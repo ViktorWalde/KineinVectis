@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kernwerk.dev/schemas/settings.schema.json",
+  "title": "Kernwerk Studio Settings",
+  "type": "object",
+  "required": ["strictness", "compilerSafety", "telemetry", "externalAi"],
+  "additionalProperties": false,
+  "properties": {
+    "strictness": {
+      "type": "string",
+      "enum": ["strict", "balanced", "relaxed"],
+      "default": "strict"
+    },
+    "compilerSafety": {
+      "type": "object",
+      "required": ["rust", "cxx", "qml"],
+      "additionalProperties": false,
+      "properties": {
+        "rust": {
+          "type": "object",
+          "required": ["unsafePolicy", "warnings", "clippy"],
+          "additionalProperties": false,
+          "properties": {
+            "unsafePolicy": {
+              "type": "string",
+              "enum": ["forbid", "allowWithJustification"],
+              "default": "forbid"
+            },
+            "warnings": { "$ref": "#/$defs/diagnosticPolicy" },
+            "clippy": { "$ref": "#/$defs/diagnosticPolicy" }
+          }
+        },
+        "cxx": {
+          "type": "object",
+          "required": ["warnings", "clangTidy", "sanitizers", "hardening"],
+          "additionalProperties": false,
+          "properties": {
+            "warnings": { "$ref": "#/$defs/diagnosticPolicy" },
+            "clangTidy": { "$ref": "#/$defs/diagnosticPolicy" },
+            "sanitizers": {
+              "type": "string",
+              "enum": ["addressAndUndefinedBehavior", "manual"],
+              "default": "addressAndUndefinedBehavior"
+            },
+            "hardening": {
+              "type": "string",
+              "enum": ["required", "manual"],
+              "default": "required"
+            }
+          }
+        },
+        "qml": {
+          "type": "object",
+          "required": ["staticChecks", "compilerDiagnostics"],
+          "additionalProperties": false,
+          "properties": {
+            "staticChecks": { "$ref": "#/$defs/diagnosticPolicy" },
+            "compilerDiagnostics": { "$ref": "#/$defs/diagnosticPolicy" }
+          }
+        }
+      }
+    },
+    "telemetry": {
+      "type": "string",
+      "enum": ["disabled"],
+      "default": "disabled"
+    },
+    "externalAi": {
+      "type": "string",
+      "enum": ["requireConfirmation", "disabled"],
+      "default": "requireConfirmation"
+    }
+  },
+  "$defs": {
+    "diagnosticPolicy": {
+      "type": "string",
+      "enum": ["deny", "warn", "allow"],
+      "default": "deny"
+    }
+  }
+}

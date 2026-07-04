@@ -1,0 +1,57 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "linux-clang-debug-strict",
+      "displayName": "Linux Clang Debug Strict",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/linux-clang-debug-strict",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "KERNWERK_ENABLE_SANITIZERS": "ON",
+        "KERNWERK_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "linux-clang-release-hardened",
+      "displayName": "Linux Clang Release Hardened",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/linux-clang-release-hardened",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "KERNWERK_ENABLE_HARDENING": "ON",
+        "KERNWERK_WARNINGS_AS_ERRORS": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug-strict",
+      "configurePreset": "linux-clang-debug-strict"
+    },
+    {
+      "name": "release-hardened",
+      "configurePreset": "linux-clang-release-hardened"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "debug-strict",
+      "configurePreset": "linux-clang-debug-strict",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

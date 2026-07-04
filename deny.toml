@@ -1,0 +1,20 @@
+# Configuração do cargo-deny (auditoria de licenças e dependências).
+# Ainda não é obrigatório no fluxo local; ver docs/06-strict-mode.md.
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Unicode-3.0",
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[advisories]
+yanked = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

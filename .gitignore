@@ -1,0 +1,10 @@
+/target/
+*.log
+CMakeUserPresets.json
+.idea/
+.vscode/
+/build/
+/compile_commands.json
+/.cache/
+/.kernwerk/
+.claude/settings.local.json

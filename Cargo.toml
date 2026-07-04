@@ -1,0 +1,56 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/kernwerk-core",
+    "crates/kernwerk-protocol",
+    "crates/kernwerk-config",
+    "crates/kernwerk-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/kernwerk/kernwerk-studio"
+homepage = "https://github.com/kernwerk/kernwerk-studio"
+readme = "README.md"
+rust-version = "1.85"
+
+[workspace.dependencies]
+kernwerk-protocol = { path = "crates/kernwerk-protocol" }
+kernwerk-config = { path = "crates/kernwerk-config" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+warnings = { level = "deny", priority = -2 }
+missing_docs = "deny"
+missing_debug_implementations = "deny"
+unreachable_pub = "deny"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "deny", priority = -1 }
+nursery = { level = "deny", priority = -1 }
+cargo = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+dbg_macro = "deny"
+print_stdout = "warn"
+print_stderr = "warn"
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+[profile.dev]
+debug = true
+incremental = true
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"

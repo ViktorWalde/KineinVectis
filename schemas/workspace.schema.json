@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kernwerk.dev/schemas/workspace.schema.json",
+  "title": "Kernwerk Studio Workspace Metadata",
+  "description": "Persisted at <workspace root>/.kernwerk/workspace.json by workspace.open.",
+  "type": "object",
+  "required": ["schemaVersion", "name", "root", "kind", "markers"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "0.1.0" },
+    "name": { "type": "string", "minLength": 1 },
+    "root": { "type": "string", "minLength": 1 },
+    "kind": {
+      "type": "string",
+      "enum": ["rustCargo", "cmake", "maven", "gradle", "python", "unknown"]
+    },
+    "markers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

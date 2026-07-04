@@ -1,0 +1,8 @@
+[build]
+rustflags = ["-C", "force-frame-pointers=yes"]
+
+[alias]
+kw-fmt = "fmt --all --check"
+kw-check = "check --workspace --all-targets --all-features"
+kw-clippy = "clippy --workspace --all-targets --all-features -- -D warnings"
+kw-test = "test --workspace --all-features"

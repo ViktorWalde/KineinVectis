@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kernwerk.dev/schemas/project.schema.json",
+  "title": "Kernwerk Studio Project Metadata",
+  "type": "object",
+  "required": ["schemaVersion", "name", "strictness"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "0.1.0" },
+    "name": { "type": "string", "minLength": 1 },
+    "strictness": {
+      "type": "string",
+      "enum": ["strict", "balanced", "relaxed"],
+      "default": "strict"
+    },
+    "relaxationJustification": {
+      "type": "string",
+      "minLength": 16
+    }
+  },
+  "if": {
+    "properties": {
+      "strictness": { "enum": ["balanced", "relaxed"] }
+    }
+  },
+  "then": {
+    "required": ["relaxationJustification"]
+  }
+}

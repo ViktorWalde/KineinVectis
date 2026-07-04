@@ -1,0 +1,18 @@
+[package]
+name = "kernwerk-config"
+description = "Strict-by-default configuration model for Kernwerk Studio"
+keywords = ["ide", "configuration", "strict"]
+categories = ["development-tools", "config"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+
+[lints]
+workspace = true
