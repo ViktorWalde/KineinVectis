@@ -1,7 +1,31 @@
 # Comandos de build e verificacao
 
-Sequencia padrao para copiar e colar quando quiser validar e atualizar os
-binarios usados pelo launcher.
+## Gate unico (recomendado)
+
+Um comando so, que roda tudo em sequencia e **para no primeiro erro**. Isso
+evita o caso em que um passo falha (ex.: `clang-format`) mas os seguintes
+continuam e dao falsa sensacao de "tudo passou".
+
+```bash
+cargo fmt --all          # formate primeiro (o gate apenas CHECA a formatacao)
+scripts/verificar.sh     # completo: lint + testes + C++ + builds debug/release
+```
+
+Modo rapido para iteracao (sem builds):
+
+```bash
+scripts/verificar.sh --rapido
+```
+
+O modo **completo** e o que bloqueia release: os binarios do icone
+(`build/linux-clang-release-hardened/ui/kernwerk-studio` e
+`target/release/kernwerk-core`) so sao atualizados se lint, testes, C++ e
+builds passarem. Presets CMake podem ser sobrescritos por ambiente:
+`KERNWERK_PRESET_DEBUG` / `KERNWERK_PRESET_RELEASE` (padrao `dev-local*`).
+
+## Sequencia manual (referencia)
+
+O gate acima equivale a rodar, nesta ordem, parando no primeiro erro:
 
 ```bash
 cargo fmt --all --check

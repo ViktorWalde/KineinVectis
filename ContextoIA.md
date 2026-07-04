@@ -240,6 +240,16 @@ refatoracao proprias por cima do que os LSPs oferecem.
   `CoreClient`/`Main.qml`, separar roteamento/handlers/serviços por dominio,
   transformar a verificacao no gate unico oficial, enxugar docs). `docs/16`
   (modos de compilador + loja de funcoes) e visao pos-V1, nao entra agora.
+- REORG INICIADA (2026-07-04): (1) GIT — o `.git` estava vazio, sem historico;
+  feito `git init` na branch `main` + commit inicial de todo o estado (verde)
+  como ponto de rollback. `.gitignore` ja cobria target/build/.kernwerk/.idea;
+  adicionei `.claude/settings.local.json`. NAO depender de git para descobrir
+  mudancas de sessoes anteriores (o historico comeca aqui). (2) GATE UNICO —
+  `scripts/verificar.sh` (`--rapido`/`--completo`) roda toda a validacao com
+  `set -e` (para no 1o erro) e so atualiza os binarios release se tudo passar;
+  `docs/COMANDOS_BUILD_VERIFICACAO.md` aponta para ele. Proximo alvo da reorg
+  (docs/15): reduzir `lib.rs`/`lsp.rs`/`CoreClient`/`Main.qml` por dominio,
+  sempre com testes cobrindo o comportamento antes de mover codigo.
 
 ## Sessao 2026-07-04 (Opus, quality/lint na aba Problemas)
 

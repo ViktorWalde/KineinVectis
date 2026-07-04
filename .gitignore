@@ -7,4 +7,4 @@ CMakeUserPresets.json
 /compile_commands.json
 /.cache/
 /.kernwerk/
-.claude/settings.local.json
+.claude/settings.local.json*
