@@ -4,4 +4,5 @@
 //! shared `workspace_root` stay in `lib.rs`; these modules hold the per-domain
 //! routers and leaf handlers.
 
+pub mod fs;
 pub mod workspace;
