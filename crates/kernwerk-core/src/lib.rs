@@ -9,6 +9,7 @@
 pub mod build;
 pub mod commands;
 pub mod fsops;
+pub mod handlers;
 pub mod lsp;
 pub mod process;
 pub mod rpc;
@@ -33,16 +34,15 @@ use kernwerk_protocol::{
     JsonRpcResponse, LspCompletionResult, LspDefinitionResult, LspHoverResult, LspReferenceItem,
     LspReferencesResult, LspRenameParams, LspRenameResult, LspSemanticTokensResult,
     QualityRunResult, RunStartParams, RunStartResult, RunStdinParams, TerminalInputParams,
-    TerminalOpenResult, TestRunResult, ToolInfo, ToolsDetectResult, WorkspaceBrowseParams,
-    WorkspaceCreateFolderParams, WorkspaceCreateFolderResult, WorkspaceCreateProjectParams,
-    WorkspaceInfo, WorkspaceOpenParams, WorkspaceStatusResult,
+    TerminalOpenResult, TestRunResult, ToolInfo, ToolsDetectResult, WorkspaceInfo,
+    WorkspaceStatusResult,
 };
 use serde_json::{Value, json};
 
 use crate::rpc::{
     fs_error_response, lsp_error_response, lsp_unavailable_response, no_workspace_response,
     parse_lsp_position_params, parse_params, run_error_response, run_unavailable_response,
-    terminal_error_response, terminal_unavailable_response, workspace_error_response,
+    terminal_error_response, terminal_unavailable_response,
 };
 
 use crate::tools::ToolDetector;
@@ -382,163 +382,6 @@ impl Core {
             "lsp.references" => Some(self.lsp_references_response(request_id, params)),
             "lsp.rename" => Some(self.lsp_rename_response(request_id, params)),
             _ => None,
-        }
-    }
-
-    fn close_workspace_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
-        let closed = self.workspace.take();
-        if let Some(lsp) = self.lsp.as_mut() {
-            lsp.set_root(None);
-        }
-        if let Some(runner) = self.run.as_mut() {
-            drop(runner.stop());
-        }
-        if let Some(session) = self.terminal.as_mut() {
-            drop(session.close());
-        }
-        JsonRpcResponse::success(
-            request_id,
-            json!({
-                "status": "ok",
-                "closed": closed.map(|workspace| workspace.root),
-            }),
-        )
-    }
-
-    fn browse_workspace_response(
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceBrowseParams>(params) {
-            Ok(params) => match workspace::browse_directories(Path::new(&params.path)) {
-                Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
-                Err(error) => {
-                    let code = if error.is_invalid_path() {
-                        JsonRpcErrorCode::InvalidParams
-                    } else {
-                        JsonRpcErrorCode::InternalError
-                    };
-                    JsonRpcResponse::failure(
-                        request_id,
-                        JsonRpcError::new(
-                            code,
-                            error.to_string(),
-                            Some(json!({ "path": params.path })),
-                        ),
-                    )
-                }
-            },
-            Err(error) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.browse requer params com o campo path",
-                    Some(json!({ "error": error.to_string() })),
-                ),
-            ),
-        }
-    }
-
-    fn create_workspace_folder_response(
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceCreateFolderParams>(params) {
-            Ok(params) => {
-                match workspace::create_directory(Path::new(&params.parent), &params.name) {
-                    Ok(path) => JsonRpcResponse::success(
-                        request_id,
-                        json!(WorkspaceCreateFolderResult {
-                            path: path.display().to_string(),
-                        }),
-                    ),
-                    Err(error) => workspace_error_response(request_id, &error),
-                }
-            }
-            Err(error) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.createFolder requer parent e name",
-                    Some(json!({ "error": error.to_string() })),
-                ),
-            ),
-        }
-    }
-
-    fn create_workspace_project_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceCreateProjectParams>(params) {
-            Ok(params) => match workspace::create_project(
-                Path::new(&params.parent),
-                &params.name,
-                params.template,
-            ) {
-                Ok(opened) => {
-                    self.workspace = Some(opened.clone());
-                    if let Some(lsp) = self.lsp.as_mut() {
-                        lsp.set_root(Some(PathBuf::from(&opened.root)));
-                    }
-                    JsonRpcResponse::success(request_id, json!(opened))
-                }
-                Err(error) => workspace_error_response(request_id, &error),
-            },
-            Err(error) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.createProject requer parent, name e template",
-                    Some(json!({ "error": error.to_string() })),
-                ),
-            ),
-        }
-    }
-
-    fn open_workspace_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let params = params.cloned().unwrap_or_else(|| json!({}));
-        match serde_json::from_value::<WorkspaceOpenParams>(params) {
-            Ok(params) => match workspace::open_workspace(Path::new(&params.path)) {
-                Ok(opened) => {
-                    self.workspace = Some(opened.clone());
-                    if let Some(lsp) = self.lsp.as_mut() {
-                        lsp.set_root(Some(PathBuf::from(&opened.root)));
-                    }
-                    JsonRpcResponse::success(request_id, json!(opened))
-                }
-                Err(error) => {
-                    let code = if error.is_invalid_path() {
-                        JsonRpcErrorCode::InvalidParams
-                    } else {
-                        JsonRpcErrorCode::InternalError
-                    };
-                    JsonRpcResponse::failure(
-                        request_id,
-                        JsonRpcError::new(
-                            code,
-                            error.to_string(),
-                            Some(json!({ "path": params.path })),
-                        ),
-                    )
-                }
-            },
-            Err(error) => JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "workspace.open requer params com o campo path",
-                    Some(json!({ "error": error.to_string() })),
-                ),
-            ),
         }
     }
 
