@@ -23,21 +23,17 @@ use std::{
     error::Error,
     fmt,
     io::{self, BufRead, Write},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use kernwerk_protocol::{
     BuildRunResult, CorePingResult, JsonRpcError, JsonRpcErrorCode, JsonRpcRequest,
-    JsonRpcResponse, QualityRunResult, RunStartParams, RunStartResult, RunStdinParams,
-    TerminalInputParams, TerminalOpenResult, TestRunResult, ToolInfo, ToolsDetectResult,
-    WorkspaceInfo, WorkspaceStatusResult,
+    JsonRpcResponse, QualityRunResult, TestRunResult, ToolInfo, ToolsDetectResult, WorkspaceInfo,
+    WorkspaceStatusResult,
 };
 use serde_json::{Value, json};
 
-use crate::rpc::{
-    no_workspace_response, parse_params, run_error_response, run_unavailable_response,
-    terminal_error_response, terminal_unavailable_response,
-};
+use crate::rpc::no_workspace_response;
 
 use crate::tools::ToolDetector;
 
@@ -205,147 +201,6 @@ impl Core {
             .map(|workspace| PathBuf::from(&workspace.root))
     }
 
-    /// Roteia os metodos `run.*`; `None` quando o metodo nao e de execucao.
-    fn run_request_response(
-        &mut self,
-        method: &str,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> Option<JsonRpcResponse> {
-        match method {
-            "run.start" => Some(self.run_start_response(request_id, params)),
-            "run.stdin" => Some(self.run_stdin_response(request_id, params)),
-            "run.stop" => Some(self.run_stop_response(request_id)),
-            _ => None,
-        }
-    }
-
-    fn run_start_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let Some(workspace) = self.workspace.clone() else {
-            return no_workspace_response(request_id, "run.start");
-        };
-        let parsed = match parse_params::<RunStartParams>(
-            request_id.as_ref(),
-            params,
-            "run.start aceita apenas o campo opcional command",
-        ) {
-            Ok(parsed) => parsed,
-            Err(response) => return *response,
-        };
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.start");
-        };
-
-        let root = Path::new(&workspace.root);
-        let command = match parsed.command.filter(|command| !command.trim().is_empty()) {
-            Some(command) => command,
-            None => match run::default_command(workspace.kind, root) {
-                Ok(command) => command,
-                Err(error) => return run_error_response(request_id, &error),
-            },
-        };
-
-        match runner.start(root, &command) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!(RunStartResult { command })),
-            Err(error) => run_error_response(request_id, &error),
-        }
-    }
-
-    fn run_stdin_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let parsed = match parse_params::<RunStdinParams>(
-            request_id.as_ref(),
-            params,
-            "run.stdin requer o campo data",
-        ) {
-            Ok(parsed) => parsed,
-            Err(response) => return *response,
-        };
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.stdin");
-        };
-        match runner.write_stdin(&parsed.data) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
-            Err(error) => run_error_response(request_id, &error),
-        }
-    }
-
-    fn run_stop_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.stop");
-        };
-        match runner.stop() {
-            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
-            Err(error) => run_error_response(request_id, &error),
-        }
-    }
-
-    /// Roteia os metodos `terminal.*`; `None` quando o metodo nao e terminal.
-    fn terminal_request_response(
-        &mut self,
-        method: &str,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> Option<JsonRpcResponse> {
-        match method {
-            "terminal.open" => Some(self.terminal_open_response(request_id)),
-            "terminal.input" => Some(self.terminal_input_response(request_id, params)),
-            "terminal.close" => Some(self.terminal_close_response(request_id)),
-            _ => None,
-        }
-    }
-
-    fn terminal_open_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "terminal.open");
-        };
-        let Some(session) = self.terminal.as_mut() else {
-            return terminal_unavailable_response(request_id, "terminal.open");
-        };
-        match session.open(&root) {
-            Ok(shell) => JsonRpcResponse::success(request_id, json!(TerminalOpenResult { shell })),
-            Err(error) => terminal_error_response(request_id, &error),
-        }
-    }
-
-    fn terminal_input_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let parsed = match parse_params::<TerminalInputParams>(
-            request_id.as_ref(),
-            params,
-            "terminal.input requer o campo data",
-        ) {
-            Ok(parsed) => parsed,
-            Err(response) => return *response,
-        };
-        let Some(session) = self.terminal.as_mut() else {
-            return terminal_unavailable_response(request_id, "terminal.input");
-        };
-        match session.write(&parsed.data) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
-            Err(error) => terminal_error_response(request_id, &error),
-        }
-    }
-
-    fn terminal_close_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some(session) = self.terminal.as_mut() else {
-            return terminal_unavailable_response(request_id, "terminal.close");
-        };
-        match session.close() {
-            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
-            Err(error) => terminal_error_response(request_id, &error),
-        }
-    }
     /// Handles a request, emitting streamed events for long-running methods.
     ///
     /// `build.run` streams `event.build.*` notifications through `emit`

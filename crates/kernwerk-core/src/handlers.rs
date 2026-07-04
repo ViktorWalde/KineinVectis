@@ -6,4 +6,6 @@
 
 pub mod fs;
 pub mod lsp;
+pub mod run;
+pub mod terminal;
 pub mod workspace;
