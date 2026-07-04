@@ -250,6 +250,22 @@ refatoracao proprias por cima do que os LSPs oferecem.
   `docs/COMANDOS_BUILD_VERIFICACAO.md` aponta para ele. Proximo alvo da reorg
   (docs/15): reduzir `lib.rs`/`lsp.rs`/`CoreClient`/`Main.qml` por dominio,
   sempre com testes cobrindo o comportamento antes de mover codigo.
+- REORG — CORE `lib.rs` MODULARIZADO (2026-07-04): `crates/kernwerk-core/src/
+  lib.rs` foi de 2966 para 317 linhas (-89%) em incrementos pequenos, cada um
+  com gate verde e commit proprio, sem mudar comportamento (111 testes do core
+  sempre verdes). Novos modulos: `commands.rs` (descritores de `command.list`),
+  `rpc.rs` (respostas de erro JSON-RPC + parse de params, `pub(crate)`),
+  `runtime.rs` (loop stdio `run_stdio`/`run_json_lines`, reexportados do lib.rs
+  p/ API estavel), `tests.rs` (testes) e `handlers/` (um arquivo por dominio:
+  `workspace.rs fs.rs lsp.rs run.rs terminal.rs build.rs`, cada handler como
+  `impl Core`). REGRA que emergiu e vale para o resto da reorg: os handlers sao
+  modulos DESCENDENTES do crate root, entao acessam campos privados de `Core`
+  (`self.lsp/run/terminal`) e metodos privados como `workspace_root` (que fica
+  no lib.rs); so os PONTOS DE ENTRADA chamados pelo dispatch (`*_request_
+  response`, os `workspace.*`, `build/test/quality_run`) precisam de `pub(crate)`.
+  `lib.rs` agora tem so: `Core`, lifecycle, `handle_request`/dispatch,
+  `workspace_root`, `RequestOutcome`, `CoreError`. Proximo alvo natural: `lsp.rs`
+  (1726 linhas, servico) e a UI (`CoreClient`/`Main.qml`).
 
 ## Sessao 2026-07-04 (Opus, quality/lint na aba Problemas)
 

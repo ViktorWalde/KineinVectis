@@ -16,7 +16,21 @@ kernwerk-studio/
 │   ├── kernwerk-core/
 │   │   ├── Cargo.toml
 │   │   └── src/
-│   │       └── main.rs
+│   │       ├── main.rs          # binary entry (calls run_stdio)
+│   │       ├── lib.rs           # Core struct + handle_request dispatch + re-exports
+│   │       ├── runtime.rs       # stdio JSON-RPC loop (run_stdio / run_json_lines)
+│   │       ├── rpc.rs           # JSON-RPC error responses + param parsing
+│   │       ├── commands.rs      # command.list descriptors
+│   │       ├── tests.rs         # core unit tests
+│   │       ├── handlers/        # request handlers by domain (impl Core blocks)
+│   │       │   ├── workspace.rs # workspace.* handlers
+│   │       │   ├── fs.rs        # fs.* handlers
+│   │       │   ├── lsp.rs       # lsp.* handlers
+│   │       │   ├── run.rs       # run.* handlers
+│   │       │   ├── terminal.rs  # terminal.* handlers
+│   │       │   └── build.rs     # build.run / test.run / quality.run handlers
+│   │       ├── workspace.rs fsops.rs lsp.rs tools.rs   # domain services
+│   │       └── build.rs test.rs run.rs terminal.rs process.rs
 │   │
 │   ├── kernwerk-protocol/
 │   │   ├── Cargo.toml
