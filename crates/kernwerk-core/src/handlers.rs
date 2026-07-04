@@ -5,4 +5,5 @@
 //! routers and leaf handlers.
 
 pub mod fs;
+pub mod lsp;
 pub mod workspace;
