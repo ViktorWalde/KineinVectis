@@ -161,6 +161,7 @@ impl Core {
             "workspace.close" => {
                 RequestOutcome::Continue(self.close_workspace_response(request_id))
             }
+            "build.run" => RequestOutcome::Continue(self.build_run_response(request_id)),
             method => RequestOutcome::Continue(self.service_request_response(
                 method,
                 request_id,
@@ -200,21 +201,18 @@ impl Core {
             .map(|workspace| PathBuf::from(&workspace.root))
     }
 
-    /// Handles a request, emitting streamed events for long-running methods.
+    /// Handles a request, streaming events for `test.run` and `quality.run`.
     ///
-    /// `build.run` streams `event.build.*` notifications through `emit`
-    /// before returning its response. Every other method behaves exactly
-    /// like [`Core::handle_request`].
+    /// Those two stream `event.test.*` / `event.quality.*` through `emit`
+    /// before returning their result. `build.run` is now an async job
+    /// (`build_run_response`); every other method behaves exactly like
+    /// [`Core::handle_request`].
     #[must_use]
     pub fn handle_request_streaming(
         &mut self,
         request: &JsonRpcRequest,
         emit: &mut dyn FnMut(&JsonRpcRequest),
     ) -> RequestOutcome {
-        if request.method == "build.run" && request.has_supported_version() && request.id.is_some()
-        {
-            return RequestOutcome::Continue(self.build_run_response(request.id.clone(), emit));
-        }
         if request.method == "test.run" && request.has_supported_version() && request.id.is_some() {
             return RequestOutcome::Continue(self.test_run_response(
                 request.id.clone(),

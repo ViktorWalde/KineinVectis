@@ -88,6 +88,23 @@ impl JobContext {
         );
     }
 
+    /// Emits an arbitrary domain event (e.g. `event.build.*`) for this job.
+    ///
+    /// The caller is responsible for tagging `params` with `jobId` when the UI
+    /// needs to correlate the event with the job.
+    pub fn emit_event(&self, method: &str, params: serde_json::Value) {
+        self.emit(method, params);
+    }
+
+    /// A clone of this job's cancellation flag.
+    ///
+    /// Process-based work shares this with a watcher so it can kill the child on
+    /// cancel instead of only polling [`Self::is_cancelled`].
+    #[must_use]
+    pub fn cancellation(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.cancel)
+    }
+
     fn emit(&self, method: &str, params: serde_json::Value) {
         drop(
             self.events

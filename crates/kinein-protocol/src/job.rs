@@ -89,6 +89,18 @@ pub struct JobCancelResult {
     pub cancelled: bool,
 }
 
+/// Result of a request that starts a job and returns immediately.
+///
+/// The actual work runs asynchronously; progress and the final outcome arrive
+/// as `event.job.*` (and any domain events like `event.build.*`) tagged with
+/// this id.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JobAcceptedResult {
+    /// Identifier of the job that was started.
+    pub job_id: String,
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;

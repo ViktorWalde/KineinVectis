@@ -5,7 +5,13 @@
 //! `--message-format=json`, CMake/compilers via the classic
 //! `file:line:column: level: message` format.
 
-use std::{error::Error, fmt, io, path::Path, process::Command};
+use std::{
+    error::Error,
+    fmt, io,
+    path::Path,
+    process::Command,
+    sync::{Arc, atomic::AtomicBool},
+};
 
 use kinein_protocol::{BuildDiagnostic, BuildDiagnosticSeverity, ProjectKind};
 use serde::Deserialize;
@@ -114,14 +120,18 @@ pub(crate) fn project_kind_name(kind: ProjectKind) -> String {
 }
 
 /// Runs the build pipeline for the workspace project kind.
+///
+/// `cancel` is polled while the tool runs; flipping it to `true` kills the
+/// build process (see [`crate::process::stream_command_lines_cancelable`]).
 pub fn run_build(
     root: &Path,
     kind: ProjectKind,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     match kind {
-        ProjectKind::RustCargo => run_cargo_build(root, sink),
-        ProjectKind::Cmake => run_cmake_build(root, sink),
+        ProjectKind::RustCargo => run_cargo_build(root, cancel, sink),
+        ProjectKind::Cmake => run_cmake_build(root, cancel, sink),
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
         }),
@@ -136,6 +146,7 @@ pub fn run_build(
 pub fn run_quality(
     root: &Path,
     kind: ProjectKind,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     match kind {
@@ -146,7 +157,13 @@ pub fn run_quality(
                 .arg("--all-targets")
                 .arg("--message-format=json")
                 .current_dir(root);
-            stream_command(command, "cargo clippy", DiagnosticFormat::CargoJson, sink)
+            stream_command(
+                command,
+                "cargo clippy",
+                DiagnosticFormat::CargoJson,
+                cancel,
+                sink,
+            )
         }
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
@@ -156,6 +173,7 @@ pub fn run_quality(
 
 fn run_cargo_build(
     root: &Path,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     let mut command = Command::new("cargo");
@@ -164,11 +182,18 @@ fn run_cargo_build(
         .arg("--message-format=json")
         .current_dir(root);
 
-    stream_command(command, "cargo build", DiagnosticFormat::CargoJson, sink)
+    stream_command(
+        command,
+        "cargo build",
+        DiagnosticFormat::CargoJson,
+        cancel,
+        sink,
+    )
 }
 
 fn run_cmake_build(
     root: &Path,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     let build_dir = root.join(".kinein").join("build");
@@ -181,6 +206,7 @@ fn run_cmake_build(
             configure,
             "cmake (configure)",
             DiagnosticFormat::GccLike,
+            cancel,
             sink,
         )?;
         if !outcome.success {
@@ -191,13 +217,20 @@ fn run_cmake_build(
     let mut build = Command::new("cmake");
     build.arg("--build").arg(&build_dir);
 
-    stream_command(build, "cmake --build", DiagnosticFormat::GccLike, sink)
+    stream_command(
+        build,
+        "cmake --build",
+        DiagnosticFormat::GccLike,
+        cancel,
+        sink,
+    )
 }
 
 fn stream_command(
     command: Command,
     display_name: &str,
     format: DiagnosticFormat,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     sink(BuildEvent::Started {
@@ -233,14 +266,15 @@ fn stream_command(
         }
     };
 
-    let status =
-        process::stream_command_lines(command, &mut on_line).map_err(|error| match error {
+    let status = process::stream_command_lines_cancelable(command, cancel, &mut on_line).map_err(
+        |error| match error {
             ProcessError::Spawn(source) => BuildError::Spawn {
                 command: display_name.to_owned(),
                 source,
             },
             ProcessError::Wait(source) => BuildError::Io(source),
-        })?;
+        },
+    )?;
 
     Ok(BuildOutcome {
         success: status.success(),
@@ -442,11 +476,13 @@ mod tests {
             "exit 2"
         ));
 
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let mut events = Vec::new();
         let outcome = super::stream_command(
             command,
             "sh de teste",
             super::DiagnosticFormat::GccLike,
+            &cancel,
             &mut |event| events.push(event),
         )
         .unwrap();
@@ -470,7 +506,9 @@ mod tests {
 
         // Cmake tem build integrado mas ainda nao tem analise de qualidade.
         let root = std::env::temp_dir();
-        let error = super::run_quality(&root, ProjectKind::Cmake, &mut |_event| {}).unwrap_err();
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let error =
+            super::run_quality(&root, ProjectKind::Cmake, &cancel, &mut |_event| {}).unwrap_err();
 
         assert!(matches!(error, super::BuildError::Unsupported { .. }));
         assert!(!error.is_missing_tool());
