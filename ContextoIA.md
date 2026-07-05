@@ -72,7 +72,15 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
   - `terminal.input`
   - `terminal.close`
   - `lsp.semanticTokens`
+  - `job.list`
+  - `job.cancel`
 - Protocolo IPC atual: `0.19.0`.
+- **Job System (fundação, 2026-07-05):** `kinein-core/src/jobs/` tem um
+  `JobManager` que roda operacoes longas de forma assincrona (retorna id na hora,
+  emite `event.job.created/progress/output/finished`, cancel cooperativo via
+  `JobContext::is_cancelled`). `job.list`/`job.cancel` expostos. Por enquanto so a
+  infraestrutura; build/test/quality/run ainda NAO foram migrados para jobs
+  (proximo passo, com coordenacao da UI). Ver `docs/ARCHITECTURE.md` §7.
 - `workspace.browse` lista subdiretorios para o seletor proprio da UI. Ele
   canonicaliza caminhos e retorna `{ path, parent, entries }`.
 - `fs.*` continua confinado ao workspace aberto e nao deve ser usado para

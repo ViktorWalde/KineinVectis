@@ -446,6 +446,33 @@ event.lsp.diagnostics  { "path": "/abs/file", "diagnostics": [{ "severity": "err
 `line` e `column` dos diagnósticos são 1-based para consumo direto da UI. A
 UI integra esses eventos à aba Problemas com origem `lsp`.
 
+### Jobs (`job.list` / `job.cancel`)
+
+Fundação do Job System (ver `docs/ARCHITECTURE.md` §7). Um **job** é uma
+operação longa que o core executa de forma assíncrona: retorna um `id` na hora,
+reporta progresso por eventos e pode ser cancelado. Nesta primeira fase existe a
+infraestrutura (registro, ciclo de vida, cancel, eventos); comandos longos
+existentes ainda **não** foram migrados para jobs.
+
+- `job.list` → `{ jobs: [{ id, kind, title, status, progress?, canCancel, risk }] }`.
+  `status`: `queued|running|success|warning|failed|cancelled`;
+  `risk`: `low|medium|high|dangerous`. Ordem estável de criação.
+- `job.cancel { jobId }` → `{ jobId, cancelled }`. `cancelled` é `true` só quando
+  o job existe, expõe cancelamento e ainda está `running`; `jobId` ausente é
+  `INVALID_PARAMS`. O cancelamento é cooperativo (o trabalho verifica o sinal).
+
+Eventos, todos com `jobId`:
+
+```text
+event.job.created   { "id", "kind", "title", "status", "progress"?, "canCancel", "risk" }
+event.job.progress  { "jobId", "status": "running", "progress": 0.0..1.0, "message"? }
+event.job.output    { "jobId", "line" }
+event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
+```
+
+Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
+pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
+
 ## Métodos iniciais
 
 ```text
