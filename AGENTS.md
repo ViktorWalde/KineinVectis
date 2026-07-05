@@ -62,6 +62,19 @@ Ao propor implementação:
 - escrever testes quando aplicável;
 - atualizar docs se mudar contrato ou arquitetura.
 
+## Política de leitura de documentação
+
+Use a ordem de precedência definida em `docs/README.md`:
+
+1. `ContextoIA.md` — estado real e decisões vigentes do repositório.
+2. `docs/00–16` (numerados) — contratos e especificações canônicas em vigor.
+3. `docs/quality/` e `docs/subsystems/` — referência de tooling e subsistemas
+   futuros (guias de rumo, nem tudo implementado).
+
+Não trate `docs/archive/` (planejamento e logs históricos) como fonte de tarefa
+atual, a menos que o usuário peça explicitamente. Se um documento histórico
+contradizer `ContextoIA.md` ou os docs numerados, vale a fonte canônica.
+
 ## Padrão de commits sugerido
 
 Usar Conventional Commits:

@@ -1,5 +1,10 @@
 # 10 — Plano de MVP
 
+> **Status:** implemented / histórico — O MVP descrito aqui foi entregue (core
+> Rust rígido respondendo comandos, workspace, fs, build/test/quality, LSP,
+> run/terminal via IPC 0.19.0). Mantido como registro do plano original; o
+> estado atual e as próximas prioridades ficam em `ContextoIA.md`.
+
 ## MVP 0.1 — Core mínimo
 
 ### Objetivo
