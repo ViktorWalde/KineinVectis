@@ -1,45 +1,58 @@
-# Documentação do Kernwerk Studio
+# Documentação da Kinein Vectis
 
-Este índice organiza toda a documentação do projeto e define a ordem de
-precedência quando houver conflito entre documentos.
+Este índice organiza a documentação do projeto e define a ordem de precedência
+quando houver conflito entre documentos.
 
 ## Ordem de precedência
 
 ```text
-1. ContextoIA.md (raiz)      → estado real e decisões vigentes do repositório
-2. docs/00–16 (numerados)    → contratos e especificações canônicas em vigor
-3. docs/quality/             → políticas de tooling/qualidade (referência)
-4. docs/subsystems/          → especificação de subsistemas futuros (referência)
-5. docs/planning/            → visão e planejamento histórico (referência)
+1. ContextoIA.md (raiz)   → estado real e decisões vigentes do repositório
+2. docs/specs/            → especificação canônica da Kinein Vectis (visão-alvo)
+3. docs/ (numerados)      → contrato e estado do que já está implementado
+4. docs/archive/          → material histórico; NÃO guia trabalho atual
 ```
 
-Os documentos numerados e o `ContextoIA.md` descrevem o repositório como ele
-é. Os pacotes em `planning/`, `quality/` e `subsystems/` são material de
-visão/planejamento gerado nas fases de concepção: valem como guia de rumo e
-padrões, mas onde divergirem da implementação real (crates, protocolo,
-fases), vale o que está em `ContextoIA.md` + docs numerados + código.
+Regra: `docs/specs/` descreve o **alvo** (produto, UX, visual, arquitetura
+completa). Os docs numerados mantidos em `docs/` descrevem o que **já existe**
+no repositório. Onde a visão divergir da implementação, vale o estado real —
+`ContextoIA.md` + docs numerados + código.
 
-## Documentos canônicos (numerados)
+## docs/specs/ — especificação canônica (Kinein Vectis)
+
+Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo: 20
+especificações com diagramas `.svg` pareados e imagens de referência.
+
+Comece pelo índice:
+[specs/KINEIN_VECTIS_SPEC_INDEX.md](specs/KINEIN_VECTIS_SPEC_INDEX.md) — mapa de
+todas as partes, fonte de verdade por área, escopo MVP/Pós-MVP/Não-fazer e
+roadmap de milestones.
+
+Âncoras principais (ver o índice para o conjunto completo):
+
+| Área | Spec |
+| --- | --- |
+| Arquitetura interna (Core/IPC/Jobs) | `KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md` |
+| Layout principal | `KINEIN_VECTIS_LAYOUT_SYSTEM.md` |
+| Componentes UI | `KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md` |
+| Sistema visual / iconografia | `KINEIN_VECTIS_VISUAL_SYSTEM_ICONS.md` |
+| Build / Run / Debug | `KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md` |
+| Editor / Language Intelligence | `KINEIN_VECTIS_EDITOR_LANGUAGE_INTELLIGENCE.md` |
+| IA externa (AI CLI Bridge) | `KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md` |
+| Configuration Actions | `KINEIN_VECTIS_SCOPED_CONFIGURATION_ACTIONS_DOC_LINKS.md` |
+| Fechamento / MVP / Performance | `KINEIN_VECTIS_FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST.md` |
+
+## docs/ — contrato e estado implementado
+
+Documentos que descrevem o repositório como ele **é hoje**:
 
 | Doc | Assunto |
 | --- | --- |
-| [00-product-vision.md](00-product-vision.md) | Visão de produto |
-| [01-architecture.md](01-architecture.md) | Arquitetura UI Qt/QML ↔ core Rust |
-| [02-repository-structure.md](02-repository-structure.md) | Estrutura do repositório |
-| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC (contrato vigente) |
-| [04-command-system.md](04-command-system.md) | Sistema de comandos |
-| [05-design-system.md](05-design-system.md) | Design system visual |
+| [02-repository-structure.md](02-repository-structure.md) | Estrutura real do repositório e crates |
+| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.19.0) |
 | [06-strict-mode.md](06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
-| [07-tooling-lifecycle.md](07-tooling-lifecycle.md) | Ciclo de vida de ferramentas externas |
-| [08-performance-budget.md](08-performance-budget.md) | Orçamento de performance |
-| [09-roadmap.md](09-roadmap.md) | Roadmap por fases |
-| [10-mvp-plan.md](10-mvp-plan.md) | Plano do MVP |
-| [11-layout-interactions.md](11-layout-interactions.md) | Layout e interações da UI |
-| [12-ai-policy.md](12-ai-policy.md) | Política de IA |
-| [13-open-source-references.md](13-open-source-references.md) | Referências open source |
 | [14-development-environment.md](14-development-environment.md) | Ambiente de desenvolvimento |
-| [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica, modularidade e refatoração pós-V1 |
-| [16-compiler-modes-and-function-store.md](16-compiler-modes-and-function-store.md) | Modos de compilador e loja de funções pós-V1 |
+| [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica e modularização pós-V1 |
+| [COMANDOS_BUILD_VERIFICACAO.md](COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
 
 ## Guias na raiz do repositório
 
@@ -47,25 +60,18 @@ fases), vale o que está em `ContextoIA.md` + docs numerados + código.
 | --- | --- |
 | [../README.md](../README.md) | Apresentação e estado atual do projeto |
 | [../COMO_EXECUTAR.md](../COMO_EXECUTAR.md) | Como executar a IDE (ícone/launcher) |
-| [../AGENTS.md](../AGENTS.md) | Instruções para agentes de IA |
-| [../ContextoIA.md](../ContextoIA.md) | Sincronização de estado entre agentes de IA |
+| [../AGENTS.md](../AGENTS.md) | Instruções e política de leitura para agentes de IA |
+| [../ContextoIA.md](../ContextoIA.md) | Estado operacional e decisões vigentes |
 
-## Pacotes de referência
+## docs/archive/ — histórico (não guia trabalho atual)
 
-- **[planning/](planning/)** — visão e planejamento histórico:
-  `KERNWERK_STUDIO_MASTER.md` (consolidação inicial), `KERNWERK_STUDIO_ALL_DOCS.md`
-  (concatenação das docs 00–14 de uma época), `KERNWERK_STUDIO_ARCHITECTURE_OVERVIEW.md`
-  e `IMPLEMENTATION_BLUEPRINT.md` (plano de execução inicial; a estrutura real de
-  crates evoluiu diferente — ver docs 02 e o código).
-- **[quality/](quality/)** — políticas de toolchain, tooling nativo C/C++/Rust,
-  Quality Center/strict modes e padrões profissionais de IDE. Ver
-  [quality/README.md](quality/README.md).
-- **[subsystems/](subsystems/)** — especificações de subsistemas profissionais
-  (task manager, editor engine, busca/indexação, refatoração, UX de erros,
-  first-run, segredos, dependências C++, crash recovery, design system da UI).
-  Ver [subsystems/README.md](subsystems/README.md).
+- **[archive/legacy/](archive/legacy/)** — docs numerados de visão (00, 01,
+  04, 05, 07–13, 16), `subsystems/` e `quality/` da fase Kernwerk, **superados
+  pelas `docs/specs/`** da Kinein Vectis. Mantidos apenas como histórico.
+- **[archive/planning/](archive/planning/)** — visão e blueprint de concepção
+  (a estrutura real de crates evoluiu diferente — ver doc 02 e o código).
+- **archive/contextoia-session-logs-2026-07.md** — logs de sessão antigos,
+  movidos do `ContextoIA.md`.
 
-## Prompts
-
-- [../prompts/GPT_TERMINAL_BOOTSTRAP.md](../prompts/GPT_TERMINAL_BOOTSTRAP.md) —
-  prompt inicial para agentes GPT/Claude no terminal.
+Índices agregadores duplicados (`*_ALL_DOCS`, `*_MASTER`) foram removidos; o
+conteúdo único vive nas `docs/specs/` e nos docs numerados mantidos.

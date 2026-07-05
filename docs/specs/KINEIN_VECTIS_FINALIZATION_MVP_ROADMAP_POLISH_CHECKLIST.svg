@@ -1,0 +1,231 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="20" flood-color="#000000" flood-opacity="0.38"/>
+    </filter>
+    <linearGradient id="kvgrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E7E2D8"/>
+      <stop offset="52%" stop-color="#FFB000"/>
+      <stop offset="100%" stop-color="#8A5CFF"/>
+    </linearGradient>
+    <style>
+      .title { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 58px; font-weight: 850; fill: #E7E2D8; }
+      .subtitle { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 27px; font-weight: 500; fill: #A9A39A; }
+      .h1 { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 34px; font-weight: 850; fill: #E7E2D8; }
+      .h2 { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 25px; font-weight: 750; fill: #E7E2D8; }
+      .body { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 21px; font-weight: 450; fill: #A9A39A; }
+      .small { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 18px; font-weight: 450; fill: #6F737A; }
+      .code { font-family: JetBrains Mono, Consolas, monospace; font-size: 19px; fill: #A9A39A; }
+      .label { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 16px; font-weight: 850; fill: #6F737A; letter-spacing: 1.4px; }
+      .pill { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 18px; font-weight: 750; fill: #E7E2D8; }
+    </style>
+  </defs>
+  <rect width="3840" height="2160" fill="#0B0D10"/>
+
+<line x1="0" y1="0" x2="0" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="80" y1="0" x2="80" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="160" y1="0" x2="160" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="320" y1="0" x2="320" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="400" y1="0" x2="400" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="560" y1="0" x2="560" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="640" y1="0" x2="640" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="720" y1="0" x2="720" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="800" y1="0" x2="800" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="880" y1="0" x2="880" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="960" y1="0" x2="960" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1040" y1="0" x2="1040" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1120" y1="0" x2="1120" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1200" y1="0" x2="1200" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1280" y1="0" x2="1280" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1360" y1="0" x2="1360" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1440" y1="0" x2="1440" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1520" y1="0" x2="1520" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1600" y1="0" x2="1600" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1680" y1="0" x2="1680" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1760" y1="0" x2="1760" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1840" y1="0" x2="1840" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1920" y1="0" x2="1920" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2000" y1="0" x2="2000" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2080" y1="0" x2="2080" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2160" y1="0" x2="2160" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2240" y1="0" x2="2240" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2320" y1="0" x2="2320" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2400" y1="0" x2="2400" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2480" y1="0" x2="2480" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2560" y1="0" x2="2560" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2640" y1="0" x2="2640" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2720" y1="0" x2="2720" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2800" y1="0" x2="2800" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2880" y1="0" x2="2880" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2960" y1="0" x2="2960" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3040" y1="0" x2="3040" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3120" y1="0" x2="3120" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3200" y1="0" x2="3200" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3280" y1="0" x2="3280" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3360" y1="0" x2="3360" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3440" y1="0" x2="3440" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3520" y1="0" x2="3520" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3600" y1="0" x2="3600" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3680" y1="0" x2="3680" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3760" y1="0" x2="3760" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="0" x2="3840" y2="0" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="80" x2="3840" y2="80" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="160" x2="3840" y2="160" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="240" x2="3840" y2="240" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="320" x2="3840" y2="320" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="400" x2="3840" y2="400" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="480" x2="3840" y2="480" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="560" x2="3840" y2="560" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="640" x2="3840" y2="640" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="720" x2="3840" y2="720" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="800" x2="3840" y2="800" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="880" x2="3840" y2="880" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="960" x2="3840" y2="960" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1040" x2="3840" y2="1040" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1120" x2="3840" y2="1120" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1200" x2="3840" y2="1200" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1280" x2="3840" y2="1280" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1360" x2="3840" y2="1360" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1440" x2="3840" y2="1440" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1520" x2="3840" y2="1520" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1600" x2="3840" y2="1600" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1680" x2="3840" y2="1680" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1760" x2="3840" y2="1760" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1840" x2="3840" y2="1840" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1920" x2="3840" y2="1920" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="2000" x2="3840" y2="2000" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="2080" x2="3840" y2="2080" stroke="#12161B" stroke-width="1"/>
+<rect x="80" y="64" width="3680" height="180" rx="34" fill="#111418" stroke="#2A2F37" filter="url(#shadow)"/>
+<rect x="116" y="98" width="102" height="102" rx="24" fill="#0C0F13" stroke="#FFB000" stroke-width="3"/>
+<text x="142" y="164" class="h1" fill="url(#kvgrad)">KV</text>
+<text x="250" y="135" class="title">Parte 10 — Fechamento, Performance, MVP e Polimento</text>
+<text x="253" y="184" class="subtitle">Última etapa macro antes de consolidar, cortar excessos e iniciar implementação</text>
+<rect x="2420" y="112" width="130" height="48" rx="24" fill="#0E1217" stroke="#5C8DFF" stroke-width="2"/>
+<circle cx="2446" cy="136" r="7" fill="#5C8DFF"/>
+<text x="2464" y="144" class="pill">Lazy LSP</text>
+<rect x="2566" y="112" width="226" height="48" rx="24" fill="#0E1217" stroke="#7CCF6A" stroke-width="2"/>
+<circle cx="2592" cy="136" r="7" fill="#7CCF6A"/>
+<text x="2610" y="144" class="pill">Tree-sitter fast</text>
+<rect x="2808" y="112" width="82" height="48" rx="24" fill="#0E1217" stroke="#FFB000" stroke-width="2"/>
+<circle cx="2834" cy="136" r="7" fill="#FFB000"/>
+<text x="2852" y="144" class="pill">Jobs</text>
+<rect x="2906" y="112" width="166" height="48" rx="24" fill="#0E1217" stroke="#8A5CFF" stroke-width="2"/>
+<circle cx="2932" cy="136" r="7" fill="#8A5CFF"/>
+<text x="2950" y="144" class="pill">Expert mode</text>
+<rect x="3088" y="112" width="142" height="48" rx="24" fill="#0E1217" stroke="#D45F5F" stroke-width="2"/>
+<circle cx="3114" cy="136" r="7" fill="#D45F5F"/>
+<text x="3132" y="144" class="pill">MVP focus</text>
+<rect x="80" y="300" width="3680" height="1660" rx="28" fill="#111418" stroke="#2A2F37" filter="url(#shadow)"/>
+<text x="122" y="362" class="h1">Kinein deve ser leve na presença, forte na estrutura e cuidadosa na ajuda</text>
+<rect x="122" y="410" width="1175" height="420" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="156" y="468" class="h1">O que pode pesar</text>
+<circle cx="172" cy="520" r="7" fill="#D45F5F"/>
+<text x="194" y="528" class="body">clangd em projeto grande</text>
+<circle cx="172" cy="574" r="7" fill="#D45F5F"/>
+<text x="194" y="582" class="body">rust-analyzer em workspace grande</text>
+<circle cx="172" cy="628" r="7" fill="#D45F5F"/>
+<text x="194" y="636" class="body">indexação sem limite</text>
+<circle cx="172" cy="682" r="7" fill="#D45F5F"/>
+<text x="194" y="690" class="body">file watcher sem debounce</text>
+<circle cx="172" cy="736" r="7" fill="#D45F5F"/>
+<text x="194" y="744" class="body">logs enormes na UI</text>
+<rect x="1347" y="410" width="1175" height="420" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="1381" y="468" class="h1">Como evitar</text>
+<circle cx="1397" cy="520" r="7" fill="#7CCF6A"/>
+<text x="1419" y="528" class="body">lazy start</text>
+<circle cx="1397" cy="574" r="7" fill="#7CCF6A"/>
+<text x="1419" y="582" class="body">LSP por escopo ativo</text>
+<circle cx="1397" cy="628" r="7" fill="#7CCF6A"/>
+<text x="1419" y="636" class="body">Jobs assíncronos</text>
+<circle cx="1397" cy="682" r="7" fill="#7CCF6A"/>
+<text x="1419" y="690" class="body">ignorar build/target/.git</text>
+<circle cx="1397" cy="736" r="7" fill="#7CCF6A"/>
+<text x="1419" y="744" class="body">status sem modal</text>
+<rect x="2572" y="410" width="1175" height="420" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="2606" y="468" class="h1">O que não precisa de LSP</text>
+<circle cx="2622" cy="520" r="7" fill="#5C8DFF"/>
+<text x="2644" y="528" class="body">Configuration Actions</text>
+<circle cx="2622" cy="574" r="7" fill="#5C8DFF"/>
+<text x="2644" y="582" class="body">Project Wizard</text>
+<circle cx="2622" cy="628" r="7" fill="#5C8DFF"/>
+<text x="2644" y="636" class="body">Toolchain scan</text>
+<circle cx="2622" cy="682" r="7" fill="#5C8DFF"/>
+<text x="2644" y="690" class="body">Cargo.toml editing</text>
+<circle cx="2622" cy="736" r="7" fill="#5C8DFF"/>
+<text x="2644" y="744" class="body">Project Health básico</text>
+<rect x="122" y="870" width="1785" height="520" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="156" y="928" class="h1">Performance model</text>
+<rect x="185" y="1050" width="220" height="92" rx="20" fill="#0D1014" stroke="#5C8DFF" stroke-width="2"/>
+<text x="209" y="1104" class="small" fill="#E7E2D8">Open workspace</text>
+<line x1="405" y1="1096" x2="460" y2="1096" stroke="#FFB000" stroke-width="4" stroke-dasharray="8 8"/>
+<rect x="460" y="1050" width="220" height="92" rx="20" fill="#0D1014" stroke="#FFB000" stroke-width="2"/>
+<text x="484" y="1104" class="small" fill="#E7E2D8">Project fingerprint</text>
+<line x1="680" y1="1096" x2="735" y2="1096" stroke="#FFB000" stroke-width="4" stroke-dasharray="8 8"/>
+<rect x="735" y="1050" width="220" height="92" rx="20" fill="#0D1014" stroke="#7CCF6A" stroke-width="2"/>
+<text x="759" y="1104" class="small" fill="#E7E2D8">Tree-sitter fast</text>
+<line x1="955" y1="1096" x2="1010" y2="1096" stroke="#FFB000" stroke-width="4" stroke-dasharray="8 8"/>
+<rect x="1010" y="1050" width="220" height="92" rx="20" fill="#0D1014" stroke="#8A5CFF" stroke-width="2"/>
+<text x="1034" y="1104" class="small" fill="#E7E2D8">LSP lazy</text>
+<line x1="1230" y1="1096" x2="1285" y2="1096" stroke="#FFB000" stroke-width="4" stroke-dasharray="8 8"/>
+<rect x="1285" y="1050" width="220" height="92" rx="20" fill="#0D1014" stroke="#FFB000" stroke-width="2"/>
+<text x="1309" y="1104" class="small" fill="#E7E2D8">Jobs + Events</text>
+<line x1="1505" y1="1096" x2="1560" y2="1096" stroke="#FFB000" stroke-width="4" stroke-dasharray="8 8"/>
+<rect x="1560" y="1050" width="220" height="92" rx="20" fill="#0D1014" stroke="#7CCF6A" stroke-width="2"/>
+<text x="1584" y="1104" class="small" fill="#E7E2D8">UI remains usable</text>
+<text x="185" y="1260" class="body">Regra: a IDE deve ficar utilizável antes de ficar 100% analisada.</text>
+<rect x="1965" y="870" width="1833" height="520" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="1999" y="928" class="h1">MVP final recomendado</text>
+<text x="2000" y="990" class="label">CORE</text>
+<text x="2160" y="990" class="body">Rust Core + JSON-RPC + Jobs + Events</text>
+<text x="2000" y="1042" class="label">PROJECTS</text>
+<text x="2160" y="1042" class="body">CMake/Cargo detection + Toolchain scan</text>
+<text x="2000" y="1094" class="label">EDITOR</text>
+<text x="2160" y="1094" class="body">Tree-sitter + LSP status + diagnostics básicos</text>
+<text x="2000" y="1146" class="label">BUILD</text>
+<text x="2160" y="1146" class="body">CMake configure/build + Cargo check/build</text>
+<text x="2000" y="1198" class="label">UX</text>
+<text x="2160" y="1198" class="body">Wizard + Settings + Project Health</text>
+<text x="2000" y="1250" class="label">ACTIONS</text>
+<text x="2160" y="1250" class="body">Configuration Actions MVP com preview</text>
+<text x="2000" y="1302" class="label">TERMINAL</text>
+<text x="2160" y="1302" class="body">normal + AI Terminal externo</text>
+<rect x="122" y="1430" width="1810" height="470" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="156" y="1488" class="h1">Pontuações para polimento futuro</text>
+<circle cx="170" cy="1542" r="8" fill="#FFB000"/>
+<text x="195" y="1550" class="h2">UX</text>
+<text x="410" y="1550" class="body">densidade, hierarquia, estados vazios, Command Palette</text>
+<circle cx="170" cy="1610" r="8" fill="#FFB000"/>
+<text x="195" y="1618" class="h2">Texto</text>
+<text x="410" y="1618" class="body">nomes, descrições, erros, tooltips, docs curtas</text>
+<circle cx="170" cy="1678" r="8" fill="#FFB000"/>
+<text x="195" y="1686" class="h2">Técnico</text>
+<text x="410" y="1686" class="body">parser CMake, TOML, diffs, rollback, logs</text>
+<circle cx="170" cy="1746" r="8" fill="#FFB000"/>
+<text x="195" y="1754" class="h2">Performance</text>
+<text x="410" y="1754" class="body">lazy loading, debounce, cache, grandes projetos</text>
+<circle cx="170" cy="1814" r="8" fill="#FFB000"/>
+<text x="195" y="1822" class="h2">Produto</text>
+<text x="410" y="1822" class="body">cortar excesso, separar MVP/Pós-MVP/Futuro</text>
+<rect x="1988" y="1430" width="1810" height="470" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="2022" y="1488" class="h1">Decisões congeladas</text>
+<circle cx="2036" cy="1537" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1545" class="body">Nome: Kinein Vectis / KV</text>
+<circle cx="2036" cy="1582" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1590" class="body">Core: Rust · UI: Qt/QML</text>
+<circle cx="2036" cy="1627" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1635" class="body">IPC: JSON-RPC local</text>
+<circle cx="2036" cy="1672" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1680" class="body">IA: externa via AI CLI Bridge</text>
+<circle cx="2036" cy="1717" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1725" class="body">Configuration Actions por Build System ativo</text>
+<circle cx="2036" cy="1762" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1770" class="body">Guided / Balanced / Expert</text>
+<circle cx="2036" cy="1807" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1815" class="body">Preview obrigatório para alterações</text>
+<circle cx="2036" cy="1852" r="7" fill="#7CCF6A"/>
+<text x="2058" y="1860" class="body">Sem plugin system público no MVP</text>
+<rect x="122" y="1922" width="3596" height="44" rx="16" fill="#0D1014" stroke="#2A2F37"/>
+<text x="152" y="1951" class="small">Próximo passo após esta fase: criar SPEC_INDEX consolidado, corrigir contradições, priorizar MVP e iniciar implementação.</text>
+</svg>

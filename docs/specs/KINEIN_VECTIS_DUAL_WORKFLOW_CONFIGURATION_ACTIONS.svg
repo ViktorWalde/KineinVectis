@@ -1,0 +1,287 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="20" flood-color="#000000" flood-opacity="0.38"/>
+    </filter>
+    <linearGradient id="kvgrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E7E2D8"/>
+      <stop offset="52%" stop-color="#FFB000"/>
+      <stop offset="100%" stop-color="#8A5CFF"/>
+    </linearGradient>
+    <style>
+      .title { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 58px; font-weight: 850; fill: #E7E2D8; }
+      .subtitle { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 27px; font-weight: 500; fill: #A9A39A; }
+      .h1 { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 34px; font-weight: 850; fill: #E7E2D8; }
+      .h2 { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 25px; font-weight: 750; fill: #E7E2D8; }
+      .body { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 21px; font-weight: 450; fill: #A9A39A; }
+      .small { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 18px; font-weight: 450; fill: #6F737A; }
+      .code { font-family: JetBrains Mono, Consolas, monospace; font-size: 19px; fill: #A9A39A; }
+      .code2 { font-family: JetBrains Mono, Consolas, monospace; font-size: 17px; fill: #6F737A; }
+      .label { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 16px; font-weight: 850; fill: #6F737A; letter-spacing: 1.4px; }
+      .pill { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 18px; font-weight: 750; fill: #E7E2D8; }
+    </style>
+  </defs>
+  <rect width="3840" height="2160" fill="#0B0D10"/>
+
+<line x1="0" y1="0" x2="0" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="80" y1="0" x2="80" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="160" y1="0" x2="160" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="320" y1="0" x2="320" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="400" y1="0" x2="400" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="560" y1="0" x2="560" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="640" y1="0" x2="640" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="720" y1="0" x2="720" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="800" y1="0" x2="800" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="880" y1="0" x2="880" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="960" y1="0" x2="960" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1040" y1="0" x2="1040" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1120" y1="0" x2="1120" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1200" y1="0" x2="1200" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1280" y1="0" x2="1280" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1360" y1="0" x2="1360" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1440" y1="0" x2="1440" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1520" y1="0" x2="1520" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1600" y1="0" x2="1600" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1680" y1="0" x2="1680" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1760" y1="0" x2="1760" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1840" y1="0" x2="1840" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1920" y1="0" x2="1920" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2000" y1="0" x2="2000" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2080" y1="0" x2="2080" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2160" y1="0" x2="2160" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2240" y1="0" x2="2240" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2320" y1="0" x2="2320" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2400" y1="0" x2="2400" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2480" y1="0" x2="2480" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2560" y1="0" x2="2560" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2640" y1="0" x2="2640" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2720" y1="0" x2="2720" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2800" y1="0" x2="2800" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2880" y1="0" x2="2880" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2960" y1="0" x2="2960" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3040" y1="0" x2="3040" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3120" y1="0" x2="3120" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3200" y1="0" x2="3200" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3280" y1="0" x2="3280" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3360" y1="0" x2="3360" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3440" y1="0" x2="3440" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3520" y1="0" x2="3520" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3600" y1="0" x2="3600" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3680" y1="0" x2="3680" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3760" y1="0" x2="3760" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="0" x2="3840" y2="0" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="80" x2="3840" y2="80" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="160" x2="3840" y2="160" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="240" x2="3840" y2="240" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="320" x2="3840" y2="320" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="400" x2="3840" y2="400" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="480" x2="3840" y2="480" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="560" x2="3840" y2="560" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="640" x2="3840" y2="640" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="720" x2="3840" y2="720" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="800" x2="3840" y2="800" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="880" x2="3840" y2="880" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="960" x2="3840" y2="960" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1040" x2="3840" y2="1040" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1120" x2="3840" y2="1120" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1200" x2="3840" y2="1200" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1280" x2="3840" y2="1280" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1360" x2="3840" y2="1360" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1440" x2="3840" y2="1440" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1520" x2="3840" y2="1520" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1600" x2="3840" y2="1600" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1680" x2="3840" y2="1680" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1760" x2="3840" y2="1760" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1840" x2="3840" y2="1840" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1920" x2="3840" y2="1920" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="2000" x2="3840" y2="2000" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="2080" x2="3840" y2="2080" stroke="#12161B" stroke-width="1"/>
+<rect x="80" y="64" width="3680" height="180" rx="34" fill="#111418" stroke="#2A2F37" filter="url(#shadow)"/>
+<rect x="116" y="98" width="102" height="102" rx="24" fill="#0C0F13" stroke="#FFB000" stroke-width="3"/>
+<text x="142" y="164" class="h1" fill="url(#kvgrad)">KV</text>
+<text x="250" y="135" class="title">Parte 9.1 — Dual Workflow e Configuration Actions</text>
+<text x="253" y="184" class="subtitle">Visual confortável para iniciantes, fluxo direto para experts, ações reais com preview e validação</text>
+<rect x="2320" y="112" width="106" height="48" rx="24" fill="#0E1217" stroke="#7CCF6A" stroke-width="2"/>
+<circle cx="2346" cy="136" r="7" fill="#7CCF6A"/>
+<text x="2364" y="144" class="pill">Guided</text>
+<rect x="2442" y="112" width="130" height="48" rx="24" fill="#0E1217" stroke="#FFB000" stroke-width="2"/>
+<circle cx="2468" cy="136" r="7" fill="#FFB000"/>
+<text x="2486" y="144" class="pill">Balanced</text>
+<rect x="2588" y="112" width="106" height="48" rx="24" fill="#0E1217" stroke="#5C8DFF" stroke-width="2"/>
+<circle cx="2614" cy="136" r="7" fill="#5C8DFF"/>
+<text x="2632" y="144" class="pill">Expert</text>
+<rect x="2710" y="112" width="286" height="48" rx="24" fill="#0E1217" stroke="#8A5CFF" stroke-width="2"/>
+<circle cx="2736" cy="136" r="7" fill="#8A5CFF"/>
+<text x="2754" y="144" class="pill">Configuration Actions</text>
+<rect x="3012" y="112" width="202" height="48" rx="24" fill="#0E1217" stroke="#D45F5F" stroke-width="2"/>
+<circle cx="3038" cy="136" r="7" fill="#D45F5F"/>
+<text x="3056" y="144" class="pill">Preview always</text>
+<rect x="80" y="300" width="3680" height="1660" rx="28" fill="#111418" stroke="#2A2F37" filter="url(#shadow)"/>
+<text x="122" y="362" class="h1">Configuração visível e confortável, mas nunca obrigatória</text>
+<text x="122" y="404" class="body">A Kinein atende quem quer clicar e quem prefere editar CMake/Cargo direto.</text>
+<rect x="122" y="450" width="1160" height="650" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="156" y="508" class="h1">First-run choice</text>
+<text x="156" y="546" class="body">Aparece uma vez. Depois muda em Settings.</text>
+<rect x="176" y="595" width="1052" height="120" rx="22" fill="#0D1014" stroke="#7CCF6A" stroke-width="2"/>
+<text x="206" y="640" class="h2">Guided</text>
+<text x="206" y="675" class="small">mais ajuda visual, wizards e Configuration Actions visíveis</text>
+<rect x="1072" y="631" width="130" height="46" rx="14" fill="#171B21" stroke="#7CCF6A"/>
+<text x="1108" y="661" class="small" fill="#E7E2D8">Select</text>
+<rect x="176" y="745" width="1052" height="120" rx="22" fill="#0D1014" stroke="#FFB000" stroke-width="2"/>
+<text x="206" y="790" class="h2">Balanced</text>
+<text x="206" y="825" class="small">ajuda quando relevante, sem interromper o fluxo</text>
+<rect x="1072" y="781" width="130" height="46" rx="14" fill="#171B21" stroke="#FFB000"/>
+<text x="1108" y="811" class="small" fill="#E7E2D8">Select</text>
+<rect x="176" y="895" width="1052" height="120" rx="22" fill="#0D1014" stroke="#5C8DFF" stroke-width="2"/>
+<text x="206" y="940" class="h2">Expert</text>
+<text x="206" y="975" class="small">UI guiada recolhida; recursos via Command Palette/Settings</text>
+<rect x="1072" y="931" width="130" height="46" rx="14" fill="#171B21" stroke="#5C8DFF"/>
+<text x="1108" y="961" class="small" fill="#E7E2D8">Select</text>
+<rect x="1325" y="450" width="2473" height="1110" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="1359" y="508" class="h1">Configuration Actions</text>
+<text x="1359" y="546" class="body">Lista densa, pesquisável, agrupada e com preview lateral.</text>
+<rect x="1359" y="575" width="2405" height="58" rx="18" fill="#0D1014" stroke="#2A2F37"/>
+<text x="1387" y="613" class="body">Search actions: link library, add dependency, enable compile_commands...</text>
+<rect x="1359" y="660" width="315" height="840" rx="22" fill="#0D1014" stroke="#2A2F37"/>
+<text x="1383" y="705" class="h2">Categories</text>
+<rect x="1377" y="732" width="280" height="42" rx="12" fill="#111418" stroke="#2A2F37"/>
+<circle cx="1401" cy="753" r="6" fill="#FFB000"/>
+<text x="1421" y="760" class="small" fill="#A9A39A">Favorites</text>
+<rect x="1377" y="790" width="280" height="42" rx="12" fill="#201A10" stroke="#FFB000"/>
+<circle cx="1401" cy="811" r="6" fill="#5C8DFF"/>
+<text x="1421" y="818" class="small" fill="#E7E2D8">CMake Basic</text>
+<rect x="1377" y="848" width="280" height="42" rx="12" fill="#111418" stroke="#2A2F37"/>
+<circle cx="1401" cy="869" r="6" fill="#8A5CFF"/>
+<text x="1421" y="876" class="small" fill="#A9A39A">CMake Advanced</text>
+<rect x="1377" y="906" width="280" height="42" rx="12" fill="#111418" stroke="#2A2F37"/>
+<circle cx="1401" cy="927" r="6" fill="#7CCF6A"/>
+<text x="1421" y="934" class="small" fill="#A9A39A">Cargo</text>
+<rect x="1377" y="964" width="280" height="42" rx="12" fill="#111418" stroke="#2A2F37"/>
+<circle cx="1401" cy="985" r="6" fill="#FFB000"/>
+<text x="1421" y="992" class="small" fill="#A9A39A">Run/Debug</text>
+<rect x="1377" y="1022" width="280" height="42" rx="12" fill="#111418" stroke="#2A2F37"/>
+<circle cx="1401" cy="1043" r="6" fill="#D45F5F"/>
+<text x="1421" y="1050" class="small" fill="#A9A39A">Targets</text>
+<rect x="1377" y="1080" width="280" height="42" rx="12" fill="#111418" stroke="#2A2F37"/>
+<circle cx="1401" cy="1101" r="6" fill="#6F737A"/>
+<text x="1421" y="1108" class="small" fill="#A9A39A">Advanced</text>
+<rect x="1710" y="660" width="1100" height="840" rx="22" fill="#0D1014" stroke="#2A2F37"/>
+<text x="1734" y="705" class="h2">Actions</text>
+<text x="2570" y="705" class="small">Available only · Basic</text>
+<rect x="1732" y="710" width="1056" height="72" rx="16" fill="#111418" stroke="#2A2F37" stroke-width="2"/>
+<text x="1756" y="740" class="h2">Enable compile_commands.json</text>
+<text x="1756" y="769" class="small">Ativa CMAKE_EXPORT_COMPILE_COMMANDS para clangd.</text>
+<text x="2400" y="740" class="small">CMakePresets.json</text>
+<rect x="2635" y="717" width="105" height="32" rx="10" fill="#0D1014" stroke="#7CCF6A"/>
+<text x="2662" y="739" class="small" fill="#E7E2D8">low</text>
+<rect x="1732" y="798" width="1056" height="72" rx="16" fill="#111418" stroke="#2A2F37" stroke-width="2"/>
+<text x="1756" y="828" class="h2">Add executable</text>
+<text x="1756" y="857" class="small">Cria um novo target executável no CMake.</text>
+<text x="2400" y="828" class="small">CMakeLists.txt</text>
+<rect x="2635" y="805" width="105" height="32" rx="10" fill="#0D1014" stroke="#FFB000"/>
+<text x="2662" y="827" class="small" fill="#E7E2D8">medium</text>
+<rect x="1732" y="886" width="1056" height="72" rx="16" fill="#111418" stroke="#2A2F37" stroke-width="2"/>
+<text x="1756" y="916" class="h2">Add static library</text>
+<text x="1756" y="945" class="small">Cria um target de biblioteca estática.</text>
+<text x="2400" y="916" class="small">CMakeLists.txt</text>
+<rect x="2635" y="893" width="105" height="32" rx="10" fill="#0D1014" stroke="#FFB000"/>
+<text x="2662" y="915" class="small" fill="#E7E2D8">medium</text>
+<rect x="1732" y="974" width="1056" height="72" rx="16" fill="#111418" stroke="#2A2F37" stroke-width="2"/>
+<text x="1756" y="1004" class="h2">Add source file to target</text>
+<text x="1756" y="1033" class="small">Inclui um arquivo .cpp/.c em um target existente.</text>
+<text x="2400" y="1004" class="small">CMakeLists.txt</text>
+<rect x="2635" y="981" width="105" height="32" rx="10" fill="#0D1014" stroke="#FFB000"/>
+<text x="2662" y="1003" class="small" fill="#E7E2D8">medium</text>
+<rect x="1732" y="1062" width="1056" height="72" rx="16" fill="#111418" stroke="#2A2F37" stroke-width="2"/>
+<text x="1756" y="1092" class="h2">Add include directory</text>
+<text x="1756" y="1121" class="small">Adiciona include dir usando target_include_directories.</text>
+<text x="2400" y="1092" class="small">CMakeLists.txt</text>
+<rect x="2635" y="1069" width="105" height="32" rx="10" fill="#0D1014" stroke="#FFB000"/>
+<text x="2662" y="1091" class="small" fill="#E7E2D8">medium</text>
+<rect x="1732" y="1150" width="1056" height="72" rx="16" fill="#171B21" stroke="#FFB000" stroke-width="2"/>
+<text x="1756" y="1180" class="h2">Add target_link_libraries</text>
+<text x="1756" y="1209" class="small">Vincula uma biblioteca ao target selecionado.</text>
+<text x="2400" y="1180" class="small">CMakeLists.txt</text>
+<rect x="2635" y="1157" width="105" height="32" rx="10" fill="#0D1014" stroke="#FFB000"/>
+<text x="2662" y="1179" class="small" fill="#E7E2D8">medium</text>
+<rect x="1732" y="1238" width="1056" height="72" rx="16" fill="#111418" stroke="#2A2F37" stroke-width="2"/>
+<text x="1756" y="1268" class="h2">Create Debug preset</text>
+<text x="1756" y="1297" class="small">Cria preset Debug com Ninja e compile_commands.</text>
+<text x="2400" y="1268" class="small">CMakePresets.json</text>
+<rect x="2635" y="1245" width="105" height="32" rx="10" fill="#0D1014" stroke="#FFB000"/>
+<text x="2662" y="1267" class="small" fill="#E7E2D8">medium</text>
+<rect x="1732" y="1326" width="1056" height="72" rx="16" fill="#111418" stroke="#2A2F37" stroke-width="2"/>
+<text x="1756" y="1356" class="h2">Inspect CMake cache</text>
+<text x="1756" y="1385" class="small">Analisa cache e detecta stale build directory.</text>
+<text x="2400" y="1356" class="small">CMakeCache.txt</text>
+<rect x="2635" y="1333" width="105" height="32" rx="10" fill="#0D1014" stroke="#7CCF6A"/>
+<text x="2662" y="1355" class="small" fill="#E7E2D8">low</text>
+<rect x="2855" y="660" width="909" height="840" rx="22" fill="#0D1014" stroke="#FFB000" stroke-width="2"/>
+<text x="2881" y="705" class="h2">Preview</text>
+<text x="2881" y="755" class="h1">Add target_link_libraries</text>
+<text x="2883" y="815" class="label">O QUE FAZ</text>
+<text x="3035" y="815" class="body">Vincula uma biblioteca existente ao target CMake.</text>
+<text x="2883" y="869" class="label">AFETA</text>
+<text x="3035" y="869" class="body">CMakeLists.txt</text>
+<text x="2883" y="923" class="label">RISCO</text>
+<text x="3035" y="923" class="body">medium · exige preview</text>
+<text x="2883" y="977" class="label">TARGET</text>
+<text x="3035" y="977" class="body">motor_control</text>
+<text x="2883" y="1031" class="label">LIBRARY</text>
+<text x="3035" y="1031" class="body">motor_driver</text>
+<rect x="2881" y="1115" width="857" height="200" rx="18" fill="#111418" stroke="#2A2F37"/>
+<text x="2907" y="1157" class="h2">Diff</text>
+<text x="2907" y="1200" class="code" fill="#A9A39A">target_link_libraries(motor_control</text>
+<text x="2907" y="1236" class="code" fill="#7CCF6A">+    PRIVATE</text>
+<text x="2907" y="1272" class="code" fill="#7CCF6A">+        motor_driver</text>
+<text x="2907" y="1308" class="code" fill="#A9A39A">)</text>
+<rect x="2881" y="1350" width="150" height="50" rx="15" fill="#FFB000" stroke="#FFC93D"/>
+<text x="2919" y="1383" class="h2" fill="#111">Apply</text>
+<rect x="3050" y="1350" width="156" height="50" rx="15" fill="#171B21" stroke="#2A2F37"/>
+<text x="3091" y="1383" class="h2">Cancel</text>
+<text x="2881" y="1450" class="small">Validação: rodar cmake --preset debug após aplicar.</text>
+<rect x="122" y="1605" width="870" height="300" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="154" y="1659" class="h1">Guided</text>
+<circle cx="166" cy="1702" r="7" fill="#7CCF6A"/>
+<text x="188" y="1710" class="body">ações visíveis</text>
+<circle cx="166" cy="1748" r="7" fill="#7CCF6A"/>
+<text x="188" y="1756" class="body">explicações curtas</text>
+<circle cx="166" cy="1794" r="7" fill="#7CCF6A"/>
+<text x="188" y="1802" class="body">setup assistant ativo</text>
+<circle cx="166" cy="1840" r="7" fill="#7CCF6A"/>
+<text x="188" y="1848" class="body">preview obrigatório</text>
+<rect x="1042" y="1605" width="870" height="300" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="1074" y="1659" class="h1">Balanced</text>
+<circle cx="1086" cy="1702" r="7" fill="#FFB000"/>
+<text x="1108" y="1710" class="body">ações quando relevantes</text>
+<circle cx="1086" cy="1748" r="7" fill="#FFB000"/>
+<text x="1108" y="1756" class="body">Project Health discreto</text>
+<circle cx="1086" cy="1794" r="7" fill="#FFB000"/>
+<text x="1108" y="1802" class="body">sem interrupção</text>
+<circle cx="1086" cy="1840" r="7" fill="#FFB000"/>
+<text x="1108" y="1848" class="body">command palette</text>
+<rect x="1962" y="1605" width="870" height="300" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="1994" y="1659" class="h1">Expert</text>
+<circle cx="2006" cy="1702" r="7" fill="#5C8DFF"/>
+<text x="2028" y="1710" class="body">ações recolhidas</text>
+<circle cx="2006" cy="1748" r="7" fill="#5C8DFF"/>
+<text x="2028" y="1756" class="body">sem wizard automático</text>
+<circle cx="2006" cy="1794" r="7" fill="#5C8DFF"/>
+<text x="2028" y="1802" class="body">status visível</text>
+<circle cx="2006" cy="1840" r="7" fill="#5C8DFF"/>
+<text x="2028" y="1848" class="body">desabilitável</text>
+<rect x="2882" y="1605" width="870" height="300" rx="26" fill="#171B21" stroke="#2A2F37"/>
+<text x="2914" y="1659" class="h1">Enterprise safe</text>
+<circle cx="2926" cy="1702" r="7" fill="#D45F5F"/>
+<text x="2948" y="1710" class="body">respeita CMakePresets</text>
+<circle cx="2926" cy="1748" r="7" fill="#D45F5F"/>
+<text x="2948" y="1756" class="body">não altera sem consentimento</text>
+<circle cx="2926" cy="1794" r="7" fill="#D45F5F"/>
+<text x="2948" y="1802" class="body">CMake complexo com cautela</text>
+<circle cx="2926" cy="1840" r="7" fill="#D45F5F"/>
+<text x="2948" y="1848" class="body">modo manual sempre</text>
+<rect x="122" y="1922" width="3596" height="44" rx="16" fill="#0D1014" stroke="#2A2F37"/>
+<text x="152" y="1951" class="small">Frase-guia: a Kinein torna configuração visível e confortável, mas nunca obrigatória.</text>
+</svg>

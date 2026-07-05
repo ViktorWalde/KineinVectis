@@ -1,5 +1,12 @@
 # 03 — Protocolo IPC
 
+> **Escopo:** este documento descreve o protocolo **implementado** hoje
+> (JSON-RPC 0.19.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `build/test/
+> quality.run`, `lsp.*`, `run.*`, `terminal.*`). O protocolo-**alvo** completo
+> (jobs, setup, cmake/cargo services, ai-bridge, targets, etc.) está em
+> `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md`. Onde
+> divergir, vale o que está implementado no código + `ContextoIA.md`.
+
 ## Objetivo
 
 O protocolo IPC permite comunicação entre:

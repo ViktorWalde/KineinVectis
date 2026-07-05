@@ -1,0 +1,328 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="kvgrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E7E2D8"/>
+      <stop offset="55%" stop-color="#FFB000"/>
+      <stop offset="100%" stop-color="#8A5CFF"/>
+    </linearGradient>
+    <style>
+      .title { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 58px; font-weight: 800; fill: #E7E2D8; }
+      .subtitle { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 27px; font-weight: 500; fill: #A9A39A; }
+      .h1 { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 32px; font-weight: 800; fill: #E7E2D8; }
+      .h2 { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 25px; font-weight: 700; fill: #E7E2D8; }
+      .body { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 22px; font-weight: 450; fill: #A9A39A; }
+      .small { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 18px; font-weight: 450; fill: #6F737A; }
+      .code { font-family: JetBrains Mono, Consolas, monospace; font-size: 20px; fill: #A9A39A; }
+      .code2 { font-family: JetBrains Mono, Consolas, monospace; font-size: 18px; fill: #6F737A; }
+      .pill { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 18px; font-weight: 700; fill: #E7E2D8; }
+      .label { font-family: Inter, Segoe UI, Arial, sans-serif; font-size: 17px; font-weight: 800; fill: #6F737A; letter-spacing: 1.5px; }
+    </style>
+  </defs>
+  <rect width="3840" height="2160" fill="#0B0D10"/>
+
+<line x1="0" y1="0" x2="0" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="80" y1="0" x2="80" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="160" y1="0" x2="160" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="240" y1="0" x2="240" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="320" y1="0" x2="320" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="400" y1="0" x2="400" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="560" y1="0" x2="560" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="640" y1="0" x2="640" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="720" y1="0" x2="720" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="800" y1="0" x2="800" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="880" y1="0" x2="880" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="960" y1="0" x2="960" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1040" y1="0" x2="1040" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1120" y1="0" x2="1120" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1200" y1="0" x2="1200" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1280" y1="0" x2="1280" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1360" y1="0" x2="1360" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1440" y1="0" x2="1440" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1520" y1="0" x2="1520" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1600" y1="0" x2="1600" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1680" y1="0" x2="1680" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1760" y1="0" x2="1760" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1840" y1="0" x2="1840" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="1920" y1="0" x2="1920" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2000" y1="0" x2="2000" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2080" y1="0" x2="2080" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2160" y1="0" x2="2160" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2240" y1="0" x2="2240" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2320" y1="0" x2="2320" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2400" y1="0" x2="2400" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2480" y1="0" x2="2480" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2560" y1="0" x2="2560" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2640" y1="0" x2="2640" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2720" y1="0" x2="2720" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2800" y1="0" x2="2800" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2880" y1="0" x2="2880" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="2960" y1="0" x2="2960" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3040" y1="0" x2="3040" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3120" y1="0" x2="3120" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3200" y1="0" x2="3200" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3280" y1="0" x2="3280" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3360" y1="0" x2="3360" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3440" y1="0" x2="3440" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3520" y1="0" x2="3520" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3600" y1="0" x2="3600" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3680" y1="0" x2="3680" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="3760" y1="0" x2="3760" y2="2160" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="0" x2="3840" y2="0" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="80" x2="3840" y2="80" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="160" x2="3840" y2="160" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="240" x2="3840" y2="240" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="320" x2="3840" y2="320" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="400" x2="3840" y2="400" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="480" x2="3840" y2="480" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="560" x2="3840" y2="560" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="640" x2="3840" y2="640" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="720" x2="3840" y2="720" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="800" x2="3840" y2="800" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="880" x2="3840" y2="880" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="960" x2="3840" y2="960" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1040" x2="3840" y2="1040" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1120" x2="3840" y2="1120" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1200" x2="3840" y2="1200" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1280" x2="3840" y2="1280" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1360" x2="3840" y2="1360" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1440" x2="3840" y2="1440" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1520" x2="3840" y2="1520" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1600" x2="3840" y2="1600" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1680" x2="3840" y2="1680" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1760" x2="3840" y2="1760" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1840" x2="3840" y2="1840" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="1920" x2="3840" y2="1920" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="2000" x2="3840" y2="2000" stroke="#12161B" stroke-width="1"/>
+<line x1="0" y1="2080" x2="3840" y2="2080" stroke="#12161B" stroke-width="1"/>
+<rect x="80" y="64" width="3680" height="180" rx="34" fill="#111418" stroke="#2A2F37" filter="url(#shadow)"/>
+<rect x="116" y="98" width="102" height="102" rx="24" fill="#0C0F13" stroke="#FFB000" stroke-width="3"/>
+<text x="142" y="164" class="h1" fill="url(#kvgrad)">KV</text>
+<text x="250" y="135" class="title">Kinein Vectis — Parte 7: KV Context</text>
+<text x="253" y="184" class="subtitle">Assistência contextual, IA local/externa, documentação, explicação de erros e ações seguras</text>
+<rect x="2520" y="112" width="162" height="48" rx="24" fill="#0E1217" stroke="#7CCF6A" stroke-width="2"/>
+<circle cx="2546" cy="136" r="7" fill="#7CCF6A"/>
+<text x="2564" y="144" class="pill">Local-first</text>
+<rect x="2700" y="112" width="150" height="48" rx="24" fill="#0E1217" stroke="#D45F5F" stroke-width="2"/>
+<circle cx="2726" cy="136" r="7" fill="#D45F5F"/>
+<text x="2744" y="144" class="pill">No secrets</text>
+<rect x="2868" y="112" width="198" height="48" rx="24" fill="#0E1217" stroke="#5C8DFF" stroke-width="2"/>
+<circle cx="2894" cy="136" r="7" fill="#5C8DFF"/>
+<text x="2912" y="144" class="pill">Evidence-based</text>
+<rect x="3084" y="112" width="294" height="48" rx="24" fill="#0E1217" stroke="#FFB000" stroke-width="2"/>
+<circle cx="3110" cy="136" r="7" fill="#FFB000"/>
+<text x="3128" y="144" class="pill">User-confirmed actions</text>
+<rect x="80" y="300" width="2400" height="1660" rx="28" fill="#111418" stroke="#2A2F37" filter="url(#shadow)"/>
+<rect x="80" y="300" width="2400" height="78" rx="28" fill="#15191F" stroke="#2A2F37"/>
+<text x="114" y="350" class="h2">KV | Kinein</text>
+<rect x="380" y="318" width="180" height="42" rx="12" fill="#0E1217" stroke="#2C333D"/>
+<text x="398" y="346" class="small" fill="#E7E2D8">x86_64-linux</text>
+<rect x="572" y="318" width="180" height="42" rx="12" fill="#0E1217" stroke="#2C333D"/>
+<text x="590" y="346" class="small" fill="#E7E2D8">CMake: Debug</text>
+<rect x="764" y="318" width="96" height="42" rx="12" fill="#0E1217" stroke="#2C333D"/>
+<text x="782" y="346" class="small" fill="#E7E2D8">Build</text>
+<rect x="872" y="318" width="72" height="42" rx="12" fill="#0E1217" stroke="#2C333D"/>
+<text x="890" y="346" class="small" fill="#E7E2D8">Run</text>
+<rect x="956" y="318" width="96" height="42" rx="12" fill="#0E1217" stroke="#2C333D"/>
+<text x="974" y="346" class="small" fill="#E7E2D8">Debug</text>
+<rect x="1064" y="318" width="96" height="42" rx="12" fill="#0E1217" stroke="#2C333D"/>
+<text x="1082" y="346" class="small" fill="#E7E2D8">Flash</text>
+<rect x="80" y="378" width="80" height="1582" fill="#0D1014" stroke="#2A2F37"/>
+<rect x="96" y="425" width="48" height="48" rx="12" fill="#15191F" stroke="#FFB000" stroke-width="2"/>
+<text x="111" y="456" class="small" fill="#FFB000">P</text>
+<rect x="96" y="499" width="48" height="48" rx="12" fill="#15191F" stroke="#6F737A" stroke-width="2"/>
+<text x="111" y="530" class="small" fill="#6F737A">S</text>
+<rect x="96" y="573" width="48" height="48" rx="12" fill="#15191F" stroke="#6F737A" stroke-width="2"/>
+<text x="111" y="604" class="small" fill="#6F737A">G</text>
+<rect x="96" y="647" width="48" height="48" rx="12" fill="#15191F" stroke="#FFB000" stroke-width="2"/>
+<text x="111" y="678" class="small" fill="#FFB000">B</text>
+<rect x="96" y="721" width="48" height="48" rx="12" fill="#15191F" stroke="#5C8DFF" stroke-width="2"/>
+<text x="111" y="752" class="small" fill="#5C8DFF">D</text>
+<rect x="96" y="795" width="48" height="48" rx="12" fill="#15191F" stroke="#7CCF6A" stroke-width="2"/>
+<text x="111" y="826" class="small" fill="#7CCF6A">T</text>
+<rect x="96" y="869" width="48" height="48" rx="12" fill="#15191F" stroke="#8A5CFF" stroke-width="2"/>
+<text x="111" y="900" class="small" fill="#8A5CFF">Q</text>
+<rect x="160" y="378" width="430" height="1582" fill="#171B21" stroke="#2A2F37"/>
+<text x="188" y="430" class="h2">Project</text>
+<text x="190" y="480" class="code" fill="#FFB000">▾ motor-firmware</text>
+<text x="190" y="522" class="code" fill="#A9A39A">  ▾ src</text>
+<text x="190" y="564" class="code" fill="#E7E2D8">    main.cpp</text>
+<text x="190" y="606" class="code" fill="#A9A39A">    motor_driver.cpp</text>
+<text x="190" y="648" class="code" fill="#A9A39A">    pwm.cpp</text>
+<text x="190" y="690" class="code" fill="#A9A39A">  ▾ include</text>
+<text x="190" y="732" class="code" fill="#A9A39A">    motor_driver.hpp</text>
+<text x="190" y="774" class="code" fill="#5C8DFF">  CMakeLists.txt</text>
+<text x="190" y="816" class="code" fill="#8A5CFF">  CMakePresets.json</text>
+<text x="190" y="858" class="code" fill="#7CCF6A">  README.md</text>
+<rect x="590" y="378" width="1220" height="1582" fill="#0F1216" stroke="#2A2F37"/>
+<rect x="590" y="378" width="1220" height="58" fill="#15191F" stroke="#2A2F37"/>
+<rect x="610" y="390" width="140" height="38" rx="10" fill="#1D232B" stroke="#FFB000"/>
+<text x="628" y="416" class="small" fill="#E7E2D8">main.cpp</text>
+<rect x="760" y="390" width="180" height="38" rx="10" fill="#10141A" stroke="#2A2F37"/>
+<text x="778" y="416" class="small" fill="#A9A39A">CMakeLists.txt</text>
+<rect x="950" y="390" width="180" height="38" rx="10" fill="#10141A" stroke="#2A2F37"/>
+<text x="968" y="416" class="small" fill="#A9A39A">build.log</text>
+<text x="624" y="485" class="code2" fill="#6F737A"> 1</text>
+<text x="682" y="485" class="code" fill="#FFC93D">#include &lt;motor_driver.hpp&gt;</text>
+<text x="624" y="527" class="code2" fill="#6F737A"> 2</text>
+<text x="682" y="527" class="code" fill="#5C8DFF">#include &lt;pwm.hpp&gt;</text>
+<text x="624" y="569" class="code2" fill="#6F737A"> 3</text>
+<text x="682" y="569" class="code" fill="#E7E2D8"></text>
+<text x="624" y="611" class="code2" fill="#6F737A"> 4</text>
+<text x="682" y="611" class="code" fill="#8A5CFF">int main() {</text>
+<text x="624" y="653" class="code2" fill="#6F737A"> 5</text>
+<text x="682" y="653" class="code" fill="#FFC93D">    MotorDriver driver;</text>
+<text x="624" y="695" class="code2" fill="#6F737A"> 6</text>
+<text x="682" y="695" class="code" fill="#FFC93D">    driver.init();</text>
+<text x="624" y="737" class="code2" fill="#6F737A"> 7</text>
+<text x="682" y="737" class="code" fill="#FFC93D">    driver.set_pwm(0.42f);</text>
+<text x="624" y="779" class="code2" fill="#6F737A"> 8</text>
+<text x="682" y="779" class="code" fill="#E7E2D8"></text>
+<text x="624" y="821" class="code2" fill="#6F737A"> 9</text>
+<text x="682" y="821" class="code" fill="#8A5CFF">    while (true) {</text>
+<text x="624" y="863" class="code2" fill="#6F737A">10</text>
+<text x="682" y="863" class="code" fill="#FFC93D">        driver.update();</text>
+<text x="624" y="905" class="code2" fill="#6F737A">11</text>
+<text x="682" y="905" class="code" fill="#E7E2D8">    }</text>
+<text x="624" y="947" class="code2" fill="#6F737A">12</text>
+<text x="682" y="947" class="code" fill="#E7E2D8">}</text>
+<line x1="775" y1="704" x2="900" y2="704" stroke="#D45F5F" stroke-width="4" stroke-dasharray="8 8"/>
+<rect x="1140" y="880" width="610" height="190" rx="18" fill="#171B21" stroke="#D45F5F" filter="url(#shadow)"/>
+<text x="1170" y="925" class="h2" fill="#D45F5F">Build diagnostic</text>
+<text x="1170" y="970" class="body">undefined reference to MotorDriver::init()</text>
+<text x="1170" y="1015" class="small">Evidence: build.log lines 120–147</text>
+<rect x="1170" y="1035" width="120" height="34" rx="10" fill="#25191A" stroke="#D45F5F"/>
+<text x="1194" y="1058" class="small" fill="#E7E2D8">Explain</text>
+<rect x="1306" y="1035" width="138" height="34" rx="10" fill="#201A10" stroke="#FFB000"/>
+<text x="1330" y="1058" class="small" fill="#E7E2D8">Suggest fix</text>
+<rect x="590" y="1590" width="1220" height="370" fill="#111418" stroke="#2A2F37"/>
+<text x="616" y="1638" class="h2">Build</text>
+<text x="618" y="1688" class="code" fill="#A9A39A">[100%] Linking CXX executable motor_firmware</text>
+<text x="618" y="1730" class="code" fill="#D45F5F">/usr/bin/ld: main.cpp.o: undefined reference to `MotorDriver::init()`</text>
+<text x="618" y="1772" class="code" fill="#D45F5F">collect2: error: ld returned 1 exit status</text>
+<text x="618" y="1814" class="code" fill="#A9A39A">ninja: build stopped: subcommand failed.</text>
+<rect x="1810" y="378" width="670" height="1582" fill="#12161B" stroke="#2A2F37"/>
+<text x="1838" y="432" class="h2">KV Context</text>
+<circle cx="2434" cy="418" r="8" fill="#7CCF6A"/>
+<text x="2345" y="426" class="small">local</text>
+<rect x="1836" y="458" width="67" height="36" rx="18" fill="#0D1014" stroke="#5C8DFF"/>
+<text x="1853" y="482" class="small" fill="#E7E2D8">C++</text>
+<rect x="1913" y="458" width="89" height="36" rx="18" fill="#0D1014" stroke="#8A5CFF"/>
+<text x="1930" y="482" class="small" fill="#E7E2D8">CMake</text>
+<rect x="2012" y="458" width="100" height="36" rx="18" fill="#0D1014" stroke="#7CCF6A"/>
+<text x="2029" y="482" class="small" fill="#E7E2D8">clangd</text>
+<rect x="2122" y="458" width="166" height="36" rx="18" fill="#0D1014" stroke="#D45F5F"/>
+<text x="2139" y="482" class="small" fill="#E7E2D8">Build failed</text>
+<rect x="1836" y="520" width="84" height="38" rx="11" fill="#0D1014" stroke="#2A2F37"/>
+<text x="1848" y="545" class="small" fill="#A9A39A">Contexto</text>
+<rect x="1928" y="520" width="82" height="38" rx="11" fill="#201A10" stroke="#FFB000"/>
+<text x="1940" y="545" class="small" fill="#E7E2D8">Explicar</text>
+<rect x="2018" y="520" width="80" height="38" rx="11" fill="#0D1014" stroke="#2A2F37"/>
+<text x="2030" y="545" class="small" fill="#A9A39A">Corrigir</text>
+<rect x="2106" y="520" width="92" height="38" rx="11" fill="#0D1014" stroke="#2A2F37"/>
+<text x="2118" y="545" class="small" fill="#A9A39A">Toolchain</text>
+<rect x="2206" y="520" width="80" height="38" rx="11" fill="#0D1014" stroke="#2A2F37"/>
+<text x="2218" y="545" class="small" fill="#A9A39A">Docs</text>
+<rect x="1836" y="592" width="618" height="122" rx="18" fill="#171B21" stroke="#D45F5F" stroke-width="2"/>
+<text x="1860" y="630" class="label" fill="#D45F5F">ERRO PRINCIPAL</text>
+<text x="1860" y="668" class="body">undefined reference to</text>
+<text x="1860" y="698" class="body">MotorDriver::init()</text>
+<rect x="1836" y="736" width="618" height="122" rx="18" fill="#171B21" stroke="#FFB000" stroke-width="2"/>
+<text x="1860" y="774" class="label" fill="#FFB000">CAUSA PROVÁVEL</text>
+<text x="1860" y="812" class="body">Biblioteca/arquivo com implementação não</text>
+<text x="1860" y="842" class="body">foi linkado.</text>
+<rect x="1836" y="880" width="618" height="122" rx="18" fill="#171B21" stroke="#5C8DFF" stroke-width="2"/>
+<text x="1860" y="918" class="label" fill="#5C8DFF">AÇÃO SUGERIDA</text>
+<text x="1860" y="956" class="body">Verificar target_link_libraries ou</text>
+<text x="1860" y="986" class="body">add_executable.</text>
+<rect x="1836" y="1034" width="618" height="210" rx="18" fill="#0D1014" stroke="#2A2F37"/>
+<text x="1860" y="1074" class="h2">Diff preview</text>
+<text x="1860" y="1116" class="code" fill="#A9A39A">target_link_libraries(motor_firmware PRIVATE</text>
+<text x="1860" y="1152" class="code" fill="#7CCF6A">+    motor_driver</text>
+<text x="1860" y="1188" class="code" fill="#A9A39A">)</text>
+<rect x="1860" y="1184" width="118" height="38" rx="11" fill="#162114" stroke="#7CCF6A"/>
+<text x="1890" y="1209" class="small" fill="#E7E2D8">Apply</text>
+<rect x="1992" y="1184" width="126" height="38" rx="11" fill="#211610" stroke="#FFB000"/>
+<text x="2018" y="1209" class="small" fill="#E7E2D8">Review</text>
+<rect x="1836" y="1802" width="618" height="104" rx="20" fill="#0D1014" stroke="#2A2F37"/>
+<text x="1864" y="1862" class="body">Pergunte sobre o erro, CMake, toolchain ou target...</text>
+<rect x="2338" y="1822" width="90" height="54" rx="16" fill="#FFB000" stroke="#FFC93D"/>
+<text x="2368" y="1857" class="h2" fill="#111">Run</text>
+<rect x="2530" y="300" width="1230" height="1660" rx="28" fill="#111418" stroke="#2A2F37" filter="url(#shadow)"/>
+<text x="2570" y="362" class="h1">Arquitetura do KV Context</text>
+<text x="2570" y="405" class="body">Contexto auditável → sanitização → provider → ações revisáveis</text>
+<rect x="2600" y="470" width="480" height="104" rx="20" fill="#171B21" stroke="#FFB000" stroke-width="2"/>
+<text x="2624" y="510" class="h2">UI Action</text>
+<text x="2624" y="546" class="small">Explain / Fix / Docs</text>
+<line x1="3080" y1="522" x2="3160" y2="522" stroke="#FFB000" stroke-width="4" marker-end="url(#none)"/>
+<rect x="3160" y="470" width="480" height="104" rx="20" fill="#171B21" stroke="#5C8DFF" stroke-width="2"/>
+<text x="3184" y="510" class="h2">Context Collector</text>
+<text x="3184" y="546" class="small">arquivo, build, LSP, docs</text>
+<line x1="3400.0" y1="574" x2="3400.0" y2="660" stroke="#3A414C" stroke-width="3" stroke-dasharray="8 8"/>
+<rect x="2600" y="660" width="480" height="104" rx="20" fill="#171B21" stroke="#D45F5F" stroke-width="2"/>
+<text x="2624" y="700" class="h2">Sanitizer</text>
+<text x="2624" y="736" class="small">remove secrets e escopos proibidos</text>
+<line x1="3080" y1="712" x2="3160" y2="712" stroke="#FFB000" stroke-width="4" marker-end="url(#none)"/>
+<rect x="3160" y="660" width="480" height="104" rx="20" fill="#171B21" stroke="#8A5CFF" stroke-width="2"/>
+<text x="3184" y="700" class="h2">Context Pack</text>
+<text x="3184" y="736" class="small">pacote rastreável</text>
+<line x1="3400.0" y1="764" x2="3400.0" y2="850" stroke="#3A414C" stroke-width="3" stroke-dasharray="8 8"/>
+<rect x="2600" y="850" width="480" height="104" rx="20" fill="#171B21" stroke="#7CCF6A" stroke-width="2"/>
+<text x="2624" y="890" class="h2">AI Provider</text>
+<text x="2624" y="926" class="small">off / local / external</text>
+<line x1="3080" y1="902" x2="3160" y2="902" stroke="#FFB000" stroke-width="4" marker-end="url(#none)"/>
+<rect x="3160" y="850" width="480" height="104" rx="20" fill="#171B21" stroke="#5C8DFF" stroke-width="2"/>
+<text x="3184" y="890" class="h2">Response Parser</text>
+<text x="3184" y="926" class="small">explicação + ações</text>
+<line x1="3400.0" y1="954" x2="3400.0" y2="1040" stroke="#3A414C" stroke-width="3" stroke-dasharray="8 8"/>
+<rect x="2600" y="1040" width="480" height="104" rx="20" fill="#171B21" stroke="#FFB000" stroke-width="2"/>
+<text x="2624" y="1080" class="h2">Action Preview</text>
+<text x="2624" y="1116" class="small">diff, comando, risco</text>
+<line x1="3080" y1="1092" x2="3160" y2="1092" stroke="#FFB000" stroke-width="4" marker-end="url(#none)"/>
+<rect x="3160" y="1040" width="480" height="104" rx="20" fill="#171B21" stroke="#7CCF6A" stroke-width="2"/>
+<text x="3184" y="1080" class="h2">User Confirm</text>
+<text x="3184" y="1116" class="small">aplicar ou rejeitar</text>
+<rect x="2580" y="1280" width="350" height="392" rx="24" fill="#111418" stroke="#2A2F37"/>
+<text x="2604" y="1328" class="h2">Fontes de contexto</text>
+<circle cx="2614" cy="1370" r="6" fill="#FFB000"/>
+<text x="2634" y="1378" class="body">Arquivo aberto</text>
+<circle cx="2614" cy="1422" r="6" fill="#FFB000"/>
+<text x="2634" y="1430" class="body">Logs de build/debug</text>
+<circle cx="2614" cy="1474" r="6" fill="#FFB000"/>
+<text x="2634" y="1482" class="body">CMake/Cargo</text>
+<circle cx="2614" cy="1526" r="6" fill="#FFB000"/>
+<text x="2634" y="1534" class="body">Tree-sitter + LSP</text>
+<circle cx="2614" cy="1578" r="6" fill="#FFB000"/>
+<text x="2634" y="1586" class="body">Docs locais</text>
+<rect x="2970" y="1280" width="350" height="392" rx="24" fill="#111418" stroke="#2A2F37"/>
+<text x="2994" y="1328" class="h2">Proteções</text>
+<circle cx="3004" cy="1370" r="6" fill="#FFB000"/>
+<text x="3024" y="1378" class="body">Secrets removidos</text>
+<circle cx="3004" cy="1422" r="6" fill="#FFB000"/>
+<text x="3024" y="1430" class="body">Opt-in para externo</text>
+<circle cx="3004" cy="1474" r="6" fill="#FFB000"/>
+<text x="3024" y="1482" class="body">Prompt visível</text>
+<circle cx="3004" cy="1526" r="6" fill="#FFB000"/>
+<text x="3024" y="1534" class="body">Diff obrigatório</text>
+<circle cx="3004" cy="1578" r="6" fill="#FFB000"/>
+<text x="3024" y="1586" class="body">Ações com risco</text>
+<rect x="3360" y="1280" width="350" height="392" rx="24" fill="#111418" stroke="#2A2F37"/>
+<text x="3384" y="1328" class="h2">Sem IA ainda funciona</text>
+<circle cx="3394" cy="1370" r="6" fill="#FFB000"/>
+<text x="3414" y="1378" class="body">Diagnósticos locais</text>
+<circle cx="3394" cy="1422" r="6" fill="#FFB000"/>
+<text x="3414" y="1430" class="body">Abrir arquivo/linha</text>
+<circle cx="3394" cy="1474" r="6" fill="#FFB000"/>
+<text x="3414" y="1482" class="body">Docs locais</text>
+<circle cx="3394" cy="1526" r="6" fill="#FFB000"/>
+<text x="3414" y="1534" class="body">Toolchain status</text>
+<circle cx="3394" cy="1578" r="6" fill="#FFB000"/>
+<text x="3414" y="1586" class="body">Sugestões determinísticas</text>
+<rect x="2580" y="1720" width="1130" height="176" rx="24" fill="#0D1014" stroke="#2A2F37"/>
+<text x="2610" y="1775" class="h2">Regra principal</text>
+<text x="2610" y="1822" class="body">A IA nunca deve tomar controle. Ela explica, mostra evidências, propõe diffs e aguarda confirmação.</text>
+<text x="2610" y="1870" class="small">Kinein-like: técnico, calmo, auditável, local-first e útil para C/C++/Rust/CMake/Embedded.</text>
+</svg>

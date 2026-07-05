@@ -1,0 +1,166 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+  <defs>
+    <style><![CDATA[
+      .bg{fill:#07090C}.app{fill:#0B0D10}.surface{fill:#111418}.elev{fill:#171B21}.editor{fill:#0F1216}.line{fill:#1A1F26}
+      .stroke{stroke:#2A2F37;stroke-width:2}.stroke2{stroke:#3A414A;stroke-width:3}.amberStroke{stroke:#B97900;stroke-width:2}
+      .t{font-family:Noto Sans,Inter,Segoe UI,sans-serif;fill:#E7E2D8}.sec{fill:#A9A39A}.muted{fill:#6F737A}.amber{fill:#FFB000}.amber2{fill:#FFC93D}.green{fill:#7CCF6A}.warn{fill:#E6B84A}.blue{fill:#5C8DFF}.purple{fill:#8A5CFF}
+      .h1{font-size:56px;font-weight:700}.h2{font-size:30px;font-weight:700}.h3{font-size:24px;font-weight:700}.body{font-size:22px}.small{font-size:18px}.xs{font-size:15px}.mono{font-family:DejaVu Sans Mono,JetBrains Mono,monospace;font-size:20px}
+    ]]></style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="3840" height="2160"/>
+  <text class="t h1" x="70" y="92">Kinein Vectis — Layout principal da IDE</text>
+  <text class="t body sec" x="70" y="135">Mapa visual técnico: interface real separada de layout de divulgação/marketing.</text>
+
+  <!-- Main window -->
+  <rect class="app stroke2" x="120" y="210" width="2700" height="1560" rx="22"/>
+  <rect class="surface stroke" x="120" y="210" width="2700" height="74"/>
+  <text class="t h2 amber" x="152" y="258">KV</text>
+  <line x1="204" y1="228" x2="204" y2="266" stroke="#3A414A" stroke-width="2"/>
+  <text class="t h3" x="230" y="258">Kinein</text>
+  <text class="t small sec" x="430" y="257">File   Edit   View   Navigate   Code   Build   Run   Tools   Help</text>
+  <text class="t body sec" x="2680" y="257">—  □  ×</text>
+
+  <rect class="surface stroke" x="120" y="284" width="2700" height="78"/>
+  <rect class="elev stroke2" x="150" y="300" width="380" height="46" rx="10"/><text class="t small" x="172" y="330">Target: stm32f767zi ▼</text>
+  <rect class="elev stroke2" x="550" y="300" width="320" height="46" rx="10"/><text class="t small" x="572" y="330">CMake: Debug ▼</text>
+  <text class="t body amber" x="915" y="331">△ Configure</text>
+  <text class="t body amber" x="1085" y="331">›_ Build</text>
+  <text class="t body amber" x="1225" y="331">▷ Run</text>
+  <text class="t body amber" x="1350" y="331">◇ Debug</text>
+  <text class="t body amber" x="1505" y="331">↯ Flash</text>
+  <text class="t body amber" x="1650" y="331">◎ Simulate</text>
+  <text class="t body sec" x="2490" y="331">⌕   ⚙   ⋯</text>
+
+  <!-- rail -->
+  <rect class="app stroke" x="120" y="362" width="66" height="1260"/>
+  <g class="t xs sec" text-anchor="middle">
+    <text x="153" y="422" class="amber">▣</text><text x="153" y="450">Project</text>
+    <text x="153" y="514">⌕</text><text x="153" y="542">Search</text>
+    <text x="153" y="606">⑂</text><text x="153" y="634">Git</text>
+    <text x="153" y="698">▷</text><text x="153" y="726">Build</text>
+    <text x="153" y="790">◇</text><text x="153" y="818">Debug</text>
+    <text x="153" y="882">◉</text><text x="153" y="910">Targets</text>
+    <text x="153" y="974">◎</text><text x="153" y="1002">Simulate</text>
+    <text x="153" y="1066">✣</text><text x="153" y="1094">Tools</text>
+  </g>
+
+  <!-- Left -->
+  <rect class="surface stroke" x="186" y="362" width="520" height="930"/>
+  <text class="t h3" x="216" y="410">Project</text>
+  <text class="t small sec" x="585" y="410">⟳  ⚙  ⋯</text>
+  <text class="t small" x="216" y="470">▾ motor-control-firmware</text>
+  <text class="t small sec" x="244" y="506">▸ .kinein</text>
+  <text class="t small sec" x="244" y="542">▸ cmake</text>
+  <text class="t small sec" x="244" y="578">▸ docs</text>
+  <text class="t small sec" x="244" y="614">▾ include</text>
+  <text class="t small sec" x="244" y="650">▾ src</text>
+  <text class="t small sec" x="272" y="686">▾ drivers</text>
+  <text class="t small sec" x="300" y="722">▾ motor</text>
+  <rect x="312" y="742" width="362" height="34" rx="8" fill="#221C0D"/><text class="t small amber" x="328" y="765">C++ motor_control.cpp</text>
+  <text class="t small sec" x="244" y="822">△ CMakeLists.txt</text>
+  <text class="t small sec" x="244" y="858">{} KineinPresets.json</text>
+  <rect class="surface stroke" x="186" y="1292" width="520" height="330"/>
+  <text class="t h3" x="216" y="1345">Structure</text>
+  <text class="t small sec" x="216" y="1392">MotorControl</text>
+  <text class="t small sec" x="240" y="1430">+ init() : bool</text>
+  <text class="t small sec" x="240" y="1468">+ update(float dt) : void</text>
+  <text class="t small sec" x="240" y="1506">+ setTarget(float target)</text>
+
+  <!-- Editor -->
+  <rect class="editor stroke" x="706" y="362" width="1094" height="930"/>
+  <rect class="surface stroke" x="706" y="362" width="1094" height="52"/>
+  <text class="t small sec" x="735" y="396">main.cpp</text>
+  <rect x="880" y="370" width="250" height="44" rx="10" fill="#191E25" stroke="#2A2F37"/><line x1="895" y1="372" x2="1115" y2="372" stroke="#FFB000" stroke-width="4"/>
+  <text class="t small amber" x="905" y="396">motor_control.cpp</text>
+  <text class="t small sec" x="1160" y="396">CMakeLists.txt    +</text>
+  <rect class="app stroke" x="706" y="414" width="1094" height="40"/>
+  <text class="t small sec" x="735" y="440">src › drivers › motor › motor_control.cpp › MotorControl › update</text>
+  <rect class="app stroke" x="706" y="454" width="76" height="838"/>
+  <g class="t mono sec">
+    <text x="800" y="505">#include "motor_control.hpp"</text>
+    <text x="800" y="545">#include "motor_driver.hpp"</text>
+    <text x="800" y="625">MotorControl::MotorControl(MotorDriver* driver)</text>
+    <text x="800" y="665">    : driver(driver), pid(0.8f, 0.02f, 0.01f), state(State::IDLE) {}</text>
+    <text x="800" y="745">bool MotorControl::init() {</text>
+    <text x="800" y="785">    if (!driver-&gt;init()) {</text>
+    <text x="800" y="825">        state = State::FAULT;</text>
+    <text x="800" y="865">        return false;</text>
+    <text x="800" y="945">void MotorControl::update(float dt) {</text>
+    <rect x="782" y="967" width="910" height="34" fill="#1A1F26"/><text x="800" y="990">    if (state != State::RUNNING) return;</text>
+    <text x="800" y="1030">    float current = driver-&gt;getCurrent();</text>
+    <text x="800" y="1070">    float output = pid.compute(target, current, dt);</text>
+    <text x="800" y="1110">    driver-&gt;setDuty(output);</text>
+  </g>
+
+  <!-- Right -->
+  <rect class="surface stroke" x="1800" y="362" width="510" height="930"/>
+  <text class="t h3" x="1830" y="410">KV Context</text>
+  <text class="t small amber" x="1830" y="470">Context</text><text class="t small sec" x="1935" y="470">Explain</text><text class="t small sec" x="2035" y="470">Fix</text><text class="t small sec" x="2100" y="470">Toolchain</text><text class="t small sec" x="2225" y="470">Docs</text>
+  <line x1="1830" y1="486" x2="1900" y2="486" stroke="#FFB000" stroke-width="4"/>
+  <rect class="elev stroke" x="1830" y="525" width="450" height="130" rx="14"/><text class="t small" x="1860" y="565">motor_control.cpp</text><text class="t xs sec" x="1860" y="600">Resumo, símbolos e intenção do arquivo atual.</text>
+  <rect class="elev stroke" x="1830" y="685" width="450" height="150" rx="14"/><text class="t small" x="1860" y="725">Principais símbolos</text><text class="t xs sec" x="1860" y="760">update(dt), PID::compute, setDuty...</text>
+  <rect x="1830" y="865" width="450" height="145" rx="14" fill="#211B0B" stroke="#B97900"/><text class="t small" x="1860" y="905">Sugestão: validar dt</text><text class="t xs sec" x="1860" y="940">Evite valores não positivos antes do PID.</text><text class="t xs amber" x="2130" y="980">Aplicar sugestão</text>
+  <rect class="elev stroke" x="1830" y="1215" width="450" height="54" rx="12"/><text class="t small muted" x="1860" y="1250">Pergunte ao KV...</text>
+
+  <!-- Bottom -->
+  <rect class="surface stroke" x="120" y="1292" width="2700" height="330"/>
+  <text class="t small amber" x="150" y="1345">Terminal</text><text class="t small sec" x="280" y="1345">Problems 2</text><text class="t small sec" x="430" y="1345">Build</text><text class="t small sec" x="535" y="1345">CMake</text><text class="t small sec" x="650" y="1345">Debug</text><text class="t small sec" x="770" y="1345">Serial Monitor</text><text class="t small sec" x="965" y="1345">Simulation</text><text class="t small sec" x="1135" y="1345">Git</text>
+  <line x1="150" y1="1362" x2="240" y2="1362" stroke="#FFB000" stroke-width="4"/>
+  <g class="t mono sec">
+    <text x="160" y="1418">kinein@devbox motor-control-firmware % cmake --build build -j8</text>
+    <text x="160" y="1458" class="green">[ 25%] Building CXX object src/drivers/motor/motor_control.cpp.o</text>
+    <text x="160" y="1498" class="green">[ 87%] Linking CXX executable motor-control.elf</text>
+    <text x="160" y="1538" class="green">[100%] Build finished successfully (2.31s)</text>
+  </g>
+  <rect class="app stroke" x="2100" y="1370" width="680" height="220"/><text class="t h3" x="2130" y="1420">Build</text><text class="t small sec" x="2130" y="1470">✓ Configure</text><text class="t small sec" x="2130" y="1510">✓ Generate</text><text class="t small" x="2130" y="1550">✓ motor-control.elf</text>
+
+  <!-- Status -->
+  <rect class="app stroke" x="120" y="1622" width="2700" height="48"/>
+  <text class="t xs amber" x="150" y="1653">KV</text><text class="t xs sec" x="205" y="1653">main*</text><text class="t xs green" x="300" y="1653">0 errors</text><text class="t xs warn" x="410" y="1653">2 warnings</text><text class="t xs sec" x="560" y="1653">CMake: Debug</text><text class="t xs sec" x="720" y="1653">clang++ 17</text><text class="t xs sec" x="860" y="1653">x86_64-linux-gnu</text><text class="t xs sec" x="2430" y="1653">Ln 18, Col 41   UTF-8   C++</text>
+
+  <!-- Labels -->
+  <g class="t xs">
+    <rect x="140" y="158" width="170" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="158" y="183" class="amber">01</text><text x="205" y="183">App bar</text>
+    <rect x="870" y="368" width="170" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="888" y="393" class="amber">02</text><text x="935" y="393">Toolbar</text>
+    <rect x="100" y="386" width="170" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="118" y="411" class="amber">03</text><text x="165" y="411">Rail</text>
+    <rect x="206" y="300" width="210" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="224" y="325" class="amber">04</text><text x="271" y="325">Left window</text>
+    <rect x="740" y="300" width="180" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="758" y="325" class="amber">05</text><text x="805" y="325">Editor</text>
+    <rect x="1840" y="300" width="210" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="1858" y="325" class="amber">06</text><text x="1905" y="325">KV Context</text>
+    <rect x="160" y="1235" width="210" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="178" y="1260" class="amber">07</text><text x="225" y="1260">Bottom tools</text>
+    <rect x="2400" y="1565" width="190" height="38" rx="12" fill="#141006" stroke="#B97900"/><text x="2418" y="1590" class="amber">08</text><text x="2465" y="1590">Status bar</text>
+  </g>
+
+  <!-- Right notes -->
+  <rect class="surface stroke" x="2880" y="210" width="840" height="500" rx="22"/>
+  <text class="t h2 amber" x="2912" y="260">Layout real da IDE</text>
+  <text class="t body" x="2912" y="320">• Sem callouts promocionais dentro do app.</text>
+  <text class="t body" x="2912" y="370">• Editor é a área dominante.</text>
+  <text class="t body" x="2912" y="420">• Target, CMake, Build e Debug visíveis.</text>
+  <text class="t body" x="2912" y="470">• Painéis previsíveis: esquerda, direita, inferior.</text>
+  <text class="t body" x="2912" y="520">• KV Context ajuda sem interromper.</text>
+  <text class="t body" x="2912" y="570">• Âmbar como sinal de ação/estado.</text>
+
+  <rect class="surface stroke" x="2880" y="760" width="840" height="490" rx="22"/>
+  <text class="t h2 amber" x="2912" y="810">Marketing fica separado</text>
+  <text class="t body sec" x="2912" y="870">Permitido em README/site, não dentro da UI real:</text>
+  <text class="t body" x="2912" y="930">• slogans e cards de destaque</text>
+  <text class="t body" x="2912" y="980">• setas/callouts explicativos</text>
+  <text class="t body" x="2912" y="1030">• app icon grande</text>
+  <text class="t body" x="2912" y="1080">• mockup com textos laterais</text>
+  <text class="t small warn" x="2912" y="1160">Marketing explica o produto; a IDE executa o trabalho.</text>
+
+  <rect class="surface stroke" x="2880" y="1300" width="840" height="470" rx="22"/>
+  <text class="t h2 amber" x="2912" y="1350">Layouts operacionais</text>
+  <text class="t body" x="2912" y="1410">Default Coding — Project + Editor + KV Context</text>
+  <text class="t body" x="2912" y="1465">Focus Editor — painéis colapsados</text>
+  <text class="t body" x="2912" y="1520">Build &amp; CMake — configuração em destaque</text>
+  <text class="t body" x="2912" y="1575">Debug Active — stack, variables, linha atual</text>
+  <text class="t body" x="2912" y="1630">Embedded Target — flash, serial, debug remoto</text>
+  <text class="t body" x="2912" y="1685">Simulation Workbench — futuro, separado</text>
+
+  <rect x="2880" y="1820" width="840" height="250" rx="22" fill="#151007" stroke="#B97900" stroke-width="2"/>
+  <text class="t h2 amber" x="2912" y="1870">Para IA CLI</text>
+  <text class="t body" x="2912" y="1930">• .md é fonte de verdade.</text>
+  <text class="t body" x="2912" y="1980">• Imagem é mapa visual.</text>
+  <text class="t body" x="2912" y="2030">• Implementar por componentes/regiões.</text>
+</svg>

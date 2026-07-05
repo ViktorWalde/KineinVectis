@@ -1,0 +1,347 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#080B0F"/>
+    <stop offset="0.55" stop-color="#0B0D10"/>
+    <stop offset="1" stop-color="#121016"/>
+  </linearGradient>
+  <linearGradient id="amber" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#B97900"/>
+    <stop offset="0.5" stop-color="#FFB000"/>
+    <stop offset="1" stop-color="#FFC93D"/>
+  </linearGradient>
+  <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="10" result="blur"/>
+    <feColorMatrix in="blur" type="matrix" values="1 0 0 0 1  0 0.65 0 0 0.55  0 0 0 0 0.0  0 0 0 0.6 0" result="glow"/>
+    <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <style>
+    .font { font-family: Inter, 'JetBrains Mono', 'DejaVu Sans', Arial, sans-serif; }
+    .mono { font-family: 'JetBrains Mono', 'DejaVu Sans Mono', monospace; }
+    .title { font-size: 76px; font-weight: 780; fill: #F0EDE6; }
+    .subtitle { font-size: 30px; fill: #A9A39A; }
+    .section { font-size: 30px; font-weight: 760; fill: #F0EDE6; }
+    .small { font-size: 23px; fill: #A9A39A; }
+    .tiny { font-size: 19px; fill: #8B8F98; }
+    .label { font-size: 24px; font-weight: 700; fill: #F0EDE6; }
+    .accent { fill: #FFB000; }
+    .muted { fill: #6F737A; }
+    .panel { fill: #111418; stroke: #2A2F37; stroke-width: 2; }
+    .panel2 { fill: #171B21; stroke: #2A2F37; stroke-width: 2; }
+    .line { stroke: #3A404A; stroke-width: 2; }
+    .amberLine { stroke: #FFB000; stroke-width: 4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .ok { fill: #7CCF6A; }
+    .warn { fill: #FFB000; }
+    .err { fill: #D45F5F; }
+    .blue { fill: #5C8DFF; }
+  </style>
+</defs>
+<rect width="3840" height="2160" fill="url(#bg)"/>
+<g opacity="0.22">
+
+<line x1="0" y1="0" x2="0" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="160" y1="0" x2="160" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="320" y1="0" x2="320" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="480" y1="0" x2="480" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="640" y1="0" x2="640" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="800" y1="0" x2="800" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="960" y1="0" x2="960" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="1120" y1="0" x2="1120" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="1280" y1="0" x2="1280" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="1440" y1="0" x2="1440" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="1600" y1="0" x2="1600" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="1760" y1="0" x2="1760" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="1920" y1="0" x2="1920" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="2080" y1="0" x2="2080" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="2240" y1="0" x2="2240" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="2400" y1="0" x2="2400" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="2560" y1="0" x2="2560" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="2720" y1="0" x2="2720" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="2880" y1="0" x2="2880" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="3040" y1="0" x2="3040" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="3200" y1="0" x2="3200" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="3360" y1="0" x2="3360" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="3520" y1="0" x2="3520" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="3680" y1="0" x2="3680" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="3840" y1="0" x2="3840" y2="2160" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="0" x2="3840" y2="0" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="160" x2="3840" y2="160" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="320" x2="3840" y2="320" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="480" x2="3840" y2="480" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="640" x2="3840" y2="640" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="800" x2="3840" y2="800" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="960" x2="3840" y2="960" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="1120" x2="3840" y2="1120" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="1280" x2="3840" y2="1280" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="1440" x2="3840" y2="1440" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="1600" x2="3840" y2="1600" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="1760" x2="3840" y2="1760" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="1920" x2="3840" y2="1920" stroke="#26303A" stroke-width="1"/>
+<line x1="0" y1="2080" x2="3840" y2="2080" stroke="#26303A" stroke-width="1"/>
+</g>
+
+<g transform="translate(100,82)">
+  <rect x="0" y="0" width="150" height="150" rx="34" fill="#0B0D10" stroke="#4A3420" stroke-width="3"/>
+  <path d="M34 32 L58 32 L58 118 L34 118 Z" fill="#E7E2D8"/>
+  <path d="M66 75 L112 32 L138 32 L91 75 L138 118 L112 118 Z" fill="#FFB000"/>
+  <path d="M58 75 L96 118 L72 118 L46 88 Z" fill="#E7E2D8" opacity="0.95"/>
+</g>
+
+
+<text x="290" y="115" class="font title">Kinein Vectis</text>
+<text x="294" y="160" class="font subtitle">Parte 4 — Fluxos de Produto: Toolchain, CMake, Build, Run e Debug</text>
+<text x="294" y="205" class="mono small" fill="#FFB000">Focus on code, not toolchains.</text>
+
+
+<rect x="2620" y="70" width="1100" height="160" rx="22" class="panel"/>
+<text x="2670" y="115" class="font label">Fonte de verdade para a IA CLI</text>
+<text x="2670" y="153" class="font small">UI Qt/QML solicita ações. Rust Core executa, valida, parseia e emite eventos.</text>
+<text x="2670" y="193" class="mono tiny">workspace → toolchain → configure → build → run/debug → diagnostics</text>
+
+<rect x="135" y="300" width="500" height="140" rx="24" class="panel2"/>
+<text x="165" y="354" class="font label">Abrir Workspace</text>
+<text x="165" y="393" class="mono small" fill="#A9A39A">scan + kind detect</text>
+<circle cx="587" cy="348" r="18" fill="#FFB000" opacity="0.9"/>
+<text x="578" y="358" class="mono tiny" fill="#080B0F">1</text>
+<path d="M655 370 L710 370" class="amberLine" opacity="0.85"/>
+<path d="M691 352 L715 370 L691 388" class="amberLine" opacity="0.85"/>
+<rect x="745" y="300" width="500" height="140" rx="24" class="panel2"/>
+<text x="775" y="354" class="font label">Detectar Tools</text>
+<text x="775" y="393" class="mono small" fill="#A9A39A">cmake, clang, gcc, cargo</text>
+<circle cx="1197" cy="348" r="18" fill="#FFB000" opacity="0.9"/>
+<text x="1188" y="358" class="mono tiny" fill="#080B0F">2</text>
+<path d="M1265 370 L1320 370" class="amberLine" opacity="0.85"/>
+<path d="M1301 352 L1325 370 L1301 388" class="amberLine" opacity="0.85"/>
+<rect x="1355" y="300" width="500" height="140" rx="24" class="panel2"/>
+<text x="1385" y="354" class="font label">Validar Toolchain</text>
+<text x="1385" y="393" class="mono small" fill="#A9A39A">compiler + debugger</text>
+<circle cx="1807" cy="348" r="18" fill="#FFB000" opacity="0.9"/>
+<text x="1798" y="358" class="mono tiny" fill="#080B0F">3</text>
+<path d="M1875 370 L1930 370" class="amberLine" opacity="0.85"/>
+<path d="M1911 352 L1935 370 L1911 388" class="amberLine" opacity="0.85"/>
+<rect x="1965" y="300" width="500" height="140" rx="24" class="panel2"/>
+<text x="1995" y="354" class="font label">Configurar</text>
+<text x="1995" y="393" class="mono small" fill="#A9A39A">CMake/Cargo profile</text>
+<circle cx="2417" cy="348" r="18" fill="#FFB000" opacity="0.9"/>
+<text x="2408" y="358" class="mono tiny" fill="#080B0F">4</text>
+<path d="M2485 370 L2540 370" class="amberLine" opacity="0.85"/>
+<path d="M2521 352 L2545 370 L2521 388" class="amberLine" opacity="0.85"/>
+<rect x="2575" y="300" width="500" height="140" rx="24" class="panel2"/>
+<text x="2605" y="354" class="font label">Build</text>
+<text x="2605" y="393" class="mono small" fill="#A9A39A">jobs + problems</text>
+<circle cx="3027" cy="348" r="18" fill="#FFB000" opacity="0.9"/>
+<text x="3018" y="358" class="mono tiny" fill="#080B0F">5</text>
+<path d="M3095 370 L3150 370" class="amberLine" opacity="0.85"/>
+<path d="M3131 352 L3155 370 L3131 388" class="amberLine" opacity="0.85"/>
+<rect x="3185" y="300" width="500" height="140" rx="24" class="panel2"/>
+<text x="3215" y="354" class="font label">Run / Debug</text>
+<text x="3215" y="393" class="mono small" fill="#A9A39A">process/session</text>
+<circle cx="3637" cy="348" r="18" fill="#FFB000" opacity="0.9"/>
+<text x="3628" y="358" class="mono tiny" fill="#080B0F">6</text>
+<rect x="100" y="510" width="685" height="600" rx="28" class="panel"/>
+<rect x="100" y="510" width="685" height="8" rx="4" fill="#5C8DFF"/>
+<text x="135" y="568" class="font section">1. Toolchain</text>
+<circle cx="148" cy="617" r="7" fill="#5C8DFF"/>
+<text x="170" y="625" class="font small">Detecta ferramentas</text>
+<circle cx="148" cy="675" r="7" fill="#5C8DFF"/>
+<text x="170" y="683" class="font small">Valida compilador</text>
+<circle cx="148" cy="733" r="7" fill="#5C8DFF"/>
+<text x="170" y="741" class="font small">Valida debugger</text>
+<circle cx="148" cy="791" r="7" fill="#5C8DFF"/>
+<text x="170" y="799" class="font small">Testa build mínimo</text>
+<circle cx="148" cy="849" r="7" fill="#5C8DFF"/>
+<text x="170" y="857" class="font small">Mostra ações corretivas</text>
+<text x="135" y="960" class="mono tiny" fill="#FFB000">states</text>
+<rect x="135" y="995" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="155" y="1021" class="mono tiny">Missing</text>
+<rect x="135" y="1041" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="155" y="1067" class="mono tiny">Found</text>
+<rect x="135" y="1087" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="155" y="1113" class="mono tiny">Valid</text>
+<rect x="135" y="1133" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="155" y="1159" class="mono tiny">Needs attention</text>
+<rect x="835" y="510" width="685" height="600" rx="28" class="panel"/>
+<rect x="835" y="510" width="685" height="8" rx="4" fill="#FFB000"/>
+<text x="870" y="568" class="font section">2. CMake / Cargo</text>
+<circle cx="883" cy="617" r="7" fill="#FFB000"/>
+<text x="905" y="625" class="font small">Lê presets</text>
+<circle cx="883" cy="675" r="7" fill="#FFB000"/>
+<text x="905" y="683" class="font small">Cria profile local</text>
+<circle cx="883" cy="733" r="7" fill="#FFB000"/>
+<text x="905" y="741" class="font small">Mostra comando real</text>
+<circle cx="883" cy="791" r="7" fill="#FFB000"/>
+<text x="905" y="799" class="font small">Gera compile_commands</text>
+<circle cx="883" cy="849" r="7" fill="#FFB000"/>
+<text x="905" y="857" class="font small">Parseia configure</text>
+<text x="870" y="960" class="mono tiny" fill="#FFB000">states</text>
+<rect x="870" y="995" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="890" y="1021" class="mono tiny">Needs configure</text>
+<rect x="870" y="1041" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="890" y="1067" class="mono tiny">Configuring</text>
+<rect x="870" y="1087" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="890" y="1113" class="mono tiny">Configured</text>
+<rect x="870" y="1133" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="890" y="1159" class="mono tiny">Failed</text>
+<rect x="1570" y="510" width="685" height="600" rx="28" class="panel"/>
+<rect x="1570" y="510" width="685" height="8" rx="4" fill="#7CCF6A"/>
+<text x="1605" y="568" class="font section">3. Build</text>
+<circle cx="1618" cy="617" r="7" fill="#7CCF6A"/>
+<text x="1640" y="625" class="font small">Job assíncrono</text>
+<circle cx="1618" cy="675" r="7" fill="#7CCF6A"/>
+<text x="1640" y="683" class="font small">Output em tempo real</text>
+<circle cx="1618" cy="733" r="7" fill="#7CCF6A"/>
+<text x="1640" y="741" class="font small">Problem matcher</text>
+<circle cx="1618" cy="791" r="7" fill="#7CCF6A"/>
+<text x="1640" y="799" class="font small">Artifacts</text>
+<circle cx="1618" cy="849" r="7" fill="#7CCF6A"/>
+<text x="1640" y="857" class="font small">Histórico</text>
+<text x="1605" y="960" class="mono tiny" fill="#FFB000">states</text>
+<rect x="1605" y="995" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1625" y="1021" class="mono tiny">Queued</text>
+<rect x="1605" y="1041" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1625" y="1067" class="mono tiny">Running</text>
+<rect x="1605" y="1087" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1625" y="1113" class="mono tiny">Succeeded</text>
+<rect x="1605" y="1133" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1625" y="1159" class="mono tiny">Failed</text>
+<rect x="2305" y="510" width="685" height="600" rx="28" class="panel"/>
+<rect x="2305" y="510" width="685" height="8" rx="4" fill="#FFB000"/>
+<text x="2340" y="568" class="font section">4. Run</text>
+<circle cx="2353" cy="617" r="7" fill="#FFB000"/>
+<text x="2375" y="625" class="font small">Run Configuration</text>
+<circle cx="2353" cy="675" r="7" fill="#FFB000"/>
+<text x="2375" y="683" class="font small">beforeRun opcional</text>
+<circle cx="2353" cy="733" r="7" fill="#FFB000"/>
+<text x="2375" y="741" class="font small">stdout/stderr</text>
+<circle cx="2353" cy="791" r="7" fill="#FFB000"/>
+<text x="2375" y="799" class="font small">exit code</text>
+<circle cx="2353" cy="849" r="7" fill="#FFB000"/>
+<text x="2375" y="857" class="font small">stop/restart</text>
+<text x="2340" y="960" class="mono tiny" fill="#FFB000">states</text>
+<rect x="2340" y="995" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="2360" y="1021" class="mono tiny">Preparing</text>
+<rect x="2340" y="1041" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="2360" y="1067" class="mono tiny">Running</text>
+<rect x="2340" y="1087" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="2360" y="1113" class="mono tiny">Exited</text>
+<rect x="2340" y="1133" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="2360" y="1159" class="mono tiny">Killed</text>
+<rect x="3040" y="510" width="685" height="600" rx="28" class="panel"/>
+<rect x="3040" y="510" width="685" height="8" rx="4" fill="#8A5CFF"/>
+<text x="3075" y="568" class="font section">5. Debug</text>
+<circle cx="3088" cy="617" r="7" fill="#8A5CFF"/>
+<text x="3110" y="625" class="font small">Debug Configuration</text>
+<circle cx="3088" cy="675" r="7" fill="#8A5CFF"/>
+<text x="3110" y="683" class="font small">breakpoints</text>
+<circle cx="3088" cy="733" r="7" fill="#8A5CFF"/>
+<text x="3110" y="741" class="font small">stack/variables</text>
+<circle cx="3088" cy="791" r="7" fill="#8A5CFF"/>
+<text x="3110" y="799" class="font small">step/continue</text>
+<circle cx="3088" cy="849" r="7" fill="#8A5CFF"/>
+<text x="3110" y="857" class="font small">GDB/LLDB adapter</text>
+<text x="3075" y="960" class="mono tiny" fill="#FFB000">states</text>
+<rect x="3075" y="995" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="3095" y="1021" class="mono tiny">Launching</text>
+<rect x="3075" y="1041" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="3095" y="1067" class="mono tiny">Running</text>
+<rect x="3075" y="1087" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="3095" y="1113" class="mono tiny">Paused</text>
+<rect x="3075" y="1133" width="615" height="38" rx="12" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="3095" y="1159" class="mono tiny">Stopped</text>
+
+<rect x="100" y="1165" width="1750" height="420" rx="28" class="panel"/>
+<text x="140" y="1225" class="font section">UI operacional — JetBrains-like, Kinein-like</text>
+<rect x="140" y="1265" width="1670" height="270" rx="18" fill="#0B0D10" stroke="#2A2F37"/>
+<rect x="165" y="1290" width="1620" height="48" rx="10" fill="#171B21"/>
+<text x="190" y="1322" class="mono tiny">KV | Kinein   File  Edit  View  Build  Run  Debug  Tools</text>
+<rect x="1150" y="1300" width="210" height="28" rx="8" fill="#111418" stroke="#3A404A"/>
+<text x="1170" y="1321" class="mono tiny">Target: motor.elf</text>
+<rect x="1378" y="1300" width="170" height="28" rx="8" fill="#111418" stroke="#3A404A"/>
+<text x="1398" y="1321" class="mono tiny">CMake: Debug</text>
+<text x="1575" y="1322" class="mono tiny" fill="#FFB000">Configure  Build  Run  Debug</text>
+<rect x="165" y="1350" width="70" height="160" rx="10" fill="#111418" stroke="#2A2F37"/>
+<text x="185" y="1382" class="mono tiny">Proj</text><text x="185" y="1422" class="mono tiny">Build</text><text x="185" y="1462" class="mono tiny">Dbg</text>
+<rect x="250" y="1350" width="310" height="160" rx="10" fill="#111418" stroke="#2A2F37"/>
+<text x="275" y="1384" class="mono tiny">Project / Toolchains</text>
+<text x="275" y="1424" class="mono tiny">CMake Profiles</text>
+<text x="275" y="1464" class="mono tiny">Run Configurations</text>
+<rect x="575" y="1350" width="730" height="160" rx="10" fill="#0F1216" stroke="#2A2F37"/>
+<text x="600" y="1384" class="mono tiny" fill="#A9A39A">editor central: código C/C++/Rust</text>
+<text x="600" y="1424" class="mono tiny" fill="#FFB000">diagnostics inline + gutter + breakpoints</text>
+<rect x="1320" y="1350" width="465" height="160" rx="10" fill="#111418" stroke="#2A2F37"/>
+<text x="1345" y="1384" class="mono tiny">KV Context</text>
+<text x="1345" y="1424" class="mono tiny">erro principal + ação segura</text>
+<rect x="250" y="1525" width="1535" height="40" rx="10" fill="#171B21" stroke="#2A2F37"/>
+<text x="275" y="1551" class="mono tiny">Terminal | Problems | Build | CMake | Debug | Run | Git</text>
+
+
+<rect x="1910" y="1165" width="1830" height="420" rx="28" class="panel"/>
+<text x="1950" y="1225" class="font section">Contratos do Rust Core</text>
+
+<rect x="1950" y="1275" width="1735" height="52" rx="14" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1980" y="1309" class="font small" fill="#F0EDE6">Process Runner</text>
+<text x="2260" y="1309" class="font small">executa ferramentas, captura stdout/stderr, cancela jobs</text>
+<rect x="1950" y="1341" width="1735" height="52" rx="14" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1980" y="1375" class="font small" fill="#F0EDE6">Job System</text>
+<text x="2260" y="1375" class="font small">estado assíncrono para configure, build, run e debug</text>
+<rect x="1950" y="1407" width="1735" height="52" rx="14" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1980" y="1441" class="font small" fill="#F0EDE6">Problem Parser</text>
+<text x="2260" y="1441" class="font small">converte GCC/Clang/Rust/CMake em diagnostics</text>
+<rect x="1950" y="1473" width="1735" height="52" rx="14" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1980" y="1507" class="font small" fill="#F0EDE6">State Store</text>
+<text x="2260" y="1507" class="font small">workspace, profiles, run/debug configs, breakpoints</text>
+<rect x="1950" y="1539" width="1735" height="52" rx="14" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1980" y="1573" class="font small" fill="#F0EDE6">Event Stream</text>
+<text x="2260" y="1573" class="font small">envia progresso em tempo real para a UI</text>
+
+<rect x="100" y="1645" width="1760" height="410" rx="28" class="panel"/>
+<text x="140" y="1705" class="font section">JSON-RPC inicial</text>
+
+<rect x="140" y="1750" width="320" height="235" rx="18" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="164" y="1788" class="mono small" fill="#FFB000">workspace</text>
+<text x="170" y="1832" class="mono tiny">• open</text>
+<text x="170" y="1870" class="mono tiny">• scan</text>
+<text x="170" y="1908" class="mono tiny">• status</text>
+<rect x="482" y="1750" width="320" height="235" rx="18" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="506" y="1788" class="mono small" fill="#FFB000">tools</text>
+<text x="512" y="1832" class="mono tiny">• detect</text>
+<text x="512" y="1870" class="mono tiny">• status</text>
+<text x="512" y="1908" class="mono tiny">• validate</text>
+<rect x="824" y="1750" width="320" height="235" rx="18" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="848" y="1788" class="mono small" fill="#FFB000">toolchain</text>
+<text x="854" y="1832" class="mono tiny">• list</text>
+<text x="854" y="1870" class="mono tiny">• create</text>
+<text x="854" y="1908" class="mono tiny">• validate</text>
+<text x="854" y="1946" class="mono tiny">• setActive</text>
+<rect x="1166" y="1750" width="320" height="235" rx="18" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1190" y="1788" class="mono small" fill="#FFB000">cmake/cargo</text>
+<text x="1196" y="1832" class="mono tiny">• presets.list</text>
+<text x="1196" y="1870" class="mono tiny">• configure</text>
+<text x="1196" y="1908" class="mono tiny">• metadata</text>
+<text x="1196" y="1946" class="mono tiny">• targets.list</text>
+<rect x="1508" y="1750" width="320" height="235" rx="18" fill="#0B0D10" stroke="#2A2F37"/>
+<text x="1532" y="1788" class="mono small" fill="#FFB000">build/run/debug</text>
+<text x="1538" y="1832" class="mono tiny">• build.run</text>
+<text x="1538" y="1870" class="mono tiny">• run.start</text>
+<text x="1538" y="1908" class="mono tiny">• debug.start</text>
+<text x="1538" y="1946" class="mono tiny">• job.cancel</text>
+
+<rect x="1910" y="1645" width="1830" height="410" rx="28" class="panel"/>
+<text x="1950" y="1705" class="font section">Critérios de aceite</text>
+
+<circle cx="1975" cy="1747" r="8" fill="#FFB000"/>
+<text x="2005" y="1755" class="font small">Usuário vê toolchain, profile, target e comando real.</text>
+<circle cx="1975" cy="1797" r="8" fill="#FFB000"/>
+<text x="2005" y="1805" class="font small">Configure/Build/Run/Debug são jobs canceláveis e rastreáveis.</text>
+<circle cx="1975" cy="1847" r="8" fill="#FFB000"/>
+<text x="2005" y="1855" class="font small">Erros viram Problems clicáveis com arquivo/linha quando possível.</text>
+<circle cx="1975" cy="1897" r="8" fill="#FFB000"/>
+<text x="2005" y="1905" class="font small">KV Context resume o problema e sugere ações sem alterar código sozinho.</text>
+<circle cx="1975" cy="1947" r="8" fill="#FFB000"/>
+<text x="2005" y="1955" class="font small">UI não trava; core executa ferramentas externas; logs ficam disponíveis.</text>
+<circle cx="1975" cy="1997" r="8" fill="#FFB000"/>
+<text x="2005" y="2005" class="font small">Não implementar simulação, QEMU completo ou flash real nesta etapa.</text>
+
+<text x="100" y="2110" class="mono tiny" fill="#6F737A">Kinein Vectis — Product Flows Spec. Use o Markdown como fonte de verdade e este SVG/PNG como mapa visual para implementação.</text>
+<text x="3070" y="2110" class="mono tiny" fill="#FFB000">Focus on code, not toolchains.</text>
+</svg>
