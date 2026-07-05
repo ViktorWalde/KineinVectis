@@ -137,10 +137,7 @@ fn lsp_navigation_reports_unavailable_without_lsp_manager() {
     ));
     let error = outcome.response().error.as_ref().unwrap();
 
-    assert_eq!(
-        error.code,
-        kinein_protocol::JsonRpcErrorCode::InternalError
-    );
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InternalError);
     assert_eq!(error.message, "LSP nao esta habilitado neste loop do core");
 }
 
@@ -175,8 +172,5 @@ fn lsp_did_change_rejects_paths_outside_workspace() {
     ));
     let error = outcome.response().error.as_ref().unwrap();
 
-    assert_eq!(
-        error.code,
-        kinein_protocol::JsonRpcErrorCode::InvalidParams
-    );
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
 }

@@ -58,10 +58,7 @@ fn workspace_open_without_path_returns_invalid_params() {
     ));
     let error = outcome.response().error.as_ref().unwrap();
 
-    assert_eq!(
-        error.code,
-        kinein_protocol::JsonRpcErrorCode::InvalidParams
-    );
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
 }
 
 #[test]
@@ -99,10 +96,7 @@ fn workspace_browse_without_path_returns_invalid_params() {
     ));
     let error = outcome.response().error.as_ref().unwrap();
 
-    assert_eq!(
-        error.code,
-        kinein_protocol::JsonRpcErrorCode::InvalidParams
-    );
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
 }
 
 #[test]
@@ -174,10 +168,7 @@ fn workspace_open_with_missing_directory_returns_invalid_params() {
     ));
     let error = outcome.response().error.as_ref().unwrap();
 
-    assert_eq!(
-        error.code,
-        kinein_protocol::JsonRpcErrorCode::InvalidParams
-    );
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
     assert_eq!(
         error.details.as_ref().unwrap()["path"],
         "/definitely/not/a/real/path"

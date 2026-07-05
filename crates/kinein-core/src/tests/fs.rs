@@ -82,10 +82,7 @@ fn fs_list_read_write_cycle_inside_workspace() {
         Some(json!({ "path": "/etc/hostname" })),
     ));
     let error = escape.response().error.as_ref().unwrap();
-    assert_eq!(
-        error.code,
-        kinein_protocol::JsonRpcErrorCode::InvalidParams
-    );
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
 }
 
 #[test]

@@ -25,10 +25,7 @@ fn run_start_requires_workspace_and_enabled_manager() {
 
     let unavailable = core.handle_request(&JsonRpcRequest::new(42_i64, "run.start", None));
     let error = unavailable.response().error.as_ref().unwrap();
-    assert_eq!(
-        error.code,
-        kinein_protocol::JsonRpcErrorCode::InternalError
-    );
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InternalError);
 }
 
 #[test]
