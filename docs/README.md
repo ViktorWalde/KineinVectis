@@ -47,6 +47,7 @@ Documentos que descrevem o repositório como ele **é hoje**:
 
 | Doc | Assunto |
 | --- | --- |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
 | [02-repository-structure.md](02-repository-structure.md) | Estrutura real do repositório e crates |
 | [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.19.0) |
 | [06-strict-mode.md](06-strict-mode.md) | Strict mode (Rust e C++/Qt) |

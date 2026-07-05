@@ -47,12 +47,12 @@ Todo código Rust deve seguir o máximo rigor possível:
 
 Antes de criar código:
 
-1. Ler `docs/00-product-vision.md`.
-2. Ler `docs/01-architecture.md`.
-3. Ler `docs/02-repository-structure.md`.
-4. Ler `docs/03-ipc-protocol.md`.
-5. Ler `docs/06-strict-mode.md`.
-6. Verificar se a tarefa pertence ao core, UI, tooling, docs ou protocolo.
+1. Ler `ContextoIA.md` (estado real e decisões vigentes).
+2. Ler `docs/ARCHITECTURE.md` (camadas, convenções de módulo e regra de split — obrigatório).
+3. Ler `docs/02-repository-structure.md` e `docs/03-ipc-protocol.md` (estrutura e contrato IPC atual).
+4. Ler `docs/06-strict-mode.md` (rigor Rust/C++).
+5. Consultar `docs/specs/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).
+6. Verificar se a tarefa pertence ao core, UI, tooling, docs ou protocolo — e ao domínio certo dentro do core.
 
 Ao propor implementação:
 
