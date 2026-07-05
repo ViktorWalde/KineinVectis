@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Este documento registra riscos de engenharia já visíveis no Kernwerk Studio e
+Este documento registra riscos de engenharia já visíveis no Kinein Vectis e
 define uma obrigação explícita: depois que a V1.0 estiver funcional, o projeto
 deve passar por uma fase cirúrgica de polimento, refatoração, organização e
 enxugamento.
@@ -32,12 +32,12 @@ módulos grandes.
 Medição observada em 2026-07-04:
 
 ```text
-crates/kernwerk-core/src/lib.rs       2967 linhas
-crates/kernwerk-core/src/lsp.rs       1726 linhas
-crates/kernwerk-protocol/src/lib.rs   1162 linhas
-crates/kernwerk-core/src/fsops.rs      988 linhas
-crates/kernwerk-core/src/workspace.rs  718 linhas
-crates/kernwerk-cli/src/main.rs        597 linhas
+crates/kinein-core/src/lib.rs       2967 linhas
+crates/kinein-core/src/lsp.rs       1726 linhas
+crates/kinein-protocol/src/lib.rs   1162 linhas
+crates/kinein-core/src/fsops.rs      988 linhas
+crates/kinein-core/src/workspace.rs  718 linhas
+crates/kinein-cli/src/main.rs        597 linhas
 ```
 
 Isso ainda é aceitável para MVP, mas não é uma forma saudável para o projeto
@@ -59,7 +59,7 @@ quality center.
 >   `find`).
 > - `workspace.rs` (718) → pasta `workspace/` (`error`, `detect`, `open`,
 >   `create`).
-> - `cli/main.rs` (597) → lib target `kernwerk_cli` (`commands`, `error`) +
+> - `cli/main.rs` (597) → lib target `kinein_cli` (`commands`, `error`) +
 >   binário fino.
 > - `tests.rs` (955) → pasta `tests/` por domínio.
 
@@ -187,7 +187,7 @@ Essa fase deve:
 Uma direção plausível para o core, sem compromisso imediato:
 
 ```text
-crates/kernwerk-core/src/
+crates/kinein-core/src/
 ├── lib.rs                  # superfície pública mínima
 ├── app/                    # estado e loop principal da aplicação
 ├── rpc/                    # parsing, roteamento e responses JSON-RPC
@@ -219,7 +219,7 @@ Até a V1.0, cada nova feature deve respeitar estas regras:
 - não colocar lógica de negócio na UI;
 - não chamar ferramenta externa pela UI;
 - não aumentar `CoreClient` sem avaliar se o fluxo merece separação;
-- não aumentar `kernwerk-core/src/lib.rs` com lógica que pertence a serviço;
+- não aumentar `kinein-core/src/lib.rs` com lógica que pertence a serviço;
 - não duplicar parsing de saída de ferramenta se já houver helper;
 - não criar novo documento longo sem atualizar o índice e a precedência;
 - não aceitar validação manual ambígua como sinal de qualidade.

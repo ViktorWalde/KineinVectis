@@ -1,10 +1,10 @@
 # AGENTS.md — Instruções para GPT/Claude no terminal
 
-Este arquivo orienta agentes de IA trabalhando no repositório **Kernwerk Studio**.
+Este arquivo orienta agentes de IA trabalhando no repositório **Kinein Vectis**.
 
 ## Identidade do projeto
 
-Kernwerk Studio é uma IDE open source, Linux-first, rígida por padrão, visualmente plug and play e orientada a performance.
+Kinein Vectis é uma IDE open source, Linux-first, rígida por padrão, visualmente plug and play e orientada a performance.
 
 Arquitetura principal:
 
@@ -90,13 +90,13 @@ chore: atualiza configuração de lint
 
 ## Nomes
 
-- Produto: `Kernwerk Studio`
-- Repositório/pasta: `kernwerk-studio`
-- Core daemon/package: `kernwerk-core`
-- Crate importável: `kernwerk_core`
-- CLI futura: `kernwerk-cli`
-- Protocolo: `kernwerk-protocol`
-- Configuração: `kernwerk-config`
+- Produto: `Kinein Vectis`
+- Repositório/pasta: `kinein-vectis`
+- Core daemon/package: `kinein-core`
+- Crate importável: `kinein_core`
+- CLI futura: `kinein-cli`
+- Protocolo: `kinein-protocol`
+- Configuração: `kinein-config`
 
 ## Não fazer
 

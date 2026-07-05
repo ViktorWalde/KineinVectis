@@ -1,6 +1,6 @@
-# Kernwerk Studio
+# Kinein Vectis
 
-**Kernwerk Studio** é uma IDE open source, Linux-first, rígida por padrão e visualmente plug and play, criada para desenvolvimento moderno em C++, Java, Python, backend convencional e sistemas embarcados.
+**Kinein Vectis** é uma IDE open source, Linux-first, rígida por padrão e visualmente plug and play, criada para desenvolvimento moderno em C++, Java, Python, backend convencional e sistemas embarcados.
 
 A arquitetura do projeto separa claramente:
 
@@ -8,7 +8,7 @@ A arquitetura do projeto separa claramente:
 - **Core/backend:** Rust.
 - **Ferramentas externas:** clangd, jdtls, pyright, CMake, Ninja, Maven, Gradle, uv, Git, GDB, LLDB, QEMU, OpenOCD, Ollama/GPT/Claude CLI.
 
-O Kernwerk Studio não tenta reimplementar compiladores, parsers, debugadores ou language servers. Ele atua como uma camada visual profissional, rigorosa e integrada sobre ferramentas open source consolidadas.
+O Kinein Vectis não tenta reimplementar compiladores, parsers, debugadores ou language servers. Ele atua como uma camada visual profissional, rigorosa e integrada sobre ferramentas open source consolidadas.
 
 ## Objetivo
 
@@ -26,11 +26,11 @@ Criar uma IDE com experiência visual familiar para usuários acostumados ao eco
 
 ## Nome
 
-- Nome do produto: **Kernwerk Studio**
-- Diretório do projeto: `kernwerk-studio`
-- Binário principal futuro: `kernwerk-studio`
-- Core Rust/daemon: `kernwerk-core`
-- Nome interno de crate no código Rust: `kernwerk_core`
+- Nome do produto: **Kinein Vectis**
+- Diretório do projeto: `kinein-vectis`
+- Binário principal futuro: `kinein-vectis`
+- Core Rust/daemon: `kinein-core`
+- Nome interno de crate no código Rust: `kinein_core`
 
 ## Decisão técnica inicial
 
@@ -60,12 +60,12 @@ Rust Core
 Resposta: core.pong
 ```
 
-O MVP inicial pode começar até sem Qt: primeiro um `kernwerk-core` e um `kernwerk-cli` para validar protocolo, comandos, settings, logs e strict mode.
+O MVP inicial pode começar até sem Qt: primeiro um `kinein-core` e um `kinein-cli` para validar protocolo, comandos, settings, logs e strict mode.
 
 ## Como executar
 
 Veja **[COMO_EXECUTAR.md](COMO_EXECUTAR.md)**. Resumo: a IDE é offline/local —
-o atalho "Kernwerk Studio" no menu (ou `./scripts/kernwerk-studio`) sobe a UI,
+o atalho "Kinein Vectis" no menu (ou `./scripts/kinein-vectis`) sobe a UI,
 que inicia o core Rust automaticamente.
 
 ## Documentação
@@ -82,25 +82,25 @@ Toda a documentação está indexada em **[docs/README.md](docs/README.md)**:
 
 MVP 0.1 (core mínimo), MVP 0.2 (tool detection), MVP 0.3 (workspace), MVP 0.4 (UI mínima), Fase 3 (explorer/editor), Fase 4 (build/problemas), criação básica de projeto e as Fases 5/5.1/5.2 de LSP (diagnósticos, navegação, completion, find usages e rename) implementados:
 
-- `kernwerk-protocol`: tipos JSON-RPC compartilhados, incluindo `ToolStatus`/`ToolInfo`, `ProjectKind`/`WorkspaceInfo`, criação de pasta/projeto, criação/salvamento/renomeação/remoção de arquivos e diretórios, build estruturado, diagnósticos LSP, go to definition, hover, completion, find usages, rename, semantic tokens, busca no workspace, busca de arquivos com `fd`/`fdfind`, build, testes e análise de qualidade estruturados, execução de processos e sessão de terminal (protocolo `0.19.0`).
-- `kernwerk-config`: modelo de configuração strict-by-default.
-- `kernwerk-core`: loop stdin/stdout JSON-RPC com `core.ping`, `core.shutdown`, `command.list`, `tools.detect`, `tools.status`, `workspace.*`, `fs.*`, `fs.findFiles`, `fs.search`, `fs.rename`, `fs.delete`, `build.run`, `test.run`, `quality.run`, `run.start`/`run.stdin`/`run.stop`, `terminal.open`/`terminal.input`/`terminal.close`, `lsp.didChange`, `lsp.semanticTokens`, `lsp.definition`, `lsp.hover`, `lsp.completion`, `lsp.references` e `lsp.rename`.
-- `kernwerk-cli`: helper mínimo para emitir requests JSON-RPC (`ping`, `list-commands`, `shutdown`, `build`, `tools detect|status`, `workspace open|browse|mkdir|new|status|close`).
+- `kinein-protocol`: tipos JSON-RPC compartilhados, incluindo `ToolStatus`/`ToolInfo`, `ProjectKind`/`WorkspaceInfo`, criação de pasta/projeto, criação/salvamento/renomeação/remoção de arquivos e diretórios, build estruturado, diagnósticos LSP, go to definition, hover, completion, find usages, rename, semantic tokens, busca no workspace, busca de arquivos com `fd`/`fdfind`, build, testes e análise de qualidade estruturados, execução de processos e sessão de terminal (protocolo `0.19.0`).
+- `kinein-config`: modelo de configuração strict-by-default.
+- `kinein-core`: loop stdin/stdout JSON-RPC com `core.ping`, `core.shutdown`, `command.list`, `tools.detect`, `tools.status`, `workspace.*`, `fs.*`, `fs.findFiles`, `fs.search`, `fs.rename`, `fs.delete`, `build.run`, `test.run`, `quality.run`, `run.start`/`run.stdin`/`run.stop`, `terminal.open`/`terminal.input`/`terminal.close`, `lsp.didChange`, `lsp.semanticTokens`, `lsp.definition`, `lsp.hover`, `lsp.completion`, `lsp.references` e `lsp.rename`.
+- `kinein-cli`: helper mínimo para emitir requests JSON-RPC (`ping`, `list-commands`, `shutdown`, `build`, `tools detect|status`, `workspace open|browse|mkdir|new|status|close`).
 
 A detecção de ferramentas cobre `cargo`, `rustc`, `cmake`, `ninja`, `git`, `clangd`, `ripgrep` e `fd`/`fdfind`: busca no `PATH`, probe de versão via `--version` e sugestão de instalação para CachyOS/Arch quando a ferramenta falta. O core nunca instala nada sozinho.
 
-`workspace.open` identifica o tipo de projeto (Rust/Cargo, CMake, Maven, Gradle, Python ou desconhecido) por marcadores na raiz e persiste `.kernwerk/workspace.json` (schema em `schemas/workspace.schema.json`).
+`workspace.open` identifica o tipo de projeto (Rust/Cargo, CMake, Maven, Gradle, Python ou desconhecido) por marcadores na raiz e persiste `.kinein/workspace.json` (schema em `schemas/workspace.schema.json`).
 
-A UI Qt/QML (`ui/`) implementa janela escura com a paleta do design system, seletor proprio de workspace via `workspace.browse`, criação de pasta/projeto (`empty`, `cppCmake`, `rustCargo`), explorer navegável com criação, renomeação e exclusão de arquivos/pastas (menu de contexto) no Project panel, Search Everywhere inicial para comandos e arquivos (`Ctrl+Shift+N`/`Ctrl+Shift+A`, usando `command.list` e `fd`/`fdfind` via core), abas de editor com indicador de modificação, syntax highlighting com cores semânticas via LSP (variáveis, funções, tipos, parâmetros), completion automático enquanto digita, salvar com Ctrl+S, build com Ctrl+F9, testes com Ctrl+Shift+F9 (aba Testes, verde/vermelho por caso), análise de qualidade (cargo clippy) com Ctrl+Shift+L (lints na aba Problemas), go to definition com Ctrl+B, hover/quick documentation com Ctrl+Q, completion com Ctrl+Space, find usages com Alt+F7, rename com Shift+F6, busca no workspace com Ctrl+Shift+F (aba Busca), botão ▶ Iniciar/■ Parar com Shift+F10/Ctrl+F2 e aba Executar (saída ao vivo com stdin), aba Terminal com o shell real do usuário (`$SHELL` num PTY via `script`, Alt+F12), painel Build/Problemas, painel Ferramentas e shell visual do Assistente KW. O acesso a arquivos passa inteiro pelo core (`fs.list`/`fs.read`/`fs.createFile`/`fs.createDirectory`/`fs.write`/`fs.rename`/`fs.delete`/`fs.findFiles`, confinados à raiz do workspace). A navegação e criação de pastas/projetos também passam pelo core. Diagnósticos de build e LSP aparecem na aba Problemas. A UI sobe o `kernwerk-core` como processo filho — nada precisa ser iniciado manualmente.
+A UI Qt/QML (`ui/`) implementa janela escura com a paleta do design system, seletor proprio de workspace via `workspace.browse`, criação de pasta/projeto (`empty`, `cppCmake`, `rustCargo`), explorer navegável com criação, renomeação e exclusão de arquivos/pastas (menu de contexto) no Project panel, Search Everywhere inicial para comandos e arquivos (`Ctrl+Shift+N`/`Ctrl+Shift+A`, usando `command.list` e `fd`/`fdfind` via core), abas de editor com indicador de modificação, syntax highlighting com cores semânticas via LSP (variáveis, funções, tipos, parâmetros), completion automático enquanto digita, salvar com Ctrl+S, build com Ctrl+F9, testes com Ctrl+Shift+F9 (aba Testes, verde/vermelho por caso), análise de qualidade (cargo clippy) com Ctrl+Shift+L (lints na aba Problemas), go to definition com Ctrl+B, hover/quick documentation com Ctrl+Q, completion com Ctrl+Space, find usages com Alt+F7, rename com Shift+F6, busca no workspace com Ctrl+Shift+F (aba Busca), botão ▶ Iniciar/■ Parar com Shift+F10/Ctrl+F2 e aba Executar (saída ao vivo com stdin), aba Terminal com o shell real do usuário (`$SHELL` num PTY via `script`, Alt+F12), painel Build/Problemas, painel Ferramentas e shell visual do Assistente KW. O acesso a arquivos passa inteiro pelo core (`fs.list`/`fs.read`/`fs.createFile`/`fs.createDirectory`/`fs.write`/`fs.rename`/`fs.delete`/`fs.findFiles`, confinados à raiz do workspace). A navegação e criação de pastas/projetos também passam pelo core. Diagnósticos de build e LSP aparecem na aba Problemas. A UI sobe o `kinein-core` como processo filho — nada precisa ser iniciado manualmente.
 
 Exemplos:
 
 ```bash
-cargo run -p kernwerk-cli -- tools detect | cargo run -p kernwerk-core
-cargo run -p kernwerk-cli -- workspace browse ~ | cargo run -p kernwerk-core
-cargo run -p kernwerk-cli -- workspace new /tmp demo cppCmake | cargo run -p kernwerk-core
-cargo run -p kernwerk-cli -- workspace open ~/dev/projeto | cargo run -p kernwerk-core
-cargo run -p kernwerk-cli -- build | cargo run -p kernwerk-core
+cargo run -p kinein-cli -- tools detect | cargo run -p kinein-core
+cargo run -p kinein-cli -- workspace browse ~ | cargo run -p kinein-core
+cargo run -p kinein-cli -- workspace new /tmp demo cppCmake | cargo run -p kinein-core
+cargo run -p kinein-cli -- workspace open ~/dev/projeto | cargo run -p kinein-core
+cargo run -p kinein-cli -- build | cargo run -p kinein-core
 ```
 
 Para recompilar e verificar sem reler a documentação longa, use a sequência em
@@ -115,4 +115,4 @@ rustup run stable cargo kw-clippy
 rustup run stable cargo kw-test
 ```
 
-Para C++/Qt/QML, novos alvos devem usar `cmake/KernwerkStrictOptions.cmake` e os presets em `CMakePresets.json`.
+Para C++/Qt/QML, novos alvos devem usar `cmake/KineinStrictOptions.cmake` e os presets em `CMakePresets.json`.

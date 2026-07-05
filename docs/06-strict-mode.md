@@ -2,7 +2,7 @@
 
 ## Filosofia
 
-Kernwerk Studio é rígido por padrão.
+Kinein Vectis é rígido por padrão.
 
 Projetos novos devem nascer com qualidade profissional, e o usuário pode relaxar regras depois se quiser.
 
@@ -13,7 +13,7 @@ Strict primeiro.
 Relaxado apenas por decisão explícita.
 ```
 
-## Rust — core do Kernwerk
+## Rust — core do Kinein Vectis
 
 Regras:
 

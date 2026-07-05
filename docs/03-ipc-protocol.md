@@ -12,7 +12,7 @@
 O protocolo IPC permite comunicação entre:
 
 ```text
-Kernwerk UI  ←→  Kernwerk Core
+Kinein Vectis UI  ←→  Kinein Vectis Core
 ```
 
 A UI deve mandar comandos e receber respostas/eventos. O core deve executar lógica, chamar ferramentas externas e emitir eventos de estado.
@@ -141,7 +141,7 @@ sem sair da IDE.
 `workspace.open` recebe
 `{ "path": "/dir" }`, canonicaliza o caminho, identifica o tipo de projeto por
 marcadores (precedência: `Cargo.toml` > `CMakeLists.txt` > `pom.xml` >
-Gradle > Python) e persiste `.kernwerk/workspace.json`
+Gradle > Python) e persiste `.kinein/workspace.json`
 (`schemas/workspace.schema.json`).
 
 ```json
@@ -187,7 +187,7 @@ e cria o diretório filho. A resposta é `{ "path": "/dir/modulo" }`.
 O core cria o diretório do projeto, aplica o template e abre o projeto como
 workspace, retornando o mesmo payload de `workspace.open`.
 
-- `empty`: cria diretório vazio e persiste `.kernwerk/workspace.json`.
+- `empty`: cria diretório vazio e persiste `.kinein/workspace.json`.
 - `cppCmake`: cria projeto C++23/CMake strict inicial com `CMakeLists.txt`,
   `CMakePresets.json`, `src/main.cpp` e `README.md`.
 - `rustCargo`: usa `cargo new --bin --vcs none`; se `cargo` não existir,
@@ -235,7 +235,7 @@ um indexador próprio no MVP.
 - `query` não pode ser vazio (`INVALID_PARAMS`).
 - `path` é relativo à raiz do workspace; `name` é o nome do arquivo.
 - A busca usa `fd --type f --fixed-strings --hidden --color never`, com
-  exclusões explícitas para `.git`, `.kernwerk`, `.idea`, `.cache`, `target`,
+  exclusões explícitas para `.git`, `.kinein`, `.idea`, `.cache`, `target`,
   `build` e `node_modules`.
 - No máximo 100 arquivos são retornados; `truncated: true` indica que o limite
   cortou resultados.
@@ -255,7 +255,7 @@ Implementado no protocolo `0.11.0` (Find in Files). Requer workspace aberto.
   (coluna em caracteres) para consumo direto do editor.
 - A caminhada é determinística (profundidade, nome case-insensitive),
   ignora silenciosamente symlinks, arquivos não UTF-8 ou maiores que 1 MiB e
-  os diretórios `.git`, `.kernwerk`, `.idea`, `.cache`, `target`, `build` e
+  os diretórios `.git`, `.kinein`, `.idea`, `.cache`, `target`, `build` e
   `node_modules`.
 - No máximo um match por linha e 500 matches no total; `truncated: true`
   indica que o limite cortou resultados. `preview` é a linha com trim,
@@ -270,7 +270,7 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
 
 - `run.start { command? }` → `{ command }`. Sem `command`, o core deriva o
   padrão do tipo de projeto: `cargo run` para Rust/Cargo; para CMake, o
-  único executável em `.kernwerk/build` (erro claro se não houver ou houver
+  único executável em `.kinein/build` (erro claro se não houver ou houver
   mais de um). Outros tipos ainda não têm padrão (`INVALID_REQUEST` com
   mensagem orientando digitar o comando).
 - `run.stdin { data }` → `{ status: "ok" }`. Encaminha `data` cru ao stdin
@@ -318,7 +318,7 @@ mesmo enxergando um TTY real; o caminho futuro é renderizar ANSI na UI.
 
 Implementado no protocolo `0.6.0`. Requer workspace aberto. O core executa a
 ferramenta de build do tipo de projeto (`cargo build --message-format=json`
-para Rust/Cargo; `cmake -S/-B` + `cmake --build` em `.kernwerk/build` para
+para Rust/Cargo; `cmake -S/-B` + `cmake --build` em `.kinein/build` para
 CMake) e emite notificações durante a execução:
 
 ```text
@@ -352,7 +352,7 @@ ausente retorna `TOOL_NOT_FOUND`.
 
 Implementado no protocolo `0.17.0`. Requer workspace aberto. O core executa o
 runner de testes do tipo de projeto (`cargo test` para Rust/Cargo; `ctest
---test-dir .kernwerk/build --output-on-failure` para CMake) e transmite cada
+--test-dir .kinein/build --output-on-failure` para CMake) e transmite cada
 caso conforme sai da saída padrão do runner — nada de reimplementar framework
 de teste. Aceita `{ "filter"? }` (posicional do cargo; `-R` do ctest).
 

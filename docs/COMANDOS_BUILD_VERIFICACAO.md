@@ -18,10 +18,10 @@ scripts/verificar.sh --rapido
 ```
 
 O modo **completo** e o que bloqueia release: os binarios do icone
-(`build/linux-clang-release-hardened/ui/kernwerk-studio` e
-`target/release/kernwerk-core`) so sao atualizados se lint, testes, C++ e
+(`build/linux-clang-release-hardened/ui/kinein-vectis` e
+`target/release/kinein-core`) so sao atualizados se lint, testes, C++ e
 builds passarem. Presets CMake podem ser sobrescritos por ambiente:
-`KERNWERK_PRESET_DEBUG` / `KERNWERK_PRESET_RELEASE` (padrao `dev-local*`).
+`KINEIN_PRESET_DEBUG` / `KINEIN_PRESET_RELEASE` (padrao `dev-local*`).
 
 ## Sequencia manual (referencia)
 
@@ -33,14 +33,14 @@ cargo test --workspace --all-features
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 scripts/verificar-cpp.sh
 cmake --build --preset dev-local
-cargo build --release -p kernwerk-core
+cargo build --release -p kinein-core
 cmake --build --preset dev-local-release
 ```
 
 Execucao manual da IDE:
 
 ```bash
-./scripts/kernwerk-studio
+./scripts/kinein-vectis
 ```
 
 Quando o preset local ainda nao existir/configurar:

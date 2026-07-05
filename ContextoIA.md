@@ -1,4 +1,4 @@
-# ContextoIA - Continuidade do Kernwerk Studio
+# ContextoIA - Continuidade do Kinein Vectis
 
 Este arquivo registra decisoes de produto/arquitetura para IAs que continuarem
 o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
@@ -6,7 +6,7 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
 
 ## Direcao do produto
 
-- Produto: Kernwerk Studio.
+- Produto: Kinein Vectis.
 - Objetivo: IDE open source, Linux-first, rigida por padrao, visualmente
   familiar para usuarios de IDEs JetBrains, mas com identidade propria.
 - Uso inicial: projeto de uso proprio do autor, com foco em qualidade alta e
@@ -89,15 +89,15 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
   Eventos `event.lsp.status` e `event.lsp.diagnostics` alimentam a UI.
 - `lsp.definition` e `lsp.hover` fazem navegacao semantica minima via LSP,
   sempre passando pelo core e usando posicao 1-based do editor.
-- A UI sobe `kernwerk-core` como processo filho via `CoreClient`.
-- O usuario testa normalmente pelo icone "Kernwerk Studio" ja instalado no
-  menu de aplicativos. Esse icone executa `scripts/kernwerk-studio`.
-- O launcher `scripts/kernwerk-studio` prefere:
-  - UI release: `build/linux-clang-release-hardened/ui/kernwerk-studio`;
-  - core release: `target/release/kernwerk-core`;
+- A UI sobe `kinein-core` como processo filho via `CoreClient`.
+- O usuario testa normalmente pelo icone "Kinein Vectis" ja instalado no
+  menu de aplicativos. Esse icone executa `scripts/kinein-vectis`.
+- O launcher `scripts/kinein-vectis` prefere:
+  - UI release: `build/linux-clang-release-hardened/ui/kinein-vectis`;
+  - core release: `target/release/kinein-core`;
   - e so cai para debug se os binarios release nao existirem.
 - Depois de alterar core/UI, atualizar os binarios usados pelo icone com:
-  `cargo build --release -p kernwerk-core` e
+  `cargo build --release -p kinein-core` e
   `cmake --build --preset dev-local-release`.
 - CORRECAO (2026-07-03): nesta maquina (Pop!_OS), o CONFIGURE do CMake deve
   usar os presets locais `dev-local` / `dev-local-release` de
@@ -115,13 +115,18 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
 - Novas pastas no core: `src/lsp/` (types/manager/server/framing/parse/edit/uri),
   `src/fsops/` (error/confine/ops/search/find), `src/workspace/`
   (error/detect/open/create) e `src/tests/` (por dominio). `handlers/` ja existia.
-- `kernwerk-protocol/src/` agora tem um modulo por dominio (rpc, command, core,
+- `kinein-protocol/src/` agora tem um modulo por dominio (rpc, command, core,
   tools, workspace, fs, run, terminal, lsp, build) re-exportado flat — os
-  consumidores continuam usando `kernwerk_protocol::TipoX`.
-- `kernwerk-cli` ganhou um lib target (`kernwerk_cli`) com `commands`/`error`;
-  `main.rs` virou shim fino sobre `kernwerk_cli::run`.
-- Rename `kernwerk` -> Kinein Vectis foi ADIADO de proposito: modularizar
-  primeiro, renomear depois numa passada mecanica separada.
+  consumidores continuam usando `kinein_protocol::TipoX`.
+- `kinein-cli` ganhou um lib target (`kinein_cli`) com `commands`/`error`;
+  `main.rs` virou shim fino sobre `kinein_cli::run`.
+- Rename kernwerk -> Kinein Vectis CONCLUIDO (2026-07-05): crates renomeados para
+  `kinein-*` (imports `kinein_*`), dir de dados `.kernwerk` -> `.kinein`, UI/Qt
+  (target `kinein-vectis`, modulo QML `KineinVectis`, namespace C++ `kinein`,
+  `KineinStrictOptions.cmake`), launcher `scripts/kinein-vectis`, schemas e docs
+  ativos. Verificado: gate Rust (147 testes) + configure/build completo do UI Qt.
+- Docs reorganizados: os specs canonicos da Kinein Vectis estao em `docs/specs/`;
+  os docs era-kernwerk superados foram para `docs/archive/legacy/`.
 - Arvore de arquivos atualizada em `docs/02-repository-structure.md`; conclusao
   registrada em `docs/15-engineering-debt-and-refactor.md`.
 
@@ -135,7 +140,7 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
   - sem `unwrap`, `expect`, `panic`, `todo`, `dbg!` fora de casos aceitos por
     testes existentes.
 - C++/Qt usa C++23, warnings-as-errors, sanitizers em Debug e hardening/LTO em
-  Release via `cmake/KernwerkStrictOptions.cmake`.
+  Release via `cmake/KineinStrictOptions.cmake`.
 - Futuramente deve existir seletor de nivel de rigidez:
   - Strict como padrao;
   - Balanced;
@@ -196,7 +201,7 @@ real. Ordem acordada:
    ativar perfis mais rigidos ou menos rigidos de compilador/quality sem
    decorar flags. A loja deve ordenar funcoes por confianca: ISO/Standard
    primeiro em C/C++; Rust oficial primeiro em Rust; depois diagnosticos
-   oficiais, ferramentas maduras, presets Kernwerk, regras locais e opcoes
+   oficiais, ferramentas maduras, presets Kinein Vectis, regras locais e opcoes
    experimentais. A experiencia deve ser visual e JetBrains-like: janela de
    opcoes do ambiente do projeto com nome da funcao, explicacao simples,
    impacto, risco, fonte, previa de alteracoes e reversao. Nao bloquear a
@@ -259,7 +264,7 @@ arquivo.
 - ERROS DA IDE EM .TXT: qualquer erro/mau funcionamento da IDE (crash do
   core, stderr do core, falha de processo, resposta IPC invalida, core nao
   encontrado) e gravado com timestamp ISO em:
-  `~/.cache/kernwerk-studio/logs/kernwerk-ui-erros.txt`
+  `~/.cache/kinein-vectis/logs/kinein-ui-erros.txt`
   (implementado em `CoreClient::appendErrorLog`; caminho exposto ao QML pela
   propriedade `errorLogFile`). Segue o diretorio de logs previsto em
   docs/07-tooling-lifecycle.md.

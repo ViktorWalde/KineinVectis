@@ -1,13 +1,13 @@
-# Como executar o Kernwerk Studio
+# Como executar o Kinein Vectis
 
 A IDE é **100% offline e local**. Você não precisa ligar nada antes: ao abrir a
-UI, ela mesma inicia o `kernwerk-core` (Rust) como processo filho e conversa
+UI, ela mesma inicia o `kinein-core` (Rust) como processo filho e conversa
 com ele por JSON-RPC. Fechou a UI, o core morre junto.
 
 ## Jeito mais simples: clicar no ícone
 
-O atalho **Kernwerk Studio** já está instalado no menu de aplicativos
-(ícone KW). Ele executa `scripts/kernwerk-studio`, que sobe a UI release e
+O atalho **Kinein Vectis** já está instalado no menu de aplicativos
+(ícone KW). Ele executa `scripts/kinein-vectis`, que sobe a UI release e
 aponta para o core release.
 
 Se precisar reinstalar o atalho (por exemplo, se mover a pasta do projeto):
@@ -19,7 +19,7 @@ Se precisar reinstalar o atalho (por exemplo, se mover a pasta do projeto):
 ## Pelo terminal
 
 ```bash
-./scripts/kernwerk-studio
+./scripts/kinein-vectis
 ```
 
 O launcher usa os binários release e cai para os de debug se os release não
@@ -33,8 +33,8 @@ Sequência curta para copiar/colar: veja
 ### 1. Core Rust
 
 ```bash
-cargo build --release -p kernwerk-core     # uso diário
-cargo build -p kernwerk-core               # debug, para desenvolvimento
+cargo build --release -p kinein-core     # uso diário
+cargo build -p kinein-core               # debug, para desenvolvimento
 ```
 
 ### 2. UI Qt/QML
@@ -49,7 +49,7 @@ Para desenvolvimento com sanitizers (ASan/UBSan):
 ```bash
 cmake --preset dev-local
 cmake --build --preset dev-local
-./build/linux-clang-debug-strict/ui/kernwerk-studio
+./build/linux-clang-debug-strict/ui/kinein-vectis
 ```
 
 > Os presets `dev-local*` estão em `CMakeUserPresets.json` (arquivo local,
@@ -87,7 +87,7 @@ Erros e mau funcionamento da própria IDE (crash do core, falha de processo,
 respostas IPC inválidas) são gravados automaticamente com timestamp em:
 
 ```text
-~/.cache/kernwerk-studio/logs/kernwerk-ui-erros.txt
+~/.cache/kinein-vectis/logs/kinein-ui-erros.txt
 ```
 
 Anexe esse arquivo ao investigar problemas. A aba "IDE" do painel inferior
@@ -96,12 +96,12 @@ erros do *seu projeto* aparecem nas abas Build/Problemas via eventos do core.
 
 ## Como a UI encontra o core
 
-Ordem de busca do binário `kernwerk-core`:
+Ordem de busca do binário `kinein-core`:
 
-1. variável de ambiente `KERNWERK_CORE_BIN` (o launcher já define);
+1. variável de ambiente `KINEIN_CORE_BIN` (o launcher já define);
 2. diretório do executável da UI;
-3. `target/debug/kernwerk-core` relativo ao diretório atual;
+3. `target/debug/kinein-core` relativo ao diretório atual;
 4. `PATH`.
 
-Se a UI mostrar "kernwerk-core nao encontrado", compile o core
-(`cargo build --release -p kernwerk-core`) ou use o launcher.
+Se a UI mostrar "kinein-core nao encontrado", compile o core
+(`cargo build --release -p kinein-core`) ou use o launcher.

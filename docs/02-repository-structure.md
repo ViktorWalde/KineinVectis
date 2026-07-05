@@ -3,7 +3,7 @@
 ## Estrutura inicial recomendada
 
 ```text
-kernwerk-studio/
+kinein-vectis/
 ├── README.md
 ├── AGENTS.md
 ├── Cargo.toml
@@ -13,7 +13,7 @@ kernwerk-studio/
 ├── .editorconfig
 │
 ├── crates/
-│   ├── kernwerk-core/
+│   ├── kinein-core/
 │   │   ├── Cargo.toml
 │   │   └── src/
 │   │       ├── main.rs          # binary entry (calls run_stdio)
@@ -33,20 +33,20 @@ kernwerk-studio/
 │   │       └── tests/           # integration tests grouped by domain
 │   │           └── mod.rs dispatch.rs tools.rs workspace.rs fs.rs run.rs build.rs lsp.rs
 │   │
-│   ├── kernwerk-protocol/
+│   ├── kinein-protocol/
 │   │   ├── Cargo.toml
 │   │   └── src/                 # per-domain modules re-exported flat from lib.rs
 │   │       └── lib.rs rpc.rs command.rs core.rs tools.rs workspace.rs fs.rs run.rs terminal.rs lsp.rs build.rs
 │   │
-│   ├── kernwerk-config/
+│   ├── kinein-config/
 │   │   ├── Cargo.toml
 │   │   └── src/
 │   │       └── lib.rs
 │   │
-│   └── kernwerk-cli/
+│   └── kinein-cli/
 │       ├── Cargo.toml
 │       └── src/
-│           ├── main.rs          # thin binary shim over kernwerk_cli::run
+│           ├── main.rs          # thin binary shim over kinein_cli::run
 │           ├── lib.rs           # library target: re-exports run + CliError
 │           ├── commands.rs      # argv → JSON-RPC request dispatch
 │           └── error.rs         # CliError
@@ -105,13 +105,13 @@ Usar hífen no nome do pacote:
 
 ```toml
 [package]
-name = "kernwerk-core"
+name = "kinein-core"
 ```
 
 No código Rust, o crate será referenciado como:
 
 ```rust
-use kernwerk_core::...
+use kinein_core::...
 ```
 
 Convenção prática:
@@ -127,17 +127,17 @@ Convenção prática:
 [workspace]
 resolver = "2"
 members = [
-    "crates/kernwerk-core",
-    "crates/kernwerk-protocol",
-    "crates/kernwerk-config",
-    "crates/kernwerk-cli",
+    "crates/kinein-core",
+    "crates/kinein-protocol",
+    "crates/kinein-config",
+    "crates/kinein-cli",
 ]
 
 [workspace.package]
 edition = "2024"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/SEU_USUARIO/kernwerk-studio"
-homepage = "https://github.com/SEU_USUARIO/kernwerk-studio"
+repository = "https://github.com/SEU_USUARIO/kinein-vectis"
+homepage = "https://github.com/SEU_USUARIO/kinein-vectis"
 readme = "README.md"
 rust-version = "1.85"
 

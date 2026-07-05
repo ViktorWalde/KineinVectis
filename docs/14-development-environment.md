@@ -38,8 +38,8 @@ cmake --build --preset release-hardened
 Todo alvo C++/Qt deve chamar:
 
 ```cmake
-include(cmake/KernwerkStrictOptions.cmake)
-kernwerk_enable_strict_compiler_options(nome_do_target)
+include(cmake/KineinStrictOptions.cmake)
+kinein_enable_strict_compiler_options(nome_do_target)
 ```
 
 ## Estado observado no ambiente atual

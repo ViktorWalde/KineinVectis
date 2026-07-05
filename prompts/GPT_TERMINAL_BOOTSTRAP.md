@@ -1,6 +1,6 @@
 # Prompt inicial para GPT/Claude no terminal
 
-Você está trabalhando no projeto **Kernwerk Studio**.
+Você está trabalhando no projeto **Kinein Vectis**.
 
 Leia estes arquivos antes de responder ou alterar código:
 
@@ -15,7 +15,7 @@ Leia estes arquivos antes de responder ou alterar código:
 
 ## Contexto
 
-Kernwerk Studio é uma IDE open source, Linux-first, visualmente plug and play e rígida por padrão.
+Kinein Vectis é uma IDE open source, Linux-first, visualmente plug and play e rígida por padrão.
 
 Arquitetura decidida:
 
@@ -36,10 +36,10 @@ Crie ou ajuste a estrutura:
 ```text
 Cargo.toml
 rust-toolchain.toml
-crates/kernwerk-core/
-crates/kernwerk-protocol/
-crates/kernwerk-config/
-crates/kernwerk-cli/
+crates/kinein-core/
+crates/kinein-protocol/
+crates/kinein-config/
+crates/kinein-cli/
 ```
 
 Implemente apenas:
