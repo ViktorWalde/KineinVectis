@@ -10,6 +10,7 @@ pub mod build;
 pub mod commands;
 pub mod fsops;
 pub mod handlers;
+pub mod jobs;
 pub mod lsp;
 pub mod process;
 pub mod rpc;
@@ -40,6 +41,7 @@ pub struct Core {
     lsp: Option<lsp::LspManager>,
     run: Option<run::RunManager>,
     terminal: Option<terminal::TerminalManager>,
+    jobs: Option<jobs::JobManager>,
 }
 
 impl Core {
@@ -59,6 +61,7 @@ impl Core {
             lsp: None,
             run: None,
             terminal: None,
+            jobs: None,
         }
     }
 
@@ -72,6 +75,7 @@ impl Core {
     pub fn enable_lsp(&mut self, events: lsp::EventSender) {
         self.lsp = Some(lsp::LspManager::new(events.clone()));
         self.run = Some(run::RunManager::new(events.clone()));
+        self.jobs = Some(jobs::JobManager::new(events.clone()));
         self.terminal = Some(terminal::TerminalManager::new(events));
     }
 
@@ -177,6 +181,7 @@ impl Core {
             .or_else(|| self.run_request_response(method, request_id.clone(), params))
             .or_else(|| self.terminal_request_response(method, request_id.clone(), params))
             .or_else(|| self.lsp_request_response(method, request_id.clone(), params))
+            .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .unwrap_or_else(|| {
                 let error = JsonRpcError::new(
                     JsonRpcErrorCode::MethodNotFound,

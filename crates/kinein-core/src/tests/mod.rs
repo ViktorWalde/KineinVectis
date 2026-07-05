@@ -6,6 +6,7 @@
 mod build;
 mod dispatch;
 mod fs;
+mod jobs;
 mod lsp;
 mod run;
 mod tools;

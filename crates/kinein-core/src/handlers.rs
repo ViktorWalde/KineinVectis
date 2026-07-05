@@ -6,6 +6,7 @@
 
 pub mod build;
 pub mod fs;
+pub mod jobs;
 pub mod lsp;
 pub mod run;
 pub mod terminal;

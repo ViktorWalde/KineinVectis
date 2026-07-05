@@ -11,7 +11,29 @@ pub(crate) fn command_descriptors() -> Vec<CommandDescriptor> {
     descriptors.extend(project_command_descriptors());
     descriptors.extend(run_command_descriptors());
     descriptors.extend(lsp_command_descriptors());
+    descriptors.extend(jobs_command_descriptors());
     descriptors
+}
+
+fn jobs_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![
+        CommandDescriptor {
+            id: "job.list".to_owned(),
+            title: "Jobs".to_owned(),
+            category: "Jobs".to_owned(),
+            description: "Lista os jobs (operacoes longas) conhecidos pelo core".to_owned(),
+            default_shortcut: None,
+            requires_workspace: false,
+        },
+        CommandDescriptor {
+            id: "job.cancel".to_owned(),
+            title: "Cancel Job".to_owned(),
+            category: "Jobs".to_owned(),
+            description: "Sinaliza um job em execucao para cancelar".to_owned(),
+            default_shortcut: None,
+            requires_workspace: false,
+        },
+    ]
 }
 
 fn run_command_descriptors() -> Vec<CommandDescriptor> {
