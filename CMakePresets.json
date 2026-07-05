@@ -16,8 +16,8 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "KERNWERK_ENABLE_SANITIZERS": "ON",
-        "KERNWERK_WARNINGS_AS_ERRORS": "ON"
+        "KINEIN_ENABLE_SANITIZERS": "ON",
+        "KINEIN_WARNINGS_AS_ERRORS": "ON"
       }
     },
     {
@@ -30,8 +30,8 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "KERNWERK_ENABLE_HARDENING": "ON",
-        "KERNWERK_WARNINGS_AS_ERRORS": "ON"
+        "KINEIN_ENABLE_HARDENING": "ON",
+        "KINEIN_WARNINGS_AS_ERRORS": "ON"
       }
     }
   ],
