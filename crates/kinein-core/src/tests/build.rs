@@ -9,7 +9,7 @@ use kinein_protocol::JsonRpcRequest;
 fn build_run_requires_open_workspace() {
     let mut core = core_with_empty_search_path("build-no-workspace");
     let request = JsonRpcRequest::new(30_i64, "build.run", Some(json!({})));
-    let outcome = core.handle_request_streaming(&request, &mut |_| {});
+    let outcome = core.handle_request(&request);
     let error = outcome.response().error.as_ref().unwrap();
 
     assert_eq!(
@@ -35,11 +35,8 @@ fn build_run_rejects_unsupported_project_kind() {
     ));
     assert!(opened.response().error.is_none());
 
-    let mut events = Vec::new();
     let request = JsonRpcRequest::new(32_i64, "build.run", Some(json!({})));
-    let outcome = core.handle_request_streaming(&request, &mut |notification| {
-        events.push(notification.method.clone());
-    });
+    let outcome = core.handle_request(&request);
     let error = outcome.response().error.as_ref().unwrap();
 
     assert_eq!(
@@ -47,7 +44,6 @@ fn build_run_rejects_unsupported_project_kind() {
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
     assert!(error.message.contains("python"));
-    assert!(events.is_empty());
 }
 
 #[test]

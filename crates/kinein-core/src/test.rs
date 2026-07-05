@@ -5,7 +5,13 @@
 //! from the tool's normal text output. Nothing here reimplements a test
 //! framework: it orchestrates the mature runners and structures their output.
 
-use std::{error::Error, fmt, path::Path, process::Command};
+use std::{
+    error::Error,
+    fmt,
+    path::Path,
+    process::Command,
+    sync::{Arc, atomic::AtomicBool},
+};
 
 use kinein_protocol::ProjectKind;
 
@@ -137,11 +143,12 @@ pub fn run_tests(
     root: &Path,
     kind: ProjectKind,
     filter: Option<&str>,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
     match kind {
-        ProjectKind::RustCargo => run_cargo_test(root, filter, sink),
-        ProjectKind::Cmake => run_ctest(root, filter, sink),
+        ProjectKind::RustCargo => run_cargo_test(root, filter, cancel, sink),
+        ProjectKind::Cmake => run_ctest(root, filter, cancel, sink),
         other => Err(TestError::Unsupported {
             kind: project_kind_name(other),
         }),
@@ -151,6 +158,7 @@ pub fn run_tests(
 fn run_cargo_test(
     root: &Path,
     filter: Option<&str>,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
     let mut command = Command::new("cargo");
@@ -162,12 +170,13 @@ fn run_cargo_test(
         display.push_str(filter);
     }
 
-    stream_command(command, &display, parse_cargo_case, sink)
+    stream_command(command, &display, parse_cargo_case, cancel, sink)
 }
 
 fn run_ctest(
     root: &Path,
     filter: Option<&str>,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
     let build_dir = root.join(".kinein").join("build");
@@ -184,7 +193,7 @@ fn run_ctest(
         display.push_str(filter);
     }
 
-    stream_command(command, &display, parse_ctest_case, sink)
+    stream_command(command, &display, parse_ctest_case, cancel, sink)
 }
 
 /// Spawns the runner, streams output, and tallies parsed cases.
@@ -192,6 +201,7 @@ fn stream_command(
     command: Command,
     display_name: &str,
     parse_case: fn(&str) -> Option<(String, CaseStatus)>,
+    cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
     sink(TestEvent::Started {
@@ -213,14 +223,15 @@ fn stream_command(
         sink(TestEvent::Output { stream, line });
     };
 
-    let status =
-        process::stream_command_lines(command, &mut on_line).map_err(|error| match error {
+    let status = process::stream_command_lines_cancelable(command, cancel, &mut on_line).map_err(
+        |error| match error {
             ProcessError::Spawn(source) => TestError::Spawn {
                 command: display_name.to_owned(),
                 source,
             },
             ProcessError::Wait(source) => TestError::Io(source),
-        })?;
+        },
+    )?;
 
     Ok(TestOutcome {
         success: status.success(),
@@ -334,10 +345,17 @@ mod tests {
             "exit 101"
         ));
 
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let mut events = Vec::new();
-        let outcome = stream_command(command, "sh de teste", parse_cargo_case, &mut |event| {
-            events.push(event);
-        })
+        let outcome = stream_command(
+            command,
+            "sh de teste",
+            parse_cargo_case,
+            &cancel,
+            &mut |event| {
+                events.push(event);
+            },
+        )
         .unwrap();
 
         assert!(!outcome.success);

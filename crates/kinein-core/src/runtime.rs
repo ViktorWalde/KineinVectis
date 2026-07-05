@@ -28,20 +28,7 @@ where
             continue;
         }
 
-        let mut emit_error: Option<CoreError> = None;
-        let outcome = {
-            let mut emit = |notification: &JsonRpcRequest| {
-                if emit_error.is_some() {
-                    return;
-                }
-                emit_error = write_json_line(&mut writer, notification).err();
-            };
-            core.handle_json_line_streaming(&line, &mut emit)
-        };
-        if let Some(error) = emit_error {
-            return Err(error);
-        }
-
+        let outcome = core.handle_json_line(&line);
         write_json_line(&mut writer, outcome.response())?;
 
         if outcome.should_shutdown() {
@@ -122,20 +109,7 @@ pub fn run_stdio() -> Result<(), CoreError> {
                     continue;
                 }
 
-                let mut emit_error: Option<CoreError> = None;
-                let outcome = {
-                    let mut emit = |notification: &JsonRpcRequest| {
-                        if emit_error.is_some() {
-                            return;
-                        }
-                        emit_error = write_json_line(&mut writer, notification).err();
-                    };
-                    core.handle_json_line_streaming(&line, &mut emit)
-                };
-                if let Some(error) = emit_error {
-                    return Err(error);
-                }
-
+                let outcome = core.handle_json_line(&line);
                 write_json_line(&mut writer, outcome.response())?;
 
                 if outcome.should_shutdown() {

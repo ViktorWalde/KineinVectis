@@ -162,6 +162,10 @@ impl Core {
                 RequestOutcome::Continue(self.close_workspace_response(request_id))
             }
             "build.run" => RequestOutcome::Continue(self.build_run_response(request_id)),
+            "quality.run" => RequestOutcome::Continue(self.quality_run_response(request_id)),
+            "test.run" => RequestOutcome::Continue(
+                self.test_run_response(request_id, request.params.as_ref()),
+            ),
             method => RequestOutcome::Continue(self.service_request_response(
                 method,
                 request_id,
@@ -201,49 +205,16 @@ impl Core {
             .map(|workspace| PathBuf::from(&workspace.root))
     }
 
-    /// Handles a request, streaming events for `test.run` and `quality.run`.
-    ///
-    /// Those two stream `event.test.*` / `event.quality.*` through `emit`
-    /// before returning their result. `build.run` is now an async job
-    /// (`build_run_response`); every other method behaves exactly like
-    /// [`Core::handle_request`].
-    #[must_use]
-    pub fn handle_request_streaming(
-        &mut self,
-        request: &JsonRpcRequest,
-        emit: &mut dyn FnMut(&JsonRpcRequest),
-    ) -> RequestOutcome {
-        if request.method == "test.run" && request.has_supported_version() && request.id.is_some() {
-            return RequestOutcome::Continue(self.test_run_response(
-                request.id.clone(),
-                request.params.as_ref(),
-                emit,
-            ));
-        }
-        if request.method == "quality.run"
-            && request.has_supported_version()
-            && request.id.is_some()
-        {
-            return RequestOutcome::Continue(self.quality_run_response(request.id.clone(), emit));
-        }
-        self.handle_request(request)
-    }
-
     /// Parses and handles a single line-delimited JSON-RPC request.
+    ///
+    /// Long-running methods (`build.run`, `quality.run`, `test.run`) return a
+    /// `jobId` immediately and stream their progress as async `event.*`
+    /// notifications through the core's event channel, so there is no separate
+    /// synchronous-streaming entry point.
     #[must_use]
     pub fn handle_json_line(&mut self, line: &str) -> RequestOutcome {
-        self.handle_json_line_streaming(line, &mut |_notification| {})
-    }
-
-    /// Parses and handles one request line, streaming events through `emit`.
-    #[must_use]
-    pub fn handle_json_line_streaming(
-        &mut self,
-        line: &str,
-        emit: &mut dyn FnMut(&JsonRpcRequest),
-    ) -> RequestOutcome {
         match serde_json::from_str::<JsonRpcRequest>(line) {
-            Ok(request) => self.handle_request_streaming(&request, emit),
+            Ok(request) => self.handle_request(&request),
             Err(error) => {
                 let protocol_error = JsonRpcError::new(
                     JsonRpcErrorCode::ParseError,

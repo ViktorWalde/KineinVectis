@@ -9,6 +9,7 @@ mod fs;
 mod jobs;
 mod lsp;
 mod run;
+mod runners;
 mod tools;
 mod workspace;
 
