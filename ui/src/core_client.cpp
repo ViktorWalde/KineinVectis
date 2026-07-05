@@ -12,7 +12,7 @@
 #include <QTextStream>
 #include <QTime>
 
-namespace kernwerk {
+namespace kinein {
 
 namespace {
 
@@ -99,7 +99,7 @@ QString CoreClient::homeDir()
 QString CoreClient::errorLogFile()
 {
     return QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) +
-           QStringLiteral("/kernwerk-studio/logs/kernwerk-ui-erros.txt");
+           QStringLiteral("/kinein-vectis/logs/kinein-ui-erros.txt");
 }
 
 void CoreClient::start()
@@ -110,10 +110,10 @@ void CoreClient::start()
 
     const QString binary = resolveCoreBinary();
     if (binary.isEmpty()) {
-        setStatus(QStringLiteral("kernwerk-core nao encontrado"), false);
+        setStatus(QStringLiteral("kinein-core nao encontrado"), false);
         appendErrorLog(
-            QStringLiteral("erro: kernwerk-core nao foi encontrado. Compile com "
-                           "'cargo build -p kernwerk-core' ou defina KERNWERK_CORE_BIN."));
+            QStringLiteral("erro: kinein-core nao foi encontrado. Compile com "
+                           "'cargo build -p kinein-core' ou defina KINEIN_CORE_BIN."));
         return;
     }
 
@@ -873,16 +873,16 @@ void CoreClient::setStatus(const QString& status, bool connected)
 
 QString CoreClient::resolveCoreBinary()
 {
-    QString fromEnv = qEnvironmentVariable("KERNWERK_CORE_BIN");
+    QString fromEnv = qEnvironmentVariable("KINEIN_CORE_BIN");
     if (!fromEnv.isEmpty() && QFileInfo::exists(fromEnv)) {
         return fromEnv;
     }
 
     const QStringList candidates{
-        QCoreApplication::applicationDirPath() + QStringLiteral("/kernwerk-core"),
-        QDir::currentPath() + QStringLiteral("/target/debug/kernwerk-core"),
-        QDir::currentPath() + QStringLiteral("/../target/debug/kernwerk-core"),
-        QDir::currentPath() + QStringLiteral("/../../target/debug/kernwerk-core"),
+        QCoreApplication::applicationDirPath() + QStringLiteral("/kinein-core"),
+        QDir::currentPath() + QStringLiteral("/target/debug/kinein-core"),
+        QDir::currentPath() + QStringLiteral("/../target/debug/kinein-core"),
+        QDir::currentPath() + QStringLiteral("/../../target/debug/kinein-core"),
     };
     for (const QString& candidate : candidates) {
         if (QFileInfo::exists(candidate)) {
@@ -890,7 +890,7 @@ QString CoreClient::resolveCoreBinary()
         }
     }
 
-    return QStandardPaths::findExecutable(QStringLiteral("kernwerk-core"));
+    return QStandardPaths::findExecutable(QStringLiteral("kinein-core"));
 }
 
-} // namespace kernwerk
+} // namespace kinein

@@ -1,0 +1,30 @@
+#!/bin/sh
+# Launcher do Kinein Vectis.
+# Sobe a UI release, que por sua vez inicia o kinein-core automaticamente.
+# Tudo local, sem rede e sem servicos externos.
+
+set -eu
+
+REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+
+UI_BIN="$REPO_ROOT/build/linux-clang-release-hardened/ui/kinein-vectis"
+CORE_BIN="$REPO_ROOT/target/release/kinein-core"
+
+# Fallback para builds de desenvolvimento quando o release nao existe.
+if [ ! -x "$UI_BIN" ]; then
+    UI_BIN="$REPO_ROOT/build/linux-clang-debug-strict/ui/kinein-vectis"
+fi
+if [ ! -x "$CORE_BIN" ]; then
+    CORE_BIN="$REPO_ROOT/target/debug/kinein-core"
+fi
+
+if [ ! -x "$UI_BIN" ]; then
+    echo "erro: UI nao compilada. Rode: cmake --preset dev-local-release && cmake --build --preset dev-local-release" >&2
+    exit 1
+fi
+if [ ! -x "$CORE_BIN" ]; then
+    echo "erro: core nao compilado. Rode: cargo build --release -p kinein-core" >&2
+    exit 1
+fi
+
+KINEIN_CORE_BIN="$CORE_BIN" exec "$UI_BIN" "$@"

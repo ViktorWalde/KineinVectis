@@ -6,5 +6,5 @@ CMakeUserPresets.json
 /build/
 /compile_commands.json
 /.cache/
-/.kernwerk/
+/.kinein/
 .claude/settings.local.json*

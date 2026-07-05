@@ -2,7 +2,7 @@
 // header, explorer em arvore, editor com abas, logs recolhiveis, status bar.
 import QtQuick
 import QtQuick.Window
-import KernwerkStudio
+import KineinVectis
 
 Window {
     id: root
@@ -13,8 +13,8 @@ Window {
     minimumHeight: 500
     visible: true
     title: coreClient.workspaceName !== ""
-           ? qsTr("%1 - Kernwerk Studio").arg(coreClient.workspaceName)
-           : qsTr("Kernwerk Studio")
+           ? qsTr("%1 - Kinein Vectis").arg(coreClient.workspaceName)
+           : qsTr("Kinein Vectis")
     color: Theme.background0
 
     property int currentTab: -1
@@ -1810,14 +1810,14 @@ Window {
                 width: 26
                 height: 26
                 anchors.verticalCenter: parent.verticalCenter
-                source: "qrc:/KernwerkStudio/assets/app-icon.png"
+                source: "qrc:/KineinVectis/assets/app-icon.png"
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Kernwerk Studio")
+                text: qsTr("Kinein Vectis")
                 color: Theme.textPrimary
                 font.pixelSize: 15
                 font.bold: true

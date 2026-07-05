@@ -16,7 +16,7 @@
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
-namespace kernwerk {
+namespace kinein {
 
 class EditorHighlighter : public QSyntaxHighlighter
 {
@@ -79,4 +79,4 @@ private:
     QHash<int, QList<SemanticSpan>> m_semanticSpansByLine;
 };
 
-} // namespace kernwerk
+} // namespace kinein

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gate unico de verificacao do Kernwerk Studio.
+# Gate unico de verificacao do Kinein Vectis.
 #
 # Roda toda a validacao em sequencia e PARA no primeiro erro (set -e), para
 # evitar o caso em que um passo falha mas os seguintes continuam e dao falsa
@@ -13,8 +13,8 @@
 # O gate apenas CHECA a formatacao (cargo fmt --check); ele nao altera arquivos.
 #
 # Presets CMake podem ser sobrescritos por ambiente (padrao: dev-local*):
-#   KERNWERK_PRESET_DEBUG   (padrao: dev-local)
-#   KERNWERK_PRESET_RELEASE (padrao: dev-local-release)
+#   KINEIN_PRESET_DEBUG   (padrao: dev-local)
+#   KINEIN_PRESET_RELEASE (padrao: dev-local-release)
 set -euo pipefail
 
 modo="completo"
@@ -30,8 +30,8 @@ esac
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$raiz"
 
-preset_debug="${KERNWERK_PRESET_DEBUG:-dev-local}"
-preset_release="${KERNWERK_PRESET_RELEASE:-dev-local-release}"
+preset_debug="${KINEIN_PRESET_DEBUG:-dev-local}"
+preset_release="${KINEIN_PRESET_RELEASE:-dev-local-release}"
 
 etapa=""
 trap 'estado=$?; if [ "$estado" -ne 0 ]; then
@@ -61,8 +61,8 @@ if [ "$modo" = "completo" ]; then
     passo "cmake --build --preset $preset_debug (UI debug sanitized)"
     cmake --build --preset "$preset_debug"
 
-    passo "cargo build --release -p kernwerk-core"
-    cargo build --release -p kernwerk-core
+    passo "cargo build --release -p kinein-core"
+    cargo build --release -p kinein-core
 
     passo "cmake --build --preset $preset_release (UI release)"
     cmake --build --preset "$preset_release"

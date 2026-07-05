@@ -1,8 +1,8 @@
 
-// IDE-owned workspace picker. Directory data comes from kernwerk-core through
+// IDE-owned workspace picker. Directory data comes from kinein-core through
 // workspace.browse; this component never touches the filesystem directly.
 import QtQuick
-import KernwerkStudio
+import KineinVectis
 
 Item {
     id: picker

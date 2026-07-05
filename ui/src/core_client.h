@@ -1,4 +1,4 @@
-// IPC client that owns the kernwerk-core child process.
+// IPC client that owns the kinein-core child process.
 //
 // The UI never runs build tools or touches the workspace file system itself;
 // it only sends JSON-RPC requests to the core and renders the responses.
@@ -15,7 +15,7 @@
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
-namespace kernwerk {
+namespace kinein {
 
 class CoreClient : public QObject
 {
@@ -184,4 +184,4 @@ private:
     qint64 m_nextRequestId = 1;
 };
 
-} // namespace kernwerk
+} // namespace kinein

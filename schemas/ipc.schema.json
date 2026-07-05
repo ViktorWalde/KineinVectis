@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://kernwerk.dev/schemas/ipc.schema.json",
-  "title": "Kernwerk Studio IPC",
+  "$id": "https://kinein.dev/schemas/ipc.schema.json",
+  "title": "Kinein Vectis IPC",
   "type": "object",
   "oneOf": [
     { "$ref": "#/$defs/request" },

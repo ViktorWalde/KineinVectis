@@ -1,15 +1,15 @@
 # UI Qt/QML
 
-Este diretório é o processo visual do Kernwerk Studio.
+Este diretório é o processo visual do Kinein Vectis.
 
-A UI sobe o `kernwerk-core` como processo filho e conversa por JSON-RPC
+A UI sobe o `kinein-core` como processo filho e conversa por JSON-RPC
 line-delimited via stdin/stdout. Nenhuma lógica de negócio mora aqui.
 
 ## Estrutura
 
 ```text
 ui/
-├── CMakeLists.txt        # alvo kernwerk-studio (qt_add_qml_module)
+├── CMakeLists.txt        # alvo kinein-vectis (qt_add_qml_module)
 ├── src/
 │   ├── main.cpp          # entrypoint QGuiApplication
 │   ├── core_client.h     # CoreClient: QProcess + JSON-RPC (exposto ao QML)
@@ -29,14 +29,14 @@ ui/
 A partir da raiz do repositório:
 
 ```bash
-cargo build -p kernwerk-core          # binário que a UI executa
+cargo build -p kinein-core          # binário que a UI executa
 cmake --preset dev-local
 cmake --build --preset dev-local
-./build/linux-clang-debug-strict/ui/kernwerk-studio
+./build/linux-clang-debug-strict/ui/kinein-vectis
 ```
 
-A UI procura o `kernwerk-core` nesta ordem: variável `KERNWERK_CORE_BIN`,
-diretório do executável, `target/debug/kernwerk-core` relativo ao diretório
+A UI procura o `kinein-core` nesta ordem: variável `KINEIN_CORE_BIN`,
+diretório do executável, `target/debug/kinein-core` relativo ao diretório
 atual, e por fim o `PATH`.
 
 ## Dependências
@@ -57,7 +57,7 @@ sudo apt install cmake ninja-build clang qt6-base-dev qt6-declarative-dev \
 ## Regras permanentes
 
 - UI Qt/QML não chama `cmake`, `git`, `clangd`, `gdb`, `lldb` ou IA externa diretamente.
-- Toda ação visual deve virar comando enviado ao `kernwerk-core` por IPC.
+- Toda ação visual deve virar comando enviado ao `kinein-core` por IPC.
 - QML fica responsável por apresentação e interação; lógica de negócio fica no core Rust.
 - O seletor próprio de workspace usa `workspace.browse`; não voltar para dialog nativo.
 - Criação de pasta/projeto no seletor usa `workspace.createFolder` e
@@ -65,5 +65,5 @@ sudo apt install cmake ninja-build clang qt6-base-dev qt6-declarative-dev \
 - Diagnósticos de build/LSP devem passar pelos eventos do core e pela aba Problemas existente.
 - Navegação semântica (`lsp.definition`, `lsp.hover`) deve passar por `CoreClient`
   e pelo `LspManager`; a UI não fala LSP diretamente.
-- C++/Qt usa CMake, Ninja, C++23, clang-format, clang-tidy e as opções de `cmake/KernwerkStrictOptions.cmake`.
+- C++/Qt usa CMake, Ninja, C++23, clang-format, clang-tidy e as opções de `cmake/KineinStrictOptions.cmake`.
 - Debug nativo usa sanitizers; release nativo usa hardening e LTO.

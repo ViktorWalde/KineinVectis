@@ -6,7 +6,7 @@
 #include <QRegularExpressionMatchIterator>
 #include <QStringList>
 
-namespace kernwerk {
+namespace kinein {
 
 namespace {
 
@@ -462,4 +462,4 @@ void EditorHighlighter::applyBlockSpans(const QString& text)
     }
 }
 
-} // namespace kernwerk
+} // namespace kinein
