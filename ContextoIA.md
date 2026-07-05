@@ -106,6 +106,25 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
   porque o diretorio GCC 14 do sistema esta incompleto (sem libstdc++) e
   quebra o link. Em outras maquinas, usar os presets oficiais.
 
+## Modularizacao pos-V1 (2026-07-05, Opus)
+
+- Fase de "monolito modular" do doc 15 executada: os arquivos-monolito do core,
+  protocolo e CLI foram quebrados por responsabilidade, um commit atomico por
+  arquivo, com gate completo (test + clippy estrito + fmt) verde entre passos e
+  superficie publica preservada. Sem mudanca de comportamento.
+- Novas pastas no core: `src/lsp/` (types/manager/server/framing/parse/edit/uri),
+  `src/fsops/` (error/confine/ops/search/find), `src/workspace/`
+  (error/detect/open/create) e `src/tests/` (por dominio). `handlers/` ja existia.
+- `kernwerk-protocol/src/` agora tem um modulo por dominio (rpc, command, core,
+  tools, workspace, fs, run, terminal, lsp, build) re-exportado flat — os
+  consumidores continuam usando `kernwerk_protocol::TipoX`.
+- `kernwerk-cli` ganhou um lib target (`kernwerk_cli`) com `commands`/`error`;
+  `main.rs` virou shim fino sobre `kernwerk_cli::run`.
+- Rename `kernwerk` -> Kinein Vectis foi ADIADO de proposito: modularizar
+  primeiro, renomear depois numa passada mecanica separada.
+- Arvore de arquivos atualizada em `docs/02-repository-structure.md`; conclusao
+  registrada em `docs/15-engineering-debt-and-refactor.md`.
+
 ## Strict mode
 
 - Rust deve continuar com o maximo rigor:

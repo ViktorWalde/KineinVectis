@@ -44,6 +44,25 @@ Isso ainda é aceitável para MVP, mas não é uma forma saudável para o projet
 crescer até Java, Python, Git, debug, IA, embedded, services, refactoring e
 quality center.
 
+> **Atualização 2026-07-05 — feito.** Todos esses módulos-monólito foram
+> quebrados por responsabilidade, um commit atômico por arquivo, com o gate
+> completo (test + clippy estrito + fmt) verde entre cada passo e a superfície
+> pública preservada:
+>
+> - `lib.rs` do core: 2967 → 317 linhas (dispatch central) + `handlers/`.
+> - `lsp.rs` (1726) → pasta `lsp/` (`types`, `manager`, `server`, `framing`,
+>   `parse`, `edit`, `uri`).
+> - `protocol/lib.rs` (1162) → módulos por domínio (`rpc`, `command`, `core`,
+>   `tools`, `workspace`, `fs`, `run`, `terminal`, `lsp`, `build`) re-exportados
+>   flat.
+> - `fsops.rs` (988) → pasta `fsops/` (`error`, `confine`, `ops`, `search`,
+>   `find`).
+> - `workspace.rs` (718) → pasta `workspace/` (`error`, `detect`, `open`,
+>   `create`).
+> - `cli/main.rs` (597) → lib target `kernwerk_cli` (`commands`, `error`) +
+>   binário fino.
+> - `tests.rs` (955) → pasta `tests/` por domínio.
+
 O risco principal não é "ter arquivos grandes". O risco é os arquivos grandes
 virarem pontos onde tudo sabe demais sobre tudo:
 
@@ -185,6 +204,13 @@ crates/kernwerk-core/src/
 
 Essa divisão só deve ser feita quando houver testes suficientes e benefício
 claro. A meta não é criar pastas por estética, mas reduzir acoplamento real.
+
+> **Estado 2026-07-05.** Parcialmente realizada. `lib.rs` (dispatch mínimo),
+> `rpc.rs`, `runtime.rs`, `commands.rs` e `handlers/` já existem; `lsp/`,
+> `fsops/` (operações confinadas) e `workspace/` já são pastas. Os runners
+> menores (`build.rs`, `test.rs`, `run.rs`, `terminal.rs`, `process.rs`,
+> `tools.rs`) continuam como arquivos únicos por ainda não justificarem uma
+> pasta — foram deixados assim de propósito, não por esquecimento.
 
 ## Regras para evitar dívida técnica antes da V1
 

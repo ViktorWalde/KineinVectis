@@ -21,21 +21,22 @@ kernwerk-studio/
 │   │       ├── runtime.rs       # stdio JSON-RPC loop (run_stdio / run_json_lines)
 │   │       ├── rpc.rs           # JSON-RPC error responses + param parsing
 │   │       ├── commands.rs      # command.list descriptors
-│   │       ├── tests.rs         # core unit tests
-│   │       ├── handlers/        # request handlers by domain (impl Core blocks)
-│   │       │   ├── workspace.rs # workspace.* handlers
-│   │       │   ├── fs.rs        # fs.* handlers
-│   │       │   ├── lsp.rs       # lsp.* handlers
-│   │       │   ├── run.rs       # run.* handlers
-│   │       │   ├── terminal.rs  # terminal.* handlers
-│   │       │   └── build.rs     # build.run / test.run / quality.run handlers
-│   │       ├── workspace.rs fsops.rs lsp.rs tools.rs   # domain services
-│   │       └── build.rs test.rs run.rs terminal.rs process.rs
+│   │       ├── tools.rs process.rs build.rs test.rs run.rs terminal.rs  # domain services
+│   │       ├── handlers/        # request routers by domain (impl Core blocks)
+│   │       │   └── workspace.rs fs.rs lsp.rs run.rs terminal.rs build.rs
+│   │       ├── lsp/             # LSP client subsystem
+│   │       │   └── mod.rs types.rs manager.rs server.rs framing.rs parse.rs edit.rs uri.rs
+│   │       ├── fsops/           # workspace-confined filesystem operations
+│   │       │   └── mod.rs error.rs confine.rs ops.rs search.rs find.rs
+│   │       ├── workspace/       # open / detect / browse / create + persistence
+│   │       │   └── mod.rs error.rs detect.rs open.rs create.rs
+│   │       └── tests/           # integration tests grouped by domain
+│   │           └── mod.rs dispatch.rs tools.rs workspace.rs fs.rs run.rs build.rs lsp.rs
 │   │
 │   ├── kernwerk-protocol/
 │   │   ├── Cargo.toml
-│   │   └── src/
-│   │       └── lib.rs
+│   │   └── src/                 # per-domain modules re-exported flat from lib.rs
+│   │       └── lib.rs rpc.rs command.rs core.rs tools.rs workspace.rs fs.rs run.rs terminal.rs lsp.rs build.rs
 │   │
 │   ├── kernwerk-config/
 │   │   ├── Cargo.toml
@@ -45,7 +46,10 @@ kernwerk-studio/
 │   └── kernwerk-cli/
 │       ├── Cargo.toml
 │       └── src/
-│           └── main.rs
+│           ├── main.rs          # thin binary shim over kernwerk_cli::run
+│           ├── lib.rs           # library target: re-exports run + CliError
+│           ├── commands.rs      # argv → JSON-RPC request dispatch
+│           └── error.rs         # CliError
 │
 ├── ui/
 │   ├── README.md
