@@ -1,0 +1,19 @@
+[package]
+name = "kinein-protocol"
+description = "Shared JSON-RPC protocol types for Kinein Vectis"
+keywords = ["ide", "jsonrpc", "protocol"]
+categories = ["development-tools"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true

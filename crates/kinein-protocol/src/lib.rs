@@ -1,0 +1,38 @@
+//! Shared JSON-RPC protocol types for Kinein Vectis.
+//!
+//! This crate is intentionally UI-agnostic. Qt/QML talks to these structures
+//! through serialized JSON, while the Rust core owns command execution.
+//!
+//! Types are grouped by protocol domain in submodules and re-exported flat, so
+//! consumers keep using `kinein_protocol::TypeName` regardless of the domain
+//! a type lives in.
+
+#![forbid(unsafe_code)]
+
+mod build;
+mod command;
+mod core;
+mod fs;
+mod lsp;
+mod rpc;
+mod run;
+mod terminal;
+mod tools;
+mod workspace;
+
+pub use build::*;
+pub use command::*;
+pub use core::*;
+pub use fs::*;
+pub use lsp::*;
+pub use rpc::*;
+pub use run::*;
+pub use terminal::*;
+pub use tools::*;
+pub use workspace::*;
+
+/// JSON-RPC protocol version used by Kinein Vectis.
+pub const JSON_RPC_VERSION: &str = "2.0";
+
+/// Kinein Vectis IPC protocol version implemented by this workspace.
+pub const PROTOCOL_VERSION: &str = "0.19.0";
