@@ -71,9 +71,11 @@ Use a ordem de precedência definida em `docs/README.md`:
 3. `docs/quality/` e `docs/subsystems/` — referência de tooling e subsistemas
    futuros (guias de rumo, nem tudo implementado).
 
-Não trate `docs/archive/` (planejamento e logs históricos) como fonte de tarefa
-atual, a menos que o usuário peça explicitamente. Se um documento histórico
-contradizer `ContextoIA.md` ou os docs numerados, vale a fonte canônica.
+**Não leia `docs/archive/`.** É histórico morto (legado era-kernwerk, planning,
+logs de sessão) e não deve ser usado como fonte para nada — nem para UI/UX, nem
+para arquitetura, nem para tarefas. A **UI/UX segue `docs/specs/`**; a fonte de
+verdade é `ContextoIA.md` + `docs/specs/` + `docs/ARCHITECTURE.md` + código. Se
+algo em `docs/archive/` contradizer isso, ignore o archive.
 
 ## Padrão de commits sugerido
 
