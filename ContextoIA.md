@@ -75,12 +75,18 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
   - `job.list`
   - `job.cancel`
 - Protocolo IPC atual: `0.19.0`.
-- **Job System (fundação, 2026-07-05):** `kinein-core/src/jobs/` tem um
-  `JobManager` que roda operacoes longas de forma assincrona (retorna id na hora,
-  emite `event.job.created/progress/output/finished`, cancel cooperativo via
-  `JobContext::is_cancelled`). `job.list`/`job.cancel` expostos. Por enquanto so a
-  infraestrutura; build/test/quality/run ainda NAO foram migrados para jobs
-  (proximo passo, com coordenacao da UI). Ver `docs/ARCHITECTURE.md` §7.
+- **Job System (2026-07-05):** `kinein-core/src/jobs/` tem um `JobManager` que roda
+  operacoes longas de forma assincrona (retorna id na hora, emite
+  `event.job.created/progress/output/finished`, cancel via `JobContext`).
+  `job.list`/`job.cancel` expostos. Ver `docs/ARCHITECTURE.md` §7.
+- **`build.run` migrado para job assincrono/cancelavel:** responde na hora com
+  `{ jobId }`; o build roda em background emitindo `event.build.*` (com `jobId`,
+  para Problems/build tool window) + `event.job.*` (status bar); `job.cancel` mata
+  o processo de build (`process::stream_command_lines_cancelable`, com drain
+  limitado para netos nao travarem o retorno). MUDANCA DE CONTRATO: build.run nao
+  retorna mais `BuildRunResult` na resposta; o resultado vem em
+  `event.build.finished`. `quality.run`/`test.run` seguem SINCRONOS (proximos a
+  migrar).
 - `workspace.browse` lista subdiretorios para o seletor proprio da UI. Ele
   canonicaliza caminhos e retorna `{ path, parent, entries }`.
 - `fs.*` continua confinado ao workspace aberto e nao deve ser usado para

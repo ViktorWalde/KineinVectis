@@ -314,25 +314,36 @@ UI renderizar texto puro. LIMITAÇÃO REGISTRADA: como a UI renderiza texto
 sanitizado, programas full-screen (vim, htop) não desenham corretamente
 mesmo enxergando um TTY real; o caminho futuro é renderizar ANSI na UI.
 
-### Build (`build.run`)
+### Build (`build.run` — job assíncrono)
 
-Implementado no protocolo `0.6.0`. Requer workspace aberto. O core executa a
-ferramenta de build do tipo de projeto (`cargo build --message-format=json`
-para Rust/Cargo; `cmake -S/-B` + `cmake --build` em `.kinein/build` para
-CMake) e emite notificações durante a execução:
+Implementado no protocolo `0.6.0`; migrado para **job assíncrono** (ver seção
+Jobs e `docs/ARCHITECTURE.md` §7). Requer workspace aberto. O core valida de
+forma síncrona e responde **na hora** com `{ "jobId": "job_N" }`; o build roda
+em background (`cargo build --message-format=json` para Rust/Cargo;
+`cmake -S/-B` + `cmake --build` em `.kinein/build` para CMake) e é **cancelável**
+via `job.cancel` (mata o processo de build).
+
+Enquanto roda, emite os eventos ricos que a UI consome, agora com `jobId`:
 
 ```text
-event.build.started     { "command": "cargo build" }
-event.build.output      { "stream": "stdout|stderr", "line": "..." }
-event.build.diagnostic  { "severity": "error|warning|note", "message", "file"?, "line"?, "column"? }
-event.build.finished    { "success", "exitCode", "diagnostics" }
+event.build.started     { "jobId", "command": "cargo build" }
+event.build.output      { "jobId", "stream": "stdout|stderr", "line": "..." }
+event.build.diagnostic  { "jobId", "severity": "error|warning|note", "message", "file"?, "line"?, "column"? }
+event.build.finished    { "jobId", "success", "exitCode", "diagnostics" }   // ou { "jobId", "success": false, "error" }
 ```
 
-A resposta final repete o resumo: `{ "success", "exitCode", "diagnostics" }`.
+Além destes, o Job System emite `event.job.created` (ao iniciar) e
+`event.job.finished` (ao encerrar) para a status bar / lista de jobs. O
+resultado do build chega por `event.build.finished`, **não** mais na resposta.
 Diagnósticos vêm do JSON do cargo (span primário) ou do formato
-`arquivo:linha:coluna: nivel: mensagem` de compiladores/CMake. Tipos sem
-integração de build retornam `INVALID_REQUEST`; ferramenta ausente retorna
-`TOOL_NOT_FOUND`. Cancelamento ainda não é suportado.
+`arquivo:linha:coluna: nivel: mensagem` de compiladores/CMake e alimentam o
+Problems. Validação síncrona antes de iniciar o job: tipos sem integração de
+build retornam `INVALID_REQUEST`; sem workspace, `INVALID_REQUEST`. Falhas do
+build (ferramenta ausente, erro de compilação) chegam por
+`event.build.finished`/`event.job.finished`, não como erro da resposta.
+
+> `quality.run` e `test.run` ainda são **síncronos** (streaming via resposta);
+> serão migrados para jobs depois.
 
 ### Qualidade / lint (`quality.run`)
 
