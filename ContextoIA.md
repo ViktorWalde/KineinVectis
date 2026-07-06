@@ -2,7 +2,52 @@
 
 Este arquivo registra decisoes de produto/arquitetura para IAs que continuarem
 o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
-`docs/`.
+`docs/`. Este arquivo e enxuto de proposito: contrato/estado detalhado vive em
+`docs/03-ipc-protocol.md`, `docs/ARCHITECTURE.md` e
+`docs/BACKEND_TO_UI_UX_ROADMAP.md`; aqui so ficam decisoes vigentes e
+prioridade atual (ver `docs/15-engineering-debt-and-refactor.md` sobre por
+que este arquivo foi enxugado em 2026-07-05).
+
+## ATENCAO — trabalho real ainda nao commitado (2026-07-05)
+
+O ultimo commit e `32523cb` ("run quality.run e test.run as async cancelable
+jobs"). Desde entao, ha uma quantidade grande de trabalho **real, testado e
+funcionando** que so existe no working tree, nunca commitado — nao apagar/
+resetar sem revisar antes (`git status`, nunca `git checkout -- .` ou
+`git clean` sem olhar primeiro):
+
+- Feature de scan de ambiente inteira: `crates/kinein-core/src/lib.rs`
+  (+161), `crates/kinein-core/src/tools.rs` (+86),
+  `crates/kinein-core/src/tests/tools.rs` (+86, testes novos).
+- Feature de diagnostics unificados inteira: `crates/kinein-protocol/src/
+  diagnostic.rs` (**arquivo novo, nunca commitado, sem o qual o build quebra
+  num clone limpo**), mais `crates/kinein-protocol/src/build.rs` (+72),
+  `crates/kinein-protocol/src/lib.rs` (+4) e `crates/kinein-core/src/
+  handlers/build.rs` (+89) que a usam.
+- Trabalho adicional em `crates/kinein-core/src/jobs/manager.rs` (+138) e
+  `crates/kinein-protocol/src/job.rs` (+33) alem do que ja foi commitado na
+  "fundacao" do job system.
+- `crates/kinein-core/src/lsp/parse.rs` (+32/-diff) e `crates/kinein-core/
+  src/commands.rs` (+8), sem contexto claro do motivo — revisar antes de
+  commitar.
+- `docs/03-ipc-protocol.md` (+193/-) ja documenta boa parte disso.
+- Mais as mudancas desta sessao (limpeza de docs, `ContextoIA.md`,
+  `core_client.h/.cpp`, `Main.qml`, `AGENTS.md`, `docs/README.md`,
+  `docs/15`).
+
+Tudo isso passa no gate completo (`cargo fmt/clippy -D warnings/test`, 170+
+testes) e nao e trabalho quebrado — so nunca foi commitado. Recomendacao:
+commitar em pedacos logicos (scan de ambiente; diagnostics unificados; job
+manager extra; a limpeza de docs + job.cancel desta sessao) antes de seguir
+com o proximo refactor grande de UI, para nao acumular ainda mais coisa
+uncommitted em cima de uncommitted.
+
+**Ruido separado, nao mexer:** quase todo arquivo rastreado do repositorio
+mudou de modo `100644` para `100755` (executavel) — isso NAO e conteudo
+mudando, e so bit de permissao, provavelmente de uma copia/extracao do
+projeto entre maquinas. Polui `git status`/`git diff --stat` do repositorio
+inteiro. Vale normalizar (`chmod 644` de volta em arquivos que nao sao
+scripts) numa limpeza separada, sem misturar com os commits de feature acima.
 
 ## Direcao do produto
 
@@ -28,201 +73,200 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
   internas e acoes compactas por icone.
 - Clique em diretorio no explorer do projeto deve expandir/recolher, nao trocar
   workspace implicitamente.
-- Abrir outro workspace:
-  - se for o mesmo root, pode preservar abas abertas;
-  - se for outro root, a UI deve limpar abas e estado visual do workspace
-    anterior.
+- Abrir outro workspace: mesmo root pode preservar abas; root diferente limpa
+  abas e estado visual do workspace anterior.
 - Fechar projeto deve fechar automaticamente abas abertas e limpar explorer.
 
 ## Estado tecnico atual
 
 - Arquitetura: Qt/QML UI <-> JSON-RPC local/stdin-stdout <-> Rust core.
-- Core Rust:
-  - `core.ping`
-  - `core.shutdown`
-  - `command.list`
-  - `tools.detect`
-  - `tools.status`
-  - `workspace.browse`
-  - `workspace.open`
-  - `workspace.status`
-  - `workspace.close`
-  - `fs.list`
-  - `fs.read`
-  - `fs.createFile`
-  - `fs.createDirectory`
-  - `fs.write`
-  - `fs.rename`
-  - `fs.delete`
-  - `fs.findFiles`
-  - `build.run`
-  - `test.run`
-  - `quality.run`
-  - `lsp.didChange`
-  - `lsp.definition`
-  - `lsp.hover`
-  - `lsp.completion`
-  - `lsp.references`
-  - `lsp.rename`
-  - `fs.search`
-  - `run.start`
-  - `run.stdin`
-  - `run.stop`
-  - `terminal.open`
-  - `terminal.input`
-  - `terminal.close`
-  - `lsp.semanticTokens`
-  - `job.list`
-  - `job.cancel`
-- Protocolo IPC atual: `0.19.0`.
-- **Job System (2026-07-05):** `kinein-core/src/jobs/` tem um `JobManager` que roda
-  operacoes longas de forma assincrona (retorna id na hora, emite
-  `event.job.created/progress/output/finished`, cancel via `JobContext`).
-  `job.list`/`job.cancel` expostos. Ver `docs/ARCHITECTURE.md` §7.
-- **`build.run` migrado para job assincrono/cancelavel:** responde na hora com
-  `{ jobId }`; o build roda em background emitindo `event.build.*` (com `jobId`,
-  para Problems/build tool window) + `event.job.*` (status bar); `job.cancel` mata
-  o processo de build (`process::stream_command_lines_cancelable`, com drain
-  limitado para netos nao travarem o retorno). MUDANCA DE CONTRATO: build.run nao
-  retorna mais `BuildRunResult` na resposta; o resultado vem em
-  `event.build.finished`. `quality.run`/`test.run` seguem SINCRONOS (proximos a
-  migrar).
-- `workspace.browse` lista subdiretorios para o seletor proprio da UI. Ele
-  canonicaliza caminhos e retorna `{ path, parent, entries }`.
-- `fs.*` continua confinado ao workspace aberto e nao deve ser usado para
-  navegar fora do workspace. `fs.createFile` cria arquivo novo e
-  `fs.createDirectory` cria diretorio novo, ambos sem sobrescrever caminho
-  existente; `fs.write` continua salvando apenas arquivos ja existentes.
-  `fs.rename` renomeia/move e `fs.delete` remove (recursivo para diretorios),
-  ambos confinados a raiz e recusando a propria raiz do workspace.
-- `fs.findFiles` usa `fd` para busca de arquivos por nome, sem indexador
-  proprio. Falta de `fd` retorna `TOOL_NOT_FOUND`.
-- `build.run` executa a ferramenta de build pelo core e emite
-  `event.build.started/output/diagnostic/finished`.
-- `lsp.didChange` sincroniza o buffer aberto com o LSP gerenciado pelo core.
-  Eventos `event.lsp.status` e `event.lsp.diagnostics` alimentam a UI.
-- `lsp.definition` e `lsp.hover` fazem navegacao semantica minima via LSP,
-  sempre passando pelo core e usando posicao 1-based do editor.
-- A UI sobe `kinein-core` como processo filho via `CoreClient`.
-- O usuario testa normalmente pelo icone "Kinein Vectis" ja instalado no
-  menu de aplicativos. Esse icone executa `scripts/kinein-vectis`.
-- O launcher `scripts/kinein-vectis` prefere:
-  - UI release: `build/linux-clang-release-hardened/ui/kinein-vectis`;
-  - core release: `target/release/kinein-core`;
-  - e so cai para debug se os binarios release nao existirem.
-- Depois de alterar core/UI, atualizar os binarios usados pelo icone com:
-  `cargo build --release -p kinein-core` e
+- Protocolo IPC atual: `0.20.0`. Lista completa de comandos/eventos e contrato:
+  `docs/03-ipc-protocol.md` (nao duplicar essa lista aqui).
+- Job system assincrono/cancelavel (`job.list`/`job.cancel`, `event.job.*`)
+  cobre `build.run`, `quality.run`, `test.run` e `environment.scan`: cada um
+  responde `{ jobId }` na hora e emite `event.<dominio>.finished` com o
+  resultado real. Arquitetura: `docs/ARCHITECTURE.md` §7. Impacto/estado de UI:
+  `docs/BACKEND_TO_UI_UX_ROADMAP.md` (P0).
+- Diagnostics parcialmente unificados: modelo comum `Diagnostic` em
+  `kinein-protocol` usado por `event.build.diagnostic`/`event.quality.diagnostic`
+  (faltam ids estaveis, actions e `logRef` — ver roadmap P1).
+- `workspace.browse`/`fs.*`/`fs.findFiles` seguem confinados ao workspace
+  aberto; `fs.*` nunca navega fora dele. Detalhe de cada metodo:
+  `docs/03-ipc-protocol.md`.
+- A UI sobe `kinein-core` como processo filho via `CoreClient`. O usuario testa
+  pelo icone "Kinein Vectis" do menu de aplicativos (`scripts/kinein-vectis`),
+  que prefere binarios release (`build/linux-clang-release-hardened/ui/
+  kinein-vectis`, `target/release/kinein-core`) e cai para debug se release
+  nao existir. Depois de alterar core/UI, rebuild obrigatorio:
+  `cargo build --release -p kinein-core` +
   `cmake --build --preset dev-local-release`.
-- CORRECAO (2026-07-03): nesta maquina (Pop!_OS), o CONFIGURE do CMake deve
-  usar os presets locais `dev-local` / `dev-local-release` de
-  `CMakeUserPresets.json` (fora do git). Eles herdam os presets oficiais e
-  apontam o clang para `--gcc-install-dir=.../gcc/x86_64-linux-gnu/13`,
-  porque o diretorio GCC 14 do sistema esta incompleto (sem libstdc++) e
-  quebra o link. Em outras maquinas, usar os presets oficiais.
+- **Toolchain local (2026-07-05, maquina atual):** o Clang do sistema virou
+  trunk (Clang 21 experimental) e o GCC trunk foi para 15/16. Com Clang trunk,
+  o proprio codigo gerado pelo moc do Qt dispara `-Wctad-maybe-unsupported`;
+  com GCC nativo, o codigo QML gerado (`qmlcache_loader`,
+  `qmltyperegistrations`, JS AOT de `Main.qml`/`FolderPickerDialog.qml`)
+  dispara `-Wfloat-equal`/`-Wuseless-cast`/`-Wmissing-declarations`. Nenhum dos
+  dois e bug nosso — e codigo gerado pelo Qt que este toolchain de ponta
+  considera suspeito. Workaround **local** (`CMakeUserPresets.json`,
+  gitignored, nao afeta CI/outras maquinas): `dev-local`/`dev-local-release`
+  usam `g++`/`gcc` nativos e `KINEIN_WARNINGS_AS_ERRORS=OFF`.
+  `cmake/KineinStrictOptions.cmake` (rastreado no git) permanece inalterado.
+  Se o proximo agente ve warnings so em `.rcc/qmlcache/*`, `moc_*` ou
+  `*_qmltyperegistrations.cpp`, e esse problema conhecido, nao regressao.
+  Em outra maquina, ajustar `CMakeUserPresets.json` conforme o toolchain local
+  (nao editar `cmake/KineinStrictOptions.cmake` sem motivo registrado).
 
-## Modularizacao pos-V1 (2026-07-05, Opus)
+## Modularizacao pos-V1
 
-- Fase de "monolito modular" do doc 15 executada: os arquivos-monolito do core,
-  protocolo e CLI foram quebrados por responsabilidade, um commit atomico por
-  arquivo, com gate completo (test + clippy estrito + fmt) verde entre passos e
-  superficie publica preservada. Sem mudanca de comportamento.
-- Novas pastas no core: `src/lsp/` (types/manager/server/framing/parse/edit/uri),
-  `src/fsops/` (error/confine/ops/search/find), `src/workspace/`
-  (error/detect/open/create) e `src/tests/` (por dominio). `handlers/` ja existia.
-- `kinein-protocol/src/` agora tem um modulo por dominio (rpc, command, core,
-  tools, workspace, fs, run, terminal, lsp, build) re-exportado flat — os
-  consumidores continuam usando `kinein_protocol::TipoX`.
-- `kinein-cli` ganhou um lib target (`kinein_cli`) com `commands`/`error`;
-  `main.rs` virou shim fino sobre `kinein_cli::run`.
-- Rename kernwerk -> Kinein Vectis CONCLUIDO (2026-07-05): crates renomeados para
-  `kinein-*` (imports `kinein_*`), dir de dados `.kernwerk` -> `.kinein`, UI/Qt
-  (target `kinein-vectis`, modulo QML `KineinVectis`, namespace C++ `kinein`,
-  `KineinStrictOptions.cmake`), launcher `scripts/kinein-vectis`, schemas e docs
-  ativos. Verificado: gate Rust (147 testes) + configure/build completo do UI Qt.
-- Docs reorganizados: os specs canonicos da Kinein Vectis estao em `docs/specs/`;
-  os docs era-kernwerk superados foram para `docs/archive/legacy/`.
-- Arvore de arquivos atualizada em `docs/02-repository-structure.md`; conclusao
-  registrada em `docs/15-engineering-debt-and-refactor.md`.
+Fase de "monolito modular" concluida em 2026-07-05: core, protocolo e CLI
+quebrados por responsabilidade; rename kernwerk -> Kinein Vectis concluido.
+Detalhe completo (arquivos, pastas, verificacao): ver
+`docs/15-engineering-debt-and-refactor.md`.
 
 ## Strict mode
 
-- Rust deve continuar com o maximo rigor:
-  - `unsafe_code = "forbid"`;
-  - warnings como erro;
-  - docs/debug impls obrigatorios onde configurado;
-  - clippy pedantic/nursery;
-  - sem `unwrap`, `expect`, `panic`, `todo`, `dbg!` fora de casos aceitos por
-    testes existentes.
-- C++/Qt usa C++23, warnings-as-errors, sanitizers em Debug e hardening/LTO em
+- Rust: `unsafe_code = "forbid"`, warnings como erro, clippy pedantic/nursery,
+  sem `unwrap`/`expect`/`panic`/`todo`/`dbg!` fora de casos aceitos por testes.
+- C++/Qt: C++23, warnings-as-errors, sanitizers em Debug, hardening/LTO em
   Release via `cmake/KineinStrictOptions.cmake`.
-- Futuramente deve existir seletor de nivel de rigidez:
-  - Strict como padrao;
-  - Balanced;
-  - Relaxed apenas por escolha explicita.
+- Futuramente: seletor de nivel de rigidez (Strict padrao / Balanced /
+  Relaxed so por escolha explicita).
 
-## Prioridade imediata
+## Prioridade imediata (2026-07-05, decisao do usuario)
 
-Estabilizar UX/UI basica antes de avancar para features grandes:
+UX/UI basica (workspace, explorer, abas, layout, sidebar, paineis, syntax
+highlighting, build/test/quality, LSP MVP) esta **feita** — ver histórico no
+git e em `docs/BACKEND_TO_UI_UX_ROADMAP.md`. A partir de 2026-07-05 a ordem
+mudou:
 
-1. Fluxo de abrir/fechar workspace. [feito]
-2. Explorer previsivel (arvore expande/recolhe). [feito]
-3. Abas e salvamento. [feito]
-4. Layout arredondado, denso e tecnico inspirado no mockup em
-   `imagens/layout-mockup.png`. [feito]
-5. Top bar, sidebar de icones, paineis inferior e direito. [em andamento]
-   - Sidebar de icones (esquerda): Projeto (mostra/oculta explorer),
-     Ferramentas e Logs (abrem o painel inferior). [feito 2026-07-03]
-   - Painel inferior com abas "Logs" e "Ferramentas". A aba Ferramentas usa
-     `tools.detect` (status, versao e sugestao pacman por ferramenta) com
-     botao de redeteccao. [feito 2026-07-03]
-   - Painel direito (Assistente KW): casca visual pronta (icone ✦ na sidebar,
-     header com badge "offline", historico de mensagens e input). SEM provider
-     de IA ligado; resposta e um aviso honesto sobre a Fase 7 e a politica de
-     confirmacao. Nao fingir IA funcionando. [feito 2026-07-03]
-6. Polir a arvore Project para a sensacao limpa/confortavel JetBrains-like.
-   - Reduzir peso visual do painel e das linhas.
-   - Evitar visual de explorer pesado/fechado estilo VS Code.
-   - Manter diretorio como expandir/recolher, nao trocar workspace.
-   - Preferir icones pequenos e tooltips futuros para acoes.
+1. **Nao empilhar mais fases de backend antes de voltar ao Qt.** O usuario
+   pediu explicitamente para nao atrasar o frontend: o projeto ja e
+   medio/medio-grande, entao cada entrega de backend "invisivel" tem que vir
+   acompanhada de um ganho de UI logo em seguida, nao de mais uma fase de
+   contrato.
+2. [feito 2026-07-05] Cancelar build/test/quality/environment-scan pela UI:
+   `CoreClient` guarda o `jobId` aceito por dominio e ganhou
+   `cancelBuild()/cancelTests()/cancelQuality()/cancelEnvironmentScan()`
+   chamando `job.cancel`; `Main.qml` ganhou um "×" na status bar ao lado de
+   cada indicador (compilando/testando/analisando/scan de ambiente).
+3. Itens de backend ainda pendentes no roadmap (Process Runner unificado,
+   CMake/Cargo service, Project Health, Settings/Storage, Risk Engine, Run
+   Configs, Git, AI Bridge) ficam **explicitamente adiados**: nenhum deles
+   bloqueia o cancelamento de jobs nem a proxima fatia de UI. Retomar um deles
+   so quando uma fatia de UI concreta precisar dele.
+4. **PROXIMA TAREFA (handoff detalhado para quem pegar a sessao seguinte —
+   FABLE ficou sem tokens em 2026-07-05; limite semanal so volta
+   quarta-feira a noite; CODEX deve poder seguir so com o que esta escrito
+   aqui, sem depender de memoria de conversa):** quebrar `Main.qml`
+   (~4600 linhas) em componentes por dominio. Trabalho maior, fazer **uma aba
+   por vez**, com gate verde entre cada extracao — nunca big-bang.
 
-## DECISAO DE PRIORIDADE (usuario, 2026-07-03)
+   **Onde olhar primeiro (linhas aproximadas nesta versao; podem ter mudado
+   um pouco, procure pelos ids/comentarios citados, nao confie so no numero):**
+   - Estado (`property ...`) do `root` (`id: root`, comeca linha 8): flags
+     como `showBottomPanel`, `bottomTab` (linha 23) controlam qual aba do
+     painel inferior esta visivel ("build", "tests", "problems", "tools",
+     "logs", "terminal", "run", "search").
+   - `ListModel`s compartilhados (linhas ~1024-1066): `buildOutputModel`,
+     `problemsModel` (**compartilhado** entre build/quality/lsp diagnostics —
+     nao dividir por dominio sem cuidado), `testModel`, `runModel`,
+     `searchModel`, `everywhereModel`, `treeModel`, `openFiles`.
+   - `Connections { target: coreClient ... }` (comeca linha ~1102): tem
+     `onBuildStarted/onBuildOutput/onBuildDiagnostic/onBuildFinished`,
+     `onTestCase/onTestFinished`, `onQualityDiagnostic/onQualityFinished` —
+     e aqui que os eventos do `CoreClient` viram itens nos `ListModel`s
+     acima via `root.appendBuildLine(...)` etc.
+   - O painel inferior inteiro (tab bar + conteudo de todas as abas) fica
+     num bloco unico dentro do layout principal, comeca por volta da linha
+     3100 (`id: bottomPanel`) e vai ate perto da status bar (~linha 4060).
+     Dentro dele, cada aba tem seu `ListView`/conteudo com
+     `visible: root.bottomTab === "<nome>"` (ex.: `"build"`, `"tests"`,
+     `"problems"`, `"tools"`, `"logs"`).
+   - A status bar (`id: statusBar`, por volta da linha 4090) ja tem os
+     controles de cancelar (× ao lado de "compilando.../testando...") —
+     nao duplicar isso ao extrair os paineis.
 
-O usuario decidiu: UI/UX fica no nivel "basico/funcional" atual; a prioridade
-agora e integrar ferramentas para usar a IDE como ambiente de desenvolvimento
-real. Ordem acordada:
+   **Padrao de extracao a seguir (ja existe um precedente no arquivo —
+   `ui/qml/FolderPickerDialog.qml`, instanciado em `Main.qml` por volta da
+   linha 1072):** um componente QML em arquivo separado **nao ve os `id`s**
+   de `Main.qml` automaticamente (escopo de id e por documento). O jeito
+   certo, exatamente como `FolderPickerDialog` faz:
+   1. O novo `.qml` declara `property`s para tudo que precisa vir de fora
+      (ex.: `property CoreClient coreClient`, `property ListModel model`,
+      `property bool active`) e `signal`s para o que precisa avisar o pai.
+   2. `Main.qml` instancia o componente passando essas propriedades
+      (`BuildPanel { coreClient: coreClient; model: buildOutputModel;
+      visible: root.bottomTab === "build" }`) e conectando os sinais, do
+      mesmo jeito que `onBrowseRequested`/`onOpenRequested` etc. sao
+      conectados no `FolderPickerDialog` hoje.
+   3. Todo novo arquivo `.qml` precisa ser adicionado em `QML_FILES` no
+      `ui/CMakeLists.txt` (mesma lista onde `qml/FolderPickerDialog.qml` ja
+      esta) — sem isso o tipo nao fica disponivel via `import KineinVectis`.
 
-1. Syntax highlighting no editor. [FEITO 2026-07-03]
-2. Fase 4 - Build. [FEITO 2026-07-03 — ver sessao abaixo; cancelamento e
-   run/execucao do binario ainda pendentes]
-3. Fase 5 - LSP: diagnosticos MVP, go to definition e hover implementados
-   para clangd e rust-analyzer. O core sobe servidores como processos
-   gerenciados e traduz LSP para IPC. Nesta sessao `clangd` foi encontrado em
-   `/usr/bin/clangd`; ainda nao assumir que `rust-analyzer` esta instalado.
-   Completion (Ctrl+Space), find usages (Alt+F7) e rename (Shift+F6)
-   entregues na Fase 5.2 [FEITO 2026-07-03]; semantic tokens e code actions
-   continuam pendentes. [MVP EM ANDAMENTO]
-4. Git (Fase 6) na sequencia. A Fase 5 passa a ser tratada como base LSP
-   suficiente para C/C++ e Rust, sem tentar fechar todos os recursos avançados
-   de IDE profissional antes de avançar.
-5. Decisao atualizada (2026-07-04): reformular Fases 7-9 para foco de curto
-   prazo em C/C++ e Rust. Java/Python saem do curto prazo e ficam para pos-V1
-   ou retomada futura. IA nao deve virar sistema complexo de providers agora:
-   o usuario consegue usar Claude/Codex/GPT pelo terminal; a necessidade da
-   IDE e uma aba/terminal visualmente separado para chat de IA, separado do
-   terminal geral usado para comandos do projeto.
-6. Decisao de produto pos-V1 (2026-07-04): adicionar no futuro "modos de
-   compilador" e uma "loja de funcoes" para C/C++ e Rust. Isso deve permitir
-   ativar perfis mais rigidos ou menos rigidos de compilador/quality sem
-   decorar flags. A loja deve ordenar funcoes por confianca: ISO/Standard
-   primeiro em C/C++; Rust oficial primeiro em Rust; depois diagnosticos
-   oficiais, ferramentas maduras, presets Kinein Vectis, regras locais e opcoes
-   experimentais. A experiencia deve ser visual e JetBrains-like: janela de
-   opcoes do ambiente do projeto com nome da funcao, explicacao simples,
-   impacto, risco, fonte, previa de alteracoes e reversao. Nao bloquear a
-   V1.0 com isso. Ver
-   `docs/16-compiler-modes-and-function-store.md`.
+   **Ordem recomendada (do mais isolado ao mais acoplado):**
+   1. Aba "logs"/IDE — so lista `coreClient.logLines`, sem modelo proprio nem
+      logica de dominio. Bom primeiro corte para validar o padrao.
+   2. Aba "tools"/Ferramentas — usa `root.toolsList` (populado por
+      `onToolsListed`) e `coreClient.scanEnvironment()`/`detectTools()`;
+      pouco acoplamento com outras abas.
+   3. Abas "build"/"tests" — cada uma usa seu proprio `ListModel`
+      (`buildOutputModel`/`testModel`) + os handlers de `Connections`
+      correspondentes; extrair os dois juntos ou um de cada vez.
+   4. Aba "problems" — cuidado: e alimentada por build, quality **e** LSP;
+      so extrair depois que build/quality ja estiverem em componentes
+      separados, para nao quebrar nenhuma das tres origens.
+   5. NAO mexer em "terminal"/"run"/"search" nesta rodada a menos que sobre
+      tempo — nao fazem parte do pedido atual (jobs/build/quality) e tem
+      logica propria (PTY, stdin) que merece atencao dedicada.
 
-## Visao pos-V1.0 (usuario, 2026-07-03)
+   **Verificacao apos cada aba extraida:** `cmake --build --preset
+   dev-local` e `--preset dev-local-release` (ambos devem linkar),
+   `clang-format --dry-run --Werror` no `.qml` novo se o projeto passar a
+   formatar QML (hoje so C++ tem gate automatico — QML e revisado a olho),
+   smoke offscreen (`QT_QPA_PLATFORM=offscreen`), e o comportamento visual
+   idempotente (build/test/quality continuam iniciando, mostrando saida e
+   finalizando via eventos; Problems continua recebendo as tres origens).
+
+   **Specs de UI/UX sao inegociaveis mesmo neste refactor estrutural.** Esta
+   tarefa e reorganizacao de arquivo (extrair QML para componentes), NAO
+   redesign — mas qualquer decisao de layout, espacamento, cor, icone,
+   copy ou comportamento visual que aparecer no caminho tem que seguir
+   estritamente os `.md` de `docs/specs/`, nunca inventar por conta propria
+   nem "aproveitar para melhorar visualmente". Specs relevantes para as abas
+   desta tarefa: `docs/specs/KINEIN_VECTIS_LAYOUT_SYSTEM.md`,
+   `docs/specs/KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md`,
+   `docs/specs/KINEIN_VECTIS_VISUAL_SYSTEM_ICONS.md` e
+   `docs/specs/KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md` (indice geral:
+   `docs/specs/KINEIN_VECTIS_SPEC_INDEX.md`). Se o comportamento atual de
+   `Main.qml` divergir do spec, extrair mantendo o comportamento atual (bug
+   de UX vira tarefa separada, com o usuario ciente) — nao corrigir de
+   passagem escondido dentro do refactor estrutural.
+
+   **Nao fazer:** nao mudar o layout/visual (isso e refactor de estrutura,
+   nao redesign); nao duplicar
+   `problemsModel`/`buildOutputModel`/`testModel` — eles continuam vivendo
+   em `Main.qml` e sendo passados por propriedade; nao mover a logica de
+   IPC para os componentes novos (isso e do `CoreClient`, so o binding fica
+   no QML).
+5. `docs/BACKEND_TO_UI_UX_ROADMAP.md` continua sendo a ponte backend->UI: nao
+   substitui `docs/specs/`, so evita que o backend avance sem mapear a
+   experiencia visual futura. Atualizar os dois ao fim de cada entrega.
+
+Decisoes anteriores (2026-07-03/04) ja cumpridas e resumidas: UI/UX
+basica antes de features grandes; syntax highlighting; Fase 4 (build); Fase 5
+(LSP: diagnosticos, go to definition, hover, completion, find usages, rename —
+semantic tokens e code actions ainda pendentes); Java/Python fora do curto
+prazo (pos-V1); IA usada via terminal (Claude/Codex/GPT), sem provider embutido
+no MVP. Detalhe: git log e `docs/BACKEND_TO_UI_UX_ROADMAP.md`.
+
+Ideia de produto pos-V1 (2026-07-04, nao bloqueia V1.0): "modos de compilador"
+e "loja de funcoes" para C/C++ e Rust, com janela de opcoes visual e
+JetBrains-like (nome, explicacao, impacto, risco, fonte, previa, reversao),
+ordenando por confianca (ISO/Rust oficial primeiro). Ainda sem doc dedicado
+apos a limpeza de `docs/archive/`; se for retomada, criar
+`docs/17-compiler-modes-and-function-store.md` antes de implementar.
+
+## Visao pos-V1.0
 
 Depois da V1.0 o foco e polir a IDE continuamente para chegar o mais perto
 possivel das IDEs JetBrains em analise, navegacao e refatoracao — mesmo
@@ -231,13 +275,6 @@ NAO terminar como "um VS Code": a régua de qualidade de navegacao/refactoring
 e JetBrains. Isso reforca a Fase 5 (LSP) como investimento central: semantic
 tokens, go-to-definition, find usages, rename via LSP, e futuramente acoes de
 refatoracao proprias por cima do que os LSPs oferecem.
-
-## Logs de sessão (arquivados)
-
-O registro narrativo, sessão a sessão, do desenvolvimento de 2026-07 foi
-movido para [docs/archive/contextoia-session-logs-2026-07.md](docs/archive/contextoia-session-logs-2026-07.md)
-para manter este arquivo focado em estado atual, decisões vigentes e próximas
-prioridades. Consulte o arquivo apenas se precisar do histórico detalhado.
 
 ## Instrucoes por agente (confirmado pelo usuario em 2026-07-03)
 
@@ -254,7 +291,7 @@ arquivo.
   confirmou isso explicitamente). Se o usuario mandar o Codex desenvolver,
   ele deve ler este arquivo inteiro, seguir a politica anti-duplicacao e as
   decisoes registradas, e continuar do estado descrito na secao "Estado
-  tecnico atual" + sessoes datadas.
+  tecnico atual" + "Prioridade imediata".
 - Regras comuns aos dois:
   - O icone/atalho do aplicativo ja existe. Nao recriar, reinstalar ou
     modificar icone/atalho sem pedido explicito. Recompilar os binarios
@@ -269,19 +306,13 @@ arquivo.
   `claude` (Claude Pro) e `codex` no terminal, como o usuario ja faz
   manualmente. O painel e um "atalho para IA": visualmente separa terminais
   por provider, evitando digitar `claude`/`codex` toda vez. NAO e integracao
-  via API num primeiro momento. Implementacao fica para a Fase 7 (o usuario
-  disse "deixa mais pra frente" os detalhes).
+  via API num primeiro momento.
 - LOGS: o log de tráfego IPC/acoes da IDE e ferramenta de desenvolvimento DA
-  IDE, nao do usuario final. Por isso a aba do painel inferior foi renomeada
-  para "IDE". No fluxo real de projeto, "Logs/Problemas" devem mostrar erros
-  DO PROJETO (build, diagnosticos) — essas abas nascem nas Fases 4/5.
-- ERROS DA IDE EM .TXT: qualquer erro/mau funcionamento da IDE (crash do
-  core, stderr do core, falha de processo, resposta IPC invalida, core nao
-  encontrado) e gravado com timestamp ISO em:
-  `~/.cache/kinein-vectis/logs/kinein-ui-erros.txt`
-  (implementado em `CoreClient::appendErrorLog`; caminho exposto ao QML pela
-  propriedade `errorLogFile`). Segue o diretorio de logs previsto em
-  docs/07-tooling-lifecycle.md.
+  IDE, nao do usuario final — por isso a aba do painel inferior e "IDE", nao
+  "Logs". "Problemas" mostra erros DO PROJETO (build, diagnosticos).
+- ERROS DA IDE EM .TXT: qualquer erro/mau funcionamento da IDE e gravado com
+  timestamp ISO em `~/.cache/kinein-vectis/logs/kinein-ui-erros.txt`
+  (`CoreClient::appendErrorLog`, propriedade QML `errorLogFile`).
 
 ## Politica anti-duplicacao de codigo
 
@@ -339,3 +370,7 @@ plano da tarefa e pedir confirmacao do usuario.
 - Nao duplicar codigo existente; aplicar a Politica anti-duplicacao acima.
 - Atualizar `docs/03-ipc-protocol.md` e schemas quando mudar contrato IPC.
 - Manter docs sincronizadas quando comportamento de workspace/editor mudar.
+- Nao recriar `docs/archive/`: foi removido de proposito em 2026-07-05 (ver
+  `docs/15-engineering-debt-and-refactor.md`). Documento descontinuado vira
+  resumo no doc numerado relevante e depois e apagado, nao guardado numa pasta
+  de arquivo morto.

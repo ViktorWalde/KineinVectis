@@ -9,7 +9,6 @@ quando houver conflito entre documentos.
 1. ContextoIA.md (raiz)   → estado real e decisões vigentes do repositório
 2. docs/specs/            → especificação canônica da Kinein Vectis (visão-alvo)
 3. docs/ (numerados)      → contrato e estado do que já está implementado
-4. docs/archive/          → material histórico; NÃO guia trabalho atual
 ```
 
 Regra: `docs/specs/` descreve o **alvo** (produto, UX, visual, arquitetura
@@ -48,11 +47,13 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | Doc | Assunto |
 | --- | --- |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
+| [BACKEND_TO_UI_UX_ROADMAP.md](BACKEND_TO_UI_UX_ROADMAP.md) | Ponte operacional backend → UI/UX para implementar backend primeiro sem perder os specs visuais |
 | [02-repository-structure.md](02-repository-structure.md) | Estrutura real do repositório e crates |
-| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.19.0) |
+| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.20.0) |
 | [06-strict-mode.md](06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
 | [14-development-environment.md](14-development-environment.md) | Ambiente de desenvolvimento |
 | [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica e modularização pós-V1 |
+| [16-hidden-risks-checklist.md](16-hidden-risks-checklist.md) | Riscos ocultos (perda de dados, migração de config, segurança de comandos, segredos, testes de regressão, a11y, observabilidade, packaging) |
 | [COMANDOS_BUILD_VERIFICACAO.md](COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
 
 ## Guias na raiz do repositório
@@ -64,15 +65,12 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [../AGENTS.md](../AGENTS.md) | Instruções e política de leitura para agentes de IA |
 | [../ContextoIA.md](../ContextoIA.md) | Estado operacional e decisões vigentes |
 
-## docs/archive/ — histórico (não guia trabalho atual)
+## Sem pasta de arquivo morto
 
-- **[archive/legacy/](archive/legacy/)** — docs numerados de visão (00, 01,
-  04, 05, 07–13, 16), `subsystems/` e `quality/` da fase Kernwerk, **superados
-  pelas `docs/specs/`** da Kinein Vectis. Mantidos apenas como histórico.
-- **[archive/planning/](archive/planning/)** — visão e blueprint de concepção
-  (a estrutura real de crates evoluiu diferente — ver doc 02 e o código).
-- **archive/contextoia-session-logs-2026-07.md** — logs de sessão antigos,
-  movidos do `ContextoIA.md`.
-
-Índices agregadores duplicados (`*_ALL_DOCS`, `*_MASTER`) foram removidos; o
-conteúdo único vive nas `docs/specs/` e nos docs numerados mantidos.
+`docs/archive/` (docs numerados era-Kernwerk superados, planning antigo, logs
+de sessão) foi removido deliberadamente em 2026-07-05: era material histórico
+que nenhum documento ativo referenciava mais como fonte, e mantê-lo só
+custava tokens de leitura para humanos e agentes sem guiar trabalho atual.
+Não recriar uma pasta de arquivo "só para guardar"; se algo for descontinuado,
+prefira apagar depois de extrair o que ainda tiver valor para o doc numerado
+relevante (mesmo espírito do item anterior).

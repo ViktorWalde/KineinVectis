@@ -163,6 +163,20 @@ Direção desejada para pós-V1:
 - preferir docs curtos, atualizados e diretamente ligados ao código;
 - manter `ContextoIA.md` como estado operacional, não como depósito infinito.
 
+> **Atualização 2026-07-05 — feito, adiantado antes do pós-V1.** O usuário
+> pediu para tratar isso agora em vez de esperar: `docs/archive/` (32
+> arquivos, ~12.500 linhas de legado era-Kernwerk/planning/logs de sessão) foi
+> deletado — nada ativo referenciava esse material como fonte, só custava
+> tokens de leitura. Uma proposta solta de governança documental
+> (`KINEIN_VECTIS_DOC_GOVERNANCE_AND_HIDDEN_RISKS.md`, nunca commitada) foi
+> revisada: a taxonomia de pastas `active/implemented/obsolete/future` que ela
+> propunha não foi adotada (redundante com a precedência de 3 níveis que
+> `docs/README.md` já usa), mas os riscos genuinamente úteis que ela listava
+> foram extraídos para `docs/16-hidden-risks-checklist.md`. `ContextoIA.md`
+> foi cortado de ~450 para a faixa de 150–200 linhas, removendo narrativa de
+> implementação que já vive no código, no histórico do git e em
+> `docs/03-ipc-protocol.md`/`docs/BACKEND_TO_UI_UX_ROADMAP.md`.
+
 ## Critérios para a refatoração pós-V1
 
 Depois que a V1.0 estiver funcional, deve haver uma fase dedicada de polimento

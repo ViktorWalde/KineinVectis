@@ -67,15 +67,13 @@ Ao propor implementação:
 Use a ordem de precedência definida em `docs/README.md`:
 
 1. `ContextoIA.md` — estado real e decisões vigentes do repositório.
-2. `docs/00–16` (numerados) — contratos e especificações canônicas em vigor.
-3. `docs/quality/` e `docs/subsystems/` — referência de tooling e subsistemas
-   futuros (guias de rumo, nem tudo implementado).
+2. `docs/specs/` — especificação canônica da Kinein Vectis (visão-alvo).
+3. `docs/00–16` (numerados) — contrato e estado do que já está implementado.
 
-**Não leia `docs/archive/`.** É histórico morto (legado era-kernwerk, planning,
-logs de sessão) e não deve ser usado como fonte para nada — nem para UI/UX, nem
-para arquitetura, nem para tarefas. A **UI/UX segue `docs/specs/`**; a fonte de
-verdade é `ContextoIA.md` + `docs/specs/` + `docs/ARCHITECTURE.md` + código. Se
-algo em `docs/archive/` contradizer isso, ignore o archive.
+A **UI/UX segue `docs/specs/`**; a fonte de verdade do que já existe é
+`ContextoIA.md` + `docs/specs/` + `docs/ARCHITECTURE.md` + código. Não existe
+mais pasta de arquivo morto (`docs/archive/` foi removida em 2026-07-05 — ver
+`docs/README.md`); não recriar uma só para guardar material descontinuado.
 
 ## Padrão de commits sugerido
 
