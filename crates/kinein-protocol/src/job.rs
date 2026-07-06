@@ -15,6 +15,8 @@ pub enum JobStatus {
     Queued,
     /// Currently running.
     Running,
+    /// Cancellation was requested and the running work has not finished yet.
+    CancelRequested,
     /// Finished successfully.
     Success,
     /// Finished, but with warnings the caller should surface.
@@ -23,6 +25,17 @@ pub enum JobStatus {
     Failed,
     /// Cancelled by the user before finishing.
     Cancelled,
+}
+
+impl JobStatus {
+    /// Returns `true` when no more work is expected for this status.
+    #[must_use]
+    pub const fn is_terminal(self) -> bool {
+        matches!(
+            self,
+            Self::Success | Self::Warning | Self::Failed | Self::Cancelled
+        )
+    }
 }
 
 /// Risk level of the operation a job performs.
@@ -67,7 +80,7 @@ pub struct JobInfo {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JobListResult {
-    /// Every job known to the core, in stable id order.
+    /// Jobs retained by the core, in stable id order.
     pub jobs: Vec<JobInfo>,
 }
 
@@ -125,6 +138,24 @@ mod tests {
         assert_eq!(value["canCancel"], true);
         assert_eq!(value["risk"], "medium");
         assert!(value.get("progress").is_none());
+    }
+
+    #[test]
+    fn cancel_requested_status_serializes_camel_case() {
+        let value = serde_json::to_value(JobStatus::CancelRequested).unwrap();
+
+        assert_eq!(value, "cancelRequested");
+    }
+
+    #[test]
+    fn job_status_knows_terminal_states() {
+        assert!(!JobStatus::Queued.is_terminal());
+        assert!(!JobStatus::Running.is_terminal());
+        assert!(!JobStatus::CancelRequested.is_terminal());
+        assert!(JobStatus::Success.is_terminal());
+        assert!(JobStatus::Warning.is_terminal());
+        assert!(JobStatus::Failed.is_terminal());
+        assert!(JobStatus::Cancelled.is_terminal());
     }
 
     #[test]
