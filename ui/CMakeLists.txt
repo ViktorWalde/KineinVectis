@@ -5,22 +5,155 @@ find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Qml Quick)
 
 qt_standard_project_setup()
 
+if(DEFINED QT_KNOWN_POLICY_QTP0004)
+    qt_policy(SET QTP0004 NEW)
+endif()
+
 qt_add_executable(kinein-vectis
     src/main.cpp
 )
 
 set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
+set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
+set_source_files_properties(qml/shell/ShellLayout.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayout.qml)
+set_source_files_properties(qml/shell/ShellController.qml PROPERTIES QT_RESOURCE_ALIAS ShellController.qml)
+set_source_files_properties(qml/shell/GlobalShortcuts.qml PROPERTIES QT_RESOURCE_ALIAS GlobalShortcuts.qml)
+set_source_files_properties(qml/shell/ShellOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellOverlays.qml)
+set_source_files_properties(qml/shell/ShellHeaderHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellHeaderHost.qml)
+set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellStatusHost.qml)
+set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
+set_source_files_properties(qml/shell/BottomTabBar.qml PROPERTIES QT_RESOURCE_ALIAS BottomTabBar.qml)
+set_source_files_properties(qml/shell/WorkspaceStatusBar.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceStatusBar.qml)
+set_source_files_properties(qml/panels/bottom/BottomPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelHost.qml)
+set_source_files_properties(qml/panels/bottom/BuildPanel.qml PROPERTIES QT_RESOURCE_ALIAS BuildPanel.qml)
+set_source_files_properties(qml/panels/bottom/IdeLogPanel.qml PROPERTIES QT_RESOURCE_ALIAS IdeLogPanel.qml)
+set_source_files_properties(qml/panels/bottom/JobsPanel.qml PROPERTIES QT_RESOURCE_ALIAS JobsPanel.qml)
+set_source_files_properties(qml/panels/bottom/ProblemsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ProblemsPanel.qml)
+set_source_files_properties(qml/panels/bottom/RunPanel.qml PROPERTIES QT_RESOURCE_ALIAS RunPanel.qml)
+set_source_files_properties(qml/panels/bottom/SearchPanel.qml PROPERTIES QT_RESOURCE_ALIAS SearchPanel.qml)
+set_source_files_properties(qml/panels/bottom/TerminalPanel.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPanel.qml)
+set_source_files_properties(qml/panels/bottom/TestsPanel.qml PROPERTIES QT_RESOURCE_ALIAS TestsPanel.qml)
+set_source_files_properties(qml/panels/bottom/ToolsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ToolsPanel.qml)
+set_source_files_properties(qml/workspace/FolderPickerDialog.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerDialog.qml)
+set_source_files_properties(qml/workspace/FolderPickerController.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerController.qml)
+set_source_files_properties(qml/workspace/FolderPickerButton.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerButton.qml)
+set_source_files_properties(qml/workspace/FolderPickerHeader.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerHeader.qml)
+set_source_files_properties(qml/workspace/FolderPickerPathBar.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerPathBar.qml)
+set_source_files_properties(qml/workspace/FolderPickerCreatePanel.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCreatePanel.qml)
+set_source_files_properties(qml/workspace/FolderPickerDirectoryList.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerDirectoryList.qml)
+set_source_files_properties(qml/workspace/FolderPickerActionRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerActionRow.qml)
+set_source_files_properties(qml/workspace/FolderPickerCard.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCard.qml)
+set_source_files_properties(qml/workspace/WorkspaceController.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceController.qml)
+set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
+set_source_files_properties(qml/assistant/AssistantPanel.qml PROPERTIES QT_RESOURCE_ALIAS AssistantPanel.qml)
+set_source_files_properties(qml/assistant/AssistantController.qml PROPERTIES QT_RESOURCE_ALIAS AssistantController.qml)
+set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
+set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
+set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
+set_source_files_properties(qml/ipc/WorkspaceEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceEventRouter.qml)
+set_source_files_properties(qml/ipc/EditorEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EditorEventRouter.qml)
+set_source_files_properties(qml/ipc/JobsEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS JobsEventRouter.qml)
+set_source_files_properties(qml/ipc/SearchEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SearchEventRouter.qml)
+set_source_files_properties(qml/ipc/RuntimeEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeEventRouter.qml)
+set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
+set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
+set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
+set_source_files_properties(qml/project/ProjectEntryContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryContextMenu.qml)
+set_source_files_properties(qml/project/ProjectEntryRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryRenameDialog.qml)
+set_source_files_properties(qml/project/ProjectEntryDeleteDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryDeleteDialog.qml)
+set_source_files_properties(qml/command/SearchEverywhereDialog.qml PROPERTIES QT_RESOURCE_ALIAS SearchEverywhereDialog.qml)
+set_source_files_properties(qml/command/CommandDispatcher.qml PROPERTIES QT_RESOURCE_ALIAS CommandDispatcher.qml)
+set_source_files_properties(qml/editor/SymbolRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS SymbolRenameDialog.qml)
+set_source_files_properties(qml/editor/EditorController.qml PROPERTIES QT_RESOURCE_ALIAS EditorController.qml)
+set_source_files_properties(qml/editor/EditorSurfaceBridge.qml PROPERTIES QT_RESOURCE_ALIAS EditorSurfaceBridge.qml)
+set_source_files_properties(qml/editor/EditorDocumentController.qml PROPERTIES QT_RESOURCE_ALIAS EditorDocumentController.qml)
+set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextController.qml)
+set_source_files_properties(qml/editor/EditorCompletionController.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionController.qml)
+set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALIAS EditorPane.qml)
+set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
+set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
+set_source_files_properties(qml/editor/EditorHoverPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorHoverPopup.qml)
+set_source_files_properties(qml/editor/EditorCompletionPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionPopup.qml)
+set_source_files_properties(qml/editor/EditorUsagesPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorUsagesPopup.qml)
 
 qt_add_qml_module(kinein-vectis
     URI KineinVectis
     VERSION 1.0
+    RESOURCE_PREFIX /
     QML_FILES
         qml/Main.qml
         qml/Theme.qml
-        qml/FolderPickerDialog.qml
+        qml/shell/TopHeaderBar.qml
+        qml/shell/SideRail.qml
+        qml/shell/ShellLayout.qml
+        qml/shell/ShellController.qml
+        qml/shell/GlobalShortcuts.qml
+        qml/shell/ShellOverlays.qml
+        qml/shell/ShellHeaderHost.qml
+        qml/shell/ShellStatusHost.qml
+        qml/shell/ShellWorkspaceHost.qml
+        qml/shell/BottomTabBar.qml
+        qml/shell/WorkspaceStatusBar.qml
+        qml/panels/bottom/BottomPanelHost.qml
+        qml/panels/bottom/BuildPanel.qml
+        qml/panels/bottom/IdeLogPanel.qml
+        qml/panels/bottom/JobsPanel.qml
+        qml/panels/bottom/ProblemsPanel.qml
+        qml/panels/bottom/RunPanel.qml
+        qml/panels/bottom/SearchPanel.qml
+        qml/panels/bottom/TerminalPanel.qml
+        qml/panels/bottom/TestsPanel.qml
+        qml/panels/bottom/ToolsPanel.qml
+        qml/workspace/FolderPickerDialog.qml
+        qml/workspace/FolderPickerController.qml
+        qml/workspace/FolderPickerButton.qml
+        qml/workspace/FolderPickerHeader.qml
+        qml/workspace/FolderPickerPathBar.qml
+        qml/workspace/FolderPickerCreatePanel.qml
+        qml/workspace/FolderPickerDirectoryList.qml
+        qml/workspace/FolderPickerActionRow.qml
+        qml/workspace/FolderPickerCard.qml
+        qml/workspace/WorkspaceController.qml
+        qml/workspace/WorkspaceUiResetter.qml
+        qml/assistant/AssistantPanel.qml
+        qml/assistant/AssistantController.qml
+        qml/jobs/JobsController.qml
+        qml/runtime/RuntimeController.qml
+        qml/search/SearchController.qml
+        qml/ipc/WorkspaceEventRouter.qml
+        qml/ipc/EditorEventRouter.qml
+        qml/ipc/JobsEventRouter.qml
+        qml/ipc/SearchEventRouter.qml
+        qml/ipc/RuntimeEventRouter.qml
+        qml/project/ProjectCreateDialog.qml
+        qml/project/ProjectTreeController.qml
+        qml/project/ProjectExplorer.qml
+        qml/project/ProjectEntryContextMenu.qml
+        qml/project/ProjectEntryRenameDialog.qml
+        qml/project/ProjectEntryDeleteDialog.qml
+        qml/command/SearchEverywhereDialog.qml
+        qml/command/CommandDispatcher.qml
+        qml/editor/SymbolRenameDialog.qml
+        qml/editor/EditorController.qml
+        qml/editor/EditorSurfaceBridge.qml
+        qml/editor/EditorDocumentController.qml
+        qml/editor/EditorTextController.qml
+        qml/editor/EditorCompletionController.qml
+        qml/editor/EditorPane.qml
+        qml/editor/EditorTabsBar.qml
+        qml/editor/EditorTextSurface.qml
+        qml/editor/EditorHoverPopup.qml
+        qml/editor/EditorCompletionPopup.qml
+        qml/editor/EditorUsagesPopup.qml
     SOURCES
         src/core_client.cpp
         src/core_client.h
+        src/core_client_dispatch.cpp
+        src/core_client_log.cpp
+        src/core_client_process.cpp
+        src/core_client_requests.cpp
+        src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
     RESOURCES

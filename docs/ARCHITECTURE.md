@@ -61,6 +61,46 @@ Proibições que sustentam a arquitetura (não negociáveis):
 Esta é a base mínima. A visão-alvo (specs) prevê ~18 crates; a Seção 6 descreve
 como chegar lá **sem big-bang**.
 
+## 3.1. Organização da UI Qt/QML
+
+A UI segue a mesma regra anti-monólito do core. A fase descrita em
+`docs/17-architecture-hygiene-plan.md` eliminou as concentrações conhecidas em
+2026-07-06; a regra permanente é não aceitar "dívida pequena" quando ela já é
+uma concentração conhecida.
+
+Fluxo obrigatório:
+
+```text
+QML visual -> controller/store QML -> CoreClient facade -> handler IPC interno -> Rust core
+```
+
+Regras:
+
+1. **`Main.qml` é composition root.** Ele instancia janela, `CoreClient`,
+   controllers, roteadores e layout. Não recebe `ListModel`, `Connections`,
+   timers, parsing, estado de domínio nem helpers que conheçam domínio.
+2. **Componente visual é burro.** Recebe dados por `property`, expõe ações por
+   `signal` e não chama ferramenta externa, filesystem ou core diretamente.
+3. **Controller/store QML guarda estado de UI.** Ele pode coordenar modelos,
+   timers e intenção de IPC, mas não executa regra de negócio nem parsing de
+   saída de ferramenta.
+4. **Roteador IPC QML só despacha evento.** Eventos de `CoreClient` ficam em
+   `ui/qml/ipc/<Dominio>EventRouter.qml` e chamam o controller certo.
+5. **`CoreClient` é fachada única.** Não criar `CoreClient2` nem clientes QML
+   paralelos. A implementação C++ deve ser dividida internamente por domínio
+   quando crescer.
+6. **Regra de split da UI.** Arquivo QML visual acima de ~300 linhas,
+   controller/store acima de ~400 linhas ou qualquer arquivo que combine
+   renderização + estado + IPC deve ser quebrado antes de nova feature crescer
+   em cima dele.
+
+Estado validado em 2026-07-06: `Main.qml` tem 336 linhas e atua como
+composition root; o host visual central fica em
+`ui/qml/shell/ShellWorkspaceHost.qml` e não acessa `CoreClient` diretamente; o
+editor divide documentos, texto e completion em subcontrollers; o `CoreClient`
+preserva a API QML única, mas sua implementação C++ está fatiada em processo,
+requests, dispatch, estado e logs.
+
 ## 4. Organização interna do `kinein-core` (o que impede o monólito)
 
 ```text

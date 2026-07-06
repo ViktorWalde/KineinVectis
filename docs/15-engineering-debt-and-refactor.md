@@ -97,6 +97,47 @@ Direção desejada:
 - separação explícita entre estado visual e chamadas IPC;
 - manter toda regra de negócio no core.
 
+> **Atualização 2026-07-06 — concluído para o estado atual.** O risco principal
+> foi reduzido: `Main.qml` saiu da faixa de mais de 4k linhas para **336
+> linhas** e virou composition root. Ele cria a janela, instancia `CoreClient`,
+> controllers, roteadores e hosts de shell, mas não possui mais `ListModel`,
+> `Connections { target: coreClient }`, `Shortcut`, `Timer`, helper de domínio
+> ou componente visual pesado embutido.
+>
+> Estrutura criada para matar o "god file/god controller":
+>
+> 1. Shell visual extraído para `TopHeaderBar`, `SideRail`, `ShellLayout`,
+>    `ShellHeaderHost`, `ShellStatusHost`, `ShellOverlays` e
+>    `ShellWorkspaceHost`. O host central não acessa `CoreClient` diretamente;
+>    ele recebe estado simples/modelos e emite sinais para o composition root.
+> 2. Controllers/stores QML não visuais por domínio:
+>    `WorkspaceController`, `EditorController`, `ProjectTreeController`,
+>    `JobsController`, `RuntimeController`, `SearchController`,
+>    `AssistantController` e `CommandDispatcher`. O editor também foi quebrado
+>    internamente em `EditorDocumentController`, `EditorTextController` e
+>    `EditorCompletionController`.
+> 3. Eventos de `CoreClient` separados em roteadores IPC por domínio:
+>    `WorkspaceEventRouter`, `EditorEventRouter`, `JobsEventRouter`,
+>    `SearchEventRouter` e `RuntimeEventRouter`.
+> 4. `CoreClient` continuou sendo a fachada QML única, mas sua implementação
+>    C++ foi separada em arquivos por responsabilidade: lifecycle/processo,
+>    requests, dispatch, estado e logs.
+> 5. Componentes visuais seguem "burros": recebem dados por `property` e emitem
+>    `signal`; controllers/roteadores coordenam modelos, timers e IPC.
+>
+> Validação desta etapa: `cmake --build --preset dev-local`, smoke offscreen
+> debug, `cmake --build --preset dev-local-release`, smoke offscreen release e
+> `scripts/verificar.sh --rapido` verde. O launcher local
+> `scripts/kinein-vectis` tambem foi testado em smoke offscreen e o atalho do
+> menu foi reinstalado com `scripts/instalar-atalho.sh`.
+>
+> **Decisão posterior do usuário em 2026-07-06:** não tratar sobras pequenas
+> como aceitáveis. A fase de higiene arquitetural sem dívida nova foi executada
+> e documentada em `docs/17-architecture-hygiene-plan.md`. Daqui para frente,
+> esses critérios viram regra de regressão: nova feature não pode recolocar
+> modelo, IPC, timer, estado de domínio ou ferramenta externa em componente
+> visual/`Main.qml`.
+
 ## Gates de qualidade insuficientemente encapsulados
 
 O projeto já tem comandos rigorosos, mas a validação ainda depende de copiar uma
@@ -233,6 +274,10 @@ Até a V1.0, cada nova feature deve respeitar estas regras:
 - não colocar lógica de negócio na UI;
 - não chamar ferramenta externa pela UI;
 - não aumentar `CoreClient` sem avaliar se o fluxo merece separação;
+- não deixar `Main.qml` acumular função, estado, timer, model ou IPC de
+  domínio;
+- não deixar controller/store QML passar do gatilho de split definido em
+  `docs/17-architecture-hygiene-plan.md`;
 - não aumentar `kinein-core/src/lib.rs` com lógica que pertence a serviço;
 - não duplicar parsing de saída de ferramenta se já houver helper;
 - não criar novo documento longo sem atualizar o índice e a precedência;

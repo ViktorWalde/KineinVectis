@@ -154,70 +154,172 @@ mudou:
    Configs, Git, AI Bridge) ficam **explicitamente adiados**: nenhum deles
    bloqueia o cancelamento de jobs nem a proxima fatia de UI. Retomar um deles
    so quando uma fatia de UI concreta precisar dele.
-4. **PROXIMA TAREFA (handoff detalhado para quem pegar a sessao seguinte —
-   FABLE ficou sem tokens em 2026-07-05; limite semanal so volta
-   quarta-feira a noite; CODEX deve poder seguir so com o que esta escrito
-   aqui, sem depender de memoria de conversa):** quebrar `Main.qml`
-   (~4600 linhas) em componentes por dominio. Trabalho maior, fazer **uma aba
-   por vez**, com gate verde entre cada extracao — nunca big-bang.
+4. **TAREFA CONCLUIDA EM 2026-07-06:** quebrar `Main.qml` (~4600 linhas
+   originalmente) em componentes por dominio, controllers/stores nao visuais e
+   roteadores IPC por dominio. Historico da sequencia abaixo; o estado atual e
+   o bloco "Main deixou de ser god file/god controller".
 
-   **Onde olhar primeiro (linhas aproximadas nesta versao; podem ter mudado
-   um pouco, procure pelos ids/comentarios citados, nao confie so no numero):**
-   - Estado (`property ...`) do `root` (`id: root`, comeca linha 8): flags
-     como `showBottomPanel`, `bottomTab` (linha 23) controlam qual aba do
-     painel inferior esta visivel ("build", "tests", "problems", "tools",
-     "logs", "terminal", "run", "search").
-   - `ListModel`s compartilhados (linhas ~1024-1066): `buildOutputModel`,
-     `problemsModel` (**compartilhado** entre build/quality/lsp diagnostics —
-     nao dividir por dominio sem cuidado), `testModel`, `runModel`,
-     `searchModel`, `everywhereModel`, `treeModel`, `openFiles`.
-   - `Connections { target: coreClient ... }` (comeca linha ~1102): tem
-     `onBuildStarted/onBuildOutput/onBuildDiagnostic/onBuildFinished`,
-     `onTestCase/onTestFinished`, `onQualityDiagnostic/onQualityFinished` —
-     e aqui que os eventos do `CoreClient` viram itens nos `ListModel`s
-     acima via `root.appendBuildLine(...)` etc.
-   - O painel inferior inteiro (tab bar + conteudo de todas as abas) fica
-     num bloco unico dentro do layout principal, comeca por volta da linha
-     3100 (`id: bottomPanel`) e vai ate perto da status bar (~linha 4060).
-     Dentro dele, cada aba tem seu `ListView`/conteudo com
-     `visible: root.bottomTab === "<nome>"` (ex.: `"build"`, `"tests"`,
-     `"problems"`, `"tools"`, `"logs"`).
-   - A status bar (`id: statusBar`, por volta da linha 4090) ja tem os
-     controles de cancelar (× ao lado de "compilando.../testando...") —
-     nao duplicar isso ao extrair os paineis.
+   **Atualizacao CODEX 2026-07-06:** primeira fatia executada e validada.
+   `Main.qml` caiu primeiro para ~4130 linhas. Foram extraidos e registrados em
+   `ui/CMakeLists.txt`: `BottomTabBar.qml`, `BuildPanel.qml`,
+   `TestsPanel.qml`, `ProblemsPanel.qml`, `IdeLogPanel.qml`,
+   `ToolsPanel.qml` e `WorkspaceStatusBar.qml`. `Main.qml` continua dono dos
+   `ListModel`s e dos handlers `Connections { target: coreClient }`; os
+   componentes novos recebem dados por `property` e devolvem acoes por
+   `signal` quando necessario (`ProblemsPanel.openRequested`,
+   `WorkspaceStatusBar.cancel*Requested`, etc.). Tambem foi corrigido um lint
+   C++ pequeno em `ui/src/editor_highlighter.cpp` (`Rule` com designated
+   initializer). Verificacao feita: `cmake --build --preset dev-local`,
+   `cmake --build --preset dev-local-release`, smoke offscreen release
+   (encerrou por `timeout`, so mostrou warning antigo de `Shortcut`) e
+   `scripts/verificar.sh --rapido` verde.
 
-   **Padrao de extracao a seguir (ja existe um precedente no arquivo —
-   `ui/qml/FolderPickerDialog.qml`, instanciado em `Main.qml` por volta da
-   linha 1072):** um componente QML em arquivo separado **nao ve os `id`s**
-   de `Main.qml` automaticamente (escopo de id e por documento). O jeito
-   certo, exatamente como `FolderPickerDialog` faz:
-   1. O novo `.qml` declara `property`s para tudo que precisa vir de fora
-      (ex.: `property CoreClient coreClient`, `property ListModel model`,
-      `property bool active`) e `signal`s para o que precisa avisar o pai.
-   2. `Main.qml` instancia o componente passando essas propriedades
-      (`BuildPanel { coreClient: coreClient; model: buildOutputModel;
-      visible: root.bottomTab === "build" }`) e conectando os sinais, do
-      mesmo jeito que `onBrowseRequested`/`onOpenRequested` etc. sao
-      conectados no `FolderPickerDialog` hoje.
-   3. Todo novo arquivo `.qml` precisa ser adicionado em `QML_FILES` no
-      `ui/CMakeLists.txt` (mesma lista onde `qml/FolderPickerDialog.qml` ja
-      esta) — sem isso o tipo nao fica disponivel via `import KineinVectis`.
+   **Atualizacao CODEX 2026-07-06 (segunda fatia):** tambem foram extraidos
+   `TerminalPanel.qml`, `RunPanel.qml` e `SearchPanel.qml`; `Main.qml` caiu
+   para ~3810 linhas. O terminal agora envia input via `coreClient.terminalInput`
+   (antes o QML chamava `runInput`, metodo inexistente no `CoreClient`).
+   Verificacao repetida: `cmake --build --preset dev-local`,
+   `cmake --build --preset dev-local-release`, smoke offscreen release
+   (mesmo warning antigo de `Shortcut`) e `scripts/verificar.sh --rapido`
+   verde.
 
-   **Ordem recomendada (do mais isolado ao mais acoplado):**
-   1. Aba "logs"/IDE — so lista `coreClient.logLines`, sem modelo proprio nem
-      logica de dominio. Bom primeiro corte para validar o padrao.
-   2. Aba "tools"/Ferramentas — usa `root.toolsList` (populado por
-      `onToolsListed`) e `coreClient.scanEnvironment()`/`detectTools()`;
-      pouco acoplamento com outras abas.
-   3. Abas "build"/"tests" — cada uma usa seu proprio `ListModel`
-      (`buildOutputModel`/`testModel`) + os handlers de `Connections`
-      correspondentes; extrair os dois juntos ou um de cada vez.
-   4. Aba "problems" — cuidado: e alimentada por build, quality **e** LSP;
-      so extrair depois que build/quality ja estiverem em componentes
-      separados, para nao quebrar nenhuma das tres origens.
-   5. NAO mexer em "terminal"/"run"/"search" nesta rodada a menos que sobre
-      tempo — nao fazem parte do pedido atual (jobs/build/quality) e tem
-      logica propria (PTY, stdin) que merece atencao dedicada.
+   **Atualizacao CODEX 2026-07-06 (arquitetura QML por responsabilidade):**
+   os componentes QML agora ficam em pastas por dominio, nao soltos em
+   `ui/qml/`. `Main.qml` caiu para **2745 linhas** e continua sendo o
+   orquestrador de estado/modelos/IPC. Estrutura atual:
+   `shell/` (`BottomTabBar`, `WorkspaceStatusBar`), `panels/bottom/`
+   (`BuildPanel`, `TestsPanel`, `ProblemsPanel`, `TerminalPanel`,
+   `RunPanel`, `SearchPanel`, `IdeLogPanel`, `ToolsPanel`), `workspace/`
+   (`FolderPickerDialog`), `assistant/` (`AssistantPanel`), `project/`
+   (`ProjectCreateDialog`, `ProjectEntryContextMenu`,
+   `ProjectEntryRenameDialog`, `ProjectEntryDeleteDialog`), `command/`
+   (`SearchEverywhereDialog`) e `editor/` (`SymbolRenameDialog`,
+   `EditorTabsBar`, `EditorTextSurface`, `EditorHoverPopup`,
+   `EditorCompletionPopup`, `EditorUsagesPopup`).
+   `ui/CMakeLists.txt` usa `QT_RESOURCE_ALIAS` para manter os nomes dos tipos
+   QML estaveis apesar dos arquivos fisicamente organizados em subpastas.
+   Componentes recebem dados por `property` e retornam acoes por `signal`; nao
+   chamam ferramentas externas nem falam diretamente com filesystem/core, salvo
+   quando o pai (`Main.qml`) ja encaminha via `CoreClient`.
+
+   Verificacao desta terceira fatia: `cmake --build --preset dev-local`,
+   smoke offscreen debug, `cmake --build --preset dev-local-release`, smoke
+   offscreen release (ambos encerraram por `timeout`; unico aviso novo/visivel
+   segue sendo o warning antigo de `Shortcut`) e
+   `scripts/verificar.sh --rapido` verde. Durante a extracao foi preservado o
+   padrao arquitetural: `Main.qml` e dono dos `ListModel`s e dos handlers
+   `Connections { target: coreClient }`; componentes novos so recebem modelos,
+   texto, flags e emitem sinais.
+
+   **Atualizacao CODEX 2026-07-06 (warning de Shortcut resolvido):** o aviso
+   runtime `QML Shortcut: Only binding to one of multiple key bindings...`
+   vinha de `Shortcut { sequence: StandardKey.Save }`. Corrigido sem camada
+   nova, usando `sequences: [StandardKey.Save]`. Smoke offscreen debug e
+   release ficaram sem saida QML; `scripts/verificar.sh` completo terminou
+   verde e atualizou os binarios release usados pelo icone.
+
+   **Atualizacao CODEX 2026-07-06 (Main deixou de ser god file/god
+   controller):** `Main.qml` foi reduzido para **336 linhas** e virou
+   composition root. Ele nao possui mais `ListModel`, nao possui
+   `Connections { target: coreClient }`, `Shortcut`, `Timer`, helper de
+   dominio ou componente visual pesado embutido, e nao concentra os
+   estados/modelos de editor, project tree, jobs, busca, run/terminal,
+   assistente ou workspace.
+   Estado e orquestracao foram movidos para controllers/stores nao visuais:
+   `editor/EditorController.qml`, `project/ProjectTreeController.qml`,
+   `jobs/JobsController.qml`, `runtime/RuntimeController.qml`,
+   `search/SearchController.qml`, `workspace/WorkspaceController.qml`,
+   `assistant/AssistantController.qml` e `command/CommandDispatcher.qml`.
+   Eventos do `CoreClient` foram separados em roteadores IPC por dominio:
+   `ipc/WorkspaceEventRouter.qml`, `ipc/EditorEventRouter.qml`,
+   `ipc/JobsEventRouter.qml`, `ipc/SearchEventRouter.qml` e
+   `ipc/RuntimeEventRouter.qml`. A superficie visual central foi consolidada em
+   `shell/ShellWorkspaceHost.qml` (sem acesso direto a `CoreClient`), o editor
+   foi quebrado em subcontrollers e a implementacao C++ do `CoreClient` foi
+   fatiada por responsabilidade interna.
+   Validacao desta etapa: `cmake --build --preset dev-local`, smoke offscreen
+   debug, `cmake --build --preset dev-local-release`, smoke offscreen release,
+   smoke offscreen pelo launcher `scripts/kinein-vectis` e
+   `scripts/verificar.sh --rapido` verde.
+
+   **Atualizacao CODEX 2026-07-06 (ProjectExplorer extraido):** a arvore de
+   projeto saiu de `Main.qml` e virou `ui/qml/project/ProjectExplorer.qml`,
+   registrada em `ui/CMakeLists.txt` com `QT_RESOURCE_ALIAS`. `Main.qml` caiu
+   para **2533 linhas**; `ProjectExplorer.qml` ficou com **253 linhas**.
+   `treeModel`, selecao e IPC continuam no pai. O componente so recebe
+   `workspaceName`, `workspaceKindLabel`, `selectedPath` e `entriesModel`, e
+   emite sinais para criar arquivo/pasta, atualizar, fechar workspace,
+   selecionar entrada, expandir/recolher diretorio, abrir arquivo e pedir menu
+   de contexto. Validado com `cmake --build --preset dev-local`, smoke
+   offscreen debug, `cmake --build --preset dev-local-release`, smoke offscreen
+   release e `scripts/verificar.sh --rapido` verde.
+
+   **Atualizacao CODEX 2026-07-06 (editor visual extraido):** a barra de abas
+   e a superficie visual do editor sairam de `Main.qml` e viraram
+   `ui/qml/editor/EditorTabsBar.qml` e
+   `ui/qml/editor/EditorTextSurface.qml`, ambas registradas em
+   `ui/CMakeLists.txt` com `QT_RESOURCE_ALIAS`. `Main.qml` caiu para
+   **2340 linhas**; `EditorTabsBar.qml` ficou com **110 linhas** e
+   `EditorTextSurface.qml` com **176 linhas**. `Main.qml` continua dono de
+   `openFiles`, `currentTab`, `loadingEditorText`, dirty state, timers,
+   requests LSP, save/read/write e IPC. `EditorTabsBar` so recebe modelo/indice
+   e emite selecao, fechamento e salvar. `EditorTextSurface` encapsula
+   `Flickable + TextEdit + EditorHighlighter`, expoe texto/cursor/selecao e
+   emite sinais para texto editado, completion, hover/usages, indent/unindent
+   e newline. Validado com `cmake --build --preset dev-local`, smoke offscreen
+   debug, `cmake --build --preset dev-local-release`, smoke offscreen release e
+   `scripts/verificar.sh --rapido` verde.
+
+   **Atualizacao CODEX 2026-07-06 (Main deixou de ser god file/god
+   controller):** a estrategia aprovada foi executada. O shell visual saiu
+   para `ui/qml/shell/TopHeaderBar.qml`, `SideRail.qml` e `ShellLayout.qml`.
+   O estado/orquestracao saiu para controllers/stores QML nao visuais:
+   `workspace/WorkspaceController.qml`, `editor/EditorController.qml`,
+   `project/ProjectTreeController.qml`, `jobs/JobsController.qml`,
+   `runtime/RuntimeController.qml`, `search/SearchController.qml`,
+   `assistant/AssistantController.qml` e `command/CommandDispatcher.qml`.
+   Os handlers de `CoreClient` foram divididos em roteadores IPC por dominio:
+   `ipc/WorkspaceEventRouter.qml`, `EditorEventRouter.qml`,
+   `JobsEventRouter.qml`, `SearchEventRouter.qml` e
+   `RuntimeEventRouter.qml`.
+
+   `Main.qml` caiu para **336 linhas**. Ele nao tem mais `ListModel`, nao tem
+   mais bloco `Connections { target: coreClient }`, `Shortcut`, `Timer`, helper
+   de dominio ou componente visual pesado embutido; tambem nao guarda
+   `openFiles`, `treeModel`, modelos de build/test/problems/search/run, timers
+   de LSP, estado de terminal, command palette ou mensagens do assistente. O
+   arquivo ficou como composition root: cria a janela, instancia `CoreClient`,
+   controllers, roteadores e hosts de shell, e conecta sinais de alto nivel.
+
+   **Decisao do usuario em 2026-07-06:** nao aceitar sobras pequenas como
+   divida tecnica "adiavel". A fase de higiene arquitetural sem divida nova foi
+   executada e ficou documentada em `docs/17-architecture-hygiene-plan.md`.
+   Daqui para frente, novas features grandes so devem entrar mantendo os
+   guardrails: `Main.qml` composition root, controllers/stores por dominio,
+   roteadores IPC por dominio e `CoreClient` como fachada QML unica com
+   implementacao interna fatiada quando crescer.
+
+   **Onde olhar primeiro agora:**
+   - `ui/qml/Main.qml`: composition root; deve permanecer pequeno e nao voltar
+     a concentrar modelos/handlers de dominio.
+   - `ui/qml/editor/EditorController.qml`: fachada do editor; documentos,
+     texto e completion ficam nos subcontrollers do mesmo diretorio.
+   - `ui/qml/project/ProjectTreeController.qml`: `treeModel`,
+     expand/collapse, selecao, create/rename/delete e sincronizacao com abas.
+   - `ui/qml/jobs/JobsController.qml`: saida de build, problemas
+     build/quality/LSP, testes, summary e historico generico de jobs.
+   - `ui/qml/runtime/RuntimeController.qml`: terminal integrado, saida de run,
+     stdin e start/stop de processo.
+   - `ui/qml/search/SearchController.qml`: busca em arquivos e Search
+     Everywhere.
+   - `ui/qml/ipc/*.qml`: roteadores dos eventos `CoreClient` por dominio.
+
+   **Padrao de extracao daqui para frente:** componente visual recebe dados por
+   `property` e emite `signal`; controller/store guarda modelo, estado, timers
+   e pequenas decisoes de UI; roteador IPC recebe evento do `CoreClient` e chama
+   o controller certo. Nenhum componente visual deve acessar filesystem ou
+   chamar ferramenta externa. Todo novo `.qml` em subpasta precisa entrar em
+   `ui/CMakeLists.txt` com `QT_RESOURCE_ALIAS`.
 
    **Verificacao apos cada aba extraida:** `cmake --build --preset
    dev-local` e `--preset dev-local-release` (ambos devem linkar),
@@ -242,12 +344,78 @@ mudou:
    de UX vira tarefa separada, com o usuario ciente) — nao corrigir de
    passagem escondido dentro do refactor estrutural.
 
-   **Nao fazer:** nao mudar o layout/visual (isso e refactor de estrutura,
-   nao redesign); nao duplicar
-   `problemsModel`/`buildOutputModel`/`testModel` — eles continuam vivendo
-   em `Main.qml` e sendo passados por propriedade; nao mover a logica de
-   IPC para os componentes novos (isso e do `CoreClient`, so o binding fica
-   no QML).
+   **Nao fazer:** nao mudar o layout/visual escondido dentro de refactor
+   estrutural; nao recolocar `ListModel`, timers, `Connections` ou switchs de
+   dominio em `Main.qml`; nao criar acesso direto a filesystem/ferramentas em
+   componente visual. Modelos de dominio agora vivem nos controllers
+   (`JobsController`, `EditorController`, `ProjectTreeController`,
+   `RuntimeController`, `SearchController`, etc.) e eventos IPC vivem nos
+   roteadores `ui/qml/ipc/`.
+
+   **Atualizacao CODEX 2026-07-06 (higiene arquitetural finalizada):** a fase
+   sem divida nova foi executada e documentada em
+   `docs/17-architecture-hygiene-plan.md`. Estado final validado:
+   `Main.qml` ficou com **336 linhas**, sem `ListModel`, `Connections`,
+   `Shortcut`, `Timer`, helper de dominio ou componente visual pesado
+   embutido. O host visual central do workspace virou
+   `ui/qml/shell/ShellWorkspaceHost.qml` (**248 linhas**, sem acesso direto a
+   `CoreClient`). O `EditorController.qml` ficou com **318 linhas** e delega
+   documentos, texto
+   e completion para `EditorDocumentController.qml`,
+   `EditorTextController.qml` e `EditorCompletionController.qml`. O
+   `CoreClient` segue sendo a fachada QML unica, mas sua implementacao C++ foi
+   dividida em `core_client_process.cpp`, `core_client_requests.cpp`,
+   `core_client_dispatch.cpp`, `core_client_state.cpp` e
+   `core_client_log.cpp`. `ui/CMakeLists.txt` foi sincronizado com os novos
+   QML/C++ e tambem declara o prefixo QML usado pelo runtime, alem de tratar a
+   politica Qt de `qmldir` extra quando disponivel. Validacao final:
+   `cmake --build --preset dev-local`, smoke offscreen debug,
+   `cmake --build --preset dev-local-release`, smoke offscreen release, smoke
+   offscreen via `scripts/kinein-vectis` e `scripts/verificar.sh --rapido`
+   verde.
+
+   **Atualizacao CODEX 2026-07-06 (aba Jobs generica):** a UI passou a consumir
+   `event.job.created/progress/output/finished` em uma aba dedicada "Jobs" no
+   painel inferior, sem mudanca de contrato IPC nem backend novo. O
+   `JobsController.qml` agora mantem `jobsModel`, `JobsEventRouter.qml`
+   encaminha os sinais genericos de job, e o componente visual novo
+   `ui/qml/panels/bottom/JobsPanel.qml` mostra titulo, status, risco nao baixo
+   e ultima linha/progresso textual do job. `ui/CMakeLists.txt` foi atualizado
+   com `QT_RESOURCE_ALIAS` para o novo QML. Validacao da fatia: build debug,
+   smoke offscreen debug, build release, smoke offscreen release e smoke pelo
+   launcher local verdes; `scripts/verificar.sh --rapido` tambem verde. O
+   ruido restante segue restrito a qmlcache gerado pelo Qt/toolchain local.
+
+   **Regra daqui para frente:** a fase nao deixa divida tecnica conhecida
+   nessa frente. Nova feature deve manter o fluxo `QML visual ->
+   controller/store -> CoreClient facade -> handler IPC interno -> Rust core`.
+   Se algum arquivo passar dos limites de `docs/17-architecture-hygiene-plan.md`
+   ou misturar renderizacao, estado e IPC, a feature so esta pronta depois do
+   split.
+
+   **Proxima sequencia recomendada apos este checkpoint/commit (2026-07-06):**
+   1. Depois de trocar/reinstalar a distro, revalidar o ambiente local antes de
+      codar: instalar dependencias de `docs/14-development-environment.md`,
+      configurar presets locais se necessario (`cmake --preset dev-local` e
+      `cmake --preset dev-local-release`), rodar `scripts/verificar.sh
+      --rapido`, `cmake --build --preset dev-local`,
+      `cargo build --release -p kinein-core`,
+      `cmake --build --preset dev-local-release` e smoke offscreen pelo
+      launcher `scripts/kinein-vectis`.
+   2. Nao iniciar Git/AI/debug avancado antes de uma fatia UI concreta. A
+      proxima entrega recomendada e **Project Health minimo e visivel**:
+      primeiro usar dados ja existentes (`workspace.kind`, `tools.status`,
+      `environment.scan`, estado de jobs/LSP) para um banner/painel discreto;
+      so criar contrato novo (`project.health`) se a UI realmente precisar de
+      dado que o core ainda nao expõe.
+   3. Se `project.health` virar necessario, seguir o fluxo de
+      `docs/ARCHITECTURE.md`: tipos em `kinein-protocol`, handler fino,
+      servico de dominio no core, testes, docs/03 atualizado e UI por
+      controller/roteador/componente visual. Operacao longa deve ser job.
+   4. Depois do Project Health minimo, escolher a proxima fatia visivel entre:
+      Toolchain/Environment Settings usando `environment.scan`; CMake/Cargo
+      toolbar basica so quando houver contrato suficiente; ou Settings/Storage
+      com schema se a UI precisar persistir escolhas.
 5. `docs/BACKEND_TO_UI_UX_ROADMAP.md` continua sendo a ponte backend->UI: nao
    substitui `docs/specs/`, so evita que o backend avance sem mapear a
    experiencia visual futura. Atualizar os dois ao fim de cada entrega.
@@ -330,12 +498,17 @@ Antes de implementar qualquer coisa, uma IA deve:
 
 Elementos que ja existem e devem ser reaproveitados:
 
-- `ui/src/core_client.h` e `ui/src/core_client.cpp`: cliente IPC da UI. Nao
-  criar outro cliente IPC paralelo.
-- `ui/qml/FolderPickerDialog.qml`: seletor proprio de workspace. Nao voltar
-  para `QtQuick.Dialogs` e nao criar outro seletor de pasta duplicado.
-- `ui/qml/Main.qml`: layout principal, sidebar, explorer, editor, painel
-  inferior e estado visual (`showExplorer`, abas, logs/ferramentas).
+- `ui/src/core_client.h` e `ui/src/core_client*.cpp`: cliente IPC da UI. Nao
+  criar outro cliente IPC paralelo; manter `CoreClient` como fachada QML unica
+  e dividir so a implementacao interna por responsabilidade.
+- `ui/qml/workspace/FolderPickerDialog.qml`: seletor proprio de workspace.
+  Nao voltar para `QtQuick.Dialogs` e nao criar outro seletor de pasta
+  duplicado.
+- `ui/qml/Main.qml`: composition root da UI. Nao recolocar nele modelos,
+  timers, handlers IPC ou blocos grandes de dominio se ja houver componente,
+  controller ou roteador em `shell/`, `panels/bottom/`, `workspace/`,
+  `assistant/`, `project/`, `command/`, `editor/`, `jobs/`, `runtime/`,
+  `search/` ou `ipc/`.
 - `ui/qml/Theme.qml`: tokens visuais. Nao espalhar cores soltas quando um token
   existente resolver.
 - `workspace.browse`: navegacao de diretorios para abrir workspace. Nao criar

@@ -156,7 +156,7 @@ void EditorHighlighter::rebuildRules()
     const QTextCharFormat metaFormat = colorFormat(kMetaRgb);
 
     const auto addRule = [this](const QRegularExpression& pattern, const QTextCharFormat& format) {
-        m_rules.append(Rule{pattern, format});
+        m_rules.append(Rule{.pattern = pattern, .format = format});
     };
 
     if (m_language == QStringLiteral("rust")) {

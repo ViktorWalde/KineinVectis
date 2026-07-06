@@ -3,7 +3,7 @@
 > **Status:** active
 > **Prioridade:** P0
 > **Fonte de verdade:** nao; ponte operacional entre backend real e specs UI/UX
-> **Ultima revisao:** 2026-07-05
+> **Ultima revisao:** 2026-07-06
 > **Substituido por:** n/a
 
 ## Objetivo
@@ -69,14 +69,27 @@ Backend Rust:
   cancelled.
 - JobManager retem ate 100 jobs em memoria, preservando ativos e removendo
   finalizados mais antigos.
-- Rust gate rapido verde em 2026-07-05: fmt, test, clippy.
+- Gate rapido verde em 2026-07-06: Rust fmt/test/clippy, C++ clang-format e
+  clang-tidy via `scripts/verificar.sh --rapido`.
 
 UI:
-- funcional, mas monolitica.
-- Main.qml tem mais de 4k linhas.
-- CoreClient ainda centraliza muitos dominios.
-- UI ainda precisa se adaptar ao contrato novo de jobs: build/test/quality
-  retornam { jobId }, resultado final vem por event.*.finished.
+- funcional e modularizada por dominio QML.
+- Main.qml caiu de mais de 4k linhas para **336 linhas** em 2026-07-06 e
+  virou composition root: nao possui mais `ListModel`, `Connections`,
+  `Shortcut`, `Timer`, helper de dominio nem componente visual pesado embutido.
+- Host visual central fica em `shell/ShellWorkspaceHost.qml`; controllers,
+  stores e roteadores IPC continuam separados por dominio, sem acesso direto
+  do host visual ao `CoreClient`.
+- CoreClient continua fachada QML unica, mas sua implementacao C++ foi dividida
+  por responsabilidade interna (`process`, `requests`, `dispatch`, `state`,
+  `log`).
+- UI ja consome o contrato novo de jobs e suporta cancelamento de
+  build/test/quality/environment-scan.
+- UI tem aba generica "Jobs" no painel inferior consumindo
+  `event.job.created/progress/output/finished`, alem dos paineis especificos
+  de Build/Testes/Problemas.
+- Build debug/release, smokes offscreen debug/release, smoke via launcher e
+  gate rapido verdes apos a higiene arquitetural final e a aba Jobs.
 ```
 
 ## Prioridades de backend antes da grande UI
@@ -87,9 +100,9 @@ UI:
 `CoreClient` trata `{ jobId }` como aceite e finaliza build/test/quality via
 `event.<dominio>.finished`; `environment.scan` alimenta a aba Ferramentas via
 `toolsListed`; a status bar tem cancelar (×) para build/test/quality/scan de
-ambiente. `event.job.created/progress/output/finished` continuam reemitidos
-como sinais Qt sem consumidor dedicado (nenhum painel de jobs generico existe
-ainda — so os quatro cancelamentos pontuais). Ver `ContextoIA.md`.
+ambiente. Desde 2026-07-06, `event.job.created/progress/output/finished`
+tambem alimentam a aba generica "Jobs" no painel inferior, mantendo historico
+visual dos jobs sem abrir pop-up automatico. Ver `ContextoIA.md`.
 
 Backend atual:
 
@@ -126,7 +139,7 @@ Impacto UI futuro:
 - eventos event.job.* nao abrem popup automatico.
 ```
 
-Patch minimo UI em andamento (antes da grande refatoracao):
+Patch minimo UI concluido (antes da grande refatoracao):
 
 ```text
 Arquivos provaveis:
@@ -137,7 +150,7 @@ Arquivos provaveis:
 Implementar:
 - respostas { jobId } de build.run/quality.run/test.run significam "job aceito";
 - resultado final vem de event.build.finished/event.quality.finished/event.test.finished;
-- event.job.created/progress/output/finished alimenta estado/log minimo de jobs;
+- event.job.created/progress/output/finished alimenta a aba generica Jobs;
 - event.environment.started/tool/finished alimenta scan de ambiente/tooling;
 - tools.detect/status continuam funcionando para compatibilidade.
 
@@ -153,6 +166,7 @@ Componentes UI provaveis:
 ```text
 StatusBar.qml
 JobsPopover.qml
+JobsPanel.qml
 TaskStatusChip.qml
 BuildPanel.qml
 TestsPanel.qml
@@ -834,10 +848,28 @@ invisivel.
    CoreClient::cancelBuild/cancelTests/cancelQuality/cancelEnvironmentScan
    chamam job.cancel usando o jobId aceito por dominio; controles "×" na
    status bar do Main.qml ao lado de cada indicador.
-3. [proximo, sessao dedicada] Quebrar Main.qml em componentes por dominio
-   (BuildPanel.qml, TestsPanel.qml, QualityPanel.qml, StatusBar/JobsPopover) —
-   ver "Criterios para liberar a grande refatoracao UI" abaixo.
-4. Os itens de backend abaixo ficam explicitamente ADIADOS — nenhum bloqueia
+3. [feito 2026-07-06] Quebrar Main.qml em componentes por dominio e depois em
+   controllers/stores nao visuais. Foram extraidos shell visual, paineis,
+   dialogs, explorer, assistente, command palette, editor visual, controllers
+   de workspace/editor/project/jobs/runtime/search/assistant, roteadores IPC
+   por dominio e `ShellWorkspaceHost`. `Main.qml` ficou como composition root
+   com 336 linhas.
+4. [feito 2026-07-06] Quebrar o proximo ponto de concentracao: `EditorController`
+   virou fachada leve sobre controllers de documento, texto e completion; o
+   `CoreClient` preservou a API QML, mas foi dividido internamente por
+   responsabilidade C++.
+5. [feito 2026-07-06] Consumir `event.job.*` numa UI generica: aba "Jobs" no
+   painel inferior, alimentada por `JobsController` e `JobsEventRouter`, sem
+   mudanca de contrato IPC.
+6. [proximo recomendado apos migrar/revalidar distro] Project Health minimo e
+   visivel, em duas etapas:
+   - primeiro compor UI com dados ja existentes (`workspace.kind`,
+     `tools.status`, `environment.scan`, status de jobs e LSP), sem criar
+     protocolo novo;
+   - se faltar dado real, criar `project.health` tipado no protocolo, handler
+     fino no core, testes, docs/03 e componente UI discreto. Se for operacao
+     longa, implementar como job.
+7. Os itens de backend abaixo ficam explicitamente ADIADOS — nenhum bloqueia
    os passos 2-3 acima. So retomar um deles quando uma fatia de UI concreta
    precisar dele:
    - Process Runner interno unificado;
@@ -860,12 +892,13 @@ Antes de quebrar `Main.qml` em componentes grandes, idealmente:
     (patch minimo concluido 2026-07-05; nao e a refatoracao visual final).
 [x] Jobs tem contrato estavel para status/cancelamento (job.cancel no backend
     + botao de cancelar na UI, os dois desde 2026-07-05).
+[x] event.job.* tem consumidor visual generico na aba Jobs (2026-07-06).
 [x] Diagnostics tem modelo comum inicial; ainda faltam ids/actions/logRef.
 [ ] CMake/Cargo tem contratos suficientes para toolbar/profile/target.
 [ ] Project Health tem payload inicial.
 [ ] Settings/storage tem schemaVersion.
 [ ] Risk/confirmacao esta definido para acoes automaticas.
-[ ] ContextoIA.md aponta a proxima etapa sem depender de memoria de sessao.
+[x] ContextoIA.md aponta a proxima etapa sem depender de memoria de sessao.
 ```
 
 ## Handoff rapido para agentes
