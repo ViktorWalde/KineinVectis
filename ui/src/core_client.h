@@ -35,6 +35,8 @@ class CoreClient : public QObject
     Q_PROPERTY(bool analyzing READ isAnalyzing NOTIFY analyzingChanged)
     Q_PROPERTY(bool running READ isRunning NOTIFY runningChanged)
     Q_PROPERTY(bool terminalActive READ isTerminalActive NOTIFY terminalActiveChanged)
+    Q_PROPERTY(
+        bool scanningEnvironment READ isScanningEnvironment NOTIFY scanningEnvironmentChanged)
 
 public:
     explicit CoreClient(QObject* parent = nullptr);
@@ -54,6 +56,7 @@ public:
     [[nodiscard]] bool isAnalyzing() const;
     [[nodiscard]] bool isRunning() const;
     [[nodiscard]] bool isTerminalActive() const;
+    [[nodiscard]] bool isScanningEnvironment() const;
 
     Q_INVOKABLE void start();
     Q_INVOKABLE void ping();
@@ -72,9 +75,14 @@ public:
     Q_INVOKABLE void deletePath(const QString& path);
     Q_INVOKABLE void listCommands();
     Q_INVOKABLE void detectTools();
+    Q_INVOKABLE void scanEnvironment();
     Q_INVOKABLE void runBuild();
     Q_INVOKABLE void runTests(const QString& filter = QString());
     Q_INVOKABLE void runQuality();
+    Q_INVOKABLE void cancelBuild();
+    Q_INVOKABLE void cancelTests();
+    Q_INVOKABLE void cancelQuality();
+    Q_INVOKABLE void cancelEnvironmentScan();
     Q_INVOKABLE void notifyFileChanged(const QString& path, const QString& content);
     Q_INVOKABLE void requestDefinition(const QString& path, const QString& content, int line,
                                        int column);
@@ -112,6 +120,16 @@ signals:
     void pathDeleted(const QString& path);
     void commandsListed(const QVariantList& commands);
     void toolsListed(const QVariantList& tools);
+    void scanningEnvironmentChanged();
+    void environmentScanStarted(int tools);
+    void environmentTool(const QVariantMap& tool);
+    void environmentScanFinished(bool success, int total, int detected, int missing, int failed,
+                                 const QVariantList& tools);
+    void jobCreated(const QVariantMap& job);
+    void jobProgress(const QString& jobId, const QString& status, double progress,
+                     const QString& message);
+    void jobOutput(const QString& jobId, const QString& line);
+    void jobFinished(const QString& jobId, const QString& status);
     void buildingChanged();
     void buildStarted(const QString& command);
     void buildOutput(const QString& line);
@@ -152,14 +170,20 @@ private:
     void handleErrorOccurred(QProcess::ProcessError error);
     void handleResponseLine(const QByteArray& line);
     void handleNotification(const QString& method, const QJsonObject& params);
+    bool handleLspNotification(const QString& method, const QJsonObject& params);
+    bool handleEnvironmentNotification(const QString& method, const QJsonObject& params);
+    bool handleJobNotification(const QString& method, const QJsonObject& params);
     void dispatchResult(const QString& method, const QJsonObject& result);
     bool dispatchFileResult(const QString& method, const QJsonObject& result);
     bool dispatchLspResult(const QString& method, const QJsonObject& result);
+    void storeJobId(const QString& method, const QString& jobId);
+    void cancelJob(const QString& jobId);
     void setBuilding(bool building);
     void setTesting(bool testing);
     void setAnalyzing(bool analyzing);
     void setRunning(bool running);
     void setTerminalActive(bool active);
+    void setScanningEnvironment(bool scanning);
     void sendRequest(const QString& method, const QJsonObject& params);
     void appendLog(const QString& line);
     void appendErrorLog(const QString& line);
@@ -181,6 +205,11 @@ private:
     bool m_analyzing = false;
     bool m_running = false;
     bool m_terminalActive = false;
+    bool m_scanningEnvironment = false;
+    QString m_buildJobId;
+    QString m_testJobId;
+    QString m_qualityJobId;
+    QString m_environmentJobId;
     qint64 m_nextRequestId = 1;
 };
 

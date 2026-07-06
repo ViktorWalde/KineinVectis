@@ -4124,12 +4124,128 @@ Window {
                 }
             }
 
-            Text {
+            Row {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: coreClient.building
-                text: qsTr("compilando...")
-                color: Theme.accent
-                font.pixelSize: 10
+                spacing: Theme.spacingSmall
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("compilando...")
+                    color: Theme.accent
+                    font.pixelSize: 10
+                }
+
+                Text {
+                    id: cancelBuildLabel
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "×"
+                    color: cancelBuildArea.containsMouse ? Theme.errorSoft : Theme.textMuted
+                    font.pixelSize: 12
+
+                    MouseArea {
+                        id: cancelBuildArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: coreClient.cancelBuild()
+                    }
+                }
+            }
+
+            Row {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: coreClient.testing
+                spacing: Theme.spacingSmall
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("testando...")
+                    color: Theme.accent
+                    font.pixelSize: 10
+                }
+
+                Text {
+                    id: cancelTestsLabel
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "×"
+                    color: cancelTestsArea.containsMouse ? Theme.errorSoft : Theme.textMuted
+                    font.pixelSize: 12
+
+                    MouseArea {
+                        id: cancelTestsArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: coreClient.cancelTests()
+                    }
+                }
+            }
+
+            Row {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: coreClient.analyzing
+                spacing: Theme.spacingSmall
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("analisando...")
+                    color: Theme.accent
+                    font.pixelSize: 10
+                }
+
+                Text {
+                    id: cancelQualityLabel
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "×"
+                    color: cancelQualityArea.containsMouse ? Theme.errorSoft : Theme.textMuted
+                    font.pixelSize: 12
+
+                    MouseArea {
+                        id: cancelQualityArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: coreClient.cancelQuality()
+                    }
+                }
+            }
+
+            Row {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: coreClient.scanningEnvironment
+                spacing: Theme.spacingSmall
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("scan de ambiente...")
+                    color: Theme.accent
+                    font.pixelSize: 10
+                }
+
+                Text {
+                    id: cancelEnvironmentLabel
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: "×"
+                    color: cancelEnvironmentArea.containsMouse ? Theme.errorSoft : Theme.textMuted
+                    font.pixelSize: 12
+
+                    MouseArea {
+                        id: cancelEnvironmentArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: coreClient.cancelEnvironmentScan()
+                    }
+                }
             }
 
             Text {

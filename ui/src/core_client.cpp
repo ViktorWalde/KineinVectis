@@ -111,9 +111,8 @@ void CoreClient::start()
     const QString binary = resolveCoreBinary();
     if (binary.isEmpty()) {
         setStatus(QStringLiteral("kinein-core nao encontrado"), false);
-        appendErrorLog(
-            QStringLiteral("erro: kinein-core nao foi encontrado. Compile com "
-                           "'cargo build -p kinein-core' ou defina KINEIN_CORE_BIN."));
+        appendErrorLog(QStringLiteral("erro: kinein-core nao foi encontrado. Compile com "
+                                      "'cargo build -p kinein-core' ou defina KINEIN_CORE_BIN."));
         return;
     }
 
@@ -205,6 +204,15 @@ void CoreClient::listCommands()
 void CoreClient::detectTools()
 {
     sendRequest(QStringLiteral("tools.detect"), QJsonObject{});
+}
+
+void CoreClient::scanEnvironment()
+{
+    if (m_scanningEnvironment || m_process.state() != QProcess::Running) {
+        return;
+    }
+    setScanningEnvironment(true);
+    sendRequest(QStringLiteral("environment.scan"), QJsonObject{});
 }
 
 bool CoreClient::isBuilding() const
@@ -321,6 +329,34 @@ void CoreClient::runQuality()
     sendRequest(QStringLiteral("quality.run"), QJsonObject{});
 }
 
+void CoreClient::cancelBuild()
+{
+    cancelJob(m_buildJobId);
+}
+
+void CoreClient::cancelTests()
+{
+    cancelJob(m_testJobId);
+}
+
+void CoreClient::cancelQuality()
+{
+    cancelJob(m_qualityJobId);
+}
+
+void CoreClient::cancelEnvironmentScan()
+{
+    cancelJob(m_environmentJobId);
+}
+
+void CoreClient::cancelJob(const QString& jobId)
+{
+    if (jobId.isEmpty()) {
+        return;
+    }
+    sendRequest(QStringLiteral("job.cancel"), QJsonObject{{QStringLiteral("jobId"), jobId}});
+}
+
 bool CoreClient::isAnalyzing() const
 {
     return m_analyzing;
@@ -396,6 +432,20 @@ void CoreClient::setTerminalActive(bool active)
     emit terminalActiveChanged();
 }
 
+bool CoreClient::isScanningEnvironment() const
+{
+    return m_scanningEnvironment;
+}
+
+void CoreClient::setScanningEnvironment(bool scanning)
+{
+    if (m_scanningEnvironment == scanning) {
+        return;
+    }
+    m_scanningEnvironment = scanning;
+    emit scanningEnvironmentChanged();
+}
+
 void CoreClient::terminalOpen()
 {
     sendRequest(QStringLiteral("terminal.open"), QJsonObject{});
@@ -454,6 +504,11 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
     setAnalyzing(false);
     setRunning(false);
     setTerminalActive(false);
+    setScanningEnvironment(false);
+    m_buildJobId.clear();
+    m_testJobId.clear();
+    m_qualityJobId.clear();
+    m_environmentJobId.clear();
     setStatus(QStringLiteral("desconectado"), false);
 }
 
@@ -499,12 +554,19 @@ void CoreClient::handleResponseLine(const QByteArray& line)
         appendLog(QStringLiteral("erro do core em %1: %2").arg(method, message));
         if (method == QStringLiteral("build.run")) {
             setBuilding(false);
+            m_buildJobId.clear();
         }
         if (method == QStringLiteral("test.run")) {
             setTesting(false);
+            m_testJobId.clear();
         }
         if (method == QStringLiteral("quality.run")) {
             setAnalyzing(false);
+            m_qualityJobId.clear();
+        }
+        if (method == QStringLiteral("environment.scan")) {
+            setScanningEnvironment(false);
+            m_environmentJobId.clear();
         }
         emit requestFailed(method, message);
         return;
@@ -530,10 +592,13 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         return;
     }
     if (method == QStringLiteral("event.build.finished")) {
-        const QString status = params.value(QStringLiteral("success")).toBool()
-                                   ? QStringLiteral("sucesso")
-                                   : QStringLiteral("falha");
-        appendLog(QStringLiteral("build finalizado: %1").arg(status));
+        const bool success = params.value(QStringLiteral("success")).toBool();
+        appendLog(QStringLiteral("build finalizado: %1")
+                      .arg(success ? QStringLiteral("sucesso") : QStringLiteral("falha")));
+        setBuilding(false);
+        m_buildJobId.clear();
+        emit buildFinished(success, params.value(QStringLiteral("exitCode")).toInt(-1),
+                           params.value(QStringLiteral("diagnostics")).toInt(0));
         return;
     }
     if (method == QStringLiteral("event.test.started")) {
@@ -553,6 +618,12 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         return;
     }
     if (method == QStringLiteral("event.test.finished")) {
+        setTesting(false);
+        m_testJobId.clear();
+        emit testFinished(params.value(QStringLiteral("success")).toBool(),
+                          params.value(QStringLiteral("passed")).toInt(0),
+                          params.value(QStringLiteral("failed")).toInt(0),
+                          params.value(QStringLiteral("ignored")).toInt(0));
         return;
     }
     if (method == QStringLiteral("event.quality.started")) {
@@ -565,9 +636,15 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit qualityDiagnostic(params.toVariantMap());
         return;
     }
-    if (method == QStringLiteral("event.quality.output") ||
-        method == QStringLiteral("event.quality.finished"))
-    {
+    if (method == QStringLiteral("event.quality.output")) {
+        return;
+    }
+    if (method == QStringLiteral("event.quality.finished")) {
+        setAnalyzing(false);
+        m_qualityJobId.clear();
+        emit qualityFinished(params.value(QStringLiteral("success")).toBool(),
+                             params.value(QStringLiteral("exitCode")).toInt(-1),
+                             params.value(QStringLiteral("diagnostics")).toInt(0));
         return;
     }
     if (method == QStringLiteral("event.run.started")) {
@@ -597,10 +674,23 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit terminalClosed(params.value(QStringLiteral("exitCode")).toInt(-1));
         return;
     }
+    if (handleLspNotification(method, params)) {
+        return;
+    }
+    if (handleEnvironmentNotification(method, params)) {
+        return;
+    }
+    if (handleJobNotification(method, params)) {
+        return;
+    }
+}
+
+bool CoreClient::handleLspNotification(const QString& method, const QJsonObject& params)
+{
     if (method == QStringLiteral("event.lsp.diagnostics")) {
         emit lspDiagnostics(params.value(QStringLiteral("path")).toString(),
                             params.value(QStringLiteral("diagnostics")).toArray().toVariantList());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.lsp.status")) {
         const QString language = params.value(QStringLiteral("language")).toString();
@@ -612,7 +702,65 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         else {
             appendLog(QStringLiteral("lsp %1: %2").arg(language, status));
         }
+        return true;
     }
+    return false;
+}
+
+bool CoreClient::handleEnvironmentNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.environment.started")) {
+        setScanningEnvironment(true);
+        appendLog(QStringLiteral("scan de ambiente iniciado"));
+        emit environmentScanStarted(params.value(QStringLiteral("tools")).toInt(0));
+        return true;
+    }
+    if (method == QStringLiteral("event.environment.tool")) {
+        emit environmentTool(params.value(QStringLiteral("tool")).toObject().toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.environment.finished")) {
+        setScanningEnvironment(false);
+        m_environmentJobId.clear();
+        const QVariantList tools = params.value(QStringLiteral("tools")).toArray().toVariantList();
+        appendLog(QStringLiteral("scan de ambiente finalizado"));
+        emit environmentScanFinished(params.value(QStringLiteral("success")).toBool(),
+                                     params.value(QStringLiteral("total")).toInt(0),
+                                     params.value(QStringLiteral("detected")).toInt(0),
+                                     params.value(QStringLiteral("missing")).toInt(0),
+                                     params.value(QStringLiteral("failed")).toInt(0), tools);
+        // Reaproveita o mesmo sinal que tools.detect/status usa, para a aba
+        // Ferramentas ja se popular sem esperar a refatoracao de UI dedicada.
+        emit toolsListed(tools);
+        return true;
+    }
+    return false;
+}
+
+bool CoreClient::handleJobNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.job.created")) {
+        emit jobCreated(params.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.job.progress")) {
+        emit jobProgress(params.value(QStringLiteral("jobId")).toString(),
+                         params.value(QStringLiteral("status")).toString(),
+                         params.value(QStringLiteral("progress")).toDouble(0.0),
+                         params.value(QStringLiteral("message")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("event.job.output")) {
+        emit jobOutput(params.value(QStringLiteral("jobId")).toString(),
+                       params.value(QStringLiteral("line")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("event.job.finished")) {
+        emit jobFinished(params.value(QStringLiteral("jobId")).toString(),
+                         params.value(QStringLiteral("status")).toString());
+        return true;
+    }
+    return false;
 }
 
 bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& result)
@@ -710,28 +858,14 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         return;
     }
 
-    if (method == QStringLiteral("build.run")) {
-        setBuilding(false);
-        emit buildFinished(result.value(QStringLiteral("success")).toBool(),
-                           result.value(QStringLiteral("exitCode")).toInt(-1),
-                           result.value(QStringLiteral("diagnostics")).toInt(0));
-        return;
-    }
-
-    if (method == QStringLiteral("test.run")) {
-        setTesting(false);
-        emit testFinished(result.value(QStringLiteral("success")).toBool(),
-                          result.value(QStringLiteral("passed")).toInt(0),
-                          result.value(QStringLiteral("failed")).toInt(0),
-                          result.value(QStringLiteral("ignored")).toInt(0));
-        return;
-    }
-
-    if (method == QStringLiteral("quality.run")) {
-        setAnalyzing(false);
-        emit qualityFinished(result.value(QStringLiteral("success")).toBool(),
-                             result.value(QStringLiteral("exitCode")).toInt(-1),
-                             result.value(QStringLiteral("diagnostics")).toInt(0));
+    if (method == QStringLiteral("build.run") || method == QStringLiteral("test.run") ||
+        method == QStringLiteral("quality.run") || method == QStringLiteral("environment.scan"))
+    {
+        // O resultado sincrono agora e so { jobId }: confirma que o job foi
+        // aceito. O resultado real chega depois via event.<dominio>.finished.
+        const QString jobId = result.value(QStringLiteral("jobId")).toString();
+        appendLog(QStringLiteral("job aceito (%1): %2").arg(method, jobId));
+        storeJobId(method, jobId);
         return;
     }
 
@@ -812,6 +946,22 @@ bool CoreClient::dispatchLspResult(const QString& method, const QJsonObject& res
     }
 
     return false;
+}
+
+void CoreClient::storeJobId(const QString& method, const QString& jobId)
+{
+    if (method == QStringLiteral("build.run")) {
+        m_buildJobId = jobId;
+    }
+    else if (method == QStringLiteral("test.run")) {
+        m_testJobId = jobId;
+    }
+    else if (method == QStringLiteral("quality.run")) {
+        m_qualityJobId = jobId;
+    }
+    else {
+        m_environmentJobId = jobId;
+    }
 }
 
 void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
