@@ -2,17 +2,10 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Severity of a structured build diagnostic.
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub enum BuildDiagnosticSeverity {
-    /// Compilation error.
-    Error,
-    /// Compiler warning.
-    Warning,
-    /// Informational note attached to another diagnostic.
-    Note,
-}
+use crate::{Diagnostic, DiagnosticSource};
+
+/// Backwards-compatible name for diagnostic severity used by build payloads.
+pub use crate::DiagnosticSeverity as BuildDiagnosticSeverity;
 
 /// Structured diagnostic extracted from build output.
 ///
@@ -33,6 +26,36 @@ pub struct BuildDiagnostic {
     /// One-based column number.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub column: Option<u64>,
+}
+
+impl BuildDiagnostic {
+    /// Converts this tool-specific diagnostic into the common Problems model.
+    #[must_use]
+    pub fn to_diagnostic(&self, source: DiagnosticSource, job_id: Option<String>) -> Diagnostic {
+        Diagnostic {
+            id: None,
+            source,
+            severity: self.severity,
+            category: Some(category_for_source(source).to_owned()),
+            message: self.message.clone(),
+            file: self.file.clone(),
+            line: self.line,
+            column: self.column,
+            job_id,
+            command: None,
+            target: None,
+            log_ref: None,
+        }
+    }
+}
+
+const fn category_for_source(source: DiagnosticSource) -> &'static str {
+    match source {
+        DiagnosticSource::Build => "compiler",
+        DiagnosticSource::Quality => "lint",
+        DiagnosticSource::Lsp => "lsp",
+        DiagnosticSource::Toolchain => "toolchain",
+    }
 }
 
 /// Result payload for `build.run`, sent after `event.build.finished`.
@@ -79,4 +102,31 @@ pub struct TestRunResult {
     pub failed: u64,
     /// Number of ignored test cases.
     pub ignored: u64,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{BuildDiagnostic, BuildDiagnosticSeverity, DiagnosticSource};
+
+    #[test]
+    fn build_diagnostic_converts_to_common_diagnostic() {
+        let build = BuildDiagnostic {
+            severity: BuildDiagnosticSeverity::Warning,
+            message: "unused variable".to_owned(),
+            file: Some("src/main.rs".to_owned()),
+            line: Some(12),
+            column: Some(8),
+        };
+
+        let diagnostic = build.to_diagnostic(DiagnosticSource::Quality, Some("job_7".to_owned()));
+
+        assert_eq!(diagnostic.source, DiagnosticSource::Quality);
+        assert_eq!(diagnostic.severity, BuildDiagnosticSeverity::Warning);
+        assert_eq!(diagnostic.category.as_deref(), Some("lint"));
+        assert_eq!(diagnostic.message, "unused variable");
+        assert_eq!(diagnostic.file.as_deref(), Some("src/main.rs"));
+        assert_eq!(diagnostic.line, Some(12));
+        assert_eq!(diagnostic.column, Some(8));
+        assert_eq!(diagnostic.job_id.as_deref(), Some("job_7"));
+    }
 }

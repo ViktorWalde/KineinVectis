@@ -10,7 +10,8 @@
 use std::path::PathBuf;
 
 use kinein_protocol::{
-    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ProjectKind,
+    DiagnosticSource, JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    ProjectKind,
 };
 use serde_json::{Value, json};
 
@@ -122,10 +123,10 @@ impl Core {
                         "event.test.started",
                         json!({ "jobId": id, "command": command }),
                     ),
-                    test::TestEvent::Output { stream, line } => (
-                        "event.test.output",
-                        json!({ "jobId": id, "stream": stream, "line": line }),
-                    ),
+                    test::TestEvent::Output { stream, line } => ("event.test.output", {
+                        ctx.emit_output(&line);
+                        json!({ "jobId": id, "stream": stream, "line": line })
+                    }),
                     test::TestEvent::Case { name, status } => (
                         "event.test.case",
                         json!({ "jobId": id, "name": name, "status": status.as_str() }),
@@ -175,19 +176,26 @@ fn emit_build_event(ctx: &JobContext, domain: &str, event: &build::BuildEvent) {
             format!("event.{domain}.started"),
             json!({ "jobId": id, "command": command }),
         ),
-        build::BuildEvent::Output { stream, line } => (
-            format!("event.{domain}.output"),
-            json!({ "jobId": id, "stream": stream, "line": line }),
-        ),
+        build::BuildEvent::Output { stream, line } => (format!("event.{domain}.output"), {
+            ctx.emit_output(line);
+            json!({ "jobId": id, "stream": stream, "line": line })
+        }),
         build::BuildEvent::Diagnostic(diagnostic) => {
-            let mut params = serde_json::to_value(diagnostic).unwrap_or_else(|_error| json!({}));
-            if let Some(map) = params.as_object_mut() {
-                map.insert("jobId".to_owned(), json!(id));
-            }
+            let params = serde_json::to_value(
+                diagnostic.to_diagnostic(diagnostic_source(domain), Some(id.to_owned())),
+            )
+            .unwrap_or_else(|_error| json!({}));
             (format!("event.{domain}.diagnostic"), params)
         }
     };
     ctx.emit_event(&method, params);
+}
+
+const fn diagnostic_source(domain: &str) -> DiagnosticSource {
+    match domain.as_bytes() {
+        b"quality" => DiagnosticSource::Quality,
+        _ => DiagnosticSource::Build,
+    }
 }
 
 /// Emits `event.<domain>.finished` with a failure and a message.
@@ -233,4 +241,59 @@ fn jobs_unavailable_response(request_id: Option<Value>, method: &str) -> JsonRpc
             Some(json!({ "method": method })),
         ),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use kinein_protocol::{BuildDiagnostic, BuildDiagnosticSeverity, JobRisk};
+
+    use super::emit_build_event;
+    use crate::{
+        build::BuildEvent,
+        jobs::{JobManager, JobOutcome},
+    };
+
+    #[test]
+    fn diagnostic_events_include_source_and_job_id() {
+        let (sender, receiver) = std::sync::mpsc::channel();
+        let manager = JobManager::new(sender);
+
+        let job_id = manager.spawn("quality", "Quality", JobRisk::Medium, false, |ctx| {
+            emit_build_event(
+                ctx,
+                "quality",
+                &BuildEvent::Diagnostic(BuildDiagnostic {
+                    severity: BuildDiagnosticSeverity::Error,
+                    message: "falhou".to_owned(),
+                    file: Some("src/lib.rs".to_owned()),
+                    line: Some(10),
+                    column: Some(4),
+                }),
+            );
+            JobOutcome::Success
+        });
+
+        let mut saw_diagnostic = false;
+        loop {
+            let event = receiver
+                .recv_timeout(Duration::from_secs(5))
+                .expect("evento do job dentro do timeout");
+            match event.method.as_str() {
+                "event.quality.diagnostic" => {
+                    let params = event.params.as_ref().unwrap();
+                    assert_eq!(params["jobId"], job_id.as_str());
+                    assert_eq!(params["source"], "quality");
+                    assert_eq!(params["severity"], "error");
+                    assert_eq!(params["message"], "falhou");
+                    saw_diagnostic = true;
+                }
+                "event.job.finished" => break,
+                _ => {}
+            }
+        }
+
+        assert!(saw_diagnostic, "faltou diagnostico com source");
+    }
 }

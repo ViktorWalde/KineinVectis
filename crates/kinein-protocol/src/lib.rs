@@ -12,6 +12,7 @@
 mod build;
 mod command;
 mod core;
+mod diagnostic;
 mod fs;
 mod job;
 mod lsp;
@@ -24,6 +25,7 @@ mod workspace;
 pub use build::*;
 pub use command::*;
 pub use core::*;
+pub use diagnostic::*;
 pub use fs::*;
 pub use job::*;
 pub use lsp::*;
@@ -37,4 +39,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.19.0";
+pub const PROTOCOL_VERSION: &str = "0.20.0";

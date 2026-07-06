@@ -98,6 +98,7 @@ fn test_run_starts_a_job_and_reports_a_passing_case() {
         .to_owned();
 
     let mut saw_created = false;
+    let mut saw_job_output = false;
     let mut saw_passing_case = false;
     let mut saw_test_finished = false;
     loop {
@@ -107,6 +108,12 @@ fn test_run_starts_a_job_and_reports_a_passing_case() {
         match event.method.as_str() {
             "event.job.created" => {
                 saw_created = event.params.as_ref().unwrap()["id"] == job_id.as_str();
+            }
+            "event.job.output" => {
+                let params = event.params.as_ref().unwrap();
+                if params["jobId"] == job_id.as_str() && params["line"].is_string() {
+                    saw_job_output = true;
+                }
             }
             "event.test.case" => {
                 let params = event.params.as_ref().unwrap();
@@ -129,6 +136,7 @@ fn test_run_starts_a_job_and_reports_a_passing_case() {
         }
     }
     assert!(saw_created, "faltou event.job.created");
+    assert!(saw_job_output, "faltou event.job.output");
     assert!(saw_passing_case, "faltou event.test.case passed");
     assert!(saw_test_finished, "faltou event.test.finished");
 }

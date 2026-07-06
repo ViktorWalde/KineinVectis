@@ -5,7 +5,10 @@
 //! tokens, plano de rename ou o evento de diagnosticos). Nenhuma delas fala com
 //! o servidor; sao puras sobre `serde_json::Value`.
 
-use kinein_protocol::{JsonRpcRequest, LspCompletionItem, LspSemanticToken};
+use kinein_protocol::{
+    Diagnostic, DiagnosticSeverity, DiagnosticSource, JsonRpcRequest, LspCompletionItem,
+    LspSemanticToken,
+};
 use serde_json::{Value, json};
 
 use super::types::{FileEdits, LspError, LspLocation, TextSpanEdit, WorkspaceEditPlan};
@@ -45,19 +48,27 @@ pub(super) fn diagnostics_event(params: &Value) -> Option<JsonRpcRequest> {
         .filter_map(|diagnostic| {
             let message = diagnostic.get("message")?.as_str()?.to_owned();
             let severity = match diagnostic.get("severity").and_then(Value::as_i64) {
-                Some(1) | None => "error",
-                Some(2) => "warning",
-                _ => "note",
+                Some(1) | None => DiagnosticSeverity::Error,
+                Some(2) => DiagnosticSeverity::Warning,
+                _ => DiagnosticSeverity::Note,
             };
             let start = diagnostic.get("range")?.get("start")?;
             let line = start.get("line").and_then(Value::as_u64).unwrap_or(0) + 1;
             let column = start.get("character").and_then(Value::as_u64).unwrap_or(0) + 1;
-            Some(json!({
-                "severity": severity,
-                "message": message,
-                "line": line,
-                "column": column,
-            }))
+            Some(Diagnostic {
+                id: None,
+                source: DiagnosticSource::Lsp,
+                severity,
+                category: Some("lsp".to_owned()),
+                message,
+                file: None,
+                line: Some(line),
+                column: Some(column),
+                job_id: None,
+                command: None,
+                target: None,
+                log_ref: None,
+            })
         })
         .collect::<Vec<_>>();
 
@@ -409,6 +420,7 @@ mod tests {
         assert_eq!(event.method, "event.lsp.diagnostics");
         let event_params = event.params.unwrap();
         assert_eq!(event_params["path"], "/tmp/demo/src/main.rs");
+        assert_eq!(event_params["diagnostics"][0]["source"], "lsp");
         assert_eq!(event_params["diagnostics"][0]["line"], 5);
         assert_eq!(event_params["diagnostics"][0]["column"], 9);
         assert_eq!(event_params["diagnostics"][0]["severity"], "error");
