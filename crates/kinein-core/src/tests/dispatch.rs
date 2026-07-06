@@ -48,6 +48,7 @@ fn command_list_includes_lsp_navigation_commands() {
 
     assert!(ids.contains(&"workspace.createFolder"));
     assert!(ids.contains(&"workspace.createProject"));
+    assert!(ids.contains(&"environment.scan"));
     assert!(ids.contains(&"fs.createFile"));
     assert!(ids.contains(&"fs.createDirectory"));
     assert!(ids.contains(&"fs.rename"));

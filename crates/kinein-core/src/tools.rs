@@ -45,6 +45,20 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         pacman_package: "rustup",
     },
     ToolSpec {
+        id: "rustup",
+        display_name: "rustup",
+        binary: "rustup",
+        alternative_binary: None,
+        pacman_package: "rustup",
+    },
+    ToolSpec {
+        id: "rust-analyzer",
+        display_name: "rust-analyzer",
+        binary: "rust-analyzer",
+        alternative_binary: None,
+        pacman_package: "rust-analyzer",
+    },
+    ToolSpec {
         id: "cmake",
         display_name: "CMake",
         binary: "cmake",
@@ -71,6 +85,48 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         binary: "clangd",
         alternative_binary: None,
         pacman_package: "clang",
+    },
+    ToolSpec {
+        id: "clang",
+        display_name: "clang",
+        binary: "clang",
+        alternative_binary: None,
+        pacman_package: "clang",
+    },
+    ToolSpec {
+        id: "clangxx",
+        display_name: "clang++",
+        binary: "clang++",
+        alternative_binary: None,
+        pacman_package: "clang",
+    },
+    ToolSpec {
+        id: "gcc",
+        display_name: "GCC",
+        binary: "gcc",
+        alternative_binary: None,
+        pacman_package: "gcc",
+    },
+    ToolSpec {
+        id: "gxx",
+        display_name: "g++",
+        binary: "g++",
+        alternative_binary: None,
+        pacman_package: "gcc",
+    },
+    ToolSpec {
+        id: "gdb",
+        display_name: "GDB",
+        binary: "gdb",
+        alternative_binary: None,
+        pacman_package: "gdb",
+    },
+    ToolSpec {
+        id: "lldb",
+        display_name: "LLDB",
+        binary: "lldb",
+        alternative_binary: None,
+        pacman_package: "lldb",
     },
     ToolSpec {
         id: "ripgrep",
@@ -218,7 +274,11 @@ fn probe_version(path: &Path) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs, path::PathBuf};
+    use std::{
+        fs,
+        path::PathBuf,
+        sync::atomic::{AtomicU64, Ordering},
+    };
 
     use kinein_protocol::ToolStatus;
 
@@ -232,10 +292,14 @@ mod tests {
         pacman_package: "rustup",
     };
 
+    static NEXT_TEMP_ID: AtomicU64 = AtomicU64::new(1);
+
     fn temp_bin_dir(test_name: &str) -> PathBuf {
+        let unique = NEXT_TEMP_ID.fetch_add(1, Ordering::SeqCst);
         let dir = std::env::temp_dir()
             .join("kinein-core-tests")
-            .join(format!("{}-{test_name}", std::process::id()));
+            .join(format!("{}-{test_name}-{unique}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
     }
@@ -258,7 +322,22 @@ mod tests {
         assert_eq!(
             ids,
             [
-                "cargo", "rustc", "cmake", "ninja", "git", "clangd", "ripgrep", "fd"
+                "cargo",
+                "rustc",
+                "rustup",
+                "rust-analyzer",
+                "cmake",
+                "ninja",
+                "git",
+                "clangd",
+                "clang",
+                "clangxx",
+                "gcc",
+                "gxx",
+                "gdb",
+                "lldb",
+                "ripgrep",
+                "fd"
             ]
         );
     }
@@ -295,6 +374,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn fd_detection_accepts_fdfind_binary_name() {
+        let _guard = EXEC_LOCK.lock().unwrap();
         let dir = temp_bin_dir("fd-fdfind");
         write_fake_tool(&dir, "fdfind", "echo 'fdfind 10.2.0'");
         let detector = ToolDetector::with_search_path(&dir);

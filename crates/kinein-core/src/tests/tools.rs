@@ -29,3 +29,89 @@ fn tools_status_runs_detection_once_and_reuses_registry() {
         second.response().result.as_ref().unwrap()["tools"]
     );
 }
+
+#[test]
+fn environment_scan_requires_jobs_enabled() {
+    let mut core = core_with_empty_search_path("environment-no-jobs");
+    let outcome = core.handle_request(&JsonRpcRequest::new(
+        80_i64,
+        "environment.scan",
+        Some(json!({})),
+    ));
+    let error = outcome.response().error.as_ref().unwrap();
+
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InternalError);
+    assert_eq!(
+        error.details.as_ref().unwrap()["method"],
+        "environment.scan"
+    );
+}
+
+#[test]
+fn environment_scan_runs_as_job_and_updates_tools_status() {
+    use std::time::Duration;
+
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("environment-job");
+    core.enable_lsp(sender);
+
+    let started = core.handle_request(&JsonRpcRequest::new(
+        81_i64,
+        "environment.scan",
+        Some(json!({})),
+    ));
+    let job_id = started.response().result.as_ref().unwrap()["jobId"]
+        .as_str()
+        .expect("environment.scan deve retornar jobId")
+        .to_owned();
+
+    let mut saw_started = false;
+    let mut saw_tool = false;
+    let mut finished_tools = None;
+    loop {
+        let event = receiver
+            .recv_timeout(Duration::from_secs(10))
+            .expect("eventos do environment.scan dentro do timeout");
+        match event.method.as_str() {
+            "event.environment.started" => {
+                let params = event.params.as_ref().unwrap();
+                assert_eq!(params["jobId"], job_id.as_str());
+                assert_eq!(params["tools"], crate::tools::KNOWN_TOOLS.len());
+                saw_started = true;
+            }
+            "event.environment.tool" => {
+                let params = event.params.as_ref().unwrap();
+                assert_eq!(params["jobId"], job_id.as_str());
+                assert!(params["tool"]["id"].is_string());
+                saw_tool = true;
+            }
+            "event.environment.finished" => {
+                let params = event.params.as_ref().unwrap();
+                assert_eq!(params["jobId"], job_id.as_str());
+                assert_eq!(params["success"], true);
+                assert_eq!(params["total"], crate::tools::KNOWN_TOOLS.len());
+                assert_eq!(params["missing"], crate::tools::KNOWN_TOOLS.len());
+                finished_tools = Some(params["tools"].clone());
+            }
+            "event.job.finished" => {
+                assert_eq!(event.params.as_ref().unwrap()["status"], "success");
+                break;
+            }
+            _ => {}
+        }
+    }
+
+    assert!(saw_started, "faltou event.environment.started");
+    assert!(saw_tool, "faltou event.environment.tool");
+    let finished_tools = finished_tools.expect("faltou event.environment.finished");
+    let status = core.handle_request(&JsonRpcRequest::new(
+        82_i64,
+        "tools.status",
+        Some(json!({})),
+    ));
+
+    assert_eq!(
+        status.response().result.as_ref().unwrap()["tools"],
+        finished_tools
+    );
+}

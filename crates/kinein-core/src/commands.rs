@@ -133,6 +133,14 @@ fn core_command_descriptors() -> Vec<CommandDescriptor> {
             default_shortcut: None,
             requires_workspace: false,
         },
+        CommandDescriptor {
+            id: "environment.scan".to_owned(),
+            title: "Scan Environment".to_owned(),
+            category: "Tools".to_owned(),
+            description: "Executa scan de ambiente/toolchain em background como job".to_owned(),
+            default_shortcut: None,
+            requires_workspace: false,
+        },
     ]
 }
 
