@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.19.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `build/test/
+> (JSON-RPC 0.20.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `build/test/
 > quality.run`, `lsp.*`, `run.*`, `terminal.*`). O protocolo-**alvo** completo
 > (jobs, setup, cmake/cargo services, ai-bridge, targets, etc.) está em
 > `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md`. Onde
@@ -94,11 +94,45 @@ gRPC/local socket
 }
 ```
 
+### Diagnóstico comum (`Diagnostic`)
+
+Implementado no protocolo `0.20.0` como modelo comum para Problems. Os eventos
+continuam sendo por domínio (`event.build.diagnostic`,
+`event.quality.diagnostic`, `event.lsp.diagnostics`), mas os itens de
+diagnóstico usam campos comuns:
+
+```text
+Diagnostic {
+  id?,
+  source: "build|quality|lsp|toolchain",
+  severity: "error|warning|note",
+  category?,
+  message,
+  file?,
+  line?,
+  column?,
+  jobId?,
+  command?,
+  target?,
+  logRef?
+}
+```
+
+Estado atual: build usa `source: "build"` / `category: "compiler"`;
+quality usa `source: "quality"` / `category: "lint"`; LSP usa
+`source: "lsp"` / `category: "lsp"`. `id`, `command`, `target` e `logRef` já
+existem no tipo de protocolo, mas ainda só aparecem quando um produtor tiver
+dado real para preencher.
+
 ### Resultado de `tools.detect` / `tools.status`
 
 Implementado no protocolo `0.2.0`. `tools.detect` sempre executa a detecção e
 atualiza o registro interno; `tools.status` responde com o último resultado
 conhecido (detectando na primeira chamada).
+
+Inventário atual: cargo, rustc, rustup, rust-analyzer, cmake, ninja, git,
+clangd, clang, clang++ (`id: clangxx`), gcc, g++ (`id: gxx`), gdb, lldb,
+ripgrep (`rg`) e fd/fdfind.
 
 ```json
 {
@@ -129,6 +163,25 @@ Estados possíveis de ferramenta (`docs/07-tooling-lifecycle.md`):
 `notConfigured`, `missing`, `detected`, `ready`, `running`, `failed`,
 `disabled`. A detecção usa `missing`, `detected` e `failed`; os demais são
 reservados para o gerenciamento de processos.
+
+### Scan de ambiente (`environment.scan` — job assíncrono)
+
+Implementado no protocolo `0.20.0`. Roda a mesma detecção de ferramentas de
+`tools.detect`, mas como job assíncrono para o fluxo de First Run / Toolchain
+Settings. Responde na hora com `{ "jobId" }`, não requer workspace aberto e,
+ao concluir, atualiza o mesmo registry consultado por `tools.status`.
+
+```text
+event.environment.started   { "jobId", "tools" }
+event.environment.tool      { "jobId", "tool": ToolInfo }
+event.environment.finished  { "jobId", "success", "total", "detected", "missing", "failed", "tools": [ToolInfo] }
+```
+
+Além destes, emite `event.job.created/progress/output/finished`. A UI deve usar
+`event.environment.*` para preencher telas de ambiente/toolchain e
+`event.job.*` para status bar/lista de jobs. O core nunca instala ferramentas;
+`suggestedInstall` continua sendo apenas uma sugestão para ação explícita do
+usuário.
 
 ### Workspace (`workspace.browse` / `workspace.createFolder` / `workspace.createProject` / `workspace.open`)
 
@@ -328,12 +381,13 @@ Enquanto roda, emite os eventos ricos que a UI consome, agora com `jobId`:
 ```text
 event.build.started     { "jobId", "command": "cargo build" }
 event.build.output      { "jobId", "stream": "stdout|stderr", "line": "..." }
-event.build.diagnostic  { "jobId", "severity": "error|warning|note", "message", "file"?, "line"?, "column"? }
+event.build.diagnostic  { "jobId", "source": "build", "category": "compiler", "severity": "error|warning|note", "message", "file"?, "line"?, "column"? }
 event.build.finished    { "jobId", "success", "exitCode", "diagnostics" }   // ou { "jobId", "success": false, "error" }
 ```
 
-Além destes, o Job System emite `event.job.created` (ao iniciar) e
-`event.job.finished` (ao encerrar) para a status bar / lista de jobs. O
+Além destes, o Job System emite `event.job.created` (ao iniciar),
+`event.job.output` (fan-out da saida bruta) e `event.job.finished` (ao
+encerrar) para a status bar / lista de jobs. O
 resultado do build chega por `event.build.finished`, **não** mais na resposta.
 Diagnósticos vêm do JSON do cargo (span primário) ou do formato
 `arquivo:linha:coluna: nivel: mensagem` de compiladores/CMake e alimentam o
@@ -342,45 +396,48 @@ build retornam `INVALID_REQUEST`; sem workspace, `INVALID_REQUEST`. Falhas do
 build (ferramenta ausente, erro de compilação) chegam por
 `event.build.finished`/`event.job.finished`, não como erro da resposta.
 
-> `quality.run` e `test.run` ainda são **síncronos** (streaming via resposta);
-> serão migrados para jobs depois.
+### Qualidade / lint (`quality.run` — job assíncrono)
 
-### Qualidade / lint (`quality.run`)
+Implementado no protocolo `0.18.0`; migrado para **job assíncrono/cancelável**
+como o `build.run`. Requer workspace aberto. Responde na hora com `{ "jobId" }`;
+para Rust/Cargo roda `cargo clippy --all-targets --message-format=json` em
+background, cujo JSON é idêntico ao do `cargo build`, então os lints viram
+diagnósticos estruturados sem parser novo. Emite, com `jobId`,
+`event.quality.started/output/diagnostic/finished` (mesmos formatos dos
+`event.build.*`) + `event.job.*`; a saida bruta tambem faz fan-out para
+`event.job.output`. Diagnosticos usam o mesmo payload de build, mas com
+`source: "quality"` e `category: "lint"`. A UI adiciona os diagnósticos à aba Problemas
+com origem `quality`. `job.cancel` mata o clippy. Validação síncrona: tudo que
+não é Rust/Cargo retorna `INVALID_REQUEST` (CMake via clang-tidy é o próximo
+passo). Falhas (`cargo` ausente etc.) chegam por `event.quality.finished`.
 
-Implementado no protocolo `0.18.0`. Requer workspace aberto. Reusa
-inteiramente o pipeline do `build.run`: para Rust/Cargo roda
-`cargo clippy --all-targets --message-format=json`, cujo JSON é idêntico ao
-do `cargo build`, então os lints viram diagnósticos estruturados sem parser
-novo. Emite `event.quality.started/output/diagnostic/finished` (mesmos
-formatos dos `event.build.*`); a UI adiciona os diagnósticos à aba Problemas
-com origem `quality` (limpos a cada análise, distintos dos de build/LSP).
-A resposta final repete `{ "success", "exitCode", "diagnostics" }`. Tipos
-de projeto sem linter integrado (por ora, tudo que não é Rust/Cargo — CMake
-via clang-tidy é o próximo passo) retornam `INVALID_REQUEST`; `cargo`
-ausente retorna `TOOL_NOT_FOUND`.
+### Testes (`test.run` — job assíncrono)
 
-### Testes (`test.run`)
-
-Implementado no protocolo `0.17.0`. Requer workspace aberto. O core executa o
-runner de testes do tipo de projeto (`cargo test` para Rust/Cargo; `ctest
---test-dir .kinein/build --output-on-failure` para CMake) e transmite cada
-caso conforme sai da saída padrão do runner — nada de reimplementar framework
-de teste. Aceita `{ "filter"? }` (posicional do cargo; `-R` do ctest).
+Implementado no protocolo `0.17.0`; migrado para **job assíncrono/cancelável**.
+Requer workspace aberto. Responde na hora com `{ "jobId" }`; roda o runner do
+tipo de projeto em background (`cargo test` para Rust/Cargo; `ctest --test-dir
+.kinein/build --output-on-failure` para CMake) e transmite cada caso conforme
+sai da saída do runner. Aceita `{ "filter"? }` (posicional do cargo; `-R` do
+ctest). `job.cancel` mata o runner.
 
 ```text
-event.test.started   { "command": "cargo test" }
-event.test.output    { "stream": "stdout|stderr", "line": "..." }
-event.test.case      { "name": "modulo::caso", "status": "passed|failed|ignored" }
-event.test.finished  { "success", "exitCode", "passed", "failed", "ignored" }
+event.test.started   { "jobId", "command": "cargo test" }
+event.test.output    { "jobId", "stream": "stdout|stderr", "line": "..." }
+event.test.case      { "jobId", "name": "modulo::caso", "status": "passed|failed|ignored" }
+event.test.finished  { "jobId", "success", "exitCode", "passed", "failed", "ignored" }
 ```
 
-Os casos são extraídos das linhas `test <nome> ... ok|FAILED|ignored` (libtest)
-e `... Test #N: <nome> ... Passed|***Failed` (ctest); a linha de resumo do
-libtest é ignorada. A resposta final repete
-`{ "success", "exitCode", "passed", "failed", "ignored" }`. Tipos sem
-integração retornam `INVALID_REQUEST`; runner ausente retorna `TOOL_NOT_FOUND`.
-O streaming reusa o mesmo mecanismo do `build.run` (módulo `process`);
-cancelamento ainda não é suportado.
+Além destes, `event.job.created`/`event.job.output`/`event.job.finished`. Cada
+`event.test.output` tambem gera `event.job.output { "jobId", "line" }` para o
+historico generico do job. Os casos são extraídos das linhas
+`test <nome> ... ok|FAILED|ignored` (libtest) e `... Test #N: <nome> ...
+Passed|***Failed` (ctest); a linha de resumo do libtest é ignorada. Tipos sem
+integração retornam `INVALID_REQUEST` (síncrono, antes do job); o resultado vem
+em `event.test.finished`, não na resposta.
+
+> **Nota:** com build/quality/test todos como jobs assíncronos, não existe mais
+> caminho de streaming síncrono no core — toda operação longa retorna `jobId` e
+> emite eventos pelo canal assíncrono.
 
 ### LSP (`lsp.didChange` / `lsp.definition` / `lsp.hover` / `lsp.completion` / `lsp.references` / `lsp.rename`)
 
@@ -451,7 +508,7 @@ deste contrato.
 
 ```text
 event.lsp.status       { "language": "cpp|rust", "status": "running|failed|stopped|exited", "message"? }
-event.lsp.diagnostics  { "path": "/abs/file", "diagnostics": [{ "severity": "error|warning|note", "message", "line", "column" }] }
+event.lsp.diagnostics  { "path": "/abs/file", "diagnostics": [{ "source": "lsp", "category": "lsp", "severity": "error|warning|note", "message", "line", "column" }] }
 ```
 
 `line` e `column` dos diagnósticos são 1-based para consumo direto da UI. A
@@ -461,22 +518,26 @@ UI integra esses eventos à aba Problemas com origem `lsp`.
 
 Fundação do Job System (ver `docs/ARCHITECTURE.md` §7). Um **job** é uma
 operação longa que o core executa de forma assíncrona: retorna um `id` na hora,
-reporta progresso por eventos e pode ser cancelado. Nesta primeira fase existe a
-infraestrutura (registro, ciclo de vida, cancel, eventos); comandos longos
-existentes ainda **não** foram migrados para jobs.
+reporta progresso por eventos e pode ser cancelado. A infraestrutura atual
+registra ciclo de vida/cancelamento e já é usada por `build.run`, `quality.run`
+e `test.run`.
 
 - `job.list` → `{ jobs: [{ id, kind, title, status, progress?, canCancel, risk }] }`.
-  `status`: `queued|running|success|warning|failed|cancelled`;
-  `risk`: `low|medium|high|dangerous`. Ordem estável de criação.
+  `status`: `queued|running|cancelRequested|success|warning|failed|cancelled`;
+  `risk`: `low|medium|high|dangerous`. Ordem estável de criação. O core retém
+  até 100 jobs em memória, preservando jobs ativos e removendo os finalizados
+  mais antigos quando o limite é excedido.
 - `job.cancel { jobId }` → `{ jobId, cancelled }`. `cancelled` é `true` só quando
-  o job existe, expõe cancelamento e ainda está `running`; `jobId` ausente é
-  `INVALID_PARAMS`. O cancelamento é cooperativo (o trabalho verifica o sinal).
+  o job existe, expõe cancelamento e ainda está `running`; ao aceitar o pedido,
+  o core muda o status para `cancelRequested` e emite `event.job.progress`.
+  `jobId` ausente é `INVALID_PARAMS`. O cancelamento é cooperativo (o trabalho
+  verifica o sinal) e o estado terminal chega depois como `cancelled`.
 
 Eventos, todos com `jobId`:
 
 ```text
 event.job.created   { "id", "kind", "title", "status", "progress"?, "canCancel", "risk" }
-event.job.progress  { "jobId", "status": "running", "progress": 0.0..1.0, "message"? }
+event.job.progress  { "jobId", "status": "running|cancelRequested", "progress"?, "message"? }
 event.job.output    { "jobId", "line" }
 event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 ```
@@ -495,12 +556,10 @@ workspace.createFolder
 workspace.createProject
 workspace.close
 workspace.status
-settings.get
-settings.set
 command.list
-command.execute
 tools.detect
 tools.status
+environment.scan
 fs.list
 fs.read
 fs.createFile
@@ -510,7 +569,6 @@ fs.rename
 fs.delete
 fs.findFiles
 fs.search
-build.configure
 build.run
 test.run
 quality.run
@@ -527,24 +585,39 @@ lsp.hover
 lsp.completion
 lsp.references
 lsp.rename
-logs.tail
+job.list
+job.cancel
 ```
 
 ## Eventos iniciais
 
 ```text
-event.core.ready
-event.workspace.opened
-event.workspace.closed
-event.tool.statusChanged
 event.build.started
 event.build.output
+event.build.diagnostic
 event.build.finished
+event.quality.started
+event.quality.output
+event.quality.diagnostic
+event.quality.finished
+event.environment.started
+event.environment.tool
+event.environment.finished
+event.test.started
+event.test.output
+event.test.case
+event.test.finished
+event.job.created
+event.job.progress
+event.job.output
+event.job.finished
+event.run.started
+event.run.output
+event.run.finished
+event.terminal.data
+event.terminal.closed
 event.lsp.status
 event.lsp.diagnostics
-event.diagnostics.updated
-event.notification.created
-event.log.appended
 ```
 
 ## Regras
