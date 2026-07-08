@@ -44,19 +44,23 @@ cmake --preset dev-local-release            # configura (só na primeira vez)
 cmake --build --preset dev-local-release    # compila
 ```
 
-Para desenvolvimento com sanitizers (ASan/UBSan):
+Para desenvolvimento (build debug local):
 
 ```bash
 cmake --preset dev-local
 cmake --build --preset dev-local
-./build/linux-clang-debug-strict/ui/kinein-vectis
+./build/dev-local/ui/kinein-vectis
 ```
 
 > Os presets `dev-local*` estão em `CMakeUserPresets.json` (arquivo local,
-> fora do git). Eles herdam os presets estritos oficiais e apontam o clang
-> para o toolchain GCC 13 desta máquina (o Pop!_OS tem um diretório GCC 14
-> incompleto que quebra o link). Em outra máquina, use os presets oficiais
-> `linux-clang-debug-strict` / `linux-clang-release-hardened` direto.
+> fora do git). Eles herdam os presets estritos oficiais, mas nesta máquina
+> usam GCC nativo com warnings-as-errors e sanitizers desligados, porque o
+> toolchain recente dispara warnings em código gerado pelo Qt (detalhe em
+> `ContextoIA.md`, seção "Toolchain local"). Em outra máquina, prefira os
+> presets oficiais `linux-clang-debug-strict` / `linux-clang-release-hardened`
+> (debug oficial liga ASan/UBSan). Se o build reclamar de caminhos de outra
+> distro (ex.: `/usr/lib/x86_64-linux-gnu/...`), apague o diretório em
+> `build/` e reconfigure do zero — reconfigurar por cima não limpa o cache.
 
 ## Verificação rigorosa (antes de considerar algo pronto)
 
@@ -67,18 +71,18 @@ rustup run stable cargo kw-test     # testes Rust
 clang-format --dry-run --Werror ui/src/*.cpp ui/src/*.h   # formatação C++
 ```
 
-## Dependências do sistema (já instaladas nesta máquina)
+## Dependências do sistema
 
 ```bash
-# Pop!_OS / Ubuntu / Debian
+# Arch / CachyOS (alvo principal do projeto e máquina atual)
+sudo pacman -S cmake ninja clang qt6-base qt6-declarative qt6-tools rustup
+
+# Debian / Ubuntu / Pop!_OS (referência)
 sudo apt install cmake ninja-build clang \
     qt6-base-dev qt6-declarative-dev \
     qml6-module-qtqml qml6-module-qtqml-workerscript qml6-module-qtqml-models \
     qml6-module-qtquick qml6-module-qtquick-controls \
     qml6-module-qtquick-layouts qml6-module-qtquick-window
-
-# Arch / CachyOS (alvo principal do projeto)
-sudo pacman -S cmake ninja clang qt6-base qt6-declarative qt6-tools rustup
 ```
 
 ## Logs de erro da IDE

@@ -42,9 +42,11 @@ include(cmake/KineinStrictOptions.cmake)
 kinein_enable_strict_compiler_options(nome_do_target)
 ```
 
-## Estado observado no ambiente atual
+## Estado observado no ambiente atual (Arch, 2026-07-08)
 
 - Rust 1.96.1, rustfmt e clippy disponíveis via `rustup run stable`.
-- CMake e Ninja disponíveis.
-- `clang++`, `clang-format` e `clang-tidy` disponíveis.
-- Qt 6 CLI e `clangd` ainda não apareceram no PATH pelos nomes testados.
+- CMake 4.3.4 e Ninja disponíveis.
+- GCC 16.1.1; `clang++`, `clang-format`, `clang-tidy` e `clangd` 22.1.6
+  disponíveis no PATH.
+- Qt 6.11.1 em `/usr/lib` (qt6-base, qt6-declarative, qt6-tools).
+- Gate completo `scripts/verificar.sh` verde nesta máquina em 2026-07-08.
