@@ -3,7 +3,7 @@
 > **Status:** active
 > **Prioridade:** P0
 > **Fonte de verdade:** nao; ponte operacional entre backend real e specs UI/UX
-> **Ultima revisao:** 2026-07-06
+> **Ultima revisao:** 2026-07-08
 > **Substituido por:** n/a
 
 ## Objetivo
@@ -88,6 +88,9 @@ UI:
 - UI tem aba generica "Jobs" no painel inferior consumindo
   `event.job.created/progress/output/finished`, alem dos paineis especificos
   de Build/Testes/Problemas.
+- UI tem banner de Project Health (etapa 1, 2026-07-08) composto so com dados
+  existentes: ambiente nao verificado/ferramentas ausentes por kind/kind
+  desconhecido/scan em andamento; some quando saudavel; dispensavel via "×".
 - Build debug/release, smokes offscreen debug/release, smoke via launcher e
   gate rapido verdes apos a higiene arquitetural final e a aba Jobs.
 ```
@@ -535,7 +538,10 @@ Nao fazer:
 
 ### P1. Project Health
 
-**Status:** pendente.
+**Status:** etapa 1 (UI com dados existentes) entregue em 2026-07-08 —
+`ProjectHealthBanner.qml` + `ProjectHealthController.qml` cobrem workspace
+kind e ferramentas ausentes sem contrato novo. Payload backend
+(`project.health`) segue pendente para os sinais que o core nao expoe.
 
 Backend desejado:
 
@@ -861,14 +867,13 @@ invisivel.
 5. [feito 2026-07-06] Consumir `event.job.*` numa UI generica: aba "Jobs" no
    painel inferior, alimentada por `JobsController` e `JobsEventRouter`, sem
    mudanca de contrato IPC.
-6. [proximo recomendado apos migrar/revalidar distro] Project Health minimo e
-   visivel, em duas etapas:
-   - primeiro compor UI com dados ja existentes (`workspace.kind`,
-     `tools.status`, `environment.scan`, status de jobs e LSP), sem criar
-     protocolo novo;
-   - se faltar dado real, criar `project.health` tipado no protocolo, handler
-     fino no core, testes, docs/03 e componente UI discreto. Se for operacao
-     longa, implementar como job.
+6. [etapa 1 feita em 2026-07-08] Project Health minimo e visivel:
+   - [feito] UI composta com dados ja existentes (`workspace.kind`,
+     `toolsList` de scan/detect, `scanningEnvironment`), sem protocolo novo:
+     banner discreto no topo da area do editor, acionavel e dispensavel.
+   - [pendente] se faltar dado real, criar `project.health` tipado no
+     protocolo, handler fino no core, testes, docs/03 e UI discreta. Se for
+     operacao longa, implementar como job.
 7. Os itens de backend abaixo ficam explicitamente ADIADOS — nenhum bloqueia
    os passos 2-3 acima. So retomar um deles quando uma fatia de UI concreta
    precisar dele:

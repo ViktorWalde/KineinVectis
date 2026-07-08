@@ -8,46 +8,23 @@ o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
 prioridade atual (ver `docs/15-engineering-debt-and-refactor.md` sobre por
 que este arquivo foi enxugado em 2026-07-05).
 
-## ATENCAO — trabalho real ainda nao commitado (2026-07-05)
+## Ambiente revalidado apos troca de distro (2026-07-08, Arch)
 
-O ultimo commit e `32523cb` ("run quality.run e test.run as async cancelable
-jobs"). Desde entao, ha uma quantidade grande de trabalho **real, testado e
-funcionando** que so existe no working tree, nunca commitado — nao apagar/
-resetar sem revisar antes (`git status`, nunca `git checkout -- .` ou
-`git clean` sem olhar primeiro):
+A maquina atual e Arch Linux. Duas falhas que aparecerem de novo tem causa
+conhecida e correcao simples:
 
-- Feature de scan de ambiente inteira: `crates/kinein-core/src/lib.rs`
-  (+161), `crates/kinein-core/src/tools.rs` (+86),
-  `crates/kinein-core/src/tests/tools.rs` (+86, testes novos).
-- Feature de diagnostics unificados inteira: `crates/kinein-protocol/src/
-  diagnostic.rs` (**arquivo novo, nunca commitado, sem o qual o build quebra
-  num clone limpo**), mais `crates/kinein-protocol/src/build.rs` (+72),
-  `crates/kinein-protocol/src/lib.rs` (+4) e `crates/kinein-core/src/
-  handlers/build.rs` (+89) que a usam.
-- Trabalho adicional em `crates/kinein-core/src/jobs/manager.rs` (+138) e
-  `crates/kinein-protocol/src/job.rs` (+33) alem do que ja foi commitado na
-  "fundacao" do job system.
-- `crates/kinein-core/src/lsp/parse.rs` (+32/-diff) e `crates/kinein-core/
-  src/commands.rs` (+8), sem contexto claro do motivo — revisar antes de
-  commitar.
-- `docs/03-ipc-protocol.md` (+193/-) ja documenta boa parte disso.
-- Mais as mudancas desta sessao (limpeza de docs, `ContextoIA.md`,
-  `core_client.h/.cpp`, `Main.qml`, `AGENTS.md`, `docs/README.md`,
-  `docs/15`).
-
-Tudo isso passa no gate completo (`cargo fmt/clippy -D warnings/test`, 170+
-testes) e nao e trabalho quebrado — so nunca foi commitado. Recomendacao:
-commitar em pedacos logicos (scan de ambiente; diagnostics unificados; job
-manager extra; a limpeza de docs + job.cancel desta sessao) antes de seguir
-com o proximo refactor grande de UI, para nao acumular ainda mais coisa
-uncommitted em cima de uncommitted.
-
-**Ruido separado, nao mexer:** quase todo arquivo rastreado do repositorio
-mudou de modo `100644` para `100755` (executavel) — isso NAO e conteudo
-mudando, e so bit de permissao, provavelmente de uma copia/extracao do
-projeto entre maquinas. Polui `git status`/`git diff --stat` do repositorio
-inteiro. Vale normalizar (`chmod 644` de volta em arquivos que nao sao
-scripts) numa limpeza separada, sem misturar com os commits de feature acima.
+- **`ninja: error: '/usr/lib/x86_64-linux-gnu/...' missing`**: cache de CMake
+  configurado na distro anterior (caminhos Debian/Ubuntu). Reconfigurar por
+  cima NAO corrige — o CMake preserva valores antigos do cache. Correcao:
+  apagar o diretorio de build inteiro e rodar `cmake --preset <preset>` do
+  zero (feito em 2026-07-08 para `build/linux-clang-release-hardened`; o
+  orfao `build/dev-local-release`, de um preset antigo, foi removido).
+- **`error due to GNU_PROPERTY_1_NEEDED_INDIRECT_EXTERN_ACCESS` ao executar**:
+  binario compilado em outra distro fazendo copy relocation contra simbolo
+  protegido da Qt do Arch. O Qt6 do Arch propaga `-mno-direct-extern-access`
+  (GCC) / `-fno-direct-access-external-data` (Clang) via
+  `/usr/lib/cmake/Qt6/Qt6Targets.cmake`; basta rebuildar limpo na maquina
+  atual que o flag entra sozinho. Nao adicionar flag manual em preset.
 
 ## Direcao do produto
 
@@ -93,6 +70,17 @@ scripts) numa limpeza separada, sem misturar com os commits de feature acima.
 - `workspace.browse`/`fs.*`/`fs.findFiles` seguem confinados ao workspace
   aberto; `fs.*` nunca navega fora dele. Detalhe de cada metodo:
   `docs/03-ipc-protocol.md`.
+- Project Health minimo (primeira etapa, 2026-07-08): banner discreto no topo
+  da area do editor (`shell/ProjectHealthBanner.qml` +
+  `workspace/ProjectHealthController.qml`), composto so com dados existentes
+  (`workspace.kind`, `toolsList` do scan/detect, `scanningEnvironment`) —
+  nenhum contrato IPC novo. Estados: ambiente nao verificado (acao
+  "Verificar" -> `environment.scan`), ferramentas obrigatorias ausentes por
+  kind (acao "Ferramentas" -> aba de tools), kind desconhecido (informativo) e
+  scan em andamento. Quando o ambiente esta saudavel o banner some (decisao de
+  produto: banner discreto, nao selo verde permanente); erros de compilacao e
+  build em andamento ficam fora dele de proposito — ja tem badge de Problemas
+  e status bar. Ha um "×" que dispensa o aviso atual ate a causa mudar.
 - A UI sobe `kinein-core` como processo filho via `CoreClient`. O usuario testa
   pelo icone "Kinein Vectis" do menu de aplicativos (`scripts/kinein-vectis`),
   que prefere binarios release (`build/linux-clang-release-hardened/ui/
@@ -100,8 +88,8 @@ scripts) numa limpeza separada, sem misturar com os commits de feature acima.
   nao existir. Depois de alterar core/UI, rebuild obrigatorio:
   `cargo build --release -p kinein-core` +
   `cmake --build --preset dev-local-release`.
-- **Toolchain local (2026-07-05, maquina atual):** o Clang do sistema virou
-  trunk (Clang 21 experimental) e o GCC trunk foi para 15/16. Com Clang trunk,
+- **Toolchain local (2026-07-08, maquina atual, Arch):** GCC 16.1.1 e
+  Clang 22.1.6. Com Clang recente,
   o proprio codigo gerado pelo moc do Qt dispara `-Wctad-maybe-unsupported`;
   com GCC nativo, o codigo QML gerado (`qmlcache_loader`,
   `qmltyperegistrations`, JS AOT de `Main.qml`/`FolderPickerDialog.qml`)
@@ -393,26 +381,23 @@ mudou:
    ou misturar renderizacao, estado e IPC, a feature so esta pronta depois do
    split.
 
-   **Proxima sequencia recomendada apos este checkpoint/commit (2026-07-06):**
-   1. Depois de trocar/reinstalar a distro, revalidar o ambiente local antes de
-      codar: instalar dependencias de `docs/14-development-environment.md`,
-      configurar presets locais se necessario (`cmake --preset dev-local` e
-      `cmake --preset dev-local-release`), rodar `scripts/verificar.sh
-      --rapido`, `cmake --build --preset dev-local`,
-      `cargo build --release -p kinein-core`,
-      `cmake --build --preset dev-local-release` e smoke offscreen pelo
-      launcher `scripts/kinein-vectis`.
-   2. Nao iniciar Git/AI/debug avancado antes de uma fatia UI concreta. A
-      proxima entrega recomendada e **Project Health minimo e visivel**:
-      primeiro usar dados ja existentes (`workspace.kind`, `tools.status`,
-      `environment.scan`, estado de jobs/LSP) para um banner/painel discreto;
-      so criar contrato novo (`project.health`) se a UI realmente precisar de
-      dado que o core ainda nao expõe.
-   3. Se `project.health` virar necessario, seguir o fluxo de
+   **Proxima sequencia recomendada apos este checkpoint/commit (2026-07-06;
+   status revisado 2026-07-08):**
+   1. [feito 2026-07-08] Revalidar o ambiente local apos a troca de distro:
+      build release reconfigurado do zero (cache stale removido), gate
+      completo `scripts/verificar.sh` verde e smokes offscreen debug/release/
+      launcher ok. Detalhe das falhas e correcoes: secao "Ambiente revalidado"
+      no topo deste arquivo.
+   2. [feito 2026-07-08, primeira etapa] **Project Health minimo e visivel**
+      com dados ja existentes — banner discreto documentado em "Estado tecnico
+      atual". Nenhum contrato novo foi necessario nesta etapa.
+   3. Se `project.health` virar necessario (sinais que o core ainda nao expoe:
+      CMake sem configure, compile_commands ausente, cargo metadata quebrado,
+      LSP degradado, build dir stale), seguir o fluxo de
       `docs/ARCHITECTURE.md`: tipos em `kinein-protocol`, handler fino,
       servico de dominio no core, testes, docs/03 atualizado e UI por
       controller/roteador/componente visual. Operacao longa deve ser job.
-   4. Depois do Project Health minimo, escolher a proxima fatia visivel entre:
+   4. [proximo] Escolher a proxima fatia visivel entre:
       Toolchain/Environment Settings usando `environment.scan`; CMake/Cargo
       toolbar basica so quando houver contrato suficiente; ou Settings/Storage
       com schema se a UI precisar persistir escolhas.
