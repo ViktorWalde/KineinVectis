@@ -23,6 +23,7 @@ set_source_files_properties(qml/shell/ShellOverlays.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/shell/ShellHeaderHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellHeaderHost.qml)
 set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellStatusHost.qml)
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
+set_source_files_properties(qml/shell/ProjectHealthBanner.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthBanner.qml)
 set_source_files_properties(qml/shell/BottomTabBar.qml PROPERTIES QT_RESOURCE_ALIAS BottomTabBar.qml)
 set_source_files_properties(qml/shell/WorkspaceStatusBar.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceStatusBar.qml)
 set_source_files_properties(qml/panels/bottom/BottomPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelHost.qml)
@@ -45,6 +46,7 @@ set_source_files_properties(qml/workspace/FolderPickerDirectoryList.qml PROPERTI
 set_source_files_properties(qml/workspace/FolderPickerActionRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerActionRow.qml)
 set_source_files_properties(qml/workspace/FolderPickerCard.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCard.qml)
 set_source_files_properties(qml/workspace/WorkspaceController.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceController.qml)
+set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthController.qml)
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/assistant/AssistantPanel.qml PROPERTIES QT_RESOURCE_ALIAS AssistantPanel.qml)
 set_source_files_properties(qml/assistant/AssistantController.qml PROPERTIES QT_RESOURCE_ALIAS AssistantController.qml)
@@ -93,6 +95,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/ShellHeaderHost.qml
         qml/shell/ShellStatusHost.qml
         qml/shell/ShellWorkspaceHost.qml
+        qml/shell/ProjectHealthBanner.qml
         qml/shell/BottomTabBar.qml
         qml/shell/WorkspaceStatusBar.qml
         qml/panels/bottom/BottomPanelHost.qml
@@ -115,6 +118,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/FolderPickerActionRow.qml
         qml/workspace/FolderPickerCard.qml
         qml/workspace/WorkspaceController.qml
+        qml/workspace/ProjectHealthController.qml
         qml/workspace/WorkspaceUiResetter.qml
         qml/assistant/AssistantPanel.qml
         qml/assistant/AssistantController.qml

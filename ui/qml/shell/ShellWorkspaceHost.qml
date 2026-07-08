@@ -6,6 +6,7 @@ Item {
 
     property var shellController
     property var workspaceController
+    property var projectHealthController
     property var projectTree
     property var editorController
     property var jobsController
@@ -26,6 +27,7 @@ Item {
     signal readFileRequested(string path)
     signal closeWorkspaceRequested()
     signal toolsDetectionRequested()
+    signal environmentScanRequested()
 
     function focusSearchInput() {
         bottomPanel.focusSearchInput();
@@ -113,11 +115,33 @@ Item {
             height: parent.height
             spacing: Theme.panelGap
 
+            ProjectHealthBanner {
+                id: healthBanner
+
+                width: parent.width
+                active: root.projectHealthController.active
+                status: root.projectHealthController.status
+                message: root.projectHealthController.message
+                actionLabel: root.projectHealthController.actionLabel
+                onActionRequested: {
+                    const target = root.projectHealthController.actionTarget;
+                    if (target === "scan") {
+                        root.environmentScanRequested();
+                    } else if (target !== "") {
+                        root.shellController.showTab(target);
+                    }
+                }
+                onDismissRequested: root.projectHealthController.dismiss()
+            }
+
             EditorPane {
                 id: editorPane
 
                 width: parent.width
-                height: parent.height - (bottomPanel.visible
+                height: parent.height
+                        - (healthBanner.visible
+                        ? healthBanner.height + Theme.panelGap : 0)
+                        - (bottomPanel.visible
                         ? bottomPanel.height + Theme.panelGap : 0)
                 workspaceOpen: root.workspaceOpen
                 filesModel: root.editorController.filesModel

@@ -27,6 +27,15 @@ Window {
         onClearWorkspaceUiRequested: workspaceUiResetter.clear()
     }
 
+    ProjectHealthController {
+        id: projectHealthController
+
+        workspaceRoot: coreClient.workspaceRoot
+        workspaceKind: coreClient.workspaceKind
+        toolsList: workspaceController.toolsList
+        scanningEnvironment: coreClient.scanningEnvironment
+    }
+
     ShellController {
         id: shellController
 
@@ -288,6 +297,7 @@ Window {
         anchors.margins: Theme.panelGap
         shellController: shellController
         workspaceController: workspaceController
+        projectHealthController: projectHealthController
         projectTree: projectTree
         editorController: editorController
         jobsController: jobsController
@@ -310,6 +320,7 @@ Window {
         }
         onCloseWorkspaceRequested: coreClient.closeWorkspace()
         onToolsDetectionRequested: coreClient.detectTools()
+        onEnvironmentScanRequested: coreClient.scanEnvironment()
     }
 
     ShellStatusHost {
