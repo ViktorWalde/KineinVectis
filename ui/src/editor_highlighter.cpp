@@ -366,7 +366,11 @@ void EditorHighlighter::setSemanticTokens(const QVariantList& tokens)
         {
             continue;
         }
-        m_semanticSpansByLine[line].append(span);
+        auto spans = m_semanticSpansByLine.find(line);
+        if (spans == m_semanticSpansByLine.end()) {
+            spans = m_semanticSpansByLine.insert(line, QList<SemanticSpan>{});
+        }
+        spans.value().append(span);
     }
     rehighlight();
 }
