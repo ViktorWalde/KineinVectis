@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
@@ -28,7 +29,7 @@ ListView {
 
     Text {
         anchors.centerIn: parent
-        visible: diagnosticsModel.count === 0
+        visible: panel.diagnosticsModel.count === 0
         text: qsTr("Nenhum problema. Rode um build (Ctrl+F9) ou "
                    + "uma análise (Ctrl+Shift+L).")
         color: Theme.textMuted

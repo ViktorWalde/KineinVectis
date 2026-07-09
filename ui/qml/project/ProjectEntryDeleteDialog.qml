@@ -17,7 +17,7 @@ Item {
 
     Rectangle {
         anchors.centerIn: parent
-        width: Math.min(380, maxAvailableWidth)
+        width: Math.min(380, root.maxAvailableWidth)
         height: entryDeleteColumn.height + 2 * Theme.spacingMedium
         radius: Theme.radius
         color: Theme.background2

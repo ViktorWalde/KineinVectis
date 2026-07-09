@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 Rectangle {
@@ -114,6 +115,8 @@ Rectangle {
             currentIndex: root.currentIndex
 
             delegate: Rectangle {
+                id: resultDelegate
+
                 required property int index
                 required property string path
                 required property string title
@@ -138,7 +141,7 @@ Rectangle {
 
                     Text {
                         width: parent.width
-                        text: title
+                        text: resultDelegate.title
                         color: Theme.textPrimary
                         font.pixelSize: 12
                         font.bold: true
@@ -147,7 +150,8 @@ Rectangle {
 
                     Text {
                         width: parent.width
-                        text: subtitle !== "" ? subtitle : path
+                        text: resultDelegate.subtitle !== ""
+                              ? resultDelegate.subtitle : resultDelegate.path
                         color: Theme.textMuted
                         font.family: Theme.monoFont
                         font.pixelSize: 10
@@ -161,8 +165,8 @@ Rectangle {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: root.resultHovered(parent.index)
-                    onClicked: root.resultActivated(parent.index)
+                    onEntered: root.resultHovered(resultDelegate.index)
+                    onClicked: root.resultActivated(resultDelegate.index)
                 }
             }
         }

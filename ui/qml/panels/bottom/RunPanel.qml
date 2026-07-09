@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
@@ -56,12 +57,14 @@ Item {
         }
 
         delegate: Text {
+            id: runLineDelegate
+
             required property string line
             required property string kind
 
             width: runOutputView.width
             text: line
-            color: panel.lineColor(kind)
+            color: panel.lineColor(runLineDelegate.kind)
             font.family: Theme.monoFont
             font.pixelSize: 11
             wrapMode: Text.WrapAnywhere

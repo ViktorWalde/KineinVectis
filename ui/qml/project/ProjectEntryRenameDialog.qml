@@ -27,7 +27,7 @@ Item {
 
     Rectangle {
         anchors.centerIn: parent
-        width: Math.min(360, maxAvailableWidth)
+        width: Math.min(360, root.maxAvailableWidth)
         height: entryRenameColumn.height + 2 * Theme.spacingMedium
         radius: Theme.radius
         color: Theme.background2

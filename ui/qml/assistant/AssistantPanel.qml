@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 Rectangle {
     id: root

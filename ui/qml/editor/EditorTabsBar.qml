@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 Item {
     id: root
@@ -23,6 +25,8 @@ Item {
             model: root.filesModel
 
             delegate: Rectangle {
+                id: tabDelegate
+
                 required property int index
                 required property string name
                 required property bool modified
@@ -43,8 +47,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: Theme.spacingSmall
-                    text: (modified ? "● " : "") + name
-                    color: index === root.currentIndex
+                    text: (tabDelegate.modified ? "● " : "") + tabDelegate.name
+                    color: tabDelegate.index === root.currentIndex
                            ? Theme.textPrimary : Theme.textSecondary
                     font.pixelSize: 12
                 }
@@ -66,7 +70,7 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.tabCloseRequested(parent.parent.index)
+                        onClicked: root.tabCloseRequested(tabDelegate.index)
                     }
                 }
 
@@ -74,7 +78,7 @@ Item {
                     anchors.fill: parent
                     anchors.rightMargin: closeLabel.width + Theme.spacingSmall
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.tabSelected(parent.index)
+                    onClicked: root.tabSelected(tabDelegate.index)
                 }
             }
         }

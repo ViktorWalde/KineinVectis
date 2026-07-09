@@ -117,16 +117,18 @@ Item {
         interval: 250
         repeat: false
         onTriggered: {
-            if (!root.ready() || documentController.currentTab < 0
-                    || !surfaceBridge.editorSurface.editorActiveFocus || root.visible) {
+            if (!root.ready() || root.documentController.currentTab < 0
+                    || !root.surfaceBridge.editorSurface.editorActiveFocus
+                    || root.visible) {
                 return;
             }
-            const position = surfaceBridge.editorSurface.cursorPosition;
+            const position = root.surfaceBridge.editorSurface.cursorPosition;
             if (position <= 0) {
                 return;
             }
-            const previous = surfaceBridge.editorSurface.text.charAt(position - 1);
-            if (textController.isWordChar(previous) || previous === "."
+            const previous = root.surfaceBridge.editorSurface.text.charAt(
+                        position - 1);
+            if (root.textController.isWordChar(previous) || previous === "."
                     || previous === ":") {
                 root.requestCompletion();
             }

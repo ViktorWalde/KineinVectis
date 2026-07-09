@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
@@ -20,6 +21,8 @@ ListView {
     model: tools
 
     delegate: Rectangle {
+        id: toolDelegate
+
         required property var modelData
 
         width: panel.width
@@ -38,13 +41,13 @@ ListView {
                 height: 8
                 radius: 4
                 anchors.verticalCenter: parent.verticalCenter
-                color: panel.statusColor(modelData.status)
+                color: panel.statusColor(toolDelegate.modelData.status)
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 130
-                text: modelData.displayName
+                text: toolDelegate.modelData.displayName
                 color: Theme.textPrimary
                 font.pixelSize: 11
                 font.bold: true
@@ -53,10 +56,10 @@ ListView {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: modelData.version !== undefined
-                      ? modelData.version
-                      : (modelData.message !== undefined
-                         ? modelData.message : "")
+                text: toolDelegate.modelData.version !== undefined
+                      ? toolDelegate.modelData.version
+                      : (toolDelegate.modelData.message !== undefined
+                         ? toolDelegate.modelData.message : "")
                 color: Theme.textSecondary
                 font.pixelSize: 11
                 font.family: Theme.monoFont
@@ -64,9 +67,9 @@ ListView {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: modelData.suggestedInstall !== undefined
-                text: modelData.suggestedInstall !== undefined
-                      ? modelData.suggestedInstall : ""
+                visible: toolDelegate.modelData.suggestedInstall !== undefined
+                text: toolDelegate.modelData.suggestedInstall !== undefined
+                      ? toolDelegate.modelData.suggestedInstall : ""
                 color: Theme.accent
                 font.pixelSize: 11
                 font.family: Theme.monoFont

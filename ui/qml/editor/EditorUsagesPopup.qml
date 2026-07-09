@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 Rectangle {
     id: root
@@ -80,6 +82,8 @@ Rectangle {
         model: root.itemsModel
 
         delegate: Rectangle {
+            id: usageDelegate
+
             required property string path
             required property int line
             required property int column
@@ -96,7 +100,7 @@ Rectangle {
                 anchors.leftMargin: Theme.spacingSmall
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spacingSmall
-                text: parent.display
+                text: usageDelegate.display
                 color: Theme.accent
                 font.family: Theme.monoFont
                 font.pixelSize: 11
@@ -109,8 +113,9 @@ Rectangle {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.usageOpenRequested(parent.path, parent.line,
-                                                   parent.column)
+                onClicked: root.usageOpenRequested(usageDelegate.path,
+                                                   usageDelegate.line,
+                                                   usageDelegate.column)
             }
         }
     }

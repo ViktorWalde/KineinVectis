@@ -24,76 +24,77 @@ Item {
     SearchEverywhereDialog {
         id: searchEverywhereDialog
 
-        visible: searchController.everywhereVisible
+        visible: root.searchController.everywhereVisible
         z: 90
         anchors.centerIn: parent
-        resultsModel: searchController.everywhereModel
-        resultCount: searchController.everywhereModel.count
-        currentIndex: searchController.everywhereIndex
-        loading: searchController.everywhereLoading
-        truncated: searchController.everywhereTruncated
-        errorText: searchController.everywhereError
+        resultsModel: root.searchController.everywhereModel
+        resultCount: root.searchController.everywhereModel.count
+        currentIndex: root.searchController.everywhereIndex
+        loading: root.searchController.everywhereLoading
+        truncated: root.searchController.everywhereTruncated
+        errorText: root.searchController.everywhereError
         maxAvailableWidth: root.hostWidth - 80
         maxAvailableHeight: root.hostHeight - 120
-        onQueryChanged: searchController.scheduleSearchEverywhere(
+        onQueryChanged: root.searchController.scheduleSearchEverywhere(
                             searchEverywhereDialog.currentQuery())
-        onAcceptRequested: searchController.acceptSearchEverywhere()
+        onAcceptRequested: root.searchController.acceptSearchEverywhere()
         onDismissRequested: {
-            searchController.everywhereVisible = false;
-            editorController.focusEditor();
+            root.searchController.everywhereVisible = false;
+            root.editorController.focusEditor();
         }
-        onMoveDownRequested: searchController.moveEverywhereDown()
-        onMoveUpRequested: searchController.moveEverywhereUp()
+        onMoveDownRequested: root.searchController.moveEverywhereDown()
+        onMoveUpRequested: root.searchController.moveEverywhereUp()
         onResultHovered: function(index) {
-            searchController.everywhereIndex = index;
+            root.searchController.everywhereIndex = index;
         }
         onResultActivated: function(index) {
-            searchController.everywhereIndex = index;
-            searchController.acceptSearchEverywhere();
+            root.searchController.everywhereIndex = index;
+            root.searchController.acceptSearchEverywhere();
         }
     }
 
     ProjectEntryContextMenu {
         anchors.fill: parent
-        visible: projectTree.entryMenuVisible
+        visible: root.projectTree.entryMenuVisible
         z: 100
-        menuX: projectTree.entryMenuX
-        menuY: projectTree.entryMenuY
-        onDismissRequested: projectTree.entryMenuVisible = false
-        onRenameRequested: projectTree.openEntryRename()
-        onDeleteRequested: projectTree.openEntryDelete()
+        menuX: root.projectTree.entryMenuX
+        menuY: root.projectTree.entryMenuY
+        onDismissRequested: root.projectTree.entryMenuVisible = false
+        onRenameRequested: root.projectTree.openEntryRename()
+        onDeleteRequested: root.projectTree.openEntryDelete()
     }
 
     ProjectEntryRenameDialog {
         id: entryRenameDialog
 
         anchors.fill: parent
-        visible: projectTree.entryRenameVisible
+        visible: root.projectTree.entryRenameVisible
         z: 101
-        entryKind: projectTree.entryRenameKind
-        entryDisplayPath: shellController.relativeToRoot(projectTree.entryRenamePath)
-        errorText: projectTree.entryRenameError
+        entryKind: root.projectTree.entryRenameKind
+        entryDisplayPath: root.shellController.relativeToRoot(
+                              root.projectTree.entryRenamePath)
+        errorText: root.projectTree.entryRenameError
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        onConfirmRequested: projectTree.confirmEntryRename(
+        onConfirmRequested: root.projectTree.confirmEntryRename(
                                 entryRenameDialog.currentName())
         onCancelRequested: {
-            projectTree.entryRenameVisible = false;
-            editorController.focusEditor();
+            root.projectTree.entryRenameVisible = false;
+            root.editorController.focusEditor();
         }
     }
 
     ProjectEntryDeleteDialog {
         anchors.fill: parent
-        visible: projectTree.entryDeleteVisible
+        visible: root.projectTree.entryDeleteVisible
         z: 102
-        entryKind: projectTree.entryDeleteKind
-        entryName: projectTree.entryDeleteName
-        errorText: projectTree.entryDeleteError
+        entryKind: root.projectTree.entryDeleteKind
+        entryName: root.projectTree.entryDeleteName
+        errorText: root.projectTree.entryDeleteError
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        onConfirmRequested: projectTree.confirmEntryDelete()
+        onConfirmRequested: root.projectTree.confirmEntryDelete()
         onCancelRequested: {
-            projectTree.entryDeleteVisible = false;
-            editorController.focusEditor();
+            root.projectTree.entryDeleteVisible = false;
+            root.editorController.focusEditor();
         }
     }
 }

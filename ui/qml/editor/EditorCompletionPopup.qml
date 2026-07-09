@@ -1,4 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 Rectangle {
     id: root
@@ -29,6 +31,8 @@ Rectangle {
         onCurrentIndexChanged: positionViewAtIndex(currentIndex, ListView.Contain)
 
         delegate: Rectangle {
+            id: completionDelegate
+
             required property int index
             required property string label
             required property string detail
@@ -50,7 +54,7 @@ Rectangle {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 52
-                    text: parent.parent.kind
+                    text: completionDelegate.kind
                     color: Theme.accent
                     font.pixelSize: 9
                     elide: Text.ElideRight
@@ -58,7 +62,7 @@ Rectangle {
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: parent.parent.label
+                    text: completionDelegate.label
                     color: Theme.textPrimary
                     font.family: Theme.monoFont
                     font.pixelSize: 12
@@ -67,7 +71,7 @@ Rectangle {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width - x
-                    text: parent.parent.detail
+                    text: completionDelegate.detail
                     color: Theme.textMuted
                     font.pixelSize: 10
                     elide: Text.ElideRight
@@ -77,7 +81,7 @@ Rectangle {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.completionActivated(parent.index)
+                onClicked: root.completionActivated(completionDelegate.index)
             }
         }
     }
