@@ -117,6 +117,12 @@ Detalhe completo (arquivos, pastas, verificacao): ver
   sem `unwrap`/`expect`/`panic`/`todo`/`dbg!` fora de casos aceitos por testes.
 - C++/Qt: C++23, warnings-as-errors, sanitizers em Debug, hardening/LTO em
   Release via `cmake/KineinStrictOptions.cmake`.
+- QML (desde 2026-07-08): qmllint estrito (zero warnings) no gate via
+  `scripts/verificar-qml.sh`. Padrao do repositorio: `pragma
+  ComponentBehavior: Bound` onde ha delegates, `required property` para
+  roles, acesso por id qualificado (nunca `parent.parent.x` nem resolucao
+  implicita de escopo). Detalhe: `docs/06-strict-mode.md`; degraus futuros de
+  rigor: `docs/18-daily-driver-plan.md`.
 - Futuramente: seletor de nivel de rigidez (Strict padrao / Balanced /
   Relaxed so por escolha explicita).
 
@@ -311,11 +317,11 @@ mudou:
 
    **Verificacao apos cada aba extraida:** `cmake --build --preset
    dev-local` e `--preset dev-local-release` (ambos devem linkar),
-   `clang-format --dry-run --Werror` no `.qml` novo se o projeto passar a
-   formatar QML (hoje so C++ tem gate automatico — QML e revisado a olho),
-   smoke offscreen (`QT_QPA_PLATFORM=offscreen`), e o comportamento visual
-   idempotente (build/test/quality continuam iniciando, mostrando saida e
-   finalizando via eventos; Problems continua recebendo as tres origens).
+   `scripts/verificar-qml.sh` (desde 2026-07-08 QML tem gate automatico:
+   qmllint estrito com zero warnings), smoke offscreen
+   (`QT_QPA_PLATFORM=offscreen`), e o comportamento visual idempotente
+   (build/test/quality continuam iniciando, mostrando saida e finalizando
+   via eventos; Problems continua recebendo as tres origens).
 
    **Specs de UI/UX sao inegociaveis mesmo neste refactor estrutural.** Esta
    tarefa e reorganizacao de arquivo (extrair QML para componentes), NAO
@@ -397,10 +403,12 @@ mudou:
       `docs/ARCHITECTURE.md`: tipos em `kinein-protocol`, handler fino,
       servico de dominio no core, testes, docs/03 atualizado e UI por
       controller/roteador/componente visual. Operacao longa deve ser job.
-   4. [proximo] Escolher a proxima fatia visivel entre:
-      Toolchain/Environment Settings usando `environment.scan`; CMake/Cargo
-      toolbar basica so quando houver contrato suficiente; ou Settings/Storage
-      com schema se a UI precisar persistir escolhas.
+   4. [proximo] Seguir `docs/18-daily-driver-plan.md` (criado 2026-07-08 a
+      pedido do usuario: rigor maior + virar daily driver o quanto antes).
+      Marco corrente: **M1 — edicao diaria confortavel**; primeira fatia
+      recomendada: formatacao orquestrada (rustfmt/clang-format via core como
+      job, format-on-save opt-in). Toolchain/Environment Settings, CMake/Cargo
+      toolbar e Settings/Storage entram nos marcos M1/M2 conforme o plano.
 5. `docs/BACKEND_TO_UI_UX_ROADMAP.md` continua sendo a ponte backend->UI: nao
    substitui `docs/specs/`, so evita que o backend avance sem mapear a
    experiencia visual futura. Atualizar os dois ao fim de cada entrega.

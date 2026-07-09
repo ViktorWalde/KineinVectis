@@ -55,6 +55,7 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica e modularização pós-V1 |
 | [16-hidden-risks-checklist.md](16-hidden-risks-checklist.md) | Riscos ocultos (perda de dados, migração de config, segurança de comandos, segredos, testes de regressão, a11y, observabilidade, packaging) |
 | [17-architecture-hygiene-plan.md](17-architecture-hygiene-plan.md) | Fase ativa para eliminar concentração arquitetural antes de novas features grandes |
+| [18-daily-driver-plan.md](18-daily-driver-plan.md) | Plano de daily driver (marcos M0–M4 de dogfooding) e escada de rigor |
 | [COMANDOS_BUILD_VERIFICACAO.md](COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
 
 ## Guias na raiz do repositório
