@@ -81,6 +81,25 @@ Sanitizers Debug:
 -fno-omit-frame-pointer
 ```
 
+## QML Strict (UI do Kinein Vectis)
+
+Desde 2026-07-08 o QML da UI tem gate automatizado, no mesmo espírito de
+Rust/C++ (zerado primeiro, ligado depois):
+
+- `scripts/verificar-qml.sh` roda `qmllint -W 0` (zero warnings) com o
+  contexto real do módulo (`--bare`, import paths, qmldir e resources do
+  response file gerado pelo `qt_add_qml_module` no build debug);
+- faz parte do `scripts/verificar.sh` nos modos completo e rápido;
+- padrões do repositório: `pragma ComponentBehavior: Bound` em arquivos com
+  delegates, `required property` para roles de model, acesso qualificado
+  (id explícito) em vez de resolução implícita de escopo ou `parent.parent`;
+- `import KineinVectis` explícito quando o arquivo usa tipos do módulo
+  (ex.: `Theme`), mesmo que o import implícito resolvesse.
+
+Degraus futuros (ordem em `docs/18-daily-driver-plan.md`): `qmlformat
+--check` após reformatar o tree numa fatia dedicada e testes Qt Quick Test
+para controllers não visuais.
+
 ## Java Strict
 
 Padrão para projetos Java:

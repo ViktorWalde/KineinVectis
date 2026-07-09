@@ -32,10 +32,15 @@ cargo fmt --all --check
 cargo test --workspace --all-features
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 scripts/verificar-cpp.sh
+scripts/verificar-qml.sh
 cmake --build --preset dev-local
 cargo build --release -p kinein-core
 cmake --build --preset dev-local-release
 ```
+
+`scripts/verificar-qml.sh` roda o qmllint em modo estrito (zero warnings)
+com o contexto de modulo do build debug; se um `.qml` novo nao aparecer no
+lint, reconfigure o preset debug para regenerar o response file.
 
 Execucao manual da IDE:
 

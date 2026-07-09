@@ -57,6 +57,9 @@ cargo clippy --workspace --all-targets --all-features -- -D warnings
 passo "scripts/verificar-cpp.sh (clang-format + clang-tidy)"
 scripts/verificar-cpp.sh
 
+passo "scripts/verificar-qml.sh (qmllint estrito)"
+scripts/verificar-qml.sh
+
 if [ "$modo" = "completo" ]; then
     passo "cmake --build --preset $preset_debug (UI debug sanitized)"
     cmake --build --preset "$preset_debug"
