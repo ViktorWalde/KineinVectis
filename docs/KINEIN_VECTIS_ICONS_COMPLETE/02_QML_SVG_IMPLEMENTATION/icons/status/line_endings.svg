@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Fim de linha">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M14.5 4.5v5H7"/><polygon class="f" points="9.3,7.3 7,9.5 9.3,11.7"/><line class="s" x1="4" y1="14.5" x2="14" y2="14.5"/>
+</svg>

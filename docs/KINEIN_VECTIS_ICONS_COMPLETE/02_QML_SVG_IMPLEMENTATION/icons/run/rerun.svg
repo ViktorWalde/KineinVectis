@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Executar novamente">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<polygon class="f" points="7.05,7 12,10 7.05,13"/><path class="s" d="M14.5 5.2A6 6 0 0 1 15 13"/><polygon class="f" points="15,13 12.8,11.5 15.7,10.6"/>
+</svg>

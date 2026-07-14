@@ -31,10 +31,12 @@ impl Core {
             return jobs_unavailable_response(request_id, "build.run");
         };
 
+        // M4.5: o perfil de rigor efetivo regula o build do USUARIO.
+        let profile = crate::settings::effective_rigor_profile(&root);
         let job_id = jobs.spawn("build", "Build", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "build", &event);
-            match build::run_build(&root, kind, &cancel, &mut sink) {
+            match build::run_build(&root, kind, profile, &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.build.finished",
@@ -69,10 +71,11 @@ impl Core {
             return jobs_unavailable_response(request_id, "quality.run");
         };
 
+        let profile = crate::settings::effective_rigor_profile(&root);
         let job_id = jobs.spawn("quality", "Quality", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-            match build::run_quality(&root, kind, &cancel, &mut sink) {
+            match build::run_quality(&root, kind, profile, &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.quality.finished",
@@ -169,7 +172,7 @@ impl Core {
 
 /// Maps a [`build::BuildEvent`] onto an `event.<domain>.*` notification tagged
 /// with the job id, so `build` and `quality` share one mapping.
-fn emit_build_event(ctx: &JobContext, domain: &str, event: &build::BuildEvent) {
+pub(super) fn emit_build_event(ctx: &JobContext, domain: &str, event: &build::BuildEvent) {
     let id = ctx.id();
     let (method, params) = match event {
         build::BuildEvent::Started { command } => (
@@ -199,14 +202,14 @@ const fn diagnostic_source(domain: &str) -> DiagnosticSource {
 }
 
 /// Emits `event.<domain>.finished` with a failure and a message.
-fn emit_run_error(ctx: &JobContext, domain: &str, message: &str) {
+pub(super) fn emit_run_error(ctx: &JobContext, domain: &str, message: &str) {
     ctx.emit_event(
         &format!("event.{domain}.finished"),
         json!({ "jobId": ctx.id(), "success": false, "error": message }),
     );
 }
 
-const fn job_outcome(success: bool) -> JobOutcome {
+pub(super) const fn job_outcome(success: bool) -> JobOutcome {
     if success {
         JobOutcome::Success
     } else {

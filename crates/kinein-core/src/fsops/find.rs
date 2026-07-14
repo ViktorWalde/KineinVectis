@@ -138,7 +138,24 @@ mod tests {
         permissions.set_mode(0o755);
         fs::set_permissions(&fd, permissions).unwrap();
 
-        let (matches, truncated) = find_files_with_binary(&root, "main", &fd).unwrap();
+        // Testes rodam em paralelo e outros deles fazem fork/exec; um filho
+        // pode herdar por instantes o fd de escrita do script acima e o
+        // primeiro exec falha com ETXTBSY (race classico de Unix). Retentar
+        // poucas vezes elimina o flake sem mascarar erro real.
+        let mut outcome = find_files_with_binary(&root, "main", &fd);
+        for _attempt in 0..20 {
+            let is_busy = matches!(
+                &outcome,
+                Err(super::FsError::Io { source, .. })
+                    if source.raw_os_error() == Some(26)
+            );
+            if !is_busy {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(10));
+            outcome = find_files_with_binary(&root, "main", &fd);
+        }
+        let (matches, truncated) = outcome.unwrap();
         let paths = matches
             .iter()
             .map(|entry| entry.path.as_str())

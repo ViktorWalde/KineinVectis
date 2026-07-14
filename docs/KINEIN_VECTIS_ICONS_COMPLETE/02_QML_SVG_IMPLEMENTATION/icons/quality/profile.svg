@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Perfil de qualidade">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M10 2.4l6 2.1v5.1c0 3.8-2.2 6.6-6 8-3.8-1.4-6-4.2-6-8V4.5z"/><line class="s" x1="7" y1="8" x2="13" y2="8"/><circle class="f" cx="9" cy="8" r="0.7"/><line class="s" x1="7" y1="11" x2="13" y2="11"/><circle class="f" cx="11.5" cy="11" r="0.7"/><line class="s" x1="7" y1="14" x2="13" y2="14"/><circle class="f" cx="8" cy="14" r="0.7"/>
+</svg>

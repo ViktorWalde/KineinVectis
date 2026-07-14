@@ -18,10 +18,11 @@
 //! - [`uri`]: conversao entre caminhos e URIs `file://`.
 
 mod edit;
-mod framing;
+pub mod framing;
 mod manager;
 mod parse;
 mod server;
+mod transaction;
 mod types;
 mod uri;
 
@@ -35,6 +36,9 @@ use serde_json::Value;
 
 pub use edit::apply_text_edits;
 pub use manager::LspManager;
+pub use transaction::{
+    WorkspaceEditApplied, WorkspaceEditTransactionError, WorkspaceEditTransactions,
+};
 pub use types::{FileEdits, LspError, LspLocation, TextSpanEdit, WorkspaceEditPlan};
 
 /// Sender usado para empurrar notificacoes assincronas ao loop principal.

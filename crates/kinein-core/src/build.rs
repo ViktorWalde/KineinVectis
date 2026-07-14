@@ -13,10 +13,39 @@ use std::{
     sync::{Arc, atomic::AtomicBool},
 };
 
-use kinein_protocol::{BuildDiagnostic, BuildDiagnosticSeverity, ProjectKind};
+use kinein_protocol::{BuildDiagnostic, BuildDiagnosticSeverity, ProjectKind, RigorProfile};
 use serde::Deserialize;
 
 use crate::process::{self, ProcessError};
+
+/// Flags de lint do clippy por perfil de rigor (fatia M4.5). Vão DEPOIS do
+/// `--` do `cargo clippy`. Balanced usa o clippy default (sem extras).
+#[must_use]
+pub fn clippy_profile_args(profile: RigorProfile) -> Vec<&'static str> {
+    match profile {
+        RigorProfile::Strict => vec![
+            "--",
+            "-W",
+            "clippy::pedantic",
+            "-W",
+            "clippy::nursery",
+            "-D",
+            "warnings",
+        ],
+        RigorProfile::Balanced => Vec::new(),
+        RigorProfile::Relaxed => vec!["--", "-A", "clippy::all", "-W", "clippy::correctness"],
+    }
+}
+
+/// `RUSTFLAGS` do `cargo build` por perfil: Strict trata warning como erro;
+/// os outros deixam o cargo decidir. `None` = não setar o env.
+#[must_use]
+pub const fn rust_build_rustflags(profile: RigorProfile) -> Option<&'static str> {
+    match profile {
+        RigorProfile::Strict => Some("-D warnings"),
+        RigorProfile::Balanced | RigorProfile::Relaxed => None,
+    }
+}
 
 /// Event emitted while a build runs.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -126,16 +155,44 @@ pub(crate) fn project_kind_name(kind: ProjectKind) -> String {
 pub fn run_build(
     root: &Path,
     kind: ProjectKind,
+    profile: RigorProfile,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     match kind {
-        ProjectKind::RustCargo => run_cargo_build(root, cancel, sink),
+        ProjectKind::RustCargo => run_cargo_build(root, profile, cancel, sink),
+        // C++ CMake -Werror por perfil fica para uma fatia futura (injetar
+        // flag no build do usuario e invasivo — ver docs/18 M4.5).
         ProjectKind::Cmake => run_cmake_build(root, cancel, sink),
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
         }),
     }
+}
+
+/// Runs `cargo check` for fast type/borrow feedback without codegen.
+///
+/// Same JSON stream as `cargo build`/`cargo clippy`, so diagnostics reuse
+/// the existing parser and flow into the Problems panel unchanged.
+pub fn run_cargo_check(
+    root: &Path,
+    cancel: &Arc<AtomicBool>,
+    sink: &mut dyn FnMut(BuildEvent),
+) -> Result<BuildOutcome, BuildError> {
+    let mut command = Command::new("cargo");
+    command
+        .arg("check")
+        .arg("--workspace")
+        .arg("--all-targets")
+        .arg("--message-format=json")
+        .current_dir(root);
+    stream_command(
+        command,
+        "cargo check",
+        DiagnosticFormat::CargoJson,
+        cancel,
+        sink,
+    )
 }
 
 /// Runs the lint/quality tool for the workspace project kind.
@@ -146,6 +203,7 @@ pub fn run_build(
 pub fn run_quality(
     root: &Path,
     kind: ProjectKind,
+    profile: RigorProfile,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
@@ -156,6 +214,7 @@ pub fn run_quality(
                 .arg("clippy")
                 .arg("--all-targets")
                 .arg("--message-format=json")
+                .args(clippy_profile_args(profile))
                 .current_dir(root);
             stream_command(
                 command,
@@ -173,6 +232,7 @@ pub fn run_quality(
 
 fn run_cargo_build(
     root: &Path,
+    profile: RigorProfile,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
@@ -181,6 +241,11 @@ fn run_cargo_build(
         .arg("build")
         .arg("--message-format=json")
         .current_dir(root);
+    // Strict: warning vira erro no build do usuario (invalida o cache do
+    // cargo ao trocar de perfil — aceito, ver docs/18 M4.5).
+    if let Some(flags) = rust_build_rustflags(profile) {
+        command.env("RUSTFLAGS", flags);
+    }
 
     stream_command(
         command,
@@ -502,15 +567,42 @@ mod tests {
 
     #[test]
     fn run_quality_rejects_kinds_without_linter() {
-        use kinein_protocol::ProjectKind;
+        use kinein_protocol::{ProjectKind, RigorProfile};
 
         // Cmake tem build integrado mas ainda nao tem analise de qualidade.
         let root = std::env::temp_dir();
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
-        let error =
-            super::run_quality(&root, ProjectKind::Cmake, &cancel, &mut |_event| {}).unwrap_err();
+        let error = super::run_quality(
+            &root,
+            ProjectKind::Cmake,
+            RigorProfile::Strict,
+            &cancel,
+            &mut |_event| {},
+        )
+        .unwrap_err();
 
         assert!(matches!(error, super::BuildError::Unsupported { .. }));
         assert!(!error.is_missing_tool());
+    }
+
+    #[test]
+    fn clippy_and_build_flags_vary_by_rigor_profile() {
+        use kinein_protocol::RigorProfile;
+
+        // Strict: pedantic/nursery + deny warnings; RUSTFLAGS deny warnings.
+        let strict = super::clippy_profile_args(RigorProfile::Strict);
+        assert!(strict.contains(&"clippy::pedantic"));
+        assert!(strict.contains(&"warnings"));
+        assert_eq!(
+            super::rust_build_rustflags(RigorProfile::Strict),
+            Some("-D warnings")
+        );
+        // Balanced: clippy default (sem flags extras); build sem RUSTFLAGS.
+        assert!(super::clippy_profile_args(RigorProfile::Balanced).is_empty());
+        assert_eq!(super::rust_build_rustflags(RigorProfile::Balanced), None);
+        // Relaxed: allow-all + so correctness; build sem RUSTFLAGS.
+        let relaxed = super::clippy_profile_args(RigorProfile::Relaxed);
+        assert!(relaxed.contains(&"clippy::correctness"));
+        assert_eq!(super::rust_build_rustflags(RigorProfile::Relaxed), None);
     }
 }

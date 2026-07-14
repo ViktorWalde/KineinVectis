@@ -17,21 +17,39 @@ use std::{
     time::Duration,
 };
 
-use kinein_protocol::{JsonRpcRequest, LspCompletionItem, LspSemanticToken};
+use kinein_protocol::{
+    JsonRpcRequest, LspCodeActionInfo, LspCompletionItem, LspSemanticToken, LspSymbolInfo,
+};
 use serde_json::{Value, json};
 
 use super::framing::{full_change_params, send_notification, write_locked_message};
 use super::parse::{
-    completion_items, decode_semantic_tokens, definition_location, hover_content,
-    reference_locations, response_result, workspace_edit_plan,
+    code_action_infos, completion_items, decode_semantic_tokens, definition_location,
+    document_symbols, hover_content, reference_locations, response_result, workspace_edit_plan,
+    workspace_symbols,
 };
 use super::server::{ServerHandle, ServerSpec, spawn_server, spec_for_path};
 use super::types::{LspError, LspLocation, WorkspaceEditPlan};
-use super::uri::uri_for_path;
+use super::uri::{path_for_uri, uri_for_path};
 use super::{EventSender, PendingResponses};
 
 /// Tempo maximo aguardando respostas interativas do LSP.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
+
+/// Timeouts CONSECUTIVOS de um servidor antes do auto-restart (M4.3b). Com
+/// `REQUEST_TIMEOUT` de 4s, são ~12s preso antes de ressuscitar o servidor.
+const MAX_TIMEOUT_STREAK: u32 = 3;
+
+/// Ultima consulta de code actions respondida, com as ações cruas do servidor.
+///
+/// `lsp.applyCodeAction` só aplica índices desta consulta; qualquer didChange,
+/// didOpen ou troca de raiz a invalida (as posições dos edits valem para o
+/// conteúdo que o servidor viu na consulta).
+#[derive(Debug)]
+struct ActiveCodeActions {
+    path: PathBuf,
+    actions: Vec<Value>,
+}
 
 /// Gerencia os language servers do workspace aberto.
 #[derive(Debug)]
@@ -41,6 +59,9 @@ pub struct LspManager {
     pending: PendingResponses,
     root: Option<PathBuf>,
     next_request_id: i64,
+    active_code_actions: Option<ActiveCodeActions>,
+    /// Timeouts consecutivos por linguagem; zera em qualquer resposta.
+    timeout_streak: HashMap<&'static str, u32>,
 }
 
 impl LspManager {
@@ -53,6 +74,50 @@ impl LspManager {
             pending: Arc::new(Mutex::new(HashMap::new())),
             root: None,
             next_request_id: 2,
+            active_code_actions: None,
+            timeout_streak: HashMap::new(),
+        }
+    }
+
+    /// Reinicia o servidor de UMA linguagem: mata o processo e o remove; sobe
+    /// de novo (lazy) no próximo request. `true` se havia servidor. A UI
+    /// re-sincroniza o arquivo ativo ao ver `event.lsp.restarted` (M4.3b).
+    pub fn restart_language(&mut self, language: &str) -> bool {
+        let Some(key) = self.servers.keys().copied().find(|k| *k == language) else {
+            return false;
+        };
+        if let Some(mut handle) = self.servers.remove(key) {
+            drop(handle.child.kill());
+            drop(handle.child.wait());
+        }
+        self.timeout_streak.remove(key);
+        self.emit_status(key, "restarting");
+        self.emit_restarted(key);
+        true
+    }
+
+    /// Reinicia TODOS os servidores vivos; devolve as linguagens reiniciadas.
+    pub fn restart_all(&mut self) -> Vec<String> {
+        let languages: Vec<&'static str> = self.servers.keys().copied().collect();
+        let mut restarted = Vec::new();
+        for language in languages {
+            if self.restart_language(language) {
+                restarted.push(language.to_owned());
+            }
+        }
+        restarted
+    }
+
+    /// Registra um timeout do servidor; ao acumular `MAX_TIMEOUT_STREAK`
+    /// seguidos, auto-reinicia aquela linguagem (M4.3b).
+    fn note_timeout(&mut self, language: &'static str) {
+        let streak = {
+            let entry = self.timeout_streak.entry(language).or_insert(0);
+            *entry += 1;
+            *entry
+        };
+        if streak >= MAX_TIMEOUT_STREAK {
+            self.restart_language(language);
         }
     }
 
@@ -67,6 +132,7 @@ impl LspManager {
 
     /// Encerra todos os servidores gerenciados.
     pub fn shutdown_all(&mut self) {
+        self.active_code_actions = None;
         let drained: Vec<(&'static str, ServerHandle)> = self.servers.drain().collect();
         for (language, mut handle) in drained {
             // Melhor esforco: mata o processo; shutdown educado fica para
@@ -78,6 +144,10 @@ impl LspManager {
     }
 
     /// Abre (ou re-sincroniza) um documento no servidor da linguagem dele.
+    ///
+    /// Conteudo identico ao ultimo sincronizado nao gera notificacao nova:
+    /// alem de evitar reparse no servidor, preserva a consulta ativa de code
+    /// actions e os fix-its que o clangd amarra a versao do documento.
     pub fn did_open(&mut self, path: &Path, content: &str) {
         let Some(spec) = spec_for_path(path) else {
             return;
@@ -86,18 +156,26 @@ impl LspManager {
             return;
         }
         let uri = uri_for_path(path);
+        let hash = content_hash(content);
         let Some(handle) = self.servers.get_mut(spec.language) else {
             return;
         };
 
         if let Some(version) = handle.versions.get_mut(&uri) {
+            if handle.content_hashes.get(&uri) == Some(&hash) {
+                return;
+            }
+            self.active_code_actions = None;
             *version += 1;
             let params = full_change_params(&uri, *version, content);
+            handle.content_hashes.insert(uri.clone(), hash);
             send_notification(&handle.stdin, "textDocument/didChange", &params);
             return;
         }
 
+        self.active_code_actions = None;
         handle.versions.insert(uri.clone(), 1);
+        handle.content_hashes.insert(uri.clone(), hash);
         let params = json!({
             "textDocument": {
                 "uri": uri,
@@ -110,6 +188,8 @@ impl LspManager {
     }
 
     /// Sincroniza o conteudo atual de um documento (texto completo).
+    ///
+    /// Sem mudanca real de conteudo, nada e enviado (ver `did_open`).
     pub fn did_change(&mut self, path: &Path, content: &str) {
         let Some(spec) = spec_for_path(path) else {
             return;
@@ -123,14 +203,20 @@ impl LspManager {
             self.did_open(path, content);
             return;
         }
+        let hash = content_hash(content);
         let Some(handle) = self.servers.get_mut(spec.language) else {
             return;
         };
+        if handle.content_hashes.get(&uri) == Some(&hash) {
+            return;
+        }
         let Some(version) = handle.versions.get_mut(&uri) else {
             return;
         };
+        self.active_code_actions = None;
         *version += 1;
         let params = full_change_params(&uri, *version, content);
+        handle.content_hashes.insert(uri.clone(), hash);
         send_notification(&handle.stdin, "textDocument/didChange", &params);
     }
 
@@ -190,7 +276,7 @@ impl LspManager {
         content: &str,
         line: u64,
         column: u64,
-    ) -> Result<Vec<LspCompletionItem>, LspError> {
+    ) -> Result<(Vec<LspCompletionItem>, bool), LspError> {
         let result = self.text_document_position_request(
             "textDocument/completion",
             path,
@@ -220,6 +306,32 @@ impl LspManager {
         Ok(reference_locations(&result))
     }
 
+    /// Alterna entre header e source via a extensao do clangd
+    /// `textDocument/switchSourceHeader`.
+    ///
+    /// So o servidor C/C++ tem essa extensao: arquivo de outra linguagem
+    /// vira `UnsupportedFile` (nunca deixamos rust-analyzer responder
+    /// "method not found" cru). Sem contraparte, o clangd responde `null`
+    /// e devolvemos `None` — nao e erro.
+    pub fn switch_source_header(
+        &mut self,
+        path: &Path,
+        content: &str,
+    ) -> Result<Option<String>, LspError> {
+        let spec = self.sync_document(path, content)?;
+        if spec.language != "cpp" {
+            return Err(LspError::UnsupportedFile {
+                path: path.display().to_string(),
+            });
+        }
+        // A extensao usa TextDocumentIdentifier PLANO ({ uri }), sem o
+        // envelope { textDocument } dos requests de posicao.
+        let params = json!({ "uri": uri_for_path(path) });
+        let result =
+            self.send_request(spec.language, "textDocument/switchSourceHeader", &params)?;
+        Ok(result.as_str().and_then(path_for_uri))
+    }
+
     /// Solicita `textDocument/rename` e devolve o plano de edits por arquivo.
     ///
     /// O manager NAO escreve arquivos; quem aplica o plano (confinado ao
@@ -241,6 +353,94 @@ impl LspManager {
             &json!({ "newName": new_name }),
         )?;
         workspace_edit_plan(&result)
+    }
+
+    /// Resolve `textDocument/codeAction` no ponto do cursor.
+    ///
+    /// O `context` leva os diagnostics que o proprio servidor publicou para a
+    /// linha (cache da thread leitora); a UI nao devolve diagnostico nenhum.
+    /// As acoes cruas aplicaveis ficam guardadas como consulta ativa para o
+    /// `lsp.applyCodeAction` seguinte.
+    pub fn code_actions(
+        &mut self,
+        path: &Path,
+        content: &str,
+        line: u64,
+        column: u64,
+    ) -> Result<Vec<LspCodeActionInfo>, LspError> {
+        let spec = self.sync_document(path, content)?;
+        let uri = uri_for_path(path);
+        let context_diagnostics = self
+            .servers
+            .get(spec.language)
+            .map(|handle| diagnostics_for_line(&handle.diagnostics_by_uri, &uri, line))
+            .unwrap_or_default();
+        let position = json!({
+            "line": line.saturating_sub(1),
+            "character": column.saturating_sub(1),
+        });
+        let params = json!({
+            "textDocument": { "uri": uri },
+            "range": { "start": position, "end": position },
+            "context": { "diagnostics": context_diagnostics },
+        });
+        let result = self.send_request(spec.language, "textDocument/codeAction", &params)?;
+        let (infos, raw) = code_action_infos(&result);
+        self.active_code_actions = Some(ActiveCodeActions {
+            path: path.to_path_buf(),
+            actions: raw,
+        });
+        Ok(infos)
+    }
+
+    /// Consome a acao `index` da consulta ativa de `path`, se ela existir.
+    ///
+    /// Retorna o titulo e o plano de edits ja convertido; `None` quando nao
+    /// ha consulta ativa para o arquivo ou o indice nao existe. A consulta
+    /// inteira e invalidada na chamada: depois de aplicar um edit o conteudo
+    /// muda e os indices antigos deixam de valer.
+    pub fn take_code_action(
+        &mut self,
+        path: &Path,
+        index: usize,
+    ) -> Option<Result<(String, WorkspaceEditPlan), LspError>> {
+        let active = self.active_code_actions.take()?;
+        if active.path != path {
+            return None;
+        }
+        let action = active.actions.get(index)?;
+        let title = action
+            .get("title")
+            .and_then(Value::as_str)
+            .unwrap_or("code action")
+            .to_owned();
+        let edit = action.get("edit")?;
+        Some(workspace_edit_plan(edit).map(|plan| (title, plan)))
+    }
+
+    /// Resolve `textDocument/documentSymbol`: a estrutura achatada do arquivo.
+    pub fn document_symbols(
+        &mut self,
+        path: &Path,
+        content: &str,
+    ) -> Result<Vec<LspSymbolInfo>, LspError> {
+        let spec = self.sync_document(path, content)?;
+        let params = json!({ "textDocument": { "uri": uri_for_path(path) } });
+        let result = self.send_request(spec.language, "textDocument/documentSymbol", &params)?;
+        Ok(document_symbols(&result, &path.display().to_string()))
+    }
+
+    /// Resolve `workspace/symbol` no servidor da linguagem do arquivo ativo.
+    pub fn workspace_symbols(
+        &mut self,
+        path: &Path,
+        content: &str,
+        query: &str,
+    ) -> Result<Vec<LspSymbolInfo>, LspError> {
+        let spec = self.sync_document(path, content)?;
+        let params = json!({ "query": query });
+        let result = self.send_request(spec.language, "workspace/symbol", &params)?;
+        Ok(workspace_symbols(&result))
     }
 
     /// Resolve `textDocument/semanticTokens/full` para o documento inteiro.
@@ -276,15 +476,34 @@ impl LspManager {
             return;
         };
         let uri = uri_for_path(path);
+        let hash = content_hash(content);
         let Some(handle) = self.servers.get_mut(spec.language) else {
             return;
         };
         let Some(version) = handle.versions.get_mut(&uri) else {
             return;
         };
+        if handle.content_hashes.get(&uri) == Some(&hash) {
+            return;
+        }
         *version += 1;
         let params = full_change_params(&uri, *version, content);
+        handle.content_hashes.insert(uri.clone(), hash);
         send_notification(&handle.stdin, "textDocument/didChange", &params);
+    }
+
+    /// Versao do documento que o servidor da linguagem conhece, se aberto.
+    ///
+    /// Usada para rejeitar `WorkspaceEdit.documentChanges` obsoleto antes de
+    /// criar uma transacao de escrita.
+    #[must_use]
+    pub fn document_version(&self, path: &Path) -> Option<i64> {
+        let spec = spec_for_path(path)?;
+        let uri = uri_for_path(path);
+        self.servers
+            .get(spec.language)
+            .and_then(|handle| handle.versions.get(&uri))
+            .copied()
     }
 
     fn text_document_position_request(
@@ -417,9 +636,15 @@ impl LspManager {
         }
 
         match response_rx.recv_timeout(REQUEST_TIMEOUT) {
-            Ok(response) => response_result(method, &response),
+            Ok(response) => {
+                // Qualquer resposta (mesmo erro do LSP) prova que o servidor
+                // está vivo: zera a contagem de timeouts (M4.3b).
+                self.timeout_streak.remove(language);
+                response_result(method, &response)
+            }
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 self.remove_pending(id);
+                self.note_timeout(language);
                 Err(LspError::Timeout { method })
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => Err(LspError::Transport {
@@ -438,6 +663,15 @@ impl LspManager {
         self.emit_status_message(language, status, None);
     }
 
+    /// Avisa a UI que um servidor reiniciou, para ela re-sincronizar o
+    /// arquivo ativo (mesmo caminho do `recovered()` do crash — M4.3b).
+    fn emit_restarted(&self, language: &str) {
+        drop(self.events.send(JsonRpcRequest::notification(
+            "event.lsp.restarted",
+            Some(json!({ "language": language })),
+        )));
+    }
+
     fn emit_status_message(&self, language: &str, status: &str, message: Option<&str>) {
         let mut params = json!({ "language": language, "status": status });
         if let (Some(map), Some(text)) = (params.as_object_mut(), message) {
@@ -453,5 +687,61 @@ impl LspManager {
 impl Drop for LspManager {
     fn drop(&mut self) {
         self.shutdown_all();
+    }
+}
+
+/// Hash estavel do conteudo de um documento para detectar sync redundante.
+fn content_hash(content: &str) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    content.hash(&mut hasher);
+    hasher.finish()
+}
+
+/// Filtra os diagnostics cacheados de `uri` que intersectam a linha do cursor.
+///
+/// `line` e 1-based (protocolo Kinein); ranges LSP sao 0-based.
+fn diagnostics_for_line(
+    cache: &Arc<Mutex<HashMap<String, Value>>>,
+    uri: &str,
+    line: u64,
+) -> Vec<Value> {
+    let zero_based = line.saturating_sub(1);
+    let Ok(entries) = cache.lock() else {
+        return Vec::new();
+    };
+    let Some(diagnostics) = entries.get(uri).and_then(Value::as_array) else {
+        return Vec::new();
+    };
+    diagnostics
+        .iter()
+        .filter(|diagnostic| {
+            let start = diagnostic
+                .pointer("/range/start/line")
+                .and_then(Value::as_u64)
+                .unwrap_or(0);
+            let end = diagnostic
+                .pointer("/range/end/line")
+                .and_then(Value::as_u64)
+                .unwrap_or(start);
+            start <= zero_based && zero_based <= end
+        })
+        .cloned()
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::mpsc;
+
+    use super::LspManager;
+
+    #[test]
+    fn restart_without_server_is_noop() {
+        let (sender, _receiver) = mpsc::channel();
+        let mut manager = LspManager::new(sender);
+        // Sem servidor vivo, reiniciar uma linguagem é no-op; todos = vazio.
+        assert!(!manager.restart_language("rust"));
+        assert!(manager.restart_all().is_empty());
     }
 }

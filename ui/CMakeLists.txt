@@ -14,16 +14,43 @@ qt_add_executable(kinein-vectis
 )
 
 set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
+set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
+set_source_files_properties(qml/components/KvTooltipHost.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltipHost.qml)
+set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_RESOURCE_ALIAS TooltipController.qml)
+set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOURCE_ALIAS KvIconButton.qml)
+set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_ALIAS KvButton.qml)
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
+set_source_files_properties(qml/shell/AppMenuBar.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuBar.qml)
+set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuPopup.qml)
 set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
 set_source_files_properties(qml/shell/ShellLayout.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayout.qml)
 set_source_files_properties(qml/shell/ShellController.qml PROPERTIES QT_RESOURCE_ALIAS ShellController.qml)
 set_source_files_properties(qml/shell/GlobalShortcuts.qml PROPERTIES QT_RESOURCE_ALIAS GlobalShortcuts.qml)
 set_source_files_properties(qml/shell/ShellOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellOverlays.qml)
+set_source_files_properties(qml/shell/AboutDialog.qml PROPERTIES QT_RESOURCE_ALIAS AboutDialog.qml)
 set_source_files_properties(qml/shell/ShellHeaderHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellHeaderHost.qml)
 set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellStatusHost.qml)
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
 set_source_files_properties(qml/shell/ProjectHealthBanner.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthBanner.qml)
+set_source_files_properties(qml/shell/PanelSplitter.qml PROPERTIES QT_RESOURCE_ALIAS PanelSplitter.qml)
+set_source_files_properties(qml/shell/VerticalScrollBar.qml PROPERTIES QT_RESOURCE_ALIAS VerticalScrollBar.qml)
+set_source_files_properties(qml/shell/RunConfigDialog.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigDialog.qml)
+set_source_files_properties(qml/shell/RunConfigMenu.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigMenu.qml)
+set_source_files_properties(qml/debug/DebugController.qml PROPERTIES QT_RESOURCE_ALIAS DebugController.qml)
+set_source_files_properties(qml/diagnostics/DiagnosticsController.qml PROPERTIES QT_RESOURCE_ALIAS DiagnosticsController.qml)
+set_source_files_properties(qml/settings/SettingsController.qml PROPERTIES QT_RESOURCE_ALIAS SettingsController.qml)
+set_source_files_properties(qml/settings/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
+set_source_files_properties(qml/settings/SettingsToggleRow.qml PROPERTIES QT_RESOURCE_ALIAS SettingsToggleRow.qml)
+set_source_files_properties(qml/ipc/SettingsEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SettingsEventRouter.qml)
+set_source_files_properties(qml/git/GitController.qml PROPERTIES QT_RESOURCE_ALIAS GitController.qml)
+set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiffDialog.qml)
+set_source_files_properties(qml/git/GitDiscardDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiscardDialog.qml)
+set_source_files_properties(qml/panels/bottom/GitPanel.qml PROPERTIES QT_RESOURCE_ALIAS GitPanel.qml)
+set_source_files_properties(qml/ipc/GitEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitEventRouter.qml)
+set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
+set_source_files_properties(qml/panels/bottom/DebugPanel.qml PROPERTIES QT_RESOURCE_ALIAS DebugPanel.qml)
 set_source_files_properties(qml/shell/BottomTabBar.qml PROPERTIES QT_RESOURCE_ALIAS BottomTabBar.qml)
 set_source_files_properties(qml/shell/WorkspaceStatusBar.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceStatusBar.qml)
 set_source_files_properties(qml/panels/bottom/BottomPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelHost.qml)
@@ -46,6 +73,7 @@ set_source_files_properties(qml/workspace/FolderPickerDirectoryList.qml PROPERTI
 set_source_files_properties(qml/workspace/FolderPickerActionRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerActionRow.qml)
 set_source_files_properties(qml/workspace/FolderPickerCard.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCard.qml)
 set_source_files_properties(qml/workspace/WorkspaceController.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceController.qml)
+set_source_files_properties(qml/workspace/StartScreen.qml PROPERTIES QT_RESOURCE_ALIAS StartScreen.qml)
 set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthController.qml)
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/assistant/AssistantPanel.qml PROPERTIES QT_RESOURCE_ALIAS AssistantPanel.qml)
@@ -58,6 +86,7 @@ set_source_files_properties(qml/ipc/EditorEventRouter.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/ipc/JobsEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS JobsEventRouter.qml)
 set_source_files_properties(qml/ipc/SearchEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SearchEventRouter.qml)
 set_source_files_properties(qml/ipc/RuntimeEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeEventRouter.qml)
+set_source_files_properties(qml/ipc/AiBridgeEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS AiBridgeEventRouter.qml)
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
@@ -67,6 +96,7 @@ set_source_files_properties(qml/project/ProjectEntryDeleteDialog.qml PROPERTIES 
 set_source_files_properties(qml/command/SearchEverywhereDialog.qml PROPERTIES QT_RESOURCE_ALIAS SearchEverywhereDialog.qml)
 set_source_files_properties(qml/command/CommandDispatcher.qml PROPERTIES QT_RESOURCE_ALIAS CommandDispatcher.qml)
 set_source_files_properties(qml/editor/SymbolRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS SymbolRenameDialog.qml)
+set_source_files_properties(qml/editor/EditorWorkspaceEditPreviewDialog.qml PROPERTIES QT_RESOURCE_ALIAS EditorWorkspaceEditPreviewDialog.qml)
 set_source_files_properties(qml/editor/EditorController.qml PROPERTIES QT_RESOURCE_ALIAS EditorController.qml)
 set_source_files_properties(qml/editor/EditorSurfaceBridge.qml PROPERTIES QT_RESOURCE_ALIAS EditorSurfaceBridge.qml)
 set_source_files_properties(qml/editor/EditorDocumentController.qml PROPERTIES QT_RESOURCE_ALIAS EditorDocumentController.qml)
@@ -77,7 +107,12 @@ set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
 set_source_files_properties(qml/editor/EditorHoverPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorHoverPopup.qml)
 set_source_files_properties(qml/editor/EditorCompletionPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionPopup.qml)
+set_source_files_properties(qml/editor/EditorActionsPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorActionsPopup.qml)
+set_source_files_properties(qml/editor/EditorGoToLineDialog.qml PROPERTIES QT_RESOURCE_ALIAS EditorGoToLineDialog.qml)
 set_source_files_properties(qml/editor/EditorUsagesPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorUsagesPopup.qml)
+set_source_files_properties(qml/editor/EditorFindController.qml PROPERTIES QT_RESOURCE_ALIAS EditorFindController.qml)
+set_source_files_properties(qml/editor/EditorFindBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorFindBar.qml)
+set_source_files_properties(qml/editor/EditorExternalChangeBanner.qml PROPERTIES QT_RESOURCE_ALIAS EditorExternalChangeBanner.qml)
 
 qt_add_qml_module(kinein-vectis
     URI KineinVectis
@@ -86,16 +121,42 @@ qt_add_qml_module(kinein-vectis
     QML_FILES
         qml/Main.qml
         qml/Theme.qml
+        qml/components/KvIcon.qml
+        qml/components/KvTooltip.qml
+        qml/components/KvTooltipHost.qml
+        qml/components/TooltipController.qml
+        qml/components/KvIconButton.qml
+        qml/components/KvButton.qml
         qml/shell/TopHeaderBar.qml
+        qml/shell/AppMenuBar.qml
+        qml/shell/AppMenuPopup.qml
         qml/shell/SideRail.qml
         qml/shell/ShellLayout.qml
         qml/shell/ShellController.qml
         qml/shell/GlobalShortcuts.qml
         qml/shell/ShellOverlays.qml
+        qml/shell/AboutDialog.qml
         qml/shell/ShellHeaderHost.qml
         qml/shell/ShellStatusHost.qml
         qml/shell/ShellWorkspaceHost.qml
         qml/shell/ProjectHealthBanner.qml
+        qml/shell/PanelSplitter.qml
+        qml/shell/VerticalScrollBar.qml
+        qml/shell/RunConfigDialog.qml
+        qml/shell/RunConfigMenu.qml
+        qml/debug/DebugController.qml
+        qml/diagnostics/DiagnosticsController.qml
+        qml/settings/SettingsController.qml
+        qml/settings/SettingsDialog.qml
+        qml/settings/SettingsToggleRow.qml
+        qml/ipc/SettingsEventRouter.qml
+        qml/git/GitController.qml
+        qml/git/GitDiffDialog.qml
+        qml/git/GitDiscardDialog.qml
+        qml/panels/bottom/GitPanel.qml
+        qml/ipc/GitEventRouter.qml
+        qml/ipc/DebugEventRouter.qml
+        qml/panels/bottom/DebugPanel.qml
         qml/shell/BottomTabBar.qml
         qml/shell/WorkspaceStatusBar.qml
         qml/panels/bottom/BottomPanelHost.qml
@@ -118,6 +179,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/FolderPickerActionRow.qml
         qml/workspace/FolderPickerCard.qml
         qml/workspace/WorkspaceController.qml
+        qml/workspace/StartScreen.qml
         qml/workspace/ProjectHealthController.qml
         qml/workspace/WorkspaceUiResetter.qml
         qml/assistant/AssistantPanel.qml
@@ -130,6 +192,7 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/JobsEventRouter.qml
         qml/ipc/SearchEventRouter.qml
         qml/ipc/RuntimeEventRouter.qml
+        qml/ipc/AiBridgeEventRouter.qml
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
         qml/project/ProjectExplorer.qml
@@ -139,6 +202,7 @@ qt_add_qml_module(kinein-vectis
         qml/command/SearchEverywhereDialog.qml
         qml/command/CommandDispatcher.qml
         qml/editor/SymbolRenameDialog.qml
+        qml/editor/EditorWorkspaceEditPreviewDialog.qml
         qml/editor/EditorController.qml
         qml/editor/EditorSurfaceBridge.qml
         qml/editor/EditorDocumentController.qml
@@ -149,8 +213,17 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorTextSurface.qml
         qml/editor/EditorHoverPopup.qml
         qml/editor/EditorCompletionPopup.qml
+        qml/editor/EditorActionsPopup.qml
+        qml/editor/EditorGoToLineDialog.qml
         qml/editor/EditorUsagesPopup.qml
+        qml/editor/EditorFindController.qml
+        qml/editor/EditorFindBar.qml
+        qml/editor/EditorExternalChangeBanner.qml
+        qml/editor/EditorOutlineController.qml
+        qml/editor/EditorOutlinePanel.qml
     SOURCES
+        src/clipboard.cpp
+        src/clipboard.h
         src/core_client.cpp
         src/core_client.h
         src/core_client_dispatch.cpp

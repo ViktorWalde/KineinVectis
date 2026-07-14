@@ -49,23 +49,35 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [ARCHITECTURE.md](ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
 | [BACKEND_TO_UI_UX_ROADMAP.md](BACKEND_TO_UI_UX_ROADMAP.md) | Ponte operacional backend → UI/UX para implementar backend primeiro sem perder os specs visuais |
 | [02-repository-structure.md](02-repository-structure.md) | Estrutura real do repositório e crates |
-| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.20.0) |
+| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.50.0) |
 | [06-strict-mode.md](06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
 | [14-development-environment.md](14-development-environment.md) | Ambiente de desenvolvimento |
 | [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica e modularização pós-V1 |
 | [16-hidden-risks-checklist.md](16-hidden-risks-checklist.md) | Riscos ocultos (perda de dados, migração de config, segurança de comandos, segredos, testes de regressão, a11y, observabilidade, packaging) |
 | [17-architecture-hygiene-plan.md](17-architecture-hygiene-plan.md) | Fase ativa para eliminar concentração arquitetural antes de novas features grandes |
 | [18-daily-driver-plan.md](18-daily-driver-plan.md) | Plano de daily driver (marcos M0–M4 de dogfooding) e escada de rigor |
+| [19-architecture-tradeoffs.md](19-architecture-tradeoffs.md) | Requisitos funcionais/não funcionais e trade-offs de arquitetura (o porquê das decisões) |
+| [20-ui-spec-convergence-plan.md](20-ui-spec-convergence-plan.md) | Plano vinculante de convergência da UI atual para docs/specs (fatias C0–C6, regras anti-vagueza) |
+- [21-long-horizon-roadmap.md](21-long-horizon-roadmap.md) — M4–M7 detalhados + playbook de continuidade (handoff)
+| [22-compilacao-c-cpp-rust.md](22-compilacao-c-cpp-rust.md) | Referência prática de comandos de compilação C/C++ (gcc/clang/CMake) e Rust (cargo), mapeada para a IDE |
+| [23-rede-de-seguranca.md](23-rede-de-seguranca.md) | Rede de segurança contra perda de dado (escrita atômica + autosave em SQLite): problemas, design e status vivo da fatia S1 |
+| [24-paridade-e-fundacao.md](24-paridade-e-fundacao.md) | Fase pós-rede-de-segurança (D1–D4, ordem do usuário): autocomplete LSP ao vivo → terminal paridade VS Code/JetBrains → tree-sitter/plugins/views → remake. Status vivo. |
+| [25-syntax-tree-semantic-foundation.md](25-syntax-tree-semantic-foundation.md) | Contrato D3: Tree-sitter incremental, composição com LSP, folding/outline e vínculo com workspace edits transacionais. |
+| [../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md](../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md) | **Norte autoritativo de adoção de ferramentas open-source** (modos A–D, gate de auditoria, licenças, P0–P3). Ler antes de adotar qualquer tech externa. |
 | [COMANDOS_BUILD_VERIFICACAO.md](COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
+| [tooling/OPEN_COMPONENT_REGISTRY.json](tooling/OPEN_COMPONENT_REGISTRY.json) | Registro auditável de componentes open-source adotados |
+| [adr/ADR-0001-notify-filesystem-watcher.md](adr/ADR-0001-notify-filesystem-watcher.md) | Decisão de adoção do watcher `notify` e barreira compare-before-save |
 
 ## Guias na raiz do repositório
 
 | Arquivo | Assunto |
 | --- | --- |
 | [../README.md](../README.md) | Apresentação e estado atual do projeto |
+| [../MANUAL.md](../MANUAL.md) | **Manual do usuário** — instalação, funções e atalhos (para quem vai usar/testar a IDE) |
 | [../COMO_EXECUTAR.md](../COMO_EXECUTAR.md) | Como executar a IDE (ícone/launcher) |
 | [../AGENTS.md](../AGENTS.md) | Instruções e política de leitura para agentes de IA |
 | [../ContextoIA.md](../ContextoIA.md) | Estado operacional e decisões vigentes |
+| [../KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md](../KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md) | Complemento de arquitetura semântica C++/Rust; aplicar por fatias conforme o roadmap vigente |
 
 ## Sem pasta de arquivo morto
 

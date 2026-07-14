@@ -8,6 +8,9 @@ Rectangle {
     property string workspaceKindLabel: ""
     property string selectedPath: ""
     property var entriesModel
+    // path absoluto -> kind do git (fatia M3.1); a revisão força rebind.
+    property var gitKinds: ({})
+    property int gitRevision: 0
 
     signal createFileRequested()
     signal createDirectoryRequested()
@@ -18,6 +21,23 @@ Rectangle {
     signal fileOpenRequested(string path)
     signal contextMenuRequested(string path, string kind, string name,
                                 real sceneX, real sceneY)
+
+    function gitFileColor(path, revision) {
+        const kind = gitKinds[path];
+        if (kind === undefined) {
+            return Theme.textSecondary;
+        }
+        if (kind === "conflicted") {
+            return Theme.errorSoft;
+        }
+        if (kind === "untracked" || kind === "added") {
+            return Theme.successSoft;
+        }
+        if (kind === "deleted") {
+            return Theme.textDisabled;
+        }
+        return Theme.infoSoft;
+    }
 
     implicitWidth: 260
     radius: Theme.radiusLarge
@@ -67,111 +87,53 @@ Rectangle {
                 height: 1
             }
 
-            Rectangle {
+            KvIconButton {
                 id: newFileChip
 
                 anchors.verticalCenter: parent.verticalCenter
                 width: 22
                 height: 22
-                radius: Theme.radius
-                color: newFileArea.containsMouse ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "+"
-                    color: Theme.textSecondary
-                    font.pixelSize: 15
-                    font.bold: true
-                }
-
-                MouseArea {
-                    id: newFileArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.createFileRequested()
-                }
+                iconName: "file"
+                iconSize: 15
+                tooltip: qsTr("Novo arquivo")
+                onClicked: root.createFileRequested()
             }
 
-            Rectangle {
+            KvIconButton {
                 id: newFolderChip
 
                 anchors.verticalCenter: parent.verticalCenter
                 width: 22
                 height: 22
-                radius: Theme.radius
-                color: newFolderArea.containsMouse ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "▣"
-                    color: Theme.textSecondary
-                    font.pixelSize: 12
-                }
-
-                MouseArea {
-                    id: newFolderArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.createDirectoryRequested()
-                }
+                iconName: "folder"
+                iconSize: 15
+                tooltip: qsTr("Nova pasta")
+                onClicked: root.createDirectoryRequested()
             }
 
-            Rectangle {
+            KvIconButton {
                 id: refreshChip
 
                 anchors.verticalCenter: parent.verticalCenter
                 width: 22
                 height: 22
-                radius: Theme.radius
-                color: refreshArea.containsMouse ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "⟳"
-                    color: Theme.textSecondary
-                    font.pixelSize: 13
-                }
-
-                MouseArea {
-                    id: refreshArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.refreshRequested()
-                }
+                iconName: "refresh"
+                iconSize: 15
+                tooltip: qsTr("Atualizar projeto")
+                onClicked: root.refreshRequested()
             }
 
-            Rectangle {
+            KvIconButton {
                 id: closeProjectChip
 
                 anchors.verticalCenter: parent.verticalCenter
                 width: 22
                 height: 22
-                radius: Theme.radius
-                color: closeProjectArea.containsMouse
-                       ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "x"
-                    color: closeProjectArea.containsMouse
-                           ? Theme.errorSoft : Theme.textSecondary
-                    font.pixelSize: 13
-                }
-
-                MouseArea {
-                    id: closeProjectArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.closeRequested()
-                }
+                iconName: "close"
+                iconSize: 14
+                danger: true
+                tooltip: qsTr("Fechar workspace")
+                onClicked: root.closeRequested()
             }
         }
 
@@ -197,7 +159,7 @@ Rectangle {
                 height: 24
                 radius: Theme.radius
                 color: treeRow.path === root.selectedPath
-                       ? Theme.accentDim
+                       ? Theme.surfaceSelected
                        : (entryArea.containsMouse ? Theme.surface2 : "transparent")
 
                 Row {
@@ -213,15 +175,17 @@ Rectangle {
                               ? (treeRow.expanded ? "▾" : "▸") : "·"
                         color: treeRow.kind === "directory"
                                ? Theme.accent : Theme.textMuted
-                        font.pixelSize: 12
+                        font.pixelSize: Theme.fontSizeTree
                     }
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: treeRow.name
                         color: treeRow.kind === "directory"
-                               ? Theme.textPrimary : Theme.textSecondary
-                        font.pixelSize: 12
+                               ? Theme.textPrimary
+                               : root.gitFileColor(treeRow.path,
+                                                   root.gitRevision)
+                        font.pixelSize: Theme.fontSizeTree
                     }
                 }
 

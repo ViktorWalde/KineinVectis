@@ -22,6 +22,13 @@ Item {
         controller.open(startPath);
     }
 
+    function openCreateProject(startPath, templateId) {
+        picker.visible = true;
+        controller.open(startPath);
+        controller.createTemplate = templateId;
+        controller.beginCreateProject();
+    }
+
     function close() {
         picker.visible = false;
         controller.close();

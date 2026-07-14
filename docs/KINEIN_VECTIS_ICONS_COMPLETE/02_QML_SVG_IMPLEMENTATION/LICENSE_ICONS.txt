@@ -1,0 +1,10 @@
+Kinein Vectis Symbolic Icon Set
+
+The SVG glyphs in this package were generated specifically for the Kinein Vectis
+project from the project's semantic icon specification. They do not embed or copy
+the trademarked logos of IDEs, Git, QEMU, CMake, Rust, Qt, or hardware vendors.
+
+Recommended project license:
+SPDX-License-Identifier: MIT OR Apache-2.0
+
+Before public distribution, add the final copyright holder and year.

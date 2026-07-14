@@ -1,10 +1,13 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 Rectangle {
     id: root
 
     property alias text: textEditor.text
     property alias cursorPosition: textEditor.cursorPosition
+    readonly property alias language: editorHighlighter.language
     readonly property int selectionStart: textEditor.selectionStart
     readonly property int selectionEnd: textEditor.selectionEnd
     readonly property var cursorRectangle: textEditor.cursorRectangle
@@ -14,16 +17,56 @@ Rectangle {
     property bool completionVisible: false
     property bool usagesVisible: false
     property bool hoverVisible: false
+    property bool actionsVisible: false
+    // C4 (gutter): breakpoints do arquivo atual e a linha de execucao
+    // pausada do debugger (0 = nenhuma). Estado vive no DebugController.
+    property var breakpointLines: []
+    property int executionLine: 0
+    // M3.2: linha→kind do diff git (added|modified|removed) do arquivo
+    // atual; a revisão força o rebind das marcas.
+    property var diffLineKinds: ({})
+    property int diffRevision: 0
+    // M3.4: blame por linha ("autor, idade") como coluna extra da gutter,
+    // ligado/desligado pelo comando "Git: Blame do arquivo".
+    property bool blameActive: false
+    property var blameLineAnnotations: ({})
+    property int blameRevision: 0
+    readonly property int blameColumnWidth: 130
+    // T6: diagnósticos do arquivo ativo. Os spans (0-based UTF-16) vão
+    // para o highlighter (sublinhado ondulado); o mapa linha→{severity,
+    // message} desenha a marca e o tooltip da gutter.
+    property var diagnosticSpans: []
+    property var diagnosticByLine: ({})
+    property int diagnosticRevision: 0
+    // Linha/mensagem do diagnóstico sob o mouse na gutter (tooltip).
+    property int hoveredDiagnosticLine: 0
+    property string hoveredDiagnosticText: ""
+    // Linhas logicas que continuam visiveis depois do folding. O renderer
+    // C++ deriva isto dos QTextBlocks para a gutter nao renumerar o arquivo.
+    property var visibleLineNumbers: []
+    property int foldingRevision: 0
 
+    onDiagnosticSpansChanged: {
+        if (editorHighlighter !== null) {
+            editorHighlighter.setDiagnostics(diagnosticSpans);
+        }
+    }
+
+    signal gutterLineClicked(int line)
     signal textEdited(string text)
     signal completionMoveRequested(int delta)
     signal completionAcceptRequested()
     signal completionDismissRequested()
+    signal actionsMoveRequested(int delta)
+    signal actionsAcceptRequested()
+    signal actionsDismissRequested()
     signal usagesDismissRequested()
     signal hoverDismissRequested()
     signal indentRequested()
     signal unindentRequested()
     signal newlineRequested()
+    signal closerBraceRequested()
+    signal smartHomeRequested(bool extendSelection)
 
     radius: Theme.radius
     color: Theme.background0
@@ -46,10 +89,168 @@ Rectangle {
 
     function setFilePath(path) {
         editorHighlighter.filePath = path;
+        visibleLineNumbers = editorHighlighter.visibleLineNumbers();
     }
 
     function setSemanticTokens(tokens) {
         editorHighlighter.setSemanticTokens(tokens);
+    }
+
+    function setSyntaxSnapshot(tokens, foldingRanges) {
+        editorHighlighter.setSyntaxTokens(tokens);
+        editorHighlighter.setFoldingRanges(foldingRanges);
+    }
+
+    function toggleFoldAtLine(line) {
+        return editorHighlighter.toggleFoldAtLine(line);
+    }
+
+    function isFoldableLine(line, revision) {
+        return editorHighlighter.isFoldableLine(line);
+    }
+
+    function isFoldedLine(line, revision) {
+        return editorHighlighter.isFoldedLine(line);
+    }
+
+    // D1b: ocorrências do Find realçadas no texto (a atual mais forte).
+    function setSearchMatches(matches, current) {
+        editorHighlighter.setSearchMatches(matches, current);
+    }
+
+    // M4.1: liga/desliga o auto-close de pares (setting autoClosePairs).
+    property bool autoCloseEnabled: true
+
+    // E1 (docs/18, trilha E): auto-close de pares, type-over do fechador,
+    // surround da seleção e backspace apagando o par vazio.
+    readonly property var pairOpeners: ({ "(": ")", "[": "]", "{": "}",
+                                          "\"": "\"", "'": "'" })
+    readonly property var pairClosers: ({ ")": true, "]": true, "}": true,
+                                          "\"": true, "'": true })
+
+    function isWordChar(character) {
+        return character !== "" && /[A-Za-z0-9_]/.test(character);
+    }
+
+    // true = tecla consumida (event.accepted pelo chamador).
+    function handleTypingKey(event) {
+        if (event.text === "" || !autoCloseEnabled) {
+            return false;
+        }
+        // Ctrl puro é atalho; Ctrl+Alt (AltGr em layouts europeus) produz
+        // caractere legítimo e passa.
+        if ((event.modifiers & Qt.ControlModifier)
+                && !(event.modifiers & Qt.AltModifier)) {
+            return false;
+        }
+        const character = event.text;
+        const closer = pairOpeners[character];
+        const position = textEditor.cursorPosition;
+        const content = textEditor.text;
+        const hasSelection =
+            textEditor.selectionStart !== textEditor.selectionEnd;
+
+        // CR1: "<" logo após `#include ` fecha em "<>" (contexto seguro;
+        // "<" genérico é comparação/template/shift e NÃO auto-fecha).
+        if (character === "<" && !hasSelection && position > 0) {
+            const lineStart = content.lastIndexOf("\n", position - 1) + 1;
+            const beforeCursor = content.substring(lineStart, position);
+            if (/^\s*#\s*include\s+$/.test(beforeCursor)) {
+                textEditor.insert(position, "<>");
+                textEditor.cursorPosition = position + 1;
+                return true;
+            }
+        }
+
+        if (hasSelection && closer !== undefined) {
+            // Abridor com seleção ativa ENVOLVE em vez de substituir.
+            const start = textEditor.selectionStart;
+            const end = textEditor.selectionEnd;
+            const selected = content.substring(start, end);
+            textEditor.remove(start, end);
+            textEditor.insert(start, character + selected + closer);
+            textEditor.select(start + 1, end + 1);
+            return true;
+        }
+        if (pairClosers[character] !== undefined && !hasSelection
+                && content.charAt(position) === character) {
+            // type-over: pula o fechador já presente em vez de duplicar.
+            textEditor.cursorPosition = position + 1;
+            return true;
+        }
+        if (closer !== undefined) {
+            const previous = position > 0 ? content.charAt(position - 1) : "";
+            const next = content.charAt(position);
+            const quote = character === "\"" || character === "'";
+            // Aspas coladas em palavra não duplicam (don't → don''t);
+            // colchetes/parênteses antes de palavra ou aspas também não.
+            if (quote && (isWordChar(previous) || isWordChar(next))) {
+                return false;
+            }
+            if (!quote && (isWordChar(next) || next === "\"" || next === "'")) {
+                return false;
+            }
+            textEditor.insert(position, character + closer);
+            textEditor.cursorPosition = position + 1;
+            return true;
+        }
+        if (character === "}" && !hasSelection) {
+            // E3: a inserção (com dedent quando a linha é só
+            // whitespace) vive no EditorTextController; o type-over
+            // acima tem precedência e não re-indenta.
+            root.closerBraceRequested();
+            return true;
+        }
+        return false;
+    }
+
+    function handlePairBackspace() {
+        if (!autoCloseEnabled
+                || textEditor.selectionStart !== textEditor.selectionEnd) {
+            return false;
+        }
+        const position = textEditor.cursorPosition;
+        if (position <= 0) {
+            return false;
+        }
+        const content = textEditor.text;
+        const previous = content.charAt(position - 1);
+        const closer = pairOpeners[previous];
+        if (closer !== undefined && content.charAt(position) === closer) {
+            textEditor.remove(position - 1, position + 1);
+            return true;
+        }
+        return false;
+    }
+
+    function diffKindFor(line, revision) {
+        const kind = diffLineKinds[line];
+        return kind === undefined ? "" : kind;
+    }
+
+    function blameTextFor(line, revision) {
+        const text = blameLineAnnotations[line];
+        return text === undefined ? "" : text;
+    }
+
+    function diagnosticSeverityFor(line, revision) {
+        const info = diagnosticByLine[line];
+        return info === undefined ? "" : info.severity;
+    }
+
+    function diagnosticMessageFor(line, revision) {
+        const info = diagnosticByLine[line];
+        return info === undefined ? "" : info.message;
+    }
+
+    function diagnosticColor(severity) {
+        if (severity === "warning") {
+            return Theme.warningSoft;
+        }
+        if (severity === "note") {
+            return Theme.infoSoft;
+        }
+        return Theme.errorSoft;
     }
 
     function cursorPointIn(item) {
@@ -65,13 +266,194 @@ Rectangle {
         wrapMode: Text.WordWrap
         text: root.emptyMessage
         color: Theme.textMuted
-        font.pixelSize: 14
+        font.pixelSize: Theme.fontSizeEditor
+    }
+
+    Item {
+        id: gutterArea
+
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.topMargin: Theme.spacingSmall
+        anchors.bottomMargin: Theme.spacingSmall
+        anchors.leftMargin: Theme.spacingXSmall
+        visible: root.hasOpenFile
+        clip: true
+        width: 30 + digitCount * 8
+               + (root.blameActive ? root.blameColumnWidth : 0)
+
+        // Com NoWrap e fonte unica toda linha tem a mesma altura; derivar
+        // do conteudo real evita drift em arquivos longos.
+        readonly property real lineHeight: Math.max(1,
+            textEditor.cursorRectangle.height > 0
+                ? textEditor.cursorRectangle.height
+                : Theme.fontSizeEditor * 1.35)
+        readonly property int digitCount:
+            Math.max(2, String(textEditor.lineCount).length)
+        readonly property int firstVisibleIndex:
+            Math.max(0, Math.floor(editorFlick.contentY / lineHeight))
+        readonly property int visibleLineCount: Math.max(0,
+            Math.min(root.visibleLineNumbers.length - firstVisibleIndex,
+                     Math.ceil(height / lineHeight) + 1))
+
+        Repeater {
+            model: gutterArea.visibleLineCount
+
+            delegate: Item {
+                id: gutterLine
+
+                required property int index
+                readonly property int lineNumber:
+                    Number(root.visibleLineNumbers[
+                        gutterArea.firstVisibleIndex + index])
+                readonly property int visibleIndex:
+                    gutterArea.firstVisibleIndex + index
+                readonly property bool hasBreakpoint:
+                    root.breakpointLines.indexOf(lineNumber) >= 0
+
+                y: visibleIndex * gutterArea.lineHeight
+                   - editorFlick.contentY
+                width: gutterArea.width
+                height: gutterArea.lineHeight
+
+                Rectangle {
+                    readonly property string diffKind:
+                        root.diffKindFor(gutterLine.lineNumber,
+                                         root.diffRevision)
+
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    width: 3
+                    height: diffKind === "removed" ? 3 : parent.height
+                    visible: diffKind !== ""
+                    color: diffKind === "added" ? Theme.successSoft
+                           : (diffKind === "modified" ? Theme.infoSoft
+                                                      : Theme.errorSoft)
+                }
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 5
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: root.isFoldableLine(gutterLine.lineNumber,
+                                                 root.foldingRevision)
+                    text: root.isFoldedLine(gutterLine.lineNumber,
+                                            root.foldingRevision) ? "▸" : "▾"
+                    color: Theme.textMuted
+                    font.pixelSize: Theme.fontSizeEditor - 3
+
+                    MouseArea {
+                        anchors.fill: parent
+                        anchors.margins: -4
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: function(mouse) {
+                            root.toggleFoldAtLine(gutterLine.lineNumber);
+                            mouse.accepted = true;
+                        }
+                    }
+                }
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 16
+                    width: 8
+                    height: 8
+                    radius: 4
+                    visible: gutterLine.hasBreakpoint
+                    color: Theme.errorSoft
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 26
+                    width: root.blameColumnWidth - 20
+                    visible: root.blameActive
+                    text: root.blameTextFor(gutterLine.lineNumber,
+                                            root.blameRevision)
+                    color: Theme.textMuted
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fontSizeEditor - 3
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    id: lineNumberText
+
+                    readonly property string diagnosticSeverity:
+                        root.diagnosticSeverityFor(gutterLine.lineNumber,
+                                                   root.diagnosticRevision)
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: 6
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: gutterLine.lineNumber
+                    // Linha com diagnóstico tinge o número pela severidade;
+                    // linha de execução do debugger tem prioridade.
+                    color: root.executionLine === gutterLine.lineNumber
+                           ? Theme.accent
+                           : (diagnosticSeverity !== ""
+                              ? root.diagnosticColor(diagnosticSeverity)
+                              : Theme.textMuted)
+                    font.family: Theme.monoFont
+                    font.pixelSize: Theme.fontSizeEditor - 2
+                    font.bold: diagnosticSeverity === "error"
+                }
+
+                Rectangle {
+                    id: diagnosticDot
+
+                    readonly property string severity:
+                        root.diagnosticSeverityFor(gutterLine.lineNumber,
+                                                   root.diagnosticRevision)
+
+                    anchors.right: lineNumberText.left
+                    anchors.rightMargin: 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 8
+                    height: 8
+                    radius: 4
+                    visible: severity !== ""
+                    color: root.diagnosticColor(severity)
+                    border.width: 1
+                    border.color: Theme.background0
+
+                    MouseArea {
+                        anchors.fill: parent
+                        anchors.margins: -3
+                        hoverEnabled: true
+                        acceptedButtons: Qt.NoButton
+                        onEntered: {
+                            root.hoveredDiagnosticLine = gutterLine.lineNumber;
+                            root.hoveredDiagnosticText =
+                                root.diagnosticMessageFor(gutterLine.lineNumber,
+                                                          root.diagnosticRevision);
+                        }
+                        onExited: {
+                            root.hoveredDiagnosticLine = 0;
+                            root.hoveredDiagnosticText = "";
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.gutterLineClicked(gutterLine.lineNumber)
+                }
+            }
+        }
     }
 
     Flickable {
         id: editorFlick
 
-        anchors.fill: parent
+        anchors.left: gutterArea.right
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
         anchors.margins: Theme.spacingSmall
         visible: root.hasOpenFile
         clip: true
@@ -92,6 +474,26 @@ Rectangle {
             }
         }
 
+        // C4: linha do cursor destacada (some durante selecao; a linha de
+        // execucao do debugger, mais forte, desenha por cima).
+        Rectangle {
+            visible: root.hasOpenFile
+                     && textEditor.selectionStart === textEditor.selectionEnd
+            y: textEditor.cursorRectangle.y
+            height: textEditor.cursorRectangle.height
+            width: Math.max(editorFlick.contentWidth, editorFlick.width)
+            color: Theme.surfaceSelected
+        }
+
+        Rectangle {
+            visible: root.executionLine > 0
+            y: (root.executionLine - 1) * gutterArea.lineHeight
+            width: Math.max(editorFlick.contentWidth, editorFlick.width)
+            height: gutterArea.lineHeight
+            color: Theme.accentDim
+            opacity: 0.35
+        }
+
         TextEdit {
             id: textEditor
 
@@ -101,19 +503,59 @@ Rectangle {
                 document: textEditor.textDocument
             }
 
+            Connections {
+                target: editorHighlighter
+
+                function onFoldingChanged() {
+                    root.visibleLineNumbers = editorHighlighter.visibleLineNumbers();
+                    root.foldingRevision++;
+                }
+            }
+
             width: Math.max(editorFlick.width, contentWidth)
             height: Math.max(editorFlick.height, contentHeight)
             color: Theme.textPrimary
             selectionColor: Theme.accentDim
             selectedTextColor: Theme.textPrimary
             font.family: Theme.monoFont
-            font.pixelSize: 13
+            font.pixelSize: Theme.fontSizeEditor
             wrapMode: TextEdit.NoWrap
             selectByMouse: true
             tabStopDistance: 4 * 8
             onCursorRectangleChanged: editorFlick.ensureVisible(cursorRectangle)
             onTextChanged: root.textEdited(text)
             Keys.onPressed: function(event) {
+                if (event.key === Qt.Key_Backspace
+                        && root.handlePairBackspace()) {
+                    event.accepted = true;
+                    return;
+                }
+                if (root.handleTypingKey(event)) {
+                    event.accepted = true;
+                    return;
+                }
+                if (root.actionsVisible) {
+                    if (event.key === Qt.Key_Down) {
+                        root.actionsMoveRequested(1);
+                        event.accepted = true;
+                        return;
+                    }
+                    if (event.key === Qt.Key_Up) {
+                        root.actionsMoveRequested(-1);
+                        event.accepted = true;
+                        return;
+                    }
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        root.actionsAcceptRequested();
+                        event.accepted = true;
+                        return;
+                    }
+                    if (event.key === Qt.Key_Escape) {
+                        root.actionsDismissRequested();
+                        event.accepted = true;
+                        return;
+                    }
+                }
                 if (root.completionVisible) {
                     if (event.key === Qt.Key_Down) {
                         root.completionMoveRequested(1);
@@ -165,12 +607,82 @@ Rectangle {
                     event.accepted = true;
                     return;
                 }
+                if (event.key === Qt.Key_Home
+                        && (event.modifiers === Qt.NoModifier
+                            || event.modifiers === Qt.ShiftModifier)) {
+                    // E3: Home inteligente; Ctrl+Home (início do
+                    // documento) segue com o TextEdit.
+                    root.smartHomeRequested(
+                        event.modifiers === Qt.ShiftModifier);
+                    event.accepted = true;
+                    return;
+                }
                 if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                         && event.modifiers === Qt.NoModifier) {
                     root.newlineRequested();
                     event.accepted = true;
                 }
             }
+        }
+    }
+
+    // B2 (docs/24): barra de rolagem do editor. Até 2026-07-12 o editor era um
+    // Flickable SEM indicador nenhum — não dava pra saber o tamanho do arquivo
+    // nem onde se estava nele. O Flickable segue sendo a fonte da verdade: a
+    // barra só reflete `contentY` e PEDE mudança por `moveRequested`.
+    VerticalScrollBar {
+        id: editorScrollBar
+
+        anchors.right: editorFlick.right
+        anchors.top: editorFlick.top
+        anchors.bottom: editorFlick.bottom
+        visible: root.hasOpenFile && scrollable
+
+        contentSize: editorFlick.contentHeight
+        viewportSize: editorFlick.height
+        position: editorFlick.contentY
+
+        onMoveRequested: function(position) {
+            editorFlick.contentY = position;
+        }
+    }
+
+    // T6: tooltip da mensagem do diagnóstico ao passar o mouse na marca
+    // da gutter (a UI não usa QtQuick.Controls; é um popup próprio leve).
+    Rectangle {
+        id: diagnosticTooltip
+
+        readonly property real lineTop: gutterArea.y
+            + (root.hoveredDiagnosticLine - 1) * gutterArea.lineHeight
+            - editorFlick.contentY
+
+        readonly property real maxTextWidth: Math.min(420,
+            root.width - x - 3 * Theme.spacingSmall)
+
+        visible: root.hoveredDiagnosticText !== ""
+        z: 30
+        x: gutterArea.x + gutterArea.width + Theme.spacingSmall
+        y: Math.max(Theme.spacingSmall,
+                    lineTop + gutterArea.lineHeight)
+        width: diagnosticTooltipText.width + 2 * Theme.spacingSmall
+        height: diagnosticTooltipText.height + 2 * Theme.spacingSmall
+        radius: Theme.radius
+        color: Theme.background2
+        border.color: Theme.borderStrong
+        border.width: 1
+
+        Text {
+            id: diagnosticTooltipText
+
+            x: Theme.spacingSmall
+            y: Theme.spacingSmall
+            // implicitWidth (não embrulhado) é constante para o texto;
+            // cortar no máximo evita o binding circular do wrap.
+            width: Math.min(implicitWidth, diagnosticTooltip.maxTextWidth)
+            text: root.hoveredDiagnosticText
+            color: Theme.textPrimary
+            font.pixelSize: Theme.fontSizeEditor - 2
+            wrapMode: Text.WordWrap
         }
     }
 }

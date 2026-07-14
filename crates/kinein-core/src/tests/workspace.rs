@@ -174,3 +174,70 @@ fn workspace_open_with_missing_directory_returns_invalid_params() {
         "/definitely/not/a/real/path"
     );
 }
+
+#[test]
+fn workspace_session_roundtrips_through_open() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-session-dispatch", std::process::id()));
+    // O PID pode ser reutilizado entre execuções do gate (e é estável em
+    // alguns sandboxes). Sem limpar, `.kinein/session.json` da rodada anterior
+    // transforma esta "primeira abertura" em restore e torna o teste flaky.
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+    std::fs::write(dir.join("src/lib.rs"), "pub fn x() {}\n").unwrap();
+    let mut core = core_with_empty_search_path("session-dispatch");
+
+    let no_workspace = core.handle_request(&JsonRpcRequest::new(
+        70_i64,
+        "workspace.saveSession",
+        Some(json!({ "openFiles": [] })),
+    ));
+    assert_eq!(
+        no_workspace.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        71_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let first_open = opened.response().result.as_ref().unwrap().clone();
+    assert!(
+        first_open.get("session").is_none(),
+        "primeira abertura nao deveria ter sessao"
+    );
+    let root = first_open["root"].as_str().unwrap().to_owned();
+
+    let saved = core.handle_request(&JsonRpcRequest::new(
+        72_i64,
+        "workspace.saveSession",
+        Some(json!({
+            "openFiles": [format!("{root}/src/main.rs"), format!("{root}/src/lib.rs")],
+            "activeFile": format!("{root}/src/lib.rs"),
+        })),
+    ));
+    assert_eq!(saved.response().result.as_ref().unwrap()["files"], 2);
+
+    let closed = core.handle_request(&JsonRpcRequest::new(73_i64, "workspace.close", None));
+    assert!(closed.response().error.is_none());
+
+    let reopened = core.handle_request(&JsonRpcRequest::new(
+        74_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let session = reopened.response().result.as_ref().unwrap()["session"].clone();
+    let files = session["openFiles"].as_array().unwrap();
+    assert_eq!(files.len(), 2);
+    assert!(files[0].as_str().unwrap().ends_with("src/main.rs"));
+    assert!(
+        session["activeFile"]
+            .as_str()
+            .unwrap()
+            .ends_with("src/lib.rs")
+    );
+}

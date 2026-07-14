@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Ajuda">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<circle class="s" cx="10" cy="10" r="7"/><path class="s" d="M8.3 7.5a2 2 0 1 1 2.4 2c-1 .4-1.2 1-1.2 1.8"/><circle class="f" cx="9.5" cy="14" r="0.35"/>
+</svg>

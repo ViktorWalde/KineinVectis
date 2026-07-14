@@ -6,8 +6,8 @@
 //! o servidor; sao puras sobre `serde_json::Value`.
 
 use kinein_protocol::{
-    Diagnostic, DiagnosticSeverity, DiagnosticSource, JsonRpcRequest, LspCompletionItem,
-    LspSemanticToken,
+    Diagnostic, DiagnosticSeverity, DiagnosticSource, JsonRpcRequest, LspCodeActionInfo,
+    LspCompletionItem, LspSemanticToken, LspSymbolInfo,
 };
 use serde_json::{Value, json};
 
@@ -15,10 +15,16 @@ use super::types::{FileEdits, LspError, LspLocation, TextSpanEdit, WorkspaceEdit
 use super::uri::path_for_uri;
 
 /// Maximo de itens de completion repassados a UI por request.
-const MAX_COMPLETION_ITEMS: usize = 50;
+const MAX_COMPLETION_ITEMS: usize = 100;
 
 /// Maximo de referencias (find usages) repassadas a UI por request.
 const MAX_REFERENCE_ITEMS: usize = 200;
+
+/// Maximo de simbolos de arquivo (`documentSymbol`) por request.
+const MAX_DOCUMENT_SYMBOLS: usize = 500;
+
+/// Maximo de simbolos de workspace (`workspace/symbol`) por request.
+const MAX_WORKSPACE_SYMBOLS: usize = 100;
 
 /// Extrai `result`/`error` de uma resposta LSP em `Result<Value, LspError>`.
 pub(super) fn response_result(method: &'static str, response: &Value) -> Result<Value, LspError> {
@@ -52,9 +58,21 @@ pub(super) fn diagnostics_event(params: &Value) -> Option<JsonRpcRequest> {
                 Some(2) => DiagnosticSeverity::Warning,
                 _ => DiagnosticSeverity::Note,
             };
-            let start = diagnostic.get("range")?.get("start")?;
+            let range = diagnostic.get("range")?;
+            let start = range.get("start")?;
             let line = start.get("line").and_then(Value::as_u64).unwrap_or(0) + 1;
             let column = start.get("character").and_then(Value::as_u64).unwrap_or(0) + 1;
+            // Fim do range (para o sublinhado no editor); ausente ou
+            // invertido cai de volta ao inicio (marca ao menos 1 char).
+            let end = range.get("end");
+            let end_line = end
+                .and_then(|end| end.get("line"))
+                .and_then(Value::as_u64)
+                .map_or(line, |value| value + 1);
+            let end_column = end
+                .and_then(|end| end.get("character"))
+                .and_then(Value::as_u64)
+                .map_or(column, |value| value + 1);
             Some(Diagnostic {
                 id: None,
                 source: DiagnosticSource::Lsp,
@@ -64,6 +82,9 @@ pub(super) fn diagnostics_event(params: &Value) -> Option<JsonRpcRequest> {
                 file: None,
                 line: Some(line),
                 column: Some(column),
+                end_line: Some(end_line),
+                end_column: Some(end_column),
+                code: diagnostic_code(diagnostic.get("code")),
                 job_id: None,
                 command: None,
                 target: None,
@@ -76,6 +97,15 @@ pub(super) fn diagnostics_event(params: &Value) -> Option<JsonRpcRequest> {
         "event.lsp.diagnostics",
         Some(json!({ "path": path, "diagnostics": diagnostics })),
     ))
+}
+
+/// Normaliza o `code` de um diagnostico LSP (string OU numero) em string.
+fn diagnostic_code(code: Option<&Value>) -> Option<String> {
+    match code? {
+        Value::String(text) if !text.is_empty() => Some(text.clone()),
+        Value::Number(number) => Some(number.to_string()),
+        _ => None,
+    }
 }
 
 /// Resolve `textDocument/definition` (`Location`, `Location[]` ou `LocationLink[]`).
@@ -149,12 +179,19 @@ const fn completion_kind_name(kind: i64) -> Option<&'static str> {
 }
 
 /// Achata `CompletionItem[] | CompletionList | null` nos itens do protocolo.
-pub(super) fn completion_items(result: &Value) -> Vec<LspCompletionItem> {
+pub(super) fn completion_items(result: &Value) -> (Vec<LspCompletionItem>, bool) {
     let empty = Vec::new();
     let raw = result
         .as_array()
         .or_else(|| result.get("items").and_then(Value::as_array))
         .unwrap_or(&empty);
+    // O servidor marca `isIncomplete` quando a lista foi truncada por
+    // ele (ex.: std::c no clangd): a UI precisa REPEDIR ao digitar mais,
+    // nao filtrar o cache. Se nos truncamos, tambem vira incompleto.
+    let server_incomplete = result
+        .get("isIncomplete")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
 
     let mut entries = raw
         .iter()
@@ -204,8 +241,10 @@ pub(super) fn completion_items(result: &Value) -> Vec<LspCompletionItem> {
             .cmp(&right.0)
             .then_with(|| left.1.label.cmp(&right.1.label))
     });
+    let truncated = entries.len() > MAX_COMPLETION_ITEMS;
     entries.truncate(MAX_COMPLETION_ITEMS);
-    entries.into_iter().map(|(_sort, item)| item).collect()
+    let items = entries.into_iter().map(|(_sort, item)| item).collect();
+    (items, server_incomplete || truncated)
 }
 
 /// Decodifica o array `data` de semantic tokens (grupos de 5 inteiros).
@@ -272,7 +311,7 @@ pub(super) fn workspace_edit_plan(result: &Value) -> Result<WorkspaceEditPlan, L
 
     if let Some(changes) = result.get("changes").and_then(Value::as_object) {
         for (uri, edits) in changes {
-            files.push(file_edits_from_value(uri, edits)?);
+            files.push(file_edits_from_value(uri, None, edits)?);
         }
     } else if let Some(changes) = result.get("documentChanges").and_then(Value::as_array) {
         for change in changes {
@@ -290,8 +329,12 @@ pub(super) fn workspace_edit_plan(result: &Value) -> Result<WorkspaceEditPlan, L
                 .ok_or_else(|| LspError::Transport {
                     message: "documentChanges de rename sem textDocument.uri".to_owned(),
                 })?;
+            let version = change
+                .get("textDocument")
+                .and_then(|document| document.get("version"))
+                .and_then(Value::as_i64);
             let edits = change.get("edits").unwrap_or(&Value::Null);
-            files.push(file_edits_from_value(uri, edits)?);
+            files.push(file_edits_from_value(uri, version, edits)?);
         }
     }
 
@@ -299,7 +342,199 @@ pub(super) fn workspace_edit_plan(result: &Value) -> Result<WorkspaceEditPlan, L
     Ok(WorkspaceEditPlan { files })
 }
 
-fn file_edits_from_value(uri: &str, edits: &Value) -> Result<FileEdits, LspError> {
+/// Nome plano do `SymbolKind` numerico do LSP (1..=26).
+const fn symbol_kind_name(kind: i64) -> Option<&'static str> {
+    Some(match kind {
+        1 => "file",
+        2 => "module",
+        3 => "namespace",
+        4 => "package",
+        5 => "class",
+        6 => "method",
+        7 => "property",
+        8 => "field",
+        9 => "constructor",
+        10 => "enum",
+        11 => "interface",
+        12 => "function",
+        13 => "variable",
+        14 => "constant",
+        15 => "string",
+        16 => "number",
+        17 => "boolean",
+        18 => "array",
+        19 => "object",
+        20 => "key",
+        21 => "null",
+        22 => "enumMember",
+        23 => "struct",
+        24 => "event",
+        25 => "operator",
+        26 => "typeParameter",
+        _ => return None,
+    })
+}
+
+/// Achata `textDocument/documentSymbol` nos simbolos do protocolo.
+///
+/// Aceita os dois shapes do LSP: `DocumentSymbol[]` hierarquico (achatado em
+/// pre-ordem, com o pai como `container`) e `SymbolInformation[]` plano.
+/// `fallback_path` e o proprio arquivo consultado (o shape hierarquico nao
+/// carrega URI).
+pub(super) fn document_symbols(result: &Value, fallback_path: &str) -> Vec<LspSymbolInfo> {
+    let Some(items) = result.as_array() else {
+        return Vec::new();
+    };
+    let mut symbols = Vec::new();
+    for item in items {
+        if symbols.len() >= MAX_DOCUMENT_SYMBOLS {
+            break;
+        }
+        if item.get("location").is_some() {
+            if let Some(info) = symbol_information(item) {
+                symbols.push(info);
+            }
+        } else {
+            flatten_document_symbol(item, None, fallback_path, &mut symbols);
+        }
+    }
+    symbols.truncate(MAX_DOCUMENT_SYMBOLS);
+    symbols
+}
+
+fn flatten_document_symbol(
+    item: &Value,
+    container: Option<&str>,
+    path: &str,
+    out: &mut Vec<LspSymbolInfo>,
+) {
+    if out.len() >= MAX_DOCUMENT_SYMBOLS {
+        return;
+    }
+    let Some(name) = item.get("name").and_then(Value::as_str) else {
+        return;
+    };
+    let kind = item
+        .get("kind")
+        .and_then(Value::as_i64)
+        .and_then(symbol_kind_name)
+        .unwrap_or("symbol")
+        .to_owned();
+    let position = item
+        .pointer("/selectionRange/start")
+        .or_else(|| item.pointer("/range/start"));
+    let line = position
+        .and_then(|start| start.get("line"))
+        .and_then(Value::as_u64)
+        .unwrap_or(0)
+        + 1;
+    let column = position
+        .and_then(|start| start.get("character"))
+        .and_then(Value::as_u64)
+        .unwrap_or(0)
+        + 1;
+    out.push(LspSymbolInfo {
+        name: name.to_owned(),
+        kind,
+        path: path.to_owned(),
+        line,
+        column,
+        container: container.map(str::to_owned),
+    });
+    if let Some(children) = item.get("children").and_then(Value::as_array) {
+        for child in children {
+            flatten_document_symbol(child, Some(name), path, out);
+        }
+    }
+}
+
+/// Converte um `SymbolInformation` (com `location.uri`) num simbolo do
+/// protocolo; entradas com URI fora do esquema `file://` sao ignoradas.
+fn symbol_information(item: &Value) -> Option<LspSymbolInfo> {
+    let name = item.get("name")?.as_str()?;
+    let kind = item
+        .get("kind")
+        .and_then(Value::as_i64)
+        .and_then(symbol_kind_name)
+        .unwrap_or("symbol")
+        .to_owned();
+    let uri = item.pointer("/location/uri")?.as_str()?;
+    let path = path_for_uri(uri)?;
+    let start = item.pointer("/location/range/start");
+    let line = start
+        .and_then(|position| position.get("line"))
+        .and_then(Value::as_u64)
+        .unwrap_or(0)
+        + 1;
+    let column = start
+        .and_then(|position| position.get("character"))
+        .and_then(Value::as_u64)
+        .unwrap_or(0)
+        + 1;
+    let container = item
+        .get("containerName")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned);
+    Some(LspSymbolInfo {
+        name: name.to_owned(),
+        kind,
+        path,
+        line,
+        column,
+        container,
+    })
+}
+
+/// Converte `workspace/symbol` nos simbolos do protocolo (ordem do servidor).
+pub(super) fn workspace_symbols(result: &Value) -> Vec<LspSymbolInfo> {
+    let Some(items) = result.as_array() else {
+        return Vec::new();
+    };
+    let mut symbols = items
+        .iter()
+        .filter_map(symbol_information)
+        .collect::<Vec<_>>();
+    symbols.truncate(MAX_WORKSPACE_SYMBOLS);
+    symbols
+}
+
+/// Converte a resposta de `textDocument/codeAction` em pares (info, ação crua).
+///
+/// So ações aplicáveis localmente entram: `CodeAction` literal com `edit`
+/// inline e sem `disabled`. Comandos puros e ações que dependem de
+/// `workspace/executeCommand` são filtrados (decisão registrada em
+/// docs/18, fatia M1.3). A ordem do servidor é preservada.
+pub(super) fn code_action_infos(result: &Value) -> (Vec<LspCodeActionInfo>, Vec<Value>) {
+    let Some(items) = result.as_array() else {
+        return (Vec::new(), Vec::new());
+    };
+    let mut infos = Vec::new();
+    let mut raw = Vec::new();
+    for item in items {
+        if item.get("disabled").is_some() {
+            continue;
+        }
+        if !item.get("edit").is_some_and(Value::is_object) {
+            continue;
+        }
+        let Some(title) = item.get("title").and_then(Value::as_str) else {
+            continue;
+        };
+        infos.push(LspCodeActionInfo {
+            title: title.to_owned(),
+            kind: item.get("kind").and_then(Value::as_str).map(str::to_owned),
+        });
+        raw.push(item.clone());
+    }
+    (infos, raw)
+}
+
+fn file_edits_from_value(
+    uri: &str,
+    version: Option<i64>,
+    edits: &Value,
+) -> Result<FileEdits, LspError> {
     let path = path_for_uri(uri).ok_or_else(|| LspError::Transport {
         message: format!("uri de rename invalida: {uri}"),
     })?;
@@ -330,7 +565,11 @@ fn file_edits_from_value(uri: &str, edits: &Value) -> Result<FileEdits, LspError
         });
     }
 
-    Ok(FileEdits { path, edits: spans })
+    Ok(FileEdits {
+        path,
+        version,
+        edits: spans,
+    })
 }
 
 fn position_component(position: Option<&Value>, key: &str) -> u64 {
@@ -424,6 +663,49 @@ mod tests {
         assert_eq!(event_params["diagnostics"][0]["line"], 5);
         assert_eq!(event_params["diagnostics"][0]["column"], 9);
         assert_eq!(event_params["diagnostics"][0]["severity"], "error");
+        // End vazio cai de volta ao inicio (marca ao menos o ponto).
+        assert_eq!(event_params["diagnostics"][0]["endLine"], 5);
+        assert_eq!(event_params["diagnostics"][0]["endColumn"], 9);
+    }
+
+    #[test]
+    fn publish_diagnostics_keeps_full_range_and_code() {
+        let params = json!({
+            "uri": "file:///tmp/demo/src/main.rs",
+            "diagnostics": [
+                {
+                    "range": {
+                        "start": { "line": 2, "character": 4 },
+                        "end": { "line": 3, "character": 10 },
+                    },
+                    "severity": 2,
+                    "code": "unused_variables",
+                    "message": "unused variable: `x`",
+                },
+                {
+                    "range": {
+                        "start": { "line": 0, "character": 0 },
+                        "end": { "line": 0, "character": 6 },
+                    },
+                    "severity": 1,
+                    "code": 425,
+                    "message": "cannot find value",
+                },
+            ],
+        });
+
+        let event = diagnostics_event(&params).unwrap();
+        let diagnostics = &event.params.unwrap()["diagnostics"];
+
+        // Range multi-linha preservado (1-based) + code string.
+        assert_eq!(diagnostics[0]["line"], 3);
+        assert_eq!(diagnostics[0]["column"], 5);
+        assert_eq!(diagnostics[0]["endLine"], 4);
+        assert_eq!(diagnostics[0]["endColumn"], 11);
+        assert_eq!(diagnostics[0]["severity"], "warning");
+        assert_eq!(diagnostics[0]["code"], "unused_variables");
+        // code numerico do LSP vira string.
+        assert_eq!(diagnostics[1]["code"], "425");
     }
 
     #[test]
@@ -484,9 +766,10 @@ mod tests {
                 { "label": "alpha", "kind": 6, "sortText": "a" },
             ],
         });
-        let items = completion_items(&as_list);
+        let (items, incomplete) = completion_items(&as_list);
 
         assert_eq!(items.len(), 2);
+        assert!(!incomplete);
         assert_eq!(items[0].label, "alpha");
         assert_eq!(items[0].insert_text, "alpha");
         assert_eq!(items[0].kind.as_deref(), Some("variable"));
@@ -496,14 +779,17 @@ mod tests {
         assert_eq!(items[1].kind.as_deref(), Some("function"));
 
         let as_array = json!([{ "label": "solo" }]);
-        assert_eq!(completion_items(&as_array).len(), 1);
-        assert!(completion_items(&json!(null)).is_empty());
+        assert_eq!(completion_items(&as_array).0.len(), 1);
+        assert!(completion_items(&json!(null)).0.is_empty());
+        // isIncomplete do servidor propaga mesmo com poucos itens.
+        let flagged = json!({ "isIncomplete": true, "items": [{ "label": "x" }] });
+        assert!(completion_items(&flagged).1);
     }
 
     #[test]
     fn completion_items_uses_text_edit_and_caps_results() {
         let mut raw_items = Vec::new();
-        for index in 0..80 {
+        for index in 0..150 {
             raw_items.push(json!({
                 "label": format!("item{index:03}"),
                 "textEdit": {
@@ -512,9 +798,11 @@ mod tests {
                 },
             }));
         }
-        let items = completion_items(&json!(raw_items));
+        let (items, incomplete) = completion_items(&json!(raw_items));
 
         assert_eq!(items.len(), MAX_COMPLETION_ITEMS);
+        // Truncou -> a lista vira incompleta (a UI deve repedir ao digitar).
+        assert!(incomplete);
         assert_eq!(items[0].insert_text, "item000");
     }
 
@@ -600,5 +888,115 @@ mod tests {
         let plan = workspace_edit_plan(&json!(null)).unwrap();
         assert!(plan.files.is_empty());
         assert_eq!(plan.edit_count(), 0);
+    }
+
+    #[test]
+    fn code_action_infos_keeps_order_and_filters_unusable_actions() {
+        let result = json!([
+            { "title": "Fix a", "kind": "quickfix", "edit": { "changes": {} } },
+            {
+                "title": "Disabled",
+                "edit": { "changes": {} },
+                "disabled": { "reason": "n/a" },
+            },
+            { "title": "Command only", "command": { "title": "x", "command": "x" } },
+            { "title": "Bare command", "command": "x" },
+            { "title": "Refactor b", "edit": { "documentChanges": [] } },
+        ]);
+
+        let (infos, raw) = super::code_action_infos(&result);
+
+        assert_eq!(infos.len(), 2);
+        assert_eq!(infos[0].title, "Fix a");
+        assert_eq!(infos[0].kind.as_deref(), Some("quickfix"));
+        assert_eq!(infos[1].title, "Refactor b");
+        assert_eq!(infos[1].kind, None);
+        assert_eq!(raw.len(), 2);
+        assert_eq!(raw[0]["title"], "Fix a");
+    }
+
+    #[test]
+    fn code_action_infos_accepts_null_and_non_arrays() {
+        assert!(super::code_action_infos(&json!(null)).0.is_empty());
+        assert!(super::code_action_infos(&json!({})).0.is_empty());
+    }
+
+    #[test]
+    fn document_symbols_flattens_hierarchical_shape_with_containers() {
+        let result = json!([
+            {
+                "name": "Ponto",
+                "kind": 23,
+                "range": { "start": { "line": 3, "character": 0 },
+                           "end": { "line": 8, "character": 1 } },
+                "selectionRange": { "start": { "line": 3, "character": 11 },
+                                    "end": { "line": 3, "character": 16 } },
+                "children": [
+                    {
+                        "name": "tamanho",
+                        "kind": 6,
+                        "selectionRange": { "start": { "line": 5, "character": 7 },
+                                            "end": { "line": 5, "character": 14 } },
+                        "range": { "start": { "line": 5, "character": 4 },
+                                   "end": { "line": 7, "character": 5 } },
+                    },
+                ],
+            },
+            {
+                "name": "main",
+                "kind": 12,
+                "selectionRange": { "start": { "line": 10, "character": 3 },
+                                    "end": { "line": 10, "character": 7 } },
+                "range": { "start": { "line": 10, "character": 0 },
+                           "end": { "line": 12, "character": 1 } },
+            },
+        ]);
+
+        let symbols = super::document_symbols(&result, "/w/src/main.rs");
+
+        assert_eq!(symbols.len(), 3);
+        assert_eq!(symbols[0].name, "Ponto");
+        assert_eq!(symbols[0].kind, "struct");
+        assert_eq!(symbols[0].line, 4);
+        assert_eq!(symbols[0].column, 12);
+        assert_eq!(symbols[0].container, None);
+        assert_eq!(symbols[1].name, "tamanho");
+        assert_eq!(symbols[1].kind, "method");
+        assert_eq!(symbols[1].container.as_deref(), Some("Ponto"));
+        assert_eq!(symbols[1].path, "/w/src/main.rs");
+        assert_eq!(symbols[2].name, "main");
+        assert_eq!(symbols[2].kind, "function");
+    }
+
+    #[test]
+    fn workspace_symbols_parses_symbol_information_and_skips_bad_uris() {
+        let result = json!([
+            {
+                "name": "Ponto",
+                "kind": 23,
+                "containerName": "geometria",
+                "location": {
+                    "uri": "file:///w/src/lib.rs",
+                    "range": { "start": { "line": 2, "character": 11 },
+                               "end": { "line": 2, "character": 16 } },
+                },
+            },
+            {
+                "name": "quebrado",
+                "kind": 12,
+                "location": { "uri": "untitled:sem-arquivo" },
+            },
+        ]);
+
+        let symbols = super::workspace_symbols(&result);
+
+        assert_eq!(symbols.len(), 1);
+        assert_eq!(symbols[0].name, "Ponto");
+        assert_eq!(symbols[0].kind, "struct");
+        assert_eq!(symbols[0].path, "/w/src/lib.rs");
+        assert_eq!(symbols[0].line, 3);
+        assert_eq!(symbols[0].column, 12);
+        assert_eq!(symbols[0].container.as_deref(), Some("geometria"));
+        assert!(super::workspace_symbols(&json!(null)).is_empty());
     }
 }

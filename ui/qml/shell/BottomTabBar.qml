@@ -7,6 +7,7 @@ Row {
 
     property string activeTab: ""
     property int problemCount: 0
+    property bool processRunning: false
 
     signal tabRequested(string tab)
     signal refreshToolsRequested()
@@ -15,38 +16,59 @@ Row {
 
     Repeater {
         model: [
-            { key: "build", label: qsTr("Build") },
-            { key: "jobs", label: qsTr("Jobs") },
-            { key: "problems", label: qsTr("Problemas") },
-            { key: "tests", label: qsTr("Testes") },
-            { key: "run", label: qsTr("Executar") },
-            { key: "terminal", label: qsTr("Terminal") },
-            { key: "search", label: qsTr("Busca") },
-            { key: "logs", label: qsTr("IDE") },
-            { key: "tools", label: qsTr("Ferramentas") }
+            { key: "build", label: qsTr("Build"), icon: "build" },
+            { key: "jobs", label: qsTr("Jobs"), icon: "run" },
+            { key: "problems", label: qsTr("Problemas"), icon: "problems" },
+            { key: "tests", label: qsTr("Testes"), icon: "test" },
+            { key: "terminal", label: qsTr("Terminal"), icon: "terminal" },
+            { key: "debug", label: qsTr("Debug"), icon: "debug" },
+            { key: "git", label: qsTr("Git"), icon: "git" },
+            { key: "search", label: qsTr("Busca"), icon: "search" },
+            { key: "logs", label: qsTr("IDE"), icon: "file" },
+            { key: "tools", label: qsTr("Ferramentas"), icon: "tools" }
         ]
 
         delegate: Rectangle {
+            id: bottomTab
+
             required property var modelData
 
-            width: bottomTabLabel.width + 2 * Theme.spacingSmall
-            height: 20
+            width: bottomTabContent.implicitWidth + 2 * Theme.spacingSmall
+            height: 26
             radius: Theme.radius
-            color: tabBar.activeTab === modelData.key ? Theme.accentDim : "transparent"
+            color: tabBar.activeTab === modelData.key ? Theme.surfaceSelected : "transparent"
             border.color: Theme.borderSoft
             border.width: 1
 
-            Text {
-                id: bottomTabLabel
+            Row {
+                id: bottomTabContent
 
                 anchors.centerIn: parent
-                text: parent.modelData.key === "problems" && tabBar.problemCount > 0
-                      ? qsTr("Problemas (%1)").arg(tabBar.problemCount)
-                      : parent.modelData.label
-                color: tabBar.activeTab === parent.modelData.key
-                       ? Theme.accent : Theme.textSecondary
-                font.pixelSize: 10
-                font.bold: true
+                spacing: Theme.spacingXSmall
+
+                KvIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: bottomTab.modelData.icon
+                    size: 14
+                    active: tabBar.activeTab === bottomTab.modelData.key
+                }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: {
+                        if (bottomTab.modelData.key === "problems" && tabBar.problemCount > 0) {
+                            return qsTr("Problemas (%1)").arg(tabBar.problemCount);
+                        }
+                        if (bottomTab.modelData.key === "terminal" && tabBar.processRunning) {
+                            return bottomTab.modelData.label + " ·";
+                        }
+                        return bottomTab.modelData.label;
+                    }
+                    color: tabBar.activeTab === bottomTab.modelData.key
+                           ? Theme.accent : Theme.textSecondary
+                    font.pixelSize: 10
+                    font.bold: true
+                }
             }
 
             MouseArea {
@@ -57,31 +79,12 @@ Row {
         }
     }
 
-    Rectangle {
-        width: refreshToolsLabel.width + 2 * Theme.spacingSmall
-        height: 20
-        radius: Theme.radius
+    KvButton {
+        height: 26
         visible: tabBar.activeTab === "tools"
-        color: refreshToolsArea.containsMouse ? Theme.surface2 : "transparent"
-        border.color: Theme.borderSoft
-        border.width: 1
-
-        Text {
-            id: refreshToolsLabel
-
-            anchors.centerIn: parent
-            text: qsTr("⟳ redetectar")
-            color: Theme.textSecondary
-            font.pixelSize: 10
-        }
-
-        MouseArea {
-            id: refreshToolsArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: tabBar.refreshToolsRequested()
-        }
+        compact: true
+        iconName: "refresh"
+        text: qsTr("Redetectar")
+        onClicked: tabBar.refreshToolsRequested()
     }
 }

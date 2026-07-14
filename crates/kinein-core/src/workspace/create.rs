@@ -114,20 +114,34 @@ fn create_cpp_cmake_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, 
         source,
     })?;
     let src = root.join("src");
-    fs::create_dir(&src).map_err(|source| WorkspaceError::CreateDirectory {
-        path: src.display().to_string(),
-        source,
-    })?;
+    let include = root.join("include");
+    let tests = root.join("tests");
+    for directory in [&src, &include, &tests] {
+        fs::create_dir(directory).map_err(|source| WorkspaceError::CreateDirectory {
+            path: directory.display().to_string(),
+            source,
+        })?;
+    }
 
     write_template(
         &root.join("CMakeLists.txt"),
         &format!(
-            "cmake_minimum_required(VERSION 3.25)\n\
-             project({name} LANGUAGES CXX)\n\n\
-             set(CMAKE_CXX_STANDARD 23)\n\
-             set(CMAKE_CXX_STANDARD_REQUIRED ON)\n\
-             set(CMAKE_CXX_EXTENSIONS OFF)\n\n\
-             add_executable({name} src/main.cpp)\n\
+            "cmake_minimum_required(VERSION 3.24)\n\n\
+             project({name}\n\
+                 VERSION 0.1.0\n\
+                 LANGUAGES CXX\n\
+             )\n\n\
+             add_executable({name}\n\
+                 src/main.cpp\n\
+             )\n\n\
+             target_compile_features({name}\n\
+                 PRIVATE\n\
+                     cxx_std_23\n\
+             )\n\n\
+             target_include_directories({name}\n\
+                 PRIVATE\n\
+                     ${{CMAKE_CURRENT_SOURCE_DIR}}/include\n\
+             )\n\n\
              target_compile_options({name} PRIVATE\n\
                  -Wall -Wextra -Wpedantic -Werror\n\
                  -Wconversion -Wsign-conversion -Wshadow\n\
@@ -136,7 +150,7 @@ fn create_cpp_cmake_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, 
     )?;
     write_template(
         &root.join("CMakePresets.json"),
-        "{\n  \"version\": 6,\n  \"configurePresets\": [\n    {\n      \"name\": \"debug\",\n      \"generator\": \"Ninja\",\n      \"binaryDir\": \"${sourceDir}/.kinein/build/debug\",\n      \"cacheVariables\": {\n        \"CMAKE_BUILD_TYPE\": \"Debug\",\n        \"CMAKE_EXPORT_COMPILE_COMMANDS\": \"ON\"\n      }\n    }\n  ],\n  \"buildPresets\": [\n    {\n      \"name\": \"debug\",\n      \"configurePreset\": \"debug\"\n    }\n  ]\n}\n",
+        "{\n  \"version\": 6,\n  \"configurePresets\": [\n    {\n      \"name\": \"debug\",\n      \"displayName\": \"Debug\",\n      \"generator\": \"Ninja\",\n      \"binaryDir\": \"${sourceDir}/build/debug\",\n      \"cacheVariables\": {\n        \"CMAKE_BUILD_TYPE\": \"Debug\",\n        \"CMAKE_EXPORT_COMPILE_COMMANDS\": \"ON\"\n      }\n    },\n    {\n      \"name\": \"release\",\n      \"displayName\": \"Release\",\n      \"generator\": \"Ninja\",\n      \"binaryDir\": \"${sourceDir}/build/release\",\n      \"cacheVariables\": {\n        \"CMAKE_BUILD_TYPE\": \"Release\",\n        \"CMAKE_EXPORT_COMPILE_COMMANDS\": \"ON\"\n      }\n    }\n  ],\n  \"buildPresets\": [\n    {\n      \"name\": \"debug\",\n      \"configurePreset\": \"debug\"\n    },\n    {\n      \"name\": \"release\",\n      \"configurePreset\": \"release\"\n    }\n  ]\n}\n",
     )?;
     write_template(
         &src.join("main.cpp"),
@@ -145,6 +159,10 @@ fn create_cpp_cmake_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, 
     write_template(
         &root.join("README.md"),
         &format!("# {name}\n\nProjeto C++/CMake strict criado pelo Kinein Vectis.\n"),
+    )?;
+    write_template(
+        &root.join(".gitignore"),
+        "/build/\n/.cache/\n/compile_commands.json\n",
     )?;
 
     open_workspace(&root)
@@ -249,8 +267,17 @@ mod tests {
         let root = PathBuf::from(&workspace.root);
         assert!(root.join("CMakePresets.json").is_file());
         assert!(root.join("src/main.cpp").is_file());
+        assert!(root.join("include").is_dir());
+        assert!(root.join("tests").is_dir());
+        assert!(root.join(".gitignore").is_file());
         let cmake = fs::read_to_string(root.join("CMakeLists.txt")).unwrap();
         assert!(cmake.contains("-Werror"));
+        assert!(cmake.contains("target_compile_features"));
+        assert!(cmake.contains("cxx_std_23"));
+        assert!(!cmake.contains("CMAKE_CXX_STANDARD"));
+        let presets = fs::read_to_string(root.join("CMakePresets.json")).unwrap();
+        assert!(presets.contains("\"name\": \"debug\""));
+        assert!(presets.contains("\"name\": \"release\""));
     }
 
     #[test]

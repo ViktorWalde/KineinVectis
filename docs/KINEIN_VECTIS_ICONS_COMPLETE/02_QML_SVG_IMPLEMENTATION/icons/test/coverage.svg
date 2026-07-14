@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Cobertura">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="f" x="3" y="12" width="2.5" height="5" rx="0"/><rect class="f" x="7.5" y="9" width="2.5" height="8" rx="0"/><rect class="s" x="12" y="5" width="2.5" height="12" rx="0"/><path class="s" d="M 13.2 6.2 l 1.0 1.0 l 2.0 -2.0"/>
+</svg>

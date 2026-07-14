@@ -9,28 +9,48 @@
 
 #![forbid(unsafe_code)]
 
+mod ai;
 mod build;
+mod cargo;
+mod cmake;
 mod command;
 mod core;
+mod debug;
 mod diagnostic;
+mod draft;
+mod format;
 mod fs;
+mod git;
 mod job;
 mod lsp;
 mod rpc;
 mod run;
+mod runconfig;
+mod settings;
+mod syntax;
 mod terminal;
 mod tools;
 mod workspace;
 
+pub use ai::*;
 pub use build::*;
+pub use cargo::*;
+pub use cmake::*;
 pub use command::*;
 pub use core::*;
+pub use debug::*;
 pub use diagnostic::*;
+pub use draft::*;
+pub use format::*;
 pub use fs::*;
+pub use git::*;
 pub use job::*;
 pub use lsp::*;
 pub use rpc::*;
 pub use run::*;
+pub use runconfig::*;
+pub use settings::*;
+pub use syntax::*;
 pub use terminal::*;
 pub use tools::*;
 pub use workspace::*;
@@ -39,4 +59,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.20.0";
+pub const PROTOCOL_VERSION: &str = "0.50.0";

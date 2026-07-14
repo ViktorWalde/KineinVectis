@@ -3,7 +3,10 @@
 //! The `terminal.*` router plus open/input/close, driving the PTY session
 //! managed by `crate::terminal`.
 
-use kinein_protocol::{JsonRpcResponse, TerminalInputParams, TerminalOpenResult};
+use kinein_protocol::{
+    JsonRpcResponse, TerminalCloseParams, TerminalInputParams, TerminalOpenResult,
+    TerminalResizeParams, TerminalScrollParams,
+};
 use serde_json::{Value, json};
 
 use crate::Core;
@@ -22,8 +25,54 @@ impl Core {
         match method {
             "terminal.open" => Some(self.terminal_open_response(request_id)),
             "terminal.input" => Some(self.terminal_input_response(request_id, params)),
-            "terminal.close" => Some(self.terminal_close_response(request_id)),
+            "terminal.resize" => Some(self.terminal_resize_response(request_id, params)),
+            "terminal.scroll" => Some(self.terminal_scroll_response(request_id, params)),
+            "terminal.close" => Some(self.terminal_close_response(request_id, params)),
             _ => None,
+        }
+    }
+
+    fn terminal_scroll_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<TerminalScrollParams>(
+            request_id.as_ref(),
+            params,
+            "terminal.scroll requer os campos id e offset",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let Some(session) = self.terminal.as_mut() else {
+            return terminal_unavailable_response(request_id, "terminal.scroll");
+        };
+        match session.scroll(&parsed.id, parsed.offset) {
+            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
+            Err(error) => terminal_error_response(request_id, &error),
+        }
+    }
+
+    fn terminal_resize_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<TerminalResizeParams>(
+            request_id.as_ref(),
+            params,
+            "terminal.resize requer os campos id, cols e rows",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let Some(session) = self.terminal.as_mut() else {
+            return terminal_unavailable_response(request_id, "terminal.resize");
+        };
+        match session.resize(&parsed.id, parsed.cols, parsed.rows) {
+            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
+            Err(error) => terminal_error_response(request_id, &error),
         }
     }
 
@@ -35,7 +84,9 @@ impl Core {
             return terminal_unavailable_response(request_id, "terminal.open");
         };
         match session.open(&root) {
-            Ok(shell) => JsonRpcResponse::success(request_id, json!(TerminalOpenResult { shell })),
+            Ok((id, shell)) => {
+                JsonRpcResponse::success(request_id, json!(TerminalOpenResult { id, shell }))
+            }
             Err(error) => terminal_error_response(request_id, &error),
         }
     }
@@ -48,7 +99,7 @@ impl Core {
         let parsed = match parse_params::<TerminalInputParams>(
             request_id.as_ref(),
             params,
-            "terminal.input requer o campo data",
+            "terminal.input requer os campos id e data",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -56,17 +107,29 @@ impl Core {
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "terminal.input");
         };
-        match session.write(&parsed.data) {
+        match session.write(&parsed.id, &parsed.data) {
             Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
             Err(error) => terminal_error_response(request_id, &error),
         }
     }
 
-    fn terminal_close_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
+    fn terminal_close_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<TerminalCloseParams>(
+            request_id.as_ref(),
+            params,
+            "terminal.close requer o campo id",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "terminal.close");
         };
-        match session.close() {
+        match session.close(&parsed.id) {
             Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
             Err(error) => terminal_error_response(request_id, &error),
         }

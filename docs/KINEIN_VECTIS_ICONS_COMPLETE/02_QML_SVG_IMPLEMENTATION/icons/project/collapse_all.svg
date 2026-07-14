@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Recolher tudo">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<line class="s" x1="4" y1="5" x2="16" y2="5"/><line class="s" x1="5.5" y1="10" x2="14.5" y2="10"/><line class="s" x1="7" y1="15" x2="13" y2="15"/><polyline class="s" points="8,7 10,9 12,7"/><polyline class="s" points="8,13 10,11 12,13"/>
+</svg>

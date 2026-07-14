@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Fetch">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<circle class="s" cx="4.8" cy="5" r="1.35"/><circle class="s" cx="7.8" cy="5" r="1.35"/><line class="s" x1="6.15" y1="5" x2="6.45" y2="5"/><path class="s" d="M10 6v7"/><polygon class="f" points="7.8,11 10,14 12.2,11"/>
+</svg>

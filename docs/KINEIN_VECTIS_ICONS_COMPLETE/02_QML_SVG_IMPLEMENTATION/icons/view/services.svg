@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Serviços">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="s" x="8" y="8" width="4" height="4" rx="1"/><rect class="s" x="2.2" y="3" width="3.6" height="3.6" rx="1"/><rect class="s" x="14.2" y="3" width="3.6" height="3.6" rx="1"/><rect class="s" x="8.2" y="14" width="3.6" height="3.6" rx="1"/><line class="s" x1="5.8" y1="6.6" x2="8.5" y2="8.6"/><line class="s" x1="14.2" y1="6.6" x2="11.5" y2="8.6"/><line class="s" x1="10" y1="12" x2="10" y2="14"/>
+</svg>

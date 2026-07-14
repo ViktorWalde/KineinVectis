@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Blame">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<circle class="s" cx="5.5" cy="6" r="2"/><path class="s" d="M2.5 13.5c.5-3.2 5.5-3.2 6 0"/><line class="s" x1="13" y1="3" x2="13" y2="17"/><circle class="s" cx="13" cy="7" r="1.2"/><circle class="s" cx="13" cy="13" r="1.2"/>
+</svg>

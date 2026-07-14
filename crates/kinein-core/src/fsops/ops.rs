@@ -4,6 +4,7 @@ use std::{
     fs,
     io::{self, Write},
     path::{Path, PathBuf},
+    sync::atomic::{AtomicU64, Ordering},
 };
 
 use kinein_protocol::{FsEntry, FsEntryKind};
@@ -162,13 +163,72 @@ pub fn create_directory(root: &Path, path: &Path) -> Result<PathBuf, FsError> {
 /// explicit new-file creation.
 pub fn write_file(root: &Path, path: &Path, content: &str) -> Result<(PathBuf, u64), FsError> {
     let file = confine_file(root, path)?;
+    atomic_write(&file, content.as_bytes())?;
+    Ok((file, content.len() as u64))
+}
 
-    fs::write(&file, content).map_err(|source| FsError::Io {
+/// Atomically overwrites a UTF-8 file only when its disk content still
+/// matches the snapshot last observed by the caller.
+pub fn write_file_if_unchanged(
+    root: &Path,
+    path: &Path,
+    content: &str,
+    expected_content: &str,
+) -> Result<(PathBuf, u64), FsError> {
+    let file = confine_file(root, path)?;
+    let current = fs::read(&file).map_err(|source| FsError::Io {
         path: file.display().to_string(),
         source,
     })?;
-
+    if current != expected_content.as_bytes() {
+        return Err(FsError::ChangedOnDisk {
+            path: file.display().to_string(),
+        });
+    }
+    atomic_write(&file, content.as_bytes())?;
     Ok((file, content.len() as u64))
+}
+
+/// Grava `bytes` em `target` de forma ATÔMICA (rede de segurança da fatia S1,
+/// ver `docs/23`): escreve num arquivo temporário no MESMO diretório, faz
+/// `fsync`, e `rename` por cima do alvo. Como o `rename` no mesmo filesystem
+/// é atômico, um crash/kill no meio da escrita nunca deixa o alvo truncado ou
+/// zerado — ele fica com o conteúdo ANTIGO ou o NOVO, jamais pela metade.
+fn atomic_write(target: &Path, bytes: &[u8]) -> Result<(), FsError> {
+    let io_err = |path: &Path, source: io::Error| FsError::Io {
+        path: path.display().to_string(),
+        source,
+    };
+    let temp = temp_sibling(target);
+
+    let mut file = fs::File::create(&temp).map_err(|source| io_err(&temp, source))?;
+    if let Err(source) = file.write_all(bytes) {
+        drop(fs::remove_file(&temp));
+        return Err(io_err(&temp, source));
+    }
+    // `fsync` garante que os bytes chegaram ao disco antes do rename.
+    if let Err(source) = file.sync_all() {
+        drop(fs::remove_file(&temp));
+        return Err(io_err(&temp, source));
+    }
+    drop(file); // fecha o handle antes do rename.
+
+    fs::rename(&temp, target).map_err(|source| {
+        drop(fs::remove_file(&temp));
+        io_err(target, source)
+    })
+}
+
+/// Caminho de um temp irmão único e oculto, no mesmo diretório do alvo (para
+/// o `rename` ser atômico — mesmo filesystem).
+fn temp_sibling(target: &Path) -> PathBuf {
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    let seq = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let name = target
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or("file");
+    target.with_file_name(format!(".{name}.kinein-tmp-{}-{seq}", std::process::id()))
 }
 
 /// Renames or moves a file or directory inside the workspace root.
@@ -232,7 +292,7 @@ mod tests {
     use kinein_protocol::FsEntryKind;
 
     use super::super::{FsError, MAX_READ_BYTES};
-    use super::{delete, list_dir, read_file, rename, write_file};
+    use super::{delete, list_dir, read_file, rename, write_file, write_file_if_unchanged};
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -298,6 +358,53 @@ mod tests {
 
         let (_, reread) = read_file(&root, &file).unwrap();
         assert_eq!(reread, "fn main() { println!(); }\n");
+    }
+
+    #[test]
+    fn write_is_atomic_and_leaves_no_temp_behind() {
+        // Escrita atômica (S1/docs/23): substitui o conteúdo e não deixa
+        // nenhum arquivo temporário `.kinein-tmp-*` no diretório.
+        let root = temp_root("atomic");
+        let file = root.join("data.txt");
+        fs::write(&file, "antigo\n").unwrap();
+
+        write_file(&root, &file, "novo conteudo\n").unwrap();
+
+        let (_, reread) = read_file(&root, &file).unwrap();
+        assert_eq!(reread, "novo conteudo\n");
+
+        let leftovers: Vec<_> = fs::read_dir(&root)
+            .unwrap()
+            .filter_map(Result::ok)
+            .filter(|entry| entry.file_name().to_string_lossy().contains("kinein-tmp"))
+            .collect();
+        assert!(leftovers.is_empty(), "temp não foi renomeado/limpo");
+    }
+
+    #[test]
+    fn conditional_write_rejects_external_change() {
+        let root = temp_root("conditional-conflict");
+        let file = root.join("data.txt");
+        fs::write(&file, "primeira versao\n").unwrap();
+
+        let error = write_file_if_unchanged(&root, &file, "buffer local\n", "snapshot antigo\n")
+            .unwrap_err();
+
+        assert!(matches!(error, FsError::ChangedOnDisk { .. }));
+        assert_eq!(fs::read_to_string(&file).unwrap(), "primeira versao\n");
+    }
+
+    #[test]
+    fn conditional_write_accepts_matching_snapshot() {
+        let root = temp_root("conditional-match");
+        let file = root.join("data.txt");
+        fs::write(&file, "snapshot\n").unwrap();
+
+        let (_, bytes) =
+            write_file_if_unchanged(&root, &file, "buffer local\n", "snapshot\n").unwrap();
+
+        assert_eq!(bytes, 13);
+        assert_eq!(fs::read_to_string(&file).unwrap(), "buffer local\n");
     }
 
     #[test]

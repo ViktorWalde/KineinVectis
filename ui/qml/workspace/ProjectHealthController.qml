@@ -7,6 +7,14 @@ Item {
     property string workspaceKind: ""
     property var toolsList: []
     property bool scanningEnvironment: false
+    property bool cmakeStatusKnown: false
+    property bool cmakeConfigured: false
+    // Auto-setup ao abrir (radar de docs/18): o configure dispara sozinho
+    // UMA vez por workspace; falha devolve o aviso acionavel (sem loop).
+    property bool autoConfigureAttempted: false
+    property bool autoConfigureFailed: false
+    property bool cargoMetadataFailed: false
+    property string cargoMetadataError: ""
 
     property bool active: false
     property string status: "idle"
@@ -15,16 +23,54 @@ Item {
     property string actionTarget: ""
     property string dismissedKey: ""
 
+    signal autoConfigureRequested()
+
     visible: false
 
     onWorkspaceRootChanged: {
         dismissedKey = "";
+        cmakeStatusKnown = false;
+        cmakeConfigured = false;
+        autoConfigureAttempted = false;
+        autoConfigureFailed = false;
+        cargoMetadataFailed = false;
+        cargoMetadataError = "";
         update();
     }
     onWorkspaceKindChanged: update()
     onToolsListChanged: update()
     onScanningEnvironmentChanged: update()
     Component.onCompleted: update()
+
+    function handleCmakeStatus(configured) {
+        cmakeStatusKnown = true;
+        cmakeConfigured = configured;
+        if (workspaceKind === "cmake" && !configured
+                && !autoConfigureAttempted) {
+            autoConfigureAttempted = true;
+            autoConfigureRequested();
+        }
+        update();
+    }
+
+    function handleCmakeFinished(success) {
+        if (!success && autoConfigureAttempted) {
+            autoConfigureFailed = true;
+        }
+        update();
+    }
+
+    function handleCargoMetadataResolved() {
+        cargoMetadataFailed = false;
+        cargoMetadataError = "";
+        update();
+    }
+
+    function handleCargoMetadataFailed(message) {
+        cargoMetadataFailed = true;
+        cargoMetadataError = message;
+        update();
+    }
 
     function dismiss() {
         dismissedKey = status + "|" + message;
@@ -112,6 +158,24 @@ Item {
             apply("warning",
                   qsTr("ferramentas ausentes: %1").arg(missing.join(", ")),
                   qsTr("Ferramentas"), "tools");
+            return;
+        }
+        if (workspaceKind === "cmake" && cmakeStatusKnown && !cmakeConfigured) {
+            if (autoConfigureAttempted && !autoConfigureFailed) {
+                apply("info",
+                      qsTr("configurando o projeto CMake automaticamente..."),
+                      qsTr("Jobs"), "jobs");
+                return;
+            }
+            apply("warning",
+                  qsTr("CMake sem configure — análise e run em modo degradado"),
+                  qsTr("Configurar"), "cmakeConfigure");
+            return;
+        }
+        if (workspaceKind === "rustCargo" && cargoMetadataFailed) {
+            apply("warning",
+                  qsTr("cargo metadata falhou: %1").arg(cargoMetadataError),
+                  qsTr("Tentar de novo"), "cargoMetadata");
             return;
         }
         apply("ok", "", "", "");

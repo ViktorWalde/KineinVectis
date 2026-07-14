@@ -11,11 +11,80 @@ Item {
     property string bottomTab: "logs"
     property bool showExplorer: true
     property bool showAssistant: false
+    property real viewportWidth: 1280
+    property real viewportHeight: 720
+    property bool layoutLoaded: false
+    property bool persistedLayout: false
+    // Dimensoes padrao e limites de docs/specs/KINEIN_VECTIS_LAYOUT_SYSTEM.md
+    // §6.4; persistencia de layout entra com Settings (M4).
+    property real explorerWidth: 280
+    property real contextWidth: 360
+    property real bottomPanelHeight: 260
+    property real outlineWidth: 220
+    property bool outlineCollapsed: false
+    readonly property bool effectiveShowExplorer: showExplorer
+                                                  && (!showAssistant
+                                                      || viewportWidth >= 1050)
 
     signal folderOpenRequested(string path)
     signal toolsDetectionRequested()
+    signal layoutSaveRequested(var values)
 
     visible: false
+
+    Timer {
+        id: layoutSaveTimer
+
+        interval: 250
+        repeat: false
+        onTriggered: root.layoutSaveRequested({
+            explorerWidth: Math.round(root.explorerWidth),
+            contextWidth: Math.round(root.contextWidth),
+            bottomPanelHeight: Math.round(root.bottomPanelHeight),
+            outlineWidth: Math.round(root.outlineWidth),
+            outlineCollapsed: root.outlineCollapsed
+        })
+    }
+
+    function clamp(value, minimum, maximum) {
+        return Math.max(minimum, Math.min(maximum, value));
+    }
+
+    function applySettings(settingsController) {
+        persistedLayout = settingsController.hasPersistedLayout();
+        if (persistedLayout) {
+            explorerWidth = clamp(settingsController.explorerWidth, 220, 420);
+            contextWidth = clamp(settingsController.contextWidth, 300, 480);
+            bottomPanelHeight = clamp(settingsController.bottomPanelHeight,
+                                      160, 480);
+            outlineWidth = clamp(settingsController.outlineWidth, 160, 420);
+            outlineCollapsed = settingsController.outlineCollapsed;
+        } else {
+            applyAutomaticLayout();
+        }
+        layoutLoaded = true;
+    }
+
+    function updateViewport(width, height) {
+        viewportWidth = width;
+        viewportHeight = height;
+        if (layoutLoaded && !persistedLayout) {
+            applyAutomaticLayout();
+        }
+    }
+
+    function applyAutomaticLayout() {
+        explorerWidth = clamp(viewportWidth * 0.22, 220, 300);
+        contextWidth = clamp(viewportWidth * 0.28, 300, 380);
+        bottomPanelHeight = clamp(viewportHeight * 0.32, 180, 300);
+        outlineWidth = clamp(viewportWidth * 0.18, 180, 260);
+        outlineCollapsed = viewportWidth < 1180;
+    }
+
+    function persistLayoutSoon() {
+        persistedLayout = true;
+        layoutSaveTimer.restart();
+    }
 
     function relativeToRoot(path) {
         if (workspaceRoot !== "" && path.indexOf(workspaceRoot + "/") === 0) {
@@ -38,6 +107,36 @@ Item {
         if (tab === "tools" && toolsCount === 0) {
             toolsDetectionRequested();
         }
+    }
+
+    function resizeExplorer(delta) {
+        explorerWidth = Math.max(220, Math.min(420, explorerWidth + delta));
+        persistLayoutSoon();
+    }
+
+    function resizeContext(delta) {
+        contextWidth = Math.max(300, Math.min(480, contextWidth + delta));
+        persistLayoutSoon();
+    }
+
+    function resizeBottomPanel(delta) {
+        bottomPanelHeight = Math.max(160, Math.min(480, bottomPanelHeight + delta));
+        persistLayoutSoon();
+    }
+
+    function resizeOutline(delta) {
+        outlineWidth = Math.max(160, Math.min(420, outlineWidth + delta));
+        persistLayoutSoon();
+    }
+
+    function resetOutlineWidth() {
+        outlineWidth = 220;
+        persistLayoutSoon();
+    }
+
+    function toggleOutline() {
+        outlineCollapsed = !outlineCollapsed;
+        persistLayoutSoon();
     }
 
     function toggleExplorer() {

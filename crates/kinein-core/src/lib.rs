@@ -7,15 +7,25 @@
 #![forbid(unsafe_code)]
 
 pub mod build;
+pub mod cargo;
+pub mod cmake;
 pub mod commands;
+pub mod dap;
+pub mod db;
+pub mod format;
 pub mod fsops;
+pub mod fswatch;
+pub mod git;
 pub mod handlers;
 pub mod jobs;
+pub mod lang;
 pub mod lsp;
 pub mod process;
 pub mod rpc;
 pub mod run;
+pub mod runconfig;
 pub mod runtime;
+pub mod settings;
 pub mod terminal;
 pub mod test;
 pub mod tools;
@@ -25,7 +35,7 @@ pub use runtime::{run_json_lines, run_stdio};
 use std::{
     error::Error,
     fmt, io,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
 
@@ -43,10 +53,19 @@ pub struct Core {
     detector: ToolDetector,
     tool_registry: Arc<Mutex<Option<Vec<ToolInfo>>>>,
     workspace: Option<WorkspaceInfo>,
+    fswatch: Option<fswatch::WorkspaceWatcher>,
+    syntax: lang::SyntaxTreeService,
+    events: Option<lsp::EventSender>,
     lsp: Option<lsp::LspManager>,
+    workspace_edits: lsp::WorkspaceEditTransactions,
     run: Option<run::RunManager>,
+    debug: Option<dap::DebugManager>,
     terminal: Option<terminal::TerminalManager>,
     jobs: Option<jobs::JobManager>,
+    /// Store local de rascunhos (autosave), aberta por-workspace (docs/23).
+    drafts: Option<db::DraftStore>,
+    /// Persistência local ligada (só no core completo, não em testes leves).
+    persistence_enabled: bool,
 }
 
 impl Core {
@@ -63,10 +82,17 @@ impl Core {
             detector,
             tool_registry: Arc::new(Mutex::new(None)),
             workspace: None,
+            fswatch: None,
+            syntax: lang::SyntaxTreeService::default(),
+            events: None,
             lsp: None,
+            workspace_edits: lsp::WorkspaceEditTransactions::default(),
             run: None,
+            debug: None,
             terminal: None,
             jobs: None,
+            drafts: None,
+            persistence_enabled: false,
         }
     }
 
@@ -80,8 +106,13 @@ impl Core {
     pub fn enable_lsp(&mut self, events: lsp::EventSender) {
         self.lsp = Some(lsp::LspManager::new(events.clone()));
         self.run = Some(run::RunManager::new(events.clone()));
+        self.debug = Some(dap::DebugManager::new(events.clone()));
         self.jobs = Some(jobs::JobManager::new(events.clone()));
-        self.terminal = Some(terminal::TerminalManager::new(events));
+        self.terminal = Some(terminal::TerminalManager::new(events.clone()));
+        self.events = Some(events);
+        // M-S1: liga a persistência local (rascunhos em SQLite) — só no core
+        // completo; a store real abre quando um workspace é aberto.
+        self.persistence_enabled = true;
     }
 
     /// Handles one already parsed JSON-RPC request.
@@ -115,13 +146,21 @@ impl Core {
                 request_id,
                 json!(CorePingResult::default()),
             )),
-            "core.shutdown" => RequestOutcome::Shutdown(JsonRpcResponse::success(
-                request_id,
-                json!({
-                    "status": "ok",
-                    "message": "shutdown requested",
-                }),
-            )),
+            "core.shutdown" => {
+                // M4.3b: cancela jobs vivos já no shutdown (sinal pronto +
+                // entrega os event.job.* enquanto o canal existe); o drain
+                // final fica no Drop do JobManager, após a resposta.
+                if let Some(jobs) = self.jobs.as_ref() {
+                    jobs.cancel_all();
+                }
+                RequestOutcome::Shutdown(JsonRpcResponse::success(
+                    request_id,
+                    json!({
+                        "status": "ok",
+                        "message": "shutdown requested",
+                    }),
+                ))
+            }
             "command.list" => RequestOutcome::Continue(JsonRpcResponse::success(
                 request_id,
                 json!({ "commands": commands::command_descriptors() }),
@@ -161,6 +200,9 @@ impl Core {
             "workspace.createProject" => RequestOutcome::Continue(
                 self.create_workspace_project_response(request_id, request.params.as_ref()),
             ),
+            "workspace.saveSession" => RequestOutcome::Continue(
+                self.save_session_response(request_id, request.params.as_ref()),
+            ),
             "workspace.status" => RequestOutcome::Continue(JsonRpcResponse::success(
                 request_id,
                 json!(WorkspaceStatusResult {
@@ -192,10 +234,20 @@ impl Core {
         params: Option<&Value>,
     ) -> JsonRpcResponse {
         self.fs_request_response(method, request_id.clone(), params)
+            .or_else(|| self.ai_request_response(method, request_id.clone(), params))
+            .or_else(|| self.cargo_request_response(method, request_id.clone(), params))
+            .or_else(|| self.git_request_response(method, request_id.clone(), params))
+            .or_else(|| self.runconfig_request_response(method, request_id.clone(), params))
+            .or_else(|| self.settings_request_response(method, request_id.clone(), params))
+            .or_else(|| self.cmake_request_response(method, request_id.clone(), params))
+            .or_else(|| self.format_request_response(method, request_id.clone(), params))
             .or_else(|| self.run_request_response(method, request_id.clone(), params))
+            .or_else(|| self.debug_request_response(method, request_id.clone(), params))
             .or_else(|| self.terminal_request_response(method, request_id.clone(), params))
+            .or_else(|| self.syntax_request_response(method, request_id.clone(), params))
             .or_else(|| self.lsp_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
+            .or_else(|| self.draft_request_response(method, request_id.clone(), params))
             .unwrap_or_else(|| {
                 let error = JsonRpcError::new(
                     JsonRpcErrorCode::MethodNotFound,
@@ -212,6 +264,37 @@ impl Core {
         self.workspace
             .as_ref()
             .map(|workspace| PathBuf::from(&workspace.root))
+    }
+
+    /// Replaces the watcher when a workspace opens. Failure is reported as an
+    /// async warning, while compare-before-save remains active as the final
+    /// protection against silent overwrites.
+    fn reset_workspace_watcher(&mut self, root: &Path) {
+        self.fswatch = None;
+        let Some(events) = self.events.as_ref() else {
+            return;
+        };
+        match fswatch::WorkspaceWatcher::new(root, events.clone()) {
+            Ok(watcher) => self.fswatch = Some(watcher),
+            Err(error) => drop(events.send(JsonRpcRequest::notification(
+                "event.fs.watchError",
+                Some(json!({ "message": error.to_string() })),
+            ))),
+        }
+    }
+
+    /// Lazily observes a directory reached by the explorer or editor.
+    fn watch_workspace_directory(&mut self, directory: &Path) {
+        let error = self
+            .fswatch
+            .as_mut()
+            .and_then(|watcher| watcher.watch_directory(directory).err());
+        if let (Some(error), Some(events)) = (error, self.events.as_ref()) {
+            drop(events.send(JsonRpcRequest::notification(
+                "event.fs.watchError",
+                Some(json!({ "message": error.to_string() })),
+            )));
+        }
     }
 
     fn tool_registry_snapshot(&self) -> Option<Vec<ToolInfo>> {

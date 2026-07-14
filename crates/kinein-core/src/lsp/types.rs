@@ -37,6 +37,9 @@ pub struct TextSpanEdit {
 pub struct FileEdits {
     /// Caminho absoluto do arquivo alvo.
     pub path: String,
+    /// Versao LSP esperada pelo servidor, quando o `WorkspaceEdit` usa
+    /// `OptionalVersionedTextDocumentIdentifier`.
+    pub version: Option<i64>,
     /// Edits a aplicar, na ordem enviada pelo servidor.
     pub edits: Vec<TextSpanEdit>,
 }

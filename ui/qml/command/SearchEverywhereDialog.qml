@@ -10,6 +10,8 @@ Rectangle {
     property bool loading: false
     property bool truncated: false
     property string errorText: ""
+    property string titleText: qsTr("Search Everywhere")
+    property bool recentMode: false
     property real maxAvailableWidth: 620
     property real maxAvailableHeight: 420
 
@@ -43,7 +45,7 @@ Rectangle {
         spacing: Theme.spacingSmall
 
         Text {
-            text: qsTr("Search Everywhere")
+            text: root.titleText
             color: Theme.textPrimary
             font.pixelSize: 13
             font.bold: true
@@ -91,15 +93,19 @@ Rectangle {
             width: parent.width
             text: {
                 if (root.loading) {
-                    return qsTr("Buscando arquivos...");
+                    return qsTr("Buscando...");
                 }
                 if (root.truncated) {
                     return qsTr("Mostrando os primeiros resultados.");
                 }
                 if (searchInput.text.trim() === "") {
-                    return qsTr("Digite para buscar arquivos por nome.");
+                    if (root.recentMode) {
+                        return qsTr("Digite para filtrar o histórico desta sessão.");
+                    }
+                    return qsTr("Digite para buscar arquivos e comandos · "
+                                + "@ símbolos do arquivo · # símbolos do workspace");
                 }
-                return qsTr("%1 arquivos").arg(root.resultCount);
+                return qsTr("%1 resultados").arg(root.resultCount);
             }
             color: Theme.textMuted
             font.pixelSize: 10
@@ -127,7 +133,7 @@ Rectangle {
                 height: 38
                 radius: Theme.radius
                 color: index === root.currentIndex
-                       ? Theme.accentDim
+                       ? Theme.surfaceSelected
                        : (resultArea.containsMouse
                           ? Theme.surface2 : "transparent")
 

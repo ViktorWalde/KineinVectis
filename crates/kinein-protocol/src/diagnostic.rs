@@ -51,12 +51,21 @@ pub struct Diagnostic {
     /// Source file, relative to the workspace root when possible.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub file: Option<String>,
-    /// One-based line number.
+    /// One-based line number (start of the range).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub line: Option<u64>,
-    /// One-based column number.
+    /// One-based column number (start of the range).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub column: Option<u64>,
+    /// One-based line number of the range end (for editor underlines).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub end_line: Option<u64>,
+    /// One-based column number of the range end (for editor underlines).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub end_column: Option<u64>,
+    /// Machine code/rule of the diagnostic (`E0425`, a lint name, ...).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
     /// Job that produced the diagnostic, for job-backed operations.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub job_id: Option<String>,
@@ -88,6 +97,9 @@ mod tests {
             file: Some("src/main.rs".to_owned()),
             line: Some(7),
             column: Some(12),
+            end_line: Some(7),
+            end_column: Some(13),
+            code: Some("E0425".to_owned()),
             job_id: Some("job_1".to_owned()),
             command: None,
             target: None,
@@ -100,6 +112,9 @@ mod tests {
         assert_eq!(value["severity"], "error");
         assert_eq!(value["jobId"], "job_1");
         assert_eq!(value["category"], "compiler");
+        assert_eq!(value["endLine"], 7);
+        assert_eq!(value["endColumn"], 13);
+        assert_eq!(value["code"], "E0425");
         assert!(value.get("command").is_none());
     }
 

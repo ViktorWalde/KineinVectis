@@ -5,16 +5,22 @@ Rectangle {
 
     property bool workspaceOpen: false
     property bool explorerActive: false
+    property bool searchActive: false
+    property bool gitActive: false
+    property bool buildActive: false
+    property bool debugActive: false
     property bool toolsActive: false
-    property bool logsActive: false
     property bool assistantActive: false
 
     signal explorerToggled()
+    signal searchRequested()
+    signal gitRequested()
+    signal buildRequested()
+    signal debugRequested()
     signal toolsRequested()
-    signal logsRequested()
     signal assistantToggled()
 
-    width: 42
+    width: 52
     radius: Theme.radiusLarge
     color: Theme.background1
     border.color: Theme.borderSoft
@@ -23,22 +29,29 @@ Rectangle {
     component RailButton: Rectangle {
         id: railButton
 
-        property string glyph: ""
+        property string iconName: "file"
+        property string tooltip: ""
         property bool active: false
 
         signal activated()
 
-        width: 30
-        height: 30
+        width: 32
+        height: 32
         radius: Theme.radius
-        color: active ? Theme.accentDim
+        opacity: enabled ? 1.0 : 0.72
+        color: active ? Theme.surfaceSelected
                       : (railButtonArea.containsMouse ? Theme.surface2 : "transparent")
 
-        Text {
+        KvIcon {
             anchors.centerIn: parent
-            text: railButton.glyph
-            color: railButton.active ? Theme.accent : Theme.textSecondary
-            font.pixelSize: 14
+            name: railButton.iconName
+            size: 22
+            active: railButton.active
+            disabled: !railButton.enabled
+            iconColor: railButton.active ? Theme.accent
+                                         : (railButtonArea.containsMouse
+                                            ? Theme.textPrimary
+                                            : Theme.textSecondary)
         }
 
         MouseArea {
@@ -48,7 +61,18 @@ Rectangle {
             enabled: railButton.enabled
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: railButton.activated()
+            onContainsMouseChanged: {
+                if (containsMouse) {
+                    TooltipController.showFor(railButton, railButton.tooltip,
+                                              "right");
+                } else {
+                    TooltipController.hideFor(railButton);
+                }
+            }
+            onClicked: {
+                TooltipController.hideFor(railButton);
+                railButton.activated();
+            }
         }
     }
 
@@ -59,28 +83,57 @@ Rectangle {
         spacing: Theme.spacingSmall
 
         RailButton {
-            glyph: "▤"
+            iconName: "project"
+            tooltip: qsTr("Projeto")
             active: root.explorerActive && root.workspaceOpen
             enabled: root.workspaceOpen
-            opacity: enabled ? 1.0 : 0.4
             onActivated: root.explorerToggled()
         }
 
         RailButton {
-            glyph: "⚒"
+            iconName: "search"
+            tooltip: qsTr("Busca no projeto")
+            active: root.searchActive
+            enabled: root.workspaceOpen
+            onActivated: root.searchRequested()
+        }
+
+        RailButton {
+            iconName: "git"
+            tooltip: qsTr("Git")
+            active: root.gitActive
+            enabled: root.workspaceOpen
+            onActivated: root.gitRequested()
+        }
+
+        RailButton {
+            iconName: "build"
+            tooltip: qsTr("Build e jobs")
+            active: root.buildActive
+            enabled: root.workspaceOpen
+            onActivated: root.buildRequested()
+        }
+
+        RailButton {
+            iconName: "debug"
+            tooltip: qsTr("Debug")
+            active: root.debugActive
+            enabled: root.workspaceOpen
+            onActivated: root.debugRequested()
+        }
+
+        RailButton {
+            iconName: "tools"
+            tooltip: qsTr("Ferramentas")
             active: root.toolsActive
             onActivated: root.toolsRequested()
         }
 
         RailButton {
-            glyph: "≣"
-            active: root.logsActive
-            onActivated: root.logsRequested()
-        }
-
-        RailButton {
-            glyph: "✦"
+            iconName: "context"
+            tooltip: qsTr("KV Context")
             active: root.assistantActive
+            enabled: root.workspaceOpen
             onActivated: root.assistantToggled()
         }
     }

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Toolchain">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M12.7 3.3a4 4 0 0 0-4.8 4.8L3.2 12.8a1.8 1.8 0 0 0 2.5 2.5l4.7-4.7a4 4 0 0 0 4.8-4.8l-2.4 2.4-2.2-.7-.7-2.2z"/><rect class="s" x="5" y="5" width="10" height="10" rx="1.2"/><rect class="s" x="8" y="8" width="4" height="4" rx="0.5"/><line class="s" x1="7" y1="2.5" x2="7" y2="5"/><line class="s" x1="7" y1="15" x2="7" y2="17.5"/><line class="s" x1="2.5" y1="7" x2="5" y2="7"/><line class="s" x1="15" y1="7" x2="17.5" y2="7"/><line class="s" x1="10" y1="2.5" x2="10" y2="5"/><line class="s" x1="10" y1="15" x2="10" y2="17.5"/><line class="s" x1="2.5" y1="10" x2="5" y2="10"/><line class="s" x1="15" y1="10" x2="17.5" y2="10"/><line class="s" x1="13" y1="2.5" x2="13" y2="5"/><line class="s" x1="13" y1="15" x2="13" y2="17.5"/><line class="s" x1="2.5" y1="13" x2="5" y2="13"/><line class="s" x1="15" y1="13" x2="17.5" y2="13"/>
+</svg>

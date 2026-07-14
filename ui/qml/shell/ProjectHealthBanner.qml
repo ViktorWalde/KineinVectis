@@ -49,7 +49,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: qsTr("Project Health")
         color: Theme.textPrimary
-        font.pixelSize: 11
+        font.pixelSize: Theme.fontSizePanelTitle
         font.bold: true
     }
 
@@ -57,7 +57,7 @@ Rectangle {
         anchors.left: titleText.right
         anchors.leftMargin: Theme.spacingMedium
         anchors.right: actionButton.visible
-                       ? actionButton.left : dismissText.left
+                       ? actionButton.left : dismissButton.left
         anchors.rightMargin: Theme.spacingMedium
         anchors.verticalCenter: parent.verticalCenter
         text: root.message
@@ -71,7 +71,7 @@ Rectangle {
 
         width: actionText.width + 2 * Theme.spacingSmall
         height: 22
-        anchors.right: dismissText.left
+        anchors.right: dismissButton.left
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
         visible: root.actionLabel !== ""
@@ -99,23 +99,14 @@ Rectangle {
         }
     }
 
-    Text {
-        id: dismissText
-
+    KvIconButton {
+        id: dismissButton
         anchors.right: parent.right
-        anchors.rightMargin: Theme.spacingMedium
         anchors.verticalCenter: parent.verticalCenter
-        text: "×"
-        color: dismissArea.containsMouse ? Theme.errorSoft : Theme.textMuted
-        font.pixelSize: 12
-
-        MouseArea {
-            id: dismissArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.dismissRequested()
-        }
+        anchors.rightMargin: Theme.spacingSmall
+        compact: true
+        iconName: "close"
+        tooltip: qsTr("Dispensar")
+        onClicked: root.dismissRequested()
     }
 }

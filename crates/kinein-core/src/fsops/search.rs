@@ -114,7 +114,7 @@ fn search_file(
 /// Finds the byte offset of the first literal occurrence of `query` in `line`.
 ///
 /// Case-insensitive comparison is ASCII-only, which keeps byte offsets exact.
-fn find_literal(line: &str, query: &str, case_sensitive: bool) -> Option<usize> {
+pub(super) fn find_literal(line: &str, query: &str, case_sensitive: bool) -> Option<usize> {
     if case_sensitive {
         return line.find(query);
     }
@@ -123,9 +123,13 @@ fn find_literal(line: &str, query: &str, case_sensitive: bool) -> Option<usize> 
     if query_bytes.is_empty() || query_bytes.len() > line_bytes.len() {
         return None;
     }
-    line_bytes
-        .windows(query_bytes.len())
-        .position(|window| window.eq_ignore_ascii_case(query_bytes))
+    line.char_indices().find_map(|(offset, _character)| {
+        let end = offset.saturating_add(query_bytes.len());
+        (end <= line_bytes.len()
+            && line.is_char_boundary(end)
+            && line_bytes[offset..end].eq_ignore_ascii_case(query_bytes))
+        .then_some(offset)
+    })
 }
 
 #[cfg(test)]

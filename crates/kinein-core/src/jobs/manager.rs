@@ -12,6 +12,7 @@ use std::{
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
+    time::{Duration, Instant},
 };
 
 use kinein_protocol::{JobInfo, JobRisk, JobStatus, JsonRpcRequest};
@@ -25,6 +26,11 @@ use crate::lsp::EventSender;
 /// Active jobs are never removed. When the registry grows beyond this cap, the
 /// oldest terminal jobs are pruned first.
 const MAX_RETAINED_JOBS: usize = 100;
+
+/// Janela de espera cooperativa no shutdown: os runners observam o cancel a
+/// cada ~50ms (`process.rs`) e matam o filho; damos esse tempo antes do core
+/// sair para não deixar `cargo`/`cmake`/`lldb` órfãos (fatia M4.3b).
+const SHUTDOWN_DRAIN: Duration = Duration::from_millis(500);
 
 /// Live record of one job kept in the manager's registry.
 #[derive(Debug)]
@@ -203,6 +209,54 @@ impl JobManager {
 
         true
     }
+
+    /// Sinaliza cancelamento a TODOS os jobs canceláveis ainda em execução
+    /// (fatia M4.3b). Devolve quantos foram sinalizados; não bloqueia — o
+    /// `Drop` faz a espera (drain) no shutdown.
+    pub fn cancel_all(&self) -> usize {
+        let ids: Vec<String> = match self.jobs.lock() {
+            Ok(jobs) => jobs.keys().cloned().collect(),
+            Err(_poisoned) => return 0,
+        };
+        let mut signalled = 0;
+        for id in &ids {
+            if self.cancel(id) {
+                signalled += 1;
+            }
+        }
+        signalled
+    }
+
+    /// `true` quando nenhum job está mais `Running`/`CancelRequested`.
+    fn all_jobs_settled(&self) -> bool {
+        let Ok(jobs) = self.jobs.lock() else {
+            return true;
+        };
+        jobs.values().all(|record| {
+            record.status.lock().is_ok_and(|status| {
+                !matches!(*status, JobStatus::Running | JobStatus::CancelRequested)
+            })
+        })
+    }
+}
+
+impl Drop for JobManager {
+    fn drop(&mut self) {
+        // Shutdown (core.shutdown, EOF da UI morta, ou unwind): cancela os
+        // jobs vivos e dá uma janela curta para os runners matarem o processo
+        // filho, senão ele fica órfão. Barato quando não há job (sai na hora).
+        self.cancel_all();
+        if self.all_jobs_settled() {
+            return;
+        }
+        let deadline = Instant::now() + SHUTDOWN_DRAIN;
+        while Instant::now() < deadline {
+            if self.all_jobs_settled() {
+                break;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+    }
 }
 
 fn prune_finished_jobs(jobs: &mut HashMap<String, JobRecord>) {
@@ -236,7 +290,10 @@ fn prune_finished_jobs(jobs: &mut HashMap<String, JobRecord>) {
 #[cfg(test)]
 mod tests {
     use std::{
-        sync::mpsc::{self, Receiver},
+        sync::{
+            Arc, Mutex,
+            mpsc::{self, Receiver},
+        },
         time::Duration,
     };
 
@@ -330,6 +387,41 @@ mod tests {
         assert!(!manager.cancel(&id));
         // Unknown ids never cancel.
         assert!(!manager.cancel("job_999"));
+    }
+
+    #[test]
+    fn cancel_all_signals_every_running_cancelable_job() {
+        let (sender, _receiver) = mpsc::channel();
+        let (seen_sender, seen_receiver) = mpsc::channel();
+        let (release_sender, release_receiver) = mpsc::channel::<()>();
+        let manager = JobManager::new(sender);
+        let release = Arc::new(Mutex::new(release_receiver));
+
+        // Dois jobs canceláveis em loop até verem o cancel (M4.3b).
+        for _ in 0..2 {
+            let seen = seen_sender.clone();
+            let release = Arc::clone(&release);
+            manager.spawn("run", "loop", JobRisk::Low, true, move |ctx| {
+                while !ctx.is_cancelled() {
+                    std::thread::sleep(Duration::from_millis(5));
+                }
+                seen.send(()).expect("sinaliza cancel visto");
+                let _ = release.lock().unwrap().recv_timeout(Duration::from_secs(5));
+                JobOutcome::Success
+            });
+        }
+
+        // cancel_all sinaliza os DOIS jobs vivos.
+        assert_eq!(manager.cancel_all(), 2);
+        for _ in 0..2 {
+            seen_receiver
+                .recv_timeout(Duration::from_secs(5))
+                .expect("job viu cancelamento");
+        }
+        // Nada mais a sinalizar numa segunda chamada.
+        assert_eq!(manager.cancel_all(), 0);
+        release_sender.send(()).expect("libera 1");
+        release_sender.send(()).expect("libera 2");
     }
 
     #[test]

@@ -1,8 +1,13 @@
 # Como executar o Kinein Vectis
 
-A IDE é **100% offline e local**. Você não precisa ligar nada antes: ao abrir a
-UI, ela mesma inicia o `kinein-core` (Rust) como processo filho e conversa
-com ele por JSON-RPC. Fechou a UI, o core morre junto.
+> Vai **usar** a IDE (atalhos, funções, troubleshooting)? O guia completo é
+> o [MANUAL.md](MANUAL.md). Este arquivo cobre só build/execução.
+
+O core da IDE é **offline e local**. Você não precisa ligar nada antes: ao
+abrir a UI, ela mesma inicia o `kinein-core` (Rust) como processo filho e
+conversa com ele por JSON-RPC. Fechou a UI, o core morre junto. A exceção é
+uma CLI externa iniciada explicitamente no KV Context, que pode usar rede de
+acordo com a política da própria ferramenta.
 
 ## Jeito mais simples: clicar no ícone
 
@@ -72,6 +77,14 @@ clang-format --dry-run --Werror ui/src/*.cpp ui/src/*.h   # formatação C++
 ```
 
 ## Dependências do sistema
+
+Atalho para tudo isso (detecta a distro, instala o que falta e verifica):
+
+```bash
+./scripts/instalar-ambiente.sh            # use --dry-run para só ver os comandos
+```
+
+Ou manualmente:
 
 ```bash
 # Arch / CachyOS (alvo principal do projeto e máquina atual)

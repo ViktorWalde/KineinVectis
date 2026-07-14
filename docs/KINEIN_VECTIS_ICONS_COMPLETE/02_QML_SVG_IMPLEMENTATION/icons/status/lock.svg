@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Seguro/verificado">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M 6.550000000000001 8.85 v -2.07 a 3.4499999999999997 3.4499999999999997 0 0 1 6.8999999999999995 0 v 2.07"/><rect class="s" x="5.745" y="8.85" width="8.51" height="6.669999999999999" rx="1.15"/>
+</svg>

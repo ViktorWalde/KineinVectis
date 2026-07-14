@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Registradores">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="s" x="3" y="4" width="14" height="3" rx="1"/><rect class="s" x="3" y="8.5" width="14" height="3" rx="1"/><rect class="s" x="3" y="13" width="14" height="3" rx="1"/><circle class="f" cx="14.5" cy="5.5" r="0.7"/><circle class="f" cx="11.5" cy="10" r="0.7"/><circle class="f" cx="15.5" cy="14.5" r="0.7"/>
+</svg>

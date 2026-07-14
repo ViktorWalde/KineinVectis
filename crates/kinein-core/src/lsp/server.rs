@@ -67,8 +67,16 @@ pub(super) struct ServerHandle {
     pub(super) child: Child,
     pub(super) stdin: Arc<Mutex<ChildStdin>>,
     pub(super) versions: HashMap<String, i64>,
+    /// Hash do ultimo conteudo sincronizado por URI. Evita `didChange`
+    /// redundante quando o buffer nao mudou (cada request posicional
+    /// re-sincroniza) — sem isso o clangd invalida seus fix-its a cada
+    /// consulta, e todo hover/completion reenviava o documento inteiro.
+    pub(super) content_hashes: HashMap<String, u64>,
     /// Legend de semantic tokens anunciada pelo servidor no `initialize`.
     pub(super) semantic_token_types: Vec<String>,
+    /// Ultimo array cru de diagnostics publicado por URI, para compor o
+    /// `context` de `textDocument/codeAction` sem depender da UI.
+    pub(super) diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
 }
 
 impl std::fmt::Debug for ServerHandle {
@@ -87,9 +95,21 @@ pub(super) fn spawn_server(
     events: super::EventSender,
     pending: PendingResponses,
 ) -> Result<ServerHandle, LspError> {
-    let mut child = Command::new(spec.command)
-        .args(spec.args)
-        .current_dir(root)
+    let mut command = Command::new(spec.command);
+    command.args(spec.args).current_dir(root);
+    // clangd usa a compilation database gerada pelo cmake.configure quando
+    // ela existe (fatia M2.2). Servidor ja em execucao nao recarrega flags
+    // de arquivos abertos: configure e reabra o arquivo/workspace.
+    if spec.language == "cpp" {
+        let compile_commands = crate::cmake::build_dir(root).join("compile_commands.json");
+        if compile_commands.is_file() {
+            command.arg(format!(
+                "--compile-commands-dir={}",
+                crate::cmake::build_dir(root).display()
+            ));
+        }
+    }
+    let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -125,7 +145,43 @@ pub(super) fn spawn_server(
     let stdin = Arc::new(Mutex::new(stdin));
     let mut reader = BufReader::new(stdout);
 
-    let initialize = json!({
+    let initialize = initialize_request(root);
+    write_locked_message(&stdin, &initialize).map_err(|error| LspError::ServerFailed {
+        command: spec.command,
+        message: format!("falha no initialize: {error}"),
+    })?;
+
+    let semantic_token_types = wait_for_initialize(&mut reader, &stdin, spec.command)?;
+
+    let initialized = json!({ "jsonrpc": "2.0", "method": "initialized", "params": {} });
+    write_locked_message(&stdin, &initialized).map_err(|error| LspError::ServerFailed {
+        command: spec.command,
+        message: format!("falha no initialized: {error}"),
+    })?;
+
+    let diagnostics_by_uri = Arc::new(Mutex::new(HashMap::new()));
+    spawn_reader_thread(
+        spec,
+        reader,
+        Arc::clone(&stdin),
+        events,
+        pending,
+        Arc::clone(&diagnostics_by_uri),
+    );
+
+    Ok(ServerHandle {
+        child,
+        stdin,
+        versions: HashMap::new(),
+        content_hashes: HashMap::new(),
+        semantic_token_types,
+        diagnostics_by_uri,
+    })
+}
+
+/// Monta o request `initialize` com as capabilities do cliente Kinein.
+fn initialize_request(root: &Path) -> Value {
+    json!({
         "jsonrpc": "2.0",
         "id": 1,
         "method": "initialize",
@@ -142,6 +198,19 @@ pub(super) fn spawn_server(
                     "hover": {},
                     "references": {},
                     "rename": {},
+                    "documentSymbol": { "hierarchicalDocumentSymbolSupport": true },
+                    "codeAction": {
+                        "codeActionLiteralSupport": {
+                            "codeActionKind": {
+                                "valueSet": [
+                                    "", "quickfix", "refactor",
+                                    "refactor.extract", "refactor.inline",
+                                    "refactor.rewrite", "source",
+                                    "source.organizeImports", "source.fixAll",
+                                ],
+                            },
+                        },
+                    },
                     "semanticTokens": {
                         "requests": { "full": true },
                         "tokenTypes": [
@@ -155,7 +224,7 @@ pub(super) fn spawn_server(
                         "formats": ["relative"],
                     },
                 },
-                "workspace": {},
+                "workspace": { "symbol": {} },
             },
             "workspaceFolders": [{
                 "uri": uri_for_path(root),
@@ -165,27 +234,6 @@ pub(super) fn spawn_server(
                 ),
             }],
         }
-    });
-    write_locked_message(&stdin, &initialize).map_err(|error| LspError::ServerFailed {
-        command: spec.command,
-        message: format!("falha no initialize: {error}"),
-    })?;
-
-    let semantic_token_types = wait_for_initialize(&mut reader, &stdin, spec.command)?;
-
-    let initialized = json!({ "jsonrpc": "2.0", "method": "initialized", "params": {} });
-    write_locked_message(&stdin, &initialized).map_err(|error| LspError::ServerFailed {
-        command: spec.command,
-        message: format!("falha no initialized: {error}"),
-    })?;
-
-    spawn_reader_thread(spec, reader, Arc::clone(&stdin), events, pending);
-
-    Ok(ServerHandle {
-        child,
-        stdin,
-        versions: HashMap::new(),
-        semantic_token_types,
     })
 }
 
@@ -240,6 +288,7 @@ fn spawn_reader_thread(
     stdin: Arc<Mutex<ChildStdin>>,
     events: super::EventSender,
     pending: PendingResponses,
+    diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
 ) {
     thread::spawn(move || {
         while let Ok(Some(message)) = read_message(&mut reader) {
@@ -252,6 +301,7 @@ fn spawn_reader_thread(
                 == Some("textDocument/publishDiagnostics")
             {
                 if let Some(params) = message.get("params") {
+                    cache_diagnostics(&diagnostics_by_uri, params);
                     if let Some(event) = diagnostics_event(params) {
                         if events.send(event).is_err() {
                             break;
@@ -284,6 +334,20 @@ fn route_response(message: &Value, pending: &PendingResponses) -> bool {
     };
     drop(sender.send(message.clone()));
     true
+}
+
+/// Guarda o array cru de diagnostics do `publishDiagnostics` por URI.
+fn cache_diagnostics(cache: &Arc<Mutex<HashMap<String, Value>>>, params: &Value) {
+    let Some(uri) = params.get("uri").and_then(Value::as_str) else {
+        return;
+    };
+    let diagnostics = params
+        .get("diagnostics")
+        .cloned()
+        .unwrap_or_else(|| json!([]));
+    if let Ok(mut entries) = cache.lock() {
+        entries.insert(uri.to_owned(), diagnostics);
+    }
 }
 
 /// Responde `null` a requests servidor->cliente que nao suportamos ainda.

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Buscar em tudo">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<circle class="s" cx="8.3" cy="8.3" r="4.7"/><line class="s" x1="11.8" y1="11.8" x2="16.5" y2="16.5"/><circle class="f" cx="7.2" cy="7.2" r="0.45"/><circle class="f" cx="9.4" cy="7.2" r="0.45"/><circle class="f" cx="7.2" cy="9.4" r="0.45"/><circle class="f" cx="9.4" cy="9.4" r="0.45"/>
+</svg>

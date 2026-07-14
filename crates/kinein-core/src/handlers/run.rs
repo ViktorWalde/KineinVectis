@@ -52,9 +52,12 @@ impl Core {
         let root = Path::new(&workspace.root);
         let command = match parsed.command.filter(|command| !command.trim().is_empty()) {
             Some(command) => command,
-            None => match run::default_command(workspace.kind, root) {
-                Ok(command) => command,
-                Err(error) => return run_error_response(request_id, &error),
+            None => match crate::runconfig::active_command(root) {
+                Some(command) => command,
+                None => match run::default_command(workspace.kind, root) {
+                    Ok(command) => command,
+                    Err(error) => return run_error_response(request_id, &error),
+                },
             },
         };
 

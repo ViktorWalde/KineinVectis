@@ -1,5 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
+// Main Toolbar da spec: alvo, perfil e fluxo Configure → Build → Run/Debug.
 Rectangle {
     id: root
 
@@ -9,6 +12,11 @@ Rectangle {
     property bool testing: false
     property bool analyzing: false
     property bool running: false
+    property bool debugging: false
+    property string workspaceKind: ""
+    property string activeConfigId: ""
+    property string activeConfigName: ""
+    property bool configMenuOpen: false
 
     signal openWorkspaceRequested()
     signal buildRequested()
@@ -16,183 +24,162 @@ Rectangle {
     signal qualityRequested()
     signal runRequested()
     signal stopRunRequested()
+    signal debugRequested()
+    signal stopDebugRequested()
+    signal configureRequested()
+    signal configMenuRequested(real menuX, real menuY)
 
     height: 44
     color: Theme.background1
+    border.color: Theme.borderSoft
+    border.width: 1
 
     Row {
+        id: toolbarRow
+
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingMedium
-        spacing: Theme.spacingMedium
+        spacing: Theme.spacingSmall
 
-        Image {
-            width: 26
-            height: 26
+        KvButton {
+            visible: !root.workspaceOpen
+            text: qsTr("Abrir workspace")
+            iconName: "project"
+            primary: true
+            onClicked: root.openWorkspaceRequested()
+        }
+
+        Rectangle {
+            visible: root.workspaceOpen
+            height: 32
+            width: targetText.implicitWidth + 16 + Theme.spacingSmall
+                   + 2 * Theme.spacingMedium
+            radius: Theme.radius
+            color: Theme.surface1
+            border.color: Theme.borderSoft
+            border.width: 1
+
+            Row {
+                anchors.centerIn: parent
+                spacing: Theme.spacingSmall
+
+                KvIcon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    name: "tools"
+                    size: 16
+                }
+
+                Text {
+                    id: targetText
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("Target: host local")
+                    color: Theme.textSecondary
+                    font.pixelSize: 12
+                }
+            }
+        }
+
+        KvButton {
+            id: configSelector
+
+            visible: root.workspaceOpen
+            selected: root.configMenuOpen
+            iconName: "chevron-down"
+            text: root.activeConfigId === ""
+                  ? (root.workspaceKind === "rustCargo"
+                     ? qsTr("Cargo: debug") : qsTr("Perfil: automático"))
+                  : root.activeConfigName
+            onClicked: {
+                const pos = root.mapFromItem(configSelector, 0,
+                                             configSelector.height + 4);
+                root.configMenuRequested(pos.x, pos.y);
+            }
+        }
+
+        Rectangle {
+            visible: root.workspaceOpen
+            width: 1
+            height: 24
+            color: Theme.borderStrong
             anchors.verticalCenter: parent.verticalCenter
-            source: "qrc:/KineinVectis/assets/app-icon.png"
-            fillMode: Image.PreserveAspectFit
-            smooth: true
+        }
+
+        KvIconButton {
+            visible: root.workspaceOpen && root.workspaceKind === "cmake"
+            enabled: root.coreConnected
+            iconName: "configure"
+            tooltip: qsTr("Configurar CMake")
+            onClicked: root.configureRequested()
+        }
+
+        KvButton {
+            visible: root.workspaceOpen
+            enabled: !root.building && root.coreConnected
+            text: root.building ? qsTr("Compilando...") : qsTr("Compilar")
+            iconName: "build"
+            primary: true
+            onClicked: root.buildRequested()
+        }
+
+        KvIconButton {
+            visible: root.workspaceOpen
+            enabled: !root.testing && root.coreConnected
+            iconName: "test"
+            tooltip: root.testing ? qsTr("Testes em andamento") : qsTr("Executar testes")
+            onClicked: root.testsRequested()
+        }
+
+        KvIconButton {
+            visible: root.workspaceOpen
+            enabled: !root.analyzing && root.coreConnected
+            iconName: "problems"
+            tooltip: root.analyzing ? qsTr("Análise em andamento") : qsTr("Executar análise")
+            onClicked: root.qualityRequested()
+        }
+
+        KvIconButton {
+            visible: root.workspaceOpen
+            enabled: root.coreConnected
+            active: root.debugging
+            danger: root.debugging
+            iconName: root.debugging ? "stop" : "debug"
+            tooltip: root.debugging ? qsTr("Parar debug") : qsTr("Iniciar debug")
+            onClicked: root.debugging ? root.stopDebugRequested() : root.debugRequested()
+        }
+
+        KvIconButton {
+            visible: root.workspaceOpen
+            enabled: root.coreConnected
+            primary: true
+            danger: root.running
+            iconName: root.running ? "stop" : "run"
+            tooltip: root.running ? qsTr("Parar execução") : qsTr("Executar configuração ativa")
+            onClicked: root.running ? root.stopRunRequested() : root.runRequested()
+        }
+    }
+
+    Row {
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spacingMedium
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: Theme.spacingSmall
+        visible: root.workspaceOpen
+
+        Rectangle {
+            width: 7
+            height: 7
+            radius: 3.5
+            color: root.coreConnected ? Theme.successSoft : Theme.errorSoft
+            anchors.verticalCenter: parent.verticalCenter
         }
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: qsTr("Kinein Vectis")
-            color: Theme.textPrimary
-            font.pixelSize: 15
-            font.bold: true
-        }
-
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: openFolderText.width + 2 * Theme.spacingMedium
-            height: 28
-            radius: Theme.radius
-            color: openFolderArea.containsMouse ? Theme.surface2 : Theme.surface1
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: openFolderText
-
-                anchors.centerIn: parent
-                text: qsTr("Abrir pasta...")
-                color: Theme.textPrimary
-                font.pixelSize: 12
-            }
-
-            MouseArea {
-                id: openFolderArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.openWorkspaceRequested()
-            }
-        }
-
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: buildButtonText.width + 2 * Theme.spacingMedium
-            height: 28
-            radius: Theme.radius
-            visible: root.workspaceOpen
-            enabled: !root.building && root.coreConnected
-            opacity: enabled ? 1.0 : 0.6
-            color: root.building
-                   ? Theme.surface1
-                   : (buildArea.pressed ? Theme.accentDim : Theme.accent)
-
-            Text {
-                id: buildButtonText
-
-                anchors.centerIn: parent
-                text: root.building ? qsTr("Compilando...") : qsTr("Compilar")
-                color: root.building ? Theme.textSecondary : Theme.background0
-                font.pixelSize: 12
-                font.bold: true
-            }
-
-            MouseArea {
-                id: buildArea
-
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.buildRequested()
-            }
-        }
-
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: testButtonText.width + 2 * Theme.spacingMedium
-            height: 28
-            radius: Theme.radius
-            visible: root.workspaceOpen
-            enabled: !root.testing && root.coreConnected
-            opacity: enabled ? 1.0 : 0.6
-            color: testArea.pressed ? Theme.surface2 : Theme.surface1
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: testButtonText
-
-                anchors.centerIn: parent
-                text: root.testing ? qsTr("Testando...") : qsTr("Testes")
-                color: root.testing ? Theme.textSecondary : Theme.textPrimary
-                font.pixelSize: 12
-                font.bold: true
-            }
-
-            MouseArea {
-                id: testArea
-
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.testsRequested()
-            }
-        }
-
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: qualityButtonText.width + 2 * Theme.spacingMedium
-            height: 28
-            radius: Theme.radius
-            visible: root.workspaceOpen
-            enabled: !root.analyzing && root.coreConnected
-            opacity: enabled ? 1.0 : 0.6
-            color: qualityArea.pressed ? Theme.surface2 : Theme.surface1
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: qualityButtonText
-
-                anchors.centerIn: parent
-                text: root.analyzing ? qsTr("Analisando...") : qsTr("Análise")
-                color: root.analyzing ? Theme.textSecondary : Theme.textPrimary
-                font.pixelSize: 12
-                font.bold: true
-            }
-
-            MouseArea {
-                id: qualityArea
-
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.qualityRequested()
-            }
-        }
-
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: runButtonText.width + 2 * Theme.spacingMedium
-            height: 28
-            radius: Theme.radius
-            visible: root.workspaceOpen
-            enabled: root.coreConnected
-            opacity: enabled ? 1.0 : 0.6
-            color: root.running
-                   ? (runArea.pressed ? Theme.surface1 : Theme.surface2)
-                   : (runArea.pressed ? Theme.accentDim : Theme.accent)
-
-            Text {
-                id: runButtonText
-
-                anchors.centerIn: parent
-                text: root.running ? qsTr("■ Parar") : qsTr("▶ Iniciar")
-                color: root.running ? Theme.textPrimary : Theme.background0
-                font.pixelSize: 12
-                font.bold: true
-            }
-
-            MouseArea {
-                id: runArea
-
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.running ? root.stopRunRequested() : root.runRequested()
-            }
+            text: root.workspaceKind === "" ? qsTr("projeto") : root.workspaceKind
+            color: Theme.textMuted
+            font.pixelSize: 11
         }
     }
 }

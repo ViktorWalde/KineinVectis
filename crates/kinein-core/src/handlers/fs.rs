@@ -7,8 +7,8 @@ use std::path::Path;
 use kinein_protocol::{
     FsCreateDirectoryParams, FsCreateDirectoryResult, FsCreateFileParams, FsCreateFileResult,
     FsDeleteResult, FsFindFilesParams, FsFindFilesResult, FsListResult, FsPathParams, FsReadResult,
-    FsRenameParams, FsRenameResult, FsSearchParams, FsSearchResult, FsWriteParams, FsWriteResult,
-    JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    FsRenameParams, FsRenameResult, FsReplaceParams, FsReplaceResult, FsSaveParams, FsSearchParams,
+    FsSearchResult, FsWriteResult, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -33,12 +33,59 @@ impl Core {
             "fs.delete" => Some(self.fs_delete_response(request_id, params)),
             "fs.findFiles" => Some(self.fs_find_files_response(request_id, params)),
             "fs.search" => Some(self.fs_search_response(request_id, params)),
+            "fs.replace" => Some(self.fs_replace_response(request_id, params)),
             _ => None,
         }
     }
 
+    fn fs_replace_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let Some(root) = self.workspace_root() else {
+            return no_workspace_response(request_id, "fs.replace");
+        };
+        let parsed = match parse_params::<FsReplaceParams>(
+            request_id.as_ref(),
+            params,
+            "fs.replace requer query, replacement e caseSensitive opcional",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        if parsed.query.is_empty() {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    "fs.replace requer query nao vazia",
+                    None,
+                ),
+            );
+        }
+        match fsops::replace(
+            &root,
+            &parsed.query,
+            &parsed.replacement,
+            parsed.case_sensitive,
+        ) {
+            Ok((files, replacements)) => {
+                self.syntax.clear();
+                JsonRpcResponse::success(
+                    request_id,
+                    json!(FsReplaceResult {
+                        files,
+                        replacements,
+                    }),
+                )
+            }
+            Err(error) => fs_error_response(request_id, &error),
+        }
+    }
+
     fn fs_list_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -51,13 +98,16 @@ impl Core {
             "fs.list requer o campo path",
         ) {
             Ok(parsed) => match fsops::list_dir(&root, Path::new(&parsed.path)) {
-                Ok((path, entries)) => JsonRpcResponse::success(
-                    request_id,
-                    json!(FsListResult {
-                        path: path.display().to_string(),
-                        entries,
-                    }),
-                ),
+                Ok((path, entries)) => {
+                    self.watch_workspace_directory(&path);
+                    JsonRpcResponse::success(
+                        request_id,
+                        json!(FsListResult {
+                            path: path.display().to_string(),
+                            entries,
+                        }),
+                    )
+                }
                 Err(error) => fs_error_response(request_id, &error),
             },
             Err(response) => *response,
@@ -79,6 +129,9 @@ impl Core {
         ) {
             Ok(parsed) => match fsops::read_file(&root, Path::new(&parsed.path)) {
                 Ok((path, content)) => {
+                    if let Some(parent) = path.parent() {
+                        self.watch_workspace_directory(parent);
+                    }
                     if let Some(lsp) = self.lsp.as_mut() {
                         lsp.did_open(&path, &content);
                     }
@@ -231,17 +284,24 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "fs.write");
         };
-        match parse_params::<FsWriteParams>(
+        match parse_params::<FsSaveParams>(
             request_id.as_ref(),
             params,
-            "fs.write requer os campos path e content",
+            "fs.write requer path, content e expectedContent",
         ) {
             Ok(parsed) => {
-                match fsops::write_file(&root, Path::new(&parsed.path), &parsed.content) {
+                match fsops::write_file_if_unchanged(
+                    &root,
+                    Path::new(&parsed.path),
+                    &parsed.content,
+                    &parsed.expected_content,
+                ) {
                     Ok((path, bytes_written)) => {
                         if let Some(lsp) = self.lsp.as_mut() {
                             lsp.did_save(&path, &parsed.content);
                         }
+                        // M-S1: arquivo salvo em disco → rascunho é obsoleto.
+                        super::draft::clear_draft_after_save(self, &path);
                         JsonRpcResponse::success(
                             request_id,
                             json!(FsWriteResult {

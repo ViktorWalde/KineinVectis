@@ -8,6 +8,11 @@ Item {
     property var jobsController: null
     property var searchController: null
     property var runtimeController: null
+    property var debugController: null
+    property var gitController: null
+    property var diagnosticsController: null
+    property var assistantController: null
+    property var shellController: null
     property var bottomPanelHost: null
 
     visible: false
@@ -18,6 +23,11 @@ Item {
         jobsController.clear();
         searchController.clear();
         runtimeController.clear();
+        debugController.clear();
+        gitController.clear();
+        diagnosticsController.clear();
+        assistantController.clearSession();
+        shellController.closeAssistant();
         bottomPanelHost.clearSearchInput();
         bottomPanelHost.clearRunInput();
         bottomPanelHost.clearTerminalInput();

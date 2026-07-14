@@ -23,6 +23,61 @@ fn fs_methods_require_open_workspace() {
 }
 
 #[test]
+fn fs_replace_flows_through_dispatch_and_changes_all_matching_files() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-fs-replace-dispatch", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::create_dir_all(dir.join("target")).unwrap();
+    std::fs::write(dir.join("src/a.txt"), "alpha beta alpha\n").unwrap();
+    std::fs::write(dir.join("src/b.txt"), "ALPHA\n").unwrap();
+    std::fs::write(dir.join("target/skipped.txt"), "alpha\n").unwrap();
+    let mut core = core_with_empty_search_path("fs-replace-dispatch");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        200_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let empty = core.handle_request(&JsonRpcRequest::new(
+        201_i64,
+        "fs.replace",
+        Some(json!({ "query": "", "replacement": "x" })),
+    ));
+    assert_eq!(
+        empty.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
+
+    let replaced = core.handle_request(&JsonRpcRequest::new(
+        202_i64,
+        "fs.replace",
+        Some(json!({
+            "query": "alpha",
+            "replacement": "omega",
+            "caseSensitive": false
+        })),
+    ));
+    let result = replaced.response().result.as_ref().unwrap();
+    assert_eq!(result["replacements"], 3);
+    assert_eq!(result["files"].as_array().unwrap().len(), 2);
+    assert_eq!(
+        std::fs::read_to_string(dir.join("src/a.txt")).unwrap(),
+        "omega beta omega\n"
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.join("src/b.txt")).unwrap(),
+        "omega\n"
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.join("target/skipped.txt")).unwrap(),
+        "alpha\n"
+    );
+}
+
+#[test]
 fn fs_list_read_write_cycle_inside_workspace() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -69,7 +124,11 @@ fn fs_list_read_write_cycle_inside_workspace() {
     let written = core.handle_request(&JsonRpcRequest::new(
         24_i64,
         "fs.write",
-        Some(json!({ "path": file_path, "content": "// editado\n" })),
+        Some(json!({
+            "path": file_path,
+            "content": "// editado\n",
+            "expectedContent": "fn main() {}\n"
+        })),
     ));
     assert_eq!(
         written.response().result.as_ref().unwrap()["bytesWritten"],
@@ -83,6 +142,43 @@ fn fs_list_read_write_cycle_inside_workspace() {
     ));
     let error = escape.response().error.as_ref().unwrap();
     assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+}
+
+#[test]
+fn fs_write_rejects_stale_editor_snapshot() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-fs-write-conflict", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("main.rs");
+    std::fs::write(&file, "disk v1\n").unwrap();
+    let mut core = core_with_empty_search_path("fs-write-conflict");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        26_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    std::fs::write(&file, "external v2\n").unwrap();
+    let outcome = core.handle_request(&JsonRpcRequest::new(
+        27_i64,
+        "fs.write",
+        Some(json!({
+            "path": file.to_str().unwrap(),
+            "content": "local buffer\n",
+            "expectedContent": "disk v1\n"
+        })),
+    ));
+    let error = outcome.response().error.as_ref().unwrap();
+
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::FileChanged);
+    assert_eq!(
+        error.details.as_ref().unwrap()["path"],
+        file.to_str().unwrap()
+    );
+    assert_eq!(std::fs::read_to_string(file).unwrap(), "external v2\n");
 }
 
 #[test]

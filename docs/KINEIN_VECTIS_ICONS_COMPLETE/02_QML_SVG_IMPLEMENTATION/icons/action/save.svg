@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Salvar">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M4 3h10.5l2 2v12H4z"/><rect class="s" x="6.2" y="3" width="6.2" height="4" rx="0"/><rect class="s" x="6.5" y="11" width="7" height="4.5" rx="0.5"/>
+</svg>

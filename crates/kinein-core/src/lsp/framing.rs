@@ -38,16 +38,17 @@ pub(super) fn write_locked_message(
     write_message(&mut *guard, message)
 }
 
-/// Escreve uma mensagem LSP com framing `Content-Length`.
-pub(super) fn write_message(writer: &mut impl Write, message: &Value) -> io::Result<()> {
+/// Escreve uma mensagem com framing `Content-Length` (LSP e DAP usam o
+/// mesmo envelope; so o corpo difere).
+pub(crate) fn write_message(writer: &mut impl Write, message: &Value) -> io::Result<()> {
     let body = serde_json::to_vec(message).map_err(io::Error::other)?;
     write!(writer, "Content-Length: {}\r\n\r\n", body.len())?;
     writer.write_all(&body)?;
     writer.flush()
 }
 
-/// Le uma mensagem LSP com framing `Content-Length`. `None` significa EOF.
-pub(super) fn read_message(reader: &mut impl BufRead) -> io::Result<Option<Value>> {
+/// Le uma mensagem com framing `Content-Length` (LSP/DAP). `None` = EOF.
+pub(crate) fn read_message(reader: &mut impl BufRead) -> io::Result<Option<Value>> {
     let mut content_length: Option<usize> = None;
 
     loop {

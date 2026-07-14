@@ -102,6 +102,7 @@ Item {
             severity: diagnostic.severity !== undefined
                       ? diagnostic.severity : defaultSeverity,
             message: diagnostic.message !== undefined ? diagnostic.message : "",
+            code: diagnostic.code !== undefined ? diagnostic.code : "",
             file: diagnostic.file !== undefined ? diagnostic.file : "",
             line: diagnostic.line !== undefined ? Number(diagnostic.line) : 0,
             column: diagnostic.column !== undefined ? Number(diagnostic.column) : 0,
@@ -259,6 +260,7 @@ Item {
                           ? diagnostic.severity : "error",
                 message: diagnostic.message !== undefined
                          ? diagnostic.message : "",
+                code: diagnostic.code !== undefined ? diagnostic.code : "",
                 file: rel,
                 line: diagnostic.line !== undefined ? Number(diagnostic.line) : 0,
                 column: diagnostic.column !== undefined

@@ -21,6 +21,22 @@ kinein-protocol = { path = "crates/kinein-protocol" }
 kinein-config = { path = "crates/kinein-config" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+# SQLite vendorizado (feature bundled): sem dep de sistema, reprodutível.
+# Rede de segurança de dados (docs/23). FFI C fica na dependência.
+rusqlite = { version = "0.32", features = ["bundled"] }
+# Terminal profissional (docs/24 D2): PTY real (wezterm) + emulador VT
+# (grid com cores/cursor/scrollback) para render fiel, resize e TUIs.
+portable-pty = "0.8"
+vt100 = "0.16"
+# External file changes: mature cross-platform watcher (inotify on Linux)
+# with a polling fallback selected by the core when the native backend fails.
+notify = "=8.2.0"
+# D3 syntax layer (docs/25): mature incremental parser plus the official
+# C/C++/Rust grammars. Exact pins are audited in the component registry.
+tree-sitter = "=0.26.11"
+tree-sitter-c = "=0.24.2"
+tree-sitter-cpp = "=0.23.4"
+tree-sitter-rust = "=0.24.2"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
@@ -44,6 +60,9 @@ print_stderr = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+# portable-pty/vt100 (terminal profissional, docs/24 D2) trazem bitflags 1.x
+# por transitividade enquanto o resto usa 2.x — fora do nosso controle.
+multiple_crate_versions = "allow"
 
 [profile.dev]
 debug = true

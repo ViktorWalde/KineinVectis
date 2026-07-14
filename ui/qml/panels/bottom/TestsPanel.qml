@@ -39,6 +39,26 @@ Item {
     ListView {
         id: testCasesView
 
+
+        // B2 (docs/24): barra de rolagem. `parent: testCasesView` é OBRIGATÓRIO — um filho
+        // declarado dentro de um ListView vira filho do contentItem e ROLARIA
+        // junto com a lista. O ListView segue sendo a fonte da verdade.
+        VerticalScrollBar {
+            id: scrollBar_testCasesView
+
+            parent: testCasesView
+            anchors.right: testCasesView.right
+            anchors.top: testCasesView.top
+            anchors.bottom: testCasesView.bottom
+
+            contentSize: testCasesView.contentHeight
+            viewportSize: testCasesView.height
+            position: testCasesView.contentY
+
+            onMoveRequested: function(position) {
+                testCasesView.contentY = position;
+            }
+        }
         anchors.top: panel.summary !== "" ? testSummaryLabel.bottom : parent.top
         anchors.topMargin: panel.summary !== "" ? Theme.spacingSmall : 0
         anchors.bottom: parent.bottom
@@ -52,7 +72,7 @@ Item {
         Text {
             anchors.centerIn: parent
             visible: panel.casesModel.count === 0 && !panel.running
-            text: qsTr("Nenhum teste rodado. Use ▶ Testes (Ctrl+Shift+F9).")
+            text: qsTr("Nenhum teste rodado. Use Testes (Ctrl+Shift+F9).")
             color: Theme.textMuted
             font.pixelSize: 11
         }

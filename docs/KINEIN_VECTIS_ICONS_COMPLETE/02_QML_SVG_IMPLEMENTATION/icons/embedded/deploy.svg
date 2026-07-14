@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Deploy">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="s" x="2.8" y="6" width="5" height="7" rx="1"/><path class="s" d="M8.5 9.5h4.5"/><polygon class="f" points="11,7.5 13.5,9.5 11,11.5"/><rect class="s" x="2.7" y="3.8" width="14.6" height="10.5" rx="1.2"/><line class="s" x1="7" y1="17" x2="13" y2="17"/><line class="s" x1="10" y1="14.3" x2="10" y2="17"/>
+</svg>

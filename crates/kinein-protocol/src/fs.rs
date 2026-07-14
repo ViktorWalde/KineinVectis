@@ -64,6 +64,60 @@ pub struct FsWriteParams {
     pub content: String,
 }
 
+/// Parameters for the conflict-safe `fs.write` operation.
+///
+/// The core only replaces the file when its current disk content still
+/// matches `expected_content`. This prevents a stale editor buffer from
+/// silently overwriting changes made by another process.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FsSaveParams {
+    /// Absolute path of an existing file inside the workspace root.
+    pub path: String,
+    /// New UTF-8 content of the file.
+    pub content: String,
+    /// Last disk content observed by the editor.
+    pub expected_content: String,
+}
+
+/// Kind of change emitted by `event.fs.changed`.
+#[derive(Debug, Clone, Copy, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum FsChangeKind {
+    /// A new path appeared on disk.
+    Created,
+    /// An existing path changed on disk.
+    Modified,
+    /// A path disappeared from disk.
+    Deleted,
+}
+
+/// One debounced external file-system change.
+#[derive(Debug, Clone, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FsChange {
+    /// Absolute path inside the open workspace.
+    pub path: String,
+    /// Observed change kind.
+    pub kind: FsChangeKind,
+}
+
+/// Payload of `event.fs.changed`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FsChangedEvent {
+    /// Deduplicated changes collected during the debounce window.
+    pub changes: Vec<FsChange>,
+}
+
+/// Payload of `event.fs.watchError`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FsWatchErrorEvent {
+    /// Human-readable watcher failure.
+    pub message: String,
+}
+
 /// Parameters for `fs.rename` (also used to move within the workspace).
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -175,6 +229,29 @@ pub struct FsSearchResult {
     pub truncated: bool,
 }
 
+/// Parameters for the confirmed project-wide literal replacement.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FsReplaceParams {
+    /// Non-empty literal text to replace.
+    pub query: String,
+    /// Replacement text; may be empty to delete matches.
+    pub replacement: String,
+    /// Match case exactly. Defaults to ASCII case-insensitive.
+    #[serde(default)]
+    pub case_sensitive: bool,
+}
+
+/// Result payload for `fs.replace`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FsReplaceResult {
+    /// Canonical absolute paths rewritten by the transaction.
+    pub files: Vec<String>,
+    /// Total literal occurrences replaced.
+    pub replacements: u64,
+}
+
 /// Parameters for `fs.findFiles`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -208,10 +285,60 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        FsCreateDirectoryParams, FsCreateDirectoryResult, FsCreateFileParams, FsCreateFileResult,
-        FsDeleteResult, FsFileMatch, FsFindFilesParams, FsFindFilesResult, FsRenameParams,
-        FsRenameResult, FsSearchMatch, FsSearchParams, FsSearchResult,
+        FsChange, FsChangeKind, FsChangedEvent, FsCreateDirectoryParams, FsCreateDirectoryResult,
+        FsCreateFileParams, FsCreateFileResult, FsDeleteResult, FsFileMatch, FsFindFilesParams,
+        FsFindFilesResult, FsRenameParams, FsRenameResult, FsReplaceParams, FsReplaceResult,
+        FsSaveParams, FsSearchMatch, FsSearchParams, FsSearchResult,
     };
+
+    #[test]
+    fn fs_save_requires_expected_content() {
+        let parsed = serde_json::from_value::<FsSaveParams>(json!({
+            "path": "/tmp/main.rs",
+            "content": "novo",
+            "expectedContent": "antigo"
+        }))
+        .unwrap();
+        let missing_expected = serde_json::from_value::<FsSaveParams>(json!({
+            "path": "/tmp/main.rs",
+            "content": "novo"
+        }));
+
+        assert_eq!(parsed.expected_content, "antigo");
+        assert!(missing_expected.is_err());
+    }
+
+    #[test]
+    fn fs_changed_event_serializes_camel_case() {
+        let value = serde_json::to_value(FsChangedEvent {
+            changes: vec![FsChange {
+                path: "/tmp/main.rs".to_owned(),
+                kind: FsChangeKind::Modified,
+            }],
+        })
+        .unwrap();
+
+        assert_eq!(value["changes"][0]["path"], "/tmp/main.rs");
+        assert_eq!(value["changes"][0]["kind"], "modified");
+    }
+
+    #[test]
+    fn fs_replace_payloads_use_camel_case_and_reject_unknown_fields() {
+        let params: FsReplaceParams = serde_json::from_value(json!({
+            "query": "old",
+            "replacement": "new",
+            "caseSensitive": true
+        }))
+        .unwrap();
+        assert!(params.case_sensitive);
+
+        let value = serde_json::to_value(FsReplaceResult {
+            files: vec!["/tmp/ws/a.rs".to_owned()],
+            replacements: 2,
+        })
+        .unwrap();
+        assert_eq!(value["replacements"], 2);
+    }
 
     #[test]
     fn fs_search_params_default_case_and_reject_unknown_fields() {

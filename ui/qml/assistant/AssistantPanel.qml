@@ -2,28 +2,35 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
+// KV Context: seletor e terminal dedicado para CLIs de IA externas. A IDE não
+// embute chat nem API; Claude/Codex precisam estar instalados pelo usuário.
 Rectangle {
     id: root
 
-    property var messagesModel
+    property var profilesModel
+    property string selectedProfileId: "claude"
+    property string sessionId: ""
+    property string activeProfileName: ""
+    property string activeCommand: ""
+    property var terminalRender: ({})
+    property string errorText: ""
+    property bool loading: false
 
     signal closeRequested()
-    signal messageSubmitted(string body)
+    signal refreshRequested()
+    signal profileSelected(string profileId)
+    signal startRequested()
+    signal switchRequested()
+    signal exitRequested()
+    signal terminalKeyPressed(string data)
+    signal terminalResizeRequested(int cols, int rows)
+    signal terminalScrollRequested(int offset)
 
-    implicitWidth: 300
+    implicitWidth: 360
     radius: Theme.radiusLarge
     color: Theme.background1
     border.color: Theme.borderSoft
     border.width: 1
-
-    function submitMessage() {
-        const body = assistantInput.text;
-        if (body.trim() === "") {
-            return;
-        }
-        root.messageSubmitted(body);
-        assistantInput.text = "";
-    }
 
     Column {
         anchors.fill: parent
@@ -31,39 +38,37 @@ Rectangle {
         spacing: Theme.spacingSmall
 
         Row {
-            id: assistantHeader
-
             width: parent.width
-            height: 26
+            height: 30
             spacing: Theme.spacingSmall
 
-            Text {
+            KvIcon {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "✦"
-                color: Theme.accent
-                font.pixelSize: 13
+                name: "context"
+                size: 20
+                active: true
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Assistente KW")
+                text: qsTr("KV Context")
                 color: Theme.textPrimary
-                font.pixelSize: 13
+                font.pixelSize: Theme.fontSizePanelTitle
                 font.bold: true
             }
 
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                width: assistantBadge.width + 10
-                height: 16
-                radius: 8
+                width: bridgeLabel.implicitWidth + 2 * Theme.spacingSmall
+                height: 18
+                radius: 9
                 color: Theme.surface2
 
                 Text {
-                    id: assistantBadge
+                    id: bridgeLabel
 
                     anchors.centerIn: parent
-                    text: qsTr("offline")
+                    text: qsTr("AI CLI externa")
                     color: Theme.textMuted
                     font.pixelSize: 9
                     font.bold: true
@@ -71,129 +76,214 @@ Rectangle {
             }
 
             Item {
-                width: parent.width - x - assistantClose.width
+                width: parent.width - x - closeButton.width
                 height: 1
             }
 
-            Rectangle {
-                id: assistantClose
+            KvIconButton {
+                id: closeButton
 
-                anchors.verticalCenter: parent.verticalCenter
-                width: 22
-                height: 22
-                radius: Theme.radius
-                color: assistantCloseArea.containsMouse
-                       ? Theme.surface2 : "transparent"
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "×"
-                    color: Theme.textSecondary
-                    font.pixelSize: 13
-                }
-
-                MouseArea {
-                    id: assistantCloseArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.closeRequested()
-                }
-            }
-        }
-
-        ListView {
-            id: assistantView
-
-            width: parent.width
-            height: parent.height - assistantHeader.height
-                    - assistantInputBox.height - 2 * Theme.spacingSmall
-            clip: true
-            spacing: Theme.spacingSmall
-            model: root.messagesModel
-            onCountChanged: positionViewAtEnd()
-
-            delegate: Rectangle {
-                required property string role
-                required property string body
-
-                width: assistantView.width
-                height: messageText.height + 2 * Theme.spacingSmall
-                radius: Theme.radius
-                color: role === "user" ? Theme.surface2 : Theme.surface1
-                border.color: role === "user" ? Theme.accentDim : Theme.borderSoft
-                border.width: 1
-
-                Text {
-                    id: messageText
-
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.margins: Theme.spacingSmall
-                    text: parent.body
-                    color: parent.role === "user"
-                           ? Theme.textPrimary : Theme.textSecondary
-                    font.pixelSize: 11
-                    wrapMode: Text.WordWrap
-                }
+                width: 28
+                height: 28
+                iconName: "close"
+                iconSize: 16
+                tooltip: qsTr("Fechar KV Context")
+                onClicked: root.closeRequested()
             }
         }
 
         Rectangle {
-            id: assistantInputBox
-
             width: parent.width
-            height: 34
+            height: parent.height - y
             radius: Theme.radius
-            color: Theme.background0
-            border.color: assistantInput.activeFocus ? Theme.accent : Theme.borderSoft
+            color: Theme.backgroundEditor
+            border.color: Theme.borderSoft
             border.width: 1
 
-            TextInput {
-                id: assistantInput
-
-                anchors.left: parent.left
-                anchors.right: assistantSend.left
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.margins: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.pixelSize: 11
-                clip: true
-                selectByMouse: true
-                onAccepted: root.submitMessage()
-            }
-
-            Rectangle {
-                id: assistantSend
-
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: 4
-                width: 26
-                height: 26
-                radius: Theme.radius
-                color: assistantSendArea.pressed ? Theme.accentDim : Theme.accent
+            Column {
+                anchors.fill: parent
+                anchors.margins: Theme.spacingMedium
+                spacing: Theme.spacingMedium
+                visible: root.sessionId === ""
 
                 Text {
-                    anchors.centerIn: parent
-                    text: "➤"
-                    color: Theme.background0
-                    font.pixelSize: 11
+                    width: parent.width
+                    text: qsTr("Escolha a IA CLI")
+                    color: Theme.textPrimary
+                    font.pixelSize: 14
                     font.bold: true
                 }
 
-                MouseArea {
-                    id: assistantSendArea
+                Text {
+                    width: parent.width
+                    text: qsTr("Claude ou Codex deve estar previamente instalado e disponível no PATH. Abrir o painel nunca executa um comando automaticamente.")
+                    color: Theme.textSecondary
+                    font.pixelSize: 11
+                    wrapMode: Text.WordWrap
+                }
 
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.submitMessage()
+                Repeater {
+                    model: root.profilesModel
+
+                    delegate: Rectangle {
+                        id: profileCard
+
+                        required property string profileId
+                        required property string name
+                        required property string command
+                        required property bool available
+
+                        width: parent.width
+                        height: 64
+                        radius: Theme.radius
+                        color: root.selectedProfileId === profileId
+                               ? Theme.surfaceSelected
+                               : (profileMouse.containsMouse
+                                  ? Theme.surface2 : Theme.background1)
+                        border.color: root.selectedProfileId === profileId
+                                      ? Theme.accent : Theme.borderSoft
+                        border.width: 1
+                        opacity: available ? 1.0 : 0.72
+
+                        Column {
+                            anchors.left: parent.left
+                            anchors.leftMargin: Theme.spacingMedium
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: Theme.spacingXSmall
+
+                            Text {
+                                text: profileCard.name
+                                color: profileCard.available
+                                       ? Theme.textPrimary : Theme.textDisabled
+                                font.pixelSize: 12
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: profileCard.available
+                                      ? qsTr("Comando detectado: %1").arg(profileCard.command)
+                                      : qsTr("Não encontrado — instale %1 primeiro").arg(profileCard.command)
+                                color: profileCard.available
+                                       ? Theme.successSoft : Theme.warningSoft
+                                font.family: Theme.monoFont
+                                font.pixelSize: 10
+                            }
+                        }
+
+                        MouseArea {
+                            id: profileMouse
+
+                            anchors.fill: parent
+                            enabled: profileCard.available
+                            hoverEnabled: true
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: root.profileSelected(profileCard.profileId)
+                        }
+                    }
+                }
+
+                Text {
+                    width: parent.width
+                    visible: root.errorText !== ""
+                    text: root.errorText
+                    color: Theme.errorSoft
+                    font.pixelSize: 11
+                    wrapMode: Text.WordWrap
+                }
+
+                Row {
+                    spacing: Theme.spacingSmall
+
+                    KvButton {
+                        text: root.loading ? qsTr("Abrindo...") : qsTr("Iniciar")
+                        iconName: "run"
+                        primary: true
+                        enabled: !root.loading
+                        onClicked: root.startRequested()
+                    }
+
+                    KvButton {
+                        text: qsTr("Redetectar")
+                        iconName: "refresh"
+                        enabled: !root.loading
+                        onClicked: root.refreshRequested()
+                    }
+                }
+
+                Text {
+                    width: parent.width
+                    text: qsTr("Outras ferramentas de IA entrarão depois deste ciclo funcional, por meio de um AI Terminal genérico com comando informado pelo usuário.")
+                    color: Theme.textMuted
+                    font.pixelSize: 10
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 1
+                spacing: Theme.spacingXSmall
+                visible: root.sessionId !== ""
+
+                Row {
+                    width: parent.width
+                    height: 34
+                    spacing: Theme.spacingSmall
+
+                    Text {
+                        anchors.left: parent.left
+                        anchors.leftMargin: Theme.spacingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.activeProfileName
+                        color: Theme.textPrimary
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(0, parent.width - x - switchButton.width
+                                        - exitButton.width - 3 * Theme.spacingSmall)
+                        text: root.activeCommand
+                        color: Theme.textMuted
+                        font.family: Theme.monoFont
+                        font.pixelSize: 9
+                        elide: Text.ElideMiddle
+                    }
+
+                    KvButton {
+                        id: switchButton
+
+                        compact: true
+                        text: qsTr("Trocar")
+                        onClicked: root.switchRequested()
+                    }
+
+                    KvButton {
+                        id: exitButton
+
+                        compact: true
+                        text: qsTr("Sair")
+                        onClicked: root.exitRequested()
+                    }
+                }
+
+                TerminalPanel {
+                    width: parent.width
+                    height: parent.height - 34 - parent.spacing
+                    render: root.terminalRender
+                    terminalActive: root.sessionId !== ""
+                    workspaceAvailable: true
+                    emptyText: qsTr("Inicializando %1...").arg(root.activeProfileName)
+                    onKeyPressed: function(data) {
+                        root.terminalKeyPressed(data);
+                    }
+                    onResizeRequested: function(cols, rows) {
+                        root.terminalResizeRequested(cols, rows);
+                    }
+                    onScrollRequested: function(offset) {
+                        root.terminalScrollRequested(offset);
+                    }
                 }
             }
         }

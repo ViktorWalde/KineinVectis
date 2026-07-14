@@ -13,7 +13,7 @@ Item {
     signal tabCloseRequested(int index)
     signal saveRequested()
 
-    height: fileCount > 0 ? 30 : 0
+    height: fileCount > 0 ? 36 : 0
     visible: fileCount > 0
 
     Row {
@@ -31,9 +31,9 @@ Item {
                 required property string name
                 required property bool modified
 
-                width: tabLabel.width + closeLabel.width
+                width: tabLabel.width + closeButton.width
                        + 3 * Theme.spacingSmall
-                height: 26
+                height: 30
                 radius: Theme.radius
                 color: index === root.currentIndex
                        ? Theme.surface2 : Theme.surface1
@@ -47,36 +47,41 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: Theme.spacingSmall
-                    text: (tabDelegate.modified ? "● " : "") + tabDelegate.name
+                    text: tabDelegate.name
                     color: tabDelegate.index === root.currentIndex
                            ? Theme.textPrimary : Theme.textSecondary
                     font.pixelSize: 12
                 }
 
-                Text {
-                    id: closeLabel
+                Rectangle {
+                    anchors.left: tabLabel.left
+                    anchors.leftMargin: -Theme.spacingSmall + 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 4
+                    height: 4
+                    radius: 2
+                    visible: tabDelegate.modified
+                    color: Theme.accent
+                }
+
+                KvIconButton {
+                    id: closeButton
 
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.right: parent.right
-                    anchors.rightMargin: Theme.spacingSmall
-                    text: "×"
-                    color: closeArea.containsMouse
-                           ? Theme.errorSoft : Theme.textMuted
-                    font.pixelSize: 14
-
-                    MouseArea {
-                        id: closeArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.tabCloseRequested(tabDelegate.index)
-                    }
+                    anchors.rightMargin: 2
+                    width: 24
+                    height: 24
+                    iconName: "close"
+                    iconSize: 13
+                    danger: true
+                    tooltip: qsTr("Fechar aba")
+                    onClicked: root.tabCloseRequested(tabDelegate.index)
                 }
 
                 MouseArea {
                     anchors.fill: parent
-                    anchors.rightMargin: closeLabel.width + Theme.spacingSmall
+                    anchors.rightMargin: closeButton.width + Theme.spacingSmall
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.tabSelected(tabDelegate.index)
                 }
@@ -84,31 +89,15 @@ Item {
         }
     }
 
-    Rectangle {
+    KvButton {
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
-        width: saveText.width + 2 * Theme.spacingMedium
-        height: 24
-        radius: Theme.radius
+        height: 28
         visible: root.currentIndex >= 0
-        color: saveArea.pressed ? Theme.accentDim : Theme.accent
-
-        Text {
-            id: saveText
-
-            anchors.centerIn: parent
-            text: qsTr("Salvar")
-            color: Theme.background0
-            font.pixelSize: 11
-            font.bold: true
-        }
-
-        MouseArea {
-            id: saveArea
-
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.saveRequested()
-        }
+        compact: true
+        primary: true
+        text: qsTr("Salvar")
+        iconName: "file"
+        onClicked: root.saveRequested()
     }
 }

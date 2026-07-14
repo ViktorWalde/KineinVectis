@@ -8,17 +8,20 @@
 //! - [`error`]: o erro estruturado devolvido por toda operacao;
 //! - [`detect`]: deteccao de project kind por marcadores de build;
 //! - [`open`]: abertura, browse e persistencia de metadados;
-//! - [`create`]: criacao de pastas e projetos a partir de templates.
+//! - [`create`]: criacao de pastas e projetos a partir de templates;
+//! - [`session`]: abas abertas/aba ativa por workspace (`session.json`).
 
 mod create;
 mod detect;
 mod error;
 mod open;
+mod session;
 
 pub use create::{create_directory, create_project};
 pub use detect::detect_project;
 pub use error::WorkspaceError;
 pub use open::{browse_directories, metadata_path, open_workspace};
+pub use session::{load_session, save_session, session_path};
 
 /// Directory created inside the workspace root for Kinein Vectis metadata.
 pub const WORKSPACE_DIR: &str = ".kinein";

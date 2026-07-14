@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="SSH">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="s" x="2.5" y="3.5" width="15" height="13" rx="1.2"/><polyline class="s" points="5.5,7 8.5,10 5.5,13"/><line class="s" x1="10.5" y1="13" x2="14.7" y2="13"/><path class="s" d="M13.2 13.5h3M14.7 12v3"/><circle class="s" cx="13.2" cy="12" r="1"/>
+</svg>

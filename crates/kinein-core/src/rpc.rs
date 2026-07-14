@@ -26,14 +26,20 @@ pub(crate) fn fs_error_response(
     request_id: Option<Value>,
     error: &fsops::FsError,
 ) -> JsonRpcResponse {
-    let code = if error.is_invalid_path() {
+    let code = if error.changed_path().is_some() {
+        JsonRpcErrorCode::FileChanged
+    } else if error.is_invalid_path() {
         JsonRpcErrorCode::InvalidParams
     } else if error.is_missing_tool() {
         JsonRpcErrorCode::ToolNotFound
     } else {
         JsonRpcErrorCode::InternalError
     };
-    JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
+    let details = error.changed_path().map(|path| json!({ "path": path }));
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(code, error.to_string(), details),
+    )
 }
 
 pub(crate) fn workspace_error_response(
@@ -70,7 +76,7 @@ pub(crate) fn terminal_error_response(
 ) -> JsonRpcResponse {
     let code = match error {
         terminal::TerminalError::Process { .. } => JsonRpcErrorCode::InternalError,
-        terminal::TerminalError::AlreadyOpen | terminal::TerminalError::NotOpen => {
+        terminal::TerminalError::TooMany | terminal::TerminalError::NotOpen => {
             JsonRpcErrorCode::InvalidRequest
         }
     };
@@ -97,6 +103,35 @@ pub(crate) fn run_error_response(
         run::RunError::AlreadyRunning
         | run::RunError::NotRunning
         | run::RunError::NoDefaultCommand { .. } => JsonRpcErrorCode::InvalidRequest,
+    };
+    JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
+}
+
+pub(crate) fn debug_unavailable_response(
+    request_id: Option<Value>,
+    method: &str,
+) -> JsonRpcResponse {
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(
+            JsonRpcErrorCode::InternalError,
+            "debug nao esta habilitado neste loop do core",
+            Some(json!({ "method": method })),
+        ),
+    )
+}
+
+pub(crate) fn debug_error_response(
+    request_id: Option<Value>,
+    error: &crate::dap::DebugError,
+) -> JsonRpcResponse {
+    let code = match error {
+        crate::dap::DebugError::MissingAdapter => JsonRpcErrorCode::ToolNotFound,
+        crate::dap::DebugError::Adapter { .. } => JsonRpcErrorCode::InternalError,
+        crate::dap::DebugError::AlreadyRunning
+        | crate::dap::DebugError::NotRunning
+        | crate::dap::DebugError::NotStopped
+        | crate::dap::DebugError::NoTarget { .. } => JsonRpcErrorCode::InvalidRequest,
     };
     JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
 }

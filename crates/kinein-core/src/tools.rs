@@ -129,6 +129,13 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         pacman_package: "lldb",
     },
     ToolSpec {
+        id: "lldb-dap",
+        display_name: "lldb-dap",
+        binary: "lldb-dap",
+        alternative_binary: None,
+        pacman_package: "lldb",
+    },
+    ToolSpec {
         id: "ripgrep",
         display_name: "ripgrep",
         binary: "rg",
@@ -217,6 +224,15 @@ impl ToolDetector {
                 },
             },
         )
+    }
+
+    /// Resolves one executable on the detector's configured search path.
+    ///
+    /// This is used by opt-in launchers such as the AI CLI Bridge. It only
+    /// resolves an executable path; it never installs or starts the tool.
+    #[must_use]
+    pub fn find_binary(&self, binary: &str) -> Option<PathBuf> {
+        self.find_in_path(binary)
     }
 
     fn suggested_install_for(&self, spec: &ToolSpec) -> Option<String> {
@@ -336,6 +352,7 @@ mod tests {
                 "gxx",
                 "gdb",
                 "lldb",
+                "lldb-dap",
                 "ripgrep",
                 "fd"
             ]

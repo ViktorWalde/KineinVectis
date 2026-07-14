@@ -8,6 +8,10 @@ Item {
     property alias everywhereModel: everywhereItemsModel
     property bool caseSensitive: false
     property bool searching: false
+    property bool replaceMode: false
+    property bool replacing: false
+    property string replaceError: ""
+    property string replaceSummary: ""
     property bool everywhereVisible: false
     property bool everywhereLoading: false
     property bool everywhereTruncated: false
@@ -16,15 +20,25 @@ Item {
     property var commandList: []
     property bool searchTruncated: false
     property string pendingEverywhereQuery: ""
+    property bool hasActiveEditorFile: false
+    property string symbolFilter: ""
+    property var recentFiles: []
+    property bool recentMode: false
+    property string everywhereTitle: qsTr("Search Everywhere")
     readonly property bool hasCommands: commandList.length > 0
 
     signal showTabRequested(string tab)
     signal focusSearchInputRequested()
     signal resetAndFocusEverywhereRequested()
     signal searchInFilesRequested(string query, bool caseSensitive)
+    signal replaceInFilesRequested(string query, string replacement, bool caseSensitive)
+    signal focusReplaceInputRequested()
     signal findFilesRequested(string query)
+    signal documentSymbolsRequested()
+    signal workspaceSymbolsRequested(string query)
     signal listCommandsRequested()
     signal readFileRequested(string path)
+    signal openAtRequested(string path, int line, int column)
     signal commandAccepted(string commandId)
     signal focusEditorRequested()
 
@@ -43,6 +57,10 @@ Item {
         clearSearchEverywhere();
         caseSensitive = false;
         searching = false;
+        replaceMode = false;
+        replacing = false;
+        replaceError = "";
+        replaceSummary = "";
     }
 
     function clearSearchEverywhere() {
@@ -53,6 +71,8 @@ Item {
         everywhereIndex = 0;
         everywhereError = "";
         pendingEverywhereQuery = "";
+        recentMode = false;
+        everywhereTitle = qsTr("Search Everywhere");
     }
 
     function baseName(path) {
@@ -67,6 +87,17 @@ Item {
         focusSearchInputRequested();
     }
 
+    function openReplacePanel() {
+        if (workspaceRoot === "") {
+            return;
+        }
+        replaceMode = true;
+        replaceError = "";
+        replaceSummary = "";
+        showTabRequested("search");
+        focusReplaceInputRequested();
+    }
+
     function runSearch(query) {
         if (query === "" || workspaceRoot === "" || searching) {
             return;
@@ -77,12 +108,42 @@ Item {
         searchInFilesRequested(query, caseSensitive);
     }
 
+    function runReplace(query, replacement) {
+        if (query === "" || workspaceRoot === "" || replacing) {
+            replaceError = query === "" ? qsTr("Informe o texto a substituir.") : "";
+            return;
+        }
+        replacing = true;
+        replaceError = "";
+        replaceSummary = "";
+        replaceInFilesRequested(query, replacement, caseSensitive);
+    }
+
+    function rejectReplaceForDirtyEditors() {
+        replacing = false;
+        replaceError = qsTr("Salve todas as abas modificadas antes de substituir no projeto.");
+    }
+
+    function handleReplaceResult(files, replacements) {
+        replacing = false;
+        replaceError = "";
+        // Os offsets do resultado anterior deixaram de representar o disco.
+        // O usuario pode executar uma nova busca quando quiser conferir o
+        // estado posterior, sem navegar por resultados obsoletos.
+        searchItemsModel.clear();
+        searchTruncated = false;
+        replaceSummary = qsTr("%1 ocorrencia(s) em %2 arquivo(s).")
+                .arg(replacements).arg(files.length);
+    }
+
     function toggleCaseAndRun(query) {
         caseSensitive = !caseSensitive;
         runSearch(query);
     }
 
     function openSearchEverywhere() {
+        recentMode = false;
+        everywhereTitle = qsTr("Search Everywhere");
         everywhereVisible = true;
         everywhereLoading = false;
         everywhereTruncated = false;
@@ -97,6 +158,21 @@ Item {
         resetAndFocusEverywhereRequested();
     }
 
+    function openRecentFiles() {
+        if (workspaceRoot === "") {
+            return;
+        }
+        recentMode = true;
+        everywhereTitle = qsTr("Arquivos recentes");
+        everywhereVisible = true;
+        everywhereLoading = false;
+        everywhereTruncated = false;
+        everywhereError = "";
+        pendingEverywhereQuery = "";
+        appendRecentFiles("");
+        resetAndFocusEverywhereRequested();
+    }
+
     function scheduleSearchEverywhere(query) {
         pendingEverywhereQuery = query;
         searchEverywhereDebounce.restart();
@@ -106,14 +182,68 @@ Item {
         everywhereError = "";
         everywhereItemsModel.clear();
         everywhereIndex = 0;
+        everywhereTruncated = false;
+        if (recentMode) {
+            appendRecentFiles(query);
+            return;
+        }
+        if (query.length > 0 && (query.charAt(0) === "@" || query.charAt(0) === "#")) {
+            runSymbolSearch(query);
+            return;
+        }
         appendSearchEverywhereCommands(query);
         if (query === "" || workspaceRoot === "") {
             everywhereLoading = false;
-            everywhereTruncated = false;
             return;
         }
         everywhereLoading = true;
         findFilesRequested(query);
+    }
+
+    function appendRecentFiles(query) {
+        everywhereItemsModel.clear();
+        everywhereLoading = false;
+        const needle = query.toLowerCase();
+        for (let i = 0; i < recentFiles.length; i++) {
+            const path = recentFiles[i];
+            const relative = relativeToRoot(path);
+            if (needle !== "" && relative.toLowerCase().indexOf(needle) < 0) {
+                continue;
+            }
+            everywhereItemsModel.append({
+                kind: "recent",
+                title: baseName(path),
+                path: path,
+                subtitle: relative,
+                commandId: "",
+                line: 0,
+                column: 0
+            });
+        }
+        everywhereIndex = everywhereItemsModel.count > 0 ? 0 : -1;
+    }
+
+    function runSymbolSearch(query) {
+        const isDocument = query.charAt(0) === "@";
+        const needle = query.substring(1).trim();
+        symbolFilter = isDocument ? needle.toLowerCase() : "";
+        if (workspaceRoot === "" || !hasActiveEditorFile) {
+            everywhereLoading = false;
+            everywhereError =
+                    qsTr("Abra um arquivo com LSP para buscar símbolos.");
+            return;
+        }
+        if (!isDocument && needle === "") {
+            everywhereLoading = false;
+            everywhereError = qsTr("Digite o nome do símbolo após #.");
+            return;
+        }
+        everywhereLoading = true;
+        if (isDocument) {
+            documentSymbolsRequested();
+        } else {
+            workspaceSymbolsRequested(needle);
+        }
     }
 
     function appendSearchEverywhereCommands(query) {
@@ -141,7 +271,9 @@ Item {
                 title: title,
                 path: id,
                 subtitle: shortcut !== "" ? category + " · " + shortcut : category,
-                commandId: id
+                commandId: id,
+                line: 0,
+                column: 0
             });
         }
     }
@@ -155,6 +287,14 @@ Item {
         everywhereVisible = false;
         if (item.kind === "command") {
             commandAccepted(item.commandId);
+            return;
+        }
+        if (item.kind === "symbol") {
+            openAtRequested(item.path, item.line, item.column);
+            return;
+        }
+        if (item.kind === "recent") {
+            readFileRequested(item.path);
             return;
         }
         readFileRequested(workspaceRoot + "/" + item.path);
@@ -199,7 +339,46 @@ Item {
                 title: match.name !== undefined ? match.name : baseName(match.path),
                 path: match.path !== undefined ? match.path : "",
                 subtitle: match.path !== undefined ? match.path : "",
-                commandId: ""
+                commandId: "",
+                line: 0,
+                column: 0
+            });
+        }
+        everywhereIndex = everywhereItemsModel.count > 0 ? 0 : -1;
+    }
+
+    function relativeToRoot(path) {
+        if (workspaceRoot !== "" && path.indexOf(workspaceRoot + "/") === 0) {
+            return path.substring(workspaceRoot.length + 1);
+        }
+        return path;
+    }
+
+    function handleSymbolsResolved(symbols) {
+        everywhereLoading = false;
+        if (!everywhereVisible) {
+            return;
+        }
+        everywhereItemsModel.clear();
+        for (let i = 0; i < symbols.length; i++) {
+            const symbol = symbols[i];
+            const name = symbol.name !== undefined ? symbol.name : "";
+            if (symbolFilter !== ""
+                    && name.toLowerCase().indexOf(symbolFilter) < 0) {
+                continue;
+            }
+            const container = symbol.container !== undefined
+                    ? symbol.container + " · " : "";
+            const line = symbol.line !== undefined ? Number(symbol.line) : 1;
+            everywhereItemsModel.append({
+                kind: "symbol",
+                title: name,
+                path: symbol.path !== undefined ? symbol.path : "",
+                subtitle: (symbol.kind !== undefined ? symbol.kind + " · " : "")
+                          + container + relativeToRoot(symbol.path) + ":" + line,
+                commandId: "",
+                line: line,
+                column: symbol.column !== undefined ? Number(symbol.column) : 1
             });
         }
         everywhereIndex = everywhereItemsModel.count > 0 ? 0 : -1;
@@ -207,7 +386,7 @@ Item {
 
     function handleCommandsListed(commands) {
         commandList = commands;
-        if (everywhereVisible) {
+        if (everywhereVisible && !recentMode) {
             runSearchEverywhere(pendingEverywhereQuery);
         }
     }
@@ -216,10 +395,18 @@ Item {
         if (method === "fs.search") {
             searching = false;
         }
+        if (method === "fs.replace") {
+            replacing = false;
+            replaceError = message;
+        }
         if (method === "fs.findFiles") {
             everywhereLoading = false;
             everywhereError = message;
             everywhereVisible = true;
+        }
+        if (method === "lsp.documentSymbols" || method === "lsp.workspaceSymbols") {
+            everywhereLoading = false;
+            everywhereError = message;
         }
     }
 

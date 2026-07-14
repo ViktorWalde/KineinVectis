@@ -5,6 +5,7 @@ Item {
 
     property var coreClient: null
     property var jobsController: null
+    property var diagnosticsController: null
 
     visible: false
 
@@ -29,6 +30,7 @@ Item {
 
         function onLspDiagnostics(path, diagnostics) {
             root.jobsController.handleLspDiagnostics(path, diagnostics);
+            root.diagnosticsController.handleLspDiagnostics(path, diagnostics);
         }
 
         function onTestCase(name, status) {

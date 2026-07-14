@@ -56,6 +56,21 @@ pub enum FsError {
         /// Canonical path that was rejected.
         path: String,
     },
+    /// The file no longer matches the content observed by the editor.
+    ChangedOnDisk {
+        /// Canonical path whose external version must be reviewed.
+        path: String,
+    },
+    /// A multi-file transaction failed and could not restore every file.
+    RollbackFailed {
+        /// Original write failure plus rollback failures.
+        message: String,
+    },
+    /// A bulk replacement exceeded a defensive resource limit.
+    ReplaceLimit {
+        /// Limit that rejected the operation.
+        message: String,
+    },
     /// Underlying IO failure while reading or writing.
     Io {
         /// Canonical path that failed.
@@ -83,7 +98,10 @@ impl FsError {
     pub const fn is_invalid_path(&self) -> bool {
         !matches!(
             self,
-            Self::Io { .. } | Self::MissingTool { .. } | Self::ToolFailed { .. }
+            Self::Io { .. }
+                | Self::RollbackFailed { .. }
+                | Self::MissingTool { .. }
+                | Self::ToolFailed { .. }
         )
     }
 
@@ -91,6 +109,15 @@ impl FsError {
     #[must_use]
     pub const fn is_missing_tool(&self) -> bool {
         matches!(self, Self::MissingTool { .. })
+    }
+
+    /// Returns the conflicting path when the disk changed since the last read.
+    #[must_use]
+    pub fn changed_path(&self) -> Option<&str> {
+        match self {
+            Self::ChangedOnDisk { path } => Some(path),
+            _ => None,
+        }
     }
 }
 
@@ -130,6 +157,15 @@ impl fmt::Display for FsError {
             Self::NotText { path } => {
                 write!(formatter, "o arquivo {path} nao e texto UTF-8 valido")
             }
+            Self::ChangedOnDisk { path } => {
+                write!(
+                    formatter,
+                    "o arquivo {path} foi alterado fora da IDE; revise antes de salvar"
+                )
+            }
+            Self::RollbackFailed { message } | Self::ReplaceLimit { message } => {
+                formatter.write_str(message)
+            }
             Self::Io { path, source } => {
                 write!(formatter, "falha de IO em {path}: {source}")
             }
@@ -155,6 +191,9 @@ impl Error for FsError {
             | Self::WorkspaceRoot { .. }
             | Self::TooLarge { .. }
             | Self::NotText { .. }
+            | Self::ChangedOnDisk { .. }
+            | Self::RollbackFailed { .. }
+            | Self::ReplaceLimit { .. }
             | Self::MissingTool { .. }
             | Self::ToolFailed { .. } => None,
         }

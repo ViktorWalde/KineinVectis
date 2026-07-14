@@ -8,7 +8,7 @@ Rectangle {
     property var controller
 
     width: parent.width
-    height: visible ? (root.controller.createMode === "project" ? 74 : 42) : 0
+    height: visible ? (root.controller.createMode === "project" ? 194 : 42) : 0
     visible: root.controller.createMode !== ""
     radius: Theme.radius
     color: Theme.background2
@@ -17,6 +17,27 @@ Rectangle {
 
     function focusName() {
         createNameField.forceActiveFocus();
+    }
+
+    function previewText() {
+        const name = root.controller.createName.trim() !== ""
+                     ? root.controller.createName.trim() : qsTr("meu-projeto");
+        if (root.controller.createTemplate === "cppCmake") {
+            return name + "/\n"
+                 + "  CMakeLists.txt  · C++23 target-based\n"
+                 + "  CMakePresets.json  · Debug + Release / Ninja\n"
+                 + "  src/main.cpp\n"
+                 + "  include/  tests/\n"
+                 + "  .gitignore  README.md\n"
+                 + qsTr("Geração interna: nenhum comando externo");
+        }
+        if (root.controller.createTemplate === "rustCargo") {
+            return name + "/\n"
+                 + "  Cargo.toml\n"
+                 + "  src/main.rs\n\n"
+                 + qsTr("Comando: cargo new --bin --vcs none %1").arg(name);
+        }
+        return name + "/  " + qsTr("(diretório vazio)");
     }
 
     Column {
@@ -75,12 +96,12 @@ Rectangle {
                 onClicked: root.controller.submitCreate()
             }
 
-            FolderPickerButton {
+            KvIconButton {
                 id: cancelCreateButton
 
-                width: 26
-                height: parent.height
-                text: "x"
+                compact: true
+                iconName: "close"
+                tooltip: qsTr("Cancelar criação")
                 onClicked: root.controller.cancelCreate()
             }
         }
@@ -107,7 +128,7 @@ Rectangle {
                     height: parent.height
                     radius: Theme.radius
                     color: root.controller.createTemplate === modelData.key
-                           ? Theme.accentDim
+                           ? Theme.surfaceSelected
                            : (templateArea.containsMouse
                               ? Theme.surface2 : "transparent")
                     border.color: Theme.borderSoft
@@ -133,6 +154,26 @@ Rectangle {
                         onClicked: root.controller.createTemplate = templateChip.modelData.key
                     }
                 }
+            }
+        }
+
+        Rectangle {
+            width: parent.width
+            height: 106
+            visible: root.controller.createMode === "project"
+            radius: Theme.radius
+            color: Theme.background0
+            border.color: Theme.borderSoft
+            border.width: 1
+
+            Text {
+                anchors.fill: parent
+                anchors.margins: Theme.spacingSmall
+                text: qsTr("Preview — arquivos e comandos\n") + root.previewText()
+                color: Theme.textSecondary
+                font.family: Theme.monoFont
+                font.pixelSize: 10
+                wrapMode: Text.WrapAnywhere
             }
         }
     }

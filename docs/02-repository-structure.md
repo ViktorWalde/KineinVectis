@@ -23,20 +23,26 @@ kinein-vectis/
 │   │       ├── commands.rs      # command.list descriptors
 │   │       ├── tools.rs process.rs build.rs test.rs run.rs terminal.rs  # domain services
 │   │       ├── handlers/        # request routers by domain (impl Core blocks)
-│   │       │   └── workspace.rs fs.rs lsp.rs run.rs terminal.rs build.rs
+│   │       │   └── workspace.rs fs.rs lsp.rs syntax.rs git.rs run.rs terminal.rs build.rs
 │   │       ├── lsp/             # LSP client subsystem
-│   │       │   └── mod.rs types.rs manager.rs server.rs framing.rs parse.rs edit.rs uri.rs
+│   │       │   └── mod.rs types.rs manager.rs server.rs framing.rs parse.rs transaction.rs
+│   │       ├── lang/            # Tree-sitter local, incremental e LSP-independent
+│   │       │   └── registry.rs service.rs positions.rs outline.rs folding.rs
+│   │       ├── git/             # orquestração tipada do binário git
+│   │       │   └── mod.rs status.rs diff.rs mutate.rs history.rs branches.rs
 │   │       ├── fsops/           # workspace-confined filesystem operations
-│   │       │   └── mod.rs error.rs confine.rs ops.rs search.rs find.rs
+│   │       │   └── mod.rs error.rs ops.rs search.rs find.rs replace.rs transaction.rs
+│   │       ├── fswatch.rs       # notify lazy/debounced + eventos de mudança externa
 │   │       ├── workspace/       # open / detect / browse / create + persistence
 │   │       │   └── mod.rs error.rs detect.rs open.rs create.rs
 │   │       └── tests/           # integration tests grouped by domain
-│   │           └── mod.rs dispatch.rs tools.rs workspace.rs fs.rs run.rs build.rs lsp.rs
+│   │           └── mod.rs dispatch.rs workspace.rs fs.rs lsp.rs syntax.rs git.rs
 │   │
 │   ├── kinein-protocol/
 │   │   ├── Cargo.toml
 │   │   └── src/                 # per-domain modules re-exported flat from lib.rs
-│   │       └── lib.rs rpc.rs command.rs core.rs tools.rs workspace.rs fs.rs run.rs terminal.rs lsp.rs build.rs
+│   │       └── lib.rs rpc.rs command.rs core.rs tools.rs workspace.rs fs.rs
+│   │           run.rs terminal.rs lsp.rs syntax.rs git.rs build.rs
 │   │
 │   ├── kinein-config/
 │   │   ├── Cargo.toml
@@ -52,8 +58,16 @@ kinein-vectis/
 │           └── error.rs         # CliError
 │
 ├── ui/
-│   ├── README.md
-│   └── placeholder.md
+│   ├── CMakeLists.txt
+│   ├── src/                     # CoreClient IPC + EditorHighlighter
+│   ├── assets/
+│   └── qml/
+│       ├── components/          # KvIcon/KvButton/KvTooltip reutilizáveis
+│       ├── shell/               # App/toolbar, rail, layout, overlays, status
+│       ├── workspace/           # picker, Start Screen e Project Health
+│       ├── editor/              # renderer, controllers, outline/folding
+│       ├── panels/              # tool windows inferiores
+│       └── ipc/                 # routers de eventos por domínio
 │
 ├── schemas/
 │   ├── ipc.schema.json
@@ -68,6 +82,8 @@ kinein-vectis/
 │   └── embedded-linux-strict/
 │
 ├── docs/
+│   ├── adr/                     # decisões de adoção e arquitetura
+│   ├── tooling/                 # registro auditável de componentes externos
 │   ├── 00-product-vision.md
 │   ├── 01-architecture.md
 │   ├── 02-repository-structure.md

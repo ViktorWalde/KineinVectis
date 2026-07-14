@@ -3,13 +3,22 @@
 //! Declared as `#[cfg(test)] mod tests;` in `lib.rs`, so `crate::` reaches the
 //! core surface and every submodule shares [`core_with_empty_search_path`].
 
+mod ai;
 mod build;
+mod cargo;
+mod cmake;
+mod debug;
 mod dispatch;
+mod format;
 mod fs;
+mod git;
 mod jobs;
 mod lsp;
 mod run;
+mod runconfig;
 mod runners;
+mod settings;
+mod syntax;
 mod tools;
 mod workspace;
 

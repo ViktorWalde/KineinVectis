@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Arquivo C">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M5 2.8h6.4l3.6 3.7v10.7H5z"/><path class="s" d="M11.4 2.8v3.8H15"/><path class="s" d="M12.7 10.1a2.2 2.2 0 1 0 0 3.8"/>
+</svg>

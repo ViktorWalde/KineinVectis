@@ -142,11 +142,25 @@ Item {
         if (workspaceRoot === "") {
             return;
         }
+        openCreateDialogAt(kind, selectedCreateParent());
+    }
+
+    function openCreateDialogAt(kind, parentPath) {
         createDialogKind = kind;
-        createDialogParentPath = selectedCreateParent();
+        createDialogParentPath = parentPath;
         createDialogError = "";
         createDialogVisible = true;
         createDialogFocusRequested();
+    }
+
+    function openEntryCreate(kind) {
+        if (entryMenuPath === "" || workspaceRoot === "") {
+            return;
+        }
+        entryMenuVisible = false;
+        const parentPath = entryMenuKind === "directory"
+                ? entryMenuPath : parentDir(entryMenuPath);
+        openCreateDialogAt(kind, parentPath);
     }
 
     function confirmCreateEntry(name) {
@@ -172,7 +186,7 @@ Item {
         entryMenuKind = kind;
         entryMenuName = name;
         entryMenuX = Math.max(0, Math.min(sceneX, hostWidth - 172));
-        entryMenuY = Math.max(0, Math.min(sceneY, hostHeight - 96));
+        entryMenuY = Math.max(0, Math.min(sceneY, hostHeight - 156));
         entryMenuVisible = true;
     }
 
@@ -259,6 +273,25 @@ Item {
         }
         listDirRequested(parentDir(path));
         focusEditorRequested();
+    }
+
+    function handleExternalChanges(changes) {
+        const directories = {};
+        for (let i = 0; i < changes.length; i++) {
+            const directory = parentDir(changes[i].path);
+            if (directory === workspaceRoot) {
+                directories[directory] = true;
+                continue;
+            }
+            const index = rowIndexForPath(directory);
+            if (index >= 0 && treeModel.get(index).kind === "directory"
+                    && treeModel.get(index).expanded) {
+                directories[directory] = true;
+            }
+        }
+        for (const directory in directories) {
+            listDirRequested(directory);
+        }
     }
 
     function handleRequestFailed(method, message) {

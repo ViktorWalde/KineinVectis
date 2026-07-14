@@ -16,6 +16,16 @@ kinein-config.workspace = true
 kinein-protocol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+# Rede de segurança de dados (docs/23): autosave de rascunhos em SQLite.
+rusqlite.workspace = true
+# Terminal profissional (docs/24 D2): PTY real + emulador VT com grid.
+portable-pty.workspace = true
+vt100.workspace = true
+notify.workspace = true
+tree-sitter.workspace = true
+tree-sitter-c.workspace = true
+tree-sitter-cpp.workspace = true
+tree-sitter-rust.workspace = true
 
 [lints]
 workspace = true

@@ -60,6 +60,9 @@ scripts/verificar-cpp.sh
 passo "scripts/verificar-qml.sh (qmllint estrito)"
 scripts/verificar-qml.sh
 
+passo "scripts/verificar-qml-logica.sh (controllers QML headless)"
+scripts/verificar-qml-logica.sh
+
 if [ "$modo" = "completo" ]; then
     passo "cmake --build --preset $preset_debug (UI debug sanitized)"
     cmake --build --preset "$preset_debug"

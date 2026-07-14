@@ -15,6 +15,10 @@ Rectangle {
     property bool coreConnected: false
     property string coreProtocolVersion: ""
     property string coreStatus: ""
+    property string gitBranchLabel: ""
+    property int gitAheadCount: 0
+    property int gitBehindCount: 0
+    property int gitChangeCount: 0
 
     signal logsRequested()
     signal cancelBuildRequested()
@@ -22,7 +26,7 @@ Rectangle {
     signal cancelQualityRequested()
     signal cancelEnvironmentScanRequested()
 
-    height: 26
+    height: 28
     color: Theme.background1
 
     Row {
@@ -36,7 +40,30 @@ Rectangle {
             visible: bar.workspaceRoot !== ""
             text: bar.workspaceKindLabel + "  ·  " + bar.workspaceRoot
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeStatus
+            font.family: Theme.monoFont
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: bar.gitBranchLabel !== ""
+            text: {
+                let label = "⎇ " + bar.gitBranchLabel;
+                if (bar.gitAheadCount > 0) {
+                    label += " ↑" + bar.gitAheadCount;
+                }
+                if (bar.gitBehindCount > 0) {
+                    label += " ↓" + bar.gitBehindCount;
+                }
+                if (bar.gitChangeCount === 1) {
+                    label += qsTr("  ·  1 alteração");
+                } else if (bar.gitChangeCount > 1) {
+                    label += qsTr("  ·  %1 alterações").arg(bar.gitChangeCount);
+                }
+                return label;
+            }
+            color: bar.gitChangeCount > 0 ? Theme.textSecondary : Theme.textMuted
+            font.pixelSize: Theme.fontSizeStatus
             font.family: Theme.monoFont
         }
     }
@@ -50,9 +77,9 @@ Rectangle {
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: logsToggleText.width + 2 * Theme.spacingSmall
-            height: 18
+            height: 20
             radius: Theme.radius
-            color: bar.logsActive ? Theme.accentDim
+            color: bar.logsActive ? Theme.surfaceSelected
                                   : (logsToggleArea.containsMouse
                                      ? Theme.surface2 : "transparent")
             border.color: Theme.borderSoft
@@ -64,7 +91,7 @@ Rectangle {
                 anchors.centerIn: parent
                 text: qsTr("IDE")
                 color: bar.logsActive ? Theme.accent : Theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeStatus
             }
 
             MouseArea {
@@ -86,23 +113,16 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("compilando...")
                 color: Theme.accent
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeStatus
             }
 
-            Text {
+            KvIconButton {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "×"
-                color: cancelBuildArea.containsMouse ? Theme.errorSoft : Theme.textMuted
-                font.pixelSize: 12
-
-                MouseArea {
-                    id: cancelBuildArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: bar.cancelBuildRequested()
-                }
+                compact: true
+                iconName: "close"
+                danger: true
+                tooltip: qsTr("Cancelar build")
+                onClicked: bar.cancelBuildRequested()
             }
         }
 
@@ -115,23 +135,16 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("testando...")
                 color: Theme.accent
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeStatus
             }
 
-            Text {
+            KvIconButton {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "×"
-                color: cancelTestsArea.containsMouse ? Theme.errorSoft : Theme.textMuted
-                font.pixelSize: 12
-
-                MouseArea {
-                    id: cancelTestsArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: bar.cancelTestsRequested()
-                }
+                compact: true
+                iconName: "close"
+                danger: true
+                tooltip: qsTr("Cancelar testes")
+                onClicked: bar.cancelTestsRequested()
             }
         }
 
@@ -144,23 +157,16 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("analisando...")
                 color: Theme.accent
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeStatus
             }
 
-            Text {
+            KvIconButton {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "×"
-                color: cancelQualityArea.containsMouse ? Theme.errorSoft : Theme.textMuted
-                font.pixelSize: 12
-
-                MouseArea {
-                    id: cancelQualityArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: bar.cancelQualityRequested()
-                }
+                compact: true
+                iconName: "close"
+                danger: true
+                tooltip: qsTr("Cancelar análise")
+                onClicked: bar.cancelQualityRequested()
             }
         }
 
@@ -173,24 +179,16 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("scan de ambiente...")
                 color: Theme.accent
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeStatus
             }
 
-            Text {
+            KvIconButton {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "×"
-                color: cancelEnvironmentArea.containsMouse
-                       ? Theme.errorSoft : Theme.textMuted
-                font.pixelSize: 12
-
-                MouseArea {
-                    id: cancelEnvironmentArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: bar.cancelEnvironmentScanRequested()
-                }
+                compact: true
+                iconName: "close"
+                danger: true
+                tooltip: qsTr("Cancelar scan")
+                onClicked: bar.cancelEnvironmentScanRequested()
             }
         }
 
@@ -199,7 +197,7 @@ Rectangle {
             visible: bar.running
             text: qsTr("executando...")
             color: Theme.accent
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeStatus
         }
 
         Rectangle {
@@ -216,7 +214,7 @@ Rectangle {
                   ? qsTr("core conectado · IPC %1").arg(bar.coreProtocolVersion)
                   : qsTr("core %1").arg(bar.coreStatus)
             color: Theme.textMuted
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeStatus
         }
     }
 }

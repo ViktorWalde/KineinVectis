@@ -5,6 +5,26 @@ import KineinVectis
 ListView {
     id: panel
 
+
+    // B2 (docs/24): barra de rolagem. `parent: panel` é OBRIGATÓRIO — um filho
+    // declarado dentro de um ListView vira filho do contentItem e ROLARIA
+    // junto com a lista. O ListView segue sendo a fonte da verdade.
+    VerticalScrollBar {
+        id: scrollBar_panel
+
+        parent: panel
+        anchors.right: panel.right
+        anchors.top: panel.top
+        anchors.bottom: panel.bottom
+
+        contentSize: panel.contentHeight
+        viewportSize: panel.height
+        position: panel.contentY
+
+        onMoveRequested: function(position) {
+            panel.contentY = position;
+        }
+    }
     ListModel {
         id: emptyDiagnosticsModel
     }
@@ -41,6 +61,7 @@ ListView {
 
         required property string severity
         required property string message
+        required property string code
         required property string file
         required property int line
         required property int column
@@ -74,6 +95,17 @@ ListView {
                 color: Theme.accent
                 font.family: Theme.monoFont
                 font.pixelSize: 11
+            }
+
+            Text {
+                id: codeLabel
+
+                anchors.verticalCenter: parent.verticalCenter
+                visible: problemDelegate.code !== ""
+                text: problemDelegate.code
+                color: Theme.textMuted
+                font.family: Theme.monoFont
+                font.pixelSize: 10
             }
 
             Text {

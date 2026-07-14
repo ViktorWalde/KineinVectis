@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Step into">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="s" x="5" y="12" width="10" height="4" rx="1"/><line class="s" x1="10" y1="3" x2="10" y2="12"/><polygon class="f" points="7.7,9.3 10,12 12.3,9.3"/>
+</svg>

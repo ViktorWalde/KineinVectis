@@ -42,30 +42,14 @@ Rectangle {
             height: 1
         }
 
-        Rectangle {
+        KvIconButton {
             id: usagesClose
 
             anchors.verticalCenter: parent.verticalCenter
-            width: 18
-            height: 18
-            radius: Theme.radius
-            color: usagesCloseArea.containsMouse ? Theme.surface2 : "transparent"
-
-            Text {
-                anchors.centerIn: parent
-                text: "×"
-                color: Theme.textSecondary
-                font.pixelSize: 12
-            }
-
-            MouseArea {
-                id: usagesCloseArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.closeRequested()
-            }
+            compact: true
+            iconName: "close"
+            tooltip: qsTr("Fechar usos")
+            onClicked: root.closeRequested()
         }
     }
 

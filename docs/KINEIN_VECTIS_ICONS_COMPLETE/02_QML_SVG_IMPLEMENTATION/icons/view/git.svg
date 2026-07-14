@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Git">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<circle class="s" cx="6" cy="4.5" r="1.5"/><circle class="s" cx="6" cy="15.5" r="1.5"/><circle class="s" cx="14.5" cy="8.8" r="1.5"/><line class="s" x1="6" y1="6" x2="6" y2="14"/><path class="s" d="M7.5 8.5c4 0 5.5-1.4 5.5-3.7v2.5"/>
+</svg>

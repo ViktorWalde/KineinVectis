@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Sincronizar">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M4 7.2A6.2 6.2 0 0 1 14.5 5l1.8 1.7"/><polygon class="f" points="16.3,6.7 13.4,6.9 14.9,4.4"/><path class="s" d="M16 12.8A6.2 6.2 0 0 1 5.5 15l-1.8-1.7"/><polygon class="f" points="3.7,13.3 6.6,13.1 5.1,15.6"/>
+</svg>

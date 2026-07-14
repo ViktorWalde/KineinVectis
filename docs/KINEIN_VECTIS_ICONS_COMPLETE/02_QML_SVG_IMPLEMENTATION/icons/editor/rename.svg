@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Renomear símbolo">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<line class="s" x1="4" y1="5" x2="4" y2="15"/><line class="s" x1="2.5" y1="5" x2="5.5" y2="5"/><line class="s" x1="2.5" y1="15" x2="5.5" y2="15"/><path class="s" d="M8 8h7M13 6l2 2-2 2M15 12H8M10 10l-2 2 2 2"/>
+</svg>

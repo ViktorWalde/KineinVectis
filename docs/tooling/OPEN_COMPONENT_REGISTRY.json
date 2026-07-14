@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-14",
+  "components": [
+    {
+      "id": "notify",
+      "name": "notify",
+      "role": "Filesystem notifications for external workspace changes",
+      "adoptionMode": "A",
+      "integration": "Rust crate linked only by kinein-core",
+      "upstream": {
+        "repository": "https://github.com/notify-rs/notify",
+        "documentation": "https://docs.rs/notify/8.2.0/notify/",
+        "release": "https://github.com/notify-rs/notify/releases/tag/notify-8.2.0"
+      },
+      "version": {
+        "selected": "8.2.0",
+        "pin": "Exact Cargo constraint (=8.2.0) plus Cargo.lock",
+        "reason": "Latest stable release compatible with project MSRV 1.85; 9.x was prerelease during adoption"
+      },
+      "license": {
+        "spdx": "CC0-1.0",
+        "accepted": true,
+        "source": "Published crate manifest"
+      },
+      "maintenance": {
+        "stableReleaseDate": "2025-08-03",
+        "statusAtReview": "Active; 9.0 release candidates published in 2026",
+        "reviewedAt": "2026-07-14"
+      },
+      "runtimeSecurity": {
+        "telemetry": false,
+        "network": false,
+        "shellExecution": false,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "nativeBackendLinux": "inotify via inotify/mio/libc",
+        "fallback": "PollWatcher with 2 second interval and content comparison"
+      },
+      "linuxTransitives": [
+        "notify-types 2.1.0",
+        "inotify 0.11.4",
+        "inotify-sys 0.1.8",
+        "bitflags 2.13.0",
+        "mio 1.2.2",
+        "walkdir 2.5.0",
+        "same-file 1.0.6",
+        "libc 0.2.186",
+        "log 0.4.33"
+      ],
+      "scopeControls": [
+        "Non-recursive lazy watches only",
+        "Workspace path confinement",
+        "Build, cache, VCS and atomic-temp filtering",
+        "180 ms event debounce and deduplication",
+        "Compare-before-save remains the final data-loss barrier"
+      ],
+      "verification": [
+        "Native/polling backend integration test",
+        "Event filtering and coalescing unit tests",
+        "Strict clippy and full workspace tests",
+        "QML conflict and automatic-reload harness"
+      ],
+      "decision": "docs/adr/ADR-0001-notify-filesystem-watcher.md"
+    },
+    {
+      "id": "tree-sitter-foundation",
+      "name": "Tree-sitter runtime and C/C++/Rust grammars",
+      "role": "Incremental local syntax parsing for highlights, folding, outline and locals",
+      "adoptionMode": "A",
+      "integration": "Rust crates linked only by kinein-core; generated C parsers stay encapsulated upstream",
+      "upstream": {
+        "runtimeRepository": "https://github.com/tree-sitter/tree-sitter",
+        "cRepository": "https://github.com/tree-sitter/tree-sitter-c",
+        "cppRepository": "https://github.com/tree-sitter/tree-sitter-cpp",
+        "rustRepository": "https://github.com/tree-sitter/tree-sitter-rust",
+        "documentation": "https://tree-sitter.github.io/tree-sitter/"
+      },
+      "version": {
+        "runtime": "0.26.11",
+        "cGrammar": "0.24.2",
+        "cppGrammar": "0.23.4",
+        "rustGrammar": "0.24.2",
+        "pin": "Exact Cargo constraints plus Cargo.lock",
+        "reason": "Current stable official releases; runtime MSRV 1.77 is below project MSRV 1.85 and grammar ABI is covered by integration tests"
+      },
+      "license": {
+        "spdx": "MIT",
+        "accepted": true,
+        "source": "Official repositories and published crate manifests"
+      },
+      "maintenance": {
+        "statusAtReview": "Official Tree-sitter organization; runtime and grammars active in 2026",
+        "reviewedAt": "2026-07-14"
+      },
+      "runtimeSecurity": {
+        "telemetry": false,
+        "network": false,
+        "shellExecution": false,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "nativeCode": "Tree-sitter runtime and generated grammar parsers compiled by cc; no Kinein-authored unsafe code"
+      },
+      "transitives": [
+        "tree-sitter-language 0.1.7",
+        "streaming-iterator 0.1.9",
+        "regex 1.13.0",
+        "regex-automata 0.4.15",
+        "regex-syntax 0.8.11",
+        "cc 1.2.67 (build-time)"
+      ],
+      "scopeControls": [
+        "C, C++ and Rust only in the first slice",
+        "Open editor buffers only; no recursive workspace indexing",
+        "32-document LRU cache",
+        "4 MiB per-buffer limit",
+        "180 ms UI debounce and versioned stale-result rejection",
+        "Tree-sitter never authorizes semantic refactors"
+      ],
+      "verification": [
+        "Official highlights and tags queries compile for all three grammars",
+        "Incremental second-version unit test",
+        "UTF-8 byte to Qt UTF-16 position test",
+        "Folding, outline and locals tests",
+        "JSON-RPC confinement integration tests",
+        "QML outline controller harness",
+        "Strict clippy and C++/QML gates"
+      ],
+      "decision": "docs/adr/ADR-0002-tree-sitter-syntax-foundation.md"
+    }
+  ]
+}

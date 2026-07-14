@@ -8,6 +8,7 @@ Item {
     property var projectTree: null
     property var searchController: null
     property var workspaceController: null
+    property var projectHealthController: null
 
     visible: false
 
@@ -18,6 +19,30 @@ Item {
             if (root.coreClient.connected && !root.searchController.hasCommands) {
                 root.coreClient.listCommands();
             }
+        }
+
+        function onCmakeStatusResolved(configured, hasCompileCommands) {
+            root.projectHealthController.handleCmakeStatus(configured);
+        }
+
+        function onCmakeConfigureFinished(success) {
+            root.projectHealthController.handleCmakeFinished(success);
+        }
+
+        function onFileSaved(path) {
+            // Auto-setup (radar docs/18): salvar CMakeLists/Presets pela
+            // IDE reconfigura sozinho (job na aba Jobs, sem roubar foco).
+            if (root.coreClient.workspaceKind !== "cmake") {
+                return;
+            }
+            if (path.endsWith("/CMakeLists.txt")
+                    || path.endsWith("/CMakePresets.json")) {
+                root.coreClient.cmakeConfigure();
+            }
+        }
+
+        function onCargoMetadataResolved(packages) {
+            root.projectHealthController.handleCargoMetadataResolved();
         }
 
         function onDirListed(path, entries) {
@@ -38,6 +63,10 @@ Item {
 
         function onPathDeleted(path) {
             root.projectTree.handlePathDeleted(path);
+        }
+
+        function onFilesChanged(changes) {
+            root.projectTree.handleExternalChanges(changes);
         }
 
         function onWorkspaceBrowseListed(path, parent, entries) {
@@ -67,6 +96,9 @@ Item {
             if (method === "fs.createFile" || method === "fs.createDirectory"
                     || method === "fs.rename" || method === "fs.delete") {
                 root.projectTree.handleRequestFailed(method, message);
+            }
+            if (method === "cargo.metadata") {
+                root.projectHealthController.handleCargoMetadataFailed(message);
             }
         }
     }

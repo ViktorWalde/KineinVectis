@@ -16,13 +16,20 @@ mod confine;
 mod error;
 mod find;
 mod ops;
+mod replace;
 mod search;
+pub mod transaction;
 
 pub use confine::confine_file;
 pub use error::FsError;
 pub use find::find_files;
-pub use ops::{create_directory, create_file, delete, list_dir, read_file, rename, write_file};
+pub use ops::{
+    create_directory, create_file, delete, list_dir, read_file, rename, write_file,
+    write_file_if_unchanged,
+};
+pub use replace::replace;
 pub use search::search;
+pub(crate) use transaction::{TextFileUpdate, write_text_transaction, write_text_transaction_with};
 
 /// Maximum file size accepted by `fs.read`, in bytes.
 pub const MAX_READ_BYTES: u64 = 1_048_576;

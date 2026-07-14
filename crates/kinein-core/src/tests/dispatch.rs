@@ -60,6 +60,7 @@ fn command_list_includes_lsp_navigation_commands() {
     assert!(ids.contains(&"lsp.completion"));
     assert!(ids.contains(&"lsp.references"));
     assert!(ids.contains(&"lsp.rename"));
+    assert!(ids.contains(&"syntaxTree.update"));
 }
 
 #[test]

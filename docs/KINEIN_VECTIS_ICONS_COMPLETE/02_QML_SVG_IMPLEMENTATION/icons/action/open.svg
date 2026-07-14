@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Abrir">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M2.5 6.2h5l1.5 1.8h8.5l-1.2 8.2H3.4z"/><line class="s" x1="4.2" y1="9.1" x2="16.9" y2="9.1"/><path class="s" d="M12.5 12.5h4M14.8 10.6l2 1.9-2 1.9"/>
+</svg>

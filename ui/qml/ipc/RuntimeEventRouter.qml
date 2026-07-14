@@ -11,12 +11,20 @@ Item {
     Connections {
         target: root.coreClient
 
-        function onTerminalData(data) {
-            root.runtimeController.handleTerminalData(data);
+        function onTerminalOpened(id, shell) {
+            root.runtimeController.handleTerminalOpened(id, shell);
         }
 
-        function onTerminalClosed(exitCode) {
-            root.runtimeController.handleTerminalClosed();
+        function onTerminalRender(render) {
+            root.runtimeController.handleTerminalRender(render);
+        }
+
+        function onTerminalClosed(id, exitCode) {
+            root.runtimeController.handleTerminalClosed(id);
+        }
+
+        function onRunConfigsResolved(configs, activeId) {
+            root.runtimeController.handleRunConfigs(configs, activeId);
         }
 
         function onRunStarted(command) {

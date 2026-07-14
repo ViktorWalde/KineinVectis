@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Rebase">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<circle class="s" cx="6" cy="4" r="1.1"/><circle class="s" cx="6" cy="9" r="1.1"/><circle class="s" cx="14" cy="11" r="1.1"/><circle class="s" cx="14" cy="16" r="1.1"/><line class="s" x1="6" y1="5.1" x2="6" y2="7.9"/><line class="s" x1="14" y1="12.1" x2="14" y2="14.9"/><path class="s" d="M7.1 9c3.5 0 4.2 2 5.8 2"/>
+</svg>

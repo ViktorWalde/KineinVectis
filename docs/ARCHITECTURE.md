@@ -213,6 +213,21 @@ Portanto:
 - erros são **estruturados** (código estável + mensagem + detalhes), como já são
   hoje no protocolo.
 
+### 7.1. Estado do disco e buffers do editor
+
+O disco é uma fonte externa concorrente; a UI nunca presume que o snapshot de
+uma aba ainda é atual. O domínio `fswatch` observa apenas a raiz e diretórios
+alcançados por `fs.list`/`fs.read`, sem varredura recursiva global. Ele publica
+eventos tipados e debounced; routers de UI os distribuem para editor, árvore e
+Git sem colocar lógica de conflito no `CoreClient`.
+
+O watcher é aviso antecipado, não a barreira final. Todo `fs.write` de usuário
+leva `expectedContent`, e `fsops` compara com o disco antes da escrita atômica.
+Se divergir, o core retorna `FILE_CHANGED` e não escreve. Só uma decisão
+explícita da UI atualiza o snapshot esperado para permitir sobrescrever a versão
+externa. Operações de workspace edit do LSP devem convergir para o mesmo modelo
+transacional quando ganharem preview/rollback.
+
 ## 8. Anti-padrões (o que causou a dívida — proibido repetir)
 
 ```text

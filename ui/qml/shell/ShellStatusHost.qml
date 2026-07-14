@@ -6,6 +6,7 @@ WorkspaceStatusBar {
 
     property var coreClient: null
     property var shellController: null
+    property var gitController: null
 
     workspaceRoot: coreClient.workspaceRoot
     workspaceKindLabel: shellController.kindLabel(coreClient.workspaceKind)
@@ -19,6 +20,10 @@ WorkspaceStatusBar {
     coreConnected: coreClient.connected
     coreProtocolVersion: coreClient.protocolVersion
     coreStatus: coreClient.status
+    gitBranchLabel: gitController.branchLabel
+    gitAheadCount: gitController.aheadCount
+    gitBehindCount: gitController.behindCount
+    gitChangeCount: gitController.changeCount
     onLogsRequested: shellController.toggleBottomTab("logs")
     onCancelBuildRequested: coreClient.cancelBuild()
     onCancelTestsRequested: coreClient.cancelTests()

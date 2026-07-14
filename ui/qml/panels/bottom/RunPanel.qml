@@ -38,6 +38,26 @@ Item {
     ListView {
         id: runOutputView
 
+
+        // B2 (docs/24): barra de rolagem. `parent: runOutputView` é OBRIGATÓRIO — um filho
+        // declarado dentro de um ListView vira filho do contentItem e ROLARIA
+        // junto com a lista. O ListView segue sendo a fonte da verdade.
+        VerticalScrollBar {
+            id: scrollBar_runOutputView
+
+            parent: runOutputView
+            anchors.right: runOutputView.right
+            anchors.top: runOutputView.top
+            anchors.bottom: runOutputView.bottom
+
+            contentSize: runOutputView.contentHeight
+            viewportSize: runOutputView.height
+            position: runOutputView.contentY
+
+            onMoveRequested: function(position) {
+                runOutputView.contentY = position;
+            }
+        }
         anchors.top: parent.top
         anchors.bottom: runInputBox.top
         anchors.bottomMargin: Theme.spacingSmall
@@ -51,7 +71,7 @@ Item {
             anchors.centerIn: parent
             visible: panel.outputModel.count === 0
             text: qsTr("Digite um comando e pressione Enter,"
-                       + " ou use ▶ Iniciar (Shift+F10).")
+                       + " ou use Iniciar (Shift+F10).")
             color: Theme.textMuted
             font.pixelSize: 11
         }
@@ -77,7 +97,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 24
+        height: 30
         radius: Theme.radius
         color: Theme.background0
         border.color: runInput.activeFocus ? Theme.accent : Theme.borderSoft

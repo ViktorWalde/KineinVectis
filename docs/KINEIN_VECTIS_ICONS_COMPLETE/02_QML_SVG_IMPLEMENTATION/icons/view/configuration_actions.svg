@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Configuration Actions">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M12.7 3.3a4 4 0 0 0-4.8 4.8L3.2 12.8a1.8 1.8 0 0 0 2.5 2.5l4.7-4.7a4 4 0 0 0 4.8-4.8l-2.4 2.4-2.2-.7-.7-2.2z"/><line class="s" x1="13.399999999999999" y1="14.8" x2="17.0" y2="14.8"/><line class="s" x1="15.2" y1="13.0" x2="15.2" y2="16.6"/>
+</svg>

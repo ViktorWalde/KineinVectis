@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Sanitizers">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M10 2.4l6 2.1v5.1c0 3.8-2.2 6.6-6 8-3.8-1.4-6-4.2-6-8V4.5z"/><path class="s" d="M7 11c1.4-3 4.6-3 6 0M8.5 13.5h3M10 6.5v1.2"/>
+</svg>

@@ -224,7 +224,9 @@ Impacto UI futuro:
 - a UI mostra processos ativos de forma uniforme;
 - logs sao clicaveis por job/task;
 - "Background Services" consegue explicar o que esta vivo;
-- Run/Terminal/Build continuam visualmente separados, mas com lifecycle comum.
+- Run e Terminal dividem UMA aba Terminal com sessoes distintas (decisao do
+  usuario em 2026-07-09, fatia M2.1 de docs/18); os BACKENDS continuam
+  separados (PTY interativo vs run controlado) e Build segue a parte.
 ```
 
 Componentes UI provaveis:

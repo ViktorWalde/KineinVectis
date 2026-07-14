@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Depurar">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<circle class="s" cx="10" cy="5" r="2"/><rect class="s" x="6.7" y="8" width="6.6" height="7.6" rx="2"/><line class="s" x1="4.2" y1="9.5" x2="6.7" y2="9.5"/><line class="s" x1="13.3" y1="9.5" x2="15.8" y2="9.5"/><line class="s" x1="4.2" y1="12" x2="6.7" y2="12"/><line class="s" x1="13.3" y1="12" x2="15.8" y2="12"/><line class="s" x1="6.8" y1="6.4" x2="5.2" y2="4.8"/><line class="s" x1="13.2" y1="6.4" x2="14.8" y2="4.8"/>
+</svg>

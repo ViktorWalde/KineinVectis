@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Palavra inteira">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<line class="s" x1="3" y1="4" x2="3" y2="16"/><line class="s" x1="17" y1="4" x2="17" y2="16"/><path class="s" d="M6 13V8h2.3a1.8 1.8 0 0 1 0 3.6H6M8.4 11.6A1.7 1.7 0 0 1 8.4 15H6v-3.4"/><path class="s" d="M11.5 10.2c0-2 4-2.2 4 0v3.8M15.5 11.8c-4-1-5 3.2-1.2 2.2 1.2-.3 1.2-1 1.2-2.2"/>
+</svg>

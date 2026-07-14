@@ -47,7 +47,7 @@ Rectangle {
             height: 28
             radius: Theme.radius
             color: root.controller.selectedPath === folderRow.path
-                   ? Theme.accentDim
+                   ? Theme.surfaceSelected
                    : (folderMouse.containsMouse ? Theme.surface2 : "transparent")
 
             Row {

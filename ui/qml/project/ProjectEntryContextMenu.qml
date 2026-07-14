@@ -7,6 +7,8 @@ Item {
     property real menuY: 0
 
     signal dismissRequested()
+    signal createFileRequested()
+    signal createDirectoryRequested()
     signal renameRequested()
     signal deleteRequested()
 
@@ -34,6 +36,64 @@ Item {
             anchors.right: parent.right
             anchors.margins: Theme.spacingSmall
             spacing: 2
+
+            Rectangle {
+                width: parent.width
+                height: 26
+                radius: Theme.radius
+                color: entryCreateFileHover.containsMouse
+                       ? Theme.surface2 : "transparent"
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingSmall
+                    text: qsTr("Adicionar arquivo")
+                    color: Theme.textPrimary
+                    font.pixelSize: 12
+                }
+
+                MouseArea {
+                    id: entryCreateFileHover
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.createFileRequested()
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 26
+                radius: Theme.radius
+                color: entryCreateDirectoryHover.containsMouse
+                       ? Theme.surface2 : "transparent"
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingSmall
+                    text: qsTr("Adicionar pasta")
+                    color: Theme.textPrimary
+                    font.pixelSize: 12
+                }
+
+                MouseArea {
+                    id: entryCreateDirectoryHover
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.createDirectoryRequested()
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: Theme.borderSoft
+            }
 
             Rectangle {
                 width: parent.width

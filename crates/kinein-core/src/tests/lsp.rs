@@ -32,6 +32,8 @@ fn lsp_navigation_requires_open_workspace() {
         "lsp.hover",
         "lsp.completion",
         "lsp.references",
+        "lsp.codeActions",
+        "lsp.workspaceSymbols",
     ] {
         let request = JsonRpcRequest::new(
             36_i64,
@@ -108,6 +110,20 @@ fn lsp_rename_requires_open_workspace_and_non_empty_name() {
 }
 
 #[test]
+fn lsp_switch_source_header_requires_workspace() {
+    let mut core = core_with_empty_search_path("lsp-switch-no-workspace");
+    let no_workspace = core.handle_request(&JsonRpcRequest::new(
+        90_i64,
+        "lsp.switchSourceHeader",
+        Some(json!({ "path": "/tmp/a.cpp", "content": "" })),
+    ));
+    assert_eq!(
+        no_workspace.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+}
+
+#[test]
 fn lsp_navigation_reports_unavailable_without_lsp_manager() {
     let workspace = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -173,4 +189,98 @@ fn lsp_did_change_rejects_paths_outside_workspace() {
     let error = outcome.response().error.as_ref().unwrap();
 
     assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+}
+
+#[test]
+fn lsp_apply_code_action_requires_workspace_and_manager() {
+    let mut core = core_with_empty_search_path("lsp-apply-action-no-workspace");
+    let no_workspace = core.handle_request(&JsonRpcRequest::new(
+        50_i64,
+        "lsp.applyCodeAction",
+        Some(json!({ "path": "/tmp/main.rs", "content": "fn main() {}\n", "actionIndex": 0 })),
+    ));
+    let error = no_workspace.response().error.as_ref().unwrap();
+    assert_eq!(
+        error.code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+    assert_eq!(error.message, "nenhum workspace aberto");
+
+    let workspace = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-lsp-apply-action", std::process::id()));
+    std::fs::create_dir_all(workspace.join("src")).unwrap();
+    std::fs::write(workspace.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(workspace.join("src/main.rs"), "fn main() {}\n").unwrap();
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        51_i64,
+        "workspace.open",
+        Some(json!({ "path": workspace.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let unavailable = core.handle_request(&JsonRpcRequest::new(
+        52_i64,
+        "lsp.applyCodeAction",
+        Some(json!({
+            "path": workspace.join("src/main.rs").to_str().unwrap(),
+            "content": "fn main() {}\n",
+            "actionIndex": 0,
+        })),
+    ));
+    let unavailable_error = unavailable.response().error.as_ref().unwrap();
+    assert_eq!(
+        unavailable_error.code,
+        kinein_protocol::JsonRpcErrorCode::InternalError
+    );
+    assert_eq!(
+        unavailable_error.message,
+        "LSP nao esta habilitado neste loop do core"
+    );
+}
+
+#[test]
+fn lsp_workspace_symbols_rejects_empty_query() {
+    let workspace = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-lsp-symbols-query", std::process::id()));
+    std::fs::create_dir_all(workspace.join("src")).unwrap();
+    std::fs::write(workspace.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(workspace.join("src/main.rs"), "fn main() {}\n").unwrap();
+    let mut core = core_with_empty_search_path("lsp-symbols-query");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        60_i64,
+        "workspace.open",
+        Some(json!({ "path": workspace.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let outcome = core.handle_request(&JsonRpcRequest::new(
+        61_i64,
+        "lsp.workspaceSymbols",
+        Some(json!({
+            "path": workspace.join("src/main.rs").to_str().unwrap(),
+            "content": "fn main() {}\n",
+            "query": "   ",
+        })),
+    ));
+    let error = outcome.response().error.as_ref().unwrap();
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+    assert!(error.message.contains("query"));
+}
+
+#[test]
+fn lsp_document_symbols_requires_workspace_and_manager() {
+    let mut core = core_with_empty_search_path("lsp-doc-symbols");
+    let no_workspace = core.handle_request(&JsonRpcRequest::new(
+        62_i64,
+        "lsp.documentSymbols",
+        Some(json!({ "path": "/tmp/main.rs", "content": "fn main() {}\n" })),
+    ));
+    let error = no_workspace.response().error.as_ref().unwrap();
+    assert_eq!(
+        error.code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+    assert_eq!(error.message, "nenhum workspace aberto");
 }

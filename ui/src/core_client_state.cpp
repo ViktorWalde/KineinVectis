@@ -58,6 +58,20 @@ void CoreClient::setRunning(bool running)
     emit runningChanged();
 }
 
+bool CoreClient::isDebugging() const
+{
+    return m_debugging;
+}
+
+void CoreClient::setDebugging(bool debugging)
+{
+    if (m_debugging == debugging) {
+        return;
+    }
+    m_debugging = debugging;
+    emit debuggingChanged();
+}
+
 bool CoreClient::isTerminalActive() const
 {
     return m_terminalActive;
@@ -84,6 +98,20 @@ void CoreClient::setScanningEnvironment(bool scanning)
     }
     m_scanningEnvironment = scanning;
     emit scanningEnvironmentChanged();
+}
+
+bool CoreClient::isRecovering() const
+{
+    return m_recovering;
+}
+
+void CoreClient::setRecovering(bool recovering)
+{
+    if (m_recovering == recovering) {
+        return;
+    }
+    m_recovering = recovering;
+    emit recoveringChanged();
 }
 
 } // namespace kinein

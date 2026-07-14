@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Configurar">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="s" x="3" y="3.5" width="5.4" height="5.4" rx="1"/><rect class="s" x="11.6" y="11.1" width="5.4" height="5.4" rx="1"/><path class="s" d="M8.4 6.2h3.2c2 0 2.7 1.2 2.7 2.8v2"/><circle class="s" cx="10" cy="10" r="2.5"/><line class="s" x1="14.3" y1="10.0" x2="16.1" y2="10.0"/><line class="s" x1="13.04" y1="13.04" x2="14.31" y2="14.31"/><line class="s" x1="10.0" y1="14.3" x2="10.0" y2="16.1"/><line class="s" x1="6.96" y1="13.04" x2="5.69" y2="14.31"/><line class="s" x1="5.7" y1="10.0" x2="3.9" y2="10.0"/><line class="s" x1="6.96" y1="6.96" x2="5.69" y2="5.69"/><line class="s" x1="10.0" y1="5.7" x2="10.0" y2="3.9"/><line class="s" x1="13.04" y1="6.96" x2="14.31" y2="5.69"/>
+</svg>

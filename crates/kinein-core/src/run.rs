@@ -289,7 +289,7 @@ fn cmake_binary_command(root: &Path) -> Result<String, RunError> {
 }
 
 /// Collects executable regular files under `dir`, skipping `CMakeFiles`.
-fn collect_executables(dir: &Path, found: &mut Vec<String>) {
+pub(crate) fn collect_executables(dir: &Path, found: &mut Vec<String>) {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
@@ -310,14 +310,14 @@ fn collect_executables(dir: &Path, found: &mut Vec<String>) {
 
 /// Returns `true` when the file has any execute permission bit set.
 #[cfg(unix)]
-fn is_executable(path: &Path) -> bool {
+pub(crate) fn is_executable(path: &Path) -> bool {
     use std::os::unix::fs::PermissionsExt;
     std::fs::metadata(path).is_ok_and(|metadata| metadata.permissions().mode() & 0o111 != 0)
 }
 
 /// Non-Unix platforms have no execute bit; nothing is auto-runnable.
 #[cfg(not(unix))]
-fn is_executable(_path: &Path) -> bool {
+pub(crate) fn is_executable(_path: &Path) -> bool {
     false
 }
 

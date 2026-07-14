@@ -12,7 +12,226 @@ pub(crate) fn command_descriptors() -> Vec<CommandDescriptor> {
     descriptors.extend(run_command_descriptors());
     descriptors.extend(lsp_command_descriptors());
     descriptors.extend(jobs_command_descriptors());
+    descriptors.extend(format_command_descriptors());
+    descriptors.extend(editor_find_command_descriptors());
+    descriptors.extend(cmake_command_descriptors());
+    descriptors.extend(cargo_command_descriptors());
+    descriptors.extend(runconfig_command_descriptors());
+    descriptors.extend(debug_command_descriptors());
+    descriptors.extend(git_command_descriptors());
+    descriptors.extend(settings_command_descriptors());
     descriptors
+}
+
+fn settings_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "settings.get".to_owned(),
+        title: "Configuracoes".to_owned(),
+        category: "IDE".to_owned(),
+        description: "Abre as configuracoes (fonte do editor, format-on-save, auto-close)"
+            .to_owned(),
+        default_shortcut: Some("Ctrl+Alt+S".to_owned()),
+        requires_workspace: false,
+    }]
+}
+
+fn git_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![
+        CommandDescriptor {
+            id: "git.status".to_owned(),
+            title: "Git: Atualizar status".to_owned(),
+            category: "Git".to_owned(),
+            description: "Reconsulta o git status do workspace (branch e mudancas)".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.commit".to_owned(),
+            title: "Git: Commit...".to_owned(),
+            category: "Git".to_owned(),
+            description: "Abre a aba Git para stage e commit das mudancas".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.fileDiff".to_owned(),
+            title: "Git: Diff do arquivo".to_owned(),
+            category: "Git".to_owned(),
+            description: "Mostra o diff do arquivo atual contra o HEAD".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.blame".to_owned(),
+            title: "Git: Blame do arquivo".to_owned(),
+            category: "Git".to_owned(),
+            description: "Liga/desliga autor e idade de cada linha na gutter do editor".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.log".to_owned(),
+            title: "Git: Historico".to_owned(),
+            category: "Git".to_owned(),
+            description: "Abre o historico de commits na aba Git (diff por clique)".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.branches".to_owned(),
+            title: "Git: Trocar branch...".to_owned(),
+            category: "Git".to_owned(),
+            description: "Lista branches locais e permite trocar a branch ativa".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.pull".to_owned(),
+            title: "Git: Pull (fast-forward)".to_owned(),
+            category: "Git".to_owned(),
+            description: "Atualiza a branch via job usando apenas fast-forward".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.push".to_owned(),
+            title: "Git: Push".to_owned(),
+            category: "Git".to_owned(),
+            description: "Envia a branch atual ao upstream configurado via job".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "git.stash".to_owned(),
+            title: "Git: Stash...".to_owned(),
+            category: "Git".to_owned(),
+            description: "Guarda ou restaura mudancas locais incluindo untracked".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+    ]
+}
+
+fn debug_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "debug.start".to_owned(),
+        title: "Debug".to_owned(),
+        category: "Run".to_owned(),
+        description: "Inicia sessao de debug (lldb-dap) no alvo do workspace".to_owned(),
+        default_shortcut: Some("Shift+F9".to_owned()),
+        requires_workspace: true,
+    }]
+}
+
+fn runconfig_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "runConfig.list".to_owned(),
+        title: "Run Configurations".to_owned(),
+        category: "Run".to_owned(),
+        description: "Configuracoes de execucao do workspace (seletor na toolbar)".to_owned(),
+        default_shortcut: None,
+        requires_workspace: true,
+    }]
+}
+
+fn cargo_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![
+        CommandDescriptor {
+            id: "cargo.check".to_owned(),
+            title: "Cargo: Check".to_owned(),
+            category: "Cargo".to_owned(),
+            description:
+                "Roda cargo check (feedback rapido sem codegen); problemas na aba Problemas"
+                    .to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "cargo.metadata".to_owned(),
+            title: "Cargo: Metadata".to_owned(),
+            category: "Cargo".to_owned(),
+            description: "Resumo do workspace Cargo (pacotes, targets, features)".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+    ]
+}
+
+fn cmake_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![
+        CommandDescriptor {
+            id: "cmake.configure".to_owned(),
+            title: "CMake: Configure".to_owned(),
+            category: "CMake".to_owned(),
+            description: "Configura o projeto CMake em .kinein/build (gera compile_commands.json)"
+                .to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "cmake.presets.list".to_owned(),
+            title: "CMake: Presets".to_owned(),
+            category: "CMake".to_owned(),
+            description: "Lista os configure presets do projeto".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "cmake.targets.list".to_owned(),
+            title: "CMake: Targets".to_owned(),
+            category: "CMake".to_owned(),
+            description: "Lista os targets do ultimo configure (file-api)".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "cmake.status".to_owned(),
+            title: "CMake: Status".to_owned(),
+            category: "CMake".to_owned(),
+            description: "Mostra se o projeto esta configurado e se ha compile_commands".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+    ]
+}
+
+fn format_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "format.text".to_owned(),
+        title: "Reformat File".to_owned(),
+        category: "Editor".to_owned(),
+        description: "Formata o arquivo atual com rustfmt/clang-format".to_owned(),
+        default_shortcut: Some("Ctrl+Alt+L".to_owned()),
+        requires_workspace: true,
+    }]
+}
+
+/// Find/Replace dentro do arquivo aberto (D1b, docs/24).
+///
+/// Sao comandos de UI PURA: o buffer vive no editor, entao a busca nao passa
+/// pelo core (diferente do `fs.search`, que roda ripgrep no DISCO). O core so
+/// os ANUNCIA aqui para que aparecam na paleta de comandos (`command.list`);
+/// quem executa e o `CommandDispatcher` da UI, como ja acontece com
+/// `settings.get`.
+fn editor_find_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![
+        CommandDescriptor {
+            id: "editor.find".to_owned(),
+            title: "Localizar no arquivo".to_owned(),
+            category: "Editor".to_owned(),
+            description: "Busca texto no arquivo aberto (case, palavra inteira, regex)".to_owned(),
+            default_shortcut: Some("Ctrl+F".to_owned()),
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "editor.replace".to_owned(),
+            title: "Substituir no arquivo".to_owned(),
+            category: "Editor".to_owned(),
+            description: "Busca e substitui no arquivo aberto (um a um ou tudo)".to_owned(),
+            default_shortcut: Some("Ctrl+H".to_owned()),
+            requires_workspace: true,
+        },
+    ]
 }
 
 fn jobs_command_descriptors() -> Vec<CommandDescriptor> {
@@ -200,11 +419,19 @@ fn workspace_command_descriptors() -> Vec<CommandDescriptor> {
             default_shortcut: None,
             requires_workspace: true,
         },
+        CommandDescriptor {
+            id: "workspace.saveSession".to_owned(),
+            title: "Save Session".to_owned(),
+            category: "Workspace".to_owned(),
+            description: "Persiste as abas abertas do workspace (.kinein/session.json)".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
     ]
 }
 
 fn file_command_descriptors() -> Vec<CommandDescriptor> {
-    vec![
+    let mut descriptors = vec![
         CommandDescriptor {
             id: "fs.list".to_owned(),
             title: "List Directory".to_owned(),
@@ -271,6 +498,14 @@ fn file_command_descriptors() -> Vec<CommandDescriptor> {
             requires_workspace: true,
         },
         CommandDescriptor {
+            id: "fs.replace".to_owned(),
+            title: "Replace in Files".to_owned(),
+            category: "Files".to_owned(),
+            description: "Substitui texto no workspace com rollback multi-arquivo".to_owned(),
+            default_shortcut: Some("Ctrl+Shift+H".to_owned()),
+            requires_workspace: true,
+        },
+        CommandDescriptor {
             id: "fs.findFiles".to_owned(),
             title: "Find File".to_owned(),
             category: "Files".to_owned(),
@@ -278,6 +513,13 @@ fn file_command_descriptors() -> Vec<CommandDescriptor> {
             default_shortcut: Some("Ctrl+Shift+N".to_owned()),
             requires_workspace: true,
         },
+    ];
+    descriptors.extend(build_command_descriptors());
+    descriptors
+}
+
+fn build_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![
         CommandDescriptor {
             id: "build.run".to_owned(),
             title: "Build Project".to_owned(),
@@ -307,12 +549,59 @@ fn file_command_descriptors() -> Vec<CommandDescriptor> {
 }
 
 fn lsp_command_descriptors() -> Vec<CommandDescriptor> {
+    let mut descriptors = lsp_core_command_descriptors();
+    descriptors.extend(lsp_workspace_edit_command_descriptors());
+    descriptors.push(CommandDescriptor {
+        id: "lsp.switchSourceHeader".to_owned(),
+        title: "C/C++: Alternar header/source".to_owned(),
+        category: "LSP".to_owned(),
+        description: "Alterna entre o header e o source do componente C/C++ (clangd)".to_owned(),
+        default_shortcut: Some("Alt+O".to_owned()),
+        requires_workspace: true,
+    });
+    descriptors.push(CommandDescriptor {
+        id: "lsp.restart".to_owned(),
+        title: "LSP: Reiniciar servidor".to_owned(),
+        category: "LSP".to_owned(),
+        description: "Reinicia os servidores de linguagem (clangd/rust-analyzer) quando travam"
+            .to_owned(),
+        default_shortcut: None,
+        requires_workspace: true,
+    });
+    descriptors
+}
+
+fn lsp_core_command_descriptors() -> Vec<CommandDescriptor> {
     vec![
         CommandDescriptor {
             id: "lsp.semanticTokens".to_owned(),
             title: "Semantic Highlighting".to_owned(),
             category: "LSP".to_owned(),
             description: "Resolve cores semanticas do arquivo aberto via LSP".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "lsp.codeActions".to_owned(),
+            title: "Code Actions".to_owned(),
+            category: "LSP".to_owned(),
+            description: "Lista quick fixes e refactors do LSP no ponto do cursor".to_owned(),
+            default_shortcut: Some("Alt+Enter".to_owned()),
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "lsp.documentSymbols".to_owned(),
+            title: "File Structure".to_owned(),
+            category: "LSP".to_owned(),
+            description: "Simbolos do arquivo atual (prefixo @ no Search Everywhere)".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "lsp.workspaceSymbols".to_owned(),
+            title: "Go to Symbol".to_owned(),
+            category: "LSP".to_owned(),
+            description: "Busca simbolos no workspace (prefixo # no Search Everywhere)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
         },
@@ -362,8 +651,45 @@ fn lsp_command_descriptors() -> Vec<CommandDescriptor> {
             id: "lsp.rename".to_owned(),
             title: "Rename Symbol".to_owned(),
             category: "LSP".to_owned(),
-            description: "Renomeia o simbolo em todos os arquivos do workspace via LSP".to_owned(),
+            description: "Prepara a previa de rename em todos os arquivos via LSP".to_owned(),
             default_shortcut: Some("Shift+F6".to_owned()),
+            requires_workspace: true,
+        },
+    ]
+}
+
+fn lsp_workspace_edit_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![
+        CommandDescriptor {
+            id: "lsp.applyCodeAction".to_owned(),
+            title: "Preview Code Action".to_owned(),
+            category: "LSP".to_owned(),
+            description: "Prepara a previa de uma acao da ultima consulta".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "lsp.workspaceEdit.apply".to_owned(),
+            title: "Apply Workspace Edit".to_owned(),
+            category: "LSP".to_owned(),
+            description: "Confirma uma transacao LSP com validacao e rollback".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "lsp.workspaceEdit.cancel".to_owned(),
+            title: "Cancel Workspace Edit".to_owned(),
+            category: "LSP".to_owned(),
+            description: "Descarta uma transacao LSP sem alterar arquivos".to_owned(),
+            default_shortcut: None,
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "syntaxTree.update".to_owned(),
+            title: "Update Local Syntax Tree".to_owned(),
+            category: "Language".to_owned(),
+            description: "Atualiza highlight, folding, outline e locals estruturais".to_owned(),
+            default_shortcut: None,
             requires_workspace: true,
         },
     ]

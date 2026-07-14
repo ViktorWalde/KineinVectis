@@ -42,6 +42,36 @@ pub struct WorkspaceOpenParams {
     pub path: String,
 }
 
+/// Editor session restored with `workspace.open` (open tabs + active tab).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceSession {
+    /// Canonical absolute paths of files to reopen, in tab order.
+    pub open_files: Vec<String>,
+    /// Canonical absolute path of the tab that was active, when still valid.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_file: Option<String>,
+}
+
+/// Parameters for `workspace.saveSession`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WorkspaceSaveSessionParams {
+    /// Absolute paths of the open tabs, in order.
+    pub open_files: Vec<String>,
+    /// Absolute path of the active tab, when any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_file: Option<String>,
+}
+
+/// Result payload for `workspace.saveSession`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceSaveSessionResult {
+    /// Number of entries actually persisted (invalid paths are skipped).
+    pub files: u64,
+}
+
 /// Result payload for `workspace.status`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

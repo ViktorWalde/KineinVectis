@@ -136,6 +136,8 @@ pub enum JsonRpcErrorCode {
     InternalError,
     /// A required external tool was not found.
     ToolNotFound,
+    /// The file changed after the client last read it.
+    FileChanged,
 }
 
 #[cfg(test)]

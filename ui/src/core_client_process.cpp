@@ -33,6 +33,13 @@ void CoreClient::handleStarted()
 {
     appendLog(QStringLiteral("processo do core iniciado (pid %1)").arg(m_process.processId()));
     ping();
+    // M4.3: recuperacao de crash — reabre o mesmo workspace no core novo.
+    // O session restore e suprimido em handleWorkspaceOpened (m_recovering),
+    // entao as abas/edicoes da UI sao preservadas.
+    if (m_recovering && !m_lastWorkspaceRoot.isEmpty()) {
+        appendLog(QStringLiteral("recuperando workspace: %1").arg(m_lastWorkspaceRoot));
+        openWorkspace(m_lastWorkspaceRoot);
+    }
 }
 
 void CoreClient::handleStdout()
@@ -66,18 +73,48 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
     else {
         appendErrorLog(QStringLiteral("core finalizou: crash"));
     }
+    // O destrutor desconecta os sinais antes de fechar limpo, entao qualquer
+    // handleFinished aqui e uma saida INESPERADA com a IDE viva.
     m_pendingMethods.clear();
+    m_pendingPaths.clear();
     setBuilding(false);
     setTesting(false);
     setAnalyzing(false);
     setRunning(false);
+    m_terminalIds.clear();
     setTerminalActive(false);
     setScanningEnvironment(false);
     m_buildJobId.clear();
     m_testJobId.clear();
     m_qualityJobId.clear();
     m_environmentJobId.clear();
+    m_stdoutBuffer.clear();
     setStatus(QStringLiteral("desconectado"), false);
+
+    // M4.3: sem workspace aberto, nada a recuperar (o usuario escolhe a
+    // pasta). Com workspace, tenta relancar — com guarda anti-loop de fork.
+    if (m_lastWorkspaceRoot.isEmpty()) {
+        return;
+    }
+    constexpr int kMaxAttempts = 3;
+    constexpr qint64 kWindowMs = 4000;
+    if (m_recoveryWindow.isValid() && m_recoveryWindow.elapsed() < kWindowMs) {
+        m_recoveryAttempts++;
+    }
+    else {
+        m_recoveryAttempts = 1;
+    }
+    m_recoveryWindow.restart();
+    if (m_recoveryAttempts > kMaxAttempts) {
+        setRecovering(false);
+        appendErrorLog(QStringLiteral(
+            "core caiu repetidamente; recuperacao pausada. Veja o log e reabra o projeto."));
+        setStatus(QStringLiteral("core caiu repetidamente"), false);
+        return;
+    }
+    setRecovering(true);
+    setStatus(QStringLiteral("recuperando..."), false);
+    start();
 }
 
 void CoreClient::handleErrorOccurred(QProcess::ProcessError error)
@@ -97,6 +134,10 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
 
     const qint64 id = m_nextRequestId++;
     m_pendingMethods.insert(id, method);
+    const QJsonValue path = params.value(QStringLiteral("path"));
+    if (path.isString()) {
+        m_pendingPaths.insert(id, path.toString());
+    }
 
     const QJsonObject request{
         {QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
@@ -105,7 +146,8 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
         {QStringLiteral("params"), params},
     };
     const QByteArray payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
-    if (method != QStringLiteral("lsp.didChange")) {
+    if (method != QStringLiteral("lsp.didChange") && method != QStringLiteral("syntaxTree.update"))
+    {
         appendLog(QStringLiteral("-> %1").arg(QString::fromUtf8(payload.left(200).trimmed())));
     }
     m_process.write(payload);

@@ -10,6 +10,17 @@ Item {
     property var projectTree: null
     property var editorController: null
     property var shellController: null
+    property var runtimeController: null
+    property var gitController: null
+    property var settingsController: null
+    property bool aboutVisible: false
+    property bool appMenuVisible: false
+    property real appMenuX: 0
+    property real appMenuY: 0
+    property var appMenuItems: []
+
+    signal appMenuActionRequested(string action)
+    signal appMenuDismissed()
 
     anchors.fill: parent
 
@@ -19,6 +30,46 @@ Item {
 
     function openEntryRenameWithName(name) {
         entryRenameDialog.openWithName(name);
+    }
+
+    function openRunConfigDialogWith(name, command) {
+        runConfigDialog.openWith(name, command);
+    }
+
+    function openAboutDialog() {
+        aboutVisible = true;
+    }
+
+    function openAppMenu(x, y, items) {
+        appMenuX = x;
+        appMenuY = y;
+        appMenuItems = items;
+        appMenuVisible = items.length > 0;
+    }
+
+    function closeAppMenu() {
+        if (!appMenuVisible) {
+            return;
+        }
+        appMenuVisible = false;
+        appMenuItems = [];
+        appMenuDismissed();
+    }
+
+    AppMenuPopup {
+        anchors.fill: parent
+        visible: root.appMenuVisible
+        z: 103
+        menuX: root.appMenuX
+        menuY: root.appMenuY
+        items: root.appMenuItems
+        onDismissRequested: root.closeAppMenu()
+        onActionRequested: function(action) {
+            root.appMenuVisible = false;
+            root.appMenuItems = [];
+            root.appMenuActionRequested(action);
+            root.appMenuDismissed();
+        }
     }
 
     SearchEverywhereDialog {
@@ -33,6 +84,8 @@ Item {
         loading: root.searchController.everywhereLoading
         truncated: root.searchController.everywhereTruncated
         errorText: root.searchController.everywhereError
+        titleText: root.searchController.everywhereTitle
+        recentMode: root.searchController.recentMode
         maxAvailableWidth: root.hostWidth - 80
         maxAvailableHeight: root.hostHeight - 120
         onQueryChanged: root.searchController.scheduleSearchEverywhere(
@@ -53,6 +106,93 @@ Item {
         }
     }
 
+    GitDiffDialog {
+        anchors.fill: parent
+        visible: root.gitController.diffDialogVisible
+        z: 93
+        title: root.gitController.diffDialogCommitLabel !== ""
+               ? root.gitController.diffDialogCommitLabel
+               : root.shellController.relativeToRoot(
+                     root.gitController.diffDialogPath)
+        emptyText: root.gitController.diffDialogCommitLabel !== ""
+                   ? qsTr("Commit sem diff textual (merge?).")
+                   : ""
+        diffText: root.gitController.diffDialogText
+        tracked: root.gitController.diffDialogTracked
+        loading: root.gitController.diffDialogLoading
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.gitController.closeDiffDialog()
+    }
+
+    SettingsDialog {
+        anchors.fill: parent
+        visible: root.settingsController.dialogVisible
+        z: 97
+        formatOnSave: root.settingsController.formatOnSave
+        editorFontSize: root.settingsController.editorFontSize
+        autoClosePairs: root.settingsController.autoClosePairs
+        rigorProfile: root.settingsController.rigorProfile
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.settingsController.closeDialog()
+        onSettingChanged: function(key, value) {
+            const values = {};
+            values[key] = value;
+            root.settingsController.setGlobal(values);
+        }
+    }
+
+    AboutDialog {
+        anchors.fill: parent
+        visible: root.aboutVisible
+        z: 98
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.aboutVisible = false
+    }
+
+    GitDiscardDialog {
+        anchors.fill: parent
+        visible: root.gitController.discardDialogVisible
+        z: 96
+        entryPath: root.gitController.discardDialogPath
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        onConfirmRequested: root.gitController.confirmDiscard()
+        onCancelRequested: root.gitController.cancelDiscard()
+    }
+
+    RunConfigMenu {
+        anchors.fill: parent
+        visible: root.runtimeController.configMenuVisible
+        z: 94
+        menuX: root.runtimeController.configMenuX
+        menuY: root.runtimeController.configMenuY
+        configsModel: root.runtimeController.runConfigsModel
+        activeConfigId: root.runtimeController.activeConfigId
+        onDismissRequested: root.runtimeController.closeConfigMenu()
+        onConfigChosen: function(id) {
+            root.runtimeController.chooseConfig(id);
+        }
+        onNewRequested: root.runtimeController.openNewConfigDialog()
+        onEditRequested: root.runtimeController.openEditConfigDialog()
+        onDeleteRequested: root.runtimeController.deleteActiveConfig()
+    }
+
+    RunConfigDialog {
+        id: runConfigDialog
+
+        visible: root.runtimeController.runConfigDialogVisible
+        z: 95
+        anchors.centerIn: parent
+        editing: root.runtimeController.editingConfigId !== ""
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        onConfirmRequested: root.runtimeController.confirmConfigDialog(
+                                runConfigDialog.currentName(),
+                                runConfigDialog.currentCommand())
+        onCancelRequested: root.runtimeController.cancelConfigDialog()
+    }
+
     ProjectEntryContextMenu {
         anchors.fill: parent
         visible: root.projectTree.entryMenuVisible
@@ -60,6 +200,8 @@ Item {
         menuX: root.projectTree.entryMenuX
         menuY: root.projectTree.entryMenuY
         onDismissRequested: root.projectTree.entryMenuVisible = false
+        onCreateFileRequested: root.projectTree.openEntryCreate("file")
+        onCreateDirectoryRequested: root.projectTree.openEntryCreate("directory")
         onRenameRequested: root.projectTree.openEntryRename()
         onDeleteRequested: root.projectTree.openEntryDelete()
     }

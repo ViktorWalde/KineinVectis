@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Diferenciar maiúsculas">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<path class="s" d="M3 14l3-9 3 9M4.2 10.5h3.6"/><path class="s" d="M11 10.2c0-2 4-2.2 4 0v3.8M15 11.8c-4-1-5 3.2-1.2 2.2 1.2-.3 1.2-1 1.2-2.2"/>
+</svg>

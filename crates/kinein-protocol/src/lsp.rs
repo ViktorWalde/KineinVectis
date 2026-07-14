@@ -62,6 +62,10 @@ pub struct LspCompletionItem {
 pub struct LspCompletionResult {
     /// Completion entries, already sorted and capped by the core.
     pub items: Vec<LspCompletionItem>,
+    /// `true` when the server marked the list incomplete (the UI must
+    /// re-request as the user types more, instead of filtering the cache).
+    #[serde(default)]
+    pub is_incomplete: bool,
 }
 
 /// Parameters for `lsp.rename`.
@@ -80,14 +84,138 @@ pub struct LspRenameParams {
     pub new_name: String,
 }
 
-/// Result payload for `lsp.rename`, after the core applied every edit.
+/// One file in a pending workspace-edit preview.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct LspRenameResult {
-    /// Canonical absolute paths of the files rewritten by the rename.
-    pub files: Vec<String>,
-    /// Total number of text edits applied.
+pub struct LspWorkspaceEditFilePreview {
+    /// Canonical absolute path of the file that would be rewritten.
+    pub path: String,
+    /// Current editor/disk content used as the edit base.
+    pub before_content: String,
+    /// Resulting content if the transaction is confirmed.
+    pub after_content: String,
+    /// Number of text edits targeting this file.
     pub edits: u64,
+}
+
+/// Pending workspace edit returned by `lsp.rename` and
+/// `lsp.applyCodeAction`. No file has been changed yet.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspWorkspaceEditPreviewResult {
+    /// Opaque transaction identifier accepted by apply/cancel.
+    pub transaction_id: String,
+    /// Human-readable operation title.
+    pub title: String,
+    /// Per-file before/after preview.
+    pub files: Vec<LspWorkspaceEditFilePreview>,
+    /// Total number of edits in every file.
+    pub edits: u64,
+}
+
+/// Parameters for `lsp.workspaceEdit.apply` and
+/// `lsp.workspaceEdit.cancel`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LspWorkspaceEditTransactionParams {
+    /// Opaque identifier returned by the preview-producing request.
+    pub transaction_id: String,
+}
+
+/// Result returned after an atomic workspace-edit transaction succeeds.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspWorkspaceEditApplyResult {
+    /// Identifier of the applied transaction.
+    pub transaction_id: String,
+    /// Human-readable operation title.
+    pub title: String,
+    /// Canonical absolute paths rewritten by the transaction.
+    pub files: Vec<String>,
+    /// Total number of applied text edits.
+    pub edits: u64,
+}
+
+/// Result returned after discarding a pending workspace edit.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspWorkspaceEditCancelResult {
+    /// Identifier of the cancelled transaction.
+    pub transaction_id: String,
+    /// Always `true` when the pending transaction existed and was removed.
+    pub cancelled: bool,
+}
+
+/// One action offered by `lsp.codeActions`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspCodeActionInfo {
+    /// Human-readable action title, as sent by the server.
+    pub title: String,
+    /// LSP code-action kind (`quickfix`, `refactor.rewrite`, ...), when the
+    /// server provides one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+}
+
+/// Result payload for `lsp.codeActions`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspCodeActionsResult {
+    /// Applicable actions, in server order. Only actions carrying an inline
+    /// `edit` are listed; the core keeps them cached for `lsp.applyCodeAction`.
+    pub actions: Vec<LspCodeActionInfo>,
+}
+
+/// Parameters for `lsp.applyCodeAction`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LspApplyCodeActionParams {
+    /// Absolute path of the file the actions were requested for.
+    pub path: String,
+    /// Current UTF-8 editor buffer, used as the base for edits on this file.
+    pub content: String,
+    /// Zero-based index into the last `lsp.codeActions` response for `path`.
+    pub action_index: u64,
+}
+
+/// Parameters for `lsp.workspaceSymbols`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LspWorkspaceSymbolsParams {
+    /// Absolute path of the active file; picks the language server queried.
+    pub path: String,
+    /// Current UTF-8 editor buffer, synced before the request.
+    pub content: String,
+    /// Non-empty symbol name query, matched server-side.
+    pub query: String,
+}
+
+/// One symbol returned by `lsp.documentSymbols` or `lsp.workspaceSymbols`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspSymbolInfo {
+    /// Symbol name as reported by the server.
+    pub name: String,
+    /// Flattened LSP symbol kind (`function`, `struct`, `enumMember`, ...).
+    pub kind: String,
+    /// Canonical absolute path of the file that declares the symbol.
+    pub path: String,
+    /// One-based line of the symbol's selection position.
+    pub line: u64,
+    /// One-based column of the symbol's selection position.
+    pub column: u64,
+    /// Enclosing container (parent symbol or module), when reported.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub container: Option<String>,
+}
+
+/// Result payload for `lsp.documentSymbols` and `lsp.workspaceSymbols`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspSymbolsResult {
+    /// Symbols in document order (file) or server order (workspace), capped.
+    pub symbols: Vec<LspSymbolInfo>,
 }
 
 /// One code location returned by `lsp.references`.
@@ -136,13 +264,42 @@ pub struct LspSemanticTokensResult {
     pub tokens: Vec<LspSemanticToken>,
 }
 
+/// Result payload for `lsp.switchSourceHeader` (clangd extension).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspSwitchSourceHeaderResult {
+    /// Counterpart file (header ↔ source); absent when clangd found none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+}
+
+/// Parameters for `lsp.restart` (M4.3b): restart one language server or all.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LspRestartParams {
+    /// Language to restart (e.g. `rust`, `cpp`). Absent = restart every
+    /// running server.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub language: Option<String>,
+}
+
+/// Result of `lsp.restart`: which servers were killed for restart.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LspRestartResult {
+    /// Languages whose server was stopped (respawns lazily on next request).
+    pub restarted: Vec<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;
 
     use crate::{
-        LspCompletionItem, LspCompletionResult, LspDefinitionResult, LspRenameParams,
-        LspRenameResult, LspTextDocumentPositionParams,
+        LspApplyCodeActionParams, LspCodeActionInfo, LspCodeActionsResult, LspCompletionItem,
+        LspCompletionResult, LspDefinitionResult, LspRenameParams, LspTextDocumentPositionParams,
+        LspWorkspaceEditApplyResult, LspWorkspaceEditCancelResult, LspWorkspaceEditFilePreview,
+        LspWorkspaceEditPreviewResult, LspWorkspaceEditTransactionParams,
     };
 
     #[test]
@@ -196,6 +353,7 @@ mod tests {
                 detail: None,
                 kind: Some("function".to_owned()),
             }],
+            is_incomplete: true,
         };
         let value = serde_json::to_value(result).unwrap();
 
@@ -203,17 +361,27 @@ mod tests {
         assert_eq!(value["items"][0]["insertText"], "main");
         assert_eq!(value["items"][0]["kind"], "function");
         assert!(value["items"][0].get("detail").is_none());
+        assert_eq!(value["isIncomplete"], true);
     }
 
     #[test]
-    fn lsp_rename_result_serializes_camel_case() {
-        let result = LspRenameResult {
-            files: vec!["/tmp/demo/src/main.rs".to_owned()],
+    fn lsp_workspace_edit_preview_serializes_camel_case() {
+        let result = LspWorkspaceEditPreviewResult {
+            transaction_id: "workspace-edit-7".to_owned(),
+            title: "Rename to start".to_owned(),
+            files: vec![LspWorkspaceEditFilePreview {
+                path: "/tmp/demo/src/main.rs".to_owned(),
+                before_content: "fn main() {}\n".to_owned(),
+                after_content: "fn start() {}\n".to_owned(),
+                edits: 1,
+            }],
             edits: 3,
         };
         let value = serde_json::to_value(result).unwrap();
 
-        assert_eq!(value["files"][0], "/tmp/demo/src/main.rs");
+        assert_eq!(value["transactionId"], "workspace-edit-7");
+        assert_eq!(value["files"][0]["path"], "/tmp/demo/src/main.rs");
+        assert_eq!(value["files"][0]["afterContent"], "fn start() {}\n");
         assert_eq!(value["edits"], 3);
     }
 
@@ -227,5 +395,124 @@ mod tests {
         let value = serde_json::to_value(result).unwrap();
 
         assert!(value.as_object().unwrap().is_empty());
+    }
+
+    #[test]
+    fn lsp_code_actions_result_serializes_camel_case_and_omits_empty_kind() {
+        let result = LspCodeActionsResult {
+            actions: vec![
+                LspCodeActionInfo {
+                    title: "Fill match arms".to_owned(),
+                    kind: Some("quickfix".to_owned()),
+                },
+                LspCodeActionInfo {
+                    title: "Inline variable".to_owned(),
+                    kind: None,
+                },
+            ],
+        };
+        let value = serde_json::to_value(result).unwrap();
+
+        assert_eq!(value["actions"][0]["title"], "Fill match arms");
+        assert_eq!(value["actions"][0]["kind"], "quickfix");
+        assert_eq!(value["actions"][1]["title"], "Inline variable");
+        assert!(value["actions"][1].get("kind").is_none());
+    }
+
+    #[test]
+    fn lsp_apply_code_action_params_reject_unknown_fields_and_use_camel_case() {
+        let parsed: LspApplyCodeActionParams = serde_json::from_value(serde_json::json!({
+            "path": "/w/src/main.rs",
+            "content": "fn main() {}",
+            "actionIndex": 2,
+        }))
+        .unwrap();
+        assert_eq!(parsed.action_index, 2);
+
+        let rejected = serde_json::from_value::<LspApplyCodeActionParams>(serde_json::json!({
+            "path": "/w/src/main.rs",
+            "content": "",
+            "actionIndex": 0,
+            "extra": true,
+        }));
+        assert!(rejected.is_err());
+    }
+
+    #[test]
+    fn lsp_symbol_info_serializes_camel_case_and_omits_empty_container() {
+        let value = serde_json::to_value(crate::LspSymbolsResult {
+            symbols: vec![
+                crate::LspSymbolInfo {
+                    name: "tamanho".to_owned(),
+                    kind: "method".to_owned(),
+                    path: "/w/src/main.rs".to_owned(),
+                    line: 16,
+                    column: 8,
+                    container: Some("Ponto".to_owned()),
+                },
+                crate::LspSymbolInfo {
+                    name: "main".to_owned(),
+                    kind: "function".to_owned(),
+                    path: "/w/src/main.rs".to_owned(),
+                    line: 21,
+                    column: 4,
+                    container: None,
+                },
+            ],
+        })
+        .unwrap();
+
+        assert_eq!(value["symbols"][0]["container"], "Ponto");
+        assert!(value["symbols"][1].get("container").is_none());
+        assert_eq!(value["symbols"][1]["kind"], "function");
+    }
+
+    #[test]
+    fn lsp_workspace_symbols_params_reject_unknown_fields() {
+        let parsed: crate::LspWorkspaceSymbolsParams = serde_json::from_value(json!({
+            "path": "/w/src/main.rs",
+            "content": "fn main() {}",
+            "query": "Ponto",
+        }))
+        .unwrap();
+        assert_eq!(parsed.query, "Ponto");
+
+        let rejected = serde_json::from_value::<crate::LspWorkspaceSymbolsParams>(json!({
+            "path": "/w/src/main.rs",
+            "content": "",
+            "query": "x",
+            "extra": 1,
+        }));
+        assert!(rejected.is_err());
+    }
+
+    #[test]
+    fn lsp_workspace_edit_apply_and_cancel_payloads_use_camel_case() {
+        let result = LspWorkspaceEditApplyResult {
+            transaction_id: "workspace-edit-9".to_owned(),
+            title: "Fill match arms".to_owned(),
+            files: vec!["/w/src/main.rs".to_owned()],
+            edits: 1,
+        };
+        let value = serde_json::to_value(result).unwrap();
+
+        assert_eq!(value["title"], "Fill match arms");
+        assert_eq!(value["transactionId"], "workspace-edit-9");
+        assert_eq!(value["files"][0], "/w/src/main.rs");
+        assert_eq!(value["edits"], 1);
+
+        let params: LspWorkspaceEditTransactionParams = serde_json::from_value(json!({
+            "transactionId": "workspace-edit-9"
+        }))
+        .unwrap();
+        assert_eq!(params.transaction_id, "workspace-edit-9");
+
+        let cancelled = serde_json::to_value(LspWorkspaceEditCancelResult {
+            transaction_id: params.transaction_id,
+            cancelled: true,
+        })
+        .unwrap();
+        assert_eq!(cancelled["transactionId"], "workspace-edit-9");
+        assert_eq!(cancelled["cancelled"], true);
     }
 }

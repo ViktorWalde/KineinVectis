@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" role="img" aria-label="Build">
+<style>
+.s{fill:none;stroke:#fff;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}
+.f{fill:#fff;stroke:none}
+.t{fill:none;stroke:#fff;stroke-width:1.15;stroke-linecap:round;stroke-linejoin:round}
+</style>
+<rect class="s" x="3" y="3.5" width="5.4" height="5.4" rx="1"/><rect class="s" x="11.6" y="11.1" width="5.4" height="5.4" rx="1"/><path class="s" d="M8.4 6.2h3.2c2 0 2.7 1.2 2.7 2.8v2"/>
+</svg>
