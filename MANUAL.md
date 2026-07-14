@@ -20,8 +20,11 @@ atalhos e o que fazer quando algo der errado.
 
 ### 1.1 Requisitos
 
-- Linux (Arch/CachyOS é o alvo principal; Debian/Ubuntu e Fedora também
-  funcionam).
+- Linux. Arch/CachyOS é o alvo principal e validado; o bootstrap também cobre
+  Debian/Ubuntu e Fedora, que ainda precisam da mesma cobertura contínua de CI.
+- Windows ainda não é uma plataforma suportada nesta fase. Qt, Rust e parte do
+  core são portáveis, mas shell, empacotamento, caminhos, toolchains e testes
+  de integração continuam Linux-first.
 - ~2 GB livres para compilar a IDE. Hardware modesto serve: a IDE roda bem
   em 2 núcleos/8 GB de RAM — quem pesa são os projetos grandes, não ela.
 
@@ -37,6 +40,13 @@ Na pasta do projeto:
 O script instala: cmake, ninja, clang (com clangd/clang-format/clang-tidy),
 gcc, gdb, lldb, Qt6, rustup (+ rustfmt/clippy), rust-analyzer, ripgrep e fd.
 No final ele verifica ferramenta por ferramenta e diz o que faltou.
+
+> **Baixar a IDE pronta x compilar o repositório:** hoje os testadores usam o
+> checkout e, por isso, precisam de Rust e Qt para compilar a própria IDE. O
+> pacote futuro (AUR/AppImage) levará UI, core e runtime Qt necessários para
+> simplesmente abrir a Kinein. Compiladores, CMake, Ninja, clangd,
+> rust-analyzer e debugadores continuam ferramentas externas: o usuário
+> instala somente as exigidas pelo tipo de projeto que pretende desenvolver.
 
 ### 1.3 Compilar a IDE
 
@@ -123,6 +133,9 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
   recolhida pelo botão próprio. Recolhida, vira uma aba estreita no centro da
   borda direita do editor; clicar nela restaura o painel. O primeiro layout é
   calculado pelo tamanho da janela e os ajustes posteriores ficam salvos.
+- **Ajuda → Manual da IDE** abre este mesmo `MANUAL.md` numa visualização
+  Markdown renderizada dentro da Kinein; não abre editor externo nem mantém
+  uma segunda documentação divergente.
 
 ---
 
@@ -208,7 +221,9 @@ meio (só nesse contexto — em comparações e templates o `<` fica normal).
 
 Funciona em Rust (rust-analyzer) e C/C++ (clangd). Os servidores sobem
 sozinhos ao abrir o primeiro arquivo da linguagem — a primeira resposta
-pode demorar alguns segundos enquanto o projeto é indexado.
+pode demorar alguns segundos enquanto o projeto é indexado. Nesse intervalo,
+o autocomplete já mostra símbolos locais do Tree-sitter; quando o LSP responde,
+a lista é enriquecida/substituída pelo resultado semântico autoritativo.
 
 | Atalho | Ação |
 | --- | --- |
@@ -401,6 +416,10 @@ topo, além da sessão separada **Execução**:
   histórico, `Tab` completa — não é mais "escreva a linha e aperte Enter".
   Clique em **+** para abrir outro terminal e em **×** no chip para fechar só
   aquela sessão; programas e histórico das outras abas continuam vivos.
+  A barra de rolagem permanece visível desde o início, acompanha a saída ao
+  vivo e coalesce movimentos rápidos. Ao digitar, o terminal retorna
+  imediatamente ao prompt atual; rolar manualmente para cima preserva a leitura
+  do histórico até o usuário voltar ao fundo ou começar um novo comando.
 - **Execução**: o processo do seu projeto (`cargo run` ou o executável do
   CMake), com saída ao vivo e envio de entrada (stdin) pelo campo de baixo —
   digitar um comando ali com nada rodando executa esse comando.
@@ -491,8 +510,9 @@ pode ser disparado pelo banner de Project Health.
    `~/.cache/kinein-vectis/logs/kinein-ui-erros.txt` — anexe este arquivo ao
    reportar um bug.
 3. **LSP demorou?** A primeira indexação de um projeto grande leva tempo
-   (especialmente rust-analyzer). As funções de código ficam disponíveis
-   quando ela termina.
+   (especialmente rust-analyzer). O completion sintático local aparece antes;
+   navegação, tipos e resultados semânticos completos chegam quando o servidor
+   termina a primeira preparação.
 4. **Ferramenta faltando?** Veja a aba Ferramentas ou rode
    `./scripts/instalar-ambiente.sh` de novo.
 5. **A IDE não abre?** Rode `./scripts/kinein-vectis` pelo terminal e mande

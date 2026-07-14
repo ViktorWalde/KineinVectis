@@ -14,6 +14,7 @@ Item {
     property var gitController: null
     property var settingsController: null
     property bool aboutVisible: false
+    property bool manualVisible: false
     property bool appMenuVisible: false
     property real appMenuX: 0
     property real appMenuY: 0
@@ -38,6 +39,10 @@ Item {
 
     function openAboutDialog() {
         aboutVisible = true;
+    }
+
+    function openManualDialog() {
+        manualVisible = true;
     }
 
     function openAppMenu(x, y, items) {
@@ -150,6 +155,15 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.aboutVisible = false
+    }
+
+    DocumentationDialog {
+        anchors.fill: parent
+        visible: root.manualVisible
+        z: 104
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.manualVisible = false
     }
 
     GitDiscardDialog {

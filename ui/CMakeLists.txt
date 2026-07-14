@@ -30,6 +30,7 @@ set_source_files_properties(qml/shell/ShellController.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/shell/GlobalShortcuts.qml PROPERTIES QT_RESOURCE_ALIAS GlobalShortcuts.qml)
 set_source_files_properties(qml/shell/ShellOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellOverlays.qml)
 set_source_files_properties(qml/shell/AboutDialog.qml PROPERTIES QT_RESOURCE_ALIAS AboutDialog.qml)
+set_source_files_properties(qml/shell/DocumentationDialog.qml PROPERTIES QT_RESOURCE_ALIAS DocumentationDialog.qml)
 set_source_files_properties(qml/shell/ShellHeaderHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellHeaderHost.qml)
 set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellStatusHost.qml)
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
@@ -114,6 +115,9 @@ set_source_files_properties(qml/editor/EditorFindController.qml PROPERTIES QT_RE
 set_source_files_properties(qml/editor/EditorFindBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorFindBar.qml)
 set_source_files_properties(qml/editor/EditorExternalChangeBanner.qml PROPERTIES QT_RESOURCE_ALIAS EditorExternalChangeBanner.qml)
 
+set(KINEIN_MANUAL_FILE "${CMAKE_SOURCE_DIR}/MANUAL.md")
+set_source_files_properties("${KINEIN_MANUAL_FILE}" PROPERTIES QT_RESOURCE_ALIAS MANUAL.md)
+
 qt_add_qml_module(kinein-vectis
     URI KineinVectis
     VERSION 1.0
@@ -136,6 +140,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/GlobalShortcuts.qml
         qml/shell/ShellOverlays.qml
         qml/shell/AboutDialog.qml
+        qml/shell/DocumentationDialog.qml
         qml/shell/ShellHeaderHost.qml
         qml/shell/ShellStatusHost.qml
         qml/shell/ShellWorkspaceHost.qml
@@ -224,6 +229,8 @@ qt_add_qml_module(kinein-vectis
     SOURCES
         src/clipboard.cpp
         src/clipboard.h
+        src/documentation.cpp
+        src/documentation.h
         src/core_client.cpp
         src/core_client.h
         src/core_client_dispatch.cpp
@@ -235,6 +242,7 @@ qt_add_qml_module(kinein-vectis
         src/editor_highlighter.h
     RESOURCES
         assets/app-icon.png
+        "${KINEIN_MANUAL_FILE}"
 )
 
 kinein_enable_strict_compiler_options(kinein-vectis)

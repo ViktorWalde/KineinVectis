@@ -17,6 +17,7 @@ Column {
     signal configMenuRequested(real menuX, real menuY)
     signal appMenuRequested(string key, real menuX, real menuY, var items)
     signal aboutRequested()
+    signal manualRequested()
 
     height: 84
     z: 100
@@ -59,6 +60,7 @@ Column {
         case "debug.start": root.debugController.startDebug(); break;
         case "debug.stop": root.debugController.stopDebug(); break;
         case "tools.detect": root.coreClient.detectTools(); break;
+        case "help.manual": root.manualRequested(); break;
         case "help.about": root.aboutRequested(); break;
         case "app.quit": Qt.quit(); break;
         }

@@ -28,6 +28,13 @@ Item {
     property int selAnchorCol: 0
     property int selHeadRow: 0
     property int selHeadCol: 0
+    // Coalescência de scroll: arrastar o polegar pode produzir centenas de
+    // movimentos por segundo, mas cada terminal.scroll serializa um grid
+    // completo. A posição visual é otimista e o core recebe no máximo um
+    // pedido por frame.
+    property int pendingScrollOffset: -1
+    property int awaitingScrollOffset: -1
+    property string renderedSessionId: ""
 
     focus: true
 
@@ -46,8 +53,33 @@ Item {
     // O CORE é a fonte da verdade do offset: ele clampa o pedido ao histórico
     // real. A UI aplica local pra ter resposta imediata e reconcilia aqui.
     onRenderChanged: {
+        const nextSessionId = render && render.id !== undefined
+                ? String(render.id) : "";
+        if (nextSessionId !== renderedSessionId) {
+            scrollFlush.stop();
+            pendingScrollOffset = -1;
+            awaitingScrollOffset = -1;
+            renderedSessionId = nextSessionId;
+        }
         if (render && render.scrollback !== undefined) {
-            scrollOffset = render.scrollback;
+            const confirmed = Number(render.scrollback);
+            if (confirmed === awaitingScrollOffset) {
+                awaitingScrollOffset = -1;
+            }
+            // Um render de output pode cruzar com um arrasto já enviado. Não
+            // deixa esse frame antigo puxar o polegar de volta.
+            if (pendingScrollOffset < 0 && awaitingScrollOffset < 0) {
+                scrollOffset = confirmed;
+            }
+        }
+    }
+
+    function queueScroll(next) {
+        const clamped = Math.max(0, Math.min(panel.scrollbackMax, next));
+        panel.scrollOffset = clamped;
+        panel.pendingScrollOffset = clamped;
+        if (!scrollFlush.running) {
+            scrollFlush.start();
         }
     }
 
@@ -56,8 +88,23 @@ Item {
     function scrollBy(lines) {
         const next = Math.max(0, Math.min(panel.scrollbackMax, panel.scrollOffset + lines));
         if (next !== panel.scrollOffset) {
-            panel.scrollOffset = next;
-            panel.scrollRequested(next);
+            panel.queueScroll(next);
+        }
+    }
+
+    Timer {
+        id: scrollFlush
+
+        interval: 16
+        repeat: false
+        onTriggered: {
+            if (panel.pendingScrollOffset < 0) {
+                return;
+            }
+            const offset = panel.pendingScrollOffset;
+            panel.pendingScrollOffset = -1;
+            panel.awaitingScrollOffset = offset;
+            panel.scrollRequested(offset);
         }
     }
 
@@ -201,7 +248,14 @@ Item {
     }
 
     function snapToBottom() {
-        if (scrollOffset !== 0) {
+        // Input precisa chegar DEPOIS do retorno ao vivo, sem esperar o
+        // coalescedor; assim o prompt/comando atual nunca fica fora da tela.
+        const needsConfirmation = scrollOffset !== 0
+                || pendingScrollOffset >= 0 || awaitingScrollOffset >= 0;
+        scrollFlush.stop();
+        pendingScrollOffset = -1;
+        awaitingScrollOffset = -1;
+        if (needsConfirmation) {
             scrollOffset = 0;
             panel.scrollRequested(0);
         }
@@ -431,13 +485,13 @@ Item {
             contentSize: panel.scrollbackMax + panel.gridRows
             viewportSize: panel.gridRows
             position: panel.scrollbackMax - panel.scrollOffset
+            showWhenIdle: panel.terminalActive
 
             onMoveRequested: function(position) {
                 const offset = Math.round(panel.scrollbackMax - position);
                 const next = Math.max(0, Math.min(panel.scrollbackMax, offset));
                 if (next !== panel.scrollOffset) {
-                    panel.scrollOffset = next;
-                    panel.scrollRequested(next);
+                    panel.queueScroll(next);
                 }
             }
         }
@@ -454,7 +508,9 @@ Item {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
 
         onWheel: function(event) {
-            panel.scrollBy(event.angleDelta.y > 0 ? 3 : -3);
+            const magnitude = Math.max(1, Math.round(
+                Math.abs(event.angleDelta.y) / 120 * 3));
+            panel.scrollBy(event.angleDelta.y > 0 ? magnitude : -magnitude);
         }
     }
 }

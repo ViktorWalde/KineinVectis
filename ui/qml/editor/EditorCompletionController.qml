@@ -6,6 +6,10 @@ Item {
     property var surfaceBridge: null
     property var documentController: null
     property var textController: null
+    // Índice sintático local produzido pelo Tree-sitter já integrado. Ele
+    // fornece uma primeira lista enquanto clangd/rust-analyzer inicializa ou
+    // indexa o projeto; o LSP continua sendo a autoridade semântica final.
+    property var localItems: []
     property alias completionModel: completionItemsModel
     property int index: 0
     property int prefixStart: -1
@@ -14,6 +18,9 @@ Item {
     // que devolve centenas): ao digitar mais, REPEDIR ao servidor em vez
     // de filtrar o cache — senão itens fora dos primeiros N somem.
     property bool lastIncomplete: false
+    property bool fallbackVisible: false
+    property bool serverRequestPending: false
+    property bool refreshQueued: false
     // D1 (docs/24): estado do popup em property PRÓPRIA — NÃO no `visible`
     // do Item. `Item.visible` LÊ a visibilidade EFETIVA (explicitVisible &&
     // pai efetivamente visível); como este controller vive dentro do
@@ -41,6 +48,9 @@ Item {
         prefixStart = -1;
         allItems = [];
         lastIncomplete = false;
+        fallbackVisible = false;
+        serverRequestPending = false;
+        refreshQueued = false;
         completionItemsModel.clear();
     }
 
@@ -62,8 +72,51 @@ Item {
             return;
         }
         prefixStart = textController.wordStartAt(surfaceBridge.editorSurface.cursorPosition);
+        if (!popupVisible || fallbackVisible) {
+            showLocalFallback();
+        }
+        if (serverRequestPending) {
+            refreshQueued = true;
+            return;
+        }
         const position = textController.cursorLineColumn();
+        serverRequestPending = true;
         completionRequested(path, surfaceBridge.text(), position.line, position.column);
+    }
+
+    function showLocalFallback() {
+        const seen = {};
+        const items = [];
+        // Não varre um índice sintático arbitrariamente grande na thread da
+        // UI: a prévia precisa continuar instantânea em arquivos extensos.
+        const scanLimit = Math.min(localItems.length, 2048);
+        for (let i = 0; i < scanLimit && items.length < 256; i++) {
+            const local = localItems[i];
+            const name = local.name !== undefined && local.name !== null
+                    ? String(local.name) : "";
+            if (name === "" || seen[name] === true) {
+                continue;
+            }
+            // Referências completam lacunas quando a query da gramática não
+            // classificou a declaração como definição.
+            if (local.kind !== "definition" && local.kind !== "reference") {
+                continue;
+            }
+            seen[name] = true;
+            items.push({
+                label: name,
+                insertText: name,
+                detail: qsTr("símbolo local — análise sintática"),
+                kind: local.kind === "definition" ? "local" : "reference"
+            });
+        }
+        if (items.length === 0) {
+            return;
+        }
+        allItems = items;
+        lastIncomplete = false;
+        fallbackVisible = true;
+        refilter();
     }
 
     // D1 (docs/24): match FUZZY por subsequência (estilo VS Code). O filtro
@@ -129,7 +182,7 @@ Item {
     }
 
     function handleTextEdited() {
-        if (popupVisible && lastIncomplete) {
+        if (popupVisible && (lastIncomplete || fallbackVisible)) {
             // Lista incompleta: refiltra o cache já (resposta instantânea)
             // e REPEDE ao servidor com o prefixo maior (traz os itens que
             // não couberam no primeiro lote, ex.: cout ao digitar "cou").
@@ -143,15 +196,31 @@ Item {
     }
 
     function handleResolved(items, isIncomplete) {
-        allItems = items;
-        lastIncomplete = isIncomplete === true;
-        refilter();
+        serverRequestPending = false;
+        if (items.length > 0 || !fallbackVisible) {
+            allItems = items;
+            lastIncomplete = isIncomplete === true;
+            fallbackVisible = false;
+            refilter();
+        }
+        if (refreshQueued) {
+            refreshQueued = false;
+            completionRefresh.restart();
+        }
+    }
+
+    function handleFailed() {
+        serverRequestPending = false;
+        refreshQueued = false;
+        if (!fallbackVisible) {
+            dismiss();
+        }
     }
 
     Timer {
         id: completionDebounce
 
-        interval: 250
+        interval: 120
         repeat: false
         onTriggered: {
             if (!root.ready() || root.documentController.currentTab < 0
@@ -178,5 +247,13 @@ Item {
                 root.requestCompletion();
             }
         }
+    }
+
+    Timer {
+        id: completionRefresh
+
+        interval: 0
+        repeat: false
+        onTriggered: root.requestCompletion()
     }
 }

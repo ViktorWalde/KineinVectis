@@ -131,6 +131,7 @@ Item {
         surfaceBridge: surfaceBridge
         documentController: documents
         textController: textController
+        localItems: root.syntaxLocals
         onCompletionRequested: function(path, content, line, column) {
             root.completionRequested(path, content, line, column);
         }
@@ -916,7 +917,7 @@ Item {
             hoverVisible = false;
         }
         if (method === "lsp.completion") {
-            completionController.dismiss();
+            completionController.handleFailed();
         }
         if (method === "lsp.rename") {
             renameError = message;

@@ -579,6 +579,7 @@ Window {
             shellOverlays.openAppMenu(pos.x, pos.y, items);
         }
         onAboutRequested: shellOverlays.openAboutDialog()
+        onManualRequested: shellOverlays.openManualDialog()
     }
 
     ShellWorkspaceHost {
@@ -645,6 +646,9 @@ Window {
     ShellOverlays {
         id: shellOverlays
 
+        // Overlay global acima do header (z=100) e de toda a workspace. O z
+        // interno de um popup não escapa do stacking context do pai.
+        z: 1000
         hostWidth: root.width
         hostHeight: root.height
         searchController: searchController

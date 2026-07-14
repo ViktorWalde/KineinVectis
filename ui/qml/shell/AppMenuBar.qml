@@ -95,6 +95,7 @@ Rectangle {
                 { label: qsTr("Reiniciar LSP"), action: "lsp.restart", enabled: workspaceOpen }
             ],
             help: [
+                { label: qsTr("Manual da IDE"), action: "help.manual", enabled: true },
                 { label: qsTr("Sobre Kinein Vectis"), action: "help.about", enabled: true }
             ]
         };

@@ -1248,3 +1248,26 @@ O estado real avancou para o protocolo **0.50.0**:
 Validacao automatizada desta entrega inclui testes Rust, harness QML real,
 qmllint estrito, builds Qt e smoke offscreen. Nao marcar C6 como visualmente
 aceita ate o usuario abrir a GUI e conferir contra as specs.
+
+## Feedback pós-checkpoint 0.50 (2026-07-14)
+
+- O checkpoint grande foi salvo no commit `b506d87` e publicado em
+  `origin/main` antes desta nova rodada.
+- Corrigir nesta rodada: scroll do terminal com seguimento ao vivo e
+  coalescência de rajadas; primeira resposta do autocomplete com fallback
+  Tree-sitter enquanto clangd/rust-analyzer inicializam; menus acima de toda a
+  workspace; `Ajuda → Manual da IDE` renderizando o `MANUAL.md` empacotado.
+- Workspaces recentes permanecem a próxima fatia de Start Screen já desenhada
+  em `docs/21` M4.4: lista global limitada, último acesso, fixar/remover e
+  limpeza de caminhos inexistentes, reutilizando `workspace.open`.
+- Plataforma honesta: Linux-first. Arch/CachyOS é o alvo validado; há bootstrap
+  para Debian/Ubuntu/Fedora, ainda dependente de CI/teste contínuo. Windows não
+  é suportado hoje, embora Qt/Rust/portable-pty deem base para uma port futura.
+- Distribuição binária futura empacota UI, core e runtime Qt para o usuário não
+  precisar instalar Rust/Qt só para abrir a IDE. Compiladores, CMake/Ninja,
+  LSPs e debugadores continuam externos e opcionais por linguagem.
+- Publicação futura deve usar um espelho gerado do privado. Entre Markdown,
+  somente `README.md` e `MANUAL.md` podem sair; excluir ContextoIA, PONTO_ATUAL,
+  AGENTS, docs/specs e roadmaps. Implementar exportador allowlist com dry-run,
+  recusa de Markdown extra e auditoria de segredos antes de criar remoto
+  público. Não mudar a visibilidade do repositório-fonte.

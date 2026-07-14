@@ -176,6 +176,19 @@ Item {
                 context.lineTo(5, 11);
                 context.lineTo(10, 10);
                 break;
+            case "help":
+                context.arc(12, 12, 9, 0, Math.PI * 2, false);
+                context.moveTo(9, 9.5);
+                context.bezierCurveTo(9.5, 6.5, 14.8, 6.5, 15, 9.5);
+                context.bezierCurveTo(15.1, 11.2, 12, 11.8, 12, 14);
+                node(context, 12, 17.5, 0.7);
+                break;
+            case "back":
+                context.moveTo(10, 5);
+                context.lineTo(3, 12);
+                context.lineTo(10, 19);
+                line(context, 3.5, 12, 21, 12);
+                break;
             case "chevron-down":
                 context.moveTo(5, 9);
                 context.lineTo(12, 16);

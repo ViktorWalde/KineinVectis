@@ -403,11 +403,17 @@ falar comigo antes?"* Só faz sentido com M4 (robustez) maduro.
 ```text
 - Ordem: PKGBUILD (AUR; a máquina-alvo é Arch) → AppImage (cobre o
   resto) → Flatpak (se houver demanda). Binário do core + UI + qml no
-  mesmo pacote; scripts/instalar-ambiente.sh vira dependência declarada
-  do pacote, não passo manual.
+  mesmo pacote, incluindo o runtime Qt necessário. Rust/Qt deixam de ser
+  pré-requisito do usuário final; compiladores, LSPs, build systems e
+  debugadores permanecem dependências externas por linguagem. O pacote deve
+  declará-las como opcionais/recomendadas, nunca instalar tudo silenciosamente.
 - Versionamento: a IDE ganha versão própria (0.x) desacoplada do
   protocolo IPC; changelog GERADO das seções [feito] de docs/18 (fonte
   única, sem duplicar histórico).
+- AppImage cobre outras distribuições Linux, não Windows. Uma port Windows é
+  trilha posterior própria: CI nativa, PowerShell/ConPTY, caminhos e `.exe`,
+  storage sem XDG, descoberta de toolchains e instalador assinável. Só declarar
+  suporte depois de gate e testes reais nessa plataforma.
 ```
 
 ### M7.2 — CI pública
@@ -423,10 +429,16 @@ falar comigo antes?"* Só faz sentido com M4 (robustez) maduro.
 ### M7.3 — Documentação pública e contribuição
 
 ```text
-- MANUAL.md é a fonte; gerar site estático simples (mdBook/mkdocs) sem
-  reescrever conteúdo. README com screenshot real + status honesto.
-- CONTRIBUTING.md: o playbook deste doc adaptado para humanos externos
-  (ritual da fatia, gate, proibição de reimplementar ferramenta madura).
+- O repositório privado continua sendo a fonte completa. Publicar por um
+  exportador allowlist para um espelho separado; nunca tornar o remoto privado
+  atual público por engano.
+- Entre arquivos Markdown, o espelho contém somente README.md e MANUAL.md.
+  ContextoIA.md, PONTO_ATUAL.md, AGENTS.md, docs/specs, roadmaps e notas de
+  agentes ficam privados. Licenças/atribuições usam LICENSE, JSON ou TXT.
+- README com screenshot real + status honesto; MANUAL.md é a única
+  documentação extensa pública e também alimenta o visualizador interno.
+- O exportador precisa de `--dry-run`, lista explícita do que entra, rejeição
+  de Markdown extra e auditoria de segredos antes de qualquer push.
 - i18n: extrair strings (qsTr já usado em toda a UI) e gerar inglês
   como segunda língua; português continua a língua de desenvolvimento.
 ```

@@ -15,11 +15,16 @@ ui/
 │   ├── core_client.h     # CoreClient: QProcess + JSON-RPC (exposto ao QML)
 │   ├── core_client.cpp
 │   ├── editor_highlighter.h
-│   └── editor_highlighter.cpp
+│   ├── editor_highlighter.cpp
+│   ├── documentation.h  # singleton somente leitura para recursos da UI
+│   └── documentation.cpp
 ├── qml/
-│   ├── FolderPickerDialog.qml
-│   ├── Main.qml          # janela principal: workspace, explorer, editor e paineis
-│   └── Theme.qml         # singleton com a paleta de docs/05-design-system.md
+│   ├── Main.qml          # composição da janela e dos hosts
+│   ├── Theme.qml         # singleton com a paleta de docs/05-design-system.md
+│   ├── shell/            # cabeçalho, layout, overlays e visualizador do manual
+│   ├── workspace/        # seletor, tela inicial e saúde do projeto
+│   ├── editor/           # superfície, controladores e popups do editor
+│   └── panels/           # janelas de ferramentas inferiores
 └── assets/
     └── app-icon.png      # ícone KW (copiado de imagens/app-icon.png)
 ```
@@ -38,6 +43,10 @@ cmake --build --preset dev-local
 A UI procura o `kinein-core` nesta ordem: variável `KINEIN_CORE_BIN`,
 diretório do executável, `target/debug/kinein-core` relativo ao diretório
 atual, e por fim o `PATH`.
+
+O `MANUAL.md` da raiz é empacotado como recurso somente leitura e exibido em
+Markdown por **Ajuda > Manual da IDE**; isso não acessa arquivos do workspace
+nem introduz lógica de negócio na UI.
 
 ## Dependências
 

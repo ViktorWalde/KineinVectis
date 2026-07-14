@@ -5,6 +5,7 @@ import "../../ui/qml/editor"
 Item {
     id: root
     width: 100; height: 100
+    property int completionRequests: 0
 
     // Fakes minimos com a mesma superficie que o controller usa.
     QtObject {
@@ -48,6 +49,12 @@ Item {
             surfaceBridge: fakeBridge
             documentController: fakeDocs
             textController: fakeText
+            localItems: [
+                { kind: "definition", name: "Status" },
+                { kind: "reference", name: "String" },
+                { kind: "scope", name: "ignorado" }
+            ]
+            onCompletionRequested: root.completionRequests += 1
         }
     }
 
@@ -74,6 +81,19 @@ Item {
         completion.prefixStart = 8;
         completion.handleResolved([], false);
         if (completion.popupVisible !== false) falhas += 8;
+
+        // 4) Antes do LSP responder, o índice Tree-sitter já abre uma lista
+        // local. Um segundo pedido enquanto o primeiro está pendente não pode
+        // lotar o core com completion obsoleto.
+        completion.clear();
+        completion.requestCompletion();
+        if (completion.popupVisible !== true) falhas += 16;
+        if (completion.completionModel.count !== 2) falhas += 32;
+        if (root.completionRequests !== 1) falhas += 64;
+        completion.requestCompletion();
+        if (root.completionRequests !== 1 || !completion.refreshQueued) falhas += 128;
+        completion.handleFailed();
+        if (completion.popupVisible !== true) falhas += 256;
 
         Qt.exit(falhas);
     }

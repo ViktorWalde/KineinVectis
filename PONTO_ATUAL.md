@@ -238,6 +238,21 @@ builds da UI.
     retomar a **biblioteca de funções / Configuration Actions** para facilitar
     configuração de ambiente, seguindo a spec própria e sem criar engine
     genérica prematuramente.
+12. **Workspaces recentes:** promover o item já desenhado em `docs/21` M4.4
+    para a próxima fatia de Start Screen. Persistir uma lista global limitada,
+    ordenar por último acesso, remover caminhos inexistentes e permitir
+    fixar/remover entradas; reusar `workspace.open` e o seletor atual.
+13. **Distribuição:** hoje o produto é Linux-first (Arch/CachyOS validado;
+    bootstrap Debian/Ubuntu/Fedora). Windows não está suportado ainda. AUR e
+    AppImage devem empacotar UI + core + runtime Qt; compiladores/LSP/debuggers
+    continuam dependências externas escolhidas por linguagem.
+14. **Espelho público futuro:** o privado permanece fonte completa. O export
+    público leva código, ativos e avisos de licença, mas entre arquivos
+    Markdown publica somente `README.md` e `MANUAL.md`. Excluir `ContextoIA.md`,
+    `PONTO_ATUAL.md`, `AGENTS.md`, `docs/**/*.md`, specs e roadmaps internos.
+    Criar exportador allowlist com `--dry-run` e auditoria de segredos antes de
+    tornar qualquer remoto público; nunca apenas trocar a visibilidade deste
+    repositório privado.
 
 ---
 

@@ -78,6 +78,12 @@ clang-format --dry-run --Werror ui/src/*.cpp ui/src/*.h   # formatação C++
 
 ## Dependências do sistema
 
+Esta seção é para quem compila a IDE a partir do repositório. Uma distribuição
+binária futura deverá incluir a UI, o core e o runtime Qt, de modo que o usuário
+não precise instalar Rust ou Qt só para abrir a Kinein. As ferramentas dos
+projetos — compilador C/C++ ou Rust, CMake/Ninja, LSP e debugger — permanecem
+externas e são instaladas conforme a linguagem usada.
+
 Atalho para tudo isso (detecta a distro, instala o que falta e verifica):
 
 ```bash

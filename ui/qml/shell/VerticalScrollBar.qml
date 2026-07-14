@@ -24,6 +24,10 @@ Item {
     property real contentSize: 0
     property real viewportSize: 0
     property real position: 0
+    // Terminais mantêm a barra presente antes de existir histórico. Isso evita
+    // mudança tardia de layout e deixa explícito desde o primeiro prompt onde
+    // o scrollback aparecerá; outros consumidores continuam sob demanda.
+    property bool showWhenIdle: false
 
     signal moveRequested(real position)
 
@@ -33,7 +37,7 @@ Item {
     // Trilho estreito; o polegar engorda no hover (padrão JetBrains).
     implicitWidth: 10
     width: implicitWidth
-    visible: scrollable
+    visible: scrollable || showWhenIdle
 
     Rectangle {
         id: track
@@ -69,6 +73,7 @@ Item {
         radius: width / 2
         color: thumbMouse.containsMouse || thumbMouse.pressed
                 ? Theme.textMuted : Theme.borderStrong
+        opacity: bar.scrollable ? 1.0 : 0.35
 
         Behavior on width {
             NumberAnimation { duration: 120 }
@@ -79,6 +84,7 @@ Item {
         id: thumbMouse
 
         anchors.fill: parent
+        enabled: bar.scrollable
         hoverEnabled: true
         cursorShape: Qt.ArrowCursor
 
