@@ -24,6 +24,10 @@ uso.
 2. Navegue até a pasta do seu projeto (qualquer projeto com `Cargo.toml` ou
    `CMakeLists.txt` é detectado automaticamente) e confirme.
 3. A árvore de arquivos aparece à esquerda. Clique num arquivo para editar.
+
+Se a raiz tiver `Cargo.toml` **e** `CMakeLists.txt`, a Kinein reconhece o
+workspace híbrido: menus e barra superior oferecem Build/Teste Cargo e CMake
+separadamente, e o Project Health verifica as duas toolchains.
 4. Ao reabrir o mesmo projeto depois, **suas abas voltam como estavam**
    (sessão automática).
 
@@ -263,6 +267,12 @@ problemas caindo na mesma aba Problemas. Se o `cargo metadata` do projeto
 estiver quebrado (Cargo.toml inválido), o banner de Project Health avisa
 com a mensagem do cargo e um botão para tentar de novo.
 
+**Scripts do projeto:** arquivos `.sh`, `.bash` e `.zsh` mostram um botão de
+executar ao passar o mouse na árvore. A mesma ação fica no clique direito como
+**Executar script**. A saída abre na sessão **Execução** do Terminal e pode ser
+interrompida pelo controle normal de Run. Só arquivos dentro do workspace são
+aceitos; não é necessário abrir um terminal e digitar o caminho.
+
 ---
 
 ### 4.1 Depurar (debugger)
@@ -431,11 +441,10 @@ pedem ao terminal para apagar o scrollback nesse modo, o KV Context ignora
 somente esse pedido de limpeza nas sessões de IA; o Terminal comum mantém o
 comportamento normal do comando `clear`.
 
-Nesse modo, o KV Context demarca discretamente a linha ativa do terminal para
-que a digitação não pareça flutuar. Não é um segundo campo de entrada: avisos
-de uso, prompt e status do modelo continuam sendo desenhados pela própria CLI.
-O fundo e o contorno envolvem a altura dos caracteres, inclusive quando a CLI
-aplica cores ANSI próprias à linha.
+O KV Context não desenha campo, faixa ou contorno próprio para a entrada. A
+grade VT, as cores ANSI e o cursor da própria CLI são a única representação,
+como no Terminal integrado. Isso evita que a IDE dispute espaço ou estado com
+avisos de uso, prompt e status do modelo.
 
 A opção guiada para outras ferramentas de IA será acrescentada em uma etapa
 posterior, depois da validação desta correção. Ela deverá levar ao terminal e

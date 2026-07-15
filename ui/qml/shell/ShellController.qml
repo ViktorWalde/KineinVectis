@@ -5,6 +5,7 @@ Item {
 
     property string workspaceRoot: ""
     property string workspaceKind: ""
+    property var workspaceBuildSystems: []
     property string homeDir: ""
     property int toolsCount: 0
     property bool showBottomPanel: false
@@ -196,7 +197,12 @@ Item {
         folderOpenRequested(workspaceRoot !== "" ? workspaceRoot : homeDir);
     }
 
-    function kindLabel(kind) {
+    function kindLabel(kind, buildSystems) {
+        const systems = buildSystems !== undefined && buildSystems !== null
+                ? buildSystems : workspaceBuildSystems;
+        if (systems.indexOf("cargo") >= 0 && systems.indexOf("cmake") >= 0) {
+            return "Cargo + CMake";
+        }
         const labels = {
             rustCargo: "Rust/Cargo",
             cmake: "CMake",

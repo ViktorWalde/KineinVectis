@@ -1,6 +1,8 @@
 //! Non-blocking execution of user commands inside the workspace.
 //!
-//! `run.start` spawns one child process per workspace via `sh -c`, streams
+//! `run.start` spawns one child process per workspace via `sh -c`; typed
+//! launchers such as `run.script` bypass the shell and pass argv directly. All
+//! variants stream
 //! `event.run.output` lines through the same async notification channel used
 //! by the LSP manager, and reports `event.run.finished` when the process
 //! exits. The core stays responsive during the whole run; `run.stdin` and
@@ -12,6 +14,7 @@
 
 use std::{
     error::Error,
+    ffi::OsStr,
     fmt,
     io::{BufRead, BufReader, Write},
     path::Path,
@@ -102,20 +105,42 @@ impl RunManager {
 
     /// Spawns `command` via `sh -c` in `root` and streams its output.
     pub fn start(&mut self, root: &Path, command: &str) -> Result<(), RunError> {
+        let mut process = Command::new("sh");
+        process.arg("-c").arg(command);
+        self.start_process(root, command, process)
+    }
+
+    /// Spawns an explicit program and argv without shell interpolation.
+    pub fn start_program(
+        &mut self,
+        root: &Path,
+        program: &str,
+        args: &[&OsStr],
+        display_command: &str,
+    ) -> Result<(), RunError> {
+        let mut process = Command::new(program);
+        process.args(args);
+        self.start_process(root, display_command, process)
+    }
+
+    fn start_process(
+        &mut self,
+        root: &Path,
+        display_command: &str,
+        mut process: Command,
+    ) -> Result<(), RunError> {
         if self.is_running() {
             return Err(RunError::AlreadyRunning);
         }
 
-        let mut child = Command::new("sh")
-            .arg("-c")
-            .arg(command)
+        let mut child = process
             .current_dir(root)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
             .map_err(|source| RunError::Process {
-                message: format!("falha ao iniciar `{command}`: {source}"),
+                message: format!("falha ao iniciar `{display_command}`: {source}"),
             })?;
 
         self.stdin = child.stdin.take();
@@ -125,7 +150,7 @@ impl RunManager {
         send_event(
             &self.events,
             "event.run.started",
-            json!({ "command": command }),
+            json!({ "command": display_command }),
         );
 
         let pending_readers = Arc::new(AtomicUsize::new(0));
@@ -215,6 +240,27 @@ impl RunManager {
             message: format!("falha ao encerrar o processo: {source}"),
         })
     }
+}
+
+/// Interpreter for shell-script file types intentionally exposed by the UI.
+#[must_use]
+pub fn script_interpreter(path: &Path) -> Option<&'static str> {
+    match path.extension().and_then(OsStr::to_str) {
+        Some("sh" | "bash") => Some("bash"),
+        Some("zsh") => Some("zsh"),
+        _ => None,
+    }
+}
+
+/// Shell-like label used only for display in the Run panel and events.
+#[must_use]
+pub fn script_display_command(root: &Path, interpreter: &str, script: &Path) -> String {
+    let display_path = script
+        .strip_prefix(root)
+        .unwrap_or(script)
+        .display()
+        .to_string();
+    format!("{interpreter} -- '{}'", display_path.replace('\'', "'\\''"))
 }
 
 /// Serializes one `event.run.*` notification into the async channel.
@@ -327,7 +373,9 @@ mod tests {
 
     use kinein_protocol::{JsonRpcRequest, ProjectKind};
 
-    use super::{RunError, RunManager, default_command};
+    use super::{
+        RunError, RunManager, default_command, script_display_command, script_interpreter,
+    };
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -372,6 +420,19 @@ mod tests {
         assert_eq!(finished["success"], true);
         assert_eq!(finished["exitCode"], 0);
         assert!(!manager.is_running());
+    }
+
+    #[test]
+    fn shell_script_detection_and_display_are_explicit() {
+        let root = PathBuf::from("/workspace");
+        let script = root.join("scripts/check it's.sh");
+
+        assert_eq!(script_interpreter(&script), Some("bash"));
+        assert_eq!(
+            script_display_command(&root, "bash", &script),
+            "bash -- 'scripts/check it'\\''s.sh'"
+        );
+        assert_eq!(script_interpreter(&root.join("script.py")), None);
     }
 
     #[test]

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "product": "Kinein Vectis",
+  "family": "Project Tree",
+  "icons": [
+    {
+      "id": "kv.tree.folder.closed",
+      "label": "Pasta fechada",
+      "svg": "svg/01-folder-closed.svg",
+      "preview": "preview/01-folder-closed.png"
+    },
+    {
+      "id": "kv.tree.folder.open",
+      "label": "Pasta aberta",
+      "svg": "svg/02-folder-open.svg",
+      "preview": "preview/02-folder-open.png"
+    },
+    {
+      "id": "kv.tree.file.c",
+      "label": "C Core Seal",
+      "svg": "svg/03-file-c.svg",
+      "preview": "preview/03-file-c.png"
+    },
+    {
+      "id": "kv.tree.file.cpp",
+      "label": "C Twin Vector",
+      "svg": "svg/04-file-cpp.svg",
+      "preview": "preview/04-file-cpp.png"
+    },
+    {
+      "id": "kv.tree.file.rust",
+      "label": "Rivet Gear",
+      "svg": "svg/05-file-rust.svg",
+      "preview": "preview/05-file-rust.png"
+    }
+  ]
+}

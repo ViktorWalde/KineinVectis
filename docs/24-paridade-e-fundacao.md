@@ -553,6 +553,24 @@ roda tradicional, evento somente com `pixelDelta` e delta nulo. Gate completo,
 builds Debug/Release e smoke offscreen estão verdes. O gesto de roda na sessão
 real ainda precisa da confirmação do usuário após reiniciar o release.
 
+### Estabilização final — grade VT autoritativa (2026-07-15)
+
+A decoração de entrada descrita acima foi removida após a comparação com o
+terminal integrado e com o comportamento terminal-first do VS Code/xterm.js.
+Mesmo sem interpretar conteúdo, ela ainda criava uma segunda noção visual de
+“campo de entrada” e podia divergir do cursor/TUI da CLI. O contrato final é
+mais simples: grade VT, spans ANSI e cursor vindos do core são a única
+representação; `TerminalInputController` apenas traduz teclas Qt para bytes e
+não guarda texto, linha inicial ou geometria de moldura. Terminal comum e KV
+Context usam a mesma composição, mudando apenas sessão/perfil e a política
+estreita de scrollback do bridge. O comportamento foi usado como referência;
+nenhum código de VS Code/xterm.js foi copiado.
+
+Os harnesses agora protegem a ausência de input/decoração paralelos, além de
+teclado, paste, seleção, roda, scrollback e resize já cobertos. Reintroduzir um
+composer, parser de tela ou overlay de prompt exige nova decisão arquitetural;
+não é polimento do terminal atual.
+
 **Arquivos (D2.1):** Cargo (portable-pty, vt100 — já adicionados);
 `terminal.rs` (reescrever: PTY + vt100 grid + emitir render + resize +
 multi-id opcional); protocolo (`TerminalResizeParams`, tipos de render,

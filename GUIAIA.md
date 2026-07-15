@@ -63,7 +63,9 @@ Prioridades:
 4. corrigir apenas os motivos concretos que forçarem saída para outra IDE.
 
 Workspaces recentes e recuperação de sessão previsível foram entregues na
-fatia A1 do protocolo 0.53.0.
+fatia A1 do protocolo 0.53.0. A2 foi entregue no protocolo 0.55.0: um único
+snapshot expõe Cargo e CMake simultaneamente e as ações de build/teste podem
+selecionar o sistema sem perder o `workspace.kind` compatível.
 
 ### TR2 — ficar imediatamente abaixo do CLion
 
@@ -100,8 +102,9 @@ dados passam a ordenar o backlog antes de confortos hipotéticos. A frase pode
 ser o primeiro e único conteúdo de uma nova sessão: nesse caso, confirmar a
 ativação, ler o handoff da seção 0 de `PONTO_ATUAL.md` e aguardar o primeiro
 feedback real. Se não houver bloqueio e o usuário pedir continuidade do
-roadmap, seguir a fila viva de `PONTO_ATUAL.md`; após A1, a próxima fatia
-planejada é A2 — projeto híbrido e self-hosting.
+roadmap, seguir a fila viva de `PONTO_ATUAL.md`; depois de A1/A2, a próxima
+fatia funcional é A3 — responsividade medida, salvo regressão concreta do
+dogfooding.
 
 Feedback de amigos/testadores usa o mesmo funil, sempre identificado pela
 origem, distro e versão do artefato. Prioridade: perda de dados/segurança/crash
@@ -270,6 +273,7 @@ crates/kinein-core/src/handlers/{fs,draft,format}.rs
 ui/qml/editor/EditorController.qml
     ├─ EditorCompletionController.qml
     ├─ EditorOutlineController.qml / EditorOutlinePanel.qml
+    ├─ EditorTextSurface.qml / EditorGutter.qml
     ├─ EditorHoverPopup.qml / EditorUsagesPopup.qml
     └─ EditorWorkspaceEditPreviewDialog.qml
 ui/qml/diagnostics/DiagnosticsController.qml
@@ -286,6 +290,15 @@ crates/kinein-core/src/handlers/{lsp,syntax}.rs
   `docs/25-syntax-tree-semantic-foundation.md` e especificação KSWE.
 - Tree-sitter entrega estrutura/fallback; clangd e rust-analyzer são a
   autoridade semântica. Não misturar ou duplicar esses papéis.
+- Toda edição avança imediatamente as versões sintática e semântica e limpa os
+  semantic tokens anteriores. `lsp.semanticTokens` ecoa `path` e `version`;
+  nunca aplicar resposta cujo par difira do documento/buffer ativo. Essa é a
+  barreira contra a corrida Tree-sitter/LSP, não uma regra de precedência por
+  tempo de chegada.
+- `EditorGutter.qml` é a única dona do layout de números, folding, breakpoint,
+  diagnóstico, blame e diff. As faixas são independentes e a coluna numérica
+  usa a métrica real da fonte; não voltar a posicionar marcadores sobre uma
+  estimativa fixa por dígito dentro de `EditorTextSurface.qml`.
 
 ### 5.4 CMake, Cargo, build, qualidade, testes, tools e jobs
 
@@ -309,6 +322,9 @@ crates/kinein-core/src/handlers/{cmake,cargo,build,jobs,runconfig}.rs
 - Fontes: spec Build/Run/Debug, `docs/22-compilacao-c-cpp-rust.md`,
   `docs/18-daily-driver-plan.md` e `docs/21-long-horizon-roadmap.md`.
 - KSWE deve reutilizar estes serviços; não criar outro executor de build.
+- `workspace.capabilities.buildSystems` é a fonte única das ações disponíveis
+  em projeto híbrido. `workspace.kind` continua apenas como primário compatível;
+  não voltar a inferir capacidade isoladamente na UI.
 
 ### 5.5 Run e Debug
 
@@ -326,6 +342,9 @@ crates/kinein-core/src/handlers/{run,debug}.rs
 
 - Testes: `crates/kinein-core/src/tests/{run,debug}.rs`.
 - Fontes: spec Build/Run/Debug e partes Debug da especificação KSWE.
+- `run.script { path }` é o caminho de execução rápida da árvore para scripts
+  `.sh/.bash/.zsh`: o core confina o arquivo e usa argv explícito. Não enviar
+  conteúdo, comando shell ou caminho não validado pela UI.
 
 ### 5.6 Terminal e KV Context
 
@@ -355,6 +374,10 @@ crates/kinein-core/src/handlers/{terminal,ai}.rs
   livre/persistida/maximizável são estados diferentes da mesma superfície,
   nunca um renderer de conversa da IDE. `Project` só é ocultado na maximização
   explícita, não pela mera existência da sessão.
+- A grade VT e o cursor são a única representação da entrada. Não recriar
+  faixa, `TextInput`, composer ou borda inferida por parsing da tela; a
+  referência comportamental é terminal-first (VS Code/xterm.js), adaptada ao
+  renderer Qt/QML e ao contrato tipado existentes.
 
 ### 5.7 Git
 
@@ -488,7 +511,8 @@ Alvos complementares:
 
 ### Caminho implementado: AppImage portátil de teste
 
-O método mais simples para um testador é receber **um AppImage + SHA256**. Ele
+O método mais simples para um testador é receber **um AppImage + SHA256 + o
+instalador de atalho + o tutorial vigente**. Ele
 não precisa clonar o repositório nem instalar Rust, CMake de desenvolvimento ou
 Qt para abrir a IDE. O AppImage inclui:
 
@@ -511,11 +535,21 @@ bash scripts/testar-appimage-portatil.sh
 ```
 
 O resultado fica em `dist/Kinein-Vectis-<versão>-x86_64.AppImage`, acompanhado
-de `SHA256SUMS` e de um `.AppImage.sha256` específico. Para um testador, enviar
-o AppImage e o checksum específico juntos; o procedimento completo fica em
-`Tutorial.md`. A receita usa `linuxdeploy` + `linuxdeploy-plugin-qt`, builder
+de `SHA256SUMS`, de um `.AppImage.sha256` específico e de
+`instalar-kinein-vectis.sh`, além de uma cópia byte a byte do `Tutorial.md`
+vigente. Esse instalador seleciona semanticamente o
+AppImage mais recente da pasta, sobrescreve um único `.desktop` no escopo do
+usuário e oferece apagar versões anteriores. Para um testador, enviar os quatro
+arquivos; o procedimento completo fica em `Tutorial.md`. A receita usa
+`linuxdeploy` + `linuxdeploy-plugin-qt`, builder
 Debian 12 fixado e ferramentas auditadas no registry. O smoke portátil executa
 sem rede em um Debian mínimo que não contém Qt, Rust, CMake ou compiladores.
+
+No computador de desenvolvimento, os atalhos têm identidades separadas:
+`kinein-vectis.desktop` pertence ao AppImage distribuído e
+`kinein-vectis-development.desktop` ao checkout. O segundo aparece como
+**Kinein Vectis (Desenvolvimento)** e é criado somente por
+`scripts/instalar-atalho.sh`; nenhum dos dois deve sobrescrever o outro.
 
 Baseline honesto: Linux x86_64 com glibc 2.36 ou posterior e a pilha gráfica/
 fontes normal de uma instalação desktop. Suportar distribuições anteriores ao

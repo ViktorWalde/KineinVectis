@@ -165,9 +165,11 @@ referência exata (arquivo§seção). `LAYOUT` =
 
 `KvIcon.qml` centraliza desenhos vetoriais lineares, grid 24×24 e stroke
 1.75px; `KvIconButton` aplica estados default/hover/ativo/desabilitado e
-acessibilidade. Rail, toolbar, explorer, tabs, painéis, diálogos e controles
-de ação deixaram de depender de glifos Unicode/fontes. Canvas foi escolhido
-como asset vetorial code-native; não há pack externo nem SVG duplicado.
+acessibilidade. Rail, toolbar, tabs, painéis, diálogos e controles de ação
+deixaram de depender de glifos Unicode/fontes. A árvore é a exceção deliberada:
+os cinco SVGs autorais fornecidos pelo usuário vivem em `ui/assets/icons/tree/`
+com bytes idênticos aos masters e são dimensionados pelo mesmo `KvIcon`, sem
+redesenho ou mapa paralelo.
 
 ### G. Componentes catalogados (COMP §11–13)
 
@@ -212,6 +214,8 @@ C1 [FEITA 2026-07-09; validação visual do usuário pendente — R7]
    atualizar as linhas das áreas A/C/D do inventário para "conforme".
 C2 [FEITA 2026-07-14; validação visual R7 pendente] Iconografia: `KvIcon`
    vetorial + botões/tooltip centrais substituíram glifos de texto nas ações.
+   Em 2026-07-15, pasta fechada/aberta e arquivos C/C++/Rust passaram a usar
+   fielmente os SVGs entregues pelo usuário via o mesmo contrato.
 C3 [FEITA 2026-07-14; validação visual R7 pendente] Main Toolbar (região 2)
    nasceu
    conforme spec — aqui feature e convergência coincidem por natureza
@@ -219,8 +223,8 @@ C3 [FEITA 2026-07-14; validação visual R7 pendente] Main Toolbar (região 2)
 C4 [durante M3] Editor Area: breadcrumbs, gutter de diagnósticos (depois
    breakpoints no M2/M3 do debugger), linha atual, conforme
    EDITOR_LANGUAGE_INTELLIGENCE + LAYOUT_SYSTEM.
-   [parcial 2026-07-09, fatias M2.5b/M2.5c] A gutter NASCEU no
-   EditorTextSurface: números de linha (janela visível, sem custo em
+   [parcial 2026-07-09, fatias M2.5b/M2.5c] A gutter NASCEU no editor:
+   números de linha (janela visível, sem custo em
    arquivo longo), breakpoints por clique (bolinha errorSoft) e linha de
    execução do debugger destacada (accentDim 35%). M2.5c somou a linha
    do cursor (surfaceSelected, some na seleção) e breadcrumbs do caminho
@@ -234,6 +238,11 @@ C4 [durante M3] Editor Area: breadcrumbs, gutter de diagnósticos (depois
    visual do usuário (R7). Underline aponta para os semantic tokens/
    layout de EDITOR_LANGUAGE_INTELLIGENCE; refino fino (marker bar à
    direita, contadores) fica para o Problems 2.0/C6.
+   [correção de dogfooding 2026-07-15] O layout saiu de
+   `EditorTextSurface.qml` para `EditorGutter.qml`. Folding/breakpoint,
+   diagnóstico, blame e número agora ocupam faixas independentes; a largura
+   numérica usa `FontMetrics`, eliminando a sobreposição do breakpoint em
+   arquivos com mais dígitos ou fonte ampliada.
 C5 [FEITA 2026-07-14; remediações funcionais 0.50–0.52; validação R7 pendente]
    App Bar com menus em overlay global e ações ligadas, KV Context como AI CLI
    Bridge Claude/Codex sobre PTY, Start Screen e criação com preview conforme
@@ -243,9 +252,9 @@ C5 [FEITA 2026-07-14; remediações funcionais 0.50–0.52; validação R7 pende
    A largura 300–480 continua normativa para o seletor/estado compacto; a CLI
    ativa pode ocupar até 720px ou a área de trabalho porque passa a ser um
    layout operacional de terminal, conforme a Parte 7.1 que supera o KV
-   Context-chat original. No modo inline, a linha do cursor ao vivo recebe um
-   guia visual opt-in do host; conteúdo, ordem das linhas e input continuam no
-   grid VT da CLI, sem composer paralelo.
+   Context-chat original. A tentativa intermediária de guia da linha ativa foi
+   removida em 2026-07-15: conteúdo, ordem, input e cursor pertencem somente ao
+   grid VT da CLI, sem composer, moldura ou parsing paralelo.
    O terceiro feedback foi tratado no 0.52: a sessão ativa mantém o splitter,
    persiste sua largura própria em 300–720px, não fecha `Project`, preserva o
    scroll durante nova saída e impede somente `CSI 3 J` nas sessões do bridge

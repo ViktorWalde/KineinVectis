@@ -238,10 +238,12 @@ void CoreClient::requestRename(const QString& path, const QString& content, int 
                                                           {QStringLiteral("newName"), newName}});
 }
 
-void CoreClient::requestSemanticTokens(const QString& path, const QString& content)
+void CoreClient::requestSemanticTokens(const QString& path, const QString& content, int version)
 {
     sendRequest(QStringLiteral("lsp.semanticTokens"),
-                QJsonObject{{QStringLiteral("path"), path}, {QStringLiteral("content"), content}});
+                QJsonObject{{QStringLiteral("path"), path},
+                            {QStringLiteral("content"), content},
+                            {QStringLiteral("version"), version}});
 }
 
 void CoreClient::requestSyntaxTree(const QString& path, const QString& content, int version)
@@ -507,16 +509,20 @@ void CoreClient::cmakeStatus()
     sendRequest(QStringLiteral("cmake.status"), QJsonObject{});
 }
 
-void CoreClient::runBuild()
+void CoreClient::runBuild(const QString& buildSystem)
 {
     if (m_building || m_process.state() != QProcess::Running) {
         return;
     }
     setBuilding(true);
-    sendRequest(QStringLiteral("build.run"), QJsonObject{});
+    QJsonObject params;
+    if (!buildSystem.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("buildSystem"), buildSystem);
+    }
+    sendRequest(QStringLiteral("build.run"), params);
 }
 
-void CoreClient::runTests(const QString& filter)
+void CoreClient::runTests(const QString& filter, const QString& buildSystem)
 {
     if (m_testing || m_process.state() != QProcess::Running) {
         return;
@@ -525,17 +531,24 @@ void CoreClient::runTests(const QString& filter)
     if (!filter.trimmed().isEmpty()) {
         params.insert(QStringLiteral("filter"), filter);
     }
+    if (!buildSystem.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("buildSystem"), buildSystem);
+    }
     setTesting(true);
     sendRequest(QStringLiteral("test.run"), params);
 }
 
-void CoreClient::runQuality()
+void CoreClient::runQuality(const QString& buildSystem)
 {
     if (m_analyzing || m_process.state() != QProcess::Running) {
         return;
     }
     setAnalyzing(true);
-    sendRequest(QStringLiteral("quality.run"), QJsonObject{});
+    QJsonObject params;
+    if (!buildSystem.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("buildSystem"), buildSystem);
+    }
+    sendRequest(QStringLiteral("quality.run"), params);
 }
 
 void CoreClient::cancelBuild()
@@ -573,6 +586,11 @@ void CoreClient::runStart(const QString& command)
         params.insert(QStringLiteral("command"), command);
     }
     sendRequest(QStringLiteral("run.start"), params);
+}
+
+void CoreClient::runScript(const QString& path)
+{
+    sendRequest(QStringLiteral("run.script"), QJsonObject{{QStringLiteral("path"), path}});
 }
 
 void CoreClient::runStdin(const QString& data)

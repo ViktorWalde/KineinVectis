@@ -238,6 +238,22 @@ pub struct LspReferencesResult {
     pub references: Vec<LspReferenceItem>,
 }
 
+/// Parameters for `lsp.semanticTokens`.
+///
+/// `version` is owned by the editor UI and echoed unchanged by the core. It
+/// prevents a slow language-server response from being applied to a newer
+/// buffer or to another tab.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LspSemanticTokensParams {
+    /// Absolute path of an existing file inside the workspace root.
+    pub path: String,
+    /// Current UTF-8 editor buffer synchronized before the LSP request.
+    pub content: String,
+    /// Monotonic editor-side version for stale-response rejection.
+    pub version: u64,
+}
+
 /// One semantic token resolved by `lsp.semanticTokens`.
 ///
 /// Positions are tailored for the Qt text renderer: `line` is 1-based and
@@ -260,6 +276,10 @@ pub struct LspSemanticToken {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LspSemanticTokensResult {
+    /// Canonical path whose buffer produced these tokens.
+    pub path: String,
+    /// Editor-side version received in the request.
+    pub version: u64,
     /// Tokens in document order.
     pub tokens: Vec<LspSemanticToken>,
 }
@@ -297,7 +317,8 @@ mod tests {
 
     use crate::{
         LspApplyCodeActionParams, LspCodeActionInfo, LspCodeActionsResult, LspCompletionItem,
-        LspCompletionResult, LspDefinitionResult, LspRenameParams, LspTextDocumentPositionParams,
+        LspCompletionResult, LspDefinitionResult, LspRenameParams, LspSemanticToken,
+        LspSemanticTokensParams, LspSemanticTokensResult, LspTextDocumentPositionParams,
         LspWorkspaceEditApplyResult, LspWorkspaceEditCancelResult, LspWorkspaceEditFilePreview,
         LspWorkspaceEditPreviewResult, LspWorkspaceEditTransactionParams,
     };
@@ -362,6 +383,41 @@ mod tests {
         assert_eq!(value["items"][0]["kind"], "function");
         assert!(value["items"][0].get("detail").is_none());
         assert_eq!(value["isIncomplete"], true);
+    }
+
+    #[test]
+    fn lsp_semantic_tokens_echo_path_and_version() {
+        let params: LspSemanticTokensParams = serde_json::from_value(json!({
+            "path": "/tmp/main.rs",
+            "content": "fn main() {}\n",
+            "version": 7,
+        }))
+        .unwrap();
+        assert_eq!(params.version, 7);
+
+        let result = LspSemanticTokensResult {
+            path: params.path,
+            version: params.version,
+            tokens: vec![LspSemanticToken {
+                line: 1,
+                start: 3,
+                length: 4,
+                kind: "function".to_owned(),
+            }],
+        };
+        let value = serde_json::to_value(result).unwrap();
+
+        assert_eq!(value["path"], "/tmp/main.rs");
+        assert_eq!(value["version"], 7);
+        assert_eq!(value["tokens"][0]["kind"], "function");
+
+        let rejected = serde_json::from_value::<LspSemanticTokensParams>(json!({
+            "path": "/tmp/main.rs",
+            "content": "",
+            "version": 8,
+            "extra": true,
+        }));
+        assert!(rejected.is_err());
     }
 
     #[test]

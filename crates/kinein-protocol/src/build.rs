@@ -2,10 +2,40 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{Diagnostic, DiagnosticSource};
+use crate::{BuildSystem, Diagnostic, DiagnosticSource};
 
 /// Backwards-compatible name for diagnostic severity used by build payloads.
 pub use crate::DiagnosticSeverity as BuildDiagnosticSeverity;
+
+/// Parameters for `build.run`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BuildRunParams {
+    /// Explicit build system in a hybrid workspace; primary kind when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_system: Option<BuildSystem>,
+}
+
+/// Parameters for `quality.run`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct QualityRunParams {
+    /// Explicit analyzer toolchain. Only Cargo is implemented currently.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_system: Option<BuildSystem>,
+}
+
+/// Parameters for `test.run`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TestRunParams {
+    /// Optional runner-specific test filter.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filter: Option<String>,
+    /// Explicit build system in a hybrid workspace; primary kind when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_system: Option<BuildSystem>,
+}
 
 /// Structured diagnostic extracted from build output.
 ///
@@ -109,7 +139,12 @@ pub struct TestRunResult {
 
 #[cfg(test)]
 mod tests {
-    use crate::{BuildDiagnostic, BuildDiagnosticSeverity, DiagnosticSource};
+    use serde_json::json;
+
+    use crate::{
+        BuildDiagnostic, BuildDiagnosticSeverity, BuildRunParams, BuildSystem, DiagnosticSource,
+        TestRunParams,
+    };
 
     #[test]
     fn build_diagnostic_converts_to_common_diagnostic() {
@@ -131,5 +166,20 @@ mod tests {
         assert_eq!(diagnostic.line, Some(12));
         assert_eq!(diagnostic.column, Some(8));
         assert_eq!(diagnostic.job_id.as_deref(), Some("job_7"));
+    }
+
+    #[test]
+    fn hybrid_runner_params_are_strict_and_backwards_compatible() {
+        let default_build = serde_json::from_value::<BuildRunParams>(json!({})).unwrap();
+        let cmake_tests = serde_json::from_value::<TestRunParams>(json!({
+            "filter": "smoke",
+            "buildSystem": "cmake"
+        }))
+        .unwrap();
+
+        assert_eq!(default_build.build_system, None);
+        assert_eq!(cmake_tests.build_system, Some(BuildSystem::Cmake));
+        assert_eq!(cmake_tests.filter.as_deref(), Some("smoke"));
+        assert!(serde_json::from_value::<BuildRunParams>(json!({ "system": "cargo" })).is_err());
     }
 }

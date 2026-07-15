@@ -31,6 +31,7 @@ class CoreClient : public QObject
     Q_PROPERTY(QString workspaceRoot READ workspaceRoot NOTIFY workspaceChanged)
     Q_PROPERTY(QString workspaceName READ workspaceName NOTIFY workspaceChanged)
     Q_PROPERTY(QString workspaceKind READ workspaceKind NOTIFY workspaceChanged)
+    Q_PROPERTY(QStringList workspaceBuildSystems READ workspaceBuildSystems NOTIFY workspaceChanged)
     Q_PROPERTY(QString homeDir READ homeDir CONSTANT)
     Q_PROPERTY(QString errorLogFile READ errorLogFile CONSTANT)
     Q_PROPERTY(bool building READ isBuilding NOTIFY buildingChanged)
@@ -54,6 +55,7 @@ public:
     [[nodiscard]] QString workspaceRoot() const;
     [[nodiscard]] QString workspaceName() const;
     [[nodiscard]] QString workspaceKind() const;
+    [[nodiscard]] QStringList workspaceBuildSystems() const;
     [[nodiscard]] static QString homeDir();
     [[nodiscard]] static QString errorLogFile();
     [[nodiscard]] bool isBuilding() const;
@@ -126,9 +128,10 @@ public:
     Q_INVOKABLE void cargoMetadata();
     Q_INVOKABLE void cmakeConfigure();
     Q_INVOKABLE void cmakeStatus();
-    Q_INVOKABLE void runBuild();
-    Q_INVOKABLE void runTests(const QString& filter = QString());
-    Q_INVOKABLE void runQuality();
+    Q_INVOKABLE void runBuild(const QString& buildSystem = QString());
+    Q_INVOKABLE void runTests(const QString& filter = QString(),
+                              const QString& buildSystem = QString());
+    Q_INVOKABLE void runQuality(const QString& buildSystem = QString());
     Q_INVOKABLE void cancelBuild();
     Q_INVOKABLE void cancelTests();
     Q_INVOKABLE void cancelQuality();
@@ -152,7 +155,8 @@ public:
     Q_INVOKABLE void cancelWorkspaceEdit(const QString& transactionId);
     Q_INVOKABLE void requestRename(const QString& path, const QString& content, int line,
                                    int column, const QString& newName);
-    Q_INVOKABLE void requestSemanticTokens(const QString& path, const QString& content);
+    Q_INVOKABLE void requestSemanticTokens(const QString& path, const QString& content,
+                                           int version);
     Q_INVOKABLE void requestSyntaxTree(const QString& path, const QString& content, int version);
     Q_INVOKABLE void requestSwitchSourceHeader(const QString& path, const QString& content);
     // M4.3b: reinicia servidor(es) LSP; language vazio = todos.
@@ -165,6 +169,7 @@ public:
     Q_INVOKABLE void replaceInFiles(const QString& query, const QString& replacement,
                                     bool caseSensitive);
     Q_INVOKABLE void runStart(const QString& command);
+    Q_INVOKABLE void runScript(const QString& path);
     Q_INVOKABLE void runStdin(const QString& data);
     Q_INVOKABLE void runStop();
     // D2.3 (docs/24): multi-terminal — todo comando leva o id da sessão.
@@ -243,7 +248,7 @@ signals:
     void lspWorkspaceEditApplied(const QStringList& files, const QString& title, int edits);
     void lspWorkspaceEditCancelled(const QString& transactionId);
     void lspSymbolsResolved(const QVariantList& symbols);
-    void lspSemanticTokensResolved(const QVariantList& tokens);
+    void lspSemanticTokensResolved(const QString& path, int version, const QVariantList& tokens);
     void syntaxTreeResolved(const QString& path, int version, const QString& language,
                             bool hasErrors, const QVariantList& highlights,
                             const QVariantList& foldingRanges, const QVariantList& outline,
@@ -336,6 +341,7 @@ private:
     QString m_workspaceRoot;
     QString m_workspaceName;
     QString m_workspaceKind;
+    QStringList m_workspaceBuildSystems;
     // M4.3: recuperacao de crash do core. m_lastWorkspaceRoot sobrevive ao
     // crash (o que a recuperacao reabre); m_recovering suprime o session
     // restore e sinaliza a UI; a janela+contador cortam loop de fork.

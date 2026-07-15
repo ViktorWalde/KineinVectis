@@ -40,13 +40,35 @@ A receita é dividida em:
 - `scripts/empacotar-appimage-portatil.sh`: cria/executa o builder Podman ou
   Docker;
 - `scripts/empacotar-appimage.sh`: compila, instala no AppDir, verifica as
-  ferramentas e gera o AppImage;
+  ferramentas, gera o AppImage e concentra AppImage/checksum/instalador/
+  tutorial em `dist/`;
+- `scripts/instalar-appimage.sh`: integra no menu do usuário o AppImage de
+  maior versão encontrado na pasta, sobrescreve um único atalho e oferece
+  remover versões anteriores;
 - `scripts/testar-appimage.sh`: valida estrutura, core e primeiro frame
   offscreen;
 - `scripts/testar-appimage-portatil.sh`: repete o smoke sem rede em um runtime
   Debian mínimo sem Qt, Rust, CMake ou compiladores;
 - `packaging/appimage/`: builders fixados, metadados do desktop e avisos de
   licença.
+
+Build nativo e build no baseline não compartilham cache CMake: usam diretórios
+`native-host` e `native-portable` distintos e configuração `cmake --fresh`.
+Isso impede que um cache criado em `/workspace` dentro do container seja
+reutilizado pelo checkout em `/home/...` (ou o inverso). O wrapper portátil
+invoca os scripts montados com `bash`, sem depender do bit executável, e os
+mounts Podman usam rótulo SELinux `:Z` com modo de acesso explícito.
+
+Além do `SHA256SUMS` interno de automação, a entrega principal de `dist/` é:
+AppImage, `.AppImage.sha256`, `instalar-kinein-vectis.sh` e `Tutorial.md`. O
+teste local exige os quatro, exige o instalador executável e compara a cópia do
+tutorial byte a byte com a fonte vigente.
+
+O AppImage é dono do desktop id `kinein-vectis.desktop` e do nome público
+**Kinein Vectis**. O checkout usa o desktop id separado
+`kinein-vectis-development.desktop`, exibido como
+**Kinein Vectis (Desenvolvimento)**; assim o mantenedor pode comparar o
+artefato distribuído com a build local sem um atalho sobrescrever o outro.
 
 O baseline atual é Debian 12/glibc 2.36. Portanto, o primeiro artefato cobre
 distribuições Linux x86_64 atuais com glibc igual ou posterior; não se promete
@@ -73,7 +95,9 @@ de build. A Kinein instala também seu aviso de licença no artefato.
 Os módulos Debian `QtQuick`, `QtQuick.Window`, `QtQml`, `QtQml.Models` e
 `QtQml.WorkerScript` são dependências explícitas do builder. Isso evita que um
 build bem-sucedido gere um bundle sem imports QML que só falharia na máquina
-do testador. O smoke confere também `xcb`, `offscreen` e os diretórios QML.
+do testador. O smoke confere `libqxcb.so`, `offscreen`, `minimal`, plugins de
+plataforma Wayland, integrações gráficas/shell Wayland, suas dependências ELF e
+os diretórios QML.
 
 ## Evidência de validação inicial
 
@@ -103,6 +127,15 @@ passou novamente pelos smokes do host e do Debian mínimo. Seu SHA256 atual é
 `ef5970f322aced46905c66dbca5f1360964cde3a4871030bb8f321d771277fe7`; o hash
 acima permanece registrado apenas como evidência do primeiro build.
 
+Em 2026-07-15, após endurecer plugins Wayland, separar caches host/container e
+adicionar o instalador/tutorial à entrega, o artefato `0.1.0` foi regenerado
+com 33.737.208 bytes e SHA256
+`fd5fe934599757b6980703d2c2529f9b50bdc026e03e5da34b6a0eb5f44629b9`.
+Passaram o smoke do host e o Debian mínimo sem rede. O teste também executou o
+instalador a partir de um diretório de trabalho diferente da entrega e
+confirmou `.desktop`, PNG extraído e `Exec` apontando para o AppImage correto;
+isso protege a regra de resolver por padrão a pasta do próprio script.
+
 ## Alternativas consideradas
 
 - **Bundler próprio:** rejeitado por duplicar resolução ELF/RPATH/Qt/QML.
@@ -119,11 +152,14 @@ acima permanece registrado apenas como evidência do primeiro build.
 O artefato só pode ser distribuído após:
 
 1. SHA256 das ferramentas e do runtime type-2 validado;
-2. AppDir conter UI, core, manual, desktop, Qt, módulos QML e plugins `xcb` e
-   `offscreen`;
+2. AppDir conter UI, core, manual, desktop, Qt, módulos QML e plugins `xcb`,
+   `offscreen`, `minimal` e Wayland, inclusive integrações gráficas e de shell
+   e suas dependências dinâmicas;
 3. `core.ping` responder usando o binário empacotado;
 4. primeiro frame Qt/QML aparecer no smoke offscreen;
-5. `scripts/testar-appimage-portatil.sh` passar sem rede e sem Qt/Rust de
+5. `dist/` conter AppImage, checksum específico, instalador e `Tutorial.md`
+   idêntico à fonte;
+6. `scripts/testar-appimage-portatil.sh` passar sem rede e sem Qt/Rust de
    desenvolvimento.
 
 Rollback: remover a receita/instalação AppDir e as duas entradas do registry.

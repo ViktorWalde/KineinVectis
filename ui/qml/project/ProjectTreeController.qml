@@ -19,6 +19,7 @@ Item {
     property string entryMenuPath: ""
     property string entryMenuKind: ""
     property string entryMenuName: ""
+    property bool entryMenuRunnable: false
     property bool entryRenameVisible: false
     property string entryRenamePath: ""
     property string entryRenameKind: ""
@@ -35,6 +36,7 @@ Item {
     signal readFileRequested(string path)
     signal renamePathRequested(string from, string to)
     signal deletePathRequested(string path)
+    signal runScriptRequested(string path)
     signal tabsRenameRequested(string from, string to)
     signal tabsCloseRequested(string path)
     signal createDialogFocusRequested()
@@ -56,6 +58,15 @@ Item {
         return slash > 0 ? path.substring(0, slash) : path;
     }
 
+    function isRunnableScript(path, kind) {
+        if (kind !== "file") {
+            return false;
+        }
+        const lower = path.toLowerCase();
+        return lower.endsWith(".sh") || lower.endsWith(".bash")
+                || lower.endsWith(".zsh");
+    }
+
     function clear() {
         treeModel.clear();
         selectedPath = "";
@@ -65,6 +76,7 @@ Item {
         createDialogParentPath = "";
         entryMenuVisible = false;
         entryMenuPath = "";
+        entryMenuRunnable = false;
         entryRenameVisible = false;
         entryRenameError = "";
         entryDeleteVisible = false;
@@ -185,9 +197,25 @@ Item {
         entryMenuPath = path;
         entryMenuKind = kind;
         entryMenuName = name;
+        entryMenuRunnable = isRunnableScript(path, kind);
         entryMenuX = Math.max(0, Math.min(sceneX, hostWidth - 172));
-        entryMenuY = Math.max(0, Math.min(sceneY, hostHeight - 156));
+        entryMenuY = Math.max(0, Math.min(sceneY, hostHeight - 190));
         entryMenuVisible = true;
+    }
+
+    function runScript(path) {
+        if (!isRunnableScript(path, "file") || workspaceRoot === "") {
+            return;
+        }
+        entryMenuVisible = false;
+        runScriptRequested(path);
+    }
+
+    function runEntryScript() {
+        if (!entryMenuRunnable) {
+            return;
+        }
+        runScript(entryMenuPath);
     }
 
     function openEntryRename() {

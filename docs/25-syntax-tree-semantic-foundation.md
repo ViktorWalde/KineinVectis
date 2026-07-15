@@ -114,8 +114,12 @@ Ordem de pintura por bloco:
 3. semantic tokens do LSP, que têm precedência;
 4. diagnósticos e ocorrências de busca, que acrescentam decoração.
 
-Tree-sitter não é apagado quando o LSP reinicia. Semantic tokens obsoletos são
-limpos na troca de documento; a base estrutural permanece.
+Tree-sitter não é apagado quando o LSP reinicia. Desde o protocolo 0.54.0,
+`lsp.semanticTokens` recebe e ecoa `path`+`version`. Cada edição avança as
+versões sintática e semântica imediatamente, limpa os semantic tokens vigentes
+e a UI descarta qualquer resposta que não pertença ao documento e versão
+ativos. Assim a base estrutural atual nunca é coberta por semântica atrasada de
+um buffer anterior.
 
 O outline é uma árvore recolhível local e continua disponível sem clangd ou
 rust-analyzer. Um clique navega para a posição do nó. Folding esconde blocos

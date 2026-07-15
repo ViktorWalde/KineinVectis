@@ -1,5 +1,5 @@
 #!/bin/sh
-# Launcher do Kinein Vectis.
+# Launcher do checkout de desenvolvimento do Kinein Vectis.
 # Sobe a UI release, que por sua vez inicia o kinein-core automaticamente.
 # Tudo local, sem rede e sem servicos externos.
 

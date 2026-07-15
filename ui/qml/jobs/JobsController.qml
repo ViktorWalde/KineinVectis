@@ -13,8 +13,8 @@ Item {
     property alias jobsModel: jobItemsModel
     property string testSummary: ""
 
-    signal runBuildRequested()
-    signal runTestsRequested()
+    signal runBuildRequested(string buildSystem)
+    signal runTestsRequested(string buildSystem)
     signal runQualityRequested()
     signal showTabRequested(string tab)
 
@@ -46,24 +46,24 @@ Item {
         testSummary = "";
     }
 
-    function startBuild() {
+    function startBuild(buildSystem) {
         if (building || workspaceRoot === "") {
             return;
         }
         buildOutputItemsModel.clear();
         removeProblemsBySource("build");
         showTabRequested("build");
-        runBuildRequested();
+        runBuildRequested(buildSystem || "");
     }
 
-    function startTests() {
+    function startTests(buildSystem) {
         if (testing || workspaceRoot === "") {
             return;
         }
         testItemsModel.clear();
         testSummary = qsTr("rodando testes...");
         showTabRequested("tests");
-        runTestsRequested();
+        runTestsRequested(buildSystem || "");
     }
 
     function startQuality() {

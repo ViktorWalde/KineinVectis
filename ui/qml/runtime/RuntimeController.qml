@@ -40,6 +40,7 @@ Item {
     signal terminalScrollRequested(string id, int offset)
     signal terminalCloseRequested(string id)
     signal runStartRequested(string command)
+    signal runScriptRequested(string path)
     signal runStopRequested()
     signal runStdinRequested(string data)
     signal focusTerminalInputRequested()
@@ -188,6 +189,16 @@ Item {
         showTabRequested("terminal");
         focusTerminalInputRequested();
         runStartRequested(command);
+    }
+
+    function startScript(path) {
+        if (workspaceRoot === "" || running || path === "") {
+            return;
+        }
+        terminalSession = "run";
+        showTabRequested("terminal");
+        focusTerminalInputRequested();
+        runScriptRequested(path);
     }
 
     function stopRun() {

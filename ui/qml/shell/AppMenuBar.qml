@@ -10,6 +10,7 @@ Rectangle {
     property bool running: false
     property bool debugging: false
     property string workspaceKind: ""
+    property var workspaceBuildSystems: []
     property var recentWorkspaces: []
     property string activeMenu: ""
 
@@ -29,6 +30,12 @@ Rectangle {
 
     function closeMenu() {
         activeMenu = "";
+    }
+
+    function hasBuildSystem(buildSystem) {
+        const systems = workspaceBuildSystems !== undefined
+                && workspaceBuildSystems !== null ? workspaceBuildSystems : [];
+        return systems.indexOf(buildSystem) >= 0;
     }
 
     function toggleMenu(key, item) {
@@ -72,6 +79,28 @@ Rectangle {
             { label: qsTr("Salvar tudo"), action: "editor.saveAll", enabled: hasActiveFile },
             { label: qsTr("Sair"), action: "app.quit", enabled: true }
         );
+        const cargoAvailable = hasBuildSystem("cargo");
+        const cmakeAvailable = hasBuildSystem("cmake");
+        const hybrid = cargoAvailable && cmakeAvailable;
+        const buildItems = [
+            { label: qsTr("Configurar CMake"), action: "cmake.configure",
+              enabled: workspaceOpen && cmakeAvailable && coreConnected }
+        ];
+        if (hybrid) {
+            buildItems.push(
+                { label: qsTr("Compilar com Cargo"), action: "build.run.cargo", enabled: workspaceOpen && coreConnected },
+                { label: qsTr("Testar com Cargo"), action: "test.run.cargo", enabled: workspaceOpen && coreConnected },
+                { label: qsTr("Compilar com CMake"), action: "build.run.cmake", enabled: workspaceOpen && coreConnected },
+                { label: qsTr("Testar com CMake"), action: "test.run.cmake", enabled: workspaceOpen && coreConnected }
+            );
+        } else {
+            buildItems.push(
+                { label: qsTr("Compilar"), action: "build.run", enabled: workspaceOpen && coreConnected },
+                { label: qsTr("Testes"), action: "test.run", enabled: workspaceOpen && coreConnected }
+            );
+        }
+        buildItems.push({ label: qsTr("Análise Cargo"), action: "quality.run",
+                          enabled: workspaceOpen && cargoAvailable && coreConnected });
         const menus = {
             file: fileItems,
             edit: [
@@ -98,12 +127,7 @@ Rectangle {
                 { label: qsTr("Ações de código"), action: "lsp.codeActions", enabled: hasActiveFile },
                 { label: qsTr("Alternar source/header"), action: "lsp.switchSourceHeader", enabled: hasActiveFile }
             ],
-            build: [
-                { label: qsTr("Configurar"), action: "cmake.configure", enabled: workspaceOpen && workspaceKind === "cmake" && coreConnected },
-                { label: qsTr("Compilar"), action: "build.run", enabled: workspaceOpen && coreConnected },
-                { label: qsTr("Testes"), action: "test.run", enabled: workspaceOpen && coreConnected },
-                { label: qsTr("Análise"), action: "quality.run", enabled: workspaceOpen && coreConnected }
-            ],
+            build: buildItems,
             run: [
                 { label: qsTr("Executar"), action: "run.start", enabled: workspaceOpen && coreConnected && !running },
                 { label: qsTr("Depurar"), action: "debug.start", enabled: workspaceOpen && coreConnected && !debugging },

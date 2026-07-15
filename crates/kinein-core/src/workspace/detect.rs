@@ -2,21 +2,25 @@
 
 use std::path::Path;
 
-use kinein_protocol::ProjectKind;
+use kinein_protocol::{BuildSystem, ProjectKind, WorkspaceCapabilities};
 
 /// Build system markers in precedence order. The first match decides the
 /// primary project kind; every match is reported to the UI.
-const MARKERS: &[(&str, ProjectKind)] = &[
-    ("Cargo.toml", ProjectKind::RustCargo),
-    ("CMakeLists.txt", ProjectKind::Cmake),
-    ("pom.xml", ProjectKind::Maven),
-    ("build.gradle", ProjectKind::Gradle),
-    ("build.gradle.kts", ProjectKind::Gradle),
-    ("settings.gradle", ProjectKind::Gradle),
-    ("settings.gradle.kts", ProjectKind::Gradle),
-    ("pyproject.toml", ProjectKind::Python),
-    ("setup.py", ProjectKind::Python),
-    ("requirements.txt", ProjectKind::Python),
+const MARKERS: &[(&str, ProjectKind, BuildSystem)] = &[
+    ("Cargo.toml", ProjectKind::RustCargo, BuildSystem::Cargo),
+    ("CMakeLists.txt", ProjectKind::Cmake, BuildSystem::Cmake),
+    ("pom.xml", ProjectKind::Maven, BuildSystem::Maven),
+    ("build.gradle", ProjectKind::Gradle, BuildSystem::Gradle),
+    ("build.gradle.kts", ProjectKind::Gradle, BuildSystem::Gradle),
+    ("settings.gradle", ProjectKind::Gradle, BuildSystem::Gradle),
+    (
+        "settings.gradle.kts",
+        ProjectKind::Gradle,
+        BuildSystem::Gradle,
+    ),
+    ("pyproject.toml", ProjectKind::Python, BuildSystem::Python),
+    ("setup.py", ProjectKind::Python, BuildSystem::Python),
+    ("requirements.txt", ProjectKind::Python, BuildSystem::Python),
 ];
 
 /// Detects the project kind of a workspace root.
@@ -24,28 +28,34 @@ const MARKERS: &[(&str, ProjectKind)] = &[
 /// Returns the primary kind (first marker in precedence order) and every
 /// recognized marker file present in the root.
 #[must_use]
-pub fn detect_project(root: &Path) -> (ProjectKind, Vec<String>) {
+pub fn detect_project(root: &Path) -> (ProjectKind, Vec<String>, WorkspaceCapabilities) {
     let found = MARKERS
         .iter()
-        .filter(|(marker, _)| root.join(marker).is_file())
+        .filter(|(marker, _, _)| root.join(marker).is_file())
         .collect::<Vec<_>>();
 
     let kind = found
         .first()
-        .map_or(ProjectKind::Unknown, |(_, kind)| *kind);
+        .map_or(ProjectKind::Unknown, |(_, kind, _)| *kind);
     let markers = found
         .iter()
-        .map(|(marker, _)| (*marker).to_owned())
+        .map(|(marker, _, _)| (*marker).to_owned())
         .collect();
+    let mut build_systems = Vec::new();
+    for (_, _, build_system) in found {
+        if !build_systems.contains(build_system) {
+            build_systems.push(*build_system);
+        }
+    }
 
-    (kind, markers)
+    (kind, markers, WorkspaceCapabilities { build_systems })
 }
 
 #[cfg(test)]
 mod tests {
     use std::{fs, path::PathBuf};
 
-    use kinein_protocol::ProjectKind;
+    use kinein_protocol::{BuildSystem, ProjectKind};
 
     use super::detect_project;
 
@@ -64,10 +74,11 @@ mod tests {
     fn empty_directory_is_unknown() {
         let dir = temp_workspace("unknown");
 
-        let (kind, markers) = detect_project(&dir);
+        let (kind, markers, capabilities) = detect_project(&dir);
 
         assert_eq!(kind, ProjectKind::Unknown);
         assert!(markers.is_empty());
+        assert!(capabilities.build_systems.is_empty());
     }
 
     #[test]
@@ -76,10 +87,14 @@ mod tests {
         fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
         fs::write(dir.join("CMakeLists.txt"), "project(x)\n").unwrap();
 
-        let (kind, markers) = detect_project(&dir);
+        let (kind, markers, capabilities) = detect_project(&dir);
 
         assert_eq!(kind, ProjectKind::RustCargo);
         assert_eq!(markers, ["Cargo.toml", "CMakeLists.txt"]);
+        assert_eq!(
+            capabilities.build_systems,
+            [BuildSystem::Cargo, BuildSystem::Cmake]
+        );
     }
 
     #[test]
@@ -94,7 +109,7 @@ mod tests {
             let dir = temp_workspace(marker);
             fs::write(dir.join(marker), "x\n").unwrap();
 
-            let (kind, _) = detect_project(&dir);
+            let (kind, _, _) = detect_project(&dir);
 
             assert_eq!(kind, expected, "marker {marker}");
         }

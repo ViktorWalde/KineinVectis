@@ -71,6 +71,11 @@ QString CoreClient::workspaceKind() const
     return m_workspaceKind;
 }
 
+QStringList CoreClient::workspaceBuildSystems() const
+{
+    return m_workspaceBuildSystems;
+}
+
 QString CoreClient::homeDir()
 {
     return QDir::homePath();

@@ -2550,6 +2550,59 @@ fica para o próximo uso real, sem pendência técnica conhecida.
 **Fora:** conteúdo de arquivos, credenciais, IA, sync/cloud, multi-root,
 miniaturas, varredura de diretórios e restauração adicional de layout/cursor.
 
+## Fatia A2 — projeto híbrido e execução prática [FEITA] (2026-07-15)
+
+Fecha a lacuna de self-hosting em que a própria Kinein era classificada apenas
+como Cargo, embora também tenha CMake/Qt/QML. Não cria Project Model paralelo;
+é a camada mínima de capacidade sobre os serviços já entregues.
+
+**Contrato implementado (protocolo 0.55.0):**
+
+```text
+WorkspaceInfo {
+  kind, markers,
+  capabilities: { buildSystems: ["cargo", "cmake", ...] }
+}
+build.run   { buildSystem? } → { jobId }
+quality.run { buildSystem? } → { jobId }
+test.run    { filter?, buildSystem? } → { jobId }
+run.script  { path } → { command }
+```
+
+`kind` mantém a precedência/compatibilidade existente; capabilities vêm da
+mesma varredura dos marcadores. Seleção explícita precisa estar no snapshot e
+é rejeitada antes do job quando indisponível. Sem seleção, o sistema primário
+preserva clientes anteriores. Toolbar, menu, Project Health e status mostram
+Cargo+CMake e oferecem build/teste separados no workspace híbrido; os Jobs e
+handlers existentes continuam sendo os únicos executores.
+
+Como conforto diretamente ligado ao self-hosting, arquivos `.sh/.bash/.zsh`
+ganharam ação de executar na linha da árvore e no menu de contexto, inspirada
+na ação de gutter/contexto das IDEs JetBrains. A UI envia somente o path; o
+core confina o arquivo e invoca `bash`/`zsh` com argv explícito, sem interpolar
+shell. Saída, stdin e stop reutilizam `event.run.*` e o Terminal de execução.
+
+**Concorrência editor:** a investigação do relato “Tree-sitter disputando com
+LSP” encontrou resposta semântica obsoleta, não dois highlighters de mesma
+autoridade. O protocolo 0.54.0 fez semantic tokens ecoarem path+version; a UI
+avança a versão na edição, limpa tokens velhos e descarta resposta que não
+corresponde ao buffer ativo. Tree-sitter continua instantâneo e o LSP
+progressivo.
+
+**UI adjacente:** `EditorGutter.qml` separa folding/breakpoint, diagnóstico,
+blame/diff e números medidos por `FontMetrics`; a toolbar oculta target/config
+secundários em larguras menores; os cinco SVGs fornecidos pelo usuário são
+usados byte a byte pelo `KvIcon` para pasta/C/C++/Rust. O KV Context voltou ao
+contrato terminal-first: grade VT e cursor autoritativos, sem moldura/input
+paralelo.
+
+**Testes:** core cobre detecção híbrida, roteamento Cargo/CMake, rejeição de
+capacidade ausente, scripts com espaços/aspas e extensão inválida; protocolo
+cobre payloads estritos; harness QML cobre ação de script e ausência de input
+terminal paralelo. Rust fmt/clippy/testes, C++ clang-format/tidy/build strict,
+qmllint zero warnings e harnesses QML passaram. O AppImage final é o gate de
+distribuição separado desta fatia.
+
 ## M4 — Polimento contínuo (longo prazo)
 
 ## M4–M7 — Roadmap de longo horizonte

@@ -14,6 +14,7 @@ Item {
     property string openedProfile: ""
     property string closedTerminal: ""
     property string preferredProfile: ""
+    property string executedScript: ""
     property int profilesRequests: 0
 
     QtObject {
@@ -43,6 +44,7 @@ Item {
         hostHeight: root.height
         onCreateFileRequested: path => root.createdFile = path
         onCreateDirectoryRequested: path => root.createdDirectory = path
+        onRunScriptRequested: path => root.executedScript = path
     }
 
     AssistantController {
@@ -74,6 +76,8 @@ Item {
         if (shell.outlineCollapsed === collapsed) failures += 1;
         shell.showAssistant = true;
         if (!shell.effectiveShowExplorer) failures += 1;
+        shell.workspaceBuildSystems = ["cargo", "cmake"];
+        if (shell.kindLabel("rustCargo") !== "Cargo + CMake") failures += 1;
 
         projectTree.openEntryMenu("/work/src/main.cpp", "file",
                                   "main.cpp", 990, 710);
@@ -91,6 +95,16 @@ Item {
         if (createdFile !== "/work/src/device.rs") failures += 1;
         projectTree.confirmCreateEntry("invalid/name");
         if (projectTree.createDialogError === "") failures += 1;
+
+        projectTree.openEntryMenu("/work/scripts/check.sh", "file",
+                                  "check.sh", 10, 10);
+        if (!projectTree.entryMenuRunnable) failures += 1;
+        projectTree.runEntryScript();
+        if (executedScript !== "/work/scripts/check.sh"
+                || projectTree.entryMenuVisible) failures += 1;
+        projectTree.openEntryMenu("/work/src/main.cpp", "file",
+                                  "main.cpp", 10, 10);
+        if (projectTree.entryMenuRunnable) failures += 1;
 
         assistant.handleProfiles([
             { id: "claude", name: "Claude", command: "claude", available: false },

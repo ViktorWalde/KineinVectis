@@ -36,4 +36,4 @@ pub const WORKSPACE_DIR: &str = ".kinein";
 pub const WORKSPACE_FILE: &str = "workspace.json";
 
 /// Schema version of the persisted workspace metadata.
-pub const WORKSPACE_SCHEMA_VERSION: &str = "0.1.0";
+pub const WORKSPACE_SCHEMA_VERSION: &str = "0.2.0";

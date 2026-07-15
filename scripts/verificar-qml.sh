@@ -14,8 +14,8 @@ REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 RSP="${KINEIN_QML_RSP:-}"
 if [ -z "$RSP" ]; then
     for candidato in \
-        "$REPO_ROOT/build/dev-local/ui/.rcc/qmllint/kinein-vectis.rsp" \
-        "$REPO_ROOT/build/linux-clang-debug-strict/ui/.rcc/qmllint/kinein-vectis.rsp"; do
+        "$REPO_ROOT/build/linux-clang-debug-strict/ui/.rcc/qmllint/kinein-vectis.rsp" \
+        "$REPO_ROOT/build/dev-local/ui/.rcc/qmllint/kinein-vectis.rsp"; do
         if [ -f "$candidato" ]; then
             RSP="$candidato"
             break
@@ -32,6 +32,8 @@ QMLLINT="${KINEIN_QMLLINT:-}"
 if [ -z "$QMLLINT" ]; then
     if command -v qmllint >/dev/null 2>&1; then
         QMLLINT="qmllint"
+    elif command -v qmllint-qt6 >/dev/null 2>&1; then
+        QMLLINT="qmllint-qt6"
     elif [ -x /usr/lib/qt6/bin/qmllint ]; then
         QMLLINT="/usr/lib/qt6/bin/qmllint"
     else

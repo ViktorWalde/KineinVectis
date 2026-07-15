@@ -141,6 +141,7 @@ impl Core {
             return RequestOutcome::Continue(JsonRpcResponse::failure(Some(Value::Null), error));
         }
 
+        let params = request.params.as_ref();
         match request.method.as_str() {
             "core.ping" => RequestOutcome::Continue(JsonRpcResponse::success(
                 request_id,
@@ -187,22 +188,21 @@ impl Core {
             "environment.scan" => {
                 RequestOutcome::Continue(self.environment_scan_response(request_id))
             }
-            "workspace.open" => RequestOutcome::Continue(
-                self.open_workspace_response(request_id, request.params.as_ref()),
-            ),
-            "workspace.browse" => RequestOutcome::Continue(Self::browse_workspace_response(
-                request_id,
-                request.params.as_ref(),
-            )),
-            "workspace.createFolder" => RequestOutcome::Continue(
-                Self::create_workspace_folder_response(request_id, request.params.as_ref()),
-            ),
-            "workspace.createProject" => RequestOutcome::Continue(
-                self.create_workspace_project_response(request_id, request.params.as_ref()),
-            ),
-            "workspace.saveSession" => RequestOutcome::Continue(
-                self.save_session_response(request_id, request.params.as_ref()),
-            ),
+            "workspace.open" => {
+                RequestOutcome::Continue(self.open_workspace_response(request_id, params))
+            }
+            "workspace.browse" => {
+                RequestOutcome::Continue(Self::browse_workspace_response(request_id, params))
+            }
+            "workspace.createFolder" => {
+                RequestOutcome::Continue(Self::create_workspace_folder_response(request_id, params))
+            }
+            "workspace.createProject" => {
+                RequestOutcome::Continue(self.create_workspace_project_response(request_id, params))
+            }
+            "workspace.saveSession" => {
+                RequestOutcome::Continue(self.save_session_response(request_id, params))
+            }
             "workspace.status" => RequestOutcome::Continue(JsonRpcResponse::success(
                 request_id,
                 json!(WorkspaceStatusResult {
@@ -212,16 +212,14 @@ impl Core {
             "workspace.close" => {
                 RequestOutcome::Continue(self.close_workspace_response(request_id))
             }
-            "build.run" => RequestOutcome::Continue(self.build_run_response(request_id)),
-            "quality.run" => RequestOutcome::Continue(self.quality_run_response(request_id)),
-            "test.run" => RequestOutcome::Continue(
-                self.test_run_response(request_id, request.params.as_ref()),
-            ),
-            method => RequestOutcome::Continue(self.service_request_response(
-                method,
-                request_id,
-                request.params.as_ref(),
-            )),
+            "build.run" => RequestOutcome::Continue(self.build_run_response(request_id, params)),
+            "quality.run" => {
+                RequestOutcome::Continue(self.quality_run_response(request_id, params))
+            }
+            "test.run" => RequestOutcome::Continue(self.test_run_response(request_id, params)),
+            method => {
+                RequestOutcome::Continue(self.service_request_response(method, request_id, params))
+            }
         }
     }
 

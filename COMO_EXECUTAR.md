@@ -9,17 +9,24 @@ conversa com ele por JSON-RPC. Fechou a UI, o core morre junto. A exceção é
 uma CLI externa iniciada explicitamente no KV Context, que pode usar rede de
 acordo com a política da própria ferramenta.
 
-## Jeito mais simples: clicar no ícone
+## Jeito mais simples: clicar no ícone certo
 
-O atalho **Kinein Vectis** já está instalado no menu de aplicativos
-(ícone KW). Ele executa `scripts/kinein-vectis`, que sobe a UI release e
-aponta para o core release.
+As duas formas de execução podem coexistir no menu sem se sobrescrever:
 
-Se precisar reinstalar o atalho (por exemplo, se mover a pasta do projeto):
+- **Kinein Vectis** abre o AppImage instalado para validar o mesmo artefato
+  entregue aos testadores;
+- **Kinein Vectis (Desenvolvimento)** executa `scripts/kinein-vectis` deste
+  checkout, usando os binários locais recompilados.
+
+Instale ou atualize somente o atalho de desenvolvimento com:
 
 ```bash
 ./scripts/instalar-atalho.sh
 ```
+
+O script usa o desktop id próprio `kinein-vectis-development.desktop`. Uma
+entrada antiga só é migrada quando aponta comprovadamente para este checkout;
+o atalho `kinein-vectis.desktop` do AppImage é preservado.
 
 ## Pelo terminal
 
@@ -27,8 +34,8 @@ Se precisar reinstalar o atalho (por exemplo, se mover a pasta do projeto):
 ./scripts/kinein-vectis
 ```
 
-O launcher usa os binários release e cai para os de debug se os release não
-existirem.
+Esse launcher pertence ao checkout: usa os binários release locais e cai para
+os de debug se os release não existirem. Ele nunca executa o AppImage.
 
 ## Compilar do zero (quando mudar o código)
 

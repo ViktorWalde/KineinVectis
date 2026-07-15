@@ -256,7 +256,6 @@ Rectangle {
                     render: root.terminalRender
                     terminalActive: root.sessionId !== ""
                     workspaceAvailable: true
-                    inputRowDecoration: true
                     emptyText: qsTr("Inicializando %1...").arg(root.activeProfileName)
                     onKeyPressed: function(data) {
                         root.terminalKeyPressed(data);

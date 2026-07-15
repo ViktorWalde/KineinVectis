@@ -33,7 +33,7 @@ Item {
         function onFileSaved(path) {
             // Auto-setup (radar docs/18): salvar CMakeLists/Presets pela
             // IDE reconfigura sozinho (job na aba Jobs, sem roubar foco).
-            if (root.coreClient.workspaceKind !== "cmake") {
+            if (root.coreClient.workspaceBuildSystems.indexOf("cmake") < 0) {
                 return;
             }
             if (path.endsWith("/CMakeLists.txt")

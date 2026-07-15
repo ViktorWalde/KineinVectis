@@ -39,12 +39,13 @@ pub fn open_workspace(path: &Path) -> Result<WorkspaceInfo, WorkspaceError> {
         || root.display().to_string(),
         |file_name| file_name.to_string_lossy().into_owned(),
     );
-    let (kind, markers) = detect_project(&root);
+    let (kind, markers, capabilities) = detect_project(&root);
     let workspace = WorkspaceInfo {
         name,
         root: root.display().to_string(),
         kind,
         markers,
+        capabilities,
     };
 
     persist(&root, &workspace)?;
@@ -141,7 +142,7 @@ fn persist(root: &Path, workspace: &WorkspaceInfo) -> Result<(), WorkspaceError>
 mod tests {
     use std::{fs, path::PathBuf};
 
-    use kinein_protocol::ProjectKind;
+    use kinein_protocol::{BuildSystem, ProjectKind};
     use serde_json::Value;
 
     use super::{browse_directories, metadata_path, open_workspace};
@@ -172,8 +173,10 @@ mod tests {
 
         let raw = fs::read_to_string(metadata_path(&dir)).unwrap();
         let value = serde_json::from_str::<Value>(&raw).unwrap();
-        assert_eq!(value["schemaVersion"], "0.1.0");
+        assert_eq!(value["schemaVersion"], "0.2.0");
         assert_eq!(value["kind"], "python");
+        assert_eq!(value["capabilities"]["buildSystems"][0], "python");
+        assert_eq!(workspace.capabilities.build_systems, [BuildSystem::Python]);
         assert_eq!(value["name"], dir.file_name().unwrap().to_str().unwrap());
     }
 

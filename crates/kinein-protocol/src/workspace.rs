@@ -20,6 +20,56 @@ pub enum ProjectKind {
     Unknown,
 }
 
+/// Build system capability detected in a workspace root.
+///
+/// This is deliberately independent from [`ProjectKind`]: `kind` keeps the
+/// primary, backwards-compatible classification while a hybrid workspace can
+/// expose more than one actionable build system.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum BuildSystem {
+    /// Cargo (`Cargo.toml`).
+    Cargo,
+    /// `CMake` (`CMakeLists.txt`).
+    Cmake,
+    /// Maven (`pom.xml`).
+    Maven,
+    /// Gradle (`build.gradle*`, `settings.gradle*`).
+    Gradle,
+    /// Python project metadata (`pyproject.toml`, `setup.py`, requirements).
+    Python,
+}
+
+impl BuildSystem {
+    /// Primary project kind associated with this build system.
+    #[must_use]
+    pub const fn project_kind(self) -> ProjectKind {
+        match self {
+            Self::Cargo => ProjectKind::RustCargo,
+            Self::Cmake => ProjectKind::Cmake,
+            Self::Maven => ProjectKind::Maven,
+            Self::Gradle => ProjectKind::Gradle,
+            Self::Python => ProjectKind::Python,
+        }
+    }
+}
+
+/// Actionable project capabilities detected in one pass over root markers.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceCapabilities {
+    /// Detected build systems in marker-precedence order, without duplicates.
+    pub build_systems: Vec<BuildSystem>,
+}
+
+impl WorkspaceCapabilities {
+    /// Whether this workspace can route actions to `build_system`.
+    #[must_use]
+    pub fn supports(&self, build_system: BuildSystem) -> bool {
+        self.build_systems.contains(&build_system)
+    }
+}
+
 /// Workspace opened by the core.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -32,6 +82,8 @@ pub struct WorkspaceInfo {
     pub kind: ProjectKind,
     /// Every recognized build system marker found in the root.
     pub markers: Vec<String>,
+    /// All actionable project systems found in the same detection pass.
+    pub capabilities: WorkspaceCapabilities,
 }
 
 /// Parameters for `workspace.open`.
@@ -208,9 +260,10 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        ProjectKind, RecentWorkspaceInfo, RecentWorkspacePinParams, RecentWorkspaceRemoveParams,
-        RecentWorkspacesParams, WorkspaceBrowseParams, WorkspaceCreateFolderParams,
-        WorkspaceCreateProjectParams, WorkspaceInfo, WorkspaceOpenParams, WorkspaceProjectTemplate,
+        BuildSystem, ProjectKind, RecentWorkspaceInfo, RecentWorkspacePinParams,
+        RecentWorkspaceRemoveParams, RecentWorkspacesParams, WorkspaceBrowseParams,
+        WorkspaceCapabilities, WorkspaceCreateFolderParams, WorkspaceCreateProjectParams,
+        WorkspaceInfo, WorkspaceOpenParams, WorkspaceProjectTemplate,
     };
 
     #[test]
@@ -220,11 +273,15 @@ mod tests {
             root: "/home/user/demo".to_owned(),
             kind: ProjectKind::RustCargo,
             markers: vec!["Cargo.toml".to_owned()],
+            capabilities: WorkspaceCapabilities {
+                build_systems: vec![BuildSystem::Cargo],
+            },
         };
         let value = serde_json::to_value(workspace).unwrap();
 
         assert_eq!(value["kind"], "rustCargo");
         assert_eq!(value["markers"][0], "Cargo.toml");
+        assert_eq!(value["capabilities"]["buildSystems"][0], "cargo");
     }
 
     #[test]

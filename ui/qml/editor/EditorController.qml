@@ -55,6 +55,7 @@ Item {
     property alias findMatchCount: findController.matchCount
     property alias findCurrentDisplay: findController.currentDisplay
     property int syntaxVersion: 0
+    property int semanticVersion: 0
     property string syntaxLanguage: "plain"
     property bool syntaxHasErrors: false
     property var syntaxOutline: []
@@ -67,7 +68,7 @@ Item {
     signal draftClearRequested(string path)
     signal formatRequested(string path, string content)
     signal fileChangedNotificationRequested(string path, string content)
-    signal semanticTokensRequested(string path, string content)
+    signal semanticTokensRequested(string path, string content, int version)
     signal syntaxTreeRequested(string path, string content, int version)
     signal switchSourceHeaderRequested(string path, string content)
     signal definitionRequested(string path, string content, int line, int column)
@@ -441,10 +442,14 @@ Item {
 
     function refreshSemanticTokens() {
         const path = currentFilePath();
+        semanticVersion++;
         if (path === "" || !editorReady()) {
+            if (editorReady()) {
+                editorSurface.clearSemanticTokens();
+            }
             return;
         }
-        semanticTokensRequested(path, surfaceBridge.text());
+        semanticTokensRequested(path, surfaceBridge.text(), semanticVersion);
     }
 
     function refreshSyntaxTree() {
@@ -779,6 +784,12 @@ Item {
 
     function handleTextEdited(text) {
         if (!surfaceBridge.loadingText && documents.markCurrentModified(text)) {
+            // Invalida imediatamente respostas iniciadas para o snapshot
+            // anterior. Semantic tokens antigos também saem da pintura até o
+            // LSP responder; Tree-sitter continua como fallback estrutural.
+            semanticVersion++;
+            syntaxVersion++;
+            editorSurface.clearSemanticTokens();
             hoverVisible = false;
             changeDebounce.restart();
             syntaxDebounce.restart();
@@ -862,10 +873,12 @@ Item {
         hoverHideTimer.restart();
     }
 
-    function handleSemanticTokensResolved(tokens) {
-        if (editorReady()) {
-            editorSurface.setSemanticTokens(tokens);
+    function handleSemanticTokensResolved(path, version, tokens) {
+        if (path !== currentFilePath() || Number(version) !== semanticVersion
+                || !editorReady()) {
+            return;
         }
+        editorSurface.setSemanticTokens(tokens);
     }
 
     function handleSyntaxTreeResolved(path, version, language, hasErrors,

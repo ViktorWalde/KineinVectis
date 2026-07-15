@@ -38,9 +38,6 @@ Rectangle {
     property var diagnosticSpans: []
     property var diagnosticByLine: ({})
     property int diagnosticRevision: 0
-    // Linha/mensagem do diagnóstico sob o mouse na gutter (tooltip).
-    property int hoveredDiagnosticLine: 0
-    property string hoveredDiagnosticText: ""
     // Linhas logicas que continuam visiveis depois do folding. O renderer
     // C++ deriva isto dos QTextBlocks para a gutter nao renumerar o arquivo.
     property var visibleLineNumbers: []
@@ -96,21 +93,13 @@ Rectangle {
         editorHighlighter.setSemanticTokens(tokens);
     }
 
+    function clearSemanticTokens() {
+        editorHighlighter.clearSemanticTokens();
+    }
+
     function setSyntaxSnapshot(tokens, foldingRanges) {
         editorHighlighter.setSyntaxTokens(tokens);
         editorHighlighter.setFoldingRanges(foldingRanges);
-    }
-
-    function toggleFoldAtLine(line) {
-        return editorHighlighter.toggleFoldAtLine(line);
-    }
-
-    function isFoldableLine(line, revision) {
-        return editorHighlighter.isFoldableLine(line);
-    }
-
-    function isFoldedLine(line, revision) {
-        return editorHighlighter.isFoldedLine(line);
     }
 
     // D1b: ocorrências do Find realçadas no texto (a atual mais forte).
@@ -223,40 +212,15 @@ Rectangle {
         return false;
     }
 
-    function diffKindFor(line, revision) {
-        const kind = diffLineKinds[line];
-        return kind === undefined ? "" : kind;
-    }
-
-    function blameTextFor(line, revision) {
-        const text = blameLineAnnotations[line];
-        return text === undefined ? "" : text;
-    }
-
-    function diagnosticSeverityFor(line, revision) {
-        const info = diagnosticByLine[line];
-        return info === undefined ? "" : info.severity;
-    }
-
-    function diagnosticMessageFor(line, revision) {
-        const info = diagnosticByLine[line];
-        return info === undefined ? "" : info.message;
-    }
-
-    function diagnosticColor(severity) {
-        if (severity === "warning") {
-            return Theme.warningSoft;
-        }
-        if (severity === "note") {
-            return Theme.infoSoft;
-        }
-        return Theme.errorSoft;
-    }
-
     function cursorPointIn(item) {
         const rect = textEditor.cursorRectangle;
         return textEditor.mapToItem(item, rect.x, rect.y);
     }
+
+    readonly property real editorLineHeight: Math.max(1,
+        textEditor.cursorRectangle.height > 0
+            ? textEditor.cursorRectangle.height
+            : Theme.fontSizeEditor * 1.35)
 
     Text {
         anchors.centerIn: parent
@@ -269,8 +233,8 @@ Rectangle {
         font.pixelSize: Theme.fontSizeEditor
     }
 
-    Item {
-        id: gutterArea
+    EditorGutter {
+        id: editorGutter
 
         anchors.left: parent.left
         anchors.top: parent.top
@@ -279,178 +243,30 @@ Rectangle {
         anchors.bottomMargin: Theme.spacingSmall
         anchors.leftMargin: Theme.spacingXSmall
         visible: root.hasOpenFile
-        clip: true
-        width: 30 + digitCount * 8
-               + (root.blameActive ? root.blameColumnWidth : 0)
-
-        // Com NoWrap e fonte unica toda linha tem a mesma altura; derivar
-        // do conteudo real evita drift em arquivos longos.
-        readonly property real lineHeight: Math.max(1,
-            textEditor.cursorRectangle.height > 0
-                ? textEditor.cursorRectangle.height
-                : Theme.fontSizeEditor * 1.35)
-        readonly property int digitCount:
-            Math.max(2, String(textEditor.lineCount).length)
-        readonly property int firstVisibleIndex:
-            Math.max(0, Math.floor(editorFlick.contentY / lineHeight))
-        readonly property int visibleLineCount: Math.max(0,
-            Math.min(root.visibleLineNumbers.length - firstVisibleIndex,
-                     Math.ceil(height / lineHeight) + 1))
-
-        Repeater {
-            model: gutterArea.visibleLineCount
-
-            delegate: Item {
-                id: gutterLine
-
-                required property int index
-                readonly property int lineNumber:
-                    Number(root.visibleLineNumbers[
-                        gutterArea.firstVisibleIndex + index])
-                readonly property int visibleIndex:
-                    gutterArea.firstVisibleIndex + index
-                readonly property bool hasBreakpoint:
-                    root.breakpointLines.indexOf(lineNumber) >= 0
-
-                y: visibleIndex * gutterArea.lineHeight
-                   - editorFlick.contentY
-                width: gutterArea.width
-                height: gutterArea.lineHeight
-
-                Rectangle {
-                    readonly property string diffKind:
-                        root.diffKindFor(gutterLine.lineNumber,
-                                         root.diffRevision)
-
-                    anchors.left: parent.left
-                    anchors.top: parent.top
-                    width: 3
-                    height: diffKind === "removed" ? 3 : parent.height
-                    visible: diffKind !== ""
-                    color: diffKind === "added" ? Theme.successSoft
-                           : (diffKind === "modified" ? Theme.infoSoft
-                                                      : Theme.errorSoft)
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: 5
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.isFoldableLine(gutterLine.lineNumber,
-                                                 root.foldingRevision)
-                    text: root.isFoldedLine(gutterLine.lineNumber,
-                                            root.foldingRevision) ? "▸" : "▾"
-                    color: Theme.textMuted
-                    font.pixelSize: Theme.fontSizeEditor - 3
-
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -4
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: function(mouse) {
-                            root.toggleFoldAtLine(gutterLine.lineNumber);
-                            mouse.accepted = true;
-                        }
-                    }
-                }
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: 16
-                    width: 8
-                    height: 8
-                    radius: 4
-                    visible: gutterLine.hasBreakpoint
-                    color: Theme.errorSoft
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: 26
-                    width: root.blameColumnWidth - 20
-                    visible: root.blameActive
-                    text: root.blameTextFor(gutterLine.lineNumber,
-                                            root.blameRevision)
-                    color: Theme.textMuted
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeEditor - 3
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    id: lineNumberText
-
-                    readonly property string diagnosticSeverity:
-                        root.diagnosticSeverityFor(gutterLine.lineNumber,
-                                                   root.diagnosticRevision)
-
-                    anchors.right: parent.right
-                    anchors.rightMargin: 6
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: gutterLine.lineNumber
-                    // Linha com diagnóstico tinge o número pela severidade;
-                    // linha de execução do debugger tem prioridade.
-                    color: root.executionLine === gutterLine.lineNumber
-                           ? Theme.accent
-                           : (diagnosticSeverity !== ""
-                              ? root.diagnosticColor(diagnosticSeverity)
-                              : Theme.textMuted)
-                    font.family: Theme.monoFont
-                    font.pixelSize: Theme.fontSizeEditor - 2
-                    font.bold: diagnosticSeverity === "error"
-                }
-
-                Rectangle {
-                    id: diagnosticDot
-
-                    readonly property string severity:
-                        root.diagnosticSeverityFor(gutterLine.lineNumber,
-                                                   root.diagnosticRevision)
-
-                    anchors.right: lineNumberText.left
-                    anchors.rightMargin: 4
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 8
-                    height: 8
-                    radius: 4
-                    visible: severity !== ""
-                    color: root.diagnosticColor(severity)
-                    border.width: 1
-                    border.color: Theme.background0
-
-                    MouseArea {
-                        anchors.fill: parent
-                        anchors.margins: -3
-                        hoverEnabled: true
-                        acceptedButtons: Qt.NoButton
-                        onEntered: {
-                            root.hoveredDiagnosticLine = gutterLine.lineNumber;
-                            root.hoveredDiagnosticText =
-                                root.diagnosticMessageFor(gutterLine.lineNumber,
-                                                          root.diagnosticRevision);
-                        }
-                        onExited: {
-                            root.hoveredDiagnosticLine = 0;
-                            root.hoveredDiagnosticText = "";
-                        }
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.gutterLineClicked(gutterLine.lineNumber)
-                }
-            }
-        }
+        lineCount: textEditor.lineCount
+        lineHeight: root.editorLineHeight
+        contentY: editorFlick.contentY
+        visibleLineNumbers: root.visibleLineNumbers
+        breakpointLines: root.breakpointLines
+        executionLine: root.executionLine
+        diffLineKinds: root.diffLineKinds
+        diffRevision: root.diffRevision
+        blameActive: root.blameActive
+        blameLineAnnotations: root.blameLineAnnotations
+        blameRevision: root.blameRevision
+        blameColumnWidth: root.blameColumnWidth
+        diagnosticByLine: root.diagnosticByLine
+        diagnosticRevision: root.diagnosticRevision
+        foldingRevision: root.foldingRevision
+        highlighter: editorHighlighter
+        onLineClicked: line => root.gutterLineClicked(line)
+        onFoldToggleRequested: line => editorHighlighter.toggleFoldAtLine(line)
     }
 
     Flickable {
         id: editorFlick
 
-        anchors.left: gutterArea.right
+        anchors.left: editorGutter.right
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -487,9 +303,9 @@ Rectangle {
 
         Rectangle {
             visible: root.executionLine > 0
-            y: (root.executionLine - 1) * gutterArea.lineHeight
+            y: (root.executionLine - 1) * root.editorLineHeight
             width: Math.max(editorFlick.contentWidth, editorFlick.width)
-            height: gutterArea.lineHeight
+            height: root.editorLineHeight
             color: Theme.accentDim
             opacity: 0.35
         }
@@ -652,18 +468,18 @@ Rectangle {
     Rectangle {
         id: diagnosticTooltip
 
-        readonly property real lineTop: gutterArea.y
-            + (root.hoveredDiagnosticLine - 1) * gutterArea.lineHeight
+        readonly property real lineTop: editorGutter.y
+            + (editorGutter.hoveredDiagnosticLine - 1) * root.editorLineHeight
             - editorFlick.contentY
 
         readonly property real maxTextWidth: Math.min(420,
             root.width - x - 3 * Theme.spacingSmall)
 
-        visible: root.hoveredDiagnosticText !== ""
+        visible: editorGutter.hoveredDiagnosticText !== ""
         z: 30
-        x: gutterArea.x + gutterArea.width + Theme.spacingSmall
+        x: editorGutter.x + editorGutter.width + Theme.spacingSmall
         y: Math.max(Theme.spacingSmall,
-                    lineTop + gutterArea.lineHeight)
+                    lineTop + root.editorLineHeight)
         width: diagnosticTooltipText.width + 2 * Theme.spacingSmall
         height: diagnosticTooltipText.height + 2 * Theme.spacingSmall
         radius: Theme.radius
@@ -679,7 +495,7 @@ Rectangle {
             // implicitWidth (não embrulhado) é constante para o texto;
             // cortar no máximo evita o binding circular do wrap.
             width: Math.min(implicitWidth, diagnosticTooltip.maxTextWidth)
-            text: root.hoveredDiagnosticText
+            text: editorGutter.hoveredDiagnosticText
             color: Theme.textPrimary
             font.pixelSize: Theme.fontSizeEditor - 2
             wrapMode: Text.WordWrap

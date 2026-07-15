@@ -68,6 +68,7 @@ Window {
 
         workspaceRoot: coreClient.workspaceRoot
         workspaceKind: coreClient.workspaceKind
+        workspaceBuildSystems: coreClient.workspaceBuildSystems
         toolsList: workspaceController.toolsList
         scanningEnvironment: coreClient.scanningEnvironment
         onAutoConfigureRequested: coreClient.cmakeConfigure()
@@ -78,6 +79,7 @@ Window {
 
         workspaceRoot: coreClient.workspaceRoot
         workspaceKind: coreClient.workspaceKind
+        workspaceBuildSystems: coreClient.workspaceBuildSystems
         homeDir: coreClient.homeDir
         toolsCount: workspaceController.toolsList.length
         assistantTerminalActive: assistantController.sessionId !== ""
@@ -97,8 +99,8 @@ Window {
         building: coreClient.building
         testing: coreClient.testing
         analyzing: coreClient.analyzing
-        onRunBuildRequested: coreClient.runBuild()
-        onRunTestsRequested: coreClient.runTests("")
+        onRunBuildRequested: buildSystem => coreClient.runBuild(buildSystem)
+        onRunTestsRequested: buildSystem => coreClient.runTests("", buildSystem)
         onRunQualityRequested: coreClient.runQuality()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
@@ -144,6 +146,9 @@ Window {
         }
         onRunStartRequested: function(command) {
             coreClient.runStart(command);
+        }
+        onRunScriptRequested: function(path) {
+            coreClient.runScript(path);
         }
         onRunStopRequested: coreClient.runStop()
         onRunStdinRequested: function(data) {
@@ -373,8 +378,8 @@ Window {
         onFileChangedNotificationRequested: function(path, content) {
             coreClient.notifyFileChanged(path, content);
         }
-        onSemanticTokensRequested: function(path, content) {
-            coreClient.requestSemanticTokens(path, content);
+        onSemanticTokensRequested: function(path, content, version) {
+            coreClient.requestSemanticTokens(path, content, version);
         }
         onSyntaxTreeRequested: function(path, content, version) {
             coreClient.requestSyntaxTree(path, content, version);
@@ -429,6 +434,9 @@ Window {
         }
         onDeletePathRequested: function(path) {
             coreClient.deletePath(path);
+        }
+        onRunScriptRequested: function(path) {
+            runtimeController.startScript(path);
         }
         onTabsRenameRequested: function(from, to) {
             editorController.applyPathRenameToTabs(from, to);
@@ -627,6 +635,7 @@ Window {
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName
         workspaceKind: coreClient.workspaceKind
+        workspaceBuildSystems: coreClient.workspaceBuildSystems
         testing: coreClient.testing
         terminalActive: coreClient.terminalActive
         running: coreClient.running

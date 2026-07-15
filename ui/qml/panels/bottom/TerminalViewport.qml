@@ -16,10 +16,6 @@ Item {
     property real charWidth: 0
     property real lineHeight: 0
     property string emptyText: ""
-    property bool inputRowDecorationVisible: false
-    property int inputRowDecorationStartRow: -1
-    property int inputRowDecorationEndRow: -1
-
     signal focusRequested()
     signal pasteRequested()
     signal scrollPositionRequested(int offset)
@@ -83,24 +79,6 @@ Item {
         anchors.margins: Theme.spacingSmall
         clip: true
 
-        readonly property real inputRowTop: Math.max(
-            0, root.inputRowDecorationStartRow * root.lineHeight - 2)
-        readonly property real inputRowBottom: Math.min(
-            height, (root.inputRowDecorationEndRow + 1)
-                    * root.lineHeight + 2)
-
-        // Fundo do intervalo de entrada ativa. A borda fica em uma camada
-        // posterior para não ser apagada por backgrounds ANSI dos spans.
-        Rectangle {
-            visible: root.inputRowDecorationVisible
-            x: 0
-            y: grid.inputRowTop
-            width: root.contentWidth
-            height: Math.max(0, grid.inputRowBottom - grid.inputRowTop)
-            radius: Theme.radiusXSmall
-            color: Theme.currentLine
-        }
-
         Column {
             width: root.contentWidth
             spacing: 0
@@ -139,30 +117,6 @@ Item {
                         }
                     }
                 }
-            }
-        }
-
-        // Contorno acima dos spans: os glifos permanecem intactos, mas a
-        // faixa acompanha a geometria de todas as linhas da entrada.
-        Rectangle {
-            visible: root.inputRowDecorationVisible
-            z: 2
-            x: 0
-            y: grid.inputRowTop
-            width: root.contentWidth
-            height: Math.max(0, grid.inputRowBottom - grid.inputRowTop)
-            radius: Theme.radiusXSmall
-            color: "transparent"
-            border.color: Theme.borderStrong
-            border.width: 1
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: 2
-                height: Math.max(0, parent.height - 4)
-                radius: 1
-                color: Theme.accent
             }
         }
 

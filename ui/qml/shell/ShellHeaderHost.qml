@@ -64,7 +64,11 @@ Column {
         case "lsp.restart": root.coreClient.lspRestart(""); break;
         case "cmake.configure": root.coreClient.cmakeConfigure(); break;
         case "build.run": root.jobsController.startBuild(); break;
+        case "build.run.cargo": root.jobsController.startBuild("cargo"); break;
+        case "build.run.cmake": root.jobsController.startBuild("cmake"); break;
         case "test.run": root.jobsController.startTests(); break;
+        case "test.run.cargo": root.jobsController.startTests("cargo"); break;
+        case "test.run.cmake": root.jobsController.startTests("cmake"); break;
         case "quality.run": root.jobsController.startQuality(); break;
         case "run.start": root.runtimeController.startRun(""); break;
         case "run.stop": root.runtimeController.stopRun(); break;
@@ -87,6 +91,7 @@ Column {
         running: root.coreClient.running
         debugging: root.coreClient.debugging
         workspaceKind: root.coreClient.workspaceKind
+        workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         recentWorkspaces: root.recentWorkspacesController.workspaces
         onActionRequested: function(action) {
             root.executeMenuAction(action);
@@ -105,6 +110,7 @@ Column {
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         coreConnected: root.coreClient.connected
         workspaceKind: root.coreClient.workspaceKind
+        workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         activeConfigId: root.runtimeController.activeConfigId
         activeConfigName: root.runtimeController.activeConfigName
         configMenuOpen: root.runtimeController.configMenuVisible
@@ -114,8 +120,8 @@ Column {
         running: root.coreClient.running
         debugging: root.coreClient.debugging
         onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
-        onBuildRequested: root.jobsController.startBuild()
-        onTestsRequested: root.jobsController.startTests()
+        onBuildRequested: buildSystem => root.jobsController.startBuild(buildSystem)
+        onTestsRequested: buildSystem => root.jobsController.startTests(buildSystem)
         onQualityRequested: root.jobsController.startQuality()
         onRunRequested: root.runtimeController.startRun("")
         onStopRunRequested: root.runtimeController.stopRun()

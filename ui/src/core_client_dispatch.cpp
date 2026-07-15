@@ -419,7 +419,7 @@ bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObjec
         appendLog(QStringLiteral("cmake configure finalizado (sucesso: %1)")
                       .arg(success ? QStringLiteral("sim") : QStringLiteral("nao")));
         emit cmakeConfigureFinished(success);
-        if (m_workspaceKind == QStringLiteral("cmake")) {
+        if (m_workspaceBuildSystems.contains(QStringLiteral("cmake"))) {
             cmakeStatus();
         }
         return true;
@@ -533,6 +533,7 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
         m_workspaceRoot.clear();
         m_workspaceName.clear();
         m_workspaceKind.clear();
+        m_workspaceBuildSystems.clear();
         m_terminalIds.clear();
         setTerminalActive(false);
         emit workspaceChanged();
@@ -546,15 +547,36 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     m_workspaceRoot = result.value(QStringLiteral("root")).toString();
     m_workspaceName = result.value(QStringLiteral("name")).toString();
     m_workspaceKind = result.value(QStringLiteral("kind")).toString();
+    m_workspaceBuildSystems.clear();
+    const QJsonArray buildSystems = result.value(QStringLiteral("capabilities"))
+                                        .toObject()
+                                        .value(QStringLiteral("buildSystems"))
+                                        .toArray();
+    for (const QJsonValue buildSystem : buildSystems) {
+        const QString value = buildSystem.toString();
+        if (!value.isEmpty() && !m_workspaceBuildSystems.contains(value)) {
+            m_workspaceBuildSystems.append(value);
+        }
+    }
+    // Tolerate an older core response during crash recovery; protocol version
+    // negotiation still prevents unsupported requests in normal operation.
+    if (m_workspaceBuildSystems.isEmpty()) {
+        if (m_workspaceKind == QStringLiteral("rustCargo")) {
+            m_workspaceBuildSystems.append(QStringLiteral("cargo"));
+        }
+        else if (m_workspaceKind == QStringLiteral("cmake")) {
+            m_workspaceBuildSystems.append(QStringLiteral("cmake"));
+        }
+    }
     // M4.3: lembra o root para recuperar de um crash futuro.
     m_lastWorkspaceRoot = m_workspaceRoot;
     emit workspaceChanged();
     listRecentWorkspaces();
     listDir(m_workspaceRoot);
-    if (m_workspaceKind == QStringLiteral("cmake")) {
+    if (m_workspaceBuildSystems.contains(QStringLiteral("cmake"))) {
         cmakeStatus();
     }
-    if (m_workspaceKind == QStringLiteral("rustCargo")) {
+    if (m_workspaceBuildSystems.contains(QStringLiteral("cargo"))) {
         cargoMetadata();
     }
     runConfigList();
@@ -717,6 +739,8 @@ bool CoreClient::dispatchLspResult(const QString& method, const QJsonObject& res
     }
     if (method == QStringLiteral("lsp.semanticTokens")) {
         emit lspSemanticTokensResolved(
+            result.value(QStringLiteral("path")).toString(),
+            result.value(QStringLiteral("version")).toInt(),
             result.value(QStringLiteral("tokens")).toArray().toVariantList());
         return true;
     }

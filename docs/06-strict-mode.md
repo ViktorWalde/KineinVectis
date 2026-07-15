@@ -81,6 +81,13 @@ Sanitizers Debug:
 -fno-omit-frame-pointer
 ```
 
+No frontend da própria Kinein, warnings-as-errors permanecem obrigatórios para
+todo `ui/src/*`. Arquivos gerados pelo Qt 6 (MOC, registro QML e cache AOT)
+podem disparar novos warnings do compilador sem haver fonte autoral corrigível;
+as únicas supressões aceitas ficam por `COMPILE_OPTIONS` nos caminhos gerados
+específicos em `ui/CMakeLists.txt`. Não adicionar `-Wno-error` global para
+resolver warning de MOC/QML AOT.
+
 ## QML Strict (UI do Kinein Vectis)
 
 Desde 2026-07-08 o QML da UI tem gate automatizado, no mesmo espírito de
@@ -89,6 +96,9 @@ Rust/C++ (zerado primeiro, ligado depois):
 - `scripts/verificar-qml.sh` roda `qmllint -W 0` (zero warnings) com o
   contexto real do módulo (`--bare`, import paths, qmldir e resources do
   response file gerado pelo `qt_add_qml_module` no build debug);
+- quando mais de um build existe, o response file do preset
+  `linux-clang-debug-strict` tem precedência sobre `dev-local`, evitando lint
+  contra cópias QML/qmltypes antigas;
 - faz parte do `scripts/verificar.sh` nos modos completo e rápido;
 - padrões do repositório: `pragma ComponentBehavior: Bound` em arquivos com
   delegates, `required property` para roles de model, acesso qualificado

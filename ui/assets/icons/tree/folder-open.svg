@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+    width="64" height="64" viewBox="0 0 64 64"
+    role="img" aria-label="Kinein Vectis — Pasta aberta">
+  <title>Kinein Vectis — Pasta aberta</title>
+  
+  <!-- rear wall -->
+  <path d="M8 19V13.5C8 11.6 9.6 10 11.5 10H25L31 16H51.5C54 16 56 18 56 20.5V39H8Z"
+        fill="#59606B"/>
+  <path d="M11 10H25L31 16H21.5L17.5 12H11Z"
+        fill="#C98D19"/>
+  <!-- visible internal plane -->
+  <path d="M10 23H54L49 37H15Z"
+        fill="#8A5A0A"/>
+  <path d="M13 24.5H51L48.5 31H15.5Z"
+        fill="#FFB000"/>
+  <!-- lowered front flap -->
+  <path d="M9.5 28H57L50 54H12.5C9.5 54 7.5 51.3 8.2 48.5L13 31.5C13.5 29.5 11.5 28 9.5 28Z"
+        fill="#20242B"/>
+  <path d="M14 31H55L49.5 51H13L8.5 49.5L13 32.5C13.2 31.7 13.5 31.2 14 31Z"
+        fill="#343A44"/>
+  <!-- Kinein angular front cut -->
+  <path d="M43 51H49.5L55 31H51L46 47Z"
+        fill="#59606B"/>
+  <path d="M13.5 31H55" stroke="#AAA39A" stroke-width="2" opacity=".28"/>
+
+</svg>

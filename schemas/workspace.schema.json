@@ -4,10 +4,10 @@
   "title": "Kinein Vectis Workspace Metadata",
   "description": "Persisted at <workspace root>/.kinein/workspace.json by workspace.open.",
   "type": "object",
-  "required": ["schemaVersion", "name", "root", "kind", "markers"],
+  "required": ["schemaVersion", "name", "root", "kind", "markers", "capabilities"],
   "additionalProperties": false,
   "properties": {
-    "schemaVersion": { "type": "string", "const": "0.1.0" },
+    "schemaVersion": { "type": "string", "const": "0.2.0" },
     "name": { "type": "string", "minLength": 1 },
     "root": { "type": "string", "minLength": 1 },
     "kind": {
@@ -17,6 +17,21 @@
     "markers": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 }
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["buildSystems"],
+      "additionalProperties": false,
+      "properties": {
+        "buildSystems": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": ["cargo", "cmake", "maven", "gradle", "python"]
+          }
+        }
+      }
     }
   }
 }

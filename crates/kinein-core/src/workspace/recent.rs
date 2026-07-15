@@ -341,7 +341,7 @@ fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), RecentWorkspaceError> {
 mod tests {
     use std::path::{Path, PathBuf};
 
-    use kinein_protocol::{ProjectKind, WorkspaceInfo};
+    use kinein_protocol::{ProjectKind, WorkspaceCapabilities, WorkspaceInfo};
 
     use super::{
         MAX_RECENT_WORKSPACES, RECENT_WORKSPACES_SCHEMA_VERSION, RecentWorkspaceError, clear_at,
@@ -370,6 +370,7 @@ mod tests {
             root: root.display().to_string(),
             kind: ProjectKind::Unknown,
             markers: Vec::new(),
+            capabilities: WorkspaceCapabilities::default(),
         }
     }
 

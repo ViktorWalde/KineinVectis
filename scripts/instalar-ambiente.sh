@@ -170,4 +170,4 @@ else
 fi
 echo "  cmake --preset dev-local && cmake --preset dev-local-release"
 echo "  scripts/verificar.sh"
-echo "  scripts/instalar-atalho.sh   # icone no menu (se ainda nao instalou)"
+echo "  scripts/instalar-atalho.sh   # atalho de desenvolvimento no menu"

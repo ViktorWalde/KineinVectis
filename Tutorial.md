@@ -1,20 +1,26 @@
-# Tutorial de distribuição e instalação do Kinein Vectis
+# Tutorial para instalar, atualizar e distribuir o Kinein Vectis
 
-Este tutorial cobre tudo que acontece **fora da IDE**: enviar o AppImage para
-testadores, verificar sua integridade, executá-lo sem depender da distribuição,
-instalar ferramentas opcionais, atualizar manualmente e gerar uma nova versão.
-O uso dos recursos da IDE está no [MANUAL.md](MANUAL.md).
+Este guia foi escrito para quem recebeu a Kinein Vectis e nunca viu o projeto
+por dentro. Siga as seções na ordem: confira se o computador é compatível,
+verifique o download, instale o atalho e só depois abra seus projetos. A parte
+final é reservada a quem gera e distribui novas versões.
+
+O AppImage é um executável portátil para Linux: ele já contém a interface, o
+core, o Qt/QML e os plugins gráficos necessários. O uso das funções da IDE,
+depois que ela estiver aberta, está no [MANUAL.md](MANUAL.md).
 
 ## 1. O que enviar aos seus amigos agora
 
-Na pasta `dist/`, envie estes dois arquivos juntos:
+Na pasta `dist/`, envie estes quatro arquivos juntos:
 
 ```text
 Kinein-Vectis-0.1.0-x86_64.AppImage
 Kinein-Vectis-0.1.0-x86_64.AppImage.sha256
+instalar-kinein-vectis.sh
+Tutorial.md
 ```
 
-É possível compartilhar o par por armazenamento em nuvem, anexo, mídia física
+É possível compartilhar os arquivos por armazenamento em nuvem, anexo, mídia física
 ou outro canal que aceite arquivos binários. Não é necessário enviar o
 repositório nem pedir que o testador compile a IDE.
 
@@ -34,9 +40,14 @@ integridade, envie também o texto do hash por um segundo canal. Um checksum
 recebido junto do binário detecta corrupção, mas não prova autoria se ambos
 forem substituídos pelo mesmo atacante.
 
-## 2. Como o testador verifica e executa
+O terceiro arquivo cria o ícone no menu de aplicativos. Ele também atualiza um
+atalho existente para a versão mais recente e pergunta se as versões antigas
+devem ser apagadas. A pessoa ainda pode executar somente o AppImage, sem usar o
+instalador. O quarto arquivo é esta cópia autônoma e atualizada do tutorial,
+para que instalação, atualização, rollback e diagnóstico continuem disponíveis
+sem acesso ao repositório.
 
-### 2.1 Requisitos do computador
+## 2. Conferir se o computador é compatível
 
 - Linux x86_64 (`uname -m` deve mostrar `x86_64`);
 - glibc 2.36 ou posterior;
@@ -45,7 +56,7 @@ forem substituídos pelo mesmo atacante.
 Windows, ARM64 e distribuições baseadas somente em musl não estão cobertos por
 este artefato. A IDE abre sem Rust, Qt, CMake ou compiladores instalados.
 
-### 2.2 Verificar o download
+## 3. Verificar o download
 
 Coloque os dois arquivos recebidos na mesma pasta, abra um terminal nela e
 rode:
@@ -64,22 +75,49 @@ Se aparecer `FAILED`, não execute o arquivo. Apague o AppImage e o checksum,
 baixe ambos novamente e repita a verificação. Confira também se o navegador
 não renomeou um deles acrescentando `(1)` ou outro sufixo.
 
-### 2.3 Dar permissão e abrir
+## 4. Instalar o ícone e abrir pelo menu
+
+Mantenha o AppImage, o checksum, `instalar-kinein-vectis.sh` e `Tutorial.md`
+juntos na mesma pasta. Uma pasta pessoal permanente, como
+`~/Applications/KineinVectis`, é preferível a Downloads: o atalho aponta para
+o AppImage naquele local.
+
+Abra um terminal nessa pasta e execute:
+
+```bash
+chmod +x instalar-kinein-vectis.sh
+./instalar-kinein-vectis.sh
+```
+
+O instalador não usa `sudo`. Ele procura todos os AppImages da Kinein na pasta
+onde o próprio script está (ou no caminho passado como argumento),
+compara os números de versão, dá permissão de execução ao mais recente e cria
+um único item chamado **Kinein Vectis** no menu de aplicativos. Ao atualizar,
+esse mesmo item é sobrescrito e passa a abrir a versão mais recente; portanto,
+não ficam vários ícones acumulados.
+
+Se houver versões anteriores na pasta, o script pergunta se você quer
+apagá-las. Responda `s` para remover os AppImages antigos e seus checksums ou
+pressione Enter para conservá-los. Essa escolha não muda o atalho: ele sempre
+aponta para a versão mais recente encontrada.
+
+Depois, procure por **Kinein Vectis** no menu de aplicativos e abra normalmente.
+
+### Alternativa: executar sem instalar o ícone
 
 ```bash
 chmod +x Kinein-Vectis-0.1.0-x86_64.AppImage
 ./Kinein-Vectis-0.1.0-x86_64.AppImage
 ```
 
-Não use `sudo`. O AppImage é portátil e deve rodar com a conta normal do
-usuário. Ele pode permanecer na pasta de downloads ou ser movido para uma
-pasta pessoal, por exemplo `~/Applications/`.
+Não use `sudo`. Se mover o AppImage depois de criar o ícone, execute novamente
+`instalar-kinein-vectis.sh` na nova pasta para atualizar o caminho do atalho.
 
 O AppImage leva a UI, o core e o runtime Qt necessários. Configurações globais
 ficam em `~/.config/kinein-vectis/`; sessões e rascunhos de um projeto ficam na
 pasta `.kinein/` dentro do próprio workspace.
 
-## 3. Ferramentas opcionais dos projetos
+## 5. Ferramentas opcionais dos projetos
 
 Essas ferramentas não são necessárias apenas para abrir a Kinein. Instale
 somente as que correspondem ao trabalho do testador, usando o gerenciador de
@@ -96,27 +134,35 @@ A aba **Ferramentas** e o banner **Project Health** mostram o que foi detectado
 e o que falta para o projeto aberto. A Kinein não instala, autentica ou envia
 dados para essas ferramentas silenciosamente.
 
-## 4. Atualização manual segura
+## 6. Atualizar para uma versão nova
 
 Quando você enviar uma versão nova, o testador deve:
 
-1. baixar o novo AppImage e o novo `.sha256` para uma pasta separada;
+1. baixar o novo AppImage, o novo `.sha256`, o instalador e o tutorial atualizados;
 2. verificar o checksum antes de executar;
 3. salvar o trabalho e fechar a versão antiga;
-4. dar permissão de execução ao AppImage novo e abri-lo;
-5. testar a abertura do workspace, um arquivo e as funções principais;
-6. manter o AppImage antigo por alguns dias para rollback.
+4. colocar os quatro arquivos na mesma pasta da versão anterior;
+5. executar `./instalar-kinein-vectis.sh`;
+6. escolher se quer apagar as versões antigas quando o script perguntar;
+7. abrir a Kinein pelo mesmo ícone do menu e testar o workspace.
 
-Não sobrescreva nem apague a versão antiga antes de validar a nova. Como cada
-versão tem o número no nome, elas podem coexistir. Para voltar atrás, feche a
-nova e execute o AppImage anterior; os arquivos do projeto não ficam dentro do
-executável.
+Se quiser uma possibilidade imediata de rollback, responda `N` à remoção até
+validar a nova versão. Os AppImages podem coexistir porque cada nome contém a
+versão, mas existe sempre apenas um ícone: ao rodar o instalador ele aponta para
+a maior versão disponível. Para voltar atrás, remova ou mova a versão nova e
+execute o instalador novamente; ele passará a apontar para a anterior.
 
 O checksum é específico de cada build. Nunca reutilize o `.sha256` de uma
 versão anterior e nunca altere o nome ou o conteúdo citado dentro dele sem
 gerar o hash novamente.
 
-## 5. Solução de problemas de execução
+## 7. Solução de problemas de execução
+
+### O ícone não apareceu ou abre uma versão movida
+
+Execute `./instalar-kinein-vectis.sh` novamente na pasta onde estão os
+AppImages. Em alguns ambientes gráficos pode ser necessário encerrar e entrar
+novamente na sessão para o menu atualizar.
 
 ### `Permission denied`
 
@@ -146,13 +192,13 @@ Se o aplicativo chegou a abrir, inclua também o log
 `~/.cache/kinein-vectis/logs/kinein-ui-erros.txt`, a distribuição usada e a
 descrição do que aconteceu.
 
-## 6. Gerar uma nova versão portátil
+## 8. Para mantenedores: gerar uma nova versão portátil
 
 Esta seção é para quem tem acesso autorizado ao repositório privado. O método
 usa um builder Debian 12 em Podman ou Docker, evitando que o AppImage dependa
 da distribuição instalada no host.
 
-### 6.1 Preparação
+### 8.1 Preparação
 
 Na raiz do projeto:
 
@@ -169,7 +215,7 @@ O primeiro build precisa de rede para obter a imagem e os assets de packaging
 fixados. Os downloads de `linuxdeploy`, do plugin Qt e do runtime AppImage são
 aceitos somente quando seus SHA-256 coincidem com os pins auditados.
 
-### 6.2 Empacotar
+### 8.2 Empacotar
 
 ```bash
 bash scripts/empacotar-appimage-portatil.sh
@@ -182,12 +228,16 @@ O script:
 - inclui runtime Qt, plugins, manual e licenças;
 - gera `dist/Kinein-Vectis-<versão>-x86_64.AppImage`;
 - gera `SHA256SUMS` e o `.AppImage.sha256` correspondente.
+- copia `dist/instalar-kinein-vectis.sh`, responsável pelo único atalho do
+  usuário.
+- copia o `Tutorial.md` vigente para `dist/`, sem depender da árvore-fonte na
+  entrega.
 
 Ele pode substituir um artefato da **mesma versão**. Se quiser preservar um
 build anterior para rollback, copie o par AppImage/checksum para outro local
 antes de reconstruir com o mesmo número.
 
-### 6.3 Validar no host e no baseline portátil
+### 8.3 Validar no host e no baseline portátil
 
 ```bash
 bash scripts/testar-appimage.sh
@@ -209,19 +259,21 @@ sha256sum -c "Kinein-Vectis-${VERSION}-x86_64.AppImage.sha256"
 Troque `0.2.0` pelo número real da nova versão. A release só está pronta quando
 os dois testes e essa verificação terminarem com sucesso.
 
-### 6.4 Entregar
+### 8.4 Entregar
 
-Envie somente o novo par:
+Envie o executável, seu checksum, o instalador e o tutorial:
 
 ```text
 Kinein-Vectis-<versão>-x86_64.AppImage
 Kinein-Vectis-<versão>-x86_64.AppImage.sha256
+instalar-kinein-vectis.sh
+Tutorial.md
 ```
 
 Não edite o AppImage depois que o checksum foi gerado. Qualquer alteração exige
 novo hash e nova validação.
 
-## 7. Entrega do código a terceiros
+## 9. Para mantenedores: entrega do código a terceiros
 
 O repositório de desenvolvimento não deve ser tornado público. Quando houver
 necessidade de fornecer o código, gere outra árvore/cópia por allowlist. Essa
@@ -242,7 +294,7 @@ monte a cópia externa por exclusões improvisadas e não altere a visibilidade 
 repositório-fonte. Um eventual espelho deve começar com histórico próprio,
 criado a partir da árvore sanitizada.
 
-## 8. Responsabilidade dos três documentos públicos
+## 10. Onde continuar a leitura
 
 - `README.md`: apresenta o projeto e seu estado atual;
 - `MANUAL.md`: ensina exclusivamente a usar a IDE;

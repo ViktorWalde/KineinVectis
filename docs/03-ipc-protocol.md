@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.53.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.55.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `aiBridge.*`). O
@@ -219,10 +219,18 @@ Gradle > Python) e persiste `.kinein/workspace.json`
     "name": "meu-projeto",
     "root": "/home/user/dev/meu-projeto",
     "kind": "rustCargo",
-    "markers": ["Cargo.toml"]
+    "markers": ["Cargo.toml", "CMakeLists.txt"],
+    "capabilities": { "buildSystems": ["cargo", "cmake"] }
   }
 }
 ```
+
+Desde o protocolo `0.55.0`, `kind` continua sendo a classificação primária
+compatível pela precedência de marcadores, enquanto `capabilities.buildSystems`
+contém todos os sistemas reconhecidos na mesma varredura. Assim, um repositório
+híbrido pode ser `rustCargo` e oferecer Cargo+CMake simultaneamente. O metadata
+persistido usa `schemas/workspace.schema.json` 0.2.0; a UI consome o snapshot e
+não repete detecção por arquivo.
 
 `workspace.browse` recebe `{ "path": "/dir" }`, canonicaliza o diretorio e
 retorna apenas subdiretorios para a UI navegar sem depender de dialogo nativo do
@@ -440,7 +448,7 @@ projeto, com a mesma política de confinamento/ignores e limites da busca:
 - `query` vazia retorna `INVALID_PARAMS`; zero ocorrências é sucesso com
   listas/contador vazios.
 
-### Execução (`run.start` / `run.stdin` / `run.stop`)
+### Execução (`run.start` / `run.script` / `run.stdin` / `run.stop`)
 
 Implementado no protocolo `0.12.0`. Requer workspace aberto. O core executa
 um comando via `sh -c` na raiz do workspace SEM bloquear o loop de IPC: a
@@ -452,6 +460,12 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   único executável em `.kinein/build` (erro claro se não houver ou houver
   mais de um). Outros tipos ainda não têm padrão (`INVALID_REQUEST` com
   mensagem orientando digitar o comando).
+- `run.script { path }` → `{ command }` (protocolo `0.55.0`). Aceita somente
+  arquivo regular `.sh`, `.bash` ou `.zsh` dentro do workspace. O core
+  canonicaliza/confina o caminho e chama `bash`/`zsh` com argv explícito
+  (`--`, caminho), sem interpolação por `sh -c`; nomes com espaços ou aspas são
+  dados, não sintaxe. Reutiliza os mesmos eventos e a mesma sessão única de
+  `run.start`; extensão inválida é `INVALID_PARAMS`.
 - `run.stdin { data }` → `{ status: "ok" }`. Encaminha `data` cru ao stdin
   do processo (a UI acrescenta o `\n`).
 - `run.stop {}` → `{ status: "ok" }`. Mata o processo; o término é
@@ -589,6 +603,12 @@ em background (`cargo build --message-format=json` para Rust/Cargo;
 `cmake -S/-B` + `cmake --build` em `.kinein/build` para CMake) e é **cancelável**
 via `job.cancel` (mata o processo de build).
 
+Desde `0.55.0`, aceita `{ "buildSystem"?: "cargo"|"cmake"|... }`. Em workspace
+híbrido, a seleção explícita precisa existir em
+`workspace.capabilities.buildSystems`; sem o campo, o `workspace.kind` primário
+preserva o comportamento anterior. Sistema ausente retorna `INVALID_PARAMS`
+com a lista disponível, antes de criar job.
+
 Enquanto roda, emite os eventos ricos que a UI consome, agora com `jobId`:
 
 ```text
@@ -623,6 +643,8 @@ diagnósticos estruturados sem parser novo. Emite, com `jobId`,
 com origem `quality`. `job.cancel` mata o clippy. Validação síncrona: tudo que
 não é Rust/Cargo retorna `INVALID_REQUEST` (CMake via clang-tidy é o próximo
 passo). Falhas (`cargo` ausente etc.) chegam por `event.quality.finished`.
+O parâmetro opcional `buildSystem` de `0.55.0` é tipado pelo mesmo enum; hoje a
+única capacidade executável por `quality.run` continua sendo `cargo`.
 
 ### Testes (`test.run` — job assíncrono)
 
@@ -631,7 +653,8 @@ Requer workspace aberto. Responde na hora com `{ "jobId" }`; roda o runner do
 tipo de projeto em background (`cargo test` para Rust/Cargo; `ctest --test-dir
 .kinein/build --output-on-failure` para CMake) e transmite cada caso conforme
 sai da saída do runner. Aceita `{ "filter"? }` (posicional do cargo; `-R` do
-ctest). `job.cancel` mata o runner.
+ctest) e, desde `0.55.0`, `{ "buildSystem"? }` com a mesma validação de
+capacidade do build. `job.cancel` mata o runner.
 
 ```text
 event.test.started   { "jobId", "command": "cargo test" }
@@ -708,15 +731,18 @@ parâmetros posicionais de `lsp.definition`; rename recebe adicionalmente
   (resource operations) ainda não são suportados e retornam erro estruturado
   sem tocar em nada.
 
-`lsp.semanticTokens` foi adicionado no protocolo `0.14.0`. Recebe
-`{ path, content }` (mesmos campos de `lsp.didChange`), sincroniza o buffer
+`lsp.semanticTokens` foi adicionado no protocolo `0.14.0`. Desde `0.54.0`,
+recebe `{ path, content, version }`, sincroniza o buffer
 e resolve `textDocument/semanticTokens/full`, decodificando os deltas com a
 legend anunciada pelo servidor no `initialize`. Responde
-`{ tokens: [{ line, start, length, kind }] }` com `line` 1-based e
+`{ path, version, tokens: [{ line, start, length, kind }] }` com `line` 1-based e
 `start`/`length` em unidades UTF-16 (0-based) — os mesmos índices de
 `QString`, aplicados direto pelo highlighter da UI. `kind` é o nome da
 legend (`variable`, `function`, `parameter`, `class`, ...). Servidores sem
-suporte respondem lista vazia.
+suporte respondem lista vazia. A UI incrementa a versão no instante da edição,
+limpa tokens anteriores e só aplica resposta cujo `path`+`version` ainda
+corresponde ao buffer ativo; o tempo de chegada do LSP nunca substitui a base
+Tree-sitter de uma versão mais nova.
 
 `lsp.codeActions` e `lsp.applyCodeAction` foram adicionados no protocolo
 `0.22.0` (fatia M1.3 de `docs/18-daily-driver-plan.md`):
@@ -1206,6 +1232,7 @@ build.run
 test.run
 quality.run
 run.start
+run.script
 run.stdin
 run.stop
 terminal.open

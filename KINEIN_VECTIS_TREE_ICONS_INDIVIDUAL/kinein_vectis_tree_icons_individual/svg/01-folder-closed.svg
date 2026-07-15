@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+    width="64" height="64" viewBox="0 0 64 64"
+    role="img" aria-label="Kinein Vectis — Pasta fechada">
+  <title>Kinein Vectis — Pasta fechada</title>
+  
+  <!-- rear tab / Kinein angular signature -->
+  <path d="M8 18V13.5C8 11.6 9.6 10 11.5 10H25L31 16H51.5C54 16 56 18 56 20.5V23H8Z"
+        fill="#59606B"/>
+  <path d="M11 10H25L31 16H21.5L17.5 12H11Z"
+        fill="#C98D19"/>
+  <!-- body -->
+  <path d="M7 21.5C7 19.6 8.6 18 10.5 18H53.5C55.4 18 57 19.6 57 21.5V49.5
+           C57 52.5 54.5 55 51.5 55H12.5C9.5 55 7 52.5 7 49.5Z"
+        fill="#20242B"/>
+  <path d="M7 24H57V49.5C57 52.5 54.5 55 51.5 55H12.5C9.5 55 7 52.5 7 49.5Z"
+        fill="#343A44"/>
+  <!-- Kinein cut -->
+  <path d="M49 55H51.5C54.5 55 57 52.5 57 49.5V43L49 51Z"
+        fill="#59606B"/>
+  <path d="M10.5 18H53.5C55.4 18 57 19.6 57 21.5V24H7V21.5C7 19.6 8.6 18 10.5 18Z"
+        fill="#AAA39A" opacity=".22"/>
+  <path d="M8.5 24H55.5" stroke="#8A5A0A" stroke-width="2" opacity=".7"/>
+
+</svg>

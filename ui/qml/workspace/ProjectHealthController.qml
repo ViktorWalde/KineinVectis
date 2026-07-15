@@ -5,6 +5,7 @@ Item {
 
     property string workspaceRoot: ""
     property string workspaceKind: ""
+    property var workspaceBuildSystems: []
     property var toolsList: []
     property bool scanningEnvironment: false
     property bool cmakeStatusKnown: false
@@ -38,6 +39,7 @@ Item {
         update();
     }
     onWorkspaceKindChanged: update()
+    onWorkspaceBuildSystemsChanged: update()
     onToolsListChanged: update()
     onScanningEnvironmentChanged: update()
     Component.onCompleted: update()
@@ -45,7 +47,7 @@ Item {
     function handleCmakeStatus(configured) {
         cmakeStatusKnown = true;
         cmakeConfigured = configured;
-        if (workspaceKind === "cmake" && !configured
+        if (hasBuildSystem("cmake") && !configured
                 && !autoConfigureAttempted) {
             autoConfigureAttempted = true;
             autoConfigureRequested();
@@ -97,6 +99,13 @@ Item {
         return false;
     }
 
+    function hasBuildSystem(buildSystem) {
+        const systems = workspaceBuildSystems !== undefined
+                && workspaceBuildSystems !== null
+                ? workspaceBuildSystems : [];
+        return systems.indexOf(buildSystem) >= 0;
+    }
+
     function requiredToolGroups(kind) {
         if (kind === "rustCargo") {
             return [["cargo"], ["rustc"], ["rust-analyzer"]];
@@ -105,6 +114,36 @@ Item {
             return [["cmake"], ["ninja"], ["clangd"], ["clangxx", "gxx"]];
         }
         return [];
+    }
+
+    function requiredWorkspaceToolGroups() {
+        const groups = [];
+        const systems = workspaceBuildSystems !== undefined
+                && workspaceBuildSystems !== null
+                ? workspaceBuildSystems : [];
+        for (let index = 0; index < systems.length; index++) {
+            let systemGroups = [];
+            if (systems[index] === "cargo") {
+                systemGroups = requiredToolGroups("rustCargo");
+            } else if (systems[index] === "cmake") {
+                systemGroups = requiredToolGroups("cmake");
+            }
+            for (let groupIndex = 0; groupIndex < systemGroups.length;
+                 groupIndex++) {
+                const key = systemGroups[groupIndex].join("|");
+                let duplicate = false;
+                for (let existing = 0; existing < groups.length; existing++) {
+                    if (groups[existing].join("|") === key) {
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if (!duplicate) {
+                    groups.push(systemGroups[groupIndex]);
+                }
+            }
+        }
+        return groups.length > 0 ? groups : requiredToolGroups(workspaceKind);
     }
 
     function missingGroups(groups) {
@@ -135,13 +174,14 @@ Item {
             apply("busy", qsTr("verificando o ambiente do projeto..."), "", "");
             return;
         }
-        if (workspaceKind === "unknown") {
+        if (workspaceKind === "unknown"
+                && workspaceBuildSystems.length === 0) {
             apply("info",
                   qsTr("tipo de projeto não detectado; build e run indisponíveis"),
                   "", "");
             return;
         }
-        const groups = requiredToolGroups(workspaceKind);
+        const groups = requiredWorkspaceToolGroups();
         if (groups.length === 0) {
             apply("ok", "", "", "");
             return;
@@ -160,7 +200,7 @@ Item {
                   qsTr("Ferramentas"), "tools");
             return;
         }
-        if (workspaceKind === "cmake" && cmakeStatusKnown && !cmakeConfigured) {
+        if (hasBuildSystem("cmake") && cmakeStatusKnown && !cmakeConfigured) {
             if (autoConfigureAttempted && !autoConfigureFailed) {
                 apply("info",
                       qsTr("configurando o projeto CMake automaticamente..."),
@@ -172,7 +212,7 @@ Item {
                   qsTr("Configurar"), "cmakeConfigure");
             return;
         }
-        if (workspaceKind === "rustCargo" && cargoMetadataFailed) {
+        if (hasBuildSystem("cargo") && cargoMetadataFailed) {
             apply("warning",
                   qsTr("cargo metadata falhou: %1").arg(cargoMetadataError),
                   qsTr("Tentar de novo"), "cargoMetadata");

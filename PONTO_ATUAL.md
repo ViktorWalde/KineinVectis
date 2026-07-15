@@ -6,10 +6,11 @@
 >
 > Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
 > conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
-> Git. Base remota atual: `928fbb5`, protocolo `0.53.0`.
+> Git. Base remota atual: `928fbb5`, protocolo `0.55.0`.
 >
-> Não alterar a UI fora das specs e não commitar ou publicar por iniciativa
-> própria. **Dogfooding/self-hosting ativo desde 2026-07-14:** o usuário já
+> Não alterar a UI fora das specs. Commits locais de checkpoint após marco
+> crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
+> foram. **Dogfooding/self-hosting ativo desde 2026-07-14:** o usuário já
 > está na Kinein, e cada bloqueio ou saída para outra IDE passa a ordenar o
 > backlog antes de funcionalidade nova.
 
@@ -27,8 +28,10 @@ faixa não envolvia os glifos, o divisor livre desaparecia durante a sessão, a
 dimensionamento, o feedback restante ficou restrito à faixa da entrada
 multilinha e à roda do mouse; a correção pós-0.52 de 2026-07-15 aguarda o gesto
 real apenas nesses dois pontos, conforme `REENTRADA-KV`. O usuário pausou esse
-gesto e autorizou expressamente A1, entregue no protocolo 0.53.0; isso não vale
-como aceite visual do KV Context.
+gesto e autorizou expressamente a continuação do roadmap. A1 e A2 foram
+entregues nos protocolos 0.53.0 e 0.55.0. A tentativa posterior de demarcar a
+entrada foi removida: grade VT, spans e cursor voltaram a ser a única fonte
+visual, no modelo terminal-first.
 
 1. registrar cada problema observado pelo usuário ou por um testador com ação,
    esperado, resultado, reprodução, distro e log quando houver;
@@ -36,13 +39,14 @@ como aceite visual do KV Context.
    ou bloqueio que force a saída para outra IDE;
 3. depois tratar regressões funcionais e atritos reproduzíveis de uso diário;
 4. quando não houver feedback bloqueador e o usuário mandar prosseguir no
-   roadmap, iniciar **A2 — projeto híbrido e self-hosting**; A1 foi entregue;
+   roadmap, iniciar **A3 — responsividade medida**; A1 e A2 foram entregues;
 5. continuar pelas etapas deste arquivo e pelos docs existentes, sem inventar
    outro remake, subsistema paralelo ou roadmap substituto.
 
-O dogfooding não autoriza commit, push, publicação, mudança de visibilidade,
-envio externo ou implementação aleatória fora da fila. O repositório-fonte
-continua privado.
+O dogfooding não autoriza push, publicação, mudança de visibilidade, envio
+externo ou implementação aleatória fora da fila. Commits locais são feitos
+somente nos checkpoints verdes já autorizados. O repositório-fonte continua
+privado.
 
 ### 0.1 Protocolo econômico de reentrada após reiniciar a própria Kinein
 
@@ -62,9 +66,9 @@ A sessão nova deve executar esta sequência:
    uma recapitulação extensa ao usuário;
 2. localizar primeiro o marcador `REENTRADA-KV` abaixo e confrontá-lo com
    `ContextoIA.md` + código apenas onde houver divergência;
-3. rodar `git status --short` somente para preservar o worktree existente;
-   arquivos modificados ou não rastreados já presentes não autorizam limpeza,
-   descarte, commit ou push;
+3. rodar `git status --short` para preservar o worktree existente; arquivos
+   presentes não autorizam limpeza/descarte. Commit local só depois do gate
+   verde do marco; push continua sem autorização;
 4. não repetir investigação, implementação, gate ou build já registrados como
    verdes, a menos que o código tenha mudado depois do marcador ou apareça
    evidência concreta de regressão;
@@ -79,55 +83,61 @@ A sessão nova deve executar esta sequência:
 
 ```text
 ESTADO
-- Correções KV Context terminal-first e de continuidade implementadas nos
-  protocolos 0.51.0/0.52.0.
-- A1 — Workspaces recentes foi entregue separadamente no protocolo 0.53.0;
-  não altera o reteste visual pendente do KV Context.
+- Protocolo atual 0.55.0. A1 (recentes) e A2 (capacidades Cargo+CMake) estão
+  implementadas; `workspace.kind` é primário compatível e
+  `workspace.capabilities.buildSystems` é a fonte das ações híbridas.
 - Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
 - KV ativo reutiliza TerminalPanel/TerminalManager, tem barra persistente,
   roda/arrasto, teclado/paste VT, largura livre persistida 300–720px e
   ampliar/restaurar; Project permanece independente fora da maximização.
 - O bridge preserva o transcript contra CSI 3 J ainda emitido por versões do
   Codex; o Terminal comum continua honrando clear.
-- A guia visual do KV Context agora existe somente enquanto o usuário escreve,
-  cobre todas as linhas de uma entrada quebrada e some imediatamente no Enter;
-  não sobra caixa vazia durante o processamento da CLI.
+- Não existe guia, faixa ou input paralelo: grade VT, spans ANSI e cursor são
+  a única representação da entrada, seguindo comportamento terminal-first.
 - A roda aceita os dois formatos do Qt (`angleDelta` e `pixelDelta`) e segue o
-  mesmo `terminal.scroll` do Terminal comum. Nenhum dimensionamento foi
-  alterado nesta correção.
+  mesmo `terminal.scroll` do Terminal comum.
+- Gutter usa faixas independentes para folding/breakpoint, diagnóstico, blame,
+  diff e números medidos por FontMetrics; marcador não invade o número.
+- Semantic tokens carregam path+version e respostas obsoletas são descartadas;
+  Tree-sitter permanece fallback estrutural instantâneo.
+- Os cinco SVGs de árvore fornecidos foram integrados sem alterar seus bytes.
+- Scripts shell reconhecidos têm ação de execução na árvore; o core confina o
+  caminho e usa argv explícito, sem interpolação.
+- Packaging corrigido para cache host/container isolado, mounts Podman/SELinux
+  e invocação por bash. `dist/` deve receber AppImage, checksum específico,
+  instalador e Tutorial.md vigente.
 
 VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
-- scripts/verificar.sh completo: verde.
+- `scripts/verificar.sh` completo: verde; binários release do atalho de
+  desenvolvimento atualizados.
 - Testes Rust, clippy -D warnings, C++/QML estritos e harnesses QML: verdes.
-- O harness tst_terminal_input cobre prompt ocioso, entrada multilinha, reset
-  no Enter, histórico e cursor fora da grade.
+- Build Clang debug strict e `scripts/verificar-cpp.sh`: verdes.
+- `scripts/verificar-qml.sh`: verde usando o response file do build strict
+  atualizado; o antigo `build/dev-local` não tem precedência.
 - tst_assistant_layout cobre divisor ativo/largura/Project; tst_terminal_scroll
   cobre nova saída, snap, troca de sessão, roda tradicional e `pixelDelta`;
   Rust cobre CSI 3 J entre chunks.
-- Builds debug/release: verdes; binários release do launcher atualizados.
-- Smoke pelo launcher: vivo por 8s, sem erro QML (exit 124 esperado).
+- AppImage final (33.737.208 bytes; SHA256 `fd5fe934599757b6980703d2c2529f9b50bdc026e03e5da34b6a0eb5f44629b9`),
+  teste host e Debian mínimo sem rede: verdes. Ambos validam também instalador
+  executado fora da pasta, `.desktop`, PNG e `Tutorial.md` idêntico à fonte.
 
 PRÓXIMO GESTO
-1. Fechar e reabrir a Kinein pelo ícone para carregar o release novo.
-2. Abrir um workspace e então KV Context -> Codex -> Iniciar.
-3. Antes de enviar, escrever uma mensagem longa que quebre em duas ou mais
-   linhas: uma única faixa deve envolver todas elas. Ao pressionar Enter, a
-   faixa deve sumir em vez de ficar vazia abaixo da conversa.
-4. Gerar saída maior que a altura do painel; rolar para cima enquanto a
+1. Criar o checkpoint Git local desta estabilização já verde.
+2. Abrir a Kinein pelo AppImage novo em `dist/` e carregar este repositório.
+3. Confirmar as ações Cargo e CMake, um script pela árvore, os ícones exatos e
+   breakpoint/diagnóstico em arquivo com numeração larga.
+4. No KV Context, gerar saída maior que a altura do painel; rolar enquanto a
    resposta ainda chega e confirmar que a leitura não salta nem perde o
-   histórico. Testar roda e arrasto; depois digitar e confirmar retorno ao fim.
-5. Se a roda ainda não mover, informar se o polegar da barra também fica parado
-   e se o arrasto manual da barra funciona; isso separa evento Qt de scrollback.
+   histórico. Confirmar que não há moldura/input desenhado pela IDE.
+5. Depois do gesto, seguir A3 — responsividade medida.
 
 RESULTADO PENDENTE
-- Aceite humano da entrada multilinha e da roda em tela real. O dimensionamento
-  já foi confirmado pelo usuário e não faz parte deste reteste.
-- O usuário pausou este reteste e autorizou expressamente A1, já entregue. Se
-  o gesto falhar quando retomado, registrar exatamente o observado e priorizar
-  a regressão antes de iniciar A2.
+- Aceite humano dos fluxos acima usando o AppImage final.
+- Se qualquer gesto falhar, registrar ação/esperado/observado/ambiente e
+  priorizar a regressão antes de A3.
 
 LIMITES
-- Não fazer commit, push ou publicação por iniciativa própria.
+- Commit local somente após checkpoint verde; não fazer push/publicação.
 - Não reabrir a discussão de chat embutido: KV Context é terminal dedicado.
 ```
 
@@ -158,7 +168,7 @@ P3  conforto, polimento ou funcionalidade nova
 
 Feedback de testador não vira feature automaticamente: reproduzir, conferir se
 já existe solução no core/UI e encaixar no domínio/roadmap correto. Se for uma
-ideia nova sem bloqueio, registrar atrás dos problemas reais e de A2.
+ideia nova sem bloqueio, registrar atrás dos problemas reais e de A3.
 
 ## 1. TR0 — aceite funcional da rodada atual
 
@@ -203,23 +213,6 @@ correspondente ficar corrigida e protegida.
 
 ## 2. TR1 — distribuição e substituição de editores generalistas
 
-### A2 — projeto híbrido e self-hosting (próxima funcionalidade de produto)
-
-O repositório da própria Kinein combina Cargo, CMake e Qt/QML. A detecção atual
-escolhe um único `workspace.kind`, portanto não representa toda a capacidade
-do projeto.
-
-- introduzir um snapshot de **capacidades do projeto** sem quebrar o `kind`
-  compatível existente;
-- reconhecer Cargo e CMake simultaneamente;
-- apresentar ações reais de ambos os sistemas no mesmo workspace;
-- reutilizar serviços `cargo`, `cmake`, `build`, `runConfig`, LSP e Jobs;
-- evitar um segundo detector ou executor paralelo ao core atual;
-- validar abertura, edição, build, testes e navegação da Kinein dentro dela.
-
-Aceite: o repositório da Kinein não esconde o lado Rust nem o lado Qt/CMake e
-pode ser desenvolvido sem recorrer a VS Code, Sublime ou Neovim.
-
 ### A3 — responsividade medida
 
 - medir tempo de abertura, primeira estrutura Tree-sitter, primeira sugestão
@@ -255,7 +248,7 @@ substituir evidência de reprodução.
 | --- | --- | --- |
 | Distribuição | ampliar matriz Ubuntu/Fedora, canal de release, atualização e diagnóstico de runtime | AppImage validado em distros-alvo e procedimento de release repetível |
 | Entrada no trabalho | validar workspaces recentes e restauração previsível em uso prolongado | retomar projeto em um clique, sem sessão cruzada |
-| Modelo de projeto | múltiplas capacidades Cargo/CMake/Qt | Kinein compreende o próprio repositório híbrido |
+| Modelo de projeto | aprofundar capacidades já detectadas em Project Graph/Context Matrix | targets e contextos Cargo/CMake/Qt explicáveis por arquivo |
 | Editor | resposta imediata local + semântica progressiva | cenários e latências medidos |
 | Terminal | rajadas, scrollback e múltiplas sessões prolongadas | teste de estresse sem atraso ou perda de interação |
 | Build/Run/Test | fluxos reais e cancelamento em projetos externos | processos encerram sem órfãos e resultados são navegáveis |

@@ -213,9 +213,11 @@ Item {
         z: 100
         menuX: root.projectTree.entryMenuX
         menuY: root.projectTree.entryMenuY
+        runnableScript: root.projectTree.entryMenuRunnable
         onDismissRequested: root.projectTree.entryMenuVisible = false
         onCreateFileRequested: root.projectTree.openEntryCreate("file")
         onCreateDirectoryRequested: root.projectTree.openEntryCreate("directory")
+        onRunScriptRequested: root.projectTree.runEntryScript()
         onRenameRequested: root.projectTree.openEntryRename()
         onDeleteRequested: root.projectTree.openEntryDelete()
     }

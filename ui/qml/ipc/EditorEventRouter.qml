@@ -66,8 +66,8 @@ Item {
             root.editorController.handleHoverResolved(content);
         }
 
-        function onLspSemanticTokensResolved(tokens) {
-            root.editorController.handleSemanticTokensResolved(tokens);
+        function onLspSemanticTokensResolved(path, version, tokens) {
+            root.editorController.handleSemanticTokensResolved(path, version, tokens);
         }
 
         function onSyntaxTreeResolved(path, version, language, hasErrors,

@@ -6,25 +6,6 @@ Item {
 
     property bool terminalActive: false
     property bool applicationCursor: false
-    property bool inputRowDecoration: false
-    property bool cursorVisible: false
-    property int cursorRow: 0
-    property int gridRows: 0
-    property int scrollOffset: 0
-    property bool inputRowDecorationActive: false
-    property int inputRowDecorationStartRow: -1
-    property int inputRowDecorationEndRow: -1
-
-    // O modo inline de algumas TUIs (Codex --no-alt-screen) preserva o
-    // scrollback, mas deixa o compositor como uma linha solta no grid. O host
-    // pode pedir um guia visual sem criar outro campo de input nem interpretar
-    // o conteúdo da aplicação. O intervalo acompanha as quebras da entrada e
-    // some quando ela é enviada ou deixa de pertencer ao fundo ao vivo.
-    readonly property bool inputRowDecorationVisible: inputRowDecoration
-            && inputRowDecorationActive && terminalActive && cursorVisible
-            && scrollOffset === 0 && inputRowDecorationStartRow >= 0
-            && inputRowDecorationEndRow >= inputRowDecorationStartRow
-            && inputRowDecorationEndRow < gridRows
 
     signal openRequested()
     signal copyRequested()
@@ -32,46 +13,6 @@ Item {
     signal dataRequested(string data)
 
     visible: false
-
-    onTerminalActiveChanged: {
-        if (!terminalActive) resetInputRowDecoration();
-    }
-    onInputRowDecorationChanged: {
-        if (!inputRowDecoration) resetInputRowDecoration();
-    }
-    onCursorRowChanged: {
-        if (!inputRowDecorationActive) return;
-        if (cursorRow < 0 || cursorRow >= gridRows) {
-            resetInputRowDecoration();
-            return;
-        }
-        inputRowDecorationStartRow = Math.min(
-            inputRowDecorationStartRow, cursorRow);
-        inputRowDecorationEndRow = Math.max(
-            inputRowDecorationEndRow, cursorRow);
-    }
-
-    function beginInputRowDecoration() {
-        if (!inputRowDecoration || !terminalActive
-                || cursorRow < 0 || cursorRow >= gridRows) {
-            return;
-        }
-        if (!inputRowDecorationActive) {
-            inputRowDecorationStartRow = cursorRow;
-            inputRowDecorationEndRow = cursorRow;
-            inputRowDecorationActive = true;
-        }
-    }
-
-    function resetInputRowDecoration() {
-        inputRowDecorationActive = false;
-        inputRowDecorationStartRow = -1;
-        inputRowDecorationEndRow = -1;
-    }
-
-    function notePastedInput() {
-        beginInputRowDecoration();
-    }
 
     function handleKey(event) {
         if (!terminalActive) {
@@ -139,16 +80,6 @@ Item {
             data = "\x1b" + data;
         }
         if (data !== "") {
-            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
-                    || event.key === Qt.Key_Escape
-                    || (ctrl && event.key === Qt.Key_C)) {
-                resetInputRowDecoration();
-            } else if (event.text !== ""
-                       || ((event.key === Qt.Key_Backspace
-                            || event.key === Qt.Key_Delete)
-                           && inputRowDecorationActive)) {
-                beginInputRowDecoration();
-            }
             dataRequested(data);
             event.accepted = true;
         }

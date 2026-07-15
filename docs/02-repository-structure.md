@@ -60,7 +60,7 @@ kinein-vectis/
 ├── ui/
 │   ├── CMakeLists.txt
 │   ├── src/                     # CoreClient IPC + EditorHighlighter
-│   ├── assets/
+│   ├── assets/icons/tree/       # SVGs autorais de pasta/C/C++/Rust
 │   └── qml/
 │       ├── components/          # KvIcon/KvButton/KvTooltip reutilizáveis
 │       ├── shell/               # App/toolbar, rail, layout, overlays, status
@@ -68,6 +68,9 @@ kinein-vectis/
 │       ├── editor/              # renderer, controllers, outline/folding
 │       ├── panels/              # tool windows inferiores
 │       └── ipc/                 # routers de eventos por domínio
+│
+├── scripts/                     # gates, launcher e packaging/instalação
+├── dist/                        # saída única: AppImage/checksum/instalador/tutorial
 │
 ├── schemas/
 │   ├── ipc.schema.json

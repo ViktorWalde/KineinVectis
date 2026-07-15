@@ -14,13 +14,14 @@ Rectangle {
     property bool running: false
     property bool debugging: false
     property string workspaceKind: ""
+    property var workspaceBuildSystems: []
     property string activeConfigId: ""
     property string activeConfigName: ""
     property bool configMenuOpen: false
 
     signal openWorkspaceRequested()
-    signal buildRequested()
-    signal testsRequested()
+    signal buildRequested(string buildSystem)
+    signal testsRequested(string buildSystem)
     signal qualityRequested()
     signal runRequested()
     signal stopRunRequested()
@@ -28,6 +29,29 @@ Rectangle {
     signal stopDebugRequested()
     signal configureRequested()
     signal configMenuRequested(real menuX, real menuY)
+
+    readonly property bool cargoAvailable: hasBuildSystem("cargo")
+    readonly property bool cmakeAvailable: hasBuildSystem("cmake")
+    readonly property bool hybridNativeWorkspace: cargoAvailable && cmakeAvailable
+
+    function hasBuildSystem(buildSystem) {
+        const systems = workspaceBuildSystems !== undefined
+                && workspaceBuildSystems !== null ? workspaceBuildSystems : [];
+        return systems.indexOf(buildSystem) >= 0;
+    }
+
+    function primaryBuildSystem() {
+        if (workspaceKind === "rustCargo") return "cargo";
+        if (workspaceKind === "cmake") return "cmake";
+        return "";
+    }
+
+    function workspaceSystemLabel() {
+        if (hybridNativeWorkspace) return "Cargo + CMake";
+        if (cargoAvailable) return "Cargo";
+        if (cmakeAvailable) return "CMake";
+        return workspaceKind === "" ? qsTr("projeto") : workspaceKind;
+    }
 
     height: 44
     color: Theme.background1
@@ -51,7 +75,7 @@ Rectangle {
         }
 
         Rectangle {
-            visible: root.workspaceOpen
+            visible: root.workspaceOpen && root.width >= 1100
             height: 32
             width: targetText.implicitWidth + 16 + Theme.spacingSmall
                    + 2 * Theme.spacingMedium
@@ -84,7 +108,7 @@ Rectangle {
         KvButton {
             id: configSelector
 
-            visible: root.workspaceOpen
+            visible: root.workspaceOpen && root.width >= 900
             selected: root.configMenuOpen
             iconName: "chevron-down"
             text: root.activeConfigId === ""
@@ -99,7 +123,7 @@ Rectangle {
         }
 
         Rectangle {
-            visible: root.workspaceOpen
+            visible: root.workspaceOpen && root.width >= 900
             width: 1
             height: 24
             color: Theme.borderStrong
@@ -107,7 +131,7 @@ Rectangle {
         }
 
         KvIconButton {
-            visible: root.workspaceOpen && root.workspaceKind === "cmake"
+            visible: root.workspaceOpen && root.cmakeAvailable
             enabled: root.coreConnected
             iconName: "configure"
             tooltip: qsTr("Configurar CMake")
@@ -117,22 +141,46 @@ Rectangle {
         KvButton {
             visible: root.workspaceOpen
             enabled: !root.building && root.coreConnected
-            text: root.building ? qsTr("Compilando...") : qsTr("Compilar")
+            text: root.building ? qsTr("Compilando...")
+                  : (root.hybridNativeWorkspace ? "Cargo" : qsTr("Compilar"))
             iconName: "build"
             primary: true
-            onClicked: root.buildRequested()
+            onClicked: root.buildRequested(root.hybridNativeWorkspace
+                                           ? "cargo"
+                                           : root.primaryBuildSystem())
         }
 
         KvIconButton {
             visible: root.workspaceOpen
             enabled: !root.testing && root.coreConnected
             iconName: "test"
-            tooltip: root.testing ? qsTr("Testes em andamento") : qsTr("Executar testes")
-            onClicked: root.testsRequested()
+            tooltip: root.testing ? qsTr("Testes em andamento")
+                                  : (root.hybridNativeWorkspace
+                                     ? qsTr("Executar testes Cargo")
+                                     : qsTr("Executar testes"))
+            onClicked: root.testsRequested(root.hybridNativeWorkspace
+                                           ? "cargo"
+                                           : root.primaryBuildSystem())
+        }
+
+        KvButton {
+            visible: root.workspaceOpen && root.hybridNativeWorkspace
+            enabled: !root.building && root.coreConnected
+            text: "CMake"
+            iconName: "build"
+            onClicked: root.buildRequested("cmake")
         }
 
         KvIconButton {
-            visible: root.workspaceOpen
+            visible: root.workspaceOpen && root.hybridNativeWorkspace
+            enabled: !root.testing && root.coreConnected
+            iconName: "test"
+            tooltip: qsTr("Executar testes CMake")
+            onClicked: root.testsRequested("cmake")
+        }
+
+        KvIconButton {
+            visible: root.workspaceOpen && root.cargoAvailable
             enabled: !root.analyzing && root.coreConnected
             iconName: "problems"
             tooltip: root.analyzing ? qsTr("Análise em andamento") : qsTr("Executar análise")
@@ -165,7 +213,7 @@ Rectangle {
         anchors.rightMargin: Theme.spacingMedium
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spacingSmall
-        visible: root.workspaceOpen
+        visible: root.workspaceOpen && root.width >= 1050
 
         Rectangle {
             width: 7
@@ -177,7 +225,7 @@ Rectangle {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.workspaceKind === "" ? qsTr("projeto") : root.workspaceKind
+            text: root.workspaceSystemLabel()
             color: Theme.textMuted
             font.pixelSize: 11
         }

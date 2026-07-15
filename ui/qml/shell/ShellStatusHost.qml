@@ -9,7 +9,9 @@ WorkspaceStatusBar {
     property var gitController: null
 
     workspaceRoot: coreClient.workspaceRoot
-    workspaceKindLabel: shellController.kindLabel(coreClient.workspaceKind)
+    workspaceKindLabel: shellController.kindLabel(
+                            coreClient.workspaceKind,
+                            coreClient.workspaceBuildSystems)
     logsActive: shellController.showBottomPanel
                 && shellController.bottomTab === "logs"
     building: coreClient.building

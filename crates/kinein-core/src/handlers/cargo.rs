@@ -2,7 +2,7 @@
 //! check como job, ambos exigindo workspace Rust/Cargo.
 
 use kinein_protocol::{
-    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ProjectKind,
+    BuildSystem, JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -25,7 +25,7 @@ impl Core {
         }
     }
 
-    /// Valida workspace aberto com kind Rust/Cargo; devolve o root.
+    /// Valida a capacidade Cargo do workspace; devolve o root.
     fn cargo_workspace_root(
         &self,
         request_id: Option<&Value>,
@@ -34,13 +34,16 @@ impl Core {
         let Some(workspace) = self.workspace.as_ref() else {
             return Err(Box::new(no_workspace_response(request_id.cloned(), method)));
         };
-        if workspace.kind != ProjectKind::RustCargo {
+        if !workspace.capabilities.supports(BuildSystem::Cargo) {
             return Err(Box::new(JsonRpcResponse::failure(
                 request_id.cloned(),
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
                     format!("{method} requer um workspace Rust/Cargo"),
-                    Some(json!({ "kind": workspace.kind })),
+                    Some(json!({
+                        "kind": workspace.kind,
+                        "buildSystems": workspace.capabilities.build_systems,
+                    })),
                 ),
             )));
         }

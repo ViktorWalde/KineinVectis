@@ -10,9 +10,9 @@ use kinein_protocol::{
     FsWriteParams, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, LspCodeActionsResult,
     LspCompletionResult, LspDefinitionResult, LspHoverResult, LspReferenceItem,
     LspReferencesResult, LspRenameParams, LspRestartParams, LspRestartResult,
-    LspSemanticTokensResult, LspSwitchSourceHeaderResult, LspSymbolsResult,
-    LspWorkspaceEditApplyResult, LspWorkspaceEditCancelResult, LspWorkspaceEditTransactionParams,
-    LspWorkspaceSymbolsParams,
+    LspSemanticTokensParams, LspSemanticTokensResult, LspSwitchSourceHeaderResult,
+    LspSymbolsResult, LspWorkspaceEditApplyResult, LspWorkspaceEditCancelResult,
+    LspWorkspaceEditTransactionParams, LspWorkspaceSymbolsParams,
 };
 use serde_json::{Value, json};
 
@@ -235,10 +235,10 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "lsp.semanticTokens");
         };
-        match parse_params::<FsWriteParams>(
+        match parse_params::<LspSemanticTokensParams>(
             request_id.as_ref(),
             params,
-            "lsp.semanticTokens requer os campos path e content",
+            "lsp.semanticTokens requer path, content e version",
         ) {
             Ok(parsed) => {
                 let path = match fsops::confine_file(&root, Path::new(&parsed.path)) {
@@ -251,7 +251,11 @@ impl Core {
                 match lsp.semantic_tokens(&path, &parsed.content) {
                     Ok(tokens) => JsonRpcResponse::success(
                         request_id,
-                        json!(LspSemanticTokensResult { tokens }),
+                        json!(LspSemanticTokensResult {
+                            path: path.to_string_lossy().into_owned(),
+                            version: parsed.version,
+                            tokens,
+                        }),
                     ),
                     Err(error) => lsp_error_response(request_id, &error),
                 }

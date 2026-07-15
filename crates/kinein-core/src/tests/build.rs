@@ -70,6 +70,61 @@ fn build_run_requires_jobs_enabled() {
 }
 
 #[test]
+fn hybrid_workspace_routes_cargo_and_cmake_without_changing_primary_kind() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-build-hybrid", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[workspace]\nmembers = []\n").unwrap();
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(hybrid CXX)\n",
+    )
+    .unwrap();
+    let mut core = core_with_empty_search_path("build-hybrid");
+
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        341_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let workspace = opened.response().result.as_ref().unwrap();
+    assert_eq!(workspace["kind"], "rustCargo");
+    assert_eq!(
+        workspace["capabilities"]["buildSystems"],
+        json!(["cargo", "cmake"])
+    );
+
+    let cmake_status = core.handle_request(&JsonRpcRequest::new(
+        342_i64,
+        "cmake.status",
+        Some(json!({})),
+    ));
+    assert!(cmake_status.response().error.is_none());
+
+    for (request_id, build_system) in [(343_i64, "cargo"), (344_i64, "cmake")] {
+        let outcome = core.handle_request(&JsonRpcRequest::new(
+            request_id,
+            "build.run",
+            Some(json!({ "buildSystem": build_system })),
+        ));
+        let error = outcome.response().error.as_ref().unwrap();
+        assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InternalError);
+        assert!(error.message.contains("jobs"));
+    }
+
+    let unavailable = core.handle_request(&JsonRpcRequest::new(
+        345_i64,
+        "build.run",
+        Some(json!({ "buildSystem": "maven" })),
+    ));
+    let error = unavailable.response().error.as_ref().unwrap();
+    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+    assert!(error.message.contains("Maven"));
+}
+
+#[test]
 fn build_run_starts_a_job_and_finishes_successfully() {
     use std::time::Duration;
 

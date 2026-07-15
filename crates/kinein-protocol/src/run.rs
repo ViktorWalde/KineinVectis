@@ -12,6 +12,14 @@ pub struct RunStartParams {
     pub command: Option<String>,
 }
 
+/// Parameters for `run.script`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RunScriptParams {
+    /// Shell script path confined to the currently opened workspace.
+    pub path: String,
+}
+
 /// Result payload for `run.start`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,4 +34,28 @@ pub struct RunStartResult {
 pub struct RunStdinParams {
     /// Raw bytes forwarded to the child stdin. The UI appends the newline.
     pub data: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::RunScriptParams;
+
+    #[test]
+    fn run_script_params_require_only_a_path() {
+        let parsed = serde_json::from_value::<RunScriptParams>(json!({
+            "path": "/workspace/scripts/check.sh"
+        }))
+        .unwrap();
+
+        assert!(parsed.path.ends_with("check.sh"));
+        assert!(
+            serde_json::from_value::<RunScriptParams>(json!({
+                "path": "check.sh",
+                "command": "other"
+            }))
+            .is_err()
+        );
+    }
 }

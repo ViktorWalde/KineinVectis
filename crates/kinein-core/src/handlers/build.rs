@@ -10,20 +10,34 @@
 use std::path::PathBuf;
 
 use kinein_protocol::{
-    DiagnosticSource, JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
-    ProjectKind,
+    BuildRunParams, BuildSystem, DiagnosticSource, JobAcceptedResult, JobRisk, JsonRpcError,
+    JsonRpcErrorCode, JsonRpcResponse, ProjectKind, QualityRunParams, TestRunParams,
 };
 use serde_json::{Value, json};
 
 use crate::jobs::{JobContext, JobOutcome};
-use crate::rpc::no_workspace_response;
+use crate::rpc::{no_workspace_response, parse_params};
 use crate::{Core, build, test};
 
 impl Core {
-    pub(crate) fn build_run_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some((root, kind)) = self.workspace_root_and_kind() else {
-            return no_workspace_response(request_id, "build.run");
+    pub(crate) fn build_run_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<BuildRunParams>(
+            request_id.as_ref(),
+            params,
+            "build.run aceita apenas o campo opcional buildSystem",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
         };
+        let (root, kind) =
+            match self.runner_workspace(request_id.as_ref(), "build.run", parsed.build_system) {
+                Ok(context) => context,
+                Err(response) => return *response,
+            };
         if !matches!(kind, ProjectKind::RustCargo | ProjectKind::Cmake) {
             return unsupported_kind_response(request_id, "build", kind);
         }
@@ -33,7 +47,8 @@ impl Core {
 
         // M4.5: o perfil de rigor efetivo regula o build do USUARIO.
         let profile = crate::settings::effective_rigor_profile(&root);
-        let job_id = jobs.spawn("build", "Build", JobRisk::Medium, true, move |ctx| {
+        let title = format!("{} Build", project_system_name(kind));
+        let job_id = jobs.spawn("build", title, JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "build", &event);
             match build::run_build(&root, kind, profile, &cancel, &mut sink) {
@@ -59,10 +74,24 @@ impl Core {
         JsonRpcResponse::success(request_id, json!(JobAcceptedResult { job_id }))
     }
 
-    pub(crate) fn quality_run_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some((root, kind)) = self.workspace_root_and_kind() else {
-            return no_workspace_response(request_id, "quality.run");
+    pub(crate) fn quality_run_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<QualityRunParams>(
+            request_id.as_ref(),
+            params,
+            "quality.run aceita apenas o campo opcional buildSystem",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
         };
+        let (root, kind) =
+            match self.runner_workspace(request_id.as_ref(), "quality.run", parsed.build_system) {
+                Ok(context) => context,
+                Err(response) => return *response,
+            };
         // Only Rust/Cargo has a linter integration (cargo clippy) so far.
         if kind != ProjectKind::RustCargo {
             return unsupported_kind_response(request_id, "quality", kind);
@@ -103,21 +132,29 @@ impl Core {
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
-        let Some((root, kind)) = self.workspace_root_and_kind() else {
-            return no_workspace_response(request_id, "test.run");
+        let parsed = match parse_params::<TestRunParams>(
+            request_id.as_ref(),
+            params,
+            "test.run aceita apenas os campos opcionais filter e buildSystem",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
         };
+        let (root, kind) =
+            match self.runner_workspace(request_id.as_ref(), "test.run", parsed.build_system) {
+                Ok(context) => context,
+                Err(response) => return *response,
+            };
         if !matches!(kind, ProjectKind::RustCargo | ProjectKind::Cmake) {
             return unsupported_kind_response(request_id, "test", kind);
         }
-        let filter = params
-            .and_then(|value| value.get("filter"))
-            .and_then(Value::as_str)
-            .map(ToOwned::to_owned);
+        let filter = parsed.filter;
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "test.run");
         };
 
-        let job_id = jobs.spawn("test", "Tests", JobRisk::Medium, true, move |ctx| {
+        let title = format!("{} Tests", project_system_name(kind));
+        let job_id = jobs.spawn("test", title, JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: test::TestEvent| {
                 let id = ctx.id();
@@ -162,11 +199,50 @@ impl Core {
         JsonRpcResponse::success(request_id, json!(JobAcceptedResult { job_id }))
     }
 
-    /// Canonical workspace root and project kind, when a workspace is open.
-    fn workspace_root_and_kind(&self) -> Option<(PathBuf, ProjectKind)> {
-        self.workspace
-            .as_ref()
-            .map(|workspace| (PathBuf::from(&workspace.root), workspace.kind))
+    /// Resolves an explicit hybrid build-system selection against the one
+    /// workspace snapshot. With no selection, preserves the primary `kind`.
+    fn runner_workspace(
+        &self,
+        request_id: Option<&Value>,
+        method: &str,
+        requested: Option<BuildSystem>,
+    ) -> Result<(PathBuf, ProjectKind), Box<JsonRpcResponse>> {
+        let Some(workspace) = self.workspace.as_ref() else {
+            return Err(Box::new(no_workspace_response(request_id.cloned(), method)));
+        };
+        let kind = if let Some(build_system) = requested {
+            if !workspace.capabilities.supports(build_system) {
+                return Err(Box::new(JsonRpcResponse::failure(
+                    request_id.cloned(),
+                    JsonRpcError::new(
+                        JsonRpcErrorCode::InvalidParams,
+                        format!(
+                            "{method} requer que o sistema {} exista no workspace",
+                            project_system_name(build_system.project_kind())
+                        ),
+                        Some(json!({
+                            "buildSystem": build_system,
+                            "available": workspace.capabilities.build_systems,
+                        })),
+                    ),
+                )));
+            }
+            build_system.project_kind()
+        } else {
+            workspace.kind
+        };
+        Ok((PathBuf::from(&workspace.root), kind))
+    }
+}
+
+const fn project_system_name(kind: ProjectKind) -> &'static str {
+    match kind {
+        ProjectKind::RustCargo => "Cargo",
+        ProjectKind::Cmake => "CMake",
+        ProjectKind::Maven => "Maven",
+        ProjectKind::Gradle => "Gradle",
+        ProjectKind::Python => "Python",
+        ProjectKind::Unknown => "Unknown",
     }
 }
 

@@ -2,8 +2,8 @@
 //! presets/targets/status sincronos, todos exigindo workspace `CMake`.
 
 use kinein_protocol::{
-    CmakeConfigureParams, CmakePresetsResult, CmakeStatusResult, CmakeTargetsResult,
-    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ProjectKind,
+    BuildSystem, CmakeConfigureParams, CmakePresetsResult, CmakeStatusResult, CmakeTargetsResult,
+    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -27,7 +27,7 @@ impl Core {
         }
     }
 
-    /// Valida workspace aberto com kind `CMake`; devolve o root.
+    /// Valida a capacidade `CMake` do workspace; devolve o root.
     fn cmake_workspace_root(
         &self,
         request_id: Option<&Value>,
@@ -36,13 +36,16 @@ impl Core {
         let Some(workspace) = self.workspace.as_ref() else {
             return Err(Box::new(no_workspace_response(request_id.cloned(), method)));
         };
-        if workspace.kind != ProjectKind::Cmake {
+        if !workspace.capabilities.supports(BuildSystem::Cmake) {
             return Err(Box::new(JsonRpcResponse::failure(
                 request_id.cloned(),
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
                     format!("{method} requer um workspace CMake"),
-                    Some(json!({ "kind": workspace.kind })),
+                    Some(json!({
+                        "kind": workspace.kind,
+                        "buildSystems": workspace.capabilities.build_systems,
+                    })),
                 ),
             )));
         }

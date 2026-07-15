@@ -17,8 +17,18 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.."
 
-if ! command -v qml6 >/dev/null 2>&1; then
-    echo "qml6 nao encontrado (pacote qt6-declarative)." >&2
+qml_runner="${KINEIN_QML_RUNNER:-}"
+if [ -z "$qml_runner" ]; then
+    for candidate in qml6 qml-qt6 qml; do
+        if command -v "$candidate" >/dev/null 2>&1; then
+            qml_runner="$candidate"
+            break
+        fi
+    done
+fi
+
+if [ -z "$qml_runner" ]; then
+    echo "runner QML nao encontrado (pacote qt6-declarative)." >&2
     exit 1
 fi
 
@@ -29,7 +39,7 @@ for teste in scripts/qml-harness/tst_*.qml; do
     printf '== %s ==\n' "$nome"
     # QT_ASSUME_STDERR_HAS_CONSOLE: sem isso o qml6 ENGOLE console.log/warn.
     timeout 60 env QT_QPA_PLATFORM=offscreen QT_ASSUME_STDERR_HAS_CONSOLE=1 \
-        qml6 "$teste"
+        "$qml_runner" "$teste"
     codigo=$?
     if [ "$codigo" -eq 0 ]; then
         echo "  ok"

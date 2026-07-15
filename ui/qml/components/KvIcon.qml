@@ -18,6 +18,22 @@ Item {
                               : warning ? Theme.warningSoft
                               : success ? Theme.successSoft
                               : active ? Theme.accent : Theme.textSecondary
+    readonly property url assetSource: {
+        switch (root.name) {
+        case "tree-folder-closed":
+            return "qrc:/KineinVectis/assets/icons/tree/folder-closed.svg";
+        case "tree-folder-open":
+            return "qrc:/KineinVectis/assets/icons/tree/folder-open.svg";
+        case "tree-file-c":
+            return "qrc:/KineinVectis/assets/icons/tree/file-c.svg";
+        case "tree-file-cpp":
+            return "qrc:/KineinVectis/assets/icons/tree/file-cpp.svg";
+        case "tree-file-rust":
+            return "qrc:/KineinVectis/assets/icons/tree/file-rust.svg";
+        default:
+            return "";
+        }
+    }
 
     implicitWidth: size
     implicitHeight: size
@@ -31,6 +47,7 @@ Item {
         id: iconCanvas
 
         anchors.fill: parent
+        visible: root.assetSource.toString() === ""
         antialiasing: true
 
         function line(context, x1, y1, x2, y2) {
@@ -253,5 +270,17 @@ Item {
 
             context.stroke();
         }
+    }
+
+    // Os cinco masters da arvore sao recursos vetoriais autorais e nao sao
+    // recoloridos nem redesenhados pelo contrato simbolico do Canvas.
+    Image {
+        anchors.fill: parent
+        visible: root.assetSource.toString() !== ""
+        source: root.assetSource
+        fillMode: Image.PreserveAspectFit
+        asynchronous: false
+        cache: true
+        smooth: true
     }
 }

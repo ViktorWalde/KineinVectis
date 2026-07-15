@@ -113,6 +113,7 @@ set_source_files_properties(qml/editor/EditorCompletionController.qml PROPERTIES
 set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALIAS EditorPane.qml)
 set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
+set_source_files_properties(qml/editor/EditorGutter.qml PROPERTIES QT_RESOURCE_ALIAS EditorGutter.qml)
 set_source_files_properties(qml/editor/EditorHoverPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorHoverPopup.qml)
 set_source_files_properties(qml/editor/EditorCompletionPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionPopup.qml)
 set_source_files_properties(qml/editor/EditorActionsPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorActionsPopup.qml)
@@ -232,6 +233,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorPane.qml
         qml/editor/EditorTabsBar.qml
         qml/editor/EditorTextSurface.qml
+        qml/editor/EditorGutter.qml
         qml/editor/EditorHoverPopup.qml
         qml/editor/EditorCompletionPopup.qml
         qml/editor/EditorActionsPopup.qml
@@ -258,10 +260,33 @@ qt_add_qml_module(kinein-vectis
         src/editor_highlighter.h
     RESOURCES
         assets/app-icon.png
+        assets/icons/tree/folder-closed.svg
+        assets/icons/tree/folder-open.svg
+        assets/icons/tree/file-c.svg
+        assets/icons/tree/file-cpp.svg
+        assets/icons/tree/file-rust.svg
         "${KINEIN_MANUAL_FILE}"
 )
 
 kinein_enable_strict_compiler_options(kinein-vectis)
+
+# Qt 6 gera registro, cache AOT e MOC com construcoes que GCC 16/Clang 22
+# diagnosticam sob os warnings rigorosos da Kinein. As excecoes ficam presas
+# aos fontes GERADOS; os arquivos ui/src continuam integralmente sob -Werror.
+get_target_property(KINEIN_UI_SOURCES kinein-vectis SOURCES)
+foreach(KINEIN_UI_SOURCE IN LISTS KINEIN_UI_SOURCES)
+    if(KINEIN_UI_SOURCE MATCHES "qmltyperegistrations\\.cpp$|/\\.rcc/qmlcache/|_autogen/mocs_compilation\\.cpp$")
+        set_property(
+            SOURCE "${KINEIN_UI_SOURCE}"
+            APPEND PROPERTY COMPILE_OPTIONS
+                -w
+        )
+    endif()
+endforeach()
+set_source_files_properties(
+    "${CMAKE_CURRENT_BINARY_DIR}/kinein-vectis_autogen/mocs_compilation.cpp"
+    PROPERTIES COMPILE_OPTIONS -w
+)
 
 # The generated qmltyperegistrations.cpp includes headers by base name.
 target_include_directories(kinein-vectis PRIVATE src)

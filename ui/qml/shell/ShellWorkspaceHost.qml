@@ -22,6 +22,7 @@ Item {
     property string workspaceRoot: ""
     property string workspaceName: ""
     property string workspaceKind: ""
+    property var workspaceBuildSystems: []
     property bool testing: false
     property bool terminalActive: false
     property bool running: false
@@ -149,7 +150,8 @@ Item {
                      && root.shellController.effectiveShowExplorer
             workspaceName: root.workspaceName
             workspaceKindLabel: root.shellController.kindLabel(
-                                    root.workspaceKind)
+                                    root.workspaceKind,
+                                    root.workspaceBuildSystems)
             selectedPath: root.projectTree.selectedPath
             entriesModel: root.projectTree.entriesModel
             gitKinds: root.gitController.gitKinds
@@ -166,6 +168,9 @@ Item {
             }
             onFileOpenRequested: function(path) {
                 root.readFileRequested(path);
+            }
+            onScriptRunRequested: function(path) {
+                root.projectTree.runScript(path);
             }
             onContextMenuRequested: function(path, kind, name, sceneX, sceneY) {
                 root.projectTree.openEntryMenu(path, kind, name, sceneX, sceneY);

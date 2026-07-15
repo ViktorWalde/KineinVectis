@@ -19,6 +19,7 @@ Rectangle {
     signal entrySelected(string path, string kind)
     signal directoryToggleRequested(string path, int index, bool expanded)
     signal fileOpenRequested(string path)
+    signal scriptRunRequested(string path)
     signal contextMenuRequested(string path, string kind, string name,
                                 real sceneX, real sceneY)
 
@@ -37,6 +38,34 @@ Rectangle {
             return Theme.textDisabled;
         }
         return Theme.infoSoft;
+    }
+
+    function treeIconName(name, kind, expanded) {
+        if (kind === "directory") {
+            return expanded ? "tree-folder-open" : "tree-folder-closed";
+        }
+        const lowerName = name.toLowerCase();
+        if (lowerName.endsWith(".c") || lowerName.endsWith(".h")) {
+            return "tree-file-c";
+        }
+        if (lowerName.endsWith(".cc") || lowerName.endsWith(".cpp")
+                || lowerName.endsWith(".cxx") || lowerName.endsWith(".c++")
+                || lowerName.endsWith(".hh") || lowerName.endsWith(".hpp")
+                || lowerName.endsWith(".hxx") || lowerName.endsWith(".h++")
+                || lowerName.endsWith(".ipp")) {
+            return "tree-file-cpp";
+        }
+        if (lowerName.endsWith(".rs")) {
+            return "tree-file-rust";
+        }
+        return "file";
+    }
+
+    function isRunnableScript(name, kind) {
+        if (kind !== "file") return false;
+        const lower = name.toLowerCase();
+        return lower.endsWith(".sh") || lower.endsWith(".bash")
+                || lower.endsWith(".zsh");
     }
 
     implicitWidth: 260
@@ -172,20 +201,29 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 12
                         text: treeRow.kind === "directory"
-                              ? (treeRow.expanded ? "▾" : "▸") : "·"
+                              ? (treeRow.expanded ? "▾" : "▸") : ""
                         color: treeRow.kind === "directory"
                                ? Theme.accent : Theme.textMuted
                         font.pixelSize: Theme.fontSizeTree
                     }
 
+                    KvIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        size: 20
+                        name: root.treeIconName(treeRow.name, treeRow.kind,
+                                                treeRow.expanded)
+                    }
+
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
+                        width: Math.max(0, treeRow.width - parent.x - x - 30)
                         text: treeRow.name
                         color: treeRow.kind === "directory"
                                ? Theme.textPrimary
                                : root.gitFileColor(treeRow.path,
                                                    root.gitRevision)
                         font.pixelSize: Theme.fontSizeTree
+                        elide: Text.ElideRight
                     }
                 }
 
@@ -211,6 +249,24 @@ Rectangle {
                             root.fileOpenRequested(treeRow.path);
                         }
                     }
+                }
+
+                KvIconButton {
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spacingXSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 22
+                    height: 22
+                    z: 2
+                    visible: root.isRunnableScript(treeRow.name, treeRow.kind)
+                             && (entryArea.containsMouse
+                                 || treeRow.path === root.selectedPath)
+                    enabled: visible
+                    iconName: "run"
+                    iconSize: 13
+                    primary: true
+                    tooltip: qsTr("Executar script")
+                    onClicked: root.scriptRunRequested(treeRow.path)
                 }
             }
         }

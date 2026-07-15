@@ -1,0 +1,5 @@
+# Os SVGs autorais da árvore devem permanecer byte a byte idênticos aos
+# masters fornecidos. Trate-os como arte binária: sem normalização ou diff de
+# whitespace pelo Git.
+KINEIN_VECTIS_TREE_ICONS_INDIVIDUAL/**/svg/*.svg binary
+ui/assets/icons/tree/*.svg binary

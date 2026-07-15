@@ -184,9 +184,13 @@ testes que exec, ou fsync).
 ## Estado tecnico atual
 
 - Arquitetura: Qt/QML UI <-> JSON-RPC local/stdin-stdout <-> Rust core.
-- Protocolo IPC atual: `0.53.0` (2026-07-15). 0.53 entrega Workspaces recentes
-  globais: snapshot tipado, fixação, remoção/limpeza, disponibilidade calculada
-  no core e retomada por `workspace.open`; 0.52 separa e persiste a largura da
+- Protocolo IPC atual: `0.55.0` (2026-07-15). 0.55 entrega capacidades de
+  workspace híbrido Cargo+CMake, seleção tipada de `buildSystem` em
+  build/quality/test e `run.script` confinado, sem interpolação de shell. 0.54
+  faz `lsp.semanticTokens` ecoar `path` e `version`, permitindo à UI descartar
+  respostas de outro documento ou buffer já editado. 0.53 entrega Workspaces
+  recentes globais: snapshot tipado, fixação, remoção/limpeza, disponibilidade
+  calculada no core e retomada por `workspace.open`; 0.52 separa e persiste a largura da
   sessão ativa (300–720px), mantém `Project` independente, endurece a
   reconciliação do scroll durante nova saída e preserva o transcript das AI
   CLIs contra `CSI 3 J`; 0.51 tornou o KV Context terminal-first: Codex usa o
@@ -1318,6 +1322,8 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 
 - Implementados `scripts/empacotar-appimage-portatil.sh` (builder Podman),
   `scripts/empacotar-appimage.sh` (AppDir/linuxdeploy),
+  `scripts/instalar-appimage.sh` (um único atalho de usuário para a versão mais
+  recente, com remoção opcional das anteriores),
   `scripts/testar-appimage.sh` (estrutura/core/primeiro frame) e
   `scripts/testar-appimage-portatil.sh` (runtime mínimo sem rede).
 - Builder fixado em Rust 1.96.1/Debian 12 por digest; `linuxdeploy`, plugin Qt e
@@ -1327,6 +1333,11 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - O bundle contém `kinein-vectis`, `kinein-core`, Qt/QML, módulos
   `QtQuick`/`QtQuick.Window`/`QtQml.WorkerScript`, plugins xcb/Wayland/
   offscreen/minimal, ícone, desktop, AppStream, `MANUAL.md` e licenças.
+- A receita exige explicitamente os plugins de plataforma xcb, Wayland,
+  offscreen e minimal e falha antes da distribuição se o arquivo ou uma
+  dependência dinâmica obrigatória estiver ausente. O diretório `dist/` recebe
+  também `instalar-kinein-vectis.sh`; ele nunca usa sudo, mantém um único ícone
+  e sempre o aponta para a maior versão disponível na pasta.
 - Smoke aprovado no host Arch e, com rede desligada, em Debian 12 mínimo sem
   Qt, Rust, CMake ou compiladores. O artefato `0.1.0` foi reempacotado após a
   separação entre manual de uso e tutorial externo: 33.573.368 bytes, SHA256
@@ -1340,8 +1351,8 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   módulo. O strict build Qt 6.4 também passou após tornar as comparações de
   strings do terminal independentes da conversão `qsizetype`→`int`, sem
   relaxar warnings-as-errors.
-- A próxima funcionalidade de produto após A1 é **projeto híbrido e
-  self-hosting**; a ordem viva está somente em `PONTO_ATUAL.md`.
+- Após A1/A2, a próxima funcionalidade de produto é **responsividade medida**;
+  a ordem viva está somente em `PONTO_ATUAL.md`.
 
 ## Workspaces recentes globais — A1 (2026-07-15)
 
@@ -1431,11 +1442,75 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - O aceite humano restante da entrada multilinha e da roda permanece em TR0,
   mas foi pausado explicitamente pelo usuário em 2026-07-15; a autorização
   direta para A1 não equivale a aceitar esses dois gestos do KV Context.
-- Com A1 entregue, seguir projeto híbrido/self-hosting, responsividade medida e os
-  confortos exigidos por saídas reais para outra IDE. Não criar outro roadmap:
+- Com A1/A2 entregues, seguir responsividade medida e os confortos exigidos por
+  saídas reais para outra IDE. Não criar outro roadmap:
   `PONTO_ATUAL.md`, `docs/21-long-horizon-roadmap.md` e os docs de domínio já
   são a fila.
-- O dogfooding não concede autorização para
-  commit, push, publicação, alteração de visibilidade ou entrega externa. O
+- O usuário autorizou commits locais de checkpoint após cada marco crítico com
+  gate verde. Push, publicação, alteração de visibilidade ou entrega externa
+  continuam sem autorização. O
   repositório-fonte continua privado; código externo só pela futura árvore
   sanitizada descrita na política vigente.
+
+## Estabilização de distribuição, editor e self-hosting (2026-07-15)
+
+- O AppImage distribuído e o checkout de desenvolvimento agora coexistem no
+  menu: `kinein-vectis.desktop` / **Kinein Vectis** pertencem ao AppImage;
+  `kinein-vectis-development.desktop` / **Kinein Vectis (Desenvolvimento)**
+  pertencem a `scripts/kinein-vectis`. `scripts/instalar-atalho.sh` migra
+  apenas o atalho legado que aponta comprovadamente para o mesmo checkout e
+  preserva um atalho de AppImage já instalado.
+- Feedback de um testador: em alguns arquivos o indicador de breakpoint
+  cobria o número da linha. Causa: a largura da coluna numérica era estimada
+  como `8 px × dígitos`, apesar de `editorFontSize` variar de 8 a 40. A gutter
+  foi extraída para `ui/qml/editor/EditorGutter.qml`; folding/breakpoint,
+  diagnóstico, blame e números têm faixas independentes e a largura dos
+  números vem de `FontMetrics`. DAP, estado de breakpoints e protocolo não
+  mudaram.
+- Os cinco SVGs fornecidos em `KINEIN_VECTIS_TREE_ICONS_INDIVIDUAL/` foram
+  copiados sem alteração de bytes para `ui/assets/icons/tree/` e integrados no
+  `KvIcon`/`ProjectExplorer`: pasta fechada/aberta, C, C++ e Rust. O Qt apenas
+  os dimensiona no slot da árvore; o desenho original não foi redesenhado,
+  simplificado ou substituído.
+- A disputa aparente Tree-sitter/LSP era uma corrida de resposta: após uma
+  edição, tokens semânticos da versão anterior ainda podiam chegar e vencer
+  temporariamente o fallback estrutural atual. `syntaxVersion` e
+  `semanticVersion` agora avançam imediatamente por edição, os semantic tokens
+  anteriores são limpos, e cada resposta LSP carrega `path`+`version`; somente
+  a resposta do documento e versão ativos é aplicada. Os papéis continuam
+  separados: Tree-sitter é a base sintática instantânea e clangd/
+  rust-analyzer são a autoridade semântica progressiva.
+- O KV Context deixou de desenhar faixa/caixa própria sobre a entrada. Como no
+  terminal integrado, a grade VT, seus spans ANSI e o cursor são a única fonte
+  visual; teclado, paste, seleção, scrollback, resize coalescido e modo inline
+  continuam reutilizando o mesmo `TerminalPanel`/`TerminalManager`. A referência
+  foi o comportamento terminal-first do VS Code/xterm.js, adaptado à UI da
+  Kinein, sem copiar código nem criar um renderer de conversa.
+- A2 foi entregue: `workspace.kind` permanece como classificação primária
+  compatível, enquanto `workspace.capabilities.buildSystems` representa Cargo
+  e CMake simultaneamente. Toolbar, menus, Project Health, build e testes
+  apresentam/roteiam os dois sistemas usando Jobs e serviços existentes.
+- Scripts `.sh`, `.bash` e `.zsh` dentro do workspace ganharam ação de executar
+  na árvore e no menu de contexto, seguindo a praticidade de IDEs profissionais.
+  A UI envia somente o caminho; o core o confina à raiz e chama o interpretador
+  com argv explícito (`--` + caminho canônico), sem montar uma linha de shell.
+- A toolbar reduz informações secundárias por largura para não invadir o
+  editor. O strict mode permanece integral para fontes C++ próprias; somente
+  MOC/QML AOT gerados pela Qt recebem supressão local de warnings de código
+  gerado.
+- Packaging usa diretórios CMake distintos (`native-host` e baseline portátil)
+  e `cmake --fresh`, impedindo cache de `/workspace` de contaminar o host. Os
+  mounts Podman usam contexto SELinux e os scripts são invocados por `bash`,
+  portanto o build portátil não depende do bit executável no checkout. A saída
+  única continua `dist/` e contém AppImage, checksum específico,
+  `instalar-kinein-vectis.sh` e uma cópia atual de `Tutorial.md`; o teste recusa
+  tutorial ausente ou divergente.
+- Gate integral após a consolidação: 334 testes Rust (256 core, 63 protocolo,
+  15 demais), Clippy `-D warnings`, clang-format/clang-tidy, qmllint zero
+  warnings, 12 harnesses QML e builds UI Debug/Release passaram; os binários
+  release do launcher de desenvolvimento foram atualizados.
+- AppImage `0.1.0` final: 33.737.208 bytes, SHA256
+  `fd5fe934599757b6980703d2c2529f9b50bdc026e03e5da34b6a0eb5f44629b9`.
+  Smoke do host e Debian 12 mínimo sem rede passaram. O instalador distribuído
+  foi exercitado de fora da pasta de entrega em XDG isolado e gerou `.desktop`
+  e PNG apontando para o AppImage ao lado do próprio script.

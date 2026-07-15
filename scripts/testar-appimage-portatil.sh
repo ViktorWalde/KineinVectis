@@ -18,8 +18,9 @@ podman build \
     "$REPO_ROOT"
 
 echo "==> testando sem rede, Qt/Rust SDKs ou compiladores no host convidado"
+# Fedora/SELinux exige rótulo também no mount somente-leitura do smoke.
 podman run --rm --network none \
-    --volume "$REPO_ROOT:/workspace:ro" \
+    --volume "$REPO_ROOT:/workspace:ro,Z" \
     --workdir /workspace \
     "$IMAGE" \
     bash scripts/testar-appimage.sh

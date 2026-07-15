@@ -14,10 +14,6 @@ Item {
     property bool terminalActive: false
     property bool workspaceAvailable: false
     property string emptyText: qsTr("Seu shell ($SHELL) abre aqui na raiz do workspace (Alt+F12).")
-    // Opt-in do host: o Terminal comum permanece neutro; o KV Context usa o
-    // guia para a linha de interação da CLI não parecer flutuar no transcript.
-    property bool inputRowDecoration: false
-
     signal openRequested()
     signal keyPressed(string data)
     signal resizeRequested(int cols, int rows)
@@ -54,13 +50,6 @@ Item {
     readonly property bool scrollIndicatorVisible: terminalViewport.scrollIndicatorVisible
     readonly property bool scrollIndicatorScrollable: terminalViewport.scrollIndicatorScrollable
     readonly property real terminalContentWidth: terminalViewport.contentWidth
-    readonly property bool inputRowDecorationVisible:
-        inputController.inputRowDecorationVisible
-    readonly property int inputRowDecorationStartRow:
-        inputController.inputRowDecorationStartRow
-    readonly property int inputRowDecorationEndRow:
-        inputController.inputRowDecorationEndRow
-
     onRenderChanged: {
         const nextSessionId = render && render.id !== undefined
                 ? String(render.id) : "";
@@ -71,7 +60,6 @@ Item {
             lastRequestedCols = 0;
             lastRequestedRows = 0;
             selectionController.clear();
-            inputController.resetInputRowDecoration();
             Qt.callLater(panel.recomputeSize);
         }
         scrollController.handleRender(render);
@@ -123,11 +111,6 @@ Item {
 
         terminalActive: panel.terminalActive
         applicationCursor: panel.applicationCursor
-        inputRowDecoration: panel.inputRowDecoration
-        cursorVisible: panel.cursor.visible === true
-        cursorRow: Number(panel.cursor.row)
-        gridRows: panel.gridRows
-        scrollOffset: panel.scrollOffset
         onOpenRequested: panel.openRequested()
         onCopyRequested: panel.copySelection()
         onPasteRequested: panel.paste()
@@ -165,7 +148,10 @@ Item {
         const cols = Math.max(2, Math.floor(terminalContentWidth / charWidth));
         const rows = Math.max(2, Math.floor(
             terminalViewport.contentHeight / lineHeight));
-        if (cols === lastRequestedCols && rows === lastRequestedRows) {
+        // Math.floor/Math.max chegam ao cache AOT como double. Comparar pela
+        // distancia inteira evita -Wfloat-equal no C++ gerado pelo Qt.
+        if (Math.abs(cols - lastRequestedCols) < 0.5
+                && Math.abs(rows - lastRequestedRows) < 0.5) {
             return;
         }
         pendingCols = cols;
@@ -201,7 +187,6 @@ Item {
         const text = Clipboard.text();
         if (text !== "") {
             snapToBottom();
-            inputController.notePastedInput();
             const data = panel.bracketedPaste
                     ? "\x1b[200~" + text + "\x1b[201~" : text;
             panel.keyPressed(data);
@@ -232,10 +217,6 @@ Item {
         charWidth: panel.charWidth
         lineHeight: panel.lineHeight
         emptyText: panel.emptyText
-        inputRowDecorationVisible: panel.inputRowDecorationVisible
-        inputRowDecorationStartRow: panel.inputRowDecorationStartRow
-        inputRowDecorationEndRow: panel.inputRowDecorationEndRow
-
         onContentWidthChanged: panel.recomputeSize()
         onContentHeightChanged: panel.recomputeSize()
         onFocusRequested: panel.forceActiveFocus()
