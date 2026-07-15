@@ -55,7 +55,8 @@ pub struct AiTerminalOpenResult {
     pub profile_id: AiCliProfileId,
     /// User-facing profile name.
     pub name: String,
-    /// Resolved executable path started by the core.
+    /// Resolved executable path and fixed, allowlisted arguments started by
+    /// the core (for example, Codex's official inline terminal mode).
     pub command: String,
 }
 

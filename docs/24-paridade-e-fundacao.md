@@ -5,14 +5,10 @@
 > (D1, D2), **fundação depois** (D3, D4) — o dogfooding informa a fundação.
 > O usuário está estruturando os **ícones próprios da IDE** em paralelo.
 >
-> ⚠️ **2026-07-12 — o princípio acima perdeu a base: DOGFOODING PAUSADO.**
-> O Viktor tentou desenvolver o Kinein no próprio Kinein, concluiu que ainda
-> não se sustenta pro trabalho real, e **voltou pro CLion até o projeto ficar
-> pronto**. Sem uso diário, não chega mais bug de uso diário (a fonte que
-> gerou D1, D1b e D2 secou), e a régua vira **"está pronto pra virar o daily
-> driver?"** — o que empurra o valor pra **fundação (D3/D4)** e pro
-> **inventário do que ainda falta**. A reordenação é decisão do Viktor e está
-> em aberto (ver `PONTO_ATUAL.md`). Nada foi reordenado sem ele.
+> **2026-07-14 — DOGFOODING REATIVADO.** O usuário informou “estou no
+> Kinein”; feedback real voltou a interromper a fila antes de funcionalidade
+> nova. A primeira regressão desta retomada foi a experiência terminal do KV
+> Context, corrigida nos protocolos 0.51/0.52 e ainda pendente de aceite visual.
 >
 > ⚠️ **D1 e D1b nunca foram confirmados AO VIVO** pelo Viktor — estão verdes
 > no código, no gate e em harness headless, mas ninguém viu na tela.
@@ -21,7 +17,7 @@
 |---|---|---|---|
 | **D1** | Autocomplete LSP aparecer AO VIVO na GUI | 🐞 bug de uso diário | 🟢 CAUSA-RAIZ ACHADA E CORRIGIDA (2026-07-12; falta o OK ao vivo do usuário) |
 | **D1b** | Find/Replace no arquivo (Ctrl+F / Ctrl+H) | 🐞 bug de uso diário | 🟢 IMPLEMENTADO (2026-07-12; falta o OK ao vivo do usuário) |
-| **D2** | Terminal → paridade VS Code/JetBrains | 🐞 lacuna de uso diário | 🟢 D2.1 + D2.2 + D2.3 FEITOS (0.44.0; falta OK ao vivo das abas) |
+| **D2** | Terminal → paridade VS Code/JetBrains | 🐞 lacuna de uso diário | 🟡 fundação + correções KV 0.51/0.52 verdes; falta aceite ao vivo |
 | **D3** | Tree-sitter + arquitetura de plugins + views em árvore | 🏗️ fundação | 🟢 FEITO (2026-07-14; protocolo 0.46.0) |
 | **D4** | Convergência UI/UX (docs/20 + specs) | 🏗️ fundação | 🟢 C2/C3/C5 implementadas; C6 aguarda validação visual do usuário |
 
@@ -444,6 +440,118 @@ O mesmo componente foi reaproveitado; não nasceu uma segunda barra.
 
 **Fora (com gatilho):** shell integration (cwd/exit por comando via OSC
 133), imagens (sixel).
+
+### Correção 0.51 — KV Context terminal-first (2026-07-14)
+
+**Feedback ao vivo:** o Terminal integrado tinha barra e comportamento
+previsível, mas o Codex aberto pelo KV Context não mostrava histórico, ficava
+estreito e não transmitia a mesma sensação de terminal do CLion/terminal do
+sistema.
+
+**Causa:** o bridge já reutilizava `TerminalManager` e `TerminalPanel`, mas o
+Codex era iniciado no TUI padrão em **alternate screen**. Essa tela alternativa
+tem scrollback zero por definição; logo a barra compartilhada estava correta,
+mas não possuía histórico para representar. Os 360px normativos do seletor
+também eram inadequados para uma sessão TUI longa, e cada pixel de splitter
+podia provocar `terminal.resize` + serialização integral do grid.
+
+**Correção:** o perfil Codex usa a opção oficial fixa
+`--no-alt-screen`, mantendo a CLI real em modo inline e produzindo scrollback.
+O render 0.51 expõe `alternateScreen`, `applicationCursor` e
+`bracketedPaste`; o teclado/paste respeita esses modos. A barra ganhou faixa
+reservada e contraste persistente. Resize/scroll são coalescidos por frame.
+Com uma sessão ativa, o KV Context cresce responsivamente até 720px, preserva
+o editor e oferece maximização reversível da área de trabalho.
+
+**Segundo feedback ao vivo:** após reiniciar com a correção, o prompt inline
+do Codex aceitava texto, porém não tinha qualquer limite visual. A mensagem
+digitada aparecia abaixo do aviso de usage e antes do status do modelo, como
+se estivesse flutuando. Uma captura do grid VT da sessão real confirmou que o
+input e essa ordem pertencem ao próprio Codex; não havia perda de tecla nem
+camada sobreposta na Kinein.
+
+**Ajuste visual:** o `TerminalPanel` ganhou uma decoração opt-in da linha do
+cursor. Somente o KV Context a habilita: a linha ao vivo recebe fundo
+`Theme.currentLine` e contorno `Theme.borderStrong`, atrás dos spans reais. O
+guia some ao rolar o histórico ou quando o cursor sai do grid. A solução não
+move linhas, não interpreta a TUI e não cria composer/chat paralelo; o Terminal
+comum permanece visualmente inalterado. `tst_terminal_input` cobre os estados
+visível, histórico e cursor fora da grade.
+
+Não nasceu outro terminal: `TerminalPanel` continua sendo a única composição e
+foi dividido em viewport, controller de seleção e controller de input para
+respeitar `docs/ARCHITECTURE.md`. Os harnesses `tst_assistant_layout`,
+`tst_terminal_input` e `tst_terminal_selection` protegem o comportamento. O
+gate completo (testes, clippy, C++/QML e builds debug/release) e o smoke pelo
+launcher estão verdes. O fechamento depende agora somente do teste real de
+barra/roda/arrasto/digitação, demarcação da linha ativa e maximização com
+Claude/Codex.
+
+### Correção 0.52 — divisor livre, Project independente e scroll contínuo (2026-07-14)
+
+**Terceiro feedback ao vivo:** a faixa continuava parecendo separada do texto,
+o KV Context já não podia ser dimensionado à vontade, a sessão escondia a
+árvore de pastas e o scroll era perdido durante chats longos.
+
+**Causas:** o estado ativo calculava sempre metade da janela e ignorava a
+largura escolhida; o splitter era visível só antes da sessão; `Project` era
+forçado a fechar enquanto a IA estivesse ativa. No terminal, um render de nova
+saída podia aumentar o offset positivo antes de confirmar o pedido da UI e
+deixar a reconciliação esperando um número exato para sempre. Além disso,
+versões atuais do Codex ainda podem emitir `CSI 3 J` (`erase scrollback`) mesmo
+com `--no-alt-screen`, apagando um transcript que o bridge prometeu preservar.
+
+**Correção em fases:** (1) a linha ativa ganhou geometria com respiro vertical,
+texto centralizado e contorno acima dos spans ANSI; (2) o splitter permanece
+ativo durante a sessão e grava `assistantTerminalWidth` (300–720px) separado
+dos 300–480px do seletor; (3) `Project` e KV Context voltaram a ser escolhas
+independentes, salvo na maximização explícita; (4) o novo
+`TerminalScrollController` coalesce e reconcilia roda/arrasto, aceita o offset
+positivo deslocado por nova saída e protege o snap ao vivo contra render
+atrasado; (5) somente as sessões de AI CLI filtram `CSI 3 J`, inclusive quando
+a sequência cruza duas leituras do PTY. O Terminal comum não muda a semântica
+de `clear`.
+
+**Provas automatizadas:** `tst_assistant_layout` cobre largura persistida,
+limites e árvore aberta; `tst_terminal_scroll` cobre output durante leitura,
+snap e troca de sessão; `tst_terminal_input` cobre a ativação da faixa; o teste
+Rust `ai_scrollback_filter_survives_chunk_boundaries` protege o filtro estreito.
+O aceite em tela real continua obrigatório.
+
+### Correção pós-0.52 — entrada multilinha e roda Qt/Wayland (2026-07-15)
+
+**Quarto feedback ao vivo:** o dimensionamento já estava resolvido, mas a
+entrada ainda parecia flutuar na captura e a roda não movia a conversa da
+sessão CLI no Arch Linux.
+
+**Causa visual:** a faixa era derivada somente da linha atual do cursor VT.
+Isso não representa uma entrada longa: quando o texto quebrava, apenas a
+última linha podia receber a geometria; depois de Enter, o Codex estacionava o
+cursor numa linha vazia e a UI deixava uma caixa vazia separada do prompt já
+enviado. A sonda com o Codex real confirmou que, durante a digitação, o texto e
+o cursor chegam corretamente na mesma linha do grid — o erro era o ciclo de
+vida/range da decoração, não o PTY.
+
+**Causa da roda:** o fluxo `AssistantPanel -> AssistantController ->
+CoreClient -> terminal.scroll -> TerminalManager` estava completo e reutiliza
+o mesmo backend do Terminal comum. O `WheelHandler`, porém, lia apenas
+`angleDelta`. Qt/Wayland e dispositivos de alta resolução podem entregar o
+gesto somente em `pixelDelta`; nesse caso o delta era tratado como zero/para
+baixo e, no fundo da sessão, virava no-op.
+
+**Correção focal, sem mexer no dimensionamento:** a decoração agora começa no
+primeiro caractere/paste, guarda o intervalo da primeira à última linha
+quebrada e é removida imediatamente por Enter/Escape/Ctrl+C; prompt ocioso ou
+sessão processando não deixam moldura vazia. A roda aceita `angleDelta` e
+`pixelDelta`, sem alvo de transformação implícito, e continua delegando ao
+mesmo `TerminalScrollController`. Largura, splitter, maximização, resize,
+`Project`, protocolo e core não foram alterados.
+
+**Provas:** `tst_terminal_input` cobre prompt ocioso, entrada em duas linhas,
+reset no Enter, histórico e cursor fora do grid; `tst_terminal_scroll` cobre
+roda tradicional, evento somente com `pixelDelta` e delta nulo. Gate completo,
+builds Debug/Release e smoke offscreen estão verdes. O gesto de roda na sessão
+real ainda precisa da confirmação do usuário após reiniciar o release.
 
 **Arquivos (D2.1):** Cargo (portable-pty, vt100 — já adicionados);
 `terminal.rs` (reescrever: PTY + vt100 grid + emitir render + resize +

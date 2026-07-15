@@ -51,6 +51,7 @@ fn settings_set_workspace_overrides_and_persists() {
                 "autoClosePairs": false,
                 "explorerWidth": 320,
                 "contextWidth": 400,
+                "assistantTerminalWidth": 680,
                 "bottomPanelHeight": 300,
                 "outlineWidth": 240,
                 "outlineCollapsed": true,
@@ -63,6 +64,7 @@ fn settings_set_workspace_overrides_and_persists() {
     assert_eq!(result["settings"]["autoClosePairs"], false);
     assert_eq!(result["settings"]["explorerWidth"], 320);
     assert_eq!(result["settings"]["contextWidth"], 400);
+    assert_eq!(result["settings"]["assistantTerminalWidth"], 680);
     assert_eq!(result["settings"]["bottomPanelHeight"], 300);
     assert_eq!(result["settings"]["outlineWidth"], 240);
     assert_eq!(result["settings"]["outlineCollapsed"], true);
@@ -92,6 +94,7 @@ fn settings_set_workspace_overrides_and_persists() {
     assert_eq!(reread["settings"]["editorFontSize"], 20);
     assert_eq!(reread["settings"]["formatOnSave"], true);
     assert_eq!(reread["settings"]["outlineWidth"], 240);
+    assert_eq!(reread["settings"]["assistantTerminalWidth"], 680);
     assert_eq!(reread["settings"]["outlineCollapsed"], true);
     assert_eq!(reread["settings"]["aiCliProfile"], "codex");
 }
@@ -132,6 +135,8 @@ fn settings_set_rejects_out_of_range_layout_dimensions() {
     for values in [
         json!({ "explorerWidth": 100 }),
         json!({ "contextWidth": 900 }),
+        json!({ "assistantTerminalWidth": 200 }),
+        json!({ "assistantTerminalWidth": 900 }),
         json!({ "outlineWidth": 80 }),
         json!({ "bottomPanelHeight": 900 }),
     ] {

@@ -1,118 +1,90 @@
 # Kinein Vectis
 
-**Kinein Vectis** é uma IDE open source, Linux-first, rígida por padrão e visualmente plug and play, criada para desenvolvimento moderno em C++, Java, Python, backend convencional e sistemas embarcados.
+Kinein Vectis é uma IDE open source, Linux-first e rígida por padrão para C,
+C++ e Rust. A interface nativa em Qt/QML conversa por JSON-RPC local com um
+core em Rust e orquestra ferramentas maduras, em vez de reimplementar
+compiladores, servidores de linguagem, build systems ou debugadores.
 
-A arquitetura do projeto separa claramente:
+O projeto está em desenvolvimento ativo. A versão de teste atual é a `0.1.0`,
+distribuída como AppImage para Linux x86_64.
 
-- **Frontend visual:** Qt/QML.
-- **Core/backend:** Rust.
-- **Ferramentas externas:** clangd, jdtls, pyright, CMake, Ninja, Maven, Gradle, uv, Git, GDB, LLDB, QEMU, OpenOCD, Ollama/GPT/Claude CLI.
+## Princípios
 
-O Kinein Vectis não tenta reimplementar compiladores, parsers, debugadores ou language servers. Ele atua como uma camada visual profissional, rigorosa e integrada sobre ferramentas open source consolidadas.
+- execução local, sem telemetria;
+- UI e lógica de negócio separadas;
+- qualidade estrita por padrão;
+- CMake/Cargo, clangd/rust-analyzer e LLDB integrados como ferramentas
+  externas;
+- nenhuma instalação silenciosa de toolchain;
+- nenhuma chamada de IA ou envio de código sem ação explícita do usuário.
 
-## Objetivo
+## O que já funciona
 
-Criar uma IDE com experiência visual familiar para usuários acostumados ao ecossistema JetBrains, mas com filosofia:
+- abertura e criação de projetos C++/CMake e Rust/Cargo, com workspaces
+  recentes fixáveis na Start Screen e no menu Arquivo;
+- explorer, editor com múltiplas abas e recuperação de rascunhos;
+- Tree-sitter incremental, autocomplete, diagnósticos, navegação, rename e
+  quick fixes com preview;
+- build, testes, análise, execução e debug;
+- terminal PTY com múltiplas sessões;
+- Git diário: status, diff, stage, commit, branches, pull, push e stash;
+- configurações, Project Health e KV Context para Claude/Codex CLI já
+  instalados pelo usuário.
 
-- open source;
-- sem telemetria obrigatória;
-- Linux-first;
-- alta performance;
-- baixo consumo de memória;
-- qualidade máxima por padrão;
-- configuração visual em vez de configuração manual excessiva;
-- suporte profissional a C++, Java, Python, backend e embarcados;
-- integração opcional com IA local e/ou externa.
+## Testar ou instalar
 
-## Nome
+O AppImage inclui a interface, o `kinein-core`, o runtime Qt/QML, plugins,
+licenças e o manual. Rust e Qt não precisam estar instalados para abrir a IDE;
+as ferramentas usadas pelos projetos continuam opcionais e externas.
 
-- Nome do produto: **Kinein Vectis**
-- Diretório do projeto: `kinein-vectis`
-- Binário principal futuro: `kinein-vectis`
-- Core Rust/daemon: `kinein-core`
-- Nome interno de crate no código Rust: `kinein_core`
+Para saber exatamente quais arquivos enviar, verificar o SHA-256, executar,
+atualizar com segurança ou gerar uma nova versão, consulte o
+[Tutorial.md](Tutorial.md).
 
-## Decisão técnica inicial
+Depois de abrir a IDE, o [MANUAL.md](MANUAL.md) explica os recursos, fluxos e
+atalhos. O manual trata somente do uso da Kinein; instalação e distribuição
+ficam no tutorial.
 
-O projeto deve começar como **Rust workspace** no CLion.
-
-Motivo:
-
-1. O core/backend é o cérebro da IDE.
-2. A UI Qt/QML pode ser adicionada depois como subprojeto `ui/`.
-3. O core Rust pode ser testado desde o primeiro dia sem interface gráfica.
-4. O protocolo IPC entre UI e core pode ser definido antes da interface definitiva.
-5. A arquitetura evita um monólito C++/Qt difícil de manter.
-
-A UI Qt/QML será adicionada posteriormente como processo separado ou como subprojeto CMake que se comunica com o core Rust via IPC local.
-
-## Primeira meta técnica
-
-Antes de editor, LSP, Git ou CMake, o primeiro marco técnico é:
+## Arquitetura
 
 ```text
-Qt/QML UI ou cliente CLI
-        ↓
-IPC local
-        ↓
+Qt/QML Frontend
+       ↕ JSON-RPC local
 Rust Core
-        ↓
-Resposta: core.pong
+       ↕
+CMake · Cargo · clangd · rust-analyzer · LLDB · Git · outras ferramentas
 ```
 
-O MVP inicial pode começar até sem Qt: primeiro um `kinein-core` e um `kinein-cli` para validar protocolo, comandos, settings, logs e strict mode.
+A UI apresenta e recebe ações. O core valida, mantém estado e chama as
+ferramentas externas. Operações longas são jobs assíncronos e canceláveis para
+não bloquear a interface.
 
-## Como executar
+## Plataforma
 
-Veja **[COMO_EXECUTAR.md](COMO_EXECUTAR.md)**. Resumo: a IDE é offline/local —
-o atalho "Kinein Vectis" no menu (ou `./scripts/kinein-vectis`) sobe a UI,
-que inicia o core Rust automaticamente.
+- Linux x86_64;
+- baseline do AppImage: glibc 2.36, equivalente ao Debian 12 ou posterior;
+- desktop Linux com pilha gráfica e fontes normais;
+- Windows ainda não é suportado.
 
-## Documentação
+O smoke do pacote já passou no host Arch/CachyOS e em um runtime Debian 12
+mínimo, sem Qt, Rust, CMake ou compiladores instalados.
 
-Toda a documentação está indexada em **[docs/README.md](docs/README.md)**:
+## Privacidade do repositório e distribuição do código
 
-- `docs/00–16` — especificações canônicas em vigor (arquitetura, IPC, strict mode…);
-- `docs/planning/` — visão e planejamento histórico (masters e blueprint);
-- `docs/quality/` — políticas de toolchain, Quality Center e padrões profissionais;
-- `docs/subsystems/` — especificações de subsistemas futuros;
-- `ContextoIA.md` — estado real do desenvolvimento e sincronização entre agentes de IA.
+O repositório de desenvolvimento permanece privado. Se o código for entregue
+a terceiros, será usada uma cópia sanitizada, sem o histórico Git privado, que
+contém o código do projeto e, entre arquivos Markdown, somente:
 
-## Estado atual
+- `README.md`;
+- `MANUAL.md`;
+- `Tutorial.md`.
 
-MVP 0.1 (core mínimo), MVP 0.2 (tool detection), MVP 0.3 (workspace), MVP 0.4 (UI mínima), Fase 3 (explorer/editor), Fase 4 (build/problemas), criação básica de projeto e as Fases 5/5.1/5.2 de LSP (diagnósticos, navegação, completion, find usages e rename) implementados:
+Documentos internos de IA, contexto, planejamento, prompts, roadmaps e specs de
+trabalho não fazem parte dessa cópia. A visibilidade do repositório-fonte não
+deve ser alterada para realizar uma distribuição; um eventual espelho começa
+com histórico próprio.
 
-- `kinein-protocol`: tipos JSON-RPC compartilhados, incluindo `ToolStatus`/`ToolInfo`, `ProjectKind`/`WorkspaceInfo`, criação de pasta/projeto, criação/salvamento/renomeação/remoção de arquivos e diretórios, build estruturado, diagnósticos LSP, go to definition, hover, completion, find usages, rename, semantic tokens, busca no workspace, busca de arquivos com `fd`/`fdfind`, build, testes e análise de qualidade estruturados, execução de processos e sessão de terminal, job system assíncrono/cancelável (`job.list`/`job.cancel`) e scan de ambiente (protocolo `0.20.0`).
-- `kinein-config`: modelo de configuração strict-by-default.
-- `kinein-core`: loop stdin/stdout JSON-RPC com `core.ping`, `core.shutdown`, `command.list`, `tools.detect`, `tools.status`, `environment.scan`, `workspace.*`, `fs.*`, `fs.findFiles`, `fs.search`, `fs.rename`, `fs.delete`, `build.run`, `test.run`, `quality.run` (jobs assíncronos/canceláveis), `job.list`, `job.cancel`, `run.start`/`run.stdin`/`run.stop`, `terminal.open`/`terminal.input`/`terminal.close`, `lsp.didChange`, `lsp.semanticTokens`, `lsp.definition`, `lsp.hover`, `lsp.completion`, `lsp.references` e `lsp.rename`. Lista completa e contrato em `docs/03-ipc-protocol.md`.
-- `kinein-cli`: helper mínimo para emitir requests JSON-RPC (`ping`, `list-commands`, `shutdown`, `build`, `tools detect|status`, `workspace open|browse|mkdir|new|status|close`).
+## Licença
 
-A detecção de ferramentas cobre `cargo`, `rustc`, `cmake`, `ninja`, `git`, `clangd`, `ripgrep` e `fd`/`fdfind`: busca no `PATH`, probe de versão via `--version` e sugestão de instalação para CachyOS/Arch quando a ferramenta falta. O core nunca instala nada sozinho.
-
-`workspace.open` identifica o tipo de projeto (Rust/Cargo, CMake, Maven, Gradle, Python ou desconhecido) por marcadores na raiz e persiste `.kinein/workspace.json` (schema em `schemas/workspace.schema.json`).
-
-A UI Qt/QML (`ui/`) implementa janela escura com a paleta do design system, seletor proprio de workspace via `workspace.browse`, criação de pasta/projeto (`empty`, `cppCmake`, `rustCargo`), explorer navegável com criação, renomeação e exclusão de arquivos/pastas (menu de contexto) no Project panel, Search Everywhere inicial para comandos e arquivos (`Ctrl+Shift+N`/`Ctrl+Shift+A`, usando `command.list` e `fd`/`fdfind` via core), abas de editor com indicador de modificação, syntax highlighting com cores semânticas via LSP (variáveis, funções, tipos, parâmetros), completion automático enquanto digita, salvar com Ctrl+S, build com Ctrl+F9, testes com Ctrl+Shift+F9 (aba Testes, verde/vermelho por caso), análise de qualidade (cargo clippy) com Ctrl+Shift+L (lints na aba Problemas), go to definition com Ctrl+B, hover/quick documentation com Ctrl+Q, completion com Ctrl+Space, find usages com Alt+F7, rename com Shift+F6, busca no workspace com Ctrl+Shift+F (aba Busca), botão ▶ Iniciar/■ Parar com Shift+F10/Ctrl+F2 e aba Executar (saída ao vivo com stdin), aba Terminal com o shell real do usuário (`$SHELL` num PTY via `script`, Alt+F12), painel Build/Problemas, painel Ferramentas e KV Context para iniciar Claude ou Codex já instalados em um PTY dedicado. O acesso a arquivos passa inteiro pelo core (`fs.list`/`fs.read`/`fs.createFile`/`fs.createDirectory`/`fs.write`/`fs.rename`/`fs.delete`/`fs.findFiles`, confinados à raiz do workspace). A navegação e criação de pastas/projetos também passam pelo core. Diagnósticos de build e LSP aparecem na aba Problemas. A UI sobe o `kinein-core` como processo filho — nada precisa ser iniciado manualmente.
-
-Exemplos:
-
-```bash
-cargo run -p kinein-cli -- tools detect | cargo run -p kinein-core
-cargo run -p kinein-cli -- workspace browse ~ | cargo run -p kinein-core
-cargo run -p kinein-cli -- workspace new /tmp demo cppCmake | cargo run -p kinein-core
-cargo run -p kinein-cli -- workspace open ~/dev/projeto | cargo run -p kinein-core
-cargo run -p kinein-cli -- build | cargo run -p kinein-core
-```
-
-Para recompilar e verificar sem reler a documentação longa, use a sequência em
-[`docs/COMANDOS_BUILD_VERIFICACAO.md`](docs/COMANDOS_BUILD_VERIFICACAO.md).
-
-## Verificação rigorosa
-
-```bash
-rustup run stable cargo kw-fmt
-rustup run stable cargo kw-check
-rustup run stable cargo kw-clippy
-rustup run stable cargo kw-test
-```
-
-Para C++/Qt/QML, novos alvos devem usar `cmake/KineinStrictOptions.cmake` e os presets em `CMakePresets.json`.
+Kinein Vectis é disponibilizado sob licença dupla MIT ou Apache-2.0. Consulte
+`LICENSE-MIT.txt` e `LICENSE-APACHE-2.0.txt`.

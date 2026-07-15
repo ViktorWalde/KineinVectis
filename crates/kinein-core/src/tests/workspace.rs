@@ -62,6 +62,53 @@ fn workspace_open_without_path_returns_invalid_params() {
 }
 
 #[test]
+fn recent_workspaces_list_is_empty_when_global_storage_is_disabled() {
+    let mut core = core_with_empty_search_path("workspace-recent-list");
+    let outcome = core.handle_request(&JsonRpcRequest::new(
+        140_i64,
+        "workspace.recent.list",
+        Some(json!({})),
+    ));
+    let result = outcome.response().result.as_ref().unwrap();
+
+    assert_eq!(result["workspaces"].as_array().unwrap().len(), 0);
+}
+
+#[test]
+fn recent_workspace_mutations_validate_typed_params_before_storage() {
+    let mut core = core_with_empty_search_path("workspace-recent-params");
+    let pin = core.handle_request(&JsonRpcRequest::new(
+        141_i64,
+        "workspace.recent.pin",
+        Some(json!({ "root": "/tmp/demo" })),
+    ));
+    assert_eq!(
+        pin.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
+
+    let remove = core.handle_request(&JsonRpcRequest::new(
+        142_i64,
+        "workspace.recent.remove",
+        Some(json!({ "root": "/tmp/demo", "extra": true })),
+    ));
+    assert_eq!(
+        remove.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
+
+    let clear = core.handle_request(&JsonRpcRequest::new(
+        143_i64,
+        "workspace.recent.clear",
+        Some(json!({ "extra": true })),
+    ));
+    assert_eq!(
+        clear.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
+}
+
+#[test]
 fn workspace_browse_returns_directory_entries() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")

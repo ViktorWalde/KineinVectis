@@ -588,7 +588,7 @@ o usuário vê as coisas.
                                                chaveados por sessão + foco/
                                                limpar por sessão
 [feito] ui/qml/shell/ShellWorkspaceHost.qml    plumbing sessão/limpar
-[feito] MANUAL.md + ContextoIA.md              seção 6 reescrita; estado
+[feito] MANUAL.md + ContextoIA.md              atual seção 5; estado
 ```
 
 **Validação:** fatia de UI (gap D9): gate completo + smoke offscreen + uso
@@ -976,7 +976,7 @@ mesmo fluxo num projeto cargo.
 [feito] ui/qml/command/CommandDispatcher.qml "Debug" no Search Everywhere
 [feito] ui/qml/workspace/WorkspaceUiResetter.qml  limpa debug no fechar
 [feito] ui/qml/Main.qml + ui/CMakeLists.txt  composicao + registro
-[feito] MANUAL.md + docs/20                  secao 5.1 Depurar + C4 status
+[feito] MANUAL.md + docs/20                  atual seção 4.1 Depurar + C4 status
 ```
 
 **Regra de atalhos (pedido do usuario, 2026-07-09):** teclados de
@@ -2491,6 +2491,64 @@ release+debug, qmllint estrito e smoke offscreen verdes; teste
 interativo real (abrir projeto CMake cru e ver o configure sozinho) é
 do usuário (R7).
 ```
+
+## Fatia A1 — Workspaces recentes [FEITA] (2026-07-15)
+
+Fecha a lacuna entre a Start Screen já entregue e a retomada diária de um
+projeto. O usuário pausou explicitamente o refino visual restante do KV Context
+e autorizou esta fatia; ela não altera terminal, editor ou sessão por
+workspace.
+
+**Decisões (e porquês):**
+
+```text
+- Persistência global em recent-workspaces.json, no diretório XDG da Kinein,
+  com schemaVersion=1. Histórico é estado global da IDE, não setting
+  sobreponível por workspace e não entra em .kinein/.
+- Limite de 12 entradas. Fixadas aparecem primeiro; dentro de cada grupo vale
+  lastOpenedAt decrescente. Duplicata canônica é atualizada, nunca repetida.
+- Só workspace.open/createProject concluído com sucesso toca o histórico.
+  Falha de persistência não desfaz uma abertura válida; as mutações explícitas
+  devolvem erro estruturado.
+- workspace.recent.list/pin/remove/clear sempre respondem a lista completa.
+  A UI guarda apenas esse snapshot e não calcula ordenação ou disponibilidade.
+- available é calculado pelo core. Caminho removido fica visível e desabilitado
+  até o usuário removê-lo; abrir continua usando workspace.open.
+- O formato v0 (sem pinned) é aceito e promovido para v1 na próxima escrita;
+  schema desconhecido/JSON inválido vira lista vazia sem impedir a IDE de abrir.
+- Start Screen mostra até quatro entradas com abrir/fixar/remover/limpar. O menu
+  Arquivo inclui Abrir recente e a limpeza; nenhum explorador paralelo nasce.
+```
+
+**Contrato implementado (protocolo 0.53.0):**
+
+```text
+workspace.recent.list {} → { workspaces: [RecentWorkspace] }
+workspace.recent.pin { root, pinned } → mesmo resultado completo
+workspace.recent.remove { root } → mesmo resultado completo
+workspace.recent.clear {} → { workspaces: [] }
+RecentWorkspace { name, root, lastOpenedAt, pinned, available }
+```
+
+**Arquivos:** `kinein-protocol/src/workspace.rs`; `kinein-core/src/workspace/
+recent.rs`, `handlers/workspace.rs`, `tests/workspace.rs`, `lib.rs`; CoreClient
+C++; `RecentWorkspacesController.qml`, `RecentWorkspacesCard.qml`,
+`StartScreen.qml`, shell/menu/roteador e fios de composição; schema próprio +
+IPC; este documento, `docs/03`, `MANUAL`, `ContextoIA`, `GUIAIA` e
+`PONTO_ATUAL`.
+
+**Testes e validação:** core cobre ordenação, deduplicação, limite, fixação,
+migração v0, schema desconhecido e caminho ausente; dispatch cobre params e
+resposta completa; harness QML cobre snapshot, abrir, fixar, remover, limpar e
+bloqueio de entrada ausente. `scripts/verificar.sh` passou completo com 328
+testes Rust, Clippy `-D warnings`, clang-format/tidy, qmllint, 12 harnesses e
+builds debug/release. O smoke offscreen do release saiu com código 0. Uma sonda
+com dois processos reais do core e XDG isolado confirmou abrir → persistir →
+fixar → reler após reinício → remover → limpar; o gesto humano de um clique
+fica para o próximo uso real, sem pendência técnica conhecida.
+
+**Fora:** conteúdo de arquivos, credenciais, IA, sync/cloud, multi-root,
+miniaturas, varredura de diretórios e restauração adicional de layout/cursor.
 
 ## M4 — Polimento contínuo (longo prazo)
 

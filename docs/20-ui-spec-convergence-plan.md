@@ -128,7 +128,7 @@ referência exata (arquivo§seção). `LAYOUT` =
 | 3 Tool Rail | 42px | 52px (48–56) | **diverge** (abaixo do mínimo) |
 | 4 Left Tool Window | Project, 280px automático (220–420), redimensionável/persistido | 280px (220–420) redimensionável; Project/Structure/CMake/Toolchains/Targets | **parcial** (dimensionamento conforme; outras tool views futuras) |
 | 5 Editor Area | tabs+texto+popups | + breadcrumbs (COMP §13.3), gutter (COMP §13.4), linha atual | **parcial** |
-| 6 KV Context | 360px automático (300–480), redimensionável; Claude/Codex sobre PTY existente | AI CLI Bridge externo em tool window direita | **conforme em código; validação funcional/visual pendente** |
+| 6 KV Context | seletor 360px; sessão terminal ajustável/persistida 300–720px + maximização; Project independente; Claude/Codex sobre PTY existente | AI CLI Bridge externo, terminal-first e separável do Terminal comum | **correções 0.51/0.52 em código; validação funcional/visual pendente** |
 | 7 Bottom Tool Window | 260px automático (160–480), redimensionável/persistido | 260px (160–480) redimensionável | **conforme em código; validação visual pendente** |
 | 8 Status Bar | 26px; indicadores de jobs | 28px; branch, erros/avisos, profile, compiler, target, Ln/Col, encoding, linguagem (LAYOUT §17.2–17.3) | **parcial** |
 
@@ -234,10 +234,22 @@ C4 [durante M3] Editor Area: breadcrumbs, gutter de diagnósticos (depois
    visual do usuário (R7). Underline aponta para os semantic tokens/
    layout de EDITOR_LANGUAGE_INTELLIGENCE; refino fino (marker bar à
    direita, contadores) fica para o Problems 2.0/C6.
-C5 [FEITA 2026-07-14; remediação funcional 0.50; validação R7 pendente]
+C5 [FEITA 2026-07-14; remediações funcionais 0.50–0.52; validação R7 pendente]
    App Bar com menus em overlay global e ações ligadas, KV Context como AI CLI
    Bridge Claude/Codex sobre PTY, Start Screen e criação com preview conforme
-   ONBOARDING_*.
+   ONBOARDING_*. O dogfooding abriu uma correção vinculada em 0.51: Codex em
+   modo inline oficial para scrollback, barra persistente, largura terminal
+   responsiva, maximização e input/resize com paridade do Terminal integrado.
+   A largura 300–480 continua normativa para o seletor/estado compacto; a CLI
+   ativa pode ocupar até 720px ou a área de trabalho porque passa a ser um
+   layout operacional de terminal, conforme a Parte 7.1 que supera o KV
+   Context-chat original. No modo inline, a linha do cursor ao vivo recebe um
+   guia visual opt-in do host; conteúdo, ordem das linhas e input continuam no
+   grid VT da CLI, sem composer paralelo.
+   O terceiro feedback foi tratado no 0.52: a sessão ativa mantém o splitter,
+   persiste sua largura própria em 300–720px, não fecha `Project`, preserva o
+   scroll durante nova saída e impede somente `CSI 3 J` nas sessões do bridge
+   de apagar o transcript inline. O Terminal comum continua honrando `clear`.
 C6 [PENDENTE: validação visual do usuário] Auditoria de fechamento: tabela do inventário inteira "conforme";
    o que sobrar vira decisão registrada (spec ajustada OU fatia extra).
 ```

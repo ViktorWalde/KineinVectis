@@ -1,81 +1,70 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://kinein.dev/schemas/settings.schema.json",
-  "title": "Kinein Vectis Settings",
+  "title": "Kinein Vectis Runtime Settings",
+  "description": "Schema v1 dos arquivos settings.json global e por workspace.",
   "type": "object",
-  "required": ["strictness", "compilerSafety", "telemetry", "externalAi"],
+  "required": ["schemaVersion"],
   "additionalProperties": false,
   "properties": {
-    "strictness": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "formatOnSave": {
+      "type": "boolean",
+      "default": false
+    },
+    "editorFontSize": {
+      "type": "integer",
+      "minimum": 8,
+      "maximum": 40,
+      "default": 14
+    },
+    "autoClosePairs": {
+      "type": "boolean",
+      "default": true
+    },
+    "rigorProfile": {
       "type": "string",
       "enum": ["strict", "balanced", "relaxed"],
       "default": "strict"
     },
-    "compilerSafety": {
-      "type": "object",
-      "required": ["rust", "cxx", "qml"],
-      "additionalProperties": false,
-      "properties": {
-        "rust": {
-          "type": "object",
-          "required": ["unsafePolicy", "warnings", "clippy"],
-          "additionalProperties": false,
-          "properties": {
-            "unsafePolicy": {
-              "type": "string",
-              "enum": ["forbid", "allowWithJustification"],
-              "default": "forbid"
-            },
-            "warnings": { "$ref": "#/$defs/diagnosticPolicy" },
-            "clippy": { "$ref": "#/$defs/diagnosticPolicy" }
-          }
-        },
-        "cxx": {
-          "type": "object",
-          "required": ["warnings", "clangTidy", "sanitizers", "hardening"],
-          "additionalProperties": false,
-          "properties": {
-            "warnings": { "$ref": "#/$defs/diagnosticPolicy" },
-            "clangTidy": { "$ref": "#/$defs/diagnosticPolicy" },
-            "sanitizers": {
-              "type": "string",
-              "enum": ["addressAndUndefinedBehavior", "manual"],
-              "default": "addressAndUndefinedBehavior"
-            },
-            "hardening": {
-              "type": "string",
-              "enum": ["required", "manual"],
-              "default": "required"
-            }
-          }
-        },
-        "qml": {
-          "type": "object",
-          "required": ["staticChecks", "compilerDiagnostics"],
-          "additionalProperties": false,
-          "properties": {
-            "staticChecks": { "$ref": "#/$defs/diagnosticPolicy" },
-            "compilerDiagnostics": { "$ref": "#/$defs/diagnosticPolicy" }
-          }
-        }
-      }
+    "explorerWidth": {
+      "$ref": "#/$defs/panelWidth"
     },
-    "telemetry": {
-      "type": "string",
-      "enum": ["disabled"],
-      "default": "disabled"
+    "contextWidth": {
+      "$ref": "#/$defs/panelWidth"
     },
-    "externalAi": {
+    "assistantTerminalWidth": {
+      "type": "integer",
+      "minimum": 300,
+      "maximum": 720,
+      "default": 640
+    },
+    "bottomPanelHeight": {
+      "type": "integer",
+      "minimum": 120,
+      "maximum": 700,
+      "default": 260
+    },
+    "outlineWidth": {
+      "$ref": "#/$defs/panelWidth"
+    },
+    "outlineCollapsed": {
+      "type": "boolean",
+      "default": false
+    },
+    "aiCliProfile": {
       "type": "string",
-      "enum": ["requireConfirmation", "disabled"],
-      "default": "requireConfirmation"
+      "enum": ["claude", "codex"],
+      "default": "claude"
     }
   },
   "$defs": {
-    "diagnosticPolicy": {
-      "type": "string",
-      "enum": ["deny", "warn", "allow"],
-      "default": "deny"
+    "panelWidth": {
+      "type": "integer",
+      "minimum": 160,
+      "maximum": 600
     }
   }
 }

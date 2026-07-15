@@ -4,9 +4,11 @@
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::{
-    DraftInfo, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, WorkspaceBrowseParams,
-    WorkspaceCreateFolderParams, WorkspaceCreateFolderResult, WorkspaceCreateProjectParams,
-    WorkspaceOpenParams, WorkspaceSaveSessionParams, WorkspaceSaveSessionResult,
+    DraftInfo, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, RecentWorkspacePinParams,
+    RecentWorkspaceRemoveParams, RecentWorkspacesParams, RecentWorkspacesResult,
+    WorkspaceBrowseParams, WorkspaceCreateFolderParams, WorkspaceCreateFolderResult,
+    WorkspaceCreateProjectParams, WorkspaceOpenParams, WorkspaceSaveSessionParams,
+    WorkspaceSaveSessionResult,
 };
 use serde_json::{Value, json};
 
@@ -15,7 +17,155 @@ use crate::rpc::{
 };
 use crate::{Core, db, workspace};
 
+fn recent_workspace_error_response(
+    request_id: Option<Value>,
+    error: &workspace::RecentWorkspaceError,
+) -> JsonRpcResponse {
+    let code = if error.is_invalid_params() {
+        JsonRpcErrorCode::InvalidParams
+    } else {
+        JsonRpcErrorCode::InternalError
+    };
+    JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
+}
+
 impl Core {
+    /// Routes the compact `workspace.recent.*` family outside the central
+    /// composition root.
+    pub(crate) fn recent_workspace_response(
+        &self,
+        method: &str,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> Option<JsonRpcResponse> {
+        match method {
+            "workspace.recent.list" => {
+                Some(self.list_recent_workspaces_response(request_id, params))
+            }
+            "workspace.recent.pin" => Some(self.pin_recent_workspace_response(request_id, params)),
+            "workspace.recent.remove" => {
+                Some(self.remove_recent_workspace_response(request_id, params))
+            }
+            "workspace.recent.clear" => {
+                Some(self.clear_recent_workspaces_response(request_id, params))
+            }
+            _ => None,
+        }
+    }
+
+    fn recent_storage_unavailable_response(
+        request_id: Option<Value>,
+        method: &str,
+    ) -> JsonRpcResponse {
+        JsonRpcResponse::failure(
+            request_id,
+            JsonRpcError::new(
+                JsonRpcErrorCode::InternalError,
+                "storage global nao esta habilitado neste loop do core",
+                Some(json!({ "method": method })),
+            ),
+        )
+    }
+
+    /// Lists the global recent-workspace snapshot. Lightweight in-process
+    /// loops keep persistence disabled and therefore expose an empty list.
+    pub(crate) fn list_recent_workspaces_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        if let Err(response) = parse_params::<RecentWorkspacesParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.recent.list nao aceita campos",
+        ) {
+            return *response;
+        }
+        let workspaces = if self.persistence_enabled {
+            workspace::load_recent_workspaces()
+        } else {
+            Vec::new()
+        };
+        JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
+    }
+
+    /// Changes one recent workspace's pinned state.
+    pub(crate) fn pin_recent_workspace_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<RecentWorkspacePinParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.recent.pin requer root e pinned",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        if !self.persistence_enabled {
+            return Self::recent_storage_unavailable_response(request_id, "workspace.recent.pin");
+        }
+        match workspace::set_recent_workspace_pinned(&parsed.root, parsed.pinned) {
+            Ok(workspaces) => {
+                JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
+            }
+            Err(error) => recent_workspace_error_response(request_id, &error),
+        }
+    }
+
+    /// Removes one recent workspace, including a root missing from disk.
+    pub(crate) fn remove_recent_workspace_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<RecentWorkspaceRemoveParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.recent.remove requer root",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        if !self.persistence_enabled {
+            return Self::recent_storage_unavailable_response(
+                request_id,
+                "workspace.recent.remove",
+            );
+        }
+        match workspace::remove_recent_workspace(&parsed.root) {
+            Ok(workspaces) => {
+                JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
+            }
+            Err(error) => recent_workspace_error_response(request_id, &error),
+        }
+    }
+
+    /// Clears the complete global recent-workspace history.
+    pub(crate) fn clear_recent_workspaces_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        if let Err(response) = parse_params::<RecentWorkspacesParams>(
+            request_id.as_ref(),
+            params,
+            "workspace.recent.clear nao aceita campos",
+        ) {
+            return *response;
+        }
+        if !self.persistence_enabled {
+            return Self::recent_storage_unavailable_response(request_id, "workspace.recent.clear");
+        }
+        match workspace::clear_recent_workspaces() {
+            Ok(workspaces) => {
+                JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
+            }
+            Err(error) => recent_workspace_error_response(request_id, &error),
+        }
+    }
+
     /// Rascunhos que DIFEREM do disco (recuperáveis após um crash) e apaga os
     /// obsoletos (já salvos). Chamado no `workspace.open` (docs/23, M-S1).
     fn recover_drafts(&self) -> Vec<DraftInfo> {
@@ -176,6 +326,9 @@ impl Core {
                     if let Some(lsp) = self.lsp.as_mut() {
                         lsp.set_root(Some(PathBuf::from(&opened.root)));
                     }
+                    if self.persistence_enabled {
+                        drop(workspace::record_recent_workspace(&opened));
+                    }
                     JsonRpcResponse::success(request_id, json!(opened))
                 }
                 Err(error) => workspace_error_response(request_id, &error),
@@ -206,6 +359,9 @@ impl Core {
                     self.reset_workspace_watcher(Path::new(&opened.root));
                     if let Some(lsp) = self.lsp.as_mut() {
                         lsp.set_root(Some(PathBuf::from(&opened.root)));
+                    }
+                    if self.persistence_enabled {
+                        drop(workspace::record_recent_workspace(&opened));
                     }
                     // M-S1: abre a store local e recupera rascunhos não salvos
                     // (buffers que sobreviveram a um crash da UI — docs/23).

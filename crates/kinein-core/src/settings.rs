@@ -29,6 +29,10 @@ pub const MAX_EDITOR_FONT_SIZE: u32 = 40;
 pub const MIN_PANEL_WIDTH: u32 = 160;
 /// Upper limit for persisted horizontal tool-window widths.
 pub const MAX_PANEL_WIDTH: u32 = 600;
+/// Minimum persisted width of an active external AI terminal.
+pub const MIN_ASSISTANT_TERMINAL_WIDTH: u32 = 300;
+/// Maximum persisted width of an active external AI terminal.
+pub const MAX_ASSISTANT_TERMINAL_WIDTH: u32 = 720;
 /// Limits for persisted bottom tool-window height.
 pub const MIN_BOTTOM_PANEL_HEIGHT: u32 = 120;
 /// Upper limit for persisted bottom tool-window height.
@@ -46,7 +50,13 @@ struct SettingsFile {
 /// Caminho do `settings.json` global (XDG).
 #[must_use]
 pub fn global_path() -> PathBuf {
-    config_home().join("kinein-vectis").join("settings.json")
+    global_dir().join("settings.json")
+}
+
+/// Shared XDG directory for global Kinein state files.
+#[must_use]
+pub(crate) fn global_dir() -> PathBuf {
+    config_home().join("kinein-vectis")
 }
 
 /// Caminho do `settings.json` por-workspace.
@@ -130,6 +140,10 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
             .context_width
             .or(global.context_width)
             .unwrap_or(360),
+        assistant_terminal_width: workspace
+            .assistant_terminal_width
+            .or(global.assistant_terminal_width)
+            .unwrap_or(640),
         bottom_panel_height: workspace
             .bottom_panel_height
             .or(global.bottom_panel_height)
@@ -165,6 +179,9 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         rigor_profile: incoming.rigor_profile.or(base.rigor_profile),
         explorer_width: incoming.explorer_width.or(base.explorer_width),
         context_width: incoming.context_width.or(base.context_width),
+        assistant_terminal_width: incoming
+            .assistant_terminal_width
+            .or(base.assistant_terminal_width),
         bottom_panel_height: incoming.bottom_panel_height.or(base.bottom_panel_height),
         outline_width: incoming.outline_width.or(base.outline_width),
         outline_collapsed: incoming.outline_collapsed.or(base.outline_collapsed),

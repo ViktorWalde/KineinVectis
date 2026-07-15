@@ -184,7 +184,15 @@ testes que exec, ou fsync).
 ## Estado tecnico atual
 
 - Arquitetura: Qt/QML UI <-> JSON-RPC local/stdin-stdout <-> Rust core.
-- Protocolo IPC atual: `0.50.0` (2026-07-14). 0.50 formalizou o AI CLI Bridge
+- Protocolo IPC atual: `0.53.0` (2026-07-15). 0.53 entrega Workspaces recentes
+  globais: snapshot tipado, fixação, remoção/limpeza, disponibilidade calculada
+  no core e retomada por `workspace.open`; 0.52 separa e persiste a largura da
+  sessão ativa (300–720px), mantém `Project` independente, endurece a
+  reconciliação do scroll durante nova saída e preserva o transcript das AI
+  CLIs contra `CSI 3 J`; 0.51 tornou o KV Context terminal-first: Codex usa o
+  modo inline oficial, o render VT expõe application-cursor/bracketed-paste/
+  alternate-screen e a UI ganhou largura responsiva/maximização e resize
+  coalescido. 0.50 formalizou o AI CLI Bridge
   Claude/Codex e persistência responsiva do layout; 0.49 trouxe Git diário
   (branches/checkout/create, pull/push jobs, stash); 0.48 trouxe `fs.replace`
   transacional; 0.47 trouxe preview/aplicar/cancelar de workspace edits LSP;
@@ -620,8 +628,9 @@ mudou:
       **M1 FECHADO em 2026-07-09**: as 6 fatias funcionais + a C0 (auditoria
       formal de convergencia visual — resultado completo com referencias de
       spec em docs/20, areas A-H). Existe um **MANUAL.md** na raiz para
-      usuarios/testers (instalacao, todas as funcoes e atalhos,
-      troubleshooting) — manter atualizado a cada fatia que mudar UX.
+      usuarios/testers (uso, funções, atalhos e troubleshooting dentro da
+      IDE) — manter atualizado a cada fatia que mudar UX. Distribuição,
+      instalação e geração do executável ficam em `Tutorial.md`.
       **M2 estruturado em docs/18** (ordem: M2.1 terminal unificado ->
       M2.2 CMake -> M2.3 Cargo -> M2.4 run configs -> M2.5 debugger DAP).
       DECISAO DO USUARIO (2026-07-09): as abas "Executar" e "Terminal"
@@ -643,7 +652,8 @@ mudou:
       RuntimeController), Shift+F10 abre direto na Execucao, Alt+F12 no
       Shell, chip da Execucao e rotulo da aba mostram "●" com processo
       vivo, botao "limpar" zera so a sessao ativa, foco automatico por
-      sessao. MANUAL secao 6 reescrita. Design: docs/18, "Fatia M2.1".
+      sessao. A atual seção 5 do MANUAL documenta o fluxo. Design: docs/18,
+      "Fatia M2.1".
       Fatia M2.2 (CMake service) FEITA em 2026-07-09, protocolo 0.25.0:
       cmake.configure como job (file-api query + CDB exportada, preset
       opcional sem mudar o build dir .kinein/build), cmake.presets.list/
@@ -696,7 +706,7 @@ mudou:
       botao Debug na toolbar (vira "■ Debug") + atalhos Shift+F9/F9/F8/
       F7/Shift+F8 + comando "Debug" no Search Everywhere; CoreClient com
       propriedade debugging, 8 invokables debug* e sinais de evento.
-      MANUAL.md secao 5.1 ensina o fluxo. Falta validacao visual do
+      A atual seção 4.1 do MANUAL.md ensina o fluxo. Falta validacao visual do
       usuario (R7).
       Fatia M2.5c (Inspecao) FEITA em 2026-07-09, protocolo 0.29.0 —
       **M2 FECHADO**: debug.stackTrace (20 frames) e debug.variables
@@ -1253,21 +1263,179 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 
 - O checkpoint grande foi salvo no commit `b506d87` e publicado em
   `origin/main` antes desta nova rodada.
-- Corrigir nesta rodada: scroll do terminal com seguimento ao vivo e
-  coalescência de rajadas; primeira resposta do autocomplete com fallback
-  Tree-sitter enquanto clangd/rust-analyzer inicializam; menus acima de toda a
-  workspace; `Ajuda → Manual da IDE` renderizando o `MANUAL.md` empacotado.
-- Workspaces recentes permanecem a próxima fatia de Start Screen já desenhada
-  em `docs/21` M4.4: lista global limitada, último acesso, fixar/remover e
-  limpeza de caminhos inexistentes, reutilizando `workspace.open`.
+- A correção pós-checkpoint foi validada e publicada em `928fbb5`: scroll do
+  terminal coalescido/ao vivo, fallback Tree-sitter imediato no autocomplete,
+  menus em overlay global e `Ajuda → Manual da IDE` renderizado internamente.
+- O dogfooding iniciado depois deste checkpoint revelou uma divergência nova:
+  o KV Context não mostrava scrollback/barra no Codex e ficava estreito para
+  uma TUI de uso diário. A correção 0.51 está descrita na seção final deste
+  arquivo; o usuário pausou explicitamente o aceite visual restante em
+  2026-07-15 e autorizou a fatia A1.
+- Workspaces recentes foram entregues na Start Screen e em
+  `Arquivo → Abrir recente`: lista global limitada, último acesso,
+  fixar/remover/limpar e tratamento de caminhos inexistentes, sempre
+  reutilizando `workspace.open`.
 - Plataforma honesta: Linux-first. Arch/CachyOS é o alvo validado; há bootstrap
   para Debian/Ubuntu/Fedora, ainda dependente de CI/teste contínuo. Windows não
   é suportado hoje, embora Qt/Rust/portable-pty deem base para uma port futura.
-- Distribuição binária futura empacota UI, core e runtime Qt para o usuário não
-  precisar instalar Rust/Qt só para abrir a IDE. Compiladores, CMake/Ninja,
-  LSPs e debugadores continuam externos e opcionais por linguagem.
-- Publicação futura deve usar um espelho gerado do privado. Entre Markdown,
-  somente `README.md` e `MANUAL.md` podem sair; excluir ContextoIA, PONTO_ATUAL,
-  AGENTS, docs/specs e roadmaps. Implementar exportador allowlist com dry-run,
-  recusa de Markdown extra e auditoria de segredos antes de criar remoto
-  público. Não mudar a visibilidade do repositório-fonte.
+- Distribuição AppImage x86_64 implementada: empacota UI, core, Qt/QML,
+  plugins, manual e licenças para o usuário não precisar instalar Rust/Qt só
+  para abrir a IDE. Compiladores, CMake/Ninja, LSPs e debugadores continuam
+  externos e opcionais por linguagem.
+- Qualquer entrega futura do código a terceiros deve usar uma cópia sanitizada
+  gerada do repositório privado. A cópia leva o código do projeto e, entre
+  Markdown, somente `README.md`, `MANUAL.md` e `Tutorial.md`; excluir
+  ContextoIA, PONTO_ATUAL, GUIAIA, AGENTS, `docs/`, `prompts/`, specs,
+  roadmaps e demais notas de agentes. Implementar exportador allowlist com
+  dry-run, recusa de Markdown extra e auditoria de segredos antes de entregar
+  ou criar um espelho. A entrega não inclui `.git/` nem o histórico privado; um
+  eventual espelho começa com histórico próprio da árvore sanitizada. O
+  repositório-fonte permanece privado e sua visibilidade não deve ser alterada.
+
+## Mapa operacional e transição de IDE (2026-07-14)
+
+- `GUIAIA.md` é o roteador operacional vivo entre documentação e código:
+  organiza fontes por pergunta, mapeia UI → CoreClient → protocolo → handler →
+  serviço → teste e registra arquivos que mudam juntos. Ele não substitui
+  ContextoIA, ARCHITECTURE, specs ou contrato IPC e deve acompanhar qualquer
+  mudança de módulo/domínio/router/controller/gate.
+- Sequência confirmada: (TR0) aceite visual; (TR1) self-hosting e substituição
+  do VS Code/editores generalistas; (TR2) KSWE/Project Graph/Context Matrix até
+  o patamar inicial abaixo do CLion; (TR3) profundidade semântica e embarcados.
+  O prefixo TR evita colisão com P0–P3 do roadmap de adaptação de plugins.
+- Quando o usuário disser “estou no Kinein”, o dogfooding volta a ser a fonte
+  principal do backlog: registrar cada saída para outra IDE e corrigir o motivo
+  reproduzível antes de confortos hipotéticos.
+- Para testadores Linux, o artefato preferido é AppImage com UI, core, runtime
+  Qt, desktop/icon e checksum. PKGBUILD local é alternativa mais simples para
+  um grupo exclusivamente Arch/CachyOS; checkout + bootstrap fica reservado a
+  colaboradores que realmente vão compilar a IDE.
+- Responsabilidade dos Markdown externos: `README.md` apresenta o produto,
+  `MANUAL.md` cobre somente o uso da IDE e `Tutorial.md` cobre recebimento,
+  checksum, execução, atualização, packaging e entrega sanitizada do código.
+
+## Distribuição AppImage portátil (2026-07-14)
+
+- Implementados `scripts/empacotar-appimage-portatil.sh` (builder Podman),
+  `scripts/empacotar-appimage.sh` (AppDir/linuxdeploy),
+  `scripts/testar-appimage.sh` (estrutura/core/primeiro frame) e
+  `scripts/testar-appimage-portatil.sh` (runtime mínimo sem rede).
+- Builder fixado em Rust 1.96.1/Debian 12 por digest; `linuxdeploy`, plugin Qt e
+  runtime type-2 fixados por versão/commit/SHA256 no registry de tooling. A
+  auditoria e o rollback estão em
+  `docs/adr/ADR-0003-linuxdeploy-appimage-packaging.md`.
+- O bundle contém `kinein-vectis`, `kinein-core`, Qt/QML, módulos
+  `QtQuick`/`QtQuick.Window`/`QtQml.WorkerScript`, plugins xcb/Wayland/
+  offscreen/minimal, ícone, desktop, AppStream, `MANUAL.md` e licenças.
+- Smoke aprovado no host Arch e, com rede desligada, em Debian 12 mínimo sem
+  Qt, Rust, CMake ou compiladores. O artefato `0.1.0` foi reempacotado após a
+  separação entre manual de uso e tutorial externo: 33.573.368 bytes, SHA256
+  atual `ef5970f322aced46905c66dbca5f1360964cde3a4871030bb8f321d771277fe7`.
+- Compatibilidade prometida nesta etapa: Linux x86_64 atual, baseline glibc
+  2.36, com a pilha gráfica/fontes normal de um desktop. Ubuntu/Fedora,
+  atualização e canal de release ainda precisam de matriz explícita; Linux
+  histórico anterior ao baseline não deve ser chamado de suportado.
+- O smoke na base mínima revelou e corrigiu duas lacunas que o Arch mascarava:
+  imports QML ausentes no bundle e aliases de `EditorOutline*` fora da raiz do
+  módulo. O strict build Qt 6.4 também passou após tornar as comparações de
+  strings do terminal independentes da conversão `qsizetype`→`int`, sem
+  relaxar warnings-as-errors.
+- A próxima funcionalidade de produto após A1 é **projeto híbrido e
+  self-hosting**; a ordem viva está somente em `PONTO_ATUAL.md`.
+
+## Workspaces recentes globais — A1 (2026-07-15)
+
+- O protocolo `0.53.0` adiciona `workspace.recent.list/pin/remove/clear`; todos
+  devolvem um snapshot completo e a UI não ordena nem consulta o filesystem.
+- Aberturas e projetos criados com sucesso atualizam atomicamente
+  `$XDG_CONFIG_HOME/kinein-vectis/recent-workspaces.json`, versionado por
+  `schemaVersion: 1`, com no máximo 12 entradas. Fixadas vêm primeiro e o
+  último acesso ordena cada grupo.
+- `available` é calculado no core. Raiz ausente permanece visível,
+  desabilitada e removível; uma entrada válida abre pelo `workspace.open` e
+  herda a restauração de sessão por workspace já existente.
+- A Start Screen exibe até quatro entradas e permite abrir, fixar, remover e
+  limpar. O menu Arquivo expõe até oito entradas e a limpeza.
+- Migração v0, schema futuro/inválido, ordenação, deduplicação, limite,
+  fixação, caminho ausente e mutações estão cobertos no core; o harness
+  `tst_recent_workspaces.qml` cobre o controller e o bloqueio de raiz ausente.
+- `scripts/verificar.sh` passou completo (328 testes Rust, Clippy estrito,
+  C++/QML estritos, 12 harnesses e builds debug/release); smoke offscreen e
+  sonda com dois processos do core/XDG isolado também passaram.
+- O storage contém somente nome, raiz, último acesso e fixação; não armazena
+  arquivos, credenciais, contexto de IA ou estado de sessão duplicado.
+
+## Dogfooding ativo e correção KV Context terminal-first (2026-07-14)
+
+- O gatilho **“estou no Kinein”** foi recebido; self-hosting/dogfooding está
+  ATIVO. `PONTO_ATUAL.md` já registra a transição e permanece a fila viva.
+- Primeiro feedback real: embora o KV Context já executasse Claude/Codex no
+  mesmo PTY do Terminal, o Codex entrava em alternate screen. Esse modo não
+  produz scrollback, então a barra sintética não tinha histórico para mostrar;
+  além disso, os 360px do seletor eram estreitos para a TUI e resize contínuo
+  podia serializar grids demais.
+- Correção 0.51: Codex é iniciado com sua opção oficial
+  `--no-alt-screen` (argumento fixo/allowlisted, sem shell livre); o render
+  expõe `alternateScreen`, `applicationCursor` e `bracketedPaste`; teclado
+  cobre setas no modo pedido, Shift+Tab, Insert, F1–F12, Alt e Ctrl+Space;
+  paste respeita os delimitadores VT; a barra reserva sua própria faixa e
+  permanece perceptível; resize é coalescido a ~30 fps.
+- A sessão ativa usa uma largura responsiva (metade da janela, até 720px,
+  preservando o editor) e pode ser maximizada para a área de trabalho pelo
+  header compacto. O seletor só existe antes da sessão; depois, a superfície é
+  o `TerminalPanel` compartilhado, sem chat ou renderer paralelo.
+- Segundo feedback real após o reinício: no modo inline do Codex, a linha onde
+  se digita aparecia entre o aviso de usage e o status do modelo sem qualquer
+  limite visual, parecendo flutuar. A captura do grid VT confirmou que essa
+  ordem e o input pertencem à TUI real. O KV Context agora demarca somente a
+  linha do cursor ao vivo com `Theme.currentLine`/`Theme.borderStrong`; o guia
+  some ao consultar o histórico e não cria composer, chat ou parsing da saída.
+- Terceiro feedback real: a faixa ainda não envolvia os glifos, o divisor era
+  perdido durante a sessão, `Project` fechava compulsoriamente e o scroll
+  desaparecia durante chats longos. A causa de layout era tripla: largura
+  ativa recalculada em metade da janela, splitter oculto no estado ativo e
+  `effectiveShowExplorer` amarrado à sessão. A causa de scroll combinava
+  reconciliação exata demais após nova saída com versões do Codex que ainda
+  emitem `CSI 3 J` mesmo usando `--no-alt-screen`.
+- Correção 0.52: o texto da linha ativa é centralizado numa faixa com respiro e
+  contorno acima dos spans ANSI; `assistantTerminalWidth` persiste 300–720px,
+  o splitter continua ativo e `Project` só some na maximização explícita. O
+  `TerminalScrollController` aceita deslocamento positivo causado por output,
+  protege o snap contra frames atrasados e reseta por sessão. O bridge filtra
+  somente `CSI 3 J`, inclusive dividido entre reads; o Terminal comum continua
+  obedecendo `clear`.
+- Quarto feedback ao vivo (2026-07-15): o dimensionamento foi confirmado como
+  resolvido e ficou explicitamente fora do novo patch. A captura mostrou a
+  limitação restante da faixa: ela representava só a última linha do cursor e
+  sobrava como caixa vazia depois de Enter. A faixa agora nasce no primeiro
+  caractere/paste, envolve todo o intervalo de uma entrada quebrada e some ao
+  enviar/cancelar. A roda da sessão CLI também ganhou compatibilidade com os
+  eventos `pixelDelta` que Qt/Wayland pode entregar no Arch, além do
+  `angleDelta` tradicional; o fluxo IPC/core compartilhado não mudou.
+- Para manter a regra de split, o antigo `TerminalPanel.qml` de mais de 500
+  linhas foi dividido em `TerminalViewport.qml`,
+  `TerminalSelectionController.qml`, `TerminalInputController.qml` e
+  `TerminalScrollController.qml`; o header saiu para
+  `AssistantTerminalHeader.qml`. Novos harnesses cobrem layout responsivo,
+  teclado, seleção e scroll cruzado com output.
+- Validação automatizada fechada: `scripts/verificar.sh` completo verde
+  (testes, clippy `-D warnings`, C++/QML estritos e builds debug/release) e
+  smoke release pelo launcher vivo por 8s, sem saída QML (`exit 124` esperado).
+  Os binários release usados pelo ícone foram atualizados.
+- Ciclo obrigatório: registrar ação/esperado/observado/ambiente → reproduzir →
+  achar causa-raiz → adicionar teste/harness quando aplicável → corrigir na
+  camada dona → rodar gate e validar o gesto real → sincronizar docs.
+- Prioridade: P0 perda/corrupção de dados, segurança, crash ou IDE não abre;
+  P1 bloqueio diário de edição/build/run/debug/terminal/Git/navegação; P2
+  regressão funcional reproduzível; P3 conforto ou feature nova.
+- O aceite humano restante da entrada multilinha e da roda permanece em TR0,
+  mas foi pausado explicitamente pelo usuário em 2026-07-15; a autorização
+  direta para A1 não equivale a aceitar esses dois gestos do KV Context.
+- Com A1 entregue, seguir projeto híbrido/self-hosting, responsividade medida e os
+  confortos exigidos por saídas reais para outra IDE. Não criar outro roadmap:
+  `PONTO_ATUAL.md`, `docs/21-long-horizon-roadmap.md` e os docs de domínio já
+  são a fila.
+- O dogfooding não concede autorização para
+  commit, push, publicação, alteração de visibilidade ou entrega externa. O
+  repositório-fonte continua privado; código externo só pela futura árvore
+  sanitizada descrita na política vigente.

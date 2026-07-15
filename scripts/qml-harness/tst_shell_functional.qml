@@ -21,6 +21,7 @@ Item {
 
         property real explorerWidth: 280
         property real contextWidth: 360
+        property real assistantTerminalWidth: 640
         property real bottomPanelHeight: 260
         property real outlineWidth: 220
         property bool outlineCollapsed: false
@@ -72,7 +73,7 @@ Item {
         shell.toggleOutline();
         if (shell.outlineCollapsed === collapsed) failures += 1;
         shell.showAssistant = true;
-        if (shell.effectiveShowExplorer) failures += 1;
+        if (!shell.effectiveShowExplorer) failures += 1;
 
         projectTree.openEntryMenu("/work/src/main.cpp", "file",
                                   "main.cpp", 990, 710);

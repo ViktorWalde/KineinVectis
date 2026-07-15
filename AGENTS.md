@@ -48,11 +48,13 @@ Todo código Rust deve seguir o máximo rigor possível:
 Antes de criar código:
 
 1. Ler `ContextoIA.md` (estado real e decisões vigentes).
-2. Ler `docs/ARCHITECTURE.md` (camadas, convenções de módulo e regra de split — obrigatório).
-3. Ler `docs/02-repository-structure.md` e `docs/03-ipc-protocol.md` (estrutura e contrato IPC atual).
-4. Ler `docs/06-strict-mode.md` (rigor Rust/C++).
-5. Consultar `docs/specs/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).
-6. Verificar se a tarefa pertence ao core, UI, tooling, docs ou protocolo — e ao domínio certo dentro do core.
+2. Ler `GUIAIA.md` para localizar o domínio, as conexões e os documentos
+   específicos da tarefa. Ele é um mapa, não substitui as fontes seguintes.
+3. Ler `docs/ARCHITECTURE.md` (camadas, convenções de módulo e regra de split — obrigatório).
+4. Ler `docs/02-repository-structure.md` e `docs/03-ipc-protocol.md` (estrutura e contrato IPC atual).
+5. Ler `docs/06-strict-mode.md` (rigor Rust/C++).
+6. Consultar `docs/specs/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).
+7. Verificar se a tarefa pertence ao core, UI, tooling, docs ou protocolo — e ao domínio certo dentro do core.
 
 Ao propor implementação:
 
@@ -60,7 +62,9 @@ Ao propor implementação:
 - manter escopo pequeno;
 - não misturar muitas camadas;
 - escrever testes quando aplicável;
-- atualizar docs se mudar contrato ou arquitetura.
+- atualizar docs se mudar contrato ou arquitetura;
+- atualizar `GUIAIA.md` se criar/renomear/remover módulo, domínio, router,
+  controller, gate ou direção de dependência.
 
 ## Política de leitura de documentação
 
@@ -74,6 +78,7 @@ A **UI/UX segue `docs/specs/`**; a fonte de verdade do que já existe é
 `ContextoIA.md` + `docs/specs/` + `docs/ARCHITECTURE.md` + código. Não existe
 mais pasta de arquivo morto (`docs/archive/` foi removida em 2026-07-05 — ver
 `docs/README.md`); não recriar uma só para guardar material descontinuado.
+`GUIAIA.md` apenas encurta a navegação entre essas fontes e o código.
 
 ## Padrão de commits sugerido
 

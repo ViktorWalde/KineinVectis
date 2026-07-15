@@ -33,8 +33,8 @@ kinein-vectis/
 │   │       ├── fsops/           # workspace-confined filesystem operations
 │   │       │   └── mod.rs error.rs ops.rs search.rs find.rs replace.rs transaction.rs
 │   │       ├── fswatch.rs       # notify lazy/debounced + eventos de mudança externa
-│   │       ├── workspace/       # open / detect / browse / create + persistence
-│   │       │   └── mod.rs error.rs detect.rs open.rs create.rs
+│   │       ├── workspace/       # open/detect/create + sessão e recentes
+│   │       │   └── mod.rs error.rs detect.rs open.rs create.rs session.rs recent.rs
 │   │       └── tests/           # integration tests grouped by domain
 │   │           └── mod.rs dispatch.rs workspace.rs fs.rs lsp.rs syntax.rs git.rs
 │   │
@@ -72,6 +72,7 @@ kinein-vectis/
 ├── schemas/
 │   ├── ipc.schema.json
 │   ├── settings.schema.json
+│   ├── recent-workspaces.schema.json
 │   └── project.schema.json
 │
 ├── templates/

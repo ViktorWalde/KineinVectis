@@ -110,6 +110,16 @@ fn validate_values(values: &SettingsValues) -> Option<String> {
             ));
         }
     }
+    if values.assistant_terminal_width.is_some_and(|width| {
+        !(settings::MIN_ASSISTANT_TERMINAL_WIDTH..=settings::MAX_ASSISTANT_TERMINAL_WIDTH)
+            .contains(&width)
+    }) {
+        return Some(format!(
+            "assistantTerminalWidth deve estar entre {} e {}",
+            settings::MIN_ASSISTANT_TERMINAL_WIDTH,
+            settings::MAX_ASSISTANT_TERMINAL_WIDTH
+        ));
+    }
     if values.bottom_panel_height.is_some_and(|height| {
         !(settings::MIN_BOTTOM_PANEL_HEIGHT..=settings::MAX_BOTTOM_PANEL_HEIGHT).contains(&height)
     }) {

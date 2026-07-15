@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.50.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.53.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `aiBridge.*`). O
@@ -197,7 +197,7 @@ Além destes, emite `event.job.created/progress/output/finished`. A UI deve usar
 `suggestedInstall` continua sendo apenas uma sugestão para ação explícita do
 usuário.
 
-### Workspace (`workspace.browse` / `workspace.createFolder` / `workspace.createProject` / `workspace.open`)
+### Workspace (`workspace.browse` / `workspace.createFolder` / `workspace.createProject` / `workspace.open` / `workspace.recent.*`)
 
 `workspace.open` foi implementado no protocolo `0.3.0`. `workspace.browse`
 foi adicionado no protocolo `0.5.0` para o seletor proprio de workspace da UI.
@@ -279,6 +279,42 @@ abas/aba ativa e restaura pedindo `fs.read` na ordem da sessão, com a aba
 ativa por último.
 Caminho inexistente ou sem `path` nos params retorna `INVALID_PARAMS`; falha de
 IO ao persistir, listar ou criar diretorios retorna `INTERNAL_ERROR`.
+
+**Workspaces recentes globais** (protocolo `0.53.0`, fatia A1 de `docs/18`):
+somente `workspace.open` e `workspace.createProject` concluídos com sucesso
+registram a raiz canônica. O core persiste até 12 entradas em
+`$XDG_CONFIG_HOME/kinein-vectis/recent-workspaces.json` (ou
+`~/.config/kinein-vectis/`), conforme
+`schemas/recent-workspaces.schema.json`; a UI nunca consulta o filesystem.
+
+```text
+workspace.recent.list {} → { workspaces: [RecentWorkspace] }
+workspace.recent.pin { root, pinned } → mesmo snapshot completo
+workspace.recent.remove { root } → mesmo snapshot completo
+workspace.recent.clear {} → { workspaces: [] }
+
+RecentWorkspace {
+  name: string,
+  root: string,
+  lastOpenedAt: inteiro (Unix epoch em milissegundos),
+  pinned: bool,
+  available: bool
+}
+```
+
+- entradas fixadas vêm primeiro; cada grupo é ordenado por
+  `lastOpenedAt` decrescente e uma raiz canônica nunca é duplicada;
+- `available` é recalculado pelo core em cada snapshot. Uma pasta removida
+  continua listada, desabilitada e removível, sem ser aberta pela UI;
+- abrir uma entrada reutiliza `workspace.open` e, portanto, restaura a sessão
+  por workspace já existente;
+- o formato legado `schemaVersion: 0` sem `pinned` é aceito e promovido na
+  próxima escrita. JSON inválido ou schema futuro é tratado como lista vazia;
+- pin/remover exigem uma raiz absoluta já registrada e retornam
+  `INVALID_PARAMS` caso contrário. Erro de escrita retorna `INTERNAL_ERROR`;
+  uma falha ao atualizar o histórico não desfaz uma abertura válida;
+- o arquivo guarda apenas nome, raiz, último acesso e fixação: nunca conteúdo,
+  credenciais ou contexto de IA.
 
 ### Arquivos (`fs.list` / `fs.read` / `fs.createFile` / `fs.createDirectory` / `fs.write` / `fs.rename` / `fs.delete` / `fs.replace`)
 
@@ -468,6 +504,9 @@ event.terminal.render {           (throttle ~30fps; substitui event.terminal.dat
   "id": string,                  (0.44.0 — sessão dona deste grid)
   "cols": u16, "rows": u16,
   "cursor": { "row": u16, "col": u16, "visible": bool },
+  "alternateScreen": bool,       (0.51.0 — TUI em tela alternativa)
+  "applicationCursor": bool,     (0.51.0 — setas SS3 quando solicitado)
+  "bracketedPaste": bool,        (0.51.0 — paste delimitado e seguro)
   "scrollback": usize,            (0.43.0 — offset ATUAL, já clampado: a verdade)
   "scrollbackMax": usize,         (0.43.0 — quanto histórico existe; 0 = nenhum)
   "lines": [ [ { "text": str, "fg"?: idx|"#rrggbb", "bg"?: idx|"#rrggbb",
@@ -487,9 +526,17 @@ quem clampa. Sem eles não dá pra desenhar barra de rolagem honesta, e a UI
 acabava pedindo offsets impossíveis. A UI trata `scrollback` como fonte da
 verdade (reconcilia o estado local a cada render).
 
+Desde `0.51.0`, o render também expõe os modos VT que alteram a tradução de
+entrada. A UI respeita application cursor, envolve colagens com bracketed
+paste quando a aplicação o pede e continua sem interpretar a interface do
+programa. Resize de painel é coalescido antes de `terminal.resize`, evitando
+reserializar um grid por pixel durante o arrasto.
+
 ### AI CLI Bridge (`aiBridge.profiles` / `aiBridge.terminal.open`)
 
-Implementado no protocolo `0.50.0`. O **KV Context** é uma superfície separada
+Implementado inicialmente no protocolo `0.50.0`; a paridade terminal-first foi
+consolidada no `0.51.0` e o dimensionamento/scroll contínuos no `0.52.0`. O
+**KV Context** é uma superfície separada
 na UI, mas sua execução reutiliza o mesmo `TerminalManager`, PTY real,
 `terminal.input/resize/scroll/close` e eventos `event.terminal.*`. Não existe
 segundo emulador de terminal nem chamada de API de IA dentro da IDE.
@@ -513,6 +560,19 @@ aiBridge.terminal.open { profileId: "claude"|"codex" }
   executável encontrado, na raiz do workspace, sem montar comando shell com
   entrada livre. CLI ausente retorna `TOOL_NOT_FOUND` com instrução de
   instalação.
+- O perfil Codex acrescenta o argumento fixo e allowlisted
+  `--no-alt-screen`, opção oficial da própria CLI. Isso mantém o TUI real em
+  modo inline e preserva o histórico para a mesma barra/roda/arrasto do
+  Terminal integrado. Como versões atuais ainda podem emitir `CSI 3 J` nesse
+  modo, a sessão do bridge remove somente essa sequência de apagar scrollback;
+  o Terminal comum continua honrando `clear` integralmente. Claude continua
+  sendo iniciado sem argumento imposto.
+- Com sessão ativa, a superfície tem divisor livre entre 300 e 720px, persiste
+  a largura separadamente do seletor compacto, não fecha a árvore `Project` e
+  pode ser ampliada para toda a área de trabalho. Ela reutiliza exatamente o
+  mesmo renderer de grade, seleção, clipboard, teclado e scroll do Terminal
+  integrado. Em janela estreita, a apresentação é clampada para preservar uma
+  faixa editável central sem apagar a preferência do usuário.
 - A IDE não envia código ou contexto automaticamente. Eventual rede,
   autenticação e política de dados pertencem à CLI externa iniciada pelo
   usuário.
@@ -857,12 +917,14 @@ SettingsValues { formatOnSave?: bool, editorFontSize?: u32,
                  autoClosePairs?: bool,
                  rigorProfile?: "strict"|"balanced"|"relaxed",
                  explorerWidth?: u32, contextWidth?: u32,
+                 assistantTerminalWidth?: u32,
                  bottomPanelHeight?: u32, outlineWidth?: u32,
                  outlineCollapsed?: bool,
                  aiCliProfile?: "claude"|"codex" }
                                           (campos ausentes = não setados)
 EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs,
                     rigorProfile, explorerWidth, contextWidth,
+                    assistantTerminalWidth,
                     bottomPanelHeight, outlineWidth, outlineCollapsed,
                     aiCliProfile }
 SettingsResult { settings: EffectiveSettings, global: SettingsValues,
@@ -875,11 +937,13 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
 - `settings.set` faz MERGE parcial de `values` no escopo (campo ausente
   mantém o valor gravado; reverter/limpar override é pós-v1). Defaults:
   `formatOnSave=false`, `editorFontSize=14`, `autoClosePairs=true`,
-  `rigorProfile="strict"`, larguras `280/360/220`, painel inferior `260`,
-  Estrutura expandida e `aiCliProfile="claude"`.
+  `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
+  terminal KV ativo e Estrutura), painel inferior `260`, Estrutura expandida e
+  `aiCliProfile="claude"`.
 - Erros: `NO_WORKSPACE` (set `scope=workspace` sem workspace);
   `INVALID_PARAMS` (`editorFontSize` fora de 8..=40, ou `rigorProfile`
-  fora do enum; largura/altura de painel fora dos limites); `INTERNAL_ERROR`
+  fora do enum; largura/altura de painel fora dos limites, inclusive terminal
+  KV ativo fora de 300..=720); `INTERNAL_ERROR`
   (falha de escrita).
 - Consumidores atuais: `editorFontSize` → `Theme.fontSizeEditor`;
   `autoClosePairs` → auto-close da E1; `formatOnSave` → Ctrl+S formata e
@@ -1117,6 +1181,11 @@ workspace.open
 workspace.browse
 workspace.createFolder
 workspace.createProject
+workspace.saveSession
+workspace.recent.list
+workspace.recent.pin
+workspace.recent.remove
+workspace.recent.clear
 workspace.close
 workspace.status
 command.list

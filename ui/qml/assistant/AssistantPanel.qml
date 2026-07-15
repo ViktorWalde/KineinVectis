@@ -15,6 +15,7 @@ Rectangle {
     property var terminalRender: ({})
     property string errorText: ""
     property bool loading: false
+    property bool maximized: false
 
     signal closeRequested()
     signal refreshRequested()
@@ -25,12 +26,19 @@ Rectangle {
     signal terminalKeyPressed(string data)
     signal terminalResizeRequested(int cols, int rows)
     signal terminalScrollRequested(int offset)
+    signal maximizeToggleRequested()
 
     implicitWidth: 360
     radius: Theme.radiusLarge
     color: Theme.background1
     border.color: Theme.borderSoft
     border.width: 1
+
+    onSessionIdChanged: {
+        if (sessionId !== "") {
+            Qt.callLater(terminalView.focusInput);
+        }
+    }
 
     Column {
         anchors.fill: parent
@@ -219,61 +227,36 @@ Rectangle {
                 }
             }
 
-            Column {
+            Item {
                 anchors.fill: parent
-                anchors.margins: 1
-                spacing: Theme.spacingXSmall
                 visible: root.sessionId !== ""
 
-                Row {
-                    width: parent.width
-                    height: 34
-                    spacing: Theme.spacingSmall
+                AssistantTerminalHeader {
+                    id: sessionHeader
 
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.spacingSmall
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: root.activeProfileName
-                        color: Theme.textPrimary
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(0, parent.width - x - switchButton.width
-                                        - exitButton.width - 3 * Theme.spacingSmall)
-                        text: root.activeCommand
-                        color: Theme.textMuted
-                        font.family: Theme.monoFont
-                        font.pixelSize: 9
-                        elide: Text.ElideMiddle
-                    }
-
-                    KvButton {
-                        id: switchButton
-
-                        compact: true
-                        text: qsTr("Trocar")
-                        onClicked: root.switchRequested()
-                    }
-
-                    KvButton {
-                        id: exitButton
-
-                        compact: true
-                        text: qsTr("Sair")
-                        onClicked: root.exitRequested()
-                    }
+                    anchors.top: parent.top
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    profileName: root.activeProfileName
+                    command: root.activeCommand
+                    maximized: root.maximized
+                    onMaximizeToggleRequested: root.maximizeToggleRequested()
+                    onSwitchRequested: root.switchRequested()
+                    onExitRequested: root.exitRequested()
                 }
 
                 TerminalPanel {
-                    width: parent.width
-                    height: parent.height - 34 - parent.spacing
+                    id: terminalView
+
+                    anchors.top: sessionHeader.bottom
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.margins: 1
                     render: root.terminalRender
                     terminalActive: root.sessionId !== ""
                     workspaceAvailable: true
+                    inputRowDecoration: true
                     emptyText: qsTr("Inicializando %1...").arg(root.activeProfileName)
                     onKeyPressed: function(data) {
                         root.terminalKeyPressed(data);

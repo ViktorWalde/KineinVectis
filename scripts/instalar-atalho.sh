@@ -14,7 +14,7 @@ cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Type=Application
 Name=Kinein Vectis
-Comment=IDE open source, Linux-first, offline
+Comment=IDE para C, C++, Rust, sistemas embarcados e simulação
 Exec=$REPO_ROOT/scripts/kinein-vectis
 Icon=$REPO_ROOT/imagens/app-icon.png
 Terminal=false

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://kinein.dev/schemas/ipc.schema.json",
-  "$comment": "Contrato estrutural do protocolo implementado 0.50.0; inclui as restricoes dos requests aiBridge iniciais.",
+  "$comment": "Contrato estrutural do protocolo implementado 0.53.0; inclui workspaces recentes globais e o AI CLI Bridge terminal-first.",
   "title": "Kinein Vectis IPC",
   "type": "object",
   "oneOf": [
@@ -53,6 +53,60 @@
                 "additionalProperties": false,
                 "properties": {
                   "profileId": { "enum": ["claude", "codex"] }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "method": {
+                "enum": ["workspace.recent.list", "workspace.recent.clear"]
+              }
+            },
+            "required": ["method"]
+          },
+          "then": {
+            "properties": {
+              "params": { "type": "object", "maxProperties": 0 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "method": { "const": "workspace.recent.pin" } },
+            "required": ["method"]
+          },
+          "then": {
+            "required": ["params"],
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": ["root", "pinned"],
+                "additionalProperties": false,
+                "properties": {
+                  "root": { "type": "string", "pattern": "^/" },
+                  "pinned": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "method": { "const": "workspace.recent.remove" } },
+            "required": ["method"]
+          },
+          "then": {
+            "required": ["params"],
+            "properties": {
+              "params": {
+                "type": "object",
+                "required": ["root"],
+                "additionalProperties": false,
+                "properties": {
+                  "root": { "type": "string", "pattern": "^/" }
                 }
               }
             }

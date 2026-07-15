@@ -47,6 +47,22 @@ Window {
         onClearWorkspaceUiRequested: workspaceUiResetter.clear()
     }
 
+    RecentWorkspacesController {
+        id: recentWorkspacesController
+
+        onListRequested: coreClient.listRecentWorkspaces()
+        onOpenRequested: function(rootPath) {
+            coreClient.openWorkspace(rootPath);
+        }
+        onPinRequested: function(rootPath, pinned) {
+            coreClient.pinRecentWorkspace(rootPath, pinned);
+        }
+        onRemoveRequested: function(rootPath) {
+            coreClient.removeRecentWorkspace(rootPath);
+        }
+        onClearRequested: coreClient.clearRecentWorkspaces()
+    }
+
     ProjectHealthController {
         id: projectHealthController
 
@@ -64,6 +80,7 @@ Window {
         workspaceKind: coreClient.workspaceKind
         homeDir: coreClient.homeDir
         toolsCount: workspaceController.toolsList.length
+        assistantTerminalActive: assistantController.sessionId !== ""
         onFolderOpenRequested: function(path) {
             folderPicker.open(path);
         }
@@ -474,6 +491,7 @@ Window {
             }
             if (coreClient.connected) {
                 coreClient.settingsGet();
+                recentWorkspacesController.listRequested();
                 assistantController.initialize();
             }
         }
@@ -504,6 +522,7 @@ Window {
         searchController: searchController
         workspaceController: workspaceController
         projectHealthController: projectHealthController
+        recentWorkspacesController: recentWorkspacesController
     }
 
     EditorEventRouter {
@@ -566,6 +585,7 @@ Window {
         projectTree: projectTree
         searchController: searchController
         settingsController: settingsController
+        recentWorkspacesController: recentWorkspacesController
         onConfigMenuRequested: function(menuX, menuY) {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);
             runtimeController.openConfigMenu(pos.x, pos.y);
@@ -602,6 +622,7 @@ Window {
         diagnosticsController: diagnosticsController
         searchController: searchController
         assistantController: assistantController
+        recentWorkspacesController: recentWorkspacesController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName

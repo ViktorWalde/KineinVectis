@@ -1,268 +1,353 @@
-# PONTO ATUAL — guia de execução (2026-07-14)
+# PONTO ATUAL — fila viva do Kinein Vectis (2026-07-15)
 
-> **O que este doc é:** a lista **explícita do que falta fazer**, em ordem, com
-> detalhe suficiente pra executar sem reler o projeto inteiro.
-> **O que ele NÃO é:** o contexto do produto. Isso vive no `ContextoIA.md`
-> (norte, mandatos, decisões) e nos `docs/` numerados. Aqui só entra **tarefa**.
+> Este arquivo contém somente trabalho presente ou futuro, em ordem de
+> execução. Trabalho concluído deve ser registrado no documento do domínio e
+> em `ContextoIA.md`, e então removido daqui.
 >
-> **Regra que vale pra tudo abaixo:** NÃO commitar — o Viktor faz o commit; o
-> working tree acumula.
+> Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
+> conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
+> Git. Base remota atual: `928fbb5`, protocolo `0.53.0`.
 >
-> **Ambiente:** o Viktor voltou pro **CLion** e desenvolve o Kinein lá até o
-> projeto ficar pronto. O dogfooding está **pausado** — então não chega mais bug
-> de uso diário por uso real, e a régua deixou de ser *"dá pra usar hoje?"* e
-> virou **"está pronto pra virar o daily driver?"**. É essa régua que ordena a
-> lista.
+> Não alterar a UI fora das specs e não commitar ou publicar por iniciativa
+> própria. **Dogfooding/self-hosting ativo desde 2026-07-14:** o usuário já
+> está na Kinein, e cada bloqueio ou saída para outra IDE passa a ordenar o
+> backlog antes de funcionalidade nova.
 
-## Checkpoint de execução — 2026-07-14 (protocolo 0.50.0)
+## 0. Dogfooding ativo
 
-O lote recomendado foi implementado sem criar subsistemas paralelos:
+O gatilho **“estou no Kinein”** já foi recebido. A primeira regressão concreta
+é o KV Context não se comportar visualmente como um terminal profissional:
+faltavam scrollback/barra perceptível no Codex, largura adequada e fluidez no
+resize. Após o primeiro reinício, surgiu um segundo detalhe: a linha de
+digitação inline ficava sem limite visual entre o aviso de usage e o status do
+modelo. No segundo reinício foram reportados quatro sintomas adicionais: a
+faixa não envolvia os glifos, o divisor livre desaparecia durante a sessão, a
+árvore `Project` era fechada e o scroll se perdia em chats longos. A correção
+0.52 tratou esses quatro sem criar input ou terminal paralelo. Após o aceite do
+dimensionamento, o feedback restante ficou restrito à faixa da entrada
+multilinha e à roda do mouse; a correção pós-0.52 de 2026-07-15 aguarda o gesto
+real apenas nesses dois pontos, conforme `REENTRADA-KV`. O usuário pausou esse
+gesto e autorizou expressamente A1, entregue no protocolo 0.53.0; isso não vale
+como aceite visual do KV Context.
 
-- D3/F1/F2: Tree-sitter incremental C/C++/Rust, highlight/folding/outline/
-  locals, registry e cache limitado; design em `docs/25`.
-- Workspace edits LSP: preview, aplicar/cancelar, snapshot versionado,
-  gravação multi-arquivo atômica e rollback.
-- T3–T6: branches/pull/push/stash; substituir no projeto; salvar tudo;
-  arquivos recentes.
-- D4 material: ícones/componentes vetoriais, App Bar, Main Toolbar, Start
-  Screen, preview de criação, scaffold C++ target-based e KV Context.
-- Q1: harness QML está no gate oficial (7 cenários atuais).
-- Correção funcional pós-teste visual: menus Arquivo–Ajuda agora usam overlay
-  global e ações auditadas; tooltips não ficam sob o editor; Arquivo e clique
-  direito criam arquivo/pasta pelo fluxo existente; KV Context inicia
-  Claude/Codex instalados pelo usuário sobre o `TerminalManager`; Estrutura e
-  painéis são redimensionáveis, recolhíveis/responsivos e persistidos.
+1. registrar cada problema observado pelo usuário ou por um testador com ação,
+   esperado, resultado, reprodução, distro e log quando houver;
+2. corrigir primeiro perda de dados, crash, corrupção, falha de abertura/build
+   ou bloqueio que force a saída para outra IDE;
+3. depois tratar regressões funcionais e atritos reproduzíveis de uso diário;
+4. quando não houver feedback bloqueador e o usuário mandar prosseguir no
+   roadmap, iniciar **A2 — projeto híbrido e self-hosting**; A1 foi entregue;
+5. continuar pelas etapas deste arquivo e pelos docs existentes, sem inventar
+   outro remake, subsistema paralelo ou roadmap substituto.
 
-**O que ainda depende de pessoa/tela:** executar a validação ao vivo da seção
-1 e o aceite visual R7/C6 contra as specs. Os próximos passos de engenharia,
-depois desse aceite, são as fases maiores do KSWE (grafo de targets/contextos,
-CMake File API completa e scheduler semântico), não correções das lacunas
-T3–T6 listadas historicamente abaixo.
+O dogfooding não autoriza commit, push, publicação, mudança de visibilidade,
+envio externo ou implementação aleatória fora da fila. O repositório-fonte
+continua privado.
 
----
+### 0.1 Protocolo econômico de reentrada após reiniciar a própria Kinein
 
-## 0. Como trabalhar (o mínimo)
+Reiniciar a IDE encerra a sessão de IA que está rodando dentro dela. Para não
+gastar outra conversa reconstruindo contexto, o handoff deve ficar neste
+arquivo antes de fechar. Na sessão nova, o usuário precisa escrever somente:
 
-**Ritual por fatia:** design em `docs/24` (fases D) ou `docs/18` (fases M/E/T)
-→ protocolo (`crates/kinein-protocol`) → core (`crates/kinein-core`) → handler →
-testes → UI (`ui/qml`, `ui/src`) → sincronizar docs (`docs/03` se mudar
-protocolo, `MANUAL.md` se mudar UX).
-
-**Gate (tem que ficar verde antes de dar por pronto):**
-
-```bash
-bash scripts/verificar.sh              # fmt/clippy -D warnings/testes/clang-tidy/qmllint/builds
-bash scripts/verificar-qml-logica.sh   # lógica QML headless — também executada pelo gate oficial
-cargo build -p kinein-core             # OBRIGATÓRIO antes de qualquer sonda e2e
-cmake --build build/dev-local --target kinein-vectis
+```text
+Leia AGENTS.md e retome pelo marcador REENTRADA-KV em PONTO_ATUAL.md. Siga as
+leituras obrigatórias silenciosamente, não resuma o histórico e não refaça o
+que já está validado.
 ```
 
-**Três armadilhas que já morderam:**
+A sessão nova deve executar esta sequência:
 
-1. `cargo test` e o gate **não recompilam** `target/debug/kinein-core`. Sem
-   `cargo build -p kinein-core` antes, a sonda e2e roda contra binário velho.
-2. Controller QML é `Item { visible: false }`. **Nunca** use o `visible` dele
-   como estado de UI, nem faça `alias` pra `.visible` — o Qt lê a visibilidade
-   *efetiva* (do pai), não o valor gravado. Use `property bool` própria. Foi
-   essa armadilha que segurou o D1 por dois ciclos.
-3. Todo `.qml` novo precisa de `QT_RESOURCE_ALIAS` no `ui/CMakeLists.txt`; toda
-   classe C++ exposta ao QML precisa entrar em `SOURCES` do `qt_add_qml_module`.
+1. ler `AGENTS.md` e a documentação obrigatória indicada nele, sem devolver
+   uma recapitulação extensa ao usuário;
+2. localizar primeiro o marcador `REENTRADA-KV` abaixo e confrontá-lo com
+   `ContextoIA.md` + código apenas onde houver divergência;
+3. rodar `git status --short` somente para preservar o worktree existente;
+   arquivos modificados ou não rastreados já presentes não autorizam limpeza,
+   descarte, commit ou push;
+4. não repetir investigação, implementação, gate ou build já registrados como
+   verdes, a menos que o código tenha mudado depois do marcador ou apareça
+   evidência concreta de regressão;
+5. retomar diretamente pela ação `PRÓXIMO GESTO`; responder inicialmente com
+   uma frase curta de orientação, não com outro plano ou resumo;
+6. depois do gesto real, registrar o resultado no marcador: se falhar,
+   ação/esperado/observado/ambiente viram a prioridade do dogfooding; se passar,
+   marcar o aceite e seguir a próxima fatia desta fila somente quando o usuário
+   mandar prosseguir.
 
----
+#### REENTRADA-KV — estado exato para a próxima reentrada
 
-## 1. Pendente de você: validação ao vivo (3 minutos)
+```text
+ESTADO
+- Correções KV Context terminal-first e de continuidade implementadas nos
+  protocolos 0.51.0/0.52.0.
+- A1 — Workspaces recentes foi entregue separadamente no protocolo 0.53.0;
+  não altera o reteste visual pendente do KV Context.
+- Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
+- KV ativo reutiliza TerminalPanel/TerminalManager, tem barra persistente,
+  roda/arrasto, teclado/paste VT, largura livre persistida 300–720px e
+  ampliar/restaurar; Project permanece independente fora da maximização.
+- O bridge preserva o transcript contra CSI 3 J ainda emitido por versões do
+  Codex; o Terminal comum continua honrando clear.
+- A guia visual do KV Context agora existe somente enquanto o usuário escreve,
+  cobre todas as linhas de uma entrada quebrada e some imediatamente no Enter;
+  não sobra caixa vazia durante o processamento da CLI.
+- A roda aceita os dois formatos do Qt (`angleDelta` e `pixelDelta`) e segue o
+  mesmo `terminal.scroll` do Terminal comum. Nenhum dimensionamento foi
+  alterado nesta correção.
 
-As quatro frentes estão **verdes no código e nas verificações automatizadas —
-mas ainda falta confirmar os gestos na tela.** Enquanto isso, trate a validação
-visual como pendente.
+VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
+- scripts/verificar.sh completo: verde.
+- Testes Rust, clippy -D warnings, C++/QML estritos e harnesses QML: verdes.
+- O harness tst_terminal_input cobre prompt ocioso, entrada multilinha, reset
+  no Enter, histórico e cursor fora da grade.
+- tst_assistant_layout cobre divisor ativo/largura/Project; tst_terminal_scroll
+  cobre nova saída, snap, troca de sessão, roda tradicional e `pixelDelta`;
+  Rust cobre CSI 3 J entre chunks.
+- Builds debug/release: verdes; binários release do launcher atualizados.
+- Smoke pelo launcher: vivo por 8s, sem erro QML (exit 124 esperado).
 
-```bash
-./build/dev-local/ui/kinein-vectis
+PRÓXIMO GESTO
+1. Fechar e reabrir a Kinein pelo ícone para carregar o release novo.
+2. Abrir um workspace e então KV Context -> Codex -> Iniciar.
+3. Antes de enviar, escrever uma mensagem longa que quebre em duas ou mais
+   linhas: uma única faixa deve envolver todas elas. Ao pressionar Enter, a
+   faixa deve sumir em vez de ficar vazia abaixo da conversa.
+4. Gerar saída maior que a altura do painel; rolar para cima enquanto a
+   resposta ainda chega e confirmar que a leitura não salta nem perde o
+   histórico. Testar roda e arrasto; depois digitar e confirmar retorno ao fim.
+5. Se a roda ainda não mover, informar se o polegar da barra também fica parado
+   e se o arrasto manual da barra funciona; isso separa evento Qt de scrollback.
+
+RESULTADO PENDENTE
+- Aceite humano da entrada multilinha e da roda em tela real. O dimensionamento
+  já foi confirmado pelo usuário e não faz parte deste reteste.
+- O usuário pausou este reteste e autorizou expressamente A1, já entregue. Se
+  o gesto falhar quando retomado, registrar exatamente o observado e priorizar
+  a regressão antes de iniciar A2.
+
+LIMITES
+- Não fazer commit, push ou publicação por iniciativa própria.
+- Não reabrir a discussão de chat embutido: KV Context é terminal dedicado.
 ```
 
-- **D1 (autocomplete):** abrir projeto **Rust**, abrir um `.rs`, esperar ~10s
-  (rust-analyzer indexando), digitar `let x = St`. **O popup tem que aparecer.**
-  Em C/C++, rode "CMake: Configure" antes — o clangd precisa do
-  `compile_commands.json`.
-- **D1b (Find/Replace):** `Ctrl+F` abre a barra pré-preenchida com a palavra sob
-  o cursor, realça todas as ocorrências, mostra "3 de 17". `Enter`/`Shift+Enter`
-  navegam (circular), `Esc` fecha. `Ctrl+H` mostra o campo de substituir.
-  Toggles `Aa` / `W` / `.*`. `F3`/`Shift+F3` navegam com a barra fechada.
-- **B1/B2 (scroll + barras):** abrir o terminal (`Alt+F12`), rodar algo longo
-  (`seq 1 300`), e **rolar com a roda**. A tela tem que subir no histórico e a
-  **barra de rolagem** tem que aparecer à direita (dá pra arrastar). No editor,
-  abrir um arquivo grande: a barra aparece à direita e arrasta. Conferir também
-  uma lista longa em Build/Problemas/Busca.
-- **T1/D2.3 (múltiplos terminais):** no Terminal, clicar `+`, deixar um comando
-  contínuo na primeira aba e usar a segunda; alternar os chips preserva cada
-  tela, e `×` fecha só a aba escolhida.
+### Loop de desenvolvimento a partir do dogfooding
 
----
-
-## 2. BUGS — B1 e B2 RESOLVIDOS (2026-07-12, protocolo 0.43.0)
-
-### ✅ B1 — a roda do mouse não rolava o terminal
-
-**A causa era grave e não estava onde eu suspeitei.** Não era a fiação (estava
-correta) nem o MouseArea. Era um **bug do `vt100` 0.15.2 que DERRUBAVA O CORE**:
-`visible_rows()` monta a tela como *(últimas `offset` linhas de histórico) +
-(`rows - offset` linhas vivas)*, e um `offset` maior que a altura da tela fazia
-`24 - 278` em `usize` → **overflow**.
-
-E a UI alimentava exatamente esse caso: o `onWheel` somava **sem teto**. Com
-passo de 3 linhas e tela de ~24, **~9 cliques de roda** estouravam o limite. O
-core morria, a recuperação de crash da M4.3 o **relançava calada**, a sessão de
-terminal ia junto — e você via "não acontece nada".
-
-**Fix (3 camadas):** (1) `vt100` **0.15 → 0.16.2**, que corrige o overflow
-upstream — e de quebra libera o scrollback inteiro (no 0.15 ele era inalcançável
-além de UMA tela); (2) o core passou a mandar `scrollback` (offset real, já
-clampado) e `scrollbackMax` (quanto histórico existe) no `event.terminal.render`;
-(3) a UI trocou o `MouseArea.onWheel` por um `WheelHandler`, **clampa** em
-`scrollbackMax` e reconcilia o offset local pelo que o core devolve.
-
-**Provado:** `scripts/sonda_scrollback.py` (e2e, core real) — antes, offset
-absurdo matava o core com `attempt to subtract with overflow`; agora clampa em
-278 e a tela rola de verdade.
-
-### ✅ B2 — não havia barra de rolagem em lugar NENHUM da IDE
-
-**Confirmado por varredura:** `ScrollBar`/`ScrollView` não apareciam **uma única
-vez** em todo o `ui/qml`. Sem barra você não sabe que há conteúdo fora da tela,
-onde está no arquivo, nem **se uma rolagem aconteceu** — foi o que manteve o B1
-invisível.
-
-**Feito:** `ui/qml/shell/VerticalScrollBar.qml`, barra própria (o projeto não usa
-`QtQuick.Controls`) e genérica na unidade — serve em PIXELS (editor) e em LINHAS
-(terminal, onde é sintética e de eixo invertido). Aplicada no **editor** e no
-**terminal** e reaproveitada nos `ListView` dos painéis inferiores. Esta sobra
-barata está fechada; `qmllint` estrito verde.
-
----
-
-## 3. Inventário: o que falta pro Kinein virar o daily driver
-
-Levantado lendo o código em 2026-07-12 (não é chute; cada item foi verificado).
-**A infra difícil já existe** — build, debug (DAP), git, LSP (navegação,
-diagnósticos em tempo real, code actions, rename), terminal com PTY real, rede de
-segurança contra perda de dado. O que falta é o que segue.
-
-### 🔴 Bloqueia o daily driver
-
-**Concluído desde o levantamento:** **T1 / D2.3 — múltiplas abas de terminal**
-(protocolo 0.44.0) e **T2 — mudanças externas protegidas** (protocolo 0.45.0).
-T2 usa `notify` lazy/debounced, atualiza editor/árvore/Git e adiciona
-compare-before-save: uma aba velha nunca sobrescreve o disco silenciosamente.
-
-| # | Falta | Por que bloqueia | Onde |
-|---|---|---|---|
-| ~~**T2**~~ | ~~**Mudança externa de arquivo não é detectada**~~ | ✅ **FEITO (0.45.0):** watcher `notify` lazy + debounce; `event.fs.changed`; auto-reload de aba limpa; conflito preserva o buffer; `fs.write` exige `expectedContent` e recusa snapshot velho com `FILE_CHANGED` | core/protocolo/UI + auditoria em `docs/tooling/` e ADR |
-| ~~**T3**~~ | **Git: branches/remotos/stash** | ✅ **FEITO (0.49.0):** branches/checkout/create, pull/push como jobs, stash push/pop com guarda de buffers sujos e exclusão de `.kinein` | core/protocolo/UI/testes Git reais |
-| ~~**T4**~~ | **Substituir no projeto (`Ctrl+Shift+H`)** | ✅ **FEITO (0.48.0):** literal, confirmação, ignores/limites, transação multi-arquivo e rollback | `fsops/replace.rs` + transação compartilhada + Busca |
-| ~~**T5**~~ | **Salvar tudo (`Ctrl+Shift+S`)** | ✅ **FEITO:** fila determinística e format-on-save, com stale-drop | EditorController + harness QML |
-| ~~**T6**~~ | **Arquivos recentes (`Ctrl+E`)** | ✅ **FEITO:** MRU reutiliza Search Everywhere, sem modelo paralelo | Editor/Search controllers + harness QML |
-
-### 🟡 Fundação (mandato do produto)
-
-| # | Falta | Detalhe |
-|---|---|---|
-| ~~**F1**~~ | **Tree-sitter** (D3) | ✅ **FEITO (0.46.0):** design `docs/25`, pins/licenças auditados, `lang/`, incremental C/C++/Rust, highlight/fold/outline/locals |
-| ~~**F2**~~ | **Views em árvore + ícones** (D3) | ✅ **FEITO:** Outline estrutural recolhível + `KvIcon` vetorial central e migração das ações QML |
-| **F3** | **Convergência UI/UX** (D4) | ✅ Implementação material C2/C3/C5 feita; **resta validação visual R7/C6 pelo usuário** |
-
-### 🟢 Conforto (não bloqueia — puxar quando incomodar)
-
-Split editor (lado a lado) · multi-cursor · zoom `Ctrl+±` · EditorConfig ·
-primitiva de toast (aviso discreto) · links clicáveis no terminal · busca no
-scrollback · debug: watch/expressões e breakpoints condicionais · terminal:
-duplo-clique = palavra.
-
----
-
-## 4. Pendência técnica atravessada em tudo
-
-### Q1 — Teste que EXECUTA lógica QML no gate — FEITO
-
-`scripts/verificar.sh` cobre Rust (fmt/clippy/testes), C++ (clang-format/tidy) e
-`qmllint` — mas **nada executa a lógica QML**, que é justamente onde a IDE guarda
-o estado da UI. Foi por esse buraco que o bug do D1 sobreviveu a **dois ciclos**
-de "correção" (sonda verde no backend, GUI quebrada). **O B1 é o mesmo padrão
-acontecendo de novo.**
-
-Já existe o começo, **fora do gate**:
-
-```bash
-bash scripts/verificar-qml-logica.sh   # hoje: 4 testes, todos verdes
+```text
+feedback real (autor ou testador)
+        ↓
+reprodução e causa-raiz
+        ↓
+teste/harness de regressão quando aplicável
+        ↓
+correção pequena na camada dona
+        ↓
+gate + gesto real
+        ↓
+docs sincronizadas e retorno ao uso
 ```
 
-`tst_completion.qml`, `tst_find.qml`, `tst_multi_terminal.qml` e
-`tst_external_change.qml` carregam os
-controllers **REAIS** (não cópias) com bridges falsos, em `qml6` offscreen, e codificam as
-falhas no código de saída. O `tst_completion` é a regressão do D1; o `tst_find`
-cobre os casos que matam um find/replace (regex de largura zero → o TIMEOUT pega
-o laço infinito; `Substituir tudo` com substituto maior → offsets); o terceiro
-cobre troca/fechamento/isolamento e limpeza após crash dos terminais; o quarto
-cobre conflito externo, auto-reload e a base usada pelo save seguro.
+Se vários feedbacks chegarem juntos, usar esta prioridade:
 
-O harness foi integrado ao `scripts/verificar.sh` em 2026-07-14. Os controllers
-reais agora são executados tanto no gate rápido quanto no completo, antes dos
-builds da UI.
+```text
+P0  perda/corrupção de dados, segurança, crash ou IDE não abre
+P1  bloqueio de edição, build, run, debug, terminal, Git ou navegação
+P2  comportamento incorreto/repetível que prejudica o fluxo diário
+P3  conforto, polimento ou funcionalidade nova
+```
 
----
+Feedback de testador não vira feature automaticamente: reproduzir, conferir se
+já existe solução no core/UI e encaixar no domínio/roadmap correto. Se for uma
+ideia nova sem bloqueio, registrar atrás dos problemas reais e de A2.
 
-## 5. Ordem recomendada
+## 1. TR0 — aceite funcional da rodada atual
 
-1. ~~**B1 + B2**~~ — ✅ **FEITOS** (2026-07-12). Falta só o seu OK ao vivo.
-2. ~~**Barra de rolagem nos painéis inferiores**~~ — ✅ **FEITA**.
-3. ~~**T1 / D2.3** — múltiplas abas de terminal~~ — ✅ **FEITA** (0.44.0;
-   falta OK ao vivo).
-4. ~~**T2** — watcher + save protegido~~ — ✅ **FEITO** (0.45.0).
-5. ~~**Q1** — plugar o teste de QML no gate~~ — ✅ **FEITO**.
-6. ~~**F1/F2 (D3)** — tree-sitter + views em árvore~~ — ✅ **FEITOS**.
-7. ~~**T3–T6**~~ — ✅ **FEITOS**.
-8. **F3/D4** — correção funcional automatizada feita; validar ao vivo menus,
-   tooltips, criação, KV Context e o recolhimento/redimensionamento da
-   Estrutura antes de aceitar R7/C6.
-9. Depois do aceite: iniciar KSWE em fatias (Project Graph/Context Matrix,
-   CMake File API completa, scheduler e Diagnostic/Symbol Brokers), com design
-   e orçamento antes de ampliar o core.
-10. Norte de longo prazo: fazer a IDE entrar em “simbiose com os compiladores”
-    (`docs/21`, seção própria) — contexto incremental profundo de projeto sem
-    reimplementar compilador/build system/LSP. O primeiro patamar desejado é
-    “um nível abaixo do CLion”; depois, evoluir por profundidade de integração.
-    Inclui targets/toolchains, debug e variáveis, flash/serial/QEMU/OpenOCD,
-    split editor/multi-cursor/EditorConfig e testes prolongados em projetos
-    reais.
-11. Depois da validação funcional: acrescentar a opção guiada de **outra IA**
-    (abrir terminal + instruir o comando manual, sem provider embutido) e
-    retomar a **biblioteca de funções / Configuration Actions** para facilitar
-    configuração de ambiente, seguindo a spec própria e sem criar engine
-    genérica prematuramente.
-12. **Workspaces recentes:** promover o item já desenhado em `docs/21` M4.4
-    para a próxima fatia de Start Screen. Persistir uma lista global limitada,
-    ordenar por último acesso, remover caminhos inexistentes e permitir
-    fixar/remover entradas; reusar `workspace.open` e o seletor atual.
-13. **Distribuição:** hoje o produto é Linux-first (Arch/CachyOS validado;
-    bootstrap Debian/Ubuntu/Fedora). Windows não está suportado ainda. AUR e
-    AppImage devem empacotar UI + core + runtime Qt; compiladores/LSP/debuggers
-    continuam dependências externas escolhidas por linguagem.
-14. **Espelho público futuro:** o privado permanece fonte completa. O export
-    público leva código, ativos e avisos de licença, mas entre arquivos
-    Markdown publica somente `README.md` e `MANUAL.md`. Excluir `ContextoIA.md`,
-    `PONTO_ATUAL.md`, `AGENTS.md`, `docs/**/*.md`, specs e roadmaps internos.
-    Criar exportador allowlist com `--dry-run` e auditoria de segredos antes de
-    tornar qualquer remoto público; nunca apenas trocar a visibilidade deste
-    repositório privado.
+Antes de ampliar o produto, validar a aplicação real em tela. Regressões
+encontradas aqui têm prioridade e não autorizam outro remake visual.
 
----
+### 1.1 Checklist de validação manual
 
-## 6. Onde ler mais (só se precisar)
+- **Autocomplete:** a primeira sugestão estrutural aparece sem esperar o LSP;
+  a resposta semântica de clangd/rust-analyzer substitui o fallback quando
+  estiver pronta, sem popup duplicado ou salto de seleção.
+- **Terminal sob rajada:** saída contínua acompanha a linha atual sem atrasos;
+  a barra aparece assim que existe histórico; rolar ou arrastar preserva a
+  leitura; nova entrada do usuário volta ao final; múltiplas abas permanecem
+  independentes.
+- **Menus Arquivo–Ajuda:** todas as opções ficam acima do editor, legíveis e
+  acionáveis. `Ajuda → Manual da IDE` abre a documentação interna.
+- **Criação no projeto:** menu Arquivo e clique direito oferecem adicionar
+  arquivo/pasta e reutilizam o fluxo confinado ao workspace.
+- **KV Context:** Claude/Codex instalados pelo usuário são descobertos; a
+  escolha abre uma sessão própria sobre o terminal real; Codex preserva
+  scrollback em modo inline; barra/roda/arrasto, teclado, seleção, copiar/colar
+  e resize se comportam como no Terminal integrado, inclusive durante nova
+  saída; a sessão tem largura livre/persistida, coexiste com `Project` e pode
+  ser ampliada sem acoplar o painel ao terminal comum.
+- **Estrutura e painéis:** a aba Estrutura redimensiona, recolhe e restaura;
+  o layout inicial se adapta à janela sem cobrir editor ou menus.
+- **Barras e tooltips:** editor, terminal e listas longas mostram posição e
+  permitem arrastar; descrições de ícones nunca aparecem sob o editor.
 
-| Doc | Pra quê |
-|---|---|
-| `ContextoIA.md` | Norte do produto, mandatos, decisões. **Não precisa ler pra executar a lista acima.** |
-| `docs/24-paridade-e-fundacao.md` | A fase D1–D4 (status vivo) |
-| `docs/03-ipc-protocol.md` | Contrato IPC implementado (**0.50.0**) |
-| `docs/18-daily-driver-plan.md` | Design das fatias M/E/T |
-| `docs/20-ui-spec-convergence-plan.md` | Regras vinculantes de convergência visual (C0–C6) |
-| `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | **Ler antes do D3** — como adotar ferramenta open-source |
+### 1.2 Critério de saída do TR0
+
+- checklist acima aceito em uma sessão real;
+- qualquer falha reproduzível ganhou teste/harness quando aplicável;
+- `bash scripts/verificar.sh` verde;
+- aceite visual R7/C6 confrontado com as specs, sem mudança estética lateral.
+
+O início do dogfooding não precisa esperar uma cerimônia separada de TR0: a
+primeira sessão dentro da Kinein deve percorrer este checklist naturalmente.
+Falhas encontradas nela interrompem a próxima fatia do roadmap até a regressão
+correspondente ficar corrigida e protegida.
+
+## 2. TR1 — distribuição e substituição de editores generalistas
+
+### A2 — projeto híbrido e self-hosting (próxima funcionalidade de produto)
+
+O repositório da própria Kinein combina Cargo, CMake e Qt/QML. A detecção atual
+escolhe um único `workspace.kind`, portanto não representa toda a capacidade
+do projeto.
+
+- introduzir um snapshot de **capacidades do projeto** sem quebrar o `kind`
+  compatível existente;
+- reconhecer Cargo e CMake simultaneamente;
+- apresentar ações reais de ambos os sistemas no mesmo workspace;
+- reutilizar serviços `cargo`, `cmake`, `build`, `runConfig`, LSP e Jobs;
+- evitar um segundo detector ou executor paralelo ao core atual;
+- validar abertura, edição, build, testes e navegação da Kinein dentro dela.
+
+Aceite: o repositório da Kinein não esconde o lado Rust nem o lado Qt/CMake e
+pode ser desenvolvido sem recorrer a VS Code, Sublime ou Neovim.
+
+### A3 — responsividade medida
+
+- medir tempo de abertura, primeira estrutura Tree-sitter, primeira sugestão
+  semântica, latência de digitação, estabilização do LSP, rajada do terminal e
+  memória em projetos reais;
+- estabelecer orçamento local reproduzível, sem telemetria;
+- mover indexação, parse e I/O pesado para trabalho cancelável/assíncrono;
+- priorizar regressões perceptíveis antes de aumentar profundidade semântica.
+
+Aceite: métricas e cenários ficam versionados; não se depende apenas de
+impressão visual para afirmar que autocomplete/editor/terminal são responsivos.
+
+### A4 — confortos que bloquearem o dogfooding
+
+Prioridade inicial, ajustada pelos motivos reais de saída para outro editor:
+
+1. split editor;
+2. multicursor;
+3. EditorConfig;
+4. zoom do editor;
+5. links e busca no scrollback do terminal;
+6. duplo clique para selecionar palavra no terminal.
+
+Aceite do TR1: uma semana de desenvolvimento C/C++ e Rust sem abrir editor
+generalista auxiliar. Quando o usuário disser **“estou no Kinein”**, registrar
+cada exceção e corrigir primeiro o bloqueio reproduzível. Feedback dos
+testadores entra no mesmo funil, identificado pela origem e pelo ambiente, sem
+substituir evidência de reprodução.
+
+## 3. Consolidações necessárias antes de declarar substituição diária
+
+| Frente | Consolidação pendente | Evidência de aceite |
+| --- | --- | --- |
+| Distribuição | ampliar matriz Ubuntu/Fedora, canal de release, atualização e diagnóstico de runtime | AppImage validado em distros-alvo e procedimento de release repetível |
+| Entrada no trabalho | validar workspaces recentes e restauração previsível em uso prolongado | retomar projeto em um clique, sem sessão cruzada |
+| Modelo de projeto | múltiplas capacidades Cargo/CMake/Qt | Kinein compreende o próprio repositório híbrido |
+| Editor | resposta imediata local + semântica progressiva | cenários e latências medidos |
+| Terminal | rajadas, scrollback e múltiplas sessões prolongadas | teste de estresse sem atraso ou perda de interação |
+| Build/Run/Test | fluxos reais e cancelamento em projetos externos | processos encerram sem órfãos e resultados são navegáveis |
+| Debug | sessão básica confiável e inspeção útil | breakpoint, step, pilha e variáveis em fixture real |
+| Segurança de dados | soak tests de save, mudança externa, crash e drafts | nenhuma escrita silenciosa sobre snapshot antigo |
+| Ergonomia | confortos puxados pelo dogfooding | nenhum editor auxiliar necessário por lacuna diária |
+
+## 4. TR2 — primeiro patamar “um nível abaixo do CLion”
+
+Implementar o KSWE em fatias pequenas, mantendo CMake/Cargo/clangd/
+rust-analyzer como fontes autoritativas e sem criar uma engine genérica
+paralela.
+
+### B1 — Project Model autoritativo
+
+- ampliar CMake File API para codemodel, targets, configurações, sources,
+  compile groups, includes, defines e artefatos;
+- consumir Cargo Metadata para packages, targets, features e workspace;
+- normalizar ambos em snapshot versionado de Project Graph + Context Matrix;
+- atualizar por geração, descartar resultado obsoleto e respeitar orçamento;
+- criar fixtures CMake, Cargo e híbrida.
+
+### B2 — targets, perfis e toolchains como entidades
+
+- seleção explícita de target/configuração/toolchain;
+- contexto efetivo por arquivo e target;
+- presets CMake, perfis Cargo, sysroot e compile database rastreáveis;
+- interface visual fiel às Configuration Actions das specs.
+
+### B3 — inteligência semântica coordenada
+
+- scheduler LSP com prioridade ao arquivo visível e cancelamento;
+- Symbol Broker e Diagnostic Broker sem duplicar clangd/rust-analyzer;
+- Effective Compile Context explicável ao usuário;
+- caches limitados e invalidação por geração/fingerprint;
+- fallback Tree-sitter continua instantâneo e independente do LSP.
+
+### B4 — debug de IDE
+
+- watches/expressões, variáveis, pilha, breakpoints condicionais e
+  pretty-printers;
+- GDB/LLDB via DAP, sem UI chamar debugger diretamente;
+- sessões reais C/C++ e Rust com encerramento/cancelamento confiável.
+
+Aceite do TR2: desenvolver a Kinein por uma semana sem abrir CLion por falta de
+compreensão do projeto, build, navegação semântica ou debug básico.
+
+## 5. TR3 — profundidade equiparável e embarcados
+
+- múltiplos targets/contextos concorrentes e cache semântico persistente;
+- correlação de símbolos, diagnósticos e refatorações mais profundas;
+- toolchains cruzadas, sysroots e SDKs Yocto/Buildroot;
+- flash, serial, QEMU, OpenOCD/pyOCD e GDB remoto;
+- testes prolongados em projetos C, C++, Rust e embarcados reais;
+- otimização de CPU/RAM/latência sem transformar indexação em trabalho eager.
+
+## 6. Backlog complementar, depois das consolidações imediatas
+
+- opção guiada **Outra IA**: abrir uma sessão de terminal dedicada e instruir
+  o usuário a digitar o comando de inicialização da CLI que já instalou;
+- biblioteca de funções / Configuration Actions para configurar CMake/Cargo e
+  ambiente com preview, evidência e controle do usuário;
+- exportador allowlist para qualquer cópia do código entregue a terceiros, com
+  `--dry-run`, auditoria de segredos e recusa de Markdown além de `README.md`,
+  `MANUAL.md` e `Tutorial.md`; sem `.git/`/histórico privado e com o
+  repositório-fonte permanecendo privado;
+- Windows é uma frente futura separada; não diluir o objetivo Linux-first atual.
+
+## 7. Gate e definição de pronto de cada fatia
+
+1. Ler `GUIAIA.md` e as fontes do domínio antes de editar.
+2. Manter UI → CoreClient → protocolo → handler → serviço; UI não chama
+   ferramenta externa ou filesystem de workspace diretamente.
+3. Operação longa vira Job cancelável e nunca bloqueia a UI.
+4. Criar teste de core e harness QML quando houver estado visual.
+5. Executar `bash scripts/verificar.sh` e a sonda específica do domínio.
+6. Para UI/layout, validar o gesto em tela real; para packaging, executar
+   `scripts/testar-appimage.sh` e `scripts/testar-appimage-portatil.sh`.
+7. Atualizar contrato, schema, manual e arquitetura quando afetados.
+8. Registrar conclusão em `ContextoIA.md` e no doc do domínio; remover o item
+   concluído deste arquivo, sem manter listas riscadas ou post-mortems aqui.
+
+## 8. Onde ficou o histórico concluído
+
+Este é apenas um mapa para evitar duplicação:
+
+- estado técnico, decisões e checkpoints: `ContextoIA.md`;
+- rede de segurança, drafts e escrita atômica: `docs/23-rede-de-seguranca.md`;
+- autocomplete, terminal, paridade diária e UI: `docs/24-paridade-e-fundacao.md`;
+- Tree-sitter e workspace edits: `docs/25-syntax-tree-semantic-foundation.md`;
+- plano de daily driver e longo prazo: `docs/18-daily-driver-plan.md` e
+  `docs/21-long-horizon-roadmap.md`;
+- apresentação pública: `README.md`; uso da IDE: `MANUAL.md`; distribuição e
+  instalação: `Tutorial.md`;
+- alterações exatas e checkpoints: histórico Git.

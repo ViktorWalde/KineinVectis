@@ -127,6 +127,162 @@
         "Strict clippy and C++/QML gates"
       ],
       "decision": "docs/adr/ADR-0002-tree-sitter-syntax-foundation.md"
+    },
+    {
+      "id": "linuxdeploy",
+      "name": "linuxdeploy",
+      "role": "Build-time AppDir assembly and AppImage type 2 generation",
+      "adoptionMode": "A",
+      "integration": "Pinned build-only AppImage executed inside the Debian 12 packaging container; not shipped in Kinein Vectis",
+      "upstream": {
+        "repository": "https://github.com/linuxdeploy/linuxdeploy",
+        "documentation": "https://docs.appimage.org/packaging-guide/from-source/linuxdeploy-user-guide.html",
+        "release": "https://github.com/linuxdeploy/linuxdeploy/releases/tag/1-alpha-20251107-1"
+      },
+      "version": {
+        "selected": "1-alpha-20251107-1",
+        "commit": "cc7b86472c3caa3fd729b9dc502fd2aa78394257",
+        "asset": "linuxdeploy-x86_64.AppImage",
+        "sha256": "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d",
+        "pin": "Immutable GitHub release URL plus SHA256 verification before every use",
+        "reason": "Latest tagged upstream release at the 2026-07-14 review; avoids the mutable continuous channel"
+      },
+      "license": {
+        "spdx": "MIT",
+        "accepted": true,
+        "source": "LICENSE.txt from the audited release tag"
+      },
+      "maintenance": {
+        "statusAtReview": "Official linuxdeploy project; tagged release published in 2025 and continuous builds active in 2026",
+        "reviewedAt": "2026-07-14"
+      },
+      "runtimeSecurity": {
+        "shippedWithProduct": false,
+        "telemetry": false,
+        "network": false,
+        "shellExecution": true,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "notes": "Build tool launches audited local utilities/plugins such as ldd, patchelf and strip. Network is used only by the Kinein recipe to fetch the fixed official asset before SHA256 verification."
+      },
+      "scopeControls": [
+        "Runs only against a generated AppDir in the pinned packaging container",
+        "Release URL and asset checksum are fixed",
+        "No project workspace or user credentials are passed to the tool",
+        "Generated AppImage is smoke-tested before distribution"
+      ],
+      "verification": [
+        "Tag and commit verified locally",
+        "MIT license verified",
+        "Source scan found no telemetry or runtime network client",
+        "Subprocess and environment access documented as required build behavior",
+        "Pinned official binary version and SHA256 verified"
+      ],
+      "decision": "docs/adr/ADR-0003-linuxdeploy-appimage-packaging.md"
+    },
+    {
+      "id": "linuxdeploy-plugin-qt",
+      "name": "linuxdeploy-plugin-qt",
+      "role": "Build-time deployment of Qt 6 libraries, platform plugins and QML imports",
+      "adoptionMode": "A",
+      "integration": "Pinned build-only AppImage discovered by linuxdeploy inside the packaging container; not shipped in Kinein Vectis",
+      "upstream": {
+        "repository": "https://github.com/linuxdeploy/linuxdeploy-plugin-qt",
+        "documentation": "https://github.com/linuxdeploy/linuxdeploy-plugin-qt#usage",
+        "release": "https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/tag/1-alpha-20250213-1"
+      },
+      "version": {
+        "selected": "1-alpha-20250213-1",
+        "commit": "ce5291e25979d7d6417551d787f308b88c1b8d76",
+        "asset": "linuxdeploy-plugin-qt-x86_64.AppImage",
+        "sha256": "15106be885c1c48a021198e7e1e9a48ce9d02a86dd0a1848f00bdbf3c1c92724",
+        "pin": "Immutable GitHub release URL plus SHA256 verification before every use",
+        "reason": "Latest tagged upstream release at the 2026-07-14 review; explicitly supports Qt 5 and Qt 6"
+      },
+      "license": {
+        "spdx": "MIT",
+        "accepted": true,
+        "source": "LICENSE.txt from the audited release tag"
+      },
+      "maintenance": {
+        "statusAtReview": "Official linuxdeploy Qt plugin with tagged release and active continuous builds",
+        "reviewedAt": "2026-07-14"
+      },
+      "runtimeSecurity": {
+        "shippedWithProduct": false,
+        "telemetry": false,
+        "network": false,
+        "shellExecution": true,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "notes": "Build tool calls qmake and qmlimportscanner and reads explicit deployment environment variables. It does not run when the packaged IDE starts."
+      },
+      "scopeControls": [
+        "QML scan is restricted to ui/qml and the installed Qt module tree",
+        "Release URL and asset checksum are fixed",
+        "Only required Qt/QML and selected platform plugins are deployed",
+        "Qt copyright files are collected into the AppDir"
+      ],
+      "verification": [
+        "Tag and commit verified locally",
+        "MIT license verified",
+        "Source scan found no telemetry or runtime network client",
+        "Qmake/qmlimportscanner subprocess behavior documented",
+        "Pinned official binary version and SHA256 verified"
+      ],
+      "decision": "docs/adr/ADR-0003-linuxdeploy-appimage-packaging.md"
+    },
+    {
+      "id": "appimage-type2-runtime",
+      "name": "AppImage type-2 runtime",
+      "role": "Executable AppImage header that mounts or extracts the bundled AppDir and starts AppRun",
+      "adoptionMode": "A",
+      "integration": "Pinned official x86_64 runtime passed explicitly to appimagetool through LDAI_RUNTIME_FILE and embedded in every generated AppImage",
+      "upstream": {
+        "repository": "https://github.com/AppImage/type2-runtime",
+        "documentation": "https://docs.appimage.org/introduction/software-overview.html",
+        "release": "https://github.com/AppImage/type2-runtime/releases/tag/continuous"
+      },
+      "version": {
+        "selected": "continuous build from commit 75849dce7cc37e4319b633df1f116ca895c71a12",
+        "commit": "75849dce7cc37e4319b633df1f116ca895c71a12",
+        "asset": "runtime-x86_64",
+        "sha256": "1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf",
+        "pin": "Upstream exposes a mutable continuous URL; the Kinein recipe treats the recorded SHA256 as authoritative and fails closed when the asset changes",
+        "reason": "Official statically linked type-2 runtime no longer requires libfuse2 on the target system and supports extract-and-run fallback"
+      },
+      "license": {
+        "spdx": "MIT",
+        "accepted": true,
+        "source": "LICENSE from the audited commit; file also identifies statically linked musl, libfuse, squashfuse, zstd and zlib notices"
+      },
+      "maintenance": {
+        "statusAtReview": "Official AppImage organization; continuous build published 2026-06-23",
+        "reviewedAt": "2026-07-14"
+      },
+      "runtimeSecurity": {
+        "shippedWithProduct": true,
+        "telemetry": false,
+        "network": false,
+        "shellExecution": true,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "notes": "Runtime mounts/extracts its own SquashFS payload and execs AppRun. It reads only documented process/runtime environment such as PATH, TMPDIR and APPIMAGE_EXTRACT_AND_RUN."
+      },
+      "scopeControls": [
+        "Exact asset checksum is verified before appimagetool runs",
+        "Runtime commit and license were audited locally",
+        "No update information or network updater is embedded",
+        "Smoke test exercises extract-and-run without FUSE"
+      ],
+      "verification": [
+        "Commit and continuous release build verified",
+        "MIT and bundled dependency notices verified",
+        "Source scan found no telemetry, analytics, sockets or network client",
+        "Mount/extract and AppRun exec behavior documented",
+        "Official runtime SHA256 verified before packaging"
+      ],
+      "decision": "docs/adr/ADR-0003-linuxdeploy-appimage-packaging.md"
     }
   ]
 }

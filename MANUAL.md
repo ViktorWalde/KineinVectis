@@ -1,8 +1,8 @@
 # Manual do Kinein Vectis
 
-Guia completo para usar (e testar) a IDE. Você não precisa ler mais nada
-para começar — este documento cobre instalação, todas as funções, todos os
-atalhos e o que fazer quando algo der errado.
+Guia completo para usar e testar a IDE depois que ela estiver aberta. Este
+documento cobre os fluxos, recursos, atalhos e problemas encontrados durante o
+uso.
 
 > **O que é:** Kinein Vectis é uma IDE para C, C++, Rust, sistemas embarcados
 > e simulação. Ela orquestra ferramentas maduras (clangd, rust-analyzer,
@@ -16,61 +16,7 @@ atalhos e o que fazer quando algo der errado.
 
 ---
 
-## 1. Instalação
-
-### 1.1 Requisitos
-
-- Linux. Arch/CachyOS é o alvo principal e validado; o bootstrap também cobre
-  Debian/Ubuntu e Fedora, que ainda precisam da mesma cobertura contínua de CI.
-- Windows ainda não é uma plataforma suportada nesta fase. Qt, Rust e parte do
-  core são portáveis, mas shell, empacotamento, caminhos, toolchains e testes
-  de integração continuam Linux-first.
-- ~2 GB livres para compilar a IDE. Hardware modesto serve: a IDE roda bem
-  em 2 núcleos/8 GB de RAM — quem pesa são os projetos grandes, não ela.
-
-### 1.2 Instalar dependências (automático)
-
-Na pasta do projeto:
-
-```bash
-./scripts/instalar-ambiente.sh            # detecta sua distro e instala tudo
-./scripts/instalar-ambiente.sh --dry-run  # só mostra o que seria executado
-```
-
-O script instala: cmake, ninja, clang (com clangd/clang-format/clang-tidy),
-gcc, gdb, lldb, Qt6, rustup (+ rustfmt/clippy), rust-analyzer, ripgrep e fd.
-No final ele verifica ferramenta por ferramenta e diz o que faltou.
-
-> **Baixar a IDE pronta x compilar o repositório:** hoje os testadores usam o
-> checkout e, por isso, precisam de Rust e Qt para compilar a própria IDE. O
-> pacote futuro (AUR/AppImage) levará UI, core e runtime Qt necessários para
-> simplesmente abrir a Kinein. Compiladores, CMake, Ninja, clangd,
-> rust-analyzer e debugadores continuam ferramentas externas: o usuário
-> instala somente as exigidas pelo tipo de projeto que pretende desenvolver.
-
-### 1.3 Compilar a IDE
-
-```bash
-cargo build --release -p kinein-core        # o "cérebro" (Rust)
-cmake --preset dev-local-release            # configura a interface (1ª vez)
-cmake --build --preset dev-local-release    # compila a interface (Qt)
-```
-
-> Se o build reclamar de caminhos de outra distro (ex.:
-> `/usr/lib/x86_64-linux-gnu/...`), apague a pasta correspondente dentro de
-> `build/` e reconfigure — cache de CMake de outra máquina não se corrige
-> sozinho.
-
-### 1.4 Rodar
-
-```bash
-./scripts/kinein-vectis            # pelo terminal
-./scripts/instalar-atalho.sh       # instala "Kinein Vectis" no menu de apps
-```
-
----
-
-## 2. Primeiros passos
+## 1. Primeiros passos
 
 1. A IDE abre na **Start Screen**, que mostra o estado das ferramentas sem
    instalar ou alterar nada automaticamente. Clique em **Abrir workspace**
@@ -80,6 +26,13 @@ cmake --build --preset dev-local-release    # compila a interface (Qt)
 3. A árvore de arquivos aparece à esquerda. Clique num arquivo para editar.
 4. Ao reabrir o mesmo projeto depois, **suas abas voltam como estavam**
    (sessão automática).
+
+Depois da primeira abertura bem-sucedida, o projeto aparece em **Workspaces
+recentes** na Start Screen e em **Arquivo → Abrir recente**. Um clique reabre o
+workspace e restaura suas abas. Na Start Screen também é possível **fixar** os
+projetos mais importantes no topo, remover uma entrada ou limpar toda a lista.
+Se uma pasta foi movida ou apagada, ela aparece como **caminho ausente**, fica
+desabilitada e pode ser removida com segurança.
 
 Também dá para **criar** um projeto novo (Rust/Cargo ou C++/CMake) pela Start
 Screen. O seletor mostra antes os arquivos e comandos que serão usados. O
@@ -103,7 +56,7 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
 
 ---
 
-## 3. O layout
+## 2. O layout
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
@@ -139,9 +92,9 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
 
 ---
 
-## 4. Editor
+## 3. Editor
 
-### 4.1 Edição
+### 3.1 Edição
 
 | Atalho | Ação |
 | --- | --- |
@@ -217,7 +170,7 @@ momento.
 Digitar `<` logo depois de `#include ` já fecha em `<>` com o cursor no
 meio (só nesse contexto — em comparações e templates o `<` fica normal).
 
-### 4.2 Inteligência de código (LSP)
+### 3.2 Inteligência de código (LSP)
 
 Funciona em Rust (rust-analyzer) e C/C++ (clangd). Os servidores sobem
 sozinhos ao abrir o primeiro arquivo da linguagem — a primeira resposta
@@ -254,7 +207,7 @@ transação; **Cancelar** não toca no disco. Se algum arquivo mudou desde o
 preview, a operação inteira é recusada e nenhum arquivo fica parcialmente
 alterado.
 
-### 4.3 Navegação e busca
+### 3.3 Navegação e busca
 
 | Atalho | Ação |
 | --- | --- |
@@ -288,7 +241,7 @@ grupo capturado.
 
 ---
 
-## 5. Build, testes e análise
+## 4. Build, testes e análise
 
 | Atalho | Ação | Onde ver o resultado |
 | --- | --- | --- |
@@ -312,7 +265,7 @@ com a mensagem do cargo e um botão para tentar de novo.
 
 ---
 
-## 5.1 Depurar (debugger)
+### 4.1 Depurar (debugger)
 
 Funciona em C/C++ e Rust via `lldb-dap` (instalado junto com o lldb).
 
@@ -351,7 +304,7 @@ está no projeto; a linha do cursor fica levemente destacada.
 
 ---
 
-## 5.2 Git (status)
+### 4.2 Git
 
 Se o projeto for um repositório git, a IDE mostra sem você pedir:
 
@@ -402,7 +355,7 @@ com mudanças do worktree. Metadados `.kinein` nunca entram no stash.
 
 ---
 
-## 6. Terminal (shell e execução)
+## 5. Terminal (shell e execução)
 
 A aba **Terminal** tem várias sessões de shell, alternáveis pelos chips no
 topo, além da sessão separada **Execução**:
@@ -439,7 +392,7 @@ projeto.
 Enquanto um processo estiver rodando, a aba mostra **Terminal ●**. O botão
 **limpar** zera a saída da sessão ativa (só dela).
 
-## 7. KV Context (opcional)
+## 6. KV Context (opcional)
 
 O **KV Context** é o atalho visual para uma CLI de IA rodando em um terminal
 PTY real separado do terminal comum da IDE. Ao abrir o painel:
@@ -447,8 +400,21 @@ PTY real separado do terminal comum da IDE. Ao abrir o painel:
 1. escolha **Claude** ou **Codex**; Claude é a preferência inicial;
 2. a IDE informa se o comando `claude`/`codex` foi encontrado no `PATH`;
 3. clique em **Iniciar** para abrir a CLI na raiz do workspace;
-4. use **Sair** para encerrar só essa sessão ou **Trocar** para voltar ao
-   seletor e escolher outra CLI.
+4. depois que a sessão abrir, o seletor some e a área vira o terminal real;
+5. no header compacto, use **ampliar/restaurar**, **trocar** ou **encerrar**.
+
+Durante a sessão, arraste o divisor à esquerda do KV Context para escolher a
+largura entre 300 e 720px; essa largura é lembrada separadamente do seletor.
+A árvore **Project** continua disponível e pode ser aberta/fechada sem alterar
+essa preferência. Em janelas estreitas, a largura mostrada é limitada apenas
+para preservar uma faixa do editor. **Ampliar** usa toda a área de trabalho e
+**restaurar** volta ao layout lado a lado.
+
+A barra de rolagem à direita permanece visível, e roda/arrasto navegam o mesmo
+scrollback do Terminal integrado mesmo enquanto chegam novas respostas.
+Digitar volta ao fim ao vivo. Seleção com mouse, `Ctrl+Shift+C`,
+`Ctrl+Shift+V`, clique do meio, setas, `Shift+Tab`, Home/End/Page Up/Page Down
+e F1–F12 seguem o comportamento de terminal.
 
 O Claude CLI ou Codex CLI precisa estar **previamente instalado e autenticado
 pelo usuário**. A Kinein não instala a CLI, não guarda credenciais, não chama
@@ -457,13 +423,27 @@ comportamento de rede e dados é o da ferramenta externa. O terminal comum e o
 KV Context compartilham o motor de PTY por baixo dos panos, mas mantêm sessões
 e superfícies visuais separadas.
 
+No perfil Codex, a Kinein acrescenta a opção oficial
+`--no-alt-screen`. Ela mantém a própria interface do Codex em modo inline para
+que a conversa produza histórico e possa ser rolada; nenhuma resposta é
+reinterpretada ou renderizada como chat da IDE. Como algumas versões ainda
+pedem ao terminal para apagar o scrollback nesse modo, o KV Context ignora
+somente esse pedido de limpeza nas sessões de IA; o Terminal comum mantém o
+comportamento normal do comando `clear`.
+
+Nesse modo, o KV Context demarca discretamente a linha ativa do terminal para
+que a digitação não pareça flutuar. Não é um segundo campo de entrada: avisos
+de uso, prompt e status do modelo continuam sendo desenhados pela própria CLI.
+O fundo e o contorno envolvem a altura dos caracteres, inclusive quando a CLI
+aplica cores ANSI próprias à linha.
+
 A opção guiada para outras ferramentas de IA será acrescentada em uma etapa
 posterior, depois da validação desta correção. Ela deverá levar ao terminal e
 explicar que o usuário precisa digitar o comando de inicialização da sua CLI.
 
 ---
 
-## 7.1 Configurações (`Ctrl+Alt+S`)
+## 7. Configurações (`Ctrl+Alt+S`)
 
 Abra as configurações com `Ctrl+Alt+S` (ou "Configurações" no Search
 Everywhere). No v1 há quatro opções, que valem para **todos os projetos**:
@@ -513,11 +493,9 @@ pode ser disparado pelo banner de Project Health.
    (especialmente rust-analyzer). O completion sintático local aparece antes;
    navegação, tipos e resultados semânticos completos chegam quando o servidor
    termina a primeira preparação.
-4. **Ferramenta faltando?** Veja a aba Ferramentas ou rode
-   `./scripts/instalar-ambiente.sh` de novo.
-5. **A IDE não abre?** Rode `./scripts/kinein-vectis` pelo terminal e mande
-   a saída junto do report.
-6. **O motor (core) caiu?** A IDE se recupera sozinha: a barra de status
+4. **Ferramenta faltando?** Veja a aba Ferramentas e siga a sugestão exibida
+   para o seu sistema.
+5. **O motor (core) caiu?** A IDE se recupera sozinha: a barra de status
    mostra "recuperando..." por um instante e reconecta ao mesmo projeto,
    mantendo suas abas abertas — sem reiniciar a janela. Se ele cair várias
    vezes seguidas, a recuperação pausa e a status bar avisa; aí veja o log

@@ -42,6 +42,55 @@ pub struct WorkspaceOpenParams {
     pub path: String,
 }
 
+/// One globally persisted workspace shown in the Start Screen and File menu.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentWorkspaceInfo {
+    /// Display name captured from the last successful workspace opening.
+    pub name: String,
+    /// Canonical absolute workspace root.
+    pub root: String,
+    /// Last successful opening time as Unix epoch milliseconds.
+    pub last_opened_at: u64,
+    /// Whether the user pinned this entry above ordinary recent workspaces.
+    pub pinned: bool,
+    /// Whether the root still exists as a directory.
+    pub available: bool,
+}
+
+/// Empty parameters accepted by `workspace.recent.list` and
+/// `workspace.recent.clear`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RecentWorkspacesParams {}
+
+/// Parameters for `workspace.recent.pin`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RecentWorkspacePinParams {
+    /// Canonical root already present in the recent-workspace list.
+    pub root: String,
+    /// New pinned state.
+    pub pinned: bool,
+}
+
+/// Parameters for `workspace.recent.remove`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RecentWorkspaceRemoveParams {
+    /// Canonical root to remove, even when it no longer exists on disk.
+    pub root: String,
+}
+
+/// Complete recent-workspace snapshot returned by every `workspace.recent.*`
+/// operation.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecentWorkspacesResult {
+    /// Pinned-first, last-opened-descending workspace list.
+    pub workspaces: Vec<RecentWorkspaceInfo>,
+}
+
 /// Editor session restored with `workspace.open` (open tabs + active tab).
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -159,7 +208,8 @@ mod tests {
     use serde_json::json;
 
     use crate::{
-        ProjectKind, WorkspaceBrowseParams, WorkspaceCreateFolderParams,
+        ProjectKind, RecentWorkspaceInfo, RecentWorkspacePinParams, RecentWorkspaceRemoveParams,
+        RecentWorkspacesParams, WorkspaceBrowseParams, WorkspaceCreateFolderParams,
         WorkspaceCreateProjectParams, WorkspaceInfo, WorkspaceOpenParams, WorkspaceProjectTemplate,
     };
 
@@ -185,6 +235,37 @@ mod tests {
 
         assert_eq!(valid.unwrap().path, "/tmp");
         assert!(invalid.is_err());
+    }
+
+    #[test]
+    fn recent_workspace_payloads_use_camel_case_and_strict_params() {
+        let info = RecentWorkspaceInfo {
+            name: "demo".to_owned(),
+            root: "/tmp/demo".to_owned(),
+            last_opened_at: 42,
+            pinned: true,
+            available: false,
+        };
+        let value = serde_json::to_value(info).unwrap();
+        assert_eq!(value["lastOpenedAt"], 42);
+        assert_eq!(value["pinned"], true);
+
+        assert!(serde_json::from_value::<RecentWorkspacesParams>(json!({})).is_ok());
+        assert!(serde_json::from_value::<RecentWorkspacesParams>(json!({ "x": 1 })).is_err());
+        assert!(
+            serde_json::from_value::<RecentWorkspacePinParams>(json!({
+                "root": "/tmp/demo",
+                "pinned": true,
+            }))
+            .is_ok()
+        );
+        assert!(
+            serde_json::from_value::<RecentWorkspaceRemoveParams>(json!({
+                "root": "/tmp/demo",
+                "extra": false,
+            }))
+            .is_err()
+        );
     }
 
     #[test]

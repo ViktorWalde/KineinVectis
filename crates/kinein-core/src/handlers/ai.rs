@@ -18,6 +18,7 @@ struct ProfileSpec {
     id: AiCliProfileId,
     name: &'static str,
     command: &'static str,
+    args: &'static [&'static str],
 }
 
 const PROFILES: &[ProfileSpec] = &[
@@ -25,11 +26,17 @@ const PROFILES: &[ProfileSpec] = &[
         id: AiCliProfileId::Claude,
         name: "Claude CLI",
         command: "claude",
+        args: &[],
     },
     ProfileSpec {
         id: AiCliProfileId::Codex,
         name: "Codex CLI",
         command: "codex",
+        // O TUI padrao usa a alternate screen, que por definicao nao gera
+        // scrollback. No painel dedicado da IDE usamos o modo inline oficial
+        // do Codex: a conversa continua sendo renderizada pela CLI real, mas
+        // ganha o mesmo historico navegavel de um terminal profissional.
+        args: &["--no-alt-screen"],
     },
 ];
 
@@ -99,19 +106,31 @@ impl Core {
         let Some(terminal) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "aiBridge.terminal.open");
         };
-        match terminal.open_command(&root, &command, &[]) {
+        let args: Vec<String> = profile
+            .args
+            .iter()
+            .map(|argument| (*argument).to_owned())
+            .collect();
+        match terminal.open_command_preserving_scrollback(&root, &command, &args) {
             Ok(id) => JsonRpcResponse::success(
                 request_id,
                 json!(AiTerminalOpenResult {
                     id,
                     profile_id: profile.id,
                     name: profile.name.to_owned(),
-                    command,
+                    command: display_command(&command, profile.args),
                 }),
             ),
             Err(error) => terminal_error_response(request_id, &error),
         }
     }
+}
+
+fn display_command(program: &str, args: &[&str]) -> String {
+    if args.is_empty() {
+        return program.to_owned();
+    }
+    format!("{program} {}", args.join(" "))
 }
 
 fn profile_spec(id: AiCliProfileId) -> &'static ProfileSpec {
@@ -133,4 +152,22 @@ fn missing_cli_response(request_id: Option<Value>, profile: &ProfileSpec) -> Jso
             Some(json!({ "command": profile.command, "profileId": profile.id })),
         ),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use kinein_protocol::AiCliProfileId;
+
+    use super::{display_command, profile_spec};
+
+    #[test]
+    fn codex_uses_its_official_inline_terminal_mode() {
+        let profile = profile_spec(AiCliProfileId::Codex);
+
+        assert_eq!(profile.args, ["--no-alt-screen"]);
+        assert_eq!(
+            display_command("/usr/bin/codex", profile.args),
+            "/usr/bin/codex --no-alt-screen"
+        );
+    }
 }

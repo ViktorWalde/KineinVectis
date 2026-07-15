@@ -62,6 +62,10 @@ set_source_files_properties(qml/panels/bottom/ProblemsPanel.qml PROPERTIES QT_RE
 set_source_files_properties(qml/panels/bottom/RunPanel.qml PROPERTIES QT_RESOURCE_ALIAS RunPanel.qml)
 set_source_files_properties(qml/panels/bottom/SearchPanel.qml PROPERTIES QT_RESOURCE_ALIAS SearchPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalPanel.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPanel.qml)
+set_source_files_properties(qml/panels/bottom/TerminalViewport.qml PROPERTIES QT_RESOURCE_ALIAS TerminalViewport.qml)
+set_source_files_properties(qml/panels/bottom/TerminalScrollController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalScrollController.qml)
+set_source_files_properties(qml/panels/bottom/TerminalSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSelectionController.qml)
+set_source_files_properties(qml/panels/bottom/TerminalInputController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalInputController.qml)
 set_source_files_properties(qml/panels/bottom/TestsPanel.qml PROPERTIES QT_RESOURCE_ALIAS TestsPanel.qml)
 set_source_files_properties(qml/panels/bottom/ToolsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ToolsPanel.qml)
 set_source_files_properties(qml/workspace/FolderPickerDialog.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerDialog.qml)
@@ -74,10 +78,13 @@ set_source_files_properties(qml/workspace/FolderPickerDirectoryList.qml PROPERTI
 set_source_files_properties(qml/workspace/FolderPickerActionRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerActionRow.qml)
 set_source_files_properties(qml/workspace/FolderPickerCard.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCard.qml)
 set_source_files_properties(qml/workspace/WorkspaceController.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceController.qml)
+set_source_files_properties(qml/workspace/RecentWorkspacesController.qml PROPERTIES QT_RESOURCE_ALIAS RecentWorkspacesController.qml)
+set_source_files_properties(qml/workspace/RecentWorkspacesCard.qml PROPERTIES QT_RESOURCE_ALIAS RecentWorkspacesCard.qml)
 set_source_files_properties(qml/workspace/StartScreen.qml PROPERTIES QT_RESOURCE_ALIAS StartScreen.qml)
 set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthController.qml)
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/assistant/AssistantPanel.qml PROPERTIES QT_RESOURCE_ALIAS AssistantPanel.qml)
+set_source_files_properties(qml/assistant/AssistantTerminalHeader.qml PROPERTIES QT_RESOURCE_ALIAS AssistantTerminalHeader.qml)
 set_source_files_properties(qml/assistant/AssistantController.qml PROPERTIES QT_RESOURCE_ALIAS AssistantController.qml)
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
@@ -114,6 +121,8 @@ set_source_files_properties(qml/editor/EditorUsagesPopup.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/editor/EditorFindController.qml PROPERTIES QT_RESOURCE_ALIAS EditorFindController.qml)
 set_source_files_properties(qml/editor/EditorFindBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorFindBar.qml)
 set_source_files_properties(qml/editor/EditorExternalChangeBanner.qml PROPERTIES QT_RESOURCE_ALIAS EditorExternalChangeBanner.qml)
+set_source_files_properties(qml/editor/EditorOutlineController.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineController.qml)
+set_source_files_properties(qml/editor/EditorOutlinePanel.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlinePanel.qml)
 
 set(KINEIN_MANUAL_FILE "${CMAKE_SOURCE_DIR}/MANUAL.md")
 set_source_files_properties("${KINEIN_MANUAL_FILE}" PROPERTIES QT_RESOURCE_ALIAS MANUAL.md)
@@ -172,6 +181,10 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/RunPanel.qml
         qml/panels/bottom/SearchPanel.qml
         qml/panels/bottom/TerminalPanel.qml
+        qml/panels/bottom/TerminalViewport.qml
+        qml/panels/bottom/TerminalScrollController.qml
+        qml/panels/bottom/TerminalSelectionController.qml
+        qml/panels/bottom/TerminalInputController.qml
         qml/panels/bottom/TestsPanel.qml
         qml/panels/bottom/ToolsPanel.qml
         qml/workspace/FolderPickerDialog.qml
@@ -184,10 +197,13 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/FolderPickerActionRow.qml
         qml/workspace/FolderPickerCard.qml
         qml/workspace/WorkspaceController.qml
+        qml/workspace/RecentWorkspacesController.qml
+        qml/workspace/RecentWorkspacesCard.qml
         qml/workspace/StartScreen.qml
         qml/workspace/ProjectHealthController.qml
         qml/workspace/WorkspaceUiResetter.qml
         qml/assistant/AssistantPanel.qml
+        qml/assistant/AssistantTerminalHeader.qml
         qml/assistant/AssistantController.qml
         qml/jobs/JobsController.qml
         qml/runtime/RuntimeController.qml
@@ -251,3 +267,31 @@ kinein_enable_strict_compiler_options(kinein-vectis)
 target_include_directories(kinein-vectis PRIVATE src)
 
 target_link_libraries(kinein-vectis PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+
+# Keep the install tree AppDir/FHS-compatible. The Rust core is built and
+# installed by the AppImage recipe because it is not a CMake target.
+install(TARGETS kinein-vectis RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(
+    FILES assets/app-icon.png
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps"
+    RENAME kinein-vectis.png
+)
+install(
+    FILES "${CMAKE_SOURCE_DIR}/packaging/appimage/io.github.viktorwalde.KineinVectis.desktop"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/applications"
+)
+install(
+    FILES "${CMAKE_SOURCE_DIR}/packaging/appimage/io.github.viktorwalde.KineinVectis.appdata.xml"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo"
+)
+install(
+    FILES "${KINEIN_MANUAL_FILE}"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/kinein-vectis"
+)
+install(
+    FILES
+        "${CMAKE_SOURCE_DIR}/LICENSE-MIT.txt"
+        "${CMAKE_SOURCE_DIR}/LICENSE-APACHE-2.0.txt"
+        "${CMAKE_SOURCE_DIR}/packaging/appimage/KINEIN_LICENSE_NOTICE.txt"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/kinein-vectis"
+)

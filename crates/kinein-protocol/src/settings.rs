@@ -59,6 +59,9 @@ pub struct SettingsValues {
     /// Preferred KV Context width in logical pixels.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_width: Option<u32>,
+    /// Preferred width of an active external AI terminal in logical pixels.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub assistant_terminal_width: Option<u32>,
     /// Preferred bottom tool-window height in logical pixels.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bottom_panel_height: Option<u32>,
@@ -89,6 +92,8 @@ pub struct EffectiveSettings {
     pub explorer_width: u32,
     /// Effective KV Context width.
     pub context_width: u32,
+    /// Effective width of an active external AI terminal.
+    pub assistant_terminal_width: u32,
     /// Effective bottom tool-window height.
     pub bottom_panel_height: u32,
     /// Effective editor Structure width.

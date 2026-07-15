@@ -4,6 +4,7 @@ CMakeUserPresets.json
 .idea/
 .vscode/
 /build/
+/dist/
 /compile_commands.json
 /.cache/
 /.kinein/

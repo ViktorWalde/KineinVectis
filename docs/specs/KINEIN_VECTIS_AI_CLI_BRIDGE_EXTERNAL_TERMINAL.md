@@ -209,6 +209,34 @@ aviso: command configured by user
 
 O usuário deve saber que está em um terminal especial.
 
+### 4.3 Fidelidade de terminal
+
+Depois que a CLI é iniciada, a superfície deve ser **terminal-first** e usar o
+mesmo renderer/PTY do Terminal comum:
+
+```text
+- grid VT e cursor reais;
+- cores/atributos xterm-256color;
+- teclado caractere a caractere e modos application-cursor;
+- bracketed paste quando solicitado pela aplicação;
+- seleção, copiar/colar e clique do meio;
+- roda, barra arrastável e scrollback visível;
+- resize coalescido e fluido.
+```
+
+O seletor de perfis existe apenas antes da sessão. Cards, explicações ou UI de
+chat não devem dividir o espaço com o prompt depois que Claude/Codex abriu.
+
+Para Codex, a integração pode usar a opção oficial `--no-alt-screen` como
+argumento fixo do perfil. Ela preserva o TUI real em modo inline e torna a
+conversa navegável pelo scrollback da IDE; não é parser, wrapper visual nem
+comando livre criado pela UI.
+
+Se a CLI emitir `CSI 3 J` mesmo no modo inline, o bridge pode suprimir somente
+essa sequência para cumprir a promessa de transcript navegável. A política é
+exclusiva das sessões de IA: o Terminal comum continua honrando comandos de
+limpeza integralmente, e nenhum outro escape ou conteúdo da TUI é alterado.
+
 ---
 
 ## 5. Fluxo principal
@@ -670,6 +698,22 @@ Problems
 
 A aba AI Terminal deve ser distinta, mas discreta.
 
+Na implementação do shell atual, essa superfície pode ocupar o painel direito
+**KV Context**, desde que continue separada do Terminal comum e obedeça às
+mesmas capacidades de terminal. A largura 300–480px vale para o seletor e para
+o estado compacto. Com uma CLI ativa:
+
+```text
+- largura inicial recomendada: cerca de 50% da área;
+- splitter livre e largura persistida da sessão entre 300 e 720px, separada
+  dos 300–480px do seletor compacto;
+- preservar uma faixa útil do editor quando não maximizado;
+- oferecer maximização/reversão imediata da área de trabalho;
+- manter Project como escolha independente; ocultá-lo apenas na maximização
+  explícita, sem apagar a preferência de largura;
+- recalcular cols/rows do PTY sem rajadas de resize por pixel.
+```
+
 ### 13.2 Visual
 
 ```text
@@ -687,6 +731,10 @@ Kinein only prepared the context and launched the command.
 ```
 
 Essa mensagem pode ser compacta.
+
+Depois do primeiro uso, basta um header técnico compacto com perfil, comando
+efetivo e ações de ampliar, trocar e encerrar. A mensagem explicativa não deve
+reduzir permanentemente a área de digitação.
 
 ---
 

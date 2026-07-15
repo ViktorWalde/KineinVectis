@@ -401,12 +401,16 @@ falar comigo antes?"* Só faz sentido com M4 (robustez) maduro.
 ### M7.1 — Empacotamento e release
 
 ```text
-- Ordem: PKGBUILD (AUR; a máquina-alvo é Arch) → AppImage (cobre o
-  resto) → Flatpak (se houver demanda). Binário do core + UI + qml no
-  mesmo pacote, incluindo o runtime Qt necessário. Rust/Qt deixam de ser
-  pré-requisito do usuário final; compiladores, LSPs, build systems e
-  debugadores permanecem dependências externas por linguagem. O pacote deve
-  declará-las como opcionais/recomendadas, nunca instalar tudo silenciosamente.
+- [FUNDAÇÃO FEITA 2026-07-14] AppImage x86_64 reproduzível em builder Debian
+  12, com UI + core + Qt/QML + metadados/licenças/checksum. Smoke aprovado no
+  Arch e sem rede num Debian mínimo sem Qt/Rust/compiladores. Decisão e pins:
+  ADR-0003. Baseline glibc 2.36; não prometer distros anteriores sem nova base.
+- Próximos passos de release: matriz Ubuntu/Fedora, automação de artefatos,
+  changelog, assinatura/proveniência e diagnóstico de runtime. PKGBUILD/AUR é
+  alternativa para Arch e Flatpak só entra se houver demanda.
+- Compiladores, LSPs, build systems e debugadores permanecem dependências
+  externas por linguagem. O pacote deve declará-las como opcionais/
+  recomendadas, nunca instalar tudo silenciosamente.
 - Versionamento: a IDE ganha versão própria (0.x) desacoplada do
   protocolo IPC; changelog GERADO das seções [feito] de docs/18 (fonte
   única, sem duplicar histórico).
@@ -432,11 +436,16 @@ falar comigo antes?"* Só faz sentido com M4 (robustez) maduro.
 - O repositório privado continua sendo a fonte completa. Publicar por um
   exportador allowlist para um espelho separado; nunca tornar o remoto privado
   atual público por engano.
-- Entre arquivos Markdown, o espelho contém somente README.md e MANUAL.md.
-  ContextoIA.md, PONTO_ATUAL.md, AGENTS.md, docs/specs, roadmaps e notas de
-  agentes ficam privados. Licenças/atribuições usam LICENSE, JSON ou TXT.
-- README com screenshot real + status honesto; MANUAL.md é a única
-  documentação extensa pública e também alimenta o visualizador interno.
+- Qualquer cópia do código entregue a terceiros contém, entre arquivos
+  Markdown, somente README.md, MANUAL.md e Tutorial.md. GUIAIA.md,
+  ContextoIA.md, PONTO_ATUAL.md, AGENTS.md, `docs/`, `prompts/`, roadmaps e
+  notas de agentes ficam privados. Licenças/atribuições usam LICENSE, JSON ou
+  TXT. `.git/` e o histórico privado não entram; eventual espelho começa com
+  histórico próprio. O repositório-fonte nunca muda de visibilidade para essa
+  entrega.
+- README apresenta o produto e o status; MANUAL.md cobre somente o uso da IDE
+  e alimenta o visualizador interno; Tutorial.md cobre instalação,
+  distribuição, atualização e geração do pacote.
 - O exportador precisa de `--dry-run`, lista explícita do que entra, rejeição
   de Markdown extra e auditoria de segredos antes de qualquer push.
 - i18n: extrair strings (qsTr já usado em toda a UI) e gerar inglês
@@ -608,7 +617,8 @@ para não nascer capado; T9/T8 são polimento.
    (sanitizers/pretty printers) entram colados na decisão de engine
    M5.4 e nos run profiles.
 10. M6 na ordem 6.3 → 6.1 → 6.2 → 6.4; T9/T8 como polimento entre elas.
-11. M7 quando existir um segundo usuário diário real.
+11. [FUNDAÇÃO M7.1 FEITA 2026-07-14] AppImage portátil; matriz de release,
+    M7.2–M7.4 e distribuição ampla avançam quando houver testadores reais.
 ```
 
 Cada item acima, ao ser executado, ganha sua seção "Fatia" em docs/18

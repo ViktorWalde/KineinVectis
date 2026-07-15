@@ -45,6 +45,47 @@ const READ_CHUNK_BYTES: usize = 8192;
 const FRAME: Duration = Duration::from_millis(33);
 /// Teto de terminais abertos ao mesmo tempo (cada um é um shell + 3 threads).
 const MAX_SESSIONS: usize = 12;
+/// CSI usado por aplicações para apagar também o histórico do terminal.
+const ERASE_SCROLLBACK_SEQUENCE: &[u8] = b"\x1b[3J";
+
+/// Filtro estreito para sessões de AI CLI que prometem transcript navegável.
+///
+/// Algumas versões do Codex emitem `CSI 3 J` mesmo com `--no-alt-screen`.
+/// Um emulador VT correto obedece e apaga o scrollback; dentro do KV Context
+/// isso destrói justamente o histórico que o modo inline deveria preservar.
+/// O filtro remove somente essa sequência, inclusive quando dividida entre
+/// leituras do PTY. O Terminal comum continua honrando `clear` integralmente.
+#[derive(Debug, Default)]
+struct ScrollbackPreserver {
+    pending: Vec<u8>,
+}
+
+impl ScrollbackPreserver {
+    fn push(&mut self, bytes: &[u8]) -> Vec<u8> {
+        let mut input = std::mem::take(&mut self.pending);
+        input.extend_from_slice(bytes);
+        let mut output = Vec::with_capacity(input.len());
+        let mut index = 0;
+
+        while index < input.len() {
+            let remaining = &input[index..];
+            if remaining.starts_with(ERASE_SCROLLBACK_SEQUENCE) {
+                index += ERASE_SCROLLBACK_SEQUENCE.len();
+            } else if ERASE_SCROLLBACK_SEQUENCE.starts_with(remaining) {
+                self.pending.extend_from_slice(remaining);
+                break;
+            } else {
+                output.push(input[index]);
+                index += 1;
+            }
+        }
+        output
+    }
+
+    fn finish(&mut self) -> Vec<u8> {
+        std::mem::take(&mut self.pending)
+    }
+}
 
 /// Error produced by the terminal session manager.
 #[derive(Debug)]
@@ -171,6 +212,28 @@ impl TerminalManager {
         program: &str,
         args: &[String],
     ) -> Result<String, TerminalError> {
+        self.open_command_with_policy(root, program, args, false)
+    }
+
+    /// Opens an explicit command while preserving the host scrollback from
+    /// application-issued erase-history sequences. Used only by AI CLI
+    /// surfaces whose transcript must remain navigable.
+    pub fn open_command_preserving_scrollback(
+        &mut self,
+        root: &Path,
+        program: &str,
+        args: &[String],
+    ) -> Result<String, TerminalError> {
+        self.open_command_with_policy(root, program, args, true)
+    }
+
+    fn open_command_with_policy(
+        &mut self,
+        root: &Path,
+        program: &str,
+        args: &[String],
+        preserve_scrollback: bool,
+    ) -> Result<String, TerminalError> {
         // Sessões mortas (shell saiu) não contam pro teto nem seguram memória.
         self.sessions
             .retain(|_id, session| session.running.load(Ordering::SeqCst));
@@ -195,6 +258,8 @@ impl TerminalManager {
         command.args(args);
         command.cwd(root);
         command.env("TERM", "xterm-256color");
+        command.env("COLORTERM", "truecolor");
+        command.env("TERM_PROGRAM", "KineinVectis");
         let child = pair
             .slave
             .spawn_command(command)
@@ -220,7 +285,7 @@ impl TerminalManager {
         let killer = child.clone_killer();
         let dirty = Arc::new(AtomicBool::new(false));
 
-        self.spawn_reader(&id, reader, &parser, &dirty);
+        self.spawn_reader(&id, reader, &parser, &dirty, preserve_scrollback);
         self.spawn_emitter(&id, &parser, &dirty, &running);
         self.spawn_waiter(&id, child, &running);
 
@@ -244,6 +309,7 @@ impl TerminalManager {
         mut reader: Box<dyn Read + Send>,
         parser: &Arc<Mutex<Parser>>,
         dirty: &Arc<AtomicBool>,
+        preserve_scrollback: bool,
     ) {
         let parser = Arc::clone(parser);
         let dirty = Arc::clone(dirty);
@@ -251,14 +317,31 @@ impl TerminalManager {
         let id = id.to_owned();
         thread::spawn(move || {
             let mut buffer = [0_u8; READ_CHUNK_BYTES];
+            let mut preserver = preserve_scrollback.then(ScrollbackPreserver::default);
             while let Ok(bytes_read) = reader.read(&mut buffer) {
                 if bytes_read == 0 {
                     break;
                 }
+                let filtered = preserver
+                    .as_mut()
+                    .map(|filter| filter.push(&buffer[..bytes_read]));
+                let bytes = filtered.as_deref().unwrap_or(&buffer[..bytes_read]);
+                if bytes.is_empty() {
+                    continue;
+                }
                 if let Ok(mut parser) = parser.lock() {
-                    parser.process(&buffer[..bytes_read]);
+                    parser.process(bytes);
                 }
                 dirty.store(true, Ordering::SeqCst);
+            }
+            if let Some(filter) = preserver.as_mut() {
+                let remaining = filter.finish();
+                if !remaining.is_empty() {
+                    if let Ok(mut parser) = parser.lock() {
+                        parser.process(&remaining);
+                    }
+                    dirty.store(true, Ordering::SeqCst);
+                }
             }
             // EOF: garante o render do estado final antes do `closed`.
             emit_render(&events, &id, &parser);
@@ -428,6 +511,12 @@ fn emit_render(events: &EventSender, id: &str, parser: &Arc<Mutex<Parser>>) {
                 "col": cursor_col,
                 "visible": !screen.hide_cursor(),
             },
+            // Modos que mudam como um terminal real deve traduzir input.
+            // A UI continua burra em relacao ao TUI: apenas respeita o estado
+            // VT mantido pelo parser ao enviar teclas e paste.
+            "alternateScreen": screen.alternate_screen(),
+            "applicationCursor": screen.application_cursor(),
+            "bracketedPaste": screen.bracketed_paste(),
             // D2.3/B2: a UI precisa dos dois pra desenhar a barra de rolagem.
             // `scrollback` é a verdade sobre onde a view está (o core clampa o
             // pedido da UI); `scrollbackMax` é quanto histórico existe.
@@ -538,11 +627,15 @@ fn color_value(color: vt100::Color) -> Option<Value> {
 
 #[cfg(test)]
 mod tests {
-    use std::{path::PathBuf, sync::mpsc, time::Duration};
+    use std::{
+        path::PathBuf,
+        sync::{Arc, Mutex, mpsc},
+        time::Duration,
+    };
 
     use kinein_protocol::JsonRpcRequest;
 
-    use super::{TerminalError, TerminalManager};
+    use super::{ScrollbackPreserver, TerminalError, TerminalManager, emit_render};
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -636,6 +729,34 @@ mod tests {
             render_contains(&receiver, "ai-bridge-ok"),
             "o comando explicito nao apareceu no renderer compartilhado"
         );
+    }
+
+    #[test]
+    fn render_exposes_input_modes_and_scrollbar_capacity() {
+        let (sender, receiver) = mpsc::channel();
+        let parser = Arc::new(Mutex::new(vt100::Parser::new(3, 20, 100)));
+        if let Ok(mut parser) = parser.lock() {
+            parser.process(b"\x1b[?1h\x1b[?2004h1\r\n2\r\n3\r\n4\r\n5");
+        }
+
+        emit_render(&sender, "t1", &parser);
+        let event = receiver.recv_timeout(Duration::from_secs(1)).unwrap();
+        let params = event.params.unwrap();
+
+        assert_eq!(params["applicationCursor"], true);
+        assert_eq!(params["bracketedPaste"], true);
+        assert_eq!(params["alternateScreen"], false);
+        assert!(params["scrollbackMax"].as_u64().is_some_and(|max| max > 0));
+    }
+
+    #[test]
+    fn ai_scrollback_filter_survives_chunk_boundaries() {
+        let mut filter = ScrollbackPreserver::default();
+        let mut output = filter.push(b"before\x1b[");
+        output.extend(filter.push(b"3Jafter\x1b[2J"));
+        output.extend(filter.finish());
+
+        assert_eq!(output, b"beforeafter\x1b[2J");
     }
 
     /// D2.3: o ponto da fatia — duas sessões vivas ao mesmo tempo, com ids
