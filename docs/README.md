@@ -67,7 +67,7 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [23-rede-de-seguranca.md](23-rede-de-seguranca.md) | Rede de segurança contra perda de dado (escrita atômica + autosave em SQLite): problemas, design e status vivo da fatia S1 |
 | [24-paridade-e-fundacao.md](24-paridade-e-fundacao.md) | Fase pós-rede-de-segurança (D1–D4, ordem do usuário): autocomplete LSP ao vivo → terminal paridade VS Code/JetBrains → tree-sitter/plugins/views → remake. Status vivo. |
 | [25-syntax-tree-semantic-foundation.md](25-syntax-tree-semantic-foundation.md) | Contrato D3: Tree-sitter incremental, composição com LSP, folding/outline e vínculo com workspace edits transacionais. |
-| [../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md](../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md) | **Norte autoritativo de adoção de ferramentas open-source** (modos A–D, gate de auditoria, licenças, P0–P3). Ler antes de adotar qualquer tech externa. |
+| [../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md](../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md) | **Norte autoritativo de adoção e referência open-source**: modos A–D, gate/licenças e política obrigatória para estudar Code OSS, IntelliJ Community, Zed, Lapce e NetBeans sem copiar código ou transplantar arquitetura. |
 | [COMANDOS_BUILD_VERIFICACAO.md](COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
 | [tooling/OPEN_COMPONENT_REGISTRY.json](tooling/OPEN_COMPONENT_REGISTRY.json) | Registro auditável de componentes open-source adotados |
 | [adr/ADR-0001-notify-filesystem-watcher.md](adr/ADR-0001-notify-filesystem-watcher.md) | Decisão de adoção do watcher `notify` e barreira compare-before-save |

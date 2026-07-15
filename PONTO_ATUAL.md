@@ -6,7 +6,8 @@
 >
 > Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
 > conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
-> Git. Base remota atual: `928fbb5`, protocolo `0.55.0`.
+> Git. Base remota atual: `928fbb5`; checkpoint funcional: `c75537d`;
+> protocolo `0.55.0`.
 >
 > Não alterar a UI fora das specs. Commits locais de checkpoint após marco
 > crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
@@ -122,14 +123,13 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
   executado fora da pasta, `.desktop`, PNG e `Tutorial.md` idêntico à fonte.
 
 PRÓXIMO GESTO
-1. Criar o checkpoint Git local desta estabilização já verde.
-2. Abrir a Kinein pelo AppImage novo em `dist/` e carregar este repositório.
-3. Confirmar as ações Cargo e CMake, um script pela árvore, os ícones exatos e
+1. Abrir a Kinein pelo AppImage novo em `dist/` e carregar este repositório.
+2. Confirmar as ações Cargo e CMake, um script pela árvore, os ícones exatos e
    breakpoint/diagnóstico em arquivo com numeração larga.
-4. No KV Context, gerar saída maior que a altura do painel; rolar enquanto a
+3. No KV Context, gerar saída maior que a altura do painel; rolar enquanto a
    resposta ainda chega e confirmar que a leitura não salta nem perde o
    histórico. Confirmar que não há moldura/input desenhado pela IDE.
-5. Depois do gesto, seguir A3 — responsividade medida.
+4. Depois do gesto, seguir A3 — responsividade medida.
 
 RESULTADO PENDENTE
 - Aceite humano dos fluxos acima usando o AppImage final.
@@ -320,15 +320,18 @@ compreensão do projeto, build, navegação semântica ou debug básico.
 ## 7. Gate e definição de pronto de cada fatia
 
 1. Ler `GUIAIA.md` e as fontes do domínio antes de editar.
-2. Manter UI → CoreClient → protocolo → handler → serviço; UI não chama
+2. Para funcionalidade de IDE, cumprir a referência profissional obrigatória:
+   fonte oficial atual, revisão/invariantes registradas e adaptação própria sem
+   cópia, conforme a seção 2.1 do roadmap de adaptação.
+3. Manter UI → CoreClient → protocolo → handler → serviço; UI não chama
    ferramenta externa ou filesystem de workspace diretamente.
-3. Operação longa vira Job cancelável e nunca bloqueia a UI.
-4. Criar teste de core e harness QML quando houver estado visual.
-5. Executar `bash scripts/verificar.sh` e a sonda específica do domínio.
-6. Para UI/layout, validar o gesto em tela real; para packaging, executar
+4. Operação longa vira Job cancelável e nunca bloqueia a UI.
+5. Criar teste de core e harness QML quando houver estado visual.
+6. Executar `bash scripts/verificar.sh` e a sonda específica do domínio.
+7. Para UI/layout, validar o gesto em tela real; para packaging, executar
    `scripts/testar-appimage.sh` e `scripts/testar-appimage-portatil.sh`.
-7. Atualizar contrato, schema, manual e arquitetura quando afetados.
-8. Registrar conclusão em `ContextoIA.md` e no doc do domínio; remover o item
+8. Atualizar contrato, schema, manual e arquitetura quando afetados.
+9. Registrar conclusão em `ContextoIA.md` e no doc do domínio; remover o item
    concluído deste arquivo, sem manter listas riscadas ou post-mortems aqui.
 
 ## 8. Onde ficou o histórico concluído

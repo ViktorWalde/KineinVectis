@@ -55,6 +55,13 @@ Antes de criar código:
 5. Ler `docs/06-strict-mode.md` (rigor Rust/C++).
 6. Consultar `docs/specs/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).
 7. Verificar se a tarefa pertence ao core, UI, tooling, docs ou protocolo — e ao domínio certo dentro do core.
+8. Se a tarefa criar ou alterar uma funcionalidade de IDE, seguir a política
+   obrigatória de referência profissional de
+   `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md`: estudar a implementação
+   atual e oficial relevante em Code OSS, IntelliJ IDEA Community, Zed, Lapce
+   e/ou Apache NetBeans; registrar revisão, invariantes e adaptação; escrever a
+   solução nativa da Kinein sem copiar função, classe ou módulo e sem fazer
+   tradução mecânica entre linguagens/frameworks.
 
 Ao propor implementação:
 
@@ -63,6 +70,10 @@ Ao propor implementação:
 - não misturar muitas camadas;
 - escrever testes quando aplicável;
 - atualizar docs se mudar contrato ou arquitetura;
+- registrar no documento do domínio quais referências profissionais atuais
+  foram consultadas, o que foi aprendido e como isso foi adaptado às camadas
+  Qt/QML → CoreClient → protocolo → Rust Core; a referência não autoriza
+  dependência, port ou cópia de código;
 - atualizar `GUIAIA.md` se criar/renomear/remover módulo, domínio, router,
   controller, gate ou direção de dependência.
 
@@ -112,3 +123,5 @@ chore: atualiza configuração de lint
 - Não adicionar telemetria.
 - Não enviar código do usuário para IA externa sem confirmação explícita.
 - Não relaxar strict mode sem registrar motivo.
+- Não copiar e colar implementação pronta de outra IDE, nem escolher revisão
+  antiga/abandonada apenas porque contém uma função conveniente.

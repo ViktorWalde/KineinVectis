@@ -101,6 +101,24 @@ Não esquecer: desktop entry, ícone, script launcher, config dir, cache dir,
 data dir, logs dir, AppImage/PKGBUILD futuro, seleção release/debug, não
 depender de caminho absoluto da máquina do autor.
 
+## 10. Cópia cega, referência obsoleta e transplante arquitetural
+
+**Prioridade:** P0/P1.
+
+Estudar IDEs profissionais reduz erro de projeto somente quando a fonte é
+oficial, mantida e pertinente. Copiar uma função pronta, traduzi-la
+mecanicamente ou carregar o runtime/serviços internos da IDE de origem cria
+incompatibilidade arquitetural, risco de licença, bugs de ciclo de vida e uma
+manutenção que a Kinein não controla. Código antigo não vira boa referência só
+porque resolve um caso parecido.
+
+Aplicar a seção 2.1 de
+`KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md`: registrar revisão e licença,
+ler também testes/falhas, extrair invariantes e implementar código novo nas
+camadas nativas. Code OSS, IntelliJ IDEA Community, Zed, Lapce e Apache
+NetBeans são referências obrigatórias conforme pertinência, nunca fornecedores
+automáticos de código.
+
 ## Checklist rápido
 
 ```text
@@ -114,4 +132,6 @@ depender de caminho absoluto da máquina do autor.
 [ ] UI considera tela pequena e teclado.
 [ ] Background Services observáveis.
 [ ] Launcher/paths Linux documentados.
+[ ] Feature de IDE registra fonte/revisão atual, invariantes e adaptação própria.
+[ ] Nenhuma função pronta, tradução mecânica ou runtime de outra IDE foi copiado.
 ```

@@ -556,7 +556,7 @@ real ainda precisa da confirmação do usuário após reiniciar o release.
 ### Estabilização final — grade VT autoritativa (2026-07-15)
 
 A decoração de entrada descrita acima foi removida após a comparação com o
-terminal integrado e com o comportamento terminal-first do VS Code/xterm.js.
+terminal integrado e com o comportamento terminal-first do Code OSS/xterm.js.
 Mesmo sem interpretar conteúdo, ela ainda criava uma segunda noção visual de
 “campo de entrada” e podia divergir do cursor/TUI da CLI. O contrato final é
 mais simples: grade VT, spans ANSI e cursor vindos do core são a única
@@ -564,7 +564,15 @@ representação; `TerminalInputController` apenas traduz teclas Qt para bytes e
 não guarda texto, linha inicial ou geometria de moldura. Terminal comum e KV
 Context usam a mesma composição, mudando apenas sessão/perfil e a política
 estreita de scrollback do bridge. O comportamento foi usado como referência;
-nenhum código de VS Code/xterm.js foi copiado.
+nenhum código de Code OSS/xterm.js foi copiado.
+
+Para qualquer incremento futuro, “referência do terminal do VS Code” significa
+estudar no Code OSS oficial o backend/PTY host, ciclo de sessão, resize,
+backpressure, reconexão e shell integration. A adaptação permanece
+`portable-pty` + parser VT no Rust Core, contrato IPC tipado e renderização
+Qt/QML; não incorporar Node, xterm.js, Extension Host nem traduzir funções do
+repositório. A evidência de fonte/revisão e as diferenças devem ser registradas
+conforme a política obrigatória da seção 2.1 do roadmap de adaptação.
 
 Os harnesses agora protegem a ausência de input/decoração paralelos, além de
 teclado, paste, seleção, roda, scrollback e resize já cobertos. Reintroduzir um

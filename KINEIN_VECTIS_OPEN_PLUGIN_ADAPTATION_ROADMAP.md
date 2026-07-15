@@ -1,6 +1,6 @@
 # Kinein Vectis — Roadmap de Adaptação de Plugins e Ferramentas Open Source
 
-> **Data da pesquisa:** 11 de julho de 2026  
+> **Data da pesquisa:** 11 de julho de 2026; política ampliada em 15 de julho de 2026
 > **Objetivo:** construir o melhor ambiente possível para C, C++ e Rust, com conforto de IDE profissional, zero dependência de plugins proprietários do Visual Studio Code e sem usar Neovim/Vim como runtime.
 
 ---
@@ -123,6 +123,78 @@ o projeto estiver pouco maduro;
 o código tiver dependências obscuras;
 a adaptação custar mais do que reimplementar.
 ```
+
+---
+
+## 2.1 Referências profissionais obrigatórias para funcionalidades de IDE
+
+Ao criar ou alterar uma funcionalidade de IDE, é obrigatório estudar código
+oficial, atual e funcional de pelo menos uma referência pertinente abaixo. Em
+decisões arquiteturais ou de segurança, comparar duas quando isso trouxer uma
+segunda solução realmente relevante. O objetivo é aprender invariantes,
+fronteiras, tratamento de erros, cancelamento, backpressure, concorrência,
+segurança e estratégia de testes — não transportar a implementação.
+
+| Referência oficial | Uso principal como referência | Modo padrão |
+| --- | --- | --- |
+| [Code OSS (`microsoft/vscode`)](https://github.com/microsoft/vscode) | terminal/PTY host, shell integration, ciclo de sessões, workbench assíncrono e editor | MODE-B |
+| [IntelliJ IDEA Community](https://github.com/JetBrains/intellij-community) | project model, actions/run configurations, tool windows, indexação, cancelamento, editor e gutter | MODE-B |
+| [Zed](https://github.com/zed-industries/zed) | arquitetura Rust, concorrência, responsividade, workspace, editor e terminal | MODE-D por padrão; auditar cada componente |
+| [Lapce](https://github.com/lapce/lapce) | fluxos de comando/estado/eventos e arquitetura de editor em Rust | MODE-B |
+| [Apache NetBeans](https://github.com/apache/netbeans) | sistema de projetos, ações, modularidade, tarefas longas e tool windows | MODE-B |
+
+Neste documento, “VS Code como referência” significa exclusivamente o código
+público **Code OSS** no repositório oficial. A distribuição Visual Studio Code,
+o Marketplace, extensões proprietárias, serviços fechados e customizações não
+presentes no repositório público ficam fora do escopo. A distinção oficial está
+documentada em [Differences between the repository and Visual Studio
+Code](https://github.com/microsoft/vscode/wiki/Differences-between-the-repository-and-Visual-Studio-Code).
+
+Licenças e limites precisam ser revalidados na revisão consultada; a tabela não
+é autorização permanente de reutilização. Em especial, código copyleft é
+MODE-D por padrão. Mesmo quando a licença for permissiva, a inclusão desta IDE
+na lista autoriza **estudo**, não cópia. MODE-C continua reservado a componente
+isolado deliberadamente adotado após auditoria, registro e ADR; não serve para
+copiar uma função pronta da IDE de referência.
+
+### Procedimento obrigatório
+
+```text
+1. Definir o problema, os invariantes e os modos de falha da fatia atual.
+2. Localizar no repositório oficial uma implementação mantida, seus testes e a
+   revisão/tag examinada; não escolher código legado só por conveniência.
+3. Registrar no documento do domínio: URL/revisão, arquivos ou subsistema
+   estudado, licença/modo, lições e diferenças arquiteturais da Kinein.
+4. Extrair comportamento, contratos, estratégias de erro/cancelamento,
+   segurança, concorrência e testes — nunca texto de implementação.
+5. Projetar a solução nativa no fluxo Qt/QML → CoreClient → protocolo tipado →
+   Rust Core → serviço/job/ferramenta externa.
+6. Escrever código novo e testes próprios, coerentes com strict mode e specs.
+7. Comparar o comportamento e os modos de falha com a referência estudada.
+```
+
+É proibido:
+
+```text
+copiar função, classe, módulo ou teste pronto;
+traduzir mecanicamente TypeScript/Kotlin/Java/Rust para outra linguagem;
+transplantar Electron/Node, Extension Host, Swing/IntelliJ Platform, GPUI,
+Floem ou outro runtime/arquitetura para dentro da Kinein;
+usar revisão antiga, abandonada ou vulnerável quando existe caminho atual;
+remover proveniência/licença de um componente que tenha sido adotado via MODE-C;
+tratar semelhança de UX como autorização para depender do host original.
+```
+
+### Exemplo canônico: terminal e KV Context
+
+Para terminal, estudar no Code OSS o backend/PTY host, o ciclo de vida da
+sessão, shell integration, resize, reconexão, backpressure e a separação entre
+entrada, processo e renderização. A Kinein preserva sua própria arquitetura:
+`portable-pty` + parser VT no Rust Core, eventos IPC tipados e renderização
+Qt/QML pelo `TerminalPanel`/`TerminalManager`. Não incorporar Node, xterm.js ou
+código do Code OSS. A correção que tornou a grade VT e o cursor autoritativos
+no KV Context é o modelo: mesma qualidade funcional, desenho próprio e nenhuma
+cópia de implementação.
 
 ---
 

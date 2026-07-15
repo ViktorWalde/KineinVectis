@@ -42,6 +42,33 @@ PONTO_ATUAL.md (ordem de execução)
 GUIAIA.md (mapa; nunca sobrepõe as fontes acima)
 ```
 
+### 1.1 Referência profissional antes de funcionalidade de IDE
+
+É obrigatório seguir a seção 2.1 de
+`KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` antes de criar ou alterar
+uma funcionalidade de IDE. Use a fonte oficial e atual pertinente — Code OSS,
+IntelliJ IDEA Community, Zed, Lapce e/ou Apache NetBeans — para estudar
+comportamento, invariantes, falhas, segurança, concorrência e testes. Registre
+repositório/revisão, subsistema estudado, licença/modo, lições e adaptação no
+documento do domínio.
+
+```text
+referência profissional atual
+        ↓ extrair invariantes e modos de falha, sem copiar código
+design próprio nas specs e camadas da Kinein
+        ↓
+Qt/QML → CoreClient → protocolo tipado → Rust Core → serviço/job/tool
+        ↓
+testes próprios + comparação comportamental
+```
+
+“VS Code” nesse contexto significa o repositório público Code OSS
+`microsoft/vscode`, não a distribuição proprietária, Marketplace ou extensões
+fechadas. Não copiar função pronta, não fazer tradução mecânica e não adotar
+uma revisão antiga apenas por conveniência. Para o terminal, o Code OSS é
+referência do backend e do ciclo de sessão; a implementação continua nativa em
+Rust + IPC + Qt/QML, conforme a seção 5.6.
+
 ## 2. Meta operacional e sequência explícita
 
 ### TR0 — aceitar a rodada visual atual
@@ -127,6 +154,7 @@ alterar arquitetura ou transformar uma impressão isolada em funcionalidade.
 | Terminal e KV Context | spec `AI_CLI_BRIDGE_EXTERNAL_TERMINAL` | `docs/24-paridade-e-fundacao.md` |
 | Dados, drafts e escrita segura | `docs/23-rede-de-seguranca.md` | ADR-0001 + `docs/16-hidden-risks-checklist.md` |
 | Adotar ferramenta open source | `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | `docs/tooling/OPEN_COMPONENT_REGISTRY.json` |
+| Referenciar implementação de IDE profissional | seção 2.1 do roadmap de adaptação | documento do domínio + `docs/ARCHITECTURE.md` |
 | Strict mode e gates | `docs/06-strict-mode.md` | `docs/COMANDOS_BUILD_VERIFICACAO.md` |
 | Daily driver e dogfooding | `docs/18-daily-driver-plan.md` | `docs/21-long-horizon-roadmap.md` |
 | Convergência visual | `docs/20-ui-spec-convergence-plan.md` | specs visuais |
@@ -376,7 +404,7 @@ crates/kinein-core/src/handlers/{terminal,ai}.rs
   explícita, não pela mera existência da sessão.
 - A grade VT e o cursor são a única representação da entrada. Não recriar
   faixa, `TextInput`, composer ou borda inferida por parsing da tela; a
-  referência comportamental é terminal-first (VS Code/xterm.js), adaptada ao
+  referência comportamental é terminal-first (Code OSS/xterm.js), adaptada ao
   renderer Qt/QML e ao contrato tipado existentes.
 
 ### 5.7 Git
@@ -469,6 +497,16 @@ negócio para QML só para evitar um contrato IPC.
 3. registrar pin, licença e modo de integração no registry;
 4. ADR quando a decisão atravessar arquitetura ou segurança;
 5. core orquestra; UI nunca chama o binário diretamente.
+
+### Nova funcionalidade de IDE
+
+1. definir o problema, invariantes e falhas antes da solução;
+2. consultar fonte oficial atual pertinente conforme a seção 1.1;
+3. registrar revisão, subsistema, licença/modo e lições no documento do domínio;
+4. desenhar a adaptação nas camadas nativas da Kinein, sem copiar ou traduzir
+   mecanicamente a implementação de referência;
+5. cobrir comportamento, cancelamento/erro, segurança e regressões com testes
+   próprios.
 
 ### Nova setting ou persistência
 

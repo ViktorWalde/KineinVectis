@@ -48,6 +48,23 @@ Proibições que sustentam a arquitetura (não negociáveis):
 - todo dado entre UI e Core passa por **tipos versionados** do `kinein-protocol`
   (nada de JSON solto montado à mão).
 
+### 2.1 Referência externa não altera as camadas
+
+Funcionalidades de IDE devem estudar implementações profissionais atuais
+conforme a seção 2.1 de
+`KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md`. Esse estudo importa
+invariantes, decisões, modos de falha e estratégias de teste; não importa
+código nem a arquitetura do host.
+
+Uma solução observada em Code OSS, IntelliJ IDEA Community, Zed, Lapce ou
+Apache NetBeans precisa ser redesenhada no fluxo nativo acima. Electron/Node,
+Extension Host, IntelliJ Platform/Swing, GPUI, Floem e modelos internos dessas
+IDEs não atravessam a fronteira como dependência implícita. Copiar função ou
+fazer tradução mecânica também não é adaptação. O documento do domínio deve
+registrar fonte/revisão, lições e a tradução **arquitetural** — em termos de
+responsabilidade e contrato, nunca de texto de implementação — para as camadas
+da Kinein.
+
 ## 3. Mapa de crates atual
 
 | Crate | Responsabilidade |
@@ -256,6 +273,8 @@ Uma mudança está arquiteturalmente saudável quando:
 [ ] testes unit co-localizados + integração por domínio.
 [ ] contrato novo documentado em docs/03; estado em ContextoIA.md.
 [ ] pasta-módulo de serviço já nomeada como o crate-alvo dos specs.
+[ ] funcionalidade de IDE registra referência oficial atual, invariantes e
+    adaptação própria; nenhum código/runtime do host foi transplantado.
 ```
 
 Referência da visão completa: `docs/specs/` (fonte de verdade do produto e da

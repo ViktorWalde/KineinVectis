@@ -91,6 +91,20 @@ conhecida e correcao simples:
   instalar plugins do Neovim/VSCodium dentro do Kinein; reaproveitar
   protocolo/ferramenta aberta + UI/UX propria + zero telemetria + controle
   total.
+- **MANDATO DE REFERENCIA PROFISSIONAL (usuario, 2026-07-15):** toda
+  funcionalidade de IDE nova ou alterada deve estudar a fonte oficial atual
+  pertinente de **Code OSS (`microsoft/vscode`)**, **IntelliJ IDEA Community**,
+  **Zed**, **Lapce** e/ou **Apache NetBeans**, seguindo a secao 2.1 do roadmap
+  acima. A referencia serve para extrair comportamento, invariantes, erros,
+  cancelamento, concorrencia, seguranca e testes com qualidade comprovada; nao
+  autoriza copiar funcao/classe/modulo, fazer traducao mecanica, transplantar o
+  runtime do host ou escolher codigo antigo so por conveniencia. Registrar no
+  doc do dominio a revisao, subsistema, licenca/modo, licoes e adaptacao para
+  Qt/QML -> CoreClient -> protocolo -> Rust Core. "VS Code" aqui significa o
+  Code OSS publico, nunca distribuicao, Marketplace, servico ou extensao
+  proprietaria. O terminal e o exemplo canonico: estudar backend/ciclo de PTY
+  do Code OSS, mas implementar com `portable-pty`, parser VT, IPC tipado e
+  renderer Qt/QML proprios da Kinein.
 
 ## Decisoes recentes de UX/workspace
 
@@ -1484,7 +1498,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   terminal integrado, a grade VT, seus spans ANSI e o cursor são a única fonte
   visual; teclado, paste, seleção, scrollback, resize coalescido e modo inline
   continuam reutilizando o mesmo `TerminalPanel`/`TerminalManager`. A referência
-  foi o comportamento terminal-first do VS Code/xterm.js, adaptado à UI da
+  foi o comportamento terminal-first do Code OSS/xterm.js, adaptado à UI da
   Kinein, sem copiar código nem criar um renderer de conversa.
 - A2 foi entregue: `workspace.kind` permanece como classificação primária
   compatível, enquanto `workspace.capabilities.buildSystems` representa Cargo
@@ -1514,3 +1528,5 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   Smoke do host e Debian 12 mínimo sem rede passaram. O instalador distribuído
   foi exercitado de fora da pasta de entrega em XDG isolado e gerou `.desktop`
   e PNG apontando para o AppImage ao lado do próprio script.
+- A estabilização inteira foi preservada no checkpoint Git local `c75537d`
+  (`feat: estabiliza distribuicao e self-hosting hibrido`); não houve push.
