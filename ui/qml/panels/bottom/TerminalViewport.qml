@@ -53,6 +53,15 @@ Item {
         return span.inverse === true ? fg : bg;
     }
 
+    function spanCells(span) {
+        if (span.cells !== undefined) {
+            return Math.max(0, Number(span.cells));
+        }
+        // Compatibilidade defensiva com um frame 0.55 que ainda esteja na
+        // fila durante a troca do core; 0.56 sempre informa células reais.
+        return span.text !== undefined ? Array.from(String(span.text)).length : 0;
+    }
+
     function copySelection() {
         const text = selectionController.selectedText();
         if (text !== "") Clipboard.setText(text);
@@ -99,7 +108,8 @@ Item {
                             id: spanCell
                             required property var modelData
                             height: root.lineHeight
-                            width: spanText.implicitWidth
+                            width: root.spanCells(spanCell.modelData)
+                                   * root.charWidth
                             color: root.spanBg(spanCell.modelData)
 
                             Text {
@@ -109,9 +119,13 @@ Item {
                                 color: root.spanFg(spanCell.modelData)
                                 font.family: Theme.monoFont
                                 font.pixelSize: Theme.fontSizeTerminal
-                                font.bold: spanCell.modelData.bold === true
+                                // ANSI bold continua semanticamente distinto,
+                                // mas sem o peso excessivo do Font.Bold (700).
+                                font.weight: spanCell.modelData.bold === true
+                                             ? Font.Medium : Font.Normal
                                 font.italic: spanCell.modelData.italic === true
                                 font.underline: spanCell.modelData.underline === true
+                                font.preferShaping: false
                                 verticalAlignment: Text.AlignVCenter
                             }
                         }
@@ -121,14 +135,23 @@ Item {
         }
 
         Rectangle {
+            id: cursorBar
+
             visible: root.cursor.visible && root.terminalActive
                      && root.scrollOffset === 0
-            x: root.cursor.col * root.charWidth
-            y: root.cursor.row * root.lineHeight
-            width: root.charWidth
-            height: root.lineHeight
-            color: Theme.accent
-            opacity: 0.55
+            x: Math.floor(root.cursor.col * root.charWidth)
+            y: Math.floor(root.cursor.row * root.lineHeight) + 2
+            width: Math.max(2, Math.round(root.charWidth * 0.18))
+            height: Math.max(1, root.lineHeight - 4)
+            radius: 1
+            color: Theme.accentActive
+
+            SequentialAnimation on opacity {
+                running: cursorBar.visible
+                loops: Animation.Infinite
+                NumberAnimation { from: 0.95; to: 0.28; duration: 520 }
+                NumberAnimation { from: 0.28; to: 0.95; duration: 520 }
+            }
         }
 
         Item {

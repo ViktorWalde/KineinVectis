@@ -377,6 +377,9 @@ topo, além da sessão separada **Execução**:
   htop, o progresso do `cargo`). A digitação é **caractere a caractere**
   (como no VS Code/JetBrains): `Ctrl+C` interrompe, setas navegam o
   histórico, `Tab` completa — não é mais "escreva a linha e aperte Enter".
+  O cursor vertical acompanha a próxima célula de digitação. As cores ANSI
+  seguem a paleta visual da Kinein; prompts que marcam usuário, máquina e
+  pasta continuam sendo produzidos pelo shell, com peso moderado pela IDE.
   Clique em **+** para abrir outro terminal e em **×** no chip para fechar só
   aquela sessão; programas e histórico das outras abas continuam vivos.
   A barra de rolagem permanece visível desde o início, acompanha a saída ao

@@ -13,7 +13,12 @@ Item {
         lines: [
             [{ "text": "primeira" }],
             [{ "text": "segunda" }],
-            [{ "text": "terceira" }]
+            [{ "text": "terceira" }],
+            [
+                { "text": "A", "cells": 1 },
+                { "text": "界", "cells": 2 },
+                { "text": "B", "cells": 1 }
+            ]
         ]
     }
 
@@ -33,6 +38,16 @@ Item {
 
         selection.clear();
         if (selection.hasSelection || selection.selecting) failures += 8;
+
+        selection.begin(30, 61);
+        selection.update(40, 61);
+        selection.finish();
+        if (selection.selectedText() !== "B") failures += 16;
+
+        selection.begin(10, 61);
+        selection.update(20, 61);
+        selection.finish();
+        if (selection.selectedText() !== "界") failures += 32;
 
         Qt.exit(failures);
     }

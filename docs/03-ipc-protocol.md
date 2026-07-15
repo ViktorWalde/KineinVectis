@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.55.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.56.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `aiBridge.*`). O
@@ -523,7 +523,8 @@ event.terminal.render {           (throttle ~30fps; substitui event.terminal.dat
   "bracketedPaste": bool,        (0.51.0 — paste delimitado e seguro)
   "scrollback": usize,            (0.43.0 — offset ATUAL, já clampado: a verdade)
   "scrollbackMax": usize,         (0.43.0 — quanto histórico existe; 0 = nenhum)
-  "lines": [ [ { "text": str, "fg"?: idx|"#rrggbb", "bg"?: idx|"#rrggbb",
+  "lines": [ [ { "text": str, "cells": u16,
+                 "fg"?: idx|"#rrggbb", "bg"?: idx|"#rrggbb",
                  "bold"?: bool, "italic"?: bool, "underline"?: bool,
                  "inverse"?: bool } ... ] ... ]
 }
@@ -532,7 +533,10 @@ event.terminal.closed  { "id": string, "exitCode": int|null }
 
 `fg`/`bg`: índice 0–255 (paleta) ou `#rrggbb` (truecolor); ausência = cor
 default do tema. Cada linha é uma lista de SPANS (runs de células de mesmo
-estilo). O core coalesce runs e descarta o espaço final em estilo default.
+estilo). Desde `0.56.0`, `cells` informa a largura autoritativa do span em
+colunas VT; ela não deve ser inferida de `text.length` nem da largura em pixels
+da fonte, pois glifos largos, combinantes e fallback tipográfico podem divergir.
+O core coalesce runs e descarta o espaço final em estilo default.
 
 `scrollback`/`scrollbackMax` (`0.43.0`, B1/B2 de docs/24) existem porque a UI
 **não tem como saber sozinha** se há histórico nem onde a view está: o core é

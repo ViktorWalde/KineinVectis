@@ -53,7 +53,7 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [ARCHITECTURE.md](ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
 | [BACKEND_TO_UI_UX_ROADMAP.md](BACKEND_TO_UI_UX_ROADMAP.md) | Ponte operacional backend → UI/UX para implementar backend primeiro sem perder os specs visuais |
 | [02-repository-structure.md](02-repository-structure.md) | Estrutura real do repositório e crates |
-| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.55.0) |
+| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.56.0) |
 | [06-strict-mode.md](06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
 | [14-development-environment.md](14-development-environment.md) | Ambiente de desenvolvimento |
 | [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica e modularização pós-V1 |

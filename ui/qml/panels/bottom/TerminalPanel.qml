@@ -80,6 +80,7 @@ Item {
 
         font.family: Theme.monoFont
         font.pixelSize: Theme.fontSizeTerminal
+        font.preferShaping: false
         text: "M"
     }
 

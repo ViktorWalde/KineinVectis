@@ -27,9 +27,9 @@ QtObject {
     // Paleta ANSI de 16 cores do terminal (0–7 normais, 8–15 brilhantes),
     // usada pelo renderer de grade (docs/24 D2).
     readonly property var terminalPalette: [
-        "#171b21", "#d05f5f", "#8fbf7f", "#d0b05f",
+        "#171b21", "#d05f5f", "#78aa98", "#d0b05f",
         "#6f93c0", "#b07fb0", "#5fb0b0", "#a9a39a",
-        "#3a414a", "#ff7f7f", "#a5d99a", "#ffd77f",
+        "#3a414a", "#ff7f7f", "#91c5b0", "#ffd77f",
         "#8fb0e0", "#d09fd0", "#7fd0d0", "#e7e2d8"
     ]
     readonly property color errorSoft: "#d45f5f"
@@ -58,5 +58,8 @@ QtObject {
     property int fontSizeEditor: 14
 
     readonly property string uiFont: "Inter, Noto Sans, sans-serif"
-    readonly property string monoFont: "JetBrains Mono, Fira Code, monospace"
+    // `font.family` do QML recebe uma família, não uma pilha CSS. A família
+    // genérica deixa o Qt/fontconfig escolher uma fonte realmente monoespaçada
+    // em cada desktop Linux, inclusive quando JetBrains Mono não está instalado.
+    readonly property string monoFont: "monospace"
 }

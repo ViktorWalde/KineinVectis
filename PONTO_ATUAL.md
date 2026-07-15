@@ -6,8 +6,8 @@
 >
 > Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
 > conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
-> Git. Base remota atual: `928fbb5`; checkpoint funcional: `c75537d`;
-> protocolo `0.55.0`.
+> Git. Base remota atual: `928fbb5`; checkpoint anterior: `948535d`;
+> checkpoint funcional atual: `HEAD` local; protocolo `0.56.0`.
 >
 > Não alterar a UI fora das specs. Commits locais de checkpoint após marco
 > crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
@@ -32,7 +32,11 @@ real apenas nesses dois pontos, conforme `REENTRADA-KV`. O usuário pausou esse
 gesto e autorizou expressamente a continuação do roadmap. A1 e A2 foram
 entregues nos protocolos 0.53.0 e 0.55.0. A tentativa posterior de demarcar a
 entrada foi removida: grade VT, spans e cursor voltaram a ser a única fonte
-visual, no modelo terminal-first.
+visual, no modelo terminal-first. Antes do início efetivo de A3, o dogfooding
+revelou que o caret ficava muito depois do texto e que verde/bold do prompt era
+visualmente agressivo. A correção 0.56 unifica spans e cursor pela largura VT,
+usa família monoespaçada real e suaviza peso/paleta sem interpretar o prompt;
+o gesto ao vivo após reiniciar permanece pendente.
 
 1. registrar cada problema observado pelo usuário ou por um testador com ação,
    esperado, resultado, reprodução, distro e log quando houver;
@@ -84,7 +88,7 @@ A sessão nova deve executar esta sequência:
 
 ```text
 ESTADO
-- Protocolo atual 0.55.0. A1 (recentes) e A2 (capacidades Cargo+CMake) estão
+- Protocolo atual 0.56.0. A1 (recentes) e A2 (capacidades Cargo+CMake) estão
   implementadas; `workspace.kind` é primário compatível e
   `workspace.capabilities.buildSystems` é a fonte das ações híbridas.
 - Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
@@ -95,6 +99,9 @@ ESTADO
   Codex; o Terminal comum continua honrando clear.
 - Não existe guia, faixa ou input paralelo: grade VT, spans ANSI e cursor são
   a única representação da entrada, seguindo comportamento terminal-first.
+- Cada span informa a largura autoritativa em células VT; fonte, resize,
+  seleção e caret usam a mesma grade. ANSI bold usa peso médio e a paleta verde
+  é suave; o shell continua dono do texto e dos atributos do prompt.
 - A roda aceita os dois formatos do Qt (`angleDelta` e `pixelDelta`) e segue o
   mesmo `terminal.scroll` do Terminal comum.
 - Gutter usa faixas independentes para folding/breakpoint, diagnóstico, blame,
@@ -123,18 +130,29 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - AppImage final (33.737.208 bytes; SHA256 `86b335b2b1ba8c81d958df4f1e45f7d9c0838fdad2a2567c84199f84b8dbdc0d`),
   teste host e Debian mínimo sem rede: verdes. Ambos validam também instalador
   executado fora da pasta, `.desktop`, PNG e `Tutorial.md` idêntico à fonte.
+- Correção 0.56: gate integral verde com 335 testes Rust, Clippy, C++/QML
+  estritos, 12 harnesses, builds Debug/Release e smoke offscreen de 8 s
+  (`exit 124` esperado). Binários do atalho de desenvolvimento atualizados.
 
 PRÓXIMO GESTO
-1. Abrir a Kinein pelo AppImage novo em `dist/` e carregar este repositório.
+1. Reiniciar pelo atalho **Kinein Vectis (Desenvolvimento)**, que já aponta
+   para os binários release 0.56 atualizados, e carregar este repositório. O
+   AppImage preservado em `dist/` ainda é o checkpoint anterior e não deve ser
+   usado para validar esta correção sem novo empacotamento explícito.
 2. Confirmar as ações Cargo e CMake, um script pela árvore, os ícones exatos e
    breakpoint/diagnóstico em arquivo com numeração larga.
 3. No KV Context, gerar saída maior que a altura do painel; rolar enquanto a
    resposta ainda chega e confirmar que a leitura não salta nem perde o
-   histórico. Confirmar que não há moldura/input desenhado pela IDE.
-4. Depois do gesto, seguir A3 — responsividade medida.
+   histórico. Confirmar que não há moldura/input desenhado pela IDE. Digitar
+   texto e confirmar que o caret vertical fica imediatamente na próxima
+   célula, inclusive após caracteres largos; conferir se usuário/máquina e
+   pasta têm verde suave e peso confortável.
+4. Depois do gesto da correção 0.56, seguir A3 — responsividade medida.
 
 RESULTADO PENDENTE
 - Aceite humano dos fluxos acima usando o AppImage final.
+- Aceite humano do alinhamento do caret e do conforto visual do prompt após
+  reiniciar o build que contém o protocolo 0.56.
 - Se qualquer gesto falhar, registrar ação/esperado/observado/ambiente e
   priorizar a regressão antes de A3.
 

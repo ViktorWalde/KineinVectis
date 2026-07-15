@@ -406,6 +406,9 @@ crates/kinein-core/src/handlers/{terminal,ai}.rs
   faixa, `TextInput`, composer ou borda inferida por parsing da tela; a
   referência comportamental é terminal-first (Code OSS/xterm.js), adaptada ao
   renderer Qt/QML e ao contrato tipado existentes.
+- Cada span de `event.terminal.render` informa `cells`; essa largura VT, a
+  métrica monoespaçada usada no resize e a coluna do cursor formam uma única
+  grade. Não derivar geometria de `text.length` ou de `implicitWidth`.
 
 ### 5.7 Git
 

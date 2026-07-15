@@ -554,46 +554,73 @@ const DEFAULT_STYLE: CellStyle = (
 fn build_line(screen: &vt100::Screen, row: u16, cols: u16) -> Value {
     let mut spans: Vec<Value> = Vec::new();
     let mut run_text = String::new();
+    let mut run_cells = 0_u16;
     let mut run_style: Option<CellStyle> = None;
+    let mut run_isolated = false;
 
     for col in 0..cols {
-        let (glyph, style) = screen.cell(row, col).map_or_else(
-            || (" ".to_owned(), DEFAULT_STYLE),
+        let (glyph, style, isolated, wide_continuation) = screen.cell(row, col).map_or_else(
+            || (" ".to_owned(), DEFAULT_STYLE, false, false),
             |cell| {
-                let glyph = if cell.has_contents() {
+                // A segunda célula de um glifo largo ocupa espaço na grade,
+                // mas não deve virar outro espaço desenhado. O número de
+                // células segue separado do texto para a UI manter o cursor
+                // exatamente na coluna VT autoritativa.
+                let wide_continuation = cell.is_wide_continuation();
+                let glyph = if wide_continuation {
+                    String::new()
+                } else if cell.has_contents() {
                     cell.contents().to_string()
                 } else {
                     " ".to_owned()
                 };
-                (glyph, cell_style(cell))
+                // Runs excepcionais ficam isolados para a UI conseguir
+                // converter uma seleção em colunas de volta para texto sem
+                // reimplementar Unicode width. A continuação larga se junta
+                // somente à sua célula inicial.
+                let isolated = cell.is_wide()
+                    || wide_continuation
+                    || (cell.has_contents() && cell.contents().chars().count() != 1);
+                let style = if wide_continuation {
+                    run_style.unwrap_or_else(|| cell_style(cell))
+                } else {
+                    cell_style(cell)
+                };
+                (glyph, style, isolated, wide_continuation)
             },
         );
 
-        if run_style == Some(style) {
+        let extends_run = run_style == Some(style)
+            && ((!run_isolated && !isolated) || (run_isolated && wide_continuation));
+        if extends_run {
             run_text.push_str(&glyph);
+            run_cells = run_cells.saturating_add(1);
         } else {
-            flush_span(&mut spans, &run_text, run_style);
+            flush_span(&mut spans, &run_text, run_cells, run_style);
             run_text = glyph;
+            run_cells = 1;
             run_style = Some(style);
+            run_isolated = isolated;
         }
     }
     // Descarta o run final se for só espaços no estilo default (economia).
     if !(run_style == Some(DEFAULT_STYLE) && run_text.trim().is_empty()) {
-        flush_span(&mut spans, &run_text, run_style);
+        flush_span(&mut spans, &run_text, run_cells, run_style);
     }
     Value::Array(spans)
 }
 
-fn flush_span(spans: &mut Vec<Value>, text: &str, style: Option<CellStyle>) {
+fn flush_span(spans: &mut Vec<Value>, text: &str, cells: u16, style: Option<CellStyle>) {
     let Some(style) = style else {
         return;
     };
-    if text.is_empty() {
+    if cells == 0 {
         return;
     }
     let (fg, bg, bold, italic, underline, inverse) = style;
     let mut span = serde_json::Map::new();
     span.insert("text".to_owned(), json!(text));
+    span.insert("cells".to_owned(), json!(cells));
     if let Some(color) = color_value(fg) {
         span.insert("fg".to_owned(), color);
     }
@@ -635,7 +662,7 @@ mod tests {
 
     use kinein_protocol::JsonRpcRequest;
 
-    use super::{ScrollbackPreserver, TerminalError, TerminalManager, emit_render};
+    use super::{ScrollbackPreserver, TerminalError, TerminalManager, build_line, emit_render};
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -747,6 +774,29 @@ mod tests {
         assert_eq!(params["bracketedPaste"], true);
         assert_eq!(params["alternateScreen"], false);
         assert!(params["scrollbackMax"].as_u64().is_some_and(|max| max > 0));
+    }
+
+    #[test]
+    fn render_span_preserves_authoritative_vt_cell_width() {
+        let mut parser = vt100::Parser::new(1, 12, 0);
+        parser.process("\x1b[32;1mA界B\x1b[0m".as_bytes());
+
+        let line = build_line(parser.screen(), 0, 12);
+        let spans = line.as_array().expect("a linha deve conter spans");
+        let texts = spans
+            .iter()
+            .map(|span| span["text"].as_str().unwrap_or_default())
+            .collect::<String>();
+        let cells = spans
+            .iter()
+            .map(|span| span["cells"].as_u64().unwrap_or_default())
+            .collect::<Vec<_>>();
+
+        assert_eq!(texts, "A界B");
+        assert_eq!(cells, vec![1, 2, 1]);
+        assert!(spans.iter().all(|span| span["fg"] == 2));
+        assert!(spans.iter().all(|span| span["bold"] == true));
+        assert_eq!(parser.screen().cursor_position(), (0, 4));
     }
 
     #[test]

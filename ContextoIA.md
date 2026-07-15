@@ -198,7 +198,10 @@ testes que exec, ou fsync).
 ## Estado tecnico atual
 
 - Arquitetura: Qt/QML UI <-> JSON-RPC local/stdin-stdout <-> Rust core.
-- Protocolo IPC atual: `0.55.0` (2026-07-15). 0.55 entrega capacidades de
+- Protocolo IPC atual: `0.56.0` (2026-07-15). 0.56 acrescenta a largura
+  autoritativa em células VT a cada span de `event.terminal.render`, mantendo
+  texto, seleção e cursor na mesma grade mesmo com glifos largos ou fallback de
+  fonte. 0.55 entrega capacidades de
   workspace híbrido Cargo+CMake, seleção tipada de `buildSystem` em
   build/quality/test e `run.script` confinado, sem interpolação de shell. 0.54
   faz `lsp.semanticTokens` ecoar `path` e `version`, permitindo à UI descartar
@@ -1538,3 +1541,33 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   e PNG apontando para o AppImage ao lado do próprio script.
 - A estabilização inteira foi preservada no checkpoint Git local `c75537d`
   (`feat: estabiliza distribuicao e self-hosting hibrido`); não houve push.
+- A proteção final do empacotamento AppImage foi preservada no checkpoint
+  local `948535d` (`fix: protege empacotamento AppImage portatil`), também sem
+  push.
+
+## Alinhamento da grade do terminal e conforto visual (2026-07-15)
+
+- Novo feedback de dogfooding interrompeu A3: no KV Context, o caret vertical
+  aparecia muito depois da última palavra, e os trechos verdes/bold do prompt e
+  da pasta tinham saturação e peso desconfortáveis.
+- Causa fechada: `Theme.monoFont` usava uma pilha CSS inteira em uma propriedade
+  QML que recebe uma família, permitindo fallback proporcional; ao mesmo tempo,
+  spans eram dimensionados por `implicitWidth`, mas o cursor por coluna VT.
+- O protocolo `0.56.0` agora inclui `cells` em cada span. O core preserva a
+  contagem de colunas inclusive na continuação de glifos largos; a UI usa a
+  mesma métrica monoespaçada para span, resize, seleção e caret. O cursor é uma
+  barra fina pulsante, o bold ANSI usa peso médio e os verdes normal/brilhante
+  foram suavizados para tons verde-azulados coerentes com o tema.
+- A sequência e o significado do prompt continuam pertencendo ao shell. A IDE
+  apenas renderiza seus atributos ANSI pela própria paleta; nenhum parser,
+  overlay ou segundo campo de entrada foi criado.
+- Referências arquiteturais registradas em `docs/24`: Code OSS
+  `234638618394269563dd77c0c395c270d8df8b12` (MIT, modo B), Zed
+  `1e22d1a83f8b1b7acc528d15cfab0644852380c0` (modo D, somente referência) e
+  documentação oficial Qt 6. Nenhuma função, classe ou implementação foi
+  copiada.
+- Gate integral verde após a correção: 335 testes Rust, Clippy `-D warnings`,
+  C++/QML estritos, 12 harnesses e builds Debug/Release; smoke release
+  offscreen vivo por 8 s, sem saída QML (`exit 124` esperado). O harness de
+  seleção cobre glifo largo e o caractere posterior. Aceite visual do caret e
+  da paleta permanece humano após reiniciar o atalho de desenvolvimento.

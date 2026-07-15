@@ -579,6 +579,59 @@ teclado, paste, seleção, roda, scrollback e resize já cobertos. Reintroduzir 
 composer, parser de tela ou overlay de prompt exige nova decisão arquitetural;
 não é polimento do terminal atual.
 
+### Alinhamento do caret e conforto do prompt (2026-07-15)
+
+**Feedback ao vivo:** no KV Context, o caret aparecia várias colunas depois da
+última palavra, flutuando sobre o fundo. O prompt `usuário@máquina:` e a pasta
+também apareciam em verde saturado e peso visual excessivo.
+
+**Causa:** `Theme.monoFont` continha uma pilha no formato CSS, mas
+`font.family` do QML recebe uma única família. Na ausência da primeira fonte,
+o Qt podia resolver toda a string como família inexistente e usar uma fonte
+proporcional. Além disso, os spans usavam `implicitWidth`, enquanto o caret
+seguia `cursor.col * charWidth`; as duas geometrias acumulavam distâncias
+diferentes. Inferir células de texto também falha para glifos largos e
+combinantes. A cor e o atributo bold, por outro lado, vêm corretamente dos
+códigos ANSI emitidos pelo shell e não devem ser descobertos analisando o
+prompt.
+
+**Referências oficiais atuais, somente arquiteturais:**
+
+- Code OSS, revisão `234638618394269563dd77c0c395c270d8df8b12`, arquivos
+  `xtermTerminal.ts`, `terminalConfiguration.ts` e
+  `terminalColorRegistry.ts`, licença MIT, modo de adaptação B: dimensões usam
+  uma métrica de célula comum; cursor, peso bold e paleta ANSI permanecem
+  configurações independentes.
+- Zed, revisão `1e22d1a83f8b1b7acc528d15cfab0644852380c0`, arquivo
+  `crates/terminal_view/src/terminal_element.rs`, referência GPL somente em
+  modo D: batches mantêm `cell_count` separado do texto e posicionam runs,
+  fundos e cursor pela mesma `cell_width`; cores ANSI vêm do tema.
+- Qt 6, documentação de `font` e `FontMetrics`: `family` identifica uma
+  família, `weight` aceita pesos explícitos e `advanceWidth` fornece a métrica
+  de avanço usada para a próxima célula.
+
+**Adaptação nativa:** o protocolo `0.56.0` acrescenta `cells` a cada span do
+render; o core conta colunas VT inclusive para continuações de glifos largos,
+e o QML dimensiona cada run por `cells * charWidth`. A família genérica
+`monospace`, sem shaping no grid, é compartilhada pelo resize, texto e caret.
+O cursor virou uma barra vertical fina e pulsante; o bold ANSI é desenhado em
+`Font.Medium`, e os verdes normal/brilhante receberam tons verde-azulados mais
+suaves da paleta da Kinein. Não foram incorporados xterm.js, Node, GPUI, função,
+classe ou trecho das referências, e nenhum parser de prompt foi criado.
+
+**Provas automatizadas:** o gate integral passou com 335 testes Rust, Clippy
+`-D warnings`, C++/QML estritos, 12 harnesses QML e builds Debug/Release. O
+smoke offscreen pelo launcher release permaneceu vivo por 8 s (`exit 124`
+esperado), sem saída QML. Os binários do atalho de desenvolvimento foram
+atualizados; o gesto visual real continua reservado ao usuário após reiniciar.
+
+**Falha que esta adaptação evita:** voltar a dimensionar spans por largura em
+pixels, escolher uma fonte proporcional silenciosamente ou reconstruir a
+posição do cursor a partir do texto recoloca grade, seleção e caret em sistemas
+de coordenadas diferentes. O teste Rust cobre um run ANSI com glifo largo e
+confirma quatro células para três caracteres visuais; o harness QML seleciona
+corretamente tanto o glifo largo quanto o caractere posterior a ele.
+
 **Arquivos (D2.1):** Cargo (portable-pty, vt100 — já adicionados);
 `terminal.rs` (reescrever: PTY + vt100 grid + emitir render + resize +
 multi-id opcional); protocolo (`TerminalResizeParams`, tipos de render,
