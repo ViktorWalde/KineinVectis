@@ -256,6 +256,10 @@ Rectangle {
                     render: root.terminalRender
                     terminalActive: root.sessionId !== ""
                     workspaceAvailable: true
+                    // A TUI das AI CLIs fica visualmente dois pixels abaixo
+                    // no painel lateral. Compensa só o caret; o Terminal
+                    // integrado conserva a geometria aprovada (offset zero).
+                    cursorVerticalOffset: -2
                     emptyText: qsTr("Inicializando %1...").arg(root.activeProfileName)
                     onKeyPressed: function(data) {
                         root.terminalKeyPressed(data);

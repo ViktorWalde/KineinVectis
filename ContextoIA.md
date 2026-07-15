@@ -1571,3 +1571,19 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   offscreen vivo por 8 s, sem saída QML (`exit 124` esperado). O harness de
   seleção cobre glifo largo e o caractere posterior. Aceite visual do caret e
   da paleta permanece humano após reiniciar o atalho de desenvolvimento.
+- Aceite parcial do usuário: posição horizontal letra a letra, cursor do
+  Terminal comum e verdes suaves foram aprovados. O único feedback restante é
+  o caret de Claude/Codex parecer ligeiramente baixo no KV Context. A UI agora
+  aplica `cursorVerticalOffset: -2` somente no `AssistantPanel`; o padrão do
+  `TerminalPanel` continua zero. Gerar novo AppImage está condicionado ao
+  aceite visual desse último polimento.
+- O polimento exclusivo do KV Context passou no gate integral (335 testes
+  Rust, Clippy, C++/QML estritos, 12 harnesses e builds Debug/Release) e no
+  smoke release offscreen de 8 s (`exit 124` esperado). O binário do atalho de
+  desenvolvimento está atualizado; `dist/` permanece intocado até o aceite.
+- Uma sessão futura foi reservada para preparar um repositório público novo e
+  separado, seguindo o exportador allowlist de `docs/21` em vez de confiar só
+  em `.gitignore`. Nessa sessão serão definidos com o usuário os nomes exatos
+  de Markdown e diretórios que não podem aparecer, auditados caminhos,
+  conteúdo, segredos e histórico, e só então considerada qualquer criação ou
+  publicação externa. Nada foi publicado ou teve visibilidade alterada agora.

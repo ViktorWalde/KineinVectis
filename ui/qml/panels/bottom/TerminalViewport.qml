@@ -10,6 +10,7 @@ Item {
     property var cursor: ({ row: 0, col: 0, visible: false })
     property var selectionController
     property bool terminalActive: false
+    property real cursorVerticalOffset: 0
     property int scrollOffset: 0
     property int scrollbackMax: 0
     property int gridRows: 0
@@ -141,6 +142,7 @@ Item {
                      && root.scrollOffset === 0
             x: Math.floor(root.cursor.col * root.charWidth)
             y: Math.floor(root.cursor.row * root.lineHeight) + 2
+               + root.cursorVerticalOffset
             width: Math.max(2, Math.round(root.charWidth * 0.18))
             height: Math.max(1, root.lineHeight - 4)
             radius: 1

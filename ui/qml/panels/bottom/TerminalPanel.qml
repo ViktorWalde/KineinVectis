@@ -13,6 +13,8 @@ Item {
     property var render: ({})
     property bool terminalActive: false
     property bool workspaceAvailable: false
+    // Ajuste visual opt-in do host; o Terminal comum mantém zero.
+    property real cursorVerticalOffset: 0
     property string emptyText: qsTr("Seu shell ($SHELL) abre aqui na raiz do workspace (Alt+F12).")
     signal openRequested()
     signal keyPressed(string data)
@@ -212,6 +214,7 @@ Item {
         cursor: panel.cursor
         selectionController: selectionController
         terminalActive: panel.terminalActive
+        cursorVerticalOffset: panel.cursorVerticalOffset
         scrollOffset: panel.scrollOffset
         scrollbackMax: panel.scrollbackMax
         gridRows: panel.gridRows

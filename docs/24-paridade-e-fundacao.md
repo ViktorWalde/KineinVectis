@@ -632,6 +632,17 @@ de coordenadas diferentes. O teste Rust cobre um run ANSI com glifo largo e
 confirma quatro células para três caracteres visuais; o harness QML seleciona
 corretamente tanto o glifo largo quanto o caractere posterior a ele.
 
+**Polimento após aceite parcial:** o usuário aprovou o alinhamento horizontal,
+a paleta verde suave e o Terminal integrado. No KV Context, porém, o caret das
+TUIs Claude/Codex ainda parecia cerca de dois pixels abaixo do centro visual da
+linha. `TerminalPanel` ganhou `cursorVerticalOffset` com padrão zero, repassado
+ao viewport somente na geometria do caret; `AssistantPanel` define `-2`, sem
+mover texto, spans, seleção ou grade. O host do Terminal comum não fornece
+override e preserva exatamente o posicionamento aprovado. Esse ajuste é uma
+variação visual explícita da superfície, não parsing da CLI ou segundo
+renderer. Gate integral, builds Debug/Release e smoke offscreen de 8 s passaram;
+o aceite final permanece humano antes de gerar outro AppImage.
+
 **Arquivos (D2.1):** Cargo (portable-pty, vt100 — já adicionados);
 `terminal.rs` (reescrever: PTY + vt100 grid + emitir render + resize +
 multi-id opcional); protocolo (`TerminalResizeParams`, tipos de render,

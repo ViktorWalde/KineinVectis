@@ -36,7 +36,10 @@ visual, no modelo terminal-first. Antes do início efetivo de A3, o dogfooding
 revelou que o caret ficava muito depois do texto e que verde/bold do prompt era
 visualmente agressivo. A correção 0.56 unifica spans e cursor pela largura VT,
 usa família monoespaçada real e suaviza peso/paleta sem interpretar o prompt;
-o gesto ao vivo após reiniciar permanece pendente.
+o usuário aprovou posição horizontal, Terminal comum e verdes suaves. Restou
+somente um ajuste fino: no KV Context o caret de Claude/Codex parecia cerca de
+dois pixels baixo. O override vertical `-2` existe apenas no `AssistantPanel`;
+o Terminal comum permanece inalterado e o novo gesto ao vivo está pendente.
 
 1. registrar cada problema observado pelo usuário ou por um testador com ação,
    esperado, resultado, reprodução, distro e log quando houver;
@@ -102,6 +105,9 @@ ESTADO
 - Cada span informa a largura autoritativa em células VT; fonte, resize,
   seleção e caret usam a mesma grade. ANSI bold usa peso médio e a paleta verde
   é suave; o shell continua dono do texto e dos atributos do prompt.
+- O caret tem offset vertical padrão zero. Somente o KV Context fornece `-2`
+  px pelo `AssistantPanel`; Claude/Codex compartilham esse polimento e o
+  Terminal comum conserva a posição já aprovada.
 - A roda aceita os dois formatos do Qt (`angleDelta` e `pixelDelta`) e segue o
   mesmo `terminal.scroll` do Terminal comum.
 - Gutter usa faixas independentes para folding/breakpoint, diagnóstico, blame,
@@ -133,26 +139,25 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - Correção 0.56: gate integral verde com 335 testes Rust, Clippy, C++/QML
   estritos, 12 harnesses, builds Debug/Release e smoke offscreen de 8 s
   (`exit 124` esperado). Binários do atalho de desenvolvimento atualizados.
+- Polimento `cursorVerticalOffset: -2` exclusivo do KV Context: mesmo gate
+  integral e smoke release de 8 s verdes; `dist/` não foi regenerado.
 
 PRÓXIMO GESTO
 1. Reiniciar pelo atalho **Kinein Vectis (Desenvolvimento)**, que já aponta
-   para os binários release 0.56 atualizados, e carregar este repositório. O
-   AppImage preservado em `dist/` ainda é o checkpoint anterior e não deve ser
-   usado para validar esta correção sem novo empacotamento explícito.
-2. Confirmar as ações Cargo e CMake, um script pela árvore, os ícones exatos e
-   breakpoint/diagnóstico em arquivo com numeração larga.
-3. No KV Context, gerar saída maior que a altura do painel; rolar enquanto a
-   resposta ainda chega e confirmar que a leitura não salta nem perde o
-   histórico. Confirmar que não há moldura/input desenhado pela IDE. Digitar
-   texto e confirmar que o caret vertical fica imediatamente na próxima
-   célula, inclusive após caracteres largos; conferir se usuário/máquina e
-   pasta têm verde suave e peso confortável.
-4. Depois do gesto da correção 0.56, seguir A3 — responsividade medida.
+   para os binários release 0.56 atualizados, e abrir Claude ou Codex no KV
+   Context. O AppImage em `dist/` ainda é o checkpoint anterior.
+2. Confirmar somente se o caret subiu o pouco necessário e ficou centralizado
+   na linha; posição horizontal e paleta já foram aprovadas e não devem ser
+   alteradas novamente. Conferir também que o cursor do Terminal comum segue
+   exatamente como estava.
+3. Após aceite explícito do usuário, gerar e validar o AppImage portátil dessa
+   revisão para disponibilização a testadores. Não empacotar antes do aceite.
+4. Depois da distribuição aprovada, retomar A3, análise de integrações futuras
+   e polimentos vindos do feedback dos usuários na ordem da fila.
 
 RESULTADO PENDENTE
-- Aceite humano dos fluxos acima usando o AppImage final.
-- Aceite humano do alinhamento do caret e do conforto visual do prompt após
-  reiniciar o build que contém o protocolo 0.56.
+- Aceite humano do offset vertical exclusivo do caret no KV Context.
+- Novo AppImage e seus smokes host/Debian somente depois desse aceite.
 - Se qualquer gesto falhar, registrar ação/esperado/observado/ambiente e
   priorizar a regressão antes de A3.
 
@@ -261,6 +266,53 @@ generalista auxiliar. Quando o usuário disser **“estou no Kinein”**, regist
 cada exceção e corrigir primeiro o bloqueio reproduzível. Feedback dos
 testadores entra no mesmo funil, identificado pela origem e pelo ambiente, sem
 substituir evidência de reprodução.
+
+### A5 — candidatos explícitos para análise futura de integrações
+
+Lista solicitada pelo usuário em 2026-07-15. **Não é decisão de adoção nem fila
+de implementação imediata**: alguns itens já estão presentes ou registrados,
+outros podem ser substituídos por opção mais adequada. A sessão própria deve
+confrontar manutenção atual, licença, segurança, compatibilidade Linux-first,
+duplicação do que existe e encaixe Qt/QML → IPC → Rust Core antes de escolher:
+
+1. **Open Remote SSH (Open VSX/comunidade):** já consta no roadmap de adaptação
+   como referência FOSS. Reavaliar UX de abrir pasta, arquivos e sessão remotos
+   sem executar extensão VS Code/VSCodium dentro da Kinein nem depender de
+   servidor proprietário.
+2. **SSHFS / sshfs-win por CLI:** estudar montagem de Raspberry Pi, satélite ou
+   host embarcado como árvore local. Comparar com OpenSSH direto e considerar
+   latência, desconexão, watcher, escrita atômica e o fato de `sshfs-win` não
+   ser a variante primária de uma IDE Linux-first.
+3. **Bear (Build EAR):** avaliar geração de `compile_commands.json` ao
+   interceptar builds C/C++ quando CMake File API/presets ou banco de compilação
+   nativo do projeto não estiverem disponíveis; não substituir CMake nem
+   clangd.
+4. **CodeLLDB:** já é referência explícita no roadmap e a Kinein já possui
+   fundação DAP com `lldb-dap`. Analisar apenas lacunas concretas de experiência
+   e embarcados, sem incorporar o host de extensão.
+5. **libssh / ssh2-rs:** candidatos nativos para sessão, túnel e SFTP. Comparar
+   custo de dependência, superfície de segurança e manutenção com a política
+   atual de orquestrar OpenSSH CLI antes de escolher biblioteca de binding.
+6. **Valgrind / Memcheck:** avaliar integração de análise de vazamentos e
+   acessos inválidos C/C++ como job cancelável, com parser no core e resultados
+   navegáveis na UI.
+7. **Heaptrack:** avaliar profiling de memória C/C++ e Rust e visualização de
+   resultados sem criar profiler próprio; medir custo e disponibilidade nas
+   distribuições suportadas.
+8. **Clippy:** já está implementado no strict gate e em `quality.run` para
+   Rust. A análise futura deve tratar somente lacunas de UX/diagnósticos, não
+   adicionar outro linter equivalente.
+
+### A6 — sessão reservada para o novo repositório público
+
+O usuário pretende abrir uma sessão própria em breve para organizar o projeto
+inteiro antes de criar um **novo** repositório público no GitHub. `.gitignore`
+não é barreira de publicação nem remove nomes/histórico já rastreados. Aplicar
+`docs/21` M7.3: exportação por allowlist para árvore separada, histórico novo,
+dry-run, rejeição de Markdown extra e auditoria de segredos. No início dessa
+sessão, obter do usuário a lista exata dos nomes de arquivos `.md` e diretórios
+que não podem aparecer nem como caminho. Até lá, não criar repositório, não
+alterar visibilidade e não fazer push.
 
 ## 3. Consolidações necessárias antes de declarar substituição diária
 
