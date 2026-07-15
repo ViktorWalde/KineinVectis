@@ -15,6 +15,28 @@ void CoreClient::openWorkspace(const QString& path)
     sendRequest(QStringLiteral("workspace.open"), QJsonObject{{QStringLiteral("path"), path}});
 }
 
+void CoreClient::listRecentWorkspaces()
+{
+    sendRequest(QStringLiteral("workspace.recent.list"), QJsonObject{});
+}
+
+void CoreClient::pinRecentWorkspace(const QString& root, bool pinned)
+{
+    sendRequest(QStringLiteral("workspace.recent.pin"),
+                QJsonObject{{QStringLiteral("root"), root}, {QStringLiteral("pinned"), pinned}});
+}
+
+void CoreClient::removeRecentWorkspace(const QString& root)
+{
+    sendRequest(QStringLiteral("workspace.recent.remove"),
+                QJsonObject{{QStringLiteral("root"), root}});
+}
+
+void CoreClient::clearRecentWorkspaces()
+{
+    sendRequest(QStringLiteral("workspace.recent.clear"), QJsonObject{});
+}
+
 void CoreClient::browseWorkspaceFolders(const QString& path)
 {
     sendRequest(QStringLiteral("workspace.browse"), QJsonObject{{QStringLiteral("path"), path}});

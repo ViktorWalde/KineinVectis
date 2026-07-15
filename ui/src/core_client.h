@@ -68,6 +68,10 @@ public:
     Q_INVOKABLE void start();
     Q_INVOKABLE void ping();
     Q_INVOKABLE void openWorkspace(const QString& path);
+    Q_INVOKABLE void listRecentWorkspaces();
+    Q_INVOKABLE void pinRecentWorkspace(const QString& root, bool pinned);
+    Q_INVOKABLE void removeRecentWorkspace(const QString& root);
+    Q_INVOKABLE void clearRecentWorkspaces();
     Q_INVOKABLE void browseWorkspaceFolders(const QString& path);
     Q_INVOKABLE void createWorkspaceFolder(const QString& parent, const QString& name);
     Q_INVOKABLE void createWorkspaceProject(const QString& parent, const QString& name,
@@ -176,6 +180,7 @@ signals:
     void statusChanged();
     void logChanged();
     void workspaceChanged();
+    void recentWorkspacesResolved(const QVariantList& workspaces);
     void workspaceBrowseListed(const QString& path, const QString& parent,
                                const QVariantList& entries);
     void workspaceFolderCreated(const QString& path);
@@ -305,6 +310,7 @@ private:
     bool dispatchSyntaxResult(const QString& method, const QJsonObject& result);
     bool dispatchCmakeResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
+    bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);
     void handleWorkspaceOpened(const QJsonObject& result);
     void storeJobId(const QString& method, const QString& jobId);
     void cancelJob(const QString& jobId);

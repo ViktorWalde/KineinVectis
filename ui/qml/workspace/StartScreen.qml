@@ -5,9 +5,15 @@ Rectangle {
     id: root
 
     property var tools: []
+    property var recentWorkspaces: []
+    property string recentWorkspacesError: ""
     property bool scanning: false
 
     signal openWorkspaceRequested()
+    signal recentWorkspaceOpenRequested(string rootPath)
+    signal recentWorkspacePinRequested(string rootPath)
+    signal recentWorkspaceRemoveRequested(string rootPath)
+    signal recentWorkspacesClearRequested()
     signal newProjectRequested(string templateId)
     signal settingsRequested()
     signal detectToolsRequested()
@@ -27,10 +33,26 @@ Rectangle {
         return count;
     }
 
-    Column {
-        anchors.centerIn: parent
-        width: Math.min(760, parent.width - 2 * Theme.spacingRegion)
-        spacing: Theme.spacingLarge
+    Flickable {
+        id: startFlick
+
+        anchors.fill: parent
+        contentWidth: width
+        contentHeight: Math.max(height,
+                                contentColumn.y + contentColumn.height
+                                + Theme.spacingRegion)
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.VerticalFlick
+
+        Column {
+            id: contentColumn
+
+            x: (startFlick.width - width) / 2
+            y: Math.max(Theme.spacingRegion,
+                        (startFlick.height - height) / 2)
+            width: Math.min(760, startFlick.width - 2 * Theme.spacingRegion)
+            spacing: Theme.spacingLarge
 
         Row {
             width: parent.width
@@ -63,7 +85,7 @@ Rectangle {
             }
         }
 
-        Rectangle {
+            Rectangle {
             width: parent.width
             height: 142
             radius: Theme.radiusLarge
@@ -122,7 +144,23 @@ Rectangle {
             }
         }
 
-        Rectangle {
+            RecentWorkspacesCard {
+                width: parent.width
+                workspaces: root.recentWorkspaces
+                errorText: root.recentWorkspacesError
+                onOpenRequested: function(rootPath) {
+                    root.recentWorkspaceOpenRequested(rootPath);
+                }
+                onPinRequested: function(rootPath) {
+                    root.recentWorkspacePinRequested(rootPath);
+                }
+                onRemoveRequested: function(rootPath) {
+                    root.recentWorkspaceRemoveRequested(rootPath);
+                }
+                onClearRequested: root.recentWorkspacesClearRequested()
+            }
+
+            Rectangle {
             width: parent.width
             height: 220
             radius: Theme.radiusLarge
@@ -233,6 +271,7 @@ Rectangle {
                     color: Theme.textMuted
                     font.pixelSize: 10
                 }
+            }
             }
         }
     }

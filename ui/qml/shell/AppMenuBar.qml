@@ -10,6 +10,7 @@ Rectangle {
     property bool running: false
     property bool debugging: false
     property string workspaceKind: ""
+    property var recentWorkspaces: []
     property string activeMenu: ""
 
     signal actionRequested(string action)
@@ -42,16 +43,37 @@ Rectangle {
     }
 
     function menuItems(key) {
+        const fileItems = [
+            { label: qsTr("Abrir workspace..."), action: "workspace.open", enabled: true }
+        ];
+        if (recentWorkspaces.length > 0) {
+            fileItems.push({ label: qsTr("Abrir recente"), action: "", enabled: false });
+            for (let index = 0; index < Math.min(recentWorkspaces.length, 8); index++) {
+                const recent = recentWorkspaces[index];
+                const prefix = recent.pinned ? qsTr("Fixado — ") : "";
+                const suffix = recent.available ? "" : qsTr(" — caminho ausente");
+                fileItems.push({
+                    label: "  " + prefix + recent.name + suffix,
+                    action: "workspace.recent.open:" + index,
+                    enabled: recent.available
+                });
+            }
+            fileItems.push({
+                label: qsTr("Limpar workspaces recentes"),
+                action: "workspace.recent.clear",
+                enabled: true
+            });
+        }
+        fileItems.push(
+            { label: qsTr("Novo arquivo..."), action: "project.createFile", enabled: workspaceOpen },
+            { label: qsTr("Nova pasta..."), action: "project.createDirectory", enabled: workspaceOpen },
+            { label: qsTr("Fechar workspace"), action: "workspace.close", enabled: workspaceOpen },
+            { label: qsTr("Salvar"), action: "editor.save", enabled: hasActiveFile },
+            { label: qsTr("Salvar tudo"), action: "editor.saveAll", enabled: hasActiveFile },
+            { label: qsTr("Sair"), action: "app.quit", enabled: true }
+        );
         const menus = {
-            file: [
-                { label: qsTr("Abrir workspace..."), action: "workspace.open", enabled: true },
-                { label: qsTr("Novo arquivo..."), action: "project.createFile", enabled: workspaceOpen },
-                { label: qsTr("Nova pasta..."), action: "project.createDirectory", enabled: workspaceOpen },
-                { label: qsTr("Fechar workspace"), action: "workspace.close", enabled: workspaceOpen },
-                { label: qsTr("Salvar"), action: "editor.save", enabled: hasActiveFile },
-                { label: qsTr("Salvar tudo"), action: "editor.saveAll", enabled: hasActiveFile },
-                { label: qsTr("Sair"), action: "app.quit", enabled: true }
-            ],
+            file: fileItems,
             edit: [
                 { label: qsTr("Buscar no arquivo"), action: "editor.find", enabled: hasActiveFile },
                 { label: qsTr("Substituir no arquivo"), action: "editor.replace", enabled: hasActiveFile },

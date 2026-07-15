@@ -1,0 +1,14 @@
+Kinein Vectis
+Copyright 2026 Kinein Vectis contributors
+
+The Kinein Vectis source declares the license expression:
+
+    MIT OR Apache-2.0
+
+The complete terms are included beside this notice as LICENSE-MIT.txt and
+LICENSE-APACHE-2.0.txt. This AppImage also bundles dynamically linked Qt
+libraries and other system libraries. Their copyright and license notices are
+collected by linuxdeploy from the build distribution under usr/share/doc.
+
+Build-only tools linuxdeploy and linuxdeploy-plugin-qt are licensed under MIT.
+They create this artifact but are not shipped as executables inside it.

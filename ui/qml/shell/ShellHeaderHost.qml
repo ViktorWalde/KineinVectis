@@ -13,6 +13,7 @@ Column {
     property var projectTree: null
     property var searchController: null
     property var settingsController: null
+    property var recentWorkspacesController: null
 
     signal configMenuRequested(real menuX, real menuY)
     signal appMenuRequested(string key, real menuX, real menuY, var items)
@@ -23,8 +24,18 @@ Column {
     z: 100
 
     function executeMenuAction(action) {
+        const recentPrefix = "workspace.recent.open:";
+        if (action.indexOf(recentPrefix) === 0) {
+            const index = Number(action.substring(recentPrefix.length));
+            if (index >= 0 && index < root.recentWorkspacesController.workspaces.length) {
+                root.recentWorkspacesController.openWorkspace(
+                    root.recentWorkspacesController.workspaces[index].root);
+            }
+            return;
+        }
         switch (action) {
         case "workspace.open": root.shellController.requestOpenFolder(); break;
+        case "workspace.recent.clear": root.recentWorkspacesController.clearAll(); break;
         case "workspace.close": root.coreClient.closeWorkspace(); break;
         case "project.createFile": root.projectTree.openCreateDialog("file"); break;
         case "project.createDirectory": root.projectTree.openCreateDialog("directory"); break;
@@ -76,6 +87,7 @@ Column {
         running: root.coreClient.running
         debugging: root.coreClient.debugging
         workspaceKind: root.coreClient.workspaceKind
+        recentWorkspaces: root.recentWorkspacesController.workspaces
         onActionRequested: function(action) {
             root.executeMenuAction(action);
         }

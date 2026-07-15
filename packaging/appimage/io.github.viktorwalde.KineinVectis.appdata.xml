@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.viktorwalde.KineinVectis</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT OR Apache-2.0</project_license>
+  <name>Kinein Vectis</name>
+  <summary>IDE para C, C++, Rust, sistemas embarcados e simulação</summary>
+  <developer_name>Kinein Vectis contributors</developer_name>
+  <description>
+    <p>
+      Kinein Vectis é uma IDE Linux-first que integra CMake, Cargo,
+      clangd, rust-analyzer e ferramentas abertas através de um core Rust e
+      uma interface Qt/QML nativa.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.viktorwalde.KineinVectis.desktop</launchable>
+  <url type="homepage">https://github.com/ViktorWalde</url>
+  <provides>
+    <binary>kinein-vectis</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-07-14"/>
+  </releases>
+</component>

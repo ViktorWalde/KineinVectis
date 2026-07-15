@@ -1,0 +1,19 @@
+FROM docker.io/library/debian:12-slim@sha256:63a496b5d3b99214b39f5ed70eb71a61e590a77979c79cbee4faf991f8c0783e
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Only the graphics/font stack expected from a desktop Linux installation.
+# Qt, Rust, CMake, compilers and development packages are intentionally absent.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        libegl1 \
+        libfontconfig1 \
+        libfreetype6 \
+        libglx0 \
+        libharfbuzz0b \
+        libopengl0 \
+        libx11-6 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace

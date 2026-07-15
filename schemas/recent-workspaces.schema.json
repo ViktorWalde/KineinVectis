@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kinein.dev/schemas/recent-workspaces.schema.json",
+  "title": "Kinein Vectis Recent Workspaces",
+  "description": "Global XDG history used by the Start Screen and File menu.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workspaces"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "workspaces": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "root", "lastOpenedAt", "pinned"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "root": { "type": "string", "pattern": "^/" },
+          "lastOpenedAt": { "type": "integer", "minimum": 0 },
+          "pinned": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+# Debian 12/glibc 2.36 baseline, pinned to the repository's Rust 1.96.1.
+# The first AppImage target is x86_64; add a separately audited ARM builder
+# instead of silently cross-building from this image.
+FROM docker.io/library/rust:1.96.1-bookworm@sha256:d99f7b31f49909348dc59b51f3c95d1efded1701ffb222f095aaab7de3c4abd8
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        ca-certificates \
+        clang \
+        cmake \
+        curl \
+        desktop-file-utils \
+        file \
+        appstream \
+        libegl1-mesa-dev \
+        libgl1-mesa-dev \
+        libxcb-cursor0 \
+        ninja-build \
+        patchelf \
+        pkg-config \
+        qt6-base-dev \
+        qt6-declarative-dev \
+        qt6-tools-dev-tools \
+        qt6-wayland \
+        qml6-module-qtqml \
+        qml6-module-qtqml-models \
+        qml6-module-qtqml-workerscript \
+        qml6-module-qtquick \
+        qml6-module-qtquick-window \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace

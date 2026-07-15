@@ -44,7 +44,8 @@ Item {
 
         anchors.fill: parent
         color: Theme.surface2
-        opacity: thumbMouse.containsMouse || thumbMouse.pressed ? 0.6 : 0
+        opacity: thumbMouse.containsMouse || thumbMouse.pressed
+                 ? 0.6 : (bar.showWhenIdle ? 0.18 : 0)
         radius: Theme.radiusXSmall
 
         Behavior on opacity {
@@ -73,7 +74,7 @@ Item {
         radius: width / 2
         color: thumbMouse.containsMouse || thumbMouse.pressed
                 ? Theme.textMuted : Theme.borderStrong
-        opacity: bar.scrollable ? 1.0 : 0.35
+        opacity: bar.scrollable ? 1.0 : (bar.showWhenIdle ? 0.55 : 0.35)
 
         Behavior on width {
             NumberAnimation { duration: 120 }

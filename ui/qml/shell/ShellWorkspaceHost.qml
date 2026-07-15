@@ -16,6 +16,7 @@ Item {
     property var diagnosticsController
     property var searchController
     property var assistantController
+    property var recentWorkspacesController
     property alias editorSurface: editorPane.editorSurface
     property bool workspaceOpen: false
     property string workspaceRoot: ""
@@ -174,12 +175,15 @@ Item {
         Column {
             id: centerColumn
 
-            width: parent.width - sideBar.width - Theme.panelGap
-                   - (explorerPanel.visible
-                      ? explorerPanel.width + Theme.panelGap : 0)
-                   - (assistantPanel.visible
-                      ? assistantPanel.width + Theme.panelGap : 0)
+            width: visible
+                   ? Math.max(0, parent.width - sideBar.width - Theme.panelGap
+                              - (explorerPanel.visible
+                                 ? explorerPanel.width + Theme.panelGap : 0)
+                              - (assistantPanel.visible
+                                 ? assistantPanel.width + Theme.panelGap : 0))
+                   : 0
             height: parent.height
+            visible: !root.shellController.assistantMaximized
             spacing: Theme.panelGap
 
             ProjectHealthBanner {
@@ -212,8 +216,20 @@ Item {
                           ? bottomPanel.height + Theme.panelGap : 0) : 0
                 visible: !root.workspaceOpen
                 tools: root.toolsList
+                recentWorkspaces: root.recentWorkspacesController.workspaces
+                recentWorkspacesError: root.recentWorkspacesController.errorText
                 scanning: root.scanningEnvironment
                 onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
+                onRecentWorkspaceOpenRequested: function(rootPath) {
+                    root.recentWorkspacesController.openWorkspace(rootPath);
+                }
+                onRecentWorkspacePinRequested: function(rootPath) {
+                    root.recentWorkspacesController.togglePinned(rootPath);
+                }
+                onRecentWorkspaceRemoveRequested: function(rootPath) {
+                    root.recentWorkspacesController.removeWorkspace(rootPath);
+                }
+                onRecentWorkspacesClearRequested: root.recentWorkspacesController.clearAll()
                 onNewProjectRequested: function(templateId) {
                     root.createProjectRequested(templateId);
                 }
@@ -531,9 +547,14 @@ Item {
         AssistantPanel {
             id: assistantPanel
 
-            width: visible ? root.shellController.contextWidth : 0
+            width: !visible ? 0
+                   : (root.shellController.assistantMaximized
+                      ? Math.max(300, parent.width - sideBar.width
+                                 - Theme.panelGap)
+                      : root.shellController.assistantPresentationWidth)
             height: parent.height
             visible: root.shellController.showAssistant
+            maximized: root.shellController.assistantMaximized
             profilesModel: root.assistantController.profilesModel
             selectedProfileId: root.assistantController.selectedProfileId
             sessionId: root.assistantController.sessionId
@@ -559,6 +580,9 @@ Item {
             onTerminalScrollRequested: function(offset) {
                 root.assistantController.scrollTerminal(offset);
             }
+            onMaximizeToggleRequested: {
+                root.shellController.toggleAssistantMaximized();
+            }
         }
     }
 
@@ -576,11 +600,12 @@ Item {
 
     PanelSplitter {
         visible: assistantPanel.visible
+                 && !root.shellController.assistantMaximized
         x: assistantPanel.x - Theme.panelGap
         width: Theme.panelGap
         height: parent.height
         onDragged: function(delta) {
-            root.shellController.resizeContext(-delta);
+            root.shellController.resizeAssistant(-delta);
         }
     }
 

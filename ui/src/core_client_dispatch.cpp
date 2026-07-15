@@ -505,6 +505,42 @@ bool CoreClient::dispatchDebugResult(const QString& method, const QJsonObject& r
            method == QStringLiteral("debug.pause") || method == QStringLiteral("debug.stop");
 }
 
+bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObject& result)
+{
+    if (method == QStringLiteral("workspace.open") ||
+        method == QStringLiteral("workspace.createProject"))
+    {
+        handleWorkspaceOpened(result);
+        return true;
+    }
+    if (method.startsWith(QStringLiteral("workspace.recent."))) {
+        emit recentWorkspacesResolved(
+            result.value(QStringLiteral("workspaces")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("workspace.createFolder")) {
+        emit workspaceFolderCreated(result.value(QStringLiteral("path")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("workspace.browse")) {
+        emit workspaceBrowseListed(
+            result.value(QStringLiteral("path")).toString(),
+            result.value(QStringLiteral("parent")).toString(),
+            result.value(QStringLiteral("entries")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("workspace.close")) {
+        m_workspaceRoot.clear();
+        m_workspaceName.clear();
+        m_workspaceKind.clear();
+        m_terminalIds.clear();
+        setTerminalActive(false);
+        emit workspaceChanged();
+        return true;
+    }
+    return false;
+}
+
 void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
 {
     m_workspaceRoot = result.value(QStringLiteral("root")).toString();
@@ -513,6 +549,7 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     // M4.3: lembra o root para recuperar de um crash futuro.
     m_lastWorkspaceRoot = m_workspaceRoot;
     emit workspaceChanged();
+    listRecentWorkspaces();
     listDir(m_workspaceRoot);
     if (m_workspaceKind == QStringLiteral("cmake")) {
         cmakeStatus();
@@ -562,30 +599,7 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         setStatus(QStringLiteral("conectado"), true);
         return;
     }
-    if (method == QStringLiteral("workspace.open") ||
-        method == QStringLiteral("workspace.createProject"))
-    {
-        handleWorkspaceOpened(result);
-        return;
-    }
-    if (method == QStringLiteral("workspace.createFolder")) {
-        emit workspaceFolderCreated(result.value(QStringLiteral("path")).toString());
-        return;
-    }
-    if (method == QStringLiteral("workspace.browse")) {
-        emit workspaceBrowseListed(
-            result.value(QStringLiteral("path")).toString(),
-            result.value(QStringLiteral("parent")).toString(),
-            result.value(QStringLiteral("entries")).toArray().toVariantList());
-        return;
-    }
-    if (method == QStringLiteral("workspace.close")) {
-        m_workspaceRoot.clear();
-        m_workspaceName.clear();
-        m_workspaceKind.clear();
-        m_terminalIds.clear();
-        setTerminalActive(false);
-        emit workspaceChanged();
+    if (dispatchWorkspaceResult(method, result)) {
         return;
     }
     if (dispatchCmakeResult(method, result) || dispatchDebugResult(method, result)) {

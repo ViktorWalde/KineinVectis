@@ -176,6 +176,26 @@ Item {
                 context.lineTo(5, 11);
                 context.lineTo(10, 10);
                 break;
+            case "expand":
+                line(context, 4, 9, 4, 4);
+                line(context, 4, 4, 9, 4);
+                line(context, 15, 4, 20, 4);
+                line(context, 20, 4, 20, 9);
+                line(context, 20, 15, 20, 20);
+                line(context, 20, 20, 15, 20);
+                line(context, 9, 20, 4, 20);
+                line(context, 4, 20, 4, 15);
+                break;
+            case "collapse":
+                line(context, 9, 4, 9, 9);
+                line(context, 9, 9, 4, 9);
+                line(context, 15, 4, 15, 9);
+                line(context, 15, 9, 20, 9);
+                line(context, 15, 20, 15, 15);
+                line(context, 15, 15, 20, 15);
+                line(context, 9, 20, 9, 15);
+                line(context, 9, 15, 4, 15);
+                break;
             case "help":
                 context.arc(12, 12, 9, 0, Math.PI * 2, false);
                 context.moveTo(9, 9.5);

@@ -9,6 +9,7 @@ Item {
     property var searchController: null
     property var workspaceController: null
     property var projectHealthController: null
+    property var recentWorkspacesController: null
 
     visible: false
 
@@ -83,11 +84,16 @@ Item {
             root.workspaceController.handleWorkspaceChanged();
         }
 
+        function onRecentWorkspacesResolved(workspaces) {
+            root.recentWorkspacesController.handleResolved(workspaces);
+        }
+
         function onToolsListed(tools) {
             root.workspaceController.toolsList = tools;
         }
 
         function onRequestFailed(method, message) {
+            root.recentWorkspacesController.handleRequestFailed(method, message);
             if (method === "workspace.open" || method === "workspace.browse"
                     || method === "workspace.createFolder"
                     || method === "workspace.createProject") {
