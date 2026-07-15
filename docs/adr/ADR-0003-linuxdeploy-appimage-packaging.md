@@ -38,10 +38,11 @@ SHA256 não seja o auditado. As ferramentas rodam no builder oficial Rust
 A receita é dividida em:
 
 - `scripts/empacotar-appimage-portatil.sh`: cria/executa o builder Podman ou
-  Docker;
-- `scripts/empacotar-appimage.sh`: compila, instala no AppDir, verifica as
-  ferramentas, gera o AppImage e concentra AppImage/checksum/instalador/
-  tutorial em `dist/`;
+  Docker e é a entrada canônica;
+- `scripts/empacotar-appimage.sh`: quando chamado sem argumentos, encaminha
+  para a entrada canônica; dentro do builder, o argumento interno
+  `--baseline-worker` habilita a compilação, instalação no AppDir, verificações
+  e geração do AppImage;
 - `scripts/instalar-appimage.sh`: integra no menu do usuário o AppImage de
   maior versão encontrado na pasta, sobrescreve um único atalho e oferece
   remover versões anteriores;
@@ -59,10 +60,22 @@ reutilizado pelo checkout em `/home/...` (ou o inverso). O wrapper portátil
 invoca os scripts montados com `bash`, sem depender do bit executável, e os
 mounts Podman usam rótulo SELinux `:Z` com modo de acesso explícito.
 
+O worker não é uma interface de build nativo. Distribuições e versões do Qt
+podem representar o backend Wayland por nomes diferentes — por exemplo, o
+builder Qt 6.4 fornece `libqwayland-egl.so` e `libqwayland-generic.so`, enquanto
+ambientes mais recentes podem fornecer apenas `libqwayland.so`. Obrigar toda
+entrada pública a passar pelo builder fixado evita validar um layout no host e
+publicar outro no baseline suportado.
+
 Além do `SHA256SUMS` interno de automação, a entrega principal de `dist/` é:
 AppImage, `.AppImage.sha256`, `instalar-kinein-vectis.sh` e `Tutorial.md`. O
 teste local exige os quatro, exige o instalador executável e compara a cópia do
 tutorial byte a byte com a fonte vigente.
+
+Esses arquivos são montados integralmente em staging. Somente após AppImage,
+checksum, instalador e tutorial passarem pelas verificações locais cada arquivo
+é publicado por renomeação em `dist/`; uma falha anterior à publicação preserva
+a última entrega válida e não deixa um binário parcial com nome definitivo.
 
 O AppImage é dono do desktop id `kinein-vectis.desktop` e do nome público
 **Kinein Vectis**. O checkout usa o desktop id separado
@@ -135,6 +148,14 @@ Passaram o smoke do host e o Debian mínimo sem rede. O teste também executou o
 instalador a partir de um diretório de trabalho diferente da entrega e
 confirmou `.desktop`, PNG extraído e `Exec` apontando para o AppImage correto;
 isso protege a regra de resolver por padrão a pasta do próprio script.
+
+Ainda em 2026-07-15, a entrada pública foi protegida contra execução acidental
+do worker no Qt do host e a publicação passou a usar staging. Uma falha forçada
+antes do container preservou byte a byte os cinco arquivos existentes em
+`dist/`. A reconstrução seguinte gerou 33.737.208 bytes, SHA256
+`86b335b2b1ba8c81d958df4f1e45f7d9c0838fdad2a2567c84199f84b8dbdc0d`,
+sem staging residual, e passou novamente pelos smokes do host e do Debian 12
+mínimo sem rede.
 
 ## Alternativas consideradas
 

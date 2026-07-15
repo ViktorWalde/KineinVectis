@@ -221,21 +221,34 @@ aceitos somente quando seus SHA-256 coincidem com os pins auditados.
 bash scripts/empacotar-appimage-portatil.sh
 ```
 
+Esse é o comando canônico. Por segurança, a chamada mais curta abaixo também
+encaminha automaticamente para o mesmo builder Debian 12:
+
+```bash
+bash scripts/empacotar-appimage.sh
+```
+
+Não tente executar a etapa interna com `--baseline-worker` no host. Os nomes e
+a disposição dos plugins Qt Wayland variam entre versões e distribuições; o
+contrato auditado da entrega é o ambiente fixado pelo script portátil.
+
 O script:
 
 - compila o `kinein-core` em release;
 - compila e instala a UI Qt/QML no AppDir;
 - inclui runtime Qt, plugins, manual e licenças;
 - gera `dist/Kinein-Vectis-<versão>-x86_64.AppImage`;
-- gera `SHA256SUMS` e o `.AppImage.sha256` correspondente.
+- gera `SHA256SUMS` e o `.AppImage.sha256` correspondente;
 - copia `dist/instalar-kinein-vectis.sh`, responsável pelo único atalho do
-  usuário.
+  usuário;
 - copia o `Tutorial.md` vigente para `dist/`, sem depender da árvore-fonte na
   entrega.
 
-Ele pode substituir um artefato da **mesma versão**. Se quiser preservar um
-build anterior para rollback, copie o par AppImage/checksum para outro local
-antes de reconstruir com o mesmo número.
+O conjunto completo é preparado em staging e só então publicado em `dist/`.
+Falha de compilação, plugin, validação ou geração preserva a última entrega
+válida. Um build concluído pode substituir um artefato da **mesma versão**; se
+quiser conservar também esse build anterior após uma reconstrução bem-sucedida,
+copie o par AppImage/checksum para outro local antes de repetir o mesmo número.
 
 ### 8.3 Validar no host e no baseline portátil
 

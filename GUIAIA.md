@@ -572,6 +572,10 @@ bash scripts/testar-appimage.sh
 bash scripts/testar-appimage-portatil.sh
 ```
 
+`scripts/empacotar-appimage.sh`, quando chamado diretamente e sem argumentos,
+encaminha para o mesmo fluxo portátil. Seu modo `--baseline-worker` é interno ao
+container e não deve ser usado como build nativo no host.
+
 O resultado fica em `dist/Kinein-Vectis-<versão>-x86_64.AppImage`, acompanhado
 de `SHA256SUMS`, de um `.AppImage.sha256` específico e de
 `instalar-kinein-vectis.sh`, além de uma cópia byte a byte do `Tutorial.md`
@@ -581,7 +585,9 @@ usuário e oferece apagar versões anteriores. Para um testador, enviar os quatr
 arquivos; o procedimento completo fica em `Tutorial.md`. A receita usa
 `linuxdeploy` + `linuxdeploy-plugin-qt`, builder
 Debian 12 fixado e ferramentas auditadas no registry. O smoke portátil executa
-sem rede em um Debian mínimo que não contém Qt, Rust, CMake ou compiladores.
+sem rede em um Debian mínimo que não contém Qt, Rust, CMake ou compiladores. A
+entrega é preparada em staging e publicada em `dist/` somente quando o conjunto
+está completo; falhas preservam a última versão válida já entregue.
 
 No computador de desenvolvimento, os atalhos têm identidades separadas:
 `kinein-vectis.desktop` pertence ao AppImage distribuído e

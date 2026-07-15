@@ -1,12 +1,32 @@
 #!/usr/bin/env bash
 # Creates the AppDir and AppImage using audited, pinned linuxdeploy releases.
 #
-# Este script roda dentro do builder Debian 12.
+# A chamada pública delega ao builder portátil. O trabalho abaixo só roda com
+# --baseline-worker, argumento interno passado pelo wrapper Debian 12.
 # Toda operação sobre APPDIR e plugins Qt deve permanecer neste arquivo.
 
 set -Eeuo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+if [[ "${1:-}" != "--baseline-worker" ]]; then
+    if (( $# > 0 )); then
+        echo "erro: argumento desconhecido: $1" >&2
+        echo "uso: bash scripts/empacotar-appimage.sh" >&2
+        exit 2
+    fi
+
+    echo "==> empacotamento direto usa o baseline portátil auditado"
+    exec bash "$REPO_ROOT/scripts/empacotar-appimage-portatil.sh"
+fi
+
+shift
+
+if (( $# > 0 )); then
+    echo "erro: --baseline-worker é um argumento interno e não aceita opções." >&2
+    exit 2
+fi
+
 BUILD_ROOT="${KINEIN_APPIMAGE_BUILD_ROOT:-$REPO_ROOT/build/appimage}"
 # O checkout pode ser visto como /workspace dentro do container e por seu
 # caminho real no host. Caches CMake não são relocáveis entre essas duas
@@ -153,6 +173,7 @@ for command_name in \
     find \
     grep \
     ldd \
+    mktemp \
     ninja \
     qmake6 \
     sha256sum
@@ -170,6 +191,23 @@ mkdir -p \
     "$DIST_DIR" \
     "$TOOLS_DIR" \
     "$CARGO_TARGET_DIR"
+
+# A entrega é construída integralmente fora de dist/. Assim um erro de
+# compilação, plugin ou linuxdeploy preserva o último AppImage válido.
+DELIVERY_STAGING_DIR="$(mktemp -d "$BUILD_ROOT/delivery-staging.XXXXXX")"
+PUBLISH_TEMP_FILES=()
+
+cleanup_delivery() {
+    local temporary_file
+
+    for temporary_file in "${PUBLISH_TEMP_FILES[@]}"; do
+        rm -f -- "$temporary_file"
+    done
+
+    cmake -E remove_directory "$DELIVERY_STAGING_DIR"
+}
+
+trap cleanup_delivery EXIT
 
 download_checked \
     "$LINUXDEPLOY_URL" \
@@ -250,12 +288,9 @@ if [[ -z "$VERSION" ]]; then
     exit 1
 fi
 
-OUTPUT_FILE="$DIST_DIR/Kinein-Vectis-$VERSION-x86_64.AppImage"
-
-rm -f \
-    "$OUTPUT_FILE" \
-    "$OUTPUT_FILE.sha256" \
-    "$DIST_DIR/SHA256SUMS"
+OUTPUT_BASENAME="Kinein-Vectis-$VERSION-x86_64.AppImage"
+OUTPUT_FILE="$DELIVERY_STAGING_DIR/$OUTPUT_BASENAME"
+FINAL_OUTPUT_FILE="$DIST_DIR/$OUTPUT_BASENAME"
 
 export APPIMAGE_EXTRACT_AND_RUN=1
 
@@ -409,30 +444,64 @@ if [[ ! -x "$OUTPUT_FILE" ]]; then
 fi
 
 (
-    cd "$DIST_DIR"
+    cd "$DELIVERY_STAGING_DIR"
 
     sha256sum \
-        "$(basename "$OUTPUT_FILE")" \
+        "$OUTPUT_BASENAME" \
         > SHA256SUMS
 )
 
 cp \
-    "$DIST_DIR/SHA256SUMS" \
+    "$DELIVERY_STAGING_DIR/SHA256SUMS" \
     "$OUTPUT_FILE.sha256"
 
 install \
     -m 0755 \
     "$REPO_ROOT/scripts/instalar-appimage.sh" \
-    "$DIST_DIR/instalar-kinein-vectis.sh"
+    "$DELIVERY_STAGING_DIR/instalar-kinein-vectis.sh"
 
 install \
     -m 0644 \
     "$REPO_ROOT/Tutorial.md" \
-    "$DIST_DIR/Tutorial.md"
+    "$DELIVERY_STAGING_DIR/Tutorial.md"
+
+publish_delivery_file() {
+    local source_file="$1"
+    local destination_file="$2"
+    local mode="$3"
+    local temporary_file="${destination_file}.kinein-new-$$"
+
+    PUBLISH_TEMP_FILES+=("$temporary_file")
+    install -m "$mode" "$source_file" "$temporary_file"
+    mv -f -- "$temporary_file" "$destination_file"
+}
+
+echo "==> publicando entrega validada em dist"
+
+publish_delivery_file \
+    "$OUTPUT_FILE" \
+    "$FINAL_OUTPUT_FILE" \
+    0755
+publish_delivery_file \
+    "$OUTPUT_FILE.sha256" \
+    "$FINAL_OUTPUT_FILE.sha256" \
+    0644
+publish_delivery_file \
+    "$DELIVERY_STAGING_DIR/SHA256SUMS" \
+    "$DIST_DIR/SHA256SUMS" \
+    0644
+publish_delivery_file \
+    "$DELIVERY_STAGING_DIR/instalar-kinein-vectis.sh" \
+    "$DIST_DIR/instalar-kinein-vectis.sh" \
+    0755
+publish_delivery_file \
+    "$DELIVERY_STAGING_DIR/Tutorial.md" \
+    "$DIST_DIR/Tutorial.md" \
+    0644
 
 echo "==> AppImage pronto"
-echo "$OUTPUT_FILE"
-echo "$OUTPUT_FILE.sha256"
+echo "$FINAL_OUTPUT_FILE"
+echo "$FINAL_OUTPUT_FILE.sha256"
 echo "$DIST_DIR/SHA256SUMS"
 echo "$DIST_DIR/instalar-kinein-vectis.sh"
 echo "$DIST_DIR/Tutorial.md"

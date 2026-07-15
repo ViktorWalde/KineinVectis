@@ -1519,12 +1519,20 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   única continua `dist/` e contém AppImage, checksum específico,
   `instalar-kinein-vectis.sh` e uma cópia atual de `Tutorial.md`; o teste recusa
   tutorial ausente ou divergente.
+- Uma execução manual revelou que o worker de packaging ainda podia ser
+  chamado diretamente no Fedora: além de voltar a expor cache CMake criado em
+  `/workspace`, o Qt 6.11 do host representa o plugin Wayland de modo diferente
+  do Qt 6.4/Debian do baseline. A entrada direta agora encaminha ao builder
+  portátil, `--baseline-worker` ficou reservado ao container, e a entrega é
+  preparada em staging antes de substituir arquivos em `dist/`. Assim uma
+  falha de compilação, plugin ou geração preserva o último AppImage válido.
 - Gate integral após a consolidação: 334 testes Rust (256 core, 63 protocolo,
   15 demais), Clippy `-D warnings`, clang-format/clang-tidy, qmllint zero
   warnings, 12 harnesses QML e builds UI Debug/Release passaram; os binários
   release do launcher de desenvolvimento foram atualizados.
-- AppImage `0.1.0` final: 33.737.208 bytes, SHA256
-  `fd5fe934599757b6980703d2c2529f9b50bdc026e03e5da34b6a0eb5f44629b9`.
+- AppImage `0.1.0` final após a proteção da entrada e publicação por staging:
+  33.737.208 bytes, SHA256
+  `86b335b2b1ba8c81d958df4f1e45f7d9c0838fdad2a2567c84199f84b8dbdc0d`.
   Smoke do host e Debian 12 mínimo sem rede passaram. O instalador distribuído
   foi exercitado de fora da pasta de entrega em XDG isolado e gerou `.desktop`
   e PNG apontando para o AppImage ao lado do próprio script.

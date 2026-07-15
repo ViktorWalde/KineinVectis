@@ -105,8 +105,10 @@ ESTADO
 - Scripts shell reconhecidos têm ação de execução na árvore; o core confina o
   caminho e usa argv explícito, sem interpolação.
 - Packaging corrigido para cache host/container isolado, mounts Podman/SELinux
-  e invocação por bash. `dist/` deve receber AppImage, checksum específico,
-  instalador e Tutorial.md vigente.
+  e invocação por bash. A entrada direta delega ao builder Debian auditado; o
+  worker não é um build nativo. `dist/` só recebe por staging o conjunto
+  completo AppImage/checksum/instalador/Tutorial, preservando a entrega anterior
+  em caso de falha.
 
 VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - `scripts/verificar.sh` completo: verde; binários release do atalho de
@@ -118,7 +120,7 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - tst_assistant_layout cobre divisor ativo/largura/Project; tst_terminal_scroll
   cobre nova saída, snap, troca de sessão, roda tradicional e `pixelDelta`;
   Rust cobre CSI 3 J entre chunks.
-- AppImage final (33.737.208 bytes; SHA256 `fd5fe934599757b6980703d2c2529f9b50bdc026e03e5da34b6a0eb5f44629b9`),
+- AppImage final (33.737.208 bytes; SHA256 `86b335b2b1ba8c81d958df4f1e45f7d9c0838fdad2a2567c84199f84b8dbdc0d`),
   teste host e Debian mínimo sem rede: verdes. Ambos validam também instalador
   executado fora da pasta, `.desktop`, PNG e `Tutorial.md` idêntico à fonte.
 

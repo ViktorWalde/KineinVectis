@@ -63,7 +63,7 @@ echo "==> gerando AppImage no baseline portátil"
 "$CONTAINER_ENGINE" run \
     "${RUN_ARGS[@]}" \
     "$BUILDER_IMAGE" \
-    bash scripts/empacotar-appimage.sh
+    bash scripts/empacotar-appimage.sh --baseline-worker
 
 echo "==> build portátil concluído"
 echo "==> artefatos disponíveis em: $REPO_ROOT/dist"
