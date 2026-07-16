@@ -328,8 +328,27 @@ já tematizada. O contraste e a duplicação causam fadiga visual.
 **Correção mínima entregue:** `Main.qml` mantém a decoração server-side, mas
 deixa seu título vazio. A identidade continua na App Bar e o workspace passa a
 aparecer ali com `Theme.textMuted`, elide central e sem cor literal. Isso
-preserva move, resize, snap, maximizar/minimizar/fechar e integração do
-compositor enquanto remove o texto branco duplicado.
+remove o texto branco duplicado sem introduzir ainda uma decoração client-side.
+
+**Correção do aceite pelo dogfooding (bloqueante antes de novo código):** no
+AppImage aberto em Fedora/Wayland, a barra resultante não apresenta as ações
+visíveis **Minimizar**, **Maximizar** e **Restaurar**. Portanto, a afirmação de
+que a mitigação preservava todos os controles nativos não está aceita. Registrar
+como regressão P2 do shell, anterior ao polimento P3 da barra completa.
+
+Critérios obrigatórios da próxima correção, antes de remover qualquer moldura:
+
+- exibir Minimizar e um único controle alternável Maximizar/Restaurar, além de
+  Fechar, com ícones, tooltip e nomes acessíveis Kinein;
+- Maximizar deve aparecer no estado normal; Restaurar deve substituí-lo apenas
+  quando a janela estiver maximizada e recuperar a geometria normal anterior;
+- o estado autoritativo vem da janela/Qt e do compositor, sem booleano visual
+  paralelo em QML;
+- duplo clique e arraste da região livre não podem competir com os botões;
+- validar clique, teclado, foco, Wayland e X11 em janela normal, maximizada e
+  restaurada; smoke offscreen sozinho não serve como aceite desses controles;
+- nenhuma nova funcionalidade da barra é considerada pronta enquanto os três
+  comandos relatados pelo usuário não estiverem visíveis e funcionais.
 
 **Referência profissional atual:** Zed oficial na revisão
 `1e22d1a83f8b1b7acc528d15cfab0644852380c0` (2026-07-15) separa decoração

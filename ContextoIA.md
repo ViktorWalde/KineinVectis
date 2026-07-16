@@ -1653,12 +1653,19 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   server-side repetia `workspace - Kinein Vectis` em branco puro acima da App
   Bar e causava fadiga visual. Essa cor/peso pertencem ao compositor, não ao
   QML, e não têm ajuste portátil por aplicação.
-- A mitigação mínima mantém toda a moldura nativa e seus controles, mas deixa
-  o título server-side vazio. A App Bar continua dona da identidade `Kinein` e
+- A mitigação mínima mantém a moldura nativa e deixa o título server-side
+  vazio. A App Bar continua dona da identidade `Kinein` e
   agora mostra o nome real do workspace em `Theme.textMuted`, com elide. Um
   binding direto cobre os estados com e sem workspace; core, protocolo e IPC
   não mudam. Como o aceite é visual e depende do compositor, o gate automatiza
   lint/build/smoke e o usuário confere o resultado em tela real.
+- Correção posterior do estado real: no AppImage em Fedora/Wayland, o usuário
+  confirmou que Minimizar, Maximizar e Restaurar não estão visíveis. A frase
+  acima sobre preservação dos controles nativos fica invalidada pelo
+  dogfooding. Isso é regressão P2 anterior a qualquer código novo da barra.
+  Próxima correção deve oferecer Minimizar e Maximizar/Restaurar alternável pelo
+  estado autoritativo da janela, preservando geometria, Fechar, arraste,
+  acessibilidade e Wayland/X11; smoke offscreen não basta para o aceite.
 - A reformulação completa permanece na C5/C6 de `docs/20`: decoração
   client-side original da Kinein, compacta e suave, somente depois de cobrir
   move/resize/snap/controles, acessibilidade, escala e X11/Wayland. Não ativar

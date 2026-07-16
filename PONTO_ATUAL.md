@@ -238,15 +238,21 @@ Feedback de testador não vira feature automaticamente: reproduzir, conferir se
 já existe solução no core/UI e encaixar no domínio/roadmap correto. Se for uma
 ideia nova sem bloqueio, registrar atrás dos problemas reais e de A3.
 
-### 0.2 Reformulação completa da barra de janela (P3, futura)
+### 0.2 Controles ausentes agora (P2) e barra completa futura (P3)
 
 A mitigação curta já remove o texto branco duplicado da decoração nativa e
-mostra o workspace na App Bar tematizada. Depois de A3 e sem interromper novas
-funções, fechar a convergência visual definida em `docs/20`: integrar App Bar e
-ações de janela numa decoração client-side Kinein suave, validando X11,
-Wayland, oito bordas de resize, snap, maximização, escala fracionária,
-multimonitor e acessibilidade antes de remover a moldura server-side. A imagem
-de aceite inicial é `imagens/bugs/ReformularBarra.png`. Não implementar apenas
+mostra o workspace na App Bar tematizada, mas o dogfooding do AppImage em
+Fedora/Wayland revelou que **Minimizar**, **Maximizar** e **Restaurar** não estão
+visíveis. Corrigir essa regressão P2 antes de escrever qualquer polimento novo:
+Maximizar/Restaurar formam um controle alternável guiado pelo estado real da
+janela, Restaurar recupera a geometria normal, e todos os controles exigem
+tooltip, acessibilidade e aceite visual real em Wayland/X11.
+
+Depois de A3, fechar a convergência P3 definida em `docs/20`: integrar App Bar
+e ações de janela numa decoração client-side Kinein suave, validando oito
+bordas de resize, snap, escala fracionária, multimonitor e acessibilidade antes
+de remover a moldura server-side. A imagem de aceite inicial é
+`imagens/bugs/ReformularBarra.png`. Não implementar apenas
 `FramelessWindowHint` nem copiar a barra da JetBrains.
 
 ## 1. TR0 — aceite funcional da rodada atual
