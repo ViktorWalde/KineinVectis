@@ -60,6 +60,9 @@ scripts/verificar-cpp.sh
 passo "scripts/verificar-qml.sh (qmllint estrito)"
 scripts/verificar-qml.sh
 
+passo "scripts/verificar-arquitetura.sh (catraca da regra de split)"
+bash scripts/verificar-arquitetura.sh
+
 passo "scripts/verificar-qml-logica.sh (controllers QML headless)"
 scripts/verificar-qml-logica.sh
 

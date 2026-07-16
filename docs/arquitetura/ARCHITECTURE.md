@@ -111,6 +111,22 @@ Regras:
    renderização + estado + IPC deve ser quebrado antes de nova feature crescer
    em cima dele.
 
+   **Verificada pelo gate desde 2026-07-16** (`scripts/verificar-arquitetura.sh`,
+   dentro do `verificar.sh`). Regra que mora só em `.md` não segura
+   arquitetura: esta existia, era boa, e ninguém a checava — em dez dias o
+   `Main.qml` foi de 336 para 700 linhas e 20 arquivos passaram do limite.
+   A verificação é **catraca**, não limite duro: o débito existente fica
+   congelado em `scripts/arquitetura-baseline.txt` e só pode diminuir.
+   Arquivo novo acima do limite reprova; arquivo em débito que cresce
+   reprova; encolher é sempre aceito. Falhar nos 20 de uma vez só ensinaria
+   a desligar o script.
+
+Estado em 2026-07-16 — **a validação de 2026-07-06 abaixo NÃO vale mais**:
+`Main.qml` está com 700 linhas (era 336), `EditorController.qml` com 1070
+(limite 400) e ao todo 20 arquivos passam do limite. A separação de camadas
+descrita adiante continua correta e é o alvo; o que falhou foi o TAMANHO, e
+agora a catraca do gate impede a piora. Texto original preservado:
+
 Estado validado em 2026-07-06: `Main.qml` tem 336 linhas e atua como
 composition root; o host visual central fica em
 `ui/qml/shell/ShellWorkspaceHost.qml` e não acessa `CoreClient` diretamente; o

@@ -396,6 +396,63 @@ mas ela cobria `.md` — falta aplicá-la a **comentário de código**. Regra a 
 de agora: comentário explica invariante e causa, não processo nem autoria. Fatia
 própria, depois da trilha atual.
 
+### 0.2g Arquivos "god" na UI — MEDIDO e travado por catraca (2026-07-16)
+
+Observação do autor: "tem muito arquivo god na UI de novo… precisamos de um
+plano de arquitetura atômica". Medi antes de escrever plano, e o resultado
+muda a resposta:
+
+**O projeto NÃO precisa de plano de arquitetura novo. Já tem um, é bom, e não
+era aplicado.** A `ARCHITECTURE.md` §6 já define a regra de split (QML visual
+~300 linhas, controller/store ~400, C++ ~500, e nunca misturar renderização +
+estado + IPC). O que faltava era **dente**: a regra morava num `.md` que
+ninguém relê, e o gate não a checava.
+
+Medição de 2026-07-16 — **20 arquivos acima do limite da própria regra**:
+
+```text
+1070 (limite 400, 2.7x)  ui/qml/editor/EditorController.qml
+ 910 (limite 500, 1.8x)  ui/src/editor_highlighter.cpp
+ 804 (limite 500, 1.6x)  ui/src/core_client_dispatch.cpp
+ 764 (limite 300, 2.5x)  ui/qml/panels/bottom/GitPanel.qml
+ 700 (limite 400, 1.8x)  ui/qml/Main.qml
+ 660 (limite 500, 1.3x)  ui/src/core_client_requests.cpp
+ 582 (limite 400, 1.5x)  ui/qml/shell/ShellWorkspaceHost.qml
+ 574 · 548 · 541 · 538 · 504 · 494 · 464 · 420 · 370 · 329 · 325 · 319 · 303
+```
+
+O sintoma mais eloquente: a `ARCHITECTURE.md` afirmava *"Estado validado em
+2026-07-06: `Main.qml` tem 336 linhas"*. Dez dias depois são **700**. A regra
+não foi revogada — ela apodreceu em silêncio enquanto o gate ficava verde.
+
+**Feito: catraca no gate** (`scripts/verificar-arquitetura.sh`, dentro do
+`verificar.sh`). Não é limite duro — falhar nos 20 de uma vez só ensinaria a
+desligar o script. O débito fica congelado em `scripts/arquitetura-baseline.txt`
+e **só pode diminuir**: arquivo novo acima do limite reprova, arquivo em débito
+que cresce reprova, encolher é sempre aceito. Testado: pegou o `Main.qml`
+engordando 2 linhas.
+
+**Mea culpa:** parte do débito é desta sessão. O `RuntimeController.qml` (494) e
+o `TerminalViewport.qml` (319) cresceram por minha mão hoje. A catraca vale para
+mim também — foi por isso que ela nasceu com baseline em vez de exceções.
+
+**Não feito — pagar o débito.** A catraca impede piorar, não melhora. A ordem
+sugerida segue o próprio critério da §6 ("quem MISTURA responsabilidade primeiro,
+não quem é maior"):
+
+1. `Main.qml` (700) — é o composition root; dobrou de tamanho e virou o lugar
+   onde tudo se conecta. Quebrar por domínio de wiring é o de maior retorno.
+2. `EditorController.qml` (1070) — o maior e o que mais mistura; já tem
+   subcontrollers (`documents`, `text`, `completion`, `find`), então o caminho é
+   continuar movendo, não inventar estrutura.
+3. `GitPanel.qml` (764) e `EditorPane.qml` (538) — visuais gordos; provavelmente
+   misturam apresentação e estado.
+4. `core_client_dispatch.cpp` (804) / `requests.cpp` (660) — a §5 já manda:
+   "`CoreClient` é fachada única… dividida internamente por domínio quando
+   crescer". Já cresceu.
+
+Cada um é fatia própria, com a catraca atualizada no mesmo commit.
+
 ### 0.2f KV Context: o seletor tem que voltar (P2, 2026-07-16)
 
 **Correção de premissa, e o erro foi meu.** O registro do §0.2b dizia que a UI do
