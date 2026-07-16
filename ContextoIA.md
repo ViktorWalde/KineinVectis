@@ -1666,15 +1666,42 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   Próxima correção deve oferecer Minimizar e Maximizar/Restaurar alternável pelo
   estado autoritativo da janela, preservando geometria, Fechar, arraste,
   acessibilidade e Wayland/X11; smoke offscreen não basta para o aceite.
-- A reformulação completa permanece na C5/C6 de `docs/20`: decoração
-  client-side original da Kinein, compacta e suave, somente depois de cobrir
-  move/resize/snap/controles, acessibilidade, escala e X11/Wayland. Não ativar
-  `FramelessWindowHint` como atalho incompleto.
-- Referências: Zed oficial
-  `1e22d1a83f8b1b7acc528d15cfab0644852380c0` (separação client/server e
-  tokens de title bar; referência Mode-D) e documentação oficial Qt 6 sobre
-  `Window.title`, flags e riscos de janela frameless. Nenhuma implementação
-  externa foi copiada.
+- Atualização (a pedido explícito do usuário, 2026-07-15): a integração
+  client-side foi antecipada da C5/C6 para agora, com os controles embutidos na
+  barra da própria IDE no estilo de acabamento das JetBrains. O polimento
+  restante (snap, escala fracionária e multimonitor auditados) continua sob
+  `docs/20`; a decisão de usar `FramelessWindowHint` já agora foi do usuário.
+- Integração client-side entregue: `Main.qml` passa a
+  `Qt.Window | Qt.FramelessWindowHint` e a App Bar (`AppMenuBar.qml`) hospeda os
+  controles. `WindowControls.qml` expõe Minimizar, um único alternável
+  Maximizar/Restaurar e Fechar (ícones `minimize`/`maximize`/`restore`/`close`
+  em `KvIcon.qml`, tooltip e nomes acessíveis Kinein). O ícone/rótulo do
+  alternável e o `resizeEnabled` das bordas seguem o estado autoritativo do
+  `QWindow`, exposto por `ui/src/window_chrome_controller.{h,cpp}`
+  (`WindowChromeController`, `QML_ELEMENT` do módulo `KineinVectis`):
+  `showMinimized`/`showMaximized`/`showNormal`/`close` e
+  `startSystemMove`/`startSystemResize` do compositor. A região livre da barra
+  arrasta a janela (limiar de 6px) e o duplo clique alterna maximizar;
+  `WindowResizeHandles.qml` cobre as oito bordas via `startSystemResize`,
+  desabilitadas quando maximizada/fullscreen. Sem booleano visual paralelo em
+  QML; core, protocolo e IPC não mudam — a janela é responsabilidade do shell Qt.
+- Referência profissional desta fatia: IntelliJ IDEA Community oficial
+  `e3b4dba36d013fc221b8471b3a4a8bd5336c24cc` (2026-07-15), em
+  `platform/platform-impl/.../customFrameDecorations` e
+  `WindowButtonsConfiguration.kt`, Apache-2.0/Mode-D. Invariantes adotados:
+  controles no header; ordem minimizar → maximizar/restaurar → fechar; alternável
+  guiado pelo estado real da janela; atualização quando o estado externo muda.
+  Adaptação nativa em Qt/QML — nenhum código, Swing/JBR ou classe do IntelliJ foi
+  copiado ou portado. Referências anteriores mantidas: Zed
+  `1e22d1a83f8b1b7acc528d15cfab0644852380c0` (separação client/server, Mode-D) e
+  documentação oficial Qt 6 sobre `Window.title`, flags e janela frameless.
+- Gates verdes (2026-07-15): builds debug-strict, dev-local e release-hardened;
+  qmllint estrito; 12 harnesses de lógica QML; clang-format + clang-tidy; smoke
+  offscreen de 8s vivo (`exit 124`) sem erro de QML nos binários debug e release.
+  O release-hardened foi reconstruído para o launcher servir este código. Aceite
+  real pendente: clicar Minimizar/Maximizar/Restaurar/Fechar, arraste, duplo
+  clique e resize das oito bordas em Wayland/X11 — smoke offscreen não substitui
+  esse gesto (docs/20).
 
 ## Escalonamento linear das integrações solicitadas (2026-07-15)
 

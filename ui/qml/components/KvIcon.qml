@@ -187,6 +187,20 @@ Item {
                 line(context, 6, 6, 18, 18);
                 line(context, 18, 6, 6, 18);
                 break;
+            case "minimize":
+                line(context, 5, 17, 19, 17);
+                break;
+            case "maximize":
+                context.rect(5, 5, 14, 14);
+                break;
+            case "restore":
+                context.rect(5, 8, 11, 11);
+                context.moveTo(8, 8);
+                context.lineTo(8, 5);
+                context.lineTo(19, 5);
+                context.lineTo(19, 16);
+                context.lineTo(16, 16);
+                break;
             case "refresh":
                 context.arc(12, 12, 7, -0.4, Math.PI * 1.45, false);
                 context.moveTo(5, 6);

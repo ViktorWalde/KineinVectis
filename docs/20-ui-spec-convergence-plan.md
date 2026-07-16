@@ -360,6 +360,48 @@ confirma que `title` é apenas o texto entregue ao sistema; a documentação de
 extraídos somente invariantes e modos de falha; nenhum código, runtime ou
 arquitetura do Zed foi copiado.
 
+**Implementação entregue (2026-07-15, a pedido explícito do usuário):** os
+controles foram integrados à barra da própria IDE, no estilo de acabamento das
+IDEs JetBrains, sem copiar sua composição. Por decisão do usuário, a decoração
+client-side foi antecipada — `Main.qml` passa a `Qt.Window |
+Qt.FramelessWindowHint`. Mapa da fatia:
+
+- `ui/src/window_chrome_controller.{h,cpp}` — `WindowChromeController`
+  (`QML_ELEMENT` do módulo `KineinVectis`) guarda um `QPointer<QQuickWindow>` e
+  expõe o estado autoritativo `maximized` (de `QWindow::windowStates`) e as ações
+  `minimize`/`toggleMaximized`/`closeWindow`/`startSystemMove`/
+  `startSystemResize`. `toggleMaximized` faz `showNormal`/`showMaximized`; o
+  restaurar recupera a geometria normal via Qt/compositor, sem geometria manual.
+- `ui/qml/shell/WindowControls.qml` — Minimizar, um único alternável
+  Maximizar/Restaurar e Fechar como `KvIconButton` (tooltip e `Accessible.name`
+  Kinein). O ícone/rótulo do alternável deriva de `maximized`; não há booleano
+  visual paralelo.
+- `ui/qml/shell/AppMenuBar.qml` — hospeda os controles à direita; a região livre
+  (`dragRegion`) arrasta a janela via `startSystemMove` (limiar de 6px) e o duplo
+  clique alterna maximizar, sem competir com os botões. A marca `Kinein` some
+  abaixo de 850px para preservar legibilidade.
+- `ui/qml/shell/WindowResizeHandles.qml` — oito bordas com `startSystemResize`,
+  desabilitadas quando a janela está maximizada ou em fullscreen.
+- `ui/qml/components/KvIcon.qml` — ícones vetoriais `minimize`, `maximize` e
+  `restore`.
+
+**Referência profissional desta fatia:** IntelliJ IDEA Community oficial
+`e3b4dba36d013fc221b8471b3a4a8bd5336c24cc` (2026-07-15), em
+`platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations`
+e `WindowButtonsConfiguration.kt`, Apache-2.0, Mode-D. Invariantes adotados:
+controles no header; ordem minimizar → maximizar/restaurar → fechar; alternável
+guiado pelo estado real da janela; atualização quando o estado externo muda.
+Adaptação nativa em Qt/QML — nenhum código, Swing/JBR ou classe do IntelliJ foi
+copiado ou portado.
+
+**Estado de aceite:** gates automatizados verdes — builds debug-strict,
+dev-local e release-hardened; qmllint estrito; 12 harnesses de lógica QML;
+clang-format + clang-tidy; smoke offscreen de 8s vivo (`exit 124`) sem erro de
+QML. Conforme os próprios critérios acima, o aceite dos controles depende do
+gesto real do usuário em Wayland/X11 (clique, teclado, foco, arraste, duplo
+clique e resize das oito bordas em janela normal, maximizada e restaurada); o
+smoke offscreen sozinho não serve como aceite.
+
 **Fatia futura, sem big-bang:** transformar a App Bar existente na decoração
 client-side original da Kinein, suave e compacta, inspirada no nível de
 acabamento das IDEs JetBrains sem copiar sua composição. Critérios de aceite:

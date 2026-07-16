@@ -453,14 +453,23 @@ crates/kinein-core/src/db/* → drafts SQLite e persistência apropriada
 ```text
 ui/qml/Main.qml
     ├─ shell/* (layout, header, menus, overlays, status)
+    │   ├─ AppMenuBar.qml → WindowControls.qml (min/max-restore/fechar)
+    │   └─ WindowResizeHandles.qml (oito bordas)
     ├─ components/* (ícones, botões, tooltips)
-    └─ ui/src/{documentation,clipboard,editor_highlighter}.*
+    └─ ui/src/{documentation,clipboard,editor_highlighter,window_chrome_controller}.*
 ```
 
 - UX-alvo: specs Layout, UI Components e Visual System.
 - Plano de convergência: `docs/20-ui-spec-convergence-plan.md`.
 - O visualizador do manual é recurso read-only da própria aplicação e não
   acessa workspace; mudanças de negócio continuam proibidas na UI.
+- Decoração client-side (frameless): `Main.qml` usa `FramelessWindowHint` e
+  `WindowChromeController` (`ui/src/window_chrome_controller.*`, `QML_ELEMENT`)
+  é a única ponte para operações de janela — `showMinimized`/`showMaximized`/
+  `showNormal`/`close` e `startSystemMove`/`startSystemResize` do compositor. O
+  estado autoritativo é o do `QWindow`, sem booleano visual paralelo em QML;
+  janela é responsabilidade do shell Qt, não do core/IPC. Aceite é visual em
+  Wayland/X11 (`docs/20`).
 
 ### 5.10 CLI, schemas, templates e tooling
 

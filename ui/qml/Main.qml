@@ -9,12 +9,17 @@ Window {
     minimumWidth: 800
     minimumHeight: 500
     visible: true
-    // A decoração server-side controla cor/peso do título e pode impor texto
-    // branco de alto contraste. A identidade e o workspace já aparecem na
-    // App Bar tematizada; manter o título nativo vazio evita a duplicação sem
-    // sacrificar move/resize/controles do compositor (docs/20).
-    title: ""
+    flags: Qt.Window | Qt.FramelessWindowHint
+    title: coreClient.workspaceName !== ""
+           ? coreClient.workspaceName + " — Kinein Vectis"
+           : "Kinein Vectis"
     color: Theme.background0
+
+    WindowChromeController {
+        id: windowChromeController
+
+        window: root
+    }
 
     CoreClient {
         id: coreClient
@@ -596,6 +601,7 @@ Window {
         searchController: searchController
         settingsController: settingsController
         recentWorkspacesController: recentWorkspacesController
+        windowMaximized: windowChromeController.maximized
         onConfigMenuRequested: function(menuX, menuY) {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);
             runtimeController.openConfigMenu(pos.x, pos.y);
@@ -610,6 +616,10 @@ Window {
         }
         onAboutRequested: shellOverlays.openAboutDialog()
         onManualRequested: shellOverlays.openManualDialog()
+        onMinimizeRequested: windowChromeController.minimize()
+        onMaximizeRestoreRequested: windowChromeController.toggleMaximized()
+        onCloseWindowRequested: windowChromeController.closeWindow()
+        onMoveWindowRequested: windowChromeController.startSystemMove()
     }
 
     ShellWorkspaceHost {
@@ -699,6 +709,14 @@ Window {
     KvTooltipHost {
         anchors.fill: parent
         z: 10000
+    }
+
+    WindowResizeHandles {
+        anchors.fill: parent
+        z: 20000
+        resizeEnabled: !windowChromeController.maximized
+                       && root.visibility !== Window.FullScreen
+        onResizeRequested: edges => windowChromeController.startSystemResize(edges)
     }
 
 }

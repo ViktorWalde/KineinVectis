@@ -10,6 +10,7 @@ Rectangle {
     property bool coreConnected: false
     property bool running: false
     property bool debugging: false
+    property bool windowMaximized: false
     property url brandIconSource: "qrc:/KineinVectis/assets/app-icon.png"
     property string workspaceName: ""
     property string workspaceKind: ""
@@ -22,6 +23,10 @@ Rectangle {
 
     signal actionRequested(string action)
     signal menuRequested(string key, real menuX, real menuY, var items)
+    signal minimizeRequested()
+    signal maximizeRestoreRequested()
+    signal closeWindowRequested()
+    signal moveWindowRequested()
 
     height: 40
     color: Theme.background0
@@ -174,6 +179,7 @@ Rectangle {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
+            visible: root.width >= 850
             text: qsTr("Kinein")
             color: Theme.textPrimary
             font.pixelSize: 13
@@ -181,6 +187,7 @@ Rectangle {
         }
 
         Item {
+            visible: root.width >= 850
             width: Theme.spacingSmall
             height: 1
         }
@@ -233,14 +240,64 @@ Rectangle {
         }
     }
 
-    Text {
+    Item {
+        id: dragRegion
+
+        x: menuRow.x + menuRow.width + Theme.spacingSmall
+        width: Math.max(0, windowControls.x - Theme.spacingSmall - x)
+        height: parent.height
+
+        Text {
+            anchors.centerIn: parent
+            visible: parent.width >= 72
+            width: Math.min(implicitWidth, parent.width)
+            text: root.windowContextLabel
+            color: Theme.textMuted
+            font.pixelSize: 11
+            elide: Text.ElideMiddle
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        MouseArea {
+            id: dragArea
+
+            property real pressX: 0
+            property real pressY: 0
+            property bool systemMoveStarted: false
+
+            anchors.fill: parent
+            enabled: parent.width > 0
+            acceptedButtons: Qt.LeftButton
+            onPressed: function(mouse) {
+                pressX = mouse.x;
+                pressY = mouse.y;
+                systemMoveStarted = false;
+            }
+            onPositionChanged: function(mouse) {
+                const distance = Math.abs(mouse.x - pressX)
+                               + Math.abs(mouse.y - pressY);
+                if (pressed && !systemMoveStarted && distance >= 6) {
+                    systemMoveStarted = true;
+                    root.moveWindowRequested();
+                }
+            }
+            onDoubleClicked: function(mouse) {
+                systemMoveStarted = false;
+                root.maximizeRestoreRequested();
+                mouse.accepted = true;
+            }
+        }
+    }
+
+    WindowControls {
+        id: windowControls
+
+        anchors.top: parent.top
         anchors.right: parent.right
-        anchors.rightMargin: Theme.spacingMedium
-        anchors.verticalCenter: parent.verticalCenter
-        width: Math.min(implicitWidth, 180)
-        text: root.windowContextLabel
-        color: Theme.textMuted
-        font.pixelSize: 11
-        elide: Text.ElideMiddle
+        height: parent.height
+        maximized: root.windowMaximized
+        onMinimizeRequested: root.minimizeRequested()
+        onMaximizeRestoreRequested: root.maximizeRestoreRequested()
+        onCloseRequested: root.closeWindowRequested()
     }
 }

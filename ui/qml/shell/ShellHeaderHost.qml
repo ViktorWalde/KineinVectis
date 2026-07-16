@@ -14,11 +14,16 @@ Column {
     property var searchController: null
     property var settingsController: null
     property var recentWorkspacesController: null
+    property bool windowMaximized: false
 
     signal configMenuRequested(real menuX, real menuY)
     signal appMenuRequested(string key, real menuX, real menuY, var items)
     signal aboutRequested()
     signal manualRequested()
+    signal minimizeRequested()
+    signal maximizeRestoreRequested()
+    signal closeWindowRequested()
+    signal moveWindowRequested()
 
     height: 84
     z: 100
@@ -94,12 +99,17 @@ Column {
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         recentWorkspaces: root.recentWorkspacesController.workspaces
+        windowMaximized: root.windowMaximized
         onActionRequested: function(action) {
             root.executeMenuAction(action);
         }
         onMenuRequested: function(key, menuX, menuY, items) {
             root.appMenuRequested(key, menuX, menuY, items);
         }
+        onMinimizeRequested: root.minimizeRequested()
+        onMaximizeRestoreRequested: root.maximizeRestoreRequested()
+        onCloseWindowRequested: root.closeWindowRequested()
+        onMoveWindowRequested: root.moveWindowRequested()
     }
 
     function closeAppMenu() {

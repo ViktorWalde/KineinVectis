@@ -32,6 +32,8 @@ set_source_files_properties(qml/shell/ShellOverlays.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/shell/AboutDialog.qml PROPERTIES QT_RESOURCE_ALIAS AboutDialog.qml)
 set_source_files_properties(qml/shell/DocumentationDialog.qml PROPERTIES QT_RESOURCE_ALIAS DocumentationDialog.qml)
 set_source_files_properties(qml/shell/ShellHeaderHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellHeaderHost.qml)
+set_source_files_properties(qml/shell/WindowControls.qml PROPERTIES QT_RESOURCE_ALIAS WindowControls.qml)
+set_source_files_properties(qml/shell/WindowResizeHandles.qml PROPERTIES QT_RESOURCE_ALIAS WindowResizeHandles.qml)
 set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellStatusHost.qml)
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
 set_source_files_properties(qml/shell/ProjectHealthBanner.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthBanner.qml)
@@ -152,6 +154,8 @@ qt_add_qml_module(kinein-vectis
         qml/shell/AboutDialog.qml
         qml/shell/DocumentationDialog.qml
         qml/shell/ShellHeaderHost.qml
+        qml/shell/WindowControls.qml
+        qml/shell/WindowResizeHandles.qml
         qml/shell/ShellStatusHost.qml
         qml/shell/ShellWorkspaceHost.qml
         qml/shell/ProjectHealthBanner.qml
@@ -258,6 +262,8 @@ qt_add_qml_module(kinein-vectis
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
+        src/window_chrome_controller.cpp
+        src/window_chrome_controller.h
     RESOURCES
         assets/app-icon.png
         assets/icons/tree/folder-closed.svg

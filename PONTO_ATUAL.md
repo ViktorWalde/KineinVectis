@@ -238,22 +238,28 @@ Feedback de testador não vira feature automaticamente: reproduzir, conferir se
 já existe solução no core/UI e encaixar no domínio/roadmap correto. Se for uma
 ideia nova sem bloqueio, registrar atrás dos problemas reais e de A3.
 
-### 0.2 Controles ausentes agora (P2) e barra completa futura (P3)
+### 0.2 Controles de janela integrados (P2 — implementado, aguardando gesto)
 
-A mitigação curta já remove o texto branco duplicado da decoração nativa e
-mostra o workspace na App Bar tematizada, mas o dogfooding do AppImage em
-Fedora/Wayland revelou que **Minimizar**, **Maximizar** e **Restaurar** não estão
-visíveis. Corrigir essa regressão P2 antes de escrever qualquer polimento novo:
-Maximizar/Restaurar formam um controle alternável guiado pelo estado real da
-janela, Restaurar recupera a geometria normal, e todos os controles exigem
-tooltip, acessibilidade e aceite visual real em Wayland/X11.
+O dogfooding do AppImage em Fedora/Wayland havia revelado que **Minimizar**,
+**Maximizar** e **Restaurar** não estavam visíveis. A pedido explícito do
+usuário, os controles foram integrados à barra da própria IDE (estilo JetBrains,
+sem copiar): `Main.qml` usa `Qt.Window | Qt.FramelessWindowHint`,
+`WindowControls.qml` traz Minimizar + alternável Maximizar/Restaurar + Fechar
+guiados pelo estado real do `QWindow` via `WindowChromeController`, a região
+livre arrasta/duplo-clica e `WindowResizeHandles.qml` cobre as oito bordas.
+Detalhes e referência profissional (IntelliJ IDEA Community) em `docs/20` e
+`ContextoIA.md`.
 
-Depois de A3, fechar a convergência P3 definida em `docs/20`: integrar App Bar
-e ações de janela numa decoração client-side Kinein suave, validando oito
-bordas de resize, snap, escala fracionária, multimonitor e acessibilidade antes
-de remover a moldura server-side. A imagem de aceite inicial é
-`imagens/bugs/ReformularBarra.png`. Não implementar apenas
-`FramelessWindowHint` nem copiar a barra da JetBrains.
+**PRÓXIMO GESTO (aceite P2):** abrir por `scripts/kinein-vectis` (release-hardened
+já reconstruído com este código) em Wayland/X11 e confirmar Minimizar,
+Maximizar↔Restaurar com estado correto, Fechar, arraste, duplo clique e resize
+das oito bordas. Os gates automatizados estão verdes, mas — por decisão de
+`docs/20` — não substituem esse gesto. Se algo falhar, registrar
+ação/esperado/observado/ambiente e priorizar a regressão antes de A3.
+
+Depois desse aceite, o polimento P3 restante de `docs/20` (snap, escala
+fracionária, multimonitor e acabamento visual) segue como fatia própria. A
+imagem de aceite inicial é `imagens/bugs/ReformularBarra.png`.
 
 ## 1. TR0 — aceite funcional da rodada atual
 
