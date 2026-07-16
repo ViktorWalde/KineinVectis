@@ -98,28 +98,40 @@ Item {
             failures += 2097152;
         }
 
+        // Estado aceso do icone no rail: segue a aba ATIVA, nao a existencia.
+        if (!runtime.activeTerminalIsContext) failures += 4194304;
+        runtime.selectTerminal("t9");
+        if (runtime.activeTerminalIsContext) failures += 8388608;
+        runtime.selectTerminal("c1");
+        if (!runtime.activeTerminalIsContext) failures += 16777216;
+
         // Com contexto vivo, o atalho FOCA em vez de acumular aba.
         root.openedRequests = 0;
+        runtime.selectTerminal("t9");
         runtime.openContext();
-        if (root.openedRequests !== 0) failures += 4194304;
-        if (runtime.activeTerminalId !== "c1") failures += 8388608;
-        if (runtime.terminalsModel.count !== 2) failures += 16777216;
+        if (root.openedRequests !== 0) failures += 33554432;
+        if (runtime.activeTerminalId !== "c1") failures += 67108864;
+        if (runtime.terminalsModel.count !== 2) failures += 134217728;
 
         // Fechado o contexto, o atalho abre outro — e a numeracao nao repete.
         runtime.handleTerminalClosed("c1");
+        if (runtime.activeTerminalIsContext) failures += 268435456;
         root.openedRequests = 0;
         runtime.openContext();
-        if (root.openedRequests !== 1) failures += 33554432;
+        if (root.openedRequests !== 1) failures += 536870912;
         runtime.handleTerminalOpened("c2", "/bin/sh");
         const contexto = runtime.terminalsModel.get(runtime.terminalsModel.count - 1);
-        if (String(contexto.title) === "KV Context 1") failures += 67108864;
+        if (String(contexto.title) === "KV Context 1") failures += 1073741824;
 
         // Sem workspace o atalho e inerte (nao ha raiz para o PTY).
         runtime.clearTerminals();
         runtime.workspaceRoot = "";
         root.openedRequests = 0;
         runtime.openContext();
-        if (root.openedRequests !== 0 || runtime.pendingContext) failures += 134217728;
+        if (root.openedRequests !== 0 || runtime.pendingContext) {
+            console.warn("FALHA: atalho ativo sem workspace");
+            failures += 1;
+        }
 
         Qt.exit(failures);
     }

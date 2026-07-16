@@ -24,6 +24,9 @@ Item {
     // 100% de UI: o core nao conhece a distincao.
     property int contextSeq: 0
     property bool pendingContext: false
+    // ListModel nao notifica mudanca de conteudo para funcoes; este contador
+    // e o gatilho de reavaliacao dos bindings que dependem da lista.
+    property int terminalsRevision: 0
     property string terminalText: ""
     property alias runModel: runItemsModel
     // Sessao visivel dentro da aba Terminal (fatia M2.1): o shell PTY e o
@@ -87,6 +90,7 @@ Item {
 
     function clearTerminals() {
         terminalsListModel.clear();
+        root.terminalsRevision += 1;
         root.activeTerminalId = "";
         root.terminalRender = ({});
         root.terminalRenders = ({});
@@ -156,6 +160,7 @@ Item {
                 "isContext": false
             });
         }
+        root.terminalsRevision += 1;
         selectTerminal(id);
     }
 
@@ -184,6 +189,21 @@ Item {
         root.pendingContext = true;
         contextIntentTimeout.restart();
         terminalOpenRequested();
+    }
+
+    /// `true` quando a aba ativa é uma sessão de contexto. Alimenta o estado
+    /// aceso do ícone no rail — não há painel próprio para alternar, o estado
+    /// vem de qual terminal está na frente.
+    ///
+    /// `terminalsRevision` existe só para o binding reavaliar: `ListModel` não
+    /// notifica mudança de conteúdo para funções.
+    readonly property bool activeTerminalIsContext: {
+        void root.terminalsRevision;
+        if (root.activeTerminalId === "") {
+            return false;
+        }
+        const index = indexOfTerminal(root.activeTerminalId);
+        return index >= 0 && terminalsListModel.get(index).isContext === true;
     }
 
     /// Id da primeira sessão de contexto viva, ou "" se não houver.
@@ -432,6 +452,7 @@ Item {
         const index = indexOfTerminal(id);
         if (index >= 0) {
             terminalsListModel.remove(index);
+            root.terminalsRevision += 1;
         }
         delete root.terminalRenders[id];
         if (root.activeTerminalId !== id) {

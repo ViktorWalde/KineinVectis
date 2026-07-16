@@ -323,8 +323,14 @@ vai para o handler genérico do `CoreClient`, sem chegar ao QML. Sem tratamento 
 marca ficaria presa e a próxima aba comum nasceria rotulada "KV Context"; um
 timeout de 4 s a solta.
 
+O atalho tem **duas entradas**: `Exibir → KV Context` e o ícone dedicado no
+`SideRail` (o `context` do `KvIcon` sobreviveu ao 0.59.0; só o botão tinha
+sido arrancado junto com o painel do assistente). O ícone acende conforme a
+aba ATIVA do terminal ser de contexto — não há painel próprio para alternar.
+
 Cobertura: `tst_multi_terminal.qml` (rótulo, marca consumida, aba comum não
-herda, foco em vez de acumular, numeração não repete, inerte sem workspace).
+herda, estado aceso segue a aba ativa, foco em vez de acumular, numeração não
+repete, inerte sem workspace).
 
 Fio solto que isso fechou: o item de menu "KV Context" existia desde o 0.59.0
 apontando para uma ação `view.context` que **não existia** — opção morta na barra.
@@ -954,6 +960,33 @@ compreensão do projeto, build, navegação semântica ou debug básico.
   Reusar `TextEdit.MarkdownText` (já validado no `DocumentationDialog`); fatia de
   UI com toggle por aba/atalho, sem editar o markdown pela visualização.
   Pedido do autor em 2026-07-16.
+- **remake de UI/UX do shell, com o IntelliJ IDEA Community como layout-base.**
+  Pedido do autor em 2026-07-16. Não é fatia pequena e não deve ser iniciada de
+  improviso: exige spec antes de código, como a barra da janela (`docs/roadmaps/20`).
+
+  Sintomas concretos já relatados:
+
+  1. **A barra de "Target: host local", perfil, Compilar e Run não tem bordas
+     arredondadas**, ao contrário dos demais painéis (o `SideRail` usa
+     `Theme.radiusLarge`, a faixa da toolbar não). Inconsistência visível entre
+     superfícies vizinhas.
+  2. O conjunto App Bar + toolbar + rail + painéis cresceu por acréscimo e não
+     por um sistema; falta uma regra única de raio, gap, elevação e densidade.
+
+  Referência profissional autorizada: **IntelliJ IDEA Community** (política do
+  `AGENTS.md`/roadmap de adaptação — estudar revisão atual, registrar
+  invariantes, adaptar para Qt/QML **sem copiar** código ou tradução mecânica).
+  Extrair o *layout base*: hierarquia tool window / editor / status bar, a faixa
+  de ações, e como a densidade e o raio são sistematizados. Cruzar com
+  `docs/specs/KINEIN_VECTIS_LAYOUT_SYSTEM.md` e
+  `KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md`, que já são a visão-alvo — o remake
+  deve convergir para as specs, não inventar uma terceira direção.
+
+  Imagem de referência do autor para a barra: `imagens/bugs/ReformularBarra.png`.
+  O polimento P3 da barra da janela (`docs/roadmaps/20`: snap, escala
+  fracionária, multimonitor) pertence a esta mesma frente.
+
+  Não bloqueia L0/L1. Entra quando o autor priorizar.
 - **integrar os pacotes de ícones ao app (não é fatia de packaging).** Pedido do
   autor em 2026-07-16: "os ícones atuais e os novos devem estar no AppImage".
 

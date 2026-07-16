@@ -130,11 +130,17 @@ Item {
                          && root.shellController.bottomTab === "debug"
             toolsActive: root.shellController.showBottomPanel
                          && root.shellController.bottomTab === "tools"
+            // Ativo quando a aba visivel do terminal E uma sessao de
+            // contexto. Nao ha painel proprio: o estado vem do terminal.
+            contextActive: root.shellController.showBottomPanel
+                           && root.shellController.bottomTab === "terminal"
+                           && root.runtimeController.activeTerminalIsContext
             onExplorerToggled: root.shellController.toggleExplorer()
             onSearchRequested: root.searchController.openSearchPanel()
             onGitRequested: root.shellController.toggleBottomTab("git")
             onBuildRequested: root.shellController.toggleBottomTab("build")
             onDebugRequested: root.shellController.toggleBottomTab("debug")
+            onContextRequested: root.runtimeController.openContext()
             onToolsRequested: root.shellController.toggleBottomTab("tools")
         }
 
