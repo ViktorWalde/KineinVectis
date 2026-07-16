@@ -382,7 +382,7 @@ Item {
         id: historyView
 
 
-        // B2 (docs/24): barra de rolagem. `parent: historyView` é OBRIGATÓRIO — um filho
+        // B2 (docs/roadmaps/24): barra de rolagem. `parent: historyView` é OBRIGATÓRIO — um filho
         // declarado dentro de um ListView vira filho do contentItem e ROLARIA
         // junto com a lista. O ListView segue sendo a fonte da verdade.
         VerticalScrollBar {
@@ -488,7 +488,7 @@ Item {
         id: changesView
 
 
-        // B2 (docs/24): barra de rolagem. `parent: changesView` é OBRIGATÓRIO — um filho
+        // B2 (docs/roadmaps/24): barra de rolagem. `parent: changesView` é OBRIGATÓRIO — um filho
         // declarado dentro de um ListView vira filho do contentItem e ROLARIA
         // junto com a lista. O ListView segue sendo a fonte da verdade.
         VerticalScrollBar {

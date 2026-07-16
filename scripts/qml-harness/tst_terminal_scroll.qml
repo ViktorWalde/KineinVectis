@@ -49,18 +49,27 @@ Item {
         if (root.sessionChanges !== 2 || scroll.renderedSessionId !== "t2"
                 || scroll.scrollOffset !== 0) failures += 128;
 
-        // No Arch/Wayland um gesto de alta resolucao pode chegar sem
-        // angleDelta. O fallback de pixelDelta precisa rolar para cima.
+        // A roda so CONVERTE unidade de dispositivo em linhas; nao rola nada e
+        // nao toca no estado. Quem decide o destino do gesto e o core, que le o
+        // modo VT (protocolo 0.60.0). Ver TerminalScrollController.
         scroll.handleRender({ id: "t3", scrollback: 0, scrollbackMax: 100 });
-        if (!scroll.handleWheel(0, 36, 18)
-                || scroll.scrollOffset !== 2) failures += 256;
 
-        // Roda tradicional preserva os tres passos por notch; delta nulo nao
-        // deve fabricar um scroll para baixo.
-        if (!scroll.handleWheel(120, 0, 18)
-                || scroll.scrollOffset !== 5) failures += 512;
-        if (scroll.handleWheel(0, 0, 18)
-                || scroll.scrollOffset !== 5) failures += 1024;
+        // No Arch/Wayland um gesto de alta resolucao pode chegar sem
+        // angleDelta. O fallback de pixelDelta precisa dar linhas para cima.
+        if (scroll.linesFromWheel(0, 36, 18) !== 2) failures += 256;
+
+        // Roda tradicional preserva os tres passos por notch, nos dois sentidos.
+        if (scroll.linesFromWheel(120, 0, 18) !== 3) failures += 512;
+        if (scroll.linesFromWheel(-120, 0, 18) !== -3) failures += 1024;
+
+        // Delta nulo nao fabrica gesto.
+        if (scroll.linesFromWheel(0, 0, 18) !== 0) failures += 2048;
+
+        // A regressao que originou a fatia: converter a roda NAO pode mexer no
+        // offset. Se voltar a mexer, a regra de negocio voltou para a UI e o
+        // Claude para de rolar de novo.
+        if (scroll.scrollOffset !== 0
+                || scroll.pendingScrollOffset !== -1) failures += 4096;
 
         Qt.exit(failures);
     }

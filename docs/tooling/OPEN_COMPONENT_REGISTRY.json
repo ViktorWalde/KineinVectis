@@ -3,28 +3,28 @@
   "updatedAt": "2026-07-15",
   "components": [
     {
-      "id": "vte-cursor-style-parser",
-      "name": "vte",
-      "role": "Chunk-safe recognition of the DECSCUSR cursor-style state missing from vt100's public screen API",
+      "id": "alacritty-terminal",
+      "name": "alacritty_terminal",
+      "role": "VT emulator: grid, colours, cursor, modes, alternate screen and scrollback for the integrated terminal",
       "adoptionMode": "A",
-      "integration": "Rust crate linked only by kinein-core; observes the same PTY bytes and exposes only cursor shape/blinking",
+      "integration": "Rust crate linked only by kinein-core. Only the Term/Grid/parser surface is used; the crate's own tty, event_loop and thread modules are unused because the PTY stays with portable-pty. Replaces the vt100 emulator and the handwritten DECSCUSR tracker built on vte.",
       "upstream": {
-        "repository": "https://github.com/alacritty/vte",
-        "documentation": "https://docs.rs/vte/0.15.0/vte/"
+        "repository": "https://github.com/alacritty/alacritty",
+        "documentation": "https://docs.rs/alacritty_terminal/0.26.0/alacritty_terminal/"
       },
       "version": {
-        "selected": "0.15.0",
-        "pin": "Cargo constraint plus Cargo.lock checksum",
-        "reason": "Already resolved transitively by vt100 0.16.2; direct use avoids a handwritten ANSI state machine and adds no second crate version"
+        "selected": "0.26.0",
+        "pin": "Cargo constraint plus Cargo.lock checksum bda177466b9524d59f1b12f0dd30b68696788e9992a7e959021c4a0ed96fcf59",
+        "reason": "Current stable release; MSRV 1.85 matches the project. Same emulator that backs Alacritty and Zed, and it re-exports the vte 0.15 the core already resolved."
       },
       "license": {
-        "spdx": "Apache-2.0 OR MIT",
+        "spdx": "Apache-2.0",
         "accepted": true,
         "source": "Published crate manifest"
       },
       "maintenance": {
-        "statusAtReview": "Maintained by the Alacritty terminal ecosystem",
-        "reviewedAt": "2026-07-15"
+        "statusAtReview": "Official Alacritty project; emulator in production use for years",
+        "reviewedAt": "2026-07-16"
       },
       "runtimeSecurity": {
         "telemetry": false,
@@ -32,21 +32,25 @@
         "shellExecution": false,
         "secretsAccess": false,
         "userContentUpload": false,
-        "nativeCode": false
+        "nativeCode": false,
+        "notes": "The crate ships a tty module capable of spawning processes, but Kinein never calls it; sessions are created by portable-pty and only raw bytes reach the emulator."
       },
       "scopeControls": [
-        "Only DECSCUSR plus standard soft/full resets affect the tracked style",
-        "Grid, cursor position and all other VT state remain owned by vt100",
+        "Only Term, Grid and the ANSI Processor are used; tty/event_loop/thread stay unused",
+        "VoidListener: the core polls the grid instead of consuming emulator events",
+        "Scrollback bounded by Config::scrolling_history (5000 lines)",
         "No CLI name, prompt text or user content is interpreted",
-        "Grid and cursor style share one mutex snapshot"
+        "Grid, modes and cursor share one mutex snapshot per frame",
+        "event.terminal.render contract unchanged by the swap"
       ],
       "verification": [
-        "All six explicit DECSCUSR shapes/blink modes mapped",
-        "Sequence split across PTY chunks covered by unit test",
-        "Default reset and structured terminal.render contract covered",
-        "Strict clippy and QML lint"
+        "Contract preserved: cursor/modes/scrollback/spans identical in the typed event",
+        "DECSCUSR shapes and blink, including sequences split across PTY chunks",
+        "Wide-char cell width, combining marks and ANSI colour mapping unit tests",
+        "End-to-end stdio probe: scrollbackMax, absolute scroll echo, clamping and multi-session",
+        "Strict clippy, full workspace tests and the C++/QML gates"
       ],
-      "decision": "docs/24-paridade-e-fundacao.md"
+      "decision": "docs/adr/ADR-0004-alacritty-terminal-emulator.md"
     },
     {
       "id": "notify",

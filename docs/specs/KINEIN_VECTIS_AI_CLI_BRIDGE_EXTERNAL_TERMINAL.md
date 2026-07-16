@@ -1,7 +1,39 @@
 # Kinein Vectis — Parte 7.1: AI CLI Bridge e Terminal IA Externo
 
+> ## Estado em 2026-07-16 — o bridge foi REMOVIDO (protocolo `0.59.0`)
+>
+> **O domínio `aiBridge.*` não existe mais**, e com ele saíram a superfície do
+> KV Context, os perfis allowlisted e as settings `aiCliProfile` /
+> `aiCliFlatTranscript`. Uma CLI de IA passa a ser usada como em qualquer IDE
+> profissional: abrir o terminal integrado e rodar `claude` ou `codex`.
+>
+> **Motivo — o bridge era a interferência.** Ele tratava um agente como um
+> programa especial: injetava argumentos pelo core (`--no-alt-screen`,
+> `--ax-screen-reader`) e filtrava `CSI 3 J` emitido pela própria aplicação.
+> Isso é a IDE se metendo entre o programa e o terminal — exatamente o que
+> nenhuma IDE profissional faz e o que fazia a ferramenta se comportar de um
+> jeito dentro da Kinein e de outro fora dela. O sintoma aparecia atribuído ao
+> painel; a causa era o caminho especial somado a um emulador raso (ver
+> [ADR-0004](../adr/ADR-0004-alacritty-terminal-emulator.md)).
+>
+> **O modelo correto, agora implementado:** uma CLI de IA é **um programa como
+> outro qualquer**. Mesmo `terminal.open`, mesmo PTY, mesmo emulador, mesmo
+> contrato `terminal.input/resize/scroll/close` de um `ls` ou de um `vim`. Sem
+> allowlist, sem argumento imposto, sem filtro, sem preferência persistida.
+>
+> **Retorno do KV Context.** Pode voltar como **UI pura** — um atalho visual
+> que abre uma sessão de terminal comum para desacoplar visualmente do uso
+> padrão do terminal, sem regra de negócio própria no core. A UI representa o
+> backend; ela não o define. Volta quando o terminal estiver consolidado, com a
+> integração do Zed como referência.
+>
+> **O que continua valendo neste documento:** o modelo de IA (externa, por CLI
+> do usuário, sem chat embutido e sem chamada de rede pela IDE) permanece a
+> fonte de verdade. O que caiu foi o **mecanismo**, não o princípio.
+
 > **Tipo:** correção arquitetural da Parte 7.  
-> **Status:** decisão de produto e arquitetura.  
+> **Status:** decisão de produto e arquitetura; superfície do painel suspensa
+> (ver bloco acima).  
 > **Decisão principal:** a Kinein Vectis **não terá IA embutida como chat interno da IDE**.  
 > **Modelo correto:** a IDE continua determinística; a IA é uma ferramenta externa acionada por atalho, abrindo um terminal separado configurado pelo usuário.
 

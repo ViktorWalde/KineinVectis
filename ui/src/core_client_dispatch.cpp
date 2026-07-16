@@ -201,7 +201,7 @@ bool CoreClient::handleFileSystemNotification(const QString& method, const QJson
 bool CoreClient::handleTerminalNotification(const QString& method, const QJsonObject& params)
 {
     if (method == QStringLiteral("event.terminal.render")) {
-        // D2 (docs/24): grid do emulador (cores/cursor/spans) — a UI só desenha.
+        // D2 (docs/roadmaps/24): grid do emulador (cores/cursor/spans) — a UI só desenha.
         emit terminalRender(params.toVariantMap());
         return true;
     }
@@ -603,7 +603,7 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
             emit sessionRestored(files, session.value(QStringLiteral("activeFile")).toString());
         }
     }
-    // M-S1: rascunhos não salvos recuperados de um crash (docs/23). Só em
+    // M-S1: rascunhos não salvos recuperados de um crash (docs/seguranca/23). Só em
     // abertura normal — a recuperação de crash do core (acima) sai antes.
     if (result.contains(QStringLiteral("drafts"))) {
         const QVariantList drafts =
@@ -658,22 +658,6 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         setTerminalActive(!m_terminalIds.isEmpty());
         emit terminalOpened(id, shell);
         appendLog(QStringLiteral("terminal aberto (%1): %2").arg(id, shell));
-        return;
-    }
-    if (method == QStringLiteral("aiBridge.profiles")) {
-        emit aiProfilesResolved(result.value(QStringLiteral("profiles")).toArray().toVariantList(),
-                                result.value(QStringLiteral("defaultProfile")).toString());
-        return;
-    }
-    if (method == QStringLiteral("aiBridge.terminal.open")) {
-        const QString id = result.value(QStringLiteral("id")).toString();
-        const QString profileId = result.value(QStringLiteral("profileId")).toString();
-        const QString name = result.value(QStringLiteral("name")).toString();
-        const QString command = result.value(QStringLiteral("command")).toString();
-        m_terminalIds.insert(id);
-        setTerminalActive(!m_terminalIds.isEmpty());
-        emit aiTerminalOpened(id, profileId, name, command);
-        appendLog(QStringLiteral("AI Terminal aberto (%1): %2").arg(id, command));
         return;
     }
     if (method == QStringLiteral("fs.findFiles")) {

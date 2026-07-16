@@ -15,7 +15,6 @@ Item {
     property var gitController
     property var diagnosticsController
     property var searchController
-    property var assistantController
     property var recentWorkspacesController
     property alias editorSurface: editorPane.editorSurface
     property bool workspaceOpen: false
@@ -131,14 +130,12 @@ Item {
                          && root.shellController.bottomTab === "debug"
             toolsActive: root.shellController.showBottomPanel
                          && root.shellController.bottomTab === "tools"
-            assistantActive: root.shellController.showAssistant
             onExplorerToggled: root.shellController.toggleExplorer()
             onSearchRequested: root.searchController.openSearchPanel()
             onGitRequested: root.shellController.toggleBottomTab("git")
             onBuildRequested: root.shellController.toggleBottomTab("build")
             onDebugRequested: root.shellController.toggleBottomTab("debug")
             onToolsRequested: root.shellController.toggleBottomTab("tools")
-            onAssistantToggled: root.shellController.toggleAssistant()
         }
 
         ProjectExplorer {
@@ -183,12 +180,9 @@ Item {
             width: visible
                    ? Math.max(0, parent.width - sideBar.width - Theme.panelGap
                               - (explorerPanel.visible
-                                 ? explorerPanel.width + Theme.panelGap : 0)
-                              - (assistantPanel.visible
-                                 ? assistantPanel.width + Theme.panelGap : 0))
+                                 ? explorerPanel.width + Theme.panelGap : 0))
                    : 0
             height: parent.height
-            visible: !root.shellController.assistantMaximized
             spacing: Theme.panelGap
 
             ProjectHealthBanner {
@@ -478,6 +472,10 @@ Item {
                 onTerminalScrollRequested: function(offset) {
                     root.runtimeController.scrollTerminal(offset);
                 }
+                onTerminalWheelRequested: function(col, row, lines, modifiers) {
+                    root.runtimeController.wheelTerminal(col, row, lines,
+                                                         modifiers);
+                }
                 onTerminalSelectRequested: function(id) {
                     root.runtimeController.selectTerminal(id);
                 }
@@ -549,46 +547,6 @@ Item {
             }
         }
 
-        AssistantPanel {
-            id: assistantPanel
-
-            width: !visible ? 0
-                   : (root.shellController.assistantMaximized
-                      ? Math.max(300, parent.width - sideBar.width
-                                 - Theme.panelGap)
-                      : root.shellController.assistantPresentationWidth)
-            height: parent.height
-            visible: root.shellController.showAssistant
-            maximized: root.shellController.assistantMaximized
-            profilesModel: root.assistantController.profilesModel
-            selectedProfileId: root.assistantController.selectedProfileId
-            sessionId: root.assistantController.sessionId
-            activeProfileName: root.assistantController.activeProfileName
-            activeCommand: root.assistantController.activeCommand
-            terminalRender: root.assistantController.terminalRender
-            errorText: root.assistantController.errorText
-            loading: root.assistantController.loading
-            onCloseRequested: root.shellController.closeAssistant()
-            onRefreshRequested: root.assistantController.initialize()
-            onProfileSelected: function(profileId) {
-                root.assistantController.selectProfile(profileId);
-            }
-            onStartRequested: root.assistantController.startSelectedProfile()
-            onSwitchRequested: root.assistantController.switchProfile()
-            onExitRequested: root.assistantController.exitSession()
-            onTerminalKeyPressed: function(data) {
-                root.assistantController.sendKey(data);
-            }
-            onTerminalResizeRequested: function(cols, rows) {
-                root.assistantController.resizeTerminal(cols, rows);
-            }
-            onTerminalScrollRequested: function(offset) {
-                root.assistantController.scrollTerminal(offset);
-            }
-            onMaximizeToggleRequested: {
-                root.shellController.toggleAssistantMaximized();
-            }
-        }
     }
 
     // Alcas de redimensionamento em overlay sobre os vaos do layout
@@ -603,16 +561,6 @@ Item {
         }
     }
 
-    PanelSplitter {
-        visible: assistantPanel.visible
-                 && !root.shellController.assistantMaximized
-        x: assistantPanel.x - Theme.panelGap
-        width: Theme.panelGap
-        height: parent.height
-        onDragged: function(delta) {
-            root.shellController.resizeAssistant(-delta);
-        }
-    }
 
     PanelSplitter {
         visible: bottomPanel.visible

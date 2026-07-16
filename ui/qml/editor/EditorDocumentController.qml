@@ -79,7 +79,7 @@ Item {
         return true;
     }
 
-    // M-S1 (docs/23): true se a aba atual tem alterações não salvas.
+    // M-S1 (docs/seguranca/23): true se a aba atual tem alterações não salvas.
     function currentIsModified() {
         return currentTab >= 0 && currentTab < openFilesModel.count
                 && openFilesModel.get(currentTab).modified === true;

@@ -1,12 +1,16 @@
 import QtQuick
 
 // Estado local de seleção da grade VT. Não conhece IPC nem clipboard.
+//
+// R1.4 (docs/roadmaps/26): a conversão pixel→célula NÃO mora aqui. Ela é uma
+// só, no TerminalMetrics, e texto, cursor, seleção, mouse e resize consomem a
+// mesma instância. Quando cada consumidor fazia a própria conta, o cursor e o
+// texto divergiam até 0,95px (§4.6).
 Item {
     id: root
 
     property var lines: []
-    property real charWidth: 0
-    property real lineHeight: 0
+    property TerminalMetrics metrics: null
     property bool selecting: false
     property bool hasSelection: false
     property int anchorRow: 0
@@ -17,12 +21,12 @@ Item {
     visible: false
 
     function cellAt(x, y) {
-        if (charWidth <= 0 || lineHeight <= 0) {
+        if (!metrics || metrics.cellWidth <= 0 || metrics.cellHeight <= 0) {
             return { "row": 0, "col": 0 };
         }
         return {
-            "row": Math.max(0, Math.floor(y / lineHeight)),
-            "col": Math.max(0, Math.floor(x / charWidth))
+            "row": metrics.rowAt(y),
+            "col": metrics.columnAt(x)
         };
     }
 

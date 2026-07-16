@@ -1,5 +1,28 @@
 # Kinein Vectis — Parte 7: KV Context, IA, Documentação e Assistência Técnica
 
+> ## ⚠ HISTÓRICO — SUPERADO
+>
+> **Esta parte não é fonte de verdade.** Ela foi substituída conceitualmente
+> pela Parte 7.1,
+> [`KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md`](KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md),
+> que é a fonte de verdade para IA.
+>
+> **O que mudou:** este documento descrevia o KV Context como um painel de
+> assistência com IA embutida e chat lateral. A decisão vigente é o oposto:
+>
+> ```text
+> não existe IA embutida  ·  não existe chat lateral na IDE
+> IA = atalho para uma CLI externa que o usuário instalou e escolheu
+> KV Context = terminal dedicado sobre o mesmo TerminalManager
+> ```
+>
+> **O que continua válido aqui:** as ideias de contexto determinístico,
+> preview antes de aplicar, evidência e sanitização. Elas foram absorvidas pela
+> Parte 7.1; leia-as aqui apenas como origem do raciocínio.
+>
+> Mantido por valor histórico. Não implementar nada a partir deste documento
+> sem confrontar com a Parte 7.1.
+
 > **Status:** especificação de produto e arquitetura visual.  
 > **Escopo:** painel KV Context, assistência local/externa, explicação de erros, CMake/toolchain, documentação, privacidade e integração com o core.  
 > **Fora de escopo nesta parte:** simulação OpenGL pesada, marketplace de plugins, telemetria remota obrigatória e auto-modificação irrestrita de código.

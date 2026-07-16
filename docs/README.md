@@ -1,7 +1,7 @@
 # Documentação da Kinein Vectis
 
-Este índice organiza a documentação do projeto e define a ordem de precedência
-quando houver conflito entre documentos.
+Este índice organiza a documentação técnica do projeto por assunto e define a
+ordem de precedência quando houver conflito entre documentos.
 
 ## Ordem de precedência
 
@@ -12,68 +12,135 @@ quando houver conflito entre documentos.
 ```
 
 Regra: `docs/specs/` descreve o **alvo** (produto, UX, visual, arquitetura
-completa). Os docs numerados mantidos em `docs/` descrevem o que **já existe**
-no repositório. Onde a visão divergir da implementação, vale o estado real —
-`ContextoIA.md` + docs numerados + código.
+completa). Os documentos numerados descrevem o que **já existe** no repositório.
+Onde a visão divergir da implementação, vale o estado real — `ContextoIA.md` +
+documentos numerados + código.
+
+**Vai alterar ou implementar algo?** Comece por
+[CONTRIBUINDO.md](CONTRIBUINDO.md): arquitetura em uma tela, tabela de "quero
+mudar X → olhe aqui", ritual de uma mudança e o gate.
 
 Para localizar rapidamente quais documentos e arquivos se conectam em cada
-domínio, use primeiro o [GUIAIA.md](../GUIAIA.md). Ele é um índice operacional
-mantido junto com a arquitetura, não uma nova fonte de verdade.
+domínio, use também o [GUIAIA.md](../GUIAIA.md), cuja seção 3 é um roteador por
+tipo de tarefa (integração nova, polimento, bug, funcionalidade, contrato).
 
-## docs/specs/ — especificação canônica (Kinein Vectis)
+## Estrutura
 
-Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo: 20
-especificações com diagramas `.svg` pareados e imagens de referência.
+```text
+docs/
+├── arquitetura/   contrato de engenharia, protocolo IPC, strict mode, dívida e higiene
+├── build/         ambiente, comandos de compilação e gate de verificação
+├── seguranca/     rede de segurança de dados (escrita atômica + drafts)
+├── roadmaps/      planos de execução, roadmap de longo prazo, adaptação e KSWE
+├── specs/         especificação canônica (visão-alvo) + diagramas
+├── integracoes/   como adicionar/escalar uma integração ("Plugins")
+├── adr/           decisões arquiteturais registradas
+├── tooling/       registro auditável de componentes open-source
+├── iconografia/   sistema visual, ícones de arquivo e da árvore
+└── diario/        registro de sessões (material interno; não publicado)
+```
 
-Comece pelo índice:
-[specs/KINEIN_VECTIS_SPEC_INDEX.md](specs/KINEIN_VECTIS_SPEC_INDEX.md) — mapa de
-todas as partes, fonte de verdade por área, escopo MVP/Pós-MVP/Não-fazer e
-roadmap de milestones.
+## Público × interno
 
-Âncoras principais (ver o índice para o conjunto completo):
+Uma cópia entregue a terceiros leva o código e **somente três Markdown**:
+`README.md`, `MANUAL.md` e `Tutorial.md`. Todo o resto — inclusive esta pasta
+`docs/` inteira — é interno.
+
+Isso não depende de disciplina: `scripts/exportar-copia-limpa.sh` gera a cópia
+por allowlist numa árvore separada, recusa Markdown extra, verifica que nenhum
+caminho interno aparece nem como nome, audita segredos e imprime a lista final.
+Roda em dry-run por padrão e **não cria repositório nem publica nada**.
+
+## Entrada para quem vai mexer no código
+
+| Documento | Assunto |
+| --- | --- |
+| [CONTRIBUINDO.md](CONTRIBUINDO.md) | **Onde olhar para alterar/implementar**: arquitetura, mapa por área, ambiente, ritual da mudança, gate e convenções |
+| [integracoes/README.md](integracoes/README.md) | **Entrada obrigatória para adotar qualquer ferramenta**: modos A–D, gate de auditoria, níveis L0–L10, checklist de 10 passos e o índice do que já está adotado |
+
+## arquitetura/ — contrato e estado implementado
+
+| Documento | Assunto |
+| --- | --- |
+| [arquitetura/ARCHITECTURE.md](arquitetura/ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
+| [arquitetura/02-repository-structure.md](arquitetura/02-repository-structure.md) | Estrutura real do repositório e crates |
+| [arquitetura/03-ipc-protocol.md](arquitetura/03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado |
+| [arquitetura/06-strict-mode.md](arquitetura/06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
+| [arquitetura/15-engineering-debt-and-refactor.md](arquitetura/15-engineering-debt-and-refactor.md) | Dívida técnica e modularização |
+| [arquitetura/16-hidden-risks-checklist.md](arquitetura/16-hidden-risks-checklist.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
+| [arquitetura/17-architecture-hygiene-plan.md](arquitetura/17-architecture-hygiene-plan.md) | Higiene arquitetural e concentrações a eliminar |
+| [arquitetura/19-architecture-tradeoffs.md](arquitetura/19-architecture-tradeoffs.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
+
+## build/ — ambiente, compilação e verificação
+
+| Documento | Assunto |
+| --- | --- |
+| [build/14-development-environment.md](build/14-development-environment.md) | Ambiente de desenvolvimento |
+| [build/22-compilacao-c-cpp-rust.md](build/22-compilacao-c-cpp-rust.md) | Referência prática de comandos de compilação C/C++ e Rust mapeados para a IDE |
+| [build/COMANDOS_BUILD_VERIFICACAO.md](build/COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
+
+## seguranca/ — segurança de dados
+
+| Documento | Assunto |
+| --- | --- |
+| [seguranca/23-rede-de-seguranca.md](seguranca/23-rede-de-seguranca.md) | Rede de segurança contra perda de dado (escrita atômica + autosave em SQLite) |
+
+## roadmaps/ — planos de execução e visão de longo prazo
+
+| Documento | Assunto |
+| --- | --- |
+| [roadmaps/BACKEND_TO_UI_UX_ROADMAP.md](roadmaps/BACKEND_TO_UI_UX_ROADMAP.md) | Ponte operacional backend → UI/UX |
+| [roadmaps/20-ui-spec-convergence-plan.md](roadmaps/20-ui-spec-convergence-plan.md) | Convergência vinculante da UI atual para as specs (fatias C0–C6) |
+| [roadmaps/21-long-horizon-roadmap.md](roadmaps/21-long-horizon-roadmap.md) | M4–M7, KSWE, distribuição e continuidade longa |
+| [roadmaps/24-paridade-e-fundacao.md](roadmaps/24-paridade-e-fundacao.md) | Fases D1–D4: completion, terminal, Tree-sitter e remake |
+| [roadmaps/25-syntax-tree-semantic-foundation.md](roadmaps/25-syntax-tree-semantic-foundation.md) | Contrato da camada sintática (Tree-sitter incremental, composição com LSP) |
+| [roadmaps/26-terminal-rendering-parity-roadmap.md](roadmaps/26-terminal-rendering-parity-roadmap.md) | Paridade de renderização/scroll do terminal: reprodução instrumentada, métricas de célula/DPR e gates (R0–R7) |
+| [roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md](roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md) | **Norte de adoção e referência open-source**: modos A–D, gate/licenças e política de estudo de Code OSS, IntelliJ, Zed, Lapce e NetBeans |
+| [roadmaps/KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md](roadmaps/KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md) | Desenho profundo do KSWE (C++/Rust, scheduler, brokers e contextos) |
+
+## specs/ — especificação canônica (visão-alvo)
+
+Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
+índice: [specs/KINEIN_VECTIS_SPEC_INDEX.md](specs/KINEIN_VECTIS_SPEC_INDEX.md).
+
+Âncoras principais:
 
 | Área | Spec |
 | --- | --- |
-| Arquitetura interna (Core/IPC/Jobs) | `KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md` |
-| Layout principal | `KINEIN_VECTIS_LAYOUT_SYSTEM.md` |
-| Componentes UI | `KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md` |
-| Sistema visual / iconografia | `KINEIN_VECTIS_VISUAL_SYSTEM_ICONS.md` |
-| Build / Run / Debug | `KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md` |
-| Editor / Language Intelligence | `KINEIN_VECTIS_EDITOR_LANGUAGE_INTELLIGENCE.md` |
-| IA externa (AI CLI Bridge) | `KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md` |
-| Configuration Actions | `KINEIN_VECTIS_SCOPED_CONFIGURATION_ACTIONS_DOC_LINKS.md` |
-| Fechamento / MVP / Performance | `KINEIN_VECTIS_FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST.md` |
+| Arquitetura interna (Core/IPC/Jobs) | [specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md](specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md) |
+| Layout principal | [specs/KINEIN_VECTIS_LAYOUT_SYSTEM.md](specs/KINEIN_VECTIS_LAYOUT_SYSTEM.md) |
+| Componentes UI | [specs/KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md](specs/KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md) |
+| Sistema visual / iconografia | [specs/KINEIN_VECTIS_VISUAL_SYSTEM_ICONS.md](specs/KINEIN_VECTIS_VISUAL_SYSTEM_ICONS.md) |
+| Build / Run / Debug | [specs/KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md](specs/KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md) |
+| Editor / Language Intelligence | [specs/KINEIN_VECTIS_EDITOR_LANGUAGE_INTELLIGENCE.md](specs/KINEIN_VECTIS_EDITOR_LANGUAGE_INTELLIGENCE.md) |
+| IA externa (AI CLI Bridge) | [specs/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md](specs/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md) |
+| Configuration Actions | [specs/KINEIN_VECTIS_SCOPED_CONFIGURATION_ACTIONS_DOC_LINKS.md](specs/KINEIN_VECTIS_SCOPED_CONFIGURATION_ACTIONS_DOC_LINKS.md) |
+| Fechamento / MVP / Performance | [specs/KINEIN_VECTIS_FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST.md](specs/KINEIN_VECTIS_FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST.md) |
 
-## docs/ — contrato e estado implementado
+## adr/ e tooling/
 
-Documentos que descrevem o repositório como ele **é hoje**:
-
-| Doc | Assunto |
+| Documento | Assunto |
 | --- | --- |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
-| [BACKEND_TO_UI_UX_ROADMAP.md](BACKEND_TO_UI_UX_ROADMAP.md) | Ponte operacional backend → UI/UX para implementar backend primeiro sem perder os specs visuais |
-| [02-repository-structure.md](02-repository-structure.md) | Estrutura real do repositório e crates |
-| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.57.0) |
-| [06-strict-mode.md](06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
-| [14-development-environment.md](14-development-environment.md) | Ambiente de desenvolvimento |
-| [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica e modularização pós-V1 |
-| [16-hidden-risks-checklist.md](16-hidden-risks-checklist.md) | Riscos ocultos (perda de dados, migração de config, segurança de comandos, segredos, testes de regressão, a11y, observabilidade, packaging) |
-| [17-architecture-hygiene-plan.md](17-architecture-hygiene-plan.md) | Fase ativa para eliminar concentração arquitetural antes de novas features grandes |
-| [18-daily-driver-plan.md](18-daily-driver-plan.md) | Plano de daily driver (marcos M0–M4 de dogfooding) e escada de rigor |
-| [19-architecture-tradeoffs.md](19-architecture-tradeoffs.md) | Requisitos funcionais/não funcionais e trade-offs de arquitetura (o porquê das decisões) |
-| [20-ui-spec-convergence-plan.md](20-ui-spec-convergence-plan.md) | Plano vinculante de convergência da UI atual para docs/specs (fatias C0–C6, regras anti-vagueza) |
-| [21-long-horizon-roadmap.md](21-long-horizon-roadmap.md) | M4–M7 detalhados, KSWE, distribuição e playbook de continuidade |
-| [22-compilacao-c-cpp-rust.md](22-compilacao-c-cpp-rust.md) | Referência prática de comandos de compilação C/C++ (gcc/clang/CMake) e Rust (cargo), mapeada para a IDE |
-| [23-rede-de-seguranca.md](23-rede-de-seguranca.md) | Rede de segurança contra perda de dado (escrita atômica + autosave em SQLite): problemas, design e status vivo da fatia S1 |
-| [24-paridade-e-fundacao.md](24-paridade-e-fundacao.md) | Fase pós-rede-de-segurança (D1–D4, ordem do usuário): autocomplete LSP ao vivo → terminal paridade VS Code/JetBrains → tree-sitter/plugins/views → remake. Status vivo. |
-| [25-syntax-tree-semantic-foundation.md](25-syntax-tree-semantic-foundation.md) | Contrato D3: Tree-sitter incremental, composição com LSP, folding/outline e vínculo com workspace edits transacionais. |
-| [26-terminal-rendering-parity-roadmap.md](26-terminal-rendering-parity-roadmap.md) | Handoff executável do cursor/TUI ainda aberto: paridade comportamental Code OSS, reprodução instrumentada, métricas de célula/DPR, renderer Qt e gates de aceite. |
-| [../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md](../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md) | **Norte autoritativo de adoção e referência open-source**: modos A–D, gate/licenças e política obrigatória para estudar Code OSS, IntelliJ Community, Zed, Lapce e NetBeans sem copiar código ou transplantar arquitetura. |
-| [COMANDOS_BUILD_VERIFICACAO.md](COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
+| [adr/ADR-0001-notify-filesystem-watcher.md](adr/ADR-0001-notify-filesystem-watcher.md) | Adoção do watcher `notify` e barreira compare-before-save |
+| [adr/ADR-0002-tree-sitter-syntax-foundation.md](adr/ADR-0002-tree-sitter-syntax-foundation.md) | Adoção do Tree-sitter e fronteira com LSP |
+| [adr/ADR-0003-linuxdeploy-appimage-packaging.md](adr/ADR-0003-linuxdeploy-appimage-packaging.md) | Empacotamento AppImage, pins, baseline Linux e auditoria |
+| [adr/ADR-0004-alacritty-terminal-emulator.md](adr/ADR-0004-alacritty-terminal-emulator.md) | Adoção do `alacritty_terminal` como motor de emulação VT |
 | [tooling/OPEN_COMPONENT_REGISTRY.json](tooling/OPEN_COMPONENT_REGISTRY.json) | Registro auditável de componentes open-source adotados |
-| [adr/ADR-0001-notify-filesystem-watcher.md](adr/ADR-0001-notify-filesystem-watcher.md) | Decisão de adoção do watcher `notify` e barreira compare-before-save |
-| [adr/ADR-0002-tree-sitter-syntax-foundation.md](adr/ADR-0002-tree-sitter-syntax-foundation.md) | Decisão de adoção do Tree-sitter e fronteira com LSP |
-| [adr/ADR-0003-linuxdeploy-appimage-packaging.md](adr/ADR-0003-linuxdeploy-appimage-packaging.md) | Decisão de empacotamento AppImage, pins, baseline Linux e auditoria |
+
+## diario/ — registro de sessões (interno)
+
+| Documento | Assunto |
+| --- | --- |
+| [diario/18-daily-driver-plan.md](diario/18-daily-driver-plan.md) | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. É registro de processo, não contrato — o contrato vive em `arquitetura/`. |
+
+## iconografia/ — sistema visual e ícones
+
+| Pacote | Assunto |
+| --- | --- |
+| [iconografia/README.md](iconografia/README.md) | **Índice único**: qual pacote é fonte de verdade de cada família |
+| [iconografia/sistema-visual/](iconografia/sistema-visual/) | Sistema de ícones da IDE (master + partes 00–08, SVGs, contrato QML) |
+| [iconografia/icones-de-arquivo/](iconografia/icones-de-arquivo/) | Ícones de tipos de arquivo especiais da árvore + `FILE_ICON_MAPPINGS.json` |
+| [iconografia/icones-da-arvore/](iconografia/icones-da-arvore/) | Ícones individuais da árvore de projetos |
 
 ## Guias na raiz do repositório
 
@@ -82,19 +149,15 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [../README.md](../README.md) | Apresentação e estado atual do projeto |
 | [../MANUAL.md](../MANUAL.md) | **Manual do usuário** — operação, funções e atalhos dentro da IDE |
 | [../Tutorial.md](../Tutorial.md) | Distribuição, checksum, instalação, atualização e geração do AppImage |
-| [../COMO_EXECUTAR.md](../COMO_EXECUTAR.md) | Como executar a IDE (ícone/launcher) |
-| [../AGENTS.md](../AGENTS.md) | Instruções e política de leitura para agentes de IA |
-| [../ContextoIA.md](../ContextoIA.md) | Estado operacional e decisões vigentes |
-| [../GUIAIA.md](../GUIAIA.md) | **Mapa operacional:** documentos por necessidade, módulos conectados, arquivos que mudam juntos e gates |
-| [../PONTO_ATUAL.md](../PONTO_ATUAL.md) | Ordem explícita do trabalho pendente |
-| [../KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md](../KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md) | Complemento de arquitetura semântica C++/Rust; aplicar por fatias conforme o roadmap vigente |
+| [../COMO_EXECUTAR.md](../COMO_EXECUTAR.md) | Como executar a IDE pelo checkout (ícone/launcher) |
+
+Documentos de continuidade operacional — `../GUIAIA.md`, `../ContextoIA.md`,
+`../PONTO_ATUAL.md`, `../AGENTS.md` e `../prompts/` — são material interno de
+desenvolvimento e não integram a documentação pública.
 
 ## Sem pasta de arquivo morto
 
-`docs/archive/` (docs numerados era-Kernwerk superados, planning antigo, logs
-de sessão) foi removido deliberadamente em 2026-07-05: era material histórico
-que nenhum documento ativo referenciava mais como fonte, e mantê-lo só
-custava tokens de leitura para humanos e agentes sem guiar trabalho atual.
-Não recriar uma pasta de arquivo "só para guardar"; se algo for descontinuado,
-prefira apagar depois de extrair o que ainda tiver valor para o doc numerado
-relevante (mesmo espírito do item anterior).
+`docs/archive/` foi removido deliberadamente em 2026-07-05: era material
+histórico que nenhum documento ativo referenciava mais como fonte. Não recriar
+uma pasta de arquivo "só para guardar"; se algo for descontinuado, extrair o que
+ainda tiver valor para o documento relevante e então remover.

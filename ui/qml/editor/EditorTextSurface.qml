@@ -110,7 +110,7 @@ Rectangle {
     // M4.1: liga/desliga o auto-close de pares (setting autoClosePairs).
     property bool autoCloseEnabled: true
 
-    // E1 (docs/18, trilha E): auto-close de pares, type-over do fechador,
+    // E1 (docs/diario/18, trilha E): auto-close de pares, type-over do fechador,
     // surround da seleção e backspace apagando o par vazio.
     readonly property var pairOpeners: ({ "(": ")", "[": "]", "{": "}",
                                           "\"": "\"", "'": "'" })
@@ -442,7 +442,7 @@ Rectangle {
         }
     }
 
-    // B2 (docs/24): barra de rolagem do editor. Até 2026-07-12 o editor era um
+    // B2 (docs/roadmaps/24): barra de rolagem do editor. Até 2026-07-12 o editor era um
     // Flickable SEM indicador nenhum — não dava pra saber o tamanho do arquivo
     // nem onde se estava nele. O Flickable segue sendo a fonte da verdade: a
     // barra só reflete `contentY` e PEDE mudança por `moveRequested`.

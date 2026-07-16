@@ -11,7 +11,6 @@ Item {
     property var debugController: null
     property var gitController: null
     property var diagnosticsController: null
-    property var assistantController: null
     property var shellController: null
     property var bottomPanelHost: null
 
@@ -26,8 +25,6 @@ Item {
         debugController.clear();
         gitController.clear();
         diagnosticsController.clear();
-        assistantController.clearSession();
-        shellController.closeAssistant();
         bottomPanelHost.clearSearchInput();
         bottomPanelHost.clearRunInput();
         bottomPanelHost.clearTerminalInput();

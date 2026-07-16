@@ -3,7 +3,7 @@
 > **Status:** ativo e interno — atualizar junto com mudanças de arquitetura.
 > **Função:** dizer rapidamente **onde buscar conhecimento**, **quais módulos se
 > conectam** e **quais arquivos normalmente mudam juntos**.
-> **Não substitui:** `ContextoIA.md`, `docs/ARCHITECTURE.md`, specs ou contrato
+> **Não substitui:** `ContextoIA.md`, `docs/arquitetura/ARCHITECTURE.md`, specs ou contrato
 > IPC. Este arquivo é o roteador prático entre essas fontes e o código real.
 > **Publicação:** não entra em nenhuma cópia entregue a terceiros; entre
 > Markdown, essa cópia leva somente `README.md`, `MANUAL.md` e `Tutorial.md`.
@@ -14,7 +14,7 @@ Leia nesta ordem antes de alterar código:
 
 1. `ContextoIA.md` — estado real, decisões vigentes e restrições do produto.
 2. Este `GUIAIA.md` — descubra o domínio e os arquivos conectados.
-3. `docs/ARCHITECTURE.md` — camadas, fronteiras e regra de split obrigatória.
+3. `docs/arquitetura/ARCHITECTURE.md` — camadas, fronteiras e regra de split obrigatória.
 4. `PONTO_ATUAL.md` — próxima tarefa executável e ordem vigente.
 5. O documento específico indicado nas tabelas deste guia.
 6. O código real do fluxo completo antes de propor arquivo ou subsistema novo.
@@ -45,7 +45,7 @@ GUIAIA.md (mapa; nunca sobrepõe as fontes acima)
 ### 1.1 Referência profissional antes de funcionalidade de IDE
 
 É obrigatório seguir a seção 2.1 de
-`KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` antes de criar ou alterar
+`docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` antes de criar ou alterar
 uma funcionalidade de IDE. Use a fonte oficial e atual pertinente — Code OSS,
 IntelliJ IDEA Community, Zed, Lapce e/ou Apache NetBeans — para estudar
 comportamento, invariantes, falhas, segurança, concorrência e testes. Registre
@@ -138,30 +138,128 @@ origem, distro e versão do artefato. Prioridade: perda de dados/segurança/cras
 → bloqueio diário → regressão funcional → conforto/feature. Reproduzir antes de
 alterar arquitetura ou transformar uma impressão isolada em funcionalidade.
 
-## 3. Onde buscar conhecimento por pergunta
+## 3. Roteador por TIPO DE TAREFA (comece por aqui)
+
+Identifique a tarefa e leia **somente** a coluna correspondente, na ordem. Cada
+linha termina num gate. Se a tarefa não se encaixar em nenhuma, ela provavelmente
+está mal definida — recorte antes de codar.
+
+### 3.A — Adotar uma integração / plugin / tecnologia nova
+
+```text
+1. docs/integracoes/README.md          ← ENTRADA OBRIGATÓRIA (modos, gate,
+                                          níveis L0–L10, checklist de 10 passos)
+2. docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md   norte A–D
+3. PONTO_ATUAL.md A5.1–A5.3            nível aberto? decisão do candidato?
+4. docs/tooling/OPEN_COMPONENT_REGISTRY.json   o que já existe (não duplicar)
+5. docs/adr/                           precedentes; ADR-0004 é o exemplo canônico
+6. docs/arquitetura/03-ipc-protocol.md contrato tipado do domínio
+```
+
+Escreve em: `kinein-protocol/src/<dominio>.rs` → `kinein-core/src/<dominio>/` →
+`handlers/` → testes → UI burra. **Nunca** a UI chamando a ferramenta.
+Fecha com: ADR + entrada no registry + `bash scripts/verificar.sh`.
+
+### 3.B — Melhoria / polimento de algo que já existe
+
+```text
+1. PONTO_ATUAL.md §0 (dogfooding) e A4  o atrito já foi registrado?
+2. a spec da área em docs/specs/        o alvo visual/UX é inegociável
+3. docs/roadmaps/20-ui-spec-convergence-plan.md   convergência C0–C6
+4. o doc do domínio (tabela 3.1)        contrato e estado atual
+5. GUIAIA §5                            quais arquivos mudam juntos
+```
+
+Regra: polimento **não** redesenha a UI aprovada nem inventa fatia nova. Se o
+polimento for de terminal, entra por `docs/roadmaps/26` — e depois do ADR-0004
+o emulador é o `alacritty_terminal`, não invente parser.
+
+### 3.C — Bug / regressão vinda do uso real
+
+```text
+1. PONTO_ATUAL.md §0                   registrar ação/esperado/observado/ambiente
+2. reproduzir ANTES de alterar arquitetura
+3. o doc do domínio + GUIAIA §5        localizar a camada dona
+4. teste/harness de regressão          antes ou junto da correção
+```
+
+Prioridade: P0 perda de dados/segurança/crash → P1 bloqueio de fluxo → P2
+comportamento incorreto repetível → P3 conforto. Bug tem precedência sobre
+qualquer fatia do roadmap.
+
+### 3.D — Funcionalidade de IDE nova
+
+```text
+1. seção 2.1 do roadmap de adaptação    REFERÊNCIA PROFISSIONAL OBRIGATÓRIA
+   (Code OSS · IntelliJ Community · Zed · Lapce · NetBeans)
+2. docs/specs/KINEIN_VECTIS_SPEC_INDEX.md   a visão-alvo da área
+3. docs/arquitetura/ARCHITECTURE.md     camadas e regra de split
+4. PONTO_ATUAL.md                       a fatia está na fila? em que nível?
+```
+
+Registrar no doc do domínio: revisão estudada, subsistema, licença/modo, lições
+e a adaptação. Referência autoriza **estudo**, nunca cópia ou tradução mecânica.
+
+### 3.E — Contrato, arquitetura ou persistência
+
+```text
+1. docs/arquitetura/ARCHITECTURE.md     ler antes de escrever código novo
+2. docs/arquitetura/03-ipc-protocol.md  contrato implementado (+ bump de versão)
+3. docs/arquitetura/02-repository-structure.md   onde o arquivo nasce
+4. schemas/                             formato persistido precisa de schema
+5. docs/arquitetura/06-strict-mode.md   rigor não é sugestão
+```
+
+### 3.F — Documentação
+
+```text
+1. docs/README.md                       índice; todo doc técnico entra nele
+2. PLANO_ORGANIZACAO_E_HANDOFF.md       faixas P/T/X e o que já foi executado
+3. docs/CONTRIBUINDO.md                 se a mudança afeta quem colabora
+```
+
+Faixa P (público) = só `README.md`, `MANUAL.md`, `Tutorial.md`. Faixa X
+(pessoal) nunca entra em cópia entregue. Detalhe na seção 9.
+
+### 3.G — Onde as coisas vivem agora (pós-reorganização de 2026-07-16)
+
+```text
+docs/arquitetura/   contrato de engenharia, IPC, strict mode, dívida, higiene
+docs/build/         ambiente, comandos de compilação, gate
+docs/seguranca/     rede de segurança de dados (atomic save + drafts)
+docs/roadmaps/      planos de execução, longo prazo, adaptação open-source, KSWE
+docs/specs/         especificação canônica (visão-alvo) + diagramas
+docs/integracoes/   como adotar/escalar uma integração ("Plugins")
+docs/adr/           decisões arquiteturais registradas
+docs/tooling/       registro auditável de componentes
+docs/iconografia/   sistema visual, ícones de arquivo e da árvore
+raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
+```
+
+### 3.H — Consulta rápida por pergunta
 
 | Pergunta | Leia primeiro | Complemento |
 | --- | --- | --- |
 | Qual é o estado real agora? | `ContextoIA.md` | `PONTO_ATUAL.md` |
-| Qual é a próxima tarefa? | `PONTO_ATUAL.md` | `docs/21-long-horizon-roadmap.md` |
-| Em qual camada colocar código? | `docs/ARCHITECTURE.md` | `docs/02-repository-structure.md` |
-| Como UI e core conversam? | `docs/03-ipc-protocol.md` | `crates/kinein-protocol/src/` |
+| Qual é a próxima tarefa? | `PONTO_ATUAL.md` | `docs/roadmaps/21-long-horizon-roadmap.md` |
+| Em qual camada colocar código? | `docs/arquitetura/ARCHITECTURE.md` | `docs/arquitetura/02-repository-structure.md` |
+| Como UI e core conversam? | `docs/arquitetura/03-ipc-protocol.md` | `crates/kinein-protocol/src/` |
 | Qual é a UX/layout obrigatória? | `docs/specs/KINEIN_VECTIS_SPEC_INDEX.md` | specs de Layout, UI Components e Visual System |
-| Editor, completion e navegação | spec `EDITOR_LANGUAGE_INTELLIGENCE` | `docs/25-syntax-tree-semantic-foundation.md` |
-| Tree-sitter e fallback local | spec `TREE_SITTER_EDITOR_LAYER` | `docs/25-syntax-tree-semantic-foundation.md` + ADR-0002 |
-| Projeto profundo/KSWE | `KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` | seção “simbiose” de `docs/21-long-horizon-roadmap.md` |
-| Build, Run, Test e Debug | spec `PRODUCT_FLOWS_BUILD_RUN_DEBUG` | `docs/22-compilacao-c-cpp-rust.md` |
-| Terminal e KV Context | spec `AI_CLI_BRIDGE_EXTERNAL_TERMINAL` | `docs/24-paridade-e-fundacao.md` + `docs/26-terminal-rendering-parity-roadmap.md` |
-| Dados, drafts e escrita segura | `docs/23-rede-de-seguranca.md` | ADR-0001 + `docs/16-hidden-risks-checklist.md` |
-| Adotar ferramenta open source | `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | `docs/tooling/OPEN_COMPONENT_REGISTRY.json` |
-| Referenciar implementação de IDE profissional | seção 2.1 do roadmap de adaptação | documento do domínio + `docs/ARCHITECTURE.md` |
-| Strict mode e gates | `docs/06-strict-mode.md` | `docs/COMANDOS_BUILD_VERIFICACAO.md` |
-| Daily driver e dogfooding | `docs/18-daily-driver-plan.md` | `docs/21-long-horizon-roadmap.md` |
-| Convergência visual | `docs/20-ui-spec-convergence-plan.md` | specs visuais |
-| Instalação para contribuir | `docs/14-development-environment.md` | `COMO_EXECUTAR.md` |
+| Editor, completion e navegação | spec `EDITOR_LANGUAGE_INTELLIGENCE` | `docs/roadmaps/25-syntax-tree-semantic-foundation.md` |
+| Tree-sitter e fallback local | spec `TREE_SITTER_EDITOR_LAYER` | `docs/roadmaps/25-syntax-tree-semantic-foundation.md` + ADR-0002 |
+| Projeto profundo/KSWE | `docs/roadmaps/KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` | seção “simbiose” de `docs/roadmaps/21-long-horizon-roadmap.md` |
+| Build, Run, Test e Debug | spec `PRODUCT_FLOWS_BUILD_RUN_DEBUG` | `docs/build/22-compilacao-c-cpp-rust.md` |
+| Terminal e KV Context | spec `AI_CLI_BRIDGE_EXTERNAL_TERMINAL` | `docs/roadmaps/24-paridade-e-fundacao.md` + `docs/roadmaps/26-terminal-rendering-parity-roadmap.md` |
+| Dados, drafts e escrita segura | `docs/seguranca/23-rede-de-seguranca.md` | ADR-0001 + `docs/arquitetura/16-hidden-risks-checklist.md` |
+| Adotar ferramenta open source | `docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | `docs/tooling/OPEN_COMPONENT_REGISTRY.json` |
+| Referenciar implementação de IDE profissional | seção 2.1 do roadmap de adaptação | documento do domínio + `docs/arquitetura/ARCHITECTURE.md` |
+| Strict mode e gates | `docs/arquitetura/06-strict-mode.md` | `docs/build/COMANDOS_BUILD_VERIFICACAO.md` |
+| Daily driver e dogfooding | `docs/diario/18-daily-driver-plan.md` | `docs/roadmaps/21-long-horizon-roadmap.md` |
+| Convergência visual | `docs/roadmaps/20-ui-spec-convergence-plan.md` | specs visuais |
+| Instalação para contribuir | `docs/build/14-development-environment.md` | `COMO_EXECUTAR.md` |
 | Uso da IDE por testador | `MANUAL.md` | `README.md` |
 | AppImage, instalação e atualização | `Tutorial.md` | seção 8 deste guia |
-| Entrega sanitizada do código | M7 de `docs/21-long-horizon-roadmap.md` | `Tutorial.md` + item correspondente de `PONTO_ATUAL.md` |
+| Entrega sanitizada do código | M7 de `docs/roadmaps/21-long-horizon-roadmap.md` | `Tutorial.md` + item correspondente de `PONTO_ATUAL.md` |
 
 ### 3.1 Catálogo dos documentos de estado/engenharia
 
@@ -175,27 +273,27 @@ alterar arquitetura ou transformar uma impressão isolada em funcionalidade.
 | `ContextoIA.md` | decisões vigentes, histórico operacional útil e estado real |
 | `PONTO_ATUAL.md` | fila explícita e critérios imediatos de aceite |
 | `GUIAIA.md` | este mapa entre conhecimento, módulo, arquivo e gate |
-| `KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` | desenho profundo do KSWE, C++/Rust, scheduler, brokers e contextos |
-| `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | como avaliar/adotar componentes externos sem extensão improvisada |
-| `docs/ARCHITECTURE.md` | camadas, ownership, limites de arquivo e crescimento modular |
-| `docs/02-repository-structure.md` | estrutura de crates/pastas e convenções de nomes |
-| `docs/03-ipc-protocol.md` | requests, responses e eventos realmente implementados |
-| `docs/06-strict-mode.md` | rigor Rust, C++, QML e linguagens suportadas |
-| `docs/14-development-environment.md` | preparação da máquina de desenvolvimento |
-| `docs/15-engineering-debt-and-refactor.md` | dívidas conhecidas e regras para não recriar monólitos |
-| `docs/16-hidden-risks-checklist.md` | segurança, dados, segredos, a11y, observabilidade e packaging |
-| `docs/17-architecture-hygiene-plan.md` | higiene arquitetural e concentrações que devem permanecer fechadas |
-| `docs/18-daily-driver-plan.md` | marcos M/E/T, dogfooding e paridade diária |
-| `docs/19-architecture-tradeoffs.md` | razões e trade-offs por trás das decisões |
-| `docs/20-ui-spec-convergence-plan.md` | execução vinculante da UI/UX C0–C6 |
-| `docs/21-long-horizon-roadmap.md` | KSWE, M4–M7, distribuição e continuidade longa |
-| `docs/22-compilacao-c-cpp-rust.md` | comandos/ferramentas reais orquestrados para C/C++/Rust |
-| `docs/23-rede-de-seguranca.md` | atomic save, drafts SQLite e recuperação contra perda |
-| `docs/24-paridade-e-fundacao.md` | fases D1–D4: completion, terminal, Tree-sitter e remake |
-| `docs/25-syntax-tree-semantic-foundation.md` | contrato da camada sintática, versões e workspace edits |
-| `docs/26-terminal-rendering-parity-roadmap.md` | cursor/TUI aberto, referência Code OSS e etapas R0–R7 da paridade nativa |
-| `docs/BACKEND_TO_UI_UX_ROADMAP.md` | ponte entre capacidade de backend e experiência visual |
-| `docs/COMANDOS_BUILD_VERIFICACAO.md` | comandos oficiais do gate |
+| `docs/roadmaps/KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` | desenho profundo do KSWE, C++/Rust, scheduler, brokers e contextos |
+| `docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | como avaliar/adotar componentes externos sem extensão improvisada |
+| `docs/arquitetura/ARCHITECTURE.md` | camadas, ownership, limites de arquivo e crescimento modular |
+| `docs/arquitetura/02-repository-structure.md` | estrutura de crates/pastas e convenções de nomes |
+| `docs/arquitetura/03-ipc-protocol.md` | requests, responses e eventos realmente implementados |
+| `docs/arquitetura/06-strict-mode.md` | rigor Rust, C++, QML e linguagens suportadas |
+| `docs/build/14-development-environment.md` | preparação da máquina de desenvolvimento |
+| `docs/arquitetura/15-engineering-debt-and-refactor.md` | dívidas conhecidas e regras para não recriar monólitos |
+| `docs/arquitetura/16-hidden-risks-checklist.md` | segurança, dados, segredos, a11y, observabilidade e packaging |
+| `docs/arquitetura/17-architecture-hygiene-plan.md` | higiene arquitetural e concentrações que devem permanecer fechadas |
+| `docs/diario/18-daily-driver-plan.md` | marcos M/E/T, dogfooding e paridade diária |
+| `docs/arquitetura/19-architecture-tradeoffs.md` | razões e trade-offs por trás das decisões |
+| `docs/roadmaps/20-ui-spec-convergence-plan.md` | execução vinculante da UI/UX C0–C6 |
+| `docs/roadmaps/21-long-horizon-roadmap.md` | KSWE, M4–M7, distribuição e continuidade longa |
+| `docs/build/22-compilacao-c-cpp-rust.md` | comandos/ferramentas reais orquestrados para C/C++/Rust |
+| `docs/seguranca/23-rede-de-seguranca.md` | atomic save, drafts SQLite e recuperação contra perda |
+| `docs/roadmaps/24-paridade-e-fundacao.md` | fases D1–D4: completion, terminal, Tree-sitter e remake |
+| `docs/roadmaps/25-syntax-tree-semantic-foundation.md` | contrato da camada sintática, versões e workspace edits |
+| `docs/roadmaps/26-terminal-rendering-parity-roadmap.md` | cursor/TUI aberto, referência Code OSS e etapas R0–R7 da paridade nativa |
+| `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md` | ponte entre capacidade de backend e experiência visual |
+| `docs/build/COMANDOS_BUILD_VERIFICACAO.md` | comandos oficiais do gate |
 | `docs/adr/*` | por que uma decisão externa/estrutural foi adotada |
 | `docs/tooling/OPEN_COMPONENT_REGISTRY.json` | pins, licenças e auditoria de componentes adotados |
 
@@ -217,9 +315,9 @@ o grupo da tarefa:
 | Configuration Actions | `SCOPED_CONFIGURATION_ACTIONS_DOC_LINKS`, `DUAL_WORKFLOW_CONFIGURATION_ACTIONS` |
 | Planejamento macro | `FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST`, `IMPLEMENTATION_PLAN_UI_UX_ARCH_PERFORMANCE`, `IMPLEMENTATION_TASKS` |
 
-O pacote `docs/KINEIN_VECTIS_ICONS_COMPLETE/` só entra em tarefa de iconografia
+O pacote `docs/iconografia/sistema-visual/` só entra em tarefa de iconografia
 ou contrato de ícones QML; não é leitura padrão de core/IPC. O pacote
-complementar `KINEIN_VECTIS_SPECIAL_FILE_ICONS/` (raiz do repo) cobre os ícones
+complementar `docs/iconografia/icones-de-arquivo/` (raiz do repo) cobre os ícones
 de tipos de arquivo especiais da árvore de projetos — `cmake-lists`,
 `project-config`, `sql` e `docker-yaml` — em light/dark 16/20/24 px, com fontes
 64 px. O contrato de resolução (nome exato → padrão → caminho → extensão) está em
@@ -276,7 +374,7 @@ crates/kinein-core/src/handlers/workspace.rs
 ```
 
 - Testes: `crates/kinein-core/src/tests/workspace.rs` e harnesses QML.
-- Contrato: workspace em `docs/03-ipc-protocol.md`.
+- Contrato: workspace em `docs/arquitetura/03-ipc-protocol.md`.
 - UX-alvo: specs de Onboarding/Project Wizard/Setup Optimization.
 - Workspaces recentes vivem em `workspace/recent.rs`, passam pelos métodos
   `workspace.recent.*`, `RecentWorkspacesController.qml` e
@@ -299,11 +397,11 @@ crates/kinein-core/src/handlers/{fs,draft,format}.rs
 
 - Testes: `crates/kinein-core/src/tests/{fs,format}.rs` e
   `scripts/qml-harness/tst_external_change.qml`.
-- Segurança: `docs/23-rede-de-seguranca.md`, ADR-0001 e
-  `docs/16-hidden-risks-checklist.md`.
+- Segurança: `docs/seguranca/23-rede-de-seguranca.md`, ADR-0001 e
+  `docs/arquitetura/16-hidden-risks-checklist.md`.
 - Nunca acessar filesystem do workspace diretamente pela UI.
 - Ícones de tipo de arquivo na árvore: pacote
-  `KINEIN_VECTIS_SPECIAL_FILE_ICONS/`, contrato `FILE_ICON_MAPPINGS.json`
+  `docs/iconografia/icones-de-arquivo/`, contrato `FILE_ICON_MAPPINGS.json`
   (precedência nome exato → padrão → caminho → extensão composta → extensão →
   genérico). Ao ligar no delegate, honrar a regra de segurança do `.env` (não
   vazar valores/segredos) e não dar o ícone Docker a YAML genérico.
@@ -328,7 +426,7 @@ crates/kinein-core/src/handlers/{lsp,syntax}.rs
 - Testes: `crates/kinein-core/src/tests/{lsp,syntax}.rs` e
   `scripts/qml-harness/{tst_completion,tst_outline}.qml`.
 - Fontes: spec Editor/Language Intelligence, spec Tree-sitter,
-  `docs/25-syntax-tree-semantic-foundation.md` e especificação KSWE.
+  `docs/roadmaps/25-syntax-tree-semantic-foundation.md` e especificação KSWE.
 - Tree-sitter entrega estrutura/fallback; clangd e rust-analyzer são a
   autoridade semântica. Não misturar ou duplicar esses papéis.
 - Toda edição avança imediatamente as versões sintática e semântica e limpa os
@@ -360,8 +458,8 @@ crates/kinein-core/src/handlers/{cmake,cargo,build,jobs,runconfig}.rs
   a lógica de detecção vive em `tools.rs` e o scan usa Jobs. Se esse fluxo
   crescer, extrair `handlers/tools.rs` antes de adicionar mais casos ao `lib.rs`.
 - Testes: `crates/kinein-core/src/tests/{cmake,cargo,build,runners,jobs,tools,runconfig}.rs`.
-- Fontes: spec Build/Run/Debug, `docs/22-compilacao-c-cpp-rust.md`,
-  `docs/18-daily-driver-plan.md` e `docs/21-long-horizon-roadmap.md`.
+- Fontes: spec Build/Run/Debug, `docs/build/22-compilacao-c-cpp-rust.md`,
+  `docs/diario/18-daily-driver-plan.md` e `docs/roadmaps/21-long-horizon-roadmap.md`.
 - KSWE deve reutilizar estes serviços; não criar outro executor de build.
 - `workspace.capabilities.buildSystems` é a fonte única das ações disponíveis
   em projeto híbrido. `workspace.kind` continua apenas como primário compatível;
@@ -408,7 +506,7 @@ crates/kinein-core/src/handlers/{terminal,ai}.rs
   `tst_assistant_layout.qml`, `tst_terminal_input.qml`,
   `tst_terminal_scroll.qml`, `tst_terminal_selection.qml` e
   `scripts/sonda_scrollback.py`.
-- Fonte: spec AI CLI Bridge + `docs/24-paridade-e-fundacao.md`.
+- Fonte: spec AI CLI Bridge + `docs/roadmaps/24-paridade-e-fundacao.md`.
 - KV Context reutiliza o TerminalManager; não criar terminal ou chat paralelo.
 - Codex usa o modo inline oficial; o bridge preserva o transcript contra o
   erase-scrollback ainda emitido pela CLI. Seletor compacto e sessão terminal
@@ -424,7 +522,7 @@ crates/kinein-core/src/handlers/{terminal,ai}.rs
   grade. Não derivar geometria de `text.length` ou de `implicitWidth`.
 - O teste humano de 2026-07-15 não percebeu correção do alinhamento vertical da
   TUI mesmo após DECSCUSR e remoção de offsets. O problema permanece aberto e
-  sua retomada obrigatória está em `docs/26-terminal-rendering-parity-roadmap.md`:
+  sua retomada obrigatória está em `docs/roadmaps/26-terminal-rendering-parity-roadmap.md`:
   começar por fixture/overlay/métricas, nunca por outro ajuste manual de `y`.
 - Por decisão do usuário, a experiência funcional do terminal do Code OSS é a
   base de paridade para shell, Claude e Codex. Adaptar fielmente os contratos
@@ -472,7 +570,7 @@ ui/qml/Main.qml
 ```
 
 - UX-alvo: specs Layout, UI Components e Visual System.
-- Plano de convergência: `docs/20-ui-spec-convergence-plan.md`.
+- Plano de convergência: `docs/roadmaps/20-ui-spec-convergence-plan.md`.
 - O visualizador do manual é recurso read-only da própria aplicação e não
   acessa workspace; mudanças de negócio continuam proibidas na UI.
 - Decoração client-side (frameless): `Main.qml` usa `FramelessWindowHint` e
@@ -481,7 +579,7 @@ ui/qml/Main.qml
   `showNormal`/`close` e `startSystemMove`/`startSystemResize` do compositor. O
   estado autoritativo é o do `QWindow`, sem booleano visual paralelo em QML;
   janela é responsabilidade do shell Qt, não do core/IPC. Aceite é visual em
-  Wayland/X11 (`docs/20`).
+  Wayland/X11 (`docs/roadmaps/20`).
 
 ### 5.10 CLI, schemas, templates e tooling
 
@@ -502,7 +600,7 @@ ui/qml/Main.qml
 4. unitários + `crates/kinein-core/src/tests/<dominio>.rs`;
 5. método/dispatch no `CoreClient` se a UI consumir;
 6. router/controller/visual QML;
-7. `docs/03-ipc-protocol.md`, schema aplicável e `ContextoIA.md`.
+7. `docs/arquitetura/03-ipc-protocol.md`, schema aplicável e `ContextoIA.md`.
 
 ### Mudança puramente visual
 
@@ -683,7 +781,7 @@ Checklist de fechamento de uma fatia:
 [ ] ContextoIA.md representa o estado real?
 [ ] PONTO_ATUAL.md aponta a próxima ação, não trabalho já encerrado?
 [ ] GUIAIA.md ainda leva ao domínio e aos arquivos corretos?
-[ ] docs/03/schema mudaram se o contrato mudou?
+[ ] docs/arquitetura/03/schema mudaram se o contrato mudou?
 [ ] MANUAL.md mudou se o comportamento do usuário mudou?
 [ ] Tutorial.md mudou se distribuição, instalação ou packaging mudaram?
 [ ] O gate relevante e uma prova do gesto real ficaram verdes?

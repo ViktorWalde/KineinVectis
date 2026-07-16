@@ -11,9 +11,6 @@ Item {
     property bool showBottomPanel: false
     property string bottomTab: "logs"
     property bool showExplorer: true
-    property bool showAssistant: false
-    property bool assistantTerminalActive: false
-    property bool assistantMaximized: false
     property real viewportWidth: 1280
     property real viewportHeight: 720
     property bool layoutLoaded: false
@@ -22,36 +19,16 @@ Item {
     // §6.4; persistencia de layout entra com Settings (M4).
     property real explorerWidth: 280
     property real contextWidth: 360
-    property real assistantTerminalWidth: 640
     property real bottomPanelHeight: 260
     property real outlineWidth: 220
     property bool outlineCollapsed: false
     readonly property bool effectiveShowExplorer: showExplorer
-                                                  && !assistantMaximized
-    // Project e KV Context sao escolhas independentes do usuario. A sessao
-    // terminal pode crescer ate 720px, mas cede espaco ao Project e preserva
-    // uma faixa editavel central; fechar o Project libera a largura preferida
-    // sem apagar essa preferencia. O seletor compacto continua em 300–480px.
-    readonly property real assistantAvailableWidth: Math.max(
-            300, viewportWidth - 52 - 3 * 8
-            - ((effectiveShowExplorer && workspaceRoot !== "")
-               ? explorerWidth : 0) - 320)
-    readonly property real assistantPresentationWidth: assistantTerminalActive
-            ? clamp(assistantTerminalWidth, 300,
-                    Math.min(720, assistantAvailableWidth))
-            : clamp(contextWidth, 300, 480)
 
     signal folderOpenRequested(string path)
     signal toolsDetectionRequested()
     signal layoutSaveRequested(var values)
 
     visible: false
-
-    onAssistantTerminalActiveChanged: {
-        if (!assistantTerminalActive) {
-            assistantMaximized = false;
-        }
-    }
 
     Timer {
         id: layoutSaveTimer
@@ -61,7 +38,6 @@ Item {
         onTriggered: root.layoutSaveRequested({
             explorerWidth: Math.round(root.explorerWidth),
             contextWidth: Math.round(root.contextWidth),
-            assistantTerminalWidth: Math.round(root.assistantTerminalWidth),
             bottomPanelHeight: Math.round(root.bottomPanelHeight),
             outlineWidth: Math.round(root.outlineWidth),
             outlineCollapsed: root.outlineCollapsed
@@ -77,10 +53,6 @@ Item {
         if (persistedLayout) {
             explorerWidth = clamp(settingsController.explorerWidth, 220, 420);
             contextWidth = clamp(settingsController.contextWidth, 300, 480);
-            assistantTerminalWidth = clamp(
-                        settingsController.assistantTerminalWidth !== undefined
-                        ? settingsController.assistantTerminalWidth : 640,
-                        300, 720);
             bottomPanelHeight = clamp(settingsController.bottomPanelHeight,
                                       160, 480);
             outlineWidth = clamp(settingsController.outlineWidth, 160, 420);
@@ -102,7 +74,6 @@ Item {
     function applyAutomaticLayout() {
         explorerWidth = clamp(viewportWidth * 0.22, 220, 300);
         contextWidth = clamp(viewportWidth * 0.28, 300, 380);
-        assistantTerminalWidth = clamp(viewportWidth * 0.5, 420, 720);
         bottomPanelHeight = clamp(viewportHeight * 0.32, 180, 300);
         outlineWidth = clamp(viewportWidth * 0.18, 180, 260);
         outlineCollapsed = viewportWidth < 1180;
@@ -146,16 +117,6 @@ Item {
         persistLayoutSoon();
     }
 
-    function resizeAssistant(delta) {
-        if (assistantTerminalActive) {
-            assistantTerminalWidth = clamp(assistantTerminalWidth + delta,
-                                             300, 720);
-        } else {
-            contextWidth = clamp(contextWidth + delta, 300, 480);
-        }
-        persistLayoutSoon();
-    }
-
     function resizeBottomPanel(delta) {
         bottomPanelHeight = Math.max(160, Math.min(480, bottomPanelHeight + delta));
         persistLayoutSoon();
@@ -178,19 +139,6 @@ Item {
 
     function toggleExplorer() {
         showExplorer = !showExplorer;
-    }
-
-    function toggleAssistant() {
-        showAssistant = !showAssistant;
-    }
-
-    function closeAssistant() {
-        showAssistant = false;
-        assistantMaximized = false;
-    }
-
-    function toggleAssistantMaximized() {
-        assistantMaximized = !assistantMaximized;
     }
 
     function requestOpenFolder() {

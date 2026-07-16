@@ -7,7 +7,7 @@
 > Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
 > conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
 > Git. Base remota atual: `928fbb5`; checkpoint anterior: `948535d`;
-> checkpoint funcional atual: `HEAD` local; protocolo `0.57.0`.
+> checkpoint funcional atual: `HEAD` local; protocolo `0.58.0`.
 >
 > Não alterar a UI fora das specs. Commits locais de checkpoint após marco
 > crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
@@ -49,7 +49,7 @@ integral. O usuário abriu a Kinein por `scripts/kinein-vectis` e não percebeu
 mudança relevante: o caret da TUI ainda parece desalinhado. Portanto 0.57 fecha
 a lacuna de forma/piscagem, mas não a causa visual. Esse polimento foi adiado
 sem novo offset; sua retomada começa por reprodução instrumentada e métricas de
-célula/DPR em `docs/26-terminal-rendering-parity-roadmap.md`. Por decisão do
+célula/DPR em `docs/roadmaps/26-terminal-rendering-parity-roadmap.md`. Por decisão do
 usuário, a experiência funcional do terminal do Code OSS é a base de paridade,
 traduzida para Rust + IPC + Qt, sem Electron, Node, WebView ou xterm.js.
 
@@ -103,7 +103,8 @@ A sessão nova deve executar esta sequência:
 
 ```text
 ESTADO
-- Protocolo atual 0.57.0. A1 (recentes) e A2 (capacidades Cargo+CMake) estão
+- Protocolo atual 0.58.0 (`aiCliFlatTranscript` em `settings.*`; 0.57 fechou
+  DECSCUSR). A1 (recentes) e A2 (capacidades Cargo+CMake) estão
   implementadas; `workspace.kind` é primário compatível e
   `workspace.capabilities.buildSystems` é a fonte das ações híbridas.
 - Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
@@ -124,7 +125,7 @@ ESTADO
   regra por agente ou superfície.
 - O teste humano pelo script de desenvolvimento não percebeu correção do
   alinhamento vertical. O problema continua aberto e foi adiado; 0.57 não tem
-  aceite visual. A retomada está integralmente especificada em `docs/26` e
+  aceite visual. A retomada está integralmente especificada em `docs/roadmaps/26` e
   começa por fixture PTY, overlay de baseline/célula e DPR, não por offset.
 - Code OSS/xterm.js são a base de paridade comportamental autorizada para o
   terminal. A implementação continua nativa em `portable-pty` + Rust + IPC +
@@ -148,7 +149,7 @@ ESTADO
   (`WindowControls.qml`), guiados pelo `QWindow` via `WindowChromeController`
   (`ui/src/window_chrome_controller.*`). Região livre arrasta/duplo-clica;
   `WindowResizeHandles.qml` cobre as oito bordas. ACEITO pelo usuário em
-  Fedora/Wayland (2026-07-15); regressão P2 encerrada. Ver `docs/20` §barra.
+  Fedora/Wayland (2026-07-15); regressão P2 encerrada. Ver `docs/roadmaps/20` §barra.
 
 VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - `scripts/verificar.sh` completo: verde; binários release do atalho de
@@ -187,7 +188,7 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
   `ContextoIA.md`. `dist/` permaneceu intocado.
 - A baseline release A3 com `N=3` passou os orçamentos: 250 ms primeiro frame,
   103 MB UI, 3,4 ms workspace, 0,0 ms leitura 10k e 7 MB core. A expansão
-  A3.1–A3.4 está detalhada abaixo; Code OSS/Zed e resultados estão em docs/21.
+  A3.1–A3.4 está detalhada abaixo; Code OSS/Zed e resultados estão em docs/roadmaps/21.
 - Controles de janela (barra client-side): `scripts/verificar.sh` integral verde
   + smoke offscreen debug/release (`exit 124`); ACEITO pelo usuário em
   Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
@@ -195,24 +196,24 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 PRÓXIMO GESTO
 1. Os controles de janela estão aceitos e já embarcados no AppImage novo de
    `dist/`. Não reabrir essa fatia; o polimento P3 (snap/escala/multimonitor) de
-   `docs/20` é opcional e não bloqueia o roadmap.
+   `docs/roadmaps/20` é opcional e não bloqueia o roadmap.
 2. Implementar **A3.1 — estrutura local Tree-sitter** estendendo somente
    `medir-core.py`/`medir-performance.sh` (ver §2 A3.1 abaixo): medir
    `syntax_first_snapshot_ms` e `syntax_incremental_update_ms` com fixture
    versionada e validação de snapshot não vazio; registrar mediana e orçamento
-   inicial em `docs/21`. Depois seguir A3.2–A3.4.
+   inicial em `docs/roadmaps/21`. Depois seguir A3.2–A3.4.
 3. Encerrada A3, auditar EditorConfig como primeira integração pequena
    recomendada. Não iniciar um host genérico de plugins.
 4. Dogfooding em tempo integral: o usuário saiu do CLion e passou a usar a
    Kinein para ganhar o log da aba IDE como vantagem de desenvolvimento. Cada
    atrito ou saída para outra ferramenta vira o topo do backlog
    (ação/esperado/observado/ambiente), na frente de A3.
-5. Se o usuário retomar o cursor/TUI, voltar por R0 de `docs/26`, nunca por
+5. Se o usuário retomar o cursor/TUI, voltar por R0 de `docs/roadmaps/26`, nunca por
    offset.
 
 RESULTADO PENDENTE
 - Cursor/TUI reprovado no gesto humano e adiado; causa visual ainda aberta.
-- R0–R7 detalhados em `docs/26-terminal-rendering-parity-roadmap.md`.
+- R0–R7 detalhados em `docs/roadmaps/26-terminal-rendering-parity-roadmap.md`.
 - O AppImage 0.1.0 de 2026-07-15 foi regenerado a pedido do usuário para
   embarcar a barra client-side aceita; ele carrega o estado atual do cursor/TUI,
   que o usuário optou por não deixar bloquear a entrega. Não regerar o AppImage
@@ -266,13 +267,68 @@ sem copiar): `Main.qml` usa `Qt.Window | Qt.FramelessWindowHint`,
 guiados pelo estado real do `QWindow` via `WindowChromeController`, a região
 livre arrasta/duplo-clica e `WindowResizeHandles.qml` cobre as oito bordas.
 Detalhes e referência profissional (IntelliJ IDEA Community `e3b4dba`) em
-`docs/20` e `ContextoIA.md`.
+`docs/roadmaps/20` e `ContextoIA.md`.
 
 **Aceito:** o usuário testou em Fedora/Wayland e confirmou que funciona. A
 regressão P2 está encerrada. Um AppImage 0.1.0 novo foi gerado com este código e
-entregue em `dist/`. O polimento P3 restante de `docs/20` (snap, escala
+entregue em `dist/`. O polimento P3 restante de `docs/roadmaps/20` (snap, escala
 fracionária, multimonitor e acabamento visual) segue como fatia própria, não
 bloqueante; a imagem de referência é `imagens/bugs/ReformularBarra.png`.
+
+### 0.2b aiBridge REMOVIDO e KV Context desabilitado (2026-07-16, protocolo 0.59.0)
+
+**O `aiBridge.*` era a interferência e foi removido.** Ele abria `claude`/`codex`
+por um caminho especial: argumentos injetados pelo core (`--no-alt-screen`,
+`--ax-screen-reader`) e um filtro que engolia `CSI 3 J` da própria aplicação.
+Isso é a IDE se metendo entre o programa e o terminal — o que nenhuma IDE
+profissional faz, e o que fazia o agente se comportar diferente dentro e fora
+da Kinein.
+
+Uma CLI de IA agora é **um programa como outro qualquer**: abrir o terminal e
+rodar `claude`. Mesmo PTY, mesmo emulador, mesmo contrato de um `ls`.
+
+Removidos: `handlers/ai.rs`, `protocol/ai.rs`, `tests/ai.rs`, a superfície
+`ui/qml/assistant/*`, o `AiBridgeEventRouter`, o atalho do rail, o estado do
+shell, as settings `aiCliProfile`/`aiCliFlatTranscript`, e — no `terminal.rs` —
+o `ScrollbackPreserver` e o `open_command_with_policy`. Não existe mais política
+por programa no terminal.
+
+**KV Context volta como UI pura:** um atalho visual que abre uma sessão de
+terminal comum, para desacoplar visualmente do uso padrão, **sem regra de
+negócio no core**. A UI representa o backend; não o define. Depende do terminal
+consolidado (ADR-0004 já trocou o emulador para o `alacritty_terminal`, motor do
+Zed; falta encaminhamento de mouse ao app e a decisão de renderer).
+
+O modelo de IA não mudou: externa, por CLI do usuário, sem chat embutido e sem
+rede pela IDE. Caiu o **mecanismo**, não o princípio.
+
+### 0.3 Sessão de organização e feedback (2026-07-16)
+
+Sessão de trabalho autônoma autorizada pelo autor (com backup; proibido git
+destrutivo/histórico). Entregas e feedback:
+
+- **Reorganização da documentação (concluída, sem commit):** os `.md` técnicos
+  foram agrupados por assunto sob `docs/{arquitetura,build,seguranca,roadmaps}`
+  via `git mv` (nomes preservados), 410 referências raiz-relativas reescritas em
+  77 arquivos (docs + comentários de código + scripts + CMake), `docs/README.md`
+  reescrito como índice e 0 links markdown quebrados. `cargo check` verde.
+  Raiz intacta: `README/MANUAL/Tutorial/AGENTS` e os pessoais. Plano completo
+  (faixa pessoal, não publicar): `PLANO_ORGANIZACAO_E_HANDOFF.md`.
+- **Scroll do agente Claude no KV Context — RESOLVIDO como toggle (protocolo
+  0.58.0):** a causa-raiz era o Claude interativo usar **tela alternada** (sem
+  scrollback por semântica VT), sem flag inline como o `--no-alt-screen` do
+  Codex. O teste ao vivo confirmou: com `--ax-screen-reader` o scroll e o cursor
+  funcionam, mas a TUI decorativa vira texto puro. Por isso virou preferência:
+  setting **`aiCliFlatTranscript`** (default `false` = TUI decorativa), exposta
+  em Configurações como "KV Context: histórico navegável", lida no
+  `aiBridge.terminal.open` e válida na próxima sessão. `ProfileSpec` ganhou
+  `flat_args`; Codex mantém `--no-alt-screen` nos dois modos (já tem TUI **e**
+  histórico). Contrato/manual/schema atualizados; 3 testes novos de perfil.
+  Detalhes em `docs/roadmaps/26` §11. Opção A (encaminhar roda ao app em
+  alt-screen — corrige vim/htop também) segue no backlog §6.
+- **"Modo imagem" para `.md` (backlog, ver seção 6):** preview de markdown
+  renderizado no editor, estilo JetBrains, reusando `TextEdit.MarkdownText` já
+  usado pelo `DocumentationDialog`.
 
 ## 1. TR0 — aceite funcional da rodada atual
 
@@ -361,7 +417,7 @@ locais; não incorporar timer, telemetria, runtime ou código das referências.
    - atualização incremental de um caractere no mesmo documento;
    - contagem/validação mínima do snapshot para impedir número rápido vazio;
 2. usar fixture versionada e tamanho explícito; não depender de rede ou LSP;
-3. registrar mediana e orçamento inicial em `docs/21`.
+3. registrar mediana e orçamento inicial em `docs/roadmaps/21`.
 
 Aceite: `syntax_first_snapshot_ms` e `syntax_incremental_update_ms` aparecem na
 mesma tabela local, com cenário reproduzível e resultado estrutural não vazio.
@@ -388,7 +444,7 @@ medição valida `path`/`version` e ao menos um token/item quando o cenário exi
    `terminal.input` → frame contendo marcador final, além de perda de input,
    scrollback e responsividade durante a saída;
 4. Terminal comum e KV Context usam o mesmo cenário/renderer; o cursor adiado
-   de `docs/26` não altera esta medição.
+   de `docs/roadmaps/26` não altera esta medição.
 
 Aceite: nenhuma tecla perdida, marcador final presente, UI interativa durante
 a rajada e números separados para editor e terminal.
@@ -777,7 +833,7 @@ e evita gastar arquitetura em candidatos já superados ou inadequados.
 O usuário pretende abrir uma sessão própria em breve para organizar o projeto
 inteiro antes de criar um **novo** repositório público no GitHub. `.gitignore`
 não é barreira de publicação nem remove nomes/histórico já rastreados. Aplicar
-`docs/21` M7.3: exportação por allowlist para árvore separada, histórico novo,
+`docs/roadmaps/21` M7.3: exportação por allowlist para árvore separada, histórico novo,
 dry-run, rejeição de Markdown extra e auditoria de segredos. No início dessa
 sessão, obter do usuário a lista exata dos nomes de arquivos `.md` e diretórios
 que não podem aparecer nem como caminho. Até lá, não criar repositório, não
@@ -856,6 +912,91 @@ compreensão do projeto, build, navegação semântica ou debug básico.
   `--dry-run`, auditoria de segredos e recusa de Markdown além de `README.md`,
   `MANUAL.md` e `Tutorial.md`; sem `.git/`/histórico privado e com o
   repositório-fonte permanecendo privado;
+- **preview de markdown renderizado ("modo imagem") no editor**, estilo
+  JetBrains: alternar entre fonte e visualização renderizada de arquivos `.md`.
+  Reusar `TextEdit.MarkdownText` (já validado no `DocumentationDialog`); fatia de
+  UI com toggle por aba/atalho, sem editar o markdown pela visualização.
+  Pedido do autor em 2026-07-16.
+- **varredura de lógica de negócio na UI/UX (auditoria de camada).** O
+  `AGENTS.md` proíbe lógica de negócio na UI e a `ARCHITECTURE.md` fixa o fluxo
+  Qt/QML → CoreClient → protocolo → core. A fatia da roda do terminal expôs uma
+  violação concreta: `ui/qml/panels/bottom/TerminalScrollController.qml`
+  (`handleWheel`) **decide o significado do gesto** — traduz roda em offset de
+  scrollback e sempre rola o histórico local, ignorando o modo VT que o core já
+  publica em `event.terminal.render` (`alternateScreen` chega ao
+  `TerminalPanel.qml` e não é lido). No `alacritty_terminal`/Zed essa decisão
+  mora no backend, que ramifica por `term.mode()`. Uma violação encontrada por
+  acaso sugere outras: auditar sistematicamente onde o QML decide em vez de
+  apresentar.
+  Método sugerido: procurar no QML/C++ da UI por (a) tradução de gesto/tecla em
+  semântica de domínio, (b) política/allowlist/validação que o core deveria
+  impor, (c) heurística sobre estado do backend (adivinhar em vez de ler o
+  contrato), (d) montagem de comando/caminho, (e) regra por programa/ferramenta.
+  Suspeitos iniciais: terminal (roda/paste/seleção), editor (autocomplete,
+  format-on-save), árvore (ações por tipo de arquivo). Cada achado vira fatia
+  própria com contrato; a auditoria em si não muda comportamento.
+  Pedido do autor em 2026-07-16.
+- **FEITO (aguarda seu gesto visual) — emulador VT migrado para
+  `alacritty_terminal`** (`docs/adr/ADR-0004-alacritty-terminal-emulator.md`).
+  Causa-raiz era entregar um VT raso (`vt100`) enquanto anunciávamos
+  `xterm-256color` — por isso Claude/Codex funcionam fora e quebravam aqui.
+  Agora o motor é o mesmo do Alacritty/Zed. Contrato `event.terminal.render`
+  **inalterado**: UI, harnesses e sonda não mudaram. 261 testes verdes, clippy
+  estrito limpo, sonda e2e verde (scrollbackMax, eco, clamp, multi-sessão).
+  `vt100`/`vte` saíram das deps; o `CursorStyleTracker` manual e o
+  `scrollback_capacity` foram deletados (o emulador expõe os dois). **Teste com
+  Claude/Codex reais e me diga se o cursor/scroll ficaram certos.**
+- Contexto da decisão (`docs/roadmaps/26` §4.5). Pedido real do autor: "meu
+  terminal inteiro dentro da IDE". Claude/Codex
+  funcionam no terminal do sistema e só quebram na Kinein, logo a variável é o
+  emulador. A crate `vt100` é rasa; o candidato é **`alacritty_terminal`** (Rust,
+  Apache-2.0, mantido, mesmo ecossistema do `vte` já linkado — é o que o Zed usa;
+  Code OSS usa xterm.js e IntelliJ usa JediTerm pelo mesmo motivo). Substitui só
+  o motor de grade/estado VT, preservando `portable-pty`, IPC tipado e renderer
+  Qt/QML. Exige ADR, auditoria/pin, mapeamento de `event.terminal.render` e
+  testes de paridade. Deve vir ANTES da decisão de renderer (R3) e tende a
+  resolver de uma vez cursor flutuante, tela alternada, mouse e scroll de TUIs.
+- **ACEITO em 2026-07-16 — cursor/TUI corrigido. Causa-raiz: linha vazia
+  colapsava no positioner.** O `Column` do Qt Quick descarta filhos de largura
+  zero; uma linha vazia chega do core como `[]` e vira um `Row` sem filhos, logo
+  sem largura. Cada linha vazia sumia do layout e todo o texto abaixo subia uma
+  linha, enquanto o cursor ficava na posição correta da grade. **O cursor nunca
+  esteve errado — o texto escorregava para cima.** Correção: a linha é
+  posicionada por `metrics.yForRow(index)`, a mesma métrica do cursor; o
+  `Column` saiu. Detalhes e evidência em `docs/roadmaps/26` §4.7. O usuário
+  testou e aprovou. A pendência de aceite visual do ADR-0004 está encerrada.
+
+  O que destravou foi a **captura de tela** — item 3 do R0, tratado como
+  opcional por três fatias. As medições numéricas (R0 §4.6) e o R1 confirmaram
+  hipóteses reais (H1, H2) que não eram a causa: o erro era de linha inteira, não
+  de sub-pixel. Lição registrada no §4.7 do roadmap.
+- **FEITO (aguarda seu gesto) — roda do mouse encaminhada ao aplicativo**
+  (fatia R4, protocolo `0.60.0`, `docs/roadmaps/26` §11.4 Opção A). A causa não
+  era interferência: era **ausência**. O `open_command` não tem política por
+  programa nenhuma; o que faltava é que a UI decidia sozinha que roda = rolar
+  histórico, sempre. O Codex rolava (desenha inline, tem histórico na grade) e o
+  Claude não (alt-screen, sem histórico por semântica VT).
+
+  Medido nas CLIs reais, não suposto: `claude` liga `?1049 ?1000 ?1002 ?1003
+  ?1006` — alt-screen **e captura de mouse SGR**; `codex` não liga nenhum. Logo o
+  conserto do Claude é **relatório de mouse**, não `alternate scroll` (ele não
+  pede `?1007`). O desenho que eu ia escrever primeiro teria sido inerte.
+
+  `terminal.mouse` carrega o contrato de mouse completo; só `wheel` está
+  implementado, `press`/`release`/`motion` ficam fixados e recusados
+  explicitamente (R5). A decisão virou `wheel_action(mode, shift)` no core — a
+  regra que estava no QML, agora num lugar só. Referências: `scroll_wheel` do
+  Zed, `MouseStateService` do xterm.js, `JediTerminal.mouseReport` do JediTerm
+  (cujas constantes `SCROLLDOWN/SCROLLUP` estão trocadas e foram descartadas).
+
+  Gate: `scripts/verificar.sh` integral verde, 264 testes Rust (10 novos),
+  clippy/C++/QML estritos, 11 harnesses e smoke offscreen (`exit 124`, sem
+  saída). **Falta o seu gesto:** abrir o Claude no terminal e rolar.
+- **cursor/TUI continua torto e NÃO é consertado pela roda.** Reportado em
+  2026-07-16 nos dois agentes, já com o emulador novo — o que fecha a hipótese
+  de que a profundidade do emulador era a causa. É renderer (R0–R3 de
+  `docs/roadmaps/26`: métrica de célula, baseline, DPR), fatia própria. O
+  mapeamento no core foi conferido e está correto.
 - Windows é uma frente futura separada; não diluir o objetivo Linux-first atual.
 
 ## 7. Gate e definição de pronto de cada fatia
@@ -880,11 +1021,11 @@ compreensão do projeto, build, navegação semântica ou debug básico.
 Este é apenas um mapa para evitar duplicação:
 
 - estado técnico, decisões e checkpoints: `ContextoIA.md`;
-- rede de segurança, drafts e escrita atômica: `docs/23-rede-de-seguranca.md`;
-- autocomplete, terminal, paridade diária e UI: `docs/24-paridade-e-fundacao.md`;
-- Tree-sitter e workspace edits: `docs/25-syntax-tree-semantic-foundation.md`;
-- plano de daily driver e longo prazo: `docs/18-daily-driver-plan.md` e
-  `docs/21-long-horizon-roadmap.md`;
+- rede de segurança, drafts e escrita atômica: `docs/seguranca/23-rede-de-seguranca.md`;
+- autocomplete, terminal, paridade diária e UI: `docs/roadmaps/24-paridade-e-fundacao.md`;
+- Tree-sitter e workspace edits: `docs/roadmaps/25-syntax-tree-semantic-foundation.md`;
+- plano de daily driver e longo prazo: `docs/diario/18-daily-driver-plan.md` e
+  `docs/roadmaps/21-long-horizon-roadmap.md`;
 - apresentação pública: `README.md`; uso da IDE: `MANUAL.md`; distribuição e
   instalação: `Tutorial.md`;
 - alterações exatas e checkpoints: histórico Git.

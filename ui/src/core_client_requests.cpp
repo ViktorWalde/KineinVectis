@@ -608,17 +608,6 @@ void CoreClient::terminalOpen()
     sendRequest(QStringLiteral("terminal.open"), QJsonObject{});
 }
 
-void CoreClient::aiProfiles()
-{
-    sendRequest(QStringLiteral("aiBridge.profiles"), QJsonObject{});
-}
-
-void CoreClient::aiTerminalOpen(const QString& profileId)
-{
-    sendRequest(QStringLiteral("aiBridge.terminal.open"),
-                QJsonObject{{QStringLiteral("profileId"), profileId}});
-}
-
 void CoreClient::terminalInput(const QString& id, const QString& data)
 {
     sendRequest(QStringLiteral("terminal.input"),
@@ -636,6 +625,26 @@ void CoreClient::terminalScroll(const QString& id, int offset)
 {
     sendRequest(QStringLiteral("terminal.scroll"),
                 QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("offset"), offset}});
+}
+
+void CoreClient::terminalWheel(const QString& id, int col, int row, int lines, int modifiers)
+{
+    // Fronteira UI→contrato: os modificadores do Qt param aqui. O core recebe o
+    // gesto tipado e decide o destino (relatorio a aplicacao, cursor keys ou
+    // historico local) lendo o modo VT — ver docs/arquitetura/03-ipc-protocol.md.
+    const auto keys = static_cast<Qt::KeyboardModifiers>(modifiers);
+    sendRequest(
+        QStringLiteral("terminal.mouse"),
+        QJsonObject{
+            {QStringLiteral("id"), id},
+            {QStringLiteral("col"), col},
+            {QStringLiteral("row"), row},
+            {QStringLiteral("event"), QJsonObject{{QStringLiteral("kind"), QStringLiteral("wheel")},
+                                                  {QStringLiteral("lines"), lines}}},
+            {QStringLiteral("modifiers"),
+             QJsonObject{{QStringLiteral("shift"), keys.testFlag(Qt::ShiftModifier)},
+                         {QStringLiteral("alt"), keys.testFlag(Qt::AltModifier)},
+                         {QStringLiteral("ctrl"), keys.testFlag(Qt::ControlModifier)}}}});
 }
 
 void CoreClient::terminalClose(const QString& id)

@@ -24,13 +24,11 @@ serde_json = "1.0"
 # SQLite vendorizado (feature bundled): sem dep de sistema, reprodutível.
 # Rede de segurança de dados (docs/23). FFI C fica na dependência.
 rusqlite = { version = "0.32", features = ["bundled"] }
-# Terminal profissional (docs/24 D2): PTY real (wezterm) + emulador VT
-# (grid com cores/cursor/scrollback) para render fiel, resize e TUIs.
+# Terminal profissional (docs/24 D2): PTY real (wezterm) para a sessão. O
+# emulador VT vive no `alacritty_terminal`, declarado pelo core (ADR-0004): a
+# Kinein anuncia `xterm-256color` ao processo, então precisa entregar um VT de
+# verdade — tela alternada, mouse, reflow, wide chars e DECSCUSR inclusos.
 portable-pty = "0.8"
-vt100 = "0.16"
-# `vt100` usa `vte` internamente, mas não expõe DECSCUSR. O core observa essa
-# única parte do estado VT com o mesmo parser maduro, sem parser ANSI próprio.
-vte = "0.15"
 # External file changes: mature cross-platform watcher (inotify on Linux)
 # with a polling fallback selected by the core when the native backend fails.
 notify = "=8.2.0"
@@ -63,8 +61,9 @@ print_stderr = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
-# portable-pty/vt100 (terminal profissional, docs/24 D2) trazem bitflags 1.x
-# por transitividade enquanto o resto usa 2.x — fora do nosso controle.
+# portable-pty/alacritty_terminal (terminal profissional, docs/24 D2) trazem
+# bitflags 1.x por transitividade enquanto o resto usa 2.x — fora do nosso
+# controle.
 multiple_crate_versions = "allow"
 
 [profile.dev]

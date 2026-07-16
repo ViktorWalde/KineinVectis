@@ -6,7 +6,7 @@ import KineinVectis
 // guarda o efetivo (default <- global <- workspace) e o que esta setado em
 // cada escopo, aplica editorFontSize no Theme e expoe os flags para os
 // consumidores (auto-close, format-on-save). Nao fala com o CoreClient
-// direto — pede por sinal e recebe do roteador (guardrail docs/17).
+// direto — pede por sinal e recebe do roteador (guardrail docs/arquitetura/17).
 Item {
     id: root
 
@@ -20,7 +20,6 @@ Item {
     property int bottomPanelHeight: 260
     property int outlineWidth: 220
     property bool outlineCollapsed: false
-    property string aiCliProfile: "claude"
     // Perfil de rigor do build/quality do usuario (M4.5): strict|balanced|relaxed.
     property string rigorProfile: "strict"
     // O que esta explicitamente setado no global (para a UI mostrar).
@@ -63,8 +62,6 @@ Item {
         outlineWidth = effective.outlineWidth !== undefined
                 ? effective.outlineWidth : 220;
         outlineCollapsed = effective.outlineCollapsed === true;
-        aiCliProfile = effective.aiCliProfile !== undefined
-                ? effective.aiCliProfile : "claude";
         globalValues = global;
         workspaceValues = workspace;
         loaded = true;

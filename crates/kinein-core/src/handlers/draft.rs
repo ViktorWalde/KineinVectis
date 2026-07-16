@@ -1,4 +1,4 @@
-//! Handlers de `draft.*` (autosave/rascunhos) — rede de segurança (docs/23).
+//! Handlers de `draft.*` (autosave/rascunhos) — rede de segurança (docs/seguranca/23).
 //!
 //! `draft.save { path, content }` persiste o buffer não salvo de um arquivo
 //! na store `SQLite`; `draft.clear { path }` remove o rascunho (save/close

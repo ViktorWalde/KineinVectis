@@ -2,7 +2,7 @@
 //!
 //! Every long-running operation the core performs should be a job: it returns an
 //! id immediately, streams `event.job.*` notifications and can be cancelled,
-//! keeping the UI responsive. See `docs/ARCHITECTURE.md` (Seção 7) for why this
+//! keeping the UI responsive. See `docs/arquitetura/ARCHITECTURE.md` (Seção 7) for why this
 //! is built before adding more long-running services, and the target model in
 //! `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md`.
 //!

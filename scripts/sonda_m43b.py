@@ -15,7 +15,7 @@ import subprocess
 import sys
 import time
 
-REPO = "/home/viktor/KineinVectis"
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORE = os.path.join(REPO, "target", "debug", "kinein-core")
 
 

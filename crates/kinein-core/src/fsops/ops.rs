@@ -190,7 +190,7 @@ pub fn write_file_if_unchanged(
 }
 
 /// Grava `bytes` em `target` de forma ATÔMICA (rede de segurança da fatia S1,
-/// ver `docs/23`): escreve num arquivo temporário no MESMO diretório, faz
+/// ver `docs/seguranca/23`): escreve num arquivo temporário no MESMO diretório, faz
 /// `fsync`, e `rename` por cima do alvo. Como o `rename` no mesmo filesystem
 /// é atômico, um crash/kill no meio da escrita nunca deixa o alvo truncado ou
 /// zerado — ele fica com o conteúdo ANTIGO ou o NOVO, jamais pela metade.
@@ -362,7 +362,7 @@ mod tests {
 
     #[test]
     fn write_is_atomic_and_leaves_no_temp_behind() {
-        // Escrita atômica (S1/docs/23): substitui o conteúdo e não deixa
+        // Escrita atômica (S1/docs/seguranca/23): substitui o conteúdo e não deixa
         // nenhum arquivo temporário `.kinein-tmp-*` no diretório.
         let root = temp_root("atomic");
         let file = root.join("data.txt");

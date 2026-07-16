@@ -7,8 +7,6 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::AiCliProfileId;
-
 /// Rigor profile that regulates what the IDE runs for the USER's project
 /// (clippy lints, build warnings) — never the Kinein repo's own gate.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
@@ -71,9 +69,6 @@ pub struct SettingsValues {
     /// Whether the editor Structure tool window is explicitly collapsed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub outline_collapsed: Option<bool>,
-    /// Preferred external AI CLI profile (Claude by default).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub ai_cli_profile: Option<AiCliProfileId>,
 }
 
 /// Settings after merging defaults, global and workspace scopes.
@@ -100,8 +95,6 @@ pub struct EffectiveSettings {
     pub outline_width: u32,
     /// Effective explicit Structure collapsed state.
     pub outline_collapsed: bool,
-    /// Effective preferred external AI CLI profile.
-    pub ai_cli_profile: AiCliProfileId,
 }
 
 /// Result payload for `settings.get` / `settings.set`.

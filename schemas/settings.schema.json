@@ -53,11 +53,6 @@
     "outlineCollapsed": {
       "type": "boolean",
       "default": false
-    },
-    "aiCliProfile": {
-      "type": "string",
-      "enum": ["claude", "codex"],
-      "default": "claude"
     }
   },
   "$defs": {

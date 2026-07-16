@@ -281,7 +281,7 @@ não existe ambiguidade sobre IA embutida.
 Ações:
 
 ```text
-marcar docs/16 compiler modes/function store como pós-V1;
+marcar docs/arquitetura/16 compiler modes/function store como pós-V1;
 marcar Configuration Actions avançadas como pós-MVP;
 manter C/C++ e Rust como foco curto prazo;
 Java/Python apenas pos-V1 ou retomada futura.

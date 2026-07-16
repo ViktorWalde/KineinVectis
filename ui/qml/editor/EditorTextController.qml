@@ -7,7 +7,7 @@ Item {
     readonly property string editorIndent: "    "
     // E3: memória do expand/shrink selection. O histórico só vale
     // enquanto a seleção atual for a última expansão sobre o mesmo
-    // texto (guarda barata; ver docs/18, fatia E3).
+    // texto (guarda barata; ver docs/diario/18, fatia E3).
     property var expandHistory: []
     property var lastExpansion: null
 
@@ -327,7 +327,7 @@ Item {
     // E3: expande para o MENOR candidato que contém estritamente a
     // seleção (palavra, linha sem indentação, linha, pares
     // envolventes, documento) — a escada JetBrains emerge sem máquina
-    // de estados. Design e limitações: docs/18, fatia E3.
+    // de estados. Design e limitações: docs/diario/18, fatia E3.
     function expandSelection() {
         if (!ready()) {
             return;

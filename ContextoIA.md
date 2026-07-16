@@ -3,9 +3,9 @@
 Este arquivo registra decisoes de produto/arquitetura para IAs que continuarem
 o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
 `docs/`. Este arquivo e enxuto de proposito: contrato/estado detalhado vive em
-`docs/03-ipc-protocol.md`, `docs/ARCHITECTURE.md` e
-`docs/BACKEND_TO_UI_UX_ROADMAP.md`; aqui so ficam decisoes vigentes e
-prioridade atual (ver `docs/15-engineering-debt-and-refactor.md` sobre por
+`docs/arquitetura/03-ipc-protocol.md`, `docs/arquitetura/ARCHITECTURE.md` e
+`docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`; aqui so ficam decisoes vigentes e
+prioridade atual (ver `docs/arquitetura/15-engineering-debt-and-refactor.md` sobre por
 que este arquivo foi enxugado em 2026-07-05).
 
 ## Ambiente revalidado apos troca de distro (2026-07-08, Arch)
@@ -26,6 +26,23 @@ conhecida e correcao simples:
   `/usr/lib/cmake/Qt6/Qt6Targets.cmake`; basta rebuildar limpo na maquina
   atual que o flag entra sozinho. Nao adicionar flag manual em preset.
 
+## Organizacao documental e diagnostico de terminal (2026-07-16)
+
+- **Documentacao reorganizada por assunto** (sessao autonoma, sem commit): os
+  `.md` tecnicos foram movidos por `git mv` para
+  `docs/{arquitetura,build,seguranca,roadmaps}` (nomes preservados);
+  referencias raiz-relativas atualizadas em docs, comentarios de codigo, scripts
+  e CMake; `docs/README.md` reescrito como indice; 0 links quebrados; `cargo
+  check` verde. Documentos numerados agora vivem sob subpastas (ex.:
+  `docs/arquitetura/03-ipc-protocol.md`, `docs/roadmaps/24-...`). Raiz mantem
+  `README/MANUAL/Tutorial/AGENTS` e os pessoais. Plano interno completo em
+  `PLANO_ORGANIZACAO_E_HANDOFF.md` (nao publicar).
+- **Scroll do agente Claude no KV Context — causa-raiz identificada:** o Claude
+  interativo usa tela alternada (sem scrollback) e nao tem flag inline como o
+  `--no-alt-screen` do Codex; a IDE ainda nao encaminha a roda ao app em tela
+  alternada. Diagnostico e duas opcoes de correcao em `docs/roadmaps/26` secao
+  11. Nao aplicado: exige gesto visual (regra do proprio R26).
+
 ## Direcao do produto
 
 - Produto: Kinein Vectis.
@@ -44,7 +61,7 @@ conhecida e correcao simples:
     e textobjects — substitui/complementa o hibrido regex + semantic-tokens
     atual. E a maior lacuna vs. o ecossistema Neovim que ja da pra plugar
     direto (biblioteca C + gramaticas). Candidato a fatia propria de alto
-    valor; ancorar na decisao de engine do editor (M5.4 do docs/21).
+    valor; ancorar na decisao de engine do editor (M5.4 do docs/roadmaps/21).
   - LSP (clangd/rust-analyzer) e DAP (lldb-dap) JA sao plugados direto pelo
     core Rust — nada de Neovim no meio.
   Regra: quando uma capacidade do Neovim for desejada, buscar a
@@ -198,7 +215,18 @@ testes que exec, ou fsync).
 ## Estado tecnico atual
 
 - Arquitetura: Qt/QML UI <-> JSON-RPC local/stdin-stdout <-> Rust core.
-- Protocolo IPC atual: `0.57.0` (2026-07-15). 0.57 preserva forma e piscagem do
+- Protocolo IPC atual: `0.59.0` (2026-07-16). **0.59 REMOVE o dominio
+  `aiBridge.*`** e, com ele, a superficie do KV Context, os perfis allowlisted e
+  as settings `aiCliProfile`/`aiCliFlatTranscript`. O bridge era a interferencia:
+  injetava argumentos no `claude`/`codex` (`--no-alt-screen`,
+  `--ax-screen-reader`) e filtrava `CSI 3 J` da propria aplicacao — a IDE se
+  metendo entre o programa e o terminal. Agora uma CLI de IA e um programa como
+  outro qualquer: abrir o terminal e rodar `claude`, mesmo PTY/emulador/contrato
+  de um `ls`. No `terminal.rs` cairam o `ScrollbackPreserver` e o
+  `open_command_with_policy`; nao existe mais politica por programa. O KV Context
+  pode voltar como UI pura (atalho que abre terminal comum), sem regra de negocio
+  no core. 0.58 (revertido) tinha adicionado o toggle de transcript plano.
+  0.57 preserva forma e piscagem do
   cursor pedidas por aplicações via DECSCUSR, incluindo a barra steady nativa
   usada por TUIs, sem perfil por Claude/Codex. 0.56 acrescenta a largura
   autoritativa em células VT a cada span de `event.terminal.render`, mantendo
@@ -232,7 +260,7 @@ testes que exec, ou fsync).
   + emulador vt100; copiar/colar via singleton C++ Clipboard; 0.40
   trouxe `draft.save`/`draft.clear` +
   `drafts` na resposta de `workspace.open` — rede de segurança contra
-  perda de dado da fatia S1/docs/23: autosave de buffer não salvo em
+  perda de dado da fatia S1/docs/seguranca/23: autosave de buffer não salvo em
   SQLite + escrita atômica de `fs.write`; 0.39 trouxe `lsp.restart` +
   `event.lsp.restarted` — reinício de LSP travado da M4.3b; 0.38 trouxe
   `settings.rigorProfile` — perfis de rigor Strict/Balanced/Relaxed da
@@ -244,25 +272,25 @@ testes que exec, ou fsync).
   enriquecido com endLine/endColumn/code (0.35, T6),
   `settings.get`/`settings.set` (0.36, M4.1) e `lsp.completion`
   `isIncomplete` (0.37, fix do autocomplete)). Lista completa de
-  comandos/eventos e contrato: `docs/03-ipc-protocol.md` (nao duplicar
+  comandos/eventos e contrato: `docs/arquitetura/03-ipc-protocol.md` (nao duplicar
   essa lista aqui).
-- Formatacao orquestrada (fatia M1.1 de `docs/18-daily-driver-plan.md`,
+- Formatacao orquestrada (fatia M1.1 de `docs/diario/18-daily-driver-plan.md`,
   2026-07-09): `Ctrl+Alt+L` formata o buffer atual via `format.text`
   (rustfmt/clang-format, stdin/stdout, cwd na raiz, sem tocar disco; a UI
   substitui o texto preservando cursor clampado e marca a aba como
   modificada). Format-on-save e Salvar tudo já estão implementados; a fila de
-  saves descarta respostas obsoletas. Design completo e decisoes: docs/18.
+  saves descarta respostas obsoletas. Design completo e decisoes: docs/diario/18.
 - Job system assincrono/cancelavel (`job.list`/`job.cancel`, `event.job.*`)
   cobre `build.run`, `quality.run`, `test.run` e `environment.scan`: cada um
   responde `{ jobId }` na hora e emite `event.<dominio>.finished` com o
-  resultado real. Arquitetura: `docs/ARCHITECTURE.md` §7. Impacto/estado de UI:
-  `docs/BACKEND_TO_UI_UX_ROADMAP.md` (P0).
+  resultado real. Arquitetura: `docs/arquitetura/ARCHITECTURE.md` §7. Impacto/estado de UI:
+  `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md` (P0).
 - Diagnostics parcialmente unificados: modelo comum `Diagnostic` em
   `kinein-protocol` usado por `event.build.diagnostic`/`event.quality.diagnostic`
   (faltam ids estaveis, actions e `logRef` — ver roadmap P1).
 - `workspace.browse`/`fs.*`/`fs.findFiles` seguem confinados ao workspace
   aberto; `fs.*` nunca navega fora dele. Detalhe de cada metodo:
-  `docs/03-ipc-protocol.md`.
+  `docs/arquitetura/03-ipc-protocol.md`.
 - Project Health minimo (primeira etapa, 2026-07-08): banner discreto no topo
   da area do editor (`shell/ProjectHealthBanner.qml` +
   `workspace/ProjectHealthController.qml`), composto so com dados existentes
@@ -302,7 +330,7 @@ testes que exec, ou fsync).
 Fase de "monolito modular" concluida em 2026-07-05: core, protocolo e CLI
 quebrados por responsabilidade; rename kernwerk -> Kinein Vectis concluido.
 Detalhe completo (arquivos, pastas, verificacao): ver
-`docs/15-engineering-debt-and-refactor.md`.
+`docs/arquitetura/15-engineering-debt-and-refactor.md`.
 
 ## Strict mode
 
@@ -314,10 +342,10 @@ Detalhe completo (arquivos, pastas, verificacao): ver
   `scripts/verificar-qml.sh`. Padrao do repositorio: `pragma
   ComponentBehavior: Bound` onde ha delegates, `required property` para
   roles, acesso por id qualificado (nunca `parent.parent.x` nem resolucao
-  implicita de escopo). Detalhe: `docs/06-strict-mode.md`; degraus futuros de
-  rigor: `docs/18-daily-driver-plan.md`.
+  implicita de escopo). Detalhe: `docs/arquitetura/06-strict-mode.md`; degraus futuros de
+  rigor: `docs/diario/18-daily-driver-plan.md`.
 - Requisitos (funcionais e nao funcionais) e trade-offs de arquitetura estao
-  explicitos em `docs/19-architecture-tradeoffs.md` (criado 2026-07-09 a
+  explicitos em `docs/arquitetura/19-architecture-tradeoffs.md` (criado 2026-07-09 a
   pedido do usuario). Decisao estrutural nova ou excecao entra la, com
   ganho/custo/gatilho de revisita. O doc tambem reafirma: **a UI/UX de
   `docs/specs/` e inegociavel** — visual nao se inventa nem se "melhora" de
@@ -325,10 +353,10 @@ Detalhe completo (arquivos, pastas, verificacao): ver
 - **A UI atual NAO reflete docs/specs/** (paleta, dimensoes, iconografia,
   regioes faltantes). A convergencia e gradual e VINCULANTE, decidida com o
   usuario em 2026-07-09 (nao sera remake big-bang):
-  `docs/20-ui-spec-convergence-plan.md` tem as regras (R1: UI nova nasce
+  `docs/roadmaps/20-ui-spec-convergence-plan.md` tem as regras (R1: UI nova nasce
   conforme spec; R2: fatia de convergencia nunca se mistura com feature),
   o inventario de divergencias e a ordem C0-C6 amarrada aos marcos de
-  docs/18. Nenhum agente deve tratar a aparencia atual como referencia — a
+  docs/diario/18. Nenhum agente deve tratar a aparencia atual como referencia — a
   referencia e a spec.
 - Futuramente: seletor de nivel de rigidez (Strict padrao / Balanced /
   Relaxed so por escolha explicita).
@@ -337,7 +365,7 @@ Detalhe completo (arquivos, pastas, verificacao): ver
 
 UX/UI basica (workspace, explorer, abas, layout, sidebar, paineis, syntax
 highlighting, build/test/quality, LSP MVP) esta **feita** — ver histórico no
-git e em `docs/BACKEND_TO_UI_UX_ROADMAP.md`. A partir de 2026-07-05 a ordem
+git e em `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`. A partir de 2026-07-05 a ordem
 mudou:
 
 1. **Nao empilhar mais fases de backend antes de voltar ao Qt.** O usuario
@@ -494,7 +522,7 @@ mudou:
 
    **Decisao do usuario em 2026-07-06:** nao aceitar sobras pequenas como
    divida tecnica "adiavel". A fase de higiene arquitetural sem divida nova foi
-   executada e ficou documentada em `docs/17-architecture-hygiene-plan.md`.
+   executada e ficou documentada em `docs/arquitetura/17-architecture-hygiene-plan.md`.
    Daqui para frente, novas features grandes so devem entrar mantendo os
    guardrails: `Main.qml` composition root, controllers/stores por dominio,
    roteadores IPC por dominio e `CoreClient` como fachada QML unica com
@@ -555,7 +583,7 @@ mudou:
 
    **Atualizacao CODEX 2026-07-06 (higiene arquitetural finalizada):** a fase
    sem divida nova foi executada e documentada em
-   `docs/17-architecture-hygiene-plan.md`. Estado final validado:
+   `docs/arquitetura/17-architecture-hygiene-plan.md`. Estado final validado:
    `Main.qml` ficou com **336 linhas**, sem `ListModel`, `Connections`,
    `Shortcut`, `Timer`, helper de dominio ou componente visual pesado
    embutido. O host visual central do workspace virou
@@ -590,7 +618,7 @@ mudou:
    **Regra daqui para frente:** a fase nao deixa divida tecnica conhecida
    nessa frente. Nova feature deve manter o fluxo `QML visual ->
    controller/store -> CoreClient facade -> handler IPC interno -> Rust core`.
-   Se algum arquivo passar dos limites de `docs/17-architecture-hygiene-plan.md`
+   Se algum arquivo passar dos limites de `docs/arquitetura/17-architecture-hygiene-plan.md`
    ou misturar renderizacao, estado e IPC, a feature so esta pronta depois do
    split.
 
@@ -607,10 +635,10 @@ mudou:
    3. Se `project.health` virar necessario (sinais que o core ainda nao expoe:
       CMake sem configure, compile_commands ausente, cargo metadata quebrado,
       LSP degradado, build dir stale), seguir o fluxo de
-      `docs/ARCHITECTURE.md`: tipos em `kinein-protocol`, handler fino,
-      servico de dominio no core, testes, docs/03 atualizado e UI por
+      `docs/arquitetura/ARCHITECTURE.md`: tipos em `kinein-protocol`, handler fino,
+      servico de dominio no core, testes, docs/arquitetura/03 atualizado e UI por
       controller/roteador/componente visual. Operacao longa deve ser job.
-   4. [em andamento] Seguir `docs/18-daily-driver-plan.md` (criado 2026-07-08
+   4. [em andamento] Seguir `docs/diario/18-daily-driver-plan.md` (criado 2026-07-08
       a pedido do usuario: rigor maior + virar daily driver o quanto antes).
       Marco corrente: **M1 — edicao diaria confortavel**.
       Fatia M1.1 (formatacao orquestrada) FEITA em 2026-07-09.
@@ -619,7 +647,7 @@ mudou:
       (inclusive limpeza de spans na troca de aba, ao contrario da suspeita
       inicial); o gap real era so o mapa de kinds do EditorHighlighter, que
       descartava lifetime, selfKeyword, typeAlias, const, boolean, character,
-      generic, builtinType, etc. Design/decisoes: docs/18, "Fatia M1.2".
+      generic, builtinType, etc. Design/decisoes: docs/diario/18, "Fatia M1.2".
       Fatia M1.3 (code actions / quick fixes) FEITA em 2026-07-09:
       Alt+Enter abre popup de acoes no cursor (lsp.codeActions com context de
       diagnostics cacheado no core; so acoes com edit inline), Enter/clique
@@ -628,39 +656,39 @@ mudou:
       em disco via stdio). Bonus da fatia: didChange/didOpen agora pulam
       sync quando o conteudo nao mudou (hash por documento) — corrige a
       invalidacao dos fix-its do clangd e corta didChange redundante de todo
-      hover/completion. Design: docs/18, "Fatia M1.3".
+      hover/completion. Design: docs/diario/18, "Fatia M1.3".
       Fatia M1.4 (go-to-symbol) FEITA em 2026-07-09: no Search Everywhere,
       "@" lista/filtra simbolos do arquivo atual (documentSymbol, achatado
       com containers) e "#nome" busca simbolos do workspace
       (workspace/symbol no servidor do arquivo ativo). Aceitar salta para
-      linha/coluna. Validada e2e com rust-analyzer real. Design: docs/18,
+      linha/coluna. Validada e2e com rust-analyzer real. Design: docs/diario/18,
       "Fatia M1.4".
       Fatia M1.5 (sessao por workspace) FEITA em 2026-07-09: reabrir o mesmo
       root restaura abas e aba ativa (.kinein/session.json, schemaVersion 1,
       caminhos relativos em disco/absolutos no IPC, arquivos mortos
       filtrados); a UI salva com debounce de 1.2s no EditorController e
       restaura pedindo a aba ativa por ultimo. Validada e2e com dois
-      processos do core. Design: docs/18, "Fatia M1.5".
+      processos do core. Design: docs/diario/18, "Fatia M1.5".
       Fatia M1.6 (ergonomia de editor) FEITA em 2026-07-09 — fatia 100% UI,
       sem mudanca de protocolo: Ctrl+D duplica linha/selecao, Alt+Shift+
       cima/baixo move bloco de linhas, Ctrl+/ comenta/descomenta (token vem
       da linguagem do highlighter; json/plain e no-op), Ctrl+Y deleta linha,
       Ctrl+G abre dialogo "linha[:coluna]" pre-preenchido. Operacoes no
       EditorTextController via remove/insert (undo nativo preservado).
-      Design: docs/18, "Fatia M1.6".
+      Design: docs/diario/18, "Fatia M1.6".
       **M1 FECHADO em 2026-07-09**: as 6 fatias funcionais + a C0 (auditoria
       formal de convergencia visual — resultado completo com referencias de
-      spec em docs/20, areas A-H). Existe um **MANUAL.md** na raiz para
+      spec em docs/roadmaps/20, areas A-H). Existe um **MANUAL.md** na raiz para
       usuarios/testers (uso, funções, atalhos e troubleshooting dentro da
       IDE) — manter atualizado a cada fatia que mudar UX. Distribuição,
       instalação e geração do executável ficam em `Tutorial.md`.
-      **M2 estruturado em docs/18** (ordem: M2.1 terminal unificado ->
+      **M2 estruturado em docs/diario/18** (ordem: M2.1 terminal unificado ->
       M2.2 CMake -> M2.3 Cargo -> M2.4 run configs -> M2.5 debugger DAP).
       DECISAO DO USUARIO (2026-07-09): as abas "Executar" e "Terminal"
       viram UMA aba Terminal (backends continuam separados; superficie
       visual unica com sessoes) — e o requisito da fatia M2.1.
       Fatia C1 (fundacao visual) FEITA em 2026-07-09, pendente de validacao
-      visual do usuario (R7 de docs/20): Theme.qml agora tem OS VALORES DA
+      visual do usuario (R7 de docs/roadmaps/20): Theme.qml agora tem OS VALORES DA
       SPEC (paleta inteira, escalas 4px/raios, tokens tipograficos novos),
       fundo de selecao virou surfaceSelected #222833 (ambar so como acento,
       COMP §10.4), dimensoes das regioes corrigidas (rail 52, status 28,
@@ -668,14 +696,14 @@ mudou:
       editor 13->14px (a auditoria tinha medido o texto errado) e os tres
       paineis sao redimensionaveis via shell/PanelSplitter.qml (limites da
       spec no ShellController; persistencia de layout fica para Settings).
-      Detalhe completo: docs/20, "Execucao da C1".
+      Detalhe completo: docs/roadmaps/20, "Execucao da C1".
       Fatia M2.1 (Terminal unificado) FEITA em 2026-07-09 — fatia 100% UI,
       contratos run.*/terminal.* intactos: a aba "Executar" saiu; a aba
       Terminal tem sessoes Shell|Execucao (estado terminalSession no
       RuntimeController), Shift+F10 abre direto na Execucao, Alt+F12 no
       Shell, chip da Execucao e rotulo da aba mostram "●" com processo
       vivo, botao "limpar" zera so a sessao ativa, foco automatico por
-      sessao. A atual seção 5 do MANUAL documenta o fluxo. Design: docs/18,
+      sessao. A atual seção 5 do MANUAL documenta o fluxo. Design: docs/diario/18,
       "Fatia M2.1".
       Fatia M2.2 (CMake service) FEITA em 2026-07-09, protocolo 0.25.0:
       cmake.configure como job (file-api query + CDB exportada, preset
@@ -705,7 +733,7 @@ mudou:
       config ativa > heuristica. C3: o TopHeaderBar VIROU a Main Toolbar
       da spec (44px, botoes 32px, ordem [Run Config][Configurar so
       cmake][Build][Testes][Analise][>]) — interpretacao registrada em
-      docs/18: regiao 1 (Title/App Bar) so nasce na C5; Target/Profile
+      docs/diario/18: regiao 1 (Title/App Bar) so nasce na C5; Target/Profile
       selectors e botao Debug entram com as fatias que os alimentam.
       Seletor com dropdown (Automatico|configs|Nova/Editar/Excluir) e
       RunConfigDialog no ShellOverlays. Validada e2e (config persiste
@@ -750,7 +778,7 @@ mudou:
       Regra do marco: orquestrar o binario git com saida estavel
       (--porcelain=v2 -z), core stateless, UI dirige refresh. Proximo
       foco: T6 (diagnostics na gutter) e depois M4.1 (Settings) — ver
-      ordem no docs/21.
+      ordem no docs/roadmaps/21.
       Fatia M3.1 FEITA em 2026-07-09, protocolo 0.30.0: git.status
       (deteccao por exit code, --untracked-files=all, paths relativos ao
       root com filtro de fora-do-workspace e de .kinein/); branch/ahead/
@@ -768,7 +796,7 @@ mudou:
       DISCO (buffer nao salvo nao aparece — attach de buffer e melhoria
       futura com gatilho). Sonda e2e G4/G5 provou hunks e untracked.
       Trilha E (fluxo de digitacao profissional, pedido do usuario)
-      estruturada em docs/18: E1 auto-close de pares → E2 Enter
+      estruturada em docs/diario/18: E1 auto-close de pares → E2 Enter
       inteligente → E3 polimento; executar ENTRE fatias do M3.
       Fatia E1 FEITA em 2026-07-09 (junto da M3.2): auto-close de
       ( [ { " ' com type-over, surround da selecao, backspace de par
@@ -788,7 +816,7 @@ mudou:
       AST); Home/Shift+Home alternam primeiro-texto ↔ coluna 0.
       Logica no EditorTextController (sonda Qt Quick, 35 casos verdes),
       Surface so emite sinais. Descobertas (read-back do select, degrau
-      de span de linhas) e design: docs/18, "Fatia E3".
+      de span de linhas) e design: docs/diario/18, "Fatia E3".
       Fatia M3.3 FEITA em 2026-07-09, protocolo 0.32.0: git.stage/
       unstage/discard/commit, todas respondendo o shape do git.status
       (um caminho so de atualizacao na UI); commit staged-only com
@@ -799,9 +827,9 @@ mudou:
       Radar registrado (pedido do usuario): "pequenas coisas" acumuladas
       = fluidez (principio na trilha E) e fatia futura "auto-setup ao
       abrir projeto pronto" (cmake.configure automatico no open sem
-      .kinein/build; reconfigure ao salvar CMakeLists; docs/18).
+      .kinein/build; reconfigure ao salvar CMakeLists; docs/diario/18).
       Roadmap de longo horizonte M4-M7 escrito em 2026-07-09 em
-      **docs/21-long-horizon-roadmap.md** (pedido do usuario: qualidade
+      **docs/roadmaps/21-long-horizon-roadmap.md** (pedido do usuario: qualidade
       de handoff para sessoes futuras sem prompt profissional; inclui o
       playbook de continuidade com o ritual por fatia e as convencoes
       aprendidas — LEIA O 21 ANTES DE FATIAS M4+).
@@ -822,9 +850,9 @@ mudou:
       [Mudancas|Historico] (chips), commit clicado reusa o
       GitDiffDialog. Bug de passagem: closeDiffDialog nao limpa mais a
       lista (isso e do clear/troca de workspace). Sonda e2e G11-G18 com
-      git real. Design: docs/18, "Fatia M3.4".
+      git real. Design: docs/diario/18, "Fatia M3.4".
       Fatia T1 FEITA em 2026-07-10, protocolo 0.34.0 (primeira da
-      trilha T, docs/21): lsp.switchSourceHeader { path, content } ->
+      trilha T, docs/roadmaps/21): lsp.switchSourceHeader { path, content } ->
       { path? } via a extensao do clangd; gate de linguagem no core
       (arquivo nao-C/C++ -> INVALID_PARAMS, sem deixar rust-analyzer
       responder cru); Alt+O + comando "C/C++: Alternar header/source".
@@ -832,7 +860,7 @@ mudou:
       novo de abertura). Sonda e2e com clangd real (header<->source +
       sem par). RADAR aberto: falta primitiva de "aviso discreto"
       (toast) na UI — switch sem par so nao navega hoje. Design:
-      docs/18, "Fatia T1".
+      docs/diario/18, "Fatia T1".
       **M3 validado tecnicamente (gate verde + sondas e2e); falta o
       teste de USO real do usuario (blame/historico/switch e digitacao
       da trilha E lado a lado com VS Code/CLion).**
@@ -848,7 +876,7 @@ mudou:
       o mesmo lspDiagnostics). Aba Problemas mostra o code por linha.
       Validada e2e com clangd E rust-analyzer reais. Design/descobertas
       (setFormat substitui formato; reatividade via revision; tooltip
-      proprio sem QtQuick.Controls): docs/18, "Fatia T6". Pendente:
+      proprio sem QtQuick.Controls): docs/diario/18, "Fatia T6". Pendente:
       validacao visual do usuario (R7) do squiggle/gutter.
       REGRA DO USUARIO reforcada nesta fatia: a experiencia de
       diagnostico deve ser JetBrains — erro na hora no codigo E na aba
@@ -866,7 +894,7 @@ mudou:
       docs/05 (sem cor nova); variaveis seguem quase-brancas. Confirmado
       por leitura + sonda que AUTOCOMPLETE LSP (C/C++ e Rust) JA existe
       e funciona (dispara sozinho, Tab/Enter aceita) e clangd/rust-
-      analyzer JA estao prontos. Design/descobertas: docs/18, "Fatia
+      analyzer JA estao prontos. Design/descobertas: docs/diario/18, "Fatia
       CR1". Pende validacao visual/digitacao do usuario.
       RADAR (pedido do usuario, registrado): a "inteligencia" de
       cout << e de sugerir bibliotecas apos #include < deve vir do
@@ -888,7 +916,7 @@ mudou:
       (sonda com XDG_CONFIG_HOME isolado: persistencia global/workspace
       entre processos). ARMADILHA: `cargo test`/gate NAO recompilam
       target/debug/kinein-core — rodar `cargo build -p kinein-core`
-      antes de sondas e2e. Design: docs/18, "Fatia M4.1".
+      antes de sondas e2e. Design: docs/diario/18, "Fatia M4.1".
       **T4 (cargo check no save) — DESCOBERTA 2026-07-11: JA ENTREGUE
       pelo rust-analyzer.** Sonda provou: `fs.write` ja manda `did_save`
       ao LSP (fs.rs:243) e o rust-analyzer roda `cargo check` no save
@@ -916,7 +944,7 @@ mudou:
       em 4s pausa); emit recovered() -> UI re-sincroniza o LSP do arquivo
       ativo. Validado com kill -9 real (reconecta com tabs=1). Falta
       parte B (lsp.restart + auto-restart) e C (jobs orfaos) = fatia
-      M4.3b. Design: docs/18 "Fatia M4.3".
+      M4.3b. Design: docs/diario/18 "Fatia M4.3".
       **M4.5 (perfis de rigor Strict/Balanced/Relaxed) FEITA em
       2026-07-11, protocolo 0.38.0:** um setting (extensao da M4.1) que
       regula O QUE A IDE RODA NO PROJETO DO USUARIO (quality.run/build.run
@@ -932,7 +960,7 @@ mudou:
       serializa o mapa inteiro). Validada e2e (sonda_m45.py: default
       strict -> global relaxed vira efetivo -> workspace vence -> persiste
       em disco). C++ CMake `-Werror` por perfil fica FORA (gatilho: pedido
-      real; perfil so afeta Rust no v1). Design: docs/18 "Fatia M4.5".
+      real; perfil so afeta Rust no v1). Design: docs/diario/18 "Fatia M4.5".
       **M4.2 (orcamento de performance) FEITA em 2026-07-11, protocolo
       INALTERADO:** medicao 100% local (offscreen + stdio + /proc, ZERO
       telemetria/rede). `scripts/medir-performance.sh` (+ `medir-core.py`)
@@ -944,9 +972,9 @@ mudou:
       offscreen ~101ms, UI RSS 88MB, workspace.open 1.5ms, fs.read 10k
       0.1ms, core RSS 5MB, rust-analyzer 677MB (ferramenta externa
       indexando o repo, nao memoria do Kinein). Orcamento (mediana+folga,
-      regressao=bug) na tabela do docs/21 M4.2; latencia de digitacao
+      regressao=bug) na tabela do docs/roadmaps/21 M4.2; latencia de digitacao
       ficou MANUAL (precisa injecao de tecla na GUI). Descoberta: fs.read
-      de .rs ja dispara did_open -> LSP sobe sozinho. Design: docs/18
+      de .rs ja dispara did_open -> LSP sobe sozinho. Design: docs/diario/18
       "Fatia M4.2".
       **M4.3b (lsp.restart + jobs orfaos) FEITA em 2026-07-11, protocolo
       0.39.0 — FECHA o M4.3 e o MARCO M4.** Parte B: LspManager conta
@@ -959,12 +987,12 @@ mudou:
       limitado (500ms) mata cargo/cmake/lldb no shutdown (core.shutdown,
       EOF da UI morta, unwind) — sem orfaos. Sonda sonda_m43b.py provou:
       lsp.restart devolve restarted:[rust]; build.run + core.shutdown NAO
-      deixa cargo orfao. Design: docs/18 "Fatia M4.3b".
+      deixa cargo orfao. Design: docs/diario/18 "Fatia M4.3b".
       **Estado do M4: FECHADO. M4.1 (Settings), M4.2 (performance), M4.3
       A+B (robustez de crash/LSP/jobs) e M4.5 (perfis de rigor) FEITOS; T4
       fora da fila (flycheck ja entrega). M4.4 (First Run) adiado pelo
       proprio gatilho (>1 usuario) — nao bloqueia uso solo.**
-      **REDE DE SEGURANCA (fatia S1, docs/23) FEITA em 2026-07-11,
+      **REDE DE SEGURANCA (fatia S1, docs/seguranca/23) FEITA em 2026-07-11,
       protocolo 0.40.0 — a pedido do usuario, ANTES do dogfooding.** Dois
       pilares contra perda de dado: (1) `fs.write` agora e ATOMICO (temp no
       mesmo dir + fsync + rename; mata o vetor "arquivo zerado" em crash no
@@ -976,9 +1004,9 @@ mudou:
       overlay. Sonda sonda_drafts.py provou: SIGKILL sem salvar -> recupera;
       save limpa; escrita atomica grava sem temp solto. Store reutilizavel
       para Local History e migracao de sessao (P4/radar). Design+status:
-      docs/23.
+      docs/seguranca/23.
       **FASE POS-REDE-DE-SEGURANCA (ordem DEFINIDA pelo usuario em
-      2026-07-11, ver docs/24 — status vivo):** D1 autocomplete LSP AO VIVO
+      2026-07-11, ver docs/roadmaps/24 — status vivo):** D1 autocomplete LSP AO VIVO
       -> D2 terminal -> D3 tree-sitter/plugins/views -> D4 remake.
       **D1 RESOLVIDO (2026-07-12) — causa-raiz achada:** NAO era foco, nem
       prontidao do servidor, nem posicao do popup, nem filtro. Era armadilha
@@ -1084,16 +1112,16 @@ mudou:
       (ADOCAO DIRETA no core, NAO extension host; camada lang/ registry por
       linguagem C/C++/Rust; highlight/fold/outline independentes do LSP) +
       views em arvore (explorer + outline; usuario fazendo os ICONES
-      proprios) -> D4 remake de UI/UX (docs/20). Dogfooding em paralelo.
+      proprios) -> D4 remake de UI/UX (docs/roadmaps/20). Dogfooding em paralelo.
       Radar aberto: primitiva de "aviso discreto" (toast, para o "N
       recuperados"); diffBase como 4o setting;
       adotar tree-sitter (MANDATO obrigatorio, ver "Direcao do produto");
-      preencher as metricas MANUAIS do orcamento (docs/21 M4.2) numa sessao
+      preencher as metricas MANUAIS do orcamento (docs/roadmaps/21 M4.2) numa sessao
       GUI real; Local History completo + migrar session/settings pro mesmo
-      SQLite (docs/23 P4). Docs desta rodada: docs/22 (comandos de
-      compilacao C/C++/Rust), docs/23 (rede de seguranca).
-      Ordem completa pos-M3 na secao final do docs/21. Trilha E
-      concluida em 2026-07-10 (E1-E3). O docs/21 tambem
+      SQLite (docs/seguranca/23 P4). Docs desta rodada: docs/build/22 (comandos de
+      compilacao C/C++/Rust), docs/seguranca/23 (rede de seguranca).
+      Ordem completa pos-M3 na secao final do docs/roadmaps/21. Trilha E
+      concluida em 2026-07-10 (E1-E3). O docs/roadmaps/21 tambem
       ganhou (pedido do usuario) a **Trilha T**: paridade de toolchain
       C/C++ e Rust com regua Neovim ADAPTADA (inventario stack→estado +
       fatias T1-T9: switch header/source, tidy no editor, inlay hints,
@@ -1101,7 +1129,7 @@ mudou:
       expand macro, crates offline-first).
       Toolchain/Environment Settings, CMake/Cargo toolbar e Settings/Storage
       entram nos marcos M1/M2 conforme o plano.
-5. `docs/BACKEND_TO_UI_UX_ROADMAP.md` continua sendo a ponte backend->UI: nao
+5. `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md` continua sendo a ponte backend->UI: nao
    substitui `docs/specs/`, so evita que o backend avance sem mapear a
    experiencia visual futura. Atualizar os dois ao fim de cada entrega.
 
@@ -1110,14 +1138,14 @@ basica antes de features grandes; syntax highlighting; Fase 4 (build); Fase 5
 (LSP: diagnosticos, go to definition, hover, completion, find usages, rename —
 semantic tokens e code actions ainda pendentes); Java/Python fora do curto
 prazo (pos-V1); IA usada via terminal (Claude/Codex/GPT), sem provider embutido
-no MVP. Detalhe: git log e `docs/BACKEND_TO_UI_UX_ROADMAP.md`.
+no MVP. Detalhe: git log e `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`.
 
 Ideia de produto pos-V1 (2026-07-04, nao bloqueia V1.0): "modos de compilador"
 e "loja de funcoes" para C/C++ e Rust, com janela de opcoes visual e
 JetBrains-like (nome, explicacao, impacto, risco, fonte, previa, reversao),
 ordenando por confianca (ISO/Rust oficial primeiro). Ainda sem doc dedicado
 apos a limpeza de `docs/archive/`; se for retomada, criar
-`docs/17-compiler-modes-and-function-store.md` antes de implementar.
+`docs/arquitetura/17-compiler-modes-and-function-store.md` antes de implementar.
 
 ## Visao pos-V1.0
 
@@ -1226,10 +1254,10 @@ plano da tarefa e pedir confirmacao do usuario.
   essa dependencia.
 - Nao duplicar protocolo de navegacao de pasta; use `workspace.browse`.
 - Nao duplicar codigo existente; aplicar a Politica anti-duplicacao acima.
-- Atualizar `docs/03-ipc-protocol.md` e schemas quando mudar contrato IPC.
+- Atualizar `docs/arquitetura/03-ipc-protocol.md` e schemas quando mudar contrato IPC.
 - Manter docs sincronizadas quando comportamento de workspace/editor mudar.
 - Nao recriar `docs/archive/`: foi removido de proposito em 2026-07-05 (ver
-  `docs/15-engineering-debt-and-refactor.md`). Documento descontinuado vira
+  `docs/arquitetura/15-engineering-debt-and-refactor.md`). Documento descontinuado vira
   resumo no doc numerado relevante e depois e apagado, nao guardado numa pasta
   de arquivo morto.
 
@@ -1238,7 +1266,7 @@ plano da tarefa e pedir confirmacao do usuario.
 O estado real avancou para o protocolo **0.50.0**:
 
 - Tree-sitter foi adotado diretamente no core para C/C++/Rust, com pins exatos,
-  auditoria de licenca/ADR e design em `docs/25`. `lang/` fornece parsing
+  auditoria de licenca/ADR e design em `docs/roadmaps/25`. `lang/` fornece parsing
   incremental, highlight, folding, outline aninhado e locals sintaticos com
   cache LRU limitado. clangd/rust-analyzer continuam autoridades semanticas.
 - Rename e code actions LSP agora produzem preview confirmavel. Aplicar valida
@@ -1263,7 +1291,7 @@ O estado real avancou para o protocolo **0.50.0**:
   ser instaladas/autenticadas pelo usuario; a IDE nao chama API nem envia
   contexto automaticamente. Uma opcao guiada para outra IA e Configuration
   Actions/biblioteca de funcoes ficam para depois do aceite desta correcao.
-- O complemento `KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` e
+- O complemento `docs/roadmaps/KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` e
   compativel com a arquitetura vigente. O recorte acionavel imediato (camada
   sintatica, versoes de documento e workspace edit conservador) esta feito.
   Project Graph, Context Matrix, CMake File API completa e scheduler multi-LSP
@@ -1276,7 +1304,7 @@ O estado real avancou para o protocolo **0.50.0**:
   normalizado pelo Project Graph/Context Matrix do KSWE. O primeiro patamar e
   “um nivel abaixo do CLion”; a evolucao posterior busca fluxo equiparavel por
   profundidade de integracao, nunca por reimplementar compilador. O norte e a
-  lista de capacidades ficaram vinculados em `docs/21-long-horizon-roadmap.md`.
+  lista de capacidades ficaram vinculados em `docs/roadmaps/21-long-horizon-roadmap.md`.
 
 Validacao automatizada desta entrega inclui testes Rust, harness QML real,
 qmllint estrito, builds Qt e smoke offscreen. Nao marcar C6 como visualmente
@@ -1463,7 +1491,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   direta para A1 não equivale a aceitar esses dois gestos do KV Context.
 - Com A1/A2 entregues, seguir responsividade medida e os confortos exigidos por
   saídas reais para outra IDE. Não criar outro roadmap:
-  `PONTO_ATUAL.md`, `docs/21-long-horizon-roadmap.md` e os docs de domínio já
+  `PONTO_ATUAL.md`, `docs/roadmaps/21-long-horizon-roadmap.md` e os docs de domínio já
   são a fila.
 - O usuário autorizou commits locais de checkpoint após cada marco crítico com
   gate verde. Push, publicação, alteração de visibilidade ou entrega externa
@@ -1486,7 +1514,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   diagnóstico, blame e números têm faixas independentes e a largura dos
   números vem de `FontMetrics`. DAP, estado de breakpoints e protocolo não
   mudaram.
-- Os cinco SVGs fornecidos em `KINEIN_VECTIS_TREE_ICONS_INDIVIDUAL/` foram
+- Os cinco SVGs fornecidos em `docs/iconografia/icones-da-arvore/` foram
   copiados sem alteração de bytes para `ui/assets/icons/tree/` e integrados no
   `KvIcon`/`ProjectExplorer`: pasta fechada/aberta, C, C++ e Rust. O Qt apenas
   os dimensiona no slot da árvore; o desenho original não foi redesenhado,
@@ -1563,7 +1591,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - A sequência e o significado do prompt continuam pertencendo ao shell. A IDE
   apenas renderiza seus atributos ANSI pela própria paleta; nenhum parser,
   overlay ou segundo campo de entrada foi criado.
-- Referências arquiteturais registradas em `docs/24`: Code OSS
+- Referências arquiteturais registradas em `docs/roadmaps/24`: Code OSS
   `234638618394269563dd77c0c395c270d8df8b12` (MIT, modo B), Zed
   `1e22d1a83f8b1b7acc528d15cfab0644852380c0` (modo D, somente referência) e
   documentação oficial Qt 6. Nenhuma função, classe ou implementação foi
@@ -1586,7 +1614,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   o core observa somente essa sequência com `vte` já transitivo e resolve
   `DefaultUserShape` para a barra padrão. O QML apenas converte a forma concreta
   e a célula VT em pixels, com altura integral, igual no Terminal e KV Context.
-  Revisões e adaptação estão em `docs/24`; o aceite visual ainda precede
+  Revisões e adaptação estão em `docs/roadmaps/24`; o aceite visual ainda precede
   qualquer novo AppImage.
 - Após remover o offset inteiro e unificar a geometria de `DefaultUserShape`,
   o gate integral 0.57 passou novamente: 337 testes Rust, Clippy `-D warnings`,
@@ -1597,7 +1625,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   usuário não percebeu mudança relevante no caret de Claude/Codex. O suporte a
   DECSCUSR continua válido, mas não encerra a causa visual; a versão 0.57 não
   recebeu aceite do cursor e o polimento foi adiado sem novo offset.
-- Handoff obrigatório: `docs/26-terminal-rendering-parity-roadmap.md` registra
+- Handoff obrigatório: `docs/roadmaps/26-terminal-rendering-parity-roadmap.md` registra
   reprodução, hipóteses, referências e R0–R7. A retomada começa por fixture PTY
   e métricas instrumentadas de glifo/célula/baseline/DPR. A auditoria do Code
   OSS `234638618394269563dd77c0c395c270d8df8b12` e xterm.js
@@ -1635,13 +1663,13 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   dentro do orçamento; rust-analyzer externo 1093 MB informativo. A3.1–A3.4
   foram detalhadas em `PONTO_ATUAL.md`, reutilizando os scripts M4.2. Code OSS
   (marcos/fases) e Zed (fixtures determinísticas/bench real de input/render)
-  foram registrados em `docs/21`; nenhuma infraestrutura externa entrou.
+  foram registrados em `docs/roadmaps/21`; nenhuma infraestrutura externa entrou.
 - Depois de A3, EditorConfig é a primeira integração pequena recomendada para
   a sessão de “novo plugin”: P0, útil para C/C++ e Rust e compatível com uma
   adoção auditável sem Extension Host. A recomendação ainda exige confirmar
   biblioteca/licença e contrato antes de código.
 - Uma sessão futura foi reservada para preparar um repositório público novo e
-  separado, seguindo o exportador allowlist de `docs/21` em vez de confiar só
+  separado, seguindo o exportador allowlist de `docs/roadmaps/21` em vez de confiar só
   em `.gitignore`. Nessa sessão serão definidos com o usuário os nomes exatos
   de Markdown e diretórios que não podem aparecer, auditados caminhos,
   conteúdo, segredos e histórico, e só então considerada qualquer criação ou
@@ -1670,7 +1698,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   client-side foi antecipada da C5/C6 para agora, com os controles embutidos na
   barra da própria IDE no estilo de acabamento das JetBrains. O polimento
   restante (snap, escala fracionária e multimonitor auditados) continua sob
-  `docs/20`; a decisão de usar `FramelessWindowHint` já agora foi do usuário.
+  `docs/roadmaps/20`; a decisão de usar `FramelessWindowHint` já agora foi do usuário.
 - Integração client-side entregue: `Main.qml` passa a
   `Qt.Window | Qt.FramelessWindowHint` e a App Bar (`AppMenuBar.qml`) hospeda os
   controles. `WindowControls.qml` expõe Minimizar, um único alternável
@@ -1711,7 +1739,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 
 ## Pacote de ícones de arquivos especiais (2026-07-15)
 
-- `KINEIN_VECTIS_SPECIAL_FILE_ICONS/` (raiz do repo) é um pacote de assets
+- `docs/iconografia/icones-de-arquivo/` (raiz do repo) é um pacote de assets
   originais que complementa o sistema de ícones para os tipos de arquivo
   especiais da árvore de projetos: `cmake-lists` (CMakeLists.txt),
   `project-config` (fallback de `.env`/`.env.*`, `.clangd`/`.clang-format`/
@@ -1730,7 +1758,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - Licença MIT OR Apache-2.0 (mesma expressão do projeto); metáforas próprias, sem
   logos oficiais. Por enquanto é um drop de assets + guia de implementação: ainda
   não está ligado ao delegate da árvore (`ui/qml/project/*`). Ao ligar, seguir o
-  `docs/03` do pack e a spec `KINEIN_VECTIS_VISUAL_SYSTEM_ICONS`, medindo
+  `docs/arquitetura/03` do pack e a spec `KINEIN_VECTIS_VISUAL_SYSTEM_ICONS`, medindo
   desempenho antes de trocar SVG por PNG pré-rasterizado. Ponteiros em
   `GUIAIA.md` §3.2 e §5.2.
 

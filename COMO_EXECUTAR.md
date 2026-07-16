@@ -40,7 +40,7 @@ os de debug se os release não existirem. Ele nunca executa o AppImage.
 ## Compilar do zero (quando mudar o código)
 
 Sequência curta para copiar/colar: veja
-[`docs/COMANDOS_BUILD_VERIFICACAO.md`](docs/COMANDOS_BUILD_VERIFICACAO.md).
+[`docs/build/COMANDOS_BUILD_VERIFICACAO.md`](docs/build/COMANDOS_BUILD_VERIFICACAO.md).
 
 Se existir qualquer dúvida sobre cache antigo ou UI/core de momentos
 diferentes, prefira o comando integral:

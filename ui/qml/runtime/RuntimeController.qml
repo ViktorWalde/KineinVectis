@@ -7,11 +7,11 @@ Item {
     property bool running: false
     property bool terminalActive: false
     property bool terminalPanelVisible: false
-    // D2 (docs/24): grid do terminal (cores/cursor/spans) vindo do core. Com a
+    // D2 (docs/roadmaps/24): grid do terminal (cores/cursor/spans) vindo do core. Com a
     // D2.3 há VÁRIAS sessões: este é o grid da ABA ATIVA. Os demais ficam em
     // `terminalRenders` e voltam intactos ao trocar de aba.
     property var terminalRender: ({})
-    // D2.3 (docs/24): multi-terminal. O core dá um `id` por sessão; a UI guarda
+    // D2.3 (docs/roadmaps/24): multi-terminal. O core dá um `id` por sessão; a UI guarda
     // a lista (pras abas), o render de cada uma e quem está ativa.
     property alias terminalsModel: terminalsListModel
     property string activeTerminalId: ""
@@ -38,6 +38,8 @@ Item {
     signal terminalInputRequested(string id, string data)
     signal terminalResizeRequested(string id, int cols, int rows)
     signal terminalScrollRequested(string id, int offset)
+    signal terminalWheelRequested(string id, int col, int row, int lines,
+                                  int modifiers)
     signal terminalCloseRequested(string id)
     signal runStartRequested(string command)
     signal runScriptRequested(string path)
@@ -336,6 +338,14 @@ Item {
     function scrollTerminal(offset) {
         if (root.activeTerminalId !== "") {
             terminalScrollRequested(root.activeTerminalId, offset);
+        }
+    }
+
+    // Repassa o gesto cru; nao interpreta. Ver TerminalScrollController.
+    function wheelTerminal(col, row, lines, modifiers) {
+        if (root.activeTerminalId !== "") {
+            terminalWheelRequested(root.activeTerminalId, col, row, lines,
+                                   modifiers);
         }
     }
 

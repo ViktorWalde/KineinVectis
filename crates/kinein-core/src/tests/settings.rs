@@ -6,7 +6,7 @@
 use serde_json::json;
 
 use super::core_with_empty_search_path;
-use kinein_protocol::{AiCliProfileId, JsonRpcErrorCode, JsonRpcRequest};
+use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 
 fn temp_workspace(name: &str) -> std::path::PathBuf {
     let dir = std::env::temp_dir()
@@ -55,7 +55,6 @@ fn settings_set_workspace_overrides_and_persists() {
                 "bottomPanelHeight": 300,
                 "outlineWidth": 240,
                 "outlineCollapsed": true,
-                "aiCliProfile": AiCliProfileId::Codex,
             },
         })),
     ));
@@ -68,7 +67,6 @@ fn settings_set_workspace_overrides_and_persists() {
     assert_eq!(result["settings"]["bottomPanelHeight"], 300);
     assert_eq!(result["settings"]["outlineWidth"], 240);
     assert_eq!(result["settings"]["outlineCollapsed"], true);
-    assert_eq!(result["settings"]["aiCliProfile"], "codex");
     assert_eq!(result["workspace"]["editorFontSize"], 20);
 
     // Segundo set parcial NAO apaga o campo anterior (merge).
@@ -96,7 +94,6 @@ fn settings_set_workspace_overrides_and_persists() {
     assert_eq!(reread["settings"]["outlineWidth"], 240);
     assert_eq!(reread["settings"]["assistantTerminalWidth"], 680);
     assert_eq!(reread["settings"]["outlineCollapsed"], true);
-    assert_eq!(reread["settings"]["aiCliProfile"], "codex");
 }
 
 #[test]

@@ -1,10 +1,10 @@
-//! Persistência local em `SQLite` — rede de segurança de dados (docs/23).
+//! Persistência local em `SQLite` — rede de segurança de dados (docs/seguranca/23).
 //!
 //! Um DB por-workspace em `.kinein/kinein.db` (WAL + escrita atômica por
 //! transação). Hoje guarda RASCUNHOS: o autosave de buffers não salvos, que
 //! sobrevive a um crash da UI / power loss e é recuperado no próximo
 //! `workspace.open`. A store é reutilizável para Local History e migração da
-//! sessão no futuro (P4 do docs/23). DB corrompido/incompatível → recria (o
+//! sessão no futuro (P4 do docs/seguranca/23). DB corrompido/incompatível → recria (o
 //! mesmo espírito inválido→default do storage JSON); nunca derruba o core.
 
 use std::{

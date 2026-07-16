@@ -65,6 +65,8 @@ set_source_files_properties(qml/panels/bottom/RunPanel.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/panels/bottom/SearchPanel.qml PROPERTIES QT_RESOURCE_ALIAS SearchPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalPanel.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalViewport.qml PROPERTIES QT_RESOURCE_ALIAS TerminalViewport.qml)
+set_source_files_properties(qml/panels/bottom/TerminalGeometryOverlay.qml PROPERTIES QT_RESOURCE_ALIAS TerminalGeometryOverlay.qml)
+set_source_files_properties(qml/panels/bottom/TerminalMetrics.qml PROPERTIES QT_RESOURCE_ALIAS TerminalMetrics.qml)
 set_source_files_properties(qml/panels/bottom/TerminalScrollController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalScrollController.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSelectionController.qml)
 set_source_files_properties(qml/panels/bottom/TerminalInputController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalInputController.qml)
@@ -85,9 +87,6 @@ set_source_files_properties(qml/workspace/RecentWorkspacesCard.qml PROPERTIES QT
 set_source_files_properties(qml/workspace/StartScreen.qml PROPERTIES QT_RESOURCE_ALIAS StartScreen.qml)
 set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthController.qml)
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
-set_source_files_properties(qml/assistant/AssistantPanel.qml PROPERTIES QT_RESOURCE_ALIAS AssistantPanel.qml)
-set_source_files_properties(qml/assistant/AssistantTerminalHeader.qml PROPERTIES QT_RESOURCE_ALIAS AssistantTerminalHeader.qml)
-set_source_files_properties(qml/assistant/AssistantController.qml PROPERTIES QT_RESOURCE_ALIAS AssistantController.qml)
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
 set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
@@ -96,7 +95,6 @@ set_source_files_properties(qml/ipc/EditorEventRouter.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/ipc/JobsEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS JobsEventRouter.qml)
 set_source_files_properties(qml/ipc/SearchEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SearchEventRouter.qml)
 set_source_files_properties(qml/ipc/RuntimeEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeEventRouter.qml)
-set_source_files_properties(qml/ipc/AiBridgeEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS AiBridgeEventRouter.qml)
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
@@ -187,6 +185,8 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/SearchPanel.qml
         qml/panels/bottom/TerminalPanel.qml
         qml/panels/bottom/TerminalViewport.qml
+        qml/panels/bottom/TerminalGeometryOverlay.qml
+        qml/panels/bottom/TerminalMetrics.qml
         qml/panels/bottom/TerminalScrollController.qml
         qml/panels/bottom/TerminalSelectionController.qml
         qml/panels/bottom/TerminalInputController.qml
@@ -207,9 +207,6 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/StartScreen.qml
         qml/workspace/ProjectHealthController.qml
         qml/workspace/WorkspaceUiResetter.qml
-        qml/assistant/AssistantPanel.qml
-        qml/assistant/AssistantTerminalHeader.qml
-        qml/assistant/AssistantController.qml
         qml/jobs/JobsController.qml
         qml/runtime/RuntimeController.qml
         qml/search/SearchController.qml
@@ -218,7 +215,6 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/JobsEventRouter.qml
         qml/ipc/SearchEventRouter.qml
         qml/ipc/RuntimeEventRouter.qml
-        qml/ipc/AiBridgeEventRouter.qml
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
         qml/project/ProjectExplorer.qml
@@ -255,6 +251,8 @@ qt_add_qml_module(kinein-vectis
         src/documentation.h
         src/core_client.cpp
         src/core_client.h
+        src/debug_flags.cpp
+        src/debug_flags.h
         src/core_client_dispatch.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp

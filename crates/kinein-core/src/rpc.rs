@@ -76,9 +76,11 @@ pub(crate) fn terminal_error_response(
 ) -> JsonRpcResponse {
     let code = match error {
         terminal::TerminalError::Process { .. } => JsonRpcErrorCode::InternalError,
-        terminal::TerminalError::TooMany | terminal::TerminalError::NotOpen => {
-            JsonRpcErrorCode::InvalidRequest
-        }
+        terminal::TerminalError::TooMany
+        | terminal::TerminalError::NotOpen
+        // Gesto válido no contrato, sem comportamento ainda (R5): é um pedido
+        // que o core recusa, não uma falha interna.
+        | terminal::TerminalError::MouseUnimplemented => JsonRpcErrorCode::InvalidRequest,
     };
     JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
 }

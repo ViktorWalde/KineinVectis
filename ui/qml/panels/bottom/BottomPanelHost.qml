@@ -60,6 +60,7 @@ Rectangle {
     signal terminalKeyPressed(string data)
     signal terminalResizeRequested(int cols, int rows)
     signal terminalScrollRequested(int offset)
+    signal terminalWheelRequested(int col, int row, int lines, int modifiers)
     signal terminalSelectRequested(string id)
     signal terminalNewRequested()
     signal terminalCloseTabRequested(string id)
@@ -196,7 +197,7 @@ Rectangle {
         visible: root.activeTab === "terminal"
         spacing: Theme.spacingSmall
 
-        // D2.3 (docs/24): uma aba por terminal aberto. A "Execução" continua
+        // D2.3 (docs/roadmaps/24): uma aba por terminal aberto. A "Execução" continua
         // sendo uma sessão à parte — ela NÃO é um PTY (é o backend run.*),
         // por isso não entra no mesmo modelo.
         Repeater {
@@ -384,6 +385,9 @@ Rectangle {
         }
         onScrollRequested: function(offset) {
             root.terminalScrollRequested(offset);
+        }
+        onWheelRequested: function(col, row, lines, modifiers) {
+            root.terminalWheelRequested(col, row, lines, modifiers);
         }
     }
 

@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Barra de rolagem vertical PRÓPRIA (B2, docs/24).
+// Barra de rolagem vertical PRÓPRIA (B2, docs/roadmaps/24).
 //
 // Por que existe: o projeto não usa QtQuick.Controls (mesma decisão do tooltip
 // e do SettingsDialog), e até 2026-07-12 a IDE não tinha barra de rolagem em

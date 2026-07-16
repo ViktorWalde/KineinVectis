@@ -1,11 +1,15 @@
-//! Terminal profissional: PTY real + emulador VT (grid), fatia D2 (docs/24).
+//! Terminal profissional: PTY real + emulador VT (grid), fatia D2 (docs/roadmaps/24).
 //!
 //! Antes o core usava `script` como PTY falso com `TERM=dumb` e removia todo
 //! o ANSI (texto puro, sem cor/cursor/TUI). Agora:
 //! - PTY REAL via `portable-pty` (do wezterm), `$SHELL` interativo em
 //!   `TERM=xterm-256color`, cwd na raiz do workspace;
-//! - EMULADOR VT via `vt100`: a saída crua alimenta um `Parser` que mantém o
-//!   GRID (células com cor/atributos), cursor e scrollback;
+//! - EMULADOR VT via `alacritty_terminal` (ADR-0004): a saída crua alimenta um
+//!   `Term` que mantém o GRID (células com cor/atributos), cursor, modos, tela
+//!   alternada e scrollback. Como a Kinein anuncia `xterm-256color` ao
+//!   processo, o emulador precisa ser de verdade — é o mesmo motor do Alacritty
+//!   e do Zed. Nada do `tty`/`event_loop` da crate é usado: o PTY continua
+//!   sendo o `portable-pty`;
 //! - a UI recebe o grid PRONTO em `event.terminal.render` (linhas de spans
 //!   estilizados) e só desenha — sem interpretar ANSI. Suporta prompts com
 //!   `\r`, barra de progresso do cargo e TUIs.
@@ -29,11 +33,17 @@ use std::{
     time::Duration,
 };
 
+use kinein_protocol::{TerminalMouseEvent, TerminalMouseModifiers};
+
+use alacritty_terminal::event::VoidListener;
+use alacritty_terminal::grid::{Dimensions, Grid, Scroll};
+use alacritty_terminal::index::{Column, Line};
+use alacritty_terminal::term::cell::{Cell, Flags};
+use alacritty_terminal::term::{Config, Term, TermMode};
+use alacritty_terminal::vte::ansi::{Color, CursorShape, CursorStyle, NamedColor, Processor};
 use kinein_protocol::JsonRpcRequest;
 use portable_pty::{Child, ChildKiller, CommandBuilder, MasterPty, PtySize, native_pty_system};
 use serde_json::{Value, json};
-use vt100::Parser;
-use vte::{Params, Perform};
 
 /// Linhas de histórico (scrollback) mantidas pelo emulador.
 const SCROLLBACK: usize = 5000;
@@ -46,182 +56,86 @@ const READ_CHUNK_BYTES: usize = 8192;
 const FRAME: Duration = Duration::from_millis(33);
 /// Teto de terminais abertos ao mesmo tempo (cada um é um shell + 3 threads).
 const MAX_SESSIONS: usize = 12;
-/// CSI usado por aplicações para apagar também o histórico do terminal.
-const ERASE_SCROLLBACK_SEQUENCE: &[u8] = b"\x1b[3J";
 
-/// Forma de cursor solicitada pela aplicação via DECSCUSR.
+/// Dimensões do viewport entregues ao emulador.
 ///
-/// O reset/default da aplicação é resolvido pelo core para a preferência do
-/// terminal Kinein (`Bar`); o frontend recebe sempre uma forma concreta.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum CursorShape {
-    Block,
-    Underline,
-    Bar,
+/// O histórico não entra aqui: quem define o scrollback é
+/// `Config::scrolling_history`, então `total_lines` do viewport é igual a
+/// `screen_lines`.
+#[derive(Debug, Clone, Copy)]
+struct GridSize {
+    columns: usize,
+    screen_lines: usize,
 }
 
-impl CursorShape {
-    const fn as_str(self) -> &'static str {
-        match self {
-            Self::Block => "block",
-            Self::Underline => "underline",
-            Self::Bar => "bar",
-        }
-    }
-}
-
-/// Estado visual do cursor que o emulador deve respeitar.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct CursorStyle {
-    shape: CursorShape,
-    blinking: bool,
-}
-
-impl Default for CursorStyle {
-    fn default() -> Self {
+impl GridSize {
+    const fn new(rows: u16, cols: u16) -> Self {
         Self {
-            shape: CursorShape::Bar,
-            // A preferência default do terminal Kinein é uma barra pulsante.
-            blinking: true,
+            columns: cols as usize,
+            screen_lines: rows as usize,
         }
     }
 }
 
-/// Handler estreito do parser VT: só observa `CSI Ps SP q` (DECSCUSR).
-struct CursorStyleHandler<'a> {
-    style: &'a mut CursorStyle,
-}
-
-impl Perform for CursorStyleHandler<'_> {
-    fn csi_dispatch(&mut self, params: &Params, intermediates: &[u8], ignore: bool, action: char) {
-        if ignore {
-            return;
-        }
-        if intermediates == b"!" && action == 'p' {
-            *self.style = CursorStyle::default();
-            return;
-        }
-        if intermediates != b" " || action != 'q' {
-            return;
-        }
-
-        let parameter = params
-            .iter()
-            .next()
-            .and_then(|values| values.first())
-            .copied()
-            .unwrap_or(0);
-        let next = match parameter {
-            0 => CursorStyle::default(),
-            1 => CursorStyle {
-                shape: CursorShape::Block,
-                blinking: true,
-            },
-            2 => CursorStyle {
-                shape: CursorShape::Block,
-                blinking: false,
-            },
-            3 => CursorStyle {
-                shape: CursorShape::Underline,
-                blinking: true,
-            },
-            4 => CursorStyle {
-                shape: CursorShape::Underline,
-                blinking: false,
-            },
-            5 => CursorStyle {
-                shape: CursorShape::Bar,
-                blinking: true,
-            },
-            6 => CursorStyle {
-                shape: CursorShape::Bar,
-                blinking: false,
-            },
-            _ => return,
-        };
-        *self.style = next;
+impl Dimensions for GridSize {
+    fn total_lines(&self) -> usize {
+        self.screen_lines
     }
 
-    fn esc_dispatch(&mut self, intermediates: &[u8], ignore: bool, byte: u8) {
-        if !ignore && intermediates.is_empty() && byte == b'c' {
-            *self.style = CursorStyle::default();
-        }
+    fn screen_lines(&self) -> usize {
+        self.screen_lines
+    }
+
+    fn columns(&self) -> usize {
+        self.columns
     }
 }
 
-/// Estado complementar que `vt100` 0.16 ainda não expõe publicamente.
-#[derive(Default)]
-struct CursorStyleTracker {
-    parser: vte::Parser,
-    style: CursorStyle,
-}
+/// Preferência de cursor do terminal Kinein quando a aplicação não pede uma.
+///
+/// O emulador resolve DECSCUSR sozinho e volta a este default no reset, então o
+/// frontend recebe sempre uma forma concreta.
+const DEFAULT_CURSOR_STYLE: CursorStyle = CursorStyle {
+    shape: CursorShape::Beam,
+    blinking: true,
+};
 
-impl CursorStyleTracker {
-    fn process(&mut self, bytes: &[u8]) {
-        let mut handler = CursorStyleHandler {
-            style: &mut self.style,
-        };
-        self.parser.advance(&mut handler, bytes);
+/// Nome da forma no contrato `event.terminal.render`.
+const fn cursor_shape_name(shape: CursorShape) -> &'static str {
+    match shape {
+        CursorShape::Block | CursorShape::HollowBlock => "block",
+        CursorShape::Underline => "underline",
+        CursorShape::Beam | CursorShape::Hidden => "bar",
     }
 }
 
 /// Snapshot terminal mantido sob um único lock para grid e cursor não
 /// divergirem entre a leitura do PTY e a emissão de um frame.
+///
+/// O emulador é o `alacritty_terminal` (ADR-0004): a Kinein anuncia
+/// `xterm-256color` ao processo, então precisa entregar um VT de verdade —
+/// tela alternada, mouse, reflow, wide chars e DECSCUSR inclusos. O PTY continua
+/// sendo o `portable-pty`; nada do `tty`/`event_loop` da crate é usado.
 struct TerminalState {
-    parser: Parser,
-    cursor_style: CursorStyleTracker,
+    term: Term<VoidListener>,
+    processor: Processor,
 }
 
 impl TerminalState {
     fn new(rows: u16, cols: u16, scrollback: usize) -> Self {
+        let config = Config {
+            scrolling_history: scrollback,
+            default_cursor_style: DEFAULT_CURSOR_STYLE,
+            ..Config::default()
+        };
         Self {
-            parser: Parser::new(rows, cols, scrollback),
-            cursor_style: CursorStyleTracker::default(),
+            term: Term::new(config, &GridSize::new(rows, cols), VoidListener),
+            processor: Processor::new(),
         }
     }
 
     fn process(&mut self, bytes: &[u8]) {
-        self.cursor_style.process(bytes);
-        self.parser.process(bytes);
-    }
-}
-
-/// Filtro estreito para sessões de AI CLI que prometem transcript navegável.
-///
-/// Algumas versões do Codex emitem `CSI 3 J` mesmo com `--no-alt-screen`.
-/// Um emulador VT correto obedece e apaga o scrollback; dentro do KV Context
-/// isso destrói justamente o histórico que o modo inline deveria preservar.
-/// O filtro remove somente essa sequência, inclusive quando dividida entre
-/// leituras do PTY. O Terminal comum continua honrando `clear` integralmente.
-#[derive(Debug, Default)]
-struct ScrollbackPreserver {
-    pending: Vec<u8>,
-}
-
-impl ScrollbackPreserver {
-    fn push(&mut self, bytes: &[u8]) -> Vec<u8> {
-        let mut input = std::mem::take(&mut self.pending);
-        input.extend_from_slice(bytes);
-        let mut output = Vec::with_capacity(input.len());
-        let mut index = 0;
-
-        while index < input.len() {
-            let remaining = &input[index..];
-            if remaining.starts_with(ERASE_SCROLLBACK_SEQUENCE) {
-                index += ERASE_SCROLLBACK_SEQUENCE.len();
-            } else if ERASE_SCROLLBACK_SEQUENCE.starts_with(remaining) {
-                self.pending.extend_from_slice(remaining);
-                break;
-            } else {
-                output.push(input[index]);
-                index += 1;
-            }
-        }
-        output
-    }
-
-    fn finish(&mut self) -> Vec<u8> {
-        std::mem::take(&mut self.pending)
+        self.processor.advance(&mut self.term, bytes);
     }
 }
 
@@ -232,6 +146,9 @@ pub enum TerminalError {
     TooMany,
     /// No session with the given id (or it already died).
     NotOpen,
+    /// Gesto de mouse cujo contrato existe mas ainda não tem comportamento
+    /// (clique/arrasto/movimento, fatia R5 de `docs/roadmaps/26`).
+    MouseUnimplemented,
     /// The session process could not be spawned or reached.
     Process {
         /// Underlying failure description.
@@ -247,6 +164,10 @@ impl fmt::Display for TerminalError {
                 "limite de {MAX_SESSIONS} terminais abertos atingido"
             ),
             Self::NotOpen => write!(formatter, "sessao de terminal inexistente ou encerrada"),
+            Self::MouseUnimplemented => write!(
+                formatter,
+                "gesto de mouse ainda nao implementado: so a roda esta ativa"
+            ),
             Self::Process { message } => write!(formatter, "{message}"),
         }
     }
@@ -342,35 +263,15 @@ impl TerminalManager {
 
     /// Opens an explicit executable and arguments inside a real PTY at `root`.
     ///
-    /// The caller must resolve/allowlist the program. This primitive is shared
-    /// by the normal shell and opt-in terminal-backed tools such as AI CLIs.
+    /// O chamador resolve/allowlista o programa. Não existe política por
+    /// programa: um agente de CLI aberto aqui recebe exatamente o mesmo
+    /// tratamento do shell — é o que faz rodar `claude` na IDE ser igual a
+    /// rodar fora dela.
     pub fn open_command(
         &mut self,
         root: &Path,
         program: &str,
         args: &[String],
-    ) -> Result<String, TerminalError> {
-        self.open_command_with_policy(root, program, args, false)
-    }
-
-    /// Opens an explicit command while preserving the host scrollback from
-    /// application-issued erase-history sequences. Used only by AI CLI
-    /// surfaces whose transcript must remain navigable.
-    pub fn open_command_preserving_scrollback(
-        &mut self,
-        root: &Path,
-        program: &str,
-        args: &[String],
-    ) -> Result<String, TerminalError> {
-        self.open_command_with_policy(root, program, args, true)
-    }
-
-    fn open_command_with_policy(
-        &mut self,
-        root: &Path,
-        program: &str,
-        args: &[String],
-        preserve_scrollback: bool,
     ) -> Result<String, TerminalError> {
         // Sessões mortas (shell saiu) não contam pro teto nem seguram memória.
         self.sessions
@@ -423,7 +324,7 @@ impl TerminalManager {
         let killer = child.clone_killer();
         let dirty = Arc::new(AtomicBool::new(false));
 
-        self.spawn_reader(&id, reader, &state, &dirty, preserve_scrollback);
+        self.spawn_reader(&id, reader, &state, &dirty);
         self.spawn_emitter(&id, &state, &dirty, &running);
         self.spawn_waiter(&id, child, &running);
 
@@ -447,7 +348,6 @@ impl TerminalManager {
         mut reader: Box<dyn Read + Send>,
         state: &Arc<Mutex<TerminalState>>,
         dirty: &Arc<AtomicBool>,
-        preserve_scrollback: bool,
     ) {
         let state = Arc::clone(state);
         let dirty = Arc::clone(dirty);
@@ -455,31 +355,15 @@ impl TerminalManager {
         let id = id.to_owned();
         thread::spawn(move || {
             let mut buffer = [0_u8; READ_CHUNK_BYTES];
-            let mut preserver = preserve_scrollback.then(ScrollbackPreserver::default);
             while let Ok(bytes_read) = reader.read(&mut buffer) {
                 if bytes_read == 0 {
                     break;
                 }
-                let filtered = preserver
-                    .as_mut()
-                    .map(|filter| filter.push(&buffer[..bytes_read]));
-                let bytes = filtered.as_deref().unwrap_or(&buffer[..bytes_read]);
-                if bytes.is_empty() {
-                    continue;
-                }
+                let bytes = &buffer[..bytes_read];
                 if let Ok(mut state) = state.lock() {
                     state.process(bytes);
                 }
                 dirty.store(true, Ordering::SeqCst);
-            }
-            if let Some(filter) = preserver.as_mut() {
-                let remaining = filter.finish();
-                if !remaining.is_empty() {
-                    if let Ok(mut state) = state.lock() {
-                        state.process(&remaining);
-                    }
-                    dirty.store(true, Ordering::SeqCst);
-                }
             }
             // EOF: garante o render do estado final antes do `closed`.
             emit_render(&events, &id, &state);
@@ -534,17 +418,125 @@ impl TerminalManager {
 
     /// Forwards raw `data` (bytes/teclas) to the shell PTY da sessão `id`.
     pub fn write(&mut self, id: &str, data: &str) -> Result<(), TerminalError> {
+        self.write_bytes(id, data.as_bytes())
+    }
+
+    /// Escreve bytes crus no PTY da sessão `id`.
+    ///
+    /// Existe separado de `write` porque o relatório de mouse legado não é
+    /// UTF-8: ele codifica cada campo como um único byte `32 + valor`, que pode
+    /// cair na faixa 128–255 e não formar um `char` válido. O `JediTerm` resolve
+    /// o mesmo problema escolhendo ISO-8859-1 para esse formato; aqui a
+    /// codificação simplesmente não se aplica, porque o contrato do PTY é byte.
+    fn write_bytes(&mut self, id: &str, bytes: &[u8]) -> Result<(), TerminalError> {
         let session = self.sessions.get_mut(id).ok_or(TerminalError::NotOpen)?;
         if !session.running.load(Ordering::SeqCst) {
             return Err(TerminalError::NotOpen);
         }
         session
             .writer
-            .write_all(data.as_bytes())
+            .write_all(bytes)
             .and_then(|()| session.writer.flush())
             .map_err(|source| TerminalError::Process {
                 message: format!("falha ao escrever no terminal: {source}"),
             })
+    }
+
+    /// Aplica um gesto de mouse na sessão `id`.
+    ///
+    /// **Esta função é a regra de negócio que faltava.** Até aqui a UI decidia
+    /// sozinha que roda = rolar histórico, sempre — e por isso o Claude não
+    /// rolava: ele desenha em tela alternada, que não tem histórico por
+    /// definição VT, então o pedido caía no vazio. Quem sabe o que um gesto
+    /// significa é o terminal, porque só ele conhece o modo que a aplicação
+    /// ligou.
+    pub fn mouse(
+        &mut self,
+        id: &str,
+        col: u16,
+        row: u16,
+        event: TerminalMouseEvent,
+        modifiers: TerminalMouseModifiers,
+    ) -> Result<(), TerminalError> {
+        match event {
+            TerminalMouseEvent::Wheel { lines } => self.wheel(id, col, row, lines, modifiers),
+            // Contrato fixado, comportamento não implementado (R5). Um erro
+            // explícito é honesto; engolir o gesto em silêncio faria a UI
+            // parecer quebrada sem deixar rastro.
+            TerminalMouseEvent::Press { .. }
+            | TerminalMouseEvent::Release { .. }
+            | TerminalMouseEvent::Motion { .. } => Err(TerminalError::MouseUnimplemented),
+        }
+    }
+
+    /// Roda do mouse: escolhe o destino do gesto pelo modo VT da sessão.
+    ///
+    /// Os três ramos e a ordem entre eles vêm do `scroll_wheel` do Zed
+    /// (`crates/terminal/src/terminal.rs`), referência MODE-D — estudada, não
+    /// copiada. `shift` desvia para o histórico local em qualquer caso: é a
+    /// válvula de escape padrão do xterm para sair de uma TUI que capturou o
+    /// mouse.
+    ///
+    /// Medido nas CLIs reais em 2026-07-16 (sonda de modos DEC privados, com o
+    /// agente aberto num workspace confiado):
+    ///
+    /// ```text
+    /// claude: ?1049h ?1000h ?1002h ?1003h ?1006h  → ramo 1 (relatório SGR)
+    /// codex : nenhum destes                       → ramo 3 (histórico local)
+    /// ```
+    ///
+    /// Isso decidiu o desenho: o Claude precisa de RELATÓRIO. Um conserto que
+    /// só traduzisse a roda em setas seria inerte para ele.
+    ///
+    /// A ordem entre os ramos importa: `ALTERNATE_SCROLL` nasce ligado
+    /// (`TermMode::default()`), então o Claude satisfaz o ramo 2 também.
+    /// Capturar o mouse tem precedência — ver
+    /// `mouse_capture_takes_precedence_over_default_alternate_scroll`.
+    fn wheel(
+        &mut self,
+        id: &str,
+        col: u16,
+        row: u16,
+        lines: i16,
+        modifiers: TerminalMouseModifiers,
+    ) -> Result<(), TerminalError> {
+        if lines == 0 {
+            return Ok(());
+        }
+        let session = self.live(id)?;
+        let Ok(mode) = session.state.lock().map(|state| *state.term.mode()) else {
+            return Err(TerminalError::NotOpen);
+        };
+
+        match wheel_action(mode, modifiers.shift) {
+            WheelAction::Report => {
+                let button = if lines > 0 {
+                    MOUSE_WHEEL_UP
+                } else {
+                    MOUSE_WHEEL_DOWN
+                };
+                let Some(report) = mouse_report(button, col, row, modifiers, mode) else {
+                    // Coordenada fora do alcance do formato legado. O xterm.js
+                    // suprime o evento nesse caso; um campo truncado viraria um
+                    // clique numa célula errada.
+                    return Ok(());
+                };
+                // Um relatório por linha do gesto, como o `scroll_report` do Zed.
+                let mut bytes = Vec::with_capacity(report.len() * lines.unsigned_abs() as usize);
+                for _ in 0..lines.unsigned_abs() {
+                    bytes.extend_from_slice(&report);
+                }
+                self.write_bytes(id, &bytes)
+            }
+            WheelAction::AltScroll => self.write_bytes(id, &alt_scroll(lines)),
+            WheelAction::ScrollHistory => {
+                if let Ok(mut state) = session.state.lock() {
+                    state.term.scroll_display(Scroll::Delta(i32::from(lines)));
+                }
+                emit_render(&self.events, id, &session.state);
+                Ok(())
+            }
+        }
     }
 
     /// Reflui o grid e o PTY da sessão `id` para um novo tamanho (cols × rows).
@@ -565,18 +557,24 @@ impl TerminalManager {
                 message: format!("falha ao redimensionar o terminal: {error}"),
             })?;
         if let Ok(mut state) = session.state.lock() {
-            state.parser.screen_mut().set_size(rows, cols);
+            state.term.resize(GridSize::new(rows, cols));
         }
         emit_render(&self.events, id, &session.state);
         Ok(())
     }
 
     /// Rola o histórico (scrollback): `offset` linhas acima do fundo (0 = ao
-    /// vivo). O `vt100` já limita ao tamanho real do buffer (D2.2, docs/24).
+    /// vivo). O contrato da UI é ABSOLUTO; o emulador trabalha por delta, então
+    /// convertemos e deixamos ele clampar ao histórico real, mantendo o eco da
+    /// verdade no render (D2.2, docs/roadmaps/24).
     pub fn scroll(&mut self, id: &str, offset: u16) -> Result<(), TerminalError> {
         let session = self.live(id)?;
         if let Ok(mut state) = session.state.lock() {
-            state.parser.screen_mut().set_scrollback(offset as usize);
+            let current = i32::try_from(state.term.grid().display_offset()).unwrap_or(i32::MAX);
+            let delta = i32::from(offset) - current;
+            if delta != 0 {
+                state.term.scroll_display(Scroll::Delta(delta));
+            }
         }
         emit_render(&self.events, id, &session.state);
         Ok(())
@@ -610,34 +608,36 @@ impl Drop for TerminalManager {
     }
 }
 
-/// Quantas linhas de histórico existem ACIMA do fundo neste momento.
+/// Serializa o grid atual e emite `event.terminal.render` para a sessão `id`
+/// (D2.3: a UI roteia o render pra aba certa).
 ///
-/// O `vt100` expõe o offset ATUAL (`screen().scrollback()`) mas não o total
-/// disponível. Como `set_scrollback` clampa ao que realmente existe, pedir o
-/// máximo e ler de volta devolve o total; o offset original é restaurado em
-/// seguida, então a função não tem efeito observável. É o que permite a UI
-/// desenhar uma barra de rolagem proporcional e honesta (0 = não há histórico).
-fn scrollback_capacity(parser: &mut Parser) -> usize {
-    let current = parser.screen().scrollback();
-    parser.screen_mut().set_scrollback(usize::MAX);
-    let total = parser.screen().scrollback();
-    parser.screen_mut().set_scrollback(current);
-    total
-}
-
-/// Serializa o grid atual do `parser` e emite `event.terminal.render` para a
-/// sessão `id` (D2.3: a UI roteia o render pra aba certa).
+/// O emulador já mantém histórico, modos e estilo de cursor; aqui só
+/// traduzimos o snapshot para o contrato tipado. `scrollbackMax` vem direto de
+/// `history_size()` — o hack de ida e volta que o `vt100` exigia deixou de
+/// existir.
 fn emit_render(events: &EventSender, id: &str, state: &Arc<Mutex<TerminalState>>) {
-    let Ok(mut state) = state.lock() else {
+    let Ok(state) = state.lock() else {
         return;
     };
-    let cursor_style = state.cursor_style.style;
-    let scrollback = state.parser.screen().scrollback();
-    let scrollback_max = scrollback_capacity(&mut state.parser);
-    let screen = state.parser.screen();
-    let (rows, cols) = screen.size();
-    let (cursor_row, cursor_col) = screen.cursor_position();
-    let lines: Vec<Value> = (0..rows).map(|row| build_line(screen, row, cols)).collect();
+    let cursor_style = state.term.cursor_style();
+    let mode = *state.term.mode();
+    let grid = state.term.grid();
+    let rows = grid.screen_lines();
+    let cols = grid.columns();
+    let scrollback = grid.display_offset();
+    let scrollback_max = grid.history_size();
+
+    // A linha do cursor é relativa ao viewport ao vivo; rolar o histórico
+    // desloca a visão, então a linha visível é a do cursor mais o offset. Fora
+    // da janela o cursor simplesmente não é desenhado.
+    let cursor_row = grid.cursor.point.line.0 + i32::try_from(scrollback).unwrap_or(i32::MAX);
+    let cursor_col = grid.cursor.point.column.0;
+    let cursor_visible = usize::try_from(cursor_row).is_ok_and(|row| row < rows)
+        && mode.contains(TermMode::SHOW_CURSOR)
+        && cursor_style.shape != CursorShape::Hidden;
+    let lines: Vec<Value> = (0..rows)
+        .map(|row| build_line(grid, row, cols, scrollback))
+        .collect();
 
     drop(events.send(JsonRpcRequest::notification(
         "event.terminal.render",
@@ -646,21 +646,21 @@ fn emit_render(events: &EventSender, id: &str, state: &Arc<Mutex<TerminalState>>
             "cols": cols,
             "rows": rows,
             "cursor": {
-                "row": cursor_row,
+                "row": cursor_row.max(0),
                 "col": cursor_col,
-                "visible": !screen.hide_cursor(),
-                "shape": cursor_style.shape.as_str(),
+                "visible": cursor_visible,
+                "shape": cursor_shape_name(cursor_style.shape),
                 "blinking": cursor_style.blinking,
             },
             // Modos que mudam como um terminal real deve traduzir input.
             // A UI continua burra em relacao ao TUI: apenas respeita o estado
-            // VT mantido pelo parser ao enviar teclas e paste.
-            "alternateScreen": screen.alternate_screen(),
-            "applicationCursor": screen.application_cursor(),
-            "bracketedPaste": screen.bracketed_paste(),
+            // VT mantido pelo emulador ao enviar teclas e paste.
+            "alternateScreen": mode.contains(TermMode::ALT_SCREEN),
+            "applicationCursor": mode.contains(TermMode::APP_CURSOR),
+            "bracketedPaste": mode.contains(TermMode::BRACKETED_PASTE),
             // D2.3/B2: a UI precisa dos dois pra desenhar a barra de rolagem.
-            // `scrollback` é a verdade sobre onde a view está (o core clampa o
-            // pedido da UI); `scrollbackMax` é quanto histórico existe.
+            // `scrollback` é a verdade sobre onde a view está (o emulador clampa
+            // o pedido da UI); `scrollbackMax` é quanto histórico existe.
             "scrollback": scrollback,
             "scrollbackMax": scrollback_max,
             "lines": lines,
@@ -668,68 +668,196 @@ fn emit_render(events: &EventSender, id: &str, state: &Arc<Mutex<TerminalState>>
     )));
 }
 
-/// Estilo de uma célula, comparável para agrupar runs de mesmo estilo.
-type CellStyle = (vt100::Color, vt100::Color, bool, bool, bool, bool);
+// ---------------------------------------------------------------------------
+// Codificação de mouse (R4). Os números abaixo não são escolha nossa: são o
+// formato de fio que as aplicações TUI esperam. Confirmados verbatim em três
+// implementações profissionais independentes, que concordam entre si:
+//
+//   Zed        `crates/terminal/src/mappings/mouse.rs`  → `|= 64`, MouseFormat
+//   xterm.js   `src/common/services/MouseStateService.ts` → `code |= 64`,
+//              SHIFT=4/ALT=8/CTRL=16, SGR sem offset, DEFAULT com `+32`
+//   JediTerm   `core/.../model/JediTerminal.java#mouseReport` → `\033[<%d;%d;%dM`
+//              com `x + 1, y + 1`, e `cb -= 4; cb |= 64`
+//
+// Armadilha registrada: as constantes do JediTerm (`SCROLLDOWN = 4`,
+// `SCROLLUP = 5`) estão MAL NOMEADAS. A aritmética delas converte o botão X11 4
+// — que é a roda para CIMA — no código 64. Zed, xterm.js e o ctlseqs do xterm
+// concordam que 64 é cima. Seguimos os três; o nome do JediTerm foi descartado.
+// ---------------------------------------------------------------------------
 
-fn cell_style(cell: &vt100::Cell) -> CellStyle {
+/// Destino de um gesto de roda.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum WheelAction {
+    /// A aplicação capturou o mouse: relatar o gesto para ela.
+    Report,
+    /// A aplicação pediu alternate scroll: traduzir em cursor keys.
+    AltScroll,
+    /// Ninguém capturou: rolar o histórico do próprio terminal.
+    ScrollHistory,
+}
+
+/// **A regra que estava na UI.** Decide o destino da roda a partir do modo VT.
+///
+/// Pura de propósito: é o único ponto onde "o que a roda significa" é decidido,
+/// e dá para exercê-la sem PTY. A ordem dos ramos vem do `scroll_wheel` do Zed.
+///
+/// `shift` vence tudo — convenção do xterm para escapar de uma TUI que capturou
+/// o mouse e falar com o terminal em vez da aplicação.
+fn wheel_action(mode: TermMode, shift: bool) -> WheelAction {
+    if shift {
+        return WheelAction::ScrollHistory;
+    }
+    if mode.intersects(TermMode::MOUSE_MODE) {
+        return WheelAction::Report;
+    }
+    if mode.contains(TermMode::ALT_SCREEN | TermMode::ALTERNATE_SCROLL) {
+        return WheelAction::AltScroll;
+    }
+    WheelAction::ScrollHistory
+}
+
+/// Roda para cima: botão 1 (código 0) somado ao bit de scroll.
+const MOUSE_WHEEL_UP: u8 = 64;
+/// Roda para baixo: botão 2 (código 1) somado ao bit de scroll.
+const MOUSE_WHEEL_DOWN: u8 = 65;
+/// Bit de Shift no código do botão.
+const MOUSE_MOD_SHIFT: u8 = 4;
+/// Bit de Alt/Meta no código do botão.
+const MOUSE_MOD_ALT: u8 = 8;
+/// Bit de Control no código do botão.
+const MOUSE_MOD_CTRL: u8 = 16;
+/// Offset de cada campo no formato legado (`ESC [ M`).
+const MOUSE_LEGACY_OFFSET: u16 = 32;
+/// Maior valor representável num campo do formato legado: ele gasta um byte por
+/// campo, então `32 + valor` precisa caber em `u8`.
+const MOUSE_LEGACY_MAX: u16 = 255 - MOUSE_LEGACY_OFFSET;
+
+/// Monta o relatório de mouse no formato que a aplicação pediu.
+///
+/// `col`/`row` chegam 0-based (mesma origem do render) e vão 1-based no fio,
+/// como o xterm especifica e o `JediTerm` faz explicitamente (`x + 1, y + 1`).
+///
+/// Devolve `None` quando o formato legado não consegue representar a
+/// coordenada: o xterm.js suprime o evento nesse caso, e é o certo — um campo
+/// truncado vira um clique numa célula errada.
+fn mouse_report(
+    button: u8,
+    col: u16,
+    row: u16,
+    modifiers: TerminalMouseModifiers,
+    mode: TermMode,
+) -> Option<Vec<u8>> {
+    let mut code = button;
+    if modifiers.shift {
+        code |= MOUSE_MOD_SHIFT;
+    }
+    if modifiers.alt {
+        code |= MOUSE_MOD_ALT;
+    }
+    if modifiers.ctrl {
+        code |= MOUSE_MOD_CTRL;
+    }
+    let col = col.saturating_add(1);
+    let row = row.saturating_add(1);
+
+    if mode.contains(TermMode::SGR_MOUSE) {
+        // `ESC [ < Cb ; Cx ; Cy M` — decimal, sem teto de coordenada. `M` é
+        // press/motion; `m` seria release, que a roda não emite.
+        return Some(format!("\x1b[<{code};{col};{row}M").into_bytes());
+    }
+
+    // `ESC [ M (32+Cb) (32+Cx) (32+Cy)` — um byte por campo.
+    if col > MOUSE_LEGACY_MAX || row > MOUSE_LEGACY_MAX {
+        return None;
+    }
+    let field = |value: u16| u8::try_from(value + MOUSE_LEGACY_OFFSET).unwrap_or(u8::MAX);
+    Some(vec![
+        0x1b,
+        b'[',
+        b'M',
+        code.saturating_add(32),
+        field(col),
+        field(row),
+    ])
+}
+
+/// Traduz a roda em cursor keys, para TUIs que pedem `?1007` (alternate scroll)
+/// mas não capturam o mouse.
+///
+/// Formato e repetição vindos do `alt_scroll` do Zed: `ESC O A` por linha para
+/// cima, `ESC O B` para baixo.
+fn alt_scroll(lines: i16) -> Vec<u8> {
+    let key = if lines > 0 { b'A' } else { b'B' };
+    let mut bytes = Vec::with_capacity(lines.unsigned_abs() as usize * 3);
+    for _ in 0..lines.unsigned_abs() {
+        bytes.extend_from_slice(&[0x1b, b'O', key]);
+    }
+    bytes
+}
+
+/// Estilo de uma célula, comparável para agrupar runs de mesmo estilo.
+type CellStyle = (Color, Color, bool, bool, bool, bool);
+
+const fn cell_style(cell: &Cell) -> CellStyle {
     (
-        cell.fgcolor(),
-        cell.bgcolor(),
-        cell.bold(),
-        cell.italic(),
-        cell.underline(),
-        cell.inverse(),
+        cell.fg,
+        cell.bg,
+        cell.flags.contains(Flags::BOLD),
+        cell.flags.contains(Flags::ITALIC),
+        cell.flags.contains(Flags::UNDERLINE),
+        cell.flags.contains(Flags::INVERSE),
     )
 }
 
+/// Célula vazia do emulador: cores do tema e nenhum atributo.
 const DEFAULT_STYLE: CellStyle = (
-    vt100::Color::Default,
-    vt100::Color::Default,
+    Color::Named(NamedColor::Foreground),
+    Color::Named(NamedColor::Background),
     false,
     false,
     false,
     false,
 );
 
-/// Monta uma linha do grid como array de spans (runs de mesmo estilo).
-fn build_line(screen: &vt100::Screen, row: u16, cols: u16) -> Value {
+/// Monta uma linha VISÍVEL do grid como array de spans (runs de mesmo estilo).
+///
+/// `display_offset` desloca a janela para o histórico: a linha visível `row`
+/// corresponde a `Line(row - display_offset)` no emulador.
+fn build_line(grid: &Grid<Cell>, row: usize, cols: usize, display_offset: usize) -> Value {
     let mut spans: Vec<Value> = Vec::new();
     let mut run_text = String::new();
     let mut run_cells = 0_u16;
     let mut run_style: Option<CellStyle> = None;
     let mut run_isolated = false;
 
+    let line = Line(i32::try_from(row).unwrap_or(0) - i32::try_from(display_offset).unwrap_or(0));
     for col in 0..cols {
-        let (glyph, style, isolated, wide_continuation) = screen.cell(row, col).map_or_else(
-            || (" ".to_owned(), DEFAULT_STYLE, false, false),
-            |cell| {
-                // A segunda célula de um glifo largo ocupa espaço na grade,
-                // mas não deve virar outro espaço desenhado. O número de
-                // células segue separado do texto para a UI manter o cursor
-                // exatamente na coluna VT autoritativa.
-                let wide_continuation = cell.is_wide_continuation();
-                let glyph = if wide_continuation {
-                    String::new()
-                } else if cell.has_contents() {
-                    cell.contents().to_string()
-                } else {
-                    " ".to_owned()
-                };
-                // Runs excepcionais ficam isolados para a UI conseguir
-                // converter uma seleção em colunas de volta para texto sem
-                // reimplementar Unicode width. A continuação larga se junta
-                // somente à sua célula inicial.
-                let isolated = cell.is_wide()
-                    || wide_continuation
-                    || (cell.has_contents() && cell.contents().chars().count() != 1);
-                let style = if wide_continuation {
-                    run_style.unwrap_or_else(|| cell_style(cell))
-                } else {
-                    cell_style(cell)
-                };
-                (glyph, style, isolated, wide_continuation)
-            },
-        );
+        let cell = &grid[line][Column(col)];
+        // A segunda célula de um glifo largo ocupa espaço na grade, mas não
+        // deve virar outro glifo desenhado. O número de células segue separado
+        // do texto para a UI manter o cursor exatamente na coluna VT
+        // autoritativa.
+        let wide_continuation = cell.flags.contains(Flags::WIDE_CHAR_SPACER);
+        let glyph = if wide_continuation {
+            String::new()
+        } else {
+            let mut glyph = String::from(cell.c);
+            if let Some(zerowidth) = cell.zerowidth() {
+                glyph.extend(zerowidth.iter().copied());
+            }
+            glyph
+        };
+        // Runs excepcionais ficam isolados para a UI conseguir converter uma
+        // seleção em colunas de volta para texto sem reimplementar Unicode
+        // width. A continuação larga se junta somente à sua célula inicial.
+        let isolated = cell.flags.contains(Flags::WIDE_CHAR)
+            || wide_continuation
+            || glyph.chars().count() != 1;
+        let style = if wide_continuation {
+            run_style.unwrap_or_else(|| cell_style(cell))
+        } else {
+            cell_style(cell)
+        };
 
         let extends_run = run_style == Some(style)
             && ((!run_isolated && !isolated) || (run_isolated && wide_continuation));
@@ -783,13 +911,45 @@ fn flush_span(spans: &mut Vec<Value>, text: &str, cells: u16, style: Option<Cell
 
 /// `None` para a cor default (a UI usa a do tema); índice 0–255 vira número;
 /// truecolor vira `#rrggbb`.
-fn color_value(color: vt100::Color) -> Option<Value> {
+fn color_value(color: Color) -> Option<Value> {
     match color {
-        vt100::Color::Default => None,
-        vt100::Color::Idx(index) => Some(json!(index)),
-        vt100::Color::Rgb(red, green, blue) => {
-            Some(json!(format!("#{red:02x}{green:02x}{blue:02x}")))
-        }
+        Color::Named(named) => named_color_index(named).map(|index| json!(index)),
+        Color::Indexed(index) => Some(json!(index)),
+        Color::Spec(rgb) => Some(json!(format!("#{:02x}{:02x}{:02x}", rgb.r, rgb.g, rgb.b))),
+    }
+}
+
+/// Índice ANSI de uma cor nomeada, ou `None` quando ela significa "use o tema".
+///
+/// O emulador separa cores nomeadas (0–15), a paleta 256 e truecolor. Os slots
+/// de tema (foreground/background/cursor) não têm índice: viram `None` para a
+/// UI aplicar a própria paleta, exatamente como o contrato antigo fazia com a
+/// cor default.
+const fn named_color_index(named: NamedColor) -> Option<u8> {
+    match named {
+        // Dim* não tem índice ANSI próprio: cai na cor base e a intensidade
+        // fica a cargo do tema.
+        NamedColor::Black | NamedColor::DimBlack => Some(0),
+        NamedColor::Red | NamedColor::DimRed => Some(1),
+        NamedColor::Green | NamedColor::DimGreen => Some(2),
+        NamedColor::Yellow | NamedColor::DimYellow => Some(3),
+        NamedColor::Blue | NamedColor::DimBlue => Some(4),
+        NamedColor::Magenta | NamedColor::DimMagenta => Some(5),
+        NamedColor::Cyan | NamedColor::DimCyan => Some(6),
+        NamedColor::White | NamedColor::DimWhite => Some(7),
+        NamedColor::BrightBlack => Some(8),
+        NamedColor::BrightRed => Some(9),
+        NamedColor::BrightGreen => Some(10),
+        NamedColor::BrightYellow => Some(11),
+        NamedColor::BrightBlue => Some(12),
+        NamedColor::BrightMagenta => Some(13),
+        NamedColor::BrightCyan => Some(14),
+        NamedColor::BrightWhite => Some(15),
+        NamedColor::Foreground
+        | NamedColor::Background
+        | NamedColor::Cursor
+        | NamedColor::BrightForeground
+        | NamedColor::DimForeground => None,
     }
 }
 
@@ -801,11 +961,12 @@ mod tests {
         time::Duration,
     };
 
-    use kinein_protocol::JsonRpcRequest;
+    use kinein_protocol::{JsonRpcRequest, TerminalMouseEvent, TerminalMouseModifiers};
 
     use super::{
-        CursorShape, CursorStyleTracker, ScrollbackPreserver, TerminalError, TerminalManager,
-        TerminalState, build_line, emit_render,
+        CursorShape, MOUSE_WHEEL_DOWN, MOUSE_WHEEL_UP, TermMode, TerminalError, TerminalManager,
+        TerminalState, WheelAction, alt_scroll, build_line, emit_render, mouse_report,
+        wheel_action,
     };
 
     fn temp_root(test_name: &str) -> PathBuf {
@@ -922,42 +1083,39 @@ mod tests {
         assert!(params["scrollbackMax"].as_u64().is_some_and(|max| max > 0));
     }
 
+    /// DECSCUSR agora é do emulador (ADR-0004); o que a Kinein garante é que a
+    /// forma pedida pela TUI chega ao render e que o reset cai na preferência
+    /// da casa (barra pulsante), inclusive com a sequência partida entre
+    /// leituras do PTY.
     #[test]
-    fn cursor_style_tracker_handles_decscusr_across_chunks() {
-        let mut tracker = CursorStyleTracker::default();
+    fn decscusr_cursor_style_survives_chunk_boundaries() {
+        let mut state = TerminalState::new(2, 10, 0);
 
         for (parameter, shape, blinking) in [
             (1, CursorShape::Block, true),
             (2, CursorShape::Block, false),
             (3, CursorShape::Underline, true),
             (4, CursorShape::Underline, false),
-            (5, CursorShape::Bar, true),
-            (6, CursorShape::Bar, false),
+            (5, CursorShape::Beam, true),
+            (6, CursorShape::Beam, false),
         ] {
             let sequence = format!("\x1b[{parameter} q");
-            tracker.process(sequence.as_bytes());
-            assert_eq!(tracker.style.shape, shape);
-            assert_eq!(tracker.style.blinking, blinking);
+            state.process(sequence.as_bytes());
+            assert_eq!(state.term.cursor_style().shape, shape);
+            assert_eq!(state.term.cursor_style().blinking, blinking);
         }
 
-        tracker.process(b"\x1b[0 q");
-        assert_eq!(tracker.style.shape, CursorShape::Bar);
-        assert!(tracker.style.blinking);
+        state.process(b"\x1b[0 q");
+        assert_eq!(state.term.cursor_style().shape, CursorShape::Beam);
+        assert!(state.term.cursor_style().blinking);
 
-        tracker.process(b"ordinary text\x1b[6");
-        assert_eq!(tracker.style.shape, CursorShape::Bar);
-        assert!(tracker.style.blinking);
+        state.process(b"ordinary text\x1b[6");
+        assert_eq!(state.term.cursor_style().shape, CursorShape::Beam);
+        assert!(state.term.cursor_style().blinking);
 
-        tracker.process(b" q");
-        assert_eq!(tracker.style.shape, CursorShape::Bar);
-        assert!(!tracker.style.blinking);
-
-        tracker.process(b"\x1b[!p");
-        assert_eq!(tracker.style.shape, CursorShape::Bar);
-
-        tracker.process(b"\x1b[5 q\x1bc");
-        assert_eq!(tracker.style.shape, CursorShape::Bar);
-        assert!(tracker.style.blinking);
+        state.process(b" q");
+        assert_eq!(state.term.cursor_style().shape, CursorShape::Beam);
+        assert!(!state.term.cursor_style().blinking);
     }
 
     #[test]
@@ -977,12 +1135,184 @@ mod tests {
         assert_eq!(cursor["blinking"], false);
     }
 
+    // ---------------------------------------------------------------------
+    // R4 — roda do mouse. As sequências abaixo NÃO são inventadas: foram
+    // medidas nas CLIs reais em 2026-07-16, abrindo cada agente num PTY dentro
+    // de um workspace confiado e capturando os modos DEC privados que ele liga.
+    // Elas são a razão do desenho, então são o que os testes exercem.
+    // ---------------------------------------------------------------------
+
+    /// O que o `claude` liga ao abrir: tela alternada + captura total de mouse
+    /// com codificação SGR. Note a AUSÊNCIA de `?1007` (alternate scroll) — é
+    /// por isso que traduzir a roda em setas não o consertaria.
+    const CLAUDE_MODES: &[u8] = b"\x1b[?1049h\x1b[?1000h\x1b[?1002h\x1b[?1003h\x1b[?1006h";
+    /// O que o `codex` liga: nem tela alternada, nem mouse. Desenha inline, tem
+    /// histórico de verdade na grade — e por isso já rolava.
+    const CODEX_MODES: &[u8] = b"\x1b[?2004h\x1b[?1004h";
+
+    fn mode_after(sequence: &[u8]) -> TermMode {
+        let mut state = TerminalState::new(24, 80, 100);
+        state.process(sequence);
+        *state.term.mode()
+    }
+
+    /// A regressão que originou a fatia: o Claude captura o mouse, então a roda
+    /// tem que ser RELATADA a ele, não virar rolagem local (que não faria nada,
+    /// porque tela alternada não tem histórico).
+    #[test]
+    fn claude_mode_set_routes_wheel_to_the_application() {
+        let mode = mode_after(CLAUDE_MODES);
+        assert!(mode.contains(TermMode::ALT_SCREEN));
+        assert!(mode.intersects(TermMode::MOUSE_MODE));
+        assert_eq!(wheel_action(mode, false), WheelAction::Report);
+    }
+
+    /// A ORDEM dos ramos é carga estrutural, e este teste existe para fixá-la.
+    ///
+    /// `ALTERNATE_SCROLL` nasce LIGADO (`TermMode::default()` do
+    /// `alacritty_terminal`, igual ao xterm, onde o modo 1007 já vem ativo).
+    /// Então o Claude satisfaz as condições dos dois ramos ao mesmo tempo:
+    /// tela alternada + alternate scroll E captura de mouse. Se `AltScroll`
+    /// fosse avaliado primeiro, ele receberia setas em vez de relatórios e
+    /// continuaria sem rolar. Quem captura o mouse tem precedência.
+    #[test]
+    fn mouse_capture_takes_precedence_over_default_alternate_scroll() {
+        let mode = mode_after(CLAUDE_MODES);
+        assert!(
+            mode.contains(TermMode::ALT_SCREEN | TermMode::ALTERNATE_SCROLL),
+            "alternate scroll deveria estar ligado por padrao"
+        );
+        assert_eq!(
+            wheel_action(mode, false),
+            WheelAction::Report,
+            "captura de mouse tem que vencer o alternate scroll padrao"
+        );
+    }
+
+    /// O contraste que provou o diagnóstico: o codex não captura nada, então o
+    /// ramo local é o certo — e é o que já funcionava.
+    #[test]
+    fn codex_mode_set_keeps_wheel_on_local_history() {
+        let mode = mode_after(CODEX_MODES);
+        assert!(!mode.contains(TermMode::ALT_SCREEN));
+        assert!(!mode.intersects(TermMode::MOUSE_MODE));
+        assert_eq!(wheel_action(mode, false), WheelAction::ScrollHistory);
+    }
+
+    /// Shift é a válvula de escape do xterm: fala com o terminal, não com a TUI.
+    #[test]
+    fn shift_escapes_application_mouse_capture() {
+        let mode = mode_after(CLAUDE_MODES);
+        assert_eq!(wheel_action(mode, true), WheelAction::ScrollHistory);
+    }
+
+    /// TUIs que pedem `?1007` sem capturar mouse (vim, less) esperam cursor keys.
+    #[test]
+    fn alternate_scroll_tui_receives_cursor_keys() {
+        let mode = mode_after(b"\x1b[?1049h\x1b[?1007h");
+        assert_eq!(wheel_action(mode, false), WheelAction::AltScroll);
+        // Uma tecla por linha, e a direção não pode inverter.
+        assert_eq!(alt_scroll(2), b"\x1bOA\x1bOA");
+        assert_eq!(alt_scroll(-1), b"\x1bOB");
+    }
+
+    /// Formato de fio SGR, com as coordenadas 1-based que o xterm especifica.
+    /// 64 = cima e 65 = baixo: Zed, xterm.js e o ctlseqs concordam (as
+    /// constantes do `JediTerm` têm o nome trocado e foram descartadas).
+    #[test]
+    fn wheel_report_uses_sgr_with_one_based_coordinates() {
+        let mode = mode_after(CLAUDE_MODES);
+        let modifiers = TerminalMouseModifiers::default();
+
+        let up = mouse_report(MOUSE_WHEEL_UP, 9, 4, modifiers, mode).unwrap();
+        assert_eq!(up, b"\x1b[<64;10;5M");
+
+        let down = mouse_report(MOUSE_WHEEL_DOWN, 0, 0, modifiers, mode).unwrap();
+        assert_eq!(down, b"\x1b[<65;1;1M");
+    }
+
+    #[test]
+    fn wheel_report_encodes_modifier_bits() {
+        let mode = mode_after(CLAUDE_MODES);
+        let modifiers = TerminalMouseModifiers {
+            shift: false,
+            alt: true,
+            ctrl: true,
+        };
+        // 64 | 8 | 16 = 88.
+        let report = mouse_report(MOUSE_WHEEL_UP, 0, 0, modifiers, mode).unwrap();
+        assert_eq!(report, b"\x1b[<88;1;1M");
+    }
+
+    /// Sem `?1006` o formato é o legado de um byte por campo, com `+32`.
+    #[test]
+    fn wheel_report_falls_back_to_legacy_format_without_sgr() {
+        let mode = mode_after(b"\x1b[?1000h");
+        let report = mouse_report(
+            MOUSE_WHEEL_UP,
+            9,
+            4,
+            TerminalMouseModifiers::default(),
+            mode,
+        )
+        .unwrap();
+        assert_eq!(report, &[0x1b, b'[', b'M', 64 + 32, 10 + 32, 5 + 32]);
+    }
+
+    /// O formato legado não representa coluna além de 223. O xterm.js suprime o
+    /// evento; truncar viraria um clique em outra célula.
+    #[test]
+    fn legacy_report_is_suppressed_beyond_representable_range() {
+        let mode = mode_after(b"\x1b[?1000h");
+        let modifiers = TerminalMouseModifiers::default();
+        assert!(mouse_report(MOUSE_WHEEL_UP, 500, 0, modifiers, mode).is_none());
+        // Com SGR a mesma coordenada passa: é decimal, sem teto.
+        let sgr = mode_after(b"\x1b[?1000h\x1b[?1006h");
+        assert!(mouse_report(MOUSE_WHEEL_UP, 500, 0, modifiers, sgr).is_some());
+    }
+
+    /// Contrato fixado para R5, comportamento ainda não: recusa explícita.
+    #[test]
+    fn unimplemented_mouse_gestures_are_rejected_explicitly() {
+        let (sender, _receiver) = mpsc::channel();
+        let mut manager = TerminalManager::new(sender);
+        let root = temp_root("mouse-unimplemented");
+        let Ok(id) = manager.open_with_shell(&root, "sh") else {
+            return;
+        };
+
+        let error = manager.mouse(
+            &id,
+            0,
+            0,
+            TerminalMouseEvent::Press {
+                button: kinein_protocol::TerminalMouseButton::Left,
+            },
+            TerminalMouseModifiers::default(),
+        );
+        assert!(matches!(error, Err(TerminalError::MouseUnimplemented)));
+
+        // Roda com zero linha é no-op, não erro.
+        assert!(
+            manager
+                .mouse(
+                    &id,
+                    0,
+                    0,
+                    TerminalMouseEvent::Wheel { lines: 0 },
+                    TerminalMouseModifiers::default(),
+                )
+                .is_ok()
+        );
+        manager.close(&id).ok();
+    }
+
     #[test]
     fn render_span_preserves_authoritative_vt_cell_width() {
-        let mut parser = vt100::Parser::new(1, 12, 0);
-        parser.process("\x1b[32;1mA界B\x1b[0m".as_bytes());
+        let mut state = TerminalState::new(1, 12, 0);
+        state.process("\x1b[32;1mA界B\x1b[0m".as_bytes());
 
-        let line = build_line(parser.screen(), 0, 12);
+        let line = build_line(state.term.grid(), 0, 12, 0);
         let spans = line.as_array().expect("a linha deve conter spans");
         let texts = spans
             .iter()
@@ -997,17 +1327,7 @@ mod tests {
         assert_eq!(cells, vec![1, 2, 1]);
         assert!(spans.iter().all(|span| span["fg"] == 2));
         assert!(spans.iter().all(|span| span["bold"] == true));
-        assert_eq!(parser.screen().cursor_position(), (0, 4));
-    }
-
-    #[test]
-    fn ai_scrollback_filter_survives_chunk_boundaries() {
-        let mut filter = ScrollbackPreserver::default();
-        let mut output = filter.push(b"before\x1b[");
-        output.extend(filter.push(b"3Jafter\x1b[2J"));
-        output.extend(filter.finish());
-
-        assert_eq!(output, b"beforeafter\x1b[2J");
+        assert_eq!(state.term.grid().cursor.point.column.0, 4);
     }
 
     /// D2.3: o ponto da fatia — duas sessões vivas ao mesmo tempo, com ids

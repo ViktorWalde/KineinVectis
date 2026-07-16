@@ -1,73 +1,28 @@
-# Prompt inicial para GPT/Claude no terminal
+# OBSOLETO — prompt de bootstrap inicial
 
-Você está trabalhando no projeto **Kinein Vectis**.
+> **Status:** histórico. Não use este arquivo.
+> **Entrada atual:** [`../AGENTS.md`](../AGENTS.md).
 
-Leia estes arquivos antes de responder ou alterar código:
+Este prompt existia para criar a **base inicial** do workspace Rust: `core.ping`,
+tipos básicos do protocolo, uma CLI de ping e a configuração estrita. Esse
+estágio terminou há muito — hoje a Kinein tem core, protocolo, UI Qt/QML,
+editor, LSP/DAP, build/run/debug, Git, terminal e empacotamento. O arquivo
+chegava a instruir "não implementar Qt/LSP/CMake ainda".
 
-1. `AGENTS.md`
-2. `docs/00-product-vision.md`
-3. `docs/01-architecture.md`
-4. `docs/02-repository-structure.md`
-5. `docs/03-ipc-protocol.md`
-6. `docs/04-command-system.md`
-7. `docs/06-strict-mode.md`
-8. `docs/10-mvp-plan.md`
+Ele também apontava para documentos que não existem mais
+(`docs/00-product-vision.md`, `docs/01-architecture.md`,
+`docs/04-command-system.md`, `docs/10-mvp-plan.md`), removidos junto com
+`docs/archive/` em 2026-07-05. Seguir este arquivo hoje levaria a caminhos
+mortos e a reimplementar o que já existe.
 
-## Contexto
-
-Kinein Vectis é uma IDE open source, Linux-first, visualmente plug and play e rígida por padrão.
-
-Arquitetura decidida:
+## Por onde começar de verdade
 
 ```text
-Qt/QML Frontend  ← IPC/JSON-RPC local → Rust Core
+AGENTS.md          regras obrigatórias e ordem de leitura
+ContextoIA.md      estado real e decisões vigentes
+GUIAIA.md          mapa: domínio → documentos → arquivos → gate
+PONTO_ATUAL.md     fila viva: a próxima ação executável
+docs/README.md     índice da documentação técnica
 ```
 
-O projeto deve começar como Rust workspace. A UI Qt/QML será adicionada depois.
-
-## Objetivo imediato
-
-Criar a base inicial do projeto Rust com boas práticas modernas e máximo rigor.
-
-## Tarefa inicial sugerida
-
-Crie ou ajuste a estrutura:
-
-```text
-Cargo.toml
-rust-toolchain.toml
-crates/kinein-core/
-crates/kinein-protocol/
-crates/kinein-config/
-crates/kinein-cli/
-```
-
-Implemente apenas:
-
-- `core.ping`;
-- tipos básicos do protocolo;
-- CLI simples para enviar ping;
-- testes unitários;
-- configuração strict com fmt/clippy/test.
-
-## Regras
-
-- Não usar `unsafe`.
-- Não usar `unwrap`, `expect` ou `panic` fora de testes.
-- Não adicionar dependências desnecessárias.
-- Não implementar Qt ainda.
-- Não implementar LSP ainda.
-- Não implementar CMake ainda.
-- Não misturar UI com core.
-- Atualizar documentação se mudar contrato.
-
-## Comandos de validação
-
-```bash
-cargo fmt --all --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace --all-features
-cargo check --workspace --all-targets --all-features
-```
-
-Explique antes de alterar arquivos, mantenha o escopo pequeno e prefira passos incrementais.
+O conteúdo anterior permanece recuperável pelo histórico Git.

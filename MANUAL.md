@@ -8,11 +8,11 @@ uso.
 > e simulação. Ela orquestra ferramentas maduras (clangd, rust-analyzer,
 > cargo, CMake, clang-format...) em vez de reimplementá-las. Os fluxos da IDE
 > são locais e não têm telemetria; somente uma CLI externa iniciada
-> explicitamente no KV Context pode usar rede conforme a política dela.
+> explicitamente por você no terminal pode usar rede conforme a política dela.
 >
 > **Estado atual:** em desenvolvimento ativo. A interface já segue o sistema
-> visual Kinein (App Bar, toolbar principal, ícones vetoriais, Start Screen e
-> KV Context); a validação visual final em hardware real continua pendente.
+> visual Kinein (App Bar, toolbar principal, ícones vetoriais e Start Screen);
+> a validação visual final em hardware real continua pendente.
 
 ---
 
@@ -67,9 +67,9 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
 │ App Bar: Arquivo · Editar · Exibir · Navegar · Código ...    │
 │ Toolbar: target · perfil · Configurar · Build · Run · Debug  │
 ├───┬───────────────┬─────────────────────────────┬────────────┤
-│ R │ Projeto       │ Editor (abas + código)      │ KV Context │
-│ a │ (árvore de    │                             │ (IA por    │
-│ i │  arquivos)    │                             │  terminal) │
+│ R │ Projeto       │ Editor (abas + código)      │ Estrutura  │
+│ a │ (árvore de    │                             │ (símbolos  │
+│ i │  arquivos)    │                             │  do arquivo)│
 │ l │               │                             │            │
 ├───┴───────────────┴─────────────────────────────┴────────────┤
 │ Painel inferior: Build | Jobs | Problemas | Testes |         │
@@ -81,7 +81,7 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
 ```
 
 - **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
-  Build, Debug, Ferramentas e o **KV Context**.
+  Build, Debug e Ferramentas.
 - Clicar numa aba do painel inferior que já está aberta **recolhe** o
   painel.
 - Os painéis laterais e o painel inferior são **redimensionáveis**: arraste
@@ -405,53 +405,30 @@ projeto.
 Enquanto um processo estiver rodando, a aba mostra **Terminal ●**. O botão
 **limpar** zera a saída da sessão ativa (só dela).
 
-## 6. KV Context (opcional)
+## 6. Usar uma CLI de IA (Claude, Codex...)
 
-O **KV Context** é o atalho visual para uma CLI de IA rodando em um terminal
-PTY real separado do terminal comum da IDE. Ao abrir o painel:
+Abra o terminal integrado (`Alt+F12`) e rode a ferramenta como faria fora da
+IDE:
 
-1. escolha **Claude** ou **Codex**; Claude é a preferência inicial;
-2. a IDE informa se o comando `claude`/`codex` foi encontrado no `PATH`;
-3. clique em **Iniciar** para abrir a CLI na raiz do workspace;
-4. depois que a sessão abrir, o seletor some e a área vira o terminal real;
-5. no header compacto, use **ampliar/restaurar**, **trocar** ou **encerrar**.
+```bash
+claude
+codex
+```
 
-Durante a sessão, arraste o divisor à esquerda do KV Context para escolher a
-largura entre 300 e 720px; essa largura é lembrada separadamente do seletor.
-A árvore **Project** continua disponível e pode ser aberta/fechada sem alterar
-essa preferência. Em janelas estreitas, a largura mostrada é limitada apenas
-para preservar uma faixa do editor. **Ampliar** usa toda a área de trabalho e
-**restaurar** volta ao layout lado a lado.
+É isso. Não há painel dedicado, perfil a escolher nem configuração: para a
+Kinein, uma CLI de IA é **um programa como outro qualquer**. Ela roda no mesmo
+PTY real e no mesmo emulador de terminal de um `ls` ou de um `vim`, então a
+interface da ferramenta aparece exatamente como aparece no seu terminal.
 
-A barra de rolagem à direita permanece visível, e roda/arrasto navegam o mesmo
-scrollback do Terminal integrado mesmo enquanto chegam novas respostas.
-Digitar volta ao fim ao vivo. Seleção com mouse, `Ctrl+Shift+C`,
-`Ctrl+Shift+V`, clique do meio, setas, `Shift+Tab`, Home/End/Page Up/Page Down
-e F1–F12 seguem o comportamento de terminal.
+A IDE não instala, não autentica e não envia nada: rede, credenciais e política
+de dados pertencem à CLI que você iniciou.
 
-O Claude CLI ou Codex CLI precisa estar **previamente instalado e autenticado
-pelo usuário**. A Kinein não instala a CLI, não guarda credenciais, não chama
-API de modelo e não envia código automaticamente; depois de iniciado, o
-comportamento de rede e dados é o da ferramenta externa. O terminal comum e o
-KV Context compartilham o motor de PTY por baixo dos panos, mas mantêm sessões
-e superfícies visuais separadas.
-
-No perfil Codex, a Kinein acrescenta a opção oficial
-`--no-alt-screen`. Ela mantém a própria interface do Codex em modo inline para
-que a conversa produza histórico e possa ser rolada; nenhuma resposta é
-reinterpretada ou renderizada como chat da IDE. Como algumas versões ainda
-pedem ao terminal para apagar o scrollback nesse modo, o KV Context ignora
-somente esse pedido de limpeza nas sessões de IA; o Terminal comum mantém o
-comportamento normal do comando `clear`.
-
-O KV Context não desenha campo, faixa ou contorno próprio para a entrada. A
-grade VT, as cores ANSI e o cursor da própria CLI são a única representação,
-como no Terminal integrado. Isso evita que a IDE dispute espaço ou estado com
-avisos de uso, prompt e status do modelo.
-
-A opção guiada para outras ferramentas de IA será acrescentada em uma etapa
-posterior, depois da validação desta correção. Ela deverá levar ao terminal e
-explicar que o usuário precisa digitar o comando de inicialização da sua CLI.
+> **Sobre o painel KV Context.** Existia um atalho visual dedicado para essas
+> CLIs. Ele foi retirado porque abria os agentes por um caminho especial no
+> core — com argumentos injetados e filtragem de sequências do terminal —, e
+> era esse caminho que fazia a ferramenta se comportar de um jeito dentro da
+> IDE e de outro fora dela. O atalho pode voltar depois como UI pura, abrindo
+> uma sessão de terminal comum.
 
 ---
 

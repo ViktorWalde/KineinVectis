@@ -50,14 +50,14 @@ Antes de criar código:
 1. Ler `ContextoIA.md` (estado real e decisões vigentes).
 2. Ler `GUIAIA.md` para localizar o domínio, as conexões e os documentos
    específicos da tarefa. Ele é um mapa, não substitui as fontes seguintes.
-3. Ler `docs/ARCHITECTURE.md` (camadas, convenções de módulo e regra de split — obrigatório).
-4. Ler `docs/02-repository-structure.md` e `docs/03-ipc-protocol.md` (estrutura e contrato IPC atual).
-5. Ler `docs/06-strict-mode.md` (rigor Rust/C++).
+3. Ler `docs/arquitetura/ARCHITECTURE.md` (camadas, convenções de módulo e regra de split — obrigatório).
+4. Ler `docs/arquitetura/02-repository-structure.md` e `docs/arquitetura/03-ipc-protocol.md` (estrutura e contrato IPC atual).
+5. Ler `docs/arquitetura/06-strict-mode.md` (rigor Rust/C++).
 6. Consultar `docs/specs/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).
 7. Verificar se a tarefa pertence ao core, UI, tooling, docs ou protocolo — e ao domínio certo dentro do core.
 8. Se a tarefa criar ou alterar uma funcionalidade de IDE, seguir a política
    obrigatória de referência profissional de
-   `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md`: estudar a implementação
+   `docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md`: estudar a implementação
    atual e oficial relevante em Code OSS, IntelliJ IDEA Community, Zed, Lapce
    e/ou Apache NetBeans; registrar revisão, invariantes e adaptação; escrever a
    solução nativa da Kinein sem copiar função, classe ou módulo e sem fazer
@@ -86,7 +86,7 @@ Use a ordem de precedência definida em `docs/README.md`:
 3. `docs/00–16` (numerados) — contrato e estado do que já está implementado.
 
 A **UI/UX segue `docs/specs/`**; a fonte de verdade do que já existe é
-`ContextoIA.md` + `docs/specs/` + `docs/ARCHITECTURE.md` + código. Não existe
+`ContextoIA.md` + `docs/specs/` + `docs/arquitetura/ARCHITECTURE.md` + código. Não existe
 mais pasta de arquivo morto (`docs/archive/` foi removida em 2026-07-05 — ver
 `docs/README.md`); não recriar uma só para guardar material descontinuado.
 `GUIAIA.md` apenas encurta a navegação entre essas fontes e o código.

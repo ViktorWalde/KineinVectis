@@ -21,7 +21,7 @@ Item {
     property alias externalMessage: documents.currentExternalMessage
     property string watchError: ""
     property alias loadingEditorText: surfaceBridge.loadingText
-    // D1 (docs/24): alias para a property PRÓPRIA do controller, nunca para o
+    // D1 (docs/roadmaps/24): alias para a property PRÓPRIA do controller, nunca para o
     // `visible` do Item — este EditorController é invisível (é controller), e
     // `Item.visible` de um filho lê a visibilidade EFETIVA, que fica presa em
     // false sob pai invisível. Era essa a causa do popup nunca abrir.
@@ -42,7 +42,7 @@ Item {
     property bool actionsVisible: false
     property int actionsIndex: 0
     property bool goToLineVisible: false
-    // D1b (docs/24): Find/Replace no arquivo. Mesma regra do D1 — alias para
+    // D1b (docs/roadmaps/24): Find/Replace no arquivo. Mesma regra do D1 — alias para
     // a property PRÓPRIA do controller, nunca para o `visible` do Item.
     property alias findBarVisible: findController.barVisible
     property alias findReplaceMode: findController.replaceMode
@@ -63,7 +63,7 @@ Item {
 
     signal readFileRequested(string path)
     signal writeFileRequested(string path, string content, string expectedContent)
-    // M-S1 (docs/23): autosave/limpeza de rascunho não salvo (rede de segurança).
+    // M-S1 (docs/seguranca/23): autosave/limpeza de rascunho não salvo (rede de segurança).
     signal draftSaveRequested(string path, string content)
     signal draftClearRequested(string path)
     signal formatRequested(string path, string content)
@@ -480,7 +480,7 @@ Item {
 
     function handleSwitchSourceHeader(path) {
         // path vazio = clangd não achou contraparte; sem primitiva de
-        // aviso discreto ainda (radar docs/18), o v1 apenas não navega.
+        // aviso discreto ainda (radar docs/diario/18), o v1 apenas não navega.
         if (path !== "") {
             documents.openDiagnostic(path, 1, 1);
         }
@@ -803,7 +803,7 @@ Item {
         }
     }
 
-    // M-S1 (docs/23): rascunhos aguardando o load do disco para sobrepor.
+    // M-S1 (docs/seguranca/23): rascunhos aguardando o load do disco para sobrepor.
     property var pendingDraftContent: ({})
 
     function handleFileLoaded(path, content) {
@@ -1004,7 +1004,7 @@ Item {
         }
     }
 
-    // M-S1 (docs/23): autosave do buffer sujo na store local (rede de
+    // M-S1 (docs/seguranca/23): autosave do buffer sujo na store local (rede de
     // segurança). Debounce após a última edição; só persiste se modificado.
     Timer {
         id: autosaveDebounce

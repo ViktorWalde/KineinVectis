@@ -4,8 +4,8 @@
 //! managed by `crate::terminal`.
 
 use kinein_protocol::{
-    JsonRpcResponse, TerminalCloseParams, TerminalInputParams, TerminalOpenResult,
-    TerminalResizeParams, TerminalScrollParams,
+    JsonRpcResponse, TerminalCloseParams, TerminalInputParams, TerminalMouseParams,
+    TerminalOpenResult, TerminalResizeParams, TerminalScrollParams,
 };
 use serde_json::{Value, json};
 
@@ -27,8 +27,39 @@ impl Core {
             "terminal.input" => Some(self.terminal_input_response(request_id, params)),
             "terminal.resize" => Some(self.terminal_resize_response(request_id, params)),
             "terminal.scroll" => Some(self.terminal_scroll_response(request_id, params)),
+            "terminal.mouse" => Some(self.terminal_mouse_response(request_id, params)),
             "terminal.close" => Some(self.terminal_close_response(request_id, params)),
             _ => None,
+        }
+    }
+
+    /// `terminal.mouse` (R4): repassa o gesto cru ao core, que decide o destino
+    /// pelo modo VT. O handler não interpreta o gesto — só o roteia.
+    fn terminal_mouse_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<TerminalMouseParams>(
+            request_id.as_ref(),
+            params,
+            "terminal.mouse requer os campos id, col, row e event",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let Some(session) = self.terminal.as_mut() else {
+            return terminal_unavailable_response(request_id, "terminal.mouse");
+        };
+        match session.mouse(
+            &parsed.id,
+            parsed.col,
+            parsed.row,
+            parsed.event,
+            parsed.modifiers,
+        ) {
+            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
+            Err(error) => terminal_error_response(request_id, &error),
         }
     }
 

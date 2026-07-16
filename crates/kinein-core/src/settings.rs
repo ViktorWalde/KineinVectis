@@ -156,10 +156,6 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
             .outline_collapsed
             .or(global.outline_collapsed)
             .unwrap_or(false),
-        ai_cli_profile: workspace
-            .ai_cli_profile
-            .or(global.ai_cli_profile)
-            .unwrap_or_default(),
     }
 }
 
@@ -185,7 +181,6 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         bottom_panel_height: incoming.bottom_panel_height.or(base.bottom_panel_height),
         outline_width: incoming.outline_width.or(base.outline_width),
         outline_collapsed: incoming.outline_collapsed.or(base.outline_collapsed),
-        ai_cli_profile: incoming.ai_cli_profile.or(base.ai_cli_profile),
     }
 }
 

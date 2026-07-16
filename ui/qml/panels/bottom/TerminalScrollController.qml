@@ -1,9 +1,17 @@
 import QtQuick
 
-// Estado e coalescencia do scrollback sintetico do terminal. O core continua
-// sendo a fonte da verdade; este controller apenas impede que renders de
-// output cruzados com roda/arrasto façam a leitura saltar ou congelem uma
-// confirmacao para sempre.
+// Estado e coalescencia da rolagem EXPLICITA do terminal (barra e
+// snap-to-bottom). O core continua sendo a fonte da verdade; este controller
+// apenas impede que renders de output cruzados com arrasto façam a leitura
+// saltar ou congelem uma confirmacao para sempre.
+//
+// Este controller NAO decide o que a roda significa. Ate 0.59 ele traduzia todo
+// gesto de roda em offset de scrollback e mandava `terminal.scroll`, sempre —
+// uma regra de negocio na UI, e a causa de o Claude nao rolar: ele desenha em
+// tela alternada (sem historico por semantica VT) e captura o mouse, entao o
+// pedido caia no vazio. Quem sabe o destino de um gesto e o terminal, porque so
+// ele conhece o modo VT que a aplicacao ligou. A UI reporta o gesto cru por
+// `terminal.mouse` (protocolo 0.60.0) e desenha o que voltar.
 Item {
     id: root
 
@@ -76,31 +84,29 @@ Item {
         }
     }
 
-    function scrollBy(lines) {
-        const next = Math.max(0, Math.min(
-            scrollbackMax, scrollOffset + lines));
-        if (next !== scrollOffset) {
-            queueScroll(next);
-        }
-    }
-
-    // Roda tradicional costuma preencher angleDelta (120 por passo), mas
-    // Qt/Wayland e dispositivos de alta resolucao podem fornecer somente
-    // pixelDelta. Aceitar ambos evita interpretar um gesto para cima como
-    // zero/para baixo no fundo do terminal.
-    function handleWheel(angleDeltaY, pixelDeltaY, pixelsPerLine) {
+    // Converte um gesto de roda em LINHAS. Só isso: quantas linhas o usuário
+    // pediu, com o sinal do gesto (positivo = para cima). O que fazer com elas
+    // é decisão do core.
+    //
+    // Esta conversão é legitimamente da UI — é unidade de dispositivo, não
+    // semântica de terminal. Roda tradicional costuma preencher angleDelta (120
+    // por notch), mas Qt/Wayland e dispositivos de alta resolucao podem fornecer
+    // somente pixelDelta. Aceitar ambos evita interpretar um gesto para cima
+    // como zero/para baixo.
+    //
+    // Devolve 0 quando não há gesto — o chamador não deve reportar nada.
+    function linesFromWheel(angleDeltaY, pixelDeltaY, pixelsPerLine) {
         const angle = Number(angleDeltaY);
         const pixels = Number(pixelDeltaY);
         const delta = angle !== 0 ? angle : pixels;
         if (!Number.isFinite(delta) || delta === 0) {
-            return false;
+            return 0;
         }
         const magnitude = angle !== 0
                 ? Math.max(1, Math.round(Math.abs(angle) / 120 * 3))
                 : Math.max(1, Math.round(
                     Math.abs(pixels) / Math.max(1, pixelsPerLine)));
-        scrollBy(delta > 0 ? magnitude : -magnitude);
-        return true;
+        return delta > 0 ? magnitude : -magnitude;
     }
 
     function flushPending() {

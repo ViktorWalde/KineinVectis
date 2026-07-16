@@ -2,7 +2,7 @@ import QtQuick
 import KineinVectis
 
 // Confirmação da ação DESTRUTIVA de descartar mudanças (fatia M3.3).
-// Guardrail docs/19: o core executa sem perguntar; quem confirma é a UI.
+// Guardrail docs/arquitetura/19: o core executa sem perguntar; quem confirma é a UI.
 Item {
     id: root
 

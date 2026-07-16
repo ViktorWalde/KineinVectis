@@ -35,7 +35,7 @@ Rectangle {
     property int workspaceEditCount: 0
     property string workspaceEditError: ""
     property bool goToLineDialogVisible: false
-    // D1b (docs/24): barra de Find/Replace do arquivo (Ctrl+F / Ctrl+H).
+    // D1b (docs/roadmaps/24): barra de Find/Replace do arquivo (Ctrl+F / Ctrl+H).
     property bool findBarVisible: false
     property bool findReplaceMode: false
     property string findQuery: ""

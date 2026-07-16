@@ -10,7 +10,6 @@ Rectangle {
     property bool buildActive: false
     property bool debugActive: false
     property bool toolsActive: false
-    property bool assistantActive: false
 
     signal explorerToggled()
     signal searchRequested()
@@ -18,7 +17,6 @@ Rectangle {
     signal buildRequested()
     signal debugRequested()
     signal toolsRequested()
-    signal assistantToggled()
 
     width: 52
     radius: Theme.radiusLarge
@@ -129,12 +127,5 @@ Rectangle {
             onActivated: root.toolsRequested()
         }
 
-        RailButton {
-            iconName: "context"
-            tooltip: qsTr("KV Context")
-            active: root.assistantActive
-            enabled: root.workspaceOpen
-            onActivated: root.assistantToggled()
-        }
     }
 }

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2 de docs/18).
+# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2 de docs/diario/18).
 #
 # ZERO telemetria/rede: mede via stdio (core) e /proc, imprime uma tabela e
-# sai. Roda quando o dev quiser; o orcamento (numeros-alvo) vive no docs/21.
+# sai. Roda quando o dev quiser; o orcamento (numeros-alvo) vive no docs/roadmaps/21.
 # Cada metrica roda N vezes (KINEIN_PERF_N, default 5) e reporta a MEDIANA.
 #
 # Metricas:
@@ -79,4 +79,4 @@ core_out="$(python3 "$REPO_ROOT/scripts/medir-core.py" "$CORE_BIN" "$REPO_ROOT" 
 echo "$core_out" | sed 's/^/   /'
 echo
 
-echo "== fim. Compare com o ORCAMENTO em docs/21 (M4.2). =="
+echo "== fim. Compare com o ORCAMENTO em docs/roadmaps/21 (M4.2). =="

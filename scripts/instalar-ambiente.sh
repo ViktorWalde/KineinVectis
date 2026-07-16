@@ -6,7 +6,7 @@
 #   scripts/instalar-ambiente.sh              # instala o conjunto base
 #   scripts/instalar-ambiente.sh --extras     # + shellcheck e cargo-deny
 #                                             #   (degraus da escada de rigor,
-#                                             #   docs/18-daily-driver-plan.md)
+#                                             #   docs/diario/18-daily-driver-plan.md)
 #   scripts/instalar-ambiente.sh --dry-run    # so mostra o que seria executado
 #
 # Distros suportadas: Arch/CachyOS (pacman, alvo principal), Debian/Ubuntu/
@@ -16,7 +16,7 @@
 # O script e idempotente (pacman --needed / apt-get install so instala o que
 # falta) e usa sudo por comando — nao rode como root. Nada aqui mexe no
 # repositorio; depois de instalar, configure os presets e rode o gate
-# (docs/COMANDOS_BUILD_VERIFICACAO.md).
+# (docs/build/COMANDOS_BUILD_VERIFICACAO.md).
 
 set -eu
 
@@ -61,7 +61,7 @@ fi
 echo "distro detectada: $DISTRO"
 
 # ---------------------------------------------------------------------------
-# Pacotes por distro. Conjunto base = o que docs/14-development-environment.md
+# Pacotes por distro. Conjunto base = o que docs/build/14-development-environment.md
 # e o ToolDetector do core esperam: cmake, ninja, clang (format/tidy/clangd),
 # gcc, gdb, lldb, Qt6 (base/declarative/tools), git, ripgrep, fd e rustup.
 # ---------------------------------------------------------------------------

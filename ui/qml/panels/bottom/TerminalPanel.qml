@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Terminal profissional (D2, docs/24): renderiza o GRID vindo do core
+// Terminal profissional (D2, docs/roadmaps/24): renderiza o GRID vindo do core
 // (event.terminal.render → { cols, rows, cursor, lines:[[span]] }) com cores,
 // cursor e atributos, e captura o teclado CARACTERE-A-CARACTERE, mandando
 // bytes crus pro PTY (incl. control chars). Calcula cols/rows do tamanho do
@@ -17,9 +17,13 @@ Item {
     signal openRequested()
     signal keyPressed(string data)
     signal resizeRequested(int cols, int rows)
+    // Rolagem explícita do histórico (barra, snap-to-bottom).
     signal scrollRequested(int offset)
+    // Gesto de roda cru; `modifiers` são os do Qt e só o CoreClient os traduz
+    // para o contrato. Quem decide o destino é o core (protocolo 0.60.0).
+    signal wheelRequested(int col, int row, int lines, int modifiers)
 
-    // D2.2 (docs/24): scrollback sintetico; estado/coalescencia vivem no
+    // D2.2 (docs/roadmaps/24): scrollback sintetico; estado/coalescencia vivem no
     // controller dedicado para serem testados fora da superficie visual.
     property alias scrollOffset: scrollController.scrollOffset
     readonly property int pendingScrollOffset:
@@ -41,11 +45,12 @@ Item {
     readonly property bool bracketedPaste: render
                                                   && render.bracketedPaste === true
 
-    // B2 (docs/24): quantas linhas cabem na tela e quanto histórico existe. O
+    // B2 (docs/roadmaps/24): quantas linhas cabem na tela e quanto histórico existe. O
     // core manda os dois no render (protocolo 0.43.0) — sem `scrollbackMax` a
     // UI não tem como desenhar uma barra proporcional nem saber se há o que
     // rolar (0 = terminal recém-aberto, "não rolar" é o correto).
     readonly property int gridRows: (render && render.rows) ? render.rows : 0
+    readonly property int gridCols: (render && render.cols) ? render.cols : 0
     readonly property int scrollbackMax: scrollController.scrollbackMax
     readonly property bool scrollIndicatorVisible: terminalViewport.scrollIndicatorVisible
     readonly property bool scrollIndicatorScrollable: terminalViewport.scrollIndicatorScrollable
@@ -69,23 +74,23 @@ Item {
         scrollController.queueScroll(next);
     }
 
-    // Rola `lines` linhas (positivo = pra cima/histórico). Clampado ao que
-    // existe, então a barra nunca mente.
-    function scrollBy(lines) {
-        scrollController.scrollBy(lines);
+    // R1 (docs/roadmaps/26 §4.6): a ÚNICA fonte de métricas de célula. Antes o
+    // painel media aqui (`TextMetrics.advanceWidth`/`height`) e cada consumidor
+    // arredondava do seu jeito — o cursor com `Math.floor`, o texto sem
+    // arredondar. Com a célula fracionária isso divergia até 0,95px, variando
+    // com a coluna. Agora a grade cai em pixel físico inteiro e todo mundo
+    // deriva daqui.
+    TerminalMetrics {
+        id: cellMetrics
+
+        fontFamily: Theme.monoFont
+        fontPixelSize: Theme.fontSizeTerminal
+        devicePixelRatio: Screen.devicePixelRatio
     }
 
-    TextMetrics {
-        id: metrics
-
-        font.family: Theme.monoFont
-        font.pixelSize: Theme.fontSizeTerminal
-        font.preferShaping: false
-        text: "M"
-    }
-
-    readonly property real charWidth: metrics.advanceWidth
-    readonly property real lineHeight: metrics.height
+    readonly property TerminalMetrics metrics: cellMetrics
+    readonly property real charWidth: cellMetrics.cellWidth
+    readonly property real lineHeight: cellMetrics.cellHeight
     property int pendingCols: 0
     property int pendingRows: 0
     property int lastRequestedCols: 0
@@ -95,8 +100,7 @@ Item {
         id: selectionController
 
         lines: panel.lines
-        charWidth: panel.charWidth
-        lineHeight: panel.lineHeight
+        metrics: cellMetrics
     }
 
     TerminalScrollController {
@@ -146,9 +150,12 @@ Item {
                 || terminalViewport.contentHeight <= 0) {
             return;
         }
-        const cols = Math.max(2, Math.floor(terminalContentWidth / charWidth));
-        const rows = Math.max(2, Math.floor(
-            terminalViewport.contentHeight / lineHeight));
+        // R1.4: o resize consome a mesma instância que o texto e o cursor. Se
+        // ele contasse células por conta própria, o grid pedido ao core poderia
+        // não ser o grid desenhado.
+        const cols = Math.max(2, cellMetrics.columnsIn(terminalContentWidth));
+        const rows = Math.max(2, cellMetrics.rowsIn(
+            terminalViewport.contentHeight));
         // Math.floor/Math.max chegam ao cache AOT como double. Comparar pela
         // distancia inteira evita -Wfloat-equal no C++ gerado pelo Qt.
         if (Math.abs(cols - lastRequestedCols) < 0.5
@@ -211,12 +218,12 @@ Item {
         lines: panel.lines
         cursor: panel.cursor
         selectionController: selectionController
+        metrics: cellMetrics
         terminalActive: panel.terminalActive
         scrollOffset: panel.scrollOffset
         scrollbackMax: panel.scrollbackMax
         gridRows: panel.gridRows
-        charWidth: panel.charWidth
-        lineHeight: panel.lineHeight
+        gridCols: panel.gridCols
         emptyText: panel.emptyText
         onContentWidthChanged: panel.recomputeSize()
         onContentHeightChanged: panel.recomputeSize()
@@ -230,15 +237,29 @@ Item {
     // A roda fica na composicao do terminal, como na implementacao D2
     // validada ao vivo. O viewport desenha; este nivel coordena input e não
     // perde o gesto para camadas internas de selecao/barra.
+    //
+    // O gesto é REPORTADO, não interpretado: a UI diz "rodou N linhas na célula
+    // (col,row) com estes modificadores" e o core decide se isso vira relatório
+    // à aplicação, cursor keys ou rolagem do histórico. A UI não tem como saber
+    // — o modo VT é estado do terminal.
     WheelHandler {
         target: null
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: function(event) {
-            if (scrollController.handleWheel(
-                        event.angleDelta.y, event.pixelDelta.y,
-                        panel.lineHeight)) {
-                event.accepted = true;
+            const lines = scrollController.linesFromWheel(
+                    event.angleDelta.y, event.pixelDelta.y, panel.lineHeight);
+            if (lines === 0) {
+                return;
             }
+            const cell = terminalViewport.cellAt(event.x, event.y);
+            // O ponteiro pode estar sobre a barra ou a margem: a célula
+            // reportada tem que existir na grade.
+            const col = Math.max(0, Math.min(
+                Math.max(0, panel.gridCols - 1), cell.col));
+            const row = Math.max(0, Math.min(
+                Math.max(0, panel.gridRows - 1), cell.row));
+            panel.wheelRequested(col, row, lines, event.modifiers);
+            event.accepted = true;
         }
     }
 }

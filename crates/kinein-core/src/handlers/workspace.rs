@@ -167,7 +167,7 @@ impl Core {
     }
 
     /// Rascunhos que DIFEREM do disco (recuperáveis após um crash) e apaga os
-    /// obsoletos (já salvos). Chamado no `workspace.open` (docs/23, M-S1).
+    /// obsoletos (já salvos). Chamado no `workspace.open` (docs/seguranca/23, M-S1).
     fn recover_drafts(&self) -> Vec<DraftInfo> {
         let Some(store) = self.drafts.as_ref() else {
             return Vec::new();
@@ -364,7 +364,7 @@ impl Core {
                         drop(workspace::record_recent_workspace(&opened));
                     }
                     // M-S1: abre a store local e recupera rascunhos não salvos
-                    // (buffers que sobreviveram a um crash da UI — docs/23).
+                    // (buffers que sobreviveram a um crash da UI — docs/seguranca/23).
                     self.drafts = if self.persistence_enabled {
                         db::DraftStore::open(Path::new(&opened.root))
                     } else {

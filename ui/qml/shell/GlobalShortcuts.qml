@@ -110,7 +110,7 @@ Item {
         onActivated: root.editorController.openGoToLine()
     }
 
-    // D1b (docs/24): Find/Replace NO ARQUIVO. Nao confundir com o
+    // D1b (docs/roadmaps/24): Find/Replace NO ARQUIVO. Nao confundir com o
     // Ctrl+Shift+F (busca no projeto, ripgrep no core).
     Shortcut {
         sequence: "Ctrl+F"

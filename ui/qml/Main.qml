@@ -24,29 +24,6 @@ Window {
     CoreClient {
         id: coreClient
     }
-    AssistantController {
-        id: assistantController
-
-        onProfilesRequested: coreClient.aiProfiles()
-        onTerminalOpenRequested: function(profileId) {
-            coreClient.aiTerminalOpen(profileId);
-        }
-        onTerminalInputRequested: function(id, data) {
-            coreClient.terminalInput(id, data);
-        }
-        onTerminalResizeRequested: function(id, cols, rows) {
-            coreClient.terminalResize(id, cols, rows);
-        }
-        onTerminalScrollRequested: function(id, offset) {
-            coreClient.terminalScroll(id, offset);
-        }
-        onTerminalCloseRequested: function(id) {
-            coreClient.terminalClose(id);
-        }
-        onProfilePreferenceRequested: function(profileId) {
-            settingsController.setGlobal({ aiCliProfile: profileId });
-        }
-    }
     WorkspaceController {
         id: workspaceController
 
@@ -89,7 +66,6 @@ Window {
         workspaceBuildSystems: coreClient.workspaceBuildSystems
         homeDir: coreClient.homeDir
         toolsCount: workspaceController.toolsList.length
-        assistantTerminalActive: assistantController.sessionId !== ""
         onFolderOpenRequested: function(path) {
             folderPicker.open(path);
         }
@@ -147,6 +123,9 @@ Window {
         }
         onTerminalScrollRequested: function(id, offset) {
             coreClient.terminalScroll(id, offset);
+        }
+        onTerminalWheelRequested: function(id, col, row, lines, modifiers) {
+            coreClient.terminalWheel(id, col, row, lines, modifiers);
         }
         onTerminalCloseRequested: function(id) {
             coreClient.terminalClose(id);
@@ -464,7 +443,6 @@ Window {
         debugController: debugController
         gitController: gitController
         diagnosticsController: diagnosticsController
-        assistantController: assistantController
         shellController: shellController
         projectTree: projectTree
         editorController: editorController
@@ -507,20 +485,14 @@ Window {
             if (coreClient.connected) {
                 coreClient.settingsGet();
                 recentWorkspacesController.listRequested();
-                assistantController.initialize();
             }
         }
 
         function onWorkspaceChanged() {
             coreClient.settingsGet();
-            assistantController.initialize();
         }
     }
 
-    AiBridgeEventRouter {
-        coreClient: coreClient
-        assistantController: assistantController
-    }
 
     Connections {
         target: settingsController
@@ -641,7 +613,6 @@ Window {
         gitController: gitController
         diagnosticsController: diagnosticsController
         searchController: searchController
-        assistantController: assistantController
         recentWorkspacesController: recentWorkspacesController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
