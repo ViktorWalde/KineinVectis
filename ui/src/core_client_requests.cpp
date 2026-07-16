@@ -113,6 +113,11 @@ void CoreClient::formatFile(const QString& path, const QString& content)
                 QJsonObject{{QStringLiteral("path"), path}, {QStringLiteral("text"), content}});
 }
 
+void CoreClient::formatCapabilities()
+{
+    sendRequest(QStringLiteral("format.capabilities"), QJsonObject{});
+}
+
 void CoreClient::renamePath(const QString& from, const QString& to)
 {
     sendRequest(QStringLiteral("fs.rename"),

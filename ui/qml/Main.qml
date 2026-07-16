@@ -478,6 +478,10 @@ Window {
     Connections {
         target: coreClient
 
+        function onFormatCapabilitiesListed(formatters) {
+            editorController.applyFormatCapabilities(formatters);
+        }
+
         function onConnectedChanged() {
             if (coreClient.connected && workspaceController.toolsList.length === 0) {
                 coreClient.detectTools();
@@ -485,6 +489,9 @@ Window {
             if (coreClient.connected) {
                 coreClient.settingsGet();
                 recentWorkspacesController.listRequested();
+                // O catalogo de formatters e estatico: pedir uma vez por
+                // conexao basta. A UI nao mantem lista propria (0.61.0).
+                coreClient.formatCapabilities();
             }
         }
 

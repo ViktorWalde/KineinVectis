@@ -5,7 +5,8 @@ use std::io;
 use std::path::Path;
 
 use kinein_protocol::{
-    FormatTextParams, FormatTextResult, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    FormatCapabilitiesResult, FormatTextParams, FormatTextResult, FormatterCapability,
+    JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -23,8 +24,24 @@ impl Core {
     ) -> Option<JsonRpcResponse> {
         match method {
             "format.text" => Some(self.format_text_response(request_id, params)),
+            "format.capabilities" => Some(Self::format_capabilities_response(request_id)),
             _ => None,
         }
+    }
+
+    /// `format.capabilities` (0.61.0): publica o catálogo de formatters para
+    /// a UI não manter uma segunda lista. Não exige workspace nem consulta o
+    /// `PATH` — é o mapa estático de extensões, derivado da mesma constante
+    /// que `formatter_for_path` usa para decidir.
+    fn format_capabilities_response(request_id: Option<Value>) -> JsonRpcResponse {
+        let formatters = format::capabilities()
+            .into_iter()
+            .map(|(kind, extensions)| FormatterCapability {
+                id: kind.id().to_owned(),
+                extensions: extensions.iter().map(|ext| (*ext).to_owned()).collect(),
+            })
+            .collect();
+        JsonRpcResponse::success(request_id, json!(FormatCapabilitiesResult { formatters }))
     }
 
     fn format_text_response(

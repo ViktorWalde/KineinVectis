@@ -1020,7 +1020,8 @@ compreensão do projeto, build, navegação semântica ou debug básico.
   o core deveria impor, (c) heurística sobre estado do backend, (d) montagem de
   comando/caminho e (e) regra por programa/ferramenta.
 
-  **Achado 1 — P2, real: a UI decide o que é formatável, duplicando o core.**
+  **Achado 1 — RESOLVIDO em 2026-07-16 (protocolo 0.61.0).** Era: a UI decidia
+  o que é formatável, duplicando o core.
   `ui/qml/editor/EditorController.qml`:
 
   ```qml
@@ -1034,11 +1035,24 @@ compreensão do projeto, build, navegação semântica ou debug básico.
 
   O core **já é a autoridade**: `format::formatter_for_path()` decide e o handler
   recusa com `InvalidParams` ("nenhum formatter registrado para esta extensão").
-  A UI mantém uma segunda lista, escrita à mão, que pode divergir — e diverge por
-  construção: `formattableLanguage` conhece 2 linguagens, `formattablePath`
-  conhece 9 extensões, e as duas listas nem concordam entre si. Adicionar
-  linguagem exige editar QML. Correção: a UI pergunta ou tenta e trata a recusa;
-  ela não mantém catálogo de formatter.
+  A UI mantinha uma segunda lista, escrita à mão, que divergia por construção:
+  `formattableLanguage` conhecia 2 linguagens, `formattablePath` conhecia 9
+  extensões, e as duas nem concordavam entre si. Adicionar linguagem exigia
+  editar QML.
+
+  Correção: `format.capabilities` publica o catálogo, derivado da MESMA
+  constante (`FORMATTER_EXTENSIONS`) que `formatter_for_path` usa para decidir —
+  o que a UI recebe é, por construção, o que o `format.text` aceita. A UI perdeu
+  as duas listas e passou a ter uma pergunta só, respondida pelo core, pedida uma
+  vez por conexão (o catálogo é estático). Capacidade e disponibilidade seguem
+  distintas: binário ausente no `PATH` continua sendo `TOOL_NOT_FOUND` do
+  `format.text`.
+
+  Cobertura: 3 testes Rust (catálogo publicado == decisão real, extensão fora do
+  catálogo, sem sobreposição entre formatters) e
+  `scripts/qml-harness/tst_format_capabilities.qml` — que falha se alguém
+  reintroduzir lista literal no QML, porque testa que **nada** é formatável antes
+  de o catálogo chegar.
 
   **Achado 2 — P3, latente: encoding VT mora na UI.**
   `TerminalInputController.qml` traduz tecla em bytes (`\x1b[A` vs `\x1bOA`

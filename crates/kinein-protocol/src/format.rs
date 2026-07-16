@@ -12,6 +12,36 @@ pub struct FormatTextParams {
     pub text: String,
 }
 
+/// Um formatter registrado e as extensões que ele atende.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FormatterCapability {
+    /// Identificador estável do formatter (e nome do binário no `PATH`).
+    pub id: String,
+    /// Extensões, minúsculas e sem ponto, que este formatter atende.
+    pub extensions: Vec<String>,
+}
+
+/// Result of `format.capabilities`: o catálogo de formatters do core.
+///
+/// Existe para a UI **não manter uma segunda lista**. Até o protocolo 0.61.0 o
+/// `EditorController` decidia sozinho o que era formatável, com duas listas
+/// escritas à mão (`formattableLanguage` por linguagem e `formattablePath` por
+/// extensão) que nem concordavam entre si — enquanto o core já era a autoridade
+/// via `format::formatter_for_path`. Duas fontes para a mesma verdade divergem
+/// por construção. Agora o core publica e a UI consome.
+///
+/// O catálogo é ESTÁTICO (mapa puro de extensão), então a UI pode buscá-lo uma
+/// vez e guardar; ele não muda com o workspace nem com a presença do binário.
+/// Formatter ausente no `PATH` continua sendo erro de `format.text`, não de
+/// capacidade — são perguntas diferentes.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FormatCapabilitiesResult {
+    /// Formatters registrados, cada um com suas extensões.
+    pub formatters: Vec<FormatterCapability>,
+}
+
 /// Result of `format.text`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

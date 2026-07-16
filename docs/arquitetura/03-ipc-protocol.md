@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.60.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.61.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
@@ -373,7 +373,7 @@ o buffer e exige a escolha explícita entre recarregar o disco ou manter o
 local. `event.fs.watchError` é visível, mas a proteção compare-before-save
 continua ativa mesmo sem watcher.
 
-### Formatação de buffer (`format.text`)
+### Formatação de buffer (`format.text` / `format.capabilities`)
 
 Implementado no protocolo `0.21.0` (fatia M1.1 de
 `docs/diario/18-daily-driver-plan.md`). Requer workspace aberto. Formata o conteúdo
@@ -394,6 +394,21 @@ workspace, então `rustfmt.toml`/`.clang-format` do projeto valem.
 - `changed: false` quando a saída é idêntica ao texto enviado.
 - Binário ausente no `PATH` → `TOOL_NOT_FOUND` (com `data.tool`); formatter
   com exit ≠ 0 → `INTERNAL_ERROR` com o stderr na mensagem.
+- `format.capabilities {}` → `{ formatters: [ { id, extensions[] } ] }`
+  (`0.61.0`). **Não** requer workspace: é o mapa estático de extensões, derivado
+  da mesma constante que `formatter_for_path` usa para decidir — o que a UI
+  recebe é, por construção, o que o `format.text` vai aceitar.
+
+  **Invariante de camada.** Quem decide o que é formatável é o core; a UI
+  consome. Até `0.60.0` o `EditorController.qml` mantinha duas listas escritas à
+  mão (`formattableLanguage` por linguagem, `formattablePath` por extensão) que
+  não concordavam entre si nem com o core, e adicionar linguagem exigia editar
+  QML. Duas fontes para a mesma verdade divergem por construção.
+
+  Capacidade e disponibilidade são perguntas **distintas**: `format.capabilities`
+  responde "existe formatter registrado para esta extensão"; se o binário está no
+  `PATH` só se descobre ao rodar `format.text` (`TOOL_NOT_FOUND`). O catálogo não
+  muda com o workspace, então a UI pode pedi-lo uma vez por conexão.
 - Operação síncrona por ser curta (um buffer); "formatar workspace inteiro"
   viraria job, e fica fora deste contrato.
 

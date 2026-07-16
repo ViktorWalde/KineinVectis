@@ -35,16 +35,40 @@ impl FormatterKind {
     }
 }
 
+/// Extensões que cada formatter atende. **Fonte única** do mapa
+/// extensão → formatter: `formatter_for_path` decide por aqui e
+/// `format.capabilities` publica isto para a UI. Uma segunda lista em qualquer
+/// lugar (inclusive no QML) diverge desta por construção — foi exatamente o que
+/// aconteceu até o protocolo 0.61.0.
+const FORMATTER_EXTENSIONS: [(FormatterKind, &[&str]); 2] = [
+    (FormatterKind::Rustfmt, &["rs"]),
+    (
+        FormatterKind::ClangFormat,
+        &["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx"],
+    ),
+];
+
+/// Catálogo de formatters registrados.
+///
+/// Existe para o core ser a única autoridade sobre o que é formatável. Estático:
+/// não depende de workspace nem de o binário existir no `PATH` — isso é assunto
+/// de `format.text`, não de capacidade.
+#[must_use]
+pub fn capabilities() -> Vec<(FormatterKind, &'static [&'static str])> {
+    FORMATTER_EXTENSIONS.to_vec()
+}
+
 /// Picks the formatter for `path` by file extension, or `None` when the
 /// extension has no registered formatter.
 #[must_use]
 pub fn formatter_for_path(path: &Path) -> Option<FormatterKind> {
     let extension = path.extension()?.to_str()?.to_lowercase();
-    match extension.as_str() {
-        "rs" => Some(FormatterKind::Rustfmt),
-        "c" | "cc" | "cpp" | "cxx" | "h" | "hh" | "hpp" | "hxx" => Some(FormatterKind::ClangFormat),
-        _ => None,
-    }
+    // Derivado do MESMO mapa que `capabilities()` publica: o que a UI recebe é,
+    // por construção, o que esta função vai aceitar.
+    FORMATTER_EXTENSIONS
+        .iter()
+        .find(|(_kind, extensions)| extensions.contains(&extension.as_str()))
+        .map(|(kind, _extensions)| *kind)
 }
 
 /// Builds the formatter invocation for `path`, rooted at the workspace `root`.
@@ -210,5 +234,62 @@ mod tests {
             }
             other => panic!("esperava Failed, veio {other:?}"),
         }
+    }
+}
+
+#[cfg(test)]
+mod capability_tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    /// O ponto da fatia 0.61.0: o catálogo que a UI recebe e a decisão que o
+    /// core toma vêm da MESMA fonte. Se alguém adicionar uma extensão em um
+    /// lugar e esquecer o outro, isto quebra — que era o defeito que existia,
+    /// só que entre core e QML, onde nenhum teste alcançava.
+    #[test]
+    fn catalogo_publicado_bate_com_a_decisao_real() {
+        for (kind, extensions) in capabilities() {
+            for extension in extensions {
+                let caminho = PathBuf::from(format!("arquivo.{extension}"));
+                assert_eq!(
+                    formatter_for_path(&caminho),
+                    Some(kind),
+                    "extensao .{extension} esta no catalogo mas nao e aceita"
+                );
+                // Maiúsculas resolvem igual: o mapa normaliza.
+                let alto = PathBuf::from(format!("arquivo.{}", extension.to_uppercase()));
+                assert_eq!(formatter_for_path(&alto), Some(kind));
+            }
+        }
+    }
+
+    #[test]
+    fn extensao_fora_do_catalogo_nao_tem_formatter() {
+        for extensao in ["md", "txt", "json", "toml", "py", ""] {
+            let caminho = PathBuf::from(format!("arquivo.{extensao}"));
+            assert!(
+                formatter_for_path(&caminho).is_none(),
+                ".{extensao} nao deveria ter formatter"
+            );
+        }
+        assert!(formatter_for_path(&PathBuf::from("SemExtensao")).is_none());
+    }
+
+    /// Nenhuma extensão pode pertencer a dois formatters: a decisão seria
+    /// ambígua e dependeria da ordem da constante.
+    #[test]
+    fn extensoes_nao_se_repetem_entre_formatters() {
+        let mut vistas: Vec<&str> = Vec::new();
+        for (_kind, extensions) in capabilities() {
+            for extension in extensions {
+                assert!(
+                    !vistas.contains(extension),
+                    "extensao .{extension} aparece em dois formatters"
+                );
+                vistas.push(extension);
+            }
+        }
+        assert!(!vistas.is_empty());
     }
 }

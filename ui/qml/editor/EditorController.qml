@@ -303,20 +303,41 @@ Item {
     property var pendingSaveAllQueue: []
     property var pendingSaveAllItem: null
 
-    function formatOnSaveEnabled() {
-        return settingsController !== null && settingsController.formatOnSave;
+    // Catálogo de formatters publicado pelo core (`format.capabilities`,
+    // protocolo 0.61.0). A UI **não decide** o que é formatável.
+    //
+    // Até 0.60 havia duas listas escritas à mão aqui — `formattableLanguage()`
+    // por linguagem (2 itens) e `formattablePath()` por extensão (9 itens) — que
+    // nem concordavam entre si, enquanto o core já era a autoridade via
+    // `format::formatter_for_path`. Duas fontes para a mesma verdade divergem
+    // por construção; adicionar linguagem exigia editar QML. Agora o core
+    // publica e isto só consome.
+    //
+    // Vazio até o catálogo chegar: não formatar por não saber ainda é o
+    // comportamento seguro — salvar nunca fica bloqueado por isso.
+    property var formatterExtensions: []
+
+    function applyFormatCapabilities(formatters) {
+        const extensions = [];
+        for (let i = 0; i < formatters.length; i++) {
+            const lista = formatters[i].extensions || [];
+            for (let j = 0; j < lista.length; j++) {
+                extensions.push(String(lista[j]).toLowerCase());
+            }
+        }
+        formatterExtensions = extensions;
     }
 
-    function formattableLanguage() {
-        const language = editorSurface.language;
-        return language === "rust" || language === "cpp";
+    function formatOnSaveEnabled() {
+        return settingsController !== null && settingsController.formatOnSave;
     }
 
     function saveCurrentFile() {
         if (pendingSaveAllItem !== null || pendingSaveAllQueue.length > 0) {
             return;
         }
-        if (formatOnSaveEnabled() && editableFileOpen() && formattableLanguage()) {
+        if (formatOnSaveEnabled() && editableFileOpen()
+                && formattablePath(documents.currentFilePath())) {
             pendingSaveAfterFormat = true;
             formatCurrentFile();
             return;
@@ -324,13 +345,16 @@ Item {
         documents.saveCurrentFile();
     }
 
+    // Única pergunta de formatabilidade da UI, respondida pelo catálogo do
+    // core. Antes existiam duas, com listas diferentes.
     function formattablePath(path) {
-        const lower = path.toLowerCase();
-        return lower.endsWith(".rs") || lower.endsWith(".c")
-                || lower.endsWith(".cc") || lower.endsWith(".cpp")
-                || lower.endsWith(".cxx") || lower.endsWith(".h")
-                || lower.endsWith(".hh") || lower.endsWith(".hpp")
-                || lower.endsWith(".hxx");
+        const ponto = path.lastIndexOf(".");
+        const barra = path.lastIndexOf("/");
+        if (ponto <= barra + 1) {
+            return false;   // sem extensão ("Makefile", ".bashrc")
+        }
+        return formatterExtensions.indexOf(
+            path.substring(ponto + 1).toLowerCase()) >= 0;
     }
 
     function saveAllFiles() {

@@ -389,6 +389,11 @@ bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& re
         emit fileSaved(result.value(QStringLiteral("path")).toString());
         return true;
     }
+    if (method == QStringLiteral("format.capabilities")) {
+        emit formatCapabilitiesListed(
+            result.value(QStringLiteral("formatters")).toArray().toVariantList());
+        return true;
+    }
     if (method == QStringLiteral("format.text")) {
         emit fileFormatted(result.value(QStringLiteral("path")).toString(),
                            result.value(QStringLiteral("text")).toString(),

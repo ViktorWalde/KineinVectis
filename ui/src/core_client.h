@@ -87,6 +87,12 @@ public:
     Q_INVOKABLE void writeFile(const QString& path, const QString& content,
                                const QString& expectedContent);
     Q_INVOKABLE void formatFile(const QString& path, const QString& content);
+    /// Pede o catalogo de formatters (`format.capabilities`, 0.61.0).
+    ///
+    /// A UI NAO decide o que e formatavel: ate 0.60 ela mantinha duas listas
+    /// escritas a mao que divergiam entre si e do core. O catalogo e estatico,
+    /// entao basta pedir uma vez ao conectar.
+    Q_INVOKABLE void formatCapabilities();
     Q_INVOKABLE void renamePath(const QString& from, const QString& to);
     Q_INVOKABLE void deletePath(const QString& path);
     Q_INVOKABLE void listCommands();
@@ -210,6 +216,7 @@ signals:
     void pathDeleted(const QString& path);
     void commandsListed(const QVariantList& commands);
     void toolsListed(const QVariantList& tools);
+    void formatCapabilitiesListed(const QVariantList& formatters);
     void cmakeStatusResolved(bool configured, bool hasCompileCommands);
     void cmakeConfigureFinished(bool success);
     void cargoMetadataResolved(int packages);
