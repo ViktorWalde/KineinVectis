@@ -212,7 +212,22 @@ PRÓXIMO GESTO
    único faz a UI mostrar completion vazia parecendo bug por segundos — insumo
    direto para o scheduler de B3/M5.3. O aquecido é ~0,5 ms nos dois: o
    round-trip da Kinein não é o gargalo, o custo é externo e de primeira vez.
-   Seguir para A3.3 (digitação tecla→frame e rajada do terminal).
+   Seguir para A3.3.
+4. **A3.3 PARCIAL em 2026-07-16** (`docs/roadmaps/21` §A3.3). Rajada do PTY
+   FEITA: 50 mil linhas até o marcador em 59 ms, vão máximo entre frames de
+   33 ms (bate a constante `FRAME` do core — a UI é servida a 30fps durante a
+   saída), scrollback real, sem perda. Duas armadilhas achadas, ambas dando
+   número falso: o eco do shell casava com o marcador antes da saída (50 mil
+   linhas em 1,5 ms!) e rajada de 3 mil linhas cabe num frame só, sem
+   "durante" para medir. Corrigida também uma armadilha pré-existente: o
+   `medir-performance.sh` media o core DEBUG por padrão, 34x mais lento, sem
+   avisar.
+   **FALTA o item 1: harness Qt de digitação tecla→frame.** Exige medir dentro
+   do processo da UI sobre o editor real, que depende do módulo `KineinVectis`
+   e não roda no runner dos 13 harnesses (todos QtQuick puro). Caminho: modo
+   opt-in por env no `main.cpp`, ao lado do `KINEIN_PERF_MARKER`. Fatia
+   própria; o `p95` já está implementado e serve aos dois cenários.
+   Depois: A3.4 (orçamento versionado e reação a regressões) fecha o L0.
 3. Encerrada A3, auditar EditorConfig como primeira integração pequena
    recomendada. Não iniciar um host genérico de plugins.
 4. Dogfooding em tempo integral: o usuário saiu do CLion e passou a usar a

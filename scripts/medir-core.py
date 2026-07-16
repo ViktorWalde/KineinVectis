@@ -12,6 +12,12 @@ Chamado por scripts/medir-performance.sh. Mede, tudo LOCAL (sem rede):
      determinística de tamanho explícito. Sem rede, sem LSP. O snapshot é
      validado estruturalmente: número rápido com resposta vazia é o parser
      falhando, não acertando.
+  A3.3 Terminal: rajada determinística do PTY, `terminal.input` até o frame
+     que contém o marcador final. Mede mediana, p95, o maior vão entre
+     renders (proxy de UI interativa durante a saída) e o scrollback. O
+     marcador é montado pelo `printf` em runtime: escrito literal na linha de
+     comando, o eco do shell o mostraria antes de qualquer saída e a medição
+     casaria com o eco — foi o que aconteceu na primeira versão.
   A3.2 LSP: primeira resposta ÚTIL de `lsp.semanticTokens` e `lsp.completion`
      por servidor (rust-analyzer e clangd, separados), em projeto próprio e
      mínimo. Ferramenta ausente => `n/d` explícito. O contrato diz que
@@ -24,10 +30,12 @@ Imprime linhas `chave=valor` para o shell parsear.
 """
 import json
 import os
+import queue
 import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 
@@ -444,6 +452,135 @@ def measure_lsp(core, tool, arquivos, rel, posicao, n, limite_s=90):
                 pass
 
 
+def percentil(samples, p):
+    """Cauda visivel. A3.3 exige p95 alem da mediana: uma travada de digitacao
+    desaparece na mediana e e exatamente ela que o usuario sente."""
+    if not samples:
+        return "n/d"
+    s = sorted(samples)
+    idx = min(len(s) - 1, int(round((p / 100.0) * (len(s) - 1))))
+    return f"{s[idx]:.1f}"
+
+
+def measure_terminal_burst(core, n, linhas=50_000, limite_s=60):
+    """A3.3 item 3: rajada DETERMINISTICA do PTY, `terminal.input` -> frame.
+
+    Reusa a mecanica da sonda existente (thread leitora + pump), porque o
+    `make_rpc` sincrono descartaria os `event.terminal.render`, que sao
+    notificacoes assincronas.
+
+    Mede o que o aceite pede:
+      - `to_marker_ms`: do input ate o frame que CONTEM o marcador final. Se o
+        marcador nunca aparece, houve perda de input ou de saida — falha, nao
+        numero.
+      - `max_gap_ms`: maior intervalo entre renders durante a rajada. E o proxy
+        de "UI interativa durante a saida": o core coalesce a ~33 ms (30fps),
+        entao um vao grande significa starvation, nao economia.
+      - `scrollback`: histórico cresceu de verdade.
+
+    50 mil linhas nao e numero redondo: e o MENOR tamanho que atravessa varias
+    janelas de coalescencia. Com 3 mil a rajada acaba dentro do primeiro frame e
+    nao existe "durante" para medir — o cenario passaria sem testar nada.
+
+    ARMADILHA que este probe ja caiu: o shell ECOA o comando digitado, entao um
+    marcador escrito literalmente na linha de comando aparece na tela ANTES de
+    qualquer saida. A primeira versao media isso e reportava 50 mil linhas em
+    1,5 ms com scrollback 0 — casando com o eco, nao com o resultado. Por isso o
+    marcador e montado pelo `printf` em tempo de execucao: o texto digitado
+    contem `FIM-%s-RAJADA` e a saida contem `FIM-<token>-RAJADA`, que so pode
+    ter vindo do programa. Marcador unico por amostra tambem impede casar com o
+    grid de uma amostra anterior.
+    """
+    amostras, gaps_max, scrollbacks = [], [], []
+    for i in range(n):
+        token = f"{i}{int(time.perf_counter() * 1e6) % 1000000}"
+        marcador = f"FIM-{token}-RAJADA"
+        proc = spawn(core)
+        inbox = queue.Queue()
+
+        def _reader(stream=proc.stdout):
+            for line in stream:
+                inbox.put(line)
+
+        threading.Thread(target=_reader, daemon=True).start()
+        estado = {"id": 0}
+
+        def send(method, params):
+            estado["id"] += 1
+            proc.stdin.write(json.dumps({
+                "jsonrpc": "2.0", "id": estado["id"],
+                "method": method, "params": params}) + "\n")
+            proc.stdin.flush()
+            return estado["id"]
+
+        tmp = tempfile.mkdtemp(prefix="kinein-perf-burst-")
+        send("workspace.open", {"path": tmp})
+        abrir = send("terminal.open", {})
+
+        term_id, fim = None, time.time() + 10
+        while term_id is None and time.time() < fim:
+            try:
+                msg = json.loads(inbox.get(timeout=0.2))
+            except queue.Empty:
+                continue
+            if msg.get("id") == abrir and "result" in msg:
+                term_id = msg["result"]["id"]
+        if term_id is None:
+            proc.kill()
+            return {"estado": "n/d (terminal.open sem resposta)"}
+
+        # Deixa o shell assentar: o prompt inicial nao e a rajada.
+        time.sleep(1.0)
+        while not inbox.empty():
+            inbox.get()
+
+        t0 = time.perf_counter()
+        # `printf` monta o marcador: o eco da linha mostra `FIM-%s-RAJADA`,
+        # a saida mostra `FIM-<token>-RAJADA`. Casar so pode ser o resultado.
+        comando = f"seq 1 {linhas}; printf 'FIM-%s-RAJADA\\n' {token}\r"
+        send("terminal.input", {"id": term_id, "data": comando})
+
+        achou, ultimo_render, gaps, scrollback = False, t0, [], 0
+        fim = time.time() + limite_s
+        while not achou and time.time() < fim:
+            try:
+                msg = json.loads(inbox.get(timeout=0.2))
+            except queue.Empty:
+                continue
+            if msg.get("method") != "event.terminal.render":
+                continue
+            agora = time.perf_counter()
+            gaps.append((agora - ultimo_render) * 1000.0)
+            ultimo_render = agora
+            params = msg["params"]
+            scrollback = max(scrollback, params.get("scrollbackMax", 0))
+            texto = "".join(
+                span["text"] for linha in params["lines"] for span in linha)
+            if marcador in texto:
+                amostras.append((agora - t0) * 1000.0)
+                achou = True
+
+        proc.stdin.close()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+        if not achou:
+            return {"estado": f"n/d (marcador ausente em {limite_s}s: perda de input/saida)"}
+        gaps_max.append(max(gaps) if gaps else 0.0)
+        scrollbacks.append(scrollback)
+
+    return {
+        "estado": "ok",
+        "to_marker_ms": median_ms(amostras),
+        "to_marker_p95_ms": percentil(amostras, 95),
+        "max_gap_ms": median_ms(gaps_max),
+        "scrollback": min(scrollbacks) if scrollbacks else 0,
+        "linhas": linhas,
+    }
+
+
 def measure_rss_with_lsp(core, root):
     proc = spawn(core)
     rpc = make_rpc(proc)
@@ -479,6 +616,17 @@ def main():
     # A3.2: cada servidor separado. Ausente => n/d explicito, nunca sucesso
     # falso. `first` carrega startup+indexacao EXTERNOS; `warm` e o round-trip
     # da Kinein — sao numeros de naturezas diferentes e nao se somam.
+    # A3.3 item 3: rajada do PTY. `terminal.input` -> frame com o marcador.
+    r = measure_terminal_burst(core, n)
+    if r["estado"] != "ok":
+        print(f"terminal_burst={r['estado']}")
+    else:
+        print(f"terminal_burst_lines={r['linhas']}")
+        print(f"terminal_burst_to_marker_ms={r['to_marker_ms']}")
+        print(f"terminal_burst_to_marker_p95_ms={r['to_marker_p95_ms']}")
+        print(f"terminal_burst_max_gap_ms={r['max_gap_ms']}")
+        print(f"terminal_burst_scrollback={r['scrollback']}")
+
     for tool, arquivos, rel, pos in [
         ("rust-analyzer", PROJETO_RUST, "src/main.rs", (22, 18)),
         ("clangd", PROJETO_CPP, "main.cpp", (18, 11)),

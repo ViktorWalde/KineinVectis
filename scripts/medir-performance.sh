@@ -74,7 +74,19 @@ echo "   -> UI VmRSS: $((ui_rss_kb / 1024)) MB"
 echo
 
 # --- B, C, D(core+LSP) via stdio ---
-echo "-- B/C/D2/A3.1. Core (stdio: workspace.open, fs.read 10k, RSS+LSP, sintaxe) --"
+# Qual binario foi medido NAO pode ficar implicito: o default de CORE_BIN e o
+# build DEBUG, e Rust sem otimizacao e ~34x mais lento no Tree-sitter (11 s vs
+# 323 ms na mesma fixture). Numero de perf sem o binario ao lado nao significa
+# nada — e o release que o usuario roda.
+echo "-- binarios medidos --"
+echo "   UI  : $UI_BIN"
+echo "   CORE: $CORE_BIN"
+case "$CORE_BIN" in
+    *release*) ;;
+    *) echo "   AVISO: core NAO-release. Os numeros nao sao comparaveis ao orcamento." >&2 ;;
+esac
+echo
+echo "-- B/C/D2/A3.1/A3.3. Core (stdio: workspace.open, fs.read, RSS+LSP, sintaxe, rajada) --"
 core_out="$(python3 "$REPO_ROOT/scripts/medir-core.py" "$CORE_BIN" "$REPO_ROOT" "$N")"
 echo "$core_out" | sed 's/^/   /'
 echo

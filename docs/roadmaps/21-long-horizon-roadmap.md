@@ -303,8 +303,53 @@ vale.
 A3.2 item 4 cumprido: nenhum processo sobrevive à amostra (`finally` fecha o
 core e espera; `pgrep` de `rust-analyzer`/`clangd` volta zero ao fim).
 
-**Continuação A3.** A mesma infraestrutura será estendida, nesta ordem, para
-digitação tecla→frame e
+#### A3.3 — rajada do terminal (item 3 feito em 2026-07-16; item 1 em aberto)
+
+**Feito — rajada determinística do PTY** (`terminal.input` → frame com o
+marcador final), reusando a mecânica da sonda existente (thread leitora +
+pump), porque o `make_rpc` síncrono descartaria os `event.terminal.render`.
+
+| Métrica (N=3, release, 50 000 linhas) | Medido | Orçamento |
+| --- | ---: | ---: |
+| `terminal_burst_to_marker_ms` | 59 ms | 250 ms |
+| `terminal_burst_to_marker_p95_ms` | 59 ms | 300 ms |
+| `terminal_burst_max_gap_ms` | 33 ms | 100 ms |
+| `terminal_burst_scrollback` | 5000 | > 0 |
+
+`max_gap` bate exatamente a constante `FRAME = 33 ms` do core: durante a rajada
+os frames continuam a 30fps, então a UI não engasga. 200 mil linhas (~1,4 MB)
+chegam ao marcador em 94 ms com o mesmo vão máximo. Aceite atendido: marcador
+presente (logo sem perda), scrollback real, UI servida durante a saída.
+
+**Duas armadilhas que a fatia encontrou, ambas produzindo número falso:**
+
+1. *O eco do shell.* A primeira versão escrevia o marcador literal na linha de
+   comando. O shell **ecoa** o que é digitado, então o marcador aparecia na tela
+   antes de qualquer saída e a medição casava com o eco: reportou 50 mil linhas
+   em **1,5 ms com scrollback 0**. Agora o marcador é montado pelo `printf` em
+   runtime — o texto digitado tem `FIM-%s-RAJADA`, a saída tem
+   `FIM-<token>-RAJADA`, que só pode ter vindo do programa.
+2. *O tamanho da rajada.* Com 3 mil linhas tudo cabe na primeira janela de
+   coalescência: `max_gap == to_marker`, um render só, e não existe "durante"
+   para medir — o cenário passaria sem testar nada. 50 mil é o menor tamanho que
+   atravessa várias janelas.
+
+**Armadilha pré-existente corrigida:** `CORE_BIN` cai por padrão em
+`target/debug/kinein-core`. Rust sem otimização é ~34x mais lento no Tree-sitter
+(11 155 ms contra 315 ms na mesma fixture), e o script não dizia qual binário
+media. Agora ele imprime os binários e avisa em `stderr` quando o core não é
+release. Número de performance sem o binário ao lado não significa nada.
+
+**Em aberto — item 1: harness Qt de digitação tecla→frame.** Não implementado.
+Ele exige medir dentro do processo da UI (tecla recebida → `frameSwapped`) sobre
+o editor real, e o editor depende do módulo `KineinVectis`, então não roda no
+runner `qml` dos 13 harnesses atuais — todos são de QtQuick puro. O caminho
+natural é um modo `opt-in` por env no `main.cpp`, ao lado do
+`KINEIN_PERF_MARKER` que já existe, injetando teclas sintéticas e cronometrando
+até o frame. Fatia própria; o `p95` já está implementado (`percentil()`) e serve
+aos dois cenários quando ela chegar.
+
+**Continuação A3.** Falta o item 1 acima e
 rajada PTY→frame. A fila executável e critérios estão em `PONTO_ATUAL.md`, A3.1
 a A3.4; não criar um segundo runner. Referências profissionais consultadas:
 
