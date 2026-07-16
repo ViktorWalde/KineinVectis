@@ -1695,13 +1695,19 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   copiado ou portado. Referências anteriores mantidas: Zed
   `1e22d1a83f8b1b7acc528d15cfab0644852380c0` (separação client/server, Mode-D) e
   documentação oficial Qt 6 sobre `Window.title`, flags e janela frameless.
-- Gates verdes (2026-07-15): builds debug-strict, dev-local e release-hardened;
-  qmllint estrito; 12 harnesses de lógica QML; clang-format + clang-tidy; smoke
-  offscreen de 8s vivo (`exit 124`) sem erro de QML nos binários debug e release.
-  O release-hardened foi reconstruído para o launcher servir este código. Aceite
-  real pendente: clicar Minimizar/Maximizar/Restaurar/Fechar, arraste, duplo
-  clique e resize das oito bordas em Wayland/X11 — smoke offscreen não substitui
-  esse gesto (docs/20).
+- Gates verdes (2026-07-15): `scripts/verificar.sh` integral (Rust fmt/clippy/
+  testes, C++ clang-format/clang-tidy, qmllint estrito, 12 harnesses de lógica
+  QML, builds debug e release); smoke offscreen de 8s vivo (`exit 124`) sem erro
+  de QML nos binários debug e release. Correções durante a validação:
+  `WindowChromeController` não pode ser `final` (o `QML_ELEMENT` deriva dele);
+  o mapeamento de bordas usa `Qt::Edges::fromInt` (sem bitwise com sinal);
+  `WindowControls` é `Row`, então `implicitWidth/Height` são read-only.
+- **Aceite real (2026-07-15):** o usuário testou em Fedora/Wayland e confirmou
+  que os controles funcionam. A regressão P2 está encerrada. O release-hardened
+  foi reconstruído e um AppImage novo (0.1.0) foi gerado e testado com este
+  código a pedido do usuário, que passa a usar a Kinein no lugar do CLion para
+  ganhar o log da aba IDE como vantagem de dogfooding. Commit local `3543de9`
+  (feature) mais o commit de aceite; sem push.
 
 ## Escalonamento linear das integrações solicitadas (2026-07-15)
 

@@ -394,13 +394,13 @@ guiado pelo estado real da janela; atualização quando o estado externo muda.
 Adaptação nativa em Qt/QML — nenhum código, Swing/JBR ou classe do IntelliJ foi
 copiado ou portado.
 
-**Estado de aceite:** gates automatizados verdes — builds debug-strict,
-dev-local e release-hardened; qmllint estrito; 12 harnesses de lógica QML;
-clang-format + clang-tidy; smoke offscreen de 8s vivo (`exit 124`) sem erro de
-QML. Conforme os próprios critérios acima, o aceite dos controles depende do
-gesto real do usuário em Wayland/X11 (clique, teclado, foco, arraste, duplo
-clique e resize das oito bordas em janela normal, maximizada e restaurada); o
-smoke offscreen sozinho não serve como aceite.
+**Estado de aceite — ACEITO (2026-07-15):** gates automatizados verdes
+(`scripts/verificar.sh` integral + smoke offscreen `exit 124`) e, sobretudo, o
+usuário testou em Fedora/Wayland e confirmou que Minimizar, Maximizar/Restaurar,
+Fechar, arraste, duplo clique e resize das oito bordas funcionam. A regressão P2
+está encerrada. Um AppImage 0.1.0 novo foi gerado e testado com este código. O
+polimento restante (snap, escala fracionária, multimonitor auditados) segue como
+fatia P3 própria abaixo.
 
 **Fatia futura, sem big-bang:** transformar a App Bar existente na decoração
 client-side original da Kinein, suave e compacta, inspirada no nível de

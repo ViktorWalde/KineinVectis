@@ -143,6 +143,12 @@ ESTADO
   worker não é um build nativo. `dist/` só recebe por staging o conjunto
   completo AppImage/checksum/instalador/Tutorial, preservando a entrega anterior
   em caso de falha.
+- Barra da janela agora é client-side: `Main.qml` usa `FramelessWindowHint` e a
+  App Bar hospeda Minimizar, alternável Maximizar/Restaurar e Fechar
+  (`WindowControls.qml`), guiados pelo `QWindow` via `WindowChromeController`
+  (`ui/src/window_chrome_controller.*`). Região livre arrasta/duplo-clica;
+  `WindowResizeHandles.qml` cobre as oito bordas. ACEITO pelo usuário em
+  Fedora/Wayland (2026-07-15); regressão P2 encerrada. Ver `docs/20` §barra.
 
 VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - `scripts/verificar.sh` completo: verde; binários release do atalho de
@@ -182,23 +188,35 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - A baseline release A3 com `N=3` passou os orçamentos: 250 ms primeiro frame,
   103 MB UI, 3,4 ms workspace, 0,0 ms leitura 10k e 7 MB core. A expansão
   A3.1–A3.4 está detalhada abaixo; Code OSS/Zed e resultados estão em docs/21.
+- Controles de janela (barra client-side): `scripts/verificar.sh` integral verde
+  + smoke offscreen debug/release (`exit 124`); ACEITO pelo usuário em
+  Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
 
 PRÓXIMO GESTO
-1. O usuário já pode testar de novo com `scripts/kinein-vectis`; desta vez UI e
-   core release foram comprovadamente reconstruídos. Isso é confirmação, não
-   reabertura automática do cursor adiado.
+1. Os controles de janela estão aceitos e já embarcados no AppImage novo de
+   `dist/`. Não reabrir essa fatia; o polimento P3 (snap/escala/multimonitor) de
+   `docs/20` é opcional e não bloqueia o roadmap.
 2. Implementar **A3.1 — estrutura local Tree-sitter** estendendo somente
-   `medir-core.py`/`medir-performance.sh`; depois seguir A3.2–A3.4.
+   `medir-core.py`/`medir-performance.sh` (ver §2 A3.1 abaixo): medir
+   `syntax_first_snapshot_ms` e `syntax_incremental_update_ms` com fixture
+   versionada e validação de snapshot não vazio; registrar mediana e orçamento
+   inicial em `docs/21`. Depois seguir A3.2–A3.4.
 3. Encerrada A3, auditar EditorConfig como primeira integração pequena
    recomendada. Não iniciar um host genérico de plugins.
-4. Se o usuário retomar o cursor, voltar por R0 de `docs/26`, nunca por offset.
-5. Não gerar novo AppImage enquanto essa revisão não tiver aceite explícito;
-   `dist/` continua sendo a entrega anterior preservada.
+4. Dogfooding em tempo integral: o usuário saiu do CLion e passou a usar a
+   Kinein para ganhar o log da aba IDE como vantagem de desenvolvimento. Cada
+   atrito ou saída para outra ferramenta vira o topo do backlog
+   (ação/esperado/observado/ambiente), na frente de A3.
+5. Se o usuário retomar o cursor/TUI, voltar por R0 de `docs/26`, nunca por
+   offset.
 
 RESULTADO PENDENTE
 - Cursor/TUI reprovado no gesto humano e adiado; causa visual ainda aberta.
 - R0–R7 detalhados em `docs/26-terminal-rendering-parity-roadmap.md`.
-- Novo AppImage e seus smokes host/Debian somente depois desse aceite.
+- O AppImage 0.1.0 de 2026-07-15 foi regenerado a pedido do usuário para
+  embarcar a barra client-side aceita; ele carrega o estado atual do cursor/TUI,
+  que o usuário optou por não deixar bloquear a entrega. Não regerar o AppImage
+  *por causa do cursor* antes do aceite visual dele.
 - Se qualquer gesto falhar, registrar ação/esperado/observado/ambiente e
   priorizar a regressão antes de A3.
 
@@ -238,7 +256,7 @@ Feedback de testador não vira feature automaticamente: reproduzir, conferir se
 já existe solução no core/UI e encaixar no domínio/roadmap correto. Se for uma
 ideia nova sem bloqueio, registrar atrás dos problemas reais e de A3.
 
-### 0.2 Controles de janela integrados (P2 — implementado, aguardando gesto)
+### 0.2 Controles de janela integrados (P2 — ACEITO em 2026-07-15)
 
 O dogfooding do AppImage em Fedora/Wayland havia revelado que **Minimizar**,
 **Maximizar** e **Restaurar** não estavam visíveis. A pedido explícito do
@@ -247,19 +265,14 @@ sem copiar): `Main.qml` usa `Qt.Window | Qt.FramelessWindowHint`,
 `WindowControls.qml` traz Minimizar + alternável Maximizar/Restaurar + Fechar
 guiados pelo estado real do `QWindow` via `WindowChromeController`, a região
 livre arrasta/duplo-clica e `WindowResizeHandles.qml` cobre as oito bordas.
-Detalhes e referência profissional (IntelliJ IDEA Community) em `docs/20` e
-`ContextoIA.md`.
+Detalhes e referência profissional (IntelliJ IDEA Community `e3b4dba`) em
+`docs/20` e `ContextoIA.md`.
 
-**PRÓXIMO GESTO (aceite P2):** abrir por `scripts/kinein-vectis` (release-hardened
-já reconstruído com este código) em Wayland/X11 e confirmar Minimizar,
-Maximizar↔Restaurar com estado correto, Fechar, arraste, duplo clique e resize
-das oito bordas. Os gates automatizados estão verdes, mas — por decisão de
-`docs/20` — não substituem esse gesto. Se algo falhar, registrar
-ação/esperado/observado/ambiente e priorizar a regressão antes de A3.
-
-Depois desse aceite, o polimento P3 restante de `docs/20` (snap, escala
-fracionária, multimonitor e acabamento visual) segue como fatia própria. A
-imagem de aceite inicial é `imagens/bugs/ReformularBarra.png`.
+**Aceito:** o usuário testou em Fedora/Wayland e confirmou que funciona. A
+regressão P2 está encerrada. Um AppImage 0.1.0 novo foi gerado com este código e
+entregue em `dist/`. O polimento P3 restante de `docs/20` (snap, escala
+fracionária, multimonitor e acabamento visual) segue como fatia própria, não
+bloqueante; a imagem de referência é `imagens/bugs/ReformularBarra.png`.
 
 ## 1. TR0 — aceite funcional da rodada atual
 
