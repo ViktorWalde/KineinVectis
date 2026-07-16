@@ -431,6 +431,58 @@ mas ela cobria `.md` — falta aplicá-la a **comentário de código**. Regra a 
 de agora: comentário explica invariante e causa, não processo nem autoria. Fatia
 própria, depois da trilha atual.
 
+### 0.2e L1 — auditoria do EditorConfig (2026-07-16). RESULTADO NEGATIVO.
+
+O `PONTO_ATUAL` exige, antes de qualquer código: "confirmar biblioteca/licença,
+contrato e conflito com settings". A auditoria foi feita e **contraria a
+recomendação do plano**. EditorConfig continua sendo boa ideia; a premissa de
+que existe biblioteca Rust madura para ele **não se sustenta**.
+
+| Crate | Última publicação | Downloads recentes | Veredito |
+| --- | --- | ---: | --- |
+| `editorconfig-core` 0.1.3 | jul/2025 | 22 | passa a suíte oficial de conformidade, mas é nicho: 1 mantenedor, 534 linhas, 4 versões em 3 dias e nada depois |
+| `editorconfig` 1.0.0 | **nov/2017** | 461 | abandonado há nove anos |
+| `editorconfig-rs` 0.2.3 (+ `-sys`) | fev/2025 | 15 | mantido, e liga a **libeditorconfig oficial** — mas por FFI a uma lib C |
+
+Todos MIT, então licença não é o problema. Manutenção e forma são.
+
+**O conflito com a política do projeto.** O `AGENTS.md` proíbe "escolher revisão
+antiga/abandonada apenas porque contém uma função conveniente", e o ADR-0004
+escolheu o `alacritty_terminal` explicitamente por ser "Rust puro… sem Node,
+Electron, WebView ou FFI". As três opções violam um desses:
+
+- `editorconfig`: abandonado;
+- `editorconfig-core`: vivo mas sem adoção (22 downloads) — adotar é assumir a
+  manutenção de fato, sem o benefício de uma base testada por terceiros;
+- `editorconfig-rs`: o único com pedigree (liga o core **oficial**), mas traz
+  FFI + dependência nativa C, exatamente o que o projeto vem evitando, e
+  complica o AppImage.
+
+**Não decidido — decisão do autor, em fatia própria.** As saídas reais:
+
+1. **`editorconfig-rs` + `-sys`**, aceitando FFI e a dependência C, com o
+   benefício de ser o core oficial. Exige auditar o impacto no empacotamento.
+2. **Parser próprio**, contrariando "orquestrar, nunca reimplementar" — mas a
+   spec do EditorConfig é pequena (INI + globs + `root=true`) e existe uma
+   **suíte de conformidade oficial** (`editorconfig-core-test`) que tornaria a
+   decisão verificável em vez de arrogante. É o argumento mais forte a favor.
+3. **Trocar o primeiro recorte do L1.** EditorConfig foi escolhido por ser
+   "pequeno e auditável"; a auditoria mostra que o pequeno não é tão pequeno. O
+   inventário das ferramentas já detectadas (clangd, rust-analyzer, CMake,
+   Cargo, Git, rg, fd, lldb-dap, Clippy) valida o `integration` v1 **sem
+   dependência nova nenhuma**, e talvez seja o primeiro recorte mais honesto.
+
+**Conflito com settings, mapeado.** `SettingsValues` já tem `format_on_save`,
+`auto_close_pairs` e `editor_font_size`; o EditorConfig traria `indent_style`,
+`indent_size`, `tab_width`, `end_of_line`, `charset`,
+`trim_trailing_whitespace` e `insert_final_newline` — **nenhum colide hoje**.
+A regra de precedência do roadmap ("aplicar `.editorconfig` antes das
+preferências globais") vale para os campos novos; se um dia um campo coincidir,
+a precedência tem de ser explícita no contrato, não implícita no código.
+
+Recomendação: **opção 3 primeiro** (inventário valida o `integration` v1 sem
+dependência), depois decidir 1 vs 2 para o EditorConfig com o contrato já de pé.
+
 ### 0.3 Sessão de organização e feedback (2026-07-16)
 
 Sessão de trabalho autônoma autorizada pelo autor (com backup; proibido git
