@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <path d="M 1.95 1.55 H 44.53 L 62.45 19.47 V 62.25 Q 62.45 62.45 62.05 62.45 H 1.95 Q 1.55 62.45 1.55 62.05 V 1.95 Q 1.55 1.55 1.95 1.55 Z" fill="#243142" stroke="#E6EDF5" stroke-width="1.55" stroke-linejoin="round"/>
+  <path d="M 44.53 1.55 V 19.47 H 62.45" fill="#526174" stroke="#E6EDF5" stroke-width="1.55" stroke-linejoin="round"/>
+
+
+  <circle cx="16.00" cy="17.92" r="1.60" fill="#FFB000"/>
+  <path d="M 19.20 17.92 H 35.84" stroke="#FFB000" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M 16.00 23.04 H 29.44" stroke="#A9B4C2" stroke-width="1.1" stroke-linecap="round"/>
+
+  <rect x="21.76" y="32.00" width="7.04" height="7.04" rx="0.96" fill="#1687FF" stroke="#E6EDF5" stroke-width="0.72"/><rect x="29.95" y="32.00" width="7.04" height="7.04" rx="0.96" fill="#1687FF" stroke="#E6EDF5" stroke-width="0.72"/><rect x="38.14" y="32.00" width="7.04" height="7.04" rx="0.96" fill="#1687FF" stroke="#E6EDF5" stroke-width="0.72"/><rect x="29.95" y="23.81" width="7.04" height="7.04" rx="0.96" fill="#1687FF" stroke="#E6EDF5" stroke-width="0.72"/>
+  <path d="M 12.80 43.52
+           C 17.92 56.32, 40.96 58.24, 48.64 44.80
+           C 51.84 44.16, 53.76 40.96, 55.04 37.76
+           C 58.24 39.04, 58.24 42.88, 55.04 44.80
+           C 53.76 46.08, 51.84 46.72, 48.64 46.72
+           C 39.68 59.52, 18.56 58.88, 12.80 43.52 Z"
+        fill="#22D3EE" stroke="#E6EDF5" stroke-width="1.1" stroke-linejoin="round"/>
+  <circle cx="19.20" cy="46.08" r="1.60" fill="#243142"/>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+  <path d="M 1.75 1.35 H 13.05 L 18.65 6.95 V 18.45 Q 18.65 18.65 18.25 18.65 H 1.75 Q 1.35 18.65 1.35 18.25 V 1.75 Q 1.35 1.35 1.75 1.35 Z" fill="#F8FAFC" stroke="#0F1B2D" stroke-width="1.35" stroke-linejoin="round"/>
+  <path d="M 13.05 1.35 V 6.95 H 18.65" fill="#D7DEE8" stroke="#0F1B2D" stroke-width="1.35" stroke-linejoin="round"/>
+
+
+  <circle cx="5.00" cy="5.60" r="0.50" fill="#FFB000"/>
+  <path d="M 6.00 5.60 H 11.20" stroke="#FFB000" stroke-width="0.95" stroke-linecap="round"/>
+  <path d="M 5.00 7.20 H 9.20" stroke="#64748B" stroke-width="0.95" stroke-linecap="round"/>
+
+  <rect x="6.80" y="10.00" width="2.20" height="2.20" rx="0.30" fill="#1687FF" stroke="#0F1B2D" stroke-width="0.62"/><rect x="9.36" y="10.00" width="2.20" height="2.20" rx="0.30" fill="#1687FF" stroke="#0F1B2D" stroke-width="0.62"/><rect x="11.92" y="10.00" width="2.20" height="2.20" rx="0.30" fill="#1687FF" stroke="#0F1B2D" stroke-width="0.62"/><rect x="9.36" y="7.44" width="2.20" height="2.20" rx="0.30" fill="#1687FF" stroke="#0F1B2D" stroke-width="0.62"/>
+  <path d="M 4.00 13.60
+           C 5.60 17.60, 12.80 18.20, 15.20 14.00
+           C 16.20 13.80, 16.80 12.80, 17.20 11.80
+           C 18.20 12.20, 18.20 13.40, 17.20 14.00
+           C 16.80 14.40, 16.20 14.60, 15.20 14.60
+           C 12.40 18.60, 5.80 18.40, 4.00 13.60 Z"
+        fill="#22D3EE" stroke="#0F1B2D" stroke-width="0.95" stroke-linejoin="round"/>
+  <circle cx="6.00" cy="14.40" r="0.50" fill="#F8FAFC"/>
+</svg>

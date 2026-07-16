@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <path d="M 1.95 1.55 H 15.73 L 22.45 8.27 V 22.25 Q 22.45 22.45 22.05 22.45 H 1.95 Q 1.55 22.45 1.55 22.05 V 1.95 Q 1.55 1.55 1.95 1.55 Z" fill="#F8FAFC" stroke="#0F1B2D" stroke-width="1.55" stroke-linejoin="round"/>
+  <path d="M 15.73 1.55 V 8.27 H 22.45" fill="#D7DEE8" stroke="#0F1B2D" stroke-width="1.55" stroke-linejoin="round"/>
+
+
+  <path d="M 5.52 6.72 H 13.20" stroke="#1687FF" stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M 5.52 8.40 H 10.56" stroke="#64748B" stroke-width="1.1" stroke-linecap="round"/>
+
+  <ellipse cx="11.04" cy="11.28" rx="5.76" ry="1.56" fill="#22D3EE" stroke="#0F1B2D" stroke-width="1.1"/>
+  <path d="M 5.28 11.28 V 20.16 C 5.28 22.03, 16.80 22.03, 16.80 20.16 V 11.28"
+        fill="#0B5ED7" stroke="#0F1B2D" stroke-width="1.1" stroke-linejoin="round"/>
+  <path d="M 5.28 15.54 C 5.28 17.10, 16.80 17.10, 16.80 15.54"
+        stroke="#22D3EE" stroke-width="1.1" fill="none"/>
+  <rect x="14.64" y="15.12" width="5.28" height="5.28" rx="0.84"
+        fill="#F8FAFC" stroke="#0F1B2D" stroke-width="1.1"/>
+  <path d="M 17.28 15.12 V 20.40 M 14.64 17.76 H 19.92"
+        stroke="#1687FF" stroke-width="0.88"/>
+</svg>

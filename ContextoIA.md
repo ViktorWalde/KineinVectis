@@ -1709,6 +1709,31 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   ganhar o log da aba IDE como vantagem de dogfooding. Commit local `3543de9`
   (feature) mais o commit de aceite; sem push.
 
+## Pacote de ícones de arquivos especiais (2026-07-15)
+
+- `KINEIN_VECTIS_SPECIAL_FILE_ICONS/` (raiz do repo) é um pacote de assets
+  originais que complementa o sistema de ícones para os tipos de arquivo
+  especiais da árvore de projetos: `cmake-lists` (CMakeLists.txt),
+  `project-config` (fallback de `.env`/`.env.*`, `.clangd`/`.clang-format`/
+  `.clang-tidy`, `CMakePresets.json`/`CMakeUserPresets.json`,
+  `compile_commands.json`, `Cargo.toml`/`Cargo.lock`, `rust-toolchain.toml`,
+  `rustfmt.toml`, `clippy.toml`, `Cross.toml`, `.cargo/config.toml`), `sql`
+  (`*.sql`) e `docker-yaml` (somente nomes/paths Compose reconhecidos). Traz
+  light/dark em 16/20/24 px, fontes SVG 64 px, `preview/icon-gallery.svg`,
+  `ICON_CATALOG.json` e o contrato de resolução `FILE_ICON_MAPPINGS.json`.
+- O resolver segue a precedência nome exato → padrão especial → caminho especial
+  → extensão composta → extensão → genérico; YAML genérico não recebe o ícone
+  Docker e `.env` tem regra de segurança (não vazar valores/segredos em tooltip,
+  log ou envio externo). A semântica, o sizing ótico, a implementação Qt/QML
+  (`Image` + `qrc` + `sourceSize` por DPR) e o checklist de validação estão nos
+  `docs/01–04` da própria pasta.
+- Licença MIT OR Apache-2.0 (mesma expressão do projeto); metáforas próprias, sem
+  logos oficiais. Por enquanto é um drop de assets + guia de implementação: ainda
+  não está ligado ao delegate da árvore (`ui/qml/project/*`). Ao ligar, seguir o
+  `docs/03` do pack e a spec `KINEIN_VECTIS_VISUAL_SYSTEM_ICONS`, medindo
+  desempenho antes de trocar SVG por PNG pré-rasterizado. Ponteiros em
+  `GUIAIA.md` §3.2 e §5.2.
+
 ## Escalonamento linear das integrações solicitadas (2026-07-15)
 
 - Os 53 candidatos de `PONTO_ATUAL.md` A5 foram tirados da categoria vaga de

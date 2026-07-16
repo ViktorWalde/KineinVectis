@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+  <path d="M 1.75 1.35 H 13.05 L 18.65 6.95 V 18.45 Q 18.65 18.65 18.25 18.65 H 1.75 Q 1.35 18.65 1.35 18.25 V 1.75 Q 1.35 1.35 1.75 1.35 Z" fill="#F8FAFC" stroke="#0F1B2D" stroke-width="1.35" stroke-linejoin="round"/>
+  <path d="M 13.05 1.35 V 6.95 H 18.65" fill="#D7DEE8" stroke="#0F1B2D" stroke-width="1.35" stroke-linejoin="round"/>
+
+
+  <path d="M 4.60 5.60 H 11.00" stroke="#1687FF" stroke-width="0.95" stroke-linecap="round"/>
+  <path d="M 4.60 7.00 H 8.80" stroke="#64748B" stroke-width="0.95" stroke-linecap="round"/>
+
+  <ellipse cx="9.20" cy="9.40" rx="4.80" ry="1.30" fill="#22D3EE" stroke="#0F1B2D" stroke-width="0.95"/>
+  <path d="M 4.40 9.40 V 16.80 C 4.40 18.36, 14.00 18.36, 14.00 16.80 V 9.40"
+        fill="#0B5ED7" stroke="#0F1B2D" stroke-width="0.95" stroke-linejoin="round"/>
+  <path d="M 4.40 12.95 C 4.40 14.25, 14.00 14.25, 14.00 12.95"
+        stroke="#22D3EE" stroke-width="0.95" fill="none"/>
+  <rect x="12.20" y="12.60" width="4.40" height="4.40" rx="0.70"
+        fill="#F8FAFC" stroke="#0F1B2D" stroke-width="0.95"/>
+  <path d="M 14.40 12.60 V 17.00 M 12.20 14.80 H 16.60"
+        stroke="#1687FF" stroke-width="0.76"/>
+</svg>

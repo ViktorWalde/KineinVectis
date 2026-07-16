@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "precedence": [
+    "exactName",
+    "specialPattern",
+    "specialPath",
+    "compoundExtension",
+    "extension",
+    "genericFile"
+  ],
+  "exactNames": {
+    "CMakeLists.txt": "kv.tree.file.cmake-lists",
+    "compose.yaml": "kv.tree.file.docker-yaml",
+    "compose.yml": "kv.tree.file.docker-yaml",
+    "docker-compose.yaml": "kv.tree.file.docker-yaml",
+    "docker-compose.yml": "kv.tree.file.docker-yaml",
+    ".env": "kv.tree.file.project-config",
+    ".clangd": "kv.tree.file.project-config",
+    ".clang-format": "kv.tree.file.project-config",
+    ".clang-tidy": "kv.tree.file.project-config",
+    "CMakePresets.json": "kv.tree.file.project-config",
+    "CMakeUserPresets.json": "kv.tree.file.project-config",
+    "compile_commands.json": "kv.tree.file.project-config",
+    "Cargo.toml": "kv.tree.file.project-config",
+    "Cargo.lock": "kv.tree.file.project-config",
+    "rust-toolchain.toml": "kv.tree.file.project-config",
+    "rustfmt.toml": "kv.tree.file.project-config",
+    "clippy.toml": "kv.tree.file.project-config",
+    "Cross.toml": "kv.tree.file.project-config"
+  },
+  "patterns": [
+    {
+      "glob": ".env.*",
+      "icon": "kv.tree.file.project-config"
+    },
+    {
+      "glob": "compose.*.yaml",
+      "icon": "kv.tree.file.docker-yaml"
+    },
+    {
+      "glob": "compose.*.yml",
+      "icon": "kv.tree.file.docker-yaml"
+    },
+    {
+      "glob": "docker-compose.*.yaml",
+      "icon": "kv.tree.file.docker-yaml"
+    },
+    {
+      "glob": "docker-compose.*.yml",
+      "icon": "kv.tree.file.docker-yaml"
+    },
+    {
+      "glob": ".cargo/config.toml",
+      "icon": "kv.tree.file.project-config"
+    },
+    {
+      "glob": "migrations/**/*.sql",
+      "icon": "kv.tree.file.sql"
+    }
+  ],
+  "extensions": {
+    ".sql": "kv.tree.file.sql"
+  },
+  "notes": [
+    "Generic .yaml and .yml files must not receive the Docker icon.",
+    "Docker YAML requires an exact Compose filename, a configured path, or validated Compose schema.",
+    "Future specialized CMake, Cargo and Clang icons should override project-config."
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "defaultTreeMode": "default",
+  "modes": {
+    "compact": {
+      "iconSize": 16,
+      "rowHeight": 20
+    },
+    "default": {
+      "iconSize": 20,
+      "rowHeight": 24
+    },
+    "comfortable": {
+      "iconSize": 24,
+      "rowHeight": 28
+    }
+  },
+  "icons": {
+    "kv.tree.file.cmake-lists": {
+      "name": "CMakeLists",
+      "files": [
+        "CMakeLists.txt"
+      ],
+      "assets": {
+        "base": "cmakelists.svg"
+      }
+    },
+    "kv.tree.file.project-config": {
+      "name": "Project configuration",
+      "assets": {
+        "base": "project-config.svg"
+      }
+    },
+    "kv.tree.file.sql": {
+      "name": "SQL",
+      "extensions": [
+        ".sql"
+      ],
+      "assets": {
+        "base": "sql.svg"
+      }
+    },
+    "kv.tree.file.docker-yaml": {
+      "name": "Docker Compose YAML",
+      "assets": {
+        "base": "docker-yaml.svg"
+      }
+    }
+  }
+}

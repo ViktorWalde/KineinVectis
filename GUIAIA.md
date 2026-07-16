@@ -218,7 +218,14 @@ o grupo da tarefa:
 | Planejamento macro | `FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST`, `IMPLEMENTATION_PLAN_UI_UX_ARCH_PERFORMANCE`, `IMPLEMENTATION_TASKS` |
 
 O pacote `docs/KINEIN_VECTIS_ICONS_COMPLETE/` só entra em tarefa de iconografia
-ou contrato de ícones QML; não é leitura padrão de core/IPC.
+ou contrato de ícones QML; não é leitura padrão de core/IPC. O pacote
+complementar `KINEIN_VECTIS_SPECIAL_FILE_ICONS/` (raiz do repo) cobre os ícones
+de tipos de arquivo especiais da árvore de projetos — `cmake-lists`,
+`project-config`, `sql` e `docker-yaml` — em light/dark 16/20/24 px, com fontes
+64 px. O contrato de resolução (nome exato → padrão → caminho → extensão) está em
+`FILE_ICON_MAPPINGS.json`; a semântica, o sizing ótico, a implementação Qt/QML e
+o checklist ficam nos `docs/01–04` da própria pasta. Assets originais
+MIT OR Apache-2.0, sem logos oficiais; complementa a spec `VISUAL_SYSTEM_ICONS`.
 
 ## 4. Arquitetura e direção das dependências
 
@@ -295,6 +302,11 @@ crates/kinein-core/src/handlers/{fs,draft,format}.rs
 - Segurança: `docs/23-rede-de-seguranca.md`, ADR-0001 e
   `docs/16-hidden-risks-checklist.md`.
 - Nunca acessar filesystem do workspace diretamente pela UI.
+- Ícones de tipo de arquivo na árvore: pacote
+  `KINEIN_VECTIS_SPECIAL_FILE_ICONS/`, contrato `FILE_ICON_MAPPINGS.json`
+  (precedência nome exato → padrão → caminho → extensão composta → extensão →
+  genérico). Ao ligar no delegate, honrar a regra de segurança do `.env` (não
+  vazar valores/segredos) e não dar o ícone Docker a YAML genérico.
 
 ### 5.3 Editor, Tree-sitter, LSP e diagnósticos
 
