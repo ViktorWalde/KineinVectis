@@ -7,7 +7,7 @@
 > Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
 > conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
 > Git. Base remota atual: `928fbb5`; checkpoint anterior: `948535d`;
-> checkpoint funcional atual: `HEAD` local; protocolo `0.58.0`.
+> checkpoint funcional atual: `HEAD` local; protocolo `0.61.0`.
 >
 > Não alterar a UI fora das specs. Commits locais de checkpoint após marco
 > crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
@@ -103,10 +103,16 @@ A sessão nova deve executar esta sequência:
 
 ```text
 ESTADO
-- Protocolo atual 0.58.0 (`aiCliFlatTranscript` em `settings.*`; 0.57 fechou
-  DECSCUSR). A1 (recentes) e A2 (capacidades Cargo+CMake) estão
-  implementadas; `workspace.kind` é primário compatível e
-  `workspace.capabilities.buildSystems` é a fonte das ações híbridas.
+- Protocolo atual 0.61.0. O `aiBridge` NAO existe: nao ha politica por
+  programa no core, e uma CLI de IA e um programa como outro qualquer.
+  `terminal.mouse` (0.60.0) decide o gesto no core; `format.capabilities`
+  (0.61.0) publica o catalogo de formatters e a UI nao mantem lista.
+- L0 fechado (A3.1-A3.4 em `docs/roadmaps/21`), com UMA excecao declarada:
+  falta o harness Qt de digitacao tecla->frame. A rota do harness QML esta
+  fechada com evidencia (qmldir aponta para qrc:); nao retentar.
+- Cursor/TUI: RESOLVIDO e ACEITO. Causa era o `Column` do Qt Quick descartar
+  linha vazia (largura zero); o texto subia e o cursor ficava certo. Ver
+  `docs/roadmaps/26` §4.7.
 - Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
 - KV ativo reutiliza TerminalPanel/TerminalManager, tem barra persistente,
   roda/arrasto, teclado/paste VT, largura livre persistida 300–720px e
@@ -194,63 +200,22 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
   Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
 
 PRÓXIMO GESTO
-1. Os controles de janela estão aceitos e já embarcados no AppImage novo de
-   `dist/`. Não reabrir essa fatia; o polimento P3 (snap/escala/multimonitor) de
-   `docs/roadmaps/20` é opcional e não bloqueia o roadmap.
-2. **A3.1 FEITA em 2026-07-16** (`docs/roadmaps/21` §A3.1). Fixture Rust
-   determinística de 2463 linhas; frio 323 ms, incremental 281 ms, payload
-   1138 KB. **Achado que sobra para A3.4:** o ganho do parse incremental
-   evapora com o tamanho (6,2x em 208 linhas → 1,04x em 4923) e o custo cresce
-   superlinearmente. A resposta é 20x o fonte e carrega highlights+outline do
-   arquivo inteiro a cada tecla — o dono do custo não é o parser. Não otimizar
-   antes de A3.4 e de perfil local confirmar.
-3. **A3.2 FEITA em 2026-07-16** (`docs/roadmaps/21` §A3.2). rust-analyzer e
-   clangd medidos separadamente, em projeto próprio; ausente vira `n/d`.
-   **Achado:** tokens e completion têm prontidões OPOSTAS — o rust-analyzer dá
-   token em 15 ms e leva 2,5 s para a primeira completion útil; o clangd é o
-   inverso (155 ms / 12 ms). "LSP pronto" não é estado único, e tratar como
-   único faz a UI mostrar completion vazia parecendo bug por segundos — insumo
-   direto para o scheduler de B3/M5.3. O aquecido é ~0,5 ms nos dois: o
-   round-trip da Kinein não é o gargalo, o custo é externo e de primeira vez.
-   Seguir para A3.3.
-4. **A3.3 PARCIAL em 2026-07-16** (`docs/roadmaps/21` §A3.3). Rajada do PTY
-   FEITA: 50 mil linhas até o marcador em 59 ms, vão máximo entre frames de
-   33 ms (bate a constante `FRAME` do core — a UI é servida a 30fps durante a
-   saída), scrollback real, sem perda. Duas armadilhas achadas, ambas dando
-   número falso: o eco do shell casava com o marcador antes da saída (50 mil
-   linhas em 1,5 ms!) e rajada de 3 mil linhas cabe num frame só, sem
-   "durante" para medir. Corrigida também uma armadilha pré-existente: o
-   `medir-performance.sh` media o core DEBUG por padrão, 34x mais lento, sem
-   avisar.
-   **FALTA o item 1: harness Qt de digitação tecla→frame.** Exige medir dentro
-   do processo da UI sobre o editor real, que depende do módulo `KineinVectis`
-   e não roda no runner dos 13 harnesses (todos QtQuick puro). Caminho: modo
-   opt-in por env no `main.cpp`, ao lado do `KINEIN_PERF_MARKER`. Fatia
-   própria; o `p95` já está implementado e serve aos dois cenários.
-5. **A3.4 FEITA em 2026-07-16** (`docs/roadmaps/21` §A3.4). O
-   `medir-performance.sh` abre com carimbo de ambiente (CPU, distro, kernel,
-   Qt, sessão, N, commit com marca `+sujo`, e os caminhos dos dois binários) —
-   número sem isso não é comparável com nada. Baseline versionada e tabela
-   consolidada das 12 métricas com folga explícita; todo orçamento é medição
-   repetida, nenhum é aspiracional. Custo de ferramenta externa (primeira
-   completion do rust-analyzer, RSS dos servidores) fica informativo, não
-   orçado: não se orça o que não se controla.
-   Reação a regressão virada gate: estouro abre fatia de causa-raiz e trava
-   nível novo; otimizar só depois de perfil apontar o dono do custo; conferir o
-   carimbo antes de gritar regressão.
-
-**L0 fechado, com uma exceção declarada:** falta o harness Qt de digitação
-tecla→frame (item 1 do A3.3). É a única afirmação de responsividade que ainda
-depende de impressão visual. Decidir explicitamente: ou fazer a fatia antes do
-L1, ou aceitar a lacuna por escrito e seguir. Não deixar implícito.
-3. Encerrada A3, auditar EditorConfig como primeira integração pequena
-   recomendada. Não iniciar um host genérico de plugins.
-4. Dogfooding em tempo integral: o usuário saiu do CLion e passou a usar a
-   Kinein para ganhar o log da aba IDE como vantagem de desenvolvimento. Cada
-   atrito ou saída para outra ferramenta vira o topo do backlog
-   (ação/esperado/observado/ambiente), na frente de A3.
-5. Se o usuário retomar o cursor/TUI, voltar por R0 de `docs/roadmaps/26`, nunca por
-   offset.
+1. **Seletor de agente do KV Context** (§0.2f). Decidido pelo autor em
+   2026-07-16. Hoje o atalho abre terminal comum e o usuario digita `claude`;
+   antes havia seletor Claude/Codex, removido POR ASSOCIACAO junto com o
+   aiBridge. O seletor nunca foi o problema — a politica no core era.
+   Desenho e criterio de falha completos em §0.2f. Resumo da linha:
+   detectar (`tools.detect`, ja existe) pode ficar no core; executar nao.
+   Se aparecer `if programa == "claude"` no core, a fatia saiu errada.
+   Aproveitar para renomear "KV Context" -> "Agente Auxiliar" (§0.2d-2): o
+   seletor e o lugar natural, e evita mexer duas vezes nos mesmos 6 pontos.
+2. Depois: harness Qt tecla->frame (`docs/roadmaps/21` §A3.3, design pronto) —
+   o autor retoma para feedback. Fecha a ultima afirmacao de A3 que depende de
+   impressao visual.
+3. Depois: primeiro recorte do L1 (§0.2e) — DECISAO DO AUTOR pendente. A
+   auditoria derrubou a premissa do plano: nao ha biblioteca EditorConfig Rust
+   madura. Recomendado validar `integration` v1 pelo inventario das ferramentas
+   ja detectadas (zero dependencia nova) antes de escolher FFI vs parser proprio.
 
 RESULTADO PENDENTE
 - Cursor/TUI reprovado no gesto humano e adiado; causa visual ainda aberta.
@@ -550,8 +515,12 @@ destrutivo/histórico). Entregas e feedback:
   reescrito como índice e 0 links markdown quebrados. `cargo check` verde.
   Raiz intacta: `README/MANUAL/Tutorial/AGENTS` e os pessoais. Plano completo
   (faixa pessoal, não publicar): `PLANO_ORGANIZACAO_E_HANDOFF.md`.
-- **Scroll do agente Claude no KV Context — RESOLVIDO como toggle (protocolo
-  0.58.0):** a causa-raiz era o Claude interativo usar **tela alternada** (sem
+- **Scroll do agente Claude no KV Context — SUPERADO. O texto abaixo descreve a
+  `aiCliFlatTranscript`, que NAO existe mais** (removida com o aiBridge no
+  0.59.0: injetar `--ax-screen-reader` era politica por programa no core). A
+  correcao vigente e o encaminhamento da roda ao aplicativo (0.60.0,
+  `docs/roadmaps/26` §11.4). Mantido como registro do que foi tentado:
+  **RESOLVIDO como toggle (protocolo 0.58.0):** a causa-raiz era o Claude interativo usar **tela alternada** (sem
   scrollback por semântica VT), sem flag inline como o `--no-alt-screen` do
   Codex. O teste ao vivo confirmou: com `--ax-screen-reader` o scroll e o cursor
   funcionam, mas a TUI decorativa vira texto puro. Por isso virou preferência:
