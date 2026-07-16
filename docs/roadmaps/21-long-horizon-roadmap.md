@@ -341,13 +341,42 @@ media. Agora ele imprime os binários e avisa em `stderr` quando o core não é
 release. Número de performance sem o binário ao lado não significa nada.
 
 **Em aberto — item 1: harness Qt de digitação tecla→frame.** Não implementado.
-Ele exige medir dentro do processo da UI (tecla recebida → `frameSwapped`) sobre
-o editor real, e o editor depende do módulo `KineinVectis`, então não roda no
-runner `qml` dos 13 harnesses atuais — todos são de QtQuick puro. O caminho
-natural é um modo `opt-in` por env no `main.cpp`, ao lado do
-`KINEIN_PERF_MARKER` que já existe, injetando teclas sintéticas e cronometrando
-até o frame. Fatia própria; o `p95` já está implementado (`percentil()`) e serve
-aos dois cenários quando ela chegar.
+
+**Rota do harness QML: fechada, com evidência.** Tentar `qml -I build/dev-local/ui`
+resolve o módulo mas falha assim:
+
+```text
+Type Theme unavailable
+qrc:/KineinVectis/qml/Theme.qml: No such file or directory
+```
+
+O `qmldir` gerado em disco aponta para caminhos `qrc:`, que só existem **dentro
+do binário compilado**. Logo o runner `qml` nunca vai carregar `EditorTextSurface`
+nem nada que dependa de `KineinVectis` — e é por isso que os 13 harnesses são
+todos de QtQuick puro. Não é escolha de estilo nem preguiça: é limite do
+empacotamento. **Não retentar essa rota**; o custo já foi pago aqui.
+
+**Caminho restante (único viável): modo opt-in no `main.cpp`**, ao lado do
+`KINEIN_PERF_MARKER` que já existe e prova o padrão:
+
+```text
+1. env KINEIN_PERF_TYPING liga o modo; sem ela, zero efeito no uso normal
+   (mesma disciplina do KINEIN_PERF_MARKER e do KINEIN_TERMINAL_DEBUG_GEOMETRY).
+2. o harness precisa de ARQUIVO GRANDE no editor real — sem workspace o editor
+   não aceita tecla. Então ele tem de dirigir o fluxo normal (workspace.open →
+   fs.read → foco no editor) antes de medir; é essa orquestração, não a
+   cronometragem, que faz a fatia ser própria.
+3. medir tecla → `QQuickWindow::frameSwapped`, não tecla → retorno do handler:
+   o que o usuário sente é o frame apresentado.
+4. reportar mediana E p95. `percentil()` já existe no `medir-core.py` e serve
+   aos dois cenários; a cauda é o ponto — travada de digitação some na mediana.
+5. matar o processo ao fim, como o KINEIN_PERF_EXIT já faz.
+```
+
+Enquanto isso não existir, **a responsividade de digitação do editor é a única
+afirmação de A3 que ainda depende de impressão visual** — declarado de propósito
+em vez de coberto por um número improvisado. Medir teclado num `TextArea`
+genérico mediria o Qt, não a Kinein.
 
 #### A3.4 — orçamento e reação a regressões (implementada em 2026-07-16)
 
