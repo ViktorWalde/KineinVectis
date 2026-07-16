@@ -33,6 +33,7 @@ use kinein_protocol::JsonRpcRequest;
 use portable_pty::{Child, ChildKiller, CommandBuilder, MasterPty, PtySize, native_pty_system};
 use serde_json::{Value, json};
 use vt100::Parser;
+use vte::{Params, Perform};
 
 /// Linhas de histórico (scrollback) mantidas pelo emulador.
 const SCROLLBACK: usize = 5000;
@@ -47,6 +48,143 @@ const FRAME: Duration = Duration::from_millis(33);
 const MAX_SESSIONS: usize = 12;
 /// CSI usado por aplicações para apagar também o histórico do terminal.
 const ERASE_SCROLLBACK_SEQUENCE: &[u8] = b"\x1b[3J";
+
+/// Forma de cursor solicitada pela aplicação via DECSCUSR.
+///
+/// O reset/default da aplicação é resolvido pelo core para a preferência do
+/// terminal Kinein (`Bar`); o frontend recebe sempre uma forma concreta.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CursorShape {
+    Block,
+    Underline,
+    Bar,
+}
+
+impl CursorShape {
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Block => "block",
+            Self::Underline => "underline",
+            Self::Bar => "bar",
+        }
+    }
+}
+
+/// Estado visual do cursor que o emulador deve respeitar.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct CursorStyle {
+    shape: CursorShape,
+    blinking: bool,
+}
+
+impl Default for CursorStyle {
+    fn default() -> Self {
+        Self {
+            shape: CursorShape::Bar,
+            // A preferência default do terminal Kinein é uma barra pulsante.
+            blinking: true,
+        }
+    }
+}
+
+/// Handler estreito do parser VT: só observa `CSI Ps SP q` (DECSCUSR).
+struct CursorStyleHandler<'a> {
+    style: &'a mut CursorStyle,
+}
+
+impl Perform for CursorStyleHandler<'_> {
+    fn csi_dispatch(&mut self, params: &Params, intermediates: &[u8], ignore: bool, action: char) {
+        if ignore {
+            return;
+        }
+        if intermediates == b"!" && action == 'p' {
+            *self.style = CursorStyle::default();
+            return;
+        }
+        if intermediates != b" " || action != 'q' {
+            return;
+        }
+
+        let parameter = params
+            .iter()
+            .next()
+            .and_then(|values| values.first())
+            .copied()
+            .unwrap_or(0);
+        let next = match parameter {
+            0 => CursorStyle::default(),
+            1 => CursorStyle {
+                shape: CursorShape::Block,
+                blinking: true,
+            },
+            2 => CursorStyle {
+                shape: CursorShape::Block,
+                blinking: false,
+            },
+            3 => CursorStyle {
+                shape: CursorShape::Underline,
+                blinking: true,
+            },
+            4 => CursorStyle {
+                shape: CursorShape::Underline,
+                blinking: false,
+            },
+            5 => CursorStyle {
+                shape: CursorShape::Bar,
+                blinking: true,
+            },
+            6 => CursorStyle {
+                shape: CursorShape::Bar,
+                blinking: false,
+            },
+            _ => return,
+        };
+        *self.style = next;
+    }
+
+    fn esc_dispatch(&mut self, intermediates: &[u8], ignore: bool, byte: u8) {
+        if !ignore && intermediates.is_empty() && byte == b'c' {
+            *self.style = CursorStyle::default();
+        }
+    }
+}
+
+/// Estado complementar que `vt100` 0.16 ainda não expõe publicamente.
+#[derive(Default)]
+struct CursorStyleTracker {
+    parser: vte::Parser,
+    style: CursorStyle,
+}
+
+impl CursorStyleTracker {
+    fn process(&mut self, bytes: &[u8]) {
+        let mut handler = CursorStyleHandler {
+            style: &mut self.style,
+        };
+        self.parser.advance(&mut handler, bytes);
+    }
+}
+
+/// Snapshot terminal mantido sob um único lock para grid e cursor não
+/// divergirem entre a leitura do PTY e a emissão de um frame.
+struct TerminalState {
+    parser: Parser,
+    cursor_style: CursorStyleTracker,
+}
+
+impl TerminalState {
+    fn new(rows: u16, cols: u16, scrollback: usize) -> Self {
+        Self {
+            parser: Parser::new(rows, cols, scrollback),
+            cursor_style: CursorStyleTracker::default(),
+        }
+    }
+
+    fn process(&mut self, bytes: &[u8]) {
+        self.cursor_style.process(bytes);
+        self.parser.process(bytes);
+    }
+}
 
 /// Filtro estreito para sessões de AI CLI que prometem transcript navegável.
 ///
@@ -123,7 +261,7 @@ type EventSender = crate::lsp::EventSender;
 struct Session {
     master: Box<dyn MasterPty + Send>,
     writer: Box<dyn Write + Send>,
-    parser: Arc<Mutex<Parser>>,
+    state: Arc<Mutex<TerminalState>>,
     // `wait()` bloqueia numa thread dedicada. O killer clonado pelo
     // `portable-pty` permite encerrar a sessão sem disputar um mutex com essa
     // thread (o desenho anterior deadlockava ao fechar uma aba).
@@ -276,7 +414,7 @@ impl TerminalManager {
             .try_clone_reader()
             .map_err(|error| process(format!("stdout do terminal indisponivel: {error}")))?;
 
-        let parser = Arc::new(Mutex::new(Parser::new(
+        let state = Arc::new(Mutex::new(TerminalState::new(
             DEFAULT_ROWS,
             DEFAULT_COLS,
             SCROLLBACK,
@@ -285,8 +423,8 @@ impl TerminalManager {
         let killer = child.clone_killer();
         let dirty = Arc::new(AtomicBool::new(false));
 
-        self.spawn_reader(&id, reader, &parser, &dirty, preserve_scrollback);
-        self.spawn_emitter(&id, &parser, &dirty, &running);
+        self.spawn_reader(&id, reader, &state, &dirty, preserve_scrollback);
+        self.spawn_emitter(&id, &state, &dirty, &running);
         self.spawn_waiter(&id, child, &running);
 
         self.sessions.insert(
@@ -294,7 +432,7 @@ impl TerminalManager {
             Session {
                 master: pair.master,
                 writer,
-                parser,
+                state,
                 killer,
                 running,
             },
@@ -307,11 +445,11 @@ impl TerminalManager {
         &self,
         id: &str,
         mut reader: Box<dyn Read + Send>,
-        parser: &Arc<Mutex<Parser>>,
+        state: &Arc<Mutex<TerminalState>>,
         dirty: &Arc<AtomicBool>,
         preserve_scrollback: bool,
     ) {
-        let parser = Arc::clone(parser);
+        let state = Arc::clone(state);
         let dirty = Arc::clone(dirty);
         let events = self.events.clone();
         let id = id.to_owned();
@@ -329,22 +467,22 @@ impl TerminalManager {
                 if bytes.is_empty() {
                     continue;
                 }
-                if let Ok(mut parser) = parser.lock() {
-                    parser.process(bytes);
+                if let Ok(mut state) = state.lock() {
+                    state.process(bytes);
                 }
                 dirty.store(true, Ordering::SeqCst);
             }
             if let Some(filter) = preserver.as_mut() {
                 let remaining = filter.finish();
                 if !remaining.is_empty() {
-                    if let Ok(mut parser) = parser.lock() {
-                        parser.process(&remaining);
+                    if let Ok(mut state) = state.lock() {
+                        state.process(&remaining);
                     }
                     dirty.store(true, Ordering::SeqCst);
                 }
             }
             // EOF: garante o render do estado final antes do `closed`.
-            emit_render(&events, &id, &parser);
+            emit_render(&events, &id, &state);
         });
     }
 
@@ -352,11 +490,11 @@ impl TerminalManager {
     fn spawn_emitter(
         &self,
         id: &str,
-        parser: &Arc<Mutex<Parser>>,
+        state: &Arc<Mutex<TerminalState>>,
         dirty: &Arc<AtomicBool>,
         running: &Arc<AtomicBool>,
     ) {
-        let parser = Arc::clone(parser);
+        let state = Arc::clone(state);
         let dirty = Arc::clone(dirty);
         let running = Arc::clone(running);
         let events = self.events.clone();
@@ -365,7 +503,7 @@ impl TerminalManager {
             while running.load(Ordering::SeqCst) {
                 thread::sleep(FRAME);
                 if dirty.swap(false, Ordering::SeqCst) {
-                    emit_render(&events, &id, &parser);
+                    emit_render(&events, &id, &state);
                 }
             }
         });
@@ -426,10 +564,10 @@ impl TerminalManager {
             .map_err(|error| TerminalError::Process {
                 message: format!("falha ao redimensionar o terminal: {error}"),
             })?;
-        if let Ok(mut parser) = session.parser.lock() {
-            parser.screen_mut().set_size(rows, cols);
+        if let Ok(mut state) = session.state.lock() {
+            state.parser.screen_mut().set_size(rows, cols);
         }
-        emit_render(&self.events, id, &session.parser);
+        emit_render(&self.events, id, &session.state);
         Ok(())
     }
 
@@ -437,10 +575,10 @@ impl TerminalManager {
     /// vivo). O `vt100` já limita ao tamanho real do buffer (D2.2, docs/24).
     pub fn scroll(&mut self, id: &str, offset: u16) -> Result<(), TerminalError> {
         let session = self.live(id)?;
-        if let Ok(mut parser) = session.parser.lock() {
-            parser.screen_mut().set_scrollback(offset as usize);
+        if let Ok(mut state) = session.state.lock() {
+            state.parser.screen_mut().set_scrollback(offset as usize);
         }
-        emit_render(&self.events, id, &session.parser);
+        emit_render(&self.events, id, &session.state);
         Ok(())
     }
 
@@ -489,13 +627,14 @@ fn scrollback_capacity(parser: &mut Parser) -> usize {
 
 /// Serializa o grid atual do `parser` e emite `event.terminal.render` para a
 /// sessão `id` (D2.3: a UI roteia o render pra aba certa).
-fn emit_render(events: &EventSender, id: &str, parser: &Arc<Mutex<Parser>>) {
-    let Ok(mut parser) = parser.lock() else {
+fn emit_render(events: &EventSender, id: &str, state: &Arc<Mutex<TerminalState>>) {
+    let Ok(mut state) = state.lock() else {
         return;
     };
-    let scrollback = parser.screen().scrollback();
-    let scrollback_max = scrollback_capacity(&mut parser);
-    let screen = parser.screen();
+    let cursor_style = state.cursor_style.style;
+    let scrollback = state.parser.screen().scrollback();
+    let scrollback_max = scrollback_capacity(&mut state.parser);
+    let screen = state.parser.screen();
     let (rows, cols) = screen.size();
     let (cursor_row, cursor_col) = screen.cursor_position();
     let lines: Vec<Value> = (0..rows).map(|row| build_line(screen, row, cols)).collect();
@@ -510,6 +649,8 @@ fn emit_render(events: &EventSender, id: &str, parser: &Arc<Mutex<Parser>>) {
                 "row": cursor_row,
                 "col": cursor_col,
                 "visible": !screen.hide_cursor(),
+                "shape": cursor_style.shape.as_str(),
+                "blinking": cursor_style.blinking,
             },
             // Modos que mudam como um terminal real deve traduzir input.
             // A UI continua burra em relacao ao TUI: apenas respeita o estado
@@ -662,7 +803,10 @@ mod tests {
 
     use kinein_protocol::JsonRpcRequest;
 
-    use super::{ScrollbackPreserver, TerminalError, TerminalManager, build_line, emit_render};
+    use super::{
+        CursorShape, CursorStyleTracker, ScrollbackPreserver, TerminalError, TerminalManager,
+        TerminalState, build_line, emit_render,
+    };
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -761,19 +905,76 @@ mod tests {
     #[test]
     fn render_exposes_input_modes_and_scrollbar_capacity() {
         let (sender, receiver) = mpsc::channel();
-        let parser = Arc::new(Mutex::new(vt100::Parser::new(3, 20, 100)));
-        if let Ok(mut parser) = parser.lock() {
-            parser.process(b"\x1b[?1h\x1b[?2004h1\r\n2\r\n3\r\n4\r\n5");
+        let state = Arc::new(Mutex::new(TerminalState::new(3, 20, 100)));
+        if let Ok(mut state) = state.lock() {
+            state.process(b"\x1b[?1h\x1b[?2004h1\r\n2\r\n3\r\n4\r\n5");
         }
 
-        emit_render(&sender, "t1", &parser);
+        emit_render(&sender, "t1", &state);
         let event = receiver.recv_timeout(Duration::from_secs(1)).unwrap();
         let params = event.params.unwrap();
 
         assert_eq!(params["applicationCursor"], true);
         assert_eq!(params["bracketedPaste"], true);
         assert_eq!(params["alternateScreen"], false);
+        assert_eq!(params["cursor"]["shape"], "bar");
+        assert_eq!(params["cursor"]["blinking"], true);
         assert!(params["scrollbackMax"].as_u64().is_some_and(|max| max > 0));
+    }
+
+    #[test]
+    fn cursor_style_tracker_handles_decscusr_across_chunks() {
+        let mut tracker = CursorStyleTracker::default();
+
+        for (parameter, shape, blinking) in [
+            (1, CursorShape::Block, true),
+            (2, CursorShape::Block, false),
+            (3, CursorShape::Underline, true),
+            (4, CursorShape::Underline, false),
+            (5, CursorShape::Bar, true),
+            (6, CursorShape::Bar, false),
+        ] {
+            let sequence = format!("\x1b[{parameter} q");
+            tracker.process(sequence.as_bytes());
+            assert_eq!(tracker.style.shape, shape);
+            assert_eq!(tracker.style.blinking, blinking);
+        }
+
+        tracker.process(b"\x1b[0 q");
+        assert_eq!(tracker.style.shape, CursorShape::Bar);
+        assert!(tracker.style.blinking);
+
+        tracker.process(b"ordinary text\x1b[6");
+        assert_eq!(tracker.style.shape, CursorShape::Bar);
+        assert!(tracker.style.blinking);
+
+        tracker.process(b" q");
+        assert_eq!(tracker.style.shape, CursorShape::Bar);
+        assert!(!tracker.style.blinking);
+
+        tracker.process(b"\x1b[!p");
+        assert_eq!(tracker.style.shape, CursorShape::Bar);
+
+        tracker.process(b"\x1b[5 q\x1bc");
+        assert_eq!(tracker.style.shape, CursorShape::Bar);
+        assert!(tracker.style.blinking);
+    }
+
+    #[test]
+    fn render_exposes_cursor_style_requested_by_tui() {
+        let (sender, receiver) = mpsc::channel();
+        let state = Arc::new(Mutex::new(TerminalState::new(2, 10, 0)));
+        if let Ok(mut state) = state.lock() {
+            // Crossterm `SteadyBar`, usado pelo compositor do Codex.
+            state.process(b"\x1b[6 q");
+        }
+
+        emit_render(&sender, "t1", &state);
+        let event = receiver.recv_timeout(Duration::from_secs(1)).unwrap();
+        let cursor = &event.params.as_ref().unwrap()["cursor"];
+
+        assert_eq!(cursor["shape"], "bar");
+        assert_eq!(cursor["blinking"], false);
     }
 
     #[test]

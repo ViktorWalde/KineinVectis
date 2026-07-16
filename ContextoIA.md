@@ -198,7 +198,9 @@ testes que exec, ou fsync).
 ## Estado tecnico atual
 
 - Arquitetura: Qt/QML UI <-> JSON-RPC local/stdin-stdout <-> Rust core.
-- Protocolo IPC atual: `0.56.0` (2026-07-15). 0.56 acrescenta a largura
+- Protocolo IPC atual: `0.57.0` (2026-07-15). 0.57 preserva forma e piscagem do
+  cursor pedidas por aplicações via DECSCUSR, incluindo a barra steady nativa
+  usada por TUIs, sem perfil por Claude/Codex. 0.56 acrescenta a largura
   autoritativa em células VT a cada span de `event.terminal.render`, mantendo
   texto, seleção e cursor na mesma grade mesmo com glifos largos ou fallback de
   fonte. 0.55 entrega capacidades de
@@ -1572,15 +1574,71 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   seleção cobre glifo largo e o caractere posterior. Aceite visual do caret e
   da paleta permanece humano após reiniciar o atalho de desenvolvimento.
 - Aceite parcial do usuário: posição horizontal letra a letra, cursor do
-  Terminal comum e verdes suaves foram aprovados. O único feedback restante é
-  o caret de Claude/Codex parecer ligeiramente baixo no KV Context. A UI agora
-  aplica `cursorVerticalOffset: -2` somente no `AssistantPanel`; o padrão do
-  `TerminalPanel` continua zero. Gerar novo AppImage está condicionado ao
-  aceite visual desse último polimento.
-- O polimento exclusivo do KV Context passou no gate integral (335 testes
-  Rust, Clippy, C++/QML estritos, 12 harnesses e builds Debug/Release) e no
-  smoke release offscreen de 8 s (`exit 124` esperado). O binário do atalho de
-  desenvolvimento está atualizado; `dist/` permanece intocado até o aceite.
+  Terminal comum e verdes suaves foram aprovados. O teste `-2` exclusivo do KV
+  Context ficou perto, mas não resolveu o cursor da TUI; testar `0` também não.
+  O usuário esclareceu que KV Context não é outro terminal: é somente uma aba/
+  apresentação separada da mesma base PTY para manter Claude/Codex visível
+  enquanto a aba Terminal fica livre. Todo offset por superfície foi removido.
+- Pesquisa oficial fechou o contrato: Codex posiciona o cursor nativo do frame
+  e pode pedir `SteadyBar`; o changelog público do Claude também o denomina
+  native terminal cursor. O `vt100` preservava linha/coluna/visibilidade, mas
+  não expunha DECSCUSR. O protocolo `0.57.0` agora carrega `shape` e `blinking`;
+  o core observa somente essa sequência com `vte` já transitivo e resolve
+  `DefaultUserShape` para a barra padrão. O QML apenas converte a forma concreta
+  e a célula VT em pixels, com altura integral, igual no Terminal e KV Context.
+  Revisões e adaptação estão em `docs/24`; o aceite visual ainda precede
+  qualquer novo AppImage.
+- Após remover o offset inteiro e unificar a geometria de `DefaultUserShape`,
+  o gate integral 0.57 passou novamente: 337 testes Rust, Clippy `-D warnings`,
+  C++/QML estritos, 12 harnesses e builds Debug/Release. O launcher release
+  ficou vivo por 8 s sem saída (`exit 124` esperado); binários de
+  desenvolvimento atualizados e `dist/` intocado.
+- Resultado humano posterior: ao abrir a Kinein por `scripts/kinein-vectis`, o
+  usuário não percebeu mudança relevante no caret de Claude/Codex. O suporte a
+  DECSCUSR continua válido, mas não encerra a causa visual; a versão 0.57 não
+  recebeu aceite do cursor e o polimento foi adiado sem novo offset.
+- Handoff obrigatório: `docs/26-terminal-rendering-parity-roadmap.md` registra
+  reprodução, hipóteses, referências e R0–R7. A retomada começa por fixture PTY
+  e métricas instrumentadas de glifo/célula/baseline/DPR. A auditoria do Code
+  OSS `234638618394269563dd77c0c395c270d8df8b12` e xterm.js
+  `ce2169485677951c7701129516cbb68e01330d86` mostrou que o renderer separa a
+  caixa do glifo da célula, arredonda em pixels físicos e compartilha a mesma
+  geometria com cursor/resize. Isso é hipótese arquitetural forte, não
+  causa-raiz provada na Kinein.
+- Decisão explícita do usuário: a funcionalidade do terminal Code OSS é a base
+  de paridade para shell, Claude e Codex, mas deve ser traduzida para a
+  realidade da Kinein (`portable-pty` + Rust Core + IPC tipado + renderer Qt).
+  Electron, Node, WebView, Extension Host e runtime xterm.js não entram. Se a
+  composição QML não cumprir a paridade, avaliar um `QQuickItem` nativo por
+  evidência/ADR, preservando o mesmo backend e o mesmo renderer entre Terminal
+  e KV Context.
+- O usuário decidiu deixar esse polimento para o futuro e confirmou que o
+  Terminal comum está visualmente bom — as melhorias de grade/paleta o deixaram
+  melhor. O problema adiado não bloqueia A3 nem a análise da próxima integração;
+  continua sem autorização para novo offset ou renderer exclusivo do KV.
+- Auditoria dos artefatos encontrou uma explicação concreta para o teste sem
+  mudança: `target/release/kinein-core` estava mais antigo que
+  `crates/kinein-core/src/terminal.rs`, embora a UI release já estivesse atual.
+  O gate foi repetido com os presets corretos `debug-strict` e
+  `release-hardened`; 337 testes Rust, Clippy, C++/QML estritos, 12 harnesses e
+  builds passaram. O launcher `scripts/kinein-vectis` ficou confirmado sobre
+  `build/linux-clang-release-hardened/ui/kinein-vectis` +
+  `target/release/kinein-core`; smoke offscreen de 8 s ficou vivo, sem saída
+  (`exit 124` esperado).
+- Hashes dos binários de desenvolvimento reconstruídos em 2026-07-15:
+  UI `afafd0d032df9f9b5f2335fdc76e54eed4e505af4fe84f5539ba13b53456689b`;
+  core `00029096a66fb5eafd9cf4c927b67106f27b4159f6427d2bd7246fb26147c2fc`.
+  Esses são executáveis ELF do checkout, não AppImage; `dist/` não mudou.
+- A baseline release de A3 foi revalidada com `N=3`: primeiro frame 250 ms,
+  UI 103 MB, `workspace.open` 3,4 ms, `fs.read` 10k 0,0 ms e core 7 MB, todos
+  dentro do orçamento; rust-analyzer externo 1093 MB informativo. A3.1–A3.4
+  foram detalhadas em `PONTO_ATUAL.md`, reutilizando os scripts M4.2. Code OSS
+  (marcos/fases) e Zed (fixtures determinísticas/bench real de input/render)
+  foram registrados em `docs/21`; nenhuma infraestrutura externa entrou.
+- Depois de A3, EditorConfig é a primeira integração pequena recomendada para
+  a sessão de “novo plugin”: P0, útil para C/C++ e Rust e compatível com uma
+  adoção auditável sem Extension Host. A recomendação ainda exige confirmar
+  biblioteca/licença e contrato antes de código.
 - Uma sessão futura foi reservada para preparar um repositório público novo e
   separado, seguindo o exportador allowlist de `docs/21` em vez de confiar só
   em `.gitignore`. Nessa sessão serão definidos com o usuário os nomes exatos

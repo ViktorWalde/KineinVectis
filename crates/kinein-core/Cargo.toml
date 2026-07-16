@@ -21,6 +21,7 @@ rusqlite.workspace = true
 # Terminal profissional (docs/24 D2): PTY real + emulador VT com grid.
 portable-pty.workspace = true
 vt100.workspace = true
+vte.workspace = true
 notify.workspace = true
 tree-sitter.workspace = true
 tree-sitter-c.workspace = true

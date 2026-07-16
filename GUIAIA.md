@@ -151,7 +151,7 @@ alterar arquitetura ou transformar uma impressão isolada em funcionalidade.
 | Tree-sitter e fallback local | spec `TREE_SITTER_EDITOR_LAYER` | `docs/25-syntax-tree-semantic-foundation.md` + ADR-0002 |
 | Projeto profundo/KSWE | `KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` | seção “simbiose” de `docs/21-long-horizon-roadmap.md` |
 | Build, Run, Test e Debug | spec `PRODUCT_FLOWS_BUILD_RUN_DEBUG` | `docs/22-compilacao-c-cpp-rust.md` |
-| Terminal e KV Context | spec `AI_CLI_BRIDGE_EXTERNAL_TERMINAL` | `docs/24-paridade-e-fundacao.md` |
+| Terminal e KV Context | spec `AI_CLI_BRIDGE_EXTERNAL_TERMINAL` | `docs/24-paridade-e-fundacao.md` + `docs/26-terminal-rendering-parity-roadmap.md` |
 | Dados, drafts e escrita segura | `docs/23-rede-de-seguranca.md` | ADR-0001 + `docs/16-hidden-risks-checklist.md` |
 | Adotar ferramenta open source | `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | `docs/tooling/OPEN_COMPONENT_REGISTRY.json` |
 | Referenciar implementação de IDE profissional | seção 2.1 do roadmap de adaptação | documento do domínio + `docs/ARCHITECTURE.md` |
@@ -193,6 +193,7 @@ alterar arquitetura ou transformar uma impressão isolada em funcionalidade.
 | `docs/23-rede-de-seguranca.md` | atomic save, drafts SQLite e recuperação contra perda |
 | `docs/24-paridade-e-fundacao.md` | fases D1–D4: completion, terminal, Tree-sitter e remake |
 | `docs/25-syntax-tree-semantic-foundation.md` | contrato da camada sintática, versões e workspace edits |
+| `docs/26-terminal-rendering-parity-roadmap.md` | cursor/TUI aberto, referência Code OSS e etapas R0–R7 da paridade nativa |
 | `docs/BACKEND_TO_UI_UX_ROADMAP.md` | ponte entre capacidade de backend e experiência visual |
 | `docs/COMANDOS_BUILD_VERIFICACAO.md` | comandos oficiais do gate |
 | `docs/adr/*` | por que uma decisão externa/estrutural foi adotada |
@@ -409,6 +410,14 @@ crates/kinein-core/src/handlers/{terminal,ai}.rs
 - Cada span de `event.terminal.render` informa `cells`; essa largura VT, a
   métrica monoespaçada usada no resize e a coluna do cursor formam uma única
   grade. Não derivar geometria de `text.length` ou de `implicitWidth`.
+- O teste humano de 2026-07-15 não percebeu correção do alinhamento vertical da
+  TUI mesmo após DECSCUSR e remoção de offsets. O problema permanece aberto e
+  sua retomada obrigatória está em `docs/26-terminal-rendering-parity-roadmap.md`:
+  começar por fixture/overlay/métricas, nunca por outro ajuste manual de `y`.
+- Por decisão do usuário, a experiência funcional do terminal do Code OSS é a
+  base de paridade para shell, Claude e Codex. Adaptar fielmente os contratos
+  e invariantes para o renderer Qt; não incorporar xterm.js/Node nem criar um
+  caminho exclusivo para o KV Context.
 
 ### 5.7 Git
 

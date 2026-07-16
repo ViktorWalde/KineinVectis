@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://kinein.dev/schemas/ipc.schema.json",
-  "$comment": "Contrato estrutural do protocolo implementado 0.56.0; inclui largura autoritativa em células nos spans do terminal, capacidades híbridas Cargo+CMake, rejeição de semantic tokens LSP obsoletos, workspaces recentes globais e o AI CLI Bridge terminal-first.",
+  "$comment": "Contrato estrutural do protocolo implementado 0.57.0; inclui forma/piscagem DECSCUSR e largura autoritativa em células no terminal, capacidades híbridas Cargo+CMake, rejeição de semantic tokens LSP obsoletos, workspaces recentes globais e o AI CLI Bridge terminal-first.",
   "title": "Kinein Vectis IPC",
   "type": "object",
   "oneOf": [

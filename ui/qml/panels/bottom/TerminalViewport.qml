@@ -10,7 +10,6 @@ Item {
     property var cursor: ({ row: 0, col: 0, visible: false })
     property var selectionController
     property bool terminalActive: false
-    property real cursorVerticalOffset: 0
     property int scrollOffset: 0
     property int scrollbackMax: 0
     property int gridRows: 0
@@ -138,21 +137,36 @@ Item {
         Rectangle {
             id: cursorBar
 
+            // O core resolve DECSCUSR para uma forma concreta. A UI somente
+            // converte a célula VT em pixels, igual no Terminal e KV Context.
+            readonly property string shape: root.cursor.shape !== undefined
+                    ? String(root.cursor.shape) : "bar"
+            readonly property bool blinking: root.cursor.blinking !== false
+            readonly property real thickness: Math.max(
+                    2, Math.round(root.charWidth * 0.18))
+            readonly property real baseOpacity: shape === "block"
+                    ? 0.72 : 0.95
+            property real blinkFactor: 1.0
+
             visible: root.cursor.visible && root.terminalActive
                      && root.scrollOffset === 0
             x: Math.floor(root.cursor.col * root.charWidth)
-            y: Math.floor(root.cursor.row * root.lineHeight) + 2
-               + root.cursorVerticalOffset
-            width: Math.max(2, Math.round(root.charWidth * 0.18))
-            height: Math.max(1, root.lineHeight - 4)
-            radius: 1
+            y: Math.floor(root.cursor.row * root.lineHeight)
+               + (shape === "underline"
+                    ? Math.max(0, root.lineHeight - thickness) : 0)
+            width: shape === "block" || shape === "underline"
+                   ? root.charWidth : thickness
+            height: shape === "underline"
+                    ? thickness : root.lineHeight
+            radius: shape === "bar" ? 1 : 0
             color: Theme.accentActive
+            opacity: baseOpacity * (blinking ? blinkFactor : 1.0)
 
-            SequentialAnimation on opacity {
-                running: cursorBar.visible
+            SequentialAnimation on blinkFactor {
+                running: cursorBar.visible && cursorBar.blinking
                 loops: Animation.Infinite
-                NumberAnimation { from: 0.95; to: 0.28; duration: 520 }
-                NumberAnimation { from: 0.28; to: 0.95; duration: 520 }
+                NumberAnimation { from: 1.0; to: 0.29; duration: 520 }
+                NumberAnimation { from: 0.29; to: 1.0; duration: 520 }
             }
         }
 

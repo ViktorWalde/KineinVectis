@@ -197,6 +197,31 @@ esperado; o número da IDE em si é o "Core RSS em regime" (5 MB). Medição
 offscreen SUBESTIMA o startup real (sem compositor); o startup da janela
 GUI de verdade é o item manual abaixo.
 
+**Revalidação release após protocolo 0.57 (2026-07-15, N=3).** O gate
+reconstruiu os binários exatos do launcher
+(`build/linux-clang-release-hardened/ui/kinein-vectis` e
+`target/release/kinein-core`) e `scripts/medir-performance.sh` foi executado
+com esses caminhos explícitos. Resultado: primeiro frame 250 ms, UI 103 MB,
+`workspace.open` 3,4 ms, `fs.read` 10k 0,0 ms e core 7 MB — todos dentro dos
+orçamentos. O rust-analyzer usou 1093 MB e permanece informativo/externo.
+
+**Continuação A3 preparada, ainda não implementada.** A mesma infraestrutura
+será estendida, nesta ordem, para primeiro snapshot Tree-sitter, atualização
+incremental, primeira resposta semântica/completion, digitação tecla→frame e
+rajada PTY→frame. A fila executável e critérios estão em `PONTO_ATUAL.md`, A3.1
+a A3.4; não criar um segundo runner. Referências profissionais consultadas:
+
+- Code OSS `234638618394269563dd77c0c395c270d8df8b12`, MIT/MODE-B,
+  `src/vs/base/common/performance.ts` e
+  `src/vs/workbench/services/timer/browser/timerService.ts`: marcos nomeados,
+  durações entre fases prontas e separação entre custo próprio/ambiente;
+- Zed `1e22d1a83f8b1b7acc528d15cfab0644852380c0`, MODE-D,
+  `crates/benchmarks/benches/editor_render.rs` e `display_map.rs`: seed fixa,
+  tamanhos explícitos, amostras repetidas e caminho real de input/render.
+
+Adaptação: `std::time::Instant`/`QElapsedTimer`, fixtures locais, stdio e
+mediana/p95; nenhuma telemetria, runtime, função ou teste das referências.
+
 **Métricas manuais (registrar quando observadas):**
 
 | Métrica manual | Procedimento | Observado |

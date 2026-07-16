@@ -53,7 +53,7 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [ARCHITECTURE.md](ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
 | [BACKEND_TO_UI_UX_ROADMAP.md](BACKEND_TO_UI_UX_ROADMAP.md) | Ponte operacional backend → UI/UX para implementar backend primeiro sem perder os specs visuais |
 | [02-repository-structure.md](02-repository-structure.md) | Estrutura real do repositório e crates |
-| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.56.0) |
+| [03-ipc-protocol.md](03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado (0.57.0) |
 | [06-strict-mode.md](06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
 | [14-development-environment.md](14-development-environment.md) | Ambiente de desenvolvimento |
 | [15-engineering-debt-and-refactor.md](15-engineering-debt-and-refactor.md) | Dívida técnica e modularização pós-V1 |
@@ -67,6 +67,7 @@ Documentos que descrevem o repositório como ele **é hoje**:
 | [23-rede-de-seguranca.md](23-rede-de-seguranca.md) | Rede de segurança contra perda de dado (escrita atômica + autosave em SQLite): problemas, design e status vivo da fatia S1 |
 | [24-paridade-e-fundacao.md](24-paridade-e-fundacao.md) | Fase pós-rede-de-segurança (D1–D4, ordem do usuário): autocomplete LSP ao vivo → terminal paridade VS Code/JetBrains → tree-sitter/plugins/views → remake. Status vivo. |
 | [25-syntax-tree-semantic-foundation.md](25-syntax-tree-semantic-foundation.md) | Contrato D3: Tree-sitter incremental, composição com LSP, folding/outline e vínculo com workspace edits transacionais. |
+| [26-terminal-rendering-parity-roadmap.md](26-terminal-rendering-parity-roadmap.md) | Handoff executável do cursor/TUI ainda aberto: paridade comportamental Code OSS, reprodução instrumentada, métricas de célula/DPR, renderer Qt e gates de aceite. |
 | [../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md](../KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md) | **Norte autoritativo de adoção e referência open-source**: modos A–D, gate/licenças e política obrigatória para estudar Code OSS, IntelliJ Community, Zed, Lapce e NetBeans sem copiar código ou transplantar arquitetura. |
 | [COMANDOS_BUILD_VERIFICACAO.md](COMANDOS_BUILD_VERIFICACAO.md) | Gate único de build e verificação |
 | [tooling/OPEN_COMPONENT_REGISTRY.json](tooling/OPEN_COMPONENT_REGISTRY.json) | Registro auditável de componentes open-source adotados |

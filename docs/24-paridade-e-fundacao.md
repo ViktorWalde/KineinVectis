@@ -632,16 +632,98 @@ de coordenadas diferentes. O teste Rust cobre um run ANSI com glifo largo e
 confirma quatro células para três caracteres visuais; o harness QML seleciona
 corretamente tanto o glifo largo quanto o caractere posterior a ele.
 
-**Polimento após aceite parcial:** o usuário aprovou o alinhamento horizontal,
-a paleta verde suave e o Terminal integrado. No KV Context, porém, o caret das
-TUIs Claude/Codex ainda parecia cerca de dois pixels abaixo do centro visual da
-linha. `TerminalPanel` ganhou `cursorVerticalOffset` com padrão zero, repassado
-ao viewport somente na geometria do caret; `AssistantPanel` define `-2`, sem
-mover texto, spans, seleção ou grade. O host do Terminal comum não fornece
-override e preserva exatamente o posicionamento aprovado. Esse ajuste é uma
-variação visual explícita da superfície, não parsing da CLI ou segundo
-renderer. Gate integral, builds Debug/Release e smoke offscreen de 8 s passaram;
-o aceite final permanece humano antes de gerar outro AppImage.
+### Cursor nativo das TUIs — DECSCUSR (protocolo 0.57, 2026-07-15)
+
+**Feedback e hipótese descartada:** o usuário aprovou o alinhamento horizontal
+e a paleta verde suave, mas o caret na entrada de Claude/Codex continuava
+parecendo baixo. Testar `cursorVerticalOffset: -2` e depois `0` mostrou que um
+deslocamento próprio do `AssistantPanel` não representava o contrato da TUI. O
+KV Context é somente outra apresentação da mesma base de terminal, criada para
+preservar visualmente a sessão do agente enquanto a aba Terminal fica livre.
+A cadeia `AssistantPanel → TerminalPanel → TerminalViewport` de offset foi
+removida por completo; não há perfil geométrico por agente ou superfície.
+
+**Referências oficiais atuais, somente arquiteturais:**
+
+- OpenAI Codex, revisão `7d1218a9975fa6e8151f683b182b6eb33294596e`,
+  `codex-rs/tui/src/app.rs` e
+  `codex-rs/tui/src/bottom_pane/chat_composer.rs`, Apache-2.0, modo B: o frame
+  envia a posição do caret ao terminal nativo e o compositor pode solicitar
+  `SetCursorStyle::SteadyBar`; a TUI não desenha uma barra em pixels dentro da
+  grade.
+- Claude Code, revisão pública
+  `c39cb0f14bfe8bb519bae5bfc55add6867c5e2ab`, `CHANGELOG.md`, somente contrato
+  comportamental: o upstream descreve o caret de entrada como **native terminal
+  cursor** e registra correções para mantê-lo acompanhando o input. A
+  implementação correspondente não é publicada nesse repositório e não foi
+  inferida nem copiada.
+- xterm.js, revisão `ce2169485677951c7701129516cbb68e01330d86`,
+  `src/common/InputHandler.ts` e
+  `addons/addon-webgl/src/RectangleRenderer.ts`, MIT, modo B: `DECSCUSR`
+  (`CSI Ps SP q`) mantém forma e piscagem separadas; a barra explícita ocupa a
+  altura inteira da célula, enquanto underline e bloco têm geometrias próprias.
+- Zed, revisão `1e22d1a83f8b1b7acc528d15cfab0644852380c0`,
+  `crates/terminal/src/alacritty.rs` e
+  `crates/terminal_view/src/terminal_element.rs`, GPL somente em modo D: o
+  backend preserva `Block`/`Underline`/`Bar` e a view cria o cursor a partir do
+  mesmo `line_height` e dos mesmos bounds da célula.
+
+**Lacuna de contrato fechada, não causa visual:** `vt100` 0.16 expõe posição
+e visibilidade, mas seu `Screen` não expõe o estilo recebido por `DECSCUSR`;
+a sequência era consumida sem
+chegar ao render. O QML desenhava sempre a barra pulsante padrão, com inset de
+dois pixels, inclusive quando a aplicação solicitava uma barra steady nativa.
+Assim, linha/coluna estavam corretas, porém forma, altura e piscagem da TUI eram
+perdidas. Corrigir essa perda era necessário, mas o gesto humano posterior
+demonstrou que ela não explicava sozinha o desalinhamento percebido.
+
+**Adaptação nativa:** o protocolo `0.57.0` acrescenta `shape` e `blinking` ao
+cursor de `event.terminal.render`. O core usa diretamente `vte 0.15.0`, já
+presente por `vt100`, para observar somente `CSI Ps SP q` de modo chunk-safe;
+grid, posição e todo o restante do VT continuam pertencendo a `vt100`. Os dois
+estados vivem sob o mesmo lock. Reset/`DefaultUserShape` é resolvido no core
+para a preferência concreta `bar`; o frontend não decide estilo nem reconhece
+agente. No QML, barra e bloco usam a altura inteira da célula VT, underline fica
+na base e uma forma steady não recebe animação. Não há offset, parser de prompt,
+nome de agente, segundo renderer, dependência de runtime das referências ou
+cópia de função/classe/módulo. Atalho, aba, foco, largura e navegação do KV
+Context continuam sendo apenas composição de frontend sobre a mesma sessão PTY.
+
+**Provas automatizadas:** testes Rust cobrem `SteadyBar` dividido entre chunks,
+as seis combinações block/underline/bar, resets default e o contrato JSON
+emitido. O primeiro gate 0.57 passou com 337 testes Rust, Clippy `-D warnings`,
+C++/QML estritos, 12 harnesses e builds Debug/Release. Após o feedback que
+removeu o offset e unificou também `DefaultUserShape`, o mesmo gate integral
+passou novamente; o launcher release permaneceu vivo por 8 s sem saída
+(`exit 124` esperado).
+
+**Resultado humano posterior:** ao abrir a Kinein por
+`scripts/kinein-vectis`, o usuário não percebeu mudança relevante no caret de
+Claude/Codex. O problema visual permanece aberto, sem aceite, e foi adiado.
+Não recolocar offsets nem gerar AppImage dessa revisão como se estivesse
+aprovada.
+
+**Nova base de paridade autorizada:** a experiência funcional do terminal do
+Code OSS deve ser reproduzida fielmente na realidade da Kinein. A inspeção da
+revisão Code OSS `234638618394269563dd77c0c395c270d8df8b12`
+(`xtermTerminal.ts`, `terminalConfigurationService.ts`, `terminalInstance.ts`)
+e da revisão xterm.js `ce2169485677951c7701129516cbb68e01330d86`
+(`InputHandler.ts`, `WebglRenderer.ts`, `RectangleRenderer.ts`) acrescentou os
+seguintes invariantes:
+
+- a caixa do glifo é medida separadamente da caixa da célula;
+- o glifo recebe offset interno/baseline, enquanto cursor e seleção usam a
+  célula integral;
+- dimensões são arredondadas em pixels físicos e depois convertidas para
+  pixels lógicos, inclusive sob DPR fracionário;
+- fonte, célula, cursor, seleção, hit-test e resize compartilham um único dono
+  de métricas;
+- o workbench coordena a sessão, mas não cria um cursor paralelo ao renderer.
+
+Na Kinein esses invariantes serão adaptados para `portable-pty` + Rust Core +
+IPC tipado + renderer Qt. Não incorporar Electron, Node, WebView, Extension
+Host ou runtime xterm.js. O roadmap executável, hipóteses, fixture e gates
+R0–R7 estão em `docs/26-terminal-rendering-parity-roadmap.md`.
 
 **Arquivos (D2.1):** Cargo (portable-pty, vt100 — já adicionados);
 `terminal.rs` (reescrever: PTY + vt100 grid + emitir render + resize +

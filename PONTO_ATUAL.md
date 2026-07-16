@@ -7,7 +7,7 @@
 > Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
 > conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
 > Git. Base remota atual: `928fbb5`; checkpoint anterior: `948535d`;
-> checkpoint funcional atual: `HEAD` local; protocolo `0.56.0`.
+> checkpoint funcional atual: `HEAD` local; protocolo `0.57.0`.
 >
 > Não alterar a UI fora das specs. Commits locais de checkpoint após marco
 > crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
@@ -37,9 +37,21 @@ revelou que o caret ficava muito depois do texto e que verde/bold do prompt era
 visualmente agressivo. A correção 0.56 unifica spans e cursor pela largura VT,
 usa família monoespaçada real e suaviza peso/paleta sem interpretar o prompt;
 o usuário aprovou posição horizontal, Terminal comum e verdes suaves. Restou
-somente um ajuste fino: no KV Context o caret de Claude/Codex parecia cerca de
-dois pixels baixo. O override vertical `-2` existe apenas no `AssistantPanel`;
-o Terminal comum permanece inalterado e o novo gesto ao vivo está pendente.
+somente um ajuste fino: no KV Context o caret de Claude/Codex não parecia
+centralizado. O teste exclusivo com `-2` ficou perto, mas o usuário pediu valor
+`0`, igual ao Terminal puro aprovado. A pesquisa seguinte mostrou que as TUIs
+usam o cursor nativo do terminal e podem solicitar forma/piscagem por DECSCUSR,
+estado que o render anterior descartava. A correção 0.57 preserva esse estado
+genericamente. O usuário esclareceu em seguida que KV Context é somente outra
+apresentação da mesma base de terminal, não um backend diferente; por isso todo
+offset por superfície foi removido e `DefaultUserShape` também usa a célula VT
+integral. O usuário abriu a Kinein por `scripts/kinein-vectis` e não percebeu
+mudança relevante: o caret da TUI ainda parece desalinhado. Portanto 0.57 fecha
+a lacuna de forma/piscagem, mas não a causa visual. Esse polimento foi adiado
+sem novo offset; sua retomada começa por reprodução instrumentada e métricas de
+célula/DPR em `docs/26-terminal-rendering-parity-roadmap.md`. Por decisão do
+usuário, a experiência funcional do terminal do Code OSS é a base de paridade,
+traduzida para Rust + IPC + Qt, sem Electron, Node, WebView ou xterm.js.
 
 1. registrar cada problema observado pelo usuário ou por um testador com ação,
    esperado, resultado, reprodução, distro e log quando houver;
@@ -91,7 +103,7 @@ A sessão nova deve executar esta sequência:
 
 ```text
 ESTADO
-- Protocolo atual 0.56.0. A1 (recentes) e A2 (capacidades Cargo+CMake) estão
+- Protocolo atual 0.57.0. A1 (recentes) e A2 (capacidades Cargo+CMake) estão
   implementadas; `workspace.kind` é primário compatível e
   `workspace.capabilities.buildSystems` é a fonte das ações híbridas.
 - Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
@@ -105,9 +117,18 @@ ESTADO
 - Cada span informa a largura autoritativa em células VT; fonte, resize,
   seleção e caret usam a mesma grade. ANSI bold usa peso médio e a paleta verde
   é suave; o shell continua dono do texto e dos atributos do prompt.
-- O caret tem offset vertical padrão zero. Somente o KV Context fornece `-2`
-  px pelo `AssistantPanel`; Claude/Codex compartilham esse polimento e o
-  Terminal comum conserva a posição já aprovada.
+- Não existe mais propriedade de offset vertical no AssistantPanel,
+  TerminalPanel ou TerminalViewport. Forma e piscagem solicitadas por DECSCUSR
+  seguem no render; reset/default é resolvido no core para `bar`. Barra/bloco
+  usam a célula VT integral, underline usa a base e `steady` não pisca. Não há
+  regra por agente ou superfície.
+- O teste humano pelo script de desenvolvimento não percebeu correção do
+  alinhamento vertical. O problema continua aberto e foi adiado; 0.57 não tem
+  aceite visual. A retomada está integralmente especificada em `docs/26` e
+  começa por fixture PTY, overlay de baseline/célula e DPR, não por offset.
+- Code OSS/xterm.js são a base de paridade comportamental autorizada para o
+  terminal. A implementação continua nativa em `portable-pty` + Rust + IPC +
+  Qt; Electron, Node, WebView, Extension Host e runtime xterm.js não entram.
 - A roda aceita os dois formatos do Qt (`angleDelta` e `pixelDelta`) e segue o
   mesmo `terminal.scroll` do Terminal comum.
 - Gutter usa faixas independentes para folding/breakpoint, diagnóstico, blame,
@@ -139,24 +160,44 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - Correção 0.56: gate integral verde com 335 testes Rust, Clippy, C++/QML
   estritos, 12 harnesses, builds Debug/Release e smoke offscreen de 8 s
   (`exit 124` esperado). Binários do atalho de desenvolvimento atualizados.
-- Polimento `cursorVerticalOffset: -2` exclusivo do KV Context: mesmo gate
-  integral e smoke release de 8 s verdes; `dist/` não foi regenerado.
+- O teste anterior `cursorVerticalOffset: -2` exclusivo do KV Context passou
+  no gate, mas não recebeu aceite visual. O novo valor `0` passou em qmllint,
+  12 harnesses, rebuild Release e smoke offscreen de 8 s; o gesto humano
+  posterior não aprovou o cursor e `dist/` não foi regenerado.
+- Primeiro recorte DECSCUSR 0.57: gate integral verde com 337 testes Rust,
+  Clippy, C++/QML, 12 harnesses, builds e smoke. O feedback posterior removeu
+  todo offset e unificou `DefaultUserShape`; o mesmo gate integral passou
+  novamente e o smoke release ficou vivo por 8 s sem saída (`exit 124`).
+  Binários de desenvolvimento atualizados; `dist/` continua intocado.
+- Gesto humano posterior: aberta por `scripts/kinein-vectis`, a versão não
+  apresentou mudança visual relevante para o usuário. O caret de Claude/Codex
+  continua sem aceite. Automação verde não equivale a correção visual.
+- A auditoria seguinte encontrou `target/release/kinein-core` anterior a
+  `terminal.rs`; o launcher podia combinar UI nova com core antigo. O gate foi
+  refeito com `debug-strict`/`release-hardened`: 337 testes Rust, Clippy,
+  C++/QML, 12 harnesses e os builds passaram. Smoke real pelo
+  `scripts/kinein-vectis` ficou vivo por 8 s sem saída (`exit 124`). UI/core
+  release agora são os binários atuais; hashes e caminhos estão em
+  `ContextoIA.md`. `dist/` permaneceu intocado.
+- A baseline release A3 com `N=3` passou os orçamentos: 250 ms primeiro frame,
+  103 MB UI, 3,4 ms workspace, 0,0 ms leitura 10k e 7 MB core. A expansão
+  A3.1–A3.4 está detalhada abaixo; Code OSS/Zed e resultados estão em docs/21.
 
 PRÓXIMO GESTO
-1. Reiniciar pelo atalho **Kinein Vectis (Desenvolvimento)**, que já aponta
-   para os binários release 0.56 atualizados, e abrir Claude ou Codex no KV
-   Context. O AppImage em `dist/` ainda é o checkpoint anterior.
-2. Confirmar somente se o caret subiu o pouco necessário e ficou centralizado
-   na linha; posição horizontal e paleta já foram aprovadas e não devem ser
-   alteradas novamente. Conferir também que o cursor do Terminal comum segue
-   exatamente como estava.
-3. Após aceite explícito do usuário, gerar e validar o AppImage portátil dessa
-   revisão para disponibilização a testadores. Não empacotar antes do aceite.
-4. Depois da distribuição aprovada, retomar A3, análise de integrações futuras
-   e polimentos vindos do feedback dos usuários na ordem da fila.
+1. O usuário já pode testar de novo com `scripts/kinein-vectis`; desta vez UI e
+   core release foram comprovadamente reconstruídos. Isso é confirmação, não
+   reabertura automática do cursor adiado.
+2. Implementar **A3.1 — estrutura local Tree-sitter** estendendo somente
+   `medir-core.py`/`medir-performance.sh`; depois seguir A3.2–A3.4.
+3. Encerrada A3, auditar EditorConfig como primeira integração pequena
+   recomendada. Não iniciar um host genérico de plugins.
+4. Se o usuário retomar o cursor, voltar por R0 de `docs/26`, nunca por offset.
+5. Não gerar novo AppImage enquanto essa revisão não tiver aceite explícito;
+   `dist/` continua sendo a entrega anterior preservada.
 
 RESULTADO PENDENTE
-- Aceite humano do offset vertical exclusivo do caret no KV Context.
+- Cursor/TUI reprovado no gesto humano e adiado; causa visual ainda aberta.
+- R0–R7 detalhados em `docs/26-terminal-rendering-parity-roadmap.md`.
 - Novo AppImage e seus smokes host/Debian somente depois desse aceite.
 - Se qualquer gesto falhar, registrar ação/esperado/observado/ambiente e
   priorizar a regressão antes de A3.
@@ -164,6 +205,8 @@ RESULTADO PENDENTE
 LIMITES
 - Commit local somente após checkpoint verde; não fazer push/publicação.
 - Não reabrir a discussão de chat embutido: KV Context é terminal dedicado.
+- Fidelidade ao Code OSS significa comportamento adaptado à arquitetura da
+  Kinein; não incorporar Electron/Node/xterm.js nem copiar implementação.
 ```
 
 ### Loop de desenvolvimento a partir do dogfooding
@@ -240,15 +283,99 @@ correspondente ficar corrigida e protegida.
 
 ### A3 — responsividade medida
 
-- medir tempo de abertura, primeira estrutura Tree-sitter, primeira sugestão
-  semântica, latência de digitação, estabilização do LSP, rajada do terminal e
-  memória em projetos reais;
-- estabelecer orçamento local reproduzível, sem telemetria;
-- mover indexação, parse e I/O pesado para trabalho cancelável/assíncrono;
-- priorizar regressões perceptíveis antes de aumentar profundidade semântica.
+**Estado em 2026-07-15:** preparada sobre a infraestrutura M4.2 já existente;
+não criar segundo runner, protocolo de telemetria ou framework de benchmark.
+`scripts/medir-performance.sh` + `scripts/medir-core.py` continuam sendo a
+entrada única, com cenários nomeados, mediana de `N` e saída local.
+
+Baseline release revalidada depois do protocolo 0.57, com `N=3` e os binários
+exatos usados por `scripts/kinein-vectis`:
+
+| Métrica existente | Mediana atual | Orçamento vigente |
+| --- | ---: | ---: |
+| primeiro frame offscreen | 250 ms | 400 ms |
+| UI RSS vazia | 103 MB | 200 MB |
+| `workspace.open` no repo | 3,4 ms | 50 ms |
+| `fs.read` de 10 mil linhas | 0,0 ms | 20 ms |
+| core RSS em regime | 7 MB | 60 MB |
+| rust-analyzer externo | 1093 MB | informativo |
+
+Todos os itens com orçamento passaram. O rust-analyzer continua separado do
+RSS próprio da Kinein e não reprova o gate sem cenário/limite específico.
+
+Referências profissionais atuais para a expansão de A3:
+
+- Code OSS `234638618394269563dd77c0c395c270d8df8b12`,
+  `src/vs/base/common/performance.ts` e
+  `src/vs/workbench/services/timer/browser/timerService.ts`, MIT/MODE-B:
+  marcos nomeados, durações derivadas entre marcos, espera explícita por fases
+  prontas e separação entre custo próprio, ambiente e processos externos;
+- Zed `1e22d1a83f8b1b7acc528d15cfab0644852380c0`,
+  `crates/benchmarks/benches/editor_render.rs` e `display_map.rs`, somente
+  referência MODE-D: fixtures com seed fixa, tamanhos de entrada explícitos,
+  amostras repetidas e benchmark do caminho real de input/render.
+
+Adaptação nativa: usar `std::time::Instant`/`QElapsedTimer`, RPC stdio e fixtures
+locais; não incorporar timer, telemetria, runtime ou código das referências.
+
+#### A3.1 — estrutura local Tree-sitter
+
+1. estender `medir-core.py`, sem RPC novo, para medir separadamente:
+   - primeiro `syntaxTree.update` frio em arquivo Rust/C++ real;
+   - atualização incremental de um caractere no mesmo documento;
+   - contagem/validação mínima do snapshot para impedir número rápido vazio;
+2. usar fixture versionada e tamanho explícito; não depender de rede ou LSP;
+3. registrar mediana e orçamento inicial em `docs/21`.
+
+Aceite: `syntax_first_snapshot_ms` e `syntax_incremental_update_ms` aparecem na
+mesma tabela local, com cenário reproduzível e resultado estrutural não vazio.
+
+#### A3.2 — primeira semântica e estabilização LSP
+
+1. medir separadamente clangd e rust-analyzer quando instalados;
+2. iniciar em workspace conhecido, sincronizar documento e medir até a primeira
+   resposta válida de `lsp.semanticTokens` e `lsp.completion`;
+3. distinguir startup/indexação externa do round-trip da Kinein; ausência da
+   ferramenta produz `n/d` explícito, nunca sucesso falso;
+4. aplicar timeout e encerrar todos os filhos ao final da amostra.
+
+Aceite: primeira resposta, resposta aquecida e RSS externo ficam separados; a
+medição valida `path`/`version` e ao menos um token/item quando o cenário exigir.
+
+#### A3.3 — digitação real e rajada do terminal
+
+1. criar um harness Qt opt-in que marque tecla recebida → frame apresentado em
+   arquivo grande, sem rodar no uso normal;
+2. medir mediana e cauda visível (`p95`) porque travadas de digitação podem
+   desaparecer na mediana;
+3. reutilizar a sonda PTY existente para uma rajada determinística, medindo
+   `terminal.input` → frame contendo marcador final, além de perda de input,
+   scrollback e responsividade durante a saída;
+4. Terminal comum e KV Context usam o mesmo cenário/renderer; o cursor adiado
+   de `docs/26` não altera esta medição.
+
+Aceite: nenhuma tecla perdida, marcador final presente, UI interativa durante
+a rajada e números separados para editor e terminal.
+
+#### A3.4 — orçamento e reação a regressões
+
+1. versionar máquina, distro, Qt, binários, `N`, fixture e perfil release;
+2. orçamento inicial = medição repetida com folga explícita, não número
+   aspiracional inventado;
+3. regressão acima do orçamento abre fatia de causa-raiz antes de nova
+   profundidade semântica;
+4. otimização só entra depois de perfil local mostrar o dono do custo; trabalho
+   pesado permanece cancelável/assíncrono e fora da thread da UI.
 
 Aceite: métricas e cenários ficam versionados; não se depende apenas de
 impressão visual para afirmar que autocomplete/editor/terminal são responsivos.
+
+Depois de A3, a primeira integração pequena recomendada para a sessão de
+“novo plugin” é **EditorConfig**: está no P0 do roadmap aberto, serve C/C++ e
+Rust, melhora dogfooding imediatamente e cabe em uma fatia auditável sem host
+de extensões. Isso é recomendação de ordem, não adoção definitiva; a sessão
+deve confirmar biblioteca/licença, contrato e conflito com settings antes do
+código. Integrações grandes de A5 continuam atrás dessa análise.
 
 ### A4 — confortos que bloquearem o dogfooding
 
@@ -302,6 +429,175 @@ duplicação do que existe e encaixe Qt/QML → IPC → Rust Core antes de escol
 8. **Clippy:** já está implementado no strict gate e em `quality.run` para
    Rust. A análise futura deve tratar somente lacunas de UX/diagnósticos, não
    adicionar outro linter equivalente.
+9. **Sigrok / PulseView:** avaliar captura e decodificação de sinais como I2C,
+   SPI e UART e uma visualização integrada para analisadores lógicos. Preferir
+   orquestrar o motor/protocolo aberto e não recriar decoders ou osciloscópio.
+10. **Serial Studio:** avaliar telemetria serial em tempo real e painéis de
+    gráficos, mapas, bússolas e medidores. Comparar integração externa,
+    formatos de dados e custo de uma UI nativa antes de qualquer adoção.
+11. **Wokwi CLI / QEMU:** QEMU já pertence à trilha embarcada; acrescentar
+    Wokwi como candidato para simulação sem placa de ESP32/STM32 e afins.
+    Verificar licença, dependência de serviço/rede, reprodutibilidade e
+    adequação à política local-first antes de escolher.
+12. **Unity / Google Test (GTest) / Criterion:** estudar descoberta e consumo
+    de relatórios de testes C/C++ no painel existente. Comparar com CTest já
+    suportado; para Rust, preservar `cargo test` como fonte autoritativa.
+13. **Doxygen:** candidato para geração acionável de documentação C/C++/Rust a
+    partir do projeto, como job externo e cancelável, sem gerador próprio.
+14. **Sphinx / Breathe:** avaliar composição de manuais sobre a saída do
+    Doxygen e geração HTML/PDF, mantendo templates e configuração pertencentes
+    ao projeto do usuário.
+15. **Bloaty McBloatface:** avaliar análise de tamanho de binários e seções para
+    firmware, com resultados navegáveis e visualizações de consumo de flash;
+    não criar analisador binário interno.
+16. **GitOxide (gix) / libgit2:** candidatos nativos para Git. A Kinein hoje já
+    oferece status, diff, blame, histórico, branches, stash e operações remotas
+    orquestrando Git no core; comparar segurança, paridade e custo antes de
+    substituir uma CLI madura ou duplicar funcionalidades existentes.
+17. **DAP / lldb-dap / gdb-dap:** DAP e `lldb-dap` já formam a fundação de
+    debug da Kinein. Avaliar `gdb-dap` e lacunas de hardware sem criar outro
+    protocolo nem interpretar a saída humana de GDB/LLDB.
+18. **LSIF:** avaliar índices persistentes para navegação em bases C/C++ muito
+    grandes e comparar com formatos/ecossistemas atuais antes de escolher. Não
+    duplicar clangd nem iniciar indexador global sem orçamento medido.
+19. **OpenOCD:** candidato principal para flash e debug JTAG/SWD, orquestrado
+    como processo confinado e observável. Separar transporte GDB, comandos de
+    controle e diagnóstico; Telnet/RPC entram na mesma análise, sem comandos
+    montados por shell.
+20. **pyOCD:** candidato Cortex-M complementar ao OpenOCD, especialmente para
+    automação e probes CMSIS-DAP; comparar cobertura de targets, distribuição,
+    dependência Python e paridade antes de ativar por placa.
+21. **CMSIS-DAP:** protocolo/firmware de probe ARM, não plugin de UI. Modelar
+    como capacidade detectada do adaptador físico e fonte para OpenOCD/pyOCD.
+22. **avrdude / esptool / stlink:** candidatos específicos para flash AVR,
+    ESP e STM32. Cada ferramenta precisa de adapter tipado, detecção de versão,
+    preview do comando, cancelamento e logs; nada de executor shell genérico.
+23. **Cppcheck / LLVM Clang Static Analyzer:** candidatos C/C++ para
+    `quality.run`, comparados com clang-tidy já adotado. Resultados devem virar
+    diagnósticos comuns e evitar três análises equivalentes por padrão.
+24. **cargo-audit / cargo-deny:** candidatos Rust para vulnerabilidades,
+    advisories, fontes e licenças. Diferenciar análise local do lockfile de
+    atualização de bancos pela rede e exigir ação/consentimento explícitos.
+25. **gcov / lcov:** candidatos de cobertura C/C++ com build instrumentado,
+    coleta separada e relatório por arquivo/linha; preservar presets e targets
+    do projeto, sem injetar flags silenciosamente.
+26. **cargo-tarpaulin:** candidato de cobertura Rust, a comparar com alternativas
+    atuais, compatibilidade de toolchain e custo Linux. A fonte de testes segue
+    sendo `cargo test`.
+27. **Ghidra:** candidato de engenharia reversa e decompilação como ferramenta
+    externa pesada. Avaliar importação/exportação e navegação ELF/assembly sem
+    embutir toda a suíte ou prometer edição round-trip.
+28. **GDB/LLDB MI:** fallback estruturado apenas para capacidades de baixo nível
+    realmente ausentes no DAP. Preferir DAP; qualquer MI precisa de parser de
+    protocolo, máquina de estados, timeout e testes, nunca scraping do terminal.
+29. **libelf / goblin:** candidatos para ELF, seções, símbolos e mapas de
+    memória. Comparar biblioteca nativa/FFI com crate Rust segura e pequena;
+    não duplicar Bloaty quando um relatório externo bastar.
+30. **DWARF / gimli:** padrão e biblioteca candidata para mapear endereços a
+    fontes/símbolos quando DAP não fornecer o dado. Exigir limites de memória,
+    parsing lazy e fixtures de ELF reais.
+31. **udevadm / libudev:** candidatos Linux para detectar probes e placas por
+    VID/PID. O core deve observar eventos e sugerir configuração; nunca iniciar
+    flash automaticamente sem confirmação do usuário.
+32. **PlatformIO Storage Architecture / sysroots isolados:** estudar somente a
+    estratégia de manifests, pins, checksums, isolamento e cache, sem incorporar
+    PlatformIO Core ou baixar toolchains silenciosamente. Instalação, rede,
+    licença, proveniência, rollback e espaço em disco exigem política própria.
+33. **CMSIS-Pack:** candidato para descrição ARM, SVD, startup, drivers e mapa
+    de memória. Tratar `.pack` como conteúdo não confiável, validar manifestos,
+    caminhos e licenças e nunca executar código do pacote durante a leitura.
+34. **DTS / DTB:** candidato para navegação, validação e compilação de Device
+    Tree via ferramentas maduras. Qualquer editor gráfico deve preservar o
+    texto autoritativo e round-trip verificável.
+35. **SWO / ITM:** candidatos de trace não intrusivo ARM, integrados ao
+    transporte/probe selecionado. Separar aquisição de alta taxa, decode,
+    backpressure, persistência e visualização.
+36. **CTF / LTTng:** candidatos para trace estruturado e timelines, sobretudo
+    Linux/RTOS. Avaliar leitores maduros e streaming limitado antes de criar
+    armazenamento ou gráficos próprios.
+37. **libclang / Clang C API:** candidato explícito do usuário para AST e
+    análises profundas/call graphs. A sessão futura deve medir custo de memória,
+    ABI/distribuição e duplicação com clangd + Tree-sitter. Só adotar quando uma
+    capacidade concreta não puder ser obtida pelos serviços existentes; o peso
+    maior é aceito apenas com benefício e orçamento demonstrados.
+38. **gcov-kernel / kcov:** candidatos especializados para cobertura de kernel
+    Linux e drivers, fora do fluxo padrão de usuário; exigem privilégios,
+    isolamento e documentação de ambiente próprios.
+39. **MQTT / CoAP / Mosquitto:** candidatos para telemetria de bancada remota.
+    Diferenciar cliente, broker e protocolo; rede permanece opt-in, com destino
+    visível, TLS/credenciais protegidos e nenhuma telemetria da IDE.
+40. **TimescaleDB / InfluxDB / LMDB / RocksDB:** candidatos distintos para
+    séries temporais ou armazenamento local de captura. Bancos-servidor não são
+    equivalentes a motores embutidos; escolher somente após medir volume,
+    retenção, consulta, operação e portabilidade.
+41. **Jinja2 / Tera:** candidatos de template para geração explícita de código
+    de inicialização. Preferir Tera se a camada permanecer Rust, mas só após
+    definir arquivos gerados, ownership, preview, diff, regeneração e proteção
+    contra sobrescrever edição manual.
+42. **OpenModelica / OMSimulator:** candidatos para simulação física
+    mecânica/elétrica/térmica por CLI/API. Avaliar licença, distribuição,
+    execução longa cancelável, artefatos e importação de resultados sem acoplar
+    o core ao runtime da suíte.
+43. **FMI / FMUs:** padrão candidato para co-simulação. Tratar FMU como pacote
+    de binário não confiável: inspeção, compatibilidade de arquitetura,
+    sandbox, limites e consentimento precedem qualquer carregamento.
+44. **GSL / ndarray:** candidatos de computação numérica para ferramentas ou
+    fixtures científicas, não APIs automaticamente expostas ao código do
+    usuário. Definir primeiro o caso de uso e evitar transformar a IDE em um
+    runtime matemático próprio.
+45. **perf / Hotspot:** candidatos Linux para profiling e flame graphs. Preferir
+    produzir/consumir formatos maduros, detectar permissões do kernel e manter
+    coleta separada da visualização.
+46. **tokio-console:** candidato Rust para tarefas assíncronas instrumentadas.
+    A integração deve detectar a instrumentação necessária e apresentar
+    claramente que não funciona em binários Tokio não preparados.
+47. **Frama-C / Kani:** candidatos de verificação formal para C e Rust. Entram
+    como jobs especializados, opt-in e reprodutíveis; não devem ser rotulados
+    como prova de segurança total nem misturados ao lint rápido padrão.
+48. **OTAWA / análise WCET:** candidato de pior tempo de execução para sistemas
+    críticos. Avaliar maturidade, arquiteturas suportadas, modelos de hardware,
+    licença e validade das premissas antes de qualquer promessa de certificação.
+49. **lm-sensors / Open Hardware Monitor CLI:** candidatos de observação do host
+    durante simulação/profiling. Para Linux-first, avaliar `lm-sensors` primeiro;
+    correlação energética não autoriza coleta persistente ou telemetria padrão.
+50. **D-Bus:** API de integração Linux para eventos realmente necessários de
+    sistema/energia/rede. Assinar apenas interfaces allowlisted; não usar como
+    barramento genérico nem monitorar o desktop inteiro.
+51. **ccache / sccache:** candidatos de cache de compilação, ativados por
+    toolchain/preset explícito e diagnóstico de hit/miss. Não reescrever linhas
+    de compilação nem enviar cache remoto sem configuração e consentimento.
+52. **distcc:** candidato de compilação distribuída C/C++ para laboratórios.
+    Exige confiança entre hosts, toolchains idênticas, rede configurada pelo
+    usuário, falha segura e medição que justifique a complexidade.
+53. **OpenGL e tecnologias gráficas afins:** trilha de rendering para simulação
+    gráfica Linux-native citada pelo usuário. Tratar como subsistema de
+    visualização/simulação com API e isolamento próprios, não como plugin de
+    linguagem nem lógica embutida no editor.
+
+#### A5.1 — arquitetura futura da biblioteca de integrações
+
+O usuário quer uma aba visual semelhante a uma biblioteca, capaz de mostrar e
+ativar/desativar integrações. O nome de produto pode ser “Plugins”, mas a
+arquitetura deve registrar a natureza real de cada item: ferramenta externa,
+protocolo, formato, biblioteca vinculada, serviço ou visualizador. Desenhar em
+sessão própria antes de implementar:
+
+- registry tipado no Rust Core com id estável, categoria, versão detectada,
+  licença, origem, capacidades, requisitos, conflitos e estado de saúde;
+- ativação global ou por workspace persistida por schema, com defaults mínimos,
+  lazy start, orçamento de CPU/RAM e desligamento/cancelamento determinísticos;
+- adapters pequenos por integração atrás de contratos de domínio; a UI lista,
+  configura e solicita ações, mas não inicia processos nem carrega plugins;
+- dependências, permissões, USB/rede/privilégios e downloads sempre visíveis e
+  confirmáveis; pins, checksums, rollback e diagnóstico para pacotes geridos;
+- nenhum extension host genérico, marketplace executável, código remoto ou
+  telemetria. Ativar/desativar não pode alterar arquivos/toolchains do projeto
+  silenciosamente;
+- separar aquisição, processamento, armazenamento e visualização para sinais,
+  trace, profiling e simulação; aplicar backpressure e limites desde o início;
+- estudar Code OSS, IntelliJ Community, Zed/Lapce/NetBeans e ferramentas
+  oficiais pertinentes por revisão atual, registrando invariantes e adaptação
+  Qt/QML → IPC → Rust Core antes de cada fatia.
 
 ### A6 — sessão reservada para o novo repositório público
 

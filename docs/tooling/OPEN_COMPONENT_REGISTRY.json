@@ -1,7 +1,53 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-14",
+  "updatedAt": "2026-07-15",
   "components": [
+    {
+      "id": "vte-cursor-style-parser",
+      "name": "vte",
+      "role": "Chunk-safe recognition of the DECSCUSR cursor-style state missing from vt100's public screen API",
+      "adoptionMode": "A",
+      "integration": "Rust crate linked only by kinein-core; observes the same PTY bytes and exposes only cursor shape/blinking",
+      "upstream": {
+        "repository": "https://github.com/alacritty/vte",
+        "documentation": "https://docs.rs/vte/0.15.0/vte/"
+      },
+      "version": {
+        "selected": "0.15.0",
+        "pin": "Cargo constraint plus Cargo.lock checksum",
+        "reason": "Already resolved transitively by vt100 0.16.2; direct use avoids a handwritten ANSI state machine and adds no second crate version"
+      },
+      "license": {
+        "spdx": "Apache-2.0 OR MIT",
+        "accepted": true,
+        "source": "Published crate manifest"
+      },
+      "maintenance": {
+        "statusAtReview": "Maintained by the Alacritty terminal ecosystem",
+        "reviewedAt": "2026-07-15"
+      },
+      "runtimeSecurity": {
+        "telemetry": false,
+        "network": false,
+        "shellExecution": false,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "nativeCode": false
+      },
+      "scopeControls": [
+        "Only DECSCUSR plus standard soft/full resets affect the tracked style",
+        "Grid, cursor position and all other VT state remain owned by vt100",
+        "No CLI name, prompt text or user content is interpreted",
+        "Grid and cursor style share one mutex snapshot"
+      ],
+      "verification": [
+        "All six explicit DECSCUSR shapes/blink modes mapped",
+        "Sequence split across PTY chunks covered by unit test",
+        "Default reset and structured terminal.render contract covered",
+        "Strict clippy and QML lint"
+      ],
+      "decision": "docs/24-paridade-e-fundacao.md"
+    },
     {
       "id": "notify",
       "name": "notify",

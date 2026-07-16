@@ -219,6 +219,7 @@ dependencies = [
  "tree-sitter-cpp",
  "tree-sitter-rust",
  "vt100",
+ "vte",
 ]
 
 [[package]]

@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.56.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.57.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `aiBridge.*`). O
@@ -517,7 +517,9 @@ os comandos e eventos seguintes carregam esse id.
 event.terminal.render {           (throttle ~30fps; substitui event.terminal.data)
   "id": string,                  (0.44.0 — sessão dona deste grid)
   "cols": u16, "rows": u16,
-  "cursor": { "row": u16, "col": u16, "visible": bool },
+  "cursor": { "row": u16, "col": u16, "visible": bool,
+              "shape": "block"|"underline"|"bar",
+              "blinking": bool },       (0.57.0 — DECSCUSR da aplicação)
   "alternateScreen": bool,       (0.51.0 — TUI em tela alternativa)
   "applicationCursor": bool,     (0.51.0 — setas SS3 quando solicitado)
   "bracketedPaste": bool,        (0.51.0 — paste delimitado e seguro)
@@ -537,6 +539,11 @@ estilo). Desde `0.56.0`, `cells` informa a largura autoritativa do span em
 colunas VT; ela não deve ser inferida de `text.length` nem da largura em pixels
 da fonte, pois glifos largos, combinantes e fallback tipográfico podem divergir.
 O core coalesce runs e descarta o espaço final em estilo default.
+Desde `0.57.0`, `shape` e `blinking` preservam o estado VT solicitado por
+`DECSCUSR` (`CSI Ps SP q`). O core resolve reset/`DefaultUserShape` para a
+preferência do terminal Kinein (`bar`) e sempre emite uma forma concreta; forma
+explícita e piscagem pertencem ao programa no PTY. A UI não deve inferir a CLI
+ativa nem aplicar geometria específica para Claude/Codex.
 
 `scrollback`/`scrollbackMax` (`0.43.0`, B1/B2 de docs/24) existem porque a UI
 **não tem como saber sozinha** se há histórico nem onde a view está: o core é
