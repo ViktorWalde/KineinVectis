@@ -9,9 +9,11 @@ Window {
     minimumWidth: 800
     minimumHeight: 500
     visible: true
-    title: coreClient.workspaceName !== ""
-           ? qsTr("%1 - Kinein Vectis").arg(coreClient.workspaceName)
-           : qsTr("Kinein Vectis")
+    // A decoração server-side controla cor/peso do título e pode impor texto
+    // branco de alto contraste. A identidade e o workspace já aparecem na
+    // App Bar tematizada; manter o título nativo vazio evita a duplicação sem
+    // sacrificar move/resize/controles do compositor (docs/20).
+    title: ""
     color: Theme.background0
 
     CoreClient {

@@ -238,6 +238,17 @@ Feedback de testador não vira feature automaticamente: reproduzir, conferir se
 já existe solução no core/UI e encaixar no domínio/roadmap correto. Se for uma
 ideia nova sem bloqueio, registrar atrás dos problemas reais e de A3.
 
+### 0.2 Reformulação completa da barra de janela (P3, futura)
+
+A mitigação curta já remove o texto branco duplicado da decoração nativa e
+mostra o workspace na App Bar tematizada. Depois de A3 e sem interromper novas
+funções, fechar a convergência visual definida em `docs/20`: integrar App Bar e
+ações de janela numa decoração client-side Kinein suave, validando X11,
+Wayland, oito bordas de resize, snap, maximização, escala fracionária,
+multimonitor e acessibilidade antes de remover a moldura server-side. A imagem
+de aceite inicial é `imagens/bugs/ReformularBarra.png`. Não implementar apenas
+`FramelessWindowHint` nem copiar a barra da JetBrains.
+
 ## 1. TR0 — aceite funcional da rodada atual
 
 Antes de ampliar o produto, validar a aplicação real em tela. Regressões
@@ -580,7 +591,8 @@ O usuário quer uma aba visual semelhante a uma biblioteca, capaz de mostrar e
 ativar/desativar integrações. O nome de produto pode ser “Plugins”, mas a
 arquitetura deve registrar a natureza real de cada item: ferramenta externa,
 protocolo, formato, biblioteca vinculada, serviço ou visualizador. Desenhar em
-sessão própria antes de implementar:
+sessão própria antes de implementar. A arquitetura-base desta sessão fica
+fechada assim:
 
 - registry tipado no Rust Core com id estável, categoria, versão detectada,
   licença, origem, capacidades, requisitos, conflitos e estado de saúde;
@@ -598,6 +610,142 @@ sessão própria antes de implementar:
 - estudar Code OSS, IntelliJ Community, Zed/Lapce/NetBeans e ferramentas
   oficiais pertinentes por revisão atual, registrando invariantes e adaptação
   Qt/QML → IPC → Rust Core antes de cada fatia.
+
+O nome visível pode ser **Plugins**, mas os nomes internos serão
+`integration`/`capability`/`adapter`. Não haverá API para carregar código de
+terceiros. O crescimento é incremental, sem criar um crate ou framework vazio:
+
+```text
+QML Plugins/Integrations view (apresenta e solicita)
+        ↓ CoreClient
+kinein-protocol::integration (descriptor, state, action, permission)
+        ↓
+kinein-core/src/integration/ (registry + policy + health)
+        ↓
+adapter pequeno do domínio → Job cancelável → ferramenta/protocolo externo
+        ↓
+eventos tipados → Problems/Tests/Profiler/Trace/Simulation
+```
+
+O primeiro recorte nasce junto de EditorConfig e registra também as ferramentas
+já detectadas; só depois o módulo é dividido. Um descriptor precisa carregar
+`id`, natureza, categoria, modo A–D, origem/licença, versão detectada,
+capacidades, requisitos, permissões, instalação, escopo de ativação e saúde.
+Uma ação carrega risco, efeitos, necessidade de rede/USB/privilégio, preview e
+tipo de Job. Estado e configuração usam schema; segredo fica fora do registry.
+
+#### A5.2 — sequência linear vinculante de capacidade
+
+Cada nível depende dos anteriores. Não começar uma integração de nível alto
+apenas porque sua CLI é fácil de chamar.
+
+| Nível | Entrega arquitetural primeiro | Integrações que validam o nível |
+| --- | --- | --- |
+| L0 | fechar A3.1–A3.4 e orçamentos; sem plataforma genérica antes da baseline | nenhuma nova |
+| L1 | `integration` v1 por fatia vertical: descriptor/health/configuração, leitura do registry existente e aba somente informativa | EditorConfig; inventário de clangd, rust-analyzer, CMake, Cargo, Git, rg, fd, lldb-dap e Clippy |
+| L2 | resultado comum para diagnóstico/teste/cobertura, artefatos e Jobs canceláveis | cargo-audit/deny, Cppcheck/Clang Static Analyzer, Valgrind, GTest/Unity/Criterion, gcov/lcov e cobertura Rust |
+| L3 | Project Graph/targets/perfis explicáveis, cache provenance e geração de artefatos | Bear, ccache/sccache, Bloaty, Doxygen e Sphinx/Breathe |
+| L4 | DAP sólido, sessão de profiling, importador de relatório e permissões do kernel | lldb/gdb DAP, Heaptrack, perf/Hotspot, tokio-console; MI/ELF/DWARF apenas por lacuna |
+| L5 | `RemoteContext`: host keys, credenciais externas, path mapping, desconexão, sync e Jobs remotos | OpenSSH/Open Remote UX; SSHFS e bindings SSH somente como alternativas; distcc não entra ainda |
+| L6 | `Target`/`Device`/`Probe`, detecção USB, package trust, flash preview e confirmação | udev, CMSIS-DAP/Pack, DTS/DTB, OpenOCD, pyOCD, probe-rs, avrdude, esptool, stlink, QEMU e Tera |
+| L7 | streaming com backpressure, timestamp, canais, retenção e segurança de rede/dispositivo | sigrok, SWO/ITM, CTF/LTTng, MQTT/CoAP/Mosquitto, lm-sensors e D-Bus allowlisted |
+| L8 | armazenamento medido e API de visualização isolada do editor/core | banco local ou de séries temporais escolhido por benchmark, OpenGL/Qt rendering e computação numérica específica |
+| L9 | sandbox de pacote/binário, compatibilidade de arquitetura e co-simulação reproduzível | FMI/FMU antes de OpenModelica/OMSimulator; Wokwi somente opt-in externo/nuvem |
+| L10 | laboratório opt-in, sem promessa de suporte diário | SCIP/indexação persistente, Ghidra, libclang, gcov-kernel/kcov, Frama-C/Kani, OTAWA e distcc |
+
+Gate de promoção de nível: ao menos uma integração vertical real, testes de
+falha/cancelamento, orçamento medido, configuração reversível e nenhum
+processo/handle órfão. A aba visual não desbloqueia o nível; o contrato e o
+serviço comprovados o desbloqueiam.
+
+#### A5.3 — decisão linear para os 53 candidatos
+
+Legenda: **manter** = já existe; **adotar** = candidato principal após o gate;
+**condicional** = só com lacuna/PoC; **referência** = estudar ou interoperar,
+sem incorporar; **substituir** = avaliar primeiro a alternativa indicada.
+
+| # | Candidato | Decisão | Ordem e limite |
+| ---: | --- | --- | --- |
+| 1 | Open Remote SSH | referência | L5; UX de referência, implementação por OpenSSH direto |
+| 2 | SSHFS / sshfs-win | condicional | L5 depois do RemoteContext; nunca transporte padrão; `sshfs-win` fora do foco Linux |
+| 3 | Bear | adotar | L3, somente fallback quando o build não fornece compile database confiável |
+| 4 | CodeLLDB | manter/referência | L4; `lldb-dap` via DAP já é a integração, sem Extension Host |
+| 5 | libssh / ssh2-rs | condicional | L5, apenas se OpenSSH CLI não cobrir sessão/SFTP/túnel necessário |
+| 6 | Valgrind/Memcheck | adotar | L2, Job opt-in e achados navegáveis; não bloquear lint rápido |
+| 7 | Heaptrack | adotar | L4, coleta separada de visualização e importação de artefato |
+| 8 | Clippy | manter | L1/L2, melhorar UX de diagnósticos; não integrar segundo Clippy |
+| 9 | sigrok/PulseView | adotar/referência | L7; motor/CLI e formatos em Mode-A, PulseView pode abrir externamente |
+| 10 | Serial Studio | referência | L7; interoperabilidade/formato apenas, sem copiar GPLv3 nem módulos Pro |
+| 11 | Wokwi CLI / QEMU | separar | QEMU em L6 local-first; Wokwi em L9, externo, token/rede/upload explícitos |
+| 12 | Unity/GTest/Criterion | adotar protocolos | L2; descobrir/executar via CTest/Cargo e consumir relatórios, sem empacotar frameworks |
+| 13 | Doxygen | adotar | L3 como Job de projeto explícito |
+| 14 | Sphinx/Breathe | condicional | L3 depois de Doxygen, para projetos que já escolheram essa cadeia |
+| 15 | Bloaty | adotar | L3, análise de artefato/flash sem parser binário próprio |
+| 16 | gix/libgit2 | não agora | L10 apenas se Git CLI demonstrar lacuna; evitar duplicação e FFI |
+| 17 | DAP/lldb-dap/gdb-dap | manter/adotar | L4; consolidar DAP/lldb e avaliar `gdb.dap`; uma sessão/contrato comum |
+| 18 | LSIF | substituir | L10; avaliar SCIP atual, não iniciar implementação nova em LSIF |
+| 19 | OpenOCD | adotar | L6, principal adapter JTAG/SWD/GDB remoto |
+| 20 | pyOCD | adotar condicional | L6, complementar Cortex-M/CMSIS-DAP por cobertura de target |
+| 21 | CMSIS-DAP | modelar | L6 como capacidade de probe, não plugin/UI |
+| 22 | avrdude/esptool/stlink | adotar | L6, adapters distintos com argv/preview/versão/cancelamento |
+| 23 | Cppcheck/Clang Static Analyzer | condicional | L2; no máximo um default além de clang-tidy, sem diagnósticos triplicados |
+| 24 | cargo-audit/cargo-deny | adotar | L2; banco/rede separados da análise local e consentimento explícito |
+| 25 | gcov/lcov | adotar | L2; perfil instrumentado explícito e resultado por arquivo/linha |
+| 26 | cargo-tarpaulin | substituir primeiro | L2; avaliar `cargo-llvm-cov` primeiro; Tarpaulin fica fallback validado |
+| 27 | Ghidra | referência/externo | L10; abrir/importar artefato, nunca embutir a suíte |
+| 28 | GDB/LLDB MI | fallback | L4 depois de DAP, somente capacidade comprovadamente ausente |
+| 29 | libelf/goblin | condicional | L4/L10; preferir crate Rust segura (`goblin`) se Bloaty/DAP não bastarem |
+| 30 | DWARF/gimli | condicional | L4/L10; parsing lazy e limitado somente para contrato concreto |
+| 31 | udevadm/libudev | adotar em degraus | L6; `udevadm`/sysfs primeiro, binding apenas se eventos persistentes exigirem |
+| 32 | PlatformIO Storage Architecture | referência | L6; aprender pins/cache/isolamento, sem incorporar Core nem download silencioso |
+| 33 | CMSIS-Pack | adotar | L6; parser de pacote não confiável, licença e paths validados, zero execução |
+| 34 | DTS/DTB | adotar | L6; ferramentas oficiais e texto autoritativo com round-trip |
+| 35 | SWO/ITM | adotar | L7 depois de Probe/Target e streaming com backpressure |
+| 36 | CTF/LTTng | adotar condicional | L7 para Linux/RTOS, formatos maduros e retenção limitada |
+| 37 | libclang/Clang C API | não agora | L10; somente caso medido que clangd + Tree-sitter não resolvam |
+| 38 | gcov-kernel/kcov | laboratório | L10, privilégios/isolamento próprios e fora do fluxo padrão |
+| 39 | MQTT/CoAP/Mosquitto | adotar opt-in | L7; cliente separado do broker, TLS/segredos e destino visível |
+| 40 | TimescaleDB/InfluxDB/LMDB/RocksDB | escolher, não somar | L8 após benchmark de volume/retenção; servidor e embutido são decisões distintas |
+| 41 | Jinja2/Tera | condicional | L6; preferir Tera no Rust, com preview/diff/ownership antes de gerar |
+| 42 | OpenModelica/OMSimulator | adotar tarde | L9 depois do contrato FMI/FMU, como Job externo cancelável |
+| 43 | FMI/FMUs | adotar fundação | L9; inspecionar/sandbox antes de carregar binário de FMU |
+| 44 | GSL/ndarray | por feature | L8/L9; preferir `ndarray` em módulo Rust quando um visualizador provar necessidade |
+| 45 | perf/Hotspot | adotar/referência | L4; `perf` coleta, Hotspot abre/importa externamente antes de UI própria |
+| 46 | tokio-console | condicional | L4; só para binários instrumentados e com pré-requisito visível |
+| 47 | Frama-C/Kani | laboratório | L10, Jobs separados e sem alegação genérica de prova de segurança |
+| 48 | OTAWA/WCET | pesquisa | L10, somente após maturidade/arquitetura/modelo de hardware comprovados |
+| 49 | lm-sensors/Open Hardware Monitor | substituir | L7; usar lm-sensors no Linux; não depender de Mono/WinForms do OHM |
+| 50 | D-Bus | condicional de plataforma | L7, interfaces allowlisted; não aparece como plugin genérico |
+| 51 | ccache/sccache | adotar | L3, ativação explícita por perfil e telemetria de hit/miss só local |
+| 52 | distcc | laboratório | L10 depois de RemoteContext, confiança/toolchain/rede explícitas e benchmark |
+| 53 | OpenGL/afins | subsistema, não plugin | L8; renderer isolado, API de dados limitada e compatível com o stack Qt |
+
+#### A5.4 — correções trazidas pela auditoria atual
+
+- [SSHFS](https://github.com/libfuse/sshfs) 3.7.6 tem release de 2026, mas o
+  próprio projeto informa ausência de contribuidores ativos regulares e
+  manutenção focada em problemas de alto impacto; por isso não é a base remota.
+- [Wokwi CLI](https://docs.wokwi.com/wokwi-ci/cli-usage) usa token; a
+  [arquitetura oficial](https://docs.wokwi.com/wokwi-ci/getting-started)
+  executa a simulação em nuvem e recebe o firmware. Só pode ser opt-in com
+  preview/envio explícito, nunca substituto local do QEMU.
+- [Serial Studio](https://github.com/Serial-Studio/Serial-Studio) separa core
+  GPL-3.0 e recursos Pro proprietários; é referência/interoperabilidade, não
+  fonte de código nem componente redistribuído pela Kinein.
+- Sourcegraph recomenda [SCIP no lugar de
+  LSIF](https://sourcegraph.com/blog/announcing-scip), e em 2026 anunciou
+  governança aberta para SCIP; qualquer índice persistente novo começa pela
+  avaliação de SCIP.
+- Para Rust, [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov)
+  trabalha sobre instrumentação LLVM, Cargo/nextest e múltiplas arquiteturas;
+  o Tarpaulin ainda usa ptrace x86_64 como backend Linux padrão. Por isso
+  `cargo-llvm-cov` é o primeiro PoC.
+- Open Hardware Monitor exige Mono/WinForms no Linux; `lm-sensors` mantém a
+  decisão Linux-first mais simples e nativa.
+
+Esta triagem não dispensa o gate completo de licença, revisão, checksum,
+segurança e manutenção imediatamente antes de cada adoção. Ela decide a ordem
+e evita gastar arquitetura em candidatos já superados ou inadequados.
 
 ### A6 — sessão reservada para o novo repositório público
 

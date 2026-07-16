@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 Rectangle {
     id: root
@@ -9,10 +10,15 @@ Rectangle {
     property bool coreConnected: false
     property bool running: false
     property bool debugging: false
+    property url brandIconSource: "qrc:/KineinVectis/assets/app-icon.png"
+    property string workspaceName: ""
     property string workspaceKind: ""
     property var workspaceBuildSystems: []
     property var recentWorkspaces: []
     property string activeMenu: ""
+    readonly property string windowContextLabel: workspaceName !== ""
+                                                 ? workspaceName
+                                                 : qsTr("sem workspace")
 
     signal actionRequested(string action)
     signal menuRequested(string key, real menuX, real menuY, var items)
@@ -161,7 +167,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: 24
             height: 24
-            source: "qrc:/KineinVectis/assets/app-icon.png"
+            source: root.brandIconSource
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -231,8 +237,10 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingMedium
         anchors.verticalCenter: parent.verticalCenter
-        text: root.workspaceOpen ? qsTr("workspace ativo") : qsTr("sem workspace")
+        width: Math.min(implicitWidth, 180)
+        text: root.windowContextLabel
         color: Theme.textMuted
         font.pixelSize: 11
+        elide: Text.ElideMiddle
     }
 }

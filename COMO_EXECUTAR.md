@@ -42,6 +42,18 @@ os de debug se os release não existirem. Ele nunca executa o AppImage.
 Sequência curta para copiar/colar: veja
 [`docs/COMANDOS_BUILD_VERIFICACAO.md`](docs/COMANDOS_BUILD_VERIFICACAO.md).
 
+Se existir qualquer dúvida sobre cache antigo ou UI/core de momentos
+diferentes, prefira o comando integral:
+
+```bash
+./scripts/atualizar-tudo.sh
+```
+
+Ele reconfigura, reconstrói, testa e valida o mesmo launcher usado pelo atalho
+de desenvolvimento. Ao terminar, confira
+`build/kinein-build-manifest.env` para os hashes das UIs e cores Debug/Release
+produzidos na mesma transação.
+
 ### 1. Core Rust
 
 ```bash

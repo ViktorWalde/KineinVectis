@@ -1625,8 +1625,9 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   `build/linux-clang-release-hardened/ui/kinein-vectis` +
   `target/release/kinein-core`; smoke offscreen de 8 s ficou vivo, sem saída
   (`exit 124` esperado).
-- Hashes dos binários de desenvolvimento reconstruídos em 2026-07-15:
-  UI `afafd0d032df9f9b5f2335fdc76e54eed4e505af4fe84f5539ba13b53456689b`;
+- Hashes dos binários de desenvolvimento reconstruídos em 2026-07-15 (a UI
+  mudou novamente na mitigação da barra de janela):
+  UI `e8b870635cd8fcb679a02920ab5ab07be9609333f2f346fcd37b775c208bcfa4`;
   core `00029096a66fb5eafd9cf4c927b67106f27b4159f6427d2bd7246fb26147c2fc`.
   Esses são executáveis ELF do checkout, não AppImage; `dist/` não mudou.
 - A baseline release de A3 foi revalidada com `N=3`: primeiro frame 250 ms,
@@ -1645,3 +1646,64 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   de Markdown e diretórios que não podem aparecer, auditados caminhos,
   conteúdo, segredos e histórico, e só então considerada qualquer criação ou
   publicação externa. Nada foi publicado ou teve visibilidade alterada agora.
+
+## Conforto imediato da barra de janela (2026-07-15)
+
+- O dogfooding registrou `imagens/bugs/ReformularBarra.png`: a decoração
+  server-side repetia `workspace - Kinein Vectis` em branco puro acima da App
+  Bar e causava fadiga visual. Essa cor/peso pertencem ao compositor, não ao
+  QML, e não têm ajuste portátil por aplicação.
+- A mitigação mínima mantém toda a moldura nativa e seus controles, mas deixa
+  o título server-side vazio. A App Bar continua dona da identidade `Kinein` e
+  agora mostra o nome real do workspace em `Theme.textMuted`, com elide. Um
+  binding direto cobre os estados com e sem workspace; core, protocolo e IPC
+  não mudam. Como o aceite é visual e depende do compositor, o gate automatiza
+  lint/build/smoke e o usuário confere o resultado em tela real.
+- A reformulação completa permanece na C5/C6 de `docs/20`: decoração
+  client-side original da Kinein, compacta e suave, somente depois de cobrir
+  move/resize/snap/controles, acessibilidade, escala e X11/Wayland. Não ativar
+  `FramelessWindowHint` como atalho incompleto.
+- Referências: Zed oficial
+  `1e22d1a83f8b1b7acc528d15cfab0644852380c0` (separação client/server e
+  tokens de title bar; referência Mode-D) e documentação oficial Qt 6 sobre
+  `Window.title`, flags e riscos de janela frameless. Nenhuma implementação
+  externa foi copiada.
+
+## Escalonamento linear das integrações solicitadas (2026-07-15)
+
+- Os 53 candidatos de `PONTO_ATUAL.md` A5 foram tirados da categoria vaga de
+  “plugin”. A5.1 define a arquitetura `QML → CoreClient → protocolo
+  integration → registry/policy/adapters no Rust Core → Job → ferramenta` sem
+  Extension Host; A5.2 fixa níveis L0–L10; A5.3 decide cada item como manter,
+  adotar, condicional, referência ou substituir.
+- O desenvolvimento começa depois da baseline A3 por uma fatia vertical de
+  EditorConfig. Ela cria apenas o mínimo do domínio `integration` e registra
+  ferramentas já detectadas; não nasce um crate/framework vazio. Qualidade e
+  testes vêm antes de build/cache, depois debug/profiling, remoto, embedded,
+  streaming, visualização, simulação e, por último, laboratório especializado.
+- Correções de triagem: OpenSSH é base remota e SSHFS fica opcional; QEMU é
+  local-first e Wokwi exige opt-in de rede/token/upload; Serial Studio é apenas
+  referência/interoperabilidade por GPLv3 + módulos Pro; SCIP substitui LSIF
+  numa avaliação futura; `cargo-llvm-cov` precede Tarpaulin; `lm-sensors`
+  precede Open Hardware Monitor no Linux.
+- Nenhuma dessas decisões instala, baixa ou ativa ferramenta. Cada adoção ainda
+  exige auditoria atual de licença/manutenção/segurança, ADR/registry quando
+  aplicável, consentimento para rede/USB/privilégio e gate vertical medido.
+
+## Atualização integral transacional do checkout (2026-07-15)
+
+- `scripts/atualizar-tudo.sh` é a entrada única para dúvida de cache ou
+  UI/core desencontrados. Usa lock, fingerprint, backup/restauração dos quatro
+  executáveis, CMake `--fresh`, rebuilds `--clean-first`, limpeza dirigida dos
+  crates, gate completo, materialização explícita do core Debug, rejeição de
+  fonte concorrente, smoke do launcher e manifesto de hashes. Não faz rede,
+  pull, update de dependências, AppImage ou push.
+- A execução integral real terminou verde às `2026-07-15T21:51:07-03:00`, com
+  `source_sha256=fff40c44220bda2296d03e3c7def2a5826eae5124f85e513449e845ce376e97f`,
+  gate completo e smoke `124` esperado. O manifesto está em
+  `build/kinein-build-manifest.env`.
+- Hashes produzidos na mesma transação: UI Debug
+  `e545876e40cb046e05b3b0f8aa9c960004562f310cb0c853d2b6675be966bd4f`,
+  UI Release `e8b870635cd8fcb679a02920ab5ab07be9609333f2f346fcd37b775c208bcfa4`,
+  core Debug `a0e677275f10cd27a0e77e22ef28ce95c5804451a208a88f4d30f549cc2d48ac`
+  e core Release `00029096a66fb5eafd9cf4c927b67106f27b4159f6427d2bd7246fb26147c2fc`.

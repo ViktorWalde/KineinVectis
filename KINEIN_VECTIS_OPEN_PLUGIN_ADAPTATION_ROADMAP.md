@@ -1741,6 +1741,12 @@ documentação existe.
 
 # 8. Ordem prática de execução para a IA
 
+> A lista estendida de 53 candidatos solicitada em 2026-07-15, com decisões
+> item a item e dependências L0–L10, está em `PONTO_ATUAL.md` A5.1–A5.4. Essa
+> sequência complementa as fases históricas abaixo e prevalece para novas
+> adoções: primeiro a capacidade arquitetural, depois a ferramenta. O primeiro
+> recorte continua sendo EditorConfig após A3, nunca um Extension Host vazio.
+
 ## Fase 0 — Registro e auditoria
 
 ```text

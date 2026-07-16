@@ -90,6 +90,7 @@ Column {
         coreConnected: root.coreClient.connected
         running: root.coreClient.running
         debugging: root.coreClient.debugging
+        workspaceName: root.coreClient.workspaceName
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         recentWorkspaces: root.recentWorkspacesController.workspaces

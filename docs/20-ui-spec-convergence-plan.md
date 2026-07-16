@@ -5,7 +5,7 @@
 > **Fonte de verdade:** ESTE doc define COMO e QUANDO a UI converge;
 > `docs/specs/` define PARA ONDE (inegociável); `docs/18` sequencia as
 > fatias; `docs/19` registra a decisão (D12)
-> **Ultima revisao:** 2026-07-14
+> **Ultima revisao:** 2026-07-15
 
 ## O problema, dito sem rodeio
 
@@ -123,7 +123,7 @@ referência exata (arquivo§seção). `LAYOUT` =
 
 | Região | Hoje | Spec | Status |
 | --- | --- | --- | --- |
-| 1 Title/App Bar | AppMenuBar 40px, identidade + 9 menus | menus File/Edit/View/... 40px | **conforme em código; validação visual pendente** |
+| 1 Title/App Bar | AppMenuBar 40px, identidade + 9 menus; decoração server-side ainda separada | menus File/Edit/View/... 40px + ações de janela | **parcial**: conteúdo conforme; integração das ações/chrome pendente |
 | 2 Main Toolbar | 44px, target/profile/configure/build/test/quality/run/debug | Target/Profile/Configure/Build/Run/Debug, 44px | **conforme em código; validação visual pendente** |
 | 3 Tool Rail | 42px | 52px (48–56) | **diverge** (abaixo do mínimo) |
 | 4 Left Tool Window | Project, 280px automático (220–420), redimensionável/persistido | 280px (220–420) redimensionável; Project/Structure/CMake/Toolchains/Targets | **parcial** (dimensionamento conforme; outras tool views futuras) |
@@ -318,6 +318,42 @@ fonte não auditados na área E.
 **Validação (R7):** gate completo + smoke offscreen + verificação visual
 do usuário contra LAYOUT §6–7/§9 e VISUAL §3 (a paleta muda a IDE inteira;
 regressões visuais só o olho pega).
+
+## Conforto imediato e reformulação futura da Title/App Bar (2026-07-15)
+
+**Evidência de dogfooding:** `imagens/bugs/ReformularBarra.png` mostra o nome
+do workspace e do produto em branco puro na decoração nativa, acima da App Bar
+já tematizada. O contraste e a duplicação causam fadiga visual.
+
+**Correção mínima entregue:** `Main.qml` mantém a decoração server-side, mas
+deixa seu título vazio. A identidade continua na App Bar e o workspace passa a
+aparecer ali com `Theme.textMuted`, elide central e sem cor literal. Isso
+preserva move, resize, snap, maximizar/minimizar/fechar e integração do
+compositor enquanto remove o texto branco duplicado.
+
+**Referência profissional atual:** Zed oficial na revisão
+`1e22d1a83f8b1b7acc528d15cfab0644852380c0` (2026-07-15) separa decoração
+`client`/`server` e oferece tokens próprios para fundo ativo/inativo da title
+bar. A documentação oficial do [Qt 6 Window](https://doc.qt.io/qt-6/qml-qtquick-window.html)
+confirma que `title` é apenas o texto entregue ao sistema; a documentação de
+[window flags](https://doc.qt.io/qt-6/qt.html#WindowType-enum) alerta que
+`FramelessWindowHint` pode remover a manipulação nativa de move/resize. Foram
+extraídos somente invariantes e modos de falha; nenhum código, runtime ou
+arquitetura do Zed foi copiado.
+
+**Fatia futura, sem big-bang:** transformar a App Bar existente na decoração
+client-side original da Kinein, suave e compacta, inspirada no nível de
+acabamento das IDEs JetBrains sem copiar sua composição. Critérios de aceite:
+
+- título e estado ativo/inativo usam apenas tokens Kinein, sem branco puro;
+- marca curta `Kinein`, workspace discreto, menus e ações de janela convivem
+  sem perder legibilidade em 800px;
+- arraste, duplo clique, snap, minimizar, maximizar/restaurar, fechar e resize
+  nas oito bordas funcionam em X11 e Wayland;
+- foco, teclado, nomes acessíveis, escala fracionária e múltiplos monitores
+  permanecem corretos;
+- a decoração nativa só é removida depois de smoke visual real nos dois
+  backends; até lá, não usar `FramelessWindowHint`.
 
 ## Gatilho de remake (quando esta decisão seria revertida)
 
