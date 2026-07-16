@@ -431,6 +431,61 @@ mas ela cobria `.md` — falta aplicá-la a **comentário de código**. Regra a 
 de agora: comentário explica invariante e causa, não processo nem autoria. Fatia
 própria, depois da trilha atual.
 
+### 0.2f KV Context: o seletor tem que voltar (P2, 2026-07-16)
+
+**Correção de premissa, e o erro foi meu.** O registro do §0.2b dizia que a UI do
+assistente saiu junto com o `aiBridge`. Feedback do autor no gesto: *"antes tinha
+o problema da UI ter lógica, mas a UI era boa e bonita"* — e ele está certo sobre
+a perda, mas a atribuição merece precisão, porque ela decide a fatia:
+
+> **O problema nunca foi a UI ter lógica. Era o CORE ter política por programa** —
+> injetar `--no-alt-screen`/`--ax-screen-reader` e filtrar `CSI 3 J`, fazendo o
+> agente se comportar diferente dentro da IDE. **O seletor Claude/Codex nunca foi
+> o problema.** Ele foi removido por associação, junto com o mecanismo ruim.
+> Perda desnecessária.
+
+Estado atual (§0.2c): o atalho abre um terminal comum e o usuário digita
+`claude`. Funciona, mas é regressão de fluxo frente ao que existia.
+
+**O que precisa voltar:** ao acionar KV Context, escolher entre as CLIs de IA
+**instaladas**; a escolha abre a sessão com o agente rodando.
+
+**A linha, e ela é fina:**
+
+```text
+DETECTAR   claude/codex existem no PATH?   → é CAPACIDADE. Pode ficar no core.
+EXECUTAR   como claude é rodado?           → é POLÍTICA. NÃO pode voltar ao core.
+```
+
+O `tools.detect` já é a forma certa e já existe: reporta
+`{ id, displayName, status, path, version }` para cargo, clangd, git…, e a UI já
+recebe a lista (`Main.qml:56` → `workspaceController.toolsList`). Detectar
+`claude` é o mesmo que detectar `cargo` — não muda como o programa roda. É o
+precedente do `format.capabilities` (0.61.0): o core publica o catálogo, a UI
+consome.
+
+**Desenho proposto (não implementado):**
+
+1. **core:** acrescentar `claude` e `codex` ao `ToolDetector`. Só detecção:
+   `open_command` continua program-agnostic e sem `ProfileSpec`, `flat_args` ou
+   filtro. Se aparecer `if programa == "claude"` no core, a fatia saiu errada.
+2. **UI:** o atalho abre um seletor com as CLIs **detectadas** (status
+   `Available`); ausentes aparecem com `suggested_install`, sem executar nada —
+   o `ToolInfo` já carrega esse campo e o contrato já diz que o core nunca roda
+   a sugestão.
+3. **UI:** escolhido o agente, abrir a sessão rotulada e mandar o comando por
+   `terminal.input`, como se o usuário tivesse digitado. É a Opção B do §0.2c —
+   e o comando deve vir do `path`/`id` **detectado**, não de string literal no
+   QML, senão a política só migrou de camada.
+4. **rail:** o ícone fica sempre visível (já está; `enabled` segue o workspace).
+
+Isso resolve o §0.2c-B e o §0.2d-2 (renomear) de uma vez: o seletor é o lugar
+natural de "Agente Auxiliar" aparecer.
+
+**Cobertura mínima exigida:** um teste que falhe se o core ganhar ramo por
+programa, e harness do seletor (o `RuntimeController` é QtQuick puro e já é
+testado em `tst_multi_terminal.qml`).
+
 ### 0.2e L1 — auditoria do EditorConfig (2026-07-16). RESULTADO NEGATIVO.
 
 O `PONTO_ATUAL` exige, antes de qualquer código: "confirmar biblioteca/licença,
