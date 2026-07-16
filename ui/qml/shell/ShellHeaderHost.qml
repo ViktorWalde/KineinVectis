@@ -54,6 +54,7 @@ Column {
         case "settings.open": root.settingsController.openDialog(); break;
         case "view.project": root.shellController.toggleExplorer(); break;
         case "view.terminal": root.runtimeController.openTerminalPanel(); break;
+        case "view.context": root.runtimeController.openContext(); break;
         case "view.tools": root.shellController.toggleBottomTab("tools"); break;
         case "view.git": root.shellController.toggleBottomTab("git"); break;
         case "search.everywhere": root.searchController.openSearchEverywhere(); break;

@@ -68,6 +68,59 @@ Item {
         runtime.openTerminalPanel();
         if (root.openedRequests !== 1) failures += 8192;
 
+        // ---- KV Context: atalho visual, sem regra de negocio -------------
+        //
+        // O core nao sabe o que e "KV Context": para ele toda sessao e um
+        // $SHELL no PTY. O rotulo e da UI. Se um dia isto virar parametro do
+        // protocolo, a politica por programa que o 0.59.0 removeu voltou.
+        runtime.terminalActive = true;
+        runtime.clearTerminals();
+        root.openedRequests = 0;
+
+        // Abrir contexto pede uma sessao COMUM — nada de argumento ou perfil.
+        runtime.openContext();
+        if (root.openedRequests !== 1) failures += 16384;
+        if (!runtime.pendingContext) failures += 32768;
+
+        // A resposta do core vira aba rotulada e consome a marca.
+        runtime.handleTerminalOpened("c1", "/bin/sh");
+        if (runtime.pendingContext) failures += 65536;
+        if (runtime.terminalsModel.get(0).isContext !== true) failures += 131072;
+        if (String(runtime.terminalsModel.get(0).title).indexOf("KV Context") !== 0) {
+            failures += 262144;
+        }
+        if (runtime.activeTerminalId !== "c1") failures += 524288;
+
+        // Uma aba comum aberta depois NAO herda o rotulo.
+        runtime.handleTerminalOpened("t9", "/bin/sh");
+        if (runtime.terminalsModel.get(1).isContext !== false) failures += 1048576;
+        if (String(runtime.terminalsModel.get(1).title).indexOf("Terminal") !== 0) {
+            failures += 2097152;
+        }
+
+        // Com contexto vivo, o atalho FOCA em vez de acumular aba.
+        root.openedRequests = 0;
+        runtime.openContext();
+        if (root.openedRequests !== 0) failures += 4194304;
+        if (runtime.activeTerminalId !== "c1") failures += 8388608;
+        if (runtime.terminalsModel.count !== 2) failures += 16777216;
+
+        // Fechado o contexto, o atalho abre outro — e a numeracao nao repete.
+        runtime.handleTerminalClosed("c1");
+        root.openedRequests = 0;
+        runtime.openContext();
+        if (root.openedRequests !== 1) failures += 33554432;
+        runtime.handleTerminalOpened("c2", "/bin/sh");
+        const contexto = runtime.terminalsModel.get(runtime.terminalsModel.count - 1);
+        if (String(contexto.title) === "KV Context 1") failures += 67108864;
+
+        // Sem workspace o atalho e inerte (nao ha raiz para o PTY).
+        runtime.clearTerminals();
+        runtime.workspaceRoot = "";
+        root.openedRequests = 0;
+        runtime.openContext();
+        if (root.openedRequests !== 0 || runtime.pendingContext) failures += 134217728;
+
         Qt.exit(failures);
     }
 }

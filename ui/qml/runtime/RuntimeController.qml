@@ -19,6 +19,11 @@ Item {
     // Numeração das abas: NUNCA decrementa. Se decrementasse, fechar a 2 de 3
     // faria a próxima nascer "Terminal 3" de novo — dois com o mesmo nome.
     property int terminalSeq: 0
+    // Numeracao propria do KV Context e a marca de que o proximo
+    // `terminal.open` que voltar do core e uma sessao de contexto. Estado
+    // 100% de UI: o core nao conhece a distincao.
+    property int contextSeq: 0
+    property bool pendingContext: false
     property string terminalText: ""
     property alias runModel: runItemsModel
     // Sessao visivel dentro da aba Terminal (fatia M2.1): o shell PTY e o
@@ -68,12 +73,27 @@ Item {
         id: runConfigsListModel
     }
 
+    // `terminal.open` pode FALHAR (ex.: teto de 12 sessões). O erro vai para o
+    // handler genérico do CoreClient e `handleTerminalOpened` nunca vem — sem
+    // isto a marca ficaria presa e a PRÓXIMA aba comum nasceria rotulada
+    // "KV Context". A marca é cosmética, mas errada é errada.
+    Timer {
+        id: contextIntentTimeout
+
+        interval: 4000
+        repeat: false
+        onTriggered: root.pendingContext = false
+    }
+
     function clearTerminals() {
         terminalsListModel.clear();
         root.activeTerminalId = "";
         root.terminalRender = ({});
         root.terminalRenders = ({});
         root.terminalSeq = 0;
+        root.contextSeq = 0;
+        root.pendingContext = false;
+        contextIntentTimeout.stop();
         root.terminalSession = "shell";
     }
 
@@ -111,14 +131,70 @@ Item {
     // ---- D2.3: multi-terminal --------------------------------------------
 
     /// O core criou a sessão: vira aba e assume o foco.
+    ///
+    /// O core NÃO sabe se a sessão é "KV Context" — para ele toda sessão é um
+    /// `$SHELL` no PTY, igual. O rótulo é decisão da UI e mora só aqui; por isso
+    /// `pendingContext` é consumido no retorno, e não vira parâmetro do
+    /// protocolo. Ver docs/roadmaps/26 e PONTO_ATUAL §0.2b.
     function handleTerminalOpened(id, shell) {
-        root.terminalSeq += 1;
         root.terminalRenders[id] = ({});
-        terminalsListModel.append({
-            "termId": id,
-            "title": qsTr("Terminal %1").arg(root.terminalSeq)
-        });
+        contextIntentTimeout.stop();
+        const isContext = root.pendingContext;
+        root.pendingContext = false;
+        if (isContext) {
+            root.contextSeq += 1;
+            terminalsListModel.append({
+                "termId": id,
+                "title": qsTr("KV Context %1").arg(root.contextSeq),
+                "isContext": true
+            });
+        } else {
+            root.terminalSeq += 1;
+            terminalsListModel.append({
+                "termId": id,
+                "title": qsTr("Terminal %1").arg(root.terminalSeq),
+                "isContext": false
+            });
+        }
         selectTerminal(id);
+    }
+
+    /// KV Context: atalho visual para uma sessão de terminal DEDICADA, para a
+    /// sessão do agente não se perder entre os terminais de build.
+    ///
+    /// É só isso — nenhuma regra de negócio, em camada nenhuma. Não injeta
+    /// argumento, não escolhe programa, não filtra byte: abre o mesmo
+    /// `terminal.open` que o Alt+F12 abre e apenas rotula a aba. Quem roda
+    /// `claude`/`codex` é você, digitando, como em qualquer terminal. Foi
+    /// exatamente a política por programa no core que o 0.59.0 removeu.
+    ///
+    /// Se já existe uma sessão de contexto viva, foca ela em vez de acumular
+    /// abas — o ponto é melhorar o fluxo, não multiplicar terminal.
+    function openContext() {
+        if (workspaceRoot === "") {
+            return;
+        }
+        terminalSession = "shell";
+        showTabRequested("terminal");
+        const existente = firstContextTerminal();
+        if (existente !== "") {
+            selectTerminal(existente);
+            return;
+        }
+        root.pendingContext = true;
+        contextIntentTimeout.restart();
+        terminalOpenRequested();
+    }
+
+    /// Id da primeira sessão de contexto viva, ou "" se não houver.
+    function firstContextTerminal() {
+        for (let i = 0; i < terminalsListModel.count; i++) {
+            const item = terminalsListModel.get(i);
+            if (item.isContext === true) {
+                return item.termId;
+            }
+        }
+        return "";
     }
 
     /// Troca a aba ativa. O grid da sessão volta INTACTO (o core mantém o

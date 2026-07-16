@@ -302,6 +302,43 @@ Zed; falta encaminhamento de mouse ao app e a decisão de renderer).
 O modelo de IA não mudou: externa, por CLI do usuário, sem chat embutido e sem
 rede pela IDE. Caiu o **mecanismo**, não o princípio.
 
+### 0.2c KV Context reativado como UI pura (2026-07-16)
+
+A dependência registrada em §0.2b ("depende do terminal consolidado") caiu: a
+roda ao aplicativo está feita (protocolo 0.60.0) e a grade foi corrigida e
+aceita. O atalho voltou, e agora ele é o que sempre deveria ter sido.
+
+`Exibir → KV Context` (`view.context`) abre uma sessão de terminal **comum**,
+rotulada `KV Context N`, para a sessão do agente não se perder entre os terminais
+de build. Se já existe uma viva, foca ela em vez de acumular aba.
+
+**Não existe regra de negócio em camada nenhuma.** O core não sabe o que é "KV
+Context": para ele é o mesmo `terminal.open` do Alt+F12, um `$SHELL` no PTY. O
+rótulo é estado de UI (`pendingContext`/`contextSeq` no `RuntimeController`) e
+não é parâmetro do protocolo — se um dia virar, a política por programa que o
+0.59.0 removeu voltou. Quem roda `claude`/`codex` é o usuário, digitando.
+
+Detalhe de robustez: `terminal.open` pode falhar (teto de 12 sessões) e o erro
+vai para o handler genérico do `CoreClient`, sem chegar ao QML. Sem tratamento a
+marca ficaria presa e a próxima aba comum nasceria rotulada "KV Context"; um
+timeout de 4 s a solta.
+
+Cobertura: `tst_multi_terminal.qml` (rótulo, marca consumida, aba comum não
+herda, foco em vez de acumular, numeração não repete, inerte sem workspace).
+
+Fio solto que isso fechou: o item de menu "KV Context" existia desde o 0.59.0
+apontando para uma ação `view.context` que **não existia** — opção morta na barra.
+
+Pendência aberta: `assistantTerminalWidth` sobreviveu à remoção do painel do
+assistente em três camadas (`SettingsController.qml`, `settings.rs`, schema). É
+setting órfã. Decidir: ou o KV Context passa a usar largura persistida, ou sai.
+
+**Opção B (a UI digitar o comando do agente) segue em aberto** e é preocupação
+válida do autor: hoje o atalho abre a aba e o usuário digita `claude`. Subir para
+a B exige que o comando seja **configurável**, senão é a regra por programa
+apenas migrando de camada — o core deixaria de conhecer "claude" e a UI passaria
+a conhecer. Analisar em fatia própria.
+
 ### 0.3 Sessão de organização e feedback (2026-07-16)
 
 Sessão de trabalho autônoma autorizada pelo autor (com backup; proibido git
@@ -917,6 +954,31 @@ compreensão do projeto, build, navegação semântica ou debug básico.
   Reusar `TextEdit.MarkdownText` (já validado no `DocumentationDialog`); fatia de
   UI com toggle por aba/atalho, sem editar o markdown pela visualização.
   Pedido do autor em 2026-07-16.
+- **integrar os pacotes de ícones ao app (não é fatia de packaging).** Pedido do
+  autor em 2026-07-16: "os ícones atuais e os novos devem estar no AppImage".
+
+  Auditoria do estado real: **isso já é automático e não pode ser esquecido.**
+  Ícones entram pelo `RESOURCES` do `qt_add_qml_module` em `ui/CMakeLists.txt`,
+  são compilados no executável, e o `empacotar-appimage.sh` empacota o
+  executável. Não existe passo separado de copiar ícone para o AppImage — o que
+  está no `RESOURCES` está no AppImage por construção.
+
+  O gap real é outro: **de 163 SVGs em `docs/iconografia/`, apenas 5 estão no
+  app** (`ui/assets/icons/tree/`: folder-closed/open, file-c/cpp/rust). O pacote
+  de ícones de arquivos especiais foi commitado em `docs/`, que é design, não
+  asset. Então a fatia é de **UI**, não de empacotamento:
+
+  1. escolher quais famílias entram (o índice `docs/iconografia/README.md` diz
+     qual é a fonte de verdade de cada uma) e copiar os SVGs para `ui/assets/`
+     preservando os bytes;
+  2. declarar em `RESOURCES` no `ui/CMakeLists.txt`;
+  3. mapear extensão/tipo → ícone (existe `FILE_ICON_MAPPINGS.json` no pacote de
+     arquivos especiais) e consumir na árvore;
+  4. o AppImage passa a carregá-los sem nenhuma mudança de packaging; validar com
+     `testar-appimage.sh` e `testar-appimage-portatil.sh`.
+
+  Regra permanente: ícone novo entra em `RESOURCES` no mesmo commit em que entra
+  na UI. Se está no `RESOURCES`, está no AppImage.
 - **varredura de lógica de negócio na UI/UX (auditoria de camada).** O
   `AGENTS.md` proíbe lógica de negócio na UI e a `ARCHITECTURE.md` fixa o fluxo
   Qt/QML → CoreClient → protocolo → core. A fatia da roda do terminal expôs uma
