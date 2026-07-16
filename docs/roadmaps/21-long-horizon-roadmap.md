@@ -349,6 +349,62 @@ natural é um modo `opt-in` por env no `main.cpp`, ao lado do
 até o frame. Fatia própria; o `p95` já está implementado (`percentil()`) e serve
 aos dois cenários quando ela chegar.
 
+#### A3.4 — orçamento e reação a regressões (implementada em 2026-07-16)
+
+**Carimbo de ambiente.** `medir-performance.sh` passou a abrir a saída com data,
+CPU, núcleos, RAM, distro, kernel, Qt, sessão gráfica, `N`, commit (marcado
+`+sujo` quando o worktree tem mudança não commitada) e os **caminhos dos dois
+binários**. Número de performance sem isso ao lado não é comparável com nada:
+não dá para dizer se um número maior amanhã é regressão, outra máquina ou o
+binário errado. O `+sujo` é deliberado — medição em worktree sujo não é
+reproduzível e a série não deve fingir que é.
+
+**Baseline versionada (2026-07-16, release, N=3).** Fedora Linux 44, kernel
+7.1.3, Wayland/GNOME, Qt 6.11.1, AMD Ryzen 7 7735HS (16 threads), 22,2 GB.
+Core: `target/release/kinein-core`. UI: `build/dev-local/ui/kinein-vectis`.
+
+| Métrica | Medido | Orçamento | Folga |
+| --- | ---: | ---: | ---: |
+| UI: primeiro frame (offscreen) | 241 ms | 400 ms | 1,7x |
+| UI: RSS em boot vazio | 106 MB | 200 MB | 1,9x |
+| Core: `workspace.open` (repo) | 3,3 ms | 50 ms | 15x |
+| Core: `fs.read` 10k linhas | 0,0 ms | 20 ms | — |
+| Core: RSS em regime | 6 MB | 60 MB | 10x |
+| A3.1: Tree-sitter frio (2463 linhas) | 315 ms | 450 ms | 1,4x |
+| A3.1: Tree-sitter incremental | 278 ms | 400 ms | 1,4x |
+| A3.1: payload por update | 1138 KB | 1500 KB | 1,3x |
+| A3.2: `semanticTokens` aquecido | 0,5–0,6 ms | 20 ms | 30x |
+| A3.2: `completion` aquecida | 2,2–8,7 ms | 50 ms | 6x |
+| A3.3: rajada 50k → marcador | 59 ms | 250 ms | 4x |
+| A3.3: vão máximo entre frames | 33 ms | 100 ms | 3x |
+
+Informativo, **não orçado** (custo de ferramenta externa, fora do controle da
+Kinein): primeira `completion` do rust-analyzer (2520 ms), RSS do
+rust-analyzer (584 MB) e do clangd (118 MB).
+
+Todo orçamento acima é **medição repetida com folga explícita** — nenhum é
+número aspiracional. Onde a folga é apertada (1,3–1,4x, os três do A3.1) é
+sinal, não conforto: são as métricas que o A3.1 já apontou como problema real.
+
+**Reação a regressão — é gate, não sugestão:**
+
+1. número acima do orçamento **abre fatia de causa-raiz**. Não se aprofunda
+   semântica nem se abre nível novo (L1+) com orçamento estourado;
+2. antes de otimizar, **perfilar**: só se mexe depois de perfil local apontar o
+   dono do custo. O A3.1 já provou por que — o gargalo do Tree-sitter não é o
+   parser, é o payload de 1138 KB por tecla; apertar o parser não teria efeito;
+3. conferir o **carimbo** antes de gritar regressão: máquina, binário (release?)
+   e `N` diferentes explicam mais desvio que código. O caso concreto: o core
+   debug é ~34x mais lento no Tree-sitter;
+4. trabalho pesado permanece cancelável/assíncrono e fora da thread da UI.
+
+**Aceite do A3.4 atendido:** métricas e cenários estão versionados (fixtures
+determinísticas de tamanho explícito no `medir-core.py`, orçamentos e carimbo
+aqui), e a afirmação "autocomplete/editor/terminal são responsivos" deixou de
+depender de impressão visual — os três têm número, cenário reproduzível e
+orçamento. O que **não** tem número ainda é a digitação tecla→frame do editor
+(item 1 do A3.3), e isso está declarado, não escondido.
+
 **Continuação A3.** Falta o item 1 acima e
 rajada PTY→frame. A fila executável e critérios estão em `PONTO_ATUAL.md`, A3.1
 a A3.4; não criar um segundo runner. Referências profissionais consultadas:

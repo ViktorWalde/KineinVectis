@@ -10,8 +10,15 @@
 #   B. Core: workspace.open no proprio repo (o "workspace grande")
 #   C. Core: fs.read de um .txt de 10k linhas (proxy de abrir arquivo grande)
 #   D. RSS: UI em boot vazio; core em regime + LSP Rust vivo (best-effort)
+#   A3.1. Tree-sitter: primeiro snapshot frio e update incremental
+#   A3.2. LSP: primeira resposta util por servidor (rust-analyzer, clangd)
+#   A3.3. Terminal: rajada do PTY, input -> frame com marcador
 #
-# Uso: scripts/medir-performance.sh   (nada de argumentos)
+# A3.4: a saida comeca por um CARIMBO de ambiente. Numero de performance sem
+# maquina, distro, Qt, binario e N ao lado nao e comparavel com nada — nao da
+# para dizer se um numero maior amanha e regressao ou so outra maquina.
+#
+# Uso: KINEIN_CORE_BIN=.../target/release/kinein-core scripts/medir-performance.sh
 
 set -eu
 
@@ -45,6 +52,26 @@ mediana() {
 }
 
 echo "== Kinein Vectis — medicao de performance (N=$N, local, sem rede) =="
+
+# --- A3.4. Carimbo de ambiente: o que torna a serie comparavel ---
+echo "== CARIMBO (A3.4) — colar junto com qualquer numero reportado =="
+echo "   data      : $(date -Iseconds)"
+echo "   cpu       : $(awk -F: '/model name/{gsub(/^ +/,"",$2); print $2; exit}' /proc/cpuinfo)"
+echo "   nucleos   : $(nproc)"
+echo "   ram_gb    : $(awk '/MemTotal/{printf "%.1f", $2/1048576}' /proc/meminfo)"
+echo "   distro    : $(. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || echo desconhecida)"
+echo "   kernel    : $(uname -r)"
+echo "   qt        : $( (qmake6 -query QT_VERSION 2>/dev/null || qmake -query QT_VERSION 2>/dev/null) || echo n/d)"
+echo "   sessao    : ${XDG_SESSION_TYPE:-n/d}"
+echo "   N         : $N"
+echo "   git       : $(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo n/d)$( git -C "$REPO_ROOT" diff --quiet 2>/dev/null || echo '+sujo' )"
+echo "   UI  : $UI_BIN"
+echo "   CORE: $CORE_BIN"
+case "$CORE_BIN" in
+    *release*) ;;
+    *) echo "   AVISO: core NAO-release. Os numeros nao sao comparaveis ao orcamento." >&2 ;;
+esac
+echo
 echo "   maquina: $(grep -m1 'model name' /proc/cpuinfo | sed 's/.*: //') / $(nproc) threads"
 echo
 
@@ -78,17 +105,18 @@ echo
 # build DEBUG, e Rust sem otimizacao e ~34x mais lento no Tree-sitter (11 s vs
 # 323 ms na mesma fixture). Numero de perf sem o binario ao lado nao significa
 # nada — e o release que o usuario roda.
-echo "-- binarios medidos --"
-echo "   UI  : $UI_BIN"
-echo "   CORE: $CORE_BIN"
-case "$CORE_BIN" in
-    *release*) ;;
-    *) echo "   AVISO: core NAO-release. Os numeros nao sao comparaveis ao orcamento." >&2 ;;
-esac
-echo
 echo "-- B/C/D2/A3.1/A3.3. Core (stdio: workspace.open, fs.read, RSS+LSP, sintaxe, rajada) --"
 core_out="$(python3 "$REPO_ROOT/scripts/medir-core.py" "$CORE_BIN" "$REPO_ROOT" "$N")"
 echo "$core_out" | sed 's/^/   /'
 echo
 
-echo "== fim. Compare com o ORCAMENTO em docs/roadmaps/21 (M4.2). =="
+echo "== fim. Compare com o ORCAMENTO em docs/roadmaps/21 (M4.2 e A3.1-A3.4). =="
+echo
+echo "A3.4 — reacao a regressao (nao e sugestao, e o gate):"
+echo "  1. numero acima do orcamento ABRE fatia de causa-raiz. Nao se aprofunda"
+echo "     semantica nem se abre nivel novo com orcamento estourado."
+echo "  2. antes de otimizar, PERFILAR: so mexe depois de perfil local apontar o"
+echo "     dono do custo. A3.1 ja mostrou por que — o gargalo do Tree-sitter nao"
+echo "     era o parser, era o payload de 1138 KB por tecla."
+echo "  3. conferir o carimbo acima antes de gritar regressao: maquina, binario"
+echo "     (release?) e N diferentes explicam mais desvio que codigo."

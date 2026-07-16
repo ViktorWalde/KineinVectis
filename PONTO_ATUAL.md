@@ -227,7 +227,22 @@ PRÓXIMO GESTO
    e não roda no runner dos 13 harnesses (todos QtQuick puro). Caminho: modo
    opt-in por env no `main.cpp`, ao lado do `KINEIN_PERF_MARKER`. Fatia
    própria; o `p95` já está implementado e serve aos dois cenários.
-   Depois: A3.4 (orçamento versionado e reação a regressões) fecha o L0.
+5. **A3.4 FEITA em 2026-07-16** (`docs/roadmaps/21` §A3.4). O
+   `medir-performance.sh` abre com carimbo de ambiente (CPU, distro, kernel,
+   Qt, sessão, N, commit com marca `+sujo`, e os caminhos dos dois binários) —
+   número sem isso não é comparável com nada. Baseline versionada e tabela
+   consolidada das 12 métricas com folga explícita; todo orçamento é medição
+   repetida, nenhum é aspiracional. Custo de ferramenta externa (primeira
+   completion do rust-analyzer, RSS dos servidores) fica informativo, não
+   orçado: não se orça o que não se controla.
+   Reação a regressão virada gate: estouro abre fatia de causa-raiz e trava
+   nível novo; otimizar só depois de perfil apontar o dono do custo; conferir o
+   carimbo antes de gritar regressão.
+
+**L0 fechado, com uma exceção declarada:** falta o harness Qt de digitação
+tecla→frame (item 1 do A3.3). É a única afirmação de responsividade que ainda
+depende de impressão visual. Decidir explicitamente: ou fazer a fatia antes do
+L1, ou aceitar a lacuna por escrito e seguir. Não deixar implícito.
 3. Encerrada A3, auditar EditorConfig como primeira integração pequena
    recomendada. Não iniciar um host genérico de plugins.
 4. Dogfooding em tempo integral: o usuário saiu do CLion e passou a usar a
@@ -1083,6 +1098,13 @@ compreensão do projeto, build, navegação semântica ou debug básico.
 
   Regra permanente: ícone novo entra em `RESOURCES` no mesmo commit em que entra
   na UI. Se está no `RESOURCES`, está no AppImage.
+- **teste Rust intermitente sob disputa de recurso (P3, observado 2026-07-16).**
+  `cargo test --workspace` falhou UMA vez (exit 101) logo após rodar
+  `medir-performance.sh`, e passou na repetição sem mudança de código. A
+  medição sobe vários cores, terminais PTY e servidores LSP; a suspeita é
+  disputa de recurso (teto de sessões, PTY, memória), não defeito lógico.
+  Não investiguei — registrado para não sumir. Se reaparecer sem a medição ao
+  lado, vira P2: teste que passa na segunda tentativa é gate que não protege.
 - **varredura de lógica de negócio na UI/UX — EXECUTADA em 2026-07-16.**
   Pedido do autor após a fatia da roda. Os dois defeitos daquele dia (`handleWheel`
   decidindo o gesto e o `Column` decidindo a geometria da grade) foram o **mesmo
