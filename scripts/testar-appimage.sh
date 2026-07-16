@@ -65,6 +65,8 @@ echo "==> extraindo e validando estrutura"
 APPDIR="$TEMP_DIR/squashfs-root"
 required_paths=(
     "$APPDIR/AppRun"
+    "$APPDIR/AppRun.wrapped"
+    "$APPDIR/apprun-hooks/kinein-portable-graphics-hook.sh"
     "$APPDIR/usr/bin/kinein-vectis"
     "$APPDIR/usr/bin/kinein-core"
     "$APPDIR/usr/share/applications/io.github.viktorwalde.KineinVectis.desktop"
@@ -91,6 +93,17 @@ for required_path in "${required_paths[@]}"; do
         exit 1
     fi
 done
+
+if ! grep -Fq 'kinein-portable-graphics-hook.sh' "$APPDIR/AppRun"; then
+    echo "erro: AppRun não carrega a política gráfica portátil." >&2
+    exit 1
+fi
+if ! grep -Fq 'KINEIN_GRAPHICS_BACKEND' \
+    "$APPDIR/apprun-hooks/kinein-portable-graphics-hook.sh"
+then
+    echo "erro: hook gráfico portátil está incompleto." >&2
+    exit 1
+fi
 
 echo "==> validando instalador executado fora da pasta de entrega"
 DELIVERY_DIR="$TEMP_DIR/delivery"
@@ -136,13 +149,22 @@ echo "==> smoke offscreen da aplicação"
 SMOKE_LOG="$TEMP_DIR/smoke.log"
 if ! timeout 30 env \
     -u KINEIN_CORE_BIN \
+    -u QT_QUICK_BACKEND \
+    -u QSG_RHI_BACKEND \
     APPIMAGE_EXTRACT_AND_RUN=1 \
     QT_QPA_PLATFORM=offscreen \
+    QSG_INFO=1 \
     KINEIN_PERF_MARKER=1 \
     KINEIN_PERF_EXIT=1 \
     "$APPIMAGE" >"$SMOKE_LOG" 2>&1; then
     sed -n '1,240p' "$SMOKE_LOG" >&2
     echo "erro: AppImage falhou no smoke offscreen." >&2
+    exit 1
+fi
+
+if ! grep -q 'Loading backend software' "$SMOKE_LOG"; then
+    sed -n '1,240p' "$SMOKE_LOG" >&2
+    echo "erro: AppImage não selecionou o renderer portátil por padrão." >&2
     exit 1
 fi
 

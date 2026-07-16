@@ -431,6 +431,13 @@ for plugin_file in "${REQUIRED_WAYLAND_FILES[@]}"; do
     echo "  ok: ${plugin_file#"$APPDIR/"}"
 done
 
+echo "==> instalando launcher gráfico portátil"
+install \
+    -D \
+    -m 0755 \
+    "$REPO_ROOT/packaging/appimage/kinein-portable-graphics-hook.sh" \
+    "$APPDIR/apprun-hooks/kinein-portable-graphics-hook.sh"
+
 echo "==> gerando AppImage"
 
 "$LINUXDEPLOY" \

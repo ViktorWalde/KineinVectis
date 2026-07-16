@@ -1707,3 +1707,27 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   UI Release `e8b870635cd8fcb679a02920ab5ab07be9609333f2f346fcd37b775c208bcfa4`,
   core Debug `a0e677275f10cd27a0e77e22ef28ce95c5804451a208a88f4d30f549cc2d48ac`
   e core Release `00029096a66fb5eafd9cf4c927b67106f27b4159f6427d2bd7246fb26147c2fc`.
+
+## Compatibilidade gráfica do AppImage (2026-07-15)
+
+- O primeiro dogfooding do AppImage no Fedora/Wayland expôs uma lacuna que o
+  smoke offscreen não cobria: o plugin `wayland-egl` era encontrado, mas o
+  driver do host não criava o contexto RHI/OpenGL, abortando antes da UI.
+- O mesmo artefato foi exercitado no desktop real com
+  `QT_QUICK_BACKEND=software` e confirmou o primeiro frame em 936 ms. A UI
+  atual é 2D e não usa `ShaderEffect`, portanto o `AppRun` passa a selecionar
+  por padrão a adaptação raster oficial do Qt Quick. Isso desacopla abertura
+  normal de EGL/Mesa/NVIDIA em Wayland e X11.
+- `KINEIN_GRAPHICS_BACKEND=hardware` oferece aceleração como opt-in reversível;
+  overrides Qt explícitos continuam prevalecendo. O smoke portátil agora limpa
+  esses overrides e exige evidência `Loading backend software`, evitando que
+  uma reconstrução volte silenciosamente a depender da GPU.
+- “Linux portátil” continua significando neste artefato x86_64, glibc 2.36 ou
+  posterior. Musl, ARM64 e glibc anterior exigem outro artefato/baseline; não é
+  tecnicamente correto prometer um único ELF para toda distro e arquitetura.
+- AppImage corrigido: 33.749.496 bytes, SHA256
+  `6c1a3c24a2b13ac36509ec615971eea75d604d36855f601726e083aa8af00312`.
+  Passou no runtime Debian 12 mínimo sem rede e no Fedora/Wayland real sem
+  variável de correção, confirmando `Loading backend software` e primeiro frame
+  em 939 ms no modo extraído e 987 ms na montagem type-2 normal. O atalho
+  instalado já aponta para esse mesmo caminho em `dist/`.

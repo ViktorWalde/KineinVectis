@@ -51,10 +51,12 @@ sem acesso ao repositório.
 
 - Linux x86_64 (`uname -m` deve mostrar `x86_64`);
 - glibc 2.36 ou posterior;
-- sessão desktop com pilha gráfica e fontes normais.
+- sessão desktop Wayland ou X11 e fontes normais.
 
 Windows, ARM64 e distribuições baseadas somente em musl não estão cobertos por
-este artefato. A IDE abre sem Rust, Qt, CMake ou compiladores instalados.
+este artefato. A IDE abre sem Rust, Qt, CMake, compiladores ou aceleração 3D
+instalados: o AppImage usa por padrão o renderer raster oficial do Qt Quick,
+evitando depender da combinação EGL/Mesa/NVIDIA presente na distribuição.
 
 ## 3. Verificar o download
 
@@ -116,6 +118,17 @@ Não use `sudo`. Se mover o AppImage depois de criar o ícone, execute novamente
 O AppImage leva a UI, o core e o runtime Qt necessários. Configurações globais
 ficam em `~/.config/kinein-vectis/`; sessões e rascunhos de um projeto ficam na
 pasta `.kinein/` dentro do próprio workspace.
+
+O modo portátil prioriza compatibilidade. Para testar aceleração gráfica no
+desktop atual, sem mudar permanentemente o atalho, execute:
+
+```bash
+KINEIN_GRAPHICS_BACKEND=hardware ./Kinein-Vectis-0.1.0-x86_64.AppImage
+```
+
+Se houver qualquer erro de EGL, OpenGL, Vulkan ou RHI, volte a abrir pelo menu
+ou sem essa variável. Variáveis Qt explícitas como `QT_QUICK_BACKEND` e
+`QSG_RHI_BACKEND` são respeitadas para diagnóstico avançado.
 
 ## 5. Ferramentas opcionais dos projetos
 

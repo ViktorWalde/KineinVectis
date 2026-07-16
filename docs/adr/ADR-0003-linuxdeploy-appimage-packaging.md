@@ -50,6 +50,10 @@ A receita é dividida em:
   offscreen;
 - `scripts/testar-appimage-portatil.sh`: repete o smoke sem rede em um runtime
   Debian mínimo sem Qt, Rust, CMake ou compiladores;
+- `packaging/appimage/kinein-portable-graphics-hook.sh`: integra-se ao AppRun
+  gerado pelo linuxdeploy e seleciona por padrão a adaptação `software` oficial
+  do Qt Quick, sem depender do EGL/GL do host;
+  `KINEIN_GRAPHICS_BACKEND=hardware` mantém aceleração como opt-in;
 - `packaging/appimage/`: builders fixados, metadados do desktop e avisos de
   licença.
 
@@ -88,6 +92,14 @@ distribuições Linux x86_64 atuais com glibc igual ou posterior; não se promet
 compatibilidade binária com distribuições mais antigas que o baseline. Para
 ampliar essa faixa será necessário construir Qt 6.4+ sobre uma base anterior e
 repetir toda a validação.
+
+Compatibilidade de distribuição e compatibilidade gráfica são limites
+separados. Bibliotecas Qt/QML seguem dentro do AppImage, mas EGL, Vulkan e os
+drivers da GPU pertencem ao host e não formam uma ABI portátil única. Como a
+UI vigente é 2D e não usa efeitos dependentes de shader, o launcher distribuído
+escolhe a adaptação raster `software` do Qt Quick. Ela funciona em Wayland e
+X11 sem criar um contexto 3D. Aceleração é uma preferência reversível, nunca
+pré-requisito para abrir a IDE.
 
 ## Auditoria
 
@@ -157,6 +169,17 @@ antes do container preservou byte a byte os cinco arquivos existentes em
 sem staging residual, e passou novamente pelos smokes do host e do Debian 12
 mínimo sem rede.
 
+No primeiro uso real desse artefato no Fedora/Wayland, o `wayland-egl` foi
+encontrado, mas o RHI não conseguiu criar um contexto OpenGL e abortou. A
+correção integrou ao AppRun o hook de renderer portátil e tornou o smoke capaz
+de rejeitar a ausência dessa política. A entrega regenerada tem 33.749.496
+bytes e SHA256
+`6c1a3c24a2b13ac36509ec615971eea75d604d36855f601726e083aa8af00312`.
+Ela passou no Debian 12 mínimo sem rede e, sem override gráfico, no desktop
+Fedora/Wayland real, onde confirmou `Loading backend software` e o primeiro
+frame em 939 ms pelo modo de extração e 987 ms pela montagem type-2 usada pelo
+atalho, sem abortar.
+
 ## Alternativas consideradas
 
 - **Bundler próprio:** rejeitado por duplicar resolução ELF/RPATH/Qt/QML.
@@ -178,9 +201,10 @@ O artefato só pode ser distribuído após:
    e suas dependências dinâmicas;
 3. `core.ping` responder usando o binário empacotado;
 4. primeiro frame Qt/QML aparecer no smoke offscreen;
-5. `dist/` conter AppImage, checksum específico, instalador e `Tutorial.md`
+5. o smoke confirmar que o AppRun limpo seleciona `Loading backend software`;
+6. `dist/` conter AppImage, checksum específico, instalador e `Tutorial.md`
    idêntico à fonte;
-6. `scripts/testar-appimage-portatil.sh` passar sem rede e sem Qt/Rust de
+7. `scripts/testar-appimage-portatil.sh` passar sem rede e sem Qt/Rust de
    desenvolvimento.
 
 Rollback: remover a receita/instalação AppDir e as duas entradas do registry.
