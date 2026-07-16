@@ -1012,25 +1012,64 @@ compreensão do projeto, build, navegação semântica ou debug básico.
 
   Regra permanente: ícone novo entra em `RESOURCES` no mesmo commit em que entra
   na UI. Se está no `RESOURCES`, está no AppImage.
-- **varredura de lógica de negócio na UI/UX (auditoria de camada).** O
-  `AGENTS.md` proíbe lógica de negócio na UI e a `ARCHITECTURE.md` fixa o fluxo
-  Qt/QML → CoreClient → protocolo → core. A fatia da roda do terminal expôs uma
-  violação concreta: `ui/qml/panels/bottom/TerminalScrollController.qml`
-  (`handleWheel`) **decide o significado do gesto** — traduz roda em offset de
-  scrollback e sempre rola o histórico local, ignorando o modo VT que o core já
-  publica em `event.terminal.render` (`alternateScreen` chega ao
-  `TerminalPanel.qml` e não é lido). No `alacritty_terminal`/Zed essa decisão
-  mora no backend, que ramifica por `term.mode()`. Uma violação encontrada por
-  acaso sugere outras: auditar sistematicamente onde o QML decide em vez de
-  apresentar.
-  Método sugerido: procurar no QML/C++ da UI por (a) tradução de gesto/tecla em
-  semântica de domínio, (b) política/allowlist/validação que o core deveria
-  impor, (c) heurística sobre estado do backend (adivinhar em vez de ler o
-  contrato), (d) montagem de comando/caminho, (e) regra por programa/ferramenta.
-  Suspeitos iniciais: terminal (roda/paste/seleção), editor (autocomplete,
-  format-on-save), árvore (ações por tipo de arquivo). Cada achado vira fatia
-  própria com contrato; a auditoria em si não muda comportamento.
-  Pedido do autor em 2026-07-16.
+- **varredura de lógica de negócio na UI/UX — EXECUTADA em 2026-07-16.**
+  Pedido do autor após a fatia da roda. Os dois defeitos daquele dia (`handleWheel`
+  decidindo o gesto e o `Column` decidindo a geometria da grade) foram o **mesmo
+  erro duas vezes**: a UI decidindo o que é do backend. A varredura procurou por
+  (a) tradução de gesto/tecla em semântica de domínio, (b) política/validação que
+  o core deveria impor, (c) heurística sobre estado do backend, (d) montagem de
+  comando/caminho e (e) regra por programa/ferramenta.
+
+  **Achado 1 — P2, real: a UI decide o que é formatável, duplicando o core.**
+  `ui/qml/editor/EditorController.qml`:
+
+  ```qml
+  function formattableLanguage() {          // linha 310
+      return language === "rust" || language === "cpp";
+  }
+  function formattablePath(path) {          // linha 327
+      return lower.endsWith(".rs") || lower.endsWith(".c") || ... // 9 extensões
+  }
+  ```
+
+  O core **já é a autoridade**: `format::formatter_for_path()` decide e o handler
+  recusa com `InvalidParams` ("nenhum formatter registrado para esta extensão").
+  A UI mantém uma segunda lista, escrita à mão, que pode divergir — e diverge por
+  construção: `formattableLanguage` conhece 2 linguagens, `formattablePath`
+  conhece 9 extensões, e as duas listas nem concordam entre si. Adicionar
+  linguagem exige editar QML. Correção: a UI pergunta ou tenta e trata a recusa;
+  ela não mantém catálogo de formatter.
+
+  **Achado 2 — P3, latente: encoding VT mora na UI.**
+  `TerminalInputController.qml` traduz tecla em bytes (`\x1b[A` vs `\x1bOA`
+  conforme `applicationCursor`) e `TerminalPanel.qml` embrulha o paste
+  (`\x1b[200~`) conforme `bracketedPaste`. É o **mesmo formato** do bug da roda —
+  encoding VT no frontend —, mas **funciona**, porque ao contrário do
+  `handleWheel` estas duas LEEM o modo que o core publica. É escolha registrada
+  ("a UI continua burra em relação ao TUI: apenas respeita o estado VT"). Fica
+  como dívida consciente: qualquer modo novo que afete encoding (kitty keyboard
+  protocol, `modifyOtherKeys`) vai exigir mudança na UI em vez de só no core.
+  Não corrigir sem necessidade concreta.
+
+  **Achado 3 — P3, trivial: `alternateScreen` é código morto.**
+  `TerminalPanel.qml:41` expõe a propriedade e **ninguém a consome** desde que a
+  decisão da roda foi para o core. Era o dado que o `handleWheel` ignorava.
+
+  **Achado 4 — P3: `assistantTerminalWidth` órfã** em `SettingsController.qml`,
+  `settings.rs` e no schema — resto do painel do assistente removido no 0.59.0.
+  Ver §0.2c.
+
+  **Limpo:** não há montagem de comando/caminho de ferramenta na UI (o `+ "/"` do
+  `EditorDocumentController`/`ProjectTreeController` é composição de caminho para
+  exibição, sobre dados que o core já confinou); não há allowlist nem validação de
+  segurança no frontend; não há heurística adivinhando estado do backend; os
+  nomes de ferramenta no QML (`"cargo"`, `"cmake"`, `"git"`) são rótulo, chave de
+  aba ou parâmetro repassado ao core — não decisão.
+
+  Conclusão: a camada está mais saudável do que os dois defeitos do dia sugeriam.
+  O padrão perigoso é específico — **UI decidindo semântica de terminal/ferramenta
+  em vez de ler o contrato** — e sobrou concentrado no Achado 1. Cada achado vira
+  fatia própria; a varredura não mudou comportamento.
 - **FEITO (aguarda seu gesto visual) — emulador VT migrado para
   `alacritty_terminal`** (`docs/adr/ADR-0004-alacritty-terminal-emulator.md`).
   Causa-raiz era entregar um VT raso (`vt100`) enquanto anunciávamos
