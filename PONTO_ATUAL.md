@@ -197,11 +197,13 @@ PRÓXIMO GESTO
 1. Os controles de janela estão aceitos e já embarcados no AppImage novo de
    `dist/`. Não reabrir essa fatia; o polimento P3 (snap/escala/multimonitor) de
    `docs/roadmaps/20` é opcional e não bloqueia o roadmap.
-2. Implementar **A3.1 — estrutura local Tree-sitter** estendendo somente
-   `medir-core.py`/`medir-performance.sh` (ver §2 A3.1 abaixo): medir
-   `syntax_first_snapshot_ms` e `syntax_incremental_update_ms` com fixture
-   versionada e validação de snapshot não vazio; registrar mediana e orçamento
-   inicial em `docs/roadmaps/21`. Depois seguir A3.2–A3.4.
+2. **A3.1 FEITA em 2026-07-16** (`docs/roadmaps/21` §A3.1). Fixture Rust
+   determinística de 2463 linhas; frio 323 ms, incremental 281 ms, payload
+   1138 KB. **Achado que sobra para A3.4:** o ganho do parse incremental
+   evapora com o tamanho (6,2x em 208 linhas → 1,04x em 4923) e o custo cresce
+   superlinearmente. A resposta é 20x o fonte e carrega highlights+outline do
+   arquivo inteiro a cada tecla — o dono do custo não é o parser. Não otimizar
+   antes de A3.4 e de perfil local confirmar. Seguir para A3.2.
 3. Encerrada A3, auditar EditorConfig como primeira integração pequena
    recomendada. Não iniciar um host genérico de plugins.
 4. Dogfooding em tempo integral: o usuário saiu do CLion e passou a usar a
@@ -344,6 +346,51 @@ válida do autor: hoje o atalho abre a aba e o usuário digita `claude`. Subir p
 a B exige que o comando seja **configurável**, senão é a regra por programa
 apenas migrando de camada — o core deixaria de conhecer "claude" e a UI passaria
 a conhecer. Analisar em fatia própria.
+
+### 0.2d Backlog levantado pelo autor em 2026-07-16 (pontuado, não implementado)
+
+**1. KV Context: confirmar em tela.** O autor reportou que o item aparece em
+`Exibir` e não funciona. Essa é exatamente a descrição do estado **anterior** aos
+commits de hoje: até `034b773` o item apontava para uma ação `view.context`
+inexistente. Depois de `034b773` (menu) e `19eef85` (ícone no rail) o wiring foi
+verificado — `runtimeController` chega ao `ShellHeaderHost` e ao
+`ShellWorkspaceHost`, e ambos chamam `openContext()`. **Falta o gesto humano no
+build novo.** Se continuar morto, é regressão real e tem prioridade: registrar
+ação/esperado/observado/ambiente.
+
+**2. Renomear "KV Context" (P3, decisão do autor).** O nome não explica o que a
+coisa é. Direção sugerida pelo autor: algo como "Agente Auxiliar". A renomeação
+é de PRODUTO e atinge: rótulo do menu (`AppMenuBar`), tooltip do rail
+(`SideRail`), título da aba (`RuntimeController.handleTerminalOpened`), o nome do
+ícone `context` no `KvIcon`, `MANUAL.md` e a spec
+`docs/specs/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md`. Os identificadores
+internos (`view.context`, `openContext`, `isContext`) podem acompanhar ou não —
+decidir de uma vez para não ficar meio renomeado. Nada disso toca o core: ele não
+conhece o conceito.
+
+**3. Autocomplete travado na primeira sugestão (P2, dogfooding).** Relato do
+autor: a sugestão do LSP fica presa no primeiro item; não dá para selecionar
+outra opção além da que aparece primeiro. Se confirmado, é bloqueio de uso diário
+e passa na frente de polimento. Suspeitos: navegação por seta no
+`EditorCompletionController` (`index`) versus quem consome a tecla antes —
+`EditorPane`/`Keys.onPressed` da superfície. Reproduzir primeiro; provavelmente é
+tecla capturada por outra camada, não o modelo de completion.
+
+**4. Ícones no app (ver §6): 158 dos 163 SVGs não estão na IDE.** Pré-requisito
+do AppImage "completo" que o autor quer distribuir.
+
+**5. AppImage para testadores.** Plano do autor: fechar A3.1–A3.4 (L0), L1, a UI
+do KV Context e os ícones, e então gerar um AppImage completo para distribuir.
+Não gerar antes disso; `dist/` só recebe conjunto completo por staging.
+
+**6. Código vai ser open source — codar pensando nisso.** Observação do autor de
+que há muito "comentário de IA" no projeto. Isso é uma **varredura própria**, na
+mesma família da varredura de camada: comentário que narra a sessão ("a IA deve",
+"nesta fatia", "o usuário pediu") não é documentação técnica e não sobrevive à
+publicação. A política de tom já existe em `PLANO_ORGANIZACAO_E_HANDOFF.md` §6,
+mas ela cobria `.md` — falta aplicá-la a **comentário de código**. Regra a partir
+de agora: comentário explica invariante e causa, não processo nem autoria. Fatia
+própria, depois da trilha atual.
 
 ### 0.3 Sessão de organização e feedback (2026-07-16)
 

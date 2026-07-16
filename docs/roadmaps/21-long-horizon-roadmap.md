@@ -205,9 +205,60 @@ com esses caminhos explícitos. Resultado: primeiro frame 250 ms, UI 103 MB,
 `workspace.open` 3,4 ms, `fs.read` 10k 0,0 ms e core 7 MB — todos dentro dos
 orçamentos. O rust-analyzer usou 1093 MB e permanece informativo/externo.
 
-**Continuação A3 preparada, ainda não implementada.** A mesma infraestrutura
-será estendida, nesta ordem, para primeiro snapshot Tree-sitter, atualização
-incremental, primeira resposta semântica/completion, digitação tecla→frame e
+#### A3.1 — estrutura local Tree-sitter (implementada em 2026-07-16)
+
+`medir-core.py` ganhou o cenário; não há runner novo. Fixture Rust
+**determinística e de tamanho explícito** (`fixture_rust(functions=60)` →
+2463 linhas, 56 226 bytes), gerada em vez de commitada para o tamanho ficar no
+código. É Rust real e parseável — struct, impl, match, genérico e closure —
+porque medir Tree-sitter sobre texto que não é código mede o parser falhando
+rápido. Sem rede, sem LSP.
+
+O snapshot é **validado estruturalmente** a cada amostra (linguagem correta,
+`hasErrors == false`, `highlights` e `outline` não vazios). Sem isso, uma
+gramática ausente devolveria resposta vazia em ~0 ms e a tabela mostraria
+"ótimo desempenho". A validação já pagou: o primeiro run devolveu
+`syntax_invalido=sem result` e revelou que `syntaxTree.update` exige caminho
+**absoluto**, ao contrário do `fs.read`.
+
+| Métrica | Medido (mediana, N=3) | Orçamento (alerta se >) |
+| --- | --- | --- |
+| `syntax_first_snapshot_ms` (frio, 2463 linhas) | 323 ms | 450 ms |
+| `syntax_incremental_update_ms` (+1 caractere) | 281 ms | 400 ms |
+| `syntax_response_kb` (payload por update) | 1138 KB | 1500 KB |
+
+Orçamento = mediana medida com folga, como manda A3.4 — **não é número
+aspiracional**. E ele é deliberadamente frouxo porque a medição encontrou um
+problema que precisa de fatia própria, não de aperto de orçamento.
+
+**Achado — o incremental deixa de valer conforme o arquivo cresce:**
+
+```text
+linhas   frio        incremental   ganho
+   208    31,1 ms        5,0 ms     6,2x
+   823    73,7 ms       42,3 ms     1,7x
+  2463   318,9 ms      278,9 ms     1,14x
+  4923  1097,4 ms     1059,6 ms     1,04x
+```
+
+Duas coisas nesse quadro. O custo cresce **superlinearmente** (2463 → 4923
+dobra as linhas e triplica o tempo), e o ganho do parse incremental **evapora**.
+Logo o custo dominante por tecla não é o parse: é algo O(arquivo) que roda em
+todo update.
+
+O suspeito está medido: **a resposta é 1138 KB para um fonte de 56 KB — 20x o
+arquivo**, e cada `syntaxTree.update` devolve `highlights` e `outline` do
+arquivo **inteiro**, a cada caractere digitado. Por isso `syntax_response_kb`
+entrou como métrica: é a primeira coisa a olhar se o incremental não ganhar do
+frio.
+
+Ressalva honesta: o número é o **round-trip visto por um cliente** e inclui a
+serialização JSON dos dois lados, não só o parse. É o que o editor sente, então
+é o que o orçamento limita; separar parse de payload é trabalho de A3.4/
+otimização, e só depois de perfil local apontar o dono do custo (A3.4 item 4).
+
+**Continuação A3.** A mesma infraestrutura será estendida, nesta ordem, para
+primeira resposta semântica/completion, digitação tecla→frame e
 rajada PTY→frame. A fila executável e critérios estão em `PONTO_ATUAL.md`, A3.1
 a A3.4; não criar um segundo runner. Referências profissionais consultadas:
 

@@ -74,7 +74,7 @@ echo "   -> UI VmRSS: $((ui_rss_kb / 1024)) MB"
 echo
 
 # --- B, C, D(core+LSP) via stdio ---
-echo "-- B/C/D2. Core (stdio: workspace.open, fs.read 10k, RSS+LSP) --"
+echo "-- B/C/D2/A3.1. Core (stdio: workspace.open, fs.read 10k, RSS+LSP, sintaxe) --"
 core_out="$(python3 "$REPO_ROOT/scripts/medir-core.py" "$CORE_BIN" "$REPO_ROOT" "$N")"
 echo "$core_out" | sed 's/^/   /'
 echo
