@@ -12,11 +12,19 @@ Chamado por scripts/medir-performance.sh. Mede, tudo LOCAL (sem rede):
      determinística de tamanho explícito. Sem rede, sem LSP. O snapshot é
      validado estruturalmente: número rápido com resposta vazia é o parser
      falhando, não acertando.
+  A3.2 LSP: primeira resposta ÚTIL de `lsp.semanticTokens` e `lsp.completion`
+     por servidor (rust-analyzer e clangd, separados), em projeto próprio e
+     mínimo. Ferramenta ausente => `n/d` explícito. O contrato diz que
+     servidor sem suporte responde lista vazia, então espera-se resposta com
+     token/item real e `path`/`version` conferidos — a primeira resposta não
+     serve. Separa `first` (inclui indexação externa) de `warm` (round-trip da
+     Kinein) e mede o RSS do processo externo.
 
 Imprime linhas `chave=valor` para o shell parsear.
 """
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -257,6 +265,185 @@ def measure_syntax(core, n, functions=60):
             resposta_kb, "")
 
 
+PROJETO_RUST = {
+    "Cargo.toml": (
+        '[package]\nname = "fixture_lsp"\nversion = "0.1.0"\nedition = "2021"\n'
+        "\n[dependencies]\n"
+    ),
+    "src/main.rs": (
+        "use std::collections::HashMap;\n"
+        "\n"
+        "pub struct Config {\n"
+        "    pub nome: String,\n"
+        "    pub valores: HashMap<String, u32>,\n"
+        "}\n"
+        "\n"
+        "impl Config {\n"
+        "    pub fn novo(nome: &str) -> Self {\n"
+        "        Self { nome: nome.to_owned(), valores: HashMap::new() }\n"
+        "    }\n"
+        "\n"
+        "    pub fn total(&self) -> u32 {\n"
+        "        self.valores.values().sum()\n"
+        "    }\n"
+        "}\n"
+        "\n"
+        "fn main() {\n"
+        "    let config = Config::novo(\"teste\");\n"
+        "    println!(\"{} {}\", config.nome, config.total());\n"
+        "}\n"
+    ),
+}
+
+PROJETO_CPP = {
+    "main.cpp": (
+        "#include <string>\n"
+        "#include <vector>\n"
+        "\n"
+        "struct Config {\n"
+        "    std::string nome;\n"
+        "    std::vector<int> valores;\n"
+        "\n"
+        "    int total() const {\n"
+        "        int soma = 0;\n"
+        "        for (int v : valores) soma += v;\n"
+        "        return soma;\n"
+        "    }\n"
+        "};\n"
+        "\n"
+        "int main() {\n"
+        "    Config config;\n"
+        "    config.nome = \"teste\";\n"
+        "    return config.total();\n"
+        "}\n"
+    ),
+}
+
+
+def escrever_projeto(arquivos, prefixo):
+    raiz = tempfile.mkdtemp(prefix=prefixo)
+    for rel, conteudo in arquivos.items():
+        destino = os.path.join(raiz, rel)
+        os.makedirs(os.path.dirname(destino), exist_ok=True)
+        with open(destino, "w") as fh:
+            fh.write(conteudo)
+    return raiz
+
+
+def esperar_resposta_util(rpc, metodo, params, valida, limite_s):
+    """Repete `metodo` ate `valida` aceitar a resposta, ou estourar `limite_s`.
+
+    Existe porque servidor LSP indexa em background: as primeiras respostas
+    chegam VAZIAS e sao indistinguiveis de "servidor nao suporta". O contrato
+    diz literalmente que servidor sem suporte responde lista vazia — entao
+    aceitar a primeira resposta produziria sucesso falso, que e o que A3.2
+    proibe. Espera-se resposta UTIL, com token/item de verdade.
+
+    Devolve (ms_ate_primeira_util, ultima_resposta) ou (None, ultima_resposta).
+    """
+    inicio = time.perf_counter()
+    ultima = None
+    while (time.perf_counter() - inicio) < limite_s:
+        ultima = rpc(metodo, params)
+        if valida(ultima):
+            return (time.perf_counter() - inicio) * 1000.0, ultima
+        time.sleep(0.25)
+    return None, ultima
+
+
+def tokens_uteis(resposta, caminho, versao):
+    """Valida `path`/`version` e exige ao menos um token (A3.2, aceite)."""
+    r = (resposta or {}).get("result") or {}
+    if r.get("path") != caminho or r.get("version") != versao:
+        return False
+    return bool(r.get("tokens"))
+
+
+def itens_uteis(resposta, caminho):
+    r = (resposta or {}).get("result") or {}
+    if r.get("path") not in (None, caminho):
+        return False
+    return bool(r.get("items"))
+
+
+def measure_lsp(core, tool, arquivos, rel, posicao, n, limite_s=90):
+    """A3.2: primeira resposta semantica e completion, por servidor.
+
+    Separa o que e da Kinein do que e da ferramenta externa:
+      - `first`  = do documento sincronizado ate a primeira resposta UTIL.
+        Inclui startup e indexacao do servidor — e custo EXTERNO, dominante.
+      - `warm`   = round-trip com o servidor ja quente. Esse e o custo da
+        Kinein, e e o unico que faz sentido orcar.
+      - `rss`    = footprint do processo externo, informativo.
+
+    Ferramenta ausente => `n/d` explicito. Nunca sucesso falso.
+    """
+    if shutil.which(tool) is None:
+        return {"estado": f"n/d ({tool} ausente no PATH)"}
+
+    raiz = escrever_projeto(arquivos, f"kinein-perf-{tool}-")
+    caminho = os.path.join(raiz, rel)
+    conteudo = arquivos[rel]
+    proc = spawn(core)
+    resultado = {"estado": "ok"}
+    try:
+        rpc = make_rpc(proc)
+        rpc("workspace.open", {"path": raiz})
+        rpc("lsp.didChange", {"path": caminho, "content": conteudo})
+
+        tokens_ms, _ = esperar_resposta_util(
+            rpc, "lsp.semanticTokens",
+            {"path": caminho, "content": conteudo, "version": 1},
+            lambda r: tokens_uteis(r, caminho, 1), limite_s)
+        if tokens_ms is None:
+            resultado["estado"] = f"n/d (sem token util em {limite_s}s)"
+            return resultado
+        resultado["tokens_first_ms"] = f"{tokens_ms:.1f}"
+
+        quentes = []
+        for versao in range(2, 2 + n):
+            t0 = time.perf_counter()
+            resposta = rpc("lsp.semanticTokens",
+                           {"path": caminho, "content": conteudo, "version": versao})
+            if tokens_uteis(resposta, caminho, versao):
+                quentes.append((time.perf_counter() - t0) * 1000.0)
+        resultado["tokens_warm_ms"] = median_ms(quentes)
+
+        linha, coluna = posicao
+        itens_ms, _ = esperar_resposta_util(
+            rpc, "lsp.completion",
+            {"path": caminho, "content": conteudo, "line": linha, "column": coluna},
+            lambda r: itens_uteis(r, caminho), limite_s)
+        if itens_ms is None:
+            resultado["completion_first_ms"] = f"n/d (sem item em {limite_s}s)"
+        else:
+            resultado["completion_first_ms"] = f"{itens_ms:.1f}"
+            quentes = []
+            for _ in range(n):
+                t0 = time.perf_counter()
+                resposta = rpc("lsp.completion", {
+                    "path": caminho, "content": conteudo,
+                    "line": linha, "column": coluna})
+                if itens_uteis(resposta, caminho):
+                    quentes.append((time.perf_counter() - t0) * 1000.0)
+            resultado["completion_warm_ms"] = median_ms(quentes)
+
+        resultado["rss_mb"] = descendants_rss_kb(proc.pid) // 1024
+        return resultado
+    finally:
+        # A3.2 item 4: nenhum filho sobrevive a amostra. O servidor LSP e filho
+        # do core; matar o core sem esperar deixaria orfao segurando RAM.
+        try:
+            proc.stdin.close()
+            proc.wait(timeout=10)
+        except (subprocess.TimeoutExpired, OSError, ValueError):
+            proc.kill()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
+
+
 def measure_rss_with_lsp(core, root):
     proc = spawn(core)
     rpc = make_rpc(proc)
@@ -288,6 +475,23 @@ def main():
     print(f"syntax_response_kb={resposta_kb}")
     if motivo:
         print(f"syntax_invalido={motivo}")
+
+    # A3.2: cada servidor separado. Ausente => n/d explicito, nunca sucesso
+    # falso. `first` carrega startup+indexacao EXTERNOS; `warm` e o round-trip
+    # da Kinein — sao numeros de naturezas diferentes e nao se somam.
+    for tool, arquivos, rel, pos in [
+        ("rust-analyzer", PROJETO_RUST, "src/main.rs", (22, 18)),
+        ("clangd", PROJETO_CPP, "main.cpp", (18, 11)),
+    ]:
+        r = measure_lsp(core, tool, arquivos, rel, pos, n)
+        prefixo = tool.replace("-", "_")
+        if r["estado"] != "ok":
+            print(f"{prefixo}_semantic={r['estado']}")
+            continue
+        for chave in ("tokens_first_ms", "tokens_warm_ms",
+                      "completion_first_ms", "completion_warm_ms", "rss_mb"):
+            if chave in r:
+                print(f"{prefixo}_{chave}={r[chave]}")
     core_rss, lsp_rss = measure_rss_with_lsp(core, root)
     print(f"core_rss_mb={core_rss // 1024}")
     print(f"lsp_rss_mb={(lsp_rss // 1024) if lsp_rss else 'n/d (rust-analyzer ausente?)'}")

@@ -257,8 +257,54 @@ serialização JSON dos dois lados, não só o parse. É o que o editor sente, e
 é o que o orçamento limita; separar parse de payload é trabalho de A3.4/
 otimização, e só depois de perfil local apontar o dono do custo (A3.4 item 4).
 
+#### A3.2 — primeira semântica e estabilização LSP (implementada em 2026-07-16)
+
+Cada servidor é medido **separadamente**, em projeto próprio e mínimo
+(Cargo real para `rust-analyzer`, `.cpp` avulso para `clangd`), não no repo
+Kinein: o repo muda e a série perde comparabilidade. Ferramenta ausente do
+`PATH` produz `n/d` explícito com o motivo — nunca sucesso falso.
+
+A armadilha que o contrato arma: *"Servidores sem suporte respondem lista
+vazia"*. Logo lista vazia é ambígua entre "não suporta", "ainda indexando" e
+"nada aqui". A medição por isso espera **resposta útil** — `path` e `version`
+conferidos e ao menos um token/item real — e não a primeira resposta.
+
+| Métrica (N=3) | rust-analyzer | clangd | Orçamento |
+| --- | ---: | ---: | ---: |
+| primeiro `semanticTokens` útil | 15 ms | 155 ms | 400 ms |
+| `semanticTokens` aquecido | 0,5 ms | 0,6 ms | 20 ms |
+| primeira `completion` útil | 2520 ms | 12 ms | informativo¹ |
+| `completion` aquecida | 2,2 ms | 8,7 ms | 50 ms |
+| RSS do servidor (fixture mínima) | 584 MB | 118 MB | informativo¹ |
+
+¹ Custo da **ferramenta externa**, não da Kinein: startup e indexação do
+servidor. Não se orça o que não se controla; orça-se o aquecido, que é o
+round-trip da Kinein.
+
+**Achado — tokens e completion têm prontidões opostas e independentes.** O
+`rust-analyzer` devolve token em 15 ms e leva **2,5 s** para a primeira
+completion útil: destaque sintático não precisa do índice, completion precisa.
+O `clangd` é o inverso (155 ms para token, 12 ms para completion). Ou seja
+"o LSP está pronto" não é um estado único, e uma UI que trate como único vai
+mostrar completion vazia parecendo bug durante segundos. Isso é insumo direto
+para o scheduler LSP de B3/M5.3, não para otimização agora.
+
+**Achado — o aquecido é ~0,5 ms.** O round-trip da Kinein não é o problema em
+nenhum dos dois; o custo é externo e de primeira vez. Confirma que apertar o
+core aqui não teria efeito.
+
+Ressalva honesta: o servidor é lançado pelo `lsp.didChange`, que acontece
+**antes** do cronômetro. Então `primeiro X útil` mede do primeiro pedido até a
+primeira resposta útil, e não captura o instante do spawn — não é "startup do
+servidor" puro, é "quanto o usuário espera depois de pedir". É o que importa
+para a UI; medir o spawn isolado exigiria instrumentar o core, e A3.4 decide se
+vale.
+
+A3.2 item 4 cumprido: nenhum processo sobrevive à amostra (`finally` fecha o
+core e espera; `pgrep` de `rust-analyzer`/`clangd` volta zero ao fim).
+
 **Continuação A3.** A mesma infraestrutura será estendida, nesta ordem, para
-primeira resposta semântica/completion, digitação tecla→frame e
+digitação tecla→frame e
 rajada PTY→frame. A fila executável e critérios estão em `PONTO_ATUAL.md`, A3.1
 a A3.4; não criar um segundo runner. Referências profissionais consultadas:
 

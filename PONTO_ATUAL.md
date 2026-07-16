@@ -203,7 +203,16 @@ PRÓXIMO GESTO
    evapora com o tamanho (6,2x em 208 linhas → 1,04x em 4923) e o custo cresce
    superlinearmente. A resposta é 20x o fonte e carrega highlights+outline do
    arquivo inteiro a cada tecla — o dono do custo não é o parser. Não otimizar
-   antes de A3.4 e de perfil local confirmar. Seguir para A3.2.
+   antes de A3.4 e de perfil local confirmar.
+3. **A3.2 FEITA em 2026-07-16** (`docs/roadmaps/21` §A3.2). rust-analyzer e
+   clangd medidos separadamente, em projeto próprio; ausente vira `n/d`.
+   **Achado:** tokens e completion têm prontidões OPOSTAS — o rust-analyzer dá
+   token em 15 ms e leva 2,5 s para a primeira completion útil; o clangd é o
+   inverso (155 ms / 12 ms). "LSP pronto" não é estado único, e tratar como
+   único faz a UI mostrar completion vazia parecendo bug por segundos — insumo
+   direto para o scheduler de B3/M5.3. O aquecido é ~0,5 ms nos dois: o
+   round-trip da Kinein não é o gargalo, o custo é externo e de primeira vez.
+   Seguir para A3.3 (digitação tecla→frame e rajada do terminal).
 3. Encerrada A3, auditar EditorConfig como primeira integração pequena
    recomendada. Não iniciar um host genérico de plugins.
 4. Dogfooding em tempo integral: o usuário saiu do CLion e passou a usar a
