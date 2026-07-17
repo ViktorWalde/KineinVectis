@@ -602,7 +602,17 @@ determinístico.
 **Gate:** testes puros de métricas para DPR 1, 1.25, 1.5 e 2; nenhum cálculo
 duplicado em Terminal/KV; fixture visual melhor ou numericamente explicada.
 
-### R2 — posicionar glifos por baseline explícita
+### R2 — posicionar glifos por baseline explícita — CONDICIONAL desde 2026-07-17
+
+> **Não executar por causa do cursor: o sintoma acabou.** A causa-raiz era a linha
+> vazia colapsando no positioner (§4.7), corrigida em `ab3becc`, e o autor
+> **aprovou o visual em 2026-07-17**. O próprio R1 já media que em DPR 1 o R2 é
+> nulo (baseline explícita difere do `AlignVCenter` em ~0,11px).
+>
+> **O que sobra de R2, e é outra coisa:** determinismo em DPR ≠ 1 (125%, 150%),
+> que continua **não demonstrado**. Só executar se uma MEDIÇÃO em DPR ≠ 1 mostrar
+> divergência — nunca por impressão visual, que foi o que custou a fatia R1
+> inteira.
 
 Objetivo: eliminar `Text.AlignVCenter` como decisão implícita do terminal.
 
@@ -615,10 +625,21 @@ Objetivo: eliminar `Text.AlignVCenter` como decisão implícita do terminal.
 **Gate:** Terminal comum e Assistente geram a mesma geometria para o mesmo
 frame; screenshot da fixture e gesto humano em Claude/Codex.
 
-### R3 — decidir o renderer Qt definitivo
+### R3 — decidir o renderer Qt definitivo — DECIDIDO em 2026-07-17: opção 1
 
-Objetivo: escolher por evidência entre a composição QML atual e um item nativo
-especializado.
+> **A decisão que este R3 pedia foi tomada, e por evidência.** O critério estava
+> escrito aqui: *"QML com baseline/métricas explícitas: manter se R2 corrigir o
+> visual e cumprir orçamento de frame/memória"*. O visual foi corrigido (§4.7,
+> `ab3becc`) e **aprovado pelo autor em 2026-07-17**; os orçamentos de frame estão
+> medidos em `docs/roadmaps/21` §A3.
+>
+> **Fica a composição QML atual. Não trocar de renderer.** As opções 2
+> (`QQuickItem` nativo) e 3 (componente Qt maduro) existiam para o caso de o
+> modelo por span continuar divergindo — não continuou. Reabrir exige medição
+> nova que mostre divergência ou estouro de orçamento, registrada em ADR.
+
+Objetivo (histórico): escolher por evidência entre a composição QML atual e um
+item nativo especializado.
 
 Opções em ordem de custo:
 
@@ -720,10 +741,10 @@ continuam sem autorização separada.
 | Resize coalescido | implementado | validar DPR/reflow | R1/R4 |
 | Grid VT + cores/atributos | implementado parcial | matriz compatível | R4 |
 | Largura de glifo em células | implementado | preservar | R1/R2 |
-| Forma/piscagem DECSCUSR | implementado, sem aceite visual | validar fixture | R0/R4 |
-| Baseline e caixa da célula | implícitas/divididas | fonte única | R1/R2 |
+| Forma/piscagem DECSCUSR | implementado; coberto pelo aceite de 2026-07-17 | preservar | R4 |
+| Baseline e caixa da célula | fonte única (`metrics.yForRow`), R1 feito | preservar | R2 só se DPR≠1 divergir |
 | DPR físico | não demonstrado | determinístico | R1 |
-| Cursor visual Claude/Codex | reprovado no gesto humano | aprovado | R0–R3 |
+| Cursor visual Claude/Codex | **APROVADO pelo autor em 2026-07-17** | preservar | regressão contínua |
 | Seleção/clipboard | implementado básico | paridade profissional | R5 |
 | Busca/links/a11y | incompleto | fatias próprias | R5 |
 | Rajadas/performance | infraestrutura parcial | orçamento medido | R6/A3 |

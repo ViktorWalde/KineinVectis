@@ -92,21 +92,190 @@ A sessão nova deve executar esta sequência:
 4. não repetir investigação, implementação, gate ou build já registrados como
    verdes, a menos que o código tenha mudado depois do marcador ou apareça
    evidência concreta de regressão;
-5. retomar diretamente pela ação `PRÓXIMO GESTO
-1. **Assistente/IA: FORA DE ESCOPO desde 2026-07-17** (§0.2j). Construído,
-   rodado e removido no mesmo dia — o terminal já resolvia. Não reabrir sem
-   decisão explícita registrada.
-2. Depois: harness Qt tecla->frame (`docs/roadmaps/21` §A3.3, design pronto) —
-   o autor retoma para feedback. Fecha a ultima afirmacao de A3 que depende de
-   impressao visual.
-3. Depois: primeiro recorte do L1 (§0.2e) — DECISAO DO AUTOR pendente. A
-   auditoria derrubou a premissa do plano: nao ha biblioteca EditorConfig Rust
-   madura. Recomendado validar `integration` v1 pelo inventario das ferramentas
-   ja detectadas (zero dependencia nova) antes de escolher FFI vs parser proprio.
+5. retomar diretamente pela ação `PRÓXIMO GESTO`; responder inicialmente com
+   uma frase curta de orientação, não com outro plano ou resumo;
+6. depois do gesto real, registrar o resultado no marcador: se falhar,
+   ação/esperado/observado/ambiente viram a prioridade do dogfooding; se passar,
+   marcar o aceite e seguir a próxima fatia desta fila somente quando o usuário
+   mandar prosseguir.
+
+#### REENTRADA-KV — estado exato para a próxima reentrada
+
+```text
+ESTADO
+- Protocolo atual 0.61.0. O `aiBridge` NAO existe: nao ha politica por
+  programa no core, e uma CLI de IA e um programa como outro qualquer.
+  `terminal.mouse` (0.60.0) decide o gesto no core; `format.capabilities`
+  (0.61.0) publica o catalogo de formatters e a UI nao mantem lista.
+- L0 fechado (A3.1-A3.4 em `docs/roadmaps/21`), com UMA excecao declarada:
+  falta o harness Qt de digitacao tecla->frame. A rota do harness QML esta
+  fechada com evidencia (qmldir aponta para qrc:); nao retentar.
+- Cursor/TUI: RESOLVIDO e ACEITO. Causa era o `Column` do Qt Quick descartar
+  linha vazia (largura zero); o texto subia e o cursor ficava certo. Ver
+  `docs/roadmaps/26` §4.7.
+- Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
+- KV ativo reutiliza TerminalPanel/TerminalManager, tem barra persistente,
+  roda/arrasto, teclado/paste VT, largura livre persistida 300–720px e
+  ampliar/restaurar; Project permanece independente fora da maximização.
+- O bridge preserva o transcript contra CSI 3 J ainda emitido por versões do
+  Codex; o Terminal comum continua honrando clear.
+- Não existe guia, faixa ou input paralelo: grade VT, spans ANSI e cursor são
+  a única representação da entrada, seguindo comportamento terminal-first.
+- Cada span informa a largura autoritativa em células VT; fonte, resize,
+  seleção e caret usam a mesma grade. ANSI bold usa peso médio e a paleta verde
+  é suave; o shell continua dono do texto e dos atributos do prompt.
+- Não existe mais propriedade de offset vertical no AssistantPanel,
+  TerminalPanel ou TerminalViewport. Forma e piscagem solicitadas por DECSCUSR
+  seguem no render; reset/default é resolvido no core para `bar`. Barra/bloco
+  usam a célula VT integral, underline usa a base e `steady` não pisca. Não há
+  regra por agente ou superfície.
+- O teste humano pelo script de desenvolvimento não percebeu correção do
+  alinhamento vertical. O problema continua aberto e foi adiado; 0.57 não tem
+  aceite visual. A retomada está integralmente especificada em `docs/roadmaps/26` e
+  começa por fixture PTY, overlay de baseline/célula e DPR, não por offset.
+- Code OSS/xterm.js são a base de paridade comportamental autorizada para o
+  terminal. A implementação continua nativa em `portable-pty` + Rust + IPC +
+  Qt; Electron, Node, WebView, Extension Host e runtime xterm.js não entram.
+- A roda aceita os dois formatos do Qt (`angleDelta` e `pixelDelta`) e segue o
+  mesmo `terminal.scroll` do Terminal comum.
+- Gutter usa faixas independentes para folding/breakpoint, diagnóstico, blame,
+  diff e números medidos por FontMetrics; marcador não invade o número.
+- Semantic tokens carregam path+version e respostas obsoletas são descartadas;
+  Tree-sitter permanece fallback estrutural instantâneo.
+- Os cinco SVGs de árvore fornecidos foram integrados sem alterar seus bytes.
+- Scripts shell reconhecidos têm ação de execução na árvore; o core confina o
+  caminho e usa argv explícito, sem interpolação.
+- Packaging corrigido para cache host/container isolado, mounts Podman/SELinux
+  e invocação por bash. A entrada direta delega ao builder Debian auditado; o
+  worker não é um build nativo. `dist/` só recebe por staging o conjunto
+  completo AppImage/checksum/instalador/Tutorial, preservando a entrega anterior
+  em caso de falha.
+- Barra da janela agora é client-side: `Main.qml` usa `FramelessWindowHint` e a
+  App Bar hospeda Minimizar, alternável Maximizar/Restaurar e Fechar
+  (`WindowControls.qml`), guiados pelo `QWindow` via `WindowChromeController`
+  (`ui/src/window_chrome_controller.*`). Região livre arrasta/duplo-clica;
+  `WindowResizeHandles.qml` cobre as oito bordas. ACEITO pelo usuário em
+  Fedora/Wayland (2026-07-15); regressão P2 encerrada. Ver `docs/roadmaps/20` §barra.
+
+VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
+- `scripts/verificar.sh` completo: verde; binários release do atalho de
+  desenvolvimento atualizados.
+- Testes Rust, clippy -D warnings, C++/QML estritos e harnesses QML: verdes.
+- Build Clang debug strict e `scripts/verificar-cpp.sh`: verdes.
+- `scripts/verificar-qml.sh`: verde usando o response file do build strict
+  atualizado; o antigo `build/dev-local` não tem precedência.
+- tst_assistant_layout cobre divisor ativo/largura/Project; tst_terminal_scroll
+  cobre nova saída, snap, troca de sessão, roda tradicional e `pixelDelta`;
+  Rust cobre CSI 3 J entre chunks.
+- AppImage final (33.737.208 bytes; SHA256 `86b335b2b1ba8c81d958df4f1e45f7d9c0838fdad2a2567c84199f84b8dbdc0d`),
+  teste host e Debian mínimo sem rede: verdes. Ambos validam também instalador
+  executado fora da pasta, `.desktop`, PNG e `Tutorial.md` idêntico à fonte.
+- Correção 0.56: gate integral verde com 335 testes Rust, Clippy, C++/QML
+  estritos, 12 harnesses, builds Debug/Release e smoke offscreen de 8 s
+  (`exit 124` esperado). Binários do atalho de desenvolvimento atualizados.
+- O teste anterior `cursorVerticalOffset: -2` exclusivo do Assistente passou
+  no gate, mas não recebeu aceite visual. O novo valor `0` passou em qmllint,
+  12 harnesses, rebuild Release e smoke offscreen de 8 s; o gesto humano
+  posterior não aprovou o cursor e `dist/` não foi regenerado.
+- Primeiro recorte DECSCUSR 0.57: gate integral verde com 337 testes Rust,
+  Clippy, C++/QML, 12 harnesses, builds e smoke. O feedback posterior removeu
+  todo offset e unificou `DefaultUserShape`; o mesmo gate integral passou
+  novamente e o smoke release ficou vivo por 8 s sem saída (`exit 124`).
+  Binários de desenvolvimento atualizados; `dist/` continua intocado.
+- Gesto humano posterior: aberta por `scripts/kinein-vectis`, a versão não
+  apresentou mudança visual relevante para o usuário. O caret de Claude/Codex
+  continua sem aceite. Automação verde não equivale a correção visual.
+- A auditoria seguinte encontrou `target/release/kinein-core` anterior a
+  `terminal.rs`; o launcher podia combinar UI nova com core antigo. O gate foi
+  refeito com `debug-strict`/`release-hardened`: 337 testes Rust, Clippy,
+  C++/QML, 12 harnesses e os builds passaram. Smoke real pelo
+  `scripts/kinein-vectis` ficou vivo por 8 s sem saída (`exit 124`). UI/core
+  release agora são os binários atuais; hashes e caminhos estão em
+  `ContextoIA.md`. `dist/` permaneceu intocado.
+- A baseline release A3 com `N=3` passou os orçamentos: 250 ms primeiro frame,
+  103 MB UI, 3,4 ms workspace, 0,0 ms leitura 10k e 7 MB core. A expansão
+  A3.1–A3.4 está detalhada abaixo; Code OSS/Zed e resultados estão em docs/roadmaps/21.
+- Controles de janela (barra client-side): `scripts/verificar.sh` integral verde
+  + smoke offscreen debug/release (`exit 124`); ACEITO pelo usuário em
+  Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
+
+PRÓXIMO GESTO — ordem explicita, montada em 2026-07-17
+
+A ordem abaixo e' por DESBLOQUEIO, nao por tamanho. O que nao exige decisao vem
+primeiro; o que exige esta marcado com [DECISAO SUA] e tem recomendacao pronta,
+para a proxima sessao nunca parar esperando.
+
+E0. FEITO — cursor/TUI APROVADO pelo autor em 2026-07-17. Nao reabrir.
+    A causa-raiz era a linha vazia colapsando no positioner do Qt: o TEXTO
+    escorregava para cima e o cursor, posicionado por `yForRow`, nunca esteve
+    errado (roadmap 26 §4.7; corrigido em `ab3becc`, 07-16 16:53).
+    O QUE ISSO APAGOU DO ROADMAP, e e' o ganho maior:
+    - **R3 DECIDIDO por evidencia: opcao 1, fica o QML.** O criterio dele era
+      "manter se R2 corrigir o visual e cumprir orcamento" — corrigiu e cumpre.
+      Nao trocar de renderer; reabrir exige medicao nova em ADR.
+    - **R2 vira CONDICIONAL.** A razao que o criou (o sintoma) acabou; o R1 ja
+      media que em DPR 1 ele e' nulo (~0,11px). So executar se uma MEDICAO em
+      DPR != 1 mostrar divergencia — nunca por impressao visual, que foi o que
+      custou a fatia R1 inteira.
+
+E1. Desentupir o gate: flake do `tools::` (§0.2h). SEM DECISAO, alto retorno.
+    POR QUE: reprova ao acaso e ensina a reexecutar ate passar — a doenca que a
+    catraca do §0.2g existe para impedir. Bateu 2x na sessao de 2026-07-17 e a
+    IA se flagrou fazendo exatamente isso.
+    CAUSA PROVAVEL, ja escrita no proprio arquivo (`crates/kinein-core/src/tools.rs:507`):
+    o `EXEC_LOCK` serializa so os testes de `tools` entre si; outro teste da suite
+    forkando no momento errado reproduz `ETXTBSY`, e a 2a falha e' cascata (mutex
+    envenenado).
+    CAMINHO: fechar o descritor de escrita ANTES do exec (ou `O_CLOEXEC`).
+    NAO aumentar o escopo do lock — isso esconde, nao corrige.
+
+E2. A3.3 item 1 — harness Qt tecla->frame (`docs/roadmaps/21` §A3.3).
+    Design pronto. Fecha a ultima afirmacao de A3 que hoje depende de impressao
+    visual em vez de medicao.
+
+E3. [DECISAO SUA] Primeiro recorte do L1 (§0.2e).
+    O QUE TRAVA: a auditoria derrubou a premissa do plano — nao existe biblioteca
+    EditorConfig Rust madura. As 3 saidas estao no §0.2e com o trade-off medido.
+    RECOMENDACAO (para nao travar): opcao 3 — validar `integration` v1 pelo
+    INVENTARIO das ferramentas ja detectadas (clangd, rust-analyzer, CMake,
+    Cargo, Git, rg, fd, lldb-dap, Clippy). Zero dependencia nova, contrato de pe,
+    e so entao decidir FFI (`editorconfig-rs`) vs parser proprio.
+    SE VOCE NAO RESPONDER: seguir pela opcao 3 e registrar como decisao da IA.
+
+E4. Debito god-file (§0.2g) — 23 arquivos. NAO e' fatia unica; e' pre-requisito
+    de quem for tocar cada area. A catraca ja provou 2x que cobra:
+    ```text
+    EditorController.qml     1070/400   bloqueia QUALQUER feature de editor
+    terminal.rs               955/500   bloqueia feature de terminal
+    editor_highlighter.cpp    910/500   bloqueia realce
+    core_client_dispatch.cpp  804/500   §5 ja manda dividir por dominio
+    GitPanel.qml              764/300   bloqueia feature de Git
+    ```
+    REGRA (§4 regra 9): quando a catraca disparar, ha TRES suspeitos nesta ordem —
+    a sua mudanca, a categoria, o arquivo. Nao corte linha para caber e nao suba
+    o baseline: os dois sao trapaca.
+
+E5. Resto conhecido, sem pressa e sem bloqueio:
+    - `assistant_terminal_width` ainda em `kinein-config`/`settings.rs` e no
+      protocolo (sobra do 0.59.0). A UI nao le mais. Tirar e' mudanca de contrato
+      com decisao de versao: fatia propria.
+    - AppImage para testadores: o plano do autor (§0.2d-5) manda fechar A3, L1 e
+      os icones antes. O AppImage atual (07-15 23:08) e' ANTERIOR ao remake do
+      icone, por isso o atalho do AppImage mostra o icone velho — o do
+      Desenvolvimento ja mostra o novo.
+
+ARMADILHA MEDIDA NESTA SESSAO, leia antes de validar qualquer coisa:
+o atalho "Kinein Vectis (Desenvolvimento)" roda
+`build/linux-clang-release-hardened/`, NAO o `dev-local`. Em 2026-07-17 o autor
+passou horas com uma IDE quebrada porque esse binario era de 07-16 23:18 e nao
+tinha 4 commits. **Depois de qualquer mudanca de UI, rodar
+`cmake --build --preset release-hardened` antes de pedir validacao.**
 
 RESULTADO PENDENTE
-- Cursor/TUI reprovado no gesto humano e adiado; causa visual ainda aberta.
-- R0–R7 detalhados em `docs/roadmaps/26-terminal-rendering-parity-roadmap.md`.
+- Cursor/TUI: RESOLVIDO e aprovado pelo autor em 2026-07-17 (ver E0). O que
+  resta do roadmap 26 e' R4–R7 (paridade VT, interacoes, desempenho, a11y);
+  R2 ficou condicional e R3 foi decidido.
+- R4–R7 detalhados em `docs/roadmaps/26-terminal-rendering-parity-roadmap.md`.
 - O AppImage 0.1.0 de 2026-07-15 foi regenerado a pedido do usuário para
   embarcar a barra client-side aceita; ele carrega o estado atual do cursor/TUI,
   que o usuário optou por não deixar bloquear a entrega. Não regerar o AppImage

@@ -2252,3 +2252,27 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - **Resto conhecido:** `assistant_terminal_width` ainda existe em
   `kinein-config`/`settings.rs` e no protocolo (sobra do 0.59.0). A UI nao le
   mais. Tirar do core e' mudanca de contrato com decisao de versao: fatia propria.
+
+## Cursor/TUI aprovado — e o aceite apagou duas fatias do roadmap (2026-07-17)
+
+- **Aceite do autor:** o cursor e a renderizacao da TUI do claude/codex via
+  terminal estao RESOLVIDOS. Fecha o sintoma que custou dois dias e duas fatias.
+- A causa-raiz ja estava achada e corrigida em `ab3becc` (07-16 16:53): a linha
+  vazia colapsava no positioner do Qt (`Column` descarta filho sem largura), o
+  TEXTO escorregava para cima e o cursor — posicionado por `yForRow`, a grade
+  matematica — nunca esteve errado. O registro do roadmap 26 dizia "reprovado no
+  gesto humano" desde ANTES da correcao e ninguem tinha revalidado.
+- **O ganho maior nao foi o bug: foi o roadmap que sumiu.**
+  - **R3 (trocar o renderer Qt) DECIDIDO por evidencia: opcao 1, fica o QML.** O
+    criterio estava escrito no proprio R3 — "manter se R2 corrigir o visual e
+    cumprir orcamento de frame/memoria". Corrigiu e cumpre (A3). As opcoes 2
+    (`QQuickItem` nativo) e 3 (componente Qt maduro) existiam para o caso de o
+    modelo por span continuar divergindo. Nao continuou.
+  - **R2 vira CONDICIONAL**: a razao que o criou era o sintoma. O R1 ja media que
+    em DPR 1 ele e' nulo (~0,11px). So se justifica se uma MEDICAO em DPR != 1
+    mostrar divergencia.
+- **Licao de processo, ja registrada no 26 e agora confirmada:** o R0 exigia tres
+  evidencias — tabela, fixture e SCREENSHOT — e dizia "sem isso, parar". As duas
+  primeiras foram tratadas como suficientes, confirmaram hipoteses reais (H1, H2)
+  que NAO eram a causa, e custaram a fatia R1 inteira. A captura resolveu em um
+  minuto. Evidencia listada como obrigatoria e' gate, nao sugestao.
