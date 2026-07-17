@@ -307,8 +307,19 @@ fn is_executable(path: &Path) -> bool {
     path.is_file()
 }
 
+// ETXTBSY (`Text file busy`, errno 26 no Linux/Unix; o core e Linux-first,
+// RNF6): o kernel recusa `exec` de um arquivo aberto para ESCRITA por qualquer
+// processo. E' TRANSITORIO por definicao — quem escreve vai fechar. Acontece
+// quando um upgrade reescreve o binario in-place, e sobretudo nos testes: um
+// fork de outra thread herda o descritor de escrita do script recem-criado na
+// janela entre `fork` e `exec` (o `O_CLOEXEC` da std so' fecha no `exec`, nao no
+// `fork`). Reportar a ferramenta como quebrada aqui seria transformar uma corrida
+// momentanea em erro permanente — a causa registrada do flake do `tools::`.
+const ETXTBSY: i32 = 26;
+
 fn probe_version(path: &Path) -> Result<String, String> {
-    match Command::new(path).arg("--version").output() {
+    let output = run_version_command(path);
+    match output {
         Ok(output) if output.status.success() => {
             let stdout = String::from_utf8_lossy(&output.stdout);
             stdout
@@ -324,6 +335,22 @@ fn probe_version(path: &Path) -> Result<String, String> {
         )),
         Err(error) => Err(format!("falha ao executar a ferramenta: {error}")),
     }
+}
+
+// Executa `--version`, reintentando enquanto o exec falhar com ETXTBSY. O limite
+// (~200 ms) e' folgado para a corrida de teste e imperceptivel no caminho feliz,
+// onde a primeira tentativa ja retorna. Nao serializa nem alarga lock nenhum:
+// so' espera a escrita concorrente terminar, que e' o unico desfecho possivel.
+fn run_version_command(path: &Path) -> std::io::Result<std::process::Output> {
+    for _ in 0..40 {
+        match Command::new(path).arg("--version").output() {
+            Err(error) if error.raw_os_error() == Some(ETXTBSY) => {
+                std::thread::sleep(std::time::Duration::from_millis(5));
+            }
+            resultado => return resultado,
+        }
+    }
+    Command::new(path).arg("--version").output()
 }
 
 #[cfg(test)]
@@ -452,7 +479,9 @@ mod tests {
         // detectar `cargo`: mesma estrutura, mesmo probe, nenhum campo
         // especial. Se alguem escrever `if spec.id == "claude"` no detector
         // para injetar flag, filtrar saida ou mudar o probe, este teste cai.
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = EXEC_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let dir = temp_bin_dir("ai-cli-like-any-other");
         // Os dois fakes ecoam o MESMO texto de proposito: o que se compara e o
         // TRATAMENTO (mesmo probe, mesma estrutura), nao o conteudo.
@@ -480,7 +509,9 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn fd_detection_accepts_fdfind_binary_name() {
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = EXEC_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let dir = temp_bin_dir("fd-fdfind");
         write_fake_tool(&dir, "fdfind", "echo 'fdfind 10.2.0'");
         let detector = ToolDetector::with_search_path(&dir);
@@ -509,7 +540,9 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn detected_tool_reports_path_and_version() {
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = EXEC_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let dir = temp_bin_dir("detected");
         write_fake_tool(&dir, "cargo", "echo 'cargo 1.99.0 (fake)'");
         let detector = ToolDetector::with_search_path(&dir);
@@ -525,10 +558,49 @@ mod tests {
         assert!(info.suggested_install.is_none());
     }
 
+    // Reproduz o ETXTBSY que causava o flake do `tools::`, de forma
+    // DETERMINISTICA em vez de "1 em 3": segura um descritor de ESCRITA aberto
+    // para o script por ~30 ms — exatamente o que um fork concorrente faz sem
+    // querer. Enquanto o descritor esta aberto, o kernel recusa o exec com
+    // ETXTBSY. O `detect` tem que ESPERAR (retry) e reportar Detected, nao
+    // transformar a corrida momentanea em ferramenta quebrada.
+    //
+    // Prova por mutacao: sem o retry em `run_version_command`, o exec falha na
+    // primeira tentativa e o status vem Failed — este assert cai.
+    #[cfg(unix)]
+    #[test]
+    fn probe_espera_um_etxtbsy_transitorio_em_vez_de_falhar() {
+        use std::{fs::OpenOptions, thread, time::Duration};
+
+        let _guard = EXEC_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let dir = temp_bin_dir("etxtbsy-transitorio");
+        write_fake_tool(&dir, "cargo", "echo 'cargo 1.0.0'");
+        let script = dir.join("cargo");
+
+        // Descritor de escrita aberto = arquivo "busy" para exec. Uma thread o
+        // solta apos 30 ms; o retry (ate' ~200 ms) sobrevive a essa janela.
+        let held = OpenOptions::new().write(true).open(&script).unwrap();
+        let liberador = thread::spawn(move || {
+            thread::sleep(Duration::from_millis(30));
+            drop(held);
+        });
+
+        let detector = ToolDetector::with_search_path(&dir);
+        let info = detector.detect(&FAKE_SPEC);
+        liberador.join().unwrap();
+
+        assert_eq!(info.status, ToolStatus::Detected);
+        assert_eq!(info.version.as_deref(), Some("cargo 1.0.0"));
+    }
+
     #[cfg(unix)]
     #[test]
     fn broken_tool_reports_failed_with_human_message() {
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = EXEC_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let dir = temp_bin_dir("broken");
         write_fake_tool(&dir, "cargo", "exit 3");
         let detector = ToolDetector::with_search_path(&dir);

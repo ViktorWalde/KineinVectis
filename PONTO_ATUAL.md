@@ -59,8 +59,10 @@ FASE 0 — Estabilizar o loop de dogfooding (destrava o autor HOJE)
   [x] 0.1  Icone: fonte unica ui/assets/app-icon.png; atalho via tema hicolor
            (nome, nao caminho); atualizar-tudo reinstala o atalho; gate
            verificar-icone. imagens/ passa a ser so' imagens. FEITO 2026-07-17.
-  [ ] 0.2  E1 — flake do `tools::` (O_CLOEXEC antes do exec). Destrava o gate.
-  Saida: trocar o icone -> UM comando -> icone novo no GNOME; gate 10x sem flake.
+  [x] 0.2  E1 — flake do `tools::`: retry em ETXTBSY (raiz) + lock sem poison
+           (cascata). NAO era falta de O_CLOEXEC — a std ja o usa; a raiz e' a
+           janela fork->exec. FEITO 2026-07-17, provado por mutacao + 5x verde.
+  Saida: FASE 0 fechada — o loop de dogfooding esta estavel.
 
 FASE 1 — Pagar os god-files que BLOQUEIAM feature (curto prazo, contínuo)
   Metodo fixo (molde: E6): teste primeiro -> corte por RESPONSABILIDADE (nao
@@ -91,18 +93,24 @@ O que não exige decisão vem primeiro. O que exige tem recomendação e um "se
 ninguém responder, siga por X" — nenhuma sessão para esperando.
 
 ```text
-E1  flake do `tools::`        SEM decisao   desentope o gate inteiro
+E1  flake do `tools::`        RESOLVIDO     2026-07-17 (ETXTBSY + poison)
 E2  L1: dominio `integration` DECISAO SUA   recomendacao pronta (§0.2e)
 E3  debito god-file           SEM decisao   pre-requisito por area
 E4  resto (protocolo, AppImage)             P3, sem bloqueio
 ```
 
-**E1 — flake do `tools::` (§0.2h). Primeiro por leverage, não por tamanho.**
-Reprova ao acaso e ensina a reexecutar até passar — a doença que a catraca do
-§0.2g existe para impedir. Pegou a IA 2x em 2026-07-17, que se flagrou fazendo
-exatamente isso. VERIFICADO ABERTO no código: `tools.rs` não muda desde `4dacc1b`
-e não tem `O_CLOEXEC`. Caminho já escrito no próprio arquivo: fechar o descritor
-de escrita antes do exec. **Não aumentar o escopo do `EXEC_LOCK`** — isso esconde.
+**E1 — flake do `tools::` (§0.2h). RESOLVIDO em 2026-07-17.** A hipótese registrada
+(`O_CLOEXEC`, "fechar o descritor antes do exec") estava **errada**, e medir
+mostrou: a std do Rust já abre com `O_CLOEXEC`, e `fs::write` já fecha antes do
+exec. A raiz eram **dois** defeitos: (A) o exec do script recém-escrito dava
+`ETXTBSY` porque um fork de outro módulo herda o descritor de escrita na janela
+entre `fork` e `exec` (o `O_CLOEXEC` só fecha no `exec`, não no `fork`); (B)
+`EXEC_LOCK.lock().unwrap()` num `Mutex<()>` propagava *poison*, então uma falha
+virava cascata. Correção: retry direcionado a `ETXTBSY` em `run_version_command`
+(transitório por definição) + `unwrap_or_else(PoisonError::into_inner)`. Teste
+`probe_espera_um_etxtbsy_transitorio` reproduz o `ETXTBSY` de forma determinística
+(segura um fd de escrita 30 ms) e cai sem o retry. Registro completo no
+`ContextoIA.md`.
 
 **E2 — L1: o domínio `integration` v1. [DECISÃO SUA, com saída]**
 VERIFICADO ABERTO: não existe `handlers/integration.rs`. O que trava é o §0.2e —

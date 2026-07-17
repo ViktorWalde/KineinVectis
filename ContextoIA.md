@@ -1882,6 +1882,34 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
   12 da ARCHITECTURE (comentário técnico, não narração — datar medição, citar
   fonte, e o teste "apague o comentário: o que se perde?").
 
+## Fase 0: icone com fonte unica e o flake do `tools::` resolvido (2026-07-17)
+
+- **0.1 — Icone.** Havia duas copias (imagens/ e ui/assets/) que nenhum script
+  sincronizava: o atalho lia uma, o autor editava a outra. Fonte unica em
+  `ui/assets/app-icon.png`; o atalho passou a instalar o PNG no tema hicolor sob
+  NOME (`Icon=kinein-vectis-development`) e invalidar com `gtk-update-icon-cache`
+  — `Icon=caminho-absoluto` no Wayland era servido de cache. `atualizar-tudo.sh`
+  reinstala o atalho no fim. Gate `verificar-icone.sh` (filesystem) reprova
+  segunda copia rastreada. `imagens/app-icon.png` removido; imagens/ e' so'
+  imagens de trabalho.
+- **0.2 — Flake do `tools::`.** A hipotese registrada estava errada e medir
+  corrigiu: a std ja abre com `O_CLOEXEC` e `fs::write` ja fecha. Dois defeitos
+  reais: (A) `ETXTBSY` no exec do script recem-escrito, porque um fork de outro
+  modulo da suite herda o descritor de escrita na janela `fork`→`exec` (o
+  `O_CLOEXEC` so' fecha no `exec`); (B) `EXEC_LOCK.lock().unwrap()` num
+  `Mutex<()>` propagava poison — 1 falha virava cascata. Correcao: retry
+  direcionado a `ETXTBSY` em `run_version_command` (robustez real: binario
+  reescrito por upgrade concorrente tambem daria `ETXTBSY`) + `into_inner` no
+  lock. Teste `probe_espera_um_etxtbsy_transitorio` reproduz o `ETXTBSY`
+  determinístico (segura um fd de escrita 30 ms) e cai sem o retry; suite
+  completa 5x verde.
+- **Licao registrada** (memoria `refatoracao-god-files-licao`): o autor
+  esclareceu que "a refatoracao nao deveria ter sido necessaria" se refere a
+  CAUSA — a IA da epoca acoplou apesar dos .md explicitos. Os gates desta sessao
+  sao o "dente" que faltava para a regra que ja existia.
+- Cronograma em FASES no `PONTO_ATUAL` (0 dogfooding → 1 god-files → 2 L1 → 3
+  L2-L4), com checkbox e criterio de saida binario por fase. FASE 0 fechada.
+
 ## Compatibilidade gráfica do AppImage (2026-07-15)
 
 - O primeiro dogfooding do AppImage no Fedora/Wayland expôs uma lacuna que o
