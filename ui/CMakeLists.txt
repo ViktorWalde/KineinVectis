@@ -277,7 +277,6 @@ qt_add_qml_module(kinein-vectis
         src/window_chrome_controller.cpp
         src/window_chrome_controller.h
     RESOURCES
-        assets/app-icon.png
         assets/icons/tree/folder-closed.svg
         assets/icons/tree/folder-open.svg
         assets/icons/tree/file-c.svg

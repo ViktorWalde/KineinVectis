@@ -59,14 +59,6 @@ Rectangle {
             height: 54
             spacing: Theme.spacingMedium
 
-            Image {
-                width: 48
-                height: 48
-                source: "qrc:/KineinVectis/assets/app-icon.png"
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-            }
-
             Column {
                 anchors.verticalCenter: parent.verticalCenter
 

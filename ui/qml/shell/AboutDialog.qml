@@ -47,15 +47,6 @@ Item {
             width: parent.width - 2 * Theme.spacingRegion
             spacing: Theme.spacingMedium
 
-            Image {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: 64
-                height: 64
-                source: "qrc:/KineinVectis/assets/app-icon.png"
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-            }
-
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: qsTr("Kinein Vectis")

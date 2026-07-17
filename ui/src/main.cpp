@@ -4,7 +4,6 @@
 
 #include <QElapsedTimer>
 #include <QGuiApplication>
-#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QUrl>
@@ -49,7 +48,6 @@ int main(int argc, char* argv[])
     QGuiApplication::setApplicationName(QStringLiteral("Kinein Vectis"));
     QGuiApplication::setOrganizationName(QStringLiteral("Kinein Vectis"));
     QGuiApplication::setApplicationVersion(QStringLiteral("0.1.0"));
-    QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/KineinVectis/assets/app-icon.png")));
 
     QQmlApplicationEngine engine;
     // Qt 6.4: qt_add_qml_module places the module under qrc:/ (no /qt/qml prefix).

@@ -2057,3 +2057,25 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - Opção (b) APROVADA pelo autor: dividir a composição por área. Plano medido e
   pronto em `docs/arquitetura/27-modulos-por-dominio.md` §4.4 (AppDomains.qml,
   204 referências, ordem de execução e armadilha do qmllint).
+
+## Ícone sai de dentro da IDE; fica só no atalho (2026-07-16)
+
+- Decisão do autor: remake do ícone principal (500x500 -> 1254x1254) e, em
+  seguida, remover a exibição do ícone DENTRO da IDE. Direção de layout: o visual
+  limpo da IDE aberta do JetBrains — inspiração, não cópia; referência de print
+  em `imagens/prints`. A janela já é frameless com chrome próprio, então isso é
+  decisão de layout, não de sistema.
+- Removidos os 4 usos: `main.cpp` (`setWindowIcon` + include `QIcon`),
+  `AppMenuBar` (Image da marca + property `brandIconSource`), `StartScreen`
+  (Image 48px) e `AboutDialog` (Image 64px).
+- **Efeito medido:** `assets/app-icon.png` saiu do `RESOURCES` e o binário release
+  caiu de 15.941.200 para 14.720.968 bytes — **1,2 MB a menos**. Verificado que o
+  PNG não está mais embutido, não deduzido.
+- O que NÃO mudou: o atalho `.desktop` aponta para `imagens/app-icon.png`
+  (cópia fora do recurso Qt) e o `install(FILES assets/app-icon.png ...)` do
+  ícone hicolor usa o arquivo do source tree. Os dois sobrevivem à remoção do
+  recurso; o PNG continua versionado nas duas cópias.
+- Consequência aceita pelo autor: sem `setWindowIcon`, a janela/barra de tarefas
+  não carrega ícone próprio pelo Qt. No Wayland o ícone vem do `.desktop` via
+  app_id (`StartupWMClass=kinein-vectis`).
+- `AppMenuBar.qml` encolheu de 303 para 293 linhas — sai do débito da catraca.

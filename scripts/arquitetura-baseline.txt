@@ -20,7 +20,6 @@ ui/qml/panels/bottom/SearchPanel.qml 325 300
 ui/qml/panels/bottom/TerminalViewport.qml 319 300
 ui/qml/runtime/RuntimeController.qml 494 400
 ui/qml/search/SearchController.qml 420 400
-ui/qml/shell/AppMenuBar.qml 303 300
 ui/qml/shell/ShellWorkspaceHost.qml 582 400
 ui/src/core_client_dispatch.cpp 804 500
 ui/src/core_client_requests.cpp 660 500

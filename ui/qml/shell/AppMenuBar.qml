@@ -11,7 +11,6 @@ Rectangle {
     property bool running: false
     property bool debugging: false
     property bool windowMaximized: false
-    property url brandIconSource: "qrc:/KineinVectis/assets/app-icon.png"
     property string workspaceName: ""
     property string workspaceKind: ""
     property var workspaceBuildSystems: []
@@ -167,15 +166,6 @@ Rectangle {
         anchors.leftMargin: Theme.spacingMedium
         height: parent.height
         spacing: Theme.spacingXSmall
-
-        Image {
-            anchors.verticalCenter: parent.verticalCenter
-            width: 24
-            height: 24
-            source: root.brandIconSource
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-        }
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
