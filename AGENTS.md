@@ -21,6 +21,60 @@ O projeto deve evitar reimplementar ferramentas já existentes. Sempre que poss�
 - Backend: Docker/Podman Compose, HTTP client, OpenAPI, PostgreSQL, Redis, logs.
 - IA: GPT CLI, Claude CLI, Ollama, OpenAI/Anthropic/OpenRouter via providers configuráveis.
 
+## Leitura obrigatória: `docs/arquitetura/ARCHITECTURE.md`
+
+**Antes de propor arquitetura, split, módulo, pasta ou "plano" de organização,
+leia `docs/arquitetura/ARCHITECTURE.md` inteiro.** Ele é contrato de engenharia,
+não referência de consulta: define camadas (§2), organização do core (§4), onde
+colocar código novo (§5) e o caminho de crescimento `função → arquivo → pasta →
+crate` (§6), com os nomes dos crates futuros já escolhidos.
+
+**Por que isto está no topo e não numa lista.** Já estava escrito "obrigatório",
+e não segurou. Medição de 2026-07-16: 7 arquivos do core e 20 da UI violavam as
+regras desse documento; `lib.rs` voltou a 505 linhas e `terminal.rs` chegou a
+955, num documento que existe **explicitamente** para impedir a volta do
+monólito. A §6 chegou a afirmar "Main.qml tem 336 linhas" enquanto ele tinha 700.
+
+> Regra que mora só em `.md` não segura arquitetura: apodrece calada enquanto o
+> gate fica verde. Por isso a §4 e a §6 hoje são verificadas por catraca
+> (`scripts/verificar-arquitetura.sh`, dentro do `verificar.sh`), com débito
+> congelado em `scripts/arquitetura-baseline.txt` que **só pode diminuir**.
+
+**A consequência prática para quem for propor arquitetura:** meça antes de
+propor. O padrão observado é que o problema é **regra não cumprida**, não regra
+ausente — duas vezes seguidas (§0.2g na UI, doc 27 no core) a resposta certa foi
+"o projeto já tem arquitetura, é boa, e não era aplicada". Propor desenho novo
+sem medir é o erro mais caro possível aqui.
+
+**Três âncoras, sempre juntas** (ver ARCHITECTURE.md §1.3):
+
+- **este documento + o código medido** — contra **alucinação de arquitetura**;
+- **IDEs open source consolidadas** (Code OSS, IntelliJ IDEA Community, Zed,
+  Lapce, NetBeans), com revisão citada — contra **dogmatismo**;
+- **documentação oficial da linguagem/tecnologia** (Rust std/reference/clippy,
+  Qt e QML, C++, CMake, POSIX) — contra **API imaginada**.
+
+Só o documento produz umbiguismo; só as referências produzem importação de
+máquina alheia que este projeto recusou (Node, Electron, WebView, host de
+extensões); e sem a documentação oficial o código compila e mente. Arquitetura
+entra como MODE-D/MODE-B: aprende-se a regra, não se copia a máquina.
+
+**Sobre a âncora 3, que é a mais fácil de pular:** comportamento de API se
+consulta na fonte, não se deduz do nome nem se lembra de cor — e versão e
+plataforma mudam a resposta. Este repositório já pagou caro por isso:
+`Qt.exit(256)` sai como 0 (8 bits do código de saída POSIX) e deixou 7 dos 14
+harnesses com checks que nunca reprovavam; `frameSwapped` é emitido na render
+thread; `QProcess::start` é assíncrono e o `sendRequest` descarta em silêncio o
+que chega antes de `Running`. Ao afirmar que uma API se comporta de tal forma,
+**cite fonte e versão**. Sem fonte consultada, a frase correta é "não sei ainda",
+e a próxima ação é consultar ou medir — nunca supor.
+
+**Manter o documento vivo é parte da tarefa.** Ao criar/renomear/remover módulo,
+domínio, router ou controller, atualizar o inventário e os números da
+`ARCHITECTURE.md` — mapa desatualizado engana mais que a ausência de mapa. Os
+fundamentos (camadas §2, regra de split §4/§6, ordem §5, crescimento §6) não
+mudam sem decisão explícita e registrada.
+
 ## Regra principal
 
 Não criar soluções improvisadas quando existir ferramenta aberta, madura e gratuita que resolva o problema.
@@ -50,7 +104,10 @@ Antes de criar código:
 1. Ler `ContextoIA.md` (estado real e decisões vigentes).
 2. Ler `GUIAIA.md` para localizar o domínio, as conexões e os documentos
    específicos da tarefa. Ele é um mapa, não substitui as fontes seguintes.
-3. Ler `docs/arquitetura/ARCHITECTURE.md` (camadas, convenções de módulo e regra de split — obrigatório).
+3. Ler `docs/arquitetura/ARCHITECTURE.md` **inteiro** (camadas, convenções de
+   módulo, regra de split, caminho de crescimento). Obrigatório e verificado por
+   catraca — ver a seção "Leitura obrigatória" no topo deste arquivo. Se a
+   tarefa é propor arquitetura: **medir antes de propor**.
 4. Ler `docs/arquitetura/02-repository-structure.md` e `docs/arquitetura/03-ipc-protocol.md` (estrutura e contrato IPC atual).
 5. Ler `docs/arquitetura/06-strict-mode.md` (rigor Rust/C++).
 6. Consultar `docs/specs/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).

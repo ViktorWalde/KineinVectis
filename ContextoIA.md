@@ -1986,3 +1986,74 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - A mensagem de falha aponta a seção certa por camada: §4 para `crates/`, §6
   para a UI. Apontar a errada faz procurar a regra onde ela não está.
 
+## ARCHITECTURE.md virou leitura obrigatória verificada (2026-07-16)
+
+- Pedido do autor após a constatação de que a §4 do core "existia desde sempre,
+  era boa, e nunca tinha sido verificada por ninguém".
+- **Achado ao executar:** "obrigatório" JÁ estava escrito. O `AGENTS.md` dizia,
+  no item 3 de uma lista de 8, "ler ARCHITECTURE.md — obrigatório", e o item 8
+  já mandava estudar Code OSS/IntelliJ/Zed/Lapce/NetBeans como referência
+  profissional obrigatória. As duas metades existiam e mesmo assim `lib.rs`
+  voltou a 505 e `terminal.rs` chegou a 955, num documento que existe
+  explicitamente para impedir a volta do monólito. A palavra não segurou nada;
+  o que segurou foi a catraca.
+- Por isso a mudança não foi reforçar o adjetivo, e sim: (a) tirar a regra de
+  item 3 de uma lista e dar seção própria no topo do `AGENTS.md`, com os números
+  medidos; (b) escrever na própria `ARCHITECTURE.md` (§1.1) que ela já falhou
+  uma vez e por quê; (c) amarrá-la ao mecanismo que a verifica.
+- `ARCHITECTURE.md` ganhou §1.1 (o fracasso medido), §1.2 (manutenção: o que
+  muda — inventário e números; o que não muda sem decisão registrada — camadas
+  §2, split §4/§6, ordem §5, crescimento §6) e §1.3 (as duas âncoras).
+- **As duas âncoras, sempre juntas:** o documento + código medido contra
+  ALUCINAÇÃO ("antes de propor, medir": duas vezes seguidas a resposta certa foi
+  "o projeto já tem arquitetura, é boa, e não era aplicada"); IDEs open source
+  consolidadas com revisão citada contra DOGMATISMO (impede "boa prática"
+  inventada virar lei local). Só o documento produz umbiguismo; só as
+  referências produzem importação de máquina recusada (Node, Electron, WebView,
+  host de extensões). Arquitetura entra como MODE-D/MODE-B.
+- Marcado em todos os pontos de entrada: `AGENTS.md` (seção nova no topo + item
+  3), `docs/README.md` (índice), `GUIAIA.md` (roteiro e ordem de leitura),
+  `docs/CONTRIBUINDO.md` (aviso no topo).
+
+## Terceira âncora: documentação oficial da linguagem/tecnologia (2026-07-16)
+
+- Pedido do autor: a documentação das linguagens/tecnologias usadas passa a ser
+  padrão, em conjunto com a documentação do projeto.
+- As âncoras da `ARCHITECTURE.md` §1.3 passaram de duas para três, cada uma
+  contra um vício: documento + código medido (alucinação de arquitetura); IDEs
+  open source consolidadas com revisão citada (dogmatismo); documentação oficial
+  de Rust/Qt/QML/C++/CMake/POSIX (**API imaginada**).
+- Não é teoria — todos estes custaram tempo neste repositório e são
+  comportamento documentado que ninguém consultou antes: `Qt.exit(256)` sai como
+  0 (8 bits do código de saída POSIX), e por isso 7 dos 14 harnesses tinham
+  checks que nunca reprovavam; `frameSwapped` é emitido na render thread (uma
+  conexão queued mediria a fila de eventos junto); `QProcess::start` é
+  assíncrono e o `sendRequest` descarta em silêncio o que chega antes de
+  `Running`; `QQmlContext::objectForName` existe desde Qt 6.5; o positioner do
+  Qt Quick descarta filho de largura zero (os dois dias de TUI).
+- Regra prática registrada: ao afirmar comportamento de API, citar fonte e
+  versão. Sem fonte consultada, a frase correta é "não sei ainda", e a próxima
+  ação é consultar ou medir — nunca supor.
+- Marcado em `AGENTS.md`, `ARCHITECTURE.md` §1.3, `GUIAIA.md`.
+
+## Limites acompanham o crescimento: a regra (2026-07-16)
+
+- Exigência do autor: as catracas não podem fazer a realidade de hoje travar o
+  desenvolvimento de amanhã.
+- Regra registrada em `ARCHITECTURE.md` §4 regra 8: **o limite é por
+  responsabilidade e NÃO cresce; o projeto cresce somando unidades, não
+  engordando unidades.** Um controller que faz uma coisa não precisa de mais
+  linhas porque o projeto ficou maior — precisam existir mais controllers. Um
+  projeto com 12 domínios tem 12 arquivos de domínio, não um de 1000 linhas. O
+  que escala é a CONTAGEM de módulos. Domínio novo (embarcados, simulação) traz
+  arquivos novos e a catraca nem percebe: nascem dentro do limite.
+- Exceção legítima: o composition root, cujo tamanho é função do número de
+  domínios, não da qualidade do código. Saída: dividir a composição por área,
+  fazendo a contagem de arquivos crescer em vez do tamanho — nunca subir o
+  limite.
+- Válvula explícita: subir um limite É permitido, como decisão registrada e
+  justificada. Nunca em silêncio, nunca "porque incomodou hoje" — esse é o vício
+  que a §1.1 documenta.
+- Opção (b) APROVADA pelo autor: dividir a composição por área. Plano medido e
+  pronto em `docs/arquitetura/27-modulos-por-dominio.md` §4.4 (AppDomains.qml,
+  204 referências, ordem de execução e armadilha do qmllint).

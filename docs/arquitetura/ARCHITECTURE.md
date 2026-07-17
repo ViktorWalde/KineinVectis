@@ -1,6 +1,10 @@
 # Arquitetura de Software e Convenções de Crescimento
 
-> **Status:** ativo / contrato de engenharia. **Ler antes de escrever código novo.**
+> **Status:** ativo / contrato de engenharia.
+> **LEITURA OBRIGATÓRIA antes de escrever ou propor código novo — humano ou IA.**
+> Não é referência de consulta: é contrato. Quem vai propor arquitetura neste
+> repositório lê este documento **primeiro** e descobre que a resposta quase
+> sempre já está aqui.
 > **Função:** codificar como o código é organizado e como crescer sem precisar de
 > outra refatoração massiva. A visão-alvo completa (produto/serviços) está em
 > `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md`; este documento
@@ -16,6 +20,97 @@ modular. A regra:
 
 > Cada peça de código novo entra na camada certa, no módulo certo, com a
 > visibilidade certa, e vira pasta/crate **antes** de virar monólito.
+
+### 1.1 Este documento já falhou uma vez. Leia o porquê antes de confiar nele.
+
+Dez dias depois de escrito, medição de 2026-07-16:
+
+```text
+lib.rs        505 linhas   a §4 manda: "fino. So o dispatch central e o estado".
+handlers/lsp  653 linhas   a §4 manda: "fino. Sem logica pesada".
+terminal.rs   955 linhas   1.9x o limite da propria §4.
+Main.qml      700 linhas   a §6 afirmava "Estado validado em 2026-07-06: 336 linhas".
+```
+
+Sete arquivos do core e vinte da UI violavam as regras deste documento. Ele foi
+escrito **exatamente** para impedir a volta do monólito e o monólito voltou. A
+causa não foi a regra — a regra é boa. A causa foi mecânica:
+
+> **Regra que mora só em `.md` não segura arquitetura. Ela apodrece em silêncio
+> enquanto o gate fica verde.** "Ler antes de escrever código" era recomendação
+> sem verificação, e recomendação perde para pressa toda vez.
+
+O que mudou em 2026-07-16: `scripts/verificar-arquitetura.sh` passou a verificar
+a §4 (core) e a §6 (UI) dentro do `verificar.sh`. Débito existente congelado em
+`scripts/arquitetura-baseline.txt`, e **só pode diminuir**. Agora a regra tem
+dente. **Se você está lendo isto para propor arquitetura nova: a proposta
+provavelmente já está escrita abaixo, e o que faltava era cumprí-la.**
+
+### 1.2 Manutenção: o que muda e o que não muda
+
+Este documento **precisa** ser atualizado conforme arquivos, módulos e domínios
+nascem — um mapa desatualizado engana mais do que a ausência de mapa (a §6 já
+afirmou "Main.qml tem 336 linhas" enquanto ele tinha 700).
+
+O que **muda**: inventário, números medidos, exemplos, nomes de módulos.
+O que **não muda sem decisão explícita e registrada**: as camadas da §2, a regra
+de split da §4/§6, a ordem da §5 e o caminho de crescimento da §6. Esses são os
+fundamentos; se um deles atrapalha, a saída é discuti-lo, não contorná-lo em
+silêncio.
+
+### 1.3 As três âncoras: contra alucinação, dogmatismo e API imaginada
+
+Decisão técnica aqui se apoia em **três** fontes, sempre juntas, e cada uma
+corrige um vício diferente:
+
+```text
+1. ESTE DOCUMENTO + o codigo         -> contra ALUCINACAO DE ARQUITETURA.
+   O que ja existe, medido, nao imaginado. Antes de propor,
+   MEDIR: o problema costuma ser regra nao cumprida, nao regra ausente.
+
+2. IDEs open source consolidadas     -> contra DOGMATISMO.
+   Code OSS, IntelliJ IDEA Community, Zed, Lapce, Apache NetBeans.
+   O que IDE profissional realmente faz, com revisao citada.
+   Impede que "boa pratica" inventada vire lei local.
+
+3. DOCUMENTACAO OFICIAL da linguagem -> contra API IMAGINADA.
+   Rust (std/reference/clippy), Qt e QML, C++, CMake, POSIX.
+   Comportamento de API se CONSULTA na fonte; nao se deduz do nome
+   nem se lembra de cor. Versao/plataforma importam e mudam a resposta.
+```
+
+Nenhuma sozinha basta. Só o documento produz umbiguismo — o projeto repete os
+próprios erros achando que são princípios. Só as referências produzem
+importação de máquina alheia (DI runtime, host de extensões, Electron) que este
+projeto recusou por decisão registrada. E sem a documentação oficial o código
+compila e mente.
+
+**A âncora 3 não é teoria.** Casos reais e caros deste repositório, todos
+resolvidos por comportamento documentado que ninguém consultou antes:
+
+```text
+Qt.exit(256) sai como 0        Codigo de saida POSIX tem 8 bits. 7 dos 14
+                               harnesses tinham checks que NUNCA reprovavam.
+frameSwapped na render thread   Conexao queued mediria a fila de eventos junto
+                               com o frame. Irrelevante em 250 ms, decisivo em 7.
+QProcess::start e assincrono    sendRequest DESCARTA em silencio o que chega
+                               antes de Running: o pedido nao falhava, sumia.
+QQmlContext::objectForName      Existe desde Qt 6.5. Sem consultar, a saida seria
+                               sujar o Main.qml com objectName so para medir.
+Positioner descarta filho de    Linha vazia virava Row sem largura: o texto subia
+largura zero                    e o cursor "parecia" errado. Dois dias de TUI.
+```
+
+Regra prática: ao afirmar que uma API se comporta de tal forma, **cite a fonte
+e a versão**. Se a fonte não foi consultada, a frase correta é "não sei ainda" —
+e a próxima ação é consultar ou medir, não supor.
+
+A política de referência é obrigatória e tem modos definidos em
+`docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` §2 — **MODE-A**
+(integrar a ferramenta original, preferido) a **MODE-D** (referência apenas).
+Arquitetura entra como MODE-D/MODE-B: **aprende-se a regra, não se copia a
+máquina**, e a revisão consultada fica registrada. Ver
+`docs/arquitetura/27-modulos-por-dominio.md` para o exemplo aplicado.
 
 ## 2. Arquitetura em camadas (regra inviolável)
 

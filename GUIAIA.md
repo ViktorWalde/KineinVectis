@@ -14,7 +14,18 @@ Leia nesta ordem antes de alterar código:
 
 1. `ContextoIA.md` — estado real, decisões vigentes e restrições do produto.
 2. Este `GUIAIA.md` — descubra o domínio e os arquivos conectados.
-3. `docs/arquitetura/ARCHITECTURE.md` — camadas, fronteiras e regra de split obrigatória.
+3. `docs/arquitetura/ARCHITECTURE.md` — **LEITURA OBRIGATÓRIA, inteiro**: camadas,
+   fronteiras, regra de split e caminho de crescimento. É contrato, não consulta.
+   Verificado por catraca (`scripts/verificar-arquitetura.sh`). Antes de propor
+   arquitetura nova, MEDIR: duas vezes seguidas a resposta certa foi "o projeto
+   já tem arquitetura, é boa, e não era aplicada" (ver §1.1 de lá).
+
+   **Três âncoras, sempre juntas** (ARCHITECTURE.md §1.3): o documento + código
+   medido (contra alucinação de arquitetura); IDEs open source consolidadas com
+   revisão citada (contra dogmatismo); e a **documentação oficial da
+   linguagem/tecnologia** — Rust, Qt/QML, C++, CMake, POSIX — contra API
+   imaginada. Comportamento de API se consulta na fonte, com versão; não se
+   deduz do nome nem se lembra de cor.
 4. `PONTO_ATUAL.md` — próxima tarefa executável e ordem vigente.
 5. O documento específico indicado nas tabelas deste guia.
 6. O código real do fluxo completo antes de propor arquivo ou subsistema novo.
@@ -203,7 +214,7 @@ e a adaptação. Referência autoriza **estudo**, nunca cópia ou tradução mec
 ### 3.E — Contrato, arquitetura ou persistência
 
 ```text
-1. docs/arquitetura/ARCHITECTURE.md     ler antes de escrever código novo
+1. docs/arquitetura/ARCHITECTURE.md     OBRIGATORIO, inteiro — contrato, nao consulta
 2. docs/arquitetura/03-ipc-protocol.md  contrato implementado (+ bump de versão)
 3. docs/arquitetura/02-repository-structure.md   onde o arquivo nasce
 4. schemas/                             formato persistido precisa de schema

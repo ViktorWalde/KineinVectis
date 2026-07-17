@@ -3,6 +3,14 @@
 Guia para quem vai **alterar ou implementar** algo no projeto. Ele responde a
 uma pergunta só: *onde olhar para fazer a mudança certa no lugar certo.*
 
+> **Antes de propor arquitetura, split ou reorganização: leia
+> [`arquitetura/ARCHITECTURE.md`](arquitetura/ARCHITECTURE.md) inteiro, e meça.**
+> É contrato, não consulta, e é verificado por catraca. O padrão observado neste
+> repositório é que o problema é **regra não cumprida, não regra ausente** — em
+> 2026-07-16, 7 arquivos do core e 20 da UI violavam regras que já estavam
+> escritas lá. Propor desenho novo sem medir é o erro mais caro possível aqui;
+> ver §1.1 e §1.3 daquele documento.
+
 Para **usar** a IDE, o documento é o [`../MANUAL.md`](../MANUAL.md). Para
 **instalar/distribuir**, o [`../Tutorial.md`](../Tutorial.md).
 

@@ -62,7 +62,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 
 | Documento | Assunto |
 | --- | --- |
-| [arquitetura/ARCHITECTURE.md](arquitetura/ARCHITECTURE.md) | **Arquitetura e convenções de crescimento — ler antes de codar** |
+| [arquitetura/ARCHITECTURE.md](arquitetura/ARCHITECTURE.md) | **LEITURA OBRIGATÓRIA — contrato de arquitetura (camadas, regra de split, crescimento). Verificado por catraca. Antes de propor arquitetura nova: MEDIR — o problema costuma ser regra não cumprida, não regra ausente (§1.1)** |
 | [arquitetura/02-repository-structure.md](arquitetura/02-repository-structure.md) | Estrutura real do repositório e crates |
 | [arquitetura/03-ipc-protocol.md](arquitetura/03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado |
 | [arquitetura/06-strict-mode.md](arquitetura/06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
@@ -70,6 +70,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [arquitetura/16-hidden-risks-checklist.md](arquitetura/16-hidden-risks-checklist.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
 | [arquitetura/17-architecture-hygiene-plan.md](arquitetura/17-architecture-hygiene-plan.md) | Higiene arquitetural e concentrações a eliminar |
 | [arquitetura/19-architecture-tradeoffs.md](arquitetura/19-architecture-tradeoffs.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
+| [arquitetura/27-modulos-por-dominio.md](arquitetura/27-modulos-por-dominio.md) | **PROPOSTA** — módulos por domínio (front + back), catraca no core e fronteira do subsistema opcional (simulador OpenGL) |
 
 ## build/ — ambiente, compilação e verificação
 
