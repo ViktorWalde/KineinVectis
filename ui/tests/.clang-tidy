@@ -1,0 +1,9 @@
+# Herda tudo do .clang-tidy da raiz e desliga UM check, com motivo.
+#
+# readability-convert-member-functions-to-static: um teste do QTest e' uma classe
+# QObject cujos casos sao `private slots`. O QTest os invoca pelo meta-object, e
+# slot NAO pode ser static — o moc nao o registra e o caso simplesmente nao roda.
+# O check e' correto em C++ geral e falso aqui: seguir a sugestao apagaria os
+# testes em silencio, que e' o pior modo de falha possivel num arquivo de teste.
+InheritParentConfig: true
+Checks: '-readability-convert-member-functions-to-static'

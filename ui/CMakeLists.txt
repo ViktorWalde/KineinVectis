@@ -2,6 +2,9 @@
 # Presentation only: every action is sent to kinein-core over JSON-RPC.
 
 find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Qml Quick)
+if(BUILD_TESTING)
+    find_package(Qt6 6.4 REQUIRED COMPONENTS Test)
+endif()
 
 qt_standard_project_setup()
 
@@ -317,6 +320,52 @@ set_source_files_properties(
 target_include_directories(kinein-vectis PRIVATE src)
 
 target_link_libraries(kinein-vectis PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+
+# ---------------------------------------------------------------------------
+# Testes de C++ (2026-07-17). Ate aqui a ui/src nao tinha NENHUM: os gates de
+# C++ sao estaticos (clang-format, clang-tidy) e os harnesses QML evitam o
+# modulo C++ por construcao. Este alvo existe para que o proximo teste tenha
+# onde morar — nao para cobrir tudo de uma vez.
+#
+# Cada teste compila as unidades que exercita, em vez de linkar o app: o
+# `kinein-vectis` e' um executavel com QML, engine e main(); transformar tudo em
+# biblioteca so' para testar seria reestruturar o build antes de existir o
+# primeiro teste. Quando o numero de alvos justificar, vira lib — nao antes.
+if(BUILD_TESTING)
+    qt_add_executable(tst_editor_highlighter
+        tests/tst_editor_highlighter.cpp
+        src/editor_highlighter.cpp
+        src/editor_highlighter.h
+    )
+    target_include_directories(tst_editor_highlighter PRIVATE src)
+    # Qt6::Quick entra so' porque `editor_highlighter.h` expoe um
+    # `QQuickTextDocument*` — o realce em si nao depende do Quick. E' o primeiro
+    # acoplamento que o split do arquivo deve desfazer (ver E5/E6 no PONTO_ATUAL).
+    target_link_libraries(tst_editor_highlighter
+        PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Test)
+    # Teste roda sob as MESMAS regras do produto: warnings-as-errors e
+    # sanitizers no debug. Teste com regra mais frouxa que o codigo testado e'
+    # como gate que nunca reprova — passa por nao olhar.
+    kinein_enable_strict_compiler_options(tst_editor_highlighter)
+    # Mesma excecao do alvo principal, e pelo mesmo motivo: o MOC do Qt 6 usa
+    # CTAD que o Clang 22 diagnostica sob os warnings rigorosos.
+    set_source_files_properties(
+        "${CMAKE_CURRENT_BINARY_DIR}/tst_editor_highlighter_autogen/mocs_compilation.cpp"
+        PROPERTIES COMPILE_OPTIONS -w
+    )
+    # O QTEST_MAIN exige `#include "<nome>.moc"` no PROPRIO .cpp, porque a classe
+    # Q_OBJECT e' local ao arquivo. O codigo gerado entra na unidade do teste e
+    # nao da' para isola-lo em mocs_compilation.cpp como o alvo principal faz.
+    # Suprime-se APENAS o diagnostico que o MOC dispara — todo o resto do
+    # -Werror continua valendo sobre o teste, que e' o ponto.
+    set_source_files_properties(tests/tst_editor_highlighter.cpp
+        PROPERTIES COMPILE_OPTIONS -Wno-ctad-maybe-unsupported
+    )
+    add_test(NAME tst_editor_highlighter COMMAND tst_editor_highlighter)
+    # offscreen: o gate roda sem servidor grafico (mesma razao do smoke).
+    set_tests_properties(tst_editor_highlighter PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
 
 # Keep the install tree AppDir/FHS-compatible. The Rust core is built and
 # installed by the AppImage recipe because it is not a CMake target.

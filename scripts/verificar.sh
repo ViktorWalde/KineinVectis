@@ -84,6 +84,18 @@ if [ "$modo" = "completo" ]; then
 
     passo "cmake --build --preset $preset_release (UI release)"
     cmake --build --preset "$preset_release"
+
+    # Testes de C++ da UI (desde 2026-07-17). Rodam no preset DEBUG porque e' o
+    # que tem sanitizers: teste que passa sem ASan/UBSan e' teste que nao viu
+    # metade do que podia pegar.
+    #
+    # Via `--target test`, NAO `ctest --test-dir build/$preset_debug`: o nome do
+    # preset nao e' o nome do diretorio. `debug-strict` e' preset de BUILD e
+    # configura em `build/linux-clang-debug-strict`; `build/debug-strict` nao
+    # existe. Deixar o CMake resolver o diretorio elimina a classe inteira de
+    # erro — a mesma que fez `dev-local-release` gravar por cima do atalho.
+    passo "ctest (testes C++ da UI, preset $preset_debug)"
+    CTEST_OUTPUT_ON_FAILURE=1 cmake --build --preset "$preset_debug" --target test
 fi
 
 etapa=""

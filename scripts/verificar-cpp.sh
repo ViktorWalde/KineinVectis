@@ -12,10 +12,16 @@ if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
     exit 1
 fi
 
+# ui/tests entra desde 2026-07-17, junto do primeiro teste de C++ do projeto.
+# Teste sob regra mais frouxa que o codigo testado e' como gate que nunca
+# reprova: passa por nao olhar. O `ui/tests/.clang-tidy` desliga UM check
+# (slot do QTest nao pode ser static) e herda todo o resto.
 echo "== clang-format =="
-clang-format --dry-run --Werror "$REPO_ROOT"/ui/src/*.cpp "$REPO_ROOT"/ui/src/*.h
+clang-format --dry-run --Werror \
+    "$REPO_ROOT"/ui/src/*.cpp "$REPO_ROOT"/ui/src/*.h \
+    "$REPO_ROOT"/ui/tests/*.cpp
 
 echo "== clang-tidy =="
-clang-tidy -p "$BUILD_DIR" "$REPO_ROOT"/ui/src/*.cpp
+clang-tidy -p "$BUILD_DIR" "$REPO_ROOT"/ui/src/*.cpp "$REPO_ROOT"/ui/tests/*.cpp
 
 echo "C++ verificado: tudo limpo."

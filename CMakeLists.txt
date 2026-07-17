@@ -9,4 +9,8 @@ include(GNUInstallDirs)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(KineinStrictOptions)
 
+# Testes de C++ da UI. `BUILD_TESTING` e' do CTest e vem ON por padrao; o
+# AppImage passa OFF para nao carregar Qt6::Test na entrega.
+include(CTest)
+
 add_subdirectory(ui)
