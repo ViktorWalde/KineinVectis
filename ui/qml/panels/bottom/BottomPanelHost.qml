@@ -194,7 +194,6 @@ Rectangle {
         anchors.leftMargin: Theme.spacingSmall
         anchors.topMargin: root.activeTab === "terminal" ? Theme.spacingXSmall : 0
         height: root.activeTab === "terminal" ? 22 : 0
-        // So a aba Terminal tem chips: a do Assistente e sessao unica.
         visible: root.activeTab === "terminal"
         sessionsModel: root.terminalsModel
         activeTerminalId: root.activeTerminalId
@@ -215,10 +214,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
-        // A aba Assistente reusa ESTE painel: e a mesma sessao de terminal, so
-        // apresentada num lugar proprio. Uma aba por vez => um render por vez.
-        visible: (root.activeTab === "terminal" || root.activeTab === "assistant")
-                 && root.terminalSession === "shell"
+        visible: root.activeTab === "terminal" && root.terminalSession === "shell"
         render: root.terminalRender
         terminalActive: root.terminalActive
         workspaceAvailable: root.workspaceAvailable

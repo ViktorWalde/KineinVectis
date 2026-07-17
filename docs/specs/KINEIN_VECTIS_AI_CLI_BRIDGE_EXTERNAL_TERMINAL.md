@@ -1,5 +1,37 @@
 # Kinein Vectis — Parte 7.1: AI CLI Bridge e Terminal IA Externo
 
+> ## ⛔ FORA DE ESCOPO — decisão do autor, 2026-07-17
+>
+> **A linha inteira de assistência com IA na IDE foi cancelada.** Não há painel
+> de IA, não há chat, não há seletor de agente, não há aba dedicada e não há
+> atalho no rail. Nada disto está implementado e nada será implementado a partir
+> deste documento.
+>
+> **O motivo, e ele é de produto:**
+>
+> ```text
+> o usuario roda claude/codex/qualquer agente no TERMINAL, naturalmente.
+> a IDE ja tem terminal. o atalho visual so poupava digitar uma palavra —
+> e cobrava por isso um seletor, um rotulo, uma numeracao, uma aba e um
+> icone. nao se paga.
+> ```
+>
+> Foi implementado em 2026-07-17 (seletor Claude/Codex + aba própria + ícone no
+> rail) e **removido no mesmo dia**, depois de rodar. A decisão veio de usar, não
+> de teorizar: `git log` entre `4782d82` e a remoção tem a fatia inteira.
+>
+> **O que sobreviveu, e por quê:** o core detecta `claude` e `codex` no
+> `KNOWN_TOOLS`, como detecta `cargo` ou `clangd` — mesmo probe, sem nenhum ramo
+> por programa, coberto por `ai_clis_are_detected_exactly_like_any_other_tool`.
+> Isso não é "assistente": é o painel Ferramentas dizendo se o binário está no
+> PATH, e é *mais* útil para quem vai usar o terminal direto.
+>
+> **O que este documento ainda vale:** registro do raciocínio. Contexto
+> determinístico, preview antes de aplicar, evidência e sanitização continuam
+> boas ideias se um dia a linha for reaberta. Não implementar nada daqui sem
+> reabrir a decisão acima, explicitamente.
+
+
 > ## Estado em 2026-07-16 — o bridge foi REMOVIDO (protocolo `0.59.0`)
 >
 > **O domínio `aiBridge.*` não existe mais**, e com ele saíram a superfície do

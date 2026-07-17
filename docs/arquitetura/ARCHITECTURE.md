@@ -395,7 +395,8 @@ Se o domínio ainda não existe, crie o par `handlers/<dominio>.rs` +
 ## 6. Caminho de crescimento até a arquitetura-alvo (sem big-bang)
 
 Os specs preveem serviços dedicados (workspace, project, toolchain, cmake, cargo,
-language, build, run, debug, terminal, ai-bridge, target, settings, storage) e,
+language, build, run, debug, terminal, target, settings, storage — o
+`ai-bridge` saiu: fora de escopo desde 2026-07-17) e,
 eventualmente, um crate por serviço (`kinein-cmake`, `kinein-cargo`,
 `kinein-language`, …) + `apps/kinein-ui` e `apps/kinein-core-daemon`.
 

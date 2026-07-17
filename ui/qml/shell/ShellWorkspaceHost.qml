@@ -11,7 +11,6 @@ Item {
     property var editorController
     property var jobsController
     property var runtimeController
-    property var assistantController
     property var debugController
     property var gitController
     property var diagnosticsController
@@ -131,13 +130,11 @@ Item {
                          && root.shellController.bottomTab === "debug"
             toolsActive: root.shellController.showBottomPanel
                          && root.shellController.bottomTab === "tools"
-            assistantActive: root.assistantController.assistantSessionVisible
             onExplorerToggled: root.shellController.toggleExplorer()
             onSearchRequested: root.searchController.openSearchPanel()
             onGitRequested: root.shellController.toggleBottomTab("git")
             onBuildRequested: root.shellController.toggleBottomTab("build")
             onDebugRequested: root.shellController.toggleBottomTab("debug")
-            onAssistantRequested: root.assistantController.openAssistant()
             onToolsRequested: root.shellController.toggleBottomTab("tools")
         }
 
@@ -455,9 +452,7 @@ Item {
                 logLinesModel: root.logLinesModel
                 toolsList: root.workspaceController.toolsList
                 onTabRequested: function(tab) {
-                    if (!root.assistantController.handleBottomTabClick(tab)) {
-                        root.shellController.toggleBottomTab(tab);
-                    }
+                    root.shellController.toggleBottomTab(tab);
                 }
                 onTerminalSessionRequested: function(session) {
                     root.runtimeController.setTerminalSession(session);

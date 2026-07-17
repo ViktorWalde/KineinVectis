@@ -5,9 +5,9 @@
 
 O core da IDE é **offline e local**. Você não precisa ligar nada antes: ao
 abrir a UI, ela mesma inicia o `kinein-core` (Rust) como processo filho e
-conversa com ele por JSON-RPC. Fechou a UI, o core morre junto. A exceção é
-uma CLI externa iniciada explicitamente no Assistente, que pode usar rede de
-acordo com a política da própria ferramenta.
+conversa com ele por JSON-RPC. Fechou a UI, o core morre junto. A exceção é uma
+CLI externa que você mesmo iniciar no terminal da IDE (um agente de IA, por
+exemplo), que usa rede de acordo com a política da própria ferramenta.
 
 ## Jeito mais simples: clicar no ícone certo
 

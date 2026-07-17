@@ -9,7 +9,6 @@ Rectangle {
     property bool gitActive: false
     property bool buildActive: false
     property bool debugActive: false
-    property bool assistantActive: false
     property bool toolsActive: false
 
     signal explorerToggled()
@@ -17,7 +16,6 @@ Rectangle {
     signal gitRequested()
     signal buildRequested()
     signal debugRequested()
-    signal assistantRequested()
     signal toolsRequested()
 
     width: 52
@@ -120,19 +118,6 @@ Rectangle {
             active: root.debugActive
             enabled: root.workspaceOpen
             onActivated: root.debugRequested()
-        }
-
-        // Assistente: atalho para a sessao de terminal do agente de IA.
-        // O icone sobreviveu a remocao do aiBridge (0.59.0); so o botao tinha
-        // sido arrancado junto com o painel do assistente. NAO ha painel
-        // proprio nem backend proprio para alternar: o que abre e' o terminal
-        // normal, e o estado aceso vem de qual sessao esta na frente.
-        RailButton {
-            iconName: "assistant"
-            tooltip: qsTr("Assistente")
-            active: root.assistantActive
-            enabled: root.workspaceOpen
-            onActivated: root.assistantRequested()
         }
 
         RailButton {

@@ -423,12 +423,12 @@ interface da ferramenta aparece exatamente como aparece no seu terminal.
 A IDE não instala, não autentica e não envia nada: rede, credenciais e política
 de dados pertencem à CLI que você iniciou.
 
-> **Sobre o painel Assistente.** Existia um atalho visual dedicado para essas
-> CLIs. Ele foi retirado porque abria os agentes por um caminho especial no
-> core — com argumentos injetados e filtragem de sequências do terminal —, e
-> era esse caminho que fazia a ferramenta se comportar de um jeito dentro da
-> IDE e de outro fora dela. O atalho pode voltar depois como UI pura, abrindo
-> uma sessão de terminal comum.
+> **Não existe painel de IA, e isso é decisão, não pendência.** Um atalho visual
+> dedicado para essas CLIs foi construído em 2026-07-17 e removido no mesmo dia,
+> depois de rodar: ele só poupava digitar uma palavra, e cobrava por isso um
+> seletor, um rótulo, uma aba e um ícone. Você roda o agente no terminal, como
+> roda qualquer outro programa. A aba **Ferramentas** mostra se o binário está
+> instalado.
 
 ---
 

@@ -12,7 +12,6 @@ Item {
     property var shellController: null
     property var runtimeController: null
     property var runConfigController: null
-    property var assistantController: null
     property var gitController: null
     property var settingsController: null
     property bool aboutVisible: false
@@ -24,7 +23,6 @@ Item {
 
     signal appMenuActionRequested(string action)
     signal appMenuDismissed()
-    signal toolsDetectionRequested()
 
     anchors.fill: parent
 
@@ -208,22 +206,6 @@ Item {
                                 runConfigDialog.currentName(),
                                 runConfigDialog.currentCommand())
         onCancelRequested: root.runConfigController.cancelConfigDialog()
-    }
-
-    // Assistente: a escolha do agente, e so ela. Existe ANTES da sessao —
-    // escolhido o agente, some e quem roda e o terminal normal.
-    AssistantSelector {
-        id: contextAgentSelector
-
-        visible: root.assistantController.selectorVisible
-        z: 95
-        anchors.centerIn: parent
-        agentsModel: root.assistantController.agentsModel
-        onChosen: function(agentId) {
-            root.assistantController.choose(agentId);
-        }
-        onDismissRequested: root.assistantController.dismiss()
-        onRedetectRequested: root.toolsDetectionRequested()
     }
 
     ProjectEntryContextMenu {

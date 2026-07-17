@@ -2214,3 +2214,41 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - Mutacao: 3 mutacoes no `tabFor`, 3 pegas — e uma sobreviveu de inicio porque o
   MEU check de `tabFor("git")` rodava com sessao comum ativa, sem exercitar a
   guarda. Movido para depois do agente ativo.
+
+## Assistente: construido, rodado e REMOVIDO no mesmo dia (2026-07-17)
+
+- **Decisao do autor, e e' de produto, nao de arquitetura.** O §0.2f pedia o
+  seletor de volta desde 2026-07-16; ele voltou, funcionou, e o uso decidiu:
+  "do jeito que foi implementado nao faz sentido usar esse atalho visual, pois o
+  usuario pode usar o claude/codex e outros agentes via terminal naturalmente".
+  O atalho poupava digitar UMA palavra e cobrava um seletor, um rotulo, uma
+  numeracao, uma aba e um icone. Linha de IA na IDE: FORA DE ESCOPO.
+- **A licao que fica, e nao e' sobre IA.** A fatia estava arquitetonicamente
+  CERTA — a linha detectar/executar do §0.2f foi respeitada, nenhum ramo por
+  programa entrou no core, o RuntimeController nem sabia que o conceito existia.
+  Passou em todo gate, em mutacao e no gesto real. E era inutil. **Nenhuma
+  quantidade de rigor arquitetural torna util uma feature que nao se paga** —
+  isso so o uso responde, e responder cedo custou um dia em vez de um trimestre.
+- **A remocao foi maior que o codigo removido**: sem a feature, o mecanismo
+  generico que eu tinha posto no RuntimeController (`openLabeledTerminal`,
+  `kind`, `terminalOpened`) ficou sem usuario. Generico sem usuario e' pior que
+  nenhum, entao saiu junto. `RuntimeController`: 494 (ontem) -> 397 (f7f472b) ->
+  393 -> **309**. Menor do que jamais foi, e fazendo so uma coisa.
+- **O que sobreviveu, e vale mais que a feature:**
+  - o `fix` do `coreClient: coreClient` null em 15 roteadores — a IDE nao lia
+    pastas nem criava projetos. So foi achado porque a feature obrigou a subir o
+    binario novo; o refactor do AppDomains (0686213) estava quebrado desde 23:51
+    e ninguem tinha rodado;
+  - `scripts/verificar-qml-fiacao.sh` — trava do binding auto-referente;
+  - `ARCHITECTURE` §4 regra 9 (3 casos + os tres suspeitos + o teste do
+    vocabulario);
+  - `TerminalSessionTabs.qml` — o `BottomPanelHost` caiu 550 -> 383 e saiu do
+    debito.
+- **Fica no core, de proposito:** `claude`/`codex` no `KNOWN_TOOLS`, como
+  `cargo`/`clangd`. Nao e' assistente: e' o painel Ferramentas dizendo se o
+  binario esta no PATH, e e' MAIS util agora que o fluxo e' o terminal direto. O
+  teste `ai_clis_are_detected_exactly_like_any_other_tool` sobrevive e continua
+  guardando o core contra politica por programa.
+- **Resto conhecido:** `assistant_terminal_width` ainda existe em
+  `kinein-config`/`settings.rs` e no protocolo (sobra do 0.59.0). A UI nao le
+  mais. Tirar do core e' mudanca de contrato com decisao de versao: fatia propria.

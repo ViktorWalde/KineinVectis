@@ -63,7 +63,6 @@ Window {
         searchController: domains.searchController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
-        assistantController: domains.assistantController
         bottomPanelHost: workspaceHost
     }
 
@@ -144,7 +143,6 @@ Window {
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
-        assistantController: domains.assistantController
         debugController: domains.debugController
         editorController: domains.editorController
         projectTree: domains.projectTree
@@ -187,7 +185,6 @@ Window {
         editorController: domains.editorController
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
-        assistantController: domains.assistantController
         debugController: domains.debugController
         gitController: domains.gitController
         diagnosticsController: domains.diagnosticsController
@@ -249,14 +246,12 @@ Window {
         shellController: domains.shellController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
-        assistantController: domains.assistantController
         gitController: domains.gitController
         settingsController: domains.settingsController
         onAppMenuActionRequested: function(action) {
             header.executeMenuAction(action);
         }
         onAppMenuDismissed: header.closeAppMenu()
-        onToolsDetectionRequested: coreClient.detectTools()
     }
 
     KvTooltipHost {

@@ -32,7 +32,6 @@ Item {
     readonly property alias settingsController: settingsController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
-    readonly property alias assistantController: assistantController
     readonly property alias debugController: debugController
     readonly property alias gitController: gitController
     readonly property alias searchController: searchController
@@ -121,15 +120,6 @@ Item {
         }
     }
 
-    // Assistente inteiro: escolher o agente e rotular a aba e POLITICA e vive na
-    // UI. O core so detecta; o RuntimeController so mantem a sessao.
-    AssistantController {
-        id: assistantController
-
-        toolsList: workspaceController.toolsList
-        runtimeController: runtimeController
-    }
-
     // Configuracoes salvas saem do RuntimeController: "guardar como rodar um
     // programa" nao e "manter uma sessao de terminal".
     RunConfigController {
@@ -150,13 +140,8 @@ Item {
                               && shellController.bottomTab === "terminal"
         // Pedido ao core mora no RuntimeRequestRouter. Aqui fica so fiacao de
         // controller para HOST/shell, que nao e IPC.
-        //
-        // O RuntimeController so sabe pedir a aba "terminal": para ele nao existe
-        // Assistente. Quem traduz e o dono do conceito, aqui na composicao —
-        // assim a sessao do agente aparece na aba dele sem que o controller de
-        // terminais precise aprender o que ela e.
         onShowTabRequested: function(tab) {
-            shellController.showTab(assistantController.tabFor(tab));
+            shellController.showTab(tab);
         }
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()

@@ -663,21 +663,32 @@ aí como M7+).
   arbitrários (shellcheck, eslint...) sem código novo por linter.
 ```
 
-### M6.4 — Ponte de IA formalizada (specs ai-bridge / Assistente)
+### M6.4 — Ponte de IA — ⛔ FORA DE ESCOPO (decisão do autor, 2026-07-17)
+
+**A linha inteira de IA na IDE foi cancelada. Esta fase não será executada.**
 
 ```text
-- [FATIA INICIAL FEITA 2026-07-14, protocolo 0.50.0] Assistente detecta
-  Claude/Codex instalados pelo usuário, inicia a CLI escolhida explicitamente
-  no TerminalManager/PTY existente e permite sair/trocar; sem provider/API
-  embutido e sem enviar contexto automaticamente.
-- Próxima fatia: formalizar SÓ a ponte de
-  contexto: comando "copiar contexto do workspace" (arquivo atual,
-  seleção, diagnostics, git status) em formato colável + variável de
-  ambiente/arquivo para CLIs de IA lerem. SEM chamadas de rede da IDE;
-  quem fala com modelo é a CLI do usuário (offline-first preservado).
-- Uma opção para outra CLI deve apenas orientar e abrir o terminal para comando
-  manual; entra depois do aceite funcional da fatia inicial.
+Motivo, e e' de produto:
+  o usuario roda claude/codex/qualquer agente no TERMINAL, naturalmente.
+  a IDE ja tem terminal. o atalho visual so poupava digitar uma palavra e
+  cobrava um seletor, um rotulo, uma numeracao, uma aba e um icone.
+
+Historico, para nao repetir:
+  0.50.0 (07-14)  Assistente com deteccao + seletor, via aiBridge.
+  0.59.0 (07-16)  aiBridge REMOVIDO: injetava --no-alt-screen/--ax-screen-reader
+                  e filtrava CSI 3 J. Politica POR PROGRAMA no core — o agente
+                  se comportava diferente dentro da IDE. Erro de camada.
+  07-17           Seletor reconstruido como UI pura (sem politica no core), com
+                  aba propria. REMOVIDO no mesmo dia, depois de rodar: correto
+                  em arquitetura e inutil em produto.
 ```
+
+O que sobrevive: `claude` e `codex` no `KNOWN_TOOLS` do core, detectados como
+`cargo`/`clangd`, sem ramo por programa. Isso é o painel Ferramentas dizendo se o
+binário está no PATH — não é assistente.
+
+Reabrir esta fase exige decisão explícita e registrada, e o obstáculo técnico
+medido está na §4 de `docs/specs/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`.
 
 ---
 

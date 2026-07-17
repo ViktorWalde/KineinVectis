@@ -1,5 +1,36 @@
 # Kinein Vectis — Parte 7: Assistente, IA, Documentação e Assistência Técnica
 
+> ## ⛔ FORA DE ESCOPO — decisão do autor, 2026-07-17
+>
+> **A linha inteira de assistência com IA na IDE foi cancelada.** Não há painel
+> de IA, não há chat, não há seletor de agente, não há aba dedicada e não há
+> atalho no rail. Nada disto está implementado e nada será implementado a partir
+> deste documento.
+>
+> **O motivo, e ele é de produto:**
+>
+> ```text
+> o usuario roda claude/codex/qualquer agente no TERMINAL, naturalmente.
+> a IDE ja tem terminal. o atalho visual so poupava digitar uma palavra —
+> e cobrava por isso um seletor, um rotulo, uma numeracao, uma aba e um
+> icone. nao se paga.
+> ```
+>
+> Foi implementado em 2026-07-17 (seletor Claude/Codex + aba própria + ícone no
+> rail) e **removido no mesmo dia**, depois de rodar. A decisão veio de usar, não
+> de teorizar: `git log` entre `4782d82` e a remoção tem a fatia inteira.
+>
+> **O que sobreviveu, e por quê:** o core detecta `claude` e `codex` no
+> `KNOWN_TOOLS`, como detecta `cargo` ou `clangd` — mesmo probe, sem nenhum ramo
+> por programa, coberto por `ai_clis_are_detected_exactly_like_any_other_tool`.
+> Isso não é "assistente": é o painel Ferramentas dizendo se o binário está no
+> PATH, e é *mais* útil para quem vai usar o terminal direto.
+>
+> **O que este documento ainda vale:** registro do raciocínio. Contexto
+> determinístico, preview antes de aplicar, evidência e sanitização continuam
+> boas ideias se um dia a linha for reaberta. Não implementar nada daqui sem
+> reabrir a decisão acima, explicitamente.
+
 > ## ⚠ HISTÓRICO — SUPERADO
 >
 > **Esta parte não é fonte de verdade.** Ela foi substituída conceitualmente
@@ -234,73 +265,42 @@ Como configurar cross compile para ARM?
 
 ---
 
-## 4. Layout visual do painel Assistente
+## 4. Layout visual — NÃO EXISTE. O que existe é o terminal.
 
-### 4.1 Posição
+**Esta seção descrevia um painel que nunca foi construído e não será.** Ela pedia
+uma coluna à direita, redimensionável, com header, context chips, mode tabs
+(Contexto/Explicar/Corrigir/Toolchain/Docs), cards e campo de pergunta. Nada
+disso existe.
 
-O Assistente deve ficar preferencialmente no lado direito da IDE.
-
-```text
-┌──────────────────────────────────────────────┬───────────────────┐
-│ Editor                                       │ Assistente        │
-│                                              │ Contexto          │
-│ Código C/C++/Rust                            │ Explicar          │
-│                                              │ Corrigir          │
-│                                              │ Toolchain         │
-│                                              │ Docs              │
-└──────────────────────────────────────────────┴───────────────────┘
-```
-
-O painel deve ser redimensionável e recolhível.
-
----
-
-### 4.2 Larguras recomendadas
+O que existe, medido em 2026-07-17:
 
 ```text
-Mínima: 280 px
-Confortável: 360–420 px
-Expandida: 520–640 px
-Modo tela cheia opcional: command palette / modal
+┌──────────┬─────────────────────────────────────────┐
+│ Explorer │ Editor                                  │
+│          ├─────────────────────────────────────────┤
+│          │ [Terminal] [Git] [Build] [Debug] ...    │
+│          │ $ claude                                │  <- voce digita
+└──────────┴─────────────────────────────────────────┘
 ```
 
-Em telas pequenas, o painel deve virar aba inferior ou overlay temporário.
+O agente de IA é **um programa como outro qualquer**: você abre o terminal da
+IDE (Alt+F12) e digita `claude`, `codex` ou o que tiver instalado. Não há painel,
+aba, seletor, ícone nem rótulo — e não é omissão, é a decisão do topo deste
+documento.
 
----
+**Por que o painel foi recusado — e a versão curta importa.** Um atalho visual
+para "abrir terminal e digitar uma palavra" cobra caro: seletor, numeração de
+aba, rótulo, ícone, sincronização de qual sessão pertence a qual aba. Foi tudo
+construído em 2026-07-17 e removido no mesmo dia, depois de rodar. O terminal já
+resolvia.
 
-### 4.3 Hierarquia visual interna
-
-Estrutura recomendada:
-
-```text
-Assistente
-├── Header
-│   ├── título
-│   ├── modelo/modo atual
-│   ├── status local/external/offline
-│   └── botão de configurações
-├── Context chips
-│   ├── C++
-│   ├── CMake
-│   ├── Debug
-│   ├── x86_64-linux
-│   └── clangd
-├── Mode tabs
-│   ├── Contexto
-│   ├── Explicar
-│   ├── Corrigir
-│   ├── Toolchain
-│   └── Docs
-├── Main content
-│   ├── cards de resumo
-│   ├── cards de erro
-│   ├── ações sugeridas
-│   └── referências
-└── Input/action area
-    ├── campo de pergunta
-    ├── anexar contexto
-    └── executar ação
-```
+**Se a linha for reaberta, o obstáculo técnico está medido e é este:** a UI
+desenha **uma** sessão de terminal por vez — a ativa. `terminalRenders[id] = render`
+muta uma chave de `property var` e **não notifica binding** (medido em Qt 6.11.1).
+Um painel lateral visível ao mesmo tempo que o terminal comum precisa de uma
+segunda vista notificante no `RuntimeController`. Não é impossível; é uma decisão
+de arquitetura que ninguém tomou, e o painel antigo (removido no 0.59.0) a
+resolvia do jeito errado: com um terminal **paralelo**.
 
 ---
 

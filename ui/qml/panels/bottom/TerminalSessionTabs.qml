@@ -13,7 +13,7 @@ import KineinVectis
 Row {
     id: root
 
-    // D2.3: uma linha por terminal aberto — { termId, title, kind }.
+    // D2.3: uma linha por terminal aberto — { termId, title }.
     property var sessionsModel: null
     property string activeTerminalId: ""
     property string terminalSession: "shell"
@@ -38,15 +38,10 @@ Row {
 
             required property string termId
             required property string title
-            required property string kind
 
             readonly property bool current: root.terminalSession === "shell"
                                             && root.activeTerminalId === termChip.termId
 
-            // Sessao ROTULADA (kind != "") tem aba propria no painel: nao se
-            // repete aqui. A regra e generica de proposito — este host nao
-            // sabe o que os `kind` significam, so que os comuns sao os daqui.
-            visible: termChip.kind === ""
             width: termChipRow.width + 2 * Theme.spacingSmall
             height: 20
             radius: Theme.radiusXSmall

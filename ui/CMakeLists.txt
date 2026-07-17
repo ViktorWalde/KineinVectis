@@ -94,8 +94,6 @@ set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
 set_source_files_properties(qml/runtime/RunConfigController.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigController.qml)
-set_source_files_properties(qml/runtime/AssistantSelector.qml PROPERTIES QT_RESOURCE_ALIAS AssistantSelector.qml)
-set_source_files_properties(qml/runtime/AssistantController.qml PROPERTIES QT_RESOURCE_ALIAS AssistantController.qml)
 set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
 set_source_files_properties(qml/ipc/WorkspaceEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceEventRouter.qml)
 set_source_files_properties(qml/ipc/EditorEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EditorEventRouter.qml)
@@ -225,8 +223,6 @@ qt_add_qml_module(kinein-vectis
         qml/jobs/JobsController.qml
         qml/runtime/RuntimeController.qml
         qml/runtime/RunConfigController.qml
-        qml/runtime/AssistantSelector.qml
-        qml/runtime/AssistantController.qml
         qml/search/SearchController.qml
         qml/ipc/WorkspaceEventRouter.qml
         qml/ipc/EditorEventRouter.qml

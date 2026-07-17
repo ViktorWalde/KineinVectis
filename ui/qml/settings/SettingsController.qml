@@ -16,7 +16,6 @@ Item {
     property bool autoClosePairs: true
     property int explorerWidth: 280
     property int contextWidth: 360
-    property int assistantTerminalWidth: 640
     property int bottomPanelHeight: 260
     property int outlineWidth: 220
     property bool outlineCollapsed: false
@@ -55,8 +54,6 @@ Item {
                 ? effective.explorerWidth : 280;
         contextWidth = effective.contextWidth !== undefined
                 ? effective.contextWidth : 360;
-        assistantTerminalWidth = effective.assistantTerminalWidth !== undefined
-                ? effective.assistantTerminalWidth : 640;
         bottomPanelHeight = effective.bottomPanelHeight !== undefined
                 ? effective.bottomPanelHeight : 260;
         outlineWidth = effective.outlineWidth !== undefined
@@ -78,13 +75,11 @@ Item {
     function hasPersistedLayout() {
         return globalValues.explorerWidth !== undefined
                 || globalValues.contextWidth !== undefined
-                || globalValues.assistantTerminalWidth !== undefined
                 || globalValues.bottomPanelHeight !== undefined
                 || globalValues.outlineWidth !== undefined
                 || globalValues.outlineCollapsed !== undefined
                 || workspaceValues.explorerWidth !== undefined
                 || workspaceValues.contextWidth !== undefined
-                || workspaceValues.assistantTerminalWidth !== undefined
                 || workspaceValues.bottomPanelHeight !== undefined
                 || workspaceValues.outlineWidth !== undefined
                 || workspaceValues.outlineCollapsed !== undefined;

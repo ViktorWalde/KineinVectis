@@ -92,120 +92,10 @@ A sessão nova deve executar esta sequência:
 4. não repetir investigação, implementação, gate ou build já registrados como
    verdes, a menos que o código tenha mudado depois do marcador ou apareça
    evidência concreta de regressão;
-5. retomar diretamente pela ação `PRÓXIMO GESTO`; responder inicialmente com
-   uma frase curta de orientação, não com outro plano ou resumo;
-6. depois do gesto real, registrar o resultado no marcador: se falhar,
-   ação/esperado/observado/ambiente viram a prioridade do dogfooding; se passar,
-   marcar o aceite e seguir a próxima fatia desta fila somente quando o usuário
-   mandar prosseguir.
-
-#### REENTRADA-KV — estado exato para a próxima reentrada
-
-```text
-ESTADO
-- Protocolo atual 0.61.0. O `aiBridge` NAO existe: nao ha politica por
-  programa no core, e uma CLI de IA e um programa como outro qualquer.
-  `terminal.mouse` (0.60.0) decide o gesto no core; `format.capabilities`
-  (0.61.0) publica o catalogo de formatters e a UI nao mantem lista.
-- L0 fechado (A3.1-A3.4 em `docs/roadmaps/21`), com UMA excecao declarada:
-  falta o harness Qt de digitacao tecla->frame. A rota do harness QML esta
-  fechada com evidencia (qmldir aponta para qrc:); nao retentar.
-- Cursor/TUI: RESOLVIDO e ACEITO. Causa era o `Column` do Qt Quick descartar
-  linha vazia (largura zero); o texto subia e o cursor ficava certo. Ver
-  `docs/roadmaps/26` §4.7.
-- Codex abre com argumento fixo --no-alt-screen; Claude permanece sem argumento.
-- KV ativo reutiliza TerminalPanel/TerminalManager, tem barra persistente,
-  roda/arrasto, teclado/paste VT, largura livre persistida 300–720px e
-  ampliar/restaurar; Project permanece independente fora da maximização.
-- O bridge preserva o transcript contra CSI 3 J ainda emitido por versões do
-  Codex; o Terminal comum continua honrando clear.
-- Não existe guia, faixa ou input paralelo: grade VT, spans ANSI e cursor são
-  a única representação da entrada, seguindo comportamento terminal-first.
-- Cada span informa a largura autoritativa em células VT; fonte, resize,
-  seleção e caret usam a mesma grade. ANSI bold usa peso médio e a paleta verde
-  é suave; o shell continua dono do texto e dos atributos do prompt.
-- Não existe mais propriedade de offset vertical no AssistantPanel,
-  TerminalPanel ou TerminalViewport. Forma e piscagem solicitadas por DECSCUSR
-  seguem no render; reset/default é resolvido no core para `bar`. Barra/bloco
-  usam a célula VT integral, underline usa a base e `steady` não pisca. Não há
-  regra por agente ou superfície.
-- O teste humano pelo script de desenvolvimento não percebeu correção do
-  alinhamento vertical. O problema continua aberto e foi adiado; 0.57 não tem
-  aceite visual. A retomada está integralmente especificada em `docs/roadmaps/26` e
-  começa por fixture PTY, overlay de baseline/célula e DPR, não por offset.
-- Code OSS/xterm.js são a base de paridade comportamental autorizada para o
-  terminal. A implementação continua nativa em `portable-pty` + Rust + IPC +
-  Qt; Electron, Node, WebView, Extension Host e runtime xterm.js não entram.
-- A roda aceita os dois formatos do Qt (`angleDelta` e `pixelDelta`) e segue o
-  mesmo `terminal.scroll` do Terminal comum.
-- Gutter usa faixas independentes para folding/breakpoint, diagnóstico, blame,
-  diff e números medidos por FontMetrics; marcador não invade o número.
-- Semantic tokens carregam path+version e respostas obsoletas são descartadas;
-  Tree-sitter permanece fallback estrutural instantâneo.
-- Os cinco SVGs de árvore fornecidos foram integrados sem alterar seus bytes.
-- Scripts shell reconhecidos têm ação de execução na árvore; o core confina o
-  caminho e usa argv explícito, sem interpolação.
-- Packaging corrigido para cache host/container isolado, mounts Podman/SELinux
-  e invocação por bash. A entrada direta delega ao builder Debian auditado; o
-  worker não é um build nativo. `dist/` só recebe por staging o conjunto
-  completo AppImage/checksum/instalador/Tutorial, preservando a entrega anterior
-  em caso de falha.
-- Barra da janela agora é client-side: `Main.qml` usa `FramelessWindowHint` e a
-  App Bar hospeda Minimizar, alternável Maximizar/Restaurar e Fechar
-  (`WindowControls.qml`), guiados pelo `QWindow` via `WindowChromeController`
-  (`ui/src/window_chrome_controller.*`). Região livre arrasta/duplo-clica;
-  `WindowResizeHandles.qml` cobre as oito bordas. ACEITO pelo usuário em
-  Fedora/Wayland (2026-07-15); regressão P2 encerrada. Ver `docs/roadmaps/20` §barra.
-
-VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
-- `scripts/verificar.sh` completo: verde; binários release do atalho de
-  desenvolvimento atualizados.
-- Testes Rust, clippy -D warnings, C++/QML estritos e harnesses QML: verdes.
-- Build Clang debug strict e `scripts/verificar-cpp.sh`: verdes.
-- `scripts/verificar-qml.sh`: verde usando o response file do build strict
-  atualizado; o antigo `build/dev-local` não tem precedência.
-- tst_assistant_layout cobre divisor ativo/largura/Project; tst_terminal_scroll
-  cobre nova saída, snap, troca de sessão, roda tradicional e `pixelDelta`;
-  Rust cobre CSI 3 J entre chunks.
-- AppImage final (33.737.208 bytes; SHA256 `86b335b2b1ba8c81d958df4f1e45f7d9c0838fdad2a2567c84199f84b8dbdc0d`),
-  teste host e Debian mínimo sem rede: verdes. Ambos validam também instalador
-  executado fora da pasta, `.desktop`, PNG e `Tutorial.md` idêntico à fonte.
-- Correção 0.56: gate integral verde com 335 testes Rust, Clippy, C++/QML
-  estritos, 12 harnesses, builds Debug/Release e smoke offscreen de 8 s
-  (`exit 124` esperado). Binários do atalho de desenvolvimento atualizados.
-- O teste anterior `cursorVerticalOffset: -2` exclusivo do Assistente passou
-  no gate, mas não recebeu aceite visual. O novo valor `0` passou em qmllint,
-  12 harnesses, rebuild Release e smoke offscreen de 8 s; o gesto humano
-  posterior não aprovou o cursor e `dist/` não foi regenerado.
-- Primeiro recorte DECSCUSR 0.57: gate integral verde com 337 testes Rust,
-  Clippy, C++/QML, 12 harnesses, builds e smoke. O feedback posterior removeu
-  todo offset e unificou `DefaultUserShape`; o mesmo gate integral passou
-  novamente e o smoke release ficou vivo por 8 s sem saída (`exit 124`).
-  Binários de desenvolvimento atualizados; `dist/` continua intocado.
-- Gesto humano posterior: aberta por `scripts/kinein-vectis`, a versão não
-  apresentou mudança visual relevante para o usuário. O caret de Claude/Codex
-  continua sem aceite. Automação verde não equivale a correção visual.
-- A auditoria seguinte encontrou `target/release/kinein-core` anterior a
-  `terminal.rs`; o launcher podia combinar UI nova com core antigo. O gate foi
-  refeito com `debug-strict`/`release-hardened`: 337 testes Rust, Clippy,
-  C++/QML, 12 harnesses e os builds passaram. Smoke real pelo
-  `scripts/kinein-vectis` ficou vivo por 8 s sem saída (`exit 124`). UI/core
-  release agora são os binários atuais; hashes e caminhos estão em
-  `ContextoIA.md`. `dist/` permaneceu intocado.
-- A baseline release A3 com `N=3` passou os orçamentos: 250 ms primeiro frame,
-  103 MB UI, 3,4 ms workspace, 0,0 ms leitura 10k e 7 MB core. A expansão
-  A3.1–A3.4 está detalhada abaixo; Code OSS/Zed e resultados estão em docs/roadmaps/21.
-- Controles de janela (barra client-side): `scripts/verificar.sh` integral verde
-  + smoke offscreen debug/release (`exit 124`); ACEITO pelo usuário em
-  Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
-
-PRÓXIMO GESTO
-1. **Seletor de agente do Assistente — FEITO em 2026-07-17** (§0.2j), no worktree
-   e não commitado. A linha do §0.2f foi respeitada: detectar ficou no core
-   (`tools.detect`), executar mora na UI, e nenhum `if programa == "claude"`
-   entrou no core. **Falta o rename** "Assistente" -> "Agente Auxiliar"
-   (§0.2d-2): o seletor e' o lugar natural e evita mexer duas vezes nos mesmos
-   6 pontos.
+5. retomar diretamente pela ação `PRÓXIMO GESTO
+1. **Assistente/IA: FORA DE ESCOPO desde 2026-07-17** (§0.2j). Construído,
+   rodado e removido no mesmo dia — o terminal já resolvia. Não reabrir sem
+   decisão explícita registrada.
 2. Depois: harness Qt tecla->frame (`docs/roadmaps/21` §A3.3, design pronto) —
    o autor retoma para feedback. Fecha a ultima afirmacao de A3 que depende de
    impressao visual.
@@ -650,73 +540,50 @@ a precedência tem de ser explícita no contrato, não implícita no código.
 Recomendação: **opção 3 primeiro** (inventário valida o `integration` v1 sem
 dependência), depois decidir 1 vs 2 para o EditorConfig com o contrato já de pé.
 
-### 0.2j Seletor do Assistente — FEITO (2026-07-17)
+### 0.2j Assistente/KV Context — CONSTRUÍDO E REMOVIDO (2026-07-17)
 
-Os dois bloqueios do §0.2j caíram e o gesto foi validado rodando. Estado no
-worktree, ainda não commitado; base `f7f472b`.
+**Decisão do autor, depois de rodar: a linha inteira de IA na IDE está FORA DE
+ESCOPO.** O §0.2f pedia o seletor de volta; ele voltou, funcionou, e o próprio uso
+mostrou que não se paga:
 
-**BLOQUEIO 1 — era o `\r`, e a suspeita descartada estava certa: só foi
-verificada no arquivo errado.** O `.qml` realmente não tem CR cru — o CR nasce na
-GERAÇÃO. O `qmlcachegen` (Qt 6.11.1) interpreta o escape `\r` e emite o byte CR
-**cru dentro do literal C++**:
+> "do jeito que foi implementado não faz sentido usar esse atalho visual, pois o
+> usuário pode usar o claude/codex e outros agentes via terminal naturalmente"
+
+O atalho poupava digitar **uma palavra** (`claude`), e cobrava por isso um
+seletor, um rótulo, uma numeração, uma aba e um ícone. Removido no mesmo dia.
+Registro canônico e o obstáculo técnico medido: topo e §4 de
+`docs/specs/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`. Fase M6.4 do roadmap 21
+marcada fora de escopo.
+
+**O que a fatia deixou de bom, e sobreviveu à remoção:**
 
 ```text
-AppDomains_qml.cpp:5496   s.v2_35 = QStringLiteral("<CR 0x0D>");
+fix do coreClient null       15 roteadores mortos; a IDE nao lia pastas nem
+                             criava projetos. Achado SO porque a feature obrigou
+                             a subir o binario novo.
+verificar-qml-fiacao.sh      trava do binding auto-referente `x: x`. Nenhum gate
+                             pegava essa classe: build passa, qmllint diz limpo,
+                             o boot vai ao primeiro frame e o Qt nao avisa.
+ARCHITECTURE §4 regra 9      3 casos medidos da catraca + "quando ela dispara ha
+                             tres suspeitos: a sua mudanca, a categoria, o
+                             arquivo" + o teste do VOCABULARIO.
+TerminalSessionTabs.qml      a barra de chips (183 linhas) saiu do BottomPanelHost,
+                             que caiu 550 -> 383 e SAIU do debito.
+RuntimeController 309        volta a fazer so uma coisa: manter sessoes. Era 494
+                             ontem, 397 no f7f472b. Menor do que jamais foi.
 ```
 
-O pré-processador trata o CR como fim de linha, o literal não fecha e o erro sai
-como "unterminated argument list" 3800 linhas adiante. Medido, não deduzido: o
-`\n` é escapado corretamente e o mesmo arquivo compila. O `submitShellInput`
-nunca provou nada sobre isso — ele **não é compilado para C++** (o `qmlcachegen`
-converte só parte das funções); o `\r` quebrou por ter caído num handler que é.
-Bug do Qt, contornado com `"\n"` — que é o que o PTY precisa de qualquer forma.
+**O que sobrou no core, de propósito:** `claude` e `codex` no `KNOWN_TOOLS`,
+detectados como `cargo`/`clangd` — mesmo probe, zero ramo por programa, coberto
+por `ai_clis_are_detected_exactly_like_any_other_tool`. Não é assistente: é o
+painel Ferramentas dizendo se o binário está no PATH, e é mais útil agora que o
+fluxo é o terminal direto.
 
-**BLOQUEIO 2 — pago, e o corte não foi de linhas.** O `RuntimeController` perdeu
-o **conceito** de Assistente, não só as funções: `grep -i context` nele não
-devolve nada (393 linhas). No lugar dos blocos específicos ele ganhou um
-mecanismo **genérico** — `openLabeledTerminal(label, kind)` carimba na aba um
-rótulo e um `kind` **opaco**, devolvido em `terminalOpened(id, kind)`; ele nunca
-interpreta o `kind`. Isso resolveu sozinho a fronteira que estava em aberto: o
-timeout guarda a *marca pendente* (dele, e agora genérica) e ficou; `contextSeq`
-é numeração de Assistente e foi junto.
-
-O `ContextAgentController` (195) é dono do Assistente inteiro: quem é agente, a
-escolha, o comando, quando a sessão abre, como a aba se chama e quando o ícone do
-rail acende. Recebe `runtimeController` por propriedade e escuta `terminalOpened`
-por `Connections` **dentro de si** — sinal escutado no composition root foi a
-armadilha que já custou duas fatias.
-
-**Terceiro caso da regra 9, e é o mais afiado** (registrado na `ARCHITECTURE.md`):
-a catraca reprovou o `ShellWorkspaceHost` por **+1 linha** (582 → 583). O defeito
-não era o arquivo (é composition host; o split dele é fatia própria) nem a
-categoria — era **a minha mudança**, que punha política de Assistente (`showBottomPanel
-&& bottomTab === "terminal" && activeTerminalIsContext`) num host visual.
-Devolvida ao dono como `contextSessionVisible`, o arquivo caiu para **579** sem
-ninguém cortar linha. Quando a catraca dispara há três suspeitos — a mudança, a
-categoria, o arquivo — e o reflexo é olhar só o último.
-
-**Verificado (não só compilado):**
-
-- `tst_multi_terminal` reescrito para os dois controllers. **Testado por mutação:
-  6 mutações, 6 pegas** — inclusive uma que passou verde na primeira tentativa e
-  expôs check meu que era mentira (a aba comum não recebia o comando por sair
-  cedo no `kind`, não pela limpeza que eu dizia testar).
-- **Gesto real dirigido headless com o `ContextAgentSelector` VISUAL**, que nenhum
-  harness jamais carregou. Técnica: copiar `build/dev-local/ui/KineinVectis`,
-  remover a linha `prefer :/KineinVectis/` do `qmldir` e apontar o runner com
-  `-I` — assim os `.qml` do módulo carregam de disco em vez do `qrc`. É o jeito
-  de testar componente visual real headless; hoje vive só no scratchpad.
-- Gate: `fmt`, `clippy`, C++, qmllint estrito, catraca e lógica QML verdes. A
-  suíte Rust reprova no flake **conhecido** do §0.2h (`tools::`), que reproduz sem
-  uma linha de Rust tocada.
-
-**Contrato preservado:** o seletor só existe ANTES da sessão. Escolhido o agente,
-some e o que roda é o terminal normal — mesmo `terminal.open`, renderer, grade,
-roda (0.60.0) e cursor. `TerminalViewport`/grade/cursor/`wheel_action` intactos.
-O core segue travado por `ai_clis_are_detected_exactly_like_any_other_tool`.
-
-**Falta:** renomear "Assistente" → "Agente Auxiliar" (§0.2d-2) — o seletor é o
-lugar natural.
+**Resto conhecido, NÃO resolvido:** `assistant_terminal_width` ainda existe em
+`kinein-config`/`settings.rs` e no protocolo, sobra do aiBridge (0.59.0). A UI
+não lê mais (removida a propriedade morta do `SettingsController`). Tirar do core
+é mudança de contrato e pede decisão de versão — **fatia própria**, não se
+enfia numa remoção de UI.
 
 ### 0.2i Os testes de lógica QML não conseguiam reprovar (achado e CORRIGIDO em 2026-07-16)
 

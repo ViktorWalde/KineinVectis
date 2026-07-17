@@ -19,12 +19,6 @@ Item {
     // Numeração das abas: NUNCA decrementa. Se decrementasse, fechar a 2 de 3
     // faria a próxima nascer "Terminal 3" de novo — dois com o mesmo nome.
     property int terminalSeq: 0
-    // Rotulo e tipo pedidos para a PROXIMA sessao que o core abrir. Vazios: aba
-    // comum, numerada "Terminal N". O `kind` e OPACO aqui — quem pede e quem
-    // sabe o que ele significa; este controller so o carimba na aba e o devolve
-    // em `terminalOpened`. Estado 100% de UI: o core nao conhece a distincao.
-    property string pendingLabel: ""
-    property string pendingKind: ""
     // ListModel nao notifica mudanca de conteudo para funcoes; este contador
     // e o gatilho de reavaliacao dos bindings que dependem da lista.
     property int terminalsRevision: 0
@@ -36,7 +30,6 @@ Item {
 
     signal showTabRequested(string tab)
     signal terminalOpenRequested()
-    signal terminalOpened(string id, string kind)
     signal terminalInputRequested(string id, string data)
     signal terminalResizeRequested(string id, int cols, int rows)
     signal terminalScrollRequested(string id, int offset)
@@ -62,21 +55,6 @@ Item {
         id: terminalsListModel
     }
 
-    // `terminal.open` pode FALHAR (ex.: teto de 12 sessões). O erro vai para o
-    // handler genérico do CoreClient e `handleTerminalOpened` nunca vem — sem
-    // isto a marca ficaria presa e a PRÓXIMA aba comum nasceria com o rótulo
-    // pedido por outra. A marca é cosmética, mas errada é errada.
-    Timer {
-        id: pendingLabelTimeout
-
-        interval: 4000
-        repeat: false
-        onTriggered: {
-            root.pendingLabel = "";
-            root.pendingKind = "";
-        }
-    }
-
     function clearTerminals() {
         terminalsListModel.clear();
         root.terminalsRevision += 1;
@@ -84,9 +62,6 @@ Item {
         root.terminalRender = ({});
         root.terminalRenders = ({});
         root.terminalSeq = 0;
-        root.pendingLabel = "";
-        root.pendingKind = "";
-        pendingLabelTimeout.stop();
         root.terminalSession = "shell";
     }
 
@@ -123,67 +98,17 @@ Item {
 
     /// O core criou a sessão: vira aba e assume o foco.
     ///
-    /// Para o core toda sessão é um `$SHELL` no PTY, igual. Rótulo e tipo são
-    /// decisão da UI — por isso são consumidos aqui, no retorno, em vez de
-    /// virarem parâmetro do protocolo. Ver docs/roadmaps/26 e PONTO_ATUAL §0.2b.
+    /// Para o core toda sessão é um `$SHELL` no PTY, igual — o número da aba é
+    /// decisão da UI e por isso não é parâmetro do protocolo.
     function handleTerminalOpened(id, shell) {
         root.terminalRenders[id] = ({});
-        pendingLabelTimeout.stop();
-        const label = root.pendingLabel;
-        const kind = root.pendingKind;
-        root.pendingLabel = "";
-        root.pendingKind = "";
-        // Sessão rotulada não consome número de "Terminal N": quem a pediu tem
-        // a própria numeração, e pular um número aqui confundiria as abas.
-        if (label === "") {
-            root.terminalSeq += 1;
-        }
+        root.terminalSeq += 1;
         terminalsListModel.append({
             "termId": id,
-            "title": label !== "" ? label : qsTr("Terminal %1").arg(root.terminalSeq),
-            "kind": kind
+            "title": qsTr("Terminal %1").arg(root.terminalSeq)
         });
         root.terminalsRevision += 1;
         selectTerminal(id);
-        terminalOpened(id, kind);
-    }
-
-    /// Abre uma sessão já pedindo rótulo e tipo para a aba. O `kind` é OPACO
-    /// aqui: quem pede é quem sabe o que ele significa — este controller nunca
-    /// o interpreta. Sem rótulo próprio, o caminho é `newTerminal()`.
-    function openLabeledTerminal(label, kind) {
-        if (workspaceRoot === "") {
-            return;
-        }
-        terminalSession = "shell";
-        showTabRequested("terminal");
-        root.pendingLabel = label;
-        root.pendingKind = kind;
-        pendingLabelTimeout.restart();
-        terminalOpenRequested();
-    }
-
-    /// Id da primeira sessão viva de um tipo, ou "" se não houver.
-    function firstTerminalOfKind(kind) {
-        for (let i = 0; i < terminalsListModel.count; i++) {
-            const item = terminalsListModel.get(i);
-            if (item.kind === kind) {
-                return item.termId;
-            }
-        }
-        return "";
-    }
-
-    /// Tipo da aba ativa, "" para sessão comum. Existe como propriedade (e não
-    /// função) porque alimenta binding; `terminalsRevision` está aí só para o
-    /// binding reavaliar — `ListModel` não notifica mudança de conteúdo.
-    readonly property string activeTerminalKind: {
-        void root.terminalsRevision;
-        if (root.activeTerminalId === "") {
-            return "";
-        }
-        const index = indexOfTerminal(root.activeTerminalId);
-        return index >= 0 ? terminalsListModel.get(index).kind : "";
     }
 
     /// Troca a aba ativa. O grid da sessão volta INTACTO (o core mantém o
@@ -237,15 +162,6 @@ Item {
         } else {
             terminalText = "";
         }
-    }
-
-    /// Digita numa sessão ESPECÍFICA, exatamente como se o usuário tivesse
-    /// digitado. Não reabre nada: quem chama já sabe que a sessão existe.
-    function sendTerminalInput(id, data) {
-        if (id === "") {
-            return;
-        }
-        terminalInputRequested(id, data);
     }
 
     function submitShellInput(text) {

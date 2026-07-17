@@ -21,7 +21,6 @@ Row {
             { key: "problems", label: qsTr("Problemas"), icon: "problems" },
             { key: "tests", label: qsTr("Testes"), icon: "test" },
             { key: "terminal", label: qsTr("Terminal"), icon: "terminal" },
-            { key: "assistant", label: qsTr("Assistente"), icon: "assistant" },
             { key: "debug", label: qsTr("Debug"), icon: "debug" },
             { key: "git", label: qsTr("Git"), icon: "git" },
             { key: "search", label: qsTr("Busca"), icon: "search" },

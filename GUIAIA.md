@@ -84,7 +84,7 @@ Rust + IPC + Qt/QML, conforme a seção 5.6.
 
 ### TR0 — aceitar a rodada visual atual
 
-- Validar menus, manual, terminal, autocomplete, Assistente e painéis.
+- Validar menus, manual, terminal, autocomplete e painéis.
 - Corrigir regressões sem redesenhar a UI aprovada.
 - Fonte: `PONTO_ATUAL.md`, seção de validação ao vivo.
 
@@ -260,7 +260,7 @@ raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
 | Tree-sitter e fallback local | spec `TREE_SITTER_EDITOR_LAYER` | `docs/roadmaps/25-syntax-tree-semantic-foundation.md` + ADR-0002 |
 | Projeto profundo/KSWE | `docs/roadmaps/KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` | seção “simbiose” de `docs/roadmaps/21-long-horizon-roadmap.md` |
 | Build, Run, Test e Debug | spec `PRODUCT_FLOWS_BUILD_RUN_DEBUG` | `docs/build/22-compilacao-c-cpp-rust.md` |
-| Terminal e Assistente | spec `AI_CLI_BRIDGE_EXTERNAL_TERMINAL` | `docs/roadmaps/24-paridade-e-fundacao.md` + `docs/roadmaps/26-terminal-rendering-parity-roadmap.md` |
+| Terminal | `docs/roadmaps/24-paridade-e-fundacao.md` + `docs/roadmaps/26-terminal-rendering-parity-roadmap.md` (a spec de IA está FORA DE ESCOPO desde 2026-07-17) |
 | Dados, drafts e escrita segura | `docs/seguranca/23-rede-de-seguranca.md` | ADR-0001 + `docs/arquitetura/16-hidden-risks-checklist.md` |
 | Adotar ferramenta open source | `docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | `docs/tooling/OPEN_COMPONENT_REGISTRY.json` |
 | Referenciar implementação de IDE profissional | seção 2.1 do roadmap de adaptação | documento do domínio + `docs/arquitetura/ARCHITECTURE.md` |
@@ -496,7 +496,7 @@ crates/kinein-core/src/handlers/{run,debug}.rs
   `.sh/.bash/.zsh`: o core confina o arquivo e usa argv explícito. Não enviar
   conteúdo, comando shell ou caminho não validado pela UI.
 
-### 5.6 Terminal e Assistente
+### 5.6 Terminal
 
 ```text
 ui/qml/panels/bottom/TerminalPanel.qml
@@ -504,26 +504,27 @@ ui/qml/panels/bottom/TerminalPanel.qml
     ├─ TerminalSelectionController.qml
     ├─ TerminalInputController.qml
     └─ TerminalScrollController.qml
-ui/qml/assistant/{AssistantPanel,AssistantController}.qml
-    └─ AssistantTerminalHeader.qml
-ui/qml/ipc/AiBridgeEventRouter.qml
-    ↕ crates/kinein-protocol/src/{terminal,ai}.rs
-crates/kinein-core/src/handlers/{terminal,ai}.rs
+ui/qml/panels/bottom/TerminalSessionTabs.qml   (a barra de chips das sessoes)
+ui/qml/runtime/RuntimeController.qml           (sessoes + run.*)
+    ↕ crates/kinein-protocol/src/terminal.rs
+crates/kinein-core/src/handlers/terminal.rs
     → crates/kinein-core/src/terminal.rs (TerminalManager, PTY e grid VT100)
-    → claude/codex instalados e escolhidos pelo usuário
 ```
 
-- Testes: testes de terminal/AI, `tst_multi_terminal.qml`,
-  `tst_assistant_layout.qml`, `tst_terminal_input.qml`,
-  `tst_terminal_scroll.qml`, `tst_terminal_selection.qml` e
-  `scripts/sonda_scrollback.py`.
-- Fonte: spec AI CLI Bridge + `docs/roadmaps/24-paridade-e-fundacao.md`.
-- Assistente reutiliza o TerminalManager; não criar terminal ou chat paralelo.
-- Codex usa o modo inline oficial; o bridge preserva o transcript contra o
-  erase-scrollback ainda emitido pela CLI. Seletor compacto e sessão terminal
-  livre/persistida/maximizável são estados diferentes da mesma superfície,
-  nunca um renderer de conversa da IDE. `Project` só é ocultado na maximização
-  explícita, não pela mera existência da sessão.
+- Testes: `tst_multi_terminal.qml`, `tst_terminal_input.qml`,
+  `tst_terminal_scroll.qml`, `tst_terminal_selection.qml`,
+  `tst_terminal_metrics.qml` e `scripts/sonda_scrollback.py`.
+- **NÃO existe assistente, painel de IA, chat, seletor de agente nem domínio
+  `ai.*`** — e não é pendência: é decisão do autor de 2026-07-17, registrada no
+  topo de `docs/specs/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`. Agente de IA é
+  um programa que o usuário roda no terminal, como qualquer outro. **Se você veio
+  propor um painel/atalho/seletor de IA: já foi construído e removido no mesmo
+  dia, depois de rodar. Reabra a decisão antes, explicitamente.**
+- O que o core sabe sobre IA: `claude` e `codex` são entradas do `KNOWN_TOOLS`,
+  detectadas como `cargo` ou `clangd` — mesmo probe, zero ramo por programa.
+  `ai_clis_are_detected_exactly_like_any_other_tool` **cai** se alguém escrever
+  `if spec.id == "claude"` no detector. Política por programa no core foi o bug
+  que o 0.59.0 removeu e não volta.
 - A grade VT e o cursor são a única representação da entrada. Não recriar
   faixa, `TextInput`, composer ou borda inferida por parsing da tela; a
   referência comportamental é terminal-first (Code OSS/xterm.js), adaptada ao
@@ -536,9 +537,10 @@ crates/kinein-core/src/handlers/{terminal,ai}.rs
   sua retomada obrigatória está em `docs/roadmaps/26-terminal-rendering-parity-roadmap.md`:
   começar por fixture/overlay/métricas, nunca por outro ajuste manual de `y`.
 - Por decisão do usuário, a experiência funcional do terminal do Code OSS é a
-  base de paridade para shell, Claude e Codex. Adaptar fielmente os contratos
-  e invariantes para o renderer Qt; não incorporar xterm.js/Node nem criar um
-  caminho exclusivo para o Assistente.
+  base de paridade para shell e para qualquer TUI (incluindo agentes de IA, que
+  são só mais uma). Adaptar fielmente os contratos e invariantes para o renderer
+  Qt; não incorporar xterm.js/Node nem criar caminho exclusivo para programa
+  nenhum.
 
 ### 5.7 Git
 
