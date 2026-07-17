@@ -1,5 +1,7 @@
 // Entry point of the Kinein Vectis UI process.
 
+#include "typing_perf_harness.h"
+
 #include <QElapsedTimer>
 #include <QGuiApplication>
 #include <QIcon>
@@ -58,6 +60,7 @@ int main(int argc, char* argv[])
     engine.load(QUrl(QStringLiteral("qrc:/KineinVectis/qml/Main.qml")));
 
     installStartupPerfMarker(app, engine, perfTimer);
+    kinein::installTypingPerfHarness(app, engine);
 
     return QGuiApplication::exec();
 }

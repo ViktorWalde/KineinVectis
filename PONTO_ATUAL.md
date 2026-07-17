@@ -59,7 +59,7 @@ traduzida para Rust + IPC + Qt, sem Electron, Node, WebView ou xterm.js.
    ou bloqueio que force a saída para outra IDE;
 3. depois tratar regressões funcionais e atritos reproduzíveis de uso diário;
 4. quando não houver feedback bloqueador e o usuário mandar prosseguir no
-   roadmap, iniciar **A3 — responsividade medida**; A1 e A2 foram entregues;
+   roadmap, seguir a fila da seção 2; A1, A2 e **A3 foram entregues**;
 5. continuar pelas etapas deste arquivo e pelos docs existentes, sem inventar
    outro remake, subsistema paralelo ou roadmap substituto.
 
@@ -635,101 +635,24 @@ correspondente ficar corrigida e protegida.
 
 ## 2. TR1 — distribuição e substituição de editores generalistas
 
-### A3 — responsividade medida
+### A3 — responsividade medida (ENTREGUE em 2026-07-16)
 
-**Estado em 2026-07-15:** preparada sobre a infraestrutura M4.2 já existente;
-não criar segundo runner, protocolo de telemetria ou framework de benchmark.
-`scripts/medir-performance.sh` + `scripts/medir-core.py` continuam sendo a
-entrada única, com cenários nomeados, mediana de `N` e saída local.
+A3.1–A3.4 estão fechadas. O item 1 do A3.3 (digitação tecla→frame no editor
+real) era o último em aberto e foi entregue em 2026-07-16: mediana 7,4 ms, p95
+8,4 ms, orçamento 16/20 ms. **Nenhuma afirmação de responsividade do A3 depende
+mais de impressão visual.**
 
-Baseline release revalidada depois do protocolo 0.57, com `N=3` e os binários
-exatos usados por `scripts/kinein-vectis`:
+Baseline versionada, orçamentos, método e as armadilhas que produzem número
+falso estão em `docs/roadmaps/21` (A3.1–A3.4); o estado implementado, em
+`ContextoIA.md`. A entrada única continua sendo `scripts/medir-performance.sh` +
+`scripts/medir-core.py` — não criar segundo runner nem framework de benchmark.
 
-| Métrica existente | Mediana atual | Orçamento vigente |
-| --- | ---: | ---: |
-| primeiro frame offscreen | 250 ms | 400 ms |
-| UI RSS vazia | 103 MB | 200 MB |
-| `workspace.open` no repo | 3,4 ms | 50 ms |
-| `fs.read` de 10 mil linhas | 0,0 ms | 20 ms |
-| core RSS em regime | 7 MB | 60 MB |
-| rust-analyzer externo | 1093 MB | informativo |
+Reação a regressão é gate, não sugestão: número acima do orçamento abre fatia de
+causa-raiz antes de nova profundidade semântica, e antes de otimizar, perfilar.
 
-Todos os itens com orçamento passaram. O rust-analyzer continua separado do
-RSS próprio da Kinein e não reprova o gate sem cenário/limite específico.
-
-Referências profissionais atuais para a expansão de A3:
-
-- Code OSS `234638618394269563dd77c0c395c270d8df8b12`,
-  `src/vs/base/common/performance.ts` e
-  `src/vs/workbench/services/timer/browser/timerService.ts`, MIT/MODE-B:
-  marcos nomeados, durações derivadas entre marcos, espera explícita por fases
-  prontas e separação entre custo próprio, ambiente e processos externos;
-- Zed `1e22d1a83f8b1b7acc528d15cfab0644852380c0`,
-  `crates/benchmarks/benches/editor_render.rs` e `display_map.rs`, somente
-  referência MODE-D: fixtures com seed fixa, tamanhos de entrada explícitos,
-  amostras repetidas e benchmark do caminho real de input/render.
-
-Adaptação nativa: usar `std::time::Instant`/`QElapsedTimer`, RPC stdio e fixtures
-locais; não incorporar timer, telemetria, runtime ou código das referências.
-
-#### A3.1 — estrutura local Tree-sitter
-
-1. estender `medir-core.py`, sem RPC novo, para medir separadamente:
-   - primeiro `syntaxTree.update` frio em arquivo Rust/C++ real;
-   - atualização incremental de um caractere no mesmo documento;
-   - contagem/validação mínima do snapshot para impedir número rápido vazio;
-2. usar fixture versionada e tamanho explícito; não depender de rede ou LSP;
-3. registrar mediana e orçamento inicial em `docs/roadmaps/21`.
-
-Aceite: `syntax_first_snapshot_ms` e `syntax_incremental_update_ms` aparecem na
-mesma tabela local, com cenário reproduzível e resultado estrutural não vazio.
-
-#### A3.2 — primeira semântica e estabilização LSP
-
-1. medir separadamente clangd e rust-analyzer quando instalados;
-2. iniciar em workspace conhecido, sincronizar documento e medir até a primeira
-   resposta válida de `lsp.semanticTokens` e `lsp.completion`;
-3. distinguir startup/indexação externa do round-trip da Kinein; ausência da
-   ferramenta produz `n/d` explícito, nunca sucesso falso;
-4. aplicar timeout e encerrar todos os filhos ao final da amostra.
-
-Aceite: primeira resposta, resposta aquecida e RSS externo ficam separados; a
-medição valida `path`/`version` e ao menos um token/item quando o cenário exigir.
-
-#### A3.3 — digitação real e rajada do terminal
-
-1. criar um harness Qt opt-in que marque tecla recebida → frame apresentado em
-   arquivo grande, sem rodar no uso normal;
-2. medir mediana e cauda visível (`p95`) porque travadas de digitação podem
-   desaparecer na mediana;
-3. reutilizar a sonda PTY existente para uma rajada determinística, medindo
-   `terminal.input` → frame contendo marcador final, além de perda de input,
-   scrollback e responsividade durante a saída;
-4. Terminal comum e KV Context usam o mesmo cenário/renderer; o cursor adiado
-   de `docs/roadmaps/26` não altera esta medição.
-
-Aceite: nenhuma tecla perdida, marcador final presente, UI interativa durante
-a rajada e números separados para editor e terminal.
-
-#### A3.4 — orçamento e reação a regressões
-
-1. versionar máquina, distro, Qt, binários, `N`, fixture e perfil release;
-2. orçamento inicial = medição repetida com folga explícita, não número
-   aspiracional inventado;
-3. regressão acima do orçamento abre fatia de causa-raiz antes de nova
-   profundidade semântica;
-4. otimização só entra depois de perfil local mostrar o dono do custo; trabalho
-   pesado permanece cancelável/assíncrono e fora da thread da UI.
-
-Aceite: métricas e cenários ficam versionados; não se depende apenas de
-impressão visual para afirmar que autocomplete/editor/terminal são responsivos.
-
-Depois de A3, a primeira integração pequena recomendada para a sessão de
-“novo plugin” é **EditorConfig**: está no P0 do roadmap aberto, serve C/C++ e
-Rust, melhora dogfooding imediatamente e cabe em uma fatia auditável sem host
-de extensões. Isso é recomendação de ordem, não adoção definitiva; a sessão
-deve confirmar biblioteca/licença, contrato e conflito com settings antes do
-código. Integrações grandes de A5 continuam atrás dessa análise.
+A primeira integração pequena recomendada a seguir era **EditorConfig** — mas a
+auditoria do §0.2e deu **resultado negativo** e a decisão está com o autor.
+Ler o §0.2e antes de escrever qualquer código de L1.
 
 ### A4 — confortos que bloquearem o dogfooding
 

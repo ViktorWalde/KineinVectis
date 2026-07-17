@@ -133,6 +133,13 @@ def measure_fs_read_big(core, n):
     return median_ms(samples)
 
 
+# Tamanho da fixture Rust, em structs+impl gerados. Uma constante so, porque a
+# MESMA fixture serve ao A3.1 (Tree-sitter) e ao A3.3 item 1 (digitacao): se os
+# dois tamanhos divergissem, os numeros deixariam de ser comparaveis entre si
+# sem ninguem perceber.
+SYNTAX_FIXTURE_FUNCTIONS = 60
+
+
 def fixture_rust(functions):
     """Fixture Rust DETERMINISTICA: mesmo texto byte a byte a cada run.
 
@@ -208,7 +215,7 @@ def syntax_snapshot_is_valid(result):
     return True, ""
 
 
-def measure_syntax(core, n, functions=60):
+def measure_syntax(core, n, functions=SYNTAX_FIXTURE_FUNCTIONS):
     """A3.1: primeiro snapshot FRIO e atualizacao incremental de 1 caractere.
 
     Frio exige core novo a cada amostra: o core mantem cache LRU de 32 buffers,
@@ -598,7 +605,30 @@ def measure_rss_with_lsp(core, root):
     return core_rss, lsp_rss
 
 
+def emit_fixture(destino, functions):
+    """Grava a fixture Rust em disco para quem mede FORA deste processo.
+
+    Existe para o harness de digitacao (A3.3 item 1, ui/src/typing_perf_harness.cpp)
+    medir sobre a MESMA fixture do A3.1. Se cada medicao gerasse a sua, os
+    numeros de Tree-sitter e de digitacao seriam sobre arquivos diferentes e nao
+    poderiam ser lidos lado a lado.
+    """
+    conteudo = fixture_rust(functions)
+    caminho = os.path.join(destino, "fixture.rs")
+    with open(caminho, "w") as fh:
+        fh.write(conteudo)
+    print(f"fixture_path={caminho}")
+    print(f"fixture_lines={conteudo.count(chr(10))}")
+    print(f"fixture_bytes={len(conteudo.encode())}")
+
+
 def main():
+    # scripts/medir-core.py --emit-fixture <dir> [functions]
+    if len(sys.argv) > 2 and sys.argv[1] == "--emit-fixture":
+        emit_fixture(sys.argv[2],
+                     int(sys.argv[3]) if len(sys.argv) > 3 else SYNTAX_FIXTURE_FUNCTIONS)
+        return
+
     core, root, n = sys.argv[1], sys.argv[2], int(sys.argv[3])
     print(f"workspace_open_ms={measure_workspace_open(core, root, n)}")
     print(f"fs_read_10k_ms={measure_fs_read_big(core, n)}")

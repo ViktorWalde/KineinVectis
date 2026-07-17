@@ -13,6 +13,7 @@
 #   A3.1. Tree-sitter: primeiro snapshot frio e update incremental
 #   A3.2. LSP: primeira resposta util por servidor (rust-analyzer, clangd)
 #   A3.3. Terminal: rajada do PTY, input -> frame com marcador
+#   A3.3-1. Editor: digitacao tecla -> frame, no editor real com arquivo grande
 #
 # A3.4: a saida comeca por um CARIMBO de ambiente. Numero de performance sem
 # maquina, distro, Qt, binario e N ao lado nao e comparavel com nada — nao da
@@ -48,6 +49,22 @@ mediana() {
     printf '%s\n' "$@" | sort -n | awk '{ v[NR]=$1 } END {
         if (NR==0) { print "0"; exit }
         if (NR%2) print v[(NR+1)/2]; else printf "%d\n", (v[NR/2]+v[NR/2+1])/2
+    }'
+}
+
+# Percentil de uma lista que aceita DECIMAIS (as amostras de digitacao vem com
+# casas). Mesma definicao do `percentil()` do medir-core.py, de proposito: dois
+# p95 calculados de formas diferentes no mesmo relatorio nao se comparam.
+# Uso: percentil <p> <amostra>...
+percentil() {
+    local p="$1"
+    shift
+    printf '%s\n' "$@" | sort -g | awk -v p="$p" '{ v[NR]=$1 } END {
+        if (NR==0) { print "n/d"; exit }
+        idx = int((p / 100.0) * (NR - 1) + 0.5) + 1
+        if (idx < 1) idx = 1
+        if (idx > NR) idx = NR
+        printf "%.1f\n", v[idx]
     }'
 }
 
@@ -98,6 +115,51 @@ ui_rss_kb="$(awk '/VmRSS/{print $2}' "/proc/$ui_pid/status" 2>/dev/null || echo 
 kill "$ui_pid" 2>/dev/null || true
 wait "$ui_pid" 2>/dev/null || true
 echo "   -> UI VmRSS: $((ui_rss_kb / 1024)) MB"
+echo
+
+# --- A3.3 item 1. UI: digitacao tecla -> frame no editor real ---
+# Roda no processo REAL (harness atras de KINEIN_PERF_TYPING), porque o runner
+# `qml` nao carrega o modulo KineinVectis: o qmldir gerado aponta para caminhos
+# qrc:, que so existem dentro do binario. Evidencia em docs/roadmaps/21.
+#
+# Offscreen NAO tem vsync. O numero e o custo PROPRIO da Kinein da tecla ao
+# frame — piso do que o usuario sente num compositor a 60 Hz, nao o total.
+# E o que precisa ser: comparavel entre runs e sem depender de monitor.
+echo "-- A3.3-1. UI: digitacao tecla->frame (editor real, offscreen) --"
+typing_ws="$(mktemp -d -t kinein-typing-XXXXXX)"
+python3 "$REPO_ROOT/scripts/medir-core.py" --emit-fixture "$typing_ws" | sed 's/^/   /'
+typing_out="$(QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 \
+    KINEIN_CORE_BIN="$CORE_BIN" \
+    KINEIN_PERF_TYPING=1 \
+    KINEIN_PERF_TYPING_WORKSPACE="$typing_ws" \
+    KINEIN_PERF_TYPING_FILE="$typing_ws/fixture.rs" \
+    timeout 180 "$UI_BIN" 2>&1 || true)"
+rm -rf "$typing_ws"
+
+typing_err="$(printf '%s\n' "$typing_out" | sed -n 's/.*typing_error=\(.*\)/\1/p' | head -n1)"
+if [ -n "$typing_err" ]; then
+    echo "   -> n/d: $typing_err"
+else
+    mapfile -t typing_amostras < <(printf '%s\n' "$typing_out" |
+        sed -n 's/.*typing_sample_ms=\([0-9.]\{1,\}\).*/\1/p')
+    typing_linhas="$(printf '%s\n' "$typing_out" | sed -n 's/.*typing_file_lines=\([0-9]\{1,\}\).*/\1/p' | head -n1)"
+    typing_inseridos="$(printf '%s\n' "$typing_out" | sed -n 's/.*typing_chars_inserted=\([0-9]\{1,\}\).*/\1/p' | head -n1)"
+    if [ "${#typing_amostras[@]}" -eq 0 ]; then
+        echo "   -> n/d: nenhuma amostra"
+    else
+        echo "   fixture  : ${typing_linhas} linhas (a MESMA do A3.1)"
+        # Prova de que as teclas entraram: sem isto o harness poderia cronometrar
+        # frames que tecla nenhuma causou e reportar um numero lindo.
+        echo "   teclas   : ${#typing_amostras[@]} enviadas, ${typing_inseridos} caracteres inseridos"
+        echo "   -> mediana tecla->frame: $(percentil 50 "${typing_amostras[@]}") ms"
+        echo "   -> p95    tecla->frame: $(percentil 95 "${typing_amostras[@]}") ms"
+        # O PIOR caso vai junto de proposito. Com 40 amostras a p95 cai na 38a e
+        # descarta as duas piores — exatamente a travada que o roadmap manda
+        # nao perder. A primeira tecla depois do arquivo carregar e sempre a mais
+        # cara (caminho frio), e e uma tecla que o usuario de fato digita.
+        echo "   -> pior   tecla->frame: $(percentil 100 "${typing_amostras[@]}") ms"
+    fi
+fi
 echo
 
 # --- B, C, D(core+LSP) via stdio ---

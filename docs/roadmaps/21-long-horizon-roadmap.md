@@ -303,7 +303,7 @@ vale.
 A3.2 item 4 cumprido: nenhum processo sobrevive à amostra (`finally` fecha o
 core e espera; `pgrep` de `rust-analyzer`/`clangd` volta zero ao fim).
 
-#### A3.3 — rajada do terminal (item 3 feito em 2026-07-16; item 1 em aberto)
+#### A3.3 — digitação e rajada do terminal (itens 1 e 3 feitos em 2026-07-16)
 
 **Feito — rajada determinística do PTY** (`terminal.input` → frame com o
 marcador final), reusando a mecânica da sonda existente (thread leitora +
@@ -340,7 +340,19 @@ presente (logo sem perda), scrollback real, UI servida durante a saída.
 media. Agora ele imprime os binários e avisa em `stderr` quando o core não é
 release. Número de performance sem o binário ao lado não significa nada.
 
-**Em aberto — item 1: harness Qt de digitação tecla→frame.** Não implementado.
+**Feito — item 1: digitação tecla→frame no editor real**
+(`ui/src/typing_perf_harness.cpp`, atrás de `KINEIN_PERF_TYPING`).
+
+| Métrica (40 teclas, release, fixture de 2463 linhas) | Medido | Orçamento |
+| --- | ---: | ---: |
+| `typing_key_to_frame_ms` (mediana) | 7,4 ms | 16 ms |
+| `typing_key_to_frame_p95_ms` | 8,4 ms | 20 ms |
+| `typing_key_to_frame_pior_ms` | 9,3–13,2 ms | informativo |
+
+Estável entre runs (mediana 7,4 / 7,6 / 7,4 em três execuções). A fixture é a
+**mesma do A3.1** — `SYNTAX_FIXTURE_FUNCTIONS` no `medir-core.py` é uma constante
+só, servindo aos dois, porque tamanhos divergentes tornariam os números do
+Tree-sitter e da digitação incomparáveis sem ninguém perceber.
 
 **Rota do harness QML: fechada, com evidência.** Tentar `qml -I build/dev-local/ui`
 resolve o módulo mas falha assim:
@@ -356,27 +368,45 @@ nem nada que dependa de `KineinVectis` — e é por isso que os 13 harnesses sã
 todos de QtQuick puro. Não é escolha de estilo nem preguiça: é limite do
 empacotamento. **Não retentar essa rota**; o custo já foi pago aqui.
 
-**Caminho restante (único viável): modo opt-in no `main.cpp`**, ao lado do
-`KINEIN_PERF_MARKER` que já existe e prova o padrão:
+**Como o harness mede, e por que cada escolha.** O modo vive no processo real,
+ligado só por env (mesma disciplina do `KINEIN_PERF_MARKER`), e dirige o fluxo
+normal `workspace.open` → `fs.read` → foco antes de cronometrar — sem workspace
+o editor não aceita tecla. Quatro decisões carregam o número:
 
-```text
-1. env KINEIN_PERF_TYPING liga o modo; sem ela, zero efeito no uso normal
-   (mesma disciplina do KINEIN_PERF_MARKER e do KINEIN_TERMINAL_DEBUG_GEOMETRY).
-2. o harness precisa de ARQUIVO GRANDE no editor real — sem workspace o editor
-   não aceita tecla. Então ele tem de dirigir o fluxo normal (workspace.open →
-   fs.read → foco no editor) antes de medir; é essa orquestração, não a
-   cronometragem, que faz a fatia ser própria.
-3. medir tecla → `QQuickWindow::frameSwapped`, não tecla → retorno do handler:
-   o que o usuário sente é o frame apresentado.
-4. reportar mediana E p95. `percentil()` já existe no `medir-core.py` e serve
-   aos dois cenários; a cauda é o ponto — travada de digitação some na mediana.
-5. matar o processo ao fim, como o KINEIN_PERF_EXIT já faz.
-```
+1. **Carimbo na render thread.** `frameSwapped` é emitido lá; uma conexão queued
+   mediria de brinde a fila de eventos da GUI thread. Irrelevante nos 250 ms do
+   startup, decisivo numa métrica de 7 ms. O carimbo sai em `DirectConnection`,
+   no instante do swap, contra um relógio único (os dois lados são threads
+   diferentes e precisam da mesma origem).
+2. **Pisca do cursor desligado** (`setCursorFlashTime(0)`). O pisca produz frames
+   que tecla nenhuma causou; um deles no momento errado seria creditado à tecla
+   seguinte e reportaria latência menor que a real.
+3. **Espera de quietude entre teclas** (nenhum frame por 150 ms). O realce volta
+   do core ~280 ms depois da tecla (A3.1) e gera frame próprio; sem a espera, esse
+   frame seria creditado à tecla seguinte.
+4. **Prova de que as teclas entraram**: `typing_chars_inserted` tem de bater com o
+   número de teclas, senão a medição falha alto. É a mesma armadilha que o item 3
+   já pagou — lá o eco do shell fez o marcador aparecer sem a rajada ter rodado, e
+   a medição reportou 50 mil linhas em 1,5 ms. Aqui o gêmeo seria cronometrar
+   frames que tecla nenhuma causou: o número sairia igualmente bonito.
 
-Enquanto isso não existir, **a responsividade de digitação do editor é a única
-afirmação de A3 que ainda depende de impressão visual** — declarado de propósito
-em vez de coberto por um número improvisado. Medir teclado num `TextArea`
-genérico mediria o Qt, não a Kinein.
+**O que o número é, e o que não é.** Offscreen não tem vsync, então 7,4 ms é o
+custo **próprio da Kinein** da tecla ao frame — piso do que o usuário sente num
+compositor a 60 Hz, não o total. É o que precisa ser: comparável entre runs e sem
+depender de monitor. E mede a tecla **aparecendo**, não o realce assentando: o
+realce chega ~280 ms depois, num frame próprio, e é custo do A3.1 (payload de
+1138 KB por update), não da digitação.
+
+**Por que o pior caso vai junto e não é orçado.** Com 40 amostras a p95 cai na 38ª
+e descarta as duas piores — justamente a travada que o item 2 do A3.3 manda não
+perder. Por isso o pior sai no relatório. Mas ele é **uma** amostra e é ruidoso
+(9,3 / 9,7 / 13,2 nas três runs, e 21,6 numa medição avulsa): reprovar o gate por
+ele ensinaria a reexecutar até passar — o mesmo vício que a catraca de arquitetura
+evita ao congelar débito em vez de reprovar 20 arquivos de uma vez.
+
+O orçamento da mediana (16 ms) é medição repetida com folga de 2,1x **e** tem
+teto com significado: um frame a 60 Hz dura 16,7 ms. Se o custo próprio passar
+disso, a digitação não acompanha mais a tela.
 
 #### A3.4 — orçamento e reação a regressões (implementada em 2026-07-16)
 
@@ -406,6 +436,8 @@ Core: `target/release/kinein-core`. UI: `build/dev-local/ui/kinein-vectis`.
 | A3.2: `completion` aquecida | 2,2–8,7 ms | 50 ms | 6x |
 | A3.3: rajada 50k → marcador | 59 ms | 250 ms | 4x |
 | A3.3: vão máximo entre frames | 33 ms | 100 ms | 3x |
+| A3.3-1: digitação tecla→frame (mediana) | 7,4 ms | 16 ms | 2,1x |
+| A3.3-1: digitação tecla→frame (p95) | 8,4 ms | 20 ms | 2,3x |
 
 Informativo, **não orçado** (custo de ferramenta externa, fora do controle da
 Kinein): primeira `completion` do rust-analyzer (2520 ms), RSS do
@@ -431,8 +463,12 @@ sinal, não conforto: são as métricas que o A3.1 já apontou como problema rea
 determinísticas de tamanho explícito no `medir-core.py`, orçamentos e carimbo
 aqui), e a afirmação "autocomplete/editor/terminal são responsivos" deixou de
 depender de impressão visual — os três têm número, cenário reproduzível e
-orçamento. O que **não** tem número ainda é a digitação tecla→frame do editor
-(item 1 do A3.3), e isso está declarado, não escondido.
+orçamento. Com o item 1 do A3.3 entregue em 2026-07-16, **nenhuma afirmação de
+responsividade do A3 depende mais de impressão visual**: a digitação do editor,
+que era a última, tem mediana, p95, pior caso e prova de que as teclas entraram.
+
+Informativo, **não orçado** (uma amostra só, ruidosa): pior caso da digitação
+tecla→frame.
 
 **Continuação A3.** Falta o item 1 acima e
 rajada PTY→frame. A fila executável e critérios estão em `PONTO_ATUAL.md`, A3.1

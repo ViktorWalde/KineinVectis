@@ -1824,3 +1824,34 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   variável de correção, confirmando `Loading backend software` e primeiro frame
   em 939 ms no modo extraído e 987 ms na montagem type-2 normal. O atalho
   instalado já aponta para esse mesmo caminho em `dist/`.
+## Digitação medida no editor real — A3.3 item 1 (2026-07-16)
+
+- `ui/src/typing_perf_harness.cpp` mede tecla→frame no editor real, atrás de
+  `KINEIN_PERF_TYPING`. Sem a env não custa nada, na mesma disciplina do
+  `KINEIN_PERF_MARKER` e do `KINEIN_TERMINAL_DEBUG_GEOMETRY`. Não é
+  configuração: não entra em settings, não tem schema e não aparece na UI.
+- O harness dirige o fluxo normal (`workspace.open` → `fs.read` → foco) porque
+  sem workspace o editor não aceita tecla; é a orquestração, não a
+  cronometragem, que fez a fatia ser própria. Alcança `coreClient` e
+  `editorController` por `QQmlContext::objectForName`, sem exigir `objectName`
+  no `Main.qml`: instrumentação não deixa marca no código que ela mede.
+- Medido (release, 40 teclas, fixture Rust de 2463 linhas): mediana 7,4 ms,
+  p95 8,4 ms, pior 9,3–13,2 ms. Estável em três runs (7,4 / 7,6 / 7,4).
+  Orçamento: mediana 16 ms, p95 20 ms. Pior caso é informativo — uma amostra
+  ruidosa, e reprovar por ela ensinaria a reexecutar até passar.
+- A fixture é a mesma do A3.1: `SYNTAX_FIXTURE_FUNCTIONS` no `medir-core.py`
+  virou constante única, e `--emit-fixture` a grava em disco para quem mede fora
+  daquele processo. Tamanhos divergentes tornariam Tree-sitter e digitação
+  incomparáveis sem ninguém perceber.
+- Quatro decisões sustentam o número, todas registradas em `docs/roadmaps/21`:
+  carimbo na render thread (`DirectConnection` no `frameSwapped`, porque queued
+  mediria a fila de eventos junto); pisca do cursor desligado; espera de
+  quietude de 150 ms entre teclas (o realce volta ~280 ms depois e geraria frame
+  creditado à tecla seguinte); e `typing_chars_inserted` obrigando N teclas a
+  virarem N caracteres — o gêmeo da armadilha do eco do shell que o item 3 pagou.
+- Offscreen não tem vsync: o número é o custo próprio da Kinein, piso do que o
+  usuário sente a 60 Hz, e mede a tecla aparecendo, não o realce assentando.
+- Com isso, nenhuma afirmação de responsividade do A3 depende mais de impressão
+  visual. A rota do runner `qml` continua fechada com evidência e não deve ser
+  retentada.
+

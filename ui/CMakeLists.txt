@@ -260,6 +260,8 @@ qt_add_qml_module(kinein-vectis
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
+        src/typing_perf_harness.cpp
+        src/typing_perf_harness.h
         src/window_chrome_controller.cpp
         src/window_chrome_controller.h
     RESOURCES
