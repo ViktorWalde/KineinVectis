@@ -1963,3 +1963,26 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   `Main.qml`, NÃO dos arquivos dos controllers. `RuntimeController.qml` continua
   em 494. Os dois bloqueios do seletor seguem de pé.
 
+## Catraca de arquitetura passou a cobrir o core (2026-07-16)
+
+- `scripts/verificar-arquitetura.sh` varria só `ui/qml` e `ui/src`. A regra §4
+  da `ARCHITECTURE.md` (core: quebrar em pasta `<dominio>/` ao misturar
+  responsabilidade ou passar de ~400–500 linhas fora dos testes) existia desde
+  sempre e nunca havia sido verificada. Medição: 7 arquivos já a violavam.
+- Dois não violam só tamanho, e sim a responsabilidade que a própria §4 lhes
+  atribui por escrito: `lib.rs` (505; a regra diz "fino, só dispatch e estado")
+  e `handlers/lsp.rs` (653; a regra diz "fino, sem lógica pesada").
+- Baseline: 20 → 27 arquivos em débito. Congelados, só podem diminuir.
+  `terminal.rs` (955) é o maior violador e fica por ÚLTIMO de propósito: é onde
+  moram grade VT, cursor/DECSCUSR e `wheel_action`, e custou dois dias de
+  estabilização. A catraca o congela sem exigir quebra — quebrar terminal para
+  cumprir métrica trocaria risco real por número bonito.
+- A contagem corta no `#[cfg(test)]`, como a §4 manda ("linhas de código fora
+  dos testes"). Em Rust o teste unitário é co-localizado: contar o arquivo
+  inteiro faria a catraca empurrar contra quem testa bem. Na UI não há teste
+  inline, então a mesma regra serve às duas camadas sem virar exceção.
+  Verificado nos dois sentidos: engordar o código reprova (955 -> 958);
+  acrescentar linhas na seção de teste não.
+- A mensagem de falha aponta a seção certa por camada: §4 para `crates/`, §6
+  para a UI. Apontar a errada faz procurar a regra onde ela não está.
+

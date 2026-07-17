@@ -175,6 +175,44 @@ Regras que mantêm isso saudável:
    `tests/mod.rs`.
 7. **Lints estritos são inegociáveis** (`unsafe` forbid, warnings/pedantic/nursery
    deny, sem `unwrap/expect/panic` fora de teste). Eles são parte do design.
+8. **Como os limites acompanham o crescimento do projeto** (decisão do autor,
+   2026-07-16: a catraca não pode impedir o projeto de crescer).
+
+   > O limite é **por responsabilidade** e **não cresce**. O projeto cresce
+   > somando unidades, não engordando unidades.
+
+   Um controller que faz uma coisa não precisa de mais linhas porque o projeto
+   ficou maior — precisam existir **mais** controllers. Um projeto com 12
+   domínios tem 12 arquivos de domínio, não um arquivo de 1000 linhas. É isso
+   que faz a regra escalar: o que cresce é a **contagem** de módulos, não o
+   tamanho de cada um. Quando um domínio novo nasce (embarcados, simulação), ele
+   traz arquivos novos e a catraca nem percebe — porque nascem dentro do limite.
+
+   **A exceção legítima é o composition root**, cujo tamanho é função do número
+   de domínios, não da qualidade do código. Aí a saída é dividir a composição
+   por área (`domínios/`, `hosts/`, `atalhos/`), fazendo a contagem de arquivos
+   crescer em vez do tamanho — nunca subir o limite. Ver
+   `docs/arquitetura/27-modulos-por-dominio.md` §4.1.
+
+   **Subir um limite é permitido — e é decisão explícita, registrada e
+   justificada, nunca silenciosa e nunca "porque incomodou hoje".** Se um limite
+   está errado, o caminho é discuti-lo e registrar o porquê no ADR/documento do
+   domínio; contorná-lo em silêncio é o vício que a §1.1 documenta.
+
+9. **A regra 4 é verificada por catraca desde 2026-07-16.**
+   `scripts/verificar-arquitetura.sh` (dentro do `verificar.sh`) conta as linhas
+   **fora dos testes** — o corte é o `#[cfg(test)]`, para não punir quem testa
+   junto — e reprova arquivo novo acima de 500 ou arquivo em débito que cresça.
+   Não é limite duro: o débito existente fica congelado em
+   `scripts/arquitetura-baseline.txt` e **só pode diminuir**.
+
+   Até essa data a catraca varria só a UI, e esta seção nunca havia sido
+   verificada por ninguém: **7 arquivos já a violavam**, dois deles contrariando
+   não o tamanho, mas a responsabilidade que as regras 1 e 2 lhes atribuem por
+   escrito (`lib.rs` com 505 linhas; `handlers/lsp.rs` com 653). Regra que mora
+   só em `.md` não segura arquitetura — apodrece em silêncio enquanto o gate
+   fica verde. Plano de pagamento e ordem em
+   `docs/arquitetura/27-modulos-por-dominio.md`.
 
 O `kinein-protocol` segue a mesma ideia: **um módulo por domínio** (`rpc`,
 `workspace`, `fs`, `lsp`, `build`, …) re-exportado flat pelo `lib.rs`. Um tipo
