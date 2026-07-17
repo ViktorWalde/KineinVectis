@@ -451,8 +451,43 @@ engordando 2 linhas.
 o `TerminalViewport.qml` (319) cresceram por minha mão hoje. A catraca vale para
 mim também — foi por isso que ela nasceu com baseline em vez de exceções.
 
-**Não feito — pagar o débito.** A catraca impede piorar, não melhora. A ordem
-sugerida segue o próprio critério da §6 ("quem MISTURA responsabilidade primeiro,
+**A catraca TRAVOU a camada de shell (achado em 2026-07-16).** Não é teoria: o
+seletor do §0.2f foi bloqueado por ela. Os dois arquivos que qualquer feature de
+shell precisa tocar estão em débito e congelados — `Main.qml` (700/400, é o
+composition root: todo controller novo é instanciado ali) e `RuntimeController`
+(494/400). Não dá para adicionar nada sem pagar antes. **A catraca está certa e
+fez o trabalho dela**: a arquitetura tem que ceder antes da feature entrar.
+
+**Em andamento — split do `Main.qml` por domínio de fiação (2026-07-16).**
+`700 → 610`, gate verde a cada passo (build dev-local + strict, qmllint estrito,
+catraca, lógica QML).
+
+O padrão não foi inventado: o projeto já tinha `ui/qml/ipc/<X>EventRouter.qml`
+para `coreClient → controller` (o que o core **manda**). Faltava a casa do
+sentido inverso, `controller → coreClient` (o que a UI **pede**), e era ele que
+morava solto no composition root. Agora existe `<X>RequestRouter.qml`, simétrico:
+
+```text
+EditorRequestRouter    72 -> 19 no Main.qml   (19 pedidos)
+RuntimeRequestRouter   53 -> 20               (13 pedidos)
+DebugRequestRouter     30 -> 12               (11 pedidos)
+```
+
+Critério do corte: **só pedido ao core entra no router**. Fiação de controller
+para HOST (abrir diálogo, focar find bar) não é IPC e fica no `Main.qml`, onde os
+dois se enxergam. O `RuntimeRequestRouter` não interpreta terminal: `terminalWheel`
+é só transporte, quem decide o que a roda significa é o core (`wheel_action`,
+0.60.0) — a UI voltar a decidir isso foi o bug do Claude não rolar.
+
+**O padrão sozinho NÃO chega a 400.** Medido: o que resta são `GitController`
+(58), `ShellWorkspaceHost` (50), `SearchController` (45), `ProjectTreeController`
+(39), `ShellHeaderHost` (36). Extrair os três controllers restantes leva a ~515 —
+ainda acima. O resto é binding de propriedade e bloco de host, que **é** trabalho
+de composition root e não sai por router. Chegar abaixo de 400 exige um corte mais
+fundo (módulos por domínio, cada um dono do seu controller + routers), e isso é
+decisão de arquitetura — não deve ser improvisada no meio de uma fatia.
+
+**Ordem do débito** (critério da §6: "quem MISTURA responsabilidade primeiro,
 não quem é maior"):
 
 1. `Main.qml` (700) — é o composition root; dobrou de tamanho e virou o lugar

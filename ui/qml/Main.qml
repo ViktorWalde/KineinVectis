@@ -111,43 +111,10 @@ Window {
         terminalActive: coreClient.terminalActive
         terminalPanelVisible: shellController.showBottomPanel
                               && shellController.bottomTab === "terminal"
+        // Pedido ao core mora no RuntimeRequestRouter. Aqui fica so fiacao de
+        // controller para HOST/shell, que nao e IPC.
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
-        }
-        onTerminalOpenRequested: coreClient.terminalOpen()
-        onTerminalInputRequested: function(id, data) {
-            coreClient.terminalInput(id, data);
-        }
-        onTerminalResizeRequested: function(id, cols, rows) {
-            coreClient.terminalResize(id, cols, rows);
-        }
-        onTerminalScrollRequested: function(id, offset) {
-            coreClient.terminalScroll(id, offset);
-        }
-        onTerminalWheelRequested: function(id, col, row, lines, modifiers) {
-            coreClient.terminalWheel(id, col, row, lines, modifiers);
-        }
-        onTerminalCloseRequested: function(id) {
-            coreClient.terminalClose(id);
-        }
-        onRunStartRequested: function(command) {
-            coreClient.runStart(command);
-        }
-        onRunScriptRequested: function(path) {
-            coreClient.runScript(path);
-        }
-        onRunStopRequested: coreClient.runStop()
-        onRunStdinRequested: function(data) {
-            coreClient.runStdin(data);
-        }
-        onSaveRunConfigRequested: function(id, name, command) {
-            coreClient.runConfigSave(id, name, command);
-        }
-        onDeleteRunConfigRequested: function(id) {
-            coreClient.runConfigDelete(id);
-        }
-        onSetActiveRunConfigRequested: function(id) {
-            coreClient.runConfigSetActive(id);
         }
         onRunConfigDialogOpenRequested: function(name, command) {
             shellOverlays.openRunConfigDialogWith(name, command);
@@ -161,25 +128,8 @@ Window {
         id: debugController
 
         workspaceRoot: coreClient.workspaceRoot
-        onStartRequested: function(program) {
-            coreClient.debugStart(program);
-        }
-        onStopRequested: coreClient.debugStop()
-        onContinueRequested: coreClient.debugContinue()
-        onNextRequested: coreClient.debugNext()
-        onStepInRequested: coreClient.debugStepIn()
-        onStepOutRequested: coreClient.debugStepOut()
-        onPauseRequested: coreClient.debugPause()
-        onSetBreakpointsRequested: function(file, lines) {
-            coreClient.debugSetBreakpoints(file, lines);
-        }
-        onStackTraceRequested: coreClient.debugStackTrace()
-        onFrameVariablesRequested: function(frameId) {
-            coreClient.debugVariablesForFrame(frameId);
-        }
-        onVariablesByRefRequested: function(ref) {
-            coreClient.debugVariablesForRef(ref);
-        }
+        // Pedido ao core mora no DebugRequestRouter. Aqui fica so fiacao de
+        // controller para HOST/editor, que nao e IPC.
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
         }
@@ -192,59 +142,8 @@ Window {
         id: gitController
 
         workspaceRoot: coreClient.workspaceRoot
-        onStatusRequested: coreClient.gitStatus()
-        onBranchesRequested: coreClient.gitBranches()
-        onCheckoutRequested: function(branch) {
-            if (editorController.hasModifiedFiles()) {
-                gitController.rejectDirtyOperation();
-                return;
-            }
-            coreClient.gitCheckout(branch);
-        }
-        onBranchCreateRequested: function(name) {
-            if (editorController.hasModifiedFiles()) {
-                gitController.rejectDirtyOperation();
-                return;
-            }
-            coreClient.gitCreateBranch(name, true);
-        }
-        onPullRequested: {
-            if (editorController.hasModifiedFiles()) {
-                gitController.rejectDirtyOperation();
-            } else {
-                coreClient.gitPull();
-            }
-        }
-        onPushRequested: coreClient.gitPush()
-        onStashRequested: function(action, message) {
-            if (editorController.hasModifiedFiles()) {
-                gitController.rejectDirtyOperation();
-                return;
-            }
-            coreClient.gitStash(action, message);
-        }
-        onFileDiffRequested: function(path) {
-            coreClient.gitFileDiff(path);
-        }
-        onStageRequested: function(paths) {
-            coreClient.gitStage(paths);
-        }
-        onUnstageRequested: function(paths) {
-            coreClient.gitUnstage(paths);
-        }
-        onDiscardRequested: function(paths) {
-            coreClient.gitDiscard(paths);
-        }
-        onCommitRequested: function(message) {
-            coreClient.gitCommit(message);
-        }
-        onBlameRequested: function(path) {
-            coreClient.gitBlame(path);
-        }
-        onLogRequested: coreClient.gitLog()
-        onCommitDiffRequested: function(sha) {
-            coreClient.gitCommitDiff(sha);
-        }
+        // Toda a fiacao de pedido — inclusive a guarda de arquivo sujo — mora
+        // no GitRequestRouter.
     }
 
     Connections {
@@ -266,39 +165,16 @@ Window {
         workspaceRoot: coreClient.workspaceRoot
         recentFiles: editorController.recentFiles
         hasActiveEditorFile: editorController.currentTab >= 0
+        // Pedido ao core (inclusive a guarda de replace e os symbols, que
+        // precisam do editor) mora no SearchRequestRouter.
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
         }
         onFocusSearchInputRequested: workspaceHost.focusSearchInput()
         onFocusReplaceInputRequested: workspaceHost.focusSearchReplaceInput()
         onResetAndFocusEverywhereRequested: shellOverlays.resetSearchEverywhereAndFocus()
-        onSearchInFilesRequested: function(query, caseSensitive) {
-            coreClient.searchInFiles(query, caseSensitive);
-        }
-        onReplaceInFilesRequested: function(query, replacement, caseSensitive) {
-            if (editorController.hasModifiedFiles()) {
-                searchController.rejectReplaceForDirtyEditors();
-                return;
-            }
-            coreClient.replaceInFiles(query, replacement, caseSensitive);
-        }
-        onFindFilesRequested: function(query) {
-            coreClient.findFiles(query);
-        }
-        onDocumentSymbolsRequested: {
-            coreClient.requestDocumentSymbols(editorController.currentFilePath(),
-                                              editorController.editorText());
-        }
-        onWorkspaceSymbolsRequested: function(query) {
-            coreClient.requestWorkspaceSymbols(editorController.currentFilePath(),
-                                               editorController.editorText(), query);
-        }
         onOpenAtRequested: function(path, line, column) {
             editorController.openDiagnostic(path, line, column);
-        }
-        onListCommandsRequested: coreClient.listCommands()
-        onReadFileRequested: function(path) {
-            coreClient.readFile(path);
         }
         onCommandAccepted: function(commandId) {
             commandDispatcher.execute(commandId);
@@ -331,63 +207,8 @@ Window {
         editorSurface: workspaceHost.editorSurface
         diagnosticsController: diagnosticsController
         settingsController: settingsController
-        onReadFileRequested: function(path) {
-            coreClient.readFile(path);
-        }
-        onWriteFileRequested: function(path, content, expectedContent) {
-            coreClient.writeFile(path, content, expectedContent);
-        }
-        onDraftSaveRequested: function(path, content) {
-            coreClient.draftSave(path, content);
-        }
-        onDraftClearRequested: function(path) {
-            coreClient.draftClear(path);
-        }
-        onFormatRequested: function(path, content) {
-            coreClient.formatFile(path, content);
-        }
-        onCodeActionsRequested: function(path, content, line, column) {
-            coreClient.requestCodeActions(path, content, line, column);
-        }
-        onCodeActionApplyRequested: function(path, content, actionIndex) {
-            coreClient.applyCodeAction(path, content, actionIndex);
-        }
-        onWorkspaceEditApplyRequested: function(transactionId) {
-            coreClient.applyWorkspaceEdit(transactionId);
-        }
-        onWorkspaceEditCancelRequested: function(transactionId) {
-            coreClient.cancelWorkspaceEdit(transactionId);
-        }
-        onSaveSessionRequested: function(files, activeFile) {
-            coreClient.saveSession(files, activeFile);
-        }
-        onFileChangedNotificationRequested: function(path, content) {
-            coreClient.notifyFileChanged(path, content);
-        }
-        onSemanticTokensRequested: function(path, content, version) {
-            coreClient.requestSemanticTokens(path, content, version);
-        }
-        onSyntaxTreeRequested: function(path, content, version) {
-            coreClient.requestSyntaxTree(path, content, version);
-        }
-        onSwitchSourceHeaderRequested: function(path, content) {
-            coreClient.requestSwitchSourceHeader(path, content);
-        }
-        onDefinitionRequested: function(path, content, line, column) {
-            coreClient.requestDefinition(path, content, line, column);
-        }
-        onHoverRequested: function(path, content, line, column) {
-            coreClient.requestHover(path, content, line, column);
-        }
-        onCompletionRequested: function(path, content, line, column) {
-            coreClient.requestCompletion(path, content, line, column);
-        }
-        onReferencesRequested: function(path, content, line, column) {
-            coreClient.requestReferences(path, content, line, column);
-        }
-        onRenameRequested: function(path, content, line, column, newName) {
-            coreClient.requestRename(path, content, line, column, newName);
-        }
+        // Pedido ao core mora no EditorRequestRouter. O que fica aqui e fiacao
+        // de controller para HOST — nao e IPC, e so o Main.qml enxerga os dois.
         onRenameDialogOpenRequested: function(currentName) {
             workspaceHost.openRenameDialogWithName(currentName);
         }
@@ -403,24 +224,8 @@ Window {
         workspaceRoot: coreClient.workspaceRoot
         hostWidth: root.width
         hostHeight: root.height
-        onListDirRequested: function(path) {
-            coreClient.listDir(path);
-        }
-        onCreateFileRequested: function(path) {
-            coreClient.createFile(path, "");
-        }
-        onCreateDirectoryRequested: function(path) {
-            coreClient.createDirectory(path);
-        }
-        onReadFileRequested: function(path) {
-            coreClient.readFile(path);
-        }
-        onRenamePathRequested: function(from, to) {
-            coreClient.renamePath(from, to);
-        }
-        onDeletePathRequested: function(path) {
-            coreClient.deletePath(path);
-        }
+        // Pedido ao core mora no ProjectTreeRequestRouter. O que a arvore pede a
+        // OUTROS dominios e composicao e fica aqui.
         onRunScriptRequested: function(path) {
             runtimeController.startScript(path);
         }
@@ -524,6 +329,11 @@ Window {
         editorController: editorController
     }
 
+    EditorRequestRouter {
+        coreClient: coreClient
+        editorController: editorController
+    }
+
     JobsEventRouter {
         coreClient: coreClient
         jobsController: jobsController
@@ -540,7 +350,23 @@ Window {
         searchController: searchController
     }
 
+    SearchRequestRouter {
+        coreClient: coreClient
+        searchController: searchController
+        editorController: editorController
+    }
+
+    ProjectTreeRequestRouter {
+        coreClient: coreClient
+        projectTree: projectTree
+    }
+
     RuntimeEventRouter {
+        coreClient: coreClient
+        runtimeController: runtimeController
+    }
+
+    RuntimeRequestRouter {
         coreClient: coreClient
         runtimeController: runtimeController
     }
@@ -550,9 +376,20 @@ Window {
         debugController: debugController
     }
 
+    DebugRequestRouter {
+        coreClient: coreClient
+        debugController: debugController
+    }
+
     GitEventRouter {
         coreClient: coreClient
         gitController: gitController
+    }
+
+    GitRequestRouter {
+        coreClient: coreClient
+        gitController: gitController
+        editorController: editorController
     }
 
     GlobalShortcuts {

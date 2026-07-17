@@ -1908,3 +1908,58 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   então a mudança não alterou nada visível. O seletor (§0.2f passos 2–4) segue
   em aberto.
 
+## Split do Main.qml por domínio de fiação — RequestRouter (2026-07-16)
+
+- Motivo: a catraca de arquitetura travou a camada de shell. O seletor do KV
+  Context foi bloqueado por ela — `Main.qml` (700/400) e `RuntimeController`
+  (494/400) estão em débito e não podem crescer, e são justamente os dois
+  arquivos que qualquer feature de shell precisa tocar. A catraca funcionou:
+  forçou a arquitetura a ceder antes da feature.
+- O padrão já existia pela metade. `ui/qml/ipc/<X>EventRouter.qml` cobria
+  `coreClient → controller` (o que o core manda). O sentido inverso,
+  `controller → coreClient` (o que a UI pede), não tinha casa e morava no
+  composition root. Criado `<X>RequestRouter.qml`, simétrico.
+- Feitos: `EditorRequestRouter` (19 pedidos), `RuntimeRequestRouter` (13),
+  `DebugRequestRouter` (11). `Main.qml`: 700 → 610 linhas.
+- Critério: só pedido ao core entra no router. Fiação de controller para HOST
+  (abrir diálogo, focar find bar) não é IPC e fica no `Main.qml`.
+- O `RuntimeRequestRouter` não interpreta terminal: repassa gesto cru. Em
+  especial `terminalWheel` é transporte — quem decide o que a roda significa é o
+  core (`wheel_action`, 0.60.0), conforme o modo VT.
+- Limite do padrão, medido: extrair Git (58), Search (45) e ProjectTree (39)
+  levaria o `Main.qml` a ~515, ainda acima de 400. O resto é binding de
+  propriedade e bloco de host — é trabalho de composition root e não sai por
+  router. Abaixo de 400 exige módulos por domínio.
+- Armadilha encontrada: `verificar-qml.sh` procura o response file do qmllint em
+  `build/linux-clang-debug-strict` ANTES de `build/dev-local`. Reconstruir só o
+  dev-local faz o qmllint acusar tipo novo como inexistente — é build velho, não
+  erro de código.
+
+## Passo 2 — RequestRouter: até onde o padrão chega (2026-07-16)
+
+- Seis `<X>RequestRouter` extraídos do `Main.qml`: Editor (19 pedidos), Runtime
+  (13), Debug (11), Git (15), Search (7), ProjectTree (6). `Main.qml`: 700 → 537.
+  Gate verde a cada passo (build dev-local + strict, qmllint estrito, catraca,
+  lógica QML).
+- Dois routers recebem `editorController` por dependência real, e está
+  justificado no arquivo: `GitRequestRouter` (checkout/branch/pull/stash mexem na
+  árvore de trabalho e não podem rodar com arquivo sujo — o git sobrescreveria
+  edição não salva) e `SearchRequestRouter` (replace reescreve arquivo; symbols
+  precisam do buffer ativo, cuja fonte de verdade é a UI). A guarda fica num
+  lugar só em vez de espalhada por quem chama.
+- **O padrão tem limite, e ele foi medido.** Toda a fiação de IPC saiu (-163
+  linhas) e o `Main.qml` ficou em 537: 179 de controllers, 120 de hosts, 64 de
+  instanciação de routers, ~170 de Window/Connections/dialogs. Módulos por
+  domínio absorvem os 64 e parte dos 179 — piso ~440-470, ainda acima de 400.
+  A estimativa original do doc 27 ("fecha abaixo de 400 com folga") estava
+  ERRADA e foi corrigida lá (§4.1).
+- Razão estrutural: sem registro/contribuição, composition root cresce
+  linearmente com o número de domínios. É o que VS Code/Zed/IntelliJ resolvem
+  com máquina que este projeto recusou. As 537 linhas não são dívida no sentido
+  da §0.2g — é o trabalho que um composition root de IDE com ~12 domínios tem. O
+  limite de 400 vem da regra genérica, herdada de quando o arquivo tinha 336
+  linhas e não continha a IDE inteira. Decisão em aberto no doc 27 §4.1.
+- **Erro de raciocínio corrigido (doc 27 §4.3):** os routers tiraram linhas do
+  `Main.qml`, NÃO dos arquivos dos controllers. `RuntimeController.qml` continua
+  em 494. Os dois bloqueios do seletor seguem de pé.
+

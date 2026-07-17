@@ -1,0 +1,98 @@
+import QtQuick
+
+// Espelho do EditorEventRouter. Os dois sentidos do IPC do editor sempre
+// existiram, mas so um tinha casa: o EventRouter traz o que o core MANDA
+// (fileLoaded, recovered...), e o que o controller PEDE ao core morava solto no
+// Main.qml. Era metade do peso do composition root — o bloco do
+// EditorController sozinho tinha 72 linhas, quase todas fiacao de pedido.
+//
+// Aqui entra SO pedido ao core. Fiacao de controller para host (abrir dialogo,
+// focar find bar) nao e IPC e continua no Main.qml, onde os dois se enxergam.
+Item {
+    id: root
+
+    property var coreClient: null
+    property var editorController: null
+
+    visible: false
+
+    Connections {
+        target: root.editorController
+
+        function onReadFileRequested(path) {
+            root.coreClient.readFile(path);
+        }
+
+        function onWriteFileRequested(path, content, expectedContent) {
+            root.coreClient.writeFile(path, content, expectedContent);
+        }
+
+        function onDraftSaveRequested(path, content) {
+            root.coreClient.draftSave(path, content);
+        }
+
+        function onDraftClearRequested(path) {
+            root.coreClient.draftClear(path);
+        }
+
+        function onFormatRequested(path, content) {
+            root.coreClient.formatFile(path, content);
+        }
+
+        function onCodeActionsRequested(path, content, line, column) {
+            root.coreClient.requestCodeActions(path, content, line, column);
+        }
+
+        function onCodeActionApplyRequested(path, content, actionIndex) {
+            root.coreClient.applyCodeAction(path, content, actionIndex);
+        }
+
+        function onWorkspaceEditApplyRequested(transactionId) {
+            root.coreClient.applyWorkspaceEdit(transactionId);
+        }
+
+        function onWorkspaceEditCancelRequested(transactionId) {
+            root.coreClient.cancelWorkspaceEdit(transactionId);
+        }
+
+        function onSaveSessionRequested(files, activeFile) {
+            root.coreClient.saveSession(files, activeFile);
+        }
+
+        function onFileChangedNotificationRequested(path, content) {
+            root.coreClient.notifyFileChanged(path, content);
+        }
+
+        function onSemanticTokensRequested(path, content, version) {
+            root.coreClient.requestSemanticTokens(path, content, version);
+        }
+
+        function onSyntaxTreeRequested(path, content, version) {
+            root.coreClient.requestSyntaxTree(path, content, version);
+        }
+
+        function onSwitchSourceHeaderRequested(path, content) {
+            root.coreClient.requestSwitchSourceHeader(path, content);
+        }
+
+        function onDefinitionRequested(path, content, line, column) {
+            root.coreClient.requestDefinition(path, content, line, column);
+        }
+
+        function onHoverRequested(path, content, line, column) {
+            root.coreClient.requestHover(path, content, line, column);
+        }
+
+        function onCompletionRequested(path, content, line, column) {
+            root.coreClient.requestCompletion(path, content, line, column);
+        }
+
+        function onReferencesRequested(path, content, line, column) {
+            root.coreClient.requestReferences(path, content, line, column);
+        }
+
+        function onRenameRequested(path, content, line, column, newName) {
+            root.coreClient.requestRename(path, content, line, column, newName);
+        }
+    }
+}

@@ -52,7 +52,9 @@ set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALI
 set_source_files_properties(qml/git/GitDiscardDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiscardDialog.qml)
 set_source_files_properties(qml/panels/bottom/GitPanel.qml PROPERTIES QT_RESOURCE_ALIAS GitPanel.qml)
 set_source_files_properties(qml/ipc/GitEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitEventRouter.qml)
+set_source_files_properties(qml/ipc/GitRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitRequestRouter.qml)
 set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
+set_source_files_properties(qml/ipc/DebugRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugRequestRouter.qml)
 set_source_files_properties(qml/panels/bottom/DebugPanel.qml PROPERTIES QT_RESOURCE_ALIAS DebugPanel.qml)
 set_source_files_properties(qml/shell/BottomTabBar.qml PROPERTIES QT_RESOURCE_ALIAS BottomTabBar.qml)
 set_source_files_properties(qml/shell/WorkspaceStatusBar.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceStatusBar.qml)
@@ -92,9 +94,13 @@ set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
 set_source_files_properties(qml/ipc/WorkspaceEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceEventRouter.qml)
 set_source_files_properties(qml/ipc/EditorEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EditorEventRouter.qml)
+set_source_files_properties(qml/ipc/EditorRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS EditorRequestRouter.qml)
 set_source_files_properties(qml/ipc/JobsEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS JobsEventRouter.qml)
 set_source_files_properties(qml/ipc/SearchEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SearchEventRouter.qml)
+set_source_files_properties(qml/ipc/ProjectTreeRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRequestRouter.qml)
+set_source_files_properties(qml/ipc/SearchRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS SearchRequestRouter.qml)
 set_source_files_properties(qml/ipc/RuntimeEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeEventRouter.qml)
+set_source_files_properties(qml/ipc/RuntimeRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeRequestRouter.qml)
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
@@ -172,7 +178,9 @@ qt_add_qml_module(kinein-vectis
         qml/git/GitDiscardDialog.qml
         qml/panels/bottom/GitPanel.qml
         qml/ipc/GitEventRouter.qml
+        qml/ipc/GitRequestRouter.qml
         qml/ipc/DebugEventRouter.qml
+        qml/ipc/DebugRequestRouter.qml
         qml/panels/bottom/DebugPanel.qml
         qml/shell/BottomTabBar.qml
         qml/shell/WorkspaceStatusBar.qml
@@ -212,9 +220,13 @@ qt_add_qml_module(kinein-vectis
         qml/search/SearchController.qml
         qml/ipc/WorkspaceEventRouter.qml
         qml/ipc/EditorEventRouter.qml
+        qml/ipc/EditorRequestRouter.qml
         qml/ipc/JobsEventRouter.qml
         qml/ipc/SearchEventRouter.qml
+        qml/ipc/ProjectTreeRequestRouter.qml
+        qml/ipc/SearchRequestRouter.qml
         qml/ipc/RuntimeEventRouter.qml
+        qml/ipc/RuntimeRequestRouter.qml
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
         qml/project/ProjectExplorer.qml
