@@ -1869,3 +1869,20 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   ativo, contradizendo a própria asserção anterior do arquivo.
   `handleTerminalOpened` termina em `selectTerminal(id)` e está correto.
 
+## Autocomplete: a escolha do usuário para de ser desfeita (2026-07-16)
+
+- Bug confirmado e corrigido: `refilter()` no `EditorCompletionController`
+  terminava em `index = 0` incondicionalmente, e `handleResolved()` chama
+  `refilter()`. Toda resposta do servidor desfazia a navegação do usuário —
+  sintoma "preso no primeiro item". A janela é grande: a A3.2 mediu a primeira
+  `completion` do rust-analyzer em 2520 ms, e nesse intervalo o usuário já
+  desceu na lista que o fallback local do Tree-sitter abriu.
+- A suspeita registrada no `PONTO_ATUAL` (tecla capturada por outra camada)
+  estava errada. A cadeia `EditorTextSurface.Keys.onPressed` → `EditorPane` →
+  `ShellWorkspaceHost` → `moveCompletion` → `move()` estava íntegra.
+- `refilter(preservarSelecao)` separa as causas: resposta do servidor preserva
+  (por identidade do `insertText`, não por posição — a lista nova pode vir em
+  outra ordem); usuário digitando zera (prefixo e ranking mudaram, o topo volta
+  a ser a melhor aposta, como VS Code). Item que sumiu cai para o primeiro:
+  seleção fantasma aceitaria item que o usuário não vê.
+

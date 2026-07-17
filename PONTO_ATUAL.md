@@ -372,13 +372,28 @@ internos (`view.context`, `openContext`, `isContext`) podem acompanhar ou não �
 decidir de uma vez para não ficar meio renomeado. Nada disso toca o core: ele não
 conhece o conceito.
 
-**3. Autocomplete travado na primeira sugestão (P2, dogfooding).** Relato do
-autor: a sugestão do LSP fica presa no primeiro item; não dá para selecionar
-outra opção além da que aparece primeiro. Se confirmado, é bloqueio de uso diário
-e passa na frente de polimento. Suspeitos: navegação por seta no
-`EditorCompletionController` (`index`) versus quem consome a tecla antes —
-`EditorPane`/`Keys.onPressed` da superfície. Reproduzir primeiro; provavelmente é
-tecla capturada por outra camada, não o modelo de completion.
+**3. Autocomplete travado na primeira sugestão — CORRIGIDO em 2026-07-16.**
+Confirmado e fechado. **A suspeita registrada estava errada**: a tecla não era
+capturada por outra camada. A cadeia inteira (`EditorTextSurface.Keys.onPressed`
+→ `EditorPane` → `ShellWorkspaceHost` → `moveCompletion` → `move()`) estava
+íntegra, e o `move()` movia.
+
+O índice era **zerado por baixo**. `refilter()` terminava em `index = 0`
+incondicionalmente, e `handleResolved()` chama `refilter()` — então **toda
+resposta do servidor desfazia a navegação do usuário**. A janela é enorme: a
+A3.2 mediu a primeira `completion` do rust-analyzer em **2520 ms**, e nesse
+intervalo o usuário já desceu na lista que o fallback local (Tree-sitter) abriu
+instantaneamente. Sintoma exato do relato: preso no primeiro item.
+
+`refilter(preservarSelecao)` agora separa as duas causas, que exigem
+comportamentos opostos: resposta do servidor **preserva** (por identidade do
+`insertText`, não por posição — a lista nova pode vir em outra ordem); usuário
+digitando **zera** (o prefixo mudou, o ranking mudou junto, o topo volta a ser a
+melhor aposta, como VS Code). Item que sumiu da lista nova cai para o primeiro:
+seleção fantasma aceitaria um item que o usuário não está vendo.
+
+Coberto por 3 checks novos no `tst_completion.qml` — o teste **falhou primeiro**
+(bitmask 1024) e só então passou.
 
 **4. Ícones no app (ver §6): 158 dos 163 SVGs não estão na IDE.** Pré-requisito
 do AppImage "completo" que o autor quer distribuir.

@@ -116,7 +116,9 @@ Item {
         allItems = items;
         lastIncomplete = false;
         fallbackVisible = true;
-        refilter();
+        // Preserva: quando o fallback reabre com o popup já aberto, o usuário
+        // pode ter descido na lista.
+        refilter(true);
     }
 
     // D1 (docs/roadmaps/24): match FUZZY por subsequência (estilo VS Code). O filtro
@@ -138,12 +140,28 @@ Item {
         return j === query.length;
     }
 
-    function refilter() {
+    // `preservarSelecao` separa as duas causas de refiltro, que exigem
+    // comportamentos OPOSTOS no índice:
+    //
+    //   servidor respondeu → PRESERVA. A resposta é assíncrona e chega quando
+    //     chega (a A3.2 mediu 2520 ms na primeira completion do rust-analyzer).
+    //     Nesse intervalo o usuário já desceu na lista que o fallback local
+    //     abriu; zerar aqui apaga a escolha dele por baixo, e o sintoma é o
+    //     popup "preso no primeiro item".
+    //   usuário digitou → ZERA. O prefixo mudou, o ranking do servidor mudou
+    //     junto, e o topo volta a ser a melhor aposta (como VS Code).
+    //
+    // Preserva por IDENTIDADE (o insertText), não por posição: a lista nova
+    // pode ter outra ordem, e manter o número da linha selecionaria outro item.
+    function refilter(preservarSelecao) {
         if (!ready() || prefixStart < 0
                 || prefixStart > surfaceBridge.editorSurface.cursorPosition) {
             popupVisible = false;
             return;
         }
+        const escolhido = preservarSelecao === true && popupVisible
+                && index >= 0 && index < completionItemsModel.count
+                ? completionItemsModel.get(index).insertText : "";
         const prefix = surfaceBridge.text().substring(
                     prefixStart, surfaceBridge.editorSurface.cursorPosition);
         completionItemsModel.clear();
@@ -162,6 +180,17 @@ Item {
             }
         }
         index = 0;
+        if (escolhido !== "") {
+            for (let j = 0; j < completionItemsModel.count; j++) {
+                if (completionItemsModel.get(j).insertText === escolhido) {
+                    index = j;
+                    break;
+                }
+            }
+            // Sumiu da lista nova: cai para o primeiro, o único índice que com
+            // certeza existe. Seleção fantasma seria pior que reset — aceitaria
+            // um item que o usuário não está vendo.
+        }
         popupVisible = completionItemsModel.count > 0;
     }
 
@@ -186,10 +215,10 @@ Item {
             // Lista incompleta: refiltra o cache já (resposta instantânea)
             // e REPEDE ao servidor com o prefixo maior (traz os itens que
             // não couberam no primeiro lote, ex.: cout ao digitar "cou").
-            refilter();
+            refilter(false);
             completionDebounce.restart();
         } else if (popupVisible) {
-            refilter();
+            refilter(false);
         } else {
             completionDebounce.restart();
         }
@@ -201,7 +230,9 @@ Item {
             allItems = items;
             lastIncomplete = isIncomplete === true;
             fallbackVisible = false;
-            refilter();
+            // Preserva: é o caminho do bug. A resposta é assíncrona e não pode
+            // desfazer a navegação que o usuário já fez.
+            refilter(true);
         }
         if (refreshQueued) {
             refreshQueued = false;
