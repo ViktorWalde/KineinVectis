@@ -8,7 +8,6 @@ ui/qml/editor/EditorController.qml 878 400
 ui/qml/editor/EditorDocumentController.qml 507 400
 ui/qml/editor/EditorPane.qml 487 300
 ui/qml/editor/EditorTextController.qml 519 400
-ui/qml/editor/EditorTextSurface.qml 349 300
 ui/qml/git/GitController.qml 403 400
 ui/qml/panels/bottom/DebugPanel.qml 313 300
 ui/qml/panels/bottom/GitPanel.qml 633 300

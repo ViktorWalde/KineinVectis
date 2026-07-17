@@ -14,6 +14,15 @@ QtObject {
     required property TextEdit target
     property bool enabled: true
 
+    // E6 (2026-07-17): rastreador dos fechadores que NOS inserimos
+    // (AutoCloseRegions, C++). O type-over so pula fechador nosso — pular
+    // qualquer fechador engolia o `)` digitado a mao em `foo(bar)`
+    // (divergencia medida contra o Code OSS, docs/diario/18). E' `var` e nao o
+    // tipo C++ de proposito: o tst_autoclose roda em qml-qt6 puro e injeta um
+    // fake, o padrao do tst_completion. null = sem type-over NENHUM: duplicar
+    // um fechador e' visivel e corrigivel; engolir tecla e' silencioso.
+    property var regions: null
+
     // E3: a insercao com dedent vive no EditorTextController, nao aqui.
     signal closerBraceRequested()
 
@@ -52,6 +61,9 @@ QtObject {
             if (/^\s*#\s*include\s+$/.test(beforeCursor)) {
                 root.target.insert(position, "<>");
                 root.target.cursorPosition = position + 1;
+                if (root.regions !== null) {
+                    root.regions.notePairInserted(position + 1);
+                }
                 return true;
             }
         }
@@ -64,23 +76,30 @@ QtObject {
             root.target.remove(start, end);
             root.target.insert(start, character + selected + closer);
             root.target.select(start + 1, end + 1);
+            if (root.regions !== null) {
+                root.regions.notePairInserted(end + 1);
+            }
             return true;
         }
-        if (root.pairClosers[character] !== undefined && !hasSelection
-                && content.charAt(position) === character) {
+        if (!hasSelection && content.charAt(position) === character) {
             // Barra invertida ESCAPA a aspa: em `"a\` + cursor + `"`, quem digita
-            // `"` quer INSERIR uma aspa escapada, nao pular a que esta ali. Sem
-            // esta guarda o caractere do usuario e' engolido (medido 2026-07-17;
-            // invariante confirmado no Code OSS, que nunca faz type-over de aspa
-            // precedida de barra).
+            // `"` quer INSERIR uma aspa escapada, nao pular a que esta ali —
+            // mesmo quando a aspa ali foi auto-inserida (medido 2026-07-17;
+            // invariante do Code OSS, que nunca faz type-over de aspa precedida
+            // de barra).
             const escapada = (character === "\"" || character === "'")
                 && position > 0 && content.charAt(position - 1) === "\\";
-            if (escapada) {
-                return false;
+            // type-over pela ORIGEM: pula somente o fechador que NOS inserimos
+            // (e' o `regions` quem sabe). Fechador escrito a mao nao e' nosso:
+            // cai adiante e, se nenhum ramo consumir, o TextEdit insere o
+            // caractere normalmente. Sem gate por pairClosers: assim o `>` do
+            // `#include <>` tambem faz type-over do fechador auto-inserido.
+            if (!escapada && root.regions !== null
+                    && root.regions.isAutoClosedAt(position)) {
+                root.regions.consumeAt(position);
+                root.target.cursorPosition = position + 1;
+                return true;
             }
-            // type-over: pula o fechador já presente em vez de duplicar.
-            root.target.cursorPosition = position + 1;
-            return true;
         }
         if (closer !== undefined) {
             const previous = position > 0 ? content.charAt(position - 1) : "";
@@ -88,7 +107,11 @@ QtObject {
             const quote = character === "\"" || character === "'";
             // Aspas coladas em palavra não duplicam (don't → don''t);
             // colchetes/parênteses antes de palavra ou aspas também não.
-            if (quote && (root.isWordChar(previous) || root.isWordChar(next))) {
+            // Aspa antes de OUTRA aspa tampouco (era o type-over cego que
+            // mascarava este caso; sem ele, a regra fica explicita — como o
+            // Code OSS, que nao auto-fecha aspa antes de aspa).
+            if (quote && (root.isWordChar(previous) || root.isWordChar(next)
+                          || next === "\"" || next === "'")) {
                 return false;
             }
             if (!quote && (root.isWordChar(next) || next === "\"" || next === "'")) {
@@ -96,6 +119,9 @@ QtObject {
             }
             root.target.insert(position, character + closer);
             root.target.cursorPosition = position + 1;
+            if (root.regions !== null) {
+                root.regions.notePairInserted(position + 1);
+            }
             return true;
         }
         if (character === "}" && !hasSelection) {

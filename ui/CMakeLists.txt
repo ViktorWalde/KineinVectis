@@ -126,6 +126,7 @@ set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALI
 set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
 set_source_files_properties(qml/editor/EditorAutoClosePairs.qml PROPERTIES QT_RESOURCE_ALIAS EditorAutoClosePairs.qml)
+set_source_files_properties(qml/editor/EditorKeyRoutes.qml PROPERTIES QT_RESOURCE_ALIAS EditorKeyRoutes.qml)
 set_source_files_properties(qml/editor/EditorGutter.qml PROPERTIES QT_RESOURCE_ALIAS EditorGutter.qml)
 set_source_files_properties(qml/editor/EditorHoverPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorHoverPopup.qml)
 set_source_files_properties(qml/editor/EditorCompletionPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionPopup.qml)
@@ -256,6 +257,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorTabsBar.qml
         qml/editor/EditorTextSurface.qml
         qml/editor/EditorAutoClosePairs.qml
+        qml/editor/EditorKeyRoutes.qml
         qml/editor/EditorGutter.qml
         qml/editor/EditorHoverPopup.qml
         qml/editor/EditorCompletionPopup.qml
@@ -283,6 +285,8 @@ qt_add_qml_module(kinein-vectis
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
+        src/auto_close_regions.cpp
+        src/auto_close_regions.h
         src/typing_perf_harness.cpp
         src/typing_perf_harness.h
         src/window_chrome_controller.cpp
@@ -364,6 +368,28 @@ if(BUILD_TESTING)
     add_test(NAME tst_editor_highlighter COMMAND tst_editor_highlighter)
     # offscreen: o gate roda sem servidor grafico (mesma razao do smoke).
     set_tests_properties(tst_editor_highlighter PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+    # E6: rastreio dos fechadores auto-inseridos (QTextCursor). Mesmo padrao do
+    # alvo acima — inclusive as duas excecoes de codigo GERADO pelo MOC.
+    qt_add_executable(tst_auto_close_regions
+        tests/tst_auto_close_regions.cpp
+        src/auto_close_regions.cpp
+        src/auto_close_regions.h
+    )
+    target_include_directories(tst_auto_close_regions PRIVATE src)
+    target_link_libraries(tst_auto_close_regions
+        PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Test)
+    kinein_enable_strict_compiler_options(tst_auto_close_regions)
+    set_source_files_properties(
+        "${CMAKE_CURRENT_BINARY_DIR}/tst_auto_close_regions_autogen/mocs_compilation.cpp"
+        PROPERTIES COMPILE_OPTIONS -w
+    )
+    set_source_files_properties(tests/tst_auto_close_regions.cpp
+        PROPERTIES COMPILE_OPTIONS -Wno-ctad-maybe-unsupported
+    )
+    add_test(NAME tst_auto_close_regions COMMAND tst_auto_close_regions)
+    set_tests_properties(tst_auto_close_regions PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()
 

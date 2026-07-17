@@ -23,9 +23,21 @@ Item {
         visible: false
     }
 
+    // Fake do AutoCloseRegions (C++): o rastreio REAL — QTextCursor
+    // acompanhando edicoes — e' coberto por ui/tests/tst_auto_close_regions.cpp;
+    // aqui interessa a POLITICA (quando o pares consulta/anota/consome), e um
+    // fake com a mesma superficie basta. Padrao do tst_completion.
+    property QtObject fakeRegions: QtObject {
+        property var marks: ({})
+        function notePairInserted(p) { marks[p] = true; }
+        function isAutoClosedAt(p) { return marks[p] === true; }
+        function consumeAt(p) { delete marks[p]; }
+    }
+
     EditorAutoClosePairs {
         id: pares
         target: editor
+        regions: root.fakeRegions
         onCloserBraceRequested: root.braceRequests += 1
     }
 
@@ -38,16 +50,22 @@ Item {
         editor.text = texto;
         editor.cursorPosition = posicao;
         editor.select(posicao, posicao);
+        fakeRegions.marks = ({});
     }
 
     Component.onCompleted: {
         let falhas = 0;
 
         // 1) Auto-close basico: o abridor traz o fechador e o cursor fica DENTRO.
+        // E o ciclo completo (E6): o fechador foi ANOTADO, entao digitar `)` em
+        // seguida faz type-over — pula, nao duplica — e CONSOME a anotacao.
         estado("", 0);
         if (!pares.handleTypingKey(tecla("("))) falhas += 1;
         if (editor.text !== "()") falhas += 2;
         if (editor.cursorPosition !== 1) falhas += 4;
+        if (!pares.handleTypingKey(tecla(")"))) falhas += 67108864;
+        if (editor.text !== "()" || editor.cursorPosition !== 2) falhas += 134217728;
+        if (root.fakeRegions.isAutoClosedAt(1)) falhas += 268435456; // consumido
 
         // 2) Surround: com selecao ativa, o abridor ENVOLVE em vez de
         // substituir, e a selecao continua sobre o mesmo texto (autoSurround
@@ -106,25 +124,43 @@ Item {
         if (!pares.handleTypingKey(tecla("}"))) falhas += 524288;
         if (root.braceRequests !== 1) falhas += 1048576;
 
-        // 10) DIVERGENCIA MEDIDA EM 2026-07-17, fatia propria. O VS Code so faz
-        // type-over do fechador que ELE auto-inseriu: com autoClosingOvertype
-        // "auto" (o padrao) ele confere se o caractere no cursor esta na lista
-        // que ele mesmo gerou, e so entao pula. Nos pulamos QUALQUER fechador no
-        // cursor, entao em "foo(bar)" digitado a mao o ")" do usuario e'
-        // engolido — ele perde um caractere que quis digitar.
-        // O check abaixo registra o comportamento ATUAL para que a correcao seja
-        // uma decisao, nao um susto: quando o rastreio de auto-insercao entrar,
-        // ele passa a falhar e ESTE comentario e' o mapa do que mudar.
+        // 10) DIVERGENCIA RESOLVIDA EM 2026-07-17 (E6). Fechador escrito a MAO
+        // nao e' nosso: o handler NAO consome, e o TextEdit insere o `)` que o
+        // usuario digitou — em vez de engoli-lo, como fazia o type-over cego.
+        // (VS Code autoClosingOvertype "auto": so pula o auto-inserido.)
         estado("foo(bar)", 7);       // cursor antes do ")" escrito a mao
-        if (!pares.handleTypingKey(tecla(")"))) falhas += 2097152;
+        if (pares.handleTypingKey(tecla(")"))) falhas += 2097152;
         if (editor.text !== "foo(bar)") falhas += 4194304;
-        if (editor.cursorPosition !== 8) falhas += 8388608;
+        if (editor.cursorPosition !== 7) falhas += 8388608;
 
-        // 11) Barra invertida escapa a aspa: NAO faz type-over. Em `x = "a\` com
-        // o cursor antes da `"` final, digitar `"` insere uma aspa escapada — nos
-        // pulavamos e engoliamos o caractere (medido e corrigido em 2026-07-17;
-        // invariante do Code OSS). Diferente do check 10: aqui ja batemos.
+        // 10b) Sem rastreador ligado (regions null), type-over NENHUM: duplicar
+        // e' visivel e corrigivel, engolir tecla e' silencioso.
+        pares.regions = null;
+        estado("()", 1);
+        if (pares.handleTypingKey(tecla(")"))) falhas += 536870912;
+        pares.regions = root.fakeRegions;
+
+        // 10c) Aspa antes de aspa escrita a mao nao duplica nem pula: insercao
+        // simples (o type-over cego mascarava este caso; Code OSS nao
+        // auto-fecha aspa antes de aspa).
+        estado("\"", 0);
+        if (pares.handleTypingKey(tecla("\""))) falhas += 1073741824;
+
+        // 10d) O `>` do `#include <>` tambem e' rastreado: digitar `>` sobre o
+        // fechador auto-inserido pula em vez de duplicar.
+        estado("#include ", 9);
+        pares.handleTypingKey(tecla("<"));           // vira "#include <>", anota 10
+        if (!pares.handleTypingKey(tecla(">"))) falhas += 16384 * 131072; // 2^31
+        if (editor.text !== "#include <>" || editor.cursorPosition !== 11) {
+            falhas += 16384 * 262144; // 2^32
+        }
+
+        // 11) Barra invertida escapa a aspa: NAO faz type-over MESMO quando a
+        // aspa no cursor foi auto-inserida (o fake a marca de proposito). Em
+        // `x = "a\` + cursor + `"`, digitar `"` insere uma aspa escapada —
+        // invariante do Code OSS, que poe a regra da barra ACIMA da origem.
         estado('x = "a\\"', 7);      // anterior = \  proximo = "
+        root.fakeRegions.marks[7] = true;
         if (pares.handleTypingKey(tecla('"'))) falhas += 16777216;
         if (editor.cursorPosition !== 7) falhas += 33554432;   // nao pode ter pulado
 

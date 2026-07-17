@@ -1507,6 +1507,33 @@ nativo aqui é `QTextCursor` (que o Qt reposiciona sozinho a cada edição) no l
 C++, ou invalidação explícita da região em QML. Decidir isso é design, não
 digitação — e misturá-lo na extração seria a §4 regra 9 ao contrário.
 
+### Fatia E6 — type-over pela ORIGEM do fechador (FEITA em 2026-07-17)
+
+A divergência do check 10 acima foi corrigida no mesmo dia, depois que a E5
+entregou onde testar a parte sutil.
+
+- **`AutoCloseRegions`** (`ui/src/auto_close_regions.{h,cpp}`): um `QTextCursor`
+  selecionando cada fechador auto-inserido — o Qt o reposiciona sozinho em
+  digitação, colagem, remoção e undo. Validação por preguiça: registro cujo
+  texto sumiu morre sozinho (selecionar ≠ 1 caractere = morto; undo NÃO
+  ressuscita, semântica deliberada e fixada em teste). Cap de 64.
+- **`EditorAutoClosePairs`** consulta/anota/consome via `property var regions`
+  (fake no harness, padrão do tst_completion; `null` = type-over NENHUM —
+  duplicar é visível, engolir tecla é silencioso). A regra da barra invertida
+  fica ACIMA da origem, como no Code OSS. Ganhos colaterais: o `>` do
+  `#include <>` agora faz type-over; aspa antes de aspa virou regra explícita
+  (o type-over cego a mascarava).
+- **A fiação foi paga com extração por responsabilidade**, não com trapaça: o
+  bloco `Keys.onPressed` (~99 linhas de navegação de popup/edição inteligente)
+  virou `EditorKeyRoutes.qml`, e a **EditorTextSurface saiu do baseline de
+  débito** (estava 349/300; agora abaixo do limite). Todos os arquivos da
+  cadeia estavam em débito — sem a extração, a catraca barraria a fiação em
+  qualquer lugar, e estaria certa.
+- **Testes, todos provados por mutação antes de valer:**
+  `tst_auto_close_regions.cpp` (10 casos; sem a âncora do cursor, 4 caem) e o
+  harness com o ciclo anota→pula→consome (mutação para o type-over cego acusa
+  bitmask 1889533952 — os 5 checks de origem, exatamente).
+
 ### Fatia M3.4 — Blame no editor + histórico básico (design 2026-07-10)
 
 Fecha o M3 (Git MVP). Duas capacidades de LEITURA: "quem mudou esta

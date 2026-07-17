@@ -112,11 +112,25 @@ Rectangle {
     // as REGRAS de par sao do EditorAutoClosePairs.
     property bool autoCloseEnabled: true
 
+    // E6: o rastreio de origem vive num QTextCursor (C++), que o Qt reposiciona
+    // sozinho a cada edicao — um int de posicao em QML nao sobrevive a uma.
+    AutoCloseRegions {
+        id: autoCloseRegions
+        document: textEditor.textDocument
+    }
+
     EditorAutoClosePairs {
         id: autoClosePairs
         target: textEditor
         enabled: root.autoCloseEnabled
+        regions: autoCloseRegions
         onCloserBraceRequested: root.closerBraceRequested()
+    }
+
+    EditorKeyRoutes {
+        id: keyRoutes
+        surface: root
+        pairs: autoClosePairs
     }
 
     function cursorPointIn(item) {
@@ -262,101 +276,7 @@ Rectangle {
                 root.textEdited(text);
             }
             Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Backspace
-                        && autoClosePairs.handlePairBackspace()) {
-                    event.accepted = true;
-                    return;
-                }
-                if (autoClosePairs.handleTypingKey(event)) {
-                    event.accepted = true;
-                    return;
-                }
-                if (root.actionsVisible) {
-                    if (event.key === Qt.Key_Down) {
-                        root.actionsMoveRequested(1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Up) {
-                        root.actionsMoveRequested(-1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        root.actionsAcceptRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Escape) {
-                        root.actionsDismissRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                }
-                if (root.completionVisible) {
-                    if (event.key === Qt.Key_Down) {
-                        root.completionMoveRequested(1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Up) {
-                        root.completionMoveRequested(-1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Return
-                            || event.key === Qt.Key_Enter
-                            || event.key === Qt.Key_Tab) {
-                        root.completionAcceptRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Escape) {
-                        root.completionDismissRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                }
-                if (event.key === Qt.Key_Escape) {
-                    if (root.usagesVisible) {
-                        root.usagesDismissRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (root.hoverVisible) {
-                        root.hoverDismissRequested();
-                        event.accepted = true;
-                    }
-                }
-                if (event.key === Qt.Key_Tab
-                        && (event.modifiers & Qt.ShiftModifier)) {
-                    root.unindentRequested();
-                    event.accepted = true;
-                    return;
-                }
-                if (event.key === Qt.Key_Tab) {
-                    root.indentRequested();
-                    event.accepted = true;
-                    return;
-                }
-                if (event.key === Qt.Key_Backtab) {
-                    root.unindentRequested();
-                    event.accepted = true;
-                    return;
-                }
-                if (event.key === Qt.Key_Home
-                        && (event.modifiers === Qt.NoModifier
-                            || event.modifiers === Qt.ShiftModifier)) {
-                    // E3: Home inteligente; Ctrl+Home (início do
-                    // documento) segue com o TextEdit.
-                    root.smartHomeRequested(
-                        event.modifiers === Qt.ShiftModifier);
-                    event.accepted = true;
-                    return;
-                }
-                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                        && event.modifiers === Qt.NoModifier) {
-                    root.newlineRequested();
+                if (keyRoutes.route(event)) {
                     event.accepted = true;
                 }
             }
