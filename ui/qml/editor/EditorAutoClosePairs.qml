@@ -68,6 +68,16 @@ QtObject {
         }
         if (root.pairClosers[character] !== undefined && !hasSelection
                 && content.charAt(position) === character) {
+            // Barra invertida ESCAPA a aspa: em `"a\` + cursor + `"`, quem digita
+            // `"` quer INSERIR uma aspa escapada, nao pular a que esta ali. Sem
+            // esta guarda o caractere do usuario e' engolido (medido 2026-07-17;
+            // invariante confirmado no Code OSS, que nunca faz type-over de aspa
+            // precedida de barra).
+            const escapada = (character === "\"" || character === "'")
+                && position > 0 && content.charAt(position - 1) === "\\";
+            if (escapada) {
+                return false;
+            }
             // type-over: pula o fechador já presente em vez de duplicar.
             root.target.cursorPosition = position + 1;
             return true;

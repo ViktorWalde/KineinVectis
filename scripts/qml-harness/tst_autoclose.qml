@@ -120,6 +120,14 @@ Item {
         if (editor.text !== "foo(bar)") falhas += 4194304;
         if (editor.cursorPosition !== 8) falhas += 8388608;
 
+        // 11) Barra invertida escapa a aspa: NAO faz type-over. Em `x = "a\` com
+        // o cursor antes da `"` final, digitar `"` insere uma aspa escapada — nos
+        // pulavamos e engoliamos o caractere (medido e corrigido em 2026-07-17;
+        // invariante do Code OSS). Diferente do check 10: aqui ja batemos.
+        estado('x = "a\\"', 7);      // anterior = \  proximo = "
+        if (pares.handleTypingKey(tecla('"'))) falhas += 16777216;
+        if (editor.cursorPosition !== 7) falhas += 33554432;   // nao pode ter pulado
+
         // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
         // O mask vai para a SAIDA (onde nao trunca) e o exit so diz passou/falhou.
         if (falhas !== 0) console.error("FALHAS bitmask=" + falhas);
