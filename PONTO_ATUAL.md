@@ -92,6 +92,50 @@ baseline — os dois são trapaça. Contar linha de Rust exige cortar no
 **E4 — resto conhecido, P3, sem bloqueio.** `assistant_terminal_width` no
 protocolo (detalhe no §0.2j); AppImage só depois de L1 e dos ícones (§0.2d-5).
 
+### Depois do E2: para onde o projeto vai (decidido em 2026-07-17)
+
+Estruturado em **`docs/roadmaps/28-plataforma-de-plugins-e-verticais.md`**. Resumo,
+para não haver dúvida ao retomar:
+
+```text
+E2 (L1)  a PLATAFORMA. Enquanto ela nao existir, plugin nenhum tem onde nascer
+         e cada ferramenta nova vira mais um handler ad-hoc.
+   |
+L2-L4    C/C++/RUST SOLIDOS primeiro — diagnostico/teste/cobertura num contrato
+         so, Project Graph, DAP e profiling. E' profundidade no que ja existe.
+         Docker e banco sao superficie nova: IDE com Docker e sem cobertura de
+         teste e' demo.
+   |
+L5       RemoteContext. **DOCKER entra aqui** — container e' contexto remoto
+         (`container://` ao lado de `ssh://`), nao nivel proprio.
+L5.5     BANCO DE DADOS. conexao -> schema browser -> query console -> result grid.
+L6       EMBARCADOS.
+```
+
+**Decisão do autor: Docker e banco são NATIVOS, de primeira classe** — domínios do
+core como `git`/`lsp`/`terminal`, não plugins de terceiro. Implementar do zero, e
+o autor aceitou que é demorado. O `integration` v1 dá o descriptor/health/config
+(como aparecem para o usuário); a funcionalidade é Rust nosso.
+
+**FATO QUE MUDA A REFERÊNCIA, verificado em 2026-07-17:** o **IntelliJ IDEA
+Community NÃO tem Database Tools** — é Ultimate. Não há UI de banco lá para
+estudar. O idioma visual do Community continua sendo a referência; a referência
+*funcional* de cliente de banco é o DBeaver (a auditar).
+
+### UI/UX — dívida contínua e explícita, atravessa todos os níveis
+
+Registro do autor (2026-07-17): **a UI/UX da IDE tem muito a ser otimizado e
+polido**, tendo o **IntelliJ IDEA Community** como referência — *"essa UI/UX da
+JetBrains é muito agradável/confortável para o desenvolvimento"*.
+
+E a regra, que já é contrato (`ARCHITECTURE.md` §2.1): **não é copiar e colar.**
+Importa-se invariante, decisão, modo de falha e estratégia de teste; nunca código,
+runtime, IntelliJ Platform/Swing ou modelo interno. O que se vê lá é
+**redesenhado** no fluxo nativo Qt/QML, com o Theme e a iconografia da Kinein. Onde
+o contexto diverge (C/C++/Rust, offline-first, sem host de extensões, frameless com
+chrome próprio), **vence o contexto da Kinein** — não a fidelidade ao IntelliJ.
+Adaptação realista e pragmática. Detalhe em `docs/roadmaps/28` §7.
+
 ### Armadilhas que já custaram horas — leia antes de validar
 
 ```text
@@ -1296,7 +1340,8 @@ apenas porque sua CLI é fácil de chamar.
 | L2 | resultado comum para diagnóstico/teste/cobertura, artefatos e Jobs canceláveis | cargo-audit/deny, Cppcheck/Clang Static Analyzer, Valgrind, GTest/Unity/Criterion, gcov/lcov e cobertura Rust |
 | L3 | Project Graph/targets/perfis explicáveis, cache provenance e geração de artefatos | Bear, ccache/sccache, Bloaty, Doxygen e Sphinx/Breathe |
 | L4 | DAP sólido, sessão de profiling, importador de relatório e permissões do kernel | lldb/gdb DAP, Heaptrack, perf/Hotspot, tokio-console; MI/ELF/DWARF apenas por lacuna |
-| L5 | `RemoteContext`: host keys, credenciais externas, path mapping, desconexão, sync e Jobs remotos | OpenSSH/Open Remote UX; SSHFS e bindings SSH somente como alternativas; distcc não entra ainda |
+| L5 | `RemoteContext`: host keys, credenciais externas, path mapping, desconexão, sync e Jobs remotos. **DOCKER ENTRA AQUI** — container é um contexto remoto (`container://` ao lado de `ssh://`), não um nível próprio; **domínio NATIVO do core** (decisão do autor, 2026-07-17) | OpenSSH/Open Remote UX; spec `devcontainer.json` (aberta) como formato de entrada; Podman a auditar (rootless muda a permissão); SSHFS e bindings SSH só como alternativas |
+| L5.5 | **BANCO DE DADOS** — **domínio NATIVO** (decisão do autor, 2026-07-17), não plugin de terceiro. Vertical própria: conexão (credencial vem do L5) → schema browser (leitura) → query console (query é Job cancelável, L2) → result grid (o componente mais caro; não é o começo). Um driver só, não uma matriz | **O IntelliJ Community NÃO serve de referência: Database Tools é Ultimate** (verificado 2026-07-17). Candidatos a auditar: DBeaver, Database Navigator, SQLTools. Rust puro > FFI (precedente ADR-0004) |
 | L6 | `Target`/`Device`/`Probe`, detecção USB, package trust, flash preview e confirmação | udev, CMSIS-DAP/Pack, DTS/DTB, OpenOCD, pyOCD, probe-rs, avrdude, esptool, stlink, QEMU e Tera |
 | L7 | streaming com backpressure, timestamp, canais, retenção e segurança de rede/dispositivo | sigrok, SWO/ITM, CTF/LTTng, MQTT/CoAP/Mosquitto, lm-sensors e D-Bus allowlisted |
 | L8 | armazenamento medido e API de visualização isolada do editor/core | banco local ou de séries temporais escolhido por benchmark, OpenGL/Qt rendering e computação numérica específica |

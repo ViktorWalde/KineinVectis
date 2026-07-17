@@ -2293,3 +2293,39 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   primeiras foram tratadas como suficientes, confirmaram hipoteses reais (H1, H2)
   que NAO eram a causa, e custaram a fatia R1 inteira. A captura resolveu em um
   minuto. Evidencia listada como obrigatoria e' gate, nao sugestao.
+
+## Docker e banco de dados: nativos, de primeira classe (2026-07-17)
+
+- **Decisao do autor.** Docker e banco de dados serao integrados de forma NATIVA,
+  como "cidadaos de primeira classe" — dominios do core como `git`/`lsp`/
+  `terminal`, nao plugins de terceiro. Implementar do zero, e o autor aceitou
+  explicitamente que e' demorado. Coerente com a arquitetura ja escolhida: sem
+  registro dinamico, sem host de extensoes, tudo compilado junto e auditavel.
+- Os dois lados sao necessarios e nao se confundem: o `integration` v1 (L1) e' a
+  PLATAFORMA (descriptor/health/config — como a coisa aparece para o usuario); o
+  dominio nativo e' a FUNCIONALIDADE. Sem o L1 a IDE nao sabe DIZER que Docker
+  existe; sem o dominio ela nao sabe FAZER nada com ele. O L1 segue sendo o
+  gargalo mesmo com a decisao de nativo.
+- **Docker pertence ao L5 (RemoteContext), nao a um nivel proprio.** Container e'
+  contexto remoto: filesystem proprio, path mapping, ciclo de vida, execucao fora
+  do host, falha por desconexao. Mesmo contrato do SSH — `container://` ao lado de
+  `ssh://`. Nivel proprio duplicaria o RemoteContext inteiro.
+- **FATO VERIFICADO NA FONTE, e derruba a premissa do pedido:** o **IntelliJ IDEA
+  Community NAO tem Database Tools** — e' exclusivo do Ultimate (DataGrip e'
+  produto pago a parte). Nao ha UI de banco no Community para estudar. Isso nao
+  cancela o objetivo; troca a fonte: o idioma VISUAL do Community continua sendo a
+  referencia, mas a referencia FUNCIONAL de cliente de banco e' o DBeaver (a
+  auditar pelo gate). O plugin Docker, esse, e' instalavel no Community — da' para
+  estudar o comportamento, so nao vem de fabrica.
+- **UI/UX: divida continua e explicita.** Registro do autor: a UI/UX da IDE tem
+  muito a ser otimizado/polido, com o IntelliJ IDEA Community como referencia —
+  "essa UI/UX da JetBrains e' muito agradavel/confortavel para o desenvolvimento".
+  A regra que ja e' contrato (§2.1) vale inteira: **nao e' copiar e colar**.
+  Importa-se invariante, decisao, modo de falha e estrategia de teste; nunca
+  codigo, runtime ou IntelliJ Platform/Swing. Onde o contexto da Kinein diverge
+  (C/C++/Rust, offline-first, sem host de extensoes, frameless), vence o contexto
+  da Kinein. Adaptacao realista e pragmatica.
+- Ordem registrada: **C/C++/Rust solidos (L2-L4) ANTES de Docker e banco.** L2-L4
+  e' profundidade no que ja existe; Docker e banco sao superficie nova. Uma IDE
+  com Docker e sem cobertura de teste e' uma demo. Detalhe em
+  `docs/roadmaps/28-plataforma-de-plugins-e-verticais.md`.
