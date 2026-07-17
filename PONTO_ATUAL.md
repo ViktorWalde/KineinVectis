@@ -67,11 +67,18 @@ FASE 0 — Estabilizar o loop de dogfooding (destrava o autor HOJE)
 FASE 1 — Pagar os god-files que BLOQUEIAM feature (curto prazo, contínuo)
   Metodo fixo (molde: E6): teste primeiro -> corte por RESPONSABILIDADE (nao
   linhas, §4 regra 9) -> GUIAIA da area re-medido no mesmo commit. 1 por fatia.
-  [ ] 1.1  EditorController.qml     878/400  bloqueia qualquer feature de editor
-  [ ] 1.2  core_client_dispatch.cpp 757/500  a §5 ja manda dividir por dominio
+  [~] 1.1  EditorController.qml     878->842  code actions extraidos (fatia 1.1).
+           NAO resolvido: e' coordenador (fachada em cadeia), ~10 fatias para 400
+           e' o pior custo/beneficio. ADIADO: quem tocar feature de editor paga o
+           resto (regra "quem toca a area paga a dela"). Medicao no ContextoIA.
+  [x] 1.2  core_client_dispatch.cpp 757->384  RESOLVIDO 2026-07-17: dividido por
+           dominio (§5) em _language/_debug/_build. Movimento puro (byte-identico
+           ao HEAD), saiu do baseline. Pendencia: QTest de dispatch e' fatia
+           propria (o movimento nao mudou comportamento; compilador+linker + smoke
+           foram a rede).
   [ ] 1.3  GitPanel.qml             633/300  bloqueia feature de Git
   [ ] 1.4  editor_highlighter.cpp   818/500  ja tem teste (languageForPath)
-  Saida: os 4 que bloqueiam feature saem do baseline; GUIAIA §5 re-medido.
+  Saida: os que bloqueiam feature saem do baseline; GUIAIA §5 re-medido.
 
 FASE 2 — L1: dominio `integration` v1 (o gargalo do medio prazo)
   [ ] 2.1  E2 — validar pelo inventario das ferramentas ja detectadas, zero

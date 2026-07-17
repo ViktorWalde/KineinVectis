@@ -384,7 +384,9 @@ Regra curta:
 ```text
 ui/qml/workspace/* + ui/qml/project/*
     ↕ ui/qml/ipc/WorkspaceEventRouter.qml
-ui/src/core_client_requests.cpp + core_client_dispatch.cpp
+ui/src/core_client_requests.cpp + core_client_dispatch*.cpp
+    (dispatch dividido por dominio, 2026-07-17: core_client_dispatch.cpp tem o
+     roteador central; _language/_debug/_build tem os handlers de cada dominio)
     ↕ crates/kinein-protocol/src/workspace.rs
 crates/kinein-core/src/handlers/workspace.rs
     → crates/kinein-core/src/workspace/*
