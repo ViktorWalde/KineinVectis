@@ -69,6 +69,9 @@ bash scripts/verificar-docs.sh
 passo "scripts/verificar-presets.sh (preset que sobrescreve o binario do atalho)"
 bash scripts/verificar-presets.sh
 
+passo "scripts/verificar-icone.sh (icone com fonte unica)"
+bash scripts/verificar-icone.sh
+
 passo "scripts/verificar-arquitetura.sh (catraca da regra de split)"
 bash scripts/verificar-arquitetura.sh
 

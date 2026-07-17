@@ -41,10 +41,48 @@ cursor/TUI    APROVADO         pelo autor em 2026-07-17. Fecha R0-R3.
 IA na IDE     FORA DE ESCOPO   0 ocorrencias em ui/qml. Nao reabrir.
 debito        17 arquivos      catraca verde (conta so CODIGO desde
                                2026-07-17); EditorTextSurface SAIU no E6
-gates         7                +presets (preset que sobrescreve o atalho)
+gates         8                +presets, +icone (fonte unica ui/assets)
 teste C++     2 alvos          ui/tests: 23 casos (highlighter 13,
                                auto-close regions 10); ctest no gate
 harnesses QML 15               +tst_autoclose (a E1 nunca teve sonda)
+```
+
+### CRONOGRAMA EM FASES — o mapa linear (aprovado pelo autor, 2026-07-17)
+
+Ordem linear e cirurgica: nenhuma fase abre antes de a anterior FECHAR, e cada
+uma tem um criterio de saida BINARIO (nao "esta bom?", mas "X acontece? sim/nao").
+E' a defesa contra se perder nas ramificacoes conforme o projeto cresce. Marque
+`[x]` ao concluir; o detalhe de cada item vive nas secoes E1-E6 e no roadmap 28.
+
+```text
+FASE 0 — Estabilizar o loop de dogfooding (destrava o autor HOJE)
+  [x] 0.1  Icone: fonte unica ui/assets/app-icon.png; atalho via tema hicolor
+           (nome, nao caminho); atualizar-tudo reinstala o atalho; gate
+           verificar-icone. imagens/ passa a ser so' imagens. FEITO 2026-07-17.
+  [ ] 0.2  E1 — flake do `tools::` (O_CLOEXEC antes do exec). Destrava o gate.
+  Saida: trocar o icone -> UM comando -> icone novo no GNOME; gate 10x sem flake.
+
+FASE 1 — Pagar os god-files que BLOQUEIAM feature (curto prazo, contínuo)
+  Metodo fixo (molde: E6): teste primeiro -> corte por RESPONSABILIDADE (nao
+  linhas, §4 regra 9) -> GUIAIA da area re-medido no mesmo commit. 1 por fatia.
+  [ ] 1.1  EditorController.qml     878/400  bloqueia qualquer feature de editor
+  [ ] 1.2  core_client_dispatch.cpp 757/500  a §5 ja manda dividir por dominio
+  [ ] 1.3  GitPanel.qml             633/300  bloqueia feature de Git
+  [ ] 1.4  editor_highlighter.cpp   818/500  ja tem teste (languageForPath)
+  Saida: os 4 que bloqueiam feature saem do baseline; GUIAIA §5 re-medido.
+
+FASE 2 — L1: dominio `integration` v1 (o gargalo do medio prazo)
+  [ ] 2.1  E2 — validar pelo inventario das ferramentas ja detectadas, zero
+           dependencia nova (recomendacao §0.2e). Nada de L2+ comeca sem isto.
+  Saida: existe handlers/integration.rs, contrato descriptor/health/config de pe.
+
+FASE 3 — L2-L4: C/C++/Rust SOLIDOS (a profundidade vertical)  [roadmap 28]
+  [ ] 3.1  L2  diagnostico/teste/cobertura num contrato so + Jobs cancelaveis
+               (Cppcheck, Clang Analyzer, cargo-audit/deny, Valgrind, gcov/lcov)
+  [ ] 3.2  L3  project graph, targets/perfis explicaveis, cache provenance
+  [ ] 3.3  L4  DAP solido + profiling (Heaptrack, perf/Hotspot)
+  Saida: rodar teste + ver cobertura de um projeto C/C++/Rust DENTRO da Kinein,
+         sem terminal. So' entao Docker (L5), banco (L5.5), embarcados (L6).
 ```
 
 ### A trilha, em ordem de DESBLOQUEIO

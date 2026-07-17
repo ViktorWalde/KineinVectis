@@ -340,6 +340,13 @@ fi
 mv -f -- "$manifest_tmp" "$MANIFEST"
 cat "$MANIFEST"
 
+# Reinstala o atalho de Desenvolvimento no fim: o proposito do script e' que
+# o atalho rode o estado ATUAL, e isso inclui o icone. Sem este passo, trocar o
+# icone e rodar o script nao mudava o atalho — a fonte da verdade
+# (ui/assets/app-icon.png) so' chegava ao gnome-shell por instalacao explicita.
+log_step "reinstalando o atalho de Desenvolvimento (binario + icone)"
+bash "$REPO_ROOT/scripts/instalar-atalho.sh"
+
 }
 
 fluxo_appimage() {
