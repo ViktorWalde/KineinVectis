@@ -221,10 +221,16 @@ Regras:
 5. **`CoreClient` é fachada única.** Não criar `CoreClient2` nem clientes QML
    paralelos. A implementação C++ deve ser dividida internamente por domínio
    quando crescer.
-6. **Regra de split da UI.** Arquivo QML visual acima de ~300 linhas,
-   controller/store acima de ~400 linhas ou qualquer arquivo que combine
+6. **Regra de split da UI.** Arquivo QML visual acima de ~300 **linhas de
+   código**, controller/store acima de ~400, ou qualquer arquivo que combine
    renderização + estado + IPC deve ser quebrado antes de nova feature crescer
    em cima dele.
+
+   **Linha de código não inclui comentário nem linha em branco** (desde
+   2026-07-17; mesma contagem da §4 regra 4, mesmo gate). E o número é o alarme,
+   não o critério: quem manda é a responsabilidade — **§4 regra 9**, que vale
+   igual para a UI e traz os três casos medidos em que a catraca disparou e o
+   diagnóstico certo foi diferente em cada um.
 
    **Verificada pelo gate desde 2026-07-16** (`scripts/verificar-arquitetura.sh`,
    dentro do `verificar.sh`). Regra que mora só em `.md` não segura
@@ -293,6 +299,30 @@ Regras que mantêm isso saudável:
    - `workspace/` → `error`, `detect`, `open`, `create`.
    O `mod.rs` só declara submódulos, re-exporta a API pública e guarda os
    aliases/constantes compartilhadas.
+
+   O peso das duas condições **não é o mesmo** — misturar responsabilidade é a
+   doença, o número é só o alarme. A regra 9 é quem manda nisso; leia-a antes de
+   quebrar qualquer arquivo.
+
+   **Comentário NÃO é linha de código, e o gate mede assim** (2026-07-17).
+   Comentário, linha em branco e teste co-localizado saem da conta — o que conta
+   é código. O motivo é o mesmo que já valia para os testes: *contar o arquivo
+   inteiro pune justamente quem faz o certo, e a catraca passa a empurrar na
+   direção errada*. Um invariante medido, escrito onde o próximo leitor tropeça
+   nele, é o que impede a fatia inútil; cobrar o arquivo por explicar-se empurra
+   para apagá-lo. **Não é licença para inchar:** 300 linhas de código com 200 de
+   comentário continua sendo um arquivo de 300 de código, e se ele mistura
+   responsabilidade a regra pega igual — o número nunca foi o juiz.
+
+   O efeito foi medido antes de a regra entrar, não estimado: **23 → 18 arquivos
+   em débito**. Cinco estavam lá só por se explicarem (`lib.rs`, `EditorFindBar`,
+   `SearchPanel`, `TerminalViewport`, `SearchController`), e `terminal.rs` caiu de
+   955 para 657 — era cobrado por 298 linhas de comentário e branco, quase um
+   terço do arquivo. Já os três god-files de C++ não se moveram do débito
+   (`editor_highlighter.cpp` 818, `core_client_dispatch.cpp` 757,
+   `core_client_requests.cpp` 551, todos contra 500): a dívida deles é de código,
+   e é isso que a regra tem que continuar cobrando.
+
 5. **Visibilidade.** Dentro de uma pasta-módulo: itens internos usados entre
    submódulos irmãos usam `pub(super)` (não `pub(crate)`, que o clippy `nursery`
    rejeita como redundante; não `pub`, que o `unreachable_pub` rejeita). Só a API
@@ -440,6 +470,47 @@ Regras que mantêm isso saudável:
     **E gate que grita falso é pior que gate nenhum: ensina a ignorar.** Por isso
     o `verificar-docs.sh` entende que uma seção "## Resultado 2026-07-06" data
     tudo dentro dela, e a catraca corta no `#[cfg(test)]`.
+
+12. **Comentário técnico, não narração** (decisão do autor, 2026-07-17).
+    Comentário existe para dizer o que o código **não consegue**: a razão, o
+    invariante, a medição, a armadilha. Não para repetir a linha abaixo, nem para
+    narrar o processo de quem escreveu. Ele não fala com quem pediu a mudança nem
+    com quem revisa o PR — fala com **quem abrir o arquivo daqui a seis meses, sem
+    contexto nenhum**. Todo comentário que só faz sentido durante a autoria (“ajustei
+    conforme pedido”, “agora está correto”, “aqui eu optei por…”) é ruído no dia
+    seguinte ao merge.
+
+    ```text
+    NAO — o codigo ja diz, ou fala com quem nao vai ler:
+      // incrementa o contador
+      contador += 1;
+      // Corrigido conforme solicitado; agora o fluxo esta certo.
+      // Aqui eu decidi usar um mapa porque achei mais limpo.
+
+    SIM — diz o que o codigo nao consegue, e prova:
+      // O QSyntaxHighlighter marca o documento como alterado mesmo quando so' o
+      // FORMATO mudou (medido no Qt 6.11.1: texto identico, contentsChanged=1).
+      // Sem esta barreira cada passada de realce se apresenta como edicao do
+      // usuario, e o autocomplete volta ao primeiro item sozinho.
+    ```
+
+    **O teste: apague o comentário — o que se perde?** Se a resposta é “nada, o
+    código já dizia”, era ruído. Se é “o próximo a mexer aqui reintroduz o bug”,
+    é o comentário mais barato do repositório. Os casos da §1.3 são todos assim:
+    cada linha daquela tabela custou horas para alguém.
+
+    **Datar transforma afirmação em registro.** “medido no Qt 6.11.1”, “2026-07-17”
+    — sem data, um número vira afirmação sobre HOJE e o `verificar-docs.sh` cobra.
+    Com data, é histórico honesto e ninguém o mede contra o presente.
+
+    **Cite a fonte quando o comentário depende dela** (§1.3, âncora 3): versão do
+    Qt, revisão do Code OSS estudada, seção da spec. Comentário que afirma
+    comportamento de API sem fonte é a API imaginada com outra roupa.
+
+    Esta regra é o par da 4: comentário não entra na contagem de linhas
+    **justamente para que escrevê-lo nunca seja um custo**. As duas juntas dizem
+    a mesma coisa por dois lados — o gate não cobra por explicar, e em troca o
+    que se escreve tem que explicar de verdade.
 
 O `kinein-protocol` segue a mesma ideia: **um módulo por domínio** (`rpc`,
 `workspace`, `fs`, `lsp`, `build`, …) re-exportado flat pelo `lib.rs`. Um tipo

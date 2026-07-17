@@ -60,19 +60,64 @@ def limite_ui(caminho: str) -> int:
 
 
 def linhas_de_codigo(caminho: str) -> int:
-    """Linhas FORA dos testes, como a §4 manda contar.
+    """Linhas de CODIGO: fora dos testes, fora dos comentarios, fora do branco.
 
-    Em Rust o teste unitario e co-localizado (`#[cfg(test)] mod tests`): contar
-    o arquivo inteiro puniria justamente quem testa bem, e a catraca passaria a
-    empurrar na direcao errada. Na UI nao ha teste inline (os harnesses vivem em
-    scripts/qml-harness), entao o corte nao acha nada e o numero e o arquivo
-    todo — a mesma regra serve aos dois sem virar excecao.
+    A §4 sempre disse "linhas de CODIGO fora dos testes". Ate 2026-07-17 esta
+    funcao contava linhas de TEXTO, e o gate contradizia a regra que ele mesmo
+    cita — a classe de mentira que o verificar-docs.sh existe para pegar.
+
+    O argumento ja estava aqui, aplicado so' aos testes: contar o arquivo
+    inteiro "puniria justamente quem testa bem, e a catraca passaria a empurrar
+    na direcao errada". Vale igual para comentario. Um invariante medido, escrito
+    onde o proximo leitor tropeca nele, e' o que impede a fatia inutil; cobrar o
+    arquivo por explicar-se empurra na direcao de apagar justamente isso — e a
+    propria catraca chama de trapaca ("NAO corte uma linha qualquer para caber").
+    Comentario nao e' volume: e' o que faz 400 linhas serem legiveis.
+
+    MEDIDO ANTES E DEPOIS, porque a mudanca podia ser autoengano — e o "depois"
+    corrigiu o "antes". Nos tres god-files de C++ a diferenca e' pequena (1% a 8%:
+    editor_highlighter.cpp 910 -> 818; core_client_dispatch.cpp 804 -> 757;
+    core_client_requests.cpp 660 -> 551) e nenhum sai do debito: seguem acima de
+    500 so' de codigo, a divida deles e' real. Mas no REPOSITORIO o efeito foi
+    outro: 23 -> 18 arquivos em debito. Cinco estavam la' apenas por se
+    explicarem — lib.rs, EditorFindBar, SearchPanel, TerminalViewport e
+    SearchController. E `terminal.rs` caiu 955 -> 657: era cobrado por 298 linhas
+    de comentario e branco, quase um terco do arquivo.
+
+    Ou seja: a catraca vinha mandando cinco arquivos "refatorarem" o que ja estava
+    certo, e cobrando do melhor documentado do core como se fosse o pior. A regra
+    corrige a DIRECAO do incentivo; para quem esta gordo de codigo mesmo, nao muda
+    nada — que e' exatamente o que se quer dos dois lados.
+
+    Nao ha parser aqui de proposito: `//`, `/*...*/` e `#` cobrem Rust, C++, QML e
+    JS, que e' tudo que este repositorio tem. Uma linha de codigo com comentario
+    ao lado conta como CODIGO (o corte e' pelo inicio da linha) — cortar pelo meio
+    exigiria entender string e regex, e um contador que erra em silencio seria
+    pior que o texto cru que ele substitui.
     """
     texto = pathlib.Path(caminho).read_text()
     corte = texto.find("#[cfg(test)]")
     if corte >= 0:
         texto = texto[:corte]
-    return len(texto.splitlines())
+
+    codigo = 0
+    em_bloco = False
+    for linha in texto.splitlines():
+        s = linha.strip()
+        if not s:
+            continue
+        if em_bloco:
+            if "*/" in s:
+                em_bloco = False
+            continue
+        if s.startswith("/*"):
+            if "*/" not in s[2:]:
+                em_bloco = True
+            continue
+        if s.startswith("//") or s.startswith("#"):
+            continue
+        codigo += 1
+    return codigo
 
 
 achados = []
