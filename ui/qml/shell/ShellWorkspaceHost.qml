@@ -11,6 +11,7 @@ Item {
     property var editorController
     property var jobsController
     property var runtimeController
+    property var contextAgentController
     property var debugController
     property var gitController
     property var diagnosticsController
@@ -130,17 +131,13 @@ Item {
                          && root.shellController.bottomTab === "debug"
             toolsActive: root.shellController.showBottomPanel
                          && root.shellController.bottomTab === "tools"
-            // Ativo quando a aba visivel do terminal E uma sessao de
-            // contexto. Nao ha painel proprio: o estado vem do terminal.
-            contextActive: root.shellController.showBottomPanel
-                           && root.shellController.bottomTab === "terminal"
-                           && root.runtimeController.activeTerminalIsContext
+            contextActive: root.contextAgentController.contextSessionVisible
             onExplorerToggled: root.shellController.toggleExplorer()
             onSearchRequested: root.searchController.openSearchPanel()
             onGitRequested: root.shellController.toggleBottomTab("git")
             onBuildRequested: root.shellController.toggleBottomTab("build")
             onDebugRequested: root.shellController.toggleBottomTab("debug")
-            onContextRequested: root.runtimeController.openContext()
+            onContextRequested: root.contextAgentController.openContext()
             onToolsRequested: root.shellController.toggleBottomTab("tools")
         }
 

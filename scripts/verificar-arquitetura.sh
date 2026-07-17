@@ -131,6 +131,10 @@ while read -r caminho linhas lim; do
     if ! grep -q "^$caminho " "$BASELINE"; then
         echo "✗ NOVO acima do limite: $caminho ($linhas linhas, limite $lim)" >&2
         echo "  Quebre antes de crescer em cima ($(regra "$caminho"))." >&2
+        echo "  ATENCAO: o criterio e RESPONSABILIDADE, nao tamanho. Este numero" >&2
+        echo "  so manda VOCE OLHAR. Pergunte 'o que esta misturado aqui?' — se o" >&2
+        echo "  arquivo faz UMA coisa so, o errado pode ser a categoria, nao ele." >&2
+        echo "  Split que nao deixa mais claro nao e split, e cerimonia (§4 regra 9)." >&2
         falhou=1
     fi
 done <<< "$atual"
@@ -143,6 +147,11 @@ while read -r caminho linhas lim; do
         echo "✗ CRESCEU em debito: $caminho ($antes -> $linhas, limite $lim)" >&2
         echo "  Este arquivo ja passa do limite; nao pode engordar." >&2
         echo "  Regra: $(regra "$caminho")" >&2
+        echo "  NAO corte uma linha qualquer para caber, e NAO suba o baseline:" >&2
+        echo "  os dois sao trapaca. Olhe primeiro a SUA MUDANCA — se ela poe" >&2
+        echo "  neste arquivo responsabilidade que e de outro dono, devolva-a e o" >&2
+        echo "  arquivo encolhe sozinho. Se a sua mudanca esta certa e o arquivo e" >&2
+        echo "  que e gordo, o debito dele e fatia PROPRIA (§4 regra 9)." >&2
         falhou=1
     fi
 done <<< "$atual"

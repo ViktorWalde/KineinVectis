@@ -9,6 +9,7 @@ Item {
     property var searchController: null
     property var runtimeController: null
     property var runConfigController: null
+    property var contextAgentController: null
     property var debugController: null
     property var gitController: null
     property var diagnosticsController: null
@@ -24,6 +25,7 @@ Item {
         searchController.clear();
         runtimeController.clear();
         runConfigController.clear();
+        contextAgentController.clear();
         debugController.clear();
         gitController.clear();
         diagnosticsController.clear();

@@ -12,6 +12,7 @@ Item {
     property var shellController: null
     property var runtimeController: null
     property var runConfigController: null
+    property var contextAgentController: null
     property var gitController: null
     property var settingsController: null
     property bool aboutVisible: false
@@ -23,6 +24,7 @@ Item {
 
     signal appMenuActionRequested(string action)
     signal appMenuDismissed()
+    signal toolsDetectionRequested()
 
     anchors.fill: parent
 
@@ -206,6 +208,22 @@ Item {
                                 runConfigDialog.currentName(),
                                 runConfigDialog.currentCommand())
         onCancelRequested: root.runConfigController.cancelConfigDialog()
+    }
+
+    // KV Context: a escolha do agente, e so ela. Existe ANTES da sessao —
+    // escolhido o agente, some e quem roda e o terminal normal.
+    ContextAgentSelector {
+        id: contextAgentSelector
+
+        visible: root.contextAgentController.selectorVisible
+        z: 95
+        anchors.centerIn: parent
+        agentsModel: root.contextAgentController.agentsModel
+        onChosen: function(agentId) {
+            root.contextAgentController.choose(agentId);
+        }
+        onDismissRequested: root.contextAgentController.dismiss()
+        onRedetectRequested: root.toolsDetectionRequested()
     }
 
     ProjectEntryContextMenu {

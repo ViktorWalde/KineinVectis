@@ -200,15 +200,12 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
   Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
 
 PRÓXIMO GESTO
-1. **Seletor de agente do KV Context** (§0.2f). Decidido pelo autor em
-   2026-07-16. Hoje o atalho abre terminal comum e o usuario digita `claude`;
-   antes havia seletor Claude/Codex, removido POR ASSOCIACAO junto com o
-   aiBridge. O seletor nunca foi o problema — a politica no core era.
-   Desenho e criterio de falha completos em §0.2f. Resumo da linha:
-   detectar (`tools.detect`, ja existe) pode ficar no core; executar nao.
-   Se aparecer `if programa == "claude"` no core, a fatia saiu errada.
-   Aproveitar para renomear "KV Context" -> "Agente Auxiliar" (§0.2d-2): o
-   seletor e o lugar natural, e evita mexer duas vezes nos mesmos 6 pontos.
+1. **Seletor de agente do KV Context — FEITO em 2026-07-17** (§0.2j), no worktree
+   e não commitado. A linha do §0.2f foi respeitada: detectar ficou no core
+   (`tools.detect`), executar mora na UI, e nenhum `if programa == "claude"`
+   entrou no core. **Falta o rename** "KV Context" -> "Agente Auxiliar"
+   (§0.2d-2): o seletor e' o lugar natural e evita mexer duas vezes nos mesmos
+   6 pontos.
 2. Depois: harness Qt tecla->frame (`docs/roadmaps/21` §A3.3, design pronto) —
    o autor retoma para feedback. Fecha a ultima afirmacao de A3 que depende de
    impressao visual.
@@ -636,6 +633,74 @@ a precedência tem de ser explícita no contrato, não implícita no código.
 
 Recomendação: **opção 3 primeiro** (inventário valida o `integration` v1 sem
 dependência), depois decidir 1 vs 2 para o EditorConfig com o contrato já de pé.
+
+### 0.2j Seletor do KV Context — FEITO (2026-07-17)
+
+Os dois bloqueios do §0.2j caíram e o gesto foi validado rodando. Estado no
+worktree, ainda não commitado; base `f7f472b`.
+
+**BLOQUEIO 1 — era o `\r`, e a suspeita descartada estava certa: só foi
+verificada no arquivo errado.** O `.qml` realmente não tem CR cru — o CR nasce na
+GERAÇÃO. O `qmlcachegen` (Qt 6.11.1) interpreta o escape `\r` e emite o byte CR
+**cru dentro do literal C++**:
+
+```text
+AppDomains_qml.cpp:5496   s.v2_35 = QStringLiteral("<CR 0x0D>");
+```
+
+O pré-processador trata o CR como fim de linha, o literal não fecha e o erro sai
+como "unterminated argument list" 3800 linhas adiante. Medido, não deduzido: o
+`\n` é escapado corretamente e o mesmo arquivo compila. O `submitShellInput`
+nunca provou nada sobre isso — ele **não é compilado para C++** (o `qmlcachegen`
+converte só parte das funções); o `\r` quebrou por ter caído num handler que é.
+Bug do Qt, contornado com `"\n"` — que é o que o PTY precisa de qualquer forma.
+
+**BLOQUEIO 2 — pago, e o corte não foi de linhas.** O `RuntimeController` perdeu
+o **conceito** de KV Context, não só as funções: `grep -i context` nele não
+devolve nada (393 linhas). No lugar dos blocos específicos ele ganhou um
+mecanismo **genérico** — `openLabeledTerminal(label, kind)` carimba na aba um
+rótulo e um `kind` **opaco**, devolvido em `terminalOpened(id, kind)`; ele nunca
+interpreta o `kind`. Isso resolveu sozinho a fronteira que estava em aberto: o
+timeout guarda a *marca pendente* (dele, e agora genérica) e ficou; `contextSeq`
+é numeração de KV Context e foi junto.
+
+O `ContextAgentController` (195) é dono do KV Context inteiro: quem é agente, a
+escolha, o comando, quando a sessão abre, como a aba se chama e quando o ícone do
+rail acende. Recebe `runtimeController` por propriedade e escuta `terminalOpened`
+por `Connections` **dentro de si** — sinal escutado no composition root foi a
+armadilha que já custou duas fatias.
+
+**Terceiro caso da regra 9, e é o mais afiado** (registrado na `ARCHITECTURE.md`):
+a catraca reprovou o `ShellWorkspaceHost` por **+1 linha** (582 → 583). O defeito
+não era o arquivo (é composition host; o split dele é fatia própria) nem a
+categoria — era **a minha mudança**, que punha política de KV Context (`showBottomPanel
+&& bottomTab === "terminal" && activeTerminalIsContext`) num host visual.
+Devolvida ao dono como `contextSessionVisible`, o arquivo caiu para **579** sem
+ninguém cortar linha. Quando a catraca dispara há três suspeitos — a mudança, a
+categoria, o arquivo — e o reflexo é olhar só o último.
+
+**Verificado (não só compilado):**
+
+- `tst_multi_terminal` reescrito para os dois controllers. **Testado por mutação:
+  6 mutações, 6 pegas** — inclusive uma que passou verde na primeira tentativa e
+  expôs check meu que era mentira (a aba comum não recebia o comando por sair
+  cedo no `kind`, não pela limpeza que eu dizia testar).
+- **Gesto real dirigido headless com o `ContextAgentSelector` VISUAL**, que nenhum
+  harness jamais carregou. Técnica: copiar `build/dev-local/ui/KineinVectis`,
+  remover a linha `prefer :/KineinVectis/` do `qmldir` e apontar o runner com
+  `-I` — assim os `.qml` do módulo carregam de disco em vez do `qrc`. É o jeito
+  de testar componente visual real headless; hoje vive só no scratchpad.
+- Gate: `fmt`, `clippy`, C++, qmllint estrito, catraca e lógica QML verdes. A
+  suíte Rust reprova no flake **conhecido** do §0.2h (`tools::`), que reproduz sem
+  uma linha de Rust tocada.
+
+**Contrato preservado:** o seletor só existe ANTES da sessão. Escolhido o agente,
+some e o que roda é o terminal normal — mesmo `terminal.open`, renderer, grade,
+roda (0.60.0) e cursor. `TerminalViewport`/grade/cursor/`wheel_action` intactos.
+O core segue travado por `ai_clis_are_detected_exactly_like_any_other_tool`.
+
+**Falta:** renomear "KV Context" → "Agente Auxiliar" (§0.2d-2) — o seletor é o
+lugar natural.
 
 ### 0.2i Os testes de lógica QML não conseguiam reprovar (achado e CORRIGIDO em 2026-07-16)
 

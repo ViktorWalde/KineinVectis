@@ -2129,3 +2129,52 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   fiação QML se valida rodando, não compilando.
 - Verificado: qmllint estrito limpo e a IDE sobe até o primeiro frame (182 ms)
   sem um TypeError.
+
+## Seletor do KV Context: o conceito sai do RuntimeController (2026-07-17)
+
+- O seletor Claude/Codex voltou (§0.2f/§0.2j). `ContextAgentController.qml` (195)
+  é dono do **KV Context inteiro**: quem é agente, a escolha, o comando (vindo do
+  `path` DETECTADO, nunca de literal), quando a sessão abre, o nome da aba e
+  quando o ícone do rail acende. `ContextAgentSelector.qml` (148) é só a escolha —
+  o `AssistantPanel` antigo carregava render/input/scroll, um terminal PARALELO,
+  e isso não voltou.
+- **O corte no `RuntimeController` foi de CONCEITO, não de linhas.** Ele não
+  perdeu só as funções de contexto: `grep -i context` nele não devolve mais nada.
+  Em vez de blocos específicos ganhou um mecanismo genérico —
+  `openLabeledTerminal(label, kind)` carimba rótulo e um `kind` **opaco** na aba,
+  devolvido em `terminalOpened(id, kind)`, e ele nunca interpreta o `kind`. A
+  fronteira que o §0.2j mandava "decidir com cuidado" se resolveu sozinha: o
+  timeout guarda a marca pendente (dele, agora genérica) e ficou; `contextSeq` é
+  numeração de KV Context e foi junto. 414 -> 393.
+- **`\r` quebrava o build, e não era o `.qml`.** O `qmlcachegen` do Qt 6.11.1
+  interpreta o escape e emite o byte CR **cru dentro do `QStringLiteral` gerado**;
+  o pré-processador trata o CR como fim de linha e o erro sai como "unterminated
+  argument list" 3800 linhas adiante. `\n` é escapado corretamente. O
+  `submitShellInput` nunca provou nada sobre isso — ele não é compilado para C++;
+  o `\r` só quebrou por cair num handler que é. Medido no `.cpp` gerado.
+- **Terceiro caso da regra 9 (`ARCHITECTURE.md` §4).** A catraca reprovou o
+  `ShellWorkspaceHost` por **+1 linha**. O defeito não era o arquivo (composition
+  host: split é fatia própria) nem a categoria — era **a mudança**, que punha
+  política de KV Context num host visual. Devolvida ao dono como
+  `contextSessionVisible`, o arquivo caiu 583 -> 579 sem ninguém cortar linha.
+  Regra registrada: quando a catraca dispara há três suspeitos — **a sua mudança,
+  a categoria, o arquivo** — e o reflexo é olhar só o último, que errou em dois
+  dos três casos medidos. E o teste de um corte por responsabilidade não é o
+  número: é o **vocabulário**. Se o arquivo ainda nomeia o domínio que você diz
+  ter extraído, você moveu código e manteve a responsabilidade.
+- **Teste de mutação virou parte do trabalho, não enfeite.** 6 mutações no
+  produto, 6 reprovadas pelo `tst_multi_terminal`. Uma sobreviveu na primeira
+  tentativa e expôs um check MEU que era mentira: "aba comum não herda o comando"
+  passava porque o controller sai cedo no `kind`, não pela limpeza que o check
+  dizia exercitar. Cenário real (segunda sessão de contexto sem escolha nova)
+  agora coberto. É o §0.2i aplicado antes de o bug nascer.
+- **Como testar componente VISUAL real headless** (técnica nova, hoje só no
+  scratchpad): os `.qml` do módulo existem em disco em
+  `build/dev-local/ui/KineinVectis`, mas o `qmldir` tem `prefer :/KineinVectis/`
+  e manda o engine no `qrc`, que o runner não enxerga. Copiar a pasta, remover
+  essa linha e apontar `qml -I <copia>` carrega o módulo REAL de disco. Foi assim
+  que o `ContextAgentSelector` (Theme/KvIcon/KvButton) rodou fora da IDE.
+- Verificado além do build: gesto real dirigido (seletor abre sem PTY, ausente não
+  é escolhível, escolha abre a sessão, comando digitado, rail acende), gate verde
+  em fmt/clippy/C++/qmllint/catraca/lógica QML. A suíte Rust reprova no flake
+  conhecido do §0.2h, que reproduz sem uma linha de Rust tocada.

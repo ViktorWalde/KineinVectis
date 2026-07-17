@@ -32,6 +32,7 @@ Item {
     readonly property alias settingsController: settingsController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
+    readonly property alias contextAgentController: contextAgentController
     readonly property alias debugController: debugController
     readonly property alias gitController: gitController
     readonly property alias searchController: searchController
@@ -118,6 +119,18 @@ Item {
         onSetRequested: function(scope, values) {
             root.coreClient.settingsSet(scope, values);
         }
+    }
+
+    // KV Context inteiro: escolher o agente e rotular a aba e POLITICA e vive na
+    // UI. O core so detecta; o RuntimeController so mantem a sessao.
+    ContextAgentController {
+        id: contextAgentController
+
+        toolsList: workspaceController.toolsList
+        // Qualificado pelo alias do root: dentro deste arquivo `runtimeController`
+        // e o nome da propriedade E o id, e a propriedade do proprio objeto vence
+        // na cadeia de escopo — sem o `root.` isto seria auto-referencia.
+        runtimeController: root.runtimeController
     }
 
     // Configuracoes salvas saem do RuntimeController: "guardar como rodar um

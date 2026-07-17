@@ -294,7 +294,66 @@ Regras que mantêm isso saudável:
    está errado, o caminho é discuti-lo e registrar o porquê no ADR/documento do
    domínio; contorná-lo em silêncio é o vício que a §1.1 documenta.
 
-9. **A regra 4 é verificada por catraca desde 2026-07-16.**
+9. **O critério é RESPONSABILIDADE. Tamanho é sintoma, não regra**
+   (decisão do autor, 2026-07-16).
+
+   > A catraca mede linhas porque é o que um script consegue medir. Ela é
+   > **detector de fumaça, não o incêndio.** Quando dispara, a pergunta certa é
+   > *"que responsabilidade está misturada aqui?"* — nunca *"como corto linhas
+   > até passar?"*.
+
+   O "OU" da regra 4 ("mistura responsabilidade **OU** passa de ~400–500
+   linhas") não faz do tamanho um critério independente: ele é o gatilho
+   automatizável que manda **ir olhar**. Quem decide o corte é a
+   responsabilidade, e o corte é **pragmático** — se não deixa o código mais
+   claro para quem vai ler, não é split, é cerimônia.
+
+   Os três casos medidos em 2026-07-16/17 — a catraca disparou nos três, e o
+   diagnóstico certo foi diferente em cada um:
+
+   ```text
+   RuntimeController 414   catraca CERTA, e o alvo era o ARQUIVO. O tamanho
+                           apontava mistura real: terminais + KV Context + run
+                           configs. Corte por responsabilidade (494 -> 397).
+
+   AppDomains 325          catraca ERRADA: erro de CATEGORIA. O arquivo faz UMA
+                           coisa (compor dominios). Quebra-lo por tamanho gerou
+                           13 propriedades de pass-through — nada ficou mais
+                           claro e "onde X e ligado" passou a ter duas
+                           respostas. 300 e limite de QML visual, e composicao
+                           nao e visual. Corrigiu-se a categoria, nao o arquivo.
+
+   ShellWorkspaceHost 583  catraca CERTA, e o alvo era a MUDANCA. Ela disparou
+                           por +1 linha de fiacao legitima num arquivo gordo por
+                           motivos antigos. O defeito nao estava no arquivo (e
+                           composition host: split e fatia propria) nem na
+                           categoria — estava no diff, que punha politica de KV
+                           Context num host visual. Devolvida ao dono, o arquivo
+                           caiu para 579 sem ninguem "cortar linhas".
+   ```
+
+   **Quando a catraca dispara, há três suspeitos, nesta ordem: a sua mudança, a
+   categoria, o arquivo.** O reflexo é olhar só o terceiro — e foi o terceiro que
+   errou em dois dos três casos. Antes de quebrar nada, pergunte se o que você
+   está *acrescentando* pertence ali.
+
+   **O teste de um corte por responsabilidade não é o número — é o vocabulário.**
+   Depois de mover o KV Context para fora, `grep -i context RuntimeController.qml`
+   não devolve nada: o arquivo perdeu o **conceito**, não só as linhas. Se o
+   arquivo ainda nomeia o domínio que você diz ter extraído, você moveu código e
+   manteve a responsabilidade — o número desceu e o acoplamento ficou. Um corte
+   que sobrevive a esse teste quase nunca precisa de justificativa de tamanho.
+
+   **Consequência prática.** Arquivo acima do limite que faz **uma coisa só** não
+   deve ser quebrado: ou a categoria está errada (corrija-a, explicitamente), ou
+   o débito fica congelado até existir um corte que melhore a leitura. Ficar
+   acima do limite fazendo uma coisa é melhor do que ficar abaixo fazendo
+   ginástica. E as duas saídas fáceis de um débito que cresce são trapaça:
+   **cortar uma linha qualquer para caber** e **subir o baseline** — a primeira é
+   cerimônia, a segunda é a §1.1 se repetindo. **Os dois extremos se evitam:**
+   monólito que cresce calado, e desacoplamento inútil para satisfazer um número.
+
+10. **A regra 4 é verificada por catraca desde 2026-07-16.**
    `scripts/verificar-arquitetura.sh` (dentro do `verificar.sh`) conta as linhas
    **fora dos testes** — o corte é o `#[cfg(test)]`, para não punir quem testa
    junto — e reprova arquivo novo acima de 500 ou arquivo em débito que cresça.

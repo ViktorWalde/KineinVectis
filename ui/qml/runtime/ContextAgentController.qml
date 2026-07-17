@@ -1,0 +1,202 @@
+import QtQuick
+
+// KV Context: o conceito INTEIRO mora aqui — o que e um agente, qual foi
+// escolhido, o que e digitado, quando a sessao abre, como a aba se chama e
+// quando o icone do rail acende.
+//
+// O RuntimeController mantem sessoes de terminal e NAO sabe que "KV Context"
+// existe: ele so carimba na aba o rotulo e o `kind` que lhe pedem, e devolve o
+// `kind` em `terminalOpened`. Essa e a fronteira — manter sessao de terminal
+// nao e saber o que uma delas significa.
+//
+// A LINHA, e ela e fina (§0.2f):
+//
+//   DETECTAR  claude/codex existem no PATH?  -> CAPACIDADE. Vive no core, e o
+//             core ja faz: sao entradas do KNOWN_TOOLS como cargo ou clangd,
+//             sem nenhum ramo por programa.
+//   EXECUTAR  como o agente e rodado?        -> POLITICA. Vive AQUI. Foi
+//             politica por programa no core que o 0.59.0 removeu, e ela nao
+//             volta.
+//
+// Saber que `claude` e `codex` sao agentes e politica, e por isso a lista mora
+// nesta camada: o core nao conhece o conceito de "agente de IA". Ele so responde
+// "existe no PATH? onde?".
+//
+// Este controller nao abre PTY, nao roda nada e nao renderiza. Escolhido o
+// agente, o seletor some e o que roda e o terminal normal — mesmo `terminal.open`,
+// mesmo renderer, mesma grade, mesmo cursor — e o comando entra pelo mesmo
+// `terminal.input` de quando o usuario digita.
+Item {
+    id: root
+
+    // Vem do `tools.detect` do core, via workspaceController.
+    property var toolsList: []
+    // O dono das sessoes de terminal. Este controller PEDE sessao; nunca abre.
+    property var runtimeController: null
+    property bool selectorVisible: false
+    property alias agentsModel: agentsListModel
+    // Comando a mandar quando a sessao abrir. Vem do `path` DETECTADO, nunca de
+    // string literal — senao a politica so teria migrado de camada.
+    property string pendingCommand: ""
+    // Numeracao propria das abas de contexto. NUNCA decrementa, pela mesma razao
+    // do `terminalSeq`: fechar a 2 de 3 faria a proxima nascer "KV Context 3".
+    property int contextSeq: 0
+
+    // A tag que o RuntimeController carimba na aba por nossa conta. Opaca para
+    // ele; o significado dela e este arquivo.
+    readonly property string contextKind: "context"
+
+    // Quais ferramentas sao agentes. E o unico lugar do projeto que sabe disso,
+    // e e UI de proposito.
+    readonly property var agentIds: ["claude", "codex"]
+
+    /// `true` quando a aba ATIVA do terminal e uma sessao de contexto.
+    readonly property bool activeTerminalIsContext:
+        root.runtimeController !== null
+        && root.runtimeController.activeTerminalKind === root.contextKind
+
+    /// Estado aceso do icone no rail. Nao ha painel proprio de KV Context para
+    /// alternar: o icone acende quando o painel do terminal esta na frente E a
+    /// sessao ativa e a de contexto. A regra e POLITICA de KV Context e mora
+    /// aqui — montada num host visual, ela ficava espalhada por tres fontes.
+    readonly property bool contextSessionVisible:
+        root.runtimeController !== null
+        && root.runtimeController.terminalPanelVisible
+        && root.activeTerminalIsContext
+
+    visible: false
+
+    ListModel {
+        id: agentsListModel
+    }
+
+    // O RuntimeController avisa TODA sessao aberta; so as nossas interessam. A
+    // escuta mora aqui, junto da dependencia declarada, e nao no composition
+    // root: sinal escutado no lugar errado nao falha no build — para de
+    // funcionar em silencio (PONTO_ATUAL §0.2j).
+    Connections {
+        target: root.runtimeController
+
+        function onTerminalOpened(id, kind) {
+            root.handleTerminalOpened(id, kind);
+        }
+    }
+
+    // "Redetectar" so tem efeito visivel por aqui: a lista e montada em
+    // `refresh()`, entao o `tools.detect` voltando com outro resultado precisa
+    // remonta-la enquanto o seletor esta aberto.
+    onToolsListChanged: {
+        if (root.selectorVisible) {
+            refresh();
+        }
+    }
+
+    function refresh() {
+        agentsListModel.clear();
+        const tools = toolsList !== undefined && toolsList !== null ? toolsList : [];
+        for (let i = 0; i < agentIds.length; i++) {
+            const id = agentIds[i];
+            let achado = null;
+            for (let j = 0; j < tools.length; j++) {
+                if (tools[j].id === id) {
+                    achado = tools[j];
+                    break;
+                }
+            }
+            if (achado === null) {
+                continue;
+            }
+            const disponivel = achado.status === "detected";
+            agentsListModel.append({
+                agentId: id,
+                displayName: achado.displayName !== undefined ? achado.displayName : id,
+                // Detectado: mostra ONDE esta. Ausente: mostra como instalar, e
+                // o core nunca roda essa sugestao — e texto, nao acao.
+                detail: disponivel
+                        ? (achado.path !== undefined && achado.path !== null ? achado.path : id)
+                        : (achado.suggestedInstall !== undefined
+                           && achado.suggestedInstall !== null ? achado.suggestedInstall : ""),
+                command: disponivel && achado.path !== undefined && achado.path !== null
+                         ? achado.path : "",
+                available: disponivel
+            });
+        }
+    }
+
+    /// O gesto do rail/menu.
+    ///
+    /// Se ja existe uma sessao de contexto viva, foca ela em vez de acumular
+    /// abas — o ponto e melhorar o fluxo, nao multiplicar terminal. Sem sessao
+    /// viva, a escolha do agente vem ANTES de abrir o PTY: o seletor so existe
+    /// enquanto nao ha sessao.
+    function openContext() {
+        if (root.runtimeController === null
+                || root.runtimeController.workspaceRoot === "") {
+            return;
+        }
+        const existente = root.runtimeController.firstTerminalOfKind(root.contextKind);
+        if (existente !== "") {
+            root.runtimeController.selectTerminal(existente);
+            return;
+        }
+        refresh();
+        selectorVisible = true;
+    }
+
+    function dismiss() {
+        selectorVisible = false;
+    }
+
+    /// Escolhido um agente disponivel: guarda o comando, fecha o seletor e pede
+    /// a sessao. Agente ausente nao e escolhivel — o seletor mostra a sugestao
+    /// de instalacao como texto e nada roda.
+    function choose(agentId) {
+        for (let i = 0; i < agentsListModel.count; i++) {
+            const item = agentsListModel.get(i);
+            if (item.agentId !== agentId || !item.available || item.command === "") {
+                continue;
+            }
+            // Caminho com espaco quebraria a linha de comando do shell.
+            root.pendingCommand = item.command.indexOf(" ") >= 0
+                    ? '"' + item.command + '"' : item.command;
+            selectorVisible = false;
+            openSession();
+            return;
+        }
+    }
+
+    /// Pede a sessao rotulada. O numero e PROVISORIO: `terminal.open` pode
+    /// falhar, e `contextSeq` so e commitado quando a aba existe de fato —
+    /// senao uma falha queimaria um numero.
+    function openSession() {
+        if (root.runtimeController === null) {
+            return;
+        }
+        root.runtimeController.openLabeledTerminal(
+            qsTr("KV Context %1").arg(root.contextSeq + 1), root.contextKind);
+    }
+
+    /// A sessao abriu. So agora o numero e commitado e o comando e digitado,
+    /// uma vez so — sem zerar, a proxima aba de contexto herdaria o comando da
+    /// anterior.
+    function handleTerminalOpened(id, kind) {
+        if (kind !== root.contextKind) {
+            return;
+        }
+        root.contextSeq += 1;
+        const comando = root.pendingCommand;
+        root.pendingCommand = "";
+        if (comando !== "") {
+            root.runtimeController.sendTerminalInput(id, comando + "\n");
+        }
+    }
+
+    /// Workspace fechou ou o core caiu: o RuntimeController descarta as abas,
+    /// entao a numeracao e a escolha pendente morrem junto.
+    function clear() {
+        agentsListModel.clear();
+        selectorVisible = false;
+        root.pendingCommand = "";
+        root.contextSeq = 0;
+    }
+}
