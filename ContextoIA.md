@@ -2079,3 +2079,29 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   não carrega ícone próprio pelo Qt. No Wayland o ícone vem do `.desktop` via
   app_id (`StartupWMClass=kinein-vectis`).
 - `AppMenuBar.qml` encolheu de 303 para 293 linhas — sai do débito da catraca.
+
+## AppDomains: o Main.qml sai do débito (2026-07-16)
+
+- Opção (b) executada. `ui/qml/app/AppDomains.qml` (326) passou a ser dono dos
+  14 controllers e dos 14 routers; o `Main.qml` ficou com a janela, os hosts
+  visuais, dialogs e atalhos. **`Main.qml`: 700 → 267.** Sai do débito.
+- Cruzamento com os hosts entra por propriedade declarada (`workspaceHost`,
+  `shellOverlays`, `folderPicker`, `workspaceUiResetter`, `hostWidth/Height`),
+  nunca por id global. Dentro do AppDomains as referências entre controllers
+  continuam ids simples do mesmo arquivo — não viraram pass-through.
+- **Correção de rumo do autor, no meio da fatia:** a catraca não pode empurrar
+  para desacoplamento inútil; o que se evita são os DOIS extremos. O gatilho foi
+  concreto: com 325 linhas o AppDomains estourava o limite de 300 e eu o quebrei
+  em dois, gerando um `AppIpcRouters` com 13 propriedades de pass-through —
+  cerimônia pura para satisfazer um número, e "onde X é ligado" passava a ter
+  duas respostas. A quebra foi DESFEITA.
+- O diagnóstico certo era outro: o limite de 300 é de QML **visual**, e
+  `ui/qml/app/` é composição sem um pixel. Era erro de categoria da catraca, não
+  gordura do arquivo. `ui/qml/app/` agora vale 400, registrado no script com o
+  motivo. Não se subiu limite de ninguém — corrigiu-se a classificação de um
+  arquivo que nunca foi visual (§4 regra 8 exige que isso seja explícito).
+- Verificado além do build: qmllint estrito limpo e a IDE sobe até o primeiro
+  frame (187 ms, offscreen). Refactor de 204 referências não se valida só
+  compilando — binding QML quebra em runtime.
+- O seletor do KV Context (§0.2f) segue bloqueado pelo `RuntimeController`
+  (494/400): separar run configs de terminais é a fatia que falta.

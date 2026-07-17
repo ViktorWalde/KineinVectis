@@ -39,6 +39,19 @@ LIMITE_RUST = 500  # ARCHITECTURE.md §4.
 def limite_ui(caminho: str) -> int:
     if caminho.startswith("ui/src/"):
         return 500
+    # `ui/qml/app/` e COMPOSICAO: instancia dominios e liga fiacao, zero pixel.
+    # Ganha 400 pelo mesmo motivo que controller/host ganham — o limite de 300 e
+    # de QML VISUAL, e classificar composicao como visual e erro de categoria.
+    #
+    # Registrado porque a §4 regra 8 exige que mexer em limite seja explicito:
+    # aqui NAO se subiu o limite de ninguem. Corrigiu-se a categoria de um
+    # arquivo que nunca foi visual. O gatilho foi concreto — espremer o
+    # AppDomains em 300 gerou um segundo arquivo com 13 propriedades de
+    # pass-through, cerimonia pura para satisfazer um numero. Catraca que
+    # empurra para desacoplamento inutil esta errada tanto quanto a que deixa
+    # monolito crescer: o que se evita sao os DOIS extremos.
+    if caminho.startswith("ui/qml/app/"):
+        return 400
     # Controller/store/host e o composition root sao "logica": 400.
     nome = caminho.rsplit("/", 1)[-1]
     if ("Controller" in nome or "Host" in nome or nome == "Main.qml"):

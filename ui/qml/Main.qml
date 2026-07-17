@@ -24,236 +24,44 @@ Window {
     CoreClient {
         id: coreClient
     }
-    WorkspaceController {
-        id: workspaceController
 
-        workspaceRoot: coreClient.workspaceRoot
-        onClearWorkspaceUiRequested: workspaceUiResetter.clear()
-    }
+    AppDomains {
+        id: domains
 
-    RecentWorkspacesController {
-        id: recentWorkspacesController
-
-        onListRequested: coreClient.listRecentWorkspaces()
-        onOpenRequested: function(rootPath) {
-            coreClient.openWorkspace(rootPath);
-        }
-        onPinRequested: function(rootPath, pinned) {
-            coreClient.pinRecentWorkspace(rootPath, pinned);
-        }
-        onRemoveRequested: function(rootPath) {
-            coreClient.removeRecentWorkspace(rootPath);
-        }
-        onClearRequested: coreClient.clearRecentWorkspaces()
-    }
-
-    ProjectHealthController {
-        id: projectHealthController
-
-        workspaceRoot: coreClient.workspaceRoot
-        workspaceKind: coreClient.workspaceKind
-        workspaceBuildSystems: coreClient.workspaceBuildSystems
-        toolsList: workspaceController.toolsList
-        scanningEnvironment: coreClient.scanningEnvironment
-        onAutoConfigureRequested: coreClient.cmakeConfigure()
-    }
-
-    ShellController {
-        id: shellController
-
-        workspaceRoot: coreClient.workspaceRoot
-        workspaceKind: coreClient.workspaceKind
-        workspaceBuildSystems: coreClient.workspaceBuildSystems
-        homeDir: coreClient.homeDir
-        toolsCount: workspaceController.toolsList.length
-        onFolderOpenRequested: function(path) {
-            folderPicker.open(path);
-        }
-        onToolsDetectionRequested: coreClient.detectTools()
-        onLayoutSaveRequested: function(values) {
-            settingsController.setGlobal(values);
-        }
-    }
-
-    JobsController {
-        id: jobsController
-
-        workspaceRoot: coreClient.workspaceRoot
-        building: coreClient.building
-        testing: coreClient.testing
-        analyzing: coreClient.analyzing
-        onRunBuildRequested: buildSystem => coreClient.runBuild(buildSystem)
-        onRunTestsRequested: buildSystem => coreClient.runTests("", buildSystem)
-        onRunQualityRequested: coreClient.runQuality()
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
-    }
-
-    DiagnosticsController {
-        id: diagnosticsController
-    }
-
-    SettingsController {
-        id: settingsController
-
-        onGetRequested: coreClient.settingsGet()
-        onSetRequested: function(scope, values) {
-            coreClient.settingsSet(scope, values);
-        }
-    }
-
-    RuntimeController {
-        id: runtimeController
-
-        workspaceRoot: coreClient.workspaceRoot
-        running: coreClient.running
-        terminalActive: coreClient.terminalActive
-        terminalPanelVisible: shellController.showBottomPanel
-                              && shellController.bottomTab === "terminal"
-        // Pedido ao core mora no RuntimeRequestRouter. Aqui fica so fiacao de
-        // controller para HOST/shell, que nao e IPC.
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
-        onRunConfigDialogOpenRequested: function(name, command) {
-            shellOverlays.openRunConfigDialogWith(name, command);
-        }
-        onFocusTerminalInputRequested: workspaceHost.focusTerminalInput()
-        onClearTerminalInputRequested: workspaceHost.clearTerminalInput()
-        onClearRunInputRequested: workspaceHost.clearRunInput()
-    }
-
-    DebugController {
-        id: debugController
-
-        workspaceRoot: coreClient.workspaceRoot
-        // Pedido ao core mora no DebugRequestRouter. Aqui fica so fiacao de
-        // controller para HOST/editor, que nao e IPC.
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
-        onOpenAtRequested: function(file, line) {
-            editorController.openDiagnostic(file, line, 1);
-        }
-    }
-
-    GitController {
-        id: gitController
-
-        workspaceRoot: coreClient.workspaceRoot
-        // Toda a fiacao de pedido — inclusive a guarda de arquivo sujo — mora
-        // no GitRequestRouter.
+        coreClient: coreClient
+        workspaceHost: workspaceHost
+        shellOverlays: shellOverlays
+        folderPicker: folderPicker
+        workspaceUiResetter: workspaceUiResetter
+        hostWidth: root.width
+        hostHeight: root.height
     }
 
     Connections {
-        target: editorController
+        target: domains.editorController
 
         // Troca de aba (ou abertura/fechamento de arquivo) re-aponta o
         // diff da gutter — e o blame, quando ligado — para o arquivo
         // ativo.
         function onCurrentTabChanged() {
-            gitController.requestDiffFor(editorController.currentFilePath());
-            gitController.requestBlameFor(editorController.currentFilePath());
-            diagnosticsController.setActivePath(editorController.currentFilePath());
+            domains.gitController.requestDiffFor(domains.editorController.currentFilePath());
+            domains.gitController.requestBlameFor(domains.editorController.currentFilePath());
+            domains.diagnosticsController.setActivePath(domains.editorController.currentFilePath());
         }
-    }
-
-    SearchController {
-        id: searchController
-
-        workspaceRoot: coreClient.workspaceRoot
-        recentFiles: editorController.recentFiles
-        hasActiveEditorFile: editorController.currentTab >= 0
-        // Pedido ao core (inclusive a guarda de replace e os symbols, que
-        // precisam do editor) mora no SearchRequestRouter.
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
-        onFocusSearchInputRequested: workspaceHost.focusSearchInput()
-        onFocusReplaceInputRequested: workspaceHost.focusSearchReplaceInput()
-        onResetAndFocusEverywhereRequested: shellOverlays.resetSearchEverywhereAndFocus()
-        onOpenAtRequested: function(path, line, column) {
-            editorController.openDiagnostic(path, line, column);
-        }
-        onCommandAccepted: function(commandId) {
-            commandDispatcher.execute(commandId);
-        }
-        onFocusEditorRequested: editorController.focusEditor()
-    }
-
-    CommandDispatcher {
-        id: commandDispatcher
-
-        coreClient: coreClient
-        debugController: debugController
-        editorController: editorController
-        gitController: gitController
-        jobsController: jobsController
-        projectTree: projectTree
-        runtimeController: runtimeController
-        settingsController: settingsController
-        searchController: searchController
-        onOpenWorkspaceRequested: shellController.requestOpenFolder()
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
-    }
-
-    EditorController {
-        id: editorController
-
-        workspaceRoot: coreClient.workspaceRoot
-        editorSurface: workspaceHost.editorSurface
-        diagnosticsController: diagnosticsController
-        settingsController: settingsController
-        // Pedido ao core mora no EditorRequestRouter. O que fica aqui e fiacao
-        // de controller para HOST — nao e IPC, e so o Main.qml enxerga os dois.
-        onRenameDialogOpenRequested: function(currentName) {
-            workspaceHost.openRenameDialogWithName(currentName);
-        }
-        onGoToLineDialogOpenRequested: function(prefill) {
-            workspaceHost.openGoToLineDialog(prefill);
-        }
-        onFindBarOpenRequested: workspaceHost.focusFindBar()
-    }
-
-    ProjectTreeController {
-        id: projectTree
-
-        workspaceRoot: coreClient.workspaceRoot
-        hostWidth: root.width
-        hostHeight: root.height
-        // Pedido ao core mora no ProjectTreeRequestRouter. O que a arvore pede a
-        // OUTROS dominios e composicao e fica aqui.
-        onRunScriptRequested: function(path) {
-            runtimeController.startScript(path);
-        }
-        onTabsRenameRequested: function(from, to) {
-            editorController.applyPathRenameToTabs(from, to);
-        }
-        onTabsCloseRequested: function(path) {
-            editorController.closeTabsUnderPath(path);
-        }
-        onCreateDialogFocusRequested: workspaceHost.focusCreateDialog()
-        onEntryRenameDialogOpenRequested: function(name) {
-            shellOverlays.openEntryRenameWithName(name);
-        }
-        onFocusEditorRequested: editorController.focusEditor()
     }
 
     WorkspaceUiResetter {
         id: workspaceUiResetter
 
-        debugController: debugController
-        gitController: gitController
-        diagnosticsController: diagnosticsController
-        shellController: shellController
-        projectTree: projectTree
-        editorController: editorController
-        jobsController: jobsController
-        searchController: searchController
-        runtimeController: runtimeController
+        debugController: domains.debugController
+        gitController: domains.gitController
+        diagnosticsController: domains.diagnosticsController
+        shellController: domains.shellController
+        projectTree: domains.projectTree
+        editorController: domains.editorController
+        jobsController: domains.jobsController
+        searchController: domains.searchController
+        runtimeController: domains.runtimeController
         bottomPanelHost: workspaceHost
     }
 
@@ -284,16 +92,16 @@ Window {
         target: coreClient
 
         function onFormatCapabilitiesListed(formatters) {
-            editorController.applyFormatCapabilities(formatters);
+            domains.editorController.applyFormatCapabilities(formatters);
         }
 
         function onConnectedChanged() {
-            if (coreClient.connected && workspaceController.toolsList.length === 0) {
+            if (coreClient.connected && domains.workspaceController.toolsList.length === 0) {
                 coreClient.detectTools();
             }
             if (coreClient.connected) {
                 coreClient.settingsGet();
-                recentWorkspacesController.listRequested();
+                domains.recentWorkspacesController.listRequested();
                 // O catalogo de formatters e estatico: pedir uma vez por
                 // conexao basta. A UI nao mantem lista propria (0.61.0).
                 coreClient.formatCapabilities();
@@ -307,98 +115,20 @@ Window {
 
 
     Connections {
-        target: settingsController
+        target: domains.settingsController
 
         function onResolved() {
-            shellController.applySettings(settingsController);
+            domains.shellController.applySettings(domains.settingsController);
         }
     }
 
-    WorkspaceEventRouter {
-        coreClient: coreClient
-        folderPicker: folderPicker
-        projectTree: projectTree
-        searchController: searchController
-        workspaceController: workspaceController
-        projectHealthController: projectHealthController
-        recentWorkspacesController: recentWorkspacesController
-    }
-
-    EditorEventRouter {
-        coreClient: coreClient
-        editorController: editorController
-    }
-
-    EditorRequestRouter {
-        coreClient: coreClient
-        editorController: editorController
-    }
-
-    JobsEventRouter {
-        coreClient: coreClient
-        jobsController: jobsController
-        diagnosticsController: diagnosticsController
-    }
-
-    SettingsEventRouter {
-        coreClient: coreClient
-        settingsController: settingsController
-    }
-
-    SearchEventRouter {
-        coreClient: coreClient
-        searchController: searchController
-    }
-
-    SearchRequestRouter {
-        coreClient: coreClient
-        searchController: searchController
-        editorController: editorController
-    }
-
-    ProjectTreeRequestRouter {
-        coreClient: coreClient
-        projectTree: projectTree
-    }
-
-    RuntimeEventRouter {
-        coreClient: coreClient
-        runtimeController: runtimeController
-    }
-
-    RuntimeRequestRouter {
-        coreClient: coreClient
-        runtimeController: runtimeController
-    }
-
-    DebugEventRouter {
-        coreClient: coreClient
-        debugController: debugController
-    }
-
-    DebugRequestRouter {
-        coreClient: coreClient
-        debugController: debugController
-    }
-
-    GitEventRouter {
-        coreClient: coreClient
-        gitController: gitController
-    }
-
-    GitRequestRouter {
-        coreClient: coreClient
-        gitController: gitController
-        editorController: editorController
-    }
-
     GlobalShortcuts {
-        debugController: debugController
-        editorController: editorController
-        jobsController: jobsController
-        runtimeController: runtimeController
-        searchController: searchController
-        settingsController: settingsController
+        debugController: domains.debugController
+        editorController: domains.editorController
+        jobsController: domains.jobsController
+        runtimeController: domains.runtimeController
+        searchController: domains.searchController
+        settingsController: domains.settingsController
     }
 
     ShellHeaderHost {
@@ -408,19 +138,19 @@ Window {
         anchors.left: parent.left
         anchors.right: parent.right
         coreClient: coreClient
-        shellController: shellController
-        jobsController: jobsController
-        runtimeController: runtimeController
-        debugController: debugController
-        editorController: editorController
-        projectTree: projectTree
-        searchController: searchController
-        settingsController: settingsController
-        recentWorkspacesController: recentWorkspacesController
+        shellController: domains.shellController
+        jobsController: domains.jobsController
+        runtimeController: domains.runtimeController
+        debugController: domains.debugController
+        editorController: domains.editorController
+        projectTree: domains.projectTree
+        searchController: domains.searchController
+        settingsController: domains.settingsController
+        recentWorkspacesController: domains.recentWorkspacesController
         windowMaximized: windowChromeController.maximized
         onConfigMenuRequested: function(menuX, menuY) {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);
-            runtimeController.openConfigMenu(pos.x, pos.y);
+            domains.runtimeController.openConfigMenu(pos.x, pos.y);
         }
         onAppMenuRequested: function(key, menuX, menuY, items) {
             if (key === "") {
@@ -446,18 +176,18 @@ Window {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.panelGap
-        shellController: shellController
-        workspaceController: workspaceController
-        projectHealthController: projectHealthController
-        projectTree: projectTree
-        editorController: editorController
-        jobsController: jobsController
-        runtimeController: runtimeController
-        debugController: debugController
-        gitController: gitController
-        diagnosticsController: diagnosticsController
-        searchController: searchController
-        recentWorkspacesController: recentWorkspacesController
+        shellController: domains.shellController
+        workspaceController: domains.workspaceController
+        projectHealthController: domains.projectHealthController
+        projectTree: domains.projectTree
+        editorController: domains.editorController
+        jobsController: domains.jobsController
+        runtimeController: domains.runtimeController
+        debugController: domains.debugController
+        gitController: domains.gitController
+        diagnosticsController: domains.diagnosticsController
+        searchController: domains.searchController
+        recentWorkspacesController: domains.recentWorkspacesController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName
@@ -467,7 +197,7 @@ Window {
         terminalActive: coreClient.terminalActive
         running: coreClient.running
         logLinesModel: coreClient.logLines
-        toolsList: workspaceController.toolsList
+        toolsList: domains.workspaceController.toolsList
         scanningEnvironment: coreClient.scanningEnvironment
         onListDirRequested: function(path) {
             coreClient.listDir(path);
@@ -479,14 +209,14 @@ Window {
         onToolsDetectionRequested: coreClient.detectTools()
         onEnvironmentScanRequested: coreClient.scanEnvironment()
         onCmakeConfigureRequested: {
-            shellController.showTab("jobs");
+            domains.shellController.showTab("jobs");
             coreClient.cmakeConfigure();
         }
         onCargoMetadataRequested: coreClient.cargoMetadata()
         onCreateProjectRequested: function(templateId) {
             folderPicker.openCreateProject(coreClient.homeDir, templateId);
         }
-        onSettingsRequested: settingsController.openDialog()
+        onSettingsRequested: domains.settingsController.openDialog()
     }
 
     ShellStatusHost {
@@ -496,8 +226,8 @@ Window {
         anchors.left: parent.left
         anchors.right: parent.right
         coreClient: coreClient
-        shellController: shellController
-        gitController: gitController
+        shellController: domains.shellController
+        gitController: domains.gitController
     }
 
     ShellOverlays {
@@ -508,13 +238,13 @@ Window {
         z: 1000
         hostWidth: root.width
         hostHeight: root.height
-        searchController: searchController
-        projectTree: projectTree
-        editorController: editorController
-        shellController: shellController
-        runtimeController: runtimeController
-        gitController: gitController
-        settingsController: settingsController
+        searchController: domains.searchController
+        projectTree: domains.projectTree
+        editorController: domains.editorController
+        shellController: domains.shellController
+        runtimeController: domains.runtimeController
+        gitController: domains.gitController
+        settingsController: domains.settingsController
         onAppMenuActionRequested: function(action) {
             header.executeMenuAction(action);
         }
