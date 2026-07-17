@@ -359,15 +359,31 @@ verificado — `runtimeController` chega ao `ShellHeaderHost` e ao
 build novo.** Se continuar morto, é regressão real e tem prioridade: registrar
 ação/esperado/observado/ambiente.
 
-**2. Renomear "Assistente" (P3, decisão do autor).** O nome não explica o que a
-coisa é. Direção sugerida pelo autor: algo como "Agente Auxiliar". A renomeação
-é de PRODUTO e atinge: rótulo do menu (`AppMenuBar`), tooltip do rail
-(`SideRail`), título da aba (`RuntimeController.handleTerminalOpened`), o nome do
-ícone `context` no `KvIcon`, `MANUAL.md` e a spec
-`docs/specs/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md`. Os identificadores
-internos (`view.context`, `openContext`, `isContext`) podem acompanhar ou não —
-decidir de uma vez para não ficar meio renomeado. Nada disso toca o core: ele não
-conhece o conceito.
+**2. Renomear "KV Context" — FEITO em 2026-07-17 (`37d4bbc`).** Nome definido
+pelo autor: **"Assistente"**. O rename foi ate os internos e os docs vivos —
+`view.assistant`, `openAssistant()`, `assistantKind`, `AssistantController`/
+`AssistantSelector`, icone `assistant` — porque o §0.2d exigia decidir de uma vez
+"para nao ficar meio renomeado". NAO renomeados de proposito: `ContextoIA.md`,
+`docs/diario/` e o ADR-0004, que sao LOG do que foi decidido quando o nome era
+outro. Ressalva viva: o `ui/qml/assistant/` removido no 0.59.0 tinha
+`AssistantPanel`/`AssistantController` — nome parecido, coisa diferente (aquele
+era terminal PARALELO); o aviso esta no cabecalho do `AssistantSelector`.
+
+**2b. Aba propria do Assistente — FEITO em 2026-07-17.** Pedido do autor: o
+Assistente precisa de separacao VISUAL, nao ficar no meio de "Terminal 1, 2, 3".
+Decisao do autor apos medicao: **aba no painel inferior**, e nao o painel direito
+da spec §4.1.
+
+O que decidiu: `terminalRenders[id] = render` **nao notifica binding** (medido).
+A IDE desenha so a sessao ATIVA, entao um painel direito exigiria uma segunda
+vista notificante no `RuntimeController` — codigo que funciona. Com uma aba por
+vez, so ha uma sessao desenhada e o `RuntimeController` nao foi tocado. O core, o
+`TerminalViewport`, a grade, a roda e o cursor tambem nao.
+
+Como a aba sabe quem e' dela sem o RuntimeController aprender o conceito: ele so
+sabe pedir a aba `"terminal"`; o `AssistantController.tabFor()` traduz para
+`"assistant"` quando a sessao ativa (ou a pendente, via `pendingKind`) e' do
+agente, e a traducao e aplicada no AppDomains.
 
 **3. Autocomplete travado na primeira sugestão — CORRIGIDO em 2026-07-16.**
 Confirmado e fechado. **A suspeita registrada estava errada**: a tecla não era

@@ -147,6 +147,56 @@ Item {
         selectorVisible = false;
     }
 
+    /// A qual aba do painel inferior a sessao ATIVA pertence.
+    ///
+    /// O RuntimeController so sabe pedir "terminal" — para ele nao existe aba de
+    /// Assistente, e nao deve existir: ele nao conhece o conceito. Quem traduz e
+    /// este arquivo, e a traducao e aplicada na composicao (AppDomains), onde o
+    /// pedido dele vira `shellController.showTab`.
+    function tabFor(tab) {
+        if (tab !== "terminal" || root.runtimeController === null) {
+            return tab;
+        }
+        // `pendingKind` cobre a janela entre pedir a sessao e o core devolve-la:
+        // sem ele o painel piscaria na aba Terminal ate o PTY abrir.
+        const nossa = root.activeTerminalIsAssistant
+                      || root.runtimeController.pendingKind === root.assistantKind;
+        return nossa ? "assistant" : tab;
+    }
+
+    /// O usuario clicou numa aba do painel inferior.
+    ///
+    /// Terminal e Assistente desenham a MESMA sessao ativa, cada um sob o seu
+    /// rotulo — trocar de aba tem que trocar a sessao junto, senao uma mostra o
+    /// conteudo da outra. Essa regra so existe porque a aba do Assistente
+    /// existe, entao ela e nossa, e nao do host visual.
+    ///
+    /// Devolve `true` quando ja resolveu — quem seleciona a sessao ja pede a aba
+    /// certa de volta pelo `tabFor`. `false` quando a aba nao tem nada a ver
+    /// conosco e o shell deve trata-la como sempre.
+    function handleBottomTabClick(tab) {
+        if (root.runtimeController === null) {
+            return false;
+        }
+        if (tab === "assistant") {
+            openAssistant();
+            return true;
+        }
+        if (tab !== "terminal" || !root.activeTerminalIsAssistant) {
+            return false;
+        }
+        // Sair para o Terminal com o agente ativo: leva para uma sessao comum,
+        // ou materializa uma. Sem isto a aba Terminal mostraria a grade do
+        // agente sob o rotulo errado.
+        const comum = root.runtimeController.firstTerminalOfKind("");
+        if (comum !== "") {
+            root.runtimeController.selectTerminal(comum);
+        } else {
+            root.runtimeController.newTerminal();
+        }
+        return true;
+    }
+
     /// Escolhido um agente disponivel: guarda o comando, fecha o seletor e pede
     /// a sessao. Agente ausente nao e escolhivel — o seletor mostra a sugestao
     /// de instalacao como texto e nada roda.

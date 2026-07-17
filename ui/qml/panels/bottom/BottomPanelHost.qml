@@ -186,7 +186,7 @@ Rectangle {
         }
     }
 
-    Row {
+    TerminalSessionTabs {
         id: sessionRow
 
         anchors.top: bottomTabs.bottom
@@ -194,174 +194,17 @@ Rectangle {
         anchors.leftMargin: Theme.spacingSmall
         anchors.topMargin: root.activeTab === "terminal" ? Theme.spacingXSmall : 0
         height: root.activeTab === "terminal" ? 22 : 0
+        // So a aba Terminal tem chips: a do Assistente e sessao unica.
         visible: root.activeTab === "terminal"
-        spacing: Theme.spacingSmall
-
-        // D2.3 (docs/roadmaps/24): uma aba por terminal aberto. A "Execução" continua
-        // sendo uma sessão à parte — ela NÃO é um PTY (é o backend run.*),
-        // por isso não entra no mesmo modelo.
-        Repeater {
-            model: root.terminalsModel
-
-            delegate: Rectangle {
-                id: termChip
-
-                required property string termId
-                required property string title
-
-                readonly property bool current: root.terminalSession === "shell"
-                                                && root.activeTerminalId === termChip.termId
-
-                width: termChipRow.width + 2 * Theme.spacingSmall
-                height: 20
-                radius: Theme.radiusXSmall
-                color: termChip.current ? Theme.surfaceSelected : "transparent"
-                border.color: Theme.borderSoft
-                border.width: 1
-
-                // Fica ATRÁS do conteúdo (z: -1) pra não engolir o clique do
-                // ícone: selecionar e fechar são gestos diferentes na mesma aba.
-                MouseArea {
-                    anchors.fill: parent
-                    z: -1
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.terminalSelectRequested(termChip.termId)
-                }
-
-                Row {
-                    id: termChipRow
-
-                    anchors.centerIn: parent
-                    spacing: Theme.spacingXSmall
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: termChip.title
-                        color: termChip.current ? Theme.accent : Theme.textSecondary
-                        font.pixelSize: 10
-                        font.bold: true
-                    }
-
-                    KvIcon {
-                        id: termCloseLabel
-
-                        anchors.verticalCenter: parent.verticalCenter
-                        name: "close"
-                        size: 14
-                        iconColor: termCloseArea.containsMouse
-                                   ? Theme.textPrimary : Theme.textMuted
-
-                        MouseArea {
-                            id: termCloseArea
-
-                            anchors.fill: parent
-                            anchors.margins: -3
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.terminalCloseTabRequested(termChip.termId)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Novo terminal.
-        Rectangle {
-            width: 20
-            height: 20
-            radius: Theme.radiusXSmall
-            color: newTerminalArea.containsMouse ? Theme.surface2 : "transparent"
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                anchors.centerIn: parent
-                text: "+"
-                color: newTerminalArea.containsMouse ? Theme.accent : Theme.textSecondary
-                font.pixelSize: 12
-                font.bold: true
-            }
-
-            MouseArea {
-                id: newTerminalArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.terminalNewRequested()
-            }
-        }
-
-        Rectangle {
-            id: runSessionChip
-
-            readonly property bool current: root.terminalSession === "run"
-
-            width: runSessionRow.width + 2 * Theme.spacingSmall
-            height: 20
-            radius: Theme.radiusXSmall
-            color: runSessionChip.current ? Theme.surfaceSelected : "transparent"
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Row {
-                id: runSessionRow
-                anchors.centerIn: parent
-                spacing: Theme.spacingXSmall
-
-                Text {
-                    id: runSessionLabel
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: qsTr("Execução")
-                    color: runSessionChip.current ? Theme.accent : Theme.textSecondary
-                    font.pixelSize: 10
-                    font.bold: true
-                }
-
-                Rectangle {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: root.running
-                    width: 6
-                    height: 6
-                    radius: 3
-                    color: Theme.successSoft
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.terminalSessionRequested("run")
-            }
-        }
-
-        Rectangle {
-            width: clearSessionLabel.width + 2 * Theme.spacingSmall
-            height: 20
-            radius: Theme.radiusXSmall
-            color: clearSessionArea.containsMouse ? Theme.surface2 : "transparent"
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: clearSessionLabel
-
-                anchors.centerIn: parent
-                text: qsTr("limpar")
-                color: Theme.textMuted
-                font.pixelSize: 10
-            }
-
-            MouseArea {
-                id: clearSessionArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.clearSessionRequested()
-            }
-        }
+        sessionsModel: root.terminalsModel
+        activeTerminalId: root.activeTerminalId
+        terminalSession: root.terminalSession
+        running: root.running
+        onSelectRequested: function(id) { root.terminalSelectRequested(id); }
+        onCloseRequested: function(id) { root.terminalCloseTabRequested(id); }
+        onNewRequested: root.terminalNewRequested()
+        onSessionRequested: function(s) { root.terminalSessionRequested(s); }
+        onClearRequested: root.clearSessionRequested()
     }
 
     TerminalPanel {
@@ -372,7 +215,10 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
-        visible: root.activeTab === "terminal" && root.terminalSession === "shell"
+        // A aba Assistente reusa ESTE painel: e a mesma sessao de terminal, so
+        // apresentada num lugar proprio. Uma aba por vez => um render por vez.
+        visible: (root.activeTab === "terminal" || root.activeTab === "assistant")
+                 && root.terminalSession === "shell"
         render: root.terminalRender
         terminalActive: root.terminalActive
         workspaceAvailable: root.workspaceAvailable

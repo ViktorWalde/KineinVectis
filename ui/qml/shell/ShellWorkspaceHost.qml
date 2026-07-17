@@ -455,7 +455,9 @@ Item {
                 logLinesModel: root.logLinesModel
                 toolsList: root.workspaceController.toolsList
                 onTabRequested: function(tab) {
-                    root.shellController.toggleBottomTab(tab);
+                    if (!root.assistantController.handleBottomTabClick(tab)) {
+                        root.shellController.toggleBottomTab(tab);
+                    }
                 }
                 onTerminalSessionRequested: function(session) {
                     root.runtimeController.setTerminalSession(session);

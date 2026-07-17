@@ -2178,3 +2178,39 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   é escolhível, escolha abre a sessão, comando digitado, rail acende), gate verde
   em fmt/clippy/C++/qmllint/catraca/lógica QML. A suíte Rust reprova no flake
   conhecido do §0.2h, que reproduz sem uma linha de Rust tocada.
+
+## "KV Context" vira "Assistente", e ele ganha aba propria (2026-07-17)
+
+- Rename fechado (§0.2d-2). Nome do autor: **Assistente**. Foi ate os internos e
+  os docs vivos; `ContextoIA.md`, `docs/diario/` e ADR-0004 ficaram com o nome da
+  epoca de proposito — sao LOG, e reescreve-los faria o registro mentir.
+- **Duas armadilhas que sed cego teria causado.** O `KvIcon.qml` usa `context`
+  como variavel do Canvas 2D (`context.moveTo`): so `case "context":` era o
+  icone. E o `tst_multi_terminal` comparava `title === "KV Context 1"` para provar
+  que a numeracao nao repete — renomear so o produto deixaria o check comparando
+  com string que nunca mais existe: verde para sempre. E' o §0.2i nascendo de um
+  rename.
+- **Aba propria: a medicao decidiu o desenho.** O autor queria o painel direito
+  (spec §4.1 e a UI antiga). Medido que `terminalRenders[id] = render` **nao
+  notifica binding** — a IDE desenha so a sessao ATIVA. Painel direito exigiria
+  uma segunda vista notificante no RuntimeController; aba inferior nao exige
+  nada. O autor escolheu a aba. RuntimeController, TerminalViewport, core, grade,
+  roda e cursor: intactos.
+- **A traducao da aba mora no dono.** O RuntimeController so pede `"terminal"` —
+  ele nao conhece "Assistente" e nao pode conhecer. `AssistantController.tabFor()`
+  traduz; o AppDomains aplica. `pendingKind` cobre a janela entre pedir a sessao e
+  ela voltar, senao o painel pisca na aba Terminal ate o PTY abrir.
+- **Catraca: quarto e quinto casos da regra 9, os dois "a culpa e da MUDANCA".**
+  Ela reprovou `ShellWorkspaceHost` (+15) e `BottomPanelHost` (+9). No primeiro eu
+  tinha posto politica de "qual sessao pertence a qual aba" num host visual: devolvida
+  ao dono como `handleBottomTabClick()`, o arquivo voltou a 581. No segundo o meu
+  diff era legitimo — e a medicao achou o real culpado, que nao tinha nada a ver
+  comigo: a barra de chips tinha **183 linhas inline**, maior que qualquer painel
+  (GitPanel: 53). Extraida como `TerminalSessionTabs.qml` (200), o
+  `BottomPanelHost` caiu 550 -> **387** e SAIU do debito (24 -> 23 arquivos).
+  O argumento nao foi tamanho: aquele host compoe PAINEIS e cada painel dele ja
+  era componente proprio — a barra era a unica inline. Extrair foi aplicar a regra
+  que o arquivo ja seguia.
+- Mutacao: 3 mutacoes no `tabFor`, 3 pegas — e uma sobreviveu de inicio porque o
+  MEU check de `tabFor("git")` rodava com sessao comum ativa, sem exercitar a
+  guarda. Movido para depois do agente ativo.

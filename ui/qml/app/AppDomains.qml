@@ -150,8 +150,13 @@ Item {
                               && shellController.bottomTab === "terminal"
         // Pedido ao core mora no RuntimeRequestRouter. Aqui fica so fiacao de
         // controller para HOST/shell, que nao e IPC.
+        //
+        // O RuntimeController so sabe pedir a aba "terminal": para ele nao existe
+        // Assistente. Quem traduz e o dono do conceito, aqui na composicao —
+        // assim a sessao do agente aparece na aba dele sem que o controller de
+        // terminais precise aprender o que ela e.
         onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
+            shellController.showTab(assistantController.tabFor(tab));
         }
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()

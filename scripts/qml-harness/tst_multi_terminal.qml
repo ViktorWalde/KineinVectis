@@ -189,6 +189,46 @@ Item {
             failures += 17179869184;
         }
 
+        // ---- A aba do Assistente (UI/UX) ---------------------------------
+        //
+        // O RuntimeController so sabe pedir a aba "terminal": ele nao conhece o
+        // conceito e NAO pode conhecer. Quem traduz e o `tabFor`.
+        runtime.workspaceRoot = "/tmp/workspace";
+        runtime.clearTerminals();
+        agentes.clear();
+        agentes.toolsList = [
+            { id: "claude", displayName: "Claude Code", status: "detected",
+              path: "/usr/bin/claude", version: "1.0" }
+        ];
+
+        // Sessao comum ativa: o pedido "terminal" continua sendo "terminal".
+        runtime.handleTerminalOpened("t1", "/bin/sh");
+        if (agentes.tabFor("terminal") !== "terminal") failures += 1099511627776;
+
+        // Sessao do agente ativa: o mesmo pedido vira a aba do Assistente.
+        agentes.openAssistant();
+        agentes.choose("claude");
+        runtime.handleTerminalOpened("a1", "/bin/sh");
+        if (agentes.tabFor("terminal") !== "assistant") failures += 4398046511104;
+
+        // ...mas o desvio e' SO da aba de terminal. Com o agente ativo, pedir
+        // "git" continua sendo "git" — este check tem que rodar AQUI, com o
+        // agente ativo: antes disso ele passava sem exercitar a guarda.
+        if (agentes.tabFor("git") !== "git") failures += 2199023255552;
+
+        // A janela entre PEDIR a sessao e ela voltar tambem e' nossa — senao o
+        // painel pisca na aba Terminal ate o PTY abrir.
+        runtime.handleTerminalClosed("a1");
+        runtime.selectTerminal("t1");
+        agentes.openAssistant();
+        agentes.choose("claude");
+        if (agentes.tabFor("terminal") !== "assistant") failures += 8796093022208;
+        runtime.handleTerminalOpened("a2", "/bin/sh");
+
+        // Voltar para a aba Terminal tem que existir uma sessao comum para onde
+        // ir — o host usa `firstTerminalOfKind("")`, que ignora as rotuladas.
+        if (runtime.firstTerminalOfKind("") !== "t1") failures += 17592186044416;
+
         // Caminho detectado com espaco vai CITADO: sem aspas o shell quebraria
         // a linha no meio do path e rodaria outra coisa.
         runtime.workspaceRoot = "/tmp/workspace";
