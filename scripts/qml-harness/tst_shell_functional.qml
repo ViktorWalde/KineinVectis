@@ -89,7 +89,12 @@ Item {
         projectTree.openEntryMenu("/work/src/main.cpp", "file",
                                   "main.cpp", 10, 10);
         if (projectTree.entryMenuRunnable) failures += 1;
-
-        Qt.exit(Math.min(failures, 255));
+        // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
+        // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256
+        // era letra morta: passava verde mesmo quebrado, que e exatamente a
+        // doenca que esta suite existe para impedir. O mask agora vai para a
+        // SAIDA (onde nao trunca) e o exit so diz passou/falhou.
+        if (failures !== 0) console.error("FALHAS bitmask=" + failures);
+        Qt.exit(failures === 0 ? 0 : 1);
     }
 }

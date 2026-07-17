@@ -1855,3 +1855,17 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   visual. A rota do runner `qml` continua fechada com evidência e não deve ser
   retentada.
 
+## Os testes de lógica QML passaram a poder reprovar (2026-07-16)
+
+- Código de saída de processo tem 8 bits: `Qt.exit(256)` sai como 0. Como cada
+  harness fazia `Qt.exit(bitmask)`, todo check com bit >= 256 era letra morta —
+  falhava e o gate dizia `ok`. Afetava 7 dos 14 harnesses; o
+  `tst_multi_terminal` usava bits até 2^31 (~24 checks mortos).
+- Corrigido em todos: o bitmask vai para `console.error` (não trunca) e o exit
+  só sinaliza passou/falhou. `scripts/verificar-qml-logica.sh` já tratava
+  qualquer código != 0 como falha, então o runner não mudou.
+- Os checks ressuscitados revelaram um problema, e era do TESTE: o
+  `tst_multi_terminal` exigia que abrir um terminal comum mantivesse o contexto
+  ativo, contradizendo a própria asserção anterior do arquivo.
+  `handleTerminalOpened` termina em `selectTerminal(id)` e está correto.
+

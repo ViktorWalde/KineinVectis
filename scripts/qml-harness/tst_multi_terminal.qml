@@ -99,7 +99,16 @@ Item {
         }
 
         // Estado aceso do icone no rail: segue a aba ATIVA, nao a existencia.
-        if (!runtime.activeTerminalIsContext) failures += 4194304;
+        // Abrir "t9" acabou de ATIVA-LO (handleTerminalOpened termina em
+        // selectTerminal), entao aqui existe um contexto vivo que NAO esta
+        // ativo — que e justamente o caso que separa "ativa" de "existe": o
+        // icone fica apagado.
+        //
+        // Este check exigia o contrario e passou verde desde que nasceu: o bit
+        // 4194304 estourava os 8 bits do codigo de saida e nunca reprovava.
+        // Ele tambem se contradizia com a linha 92, que exige "abrir ativa"
+        // para o "c1". O produto esta certo; a expectativa e que estava errada.
+        if (runtime.activeTerminalIsContext) failures += 4194304;
         runtime.selectTerminal("t9");
         if (runtime.activeTerminalIsContext) failures += 8388608;
         runtime.selectTerminal("c1");
@@ -132,7 +141,12 @@ Item {
             console.warn("FALHA: atalho ativo sem workspace");
             failures += 1;
         }
-
-        Qt.exit(failures);
+        // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
+        // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256
+        // era letra morta: passava verde mesmo quebrado, que e exatamente a
+        // doenca que esta suite existe para impedir. O mask agora vai para a
+        // SAIDA (onde nao trunca) e o exit so diz passou/falhou.
+        if (failures !== 0) console.error("FALHAS bitmask=" + failures);
+        Qt.exit(failures === 0 ? 0 : 1);
     }
 }

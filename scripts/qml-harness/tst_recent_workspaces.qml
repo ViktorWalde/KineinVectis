@@ -59,7 +59,12 @@ Item {
         if (controller.errorText !== "") failures += 64;
         controller.handleRequestFailed("workspace.recent.pin", "falhou");
         if (controller.errorText !== "falhou") failures += 128;
-
-        Qt.exit(failures);
+        // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
+        // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256
+        // era letra morta: passava verde mesmo quebrado, que e exatamente a
+        // doenca que esta suite existe para impedir. O mask agora vai para a
+        // SAIDA (onde nao trunca) e o exit so diz passou/falhou.
+        if (failures !== 0) console.error("FALHAS bitmask=" + failures);
+        Qt.exit(failures === 0 ? 0 : 1);
     }
 }

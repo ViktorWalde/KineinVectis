@@ -95,6 +95,12 @@ Item {
         completion.handleFailed();
         if (completion.popupVisible !== true) falhas += 256;
 
-        Qt.exit(falhas);
+        // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
+        // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256
+        // era letra morta: passava verde mesmo quebrado, que e exatamente a
+        // doenca que esta suite existe para impedir. O mask agora vai para a
+        // SAIDA (onde nao trunca) e o exit so diz passou/falhou.
+        if (falhas !== 0) console.error("FALHAS bitmask=" + falhas);
+        Qt.exit(falhas === 0 ? 0 : 1);
     }
 }

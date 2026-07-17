@@ -116,7 +116,12 @@ Item {
         // 11) close() zera e some
         find.close();
         if (find.barVisible !== false || find.matchCount !== 0) f += 2048;
-
-        Qt.exit(f);
+        // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
+        // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256
+        // era letra morta: passava verde mesmo quebrado, que e exatamente a
+        // doenca que esta suite existe para impedir. O mask agora vai para a
+        // SAIDA (onde nao trunca) e o exit so diz passou/falhou.
+        if (f !== 0) console.error("FALHAS bitmask=" + f);
+        Qt.exit(f === 0 ? 0 : 1);
     }
 }

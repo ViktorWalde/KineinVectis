@@ -560,6 +560,64 @@ a precedência tem de ser explícita no contrato, não implícita no código.
 Recomendação: **opção 3 primeiro** (inventário valida o `integration` v1 sem
 dependência), depois decidir 1 vs 2 para o EditorConfig com o contrato já de pé.
 
+### 0.2i Os testes de lógica QML não conseguiam reprovar (achado e CORRIGIDO em 2026-07-16)
+
+Achado ao escrever o teste do autocomplete: o teste novo passava verde **com o
+bug presente**. A causa não era o teste — era a suíte.
+
+**Código de saída de processo tem 8 bits.** `Qt.exit(256)` sai como **0**. Como
+todo harness fazia `Qt.exit(bitmask)` direto, qualquer check com bit ≥ 256 era
+letra morta: falhava e o gate dizia `ok`. Medido em 2026-07-16, **7 dos 14
+harnesses** tinham checks nessa faixa:
+
+```text
+tst_multi_terminal            32 checks, bits ate 2^31  (~24 mortos)
+tst_format_capabilities       15 checks, bits ate 2^14  (~7 mortos)
+tst_terminal_metrics          14 checks                 (~6 mortos)
+tst_terminal_scroll           13 checks                 (~5 mortos)
+tst_find                      12 checks                 (~4 mortos)
+tst_terminal_input            11 checks                 (~3 mortos)
+tst_completion / tst_terminal_geometry_overlay: 9 checks (1 morto cada)
+```
+
+A ironia é exata: esta suíte **existe** porque o bug D1 sobreviveu a dois ciclos
+de correção com "sonda verde no backend, GUI quebrada" — e ela carregava o mesmo
+vício. O `tst_shell_functional` já se defendia com `Math.min(failures, 255)`;
+a lição nunca foi generalizada para os outros treze.
+
+**Corrigido:** o bitmask vai para a SAÍDA (`console.error`, onde não trunca) e o
+código de saída só diz passou/falhou. Nenhum diagnóstico se perde e nada mais
+passa verde por estouro.
+
+**O que os checks ressuscitados revelaram:** um só, e era o **teste** que estava
+errado, não o produto. O `tst_multi_terminal` exigia que abrir um terminal comum
+mantivesse o contexto ativo — contradizendo a própria linha 92 do arquivo, que
+exige "abrir ativa". `handleTerminalOpened` termina em `selectTerminal(id)`, e
+está certo. Expectativa corrigida; o produto não mudou.
+
+### 0.2h Teste instável em `tools` (achado em 2026-07-16, P3)
+
+Encontrado ao rodar o gate, **não é regressão de fatia nenhuma** — reproduz em
+árvore que não toca Rust:
+
+```text
+tools::tests::detected_tool_reports_path_and_version  → status Failed, esperado Detected
+tools::tests::fd_detection_accepts_fdfind_binary_name → PoisonError (cascata do anterior)
+```
+
+Bateu 1 vez em 3 execuções da suíte completa; isolado (`cargo test -p kinein-core
+--lib tools::`) passa sempre. A causa provável está escrita no próprio arquivo: o
+`EXEC_LOCK` (`crates/kinein-core/src/tools.rs:418`) existe porque "um teste pode
+forkar enquanto outro ainda segura o descritor de escrita do script, e o exec
+falha com `ETXTBSY`" — mas ele serializa só os testes de `tools` entre si. Outro
+teste da suíte forkando no momento errado reproduz o mesmo `ETXTBSY`, e a segunda
+falha é cascata (o primeiro morreu segurando o mutex, envenenando-o).
+
+**Por que não é cosmético:** gate que reprova ao acaso ensina a reexecutar até
+passar, que é a mesma doença que a catraca do §0.2g foi desenhada para evitar.
+Fatia própria: fechar o descritor antes do exec (ou `O_CLOEXEC`), não aumentar o
+escopo do lock.
+
 ### 0.3 Sessão de organização e feedback (2026-07-16)
 
 Sessão de trabalho autônoma autorizada pelo autor (com backup; proibido git
