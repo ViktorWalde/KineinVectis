@@ -125,51 +125,18 @@ restore_artifact() {
     fi
 }
 
-# Diretorios de build que ALGUM preset de configure reivindica hoje, ja
-# resolvendo `inherits` (um preset sem binaryDir proprio herda o do pai, e foi
-# exatamente assim que dev-local-release passou a gravar por cima do
-# release-hardened que o launcher executa). Sai um nome por linha.
+# Diretorios de build que ALGUM preset usavel reivindica hoje. A resolucao do
+# `inherits` vive em scripts/presets-binarydir.py porque o gate de presets
+# precisa da MESMA resposta: se as duas copias divergirem, uma passa a limpar o
+# que a outra considera legitimo e a mina volta por baixo. Sai um nome por linha.
 dirs_reivindicados() {
-    python3 - "$REPO_ROOT" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-raiz = Path(sys.argv[1])
-presets = {}
-for arquivo in ("CMakePresets.json", "CMakeUserPresets.json"):
-    caminho = raiz / arquivo
-    if not caminho.is_file():
-        continue
-    with caminho.open(encoding="utf-8") as origem:
-        for preset in json.load(origem).get("configurePresets", []):
-            presets[preset["name"]] = preset
-
-
-def binary_dir(nome, vistos=frozenset()):
-    if nome in vistos:
-        return None
-    preset = presets.get(nome, {})
-    if "binaryDir" in preset:
-        return preset["binaryDir"]
-    herdados = preset.get("inherits") or []
-    if isinstance(herdados, str):
-        herdados = [herdados]
-    for pai in herdados:
-        achado = binary_dir(pai, vistos | {nome})
-        if achado:
-            return achado
-    return None
-
-
-for nome in presets:
-    caminho = binary_dir(nome)
-    if not caminho:
-        continue
-    resolvido = caminho.replace("${sourceDir}", str(raiz))
-    if resolvido.startswith(f"{raiz}/build/"):
-        print(Path(resolvido).name)
-PY
+    python3 "$REPO_ROOT/scripts/presets-binarydir.py" "$REPO_ROOT" \
+        | cut -d$'\t' -f2 \
+        | while read -r caminho; do
+            case "$caminho" in
+                "$REPO_ROOT"/build/*) basename -- "$caminho" ;;
+            esac
+        done
 }
 
 # Um diretorio em build/ que preset nenhum reivindica e' resto de um fluxo que
