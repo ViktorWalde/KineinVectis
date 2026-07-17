@@ -290,6 +290,8 @@ qt_add_qml_module(kinein-vectis
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
+        src/editor_highlighter_rules.cpp
+        src/editor_highlighter_palette.h
         src/auto_close_regions.cpp
         src/auto_close_regions.h
         src/typing_perf_harness.cpp
@@ -345,6 +347,8 @@ if(BUILD_TESTING)
         tests/tst_editor_highlighter.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
+        src/editor_highlighter_rules.cpp
+        src/editor_highlighter_palette.h
     )
     target_include_directories(tst_editor_highlighter PRIVATE src)
     # Qt6::Quick entra so' porque `editor_highlighter.h` expoe um

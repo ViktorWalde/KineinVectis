@@ -13,4 +13,3 @@ ui/qml/panels/bottom/DebugPanel.qml 313 300
 ui/qml/panels/bottom/GitPanel.qml 633 300
 ui/qml/shell/ShellWorkspaceHost.qml 537 400
 ui/src/core_client_requests.cpp 551 500
-ui/src/editor_highlighter.cpp 818 500

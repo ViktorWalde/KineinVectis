@@ -439,7 +439,9 @@ ui/qml/editor/EditorController.qml
     │         o consumo da tecla — extraido em 2026-07-17, fatia E1b)
     ├─ EditorHoverPopup.qml / EditorUsagesPopup.qml
     └─ EditorWorkspaceEditPreviewDialog.qml
-ui/src/editor_highlighter.{h,cpp}  (QSyntaxHighlighter no documento do
+ui/src/editor_highlighter.{h,cpp}  (QSyntaxHighlighter; dividido 2026-07-17:
+    _rules.cpp tem languageForPath + rebuildRules por linguagem;
+    _palette.h tem as cores compartilhadas)  (no documento do
     TextEdit; recebe da Surface: setSyntaxSnapshot/setSemanticTokens/
     setDiagnostics/setSearchMatches; realce em 3 camadas: regex ->
     Tree-sitter -> LSP, ver arquitetura/19 D5)

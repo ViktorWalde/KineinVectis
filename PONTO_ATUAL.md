@@ -77,8 +77,16 @@ FASE 1 — Pagar os god-files que BLOQUEIAM feature (curto prazo, contínuo)
            propria (o movimento nao mudou comportamento; compilador+linker + smoke
            foram a rede).
   [ ] 1.3  GitPanel.qml             633/300  bloqueia feature de Git
-  [ ] 1.4  editor_highlighter.cpp   818/500  ja tem teste (languageForPath)
+  [x] 1.4  editor_highlighter.cpp   818->486  RESOLVIDO 2026-07-17: languageForPath
+           + rebuildRules (regras regex por linguagem) -> _rules.cpp; cores
+           compartilhadas -> _palette.h. Movimento puro (byte-identico), saiu do
+           baseline. Teste languageForPath migrou junto e segue provado por mutacao.
   Saida: os que bloqueiam feature saem do baseline; GUIAIA §5 re-medido.
+
+  Padrao aprendido (1.2 e 1.4 vs 1.1): god-file organizado por dominio/camada
+  (roteador, regras) RESOLVE numa fatia por movimento puro; coordenador de
+  fachada em cadeia (EditorController) rende pouco por fatia. Ataque os primeiros;
+  os segundos, so' quando tocar a feature da area.
 
 FASE 2 — L1: dominio `integration` v1 (o gargalo do medio prazo)
   [ ] 2.1  E2 — validar pelo inventario das ferramentas ja detectadas, zero
