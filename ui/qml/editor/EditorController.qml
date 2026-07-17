@@ -32,15 +32,17 @@ Item {
     property bool usagesVisible: false
     property bool renameDialogVisible: false
     property string renameError: ""
-    property bool workspaceEditPreviewVisible: false
-    property string workspaceEditTransactionId: ""
-    property string workspaceEditTitle: ""
-    property var workspaceEditFiles: []
-    property int workspaceEditCount: 0
-    property string workspaceEditError: ""
-    property alias actionsModel: actionsItemsModel
-    property bool actionsVisible: false
-    property int actionsIndex: 0
+    // Code actions + workspace edit: estado e logica no EditorCodeActionController
+    // (Fase 1.1, 2026-07-17). Aqui ficam so' os aliases que a UI le.
+    property alias workspaceEditPreviewVisible: codeActionController.workspaceEditPreviewVisible
+    property alias workspaceEditTransactionId: codeActionController.workspaceEditTransactionId
+    property alias workspaceEditTitle: codeActionController.workspaceEditTitle
+    property alias workspaceEditFiles: codeActionController.workspaceEditFiles
+    property alias workspaceEditCount: codeActionController.workspaceEditCount
+    property alias workspaceEditError: codeActionController.workspaceEditError
+    property alias actionsModel: codeActionController.actionsModel
+    property alias actionsVisible: codeActionController.actionsVisible
+    property alias actionsIndex: codeActionController.actionsIndex
     property bool goToLineVisible: false
     // D1b (docs/roadmaps/24): Find/Replace no arquivo. Mesma regra do D1 — alias para
     // a property PRÓPRIA do controller, nunca para o `visible` do Item.
@@ -93,8 +95,28 @@ Item {
         id: usagesItemsModel
     }
 
-    ListModel {
-        id: actionsItemsModel
+    EditorCodeActionController {
+        id: codeActionController
+
+        surfaceBridge: surfaceBridge
+        textController: textController
+        documentController: documents
+        onDismissConcurrentPopups: {
+            completionController.dismiss();
+            root.hoverVisible = false;
+        }
+        onCodeActionsRequested: function(path, content, line, column) {
+            root.codeActionsRequested(path, content, line, column);
+        }
+        onCodeActionApplyRequested: function(path, content, actionIndex) {
+            root.codeActionApplyRequested(path, content, actionIndex);
+        }
+        onWorkspaceEditApplyRequested: function(transactionId) {
+            root.workspaceEditApplyRequested(transactionId);
+        }
+        onWorkspaceEditCancelRequested: function(transactionId) {
+            root.workspaceEditCancelRequested(transactionId);
+        }
     }
 
     EditorSurfaceBridge {
@@ -258,8 +280,8 @@ Item {
         usagesItemsModel.clear();
         renameDialogVisible = false;
         renameError = "";
-        resetWorkspaceEditPreview();
-        dismissActions();
+        codeActionController.resetWorkspaceEditPreview();
+        codeActionController.dismissActions();
         pendingSaveAfterFormat = false;
         pendingSaveAllQueue = [];
         pendingSaveAllItem = null;
@@ -520,103 +542,51 @@ Item {
         referencesRequested(path, surfaceBridge.text(), position.line, position.column);
     }
 
+    // Code actions + workspace edit: fachadas finas para o
+    // EditorCodeActionController. A UI e os atalhos chamam via editorController;
+    // a logica e o estado vivem no sub-controller (Fase 1.1).
     function requestCodeActions() {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        completionController.dismiss();
-        hoverVisible = false;
-        const position = textController.cursorLineColumn();
-        codeActionsRequested(path, surfaceBridge.text(), position.line, position.column);
+        codeActionController.requestCodeActions();
     }
 
     function handleCodeActionsResolved(actions) {
-        actionsItemsModel.clear();
-        for (let i = 0; i < actions.length; i++) {
-            actionsItemsModel.append({
-                title: actions[i].title,
-                kind: actions[i].kind !== undefined ? actions[i].kind : ""
-            });
-        }
-        actionsIndex = 0;
-        actionsVisible = true;
+        codeActionController.handleCodeActionsResolved(actions);
     }
 
     function moveActions(delta) {
-        if (actionsItemsModel.count === 0) {
-            return;
-        }
-        const next = actionsIndex + delta;
-        actionsIndex = Math.max(0, Math.min(actionsItemsModel.count - 1, next));
+        codeActionController.moveActions(delta);
     }
 
     function applyCodeAction(index) {
-        const path = currentFilePath();
-        if (!actionsVisible || path === "" || !editorReady()) {
-            return;
-        }
-        if (index < 0 || index >= actionsItemsModel.count) {
-            dismissActions();
-            return;
-        }
-        actionsVisible = false;
-        codeActionApplyRequested(path, surfaceBridge.text(), index);
+        codeActionController.applyCodeAction(index);
     }
 
     function applySelectedAction() {
-        applyCodeAction(actionsIndex);
+        codeActionController.applySelectedAction();
     }
 
     function dismissActions() {
-        actionsVisible = false;
-        actionsItemsModel.clear();
+        codeActionController.dismissActions();
     }
 
     function handleWorkspaceEditPreview(transactionId, title, files, edits) {
-        workspaceEditTransactionId = transactionId;
-        workspaceEditTitle = title;
-        workspaceEditFiles = files;
-        workspaceEditCount = edits;
-        workspaceEditError = "";
-        workspaceEditPreviewVisible = true;
+        codeActionController.handleWorkspaceEditPreview(transactionId, title, files, edits);
     }
 
     function applyWorkspaceEdit() {
-        if (workspaceEditTransactionId === "") {
-            return;
-        }
-        workspaceEditError = "";
-        workspaceEditApplyRequested(workspaceEditTransactionId);
+        codeActionController.applyWorkspaceEdit();
     }
 
     function cancelWorkspaceEdit() {
-        if (workspaceEditTransactionId === "") {
-            resetWorkspaceEditPreview();
-            focusEditor();
-            return;
-        }
-        workspaceEditCancelRequested(workspaceEditTransactionId);
+        codeActionController.cancelWorkspaceEdit();
     }
 
     function handleWorkspaceEditApplied(files) {
-        resetWorkspaceEditPreview();
-        handleRenameApplied(files);
-        focusEditor();
+        codeActionController.handleWorkspaceEditApplied(files);
     }
 
     function handleWorkspaceEditCancelled() {
-        resetWorkspaceEditPreview();
-        focusEditor();
-    }
-
-    function resetWorkspaceEditPreview() {
-        workspaceEditPreviewVisible = false;
-        workspaceEditTransactionId = "";
-        workspaceEditTitle = "";
-        workspaceEditFiles = [];
-        workspaceEditCount = 0;
-        workspaceEditError = "";
+        codeActionController.handleWorkspaceEditCancelled();
     }
 
     function restoreSession(files, activeFile) {
@@ -964,11 +934,10 @@ Item {
             dismissActions();
         }
         if (method === "lsp.workspaceEdit.apply") {
-            workspaceEditError = message;
-            workspaceEditPreviewVisible = workspaceEditTransactionId !== "";
+            codeActionController.handleApplyFailed(message);
         }
         if (method === "lsp.workspaceEdit.cancel") {
-            resetWorkspaceEditPreview();
+            codeActionController.resetWorkspaceEditPreview();
         }
         // Format-on-save: se o format falhou (servidor ausente/timeout),
         // salva assim mesmo — não trava o Ctrl+S do usuário.

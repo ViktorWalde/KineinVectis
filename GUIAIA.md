@@ -429,6 +429,8 @@ crates/kinein-core/src/handlers/{fs,draft,format}.rs
 ```text
 ui/qml/editor/EditorController.qml
     ├─ EditorCompletionController.qml
+    ├─ EditorCodeActionController.qml (code actions + workspace edit preview;
+    │      logica e estado do refactoring LSP — o EditorController so' delega)
     ├─ EditorOutlineController.qml / EditorOutlinePanel.qml
     ├─ EditorTextSurface.qml / EditorGutter.qml
     │      └─ EditorAutoClosePairs.qml  (regras de par; a Surface so decide

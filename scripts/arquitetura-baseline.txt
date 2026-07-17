@@ -4,7 +4,7 @@ crates/kinein-core/src/handlers/lsp.rs 609 500
 crates/kinein-core/src/lsp/manager.rs 588 500
 crates/kinein-core/src/lsp/parse.rs 514 500
 crates/kinein-core/src/terminal.rs 657 500
-ui/qml/editor/EditorController.qml 878 400
+ui/qml/editor/EditorController.qml 842 400
 ui/qml/editor/EditorDocumentController.qml 507 400
 ui/qml/editor/EditorPane.qml 487 300
 ui/qml/editor/EditorTextController.qml 519 400
