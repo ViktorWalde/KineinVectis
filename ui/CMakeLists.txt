@@ -122,6 +122,7 @@ set_source_files_properties(qml/editor/EditorCompletionController.qml PROPERTIES
 set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALIAS EditorPane.qml)
 set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
+set_source_files_properties(qml/editor/EditorAutoClosePairs.qml PROPERTIES QT_RESOURCE_ALIAS EditorAutoClosePairs.qml)
 set_source_files_properties(qml/editor/EditorGutter.qml PROPERTIES QT_RESOURCE_ALIAS EditorGutter.qml)
 set_source_files_properties(qml/editor/EditorHoverPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorHoverPopup.qml)
 set_source_files_properties(qml/editor/EditorCompletionPopup.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionPopup.qml)
@@ -251,6 +252,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorPane.qml
         qml/editor/EditorTabsBar.qml
         qml/editor/EditorTextSurface.qml
+        qml/editor/EditorAutoClosePairs.qml
         qml/editor/EditorGutter.qml
         qml/editor/EditorHoverPopup.qml
         qml/editor/EditorCompletionPopup.qml

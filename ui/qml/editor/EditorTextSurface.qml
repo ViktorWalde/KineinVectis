@@ -108,108 +108,15 @@ Rectangle {
     }
 
     // M4.1: liga/desliga o auto-close de pares (setting autoClosePairs).
+    // Continua aqui porque e' API que o ShellWorkspaceHost liga via EditorPane;
+    // as REGRAS de par sao do EditorAutoClosePairs.
     property bool autoCloseEnabled: true
 
-    // E1 (docs/diario/18, trilha E): auto-close de pares, type-over do fechador,
-    // surround da seleção e backspace apagando o par vazio.
-    readonly property var pairOpeners: ({ "(": ")", "[": "]", "{": "}",
-                                          "\"": "\"", "'": "'" })
-    readonly property var pairClosers: ({ ")": true, "]": true, "}": true,
-                                          "\"": true, "'": true })
-
-    function isWordChar(character) {
-        return character !== "" && /[A-Za-z0-9_]/.test(character);
-    }
-
-    // true = tecla consumida (event.accepted pelo chamador).
-    function handleTypingKey(event) {
-        if (event.text === "" || !autoCloseEnabled) {
-            return false;
-        }
-        // Ctrl puro é atalho; Ctrl+Alt (AltGr em layouts europeus) produz
-        // caractere legítimo e passa.
-        if ((event.modifiers & Qt.ControlModifier)
-                && !(event.modifiers & Qt.AltModifier)) {
-            return false;
-        }
-        const character = event.text;
-        const closer = pairOpeners[character];
-        const position = textEditor.cursorPosition;
-        const content = textEditor.text;
-        const hasSelection =
-            textEditor.selectionStart !== textEditor.selectionEnd;
-
-        // CR1: "<" logo após `#include ` fecha em "<>" (contexto seguro;
-        // "<" genérico é comparação/template/shift e NÃO auto-fecha).
-        if (character === "<" && !hasSelection && position > 0) {
-            const lineStart = content.lastIndexOf("\n", position - 1) + 1;
-            const beforeCursor = content.substring(lineStart, position);
-            if (/^\s*#\s*include\s+$/.test(beforeCursor)) {
-                textEditor.insert(position, "<>");
-                textEditor.cursorPosition = position + 1;
-                return true;
-            }
-        }
-
-        if (hasSelection && closer !== undefined) {
-            // Abridor com seleção ativa ENVOLVE em vez de substituir.
-            const start = textEditor.selectionStart;
-            const end = textEditor.selectionEnd;
-            const selected = content.substring(start, end);
-            textEditor.remove(start, end);
-            textEditor.insert(start, character + selected + closer);
-            textEditor.select(start + 1, end + 1);
-            return true;
-        }
-        if (pairClosers[character] !== undefined && !hasSelection
-                && content.charAt(position) === character) {
-            // type-over: pula o fechador já presente em vez de duplicar.
-            textEditor.cursorPosition = position + 1;
-            return true;
-        }
-        if (closer !== undefined) {
-            const previous = position > 0 ? content.charAt(position - 1) : "";
-            const next = content.charAt(position);
-            const quote = character === "\"" || character === "'";
-            // Aspas coladas em palavra não duplicam (don't → don''t);
-            // colchetes/parênteses antes de palavra ou aspas também não.
-            if (quote && (isWordChar(previous) || isWordChar(next))) {
-                return false;
-            }
-            if (!quote && (isWordChar(next) || next === "\"" || next === "'")) {
-                return false;
-            }
-            textEditor.insert(position, character + closer);
-            textEditor.cursorPosition = position + 1;
-            return true;
-        }
-        if (character === "}" && !hasSelection) {
-            // E3: a inserção (com dedent quando a linha é só
-            // whitespace) vive no EditorTextController; o type-over
-            // acima tem precedência e não re-indenta.
-            root.closerBraceRequested();
-            return true;
-        }
-        return false;
-    }
-
-    function handlePairBackspace() {
-        if (!autoCloseEnabled
-                || textEditor.selectionStart !== textEditor.selectionEnd) {
-            return false;
-        }
-        const position = textEditor.cursorPosition;
-        if (position <= 0) {
-            return false;
-        }
-        const content = textEditor.text;
-        const previous = content.charAt(position - 1);
-        const closer = pairOpeners[previous];
-        if (closer !== undefined && content.charAt(position) === closer) {
-            textEditor.remove(position - 1, position + 1);
-            return true;
-        }
-        return false;
+    EditorAutoClosePairs {
+        id: autoClosePairs
+        target: textEditor
+        enabled: root.autoCloseEnabled
+        onCloserBraceRequested: root.closerBraceRequested()
     }
 
     function cursorPointIn(item) {
@@ -339,14 +246,28 @@ Rectangle {
             selectByMouse: true
             tabStopDistance: 4 * 8
             onCursorRectangleChanged: editorFlick.ensureVisible(cursorRectangle)
-            onTextChanged: root.textEdited(text)
+            // O EditorHighlighter acima e um QSyntaxHighlighter no documento
+            // deste TextEdit, e rehighlight() marca o documento como alterado
+            // mesmo quando so o FORMATO mudou (medido em Qt 6.11.1: texto
+            // identico, contentsChanged=1, onTextChanged=1). Sem esta barreira
+            // cada passada de realce se apresenta como edicao do usuario, e o
+            // consumidor refiltra o autocomplete: a selecao do usuario volta ao
+            // primeiro item sozinha. `textEdited` significa texto EDITADO.
+            property string lastNotifiedText: ""
+            onTextChanged: {
+                if (text === lastNotifiedText) {
+                    return;
+                }
+                lastNotifiedText = text;
+                root.textEdited(text);
+            }
             Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Backspace
-                        && root.handlePairBackspace()) {
+                        && autoClosePairs.handlePairBackspace()) {
                     event.accepted = true;
                     return;
                 }
-                if (root.handleTypingKey(event)) {
+                if (autoClosePairs.handleTypingKey(event)) {
                     event.accepted = true;
                     return;
                 }

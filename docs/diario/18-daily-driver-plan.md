@@ -1452,6 +1452,61 @@ selectionRange (gatilho: heurística errar em uso diário); linha com
   cabeçalho de verificar-qml.sh).
 ```
 
+### Fatia E1b — auto-close com dono próprio e sonda (2026-07-17)
+
+A E1 foi a única da trilha E sem sonda. O motivo está registrado na E3: ela
+"ficou na Surface porque precisava DECIDIR consumir ou não a tecla", e a E2/E3
+foram para o controller e "ganharam sonda de graça". O preço só apareceu agora:
+as regras de par nunca tiveram teste nenhum, e o gate ficava verde sem olhar
+para elas.
+
+**O que mudou.** As REGRAS saíram para `EditorAutoClosePairs.qml` (`QtObject`
+com `target: TextEdit`); a Surface continua decidindo o consumo no
+`Keys.onPressed` — a razão registrada da E1 permanece intacta. Não foi para o
+`EditorTextController` porque aquela cadeia é de sinais e não devolve valor para
+`event.accepted`, que é justamente o que a E1 precisa. `autoCloseEnabled`
+continua na Surface: é API que o ShellWorkspaceHost liga via EditorPane.
+`EditorTextSurface.qml` 504 → 425 linhas (catraca: encolher é sempre aceito;
+baseline atualizada na mesma fatia).
+
+**Sonda nova:** `scripts/qml-harness/tst_autoclose.qml`, sobre um `TextEdit`
+real. Provada capaz de reprovar antes de valer: quebrar `isWordChar` acusou
+bitmask 3584 (os 3 checks dela), quebrar o backspace do par vazio acusou 192
+(os 2 dele) — a doença da §0.2i era exatamente teste que não sabe falhar.
+
+**Referência oficial atual, somente arquitetural (§2.1, procedimento
+obrigatório):**
+
+- Code OSS, revisão `85313ccbab834820137b97fbfc15a5ca5aa2a66b` (arquivo lido
+  alterado pela última vez em `defdcd4e5dc2f22df1666a183bad6e70a45ca369`,
+  2025-12-15), arquivo `src/vs/editor/common/cursor/cursorTypeEditOperations.ts`,
+  licença MIT, modo de adaptação B. Invariantes extraídos: (a) o type-over é
+  condicionado à ORIGEM do fechador — com `autoClosingOvertype` em "auto" (o
+  padrão) só se pula o caractere que o próprio editor auto-inseriu, rastreado
+  como intervalos que acompanham as edições; (b) aspas precedidas de barra
+  invertida nunca fazem type-over; (c) só se auto-fecha quando o caractere
+  seguinte é permitido OU é o fechador de outro par auto-fechado; (d) não se
+  auto-fecha aspa depois de caractere de palavra. Nenhuma função, classe, teste
+  ou texto de implementação foi copiado ou traduzido.
+
+**DIVERGÊNCIA MEDIDA — a spec da E1, não só o código.** A E1 especificou
+"digitar o FECHADOR com o mesmo caractere à direita pula por cima (type-over)"
+e classificou o conjunto como "regra VS Code", com aceite "lado a lado com VS
+Code". O invariante (a) acima mostra que o Code OSS é mais conservador: nós
+pulamos QUALQUER fechador no cursor, ele só pula o que ele mesmo inseriu. Efeito
+no usuário: em `foo(bar)` digitado à mão, com o cursor antes do `)`, digitar `)`
+engole o caractere. O aceite lado-a-lado não pegou porque o caso exige um
+fechador escrito à mão à direita do cursor. Registrado como check 10 do
+`tst_autoclose.qml`, que hoje fixa o comportamento ATUAL e passa a reprovar
+quando a correção entrar.
+
+**Fatia própria, não feita aqui.** Corrigir exige rastrear a origem do fechador,
+e é aí que mora o custo: um `int` de posição em QML não sobrevive a uma edição.
+O Code OSS resolve com intervalos que acompanham o documento; o equivalente
+nativo aqui é `QTextCursor` (que o Qt reposiciona sozinho a cada edição) no lado
+C++, ou invalidação explícita da região em QML. Decidir isso é design, não
+digitação — e misturá-lo na extração seria a §4 regra 9 ao contrário.
+
 ### Fatia M3.4 — Blame no editor + histórico básico (design 2026-07-10)
 
 Fecha o M3 (Git MVP). Duas capacidades de LEITURA: "quem mudou esta
