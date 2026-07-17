@@ -127,10 +127,7 @@ Item {
         id: contextAgentController
 
         toolsList: workspaceController.toolsList
-        // Qualificado pelo alias do root: dentro deste arquivo `runtimeController`
-        // e o nome da propriedade E o id, e a propriedade do proprio objeto vence
-        // na cadeia de escopo — sem o `root.` isto seria auto-referencia.
-        runtimeController: root.runtimeController
+        runtimeController: runtimeController
     }
 
     // Configuracoes salvas saem do RuntimeController: "guardar como rodar um
@@ -209,7 +206,7 @@ Item {
     CommandDispatcher {
         id: commandDispatcher
 
-        coreClient: coreClient
+        coreClient: root.coreClient
         debugController: debugController
         editorController: editorController
         gitController: gitController
@@ -267,8 +264,8 @@ Item {
     }
 
     WorkspaceEventRouter {
-        coreClient: coreClient
-        folderPicker: folderPicker
+        coreClient: root.coreClient
+        folderPicker: root.folderPicker
         projectTree: projectTree
         searchController: searchController
         workspaceController: workspaceController
@@ -277,71 +274,71 @@ Item {
     }
 
     EditorEventRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         editorController: editorController
     }
 
     EditorRequestRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         editorController: editorController
     }
 
     JobsEventRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         jobsController: jobsController
         diagnosticsController: diagnosticsController
     }
 
     SettingsEventRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         settingsController: settingsController
     }
 
     SearchEventRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         searchController: searchController
     }
 
     SearchRequestRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         searchController: searchController
         editorController: editorController
     }
 
     ProjectTreeRequestRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         projectTree: projectTree
     }
 
     RuntimeEventRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         runtimeController: runtimeController
         runConfigController: runConfigController
     }
 
     RuntimeRequestRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         runtimeController: runtimeController
         runConfigController: runConfigController
     }
 
     DebugEventRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         debugController: debugController
     }
 
     DebugRequestRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         debugController: debugController
     }
 
     GitEventRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         gitController: gitController
     }
 
     GitRequestRouter {
-        coreClient: coreClient
+        coreClient: root.coreClient
         gitController: gitController
         editorController: editorController
     }

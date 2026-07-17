@@ -60,6 +60,9 @@ scripts/verificar-cpp.sh
 passo "scripts/verificar-qml.sh (qmllint estrito)"
 scripts/verificar-qml.sh
 
+passo "scripts/verificar-qml-fiacao.sh (binding auto-referente)"
+bash scripts/verificar-qml-fiacao.sh
+
 passo "scripts/verificar-arquitetura.sh (catraca da regra de split)"
 bash scripts/verificar-arquitetura.sh
 
