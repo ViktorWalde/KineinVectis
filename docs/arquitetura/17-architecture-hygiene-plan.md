@@ -37,7 +37,22 @@ A fase terminou porque todos os itens abaixo ficaram verdadeiros:
 - Docs canônicos registram as regras para impedir regressão.
 - Gate rápido, builds debug/release e smokes offscreen passam.
 
-## Resultado 2026-07-06
+## Resultado 2026-07-06 — ⚠ OS NÚMEROS ABAIXO NÃO VALEM MAIS
+
+> **Medido em 2026-07-17: dois deles regrediram 2–3x e um foi refeito.**
+>
+> ```text
+> Main.qml                336 -> 270    (refeito: AppDomains, 0686213)
+> ShellWorkspaceHost.qml  248 -> 576    2.3x — REGREDIU
+> EditorController.qml    318 -> 1070   3.4x — REGREDIU, e' o maior debito da UI
+> ```
+>
+> Este bloco e' **registro de 2026-07-06**, nao o estado de hoje. O `Status` no
+> topo diz "concluido para o estado atual" e isso deixou de ser verdade dez dias
+> depois — exatamente o que a `ARCHITECTURE.md` §1.1 documenta sobre si mesma.
+> **A fonte viva do tamanho de cada arquivo e' `scripts/arquitetura-baseline.txt`,
+> mantido pela catraca; nao este documento.** Os guardrails de responsabilidade
+> abaixo continuam valendo — o que apodreceu foi o inventario, nao a regra.
 
 - `Main.qml`: **336 linhas**, composition root puro. Não contém `ListModel`,
   `Connections`, `Shortcut`, `Timer`, helper de domínio nem componente visual

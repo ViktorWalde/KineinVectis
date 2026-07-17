@@ -219,6 +219,11 @@ E0. FEITO — cursor/TUI APROVADO pelo autor em 2026-07-17. Nao reabrir.
       custou a fatia R1 inteira.
 
 E1. Desentupir o gate: flake do `tools::` (§0.2h). SEM DECISAO, alto retorno.
+    VERIFICADO EM ABERTO (2026-07-17): `crates/kinein-core/src/tools.rs` nao muda
+    desde `4dacc1b` (07-16 22:53) e nao tem `O_CLOEXEC` nem fechamento de
+    descritor; o `EXEC_LOCK` esta intacto e o comentario dele descreve o bug que
+    continua la. Passar 3x seguidas nao prova nada: o §0.2h mediu "1 em 3", e na
+    suite COMPLETA (`--workspace --all-features`), nao no `-p kinein-core --lib`.
     POR QUE: reprova ao acaso e ensina a reexecutar ate passar — a doenca que a
     catraca do §0.2g existe para impedir. Bateu 2x na sessao de 2026-07-17 e a
     IA se flagrou fazendo exatamente isso.
@@ -229,11 +234,21 @@ E1. Desentupir o gate: flake do `tools::` (§0.2h). SEM DECISAO, alto retorno.
     CAMINHO: fechar o descritor de escrita ANTES do exec (ou `O_CLOEXEC`).
     NAO aumentar o escopo do lock — isso esconde, nao corrige.
 
-E2. A3.3 item 1 — harness Qt tecla->frame (`docs/roadmaps/21` §A3.3).
-    Design pronto. Fecha a ultima afirmacao de A3 que hoje depende de impressao
-    visual em vez de medicao.
+E2. FEITO desde 2026-07-16 — A3.3 item 1, harness tecla->frame.
+    `ui/src/typing_perf_harness.cpp`, atras de `KINEIN_PERF_TYPING`; mediana
+    7,4 ms / p95 8,4 ms contra orcamento de 16/20 ms. **L0 esta fechado.**
+    ERRO DE REGISTRO, corrigido em 2026-07-17: o `PRÓXIMO GESTO` listava isto
+    como "design pronto, o autor retoma" enquanto a §A3 do MESMO arquivo dizia
+    "A3.1–A3.4 estao fechadas... entregue em 2026-07-16". O documento se
+    contradizia e a IA copiou a metade errada sem medir. Ao montar fila, MEDIR:
+    `ls` no arquivo, `git log` na area, grep no gate — nunca herdar o item.
 
 E3. [DECISAO SUA] Primeiro recorte do L1 (§0.2e).
+    VERIFICADO EM ABERTO (2026-07-17): **nao existe `handlers/integration.rs`**.
+    Os handlers sao build, cargo, cmake, debug, draft, format, fs, git, jobs,
+    lsp, runconfig, run, settings, syntax, terminal, workspace. A entrega
+    arquitetural do L1 e' o dominio `integration` v1 (ver a tabela L0–L10); o
+    painel Ferramentas existente e' `tools.detect`, que NAO e' o `integration`.
     O QUE TRAVA: a auditoria derrubou a premissa do plano — nao existe biblioteca
     EditorConfig Rust madura. As 3 saidas estao no §0.2e com o trade-off medido.
     RECOMENDACAO (para nao travar): opcao 3 — validar `integration` v1 pelo
@@ -242,23 +257,49 @@ E3. [DECISAO SUA] Primeiro recorte do L1 (§0.2e).
     e so entao decidir FFI (`editorconfig-rs`) vs parser proprio.
     SE VOCE NAO RESPONDER: seguir pela opcao 3 e registrar como decisao da IA.
 
-E4. Debito god-file (§0.2g) — 23 arquivos. NAO e' fatia unica; e' pre-requisito
-    de quem for tocar cada area. A catraca ja provou 2x que cobra:
+E4. Debito god-file (§0.2g) — 23 arquivos, MEDIDO em 2026-07-17. NAO e' fatia
+    unica: e' pre-requisito de quem for tocar cada area, e a catraca ja cobrou 4x.
+
+    Ja PAGO desde a medicao de 07-16 (5 de 10 da lista original):
     ```text
-    EditorController.qml     1070/400   bloqueia QUALQUER feature de editor
-    terminal.rs               955/500   bloqueia feature de terminal
-    editor_highlighter.cpp    910/500   bloqueia realce
-    core_client_dispatch.cpp  804/500   §5 ja manda dividir por dominio
-    GitPanel.qml              764/300   bloqueia feature de Git
+    Main.qml                 700 -> 270   AppDomains (0686213)
+    BottomPanelHost.qml      541 -> 383   TerminalSessionTabs (696aa23)
+    RuntimeController.qml    494 -> 309   RunConfig + remocao do Assistente
+    AppMenuBar.qml           303 -> 292   icone saiu de dentro da IDE
+    ShellWorkspaceHost.qml   582 -> 576   parcial; ainda 1.4x o limite
     ```
+    Em ABERTO, e cada um bloqueia a sua area (limite entre parenteses):
+    ```text
+    EditorController.qml     1070 (400)  bloqueia QUALQUER feature de editor
+    terminal.rs               955 (500)  bloqueia feature de terminal
+    editor_highlighter.cpp    910 (500)  bloqueia realce
+    core_client_dispatch.cpp  804 (500)  §5 ja manda dividir por dominio
+    GitPanel.qml              764 (300)  bloqueia feature de Git
+    lsp/manager.rs            732 (500)  bloqueia feature de LSP
+    commands.rs               696 (500)
+    dap/session.rs            672 (500)  bloqueia feature de debug
+    core_client_requests.cpp  660 (500)
+    ShellWorkspaceHost.qml    576 (400)  composition host; corte por area
+    ```
+    ARMADILHA DE MEDICAO: a catraca conta linhas **fora dos testes** (corte no
+    `#[cfg(test)]`, §4 regra 10). Contar `wc -l` cru em arquivo Rust da numero
+    inflado e falso alarme — aconteceu em 2026-07-17.
     REGRA (§4 regra 9): quando a catraca disparar, ha TRES suspeitos nesta ordem —
     a sua mudanca, a categoria, o arquivo. Nao corte linha para caber e nao suba
     o baseline: os dois sao trapaca.
 
 E5. Resto conhecido, sem pressa e sem bloqueio:
-    - `assistant_terminal_width` ainda em `kinein-config`/`settings.rs` e no
-      protocolo (sobra do 0.59.0). A UI nao le mais. Tirar e' mudanca de contrato
-      com decisao de versao: fatia propria.
+    - **`assistant_terminal_width` — o que e':** um campo de CONFIGURACAO no
+      contrato. `kinein-protocol/src/settings.rs:62` (`Option<u32>`) e `:91`
+      (`u32`), serializado como `assistantTerminalWidth` no JSON-RPC. Guardava a
+      LARGURA do painel Assistente lateral — aquele que o 0.59.0 removeu. Hoje:
+      **a UI nao le** (a propriedade morta saiu do `SettingsController` em
+      2026-07-17) e o core so o mescla/valida por inercia — 9 pontos em Rust,
+      incluindo `handlers/settings.rs:113`, que valida a largura de um painel que
+      nao existe. E' peso morto no contrato.
+      **Por que nao saiu junto:** tirar mexe no `kinein-protocol` = mudanca de
+      contrato, com decisao de VERSAO e atualizacao do `docs/arquitetura/03`.
+      Nao se enfia isso numa remocao de UI. Fatia propria, P3.
     - AppImage para testadores: o plano do autor (§0.2d-5) manda fechar A3, L1 e
       os icones antes. O AppImage atual (07-15 23:08) e' ANTERIOR ao remake do
       icone, por isso o atalho do AppImage mostra o icone velho — o do

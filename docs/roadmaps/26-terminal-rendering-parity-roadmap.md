@@ -827,7 +827,9 @@ claude                 → NÃO possui --no-alt-screen nem modo inline. A sessã
                          animations)".
 ```
 
-Configuração atual dos perfis (`crates/kinein-core/src/handlers/ai.rs`):
+Configuração dos perfis **como era até o 0.59.0**, em
+`crates/kinein-core/src/handlers/ai.rs` — arquivo REMOVIDO naquele protocolo
+(registro histórico; não existe mais e a linha de IA está fora de escopo):
 
 ```text
 Claude → args: &[]                    (TUI de tela cheia, sem inline)
