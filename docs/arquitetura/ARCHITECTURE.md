@@ -1,5 +1,9 @@
 # Arquitetura de Software e Convenções de Crescimento
 
+> **Classe: CONTRATO** (`docs/README.md`). Só muda por decisão explícita e
+> registrada. As §2/§4/§5 são a lei; os inventários e números medidos são a parte
+> perecível — e a §1.1 documenta o que aconteceu quando ninguém percebeu a
+> diferença.
 > **Status:** ativo / contrato de engenharia.
 > **LEITURA OBRIGATÓRIA antes de escrever ou propor código novo — humano ou IA.**
 > Não é referência de consulta: é contrato. Quem vai propor arquitetura neste
@@ -99,6 +103,22 @@ QQmlContext::objectForName      Existe desde Qt 6.5. Sem consultar, a saida seri
                                sujar o Main.qml com objectName so para medir.
 Positioner descarta filho de    Linha vazia virava Row sem largura: o texto subia
 largura zero                    e o cursor "parecia" errado. Dois dias de TUI.
+`x: x` NAO resolve para o id    A propriedade do PROPRIO alvo vence a do objeto
+quando `x` e' propriedade do    raiz do arquivo. `coreClient: coreClient` entregou
+raiz (Qt 6.11.1, medido)        null em 15 roteadores: a IDE parou de ler pastas e
+                                de criar projetos. Build passa, qmllint diz limpo,
+                                o boot vai ao 1o frame e o Qt NAO avisa de loop.
+                                (Se `x` E' um id do arquivo, resolve certo.)
+Mutar CHAVE de `property var`   `terminalRenders[id] = render` nao notifica; so
+nao notifica binding            reatribuir a propriedade notifica. E' por isso que
+                                a UI desenha UMA sessao de terminal (a ativa), e
+                                por que um painel lateral vivo exigiria uma
+                                segunda vista notificante.
+qmlcachegen emite `\r` CRU      O escape QML vira byte CR dentro do
+dentro do QStringLiteral        `QStringLiteral` gerado; o preprocessador trata
+(Qt 6.11.1)                     como fim de linha e o erro sai como "unterminated
+                                argument list" 3800 linhas adiante. `\n` e'
+                                escapado certo. Bug do Qt; medido no .cpp gerado.
 ```
 
 Regra prática: ao afirmar que uma API se comporta de tal forma, **cite a fonte
@@ -216,18 +236,32 @@ Regras:
    reprova; encolher é sempre aceito. Falhar nos 20 de uma vez só ensinaria
    a desligar o script.
 
-Estado em 2026-07-16 — **a validação de 2026-07-06 abaixo NÃO vale mais**:
-`Main.qml` está com 700 linhas (era 336), `EditorController.qml` com 1070
-(limite 400) e ao todo 20 arquivos passam do limite. A separação de camadas
-descrita adiante continua correta e é o alvo; o que falhou foi o TAMANHO, e
-agora a catraca do gate impede a piora. Texto original preservado:
+**Inventário: parte perecível deste documento.** A separação de camadas acima é
+CONTRATO e não muda por conveniência. Os números abaixo são ESTADO e envelhecem —
+a fonte viva é `scripts/arquitetura-baseline.txt`, mantido pela catraca. Este
+bloco já mentiu duas vezes (ver §1.1 e o `arquitetura/17`); ele existe para dar
+forma, não para ser citado como verdade de hoje.
 
-Estado validado em 2026-07-06: `Main.qml` tem 336 linhas e atua como
-composition root; o host visual central fica em
-`ui/qml/shell/ShellWorkspaceHost.qml` e não acessa `CoreClient` diretamente; o
-editor divide documentos, texto e completion em subcontrollers; o `CoreClient`
-preserva a API QML única, mas sua implementação C++ está fatiada em processo,
-requests, dispatch, estado e logs.
+Medição de 2026-07-17 (o que a catraca cobrou e o que foi pago):
+
+```text
+PAGO desde 2026-07-16, e cada um por RESPONSABILIDADE, nao por tamanho:
+  Main.qml                700 -> 270   dominios sairam para ui/qml/app/AppDomains.qml
+  BottomPanelHost.qml     541 -> 383   a barra de chips virou TerminalSessionTabs.qml
+  RuntimeController.qml   494 -> 309   run configs sairam; o conceito de IA saiu
+  AppMenuBar.qml          303 -> 292   o icone saiu de dentro da IDE
+
+EM ABERTO — 23 arquivos no baseline. Os maiores bloqueiam a propria area:
+  EditorController.qml   1070 (400)    ja tem subcontrollers: continuar movendo
+  terminal.rs             955 (500)
+  editor_highlighter.cpp  910 (500)
+  core_client_dispatch.cpp 804 (500)   a §5 ja manda dividir por dominio
+  ShellWorkspaceHost.qml  576 (400)    composition host: cortar por area
+```
+
+O `CoreClient` preserva a API QML única, com a implementação C++ fatiada em
+processo, requests, dispatch, estado e logs; o editor divide documentos, texto e
+completion em subcontrollers. Isso continua valendo e é o alvo.
 
 ## 4. Organização interna do `kinein-core` (o que impede o monólito)
 
@@ -372,6 +406,41 @@ Regras que mantêm isso saudável:
    fica verde. Plano de pagamento e ordem em
    `docs/arquitetura/27-modulos-por-dominio.md`.
 
+11. **Todo gate deste projeto nasceu de uma falha SILENCIOSA, e essa é a regra
+    para criar o próximo.** Não se cria gate por gosto de rigor: cria-se quando
+    uma classe de erro passa verde por todos os checks existentes. O critério é
+    esse — *"o que pode quebrar sem nada reclamar?"*.
+
+    ```text
+    verificar-arquitetura.sh   2026-07-16  a regra de split morava so em .md.
+      (catraca)                            20 arquivos da UI e 7 do core a
+                                           violavam com o gate verde.
+    verificar-qml-fiacao.sh    2026-07-17  `coreClient: coreClient` entregou null
+      (binding auto-referente)             em 15 roteadores. Build passa, qmllint
+                                           limpo, boot vai ao 1o frame, o Qt nao
+                                           avisa. A IDE parou de ler pastas.
+    verificar-docs.sh          2026-07-17  numero sem data que mente. O
+      (veracidade dos .md)                 arquitetura/17 dizia "concluido para o
+                                           estado atual" com numeros 3,4x errados
+                                           — o MESMO vicio da §1.1, dez dias
+                                           depois de a §1.1 ser escrita sobre ele.
+    verificar-qml-logica.sh    (anterior)  harness headless dos controllers. Em
+                                           2026-07-16 descobriu-se que 7 dos 14
+                                           NAO conseguiam reprovar: `Qt.exit()`
+                                           trunca em 8 bits (§1.3).
+    ```
+
+    **Um gate que nunca reprovou não está provado — está sem evidência.** Ao
+    criar ou mexer em um, MUTE o produto e confirme que ele cai. Em 2026-07-17 a
+    primeira versão do `verificar-docs.sh` deixava passar "42 linhas" porque o
+    regex exigia 3 dígitos: cega para arquivo pequeno, e só o teste de mutação
+    mostrou. Vale para teste também — a §0.2i do `PONTO_ATUAL` existe porque uma
+    suíte inteira passava verde com o bug presente.
+
+    **E gate que grita falso é pior que gate nenhum: ensina a ignorar.** Por isso
+    o `verificar-docs.sh` entende que uma seção "## Resultado 2026-07-06" data
+    tudo dentro dela, e a catraca corta no `#[cfg(test)]`.
+
 O `kinein-protocol` segue a mesma ideia: **um módulo por domínio** (`rpc`,
 `workspace`, `fs`, `lsp`, `build`, …) re-exportado flat pelo `lib.rs`. Um tipo
 novo entra no módulo do seu domínio, não num arquivo gigante.
@@ -468,7 +537,15 @@ transacional quando ganharem preview/rollback.
 - operação longa rodando síncrona no handler (deveria ser job);
 - JSON montado à mão em vez de tipo do kinein-protocol;
 - método pendurado no domínio errado;
-- relaxar strict mode sem registrar motivo.
+- relaxar strict mode sem registrar motivo;
+- mecanismo GENÉRICO sem usuário: pior que nenhum. Quando o único chamador morre,
+  o mecanismo morre junto (2026-07-17: com a IA fora de escopo, o
+  `openLabeledTerminal`/`kind` do RuntimeController ficou órfão e saiu);
+- doc de ESTADO afirmando número sem data — vira mentira em silêncio (§1.1, e o
+  `verificar-docs.sh` agora reprova);
+- ligar/escutar no lugar errado: não falha no build, **deixa de funcionar em
+  silêncio**. Já custou três fatias (`runConfigController` null, `onAgentChosen`
+  no controller errado, `coreClient: coreClient` em 15 roteadores).
 ```
 
 ## 9. Critérios de aceite (checklist arquitetural)
@@ -484,11 +561,25 @@ Uma mudança está arquiteturalmente saudável quando:
 [ ] comando classificado por risco; high/dangerous confirmam.
 [ ] erro estruturado; nada de unwrap/expect/panic fora de teste.
 [ ] testes unit co-localizados + integração por domínio.
-[ ] contrato novo documentado em docs/arquitetura/03; estado em ContextoIA.md.
+[ ] o teste/gate novo REPROVA de verdade: mutei o produto e ele caiu (regra 11).
+[ ] contrato novo documentado em docs/arquitetura/03; decisão registrada no
+    ContextoIA.md (que e' LOG datado, nao o estado).
+[ ] GUIAIA.md atualizado se módulo/domínio/router nasceu, mudou de nome ou morreu
+    — mapa desatualizado engana mais que ausência de mapa (§1.2).
+[ ] mexeu na UI? `cmake --build --preset release-hardened` ANTES de pedir
+    validação: o atalho de desenvolvimento roda o release, não o dev-local.
 [ ] pasta-módulo de serviço já nomeada como o crate-alvo dos specs.
 [ ] funcionalidade de IDE registra referência oficial atual, invariantes e
     adaptação própria; nenhum código/runtime do host foi transplantado.
 ```
 
-Referência da visão completa: `docs/specs/` (fonte de verdade do produto e da
-arquitetura-alvo); estado atual e decisões vigentes: `ContextoIA.md`.
+E o critério que nenhum checklist pega, aprendido caro em 2026-07-17: **rigor
+arquitetural não torna útil uma feature que não se paga.** O seletor de agente de
+IA passou em todo item desta lista — camadas certas, zero política no core,
+mutação, gesto real — e foi removido no mesmo dia porque o usuário já podia
+digitar `claude` no terminal. Antes da fatia, pergunte o que ela substitui e
+quanto isso custava. Só o uso responde; responder cedo é barato.
+
+Referência da visão completa: `docs/specs/` (o ALVO, que diverge por natureza).
+**O que existe hoje se mede no código** — nenhum documento derruba uma medição.
+Classes de volatilidade dos documentos: `docs/README.md`.

@@ -1,5 +1,10 @@
 # AGENTS.md — Instruções para GPT/Claude no terminal
 
+> **Classe: CONTRATO** (`docs/README.md`). São as regras de como se trabalha
+> neste repositório. Só mudam por decisão explícita e registrada — não por
+> conveniência de uma sessão. Não contêm inventário nem número medido: número é
+> o que apodrece, e ele mora no código.
+
 Este arquivo orienta agentes de IA trabalhando no repositório **Kinein Vectis**.
 
 ## Identidade do projeto
@@ -101,7 +106,14 @@ Todo código Rust deve seguir o máximo rigor possível:
 
 Antes de criar código:
 
-1. Ler `ContextoIA.md` (estado real e decisões vigentes).
+0. **MEDIR no código o que a tarefa afirma.** Antes de aceitar qualquer item de
+   fila (`PONTO_ATUAL` §PRÓXIMO GESTO, roadmap, spec) como pendente: `ls` no
+   artefato, `git log` na área, `grep` no gate. **Fila é hipótese, não estado.**
+   Em 2026-07-17 o `PRÓXIMO GESTO` listava como "design pronto" um harness que a
+   §A3 do MESMO arquivo dava como entregue — e o arquivo existia. Medir custa 30
+   segundos; reimplementar o que existe custa uma fatia.
+1. Ler `ContextoIA.md` — é **LOG datado**, não estado. Serve para "por que isto é
+   assim?"; jamais para "o que existe hoje?".
 2. Ler `GUIAIA.md` para localizar o domínio, as conexões e os documentos
    específicos da tarefa. Ele é um mapa, não substitui as fontes seguintes.
 3. Ler `docs/arquitetura/ARCHITECTURE.md` **inteiro** (camadas, convenções de
@@ -138,12 +150,18 @@ Ao propor implementação:
 
 Use a ordem de precedência definida em `docs/README.md`:
 
-1. `ContextoIA.md` — estado real e decisões vigentes do repositório.
-2. `docs/specs/` — especificação canônica da Kinein Vectis (visão-alvo).
-3. `docs/00–16` (numerados) — contrato e estado do que já está implementado.
+```text
+0. O CÓDIGO + os gates  → a ÚNICA fonte do que existe. Mede-se, não se lê.
+1. CONTRATO             → AGENTS.md, ARCHITECTURE.md, adr/. Só muda por decisão.
+2. ESTADO               → PONTO_ATUAL.md, GUIAIA.md. Tem que ser verdade hoje.
+3. PLANO / ALVO         → docs/specs/, docs/roadmaps/. Diverge por natureza.
+4. LOG                  → ContextoIA.md, diario/. Datado; nunca reescrever.
+```
 
-A **UI/UX segue `docs/specs/`**; a fonte de verdade do que já existe é
-`ContextoIA.md` + `docs/specs/` + `docs/arquitetura/ARCHITECTURE.md` + código. Não existe
+**Em conflito, o código vence sempre. Nenhum documento derruba uma medição.**
+As quatro classes e o porquê estão em `docs/README.md`.
+
+A **UI/UX segue `docs/specs/`** como alvo; o que EXISTE se mede no código. Não existe
 mais pasta de arquivo morto (`docs/archive/` foi removida em 2026-07-05 — ver
 `docs/README.md`); não recriar uma só para guardar material descontinuado.
 `GUIAIA.md` apenas encurta a navegação entre essas fontes e o código.

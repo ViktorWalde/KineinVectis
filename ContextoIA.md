@@ -1,12 +1,29 @@
 # ContextoIA - Continuidade do Kinein Vectis
 
-Este arquivo registra decisoes de produto/arquitetura para IAs que continuarem
-o desenvolvimento do repositorio. Use junto de `AGENTS.md` e dos documentos em
-`docs/`. Este arquivo e enxuto de proposito: contrato/estado detalhado vive em
+> ## ESTE ARQUIVO E' UM **LOG**. NAO E' O ESTADO DO PROJETO.
+>
+> Classe **LOG** (`docs/README.md`): registro datado do que foi decidido **naquele
+> dia**. Envelhecer e' a funcao dele; nunca reescrever entrada antiga.
+>
+> ```text
+> Serve para:     "por que isto e' assim?"  -> leia a entrada datada.
+> NAO serve para: "o que existe hoje?"      -> isso se MEDE no codigo.
+> ```
+>
+> **Ate 2026-07-17 este arquivo estava em PRIMEIRO na ordem de precedencia,
+> descrito como "estado real e decisoes vigentes".** Ele e' um log append-only e
+> ja foi rebaixado. Log em primeiro e' o mecanismo que faz uma sessao nova confiar
+> em registro velho: foi assim que uma IA reimplementou um seletor que o autor
+> mandou remover no mesmo dia, e listou como pendente um harness entregue havia
+> 24 horas.
+>
+> **Estado vivo:** `PONTO_ATUAL.md` (fila) e `GUIAIA.md` (mapa) — e os dois se
+> curvam ao codigo. **Contrato:** `AGENTS.md` + `docs/arquitetura/ARCHITECTURE.md`.
+
+Registra decisoes de produto/arquitetura para quem continuar o repositorio, em
+ordem cronologica. Contrato e estado detalhado vivem em
 `docs/arquitetura/03-ipc-protocol.md`, `docs/arquitetura/ARCHITECTURE.md` e
-`docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`; aqui so ficam decisoes vigentes e
-prioridade atual (ver `docs/arquitetura/15-engineering-debt-and-refactor.md` sobre por
-que este arquivo foi enxugado em 2026-07-05).
+`docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`.
 
 ## Ambiente revalidado apos troca de distro (2026-07-08, Arch)
 

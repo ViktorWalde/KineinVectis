@@ -1,5 +1,12 @@
 # GUIAIA — mapa operacional do Kinein Vectis
 
+> **Classe: ESTADO** (`docs/README.md`). Este arquivo é um **mapa**, e mapa
+> desatualizado engana mais que ausência de mapa (`ARCHITECTURE.md` §1.2). Cada
+> caminho citado aqui tem que existir. Criou, renomeou ou removeu
+> módulo/domínio/router? **Atualize no mesmo commit.** Em 2026-07-17 a §5.6 ainda
+> mapeava `ui/qml/assistant/` e `handlers/ai.rs`, removidos desde o 0.59.0 — era
+> instrução errada para todo mundo que chegasse.
+>
 > **Status:** ativo e interno — atualizar junto com mudanças de arquitetura.
 > **Função:** dizer rapidamente **onde buscar conhecimento**, **quais módulos se
 > conectam** e **quais arquivos normalmente mudam juntos**.

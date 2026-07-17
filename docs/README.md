@@ -6,15 +6,56 @@ ordem de precedência quando houver conflito entre documentos.
 ## Ordem de precedência
 
 ```text
-1. ContextoIA.md (raiz)   → estado real e decisões vigentes do repositório
-2. docs/specs/            → especificação canônica da Kinein Vectis (visão-alvo)
-3. docs/ (numerados)      → contrato e estado do que já está implementado
+0. O CÓDIGO + os gates    → a ÚNICA fonte do que existe. Mede-se, não se lê.
+1. CONTRATO               → as regras. Só mudam por decisão explícita registrada.
+2. ESTADO                 → tem que ser verdade HOJE. Se divergir do código,
+                            o código vence e o documento se corrige no mesmo gesto.
+3. PLANO / ALVO           → aspiracional. Diverge por natureza; reconciliar.
+4. LOG                    → registro datado. Nunca reescrever. NÃO é estado.
 ```
 
-Regra: `docs/specs/` descreve o **alvo** (produto, UX, visual, arquitetura
-completa). Os documentos numerados descrevem o que **já existe** no repositório.
-Onde a visão divergir da implementação, vale o estado real — `ContextoIA.md` +
-documentos numerados + código.
+**Em conflito, o código vence sempre. Nenhum documento derruba uma medição.**
+
+### As quatro classes de volatilidade
+
+Este eixo é **ortogonal** às faixas P/T/X (audiência) de
+`PLANO_ORGANIZACAO_E_HANDOFF.md`. Ele responde outra pergunta: *"se este arquivo
+envelhecer, o que acontece?"*
+
+| Classe | Regra | O que acontece se envelhecer | Onde |
+| --- | --- | --- | --- |
+| **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `AGENTS.md`, `arquitetura/ARCHITECTURE.md` §2/§4/§5, `adr/` |
+| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `PONTO_ATUAL.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
+| **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `docs/specs/`, `docs/roadmaps/` |
+| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `ContextoIA.md`, `diario/`, `adr/` |
+
+### Por que o `ContextoIA.md` saiu de "estado real" (2026-07-17)
+
+Ele estava em **primeiro** nesta lista, descrito como *"estado real e decisões
+vigentes"*. Ele é um **log append-only** com 44 entradas datadas, e o próprio
+cabeçalho dele afirma ser "enxuto de propósito" — sendo o maior documento do
+repositório. Log em primeiro na precedência é o mecanismo que faz uma sessão nova
+confiar num registro velho: foi assim que, em 2026-07-17, uma IA reimplementou um
+seletor que o autor mandou remover no mesmo dia e listou como pendente um harness
+entregue havia 24 horas.
+
+**Log é ótimo para responder "por que isto é assim?". É péssimo para responder "o
+que existe hoje?" — essa pergunta se responde no código.**
+
+### A regra que separa registro de mentira
+
+> **Número com data é registro. Número sem data é afirmação sobre AGORA — e tem
+> que ser verdade.**
+
+`scripts/verificar-docs.sh` (no gate) verifica isso mecanicamente: todo `arquivo
+… N linhas` sem data por perto é conferido contra o disco. Se você precisa citar
+um número antigo, **date-o**; custa quatro palavras.
+
+O limite dessa trava, para ninguém achar que ela resolve tudo: ela pega número
+**sem** data. Um número datado que envelheceu continua enganando quem lê — foi o
+caso do `arquitetura/17`, que passava no script e mentia por 3,4x. Esse caso pede
+julgamento, e o remédio é o mesmo da §1.1: marcar "não vale mais" e apontar a
+fonte viva.
 
 **Vai alterar ou implementar algo?** Comece por
 [CONTRIBUINDO.md](CONTRIBUINDO.md): arquitetura em uma tela, tabela de "quero

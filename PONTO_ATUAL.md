@@ -4,16 +4,107 @@
 > execução. Trabalho concluído deve ser registrado no documento do domínio e
 > em `ContextoIA.md`, e então removido daqui.
 >
-> Estado implementado: `ContextoIA.md` + docs numerados + código. Mapa de
-> conhecimento e arquivos conectados: `GUIAIA.md`. Histórico de checkpoints:
-> Git. Base remota atual: `928fbb5`; checkpoint anterior: `948535d`;
-> checkpoint funcional atual: `HEAD` local; protocolo `0.61.0`.
+> **Estado implementado: o CÓDIGO — mede-se, não se lê.** O `ContextoIA.md` é
+> LOG datado e não responde "o que existe hoje" (rebaixado em 2026-07-17; ver
+> `docs/README.md`). Mapa: `GUIAIA.md`. Histórico: Git. Protocolo `0.61.0`.
 >
 > Não alterar a UI fora das specs. Commits locais de checkpoint após marco
 > crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
 > foram. **Dogfooding/self-hosting ativo desde 2026-07-14:** o usuário já
 > está na Kinein, e cada bloqueio ou saída para outra IDE passa a ordenar o
 > backlog antes de funcionalidade nova.
+
+## TRILHA — leia isto primeiro (medido em 2026-07-17)
+
+> **Classe deste arquivo: ESTADO** (`docs/README.md`). Tem que ser verdade HOJE.
+> Se divergir do código, **o código vence** e este arquivo se corrige no mesmo
+> gesto. Não é log — log é o `ContextoIA.md`, e ele não manda em nada.
+
+### Regra zero, antes de qualquer item
+
+```text
+MEDIR.  Fila e' hipotese, nao estado.
+        `ls` no artefato · `git log` na area · grep no gate · rodar.
+```
+
+Isto não é cerimônia: em 2026-07-17 esta fila listava como "design pronto" um
+harness que a §A3 **deste mesmo arquivo** dava como entregue — e o arquivo
+existia. Medir custa 30 segundos; reimplementar o que existe custa uma fatia.
+
+### Onde o projeto está (tudo medido, nada herdado)
+
+```text
+HEAD          189f450          protocolo 0.61.0        gate --rapido: VERDE
+L0            FECHADO          A3.1-A3.4; typing_perf_harness.cpp existe,
+                               mediana 7,4 ms / p95 8,4 ms (orcamento 16/20)
+cursor/TUI    APROVADO         pelo autor em 2026-07-17. Fecha R0-R3.
+IA na IDE     FORA DE ESCOPO   0 ocorrencias em ui/qml. Nao reabrir.
+debito        23 arquivos      catraca verde; 5 dos 10 god-files ja pagos
+```
+
+### A trilha, em ordem de DESBLOQUEIO
+
+O que não exige decisão vem primeiro. O que exige tem recomendação e um "se
+ninguém responder, siga por X" — nenhuma sessão para esperando.
+
+```text
+E1  flake do `tools::`        SEM decisao   desentope o gate inteiro
+E2  L1: dominio `integration` DECISAO SUA   recomendacao pronta (§0.2e)
+E3  debito god-file           SEM decisao   pre-requisito por area
+E4  resto (protocolo, AppImage)             P3, sem bloqueio
+```
+
+**E1 — flake do `tools::` (§0.2h). Primeiro por leverage, não por tamanho.**
+Reprova ao acaso e ensina a reexecutar até passar — a doença que a catraca do
+§0.2g existe para impedir. Pegou a IA 2x em 2026-07-17, que se flagrou fazendo
+exatamente isso. VERIFICADO ABERTO no código: `tools.rs` não muda desde `4dacc1b`
+e não tem `O_CLOEXEC`. Caminho já escrito no próprio arquivo: fechar o descritor
+de escrita antes do exec. **Não aumentar o escopo do `EXEC_LOCK`** — isso esconde.
+
+**E2 — L1: o domínio `integration` v1. [DECISÃO SUA, com saída]**
+VERIFICADO ABERTO: não existe `handlers/integration.rs`. O que trava é o §0.2e —
+a auditoria derrubou a premissa (não há biblioteca EditorConfig Rust madura).
+RECOMENDAÇÃO: opção 3 — validar o `integration` v1 pelo **inventário das
+ferramentas já detectadas** (clangd, rust-analyzer, CMake, Cargo, Git, rg, fd,
+lldb-dap, Clippy), zero dependência nova, contrato de pé; só então decidir FFI vs
+parser próprio para o EditorConfig.
+**Se ninguém responder: seguir pela opção 3 e registrar como decisão da IA.**
+
+**E3 — débito god-file (§0.2g). Não é fatia única: é pré-requisito por área.**
+A catraca já cobrou 4x em 2026-07-17. Quem for tocar uma área, paga a dela antes.
+```text
+EditorController.qml     1070 (400)  bloqueia QUALQUER feature de editor
+terminal.rs               955 (500)  bloqueia feature de terminal
+editor_highlighter.cpp    910 (500)  bloqueia realce
+core_client_dispatch.cpp  804 (500)  a §5 ja manda dividir por dominio
+GitPanel.qml              764 (300)  bloqueia feature de Git
+lsp/manager.rs            732 (500)  bloqueia feature de LSP
+commands.rs               696 (500)
+dap/session.rs            672 (500)  bloqueia feature de debug
+core_client_requests.cpp  660 (500)
+ShellWorkspaceHost.qml    576 (400)  composition host: cortar por area
+```
+Quando a catraca disparar, há **três suspeitos nesta ordem: a sua mudança, a
+categoria, o arquivo** (§4 regra 9). Não corte linha para caber e não suba o
+baseline — os dois são trapaça. Contar linha de Rust exige cortar no
+`#[cfg(test)]` (§4 regra 10), senão dá falso alarme.
+
+**E4 — resto conhecido, P3, sem bloqueio.** `assistant_terminal_width` no
+protocolo (detalhe no §0.2j); AppImage só depois de L1 e dos ícones (§0.2d-5).
+
+### Armadilhas que já custaram horas — leia antes de validar
+
+```text
+O atalho "Kinein Vectis (Desenvolvimento)" roda
+build/linux-clang-release-hardened/, NAO o dev-local.
+=> depois de mexer na UI:  cmake --build --preset release-hardened
+   ANTES de pedir validacao. Em 2026-07-17 o autor passou horas com uma IDE
+   quebrada porque esse binario estava 4 commits atras.
+
+qmllint "limpo" + boot ate o primeiro frame NAO provam fiacao QML.
+=> binding auto-referente `x: x` entrega null em silencio.
+   scripts/verificar-qml-fiacao.sh pega; rode o gesto real assim mesmo.
+```
 
 ## 0. Dogfooding ativo
 
