@@ -1818,6 +1818,45 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   core Debug `a0e677275f10cd27a0e77e22ef28ce95c5804451a208a88f4d30f549cc2d48ac`
   e core Release `00029096a66fb5eafd9cf4c927b67106f27b4159f6427d2bd7246fb26147c2fc`.
 
+## A mina de cache: alvos, limpeza padrão e três armadilhas medidas (2026-07-17)
+
+A entrada de 2026-07-15 acima descreve a interface antiga, de comando único sem
+alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
+
+- `scripts/atualizar-tudo.sh` passou a ter alvos: `--ide` (padrão),
+  `--appimage`, `--tudo` (IDE primeiro, só empacota se ela ficar verde) e
+  `--sem-limpeza`. A afirmação "não faz AppImage" da entrada anterior deixou de
+  valer com `--appimage`/`--tudo`; `git pull`, `cargo update` e push continuam
+  fora.
+- **A limpeza do cache virou padrão.** O motivo é o modo de falha: cache velho
+  aqui não falha barulhento, ele entrega uma IDE que parece atual e não é.
+  Reconstruir custa minutos; depurar um binário fantasma custou horas.
+- **Armadilha 1 — o preset que escrevia por cima do atalho.** `dev-local-release`
+  não tinha `binaryDir` próprio e herdava o do pai: `build/linux-clang-release-hardened`,
+  exatamente o que o launcher executa. Corrigido dando-lhe diretório próprio.
+  `CMakeUserPresets.json` é gitignored, então essa correção não tem rede de
+  proteção do git — se o arquivo for recriado sem `binaryDir`, a mina volta em
+  silêncio.
+- **Armadilha 2 — `--fresh` reprovado por SIGPIPE.** `cmake --help | grep -q -- '--fresh'`
+  reprovava um CMake que tem `--fresh`: o grep sai no primeiro acerto, fecha o
+  cano, o cmake morre de SIGPIPE (141) e o `pipefail` do script transforma isso
+  no resultado do pipeline. Reproduzido 8/8 no CMake 4.3.0, cuja ajuda é longa o
+  bastante para o cmake ainda estar escrevendo. Corrigido capturando a ajuda numa
+  variável antes do grep.
+- **Armadilha 3 — órfãos que parecem builds válidas.** Diretório em `build/` que
+  preset nenhum reivindica é resto de fluxo morto; `build/dev-local` e
+  `build/debug` ficaram meses no disco. `limpar_orfaos()` resolve `inherits`
+  recursivamente para descobrir o que cada preset realmente reivindica.
+- O cache de ferramentas do AppImage (`build/appimage/cache/tools`) é
+  preservado de propósito: é verificado por SHA256 fixado a cada uso, então não
+  tem como estar velho, e apagá-lo só forçaria download — enquanto o smoke
+  portátil roda sem rede por decisão.
+- **A mesma armadilha do SIGPIPE morde quem CHAMA o script.** Rodá-lo por um
+  pipe (`| tee`, `| grep`) faz o código de saída ser o do último comando do pipe:
+  em 2026-07-17 uma execução com `| tee` reportou `exit 0` enquanto o script
+  havia falhado no gate. Critério que não mente: manifesto não regravado = não
+  passou.
+
 ## Compatibilidade gráfica do AppImage (2026-07-15)
 
 - O primeiro dogfooding do AppImage no Fedora/Wayland expôs uma lacuna que o

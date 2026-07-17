@@ -46,13 +46,20 @@ Se existir qualquer dúvida sobre cache antigo ou UI/core de momentos
 diferentes, prefira o comando integral:
 
 ```bash
-./scripts/atualizar-tudo.sh
+./scripts/atualizar-tudo.sh              # a IDE de Desenvolvimento (padrao)
+./scripts/atualizar-tudo.sh --appimage   # o AppImage portatil em dist/
+./scripts/atualizar-tudo.sh --tudo       # os dois, IDE primeiro
 ```
 
-Ele reconfigura, reconstrói, testa e valida o mesmo launcher usado pelo atalho
-de desenvolvimento. Ao terminar, confira
-`build/kinein-build-manifest.env` para os hashes das UIs e cores Debug/Release
-produzidos na mesma transação.
+Ele apaga o cache de build, reconfigura, reconstrói, testa e valida o mesmo
+launcher usado pelo atalho de desenvolvimento. A limpeza é o padrão porque
+cache velho não falha barulhento: ele entrega uma IDE que parece atual e não é.
+`--sem-limpeza` reaproveita os caches quando a pressa compensa o risco.
+
+Ao terminar, confira `build/kinein-build-manifest.env` para os hashes das UIs e
+cores Debug/Release produzidos na mesma transação. **Se alguma etapa falhar, os
+binários anteriores são restaurados e o manifesto não é regravado** — manifesto
+com data velha significa que a atualização não passou.
 
 ### 1. Core Rust
 

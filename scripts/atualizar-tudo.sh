@@ -1,32 +1,69 @@
 #!/usr/bin/env bash
-# Reconstrucao integral e transacional do checkout de desenvolvimento.
+# Reconstrucao integral e transacional da IDE de desenvolvimento e/ou do
+# AppImage portatil, sempre a partir de cache limpo.
 #
 # Objetivo: impedir que scripts/kinein-vectis combine UI/core de revisoes
 # diferentes ou que caches CMake antigos sobrevivam a uma troca de distro,
-# toolchain ou fonte. Nao faz git pull, cargo update, packaging ou rede: ele
-# sincroniza e valida somente o codigo que ja esta neste checkout.
+# toolchain ou fonte. Nao faz git pull, cargo update ou push: ele sincroniza e
+# valida somente o codigo que ja esta neste checkout.
+#
+# POR QUE A LIMPEZA E' PADRAO. Cache velho aqui nao falha barulhento: ele
+# entrega uma IDE que parece atual e nao e'. Dois casos ja medidos neste
+# repositorio — build de outra distro apontando para /usr/lib/x86_64-linux-gnu
+# inexistente, e o binario do atalho quatro commits atras. Reconstruir custa
+# minutos; depurar um binario fantasma custou horas.
 
 set -Eeuo pipefail
 
-case "${1:-}" in
-    "") ;;
-    --help | -h)
-        cat <<'EOF'
-uso: scripts/atualizar-tudo.sh
+alvo_ide=0
+alvo_appimage=0
+limpar=1
 
-Reconfigura CMake sem cache, reconstrói UI/core, executa o gate completo,
-valida o launcher e grava build/kinein-build-manifest.env.
+mostrar_uso() {
+    cat <<'EOF'
+uso: scripts/atualizar-tudo.sh [ALVO]... [OPCAO]...
 
-Não faz git pull, cargo update, AppImage ou push.
+ALVOS (sem alvo = --ide):
+  --ide         reconstroi a IDE de Desenvolvimento: CMake sem cache, UI/core,
+                gate completo, smoke do launcher e manifesto.
+  --appimage    gera o AppImage portatil auditado em dist/, no container
+                Debian 12 fixado, e roda os dois smokes de entrega.
+  --tudo        os dois, IDE primeiro. So empacota se a IDE ficar verde.
+
+OPCOES:
+  --sem-limpeza reaproveita os caches de build (mais rapido, menos seguro).
+  --help, -h    esta ajuda.
+
+Nao faz git pull, cargo update nem push.
 EOF
-        exit 0
-        ;;
-    *)
-        echo "erro: argumento desconhecido: $1" >&2
-        echo "uso: scripts/atualizar-tudo.sh" >&2
-        exit 2
-        ;;
-esac
+}
+
+while (($# > 0)); do
+    case "$1" in
+        --ide) alvo_ide=1 ;;
+        --appimage) alvo_appimage=1 ;;
+        --tudo)
+            alvo_ide=1
+            alvo_appimage=1
+            ;;
+        --sem-limpeza) limpar=0 ;;
+        --help | -h)
+            mostrar_uso
+            exit 0
+            ;;
+        *)
+            echo "erro: argumento desconhecido: $1" >&2
+            echo >&2
+            mostrar_uso >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+if ((alvo_ide == 0 && alvo_appimage == 0)); then
+    alvo_ide=1
+fi
 
 REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -88,6 +125,102 @@ restore_artifact() {
     fi
 }
 
+# Diretorios de build que ALGUM preset de configure reivindica hoje, ja
+# resolvendo `inherits` (um preset sem binaryDir proprio herda o do pai, e foi
+# exatamente assim que dev-local-release passou a gravar por cima do
+# release-hardened que o launcher executa). Sai um nome por linha.
+dirs_reivindicados() {
+    python3 - "$REPO_ROOT" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+raiz = Path(sys.argv[1])
+presets = {}
+for arquivo in ("CMakePresets.json", "CMakeUserPresets.json"):
+    caminho = raiz / arquivo
+    if not caminho.is_file():
+        continue
+    with caminho.open(encoding="utf-8") as origem:
+        for preset in json.load(origem).get("configurePresets", []):
+            presets[preset["name"]] = preset
+
+
+def binary_dir(nome, vistos=frozenset()):
+    if nome in vistos:
+        return None
+    preset = presets.get(nome, {})
+    if "binaryDir" in preset:
+        return preset["binaryDir"]
+    herdados = preset.get("inherits") or []
+    if isinstance(herdados, str):
+        herdados = [herdados]
+    for pai in herdados:
+        achado = binary_dir(pai, vistos | {nome})
+        if achado:
+            return achado
+    return None
+
+
+for nome in presets:
+    caminho = binary_dir(nome)
+    if not caminho:
+        continue
+    resolvido = caminho.replace("${sourceDir}", str(raiz))
+    if resolvido.startswith(f"{raiz}/build/"):
+        print(Path(resolvido).name)
+PY
+}
+
+# Um diretorio em build/ que preset nenhum reivindica e' resto de um fluxo que
+# nao existe mais. Ele nao e' inofensivo: `build/dev-local` e `build/debug`
+# ficaram meses no disco parecendo builds validas.
+limpar_orfaos() {
+    local -a reivindicados=()
+    mapfile -t reivindicados < <(dirs_reivindicados)
+    reivindicados+=(appimage)
+
+    local existente nome encontrado
+    for existente in "$REPO_ROOT"/build/*/; do
+        [[ -d "$existente" ]] || continue
+        nome="$(basename -- "$existente")"
+        encontrado=0
+        for reivindicado in "${reivindicados[@]}"; do
+            if [[ "$nome" == "$reivindicado" ]]; then
+                encontrado=1
+                break
+            fi
+        done
+        if ((encontrado == 0)); then
+            echo "  orfao removido (preset nenhum o reivindica): build/$nome"
+            rm -rf -- "$existente"
+        fi
+    done
+}
+
+limpar_cache_ide() {
+    echo "  build/linux-clang-debug-strict"
+    rm -rf -- "$REPO_ROOT/build/linux-clang-debug-strict"
+    echo "  build/linux-clang-release-hardened"
+    rm -rf -- "$REPO_ROOT/build/linux-clang-release-hardened"
+    limpar_orfaos
+}
+
+# O cache de FERRAMENTAS (linuxdeploy, plugin Qt, runtime type-2) fica. Ele e'
+# verificado por SHA256 fixado a cada uso, entao nao tem como estar "velho": ou
+# casa com o pin, ou o proprio empacotador o rebaixa e rebaixa. Apagar so
+# forcaria download — e o smoke portatil roda SEM REDE de proposito.
+limpar_cache_appimage() {
+    local alvo
+    for alvo in AppDir cargo-target native native-host native-portable; do
+        if [[ -d "$REPO_ROOT/build/appimage/$alvo" ]]; then
+            echo "  build/appimage/$alvo"
+            rm -rf -- "$REPO_ROOT/build/appimage/$alvo"
+        fi
+    done
+    echo "  preservado: build/appimage/cache/tools (pinado por SHA256)"
+}
+
 source_fingerprint() {
     local -a files=()
     mapfile -d '' -t files < <(
@@ -125,14 +258,22 @@ on_exit() {
 }
 trap on_exit EXIT
 
-for command in bash cargo cmake flock git ninja sha256sum timeout; do
+for command in bash cargo cmake flock git ninja python3 sha256sum timeout; do
     require_command "$command"
 done
 
-if ! cmake --help | grep -q -- '--fresh'; then
+# A ajuda vem para uma VARIAVEL antes do grep. Com `cmake --help | grep -q`,
+# o grep sai no primeiro acerto, fecha o cano, o cmake morre de SIGPIPE (141)
+# e o `pipefail` la em cima transforma isso no resultado do pipeline: a
+# checagem reprovava um CMake que TEM --fresh. Reproduzido 8/8 no CMake 4.3.0,
+# cuja ajuda e' longa o bastante para o cmake ainda estar escrevendo.
+cmake_help="$(cmake --help)"
+if ! grep -q -- '--fresh' <<<"$cmake_help"; then
     echo "erro: este fluxo exige CMake com suporte a --fresh" >&2
     exit 1
 fi
+
+fluxo_ide() {
 
 log_step "snapshot das fontes e backup transacional"
 source_before="$(source_fingerprint)"
@@ -141,6 +282,11 @@ backup_artifact "$UI_RELEASE" ui-release
 backup_artifact "$CORE_DEBUG" core-debug
 backup_artifact "$CORE_RELEASE" core-release
 echo "fonte: $source_before"
+
+if ((limpar == 1)); then
+    log_step "apagando o cache de build da IDE"
+    limpar_cache_ide
+fi
 
 log_step "CMake debug --fresh"
 cmake --fresh --preset linux-clang-debug-strict
@@ -227,8 +373,45 @@ fi
 mv -f -- "$manifest_tmp" "$MANIFEST"
 cat "$MANIFEST"
 
+}
+
+fluxo_appimage() {
+
+if ((limpar == 1)); then
+    log_step "apagando o cache de build do AppImage"
+    limpar_cache_appimage
+fi
+
+# O empacotador monta a entrega em staging e so publica em dist/ quando o
+# conjunto esta completo: uma falha aqui preserva o ultimo AppImage valido.
+log_step "AppImage portatil (container Debian 12 fixado)"
+bash "$REPO_ROOT/scripts/empacotar-appimage-portatil.sh"
+
+log_step "smoke do AppImage no host"
+bash "$REPO_ROOT/scripts/testar-appimage.sh"
+
+# O que interessa ao testador: abrir numa maquina que NAO tem Qt, Rust, CMake
+# nem compilador — e sem rede.
+log_step "smoke do AppImage em Debian minimo, sem rede"
+bash "$REPO_ROOT/scripts/testar-appimage-portatil.sh"
+
+}
+
+if ((alvo_ide == 1)); then
+    fluxo_ide
+fi
+
+if ((alvo_appimage == 1)); then
+    fluxo_appimage
+fi
+
 complete=1
 echo
 echo "✓ ATUALIZACAO INTEGRAL VERDE"
-echo "  execute: $REPO_ROOT/scripts/kinein-vectis"
-echo "  manifesto: $MANIFEST"
+if ((alvo_ide == 1)); then
+    echo "  IDE:       $REPO_ROOT/scripts/kinein-vectis"
+    echo "  manifesto: $MANIFEST"
+fi
+if ((alvo_appimage == 1)); then
+    echo "  AppImage:  $REPO_ROOT/dist/"
+fi

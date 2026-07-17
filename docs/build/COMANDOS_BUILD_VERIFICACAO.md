@@ -29,27 +29,46 @@ Quando houver dúvida de que UI, core e cache CMake pertencem ao mesmo estado,
 use o fluxo transacional único:
 
 ```bash
-scripts/atualizar-tudo.sh
+scripts/atualizar-tudo.sh              # = --ide
+scripts/atualizar-tudo.sh --appimage   # so o AppImage portatil em dist/
+scripts/atualizar-tudo.sh --tudo       # IDE primeiro; so empacota se ela ficar verde
 ```
 
-Ele executa, nesta ordem:
+**A limpeza do cache é o padrão.** Cache velho aqui não falha barulhento: ele
+entrega uma IDE que parece atual e não é. Para reaproveitar os caches (mais
+rápido, menos seguro), use `--sem-limpeza`.
+
+O alvo `--ide` executa, nesta ordem:
 
 1. lock contra duas atualizações concorrentes;
 2. fingerprint das fontes e backup dos quatro executáveis atuais;
-3. configuração `--fresh` dos presets Clang Debug/Release oficiais;
-4. rebuild `--clean-first` das duas UIs;
-5. limpeza dirigida de `kinein-protocol`/`kinein-core`;
-6. gate completo com `debug-strict`/`release-hardened`;
-7. materialização explícita do `kinein-core` Debug, que `cargo test` não
+3. remoção dos diretórios de build da IDE e dos órfãos — todo `build/*` que
+   preset nenhum reivindica, já resolvendo `inherits`;
+4. configuração `--fresh` dos presets Clang Debug/Release oficiais;
+5. rebuild `--clean-first` das duas UIs;
+6. limpeza dirigida de `kinein-protocol`/`kinein-core`;
+7. gate completo com `debug-strict`/`release-hardened`;
+8. materialização explícita do `kinein-core` Debug, que `cargo test` não
    garante no caminho estável usado pelo fallback do launcher;
-8. rejeição se as fontes mudarem durante o build;
-9. smoke pelo `scripts/kinein-vectis` real;
-10. manifesto com commit, fingerprint e hashes dos quatro executáveis em
+9. rejeição se as fontes mudarem durante o build;
+10. smoke pelo `scripts/kinein-vectis` real;
+11. manifesto com commit, fingerprint e hashes dos quatro executáveis em
    `build/kinein-build-manifest.env`.
 
-Se qualquer etapa falhar, os executáveis anteriores são restaurados. O script
-não faz `git pull`, `cargo update`, AppImage, push nem acesso de rede por conta
-própria; ele sincroniza somente o checkout local já existente.
+O alvo `--appimage` limpa o staging, empacota no container Debian 12 fixado e
+roda os dois smokes de entrega (host e Debian mínimo sem rede). O cache de
+ferramentas (`build/appimage/cache/tools`) é preservado: ele é verificado por
+SHA256 fixado a cada uso e o smoke portátil roda sem rede de propósito.
+
+Se qualquer etapa falhar, os executáveis anteriores são restaurados e o
+manifesto não é regravado. O script não faz `git pull`, `cargo update`, push
+nem acesso de rede por conta própria; ele sincroniza somente o checkout local
+já existente.
+
+> Ao rodar o script por um pipe (`| tee`, `| grep`), o código de saída passa a
+> ser o do último comando do pipe e a falha some. Use `set -o pipefail`, ou
+> confira `build/kinein-build-manifest.env`: manifesto não regravado = não
+> passou.
 
 ## Sequencia manual (referencia)
 
