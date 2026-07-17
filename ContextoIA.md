@@ -1857,6 +1857,31 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
   havia falhado no gate. Critério que não mente: manifesto não regravado = não
   passou.
 
+## Teste C++ na UI, type-over pela origem e a catraca contando só código (2026-07-17)
+
+- A `ui/src` deixou de ter zero teste: `ui/tests/` nasceu com dois alvos QTest
+  no ctest do gate (preset debug, com sanitizers) — `tst_editor_highlighter`
+  (13 casos) e `tst_auto_close_regions` (10). Todo teste entrou provado por
+  mutação; o primeiro já pegou um caso que passava pelo motivo errado (a §0.2i
+  renascendo em C++) e virou caso próprio com nome honesto.
+- E6 fechada no mesmo dia: o type-over do auto-close passou a respeitar a
+  ORIGEM do fechador (`AutoCloseRegions`, um `QTextCursor` por fechador
+  auto-inserido — o Qt reposiciona sozinho; validação por preguiça; undo não
+  ressuscita, semântica fixada em teste). Fechador digitado à mão não é mais
+  engolido. Registro completo: `docs/diario/18`, fatias E1b/E6.
+- A fiação foi paga com o corte do `Keys.onPressed` para `EditorKeyRoutes.qml`
+  (§4 regra 9), e a `EditorTextSurface` **saiu do baseline de débito**.
+- A catraca passou a contar **linhas de código** (sem comentário/branco), como
+  a §4 sempre escreveu: 23 → 18 arquivos em débito na hora da mudança (cinco
+  estavam lá só por se explicarem; `terminal.rs` era cobrado por 298 linhas de
+  comentário), 17 após o E6. Os três god-files C++ continuam em débito só de
+  código — a dívida deles é real e a fila é a §0.2g.
+- Docs de contrato/estado realinhados por medição: `arquitetura/19` (D5 com as
+  três camadas de realce e a armadilha do `rehighlight()`; D9 superado — os
+  harnesses existem), GUIAIA §5.3 com o lado C++ e os testes novos, e a regra
+  12 da ARCHITECTURE (comentário técnico, não narração — datar medição, citar
+  fonte, e o teste "apague o comentário: o que se perde?").
+
 ## Compatibilidade gráfica do AppImage (2026-07-15)
 
 - O primeiro dogfooding do AppImage no Fedora/Wayland expôs uma lacuna que o

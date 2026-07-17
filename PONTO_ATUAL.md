@@ -34,14 +34,16 @@ existia. Medir custa 30 segundos; reimplementar o que existe custa uma fatia.
 ### Onde o projeto está (tudo medido, nada herdado)
 
 ```text
-HEAD          a838425          protocolo 0.61.0        gate --rapido: VERDE
+HEAD          6f38984          protocolo 0.61.0        gate completo: VERDE
 L0            FECHADO          A3.1-A3.4; typing_perf_harness.cpp existe,
                                mediana 7,4 ms / p95 8,4 ms (orcamento 16/20)
 cursor/TUI    APROVADO         pelo autor em 2026-07-17. Fecha R0-R3.
 IA na IDE     FORA DE ESCOPO   0 ocorrencias em ui/qml. Nao reabrir.
-debito        23 arquivos      catraca verde; 5 dos 10 god-files ja pagos
+debito        17 arquivos      catraca verde (conta so CODIGO desde
+                               2026-07-17); EditorTextSurface SAIU no E6
 gates         7                +presets (preset que sobrescreve o atalho)
-teste C++     ZERO             ui/src nao tem QTest; ver E5 — e' o buraco
+teste C++     2 alvos          ui/tests: 23 casos (highlighter 13,
+                               auto-close regions 10); ctest no gate
 harnesses QML 15               +tst_autoclose (a E1 nunca teve sonda)
 ```
 
@@ -55,8 +57,6 @@ E1  flake do `tools::`        SEM decisao   desentope o gate inteiro
 E2  L1: dominio `integration` DECISAO SUA   recomendacao pronta (§0.2e)
 E3  debito god-file           SEM decisao   pre-requisito por area
 E4  resto (protocolo, AppImage)             P3, sem bloqueio
-E5  teste de C++ na ui/src    SEM decisao   ZERO hoje; pre-requisito do E6
-E6  type-over pela origem     DEPENDE DO E5 desenhada e BLOQUEADA de proposito
 ```
 
 **E1 — flake do `tools::` (§0.2h). Primeiro por leverage, não por tamanho.**
@@ -96,54 +96,6 @@ baseline — os dois são trapaça. Contar linha de Rust exige cortar no
 
 **E4 — resto conhecido, P3, sem bloqueio.** `assistant_terminal_width` no
 protocolo (detalhe no §0.2j); AppImage só depois de L1 e dos ícones (§0.2d-5).
-
-**E5 — a `ui/src` não tem teste NENHUM. Medido em 2026-07-17, não estimado.**
-`grep` por `qt_add_test`, `add_test`, `QTest`, `Qt6::Test` e `enable_testing` nos
-`CMakeLists.txt`: **zero ocorrências**. O que existe para C++ é `clang-format` e
-`clang-tidy` — ambos estáticos, nenhum executa uma linha. E os harnesses QML não
-cobrem o buraco por construção: **nenhum dos 15 importa `KineinVectis`**, e nenhum
-toca a `EditorTextSurface` (que importa). Isso é decisão de arquitetura da suíte,
-não descuido — é o que deixa os controllers testáveis com fakes.
-
-O resultado é que a camada mais difícil do projeto é a única sem rede: 
-`editor_highlighter.cpp` (910/500), `core_client_dispatch.cpp` (804/500) e
-`core_client_requests.cpp` (660/500) são os três maiores arquivos C++ do repo e
-não têm um teste sequer. Pela §4 regra 11 — *"o que pode quebrar sem nada
-reclamar?"* — esta é a maior resposta em aberto do repositório hoje.
-
-Escopo mínimo: `qt_add_executable` + `Qt6::Test` + um `qt_add_test` no preset
-`debug-strict`, e um primeiro teste que **falhe antes de passar** (a doença da
-§0.2i não pode renascer noutra linguagem). Não é para cobrir tudo: é para que
-exista onde pôr o próximo teste.
-
-**Se ninguém responder, siga por:** o alvo mais barato com dono claro, não o
-maior. O rastreio de regiões do E6 é o candidato natural — nasce testado em vez
-de herdar débito.
-
-**E6 — type-over pela ORIGEM do fechador. Desenhada, e bloqueada de propósito.**
-Divergência medida e registrada (check 10 do `tst_autoclose.qml`, e a spec da E1
-em `docs/diario/18`): nós pulamos QUALQUER fechador no cursor; o Code OSS só pula
-o que ele mesmo inseriu. Em `foo(bar)` digitado à mão, o `)` do usuário some.
-
-O desenho já está fechado, e a parte difícil é uma só: **um `int` de posição em
-QML não sobrevive a uma edição.** O Code OSS resolve com *decorations* e o Zed com
-*anchors* — o equivalente nativo aqui é `QTextCursor`, que o Qt reposiciona sozinho
-através de digitação, colagem, undo e edição vinda do LSP. O caminho de fiação já
-tem precedente no repo: `EditorHighlighter` recebe um `QQuickTextDocument*` por
-propriedade QML e chama `->textDocument()`.
-
-**Por que NÃO entrou junto da fatia E1b.** O rastreio de posição é a lógica mais
-sutil de todo o auto-close, e em C++ ela cairia exatamente na camada do E5 — onde
-nada pode reprová-la. Seria criar a falha silenciosa que a §4 regra 11 manda caçar,
-na mesma fatia em que se conserta uma. Some-se que injetar tipo C++ no
-`EditorAutoClosePairs` **mataria o `tst_autoclose.qml`** (o runner `qml-qt6` não
-carrega o módulo): a saída é injetar as regiões como propriedade e passar um fake
-no harness — o padrão que o `tst_completion` já usa —, mas aí o rastreio real fica
-descoberto de novo. Os dois caminhos desembocam no E5.
-
-**Se ninguém responder, siga por:** E5 primeiro, `QTextCursor` depois. Não fazer em
-QML puro: exigiria observar cada edição e corrigir posições à mão, que é
-reimplementar mal o que o Qt já faz.
 
 ### Depois do E2: para onde o projeto vai (decidido em 2026-07-17)
 
