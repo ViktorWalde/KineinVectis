@@ -5,7 +5,9 @@
 > **Fonte de verdade:** o *porquê* das decisões. O *como* está em
 > `docs/arquitetura/ARCHITECTURE.md`; o *o quê/quando* em `docs/diario/18-daily-driver-plan.md`
 > e `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`; o visual-alvo em `docs/specs/`
-> **Ultima revisao:** 2026-07-09
+> **Ultima revisao:** 2026-07-17 (D5 com as três camadas de realce e a
+> armadilha medida do rehighlight; D9 superado — harnesses QML e teste C++
+> existem e estão no gate; RNF5/RNF7 com números medidos e datados)
 
 ## Por que este documento existe
 
@@ -69,12 +71,19 @@ RNF5 Manutenibilidade: strict mode máximo com gate único fix-first
      (Rust: clippy pedantic/nursery -D warnings, missing_docs; C++:
      clang-format/tidy Werror; QML: qmllint estrito zero warnings);
      domínios separados, handler fino, teste de comportamento no core.
+     Desde 2026-07-17 o verificar.sh soma 7 gates dedicados (catraca de
+     split, fiação QML, veracidade dos .md, colisão de presets, lógica
+     QML, C++ estático, ctest) — cada um nascido de uma falha que passou
+     verde (ARCHITECTURE §4 regra 11); a lista viva é o próprio script.
 RNF6 Portabilidade: Linux-first, agnóstico de distro (Arch é o alvo
      principal); bootstrap por scripts/instalar-ambiente.sh; nada de
      caminho hardcoded de distro em código.
 RNF7 Performance percebida: startup rápido (LSP/ferramentas sob demanda,
      nunca no boot da UI); highlight semântico assíncrono com debounce.
-     Orçamento formal de medição entra no M4 (docs/diario/18).
+     Orçamento de digitação JÁ MEDIDO (L0, 2026-07-17): mediana 7,4 ms /
+     p95 8,4 ms por tecla, contra orçamento 16/20 ms — harness
+     typing_perf_harness.cpp. Primeiro frame do AppImage em backend
+     software: 936 ms (2026-07-15). Régua de regressão, não troféu.
 RNF8 UX: memória muscular JetBrains (atalhos/fluxos) + visual dos specs.
 ```
 
@@ -128,12 +137,20 @@ controllers; eventos em `ipc/*`; `CoreClient` fachada única (docs/arquitetura/1
 - **Revisitar:** não regride; se o fio manual doer, gerar/agrupar — nunca
   voltar estado para componente visual.
 
-### D5. Editor sobre TextEdit + QSyntaxHighlighter (não treesitter/engine própria)
+### D5. Editor sobre TextEdit + QSyntaxHighlighter (não engine própria)
 
-- **Ganho:** editor funcional imediato; highlight sintático por regex +
-  spans semânticos do LSP cobrem a leitura diária de Rust/C++.
-- **Custo aceito:** sem multi-cursor real, minimap, split, parsing
-  incremental; regex é aproximação (o LSP corrige por cima).
+- **Ganho:** editor funcional imediato. O realce hoje é em **três camadas**
+  (atualizado em 2026-07-17; era só regex+LSP na escrita original): regex como
+  fallback offline → captures estruturais do **Tree-sitter** (ADR-0002) →
+  semantic tokens do LSP como autoridade. As três desembocam no mesmo
+  `QSyntaxHighlighter` (`ui/src/editor_highlighter.cpp`); Tree-sitter NÃO virou
+  engine de editor — alimenta tokens, como o LSP.
+- **Custo aceito:** sem multi-cursor real, minimap, split; regex é aproximação
+  (as camadas de cima corrigem). E um custo **medido em 2026-07-17**: o
+  `rehighlight()` do QSyntaxHighlighter marca o documento como alterado mesmo
+  quando só o formato mudou (Qt 6.11.1) — quem consome `onTextChanged` precisa
+  da barreira de texto-realmente-mudou (ver `EditorTextSurface.qml`), senão
+  cada passada de realce se apresenta como edição do usuário.
 - **Revisitar:** pós-V1, se edição avançada virar o gargalo do daily use —
   aí avaliar engine de editor dedicada (decisão grande, nova entrada aqui).
 
@@ -162,16 +179,25 @@ seleção de formatter por extensão no core.
 - **Revisitar:** relaxar exige motivo registrado (AGENTS.md); a direção
   preferida é subir degraus (docs/diario/18, escada de rigor).
 
-### D9. Testes: comportamento no core; UI sem harness automatizado (hoje)
+### D9. Testes em todas as camadas — o "UI sem harness" foi SUPERADO
 
-- **Ganho:** 175+ testes rápidos no caminho crítico (dispatch, fs, jobs,
-  LSP parse, format); sondas stdio validam ponta-a-ponta com ferramentas
-  reais.
-- **Custo aceito:** lógica QML (controllers) e pintura do highlighter só
-  têm smoke offscreen + validação empírica — regressão visual pode passar.
-- **Revisitar:** degrau 4 da escada de rigor (Qt Quick Test para
-  controllers) quando uma regressão de UI escapar OU antes do M2 (o que
-  vier primeiro).
+> **Atualizado em 2026-07-17.** O texto original ("UI sem harness automatizado
+> (hoje)") era verdade em 2026-07-09 e o gatilho de revisita disparou: os
+> harnesses existem e estão no gate.
+
+- **Estado medido (2026-07-17):** testes Rust de comportamento no core;
+  **15 harnesses QML headless** (`scripts/qml-harness/tst_*.qml`, controllers
+  reais com fakes injetados — nenhum importa o módulo C++, por construção); e o
+  **primeiro teste C++** (`ui/tests/`, QTest via ctest no preset debug com
+  sanitizers). Tudo dentro do `verificar.sh`.
+- **Ganho:** os harnesses já provaram reprovar (a §0.2i do `PONTO_ATUAL`
+  documenta a suíte que não sabia falhar e o conserto); teste novo só entra
+  provado por mutação.
+- **Custo aceito que PERMANECE:** pintura (pixels do highlighter, layout
+  visual) segue sem teste automatizado — smoke offscreen + aceite humano.
+  Regressão puramente visual ainda pode passar.
+- **Revisitar:** quando uma regressão visual escapar, avaliar snapshot de
+  render offscreen — decisão nova aqui.
 
 ### D10. Protocolo 0.x sem compatibilidade retroativa formal
 

@@ -431,8 +431,14 @@ ui/qml/editor/EditorController.qml
     ├─ EditorCompletionController.qml
     ├─ EditorOutlineController.qml / EditorOutlinePanel.qml
     ├─ EditorTextSurface.qml / EditorGutter.qml
+    │      └─ EditorAutoClosePairs.qml  (regras de par; a Surface so decide
+    │         o consumo da tecla — extraido em 2026-07-17, fatia E1b)
     ├─ EditorHoverPopup.qml / EditorUsagesPopup.qml
     └─ EditorWorkspaceEditPreviewDialog.qml
+ui/src/editor_highlighter.{h,cpp}  (QSyntaxHighlighter no documento do
+    TextEdit; recebe da Surface: setSyntaxSnapshot/setSemanticTokens/
+    setDiagnostics/setSearchMatches; realce em 3 camadas: regex ->
+    Tree-sitter -> LSP, ver arquitetura/19 D5)
 ui/qml/diagnostics/DiagnosticsController.qml
 ui/qml/ipc/EditorEventRouter.qml
     ↕ crates/kinein-protocol/src/{lsp,syntax,diagnostic}.rs
@@ -441,8 +447,15 @@ crates/kinein-core/src/handlers/{lsp,syntax}.rs
     └─ crates/kinein-core/src/lang/{registry,service,positions,outline,folding}.rs
 ```
 
-- Testes: `crates/kinein-core/src/tests/{lsp,syntax}.rs` e
-  `scripts/qml-harness/{tst_completion,tst_outline}.qml`.
+- Testes: `crates/kinein-core/src/tests/{lsp,syntax}.rs`,
+  `scripts/qml-harness/{tst_completion,tst_outline,tst_autoclose}.qml` e
+  `ui/tests/tst_editor_highlighter.cpp` (QTest via ctest — primeiro teste C++,
+  2026-07-17; alvo novo de teste C++ entra em `ui/tests/` + `ui/CMakeLists.txt`).
+- **Armadilha medida (Qt 6.11.1, 2026-07-17):** `rehighlight()` marca o
+  documento como alterado mesmo quando só o FORMATO mudou. O sinal `textEdited`
+  da Surface tem barreira de texto-realmente-mudou; quem for consumir
+  `onTextChanged` direto do TextEdit vai reintroduzir o bug do autocomplete que
+  voltava ao primeiro item.
 - Fontes: spec Editor/Language Intelligence, spec Tree-sitter,
   `docs/roadmaps/25-syntax-tree-semantic-foundation.md` e especificação KSWE.
 - Tree-sitter entrega estrutura/fallback; clangd e rust-analyzer são a
