@@ -19,7 +19,7 @@ Parte 3  — Componentes UI
 Parte 4  — Fluxos Build/Run/Debug
 Parte 5  — Editor, LSP, Tree-sitter e diagnósticos
 Parte 6  — Embedded, Targets, Flash, Serial, Remote SSH e QEMU
-Parte 7  — KV Context original
+Parte 7  — Assistente original
 Parte 7.1 — AI CLI Bridge externo
 Parte 8  — Onboarding, Settings e Project Wizard
 Parte 8.1 — Setup Intelligence Optimization Layer

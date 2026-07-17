@@ -441,10 +441,10 @@ O mesmo componente foi reaproveitado; não nasceu uma segunda barra.
 **Fora (com gatilho):** shell integration (cwd/exit por comando via OSC
 133), imagens (sixel).
 
-### Correção 0.51 — KV Context terminal-first (2026-07-14)
+### Correção 0.51 — Assistente terminal-first (2026-07-14)
 
 **Feedback ao vivo:** o Terminal integrado tinha barra e comportamento
-previsível, mas o Codex aberto pelo KV Context não mostrava histórico, ficava
+previsível, mas o Codex aberto pelo Assistente não mostrava histórico, ficava
 estreito e não transmitia a mesma sensação de terminal do CLion/terminal do
 sistema.
 
@@ -460,7 +460,7 @@ podia provocar `terminal.resize` + serialização integral do grid.
 O render 0.51 expõe `alternateScreen`, `applicationCursor` e
 `bracketedPaste`; o teclado/paste respeita esses modos. A barra ganhou faixa
 reservada e contraste persistente. Resize/scroll são coalescidos por frame.
-Com uma sessão ativa, o KV Context cresce responsivamente até 720px, preserva
+Com uma sessão ativa, o Assistente cresce responsivamente até 720px, preserva
 o editor e oferece maximização reversível da área de trabalho.
 
 **Segundo feedback ao vivo:** após reiniciar com a correção, o prompt inline
@@ -471,7 +471,7 @@ input e essa ordem pertencem ao próprio Codex; não havia perda de tecla nem
 camada sobreposta na Kinein.
 
 **Ajuste visual:** o `TerminalPanel` ganhou uma decoração opt-in da linha do
-cursor. Somente o KV Context a habilita: a linha ao vivo recebe fundo
+cursor. Somente o Assistente a habilita: a linha ao vivo recebe fundo
 `Theme.currentLine` e contorno `Theme.borderStrong`, atrás dos spans reais. O
 guia some ao rolar o histórico ou quando o cursor sai do grid. A solução não
 move linhas, não interpreta a TUI e não cria composer/chat paralelo; o Terminal
@@ -490,7 +490,7 @@ Claude/Codex.
 ### Correção 0.52 — divisor livre, Project independente e scroll contínuo (2026-07-14)
 
 **Terceiro feedback ao vivo:** a faixa continuava parecendo separada do texto,
-o KV Context já não podia ser dimensionado à vontade, a sessão escondia a
+o Assistente já não podia ser dimensionado à vontade, a sessão escondia a
 árvore de pastas e o scroll era perdido durante chats longos.
 
 **Causas:** o estado ativo calculava sempre metade da janela e ignorava a
@@ -504,7 +504,7 @@ com `--no-alt-screen`, apagando um transcript que o bridge prometeu preservar.
 **Correção em fases:** (1) a linha ativa ganhou geometria com respiro vertical,
 texto centralizado e contorno acima dos spans ANSI; (2) o splitter permanece
 ativo durante a sessão e grava `assistantTerminalWidth` (300–720px) separado
-dos 300–480px do seletor; (3) `Project` e KV Context voltaram a ser escolhas
+dos 300–480px do seletor; (3) `Project` e Assistente voltaram a ser escolhas
 independentes, salvo na maximização explícita; (4) o novo
 `TerminalScrollController` coalesce e reconcilia roda/arrasto, aceita o offset
 positivo deslocado por nova saída e protege o snap ao vivo contra render
@@ -581,7 +581,7 @@ não é polimento do terminal atual.
 
 ### Alinhamento do caret e conforto do prompt (2026-07-15)
 
-**Feedback ao vivo:** no KV Context, o caret aparecia várias colunas depois da
+**Feedback ao vivo:** no Assistente, o caret aparecia várias colunas depois da
 última palavra, flutuando sobre o fundo. O prompt `usuário@máquina:` e a pasta
 também apareciam em verde saturado e peso visual excessivo.
 
@@ -638,7 +638,7 @@ corretamente tanto o glifo largo quanto o caractere posterior a ele.
 horizontal e a paleta verde suave, mas o caret na entrada de Claude/Codex
 continuava parecendo baixo. Testar `cursorVerticalOffset: -2` e depois `0` mostrou que um
 deslocamento próprio do `AssistantPanel` não representava o contrato da TUI. O
-KV Context é somente outra apresentação da mesma base de terminal, criada para
+Assistente é somente outra apresentação da mesma base de terminal, criada para
 preservar visualmente a sessão do agente enquanto a aba Terminal fica livre.
 A cadeia `AssistantPanel → TerminalPanel → TerminalViewport` de offset foi
 removida por completo; não há perfil geométrico por agente ou superfície.
@@ -819,7 +819,7 @@ D1–D3 informam o que priorizar. Régua: JetBrains (não "virar um VS Code").
 - C5: Title/App Bar 40px com menus completos em overlay global e ações ligadas;
   Start Screen com detecção visível
   e criação C++/Rust; preview de arquivos/comandos; template C++23 moderno,
-  target-based e presets Debug/Release; KV Context como ponte explícita para
+  target-based e presets Debug/Release; Assistente como ponte explícita para
   Claude/Codex instalados pelo usuário sobre o PTY existente; diálogo Sobre.
 - Remediação 0.50: tooltips em overlay superior, criar arquivo/pasta pelo menu
   e clique direito, dimensões responsivas/persistidas e Estrutura

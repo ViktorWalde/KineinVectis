@@ -128,7 +128,7 @@ referência exata (arquivo§seção). `LAYOUT` =
 | 3 Tool Rail | 42px | 52px (48–56) | **diverge** (abaixo do mínimo) |
 | 4 Left Tool Window | Project, 280px automático (220–420), redimensionável/persistido | 280px (220–420) redimensionável; Project/Structure/CMake/Toolchains/Targets | **parcial** (dimensionamento conforme; outras tool views futuras) |
 | 5 Editor Area | tabs+texto+popups | + breadcrumbs (COMP §13.3), gutter (COMP §13.4), linha atual | **parcial** |
-| 6 KV Context | seletor 360px; sessão terminal ajustável/persistida 300–720px + maximização; Project independente; Claude/Codex sobre PTY existente | AI CLI Bridge externo, terminal-first e separável do Terminal comum | **correções 0.51/0.52 em código; validação funcional/visual pendente** |
+| 6 Assistente | seletor 360px; sessão terminal ajustável/persistida 300–720px + maximização; Project independente; Claude/Codex sobre PTY existente | AI CLI Bridge externo, terminal-first e separável do Terminal comum | **correções 0.51/0.52 em código; validação funcional/visual pendente** |
 | 7 Bottom Tool Window | 260px automático (160–480), redimensionável/persistido | 260px (160–480) redimensionável | **conforme em código; validação visual pendente** |
 | 8 Status Bar | 26px; indicadores de jobs | 28px; branch, erros/avisos, profile, compiler, target, Ln/Col, encoding, linguagem (LAYOUT §17.2–17.3) | **parcial** |
 
@@ -207,7 +207,7 @@ C1 [FEITA 2026-07-09; validação visual do usuário pendente — R7]
    no Theme.qml (paleta completa da área A, escalas da área D, tamanhos
    tipográficos da área E nos elementos auditados); (b) dimensões das
    regiões da área B/C (rail 52, status 28, bottom tabs 34, tab bar 36,
-   left 280, bottom 260, KV Context 360); (c) PanelSplitter para
+   left 280, bottom 260, Assistente 360); (c) PanelSplitter para
    redimensionar left/bottom/context nos min/max da spec; (d) correção
    semântica: fundo de seleção agora é surfaceSelected #222833 (âmbar só
    como acento), conforme COMP §10.4. Após validação visual do usuário,
@@ -244,7 +244,7 @@ C4 [durante M3] Editor Area: breadcrumbs, gutter de diagnósticos (depois
    numérica usa `FontMetrics`, eliminando a sobreposição do breakpoint em
    arquivos com mais dígitos ou fonte ampliada.
 C5 [FEITA 2026-07-14; remediações funcionais 0.50–0.52; validação R7 pendente]
-   App Bar com menus em overlay global e ações ligadas, KV Context como AI CLI
+   App Bar com menus em overlay global e ações ligadas, Assistente como AI CLI
    Bridge Claude/Codex sobre PTY, Start Screen e criação com preview conforme
    ONBOARDING_*. O dogfooding abriu uma correção vinculada em 0.51: Codex em
    modo inline oficial para scrollback, barra persistente, largura terminal
@@ -302,7 +302,7 @@ permanece em pressed e na seleção de texto do editor/inputs.
 **Dimensões:** rail 42→52 (botões 30→32); status bar 26→28; editor tab bar
 30→36 (abas 26→30, botão salvar 24→28); tabs do painel inferior 20→26
 (strip fecha em 34 com a margem nova de 8); explorer 260→280; painel
-inferior 170→260; KV Context 300→360.
+inferior 170→260; Assistente 300→360.
 
 **KVSplitter mínimo:** `shell/PanelSplitter.qml` como alça de arraste em
 OVERLAY nas bordas (não muda a estrutura do ShellLayout): explorer|editor,

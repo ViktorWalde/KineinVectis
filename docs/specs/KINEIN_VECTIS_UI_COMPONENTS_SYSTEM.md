@@ -37,7 +37,7 @@ Este documento deve ser usado para orientar:
 - diálogos;
 - menus;
 - notificações;
-- KV Context;
+- Assistente;
 - integração visual com CMake, toolchains, targets, debug e simulação.
 
 ---
@@ -103,7 +103,7 @@ A interface deve ser pensada em cinco camadas:
    Botão, input, select, tab, tree item, list item, badge, chip.
 
 4. Componentes compostos
-   Toolbar, sidebar, editor tab bar, status bar, tool window, KV Context card.
+   Toolbar, sidebar, editor tab bar, status bar, tool window, Assistente card.
 
 5. Fluxos
    Coding, build, debug, configure, embedded target, simulation, onboarding.
@@ -216,7 +216,7 @@ Editor tabs:      0px entre abas, bordas sutis
 Cards:            12px interno
 Dialogs:          20px a 24px interno
 Status bar:       6px horizontal
-KV Context:       12px entre cards
+Assistente:       12px entre cards
 ```
 
 A interface deve ser compacta, mas não sufocante.
@@ -375,7 +375,7 @@ Usar loading discreto:
 
 - spinner pequeno;
 - barra de progresso fina;
-- skeleton apenas em KV Context ou listas longas;
+- skeleton apenas em Assistente ou listas longas;
 - nunca bloquear editor por operações de fundo.
 
 ### 10.7 Error
@@ -631,7 +631,7 @@ Exemplos:
 
 - Auto configure CMake
 - Auto detect toolchain
-- Use KV Context
+- Use Assistente
 - Format on save
 - Show minimap
 
@@ -746,7 +746,7 @@ Run CMake/Ninja build for the selected profile.
 Shortcut: Ctrl+B
 ```
 
-Não usar tooltip para explicar conceitos longos. Para isso, usar KV Context ou docs.
+Não usar tooltip para explicar conceitos longos. Para isso, usar Assistente ou docs.
 
 ---
 
@@ -886,7 +886,7 @@ Debug
 Flash
 Simulate
 Search
-KV Context toggle
+Assistente toggle
 Settings
 Overflow
 ```
@@ -948,7 +948,7 @@ Exemplos:
 - Debug;
 - Serial;
 - Git;
-- KV Context;
+- Assistente;
 - Simulation.
 
 Estrutura:
@@ -1174,7 +1174,7 @@ Regras:
 
 - Mensagem completa não deve aparecer inline por padrão se ocupar muito espaço.
 - Hover mostra detalhes.
-- KV Context pode explicar erro complexo.
+- Assistente pode explicar erro complexo.
 
 ---
 
@@ -1700,13 +1700,13 @@ Open terminal
 
 ---
 
-# 18. KV Context
+# 18. Assistente
 
 ---
 
 ## 18.1 Propósito
 
-KV Context é o painel lateral inteligente da Kinein.
+Assistente é o painel lateral inteligente da Kinein.
 
 Ele não deve parecer chatbot genérico.  
 Ele deve parecer um **painel contextual de engenharia**.
@@ -1727,7 +1727,7 @@ Funções:
 ## 18.2 Estrutura do painel
 
 ```text
-Header: KV Context
+Header: Assistente
 Tabs: Context | Explain | Fix | Toolchain | Docs
 Content cards
 Prompt input
@@ -1738,7 +1738,7 @@ Action footer opcional
 
 ## 18.3 KVContextCard
 
-Card padrão do KV Context.
+Card padrão do Assistente.
 
 Visual:
 
@@ -1863,7 +1863,7 @@ Switch Target
 Switch Build Profile
 Detect Toolchains
 Open Settings
-Toggle KV Context
+Toggle Assistente
 Focus Editor
 ```
 
@@ -1901,7 +1901,7 @@ Build & Run
 Debug
 Embedded Targets
 Terminal
-KV Context
+Assistente
 Plugins/Extensions
 ```
 
@@ -2157,8 +2157,8 @@ Rename
 Refactor
 Format Selection
 Run Tests
-Explain with KV Context
-Fix with KV Context
+Explain with Assistente
+Fix with Assistente
 ```
 
 ### Project tree context menu
@@ -2230,7 +2230,7 @@ Todos os componentes críticos devem ser navegáveis por teclado:
 - settings;
 - abas;
 - project tree;
-- KV Context actions;
+- Assistente actions;
 - dialogs.
 
 ## 26.3 Foco
@@ -2440,7 +2440,7 @@ Terminal com fonte ruim
 Settings sem busca
 Dialogs gigantes
 Painéis que abrem sozinhos
-KV Context interrompendo fluxo
+Assistente interrompendo fluxo
 Animações decorativas
 Ícones inconsistentes
 Layout que parece landing page
@@ -2507,4 +2507,4 @@ Esse documento deve detalhar:
 - run configurations;
 - debug local;
 - erros e recuperação;
-- como KV Context deve ajudar sem atrapalhar.
+- como Assistente deve ajudar sem atrapalhar.

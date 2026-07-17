@@ -291,7 +291,7 @@ Esse fingerprint alimenta:
 ```text
 Project Health
 Setup Assistant
-KV Context
+Assistente
 CMake Setup
 Run Config Wizard
 Toolchain recommendation
@@ -362,7 +362,7 @@ Run Configuration
 Debug Configuration
 LSP Context
 Documentation Index
-KV Context
+Assistente
 ```
 
 ### 8.2 Relações
@@ -376,7 +376,7 @@ Configure Preset produces compile_commands.json
 clangd consumes compile_commands.json
 Run Config uses Target
 Debug Config uses Debugger
-KV Context consumes Diagnostics, Logs and Docs
+Assistente consumes Diagnostics, Logs and Docs
 ```
 
 ### 8.3 Por que isso importa
@@ -503,7 +503,7 @@ Clear CMake cache
 Select different generator
 Select different compiler
 Create local preset
-Open error in KV Context
+Open error in Assistente
 Show exact command
 ```
 

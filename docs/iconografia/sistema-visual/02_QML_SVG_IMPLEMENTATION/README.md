@@ -8,7 +8,7 @@ Não contém:
 layout da IDE;
 Project Explorer;
 editor;
-KV Context;
+Assistente;
 painéis de build;
 terminal;
 status bar;

@@ -663,10 +663,10 @@ aí como M7+).
   arbitrários (shellcheck, eslint...) sem código novo por linter.
 ```
 
-### M6.4 — Ponte de IA formalizada (specs ai-bridge / KV Context)
+### M6.4 — Ponte de IA formalizada (specs ai-bridge / Assistente)
 
 ```text
-- [FATIA INICIAL FEITA 2026-07-14, protocolo 0.50.0] KV Context detecta
+- [FATIA INICIAL FEITA 2026-07-14, protocolo 0.50.0] Assistente detecta
   Claude/Codex instalados pelo usuário, inicia a CLI escolhida explicitamente
   no TerminalManager/PTY existente e permite sair/trocar; sem provider/API
   embutido e sem enviar contexto automaticamente.

@@ -986,7 +986,7 @@ Botão sugerido:
 [Corrigir debugger]
 ```
 
-O KV Context deve explicar:
+O Assistente deve explicar:
 
 ```text
 "Sua toolchain compila C/C++, mas ainda não possui debugger configurado. Você poderá buildar e rodar, mas o botão Debug ficará indisponível até configurar GDB ou LLDB."
@@ -1292,10 +1292,10 @@ Quando build falhar:
 - mostrar erro principal no Build Summary;
 - marcar arquivos no Project;
 - mostrar badge na status bar;
-- KV Context oferece resumo.
+- Assistente oferece resumo.
 ```
 
-Exemplo KV Context:
+Exemplo Assistente:
 
 ```text
 O build falhou por erro de compilação em motor_control.cpp:42.
@@ -1544,9 +1544,9 @@ Ele será ativado quando o módulo correspondente for carregado.
 
 ---
 
-## 15. Integração com KV Context
+## 15. Integração com Assistente
 
-O KV Context não deve ser um chat genérico nesta etapa. Ele deve ser um painel contextual para reduzir ansiedade.
+O Assistente não deve ser um chat genérico nesta etapa. Ele deve ser um painel contextual para reduzir ansiedade.
 
 ### 15.1. Durante Toolchain Setup
 
@@ -1613,7 +1613,7 @@ Mostrar:
 Regra crítica:
 
 ```text
-KV Context sugere. Não altera código automaticamente sem ação explícita do usuário.
+Assistente sugere. Não altera código automaticamente sem ação explícita do usuário.
 ```
 
 ---
@@ -2181,7 +2181,7 @@ A Kinein deve ser familiar, mas não clone.
 
 ```text
 - âmbar industrial;
-- KV Context;
+- Assistente;
 - foco em toolchain visível;
 - CMake como cidadão de primeira classe;
 - Rust como cidadão de primeira classe;
@@ -2343,7 +2343,7 @@ A ordem mais segura:
 8. Implementar Cargo metadata/build.
 9. Implementar Run Configuration local.
 10. Implementar Debug Configuration MVP.
-11. Integrar KV Context com mensagens estruturadas.
+11. Integrar Assistente com mensagens estruturadas.
 12. Refinar UI/UX, atalhos e estados.
 ```
 
@@ -2382,7 +2382,7 @@ Run
 Debug
 Problems
 Jobs
-KV Context
+Assistente
 ```
 
 O usuário pode começar com C/C++ local, migrar para Rust, avançar para Linux embarcado e depois chegar em simulação sem que a IDE precise mudar de filosofia.

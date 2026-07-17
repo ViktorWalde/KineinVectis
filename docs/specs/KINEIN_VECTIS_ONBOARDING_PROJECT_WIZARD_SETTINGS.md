@@ -1019,7 +1019,7 @@ Settings
 │   ├── Rust
 │   ├── Tree-sitter
 │   └── LSP
-├── KV Context
+├── Assistente
 │   ├── Mode
 │   ├── Local Provider
 │   ├── External Provider
@@ -1197,7 +1197,7 @@ cria preset local se usuário aceitar
   ↓
 roda configure
   ↓
-se falhar, KV Context explica
+se falhar, Assistente explica
 ```
 
 ### 22.3 Regra
@@ -1416,14 +1416,14 @@ Não gastar muitas telas com aparência.
 
 ---
 
-## 30. KV Context no onboarding
+## 30. Assistente no onboarding
 
-O KV Context deve aparecer como recurso, mas não como centro da experiência.
+O Assistente deve aparecer como recurso, mas não como centro da experiência.
 
 Mensagem discreta:
 
 ```text
-KV Context can explain build errors, CMake issues and toolchain problems.
+Assistente can explain build errors, CMake issues and toolchain problems.
 It works locally when configured and can be disabled.
 ```
 
@@ -1691,9 +1691,9 @@ avisos
 
 ---
 
-## 37. Integração com KV Context
+## 37. Integração com Assistente
 
-O KV Context deve atuar como explicador e reparador do onboarding/setup.
+O Assistente deve atuar como explicador e reparador do onboarding/setup.
 
 Exemplos:
 
@@ -1707,7 +1707,7 @@ Por que Ninja é recomendado?
 O que significa target local?
 ```
 
-Em caso de falha, o Setup Assistant chama o KV Context com evidências.
+Em caso de falha, o Setup Assistant chama o Assistente com evidências.
 
 ---
 
@@ -1816,7 +1816,7 @@ Prioridade inicial:
 [ ] Project Health Dashboard básico.
 [ ] Settings > Toolchains.
 [ ] Settings > Build > CMake.
-[ ] Integração com KV Context para falhas.
+[ ] Integração com Assistente para falhas.
 ```
 
 ---

@@ -3,7 +3,7 @@
 > ## Estado em 2026-07-16 — o bridge foi REMOVIDO (protocolo `0.59.0`)
 >
 > **O domínio `aiBridge.*` não existe mais**, e com ele saíram a superfície do
-> KV Context, os perfis allowlisted e as settings `aiCliProfile` /
+> Assistente, os perfis allowlisted e as settings `aiCliProfile` /
 > `aiCliFlatTranscript`. Uma CLI de IA passa a ser usada como em qualquer IDE
 > profissional: abrir o terminal integrado e rodar `claude` ou `codex`.
 >
@@ -21,7 +21,7 @@
 > contrato `terminal.input/resize/scroll/close` de um `ls` ou de um `vim`. Sem
 > allowlist, sem argumento imposto, sem filtro, sem preferência persistida.
 >
-> **Retorno do KV Context.** Pode voltar como **UI pura** — um atalho visual
+> **Retorno do Assistente.** Pode voltar como **UI pura** — um atalho visual
 > que abre uma sessão de terminal comum para desacoplar visualmente do uso
 > padrão do terminal, sem regra de negócio própria no core. A UI representa o
 > backend; ela não o define. Volta quando o terminal estiver consolidado, com a
@@ -731,7 +731,7 @@ Problems
 A aba AI Terminal deve ser distinta, mas discreta.
 
 Na implementação do shell atual, essa superfície pode ocupar o painel direito
-**KV Context**, desde que continue separada do Terminal comum e obedeça às
+**Assistente**, desde que continue separada do Terminal comum e obedeça às
 mesmas capacidades de terminal. A largura 300–480px vale para o seletor e para
 o estado compacto. Com uma CLI ativa:
 
@@ -833,24 +833,24 @@ O botão de IA não deve ser o primeiro se houver reparo determinístico claro.
 
 ---
 
-## 17. Integração com KV Context
+## 17. Integração com Assistente
 
 A Parte 7 deve ser reinterpretada.
 
 ### 17.1 Antes
 
 ```text
-KV Context = painel de IA dentro da IDE.
+Assistente = painel de IA dentro da IDE.
 ```
 
 ### 17.2 Agora
 
 ```text
-KV Context = contexto determinístico da IDE.
+Assistente = contexto determinístico da IDE.
 AI CLI Bridge = ponte opcional para ferramenta externa.
 ```
 
-O nome “KV Context” ainda pode existir, mas com outra função:
+O nome “Assistente” ainda pode existir, mas com outra função:
 
 ```text
 - mostrar estado técnico;

@@ -640,7 +640,7 @@ argumento imposto, filtro de sequência nem preferência persistida.
 
 Consequência de produto: rodar um agente dentro da Kinein passa a ser
 indistinguível de rodá-lo fora dela — que era o requisito original. Uma
-superfície visual de atalho (KV Context) pode voltar depois **como UI pura**,
+superfície visual de atalho (Assistente) pode voltar depois **como UI pura**,
 abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
 
 ### Build (`build.run` — job assíncrono)

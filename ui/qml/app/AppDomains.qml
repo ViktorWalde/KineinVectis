@@ -32,7 +32,7 @@ Item {
     readonly property alias settingsController: settingsController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
-    readonly property alias contextAgentController: contextAgentController
+    readonly property alias assistantController: assistantController
     readonly property alias debugController: debugController
     readonly property alias gitController: gitController
     readonly property alias searchController: searchController
@@ -121,10 +121,10 @@ Item {
         }
     }
 
-    // KV Context inteiro: escolher o agente e rotular a aba e POLITICA e vive na
+    // Assistente inteiro: escolher o agente e rotular a aba e POLITICA e vive na
     // UI. O core so detecta; o RuntimeController so mantem a sessao.
-    ContextAgentController {
-        id: contextAgentController
+    AssistantController {
+        id: assistantController
 
         toolsList: workspaceController.toolsList
         runtimeController: runtimeController

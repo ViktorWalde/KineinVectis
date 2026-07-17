@@ -27,9 +27,9 @@ Item {
         }
     }
 
-    // O dono do KV Context. O RuntimeController acima nao sabe que ele existe:
+    // O dono do Assistente. O RuntimeController acima nao sabe que ele existe:
     // recebe rotulo + `kind` opaco e devolve o `kind` em `terminalOpened`.
-    ContextAgentController {
+    AssistantController {
         id: agentes
 
         runtimeController: runtime
@@ -84,9 +84,9 @@ Item {
         runtime.openTerminalPanel();
         if (root.openedRequests !== 1) failures += 8192;
 
-        // ---- KV Context: escolha na UI, sessao comum no core -------------
+        // ---- Assistente: escolha na UI, sessao comum no core -------------
         //
-        // O core nao sabe o que e "KV Context": para ele toda sessao e um
+        // O core nao sabe o que e "Assistente": para ele toda sessao e um
         // $SHELL no PTY. Rotulo e agente sao da UI. Se um dia isto virar
         // parametro do protocolo, a politica por programa que o 0.59.0 removeu
         // voltou.
@@ -97,7 +97,7 @@ Item {
 
         // O SELETOR VEM ANTES DA SESSAO: o atalho nao pode abrir PTY nenhum
         // enquanto o agente nao foi escolhido.
-        agentes.openContext();
+        agentes.openAssistant();
         if (!agentes.selectorVisible) failures += 16384;
         if (root.openedRequests !== 0) failures += 32768;
 
@@ -113,10 +113,10 @@ Item {
         // O core responde: aba rotulada, e o comando so entao e digitado — pelo
         // mesmo terminal.input do usuario, e vindo do `path` DETECTADO.
         runtime.handleTerminalOpened("c1", "/bin/sh");
-        if (String(runtime.terminalsModel.get(0).title).indexOf("KV Context") !== 0) {
+        if (String(runtime.terminalsModel.get(0).title).indexOf("Assistente") !== 0) {
             failures += 524288;
         }
-        if (runtime.terminalsModel.get(0).kind !== "context") failures += 1048576;
+        if (runtime.terminalsModel.get(0).kind !== "assistant") failures += 1048576;
         if (root.inputId !== "c1" || root.inputData !== "/usr/bin/claude\n") {
             failures += 2097152;
         }
@@ -126,7 +126,7 @@ Item {
         // apareca sem escolha nova (um open que falhou e voltou tarde, por
         // exemplo) NAO pode herdar o comando da anterior.
         root.inputData = "";
-        agentes.handleTerminalOpened("c9", agentes.contextKind);
+        agentes.handleTerminalOpened("c9", agentes.assistantKind);
         if (root.inputData !== "") failures += 68719476736;
 
         // Uma aba comum aberta depois nao e do contexto: nao recebe rotulo e o
@@ -143,26 +143,26 @@ Item {
         // Estado aceso do icone no rail: segue a aba ATIVA, nao a existencia.
         // Abrir "t9" acabou de ATIVA-LO, entao aqui existe um contexto vivo que
         // NAO esta ativo — o caso que separa "ativa" de "existe".
-        if (agentes.activeTerminalIsContext) failures += 67108864;
+        if (agentes.activeTerminalIsAssistant) failures += 67108864;
         runtime.selectTerminal("c1");
-        if (!agentes.activeTerminalIsContext) failures += 134217728;
+        if (!agentes.activeTerminalIsAssistant) failures += 134217728;
 
         // O icone do rail exige as DUAS coisas: sessao de contexto ativa E o
         // painel do terminal na frente. Contexto ativo com o painel escondido
         // nao acende — senao o rail mentiria sobre o que esta na tela.
         runtime.terminalPanelVisible = false;
-        if (agentes.contextSessionVisible) failures += 137438953472;
+        if (agentes.assistantSessionVisible) failures += 137438953472;
         runtime.terminalPanelVisible = true;
-        if (!agentes.contextSessionVisible) failures += 274877906944;
+        if (!agentes.assistantSessionVisible) failures += 274877906944;
         runtime.selectTerminal("t9");
-        if (agentes.contextSessionVisible) failures += 549755813888;
+        if (agentes.assistantSessionVisible) failures += 549755813888;
         runtime.selectTerminal("c1");
 
         // Com contexto vivo, o atalho FOCA em vez de acumular aba — e nao
         // reabre o seletor: ele so existe antes da sessao.
         root.openedRequests = 0;
         runtime.selectTerminal("t9");
-        agentes.openContext();
+        agentes.openAssistant();
         if (agentes.selectorVisible) failures += 268435456;
         if (root.openedRequests !== 0) failures += 536870912;
         if (runtime.activeTerminalId !== "c1") failures += 1073741824;
@@ -171,19 +171,19 @@ Item {
         // Fechado o contexto, o atalho oferece escolher de novo — e a numeracao
         // NAO repete.
         runtime.handleTerminalClosed("c1");
-        if (agentes.activeTerminalIsContext) failures += 4294967296;
-        agentes.openContext();
+        if (agentes.activeTerminalIsAssistant) failures += 4294967296;
+        agentes.openAssistant();
         agentes.choose("claude");
         runtime.handleTerminalOpened("c2", "/bin/sh");
         const contexto = runtime.terminalsModel.get(runtime.terminalsModel.count - 1);
-        if (String(contexto.title) === "KV Context 1") failures += 8589934592;
+        if (String(contexto.title) === "Assistente 1") failures += 8589934592;
 
         // Sem workspace o atalho e inerte (nao ha raiz para o PTY): nem seletor.
         runtime.clearTerminals();
         agentes.clear();
         runtime.workspaceRoot = "";
         root.openedRequests = 0;
-        agentes.openContext();
+        agentes.openAssistant();
         if (root.openedRequests !== 0 || agentes.selectorVisible) {
             console.warn("FALHA: atalho ativo sem workspace");
             failures += 17179869184;
@@ -199,7 +199,7 @@ Item {
               path: "/opt/ai tools/claude", version: "1.0" }
         ];
         root.inputData = "";
-        agentes.openContext();
+        agentes.openAssistant();
         agentes.choose("claude");
         runtime.handleTerminalOpened("c3", "/bin/sh");
         if (root.inputData !== '"/opt/ai tools/claude"\n') failures += 34359738368;

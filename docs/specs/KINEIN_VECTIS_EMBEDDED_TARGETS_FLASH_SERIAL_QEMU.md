@@ -1059,9 +1059,9 @@ não matar processo sem log
 
 ---
 
-## 14. KV Context para embarcados
+## 14. Assistente para embarcados
 
-KV Context deve ajudar especialmente em erros difíceis de ambiente.
+Assistente deve ajudar especialmente em erros difíceis de ambiente.
 
 ### 14.1 O que ele deve explicar
 
@@ -1368,7 +1368,7 @@ Ao implementar esta parte, a IA CLI deve seguir esta ordem:
 9. Implementar QEMU profile básico.
 10. Implementar Flash profile configurável.
 11. Integrar logs com Jobs.
-12. Integrar erros com KV Context.
+12. Integrar erros com Assistente.
 13. Adicionar testes unitários para modelos e validação.
 14. Adicionar testes de integração para comandos simulados.
 

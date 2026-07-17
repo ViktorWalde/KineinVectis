@@ -141,7 +141,7 @@ pacotes da distribuição ou a fonte oficial da ferramenta:
 | C/C++ | Clang ou GCC, CMake, Ninja, clangd, clang-format e LLDB/GDB |
 | Rust | rustup/Cargo, rust-analyzer, rustfmt, Clippy e LLDB |
 | Busca e Git | ripgrep, fd/fdfind e Git |
-| KV Context | Claude CLI ou Codex CLI previamente instalado e autenticado |
+| Assistente | Claude CLI ou Codex CLI previamente instalado e autenticado |
 
 A aba **Ferramentas** e o banner **Project Health** mostram o que foi detectado
 e o que falta para o projeto aberto. A Kinein não instala, autentica ou envia

@@ -9,7 +9,7 @@ Rectangle {
     property bool gitActive: false
     property bool buildActive: false
     property bool debugActive: false
-    property bool contextActive: false
+    property bool assistantActive: false
     property bool toolsActive: false
 
     signal explorerToggled()
@@ -17,7 +17,7 @@ Rectangle {
     signal gitRequested()
     signal buildRequested()
     signal debugRequested()
-    signal contextRequested()
+    signal assistantRequested()
     signal toolsRequested()
 
     width: 52
@@ -122,17 +122,17 @@ Rectangle {
             onActivated: root.debugRequested()
         }
 
-        // KV Context: atalho visual para uma sessao de terminal dedicada.
-        // O icone `context` sobreviveu a remocao do aiBridge (0.59.0); so o
-        // botao tinha sido arrancado junto com o painel do assistente. Agora
-        // ele aponta para `openContext()`, que abre um terminal comum — nao ha
-        // painel proprio nem backend proprio para alternar.
+        // Assistente: atalho para a sessao de terminal do agente de IA.
+        // O icone sobreviveu a remocao do aiBridge (0.59.0); so o botao tinha
+        // sido arrancado junto com o painel do assistente. NAO ha painel
+        // proprio nem backend proprio para alternar: o que abre e' o terminal
+        // normal, e o estado aceso vem de qual sessao esta na frente.
         RailButton {
-            iconName: "context"
-            tooltip: qsTr("KV Context")
-            active: root.contextActive
+            iconName: "assistant"
+            tooltip: qsTr("Assistente")
+            active: root.assistantActive
             enabled: root.workspaceOpen
-            onActivated: root.contextRequested()
+            onActivated: root.assistantRequested()
         }
 
         RailButton {

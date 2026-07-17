@@ -18,7 +18,7 @@
 ## 0. Dogfooding ativo
 
 O gatilho **“estou no Kinein”** já foi recebido. A primeira regressão concreta
-é o KV Context não se comportar visualmente como um terminal profissional:
+é o Assistente não se comportar visualmente como um terminal profissional:
 faltavam scrollback/barra perceptível no Codex, largura adequada e fluidez no
 resize. Após o primeiro reinício, surgiu um segundo detalhe: a linha de
 digitação inline ficava sem limite visual entre o aviso de usage e o status do
@@ -37,12 +37,12 @@ revelou que o caret ficava muito depois do texto e que verde/bold do prompt era
 visualmente agressivo. A correção 0.56 unifica spans e cursor pela largura VT,
 usa família monoespaçada real e suaviza peso/paleta sem interpretar o prompt;
 o usuário aprovou posição horizontal, Terminal comum e verdes suaves. Restou
-somente um ajuste fino: no KV Context o caret de Claude/Codex não parecia
+somente um ajuste fino: no Assistente o caret de Claude/Codex não parecia
 centralizado. O teste exclusivo com `-2` ficou perto, mas o usuário pediu valor
 `0`, igual ao Terminal puro aprovado. A pesquisa seguinte mostrou que as TUIs
 usam o cursor nativo do terminal e podem solicitar forma/piscagem por DECSCUSR,
 estado que o render anterior descartava. A correção 0.57 preserva esse estado
-genericamente. O usuário esclareceu em seguida que KV Context é somente outra
+genericamente. O usuário esclareceu em seguida que Assistente é somente outra
 apresentação da mesma base de terminal, não um backend diferente; por isso todo
 offset por superfície foi removido e `DefaultUserShape` também usa a célula VT
 integral. O usuário abriu a Kinein por `scripts/kinein-vectis` e não percebeu
@@ -173,7 +173,7 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
 - Correção 0.56: gate integral verde com 335 testes Rust, Clippy, C++/QML
   estritos, 12 harnesses, builds Debug/Release e smoke offscreen de 8 s
   (`exit 124` esperado). Binários do atalho de desenvolvimento atualizados.
-- O teste anterior `cursorVerticalOffset: -2` exclusivo do KV Context passou
+- O teste anterior `cursorVerticalOffset: -2` exclusivo do Assistente passou
   no gate, mas não recebeu aceite visual. O novo valor `0` passou em qmllint,
   12 harnesses, rebuild Release e smoke offscreen de 8 s; o gesto humano
   posterior não aprovou o cursor e `dist/` não foi regenerado.
@@ -200,10 +200,10 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
   Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
 
 PRÓXIMO GESTO
-1. **Seletor de agente do KV Context — FEITO em 2026-07-17** (§0.2j), no worktree
+1. **Seletor de agente do Assistente — FEITO em 2026-07-17** (§0.2j), no worktree
    e não commitado. A linha do §0.2f foi respeitada: detectar ficou no core
    (`tools.detect`), executar mora na UI, e nenhum `if programa == "claude"`
-   entrou no core. **Falta o rename** "KV Context" -> "Agente Auxiliar"
+   entrou no core. **Falta o rename** "Assistente" -> "Agente Auxiliar"
    (§0.2d-2): o seletor e' o lugar natural e evita mexer duas vezes nos mesmos
    6 pontos.
 2. Depois: harness Qt tecla->frame (`docs/roadmaps/21` §A3.3, design pronto) —
@@ -226,7 +226,7 @@ RESULTADO PENDENTE
 
 LIMITES
 - Commit local somente após checkpoint verde; não fazer push/publicação.
-- Não reabrir a discussão de chat embutido: KV Context é terminal dedicado.
+- Não reabrir a discussão de chat embutido: Assistente é terminal dedicado.
 - Fidelidade ao Code OSS significa comportamento adaptado à arquitetura da
   Kinein; não incorporar Electron/Node/xterm.js nem copiar implementação.
 ```
@@ -278,7 +278,7 @@ entregue em `dist/`. O polimento P3 restante de `docs/roadmaps/20` (snap, escala
 fracionária, multimonitor e acabamento visual) segue como fatia própria, não
 bloqueante; a imagem de referência é `imagens/bugs/ReformularBarra.png`.
 
-### 0.2b aiBridge REMOVIDO e KV Context desabilitado (2026-07-16, protocolo 0.59.0)
+### 0.2b aiBridge REMOVIDO e Assistente desabilitado (2026-07-16, protocolo 0.59.0)
 
 **O `aiBridge.*` era a interferência e foi removido.** Ele abria `claude`/`codex`
 por um caminho especial: argumentos injetados pelo core (`--no-alt-screen`,
@@ -296,7 +296,7 @@ shell, as settings `aiCliProfile`/`aiCliFlatTranscript`, e — no `terminal.rs` 
 o `ScrollbackPreserver` e o `open_command_with_policy`. Não existe mais política
 por programa no terminal.
 
-**KV Context volta como UI pura:** um atalho visual que abre uma sessão de
+**Assistente volta como UI pura:** um atalho visual que abre uma sessão de
 terminal comum, para desacoplar visualmente do uso padrão, **sem regra de
 negócio no core**. A UI representa o backend; não o define. Depende do terminal
 consolidado (ADR-0004 já trocou o emulador para o `alacritty_terminal`, motor do
@@ -305,14 +305,14 @@ Zed; falta encaminhamento de mouse ao app e a decisão de renderer).
 O modelo de IA não mudou: externa, por CLI do usuário, sem chat embutido e sem
 rede pela IDE. Caiu o **mecanismo**, não o princípio.
 
-### 0.2c KV Context reativado como UI pura (2026-07-16)
+### 0.2c Assistente reativado como UI pura (2026-07-16)
 
 A dependência registrada em §0.2b ("depende do terminal consolidado") caiu: a
 roda ao aplicativo está feita (protocolo 0.60.0) e a grade foi corrigida e
 aceita. O atalho voltou, e agora ele é o que sempre deveria ter sido.
 
-`Exibir → KV Context` (`view.context`) abre uma sessão de terminal **comum**,
-rotulada `KV Context N`, para a sessão do agente não se perder entre os terminais
+`Exibir → Assistente` (`view.context`) abre uma sessão de terminal **comum**,
+rotulada `Assistente N`, para a sessão do agente não se perder entre os terminais
 de build. Se já existe uma viva, foca ela em vez de acumular aba.
 
 **Não existe regra de negócio em camada nenhuma.** O core não sabe o que é "KV
@@ -323,10 +323,10 @@ não é parâmetro do protocolo — se um dia virar, a política por programa qu
 
 Detalhe de robustez: `terminal.open` pode falhar (teto de 12 sessões) e o erro
 vai para o handler genérico do `CoreClient`, sem chegar ao QML. Sem tratamento a
-marca ficaria presa e a próxima aba comum nasceria rotulada "KV Context"; um
+marca ficaria presa e a próxima aba comum nasceria rotulada "Assistente"; um
 timeout de 4 s a solta.
 
-O atalho tem **duas entradas**: `Exibir → KV Context` e o ícone dedicado no
+O atalho tem **duas entradas**: `Exibir → Assistente` e o ícone dedicado no
 `SideRail` (o `context` do `KvIcon` sobreviveu ao 0.59.0; só o botão tinha
 sido arrancado junto com o painel do assistente). O ícone acende conforme a
 aba ATIVA do terminal ser de contexto — não há painel próprio para alternar.
@@ -335,12 +335,12 @@ Cobertura: `tst_multi_terminal.qml` (rótulo, marca consumida, aba comum não
 herda, estado aceso segue a aba ativa, foco em vez de acumular, numeração não
 repete, inerte sem workspace).
 
-Fio solto que isso fechou: o item de menu "KV Context" existia desde o 0.59.0
+Fio solto que isso fechou: o item de menu "Assistente" existia desde o 0.59.0
 apontando para uma ação `view.context` que **não existia** — opção morta na barra.
 
 Pendência aberta: `assistantTerminalWidth` sobreviveu à remoção do painel do
 assistente em três camadas (`SettingsController.qml`, `settings.rs`, schema). É
-setting órfã. Decidir: ou o KV Context passa a usar largura persistida, ou sai.
+setting órfã. Decidir: ou o Assistente passa a usar largura persistida, ou sai.
 
 **Opção B (a UI digitar o comando do agente) segue em aberto** e é preocupação
 válida do autor: hoje o atalho abre a aba e o usuário digita `claude`. Subir para
@@ -350,7 +350,7 @@ a conhecer. Analisar em fatia própria.
 
 ### 0.2d Backlog levantado pelo autor em 2026-07-16 (pontuado, não implementado)
 
-**1. KV Context: confirmar em tela.** O autor reportou que o item aparece em
+**1. Assistente: confirmar em tela.** O autor reportou que o item aparece em
 `Exibir` e não funciona. Essa é exatamente a descrição do estado **anterior** aos
 commits de hoje: até `034b773` o item apontava para uma ação `view.context`
 inexistente. Depois de `034b773` (menu) e `19eef85` (ícone no rail) o wiring foi
@@ -359,7 +359,7 @@ verificado — `runtimeController` chega ao `ShellHeaderHost` e ao
 build novo.** Se continuar morto, é regressão real e tem prioridade: registrar
 ação/esperado/observado/ambiente.
 
-**2. Renomear "KV Context" (P3, decisão do autor).** O nome não explica o que a
+**2. Renomear "Assistente" (P3, decisão do autor).** O nome não explica o que a
 coisa é. Direção sugerida pelo autor: algo como "Agente Auxiliar". A renomeação
 é de PRODUTO e atinge: rótulo do menu (`AppMenuBar`), tooltip do rail
 (`SideRail`), título da aba (`RuntimeController.handleTerminalOpened`), o nome do
@@ -396,7 +396,7 @@ Coberto por 3 checks novos no `tst_completion.qml` — o teste **falhou primeiro
 do AppImage "completo" que o autor quer distribuir.
 
 **5. AppImage para testadores.** Plano do autor: fechar A3.1–A3.4 (L0), L1, a UI
-do KV Context e os ícones, e então gerar um AppImage completo para distribuir.
+do Assistente e os ícones, e então gerar um AppImage completo para distribuir.
 Não gerar antes disso; `dist/` só recebe conjunto completo por staging.
 
 **6. Código vai ser open source — codar pensando nisso.** Observação do autor de
@@ -500,7 +500,7 @@ não quem é maior"):
 
 Cada um é fatia própria, com a catraca atualizada no mesmo commit.
 
-### 0.2f KV Context: o seletor tem que voltar (P2, 2026-07-16)
+### 0.2f Assistente: o seletor tem que voltar (P2, 2026-07-16)
 
 **Correção de premissa, e o erro foi meu.** O registro do §0.2b dizia que a UI do
 assistente saiu junto com o `aiBridge`. Feedback do autor no gesto: *"antes tinha
@@ -516,7 +516,7 @@ a perda, mas a atribuição merece precisão, porque ela decide a fatia:
 Estado atual (§0.2c): o atalho abre um terminal comum e o usuário digita
 `claude`. Funciona, mas é regressão de fluxo frente ao que existia.
 
-**O que precisa voltar:** ao acionar KV Context, escolher entre as CLIs de IA
+**O que precisa voltar:** ao acionar Assistente, escolher entre as CLIs de IA
 **instaladas**; a escolha abre a sessão com o agente rodando.
 
 **A linha, e ela é fina:**
@@ -634,7 +634,7 @@ a precedência tem de ser explícita no contrato, não implícita no código.
 Recomendação: **opção 3 primeiro** (inventário valida o `integration` v1 sem
 dependência), depois decidir 1 vs 2 para o EditorConfig com o contrato já de pé.
 
-### 0.2j Seletor do KV Context — FEITO (2026-07-17)
+### 0.2j Seletor do Assistente — FEITO (2026-07-17)
 
 Os dois bloqueios do §0.2j caíram e o gesto foi validado rodando. Estado no
 worktree, ainda não commitado; base `f7f472b`.
@@ -656,15 +656,15 @@ converte só parte das funções); o `\r` quebrou por ter caído num handler que
 Bug do Qt, contornado com `"\n"` — que é o que o PTY precisa de qualquer forma.
 
 **BLOQUEIO 2 — pago, e o corte não foi de linhas.** O `RuntimeController` perdeu
-o **conceito** de KV Context, não só as funções: `grep -i context` nele não
+o **conceito** de Assistente, não só as funções: `grep -i context` nele não
 devolve nada (393 linhas). No lugar dos blocos específicos ele ganhou um
 mecanismo **genérico** — `openLabeledTerminal(label, kind)` carimba na aba um
 rótulo e um `kind` **opaco**, devolvido em `terminalOpened(id, kind)`; ele nunca
 interpreta o `kind`. Isso resolveu sozinho a fronteira que estava em aberto: o
 timeout guarda a *marca pendente* (dele, e agora genérica) e ficou; `contextSeq`
-é numeração de KV Context e foi junto.
+é numeração de Assistente e foi junto.
 
-O `ContextAgentController` (195) é dono do KV Context inteiro: quem é agente, a
+O `ContextAgentController` (195) é dono do Assistente inteiro: quem é agente, a
 escolha, o comando, quando a sessão abre, como a aba se chama e quando o ícone do
 rail acende. Recebe `runtimeController` por propriedade e escuta `terminalOpened`
 por `Connections` **dentro de si** — sinal escutado no composition root foi a
@@ -673,7 +673,7 @@ armadilha que já custou duas fatias.
 **Terceiro caso da regra 9, e é o mais afiado** (registrado na `ARCHITECTURE.md`):
 a catraca reprovou o `ShellWorkspaceHost` por **+1 linha** (582 → 583). O defeito
 não era o arquivo (é composition host; o split dele é fatia própria) nem a
-categoria — era **a minha mudança**, que punha política de KV Context (`showBottomPanel
+categoria — era **a minha mudança**, que punha política de Assistente (`showBottomPanel
 && bottomTab === "terminal" && activeTerminalIsContext`) num host visual.
 Devolvida ao dono como `contextSessionVisible`, o arquivo caiu para **579** sem
 ninguém cortar linha. Quando a catraca dispara há três suspeitos — a mudança, a
@@ -699,7 +699,7 @@ some e o que roda é o terminal normal — mesmo `terminal.open`, renderer, grad
 roda (0.60.0) e cursor. `TerminalViewport`/grade/cursor/`wheel_action` intactos.
 O core segue travado por `ai_clis_are_detected_exactly_like_any_other_tool`.
 
-**Falta:** renomear "KV Context" → "Agente Auxiliar" (§0.2d-2) — o seletor é o
+**Falta:** renomear "Assistente" → "Agente Auxiliar" (§0.2d-2) — o seletor é o
 lugar natural.
 
 ### 0.2i Os testes de lógica QML não conseguiam reprovar (achado e CORRIGIDO em 2026-07-16)
@@ -772,7 +772,7 @@ destrutivo/histórico). Entregas e feedback:
   reescrito como índice e 0 links markdown quebrados. `cargo check` verde.
   Raiz intacta: `README/MANUAL/Tutorial/AGENTS` e os pessoais. Plano completo
   (faixa pessoal, não publicar): `PLANO_ORGANIZACAO_E_HANDOFF.md`.
-- **Scroll do agente Claude no KV Context — SUPERADO. O texto abaixo descreve a
+- **Scroll do agente Claude no Assistente — SUPERADO. O texto abaixo descreve a
   `aiCliFlatTranscript`, que NAO existe mais** (removida com o aiBridge no
   0.59.0: injetar `--ax-screen-reader` era politica por programa no core). A
   correcao vigente e o encaminhamento da roda ao aplicativo (0.60.0,
@@ -782,7 +782,7 @@ destrutivo/histórico). Entregas e feedback:
   Codex. O teste ao vivo confirmou: com `--ax-screen-reader` o scroll e o cursor
   funcionam, mas a TUI decorativa vira texto puro. Por isso virou preferência:
   setting **`aiCliFlatTranscript`** (default `false` = TUI decorativa), exposta
-  em Configurações como "KV Context: histórico navegável", lida no
+  em Configurações como "Assistente: histórico navegável", lida no
   `aiBridge.terminal.open` e válida na próxima sessão. `ProfileSpec` ganhou
   `flat_args`; Codex mantém `--no-alt-screen` nos dois modos (já tem TUI **e**
   histórico). Contrato/manual/schema atualizados; 3 testes novos de perfil.
@@ -810,7 +810,7 @@ encontradas aqui têm prioridade e não autorizam outro remake visual.
   acionáveis. `Ajuda → Manual da IDE` abre a documentação interna.
 - **Criação no projeto:** menu Arquivo e clique direito oferecem adicionar
   arquivo/pasta e reutilizam o fluxo confinado ao workspace.
-- **KV Context:** Claude/Codex instalados pelo usuário são descobertos; a
+- **Assistente:** Claude/Codex instalados pelo usuário são descobertos; a
   escolha abre uma sessão própria sobre o terminal real; Codex preserva
   scrollback em modo inline; barra/roda/arrasto, teclado, seleção, copiar/colar
   e resize se comportam como no Terminal integrado, inclusive durante nova

@@ -121,7 +121,7 @@ Rectangle {
             ],
             view: [
                 { label: qsTr("Explorador do projeto"), action: "view.project", enabled: workspaceOpen },
-                { label: qsTr("KV Context"), action: "view.context", enabled: workspaceOpen },
+                { label: qsTr("Assistente"), action: "view.assistant", enabled: workspaceOpen },
                 { label: qsTr("Terminal"), action: "view.terminal", enabled: workspaceOpen },
                 { label: qsTr("Ferramentas"), action: "view.tools", enabled: true }
             ],

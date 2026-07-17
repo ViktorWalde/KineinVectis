@@ -255,7 +255,7 @@ RuntimeController.qml       494 -> 494   (INTACTO. O router nao o tocou.)
 Logo os **dois** bloqueios do seletor (§0.2f) seguem de pé: `Main.qml` acima de
 400 e `RuntimeController.qml` acima de 400. Destravar exige, além da decisão da
 §4.1, separar terminais de run configs dentro do `RuntimeController` — a costura
-já identificada na §0.2g (ele mistura terminais + KV Context + run configs).
+já identificada na §0.2g (ele mistura terminais + Assistente + run configs).
 
 ## 5. Frente 2 — Core: dar dente à regra que já existe
 
@@ -401,7 +401,7 @@ depende do §6.
 1. Catraca no core (crates/), baseline congelando os 7.
    Dente antes de divida nova. Barato e sem risco.
 2. Modulos por dominio na UI  ->  Main.qml < 400  ->  DESTRAVA o seletor (§0.2f).
-3. Seletor do KV Context + rename (§0.2f passos 2-4, §0.2d-2).
+3. Seletor do Assistente + rename (§0.2f passos 2-4, §0.2d-2).
 4. Pagar a §4 no core por RESPONSABILIDADE: lib.rs, handlers/lsp.rs, commands.rs.
 ```
 

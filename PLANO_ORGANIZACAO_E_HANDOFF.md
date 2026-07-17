@@ -247,7 +247,7 @@ explicitamente o estado (vigente / histórico).
 | `KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md` | Manter. |
 | `KINEIN_VECTIS_EMBEDDED_TARGETS_FLASH_SERIAL_QEMU.md` | Manter (majoritariamente pós-MVP). |
 | `KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md` | Manter (fonte de verdade de IA externa); **reescrita intensa de tom** — é a spec com maior densidade de marcadores. |
-| `KINEIN_VECTIS_KV_CONTEXT_AI_ASSISTANCE.md` | **Marcar como histórico/superado** por `AI_CLI_BRIDGE`; preservar só as ideias úteis de contexto determinístico, ou desmembrar e remover. |
+| `KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md` | **Marcar como histórico/superado** por `AI_CLI_BRIDGE`; preservar só as ideias úteis de contexto determinístico, ou desmembrar e remover. |
 | `KINEIN_VECTIS_ONBOARDING_PROJECT_WIZARD_SETTINGS.md` | Manter. |
 | `KINEIN_VECTIS_ONBOARDING_SETUP_OPTIMIZATION_LAYER.md` | Manter. |
 | `KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md` | Manter (fonte arquitetural-alvo). |
@@ -529,7 +529,7 @@ Já implementado e validado (protocolo IPC 0.57.0):
   com preview, format-on-save, EditorConfig **ainda não** integrado.
 - **Build/Run/Test/Debug:** CMake (File API/presets) e Cargo como jobs, testes,
   análise (Clippy/clang-tidy no gate), execução, debug via DAP `lldb-dap`.
-- **Terminal e IA externa:** PTY multi-sessão (`portable-pty` + VT), KV Context
+- **Terminal e IA externa:** PTY multi-sessão (`portable-pty` + VT), Assistente
   como bridge para Claude/Codex CLI instalados pelo usuário.
 - **Git diário:** status, diff, stage, commit, branches, pull, push, stash,
   blame, log.
@@ -584,7 +584,7 @@ ao seu próprio critério de maturidade:
   Encaixa em L1/L4.
 - **Task runner do usuário (M6.3)** e **language servers configuráveis (M6.1).**
   Ampliam a plataforma `integration`; encaixam em L1/L2.
-- **Ponte de contexto do KV Context (M6.4).** Comando "copiar contexto do
+- **Ponte de contexto do Assistente (M6.4).** Comando "copiar contexto do
   workspace" em formato colável, sem chamada de rede da IDE. Fatia pequena,
   independente de nível.
 - **Distribuição e comunidade (M7).** Matriz de release (Ubuntu/Fedora), CI

@@ -1354,14 +1354,14 @@ traço vermelho discreto
 
 ---
 
-## 14. Ícones do KV Context
+## 14. Ícones do Assistente
 
 O painel de assistência contextual não deve parecer chatbot genérico.
 
 Nome recomendado:
 
 ```text
-KV Context
+Assistente
 ```
 
 ### 14.1 Context

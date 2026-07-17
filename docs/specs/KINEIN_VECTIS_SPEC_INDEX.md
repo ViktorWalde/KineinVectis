@@ -239,18 +239,18 @@ válido, mas majoritariamente pós-MVP
 
 ---
 
-### 3.8 Parte 7 — KV Context original
+### 3.8 Parte 7 — Assistente original
 
 Arquivo:
 
 ```text
-KINEIN_VECTIS_KV_CONTEXT_AI_ASSISTANCE.md
+KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md
 ```
 
 Função original:
 
 ```text
-definia KV Context como painel de assistência/IA.
+definia Assistente como painel de assistência/IA.
 ```
 
 Status:
@@ -445,7 +445,7 @@ fonte de verdade para encerramento macro
 Antes:
 
 ```text
-KV Context poderia ser interpretado como painel de IA dentro da IDE.
+Assistente poderia ser interpretado como painel de IA dentro da IDE.
 ```
 
 Agora:

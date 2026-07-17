@@ -63,7 +63,7 @@ Window {
         searchController: domains.searchController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
-        contextAgentController: domains.contextAgentController
+        assistantController: domains.assistantController
         bottomPanelHost: workspaceHost
     }
 
@@ -144,7 +144,7 @@ Window {
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
-        contextAgentController: domains.contextAgentController
+        assistantController: domains.assistantController
         debugController: domains.debugController
         editorController: domains.editorController
         projectTree: domains.projectTree
@@ -187,7 +187,7 @@ Window {
         editorController: domains.editorController
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
-        contextAgentController: domains.contextAgentController
+        assistantController: domains.assistantController
         debugController: domains.debugController
         gitController: domains.gitController
         diagnosticsController: domains.diagnosticsController
@@ -249,7 +249,7 @@ Window {
         shellController: domains.shellController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
-        contextAgentController: domains.contextAgentController
+        assistantController: domains.assistantController
         gitController: domains.gitController
         settingsController: domains.settingsController
         onAppMenuActionRequested: function(action) {

@@ -171,7 +171,7 @@ Item {
             id: cursorBar
 
             // O core resolve DECSCUSR para uma forma concreta. A UI somente
-            // converte a célula VT em pixels, igual no Terminal e KV Context.
+            // converte a célula VT em pixels, igual no Terminal e no Assistente.
             readonly property string shape: root.cursor.shape !== undefined
                     ? String(root.cursor.shape) : "bar"
             readonly property bool blinking: root.cursor.blinking !== false

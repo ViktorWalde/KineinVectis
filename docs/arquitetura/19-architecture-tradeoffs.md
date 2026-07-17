@@ -197,7 +197,7 @@ Decisão de 2026-07-09, confirmada com o usuário. Plano vinculante completo
 - **Ganho:** IDE utilizável durante toda a transição (dogfooding contínuo,
   que é o critério dos marcos); risco de regressão proporcional ao tamanho
   da fatia (não há teste visual automatizado — D9); reaproveita a separação
-  visual/lógica já paga em docs/arquitetura/17; UI nova (Main Toolbar, KV Context,
+  visual/lógica já paga em docs/arquitetura/17; UI nova (Main Toolbar, Assistente,
   Start Screen) nasce conforme spec de graça.
 - **Custo aceito:** estados intermediários visualmente híbridos (área nova
   conforme convivendo com área antiga) até a C6.

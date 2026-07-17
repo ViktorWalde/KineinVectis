@@ -12,7 +12,7 @@ Item {
     property var shellController: null
     property var runtimeController: null
     property var runConfigController: null
-    property var contextAgentController: null
+    property var assistantController: null
     property var gitController: null
     property var settingsController: null
     property bool aboutVisible: false
@@ -210,19 +210,19 @@ Item {
         onCancelRequested: root.runConfigController.cancelConfigDialog()
     }
 
-    // KV Context: a escolha do agente, e so ela. Existe ANTES da sessao —
+    // Assistente: a escolha do agente, e so ela. Existe ANTES da sessao —
     // escolhido o agente, some e quem roda e o terminal normal.
-    ContextAgentSelector {
+    AssistantSelector {
         id: contextAgentSelector
 
-        visible: root.contextAgentController.selectorVisible
+        visible: root.assistantController.selectorVisible
         z: 95
         anchors.centerIn: parent
-        agentsModel: root.contextAgentController.agentsModel
+        agentsModel: root.assistantController.agentsModel
         onChosen: function(agentId) {
-            root.contextAgentController.choose(agentId);
+            root.assistantController.choose(agentId);
         }
-        onDismissRequested: root.contextAgentController.dismiss()
+        onDismissRequested: root.assistantController.dismiss()
         onRedetectRequested: root.toolsDetectionRequested()
     }
 

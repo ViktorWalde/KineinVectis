@@ -9,7 +9,7 @@ import QtQuick
 // PTY, id de sessao nem render — e o RuntimeController nao precisa saber o que e
 // uma configuracao salva.
 //
-// O RuntimeController continua dono de: terminais, KV Context e a execucao em si
+// O RuntimeController continua dono de: terminais e a execucao em si
 // (run.start/stop/stdin), que compartilham a aba Terminal.
 Item {
     id: root

@@ -172,7 +172,7 @@ Item {
                 node(context, 15, 12, 2);
                 node(context, 11, 17, 2);
                 break;
-            case "context":
+            case "assistant":
                 context.moveTo(12, 3.5);
                 context.lineTo(14, 9.5);
                 context.lineTo(20.5, 12);

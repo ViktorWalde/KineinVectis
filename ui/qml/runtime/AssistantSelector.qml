@@ -2,9 +2,14 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Escolha da CLI de IA do KV Context. Reconstruido do AssistantPanel que saiu no
+// Escolha da CLI de IA do Assistente. Reconstruido do AssistantPanel que saiu no
 // 0.59.0 (git show ab3becc^:ui/qml/assistant/AssistantPanel.qml) — o card list
 // era bom e foi removido por associacao, junto com o mecanismo ruim.
+//
+// CUIDADO COM O NOME. O produto voltou a se chamar "Assistente" em 2026-07-17, e
+// o antigo `ui/qml/assistant/` tinha justamente `AssistantPanel` +
+// `AssistantController`. NAO sao a mesma coisa e o nome parecido nao autoriza
+// ressuscitar o que morreu: aquele painel era um terminal PARALELO.
 //
 // SO A ESCOLHA VOLTOU. O painel antigo carregava terminalRender,
 // terminalKeyPressed, terminalResizeRequested e terminalScrollRequested: um
@@ -44,7 +49,7 @@ Rectangle {
 
             KvIcon {
                 anchors.verticalCenter: parent.verticalCenter
-                name: "context"
+                name: "assistant"
                 size: 20
                 active: true
             }

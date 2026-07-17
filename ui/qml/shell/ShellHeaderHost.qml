@@ -9,7 +9,7 @@ Column {
     property var jobsController: null
     property var runtimeController: null
     property var runConfigController: null
-    property var contextAgentController: null
+    property var assistantController: null
     property var debugController: null
     property var editorController: null
     property var projectTree: null
@@ -56,7 +56,7 @@ Column {
         case "settings.open": root.settingsController.openDialog(); break;
         case "view.project": root.shellController.toggleExplorer(); break;
         case "view.terminal": root.runtimeController.openTerminalPanel(); break;
-        case "view.context": root.contextAgentController.openContext(); break;
+        case "view.assistant": root.assistantController.openAssistant(); break;
         case "view.tools": root.shellController.toggleBottomTab("tools"); break;
         case "view.git": root.shellController.toggleBottomTab("git"); break;
         case "search.everywhere": root.searchController.openSearchEverywhere(); break;

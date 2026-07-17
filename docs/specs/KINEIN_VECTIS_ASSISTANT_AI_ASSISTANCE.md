@@ -1,4 +1,4 @@
-# Kinein Vectis — Parte 7: KV Context, IA, Documentação e Assistência Técnica
+# Kinein Vectis — Parte 7: Assistente, IA, Documentação e Assistência Técnica
 
 > ## ⚠ HISTÓRICO — SUPERADO
 >
@@ -7,13 +7,13 @@
 > [`KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md`](KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md),
 > que é a fonte de verdade para IA.
 >
-> **O que mudou:** este documento descrevia o KV Context como um painel de
+> **O que mudou:** este documento descrevia o Assistente como um painel de
 > assistência com IA embutida e chat lateral. A decisão vigente é o oposto:
 >
 > ```text
 > não existe IA embutida  ·  não existe chat lateral na IDE
 > IA = atalho para uma CLI externa que o usuário instalou e escolheu
-> KV Context = terminal dedicado sobre o mesmo TerminalManager
+> Assistente = terminal dedicado sobre o mesmo TerminalManager
 > ```
 >
 > **O que continua válido aqui:** as ideias de contexto determinístico,
@@ -24,14 +24,14 @@
 > sem confrontar com a Parte 7.1.
 
 > **Status:** especificação de produto e arquitetura visual.  
-> **Escopo:** painel KV Context, assistência local/externa, explicação de erros, CMake/toolchain, documentação, privacidade e integração com o core.  
+> **Escopo:** painel Assistente, assistência local/externa, explicação de erros, CMake/toolchain, documentação, privacidade e integração com o core.  
 > **Fora de escopo nesta parte:** simulação OpenGL pesada, marketplace de plugins, telemetria remota obrigatória e auto-modificação irrestrita de código.
 
 ---
 
 ## 1. Objetivo da Parte 7
 
-O **KV Context** é o painel de assistência da Kinein Vectis. Ele não deve ser tratado como “chat genérico dentro da IDE”. Ele deve ser um **assistente técnico contextual**, focado em ajudar o usuário a resolver problemas reais de C, C++, Rust, CMake, toolchains, build, debug, embarcados e documentação.
+O **Assistente** é o painel de assistência da Kinein Vectis. Ele não deve ser tratado como “chat genérico dentro da IDE”. Ele deve ser um **assistente técnico contextual**, focado em ajudar o usuário a resolver problemas reais de C, C++, Rust, CMake, toolchains, build, debug, embarcados e documentação.
 
 A ideia central é:
 
@@ -41,11 +41,11 @@ rust-analyzer, targets, sysroot, QEMU, flash, serial ou logs de build.
 A IDE deve transformar contexto técnico bruto em ações claras, seguras e rastreáveis.
 ```
 
-O KV Context deve ser útil desde o MVP, mas desenhado para escalar no longo prazo.
+O Assistente deve ser útil desde o MVP, mas desenhado para escalar no longo prazo.
 
 ---
 
-## 2. Princípios do KV Context
+## 2. Princípios do Assistente
 
 ### 2.1 Assistente quieto, não invasivo
 
@@ -55,7 +55,7 @@ O painel não deve dominar a IDE. Ele deve ficar disponível quando útil, mas n
 
 ```text
 Editor = área principal.
-KV Context = apoio lateral.
+Assistente = apoio lateral.
 Build/Debug/Terminal = evidência operacional.
 Ações automáticas = sempre revisáveis.
 ```
@@ -94,7 +94,7 @@ O painel deve mostrar esse contexto de forma transparente para o usuário.
 
 ### 2.3 Local-first e privacidade por padrão
 
-A Kinein deve ser pensada como IDE **local-first**. O KV Context deve funcionar com IA local quando possível e com IA externa apenas se o usuário configurar explicitamente.
+A Kinein deve ser pensada como IDE **local-first**. O Assistente deve funcionar com IA local quando possível e com IA externa apenas se o usuário configurar explicitamente.
 
 **Regras rígidas:**
 
@@ -108,9 +108,9 @@ A Kinein deve ser pensada como IDE **local-first**. O KV Context deve funcionar 
 
 ---
 
-## 3. Modos do KV Context
+## 3. Modos do Assistente
 
-O KV Context deve ter modos claros. Esses modos podem virar abas ou chips no topo do painel.
+O Assistente deve ter modos claros. Esses modos podem virar abas ou chips no topo do painel.
 
 ### 3.1 Contexto
 
@@ -234,15 +234,15 @@ Como configurar cross compile para ARM?
 
 ---
 
-## 4. Layout visual do painel KV Context
+## 4. Layout visual do painel Assistente
 
 ### 4.1 Posição
 
-O KV Context deve ficar preferencialmente no lado direito da IDE.
+O Assistente deve ficar preferencialmente no lado direito da IDE.
 
 ```text
 ┌──────────────────────────────────────────────┬───────────────────┐
-│ Editor                                       │ KV Context        │
+│ Editor                                       │ Assistente        │
 │                                              │ Contexto          │
 │ Código C/C++/Rust                            │ Explicar          │
 │                                              │ Corrigir          │
@@ -273,7 +273,7 @@ Em telas pequenas, o painel deve virar aba inferior ou overlay temporário.
 Estrutura recomendada:
 
 ```text
-KV Context
+Assistente
 ├── Header
 │   ├── título
 │   ├── modelo/modo atual
@@ -304,7 +304,7 @@ KV Context
 
 ---
 
-## 5. Componentes específicos do KV Context
+## 5. Componentes específicos do Assistente
 
 ### 5.1 Context Card
 
@@ -428,7 +428,7 @@ Deve mostrar:
 
 ## 6. Fontes de contexto
 
-O KV Context deve montar contexto a partir de camadas, nunca apenas enviar o workspace inteiro.
+O Assistente deve montar contexto a partir de camadas, nunca apenas enviar o workspace inteiro.
 
 ### 6.1 Contexto imediato
 
@@ -570,7 +570,7 @@ Quando o usuário insistir, pedir confirmação explícita.
 A IDE continua funcional.
 
 ```text
-KV Context mostra:
+Assistente mostra:
 - diagnóstico local;
 - documentação local;
 - ações determinísticas;
@@ -771,7 +771,7 @@ Resposta:
 ### 12.1 Explicar erro de CMake
 
 ```text
-Você é o KV Context da IDE Kinein Vectis.
+Você é o Assistente da IDE Kinein Vectis.
 Explique o erro de CMake abaixo de forma técnica, curta e acionável.
 Não invente arquivos. Use apenas as evidências fornecidas.
 Se uma correção exigir editar arquivo, proponha diff mínimo.
@@ -867,7 +867,7 @@ comentários especiais
 
 ### 14.2 Busca documental
 
-O KV Context deve poder responder com base na documentação do projeto antes de IA externa.
+O Assistente deve poder responder com base na documentação do projeto antes de IA externa.
 
 Exemplo:
 
@@ -903,7 +903,7 @@ A IDE deve permitir cache offline.
 
 ---
 
-## 15. KV Context sem IA
+## 15. Assistente sem IA
 
 Mesmo sem IA, o painel deve ser útil.
 
@@ -925,7 +925,7 @@ Isso garante que a Kinein não dependa de IA para ser uma IDE sólida.
 
 ---
 
-## 16. Estados visuais do KV Context
+## 16. Estados visuais do Assistente
 
 ### 16.1 Idle
 
@@ -974,7 +974,7 @@ Mostrar rollback/abrir diff.
 
 ## 17. Integração com Build, CMake e Debug
 
-O KV Context deve ser profundamente conectado com a Parte 4.
+O Assistente deve ser profundamente conectado com a Parte 4.
 
 ### 17.1 Build failure
 
@@ -985,7 +985,7 @@ Build falhou
   ↓
 Parser identifica erro principal
   ↓
-KV Context cria card
+Assistente cria card
   ↓
 Usuário clica Explicar
   ↓
@@ -1026,7 +1026,7 @@ Sugerir correção
 
 ## 18. Integração com sistemas embarcados
 
-O KV Context deve ajudar em:
+O Assistente deve ajudar em:
 
 ```text
 flash falhou
@@ -1054,7 +1054,7 @@ mas isso altera permissões do sistema, então a IDE deve pedir confirmação an
 
 ## 19. Integração com Tree-sitter, LSP e indexação
 
-O KV Context deve saber diferenciar fontes:
+O Assistente deve saber diferenciar fontes:
 
 ```text
 Tree-sitter:
@@ -1113,7 +1113,7 @@ Nunca sincronizar sem opt-in.
 
 ## 21. Critérios de aceite para MVP
 
-O MVP do KV Context deve entregar:
+O MVP do Assistente deve entregar:
 
 ```text
 [ ] Painel lateral recolhível.
@@ -1173,7 +1173,7 @@ Para proteger qualidade, não implementar no começo:
 
 ## 24. Direção visual final
 
-O KV Context deve parecer:
+O Assistente deve parecer:
 
 ```text
 técnico
@@ -1205,7 +1205,7 @@ Industrial, escuro, confortável e confiável.
 
 ## 25. Resumo executivo
 
-O **KV Context** é uma camada de assistência contextual para C, C++, Rust, CMake, toolchains e sistemas embarcados.
+O **Assistente** é uma camada de assistência contextual para C, C++, Rust, CMake, toolchains e sistemas embarcados.
 
 Ele deve:
 

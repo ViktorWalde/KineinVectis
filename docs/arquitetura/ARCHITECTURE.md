@@ -313,7 +313,7 @@ Regras que mantêm isso saudável:
 
    ```text
    RuntimeController 414   catraca CERTA, e o alvo era o ARQUIVO. O tamanho
-                           apontava mistura real: terminais + KV Context + run
+                           apontava mistura real: terminais + Assistente + run
                            configs. Corte por responsabilidade (494 -> 397).
 
    AppDomains 325          catraca ERRADA: erro de CATEGORIA. O arquivo faz UMA
@@ -338,11 +338,15 @@ Regras que mantêm isso saudável:
    está *acrescentando* pertence ali.
 
    **O teste de um corte por responsabilidade não é o número — é o vocabulário.**
-   Depois de mover o KV Context para fora, `grep -i context RuntimeController.qml`
-   não devolve nada: o arquivo perdeu o **conceito**, não só as linhas. Se o
-   arquivo ainda nomeia o domínio que você diz ter extraído, você moveu código e
-   manteve a responsabilidade — o número desceu e o acoplamento ficou. Um corte
-   que sobrevive a esse teste quase nunca precisa de justificativa de tamanho.
+   Depois de mover o Assistente para fora, `grep -i assistant` no
+   `RuntimeController.qml` não devolve nada — nem `grep -i context`, como o
+   domínio se chamava até 2026-07-17. O arquivo perdeu o **conceito**, não só as
+   linhas: ele nem sequer tem uma palavra para nomeá-lo, porque o que recebeu no
+   lugar foi um mecanismo genérico (`openLabeledTerminal(label, kind)`, com o
+   `kind` opaco). Se o arquivo ainda nomeia o domínio que você diz ter extraído,
+   você moveu código e manteve a responsabilidade — o número desceu e o
+   acoplamento ficou. Um corte que sobrevive a esse teste quase nunca precisa de
+   justificativa de tamanho.
 
    **Consequência prática.** Arquivo acima do limite que faz **uma coisa só** não
    deve ser quebrado: ou a categoria está errada (corrija-a, explicitamente), ou

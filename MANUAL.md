@@ -423,7 +423,7 @@ interface da ferramenta aparece exatamente como aparece no seu terminal.
 A IDE não instala, não autentica e não envia nada: rede, credenciais e política
 de dados pertencem à CLI que você iniciou.
 
-> **Sobre o painel KV Context.** Existia um atalho visual dedicado para essas
+> **Sobre o painel Assistente.** Existia um atalho visual dedicado para essas
 > CLIs. Ele foi retirado porque abria os agentes por um caminho especial no
 > core — com argumentos injetados e filtragem de sequências do terminal —, e
 > era esse caminho que fazia a ferramenta se comportar de um jeito dentro da

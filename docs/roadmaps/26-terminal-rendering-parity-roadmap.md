@@ -17,7 +17,7 @@ da seção D2 de `docs/roadmaps/24-paridade-e-fundacao.md`.
 
 ## 1. Contrato de produto que não pode regredir
 
-O KV Context não é um chat embutido nem um terminal alternativo. Ele é somente
+O Assistente não é um chat embutido nem um terminal alternativo. Ele é somente
 uma composição visual que mantém uma sessão de IA CLI visível enquanto a aba
 Terminal continua livre. Terminal comum, Claude, Codex e futuras CLIs usam a
 mesma cadeia:
@@ -31,7 +31,7 @@ TerminalManager → PTY real → shell ou CLI escolhida
         ↓ bytes VT
 parser/estado VT autoritativo no core
         ↓ event.terminal.render
-um único renderer de grade usado por Terminal e KV Context
+um único renderer de grade usado por Terminal e Assistente
 ```
 
 Invariantes obrigatórios:
@@ -39,7 +39,7 @@ Invariantes obrigatórios:
 1. A TUI é soberana sobre conteúdo, posição, forma e piscagem do cursor.
 2. A IDE não cria `TextInput`, composer, guia de entrada nem parser de prompt
    sobre Claude/Codex.
-3. Atalho, aba, seletor de perfil, foco, largura e maximização do KV Context
+3. Atalho, aba, seletor de perfil, foco, largura e maximização do Assistente
    continuam no frontend; não justificam um segundo backend ou renderer.
 4. Texto, cursor, seleção, mouse, resize e scroll usam uma única geometria de
    células VT.
@@ -55,7 +55,7 @@ Invariantes obrigatórios:
 Ao abrir Claude ou Codex pelo script/atalho de desenvolvimento, o caret nativo
 da TUI deve ocupar a mesma célula da linha de entrada e parecer verticalmente
 centralizado como em um terminal externo. A geometria precisa ser idêntica no
-Terminal comum e no KV Context.
+Terminal comum e no Assistente.
 
 ### Observado
 
@@ -612,7 +612,7 @@ Objetivo: eliminar `Text.AlignVCenter` como decisão implícita do terminal.
 3. Confirmar bold/italic/underline, box drawing, wide e combining.
 4. Cursor continua usando o retângulo da célula, nunca bounds da tinta.
 
-**Gate:** Terminal comum e KV Context geram a mesma geometria para o mesmo
+**Gate:** Terminal comum e Assistente geram a mesma geometria para o mesmo
 frame; screenshot da fixture e gesto humano em Claude/Codex.
 
 ### R3 — decidir o renderer Qt definitivo
@@ -702,7 +702,7 @@ Só concluir quando:
 1. fixture automatizada estiver verde;
 2. gate integral estiver verde;
 3. smoke do launcher de desenvolvimento estiver verde;
-4. o usuário aprovar visualmente Claude ou Codex no KV Context;
+4. o usuário aprovar visualmente Claude ou Codex no Assistente;
 5. Terminal comum não regredir;
 6. documentação e registro de referências estiverem atualizados.
 
@@ -760,7 +760,7 @@ continuam sem autorização separada.
 - não recolocar `cursorVerticalOffset` ou constante por Claude/Codex;
 - não mover o cursor com base na moldura visual da TUI;
 - não interpretar prompt, texto, status ou nome do agente;
-- não criar um renderer exclusivo do KV Context;
+- não criar um renderer exclusivo do Assistente;
 - não executar CLI diretamente da UI;
 - não copiar/verter funções do Code OSS ou xterm.js;
 - não incorporar Node, Electron, WebView ou Extension Host;
@@ -783,12 +783,12 @@ como paridade visual concluída.
 
 ## 11. Scrollback do agente em tela alternada — diagnóstico 2026-07-16
 
-> **Origem:** relato de que o scroll do agente Claude no KV Context dificulta
+> **Origem:** relato de que o scroll do agente Claude no Assistente dificulta
 > rever o histórico do raciocínio. Pedido: entender o que na TUI ou na UI/UX da
 > IDE interfere, tratando a TUI do agente como soberana (referência Code OSS,
 > Zed, IntelliJ IDEA Community).
 > **Status:** diagnóstico com evidência empírica concluído; correção **não**
-> aplicada porque redefine a experiência do KV Context e exige gesto visual,
+> aplicada porque redefine a experiência do Assistente e exige gesto visual,
 > conforme a regra deste documento. Duas opções de correção prontas abaixo.
 
 ### 11.1 Evidência empírica das CLIs
@@ -897,7 +897,7 @@ Prós: uma linha, espelha o padrão do Codex, produz saída linear no buffer
 principal com scrollback navegável — exatamente "ver o histórico do raciocínio".
 Contras: remove bordas/animações decorativas do TUI do Claude; é uma mudança
 estética grande que o autor deve aprovar visualmente. Idealmente vira um
-**ajuste/toggle** no seletor do KV Context, não um default imposto.
+**ajuste/toggle** no seletor do Assistente, não um default imposto.
 
 ### 11.5 Recomendação — HISTÓRICO, superado
 
@@ -927,7 +927,7 @@ setting `aiCliFlatTranscript` (bool, default false)
   `["--no-alt-screen"]` nos dois modos — o inline oficial já entrega TUI **e**
   scrollback, então não há apresentação a sacrificar.
 - A setting é lida no `aiBridge.terminal.open` e vale na próxima sessão.
-  Exposta em Configurações (`Ctrl+Alt+S`) como "KV Context: histórico
+  Exposta em Configurações (`Ctrl+Alt+S`) como "Assistente: histórico
   navegável", documentada no `MANUAL.md` e no contrato `docs/arquitetura/03`.
 - Cobertura: `claude_keeps_its_decorative_tui_by_default`,
   `claude_uses_flat_transcript_only_when_enabled` e

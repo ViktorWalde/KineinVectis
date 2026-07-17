@@ -185,7 +185,7 @@ remover proveniência/licença de um componente que tenha sido adotado via MODE-
 tratar semelhança de UX como autorização para depender do host original.
 ```
 
-### Exemplo canônico: terminal e KV Context
+### Exemplo canônico: terminal e Assistente
 
 Para terminal, estudar no Code OSS o backend/PTY host, o ciclo de vida da
 sessão, shell integration, resize, reconexão, backpressure e a separação entre
@@ -193,7 +193,7 @@ entrada, processo e renderização. A Kinein preserva sua própria arquitetura:
 `portable-pty` + parser VT no Rust Core, eventos IPC tipados e renderização
 Qt/QML pelo `TerminalPanel`/`TerminalManager`. Não incorporar Node, xterm.js ou
 código do Code OSS. A correção que tornou a grade VT e o cursor autoritativos
-no KV Context é o modelo: mesma qualidade funcional, desenho próprio e nenhuma
+no Assistente é o modelo: mesma qualidade funcional, desenho próprio e nenhuma
 cópia de implementação.
 
 ---

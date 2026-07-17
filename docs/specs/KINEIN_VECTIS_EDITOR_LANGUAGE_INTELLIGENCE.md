@@ -73,7 +73,7 @@ Regras:
 
 - o editor deve ocupar a maior área útil da tela;
 - painéis laterais devem ser recolhíveis;
-- o KV Context não deve abrir sozinho de forma agressiva;
+- o Assistente não deve abrir sozinho de forma agressiva;
 - mensagens e diagnósticos devem ser úteis, não invasivos;
 - a linha atual deve ser visível sem ser gritante;
 - tooltips devem ajudar sem cobrir o código excessivamente.
@@ -99,7 +99,7 @@ Um erro não deve ser apenas uma linha vermelha. Sempre que possível, a IDE dev
 - instalar servidor de linguagem;
 - abrir erro no terminal;
 - aplicar fix-it;
-- explicar erro no KV Context;
+- explicar erro no Assistente;
 - abrir documentação local ou externa;
 - gerar configuração sugerida.
 
@@ -534,7 +534,7 @@ Campos relevantes:
 
 ### 9.5 Diagnóstico de include
 
-Quando um header não for encontrado, o KV Context deve sugerir:
+Quando um header não for encontrado, o Assistente deve sugerir:
 
 - verificar `target_include_directories`;
 - verificar `compile_commands.json`;
@@ -663,7 +663,7 @@ A indexação torna a IDE rápida para:
 - montar outline;
 - navegar por referências;
 - gerar breadcrumbs;
-- alimentar KV Context;
+- alimentar Assistente;
 - acelerar command palette.
 
 ### 12.2 Tipos de índice
@@ -792,7 +792,7 @@ Ordem de prioridade:
 2. Snippets da linguagem.
 3. Palavras do buffer.
 4. Símbolos do workspace.
-5. Sugestões do KV Context somente quando explicitamente solicitadas.
+5. Sugestões do Assistente somente quando explicitamente solicitadas.
 
 ### 14.2 UX do popup
 
@@ -862,7 +862,7 @@ Deve mostrar:
 - origem: clangd/build/rust-analyzer/cargo;
 - severidade;
 - sugestões;
-- botão “Explain in KV Context”.
+- botão “Explain in Assistente”.
 
 ### 15.3 Não cobrir código demais
 
@@ -880,7 +880,7 @@ Build diagnostics
 CMake diagnostics
 Cargo diagnostics
 Static analysis future
-KV Context explanations
+Assistente explanations
 ```
 
 ### 16.2 Normalização
@@ -999,7 +999,7 @@ Popup:
 Quick Fixes
   Add #include "control/pid.hpp"
   Create local variable 'pid'
-  Explain error in KV Context
+  Explain error in Assistente
   Ignore diagnostic
 ```
 
@@ -1125,9 +1125,9 @@ clang-format not found
 
 ---
 
-## 20. KV Context integrado ao editor
+## 20. Assistente integrado ao editor
 
-O KV Context não deve ser um chatbot solto. Ele deve entender o contexto técnico da IDE.
+O Assistente não deve ser um chatbot solto. Ele deve entender o contexto técnico da IDE.
 
 ### 20.1 Fontes de contexto permitidas
 
@@ -1159,7 +1159,7 @@ Explain Rust feature issue
 
 ### 20.3 Não atrapalhar
 
-KV Context deve ser acionável, não invasivo.
+Assistente deve ser acionável, não invasivo.
 
 Permitido:
 
@@ -1286,7 +1286,7 @@ Busca textual.
 
 Pode ser integrado ao Search ou Command Palette.
 
-### 22.5 KV Context
+### 22.5 Assistente
 
 Painel direito contextual.
 
@@ -1449,9 +1449,9 @@ A IDE pode manter cache interno, mas não deve exigir que o usuário edite manua
 
 ### Fase 6 — Inteligência assistida
 
-- KV Context explica diagnóstico;
-- KV Context explica build error;
-- KV Context sugere ajustes de CMake/toolchain;
+- Assistente explica diagnóstico;
+- Assistente explica build error;
+- Assistente sugere ajustes de CMake/toolchain;
 - ações sempre confirmadas.
 
 ---
@@ -1487,7 +1487,7 @@ A Parte 5 pode ser considerada bem implementada quando:
 - erros de build forem navegáveis;
 - arquivos modificados forem claros;
 - a IDE não travar durante indexação;
-- KV Context conseguir explicar um erro selecionado sem atrapalhar;
+- Assistente conseguir explicar um erro selecionado sem atrapalhar;
 - Rename Symbol funcionar com preview quando alterar múltiplos arquivos;
 - o usuário sempre souber se a análise está pronta, parcial ou falhou.
 
@@ -1512,7 +1512,7 @@ A IA CLI deve seguir esta ordem:
 12. Implementar symbol search.
 13. Implementar code actions básicas.
 14. Implementar rename com preview.
-15. Integrar KV Context com seleção/diagnóstico.
+15. Integrar Assistente com seleção/diagnóstico.
 ```
 
 Regra final:
@@ -1534,7 +1534,7 @@ Priorize C/C++ com clangd e Rust com rust-analyzer. Para C/C++, use compile_comm
 
 Construa a experiência do editor com abas, gutter, line numbers, syntax highlighting, diagnostics inline, hover, completion, go to definition, find references, structure panel e Problems panel. O visual deve seguir o sistema Kinein: dark confortável, acento âmbar com moderação, tipografia legível e foco absoluto no editor.
 
-Não implemente refatorações complexas próprias. Use LSP para rename/code actions e sempre mostre preview quando múltiplos arquivos forem alterados. KV Context deve explicar erros e contexto apenas quando acionado pelo usuário, sem popups invasivos.
+Não implemente refatorações complexas próprias. Use LSP para rename/code actions e sempre mostre preview quando múltiplos arquivos forem alterados. Assistente deve explicar erros e contexto apenas quando acionado pelo usuário, sem popups invasivos.
 
 Implemente em fases, com testes e critérios de aceite claros. Não avance para simulação/OpenGL antes do editor e da inteligência de linguagem estarem confiáveis.
 ```

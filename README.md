@@ -28,7 +28,7 @@ distribuída como AppImage para Linux x86_64.
 - build, testes, análise, execução e debug;
 - terminal PTY com múltiplas sessões;
 - Git diário: status, diff, stage, commit, branches, pull, push e stash;
-- configurações, Project Health e KV Context para Claude/Codex CLI já
+- configurações, Project Health e Assistente para Claude/Codex CLI já
   instalados pelo usuário.
 
 ## Testar ou instalar

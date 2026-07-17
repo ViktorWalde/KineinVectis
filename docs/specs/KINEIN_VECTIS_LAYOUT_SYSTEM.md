@@ -128,7 +128,7 @@ A janela principal da Kinein é dividida em oito regiões.
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ 2. Main Toolbar                                                              │
 ├────┬─────────────────────┬──────────────────────────────────┬───────────────┤
-│ 3  │ 4. Left Tool Window │ 5. Editor Area                   │ 6. KV Context │
+│ 3  │ 4. Left Tool Window │ 5. Editor Area                   │ 6. Assistente │
 │Rail│                     │                                  │               │
 ├────┴─────────────────────┴──────────────────────────────────┴───────────────┤
 │ 7. Bottom Tool Window                                                        │
@@ -146,7 +146,7 @@ A janela principal da Kinein é dividida em oito regiões.
 | 3 | Tool Rail | Ícones verticais de janelas/ferramentas |
 | 4 | Left Tool Window | Project, Structure, CMake, Toolchains, Targets |
 | 5 | Editor Area | Código, tabs, breadcrumbs, gutter, diagnósticos |
-| 6 | KV Context | Assistente contextual, explicação, correções e toolchain |
+| 6 | Assistente | Assistente contextual, explicação, correções e toolchain |
 | 7 | Bottom Tool Window | Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git |
 | 8 | Status Bar | Estado do projeto, branch, target, warnings, encoding, posição |
 
@@ -161,7 +161,7 @@ A área central deve ser sempre dominante.
 Regras:
 
 - nenhum painel deve roubar atenção do editor sem ação explícita do usuário;
-- KV Context deve ajudar, não interromper;
+- Assistente deve ajudar, não interromper;
 - notificações devem ser discretas;
 - erros críticos aparecem primeiro no editor e no Problems, não como popups agressivos;
 - builds longos devem aparecer na barra inferior, não bloquear a tela.
@@ -273,7 +273,7 @@ Usar escala de 4px.
 | Tool Rail esquerdo | 52px | 48px | 56px |
 | Left Tool Window | 280px | 220px | 420px |
 | Editor Area | flexível | 600px | ilimitado |
-| KV Context | 360px | 300px | 480px |
+| Assistente | 360px | 300px | 480px |
 | Rail direito opcional | 44px | 40px | 52px |
 | Bottom Tool Window | 260px altura | 160px | 480px |
 
@@ -368,7 +368,7 @@ A Kinein pode usar JetBrains Mono como sugestão opcional se a licença e a dist
 | Editor | 14–15px |
 | Terminal | 13px |
 | Status bar | 12px |
-| KV Context body | 13px |
+| Assistente body | 13px |
 | Título de painel | 13px semibold |
 
 ---
@@ -385,7 +385,7 @@ Este é o layout inicial após abrir um projeto.
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ [Target: x86_64-linux ▼] [CMake: Debug ▼] [Configure] [Build] [Run] [Debug] │
 ├────┬──────────────────────┬─────────────────────────────────┬──────────────┤
-│Rail│ Project              │ Editor                          │ KV Context   │
+│Rail│ Project              │ Editor                          │ Assistente   │
 │    │ Structure            │ Tabs + Breadcrumbs              │ Context      │
 │    │                      │ Code                            │ Explain      │
 │    │                      │ Gutter + Diagnostics            │ Fix          │
@@ -402,13 +402,13 @@ Para o primeiro uso:
 
 - Project aberto à esquerda;
 - Editor no centro;
-- KV Context aberto à direita, mas colapsável;
+- Assistente aberto à direita, mas colapsável;
 - Terminal/Build inferior aberto apenas se houver processo ativo ou se o usuário abrir.
 
 Sugestão de default:
 
 ```text
-Primeiro projeto aberto: Project + Editor + KV Context.
+Primeiro projeto aberto: Project + Editor + Assistente.
 Sessões seguintes: restaurar layout salvo pelo usuário.
 ```
 
@@ -731,11 +731,11 @@ Evitar:
 
 ---
 
-## 15. KV Context — painel direito
+## 15. Assistente — painel direito
 
 ### 15.1 Função
 
-KV Context é o painel de assistência contextual.
+Assistente é o painel de assistência contextual.
 
 Ele deve ajudar com:
 
@@ -755,7 +755,7 @@ Ele deve ajudar com:
 Usar:
 
 ```text
-KV Context
+Assistente
 ```
 
 Evitar nomes genéricos como:
@@ -966,12 +966,12 @@ Uso:
 
 - escrever código;
 - navegar projeto;
-- KV Context disponível.
+- Assistente disponível.
 
 Painéis:
 
 - Project aberto;
-- KV Context aberto;
+- Assistente aberto;
 - Bottom oculto ou terminal pequeno.
 
 ### 18.2 Focus Editor
@@ -986,7 +986,7 @@ Painéis:
 
 - Tool Rail visível;
 - Left Tool Window colapsado;
-- KV Context colapsado;
+- Assistente colapsado;
 - Bottom oculto.
 
 Atalho sugerido:
@@ -1007,7 +1007,7 @@ Painéis:
 
 - Project ou CMake à esquerda;
 - Editor no centro;
-- KV Context em Toolchain/Fix;
+- Assistente em Toolchain/Fix;
 - Bottom em CMake/Build.
 
 ### 18.4 Debug Active
@@ -1020,7 +1020,7 @@ Painéis:
 
 - Debug tool window à esquerda ou inferior;
 - Editor no centro;
-- KV Context opcional;
+- Assistente opcional;
 - Bottom com Debug, Variables, Stack.
 
 ### 18.5 Embedded Target
@@ -1036,7 +1036,7 @@ Painéis:
 
 - Targets à esquerda;
 - Editor no centro;
-- KV Context em Toolchain;
+- Assistente em Toolchain;
 - Bottom com Serial/Debug/Build.
 
 ### 18.6 Simulation Workbench
@@ -1060,7 +1060,7 @@ Painéis:
 
 - Editor e viewport lado a lado;
 - Simulation/Telemetry inferior;
-- KV Context opcional;
+- Assistente opcional;
 - controles de simulação dedicados.
 
 ---
@@ -1140,7 +1140,7 @@ Build fails
 Problems recebe erro
 Linha do editor marca erro
 Build panel mostra etapa que falhou
-KV Context oferece explicação
+Assistente oferece explicação
 Usuário aplica correção ou abre docs
 ```
 
@@ -1155,7 +1155,7 @@ Evitar:
 - animações constantes;
 - notificações grandes;
 - tooltips longos demais;
-- cards enormes no KV Context;
+- cards enormes no Assistente;
 - ícones coloridos demais;
 - fundo com texturas dentro da IDE real;
 - decoração matemática no layout real.
@@ -1237,7 +1237,7 @@ Tipos:
 
 - editor tabs;
 - panel tabs;
-- KV Context tabs;
+- Assistente tabs;
 - bottom tabs.
 
 Regras:
@@ -1252,7 +1252,7 @@ Regras:
 
 Usados apenas em:
 
-- KV Context;
+- Assistente;
 - tela de boas-vindas;
 - toolchain diagnostics;
 - sugestões aplicáveis.
@@ -1289,7 +1289,7 @@ Tempo:
 Visual:
 
 - Target selector com warning;
-- KV Context abre aba Toolchain;
+- Assistente abre aba Toolchain;
 - card “Configure Toolchain”;
 - Problems mostra “compiler not configured”;
 - Run/Debug desabilitados.
@@ -1360,7 +1360,7 @@ Visual:
 - Tool Windows
 - Focus Editor
 - Split Editor
-- Toggle KV Context
+- Toggle Assistente
 - Toggle Terminal
 
 ### 24.4 Navigate
@@ -1435,7 +1435,7 @@ Comandos:
 - Debug Project
 - Flash Target
 - Open Serial Monitor
-- Toggle KV Context
+- Toggle Assistente
 - Open Settings
 
 A Command Palette deve mostrar atalhos e contexto.
@@ -1514,7 +1514,7 @@ Callouts possíveis:
 - CMake sem fricção;
 - Linux-first;
 - toolchains visuais;
-- KV Context;
+- Assistente;
 - embedded targets;
 - debug e serial;
 - simulação futura.
@@ -1605,7 +1605,7 @@ Ao usar este documento com IA CLI, priorizar:
 5. Criar Tool Rail.
 6. Criar Left Tool Window com Project placeholder.
 7. Criar Editor Area placeholder.
-8. Criar KV Context placeholder.
+8. Criar Assistente placeholder.
 9. Criar Bottom Tool Window.
 10. Criar Status Bar.
 11. Só depois integrar dados reais.
@@ -1617,14 +1617,14 @@ MVP UI Layout 0.1: tokens + janela + regiões vazias
 MVP UI Layout 0.2: toolbar + rail + status bar
 MVP UI Layout 0.3: project tree fake + editor fake
 MVP UI Layout 0.4: bottom tool window fake
-MVP UI Layout 0.5: KV Context fake
+MVP UI Layout 0.5: Assistente fake
 MVP UI Layout 0.6: conectar ao core real
 ```
 
 ### 30.1 Prompt para IA CLI implementar layout shell
 
 ```text
-Implemente o shell visual principal da IDE Kinein Vectis em Qt/QML seguindo o documento KINEIN_VECTIS_LAYOUT_SYSTEM.md. Não implemente lógica real ainda. Crie componentes reutilizáveis para App Bar, Main Toolbar, Tool Rail, Left Tool Window, Editor Area, KV Context, Bottom Tool Window e Status Bar. Use tokens de tema centralizados. O layout deve ser real de IDE, não marketing: sem callouts, sem slogans, sem textos promocionais ao redor. Priorize visual limpo, escuro, JetBrains-like na sensação, Kinein-like na identidade.
+Implemente o shell visual principal da IDE Kinein Vectis em Qt/QML seguindo o documento KINEIN_VECTIS_LAYOUT_SYSTEM.md. Não implemente lógica real ainda. Crie componentes reutilizáveis para App Bar, Main Toolbar, Tool Rail, Left Tool Window, Editor Area, Assistente, Bottom Tool Window e Status Bar. Use tokens de tema centralizados. O layout deve ser real de IDE, não marketing: sem callouts, sem slogans, sem textos promocionais ao redor. Priorize visual limpo, escuro, JetBrains-like na sensação, Kinein-like na identidade.
 ```
 
 ### 30.2 Prompt para IA CLI criar tokens
@@ -1646,7 +1646,7 @@ Implemente estados de layout para Default Coding, Focus Editor, Build & CMake, D
 Para gerar imagem de referência, usar prompt:
 
 ```text
-Criar mockup de alta resolução de uma IDE profissional chamada Kinein Vectis, nome curto Kinein, sigla KV. A imagem deve mostrar apenas a interface real da IDE, sem callouts de marketing, sem textos promocionais externos e sem elementos fora da janela. Tema escuro grafite confortável, estilo visual polido e profissional, inspirado na sensação de IDEs modernas como JetBrains, mas com identidade própria. Layout: app bar superior com KV | Kinein, menu File/Edit/View/Navigate/Code/Build/Run/Tools/Help; toolbar com Target selector, CMake profile, Configure, Build, Run, Debug, Flash, Simulate; tool rail esquerdo com Project, Search, Git, Build, Debug, Targets, Simulate, Tools; painel esquerdo com Project e Structure; editor central com tabs, breadcrumbs, código C++ legível, gutter e diagnostics; painel direito KV Context com abas Context, Explain, Fix, Toolchain, Docs; painel inferior com Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git; status bar inferior com branch, errors, warnings, compiler, target, line/column, encoding. Usar acento âmbar industrial com moderação, azul/roxo apenas como acentos técnicos. Interface limpa, densa mas confortável, sem excesso de brilho, sem decoração matemática no layout real.
+Criar mockup de alta resolução de uma IDE profissional chamada Kinein Vectis, nome curto Kinein, sigla KV. A imagem deve mostrar apenas a interface real da IDE, sem callouts de marketing, sem textos promocionais externos e sem elementos fora da janela. Tema escuro grafite confortável, estilo visual polido e profissional, inspirado na sensação de IDEs modernas como JetBrains, mas com identidade própria. Layout: app bar superior com KV | Kinein, menu File/Edit/View/Navigate/Code/Build/Run/Tools/Help; toolbar com Target selector, CMake profile, Configure, Build, Run, Debug, Flash, Simulate; tool rail esquerdo com Project, Search, Git, Build, Debug, Targets, Simulate, Tools; painel esquerdo com Project e Structure; editor central com tabs, breadcrumbs, código C++ legível, gutter e diagnostics; painel direito Assistente com abas Context, Explain, Fix, Toolchain, Docs; painel inferior com Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git; status bar inferior com branch, errors, warnings, compiler, target, line/column, encoding. Usar acento âmbar industrial com moderação, azul/roxo apenas como acentos técnicos. Interface limpa, densa mas confortável, sem excesso de brilho, sem decoração matemática no layout real.
 ```
 
 ---
@@ -1659,7 +1659,7 @@ Antes de aceitar um layout, verificar:
 - [ ] O editor é a área dominante?
 - [ ] Target e build profile estão claros?
 - [ ] CMake/Build/Debug/Serial têm locais óbvios?
-- [ ] KV Context ajuda sem dominar?
+- [ ] Assistente ajuda sem dominar?
 - [ ] O âmbar está usado com moderação?
 - [ ] O layout não tem callouts de marketing?
 - [ ] O visual é confortável para 6+ horas de uso?
@@ -1681,7 +1681,7 @@ A interface principal deve seguir esta fórmula:
 ```text
 Project/Tools à esquerda
 Editor no centro
-KV Context à direita
+Assistente à direita
 Terminal/Build/Debug embaixo
 Target/CMake/Run no topo
 Estado do sistema no rodapé

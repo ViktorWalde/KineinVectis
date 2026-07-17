@@ -1,10 +1,10 @@
 import QtQuick
 
-// KV Context: o conceito INTEIRO mora aqui — o que e um agente, qual foi
+// Assistente: o conceito INTEIRO mora aqui — o que e um agente, qual foi
 // escolhido, o que e digitado, quando a sessao abre, como a aba se chama e
 // quando o icone do rail acende.
 //
-// O RuntimeController mantem sessoes de terminal e NAO sabe que "KV Context"
+// O RuntimeController mantem sessoes de terminal e NAO sabe que "Assistente"
 // existe: ele so carimba na aba o rotulo e o `kind` que lhe pedem, e devolve o
 // `kind` em `terminalOpened`. Essa e a fronteira — manter sessao de terminal
 // nao e saber o que uma delas significa.
@@ -39,30 +39,30 @@ Item {
     // string literal — senao a politica so teria migrado de camada.
     property string pendingCommand: ""
     // Numeracao propria das abas de contexto. NUNCA decrementa, pela mesma razao
-    // do `terminalSeq`: fechar a 2 de 3 faria a proxima nascer "KV Context 3".
-    property int contextSeq: 0
+    // do `terminalSeq`: fechar a 2 de 3 faria a proxima nascer "Assistente 3".
+    property int assistantSeq: 0
 
     // A tag que o RuntimeController carimba na aba por nossa conta. Opaca para
     // ele; o significado dela e este arquivo.
-    readonly property string contextKind: "context"
+    readonly property string assistantKind: "assistant"
 
     // Quais ferramentas sao agentes. E o unico lugar do projeto que sabe disso,
     // e e UI de proposito.
     readonly property var agentIds: ["claude", "codex"]
 
     /// `true` quando a aba ATIVA do terminal e uma sessao de contexto.
-    readonly property bool activeTerminalIsContext:
+    readonly property bool activeTerminalIsAssistant:
         root.runtimeController !== null
-        && root.runtimeController.activeTerminalKind === root.contextKind
+        && root.runtimeController.activeTerminalKind === root.assistantKind
 
-    /// Estado aceso do icone no rail. Nao ha painel proprio de KV Context para
+    /// Estado aceso do icone no rail. Nao ha painel proprio de Assistente para
     /// alternar: o icone acende quando o painel do terminal esta na frente E a
-    /// sessao ativa e a de contexto. A regra e POLITICA de KV Context e mora
+    /// sessao ativa e a do Assistente. A regra e POLITICA do Assistente e mora
     /// aqui — montada num host visual, ela ficava espalhada por tres fontes.
-    readonly property bool contextSessionVisible:
+    readonly property bool assistantSessionVisible:
         root.runtimeController !== null
         && root.runtimeController.terminalPanelVisible
-        && root.activeTerminalIsContext
+        && root.activeTerminalIsAssistant
 
     visible: false
 
@@ -129,12 +129,12 @@ Item {
     /// abas — o ponto e melhorar o fluxo, nao multiplicar terminal. Sem sessao
     /// viva, a escolha do agente vem ANTES de abrir o PTY: o seletor so existe
     /// enquanto nao ha sessao.
-    function openContext() {
+    function openAssistant() {
         if (root.runtimeController === null
                 || root.runtimeController.workspaceRoot === "") {
             return;
         }
-        const existente = root.runtimeController.firstTerminalOfKind(root.contextKind);
+        const existente = root.runtimeController.firstTerminalOfKind(root.assistantKind);
         if (existente !== "") {
             root.runtimeController.selectTerminal(existente);
             return;
@@ -166,24 +166,24 @@ Item {
     }
 
     /// Pede a sessao rotulada. O numero e PROVISORIO: `terminal.open` pode
-    /// falhar, e `contextSeq` so e commitado quando a aba existe de fato —
+    /// falhar, e `assistantSeq` so e commitado quando a aba existe de fato —
     /// senao uma falha queimaria um numero.
     function openSession() {
         if (root.runtimeController === null) {
             return;
         }
         root.runtimeController.openLabeledTerminal(
-            qsTr("KV Context %1").arg(root.contextSeq + 1), root.contextKind);
+            qsTr("Assistente %1").arg(root.assistantSeq + 1), root.assistantKind);
     }
 
     /// A sessao abriu. So agora o numero e commitado e o comando e digitado,
     /// uma vez so — sem zerar, a proxima aba de contexto herdaria o comando da
     /// anterior.
     function handleTerminalOpened(id, kind) {
-        if (kind !== root.contextKind) {
+        if (kind !== root.assistantKind) {
             return;
         }
-        root.contextSeq += 1;
+        root.assistantSeq += 1;
         const comando = root.pendingCommand;
         root.pendingCommand = "";
         if (comando !== "") {
@@ -197,6 +197,6 @@ Item {
         agentsListModel.clear();
         selectorVisible = false;
         root.pendingCommand = "";
-        root.contextSeq = 0;
+        root.assistantSeq = 0;
     }
 }

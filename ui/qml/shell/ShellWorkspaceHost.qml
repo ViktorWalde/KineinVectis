@@ -11,7 +11,7 @@ Item {
     property var editorController
     property var jobsController
     property var runtimeController
-    property var contextAgentController
+    property var assistantController
     property var debugController
     property var gitController
     property var diagnosticsController
@@ -131,13 +131,13 @@ Item {
                          && root.shellController.bottomTab === "debug"
             toolsActive: root.shellController.showBottomPanel
                          && root.shellController.bottomTab === "tools"
-            contextActive: root.contextAgentController.contextSessionVisible
+            assistantActive: root.assistantController.assistantSessionVisible
             onExplorerToggled: root.shellController.toggleExplorer()
             onSearchRequested: root.searchController.openSearchPanel()
             onGitRequested: root.shellController.toggleBottomTab("git")
             onBuildRequested: root.shellController.toggleBottomTab("build")
             onDebugRequested: root.shellController.toggleBottomTab("debug")
-            onContextRequested: root.contextAgentController.openContext()
+            onAssistantRequested: root.assistantController.openAssistant()
             onToolsRequested: root.shellController.toggleBottomTab("tools")
         }
 
