@@ -501,11 +501,38 @@ recebe a lista (`Main.qml:56` → `workspaceController.toolsList`). Detectar
 precedente do `format.capabilities` (0.61.0): o core publica o catálogo, a UI
 consome.
 
-**Desenho proposto (não implementado):**
+**Estado em 2026-07-16: passo 1 FEITO (core). Passos 2–4 (UI) em aberto.**
 
-1. **core:** acrescentar `claude` e `codex` ao `ToolDetector`. Só detecção:
-   `open_command` continua program-agnostic e sem `ProfileSpec`, `flat_args` ou
-   filtro. Se aparecer `if programa == "claude"` no core, a fatia saiu errada.
+**Decisão do autor no caminho — a sugestão de instalação virou agnóstica.** O
+`ToolSpec` tinha `pacman_package: &str` e o core sugeria `sudo pacman -S <pkg>`
+só quando `pacman` existia. Na Fedora do autor isso **nunca disparava**: campo
+morto. Distinção que decidiu o desenho:
+
+```text
+DETECTAR   le o PATH + bit de execucao   → ja era agnostico. Nao mudou.
+INSTALAR   NAO se deduz do PATH          → a ferramenta ausente e justamente a
+                                           que nao esta la. Adivinhar gerenciador
+                                           (ou traduzir nome por distro: `g++` e
+                                           `gcc-c++` na Fedora) e palpite
+                                           disfarcado de instrucao.
+```
+
+`pacman_package` foi **removido**. Regra nova: `install_command: Option<&str>` —
+o core só sugere quando o comando é canônico e independente de distro (npm, no
+caso das CLIs de IA); para ferramenta de distro é `None` e o gerenciador de
+pacotes é assunto do usuário. **Trade-off explícito:** quem usa Arch/CachyOS
+perde a sugestão `pacman` que existia. Manter Arch atendido exigiria detectar o
+gerenciador presente e manter matriz de nomes por distro — não foi feito.
+
+**Passo 1 — core: FEITO.** `claude` e `codex` no `KNOWN_TOOLS`, só detecção.
+Nenhum ramo por programa, nenhum `ProfileSpec`, `flat_args` ou filtro. Coberto
+por `ai_clis_are_detected_exactly_like_any_other_tool`, que compara o
+tratamento de `claude` com o de `cargo` (mesmo probe, mesma estrutura) e **cai
+se alguém escrever `if spec.id == "claude"` no detector** — é a cobertura
+mínima que esta seção exigia. `install_suggestion_does_not_depend_on_the_distribution`
+prova que ter `pacman` no PATH não muda mais nada. 268 testes verdes.
+
+**Passos 2–4 — UI: EM ABERTO.** O desenho abaixo continua valendo:
 2. **UI:** o atalho abre um seletor com as CLIs **detectadas** (status
    `Available`); ausentes aparecem com `suggested_install`, sem executar nada —
    o `ToolInfo` já carrega esse campo e o contrato já diz que o core nunca roda

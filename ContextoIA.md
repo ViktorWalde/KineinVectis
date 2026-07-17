@@ -1886,3 +1886,25 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   a ser a melhor aposta, como VS Code). Item que sumiu cai para o primeiro:
   seleção fantasma aceitaria item que o usuário não vê.
 
+## Detecção das CLIs de IA e fim do acoplamento a distro (2026-07-16)
+
+- `claude` e `codex` entraram no `KNOWN_TOOLS` do core, **só como detecção**.
+  Detectar `claude` é o mesmo que detectar `cargo`: é capacidade, e capacidade
+  pode viver no core. Política — como o programa é executado — continua fora:
+  nenhum ramo por programa, nenhum `ProfileSpec`, `flat_args` ou filtro.
+- `ai_clis_are_detected_exactly_like_any_other_tool` compara o tratamento de
+  `claude` com o de `cargo` (mesmo probe, mesma estrutura) e cai se alguém
+  escrever `if spec.id == "claude"` no detector.
+- **`pacman_package` removido do `ToolSpec`.** O core sugeria `sudo pacman -S`
+  só quando `pacman` existia — morto na Fedora. A distinção: detectar é
+  agnóstico e lê o PATH; instalar não se deduz do PATH, porque a ferramenta
+  ausente é justamente a que não está lá. Regra nova: `install_command:
+  Option<&str>`, só para comando canônico e independente de distro (npm nas
+  CLIs de IA); `None` para ferramenta de distro. Custo aceito: Arch/CachyOS
+  perde a sugestão que tinha.
+- `install_suggestion_does_not_depend_on_the_distribution` prova que ter
+  `pacman` no PATH não muda mais a resposta.
+- A UI ainda não consome `suggested_install` (o campo era só protocolo+testes),
+  então a mudança não alterou nada visível. O seletor (§0.2f passos 2–4) segue
+  em aberto.
+

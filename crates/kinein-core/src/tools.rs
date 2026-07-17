@@ -1,8 +1,15 @@
 //! External tool detection.
 //!
 //! The core detects tools by searching an explicit search path and probing the
-//! binary with `--version`. The core never installs anything: missing tools
-//! only produce a suggested install command for the UI to display.
+//! binary with `--version`. The core never installs anything, and never runs a
+//! suggestion it emits.
+//!
+//! Detection is distribution-agnostic by construction: it reads the `PATH` and
+//! checks the executable bit. Installation is NOT derived from the `PATH` — a
+//! missing tool is precisely the one that is not there — so the core only
+//! suggests an install when the command is canonical and independent of the
+//! distribution. Guessing a package manager, or translating package names per
+//! distribution, would be a guess dressed up as an instruction.
 
 use std::{
     env,
@@ -24,8 +31,16 @@ pub struct ToolSpec {
     pub binary: &'static str,
     /// Alternative binary name used by some distributions.
     pub alternative_binary: Option<&'static str>,
-    /// Package that provides the binary on CachyOS/Arch.
-    pub pacman_package: &'static str,
+    /// Command that installs the tool, when a canonical one exists that does
+    /// not depend on the distribution.
+    ///
+    /// `None` means "install it the way this machine installs things" — o core
+    /// nao adivinha gerenciador de pacotes. Sugerir `pacman` numa Fedora, ou
+    /// traduzir nome de pacote por distro (`g++` e `gcc-c++` na Fedora), seria
+    /// palpite disfarcado de instrucao. Detectar e agnostico e le o PATH;
+    /// instalar nao se deduz do PATH, porque a ferramenta ausente e justamente
+    /// a que nao esta la.
+    pub install_command: Option<&'static str>,
 }
 
 /// Tools detected by MVP 0.2, as defined in `docs/10-mvp-plan.md`.
@@ -35,119 +50,143 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         display_name: "Cargo",
         binary: "cargo",
         alternative_binary: None,
-        pacman_package: "rustup",
+        install_command: None,
     },
     ToolSpec {
         id: "rustc",
         display_name: "Rust Compiler",
         binary: "rustc",
         alternative_binary: None,
-        pacman_package: "rustup",
+        install_command: None,
     },
     ToolSpec {
         id: "rustup",
         display_name: "rustup",
         binary: "rustup",
         alternative_binary: None,
-        pacman_package: "rustup",
+        install_command: None,
     },
     ToolSpec {
         id: "rust-analyzer",
         display_name: "rust-analyzer",
         binary: "rust-analyzer",
         alternative_binary: None,
-        pacman_package: "rust-analyzer",
+        install_command: None,
     },
     ToolSpec {
         id: "cmake",
         display_name: "CMake",
         binary: "cmake",
         alternative_binary: None,
-        pacman_package: "cmake",
+        install_command: None,
     },
     ToolSpec {
         id: "ninja",
         display_name: "Ninja",
         binary: "ninja",
         alternative_binary: None,
-        pacman_package: "ninja",
+        install_command: None,
     },
     ToolSpec {
         id: "git",
         display_name: "Git",
         binary: "git",
         alternative_binary: None,
-        pacman_package: "git",
+        install_command: None,
     },
     ToolSpec {
         id: "clangd",
         display_name: "clangd",
         binary: "clangd",
         alternative_binary: None,
-        pacman_package: "clang",
+        install_command: None,
     },
     ToolSpec {
         id: "clang",
         display_name: "clang",
         binary: "clang",
         alternative_binary: None,
-        pacman_package: "clang",
+        install_command: None,
     },
     ToolSpec {
         id: "clangxx",
         display_name: "clang++",
         binary: "clang++",
         alternative_binary: None,
-        pacman_package: "clang",
+        install_command: None,
     },
     ToolSpec {
         id: "gcc",
         display_name: "GCC",
         binary: "gcc",
         alternative_binary: None,
-        pacman_package: "gcc",
+        install_command: None,
     },
     ToolSpec {
         id: "gxx",
         display_name: "g++",
         binary: "g++",
         alternative_binary: None,
-        pacman_package: "gcc",
+        install_command: None,
     },
     ToolSpec {
         id: "gdb",
         display_name: "GDB",
         binary: "gdb",
         alternative_binary: None,
-        pacman_package: "gdb",
+        install_command: None,
     },
     ToolSpec {
         id: "lldb",
         display_name: "LLDB",
         binary: "lldb",
         alternative_binary: None,
-        pacman_package: "lldb",
+        install_command: None,
     },
     ToolSpec {
         id: "lldb-dap",
         display_name: "lldb-dap",
         binary: "lldb-dap",
         alternative_binary: None,
-        pacman_package: "lldb",
+        install_command: None,
     },
     ToolSpec {
         id: "ripgrep",
         display_name: "ripgrep",
         binary: "rg",
         alternative_binary: None,
-        pacman_package: "ripgrep",
+        install_command: None,
     },
     ToolSpec {
         id: "fd",
         display_name: "fd",
         binary: "fd",
         alternative_binary: Some("fdfind"),
-        pacman_package: "fd",
+        install_command: None,
+    },
+    // CLIs de IA. Detectar `claude` e o MESMO que detectar `cargo`: e
+    // CAPACIDADE ("existe no PATH?"), e capacidade pode viver no core. O que
+    // NAO pode voltar e POLITICA — como o programa e executado. O core nao tem
+    // ramo por programa: nao injeta flag, nao filtra saida e nao sabe que estas
+    // entradas sao "de IA". Quem escolhe e roda e a UI.
+    //
+    // Aqui o `install_command` existe porque npm e canonico e independente de
+    // distro — nao e palpite. (Claude Code tambem tem instalador nativo; a
+    // sugestao aponta um caminho que funciona em qualquer distro, e o core
+    // nunca a executa.)
+    ToolSpec {
+        id: "claude",
+        display_name: "Claude Code",
+        binary: "claude",
+        alternative_binary: None,
+        install_command: Some("npm install -g @anthropic-ai/claude-code"),
+    },
+    ToolSpec {
+        id: "codex",
+        display_name: "Codex",
+        binary: "codex",
+        alternative_binary: None,
+        install_command: Some("npm install -g @openai/codex"),
     },
 ];
 
@@ -183,12 +222,12 @@ impl ToolDetector {
 
     /// Detects a single tool and reports its structured status.
     ///
-    /// The pacman install suggestion only appears when `pacman` itself is
-    /// available: on other distributions the suggested command would be
-    /// useless noise.
+    /// A suggestion only appears for tools whose install command is canonical
+    /// and distribution-independent. For everything else the core reports
+    /// `Missing` and stays quiet: the package manager is the user's business.
     #[must_use]
     pub fn detect(&self, spec: &ToolSpec) -> ToolInfo {
-        let suggestion = || self.suggested_install_for(spec);
+        let suggestion = || Self::suggested_install_for(spec);
 
         self.find_tool_binary(spec).map_or_else(
             || ToolInfo {
@@ -235,9 +274,8 @@ impl ToolDetector {
         self.find_in_path(binary)
     }
 
-    fn suggested_install_for(&self, spec: &ToolSpec) -> Option<String> {
-        self.find_in_path("pacman")
-            .map(|_| format!("sudo pacman -S {}", spec.pacman_package))
+    fn suggested_install_for(spec: &ToolSpec) -> Option<String> {
+        spec.install_command.map(ToOwned::to_owned)
     }
 
     fn find_in_path(&self, binary: &str) -> Option<PathBuf> {
@@ -305,7 +343,7 @@ mod tests {
         display_name: "Cargo",
         binary: "cargo",
         alternative_binary: None,
-        pacman_package: "rustup",
+        install_command: None,
     };
 
     static NEXT_TEMP_ID: AtomicU64 = AtomicU64::new(1);
@@ -354,19 +392,23 @@ mod tests {
                 "lldb",
                 "lldb-dap",
                 "ripgrep",
-                "fd"
+                "fd",
+                "claude",
+                "codex"
             ]
         );
     }
 
     #[test]
-    fn missing_tool_without_pacman_has_no_suggestion() {
-        let dir = temp_bin_dir("missing-no-pacman");
+    fn missing_distro_tool_suggests_nothing() {
+        let dir = temp_bin_dir("missing-distro-tool");
         let detector = ToolDetector::with_search_path(&dir);
 
         let info = detector.detect(&FAKE_SPEC);
 
         assert_eq!(info.status, ToolStatus::Missing);
+        // Ferramenta de distro nao ganha sugestao: o core nao adivinha
+        // gerenciador de pacotes nem traduz nome por distro.
         assert!(info.suggested_install.is_none());
         assert!(info.path.is_none());
         assert!(info.message.is_some());
@@ -374,17 +416,64 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn missing_tool_with_pacman_reports_suggestion() {
-        let dir = temp_bin_dir("missing-with-pacman");
-        write_fake_tool(&dir, "pacman", "exit 0");
+    fn install_suggestion_does_not_depend_on_the_distribution() {
+        // Ter (ou nao ter) `pacman` no PATH nao pode mudar a sugestao: essa era
+        // exatamente a dependencia de distro que saiu do core.
+        let com_pacman = temp_bin_dir("suggestion-with-pacman");
+        write_fake_tool(&com_pacman, "pacman", "exit 0");
+        let sem_pacman = temp_bin_dir("suggestion-without-pacman");
+
+        let claude = KNOWN_TOOLS
+            .iter()
+            .find(|spec| spec.id == "claude")
+            .expect("claude spec exists");
+
+        let a = ToolDetector::with_search_path(&com_pacman).detect(claude);
+        let b = ToolDetector::with_search_path(&sem_pacman).detect(claude);
+
+        assert_eq!(a.suggested_install, b.suggested_install);
+        assert_eq!(
+            a.suggested_install.as_deref(),
+            Some("npm install -g @anthropic-ai/claude-code")
+        );
+        assert_eq!(
+            ToolDetector::with_search_path(&com_pacman)
+                .detect(&FAKE_SPEC)
+                .suggested_install,
+            None
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn ai_clis_are_detected_exactly_like_any_other_tool() {
+        // A fatia so esta certa enquanto o core NAO tiver ramo por programa.
+        // Detectar `claude` tem de produzir o mesmo formato de resposta que
+        // detectar `cargo`: mesma estrutura, mesmo probe, nenhum campo
+        // especial. Se alguem escrever `if spec.id == "claude"` no detector
+        // para injetar flag, filtrar saida ou mudar o probe, este teste cai.
+        let _guard = EXEC_LOCK.lock().unwrap();
+        let dir = temp_bin_dir("ai-cli-like-any-other");
+        // Os dois fakes ecoam o MESMO texto de proposito: o que se compara e o
+        // TRATAMENTO (mesmo probe, mesma estrutura), nao o conteudo.
+        write_fake_tool(&dir, "claude", "echo 'ferramenta 9.9.9'");
+        write_fake_tool(&dir, "cargo", "echo 'ferramenta 9.9.9'");
         let detector = ToolDetector::with_search_path(&dir);
 
-        let info = detector.detect(&FAKE_SPEC);
+        let claude = detector.detect(
+            KNOWN_TOOLS
+                .iter()
+                .find(|spec| spec.id == "claude")
+                .expect("claude spec exists"),
+        );
+        let cargo = detector.detect(&FAKE_SPEC);
 
-        assert_eq!(info.status, ToolStatus::Missing);
+        assert_eq!(claude.status, cargo.status);
+        assert_eq!(claude.version, cargo.version);
+        assert!(claude.suggested_install.is_none());
         assert_eq!(
-            info.suggested_install.as_deref(),
-            Some("sudo pacman -S rustup")
+            claude.path.as_deref(),
+            Some(dir.join("claude").to_str().unwrap())
         );
     }
 
