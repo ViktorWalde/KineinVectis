@@ -8,6 +8,7 @@ Item {
     property var jobsController: null
     property var searchController: null
     property var runtimeController: null
+    property var runConfigController: null
     property var debugController: null
     property var gitController: null
     property var diagnosticsController: null
@@ -22,6 +23,7 @@ Item {
         jobsController.clear();
         searchController.clear();
         runtimeController.clear();
+        runConfigController.clear();
         debugController.clear();
         gitController.clear();
         diagnosticsController.clear();

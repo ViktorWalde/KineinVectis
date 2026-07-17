@@ -5,6 +5,7 @@ Item {
 
     property var coreClient: null
     property var runtimeController: null
+    property var runConfigController: null
 
     visible: false
 
@@ -24,7 +25,7 @@ Item {
         }
 
         function onRunConfigsResolved(configs, activeId) {
-            root.runtimeController.handleRunConfigs(configs, activeId);
+            root.runConfigController.handleRunConfigs(configs, activeId);
         }
 
         function onRunStarted(command) {

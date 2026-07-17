@@ -32,14 +32,6 @@ Item {
     // Sessao visivel dentro da aba Terminal (fatia M2.1): o shell PTY e o
     // processo controlado (run.*) dividem a mesma aba, mas nunca o backend.
     property string terminalSession: "shell"
-    property alias runConfigsModel: runConfigsListModel
-    property string activeConfigId: ""
-    property string activeConfigName: ""
-    property bool runConfigDialogVisible: false
-    property string editingConfigId: ""
-    property bool configMenuVisible: false
-    property real configMenuX: 0
-    property real configMenuY: 0
 
     signal showTabRequested(string tab)
     signal terminalOpenRequested()
@@ -56,10 +48,6 @@ Item {
     signal focusTerminalInputRequested()
     signal clearTerminalInputRequested()
     signal clearRunInputRequested()
-    signal saveRunConfigRequested(string id, string name, string command)
-    signal deleteRunConfigRequested(string id)
-    signal setActiveRunConfigRequested(string id)
-    signal runConfigDialogOpenRequested(string name, string command)
 
     visible: false
 
@@ -70,10 +58,6 @@ Item {
     // D2.3: uma linha por terminal aberto — { termId, title }.
     ListModel {
         id: terminalsListModel
-    }
-
-    ListModel {
-        id: runConfigsListModel
     }
 
     // `terminal.open` pode FALHAR (ex.: teto de 12 sessões). O erro vai para o
@@ -105,8 +89,6 @@ Item {
         runItemsModel.clear();
         clearTerminals();
         terminalText = "";
-        configMenuVisible = false;
-        runConfigDialogVisible = false;
     }
 
     // Um crash do core não produz `event.terminal.closed` para cada shell.
@@ -316,85 +298,6 @@ Item {
             return;
         }
         startRun(text);
-    }
-
-    function handleRunConfigs(configs, activeId) {
-        runConfigsListModel.clear();
-        activeConfigId = activeId !== undefined ? activeId : "";
-        activeConfigName = "";
-        for (let i = 0; i < configs.length; i++) {
-            runConfigsListModel.append({
-                id: configs[i].id,
-                name: configs[i].name,
-                command: configs[i].command
-            });
-            if (configs[i].id === activeConfigId) {
-                activeConfigName = configs[i].name;
-            }
-        }
-        if (activeConfigName === "") {
-            activeConfigId = "";
-        }
-    }
-
-    function activeConfigCommand() {
-        for (let i = 0; i < runConfigsListModel.count; i++) {
-            if (runConfigsListModel.get(i).id === activeConfigId) {
-                return runConfigsListModel.get(i).command;
-            }
-        }
-        return "";
-    }
-
-    function openConfigMenu(x, y) {
-        configMenuX = x;
-        configMenuY = y;
-        configMenuVisible = true;
-    }
-
-    function closeConfigMenu() {
-        configMenuVisible = false;
-    }
-
-    function chooseConfig(id) {
-        configMenuVisible = false;
-        setActiveRunConfigRequested(id);
-    }
-
-    function openNewConfigDialog() {
-        configMenuVisible = false;
-        editingConfigId = "";
-        runConfigDialogVisible = true;
-        runConfigDialogOpenRequested("", "");
-    }
-
-    function openEditConfigDialog() {
-        if (activeConfigId === "") {
-            return;
-        }
-        configMenuVisible = false;
-        editingConfigId = activeConfigId;
-        runConfigDialogVisible = true;
-        runConfigDialogOpenRequested(activeConfigName, activeConfigCommand());
-    }
-
-    function confirmConfigDialog(name, command) {
-        if (name === "" || command === "") {
-            return;
-        }
-        runConfigDialogVisible = false;
-        saveRunConfigRequested(editingConfigId, name, command);
-    }
-
-    function cancelConfigDialog() {
-        runConfigDialogVisible = false;
-    }
-
-    function deleteActiveConfig() {
-        configMenuVisible = false;
-        if (activeConfigId !== "") {
-            deleteRunConfigRequested(activeConfigId);
-        }
     }
 
     /// Roteia o render pra sessão dona. Só a ABA ATIVA vira `terminalRender`

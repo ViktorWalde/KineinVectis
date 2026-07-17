@@ -2105,3 +2105,27 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   compilando — binding QML quebra em runtime.
 - O seletor do KV Context (§0.2f) segue bloqueado pelo `RuntimeController`
   (494/400): separar run configs de terminais é a fatia que falta.
+
+## RunConfigController: o RuntimeController sai do débito (2026-07-16)
+
+- `ui/qml/runtime/RunConfigController.qml` (122) passou a ser dono das
+  configurações de execução salvas: modelo, qual está ativa, estado do diálogo e
+  do menu. **`RuntimeController`: 494 → 397.** Sai do débito; era o último
+  bloqueio do seletor do KV Context.
+- A costura é de responsabilidade, não de tamanho (§0.2g): "guardar como rodar
+  um programa" não é "manter uma sessão de terminal". O controller novo não
+  conhece PTY, id de sessão nem render; o RuntimeController continua dono de
+  terminais, KV Context e da execução em si (run.start/stop/stdin), que
+  compartilham a aba Terminal.
+- Três armadilhas que o COMPILADOR não pega e o qmllint só pegou em parte —
+  todas de sinal/propriedade que migrou e ficou sendo escutada no lugar antigo:
+  o `RuntimeRequestRouter` ouvia save/delete/setActive no runtimeController; o
+  handler de `runConfigDialogOpenRequested` ficou no bloco errado do AppDomains;
+  e o `clear()` do reset de workspace ainda fechava diálogo e menu de config.
+  Escutar no lugar errado não falha no build: **deixa de funcionar em silêncio.**
+- O que só a execução real pegou: `runConfigController` chegava `null` no
+  `ShellHeaderHost` e no `ShellOverlays`. qmllint dizia "tudo limpo" e a IDE
+  cuspia `TypeError: Cannot read property 'activeConfigId' of null`. Refactor de
+  fiação QML se valida rodando, não compilando.
+- Verificado: qmllint estrito limpo e a IDE sobe até o primeiro frame (182 ms)
+  sem um TypeError.

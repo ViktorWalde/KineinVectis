@@ -11,6 +11,7 @@ Item {
     property var editorController: null
     property var shellController: null
     property var runtimeController: null
+    property var runConfigController: null
     property var gitController: null
     property var settingsController: null
     property bool aboutVisible: false
@@ -178,33 +179,33 @@ Item {
 
     RunConfigMenu {
         anchors.fill: parent
-        visible: root.runtimeController.configMenuVisible
+        visible: root.runConfigController.configMenuVisible
         z: 94
-        menuX: root.runtimeController.configMenuX
-        menuY: root.runtimeController.configMenuY
-        configsModel: root.runtimeController.runConfigsModel
-        activeConfigId: root.runtimeController.activeConfigId
-        onDismissRequested: root.runtimeController.closeConfigMenu()
+        menuX: root.runConfigController.configMenuX
+        menuY: root.runConfigController.configMenuY
+        configsModel: root.runConfigController.runConfigsModel
+        activeConfigId: root.runConfigController.activeConfigId
+        onDismissRequested: root.runConfigController.closeConfigMenu()
         onConfigChosen: function(id) {
-            root.runtimeController.chooseConfig(id);
+            root.runConfigController.chooseConfig(id);
         }
-        onNewRequested: root.runtimeController.openNewConfigDialog()
-        onEditRequested: root.runtimeController.openEditConfigDialog()
-        onDeleteRequested: root.runtimeController.deleteActiveConfig()
+        onNewRequested: root.runConfigController.openNewConfigDialog()
+        onEditRequested: root.runConfigController.openEditConfigDialog()
+        onDeleteRequested: root.runConfigController.deleteActiveConfig()
     }
 
     RunConfigDialog {
         id: runConfigDialog
 
-        visible: root.runtimeController.runConfigDialogVisible
+        visible: root.runConfigController.runConfigDialogVisible
         z: 95
         anchors.centerIn: parent
-        editing: root.runtimeController.editingConfigId !== ""
+        editing: root.runConfigController.editingConfigId !== ""
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        onConfirmRequested: root.runtimeController.confirmConfigDialog(
+        onConfirmRequested: root.runConfigController.confirmConfigDialog(
                                 runConfigDialog.currentName(),
                                 runConfigDialog.currentCommand())
-        onCancelRequested: root.runtimeController.cancelConfigDialog()
+        onCancelRequested: root.runConfigController.cancelConfigDialog()
     }
 
     ProjectEntryContextMenu {

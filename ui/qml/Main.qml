@@ -62,6 +62,7 @@ Window {
         jobsController: domains.jobsController
         searchController: domains.searchController
         runtimeController: domains.runtimeController
+        runConfigController: domains.runConfigController
         bottomPanelHost: workspaceHost
     }
 
@@ -141,6 +142,7 @@ Window {
         shellController: domains.shellController
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
+        runConfigController: domains.runConfigController
         debugController: domains.debugController
         editorController: domains.editorController
         projectTree: domains.projectTree
@@ -150,7 +152,7 @@ Window {
         windowMaximized: windowChromeController.maximized
         onConfigMenuRequested: function(menuX, menuY) {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);
-            domains.runtimeController.openConfigMenu(pos.x, pos.y);
+            domains.runConfigController.openConfigMenu(pos.x, pos.y);
         }
         onAppMenuRequested: function(key, menuX, menuY, items) {
             if (key === "") {
@@ -243,6 +245,7 @@ Window {
         editorController: domains.editorController
         shellController: domains.shellController
         runtimeController: domains.runtimeController
+        runConfigController: domains.runConfigController
         gitController: domains.gitController
         settingsController: domains.settingsController
         onAppMenuActionRequested: function(action) {

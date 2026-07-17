@@ -8,6 +8,7 @@ Column {
     property var shellController: null
     property var jobsController: null
     property var runtimeController: null
+    property var runConfigController: null
     property var debugController: null
     property var editorController: null
     property var projectTree: null
@@ -122,9 +123,9 @@ Column {
         coreConnected: root.coreClient.connected
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
-        activeConfigId: root.runtimeController.activeConfigId
-        activeConfigName: root.runtimeController.activeConfigName
-        configMenuOpen: root.runtimeController.configMenuVisible
+        activeConfigId: root.runConfigController.activeConfigId
+        activeConfigName: root.runConfigController.activeConfigName
+        configMenuOpen: root.runConfigController.configMenuVisible
         building: root.coreClient.building
         testing: root.coreClient.testing
         analyzing: root.coreClient.analyzing

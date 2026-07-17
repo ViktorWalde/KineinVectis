@@ -13,6 +13,7 @@ Item {
 
     property var coreClient: null
     property var runtimeController: null
+    property var runConfigController: null
 
     visible: false
 
@@ -58,6 +59,14 @@ Item {
         function onRunStdinRequested(data) {
             root.coreClient.runStdin(data);
         }
+
+    }
+
+    // Os sinais de configuracao salva vivem no RunConfigController desde que
+    // ele saiu do RuntimeController: escutar no lugar errado nao falha no build,
+    // so deixa de funcionar em silencio.
+    Connections {
+        target: root.runConfigController
 
         function onSaveRunConfigRequested(id, name, command) {
             root.coreClient.runConfigSave(id, name, command);

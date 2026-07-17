@@ -31,6 +31,7 @@ Item {
     readonly property alias diagnosticsController: diagnosticsController
     readonly property alias settingsController: settingsController
     readonly property alias runtimeController: runtimeController
+    readonly property alias runConfigController: runConfigController
     readonly property alias debugController: debugController
     readonly property alias gitController: gitController
     readonly property alias searchController: searchController
@@ -119,6 +120,16 @@ Item {
         }
     }
 
+    // Configuracoes salvas saem do RuntimeController: "guardar como rodar um
+    // programa" nao e "manter uma sessao de terminal".
+    RunConfigController {
+        id: runConfigController
+
+        onRunConfigDialogOpenRequested: function(name, command) {
+            root.shellOverlays.openRunConfigDialogWith(name, command);
+        }
+    }
+
     RuntimeController {
         id: runtimeController
 
@@ -131,9 +142,6 @@ Item {
         // controller para HOST/shell, que nao e IPC.
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
-        }
-        onRunConfigDialogOpenRequested: function(name, command) {
-            root.shellOverlays.openRunConfigDialogWith(name, command);
         }
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()
@@ -245,7 +253,6 @@ Item {
         onFocusEditorRequested: editorController.focusEditor()
     }
 
-
     WorkspaceEventRouter {
         coreClient: coreClient
         folderPicker: folderPicker
@@ -296,11 +303,13 @@ Item {
     RuntimeEventRouter {
         coreClient: coreClient
         runtimeController: runtimeController
+        runConfigController: runConfigController
     }
 
     RuntimeRequestRouter {
         coreClient: coreClient
         runtimeController: runtimeController
+        runConfigController: runConfigController
     }
 
     DebugEventRouter {
