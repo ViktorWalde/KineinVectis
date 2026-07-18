@@ -31,6 +31,31 @@ fn tools_status_runs_detection_once_and_reuses_registry() {
 }
 
 #[test]
+fn integration_list_expoe_o_inventario_com_saude_via_dispatch() {
+    // E2E: prova que `integration.list` esta LIGADO na cadeia de dispatch
+    // (service_request_response) e devolve o inventario com saude. Com PATH
+    // vazio, toda integracao aparece nao-instalada — a saude reusa tools.rs.
+    let mut core = core_with_empty_search_path("integration-list");
+    let request = JsonRpcRequest::new(7_i64, "integration.list", Some(json!({})));
+    let outcome = core.handle_request(&request);
+    let result = outcome.response().result.as_ref().unwrap();
+    let integrations = result["integrations"].as_array().unwrap();
+
+    assert_eq!(integrations.len(), crate::tools::KNOWN_TOOLS.len());
+    for entry in integrations {
+        assert_eq!(entry["health"]["installed"], false);
+        assert!(
+            !entry["descriptor"]["capabilities"]
+                .as_array()
+                .unwrap()
+                .is_empty()
+        );
+        // camelCase no fio, e descriptor.id casa com health.id.
+        assert_eq!(entry["descriptor"]["id"], entry["health"]["id"]);
+    }
+}
+
+#[test]
 fn environment_scan_requires_jobs_enabled() {
     let mut core = core_with_empty_search_path("environment-no-jobs");
     let outcome = core.handle_request(&JsonRpcRequest::new(

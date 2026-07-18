@@ -12,6 +12,7 @@ pub mod draft;
 pub mod format;
 pub mod fs;
 pub mod git;
+pub mod integration;
 pub mod jobs;
 pub mod lsp;
 pub mod run;

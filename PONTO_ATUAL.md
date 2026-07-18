@@ -89,9 +89,17 @@ FASE 1 — Pagar os god-files que BLOQUEIAM feature (curto prazo, contínuo)
   os segundos, so' quando tocar a feature da area.
 
 FASE 2 — L1: dominio `integration` v1 (o gargalo do medio prazo)
-  [ ] 2.1  E2 — validar pelo inventario das ferramentas ja detectadas, zero
-           dependencia nova (recomendacao §0.2e). Nada de L2+ comeca sem isto.
-  Saida: existe handlers/integration.rs, contrato descriptor/health/config de pe.
+  [~] 2.1  E2 — `integration.list` READ-ONLY entregue 2026-07-17 (decisao da IA,
+           opcao 3, autor delegou). Contrato IntegrationDescriptor/Health/Info/
+           ListResult no protocolo; dominio integration/ (registry+health) que
+           REUSA tools.rs (invariante 1, provado por mutacao); handler fino
+           integration.rs na cadeia; teste E2E via handle_request. Zero
+           dependencia nova.
+  [ ] 2.2  config + event: IntegrationConfig (escopo global/workspace,
+           reversivel) e IntegrationEvent (health/config mudou). E' a parte de
+           ESCRITA — decidir FFI editorconfig-rs vs parser proprio so' aqui.
+  Saida (v1 completo): descriptor+health (feito) + config+event; a aba
+           informativa le integration.list. So' entao L2+ comeca.
 
 FASE 3 — L2-L4: C/C++/Rust SOLIDOS (a profundidade vertical)  [roadmap 28]
   [ ] 3.1  L2  diagnostico/teste/cobertura num contrato so + Jobs cancelaveis

@@ -17,6 +17,7 @@ pub mod fsops;
 pub mod fswatch;
 pub mod git;
 pub mod handlers;
+pub mod integration;
 pub mod jobs;
 pub mod lang;
 pub mod lsp;
@@ -232,6 +233,7 @@ impl Core {
         params: Option<&Value>,
     ) -> JsonRpcResponse {
         self.fs_request_response(method, request_id.clone(), params)
+            .or_else(|| self.integration_request_response(method, request_id.clone(), params))
             .or_else(|| self.recent_workspace_response(method, request_id.clone(), params))
             .or_else(|| self.cargo_request_response(method, request_id.clone(), params))
             .or_else(|| self.git_request_response(method, request_id.clone(), params))

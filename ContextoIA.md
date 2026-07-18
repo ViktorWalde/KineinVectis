@@ -1910,6 +1910,29 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
 - Cronograma em FASES no `PONTO_ATUAL` (0 dogfooding → 1 god-files → 2 L1 → 3
   L2-L4), com checkbox e criterio de saida binario por fase. FASE 0 fechada.
 
+## L1: a plataforma de integrações v1, read-only (2026-07-17)
+
+- Fase 2 do cronograma, decisão da IA pela opção 3 (o autor delegou com
+  "prossiga"; a saída registrada no §0.2e autorizava). O L1 era o gargalo do
+  roadmap 28 — nada de L2+ começa sem ele.
+- Entregue: `integration.list`, o inventário READ-ONLY. Contrato no protocolo
+  (`IntegrationDescriptor`/`Health`/`Info`/`ListResult`, camelCase); domínio
+  `crates/kinein-core/src/integration/` em pasta (§4) com `registry.rs`
+  (descritores derivados de `KNOWN_TOOLS`, capacidades por id) e `health.rs`
+  (traduz `ToolInfo`); handler fino `handlers/integration.rs` na cadeia
+  `service_request_response`.
+- **Invariante 1 respeitado e provado:** a saúde REUSA `tools.rs`
+  (`detect_all`), não há segundo detector — o teste com PATH vazio mostra toda
+  integração não-instalada, e mutar `health` para ignorar o status derruba o
+  teste. **Invariante 2:** o inventário é exatamente `KNOWN_TOOLS`, nada
+  dinâmico. Teste E2E via `handle_request` prova o roteamento (mutar a string do
+  método faz cair; e `-D dead-code` impede o handler de ficar órfão).
+- **Falta para o v1 completo (fatia 2.2):** `IntegrationConfig` (escopo,
+  reversível) e `IntegrationEvent` — a parte de ESCRITA. Só aí se decide FFI
+  `editorconfig-rs` vs parser próprio; a auditoria de 2026-07-16 derrubou a
+  premissa de uma lib EditorConfig Rust madura, por isso a primeira vertical foi
+  o inventário (zero dependência nova).
+
 ## Compatibilidade gráfica do AppImage (2026-07-15)
 
 - O primeiro dogfooding do AppImage no Fedora/Wayland expôs uma lacuna que o

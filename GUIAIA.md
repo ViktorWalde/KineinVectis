@@ -478,6 +478,9 @@ crates/kinein-core/src/handlers/{lsp,syntax}.rs
 
 ### 5.4 CMake, Cargo, build, qualidade, testes, tools e jobs
 
+**integration (plataforma de plugins L1, 2026-07-17):** o inventario
+tipado das integracoes. `integration.list` (read-only) -> `crates/kinein-core/src/handlers/integration.rs` (fino) -> `crates/kinein-core/src/integration/{registry,health}.rs`, que REUSA `tools.rs` (nunca um 2o detector). Contrato em `crates/kinein-protocol/src/integration.rs`. config+event ainda nao existem (fatia 2.2).
+
 ```text
 ui/qml/shell/{RunConfigMenu,RunConfigDialog}.qml
 ui/qml/panels/bottom/{Build,Tests,Tools,Jobs,Problems}Panel.qml
