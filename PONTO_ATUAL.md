@@ -34,18 +34,59 @@ existia. Medir custa 30 segundos; reimplementar o que existe custa uma fatia.
 ### Onde o projeto está (tudo medido, nada herdado)
 
 ```text
-HEAD          6f38984          protocolo 0.61.0        gate completo: VERDE
+HEAD          d57a96d          protocolo 0.61.0        gate completo: VERDE
 L0            FECHADO          A3.1-A3.4; typing_perf_harness.cpp existe,
                                mediana 7,4 ms / p95 8,4 ms (orcamento 16/20)
 cursor/TUI    APROVADO         pelo autor em 2026-07-17. Fecha R0-R3.
 IA na IDE     FORA DE ESCOPO   0 ocorrencias em ui/qml. Nao reabrir.
-debito        17 arquivos      catraca verde (conta so CODIGO desde
-                               2026-07-17); EditorTextSurface SAIU no E6
-gates         8                +presets, +icone (fonte unica ui/assets)
+debito        15 arquivos      catraca verde (conta so CODIGO desde
+                               2026-07-17); 8 arquivos sairam nesta sessao
+gates         8                verificar.sh: fmt/test/clippy, cpp, qml,
+                               qml-fiacao, docs, presets, icone, arquitetura,
+                               qml-logica (+presets +icone nesta sessao)
 teste C++     2 alvos          ui/tests: 23 casos (highlighter 13,
                                auto-close regions 10); ctest no gate
-harnesses QML 15               +tst_autoclose (a E1 nunca teve sonda)
+harnesses QML 16               +tst_autoclose +tst_code_actions
+handlers core 17               +integration (L1 v1 read-only)
+binario atalho c18cad8         1 commit atras do HEAD: falta o integration.list
+                               (core Rust, sem UI ainda — nao afeta dogfooding).
+                               atualizar-tudo.sh --ide fecha o manifesto no HEAD.
 ```
+
+### PARA A PRÓXIMA SESSÃO — comece aqui (handoff de 2026-07-17)
+
+O que a sessão de 2026-07-17 fechou: 3 bugs (autocomplete/rehighlight, auto-close
+type-over, flake do `tools::`), a mina de cache (gate de presets, ícone com fonte
+única, catraca contando só código), infra de teste C++ do zero, 2 god-files
+RESOLVIDOS (dispatch, highlighter) + EditorController começado, e o L1
+`integration` v1 read-only. Tudo commitado, gate completo verde.
+
+**A PRÓXIMA FATIA É A 2.2** (config + event do `integration`). É a metade de
+ESCRITA do contrato v1 — a de leitura (descriptor + health) já está de pé. NÃO
+comece por outra coisa sem decisão do autor; o roadmap 28 diz que L2+ só começa
+com o v1 completo. Passos concretos da 2.2:
+
+```text
+1. protocolo: IntegrationConfig (id, chave->valor, escopo global|workspace,
+   default reversivel) + IntegrationEvent (health mudou / config mudou).
+   Padrao: crates/kinein-protocol/src/integration.rs, serde camelCase, testes.
+2. dominio: crates/kinein-core/src/integration/config.rs (ler/gravar por escopo,
+   reversivel). Persistencia: ver db::DraftStore (docs/seguranca/23) para o
+   padrao de store local por-workspace; NAO inventar store nova.
+3. handler: integration.get/set/reset no handlers/integration.rs (ja existe).
+4. DECISAO QUE SO' APARECE AQUI: EditorConfig e' FFI (editorconfig-rs) ou parser
+   proprio? A auditoria de 2026-07-16 derrubou "lib madura" (§0.2e). Config
+   generico (chave-valor por escopo) NAO precisa disso; so' decida se/quando a
+   vertical EditorConfig entrar. Comece pelo config generico.
+5. teste E2E via handle_request + mutacao, como no integration.list.
+Saida do v1 completo: descriptor+health+config+event de pe; so' entao L2.
+```
+
+**Antes de codar qualquer coisa, MEDIR** (regra zero acima) e ler o roadmap 28 §2
++ ARCHITECTURE §2.1 (o "plugin" e' descritor tipado, nunca host de extensoes).
+
+**Para o autor testar (rodar os .sh):** ver a secao "COMO TESTAR" no fim da
+trilha.
 
 ### CRONOGRAMA EM FASES — o mapa linear (aprovado pelo autor, 2026-07-17)
 
@@ -110,6 +151,32 @@ FASE 3 — L2-L4: C/C++/Rust SOLIDOS (a profundidade vertical)  [roadmap 28]
          sem terminal. So' entao Docker (L5), banco (L5.5), embarcados (L6).
 ```
 
+### COMO TESTAR (os .sh que o autor roda)
+
+```text
+scripts/atualizar-tudo.sh --ide
+    O comando principal. Apaga o cache de build, reconstroi UI+core do ZERO,
+    roda o GATE COMPLETO (fmt/test/clippy Rust, C++ estrito, qmllint, os 8
+    gates, ctest, 16 harnesses), REINSTALA o atalho (binario + icone no tema
+    hicolor, cache invalidado) e grava o manifesto. Ao terminar, confira
+    build/kinein-build-manifest.env: git_head TEM que bater com o HEAD atual —
+    manifesto com HEAD velho = nao passou (a barreira do pipe engana: rode SEM
+    | tee, ou confie so' no manifesto).
+    -> Depois, abra o atalho "Kinein Vectis (Desenvolvimento)" no menu do GNOME
+       e dogfoode: autocomplete nao volta ao 1o item, auto-close nao engole
+       caractere, e o ICONE novo aparece.
+
+scripts/verificar.sh            gate completo SEM reconstruir do zero (mais rapido)
+scripts/verificar.sh --rapido   sem os builds debug/release (so' lint+testes)
+
+O integration.list (L1) e' core Rust SEM UI ainda — nao da' para "ver" na tela.
+Ele e' coberto pelo gate (cargo test). A aba informativa que o le e' fatia futura.
+
+NAO rodar scripts/atualizar-tudo.sh --appimage: o AppImage fica para quando a
+versao Desenvolvimento estabilizar (decisao do autor). O atalho de
+Desenvolvimento e' o alvo de teste diario.
+```
+
 ### A trilha, em ordem de DESBLOQUEIO
 
 O que não exige decisão vem primeiro. O que exige tem recomendação e um "se
@@ -145,19 +212,33 @@ parser próprio para o EditorConfig.
 **Se ninguém responder: seguir pela opção 3 e registrar como decisão da IA.**
 
 **E3 — débito god-file (§0.2g). Não é fatia única: é pré-requisito por área.**
-A catraca já cobrou 4x em 2026-07-17. Quem for tocar uma área, paga a dela antes.
+Quem for tocar uma área, paga a dela antes. **A fonte VIVA é
+`scripts/arquitetura-baseline.txt`** (números de CÓDIGO, sem comentário/branco
+desde 2026-07-17); a lista abaixo é um retrato dos maiores em 2026-07-17, não a
+verdade permanente — meça o baseline ao retomar.
 ```text
-EditorController.qml     1070 (400)  bloqueia QUALQUER feature de editor
-terminal.rs               955 (500)  bloqueia feature de terminal
-editor_highlighter.cpp    910 (500)  bloqueia realce
-core_client_dispatch.cpp  804 (500)  a §5 ja manda dividir por dominio
-GitPanel.qml              764 (300)  bloqueia feature de Git
-lsp/manager.rs            732 (500)  bloqueia feature de LSP
-commands.rs               696 (500)
-dap/session.rs            672 (500)  bloqueia feature de debug
-core_client_requests.cpp  660 (500)
-ShellWorkspaceHost.qml    576 (400)  composition host: cortar por area
+RESOLVIDOS nesta sessao (movimento puro por dominio/camada):
+  core_client_dispatch.cpp  757 -> 384   dividido por dominio (fatia 1.2)
+  editor_highlighter.cpp    818 -> 486   regras/paleta separadas (fatia 1.4)
+
+MAIORES RESTANTES (codigo/limite), retrato de 2026-07-17:
+  EditorController.qml     842 (400)  coordenador de fachada: ADIADO (rende
+                                      ~40 linhas/fatia; pague ao tocar editor)
+  commands.rs              664 (500)  descriptors de command.list
+  terminal.rs              657 (500)  bloqueia feature de terminal
+  GitPanel.qml             633 (300)  VISUAL puro: ADIADO (componentizacao sem
+                                      teste de pixel; pague ao tocar Git)
+  handlers/lsp.rs          609 (500)
+  lsp/manager.rs           588 (500)  bloqueia feature de LSP
+  dap/session.rs           563 (500)  bloqueia feature de debug
+  core_client_requests.cpp 551 (500)  irmao do dispatch: dividir por dominio
 ```
+PADRAO APRENDIDO (fatias 1.2/1.4 vs 1.1): god-file organizado por DOMINIO/CAMADA
+(roteador, regras) resolve numa fatia por MOVIMENTO PURO (prove byte-a-byte).
+Coordenador de fachada (EditorController) ou visual (GitPanel) rende pouco/nao
+tem rede — ADIE, pague ao tocar a feature da area. `core_client_requests.cpp`
+e' o proximo alvo LIMPO (irmao do dispatch, mesma tecnica).
+
 Quando a catraca disparar, há **três suspeitos nesta ordem: a sua mudança, a
 categoria, o arquivo** (§4 regra 9). Não corte linha para caber e não suba o
 baseline — os dois são trapaça. Contar linha de Rust exige cortar no
@@ -167,6 +248,13 @@ baseline — os dois são trapaça. Contar linha de Rust exige cortar no
 protocolo (detalhe no §0.2j); AppImage só depois de L1 e dos ícones (§0.2d-5).
 
 ### Depois do E2: para onde o projeto vai (decidido em 2026-07-17)
+
+> **SUPERADA pelo CRONOGRAMA EM FASES no topo deste arquivo (2026-07-17 fim do
+> dia).** Esta seção é o registro detalhado de manhã/tarde; os números de débito
+> aqui (23 arquivos, contagem de TEXTO) são de 07-16/07-17 e NÃO valem mais —
+> hoje são 15 arquivos, contagem de código, e dispatch + highlighter foram
+> RESOLVIDOS. Fonte viva do débito: `scripts/arquitetura-baseline.txt`. Leia o
+> cronograma no topo; esta seção fica pelo raciocínio, não pelos números.
 
 Estruturado em **`docs/roadmaps/28-plataforma-de-plugins-e-verticais.md`**. Resumo,
 para não haver dúvida ao retomar:
