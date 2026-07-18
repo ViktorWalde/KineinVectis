@@ -29,6 +29,13 @@ Item {
     property string entryDeleteKind: ""
     property string entryDeleteName: ""
     property string entryDeleteError: ""
+    // Linha do `selectedPath` no modelo. O ListView precisa do INDICE para
+    // rolar a selecao para dentro da vista, e funcao nao notifica binding.
+    property int selectedIndex: -1
+    // Arraste em voo: distingue um `fs.rename` de mover de um de renomear, que
+    // falham pelo mesmo metodo e pedem tratamento oposto (ver handleRequestFailed).
+    property bool moveInFlight: false
+    property string moveError: ""
 
     signal listDirRequested(string path)
     signal createFileRequested(string path)
@@ -81,11 +88,15 @@ Item {
         entryRenameError = "";
         entryDeleteVisible = false;
         entryDeleteError = "";
+        selectedIndex = -1;
+        moveInFlight = false;
+        moveError = "";
     }
 
     function selectEntry(path, kind) {
         selectedPath = path;
         selectedKind = kind;
+        selectedIndex = rowIndexForPath(path);
     }
 
     function rowIndexForPath(path) {
@@ -122,6 +133,7 @@ Item {
         if (path === workspaceRoot) {
             treeModel.clear();
             insertEntries(0, entries, 0, path);
+            selectedIndex = rowIndexForPath(selectedPath);
             return;
         }
         const index = rowIndexForPath(path);
@@ -133,6 +145,9 @@ Item {
         }
         treeModel.setProperty(index, "expanded", true);
         insertEntries(index + 1, entries, treeModel.get(index).depth + 1, path);
+        // Inserir/remover linhas desloca tudo abaixo: sem isto o ListView rola
+        // para a linha errada na proxima tecla.
+        selectedIndex = rowIndexForPath(selectedPath);
     }
 
     function toggleDirectory(path, index, expanded) {
@@ -193,6 +208,26 @@ Item {
         }
     }
 
+    // Executa o arraste ja APROVADO pelo ProjectTreeGestures. A decisao de
+    // "pode cair aqui?" nao mora neste arquivo; a mutacao de estado, sim.
+    function moveEntry(sourcePath, destinationDir) {
+        moveError = "";
+        moveInFlight = true;
+        renamePathRequested(sourcePath,
+                            destinationDir + "/" + baseName(sourcePath));
+    }
+
+    function deleteSelected() {
+        if (selectedPath === "" || workspaceRoot === "") {
+            return;
+        }
+        entryDeletePath = selectedPath;
+        entryDeleteKind = selectedKind;
+        entryDeleteName = baseName(selectedPath);
+        entryDeleteError = "";
+        entryDeleteVisible = true;
+    }
+
     function openEntryMenu(path, kind, name, sceneX, sceneY) {
         entryMenuPath = path;
         entryMenuKind = kind;
@@ -226,6 +261,7 @@ Item {
         entryRenamePath = entryMenuPath;
         entryRenameKind = entryMenuKind;
         entryRenameError = "";
+        moveInFlight = false;
         entryRenameVisible = true;
         entryRenameDialogOpenRequested(entryMenuName);
     }
@@ -283,12 +319,26 @@ Item {
     }
 
     function handlePathRenamed(from, to) {
+        const wasMove = moveInFlight;
+        moveInFlight = false;
+        moveError = "";
         entryRenameVisible = false;
         entryRenameError = "";
         tabsRenameRequested(from, to);
-        selectedPath = to;
-        listDirRequested(parentDir(to));
-        focusEditorRequested();
+        selectEntry(to, selectedKind);
+        // Renomear mexe numa pasta so; MOVER esvazia a de origem e enche a de
+        // destino. Atualizar so o destino deixaria o item fantasma na origem.
+        const origin = parentDir(from);
+        const destination = parentDir(to);
+        listDirRequested(destination);
+        if (origin !== destination) {
+            listDirRequested(origin);
+        }
+        // O arraste e um gesto DA ARVORE: roubar o foco para o editor no fim
+        // dele quebraria a sequencia de arrastar varios itens seguidos.
+        if (!wasMove) {
+            focusEditorRequested();
+        }
     }
 
     function handlePathDeleted(path) {
@@ -328,8 +378,16 @@ Item {
             createDialogVisible = true;
         }
         if (method === "fs.rename") {
-            entryRenameError = message;
-            entryRenameVisible = true;
+            // Mover e renomear falham pelo MESMO metodo. Reabrir o dialogo de
+            // renomear depois de um arraste faria surgir na tela um dialogo que
+            // o usuario nunca pediu; o arraste reporta na propria arvore.
+            if (moveInFlight) {
+                moveInFlight = false;
+                moveError = message;
+            } else {
+                entryRenameError = message;
+                entryRenameVisible = true;
+            }
         }
         if (method === "fs.delete") {
             entryDeleteError = message;

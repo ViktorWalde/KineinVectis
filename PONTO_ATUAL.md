@@ -61,7 +61,24 @@ type-over, flake do `tools::`), a mina de cache (gate de presets, ícone com fon
 RESOLVIDOS (dispatch, highlighter) + EditorController começado, e o L1
 `integration` v1 read-only. Tudo commitado, gate completo verde.
 
-**A PRÓXIMA FATIA É A 2.2** (config + event do `integration`). É a metade de
+**DESVIO AUTORIZADO PELO AUTOR em 2026-07-18 — árvore de projeto, fatia 1 de N.**
+Pedido direto: arrastar arquivo/pasta com o mouse, e a navegação do IntelliJ IDEA
+Community ("memória muscular JetBrains"). Entregue nesta sessão, gate completo
+verde: arraste (move via `fs.rename`, que JÁ era move — zero mudança de core ou
+protocolo) + teclado (↑↓, ←→ colapsa/expande, Enter, Delete, Alt+1 foca a árvore,
+Esc volta ao editor). Arquivos novos: `ProjectTreeGestures` (decide gesto),
+`ProjectTreeRow` (linha: fonte de arraste e alvo de drop), `ProjectExplorerHost`
+(fiação). `ShellWorkspaceHost` ENCOLHEU 537→530 para caber (regra "quem toca a
+área paga a dela"); baseline atualizada no mesmo commit.
+FALTA O GESTO HUMANO: offscreen não sintetiza arraste real. As REGRAS estão
+provadas por `tst_project_tree_dnd.qml` (3 mutações reprovam), mas ninguém
+arrastou nada com um mouse ainda.
+O QUE NÃO ENTROU, e é o que o autor pediu como referência: multi-seleção
+(Ctrl/Shift+clique), `Ctrl+C/X/V` (exige um `fs.copy` NOVO no core — único item
+que não é só UI), `F5` Copy…/`F6` Move…, speed search, autoscroll from source,
+`Ctrl+Shift+C` copiar caminho. Ver a tabela de paridade decidida com o autor.
+
+**DEPOIS DESSE DESVIO, A PRÓXIMA FATIA É A 2.2** (config + event do `integration`). É a metade de
 ESCRITA do contrato v1 — a de leitura (descriptor + health) já está de pé. NÃO
 comece por outra coisa sem decisão do autor; o roadmap 28 diz que L2+ só começa
 com o v1 completo. Passos concretos da 2.2:

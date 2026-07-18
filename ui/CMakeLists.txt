@@ -110,6 +110,9 @@ set_source_files_properties(qml/ipc/RuntimeRequestRouter.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
+set_source_files_properties(qml/project/ProjectTreeGestures.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeGestures.qml)
+set_source_files_properties(qml/project/ProjectTreeRow.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRow.qml)
+set_source_files_properties(qml/project/ProjectExplorerHost.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorerHost.qml)
 set_source_files_properties(qml/project/ProjectEntryContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryContextMenu.qml)
 set_source_files_properties(qml/project/ProjectEntryRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryRenameDialog.qml)
 set_source_files_properties(qml/project/ProjectEntryDeleteDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryDeleteDialog.qml)
@@ -242,6 +245,9 @@ qt_add_qml_module(kinein-vectis
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
         qml/project/ProjectExplorer.qml
+        qml/project/ProjectTreeGestures.qml
+        qml/project/ProjectTreeRow.qml
+        qml/project/ProjectExplorerHost.qml
         qml/project/ProjectEntryContextMenu.qml
         qml/project/ProjectEntryRenameDialog.qml
         qml/project/ProjectEntryDeleteDialog.qml

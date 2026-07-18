@@ -1,16 +1,27 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
+// Painel da arvore de projeto: cabecalho + lista. A linha vive no
+// `ProjectTreeRow`; a decisao de gesto, no `ProjectTreeGestures`.
+//
+// `gestures` entra aqui como CONSULTA (o alvo do arraste precisa saber, no
+// hover, se aceita o drop — e sincrono). Toda ORDEM sai como sinal, para o
+// painel nao virar dono de logica.
 Rectangle {
     id: root
 
     property string workspaceName: ""
     property string workspaceKindLabel: ""
     property string selectedPath: ""
+    property int selectedIndex: -1
     property var entriesModel
+    property var gestures: null
+    property string moveError: ""
     // path absoluto -> kind do git (fatia M3.1); a revisão força rebind.
     property var gitKinds: ({})
     property int gitRevision: 0
+    // Caminho sendo arrastado agora; a linha de origem fica esmaecida.
+    property string draggingPath: ""
 
     signal createFileRequested()
     signal createDirectoryRequested()
@@ -22,50 +33,16 @@ Rectangle {
     signal scriptRunRequested(string path)
     signal contextMenuRequested(string path, string kind, string name,
                                 real sceneX, real sceneY)
+    signal dropRequested(string sourcePath, string targetPath, string targetKind)
+    signal moveSelectionRequested(int delta)
+    signal expandSelectedRequested()
+    signal collapseSelectedRequested()
+    signal activateSelectedRequested()
+    signal deleteSelectedRequested()
+    signal focusEditorRequested()
 
-    function gitFileColor(path, revision) {
-        const kind = gitKinds[path];
-        if (kind === undefined) {
-            return Theme.textSecondary;
-        }
-        if (kind === "conflicted") {
-            return Theme.errorSoft;
-        }
-        if (kind === "untracked" || kind === "added") {
-            return Theme.successSoft;
-        }
-        if (kind === "deleted") {
-            return Theme.textDisabled;
-        }
-        return Theme.infoSoft;
-    }
-
-    function treeIconName(name, kind, expanded) {
-        if (kind === "directory") {
-            return expanded ? "tree-folder-open" : "tree-folder-closed";
-        }
-        const lowerName = name.toLowerCase();
-        if (lowerName.endsWith(".c") || lowerName.endsWith(".h")) {
-            return "tree-file-c";
-        }
-        if (lowerName.endsWith(".cc") || lowerName.endsWith(".cpp")
-                || lowerName.endsWith(".cxx") || lowerName.endsWith(".c++")
-                || lowerName.endsWith(".hh") || lowerName.endsWith(".hpp")
-                || lowerName.endsWith(".hxx") || lowerName.endsWith(".h++")
-                || lowerName.endsWith(".ipp")) {
-            return "tree-file-cpp";
-        }
-        if (lowerName.endsWith(".rs")) {
-            return "tree-file-rust";
-        }
-        return "file";
-    }
-
-    function isRunnableScript(name, kind) {
-        if (kind !== "file") return false;
-        const lower = name.toLowerCase();
-        return lower.endsWith(".sh") || lower.endsWith(".bash")
-                || lower.endsWith(".zsh");
+    function focusTree() {
+        explorerView.forceActiveFocus();
     }
 
     implicitWidth: 260
@@ -80,15 +57,55 @@ Rectangle {
         spacing: Theme.spacingSmall
 
         Row {
+            id: headerRow
+
             width: parent.width
             spacing: Theme.spacingSmall
 
-            Text {
+            // O nome do projeto E' o no raiz: soltar sobre ele move para a raiz
+            // do workspace. Sem isto nao ha como tirar um arquivo de uma
+            // subpasta, porque a raiz nunca e uma LINHA da arvore.
+            Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.workspaceName
-                color: Theme.textPrimary
-                font.pixelSize: 13
-                font.bold: true
+                width: workspaceLabel.width + 8
+                height: 18
+                radius: Theme.radius
+                color: rootDrop.containsDrag && rootDrop.acceptsSource
+                       ? Theme.accentDim : "transparent"
+                border.width: rootDrop.containsDrag && rootDrop.acceptsSource ? 1 : 0
+                border.color: Theme.accent
+
+                Text {
+                    id: workspaceLabel
+
+                    anchors.centerIn: parent
+                    text: root.workspaceName
+                    color: Theme.textPrimary
+                    font.pixelSize: 13
+                    font.bold: true
+                }
+
+                DropArea {
+                    id: rootDrop
+
+                    anchors.fill: parent
+                    keys: ["kinein/tree-entry"]
+
+                    readonly property ProjectTreeRow sourceRow:
+                        drag.source as ProjectTreeRow
+                    readonly property string sourcePath:
+                        sourceRow ? sourceRow.path : ""
+                    readonly property bool acceptsSource:
+                        root.gestures !== null && sourcePath !== ""
+                        && root.gestures.canDropOn(sourcePath, "", "directory")
+
+                    onDropped: function(drop) {
+                        if (acceptsSource) {
+                            root.dropRequested(sourcePath, "", "directory");
+                            drop.accept();
+                        }
+                    }
+                }
             }
 
             Rectangle {
@@ -166,6 +183,30 @@ Rectangle {
             }
         }
 
+        // Falha de arraste nao pode abrir dialogo (o usuario nao pediu nenhum),
+        // mas tambem nao pode sumir em silencio: o arquivo simplesmente nao se
+        // moveu e a causa (quase sempre nome ja existente no destino) fica aqui.
+        Rectangle {
+            id: moveErrorStrip
+
+            width: parent.width
+            height: visible ? 22 : 0
+            visible: root.moveError !== ""
+            radius: Theme.radius
+            color: Theme.errorSoft
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.margins: Theme.spacingSmall
+                text: root.moveError
+                color: Theme.textPrimary
+                font.pixelSize: 11
+                elide: Text.ElideRight
+            }
+        }
+
         ListView {
             id: explorerView
 
@@ -173,100 +214,68 @@ Rectangle {
             height: parent.height - y
             clip: true
             model: root.entriesModel
+            focus: true
+            currentIndex: root.selectedIndex
+            // O ListView navega por setas SOZINHO. Somadas aos handlers abaixo,
+            // a selecao andaria duas linhas por tecla e o `currentIndex` teria
+            // dois donos — o que quebraria o binding acima em silencio. Aqui a
+            // arvore tem um dono so': o ProjectTreeGestures.
+            keyNavigationEnabled: false
 
-            delegate: Rectangle {
+            // Teclado JetBrains: setas navegam, ←/→ fecham/abrem, Enter abre,
+            // Delete exclui, Esc devolve o foco ao editor.
+            Keys.onUpPressed: root.moveSelectionRequested(-1)
+            Keys.onDownPressed: root.moveSelectionRequested(1)
+            Keys.onLeftPressed: root.collapseSelectedRequested()
+            Keys.onRightPressed: root.expandSelectedRequested()
+            Keys.onReturnPressed: root.activateSelectedRequested()
+            Keys.onEnterPressed: root.activateSelectedRequested()
+            Keys.onDeletePressed: root.deleteSelectedRequested()
+            Keys.onEscapePressed: root.focusEditorRequested()
+
+            // Navegar por teclado sem rolar a vista deixa a selecao fora da
+            // tela: o usuario perde de vista o proprio cursor.
+            onCurrentIndexChanged: {
+                if (currentIndex >= 0) {
+                    positionViewAtIndex(currentIndex, ListView.Contain);
+                }
+            }
+
+            delegate: ProjectTreeRow {
                 id: treeRow
 
-                required property int index
-                required property string path
-                required property string name
-                required property string kind
-                required property int depth
-                required property bool expanded
-
                 width: explorerView.width
-                height: 24
-                radius: Theme.radius
-                color: treeRow.path === root.selectedPath
-                       ? Theme.surfaceSelected
-                       : (entryArea.containsMouse ? Theme.surface2 : "transparent")
+                gestures: root.gestures
+                selectedPath: root.selectedPath
+                gitKinds: root.gitKinds
+                gitRevision: root.gitRevision
+                dragging: root.draggingPath !== ""
+                          && root.draggingPath === treeRow.path
 
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall + treeRow.depth * 14
-                    spacing: Theme.spacingSmall
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 12
-                        text: treeRow.kind === "directory"
-                              ? (treeRow.expanded ? "▾" : "▸") : ""
-                        color: treeRow.kind === "directory"
-                               ? Theme.accent : Theme.textMuted
-                        font.pixelSize: Theme.fontSizeTree
-                    }
-
-                    KvIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        size: 20
-                        name: root.treeIconName(treeRow.name, treeRow.kind,
-                                                treeRow.expanded)
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(0, treeRow.width - parent.x - x - 30)
-                        text: treeRow.name
-                        color: treeRow.kind === "directory"
-                               ? Theme.textPrimary
-                               : root.gitFileColor(treeRow.path,
-                                                   root.gitRevision)
-                        font.pixelSize: Theme.fontSizeTree
-                        elide: Text.ElideRight
-                    }
+                onEntryClicked: function(entryPath, entryKind) {
+                    explorerView.forceActiveFocus();
+                    root.entrySelected(entryPath, entryKind);
                 }
-
-                MouseArea {
-                    id: entryArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: function(mouse) {
-                        root.entrySelected(treeRow.path, treeRow.kind);
-                        if (mouse.button === Qt.RightButton) {
-                            const pt = entryArea.mapToItem(null, mouse.x, mouse.y);
-                            root.contextMenuRequested(treeRow.path, treeRow.kind,
-                                                      treeRow.name, pt.x, pt.y);
-                            return;
-                        }
-                        if (treeRow.kind === "directory") {
-                            root.directoryToggleRequested(treeRow.path, treeRow.index,
-                                                          treeRow.expanded);
-                        } else if (treeRow.kind === "file") {
-                            root.fileOpenRequested(treeRow.path);
-                        }
-                    }
+                onEntryToggled: function(entryPath, entryIndex, entryExpanded) {
+                    root.directoryToggleRequested(entryPath, entryIndex, entryExpanded);
                 }
-
-                KvIconButton {
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spacingXSmall
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 22
-                    height: 22
-                    z: 2
-                    visible: root.isRunnableScript(treeRow.name, treeRow.kind)
-                             && (entryArea.containsMouse
-                                 || treeRow.path === root.selectedPath)
-                    enabled: visible
-                    iconName: "run"
-                    iconSize: 13
-                    primary: true
-                    tooltip: qsTr("Executar script")
-                    onClicked: root.scriptRunRequested(treeRow.path)
+                onEntryOpened: function(entryPath) {
+                    root.fileOpenRequested(entryPath);
+                }
+                onScriptRunRequested: function(entryPath) {
+                    root.scriptRunRequested(entryPath);
+                }
+                onContextMenuRequested: function(entryPath, entryKind, entryName,
+                                                 sceneX, sceneY) {
+                    root.contextMenuRequested(entryPath, entryKind, entryName,
+                                              sceneX, sceneY);
+                }
+                onDragStarted: function(entryPath) {
+                    root.draggingPath = entryPath;
+                }
+                onDragEnded: root.draggingPath = ""
+                onDropped: function(sourcePath, targetPath, targetKind) {
+                    root.dropRequested(sourcePath, targetPath, targetKind);
                 }
             }
         }

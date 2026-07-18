@@ -124,6 +124,7 @@ Window {
     }
 
     GlobalShortcuts {
+        workspaceHost: workspaceHost
         debugController: domains.debugController
         editorController: domains.editorController
         jobsController: domains.jobsController
@@ -182,6 +183,7 @@ Window {
         workspaceController: domains.workspaceController
         projectHealthController: domains.projectHealthController
         projectTree: domains.projectTree
+        projectTreeGestures: domains.projectTreeGestures
         editorController: domains.editorController
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController

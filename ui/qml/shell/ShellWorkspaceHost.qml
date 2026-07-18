@@ -8,6 +8,7 @@ Item {
     property var workspaceController
     property var projectHealthController
     property var projectTree
+    property var projectTreeGestures
     property var editorController
     property var jobsController
     property var runtimeController
@@ -110,6 +111,10 @@ Item {
         editorPane.focusFindBar();
     }
 
+    function focusProjectTree() {
+        explorerPanel.focusTree();
+    }
+
     ShellLayout {
         anchors.fill: parent
 
@@ -138,7 +143,9 @@ Item {
             onToolsRequested: root.shellController.toggleBottomTab("tools")
         }
 
-        ProjectExplorer {
+        // A fiacao da arvore mora no ProjectExplorerHost. Aqui fica so o que e
+        // deste host: geometria, dados de outros dominios (git) e o que sobe.
+        ProjectExplorerHost {
             id: explorerPanel
 
             width: visible ? root.shellController.explorerWidth : 0
@@ -149,29 +156,18 @@ Item {
             workspaceKindLabel: root.shellController.kindLabel(
                                     root.workspaceKind,
                                     root.workspaceBuildSystems)
-            selectedPath: root.projectTree.selectedPath
-            entriesModel: root.projectTree.entriesModel
+            projectTree: root.projectTree
+            gestures: root.projectTreeGestures
             gitKinds: root.gitController.gitKinds
             gitRevision: root.gitController.revision
-            onCreateFileRequested: root.projectTree.openCreateDialog("file")
-            onCreateDirectoryRequested: root.projectTree.openCreateDialog("directory")
-            onRefreshRequested: root.listDirRequested(root.workspaceRoot)
             onCloseRequested: root.closeWorkspaceRequested()
-            onEntrySelected: function(path, kind) {
-                root.projectTree.selectEntry(path, kind);
+            onListDirRequested: function(path) {
+                root.listDirRequested(path);
             }
-            onDirectoryToggleRequested: function(path, index, expanded) {
-                root.projectTree.toggleDirectory(path, index, expanded);
-            }
-            onFileOpenRequested: function(path) {
+            onReadFileRequested: function(path) {
                 root.readFileRequested(path);
             }
-            onScriptRunRequested: function(path) {
-                root.projectTree.runScript(path);
-            }
-            onContextMenuRequested: function(path, kind, name, sceneX, sceneY) {
-                root.projectTree.openEntryMenu(path, kind, name, sceneX, sceneY);
-            }
+            onFocusEditorRequested: root.editorController.focusEditor()
         }
 
         Column {

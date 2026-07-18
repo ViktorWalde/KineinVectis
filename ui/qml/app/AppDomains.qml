@@ -38,6 +38,7 @@ Item {
     readonly property alias commandDispatcher: commandDispatcher
     readonly property alias editorController: editorController
     readonly property alias projectTree: projectTree
+    readonly property alias projectTreeGestures: projectTreeGestures
 
     visible: false
 
@@ -251,6 +252,14 @@ Item {
             root.shellOverlays.openEntryRenameWithName(name);
         }
         onFocusEditorRequested: editorController.focusEditor()
+    }
+
+    // Interpreta arraste e teclado sobre a arvore. Sem estado proprio: consulta
+    // e comanda o `projectTree`, que continua dono do modelo e da selecao.
+    ProjectTreeGestures {
+        id: projectTreeGestures
+
+        tree: projectTree
     }
 
     WorkspaceEventRouter {

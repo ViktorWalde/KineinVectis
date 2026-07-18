@@ -204,9 +204,10 @@ pagamento. Meia refatoração é pior que nenhuma: fica a indireção *e* fica o
 problema.
 
 ```text
-ui/qml/app/AppDomains.qml   (EXECUTADO em 0686213; 335 linhas — limite 400,
+ui/qml/app/AppDomains.qml   (EXECUTADO em 0686213; 344 linhas — limite 400,
                              a categoria foi corrigida: composicao nao e visual)
-  dono dos 12 controllers + dos 14 routers.
+  dono dos 12 controllers + dos 14 routers, mais o ProjectTreeGestures
+  (interprete de arraste/teclado da arvore, sem estado proprio).
   recebe:  coreClient, shellController, workspaceHost, shellOverlays
   expoe:   readonly property alias <x>Controller  (um por dominio)
 

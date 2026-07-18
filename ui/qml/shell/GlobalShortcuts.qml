@@ -13,8 +13,17 @@ Item {
     property var debugController: null
     property var searchController: null
     property var settingsController: null
+    property var workspaceHost: null
 
     visible: false
+
+    // Alt+1 foca a arvore de projeto (memoria muscular JetBrains). Sem F-key,
+    // entao nao pede sequencia alternativa; o acionamento manual e clicar na
+    // arvore. Esc devolve o foco ao editor, tratado dentro do painel.
+    Shortcut {
+        sequence: "Alt+1"
+        onActivated: root.workspaceHost.focusProjectTree()
+    }
 
     Shortcut {
         sequences: [StandardKey.Save]
