@@ -6,10 +6,10 @@ crates/kinein-core/src/lsp/parse.rs 514 500
 crates/kinein-core/src/terminal.rs 657 500
 ui/qml/editor/EditorController.qml 842 400
 ui/qml/editor/EditorDocumentController.qml 507 400
-ui/qml/editor/EditorPane.qml 469 300
+ui/qml/editor/EditorPane.qml 467 300
 ui/qml/editor/EditorTextController.qml 519 400
 ui/qml/git/GitController.qml 403 400
 ui/qml/panels/bottom/DebugPanel.qml 313 300
 ui/qml/panels/bottom/GitPanel.qml 633 300
-ui/qml/shell/ShellWorkspaceHost.qml 523 400
+ui/qml/shell/ShellWorkspaceHost.qml 522 400
 ui/src/core_client_requests.cpp 551 500

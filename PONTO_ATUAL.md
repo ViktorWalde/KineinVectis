@@ -157,7 +157,14 @@ TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
                                      (Log da IDE, já existia) e menu Exibir
                                      (ganhou Jobs e Log da IDE — NENHUMA
                                      ferramenta ficou sem acesso por mouse).
-4. F4  âmbar/Salvar                  editor sagrado (§5.1), âmbar contido (§7.2)
+4. F4  âmbar/Salvar                  FEITA 2026-07-18, AGUARDA GESTO HUMANO.
+                                     O "Salvar" âmbar que flutuava sobre o
+                                     editor MORREU (cadeia de sinal órfã
+                                     removida até o host; salvar = Ctrl+S,
+                                     menu Arquivo, diálogo de não-salvos).
+                                     "Compilar" deixou de ser bloco âmbar:
+                                     na toolbar só o RUN é primário, idioma
+                                     JetBrains (§7.2).
 5. VOLTA À FILA PRINCIPAL            fatia 2.2 (config+event do integration) —
                                      o desvio de layout NÃO cancela o roadmap
                                      28; L2+ segue esperando o v1 completo

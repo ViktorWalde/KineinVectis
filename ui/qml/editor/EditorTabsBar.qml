@@ -11,7 +11,6 @@ Item {
 
     signal tabSelected(int index)
     signal tabCloseRequested(int index)
-    signal saveRequested()
 
     height: fileCount > 0 ? 36 : 0
     visible: fileCount > 0
@@ -89,15 +88,7 @@ Item {
         }
     }
 
-    KvButton {
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.right: parent.right
-        height: 28
-        visible: root.currentIndex >= 0
-        compact: true
-        primary: true
-        text: qsTr("Salvar")
-        iconName: "file"
-        onClicked: root.saveRequested()
-    }
+    // F4 (§5.1, editor sagrado): o botao "Salvar" ambar que flutuava sobre o
+    // editor morreu. Salvar continua por Ctrl+S, menu Arquivo e pelo dialogo
+    // de nao-salvos — nenhuma IDE JetBrains tem botao de salvar no editor.
 }

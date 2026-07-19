@@ -146,7 +146,8 @@ Item {
             text: root.building ? qsTr("Compilando...")
                   : (root.hybridNativeWorkspace ? "Cargo" : qsTr("Compilar"))
             iconName: "build"
-            primary: true
+            // F4 (§7.2): o ambar e identidade, nao decoracao — na toolbar so
+            // o Run e primario, como na JetBrains; Compilar vira botao comum.
             onClicked: root.buildRequested(root.hybridNativeWorkspace
                                            ? "cargo"
                                            : root.primaryBuildSystem())

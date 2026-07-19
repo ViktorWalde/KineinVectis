@@ -2535,3 +2535,15 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
   o ShellWorkspaceHost ENCOLHEU de novo (525->523) ganhando 2 botoes e o
   handler de ocultar.
 - §6.3 ja previa Bottom Tool Tabs 34px: a fatia FECHA o numero da spec.
+
+## F4 — ambar contido e Salvar flutuante removido (2026-07-18, noite)
+
+- O botao "Salvar" ambar que flutuava sobre o editor morreu (§5.1, o editor e
+  sagrado): a cadeia de sinal orfa foi removida inteira (EditorTabsBar ->
+  EditorPane -> ShellWorkspaceHost). Salvar continua por Ctrl+S, menu Arquivo
+  e dialogo de nao-salvos — nenhuma IDE JetBrains tem botao de salvar.
+- "Compilar" deixou de ser bloco ambar cheio (§7.2: ambar e identidade, nao
+  decoracao): na toolbar so o RUN e primario, como na JetBrains. Os primarios
+  de dialogo/CTA (StartScreen, FolderPicker) e o run-script da arvore ficam.
+- Com isso o plano F1-F4 do layout esta COMPLETO; a trilha volta a fila
+  principal (fatia 2.2, integration config+event) apos o gesto humano.
