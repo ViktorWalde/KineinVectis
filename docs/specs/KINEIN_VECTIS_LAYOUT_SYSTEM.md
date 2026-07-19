@@ -634,6 +634,12 @@ Extensions
 - hover com fundo elevado;
 - rail nunca deve virar painel de propaganda.
 
+Regra de crescimento (decisão do autor, 2026-07-18): um ícone novo no rail
+ou na App Bar entra **junto com a vertical que ele abre** — banco de dados
+com o L5.5, Docker/remoto com o L5 — nunca antes (ícone morto) nem em lote
+(amontoar). Rail em 2026-07-18: Project, Search, Git, Build, Debug,
+Terminal, Problemas, Testes, Ferramentas.
+
 ### 12.3 Tool windows
 
 | Ícone | Painel |

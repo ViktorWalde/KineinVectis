@@ -114,8 +114,7 @@ F1b Feedback do aceite da F1 (2026-07-18) — 4 de 5 FEITOS no mesmo dia:
         REPROVA o empacotamento sem o plugin (empacotar-appimage.sh). NOTA:
         o dist/ atual (07-17) continua sem ícones até a próxima geração —
         que segue aguardando a decisão "AppImage só quando estabilizar".
-    [x] modo "imagem" (markdown renderizado) — FEITO 2026-07-18, AGUARDA
-        GESTO HUMANO. Chip "Imagem"/"Código" no canto do editor em arquivo
+    [x] modo "imagem" (markdown renderizado) — FEITO e ACEITO 2026-07-18. Chip "Imagem"/"Código" no canto do editor em arquivo
         .md; render idêntico ao Manual (TextEdit.MarkdownText); estado POR
         ARQUIVO no EditorMarkdownModeController (apresentação, não negócio;
         core nunca sabe), limpo ao fechar workspace. O débito foi PAGO por
@@ -131,8 +130,7 @@ TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
 1. MARKDOWN ("modo imagem" p/ .md)   próxima fatia; paga débito do EditorPane
                                      por extração (outline sidebar) antes de
                                      adicionar o preview — movimento + feature
-2. F2  barra única                   FEITA 2026-07-18, AGUARDA GESTO HUMANO
-                                     (e o PUSH do autor antes do commit).
+2. F2  barra única                   FEITA e ACEITA 2026-07-18.
                                      AppMenuBar É a barra (46px): hambúrguer
                                      expande os menus inline (IntelliJ New
                                      UI), marca+workspace à esquerda, drag,
@@ -145,7 +143,7 @@ TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
                                      mapToItem real no ShellHeaderHost.
                                      Spec editada no mesmo gesto: §4 (8→7
                                      regiões), §6.3 (46px), §9.1, §10, §11.
-3. F3  painel inferior 1 linha       FEITA 2026-07-18, AGUARDA GESTO HUMANO.
+3. F3  painel inferior 1 linha       FEITA e ACEITA 2026-07-18.
                                      A fileira de 10 abas MORREU (BottomTabBar
                                      removido); o painel tem UMA linha de 34px
                                      (BottomPanelHeader): título da ferramenta
@@ -157,7 +155,7 @@ TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
                                      (Log da IDE, já existia) e menu Exibir
                                      (ganhou Jobs e Log da IDE — NENHUMA
                                      ferramenta ficou sem acesso por mouse).
-4. F4  âmbar/Salvar                  FEITA 2026-07-18, AGUARDA GESTO HUMANO.
+4. F4  âmbar/Salvar                  FEITA e ACEITA 2026-07-18.
                                      O "Salvar" âmbar que flutuava sobre o
                                      editor MORREU (cadeia de sinal órfã
                                      removida até o host; salvar = Ctrl+S,
@@ -170,10 +168,16 @@ TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
                                      28; L2+ segue esperando o v1 completo
 ```
 
-APPIMAGE/ÍCONES — respondido ao autor em 2026-07-18: gerar um AppImage novo
-JÁ SAI CORRIGIDO. O fix é no script (EXTRA_QT_PLUGINS=svg) e a validação
-reprova o empacotamento se libqsvg.so faltar. O autor gera quando quiser;
-a decisão "AppImage quando estabilizar" é dele e continua valendo.
+APPIMAGE/ÍCONES — histórico completo (2026-07-18):
+1) causa dos ícones invisíveis: faltava o PLUGIN svg no AppImage (o binário
+   sempre teve os SVGs); fix: EXTRA_QT_PLUGINS=svg + validação no script.
+2) o autor rodou --appimage e o deploy FALHOU: o container do builder não
+   tinha o pacote libqt6svg6 (Debian bookworm; traz imageformats/libqsvg.so
+   e iconengines/libqsvgicon.so). Fix: libqt6svg6 no Containerfile — o cache
+   do podman invalida sozinho; basta rodar --appimage de novo.
+3) "ERROR: Missing qml module: KineinVectis" no log do deploy é RUÍDO
+   pré-existente do scanner (nosso módulo QML vive dentro do binário); o
+   build passava com ele antes do svg e volta a passar.
 F2  Barra única — APROVADA pelo autor (fusão AppMenuBar+TopHeaderBar ~46px,
     menu hamburger, controles de janela embutidos). EXIGE editar §4/§9/§10
     da LAYOUT_SYSTEM no mesmo commit (8 regiões → 7): decisão já tomada,
@@ -192,25 +196,71 @@ ARMADILHA DESTA ÁREA: não há teste de pixel no repo — a rede de fatia visua
 é gate (qmllint/fiação/harness) + build release-hardened + O OLHO DO AUTOR.
 Nunca declarar fatia visual entregue sem o gesto humano.
 
-**DEPOIS DESSE DESVIO, A PRÓXIMA FATIA É A 2.2** (config + event do `integration`). É a metade de
-ESCRITA do contrato v1 — a de leitura (descriptor + health) já está de pé. NÃO
-comece por outra coisa sem decisão do autor; o roadmap 28 diz que L2+ só começa
-com o v1 completo. Passos concretos da 2.2:
+**O DESVIO DE LAYOUT ESTÁ FECHADO E ACEITO (2026-07-18)** — palavras do autor:
+*"perfeito... ficou visualmente bem limpo/melhor"*. F1–F4 + arraste + teclado +
+modo imagem entregues, aceitos e commitados. **A FATIA ATUAL É A 2.2**,
+estruturada abaixo em 2026-07-18 A PEDIDO DO AUTOR, antes de qualquer código.
+
+### FATIA 2.2 — config + event do `integration` (estruturada 2026-07-18)
+
+É a metade de ESCRITA do contrato v1 — a de leitura (descriptor + health,
+`integration.list`) está de pé desde 2026-07-17. O roadmap 28 trava L2+ até o
+v1 completo. NÃO começar por outra coisa sem decisão do autor.
 
 ```text
-1. protocolo: IntegrationConfig (id, chave->valor, escopo global|workspace,
-   default reversivel) + IntegrationEvent (health mudou / config mudou).
-   Padrao: crates/kinein-protocol/src/integration.rs, serde camelCase, testes.
-2. dominio: crates/kinein-core/src/integration/config.rs (ler/gravar por escopo,
-   reversivel). Persistencia: ver db::DraftStore (docs/seguranca/23) para o
-   padrao de store local por-workspace; NAO inventar store nova.
-3. handler: integration.get/set/reset no handlers/integration.rs (ja existe).
-4. DECISAO QUE SO' APARECE AQUI: EditorConfig e' FFI (editorconfig-rs) ou parser
-   proprio? A auditoria de 2026-07-16 derrubou "lib madura" (§0.2e). Config
-   generico (chave-valor por escopo) NAO precisa disso; so' decida se/quando a
-   vertical EditorConfig entrar. Comece pelo config generico.
-5. teste E2E via handle_request + mutacao, como no integration.list.
-Saida do v1 completo: descriptor+health+config+event de pe; so' entao L2.
+PASSO 1 — protocolo (kinein-protocol/src/integration.rs, ESTENDER o existente)
+  IntegrationConfigEntry  { key, value, scope: global|workspace, isDefault }
+  IntegrationConfigParams { id }                      -> integration.config.get
+  IntegrationConfigSet    { id, key, value, scope }   -> integration.config.set
+  IntegrationConfigReset  { id, key, scope }          -> integration.config.reset
+  IntegrationChangedEvent { id, kind: health|config } -> event.integration.changed
+  serde camelCase + deny_unknown_fields + testes de (de)serializacao, como
+  TODOS os payloads do arquivo ja fazem. MUDANCA DE CONTRATO: subir a versao
+  do protocolo (0.61.0 -> 0.62.0) e atualizar docs/arquitetura/03 no MESMO
+  commit — regra da casa; foi por pular isso que assistant_terminal_width
+  virou peso morto (§E5).
+
+PASSO 2 — dominio (kinein-core/src/integration/config.rs, NOVO submodulo)
+  ler/gravar por escopo; reset volta ao default (reversivel SEMPRE — um set
+  nunca destroi o valor padrao). Persistencia local por-workspace no padrao
+  db::DraftStore (docs/seguranca/23) — NAO inventar store nova. Escopo global
+  no mesmo padrao, em diretorio de config do usuario.
+
+PASSO 3 — handler (handlers/integration.rs, ja existe; fica FINO)
+  integration.config.get/set/reset na cadeia + emissao do
+  event.integration.changed quando health ou config mudam. Registrar os 3 em
+  commands.rs (o dispatch testa a lista, ver tests/dispatch.rs).
+
+PASSO 4 — DECISAO ADIADA de proposito: EditorConfig FFI (editorconfig-rs) vs
+  parser proprio SO se decide quando a vertical EditorConfig entrar; o config
+  generico (chave->valor por escopo) nao depende disso. NAO abrir agora.
+
+PASSO 5 — prova: teste E2E via handle_request + MUTACAO (como o
+  integration.list fez: mutacao no registry provou o reuso de tools.rs).
+  Minimo: set muda o que get devolve; reset restaura default; escopo
+  workspace nao vaza para global; evento emitido em mudanca real e NAO
+  emitido em set sem efeito.
+
+SAIDA BINARIA do v1 completo (criterio sim/nao):
+  [ ] integration.config.get/set/reset respondem no protocolo 0.62.0
+  [ ] reset devolve default e o E2E prova reversibilidade
+  [ ] event.integration.changed chega na mudanca de health E de config
+  [ ] a aba informativa (UI) segue FUTURA — v1 nao exige UI
+  So com os 3 primeiros marcados o L2 (diagnostico/teste/cobertura) abre.
+```
+
+### Ícones de atalho no shell — direção do autor (2026-07-18)
+
+Com o layout aceito, o crescimento é **"ir adicionando de forma limpa e
+estratégica (sem amontoar muito) ícones de atalho igual tem nos software
+JetBrains, tipo atalho para banco de dados"**. A regra que isso vira:
+
+```text
+Um icone novo no rail/App Bar entra JUNTO com a vertical que ele abre — banco
+de dados com o L5.5, Docker/remoto com o L5 — nunca antes (icone morto) nem
+em lote (amontoar). O rail hoje: project, search, git, build, debug, terminal,
+problems, tests, tools. Spec §12.2 ja proibe rail-propaganda; a §12.3 lista
+Targets/Simulate/Extensions como FUTUROS — mesmo criterio.
 ```
 
 **Antes de codar qualquer coisa, MEDIR** (regra zero acima) e ler o roadmap 28 §2

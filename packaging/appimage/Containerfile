@@ -1,6 +1,13 @@
 # Debian 12/glibc 2.36 baseline, pinned to the repository's Rust 1.96.1.
 # The first AppImage target is x86_64; add a separately audited ARM builder
 # instead of silently cross-building from this image.
+#
+# libqt6svg6 (2026-07-18): fornece imageformats/libqsvg.so e
+# iconengines/libqsvgicon.so. Sem ele o EXTRA_QT_PLUGINS=svg do
+# empacotar-appimage.sh falha ("Cannot deploy non-existing library file") —
+# e sem o plugin os icones SVG da arvore saem invisiveis do AppImage. O
+# ambiente de desenvolvimento nao sofre disso porque usa o Qt completo do
+# sistema; o container e minimo e precisa declarar a dependencia.
 FROM docker.io/library/rust:1.96.1-bookworm@sha256:d99f7b31f49909348dc59b51f3c95d1efded1701ffb222f095aaab7de3c4abd8
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -24,6 +31,7 @@ RUN apt-get update \
         qt6-declarative-dev \
         qt6-tools-dev-tools \
         qt6-wayland \
+        libqt6svg6 \
         qml6-module-qtqml \
         qml6-module-qtqml-models \
         qml6-module-qtqml-workerscript \

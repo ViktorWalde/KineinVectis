@@ -2547,3 +2547,28 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
   de dialogo/CTA (StartScreen, FolderPicker) e o run-script da arvore ficam.
 - Com isso o plano F1-F4 do layout esta COMPLETO; a trilha volta a fila
   principal (fatia 2.2, integration config+event) apos o gesto humano.
+
+## Aceite do layout F1-F4 + direcao de icones + regressao do AppImage (2026-07-18/19)
+
+- **ACEITE COMPLETO do autor**: "perfeito... ficou visualmente bem limpo/
+  melhor". Fecha o desvio de layout inteiro: arraste+teclado na arvore, modelo
+  de superficie (F1/F1b), barra unica (F2), painel inferior em linha unica
+  (F3), ambar contido + Salvar removido (F4) e o modo imagem dos .md.
+- **Direcao de crescimento registrada** (pedido do autor): icones de atalho
+  no shell "de forma limpa e estrategica (sem amontoar)", como os software
+  JetBrains — ex.: banco de dados. Regra derivada: icone novo no rail/App Bar
+  entra JUNTO com a vertical que ele abre (banco = L5.5, Docker/remoto = L5),
+  nunca antes nem em lote. Registrada no PONTO_ATUAL e na LAYOUT §12.
+- **Regressao do empacotamento, causada pela correcao dos icones**: o
+  EXTRA_QT_PLUGINS=svg exigiu do container o que ele nao tinha — o builder
+  Debian nao instalava libqt6svg6 (imageformats/libqsvg.so +
+  iconengines/libqsvgicon.so). Por isso o deploy falhou com "Cannot deploy
+  non-existing library file: .../iconengines/libqsvgicon.so" quando o autor
+  rodou --appimage. Fix: libqt6svg6 no Containerfile (comentario datado); o
+  cache do podman invalida sozinho. O "ERROR: Missing qml module:
+  KineinVectis" do mesmo log e ruido pre-existente do scanner (modulo QML
+  compilado no binario) e nao falha o build.
+- **Fatia 2.2 ESTRUTURADA no PONTO_ATUAL antes de qualquer codigo** (pedido
+  explicito): 5 passos (protocolo 0.62.0 + docs/03 no mesmo commit; dominio
+  integration/config.rs no padrao DraftStore; handler fino + commands.rs;
+  decisao EditorConfig ADIADA; E2E por mutacao) e saida BINARIA do v1.
