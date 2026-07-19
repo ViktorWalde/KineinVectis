@@ -97,17 +97,29 @@ F1  Modelo de superfície do shell (§4.2 da LAYOUT_SYSTEM) — ACEITA pelo
     apontada no aceite: os painéis perderam TODO o raio e ficou "layout do
     VS Code". O §4.2 saiu radical demais (flat total); o correto JetBrains é
     raio nas regiões SEM contorno, sobre o fundo da janela. Correção na F1b.
-F1b Feedback do aceite da F1 (fila imediata, 2026-07-18):
-    [ ] raio de volta nas regiões (sem contorno; §4.2 corrigida no commit)
-    [ ] ícone de terminal no rail esquerdo
-    [ ] cabeçalho da árvore: remover chips novo-arquivo/nova-pasta (contexto
-        já cobre), manter atualizar; corrigir sobreposição com o chip do
-        build system (nome longo passa por baixo)
-    [ ] ícones da árvore (.cpp etc.) não aparecem no AppImage — investigar
-        o packaging e resolver
+F1b Feedback do aceite da F1 (2026-07-18) — 4 de 5 FEITOS no mesmo dia:
+    [x] raio de volta nos PAINÉIS (radiusLarge sem contorno; moldura — rail,
+        barras, status — segue plana). §4.2 corrigida no mesmo commit.
+    [x] ícone de terminal no rail (toggle JetBrains: ativo esconde, senão
+        openTerminalPanel materializa sessão). Rail agora recebe estado cru
+        bottomOpen/bottomTab e mapeia sozinho; ShellWorkspaceHost ENCOLHEU
+        530→529 apesar do handler novo.
+    [x] cabeçalho da árvore: chips de criação removidos (contexto + menu
+        Arquivo cobrem); header por ÂNCORA com nome em elide — sobreposição
+        com o chip do build system morta pela raiz.
+    [x] ícones da árvore no AppImage — CAUSA-RAIZ: o binário TEM os SVGs
+        (qrc), mas o linuxdeploy-plugin-qt não embarca libqsvg.so (plugin de
+        runtime, invisível à análise ELF); dev usa o Qt do sistema, por isso
+        só o AppImage quebra. Fix: EXTRA_QT_PLUGINS=svg + validação que
+        REPROVA o empacotamento sem o plugin (empacotar-appimage.sh). NOTA:
+        o dist/ atual (07-17) continua sem ícones até a próxima geração —
+        que segue aguardando a decisão "AppImage só quando estabilizar".
     [ ] modo "imagem" (markdown renderizado) para os .md do projeto, como o
         Manual da IDE já faz — ATENÇÃO: é feature de editor; a regra "quem
         toca a área paga a dela" cobra débito do EditorController (842/400)
+        e do EditorPane (485/300). Renderização já existe pronta no
+        DocumentationDialog (TextEdit.MarkdownText); a fatia é o toggle
+        por aba + onde mora esse estado sem engordar arquivo em débito.
 F2  Barra única — APROVADA pelo autor (fusão AppMenuBar+TopHeaderBar ~46px,
     menu hamburger, controles de janela embutidos). EXIGE editar §4/§9/§10
     da LAYOUT_SYSTEM no mesmo commit (8 regiões → 7): decisão já tomada,

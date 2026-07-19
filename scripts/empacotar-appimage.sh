@@ -346,6 +346,15 @@ EXTRA_PLATFORM_PLUGINS="$(
 
 export EXTRA_PLATFORM_PLUGINS
 
+# Os icones da arvore (assets/icons/tree/*.svg) sao renderizados pelo plugin
+# de imageformat `libqsvg.so`, carregado em RUNTIME — o ELF nao referencia
+# QtSvg, entao a analise de linkagem do linuxdeploy-plugin-qt NAO o detecta.
+# Sem este export o AppImage sai com jpeg/ico/gif e SEM svg: os SVGs compilados
+# no qrc existem no binario, mas o Image{} falha ao decodifica-los e a arvore
+# fica sem icone (regressao reportada pelo autor em 2026-07-18). O ambiente de
+# desenvolvimento nao sofre disso porque usa o Qt completo do sistema.
+export EXTRA_QT_PLUGINS="svg"
+
 echo "==> primeira etapa: empacotando Qt, QML e plugins de plataforma"
 
 "$LINUXDEPLOY" \
@@ -431,6 +440,19 @@ for plugin_file in "${REQUIRED_WAYLAND_FILES[@]}"; do
     check_dynamic_dependencies "$plugin_file"
     echo "  ok: ${plugin_file#"$APPDIR/"}"
 done
+
+echo "==> validando plugin SVG (icones da arvore)"
+
+SVG_PLUGIN_FILE="$APPDIR/usr/plugins/imageformats/libqsvg.so"
+if [[ ! -f "$SVG_PLUGIN_FILE" ]]; then
+    echo "erro: libqsvg.so ausente do AppDir — os icones da arvore" >&2
+    echo "  (.c/.cpp/.rs, pastas) sairiam INVISIVEIS no AppImage." >&2
+    echo "  O EXTRA_QT_PLUGINS=svg nao surtiu efeito; verifique a versao" >&2
+    echo "  do linuxdeploy-plugin-qt." >&2
+    exit 1
+fi
+check_dynamic_dependencies "$SVG_PLUGIN_FILE"
+echo "  ok: imageformats/libqsvg.so"
 
 echo "==> instalando launcher gráfico portátil"
 install \

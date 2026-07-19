@@ -119,7 +119,8 @@ Rectangle {
     signal outlineResetRequested()
     signal outlineToggleRequested()
 
-    // §4.2: regiao plana; separacao por divisor de 1px, arredondamento interno.
+    // §4.2: painel arredondado SEM contorno; separacao pelo divisor de 1px.
+    radius: Theme.radiusLarge
     color: Theme.background1
 
     function focusCreateDialog() {

@@ -181,9 +181,14 @@ atual segue o aproveitamento de tela do IntelliJ IDEA Community (§2.0):
    borda (mesmo fundo da janela, ícones "no plano de fundo").
 2. O divisor entre regiões é o fundo da janela (background0) aparecendo
    por 1px (`seamWidth`). Não existe Rectangle de borda para isso.
-3. Nenhuma região tem contorno (border) nem raio no seu retângulo externo.
-   O arredondamento mora DENTRO: chip de hover/seleção, aba, botão, popup,
-   diálogo e banner continuam arredondados.
+3. Nenhuma região tem contorno (border). Os PAINÉIS de conteúdo (Project,
+   editor, Bottom Tool Window) têm raio (radiusLarge) sem contorno, sobre o
+   fundo da janela — como as tool windows da JetBrains. A MOLDURA (rail,
+   barras do topo, status bar) é plana: ela é a própria janela. [Corrigido
+   em 2026-07-18: a 1ª versão desta seção zerou TODO raio e o autor apontou
+   a regressão no aceite — "ficou layout do VS Code". Raio de região não era
+   o problema; o problema era contorno + calha.] O arredondamento também
+   mora DENTRO: chip de hover/seleção, aba, botão, popup, diálogo e banner.
 4. A alça de redimensionamento é invisível: `splitterGrip` (7px) montado
    SOBRE o divisor; só a linha de hover pinta (âmbar, 2px).
 5. Tons marcam as transições onde o divisor não aparece: rail e App Bar em

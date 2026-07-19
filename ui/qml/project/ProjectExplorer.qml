@@ -23,8 +23,6 @@ Rectangle {
     // Caminho sendo arrastado agora; a linha de origem fica esmaecida.
     property string draggingPath: ""
 
-    signal createFileRequested()
-    signal createDirectoryRequested()
     signal refreshRequested()
     signal closeRequested()
     signal entrySelected(string path, string kind)
@@ -45,9 +43,10 @@ Rectangle {
         explorerView.forceActiveFocus();
     }
 
-    // §4.2: regiao plana, sem contorno; a separacao vem do divisor de 1px do
-    // layout. O arredondamento fica nas linhas (selecao/hover), nao na caixa.
+    // §4.2: painel arredondado SEM contorno sobre o fundo da janela; a
+    // separacao vem do divisor de 1px do layout.
     implicitWidth: 260
+    radius: Theme.radiusLarge
     color: Theme.background1
 
     Column {
@@ -55,130 +54,124 @@ Rectangle {
         anchors.margins: Theme.spacingSmall
         spacing: Theme.spacingSmall
 
-        Row {
+        // Cabecalho por ANCORA, nao Row com espacador calculado: nome longo
+        // ELIDE em vez de empurrar os chips por baixo do chip do build system
+        // (sobreposicao reportada pelo autor em 2026-07-18). Criar arquivo e
+        // pasta saiu daqui a pedido dele: o contexto (botao direito) e o menu
+        // Arquivo ja cobrem; ficaram atualizar e fechar.
+        Item {
             id: headerRow
 
             width: parent.width
-            spacing: Theme.spacingSmall
+            height: 24
 
-            // O nome do projeto E' o no raiz: soltar sobre ele move para a raiz
-            // do workspace. Sem isto nao ha como tirar um arquivo de uma
-            // subpasta, porque a raiz nunca e uma LINHA da arvore.
-            Rectangle {
+            Row {
+                id: headerChips
+
+                anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: workspaceLabel.width + 8
-                height: 18
-                radius: Theme.radius
-                color: rootDrop.containsDrag && rootDrop.acceptsSource
-                       ? Theme.accentDim : "transparent"
-                border.width: rootDrop.containsDrag && rootDrop.acceptsSource ? 1 : 0
-                border.color: Theme.accent
+                spacing: Theme.spacingSmall
 
-                Text {
-                    id: workspaceLabel
-
-                    anchors.centerIn: parent
-                    text: root.workspaceName
-                    color: Theme.textPrimary
-                    font.pixelSize: 13
-                    font.bold: true
+                KvIconButton {
+                    width: 22
+                    height: 22
+                    iconName: "refresh"
+                    iconSize: 15
+                    tooltip: qsTr("Atualizar projeto")
+                    onClicked: root.refreshRequested()
                 }
 
-                DropArea {
-                    id: rootDrop
+                KvIconButton {
+                    width: 22
+                    height: 22
+                    iconName: "close"
+                    iconSize: 14
+                    danger: true
+                    tooltip: qsTr("Fechar workspace")
+                    onClicked: root.closeRequested()
+                }
+            }
 
-                    anchors.fill: parent
-                    keys: ["kinein/tree-entry"]
+            Row {
+                id: headerTitle
 
-                    readonly property ProjectTreeRow sourceRow:
-                        drag.source as ProjectTreeRow
-                    readonly property string sourcePath:
-                        sourceRow ? sourceRow.path : ""
-                    readonly property bool acceptsSource:
-                        root.gestures !== null && sourcePath !== ""
-                        && root.gestures.canDropOn(sourcePath, "", "directory")
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingSmall
 
-                    onDropped: function(drop) {
-                        if (acceptsSource) {
-                            root.dropRequested(sourcePath, "", "directory");
-                            drop.accept();
+                // O nome do projeto E' o no raiz: soltar sobre ele move para a
+                // raiz do workspace. Sem isto nao ha como tirar um arquivo de
+                // uma subpasta, porque a raiz nunca e uma LINHA da arvore.
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: workspaceLabel.width + 8
+                    height: 18
+                    radius: Theme.radius
+                    color: rootDrop.containsDrag && rootDrop.acceptsSource
+                           ? Theme.accentDim : "transparent"
+                    border.width: rootDrop.containsDrag && rootDrop.acceptsSource
+                                  ? 1 : 0
+                    border.color: Theme.accent
+
+                    Text {
+                        id: workspaceLabel
+
+                        anchors.centerIn: parent
+                        // O que sobra do cabecalho depois do chip do build
+                        // system e dos botoes; alem disso, elide.
+                        width: Math.min(implicitWidth,
+                                        headerRow.width - headerChips.width
+                                        - kindChip.width - 8
+                                        - 3 * Theme.spacingSmall)
+                        text: root.workspaceName
+                        color: Theme.textPrimary
+                        font.pixelSize: 13
+                        font.bold: true
+                        elide: Text.ElideRight
+                    }
+
+                    DropArea {
+                        id: rootDrop
+
+                        anchors.fill: parent
+                        keys: ["kinein/tree-entry"]
+
+                        readonly property ProjectTreeRow sourceRow:
+                            drag.source as ProjectTreeRow
+                        readonly property string sourcePath:
+                            sourceRow ? sourceRow.path : ""
+                        readonly property bool acceptsSource:
+                            root.gestures !== null && sourcePath !== ""
+                            && root.gestures.canDropOn(sourcePath, "", "directory")
+
+                        onDropped: function(drop) {
+                            if (acceptsSource) {
+                                root.dropRequested(sourcePath, "", "directory");
+                                drop.accept();
+                            }
                         }
                     }
                 }
-            }
 
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: kindText.width + 10
-                height: 16
-                radius: 8
-                color: Theme.accentDim
+                Rectangle {
+                    id: kindChip
 
-                Text {
-                    id: kindText
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: kindText.width + 10
+                    height: 16
+                    radius: 8
+                    color: Theme.accentDim
 
-                    anchors.centerIn: parent
-                    text: root.workspaceKindLabel
-                    color: Theme.accent
-                    font.pixelSize: 9
-                    font.bold: true
+                    Text {
+                        id: kindText
+
+                        anchors.centerIn: parent
+                        text: root.workspaceKindLabel
+                        color: Theme.accent
+                        font.pixelSize: 9
+                        font.bold: true
+                    }
                 }
-            }
-
-            Item {
-                width: parent.width - x - refreshChip.width
-                       - newFileChip.width - newFolderChip.width
-                       - closeProjectChip.width - 3 * Theme.spacingSmall
-                height: 1
-            }
-
-            KvIconButton {
-                id: newFileChip
-
-                anchors.verticalCenter: parent.verticalCenter
-                width: 22
-                height: 22
-                iconName: "file"
-                iconSize: 15
-                tooltip: qsTr("Novo arquivo")
-                onClicked: root.createFileRequested()
-            }
-
-            KvIconButton {
-                id: newFolderChip
-
-                anchors.verticalCenter: parent.verticalCenter
-                width: 22
-                height: 22
-                iconName: "folder"
-                iconSize: 15
-                tooltip: qsTr("Nova pasta")
-                onClicked: root.createDirectoryRequested()
-            }
-
-            KvIconButton {
-                id: refreshChip
-
-                anchors.verticalCenter: parent.verticalCenter
-                width: 22
-                height: 22
-                iconName: "refresh"
-                iconSize: 15
-                tooltip: qsTr("Atualizar projeto")
-                onClicked: root.refreshRequested()
-            }
-
-            KvIconButton {
-                id: closeProjectChip
-
-                anchors.verticalCenter: parent.verticalCenter
-                width: 22
-                height: 22
-                iconName: "close"
-                iconSize: 14
-                danger: true
-                tooltip: qsTr("Fechar workspace")
-                onClicked: root.closeRequested()
             }
         }
 

@@ -5,18 +5,22 @@ Rectangle {
 
     property bool workspaceOpen: false
     property bool explorerActive: false
-    property bool searchActive: false
-    property bool gitActive: false
-    property bool buildActive: false
-    property bool debugActive: false
-    property bool toolsActive: false
+    // Estado CRU do painel inferior; o rail mapeia estado -> chip aceso
+    // sozinho (visao burra: quem decide o que abre continua sendo o host).
+    property bool bottomOpen: false
+    property string bottomTab: ""
 
     signal explorerToggled()
     signal searchRequested()
     signal gitRequested()
     signal buildRequested()
     signal debugRequested()
+    signal terminalRequested()
     signal toolsRequested()
+
+    function bottomActive(tab) {
+        return bottomOpen && bottomTab === tab;
+    }
 
     // §4.2: o rail NAO e um cartao — ele e a borda da janela. Mesmo fundo do
     // app (background0), sem contorno; os icones ficam "no plano de fundo" e
@@ -91,7 +95,7 @@ Rectangle {
         RailButton {
             iconName: "search"
             tooltip: qsTr("Busca no projeto")
-            active: root.searchActive
+            active: root.bottomActive("search")
             enabled: root.workspaceOpen
             onActivated: root.searchRequested()
         }
@@ -99,7 +103,7 @@ Rectangle {
         RailButton {
             iconName: "git"
             tooltip: qsTr("Git")
-            active: root.gitActive
+            active: root.bottomActive("git")
             enabled: root.workspaceOpen
             onActivated: root.gitRequested()
         }
@@ -107,7 +111,7 @@ Rectangle {
         RailButton {
             iconName: "build"
             tooltip: qsTr("Build e jobs")
-            active: root.buildActive
+            active: root.bottomActive("build") || root.bottomActive("jobs")
             enabled: root.workspaceOpen
             onActivated: root.buildRequested()
         }
@@ -115,15 +119,23 @@ Rectangle {
         RailButton {
             iconName: "debug"
             tooltip: qsTr("Debug")
-            active: root.debugActive
+            active: root.bottomActive("debug")
             enabled: root.workspaceOpen
             onActivated: root.debugRequested()
         }
 
         RailButton {
+            iconName: "terminal"
+            tooltip: qsTr("Terminal")
+            active: root.bottomActive("terminal")
+            enabled: root.workspaceOpen
+            onActivated: root.terminalRequested()
+        }
+
+        RailButton {
             iconName: "tools"
             tooltip: qsTr("Ferramentas")
-            active: root.toolsActive
+            active: root.bottomActive("tools")
             onActivated: root.toolsRequested()
         }
 

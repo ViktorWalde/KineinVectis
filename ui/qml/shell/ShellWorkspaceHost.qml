@@ -124,22 +124,23 @@ Item {
             height: parent.height
             workspaceOpen: root.workspaceOpen
             explorerActive: root.shellController.effectiveShowExplorer
-            searchActive: root.shellController.showBottomPanel
-                          && root.shellController.bottomTab === "search"
-            gitActive: root.shellController.showBottomPanel
-                       && root.shellController.bottomTab === "git"
-            buildActive: root.shellController.showBottomPanel
-                         && (root.shellController.bottomTab === "build"
-                             || root.shellController.bottomTab === "jobs")
-            debugActive: root.shellController.showBottomPanel
-                         && root.shellController.bottomTab === "debug"
-            toolsActive: root.shellController.showBottomPanel
-                         && root.shellController.bottomTab === "tools"
+            bottomOpen: root.shellController.showBottomPanel
+            bottomTab: root.shellController.bottomTab
             onExplorerToggled: root.shellController.toggleExplorer()
             onSearchRequested: root.searchController.openSearchPanel()
             onGitRequested: root.shellController.toggleBottomTab("git")
             onBuildRequested: root.shellController.toggleBottomTab("build")
             onDebugRequested: root.shellController.toggleBottomTab("debug")
+            // Rail JetBrains: clicar no ativo ESCONDE; senao abre materializando
+            // uma sessao se nao houver (openTerminalPanel, mesmo do Alt+F12).
+            onTerminalRequested: {
+                if (root.shellController.showBottomPanel
+                        && root.shellController.bottomTab === "terminal") {
+                    root.shellController.toggleBottomTab("terminal");
+                } else {
+                    root.runtimeController.openTerminalPanel();
+                }
+            }
             onToolsRequested: root.shellController.toggleBottomTab("tools")
         }
 

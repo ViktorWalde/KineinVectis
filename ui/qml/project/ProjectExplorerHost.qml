@@ -27,8 +27,6 @@ ProjectExplorer {
     entriesModel: root.projectTree ? root.projectTree.entriesModel : null
     moveError: root.projectTree ? root.projectTree.moveError : ""
 
-    onCreateFileRequested: root.projectTree.openCreateDialog("file")
-    onCreateDirectoryRequested: root.projectTree.openCreateDialog("directory")
     onRefreshRequested: root.listDirRequested(root.projectTree.workspaceRoot)
     onEntrySelected: function(path, kind) {
         root.projectTree.selectEntry(path, kind);
