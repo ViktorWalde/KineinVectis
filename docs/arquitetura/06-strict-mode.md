@@ -106,7 +106,7 @@ Rust/C++ (zerado primeiro, ligado depois):
 - `import KineinVectis` explícito quando o arquivo usa tipos do módulo
   (ex.: `Theme`), mesmo que o import implícito resolvesse.
 
-Degraus futuros (ordem em `docs/diario/18-daily-driver-plan.md`): `qmlformat
+Degraus futuros (ordem em `docsprivate/diario/18-daily-driver-plan.md`): `qmlformat
 --check` após reformatar o tree numa fatia dedicada e testes Qt Quick Test
 para controllers não visuais.
 

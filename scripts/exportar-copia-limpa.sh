@@ -66,8 +66,12 @@ ALLOWED_MD="README.md MANUAL.md Tutorial.md"
 
 # ------------------------------------------------------------------ denylist
 # Caminhos que nao podem aparecer NEM COMO NOME na copia. Sao a camada pessoal
-# (faixa X do PLANO_ORGANIZACAO_E_HANDOFF.md) e o material interno de engenharia.
+# (faixa X do docsprivate/PLANO_ORGANIZACAO_E_HANDOFF.md) e o material interno de engenharia.
+# Desde 2026-07-19 a camada X inteira mora em docsprivate/ (decisao do autor:
+# agrupamento fisico do material de IA/pessoal). Uma entrada cobre tudo; as
+# antigas da raiz ficam como rede caso alguem recrie um arquivo no lugar velho.
 DENY="
+docsprivate
 ContextoIA.md
 PONTO_ATUAL.md
 GUIAIA.md
@@ -75,7 +79,7 @@ AGENTS.md
 PLANO_ORGANIZACAO_E_HANDOFF.md
 docs
 prompts
-imagens/bugs
+imagens
 .claude
 .codex
 .agents

@@ -1,6 +1,6 @@
 import QtQuick
 
-// E1 (docs/diario/18, trilha E): auto-close de pares, type-over do fechador,
+// E1 (docsprivate/diario/18, trilha E): auto-close de pares, type-over do fechador,
 // surround da selecao e backspace apagando o par vazio.
 //
 // Vive fora do EditorTextSurface porque decidir o que uma TECLA faz com um PAR
@@ -17,7 +17,7 @@ QtObject {
     // E6 (2026-07-17): rastreador dos fechadores que NOS inserimos
     // (AutoCloseRegions, C++). O type-over so pula fechador nosso — pular
     // qualquer fechador engolia o `)` digitado a mao em `foo(bar)`
-    // (divergencia medida contra o Code OSS, docs/diario/18). E' `var` e nao o
+    // (divergencia medida contra o Code OSS, docsprivate/diario/18). E' `var` e nao o
     // tipo C++ de proposito: o tst_autoclose roda em qml-qt6 puro e injeta um
     // fake, o padrao do tst_completion. null = sem type-over NENHUM: duplicar
     // um fechador e' visivel e corrigivel; engolir tecla e' silencioso.

@@ -312,7 +312,7 @@ Tutorial.md
 ```
 
 Não inclua `.git/` nem o histórico do repositório privado. Também não inclua
-`AGENTS.md`, `ContextoIA.md`, `GUIAIA.md`, `PONTO_ATUAL.md`, `docs/`,
+`docsprivate/AGENTS.md`, `docsprivate/ContextoIA.md`, `docsprivate/GUIAIA.md`, `docsprivate/PONTO_ATUAL.md`, `docs/`,
 `prompts/`, roadmaps, specs ou outras notas de agentes. Antes de entregar, o
 futuro exportador deve oferecer dry-run, rejeitar Markdown extra, auditar
 segredos e mostrar a lista final de arquivos. Até esse exportador existir, não

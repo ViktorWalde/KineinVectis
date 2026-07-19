@@ -19,17 +19,17 @@ ordem de precedência quando houver conflito entre documentos.
 ### As quatro classes de volatilidade
 
 Este eixo é **ortogonal** às faixas P/T/X (audiência) de
-`PLANO_ORGANIZACAO_E_HANDOFF.md`. Ele responde outra pergunta: *"se este arquivo
+`docsprivate/PLANO_ORGANIZACAO_E_HANDOFF.md`. Ele responde outra pergunta: *"se este arquivo
 envelhecer, o que acontece?"*
 
 | Classe | Regra | O que acontece se envelhecer | Onde |
 | --- | --- | --- | --- |
-| **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `AGENTS.md`, `arquitetura/ARCHITECTURE.md` §2/§4/§5, `adr/` |
-| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `PONTO_ATUAL.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
+| **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `docsprivate/AGENTS.md`, `arquitetura/ARCHITECTURE.md` §2/§4/§5, `adr/` |
+| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `docsprivate/PONTO_ATUAL.md`, `docsprivate/GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
 | **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `docs/specs/`, `docs/roadmaps/` |
-| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `ContextoIA.md`, `diario/`, `adr/` |
+| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `docsprivate/ContextoIA.md`, `diario/`, `adr/` |
 
-### Por que o `ContextoIA.md` saiu de "estado real" (2026-07-17)
+### Por que o `docsprivate/ContextoIA.md` saiu de "estado real" (2026-07-17)
 
 Ele estava em **primeiro** nesta lista, descrito como *"estado real e decisões
 vigentes"*. Ele é um **log append-only** com 44 entradas datadas, e o próprio
@@ -62,7 +62,7 @@ fonte viva.
 mudar X → olhe aqui", ritual de uma mudança e o gate.
 
 Para localizar rapidamente quais documentos e arquivos se conectam em cada
-domínio, use também o [GUIAIA.md](../GUIAIA.md), cuja seção 3 é um roteador por
+domínio, use também o [docsprivate/GUIAIA.md](../docsprivate/GUIAIA.md), cuja seção 3 é um roteador por
 tipo de tarefa (integração nova, polimento, bug, funcionalidade, contrato).
 
 ## Estrutura
@@ -194,8 +194,8 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | [../Tutorial.md](../Tutorial.md) | Distribuição, checksum, instalação, atualização e geração do AppImage |
 | [../COMO_EXECUTAR.md](../COMO_EXECUTAR.md) | Como executar a IDE pelo checkout (ícone/launcher) |
 
-Documentos de continuidade operacional — `../GUIAIA.md`, `../ContextoIA.md`,
-`../PONTO_ATUAL.md`, `../AGENTS.md` e `../prompts/` — são material interno de
+Documentos de continuidade operacional — `../docsprivate/GUIAIA.md`, `../docsprivate/ContextoIA.md`,
+`../docsprivate/PONTO_ATUAL.md`, `../docsprivate/AGENTS.md` e `../prompts/` — são material interno de
 desenvolvimento e não integram a documentação pública.
 
 ## Sem pasta de arquivo morto

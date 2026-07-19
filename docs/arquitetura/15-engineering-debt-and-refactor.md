@@ -192,7 +192,7 @@ Isso cria dois problemas:
 1. Agentes e humanos podem gastar tempo lendo material histórico que já não é a
    fonte da verdade.
 2. Decisões importantes podem ficar duplicadas ou divergentes entre docs
-   numerados, planning, quality, subsystems e `ContextoIA.md`.
+   numerados, planning, quality, subsystems e `docsprivate/ContextoIA.md`.
 
 A ordem de precedência em `docs/README.md` ajuda, mas não resolve tudo.
 
@@ -202,7 +202,7 @@ Direção desejada para pós-V1:
 - mover material antigo para arquivo/arquivo histórico quando necessário;
 - manter poucos documentos canônicos;
 - preferir docs curtos, atualizados e diretamente ligados ao código;
-- manter `ContextoIA.md` como estado operacional, não como depósito infinito.
+- manter `docsprivate/ContextoIA.md` como estado operacional, não como depósito infinito.
 
 > **Atualização 2026-07-05 — feito, adiantado antes do pós-V1.** O usuário
 > pediu para tratar isso agora em vez de esperar: `docs/archive/` (32
@@ -213,7 +213,7 @@ Direção desejada para pós-V1:
 > revisada: a taxonomia de pastas `active/implemented/obsolete/future` que ela
 > propunha não foi adotada (redundante com a precedência de 3 níveis que
 > `docs/README.md` já usa), mas os riscos genuinamente úteis que ela listava
-> foram extraídos para `docs/arquitetura/16-hidden-risks-checklist.md`. `ContextoIA.md`
+> foram extraídos para `docs/arquitetura/16-hidden-risks-checklist.md`. `docsprivate/ContextoIA.md`
 > foi cortado de ~450 para a faixa de 150–200 linhas, removendo narrativa de
 > implementação que já vive no código, no histórico do git e em
 > `docs/arquitetura/03-ipc-protocol.md`/`docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`.

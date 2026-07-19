@@ -526,7 +526,7 @@ Ao adicionar um comando/feature, siga sempre esta ordem:
 3. Lógica              → kinein-core/src/<dominio>.rs  (ou .../<dominio>/ se já for grande)
 4. Testes              → unit no módulo + integração em tests/<dominio>.rs
 5. Se for operação longa → vira JOB (ver Seção 7), não handler síncrono
-6. Doc                 → atualizar docs/arquitetura/03-ipc-protocol.md (contrato) e ContextoIA.md (estado)
+6. Doc                 → atualizar docs/arquitetura/03-ipc-protocol.md (contrato) e docsprivate/ContextoIA.md (estado)
 ```
 
 Se o domínio ainda não existe, crie o par `handlers/<dominio>.rs` +
@@ -634,8 +634,8 @@ Uma mudança está arquiteturalmente saudável quando:
 [ ] testes unit co-localizados + integração por domínio.
 [ ] o teste/gate novo REPROVA de verdade: mutei o produto e ele caiu (regra 11).
 [ ] contrato novo documentado em docs/arquitetura/03; decisão registrada no
-    ContextoIA.md (que e' LOG datado, nao o estado).
-[ ] GUIAIA.md atualizado se módulo/domínio/router nasceu, mudou de nome ou morreu
+    docsprivate/ContextoIA.md (que e' LOG datado, nao o estado).
+[ ] docsprivate/GUIAIA.md atualizado se módulo/domínio/router nasceu, mudou de nome ou morreu
     — mapa desatualizado engana mais que ausência de mapa (§1.2).
 [ ] mexeu na UI? `cmake --build --preset release-hardened` ANTES de pedir
     validação: o atalho de desenvolvimento roda o release, não o dev-local.

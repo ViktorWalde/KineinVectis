@@ -8,11 +8,11 @@ O ambiente local deve refletir o modo de segurança máximo do projeto.
 detecção de distro (pacman no Arch/CachyOS — alvo principal —, apt no
 Debian/Ubuntu, dnf no Fedora), aceita `--dry-run` (só mostra os comandos) e
 `--extras` (shellcheck + cargo-deny, degraus da escada de rigor de
-`docs/diario/18-daily-driver-plan.md`), e termina verificando ferramenta por
+`docsprivate/diario/18-daily-driver-plan.md`), e termina verificando ferramenta por
 ferramenta o mesmo conjunto que o ToolDetector do core reporta. Depois dele:
 `cmake --preset dev-local && cmake --preset dev-local-release` e
 `scripts/verificar.sh`. Lembrete: build dir de outra distro é lixo — apagar e
-reconfigurar (ver `ContextoIA.md`, seção "Ambiente revalidado").
+reconfigurar (ver `docsprivate/ContextoIA.md`, seção "Ambiente revalidado").
 
 ## Rust
 
@@ -63,7 +63,7 @@ reporta a mediana; imprime a tabela e sai. Precisa dos binários compilados
 (`cmake --build build/dev-local` + `cargo build -p kinein-core`). O
 ORÇAMENTO (números-alvo) e as métricas manuais (latência de digitação)
 vivem em `docs/roadmaps/21`, seção "M4.2". Detalhe do gancho `KINEIN_PERF_MARKER`
-(marker env-gated na `main.cpp`, sem efeito no uso normal): `docs/diario/18`,
+(marker env-gated na `main.cpp`, sem efeito no uso normal): `docsprivate/diario/18`,
 "Fatia M4.2".
 
 ## Estado observado no ambiente atual (Arch, 2026-07-08)

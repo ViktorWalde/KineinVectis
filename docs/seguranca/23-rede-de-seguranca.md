@@ -3,11 +3,11 @@
 > **Status vivo desta fatia.** Registra EXPLICITAMENTE os problemas
 > encontrados/a encontrar, qual está EM ANDAMENTO, e o plano. Atualizar a
 > cada passo. Design canônico resumido aqui (a fatia é grande demais para
-> caber só no docs/diario/18; docs/diario/18 aponta para cá).
+> caber só no docsprivate/diario/18; docsprivate/diario/18 aponta para cá).
 
 ## Por quê
 
-O maior bloqueador do "usar sem se preocupar" (ver ContextoIA e docs/diario/18) é
+O maior bloqueador do "usar sem se preocupar" (ver ContextoIA e docsprivate/diario/18) é
 o medo de **perda de dado**. Antes do dogfooding, construir a rede de
 segurança. Decisão do usuário (2026-07-11): persistência local com
 **SQLite** ("escala exponencialmente, o SQLite segura bem").

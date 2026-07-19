@@ -43,7 +43,7 @@ Antes de implementar uma etapa de backend:
 4. transformar operacao longa em job;
 5. escrever testes de comportamento;
 6. atualizar docs/arquitetura/03-ipc-protocol.md se IPC mudar;
-7. atualizar ContextoIA.md com estado real;
+7. atualizar docsprivate/ContextoIA.md com estado real;
 8. atualizar este roadmap com impacto UI futuro.
 ```
 
@@ -105,7 +105,7 @@ UI:
 `toolsListed`; a status bar tem cancelar (×) para build/test/quality/scan de
 ambiente. Desde 2026-07-06, `event.job.created/progress/output/finished`
 tambem alimentam a aba generica "Jobs" no painel inferior, mantendo historico
-visual dos jobs sem abrir pop-up automatico. Ver `ContextoIA.md`.
+visual dos jobs sem abrir pop-up automatico. Ver `docsprivate/ContextoIA.md`.
 
 Backend atual:
 
@@ -225,7 +225,7 @@ Impacto UI futuro:
 - logs sao clicaveis por job/task;
 - "Background Services" consegue explicar o que esta vivo;
 - Run e Terminal dividem UMA aba Terminal com sessoes distintas (decisao do
-  usuario em 2026-07-09, fatia M2.1 de docs/diario/18); os BACKENDS continuam
+  usuario em 2026-07-09, fatia M2.1 de docsprivate/diario/18); os BACKENDS continuam
   separados (PTY interativo vs run controlado) e Build segue a parte.
 ```
 
@@ -905,7 +905,7 @@ Antes de quebrar `Main.qml` em componentes grandes, idealmente:
 [ ] Project Health tem payload inicial.
 [ ] Settings/storage tem schemaVersion.
 [ ] Risk/confirmacao esta definido para acoes automaticas.
-[x] ContextoIA.md aponta a proxima etapa sem depender de memoria de sessao.
+[x] docsprivate/ContextoIA.md aponta a proxima etapa sem depender de memoria de sessao.
 ```
 
 ## Regras de continuidade deste roadmap

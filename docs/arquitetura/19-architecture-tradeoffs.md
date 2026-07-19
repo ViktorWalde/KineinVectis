@@ -3,7 +3,7 @@
 > **Status:** ativo
 > **Prioridade:** referência permanente (ler antes de decisão estrutural)
 > **Fonte de verdade:** o *porquê* das decisões. O *como* está em
-> `docs/arquitetura/ARCHITECTURE.md`; o *o quê/quando* em `docs/diario/18-daily-driver-plan.md`
+> `docs/arquitetura/ARCHITECTURE.md`; o *o quê/quando* em `docsprivate/diario/18-daily-driver-plan.md`
 > e `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`; o visual-alvo em `docs/specs/`
 > **Ultima revisao:** 2026-07-17 (D5 com as três camadas de realce e a
 > armadilha medida do rehighlight; D9 superado — harnesses QML e teste C++
@@ -25,12 +25,12 @@ copy e comportamento visual seguem estritamente os `.md` de `docs/specs/`
 (entrada: `KINEIN_VECTIS_SPEC_INDEX.md`). Funcionalidade pode ser fatiada,
 adiada ou simplificada; o visual **não se inventa nem se "melhora" de
 passagem** — divergência de spec é bug ou tarefa explícita com o usuário
-ciente. (Já registrado em `ContextoIA.md` e `AGENTS.md`; reafirmado aqui em
+ciente. (Já registrado em `docsprivate/ContextoIA.md` e `docsprivate/AGENTS.md`; reafirmado aqui em
 2026-07-09.)
 
 ## Requisitos funcionais (resumo por área)
 
-Detalhe e sequência vivem em `docs/diario/18` (marcos M0–M4) e no roadmap; aqui só
+Detalhe e sequência vivem em `docsprivate/diario/18` (marcos M0–M4) e no roadmap; aqui só
 o mapa com estado em 2026-07-09:
 
 ```text
@@ -58,7 +58,7 @@ RF17 Settings com schema/migração + Strict/Balanced/Relaxed       [M4]
 
 ```text
 RNF1 Privacidade: 100% local/offline; ZERO telemetria; nada sai da
-     máquina sem ação explícita do usuário (AGENTS.md).
+     máquina sem ação explícita do usuário (docsprivate/AGENTS.md).
 RNF2 Segurança de workspace: todo acesso a arquivo pelo core é
      canonicalizado e confinado à raiz aberta; a UI nunca toca disco.
 RNF3 Responsividade: a UI nunca bloqueia em trabalho pesado; operação
@@ -110,7 +110,7 @@ rustfmt/clang-format, clangd/rust-analyzer, cargo/cmake/ninja, fd, script(1).
 - **Custo aceito:** dependência de PATH/versões da máquina (mitigado por
   tools.detect/environment.scan + modo degradado + instalar-ambiente.sh);
   variação de saída entre versões de ferramenta.
-- **Revisitar:** nunca por princípio (AGENTS.md); exceções pontuais só com
+- **Revisitar:** nunca por princípio (docsprivate/AGENTS.md); exceções pontuais só com
   registro aqui.
 
 ### D3. Core síncrono de request único + JobManager para o resto
@@ -166,7 +166,7 @@ controllers; eventos em `ipc/*`; `CoreClient` fachada única (docs/arquitetura/1
 
 ### D7. Formatação: ferramenta direta, síncrona, sobre o buffer (M1.1)
 
-Registrado em detalhe em `docs/diario/18` (design M1.1). Resumo do trade-off:
+Registrado em detalhe em `docsprivate/diario/18` (design M1.1). Resumo do trade-off:
 independência de LSP vivo e zero side effect em disco, ao custo de manter
 seleção de formatter por extensão no core.
 
@@ -176,8 +176,8 @@ seleção de formatter por extensão no core.
   degraus novos (qmllint 117→0) provaram o método fix-first.
 - **Custo aceito:** fricção por entrega (minutos de gate completo); recusas
   do clippy pedantic exigem justificar exceções raras.
-- **Revisitar:** relaxar exige motivo registrado (AGENTS.md); a direção
-  preferida é subir degraus (docs/diario/18, escada de rigor).
+- **Revisitar:** relaxar exige motivo registrado (docsprivate/AGENTS.md); a direção
+  preferida é subir degraus (docsprivate/diario/18, escada de rigor).
 
 ### D9. Testes em todas as camadas — o "UI sem harness" foi SUPERADO
 
@@ -212,7 +212,7 @@ seleção de formatter por extensão no core.
 
 - **Ganho:** privacidade absoluta (RNF1), confiança, zero infra.
 - **Custo aceito:** melhoria guiada só por uso próprio e reports manuais.
-- **Revisitar:** não revisitar; decisão de produto permanente (AGENTS.md).
+- **Revisitar:** não revisitar; decisão de produto permanente (docsprivate/AGENTS.md).
 
 ### D12. UI atual → specs por convergência gradual, não remake big-bang
 
@@ -240,5 +240,5 @@ Decisão de 2026-07-09, confirmada com o usuário. Plano vinculante completo
 2. Custo aceito começou a doer de verdade (medido, não intuído)? Esse é o
    gatilho: reabrir a decisão numa fatia própria, nunca "de passagem".
 3. Requisito novo (funcional ou não) primeiro ganha linha aqui; depois
-   vira fatia em docs/diario/18.
+   vira fatia em docsprivate/diario/18.
 ```

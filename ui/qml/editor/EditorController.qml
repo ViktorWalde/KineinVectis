@@ -526,7 +526,7 @@ Item {
 
     function handleSwitchSourceHeader(path) {
         // path vazio = clangd não achou contraparte; sem primitiva de
-        // aviso discreto ainda (radar docs/diario/18), o v1 apenas não navega.
+        // aviso discreto ainda (radar docsprivate/diario/18), o v1 apenas não navega.
         if (path !== "") {
             documents.openDiagnostic(path, 1, 1);
         }

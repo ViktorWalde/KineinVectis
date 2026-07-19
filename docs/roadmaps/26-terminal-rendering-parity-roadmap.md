@@ -11,7 +11,7 @@
 Este documento separa o que já está implementado, o que a validação em tela
 real mostrou, as referências oficiais estudadas e a ordem de
 investigação/implementação. Deve ser lido junto de
-`AGENTS.md`, `ContextoIA.md`, `GUIAIA.md`, `docs/arquitetura/ARCHITECTURE.md`,
+`docsprivate/AGENTS.md`, `docsprivate/ContextoIA.md`, `docsprivate/GUIAIA.md`, `docs/arquitetura/ARCHITECTURE.md`,
 `docs/arquitetura/03-ipc-protocol.md`, `docs/arquitetura/06-strict-mode.md`, da spec do AI CLI Bridge e
 da seção D2 de `docs/roadmaps/24-paridade-e-fundacao.md`.
 
@@ -394,7 +394,7 @@ do que isso significa, para a próxima sessão não repetir o caminho:
 
 ## 4.7 CAUSA-RAIZ ENCONTRADA — linha vazia colapsa no positioner (2026-07-16)
 
-O que destravou foi a **captura de tela** (`imagens/bugs/`), o item 3 do R0 que
+O que destravou foi a **captura de tela** (`docsprivate/imagens/bugs/`), o item 3 do R0 que
 nunca tinha sido produzido. Ela mostrou de imediato o que nenhuma medição tinha
 mostrado: o desvio é de **linha inteira**, não de sub-pixel — o cursor aparece
 solto no canto inferior esquerdo, ~2–3 linhas abaixo da caixa de entrada, nos
@@ -792,7 +792,7 @@ continuam sem autorização separada.
 ## 10. Instrução curta para a próxima sessão
 
 ```text
-Leia AGENTS.md e docs/roadmaps/26-terminal-rendering-parity-roadmap.md. Preserve o
+Leia docsprivate/AGENTS.md e docs/roadmaps/26-terminal-rendering-parity-roadmap.md. Preserve o
 worktree. O cursor da TUI continua reprovado no teste humano; não ajuste y.
 Comece por R0: fixture PTY + métricas/overlay sob flag, compare com terminal
 externo e só então implemente R1. Code OSS/xterm.js são a base de paridade

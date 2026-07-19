@@ -237,7 +237,7 @@ Garantir que os documentos e o estado real do repositório não se contradizem a
 Ações:
 
 ```text
-confirmar que ContextoIA.md é fonte de verdade de estado real;
+confirmar que docsprivate/ContextoIA.md é fonte de verdade de estado real;
 confirmar que docs numerados são contratos vigentes;
 marcar pacotes planning/quality/subsystems como referência;
 registrar que Kinein Vectis é direção futura, não rename imediato.

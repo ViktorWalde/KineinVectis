@@ -33,8 +33,8 @@ python3 - <<'PY'
 import pathlib, re, subprocess, sys
 
 # LOGS sao registro por natureza: citam o que era verdade na epoca.
-LOGS = ("ContextoIA.md", "PLANO_ORGANIZACAO_E_HANDOFF.md")
-DIRS_LOG = ("docs/diario/", "docs/adr/")
+LOGS = ("docsprivate/ContextoIA.md", "docsprivate/PLANO_ORGANIZACAO_E_HANDOFF.md")
+DIRS_LOG = ("docsprivate/diario/", "docs/adr/")
 
 rastreados = [x for x in subprocess.run(
     ["git", "ls-files"], capture_output=True, text=True).stdout.split("\n") if x]

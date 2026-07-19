@@ -4,7 +4,7 @@
 // PROPRIA IDE inseriu; pular qualquer fechador no cursor engole o caractere que
 // o usuario quis digitar (em `foo(bar)` escrito a mao, digitar `)` antes do `)`
 // sumia com ele — divergencia medida contra o Code OSS, registrado em
-// docs/diario/18). A parte sutil e' que um int de posicao nao sobrevive a uma
+// docsprivate/diario/18). A parte sutil e' que um int de posicao nao sobrevive a uma
 // edicao: quem acompanha o documento e' o QTextCursor, que o Qt reposiciona
 // sozinho em digitacao, colagem, remocao e undo. Este objeto guarda um cursor
 // por fechador e valida por preguica: regiao cujo texto sumiu morre sozinha.

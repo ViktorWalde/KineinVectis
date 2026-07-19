@@ -5,7 +5,7 @@
 ```text
 kinein-vectis/
 ├── README.md
-├── AGENTS.md
+├── docsprivate/AGENTS.md
 ├── Cargo.toml
 ├── rust-toolchain.toml
 ├── deny.toml
@@ -100,7 +100,7 @@ kinein-vectis/
 │   ├── 09-roadmap.md
 │   └── 10-mvp-plan.md
 │
-└── prompts/
+└── docsprivate/   (camada X: material de IA/pessoal — fora da cópia pública)
     └── GPT_TERMINAL_BOOTSTRAP.md
 ```
 

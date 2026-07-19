@@ -10,7 +10,7 @@ Item {
     property bool scanningEnvironment: false
     property bool cmakeStatusKnown: false
     property bool cmakeConfigured: false
-    // Auto-setup ao abrir (radar de docs/diario/18): o configure dispara sozinho
+    // Auto-setup ao abrir (radar de docsprivate/diario/18): o configure dispara sozinho
     // UMA vez por workspace; falha devolve o aviso acionavel (sem loop).
     property bool autoConfigureAttempted: false
     property bool autoConfigureFailed: false

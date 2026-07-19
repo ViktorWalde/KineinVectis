@@ -267,7 +267,7 @@ NAO E' "copiar e colar".  A adaptacao e' obrigatoria e e' REALISTA/PRAGMATICA:
 **Por que o IntelliJ Community e não outra:** é Apache-2.0, o código está
 disponível para estudo, e a densidade/organização dele é o alvo estético que o
 autor escolheu (registro de 2026-07-16: "o visual limpo da IDE aberta do
-JetBrains — inspiração, não cópia; referência de print em `imagens/prints`").
+JetBrains — inspiração, não cópia; referência de print em `docsprivate/imagens/prints`").
 
 **Onde a dívida de UI/UX já é conhecida:** `docs/roadmaps/20-ui-spec-convergence-plan.md`
 (fatias C0–C6) e `docs/specs/KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md`. Este
@@ -281,7 +281,7 @@ débito antes**. A catraca não é opcional e já cobrou 4x num único dia.
 ## 8. O que este documento NÃO faz
 
 - **não abre nível nenhum:** a fila real e o que está em aberto vivem na TRILHA
-  do `PONTO_ATUAL.md`, medida contra o código;
+  do `docsprivate/PONTO_ATUAL.md`, medida contra o código;
 - **não adota nada:** toda ferramenta citada aqui é candidata e passa pelo gate de
   auditoria + `OPEN_COMPONENT_REGISTRY.json` antes de entrar;
 - **não decide licença:** DBeaver, Database Navigator e SQLTools estão listados

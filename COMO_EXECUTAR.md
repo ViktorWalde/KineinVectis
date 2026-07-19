@@ -87,7 +87,7 @@ cmake --build --preset dev-local
 > fora do git). Eles herdam os presets estritos oficiais, mas nesta máquina
 > usam GCC nativo com warnings-as-errors e sanitizers desligados, porque o
 > toolchain recente dispara warnings em código gerado pelo Qt (detalhe em
-> `ContextoIA.md`, seção "Toolchain local"). Em outra máquina, prefira os
+> `docsprivate/ContextoIA.md`, seção "Toolchain local"). Em outra máquina, prefira os
 > presets oficiais `linux-clang-debug-strict` / `linux-clang-release-hardened`
 > (debug oficial liga ASan/UBSan). Se o build reclamar de caminhos de outra
 > distro (ex.: `/usr/lib/x86_64-linux-gnu/...`), apague o diretório em

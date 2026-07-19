@@ -49,17 +49,39 @@ ficam no tutorial.
 
 ## Arquitetura
 
-```text
-Qt/QML Frontend
-       ↕ JSON-RPC local
-Rust Core
-       ↕
-CMake · Cargo · clangd · rust-analyzer · LLDB · Git · outras ferramentas
+```mermaid
+flowchart LR
+    subgraph UI["Frontend Qt/QML"]
+        direction TB
+        V["Componentes visuais<br/>(burros: propriedade + sinal)"]
+        C["Controllers<br/>(estado da UI)"]
+        R["Roteadores IPC"]
+        V --- C --- R
+    end
+
+    subgraph Core["kinein-core (Rust)"]
+        direction TB
+        H["Handlers por domínio<br/>fs · git · lsp · build · debug · terminal"]
+        J["Jobs assíncronos<br/>canceláveis"]
+        D["Persistência local<br/>SQLite por workspace"]
+        H --- J
+        H --- D
+    end
+
+    UI <-- "JSON-RPC local<br/>(stdin/stdout)" --> Core
+
+    Core --> T1["CMake · Cargo"]
+    Core --> T2["clangd · rust-analyzer"]
+    Core --> T3["LLDB (DAP)"]
+    Core --> T4["Git · rg · fd"]
 ```
 
-A UI apresenta e recebe ações. O core valida, mantém estado e chama as
-ferramentas externas. Operações longas são jobs assíncronos e canceláveis para
-não bloquear a interface.
+A UI apresenta e recebe ações — nenhuma regra de negócio vive nela. O core
+valida, mantém estado e orquestra as ferramentas externas; operações longas
+são jobs assíncronos e canceláveis, para a interface nunca bloquear. O
+contrato entre os dois lados é um protocolo JSON-RPC versionado, e a paridade
+de comportamento tem como referência as IDEs da JetBrains — redesenhada em
+Qt/QML, nunca copiada.
 
 ## Plataforma
 
