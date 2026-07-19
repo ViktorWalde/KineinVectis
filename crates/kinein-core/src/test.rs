@@ -193,7 +193,7 @@ fn run_ctest(
         display.push_str(filter);
     }
 
-    stream_command(command, &display, parse_ctest_case, cancel, sink)
+    stream_command(command, &display, parse_cmake_case, cancel, sink)
 }
 
 /// Spawns the runner, streams output, and tallies parsed cases.
@@ -265,6 +265,65 @@ fn parse_cargo_case(line: &str) -> Option<(String, CaseStatus)> {
     Some((name.to_owned(), status))
 }
 
+/// Chain parser do caminho `CMake` (L2 fatia 2, 2026-07-19): ctest primeiro
+/// (autoritativo por executavel), depois os frameworks C/C++ cujo output
+/// atravessa o `--output-on-failure` — `GTest` e `Unity`. Com isso um executavel
+/// que FALHA lista os casos internos nomeados no painel, nao so o binario.
+/// Assimetria documentada: executavel que passa conta 1 caso (ctest); o que
+/// falha soma os casos internos que o framework imprimir. Criterion ficou de
+/// fora de proposito: formato por-caso nao confirmado na fonte — entra
+/// quando for medido, nao de memoria.
+fn parse_cmake_case(line: &str) -> Option<(String, CaseStatus)> {
+    parse_ctest_case(line)
+        .or_else(|| parse_gtest_case(line))
+        .or_else(|| parse_unity_case(line))
+}
+
+/// `GTest`: `[       OK ] Suite.Case (0 ms)` / `[  FAILED  ] Suite.Case` /
+/// `[  SKIPPED ] Suite.Case`. O sufixo de duracao e descartado.
+fn parse_gtest_case(line: &str) -> Option<(String, CaseStatus)> {
+    let trimmed = line.trim();
+    let (status, rest) = if let Some(rest) = trimmed.strip_prefix("[       OK ]") {
+        (CaseStatus::Passed, rest)
+    } else if let Some(rest) = trimmed.strip_prefix("[  FAILED  ]") {
+        (CaseStatus::Failed, rest)
+    } else if let Some(rest) = trimmed.strip_prefix("[  SKIPPED ]") {
+        (CaseStatus::Ignored, rest)
+    } else {
+        return None;
+    };
+    let name = rest.trim().split(" (").next()?.trim();
+    // Linhas de resumo ("N tests, listed below") nao tem Suite.Case.
+    if name.is_empty() || !name.contains('.') || name.contains(' ') {
+        return None;
+    }
+    Some((name.to_owned(), status))
+}
+
+/// `Unity`: `arquivo.c:12:nome_do_teste:PASS|FAIL[: mensagem]|IGNORE`.
+fn parse_unity_case(line: &str) -> Option<(String, CaseStatus)> {
+    let mut parts = line.trim().splitn(4, ':');
+    let file = parts.next()?;
+    let line_number = parts.next()?;
+    let name = parts.next()?.trim();
+    let outcome = parts.next()?.trim();
+    // O 2o campo TEM que ser numero de linha, senao qualquer frase com
+    // dois-pontos viraria caso de teste.
+    if !file.contains('.') || line_number.parse::<u64>().is_err() || name.is_empty() {
+        return None;
+    }
+    let status = if outcome == "PASS" || outcome.starts_with("PASS:") {
+        CaseStatus::Passed
+    } else if outcome == "FAIL" || outcome.starts_with("FAIL:") {
+        CaseStatus::Failed
+    } else if outcome == "IGNORE" || outcome.starts_with("IGNORE:") {
+        CaseStatus::Ignored
+    } else {
+        return None;
+    };
+    Some((name.to_owned(), status))
+}
+
 /// Parses a ctest case line: `1/3 Test #1: Name .... Passed|***Failed`.
 fn parse_ctest_case(line: &str) -> Option<(String, CaseStatus)> {
     let marker = line.find("Test #")?;
@@ -294,7 +353,79 @@ fn parse_ctest_case(line: &str) -> Option<(String, CaseStatus)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{CaseStatus, TestEvent, parse_cargo_case, parse_ctest_case, stream_command};
+    use super::{
+        CaseStatus, TestEvent, parse_cargo_case, parse_cmake_case, parse_ctest_case,
+        parse_gtest_case, parse_unity_case, stream_command,
+    };
+
+    #[test]
+    fn parse_gtest_case_cobre_ok_failed_skipped_e_recusa_resumo() {
+        assert_eq!(
+            parse_gtest_case("[       OK ] SuiteA.CasoBom (12 ms)"),
+            Some(("SuiteA.CasoBom".to_owned(), CaseStatus::Passed))
+        );
+        assert_eq!(
+            parse_gtest_case("[  FAILED  ] SuiteA.CasoRuim (3 ms)"),
+            Some(("SuiteA.CasoRuim".to_owned(), CaseStatus::Failed))
+        );
+        assert_eq!(
+            parse_gtest_case("[  SKIPPED ] SuiteA.CasoPulado"),
+            Some(("SuiteA.CasoPulado".to_owned(), CaseStatus::Ignored))
+        );
+        // Linhas de resumo e moldura do GTest NAO viram caso.
+        assert_eq!(
+            parse_gtest_case("[  FAILED  ] 2 tests, listed below:"),
+            None
+        );
+        assert_eq!(
+            parse_gtest_case("[==========] 5 tests ran. (20 ms total)"),
+            None
+        );
+        assert_eq!(parse_gtest_case("[ RUN      ] SuiteA.CasoBom"), None);
+    }
+
+    #[test]
+    fn parse_unity_case_exige_arquivo_linha_e_recusa_frase_com_dois_pontos() {
+        assert_eq!(
+            parse_unity_case("test_led.c:21:test_liga_led:PASS"),
+            Some(("test_liga_led".to_owned(), CaseStatus::Passed))
+        );
+        assert_eq!(
+            parse_unity_case("src/test_io.c:7:test_le_pino:FAIL: Expected 1 Was 0"),
+            Some(("test_le_pino".to_owned(), CaseStatus::Failed))
+        );
+        assert_eq!(
+            parse_unity_case("test_led.c:30:test_futuro:IGNORE"),
+            Some(("test_futuro".to_owned(), CaseStatus::Ignored))
+        );
+        // Frase qualquer com dois-pontos: o 2o campo nao e numero de linha.
+        assert_eq!(parse_unity_case("nota: veja o log: erro: FAIL"), None);
+        assert_eq!(parse_unity_case("Makefile:12: warning: PASS"), None);
+        // ISOLA a guarda do numero de linha: arquivo com ponto, campo 2 nao
+        // numerico — sem esta fixture a mutacao "guarda removida" sobrevivia
+        // (2026-07-19), porque os casos acima ja caiam pela guarda do ponto.
+        assert_eq!(parse_unity_case("log.txt:aviso:contexto:FAIL"), None);
+    }
+
+    #[test]
+    fn parse_cmake_case_prioriza_ctest_e_encadeia_frameworks() {
+        // Linha do ctest continua autoritativa...
+        assert_eq!(
+            parse_cmake_case("1/3 Test #1: unidade ............   Passed    0.01 sec"),
+            Some(("unidade".to_owned(), CaseStatus::Passed))
+        );
+        // ...e os casos internos (que so aparecem no output de executavel
+        // FALHO com --output-on-failure) ganham nome no painel.
+        assert_eq!(
+            parse_cmake_case("[  FAILED  ] SuiteA.CasoRuim (3 ms)"),
+            Some(("SuiteA.CasoRuim".to_owned(), CaseStatus::Failed))
+        );
+        assert_eq!(
+            parse_cmake_case("test_led.c:21:test_liga_led:FAIL"),
+            Some(("test_liga_led".to_owned(), CaseStatus::Failed))
+        );
+        assert_eq!(parse_cmake_case("saida qualquer do build"), None);
+    }
 
     #[test]
     fn cargo_case_lines_are_parsed_and_summary_is_ignored() {
