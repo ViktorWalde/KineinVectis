@@ -131,10 +131,20 @@ TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
 1. MARKDOWN ("modo imagem" p/ .md)   próxima fatia; paga débito do EditorPane
                                      por extração (outline sidebar) antes de
                                      adicionar o preview — movimento + feature
-2. F2  barra única                   JÁ APROVADA; funde AppMenuBar+TopHeaderBar
-                                     (~46px), hamburger, controles embutidos;
-                                     edita §4/§9/§10 da LAYOUT_SYSTEM no MESMO
-                                     commit (8 regiões → 7)
+2. F2  barra única                   FEITA 2026-07-18, AGUARDA GESTO HUMANO
+                                     (e o PUSH do autor antes do commit).
+                                     AppMenuBar É a barra (46px): hambúrguer
+                                     expande os menus inline (IntelliJ New
+                                     UI), marca+workspace à esquerda, drag,
+                                     TopHeaderBar virou cluster de largura
+                                     implícita à direita, controles embutidos.
+                                     Modelo dos menus extraído p/
+                                     AppMenuModel.qml (a catraca pegou
+                                     304/300 — mistura barra+modelo; §4 r.9).
+                                     O "+40" do mapeamento de popup morreu:
+                                     mapToItem real no ShellHeaderHost.
+                                     Spec editada no mesmo gesto: §4 (8→7
+                                     regiões), §6.3 (46px), §9.1, §10, §11.
 3. F3  painel inferior 1 linha       spec e IntelliJ concordam; 26→34px (§6.3)
 4. F4  âmbar/Salvar                  editor sagrado (§5.1), âmbar contido (§7.2)
 5. VOLTA À FILA PRINCIPAL            fatia 2.2 (config+event do integration) —

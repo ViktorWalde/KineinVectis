@@ -16,6 +16,13 @@ Rectangle {
     property var workspaceBuildSystems: []
     property var recentWorkspaces: []
     property string activeMenu: ""
+    // Barra UNICA (F2, 2026-07-18): os menus ficam recolhidos atras do
+    // hamburguer, como no IntelliJ New UI; o segundo clique recolhe de volta.
+    property bool menusExpanded: false
+    // Largura que o cluster de toolbar (irmao no ShellHeaderHost) ocupa a
+    // direita: o drag region para antes dele.
+    property real reservedRight: 0
+    readonly property real controlsWidth: windowControls.width
     readonly property string windowContextLabel: workspaceName !== ""
                                                  ? workspaceName
                                                  : qsTr("sem workspace")
@@ -29,7 +36,7 @@ Rectangle {
 
     // §4.2: a barra e a propria moldura da janela (background0, sem contorno);
     // menus e controles de janela ficam EMBUTIDOS nela, nao num cartao.
-    height: 40
+    height: 46
     color: Theme.background0
     z: 100
 
@@ -38,14 +45,30 @@ Rectangle {
         actionRequested(action);
     }
 
-    function closeMenu() {
-        activeMenu = "";
+    AppMenuModel {
+        id: menuModel
+
+        workspaceOpen: root.workspaceOpen
+        hasActiveFile: root.hasActiveFile
+        coreConnected: root.coreConnected
+        running: root.running
+        debugging: root.debugging
+        recentWorkspaces: root.recentWorkspaces
+        workspaceBuildSystems: root.workspaceBuildSystems
     }
 
-    function hasBuildSystem(buildSystem) {
-        const systems = workspaceBuildSystems !== undefined
-                && workspaceBuildSystems !== null ? workspaceBuildSystems : [];
-        return systems.indexOf(buildSystem) >= 0;
+    function toggleMenusExpanded() {
+        if (menusExpanded) {
+            menusExpanded = false;
+            closeMenu();
+            menuRequested("", 0, 0, []);
+            return;
+        }
+        menusExpanded = true;
+    }
+
+    function closeMenu() {
+        activeMenu = "";
     }
 
     function toggleMenu(key, item) {
@@ -56,105 +79,7 @@ Rectangle {
         }
         activeMenu = key;
         const point = root.mapFromItem(item, 0, item.height + 2);
-        menuRequested(key, point.x, point.y, menuItems(key));
-    }
-
-    function menuItems(key) {
-        const fileItems = [
-            { label: qsTr("Abrir workspace..."), action: "workspace.open", enabled: true }
-        ];
-        if (recentWorkspaces.length > 0) {
-            fileItems.push({ label: qsTr("Abrir recente"), action: "", enabled: false });
-            for (let index = 0; index < Math.min(recentWorkspaces.length, 8); index++) {
-                const recent = recentWorkspaces[index];
-                const prefix = recent.pinned ? qsTr("Fixado — ") : "";
-                const suffix = recent.available ? "" : qsTr(" — caminho ausente");
-                fileItems.push({
-                    label: "  " + prefix + recent.name + suffix,
-                    action: "workspace.recent.open:" + index,
-                    enabled: recent.available
-                });
-            }
-            fileItems.push({
-                label: qsTr("Limpar workspaces recentes"),
-                action: "workspace.recent.clear",
-                enabled: true
-            });
-        }
-        fileItems.push(
-            { label: qsTr("Novo arquivo..."), action: "project.createFile", enabled: workspaceOpen },
-            { label: qsTr("Nova pasta..."), action: "project.createDirectory", enabled: workspaceOpen },
-            { label: qsTr("Fechar workspace"), action: "workspace.close", enabled: workspaceOpen },
-            { label: qsTr("Salvar"), action: "editor.save", enabled: hasActiveFile },
-            { label: qsTr("Salvar tudo"), action: "editor.saveAll", enabled: hasActiveFile },
-            { label: qsTr("Sair"), action: "app.quit", enabled: true }
-        );
-        const cargoAvailable = hasBuildSystem("cargo");
-        const cmakeAvailable = hasBuildSystem("cmake");
-        const hybrid = cargoAvailable && cmakeAvailable;
-        const buildItems = [
-            { label: qsTr("Configurar CMake"), action: "cmake.configure",
-              enabled: workspaceOpen && cmakeAvailable && coreConnected }
-        ];
-        if (hybrid) {
-            buildItems.push(
-                { label: qsTr("Compilar com Cargo"), action: "build.run.cargo", enabled: workspaceOpen && coreConnected },
-                { label: qsTr("Testar com Cargo"), action: "test.run.cargo", enabled: workspaceOpen && coreConnected },
-                { label: qsTr("Compilar com CMake"), action: "build.run.cmake", enabled: workspaceOpen && coreConnected },
-                { label: qsTr("Testar com CMake"), action: "test.run.cmake", enabled: workspaceOpen && coreConnected }
-            );
-        } else {
-            buildItems.push(
-                { label: qsTr("Compilar"), action: "build.run", enabled: workspaceOpen && coreConnected },
-                { label: qsTr("Testes"), action: "test.run", enabled: workspaceOpen && coreConnected }
-            );
-        }
-        buildItems.push({ label: qsTr("Análise Cargo"), action: "quality.run",
-                          enabled: workspaceOpen && cargoAvailable && coreConnected });
-        const menus = {
-            file: fileItems,
-            edit: [
-                { label: qsTr("Buscar no arquivo"), action: "editor.find", enabled: hasActiveFile },
-                { label: qsTr("Substituir no arquivo"), action: "editor.replace", enabled: hasActiveFile },
-                { label: qsTr("Substituir no projeto"), action: "fs.replace", enabled: workspaceOpen },
-                { label: qsTr("Configurações"), action: "settings.open", enabled: true }
-            ],
-            view: [
-                { label: qsTr("Explorador do projeto"), action: "view.project", enabled: workspaceOpen },
-                { label: qsTr("Terminal"), action: "view.terminal", enabled: workspaceOpen },
-                { label: qsTr("Ferramentas"), action: "view.tools", enabled: true }
-            ],
-            navigate: [
-                { label: qsTr("Search Everywhere"), action: "search.everywhere", enabled: workspaceOpen },
-                { label: qsTr("Arquivos recentes"), action: "search.recent", enabled: workspaceOpen },
-                { label: qsTr("Ir para linha"), action: "editor.gotoLine", enabled: hasActiveFile },
-                { label: qsTr("Símbolos do arquivo"), action: "search.documentSymbols", enabled: hasActiveFile }
-            ],
-            code: [
-                { label: qsTr("Formatar arquivo"), action: "editor.format", enabled: hasActiveFile },
-                { label: qsTr("Renomear símbolo"), action: "lsp.rename", enabled: hasActiveFile },
-                { label: qsTr("Ações de código"), action: "lsp.codeActions", enabled: hasActiveFile },
-                { label: qsTr("Alternar source/header"), action: "lsp.switchSourceHeader", enabled: hasActiveFile }
-            ],
-            build: buildItems,
-            run: [
-                { label: qsTr("Executar"), action: "run.start", enabled: workspaceOpen && coreConnected && !running },
-                { label: qsTr("Depurar"), action: "debug.start", enabled: workspaceOpen && coreConnected && !debugging },
-                { label: qsTr("Parar execução"), action: "run.stop", enabled: running },
-                { label: qsTr("Parar debug"), action: "debug.stop", enabled: debugging }
-            ],
-            tools: [
-                { label: qsTr("Terminal"), action: "view.terminal", enabled: workspaceOpen },
-                { label: qsTr("Git"), action: "view.git", enabled: workspaceOpen },
-                { label: qsTr("Detectar ferramentas"), action: "tools.detect", enabled: true },
-                { label: qsTr("Reiniciar LSP"), action: "lsp.restart", enabled: workspaceOpen }
-            ],
-            help: [
-                { label: qsTr("Manual da IDE"), action: "help.manual", enabled: true },
-                { label: qsTr("Sobre Kinein Vectis"), action: "help.about", enabled: true }
-            ]
-        };
-        return menus[key];
+        menuRequested(key, point.x, point.y, menuModel.menuItems(key));
     }
 
     Row {
@@ -166,17 +91,66 @@ Rectangle {
         height: parent.height
         spacing: Theme.spacingXSmall
 
+        // Hamburguer: desenhado com 3 retangulos (nao ha glifo no KvIcon e o
+        // Canvas dele esta no teto da catraca).
+        Rectangle {
+            id: burgerButton
+
+            anchors.verticalCenter: parent.verticalCenter
+            width: 30
+            height: 28
+            radius: Theme.radius
+            color: root.menusExpanded || burgerArea.containsMouse
+                   ? Theme.surface2 : "transparent"
+
+            Column {
+                anchors.centerIn: parent
+                spacing: 3
+
+                Repeater {
+                    model: 3
+
+                    Rectangle {
+                        width: 14
+                        height: 1.6
+                        radius: 1
+                        color: root.menusExpanded
+                               ? Theme.textPrimary : Theme.textSecondary
+                    }
+                }
+            }
+
+            MouseArea {
+                id: burgerArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleMenusExpanded()
+            }
+        }
+
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.width >= 850
             text: qsTr("Kinein")
             color: Theme.textPrimary
             font.pixelSize: 13
             font.bold: true
         }
 
+        // Nome do workspace ao lado da marca (idioma IntelliJ); some quando o
+        // hamburguer expande os menus, que precisam do espaco.
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: !root.menusExpanded
+            width: Math.min(implicitWidth, 260)
+            text: root.windowContextLabel
+            color: Theme.textMuted
+            font.pixelSize: 11
+            elide: Text.ElideMiddle
+        }
+
         Item {
-            visible: root.width >= 850
             width: Theme.spacingSmall
             height: 1
         }
@@ -200,7 +174,9 @@ Rectangle {
                 required property var modelData
 
                 anchors.verticalCenter: parent.verticalCenter
-                width: menuLabel.implicitWidth + 2 * Theme.spacingSmall
+                visible: root.menusExpanded
+                width: visible
+                       ? menuLabel.implicitWidth + 2 * Theme.spacingSmall : 0
                 height: 28
                 radius: Theme.radius
                 color: root.activeMenu === modelData.key || menuArea.containsMouse
@@ -233,19 +209,11 @@ Rectangle {
         id: dragRegion
 
         x: menuRow.x + menuRow.width + Theme.spacingSmall
-        width: Math.max(0, windowControls.x - Theme.spacingSmall - x)
+        // Para antes do cluster de toolbar (irmao no host) e dos controles.
+        width: Math.max(0, Math.min(windowControls.x,
+                                    root.width - root.reservedRight)
+                        - Theme.spacingSmall - x)
         height: parent.height
-
-        Text {
-            anchors.centerIn: parent
-            visible: parent.width >= 72
-            width: Math.min(implicitWidth, parent.width)
-            text: root.windowContextLabel
-            color: Theme.textMuted
-            font.pixelSize: 11
-            elide: Text.ElideMiddle
-            horizontalAlignment: Text.AlignHCenter
-        }
 
         MouseArea {
             id: dragArea

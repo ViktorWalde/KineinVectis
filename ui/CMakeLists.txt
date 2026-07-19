@@ -26,6 +26,7 @@ set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_ALIAS KvButton.qml)
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
 set_source_files_properties(qml/shell/AppMenuBar.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuBar.qml)
+set_source_files_properties(qml/shell/AppMenuModel.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuModel.qml)
 set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuPopup.qml)
 set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
 set_source_files_properties(qml/shell/ShellLayout.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayout.qml)
@@ -164,6 +165,7 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvButton.qml
         qml/shell/TopHeaderBar.qml
         qml/shell/AppMenuBar.qml
+        qml/shell/AppMenuModel.qml
         qml/shell/AppMenuPopup.qml
         qml/shell/SideRail.qml
         qml/shell/ShellLayout.qml

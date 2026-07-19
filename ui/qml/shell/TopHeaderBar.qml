@@ -2,10 +2,15 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Main Toolbar da spec: alvo, perfil e fluxo Configure → Build → Run/Debug.
-Rectangle {
+// Cluster de toolbar da App Bar unica (F2, 2026-07-18): alvo, perfil e fluxo
+// Configure -> Build -> Run/Debug. Deixou de ser uma BARRA propria — e um
+// Item transparente de largura implicita, ancorado a direita da barra unica
+// pelo ShellHeaderHost; o fundo e da barra (background0).
+Item {
     id: root
 
+    // Largura da BARRA (nao do cluster): decide o que cabe em tela estreita.
+    property real hostWidth: 0
     property bool workspaceOpen: false
     property bool coreConnected: false
     property bool building: false
@@ -53,16 +58,14 @@ Rectangle {
         return workspaceKind === "" ? qsTr("projeto") : workspaceKind;
     }
 
-    // §4.2: plana; o tom (background1 sobre background0) marca a transicao.
-    height: 44
-    color: Theme.background1
+    implicitWidth: toolbarRow.implicitWidth
+    implicitHeight: 46
 
     Row {
         id: toolbarRow
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
-        anchors.leftMargin: Theme.spacingMedium
         spacing: Theme.spacingSmall
 
         KvButton {
@@ -74,7 +77,7 @@ Rectangle {
         }
 
         Rectangle {
-            visible: root.workspaceOpen && root.width >= 1100
+            visible: root.workspaceOpen && root.hostWidth >= 1100
             height: 32
             width: targetText.implicitWidth + 16 + Theme.spacingSmall
                    + 2 * Theme.spacingMedium
@@ -107,7 +110,7 @@ Rectangle {
         KvButton {
             id: configSelector
 
-            visible: root.workspaceOpen && root.width >= 900
+            visible: root.workspaceOpen && root.hostWidth >= 900
             selected: root.configMenuOpen
             iconName: "chevron-down"
             text: root.activeConfigId === ""
@@ -122,7 +125,7 @@ Rectangle {
         }
 
         Rectangle {
-            visible: root.workspaceOpen && root.width >= 900
+            visible: root.workspaceOpen && root.hostWidth >= 900
             width: 1
             height: 24
             color: Theme.borderStrong
@@ -205,16 +208,11 @@ Rectangle {
             tooltip: root.running ? qsTr("Parar execução") : qsTr("Executar configuração ativa")
             onClicked: root.running ? root.stopRunRequested() : root.runRequested()
         }
-    }
 
-    Row {
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.spacingMedium
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: Theme.spacingSmall
-        visible: root.workspaceOpen && root.width >= 1050
-
+        // Estado da conexao + build system fecham o cluster (era o Row
+        // ancorado a direita da barra antiga).
         Rectangle {
+            visible: root.workspaceOpen && root.hostWidth >= 1050
             width: 7
             height: 7
             radius: 3.5
@@ -223,6 +221,7 @@ Rectangle {
         }
 
         Text {
+            visible: root.workspaceOpen && root.hostWidth >= 1050
             anchors.verticalCenter: parent.verticalCenter
             text: root.workspaceSystemLabel()
             color: Theme.textMuted

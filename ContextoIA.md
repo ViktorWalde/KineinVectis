@@ -2501,3 +2501,22 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
 - Prova: tst_markdown_mode.qml; mutacoes "toggle sem guarda de .md" e "toggle
   que so liga" reprovam (bitmask 512 e 64). Limitacao v1 registrada: imagem
   relativa dentro do .md nao resolve (sem baseUrl do arquivo).
+
+## F2 — barra unica (2026-07-18, noite; aguarda gesto + push do autor)
+
+- As duas barras do topo (40+44px) viraram UMA de 46px, idioma IntelliJ New
+  UI: hamburguer expande/recolhe os 9 menus INLINE na barra (segundo clique
+  recolhe; toda a logica menuItems/popup preservada); marca "Kinein" + nome do
+  workspace a esquerda (o nome some quando os menus expandem); TopHeaderBar
+  deixou de ser barra e virou cluster transparente de largura implicita
+  ancorado a direita, antes dos controles de janela embutidos.
+- A catraca pegou o AppMenuBar em 304/300 e o suspeito certo era a MISTURA
+  (barra visual + modelo dos menus): 95 linhas de dados extraidas para
+  AppMenuModel.qml; a barra ficou em 212 e o modelo tem dono proprio.
+- Fio historico morto: o "+40" no configMenuRequested era a costura das duas
+  barras empilhadas; com a fusao, o ShellHeaderHost faz mapToItem de verdade.
+- Gates de largura do cluster passaram a olhar hostWidth (a barra), nao a
+  largura do proprio cluster.
+- Spec editada no MESMO gesto (exigencia registrada): §4 vira 7 regioes com
+  nota datada, §6.3 App Bar 46px, §9.1 diagrama, §10 reescrita (hamburguer),
+  §11 nota de que a Main Toolbar mora na App Bar.

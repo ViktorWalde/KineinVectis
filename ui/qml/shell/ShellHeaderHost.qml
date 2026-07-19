@@ -1,7 +1,11 @@
 import QtQuick
 import KineinVectis
 
-Column {
+// App Bar UNICA (F2, 2026-07-18): a AppMenuBar e a barra inteira (moldura,
+// hamburguer, menus, drag, controles de janela) e o TopHeaderBar e um cluster
+// de toolbar ancorado a direita, antes dos controles. As duas barras
+// empilhadas (40+44px) viraram uma de 46px — LAYOUT_SYSTEM §4/§9/§10.
+Item {
     id: root
 
     property var coreClient: null
@@ -26,7 +30,7 @@ Column {
     signal closeWindowRequested()
     signal moveWindowRequested()
 
-    height: 84
+    height: 46
     z: 100
 
     function executeMenuAction(action) {
@@ -89,7 +93,9 @@ Column {
     AppMenuBar {
         id: appMenuBar
 
-        width: parent.width
+        anchors.fill: parent
+        // O drag region para antes do cluster de toolbar (irmao abaixo).
+        reservedRight: headerToolbar.width + Theme.spacingSmall
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         hasActiveFile: root.editorController.currentTab >= 0
         coreConnected: root.coreClient.connected
@@ -117,7 +123,12 @@ Column {
     }
 
     TopHeaderBar {
-        width: parent.width
+        id: headerToolbar
+
+        anchors.right: parent.right
+        anchors.rightMargin: appMenuBar.controlsWidth + Theme.spacingMedium
+        anchors.verticalCenter: parent.verticalCenter
+        hostWidth: root.width
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         coreConnected: root.coreClient.connected
         workspaceKind: root.coreClient.workspaceKind
@@ -143,7 +154,11 @@ Column {
             root.coreClient.cmakeConfigure();
         }
         onConfigMenuRequested: function(menuX, menuY) {
-            root.configMenuRequested(menuX, menuY + 40);
+            // O cluster nao ocupa a barra inteira: as coordenadas vem no
+            // espaco DELE e precisam do mapeamento real (o antigo "+40"
+            // era a costura das duas barras empilhadas — morreu com a fusao).
+            const pos = headerToolbar.mapToItem(root, menuX, menuY);
+            root.configMenuRequested(pos.x, pos.y);
         }
     }
 }

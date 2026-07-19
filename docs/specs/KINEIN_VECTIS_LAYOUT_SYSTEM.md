@@ -138,20 +138,21 @@ Não misturar os dois dentro da interface real.
 
 ## 4. Arquitetura visual geral
 
-A janela principal da Kinein é dividida em oito regiões.
+A janela principal da Kinein é dividida em **sete** regiões. [Eram oito até
+2026-07-18: o autor aprovou a fusão de Title/App Bar + Main Toolbar numa App
+Bar única de 46px, no idioma do IntelliJ New UI — menus atrás do hambúrguer,
+toolbar e controles de janela embutidos na mesma linha.]
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ 1. Title/App Bar                                                             │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ 2. Main Toolbar                                                              │
+│ 1. App Bar (única): ☰ menus · marca · workspace · toolbar · janela          │
 ├────┬─────────────────────┬──────────────────────────────────┬───────────────┤
-│ 3  │ 4. Left Tool Window │ 5. Editor Area                   │ 6. Assistente │
+│ 2  │ 3. Left Tool Window │ 4. Editor Area                   │ 5. Assistente │
 │Rail│                     │                                  │               │
 ├────┴─────────────────────┴──────────────────────────────────┴───────────────┤
-│ 7. Bottom Tool Window                                                        │
+│ 6. Bottom Tool Window                                                        │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ 8. Status Bar                                                               │
+│ 7. Status Bar                                                               │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -159,14 +160,13 @@ A janela principal da Kinein é dividida em oito regiões.
 
 | Região | Nome | Função |
 |---|---|---|
-| 1 | Title/App Bar | Identidade, menus, ações globais, janela |
-| 2 | Main Toolbar | Target, perfil, build, run, debug, flash, simulação |
-| 3 | Tool Rail | Ícones verticais de janelas/ferramentas |
-| 4 | Left Tool Window | Project, Structure, CMake, Toolchains, Targets |
-| 5 | Editor Area | Código, tabs, breadcrumbs, gutter, diagnósticos |
-| 6 | Assistente | Assistente contextual, explicação, correções e toolchain |
-| 7 | Bottom Tool Window | Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git |
-| 8 | Status Bar | Estado do projeto, branch, target, warnings, encoding, posição |
+| 1 | App Bar (única) | Identidade, menus (hambúrguer), target, perfil, build, run, debug, controles de janela |
+| 2 | Tool Rail | Ícones verticais de janelas/ferramentas |
+| 3 | Left Tool Window | Project, Structure, CMake, Toolchains, Targets |
+| 4 | Editor Area | Código, tabs, breadcrumbs, gutter, diagnósticos |
+| 5 | Assistente | Assistente contextual, explicação, correções e toolchain |
+| 6 | Bottom Tool Window | Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git |
+| 7 | Status Bar | Estado do projeto, branch, target, warnings, encoding, posição |
 
 ### 4.2 Modelo de superfície: regiões encostadas (2026-07-18)
 
@@ -308,8 +308,7 @@ Usar escala de 4px.
 
 | Elemento | Altura |
 |---|---:|
-| Title/App Bar | 40px |
-| Main Toolbar | 44px |
+| App Bar (única, desde 2026-07-18) | 46px |
 | Tab Bar | 36px |
 | Breadcrumb Bar | 26px |
 | Status Bar | 28px |
@@ -434,9 +433,7 @@ Este é o layout inicial após abrir um projeto.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ KV | Kinein        File Edit View Navigate Code Build Run Tools Help         │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ [Target: x86_64-linux ▼] [CMake: Debug ▼] [Configure] [Build] [Run] [Debug] │
+│ ☰ Kinein · ws   [Target ▼] [Perfil ▼] [Build] [Run] [Debug]        — □ ×    │
 ├────┬──────────────────────┬─────────────────────────────────┬──────────────┤
 │Rail│ Project              │ Editor                          │ Assistente   │
 │    │ Structure            │ Tabs + Breadcrumbs              │ Context      │
@@ -467,22 +464,30 @@ Sessões seguintes: restaurar layout salvo pelo usuário.
 
 ---
 
-## 10. Title/App Bar
+## 10. App Bar (única desde 2026-07-18)
 
 ### 10.1 Função
 
-A Title/App Bar contém:
+A App Bar contém, numa única linha de 46px:
 
-- marca KV;
+- hambúrguer (☰) que expande/recolhe os menus globais na própria barra,
+  como no IntelliJ New UI — o modelo dos menus vive no `AppMenuModel.qml`;
 - nome curto Kinein;
-- menus globais;
-- ações de janela;
-- indicadores globais discretos.
+- nome do workspace aberto (some quando os menus expandem);
+- região de arrasto da janela;
+- cluster de toolbar (ver §11) ancorado à direita;
+- controles de janela (minimizar/restaurar/fechar) EMBUTIDOS na barra.
 
 ### 10.2 Conteúdo recomendado
 
 ```text
-[KV] Kinein     File  Edit  View  Navigate  Code  Build  Run  Tools  Help
+☰  Kinein  meu-projeto        [Perfil ▼] ⚙ [Compilar] ✓ 🐞 ▶       — □ ×
+```
+
+Com o hambúrguer expandido:
+
+```text
+☰  Kinein  Arquivo Editar Exibir Navegar Código Build Executar ...  — □ ×
 ```
 
 Evitar usar “Kinein Vectis” inteiro no topo diário. O nome completo aparece em:
@@ -508,6 +513,11 @@ Evitar usar “Kinein Vectis” inteiro no topo diário. O nome completo aparece
 ## 11. Main Toolbar
 
 A Main Toolbar é a região operacional mais importante para C/C++/Rust.
+
+> Desde 2026-07-18 ela não é mais uma barra própria: é o **cluster de
+> toolbar dentro da App Bar única** (§10), ancorado à direita antes dos
+> controles de janela (`TopHeaderBar.qml`, agora um Item de largura
+> implícita). A ordem e as regras abaixo continuam valendo para o cluster.
 
 ### 11.1 Ordem recomendada
 
