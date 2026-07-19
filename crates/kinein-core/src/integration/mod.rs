@@ -7,12 +7,50 @@
 //!    junto — nunca código de terceiro em runtime.
 //! 3. A UI é burra: lista e (depois) configura; nunca inicia processo.
 
+pub mod config;
 mod health;
 mod registry;
 
 use kinein_protocol::{IntegrationInfo, IntegrationListResult};
 
 use crate::tools::ToolDetector;
+
+/// Uma integração com este `id` existe no inventário compilado?
+///
+/// Config de id desconhecido é recusada no handler: aceitar gravaria valores
+/// órfãos que nenhuma vertical lê (o typo só apareceria quando "sumisse").
+#[must_use]
+pub fn is_known(id: &str) -> bool {
+    registry::descriptors()
+        .iter()
+        .any(|descriptor| descriptor.id == id)
+}
+
+/// Ids cuja SAÚDE derivada mudou entre duas detecções.
+///
+/// Compara a `IntegrationHealth` derivada (o mesmo `from_tool_info` do
+/// `integration.list`), não o `ToolInfo` cru — só o que a UI enxerga conta.
+/// `old = None` (primeira detecção do processo) devolve vazio de propósito:
+/// "passou a existir" não é "mudou", e emitiria um evento por ferramenta em
+/// todo boot.
+#[must_use]
+pub fn health_changes(
+    old: Option<&[kinein_protocol::ToolInfo]>,
+    new: &[kinein_protocol::ToolInfo],
+) -> Vec<String> {
+    let Some(old) = old else {
+        return Vec::new();
+    };
+    registry::descriptors()
+        .into_iter()
+        .filter_map(|descriptor| {
+            let id = descriptor.id;
+            let before = health::from_tool_info(&id, old.iter().find(|tool| tool.id == id));
+            let after = health::from_tool_info(&id, new.iter().find(|tool| tool.id == id));
+            (before != after).then_some(id)
+        })
+        .collect()
+}
 
 /// Lista toda integração conhecida com a sua saúde atual.
 ///

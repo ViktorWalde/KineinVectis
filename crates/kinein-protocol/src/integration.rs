@@ -62,6 +62,109 @@ pub struct IntegrationListResult {
     pub integrations: Vec<IntegrationInfo>,
 }
 
+/// Escopo de um valor de configuração de integração (0.62.0).
+///
+/// `Workspace` sobrepõe `Global` para o mesmo par integração+chave; `reset`
+/// remove a sobreposição do escopo pedido — reversível por construção: o
+/// estado "sem sobreposição" é sempre alcançável de volta.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum IntegrationConfigScope {
+    /// Vale para todo workspace do usuário.
+    Global,
+    /// Vale só para o workspace aberto.
+    Workspace,
+}
+
+/// Um valor de configuração armazenado para uma integração.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationConfigEntry {
+    /// Chave livre (contrato genérico chave→valor; a semântica é da vertical).
+    pub key: String,
+    /// Valor textual armazenado.
+    pub value: String,
+    /// De onde o valor veio.
+    pub scope: IntegrationConfigScope,
+}
+
+/// Parâmetros de `integration.config.get`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct IntegrationConfigGetParams {
+    /// Integração consultada (`id` do descritor).
+    pub id: String,
+}
+
+/// Parâmetros de `integration.config.set`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct IntegrationConfigSetParams {
+    /// Integração alvo.
+    pub id: String,
+    /// Chave a gravar.
+    pub key: String,
+    /// Valor a gravar.
+    pub value: String,
+    /// Escopo da gravação.
+    pub scope: IntegrationConfigScope,
+}
+
+/// Parâmetros de `integration.config.reset`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct IntegrationConfigResetParams {
+    /// Integração alvo.
+    pub id: String,
+    /// Chave cuja sobreposição sai.
+    pub key: String,
+    /// Escopo de onde a sobreposição sai.
+    pub scope: IntegrationConfigScope,
+}
+
+/// Resposta de `integration.config.get`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationConfigGetResult {
+    /// Integração consultada.
+    pub id: String,
+    /// Valores armazenados nos dois escopos (workspace sobrepõe global).
+    pub entries: Vec<IntegrationConfigEntry>,
+}
+
+/// Resposta de `integration.config.reset`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationConfigResetResult {
+    /// Integração alvo.
+    pub id: String,
+    /// Chave pedida.
+    pub key: String,
+    /// `true` quando havia sobreposição e ela foi removida; `false` quando o
+    /// reset foi um no-op (já estava no default) — e aí NENHUM evento é emitido.
+    pub removed: bool,
+}
+
+/// O que mudou numa integração (`event.integration.changed`).
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum IntegrationChangeKind {
+    /// A saúde (instalada/versão/caminho) mudou após uma nova detecção.
+    Health,
+    /// Um valor de configuração mudou (set efetivo ou reset que removeu).
+    Config,
+}
+
+/// Payload de `event.integration.changed`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationChangedEvent {
+    /// Integração que mudou.
+    pub id: String,
+    /// Que face dela mudou.
+    pub kind: IntegrationChangeKind,
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{IntegrationDescriptor, IntegrationHealth, IntegrationInfo, IntegrationListResult};
@@ -88,6 +191,47 @@ mod tests {
         // Campos vazios sao omitidos; o campo com valor aparece em camelCase.
         assert!(json["health"].get("version").is_none());
         assert_eq!(json["health"]["detail"], "nao encontrado no PATH");
+    }
+
+    #[test]
+    fn config_payloads_use_camel_case_and_reject_unknown_fields() {
+        use crate::{
+            IntegrationChangeKind, IntegrationChangedEvent, IntegrationConfigEntry,
+            IntegrationConfigResetParams, IntegrationConfigScope, IntegrationConfigSetParams,
+        };
+        use serde_json::json;
+
+        let set: IntegrationConfigSetParams = serde_json::from_value(json!({
+            "id": "clangd", "key": "args", "value": "--log=error", "scope": "workspace"
+        }))
+        .unwrap();
+        assert_eq!(set.scope, IntegrationConfigScope::Workspace);
+
+        let invalid = serde_json::from_value::<IntegrationConfigSetParams>(json!({
+            "id": "clangd", "key": "args", "value": "x", "scope": "workspace", "extra": 1
+        }));
+        assert!(invalid.is_err());
+
+        let reset: IntegrationConfigResetParams = serde_json::from_value(json!({
+            "id": "clangd", "key": "args", "scope": "global"
+        }))
+        .unwrap();
+        assert_eq!(reset.scope, IntegrationConfigScope::Global);
+
+        let entry = serde_json::to_value(IntegrationConfigEntry {
+            key: "args".to_owned(),
+            value: "--log=error".to_owned(),
+            scope: IntegrationConfigScope::Global,
+        })
+        .unwrap();
+        assert_eq!(entry["scope"], "global");
+
+        let event = serde_json::to_value(IntegrationChangedEvent {
+            id: "clangd".to_owned(),
+            kind: IntegrationChangeKind::Config,
+        })
+        .unwrap();
+        assert_eq!(event["kind"], "config");
     }
 
     #[test]

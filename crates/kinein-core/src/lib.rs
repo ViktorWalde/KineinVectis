@@ -41,8 +41,9 @@ use std::{
 };
 
 use kinein_protocol::{
-    CorePingResult, JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcRequest,
-    JsonRpcResponse, ToolInfo, ToolStatus, ToolsDetectResult, WorkspaceInfo, WorkspaceStatusResult,
+    CorePingResult, IntegrationChangeKind, IntegrationChangedEvent, JobAcceptedResult, JobRisk,
+    JsonRpcError, JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse, ToolInfo, ToolStatus,
+    ToolsDetectResult, WorkspaceInfo, WorkspaceStatusResult,
 };
 use serde_json::{Value, json};
 
@@ -65,6 +66,9 @@ pub struct Core {
     jobs: Option<jobs::JobManager>,
     /// Store local de rascunhos (autosave), aberta por-workspace (docs/seguranca/23).
     drafts: Option<db::DraftStore>,
+    /// Store GLOBAL da config de integrações (XDG); aberta na 1ª necessidade.
+    global_config: Option<db::DraftStore>,
+    global_config_probed: bool,
     /// Persistência local ligada (só no core completo, não em testes leves).
     persistence_enabled: bool,
 }
@@ -93,6 +97,8 @@ impl Core {
             terminal: None,
             jobs: None,
             drafts: None,
+            global_config: None,
+            global_config_probed: false,
             persistence_enabled: false,
         }
     }
@@ -167,14 +173,7 @@ impl Core {
                 request_id,
                 json!({ "commands": commands::command_descriptors() }),
             )),
-            "tools.detect" => {
-                let tools = self.detector.detect_all();
-                set_tool_registry(&self.tool_registry, tools.clone());
-                RequestOutcome::Continue(JsonRpcResponse::success(
-                    request_id,
-                    json!(ToolsDetectResult { tools }),
-                ))
-            }
+            "tools.detect" => RequestOutcome::Continue(self.tools_detect_response(request_id)),
             "tools.status" => {
                 let tools = self.tool_registry_snapshot().unwrap_or_else(|| {
                     let tools = self.detector.detect_all();
@@ -297,11 +296,49 @@ impl Core {
         }
     }
 
+    /// Detecta as ferramentas e atualiza o registry. Fatia 2.2: a saude das
+    /// integracoes DERIVA desta deteccao — quem mudou entre snapshots gera
+    /// `event.integration.changed` (kind=health).
+    fn tools_detect_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
+        let old = self.tool_registry_snapshot();
+        let tools = self.detector.detect_all();
+        set_tool_registry(&self.tool_registry, tools.clone());
+        for id in integration::health_changes(old.as_deref(), &tools) {
+            self.emit_integration_changed(&id, IntegrationChangeKind::Health);
+        }
+        JsonRpcResponse::success(request_id, json!(ToolsDetectResult { tools }))
+    }
+
     fn tool_registry_snapshot(&self) -> Option<Vec<ToolInfo>> {
         self.tool_registry
             .lock()
             .ok()
             .and_then(|registry| registry.clone())
+    }
+
+    /// Abre a store GLOBAL da configuração de integrações (XDG) na primeira
+    /// necessidade e só uma vez — `probed` impede re-tentativa a cada request
+    /// quando o diretório não pode ser criado. Separado do uso (o chamador lê
+    /// `self.global_config` depois) para não segurar o empréstimo mutável.
+    pub(crate) fn ensure_global_config(&mut self) {
+        if !self.global_config_probed {
+            self.global_config_probed = true;
+            self.global_config = db::DraftStore::open_in(&settings::global_dir());
+        }
+    }
+
+    /// Emite `event.integration.changed` (best-effort: sem canal, sem evento —
+    /// o mesmo contrato dos demais `event.*`).
+    pub(crate) fn emit_integration_changed(&self, id: &str, kind: IntegrationChangeKind) {
+        if let Some(events) = self.events.as_ref() {
+            drop(events.send(JsonRpcRequest::notification(
+                "event.integration.changed",
+                Some(json!(IntegrationChangedEvent {
+                    id: id.to_owned(),
+                    kind,
+                })),
+            )));
+        }
     }
 
     fn environment_scan_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
@@ -350,7 +387,19 @@ impl Core {
                     );
                 }
 
+                // Fatia 2.2: mesmo contrato do tools.detect — saude que mudou
+                // entre snapshots emite event.integration.changed no job.
+                let old = registry.lock().ok().and_then(|guard| guard.clone());
                 set_tool_registry(&registry, tools.clone());
+                for id in integration::health_changes(old.as_deref(), &tools) {
+                    ctx.emit_event(
+                        "event.integration.changed",
+                        json!(IntegrationChangedEvent {
+                            id,
+                            kind: IntegrationChangeKind::Health,
+                        }),
+                    );
+                }
                 let summary = ToolScanSummary::from_tools(&tools);
                 ctx.emit_event(
                     "event.environment.finished",

@@ -1,10 +1,10 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.61.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.62.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality.run`,
-> `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
+> `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `integration.*`). O
 > protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
 > etc.) está em
 > `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md`. Onde
@@ -1213,6 +1213,36 @@ git.stash { action: "push|pop", message? } → GitStatusResult
   pop restaura o stash mais recente;
 - todas as mutações síncronas devolvem o status inteiro para não duplicar
   estado derivado na UI.
+
+### Integrações (`integration.list` / `integration.config.get|set|reset`)
+
+Plataforma de integrações (L1, roadmap 28 §2). Uma integração é um descritor
+tipado compilado junto ao core — nunca código de terceiro em runtime.
+
+- `integration.list` (0.61.0) — inventário read-only: todo descritor conhecido
+  com a saúde atual (`installed`/`version`/`path`/`detail`), derivada da mesma
+  detecção do `tools.*` (não há segundo detector).
+- `integration.config.get { id }` (0.62.0) — valores armazenados da integração
+  nos dois escopos. `entries: [{ key, value, scope }]`; `workspace` vem depois
+  de `global` na lista e o consumidor aplica o último (sobreposição). Ler
+  nunca exige workspace: escopo sem store só não contribui entradas.
+- `integration.config.set { id, key, value, scope }` (0.62.0) — grava uma
+  sobreposição. `scope: "global" | "workspace"`; o escopo `workspace` exige
+  workspace aberto. Devolve a entrada gravada. Set idempotente (mesmo valor)
+  responde sucesso e **não** emite evento.
+- `integration.config.reset { id, key, scope }` (0.62.0) — remove a
+  sobreposição (volta ao default da vertical; reversível por construção).
+  Devolve `{ id, key, removed }`; `removed: false` é no-op sem evento.
+- `id` fora do inventário compilado responde `InvalidParams` — aceitar
+  gravaria valores órfãos que nenhuma vertical lê.
+- Persistência: escopo `workspace` na base local do workspace
+  (`.kinein/kinein.db`, a mesma dos rascunhos, tabela própria); escopo
+  `global` numa base idêntica no diretório XDG do usuário.
+- Evento `event.integration.changed { id, kind: "health" | "config" }`:
+  `config` sai de set/reset **efetivos**; `health` sai quando uma nova
+  detecção (`tools.detect` / `environment.scan`) muda a saúde derivada de
+  alguma integração. A primeira detecção do processo não emite (não há
+  snapshot anterior para comparar).
 
 ### Jobs (`job.list` / `job.cancel`)
 

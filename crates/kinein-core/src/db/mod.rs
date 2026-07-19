@@ -15,7 +15,7 @@ use std::{
 use rusqlite::{Connection, params};
 
 /// Versão do schema local (migrações via `PRAGMA user_version`).
-const SCHEMA_VERSION: i64 = 1;
+const SCHEMA_VERSION: i64 = 2;
 
 /// Um rascunho não salvo, recuperável após um crash.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,8 +40,16 @@ impl DraftStore {
     /// não puder ser criado; DB corrompido é recriado do zero.
     #[must_use]
     pub fn open(root: &Path) -> Option<Self> {
-        let dir = root.join(".kinein");
-        if std::fs::create_dir_all(&dir).is_err() {
+        Self::open_in(&root.join(".kinein"))
+    }
+
+    /// Abre (ou cria) `<dir>/kinein.db` num diretório arbitrário. É o mesmo
+    /// mecanismo do por-workspace, usado também para o escopo GLOBAL da
+    /// configuração de integrações (diretório XDG de estado) — uma store só,
+    /// sem inventar formato novo (fatia 2.2, 2026-07-19).
+    #[must_use]
+    pub fn open_in(dir: &Path) -> Option<Self> {
+        if std::fs::create_dir_all(dir).is_err() {
             return None;
         }
         let path = dir.join("kinein.db");
@@ -83,6 +91,51 @@ impl DraftStore {
         Ok(())
     }
 
+    /// Grava (ou sobrescreve) um valor de configuração de integração.
+    /// Devolve `true` quando o valor efetivamente MUDOU (chave nova ou valor
+    /// diferente) — é o que decide se `event.integration.changed` é emitido.
+    pub fn config_set(&self, integration: &str, key: &str, value: &str) -> rusqlite::Result<bool> {
+        let atual: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT value FROM integration_config
+                 WHERE integration_id = ?1 AND key = ?2",
+                params![integration, key],
+                |row| row.get(0),
+            )
+            .ok();
+        if atual.as_deref() == Some(value) {
+            return Ok(false);
+        }
+        self.conn.execute(
+            "INSERT INTO integration_config(integration_id, key, value)
+             VALUES(?1, ?2, ?3)
+             ON CONFLICT(integration_id, key) DO UPDATE SET value = ?3",
+            params![integration, key, value],
+        )?;
+        Ok(true)
+    }
+
+    /// Remove a sobreposição de uma chave (reset ao default). Devolve `true`
+    /// quando havia algo para remover; `false` é um no-op sem evento.
+    pub fn config_reset(&self, integration: &str, key: &str) -> rusqlite::Result<bool> {
+        let removidas = self.conn.execute(
+            "DELETE FROM integration_config WHERE integration_id = ?1 AND key = ?2",
+            params![integration, key],
+        )?;
+        Ok(removidas > 0)
+    }
+
+    /// Lista os pares chave→valor armazenados para uma integração.
+    pub fn config_list(&self, integration: &str) -> rusqlite::Result<Vec<(String, String)>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT key, value FROM integration_config
+             WHERE integration_id = ?1 ORDER BY key",
+        )?;
+        let rows = stmt.query_map(params![integration], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        rows.collect()
+    }
+
     /// Lista todos os rascunhos guardados.
     pub fn list(&self) -> rusqlite::Result<Vec<Draft>> {
         let mut stmt = self
@@ -108,6 +161,19 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
                 path TEXT PRIMARY KEY,
                 content TEXT NOT NULL,
                 saved_at INTEGER NOT NULL
+            );",
+        )?;
+    }
+    if version < 2 {
+        // Fatia 2.2 (2026-07-19): configuração genérica de integrações,
+        // chave→valor por integração. O ESCOPO é o arquivo: o DB do workspace
+        // guarda o escopo workspace, o DB global (XDG) guarda o global.
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS integration_config(
+                integration_id TEXT NOT NULL,
+                key TEXT NOT NULL,
+                value TEXT NOT NULL,
+                PRIMARY KEY(integration_id, key)
             );",
         )?;
     }
