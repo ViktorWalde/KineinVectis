@@ -65,6 +65,8 @@ Rectangle {
     property bool externalDeleted: false
     property string externalMessage: ""
     property string watchError: ""
+    // Modo "imagem" dos .md (EditorMarkdownModeController via AppDomains).
+    property var markdownMode: null
     property var outlineItems: []
     property real outlineWidth: 220
     property bool outlineCollapsed: false
@@ -158,7 +160,7 @@ Rectangle {
         onSaveRequested: root.saveRequested()
     }
 
-    Row {
+    EditorBreadcrumbs {
         id: breadcrumbsBar
 
         anchors.top: tabBar.bottom
@@ -166,40 +168,8 @@ Rectangle {
         anchors.right: parent.right
         anchors.leftMargin: Theme.spacingMedium
         anchors.rightMargin: Theme.spacingSmall
-        height: visible ? 18 : 0
         visible: root.currentTab >= 0 && root.breadcrumbPath !== ""
-        spacing: Theme.spacingXSmall
-
-        Repeater {
-            model: root.breadcrumbPath.split("/")
-
-            delegate: Row {
-                id: breadcrumbSegment
-
-                required property int index
-                required property string modelData
-
-                spacing: Theme.spacingXSmall
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: breadcrumbSegment.modelData
-                    color: breadcrumbSegment.index
-                           === root.breadcrumbPath.split("/").length - 1
-                           ? Theme.textSecondary : Theme.textMuted
-                    font.pixelSize: 11
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: breadcrumbSegment.index
-                             < root.breadcrumbPath.split("/").length - 1
-                    text: "›"
-                    color: Theme.textMuted
-                    font.pixelSize: 11
-                }
-            }
-        }
+        path: root.breadcrumbPath
     }
 
     EditorExternalChangeBanner {
@@ -231,6 +201,9 @@ Rectangle {
         anchors.right: outlineSplitter.visible ? outlineSplitter.left : parent.right
         anchors.rightMargin: Theme.spacingSmall
         anchors.margins: Theme.spacingSmall
+        // Em modo "imagem" o buffer some da tela; esconder evita digitar num
+        // texto invisivel por baixo do preview.
+        visible: !markdownPreview.showing
         hasOpenFile: root.currentTab >= 0
         breakpointLines: root.breakpointLines
         executionLine: root.executionLine
@@ -276,6 +249,16 @@ Rectangle {
         onSmartHomeRequested: function(extendSelection) {
             root.smartHomeRequested(extendSelection);
         }
+    }
+
+    EditorMarkdownPreview {
+        id: markdownPreview
+
+        anchors.fill: editor
+        visible: root.currentTab >= 0
+        mode: root.markdownMode
+        filePath: root.breadcrumbPath
+        sourceText: editor.text
     }
 
     EditorOutlinePanel {

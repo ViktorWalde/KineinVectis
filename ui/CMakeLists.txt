@@ -127,6 +127,9 @@ set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RE
 set_source_files_properties(qml/editor/EditorCompletionController.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionController.qml)
 set_source_files_properties(qml/editor/EditorCodeActionController.qml PROPERTIES QT_RESOURCE_ALIAS EditorCodeActionController.qml)
 set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALIAS EditorPane.qml)
+set_source_files_properties(qml/editor/EditorBreadcrumbs.qml PROPERTIES QT_RESOURCE_ALIAS EditorBreadcrumbs.qml)
+set_source_files_properties(qml/editor/EditorMarkdownModeController.qml PROPERTIES QT_RESOURCE_ALIAS EditorMarkdownModeController.qml)
+set_source_files_properties(qml/editor/EditorMarkdownPreview.qml PROPERTIES QT_RESOURCE_ALIAS EditorMarkdownPreview.qml)
 set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
 set_source_files_properties(qml/editor/EditorAutoClosePairs.qml PROPERTIES QT_RESOURCE_ALIAS EditorAutoClosePairs.qml)
@@ -262,6 +265,9 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorCompletionController.qml
         qml/editor/EditorCodeActionController.qml
         qml/editor/EditorPane.qml
+        qml/editor/EditorBreadcrumbs.qml
+        qml/editor/EditorMarkdownModeController.qml
+        qml/editor/EditorMarkdownPreview.qml
         qml/editor/EditorTabsBar.qml
         qml/editor/EditorTextSurface.qml
         qml/editor/EditorAutoClosePairs.qml

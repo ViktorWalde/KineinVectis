@@ -114,12 +114,16 @@ F1b Feedback do aceite da F1 (2026-07-18) — 4 de 5 FEITOS no mesmo dia:
         REPROVA o empacotamento sem o plugin (empacotar-appimage.sh). NOTA:
         o dist/ atual (07-17) continua sem ícones até a próxima geração —
         que segue aguardando a decisão "AppImage só quando estabilizar".
-    [ ] modo "imagem" (markdown renderizado) para os .md do projeto, como o
-        Manual da IDE já faz — ATENÇÃO: é feature de editor; a regra "quem
-        toca a área paga a dela" cobra débito do EditorController (842/400)
-        e do EditorPane (485/300). Renderização já existe pronta no
-        DocumentationDialog (TextEdit.MarkdownText); a fatia é o toggle
-        por aba + onde mora esse estado sem engordar arquivo em débito.
+    [x] modo "imagem" (markdown renderizado) — FEITO 2026-07-18, AGUARDA
+        GESTO HUMANO. Chip "Imagem"/"Código" no canto do editor em arquivo
+        .md; render idêntico ao Manual (TextEdit.MarkdownText); estado POR
+        ARQUIVO no EditorMarkdownModeController (apresentação, não negócio;
+        core nunca sabe), limpo ao fechar workspace. O débito foi PAGO por
+        extração antes da feature: EditorBreadcrumbs saiu do EditorPane
+        (485→469) e o breadcrumb-helper saiu do ShellWorkspaceHost
+        (529→525). Provado por tst_markdown_mode.qml (2 mutações reprovam).
+        Limitação registrada da v1: imagem com caminho relativo dentro do
+        .md não resolve (sem baseUrl); texto/título/lista/tabela/código sim.
 
 TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
 

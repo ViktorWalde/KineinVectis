@@ -39,6 +39,7 @@ Item {
     readonly property alias editorController: editorController
     readonly property alias projectTree: projectTree
     readonly property alias projectTreeGestures: projectTreeGestures
+    readonly property alias markdownModeController: markdownModeController
 
     visible: false
 
@@ -260,6 +261,11 @@ Item {
         id: projectTreeGestures
 
         tree: projectTree
+    }
+
+    // Modo "imagem" dos .md: estado de apresentacao por arquivo (2026-07-18).
+    EditorMarkdownModeController {
+        id: markdownModeController
     }
 
     WorkspaceEventRouter {

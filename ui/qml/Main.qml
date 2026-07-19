@@ -58,6 +58,7 @@ Window {
         diagnosticsController: domains.diagnosticsController
         shellController: domains.shellController
         projectTree: domains.projectTree
+        markdownMode: domains.markdownModeController
         editorController: domains.editorController
         jobsController: domains.jobsController
         searchController: domains.searchController
@@ -187,6 +188,7 @@ Window {
         projectHealthController: domains.projectHealthController
         projectTree: domains.projectTree
         projectTreeGestures: domains.projectTreeGestures
+        markdownMode: domains.markdownModeController
         editorController: domains.editorController
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController

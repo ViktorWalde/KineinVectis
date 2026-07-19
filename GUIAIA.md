@@ -412,6 +412,8 @@ ui/qml/editor/EditorController.qml
     ├─ EditorDocumentController.qml
     ├─ EditorTextController.qml
     └─ EditorExternalChangeBanner.qml
+ui/qml/editor/EditorMarkdownModeController.qml  (modo "imagem" dos .md, por
+    arquivo; visual em EditorMarkdownPreview.qml; trilha em EditorBreadcrumbs)
 ui/qml/ipc/EditorEventRouter.qml + WorkspaceEventRouter.qml
     ↕ crates/kinein-protocol/src/{fs,draft,format}.rs
 crates/kinein-core/src/handlers/{fs,draft,format}.rs

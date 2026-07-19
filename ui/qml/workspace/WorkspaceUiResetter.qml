@@ -4,6 +4,7 @@ Item {
     id: root
 
     property var projectTree: null
+    property var markdownMode: null
     property var editorController: null
     property var jobsController: null
     property var searchController: null
@@ -19,6 +20,9 @@ Item {
 
     function clear() {
         projectTree.clear();
+        // Fechar o workspace descarta o modo "imagem" por arquivo: caminho
+        // relativo de OUTRO projeto nao pode herdar o estado deste.
+        markdownMode.clear();
         editorController.clear();
         jobsController.clear();
         searchController.clear();

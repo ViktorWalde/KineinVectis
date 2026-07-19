@@ -2482,3 +2482,22 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
   arvore (.cpp etc.) nao aparecem no AppImage — investigar packaging;
   (e) modo "imagem" (render markdown) para .md do projeto, como o Manual da
   IDE ja faz no Ajuda.
+
+## Modo "imagem" para .md do projeto (2026-07-18, tarde)
+
+- Pedido do autor: os .md do projeto legiveis como o Manual da IDE ja e (Ajuda
+  -> Manual). Entregue como chip "Imagem"/"Código" no canto do editor quando o
+  arquivo atual e .md; o render e o MESMO padrao do DocumentationDialog
+  (TextEdit.MarkdownText + Flickable + VerticalScrollBar).
+- Onde mora o que: EditorMarkdownModeController (AppDomains) guarda POR ARQUIVO
+  se a aba esta em preview — estado de APRESENTACAO, o core nunca sabe; o
+  WorkspaceUiResetter o limpa ao fechar workspace (caminho relativo de outro
+  projeto nao pode herdar o estado). EditorMarkdownPreview e visual puro; o
+  texto vem por binding vivo de editor.text (alias notificante).
+- O debito foi pago ANTES da feature (regra "quem toca a area paga a dela"):
+  EditorBreadcrumbs extraido do EditorPane (485->469 de codigo) e o helper de
+  breadcrumb inlinado no ShellWorkspaceHost (529->525). Ambos ENCOLHERAM
+  recebendo a feature.
+- Prova: tst_markdown_mode.qml; mutacoes "toggle sem guarda de .md" e "toggle
+  que so liga" reprovam (bitmask 512 e 64). Limitacao v1 registrada: imagem
+  relativa dentro do .md nao resolve (sem baseUrl do arquivo).

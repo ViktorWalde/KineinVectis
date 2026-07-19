@@ -9,6 +9,7 @@ Item {
     property var projectHealthController
     property var projectTree
     property var projectTreeGestures
+    property var markdownMode
     property var editorController
     property var jobsController
     property var runtimeController
@@ -52,14 +53,6 @@ Item {
     // quando a aba ativa ou os breakpoints mudam (funcoes nao notificam).
     function currentFileBreakpoints(currentTab, revision) {
         return debugController.breakpointLinesFor(
-            editorController.currentFilePath());
-    }
-
-    function currentFileBreadcrumb(currentTab) {
-        if (currentTab < 0) {
-            return "";
-        }
-        return shellController.relativeToRoot(
             editorController.currentFilePath());
     }
 
@@ -294,8 +287,11 @@ Item {
                     root.debugController.toggleBreakpoint(
                         root.editorController.currentFilePath(), line);
                 }
-                breadcrumbPath: root.currentFileBreadcrumb(
-                    root.editorController.currentTab)
+                // currentTab no gatilho: funcao nao notifica; a troca de aba sim.
+                breadcrumbPath: root.editorController.currentTab < 0 ? ""
+                    : root.shellController.relativeToRoot(
+                          root.editorController.currentFilePath())
+                markdownMode: root.markdownMode
                 diffLineKinds: root.gitController.diffLineKinds
                 diffRevision: root.gitController.diffRevision
                 blameActive: root.gitController.blameVisible
