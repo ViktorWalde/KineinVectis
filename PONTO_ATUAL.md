@@ -120,6 +120,28 @@ F1b Feedback do aceite da F1 (2026-07-18) — 4 de 5 FEITOS no mesmo dia:
         e do EditorPane (485/300). Renderização já existe pronta no
         DocumentationDialog (TextEdit.MarkdownText); a fatia é o toggle
         por aba + onde mora esse estado sem engordar arquivo em débito.
+
+TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
+
+```text
+1. MARKDOWN ("modo imagem" p/ .md)   próxima fatia; paga débito do EditorPane
+                                     por extração (outline sidebar) antes de
+                                     adicionar o preview — movimento + feature
+2. F2  barra única                   JÁ APROVADA; funde AppMenuBar+TopHeaderBar
+                                     (~46px), hamburger, controles embutidos;
+                                     edita §4/§9/§10 da LAYOUT_SYSTEM no MESMO
+                                     commit (8 regiões → 7)
+3. F3  painel inferior 1 linha       spec e IntelliJ concordam; 26→34px (§6.3)
+4. F4  âmbar/Salvar                  editor sagrado (§5.1), âmbar contido (§7.2)
+5. VOLTA À FILA PRINCIPAL            fatia 2.2 (config+event do integration) —
+                                     o desvio de layout NÃO cancela o roadmap
+                                     28; L2+ segue esperando o v1 completo
+```
+
+APPIMAGE/ÍCONES — respondido ao autor em 2026-07-18: gerar um AppImage novo
+JÁ SAI CORRIGIDO. O fix é no script (EXTRA_QT_PLUGINS=svg) e a validação
+reprova o empacotamento se libqsvg.so faltar. O autor gera quando quiser;
+a decisão "AppImage quando estabilizar" é dele e continua valendo.
 F2  Barra única — APROVADA pelo autor (fusão AppMenuBar+TopHeaderBar ~46px,
     menu hamburger, controles de janela embutidos). EXIGE editar §4/§9/§10
     da LAYOUT_SYSTEM no mesmo commit (8 regiões → 7): decisão já tomada,
