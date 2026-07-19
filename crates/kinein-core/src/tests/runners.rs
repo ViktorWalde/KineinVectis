@@ -9,13 +9,15 @@ use super::core_with_empty_search_path;
 use kinein_protocol::JsonRpcRequest;
 
 #[test]
-fn quality_run_rejects_non_rust_kind() {
+fn quality_run_rejects_kind_without_analyzer() {
+    // Ate 2026-07-19 este teste usava um workspace CMake — o L2 deu Cppcheck
+    // ao CMake e o sujeito da rejeicao passou a ser Maven (sem analisador).
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-quality-unsupported", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
-    std::fs::write(dir.join("CMakeLists.txt"), "project(x)\n").unwrap();
+    std::fs::write(dir.join("pom.xml"), "<project/>\n").unwrap();
     let mut core = core_with_empty_search_path("quality-unsupported");
 
     let opened = core.handle_request(&JsonRpcRequest::new(
@@ -31,7 +33,7 @@ fn quality_run_rejects_non_rust_kind() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert!(error.message.contains("cmake"));
+    assert!(error.message.contains("maven"));
 }
 
 #[test]

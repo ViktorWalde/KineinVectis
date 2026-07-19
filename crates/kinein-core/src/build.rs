@@ -204,6 +204,7 @@ pub fn run_quality(
     root: &Path,
     kind: ProjectKind,
     profile: RigorProfile,
+    extra_args: &[String],
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
@@ -224,10 +225,44 @@ pub fn run_quality(
                 sink,
             )
         }
+        // L2 fatia 1 (2026-07-19): analise C/C++ via Cppcheck no MESMO funil.
+        // `--template=gcc` fala o formato que o parser GccLike ja entende —
+        // zero parser novo; os achados caem na aba Problems como os do build.
+        ProjectKind::Cmake => {
+            let mut command = Command::new("cppcheck");
+            command
+                .args(cppcheck_args(profile, extra_args))
+                .current_dir(root);
+            stream_command(command, "cppcheck", DiagnosticFormat::GccLike, cancel, sink)
+        }
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
         }),
     }
+}
+
+/// Argumentos do Cppcheck por perfil de rigor + extras da configuracao.
+///
+/// Os extras vem da config da integracao (id `cppcheck`, chave `args`) — a
+/// primeira consumidora real do `integration.config` da fatia 2.2 — e entram
+/// DEPOIS dos flags de perfil, entao o usuario pode sobrepor o que quiser.
+#[must_use]
+pub fn cppcheck_args(profile: RigorProfile, extra_args: &[String]) -> Vec<String> {
+    let mut args: Vec<String> = vec![
+        "--template=gcc".to_owned(),
+        "--quiet".to_owned(),
+        match profile {
+            RigorProfile::Strict => "--enable=warning,style,performance,portability".to_owned(),
+            RigorProfile::Balanced => "--enable=warning,style".to_owned(),
+            RigorProfile::Relaxed => "--enable=warning".to_owned(),
+        },
+        // Sem isto o cppcheck reprovaria o job por achado; quem decide
+        // severidade e a UI, pelo diagnostico — nao o exit code.
+        "--error-exitcode=0".to_owned(),
+    ];
+    args.extend(extra_args.iter().cloned());
+    args.push(".".to_owned());
+    args
 }
 
 fn run_cargo_build(
@@ -566,16 +601,47 @@ mod tests {
     }
 
     #[test]
+    fn cppcheck_args_respeita_perfil_e_aplica_extras_da_config_por_ultimo() {
+        use kinein_protocol::RigorProfile;
+
+        let extras = vec![
+            "--std=c11".to_owned(),
+            "--suppress=missingInclude".to_owned(),
+        ];
+        let args = super::cppcheck_args(RigorProfile::Strict, &extras);
+
+        // O contrato do funil: template gcc (parser GccLike) e exit code 0
+        // (severidade e da UI, nao do processo).
+        assert!(args.contains(&"--template=gcc".to_owned()));
+        assert!(args.contains(&"--error-exitcode=0".to_owned()));
+        assert!(args.contains(&"--enable=warning,style,performance,portability".to_owned()));
+        // Extras da integracao (2.2) DEPOIS do perfil, "." por ultimo.
+        let pos_extra = args.iter().position(|a| a == "--std=c11").unwrap();
+        let pos_perfil = args
+            .iter()
+            .position(|a| a.starts_with("--enable="))
+            .unwrap();
+        assert!(pos_extra > pos_perfil);
+        assert_eq!(args.last().unwrap(), ".");
+
+        // Perfis mais leves reduzem o --enable.
+        let leve = super::cppcheck_args(RigorProfile::Relaxed, &[]);
+        assert!(leve.contains(&"--enable=warning".to_owned()));
+    }
+
+    #[test]
     fn run_quality_rejects_kinds_without_linter() {
         use kinein_protocol::{ProjectKind, RigorProfile};
 
-        // Cmake tem build integrado mas ainda nao tem analise de qualidade.
+        // Maven tem deteccao de workspace mas nao tem analise de qualidade.
+        // (Cmake SAIU daqui em 2026-07-19: ganhou o Cppcheck no L2.)
         let root = std::env::temp_dir();
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let error = super::run_quality(
             &root,
-            ProjectKind::Cmake,
+            ProjectKind::Maven,
             RigorProfile::Strict,
+            &[],
             &cancel,
             &mut |_event| {},
         )

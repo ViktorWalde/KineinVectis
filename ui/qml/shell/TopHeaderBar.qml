@@ -183,10 +183,12 @@ Item {
         }
 
         KvIconButton {
-            visible: root.workspaceOpen && root.cargoAvailable
+            // L2: analise cobre Cargo (clippy) e C/C++ (Cppcheck).
+            visible: root.workspaceOpen
+                     && (root.cargoAvailable || root.cmakeAvailable)
             enabled: !root.analyzing && root.coreConnected
             iconName: "problems"
-            tooltip: root.analyzing ? qsTr("Análise em andamento") : qsTr("Executar análise")
+            tooltip: root.analyzing ? qsTr("Análise em andamento") : qsTr("Executar análise estática")
             onClicked: root.qualityRequested()
         }
 

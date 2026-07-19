@@ -73,8 +73,9 @@ Item {
                 { label: qsTr("Testes"), action: "test.run", enabled: workspaceOpen && coreConnected }
             );
         }
-        buildItems.push({ label: qsTr("Análise Cargo"), action: "quality.run",
-                          enabled: workspaceOpen && cargoAvailable && coreConnected });
+        buildItems.push({ label: qsTr("Análise estática"), action: "quality.run",
+                          enabled: workspaceOpen && coreConnected
+                                   && (cargoAvailable || cmakeAvailable) });
         const menus = {
             file: fileItems,
             edit: [

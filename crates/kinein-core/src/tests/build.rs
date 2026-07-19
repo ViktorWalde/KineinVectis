@@ -186,3 +186,56 @@ fn build_run_starts_a_job_and_finishes_successfully() {
     assert!(saw_created, "faltou event.job.created");
     assert!(saw_build_finished, "faltou event.build.finished");
 }
+
+#[test]
+fn quality_run_aceita_workspace_cmake_e_o_funil_termina() {
+    use std::time::Duration;
+
+    // L2 fatia 1: quality.run deixou de ser so-Cargo — workspace CMake ganha
+    // Cppcheck no MESMO funil. Este teste prova a FIACAO (gate sincrono +
+    // spawn + evento terminal) sem depender do binario: com o Cppcheck
+    // ausente o job nasce e termina com event.quality.finished de falha;
+    // com ele presente, termina com a analise real. Os argumentos do
+    // comando (perfil + extras da config 2.2) sao provados por
+    // cppcheck_args_respeita_perfil_e_aplica_extras_da_config_por_ultimo.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("quality-cmake");
+    core.enable_lsp(sender);
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-quality-cmake", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo LANGUAGES CXX)\n",
+    )
+    .unwrap();
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        60_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let accepted = core.handle_request(&JsonRpcRequest::new(61_i64, "quality.run", None));
+    let result = accepted
+        .response()
+        .result
+        .as_ref()
+        .expect("quality.run em workspace CMake tem que ACEITAR o job (gate do L2)");
+    assert!(result["jobId"].is_string());
+
+    let mut terminou = false;
+    while let Ok(event) = receiver.recv_timeout(Duration::from_secs(15)) {
+        if event.method == "event.quality.finished" {
+            terminou = true;
+            break;
+        }
+    }
+    assert!(
+        terminou,
+        "o funil do quality tem que emitir o evento terminal"
+    );
+}

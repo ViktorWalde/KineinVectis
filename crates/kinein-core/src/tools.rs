@@ -175,6 +175,13 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
     // sugestao aponta um caminho que funciona em qualquer distro, e o core
     // nunca a executa.)
     ToolSpec {
+        id: "cppcheck",
+        display_name: "Cppcheck",
+        binary: "cppcheck",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
         id: "claude",
         display_name: "Claude Code",
         binary: "claude",
@@ -420,6 +427,7 @@ mod tests {
                 "lldb-dap",
                 "ripgrep",
                 "fd",
+                "cppcheck",
                 "claude",
                 "codex"
             ]

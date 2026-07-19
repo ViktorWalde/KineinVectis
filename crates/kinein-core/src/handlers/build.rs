@@ -75,7 +75,7 @@ impl Core {
     }
 
     pub(crate) fn quality_run_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -92,10 +92,22 @@ impl Core {
                 Ok(context) => context,
                 Err(response) => return *response,
             };
-        // Only Rust/Cargo has a linter integration (cargo clippy) so far.
-        if kind != ProjectKind::RustCargo {
+        // Rust/Cargo tem clippy; C/C++ (CMake) tem Cppcheck desde o L2
+        // (2026-07-19). O gate sincrono fica: kind sem analisador responde
+        // erro na hora, nao um job que nasce para falhar.
+        if kind != ProjectKind::RustCargo && kind != ProjectKind::Cmake {
             return unsupported_kind_response(request_id, "quality", kind);
         }
+        // Extras do Cppcheck vem da CONFIG da integracao (fatia 2.2): chave
+        // `args`, workspace sobrepoe global. Lidos ANTES do spawn — o job
+        // roda em outra thread e nao enxerga o Core.
+        let extra_args = if kind == ProjectKind::Cmake {
+            self.integration_config_value("cppcheck", "args")
+                .map(|value| value.split_whitespace().map(str::to_owned).collect())
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "quality.run");
         };
@@ -104,7 +116,7 @@ impl Core {
         let job_id = jobs.spawn("quality", "Quality", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-            match build::run_quality(&root, kind, profile, &cancel, &mut sink) {
+            match build::run_quality(&root, kind, profile, &extra_args, &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.quality.finished",

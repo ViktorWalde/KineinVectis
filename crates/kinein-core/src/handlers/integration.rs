@@ -35,6 +35,27 @@ impl Core {
         }
     }
 
+    /// Valor EFETIVO de uma chave de config de integracao (workspace sobrepoe
+    /// global); `None` sem valor armazenado. E' o caminho de consumo INTERNO
+    /// do core — o L2 le `cppcheck`/`args` por aqui antes de spawnar o job.
+    pub(crate) fn integration_config_value(&mut self, id: &str, key: &str) -> Option<String> {
+        self.ensure_global_config();
+        let stores = integration::config::ConfigStores {
+            global: self.global_config.as_ref(),
+            workspace: self.drafts.as_ref(),
+        };
+        integration::config::get(&stores, id)
+            .ok()
+            .and_then(|result| {
+                result
+                    .entries
+                    .iter()
+                    .rev()
+                    .find(|entry| entry.key == key)
+                    .map(|entry| entry.value.clone())
+            })
+    }
+
     fn integration_config_get(
         &mut self,
         request_id: Option<Value>,
