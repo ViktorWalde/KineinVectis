@@ -2520,3 +2520,18 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
 - Spec editada no MESMO gesto (exigencia registrada): §4 vira 7 regioes com
   nota datada, §6.3 App Bar 46px, §9.1 diagrama, §10 reescrita (hamburguer),
   §11 nota de que a Main Toolbar mora na App Bar.
+
+## F3 — painel inferior em linha unica (2026-07-18, noite)
+
+- A fileira de 10 abas com borda (o "poluido" apontado pelo autor) morreu com
+  o arquivo: BottomTabBar.qml REMOVIDO. O painel agora tem UMA linha de 34px
+  (BottomPanelHeader.qml): titulo da ferramenta ativa + acoes DELA (abas de
+  sessao do terminal na mesma linha; Redetectar nas ferramentas) + ocultar.
+- REGRA DE ACESSIBILIDADE da fatia: nenhuma ferramenta pode ficar sem acesso
+  por mouse. Cobertura: rail (project, search, git, build, debug, terminal,
+  problems NOVO, tests NOVO, tools), status bar (Log da IDE, toggle que ja
+  existia) e menu Exibir (ganhou Jobs e Log da IDE).
+- O rail trocou 4 sinais identicos por um tabToggleRequested(tab) generico —
+  o ShellWorkspaceHost ENCOLHEU de novo (525->523) ganhando 2 botoes e o
+  handler de ocultar.
+- §6.3 ja previa Bottom Tool Tabs 34px: a fatia FECHA o numero da spec.

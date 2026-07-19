@@ -51,7 +51,7 @@ Rectangle {
     property var logLinesModel
     property var toolsList
 
-    signal tabRequested(string tab)
+    signal hideRequested()
     signal terminalSessionRequested(string session)
     signal clearSessionRequested()
     signal refreshToolsRequested()
@@ -125,19 +125,31 @@ Rectangle {
         runView.clearInput();
     }
 
-    BottomTabBar {
+    // F3: linha UNICA — titulo da ferramenta + acoes dela + esconder. A
+    // escolha da ferramenta mora no rail/status bar/menu, nao mais aqui.
+    BottomPanelHeader {
         id: bottomTabs
 
         anchors.top: parent.top
         anchors.left: parent.left
-        anchors.margins: Theme.spacingSmall
+        anchors.right: parent.right
+        anchors.leftMargin: Theme.spacingSmall
+        anchors.rightMargin: Theme.spacingSmall
+        anchors.topMargin: Theme.spacingXSmall
         activeTab: root.activeTab
         problemCount: root.problemCount
         processRunning: root.running
-        onTabRequested: function(tab) {
-            root.tabRequested(tab);
-        }
+        terminalsModel: root.terminalsModel
+        activeTerminalId: root.activeTerminalId
+        terminalSession: root.terminalSession
+        running: root.running
+        onHideRequested: root.hideRequested()
         onRefreshToolsRequested: root.refreshToolsRequested()
+        onTerminalSelectRequested: function(id) { root.terminalSelectRequested(id); }
+        onTerminalCloseTabRequested: function(id) { root.terminalCloseTabRequested(id); }
+        onTerminalNewRequested: root.terminalNewRequested()
+        onTerminalSessionRequested: function(s) { root.terminalSessionRequested(s); }
+        onClearSessionRequested: root.clearSessionRequested()
     }
 
     BuildPanel {
@@ -185,30 +197,10 @@ Rectangle {
         }
     }
 
-    TerminalSessionTabs {
-        id: sessionRow
-
-        anchors.top: bottomTabs.bottom
-        anchors.left: parent.left
-        anchors.leftMargin: Theme.spacingSmall
-        anchors.topMargin: root.activeTab === "terminal" ? Theme.spacingXSmall : 0
-        height: root.activeTab === "terminal" ? 22 : 0
-        visible: root.activeTab === "terminal"
-        sessionsModel: root.terminalsModel
-        activeTerminalId: root.activeTerminalId
-        terminalSession: root.terminalSession
-        running: root.running
-        onSelectRequested: function(id) { root.terminalSelectRequested(id); }
-        onCloseRequested: function(id) { root.terminalCloseTabRequested(id); }
-        onNewRequested: root.terminalNewRequested()
-        onSessionRequested: function(s) { root.terminalSessionRequested(s); }
-        onClearRequested: root.clearSessionRequested()
-    }
-
     TerminalPanel {
         id: terminalView
 
-        anchors.top: sessionRow.bottom
+        anchors.top: bottomTabs.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
@@ -235,7 +227,7 @@ Rectangle {
     RunPanel {
         id: runView
 
-        anchors.top: sessionRow.bottom
+        anchors.top: bottomTabs.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right

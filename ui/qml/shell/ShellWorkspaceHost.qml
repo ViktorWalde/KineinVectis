@@ -121,9 +121,9 @@ Item {
             bottomTab: root.shellController.bottomTab
             onExplorerToggled: root.shellController.toggleExplorer()
             onSearchRequested: root.searchController.openSearchPanel()
-            onGitRequested: root.shellController.toggleBottomTab("git")
-            onBuildRequested: root.shellController.toggleBottomTab("build")
-            onDebugRequested: root.shellController.toggleBottomTab("debug")
+            onTabToggleRequested: function(tab) {
+                root.shellController.toggleBottomTab(tab);
+            }
             // Rail JetBrains: clicar no ativo ESCONDE; senao abre materializando
             // uma sessao se nao houver (openTerminalPanel, mesmo do Alt+F12).
             onTerminalRequested: {
@@ -134,7 +134,6 @@ Item {
                     root.runtimeController.openTerminalPanel();
                 }
             }
-            onToolsRequested: root.shellController.toggleBottomTab("tools")
         }
 
         // A fiacao da arvore mora no ProjectExplorerHost. Aqui fica so o que e
@@ -444,9 +443,8 @@ Item {
                 searchReplaceSummary: root.searchController.replaceSummary
                 logLinesModel: root.logLinesModel
                 toolsList: root.workspaceController.toolsList
-                onTabRequested: function(tab) {
-                    root.shellController.toggleBottomTab(tab);
-                }
+                onHideRequested: root.shellController.toggleBottomTab(
+                                     root.shellController.bottomTab)
                 onTerminalSessionRequested: function(session) {
                     root.runtimeController.setTerminalSession(session);
                 }

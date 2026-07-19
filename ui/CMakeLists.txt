@@ -61,9 +61,9 @@ set_source_files_properties(qml/ipc/GitRequestRouter.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
 set_source_files_properties(qml/ipc/DebugRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugRequestRouter.qml)
 set_source_files_properties(qml/panels/bottom/DebugPanel.qml PROPERTIES QT_RESOURCE_ALIAS DebugPanel.qml)
-set_source_files_properties(qml/shell/BottomTabBar.qml PROPERTIES QT_RESOURCE_ALIAS BottomTabBar.qml)
 set_source_files_properties(qml/shell/WorkspaceStatusBar.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceStatusBar.qml)
 set_source_files_properties(qml/panels/bottom/BottomPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelHost.qml)
+set_source_files_properties(qml/panels/bottom/BottomPanelHeader.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelHeader.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSessionTabs.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSessionTabs.qml)
 set_source_files_properties(qml/panels/bottom/BuildPanel.qml PROPERTIES QT_RESOURCE_ALIAS BuildPanel.qml)
 set_source_files_properties(qml/panels/bottom/IdeLogPanel.qml PROPERTIES QT_RESOURCE_ALIAS IdeLogPanel.qml)
@@ -200,9 +200,9 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/DebugEventRouter.qml
         qml/ipc/DebugRequestRouter.qml
         qml/panels/bottom/DebugPanel.qml
-        qml/shell/BottomTabBar.qml
         qml/shell/WorkspaceStatusBar.qml
         qml/panels/bottom/BottomPanelHost.qml
+        qml/panels/bottom/BottomPanelHeader.qml
         qml/panels/bottom/TerminalSessionTabs.qml
         qml/panels/bottom/BuildPanel.qml
         qml/panels/bottom/IdeLogPanel.qml

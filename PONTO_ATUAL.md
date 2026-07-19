@@ -145,7 +145,18 @@ TRILHA APÓS A F1b — ordem fixada pelo autor em 2026-07-18:
                                      mapToItem real no ShellHeaderHost.
                                      Spec editada no mesmo gesto: §4 (8→7
                                      regiões), §6.3 (46px), §9.1, §10, §11.
-3. F3  painel inferior 1 linha       spec e IntelliJ concordam; 26→34px (§6.3)
+3. F3  painel inferior 1 linha       FEITA 2026-07-18, AGUARDA GESTO HUMANO.
+                                     A fileira de 10 abas MORREU (BottomTabBar
+                                     removido); o painel tem UMA linha de 34px
+                                     (BottomPanelHeader): título da ferramenta
+                                     + ações dela (sessões do terminal,
+                                     Redetectar) + ocultar. Escolha da
+                                     ferramenta: rail (ganhou Problemas e
+                                     Testes; sinal genérico tabToggleRequested
+                                     encolheu o host 525→523), status bar
+                                     (Log da IDE, já existia) e menu Exibir
+                                     (ganhou Jobs e Log da IDE — NENHUMA
+                                     ferramenta ficou sem acesso por mouse).
 4. F4  âmbar/Salvar                  editor sagrado (§5.1), âmbar contido (§7.2)
 5. VOLTA À FILA PRINCIPAL            fatia 2.2 (config+event do integration) —
                                      o desvio de layout NÃO cancela o roadmap

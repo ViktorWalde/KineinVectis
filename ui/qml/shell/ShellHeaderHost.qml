@@ -60,6 +60,8 @@ Item {
         case "view.project": root.shellController.toggleExplorer(); break;
         case "view.terminal": root.runtimeController.openTerminalPanel(); break;
         case "view.tools": root.shellController.toggleBottomTab("tools"); break;
+        case "view.jobs": root.shellController.toggleBottomTab("jobs"); break;
+        case "view.logs": root.shellController.toggleBottomTab("logs"); break;
         case "view.git": root.shellController.toggleBottomTab("git"); break;
         case "search.everywhere": root.searchController.openSearchEverywhere(); break;
         case "search.recent": root.searchController.openRecentFiles(); break;

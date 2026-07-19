@@ -12,11 +12,10 @@ Rectangle {
 
     signal explorerToggled()
     signal searchRequested()
-    signal gitRequested()
-    signal buildRequested()
-    signal debugRequested()
     signal terminalRequested()
-    signal toolsRequested()
+    // Toggle direto de aba do painel inferior (git/build/debug/problems/
+    // tests/tools): um sinal so, o host decide com o ShellController.
+    signal tabToggleRequested(string tab)
 
     function bottomActive(tab) {
         return bottomOpen && bottomTab === tab;
@@ -105,7 +104,7 @@ Rectangle {
             tooltip: qsTr("Git")
             active: root.bottomActive("git")
             enabled: root.workspaceOpen
-            onActivated: root.gitRequested()
+            onActivated: root.tabToggleRequested("git")
         }
 
         RailButton {
@@ -113,7 +112,7 @@ Rectangle {
             tooltip: qsTr("Build e jobs")
             active: root.bottomActive("build") || root.bottomActive("jobs")
             enabled: root.workspaceOpen
-            onActivated: root.buildRequested()
+            onActivated: root.tabToggleRequested("build")
         }
 
         RailButton {
@@ -121,7 +120,7 @@ Rectangle {
             tooltip: qsTr("Debug")
             active: root.bottomActive("debug")
             enabled: root.workspaceOpen
-            onActivated: root.debugRequested()
+            onActivated: root.tabToggleRequested("debug")
         }
 
         RailButton {
@@ -133,10 +132,26 @@ Rectangle {
         }
 
         RailButton {
+            iconName: "problems"
+            tooltip: qsTr("Problemas")
+            active: root.bottomActive("problems")
+            enabled: root.workspaceOpen
+            onActivated: root.tabToggleRequested("problems")
+        }
+
+        RailButton {
+            iconName: "test"
+            tooltip: qsTr("Testes")
+            active: root.bottomActive("tests")
+            enabled: root.workspaceOpen
+            onActivated: root.tabToggleRequested("tests")
+        }
+
+        RailButton {
             iconName: "tools"
             tooltip: qsTr("Ferramentas")
             active: root.bottomActive("tools")
-            onActivated: root.toolsRequested()
+            onActivated: root.tabToggleRequested("tools")
         }
 
     }
