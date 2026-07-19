@@ -287,6 +287,9 @@ detalhe), borderStrong #3A414A, textDisabled #4E535A, accentActive
 Escalas: spacingXSmall 4 (novo), spacingSmall 6→8, spacingMedium 12 (=),
 spacingLarge 20→16, spacingRegion 24 (novo); radiusXSmall 3 (novo),
 radius 6→5, radiusLarge 10→8, radiusDialog 12 (novo); panelGap 8 (=).
+[panelGap REMOVIDO em 2026-07-18: o modelo de cartoes sobre calhas caiu;
+regioes encostadas com divisor de 1px (seamWidth) + alca invisivel
+(splitterGrip). Ver LAYOUT_SYSTEM §4.2.]
 Tipografia (tokens novos): fontSizeStatus 12, fontSizeTree 13,
 fontSizeTerminal 13, fontSizePanelTitle 13, fontSizeEditor 14 — aplicados
 nos elementos auditados na área E (status bar 10→12, tree 12→13,

@@ -9,6 +9,7 @@ Item {
         id: contentRow
 
         anchors.fill: parent
-        spacing: Theme.panelGap
+        // §4.2: 1px de fundo da janela entre as regioes E' o divisor.
+        spacing: Theme.seamWidth
     }
 }

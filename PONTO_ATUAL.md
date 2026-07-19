@@ -78,6 +78,47 @@ O QUE NÃO ENTROU, e é o que o autor pediu como referência: multi-seleção
 que não é só UI), `F5` Copy…/`F6` Move…, speed search, autoscroll from source,
 `Ctrl+Shift+C` copiar caminho. Ver a tabela de paridade decidida com o autor.
 
+**DESVIO, PARTE 2 — layout/UX geral (aprovado em 2026-07-18, EM ANDAMENTO).**
+Arraste aceito no gesto real ("está funcionando"). O autor então pediu o
+layout como um todo na referência IntelliJ IDEA Community + specs, e apontou a
+causa com precisão: ferramentas "espalhadas", visual "poluído", bordas da
+janela mal aproveitadas — controles de janela "deslocados" em vez de
+embutidos, ícones que deveriam ser "plano de fundo" nas bordas. A invariante
+pedida (specs + referência IntelliJ Community, memória muscular) está
+registrada na LAYOUT_SYSTEM §2.0; a regra "UI burra, zero regra de negócio"
+está lá dentro. Print de referência: `imagens/prints/` (2026-07-16).
+
+PLANO DE 4 FATIAS, ordem decidida com o autor (a observação dele reordenou —
+o painel inferior era a 1ª e virou 3ª, porque é sintoma da calha, não causa):
+
+```text
+F1  Modelo de superfície do shell (§4.2 da LAYOUT_SYSTEM) — FEITA 2026-07-18,
+    AGUARDA GESTO HUMANO. Morrem as calhas de 8px (panelGap REMOVIDO do
+    Theme) e as margens da janela; regiões encostam, divisor = fundo da
+    janela por 1px (seamWidth), alça invisível de 7px (splitterGrip) sobre o
+    divisor; rail/App Bar viram background0 (a borda da janela); contorno e
+    raio EXTERNOS de região removidos (SideRail, ProjectExplorer, EditorPane,
+    BottomPanelHost, AppMenuBar, TopHeaderBar); arredondamento continua
+    DENTRO (chips, abas, seleção, popups, diálogos, banners, StartScreen).
+    Fatia 100% visual: zero mudança em controller, core ou protocolo.
+F2  Barra única — APROVADA pelo autor (fusão AppMenuBar+TopHeaderBar ~46px,
+    menu hamburger, controles de janela embutidos). EXIGE editar §4/§9/§10
+    da LAYOUT_SYSTEM no mesmo commit (8 regiões → 7): decisão já tomada,
+    falta executar. É a fatia que mais aproxima do print.
+F3  Painel inferior: 2 linhas de abas → 1 (ferramenta escolhida no rail,
+    como no IntelliJ); BottomTabBar 26→34px fecha a §6.3. Spec e IntelliJ
+    concordam; zero decisão pendente.
+F4  Limpeza do editor: remover o "Salvar" âmbar flutuante (§5.1, o editor é
+    sagrado) e conter o âmbar à regra da §7.2 (Compilar deixa de ser bloco
+    âmbar cheio).
+Follow-up SEM decisão: cantos arredondados da JANELA (frameless/Wayland,
+    exige teste no compositor real — não entra em fatia visual sem rede).
+```
+
+ARMADILHA DESTA ÁREA: não há teste de pixel no repo — a rede de fatia visual
+é gate (qmllint/fiação/harness) + build release-hardened + O OLHO DO AUTOR.
+Nunca declarar fatia visual entregue sem o gesto humano.
+
 **DEPOIS DESSE DESVIO, A PRÓXIMA FATIA É A 2.2** (config + event do `integration`). É a metade de
 ESCRITA do contrato v1 — a de leitura (descriptor + health) já está de pé. NÃO
 comece por outra coisa sem decisão do autor; o roadmap 28 diz que L2+ só começa

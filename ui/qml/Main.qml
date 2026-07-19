@@ -178,7 +178,10 @@ Window {
         anchors.bottom: statusBar.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: Theme.panelGap
+        // §4.2: o workspace encosta nas bordas da janela; o unico afastamento
+        // e o divisor de 1px contra o header e a status bar.
+        anchors.topMargin: Theme.seamWidth
+        anchors.bottomMargin: Theme.seamWidth
         shellController: domains.shellController
         workspaceController: domains.workspaceController
         projectHealthController: domains.projectHealthController

@@ -18,11 +18,11 @@ Rectangle {
     signal debugRequested()
     signal toolsRequested()
 
+    // §4.2: o rail NAO e um cartao — ele e a borda da janela. Mesmo fundo do
+    // app (background0), sem contorno; os icones ficam "no plano de fundo" e
+    // so o chip de hover/ativo e desenhado (arredondamento para dentro).
     width: 52
-    radius: Theme.radiusLarge
-    color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
+    color: Theme.background0
 
     component RailButton: Rectangle {
         id: railButton

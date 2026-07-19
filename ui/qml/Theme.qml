@@ -47,7 +47,14 @@ QtObject {
     readonly property int radius: 5
     readonly property int radiusLarge: 8
     readonly property int radiusDialog: 12
-    readonly property int panelGap: 8
+    // Modelo de superficie (LAYOUT §4.2): regioes ENCOSTADAS, sem calha.
+    // O divisor e o proprio fundo da janela (background0) aparecendo por
+    // 1px entre regioes — nao existe Rectangle de borda para isso. O
+    // arredondamento mora DENTRO das regioes (chip, aba, selecao, popup),
+    // nunca no contorno delas. `splitterGrip` e a area INVISIVEL de arrasto
+    // montada sobre o divisor; so a linha de hover do PanelSplitter pinta.
+    readonly property int seamWidth: 1
+    readonly property int splitterGrip: 7
 
     readonly property int fontSizeStatus: 12
     readonly property int fontSizeTree: 13

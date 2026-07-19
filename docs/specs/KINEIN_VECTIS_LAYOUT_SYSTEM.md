@@ -37,6 +37,24 @@ Isto significa: não copiar ícones, formas, cores ou layout específico de nenh
 
 ## 2. Premissas de produto
 
+### 2.0 Referência de UI/UX: IntelliJ IDEA Community (invariante, 2026-07-18)
+
+Estas specs têm como premissa **memória muscular JetBrains**. Junto delas,
+vale como referência viva o **IntelliJ IDEA Community**: comportamento,
+idioma visual, disposição das regiões, atalhos e aproveitamento das bordas
+da janela são estudados nele antes de qualquer decisão de layout aqui.
+
+Limites desta invariante, já contratuais (`ARCHITECTURE.md` §2.1):
+
+- importa-se **invariante, decisão, modo de falha e estratégia de teste**;
+  nunca código, Swing, IntelliJ Platform ou modelo interno;
+- o que se vê lá é **redesenhado** no fluxo nativo Qt/QML, com o Theme e a
+  iconografia da Kinein;
+- onde o contexto diverge (C/C++/Rust, offline-first, sem host de
+  extensões, chrome frameless próprio), **vence o contexto da Kinein**;
+- a UI permanece **burra**: representa estado e emite intenção; regra de
+  negócio mora no core e nos controllers, nunca no QML visual.
+
 A Kinein Vectis não deve ser apenas um editor de código.
 
 Ela deve ser uma IDE de engenharia de sistemas, capaz de ajudar o programador a lidar com:
@@ -150,6 +168,35 @@ A janela principal da Kinein é dividida em oito regiões.
 | 7 | Bottom Tool Window | Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git |
 | 8 | Status Bar | Estado do projeto, branch, target, warnings, encoding, posição |
 
+### 4.2 Modelo de superfície: regiões encostadas (2026-07-18)
+
+Decisão do autor, após dogfooding: o modelo anterior — cada região como um
+cartão com contorno próprio, flutuando sobre calhas de 8px — deixava a IDE
+"espalhada" e "poluída", com margem morta nas bordas da janela. O modelo
+atual segue o aproveitamento de tela do IntelliJ IDEA Community (§2.0):
+
+```text
+1. Regiões ENCOSTADAS umas nas outras e nas bordas da janela.
+   Não existe margem entre o workspace e a janela; o rail esquerdo E' a
+   borda (mesmo fundo da janela, ícones "no plano de fundo").
+2. O divisor entre regiões é o fundo da janela (background0) aparecendo
+   por 1px (`seamWidth`). Não existe Rectangle de borda para isso.
+3. Nenhuma região tem contorno (border) nem raio no seu retângulo externo.
+   O arredondamento mora DENTRO: chip de hover/seleção, aba, botão, popup,
+   diálogo e banner continuam arredondados.
+4. A alça de redimensionamento é invisível: `splitterGrip` (7px) montado
+   SOBRE o divisor; só a linha de hover pinta (âmbar, 2px).
+5. Tons marcam as transições onde o divisor não aparece: rail e App Bar em
+   background0; painéis em background1/background2; editor dominante.
+```
+
+O que continua sendo cartão, de propósito: diálogos, popups, notificações
+(banners) e a tela inicial — são sobreposições, não regiões do layout.
+
+Racional: eliminar ~10 contornos de 1px competindo e 16px de margem morta
+por eixo; o olho passa a ler UMA superfície com divisões, não uma pilha de
+cartões. Ver `ui/qml/Theme.qml` (`seamWidth`, `splitterGrip`).
+
 ---
 
 ## 5. Princípios de UX
@@ -242,12 +289,13 @@ Usar estes tamanhos para design e imagem de referência:
 Usar escala de 4px.
 
 ```text
+1px  — divisor entre regiões (seamWidth, §4.2) — a única separação entre elas
 2px  — linhas finas, divisores internos
 4px  — micro espaçamento
 8px  — espaçamento padrão de componentes pequenos
 12px — espaçamento entre blocos
 16px — padding de painel
-24px — separação de regiões
+24px — separação de seções DENTRO de uma região (nunca entre regiões)
 32px — seções grandes
 ```
 

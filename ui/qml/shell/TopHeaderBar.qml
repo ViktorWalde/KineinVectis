@@ -53,10 +53,9 @@ Rectangle {
         return workspaceKind === "" ? qsTr("projeto") : workspaceKind;
     }
 
+    // §4.2: plana; o tom (background1 sobre background0) marca a transicao.
     height: 44
     color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
 
     Row {
         id: toolbarRow

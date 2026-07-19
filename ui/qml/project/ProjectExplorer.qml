@@ -45,11 +45,10 @@ Rectangle {
         explorerView.forceActiveFocus();
     }
 
+    // §4.2: regiao plana, sem contorno; a separacao vem do divisor de 1px do
+    // layout. O arredondamento fica nas linhas (selecao/hover), nao na caixa.
     implicitWidth: 260
-    radius: Theme.radiusLarge
     color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
 
     Column {
         anchors.fill: parent

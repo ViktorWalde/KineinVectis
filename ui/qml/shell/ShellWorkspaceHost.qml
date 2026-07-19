@@ -174,12 +174,12 @@ Item {
             id: centerColumn
 
             width: visible
-                   ? Math.max(0, parent.width - sideBar.width - Theme.panelGap
+                   ? Math.max(0, parent.width - sideBar.width - Theme.seamWidth
                               - (explorerPanel.visible
-                                 ? explorerPanel.width + Theme.panelGap : 0))
+                                 ? explorerPanel.width + Theme.seamWidth : 0))
                    : 0
             height: parent.height
-            spacing: Theme.panelGap
+            spacing: Theme.seamWidth
 
             ProjectHealthBanner {
                 id: healthBanner
@@ -208,7 +208,7 @@ Item {
                 width: parent.width
                 height: visible
                         ? parent.height - (bottomPanel.visible
-                          ? bottomPanel.height + Theme.panelGap : 0) : 0
+                          ? bottomPanel.height + Theme.seamWidth : 0) : 0
                 visible: !root.workspaceOpen
                 tools: root.toolsList
                 recentWorkspaces: root.recentWorkspacesController.workspaces
@@ -239,9 +239,9 @@ Item {
                 visible: root.workspaceOpen
                 height: visible ? parent.height
                         - (healthBanner.visible
-                        ? healthBanner.height + Theme.panelGap : 0)
+                        ? healthBanner.height + Theme.seamWidth : 0)
                         - (bottomPanel.visible
-                        ? bottomPanel.height + Theme.panelGap : 0) : 0
+                        ? bottomPanel.height + Theme.seamWidth : 0) : 0
                 workspaceOpen: root.workspaceOpen
                 filesModel: root.editorController.filesModel
                 fileCount: root.editorController.filesModel.count
@@ -545,12 +545,13 @@ Item {
 
     }
 
-    // Alcas de redimensionamento em overlay sobre os vaos do layout
-    // (KVSplitter minimo da fatia C1; limites da spec no ShellController).
+    // Alcas de redimensionamento montadas SOBRE o divisor de 1px (§4.2):
+    // area de arrasto invisivel de `splitterGrip` px centrada no divisor;
+    // so a linha de hover do PanelSplitter pinta. Limites no ShellController.
     PanelSplitter {
         visible: explorerPanel.visible
-        x: explorerPanel.x + explorerPanel.width
-        width: Theme.panelGap
+        x: explorerPanel.x + explorerPanel.width - Theme.splitterGrip / 2
+        width: Theme.splitterGrip
         height: parent.height
         onDragged: function(delta) {
             root.shellController.resizeExplorer(delta);
@@ -562,9 +563,9 @@ Item {
         visible: bottomPanel.visible
         horizontal: true
         x: centerColumn.x
-        y: centerColumn.y + bottomPanel.y - Theme.panelGap
+        y: centerColumn.y + bottomPanel.y - Theme.splitterGrip / 2
         width: centerColumn.width
-        height: Theme.panelGap
+        height: Theme.splitterGrip
         onDragged: function(delta) {
             root.shellController.resizeBottomPanel(-delta);
         }

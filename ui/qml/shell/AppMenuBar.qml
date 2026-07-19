@@ -27,10 +27,10 @@ Rectangle {
     signal closeWindowRequested()
     signal moveWindowRequested()
 
+    // §4.2: a barra e a propria moldura da janela (background0, sem contorno);
+    // menus e controles de janela ficam EMBUTIDOS nela, nao num cartao.
     height: 40
     color: Theme.background0
-    border.color: Theme.borderSoft
-    border.width: 1
     z: 100
 
     function trigger(action) {

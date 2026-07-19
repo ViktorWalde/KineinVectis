@@ -93,10 +93,8 @@ Rectangle {
     signal searchReplaceRequested(string query, string replacement)
 
     visible: open
-    radius: Theme.radiusLarge
+    // §4.2: regiao plana; separacao por divisor de 1px, arredondamento interno.
     color: Theme.background2
-    border.color: Theme.borderSoft
-    border.width: 1
 
     function focusSearchInput() {
         searchView.focusInput();

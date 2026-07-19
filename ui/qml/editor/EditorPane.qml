@@ -119,10 +119,8 @@ Rectangle {
     signal outlineResetRequested()
     signal outlineToggleRequested()
 
-    radius: Theme.radiusLarge
+    // §4.2: regiao plana; separacao por divisor de 1px, arredondamento interno.
     color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
 
     function focusCreateDialog() {
         createDialog.resetAndFocus();
@@ -301,8 +299,8 @@ Rectangle {
         id: outlineSplitter
 
         visible: outlinePanel.visible
-        x: outlinePanel.x - Theme.panelGap
-        width: Theme.panelGap
+        x: outlinePanel.x - Theme.splitterGrip
+        width: Theme.splitterGrip
         anchors.top: outlinePanel.top
         anchors.bottom: outlinePanel.bottom
         onDragged: function(delta) {
