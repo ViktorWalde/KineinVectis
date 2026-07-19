@@ -70,9 +70,9 @@ Esc volta ao editor). Arquivos novos: `ProjectTreeGestures` (decide gesto),
 `ProjectTreeRow` (linha: fonte de arraste e alvo de drop), `ProjectExplorerHost`
 (fiação). `ShellWorkspaceHost` ENCOLHEU 537→530 para caber (regra "quem toca a
 área paga a dela"); baseline atualizada no mesmo commit.
-FALTA O GESTO HUMANO: offscreen não sintetiza arraste real. As REGRAS estão
-provadas por `tst_project_tree_dnd.qml` (3 mutações reprovam), mas ninguém
-arrastou nada com um mouse ainda.
+GESTO HUMANO FEITO E ACEITO em 2026-07-18 ("está funcionando arrastar uma
+pasta para outra"). As regras seguem provadas por `tst_project_tree_dnd.qml`
+(3 mutações reprovam). Commit `40d1f15`.
 O QUE NÃO ENTROU, e é o que o autor pediu como referência: multi-seleção
 (Ctrl/Shift+clique), `Ctrl+C/X/V` (exige um `fs.copy` NOVO no core — único item
 que não é só UI), `F5` Copy…/`F6` Move…, speed search, autoscroll from source,
@@ -92,15 +92,22 @@ PLANO DE 4 FATIAS, ordem decidida com o autor (a observação dele reordenou —
 o painel inferior era a 1ª e virou 3ª, porque é sintoma da calha, não causa):
 
 ```text
-F1  Modelo de superfície do shell (§4.2 da LAYOUT_SYSTEM) — FEITA 2026-07-18,
-    AGUARDA GESTO HUMANO. Morrem as calhas de 8px (panelGap REMOVIDO do
-    Theme) e as margens da janela; regiões encostam, divisor = fundo da
-    janela por 1px (seamWidth), alça invisível de 7px (splitterGrip) sobre o
-    divisor; rail/App Bar viram background0 (a borda da janela); contorno e
-    raio EXTERNOS de região removidos (SideRail, ProjectExplorer, EditorPane,
-    BottomPanelHost, AppMenuBar, TopHeaderBar); arredondamento continua
-    DENTRO (chips, abas, seleção, popups, diálogos, banners, StartScreen).
-    Fatia 100% visual: zero mudança em controller, core ou protocolo.
+F1  Modelo de superfície do shell (§4.2 da LAYOUT_SYSTEM) — ACEITA pelo
+    autor em 2026-07-18 ("bem melhor"), commit `aec1b06`, COM uma regressão
+    apontada no aceite: os painéis perderam TODO o raio e ficou "layout do
+    VS Code". O §4.2 saiu radical demais (flat total); o correto JetBrains é
+    raio nas regiões SEM contorno, sobre o fundo da janela. Correção na F1b.
+F1b Feedback do aceite da F1 (fila imediata, 2026-07-18):
+    [ ] raio de volta nas regiões (sem contorno; §4.2 corrigida no commit)
+    [ ] ícone de terminal no rail esquerdo
+    [ ] cabeçalho da árvore: remover chips novo-arquivo/nova-pasta (contexto
+        já cobre), manter atualizar; corrigir sobreposição com o chip do
+        build system (nome longo passa por baixo)
+    [ ] ícones da árvore (.cpp etc.) não aparecem no AppImage — investigar
+        o packaging e resolver
+    [ ] modo "imagem" (markdown renderizado) para os .md do projeto, como o
+        Manual da IDE já faz — ATENÇÃO: é feature de editor; a regra "quem
+        toca a área paga a dela" cobra débito do EditorController (842/400)
 F2  Barra única — APROVADA pelo autor (fusão AppMenuBar+TopHeaderBar ~46px,
     menu hamburger, controles de janela embutidos). EXIGE editar §4/§9/§10
     da LAYOUT_SYSTEM no mesmo commit (8 regiões → 7): decisão já tomada,

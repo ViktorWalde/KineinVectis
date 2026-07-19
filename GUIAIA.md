@@ -405,6 +405,9 @@ crates/kinein-core/src/handlers/workspace.rs
 
 ```text
 ui/qml/project/ProjectTreeController.qml
+    ├─ ProjectTreeGestures.qml   (arraste/teclado: decide o gesto, sem estado)
+    ├─ ProjectTreeRow.qml        (linha: fonte de arraste e alvo de drop)
+    └─ ProjectExplorerHost.qml   (fiação árvore↔controller, fora do Shell)
 ui/qml/editor/EditorController.qml
     ├─ EditorDocumentController.qml
     ├─ EditorTextController.qml

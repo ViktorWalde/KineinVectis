@@ -2444,3 +2444,41 @@ alvos, e é registro daquele dia — não do estado atual. O que vale hoje:
   e' profundidade no que ja existe; Docker e banco sao superficie nova. Uma IDE
   com Docker e sem cobertura de teste e' uma demo. Detalhe em
   `docs/roadmaps/28-plataforma-de-plugins-e-verticais.md`.
+
+## Arvore com arraste/teclado + modelo de superficie do shell (2026-07-18)
+
+- **Arraste na arvore ACEITO no gesto real** ("esta funcionando arrastar uma
+  pasta para outra"). `fs.rename` ja era move confinado — a fatia foi 100% UI:
+  `ProjectTreeGestures` (decide gesto), `ProjectTreeRow` (fonte/alvo de drop),
+  `ProjectExplorerHost` (fiacao). Teclado JetBrains: setas, Enter, Delete,
+  Alt+1, Esc. Regras provadas por mutacao em `tst_project_tree_dnd.qml` (3
+  mutacoes reprovam). Commit `40d1f15`.
+- **A catraca pegou a primeira versao e estava certa**: regras de gesto
+  empilhadas no `ProjectTreeController` o levaram a 420/400. Suspeito nº 1 (a
+  mudanca) confirmado — interpretacao de gesto nao mora no dono do estado.
+  Extraida para `ProjectTreeGestures`, controller voltou a 347.
+- **Modelo de superficie §4.2 ACEITO** ("bem melhor"). Diagnostico do AUTOR:
+  IDE "espalhada/poluida", bordas mal aproveitadas, controles "desacoplados".
+  Causa medida: cartoes com contorno proprio sobre calhas de 8px + margem
+  morta. Modelo novo: regioes encostadas, divisor = fundo da janela por 1px
+  (`seamWidth`), alca invisivel (`splitterGrip`), rail = borda da janela.
+  `panelGap` REMOVIDO do Theme. Commit `aec1b06`.
+- **Invariante registrada (LAYOUT_SYSTEM §2.0), pedido explicito do autor:**
+  junto das specs vale o IntelliJ IDEA Community como referencia viva de
+  UI/UX (memoria muscular JetBrains), nos limites do ARCHITECTURE §2.1 —
+  invariante/decisao sim, codigo/Swing/Platform nunca; onde diverge, vence a
+  Kinein; UI burra, regra de negocio no core/controllers.
+- **Plano de 4 fatias do layout** decidido com o autor (F1 superficie FEITA;
+  F2 barra unica APROVADA, edita §4/§9/§10 no mesmo commit; F3 painel
+  inferior 1 linha; F4 ambar/Salvar). A observacao do autor reordenou o plano:
+  o painel inferior era 1a e virou 3a — e sintoma da calha, nao causa.
+- **Feedback do autor sobre a F1, vira fila (2026-07-18):** (a) REGRESSAO: os
+  paineis perderam TODO o raio e ficou "layout do VS Code" — ele quer cantos
+  arredondados nas regioes como na JetBrains (o §4.2 foi escrito radical
+  demais: flat total; corrigir para "raio sem contorno sobre o fundo da
+  janela"); (b) icone de terminal no rail esquerdo; (c) cabecalho da arvore:
+  chips de novo arquivo/pasta SOBREPOEM o chip do build system com nome longo
+  — remover os dois (contexto ja cobre), manter atualizar; (d) icones de
+  arvore (.cpp etc.) nao aparecem no AppImage — investigar packaging;
+  (e) modo "imagem" (render markdown) para .md do projeto, como o Manual da
+  IDE ja faz no Ajuda.
