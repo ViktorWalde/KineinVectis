@@ -12,4 +12,3 @@ ui/qml/git/GitController.qml 403 400
 ui/qml/panels/bottom/DebugPanel.qml 313 300
 ui/qml/panels/bottom/GitPanel.qml 633 300
 ui/qml/shell/ShellWorkspaceHost.qml 522 400
-ui/src/core_client_requests.cpp 551 500

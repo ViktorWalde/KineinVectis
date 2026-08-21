@@ -301,6 +301,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp
+        src/core_client_requests_language.cpp
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
