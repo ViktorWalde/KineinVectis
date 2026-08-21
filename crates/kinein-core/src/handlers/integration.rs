@@ -56,6 +56,17 @@ impl Core {
             })
     }
 
+    /// Valor de configuracao lido como LISTA DE ARGUMENTOS de linha de comando.
+    ///
+    /// Extraido na fatia 4 do L2, quando o segundo analisador apareceu e o
+    /// `split_whitespace` ia virar copia no chamador. Ausente e lista vazia:
+    /// integracao sem `args` configurado roda com os padroes do perfil.
+    pub(crate) fn integration_config_args(&mut self, id: &str) -> Vec<String> {
+        self.integration_config_value(id, "args")
+            .map(|value| value.split_whitespace().map(str::to_owned).collect())
+            .unwrap_or_default()
+    }
+
     fn integration_config_get(
         &mut self,
         request_id: Option<Value>,

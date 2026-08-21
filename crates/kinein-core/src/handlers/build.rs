@@ -98,15 +98,17 @@ impl Core {
         if kind != ProjectKind::RustCargo && kind != ProjectKind::Cmake {
             return unsupported_kind_response(request_id, "quality", kind);
         }
-        // Extras do Cppcheck vem da CONFIG da integracao (fatia 2.2): chave
-        // `args`, workspace sobrepoe global. Lidos ANTES do spawn — o job
-        // roda em outra thread e nao enxerga o Core.
-        let extra_args = if kind == ProjectKind::Cmake {
-            self.integration_config_value("cppcheck", "args")
-                .map(|value| value.split_whitespace().map(str::to_owned).collect())
-                .unwrap_or_default()
+        // Extras dos analisadores vem da CONFIG da integracao (fatia 2.2):
+        // chave `args`, workspace sobrepoe global. Lidos ANTES do spawn — o
+        // job roda em outra thread e nao enxerga o Core. Desde a fatia 4 sao
+        // DOIS: Cppcheck e clang-tidy, cada um com a sua chave.
+        let extras = if kind == ProjectKind::Cmake {
+            build::QualityExtras {
+                cppcheck: self.integration_config_args("cppcheck"),
+                clang_tidy: self.integration_config_args("clang-tidy"),
+            }
         } else {
-            Vec::new()
+            build::QualityExtras::default()
         };
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "quality.run");
@@ -116,7 +118,7 @@ impl Core {
         let job_id = jobs.spawn("quality", "Quality", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-            match build::run_quality(&root, kind, profile, &extra_args, &cancel, &mut sink) {
+            match build::run_quality(&root, kind, profile, &extras, &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.quality.finished",

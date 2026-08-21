@@ -251,7 +251,7 @@ grupo capturado.
 | --- | --- | --- |
 | `Ctrl+F9` ou `Ctrl+Alt+B` | **Build** do projeto (cargo build / cmake) | aba Build + Problemas |
 | `Ctrl+Shift+F9` ou `Ctrl+Alt+T` | **Testes** (cargo test / ctest) | aba Testes |
-| `Ctrl+Shift+L` | **Análise de qualidade** (clippy / Cppcheck) | aba Problemas |
+| `Ctrl+Shift+L` | **Análise de qualidade** (clippy; Cppcheck + clang-tidy) | aba Problemas |
 
 > Todos esses também são **botões na barra superior** — atalho nenhum é
 > obrigatório. Onde houver tecla `F1`–`F12` há sempre uma alternativa sem
@@ -260,6 +260,22 @@ grupo capturado.
 Tudo roda em segundo plano como *job*: a barra de status mostra o
 progresso e um **×** para cancelar; a aba **Jobs** guarda o histórico.
 Clicar num problema abre o arquivo na linha exata.
+
+### O que a análise de qualidade roda
+
+Em projeto **Rust/Cargo**: `cargo clippy`.
+
+Em projeto **C/C++ (CMake)**: dois analisadores no mesmo passo, porque eles
+enxergam coisas diferentes. O **Cppcheck** lê o código sem precisar saber como
+ele é compilado — funciona até antes de configurar o CMake. O **clang-tidy**
+(Clang Static Analyzer) usa o comando de compilação real de cada arquivo, então
+percebe problemas que dependem de macro, include e flag. Ele só entra depois de
+o projeto ter sido configurado uma vez, e a análise avisa quando pulou.
+
+Se o seu projeto tiver um `.clang-tidy` próprio, ele manda: a Kinein não
+sobrepõe os seus checks. Se não tiver, o conjunto vem do perfil de rigor
+configurado. Ter só uma das duas ferramentas instaladas não impede a análise —
+a que existir roda.
 
 ### Cobertura de testes
 

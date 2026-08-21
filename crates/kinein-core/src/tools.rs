@@ -182,6 +182,13 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         install_command: None,
     },
     ToolSpec {
+        id: "clang-tidy",
+        display_name: "clang-tidy",
+        binary: "clang-tidy",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
         id: "cargo-llvm-cov",
         display_name: "cargo-llvm-cov",
         binary: "cargo-llvm-cov",
@@ -442,6 +449,7 @@ mod tests {
                 "ripgrep",
                 "fd",
                 "cppcheck",
+                "clang-tidy",
                 "cargo-llvm-cov",
                 "lcov",
                 "claude",

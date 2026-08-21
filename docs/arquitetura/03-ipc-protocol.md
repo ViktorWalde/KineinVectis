@@ -693,14 +693,38 @@ com origem `quality`. `job.cancel` mata o linter. Validação síncrona: tipos s
 analisador retornam `INVALID_REQUEST`.
 
 Desde a fatia 1 do L2 (2026-07-19) o funil tem **dois braços**: Rust/Cargo roda
-`cargo clippy` e CMake roda `cppcheck --template=gcc`, cuja saída cai no parser
-`GccLike` que já existia — zero parser novo. O `--error-exitcode=0` é
-deliberado: severidade é decisão da UI, não do código de saída. Os argumentos
-extras do Cppcheck vêm da **configuração da integração** (`id: "cppcheck"`,
-chave `args`, escopo `workspace` sobrepondo `global`), primeira consumidora real
-do `integration.config.*` de `0.62.0`. Falhas (ferramenta ausente etc.) chegam
-por `event.quality.finished`. O parâmetro opcional `buildSystem` de `0.55.0` é
-tipado pelo mesmo enum.
+`cargo clippy`; CMake roda análise estática de C/C++. O `--error-exitcode=0` do
+Cppcheck é deliberado: severidade é decisão da UI, não do código de saída.
+
+No braço CMake rodam **dois analisadores no mesmo job**, desde a fatia 4
+(2026-08-21), e eles não competem:
+
+1. `cppcheck --template=gcc` — lê o código sem saber como ele é compilado,
+   portanto roda sempre, inclusive antes de o CMake ser configurado;
+2. `clang-tidy -p .kinein/build` — o **Clang Static Analyzer**, que usa o
+   comando de compilação real de cada arquivo e por isso enxerga macro,
+   include e flag que o outro não vê. Só entra quando existe
+   `.kinein/build/compile_commands.json`; sem ele o job **pula e diz o
+   motivo**, em vez de analisar adivinhando flags. Os arquivos vêm do próprio
+   banco de comandos, filtrados aos que ficam dentro da raiz do workspace
+   (código gerado e de terceiros ficam fora — a aba Problemas não se enche do
+   que o usuário não pode corrigir) e sem duplicatas.
+
+Se o projeto tiver o **próprio `.clang-tidy`**, a Kinein **não** passa
+`--checks`: sobrepor a escolha do projeto seria a mesma invasão recusada em
+`--coverage` e `-Werror`. Sem config no projeto, o conjunto vem do perfil de
+rigor. `clang-tidy` ausente do PATH não invalida o que o Cppcheck já achou —
+ele é o segundo analisador, não um pré-requisito.
+
+Ambos falam `GccLike` no parser que já existia — **zero parser novo** — e os
+achados caem na aba Problemas com `source: "quality"`. Os argumentos extras de
+cada um vêm da **configuração da integração** (`id: "cppcheck"` e
+`id: "clang-tidy"`, chave `args`, escopo `workspace` sobrepondo `global`),
+primeira consumidora real do `integration.config.*` de `0.62.0`, e entram
+**depois** dos flags de perfil, então o usuário sobrepõe o que quiser.
+
+Falhas (ferramenta ausente etc.) chegam por `event.quality.finished`. O
+parâmetro opcional `buildSystem` de `0.55.0` é tipado pelo mesmo enum.
 
 ### Testes (`test.run` — job assíncrono)
 
