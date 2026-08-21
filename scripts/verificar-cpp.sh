@@ -22,35 +22,24 @@ clang-format --dry-run --Werror \
     "$REPO_ROOT"/ui/tests/*.cpp
 
 echo "== clang-tidy =="
-# typing_perf_harness.cpp sai da varredura geral e volta logo abaixo com UM
-# check a menos. Motivo, medido em 2026-08-21 (Debian 13 / Qt 6.8.2):
+# UMA invocacao, o .clang-tidy da raiz INTACTO, e nenhum arquivo isento.
 #
-#   qobjectdefs.h:624: Potential leak of memory pointed to by 'callable'
-#     [clang-analyzer-cplusplus.NewDeleteLeaks]
+# Ate 2026-08-21 este gate rodava duas vezes, com um check desligado para o
+# typing_perf_harness.cpp: o clang-analyzer do Qt 6.8 acusava vazamento dentro
+# do proprio qobjectdefs.h, na sobrecarga por functor do
+# QMetaObject::invokeMethod. Aquilo era tapa-buraco — desligava um check real
+# num arquivo real. A causa foi resolvida no CODIGO (o harness deixou de usar
+# aquela sobrecarga; ver o comentario da conexao Queued la), entao a excecao
+# saiu daqui em vez de ser maquiada. Gate com excecao e gate que ensina a
+# proxima excecao.
 #
-# E falso positivo do analisador dentro do PROPRIO header do Qt: ele nao ve
-# que `invokeMethodImpl` assume a posse do callable que a sobrecarga por
-# functor aloca. O gate era verde no Qt 6.4 do Debian 12; quem mudou foi o
-# ambiente, nao o codigo — o arquivo esta identico desde 2026-07-16.
-#
-# NOLINT nao resolve: o diagnostico e emitido na linha do header do Qt, e
-# clang-tidy so honra NOLINT na linha do diagnostico. Reescrever a chamada
-# exigiria Q_OBJECT + moc numa classe de namespace anonimo — plumbing caro
-# para contornar bug de ferramenta em codigo de INSTRUMENTACAO, que so roda
-# sob KINEIN_PERF_TYPING.
-#
-# O escopo e o mais estreito que a ferramenta permite: um check, um arquivo.
-# Todo o resto do .clang-tidy continua valendo para ele. Ao subir de Qt,
-# remova as duas invocacoes separadas e volte para a linha unica — se o
-# falso positivo tiver sumido, o gate acusa nada e a divida morre sozinha.
-HARNESS="$REPO_ROOT/ui/src/typing_perf_harness.cpp"
+# PARALELO por arquivo: cada unidade de traducao e independente, e a analise
+# e o trecho mais caro do gate — em serie passava de dez minutos, o que pesa
+# no loop de quem roda o gate a cada fatia. `xargs` devolve nao-zero se
+# QUALQUER invocacao falhar, e o `set -e` do topo pega.
+NUCLEOS="$(nproc 2>/dev/null || echo 4)"
 
-clang-tidy -p "$BUILD_DIR" \
-    $(find "$REPO_ROOT/ui/src" -name '*.cpp' ! -name 'typing_perf_harness.cpp') \
-    "$REPO_ROOT"/ui/tests/*.cpp
-
-clang-tidy -p "$BUILD_DIR" \
-    --checks=-clang-analyzer-cplusplus.NewDeleteLeaks \
-    "$HARNESS"
+find "$REPO_ROOT/ui/src" "$REPO_ROOT/ui/tests" -name '*.cpp' -print0 |
+    xargs -0 -P "$NUCLEOS" -n 1 clang-tidy -p "$BUILD_DIR"
 
 echo "C++ verificado: tudo limpo."

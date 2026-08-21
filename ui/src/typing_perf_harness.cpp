@@ -103,6 +103,10 @@ private:
     QElapsedTimer m_clock;
     std::atomic<qint64> m_teclaEnviadaNs{-1};
     std::atomic<qint64> m_ultimoFrameNs{0};
+    // Amostra medida na render thread e ainda nao registrada pela GUI thread.
+    // Em nanossegundos, como os carimbos acima: converter para ms aqui exigiria
+    // um atomic<double>, que nao e lock-free em toda plataforma.
+    std::atomic<qint64> m_amostraPendenteNs{-1};
 
     QList<double> m_amostras;
     int m_enviadas = 0;
@@ -153,11 +157,37 @@ void TypingHarness::iniciar()
             if (enviada < 0) {
                 return;
             }
-            const double ms = static_cast<double>(agora - enviada) / 1000000.0;
-            QMetaObject::invokeMethod(
-                this, [this, ms]() { registrarAmostra(ms); }, Qt::QueuedConnection);
+            // A render thread SO deposita o numero. Quem registra e a GUI
+            // thread, na conexao Queued logo abaixo — `registrarAmostra` mexe
+            // em QList e QTimer, que sao dela.
+            m_amostraPendenteNs.store(agora - enviada, std::memory_order_release);
         },
         Qt::DirectConnection);
+
+    // O MESMO sinal, uma segunda vez, agora na GUI thread. Duas conexoes em
+    // vez de um QMetaObject::invokeMethod por functor, e a razao nao e estilo:
+    //
+    //   1. a sobrecarga por functor aloca o callable no heap e entrega a posse
+    //      ao `invokeMethodImpl`, dentro do Qt. O clang-analyzer nao enxerga
+    //      essa transferencia e acusa vazamento DENTRO do qobjectdefs.h — um
+    //      falso positivo que NOLINT nao alcanca, porque a supressao so vale
+    //      na linha do diagnostico e ela esta no header do Qt;
+    //   2. o resultado aqui e mais simples: a render thread so escreve um
+    //      inteiro num atomic, e nao ha alocacao nenhuma no caminho quente.
+    //
+    // Qt entrega as conexoes na ordem em que foram feitas, entao a Direct
+    // acima ja depositou o valor quando esta roda. Nenhuma amostra se perde
+    // por sobrescrita: a proxima tecla so sai de dentro de `registrarAmostra`.
+    connect(
+        m_window, &QQuickWindow::frameSwapped, this,
+        [this]() {
+            const qint64 delta = m_amostraPendenteNs.exchange(-1, std::memory_order_acq_rel);
+            if (delta < 0) {
+                return;
+            }
+            registrarAmostra(static_cast<double>(delta) / 1000000.0);
+        },
+        Qt::QueuedConnection);
 
     QTimer::singleShot(m_timeoutMs, this, [this]() {
         erro(QStringLiteral("timeout apos %1 ms (amostras=%2)")
@@ -323,6 +353,18 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
     }
     auto* client = qobject_cast<CoreClient*>(ctx->objectForName(QStringLiteral("coreClient")));
     QObject* editor = ctx->objectForName(QStringLiteral("editorController"));
+    if (editor == nullptr) {
+        // Desde 2026-07-16 os controllers vivem no AppDomains, e id de QML e
+        // ESCOPADO POR COMPONENTE: o `objectForName` do contexto do Main.qml
+        // deixou de enxergar o editorController naquele dia — silenciosamente,
+        // porque o harness nao esta em nenhum gate. A medicao de digitacao que
+        // o L0 da como fechada (mediana 7,4 ms, 2026-07-16) foi a ULTIMA que
+        // rodou. Aqui ele volta a alcancar o controller pelo alias publico do
+        // AppDomains, que e o caminho que a propria UI usa.
+        if (QObject* domains = ctx->objectForName(QStringLiteral("domains"))) {
+            editor = domains->property("editorController").value<QObject*>();
+        }
+    }
     if (client == nullptr || editor == nullptr) {
         erro(QStringLiteral("coreClient/editorController nao encontrados no contexto"));
         return;
