@@ -251,7 +251,7 @@ grupo capturado.
 | --- | --- | --- |
 | `Ctrl+F9` ou `Ctrl+Alt+B` | **Build** do projeto (cargo build / cmake) | aba Build + Problemas |
 | `Ctrl+Shift+F9` ou `Ctrl+Alt+T` | **Testes** (cargo test / ctest) | aba Testes |
-| `Ctrl+Shift+L` | **Análise de qualidade** (clippy) | aba Problemas |
+| `Ctrl+Shift+L` | **Análise de qualidade** (clippy / Cppcheck) | aba Problemas |
 
 > Todos esses também são **botões na barra superior** — atalho nenhum é
 > obrigatório. Onde houver tecla `F1`–`F12` há sempre uma alternativa sem
@@ -260,6 +260,24 @@ grupo capturado.
 Tudo roda em segundo plano como *job*: a barra de status mostra o
 progresso e um **×** para cancelar; a aba **Jobs** guarda o histórico.
 Clicar num problema abre o arquivo na linha exata.
+
+### Cobertura de testes
+
+No painel **Testes** há o botão **Cobertura**, ao lado do título. Ele mede
+quanto do código os testes tocaram e mostra o total no rodapé do painel, com a
+lista por arquivo abaixo — verde acima de 80%, vermelho abaixo de 50%.
+
+O que cada linguagem precisa:
+
+| Projeto | Ferramenta | Como preparar |
+| --- | --- | --- |
+| Rust / Cargo | `cargo-llvm-cov` | `cargo install cargo-llvm-cov` |
+| C / C++ / CMake | `lcov` | compilar o projeto **com `--coverage`** |
+
+A Kinein **não** acrescenta `--coverage` ao seu build. Rigor de compilação é
+decisão do projeto, não da IDE — a mesma regra vale para `-Werror`. Quando não
+houver dados para medir, o painel diz **por quê** em vez de mostrar `0%`: um
+zero silencioso seria indistinguível de um projeto sem nenhum teste.
 
 **Projetos Rust:** além do build/clippy, há o **"Cargo: Check"** no Search
 Everywhere — feedback de tipos/borrow bem mais rápido que o build, com os

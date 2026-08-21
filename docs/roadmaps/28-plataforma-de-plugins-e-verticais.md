@@ -108,13 +108,18 @@ a premissa (não existe biblioteca EditorConfig Rust madura; ver §0.2e).
 ## 3. A fila, em ordem de dependência
 
 ```text
-L1  plataforma (`integration` v1)      <- GARGALO. nada abaixo comeca sem ele.
+L1  plataforma (`integration` v1)      FECHADO em 2026-07-19 (protocolo 0.62.0)
       └─ vertical 1: inventario das ferramentas ja detectadas
 
-L2  C/C++/RUST SOLIDOS — resultado comum
+L2  C/C++/RUST SOLIDOS — resultado comum        EM ANDAMENTO
       diagnostico/teste/cobertura num contrato so + artefatos + Jobs cancelaveis
       valida com: Cppcheck, Clang Static Analyzer, cargo-audit/deny, Valgrind,
                   GTest/Unity/Criterion, gcov/lcov, cobertura Rust
+      FEITO   Cppcheck no funil de qualidade          (fatia 1, 2026-07-19)
+      FEITO   GTest/Unity nomeados no painel          (fatia 2, 2026-07-19)
+      FEITO   cobertura: cargo llvm-cov + lcov        (fatia 3, 2026-08-21)
+      FALTA   Clang Static Analyzer, cargo-audit/deny, Valgrind
+      FORA    Criterion — formato por-caso nao confirmado na fonte
 
 L3  Project Graph, targets e perfis explicaveis; cache provenance
       valida com: Bear, ccache/sccache, Bloaty, Doxygen

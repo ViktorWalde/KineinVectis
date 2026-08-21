@@ -265,6 +265,14 @@ EM ABERTO — 23 arquivos no baseline. Os maiores bloqueiam a propria area:
   ShellWorkspaceHost.qml  576 (400)    composition host: cortar por area
 ```
 
+Atualização de 2026-08-21, para quem ler o bloco acima sem contexto: os quatro
+god-files de C++ **saíram todos do débito** — `core_client_dispatch.cpp` e
+`editor_highlighter.cpp` em 2026-07-17, `core_client_requests.cpp` em
+2026-08-21, os três por movimento puro dividido por domínio. Nenhum arquivo C++
+do repositório segue acima do limite. O bloco acima continua valendo como
+registro do que a catraca cobrou naquele dia, não como inventário de hoje: o
+inventário de hoje é `scripts/arquitetura-baseline.txt`.
+
 O `CoreClient` preserva a API QML única, com a implementação C++ fatiada em
 processo, requests, dispatch, estado e logs; o editor divide documentos, texto e
 completion em subcontrollers. Isso continua valendo e é o alvo.
@@ -321,7 +329,10 @@ Regras que mantêm isso saudável:
    terço do arquivo. Já os três god-files de C++ não se moveram do débito
    (`editor_highlighter.cpp` 818, `core_client_dispatch.cpp` 757,
    `core_client_requests.cpp` 551, todos contra 500): a dívida deles é de código,
-   e é isso que a regra tem que continuar cobrando.
+   e é isso que a regra tem que continuar cobrando. **E cobrou:** os três foram
+   pagos entre 2026-07-17 e 2026-08-21, cada um por divisão de domínio e
+   movimento puro — o que confirma o desenho da regra. Contar só código não
+   afrouxou a catraca para quem devia de verdade.
 
 5. **Visibilidade.** Dentro de uma pasta-módulo: itens internos usados entre
    submódulos irmãos usam `pub(super)` (não `pub(crate)`, que o clippy `nursery`
