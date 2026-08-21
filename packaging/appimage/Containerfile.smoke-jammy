@@ -1,0 +1,29 @@
+# Ubuntu 22.04 LTS (jammy): o sistema MAIS ANTIGO que o artefato promete
+# suportar desde a decisao do autor de 2026-08-21. Ele existe ao lado do
+# Containerfile.smoke (Debian 12) porque compatibilidade com o piso nao se
+# prova no sistema em que a coisa foi construida — prova-se no mais velho.
+#
+# jammy traz glibc 2.35 e libstdc++6 do GCC 12 (GLIBCXX_3.4.30), que sao
+# exatamente os tetos que scripts/verificar-piso-appimage.sh cobra no AppDir.
+# O script mede o binario; este container roda o binario. As duas coisas
+# respondem perguntas diferentes e nenhuma substitui a outra.
+FROM docker.io/library/ubuntu:22.04@sha256:2edbbc5dc405e9612ba3584ce95480277e3eb374407b5505fe26f17df77c7dbc
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Apenas a pilha grafica/fontes esperada de um desktop Linux, igual ao smoke
+# do Debian. Qt, Rust, CMake, compiladores e pacotes de desenvolvimento ficam
+# deliberadamente de fora: se algum for necessario, o AppImage nao e portatil.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        libegl1 \
+        libfontconfig1 \
+        libfreetype6 \
+        libglx0 \
+        libharfbuzz0b \
+        libopengl0 \
+        libx11-6 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace

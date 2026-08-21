@@ -48,8 +48,11 @@ A receita é dividida em:
   remover versões anteriores;
 - `scripts/testar-appimage.sh`: valida estrutura, core e primeiro frame
   offscreen;
-- `scripts/testar-appimage-portatil.sh`: repete o smoke sem rede em um runtime
-  Debian mínimo sem Qt, Rust, CMake ou compiladores;
+- `scripts/testar-appimage-portatil.sh`: repete o smoke sem rede em DOIS
+  runtimes mínimos sem Qt, Rust, CMake ou compiladores — Ubuntu 22.04 (o piso
+  prometido) e Debian 12 (o baseline do builder);
+- `scripts/verificar-piso-appimage.sh`: mede no AppDir (ou num `.AppImage`
+  pronto) o teto de símbolo versionado e a ausência de dependência pendurada;
 - `packaging/appimage/kinein-portable-graphics-hook.sh`: integra-se ao AppRun
   gerado pelo linuxdeploy e seleciona por padrão a adaptação `software` oficial
   do Qt Quick, sem depender do EGL/GL do host;
@@ -87,11 +90,37 @@ O AppImage é dono do desktop id `kinein-vectis.desktop` e do nome público
 **Kinein Vectis (Desenvolvimento)**; assim o mantenedor pode comparar o
 artefato distribuído com a build local sem um atalho sobrescrever o outro.
 
-O baseline atual é Debian 12/glibc 2.36. Portanto, o primeiro artefato cobre
-distribuições Linux x86_64 atuais com glibc igual ou posterior; não se promete
-compatibilidade binária com distribuições mais antigas que o baseline. Para
-ampliar essa faixa será necessário construir Qt 6.4+ sobre uma base anterior e
-repetir toda a validação.
+### Piso de compatibilidade — revisado em 2026-08-21 por decisão do autor
+
+**A decisão anterior era:** baseline Debian 12/glibc 2.36, sem promessa de
+compatibilidade com distribuições mais antigas.
+
+**A decisão vigente é:** o artefato deve rodar em **Ubuntu 22.04 LTS em
+diante**, em distribuições baseadas ou não em Ubuntu. Formalmente, o contrato é
+**glibc ≥ 2.35 e libstdc++ ≥ GCC 12 (`GLIBCXX_3.4.30`)**, em x86_64.
+
+Isso cobre Ubuntu 22.04+, Debian 12+, Fedora 36+ e openSUSE Leap 15.6+. Fica
+**fora**: glibc anterior a 2.35 (RHEL 9, Rocky 9, AlmaLinux 9 e Amazon Linux
+2023 têm 2.34), musl e ARM64 — cada um exige outro artefato e outra validação.
+
+O pedido do autor citava "kernel 6.x ou superior". A restrição que de fato
+decide se o binário carrega é a **glibc**, não o kernel: o kernel GA do Ubuntu
+22.04 é 5.15 (6.x apenas via HWE), e "toda distribuição com kernel 6.x" não é
+satisfazível neste piso — o Amazon Linux 2023 tem kernel 6.1 e glibc 2.34.
+Por isso o contrato é expresso em glibc/libstdc++, que é verificável.
+
+O builder continua sendo Debian 12 (glibc 2.36), **um degrau acima do piso**.
+Isso é seguro apenas porque é verificado: `scripts/verificar-piso-appimage.sh`
+varre todo ELF do AppDir e **reprova o empacotamento** se algum exigir
+`GLIBC > 2.35`, `GLIBCXX > 3.4.30` ou `CXXABI > 1.3.13`. Sem esse portão a
+compatibilidade seria acidente — a medição de 2026-08-21 mostrou que o
+artefato de 2026-07-19 cabia no piso por sorte, e nada impedia uma dependência
+nova de quebrá-lo em silêncio.
+
+Se o portão reprovar, a correção **não** é subir o teto: é mover o builder para
+uma base jammy com Qt 6.4+ de fonte auditada (o jammy distribui Qt 6.2.4 e
+`ui/CMakeLists.txt` exige 6.4) e repetir toda a validação. Subir o teto sem
+mover o piso quebraria o contrato com quem já baixou o artefato.
 
 Compatibilidade de distribuição e compatibilidade gráfica são limites
 separados. Bibliotecas Qt/QML seguem dentro do AppImage, mas EGL, Vulkan e os
@@ -180,6 +209,35 @@ Fedora/Wayland real, onde confirmou `Loading backend software` e o primeiro
 frame em 939 ms pelo modo de extração e 987 ms pela montagem type-2 usada pelo
 atalho, sem abortar.
 
+Em 2026-08-21, com o piso revisado, o artefato de 2026-07-19 foi **medido e
+executado** no runtime mínimo Ubuntu 22.04 (`glibc 2.35`), sem rede:
+
+1. teto de símbolo do bundle: `GLIBC_2.35`, `GLIBCXX_3.4.30`, `CXXABI_1.3.13`
+   — no limite exato do piso, nenhum acima;
+2. `kinein-core` empacotado respondeu `core.ping` no jammy;
+3. o Qt/QML abriu o primeiro frame offscreen em **692 ms**, selecionando
+   `Loading backend software`, com código de saída 0;
+4. o runtime type-2 embutido é `static-pie` com libfuse3 ligada estaticamente:
+   **não depende de libfuse2**, que é a causa mais comum de AppImage não abrir
+   em Ubuntu 24.04 e posteriores.
+
+O mesmo exame encontrou um defeito real de empacotamento, corrigido no mesmo
+gesto: `wayland-shell-integration/libwl-shell-plugin.so` exigia
+`libQt6WlShellIntegration.so.6`, **ausente do AppImage**. A causa era dupla e
+vale como lição sobre validação: os grupos de plugin Wayland entram por `cp -a`
+depois do linuxdeploy, que não reanalisa o que não instalou; e a checagem de
+dependência usava `ldd` **dentro do builder**, onde o Qt do sistema está
+instalado — uma biblioteca ausente do AppDir mas presente em `/usr/lib`
+resolvia e passava. Um gate que faz a pergunta errada ("o linker acha?" em vez
+de "está dentro do pacote?") fica verde sobre um artefato quebrado. A validação
+passou a cobrir todos os plugins presentes no AppDir, e não uma lista escrita à
+mão de quatro.
+
+O smoke estrutural completo do artefato de 2026-07-19 **não passa**, e por um
+motivo legítimo: o `dist/Tutorial.md` é anterior ao commit `98a7e47` e a
+verificação compara a cópia byte a byte com a fonte. Esse artefato ficou
+desatualizado e será substituído quando o AppImage for regenerado.
+
 ## Alternativas consideradas
 
 - **Bundler próprio:** rejeitado por duplicar resolução ELF/RPATH/Qt/QML.
@@ -205,7 +263,12 @@ O artefato só pode ser distribuído após:
 6. `dist/` conter AppImage, checksum específico, instalador e `Tutorial.md`
    idêntico à fonte;
 7. `scripts/testar-appimage-portatil.sh` passar sem rede e sem Qt/Rust de
-   desenvolvimento.
+   desenvolvimento, **nos dois runtimes**: Ubuntu 22.04 (o piso prometido) e
+   Debian 12 (o baseline do builder);
+8. `scripts/verificar-piso-appimage.sh` aprovar o AppDir — nenhum ELF acima do
+   teto de símbolo e nenhuma dependência pendurada. Ele roda dentro do
+   `empacotar-appimage.sh` como último portão antes de existir arquivo
+   distribuível, e também aceita um `.AppImage` já pronto como argumento.
 
 Rollback: remover a receita/instalação AppDir e as duas entradas do registry.
 O build normal por Cargo/CMake não depende dessas ferramentas.

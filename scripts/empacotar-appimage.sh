@@ -306,6 +306,7 @@ export LDAI_OUTPUT="$OUTPUT_FILE"
 export LDAI_RUNTIME_FILE="$TYPE2_RUNTIME"
 
 QT_PLUGIN_DIR="$("$QMAKE" -query QT_INSTALL_PLUGINS)"
+QT_LIB_DIR="$("$QMAKE" -query QT_INSTALL_LIBS)"
 
 if [[ ! -d "$QT_PLUGIN_DIR" ]]; then
     echo "erro: diretório de plugins Qt não encontrado:" >&2
@@ -399,6 +400,32 @@ for required_file in "${REQUIRED_PLATFORM_FILES[@]}"; do
     echo "  ok: ${required_file#"$APPDIR/"}"
 done
 
+# Os grupos de plugin Wayland entram por `cp -a`, DEPOIS do linuxdeploy. Ele
+# nao reanalisa o que nao instalou, entao uma lib Qt exigida so por um desses
+# plugins fica de fora do AppDir sem erro nenhum. Foi assim que o artefato de
+# 2026-07-19 saiu com libwl-shell-plugin.so apontando para uma
+# libQt6WlShellIntegration.so.6 que nao estava no pacote. Aqui a dependencia
+# se fecha: todo soname libQt6* exigido por plugin copiado tem que existir no
+# AppDir, ou vem da instalacao do builder.
+echo "==> fechando dependências Qt dos plugins Wayland copiados"
+
+for plugin_file in "$APPDIR"/usr/plugins/wayland-*/*.so; do
+    [[ -f "$plugin_file" ]] || continue
+    while IFS= read -r soname; do
+        [[ "$soname" == libQt6* ]] || continue
+        [[ -e "$APPDIR/usr/lib/$soname" ]] && continue
+        if [[ ! -e "$QT_LIB_DIR/$soname" ]]; then
+            echo "erro: $soname é exigida por" >&2
+            echo "  ${plugin_file#"$APPDIR/"}" >&2
+            echo "  e não existe nem no AppDir nem em $QT_LIB_DIR." >&2
+            exit 1
+        fi
+        cp -aL "$QT_LIB_DIR/$soname" "$APPDIR/usr/lib/$soname"
+        echo "  empacotada: $soname (exigida por ${plugin_file##*/})"
+    done < <(readelf -d "$plugin_file" 2>/dev/null |
+                 sed -n 's/.*NEEDED.*\[\(.*\)\]/\1/p')
+done
+
 echo "==> validando arquivos obrigatórios do Wayland"
 
 for required_file in "${REQUIRED_WAYLAND_FILES[@]}"; do
@@ -434,12 +461,16 @@ fi
 
 echo "  ok: libQt6WaylandEglClientHwIntegration"
 
-echo "==> validando dependências dinâmicas dos plugins Wayland"
+# TODO plugin que esta no AppDir e verificado, nao os quatro de uma lista
+# escrita a mao: libwl-shell-plugin.so, libivi-shell.so, libqt-shell.so e
+# libfullscreen-shell-v1.so entravam no pacote sem NUNCA passar por aqui.
+echo "==> validando dependências dinâmicas de TODOS os plugins do AppDir"
 
-for plugin_file in "${REQUIRED_WAYLAND_FILES[@]}"; do
+while IFS= read -r plugin_file; do
     check_dynamic_dependencies "$plugin_file"
-    echo "  ok: ${plugin_file#"$APPDIR/"}"
-done
+done < <(find "$APPDIR/usr/plugins" -type f -name '*.so' | sort)
+
+echo "  ok: $(find "$APPDIR/usr/plugins" -type f -name '*.so' | wc -l) plugins"
 
 echo "==> validando plugin SVG (icones da arvore)"
 
@@ -460,6 +491,12 @@ install \
     -m 0755 \
     "$REPO_ROOT/packaging/appimage/kinein-portable-graphics-hook.sh" \
     "$APPDIR/apprun-hooks/kinein-portable-graphics-hook.sh"
+
+# Ultimo portao antes de existir um arquivo distribuivel. O `ldd` acima diz
+# "o linker acha"; este diz "cabe no sistema mais antigo que prometemos", que
+# e outra pergunta e a que o usuario final faz.
+echo "==> verificando piso de compatibilidade (Ubuntu 22.04 LTS em diante)"
+bash "$REPO_ROOT/scripts/verificar-piso-appimage.sh" "$APPDIR"
 
 echo "==> gerando AppImage"
 

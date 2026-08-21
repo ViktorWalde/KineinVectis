@@ -50,11 +50,18 @@ sem acesso ao repositório.
 ## 2. Conferir se o computador é compatível
 
 - Linux x86_64 (`uname -m` deve mostrar `x86_64`);
-- glibc 2.36 ou posterior;
+- **Ubuntu 22.04 LTS ou mais novo**, ou qualquer distribuição — baseada em
+  Ubuntu ou não — com **glibc 2.35 ou posterior**. Para conferir:
+  `ldd --version` mostra a versão na primeira linha;
 - sessão desktop Wayland ou X11 e fontes normais.
 
+Isso cobre Ubuntu 22.04 e posteriores, Debian 12 e posteriores, Fedora 36 e
+posteriores e openSUSE Leap 15.6 e posteriores.
+
 Windows, ARM64 e distribuições baseadas somente em musl não estão cobertos por
-este artefato. A IDE abre sem Rust, Qt, CMake, compiladores ou aceleração 3D
+este artefato. Também ficam de fora as distribuições com glibc anterior a 2.35
+— entre elas RHEL 9, Rocky Linux 9, AlmaLinux 9 e Amazon Linux 2023, que têm
+glibc 2.34. A IDE abre sem Rust, Qt, CMake, compiladores ou aceleração 3D
 instalados: o AppImage usa por padrão o renderer raster oficial do Qt Quick,
 evitando depender da combinação EGL/Mesa/NVIDIA presente na distribuição.
 
