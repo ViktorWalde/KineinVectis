@@ -233,10 +233,27 @@ de "está dentro do pacote?") fica verde sobre um artefato quebrado. A validaç�
 passou a cobrir todos os plugins presentes no AppDir, e não uma lista escrita à
 mão de quatro.
 
-O smoke estrutural completo do artefato de 2026-07-19 **não passa**, e por um
-motivo legítimo: o `dist/Tutorial.md` é anterior ao commit `98a7e47` e a
-verificação compara a cópia byte a byte com a fonte. Esse artefato ficou
-desatualizado e será substituído quando o AppImage for regenerado.
+Ainda em 2026-08-21, o AppImage foi **regenerado** sob o piso novo, por decisão
+do autor. O artefato vigente tem 36.514.296 bytes e SHA256
+`8a833e76818718420a2c97d4dce00ccc268e6c43c01884affddf6de284a34f7b`, e o
+`kinein-core` empacotado responde no protocolo `0.63.0` — o do HEAD.
+
+Passou, na ordem em que a receita cobra:
+
+1. o fechamento de dependência funcionou na produção: a receita empacotou
+   `libQt6WlShellIntegration.so.6`, exigida por `libwl-shell-plugin.so`, que
+   faltava no artefato anterior;
+2. a validação de dependência dinâmica cobriu **27 plugins**, e não os quatro
+   de uma lista escrita à mão;
+3. o piso de compatibilidade aprovou os **98 ELFs** do AppDir — nenhum acima
+   do teto de símbolo, nenhuma dependência pendurada;
+4. o smoke portátil passou **nos dois runtimes**, Ubuntu 22.04 e Debian 12,
+   sem rede e sem Qt/Rust/CMake instalados.
+
+O artefato anterior (2026-07-19) reprovava o smoke estrutural por um motivo
+legítimo, e ele fica registrado porque a verificação fez o seu trabalho: o
+`dist/Tutorial.md` era anterior ao commit `98a7e47`, e a receita compara a
+cópia byte a byte com a fonte. Entrega desatualizada não passa por acidente.
 
 ## Alternativas consideradas
 
