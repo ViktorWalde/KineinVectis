@@ -305,6 +305,12 @@ houver nenhuma, ela diz isso em vez de tentar baixar. Para autorizar a
 atualização pela rede, grave na configuração da integração `cargo-audit` a
 chave `allowNetwork` com o valor `true`. Só esse valor exato autoriza.
 
+A auditoria também verifica a **política de dependências** do seu projeto —
+licenças aceitas, crates banidos, fontes permitidas — com o `cargo-deny`. Isso
+só acontece se o seu projeto tiver um `deny.toml`: sem ele, a Kinein não impõe
+uma política de licença que você nunca declarou. Essa parte é sempre offline, e
+roda mesmo quando a verificação de vulnerabilidades não pode.
+
 O resultado sempre informa **de quando é a base** e se ela foi atualizada
 naquela execução. Auditoria com base velha apresentada como recente é pior que
 auditoria nenhuma: ela tranquiliza sem motivo.

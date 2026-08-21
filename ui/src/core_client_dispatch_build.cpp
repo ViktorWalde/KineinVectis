@@ -91,6 +91,7 @@ bool CoreClient::handleQualityNotification(const QString& method, const QJsonObj
     if (method == QStringLiteral("event.audit.finished")) {
         emit auditFinished(params.value(QStringLiteral("success")).toBool(),
                            params.value(QStringLiteral("vulnerabilities")).toInt(0),
+                           params.value(QStringLiteral("policyFindings")).toInt(0),
                            params.value(QStringLiteral("database")).toObject().toVariantMap(),
                            params.value(QStringLiteral("error")).toString());
         return true;

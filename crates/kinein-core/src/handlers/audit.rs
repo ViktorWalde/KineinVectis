@@ -61,6 +61,27 @@ impl Core {
                     },
                 },
             );
+            // O cargo-deny roda ANTES: ele e local e rapido, entao a
+            // politica de dependencia aparece na aba Problemas mesmo que o
+            // cargo-audit falhe depois por falta de base local.
+            let politica = match audit::run_deny(&root, &cancel, &mut on_output) {
+                Ok(achados) => achados,
+                Err(error) => {
+                    // cargo-deny ausente nao invalida a auditoria: e o segundo
+                    // braco, nao pre-requisito. Mesma regra do clang-tidy.
+                    ctx.emit_output(&format!("cargo-deny nao rodou: {error}"));
+                    Vec::new()
+                }
+            };
+            let politica_total = politica.len() as u64;
+            let lockfile_politica =
+                std::fs::read_to_string(root.join("Cargo.lock")).unwrap_or_default();
+            for mut achado in politica {
+                achado.line = pacote_do_achado(&achado.message)
+                    .and_then(|pacote| audit::linha_do_pacote(&lockfile_politica, &pacote));
+                emit_build_event(ctx, "audit", &BuildEvent::Diagnostic(achado));
+            }
+
             match audit::run_audit(&root, rede_autorizada, &cancel, &mut on_output) {
                 Ok(report) => {
                     // O lockfile e lido UMA vez para posicionar todos os
@@ -78,6 +99,7 @@ impl Core {
                             "jobId": ctx.id(),
                             "success": true,
                             "vulnerabilities": report.vulnerabilities,
+                            "policyFindings": politica_total,
                             "database": report.database,
                         }),
                     );
@@ -89,6 +111,7 @@ impl Core {
                         json!({
                             "jobId": ctx.id(),
                             "success": false,
+                            "policyFindings": politica_total,
                             "error": error.to_string(),
                         }),
                     );

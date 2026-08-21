@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.65.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.66.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality/coverage/audit/memcheck.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `integration.*`). O
@@ -813,10 +813,34 @@ pedido. Responde na hora com `{ "jobId" }`.
 event.audit.started     { "jobId", "command" }
 event.audit.diagnostic  payload comum de Diagnostic, source "audit"
 event.audit.finished    sucesso { "jobId", "success": true, "vulnerabilities",
+                                  "policyFindings",
                                   "database": { "advisoryCount", "lastUpdated",
                                                 "offline" } }
-event.audit.finished    falha   { "jobId", "success": false, "error": "..." }
+event.audit.finished    falha   { "jobId", "success": false, "policyFindings",
+                                  "error": "..." }
 ```
+
+Desde a fatia 7 (`0.66.0`) a auditoria tem **dois braços**, e eles respondem
+perguntas de supply chain diferentes:
+
+1. `cargo-audit` — "alguma dependência tem vulnerabilidade conhecida?";
+2. `cargo-deny check licenses bans sources` — "as dependências obedecem à
+   **política deste projeto**?": licença aceita, crate banido, fonte permitida.
+
+O braço de política **só roda se o projeto tiver `deny.toml`**, pela mesma razão
+do `.clang-tidy` na fatia 4: sem config, o `cargo-deny` aplica os próprios
+padrões de licença, e impor política a quem nunca declarou uma é a mesma invasão
+que a IDE recusa em `--coverage` e `-Werror`. O check `advisories` fica **fora**
+do conjunto — o `cargo-audit` já cobre, e incluí-lo reabriria pela porta lateral
+a decisão de rede que a fatia 5 fechou.
+
+Ele roda **primeiro**, e é offline: assim a política aparece na aba Problemas
+mesmo quando o braço de advisories falha por falta de base local. O evento
+terminal carrega `policyFindings` separado de `vulnerabilities`, inclusive na
+falha — descartar o que já foi apurado seria esconder trabalho feito.
+
+Ferramenta ausente é dito com o gesto: `cargo` existe mas o subcomando não, e o
+erro diz `cargo install cargo-audit` em vez de repassar o `no such command` cru.
 
 **A rede é opt-in explícito, e esta é a parte que importa.** Até esta fatia a
 Kinein nunca acessou a rede em runtime: toda integração roda ferramenta local.

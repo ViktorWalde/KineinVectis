@@ -67,7 +67,7 @@ Item {
         // Sucesso resume o resultado E diz se a base foi atualizada. Uma
         // auditoria com base velha apresentada como fresca tranquiliza sem
         // motivo — que e o pior servico que ela poderia prestar.
-        jobs.handleAuditFinished(true, 0, {
+        jobs.handleAuditFinished(true, 0, 0, {
             advisoryCount: 1225, lastUpdated: "2026-08-21T08:28:40+02:00", offline: true
         }, "");
         if (jobs.auditing) failures += 2048;
@@ -76,7 +76,7 @@ Item {
         if (jobs.auditSummary.indexOf("rede") < 0) failures += 16384;
 
         // Com a base atualizada pela rede, o aviso de "sem atualizar" some.
-        jobs.handleAuditFinished(true, 2, {
+        jobs.handleAuditFinished(true, 2, 0, {
             advisoryCount: 1225, lastUpdated: "2026-08-21T08:28:40+02:00", offline: false
         }, "");
         if (jobs.auditSummary.indexOf("2") < 0) failures += 32768;
@@ -85,9 +85,16 @@ Item {
         // Falha repassa o erro do core, que ja diz COMO habilitar a rede.
         // Resumir para "falhou" apagaria a unica instrucao acionavel.
         jobs.startAudit();
-        jobs.handleAuditFinished(false, 0, {}, "autorize allowNetwork=true");
+        jobs.handleAuditFinished(false, 0, 0, {}, "autorize allowNetwork=true");
         if (jobs.auditing) failures += 131072;
         if (jobs.auditSummary.indexOf("allowNetwork") < 0) failures += 262144;
+
+        // A politica roda offline: falha do braco de advisories nao pode
+        // apagar o que o cargo-deny ja achou.
+        jobs.startAudit();
+        jobs.handleAuditFinished(false, 0, 20, {}, "sem base local");
+        if (jobs.auditSummary.indexOf("20") < 0) failures += 4194304;
+        if (jobs.auditSummary.indexOf("sem base local") < 0) failures += 8388608;
 
         // clear() do workspace leva a auditoria junto.
         jobs.clear();

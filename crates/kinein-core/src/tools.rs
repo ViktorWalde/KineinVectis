@@ -203,6 +203,13 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         install_command: Some("cargo install cargo-audit"),
     },
     ToolSpec {
+        id: "cargo-deny",
+        display_name: "cargo-deny",
+        binary: "cargo-deny",
+        alternative_binary: None,
+        install_command: Some("cargo install cargo-deny"),
+    },
+    ToolSpec {
         id: "cargo-llvm-cov",
         display_name: "cargo-llvm-cov",
         binary: "cargo-llvm-cov",
@@ -466,6 +473,7 @@ mod tests {
                 "clang-tidy",
                 "valgrind",
                 "cargo-audit",
+                "cargo-deny",
                 "cargo-llvm-cov",
                 "lcov",
                 "claude",

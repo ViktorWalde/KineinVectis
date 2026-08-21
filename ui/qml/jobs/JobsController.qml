@@ -164,12 +164,17 @@ Item {
         appendDiagnostic(diagnostic, "warning", "audit");
     }
 
-    function handleAuditFinished(success, vulnerabilities, database, error) {
+    function handleAuditFinished(success, vulnerabilities, policyFindings, database, error) {
         auditing = false;
+        // A politica (cargo-deny) roda OFFLINE e pode ter achado coisa mesmo
+        // quando o braco de advisories falhou por falta de base ou de rede.
+        // Descartar isso ao reportar a falha esconderia trabalho ja feito.
+        const politica = policyFindings > 0
+            ? qsTr(" · %1 de politica").arg(policyFindings) : "";
         if (!success) {
             // O erro do core ja diz COMO habilitar a rede; a UI repassa em
             // vez de resumir para "falhou".
-            auditSummary = error !== "" ? error : qsTr("auditoria falhou");
+            auditSummary = (error !== "" ? error : qsTr("auditoria falhou")) + politica;
             return;
         }
         const base = database && database.lastUpdated !== undefined
@@ -179,7 +184,7 @@ Item {
                       ? qsTr(" (sem atualizar pela rede)") : "";
         auditSummary = (vulnerabilities > 0
                         ? qsTr("%1 vulnerabilidade(s)").arg(vulnerabilities)
-                        : qsTr("nenhuma vulnerabilidade")) + base + offline;
+                        : qsTr("nenhuma vulnerabilidade")) + politica + base + offline;
     }
 
     function startCoverage(buildSystem) {

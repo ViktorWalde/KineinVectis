@@ -111,7 +111,7 @@ a premissa (não existe biblioteca EditorConfig Rust madura; ver §0.2e).
 L1  plataforma (`integration` v1)      FECHADO em 2026-07-19 (protocolo 0.62.0)
       └─ vertical 1: inventario das ferramentas ja detectadas
 
-L2  C/C++/RUST SOLIDOS — resultado comum        EM ANDAMENTO
+L2  C/C++/RUST SOLIDOS — resultado comum        FECHADO em 2026-08-21
       diagnostico/teste/cobertura num contrato so + artefatos + Jobs cancelaveis
       valida com: Cppcheck, Clang Static Analyzer, cargo-audit/deny, Valgrind,
                   GTest/Unity/Criterion, gcov/lcov, cobertura Rust
@@ -121,7 +121,8 @@ L2  C/C++/RUST SOLIDOS — resultado comum        EM ANDAMENTO
       FEITO   Clang Static Analyzer (clang-tidy)      (fatia 4, 2026-08-21)
       FEITO   cargo-audit, com rede OPT-IN             (fatia 5, 2026-08-21)
       FEITO   Valgrind/Memcheck sobre os testes        (fatia 6, 2026-08-21)
-      FALTA   cargo-deny (exige o deny.toml do projeto)
+      FEITO   cargo-deny, so com deny.toml do projeto  (fatia 7, 2026-08-21)
+      A banda L2 FECHOU. O L3 esta aberto.
       FORA    Criterion — formato por-caso nao confirmado na fonte
 
 L3  Project Graph, targets e perfis explicaveis; cache provenance

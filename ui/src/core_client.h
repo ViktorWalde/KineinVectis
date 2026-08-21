@@ -256,8 +256,8 @@ signals:
                           const QVariantList& files, const QString& error);
     void auditStarted(const QString& command);
     void auditDiagnostic(const QVariantMap& diagnostic);
-    void auditFinished(bool success, int vulnerabilities, const QVariantMap& database,
-                       const QString& error);
+    void auditFinished(bool success, int vulnerabilities, int policyFindings,
+                       const QVariantMap& database, const QString& error);
     void memcheckStarted(const QString& command);
     void memcheckDiagnostic(const QVariantMap& diagnostic);
     void memcheckFinished(bool success, int tests, int findings, const QString& error);

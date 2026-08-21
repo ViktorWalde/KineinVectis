@@ -53,8 +53,9 @@ Item {
             root.jobsController.handleAuditDiagnostic(diagnostic);
         }
 
-        function onAuditFinished(success, vulnerabilities, database, error) {
-            root.jobsController.handleAuditFinished(success, vulnerabilities, database, error);
+        function onAuditFinished(success, vulnerabilities, policyFindings, database, error) {
+            root.jobsController.handleAuditFinished(
+                success, vulnerabilities, policyFindings, database, error);
         }
 
         function onMemcheckDiagnostic(diagnostic) {
