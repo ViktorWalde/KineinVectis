@@ -1,9 +1,9 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.64.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.65.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
-> `git.*`, `build/test/quality/coverage/audit.run`,
+> `git.*`, `build/test/quality/coverage/audit/memcheck.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `integration.*`). O
 > protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
 > etc.) está em
@@ -755,6 +755,51 @@ em `event.test.finished`, não na resposta.
 > existe mais caminho de streaming síncrono no core — toda operação longa
 > retorna `jobId` e emite eventos pelo canal assíncrono.
 
+### Análise dinâmica de memória (`memcheck.run` — job assíncrono)
+
+Implementado no protocolo `0.65.0` (fatia 6 do L2). Fecha a **tríade de
+análise** do L2: estática (`quality.run`), segurança (`audit.run`) e dinâmica
+(aqui). Requer workspace aberto e projeto **CMake** — Rust tem segurança de
+memória no compilador, então Cargo retorna `INVALID_REQUEST` síncrono em vez de
+um job que nasce para não achar nada. Não aceita parâmetros
+(`deny_unknown_fields`).
+
+```text
+event.memcheck.started     { "jobId", "command" }
+event.memcheck.diagnostic  payload comum de Diagnostic, source "memcheck"
+event.memcheck.finished    sucesso { "jobId", "success": true, "tests",
+                                     "findings" }
+event.memcheck.finished    falha   { "jobId", "success": false, "error": "..." }
+```
+
+A análise **roda os testes do projeto sob o Valgrind**, e os enumera pelo
+próprio CTest (`ctest --show-only=json-v1`), que devolve o comando exato de
+cada um. Varrer o diretório de build atrás de binários daria a lista errada:
+pegaria utilitário, pularia teste que exige argumento e ignoraria o que o
+projeto excluiu. Teste sem comando (fixture, placeholder) não é executado.
+
+O job é `JobRisk::High`, e a razão é honesta: diferente de todo o resto do
+funil, esta análise **executa** o código do usuário, com os efeitos colaterais
+que os testes tiverem. Não é um leitor de código.
+
+Flags fixas: `--leak-check=full`, `--track-origins=yes` (sem origem, valor não
+inicializado não é acionável) e `--error-exitcode=0` — pela mesma razão do
+Cppcheck, achado não pode derrubar o job, ou o próximo teste nem rodaria.
+Extras vêm da configuração da integração (`id: "valgrind"`, chave `args`) e
+entram depois, então o usuário sobrepõe.
+
+Severidades são **diferentes de propósito**: acesso inválido vira `error`,
+vazamento vira `warning`. Ler fora do bloco corrompe o programa agora; vazar é
+uma dívida que talvez nunca seja cobrada. Tratar os dois igual afogaria o erro
+no meio dos avisos.
+
+Cada achado é posicionado no **primeiro quadro de pilha útil** — pulando os
+quadros de dentro do próprio Valgrind (`vg_replace_malloc.c`) e os que ficam
+fora da raiz do workspace. A pilha atravessa a libc, e mandar o usuário para
+`malloc.c` da glibc não ajudaria. Achado sem quadro útil ainda aparece, sem
+posição: escondê-lo seria ocultar um problema real só porque não sabemos
+apontar o dedo.
+
 ### Auditoria de segurança (`audit.run` — job assíncrono)
 
 Implementado no protocolo `0.64.0` (fatia 5 do L2). Requer workspace aberto e
@@ -1429,6 +1474,7 @@ test.run
 quality.run
 coverage.run
 audit.run
+memcheck.run
 run.start
 run.script
 run.stdin
@@ -1477,6 +1523,9 @@ event.coverage.finished
 event.audit.started
 event.audit.diagnostic
 event.audit.finished
+event.memcheck.started
+event.memcheck.diagnostic
+event.memcheck.finished
 event.environment.started
 event.environment.tool
 event.environment.finished

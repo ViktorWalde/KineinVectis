@@ -25,6 +25,7 @@ mod git;
 mod integration;
 mod job;
 mod lsp;
+mod memcheck;
 mod rpc;
 mod run;
 mod runconfig;
@@ -50,6 +51,7 @@ pub use git::*;
 pub use integration::*;
 pub use job::*;
 pub use lsp::*;
+pub use memcheck::*;
 pub use rpc::*;
 pub use run::*;
 pub use runconfig::*;
@@ -63,4 +65,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.64.0";
+pub const PROTOCOL_VERSION: &str = "0.65.0";

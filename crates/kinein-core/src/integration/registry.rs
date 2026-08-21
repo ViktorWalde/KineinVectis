@@ -31,6 +31,7 @@ fn capability_for(id: &str) -> &'static str {
         "cppcheck" | "clang-tidy" => "analyzer",
         "cargo-llvm-cov" | "lcov" => "coverage",
         "cargo-audit" => "security",
+        "valgrind" => "dynamicAnalysis",
         "git" => "versionControl",
         "ripgrep" | "fd" => "search",
         "rustup" => "toolchain",

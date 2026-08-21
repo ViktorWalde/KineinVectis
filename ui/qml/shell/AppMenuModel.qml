@@ -79,6 +79,9 @@ Item {
         // Auditoria le o Cargo.lock: so faz sentido em projeto Cargo.
         buildItems.push({ label: qsTr("Auditoria de segurança"), action: "audit.run",
                           enabled: workspaceOpen && coreConnected && cargoAvailable });
+        // Analise dinamica roda os testes sob o Valgrind: caminho CMake.
+        buildItems.push({ label: qsTr("Análise dinâmica (memória)"), action: "memcheck.run",
+                          enabled: workspaceOpen && coreConnected && cmakeAvailable });
         const menus = {
             file: fileItems,
             edit: [

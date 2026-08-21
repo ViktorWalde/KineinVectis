@@ -18,6 +18,11 @@ pub enum DiagnosticSource {
     Lsp,
     /// Toolchain/environment checks.
     Toolchain,
+    /// Dynamic memory analysis (`memcheck.run`).
+    ///
+    /// Origem propria pelo mesmo motivo de `Audit`: a aba Problemas limpa por
+    /// origem, e a analise estatica nao pode apagar o que a dinamica achou.
+    Memcheck,
     /// Security advisories (`audit.run`).
     ///
     /// Origem PROPRIA, e nao `Quality` com outra categoria, porque a aba

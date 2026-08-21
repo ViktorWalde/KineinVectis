@@ -17,6 +17,7 @@ pub mod git;
 pub mod integration;
 pub mod jobs;
 pub mod lsp;
+pub mod memcheck;
 pub mod run;
 pub mod runconfig;
 pub mod settings;

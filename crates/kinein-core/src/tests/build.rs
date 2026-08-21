@@ -394,3 +394,81 @@ fn audit_run_rejeita_parametro_inventado() {
     ));
     assert!(resposta.response().error.is_some());
 }
+
+#[test]
+fn memcheck_run_recusa_cargo_e_explica_projeto_sem_build() {
+    use std::time::Duration;
+
+    // L2 fatia 6: analise dinamica e do caminho CMake. Rust tem seguranca de
+    // memoria no compilador, entao Cargo responde erro SINCRONO em vez de um
+    // job que nasce para nao achar nada.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("memcheck");
+    core.enable_lsp(sender);
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-memcheck", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+
+    std::fs::write(
+        dir.join("Cargo.toml"),
+        "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    )
+    .unwrap();
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        80_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+    let recusado = core.handle_request(&JsonRpcRequest::new(81_i64, "memcheck.run", None));
+    assert!(
+        recusado.response().error.is_some(),
+        "analise dinamica em projeto Cargo tem que falhar SINCRONA"
+    );
+
+    // Como CMake, mas sem build: o job e aceito e o evento terminal explica
+    // o gesto que falta, em vez de dizer so "falhou".
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo LANGUAGES CXX)\n",
+    )
+    .unwrap();
+    let _ = std::fs::remove_file(dir.join("Cargo.toml"));
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        82_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let aceito = core.handle_request(&JsonRpcRequest::new(83_i64, "memcheck.run", None));
+    let resultado = aceito
+        .response()
+        .result
+        .as_ref()
+        .expect("memcheck.run em workspace CMake tem que aceitar o job");
+    assert!(resultado["jobId"].is_string());
+
+    let mut terminal = None;
+    while let Ok(evento) = receiver.recv_timeout(Duration::from_secs(20)) {
+        if evento.method == "event.memcheck.finished" {
+            terminal = evento.params;
+            break;
+        }
+    }
+    let params = terminal.expect("event.memcheck.finished tem que chegar");
+    assert_eq!(
+        params["success"], false,
+        "sem build configurado nao ha o que analisar"
+    );
+    let erro = params["error"].as_str().unwrap_or_default();
+    assert!(
+        erro.contains("configurado") || erro.contains("ctest"),
+        "o erro tem que dizer o GESTO que falta, nao so o sintoma: {erro}"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}

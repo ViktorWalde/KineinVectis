@@ -140,6 +140,7 @@ public:
     Q_INVOKABLE void runQuality(const QString& buildSystem = QString());
     Q_INVOKABLE void runCoverage(const QString& buildSystem = QString());
     Q_INVOKABLE void runAudit();
+    Q_INVOKABLE void runMemcheck();
     Q_INVOKABLE void cancelBuild();
     Q_INVOKABLE void cancelTests();
     Q_INVOKABLE void cancelQuality();
@@ -257,6 +258,9 @@ signals:
     void auditDiagnostic(const QVariantMap& diagnostic);
     void auditFinished(bool success, int vulnerabilities, const QVariantMap& database,
                        const QString& error);
+    void memcheckStarted(const QString& command);
+    void memcheckDiagnostic(const QVariantMap& diagnostic);
+    void memcheckFinished(bool success, int tests, int findings, const QString& error);
     void lspDiagnostics(const QString& path, const QVariantList& diagnostics);
     void lspDefinitionResolved(const QString& path, int line, int column);
     void lspHoverResolved(const QString& content);

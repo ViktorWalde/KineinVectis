@@ -32,6 +32,7 @@ pub mod settings;
 pub mod terminal;
 pub mod test;
 pub mod tools;
+pub mod valgrind;
 pub mod workspace;
 pub use runtime::{run_json_lines, run_stdio};
 
@@ -216,6 +217,9 @@ impl Core {
             }
             "build.run" => RequestOutcome::Continue(self.build_run_response(request_id, params)),
             "audit.run" => RequestOutcome::Continue(self.audit_run_response(request_id, params)),
+            "memcheck.run" => {
+                RequestOutcome::Continue(self.memcheck_run_response(request_id, params))
+            }
             "coverage.run" => {
                 RequestOutcome::Continue(self.coverage_run_response(request_id, params))
             }

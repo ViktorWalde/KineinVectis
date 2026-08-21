@@ -288,6 +288,7 @@ const fn diagnostic_source(domain: &str) -> DiagnosticSource {
     match domain.as_bytes() {
         b"quality" => DiagnosticSource::Quality,
         b"audit" => DiagnosticSource::Audit,
+        b"memcheck" => DiagnosticSource::Memcheck,
         _ => DiagnosticSource::Build,
     }
 }

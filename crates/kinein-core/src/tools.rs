@@ -189,6 +189,13 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         install_command: None,
     },
     ToolSpec {
+        id: "valgrind",
+        display_name: "Valgrind",
+        binary: "valgrind",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
         id: "cargo-audit",
         display_name: "cargo-audit",
         binary: "cargo-audit",
@@ -457,6 +464,7 @@ mod tests {
                 "fd",
                 "cppcheck",
                 "clang-tidy",
+                "valgrind",
                 "cargo-audit",
                 "cargo-llvm-cov",
                 "lcov",

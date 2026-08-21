@@ -451,6 +451,14 @@ void CoreClient::runAudit()
     sendRequest(QStringLiteral("audit.run"), QJsonObject{});
 }
 
+void CoreClient::runMemcheck()
+{
+    if (m_process.state() != QProcess::Running) {
+        return;
+    }
+    sendRequest(QStringLiteral("memcheck.run"), QJsonObject{});
+}
+
 void CoreClient::cancelBuild()
 {
     cancelJob(m_buildJobId);

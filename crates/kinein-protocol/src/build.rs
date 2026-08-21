@@ -89,6 +89,7 @@ const fn category_for_source(source: DiagnosticSource) -> &'static str {
         DiagnosticSource::Lsp => "lsp",
         DiagnosticSource::Toolchain => "toolchain",
         DiagnosticSource::Audit => "security",
+        DiagnosticSource::Memcheck => "memory",
     }
 }
 

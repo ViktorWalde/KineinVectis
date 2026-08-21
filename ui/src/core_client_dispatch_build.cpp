@@ -95,6 +95,26 @@ bool CoreClient::handleQualityNotification(const QString& method, const QJsonObj
                            params.value(QStringLiteral("error")).toString());
         return true;
     }
+    if (method == QStringLiteral("event.memcheck.started")) {
+        appendLog(QStringLiteral("analise dinamica iniciada: %1")
+                      .arg(params.value(QStringLiteral("command")).toString()));
+        emit memcheckStarted(params.value(QStringLiteral("command")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("event.memcheck.diagnostic")) {
+        emit memcheckDiagnostic(params.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.memcheck.output")) {
+        return true;
+    }
+    if (method == QStringLiteral("event.memcheck.finished")) {
+        emit memcheckFinished(params.value(QStringLiteral("success")).toBool(),
+                              params.value(QStringLiteral("tests")).toInt(0),
+                              params.value(QStringLiteral("findings")).toInt(0),
+                              params.value(QStringLiteral("error")).toString());
+        return true;
+    }
     if (method == QStringLiteral("event.coverage.finished")) {
         // L2 fatia 3: totais + arquivos quando ha dados; erro ACIONAVEL
         // quando nao ha (lcov ausente ou build sem --coverage).

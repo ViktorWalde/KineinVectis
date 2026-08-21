@@ -120,7 +120,8 @@ L2  C/C++/RUST SOLIDOS — resultado comum        EM ANDAMENTO
       FEITO   cobertura: cargo llvm-cov + lcov        (fatia 3, 2026-08-21)
       FEITO   Clang Static Analyzer (clang-tidy)      (fatia 4, 2026-08-21)
       FEITO   cargo-audit, com rede OPT-IN             (fatia 5, 2026-08-21)
-      FALTA   cargo-deny (exige deny.toml do projeto), Valgrind
+      FEITO   Valgrind/Memcheck sobre os testes        (fatia 6, 2026-08-21)
+      FALTA   cargo-deny (exige o deny.toml do projeto)
       FORA    Criterion — formato por-caso nao confirmado na fonte
 
 L3  Project Graph, targets e perfis explicaveis; cache provenance

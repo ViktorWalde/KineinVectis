@@ -277,6 +277,21 @@ sobrepõe os seus checks. Se não tiver, o conjunto vem do perfil de rigor
 configurado. Ter só uma das duas ferramentas instaladas não impede a análise —
 a que existir roda.
 
+### Análise dinâmica de memória
+
+Em projeto C/C++ (CMake), o menu **Build → Análise dinâmica (memória)** roda os
+**testes do projeto sob o Valgrind** e traz para a aba **Problemas** o que só
+aparece com o programa rodando: escrita fora do bloco alocado, leitura de valor
+não inicializado e vazamento de memória. Clicar leva à linha exata.
+
+Acesso inválido aparece como **erro** e vazamento como **aviso** — ler fora do
+bloco corrompe o programa agora, vazar é uma dívida que talvez nunca seja
+cobrada. Exige `valgrind` instalado e o projeto configurado pelo menos uma vez;
+sem isso, a análise diz o que falta em vez de falhar em silêncio.
+
+> Esta é a única análise que **executa** o seu código. As outras leem. Se os
+> seus testes tiverem efeitos colaterais, eles vão acontecer.
+
 ### Auditoria de segurança
 
 Em projeto Rust, o menu **Build → Auditoria de segurança** verifica as suas

@@ -14,6 +14,8 @@ Item {
     property string testSummary: ""
     property bool auditing: false
     property string auditSummary: ""
+    property bool memchecking: false
+    property string memcheckSummary: ""
 
     // Cobertura (L2 fatia 3) entra como UM objeto e nao como quatro
     // propriedades soltas: e um resultado coeso (mediu? quanto? por arquivo?
@@ -49,6 +51,7 @@ Item {
     signal runQualityRequested()
     signal runCoverageRequested(string buildSystem)
     signal runAuditRequested()
+    signal runMemcheckRequested()
     signal showTabRequested(string tab)
 
     visible: false
@@ -75,7 +78,9 @@ Item {
         removeProblemsBySource("lsp");
         removeProblemsBySource("quality");
         removeProblemsBySource("audit");
+        removeProblemsBySource("memcheck");
         auditSummary = "";
+        memcheckSummary = "";
         testItemsModel.clear();
         jobItemsModel.clear();
         testSummary = "";
@@ -115,6 +120,34 @@ Item {
         removeProblemsBySource("quality");
         showTabRequested("problems");
         runQualityRequested();
+    }
+
+    function startMemcheck() {
+        if (memchecking || workspaceRoot === "") {
+            return;
+        }
+        removeProblemsBySource("memcheck");
+        memchecking = true;
+        memcheckSummary = qsTr("rodando os testes sob o Valgrind...");
+        showTabRequested("problems");
+        runMemcheckRequested();
+    }
+
+    function handleMemcheckDiagnostic(diagnostic) {
+        appendDiagnostic(diagnostic, "warning", "memcheck");
+    }
+
+    function handleMemcheckFinished(success, tests, findings, error) {
+        memchecking = false;
+        if (!success) {
+            // O erro do core diz o GESTO que falta (configurar o build, por
+            // exemplo). Resumir para "falhou" apagaria a unica parte util.
+            memcheckSummary = error !== "" ? error : qsTr("analise dinamica falhou");
+            return;
+        }
+        memcheckSummary = findings > 0
+            ? qsTr("%1 achado(s) de memoria em %2 teste(s)").arg(findings).arg(tests)
+            : qsTr("nenhum problema de memoria em %1 teste(s)").arg(tests);
     }
 
     function startAudit() {

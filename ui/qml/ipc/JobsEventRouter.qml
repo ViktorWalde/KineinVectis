@@ -57,6 +57,14 @@ Item {
             root.jobsController.handleAuditFinished(success, vulnerabilities, database, error);
         }
 
+        function onMemcheckDiagnostic(diagnostic) {
+            root.jobsController.handleMemcheckDiagnostic(diagnostic);
+        }
+
+        function onMemcheckFinished(success, tests, findings, error) {
+            root.jobsController.handleMemcheckFinished(success, tests, findings, error);
+        }
+
         function onCoverageFinished(success, percent, linesCovered, linesTotal,
                                     files, error) {
             root.jobsController.handleCoverageFinished(
