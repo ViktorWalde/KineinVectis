@@ -213,7 +213,7 @@ impl Core {
 
     /// Resolves an explicit hybrid build-system selection against the one
     /// workspace snapshot. With no selection, preserves the primary `kind`.
-    fn runner_workspace(
+    pub(crate) fn runner_workspace(
         &self,
         request_id: Option<&Value>,
         method: &str,
@@ -305,7 +305,7 @@ pub(super) const fn job_outcome(success: bool) -> JobOutcome {
     }
 }
 
-fn unsupported_kind_response(
+pub(super) fn unsupported_kind_response(
     request_id: Option<Value>,
     action: &str,
     kind: ProjectKind,
@@ -323,7 +323,10 @@ fn unsupported_kind_response(
     )
 }
 
-fn jobs_unavailable_response(request_id: Option<Value>, method: &str) -> JsonRpcResponse {
+pub(super) fn jobs_unavailable_response(
+    request_id: Option<Value>,
+    method: &str,
+) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(

@@ -124,25 +124,7 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
                           params.value(QStringLiteral("ignored")).toInt(0));
         return;
     }
-    if (method == QStringLiteral("event.quality.started")) {
-        const QString command = params.value(QStringLiteral("command")).toString();
-        appendLog(QStringLiteral("analise iniciada: %1").arg(command));
-        emit qualityStarted(command);
-        return;
-    }
-    if (method == QStringLiteral("event.quality.diagnostic")) {
-        emit qualityDiagnostic(params.toVariantMap());
-        return;
-    }
-    if (method == QStringLiteral("event.quality.output")) {
-        return;
-    }
-    if (method == QStringLiteral("event.quality.finished")) {
-        setAnalyzing(false);
-        m_qualityJobId.clear();
-        emit qualityFinished(params.value(QStringLiteral("success")).toBool(),
-                             params.value(QStringLiteral("exitCode")).toInt(-1),
-                             params.value(QStringLiteral("diagnostics")).toInt(0));
+    if (handleQualityNotification(method, params)) {
         return;
     }
     if (handleCmakeNotification(method, params)) {

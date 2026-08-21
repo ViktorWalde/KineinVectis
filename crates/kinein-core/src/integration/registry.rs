@@ -29,6 +29,7 @@ fn capability_for(id: &str) -> &'static str {
         "clangd" | "rust-analyzer" => "languageServer",
         "gdb" | "lldb" | "lldb-dap" => "debugger",
         "cppcheck" => "analyzer",
+        "cargo-llvm-cov" | "lcov" => "coverage",
         "git" => "versionControl",
         "ripgrep" | "fd" => "search",
         "rustup" => "toolchain",

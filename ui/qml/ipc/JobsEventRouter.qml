@@ -49,6 +49,12 @@ Item {
             root.jobsController.handleQualityFinished();
         }
 
+        function onCoverageFinished(success, percent, linesCovered, linesTotal,
+                                    files, error) {
+            root.jobsController.handleCoverageFinished(
+                success, percent, linesCovered, linesTotal, files, error);
+        }
+
         function onJobCreated(job) {
             root.jobsController.handleJobCreated(job);
         }

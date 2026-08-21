@@ -7,6 +7,7 @@
 pub mod build;
 pub mod cargo;
 pub mod cmake;
+pub mod coverage;
 pub mod debug;
 pub mod draft;
 pub mod format;

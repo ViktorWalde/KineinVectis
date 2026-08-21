@@ -11,15 +11,18 @@ Item {
     id: root
 
     property string activeTab: ""
-    property int problemCount: 0
+    property var problemsModel: null
     property bool processRunning: false
     property var terminalsModel: null
     property string activeTerminalId: ""
     property string terminalSession: "shell"
     property bool running: false
 
+    property bool measuringCoverage: false
+
     signal hideRequested()
     signal refreshToolsRequested()
+    signal coverageRequested()
     signal terminalSelectRequested(string id)
     signal terminalCloseTabRequested(string id)
     signal terminalNewRequested()
@@ -44,8 +47,13 @@ Item {
             logs: qsTr("Log da IDE"), tools: qsTr("Ferramentas")
         };
         const label = labels[tab] !== undefined ? labels[tab] : tab;
-        if (tab === "problems" && problemCount > 0) {
-            return qsTr("Problemas (%1)").arg(problemCount);
+        // Contagem DERIVADA do modelo que ja desce. Antes ela vinha por uma
+        // propriedade propria, atravessando ShellWorkspaceHost e
+        // BottomPanelHost em paralelo ao proprio modelo — dois caminhos para
+        // o mesmo fato, e o numerico podia mentir se um deles ficasse para tras.
+        const problemas = problemsModel ? problemsModel.count : 0;
+        if (tab === "problems" && problemas > 0) {
+            return qsTr("Problemas (%1)").arg(problemas);
         }
         if (tab === "terminal" && processRunning) {
             return label + " ·";
@@ -106,6 +114,22 @@ Item {
         iconName: "refresh"
         text: qsTr("Redetectar")
         onClicked: root.refreshToolsRequested()
+    }
+
+    // Cobertura mora com Testes, como o "Run with Coverage" do IntelliJ — nao
+    // ganha icone proprio no rail (a §12.2 proibe rail-propaganda) nem aba
+    // propria (a F3 matou a fileira de abas).
+    KvButton {
+        anchors.left: titleRow.right
+        anchors.leftMargin: Theme.spacingMedium
+        anchors.verticalCenter: parent.verticalCenter
+        height: 24
+        visible: root.activeTab === "tests"
+        enabled: !root.measuringCoverage
+        compact: true
+        iconName: "test"
+        text: root.measuringCoverage ? qsTr("Medindo...") : qsTr("Cobertura")
+        onClicked: root.coverageRequested()
     }
 
     KvIconButton {

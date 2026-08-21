@@ -400,7 +400,7 @@ Item {
                 height: root.shellController.bottomPanelHeight
                 open: root.shellController.showBottomPanel
                 activeTab: root.shellController.bottomTab
-                problemCount: root.jobsController.problemsModel.count
+                coverage: root.jobsController.coverage
                 buildOutputModel: root.jobsController.buildOutputModel
                 jobsModel: root.jobsController.jobsModel
                 testModel: root.jobsController.testModel

@@ -13,9 +13,39 @@ Item {
     property alias jobsModel: jobItemsModel
     property string testSummary: ""
 
+    // Cobertura (L2 fatia 3) entra como UM objeto e nao como quatro
+    // propriedades soltas: e um resultado coeso (mediu? quanto? por arquivo?
+    // por que falhou?) e desce a arvore em uma linha so. O ShellWorkspaceHost
+    // esta em debito e a catraca cobra de quem passa por la — quatro
+    // pass-throughs para um unico conceito seriam exatamente a cerimonia que
+    // o limite existe para impedir.
+    readonly property alias coverage: coverageState
+
+    QtObject {
+        id: coverageState
+
+        property bool measuring: false
+        property string summary: ""
+        property string error: ""
+        property var filesModel: coverageFilesModel
+
+        // A acao vem junto do resultado de proposito. A alternativa era um
+        // sinal subindo BottomPanelHost -> ShellWorkspaceHost -> controller,
+        // e o ShellWorkspaceHost esta em debito: tres linhas de cerimonia
+        // para chegar a uma chamada que o painel ja tem em maos.
+        function start() {
+            root.startCoverage("");
+        }
+    }
+
+    ListModel {
+        id: coverageFilesModel
+    }
+
     signal runBuildRequested(string buildSystem)
     signal runTestsRequested(string buildSystem)
     signal runQualityRequested()
+    signal runCoverageRequested(string buildSystem)
     signal showTabRequested(string tab)
 
     visible: false
@@ -44,6 +74,13 @@ Item {
         testItemsModel.clear();
         jobItemsModel.clear();
         testSummary = "";
+        clearCoverage();
+    }
+
+    function clearCoverage() {
+        coverageFilesModel.clear();
+        coverageState.summary = "";
+        coverageState.error = "";
     }
 
     function startBuild(buildSystem) {
@@ -73,6 +110,41 @@ Item {
         removeProblemsBySource("quality");
         showTabRequested("problems");
         runQualityRequested();
+    }
+
+    function startCoverage(buildSystem) {
+        if (coverageState.measuring || workspaceRoot === "") {
+            return;
+        }
+        clearCoverage();
+        coverageState.measuring = true;
+        coverageState.summary = qsTr("medindo cobertura...");
+        showTabRequested("tests");
+        runCoverageRequested(buildSystem || "");
+    }
+
+    function handleCoverageFinished(success, percent, linesCovered, linesTotal,
+                                    files, error) {
+        coverageState.measuring = false;
+        if (!success) {
+            coverageState.summary = "";
+            // O erro do core ja e acionavel por contrato ("compilou com
+            // --coverage?"); a UI repassa e nao inventa um 0% que pareceria
+            // medicao.
+            coverageState.error = error !== "" ? error : qsTr("cobertura falhou");
+            return;
+        }
+        coverageState.error = "";
+        coverageState.summary = qsTr("%1% — %2 de %3 linhas")
+                .arg(percent.toFixed(1)).arg(linesCovered).arg(linesTotal);
+        for (const file of files) {
+            coverageFilesModel.append({
+                path: relativeToRoot(file.path),
+                percent: file.percent,
+                linesCovered: file.linesCovered,
+                linesTotal: file.linesTotal
+            });
+        }
     }
 
     function removeProblemsBySource(source) {

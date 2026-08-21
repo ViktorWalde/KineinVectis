@@ -47,6 +47,48 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
     return false;
 }
 
+// Qualidade e cobertura: o mesmo funil do L2 ("diagnostico/teste/cobertura num
+// contrato so"). Saiu do roteador central em 2026-08-21, quando a fatia 3
+// somou o event.coverage.finished e o handleNotification estourou a
+// complexidade cognitiva do clang-tidy. A §5 ja mandava dividir por dominio;
+// a catraca so cobrou a conta.
+bool CoreClient::handleQualityNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.quality.started")) {
+        const QString command = params.value(QStringLiteral("command")).toString();
+        appendLog(QStringLiteral("analise iniciada: %1").arg(command));
+        emit qualityStarted(command);
+        return true;
+    }
+    if (method == QStringLiteral("event.quality.diagnostic")) {
+        emit qualityDiagnostic(params.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.quality.output")) {
+        return true;
+    }
+    if (method == QStringLiteral("event.quality.finished")) {
+        setAnalyzing(false);
+        m_qualityJobId.clear();
+        emit qualityFinished(params.value(QStringLiteral("success")).toBool(),
+                             params.value(QStringLiteral("exitCode")).toInt(-1),
+                             params.value(QStringLiteral("diagnostics")).toInt(0));
+        return true;
+    }
+    if (method == QStringLiteral("event.coverage.finished")) {
+        // L2 fatia 3: totais + arquivos quando ha dados; erro ACIONAVEL
+        // quando nao ha (lcov ausente ou build sem --coverage).
+        emit coverageFinished(params.value(QStringLiteral("success")).toBool(),
+                              params.value(QStringLiteral("percent")).toDouble(0.0),
+                              params.value(QStringLiteral("linesCovered")).toDouble(0.0),
+                              params.value(QStringLiteral("linesTotal")).toDouble(0.0),
+                              params.value(QStringLiteral("files")).toArray().toVariantList(),
+                              params.value(QStringLiteral("error")).toString());
+        return true;
+    }
+    return false;
+}
+
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)
 {
     if (method == QStringLiteral("event.cmake.started")) {

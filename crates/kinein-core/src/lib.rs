@@ -10,6 +10,7 @@ pub mod build;
 pub mod cargo;
 pub mod cmake;
 pub mod commands;
+pub mod coverage;
 pub mod dap;
 pub mod db;
 pub mod format;
@@ -213,6 +214,9 @@ impl Core {
                 RequestOutcome::Continue(self.close_workspace_response(request_id))
             }
             "build.run" => RequestOutcome::Continue(self.build_run_response(request_id, params)),
+            "coverage.run" => {
+                RequestOutcome::Continue(self.coverage_run_response(request_id, params))
+            }
             "quality.run" => {
                 RequestOutcome::Continue(self.quality_run_response(request_id, params))
             }

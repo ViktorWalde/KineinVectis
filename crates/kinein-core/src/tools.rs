@@ -182,6 +182,20 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         install_command: None,
     },
     ToolSpec {
+        id: "cargo-llvm-cov",
+        display_name: "cargo-llvm-cov",
+        binary: "cargo-llvm-cov",
+        alternative_binary: None,
+        install_command: Some("cargo install cargo-llvm-cov"),
+    },
+    ToolSpec {
+        id: "lcov",
+        display_name: "lcov",
+        binary: "lcov",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
         id: "claude",
         display_name: "Claude Code",
         binary: "claude",
@@ -428,6 +442,8 @@ mod tests {
                 "ripgrep",
                 "fd",
                 "cppcheck",
+                "cargo-llvm-cov",
+                "lcov",
                 "claude",
                 "codex"
             ]

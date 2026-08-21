@@ -239,3 +239,55 @@ fn quality_run_aceita_workspace_cmake_e_o_funil_termina() {
         "o funil do quality tem que emitir o evento terminal"
     );
 }
+
+#[test]
+fn coverage_run_aceita_cmake_e_o_evento_terminal_chega() {
+    use std::time::Duration;
+
+    // L2 fatia 3: coverage.run e job com evento terminal proprio. Sem lcov
+    // (ou sem build instrumentado) o evento chega com success=false e um
+    // erro ACIONAVEL — a fiacao e o que se prova, nao a ferramenta.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("coverage-cmake");
+    core.enable_lsp(sender);
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-coverage-cmake", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo LANGUAGES CXX)\n",
+    )
+    .unwrap();
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        65_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let accepted = core.handle_request(&JsonRpcRequest::new(66_i64, "coverage.run", None));
+    let result = accepted
+        .response()
+        .result
+        .as_ref()
+        .expect("coverage.run em workspace CMake tem que aceitar o job");
+    assert!(result["jobId"].is_string());
+
+    let mut terminal = None;
+    while let Ok(event) = receiver.recv_timeout(Duration::from_secs(15)) {
+        if event.method == "event.coverage.finished" {
+            terminal = event.params;
+            break;
+        }
+    }
+    let params = terminal.expect("event.coverage.finished tem que chegar");
+    // Nesta maquina de teste nao ha dados instrumentados: falha EXPLICADA.
+    if params["success"] == false {
+        assert!(params["error"].as_str().unwrap_or("").len() > 3);
+    } else {
+        assert!(params["linesTotal"].is_u64());
+    }
+}

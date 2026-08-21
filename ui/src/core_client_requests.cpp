@@ -429,6 +429,18 @@ void CoreClient::runQuality(const QString& buildSystem)
     sendRequest(QStringLiteral("quality.run"), params);
 }
 
+void CoreClient::runCoverage(const QString& buildSystem)
+{
+    if (m_process.state() != QProcess::Running) {
+        return;
+    }
+    QJsonObject params;
+    if (!buildSystem.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("buildSystem"), buildSystem);
+    }
+    sendRequest(QStringLiteral("coverage.run"), params);
+}
+
 void CoreClient::cancelBuild()
 {
     cancelJob(m_buildJobId);

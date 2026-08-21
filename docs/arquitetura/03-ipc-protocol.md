@@ -1,9 +1,9 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.62.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.63.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
-> `git.*`, `build/test/quality.run`,
+> `git.*`, `build/test/quality/coverage.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `integration.*`). O
 > protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
 > etc.) está em
@@ -689,11 +689,18 @@ diagnósticos estruturados sem parser novo. Emite, com `jobId`,
 `event.build.*`) + `event.job.*`; a saida bruta tambem faz fan-out para
 `event.job.output`. Diagnosticos usam o mesmo payload de build, mas com
 `source: "quality"` e `category: "lint"`. A UI adiciona os diagnósticos à aba Problemas
-com origem `quality`. `job.cancel` mata o clippy. Validação síncrona: tudo que
-não é Rust/Cargo retorna `INVALID_REQUEST` (CMake via clang-tidy é o próximo
-passo). Falhas (`cargo` ausente etc.) chegam por `event.quality.finished`.
-O parâmetro opcional `buildSystem` de `0.55.0` é tipado pelo mesmo enum; hoje a
-única capacidade executável por `quality.run` continua sendo `cargo`.
+com origem `quality`. `job.cancel` mata o linter. Validação síncrona: tipos sem
+analisador retornam `INVALID_REQUEST`.
+
+Desde a fatia 1 do L2 (2026-07-19) o funil tem **dois braços**: Rust/Cargo roda
+`cargo clippy` e CMake roda `cppcheck --template=gcc`, cuja saída cai no parser
+`GccLike` que já existia — zero parser novo. O `--error-exitcode=0` é
+deliberado: severidade é decisão da UI, não do código de saída. Os argumentos
+extras do Cppcheck vêm da **configuração da integração** (`id: "cppcheck"`,
+chave `args`, escopo `workspace` sobrepondo `global`), primeira consumidora real
+do `integration.config.*` de `0.62.0`. Falhas (ferramenta ausente etc.) chegam
+por `event.quality.finished`. O parâmetro opcional `buildSystem` de `0.55.0` é
+tipado pelo mesmo enum.
 
 ### Testes (`test.run` — job assíncrono)
 
@@ -720,9 +727,52 @@ Passed|***Failed` (ctest); a linha de resumo do libtest é ignorada. Tipos sem
 integração retornam `INVALID_REQUEST` (síncrono, antes do job); o resultado vem
 em `event.test.finished`, não na resposta.
 
-> **Nota:** com build/quality/test todos como jobs assíncronos, não existe mais
-> caminho de streaming síncrono no core — toda operação longa retorna `jobId` e
-> emite eventos pelo canal assíncrono.
+> **Nota:** com build/quality/test/coverage todos como jobs assíncronos, não
+> existe mais caminho de streaming síncrono no core — toda operação longa
+> retorna `jobId` e emite eventos pelo canal assíncrono.
+
+### Cobertura (`coverage.run` — job assíncrono)
+
+Implementado no protocolo `0.63.0` (fatia 3 do L2). Requer workspace aberto.
+Aceita **apenas** `{ "buildSystem"? }`, tipado pelo mesmo enum de `0.55.0`, e
+responde na hora com `{ "jobId" }`. Validação síncrona antes do job: tipo sem
+integração de cobertura retorna `INVALID_REQUEST`; sem workspace,
+`INVALID_REQUEST`. O resultado chega por `event.coverage.finished`, nunca na
+resposta.
+
+Como no resto do L2, o core **orquestra ferramenta madura e normaliza o
+número** — não instrumenta nada:
+
+- **Rust/Cargo:** `cargo llvm-cov --workspace --json`, cujo export do `llvm-cov`
+  já traz `data[0].totals.lines` e `data[0].files[]`. A instrumentação é do
+  próprio `cargo llvm-cov`.
+- **CMake:** `lcov --capture` sobre os `.gcda` que o build instrumentado do
+  usuário gravou, e o tracefile é lido por nós (registros `SF:`/`LH:`/`LF:`
+  fechados por `end_of_record`). A IDE **não injeta `--coverage`** no build de
+  ninguém — mesma regra do `-Werror` (M4.5): o rigor é escolha do projeto, não
+  imposição da ferramenta. Sem dados, o evento explica isso.
+
+```text
+event.coverage.finished  sucesso  { "jobId", "success": true,
+                                    "linesCovered", "linesTotal", "percent",
+                                    "files": [ { "path",
+                                                 "linesCovered", "linesTotal",
+                                                 "percent" } ] }
+event.coverage.finished  falha    { "jobId", "success": false, "error": "..." }
+```
+
+`percent` é derivado de `linesCovered`/`linesTotal` em um lugar só
+(`CoverageTotals::from_lines`) e vale `0` quando nada foi instrumentado — zero
+linhas instrumentadas não é divisão por zero nem 100%. As linhas de progresso
+da ferramenta saem por `event.job.output`; `job.cancel` mata o processo.
+
+O `error` da falha é **acionável por contrato**, não genérico: ferramenta
+ausente diz qual comando falhou; tracefile vazio ou `lcov` sem captura diz
+"o projeto foi compilado com `--coverage`?". Um `0%` silencioso seria pior que
+um erro — pareceria medição, e não é.
+
+`cargo-llvm-cov` e `lcov` entraram em `KNOWN_TOOLS` com capability `coverage`,
+então aparecem no `integration.list` de `0.61.0` sem código novo.
 
 ### LSP (`lsp.didChange` / `lsp.definition` / `lsp.hover` / `lsp.completion` / `lsp.references` / `lsp.rename`)
 
@@ -1308,6 +1358,7 @@ fs.replace
 build.run
 test.run
 quality.run
+coverage.run
 run.start
 run.script
 run.stdin
@@ -1352,6 +1403,7 @@ event.quality.started
 event.quality.output
 event.quality.diagnostic
 event.quality.finished
+event.coverage.finished
 event.environment.started
 event.environment.tool
 event.environment.finished

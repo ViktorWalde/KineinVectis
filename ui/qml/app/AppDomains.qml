@@ -104,6 +104,7 @@ Item {
         onRunBuildRequested: buildSystem => root.coreClient.runBuild(buildSystem)
         onRunTestsRequested: buildSystem => root.coreClient.runTests("", buildSystem)
         onRunQualityRequested: root.coreClient.runQuality()
+        onRunCoverageRequested: buildSystem => root.coreClient.runCoverage(buildSystem)
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
         }

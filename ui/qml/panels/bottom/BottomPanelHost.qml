@@ -7,7 +7,7 @@ Rectangle {
 
     property bool open: false
     property string activeTab: "logs"
-    property int problemCount: 0
+    property var coverage: null
     property var buildOutputModel
     property var jobsModel
     property var testModel
@@ -137,8 +137,14 @@ Rectangle {
         anchors.rightMargin: Theme.spacingSmall
         anchors.topMargin: Theme.spacingXSmall
         activeTab: root.activeTab
-        problemCount: root.problemCount
+        problemsModel: root.problemsModel
         processRunning: root.running
+        measuringCoverage: root.coverage ? root.coverage.measuring : false
+        onCoverageRequested: {
+            if (root.coverage) {
+                root.coverage.start();
+            }
+        }
         terminalsModel: root.terminalsModel
         activeTerminalId: root.activeTerminalId
         terminalSession: root.terminalSession
@@ -172,6 +178,7 @@ Rectangle {
         casesModel: root.testModel
         summary: root.testSummary
         running: root.testing
+        coverage: root.coverage
     }
 
     JobsPanel {

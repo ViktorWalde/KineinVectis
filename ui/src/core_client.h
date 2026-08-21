@@ -138,6 +138,7 @@ public:
     Q_INVOKABLE void runTests(const QString& filter = QString(),
                               const QString& buildSystem = QString());
     Q_INVOKABLE void runQuality(const QString& buildSystem = QString());
+    Q_INVOKABLE void runCoverage(const QString& buildSystem = QString());
     Q_INVOKABLE void cancelBuild();
     Q_INVOKABLE void cancelTests();
     Q_INVOKABLE void cancelQuality();
@@ -249,6 +250,8 @@ signals:
     void qualityStarted(const QString& command);
     void qualityDiagnostic(const QVariantMap& diagnostic);
     void qualityFinished(bool success, int exitCode, int diagnostics);
+    void coverageFinished(bool success, double percent, double linesCovered, double linesTotal,
+                          const QVariantList& files, const QString& error);
     void lspDiagnostics(const QString& path, const QVariantList& diagnostics);
     void lspDefinitionResolved(const QString& path, int line, int column);
     void lspHoverResolved(const QString& content);
@@ -317,6 +320,7 @@ private:
     bool handleEnvironmentNotification(const QString& method, const QJsonObject& params);
     bool handleJobNotification(const QString& method, const QJsonObject& params);
     bool handleCmakeNotification(const QString& method, const QJsonObject& params);
+    bool handleQualityNotification(const QString& method, const QJsonObject& params);
     bool handleDebugNotification(const QString& method, const QJsonObject& params);
     void dispatchResult(const QString& method, const QJsonObject& result);
     bool dispatchFileResult(const QString& method, const QJsonObject& result);
