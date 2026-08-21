@@ -441,6 +441,16 @@ void CoreClient::runCoverage(const QString& buildSystem)
     sendRequest(QStringLiteral("coverage.run"), params);
 }
 
+void CoreClient::runAudit()
+{
+    if (m_process.state() != QProcess::Running) {
+        return;
+    }
+    // Sem parametros: a auditoria le o Cargo.lock do workspace aberto, e o
+    // opt-in de rede vive na config da integracao, nao no pedido.
+    sendRequest(QStringLiteral("audit.run"), QJsonObject{});
+}
+
 void CoreClient::cancelBuild()
 {
     cancelJob(m_buildJobId);

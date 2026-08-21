@@ -291,3 +291,106 @@ fn coverage_run_aceita_cmake_e_o_evento_terminal_chega() {
         assert!(params["linesTotal"].is_u64());
     }
 }
+
+#[test]
+fn audit_run_recusa_projeto_que_nao_e_cargo_e_aceita_o_que_e() {
+    use std::time::Duration;
+
+    // L2 fatia 5: auditoria le o Cargo.lock, entao CMake responde erro
+    // SINCRONO — nao um job que nasce para falhar. Em Cargo, o job e aceito
+    // e o evento terminal chega mesmo sem cargo-audit instalado: o que se
+    // prova aqui e a FIACAO, nao a ferramenta.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("audit");
+    core.enable_lsp(sender);
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-audit", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+
+    // Primeiro como CMake: tem que recusar na hora.
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo LANGUAGES CXX)\n",
+    )
+    .unwrap();
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        70_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+    let recusado = core.handle_request(&JsonRpcRequest::new(71_i64, "audit.run", None));
+    assert!(
+        recusado.response().error.is_some(),
+        "auditoria em projeto sem Cargo.lock tem que falhar SINCRONA"
+    );
+
+    // Agora como Cargo: aceita o job e o evento terminal chega.
+    std::fs::write(
+        dir.join("Cargo.toml"),
+        "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    )
+    .unwrap();
+    let _ = std::fs::remove_file(dir.join("CMakeLists.txt"));
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        72_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let aceito = core.handle_request(&JsonRpcRequest::new(73_i64, "audit.run", None));
+    let resultado = aceito
+        .response()
+        .result
+        .as_ref()
+        .expect("audit.run em workspace Cargo tem que aceitar o job");
+    assert!(resultado["jobId"].is_string());
+
+    let mut terminal = None;
+    let mut comando = None;
+    while let Ok(evento) = receiver.recv_timeout(Duration::from_secs(15)) {
+        if evento.method == "event.audit.started" {
+            comando = evento.params;
+        } else if evento.method == "event.audit.finished" {
+            terminal = evento.params;
+            break;
+        }
+    }
+    // Sem opt-in de rede, o comando anunciado DIZ que nao vai buscar. Isso
+    // aparece no log do job: o usuario ve a decisao, nao so a consequencia.
+    let comando = comando.expect("event.audit.started tem que chegar");
+    assert!(
+        comando["command"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("--no-fetch"),
+        "sem autorizacao, o comando anunciado tem que declarar --no-fetch"
+    );
+
+    let params = terminal.expect("event.audit.finished tem que chegar");
+    if params["success"] == false {
+        assert!(params["error"].as_str().unwrap_or("").len() > 3);
+    } else {
+        assert!(params["vulnerabilities"].is_u64());
+    }
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn audit_run_rejeita_parametro_inventado() {
+    // deny_unknown_fields no contrato: parametro que a UI invente nao pode
+    // ser aceito em silencio e nunca fazer nada (licao do
+    // assistant_terminal_width).
+    let mut core = core_with_empty_search_path("audit-params");
+    let resposta = core.handle_request(&JsonRpcRequest::new(
+        74_i64,
+        "audit.run",
+        Some(json!({ "buildSystem": "cargo" })),
+    ));
+    assert!(resposta.response().error.is_some());
+}

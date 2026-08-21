@@ -6,6 +6,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod audit;
 pub mod build;
 pub mod cargo;
 pub mod cmake;
@@ -214,6 +215,7 @@ impl Core {
                 RequestOutcome::Continue(self.close_workspace_response(request_id))
             }
             "build.run" => RequestOutcome::Continue(self.build_run_response(request_id, params)),
+            "audit.run" => RequestOutcome::Continue(self.audit_run_response(request_id, params)),
             "coverage.run" => {
                 RequestOutcome::Continue(self.coverage_run_response(request_id, params))
             }

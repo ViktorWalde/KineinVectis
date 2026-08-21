@@ -189,6 +189,13 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         install_command: None,
     },
     ToolSpec {
+        id: "cargo-audit",
+        display_name: "cargo-audit",
+        binary: "cargo-audit",
+        alternative_binary: None,
+        install_command: Some("cargo install cargo-audit"),
+    },
+    ToolSpec {
         id: "cargo-llvm-cov",
         display_name: "cargo-llvm-cov",
         binary: "cargo-llvm-cov",
@@ -450,6 +457,7 @@ mod tests {
                 "fd",
                 "cppcheck",
                 "clang-tidy",
+                "cargo-audit",
                 "cargo-llvm-cov",
                 "lcov",
                 "claude",

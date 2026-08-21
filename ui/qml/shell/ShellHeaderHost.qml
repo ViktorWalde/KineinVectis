@@ -81,6 +81,7 @@ Item {
         case "test.run.cargo": root.jobsController.startTests("cargo"); break;
         case "test.run.cmake": root.jobsController.startTests("cmake"); break;
         case "quality.run": root.jobsController.startQuality(); break;
+        case "audit.run": root.jobsController.startAudit(); break;
         case "run.start": root.runtimeController.startRun(""); break;
         case "run.stop": root.runtimeController.stopRun(); break;
         case "debug.start": root.debugController.startDebug(); break;

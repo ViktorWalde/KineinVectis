@@ -204,8 +204,11 @@ pagamento. Meia refatoração é pior que nenhuma: fica a indireção *e* fica o
 problema.
 
 ```text
-ui/qml/app/AppDomains.qml   (EXECUTADO em 0686213; 350 linhas — limite 400,
-                             a categoria foi corrigida: composicao nao e visual)
+ui/qml/app/AppDomains.qml   (EXECUTADO em 0686213, 2026-07-16: 350 linhas
+                             naquele dia — limite 400, a categoria foi
+                             corrigida: composicao nao e visual. O numero de
+                             HOJE esta no scripts/arquitetura-baseline.txt,
+                             que a catraca mantem.)
   dono dos 12 controllers + dos 14 routers, mais o ProjectTreeGestures
   (interprete de arraste/teclado da arvore, sem estado proprio) e o
   EditorMarkdownModeController (modo "imagem" dos .md, 2026-07-18).

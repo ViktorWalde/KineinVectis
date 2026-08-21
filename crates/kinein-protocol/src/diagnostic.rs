@@ -18,6 +18,13 @@ pub enum DiagnosticSource {
     Lsp,
     /// Toolchain/environment checks.
     Toolchain,
+    /// Security advisories (`audit.run`).
+    ///
+    /// Origem PROPRIA, e nao `Quality` com outra categoria, porque a aba
+    /// Problemas limpa por origem: `quality.run` apagaria os achados da
+    /// auditoria ao rodar depois dela. Duas coisas que se limpam em momentos
+    /// diferentes precisam de dois nomes.
+    Audit,
 }
 
 /// Severity of a structured diagnostic.

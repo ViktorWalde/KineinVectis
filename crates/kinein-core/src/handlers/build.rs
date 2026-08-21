@@ -262,7 +262,7 @@ const fn project_system_name(kind: ProjectKind) -> &'static str {
 
 /// Maps a [`build::BuildEvent`] onto an `event.<domain>.*` notification tagged
 /// with the job id, so `build` and `quality` share one mapping.
-pub(super) fn emit_build_event(ctx: &JobContext, domain: &str, event: &build::BuildEvent) {
+pub(crate) fn emit_build_event(ctx: &JobContext, domain: &str, event: &build::BuildEvent) {
     let id = ctx.id();
     let (method, params) = match event {
         build::BuildEvent::Started { command } => (
@@ -287,6 +287,7 @@ pub(super) fn emit_build_event(ctx: &JobContext, domain: &str, event: &build::Bu
 const fn diagnostic_source(domain: &str) -> DiagnosticSource {
     match domain.as_bytes() {
         b"quality" => DiagnosticSource::Quality,
+        b"audit" => DiagnosticSource::Audit,
         _ => DiagnosticSource::Build,
     }
 }

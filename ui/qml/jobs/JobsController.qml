@@ -12,6 +12,8 @@ Item {
     property alias testModel: testItemsModel
     property alias jobsModel: jobItemsModel
     property string testSummary: ""
+    property bool auditing: false
+    property string auditSummary: ""
 
     // Cobertura (L2 fatia 3) entra como UM objeto e nao como quatro
     // propriedades soltas: e um resultado coeso (mediu? quanto? por arquivo?
@@ -46,6 +48,7 @@ Item {
     signal runTestsRequested(string buildSystem)
     signal runQualityRequested()
     signal runCoverageRequested(string buildSystem)
+    signal runAuditRequested()
     signal showTabRequested(string tab)
 
     visible: false
@@ -71,6 +74,8 @@ Item {
         removeProblemsBySource("build");
         removeProblemsBySource("lsp");
         removeProblemsBySource("quality");
+        removeProblemsBySource("audit");
+        auditSummary = "";
         testItemsModel.clear();
         jobItemsModel.clear();
         testSummary = "";
@@ -110,6 +115,38 @@ Item {
         removeProblemsBySource("quality");
         showTabRequested("problems");
         runQualityRequested();
+    }
+
+    function startAudit() {
+        if (auditing || workspaceRoot === "") {
+            return;
+        }
+        removeProblemsBySource("audit");
+        auditing = true;
+        showTabRequested("problems");
+        runAuditRequested();
+    }
+
+    function handleAuditDiagnostic(diagnostic) {
+        appendDiagnostic(diagnostic, "warning", "audit");
+    }
+
+    function handleAuditFinished(success, vulnerabilities, database, error) {
+        auditing = false;
+        if (!success) {
+            // O erro do core ja diz COMO habilitar a rede; a UI repassa em
+            // vez de resumir para "falhou".
+            auditSummary = error !== "" ? error : qsTr("auditoria falhou");
+            return;
+        }
+        const base = database && database.lastUpdated !== undefined
+                   ? qsTr(" · base de %1").arg(String(database.lastUpdated).slice(0, 10))
+                   : "";
+        const offline = database && database.offline
+                      ? qsTr(" (sem atualizar pela rede)") : "";
+        auditSummary = (vulnerabilities > 0
+                        ? qsTr("%1 vulnerabilidade(s)").arg(vulnerabilities)
+                        : qsTr("nenhuma vulnerabilidade")) + base + offline;
     }
 
     function startCoverage(buildSystem) {

@@ -139,6 +139,7 @@ public:
                               const QString& buildSystem = QString());
     Q_INVOKABLE void runQuality(const QString& buildSystem = QString());
     Q_INVOKABLE void runCoverage(const QString& buildSystem = QString());
+    Q_INVOKABLE void runAudit();
     Q_INVOKABLE void cancelBuild();
     Q_INVOKABLE void cancelTests();
     Q_INVOKABLE void cancelQuality();
@@ -252,6 +253,10 @@ signals:
     void qualityFinished(bool success, int exitCode, int diagnostics);
     void coverageFinished(bool success, double percent, double linesCovered, double linesTotal,
                           const QVariantList& files, const QString& error);
+    void auditStarted(const QString& command);
+    void auditDiagnostic(const QVariantMap& diagnostic);
+    void auditFinished(bool success, int vulnerabilities, const QVariantMap& database,
+                       const QString& error);
     void lspDiagnostics(const QString& path, const QVariantList& diagnostics);
     void lspDefinitionResolved(const QString& path, int line, int column);
     void lspHoverResolved(const QString& content);

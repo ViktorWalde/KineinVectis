@@ -76,6 +76,9 @@ Item {
         buildItems.push({ label: qsTr("Análise estática"), action: "quality.run",
                           enabled: workspaceOpen && coreConnected
                                    && (cargoAvailable || cmakeAvailable) });
+        // Auditoria le o Cargo.lock: so faz sentido em projeto Cargo.
+        buildItems.push({ label: qsTr("Auditoria de segurança"), action: "audit.run",
+                          enabled: workspaceOpen && coreConnected && cargoAvailable });
         const menus = {
             file: fileItems,
             edit: [

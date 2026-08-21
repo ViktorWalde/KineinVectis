@@ -75,6 +75,26 @@ bool CoreClient::handleQualityNotification(const QString& method, const QJsonObj
                              params.value(QStringLiteral("diagnostics")).toInt(0));
         return true;
     }
+    if (method == QStringLiteral("event.audit.started")) {
+        appendLog(QStringLiteral("auditoria iniciada: %1")
+                      .arg(params.value(QStringLiteral("command")).toString()));
+        emit auditStarted(params.value(QStringLiteral("command")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("event.audit.diagnostic")) {
+        emit auditDiagnostic(params.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.audit.output")) {
+        return true;
+    }
+    if (method == QStringLiteral("event.audit.finished")) {
+        emit auditFinished(params.value(QStringLiteral("success")).toBool(),
+                           params.value(QStringLiteral("vulnerabilities")).toInt(0),
+                           params.value(QStringLiteral("database")).toObject().toVariantMap(),
+                           params.value(QStringLiteral("error")).toString());
+        return true;
+    }
     if (method == QStringLiteral("event.coverage.finished")) {
         // L2 fatia 3: totais + arquivos quando ha dados; erro ACIONAVEL
         // quando nao ha (lcov ausente ou build sem --coverage).

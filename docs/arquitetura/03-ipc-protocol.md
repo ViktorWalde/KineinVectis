@@ -1,9 +1,9 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.63.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.64.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
-> `git.*`, `build/test/quality/coverage.run`,
+> `git.*`, `build/test/quality/coverage/audit.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `integration.*`). O
 > protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
 > etc.) está em
@@ -755,6 +755,51 @@ em `event.test.finished`, não na resposta.
 > existe mais caminho de streaming síncrono no core — toda operação longa
 > retorna `jobId` e emite eventos pelo canal assíncrono.
 
+### Auditoria de segurança (`audit.run` — job assíncrono)
+
+Implementado no protocolo `0.64.0` (fatia 5 do L2). Requer workspace aberto e
+projeto **Rust/Cargo** — a auditoria lê o `Cargo.lock`, e não existe
+equivalente "de CMake" a oferecer, então outro tipo retorna `INVALID_REQUEST`
+síncrono. **Não aceita parâmetros** (`deny_unknown_fields`): o alvo é o
+workspace aberto e o opt-in de rede vive na configuração da integração, não no
+pedido. Responde na hora com `{ "jobId" }`.
+
+```text
+event.audit.started     { "jobId", "command" }
+event.audit.diagnostic  payload comum de Diagnostic, source "audit"
+event.audit.finished    sucesso { "jobId", "success": true, "vulnerabilities",
+                                  "database": { "advisoryCount", "lastUpdated",
+                                                "offline" } }
+event.audit.finished    falha   { "jobId", "success": false, "error": "..." }
+```
+
+**A rede é opt-in explícito, e esta é a parte que importa.** Até esta fatia a
+Kinein nunca acessou a rede em runtime: toda integração roda ferramenta local.
+O `cargo-audit` consulta a base de advisories do RustSec, então por decisão do
+autor (2026-08-21) o padrão é **não buscar**:
+
+- **sem opt-in** (o padrão): o core chama `cargo audit --json --no-fetch
+  --stale`. A base local é usada como está, e **nenhuma conexão é aberta**. Se
+  a base não existir, a falha diz exatamente como habilitar;
+- **com opt-in**: `integration.config.set { id: "cargo-audit", key:
+  "allowNetwork", value: "true" }` — e só um `"true"` explícito abre. Ausente,
+  vazio, `"false"` ou qualquer outro valor mantém a auditoria offline. A regra
+  é assimétrica de propósito: config mal digitada não vira consentimento.
+
+O evento terminal carrega `database.offline` e `database.lastUpdated` para a UI
+poder dizer *"isto é de três semanas atrás"*. Auditoria de segurança com base
+desatualizada apresentada como fresca é pior que auditoria nenhuma: ela
+tranquiliza.
+
+Os achados usam **origem própria** `audit` no modelo de Diagnostic, com
+categoria `security`, e não `quality` com outra categoria. O motivo é
+operacional: a aba Problemas limpa por origem, então `quality.run` apagaria os
+achados da auditoria ao rodar depois dela. Duas coisas que se limpam em
+momentos diferentes precisam de dois nomes. Vulnerabilidade vira `error`;
+`unmaintained`, `yanked` e afins viram `warning`. Todo achado aponta para o
+`Cargo.lock`, na linha em que o pacote é declarado — é lá que a dependência
+realmente está, e é para lá que o clique leva.
+
 ### Cobertura (`coverage.run` — job assíncrono)
 
 Implementado no protocolo `0.63.0` (fatia 3 do L2). Requer workspace aberto.
@@ -1383,6 +1428,7 @@ build.run
 test.run
 quality.run
 coverage.run
+audit.run
 run.start
 run.script
 run.stdin
@@ -1428,6 +1474,9 @@ event.quality.output
 event.quality.diagnostic
 event.quality.finished
 event.coverage.finished
+event.audit.started
+event.audit.diagnostic
+event.audit.finished
 event.environment.started
 event.environment.tool
 event.environment.finished

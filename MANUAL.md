@@ -277,6 +277,23 @@ sobrepõe os seus checks. Se não tiver, o conjunto vem do perfil de rigor
 configurado. Ter só uma das duas ferramentas instaladas não impede a análise —
 a que existir roda.
 
+### Auditoria de segurança
+
+Em projeto Rust, o menu **Build → Auditoria de segurança** verifica as suas
+dependências contra a base de advisories do RustSec (`cargo-audit`). Os achados
+aparecem na aba **Problemas**: vulnerabilidade como erro, pacote abandonado ou
+retirado como aviso. Clicar leva ao `Cargo.lock`, na linha da dependência.
+
+**A Kinein não acessa a internet por conta própria.** Por padrão a auditoria
+roda offline, usando a cópia da base que já exista no seu computador — se não
+houver nenhuma, ela diz isso em vez de tentar baixar. Para autorizar a
+atualização pela rede, grave na configuração da integração `cargo-audit` a
+chave `allowNetwork` com o valor `true`. Só esse valor exato autoriza.
+
+O resultado sempre informa **de quando é a base** e se ela foi atualizada
+naquela execução. Auditoria com base velha apresentada como recente é pior que
+auditoria nenhuma: ela tranquiliza sem motivo.
+
 ### Cobertura de testes
 
 No painel **Testes** há o botão **Cobertura**, ao lado do título. Ele mede

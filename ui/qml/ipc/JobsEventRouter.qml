@@ -49,6 +49,14 @@ Item {
             root.jobsController.handleQualityFinished();
         }
 
+        function onAuditDiagnostic(diagnostic) {
+            root.jobsController.handleAuditDiagnostic(diagnostic);
+        }
+
+        function onAuditFinished(success, vulnerabilities, database, error) {
+            root.jobsController.handleAuditFinished(success, vulnerabilities, database, error);
+        }
+
         function onCoverageFinished(success, percent, linesCovered, linesTotal,
                                     files, error) {
             root.jobsController.handleCoverageFinished(
