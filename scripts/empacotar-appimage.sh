@@ -485,6 +485,16 @@ fi
 check_dynamic_dependencies "$SVG_PLUGIN_FILE"
 echo "  ok: imageformats/libqsvg.so"
 
+echo "==> instalando verificação de compatibilidade do host"
+# Roda ANTES de qualquer coisa do Qt. O piso existe de qualquer jeito; o que
+# este hook muda e que ele passa a se EXPLICAR, em vez de o usuario receber
+# "GLIBC_2.35 not found" do loader e achar que o download quebrou.
+install \
+    -D \
+    -m 0755 \
+    "$REPO_ROOT/packaging/appimage/kinein-compat-check-hook.sh" \
+    "$APPDIR/apprun-hooks/kinein-compat-check-hook.sh"
+
 echo "==> instalando launcher gráfico portátil"
 install \
     -D \

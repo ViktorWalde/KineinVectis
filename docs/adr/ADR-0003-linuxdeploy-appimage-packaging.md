@@ -99,9 +99,21 @@ compatibilidade com distribuições mais antigas.
 diante**, em distribuições baseadas ou não em Ubuntu. Formalmente, o contrato é
 **glibc ≥ 2.35 e libstdc++ ≥ GCC 12 (`GLIBCXX_3.4.30`)**, em x86_64.
 
-Isso cobre Ubuntu 22.04+, Debian 12+, Fedora 36+ e openSUSE Leap 15.6+. Fica
-**fora**: glibc anterior a 2.35 (RHEL 9, Rocky 9, AlmaLinux 9 e Amazon Linux
-2023 têm 2.34), musl e ARM64 — cada um exige outro artefato e outra validação.
+**Faixa PROVADA por execução** (matriz de 2026-08-21,
+`scripts/testar-appimage-matriz.sh`): Ubuntu 22.04 LTS, Ubuntu 24.04 LTS,
+Debian 12 e openSUSE Leap 15.6 — os quatro carregam o binário e desenham o
+primeiro frame num runtime mínimo, sem rede.
+
+**Fedora NÃO está provada, e o texto anterior desta ADR errava ao afirmar que
+estava.** A matriz reprovou o Fedora 41 mesmo com glibc 2.40, muito acima do
+piso — a causa ainda **não foi medida** e está registrada como pendência. Isso
+derruba a hipótese de que "glibc ≥ 2.35" seja condição suficiente: é condição
+*necessária*, e existe pelo menos mais uma que ainda não conhecemos. Até medir,
+Fedora não entra na promessa.
+
+Fica **fora**: glibc anterior a 2.35 (RHEL 9, Rocky 9, AlmaLinux 9 e Amazon
+Linux 2023 têm 2.34), musl e ARM64 — cada um exige outro artefato e outra
+validação.
 
 O pedido do autor citava "kernel 6.x ou superior". A restrição que de fato
 decide se o binário carrega é a **glibc**, não o kernel: o kernel GA do Ubuntu

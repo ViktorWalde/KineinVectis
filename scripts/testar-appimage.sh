@@ -67,6 +67,7 @@ required_paths=(
     "$APPDIR/AppRun"
     "$APPDIR/AppRun.wrapped"
     "$APPDIR/apprun-hooks/kinein-portable-graphics-hook.sh"
+    "$APPDIR/apprun-hooks/kinein-compat-check-hook.sh"
     "$APPDIR/usr/bin/kinein-vectis"
     "$APPDIR/usr/bin/kinein-core"
     "$APPDIR/usr/share/applications/io.github.viktorwalde.KineinVectis.desktop"
@@ -104,6 +105,30 @@ then
     echo "erro: hook gráfico portátil está incompleto." >&2
     exit 1
 fi
+
+# O piso vive em DOIS arquivos — o verificador do empacotamento e este hook —
+# e um divergir do outro seria a pior falha possivel: o pacote aprovado num
+# numero e o usuario barrado noutro. O smoke prende os dois juntos.
+if ! grep -Fq 'kinein-compat-check-hook.sh' "$APPDIR/AppRun"; then
+    echo "erro: AppRun não carrega a verificação de compatibilidade." >&2
+    exit 1
+fi
+PISO_NO_HOOK="$(
+    grep -oP '^KINEIN_PISO_GLIBC="\K[0-9.]+' \
+        "$APPDIR/apprun-hooks/kinein-compat-check-hook.sh" || true
+)"
+PISO_NO_GATE="$(
+    grep -oP '^TETO_GLIBC="\K[0-9.]+' \
+        "$REPO_ROOT/scripts/verificar-piso-appimage.sh" || true
+)"
+if [[ -z "$PISO_NO_HOOK" || "$PISO_NO_HOOK" != "$PISO_NO_GATE" ]]; then
+    echo "erro: o piso do hook e o do empacotamento divergiram." >&2
+    echo "  hook: ${PISO_NO_HOOK:-<nao encontrado>}" >&2
+    echo "  gate: ${PISO_NO_GATE:-<nao encontrado>}" >&2
+    echo "  Os dois falam do MESMO contrato (ADR-0003); mude os dois juntos." >&2
+    exit 1
+fi
+echo "  ok: piso de compatibilidade coerente ($PISO_NO_HOOK) entre hook e gate"
 
 echo "==> validando instalador executado fora da pasta de entrega"
 DELIVERY_DIR="$TEMP_DIR/delivery"
