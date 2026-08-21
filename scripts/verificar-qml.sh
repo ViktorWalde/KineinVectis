@@ -30,12 +30,17 @@ fi
 
 QMLLINT="${KINEIN_QMLLINT:-}"
 if [ -z "$QMLLINT" ]; then
-    if command -v qmllint >/dev/null 2>&1; then
-        QMLLINT="qmllint"
+    # O Qt6 vem PRIMEIRO. No Debian 13 o `qmllint` do PATH e o wrapper do
+    # qtchooser apontando para /usr/lib/qt5/bin/qmllint, que nao existe: o
+    # gate morria com "could not exec" antes de olhar uma linha de QML.
+    # Procurar o binario do Qt6 pelo caminho e mais barato que confiar no
+    # PATH de uma distro que ainda carrega o despachante do Qt5.
+    if [ -x /usr/lib/qt6/bin/qmllint ]; then
+        QMLLINT="/usr/lib/qt6/bin/qmllint"
     elif command -v qmllint-qt6 >/dev/null 2>&1; then
         QMLLINT="qmllint-qt6"
-    elif [ -x /usr/lib/qt6/bin/qmllint ]; then
-        QMLLINT="/usr/lib/qt6/bin/qmllint"
+    elif command -v qmllint >/dev/null 2>&1; then
+        QMLLINT="qmllint"
     else
         echo "erro: qmllint nao encontrado (instale qt6-declarative)" >&2
         exit 1

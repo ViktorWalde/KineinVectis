@@ -154,6 +154,13 @@ qt_add_qml_module(kinein-vectis
     URI KineinVectis
     VERSION 1.0
     RESOURCE_PREFIX /
+    # Tipos C++ nossos expoem ponteiros de QtQuick (QQuickWindow* no
+    # WindowChromeController, QQuickTextDocument* no AutoCloseRegions). Sem
+    # declarar a dependencia, o qmllint do Qt 6.8 nao acha o qmltypes desses
+    # tipos e reprova com [missing-type] — o modulo funcionava, mas a
+    # ferramenta nao conseguia provar. Declarar a dependencia e o que a
+    # documentacao do Qt manda fazer quando a API C++ atravessa modulos.
+    DEPENDENCIES QtQuick
     QML_FILES
         qml/Main.qml
         qml/Theme.qml
@@ -358,6 +365,18 @@ target_link_libraries(kinein-vectis PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Qui
 # biblioteca so' para testar seria reestruturar o build antes de existir o
 # primeiro teste. Quando o numero de alvos justificar, vira lib — nao antes.
 if(BUILD_TESTING)
+    # Runner dos harnesses de logica QML. Nao e um teste: e a FERRAMENTA que
+    # o scripts/verificar-qml-logica.sh usa quando o binario `qml` da distro
+    # nao existe (Debian 13 parou de empacota-lo). Sem QTest e sem add_test —
+    # quem enumera os harnesses e o script.
+    qt_add_executable(kinein-qml-harness tests/qml_harness_runner.cpp)
+    target_link_libraries(kinein-qml-harness PRIVATE Qt6::Core Qt6::Gui Qt6::Qml)
+    kinein_enable_strict_compiler_options(kinein-qml-harness)
+    set_source_files_properties(
+        "${CMAKE_CURRENT_BINARY_DIR}/kinein-qml-harness_autogen/mocs_compilation.cpp"
+        PROPERTIES COMPILE_OPTIONS -w
+    )
+
     qt_add_executable(tst_editor_highlighter
         tests/tst_editor_highlighter.cpp
         src/editor_highlighter.cpp

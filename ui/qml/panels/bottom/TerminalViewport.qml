@@ -179,7 +179,12 @@ Item {
                     2, Math.round(root.charWidth * 0.18))
             readonly property real baseOpacity: shape === "block"
                     ? 0.72 : 0.95
-            property real blinkFactor: 1.0
+            // Sem inicializador: quem escreve nesta propriedade e a
+            // SequentialAnimation abaixo (value source), e ela traz
+            // `from` explicito. Um `: 1.0` aqui seria uma segunda
+            // fonte para a mesma propriedade — o qmllint 6.8 reprova,
+            // e com razao: duas fontes, uma delas sempre perdendo.
+            property real blinkFactor
 
             visible: root.cursor.visible && root.terminalActive
                      && root.scrollOffset === 0
