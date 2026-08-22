@@ -99,6 +99,14 @@ if [ "$modo" = "completo" ]; then
     # erro — a mesma que fez `dev-local-release` gravar por cima do atalho.
     passo "ctest (testes C++ da UI, preset $preset_debug)"
     CTEST_OUTPUT_ON_FAILURE=1 cmake --build --preset "$preset_debug" --target test
+
+    # Depende dos binarios acima, por isso entra aqui e nao la em cima. Ele NAO
+    # mede latencia — so verifica que o harness de digitacao ainda acha os
+    # objetos de que precisa. Existe porque o harness passou um mes quebrado em
+    # silencio (2026-07-16 a 2026-08-21) e ninguem soube: ferramenta de medicao
+    # fora do gate apodrece calada.
+    passo "scripts/verificar-harness-perf.sh (o harness de digitacao ainda roda)"
+    bash scripts/verificar-harness-perf.sh
 fi
 
 etapa=""
