@@ -561,3 +561,81 @@ fn file_context_distingue_exato_de_emprestado_e_confina_a_raiz() {
 
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn build_run_com_alvo_exige_cmake_e_o_comando_anunciado_diz_qual() {
+    use std::time::Duration;
+
+    // L3 fatia 2: o seletor de alvo da barra so vale se o alvo CHEGAR ao
+    // comando. Aceitar e ignorar seria oferecer uma escolha sem efeito —
+    // pior que recusar, porque o usuario nao teria como perceber.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("build-target");
+    core.enable_lsp(sender);
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-build-target", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+
+    // Cargo com alvo: RECUSA sincrona.
+    std::fs::write(
+        dir.join("Cargo.toml"),
+        "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    )
+    .unwrap();
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        100_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+    let recusado = core.handle_request(&JsonRpcRequest::new(
+        101_i64,
+        "build.run",
+        Some(json!({ "target": "algum" })),
+    ));
+    assert!(
+        recusado.response().error.is_some(),
+        "alvo em workspace Cargo tem que ser recusado, nao ignorado"
+    );
+
+    // CMake com alvo: o comando ANUNCIADO tem que dizer qual.
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo LANGUAGES CXX)\n",
+    )
+    .unwrap();
+    let _ = std::fs::remove_file(dir.join("Cargo.toml"));
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        102_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let aceito = core.handle_request(&JsonRpcRequest::new(
+        103_i64,
+        "build.run",
+        Some(json!({ "target": "meu_alvo" })),
+    ));
+    assert!(aceito.response().result.is_some());
+
+    let mut comando = None;
+    while let Ok(evento) = receiver.recv_timeout(Duration::from_secs(20)) {
+        if evento.method == "event.build.started" {
+            comando = evento.params;
+        } else if evento.method == "event.build.finished" {
+            break;
+        }
+    }
+    let comando = comando.expect("event.build.started tem que chegar");
+    let texto = comando["command"].as_str().unwrap_or_default();
+    assert!(
+        texto.contains("meu_alvo"),
+        "o comando anunciado tem que nomear o alvo escolhido: {texto}"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}

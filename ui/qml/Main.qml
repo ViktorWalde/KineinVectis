@@ -62,6 +62,7 @@ Window {
         editorController: domains.editorController
         jobsController: domains.jobsController
         compileContextController: domains.compileContextController
+        buildTargetsController: domains.buildTargetsController
         searchController: domains.searchController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
@@ -146,6 +147,7 @@ Window {
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
+        buildTargetsController: domains.buildTargetsController
         debugController: domains.debugController
         editorController: domains.editorController
         projectTree: domains.projectTree
@@ -156,6 +158,10 @@ Window {
         onConfigMenuRequested: function(menuX, menuY) {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);
             domains.runConfigController.openConfigMenu(pos.x, pos.y);
+        }
+        onTargetMenuRequested: function(menuX, menuY) {
+            const pos = header.mapToItem(shellOverlays, menuX, menuY);
+            domains.buildTargetsController.openMenu(pos.x, pos.y);
         }
         onAppMenuRequested: function(key, menuX, menuY, items) {
             if (key === "") {
@@ -254,6 +260,7 @@ Window {
         shellController: domains.shellController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
+        buildTargetsController: domains.buildTargetsController
         gitController: domains.gitController
         settingsController: domains.settingsController
         onAppMenuActionRequested: function(action) {

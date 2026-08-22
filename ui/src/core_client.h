@@ -133,8 +133,10 @@ public:
     Q_INVOKABLE void cargoCheck();
     Q_INVOKABLE void cargoMetadata();
     Q_INVOKABLE void cmakeConfigure();
+    Q_INVOKABLE void requestCmakeTargets();
     Q_INVOKABLE void cmakeStatus();
-    Q_INVOKABLE void runBuild(const QString& buildSystem = QString());
+    Q_INVOKABLE void runBuild(const QString& buildSystem = QString(),
+                              const QString& target = QString());
     Q_INVOKABLE void runTests(const QString& filter = QString(),
                               const QString& buildSystem = QString());
     Q_INVOKABLE void runQuality(const QString& buildSystem = QString());
@@ -222,6 +224,7 @@ signals:
     void toolsListed(const QVariantList& tools);
     void formatCapabilitiesListed(const QVariantList& formatters);
     void cmakeStatusResolved(bool configured, bool hasCompileCommands);
+    void cmakeTargetsResolved(const QVariantList& targets);
     void cmakeConfigureFinished(bool success);
     void cargoMetadataResolved(int packages);
     void runConfigsResolved(const QVariantList& configs, const QString& activeId);

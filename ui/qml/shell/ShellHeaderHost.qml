@@ -13,6 +13,7 @@ Item {
     property var jobsController: null
     property var runtimeController: null
     property var runConfigController: null
+    property var buildTargetsController: null
     property var debugController: null
     property var editorController: null
     property var projectTree: null
@@ -22,6 +23,7 @@ Item {
     property bool windowMaximized: false
 
     signal configMenuRequested(real menuX, real menuY)
+    signal targetMenuRequested(real menuX, real menuY)
     signal appMenuRequested(string key, real menuX, real menuY, var items)
     signal aboutRequested()
     signal manualRequested()
@@ -143,6 +145,9 @@ Item {
         activeConfigId: root.runConfigController.activeConfigId
         activeConfigName: root.runConfigController.activeConfigName
         configMenuOpen: root.runConfigController.configMenuVisible
+        activeTargetLabel: root.buildTargetsController.activeLabel
+        targetMenuOpen: root.buildTargetsController.menuVisible
+        targetsAvailable: root.buildTargetsController.targetCount > 0
         building: root.coreClient.building
         testing: root.coreClient.testing
         analyzing: root.coreClient.analyzing
@@ -159,6 +164,10 @@ Item {
         onConfigureRequested: {
             root.shellController.showTab("jobs");
             root.coreClient.cmakeConfigure();
+        }
+        onTargetMenuRequested: function(menuX, menuY) {
+            const pos = headerToolbar.mapToItem(root, menuX, menuY);
+            root.targetMenuRequested(pos.x, pos.y);
         }
         onConfigMenuRequested: function(menuX, menuY) {
             // O cluster nao ocupa a barra inteira: as coordenadas vem no

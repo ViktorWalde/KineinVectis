@@ -156,14 +156,18 @@ pub fn run_build(
     root: &Path,
     kind: ProjectKind,
     profile: RigorProfile,
+    target: Option<&str>,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     match kind {
+        // Cargo nao recebe alvo nesta fatia: `cmake.targets.list` e a fonte da
+        // lista, e ela e do CMake. Aceitar um alvo aqui e ignora-lo seria pior
+        // que recusar — o usuario veria uma escolha sem efeito.
         ProjectKind::RustCargo => run_cargo_build(root, profile, cancel, sink),
         // C++ CMake -Werror por perfil fica para uma fatia futura (injetar
         // flag no build do usuario e invasivo — ver docsprivate/diario/18 M4.5).
-        ProjectKind::Cmake => run_cmake_build(root, cancel, sink),
+        ProjectKind::Cmake => run_cmake_build(root, target, cancel, sink),
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
         }),
@@ -449,6 +453,7 @@ fn run_cargo_build(
 
 fn run_cmake_build(
     root: &Path,
+    target: Option<&str>,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
@@ -472,14 +477,17 @@ fn run_cmake_build(
 
     let mut build = Command::new("cmake");
     build.arg("--build").arg(&build_dir);
+    // O comando ANUNCIADO nomeia o alvo: o log do job precisa mostrar o que
+    // foi realmente pedido, ou o usuario nao tem como conferir a escolha.
+    let display = target.map_or_else(
+        || "cmake --build".to_owned(),
+        |target| {
+            build.arg("--target").arg(target);
+            format!("cmake --build --target {target}")
+        },
+    );
 
-    stream_command(
-        build,
-        "cmake --build",
-        DiagnosticFormat::GccLike,
-        cancel,
-        sink,
-    )
+    stream_command(build, &display, DiagnosticFormat::GccLike, cancel, sink)
 }
 
 fn stream_command(

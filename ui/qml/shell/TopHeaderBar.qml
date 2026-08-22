@@ -22,6 +22,10 @@ Item {
     property var workspaceBuildSystems: []
     property string activeConfigId: ""
     property string activeConfigName: ""
+    // L3 fatia 2: o alvo de build ativo. Vazio = todos os alvos.
+    property string activeTargetLabel: ""
+    property bool targetMenuOpen: false
+    property bool targetsAvailable: false
     property bool configMenuOpen: false
 
     signal openWorkspaceRequested()
@@ -34,6 +38,7 @@ Item {
     signal stopDebugRequested()
     signal configureRequested()
     signal configMenuRequested(real menuX, real menuY)
+    signal targetMenuRequested(real menuX, real menuY)
 
     readonly property bool cargoAvailable: hasBuildSystem("cargo")
     readonly property bool cmakeAvailable: hasBuildSystem("cmake")
@@ -121,6 +126,23 @@ Item {
                 const pos = root.mapFromItem(configSelector, 0,
                                              configSelector.height + 4);
                 root.configMenuRequested(pos.x, pos.y);
+            }
+        }
+
+        // Alvo de build. So aparece quando ha alvos DETECTADOS: um seletor
+        // vazio ocuparia a barra prometendo uma escolha que nao existe, que e
+        // a "propaganda de rail" da §12.2 em outra roupa.
+        KvButton {
+            id: targetSelector
+
+            visible: root.workspaceOpen && root.targetsAvailable && root.hostWidth >= 1040
+            selected: root.targetMenuOpen
+            iconName: "chevron-down"
+            text: root.activeTargetLabel
+            onClicked: {
+                const pos = root.mapFromItem(targetSelector, 0,
+                                             targetSelector.height + 4);
+                root.targetMenuRequested(pos.x, pos.y);
             }
         }
 

@@ -4,6 +4,7 @@ Item {
     id: root
 
     property var coreClient: null
+    property var buildTargetsController: null
     property var folderPicker: null
     property var projectTree: null
     property var searchController: null
@@ -24,10 +25,25 @@ Item {
 
         function onCmakeStatusResolved(configured, hasCompileCommands) {
             root.projectHealthController.handleCmakeStatus(configured);
+            // Os alvos so existem no reply do file-api, e ele so existe depois
+            // de um configure. Pedir aqui e o momento mais cedo que da certo.
+            if (configured) {
+                root.buildTargetsController.refresh();
+            }
         }
 
         function onCmakeConfigureFinished(success) {
             root.projectHealthController.handleCmakeFinished(success);
+            // Reconfigurar pode ter criado, removido ou renomeado alvo: a
+            // lista da barra tem que acompanhar, ou o usuario escolheria um
+            // alvo que nao existe mais.
+            if (success) {
+                root.buildTargetsController.refresh();
+            }
+        }
+
+        function onCmakeTargetsResolved(targets) {
+            root.buildTargetsController.handleTargets(targets);
         }
 
         function onFileSaved(path) {

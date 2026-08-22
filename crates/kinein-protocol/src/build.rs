@@ -14,6 +14,13 @@ pub struct BuildRunParams {
     /// Explicit build system in a hybrid workspace; primary kind when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub build_system: Option<BuildSystem>,
+    /// Alvo especifico a compilar (`CMake`); ausente compila tudo.
+    ///
+    /// So o caminho `CMake` usa: e o `cmake --build --target`. Compilar um
+    /// alvo de cada vez e o que torna o seletor da barra util em vez de
+    /// decorativo — sem isto ele mostraria uma escolha que nao muda nada.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
 }
 
 /// Parameters for `quality.run`.

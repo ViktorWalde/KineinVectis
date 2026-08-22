@@ -38,6 +38,7 @@ Item {
     readonly property alias commandDispatcher: commandDispatcher
     readonly property alias editorController: editorController
     readonly property alias compileContextController: compileContextController
+    readonly property alias buildTargetsController: buildTargetsController
     readonly property alias projectTree: projectTree
     readonly property alias projectTreeGestures: projectTreeGestures
     readonly property alias markdownModeController: markdownModeController
@@ -102,7 +103,8 @@ Item {
         building: root.coreClient.building
         testing: root.coreClient.testing
         analyzing: root.coreClient.analyzing
-        onRunBuildRequested: buildSystem => root.coreClient.runBuild(buildSystem)
+        onRunBuildRequested: buildSystem => root.coreClient.runBuild(
+                                 buildSystem, buildTargetsController.activeTarget)
         onRunTestsRequested: buildSystem => root.coreClient.runTests("", buildSystem)
         onRunQualityRequested: root.coreClient.runQuality()
         onRunCoverageRequested: buildSystem => root.coreClient.runCoverage(buildSystem)
@@ -221,6 +223,13 @@ Item {
         id: compileContextController
     }
 
+    BuildTargetsController {
+        id: buildTargetsController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+        onListRequested: root.coreClient.requestCmakeTargets()
+    }
+
     EditorController {
         id: editorController
 
@@ -278,6 +287,7 @@ Item {
 
     WorkspaceEventRouter {
         coreClient: root.coreClient
+        buildTargetsController: buildTargetsController
         folderPicker: root.folderPicker
         projectTree: projectTree
         searchController: searchController

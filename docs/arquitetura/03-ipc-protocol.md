@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.67.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.68.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality/coverage/audit/memcheck.run`, `project.*`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `integration.*`). O
@@ -677,6 +677,17 @@ Problems. Validação síncrona antes de iniciar o job: tipos sem integração d
 build retornam `INVALID_REQUEST`; sem workspace, `INVALID_REQUEST`. Falhas do
 build (ferramenta ausente, erro de compilação) chegam por
 `event.build.finished`/`event.job.finished`, não como erro da resposta.
+
+Desde `0.68.0` aceita `{ "target"? }` — **só no caminho CMake**, onde vira
+`cmake --build --target <nome>`. Ausente compila tudo, que é o comportamento
+anterior e continua sendo o padrão: quem nunca escolheu um alvo não pode ter o
+build silenciosamente reduzido a um.
+
+`target` num workspace Cargo é **recusado**, não ignorado. A lista de alvos vem
+do `cmake.targets.list`, que é do CMake; aceitar o campo em Cargo e descartá-lo
+ofereceria uma escolha sem efeito, e o usuário não teria como perceber. O
+comando anunciado em `event.build.started` nomeia o alvo escolhido, então o log
+do job mostra o que foi realmente pedido.
 
 ### Qualidade / lint (`quality.run` — job assíncrono)
 

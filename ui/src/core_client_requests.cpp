@@ -387,7 +387,15 @@ void CoreClient::cmakeStatus()
     sendRequest(QStringLiteral("cmake.status"), QJsonObject{});
 }
 
-void CoreClient::runBuild(const QString& buildSystem)
+void CoreClient::requestCmakeTargets()
+{
+    if (m_process.state() != QProcess::Running) {
+        return;
+    }
+    sendRequest(QStringLiteral("cmake.targets.list"), QJsonObject{});
+}
+
+void CoreClient::runBuild(const QString& buildSystem, const QString& target)
 {
     if (m_building || m_process.state() != QProcess::Running) {
         return;
@@ -396,6 +404,11 @@ void CoreClient::runBuild(const QString& buildSystem)
     QJsonObject params;
     if (!buildSystem.trimmed().isEmpty()) {
         params.insert(QStringLiteral("buildSystem"), buildSystem);
+    }
+    // Alvo vazio significa "todos", e o core trata a AUSENCIA do campo assim.
+    // Mandar string vazia seria pedir um alvo chamado "".
+    if (!target.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("target"), target);
     }
     sendRequest(QStringLiteral("build.run"), params);
 }

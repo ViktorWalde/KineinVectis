@@ -34,6 +34,11 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
                       .arg(result.value(QStringLiteral("jobId")).toString()));
         return true;
     }
+    if (method == QStringLiteral("cmake.targets.list")) {
+        emit cmakeTargetsResolved(
+            result.value(QStringLiteral("targets")).toArray().toVariantList());
+        return true;
+    }
     if (method == QStringLiteral("cmake.status")) {
         emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
                                  result.value(QStringLiteral("hasCompileCommands")).toBool());

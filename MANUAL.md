@@ -261,6 +261,21 @@ Tudo roda em segundo plano como *job*: a barra de status mostra o
 progresso e um **×** para cancelar; a aba **Jobs** guarda o histórico.
 Clicar num problema abre o arquivo na linha exata.
 
+### Alvo de build
+
+Em projeto CMake, a barra superior mostra qual **alvo** será compilado. Clique
+para escolher outro; a lista vem do próprio CMake, com o tipo de cada alvo
+(`executable`, `staticLibrary`, ...) ao lado do nome.
+
+O padrão é **Todos os alvos**, que é o que o `cmake --build` faz sem
+`--target`. Escolher um alvo específico muda o comando de verdade — o log do
+job mostra qual foi pedido.
+
+O seletor só aparece depois de o projeto ser configurado uma vez, porque é o
+CMake que informa os alvos. Se você renomear ou remover um alvo e reconfigurar,
+a escolha volta sozinha para "todos" em vez de apontar para algo que não existe
+mais.
+
 ### Contexto de compilação
 
 **Exibir → Contexto de compilação** mostra, para o arquivo aberto, como ele é

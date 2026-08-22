@@ -111,6 +111,7 @@ set_source_files_properties(qml/ipc/RuntimeRequestRouter.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
 set_source_files_properties(qml/project/CompileContextController.qml PROPERTIES QT_RESOURCE_ALIAS CompileContextController.qml)
+set_source_files_properties(qml/project/BuildTargetsController.qml PROPERTIES QT_RESOURCE_ALIAS BuildTargetsController.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
 set_source_files_properties(qml/project/ProjectTreeGestures.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeGestures.qml)
 set_source_files_properties(qml/project/ProjectTreeRow.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRow.qml)
@@ -193,6 +194,8 @@ qt_add_qml_module(kinein-vectis
         qml/shell/VerticalScrollBar.qml
         qml/shell/RunConfigDialog.qml
         qml/shell/RunConfigMenu.qml
+        qml/shell/BuildTargetMenuRow.qml
+        qml/shell/BuildTargetMenu.qml
         qml/debug/DebugController.qml
         qml/diagnostics/DiagnosticsController.qml
         qml/settings/SettingsController.qml
@@ -259,6 +262,7 @@ qt_add_qml_module(kinein-vectis
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
         qml/project/CompileContextController.qml
+        qml/project/BuildTargetsController.qml
         qml/project/ProjectExplorer.qml
         qml/project/ProjectTreeGestures.qml
         qml/project/ProjectTreeRow.qml

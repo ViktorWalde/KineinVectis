@@ -28,7 +28,7 @@ impl Core {
         let parsed = match parse_params::<BuildRunParams>(
             request_id.as_ref(),
             params,
-            "build.run aceita apenas o campo opcional buildSystem",
+            "build.run aceita apenas os campos opcionais buildSystem e target",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -41,6 +41,20 @@ impl Core {
         if !matches!(kind, ProjectKind::RustCargo | ProjectKind::Cmake) {
             return unsupported_kind_response(request_id, "build", kind);
         }
+        // Alvo so vale no caminho CMake. Aceitar em Cargo e ignorar seria
+        // oferecer uma escolha sem efeito — pior que recusar, porque o
+        // usuario nao teria como perceber.
+        if parsed.target.is_some() && kind != ProjectKind::Cmake {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    "build.run com `target` exige um workspace CMake",
+                    None,
+                ),
+            );
+        }
+        let alvo = parsed.target;
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "build.run");
         };
@@ -51,7 +65,7 @@ impl Core {
         let job_id = jobs.spawn("build", title, JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "build", &event);
-            match build::run_build(&root, kind, profile, &cancel, &mut sink) {
+            match build::run_build(&root, kind, profile, alvo.as_deref(), &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.build.finished",

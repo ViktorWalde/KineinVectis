@@ -128,7 +128,9 @@ L2  C/C++/RUST SOLIDOS — resultado comum        FECHADO em 2026-08-21
 L3  Project Graph, targets e perfis explicaveis; cache provenance  EM ANDAMENTO
       FEITO   contexto de compilacao por arquivo, com o GRAU DE CONFIANCA
               explicito (exact/borrowed/none)          (fatia 1, 2026-08-21)
-      FALTA   targets como entidade na UI, perfis explicaveis, cache provenance
+      FEITO   alvos de build na barra, e a escolha MUDA o comando
+                                                      (fatia 2, 2026-08-21)
+      FALTA   perfis explicaveis, cache provenance
       valida com: Bear, ccache/sccache, Bloaty, Doxygen
 
 L4  DAP solido + profiling

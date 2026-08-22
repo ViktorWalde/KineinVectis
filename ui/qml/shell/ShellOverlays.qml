@@ -12,6 +12,7 @@ Item {
     property var shellController: null
     property var runtimeController: null
     property var runConfigController: null
+    property var buildTargetsController: null
     property var gitController: null
     property var settingsController: null
     property bool aboutVisible: false
@@ -175,6 +176,20 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         onConfirmRequested: root.gitController.confirmDiscard()
         onCancelRequested: root.gitController.cancelDiscard()
+    }
+
+    BuildTargetMenu {
+        anchors.fill: parent
+        visible: root.buildTargetsController.menuVisible
+        z: 94
+        menuX: root.buildTargetsController.menuX
+        menuY: root.buildTargetsController.menuY
+        targetsModel: root.buildTargetsController.targetsModel
+        activeTarget: root.buildTargetsController.activeTarget
+        onDismissRequested: root.buildTargetsController.closeMenu()
+        onTargetChosen: function(name) {
+            root.buildTargetsController.choose(name);
+        }
     }
 
     RunConfigMenu {
