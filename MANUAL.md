@@ -261,6 +261,24 @@ Tudo roda em segundo plano como *job*: a barra de status mostra o
 progresso e um **×** para cancelar; a aba **Jobs** guarda o histórico.
 Clicar num problema abre o arquivo na linha exata.
 
+### Contexto de compilação
+
+**Exibir → Contexto de compilação** mostra, para o arquivo aberto, como ele é
+compilado de verdade: compilador, padrão da linguagem, quantos defines e
+includes, e o comando completo — que você pode selecionar, copiar e rodar fora
+da IDE.
+
+A primeira linha é a mais importante, e diz **de onde veio esse comando**:
+
+| | |
+| --- | --- |
+| **comando próprio deste arquivo** | a resposta é exata |
+| **emprestado de `outro.cpp`** | headers não têm comando próprio; este veio de outra unidade e pode não ser o contexto certo |
+| **sem contexto de compilação** | o arquivo está fora do build, ou o projeto ainda não foi configurado |
+
+Outras IDEs também emprestam o contexto de headers, mas em silêncio. Aqui isso
+é dito: quando a resposta é um palpite bom, você fica sabendo que é palpite.
+
 ### O que a análise de qualidade roda
 
 Em projeto **Rust/Cargo**: `cargo clippy`.

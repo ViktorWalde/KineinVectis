@@ -61,6 +61,9 @@ Item {
         case "view.terminal": root.runtimeController.openTerminalPanel(); break;
         case "view.tools": root.shellController.toggleBottomTab("tools"); break;
         case "view.jobs": root.shellController.toggleBottomTab("jobs"); break;
+        case "view.compileContext":
+            root.shellController.toggleBottomTab("compileContext");
+            break;
         case "view.logs": root.shellController.toggleBottomTab("logs"); break;
         case "view.git": root.shellController.toggleBottomTab("git"); break;
         case "search.everywhere": root.searchController.openSearchEverywhere(); break;

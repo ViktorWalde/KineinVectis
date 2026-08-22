@@ -472,3 +472,92 @@ fn memcheck_run_recusa_cargo_e_explica_projeto_sem_build() {
 
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn file_context_distingue_exato_de_emprestado_e_confina_a_raiz() {
+    // L3 fatia 1: o valor nao e achar o comando, e dizer com que CONFIANCA.
+    let mut core = core_with_empty_search_path("file-context");
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-file-context", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    std::fs::create_dir_all(dir.join(".kinein").join("build")).unwrap();
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo LANGUAGES CXX)\n",
+    )
+    .unwrap();
+    std::fs::write(dir.join("src").join("a.cpp"), "int main(){}\n").unwrap();
+    std::fs::write(dir.join("src").join("a.hpp"), "#pragma once\n").unwrap();
+    std::fs::write(dir.join("solto.md"), "# fora do build\n").unwrap();
+
+    let raiz = dir.canonicalize().unwrap();
+    let banco = format!(
+        r#"[{{"directory": "{d}", "file": "{d}/src/a.cpp",
+             "command": "/usr/bin/c++ -DDEMO=1 -I{d}/inc -std=gnu++20 -c {d}/src/a.cpp"}}]"#,
+        d = raiz.to_str().unwrap()
+    );
+    std::fs::write(
+        raiz.join(".kinein")
+            .join("build")
+            .join("compile_commands.json"),
+        banco,
+    )
+    .unwrap();
+
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        90_i64,
+        "workspace.open",
+        Some(json!({ "path": raiz.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    // 1. Unidade com entrada propria: EXATA, e nao empresta de ninguem.
+    let resposta = core.handle_request(&JsonRpcRequest::new(
+        91_i64,
+        "project.fileContext",
+        Some(json!({ "path": "src/a.cpp" })),
+    ));
+    let exato = resposta.response().result.clone().unwrap();
+    assert_eq!(exato["origin"], "exact");
+    assert!(exato.get("borrowedFrom").is_none());
+    assert_eq!(exato["standard"], "gnu++20");
+    assert_eq!(exato["defines"][0], "DEMO=1");
+
+    // 2. Header: EMPRESTADO, e o payload DIZ de quem. Apresentar isto como
+    //    exato seria a IDE mentindo sobre a propria confianca.
+    let resposta = core.handle_request(&JsonRpcRequest::new(
+        92_i64,
+        "project.fileContext",
+        Some(json!({ "path": "src/a.hpp" })),
+    ));
+    let emprestado = resposta.response().result.clone().unwrap();
+    assert_eq!(emprestado["origin"], "borrowed");
+    assert_eq!(emprestado["borrowedFrom"], "src/a.cpp");
+
+    // 3. Fora do build: NONE com nota acionavel, nao um chute.
+    let resposta = core.handle_request(&JsonRpcRequest::new(
+        93_i64,
+        "project.fileContext",
+        Some(json!({ "path": "solto.md" })),
+    ));
+    let nenhum = resposta.response().result.clone().unwrap();
+    assert_eq!(nenhum["origin"], "none");
+    assert!(nenhum["note"].as_str().unwrap_or("").len() > 10);
+
+    // 4. Fora da raiz: RECUSA. Contexto de compilacao nao e desculpa para
+    //    ler o disco do usuario.
+    let resposta = core.handle_request(&JsonRpcRequest::new(
+        94_i64,
+        "project.fileContext",
+        Some(json!({ "path": "/etc/hostname" })),
+    ));
+    assert!(
+        resposta.response().error.is_some(),
+        "caminho fora do workspace tem que ser recusado"
+    );
+
+    let _ = std::fs::remove_dir_all(&dir);
+}

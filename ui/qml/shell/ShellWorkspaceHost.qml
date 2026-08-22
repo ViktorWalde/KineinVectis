@@ -12,6 +12,7 @@ Item {
     property var markdownMode
     property var editorController
     property var jobsController
+    property var compileContextController
     property var runtimeController
     property var debugController
     property var gitController
@@ -24,9 +25,7 @@ Item {
     property string workspaceName: ""
     property string workspaceKind: ""
     property var workspaceBuildSystems: []
-    property bool testing: false
     property bool terminalActive: false
-    property bool running: false
     property var logLinesModel
     property var toolsList: []
     property bool scanningEnvironment: false
@@ -401,11 +400,12 @@ Item {
                 open: root.shellController.showBottomPanel
                 activeTab: root.shellController.bottomTab
                 coverage: root.jobsController.coverage
+                compileContext: root.compileContextController
                 buildOutputModel: root.jobsController.buildOutputModel
                 jobsModel: root.jobsController.jobsModel
                 testModel: root.jobsController.testModel
                 testSummary: root.jobsController.testSummary
-                testing: root.testing
+                testing: root.jobsController.testing
                 problemsModel: root.jobsController.problemsModel
                 terminalRender: root.runtimeController.terminalRender
                 terminalActive: root.terminalActive
@@ -428,7 +428,7 @@ Item {
                 gitBranchesModel: root.gitController.branchesModel
                 gitBranchMenuVisible: root.gitController.branchMenuVisible
                 gitRemoteOperationRunning: root.gitController.remoteOperationRunning
-                running: root.running
+                running: root.runtimeController.running
                 terminalSession: root.runtimeController.terminalSession
                 terminalsModel: root.runtimeController.terminalsModel
                 activeTerminalId: root.runtimeController.activeTerminalId

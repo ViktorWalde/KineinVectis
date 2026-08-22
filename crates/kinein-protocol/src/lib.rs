@@ -26,6 +26,7 @@ mod integration;
 mod job;
 mod lsp;
 mod memcheck;
+mod project_context;
 mod rpc;
 mod run;
 mod runconfig;
@@ -52,6 +53,7 @@ pub use integration::*;
 pub use job::*;
 pub use lsp::*;
 pub use memcheck::*;
+pub use project_context::*;
 pub use rpc::*;
 pub use run::*;
 pub use runconfig::*;
@@ -65,4 +67,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.66.0";
+pub const PROTOCOL_VERSION: &str = "0.67.0";

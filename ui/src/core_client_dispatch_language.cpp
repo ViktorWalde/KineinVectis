@@ -44,6 +44,13 @@ bool CoreClient::handleLspNotification(const QString& method, const QJsonObject&
 
 bool CoreClient::dispatchSyntaxResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("project.fileContext")) {
+        // L3: o contexto de compilacao efetivo do arquivo. Vive aqui, no
+        // dispatch de LINGUAGEM, porque e a mesma pergunta que o clangd faz
+        // para decidir como interpretar o arquivo.
+        emit fileContextResolved(result.toVariantMap());
+        return true;
+    }
     if (method != QStringLiteral("syntaxTree.update")) {
         return false;
     }

@@ -1,9 +1,9 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.66.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.67.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
-> `git.*`, `build/test/quality/coverage/audit/memcheck.run`,
+> `git.*`, `build/test/quality/coverage/audit/memcheck.run`, `project.*`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`, `integration.*`). O
 > protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
 > etc.) está em
@@ -755,6 +755,44 @@ em `event.test.finished`, não na resposta.
 > existe mais caminho de streaming síncrono no core — toda operação longa
 > retorna `jobId` e emite eventos pelo canal assíncrono.
 
+### Contexto de compilação (`project.fileContext` — síncrono)
+
+Implementado no protocolo `0.67.0` (L3, fatia 1). Requer workspace aberto.
+Aceita `{ "path" }`, absoluto ou relativo à raiz, e responde **na hora** — ler
+o banco de comandos é IO barato, e o painel que consome isto acompanha o
+arquivo aberto: um job por troca de arquivo seria cerimônia com latência.
+
+Responde a pergunta que separa uma IDE de um editor com realce: **como este
+arquivo é compilado, de verdade?**
+
+```text
+{ "path", "origin": "exact|borrowed|none", "borrowedFrom"?,
+  "compiler"?, "standard"?, "defines"[], "includes"[], "flags"[],
+  "database"?, "command"?, "note"? }
+```
+
+**O campo que dá valor é `origin`, e ele é sobre CONFIANÇA, não sobre dados.**
+Header normalmente não tem entrada própria no `compile_commands.json`, e o
+`clangd` empresta a de outra unidade por heurística — que pode escolher errado.
+Uma IDE que mostra contexto emprestado como se fosse o do arquivo mente sobre a
+própria certeza. Aqui os três estados são distintos e a UI os pinta diferente:
+
+- `exact` — o arquivo tem entrada própria; é a única resposta sem ressalva;
+- `borrowed` — veio de outra unidade, e `borrowedFrom` **diz de qual**;
+- `none` — não há banco, ou nada nele serve; `note` diz o gesto que falta.
+
+A escolha vai da maior para a menor confiança: entrada própria; unidade de
+mesmo nome-base no mesmo diretório (`a.hpp` → `a.cpp`, a relação mais forte
+entre header e implementação); qualquer unidade do mesmo diretório. **Não há
+quarto passo** — "qualquer unidade do projeto" seria chute com cara de
+resposta: em projeto com mais de um target, o comando de outro diretório pode
+ter defines incompatíveis e o usuário não teria como saber.
+
+O caminho é confinado à raiz do workspace, como todo caminho que entra pelo
+protocolo: contexto de compilação não é desculpa para ler fora dele. O comando
+completo vai no payload para o usuário copiar e reexecutar — sem isso a
+transparência para na metade, e ele teria que confiar no resumo.
+
 ### Análise dinâmica de memória (`memcheck.run` — job assíncrono)
 
 Implementado no protocolo `0.65.0` (fatia 6 do L2). Fecha a **tríade de
@@ -1499,6 +1537,7 @@ quality.run
 coverage.run
 audit.run
 memcheck.run
+project.fileContext
 run.start
 run.script
 run.stdin

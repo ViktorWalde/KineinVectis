@@ -94,6 +94,8 @@ Item {
                 { label: qsTr("Explorador do projeto"), action: "view.project", enabled: workspaceOpen },
                 { label: qsTr("Terminal"), action: "view.terminal", enabled: workspaceOpen },
                 { label: qsTr("Jobs"), action: "view.jobs", enabled: workspaceOpen },
+                { label: qsTr("Contexto de compilação"), action: "view.compileContext",
+                  enabled: workspaceOpen },
                 { label: qsTr("Log da IDE"), action: "view.logs", enabled: true },
                 { label: qsTr("Ferramentas"), action: "view.tools", enabled: true }
             ],

@@ -7,6 +7,7 @@ Item {
     property var markdownMode: null
     property var editorController: null
     property var jobsController: null
+    property var compileContextController: null
     property var searchController: null
     property var runtimeController: null
     property var runConfigController: null
@@ -25,6 +26,9 @@ Item {
         markdownMode.clear();
         editorController.clear();
         jobsController.clear();
+        // Contexto de compilacao do projeto anterior nao pode sobreviver a
+        // troca: caminho relativo colide e o painel mostraria o arquivo errado.
+        compileContextController.clear();
         searchController.clear();
         runtimeController.clear();
         runConfigController.clear();

@@ -37,6 +37,7 @@ Item {
     readonly property alias searchController: searchController
     readonly property alias commandDispatcher: commandDispatcher
     readonly property alias editorController: editorController
+    readonly property alias compileContextController: compileContextController
     readonly property alias projectTree: projectTree
     readonly property alias projectTreeGestures: projectTreeGestures
     readonly property alias markdownModeController: markdownModeController
@@ -216,6 +217,10 @@ Item {
         }
     }
 
+    CompileContextController {
+        id: compileContextController
+    }
+
     EditorController {
         id: editorController
 
@@ -284,6 +289,7 @@ Item {
     EditorEventRouter {
         coreClient: root.coreClient
         editorController: editorController
+        compileContextController: compileContextController
     }
 
     EditorRequestRouter {

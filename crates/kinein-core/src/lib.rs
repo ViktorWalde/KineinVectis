@@ -24,6 +24,7 @@ pub mod jobs;
 pub mod lang;
 pub mod lsp;
 pub mod process;
+pub mod project_context;
 pub mod rpc;
 pub mod run;
 pub mod runconfig;
@@ -217,6 +218,9 @@ impl Core {
             }
             "build.run" => RequestOutcome::Continue(self.build_run_response(request_id, params)),
             "audit.run" => RequestOutcome::Continue(self.audit_run_response(request_id, params)),
+            "project.fileContext" => {
+                RequestOutcome::Continue(self.project_file_context_response(request_id, params))
+            }
             "memcheck.run" => {
                 RequestOutcome::Continue(self.memcheck_run_response(request_id, params))
             }

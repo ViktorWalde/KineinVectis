@@ -18,6 +18,7 @@ pub mod integration;
 pub mod jobs;
 pub mod lsp;
 pub mod memcheck;
+pub mod project;
 pub mod run;
 pub mod runconfig;
 pub mod settings;

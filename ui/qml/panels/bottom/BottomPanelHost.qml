@@ -8,6 +8,7 @@ Rectangle {
     property bool open: false
     property string activeTab: "logs"
     property var coverage: null
+    property var compileContext: null
     property var buildOutputModel
     property var jobsModel
     property var testModel
@@ -179,6 +180,16 @@ Rectangle {
         summary: root.testSummary
         running: root.testing
         coverage: root.coverage
+    }
+
+    CompileContextPanel {
+        anchors.top: bottomTabs.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.margins: Theme.spacingSmall
+        visible: root.activeTab === "compileContext"
+        context: root.compileContext
     }
 
     JobsPanel {

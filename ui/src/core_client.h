@@ -141,6 +141,7 @@ public:
     Q_INVOKABLE void runCoverage(const QString& buildSystem = QString());
     Q_INVOKABLE void runAudit();
     Q_INVOKABLE void runMemcheck();
+    Q_INVOKABLE void requestFileContext(const QString& path);
     Q_INVOKABLE void cancelBuild();
     Q_INVOKABLE void cancelTests();
     Q_INVOKABLE void cancelQuality();
@@ -261,6 +262,7 @@ signals:
     void memcheckStarted(const QString& command);
     void memcheckDiagnostic(const QVariantMap& diagnostic);
     void memcheckFinished(bool success, int tests, int findings, const QString& error);
+    void fileContextResolved(const QVariantMap& context);
     void lspDiagnostics(const QString& path, const QVariantList& diagnostics);
     void lspDefinitionResolved(const QString& path, int line, int column);
     void lspHoverResolved(const QString& content);

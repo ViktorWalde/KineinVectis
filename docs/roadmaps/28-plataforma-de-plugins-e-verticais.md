@@ -125,7 +125,10 @@ L2  C/C++/RUST SOLIDOS — resultado comum        FECHADO em 2026-08-21
       A banda L2 FECHOU. O L3 esta aberto.
       FORA    Criterion — formato por-caso nao confirmado na fonte
 
-L3  Project Graph, targets e perfis explicaveis; cache provenance
+L3  Project Graph, targets e perfis explicaveis; cache provenance  EM ANDAMENTO
+      FEITO   contexto de compilacao por arquivo, com o GRAU DE CONFIANCA
+              explicito (exact/borrowed/none)          (fatia 1, 2026-08-21)
+      FALTA   targets como entidade na UI, perfis explicaveis, cache provenance
       valida com: Bear, ccache/sccache, Bloaty, Doxygen
 
 L4  DAP solido + profiling

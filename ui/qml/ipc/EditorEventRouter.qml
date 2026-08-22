@@ -5,13 +5,22 @@ Item {
 
     property var coreClient: null
     property var editorController: null
+    property var compileContextController: null
 
     visible: false
 
     Connections {
         target: root.coreClient
 
+        function onFileContextResolved(context) {
+            root.compileContextController.handleResolved(context);
+        }
+
         function onFileLoaded(path, content) {
+            // O contexto de compilacao acompanha o arquivo aberto: perguntar
+            // aqui evita um botao "atualizar" que o usuario teria que lembrar
+            // de apertar — e contexto desatualizado e pior que nenhum.
+            root.coreClient.requestFileContext(path);
             root.editorController.handleFileLoaded(path, content);
         }
 

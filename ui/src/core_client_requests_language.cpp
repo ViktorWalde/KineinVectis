@@ -127,6 +127,14 @@ void CoreClient::requestSwitchSourceHeader(const QString& path, const QString& c
                 QJsonObject{{QStringLiteral("path"), path}, {QStringLiteral("content"), content}});
 }
 
+void CoreClient::requestFileContext(const QString& path)
+{
+    if (m_process.state() != QProcess::Running || path.isEmpty()) {
+        return;
+    }
+    sendRequest(QStringLiteral("project.fileContext"), QJsonObject{{QStringLiteral("path"), path}});
+}
+
 void CoreClient::lspRestart(const QString& language)
 {
     // language vazio = reinicia todos os servidores vivos (M4.3b).

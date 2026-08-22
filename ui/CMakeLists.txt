@@ -110,6 +110,7 @@ set_source_files_properties(qml/ipc/RuntimeEventRouter.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/ipc/RuntimeRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeRequestRouter.qml)
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
+set_source_files_properties(qml/project/CompileContextController.qml PROPERTIES QT_RESOURCE_ALIAS CompileContextController.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
 set_source_files_properties(qml/project/ProjectTreeGestures.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeGestures.qml)
 set_source_files_properties(qml/project/ProjectTreeRow.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRow.qml)
@@ -226,6 +227,7 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/TerminalInputController.qml
         qml/panels/bottom/TestsPanel.qml
         qml/panels/bottom/ToolsPanel.qml
+        qml/panels/bottom/CompileContextPanel.qml
         qml/workspace/FolderPickerDialog.qml
         qml/workspace/FolderPickerController.qml
         qml/workspace/FolderPickerButton.qml
@@ -256,6 +258,7 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/RuntimeRequestRouter.qml
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
+        qml/project/CompileContextController.qml
         qml/project/ProjectExplorer.qml
         qml/project/ProjectTreeGestures.qml
         qml/project/ProjectTreeRow.qml

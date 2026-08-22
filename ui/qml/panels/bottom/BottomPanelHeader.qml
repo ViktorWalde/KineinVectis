@@ -33,7 +33,7 @@ Item {
         const icons = {
             build: "build", jobs: "run", problems: "problems", tests: "test",
             terminal: "terminal", debug: "debug", git: "git", search: "search",
-            logs: "file", tools: "tools"
+            logs: "file", tools: "tools", compileContext: "build"
         };
         return icons[tab] !== undefined ? icons[tab] : "file";
     }
@@ -44,7 +44,8 @@ Item {
             problems: qsTr("Problemas"), tests: qsTr("Testes"),
             terminal: qsTr("Terminal"), debug: qsTr("Debug"),
             git: qsTr("Git"), search: qsTr("Busca"),
-            logs: qsTr("Log da IDE"), tools: qsTr("Ferramentas")
+            logs: qsTr("Log da IDE"), tools: qsTr("Ferramentas"),
+            compileContext: qsTr("Contexto de compilação")
         };
         const label = labels[tab] !== undefined ? labels[tab] : tab;
         // Contagem DERIVADA do modelo que ja desce. Antes ela vinha por uma

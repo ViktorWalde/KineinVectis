@@ -61,6 +61,7 @@ Window {
         markdownMode: domains.markdownModeController
         editorController: domains.editorController
         jobsController: domains.jobsController
+        compileContextController: domains.compileContextController
         searchController: domains.searchController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
@@ -175,6 +176,8 @@ Window {
     ShellWorkspaceHost {
         id: workspaceHost
 
+        compileContextController: domains.compileContextController
+
         anchors.top: header.bottom
         anchors.bottom: statusBar.top
         anchors.left: parent.left
@@ -202,9 +205,7 @@ Window {
         workspaceName: coreClient.workspaceName
         workspaceKind: coreClient.workspaceKind
         workspaceBuildSystems: coreClient.workspaceBuildSystems
-        testing: coreClient.testing
         terminalActive: coreClient.terminalActive
-        running: coreClient.running
         logLinesModel: coreClient.logLines
         toolsList: domains.workspaceController.toolsList
         scanningEnvironment: coreClient.scanningEnvironment
