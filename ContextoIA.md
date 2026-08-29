@@ -2329,3 +2329,86 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
   e' profundidade no que ja existe; Docker e banco sao superficie nova. Uma IDE
   com Docker e sem cobertura de teste e' uma demo. Detalhe em
   `docs/roadmaps/28-plataforma-de-plugins-e-verticais.md`.
+
+## Pente fino no core: E1 fechado e dois defeitos de dados (2026-08-29)
+
+Varredura de duplicacao e logica em `crates/`, com a toolchain fixada
+(`rust-toolchain.toml` → 1.96.1) instalada na maquina. `cargo fmt --check`,
+`cargo test --workspace --all-features` e `cargo clippy -D warnings` verdes ao
+fim. Os gates de C++/QML **nao** foram rodados nesta sessao (exigem Qt6 e preset
+CMake configurado, ausentes na maquina); nada de C++/QML foi alterado.
+
+**E1 (§0.2h) fechado — e o diagnostico registrado em 2026-07-16 estava meio
+errado, o que importa mais que o fix.** O arquivo dizia que faltava "fechar o
+descritor antes do exec (ou `O_CLOEXEC`)". Medido na fonte: `fs::write` ja fecha
+ao retornar e o Rust ja abre com `O_CLOEXEC` no Linux. A janela real e' **entre
+`fork` e `execve`** — o filho herda uma copia do descritor de escrita, e o
+`O_CLOEXEC` so age quando o `execve` DELE tiver sucesso; ate la o arquivo esta
+"aberto para escrita" e o `execve` do script recusa com `ETXTBSY` (`execve(2)`,
+secao ERRORS, Linux man-pages 6.9). Nenhum lock entre os testes de `tools` fecha
+essa janela — por isso o escopo do `EXEC_LOCK` **nao** cresceu, como o §0.2h
+mandava. Fecharam a corrida: retry limitado em `ETXTBSY` no `probe_version`
+(20 x 10 ms; condicao transitoria que existe em producao tambem — linker
+gravando `target/debug/foo`, gerenciador de pacotes atualizando binario) e um
+`exec_lock()` que ignora envenenamento, matando a cascata de `PoisonError` que
+era a segunda metade do §0.2h. Provado por mutacao: com `EXEC_BUSY_ATTEMPTS = 1`
+e o `unwrap()` de volta, os dois testes novos reprovam **e o
+`fd_detection_accepts_fdfind_binary_name` reproduz o `PoisonError` original** — a
+flake de 2026-07-16, agora deterministica.
+
+**Defeito de dados 1: a suite de testes escrevia no estado GLOBAL real do
+usuario.** `enable_lsp` ligava `persistence_enabled` por tabela e
+`workspace/recent.rs` deduzia o caminho XDG sozinho, entao TODO teste que
+abrisse um workspace gravava em `~/.config/kinein-vectis/recent-workspaces.json`.
+O arquivo tem teto de 12 entradas: uma execucao de `cargo test` despejava a lista
+de projetos recentes. Medido nesta data no arquivo real do autor: **12 de 12
+entradas eram `/tmp/kinein-core-tests`, zero projetos reais** — a lista dele ja
+tinha sido perdida antes desta sessao, e o dado nao volta. Correcao estrutural,
+nao cosmetica: persistencia passa a ser gesto EXPLICITO
+(`Core::enable_persistence(global_storage)`, chamado so pelo `run_stdio`) e a
+raiz do estado global e' sempre RECEBIDA, nunca deduzida dentro do modulo — as
+funcoes viraram `*_recent_workspaces_in(dir, …)`. O padrao seguro deixou de
+depender de disciplina. Coberto por
+`tests::workspace::test_core_never_writes_to_the_real_global_storage`, que
+compara o diretorio global antes/depois.
+
+**Defeito de dados 2: store de rascunhos orfa na troca de workspace.**
+`self.workspace` mudava em tres caminhos (`open`, `createProject`, `close`), cada
+um com a sua copia da lista de estado por-workspace, e as copias divergiram: so o
+`open` trocava `self.drafts`. Consequencia — depois de criar um projeto pelo
+assistente, o autosave do projeto NOVO ia para o `.kinein/kinein.db` do projeto
+ANTERIOR; sem projeto anterior, `draft.save` respondia "persistencia local de
+rascunhos indisponivel". A rede de seguranca de dados (docs/seguranca/23)
+desligava em silencio, com build, clippy e 271 testes verdes. Correcao: um dono
+unico da transicao (`activate_workspace` / `deactivate_workspace` em
+`handlers/workspace.rs`) e **gate novo** `scripts/verificar-transicao-workspace.sh`,
+que reprova qualquer `self.workspace`/`self.drafts` mexido fora do dono. Gate
+testado por mutacao nos dois sentidos (handler alheio mexendo em `drafts`;
+`createProject` voltando a atribuir direto).
+
+**Terceiro achado do mesmo modulo:** `recover_drafts` tratava "arquivo ausente"
+como "difere do rascunho" e oferecia de volta o buffer de um arquivo que o
+usuario tinha APAGADO. Um rascunho so nasce contra arquivo existente
+(`fsops::confine_file`), entao arquivo sumido = rascunho obsoleto. Fica ABERTO:
+`fs.rename` nao MOVE o rascunho (ele e' descartado); mover pede operacao nova na
+store, fatia propria.
+
+**Duplicacao com risco real (nao cosmetica):** `fs.search` e `fs.replace` tinham
+o walk de diretorios COPIADO, e as copias **ja divergiam** — diretorio ilegivel
+abortava o `replace` inteiro e era apenas pulado no `search`. Isso e' grave
+porque o usuario le o resultado da busca e manda substituir: conjuntos diferentes
+significam a IDE editando arquivo que ela nao mostrou. Extraido `fsops/walk.rs`
+(um dono), com teste de PARIDADE explicito
+(`replace_touches_exactly_the_files_search_reports`). O resto da "duplicacao"
+apontada pelo detector e' a forma canonica de handler fino (§4 regra 2) e de
+cabecalho de dialogo QML — colapsar isso em macro pioraria a leitura, e nao foi
+tocado.
+
+**Codigo morto removido:** `ToolDetector::find_binary` era o ultimo resquicio do
+aiBridge no codigo, com doc citando "AI CLI Bridge" — linha declarada FORA DE
+ESCOPO em 2026-07-17. Zero chamadores.
+
+**Ferramenta:** `scripts/instalar-ambiente.sh` instalava `stable` enquanto o
+`rust-toolchain.toml` fixa `1.96.1`. Baixava uma toolchain que ninguem usa e
+deixava a de verdade para o primeiro `cargo build` — exatamente a "surpresa
+offline" que o bloco dizia evitar. Agora le o canal do TOML.

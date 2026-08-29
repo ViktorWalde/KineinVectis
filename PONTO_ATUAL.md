@@ -40,7 +40,16 @@ L0            FECHADO          A3.1-A3.4; typing_perf_harness.cpp existe,
 cursor/TUI    APROVADO         pelo autor em 2026-07-17. Fecha R0-R3.
 IA na IDE     FORA DE ESCOPO   0 ocorrencias em ui/qml. Nao reabrir.
 debito        23 arquivos      catraca verde; 5 dos 10 god-files ja pagos
+E1            FECHADO          2026-08-29, com teste de mutacao
 ```
+
+> **Nota de 2026-08-29 sobre a parte Rust deste arquivo.** O que esta secao
+> afirma sobre Rust foi RE-MEDIDO nesta data com a toolchain fixada
+> (`rust-toolchain.toml` → 1.96.1): `cargo fmt --check`, `cargo test --workspace
+> --all-features` e `cargo clippy -D warnings` verdes. Os gates de C++/QML
+> (`verificar-cpp.sh`, `verificar-qml.sh`, `verificar-qml-logica.sh`) NÃO foram
+> re-medidos: exigem Qt6 e um preset CMake configurado, ausentes na máquina
+> daquela sessão. Não tome "gate VERDE" acima como afirmação sobre eles.
 
 ### A trilha, em ordem de DESBLOQUEIO
 
@@ -48,18 +57,32 @@ O que não exige decisão vem primeiro. O que exige tem recomendação e um "se
 ninguém responder, siga por X" — nenhuma sessão para esperando.
 
 ```text
-E1  flake do `tools::`        SEM decisao   desentope o gate inteiro
+E1  flake do `tools::`        FECHADO       2026-08-29 (ver abaixo)
 E2  L1: dominio `integration` DECISAO SUA   recomendacao pronta (§0.2e)
 E3  debito god-file           SEM decisao   pre-requisito por area
 E4  resto (protocolo, AppImage)             P3, sem bloqueio
 ```
 
-**E1 — flake do `tools::` (§0.2h). Primeiro por leverage, não por tamanho.**
-Reprova ao acaso e ensina a reexecutar até passar — a doença que a catraca do
-§0.2g existe para impedir. Pegou a IA 2x em 2026-07-17, que se flagrou fazendo
-exatamente isso. VERIFICADO ABERTO no código: `tools.rs` não muda desde `4dacc1b`
-e não tem `O_CLOEXEC`. Caminho já escrito no próprio arquivo: fechar o descritor
-de escrita antes do exec. **Não aumentar o escopo do `EXEC_LOCK`** — isso esconde.
+**E1 — flake do `tools::` (§0.2h). FECHADO em 2026-08-29.**
+A causa não era o `EXEC_LOCK` estreito demais nem `O_CLOEXEC` ausente: `fs::write`
+já fecha o descritor, e o Rust já abre com `O_CLOEXEC`. A corrida é **entre fork
+e exec** — um `fork` de qualquer outro teste herda o descritor de escrita de um
+script alheio e, enquanto esse filho não terminar o `execve`, o arquivo continua
+"aberto para escrita" e o `execve` do script recusa com `ETXTBSY` (`execve(2)`,
+seção ERRORS). Nenhum lock entre os testes de `tools` fecha essa janela — por
+isso o escopo do lock NÃO cresceu.
+
+```text
+probe_version   retry limitado em ETXTBSY (20 x 10 ms). Condicao transitoria
+                por definicao — vale tambem em producao: o linker terminando de
+                gravar target/debug/foo, ou um gerenciador de pacotes.
+exec_lock()     toma o mutex ignorando envenenamento. Era a SEGUNDA metade do
+                §0.2h: a primeira falha morria segurando o lock e a proxima
+                virava PoisonError — uma falha real virava duas.
+```
+Provado por mutação: com `EXEC_BUSY_ATTEMPTS = 1` e o `unwrap()` de volta, os
+dois testes novos reprovam **e o `fd_detection_accepts_fdfind_binary_name`
+reproduz o `PoisonError` original** — a flake de 2026-07-16, agora determinística.
 
 **E2 — L1: o domínio `integration` v1. [DECISÃO SUA, com saída]**
 VERIFICADO ABERTO: não existe `handlers/integration.rs`. O que trava é o §0.2e —
@@ -965,7 +988,60 @@ mantivesse o contexto ativo — contradizendo a própria linha 92 do arquivo, qu
 exige "abrir ativa". `handleTerminalOpened` termina em `selectTerminal(id)`, e
 está certo. Expectativa corrigida; o produto não mudou.
 
-### 0.2h Teste instável em `tools` (achado em 2026-07-16, P3)
+### 0.2k Achados do pente fino de 2026-08-29 (medidos, 3 corrigidos)
+
+Varredura de duplicação e lógica em todo o `crates/` com a toolchain fixada.
+Além do E1, saíram **dois defeitos de dados** que passavam por todos os gates:
+
+```text
+CORRIGIDO  a suite de testes escrevia no estado GLOBAL real do usuario.
+           `enable_lsp` ligava persistencia por tabela e `recent.rs` deduzia o
+           caminho XDG sozinho, entao todo teste que abrisse um workspace
+           gravava em ~/.config/kinein-vectis/recent-workspaces.json. Como o
+           arquivo tem teto de 12 entradas, uma execucao de `cargo test`
+           DESPEJAVA a lista de projetos recentes. Medido: 12 de 12 entradas
+           eram /tmp/kinein-core-tests, zero projetos reais. A lista do autor
+           ja tinha sido perdida antes desta sessao — o dado nao volta.
+           Fix: persistencia vira gesto EXPLICITO (`Core::enable_persistence`,
+           so o `run_stdio` chama) e a raiz global e' sempre RECEBIDA.
+
+CORRIGIDO  store de rascunhos orfa na troca de workspace.
+           `self.workspace` mudava em 3 caminhos e so o `open` trocava
+           `self.drafts`. `workspace.createProject` deixava o projeto novo
+           gravando autosave no banco do projeto ANTERIOR; sem anterior,
+           respondia "persistencia local de rascunhos indisponivel" — autosave
+           desligado logo depois de criar um projeto pelo assistente.
+           Fix: dono unico (`activate_workspace`/`deactivate_workspace`) +
+           gate `scripts/verificar-transicao-workspace.sh`.
+
+CORRIGIDO  arquivo apagado voltava como "rascunho recuperado". `recover_drafts`
+           lia o disco e tratava "arquivo ausente" como "difere do rascunho".
+
+CORRIGIDO  `fs.search` e `fs.replace` tinham walks COPIADOS, ja divergentes
+           (diretorio ilegivel abortava o replace e era pulado na busca).
+           Extraido `fsops/walk.rs`, com teste de PARIDADE: replace so pode
+           tocar o que a busca mostrou.
+
+CORRIGIDO  `ToolDetector::find_binary` era codigo morto — unico resquicio do
+           aiBridge no codigo (o doc dele ainda citava "AI CLI Bridge").
+
+CORRIGIDO  `scripts/instalar-ambiente.sh` instalava `stable` enquanto o
+           `rust-toolchain.toml` fixa 1.96.1: baixava uma toolchain que ninguem
+           usa e deixava a de verdade para o primeiro build — exatamente a
+           "surpresa offline" que o bloco dizia evitar. Agora le o canal do TOML.
+
+ABERTO     `fs.rename` nao MOVE o rascunho para o caminho novo (ele e'
+           descartado). Mover pede operacao nova na store: fatia propria.
+ABERTO     `fs.search` reporta no maximo 1 ocorrencia por linha; `fs.replace`
+           substitui TODAS. Contagens divergem na mesma linha ("1 resultado,
+           2 substituicoes"). E' escolha de produto, nao bug de implementacao —
+           decidir e alinhar.
+ABERTO     `lang/positions.rs` fatia `&text[..byte]` sem checar fronteira de
+           caractere. Hoje so recebe offset de no do tree-sitter (sempre em
+           fronteira), mas e' panico latente num projeto que proibe panico.
+```
+
+### 0.2h Teste instável em `tools` (achado em 2026-07-16, RESOLVIDO em 2026-08-29)
 
 Encontrado ao rodar o gate, **não é regressão de fatia nenhuma** — reproduz em
 árvore que não toca Rust:
@@ -987,6 +1063,16 @@ falha é cascata (o primeiro morreu segurando o mutex, envenenando-o).
 passar, que é a mesma doença que a catraca do §0.2g foi desenhada para evitar.
 Fatia própria: fechar o descritor antes do exec (ou `O_CLOEXEC`), não aumentar o
 escopo do lock.
+
+**RESOLVIDO em 2026-08-29 — e o diagnóstico acima estava só meio certo.** O
+remédio proposto ("fechar o descritor antes do exec / `O_CLOEXEC`") já era o
+estado do código: `fs::write` fecha ao retornar e o Rust abre com `O_CLOEXEC` no
+Linux. A janela real é **entre `fork` e `execve`**: o filho herda uma cópia do
+descritor de escrita e o `O_CLOEXEC` só age quando o `execve` do filho tiver
+SUCESSO — enquanto isso o arquivo continua aberto para escrita e o `execve` do
+script recusa com `ETXTBSY` (`execve(2)`, ERRORS, Linux man-pages 6.9). O que
+fecha a corrida é retry limitado; o escopo do lock não cresceu. Detalhe e teste
+de mutação no §TRILHA/E1.
 
 ### 0.3 Sessão de organização e feedback (2026-07-16)
 

@@ -69,6 +69,9 @@ bash scripts/verificar-docs.sh
 passo "scripts/verificar-arquitetura.sh (catraca da regra de split)"
 bash scripts/verificar-arquitetura.sh
 
+passo "scripts/verificar-transicao-workspace.sh (estado por-workspace com um dono)"
+bash scripts/verificar-transicao-workspace.sh
+
 passo "scripts/verificar-qml-logica.sh (controllers QML headless)"
 scripts/verificar-qml-logica.sh
 

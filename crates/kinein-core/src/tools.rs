@@ -14,8 +14,11 @@
 use std::{
     env,
     ffi::OsString,
+    io,
     path::{Path, PathBuf},
     process::Command,
+    thread,
+    time::Duration,
 };
 
 use kinein_protocol::{ToolInfo, ToolStatus};
@@ -265,15 +268,6 @@ impl ToolDetector {
         )
     }
 
-    /// Resolves one executable on the detector's configured search path.
-    ///
-    /// This is used by opt-in launchers such as the AI CLI Bridge. It only
-    /// resolves an executable path; it never installs or starts the tool.
-    #[must_use]
-    pub fn find_binary(&self, binary: &str) -> Option<PathBuf> {
-        self.find_in_path(binary)
-    }
-
     fn suggested_install_for(spec: &ToolSpec) -> Option<String> {
         spec.install_command.map(ToOwned::to_owned)
     }
@@ -307,23 +301,47 @@ fn is_executable(path: &Path) -> bool {
     path.is_file()
 }
 
+/// Tentativas extras de exec quando o binario responde `ETXTBSY`.
+///
+/// `ETXTBSY` ("Text file busy") nao diz que a ferramenta esta quebrada: diz que
+/// alguem ainda segura um descritor de ESCRITA para aquele arquivo no instante
+/// do `execve` — o linker terminando de gravar `target/debug/foo`, um
+/// gerenciador de pacotes atualizando o binario, ou um `fork` concorrente que
+/// herdou o descritor antes de fechar no `exec`. E' transitorio por definicao e
+/// some sozinho em milissegundos; tratar como "ferramenta falhou" e' reportar
+/// erro por uma corrida. Referencia: `execve(2)`, secao ERRORS (Linux man-pages
+/// 6.9) — "ETXTBSY: The specified executable was open for writing by one or
+/// more processes."
+const EXEC_BUSY_ATTEMPTS: u32 = 20;
+
+/// Espera entre duas tentativas de exec apos `ETXTBSY` (total <= 200 ms).
+const EXEC_BUSY_BACKOFF: Duration = Duration::from_millis(10);
+
 fn probe_version(path: &Path) -> Result<String, String> {
-    match Command::new(path).arg("--version").output() {
-        Ok(output) if output.status.success() => {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            stdout
-                .lines()
-                .map(str::trim)
-                .find(|line| !line.is_empty())
-                .map(ToOwned::to_owned)
-                .ok_or_else(|| "a ferramenta nao informou versao".to_owned())
+    for remaining in (0..EXEC_BUSY_ATTEMPTS).rev() {
+        match Command::new(path).arg("--version").output() {
+            Ok(output) if output.status.success() => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                return stdout
+                    .lines()
+                    .map(str::trim)
+                    .find(|line| !line.is_empty())
+                    .map(ToOwned::to_owned)
+                    .ok_or_else(|| "a ferramenta nao informou versao".to_owned());
+            }
+            Ok(output) => {
+                return Err(format!(
+                    "o comando de versao terminou com {}",
+                    output.status
+                ));
+            }
+            Err(error) if error.kind() == io::ErrorKind::ExecutableFileBusy && remaining > 0 => {
+                thread::sleep(EXEC_BUSY_BACKOFF);
+            }
+            Err(error) => return Err(format!("falha ao executar a ferramenta: {error}")),
         }
-        Ok(output) => Err(format!(
-            "o comando de versao terminou com {}",
-            output.status
-        )),
-        Err(error) => Err(format!("falha ao executar a ferramenta: {error}")),
     }
+    Err("a ferramenta seguiu ocupada para execucao (ETXTBSY)".to_owned())
 }
 
 #[cfg(test)]
@@ -452,7 +470,7 @@ mod tests {
         // detectar `cargo`: mesma estrutura, mesmo probe, nenhum campo
         // especial. Se alguem escrever `if spec.id == "claude"` no detector
         // para injetar flag, filtrar saida ou mudar o probe, este teste cai.
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = exec_lock();
         let dir = temp_bin_dir("ai-cli-like-any-other");
         // Os dois fakes ecoam o MESMO texto de proposito: o que se compara e o
         // TRATAMENTO (mesmo probe, mesma estrutura), nao o conteudo.
@@ -480,7 +498,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn fd_detection_accepts_fdfind_binary_name() {
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = exec_lock();
         let dir = temp_bin_dir("fd-fdfind");
         write_fake_tool(&dir, "fdfind", "echo 'fdfind 10.2.0'");
         let detector = ToolDetector::with_search_path(&dir);
@@ -503,13 +521,33 @@ mod tests {
     ///
     /// Without this, one test can fork while another still holds the write
     /// descriptor of its script, and the exec fails with `ETXTBSY`.
+    ///
+    /// O lock estreita a janela ENTRE ESTES testes; ele nao a fecha, porque
+    /// qualquer outro teste da suite que forke no instante errado herda o
+    /// descritor e produz o mesmo `ETXTBSY` (`PONTO_ATUAL` §0.2h). Quem fecha a
+    /// corrida e' o retry de [`EXEC_BUSY_ATTEMPTS`] no `probe_version`; o
+    /// escopo deste lock NAO deve crescer para tapar o buraco — isso esconderia
+    /// o defeito em vez de corrigi-lo.
     #[cfg(unix)]
     static EXEC_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    /// Toma o [`EXEC_LOCK`] ignorando envenenamento.
+    ///
+    /// Sem isto, o primeiro teste que falha segurando o mutex derruba TODOS os
+    /// seguintes com `PoisonError` — a cascata que fez uma falha virar duas em
+    /// 2026-07-16 e escondeu qual teste era o real. O dado protegido e' `()`:
+    /// nao ha estado corrompido a preservar.
+    #[cfg(unix)]
+    fn exec_lock() -> std::sync::MutexGuard<'static, ()> {
+        EXEC_LOCK
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
 
     #[cfg(unix)]
     #[test]
     fn detected_tool_reports_path_and_version() {
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = exec_lock();
         let dir = temp_bin_dir("detected");
         write_fake_tool(&dir, "cargo", "echo 'cargo 1.99.0 (fake)'");
         let detector = ToolDetector::with_search_path(&dir);
@@ -528,7 +566,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn broken_tool_reports_failed_with_human_message() {
-        let _guard = EXEC_LOCK.lock().unwrap();
+        let _guard = exec_lock();
         let dir = temp_bin_dir("broken");
         write_fake_tool(&dir, "cargo", "exit 3");
         let detector = ToolDetector::with_search_path(&dir);
@@ -538,6 +576,67 @@ mod tests {
         assert_eq!(info.status, ToolStatus::Failed);
         assert!(info.version.is_none());
         assert!(info.message.as_deref().unwrap().contains("Cargo"));
+    }
+
+    /// O caso do §0.2h, tornado DETERMINISTICO.
+    ///
+    /// A flake original dependia de outro teste forkar no microssegundo errado.
+    /// Aqui a corrida e' reproduzida de proposito: um escritor segura o
+    /// descritor de escrita do script enquanto a deteccao tenta executa-lo, que
+    /// e' exatamente o estado que o `execve` recusa com `ETXTBSY`. Sem o retry
+    /// do `probe_version` este teste reprova SEMPRE (status `Failed`) — foi
+    /// assim que ele foi verificado.
+    #[cfg(unix)]
+    #[test]
+    fn detection_survives_a_writer_still_holding_the_script() {
+        use std::time::Duration;
+
+        let _guard = exec_lock();
+        let dir = temp_bin_dir("etxtbsy");
+        write_fake_tool(&dir, "cargo", "echo 'cargo 1.99.0 (fake)'");
+
+        // Segura o descritor de ESCRITA por menos que a janela total do retry
+        // (20 x 10 ms), e solta numa thread — o `execve` so passa a valer
+        // depois disso.
+        let holder = fs::OpenOptions::new()
+            .write(true)
+            .open(dir.join("cargo"))
+            .unwrap();
+        let releaser = std::thread::spawn(move || {
+            std::thread::sleep(Duration::from_millis(60));
+            drop(holder);
+        });
+
+        let info = ToolDetector::with_search_path(&dir).detect(&FAKE_SPEC);
+        releaser.join().unwrap();
+
+        assert_eq!(info.status, ToolStatus::Detected);
+        assert_eq!(info.version.as_deref(), Some("cargo 1.99.0 (fake)"));
+    }
+
+    /// O `EXEC_LOCK` envenenado nao pode derrubar os testes seguintes.
+    ///
+    /// Era a segunda metade do §0.2h: a primeira falha morria segurando o
+    /// mutex, e a proxima virava `PoisonError` — uma falha real virava duas, e
+    /// a cascata escondia qual era a verdadeira.
+    #[cfg(unix)]
+    #[test]
+    fn poisoned_exec_lock_does_not_cascade() {
+        let poisoner = std::thread::spawn(|| {
+            let _guard = exec_lock();
+            panic!("simula um teste que falha segurando o lock");
+        });
+        assert!(poisoner.join().is_err());
+        assert!(EXEC_LOCK.is_poisoned());
+
+        // O proximo a chegar continua trabalhando: o dado protegido e' `()`.
+        let _guard = exec_lock();
+        let dir = temp_bin_dir("poisoned-lock");
+        write_fake_tool(&dir, "cargo", "echo 'cargo 1.99.0 (fake)'");
+
+        let info = ToolDetector::with_search_path(&dir).detect(&FAKE_SPEC);
+
+        assert_eq!(info.status, ToolStatus::Detected);
     }
 
     #[test]

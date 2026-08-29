@@ -462,6 +462,12 @@ projeto, com a mesma política de confinamento/ignores e limites da busca:
   não UTF-8, grandes demais ou em diretórios ignorados não entram;
 - `query` vazia retorna `INVALID_PARAMS`; zero ocorrências é sucesso com
   listas/contador vazios.
+- **paridade com `fs.search` (garantida desde 2026-08-29):** os dois percorrem o
+  mesmo walk (`fsops::walk`), então `fs.replace` nunca toca arquivo que
+  `fs.search` não mostrou. Consequência da unificação: um subdiretório ilegível é
+  **pulado** (como sempre foi na busca), e não mais aborta a substituição inteira
+  — só a raiz ilegível é erro. Travado pelo teste
+  `replace_touches_exactly_the_files_search_reports`.
 
 ### Execução (`run.start` / `run.script` / `run.stdin` / `run.stop`)
 

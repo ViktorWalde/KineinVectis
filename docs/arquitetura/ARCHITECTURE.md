@@ -428,6 +428,13 @@ Regras que mantêm isso saudável:
                                            2026-07-16 descobriu-se que 7 dos 14
                                            NAO conseguiam reprovar: `Qt.exit()`
                                            trunca em 8 bits (§1.3).
+    verificar-transicao-        2026-08-29  estado por-workspace do `Core`
+      workspace.sh                          trocado em 3 caminhos, cada copia
+                                            esquecendo uma peca diferente. O
+                                            `workspace.createProject` nao trocava
+                                            `self.drafts`: o autosave do projeto
+                                            NOVO ia para o banco do ANTERIOR.
+                                            Build, clippy e 271 testes verdes.
     ```
 
     **Um gate que nunca reprovou não está provado — está sem evidência.** Ao

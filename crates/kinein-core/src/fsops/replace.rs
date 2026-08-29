@@ -2,7 +2,8 @@
 
 use std::{fs, path::Path};
 
-use super::{FsError, MAX_READ_BYTES, SEARCH_SKIP_DIRS, TextFileUpdate, write_text_transaction};
+use super::walk::walk_text_files;
+use super::{FsError, MAX_READ_BYTES, TextFileUpdate, write_text_transaction};
 use crate::fsops::search::find_literal;
 
 const MAX_REPLACE_FILES: usize = 256;
@@ -22,73 +23,51 @@ pub fn replace(
     let mut updates = Vec::new();
     let mut replacements = 0_u64;
     let mut bytes = 0_usize;
-    let mut pending_dirs = vec![root.to_path_buf()];
+    let mut estourou_limite = false;
 
-    while let Some(directory) = pending_dirs.pop() {
-        let read_dir = fs::read_dir(&directory).map_err(|source| FsError::Io {
-            path: directory.display().to_string(),
-            source,
-        })?;
-        let mut files = Vec::new();
-        let mut subdirs = Vec::new();
-        for dir_entry in read_dir.flatten() {
-            let Ok(file_type) = dir_entry.file_type() else {
-                continue;
-            };
-            if file_type.is_symlink() {
-                continue;
-            }
-            let name = dir_entry.file_name().to_string_lossy().into_owned();
-            if file_type.is_dir() {
-                if !SEARCH_SKIP_DIRS.contains(&name.as_str()) {
-                    subdirs.push((name.to_lowercase(), dir_entry.path()));
-                }
-            } else if file_type.is_file() {
-                files.push((name.to_lowercase(), dir_entry.path()));
-            }
+    walk_text_files(root, |path| {
+        let Ok(metadata) = fs::metadata(path) else {
+            return false;
+        };
+        if metadata.len() > MAX_READ_BYTES {
+            return false;
         }
-        files.sort_by(|left, right| left.0.cmp(&right.0));
-        subdirs.sort_by(|left, right| right.0.cmp(&left.0));
-        pending_dirs.extend(subdirs.into_iter().map(|(_name, path)| path));
+        let Ok(raw) = fs::read(path) else {
+            return false;
+        };
+        let Ok(content) = String::from_utf8(raw) else {
+            return false;
+        };
+        let (rewritten, count) = replace_literal(&content, query, replacement, case_sensitive);
+        if count == 0 {
+            return false;
+        }
+        replacements = replacements.saturating_add(count);
+        bytes = bytes
+            .saturating_add(content.len())
+            .saturating_add(rewritten.len());
+        if updates.len() >= MAX_REPLACE_FILES
+            || replacements > MAX_REPLACEMENTS
+            || bytes > MAX_REPLACE_BYTES
+        {
+            estourou_limite = true;
+            return true;
+        }
+        updates.push(TextFileUpdate {
+            path: path.to_path_buf(),
+            expected_content: content,
+            new_content: rewritten,
+        });
+        false
+    })?;
 
-        for (_name, path) in files {
-            let Ok(metadata) = fs::metadata(&path) else {
-                continue;
-            };
-            if metadata.len() > MAX_READ_BYTES {
-                continue;
-            }
-            let Ok(raw) = fs::read(&path) else {
-                continue;
-            };
-            let Ok(content) = String::from_utf8(raw) else {
-                continue;
-            };
-            let (rewritten, count) = replace_literal(&content, query, replacement, case_sensitive);
-            if count == 0 {
-                continue;
-            }
-            replacements = replacements.saturating_add(count);
-            bytes = bytes
-                .saturating_add(content.len())
-                .saturating_add(rewritten.len());
-            if updates.len() >= MAX_REPLACE_FILES
-                || replacements > MAX_REPLACEMENTS
-                || bytes > MAX_REPLACE_BYTES
-            {
-                return Err(FsError::ReplaceLimit {
-                    message: format!(
-                        "substituicao excede os limites de {MAX_REPLACE_FILES} arquivos, \
-                         {MAX_REPLACEMENTS} ocorrencias ou {MAX_REPLACE_BYTES} bytes"
-                    ),
-                });
-            }
-            updates.push(TextFileUpdate {
-                path,
-                expected_content: content,
-                new_content: rewritten,
-            });
-        }
+    if estourou_limite {
+        return Err(FsError::ReplaceLimit {
+            message: format!(
+                "substituicao excede os limites de {MAX_REPLACE_FILES} arquivos, \
+                 {MAX_REPLACEMENTS} ocorrencias ou {MAX_REPLACE_BYTES} bytes"
+            ),
+        });
     }
 
     write_text_transaction(root, &updates)?;
@@ -145,6 +124,52 @@ mod tests {
         let (text, count) = replace_literal("old old OLD", "old", "new-value", false);
         assert_eq!(text, "new-value new-value new-value");
         assert_eq!(count, 3);
+    }
+
+    /// `fs.replace` nao pode tocar arquivo que `fs.search` nao mostrou.
+    ///
+    /// O usuario le o resultado da busca e manda substituir: se os dois
+    /// caminharem por conjuntos diferentes, a IDE edita as costas do usuario.
+    /// Enquanto cada um tinha a sua copia do walk isso era coincidencia — e as
+    /// copias JA divergiam (diretorio ilegivel abortava o replace inteiro e era
+    /// apenas pulado na busca). Hoje os dois usam `fsops::walk`.
+    #[test]
+    fn replace_touches_exactly_the_files_search_reports() {
+        let root = root("paridade-com-a-busca");
+        fs::create_dir(root.join("src")).unwrap();
+        fs::create_dir(root.join("target")).unwrap();
+        fs::create_dir(root.join(".git")).unwrap();
+        fs::write(root.join("src/main.rs"), "let alvo = 1;\n").unwrap();
+        fs::write(root.join("raiz.txt"), "alvo na raiz\n").unwrap();
+        fs::write(root.join("target/gerado.rs"), "alvo gerado\n").unwrap();
+        fs::write(root.join(".git/config"), "alvo versionado\n").unwrap();
+        fs::write(root.join("blob.bin"), [0xFF, b'a', b'l', b'v', b'o']).unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(root.join("raiz.txt"), root.join("link.txt")).unwrap();
+
+        let (encontrados, _) = super::super::search::search(&root, "alvo", false).unwrap();
+        let mut vistos_pela_busca = encontrados
+            .iter()
+            .map(|item| item.path.clone())
+            .collect::<Vec<_>>();
+        vistos_pela_busca.sort();
+        vistos_pela_busca.dedup();
+
+        let (arquivos, _) = replace(&root, "alvo", "novo", false).unwrap();
+        let mut tocados = arquivos
+            .iter()
+            .map(|absoluto| {
+                std::path::Path::new(absoluto)
+                    .strip_prefix(&root)
+                    .unwrap()
+                    .display()
+                    .to_string()
+            })
+            .collect::<Vec<_>>();
+        tocados.sort();
+
+        assert_eq!(tocados, vistos_pela_busca);
+        assert_eq!(tocados, ["raiz.txt", "src/main.rs"]);
     }
 
     #[test]

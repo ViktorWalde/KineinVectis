@@ -4,7 +4,8 @@ use std::{fs, path::Path};
 
 use kinein_protocol::FsSearchMatch;
 
-use super::{FsError, MAX_READ_BYTES, MAX_SEARCH_MATCHES, SEARCH_SKIP_DIRS};
+use super::walk::walk_text_files;
+use super::{FsError, MAX_READ_BYTES, MAX_SEARCH_MATCHES};
 
 /// Maximum preview length of a search match, in characters.
 const MAX_PREVIEW_CHARS: usize = 200;
@@ -22,49 +23,11 @@ pub fn search(
     case_sensitive: bool,
 ) -> Result<(Vec<FsSearchMatch>, bool), FsError> {
     let mut matches = Vec::new();
-    let mut pending_dirs = vec![root.to_path_buf()];
+    let truncated = walk_text_files(root, |file| {
+        search_file(root, file, query, case_sensitive, &mut matches)
+    })?;
 
-    while let Some(directory) = pending_dirs.pop() {
-        let Ok(read_dir) = fs::read_dir(&directory) else {
-            if directory == root {
-                return Err(FsError::NotADirectory {
-                    path: directory.display().to_string(),
-                });
-            }
-            continue;
-        };
-
-        let mut files = Vec::new();
-        let mut subdirs = Vec::new();
-        for dir_entry in read_dir.flatten() {
-            let Ok(file_type) = dir_entry.file_type() else {
-                continue;
-            };
-            if file_type.is_symlink() {
-                continue;
-            }
-            let name = dir_entry.file_name().to_string_lossy().into_owned();
-            if file_type.is_dir() {
-                if !SEARCH_SKIP_DIRS.contains(&name.as_str()) {
-                    subdirs.push((name.to_lowercase(), dir_entry.path()));
-                }
-            } else if file_type.is_file() {
-                files.push((name.to_lowercase(), dir_entry.path()));
-            }
-        }
-
-        files.sort_by(|left, right| left.0.cmp(&right.0));
-        subdirs.sort_by(|left, right| right.0.cmp(&left.0));
-        pending_dirs.extend(subdirs.into_iter().map(|(_name, path)| path));
-
-        for (_name, file) in files {
-            if search_file(root, &file, query, case_sensitive, &mut matches) {
-                return Ok((matches, true));
-            }
-        }
-    }
-
-    Ok((matches, false))
+    Ok((matches, truncated))
 }
 
 /// Searches one file, appending matches. Returns `true` when the cap is hit.

@@ -288,3 +288,239 @@ fn workspace_session_roundtrips_through_open() {
             .ends_with("src/lib.rs")
     );
 }
+
+/// A suite NAO pode escrever no estado global real do usuario.
+///
+/// Achado em 2026-08-29: `enable_lsp` ligava a persistencia por tabela, entao
+/// todo teste que abria um workspace gravava em
+/// `~/.config/kinein-vectis/recent-workspaces.json`. Como o arquivo tem teto de
+/// 12 entradas, uma unica execucao de `cargo test` DESPEJAVA a lista de
+/// projetos recentes reais — 12 de 12 entradas eram `/tmp/kinein-core-tests`.
+/// Falha silenciosa exemplar: nada reclamava, e o gate ficava verde.
+#[test]
+fn test_core_never_writes_to_the_real_global_storage() {
+    let global = crate::settings::global_dir();
+    let before = global_snapshot(&global);
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-global-isolation", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
+
+    let (sender, _receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("global-isolation");
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        160_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    assert_eq!(
+        global_snapshot(&global),
+        before,
+        "um core de teste alterou {}",
+        global.display()
+    );
+}
+
+/// Nome e hash do conteudo de cada arquivo do diretorio global.
+///
+/// Hash, e nao o conteudo: a mensagem de falha tem que caber na tela — despejar
+/// o JSON inteiro em bytes esconde exatamente o que mudou.
+fn global_snapshot(dir: &std::path::Path) -> std::collections::BTreeMap<String, u64> {
+    use std::hash::{Hash as _, Hasher as _};
+
+    let mut snapshot = std::collections::BTreeMap::new();
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return snapshot;
+    };
+    for entry in entries.flatten() {
+        if let Ok(bytes) = std::fs::read(entry.path()) {
+            let mut hasher = std::hash::DefaultHasher::new();
+            bytes.hash(&mut hasher);
+            snapshot.insert(
+                entry.file_name().to_string_lossy().into_owned(),
+                hasher.finish(),
+            );
+        }
+    }
+    snapshot
+}
+
+/// A store de rascunhos tem de acompanhar a TROCA de workspace.
+///
+/// `workspace.createProject` mudava `self.workspace` sem trocar `self.drafts`:
+/// o projeto recem-criado escrevia autosave no banco do projeto ANTERIOR (ou
+/// respondia "persistencia local de rascunhos indisponivel", quando nao havia
+/// anterior). A rede de seguranca de dados (docs/seguranca/23) desligava em
+/// silencio. Sem `activate_workspace`, este teste reprova.
+#[test]
+fn creating_a_project_moves_the_draft_store_to_the_new_workspace() {
+    let base = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-draft-store-move", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    let anterior = base.join("anterior");
+    std::fs::create_dir_all(&anterior).unwrap();
+    std::fs::write(anterior.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(anterior.join("velho.txt"), "no disco\n").unwrap();
+    let global = base.join("global");
+    std::fs::create_dir_all(&global).unwrap();
+
+    let (sender, _receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("draft-store-move");
+    core.enable_lsp(sender);
+    core.enable_persistence(global);
+
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        170_i64,
+        "workspace.open",
+        Some(json!({ "path": anterior.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let salvo = core.handle_request(&JsonRpcRequest::new(
+        171_i64,
+        "draft.save",
+        Some(json!({
+            "path": anterior.join("velho.txt").to_str().unwrap(),
+            "content": "editado, nao salvo\n",
+        })),
+    ));
+    assert!(salvo.response().error.is_none());
+
+    // Cria um projeto novo: o workspace ativo passa a ser outro.
+    let criado = core.handle_request(&JsonRpcRequest::new(
+        172_i64,
+        "workspace.createProject",
+        Some(json!({
+            "parent": base.to_str().unwrap(),
+            "name": "novo",
+            "template": "rustCargo",
+        })),
+    ));
+    assert!(
+        criado.response().error.is_none(),
+        "createProject falhou: {:?}",
+        criado.response().error
+    );
+    let novo = std::path::PathBuf::from(
+        criado.response().result.as_ref().unwrap()["root"]
+            .as_str()
+            .unwrap(),
+    );
+
+    let novo_arquivo = novo.join("src").join("main.rs");
+    let salvo_no_novo = core.handle_request(&JsonRpcRequest::new(
+        173_i64,
+        "draft.save",
+        Some(json!({
+            "path": novo_arquivo.to_str().unwrap(),
+            "content": "fn main() { /* rascunho */ }\n",
+        })),
+    ));
+    assert!(
+        salvo_no_novo.response().error.is_none(),
+        "autosave do projeto recem-criado indisponivel: {:?}",
+        salvo_no_novo.response().error
+    );
+
+    // O rascunho foi para o banco do projeto NOVO...
+    let no_novo = crate::db::DraftStore::open(&novo).expect("store do projeto novo");
+    let paths_novo: Vec<String> = no_novo
+        .list()
+        .unwrap()
+        .into_iter()
+        .map(|d| d.path)
+        .collect();
+    assert_eq!(paths_novo.len(), 1);
+    assert!(paths_novo[0].ends_with("main.rs"));
+
+    // ...e o banco do projeto ANTERIOR nao foi contaminado.
+    let no_anterior = crate::db::DraftStore::open(&anterior).expect("store do projeto anterior");
+    let paths_anterior: Vec<String> = no_anterior
+        .list()
+        .unwrap()
+        .into_iter()
+        .map(|d| d.path)
+        .collect();
+    assert_eq!(paths_anterior.len(), 1);
+    assert!(
+        paths_anterior[0].ends_with("velho.txt"),
+        "o banco do projeto anterior recebeu {paths_anterior:?}"
+    );
+}
+
+/// Arquivo apagado nao volta como "rascunho recuperado".
+///
+/// Um rascunho so nasce contra arquivo EXISTENTE (`fsops::confine_file`), entao
+/// um rascunho cujo arquivo sumiu significa que o usuario apagou (ou renomeou)
+/// o arquivo depois do autosave. `recover_drafts` comparava o conteudo com o
+/// disco e, como ler um arquivo ausente devolve `None` (que "difere" do
+/// rascunho), oferecia de volta o buffer de um arquivo deliberadamente apagado.
+#[test]
+fn drafts_of_deleted_files_are_not_recovered() {
+    let base = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-draft-deleted", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    let projeto = base.join("projeto");
+    std::fs::create_dir_all(&projeto).unwrap();
+    std::fs::write(projeto.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(projeto.join("some.txt"), "no disco\n").unwrap();
+    std::fs::write(projeto.join("fica.txt"), "no disco\n").unwrap();
+    let global = base.join("global");
+    std::fs::create_dir_all(&global).unwrap();
+
+    let (sender, _receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("draft-deleted");
+    core.enable_lsp(sender);
+    core.enable_persistence(global);
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        180_i64,
+        "workspace.open",
+        Some(json!({ "path": projeto.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+    for arquivo in ["some.txt", "fica.txt"] {
+        let salvo = core.handle_request(&JsonRpcRequest::new(
+            181_i64,
+            "draft.save",
+            Some(json!({
+                "path": projeto.join(arquivo).to_str().unwrap(),
+                "content": "editado, nao salvo\n",
+            })),
+        ));
+        assert!(salvo.response().error.is_none());
+    }
+
+    let apagado = core.handle_request(&JsonRpcRequest::new(
+        182_i64,
+        "fs.delete",
+        Some(json!({ "path": projeto.join("some.txt").to_str().unwrap() })),
+    ));
+    assert!(apagado.response().error.is_none());
+
+    // Reabrir: so o arquivo que continua no disco volta como rascunho.
+    let fechado = core.handle_request(&JsonRpcRequest::new(183_i64, "workspace.close", None));
+    assert!(fechado.response().error.is_none());
+    let reaberto = core.handle_request(&JsonRpcRequest::new(
+        184_i64,
+        "workspace.open",
+        Some(json!({ "path": projeto.to_str().unwrap() })),
+    ));
+    let drafts = reaberto.response().result.as_ref().unwrap()["drafts"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+
+    let paths: Vec<&str> = drafts
+        .iter()
+        .filter_map(|item| item["path"].as_str())
+        .collect();
+    assert_eq!(paths.len(), 1, "recuperou {paths:?}");
+    assert!(paths[0].ends_with("fica.txt"));
+}

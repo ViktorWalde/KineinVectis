@@ -107,43 +107,57 @@ impl Error for RecentWorkspaceError {
     }
 }
 
-/// Global path used by the full core process.
+/// Caminho do histórico dentro de uma raiz de estado global.
+///
+/// A raiz é sempre RECEBIDA, nunca deduzida aqui: quem sabe onde o estado
+/// global mora é o `Core` (`Core::enable_persistence`), e só o processo real a
+/// aponta para o diretório XDG. Enquanto este módulo resolvia o XDG sozinho,
+/// qualquer `Core` construído em teste escrevia no arquivo real do usuário.
 #[must_use]
-pub fn recent_workspaces_path() -> PathBuf {
-    crate::settings::global_dir().join(RECENT_WORKSPACES_FILE)
+pub fn recent_workspaces_path_in(global_storage: &Path) -> PathBuf {
+    global_storage.join(RECENT_WORKSPACES_FILE)
 }
 
 /// Loads the complete recent-workspace snapshot from global storage.
 #[must_use]
-pub fn load_recent_workspaces() -> Vec<RecentWorkspaceInfo> {
-    load_at(&recent_workspaces_path())
+pub fn load_recent_workspaces_in(global_storage: &Path) -> Vec<RecentWorkspaceInfo> {
+    load_at(&recent_workspaces_path_in(global_storage))
 }
 
 /// Records a successfully opened canonical workspace.
-pub fn record_recent_workspace(
+pub fn record_recent_workspace_in(
+    global_storage: &Path,
     workspace: &WorkspaceInfo,
 ) -> Result<Vec<RecentWorkspaceInfo>, RecentWorkspaceError> {
-    touch_at(&recent_workspaces_path(), workspace, current_unix_millis())
+    touch_at(
+        &recent_workspaces_path_in(global_storage),
+        workspace,
+        current_unix_millis(),
+    )
 }
 
 /// Changes the pinned state of a recent workspace.
-pub fn set_recent_workspace_pinned(
+pub fn set_recent_workspace_pinned_in(
+    global_storage: &Path,
     root: &str,
     pinned: bool,
 ) -> Result<Vec<RecentWorkspaceInfo>, RecentWorkspaceError> {
-    pin_at(&recent_workspaces_path(), root, pinned)
+    pin_at(&recent_workspaces_path_in(global_storage), root, pinned)
 }
 
 /// Removes one recent workspace without requiring the root to still exist.
-pub fn remove_recent_workspace(
+pub fn remove_recent_workspace_in(
+    global_storage: &Path,
     root: &str,
 ) -> Result<Vec<RecentWorkspaceInfo>, RecentWorkspaceError> {
-    remove_at(&recent_workspaces_path(), root)
+    remove_at(&recent_workspaces_path_in(global_storage), root)
 }
 
 /// Clears the complete global recent-workspace history.
-pub fn clear_recent_workspaces() -> Result<Vec<RecentWorkspaceInfo>, RecentWorkspaceError> {
-    clear_at(&recent_workspaces_path())
+pub fn clear_recent_workspaces_in(
+    global_storage: &Path,
+) -> Result<Vec<RecentWorkspaceInfo>, RecentWorkspaceError> {
+    clear_at(&recent_workspaces_path_in(global_storage))
 }
 
 fn current_unix_millis() -> u64 {

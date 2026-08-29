@@ -59,12 +59,22 @@ O gate acima equivale a rodar, nesta ordem, parando no primeiro erro:
 cargo fmt --all --check
 cargo test --workspace --all-features
 cargo clippy --workspace --all-targets --all-features -- -D warnings
-scripts/verificar-cpp.sh
-scripts/verificar-qml.sh
+scripts/verificar-cpp.sh                     # clang-format + clang-tidy
+scripts/verificar-qml.sh                     # qmllint estrito
+scripts/verificar-qml-fiacao.sh              # binding auto-referente `x: x`
+scripts/verificar-docs.sh                    # numero sem data que mente
+scripts/verificar-arquitetura.sh             # catraca da regra de split
+scripts/verificar-transicao-workspace.sh     # estado por-workspace com um dono
+scripts/verificar-qml-logica.sh              # controllers QML headless
 cmake --build --preset dev-local
 cargo build --release -p kinein-core
 cmake --build --preset dev-local-release
 ```
+
+Esta lista tem de bater com `scripts/verificar.sh` — o script é a fonte, e a
+razão de existir de cada gate está em `docs/arquitetura/ARCHITECTURE.md` §4
+regra 11 (todo gate aqui nasceu de uma falha que passou verde por todos os
+outros).
 
 `scripts/verificar-qml.sh` roda o qmllint em modo estrito (zero warnings)
 com o contexto de modulo do build debug; se um `.qml` novo nao aparecer no

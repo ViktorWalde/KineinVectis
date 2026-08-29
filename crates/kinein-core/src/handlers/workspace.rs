@@ -7,7 +7,7 @@ use kinein_protocol::{
     DraftInfo, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, RecentWorkspacePinParams,
     RecentWorkspaceRemoveParams, RecentWorkspacesParams, RecentWorkspacesResult,
     WorkspaceBrowseParams, WorkspaceCreateFolderParams, WorkspaceCreateFolderResult,
-    WorkspaceCreateProjectParams, WorkspaceOpenParams, WorkspaceSaveSessionParams,
+    WorkspaceCreateProjectParams, WorkspaceInfo, WorkspaceOpenParams, WorkspaceSaveSessionParams,
     WorkspaceSaveSessionResult,
 };
 use serde_json::{Value, json};
@@ -30,6 +30,21 @@ fn recent_workspace_error_response(
 }
 
 impl Core {
+    /// Liga a persistência local (rascunhos por-workspace + histórico global),
+    /// apontando o estado global para `global_storage`.
+    ///
+    /// Mora aqui, e não no `lib.rs`, porque quem consome `global_storage` é o
+    /// domínio workspace inteiro e mais ninguém (ARCHITECTURE.md §4 regra 9: o
+    /// critério é responsabilidade).
+    ///
+    /// Ligar é gesto EXPLÍCITO, feito só pelo processo real em `run_stdio`: sem
+    /// esta chamada o core não escreve NADA fora do workspace aberto. O porquê
+    /// e a medição estão em
+    /// `tests::workspace::test_core_never_writes_to_the_real_global_storage`.
+    pub fn enable_persistence(&mut self, global_storage: PathBuf) {
+        self.global_storage = Some(global_storage);
+    }
+
     /// Routes the compact `workspace.recent.*` family outside the central
     /// composition root.
     pub(crate) fn recent_workspace_response(
@@ -81,11 +96,10 @@ impl Core {
         ) {
             return *response;
         }
-        let workspaces = if self.persistence_enabled {
-            workspace::load_recent_workspaces()
-        } else {
-            Vec::new()
-        };
+        let workspaces = self
+            .global_storage
+            .as_deref()
+            .map_or_else(Vec::new, workspace::load_recent_workspaces_in);
         JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
     }
 
@@ -103,10 +117,11 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        if !self.persistence_enabled {
+        let Some(global_storage) = self.global_storage.as_deref() else {
             return Self::recent_storage_unavailable_response(request_id, "workspace.recent.pin");
-        }
-        match workspace::set_recent_workspace_pinned(&parsed.root, parsed.pinned) {
+        };
+        match workspace::set_recent_workspace_pinned_in(global_storage, &parsed.root, parsed.pinned)
+        {
             Ok(workspaces) => {
                 JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
             }
@@ -128,13 +143,13 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        if !self.persistence_enabled {
+        let Some(global_storage) = self.global_storage.as_deref() else {
             return Self::recent_storage_unavailable_response(
                 request_id,
                 "workspace.recent.remove",
             );
-        }
-        match workspace::remove_recent_workspace(&parsed.root) {
+        };
+        match workspace::remove_recent_workspace_in(global_storage, &parsed.root) {
             Ok(workspaces) => {
                 JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
             }
@@ -155,10 +170,10 @@ impl Core {
         ) {
             return *response;
         }
-        if !self.persistence_enabled {
+        let Some(global_storage) = self.global_storage.as_deref() else {
             return Self::recent_storage_unavailable_response(request_id, "workspace.recent.clear");
-        }
-        match workspace::clear_recent_workspaces() {
+        };
+        match workspace::clear_recent_workspaces_in(global_storage) {
             Ok(workspaces) => {
                 JsonRpcResponse::success(request_id, json!(RecentWorkspacesResult { workspaces }))
             }
@@ -177,7 +192,17 @@ impl Core {
         };
         let mut recovered = Vec::new();
         for draft in drafts {
-            let on_disk = std::fs::read_to_string(&draft.path).ok();
+            let path = Path::new(&draft.path);
+            if !path.is_file() {
+                // O arquivo sumiu (apagado ou renomeado) desde o autosave. Um
+                // rascunho so nasce contra arquivo EXISTENTE (`confine_file`),
+                // entao aqui ele so pode estar obsoleto: "recuperar" o buffer
+                // de um arquivo que o usuario apagou reabre a aba de um arquivo
+                // que nao existe mais.
+                drop(store.clear(&draft.path));
+                continue;
+            }
+            let on_disk = std::fs::read_to_string(path).ok();
             if on_disk.as_deref() == Some(draft.content.as_str()) {
                 // Buffer já salvo em disco → rascunho obsoleto, limpa.
                 drop(store.clear(&draft.path));
@@ -217,17 +242,62 @@ impl Core {
         }
     }
 
-    pub(crate) fn close_workspace_response(
-        &mut self,
-        request_id: Option<Value>,
-    ) -> JsonRpcResponse {
+    /// Estado por-workspace que TODA transicao tem de trocar junto.
+    ///
+    /// Este metodo existe para que a lista abaixo tenha UM dono. Enquanto ela
+    /// estava copiada em `workspace.open`, `workspace.createProject` e
+    /// `workspace.close`, cada copia esquecia uma peca diferente: a store de
+    /// rascunhos (`self.drafts`) so era trocada no `open`, entao
+    /// `workspace.createProject` deixava o projeto novo escrevendo autosave no
+    /// banco do projeto ANTERIOR — ou sem autosave nenhum, respondendo
+    /// "persistencia local de rascunhos indisponivel", quando nao havia
+    /// projeto anterior. Falha silenciosa: a rede de seguranca de dados
+    /// (docs/seguranca/23) desligava sem ninguem reclamar.
+    ///
+    /// Regra: quem acrescentar estado por-workspace ao `Core` acrescenta a
+    /// troca dele AQUI, e em lugar nenhum mais. Verificado por
+    /// `scripts/verificar-transicao-workspace.sh`.
+    fn activate_workspace(&mut self, opened: &WorkspaceInfo) {
+        self.workspace = Some(opened.clone());
+        let root = PathBuf::from(&opened.root);
+        self.syntax.clear();
+        self.workspace_edits.clear();
+        self.reset_workspace_watcher(&root);
+        if let Some(lsp) = self.lsp.as_mut() {
+            lsp.set_root(Some(root.clone()));
+        }
+        // M-S1: store local de rascunhos, uma por workspace (docs/seguranca/23).
+        self.drafts = self
+            .global_storage
+            .as_ref()
+            .and_then(|_| db::DraftStore::open(&root));
+        if let Some(global_storage) = self.global_storage.as_deref() {
+            drop(workspace::record_recent_workspace_in(
+                global_storage,
+                opened,
+            ));
+        }
+    }
+
+    /// Inverso de [`Self::activate_workspace`]: solta tudo que era do workspace
+    /// que sai. Devolve o que estava aberto.
+    fn deactivate_workspace(&mut self) -> Option<WorkspaceInfo> {
         let closed = self.workspace.take();
         self.fswatch = None;
         self.syntax.clear();
         self.workspace_edits.clear();
+        self.drafts = None;
         if let Some(lsp) = self.lsp.as_mut() {
             lsp.set_root(None);
         }
+        closed
+    }
+
+    pub(crate) fn close_workspace_response(
+        &mut self,
+        request_id: Option<Value>,
+    ) -> JsonRpcResponse {
+        let closed = self.deactivate_workspace();
         if let Some(runner) = self.run.as_mut() {
             drop(runner.stop());
         }
@@ -319,16 +389,7 @@ impl Core {
                 params.template,
             ) {
                 Ok(opened) => {
-                    self.workspace = Some(opened.clone());
-                    self.syntax.clear();
-                    self.workspace_edits.clear();
-                    self.reset_workspace_watcher(Path::new(&opened.root));
-                    if let Some(lsp) = self.lsp.as_mut() {
-                        lsp.set_root(Some(PathBuf::from(&opened.root)));
-                    }
-                    if self.persistence_enabled {
-                        drop(workspace::record_recent_workspace(&opened));
-                    }
+                    self.activate_workspace(&opened);
                     JsonRpcResponse::success(request_id, json!(opened))
                 }
                 Err(error) => workspace_error_response(request_id, &error),
@@ -353,23 +414,10 @@ impl Core {
         match serde_json::from_value::<WorkspaceOpenParams>(params) {
             Ok(params) => match workspace::open_workspace(Path::new(&params.path)) {
                 Ok(opened) => {
-                    self.workspace = Some(opened.clone());
-                    self.syntax.clear();
-                    self.workspace_edits.clear();
-                    self.reset_workspace_watcher(Path::new(&opened.root));
-                    if let Some(lsp) = self.lsp.as_mut() {
-                        lsp.set_root(Some(PathBuf::from(&opened.root)));
-                    }
-                    if self.persistence_enabled {
-                        drop(workspace::record_recent_workspace(&opened));
-                    }
-                    // M-S1: abre a store local e recupera rascunhos não salvos
-                    // (buffers que sobreviveram a um crash da UI — docs/seguranca/23).
-                    self.drafts = if self.persistence_enabled {
-                        db::DraftStore::open(Path::new(&opened.root))
-                    } else {
-                        None
-                    };
+                    self.activate_workspace(&opened);
+                    // Recupera buffers não salvos que sobreviveram a um crash
+                    // da UI (docs/seguranca/23). Só o `open` recupera: um
+                    // projeto recém-criado não tem rascunho anterior.
                     let recovered = self.recover_drafts();
                     let session = workspace::load_session(Path::new(&opened.root));
                     let mut result = json!(opened);

@@ -122,15 +122,28 @@ case "$DISTRO" in
 esac
 
 # ---------------------------------------------------------------------------
-# Toolchain Rust: o repositorio fixa 'stable' em rust-toolchain.toml; o rustup
-# resolve sozinho na primeira build, mas instalar agora evita surpresa offline.
+# Toolchain Rust: o canal vem do rust-toolchain.toml, nao de um literal aqui.
+# Instalar agora evita surpresa offline — mas so evita se for a MESMA toolchain
+# que a build vai usar. Este bloco dizia 'stable' enquanto o repositorio fixava
+# uma versao exata: instalava uma toolchain que ninguem usa e deixava a de
+# verdade para o primeiro `cargo build` baixar, justamente o que ele promete
+# evitar.
 # ---------------------------------------------------------------------------
+RAIZ_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CANAL_RUST="$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
+    "$RAIZ_REPO/rust-toolchain.toml" | head -n1)"
+if [ -z "$CANAL_RUST" ]; then
+    echo "erro: nao consegui ler 'channel' de rust-toolchain.toml" >&2
+    exit 1
+fi
+
 if command -v rustup >/dev/null 2>&1 || [ "$DRY_RUN" -eq 1 ]; then
-    executar rustup toolchain install stable
-    executar rustup component add rustfmt clippy
+    executar rustup toolchain install "$CANAL_RUST"
+    executar rustup component add --toolchain "$CANAL_RUST" rustfmt clippy
 else
     echo "aviso: rustup ainda nao esta no PATH; instale-o e rode:" >&2
-    echo "       rustup toolchain install stable && rustup component add rustfmt clippy" >&2
+    echo "       rustup toolchain install $CANAL_RUST" >&2
+    echo "       rustup component add --toolchain $CANAL_RUST rustfmt clippy" >&2
 fi
 
 # ---------------------------------------------------------------------------

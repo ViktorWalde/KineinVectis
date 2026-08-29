@@ -692,6 +692,8 @@ Alvos complementares:
 | Terminal | `cargo build -p kinein-core` + `python3 scripts/sonda_scrollback.py` |
 | LSP/KSWE | teste de core + fixture real + latência/cancelamento |
 | Filesystem/save | conflito externo + rollback + crash/draft |
+| Estado por-workspace no `Core` | trocar em `activate_workspace`/`deactivate_workspace` (`handlers/workspace.rs`) e em lugar nenhum mais + `bash scripts/verificar-transicao-workspace.sh` |
+| Estado GLOBAL (fora do workspace) | a raiz vem de `Core::enable_persistence`, nunca deduzida no módulo — senão a suíte escreve no `~/.config` real |
 | Build/Run/Debug | processo real, cancelamento, output e ausência de órfão |
 | UI/layout | build Debug/Release + teste offscreen + aceite em tela real |
 | Packaging | execução numa máquina/VM limpa sem Rust/Qt de desenvolvimento |

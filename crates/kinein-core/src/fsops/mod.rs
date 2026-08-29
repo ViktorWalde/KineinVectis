@@ -9,7 +9,10 @@
 //! - [`error`]: o erro estruturado devolvido por toda operacao;
 //! - [`confine`]: canonicalizacao e confinamento de caminhos ao root;
 //! - [`ops`]: list, read, create, write, rename e delete;
-//! - [`search`]: busca literal por conteudo, com walk deterministico;
+//! - [`walk`]: caminhada deterministica compartilhada por search e replace;
+//! - [`search`]: busca literal por conteudo;
+//! - [`replace`]: substituicao literal multi-arquivo, transacional;
+//! - [`transaction`]: escrita com snapshot e rollback inverso;
 //! - [`find`]: busca de arquivos por nome via `fd`.
 
 mod confine;
@@ -19,6 +22,7 @@ mod ops;
 mod replace;
 mod search;
 pub mod transaction;
+mod walk;
 
 pub use confine::confine_file;
 pub use error::FsError;

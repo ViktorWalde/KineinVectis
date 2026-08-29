@@ -24,8 +24,9 @@ pub use detect::detect_project;
 pub use error::WorkspaceError;
 pub use open::{browse_directories, metadata_path, open_workspace};
 pub use recent::{
-    RecentWorkspaceError, clear_recent_workspaces, load_recent_workspaces, recent_workspaces_path,
-    record_recent_workspace, remove_recent_workspace, set_recent_workspace_pinned,
+    RecentWorkspaceError, clear_recent_workspaces_in, load_recent_workspaces_in,
+    recent_workspaces_path_in, record_recent_workspace_in, remove_recent_workspace_in,
+    set_recent_workspace_pinned_in,
 };
 pub use session::{load_session, save_session, session_path};
 

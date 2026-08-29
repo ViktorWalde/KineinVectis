@@ -63,6 +63,22 @@ segurança. Decisão do usuário (2026-07-11): persistência local com
 - **Semântica:** um crash da UI/power loss → no próximo `workspace.open`
   os buffers sujos voltam como abas modificadas. Save/close limpo não
   deixa rascunho.
+- **Troca de workspace (corrigido em 2026-08-29).** A store é POR-WORKSPACE,
+  então trocar o workspace ativo tem de trocar a store junto. Só o
+  `workspace.open` fazia isso: `workspace.createProject` deixava o projeto novo
+  gravando autosave no banco do projeto ANTERIOR (ou sem autosave nenhum, se
+  não houvesse anterior), e `workspace.close` mantinha a store aberta. Hoje há
+  um dono único da transição (`activate_workspace`/`deactivate_workspace` em
+  `handlers/workspace.rs`), travado por `scripts/verificar-transicao-workspace.sh`.
+- **Arquivo apagado não volta (corrigido em 2026-08-29).** Um rascunho só nasce
+  contra arquivo existente (`fsops::confine_file`); se o arquivo sumiu do disco
+  desde o autosave, o usuário o apagou ou renomeou. `recover_drafts` comparava
+  conteúdo com o disco e, como ler arquivo ausente devolve `None` (que "difere"
+  do rascunho), oferecia de volta o buffer de um arquivo deliberadamente
+  apagado. Agora esses rascunhos são descartados.
+  **Aberto:** `fs.rename` não MOVE o rascunho para o caminho novo — ele é
+  descartado como qualquer arquivo que sumiu. Mover exigiria uma operação nova
+  na store; fatia própria.
 
 ## Fora desta fatia (com gatilho)
 
@@ -82,9 +98,10 @@ segurança. Decisão do usuário (2026-07-11): persistência local com
 - [x] **P2.3** protocolo 0.40.0: `draft.save`/`draft.clear` (reusam
       `FsWriteParams`/`FsPathParams`), `DraftSaveResult`/`DraftInfo`;
       `drafts` na resposta de `workspace.open`.
-- [x] **P2.4** core: `Core.drafts` + `persistence_enabled`, abre no
-      `workspace.open`, handlers `draft.*`, `fs.write` limpa o rascunho,
-      `recover_drafts` filtra os que diferem do disco.
+- [x] **P2.4** core: `Core.drafts` + `Core::enable_persistence`, aberta na
+      transição de workspace (`activate_workspace`), handlers `draft.*`,
+      `fs.write` limpa o rascunho, `recover_drafts` filtra os que diferem do
+      disco e descarta os de arquivo que sumiu.
 - [x] **P2.5** UI: `autosaveDebounce` (1.5s) → `draft.save`; `draft.clear`
       no `closeTab`; `draftsRecovered` → `restoreDrafts` (overlay do buffer
       na aba, marcada modificada).

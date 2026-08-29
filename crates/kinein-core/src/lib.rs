@@ -64,8 +64,9 @@ pub struct Core {
     jobs: Option<jobs::JobManager>,
     /// Store local de rascunhos (autosave), aberta por-workspace (docs/seguranca/23).
     drafts: Option<db::DraftStore>,
-    /// Persistência local ligada (só no core completo, não em testes leves).
-    persistence_enabled: bool,
+    /// Raiz do estado GLOBAL quando a persistência está ligada; `None` — o
+    /// padrão — é persistência DESLIGADA (ver [`Core::enable_persistence`]).
+    global_storage: Option<PathBuf>,
 }
 
 impl Core {
@@ -92,7 +93,7 @@ impl Core {
             terminal: None,
             jobs: None,
             drafts: None,
-            persistence_enabled: false,
+            global_storage: None,
         }
     }
 
@@ -110,9 +111,6 @@ impl Core {
         self.jobs = Some(jobs::JobManager::new(events.clone()));
         self.terminal = Some(terminal::TerminalManager::new(events.clone()));
         self.events = Some(events);
-        // M-S1: liga a persistência local (rascunhos em SQLite) — só no core
-        // completo; a store real abre quando um workspace é aberto.
-        self.persistence_enabled = true;
     }
 
     /// Handles one already parsed JSON-RPC request.
