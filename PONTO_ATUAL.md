@@ -1030,15 +1030,24 @@ CORRIGIDO  `scripts/instalar-ambiente.sh` instalava `stable` enquanto o
            usa e deixava a de verdade para o primeiro build — exatamente a
            "surpresa offline" que o bloco dizia evitar. Agora le o canal do TOML.
 
-ABERTO     `fs.rename` nao MOVE o rascunho para o caminho novo (ele e'
-           descartado). Mover pede operacao nova na store: fatia propria.
-ABERTO     `fs.search` reporta no maximo 1 ocorrencia por linha; `fs.replace`
-           substitui TODAS. Contagens divergem na mesma linha ("1 resultado,
-           2 substituicoes"). E' escolha de produto, nao bug de implementacao —
-           decidir e alinhar.
-ABERTO     `lang/positions.rs` fatia `&text[..byte]` sem checar fronteira de
-           caractere. Hoje so recebe offset de no do tree-sitter (sempre em
-           fronteira), mas e' panico latente num projeto que proibe panico.
+CORRIGIDO  `fs.replace` aceitava query multi-linha que a busca NAO consegue
+           mostrar (ela casa linha a linha; o replace casava no conteudo
+           inteiro). O usuario via "0 resultados" e arquivos eram reescritos.
+           `fs.replace` e' destrutivo: transacao/rollback protegem contra falha
+           de ESCRITA, nao contra aprovar o que nao se viu. Agora `\n` na query
+           ou no replacement retorna INVALID_PARAMS, antes de qualquer escrita.
+CORRIGIDO  `fs.search` parava na primeira ocorrencia da LINHA enquanto o
+           `fs.replace` trocava todas ("Alpha alpha" = 1 resultado, 2
+           substituicoes). A busca passa a reportar todas: preview de operacao
+           destrutiva tem de contar o que ela vai fazer.
+CORRIGIDO  o rascunho acompanha o `fs.rename` (`DraftStore::rename`). Antes
+           ficava orfao no caminho antigo e sumia na proxima abertura.
+CORRIGIDO  `lang/positions.rs`: a invariante de fronteira UTF-8 passa a ser
+           EXPLICITA (doc de modulo + `debug_assert` + teste `should_panic`).
+           Deliberadamente NAO se grampeia o offset: grampear transformaria
+           chamador errado em posicao silenciosamente torta. Quem nao puder
+           garantir a fronteira recua onde o offset NASCE, como o
+           `contiguous_edit` ja faz.
 ABERTO     `terminal.rs` NAO tem teste de integracao. E' o maior arquivo do
            core (1374 linhas), o maior debito da catraca e o unico dominio
            grande sem `tests/terminal.rs`. Medido em 2026-08-29.

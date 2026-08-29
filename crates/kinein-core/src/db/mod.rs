@@ -76,6 +76,21 @@ impl DraftStore {
         Ok(saved_at)
     }
 
+    /// Move o rascunho de um caminho para outro (o arquivo foi renomeado).
+    ///
+    /// A chave da tabela é o caminho absoluto, então renomear o arquivo sem
+    /// mover o rascunho o deixava órfão: o arquivo antigo não existe mais e o
+    /// novo não tem autosave. Como `path` é PRIMARY KEY, um destino já
+    /// ocupado faria o UPDATE falhar por conflito — daí o `OR REPLACE`, que é
+    /// a semântica certa: o rascunho que chega é o do arquivo vivo.
+    pub fn rename(&self, de: &str, para: &str) -> rusqlite::Result<()> {
+        self.conn.execute(
+            "UPDATE OR REPLACE drafts SET path = ?2 WHERE path = ?1",
+            params![de, para],
+        )?;
+        Ok(())
+    }
+
     /// Remove o rascunho de um arquivo (save/close limpo).
     pub fn clear(&self, path: &str) -> rusqlite::Result<()> {
         self.conn

@@ -436,3 +436,148 @@ fn fs_find_files_requires_workspace_and_non_empty_query() {
         kinein_protocol::JsonRpcErrorCode::InvalidParams
     );
 }
+
+/// `fs.replace` recusa quebra de linha na query.
+///
+/// A busca do projeto casa LINHA A LINHA (o resultado carrega `line`, `column`
+/// e um `preview` de uma linha só); a substituição casava no conteúdo inteiro.
+/// Uma query com `\n` era, portanto, invisível para o preview e ativa para a
+/// escrita: o usuário via "0 resultados", mandava substituir e arquivos eram
+/// reescritos. `fs.replace` é destrutivo — transação, snapshot e rollback
+/// protegem contra falha de escrita, não contra aprovar o que não se viu.
+#[test]
+fn fs_replace_refuses_a_multiline_query_the_search_cannot_preview() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-fs-replace-multilinha", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(dir.join("a.txt"), "primeira\nsegunda\n").unwrap();
+
+    let mut core = core_with_empty_search_path("fs-replace-multilinha");
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        190_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    // A busca nao acha isto — e nunca acharia.
+    let busca = core.handle_request(&JsonRpcRequest::new(
+        191_i64,
+        "fs.search",
+        Some(json!({ "query": "primeira\nsegunda" })),
+    ));
+    assert_eq!(
+        busca.response().result.as_ref().unwrap()["matches"]
+            .as_array()
+            .unwrap()
+            .len(),
+        0
+    );
+
+    let troca = core.handle_request(&JsonRpcRequest::new(
+        192_i64,
+        "fs.replace",
+        Some(json!({ "query": "primeira\nsegunda", "replacement": "unica" })),
+    ));
+    assert_eq!(
+        troca.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
+
+    // E o arquivo continua intacto: a recusa e' ANTES de qualquer escrita.
+    assert_eq!(
+        std::fs::read_to_string(dir.join("a.txt")).unwrap(),
+        "primeira\nsegunda\n"
+    );
+
+    // O replacement multi-linha tambem e' recusado: ele quebraria o casamento
+    // linha a linha da PROXIMA busca sobre o mesmo arquivo.
+    let troca_quebra = core.handle_request(&JsonRpcRequest::new(
+        193_i64,
+        "fs.replace",
+        Some(json!({ "query": "primeira", "replacement": "a\nb" })),
+    ));
+    assert_eq!(
+        troca_quebra.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
+}
+
+/// O rascunho acompanha o `fs.rename`.
+///
+/// A chave da store é o caminho absoluto. Renomear sem mover deixava o rascunho
+/// órfão: o caminho antigo não existe mais e o novo não tem autosave. Na
+/// abertura seguinte o rascunho era descartado — perda silenciosa dentro da
+/// própria rede de segurança (docs/seguranca/23).
+#[test]
+fn renaming_a_file_moves_its_draft_with_it() {
+    let base = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-fs-rename-draft", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    let projeto = base.join("projeto");
+    std::fs::create_dir_all(&projeto).unwrap();
+    std::fs::write(projeto.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(projeto.join("velho.txt"), "no disco\n").unwrap();
+    let global = base.join("global");
+    std::fs::create_dir_all(&global).unwrap();
+
+    let (sender, _receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("fs-rename-draft");
+    core.enable_lsp(sender);
+    core.enable_persistence(global);
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        200_i64,
+        "workspace.open",
+        Some(json!({ "path": projeto.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let salvo = core.handle_request(&JsonRpcRequest::new(
+        201_i64,
+        "draft.save",
+        Some(json!({
+            "path": projeto.join("velho.txt").to_str().unwrap(),
+            "content": "editado, nao salvo\n",
+        })),
+    ));
+    assert!(salvo.response().error.is_none());
+
+    let renomeado = core.handle_request(&JsonRpcRequest::new(
+        202_i64,
+        "fs.rename",
+        Some(json!({
+            "from": projeto.join("velho.txt").to_str().unwrap(),
+            "to": projeto.join("novo.txt").to_str().unwrap(),
+        })),
+    ));
+    assert!(renomeado.response().error.is_none());
+
+    // Reabrir e' o gesto que recupera: o rascunho tem de voltar no caminho NOVO.
+    let fechado = core.handle_request(&JsonRpcRequest::new(203_i64, "workspace.close", None));
+    assert!(fechado.response().error.is_none());
+    let reaberto = core.handle_request(&JsonRpcRequest::new(
+        204_i64,
+        "workspace.open",
+        Some(json!({ "path": projeto.to_str().unwrap() })),
+    ));
+    let drafts = reaberto.response().result.as_ref().unwrap()["drafts"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+
+    let caminhos: Vec<&str> = drafts
+        .iter()
+        .filter_map(|item| item["path"].as_str())
+        .collect();
+    assert_eq!(caminhos.len(), 1, "recuperou {caminhos:?}");
+    assert!(
+        caminhos[0].ends_with("novo.txt"),
+        "o rascunho ficou em {}",
+        caminhos[0]
+    );
+    assert_eq!(drafts[0]["content"], "editado, nao salvo\n");
+}

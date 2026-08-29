@@ -57,18 +57,28 @@ fn search_file(
         .display()
         .to_string();
     for (index, line) in content.lines().enumerate() {
-        let Some(offset) = find_literal(line, query, case_sensitive) else {
-            continue;
-        };
-        let column = line[..offset].chars().count() as u64 + 1;
-        matches.push(FsSearchMatch {
-            path: relative.clone(),
-            line: index as u64 + 1,
-            column,
-            preview: line.trim().chars().take(MAX_PREVIEW_CHARS).collect(),
-        });
-        if matches.len() >= MAX_SEARCH_MATCHES {
-            return true;
+        // TODAS as ocorrencias da linha, nao so a primeira.
+        //
+        // `fs.replace` substitui todas; enquanto a busca parava na primeira, a
+        // linha "Alpha alpha" aparecia como 1 resultado e virava 2 substituicoes.
+        // O preview de uma operacao destrutiva tem de contar o que ela vai fazer.
+        let mut cursor = 0_usize;
+        while let Some(offset) = find_literal(&line[cursor..], query, case_sensitive) {
+            let start = cursor + offset;
+            let column = line[..start].chars().count() as u64 + 1;
+            matches.push(FsSearchMatch {
+                path: relative.clone(),
+                line: index as u64 + 1,
+                column,
+                preview: line.trim().chars().take(MAX_PREVIEW_CHARS).collect(),
+            });
+            if matches.len() >= MAX_SEARCH_MATCHES {
+                return true;
+            }
+            // Avanca o comprimento da QUERY: `find_literal` casa byte a byte
+            // (case-insensitive e' ASCII), entao o casamento tem o mesmo
+            // tamanho e `start + len` cai em fronteira de caractere.
+            cursor = start.saturating_add(query.len()).min(line.len());
         }
     }
     false
@@ -132,6 +142,57 @@ mod tests {
         assert_eq!(matches[0].line, 2);
         assert_eq!(matches[0].column, 5);
         assert_eq!(matches[0].preview, "Somar(2, 3);");
+    }
+
+    /// A busca tem de CONTAR o que a substituicao vai fazer.
+    ///
+    /// Enquanto ela parava na primeira ocorrencia da linha, "Alpha alpha"
+    /// aparecia como 1 resultado e `fs.replace` devolvia 2 substituicoes. O
+    /// usuario aprova uma operacao destrutiva olhando essa lista.
+    #[test]
+    fn search_reports_every_occurrence_of_a_line() {
+        let root = temp_root("search-todas-da-linha");
+        fs::write(
+            root.join("a.txt"),
+            "Alpha alpha ALPHA
+sem nada
+",
+        )
+        .unwrap();
+
+        let (matches, truncated) = search(&root, "alpha", false).unwrap();
+
+        assert!(!truncated);
+        assert_eq!(matches.len(), 3);
+        assert!(matches.iter().all(|item| item.line == 1));
+        let colunas = matches.iter().map(|item| item.column).collect::<Vec<_>>();
+        assert_eq!(colunas, [1, 7, 13]);
+
+        // E o numero tem de bater com o do replace, que e' o ponto.
+        let (_, substituicoes) =
+            super::super::replace::replace(&root, "alpha", "beta", false).unwrap();
+        assert_eq!(substituicoes, matches.len() as u64);
+    }
+
+    /// Ocorrencias sobrepostas nao podem gerar lista infinita nem casamento
+    /// duplo: o cursor avanca o comprimento da query.
+    #[test]
+    fn search_does_not_rescan_inside_a_match() {
+        let root = temp_root("search-sobreposta");
+        fs::write(
+            root.join("a.txt"),
+            "aaaa
+",
+        )
+        .unwrap();
+
+        let (matches, _) = search(&root, "aa", true).unwrap();
+
+        assert_eq!(matches.len(), 2);
+        assert_eq!(
+            matches.iter().map(|item| item.column).collect::<Vec<_>>(),
+            [1, 3]
+        );
     }
 
     #[test]

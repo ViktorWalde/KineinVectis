@@ -76,9 +76,11 @@ segurança. Decisão do usuário (2026-07-11): persistência local com
   conteúdo com o disco e, como ler arquivo ausente devolve `None` (que "difere"
   do rascunho), oferecia de volta o buffer de um arquivo deliberadamente
   apagado. Agora esses rascunhos são descartados.
-  **Aberto:** `fs.rename` não MOVE o rascunho para o caminho novo — ele é
-  descartado como qualquer arquivo que sumiu. Mover exigiria uma operação nova
-  na store; fatia própria.
+- **O rascunho acompanha o `fs.rename` (2026-08-29).** A chave da store é o
+  caminho absoluto, então renomear sem mover deixava o rascunho órfão: o caminho
+  antigo não existe mais e o novo não tem autosave — e na abertura seguinte ele
+  era descartado. `DraftStore::rename` usa `UPDATE OR REPLACE` porque `path` é
+  PRIMARY KEY: se o destino já tiver rascunho, o do arquivo vivo é o que vale.
 
 ## Fora desta fatia (com gatilho)
 

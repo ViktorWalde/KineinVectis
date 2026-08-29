@@ -462,6 +462,18 @@ projeto, com a mesma política de confinamento/ignores e limites da busca:
   não UTF-8, grandes demais ou em diretórios ignorados não entram;
 - `query` vazia retorna `INVALID_PARAMS`; zero ocorrências é sucesso com
   listas/contador vazios.
+- **`query` ou `replacement` com `\n` retorna `INVALID_PARAMS`** (desde
+  2026-08-29). A busca do projeto casa **linha a linha** — o resultado carrega
+  `line`, `column` e um `preview` de uma linha só —, então uma query multi-linha
+  era invisível para o preview e ativa para a escrita: o usuário via "0
+  resultados" e arquivos eram reescritos mesmo assim. Como `fs.replace` é
+  destrutivo e a transação protege contra falha de **escrita**, não contra
+  aprovar o que não se viu, o contrato prefere recusar a mentir. Busca
+  multi-linha é fatia própria.
+- **`fs.search` reporta TODAS as ocorrências de cada linha** (desde 2026-08-29).
+  Antes parava na primeira: "Alpha alpha" aparecia como 1 resultado e virava 2
+  substituições. O preview de uma operação destrutiva tem de contar o que ela
+  vai fazer.
 - **paridade com `fs.search` (garantida desde 2026-08-29):** os dois percorrem o
   mesmo walk (`fsops::walk`), então `fs.replace` nunca toca arquivo que
   `fs.search` não mostrou. Consequência da unificação: um subdiretório ilegível é

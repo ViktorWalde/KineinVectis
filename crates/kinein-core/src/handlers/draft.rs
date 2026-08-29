@@ -91,6 +91,18 @@ impl Core {
     }
 }
 
+/// Move o rascunho junto com o arquivo (chamado pelo `fs.rename`).
+///
+/// Best-effort, como o `clear_draft_after_save`: renomear não pode falhar por
+/// causa do autosave. Sem isto o rascunho ficava órfão no caminho antigo e era
+/// descartado na próxima abertura — perda silenciosa exatamente na rede de
+/// segurança que a docs/seguranca/23 existe para não ter.
+pub(super) fn rename_draft_after_move(core: &Core, de: &Path, para: &Path) {
+    if let Some(store) = core.drafts.as_ref() {
+        drop(store.rename(&de.display().to_string(), &para.display().to_string()));
+    }
+}
+
 /// Limpa o rascunho de um arquivo recém-salvo (chamado pelo `fs.write`). É
 /// best-effort: se a store estiver ausente ou falhar, não afeta o save.
 pub(super) fn clear_draft_after_save(core: &Core, path: &Path) {

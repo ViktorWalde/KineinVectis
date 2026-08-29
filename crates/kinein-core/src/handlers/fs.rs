@@ -64,6 +64,26 @@ impl Core {
                 ),
             );
         }
+        // Query multi-linha e' RECUSADA porque `fs.search` nao consegue
+        // mostra-la: a busca casa linha a linha (o resultado carrega `line`,
+        // `column` e um `preview` de uma linha so), enquanto a substituicao
+        // casa no conteudo inteiro. Aceitar `\n` aqui significaria reescrever
+        // arquivos a partir de um preview que devolveu "0 resultados" — e
+        // `fs.replace` e' destrutivo. Transacao, snapshot e rollback protegem
+        // contra falha de ESCRITA, nao contra o usuario aprovar o que nao viu.
+        // Busca multi-linha e' fatia propria; ate la, o contrato e' honesto
+        // sobre o que nao sabe fazer.
+        if parsed.query.contains('\n') || parsed.replacement.contains('\n') {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    "fs.replace nao aceita quebra de linha: a busca do projeto \
+                     casa linha a linha e nao conseguiria pre-visualizar o efeito",
+                    None,
+                ),
+            );
+        }
         match fsops::replace(
             &root,
             &parsed.query,
@@ -332,13 +352,18 @@ impl Core {
         ) {
             Ok(parsed) => {
                 match fsops::rename(&root, Path::new(&parsed.from), Path::new(&parsed.to)) {
-                    Ok((from, to)) => JsonRpcResponse::success(
-                        request_id,
-                        json!(FsRenameResult {
-                            from: from.display().to_string(),
-                            to: to.display().to_string(),
-                        }),
-                    ),
+                    Ok((from, to)) => {
+                        // O rascunho acompanha o arquivo: a chave da store e' o
+                        // caminho absoluto (docs/seguranca/23).
+                        super::draft::rename_draft_after_move(self, &from, &to);
+                        JsonRpcResponse::success(
+                            request_id,
+                            json!(FsRenameResult {
+                                from: from.display().to_string(),
+                                to: to.display().to_string(),
+                            }),
+                        )
+                    }
                     Err(error) => fs_error_response(request_id, &error),
                 }
             }
