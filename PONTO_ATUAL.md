@@ -2,9 +2,9 @@
 
 > Este arquivo contém somente trabalho presente ou futuro, em ordem de
 > execução. Trabalho concluído deve ser registrado no documento do domínio e
-> em `ContextoIA.md`, e então removido daqui.
+> em `docs-privada/ContextoIA.md`, e então removido daqui.
 >
-> **Estado implementado: o CÓDIGO — mede-se, não se lê.** O `ContextoIA.md` é
+> **Estado implementado: o CÓDIGO — mede-se, não se lê.** O `docs-privada/ContextoIA.md` é
 > LOG datado e não responde "o que existe hoje" (rebaixado em 2026-07-17; ver
 > `docs/README.md`). Mapa: `GUIAIA.md`. Histórico: Git. Protocolo `0.61.0`.
 >
@@ -18,7 +18,7 @@
 
 > **Classe deste arquivo: ESTADO** (`docs/README.md`). Tem que ser verdade HOJE.
 > Se divergir do código, **o código vence** e este arquivo se corrige no mesmo
-> gesto. Não é log — log é o `ContextoIA.md`, e ele não manda em nada.
+> gesto. Não é log — log é o `docs-privada/ContextoIA.md`, e ele não manda em nada.
 
 ### Regra zero, antes de qualquer item
 
@@ -243,7 +243,7 @@ A sessão nova deve executar esta sequência:
 1. ler `AGENTS.md` e a documentação obrigatória indicada nele, sem devolver
    uma recapitulação extensa ao usuário;
 2. localizar primeiro o marcador `REENTRADA-KV` abaixo e confrontá-lo com
-   `ContextoIA.md` + código apenas onde houver divergência;
+   `docs-privada/ContextoIA.md` + código apenas onde houver divergência;
 3. rodar `git status --short` para preservar o worktree existente; arquivos
    presentes não autorizam limpeza/descarte. Commit local só depois do gate
    verde do marco; push continua sem autorização;
@@ -349,7 +349,7 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
   C++/QML, 12 harnesses e os builds passaram. Smoke real pelo
   `scripts/kinein-vectis` ficou vivo por 8 s sem saída (`exit 124`). UI/core
   release agora são os binários atuais; hashes e caminhos estão em
-  `ContextoIA.md`. `dist/` permaneceu intocado.
+  `docs-privada/ContextoIA.md`. `dist/` permaneceu intocado.
 - A baseline release A3 com `N=3` passou os orçamentos: 250 ms primeiro frame,
   103 MB UI, 3,4 ms workspace, 0,0 ms leitura 10k e 7 MB core. A expansão
   A3.1–A3.4 está detalhada abaixo; Code OSS/Zed e resultados estão em docs/roadmaps/21.
@@ -528,7 +528,7 @@ sem copiar): `Main.qml` usa `Qt.Window | Qt.FramelessWindowHint`,
 guiados pelo estado real do `QWindow` via `WindowChromeController`, a região
 livre arrasta/duplo-clica e `WindowResizeHandles.qml` cobre as oito bordas.
 Detalhes e referência profissional (IntelliJ IDEA Community `e3b4dba`) em
-`docs/roadmaps/20` e `ContextoIA.md`.
+`docs/roadmaps/20` e `docs-privada/ContextoIA.md`.
 
 **Aceito:** o usuário testou em Fedora/Wayland e confirmou que funciona. A
 regressão P2 está encerrada. Um AppImage 0.1.0 novo foi gerado com este código e
@@ -621,8 +621,8 @@ ação/esperado/observado/ambiente.
 pelo autor: **"Assistente"**. O rename foi ate os internos e os docs vivos —
 `view.assistant`, `openAssistant()`, `assistantKind`, `AssistantController`/
 `AssistantSelector`, icone `assistant` — porque o §0.2d exigia decidir de uma vez
-"para nao ficar meio renomeado". NAO renomeados de proposito: `ContextoIA.md`,
-`docs/diario/` e o ADR-0004, que sao LOG do que foi decidido quando o nome era
+"para nao ficar meio renomeado". NAO renomeados de proposito: `docs-privada/ContextoIA.md`,
+`docs-privada/diario/` e o ADR-0004, que sao LOG do que foi decidido quando o nome era
 outro. Ressalva viva: o `ui/qml/assistant/` removido no 0.59.0 tinha
 `AssistantPanel`/`AssistantController` — nome parecido, coisa diferente (aquele
 era terminal PARALELO); o aviso esta no cabecalho do `AssistantSelector`.
@@ -677,7 +677,7 @@ Não gerar antes disso; `dist/` só recebe conjunto completo por staging.
 que há muito "comentário de IA" no projeto. Isso é uma **varredura própria**, na
 mesma família da varredura de camada: comentário que narra a sessão ("a IA deve",
 "nesta fatia", "o usuário pediu") não é documentação técnica e não sobrevive à
-publicação. A política de tom já existe em `PLANO_ORGANIZACAO_E_HANDOFF.md` §6,
+publicação. A política de tom já existe em `docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md` §6,
 mas ela cobria `.md` — falta aplicá-la a **comentário de código**. Regra a partir
 de agora: comentário explica invariante e causa, não processo nem autoria. Fatia
 própria, depois da trilha atual.
@@ -920,7 +920,7 @@ mostrou que não se paga:
 O atalho poupava digitar **uma palavra** (`claude`), e cobrava por isso um
 seletor, um rótulo, uma numeração, uma aba e um ícone. Removido no mesmo dia.
 Registro canônico e o obstáculo técnico medido: topo e §4 de
-`docs/specs/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`. Fase M6.4 do roadmap 21
+`docs-legada/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`. Fase M6.4 do roadmap 21
 marcada fora de escopo.
 
 **O que a fatia deixou de bom, e sobreviveu à remoção:**
@@ -1085,7 +1085,7 @@ destrutivo/histórico). Entregas e feedback:
   77 arquivos (docs + comentários de código + scripts + CMake), `docs/README.md`
   reescrito como índice e 0 links markdown quebrados. `cargo check` verde.
   Raiz intacta: `README/MANUAL/Tutorial/AGENTS` e os pessoais. Plano completo
-  (faixa pessoal, não publicar): `PLANO_ORGANIZACAO_E_HANDOFF.md`.
+  (faixa pessoal, não publicar): `docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md`.
 - **Scroll do agente Claude no Assistente — SUPERADO. O texto abaixo descreve a
   `aiCliFlatTranscript`, que NAO existe mais** (removida com o aiBridge no
   0.59.0: injetar `--ax-screen-reader` era politica por programa no core). A
@@ -1158,7 +1158,7 @@ mais de impressão visual.**
 
 Baseline versionada, orçamentos, método e as armadilhas que produzem número
 falso estão em `docs/roadmaps/21` (A3.1–A3.4); o estado implementado, em
-`ContextoIA.md`. A entrada única continua sendo `scripts/medir-performance.sh` +
+`docs-privada/ContextoIA.md`. A entrada única continua sendo `scripts/medir-performance.sh` +
 `scripts/medir-core.py` — não criar segundo runner nem framework de benchmark.
 
 Reação a regressão é gate, não sugestão: número acima do orçamento abre fatia de
@@ -1825,18 +1825,18 @@ compreensão do projeto, build, navegação semântica ou debug básico.
 7. Para UI/layout, validar o gesto em tela real; para packaging, executar
    `scripts/testar-appimage.sh` e `scripts/testar-appimage-portatil.sh`.
 8. Atualizar contrato, schema, manual e arquitetura quando afetados.
-9. Registrar conclusão em `ContextoIA.md` e no doc do domínio; remover o item
+9. Registrar conclusão em `docs-privada/ContextoIA.md` e no doc do domínio; remover o item
    concluído deste arquivo, sem manter listas riscadas ou post-mortems aqui.
 
 ## 8. Onde ficou o histórico concluído
 
 Este é apenas um mapa para evitar duplicação:
 
-- estado técnico, decisões e checkpoints: `ContextoIA.md`;
+- estado técnico, decisões e checkpoints: `docs-privada/ContextoIA.md`;
 - rede de segurança, drafts e escrita atômica: `docs/seguranca/23-rede-de-seguranca.md`;
 - autocomplete, terminal, paridade diária e UI: `docs/roadmaps/24-paridade-e-fundacao.md`;
 - Tree-sitter e workspace edits: `docs/roadmaps/25-syntax-tree-semantic-foundation.md`;
-- plano de daily driver e longo prazo: `docs/diario/18-daily-driver-plan.md` e
+- plano de daily driver e longo prazo: `docs-privada/diario/18-daily-driver-plan.md` e
   `docs/roadmaps/21-long-horizon-roadmap.md`;
 - apresentação pública: `README.md`; uso da IDE: `MANUAL.md`; distribuição e
   instalação: `Tutorial.md`;

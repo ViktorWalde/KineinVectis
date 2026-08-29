@@ -10,16 +10,20 @@
 > **Status:** ativo e interno — atualizar junto com mudanças de arquitetura.
 > **Função:** dizer rapidamente **onde buscar conhecimento**, **quais módulos se
 > conectam** e **quais arquivos normalmente mudam juntos**.
-> **Não substitui:** `ContextoIA.md`, `docs/arquitetura/ARCHITECTURE.md`, specs ou contrato
+> **Não substitui:** `docs/arquitetura/ARCHITECTURE.md`, as specs ou o contrato
 > IPC. Este arquivo é o roteador prático entre essas fontes e o código real.
 > **Publicação:** não entra em nenhuma cópia entregue a terceiros; entre
 > Markdown, essa cópia leva somente `README.md`, `MANUAL.md` e `Tutorial.md`.
 
 ## 1. Entrada rápida para uma IA ou pessoa nova
 
+**Você lê `docs/` e mais nada** (`docs/README.md`, "As três árvores", 2026-08-29).
+`docs-privada/` é log e processo, consulta sob demanda; `docs-legada/` é
+cancelado e nunca é alvo.
+
 Leia nesta ordem antes de alterar código:
 
-1. `ContextoIA.md` — estado real, decisões vigentes e restrições do produto.
+1. `docs/README.md` — o índice das três árvores e a ordem de precedência.
 2. Este `GUIAIA.md` — descubra o domínio e os arquivos conectados.
 3. `docs/arquitetura/ARCHITECTURE.md` — **LEITURA OBRIGATÓRIA, inteiro**: camadas,
    fronteiras, regra de split e caminho de crescimento. É contrato, não consulta.
@@ -49,15 +53,15 @@ Quais consumidores e testes precisam mudar junto?
 Se houver conflito, a precedência é:
 
 ```text
-ContextoIA.md + código real
+o CODIGO + os gates  (a UNICA fonte do que existe; mede-se)
         ↓
-docs/specs/ (visão-alvo e UI/UX não negociável)
+CONTRATO   AGENTS.md, docs/arquitetura/ARCHITECTURE.md, docs/adr/
         ↓
-docs numerados (contrato/estado implementado)
+ESTADO     PONTO_ATUAL.md, este GUIAIA.md, arquitetura/02 e /03
         ↓
-PONTO_ATUAL.md (ordem de execução)
+PLANO      docs/specs/ (UI/UX-alvo nao negociavel), docs/roadmaps/
         ↓
-GUIAIA.md (mapa; nunca sobrepõe as fontes acima)
+LOG        docs-privada/ (datado; NAO e' estado, nao manda em nada)
 ```
 
 ### 1.1 Referência profissional antes de funcionalidade de IDE
@@ -232,7 +236,7 @@ e a adaptação. Referência autoriza **estudo**, nunca cópia ou tradução mec
 
 ```text
 1. docs/README.md                       índice; todo doc técnico entra nele
-2. PLANO_ORGANIZACAO_E_HANDOFF.md       faixas P/T/X e o que já foi executado
+2. docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md       faixas P/T/X e o que já foi executado
 3. docs/CONTRIBUINDO.md                 se a mudança afeta quem colabora
 ```
 
@@ -258,7 +262,7 @@ raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
 
 | Pergunta | Leia primeiro | Complemento |
 | --- | --- | --- |
-| Qual é o estado real agora? | `ContextoIA.md` | `PONTO_ATUAL.md` |
+| Qual é o estado real agora? | o CÓDIGO e os gates (mede-se) | `PONTO_ATUAL.md` |
 | Qual é a próxima tarefa? | `PONTO_ATUAL.md` | `docs/roadmaps/21-long-horizon-roadmap.md` |
 | Em qual camada colocar código? | `docs/arquitetura/ARCHITECTURE.md` | `docs/arquitetura/02-repository-structure.md` |
 | Como UI e core conversam? | `docs/arquitetura/03-ipc-protocol.md` | `crates/kinein-protocol/src/` |
@@ -272,7 +276,7 @@ raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
 | Adotar ferramenta open source | `docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md` | `docs/tooling/OPEN_COMPONENT_REGISTRY.json` |
 | Referenciar implementação de IDE profissional | seção 2.1 do roadmap de adaptação | documento do domínio + `docs/arquitetura/ARCHITECTURE.md` |
 | Strict mode e gates | `docs/arquitetura/06-strict-mode.md` | `docs/build/COMANDOS_BUILD_VERIFICACAO.md` |
-| Daily driver e dogfooding | `docs/diario/18-daily-driver-plan.md` | `docs/roadmaps/21-long-horizon-roadmap.md` |
+| Daily driver e dogfooding | `docs-privada/diario/18-daily-driver-plan.md` | `docs/roadmaps/21-long-horizon-roadmap.md` |
 | Convergência visual | `docs/roadmaps/20-ui-spec-convergence-plan.md` | specs visuais |
 | Instalação para contribuir | `docs/build/14-development-environment.md` | `COMO_EXECUTAR.md` |
 | Uso da IDE por testador | `MANUAL.md` | `README.md` |
@@ -288,7 +292,7 @@ raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
 | `Tutorial.md` | distribuição, checksum, instalação, atualização, packaging e entrega externa do código |
 | `COMO_EXECUTAR.md` | build, launcher e dependências para executar pelo checkout |
 | `AGENTS.md` | regras obrigatórias para agentes de terminal |
-| `ContextoIA.md` | decisões vigentes, histórico operacional útil e estado real |
+| `docs-privada/ContextoIA.md` | LOG datado: por que uma decisão foi tomada e quando. **Não** é estado |
 | `PONTO_ATUAL.md` | fila explícita e critérios imediatos de aceite |
 | `GUIAIA.md` | este mapa entre conhecimento, módulo, arquivo e gate |
 | `docs/roadmaps/KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md` | desenho profundo do KSWE, C++/Rust, scheduler, brokers e contextos |
@@ -300,8 +304,8 @@ raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
 | `docs/build/14-development-environment.md` | preparação da máquina de desenvolvimento |
 | `docs/arquitetura/15-engineering-debt-and-refactor.md` | dívidas conhecidas e regras para não recriar monólitos |
 | `docs/arquitetura/16-hidden-risks-checklist.md` | segurança, dados, segredos, a11y, observabilidade e packaging |
-| `docs/arquitetura/17-architecture-hygiene-plan.md` | higiene arquitetural e concentrações que devem permanecer fechadas |
-| `docs/diario/18-daily-driver-plan.md` | marcos M/E/T, dogfooding e paridade diária |
+| `docs-legada/17-architecture-hygiene-plan.md` | higiene arquitetural e concentrações que devem permanecer fechadas |
+| `docs-privada/diario/18-daily-driver-plan.md` | marcos M/E/T, dogfooding e paridade diária |
 | `docs/arquitetura/19-architecture-tradeoffs.md` | razões e trade-offs por trás das decisões |
 | `docs/roadmaps/20-ui-spec-convergence-plan.md` | execução vinculante da UI/UX C0–C6 |
 | `docs/roadmaps/21-long-horizon-roadmap.md` | KSWE, M4–M7, distribuição e continuidade longa |
@@ -477,7 +481,7 @@ crates/kinein-core/src/handlers/{cmake,cargo,build,jobs,runconfig}.rs
   crescer, extrair `handlers/tools.rs` antes de adicionar mais casos ao `lib.rs`.
 - Testes: `crates/kinein-core/src/tests/{cmake,cargo,build,runners,jobs,tools,runconfig}.rs`.
 - Fontes: spec Build/Run/Debug, `docs/build/22-compilacao-c-cpp-rust.md`,
-  `docs/diario/18-daily-driver-plan.md` e `docs/roadmaps/21-long-horizon-roadmap.md`.
+  `docs-privada/diario/18-daily-driver-plan.md` e `docs/roadmaps/21-long-horizon-roadmap.md`.
 - KSWE deve reutilizar estes serviços; não criar outro executor de build.
 - `workspace.capabilities.buildSystems` é a fonte única das ações disponíveis
   em projeto híbrido. `workspace.kind` continua apenas como primário compatível;
@@ -523,7 +527,7 @@ crates/kinein-core/src/handlers/terminal.rs
   `tst_terminal_metrics.qml` e `scripts/sonda_scrollback.py`.
 - **NÃO existe assistente, painel de IA, chat, seletor de agente nem domínio
   `ai.*`** — e não é pendência: é decisão do autor de 2026-07-17, registrada no
-  topo de `docs/specs/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`. Agente de IA é
+  topo de `docs-legada/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`. Agente de IA é
   um programa que o usuário roda no terminal, como qualquer outro. **Se você veio
   propor um painel/atalho/seletor de IA: já foi construído e removido no mesmo
   dia, depois de rodar. Reabra a decisão antes, explicitamente.**
@@ -620,7 +624,7 @@ ui/qml/Main.qml
 4. unitários + `crates/kinein-core/src/tests/<dominio>.rs`;
 5. método/dispatch no `CoreClient` se a UI consumir;
 6. router/controller/visual QML;
-7. `docs/arquitetura/03-ipc-protocol.md`, schema aplicável e `ContextoIA.md`.
+7. `docs/arquitetura/03-ipc-protocol.md`, schema aplicável e `docs-privada/ContextoIA.md`.
 
 ### Mudança puramente visual
 
@@ -779,8 +783,8 @@ Esse fluxo é adequado para contribuidores, não para testadores de produto.
   eventual espelho é separado e nunca muda a visibilidade da fonte.
 - A cópia leva o código do projeto e, entre Markdown, somente `README.md`,
   `MANUAL.md` e `Tutorial.md`.
-- `GUIAIA.md`, `ContextoIA.md`, `PONTO_ATUAL.md`, `AGENTS.md`, `docs/`,
-  `prompts/`, specs, roadmaps e notas internas não entram.
+- `GUIAIA.md`, `docs-privada/ContextoIA.md`, `PONTO_ATUAL.md`, `AGENTS.md`, `docs/`,
+  `docs-privada/prompts/`, specs, roadmaps e notas internas não entram.
 - `.git/` e o histórico privado não entram; eventual espelho começa com
   histórico próprio da árvore sanitizada.
 - O exportador precisa de dry-run, recusa de Markdown extra, auditoria de
@@ -800,7 +804,7 @@ Atualize `GUIAIA.md` quando ocorrer qualquer um destes eventos:
 Checklist de fechamento de uma fatia:
 
 ```text
-[ ] ContextoIA.md representa o estado real?
+[ ] docs-privada/ContextoIA.md ganhou a entrada datada desta sessao?
 [ ] PONTO_ATUAL.md aponta a próxima ação, não trabalho já encerrado?
 [ ] GUIAIA.md ainda leva ao domínio e aos arquivos corretos?
 [ ] docs/arquitetura/03/schema mudaram se o contrato mudou?

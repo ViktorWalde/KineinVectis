@@ -209,7 +209,7 @@ estava desatualizada. Os gaps reais medidos:
 [feito] ui/src/editor_highlighter.cpp   famílias de kinds completadas
                                         (lifetime em itálico; operator/
                                         bracket sem cor de propósito)
-[feito] docs/diario/18 + ContextoIA.md         notas antigas corrigidas, fatia
+[feito] docs-privada/diario/18 + docs-privada/ContextoIA.md         notas antigas corrigidas, fatia
                                         marcada
 ```
 
@@ -588,7 +588,7 @@ o usuário vê as coisas.
                                                chaveados por sessão + foco/
                                                limpar por sessão
 [feito] ui/qml/shell/ShellWorkspaceHost.qml    plumbing sessão/limpar
-[feito] MANUAL.md + ContextoIA.md              atual seção 5; estado
+[feito] MANUAL.md + docs-privada/ContextoIA.md              atual seção 5; estado
 ```
 
 **Validação:** fatia de UI (gap D9): gate completo + smoke offscreen + uso
@@ -2354,7 +2354,7 @@ mudança de binário é o marker env-gated na `main.cpp` da UI (stderr).
 **Arquivos:** ui/src/main.cpp (QElapsedTimer + marker gated);
 scripts/medir-performance.sh (novo); docs/roadmaps/21 (tabela de orçamento com
 números reais); docs/build/14 (documenta o script ao lado do verificar.sh);
-docs/diario/18 (esta nota); ContextoIA (M4 quase fechado).
+docs-privada/diario/18 (esta nota); ContextoIA (M4 quase fechado).
 
 **Testes/validação:** o próprio script É a validação (roda verde e
 produz números plausíveis); marker não muda o uso normal (smoke offscreen
@@ -2688,7 +2688,7 @@ Próximos degraus, em ordem de custo/benefício:
 1. Pegar a próxima fatia do marco corrente (ordem acima).
 2. Cruzar com docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md (contrato/backend necessário)
    e docs/specs/ (UX alvo inegociável).
-3. Entregar com gate verde + smoke, atualizar ContextoIA.md e este doc
+3. Entregar com gate verde + smoke, atualizar docs-privada/ContextoIA.md e este doc
    (marcar fatia feita com data).
 4. Ao fechar um marco, revalidar os anteriores no uso real antes de seguir.
 ```

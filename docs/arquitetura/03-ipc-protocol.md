@@ -8,7 +8,7 @@
 > protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
 > etc.) está em
 > `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md`. Onde
-> divergir, vale o que está implementado no código + `ContextoIA.md`.
+> divergir, vale o que está implementado no código + `docs-privada/ContextoIA.md`.
 
 ## Objetivo
 
@@ -272,7 +272,7 @@ workspace, retornando o mesmo payload de `workspace.open`.
 `workspace.status` responde `{ "workspace": <objeto acima> | null }`.
 `workspace.close` responde `{ "status": "ok", "closed": <root | null> }`.
 
-**Sessão por workspace** (protocolo `0.24.0`, fatia M1.5 de `docs/diario/18`): a
+**Sessão por workspace** (protocolo `0.24.0`, fatia M1.5 de `docs-privada/diario/18`): a
 resposta de `workspace.open` ganha o campo opcional
 `session: { openFiles: ["/abs/..."], activeFile? }`, presente apenas quando
 `.kinein/session.json` existe, tem `schemaVersion` conhecida (1) e ao menos
@@ -288,7 +288,7 @@ ativa por último.
 Caminho inexistente ou sem `path` nos params retorna `INVALID_PARAMS`; falha de
 IO ao persistir, listar ou criar diretorios retorna `INTERNAL_ERROR`.
 
-**Workspaces recentes globais** (protocolo `0.53.0`, fatia A1 de `docs/diario/18`):
+**Workspaces recentes globais** (protocolo `0.53.0`, fatia A1 de `docs-privada/diario/18`):
 somente `workspace.open` e `workspace.createProject` concluídos com sucesso
 registram a raiz canônica. O core persiste até 12 entradas em
 `$XDG_CONFIG_HOME/kinein-vectis/recent-workspaces.json` (ou
@@ -376,7 +376,7 @@ continua ativa mesmo sem watcher.
 ### Formatação de buffer (`format.text` / `format.capabilities`)
 
 Implementado no protocolo `0.21.0` (fatia M1.1 de
-`docs/diario/18-daily-driver-plan.md`). Requer workspace aberto. Formata o conteúdo
+`docs-privada/diario/18-daily-driver-plan.md`). Requer workspace aberto. Formata o conteúdo
 do editor com a ferramenta do projeto via stdin/stdout, sem tocar o disco —
 salvar continua sendo decisão do usuário. O formatter roda com cwd na raiz do
 workspace, então `rustfmt.toml`/`.clang-format` do projeto valem.
@@ -800,7 +800,7 @@ corresponde ao buffer ativo; o tempo de chegada do LSP nunca substitui a base
 Tree-sitter de uma versão mais nova.
 
 `lsp.codeActions` e `lsp.applyCodeAction` foram adicionados no protocolo
-`0.22.0` (fatia M1.3 de `docs/diario/18-daily-driver-plan.md`):
+`0.22.0` (fatia M1.3 de `docs-privada/diario/18-daily-driver-plan.md`):
 
 - `lsp.codeActions { path, content, line, column }` →
   `{ actions: [{ title, kind? }] }`. O core sincroniza o buffer, envia
@@ -809,7 +809,7 @@ Tree-sitter de uma versão mais nova.
   thread leitora — a UI não devolve diagnóstico). Só entram na lista ações
   `CodeAction` literais com `edit` inline e sem `disabled`; ações que
   dependem de `workspace/executeCommand` são filtradas (decisão registrada
-  em docs/diario/18). As ações cruas ficam guardadas como **consulta ativa**.
+  em docs-privada/diario/18). As ações cruas ficam guardadas como **consulta ativa**.
 - `lsp.applyCodeAction { path, content, actionIndex }` cria a mesma transação
   confirmável de `lsp.rename`. A consulta é consumida na chamada; índice
   inválido, arquivo diferente ou consulta
@@ -855,7 +855,7 @@ Tree-sitter < semantic tokens LSP < diagnósticos/busca. `locals` é índice
 sintático local, nunca promovido a referência semântica.
 
 `lsp.documentSymbols` e `lsp.workspaceSymbols` foram adicionados no
-protocolo `0.23.0` (fatia M1.4 de `docs/diario/18-daily-driver-plan.md`):
+protocolo `0.23.0` (fatia M1.4 de `docs-privada/diario/18-daily-driver-plan.md`):
 
 - `lsp.documentSymbols { path, content }` →
   `{ symbols: [{ name, kind, path, line, column, container? }] }`. Achata
@@ -874,7 +874,7 @@ protocolo `0.23.0` (fatia M1.4 de `docs/diario/18-daily-driver-plan.md`):
   estrutura do arquivo atual; `#nome` busca no workspace.
 
 `lsp.switchSourceHeader` foi adicionado no protocolo `0.34.0` (fatia T1
-de `docs/diario/18-daily-driver-plan.md`, trilha T de `docs/roadmaps/21`):
+de `docs-privada/diario/18-daily-driver-plan.md`, trilha T de `docs/roadmaps/21`):
 
 - `lsp.switchSourceHeader { path, content }` → `{ path: string | null }`.
   Alterna entre header e source do mesmo componente C/C++ via a
@@ -919,7 +919,7 @@ UI integra esses eventos à aba Problemas com origem `lsp`.
 
 ### CMake service (`cmake.configure` / `cmake.presets.list` / `cmake.targets.list` / `cmake.status`)
 
-Implementado no protocolo `0.25.0` (fatia M2.2 de `docs/diario/18`). Todos exigem
+Implementado no protocolo `0.25.0` (fatia M2.2 de `docs-privada/diario/18`). Todos exigem
 workspace aberto com kind `cmake` (`INVALID_PARAMS` para outros kinds). O
 diretório de build é único e imutável: `<root>/.kinein/build` — o mesmo de
 `build.run` e `run.start`; presets **não** mudam o diretório (o `-B`
@@ -946,7 +946,7 @@ explícito tem precedência).
 
 ### Cargo service (`cargo.metadata` / `cargo.check`)
 
-Implementado no protocolo `0.26.0` (fatia M2.3 de `docs/diario/18`). Ambos exigem
+Implementado no protocolo `0.26.0` (fatia M2.3 de `docs-privada/diario/18`). Ambos exigem
 workspace aberto com kind `rustCargo` (`INVALID_PARAMS` para outros kinds).
 
 - `cargo.metadata {}` → `{ packages: [{ name, version, features: [...],
@@ -963,7 +963,7 @@ workspace aberto com kind `rustCargo` (`INVALID_PARAMS` para outros kinds).
 
 ### Run configurations (`runConfig.list` / `runConfig.save` / `runConfig.delete` / `runConfig.setActive`)
 
-Implementado no protocolo `0.27.0` (fatia M2.4 de `docs/diario/18`). Todos exigem
+Implementado no protocolo `0.27.0` (fatia M2.4 de `docs-privada/diario/18`). Todos exigem
 workspace aberto (qualquer kind). Persistência em `.kinein/runconfigs.json`
 com `schemaVersion` (arquivo inválido/schema desconhecido = vazio, nunca
 quebra). Uma config v1 é `{ id, name, command }` — comando shell executado
@@ -983,7 +983,7 @@ na raiz pelo `run.start`.
 
 ### Settings (`settings.get` / `settings.set`)
 
-Implementado no protocolo `0.36.0` (fatia M4.1 de `docs/diario/18`). Dois níveis:
+Implementado no protocolo `0.36.0` (fatia M4.1 de `docs-privada/diario/18`). Dois níveis:
 GLOBAL (`$XDG_CONFIG_HOME` ou `~/.config`, então `kinein-vectis/
 settings.json`, vale para todos os workspaces) e por-WORKSPACE
 (`.kinein/settings.json`, sobrepõe o global campo a campo). Ambos com
@@ -1065,7 +1065,7 @@ workspace.open ... → { ..., drafts?: [{ path, content, savedAt }] }
 
 ### Debug (`debug.*` — sessao DAP via lldb-dap)
 
-Implementado no protocolo `0.28.0` (fatia M2.5a de `docs/diario/18`). O core
+Implementado no protocolo `0.28.0` (fatia M2.5a de `docs-privada/diario/18`). O core
 orquestra o `lldb-dap` (pacote `lldb`) pelo Debug Adapter Protocol; a UI
 nunca fala DAP — recebe eventos `event.debug.*` ja mastigados. Uma sessao
 por workspace.
@@ -1112,7 +1112,7 @@ event.debug.finished  { exitCode? }        (exatamente um por sessao)
 
 ### Git (`git.status` e operações diárias)
 
-Implementado no protocolo `0.30.0` (fatia M3.1 de `docs/diario/18`). Orquestra o
+Implementado no protocolo `0.30.0` (fatia M3.1 de `docs-privada/diario/18`). Orquestra o
 binario `git` com saida ESTAVEL (`status --porcelain=v2 --branch
 --untracked-files=all -z`); deteccao de repo por exit code
 (`rev-parse --is-inside-work-tree`), nunca por mensagem (pode vir

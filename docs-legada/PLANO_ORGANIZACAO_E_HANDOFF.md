@@ -20,10 +20,10 @@
 >        atribuições datadas ("a pedido do usuário").
 > [x] Fase 3 — obsoletos sinalizados
 >        KV_CONTEXT_AI_ASSISTANCE marcado como SUPERADO pela Parte 7.1
->        prompts/GPT_TERMINAL_BOOTSTRAP marcado como OBSOLETO
+>        docs-privada/prompts/GPT_TERMINAL_BOOTSTRAP marcado como OBSOLETO
 >        docs/README.md reescrito como índice único
 > [x] Fase 4 — camada pessoal explícita
->        docs/diario/ criado; o diário (18-daily-driver-plan) saiu de roadmaps/
+>        docs-privada/diario/ criado; o diário (18-daily-driver-plan) saiu de roadmaps/
 >        com 89 referências reescritas. Os arquivos X da raiz (ContextoIA,
 >        PONTO_ATUAL, GUIAIA, AGENTS) FICAM onde estão de propósito: o fluxo de
 >        reentrada e a convenção de agentes dependem desses caminhos. A exclusão
@@ -59,12 +59,12 @@
 > única sequência linear o trabalho necessário para levar a IDE ao estado mais
 > completo possível a partir dos componentes e ferramentas abertas já mapeados.
 >
-> **Precedência:** este plano **não** substitui `ContextoIA.md`, `PONTO_ATUAL.md`
+> **Precedência:** este plano **não** substitui `docs-privada/ContextoIA.md`, `PONTO_ATUAL.md`
 > nem os documentos de domínio. Ele organiza e lineariza o que já está decidido
 > nesses arquivos (A3–A6, trilha T, M4–M7, KSWE e o roadmap de adaptação). Em
-> caso de conflito, vale o estado real do código + `ContextoIA.md`.
+> caso de conflito, vale o estado real do código + `docs-privada/ContextoIA.md`.
 >
-> **Base de leitura:** produzido após leitura de `GUIAIA.md`, `ContextoIA.md`,
+> **Base de leitura:** produzido após leitura de `GUIAIA.md`, `docs-privada/ContextoIA.md`,
 > `PONTO_ATUAL.md`, `AGENTS.md`, `docs/README.md`, `docs/ARCHITECTURE.md`,
 > `docs/21`, `docs/specs/KINEIN_VECTIS_SPEC_INDEX.md`,
 > `KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md`,
@@ -168,7 +168,7 @@ Números do inventário (76 arquivos Markdown de projeto, exclusos `build/`,
   `KINEIN_VECTIS_SPECIAL_FILE_ICONS/`, `KINEIN_VECTIS_TREE_ICONS_INDIVIDUAL/`),
   cada um com sua documentação, somando ~180 SVG e vários formatos de apoio;
 - **decisões e registro:** `docs/adr/` (3 ADRs) + `docs/tooling/` (registry);
-- **prompts:** `prompts/GPT_TERMINAL_BOOTSTRAP.md`.
+- **prompts:** `docs-privada/prompts/GPT_TERMINAL_BOOTSTRAP.md`.
 
 Problemas concretos identificados:
 
@@ -177,12 +177,12 @@ Problemas concretos identificados:
 2. **Tom misto em documentos técnicos:** a varredura de marcadores de condução
    ("IA", "agente", "sessão", "handoff", "reentrada", "o usuário pediu/quer",
    "Claude/Codex/GPT", "você") encontrou concentração alta fora da camada
-   pessoal — notadamente `docs/specs/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md`
+   pessoal — notadamente `docs-legada/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md`
    (83 ocorrências), `docs/24` (63), `docs/26` (53), `docs/18` (53) e
    `docs/03-ipc-protocol.md` (37). Parte é legítima (o Bridge de IA é uma
    funcionalidade real do produto); parte é narrativa de sessão que precisa sair
    dos documentos técnicos.
-3. **Material obsoleto:** `prompts/GPT_TERMINAL_BOOTSTRAP.md` referencia documentos
+3. **Material obsoleto:** `docs-privada/prompts/GPT_TERMINAL_BOOTSTRAP.md` referencia documentos
    que já não existem (`docs/00-product-vision.md`, `docs/01-architecture.md`,
    `docs/04-command-system.md`, `docs/10-mvp-plan.md`, removidos com a extinção de
    `docs/archive/`). É registro pessoal desatualizado.
@@ -306,12 +306,12 @@ cópia limpa e **não** devem ser nomeados no `.gitignore` do repositório públ
 | Documento | Papel |
 | --- | --- |
 | `GUIAIA.md` | Mapa operacional entre conhecimento, módulo, arquivo e gate. |
-| `ContextoIA.md` | Estado real, decisões vigentes e direção por sessão (1798 linhas; maior densidade de marcadores). |
+| `docs-privada/ContextoIA.md` | Estado real, decisões vigentes e direção por sessão (1798 linhas; maior densidade de marcadores). |
 | `PONTO_ATUAL.md` | Fila viva, critérios de aceite imediatos e protocolo de reentrada. |
 | `AGENTS.md` | Instruções de condução do desenvolvimento. |
-| `prompts/GPT_TERMINAL_BOOTSTRAP.md` | Prompt inicial; **obsoleto** (referencia docs removidos). Atualizar ou descartar. |
+| `docs-privada/prompts/GPT_TERMINAL_BOOTSTRAP.md` | Prompt inicial; **obsoleto** (referencia docs removidos). Atualizar ou descartar. |
 | `imagens/bugs/*` | Material de trabalho (capturas de regressão). |
-| Este `PLANO_ORGANIZACAO_E_HANDOFF.md` | Faixa X: plano interno; não é publicado. |
+| Este `docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md` | Faixa X: plano interno; não é publicado. |
 
 ## 5. Árvore-alvo da documentação
 
@@ -339,9 +339,9 @@ raiz/
 │   └── tooling/                  (T) OPEN_COMPONENT_REGISTRY.json
 │
 └── (fora da publicação — camada pessoal, faixa X)
-    ContextoIA.md · PONTO_ATUAL.md · GUIAIA.md · AGENTS.md ·
-    prompts/ · docs/diario/ (ex-18 e status vivos desmembrados) ·
-    PLANO_ORGANIZACAO_E_HANDOFF.md
+    docs-privada/ContextoIA.md · PONTO_ATUAL.md · GUIAIA.md · AGENTS.md ·
+    prompts/ · docs-privada/diario/ (ex-18 e status vivos desmembrados) ·
+    docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md
 ```
 
 Convenções de nomenclatura para a documentação técnica e pública:
@@ -410,7 +410,7 @@ proteção **não** pode depender de `.gitignore`.
 **Por que `.gitignore` não protege o material pessoal:**
 
 - `.gitignore` **lista nomes**: publicá-lo revelaria a existência de
-  `ContextoIA.md`, `PONTO_ATUAL.md`, `prompts/` etc.;
+  `docs-privada/ContextoIA.md`, `PONTO_ATUAL.md`, `docs-privada/prompts/` etc.;
 - `.gitignore` **não remove** o que já foi rastreado no histórico; um arquivo
   antes versionado continua recuperável;
 - ignorar um arquivo não impede que uma cópia recursiva da árvore o inclua.
@@ -424,7 +424,7 @@ proteção **não** pode depender de `.gitignore`.
    (allowlist), com histórico próprio começando do zero.
 3. Entram na cópia: o código do projeto e, entre Markdown, somente README.md,
    MANUAL.md e Tutorial.md. Licenças/atribuições por LICENSE/JSON/TXT.
-4. NÃO entram: ContextoIA.md, PONTO_ATUAL.md, GUIAIA.md, AGENTS.md, prompts/,
+4. NÃO entram: docs-privada/ContextoIA.md, PONTO_ATUAL.md, GUIAIA.md, AGENTS.md, prompts/,
    docs/ (specs, roadmaps, ADRs, diário), este plano, imagens/bugs/ e qualquer
    nota de condução. Não há entrada correspondente no .gitignore público.
 5. .git/ e o histórico privado não entram; um eventual espelho começa com
@@ -472,7 +472,7 @@ Fase 3 — Tratamento de obsoletos e duplicatas.
 
 Fase 4 — Camada pessoal.
          Recolher os documentos faixa X e os fragmentos desmembrados num
-         agrupamento pessoal claro (ex.: docs/diario/), fora da allowlist.
+         agrupamento pessoal claro (ex.: docs-privada/diario/), fora da allowlist.
 
 Fase 5 — Geração da cópia limpa (Parte 7), somente quando o autor autorizar e
          fornecer a lista de nomes proibidos (A6/M7.3).
@@ -640,16 +640,16 @@ Conforme `PONTO_ATUAL.md` (PRÓXIMO GESTO), e sem reabrir fatias já aceitas:
   `COMO_EXECUTAR.md`, `ui/README.md`, os três pacotes de ícones e os roadmaps de
   adaptação/KSWE. É o grosso do acervo.
 - **Faixa X (pessoal / fora da distribuição, nunca no `.gitignore` público):**
-  `ContextoIA.md`, `PONTO_ATUAL.md`, `GUIAIA.md`, `AGENTS.md`, `prompts/`,
+  `docs-privada/ContextoIA.md`, `PONTO_ATUAL.md`, `GUIAIA.md`, `AGENTS.md`, `docs-privada/prompts/`,
   `docs/18` (diário) e os fragmentos de status vivo desmembrados de `21/24/26`,
-  `imagens/bugs/`, e este `PLANO_ORGANIZACAO_E_HANDOFF.md`.
+  `imagens/bugs/`, e este `docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md`.
 
 ## Apêndice B — Documentos com maior necessidade de reescrita de tom
 
 Por densidade de marcadores de condução medida no acervo (ocorrências):
 
 ```text
-ContextoIA.md ......................................... 93   (faixa X — não reescrever, isolar)
+docs-privada/ContextoIA.md ......................................... 93   (faixa X — não reescrever, isolar)
 docs/specs/..._AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md ..... 83   (faixa T — reescrita intensa)
 docs/24-paridade-e-fundacao.md ........................ 63   (faixa T/X — desmembrar)
 PONTO_ATUAL.md ........................................ 53   (faixa X — não reescrever, isolar)

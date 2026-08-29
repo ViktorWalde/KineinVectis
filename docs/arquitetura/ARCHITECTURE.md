@@ -196,7 +196,7 @@ como chegar lá **sem big-bang**.
 ## 3.1. Organização da UI Qt/QML
 
 A UI segue a mesma regra anti-monólito do core. A fase descrita em
-`docs/arquitetura/17-architecture-hygiene-plan.md` eliminou as concentrações conhecidas em
+`docs-legada/17-architecture-hygiene-plan.md` eliminou as concentrações conhecidas em
 2026-07-06; a regra permanente é não aceitar "dívida pequena" quando ela já é
 uma concentração conhecida.
 
@@ -428,6 +428,14 @@ Regras que mantêm isso saudável:
                                            2026-07-16 descobriu-se que 7 dos 14
                                            NAO conseguiam reprovar: `Qt.exit()`
                                            trunca em 8 bits (§1.3).
+    verificar-links-docs.sh    2026-08-29  `git mv` nao atualiza link nenhum. A
+      (link morto)                          documentacao ja foi reorganizada por
+                                            git mv uma vez (2026-07-16, 410
+                                            referencias) e foi de novo em
+                                            2026-08-29 (as tres arvores). Link
+                                            morto nao tem compilador: o gate
+                                            fica verde e o proximo a ler conclui
+                                            que o documento nao existe.
     verificar-transicao-        2026-08-29  estado por-workspace do `Core`
       workspace.sh                          trocado em 3 caminhos, cada copia
                                             esquecendo uma peca diferente. O
@@ -462,7 +470,7 @@ Ao adicionar um comando/feature, siga sempre esta ordem:
 3. Lógica              → kinein-core/src/<dominio>.rs  (ou .../<dominio>/ se já for grande)
 4. Testes              → unit no módulo + integração em tests/<dominio>.rs
 5. Se for operação longa → vira JOB (ver Seção 7), não handler síncrono
-6. Doc                 → atualizar docs/arquitetura/03-ipc-protocol.md (contrato) e ContextoIA.md (estado)
+6. Doc                 → atualizar docs/arquitetura/03-ipc-protocol.md (contrato) e docs-privada/ContextoIA.md (estado)
 ```
 
 Se o domínio ainda não existe, crie o par `handlers/<dominio>.rs` +
@@ -570,7 +578,7 @@ Uma mudança está arquiteturalmente saudável quando:
 [ ] testes unit co-localizados + integração por domínio.
 [ ] o teste/gate novo REPROVA de verdade: mutei o produto e ele caiu (regra 11).
 [ ] contrato novo documentado em docs/arquitetura/03; decisão registrada no
-    ContextoIA.md (que e' LOG datado, nao o estado).
+    docs-privada/ContextoIA.md (que e' LOG datado, nao o estado).
 [ ] GUIAIA.md atualizado se módulo/domínio/router nasceu, mudou de nome ou morreu
     — mapa desatualizado engana mais que ausência de mapa (§1.2).
 [ ] mexeu na UI? `cmake --build --preset release-hardened` ANTES de pedir

@@ -1,7 +1,7 @@
 # OBSOLETO — prompt de bootstrap inicial
 
 > **Status:** histórico. Não use este arquivo.
-> **Entrada atual:** [`../AGENTS.md`](../AGENTS.md).
+> **Entrada atual:** [`AGENTS.md`](../../AGENTS.md).
 
 Este prompt existia para criar a **base inicial** do workspace Rust: `core.ping`,
 tipos básicos do protocolo, uma CLI de ping e a configuração estrita. Esse
@@ -19,7 +19,7 @@ mortos e a reimplementar o que já existe.
 
 ```text
 AGENTS.md          regras obrigatórias e ordem de leitura
-ContextoIA.md      estado real e decisões vigentes
+docs-privada/ContextoIA.md      estado real e decisões vigentes
 GUIAIA.md          mapa: domínio → documentos → arquivos → gate
 PONTO_ATUAL.md     fila viva: a próxima ação executável
 docs/README.md     índice da documentação técnica

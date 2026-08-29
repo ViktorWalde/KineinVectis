@@ -11,7 +11,7 @@
 Este documento separa o que já está implementado, o que a validação em tela
 real mostrou, as referências oficiais estudadas e a ordem de
 investigação/implementação. Deve ser lido junto de
-`AGENTS.md`, `ContextoIA.md`, `GUIAIA.md`, `docs/arquitetura/ARCHITECTURE.md`,
+`AGENTS.md`, `docs-privada/ContextoIA.md`, `GUIAIA.md`, `docs/arquitetura/ARCHITECTURE.md`,
 `docs/arquitetura/03-ipc-protocol.md`, `docs/arquitetura/06-strict-mode.md`, da spec do AI CLI Bridge e
 da seção D2 de `docs/roadmaps/24-paridade-e-fundacao.md`.
 

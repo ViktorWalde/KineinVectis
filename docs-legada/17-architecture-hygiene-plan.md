@@ -98,7 +98,7 @@ A fase terminou porque todos os itens abaixo ficaram verdadeiros:
 
 5. **[feito] Registrar guardrails nos docs.**
    Atualizar `docs/arquitetura/ARCHITECTURE.md`, `docs/arquitetura/15-engineering-debt-and-refactor.md`
-   e `ContextoIA.md` sempre que uma concentração for removida ou uma regra
+   e `docs-privada/ContextoIA.md` sempre que uma concentração for removida ou uma regra
    anti-regressão mudar.
 
 6. **[feito] Validar e atualizar o launcher local.**

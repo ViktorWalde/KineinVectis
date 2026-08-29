@@ -110,7 +110,7 @@ Rectangle {
     // M4.1: liga/desliga o auto-close de pares (setting autoClosePairs).
     property bool autoCloseEnabled: true
 
-    // E1 (docs/diario/18, trilha E): auto-close de pares, type-over do fechador,
+    // E1 (docs-privada/diario/18, trilha E): auto-close de pares, type-over do fechador,
     // surround da seleção e backspace apagando o par vazio.
     readonly property var pairOpeners: ({ "(": ")", "[": "]", "{": "}",
                                           "\"": "\"", "'": "'" })

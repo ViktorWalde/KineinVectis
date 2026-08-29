@@ -53,7 +53,7 @@ conhecida e correcao simples:
   check` verde. Documentos numerados agora vivem sob subpastas (ex.:
   `docs/arquitetura/03-ipc-protocol.md`, `docs/roadmaps/24-...`). Raiz mantem
   `README/MANUAL/Tutorial/AGENTS` e os pessoais. Plano interno completo em
-  `PLANO_ORGANIZACAO_E_HANDOFF.md` (nao publicar).
+  `docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md` (nao publicar).
 - **Scroll do agente Claude no KV Context — causa-raiz identificada:** o Claude
   interativo usa tela alternada (sem scrollback) e nao tem flag inline como o
   `--no-alt-screen` do Codex; a IDE ainda nao encaminha a roda ao app em tela
@@ -291,12 +291,12 @@ testes que exec, ou fsync).
   `isIncomplete` (0.37, fix do autocomplete)). Lista completa de
   comandos/eventos e contrato: `docs/arquitetura/03-ipc-protocol.md` (nao duplicar
   essa lista aqui).
-- Formatacao orquestrada (fatia M1.1 de `docs/diario/18-daily-driver-plan.md`,
+- Formatacao orquestrada (fatia M1.1 de `docs-privada/diario/18-daily-driver-plan.md`,
   2026-07-09): `Ctrl+Alt+L` formata o buffer atual via `format.text`
   (rustfmt/clang-format, stdin/stdout, cwd na raiz, sem tocar disco; a UI
   substitui o texto preservando cursor clampado e marca a aba como
   modificada). Format-on-save e Salvar tudo já estão implementados; a fila de
-  saves descarta respostas obsoletas. Design completo e decisoes: docs/diario/18.
+  saves descarta respostas obsoletas. Design completo e decisoes: docs-privada/diario/18.
 - Job system assincrono/cancelavel (`job.list`/`job.cancel`, `event.job.*`)
   cobre `build.run`, `quality.run`, `test.run` e `environment.scan`: cada um
   responde `{ jobId }` na hora e emite `event.<dominio>.finished` com o
@@ -360,7 +360,7 @@ Detalhe completo (arquivos, pastas, verificacao): ver
   ComponentBehavior: Bound` onde ha delegates, `required property` para
   roles, acesso por id qualificado (nunca `parent.parent.x` nem resolucao
   implicita de escopo). Detalhe: `docs/arquitetura/06-strict-mode.md`; degraus futuros de
-  rigor: `docs/diario/18-daily-driver-plan.md`.
+  rigor: `docs-privada/diario/18-daily-driver-plan.md`.
 - Requisitos (funcionais e nao funcionais) e trade-offs de arquitetura estao
   explicitos em `docs/arquitetura/19-architecture-tradeoffs.md` (criado 2026-07-09 a
   pedido do usuario). Decisao estrutural nova ou excecao entra la, com
@@ -373,7 +373,7 @@ Detalhe completo (arquivos, pastas, verificacao): ver
   `docs/roadmaps/20-ui-spec-convergence-plan.md` tem as regras (R1: UI nova nasce
   conforme spec; R2: fatia de convergencia nunca se mistura com feature),
   o inventario de divergencias e a ordem C0-C6 amarrada aos marcos de
-  docs/diario/18. Nenhum agente deve tratar a aparencia atual como referencia — a
+  docs-privada/diario/18. Nenhum agente deve tratar a aparencia atual como referencia — a
   referencia e a spec.
 - Futuramente: seletor de nivel de rigidez (Strict padrao / Balanced /
   Relaxed so por escolha explicita).
@@ -539,7 +539,7 @@ mudou:
 
    **Decisao do usuario em 2026-07-06:** nao aceitar sobras pequenas como
    divida tecnica "adiavel". A fase de higiene arquitetural sem divida nova foi
-   executada e ficou documentada em `docs/arquitetura/17-architecture-hygiene-plan.md`.
+   executada e ficou documentada em `docs-legada/17-architecture-hygiene-plan.md`.
    Daqui para frente, novas features grandes so devem entrar mantendo os
    guardrails: `Main.qml` composition root, controllers/stores por dominio,
    roteadores IPC por dominio e `CoreClient` como fachada QML unica com
@@ -600,7 +600,7 @@ mudou:
 
    **Atualizacao CODEX 2026-07-06 (higiene arquitetural finalizada):** a fase
    sem divida nova foi executada e documentada em
-   `docs/arquitetura/17-architecture-hygiene-plan.md`. Estado final validado:
+   `docs-legada/17-architecture-hygiene-plan.md`. Estado final validado:
    `Main.qml` ficou com **336 linhas**, sem `ListModel`, `Connections`,
    `Shortcut`, `Timer`, helper de dominio ou componente visual pesado
    embutido. O host visual central do workspace virou
@@ -635,7 +635,7 @@ mudou:
    **Regra daqui para frente:** a fase nao deixa divida tecnica conhecida
    nessa frente. Nova feature deve manter o fluxo `QML visual ->
    controller/store -> CoreClient facade -> handler IPC interno -> Rust core`.
-   Se algum arquivo passar dos limites de `docs/arquitetura/17-architecture-hygiene-plan.md`
+   Se algum arquivo passar dos limites de `docs-legada/17-architecture-hygiene-plan.md`
    ou misturar renderizacao, estado e IPC, a feature so esta pronta depois do
    split.
 
@@ -655,7 +655,7 @@ mudou:
       `docs/arquitetura/ARCHITECTURE.md`: tipos em `kinein-protocol`, handler fino,
       servico de dominio no core, testes, docs/arquitetura/03 atualizado e UI por
       controller/roteador/componente visual. Operacao longa deve ser job.
-   4. [em andamento] Seguir `docs/diario/18-daily-driver-plan.md` (criado 2026-07-08
+   4. [em andamento] Seguir `docs-privada/diario/18-daily-driver-plan.md` (criado 2026-07-08
       a pedido do usuario: rigor maior + virar daily driver o quanto antes).
       Marco corrente: **M1 — edicao diaria confortavel**.
       Fatia M1.1 (formatacao orquestrada) FEITA em 2026-07-09.
@@ -664,7 +664,7 @@ mudou:
       (inclusive limpeza de spans na troca de aba, ao contrario da suspeita
       inicial); o gap real era so o mapa de kinds do EditorHighlighter, que
       descartava lifetime, selfKeyword, typeAlias, const, boolean, character,
-      generic, builtinType, etc. Design/decisoes: docs/diario/18, "Fatia M1.2".
+      generic, builtinType, etc. Design/decisoes: docs-privada/diario/18, "Fatia M1.2".
       Fatia M1.3 (code actions / quick fixes) FEITA em 2026-07-09:
       Alt+Enter abre popup de acoes no cursor (lsp.codeActions com context de
       diagnostics cacheado no core; so acoes com edit inline), Enter/clique
@@ -673,33 +673,33 @@ mudou:
       em disco via stdio). Bonus da fatia: didChange/didOpen agora pulam
       sync quando o conteudo nao mudou (hash por documento) — corrige a
       invalidacao dos fix-its do clangd e corta didChange redundante de todo
-      hover/completion. Design: docs/diario/18, "Fatia M1.3".
+      hover/completion. Design: docs-privada/diario/18, "Fatia M1.3".
       Fatia M1.4 (go-to-symbol) FEITA em 2026-07-09: no Search Everywhere,
       "@" lista/filtra simbolos do arquivo atual (documentSymbol, achatado
       com containers) e "#nome" busca simbolos do workspace
       (workspace/symbol no servidor do arquivo ativo). Aceitar salta para
-      linha/coluna. Validada e2e com rust-analyzer real. Design: docs/diario/18,
+      linha/coluna. Validada e2e com rust-analyzer real. Design: docs-privada/diario/18,
       "Fatia M1.4".
       Fatia M1.5 (sessao por workspace) FEITA em 2026-07-09: reabrir o mesmo
       root restaura abas e aba ativa (.kinein/session.json, schemaVersion 1,
       caminhos relativos em disco/absolutos no IPC, arquivos mortos
       filtrados); a UI salva com debounce de 1.2s no EditorController e
       restaura pedindo a aba ativa por ultimo. Validada e2e com dois
-      processos do core. Design: docs/diario/18, "Fatia M1.5".
+      processos do core. Design: docs-privada/diario/18, "Fatia M1.5".
       Fatia M1.6 (ergonomia de editor) FEITA em 2026-07-09 — fatia 100% UI,
       sem mudanca de protocolo: Ctrl+D duplica linha/selecao, Alt+Shift+
       cima/baixo move bloco de linhas, Ctrl+/ comenta/descomenta (token vem
       da linguagem do highlighter; json/plain e no-op), Ctrl+Y deleta linha,
       Ctrl+G abre dialogo "linha[:coluna]" pre-preenchido. Operacoes no
       EditorTextController via remove/insert (undo nativo preservado).
-      Design: docs/diario/18, "Fatia M1.6".
+      Design: docs-privada/diario/18, "Fatia M1.6".
       **M1 FECHADO em 2026-07-09**: as 6 fatias funcionais + a C0 (auditoria
       formal de convergencia visual — resultado completo com referencias de
       spec em docs/roadmaps/20, areas A-H). Existe um **MANUAL.md** na raiz para
       usuarios/testers (uso, funções, atalhos e troubleshooting dentro da
       IDE) — manter atualizado a cada fatia que mudar UX. Distribuição,
       instalação e geração do executável ficam em `Tutorial.md`.
-      **M2 estruturado em docs/diario/18** (ordem: M2.1 terminal unificado ->
+      **M2 estruturado em docs-privada/diario/18** (ordem: M2.1 terminal unificado ->
       M2.2 CMake -> M2.3 Cargo -> M2.4 run configs -> M2.5 debugger DAP).
       DECISAO DO USUARIO (2026-07-09): as abas "Executar" e "Terminal"
       viram UMA aba Terminal (backends continuam separados; superficie
@@ -720,7 +720,7 @@ mudou:
       RuntimeController), Shift+F10 abre direto na Execucao, Alt+F12 no
       Shell, chip da Execucao e rotulo da aba mostram "●" com processo
       vivo, botao "limpar" zera so a sessao ativa, foco automatico por
-      sessao. A atual seção 5 do MANUAL documenta o fluxo. Design: docs/diario/18,
+      sessao. A atual seção 5 do MANUAL documenta o fluxo. Design: docs-privada/diario/18,
       "Fatia M2.1".
       Fatia M2.2 (CMake service) FEITA em 2026-07-09, protocolo 0.25.0:
       cmake.configure como job (file-api query + CDB exportada, preset
@@ -750,7 +750,7 @@ mudou:
       config ativa > heuristica. C3: o TopHeaderBar VIROU a Main Toolbar
       da spec (44px, botoes 32px, ordem [Run Config][Configurar so
       cmake][Build][Testes][Analise][>]) — interpretacao registrada em
-      docs/diario/18: regiao 1 (Title/App Bar) so nasce na C5; Target/Profile
+      docs-privada/diario/18: regiao 1 (Title/App Bar) so nasce na C5; Target/Profile
       selectors e botao Debug entram com as fatias que os alimentam.
       Seletor com dropdown (Automatico|configs|Nova/Editar/Excluir) e
       RunConfigDialog no ShellOverlays. Validada e2e (config persiste
@@ -813,7 +813,7 @@ mudou:
       DISCO (buffer nao salvo nao aparece — attach de buffer e melhoria
       futura com gatilho). Sonda e2e G4/G5 provou hunks e untracked.
       Trilha E (fluxo de digitacao profissional, pedido do usuario)
-      estruturada em docs/diario/18: E1 auto-close de pares → E2 Enter
+      estruturada em docs-privada/diario/18: E1 auto-close de pares → E2 Enter
       inteligente → E3 polimento; executar ENTRE fatias do M3.
       Fatia E1 FEITA em 2026-07-09 (junto da M3.2): auto-close de
       ( [ { " ' com type-over, surround da selecao, backspace de par
@@ -833,7 +833,7 @@ mudou:
       AST); Home/Shift+Home alternam primeiro-texto ↔ coluna 0.
       Logica no EditorTextController (sonda Qt Quick, 35 casos verdes),
       Surface so emite sinais. Descobertas (read-back do select, degrau
-      de span de linhas) e design: docs/diario/18, "Fatia E3".
+      de span de linhas) e design: docs-privada/diario/18, "Fatia E3".
       Fatia M3.3 FEITA em 2026-07-09, protocolo 0.32.0: git.stage/
       unstage/discard/commit, todas respondendo o shape do git.status
       (um caminho so de atualizacao na UI); commit staged-only com
@@ -844,7 +844,7 @@ mudou:
       Radar registrado (pedido do usuario): "pequenas coisas" acumuladas
       = fluidez (principio na trilha E) e fatia futura "auto-setup ao
       abrir projeto pronto" (cmake.configure automatico no open sem
-      .kinein/build; reconfigure ao salvar CMakeLists; docs/diario/18).
+      .kinein/build; reconfigure ao salvar CMakeLists; docs-privada/diario/18).
       Roadmap de longo horizonte M4-M7 escrito em 2026-07-09 em
       **docs/roadmaps/21-long-horizon-roadmap.md** (pedido do usuario: qualidade
       de handoff para sessoes futuras sem prompt profissional; inclui o
@@ -867,7 +867,7 @@ mudou:
       [Mudancas|Historico] (chips), commit clicado reusa o
       GitDiffDialog. Bug de passagem: closeDiffDialog nao limpa mais a
       lista (isso e do clear/troca de workspace). Sonda e2e G11-G18 com
-      git real. Design: docs/diario/18, "Fatia M3.4".
+      git real. Design: docs-privada/diario/18, "Fatia M3.4".
       Fatia T1 FEITA em 2026-07-10, protocolo 0.34.0 (primeira da
       trilha T, docs/roadmaps/21): lsp.switchSourceHeader { path, content } ->
       { path? } via a extensao do clangd; gate de linguagem no core
@@ -877,7 +877,7 @@ mudou:
       novo de abertura). Sonda e2e com clangd real (header<->source +
       sem par). RADAR aberto: falta primitiva de "aviso discreto"
       (toast) na UI — switch sem par so nao navega hoje. Design:
-      docs/diario/18, "Fatia T1".
+      docs-privada/diario/18, "Fatia T1".
       **M3 validado tecnicamente (gate verde + sondas e2e); falta o
       teste de USO real do usuario (blame/historico/switch e digitacao
       da trilha E lado a lado com VS Code/CLion).**
@@ -893,7 +893,7 @@ mudou:
       o mesmo lspDiagnostics). Aba Problemas mostra o code por linha.
       Validada e2e com clangd E rust-analyzer reais. Design/descobertas
       (setFormat substitui formato; reatividade via revision; tooltip
-      proprio sem QtQuick.Controls): docs/diario/18, "Fatia T6". Pendente:
+      proprio sem QtQuick.Controls): docs-privada/diario/18, "Fatia T6". Pendente:
       validacao visual do usuario (R7) do squiggle/gutter.
       REGRA DO USUARIO reforcada nesta fatia: a experiencia de
       diagnostico deve ser JetBrains — erro na hora no codigo E na aba
@@ -911,7 +911,7 @@ mudou:
       docs/05 (sem cor nova); variaveis seguem quase-brancas. Confirmado
       por leitura + sonda que AUTOCOMPLETE LSP (C/C++ e Rust) JA existe
       e funciona (dispara sozinho, Tab/Enter aceita) e clangd/rust-
-      analyzer JA estao prontos. Design/descobertas: docs/diario/18, "Fatia
+      analyzer JA estao prontos. Design/descobertas: docs-privada/diario/18, "Fatia
       CR1". Pende validacao visual/digitacao do usuario.
       RADAR (pedido do usuario, registrado): a "inteligencia" de
       cout << e de sugerir bibliotecas apos #include < deve vir do
@@ -933,7 +933,7 @@ mudou:
       (sonda com XDG_CONFIG_HOME isolado: persistencia global/workspace
       entre processos). ARMADILHA: `cargo test`/gate NAO recompilam
       target/debug/kinein-core — rodar `cargo build -p kinein-core`
-      antes de sondas e2e. Design: docs/diario/18, "Fatia M4.1".
+      antes de sondas e2e. Design: docs-privada/diario/18, "Fatia M4.1".
       **T4 (cargo check no save) — DESCOBERTA 2026-07-11: JA ENTREGUE
       pelo rust-analyzer.** Sonda provou: `fs.write` ja manda `did_save`
       ao LSP (fs.rs:243) e o rust-analyzer roda `cargo check` no save
@@ -961,7 +961,7 @@ mudou:
       em 4s pausa); emit recovered() -> UI re-sincroniza o LSP do arquivo
       ativo. Validado com kill -9 real (reconecta com tabs=1). Falta
       parte B (lsp.restart + auto-restart) e C (jobs orfaos) = fatia
-      M4.3b. Design: docs/diario/18 "Fatia M4.3".
+      M4.3b. Design: docs-privada/diario/18 "Fatia M4.3".
       **M4.5 (perfis de rigor Strict/Balanced/Relaxed) FEITA em
       2026-07-11, protocolo 0.38.0:** um setting (extensao da M4.1) que
       regula O QUE A IDE RODA NO PROJETO DO USUARIO (quality.run/build.run
@@ -977,7 +977,7 @@ mudou:
       serializa o mapa inteiro). Validada e2e (sonda_m45.py: default
       strict -> global relaxed vira efetivo -> workspace vence -> persiste
       em disco). C++ CMake `-Werror` por perfil fica FORA (gatilho: pedido
-      real; perfil so afeta Rust no v1). Design: docs/diario/18 "Fatia M4.5".
+      real; perfil so afeta Rust no v1). Design: docs-privada/diario/18 "Fatia M4.5".
       **M4.2 (orcamento de performance) FEITA em 2026-07-11, protocolo
       INALTERADO:** medicao 100% local (offscreen + stdio + /proc, ZERO
       telemetria/rede). `scripts/medir-performance.sh` (+ `medir-core.py`)
@@ -991,7 +991,7 @@ mudou:
       indexando o repo, nao memoria do Kinein). Orcamento (mediana+folga,
       regressao=bug) na tabela do docs/roadmaps/21 M4.2; latencia de digitacao
       ficou MANUAL (precisa injecao de tecla na GUI). Descoberta: fs.read
-      de .rs ja dispara did_open -> LSP sobe sozinho. Design: docs/diario/18
+      de .rs ja dispara did_open -> LSP sobe sozinho. Design: docs-privada/diario/18
       "Fatia M4.2".
       **M4.3b (lsp.restart + jobs orfaos) FEITA em 2026-07-11, protocolo
       0.39.0 — FECHA o M4.3 e o MARCO M4.** Parte B: LspManager conta
@@ -1004,7 +1004,7 @@ mudou:
       limitado (500ms) mata cargo/cmake/lldb no shutdown (core.shutdown,
       EOF da UI morta, unwind) — sem orfaos. Sonda sonda_m43b.py provou:
       lsp.restart devolve restarted:[rust]; build.run + core.shutdown NAO
-      deixa cargo orfao. Design: docs/diario/18 "Fatia M4.3b".
+      deixa cargo orfao. Design: docs-privada/diario/18 "Fatia M4.3b".
       **Estado do M4: FECHADO. M4.1 (Settings), M4.2 (performance), M4.3
       A+B (robustez de crash/LSP/jobs) e M4.5 (perfis de rigor) FEITOS; T4
       fora da fila (flycheck ja entrega). M4.4 (First Run) adiado pelo
@@ -1353,7 +1353,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 - Qualquer entrega futura do código a terceiros deve usar uma cópia sanitizada
   gerada do repositório privado. A cópia leva o código do projeto e, entre
   Markdown, somente `README.md`, `MANUAL.md` e `Tutorial.md`; excluir
-  ContextoIA, PONTO_ATUAL, GUIAIA, AGENTS, `docs/`, `prompts/`, specs,
+  ContextoIA, PONTO_ATUAL, GUIAIA, AGENTS, `docs/`, `docs-privada/prompts/`, specs,
   roadmaps e demais notas de agentes. Implementar exportador allowlist com
   dry-run, recusa de Markdown extra e auditoria de segredos antes de entregar
   ou criar um espelho. A entrega não inclui `.git/` nem o histórico privado; um
@@ -2199,7 +2199,7 @@ aceita ate o usuario abrir a GUI e conferir contra as specs.
 ## "KV Context" vira "Assistente", e ele ganha aba propria (2026-07-17)
 
 - Rename fechado (§0.2d-2). Nome do autor: **Assistente**. Foi ate os internos e
-  os docs vivos; `ContextoIA.md`, `docs/diario/` e ADR-0004 ficaram com o nome da
+  os docs vivos; `docs-privada/ContextoIA.md`, `docs-privada/diario/` e ADR-0004 ficaram com o nome da
   epoca de proposito — sao LOG, e reescreve-los faria o registro mentir.
 - **Duas armadilhas que sed cego teria causado.** O `KvIcon.qml` usa `context`
   como variavel do Canvas 2D (`context.moveTo`): so `case "context":` era o
@@ -2412,3 +2412,56 @@ ESCOPO em 2026-07-17. Zero chamadores.
 `rust-toolchain.toml` fixa `1.96.1`. Baixava uma toolchain que ninguem usa e
 deixava a de verdade para o primeiro `cargo build` — exatamente a "surpresa
 offline" que o bloco dizia evitar. Agora le o canal do TOML.
+
+## As tres arvores de documentacao e o gate de links (2026-08-29)
+
+Decisao do autor: separar a documentacao em `docs/` (lida em toda sessao),
+`docs-privada/` (continuidade interna) e `docs-legada/` (superado/cancelado),
+**com a regra de que uma sessao le `docs/` e mais nada**.
+
+**Isto contraria uma decisao registrada, e por isso fica registrado aqui.** Em
+2026-07-05 a `docs/archive/` foi removida com a regra "nao recriar uma pasta de
+arquivo so para guardar". Aquela decisao continua certa para o que ela era:
+deposito de material historico que documento ativo nenhum referenciava. O caso
+de agora e' outro, e e' pior — havia **2380 linhas em duas specs COMPLETAS**
+(`ASSISTANT_AI_ASSISTANCE`, `AI_CLI_BRIDGE_EXTERNAL_TERMINAL`) descrevendo
+painel de IA, chat, seletor de agente e aba dedicada, tudo **cancelado em
+2026-07-17**, morando dentro de `docs/specs/`. O aviso `⛔ FORA DE ESCOPO` no
+topo de cada uma nao segura ninguem: quem chega pelo indice ou pelo grep nao le
+o topo. Deletar perderia o registro da decisao de produto — que e' a parte cara;
+o "o que" se reescreve numa tarde, o "por que nao" nao. A terceira saida e'
+separar a arvore, com criterio ESTREITO: **so entra o que uma sessao poderia
+confundir com alvo.**
+
+Foram legados 6 itens (as 2 specs de IA + o SVG do KV Context, o
+`17-architecture-hygiene-plan` — fase concluida cujos numeros envelheceram 3,4x
+e enganaram uma sessao — e o `PLANO_ORGANIZACAO_E_HANDOFF`, que descreve o
+estado ANTERIOR a reorganizacao de 2026-07-16). Antes de legar o handoff, as
+faixas P/T/X foram EXTRAIDAS para `docs/README.md`, seguindo a propria regra de
+2026-07-05: extrair o que tem valor, depois arquivar.
+
+Para `docs-privada/` foram o `ContextoIA.md` (este arquivo), o `diario/` e os
+`prompts/`. Mover o log para fora da arvore de leitura e' a decisao de
+2026-07-17 (rebaixar o log na precedencia) levada ate o fim: quem so quer
+trabalhar nao passa mais por 2414 linhas de registro datado; quem precisa do
+"por que" vem aqui de proposito.
+
+**Gate novo: `scripts/verificar-links-docs.sh`.** `git mv` nao atualiza link
+nenhum, e este repositorio ja moveu documentacao por `git mv` uma vez
+(2026-07-16: 21 arquivos, 410 referencias reescritas a mao) e moveu de novo
+agora. Link morto em Markdown nao tem compilador: o gate fica verde e o proximo
+a ler conclui que o documento nao existe. Foi testado por mutacao (apontar um
+link do `docs/README.md` para arquivo inexistente reprova) ANTES de a
+reorganizacao comecar — foi ele que guiou os 5 links que a mudanca quebrou.
+
+Efeito colateral util: o gate expos que o `GUIAIA.md` ainda chamava o
+`ContextoIA.md` de "estado real" em 4 lugares — descricao derrubada em
+2026-07-17 e que sobreviveu 6 semanas dentro do mapa que as sessoes usam para se
+orientar. Corrigido no mesmo gesto.
+
+**Tambem nesta data:** `docs/LEITURA_TECNICA.md`, pedido pelo autor como
+"leitura tecnica e explicita do projeto" para dar direcao. Classe ESTADO, todo
+numero medido e datado. Ele responde numa leitura o que hoje exige abrir dez
+documentos, e o achado mais acionavel que ele expoe e' medido: **`terminal.rs`
+e' o maior arquivo do core (1374 linhas), o maior debito da catraca, e o unico
+dominio grande com ZERO teste de integracao** — nao existe `tests/terminal.rs`.

@@ -3,6 +3,40 @@
 Este índice organiza a documentação técnica do projeto por assunto e define a
 ordem de precedência quando houver conflito entre documentos.
 
+## As três árvores (2026-08-29)
+
+**Uma sessão de trabalho lê `docs/` e mais nada.** Esta pasta é auto-suficiente
+para trabalhar no projeto: contrato, estado, plano, specs, build e segurança.
+
+```text
+docs/            LIDA EM TODA SESSAO. Contrato + estado + plano + specs.
+                 Se algo e' necessario para trabalhar, mora aqui.
+
+docs-privada/    Material interno de CONTINUIDADE, nao de trabalho: o log
+                 datado (ContextoIA), o diario de sessoes e os prompts de
+                 bootstrap. Consulta-se sob demanda para responder "por que
+                 isto ficou assim?" — nunca para descobrir "o que existe".
+
+docs-legada/     Superado ou CANCELADO. Nao e' plano, nao e' estado, nao e'
+                 contrato. Fica para nao perder o registro de uma decisao —
+                 e para que ninguem reimplemente o que foi cancelado.
+```
+
+**Por que `docs-legada/` existe, sendo que `docs/archive/` foi removida em
+2026-07-05.** A remoção daquela pasta foi certa para o que ela era: material
+histórico que documento ativo nenhum referenciava. O caso de agora é outro e é
+pior — há documentos **grandes, completos e persuasivos** de features
+**canceladas** (a linha inteira de IA na IDE: 2380 linhas em duas specs) que uma
+sessão nova encontra dentro de `docs/specs/` e lê como alvo. Deletar perderia o
+registro de uma decisão de produto; deixar em `docs/specs/` é convidar a
+reimplementação. A terceira saída é separar a árvore. **Decisão explícita do
+autor em 2026-08-29**, registrada aqui porque contraria uma decisão anterior
+registrada — que é como este repositório muda de regra.
+
+Regra de mão única: **um documento entra em `docs-legada/` e não volta.** Se
+algo lá dentro voltar a valer, o conteúdo é extraído para o documento vivo
+relevante; o arquivo legado permanece onde está, como registro.
+
 ## Ordem de precedência
 
 ```text
@@ -19,7 +53,7 @@ ordem de precedência quando houver conflito entre documentos.
 ### As quatro classes de volatilidade
 
 Este eixo é **ortogonal** às faixas P/T/X (audiência) de
-`PLANO_ORGANIZACAO_E_HANDOFF.md`. Ele responde outra pergunta: *"se este arquivo
+`docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md`. Ele responde outra pergunta: *"se este arquivo
 envelhecer, o que acontece?"*
 
 | Classe | Regra | O que acontece se envelhecer | Onde |
@@ -27,9 +61,9 @@ envelhecer, o que acontece?"*
 | **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `AGENTS.md`, `arquitetura/ARCHITECTURE.md` §2/§4/§5, `adr/` |
 | **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `PONTO_ATUAL.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
 | **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `docs/specs/`, `docs/roadmaps/` |
-| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `ContextoIA.md`, `diario/`, `adr/` |
+| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `docs-privada/ContextoIA.md`, `diario/`, `adr/` |
 
-### Por que o `ContextoIA.md` saiu de "estado real" (2026-07-17)
+### Por que o `docs-privada/ContextoIA.md` saiu de "estado real" (2026-07-17)
 
 Ele estava em **primeiro** nesta lista, descrito como *"estado real e decisões
 vigentes"*. Ele é um **log append-only** com 44 entradas datadas, e o próprio
@@ -77,8 +111,14 @@ docs/
 ├── integracoes/   como adicionar/escalar uma integração ("Plugins")
 ├── adr/           decisões arquiteturais registradas
 ├── tooling/       registro auditável de componentes open-source
-├── iconografia/   sistema visual, ícones de arquivo e da árvore
-└── diario/        registro de sessões (material interno; não publicado)
+└── iconografia/   sistema visual, ícones de arquivo e da árvore
+
+docs-privada/
+├── ContextoIA.md  log datado (por que), nunca estado (o que existe)
+├── diario/        registro de sessões
+└── prompts/       bootstrap de retomada em terminal
+
+docs-legada/       superado ou cancelado; não implementar a partir daqui
 ```
 
 ## Público × interno
@@ -96,6 +136,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 
 | Documento | Assunto |
 | --- | --- |
+| [LEITURA_TECNICA.md](LEITURA_TECNICA.md) | **Comece por aqui se você é novo no projeto**: o que a IDE é e não é, o peso medido de cada camada, o que existe de verdade por domínio, onde a arquitetura está sob tensão e o que a direção escolhida custa |
 | [CONTRIBUINDO.md](CONTRIBUINDO.md) | **Onde olhar para alterar/implementar**: arquitetura, mapa por área, ambiente, ritual da mudança, gate e convenções |
 | [integracoes/README.md](integracoes/README.md) | **Entrada obrigatória para adotar qualquer ferramenta**: modos A–D, gate de auditoria, níveis L0–L10, checklist de 10 passos e o índice do que já está adotado |
 
@@ -109,7 +150,6 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [arquitetura/06-strict-mode.md](arquitetura/06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
 | [arquitetura/15-engineering-debt-and-refactor.md](arquitetura/15-engineering-debt-and-refactor.md) | Dívida técnica e modularização |
 | [arquitetura/16-hidden-risks-checklist.md](arquitetura/16-hidden-risks-checklist.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
-| [arquitetura/17-architecture-hygiene-plan.md](arquitetura/17-architecture-hygiene-plan.md) | Higiene arquitetural e concentrações a eliminar |
 | [arquitetura/19-architecture-tradeoffs.md](arquitetura/19-architecture-tradeoffs.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
 | [arquitetura/27-modulos-por-dominio.md](arquitetura/27-modulos-por-dominio.md) | **PROPOSTA** — módulos por domínio (front + back), catraca no core e fronteira do subsistema opcional (simulador OpenGL) |
 
@@ -156,7 +196,6 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | Sistema visual / iconografia | [specs/KINEIN_VECTIS_VISUAL_SYSTEM_ICONS.md](specs/KINEIN_VECTIS_VISUAL_SYSTEM_ICONS.md) |
 | Build / Run / Debug | [specs/KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md](specs/KINEIN_VECTIS_PRODUCT_FLOWS_BUILD_RUN_DEBUG.md) |
 | Editor / Language Intelligence | [specs/KINEIN_VECTIS_EDITOR_LANGUAGE_INTELLIGENCE.md](specs/KINEIN_VECTIS_EDITOR_LANGUAGE_INTELLIGENCE.md) |
-| IA externa (AI CLI Bridge) | [specs/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md](specs/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md) |
 | Configuration Actions | [specs/KINEIN_VECTIS_SCOPED_CONFIGURATION_ACTIONS_DOC_LINKS.md](specs/KINEIN_VECTIS_SCOPED_CONFIGURATION_ACTIONS_DOC_LINKS.md) |
 | Fechamento / MVP / Performance | [specs/KINEIN_VECTIS_FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST.md](specs/KINEIN_VECTIS_FINALIZATION_MVP_ROADMAP_POLISH_CHECKLIST.md) |
 
@@ -169,12 +208,6 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | [adr/ADR-0003-linuxdeploy-appimage-packaging.md](adr/ADR-0003-linuxdeploy-appimage-packaging.md) | Empacotamento AppImage, pins, baseline Linux e auditoria |
 | [adr/ADR-0004-alacritty-terminal-emulator.md](adr/ADR-0004-alacritty-terminal-emulator.md) | Adoção do `alacritty_terminal` como motor de emulação VT |
 | [tooling/OPEN_COMPONENT_REGISTRY.json](tooling/OPEN_COMPONENT_REGISTRY.json) | Registro auditável de componentes open-source adotados |
-
-## diario/ — registro de sessões (interno)
-
-| Documento | Assunto |
-| --- | --- |
-| [diario/18-daily-driver-plan.md](diario/18-daily-driver-plan.md) | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. É registro de processo, não contrato — o contrato vive em `arquitetura/`. |
 
 ## iconografia/ — sistema visual e ícones
 
@@ -194,13 +227,48 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | [../Tutorial.md](../Tutorial.md) | Distribuição, checksum, instalação, atualização e geração do AppImage |
 | [../COMO_EXECUTAR.md](../COMO_EXECUTAR.md) | Como executar a IDE pelo checkout (ícone/launcher) |
 
-Documentos de continuidade operacional — `../GUIAIA.md`, `../ContextoIA.md`,
-`../PONTO_ATUAL.md`, `../AGENTS.md` e `../prompts/` — são material interno de
-desenvolvimento e não integram a documentação pública.
+Documentos de continuidade operacional — `../GUIAIA.md`, `../PONTO_ATUAL.md`,
+`../AGENTS.md` e as árvores `../docs-privada/` e `../docs-legada/` — são
+material interno de desenvolvimento e não integram a documentação pública.
 
-## Sem pasta de arquivo morto
+## docs-privada/ — continuidade interna (não é leitura de sessão)
+
+| Documento | Assunto |
+| --- | --- |
+| [../docs-privada/ContextoIA.md](../docs-privada/ContextoIA.md) | **LOG datado.** Responde "por que isto é assim?"; nunca "o que existe hoje?" |
+| [../docs-privada/diario/18-daily-driver-plan.md](../docs-privada/diario/18-daily-driver-plan.md) | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. Registro de processo, não contrato |
+| [../docs-privada/prompts/](../docs-privada/prompts/) | Prompts de bootstrap para retomada em terminal |
+
+## docs-legada/ — superado ou cancelado (não implementar a partir daqui)
+
+| Documento | Por que saiu de `docs/` |
+| --- | --- |
+| [../docs-legada/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md](../docs-legada/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md) | ⛔ Linha de IA na IDE **cancelada** pelo autor em 2026-07-17 |
+| [../docs-legada/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md](../docs-legada/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md) | ⛔ Idem — o `aiBridge` foi removido do código no protocolo 0.59.0 |
+| [../docs-legada/17-architecture-hygiene-plan.md](../docs-legada/17-architecture-hygiene-plan.md) | Fase concluída em 2026-07-06. Os números envelheceram 3,4x e enganaram uma sessão; os guardrails vivos estão em `arquitetura/ARCHITECTURE.md` §4 |
+| [../docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md](../docs-legada/PLANO_ORGANIZACAO_E_HANDOFF.md) | Descreve o estado **anterior** à reorganização de 2026-07-16, executada. O que continua valendo (faixas P/T/X) foi extraído para cá — ver abaixo |
+
+### Extraído do handoff antes de legar: as faixas P/T/X
+
+O eixo de **audiência** citado na tabela de volatilidade continua valendo e não
+depende mais daquele documento:
+
+```text
+P  PUBLICO   entregue a terceiros. Hoje: README.md, MANUAL.md, Tutorial.md.
+T  TECNICO   quem compila/altera o projeto. Hoje: docs/ inteira.
+X  INTERNO   continuidade do autor e das sessoes. Hoje: docs-privada/,
+             GUIAIA.md, PONTO_ATUAL.md, AGENTS.md.
+```
+
+O eixo P/T/X responde *"quem pode ler?"*; as quatro classes de volatilidade
+respondem *"o que acontece se envelhecer?"*. São ortogonais: um documento
+TÉCNICO pode ser CONTRATO (`ARCHITECTURE.md`) ou PLANO (`docs/specs/`).
+
+## Sem pasta de arquivo morto "só para guardar"
 
 `docs/archive/` foi removido deliberadamente em 2026-07-05: era material
-histórico que nenhum documento ativo referenciava mais como fonte. Não recriar
-uma pasta de arquivo "só para guardar"; se algo for descontinuado, extrair o que
-ainda tiver valor para o documento relevante e então remover.
+histórico que nenhum documento ativo referenciava mais como fonte. Essa regra
+continua: **não existe pasta de depósito.** `docs-legada/` não é depósito — é
+uma lista curta, curada e justificada de documentos que uma sessão poderia
+confundir com alvo. Se algo for descontinuado e ninguém puder se enganar com
+ele, extraia o que tiver valor e **remova**; legar é para o que engana.

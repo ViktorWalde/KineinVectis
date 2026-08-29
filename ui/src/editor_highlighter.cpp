@@ -507,7 +507,7 @@ void EditorHighlighter::applyStdlibOverride(const QString& text)
 {
     // O clangd marca cout/cin/cerr/clog como "variable" (quase branco);
     // este conjunto icônico de streams merece destaque como callable da
-    // stdlib. Único override PÓS-semantic de propósito (docs/diario/18, CR1).
+    // stdlib. Único override PÓS-semantic de propósito (docs-privada/diario/18, CR1).
     if (m_language != QStringLiteral("cpp")) {
         return;
     }

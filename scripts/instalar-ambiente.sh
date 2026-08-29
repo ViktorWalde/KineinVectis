@@ -6,7 +6,7 @@
 #   scripts/instalar-ambiente.sh              # instala o conjunto base
 #   scripts/instalar-ambiente.sh --extras     # + shellcheck e cargo-deny
 #                                             #   (degraus da escada de rigor,
-#                                             #   docs/diario/18-daily-driver-plan.md)
+#                                             #   docs-privada/diario/18-daily-driver-plan.md)
 #   scripts/instalar-ambiente.sh --dry-run    # so mostra o que seria executado
 #
 # Distros suportadas: Arch/CachyOS (pacman, alvo principal), Debian/Ubuntu/

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2 de docs/diario/18).
+# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2 de docs-privada/diario/18).
 #
 # ZERO telemetria/rede: mede via stdio (core) e /proc, imprime uma tabela e
 # sai. Roda quando o dev quiser; o orcamento (numeros-alvo) vive no docs/roadmaps/21.

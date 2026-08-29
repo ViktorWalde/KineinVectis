@@ -63,6 +63,7 @@ scripts/verificar-cpp.sh                     # clang-format + clang-tidy
 scripts/verificar-qml.sh                     # qmllint estrito
 scripts/verificar-qml-fiacao.sh              # binding auto-referente `x: x`
 scripts/verificar-docs.sh                    # numero sem data que mente
+scripts/verificar-links-docs.sh              # link de documentacao morto
 scripts/verificar-arquitetura.sh             # catraca da regra de split
 scripts/verificar-transicao-workspace.sh     # estado por-workspace com um dono
 scripts/verificar-qml-logica.sh              # controllers QML headless

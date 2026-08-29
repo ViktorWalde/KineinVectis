@@ -67,15 +67,18 @@ ALLOWED_MD="README.md MANUAL.md Tutorial.md"
 
 # ------------------------------------------------------------------ denylist
 # Caminhos que nao podem aparecer NEM COMO NOME na copia. Sao a camada pessoal
-# (faixa X do PLANO_ORGANIZACAO_E_HANDOFF.md) e o material interno de engenharia.
+# (faixa X, definida em docs/README.md) e o material interno de engenharia.
+#
+# As tres arvores de documentacao sao TODAS internas: `docs/` e' faixa T
+# (tecnica, para quem compila) e `docs-privada/`/`docs-legada/` sao faixa X.
+# Publico e' so o que estiver em ALLOWED_MD.
 DENY="
-ContextoIA.md
 PONTO_ATUAL.md
 GUIAIA.md
 AGENTS.md
-PLANO_ORGANIZACAO_E_HANDOFF.md
 docs
-prompts
+docs-privada
+docs-legada
 imagens/bugs
 .claude
 .codex

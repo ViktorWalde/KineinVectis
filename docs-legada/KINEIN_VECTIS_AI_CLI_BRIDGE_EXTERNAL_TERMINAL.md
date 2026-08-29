@@ -46,7 +46,7 @@
 > nenhuma IDE profissional faz e o que fazia a ferramenta se comportar de um
 > jeito dentro da Kinein e de outro fora dela. O sintoma aparecia atribuído ao
 > painel; a causa era o caminho especial somado a um emulador raso (ver
-> [ADR-0004](../adr/ADR-0004-alacritty-terminal-emulator.md)).
+> [ADR-0004](../docs/adr/ADR-0004-alacritty-terminal-emulator.md)).
 >
 > **O modelo correto, agora implementado:** uma CLI de IA é **um programa como
 > outro qualquer**. Mesmo `terminal.open`, mesmo PTY, mesmo emulador, mesmo

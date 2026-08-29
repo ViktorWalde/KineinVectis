@@ -3,7 +3,7 @@
 > **Status:** ativo
 > **Prioridade:** referência permanente (ler antes de decisão estrutural)
 > **Fonte de verdade:** o *porquê* das decisões. O *como* está em
-> `docs/arquitetura/ARCHITECTURE.md`; o *o quê/quando* em `docs/diario/18-daily-driver-plan.md`
+> `docs/arquitetura/ARCHITECTURE.md`; o *o quê/quando* em `docs-privada/diario/18-daily-driver-plan.md`
 > e `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md`; o visual-alvo em `docs/specs/`
 > **Ultima revisao:** 2026-07-09
 
@@ -23,12 +23,12 @@ copy e comportamento visual seguem estritamente os `.md` de `docs/specs/`
 (entrada: `KINEIN_VECTIS_SPEC_INDEX.md`). Funcionalidade pode ser fatiada,
 adiada ou simplificada; o visual **não se inventa nem se "melhora" de
 passagem** — divergência de spec é bug ou tarefa explícita com o usuário
-ciente. (Já registrado em `ContextoIA.md` e `AGENTS.md`; reafirmado aqui em
+ciente. (Já registrado em `docs-privada/ContextoIA.md` e `AGENTS.md`; reafirmado aqui em
 2026-07-09.)
 
 ## Requisitos funcionais (resumo por área)
 
-Detalhe e sequência vivem em `docs/diario/18` (marcos M0–M4) e no roadmap; aqui só
+Detalhe e sequência vivem em `docs-privada/diario/18` (marcos M0–M4) e no roadmap; aqui só
 o mapa com estado em 2026-07-09:
 
 ```text
@@ -74,7 +74,7 @@ RNF6 Portabilidade: Linux-first, agnóstico de distro (Arch é o alvo
      caminho hardcoded de distro em código.
 RNF7 Performance percebida: startup rápido (LSP/ferramentas sob demanda,
      nunca no boot da UI); highlight semântico assíncrono com debounce.
-     Orçamento formal de medição entra no M4 (docs/diario/18).
+     Orçamento formal de medição entra no M4 (docs-privada/diario/18).
 RNF8 UX: memória muscular JetBrains (atalhos/fluxos) + visual dos specs.
 ```
 
@@ -149,7 +149,7 @@ controllers; eventos em `ipc/*`; `CoreClient` fachada única (docs/arquitetura/1
 
 ### D7. Formatação: ferramenta direta, síncrona, sobre o buffer (M1.1)
 
-Registrado em detalhe em `docs/diario/18` (design M1.1). Resumo do trade-off:
+Registrado em detalhe em `docs-privada/diario/18` (design M1.1). Resumo do trade-off:
 independência de LSP vivo e zero side effect em disco, ao custo de manter
 seleção de formatter por extensão no core.
 
@@ -160,7 +160,7 @@ seleção de formatter por extensão no core.
 - **Custo aceito:** fricção por entrega (minutos de gate completo); recusas
   do clippy pedantic exigem justificar exceções raras.
 - **Revisitar:** relaxar exige motivo registrado (AGENTS.md); a direção
-  preferida é subir degraus (docs/diario/18, escada de rigor).
+  preferida é subir degraus (docs-privada/diario/18, escada de rigor).
 
 ### D9. Testes: comportamento no core; UI sem harness automatizado (hoje)
 
@@ -214,5 +214,5 @@ Decisão de 2026-07-09, confirmada com o usuário. Plano vinculante completo
 2. Custo aceito começou a doer de verdade (medido, não intuído)? Esse é o
    gatilho: reabrir a decisão numa fatia própria, nunca "de passagem".
 3. Requisito novo (funcional ou não) primeiro ganha linha aqui; depois
-   vira fatia em docs/diario/18.
+   vira fatia em docs-privada/diario/18.
 ```
