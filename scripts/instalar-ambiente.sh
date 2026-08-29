@@ -37,6 +37,14 @@ for arg in "$@"; do
     esac
 done
 
+# O rustup instala em ~/.cargo/bin e so mexe no PERFIL do shell — o shell atual
+# nao ve nada ate reabrir. Sem isto a verificacao final diz "FALTA cargo" numa
+# maquina onde o cargo esta instalado, que e' pior que nao verificar.
+if [ -d "$HOME/.cargo/bin" ]; then
+    PATH="$HOME/.cargo/bin:$PATH"
+    export PATH
+fi
+
 executar() {
     echo "+ $*"
     if [ "$DRY_RUN" -eq 0 ]; then
@@ -97,11 +105,19 @@ instalar_debian() {
 }
 
 instalar_fedora() {
+    # `rustup` da distro so entra se ainda nao houver um no PATH: quem ja
+    # instalou pelo rustup.rs (em ~/.cargo/bin) acabaria com dois gerenciadores
+    # disputando o mesmo ~/.rustup.
+    pacotes_rust="rustup rust-analyzer"
+    if command -v rustup >/dev/null 2>&1; then
+        pacotes_rust="rust-analyzer"
+    fi
+    # shellcheck disable=SC2086
     executar sudo dnf install -y \
         @development-tools git cmake ninja-build \
         clang clang-tools-extra lldb gdb \
         qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel \
-        rustup rust-analyzer \
+        $pacotes_rust \
         ripgrep fd-find
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo dnf install -y ShellCheck
@@ -129,7 +145,7 @@ esac
 # verdade para o primeiro `cargo build` baixar, justamente o que ele promete
 # evitar.
 # ---------------------------------------------------------------------------
-RAIZ_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RAIZ_REPO="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 CANAL_RUST="$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' \
     "$RAIZ_REPO/rust-toolchain.toml" | head -n1)"
 if [ -z "$CANAL_RUST" ]; then
@@ -139,11 +155,15 @@ fi
 
 if command -v rustup >/dev/null 2>&1 || [ "$DRY_RUN" -eq 1 ]; then
     executar rustup toolchain install "$CANAL_RUST"
-    executar rustup component add --toolchain "$CANAL_RUST" rustfmt clippy
+    # `rust-analyzer` entra como COMPONENTE, e nao so como pacote de distro: o
+    # do rustup e' casado com a toolchain fixada, e o proxy `~/.cargo/bin/
+    # rust-analyzer` existe mesmo sem o componente — um `command -v` sozinho
+    # diria "ok" para um binario que nao roda.
+    executar rustup component add --toolchain "$CANAL_RUST" rustfmt clippy rust-analyzer
 else
     echo "aviso: rustup ainda nao esta no PATH; instale-o e rode:" >&2
     echo "       rustup toolchain install $CANAL_RUST" >&2
-    echo "       rustup component add --toolchain $CANAL_RUST rustfmt clippy" >&2
+    echo "       rustup component add --toolchain $CANAL_RUST rustfmt clippy rust-analyzer" >&2
 fi
 
 # ---------------------------------------------------------------------------
@@ -154,6 +174,17 @@ echo "== verificacao =="
 faltando=0
 for ferramenta in git cmake ninja gcc g++ clang clang++ clangd clang-format \
     clang-tidy gdb lldb lldb-dap rustup cargo rustc rustfmt rust-analyzer rg; do
+    # `rust-analyzer` e' proxy do rustup: existe no PATH mesmo sem o componente.
+    # Achar o arquivo nao prova nada; rodar prova.
+    if [ "$ferramenta" = "rust-analyzer" ]; then
+        if rust-analyzer --version >/dev/null 2>&1; then
+            echo "  ok      rust-analyzer"
+        else
+            echo "  FALTA   rust-analyzer (proxy existe, componente nao)"
+            faltando=1
+        fi
+        continue
+    fi
     if command -v "$ferramenta" >/dev/null 2>&1; then
         echo "  ok      $ferramenta"
     else
@@ -175,12 +206,88 @@ else
     faltando=1
 fi
 
+# ---------------------------------------------------------------------------
+# Presets locais (`dev-local*`).
+#
+# POR QUE ISTO ESTA AQUI (2026-08-29). `CMakeUserPresets.json` e' gitignorado —
+# certo, porque ele descreve ESTA maquina. O problema e' que o gate
+# (`scripts/verificar.sh`) usa `dev-local` por padrao e a documentacao mandava
+# "depois deste script, rode `cmake --preset dev-local`" — um preset que num
+# checkout novo NAO EXISTE. Resultado: `scripts/verificar.sh` completo falha
+# num ambiente recem-instalado, e nada explica por que. O bootstrap gera o
+# arquivo se ele faltar; se ja existir, nao encosta (e' arquivo do usuario).
+#
+# Os presets herdam os oficiais e desligam sanitizers/clang, seguindo o que o
+# COMO_EXECUTAR.md ja documentava para a maquina do autor. Quem quiser o rigor
+# maximo usa os presets oficiais direto:
+#   cmake --preset linux-clang-debug-strict
+# ---------------------------------------------------------------------------
+PRESETS_USUARIO="$RAIZ_REPO/CMakeUserPresets.json"
+echo ""
+echo "== presets locais =="
+if [ -e "$PRESETS_USUARIO" ]; then
+    echo "  ok      CMakeUserPresets.json ja existe (nao foi tocado)"
+elif [ "$DRY_RUN" -eq 1 ]; then
+    echo "+ gerar $PRESETS_USUARIO (dev-local, dev-local-release)"
+else
+    cat > "$PRESETS_USUARIO" <<'PRESETS'
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "dev-local",
+      "displayName": "Dev local (debug, sem sanitizers)",
+      "inherits": "linux-clang-debug-strict",
+      "binaryDir": "${sourceDir}/build/dev-local",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cc",
+        "CMAKE_CXX_COMPILER": "c++",
+        "KINEIN_ENABLE_SANITIZERS": "OFF"
+      }
+    },
+    {
+      "name": "dev-local-release",
+      "displayName": "Dev local (release)",
+      "inherits": "linux-clang-release-hardened",
+      "binaryDir": "${sourceDir}/build/dev-local-release",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cc",
+        "CMAKE_CXX_COMPILER": "c++"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "dev-local", "configurePreset": "dev-local" },
+    { "name": "dev-local-release", "configurePreset": "dev-local-release" }
+  ]
+}
+PRESETS
+    echo "  criado  CMakeUserPresets.json (dev-local, dev-local-release)"
+fi
+
+# `verificar-cpp.sh` le o compile_commands.json de build/linux-clang-debug-strict;
+# `verificar.sh` compila dev-local*. Sao TRES diretorios, e todos precisam existir
+# antes do gate completo passar.
+echo ""
+echo "== configuracao dos build dirs =="
+if [ "$faltando" -ne 0 ]; then
+    echo "  pulado (ambiente incompleto)"
+elif [ "$DRY_RUN" -eq 1 ]; then
+    echo "+ cmake --preset linux-clang-debug-strict"
+    echo "+ cmake --preset dev-local"
+    echo "+ cmake --preset dev-local-release"
+else
+    for preset in linux-clang-debug-strict dev-local dev-local-release; do
+        executar cmake -S "$RAIZ_REPO" --preset "$preset"
+    done
+fi
+
 echo ""
 if [ "$faltando" -eq 0 ]; then
     echo "ambiente completo. Proximos passos:"
 else
     echo "ambiente INCOMPLETO (itens FALTA acima). Apos resolver:"
 fi
-echo "  cmake --preset dev-local && cmake --preset dev-local-release"
-echo "  scripts/verificar.sh"
-echo "  scripts/instalar-atalho.sh   # atalho de desenvolvimento no menu"
+echo "  scripts/verificar.sh          # gate completo"
+echo "  scripts/instalar-atalho.sh    # atalho de desenvolvimento no menu"
