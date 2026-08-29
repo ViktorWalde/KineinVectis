@@ -19,14 +19,22 @@ reconfigurar (ver `docs-privada/ContextoIA.md`, seção "Ambiente revalidado").
 Toolchain definido em `rust-toolchain.toml`:
 
 ```bash
-rustup run stable cargo --version
-rustup run stable cargo kw-fmt
-rustup run stable cargo kw-check
-rustup run stable cargo kw-clippy
-rustup run stable cargo kw-test
+cargo --version
+cargo kw-fmt
+cargo kw-check
+cargo kw-clippy
+cargo kw-test
 ```
 
 Os aliases `kw-*` estão em `.cargo/config.toml`.
+
+> **Não use `rustup run stable`** (corrigido em 2026-08-29). O
+> `rust-toolchain.toml` fixa uma versão exata, e `rustup run stable` **força** o
+> canal `stable`, ignorando o pin: você rodaria o gate num compilador diferente
+> do que o projeto declara. Numa máquina onde só a toolchain fixada está
+> instalada — o caso depois do `instalar-ambiente.sh` — o comando simplesmente
+> falha com *"toolchain 'stable' is not installed"*. `cargo` puro já respeita o
+> arquivo: é o rustup que resolve o pin por você.
 
 ## C++/Qt/QML
 
@@ -66,11 +74,21 @@ vivem em `docs/roadmaps/21`, seção "M4.2". Detalhe do gancho `KINEIN_PERF_MARK
 (marker env-gated na `main.cpp`, sem efeito no uso normal): `docs-privada/diario/18`,
 "Fatia M4.2".
 
-## Estado observado no ambiente atual (Arch, 2026-07-08)
+## Estado observado no ambiente atual (Fedora 44, 2026-08-29)
 
-- Rust 1.96.1, rustfmt e clippy disponíveis via `rustup run stable`.
-- CMake 4.3.4 e Ninja disponíveis.
-- GCC 16.1.1; `clang++`, `clang-format`, `clang-tidy` e `clangd` 22.1.6
-  disponíveis no PATH.
-- Qt 6.11.1 em `/usr/lib` (qt6-base, qt6-declarative, qt6-tools).
-- Gate completo `scripts/verificar.sh` verde nesta máquina em 2026-07-08.
+A máquina trocou de distro de novo — era Arch em 2026-07-08. O registro
+anterior fica em `docs-privada/ContextoIA.md`; **este bloco descreve o ambiente
+de hoje**, e é o único que vale.
+
+- Fedora Linux 44 (Workstation), kernel 7.1.
+- Rust 1.96.1 (a toolchain fixada), rustfmt e clippy via `cargo` direto.
+- CMake e Ninja disponíveis; Clang 22 (`clang++`, `clang-format`, `clang-tidy`,
+  `clangd`), GCC, GDB, LLDB e `lldb-dap` no PATH.
+- `ripgrep` e `fd` no PATH; ShellCheck instalado.
+- Qt 6.11.1 **runtime** presente; os pacotes **`-devel` não estavam
+  instalados** — sem eles não há `qmllint` nem `qmake6`, e os gates
+  `verificar-cpp.sh`, `verificar-qml.sh` e `verificar-qml-logica.sh` não rodam.
+  É o que `scripts/instalar-ambiente.sh` resolve.
+- Gate Rust (`cargo fmt --check`, `test --workspace --all-features`,
+  `clippy -D warnings`) e os gates de documentação/arquitetura: verdes em
+  2026-08-29. Os gates de Qt: **não executados** nesta data, pelo motivo acima.

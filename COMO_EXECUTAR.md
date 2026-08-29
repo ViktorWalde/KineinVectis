@@ -89,9 +89,9 @@ cmake --build --preset dev-local
 ## Verificação rigorosa (antes de considerar algo pronto)
 
 ```bash
-rustup run stable cargo kw-fmt      # formatação Rust
-rustup run stable cargo kw-clippy   # lints Rust (zero warnings)
-rustup run stable cargo kw-test     # testes Rust
+cargo kw-fmt      # formatação Rust      (nao use `rustup run stable`: ele
+cargo kw-clippy   # lints Rust (0 warnings)  ignora o pin do rust-toolchain.toml)
+cargo kw-test     # testes Rust
 clang-format --dry-run --Werror ui/src/*.cpp ui/src/*.h   # formatação C++
 ```
 

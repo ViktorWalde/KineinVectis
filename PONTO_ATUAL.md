@@ -1039,7 +1039,21 @@ ABERTO     `fs.search` reporta no maximo 1 ocorrencia por linha; `fs.replace`
 ABERTO     `lang/positions.rs` fatia `&text[..byte]` sem checar fronteira de
            caractere. Hoje so recebe offset de no do tree-sitter (sempre em
            fronteira), mas e' panico latente num projeto que proibe panico.
+ABERTO     `terminal.rs` NAO tem teste de integracao. E' o maior arquivo do
+           core (1374 linhas), o maior debito da catraca e o unico dominio
+           grande sem `tests/terminal.rs`. Medido em 2026-08-29.
+ABERTO     `WorkspaceUiResetter` recebe `shellController` e nunca o usa —
+           fiacao morta no composition root, que ja esta em debito. Nao foi
+           tocado: os gates de QML nao rodavam na maquina daquela sessao.
 ```
+
+### 0.2l Reorganizacao documental em tres arvores (2026-08-29)
+
+`docs/` (lida em toda sessao) · `docs-privada/` (log, diario, prompts) ·
+`docs-legada/` (superado/cancelado). Regra: **uma sessao le `docs/` e mais
+nada**. Entrada de quem e' novo: `docs/LEITURA_TECNICA.md`. Gate novo
+`scripts/verificar-links-docs.sh`. Decisao e o conflito com a regra de
+2026-07-05 registrados em `docs/README.md` e no log.
 
 ### 0.2h Teste instável em `tools` (achado em 2026-07-16, RESOLVIDO em 2026-08-29)
 
