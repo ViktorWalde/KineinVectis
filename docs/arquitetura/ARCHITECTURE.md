@@ -428,6 +428,13 @@ Regras que mantêm isso saudável:
                                            2026-07-16 descobriu-se que 7 dos 14
                                            NAO conseguiam reprovar: `Qt.exit()`
                                            trunca em 8 bits (§1.3).
+    verificar-shell.sh         2026-08-29  os scripts sao 3.708 linhas e sao o
+      (shellcheck)                          que EXECUTA os outros gates; nada os
+                                            verificava. `${BASH_SOURCE[0]}` num
+                                            script `#!/bin/sh` PASSA no Fedora
+                                            (/bin/sh = bash) e quebra no Debian
+                                            (dash). Verde na maquina do autor,
+                                            quebrado na de qualquer outro.
     verificar-links-docs.sh    2026-08-29  `git mv` nao atualiza link nenhum. A
       (link morto)                          documentacao ja foi reorganizada por
                                             git mv uma vez (2026-07-16, 410
@@ -562,6 +569,28 @@ transacional quando ganharem preview/rollback.
   silêncio**. Já custou três fatias (`runConfigController` null, `onAgentChosen`
   no controller errado, `coreClient: coreClient` em 15 roteadores).
 ```
+
+### 8.1 A regra da reutilização
+
+Extraída em 2026-08-29 do `IMPLEMENTATION_TASKS` §4 antes de ele ir para
+`docs-legada/` — o documento envelheceu (é anterior ao nome atual do projeto),
+esta regra não.
+
+> **Toda feature nova deve reutilizar o sistema existente.**
+
+Não criar, salvo decisão explícita e registrada:
+
+```text
+novo cliente IPC;          novo protocolo paralelo;
+novo painel Problems;      novo executor de processo;
+novo LSP manager;          novo terminal paralelo.
+```
+
+A lista não é sobre economia de código: **sistema duplicado divide o lugar onde
+um bug pode estar.** Dois executores de processo significam duas políticas de
+cancelamento, e a que ninguém lembra de manter é a que vaza processo órfão.
+Quando um segundo mecanismo parecer necessário, a pergunta certa é o que falta
+no primeiro.
 
 ## 9. Critérios de aceite (checklist arquitetural)
 

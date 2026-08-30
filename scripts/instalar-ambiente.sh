@@ -158,6 +158,48 @@ if [ -z "$CANAL_RUST" ]; then
     exit 1
 fi
 
+# ---------------------------------------------------------------------------
+# rustup: INSTALAR, nao avisar.
+#
+# POR QUE ISTO MUDOU (2026-08-29). Este bloco antes so imprimia "instale-o e
+# rode..." quando o rustup nao estava no PATH. Num Debian/Ubuntu limpo — onde
+# nao existe pacote `rustup` — o script terminava dizendo "ambiente completo"
+# e o usuario ficava sem `cargo`. Um bootstrap que manda voce fazer o passo
+# central a mao nao e' bootstrap.
+#
+# Usa o instalador OFICIAL (https://rustup.rs), que e' o que a documentacao do
+# proprio projeto ja mandava usar no Debian. E' o UNICO ponto deste script que
+# baixa algo fora do gerenciador de pacotes; por isso ele anuncia a URL antes.
+#
+# SEM `--no-modify-path`: e' o padrao do rustup, e e' ele que acrescenta
+# `~/.cargo/bin` ao perfil do shell. Instalar com --no-modify-path e depois
+# esquecer de gravar a linha foi exatamente o defeito medido nesta data.
+if ! command -v rustup >/dev/null 2>&1 && [ "$DRY_RUN" -eq 0 ]; then
+    echo ""
+    echo "== rustup =="
+    echo "  nao encontrado. Instalando pelo instalador oficial:"
+    echo "    https://sh.rustup.rs"
+    instalador="$(mktemp)"
+    if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o "$instalador"; then
+        sh "$instalador" -y --profile minimal --default-toolchain none
+        rm -f "$instalador"
+        if [ -f "$HOME/.cargo/env" ]; then
+            # shellcheck disable=SC1091
+            . "$HOME/.cargo/env"
+        fi
+    else
+        rm -f "$instalador"
+        echo "erro: falha ao baixar o instalador do rustup." >&2
+        echo "      Sem rede? Instale manualmente e rode este script de novo:" >&2
+        echo "      https://rustup.rs" >&2
+        exit 1
+    fi
+elif ! command -v rustup >/dev/null 2>&1; then
+    echo ""
+    echo "== rustup =="
+    echo "+ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+fi
+
 if command -v rustup >/dev/null 2>&1 || [ "$DRY_RUN" -eq 1 ]; then
     executar rustup toolchain install "$CANAL_RUST"
     # `rust-analyzer` entra como COMPONENTE, e nao so como pacote de distro: o
@@ -166,6 +208,7 @@ if command -v rustup >/dev/null 2>&1 || [ "$DRY_RUN" -eq 1 ]; then
     # diria "ok" para um binario que nao roda.
     executar rustup component add --toolchain "$CANAL_RUST" rustfmt clippy rust-analyzer
 else
+    # So chega aqui se a instalacao acima falhou de um jeito que nao abortou.
     echo "aviso: rustup ainda nao esta no PATH; instale-o e rode:" >&2
     echo "       rustup toolchain install $CANAL_RUST" >&2
     echo "       rustup component add --toolchain $CANAL_RUST rustfmt clippy rust-analyzer" >&2
@@ -217,6 +260,16 @@ fi
 echo ""
 echo "== verificacao =="
 faltando=0
+# A lista abaixo = o que o `KNOWN_TOOLS` do core detecta (o painel Ferramentas
+# da IDE reporta exatamente isto) MAIS o que os gates exigem.
+#
+#   do core, e nao do gate:  claude, codex — CLIs de IA, opcionais. O core os
+#                            detecta como qualquer outra ferramenta; a IDE nao
+#                            depende deles (a linha de IA embutida saiu em
+#                            2026-07-17). Ficam fora daqui de proposito: um
+#                            bootstrap nao deve instalar CLI de IA de ninguem.
+#   do gate, e nao do core:  clang-format, clang-tidy — usados pelo
+#                            verificar-cpp.sh; o core nao os orquestra.
 for ferramenta in git cmake ninja gcc g++ clang clang++ clangd clang-format \
     clang-tidy gdb lldb lldb-dap rustup cargo rustc rustfmt rust-analyzer rg; do
     # `rust-analyzer` e' proxy do rustup: existe no PATH mesmo sem o componente.

@@ -1058,6 +1058,46 @@ ABERTO     `WorkspaceUiResetter` recebe `shellController` e nunca o usa —
            tocado: os gates de QML nao rodavam na maquina daquela sessao.
 ```
 
+### 0.2p Fechamento organizacional (2026-08-29, decidido pelo autor)
+
+```text
+IMPLEMENTATION_TASKS  -> docs-legada/. Nome anterior do projeto ("Kernwerk
+                         Studio") e as tarefas M1.1-M1.3 dele (modularizar
+                         lsp.rs, dividir o CoreClient, quebrar o Main.qml) JA
+                         FORAM EXECUTADAS. A regra duravel que ele carregava
+                         ("toda feature nova reutiliza o sistema existente" +
+                         a lista do que nao criar) foi EXTRAIDA para a
+                         ARCHITECTURE §8.1 antes de mover.
+
+arquitetura/27        -> cabecalho corrigido. Ele dizia "PROPOSTA, nada
+                         implementado" enquanto a §4.3 do MESMO arquivo dizia
+                         "APROVADA em 2026-07-16" e a catraca do core ja
+                         estava no gate. Agora declara: ENTREGUE (catraca no
+                         core), APROVADO (§4.3 opcao b) e ABERTO (Frente 1:
+                         <X>Domain na UI — o caminho para o Main.qml sair do
+                         debito, fatia PROPRIA).
+
+ADR-0005              -> as tres arvores de documentacao. E' a unica decisao
+                         da sessao que virou ADR: contraria uma decisao
+                         registrada (a remocao da docs/archive/ em 2026-07-05)
+                         e muda como toda sessao futura trabalha. Os gates
+                         NAO viraram ADR — a §4 regra 11 ja e' o registro
+                         canonico deles, e dois donos divergem.
+
+shellcheck no gate    -> `scripts/verificar-shell.sh`, sem catraca. Havia 7
+                         achados em 20 scripts: 3 reais corrigidos, 4 falsos
+                         positivos suprimidos COM o motivo escrito. 21
+                         scripts, zero achados.
+
+rustup                -> o `instalar-ambiente.sh` passou a INSTALAR o rustup
+                         pelo instalador oficial quando ele falta, em vez de
+                         so avisar. Num Debian limpo (sem pacote `rustup`) o
+                         script dizia "ambiente completo" e o usuario ficava
+                         sem `cargo`. E SEM `--no-modify-path`: e' o padrao do
+                         rustup que grava a linha no perfil, e foi justamente
+                         pular isso que criou o defeito do §0.2o.
+```
+
 ### 0.2o Ambiente instalado e o gate COMPLETO rodou (2026-08-29)
 
 Primeira execucao de `scripts/verificar.sh` **completo** nesta maquina (Fedora

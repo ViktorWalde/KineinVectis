@@ -154,7 +154,14 @@ done < "$LIST_FILE"
 [ "$secret_hits" = "0" ] && note "nenhum padrao de segredo encontrado"
 
 # Caminho absoluto da maquina do autor vazando na copia.
-home_leak="$(grep -rlI "/home/${USER}/" $(tr '\n' ' ' < "$LIST_FILE") 2>/dev/null | grep -v exportar-copia-limpa || true)"
+#
+# `xargs -0` com a lista separada por NUL, e nao word splitting de `$(tr)`: o
+# segundo quebra em caminho com espaco -- e um caminho que o grep nao le e' um
+# vazamento que a auditoria nao ve. Numa checagem de SEGREDO, falso negativo e'
+# o modo de falha caro.
+home_leak="$(tr '\n' '\0' < "$LIST_FILE" \
+    | xargs -0 grep -rlI "/home/${USER}/" 2>/dev/null \
+    | grep -v exportar-copia-limpa || true)"
 if [ -n "$home_leak" ]; then
     bad "caminho absoluto do autor vaza em: $(echo "$home_leak" | tr '\n' ' ')"
 fi

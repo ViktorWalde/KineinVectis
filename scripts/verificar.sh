@@ -34,6 +34,7 @@ preset_debug="${KINEIN_PRESET_DEBUG:-dev-local}"
 preset_release="${KINEIN_PRESET_RELEASE:-dev-local-release}"
 
 etapa=""
+# shellcheck disable=SC2154  # `estado` e' atribuido na 1a instrucao do trap.
 trap 'estado=$?; if [ "$estado" -ne 0 ]; then
     echo ""
     echo "✗ FALHOU em: ${etapa:-inicializacao} (exit $estado)"
@@ -53,6 +54,9 @@ cargo test --workspace --all-features
 
 passo "cargo clippy --workspace --all-targets --all-features -- -D warnings"
 cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+passo "scripts/verificar-shell.sh (shellcheck nos scripts do gate)"
+bash scripts/verificar-shell.sh
 
 passo "scripts/verificar-cpp.sh (clang-format + clang-tidy)"
 scripts/verificar-cpp.sh

@@ -294,10 +294,11 @@ FINAL_OUTPUT_FILE="$DIST_DIR/$OUTPUT_BASENAME"
 
 export APPIMAGE_EXTRACT_AND_RUN=1
 
-export QMAKE="$(
+QMAKE="$(
     command -v qmake6 ||
         command -v qmake
 )"
+export QMAKE
 
 export QML_SOURCES_PATHS="$REPO_ROOT/ui/qml"
 export PATH="$TOOLS_DIR:$PATH"

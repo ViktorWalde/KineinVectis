@@ -76,6 +76,8 @@ echo "   data      : $(date -Iseconds)"
 echo "   cpu       : $(awk -F: '/model name/{gsub(/^ +/,"",$2); print $2; exit}' /proc/cpuinfo)"
 echo "   nucleos   : $(nproc)"
 echo "   ram_gb    : $(awk '/MemTotal/{printf "%.1f", $2/1048576}' /proc/meminfo)"
+# /etc/os-release e' do sistema, nao do repositorio: nao ha o que seguir.
+# shellcheck disable=SC1091
 echo "   distro    : $(. /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || echo desconhecida)"
 echo "   kernel    : $(uname -r)"
 echo "   qt        : $( (qmake6 -query QT_VERSION 2>/dev/null || qmake -query QT_VERSION 2>/dev/null) || echo n/d)"
@@ -169,6 +171,8 @@ echo
 # nada — e o release que o usuario roda.
 echo "-- B/C/D2/A3.1/A3.3. Core (stdio: workspace.open, fs.read, RSS+LSP, sintaxe, rajada) --"
 core_out="$(python3 "$REPO_ROOT/scripts/medir-core.py" "$CORE_BIN" "$REPO_ROOT" "$N")"
+# Indenta uma saida MULTI-LINHA; `${var//x/y}` nao ancora por linha.
+# shellcheck disable=SC2001
 echo "$core_out" | sed 's/^/   /'
 echo
 

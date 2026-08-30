@@ -42,3 +42,4 @@ descontinuado e inofensivo se extrai e se remove.
 | `KINEIN_VECTIS_KV_CONTEXT_AI_ASSISTANCE.svg` | Diagrama do KV Context, construído e removido no mesmo dia | 2026-07-17 |
 | `17-architecture-hygiene-plan.md` | Fase concluída; os números envelheceram 3,4x e enganaram uma sessão. Guardrails vivos em `docs/arquitetura/ARCHITECTURE.md` §4 | 2026-07-06 |
 | `PLANO_ORGANIZACAO_E_HANDOFF.md` | Descreve o estado **anterior** à reorganização de 2026-07-16, já executada. As faixas P/T/X foram extraídas para `docs/README.md` | 2026-07-16 |
+| `KINEIN_VECTIS_IMPLEMENTATION_TASKS.md` | Nome anterior do projeto ("Kernwerk Studio"); as tarefas M1.1–M1.3 já foram executadas e a sequência foi substituída pelos roadmaps 21/24/28. A regra durável (reutilizar o sistema existente) foi extraída para `ARCHITECTURE.md` §8.1 | 2026-08-29 |

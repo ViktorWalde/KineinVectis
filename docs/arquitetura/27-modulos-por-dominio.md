@@ -1,7 +1,26 @@
 # 27 — Módulos por domínio: proposta de arquitetura (front + back)
 
-> **Status: PROPOSTA. Nada aqui foi implementado.** Escrita em 2026-07-16 a
-> pedido do autor, antes de mover arquivo. Requer aprovação.
+> **Status revisto em 2026-08-29 — o cabeçalho anterior mentia.** Ele dizia
+> "PROPOSTA, nada aqui foi implementado" enquanto a §4.3 do MESMO arquivo
+> registrava *"APROVADA pelo autor em 2026-07-16: (b)"* e a catraca do core já
+> estava no gate. Documento que se contradiz no topo não é proposta pendente: é
+> mapa desatualizado, e mapa desatualizado engana mais que a ausência de mapa
+> (`AGENTS.md`).
+>
+> ```text
+> ENTREGUE   Item 1 — a catraca cobre o core. `verificar-arquitetura.sh` varre
+>            `crates/` desde 2026-07-16; sao 7 arquivos do core na baseline.
+> APROVADO   §4.3, opcao (b), pelo autor em 2026-07-16: dividir a composicao
+>            por AREA, fazendo crescer a CONTAGEM de arquivos e nunca o limite.
+>            Virou a regra 8 da ARCHITECTURE §4.
+> ABERTO     Frente 1 (§4) — modulo por dominio na UI: um `<X>Domain` que
+>            instancia controller + EventRouter + RequestRouter. VERIFICADO
+>            ABERTO em 2026-08-29: nao existe `EditorDomain.qml` e o
+>            `AppDomains.qml` nao usa o padrao. E' o caminho para o `Main.qml`
+>            sair do debito, e e' fatia PROPRIA.
+> ```
+>
+> Escrito em 2026-07-16 a pedido do autor, antes de mover arquivo.
 >
 > Referências de arquitetura: VS Code, Zed e IntelliJ IDEA Community, em
 > **MODE-D** (referência apenas) — o padrão é aprendido, o código não entra.

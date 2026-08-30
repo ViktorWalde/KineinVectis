@@ -151,7 +151,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [arquitetura/15-engineering-debt-and-refactor.md](arquitetura/15-engineering-debt-and-refactor.md) | Dívida técnica e modularização |
 | [arquitetura/16-hidden-risks-checklist.md](arquitetura/16-hidden-risks-checklist.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
 | [arquitetura/19-architecture-tradeoffs.md](arquitetura/19-architecture-tradeoffs.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
-| [arquitetura/27-modulos-por-dominio.md](arquitetura/27-modulos-por-dominio.md) | **PROPOSTA** — módulos por domínio (front + back), catraca no core e fronteira do subsistema opcional (simulador OpenGL) |
+| [arquitetura/27-modulos-por-dominio.md](arquitetura/27-modulos-por-dominio.md) | Módulos por domínio. **Parcialmente entregue** (a catraca do core saiu daqui); resta a Frente 1 — `<X>Domain` na UI, o caminho para o `Main.qml` sair do débito |
 
 ## build/ — ambiente, compilação e verificação
 
@@ -207,6 +207,7 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | [adr/ADR-0002-tree-sitter-syntax-foundation.md](adr/ADR-0002-tree-sitter-syntax-foundation.md) | Adoção do Tree-sitter e fronteira com LSP |
 | [adr/ADR-0003-linuxdeploy-appimage-packaging.md](adr/ADR-0003-linuxdeploy-appimage-packaging.md) | Empacotamento AppImage, pins, baseline Linux e auditoria |
 | [adr/ADR-0004-alacritty-terminal-emulator.md](adr/ADR-0004-alacritty-terminal-emulator.md) | Adoção do `alacritty_terminal` como motor de emulação VT |
+| [adr/ADR-0005-tres-arvores-de-documentacao.md](adr/ADR-0005-tres-arvores-de-documentacao.md) | As três árvores (`docs/`, `docs-privada/`, `docs-legada/`) e por que contrariam a remoção da `docs/archive/` |
 | [tooling/OPEN_COMPONENT_REGISTRY.json](tooling/OPEN_COMPONENT_REGISTRY.json) | Registro auditável de componentes open-source adotados |
 
 ## iconografia/ — sistema visual e ícones

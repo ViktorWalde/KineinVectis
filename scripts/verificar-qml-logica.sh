@@ -15,7 +15,7 @@
 # Uso: bash scripts/verificar-qml-logica.sh
 set -uo pipefail
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 qml_runner="${KINEIN_QML_RUNNER:-}"
 if [ -z "$qml_runner" ]; then

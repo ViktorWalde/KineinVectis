@@ -459,12 +459,15 @@ KINEIN_VECTIS_IMPLEMENTATION_PLAN_UI_UX_ARCH_PERFORMANCE.md
   plano de implementacao: milestones e criterios de aceite de UI/UX,
   arquitetura, performance e memoria.
 
-KINEIN_VECTIS_IMPLEMENTATION_TASKS.md
-  plano de tarefas por prioridade/dependencia. ATENCAO: fala em
-  "Kernwerk Studio" e "proximos meses" — e' anterior ao nome atual, e a
-  sequencia dele foi substituida na pratica pelos roadmaps 21, 24 e 28.
-  Candidato a `docs-legada/`; decisao do autor pendente.
 ```
+
+O `KINEIN_VECTIS_IMPLEMENTATION_TASKS.md` **saiu de `docs/specs/`** em
+2026-08-29, por decisão do autor: fala em "Kernwerk Studio" (nome anterior do
+projeto), e as tarefas M1.1–M1.3 que ele propunha — modularizar `lsp.rs`,
+dividir o `CoreClient`, quebrar o `Main.qml` — **já foram executadas**. A
+sequência dele foi substituída pelos roadmaps 21, 24 e 28. Está em
+`docs-legada/`; a regra durável que ele carregava (reutilizar o sistema
+existente) foi extraída para `docs/arquitetura/ARCHITECTURE.md` §8.1.
 
 ---
 

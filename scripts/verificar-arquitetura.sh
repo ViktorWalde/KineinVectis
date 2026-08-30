@@ -16,7 +16,7 @@
 # Uso: bash scripts/verificar-arquitetura.sh
 #      bash scripts/verificar-arquitetura.sh --atualizar-baseline
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 
 BASELINE="scripts/arquitetura-baseline.txt"
 
