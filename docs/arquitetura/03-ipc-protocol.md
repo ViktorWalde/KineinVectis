@@ -1226,7 +1226,11 @@ git.stash { action: "push|pop", message? } → GitStatusResult
 
 - nomes de branch são validados antes de virar argumento; checkout/create e
   stash são recusados pela UI quando existem buffers sujos;
-- pull/push são jobs canceláveis e publicam saída/resultado pelo Job System;
+- pull/push são jobs canceláveis e publicam saída/resultado pelo Job System, e
+  o desfecho sai em **`event.git.remoteFinished { operation, success, message }`**
+  (documentado em 2026-08-29; o evento existia desde o `0.49.0` e era o único
+  dos 32 eventos do core que não estava neste contrato). A UI usa `operation`
+  para saber se foi `pull` ou `push` sem guardar o `jobId`;
 - stash push inclui untracked, limita-se ao workspace e exclui `.kinein`;
   pop restaura o stash mais recente;
 - todas as mutações síncronas devolvem o status inteiro para não duplicar

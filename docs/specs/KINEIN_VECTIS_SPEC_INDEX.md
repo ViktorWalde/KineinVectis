@@ -438,6 +438,36 @@ fonte de verdade para encerramento macro
 
 ---
 
+### 3.x Specs que estavam FORA deste índice (adicionadas em 2026-08-29)
+
+Medição de 2026-08-29: quatro specs de `docs/specs/` não apareciam neste índice.
+Três delas não eram citadas por **nenhum** documento do repositório — cerca de
+3.500 linhas invisíveis para quem navega pelo índice, que é o caminho que o
+`AGENTS.md` manda seguir. Não são canceladas (isso teria destino em
+`docs-legada/`); eram só inalcançáveis, o que na prática dá no mesmo.
+
+```text
+KINEIN_VECTIS_RESOURCE_ON_DEMAND_PERFORMANCE_STRATEGY.md          (Parte 10)
+  arquitetura orientada a demanda, LSP sob demanda, servicos ociosos,
+  modos de performance. Derruba a fronteira rigida de "2 GB" de RAM.
+
+KINEIN_VECTIS_RESOURCE_ON_DEMAND_INTELLIGENCE_REFACTORING_STRATEGY.md (10.1)
+  correcao/evolucao da Parte 10: inspecoes em tempo real, contexto
+  profundo de projeto e refatoracao progressiva.
+
+KINEIN_VECTIS_IMPLEMENTATION_PLAN_UI_UX_ARCH_PERFORMANCE.md
+  plano de implementacao: milestones e criterios de aceite de UI/UX,
+  arquitetura, performance e memoria.
+
+KINEIN_VECTIS_IMPLEMENTATION_TASKS.md
+  plano de tarefas por prioridade/dependencia. ATENCAO: fala em
+  "Kernwerk Studio" e "proximos meses" — e' anterior ao nome atual, e a
+  sequencia dele foi substituida na pratica pelos roadmaps 21, 24 e 28.
+  Candidato a `docs-legada/`; decisao do autor pendente.
+```
+
+---
+
 ## 4. Contradições corrigidas
 
 ### 4.1 IA embutida
