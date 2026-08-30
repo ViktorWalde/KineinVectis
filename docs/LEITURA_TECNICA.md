@@ -173,11 +173,26 @@ isso é demorado. O que isso significa em concreto:
   cobertura de teste é demo" é a formulação do próprio autor, e é o que põe
   L2–L4 antes de L5.
 
-## 7. Como verificar tudo que está escrito aqui
+## 7. Para onde o projeto vai
+
+A ordem das etapas até o MVP está em
+[roadmaps/30-caminho-para-o-mvp.md](roadmaps/30-caminho-para-o-mvp.md),
+decidida pelo autor em 2026-08-30 e medida item por item contra a spec de MVP:
+**19 dos 21 itens já existem**, 1 é item morto (a linha de IA, cancelada) e **1
+falta inteiro** — Configuration Actions. O resto da lista é dívida de
+honestidade e de hardening, não funcionalidade.
+
+Como o processo da UI e o do core conversam — boot, threads, ordem garantida,
+crash e recuperação — está em
+[arquitetura/04-boot-e-comunicacao.md](arquitetura/04-boot-e-comunicacao.md).
+
+## 8. Como verificar tudo que está escrito aqui
 
 ```bash
 scripts/instalar-ambiente.sh    # bootstrap: toolchain, Qt6, presets, build dirs
 scripts/verificar.sh            # o gate completo, para no primeiro erro
+python3 scripts/sonda_drafts.py    # rede de seguranca, contra o binario real
+python3 scripts/sonda_terminal.py  # terminal e2e: grid, resize, historico
 ```
 
 Nenhuma afirmação deste documento depende de acreditar nele: cada número sai de

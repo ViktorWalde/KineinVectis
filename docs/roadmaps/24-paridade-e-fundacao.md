@@ -330,10 +330,15 @@ Ctrl+letra, texto) → `terminal.input` bytes crus; calcula cols/rows do
 tamanho ÷ métrica mono e manda `terminal.resize`. Fiação:
 CoreClient(`terminalRender`/`terminalResize`) → RuntimeController → Shell/
 BottomPanelHost → TerminalPanel. Validação: gate/clippy/qmllint/smoke
-verdes; unit test (grid recebe o echo); sonda e2e `sonda_terminal.py`
-(comando aparece no grid; resize 100×30 reflete) — ⚠️ **essa sonda nunca foi
-commitada** (verificado em 2026-08-29); o que cobre isso hoje, de forma
-reproduzível, é `tests/terminal.rs`. Ajuste de lint:
+verdes; unit test (grid recebe o echo); sonda e2e
+`scripts/sonda_terminal.py` (comando aparece no grid; resize 100×30 reflete —
+e o **programa do outro lado do PTY** enxerga a largura nova, via `tput cols`,
+porque um reflow só do nosso lado seria cosmético). A sonda **nunca havia sido
+commitada** (verificado em 2026-08-29) e foi **reescrita em 2026-08-30**,
+provada por mutação: quebrar o resize do PTY derruba o check do `tput`, e
+zerar o `scroll_display` derruba os três checks de histórico. Complementam-na
+`tests/terminal.rs` (8 testes de integração) e `sonda_scrollback.py` (clamp do
+offset e multi-sessão). Ajuste de lint:
 `multiple_crate_versions` allow (bitflags 1.x transitivo do portable-pty).
 
 **[D2.2 FEITA] em 2026-07-12, protocolo 0.42.0.** Copiar/colar + scrollback.
@@ -342,9 +347,10 @@ UI: **colar** (Ctrl+Shift+V / clique-do-meio via singleton C++ `Clipboard`),
 **scrollback** (roda do mouse → `scroll`; snap-to-bottom ao digitar; cursor
 some quando rolado), **copiar** (seleção linear com o mouse — realce em até
 3 retângulos, Ctrl+Shift+C extrai o texto dos spans → `Clipboard`).
-Validação: gate/clippy/qmllint verdes; sonda `sonda_terminal.py` (comando
-no grid, resize 100×30, **scroll traz o início do histórico**); copiar/colar
-verificado por build (precisa de GUI+clipboard pra e2e). Nota: bin do core
+Validação: gate/clippy/qmllint verdes; sonda `scripts/sonda_terminal.py`
+(comando no grid, resize 100×30, **scroll traz o início do histórico** — ela
+rola até `scrollbackMax` e exige a PRIMEIRA linha da saída na tela);
+copiar/colar verificado por build (precisa de GUI+clipboard pra e2e). Nota: bin do core
 precisa de `cargo build` fresco antes das sondas (armadilha conhecida).
 
 **[D2.3 FEITA] em 2026-07-14, protocolo 0.44.0.** Cada `terminal.open` cria

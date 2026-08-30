@@ -107,15 +107,26 @@ segurança. Decisão do usuário (2026-07-11): persistência local com
 - [x] **P2.5** UI: `autosaveDebounce` (1.5s) → `draft.save`; `draft.clear`
       no `closeTab`; `draftsRecovered` → `restoreDrafts` (overlay do buffer
       na aba, marcada modificada).
-- [x] **P2.6** validação: gate/clippy/qmllint/smoke verdes.
-      ⚠️ **Ressalva registrada em 2026-08-29.** Este item citava uma sonda e2e
-      `sonda_drafts.py` (crash com SIGKILL → recupera; save limpa; escrita
-      atômica sem temp solto). **Esse arquivo nunca foi commitado** —
-      `git log --diff-filter=A` não devolve nada. A validação pode ter sido
-      feita com um script descartável, mas **não é reproduzível hoje**: ninguém
-      consegue re-rodar a prova do pilar 2. O que é reproduzível são os testes
-      de `db/mod.rs` e, desde 2026-08-29, os de transição de workspace e de
-      arquivo apagado em `tests/workspace.rs` e `tests/fs.rs`.
+- [x] **P2.6** validação: gate/clippy/qmllint/smoke verdes **e a sonda e2e
+      `scripts/sonda_drafts.py`**, que existe e roda (`python3
+      scripts/sonda_drafts.py`, exige `cargo build -p kinein-core` antes).
+      Ela prova, contra o binário real por stdio: crash com **SIGKILL** →
+      rascunho volta no `workspace.open` seguinte com o conteúdo não salvo;
+      salvar (`fs.write`) limpa a linha na store **na hora**; a barreira
+      compare-before-save recusa disco divergente; nenhum `.kinein-tmp-*` fica
+      para trás; rascunho de arquivo apagado é descartado.
+
+      **História deste item, registrada porque ela ensina.** Até 2026-08-30 ele
+      dizia "[x] validado e2e" citando uma `sonda_drafts.py` que **nunca foi
+      commitada** — um `[x]` apontando para artefato ausente, isto é, mentira.
+      A sonda foi **reescrita** em 2026-08-30 e o teste de mutação pagou na
+      hora: a primeira versão dela ficou **verde** com o
+      `clear_draft_after_save` destruído, porque olhava a resposta do
+      `workspace.open` — e o `recover_drafts` descarta sozinho o rascunho
+      idêntico ao disco, escondendo a linha órfã. A checagem certa é na
+      **store SQLite, no mesmo processo, antes de qualquer reabertura**.
+      Complementam-na os testes de `db/mod.rs`, `tests/workspace.rs` e
+      `tests/fs.rs`.
       **Pendente:** reescrever a sonda e commitá-la, ou rebaixar este item de
       `[x]` para `[ ]`. Um `[x]` que aponta para artefato ausente é a mesma
       mentira silenciosa que o `verificar-docs.sh` existe para impedir.
