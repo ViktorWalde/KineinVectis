@@ -1,8 +1,8 @@
 # Leitura técnica da Kinein Vectis
 
 > **Classe: ESTADO** (`docs/README.md`). Tem que ser verdade hoje. Todo número
-> aqui foi **medido em 2026-08-29** com a toolchain fixada, e está datado por
-> isso. Se divergir do código, o código vence e este documento se corrige no
+> aqui foi **medido em 2026-08-30** com a toolchain fixada e o gate completo
+> verde, e está datado por isso. Se divergir do código, o código vence e este documento se corrige no
 > mesmo gesto.
 >
 > **Para que serve:** dar em uma leitura o que hoje exige abrir dez documentos —
@@ -36,14 +36,14 @@ Qt/QML  ──── IPC JSON-RPC (stdio, uma linha por mensagem) ──── R
 
 | Camada | Linhas | Arquivos | O que carrega |
 | --- | ---: | ---: | --- |
-| `crates/kinein-core` | 24.758 | 93 | Toda a lógica: build, run, debug, LSP, git, terminal, fs, jobs |
+| `crates/kinein-core` | 25.823 | 96 | Toda a lógica: build, run, debug, LSP, git, terminal, fs, jobs |
 | `ui/qml` | 23.227 | 139 | Apresentação e estado visual |
-| `crates/kinein-protocol` | 3.832 | 22 | Os tipos do contrato, um módulo por domínio |
+| `crates/kinein-protocol` | 3.879 | 22 | Os tipos do contrato, um módulo por domínio |
 | `ui/src` (C++) | 4.115 | 21 | Ponte fina: `CoreClient`, realce, clipboard, chrome de janela |
-| `scripts/` | 3.708 | 23 | Gates, sondas, ambiente, packaging |
+| `scripts/` | 4.071 | 26 | Gates, sondas, ambiente, packaging |
 
-**O fato que mais surpreende quem chega:** a documentação tem **61.671 linhas em
-82 arquivos** — mais do que o core e a UI **somados**. Isso é uma escolha
+**O fato que mais surpreende quem chega:** a documentação tem **62.697 linhas em
+87 arquivos** — mais do que o core e a UI **somados**. Isso é uma escolha
 consciente (o projeto é conduzido por sessões que trocam de contexto), mas cobra
 um preço, e é a razão de existirem as três árvores e o gate de veracidade.
 
@@ -53,8 +53,8 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**109 métodos IPC** roteados, **16 domínios** no core, **355 testes** Rust
-verdes (medido em 2026-08-29).
+**109 métodos IPC** roteados, **17 domínios** no core, **378 testes** Rust
+verdes (medido em 2026-08-30). Protocolo `0.62.0`.
 
 Domínios do core, por profundidade real:
 
@@ -70,26 +70,32 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
             dap       sessao de debug; 4 testes de integracao
             db        rascunhos em SQLite (WAL); a rede de seguranca de dados
 
-FINO        terminal  1.374 linhas, o MAIOR arquivo do core, com 18 testes
-                      unitarios e ZERO teste de integracao (nao existe
-                      tests/terminal.rs). E' tambem o maior debito da catraca.
+            cdb       diagnostico da compilation database do C/C++: onde ela
+                      esta, se envelheceu e qual arquivo a invalidou (0.62.0)
+
+FINO        terminal  1.374 linhas, o MAIOR arquivo do core e o maior debito da
+                      catraca. Ganhou tests/terminal.rs em 2026-08-29 (8 testes,
+                      incluindo o CONTRATO do event.terminal.render); o SPLIT em
+                      quatro aguarda o aceite visual do autor.
             draft     handler sem arquivo de teste proprio; coberto de lado
-                      por tests/workspace.rs desde 2026-08-29
+                      por tests/workspace.rs e tests/fs.rs desde 2026-08-29
 ```
 
-**A assimetria acima é o achado mais acionável deste documento.** Terminal é o
-subsistema com mais linhas, mais estado mutável e mais superfície de regressão
-visual — e é o único domínio grande sem teste de integração.
+**O que mudou em 2026-08-29/30, e é o que destrava o resto:** o terminal deixou
+de ser o único domínio grande sem teste de integração. A rede veio **antes** do
+corte, de propósito — e provou o valor no dia seguinte, quando o upgrade do
+`portable-pty` (0.8 → 0.9, para sair de uma dependência abandonada desde 2017)
+passou sem uma única mudança nos testes.
 
 ## 4. Cinco fatos que mudam decisão
 
-**1. O gate é o produto, não cerimônia.** Nove verificações, e **cada uma nasceu
-de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §4 regra
+**1. O gate é o produto, não cerimônia.** **Treze** verificações, e **cada uma
+nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §4 regra
 11). Não se cria gate aqui por gosto de rigor; cria-se quando uma classe de erro
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
 provado, está sem evidência — por isso cada um é testado por mutação.
 
-**2. A catraca de arquitetura congela 23 arquivos e só deixa diminuir.** Ela não
+**2. A catraca de arquitetura congela 22 arquivos e só deixa diminuir.** Ela não
 é limite duro. O critério é **responsabilidade**; linhas são só o detector de
 fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de
@@ -104,7 +110,14 @@ bloqueia feature de terminal. Quem toca a área, paga a dela antes.
 pelo processo real. O padrão seguro deixou de depender de disciplina — antes
 disso, a suíte de testes apagou a lista de projetos recentes do autor.
 
-**5. Referência profissional é obrigatória e cópia é proibida.** Toda feature de
+**5. A cadeia de dependências é verificada, não afirmada.** Desde 2026-08-30 o
+`cargo-deny` está no gate: licenças restritas a permissivas (MIT, Apache-2.0,
+ISC, CC0-1.0, Unicode-3.0), advisories negados, origens conhecidas. A primeira
+execução achou uma dependência **abandonada desde 2017** no caminho do terminal.
+Ferramenta externa com licença copyleft (o GDB é GPL-3) é **executada como
+processo**, nunca linkada.
+
+**6. Referência profissional é obrigatória e cópia é proibida.** Toda feature de
 IDE exige estudar Code OSS, IntelliJ IDEA Community, Zed, Lapce ou NetBeans e
 **registrar** o que foi aprendido. Importa-se invariante, modo de falha e
 estratégia de teste; nunca código, runtime ou modelo interno.
@@ -118,10 +131,15 @@ parte; o resto é binding e bloco de host, que **é** trabalho de composition ro
 Chegar abaixo do limite exige módulos por domínio — decisão registrada como
 proposta em `arquitetura/27`, **não** implementada.
 
-**O core tem 16 handlers e um `lib.rs` de 503 linhas** (limite 500) que é só
-dispatch. O caminho previsto no contrato é `função → arquivo → pasta → crate`,
-com os nomes dos crates futuros já escolhidos. Nenhum foi criado ainda: hoje é
-um crate só, e isso está certo enquanto couber.
+**O core tem 17 handlers e um `lib.rs` de 361 linhas** (limite 500) — ele
+**saiu do débito em 2026-08-30**, quando ~140 linhas do domínio `tools` que
+moravam ali voltaram para `handlers/tools.rs`. Quem cobrou foi a catraca, ao
+reprovar UMA linha de outra fatia: a §4 regra 9 manda olhar a mudança, a
+categoria e o arquivo nessa ordem, e aqui o culpado era o terceiro.
+
+O caminho previsto no contrato é `função → arquivo → pasta → crate`, com os
+nomes dos crates futuros já escolhidos. Nenhum foi criado ainda: hoje é um crate
+só, e isso está certo enquanto couber.
 
 **A UI tem um padrão que o core não tinha.** `WorkspaceUiResetter` é dono único
 do "esqueça tudo do workspace anterior" — exatamente o padrão que faltava no core

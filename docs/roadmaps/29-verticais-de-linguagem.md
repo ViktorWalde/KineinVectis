@@ -249,10 +249,27 @@ Os quatro juntos são o que separa "funciona quando você sabe o que fazer" de
 
 ## 6. Sequência proposta, e a decisão que ela exige
 
-**Passo 0, sem decisão nenhuma — ligar o `cargo-deny` no gate.** Minutos. Fecha
-a única política de licença do projeto que hoje não é verificada (§3.3).
+**Passo 0 — ligar o `cargo-deny` no gate. ✅ FEITO em 2026-08-30** (§3.3).
 
-Depois, duas ordens defensáveis:
+**Decisão do autor em 2026-08-30: foco em C/C++ e Rust; Python fica para
+depois.** Isso resolve a tensão da §2 pela ORDEM A, e a exceção da gramática
+Tree-sitter de Python **não** foi tomada. Estado dos itens baratos:
+
+```text
+FEITO    diagnostico da CDB (§5a) — crates/kinein-core/src/cdb.rs, e
+         `cmake.status` com cdbDirectory/cdbStale/cdbStaleBecause. 0.62.0.
+FEITO    correcao do comentario errado sobre recarga de flags (§5b)
+ABERTO   REABRIR os documentos apos configure (§5b) — toca a UI
+         (EditorController reenviando didOpen) e aguarda o aceite visual do
+         terminal, porque mexe em camada ainda nao validada.
+ABERTO   aviso de CDB velha NA TELA (§5c) — o core ja reporta o `cdbStale`;
+         falta a UI usa-lo no aviso acionavel que o auto-configure ja tem.
+ETAPA    toolchain como entidade (§5d) — etapa PROPRIA, por decisao do autor.
+PROPRIA
+```
+
+As duas ordens abaixo ficam registradas para quando Python voltar à mesa:
+
 
 ```text
 ORDEM A (mantem a decisao de 2026-07-17: profundidade antes de superficie)

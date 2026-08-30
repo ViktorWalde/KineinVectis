@@ -2465,3 +2465,70 @@ numero medido e datado. Ele responde numa leitura o que hoje exige abrir dez
 documentos, e o achado mais acionavel que ele expoe e' medido: **`terminal.rs`
 e' o maior arquivo do core (1374 linhas), o maior debito da catraca, e o unico
 dominio grande com ZERO teste de integracao** — nao existe `tests/terminal.rs`.
+
+## Verticais de linguagem: os baratos de C/C++, e o que a pesquisa cancelou (2026-08-30)
+
+Decisao do autor: foco em **C/C++ e Rust**; Python fica para depois. O
+levantamento medido e com fontes citadas esta em
+`docs/roadmaps/29-verticais-de-linguagem.md`.
+
+**A pesquisa na fonte mudou a fatia ANTES de eu escrever codigo, duas vezes.**
+Vale registrar porque e' o AGENTS.md funcionando ("ao afirmar que uma API se
+comporta de tal forma, cite fonte e versao"):
+
+1. Eu ia construir "detectar `meson.build` e apontar o clangd para o build dir".
+   E' REDUNDANTE. O clangd ja procura `compile_commands.json` nos diretorios PAI
+   e em subdiretorios `build/` sozinho (https://clangd.llvm.org/installation).
+   Projeto Meson com `build/compile_commands.json` JA FUNCIONA hoje, sem uma
+   linha nossa. Meia fatia cancelada por 5 minutos de leitura.
+
+2. O comentario do nosso `lsp/server.rs` dizia "servidor ja em execucao nao
+   recarrega flags de arquivos abertos". Meio errado: o clangd TEM hot-reload da
+   CDB desde a v12, reconferindo a cada ~5s (https://reviews.llvm.org/D92663). O
+   que NAO atualiza e' o DOCUMENTO ja aberto, que fica com a compilacao em cache
+   (https://github.com/clangd/vscode-clangd/issues/42). Isso muda a acao certa da
+   IDE: REABRIR os documentos apos um configure, e nao reiniciar o servidor —
+   reiniciar joga o indice fora e custa muito mais.
+
+**O que a fatia virou:** nao roteamento, e sim DIAGNOSTICO. A IDE nunca dizia se
+havia CDB alcancavel, de onde veio, nem se envelheceu — projeto sem CDB da erro
+de include em tudo e a IDE fica muda. `crates/kinein-core/src/cdb.rs` responde
+isso, e NAO e' do dominio `cmake` de proposito: a pergunta vale para CMake,
+Meson, `bear` sobre Makefile e CDB escrita a mao, e pendurar no cmake obrigaria
+um ramo por build system — o oposto do que o `tools.rs` faz. Protocolo 0.62.0,
+com os tres campos OMITIDOS quando nao ha o que reportar (projeto sadio nao
+carrega ruido no fio, e cliente antigo le a resposta nova sem mudar uma linha).
+
+**cargo-deny no gate, e a primeira execucao pagou o dia.** O `deny.toml` existia
+com allowlist estreita e correta, e NADA o executava — a unica politica de
+licenca do projeto era regra que nao rodava, mesma forma da regra de split antes
+da catraca. Achou:
+
+- `serial` v0.4.0, ultima release em **2017-07-02**, unmaintained, chegando por
+  `portable-pty` 0.8.1 **no caminho do terminal**. O cargo-deny dizia "No safe
+  upgrade is available!"; a fonte dizia outra coisa — `portable-pty` 0.9.0
+  trocou `serial` por `serial2`. Subimos, e a arvore perdeu 5 crates. **Os 8
+  testes de integracao do terminal, escritos ONTEM, passaram sem uma mudanca.**
+  Foi a melhor prova possivel de que a rede vem antes do corte.
+- 3 licencas fora da allowlist (ISC, CC0-1.0), ambas permissivas e FSF Free: a
+  allowlist e' que estava estreita. Ampliada COM justificativa por licenca.
+- 2 wildcards, que eram as deps de path do proprio workspace. `publish = false`
+  destrava o lint e, alem disso, e' a verdade.
+
+**A catraca cobrou UMA linha, e o culpado nao era a mudanca.** O `pub mod cdb;`
+fez o `lib.rs` passar de 503 para 504. Aplicando a §4 regra 9 ("tres suspeitos:
+a sua mudanca, a categoria, o arquivo"), os dois primeiros estavam certos — e o
+`lib.rs` carregava ~140 linhas do dominio `tools`: o job de `environment.scan`
+inteiro, o registro compartilhado e tres helpers, num arquivo cuja
+responsabilidade escrita e' "SO struct Core, dispatch e erro do loop". Devolvidas
+para `handlers/tools.rs` (o par que a §5 prescreve e que faltava), o arquivo caiu
+para **361** e SAIU da baseline: 23 -> 22 arquivos em debito.
+
+Nao foi corte de linha para caber. Foi responsabilidade devolvida, e o arquivo
+encolheu 143 linhas sozinho. E' o caso em que o terceiro suspeito era mesmo o
+culpado, mas a correcao certa nao era "quebrar o lib.rs" e sim "tirar o que nao
+era dele".
+
+**Ressalva registrada:** o upgrade do `portable-pty` mexe na camada de PTY, e o
+terminal esta justamente aguardando aceite visual do autor. Foi commitado
+SEPARADO para poder ser revertido sozinho.

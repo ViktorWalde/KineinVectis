@@ -7,8 +7,9 @@ O ambiente local deve refletir o modo de segurança máximo do projeto.
 `scripts/instalar-ambiente.sh` instala todas as dependências abaixo com
 detecção de distro (pacman no Arch/CachyOS — alvo principal —, apt no
 Debian/Ubuntu, dnf no Fedora), aceita `--dry-run` (só mostra os comandos) e
-`--extras` (shellcheck + cargo-deny, degraus da escada de rigor de
-`docs-privada/diario/18-daily-driver-plan.md`), e termina verificando ferramenta por
+`--extras` (shellcheck, degrau da escada de rigor de
+`docs-privada/diario/18-daily-driver-plan.md`; o `cargo-deny` saiu de `--extras`
+em 2026-08-30 e virou dependência BASE, porque o gate passou a depender dele), e termina verificando ferramenta por
 ferramenta o mesmo conjunto que o ToolDetector do core reporta. Depois dele:
 `cmake --preset dev-local && cmake --preset dev-local-release` e
 `scripts/verificar.sh`. Lembrete: build dir de outra distro é lixo — apagar e

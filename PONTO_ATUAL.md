@@ -6,7 +6,7 @@
 >
 > **Estado implementado: o CÓDIGO — mede-se, não se lê.** O `docs-privada/ContextoIA.md` é
 > LOG datado e não responde "o que existe hoje" (rebaixado em 2026-07-17; ver
-> `docs/README.md`). Mapa: `GUIAIA.md`. Histórico: Git. Protocolo `0.61.0`.
+> `docs/README.md`). Mapa: `GUIAIA.md`. Histórico: Git. Protocolo `0.62.0`.
 >
 > Não alterar a UI fora das specs. Commits locais de checkpoint após marco
 > crítico/teste verde foram autorizados em 2026-07-15; push e publicação não
@@ -34,12 +34,18 @@ existia. Medir custa 30 segundos; reimplementar o que existe custa uma fatia.
 ### Onde o projeto está (tudo medido, nada herdado)
 
 ```text
-HEAD          189f450          protocolo 0.61.0        gate --rapido: VERDE
+protocolo     0.62.0           gate COMPLETO: VERDE em 2026-08-30, com os
+                               gates de C++/QML rodando pela 1a vez nesta
+                               maquina (Fedora 44)
+gates         13               cada um nascido de falha silenciosa (§4 r11)
+testes Rust   378              workspace inteiro, --all-features
 L0            FECHADO          A3.1-A3.4; typing_perf_harness.cpp existe,
                                mediana 7,4 ms / p95 8,4 ms (orcamento 16/20)
 cursor/TUI    APROVADO         pelo autor em 2026-07-17. Fecha R0-R3.
 IA na IDE     FORA DE ESCOPO   0 ocorrencias em ui/qml. Nao reabrir.
-debito        23 arquivos      catraca verde; 5 dos 10 god-files ja pagos
+debito        22 arquivos      catraca verde; o lib.rs SAIU do debito em
+                               2026-08-30 (504 -> 361, responsabilidade
+                               devolvida ao handlers/tools.rs)
 E1            FECHADO          2026-08-29, com teste de mutacao
 ```
 
@@ -1057,6 +1063,47 @@ ABERTO     `WorkspaceUiResetter` recebe `shellController` e nunca o usa —
            fiacao morta no composition root, que ja esta em debito. Nao foi
            tocado: os gates de QML nao rodavam na maquina daquela sessao.
 ```
+
+### 0.2q Verticais de linguagem: os baratos de C/C++ (2026-08-30)
+
+Foco reafirmado pelo autor: **C/C++ e Rust**; Python fica para depois. Plano
+medido e com fontes citadas em `docs/roadmaps/29-verticais-de-linguagem.md`.
+
+```text
+FEITO   cargo-deny no gate (`scripts/verificar-deny.sh`). O deny.toml existia e
+        NADA o executava. A 1a execucao achou:
+          - `serial` v0.4.0, ultima release 2017, unmaintained, chegando por
+            portable-pty 0.8.1 NO CAMINHO DO TERMINAL. Resolvido subindo para
+            portable-pty 0.9, que trocou por `serial2`. Os 8 testes de
+            integracao do terminal passaram sem mudanca — a rede provou o valor.
+          - 3 licencas fora da allowlist (ISC, CC0-1.0, ambas permissivas e FSF
+            Free). Allowlist ampliada COM justificativa por licenca.
+          - 2 wildcards: deps de path do workspace. Resolvido com
+            `publish = false`, que alem de destravar o lint e' a verdade.
+
+FEITO   diagnostico da CDB (`crates/kinein-core/src/cdb.rs`, protocolo 0.62.0).
+        `cmake.status` ganha cdbDirectory/cdbStale/cdbStaleBecause, OMITIDOS
+        quando nao ha o que reportar.
+
+FEITO   lib.rs saiu do debito: ~140 linhas do dominio `tools` voltaram para
+        `handlers/tools.rs`. 504 -> 361.
+
+ABERTO  reabrir documentos apos `cmake.configure`. E' o ultimo dos tres
+        baratos e toca a UI (EditorController reenviando didOpen). Aguarda o
+        aceite visual do terminal, porque mexe na camada nao validada.
+
+DEPOIS  toolchain como ENTIDADE (B2 do TR2). Etapa PROPRIA, por decisao do
+        autor. E' o item caro da §5 do roadmap 29.
+```
+
+**Correcao que a pesquisa na fonte trouxe, e vale mais que a fatia:** o
+comentario do `lsp/server.rs` afirmava que "servidor ja em execucao nao
+recarrega flags". Meio errado — o clangd TEM hot-reload da CDB desde a v12
+(reconfere a cada ~5s). O que nao atualiza e' o DOCUMENTO ja aberto. Logo a
+acao certa apos um configure e' REABRIR os documentos, nao reiniciar o
+servidor, que joga o indice fora. Tambem foi a pesquisa que cancelou meia
+fatia: "detectar meson.build e apontar o clangd" e' REDUNDANTE, porque o
+clangd ja procura em `build/` e nos diretorios pai sozinho.
 
 ### 0.2p Fechamento organizacional (2026-08-29, decidido pelo autor)
 

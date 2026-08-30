@@ -24,7 +24,12 @@ Regras:
 - `cargo fmt --check`.
 - `cargo test`.
 - `cargo clippy --all-targets --all-features -- -D warnings`.
-- auditoria de dependências com `cargo-deny`/`cargo-audit` futuramente.
+- **auditoria de dependências com `cargo-deny`: obrigatória no gate desde
+  2026-08-30** (`scripts/verificar-deny.sh`). Cobre licenças (só permissivas),
+  advisories (`RUSTSEC`), bans e origens. O `deny.toml` existia desde cedo e
+  ninguém o executava — a primeira execução achou 3 licenças fora da allowlist e
+  uma dependência abandonada desde 2017 no caminho do terminal. `cargo-audit`
+  fica coberto pelo `advisories` do próprio `cargo-deny`.
 
 Comandos:
 

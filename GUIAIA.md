@@ -468,7 +468,7 @@ ui/qml/shell/{RunConfigMenu,RunConfigDialog}.qml
 ui/qml/panels/bottom/{Build,Tests,Tools,Jobs,Problems}Panel.qml
 ui/qml/jobs/JobsController.qml + routers IPC
     ↕ crates/kinein-protocol/src/{cmake,cargo,build,job,tools,runconfig}.rs
-crates/kinein-core/src/handlers/{cmake,cargo,build,jobs,runconfig}.rs
+crates/kinein-core/src/handlers/{cmake,cargo,build,jobs,runconfig,tools}.rs
     → crates/kinein-core/src/{cmake,cargo,build,test,tools,runconfig}.rs
     → crates/kinein-core/src/jobs/* + process.rs
     → CMake, Ninja, Cargo, compilador, tidy ou Clippy externos
@@ -697,6 +697,9 @@ Alvos complementares:
 | LSP/KSWE | teste de core + fixture real + latência/cancelamento |
 | Filesystem/save | conflito externo + rollback + crash/draft |
 | Estado por-workspace no `Core` | trocar em `activate_workspace`/`deactivate_workspace` (`handlers/workspace.rs`) e em lugar nenhum mais + `bash scripts/verificar-transicao-workspace.sh` |
+| Dependência Rust nova | `bash scripts/verificar-deny.sh` — licença permissiva, sem advisory, origem conhecida. Licença fora da allowlist entra no `deny.toml` **com justificativa escrita**, nunca em silêncio |
+| Script novo ou alterado | `bash scripts/verificar-shell.sh` — supressão sempre com `# shellcheck disable=SCxxxx  # porque...` |
+| Inteligência de código C/C++ | `crates/kinein-core/src/cdb.rs` responde onde está a compilation database e se envelheceu. **Antes de propor detectar build system**, lembre que o clangd já procura em `build/` e nos diretórios pai sozinho |
 | Estado GLOBAL (fora do workspace) | a raiz vem de `Core::enable_persistence`, nunca deduzida no módulo — senão a suíte escreve no `~/.config` real |
 | Build/Run/Debug | processo real, cancelamento, output e ausência de órfão |
 | UI/layout | build Debug/Release + teste offscreen + aceite em tela real |

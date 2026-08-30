@@ -22,8 +22,11 @@ kinein-vectis/
 │   │       ├── rpc.rs           # JSON-RPC error responses + param parsing
 │   │       ├── commands.rs      # command.list descriptors
 │   │       ├── tools.rs process.rs build.rs test.rs run.rs terminal.rs  # domain services
+│   │       ├── cdb.rs           # diagnostico da compilation database do C/C++
 │   │       ├── handlers/        # request routers by domain (impl Core blocks)
 │   │       │   └── workspace.rs fs.rs lsp.rs syntax.rs git.rs run.rs terminal.rs build.rs
+│   │       │       tools.rs cmake.rs cargo.rs debug.rs draft.rs format.rs jobs.rs
+│   │       │       runconfig.rs settings.rs
 │   │       ├── lsp/             # LSP client subsystem
 │   │       │   └── mod.rs types.rs manager.rs server.rs framing.rs parse.rs transaction.rs
 │   │       ├── lang/            # Tree-sitter local, incremental e LSP-independent
