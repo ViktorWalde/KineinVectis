@@ -107,15 +107,25 @@ segurança. Decisão do usuário (2026-07-11): persistência local com
 - [x] **P2.5** UI: `autosaveDebounce` (1.5s) → `draft.save`; `draft.clear`
       no `closeTab`; `draftsRecovered` → `restoreDrafts` (overlay do buffer
       na aba, marcada modificada).
-- [x] **P2.6** validação: gate/clippy/qmllint/smoke verdes; sonda e2e
+- [x] **P2.6** validação: gate/clippy/qmllint/smoke verdes.
+      ⚠️ **Ressalva registrada em 2026-08-29.** Este item citava uma sonda e2e
       `sonda_drafts.py` (crash com SIGKILL → recupera; save limpa; escrita
-      atômica grava sem temp solto).
+      atômica sem temp solto). **Esse arquivo nunca foi commitado** —
+      `git log --diff-filter=A` não devolve nada. A validação pode ter sido
+      feita com um script descartável, mas **não é reproduzível hoje**: ninguém
+      consegue re-rodar a prova do pilar 2. O que é reproduzível são os testes
+      de `db/mod.rs` e, desde 2026-08-29, os de transição de workspace e de
+      arquivo apagado em `tests/workspace.rs` e `tests/fs.rs`.
+      **Pendente:** reescrever a sonda e commitá-la, ou rebaixar este item de
+      `[x]` para `[ ]`. Um `[x]` que aponta para artefato ausente é a mesma
+      mentira silenciosa que o `verificar-docs.sh` existe para impedir.
 - [x] sync docs: 03 (contrato `draft.*` + 0.40.0), 18 (ponteiro), MANUAL
       (nota da rede de segurança), ContextoIA (registro S1).
 
 ## Estado
 
-**FEITO (2026-07-11).** Os dois pilares entregues e validados e2e.
+**FEITO (2026-07-11), com uma ressalva de 2026-08-29:** os dois pilares estão
+entregues, mas a prova e2e do pilar 2 **não é reproduzível** — ver P2.6.
 Protocolo 0.40.0. O aviso discreto ("N recuperados") ficou como a própria
 marca de aba MODIFICADA (sem toast — primitiva de toast segue no radar).
 Próximo, conforme o usuário: **dogfooding**.

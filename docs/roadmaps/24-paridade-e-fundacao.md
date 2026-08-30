@@ -331,7 +331,9 @@ tamanho ÷ métrica mono e manda `terminal.resize`. Fiação:
 CoreClient(`terminalRender`/`terminalResize`) → RuntimeController → Shell/
 BottomPanelHost → TerminalPanel. Validação: gate/clippy/qmllint/smoke
 verdes; unit test (grid recebe o echo); sonda e2e `sonda_terminal.py`
-(comando aparece no grid; resize 100×30 reflete). Ajuste de lint:
+(comando aparece no grid; resize 100×30 reflete) — ⚠️ **essa sonda nunca foi
+commitada** (verificado em 2026-08-29); o que cobre isso hoje, de forma
+reproduzível, é `tests/terminal.rs`. Ajuste de lint:
 `multiple_crate_versions` allow (bitflags 1.x transitivo do portable-pty).
 
 **[D2.2 FEITA] em 2026-07-12, protocolo 0.42.0.** Copiar/colar + scrollback.
