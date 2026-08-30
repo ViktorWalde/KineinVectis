@@ -18,6 +18,7 @@ mod runconfig;
 mod runners;
 mod settings;
 mod syntax;
+mod terminal;
 mod tools;
 mod workspace;
 

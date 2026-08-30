@@ -1056,6 +1056,63 @@ ABERTO     `WorkspaceUiResetter` recebe `shellController` e nunca o usa —
            tocado: os gates de QML nao rodavam na maquina daquela sessao.
 ```
 
+### 0.2m Busca/substituicao MULTI-LINHA (fatia propria, pedida em 2026-08-29)
+
+O autor respondeu que **vai precisar** buscar/substituir trecho que atravessa
+mais de uma linha. Hoje `fs.replace` RECUSA `\n` (INVALID_PARAMS) porque a busca
+casa linha a linha e nao conseguiria pre-visualizar o efeito — recusa honesta,
+nao suporte.
+
+Nao e' bug: e' funcionalidade que falta, e o desenho ja esta medido. O que muda:
+
+```text
+protocolo   FsSearchMatch tem `line`, `column`, `preview` (UMA linha).
+            Precisa de fim: `endLine` + `endColumn`. Bump de versao.
+core        `search_file` percorre `content.lines()`. Casar atravessando linha
+            exige buscar no conteudo inteiro e traduzir offset -> (linha,coluna)
+            — `lang/positions.rs` ja sabe fazer isso.
+            O `walk` e o teste de PARIDADE com o replace continuam valendo.
+UI          lista de resultados e navegacao ate o resultado assumem uma linha.
+            Pergunta de design em aberto: como mostrar um casamento de 3 linhas
+            numa linha da lista? (Code OSS mostra a 1a linha + reticencias.)
+```
+
+Quando entrar, a recusa do `\n` sai junto — e o teste
+`fs_replace_refuses_a_multiline_query_the_search_cannot_preview` vira o teste do
+comportamento novo, nao lixo a remover.
+
+### 0.2n terminal.rs: rede antes do corte (2026-08-29)
+
+`tests/terminal.rs` ESCRITO (8 testes), o dominio que tinha 18 testes unitarios
+e zero de integracao. O mais importante e' o **teste de contrato do
+`event.terminal.render`**: ele trava os nomes de campo que o `ui/qml` le
+(`id`, `cols`, `rows`, `scrollback`, `scrollbackMax`, `alternateScreen`,
+`applicationCursor`, `bracketedPaste`, `cursor.{row,col,visible,shape,blinking}`,
+`lines[][].{text,cells}`). Sem ele, o split podia renomear um campo e a UI
+parava de desenhar em SILENCIO — o Qt nao reclama de propriedade ausente num
+`QVariantMap`, o build passa e o qmllint passa.
+
+**Um dos 8 nasceu incapaz de reprovar, e o teste de mutacao pegou.** O
+`closing_the_workspace_closes_every_terminal` so verificava que `terminal.open`
+era recusado depois — verdade independentemente de as sessoes terem morrido.
+Transformar `close_all()` em no-op deixava verde. Vicio do §0.2i. Corrigido: a
+prova agora e' o `event.terminal.closed` de CADA sessao.
+
+**PROXIMO PASSO, aguardando aceite visual do autor.** O split so comeca depois
+que ele rodar a IDE e confirmar que o terminal esta bom — ponto de controle
+escolhido por ele. O corte medido, por responsabilidade:
+
+```text
+sessao/PTY   Session, TerminalManager, open/close/write/resize, spawn_*  ~430
+estado VT    GridSize, TerminalState                                       ~80
+render       emit_render, build_line, flush_span, color_value             ~350
+entrada      WheelAction, wheel_action, mouse_report, alt_scroll          ~135
+```
+
+Criterio de aceite do corte: **os mesmos 8 testes verdes antes e depois**, e o
+teste do VOCABULARIO da §4 regra 9 — depois de mover o render para fora,
+`grep -i span` no arquivo de sessao nao devolve nada.
+
 ### 0.2l Reorganizacao documental em tres arvores (2026-08-29)
 
 `docs/` (lida em toda sessao) · `docs-privada/` (log, diario, prompts) ·
