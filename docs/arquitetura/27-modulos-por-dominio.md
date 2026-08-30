@@ -301,6 +301,40 @@ foi o que custou dois dias de estabilização ao autor. A catraca **congela** o
 arquivo (não pode crescer) sem exigir quebrá-lo agora. Quebrar terminal para
 "cumprir métrica" seria trocar risco real por número bonito.
 
+### PAGO em 2026-08-30 — e o que destravou primeiro foi a rede, não a coragem
+
+O corte só aconteceu depois de duas coisas que **não** eram refatoração:
+`tests/terminal.rs` (2026-08-29, 8 testes de integração, incluindo o contrato de
+`event.terminal.render` que trava os nomes de campo lidos pelo QML) e o aceite
+visual do autor no terminal rodando. Foi isso que tornou o risco mensurável — a
+condição que faltava era evidência, não disposição.
+
+```text
+terminal/mod.rs       49   submodulos, re-export, EventSender e MAX_SESSIONS
+terminal/session.rs  471   PTY, threads de ciclo de vida, teto de sessoes
+terminal/render.rs   246   snapshot do grid -> event.terminal.render
+terminal/input.rs    135   o que a roda significa; formato de fio do mouse
+terminal/state.rs     83   grid do emulador e dimensoes do viewport
+terminal/error.rs     46   vocabulario de erro, que o rpc.rs mapeia
+```
+
+O `error.rs` não estava no corte planejado em quatro: apareceu porque
+`session.rs` fechou em 509 linhas, nove acima do limite. **Os dois reflexos
+errados ali seriam cortar nove linhas quaisquer ou subir o baseline** — a §4
+regra 9 chama os dois de trapaça. O que havia de fato era uma quinta
+responsabilidade que o próprio repositório já nomeia em `fsops/error.rs` e
+`workspace/error.rs`: o vocabulário de erro atravessa a fronteira, porque o
+`rpc.rs` mapeia cada variante para um código JSON-RPC.
+
+Aceite verificado, os dois juntos: os mesmos 26 testes verdes antes e depois
+(8 de integração + 18 unitários, nomes idênticos), e o teste de VOCABULÁRIO da
+regra 9 — `grep -i span` em `session.rs` não devolve nada. Esse segundo critério
+mudou uma decisão de projeto: os helpers de teste que decodificam o evento de
+render (`render_text`/`render_contains`) ficaram em `render.rs`, expostos aos
+irmãos por `pub(in crate::terminal)`, em vez de renomear a variável `span` no
+teste de sessão para escapar do `grep`. Um teste de sessão afirma que a saída
+apareceu; ele não conhece a forma do contrato.
+
 ## 6. Horizonte registrado — subsistema opcional (o simulador OpenGL)
 
 > **NÃO É ESCOPO ATUAL. Nada aqui entra em fila de execução.** O autor foi
@@ -408,7 +442,9 @@ Exigência do autor, e ela vira regra verificável:
   primeiro, crate só quando houver ganho real.
 - **Não** big-bang. Cada frente é fatia própria, com gate verde e catraca
   atualizada no mesmo commit.
-- **Não** quebrar `terminal.rs` para cumprir métrica.
+- **Não** quebrar um arquivo para cumprir métrica. O `terminal.rs` era o caso
+  citado aqui e foi pago em 2026-08-30 — por responsabilidade e com rede de
+  teste antes, não por causa do número. A regra que ele exemplifica continua.
 - **Não** importar DI, host de extensões ou registry dinâmico das referências. O
   padrão é MODE-D: aprende-se a regra, não se copia a máquina.
 

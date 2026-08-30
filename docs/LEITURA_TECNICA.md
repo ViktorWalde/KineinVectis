@@ -73,10 +73,11 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
             cdb       diagnostico da compilation database do C/C++: onde ela
                       esta, se envelheceu e qual arquivo a invalidou (0.62.0)
 
-FINO        terminal  1.374 linhas, o MAIOR arquivo do core e o maior debito da
-                      catraca. Ganhou tests/terminal.rs em 2026-08-29 (8 testes,
-                      incluindo o CONTRATO do event.terminal.render); o SPLIT em
-                      quatro aguarda o aceite visual do autor.
+            terminal  pasta desde 2026-08-30: session (PTY/ciclo de vida),
+                      state (grid VT), render (o contrato que o QML le), input
+                      (o que a roda significa) e error. Era 955 linhas de codigo
+                      num arquivo so; saiu da catraca. tests/terminal.rs, os 8
+                      testes de integracao, nao mudou uma linha no corte.
             draft     handler sem arquivo de teste proprio; coberto de lado
                       por tests/workspace.rs e tests/fs.rs desde 2026-08-29
 ```
@@ -95,15 +96,15 @@ nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
 provado, está sem evidência — por isso cada um é testado por mutação.
 
-**2. A catraca de arquitetura congela 22 arquivos e só deixa diminuir.** Ela não
+**2. A catraca de arquitetura congela 21 arquivos e só deixa diminuir.** Ela não
 é limite duro. O critério é **responsabilidade**; linhas são só o detector de
 fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de
 três casos.
 
 **3. O maior débito bloqueia por área, não em geral.** `EditorController.qml`
-(1.070/400) bloqueia qualquer feature de editor; `terminal.rs` (955/500)
-bloqueia feature de terminal. Quem toca a área, paga a dela antes.
+(1.070/400) bloqueia qualquer feature de editor. Quem toca a área, paga a
+dela antes — foi o que aconteceu com o terminal, pago em 2026-08-30.
 
 **4. O core não escreve nada fora do workspace sem gesto explícito.** Desde
 2026-08-29 a persistência global entra por `Core::enable_persistence`, chamada só
