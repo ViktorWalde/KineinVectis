@@ -13,7 +13,6 @@
       "binaryDir": "${sourceDir}/build/linux-clang-debug-strict",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "KINEIN_ENABLE_SANITIZERS": "ON",
@@ -27,7 +26,6 @@
       "binaryDir": "${sourceDir}/build/linux-clang-release-hardened",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "KINEIN_ENABLE_HARDENING": "ON",

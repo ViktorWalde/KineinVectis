@@ -37,9 +37,8 @@ for arg in "$@"; do
     esac
 done
 
-# O rustup instala em ~/.cargo/bin e so mexe no PERFIL do shell — o shell atual
-# nao ve nada ate reabrir. Sem isto a verificacao final diz "FALTA cargo" numa
-# maquina onde o cargo esta instalado, que e' pior que nao verificar.
+# O rustup instala em ~/.cargo/bin. Prepor aqui deixa ESTE script funcionar,
+# mas NAO e' o que o usuario tem — ver `verificar_no_shell_do_usuario` no fim.
 if [ -d "$HOME/.cargo/bin" ]; then
     PATH="$HOME/.cargo/bin:$PATH"
     export PATH
@@ -78,7 +77,7 @@ instalar_arch() {
         base-devel git cmake ninja \
         clang lldb gdb \
         qt6-base qt6-declarative qt6-tools \
-        rustup rust-analyzer \
+        rustup \
         ripgrep fd
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo pacman -S --needed --noconfirm shellcheck cargo-deny
@@ -108,9 +107,15 @@ instalar_fedora() {
     # `rustup` da distro so entra se ainda nao houver um no PATH: quem ja
     # instalou pelo rustup.rs (em ~/.cargo/bin) acabaria com dois gerenciadores
     # disputando o mesmo ~/.rustup.
-    pacotes_rust="rustup rust-analyzer"
+    # `rust-analyzer` NAO entra pelo dnf: ele depende do pacote `rust` e
+    # arrasta a toolchain inteira da distro — medido em 2026-08-29 nesta
+    # maquina: rust + rust-std-static + rust-src, ~330 MiB, na versao 1.98.0,
+    # que NAO e' a que o rust-toolchain.toml fixa. O rustup instala um
+    # rust-analyzer casado com a toolchain do projeto (ver o bloco de
+    # componentes abaixo), que e' o que se quer.
+    pacotes_rust="rustup"
     if command -v rustup >/dev/null 2>&1; then
-        pacotes_rust="rust-analyzer"
+        pacotes_rust=""
     fi
     # shellcheck disable=SC2086
     executar sudo dnf install -y \
@@ -169,6 +174,46 @@ fi
 # ---------------------------------------------------------------------------
 # Verificacao final: mesmo conjunto que o ToolDetector do core reporta.
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# PATH persistente do rustup.
+#
+# POR QUE ISTO ESTA AQUI (2026-08-29). O rustup instala em `~/.cargo/bin` e
+# grava `~/.cargo/env`, mas so acrescenta a linha ao PERFIL do shell se tiver
+# sido instalado SEM `--no-modify-path`. Quando nao ha essa linha, o shell do
+# usuario simplesmente nao tem `cargo` — e este script nao percebia, porque
+# prepoe `~/.cargo/bin` ao proprio PATH la em cima.
+#
+# O sintoma medido nesta data: o script imprimiu "ok cargo" e "ambiente
+# completo", e o comando SEGUINTE do usuario morreu em "cargo: comando nao
+# encontrado". Verificacao que passa num contexto que o usuario nao tem e' pior
+# que verificacao nenhuma: ela mente com confianca.
+# ---------------------------------------------------------------------------
+if [ -f "$HOME/.cargo/env" ]; then
+    ja_no_perfil=0
+    for perfil in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" \
+        "$HOME/.zshrc"; do
+        if [ -f "$perfil" ] && grep -q '\.cargo/env' "$perfil"; then
+            ja_no_perfil=1
+        fi
+    done
+    if [ "$ja_no_perfil" -eq 0 ]; then
+        alvo="$HOME/.bashrc"
+        echo ""
+        echo "== PATH do rustup =="
+        if [ "$DRY_RUN" -eq 1 ]; then
+            echo "+ acrescentar '. \"\$HOME/.cargo/env\"' em $alvo"
+        else
+            # O `$HOME` fica LITERAL de proposito: quem expande e' o perfil,
+            # a cada sessao, e nao este script uma vez so.
+            # shellcheck disable=SC2016
+            printf '\n# Kinein Vectis: toolchain Rust do rustup.\n. "$HOME/.cargo/env"\n' \
+                >>"$alvo"
+            echo "  acrescentado  . \"\$HOME/.cargo/env\"  em $alvo"
+            echo "  (vale no PROXIMO shell; neste, rode: . \"\$HOME/.cargo/env\")"
+        fi
+    fi
+fi
+
 echo ""
 echo "== verificacao =="
 faltando=0
@@ -241,7 +286,6 @@ else
       "inherits": "linux-clang-debug-strict",
       "binaryDir": "${sourceDir}/build/dev-local",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cc",
         "CMAKE_CXX_COMPILER": "c++",
         "KINEIN_ENABLE_SANITIZERS": "OFF"
       }
@@ -252,7 +296,6 @@ else
       "inherits": "linux-clang-release-hardened",
       "binaryDir": "${sourceDir}/build/dev-local-release",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cc",
         "CMAKE_CXX_COMPILER": "c++"
       }
     }
@@ -283,11 +326,54 @@ else
     done
 fi
 
+# A verificacao acima roda com `~/.cargo/bin` preposto por este script. O que
+# decide se o ambiente serve, porem, e' o shell de LOGIN do usuario: e' nele
+# que ele vai rodar `cargo` e `scripts/verificar.sh`.
 echo ""
-if [ "$faltando" -eq 0 ]; then
-    echo "ambiente completo. Proximos passos:"
+echo "== verificacao no shell de login (o PATH que voce realmente tem) =="
+# `env -i` e' obrigatorio: sem ele o `bash -l` HERDA o PATH deste script (que
+# tem `~/.cargo/bin` preposto la em cima) e responde "ok" para um shell que na
+# verdade nao ve nada. Foi assim que a primeira versao desta checagem mentiu.
+fora_do_path=""
+for ferramenta in cargo rustfmt; do
+    if ! env -i HOME="$HOME" USER="${USER:-}" TERM=dumb \
+        bash -lc "command -v $ferramenta" >/dev/null 2>&1; then
+        fora_do_path="$fora_do_path $ferramenta"
+    fi
+done
+if [ -n "$fora_do_path" ]; then
+    echo "  AVISO  fora do seu PATH:$fora_do_path"
+    echo "         Este shell ainda nao ve a toolchain. Rode UMA vez:"
+    echo "           . \"\$HOME/.cargo/env\""
+    echo "         (o proximo shell ja vem certo, pelo perfil)"
 else
+    echo "  ok      cargo e rustfmt visiveis no seu shell"
+fi
+
+# Um `rustc` de distro no PATH nao quebra o build (o cargo do rustup resolve o
+# rustc pela toolchain fixada), mas engana na hora de depurar: `rustc --version`
+# no terminal responde a versao da DISTRO, nao a do projeto.
+rustc_do_shell="$(env -i HOME="$HOME" USER="${USER:-}" TERM=dumb \
+    bash -lc 'command -v rustc' 2>/dev/null || true)"
+case "$rustc_do_shell" in
+    "$HOME"/.cargo/bin/* | "") ;;
+    *)
+        echo "  nota    o \`rustc\` do seu shell e' $rustc_do_shell (da distro)."
+        echo "          O build usa a toolchain fixada em rust-toolchain.toml;"
+        echo "          so \`rustc --version\` no terminal e' que vai divergir."
+        ;;
+esac
+
+echo ""
+if [ "$faltando" -ne 0 ]; then
     echo "ambiente INCOMPLETO (itens FALTA acima). Apos resolver:"
+elif [ -n "$fora_do_path" ]; then
+    # NAO dizer "completo" aqui: o passo seguinte e' `scripts/verificar.sh`, que
+    # comeca com `cargo fmt` e morreria em "comando nao encontrado".
+    echo "ambiente instalado, mas ESTE shell ainda nao ve a toolchain."
+    echo "Rode a linha do aviso acima e entao:"
+else
+    echo "ambiente completo. Proximos passos:"
 fi
 echo "  scripts/verificar.sh          # gate completo"
 echo "  scripts/instalar-atalho.sh    # atalho de desenvolvimento no menu"

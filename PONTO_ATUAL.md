@@ -1056,6 +1056,47 @@ ABERTO     `WorkspaceUiResetter` recebe `shellController` e nunca o usa —
            tocado: os gates de QML nao rodavam na maquina daquela sessao.
 ```
 
+### 0.2o Ambiente instalado e o gate COMPLETO rodou (2026-08-29)
+
+Primeira execucao de `scripts/verificar.sh` **completo** nesta maquina (Fedora
+44): **VERDE**, incluindo `verificar-cpp.sh`, `verificar-qml.sh` e
+`verificar-qml-logica.sh`, que nao rodavam por falta dos `qt6-*-devel`.
+
+Quatro defeitos achados na propria instalacao, todos corrigidos:
+
+```text
+O SCRIPT MENTIU  ele prepoe ~/.cargo/bin ao PROPRIO PATH, entao imprimiu
+                 "ok cargo" e "ambiente completo" — e o comando SEGUINTE do
+                 autor morreu em "cargo: comando nao encontrado". Causa: o
+                 rustup foi instalado com --no-modify-path, entao nada
+                 acrescentou a linha ao perfil do shell. Verificacao que passa
+                 num contexto que o usuario NAO tem e' pior que nenhuma.
+                 Fix: o script grava a linha no perfil E confere num login
+                 shell limpo (`env -i ... bash -lc`) — sem o `env -i` o
+                 `bash -l` HERDA o PATH do script e mente de novo.
+
+330 MiB A TOA    `rust-analyzer` do dnf depende do pacote `rust` e arrastou
+                 rust + rust-std-static + rust-src na versao 1.98.0 — que NAO
+                 e' a fixada (1.96.1). O rustup ja instala um rust-analyzer
+                 casado com a toolchain do projeto. Saiu da lista (Fedora e
+                 Arch). O `/usr/bin/rustc` 1.98.0 continua instalado nesta
+                 maquina e o script agora AVISA que ele nao e' o do projeto.
+
+WARNING NO CMAKE `CMAKE_C_COMPILER` nos presets, num projeto declarado
+                 `LANGUAGES CXX`: warning em TODO configure, nos dois presets
+                 oficiais. Removido do CMakePresets.json e do gerador.
+
+GATE ESCOLHIA    `verificar-qml.sh` preferia um build CONFIGURADO a um
+O BUILD ERRADO   COMPILADO: o `.rsp` nasce na configuracao, o `.qmltypes` so
+                 na compilacao. Resultado: parede de "QML types file does not
+                 exist", que parece defeito no QML e e' build faltando. Agora
+                 o candidato so vale com os dois, e a mensagem diz qual
+                 `cmake --build` rodar.
+```
+
+**Nao repetir:** instalar rustup com `--no-modify-path` sem acrescentar a linha
+ao perfil. Foi o que criou o primeiro defeito.
+
 ### 0.2m Busca/substituicao MULTI-LINHA (fatia propria, pedida em 2026-08-29)
 
 O autor respondeu que **vai precisar** buscar/substituir trecho que atravessa

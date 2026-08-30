@@ -89,6 +89,14 @@ de hoje**, e é o único que vale.
   instalados** — sem eles não há `qmllint` nem `qmake6`, e os gates
   `verificar-cpp.sh`, `verificar-qml.sh` e `verificar-qml-logica.sh` não rodam.
   É o que `scripts/instalar-ambiente.sh` resolve.
-- Gate Rust (`cargo fmt --check`, `test --workspace --all-features`,
-  `clippy -D warnings`) e os gates de documentação/arquitetura: verdes em
-  2026-08-29. Os gates de Qt: **não executados** nesta data, pelo motivo acima.
+- **`scripts/verificar.sh` completo: VERDE em 2026-08-29**, depois de
+  `scripts/instalar-ambiente.sh` — inclui `verificar-cpp.sh` (clang-format +
+  clang-tidy), `verificar-qml.sh` (qmllint estrito) e `verificar-qml-logica.sh`
+  (14 harnesses headless).
+
+> **Armadilha do `qmllint`, medida em 2026-08-29.** O response file do lint
+> nasce na **configuração**; o `kinein-vectis.qmltypes` do módulo só na
+> **compilação**. Um build dir configurado e não compilado faz o qmllint
+> despejar uma parede de *"QML types file does not exist"*, que parece defeito
+> no QML e é build faltando. O `verificar-qml.sh` passou a exigir os dois e a
+> dizer qual `cmake --build` rodar.
