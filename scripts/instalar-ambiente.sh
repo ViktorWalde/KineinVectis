@@ -80,7 +80,7 @@ instalar_arch() {
         rustup \
         ripgrep fd
     if [ "$EXTRAS" -eq 1 ]; then
-        executar sudo pacman -S --needed --noconfirm shellcheck cargo-deny
+        executar sudo pacman -S --needed --noconfirm shellcheck
     fi
 }
 
@@ -126,7 +126,6 @@ instalar_fedora() {
         ripgrep fd-find
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo dnf install -y ShellCheck
-        echo "aviso: cargo-deny no Fedora vem via 'cargo install cargo-deny'"
     fi
 }
 
@@ -207,6 +206,12 @@ if command -v rustup >/dev/null 2>&1 || [ "$DRY_RUN" -eq 1 ]; then
     # rust-analyzer` existe mesmo sem o componente — um `command -v` sozinho
     # diria "ok" para um binario que nao roda.
     executar rustup component add --toolchain "$CANAL_RUST" rustfmt clippy rust-analyzer
+    # `cargo-deny` NAO e' extra: o gate depende dele desde 2026-08-30
+    # (scripts/verificar-deny.sh). Vem por `cargo install` porque nenhuma das
+    # distros-alvo o empacota. `--locked` para reproduzir o build do autor dele.
+    if ! command -v cargo-deny >/dev/null 2>&1; then
+        executar cargo install cargo-deny --locked
+    fi
 else
     # So chega aqui se a instalacao acima falhou de um jeito que nao abortou.
     echo "aviso: rustup ainda nao esta no PATH; instale-o e rode:" >&2

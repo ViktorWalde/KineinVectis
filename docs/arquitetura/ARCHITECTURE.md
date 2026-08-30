@@ -428,6 +428,12 @@ Regras que mantêm isso saudável:
                                            2026-07-16 descobriu-se que 7 dos 14
                                            NAO conseguiam reprovar: `Qt.exit()`
                                            trunca em 8 bits (§1.3).
+    verificar-deny.sh          2026-08-30  o `deny.toml` existia e NADA o
+      (licencas/advisories)                 executava. A politica de licenca do
+                                            projeto era regra que nao rodava. A
+                                            1a execucao achou 3 licencas fora da
+                                            allowlist e 1 dependencia ABANDONADA
+                                            desde 2017 no caminho do terminal.
     verificar-shell.sh         2026-08-29  os scripts sao 3.708 linhas e sao o
       (shellcheck)                          que EXECUTA os outros gates; nada os
                                             verificava. `${BASH_SOURCE[0]}` num

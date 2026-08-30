@@ -59,6 +59,7 @@ O gate acima equivale a rodar, nesta ordem, parando no primeiro erro:
 cargo fmt --all --check
 cargo test --workspace --all-features
 cargo clippy --workspace --all-targets --all-features -- -D warnings
+scripts/verificar-deny.sh                    # licencas e advisories das deps Rust
 scripts/verificar-shell.sh                   # shellcheck nos scripts do gate
 scripts/verificar-cpp.sh                     # clang-format + clang-tidy
 scripts/verificar-qml.sh                     # qmllint estrito

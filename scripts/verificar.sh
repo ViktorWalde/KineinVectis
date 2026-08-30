@@ -55,6 +55,9 @@ cargo test --workspace --all-features
 passo "cargo clippy --workspace --all-targets --all-features -- -D warnings"
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 
+passo "scripts/verificar-deny.sh (licencas e advisories das deps Rust)"
+bash scripts/verificar-deny.sh
+
 passo "scripts/verificar-shell.sh (shellcheck nos scripts do gate)"
 bash scripts/verificar-shell.sh
 

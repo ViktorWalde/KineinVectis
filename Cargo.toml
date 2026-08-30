@@ -15,6 +15,11 @@ repository = "https://github.com/kinein/kinein-vectis"
 homepage = "https://github.com/kinein/kinein-vectis"
 readme = "README.md"
 rust-version = "1.85"
+# Nenhum crate deste workspace vai para o crates.io: eles sao internos da IDE.
+# Alem de ser a verdade, isto e' o que permite `allow-wildcard-paths` no
+# deny.toml — o cargo-deny so aceita dependencia de path em crate NAO publicado,
+# porque o crates.io recusaria uma.
+publish = false
 
 [workspace.dependencies]
 kinein-protocol = { path = "crates/kinein-protocol" }
@@ -28,7 +33,7 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 # emulador VT vive no `alacritty_terminal`, declarado pelo core (ADR-0004): a
 # Kinein anuncia `xterm-256color` ao processo, então precisa entregar um VT de
 # verdade — tela alternada, mouse, reflow, wide chars e DECSCUSR inclusos.
-portable-pty = "0.8"
+portable-pty = "0.9"
 # External file changes: mature cross-platform watcher (inotify on Linux)
 # with a polling fallback selected by the core when the native backend fails.
 notify = "=8.2.0"

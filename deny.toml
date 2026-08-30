@@ -1,16 +1,37 @@
-# Configuração do cargo-deny (auditoria de licenças e dependências).
-# Ainda não é obrigatório no fluxo local; ver docs/06-strict-mode.md.
+# Configuração do cargo-deny — auditoria de licenças e dependências.
+#
+# **Obrigatório no gate desde 2026-08-30** (`scripts/verificar-deny.sh`, dentro
+# do `verificar.sh`). Até essa data este arquivo existia e ninguém o executava:
+# a única política de licença do projeto era uma regra que não rodava — a mesma
+# forma da regra de split antes da catraca e do shellcheck antes desta semana.
 
 [licenses]
+# Só licenças permissivas. O objetivo declarado do projeto é ser 100% open
+# source E redistribuível sem obrigação viral; por isso nada de copyleft aqui,
+# nem mesmo LGPL. Ferramenta externa com licença copyleft (o GDB é GPL-3) é
+# EXECUTADA como processo, nunca linkada — e por isso não aparece nesta lista.
 allow = [
     "MIT",
     "Apache-2.0",
     "Unicode-3.0",
+    # ISC: permissiva, equivalente funcional da BSD-2-Clause; OSI-approved e
+    # FSF Free. Entrou em 2026-08-30 por `inotify`/`inotify-sys`, que chegam
+    # pelo `notify` — o watcher adotado no ADR-0001.
+    "ISC",
+    # CC0-1.0: renúncia a direitos (domínio público). FSF Free. Entrou em
+    # 2026-08-30 pelo `notify`. Aceita porque não impõe obrigação nenhuma a
+    # jusante, que é o critério desta lista.
+    "CC0-1.0",
 ]
 
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
+# Dependência de PATH dentro do próprio workspace (`kinein-protocol`,
+# `kinein-config`) não é "wildcard" no sentido que este lint persegue: ela não
+# resolve nada do registry, é o próprio repositório. Sem isto o gate reprova a
+# estrutura de workspace que a ARCHITECTURE §3 define.
+allow-wildcard-paths = true
 
 [advisories]
 yanked = "deny"
