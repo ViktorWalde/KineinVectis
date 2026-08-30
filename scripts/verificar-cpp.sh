@@ -4,7 +4,7 @@
 
 set -eu
 
-REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 BUILD_DIR="$REPO_ROOT/build/linux-clang-debug-strict"
 
 if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then

@@ -5,26 +5,64 @@
 
 set -eu
 
-REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 
-UI_BIN="$REPO_ROOT/build/linux-clang-release-hardened/ui/kinein-vectis"
+# Ordem de preferencia: RELEASE primeiro, e os dois presets de release contam.
+#
+# POR QUE A LISTA MUDOU (2026-08-29). Este launcher procurava
+# `linux-clang-release-hardened` e caia direto em `linux-clang-debug-strict` —
+# pulando os dois diretorios `dev-local*`, que sao justamente os que o
+# `scripts/verificar.sh` compila por padrao. Numa maquina onde o gate acabou de
+# ficar verde, o atalho do menu subia o binario SANITIZED (ASan/UBSan), que e'
+# varias vezes mais lento, sem dizer nada. Numa IDE cujo argumento e'
+# performance, isso e' um defeito de primeira impressao — e silencioso.
+UI_CANDIDATOS="
+build/linux-clang-release-hardened/ui/kinein-vectis
+build/dev-local-release/ui/kinein-vectis
+build/dev-local/ui/kinein-vectis
+build/linux-clang-debug-strict/ui/kinein-vectis
+"
+
+UI_BIN=""
+for candidato in $UI_CANDIDATOS; do
+    if [ -x "$REPO_ROOT/$candidato" ]; then
+        UI_BIN="$REPO_ROOT/$candidato"
+        UI_ORIGEM="$candidato"
+        break
+    fi
+done
+
 CORE_BIN="$REPO_ROOT/target/release/kinein-core"
-
-# Fallback para builds de desenvolvimento quando o release nao existe.
-if [ ! -x "$UI_BIN" ]; then
-    UI_BIN="$REPO_ROOT/build/linux-clang-debug-strict/ui/kinein-vectis"
-fi
+CORE_ORIGEM="target/release"
 if [ ! -x "$CORE_BIN" ]; then
     CORE_BIN="$REPO_ROOT/target/debug/kinein-core"
+    CORE_ORIGEM="target/debug"
 fi
 
-if [ ! -x "$UI_BIN" ]; then
-    echo "erro: UI nao compilada. Rode: cmake --preset dev-local-release && cmake --build --preset dev-local-release" >&2
+if [ -z "$UI_BIN" ]; then
+    echo "erro: UI nao compilada. Rode:" >&2
+    echo "  cmake --build --preset dev-local-release" >&2
     exit 1
 fi
 if [ ! -x "$CORE_BIN" ]; then
     echo "erro: core nao compilado. Rode: cargo build --release -p kinein-core" >&2
     exit 1
 fi
+
+# DIZER qual binario subiu, e de quando ele e'.
+#
+# A armadilha registrada no PONTO_ATUAL ("o autor passou horas com uma IDE
+# quebrada porque esse binario estava 4 commits atras") so e' possivel porque o
+# launcher escolhia em silencio. Duas linhas de stderr matam a classe inteira:
+# quem valida uma mudanca ve na hora se esta olhando o binario dela.
+carimbo="$(date -r "$UI_BIN" '+%Y-%m-%d %H:%M' 2>/dev/null || echo 'data desconhecida')"
+echo "kinein-vectis: UI de $UI_ORIGEM (compilada em $carimbo)" >&2
+echo "               core de $CORE_ORIGEM" >&2
+case "$UI_ORIGEM" in
+    *debug-strict*)
+        echo "               AVISO: build SANITIZED (ASan/UBSan) — lento de proposito." >&2
+        echo "               Para uso diario: cmake --build --preset dev-local-release" >&2
+        ;;
+esac
 
 KINEIN_CORE_BIN="$CORE_BIN" exec "$UI_BIN" "$@"

@@ -162,11 +162,13 @@ Adaptação realista e pragmática. Detalhe em `docs/roadmaps/28` §7.
 ### Armadilhas que já custaram horas — leia antes de validar
 
 ```text
-O atalho "Kinein Vectis (Desenvolvimento)" roda
-build/linux-clang-release-hardened/, NAO o dev-local.
-=> depois de mexer na UI:  cmake --build --preset release-hardened
-   ANTES de pedir validacao. Em 2026-07-17 o autor passou horas com uma IDE
-   quebrada porque esse binario estava 4 commits atras.
+O atalho "Kinein Vectis (Desenvolvimento)" roda um binario JA COMPILADO.
+Em 2026-07-17 o autor passou horas com uma IDE quebrada porque esse binario
+estava 4 commits atras.
+=> depois de mexer na UI, RECOMPILE antes de pedir validacao.
+   Desde 2026-08-29 o launcher DIZ qual binario subiu e de quando ele e' — a
+   metade silenciosa da armadilha morreu. Ele tambem deixou de pular os
+   `dev-local*` (o que o gate compila) e cair no build sanitized.
 
 qmllint "limpo" + boot ate o primeiro frame NAO provam fiacao QML.
 => binding auto-referente `x: x` entrega null em silencio.

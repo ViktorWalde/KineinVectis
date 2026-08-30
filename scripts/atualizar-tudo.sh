@@ -28,7 +28,7 @@ EOF
         ;;
 esac
 
-REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 UI_DEBUG="$REPO_ROOT/build/linux-clang-debug-strict/ui/kinein-vectis"

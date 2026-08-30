@@ -18,6 +18,16 @@ As duas formas de execução podem coexistir no menu sem se sobrescrever:
 - **Kinein Vectis (Desenvolvimento)** executa `scripts/kinein-vectis` deste
   checkout, usando os binários locais recompilados.
 
+> **Qual binário o atalho sobe (corrigido em 2026-08-29).** O launcher escolhe,
+> nesta ordem: `linux-clang-release-hardened` → `dev-local-release` →
+> `dev-local` → `linux-clang-debug-strict`. Antes ele pulava os dois
+> `dev-local*` — justamente os que o `scripts/verificar.sh` compila por padrão —
+> e caía no build **sanitized** (ASan/UBSan), que é vários vezes mais lento, sem
+> avisar. Agora ele **imprime** qual binário subiu e de quando ele é, e alerta
+> se for o sanitized. Era a metade silenciosa da armadilha registrada no
+> `PONTO_ATUAL` ("horas com uma IDE quebrada porque esse binário estava 4
+> commits atrás").
+
 Instale ou atualize somente o atalho de desenvolvimento com:
 
 ```bash

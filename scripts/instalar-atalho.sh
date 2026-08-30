@@ -4,7 +4,7 @@
 
 set -eu
 
-REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 APPS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
 DESKTOP_FILE="$APPS_DIR/kinein-vectis-development.desktop"
 LEGACY_DESKTOP_FILE="$APPS_DIR/kinein-vectis.desktop"

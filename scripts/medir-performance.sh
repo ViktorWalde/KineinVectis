@@ -23,7 +23,7 @@
 
 set -eu
 
-REPO_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 N="${KINEIN_PERF_N:-5}"
 
 UI_BIN="${KINEIN_UI_BIN:-}"
