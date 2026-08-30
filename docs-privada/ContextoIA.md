@@ -2532,3 +2532,28 @@ era dele".
 **Ressalva registrada:** o upgrade do `portable-pty` mexe na camada de PTY, e o
 terminal esta justamente aguardando aceite visual do autor. Foi commitado
 SEPARADO para poder ser revertido sozinho.
+
+## Aceite visual do terminal (2026-08-30)
+
+O autor rodou a IDE e aprovou: **"terminal ta otimo"**. Encerra o ponto de
+controle que ele mesmo escolheu em 2026-08-29 ("paro depois dos testes e voce
+confere na tela") e **desbloqueia o split do `terminal.rs`**.
+
+Dois efeitos que valem registro:
+
+1. O binario aprovado (`build/dev-local-release` + `target/release/kinein-core`,
+   de 2026-08-29 22:29) **ja continha o `portable-pty` 0.9**. Ou seja, o aceite
+   cobre tambem o upgrade que tirou o `serial` — abandonado desde 2017 — da
+   arvore de dependencias. A ressalva do commit `aaf6cb5` ("commitado separado
+   para poder ser revertido sozinho se algo parecer estranho na tela") esta
+   ENCERRADA: nao pareceu.
+
+2. Os dois itens baratos de C/C++ que restavam estavam bloqueados pela mesma
+   razao — mexem na UI, que nao tinha sido validada. Ambos desbloqueados:
+   reabrir documentos apos `cmake.configure`, e usar o `cdbStale` do 0.62.0 no
+   aviso acionavel que o `ProjectHealthController` ja tem.
+
+O padrao vale para a proxima vez: a rede (`tests/terminal.rs`, 8 testes,
+incluindo o contrato do `event.terminal.render`) foi escrita ANTES do corte e
+ANTES do upgrade — e foi ela que permitiu subir uma dependencia central sem
+medo, e que vai permitir cortar 1374 linhas em quatro sabendo se algo quebrou.

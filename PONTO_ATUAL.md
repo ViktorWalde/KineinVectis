@@ -42,6 +42,9 @@ testes Rust   378              workspace inteiro, --all-features
 L0            FECHADO          A3.1-A3.4; typing_perf_harness.cpp existe,
                                mediana 7,4 ms / p95 8,4 ms (orcamento 16/20)
 cursor/TUI    APROVADO         pelo autor em 2026-07-17. Fecha R0-R3.
+terminal      APROVADO         aceite visual em 2026-08-30 ("ta otimo"), no
+                               binario ja com portable-pty 0.9. Split
+                               DESBLOQUEADO.
 IA na IDE     FORA DE ESCOPO   0 ocorrencias em ui/qml. Nao reabrir.
 debito        22 arquivos      catraca verde; o lib.rs SAIU do debito em
                                2026-08-30 (504 -> 361, responsabilidade
@@ -1089,8 +1092,13 @@ FEITO   lib.rs saiu do debito: ~140 linhas do dominio `tools` voltaram para
         `handlers/tools.rs`. 504 -> 361.
 
 ABERTO  reabrir documentos apos `cmake.configure`. E' o ultimo dos tres
-        baratos e toca a UI (EditorController reenviando didOpen). Aguarda o
-        aceite visual do terminal, porque mexe na camada nao validada.
+        baratos e toca a UI (EditorController reenviando didOpen).
+        DESBLOQUEADO pelo aceite visual de 2026-08-30.
+
+ABERTO  aviso de CDB velha NA TELA. O core ja reporta `cdbStale` e
+        `cdbStaleBecause` (0.62.0); falta a UI usa-los no aviso acionavel que o
+        ProjectHealthController ja tem para o auto-configure.
+        DESBLOQUEADO pelo aceite visual de 2026-08-30.
 
 DEPOIS  toolchain como ENTIDADE (B2 do TR2). Etapa PROPRIA, por decisao do
         autor. E' o item caro da §5 do roadmap 29.
@@ -1228,9 +1236,15 @@ era recusado depois — verdade independentemente de as sessoes terem morrido.
 Transformar `close_all()` em no-op deixava verde. Vicio do §0.2i. Corrigido: a
 prova agora e' o `event.terminal.closed` de CADA sessao.
 
-**PROXIMO PASSO, aguardando aceite visual do autor.** O split so comeca depois
-que ele rodar a IDE e confirmar que o terminal esta bom — ponto de controle
-escolhido por ele. O corte medido, por responsabilidade:
+**ACEITE VISUAL DADO em 2026-08-30: "terminal ta otimo".** O ponto de controle
+escolhido pelo autor esta cumprido e **o split esta DESBLOQUEADO**.
+
+O binario aprovado era `build/dev-local-release` + `target/release/kinein-core`
+de 2026-08-29 22:29, **ja com o `portable-pty` 0.9** — entao o aceite cobre
+tambem o upgrade que tirou o `serial` (abandonado desde 2017) da arvore. A
+ressalva registrada no commit `aaf6cb5` esta ENCERRADA.
+
+O corte medido, por responsabilidade:
 
 ```text
 sessao/PTY   Session, TerminalManager, open/close/write/resize, spawn_*  ~430
