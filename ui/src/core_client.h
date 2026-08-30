@@ -217,7 +217,8 @@ signals:
     void commandsListed(const QVariantList& commands);
     void toolsListed(const QVariantList& tools);
     void formatCapabilitiesListed(const QVariantList& formatters);
-    void cmakeStatusResolved(bool configured, bool hasCompileCommands);
+    void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
+                             const QString& cdbStaleBecause);
     void cmakeConfigureFinished(bool success);
     void cargoMetadataResolved(int packages);
     void runConfigsResolved(const QVariantList& configs, const QString& activeId);

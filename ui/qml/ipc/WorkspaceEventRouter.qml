@@ -22,8 +22,10 @@ Item {
             }
         }
 
-        function onCmakeStatusResolved(configured, hasCompileCommands) {
-            root.projectHealthController.handleCmakeStatus(configured);
+        function onCmakeStatusResolved(configured, hasCompileCommands, cdbStale,
+                                       cdbStaleBecause) {
+            root.projectHealthController.handleCmakeStatus(configured, cdbStale,
+                                                           cdbStaleBecause);
         }
 
         function onCmakeConfigureFinished(success) {

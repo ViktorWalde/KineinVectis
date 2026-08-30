@@ -16,6 +16,12 @@ Item {
     property bool autoConfigureFailed: false
     property bool cargoMetadataFailed: false
     property string cargoMetadataError: ""
+    // §5c do roadmap 29: a CDB alcancavel pelo clangd e' mais velha que um
+    // arquivo de build que a define, entao o clangd esta usando flags de um
+    // projeto que mudou. O core mede (cdb.rs) e reporta no `cmake.status`;
+    // aqui isso vira o mesmo aviso acionavel que o auto-configure ja tem.
+    property bool cdbStale: false
+    property string cdbStaleBecause: ""
 
     property bool active: false
     property string status: "idle"
@@ -36,6 +42,8 @@ Item {
         autoConfigureFailed = false;
         cargoMetadataFailed = false;
         cargoMetadataError = "";
+        cdbStale = false;
+        cdbStaleBecause = "";
         update();
     }
     onWorkspaceKindChanged: update()
@@ -44,9 +52,12 @@ Item {
     onScanningEnvironmentChanged: update()
     Component.onCompleted: update()
 
-    function handleCmakeStatus(configured) {
+    function handleCmakeStatus(configured, stale, staleBecause) {
         cmakeStatusKnown = true;
         cmakeConfigured = configured;
+        cdbStale = stale === true;
+        cdbStaleBecause = cdbStale && staleBecause !== undefined
+                && staleBecause !== null ? staleBecause : "";
         if (hasBuildSystem("cmake") && !configured
                 && !autoConfigureAttempted) {
             autoConfigureAttempted = true;
@@ -210,6 +221,15 @@ Item {
             apply("warning",
                   qsTr("CMake sem configure — análise e run em modo degradado"),
                   qsTr("Configurar"), "cmakeConfigure");
+            return;
+        }
+        if (cdbStale) {
+            apply("warning",
+                  cdbStaleBecause !== ""
+                      ? qsTr("análise desatualizada: %1 mudou depois do último configure")
+                            .arg(cdbStaleBecause)
+                      : qsTr("análise desatualizada: reconfigure para atualizar as flags"),
+                  qsTr("Reconfigurar"), "cmakeConfigure");
             return;
         }
         if (hasBuildSystem("cargo") && cargoMetadataFailed) {

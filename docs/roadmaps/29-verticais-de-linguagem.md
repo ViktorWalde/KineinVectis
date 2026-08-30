@@ -233,6 +233,22 @@ aberto**, e falsa para a CDB. **A ação da IDE é reabrir os documentos abertos
 após um `cmake.configure` bem-sucedido** — não reiniciar o servidor, que joga o
 índice fora.
 
+> **Medido em 2026-08-30, e derruba a frase "toca `EditorController`
+> (reenviar `didOpen`)".** A UI não consegue fazer isso sozinha, por dois
+> motivos no nosso próprio código:
+>
+> 1. `LspManager::did_open` (`lsp/manager.rs`) tem **curto-circuito por hash de
+>    conteúdo**: documento já conhecido com o mesmo texto não gera notificação
+>    nenhuma. Depois de um configure o texto não mudou, então um "reenviar
+>    `didOpen`" pela UI é **inerte** — não chega nada ao servidor.
+> 2. `textDocument/didClose` **não é enviado em lugar nenhum** do repositório
+>    (`grep didClose` não devolve nada). Sem fechar, não há reabrir: o clangd
+>    mantém a compilação em cache para aquele documento.
+>
+> Logo a fatia precisa de uma peça no CORE — fechar os documentos que o servidor
+> conhece e deixar o próximo `didOpen` ser real —, não só de uma chamada nova na
+> UI. Continua barata, mas muda de camada e de protocolo.
+
 **c) CDB desatualizada não avisa.** Se o `CMakeLists.txt` muda e ninguém
 reconfigura, o clangd usa flags velhas e o usuário vê erro sem causa. Detectável
 por mtime (`CMakeLists.txt` × `compile_commands.json`) e endereçável com o mesmo
@@ -259,11 +275,14 @@ Tree-sitter de Python **não** foi tomada. Estado dos itens baratos:
 FEITO    diagnostico da CDB (§5a) — crates/kinein-core/src/cdb.rs, e
          `cmake.status` com cdbDirectory/cdbStale/cdbStaleBecause. 0.62.0.
 FEITO    correcao do comentario errado sobre recarga de flags (§5b)
-ABERTO   REABRIR os documentos apos configure (§5b) — toca a UI
-         (EditorController reenviando didOpen) e aguarda o aceite visual do
-         terminal, porque mexe em camada ainda nao validada.
-ABERTO   aviso de CDB velha NA TELA (§5c) — o core ja reporta o `cdbStale`;
-         falta a UI usa-lo no aviso acionavel que o auto-configure ja tem.
+FEITO    aviso de CDB velha NA TELA (§5c), em 2026-08-30. O core media
+         `cdbStale` desde 0.62.0 e a UI DESCARTAVA o campo — o sinal
+         `cmakeStatusResolved` nem o carregava. Agora ele vira o mesmo aviso
+         acionavel do auto-configure, nomeando o arquivo que invalidou a CDB, e
+         `scripts/qml-harness/tst_project_health.qml` trava o comportamento
+         (provado por mutacao: sem o ramo, cai com bitmask=60).
+ABERTO   REABRIR os documentos apos configure (§5b) — ver a nota abaixo: NAO e'
+         fatia so de UI, ao contrario do que esta secao dizia.
 ETAPA    toolchain como entidade (§5d) — etapa PROPRIA, por decisao do autor.
 PROPRIA
 ```

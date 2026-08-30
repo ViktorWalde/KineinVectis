@@ -332,39 +332,6 @@ bool CoreClient::handleJobNotification(const QString& method, const QJsonObject&
     return false;
 }
 
-bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& result)
-{
-    if (method == QStringLiteral("runConfig.list") || method == QStringLiteral("runConfig.save") ||
-        method == QStringLiteral("runConfig.delete") ||
-        method == QStringLiteral("runConfig.setActive"))
-    {
-        emit runConfigsResolved(result.value(QStringLiteral("configs")).toArray().toVariantList(),
-                                result.value(QStringLiteral("activeId")).toString());
-        return true;
-    }
-    if (method == QStringLiteral("cargo.metadata")) {
-        emit cargoMetadataResolved(
-            static_cast<int>(result.value(QStringLiteral("packages")).toArray().size()));
-        return true;
-    }
-    if (method == QStringLiteral("cargo.check")) {
-        appendLog(QStringLiteral("job aceito (cargo.check): %1")
-                      .arg(result.value(QStringLiteral("jobId")).toString()));
-        return true;
-    }
-    if (method == QStringLiteral("cmake.status")) {
-        emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
-                                 result.value(QStringLiteral("hasCompileCommands")).toBool());
-        return true;
-    }
-    if (method == QStringLiteral("cmake.configure")) {
-        appendLog(QStringLiteral("job aceito (cmake.configure): %1")
-                      .arg(result.value(QStringLiteral("jobId")).toString()));
-        return true;
-    }
-    return false;
-}
-
 bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("fs.list")) {
@@ -407,26 +374,6 @@ bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& re
     }
     if (method == QStringLiteral("fs.delete")) {
         emit pathDeleted(result.value(QStringLiteral("path")).toString());
-        return true;
-    }
-    return false;
-}
-
-bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)
-{
-    if (method == QStringLiteral("event.cmake.started")) {
-        appendLog(QStringLiteral("cmake configure iniciado: %1")
-                      .arg(params.value(QStringLiteral("command")).toString()));
-        return true;
-    }
-    if (method == QStringLiteral("event.cmake.finished")) {
-        const bool success = params.value(QStringLiteral("success")).toBool();
-        appendLog(QStringLiteral("cmake configure finalizado (sucesso: %1)")
-                      .arg(success ? QStringLiteral("sim") : QStringLiteral("nao")));
-        emit cmakeConfigureFinished(success);
-        if (m_workspaceBuildSystems.contains(QStringLiteral("cmake"))) {
-            cmakeStatus();
-        }
         return true;
     }
     return false;
