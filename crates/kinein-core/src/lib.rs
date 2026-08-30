@@ -8,6 +8,7 @@
 
 pub mod build;
 pub mod cargo;
+pub mod cdb;
 pub mod cmake;
 pub mod commands;
 pub mod dap;
@@ -40,12 +41,12 @@ use std::{
 };
 
 use kinein_protocol::{
-    CorePingResult, JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcRequest,
-    JsonRpcResponse, ToolInfo, ToolStatus, ToolsDetectResult, WorkspaceInfo, WorkspaceStatusResult,
+    CorePingResult, JsonRpcError, JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse, ToolInfo,
+    WorkspaceInfo, WorkspaceStatusResult,
 };
 use serde_json::{Value, json};
 
-use crate::tools::{KNOWN_TOOLS, ToolDetector};
+use crate::tools::ToolDetector;
 
 /// Stateful core runtime.
 #[derive(Debug, Default)]
@@ -164,25 +165,8 @@ impl Core {
                 request_id,
                 json!({ "commands": commands::command_descriptors() }),
             )),
-            "tools.detect" => {
-                let tools = self.detector.detect_all();
-                set_tool_registry(&self.tool_registry, tools.clone());
-                RequestOutcome::Continue(JsonRpcResponse::success(
-                    request_id,
-                    json!(ToolsDetectResult { tools }),
-                ))
-            }
-            "tools.status" => {
-                let tools = self.tool_registry_snapshot().unwrap_or_else(|| {
-                    let tools = self.detector.detect_all();
-                    set_tool_registry(&self.tool_registry, tools.clone());
-                    tools
-                });
-                RequestOutcome::Continue(JsonRpcResponse::success(
-                    request_id,
-                    json!(ToolsDetectResult { tools }),
-                ))
-            }
+            "tools.detect" => RequestOutcome::Continue(self.tools_detect_response(request_id)),
+            "tools.status" => RequestOutcome::Continue(self.tools_status_response(request_id)),
             "environment.scan" => {
                 RequestOutcome::Continue(self.environment_scan_response(request_id))
             }
@@ -293,81 +277,6 @@ impl Core {
         }
     }
 
-    fn tool_registry_snapshot(&self) -> Option<Vec<ToolInfo>> {
-        self.tool_registry
-            .lock()
-            .ok()
-            .and_then(|registry| registry.clone())
-    }
-
-    fn environment_scan_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some(jobs) = self.jobs.as_ref() else {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InternalError,
-                    "jobs nao estao habilitados neste loop do core",
-                    Some(json!({ "method": "environment.scan" })),
-                ),
-            );
-        };
-
-        let detector = self.detector.clone();
-        let registry = Arc::clone(&self.tool_registry);
-        let job_id = jobs.spawn(
-            "environment.scan",
-            "Environment Scan",
-            JobRisk::Low,
-            false,
-            move |ctx| {
-                let total = KNOWN_TOOLS.len();
-                ctx.emit_event(
-                    "event.environment.started",
-                    json!({ "jobId": ctx.id(), "tools": total }),
-                );
-                ctx.report_progress(0.0, Some("iniciando scan de ambiente"));
-
-                let mut tools = Vec::with_capacity(total);
-                for (index, spec) in KNOWN_TOOLS.iter().enumerate() {
-                    let info = detector.detect(spec);
-                    ctx.emit_output(&format!(
-                        "{}: {}",
-                        info.display_name,
-                        tool_status_label(info.status)
-                    ));
-                    ctx.emit_event(
-                        "event.environment.tool",
-                        json!({ "jobId": ctx.id(), "tool": info.clone() }),
-                    );
-                    tools.push(info);
-                    ctx.report_progress(
-                        progress_fraction(index + 1, total),
-                        Some(spec.display_name),
-                    );
-                }
-
-                set_tool_registry(&registry, tools.clone());
-                let summary = ToolScanSummary::from_tools(&tools);
-                ctx.emit_event(
-                    "event.environment.finished",
-                    json!({
-                        "jobId": ctx.id(),
-                        "success": true,
-                        "total": summary.total,
-                        "detected": summary.detected,
-                        "missing": summary.missing,
-                        "failed": summary.failed,
-                        "tools": tools,
-                    }),
-                );
-
-                jobs::JobOutcome::Success
-            },
-        );
-
-        JsonRpcResponse::success(request_id, json!(JobAcceptedResult { job_id }))
-    }
-
     /// Parses and handles a single line-delimited JSON-RPC request.
     ///
     /// Long-running methods (`build.run`, `quality.run`, `test.run`) return a
@@ -390,57 +299,6 @@ impl Core {
                 ))
             }
         }
-    }
-}
-
-fn set_tool_registry(registry: &Arc<Mutex<Option<Vec<ToolInfo>>>>, tools: Vec<ToolInfo>) {
-    if let Ok(mut slot) = registry.lock() {
-        *slot = Some(tools);
-    }
-}
-
-const fn tool_status_label(status: ToolStatus) -> &'static str {
-    match status {
-        ToolStatus::NotConfigured => "notConfigured",
-        ToolStatus::Missing => "missing",
-        ToolStatus::Detected => "detected",
-        ToolStatus::Ready => "ready",
-        ToolStatus::Running => "running",
-        ToolStatus::Failed => "failed",
-        ToolStatus::Disabled => "disabled",
-    }
-}
-
-fn progress_fraction(done: usize, total: usize) -> f64 {
-    let done = u32::try_from(done).unwrap_or(u32::MAX);
-    let total = u32::try_from(total.max(1)).unwrap_or(u32::MAX);
-    f64::from(done) / f64::from(total)
-}
-
-struct ToolScanSummary {
-    total: u64,
-    detected: u64,
-    missing: u64,
-    failed: u64,
-}
-
-impl ToolScanSummary {
-    fn from_tools(tools: &[ToolInfo]) -> Self {
-        let mut summary = Self {
-            total: tools.len() as u64,
-            detected: 0,
-            missing: 0,
-            failed: 0,
-        };
-        for tool in tools {
-            match tool.status {
-                ToolStatus::Detected | ToolStatus::Ready => summary.detected += 1,
-                ToolStatus::Missing | ToolStatus::NotConfigured => summary.missing += 1,
-                ToolStatus::Failed => summary.failed += 1,
-                ToolStatus::Running | ToolStatus::Disabled => {}
-            }
-        }
-        summary
     }
 }
 

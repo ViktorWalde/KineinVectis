@@ -1,7 +1,6 @@
 crates/kinein-core/src/commands.rs 696 500
 crates/kinein-core/src/dap/session.rs 672 500
 crates/kinein-core/src/handlers/lsp.rs 653 500
-crates/kinein-core/src/lib.rs 503 500
 crates/kinein-core/src/lsp/manager.rs 732 500
 crates/kinein-core/src/lsp/parse.rs 598 500
 crates/kinein-core/src/terminal.rs 955 500
