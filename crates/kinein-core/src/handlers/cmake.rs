@@ -176,12 +176,20 @@ impl Core {
             Err(response) => return *response,
         };
         let status = cmake::status(&root);
+        // O diagnostico da CDB e' mais amplo que o `has_compile_commands`: este
+        // olha so o build dir da IDE, e o clangd acha base em `build/` e nos
+        // diretorios pai sozinho. Um projeto Meson funciona com
+        // `hasCompileCommands: false` — quem sabe disso e' o `cdb`.
+        let cdb = crate::cdb::status(&root);
         JsonRpcResponse::success(
             request_id,
             json!(CmakeStatusResult {
                 configured: status.configured,
                 has_compile_commands: status.has_compile_commands,
                 build_dir: status.build_dir.display().to_string(),
+                cdb_directory: cdb.directory,
+                cdb_stale: cdb.stale,
+                cdb_stale_because: cdb.stale_because,
             }),
         )
     }

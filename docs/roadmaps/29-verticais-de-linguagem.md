@@ -177,18 +177,43 @@ Mais adiantado do que parece. Já implementado:
 
 O que ainda cobra atrito:
 
-**a) Só CMake tem caminho feliz.** Projeto C/C++ com Makefile, autotools ou
-script próprio é detectado como `Unknown`, não recebe CDB, e o clangd sobe sem
-flags — errando include de tudo. Saídas, em ordem de custo:
+**a) O usuário nunca sabe SE há uma CDB, nem de onde ela veio.**
+
+> **Correção de 2026-08-30, e ela derruba metade do que esta seção dizia.** A
+> versão anterior propunha "detectar `meson.build` e apontar o clangd para o
+> build dir". **É redundante:** o clangd já procura `compile_commands.json`
+> **nos diretórios pai e em subdiretórios `build/`** por conta própria — ao
+> editar `$SRC/gui/window.cpp` ele busca em `$SRC/gui/`, `$SRC/gui/build/`,
+> `$SRC/`, `$SRC/build/`, e assim por diante
+> ([clangd — installation](https://clangd.llvm.org/installation)). Um projeto
+> Meson com `build/compile_commands.json` **já funciona hoje**, sem uma linha
+> nossa. Foi a pesquisa na fonte que evitou construir isso.
+
+O que sobra, e é o que importa:
 
 ```text
-Meson      JA gera compile_commands.json no build dir. Basta DETECTAR
-           meson.build e apontar o clangd para la. E' o mais barato.
-Bear       (MIT) gera a CDB interceptando o build: `bear -- make`. E' a
-           ferramenta de escolha quando o build system nao produz CDB.
-compile_flags.txt   ultimo recurso: um argumento por linha, MESMAS flags para
-           todo arquivo. Serve para "abrir e ler", nao para projeto real.
+NAO ENCONTRADO   projeto sem CDB nenhuma (Makefile, autotools, script proprio).
+                 O clangd sobe com flags de fallback e erra include de TUDO.
+                 A IDE nao diz nada — o usuario ve erro sem causa.
+                 Saida: `bear -- make` (MIT) gera a CDB interceptando o build.
+
+FORA DA BUSCA    o `.kinein/build/` da IDE nao e' `$SRC/build/`: o clangd nao o
+                 acha sozinho, e por isso o core passa `--compile-commands-dir`.
+                 Correto como esta. O `builddir/` do Meson tambem fica fora.
+
+DESATUALIZADA    ver o item (c).
 ```
+
+**A fatia certa não é detectar build system: é DIAGNOSTICAR a CDB.** Responder
+"existe uma? onde? de quando?" e transformar erro de include misterioso em aviso
+acionável. Vale para CMake, Meson, Bear e CDB escrita à mão, sem ramo por build
+system — a mesma disciplina do `KNOWN_TOOLS`.
+
+Último recurso, e só isso: `compile_flags.txt` (um argumento por linha, mesmas
+flags para todo arquivo). Serve para "abrir e ler"; **desliga o
+background-index**, porque o clangd não sabe quais arquivos são do projeto, e é
+ignorado se houver `compile_commands.json`
+([clangd — installation](https://clangd.llvm.org/installation)).
 
 Fontes: [Bear](https://github.com/rizsotto/bear) ·
 [especificação da JSON Compilation Database](https://clang.llvm.org/docs/JSONCompilationDatabase.html) ·
@@ -231,8 +256,8 @@ Depois, duas ordens defensáveis:
 
 ```text
 ORDEM A (mantem a decisao de 2026-07-17: profundidade antes de superficie)
-  1. C/C++ sem atrito: Meson, aviso de CDB velha, reabrir documentos apos
-     configure  (itens a, b, c da §5 — os tres sao pequenos)
+  1. C/C++ sem atrito: DIAGNOSTICO da CDB (onde esta / se esta velha / se nao
+     existe) + reabrir documentos apos configure  (itens a, b, c da §5)
   2. Toolchain como entidade (B2 do TR2 — grande)
   3. Python completo
 

@@ -61,6 +61,23 @@ pub struct CmakeStatusResult {
     pub has_compile_commands: bool,
     /// Canonical build directory used by configure/build/run.
     pub build_dir: String,
+    /// Directory holding the compilation database actually reachable by
+    /// clangd, relative to the workspace root (`"."` for the root itself);
+    /// absent when the workspace has none.
+    ///
+    /// This is **not** the same as `has_compile_commands`, which only looks at
+    /// the IDE's own build directory. clangd also finds a database in parent
+    /// directories and in `build/` subdirectories on its own, so a Meson or
+    /// `bear` project can be fully working with `hasCompileCommands: false`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cdb_directory: Option<String>,
+    /// The reachable compilation database is older than a build file that
+    /// defines it, so clangd is using flags for a project that changed.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub cdb_stale: bool,
+    /// Which build file made the database stale, when `cdbStale`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cdb_stale_because: Option<String>,
 }
 
 #[cfg(test)]
@@ -108,11 +125,41 @@ mod tests {
             configured: true,
             has_compile_commands: false,
             build_dir: "/w/.kinein/build".to_owned(),
+            cdb_directory: Some("build".to_owned()),
+            cdb_stale: true,
+            cdb_stale_because: Some("CMakeLists.txt".to_owned()),
         })
         .unwrap();
 
         assert_eq!(value["configured"], true);
         assert_eq!(value["hasCompileCommands"], false);
         assert_eq!(value["buildDir"], "/w/.kinein/build");
+        assert_eq!(value["cdbDirectory"], "build");
+        assert_eq!(value["cdbStale"], true);
+        assert_eq!(value["cdbStaleBecause"], "CMakeLists.txt");
+    }
+
+    /// O caso saudavel nao carrega campo nenhum de diagnostico.
+    ///
+    /// `cdbStale: false` e `cdbStaleBecause: null` no fio seriam ruido em todo
+    /// `cmake.status` de todo projeto sadio — e a UI teria de distinguir
+    /// "ausente" de "falso". Os tres campos sao OMITIDOS quando nao ha o que
+    /// dizer, e e' isso que mantem o contrato aditivo: um cliente antigo le a
+    /// resposta nova sem mudar uma linha.
+    #[test]
+    fn status_result_omits_the_diagnosis_when_there_is_nothing_to_report() {
+        let value = serde_json::to_value(CmakeStatusResult {
+            configured: true,
+            has_compile_commands: true,
+            build_dir: "/w/.kinein/build".to_owned(),
+            cdb_directory: None,
+            cdb_stale: false,
+            cdb_stale_because: None,
+        })
+        .unwrap();
+
+        assert!(value.get("cdbDirectory").is_none());
+        assert!(value.get("cdbStale").is_none());
+        assert!(value.get("cdbStaleBecause").is_none());
     }
 }

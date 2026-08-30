@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.61.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
+> (JSON-RPC 0.62.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
 > `format.*`, `cmake.*`, `cargo.*`, `runConfig.*`, `settings.*`, `debug.*`,
 > `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
@@ -949,12 +949,39 @@ explícito tem precedência).
 - `cmake.targets.list {}` → `{ targets: [{ name, kind }] }` — lidos da
   resposta codemodel-v2 do file-api do último configure (`kind`:
   `executable`, `staticLibrary`, ...); vazio antes do primeiro configure.
-- `cmake.status {}` → `{ configured, hasCompileCommands, buildDir }` —
-  stat de `CMakeCache.txt`/`compile_commands.json`.
-- clangd: quando `compile_commands.json` existe no build dir, novos
-  servidores cpp sobem com `--compile-commands-dir` apontando para ele.
-  Servidor já em execução não recarrega flags de arquivos abertos —
-  configure e reabra o arquivo (ou o workspace).
+- `cmake.status {}` → `{ configured, hasCompileCommands, buildDir,
+  cdbDirectory?, cdbStale?, cdbStaleBecause? }` — stat de
+  `CMakeCache.txt`/`compile_commands.json`, mais o **diagnóstico da compilation
+  database** (protocolo `0.62.0`).
+- **`hasCompileCommands` e `cdbDirectory` não são a mesma pergunta**, e confundi-
+  las é a origem de "erro de include sem causa":
+
+  ```text
+  hasCompileCommands   existe CDB no build dir DA IDE (.kinein/build)?
+  cdbDirectory         existe CDB que o clangd ALCANCA, e onde? Relativa ao
+                       root; "." e' a propria raiz. AUSENTE quando nao ha.
+  ```
+
+  O clangd procura `compile_commands.json` **nos diretórios pai e em
+  subdiretórios `build/`** por conta própria
+  (<https://clangd.llvm.org/installation>), então um projeto **Meson ou `bear`
+  funciona com `hasCompileCommands: false`**. Só `cdbDirectory` responde se o
+  usuário tem inteligência de código ou não.
+- `cdbStale` + `cdbStaleBecause`: a CDB alcançável é mais velha que um arquivo
+  de build que a define (`CMakeLists.txt`, `CMakePresets.json`, `meson.build`,
+  `Makefile`). O clangd então usa flags de um projeto que mudou. Os três campos
+  são **omitidos quando não há o que reportar** — projeto sadio não carrega
+  ruído, e a UI não precisa distinguir `false` de ausente.
+- clangd: quando `compile_commands.json` existe no build dir da IDE, novos
+  servidores cpp sobem com `--compile-commands-dir` apontando para ele — o
+  `.kinein/build/` **não** é `$SRC/build/`, então o clangd não o acharia sozinho.
+- **Recarga de flags, corrigido em 2026-08-30.** O clangd **tem** hot-reload da
+  `compile_commands.json` desde a v12 (reconfere a cada ~5 s,
+  [D92663](https://reviews.llvm.org/D92663)). O que não atualiza é o **documento
+  já aberto**, que fica com a compilação em cache
+  ([vscode-clangd #42](https://github.com/clangd/vscode-clangd/issues/42)).
+  Logo a ação certa após um configure é **reabrir os documentos abertos**, e não
+  reiniciar o servidor — reiniciar joga o índice fora.
 
 ### Cargo service (`cargo.metadata` / `cargo.check`)
 

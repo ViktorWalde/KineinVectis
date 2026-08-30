@@ -97,9 +97,18 @@ pub(super) fn spawn_server(
 ) -> Result<ServerHandle, LspError> {
     let mut command = Command::new(spec.command);
     command.args(spec.args).current_dir(root);
-    // clangd usa a compilation database gerada pelo cmake.configure quando
-    // ela existe (fatia M2.2). Servidor ja em execucao nao recarrega flags
-    // de arquivos abertos: configure e reabra o arquivo/workspace.
+    // clangd usa a compilation database gerada pelo cmake.configure quando ela
+    // existe (fatia M2.2). O `--compile-commands-dir` e' necessario porque
+    // `<root>/.kinein/build` NAO e' `$SRC/build/`: o clangd procura sozinho nos
+    // diretorios pai e em subdiretorios `build/`, mas nao dentro de `.kinein`
+    // (https://clangd.llvm.org/installation).
+    //
+    // CORRECAO de 2026-08-30: este comentario dizia "servidor ja em execucao nao
+    // recarrega flags". Meio errado — o clangd TEM hot-reload da CDB desde a v12
+    // (reconfere a cada ~5s, https://reviews.llvm.org/D92663). O que nao
+    // atualiza e' o DOCUMENTO ja aberto, que fica com a compilacao em cache.
+    // A acao certa apos um configure e' reabrir os documentos abertos; reiniciar
+    // o servidor joga o indice fora.
     if spec.language == "cpp" {
         let compile_commands = crate::cmake::build_dir(root).join("compile_commands.json");
         if compile_commands.is_file() {

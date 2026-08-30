@@ -102,3 +102,89 @@ fn cmake_status_and_presets_work_without_jobs() {
     assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InternalError);
     assert!(error.message.contains("jobs"));
 }
+
+/// `cmake.status` diagnostica a CDB que o clangd REALMENTE alcança.
+///
+/// `hasCompileCommands` olha só o build dir da IDE. O clangd, porém, acha uma
+/// base em `build/` e nos diretórios pai por conta própria
+/// (<https://clangd.llvm.org/installation>) — então um projeto Meson ou `bear`
+/// funciona com `hasCompileCommands: false`. Sem o diagnóstico, a IDE não
+/// consegue distinguir "sem CDB" de "CDB fora do meu build dir", e o usuário vê
+/// erro de include sem causa.
+#[test]
+fn cmake_status_reports_a_database_outside_the_ide_build_dir() {
+    let dir = cmake_workspace("cdb-fora-do-build-dir");
+    let externo = dir.join("build");
+    std::fs::create_dir_all(&externo).unwrap();
+    std::fs::write(externo.join("compile_commands.json"), "[]\n").unwrap();
+
+    let mut core = core_with_empty_search_path("cmake-cdb-externa");
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        920_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let status = core.handle_request(&JsonRpcRequest::new(921_i64, "cmake.status", None));
+    let resultado = status.response().result.as_ref().unwrap();
+
+    // A IDE nao configurou nada: o build dir dela esta vazio...
+    assert_eq!(resultado["hasCompileCommands"], false);
+    // ...mas existe uma CDB alcancavel, e a resposta diz ONDE.
+    assert_eq!(resultado["cdbDirectory"], "build");
+}
+
+/// CDB mais velha que o `CMakeLists.txt` é reportada com o culpado.
+///
+/// Sem isto, mudar o `CMakeLists.txt` sem reconfigurar deixa o clangd usando
+/// flags de um projeto que não existe mais — e o erro que aparece na tela não
+/// tem relação visível com a causa.
+#[test]
+fn cmake_status_reports_a_stale_database_and_names_the_culprit() {
+    let dir = cmake_workspace("cdb-velha");
+    let externo = dir.join("build");
+    std::fs::create_dir_all(&externo).unwrap();
+    std::fs::write(externo.join("compile_commands.json"), "[]\n").unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(20));
+    // Toca o CMakeLists DEPOIS da CDB.
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.20)\nproject(demo CXX)\nadd_executable(a a.cpp)\n",
+    )
+    .unwrap();
+
+    let mut core = core_with_empty_search_path("cmake-cdb-velha");
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        922_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let status = core.handle_request(&JsonRpcRequest::new(923_i64, "cmake.status", None));
+    let resultado = status.response().result.as_ref().unwrap();
+
+    assert_eq!(resultado["cdbStale"], true);
+    assert_eq!(resultado["cdbStaleBecause"], "CMakeLists.txt");
+}
+
+/// Projeto sadio não carrega campo de diagnóstico nenhum.
+#[test]
+fn cmake_status_stays_quiet_when_there_is_nothing_to_diagnose() {
+    let dir = cmake_workspace("cdb-quieto");
+    let mut core = core_with_empty_search_path("cmake-cdb-quieto");
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        924_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let status = core.handle_request(&JsonRpcRequest::new(925_i64, "cmake.status", None));
+    let resultado = status.response().result.as_ref().unwrap();
+
+    // Sem CDB em lugar nenhum: nem `cdbDirectory`, nem ruido de `cdbStale`.
+    assert!(resultado.get("cdbDirectory").is_none());
+    assert!(resultado.get("cdbStale").is_none());
+}
