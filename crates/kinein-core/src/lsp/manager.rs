@@ -1,11 +1,12 @@
 //! `LspManager`: estado da sessao e orquestracao dos language servers.
 //!
-//! Mantem os servidores por linguagem, a versao de cada documento aberto e o
-//! mapa de requests pendentes. Sincroniza documentos com texto completo
-//! (didOpen/didChange/didSave) e expoe as operacoes interativas
-//! (definition/hover/completion/references/rename/semanticTokens) que o
-//! roteador `lsp.*` consome. O manager nunca escreve arquivos: rename devolve
-//! um plano que o chamador aplica confinado ao workspace.
+//! Mantem os servidores por linguagem e o mapa de requests pendentes, e expoe
+//! as operacoes interativas (definition/hover/completion/references/rename/
+//! semanticTokens) que o roteador `lsp.*` consome. O manager nunca escreve
+//! arquivos: rename devolve um plano que o chamador aplica confinado ao
+//! workspace.
+//!
+//! O que o servidor sabe sobre o TEXTO dos documentos e do [`super::sync`].
 
 use std::{
     collections::HashMap,
@@ -22,13 +23,13 @@ use kinein_protocol::{
 };
 use serde_json::{Value, json};
 
-use super::framing::{full_change_params, send_notification, write_locked_message};
+use super::framing::write_locked_message;
 use super::parse::{
     code_action_infos, completion_items, decode_semantic_tokens, definition_location,
     document_symbols, hover_content, reference_locations, response_result, workspace_edit_plan,
     workspace_symbols,
 };
-use super::server::{ServerHandle, ServerSpec, spawn_server, spec_for_path};
+use super::server::{ServerHandle, ServerSpec, spawn_server};
 use super::types::{LspError, LspLocation, WorkspaceEditPlan};
 use super::uri::{path_for_uri, uri_for_path};
 use super::{EventSender, PendingResponses};
@@ -42,11 +43,12 @@ const MAX_TIMEOUT_STREAK: u32 = 3;
 
 /// Ultima consulta de code actions respondida, com as ações cruas do servidor.
 ///
-/// `lsp.applyCodeAction` só aplica índices desta consulta; qualquer didChange,
-/// didOpen ou troca de raiz a invalida (as posições dos edits valem para o
-/// conteúdo que o servidor viu na consulta).
+/// `lsp.applyCodeAction` só aplica índices desta consulta; qualquer
+/// sincronizacao de texto ou troca de raiz a invalida — quem zera o campo e o
+/// [`super::sync`], porque as posições dos edits valem para o conteúdo que o
+/// servidor viu na consulta.
 #[derive(Debug)]
-struct ActiveCodeActions {
+pub(super) struct ActiveCodeActions {
     path: PathBuf,
     actions: Vec<Value>,
 }
@@ -55,11 +57,11 @@ struct ActiveCodeActions {
 #[derive(Debug)]
 pub struct LspManager {
     events: EventSender,
-    servers: HashMap<&'static str, ServerHandle>,
+    pub(super) servers: HashMap<&'static str, ServerHandle>,
     pending: PendingResponses,
     root: Option<PathBuf>,
     next_request_id: i64,
-    active_code_actions: Option<ActiveCodeActions>,
+    pub(super) active_code_actions: Option<ActiveCodeActions>,
     /// Timeouts consecutivos por linguagem; zera em qualquer resposta.
     timeout_streak: HashMap<&'static str, u32>,
 }
@@ -141,99 +143,6 @@ impl LspManager {
             drop(handle.child.wait());
             self.emit_status(language, "stopped");
         }
-    }
-
-    /// Abre (ou re-sincroniza) um documento no servidor da linguagem dele.
-    ///
-    /// Conteudo identico ao ultimo sincronizado nao gera notificacao nova:
-    /// alem de evitar reparse no servidor, preserva a consulta ativa de code
-    /// actions e os fix-its que o clangd amarra a versao do documento.
-    pub fn did_open(&mut self, path: &Path, content: &str) {
-        let Some(spec) = spec_for_path(path) else {
-            return;
-        };
-        if self.ensure_server(spec).is_err() {
-            return;
-        }
-        let uri = uri_for_path(path);
-        let hash = content_hash(content);
-        let Some(handle) = self.servers.get_mut(spec.language) else {
-            return;
-        };
-
-        if let Some(version) = handle.versions.get_mut(&uri) {
-            if handle.content_hashes.get(&uri) == Some(&hash) {
-                return;
-            }
-            self.active_code_actions = None;
-            *version += 1;
-            let params = full_change_params(&uri, *version, content);
-            handle.content_hashes.insert(uri.clone(), hash);
-            send_notification(&handle.stdin, "textDocument/didChange", &params);
-            return;
-        }
-
-        self.active_code_actions = None;
-        handle.versions.insert(uri.clone(), 1);
-        handle.content_hashes.insert(uri.clone(), hash);
-        let params = json!({
-            "textDocument": {
-                "uri": uri,
-                "languageId": spec.language_id,
-                "version": 1,
-                "text": content,
-            }
-        });
-        send_notification(&handle.stdin, "textDocument/didOpen", &params);
-    }
-
-    /// Sincroniza o conteudo atual de um documento (texto completo).
-    ///
-    /// Sem mudanca real de conteudo, nada e enviado (ver `did_open`).
-    pub fn did_change(&mut self, path: &Path, content: &str) {
-        let Some(spec) = spec_for_path(path) else {
-            return;
-        };
-        let uri = uri_for_path(path);
-        let has_document = self
-            .servers
-            .get(spec.language)
-            .is_some_and(|handle| handle.versions.contains_key(&uri));
-        if !has_document {
-            self.did_open(path, content);
-            return;
-        }
-        let hash = content_hash(content);
-        let Some(handle) = self.servers.get_mut(spec.language) else {
-            return;
-        };
-        if handle.content_hashes.get(&uri) == Some(&hash) {
-            return;
-        }
-        let Some(version) = handle.versions.get_mut(&uri) else {
-            return;
-        };
-        self.active_code_actions = None;
-        *version += 1;
-        let params = full_change_params(&uri, *version, content);
-        handle.content_hashes.insert(uri.clone(), hash);
-        send_notification(&handle.stdin, "textDocument/didChange", &params);
-    }
-
-    /// Notifica salvamento de um documento.
-    pub fn did_save(&mut self, path: &Path, content: &str) {
-        self.did_change(path, content);
-        let Some(spec) = spec_for_path(path) else {
-            return;
-        };
-        let Some(handle) = self.servers.get(spec.language) else {
-            return;
-        };
-        let params = json!({
-            "textDocument": { "uri": uri_for_path(path) },
-            "text": content,
-        });
-        send_notification(&handle.stdin, "textDocument/didSave", &params);
     }
 
     /// Resolve `textDocument/definition` para a posicao atual do editor.
@@ -467,45 +376,6 @@ impl LspManager {
         Ok(decode_semantic_tokens(&result, &legend))
     }
 
-    /// Re-sincroniza um documento que ja esta aberto no servidor.
-    ///
-    /// Usado depois de um rename reescrever arquivos no disco; documentos que
-    /// o servidor nao conhece ficam intactos (nenhum `didOpen` novo).
-    pub fn sync_if_open(&mut self, path: &Path, content: &str) {
-        let Some(spec) = spec_for_path(path) else {
-            return;
-        };
-        let uri = uri_for_path(path);
-        let hash = content_hash(content);
-        let Some(handle) = self.servers.get_mut(spec.language) else {
-            return;
-        };
-        let Some(version) = handle.versions.get_mut(&uri) else {
-            return;
-        };
-        if handle.content_hashes.get(&uri) == Some(&hash) {
-            return;
-        }
-        *version += 1;
-        let params = full_change_params(&uri, *version, content);
-        handle.content_hashes.insert(uri.clone(), hash);
-        send_notification(&handle.stdin, "textDocument/didChange", &params);
-    }
-
-    /// Versao do documento que o servidor da linguagem conhece, se aberto.
-    ///
-    /// Usada para rejeitar `WorkspaceEdit.documentChanges` obsoleto antes de
-    /// criar uma transacao de escrita.
-    #[must_use]
-    pub fn document_version(&self, path: &Path) -> Option<i64> {
-        let spec = spec_for_path(path)?;
-        let uri = uri_for_path(path);
-        self.servers
-            .get(spec.language)
-            .and_then(|handle| handle.versions.get(&uri))
-            .copied()
-    }
-
     fn text_document_position_request(
         &mut self,
         method: &'static str,
@@ -542,45 +412,7 @@ impl LspManager {
         self.send_request(spec.language, method, &params)
     }
 
-    fn sync_document(
-        &mut self,
-        path: &Path,
-        content: &str,
-    ) -> Result<&'static ServerSpec, LspError> {
-        let Some(spec) = spec_for_path(path) else {
-            return Err(LspError::UnsupportedFile {
-                path: path.display().to_string(),
-            });
-        };
-        self.ensure_server(spec)?;
-        let uri = uri_for_path(path);
-        let Some(handle) = self.servers.get_mut(spec.language) else {
-            return Err(LspError::Transport {
-                message: format!("servidor {} nao esta registrado", spec.language),
-            });
-        };
-
-        if let Some(version) = handle.versions.get_mut(&uri) {
-            *version += 1;
-            let params = full_change_params(&uri, *version, content);
-            send_notification(&handle.stdin, "textDocument/didChange", &params);
-        } else {
-            handle.versions.insert(uri.clone(), 1);
-            let params = json!({
-                "textDocument": {
-                    "uri": uri,
-                    "languageId": spec.language_id,
-                    "version": 1,
-                    "text": content,
-                }
-            });
-            send_notification(&handle.stdin, "textDocument/didOpen", &params);
-        }
-
-        Ok(spec)
-    }
-
-    fn ensure_server(&mut self, spec: &'static ServerSpec) -> Result<(), LspError> {
+    pub(super) fn ensure_server(&mut self, spec: &'static ServerSpec) -> Result<(), LspError> {
         if self.servers.contains_key(spec.language) {
             return Ok(());
         }
@@ -688,14 +520,6 @@ impl Drop for LspManager {
     fn drop(&mut self) {
         self.shutdown_all();
     }
-}
-
-/// Hash estavel do conteudo de um documento para detectar sync redundante.
-fn content_hash(content: &str) -> u64 {
-    use std::hash::{Hash, Hasher};
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
-    content.hash(&mut hasher);
-    hasher.finish()
 }
 
 /// Filtra os diagnostics cacheados de `uri` que intersectam a linha do cursor.

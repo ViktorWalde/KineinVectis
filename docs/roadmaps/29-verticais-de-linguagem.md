@@ -281,8 +281,16 @@ FEITO    aviso de CDB velha NA TELA (§5c), em 2026-08-30. O core media
          acionavel do auto-configure, nomeando o arquivo que invalidou a CDB, e
          `scripts/qml-harness/tst_project_health.qml` trava o comportamento
          (provado por mutacao: sem o ramo, cai com bitmask=60).
-ABERTO   REABRIR os documentos apos configure (§5b) — ver a nota abaixo: NAO e'
-         fatia so de UI, ao contrario do que esta secao dizia.
+ABERTO   REABRIR os documentos apos configure (§5b) — ver a nota da §5b: NAO e'
+         fatia so de UI, ao contrario do que esta secao dizia. O TERRENO ja foi
+         preparado em 2026-08-30: `lsp/sync.rs` nasceu com o dominio de
+         sincronizacao de documentos, e o `manager.rs` caiu de 732 para 556, o
+         que abre espaco para a peca nova sem ginástica. Falta a peca em si:
+         um flag compartilhado entre o job do configure e o manager, para que a
+         proxima sincronizacao de um documento C/C++ faca didClose+didOpen de
+         verdade. Segue barrado por PROVA, nao por espaco: nenhum teste deste
+         repositorio sobe um language server, entao o efeito real nao tem como
+         ser provado por mutacao hoje.
 ETAPA    toolchain como entidade (§5d) — etapa PROPRIA, por decisao do autor.
 PROPRIA
 ```

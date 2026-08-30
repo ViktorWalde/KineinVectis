@@ -30,7 +30,8 @@ kinein-vectis/
 │   │       ├── terminal/        # PTY real + emulador VT (ADR-0004)
 │   │       │   └── mod.rs session.rs state.rs render.rs input.rs error.rs
 │   │       ├── lsp/             # LSP client subsystem
-│   │       │   └── mod.rs types.rs manager.rs server.rs framing.rs parse.rs transaction.rs
+│   │       │   └── mod.rs types.rs manager.rs sync.rs server.rs framing.rs parse.rs
+│   │       │       transaction.rs edit.rs uri.rs
 │   │       ├── lang/            # Tree-sitter local, incremental e LSP-independent
 │   │       │   └── registry.rs service.rs positions.rs outline.rs folding.rs
 │   │       ├── git/             # orquestração tipada do binário git

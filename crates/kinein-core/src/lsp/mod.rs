@@ -12,6 +12,7 @@
 //! - [`types`]: DTOs e o erro estruturado que cruzam a fronteira do modulo;
 //! - [`manager`]: estado da sessao e as operacoes interativas;
 //! - [`server`]: ciclo de vida do processo, handshake e thread leitora;
+//! - [`sync`]: o que o servidor sabe sobre o TEXTO (didOpen/didChange/didSave);
 //! - [`framing`]: framing `Content-Length` do wire LSP;
 //! - [`parse`]: conversao das respostas cruas nos tipos do protocolo;
 //! - [`edit`]: aplicacao de edits de texto sobre conteudo UTF-8;
@@ -22,6 +23,7 @@ pub mod framing;
 mod manager;
 mod parse;
 mod server;
+mod sync;
 mod transaction;
 mod types;
 mod uri;
