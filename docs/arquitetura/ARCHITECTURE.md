@@ -449,6 +449,18 @@ Regras que mantêm isso saudável:
                                             morto nao tem compilador: o gate
                                             fica verde e o proximo a ler conclui
                                             que o documento nao existe.
+    verificar-appimage.sh      2026-09-02  a frente de DISTRIBUICAO tinha cinco
+      (frente sem verificacao)              scripts que funcionavam e nada os
+                                            executava — `appimage` aparecia 0
+                                            vezes no verificar.sh. Aqui o gate
+                                            nao nasce de falha silenciosa NOVA;
+                                            nasce de frente inteira sem
+                                            verificacao, que e este mesmo
+                                            criterio aplicado a build. O cheque
+                                            que mais importa: a UI continua 100%
+                                            2D — a garantia de abertura do
+                                            AppImage depende disso, e um
+                                            ShaderEffect a mataria em silencio.
     verificar-transicao-        2026-08-29  estado por-workspace do `Core`
       workspace.sh                          trocado em 3 caminhos, cada copia
                                             esquecendo uma peca diferente. O

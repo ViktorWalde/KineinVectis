@@ -61,6 +61,9 @@ bash scripts/verificar-deny.sh
 passo "scripts/verificar-shell.sh (shellcheck nos scripts do gate)"
 bash scripts/verificar-shell.sh
 
+passo "scripts/verificar-appimage.sh (invariantes da frente de distribuicao)"
+bash scripts/verificar-appimage.sh
+
 passo "scripts/verificar-cpp.sh (clang-format + clang-tidy)"
 scripts/verificar-cpp.sh
 

@@ -206,37 +206,119 @@ catraca reprova o arquivo que crescer. Ele já tem subcontrollers; é continuar
 movendo por responsabilidade, com o teste de vocabulário da §4 regra 9 como
 critério.
 
-### Etapa 7 — soak / estresse
+### Etapa 7 — soak / estresse ✅ FEITA (2026-09-02)
 
-Não existem, e são exigidos para afirmar "substituição diária". Sem eles não há
-base para dizer que a IDE aguenta um dia de uso — só que ela passa em 378
-testes curtos.
+`scripts/sonda_soak.py` dirige o binário **release** por JSON-RPC em ciclos de
+trabalho realista e mede as cinco coisas que teste curto não vê:
 
-### Etapa 8 — Pôr o AppImage no gate
+```text
+memoria (RSS)   teto de crescimento + a FORMA da curva
+descritores     pipe/PTY/arquivo que ninguem fecha
+threads         sessao encerrada cuja thread continua viva
+filhos          terminal ou job que nao morre (CRESCIMENTO, nao contagem)
+latencia        p95 do fim contra a p95 do inicio
+```
 
-Os cinco scripts existem e funcionam; **nada os executa**. Mesma forma exata do
-`deny.toml` antes de 2026-08-30 e do `shellcheck` antes de 2026-08-29: regra que
-mora num arquivo que ninguém roda. Aqui o gate **não** nasce de falha
-silenciosa nova — nasce de uma frente inteira sem verificação, que é o mesmo
-critério da §4 regra 11 aplicado a build em vez de código.
+**A forma da curva é o que separa vazamento de cache**, e foi a lição da etapa:
+o teto sozinho não basta. Um vazamento lento passa por qualquer orçamento num
+soak curto — cache estabiliza, vazamento não. A sonda compara o crescimento do
+último terço com o do terço do meio, e só julga a forma quando o crescimento já
+saiu do ruído.
+
+*Provada por mutação*, e as três tentativas ensinaram tanto quanto os acertos:
+
+```text
+terminal.close nao mata o shell    -> filhos 6->41, fds 16->51, threads 18->86
+cache por VERSAO, sem teto         -> RSS 25 MB -> 96 MB, linear
+cache por PATH, sem teto           -> NAO detectado, e esta certo: com um
+                                      conjunto FINITO de arquivos, cache por
+                                      caminho e limitado pelo projeto. O que
+                                      vaza de verdade e o que cresce por
+                                      REQUEST. A sonda diz o que prova.
+```
+
+**Duas descobertas medidas, ambas registradas no próprio script:**
+
+1. **`syntaxTree.update` num arquivo de 400 linhas leva ~2.100 ms no debug e
+   ~220 ms no release** — 10x. Soak que mede o debug mede outra coisa;
+   "substituição diária" é afirmação sobre o binário que o usuário roda. A
+   sonda prefere o release e avisa quando cai para o debug.
+2. **Sonda contra binário velho prova o passado**, e a armadilha estava escrita
+   (`arquitetura/04` §8) sem nada a checar. Durante esta etapa uma mutação que
+   **não compilou** deixou o binário antigo no lugar e o soak passou verde
+   "provando" um código que não existia. A sonda agora recusa rodar quando o
+   binário é mais velho que as fontes — e essa guarda pegou a segunda tentativa
+   de mutação minutos depois.
+
+### Etapa 8 — Pôr o AppImage no gate ✅ FEITA (2026-09-02)
+
+Os cinco scripts existiam e funcionavam; **nada os executava** (`appimage`
+aparecia 0 vezes no `verificar.sh`). `scripts/verificar-appimage.sh` entrou como
+a 14ª verificação.
+
+**O que ele NÃO faz, e por quê:** não empacota. Gerar o AppImage exige Podman,
+rede e uma compilação completa dentro do Debian 12 baseline — minutos, não
+segundos. Gate que demora é gate que se desliga.
+
+O que ele verifica são as invariantes que quebram **entre** dois
+empacotamentos, e a primeira é a que mais importa:
+
+```text
+1. a UI continua 100% 2D          <- a garantia de abertura depende disso
+2. as entradas do empacotamento existem (desktop, appdata, icone, licencas)
+3. o hook grafico ainda forca 'software' por padrao
+4. os pinos de terceiros tem URL + SHA256 (ADR-0003)
+5. o testar-appimage.sh nao foi esvaziado
+6. HA artefato em dist/? entao roda o smoke completo nele
+```
+
+**O cheque 1 é o coração.** O AppImage abre em qualquer máquina porque o hook
+força `QT_QUICK_BACKEND=software`, e isso só funciona porque a UI não tem uma
+linha de `ShaderEffect`/OpenGL. No dia em que alguém acrescentar aceleração,
+essa garantia morre **em silêncio**: build passa, gate passa, e só o usuário com
+driver ruim descobre. É exatamente a colisão que o
+[31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md) §5.1
+deixa em aberto — agora com um gate segurando a porta.
+
+*Provado por mutação*, cinco vezes: um `ShaderEffect` na UI, o hook trocando
+para `auto`, o smoke deixando de checar o renderer, um pino sem checksum, e uma
+entrada de empacotamento removida. Todas reprovam.
+
+**E foi validado de ponta a ponta**: um AppImage real foi gerado
+(`Kinein-Vectis-0.1.0-x86_64.AppImage`, 35 MB) e o caminho oportunista do gate
+rodou o smoke completo nele — estrutura, instalador, `core.ping` do binário
+empacotado e o smoke offscreen, que confirma o renderer portátil e o primeiro
+frame.
 
 ### Etapa 9 — Busca e substituição multi-linha
 
 `handlers/fs.rs:76` recusa `\n` em `query` e `replacement`. O autor confirmou
 que vai precisar. Fatia própria.
 
-### Etapa 10 — `WorkspaceUiResetter`: remover `shellController`
+### Etapa 10 — `WorkspaceUiResetter`: remover `shellController` ✅ FEITA (2026-09-02)
 
-Fiação morta no composition root (`WorkspaceUiResetter.qml:15`: a propriedade é
-recebida e nunca usada). Limpeza de um gesto.
+Fiação morta no composition root: a propriedade era recebida e nunca usada.
+
+**Medido antes de apagar**, porque a ausência podia ser um bug e não sujeira: o
+que o `ShellController` guarda — painel aberto, aba de baixo, larguras, explorer
+visível — é **preferência do usuário**, persistida em settings. Zerar isso a
+cada troca de projeto seria perder a configuração de quem está trabalhando. Não
+há estado por-workspace ali, então a fiação era mesmo morta.
+
+O porquê ficou escrito no próprio arquivo, junto da definição do que é "por
+workspace" — senão a próxima sessão re-adiciona a propriedade achando que
+faltava.
 
 ## 3. Onde cortar, se a pergunta for "o mínimo para ser distribuível"
 
 ```text
-FECHA O MVP        1 (feita), 2 (feita), 7, 8, 10
+FECHA O MVP        1, 2, 7, 8, 10  — TODAS FEITAS em 2026-09-02
 SEPARA MVP DE      3 (feita), 4 (feita), 5, 6, 9
 DAILY DRIVER
 ```
+
+**O corte de distribuição fechou em 2026-09-02.** O que resta (5, 6, 9) é o que
+transforma MVP em ferramenta de uso diário — o alvo seguinte, não este.
 
 As etapas 1, 2, 7, 8 e 10 entregam o MVP com honestidade e algo que se
 distribui. As demais são o que transforma MVP em ferramenta de uso diário — que

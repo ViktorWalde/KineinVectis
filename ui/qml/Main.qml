@@ -56,7 +56,6 @@ Window {
         debugController: domains.debugController
         gitController: domains.gitController
         diagnosticsController: domains.diagnosticsController
-        shellController: domains.shellController
         projectTree: domains.projectTree
         editorController: domains.editorController
         jobsController: domains.jobsController

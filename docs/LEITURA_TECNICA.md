@@ -105,7 +105,7 @@ passou sem uma única mudança nos testes.
 
 ## 4. Cinco fatos que mudam decisão
 
-**1. O gate é o produto, não cerimônia.** **Treze** verificações, e **cada uma
+**1. O gate é o produto, não cerimônia.** **Catorze** verificações (2026-09-02), e **cada uma
 nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §4 regra
 11). Não se cria gate aqui por gosto de rigor; cria-se quando uma classe de erro
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
@@ -223,6 +223,9 @@ scripts/instalar-ambiente.sh    # bootstrap: toolchain, Qt6, presets, build dirs
 scripts/verificar.sh            # o gate completo, para no primeiro erro
 python3 scripts/sonda_drafts.py    # rede de seguranca, contra o binario real
 python3 scripts/sonda_terminal.py  # terminal e2e: grid, resize, historico
+python3 scripts/sonda_soak.py      # soak: memoria, fds, threads, filhos, latencia
+bash scripts/empacotar-appimage.sh # gera o AppImage (Podman + rede); o
+                                   # verificar.sh valida o que houver em dist/
 ```
 
 Nenhuma afirmação deste documento depende de acreditar nele: cada número sai de
