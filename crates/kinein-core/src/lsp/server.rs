@@ -27,39 +27,89 @@ use kinein_protocol::JsonRpcRequest;
 /// Tempo maximo aguardando a resposta de `initialize` de um servidor.
 const INITIALIZE_TIMEOUT: Duration = Duration::from_secs(15);
 
-/// Descricao estatica de um language server suportado.
-#[derive(Debug, Clone, Copy)]
+/// Descricao de um language server suportado.
+///
+/// `language` e `language_id` sao vocabulario FECHADO do projeto (hoje `cpp` e
+/// `rust`) e continuam `&'static`: sao chave de mapa e valor de protocolo. O
+/// que muda em tempo de execucao e o EXECUTAVEL — por isso `command` e `args`
+/// sao proprios. Ver [`ServerRegistry::set_command`].
+#[derive(Debug, Clone)]
 pub(super) struct ServerSpec {
     pub(super) language: &'static str,
-    pub(super) command: &'static str,
-    pub(super) args: &'static [&'static str],
+    pub(super) command: String,
+    pub(super) args: Vec<String>,
     pub(super) language_id: &'static str,
 }
 
-const SERVERS: &[ServerSpec] = &[
-    ServerSpec {
-        language: "cpp",
-        command: "clangd",
-        args: &["--background-index"],
-        language_id: "cpp",
-    },
-    ServerSpec {
-        language: "rust",
-        command: "rust-analyzer",
-        args: &[],
-        language_id: "rust",
-    },
-];
+/// Tabela de servidores por linguagem.
+///
+/// Existe como ESTADO do manager, e nao como `const`, por um motivo medido: ate
+/// 2026-09-02 nenhum teste deste repositorio conseguia observar o que o core
+/// FALA com um language server, porque o executavel estava fixado no binario.
+/// Com a tabela injetavel, um servidor FALSO entra no lugar e o `didOpen`/
+/// `didChange`/`didClose` passam a ser verificaveis (roadmap 30, etapa 3).
+///
+/// A mesma costura serve ao produto na etapa 5 (toolchain como entidade): um
+/// clangd fora do `PATH` e a mesma pergunta — "qual executavel roda esta
+/// linguagem?".
+#[derive(Debug, Clone)]
+pub(super) struct ServerRegistry {
+    specs: Vec<ServerSpec>,
+}
 
-/// Seleciona o servidor pela extensao do arquivo, quando houver.
-pub(super) fn spec_for_path(path: &Path) -> Option<&'static ServerSpec> {
+impl Default for ServerRegistry {
+    fn default() -> Self {
+        Self {
+            specs: vec![
+                ServerSpec {
+                    language: "cpp",
+                    command: "clangd".to_owned(),
+                    args: vec!["--background-index".to_owned()],
+                    language_id: "cpp",
+                },
+                ServerSpec {
+                    language: "rust",
+                    command: "rust-analyzer".to_owned(),
+                    args: Vec::new(),
+                    language_id: "rust",
+                },
+            ],
+        }
+    }
+}
+
+impl ServerRegistry {
+    /// Seleciona o servidor pela extensao do arquivo, quando houver.
+    ///
+    /// Devolve uma COPIA de proposito: o chamador precisa do spec e do `&mut
+    /// self` ao mesmo tempo (subir o servidor), e o spec tem duas strings.
+    pub(super) fn spec_for_path(&self, path: &Path) -> Option<ServerSpec> {
+        let language = language_for_path(path)?;
+        self.specs
+            .iter()
+            .find(|spec| spec.language == language)
+            .cloned()
+    }
+
+    /// Troca o executavel de uma linguagem conhecida; `false` se ela nao existe.
+    pub(super) fn set_command(&mut self, language: &str, command: &str, args: &[&str]) -> bool {
+        let Some(spec) = self.specs.iter_mut().find(|spec| spec.language == language) else {
+            return false;
+        };
+        command.clone_into(&mut spec.command);
+        spec.args = args.iter().map(|argument| (*argument).to_owned()).collect();
+        true
+    }
+}
+
+/// Linguagem do arquivo pela extensao, quando ha uma suportada.
+pub(super) fn language_for_path(path: &Path) -> Option<&'static str> {
     let suffix = path.extension()?.to_str()?.to_lowercase();
-    let language = match suffix.as_str() {
-        "c" | "h" | "cc" | "cpp" | "cxx" | "hpp" | "hh" | "ipp" => "cpp",
-        "rs" => "rust",
-        _ => return None,
-    };
-    SERVERS.iter().find(|spec| spec.language == language)
+    match suffix.as_str() {
+        "c" | "h" | "cc" | "cpp" | "cxx" | "hpp" | "hh" | "ipp" => Some("cpp"),
+        "rs" => Some("rust"),
+        _ => None,
+    }
 }
 
 /// Estado de um servidor em execucao.
@@ -90,13 +140,13 @@ impl std::fmt::Debug for ServerHandle {
 
 /// Sobe o servidor de `spec`, faz o handshake e inicia a thread leitora.
 pub(super) fn spawn_server(
-    spec: &'static ServerSpec,
+    spec: &ServerSpec,
     root: &Path,
     events: super::EventSender,
     pending: PendingResponses,
 ) -> Result<ServerHandle, LspError> {
-    let mut command = Command::new(spec.command);
-    command.args(spec.args).current_dir(root);
+    let mut command = Command::new(&spec.command);
+    command.args(&spec.args).current_dir(root);
     // clangd usa a compilation database gerada pelo cmake.configure quando ela
     // existe (fatia M2.2). O `--compile-commands-dir` e' necessario porque
     // `<root>/.kinein/build` NAO e' `$SRC/build/`: o clangd procura sozinho nos
@@ -126,11 +176,11 @@ pub(super) fn spawn_server(
         .map_err(|error| {
             if error.kind() == io::ErrorKind::NotFound {
                 LspError::MissingServer {
-                    command: spec.command,
+                    command: spec.command.clone(),
                 }
             } else {
                 LspError::ServerFailed {
-                    command: spec.command,
+                    command: spec.command.clone(),
                     message: error.to_string(),
                 }
             }
@@ -139,14 +189,14 @@ pub(super) fn spawn_server(
     let Some(stdin) = child.stdin.take() else {
         drop(child.kill());
         return Err(LspError::ServerFailed {
-            command: spec.command,
+            command: spec.command.clone(),
             message: "stdin indisponivel".to_owned(),
         });
     };
     let Some(stdout) = child.stdout.take() else {
         drop(child.kill());
         return Err(LspError::ServerFailed {
-            command: spec.command,
+            command: spec.command.clone(),
             message: "stdout indisponivel".to_owned(),
         });
     };
@@ -156,21 +206,21 @@ pub(super) fn spawn_server(
 
     let initialize = initialize_request(root);
     write_locked_message(&stdin, &initialize).map_err(|error| LspError::ServerFailed {
-        command: spec.command,
+        command: spec.command.clone(),
         message: format!("falha no initialize: {error}"),
     })?;
 
-    let semantic_token_types = wait_for_initialize(&mut reader, &stdin, spec.command)?;
+    let semantic_token_types = wait_for_initialize(&mut reader, &stdin, &spec.command)?;
 
     let initialized = json!({ "jsonrpc": "2.0", "method": "initialized", "params": {} });
     write_locked_message(&stdin, &initialized).map_err(|error| LspError::ServerFailed {
-        command: spec.command,
+        command: spec.command.clone(),
         message: format!("falha no initialized: {error}"),
     })?;
 
     let diagnostics_by_uri = Arc::new(Mutex::new(HashMap::new()));
     spawn_reader_thread(
-        spec,
+        spec.language,
         reader,
         Arc::clone(&stdin),
         events,
@@ -250,17 +300,17 @@ fn initialize_request(root: &Path) -> Value {
 fn wait_for_initialize(
     reader: &mut BufReader<ChildStdout>,
     stdin: &Arc<Mutex<ChildStdin>>,
-    command: &'static str,
+    command: &str,
 ) -> Result<Vec<String>, LspError> {
     let deadline = Instant::now() + INITIALIZE_TIMEOUT;
     while Instant::now() < deadline {
         let message = read_message(reader).map_err(|error| LspError::ServerFailed {
-            command,
+            command: command.to_owned(),
             message: format!("erro lendo resposta de {command}: {error}"),
         })?;
         let Some(message) = message else {
             return Err(LspError::ServerFailed {
-                command,
+                command: command.to_owned(),
                 message: format!("{command} encerrou durante o initialize"),
             });
         };
@@ -272,7 +322,7 @@ fn wait_for_initialize(
         answer_server_request(&message, stdin);
     }
     Err(LspError::ServerFailed {
-        command,
+        command: command.to_owned(),
         message: format!("{command} nao respondeu ao initialize a tempo"),
     })
 }
@@ -292,7 +342,7 @@ fn semantic_token_legend(initialize_result: &Value) -> Vec<String> {
 }
 
 fn spawn_reader_thread(
-    spec: &'static ServerSpec,
+    language: &'static str,
     mut reader: BufReader<ChildStdout>,
     stdin: Arc<Mutex<ChildStdin>>,
     events: super::EventSender,
@@ -322,7 +372,7 @@ fn spawn_reader_thread(
 
         drop(events.send(JsonRpcRequest::notification(
             "event.lsp.status",
-            Some(json!({ "language": spec.language, "status": "exited" })),
+            Some(json!({ "language": language, "status": "exited" })),
         )));
     });
 }
@@ -377,7 +427,7 @@ mod tests {
 
     use serde_json::json;
 
-    use super::{semantic_token_legend, spec_for_path};
+    use super::{ServerRegistry, semantic_token_legend};
 
     #[test]
     fn semantic_token_legend_reads_token_types() {
@@ -395,8 +445,22 @@ mod tests {
 
     #[test]
     fn unsupported_extensions_have_no_server() {
-        assert!(spec_for_path(Path::new("/tmp/nota.txt")).is_none());
-        assert!(spec_for_path(Path::new("/tmp/main.rs")).is_some());
-        assert!(spec_for_path(Path::new("/tmp/app.cpp")).is_some());
+        let registry = ServerRegistry::default();
+        assert!(registry.spec_for_path(Path::new("/tmp/nota.txt")).is_none());
+        assert!(registry.spec_for_path(Path::new("/tmp/main.rs")).is_some());
+        assert!(registry.spec_for_path(Path::new("/tmp/app.cpp")).is_some());
+    }
+
+    /// A troca de executavel e o que torna o LSP testavel (roadmap 30 §3).
+    #[test]
+    fn the_command_of_a_known_language_can_be_replaced() {
+        let mut registry = ServerRegistry::default();
+        assert!(registry.set_command("rust", "/tmp/falso", &["--x"]));
+        assert!(!registry.set_command("cobol", "/tmp/falso", &[]));
+
+        let spec = registry.spec_for_path(Path::new("/tmp/main.rs")).unwrap();
+        assert_eq!(spec.command, "/tmp/falso");
+        assert_eq!(spec.args, ["--x"]);
+        assert_eq!(spec.language_id, "rust", "o vocabulario nao muda");
     }
 }

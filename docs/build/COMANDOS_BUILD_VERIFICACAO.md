@@ -23,6 +23,20 @@ O modo **completo** e o que bloqueia release: os binarios do icone
 builds passarem. Presets CMake podem ser sobrescritos por ambiente:
 `KINEIN_PRESET_DEBUG` / `KINEIN_PRESET_RELEASE` (padrao `dev-local*`).
 
+## Requisitos que não são do Rust
+
+`cargo test --workspace` exige **`python3` no PATH** desde 2026-09-02: os testes
+do subsistema LSP sobem `scripts/fake_lsp_server.py`, um language server falso e
+determinístico, e verificam o que o core FALA com ele (`didOpen`, `didChange`,
+`didClose`, versão do documento). Sem ele, os testes **falham** — nunca são
+pulados: teste que pula não prova nada, e essa era exatamente a lacuna que a
+etapa 3 do `docs/roadmaps/30-caminho-para-o-mvp.md` fechou.
+
+`python3` já era requisito de 4 das 13 verificações do gate (veracidade dos
+`.md`, links, catraca de arquitetura e as sondas), então isto não acrescenta
+dependência ao ambiente — só a torna explícita para quem roda `cargo test`
+sozinho. O `scripts/instalar-ambiente.sh` continua sendo o bootstrap.
+
 ## Atualização integral sem cache antigo
 
 Quando houver dúvida de que UI, core e cache CMake pertencem ao mesmo estado,

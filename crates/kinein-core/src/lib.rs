@@ -115,6 +115,23 @@ impl Core {
         self.events = Some(events);
     }
 
+    /// Aponta uma linguagem para outro executavel de language server.
+    ///
+    /// Devolve `false` quando o LSP nao esta habilitado neste loop ou quando a
+    /// linguagem nao existe na tabela. Ver
+    /// [`lsp::LspManager::use_server_command`] para o porque: e a costura que
+    /// permite ao gate observar o que o core FALA com um servidor.
+    pub fn use_language_server_command(
+        &mut self,
+        language: &str,
+        command: &str,
+        args: &[&str],
+    ) -> bool {
+        self.lsp
+            .as_mut()
+            .is_some_and(|lsp| lsp.use_server_command(language, command, args))
+    }
+
     /// Handles one already parsed JSON-RPC request.
     #[must_use]
     pub fn handle_request(&mut self, request: &JsonRpcRequest) -> RequestOutcome {

@@ -1,45 +1,34 @@
-//! `LspManager`: estado da sessao e orquestracao dos language servers.
+//! `LspManager`: o estado da sessao e as OPERACOES INTERATIVAS.
 //!
-//! Mantem os servidores por linguagem e o mapa de requests pendentes, e expoe
-//! as operacoes interativas (definition/hover/completion/references/rename/
-//! semanticTokens) que o roteador `lsp.*` consome. O manager nunca escreve
-//! arquivos: rename devolve um plano que o chamador aplica confinado ao
-//! workspace.
+//! Aqui moram o struct e o que o roteador `lsp.*` pergunta ao servidor —
+//! definition, hover, completion, references, rename, code actions, symbols e
+//! semantic tokens. O manager nunca escreve arquivos: rename devolve um plano
+//! que o chamador aplica confinado ao workspace.
 //!
-//! O que o servidor sabe sobre o TEXTO dos documentos e do [`super::sync`].
+//! As outras duas metades vivem nos irmaos, e o "e" que havia nesta frase ate
+//! 2026-09-02 era o sintoma de que ainda eram tres:
+//!
+//! - o que o servidor sabe sobre o TEXTO: [`super::sync`];
+//! - qual executavel roda cada linguagem, subir/reiniciar/encerrar e o
+//!   transporte de request: [`super::session`].
 
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::{
-        Arc, Mutex,
-        mpsc::{self},
-    },
-    time::Duration,
+    sync::{Arc, Mutex},
 };
 
-use kinein_protocol::{
-    JsonRpcRequest, LspCodeActionInfo, LspCompletionItem, LspSemanticToken, LspSymbolInfo,
-};
+use kinein_protocol::{LspCodeActionInfo, LspCompletionItem, LspSemanticToken, LspSymbolInfo};
 use serde_json::{Value, json};
 
-use super::framing::write_locked_message;
 use super::parse::{
     code_action_infos, completion_items, decode_semantic_tokens, definition_location,
-    document_symbols, hover_content, reference_locations, response_result, workspace_edit_plan,
-    workspace_symbols,
+    document_symbols, hover_content, reference_locations, workspace_edit_plan, workspace_symbols,
 };
-use super::server::{ServerHandle, ServerSpec, spawn_server};
+use super::server::{ServerHandle, ServerRegistry};
 use super::types::{LspError, LspLocation, WorkspaceEditPlan};
 use super::uri::{path_for_uri, uri_for_path};
 use super::{EventSender, PendingResponses};
-
-/// Tempo maximo aguardando respostas interativas do LSP.
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
-
-/// Timeouts CONSECUTIVOS de um servidor antes do auto-restart (M4.3b). Com
-/// `REQUEST_TIMEOUT` de 4s, são ~12s preso antes de ressuscitar o servidor.
-const MAX_TIMEOUT_STREAK: u32 = 3;
 
 /// Ultima consulta de code actions respondida, com as ações cruas do servidor.
 ///
@@ -56,14 +45,17 @@ pub(super) struct ActiveCodeActions {
 /// Gerencia os language servers do workspace aberto.
 #[derive(Debug)]
 pub struct LspManager {
-    events: EventSender,
+    pub(super) events: EventSender,
     pub(super) servers: HashMap<&'static str, ServerHandle>,
-    pending: PendingResponses,
-    root: Option<PathBuf>,
-    next_request_id: i64,
+    pub(super) pending: PendingResponses,
+    pub(super) root: Option<PathBuf>,
+    pub(super) next_request_id: i64,
     pub(super) active_code_actions: Option<ActiveCodeActions>,
-    /// Timeouts consecutivos por linguagem; zera em qualquer resposta.
-    timeout_streak: HashMap<&'static str, u32>,
+    /// Timeouts consecutivos por linguagem; zera em qualquer resposta. A
+    /// politica que o consome vive em [`super::session`].
+    pub(super) timeout_streak: HashMap<&'static str, u32>,
+    /// Qual executavel roda cada linguagem. Ver [`ServerRegistry`].
+    pub(super) registry: ServerRegistry,
 }
 
 impl LspManager {
@@ -78,70 +70,7 @@ impl LspManager {
             next_request_id: 2,
             active_code_actions: None,
             timeout_streak: HashMap::new(),
-        }
-    }
-
-    /// Reinicia o servidor de UMA linguagem: mata o processo e o remove; sobe
-    /// de novo (lazy) no próximo request. `true` se havia servidor. A UI
-    /// re-sincroniza o arquivo ativo ao ver `event.lsp.restarted` (M4.3b).
-    pub fn restart_language(&mut self, language: &str) -> bool {
-        let Some(key) = self.servers.keys().copied().find(|k| *k == language) else {
-            return false;
-        };
-        if let Some(mut handle) = self.servers.remove(key) {
-            drop(handle.child.kill());
-            drop(handle.child.wait());
-        }
-        self.timeout_streak.remove(key);
-        self.emit_status(key, "restarting");
-        self.emit_restarted(key);
-        true
-    }
-
-    /// Reinicia TODOS os servidores vivos; devolve as linguagens reiniciadas.
-    pub fn restart_all(&mut self) -> Vec<String> {
-        let languages: Vec<&'static str> = self.servers.keys().copied().collect();
-        let mut restarted = Vec::new();
-        for language in languages {
-            if self.restart_language(language) {
-                restarted.push(language.to_owned());
-            }
-        }
-        restarted
-    }
-
-    /// Registra um timeout do servidor; ao acumular `MAX_TIMEOUT_STREAK`
-    /// seguidos, auto-reinicia aquela linguagem (M4.3b).
-    fn note_timeout(&mut self, language: &'static str) {
-        let streak = {
-            let entry = self.timeout_streak.entry(language).or_insert(0);
-            *entry += 1;
-            *entry
-        };
-        if streak >= MAX_TIMEOUT_STREAK {
-            self.restart_language(language);
-        }
-    }
-
-    /// Define a raiz do workspace, derrubando servidores da raiz anterior.
-    pub fn set_root(&mut self, root: Option<PathBuf>) {
-        if self.root == root {
-            return;
-        }
-        self.shutdown_all();
-        self.root = root;
-    }
-
-    /// Encerra todos os servidores gerenciados.
-    pub fn shutdown_all(&mut self) {
-        self.active_code_actions = None;
-        let drained: Vec<(&'static str, ServerHandle)> = self.servers.drain().collect();
-        for (language, mut handle) in drained {
-            // Melhor esforco: mata o processo; shutdown educado fica para
-            // quando houver cancelamento generico no core.
-            drop(handle.child.kill());
-            drop(handle.child.wait());
-            self.emit_status(language, "stopped");
+            registry: ServerRegistry::default(),
         }
     }
 
@@ -227,8 +156,8 @@ impl LspManager {
         path: &Path,
         content: &str,
     ) -> Result<Option<String>, LspError> {
-        let spec = self.sync_document(path, content)?;
-        if spec.language != "cpp" {
+        let language = self.sync_document(path, content)?;
+        if language != "cpp" {
             return Err(LspError::UnsupportedFile {
                 path: path.display().to_string(),
             });
@@ -236,8 +165,7 @@ impl LspManager {
         // A extensao usa TextDocumentIdentifier PLANO ({ uri }), sem o
         // envelope { textDocument } dos requests de posicao.
         let params = json!({ "uri": uri_for_path(path) });
-        let result =
-            self.send_request(spec.language, "textDocument/switchSourceHeader", &params)?;
+        let result = self.send_request(language, "textDocument/switchSourceHeader", &params)?;
         Ok(result.as_str().and_then(path_for_uri))
     }
 
@@ -277,11 +205,11 @@ impl LspManager {
         line: u64,
         column: u64,
     ) -> Result<Vec<LspCodeActionInfo>, LspError> {
-        let spec = self.sync_document(path, content)?;
+        let language = self.sync_document(path, content)?;
         let uri = uri_for_path(path);
         let context_diagnostics = self
             .servers
-            .get(spec.language)
+            .get(language)
             .map(|handle| diagnostics_for_line(&handle.diagnostics_by_uri, &uri, line))
             .unwrap_or_default();
         let position = json!({
@@ -293,7 +221,7 @@ impl LspManager {
             "range": { "start": position, "end": position },
             "context": { "diagnostics": context_diagnostics },
         });
-        let result = self.send_request(spec.language, "textDocument/codeAction", &params)?;
+        let result = self.send_request(language, "textDocument/codeAction", &params)?;
         let (infos, raw) = code_action_infos(&result);
         self.active_code_actions = Some(ActiveCodeActions {
             path: path.to_path_buf(),
@@ -333,9 +261,9 @@ impl LspManager {
         path: &Path,
         content: &str,
     ) -> Result<Vec<LspSymbolInfo>, LspError> {
-        let spec = self.sync_document(path, content)?;
+        let language = self.sync_document(path, content)?;
         let params = json!({ "textDocument": { "uri": uri_for_path(path) } });
-        let result = self.send_request(spec.language, "textDocument/documentSymbol", &params)?;
+        let result = self.send_request(language, "textDocument/documentSymbol", &params)?;
         Ok(document_symbols(&result, &path.display().to_string()))
     }
 
@@ -346,9 +274,9 @@ impl LspManager {
         content: &str,
         query: &str,
     ) -> Result<Vec<LspSymbolInfo>, LspError> {
-        let spec = self.sync_document(path, content)?;
+        let language = self.sync_document(path, content)?;
         let params = json!({ "query": query });
-        let result = self.send_request(spec.language, "workspace/symbol", &params)?;
+        let result = self.send_request(language, "workspace/symbol", &params)?;
         Ok(workspace_symbols(&result))
     }
 
@@ -361,18 +289,17 @@ impl LspManager {
         path: &Path,
         content: &str,
     ) -> Result<Vec<LspSemanticToken>, LspError> {
-        let spec = self.sync_document(path, content)?;
+        let language = self.sync_document(path, content)?;
         let legend = self
             .servers
-            .get(spec.language)
+            .get(language)
             .map(|handle| handle.semantic_token_types.clone())
             .unwrap_or_default();
         if legend.is_empty() {
             return Ok(Vec::new());
         }
         let params = json!({ "textDocument": { "uri": uri_for_path(path) } });
-        let result =
-            self.send_request(spec.language, "textDocument/semanticTokens/full", &params)?;
+        let result = self.send_request(language, "textDocument/semanticTokens/full", &params)?;
         Ok(decode_semantic_tokens(&result, &legend))
     }
 
@@ -396,7 +323,7 @@ impl LspManager {
         column: u64,
         extra: &Value,
     ) -> Result<Value, LspError> {
-        let spec = self.sync_document(path, content)?;
+        let language = self.sync_document(path, content)?;
         let mut params = json!({
             "textDocument": { "uri": uri_for_path(path) },
             "position": {
@@ -409,116 +336,7 @@ impl LspManager {
                 target.insert(key.clone(), value.clone());
             }
         }
-        self.send_request(spec.language, method, &params)
-    }
-
-    pub(super) fn ensure_server(&mut self, spec: &'static ServerSpec) -> Result<(), LspError> {
-        if self.servers.contains_key(spec.language) {
-            return Ok(());
-        }
-        let Some(root) = self.root.clone() else {
-            return Err(LspError::Transport {
-                message: "nenhum workspace LSP configurado".to_owned(),
-            });
-        };
-
-        match spawn_server(spec, &root, self.events.clone(), Arc::clone(&self.pending)) {
-            Ok(handle) => {
-                self.servers.insert(spec.language, handle);
-                self.emit_status(spec.language, "running");
-                Ok(())
-            }
-            Err(error) => {
-                let message = error.to_string();
-                self.emit_status_message(spec.language, "failed", Some(&message));
-                Err(error)
-            }
-        }
-    }
-
-    fn send_request(
-        &mut self,
-        language: &'static str,
-        method: &'static str,
-        params: &Value,
-    ) -> Result<Value, LspError> {
-        let id = self.next_request_id;
-        self.next_request_id += 1;
-        let Some(handle) = self.servers.get(language) else {
-            return Err(LspError::Transport {
-                message: format!("servidor {language} nao esta em execucao"),
-            });
-        };
-        let (response_tx, response_rx) = mpsc::channel::<Value>();
-        {
-            let Ok(mut pending) = self.pending.lock() else {
-                return Err(LspError::Transport {
-                    message: "mapa de requests LSP envenenado".to_owned(),
-                });
-            };
-            pending.insert(id, response_tx);
-        }
-
-        let message = json!({ "jsonrpc": "2.0", "id": id, "method": method, "params": params });
-        if let Err(error) = write_locked_message(&handle.stdin, &message) {
-            self.remove_pending(id);
-            return Err(LspError::Transport {
-                message: format!("falha ao enviar {method}: {error}"),
-            });
-        }
-
-        match response_rx.recv_timeout(REQUEST_TIMEOUT) {
-            Ok(response) => {
-                // Qualquer resposta (mesmo erro do LSP) prova que o servidor
-                // está vivo: zera a contagem de timeouts (M4.3b).
-                self.timeout_streak.remove(language);
-                response_result(method, &response)
-            }
-            Err(mpsc::RecvTimeoutError::Timeout) => {
-                self.remove_pending(id);
-                self.note_timeout(language);
-                Err(LspError::Timeout { method })
-            }
-            Err(mpsc::RecvTimeoutError::Disconnected) => Err(LspError::Transport {
-                message: format!("canal de resposta de {method} foi fechado"),
-            }),
-        }
-    }
-
-    fn remove_pending(&self, id: i64) {
-        if let Ok(mut pending) = self.pending.lock() {
-            pending.remove(&id);
-        }
-    }
-
-    fn emit_status(&self, language: &str, status: &str) {
-        self.emit_status_message(language, status, None);
-    }
-
-    /// Avisa a UI que um servidor reiniciou, para ela re-sincronizar o
-    /// arquivo ativo (mesmo caminho do `recovered()` do crash — M4.3b).
-    fn emit_restarted(&self, language: &str) {
-        drop(self.events.send(JsonRpcRequest::notification(
-            "event.lsp.restarted",
-            Some(json!({ "language": language })),
-        )));
-    }
-
-    fn emit_status_message(&self, language: &str, status: &str, message: Option<&str>) {
-        let mut params = json!({ "language": language, "status": status });
-        if let (Some(map), Some(text)) = (params.as_object_mut(), message) {
-            map.insert("message".to_owned(), Value::String(text.to_owned()));
-        }
-        drop(self.events.send(JsonRpcRequest::notification(
-            "event.lsp.status",
-            Some(params),
-        )));
-    }
-}
-
-impl Drop for LspManager {
-    fn drop(&mut self) {
-        self.shutdown_all();
+        self.send_request(language, method, &params)
     }
 }
 
@@ -552,20 +370,4 @@ fn diagnostics_for_line(
         })
         .cloned()
         .collect()
-}
-
-#[cfg(test)]
-mod tests {
-    use std::sync::mpsc;
-
-    use super::LspManager;
-
-    #[test]
-    fn restart_without_server_is_noop() {
-        let (sender, _receiver) = mpsc::channel();
-        let mut manager = LspManager::new(sender);
-        // Sem servidor vivo, reiniciar uma linguagem é no-op; todos = vazio.
-        assert!(!manager.restart_language("rust"));
-        assert!(manager.restart_all().is_empty());
-    }
 }

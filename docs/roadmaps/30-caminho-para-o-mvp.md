@@ -104,28 +104,60 @@ consentimento (o `expected` que volta ao core), e cai quando ele é omitido.
    fazendo a contagem de arquivos crescer — nunca subir o baseline. A catraca
    caiu de 21 para 20 arquivos em débito **como efeito colateral**.
 
-### Etapa 3 — Servidor LSP falso para os testes
+### Etapa 3 — Servidor LSP falso para os testes ✅ FEITA (2026-09-02)
 
-Hoje **15 métodos IPC de `lsp.*` não têm um único teste de comportamento**: as
-286 linhas de `src/tests/lsp.rs` são todas "requires open workspace" ou
-"reports unavailable". Nenhum teste deste repositório sobe um language server.
+Até 2026-09-02, **15 métodos IPC de `lsp.*` não tinham um único teste de
+comportamento**: as 286 linhas de `src/tests/lsp.rs` eram todas "requires open
+workspace" ou "reports unavailable", e nenhum teste deste repositório subia um
+language server. Era a maior lacuna de evidência do projeto.
 
-É a maior lacuna de evidência do projeto e o motivo pelo qual a etapa 4 está
-barrada. Forma provável: um `ServerSpec` injetável apontando para um script que
-fala JSON-RPC de mentira, para que `didOpen`/`didClose`/`didChange` passem a
-ser observáveis.
+A forma prevista era a certa. A tabela de servidores saiu de `const` e virou
+**estado injetável** (`ServerRegistry`): `Core::use_language_server_command`
+aponta uma linguagem para outro executável, e `scripts/fake_lsp_server.py` entra
+no lugar do rust-analyzer. O servidor falso é determinístico, instantâneo e —
+o que importa — **grava tudo o que recebe**, uma mensagem por linha. Os testes
+de `src/tests/lsp_server.rs` olham o WIRE, não a resposta do IPC: é a mesma
+distinção que a etapa 1 ensinou quando uma sonda ficou verde com o produto
+quebrado.
 
-*Aceite:* `did_open`, `did_close` e `did_change` provados por mutação.
+*Aceite cumprido*, cinco mutações, cada uma derrubando o teste certo:
+
+```text
+did_open nao envia didOpen              -> 5 testes caem
+did_change nao sobe a versao            -> versao 1 onde tinha que ser 2
+curto-circuito por hash desligado       -> 3 didChange onde tinham que ser 2
+did_close nao envia didClose            -> 2 testes caem
+fs.delete deixa de fechar o documento   -> os mesmos 2 (prova o CHAMADOR)
+```
+
+**`did_close` nasceu aqui, com chamador de verdade no mesmo commit.** Ele não
+existia — `grep did_close` voltava vazio —, e a etapa 4 depende dele. Mecanismo
+sem usuário é anti-padrão registrado (§8), então ele entrou pelo bug que já
+existia em silêncio: apagar um arquivo aberto deixava o servidor com
+diagnósticos de um arquivo que não existe mais. `fs.delete` agora fecha o
+documento.
+
+**O `lsp/manager.rs` saiu do débito (556 → 392) como efeito colateral.** A
+catraca cobrou ao ver a tabela injetável entrar, e o diagnóstico foi o "e" no
+próprio doc do módulo: *"mantém os servidores... **e** expõe as operações
+interativas"*. Duas responsabilidades. Nasceu `lsp/session.rs` — qual
+executável, subir, reiniciar, encerrar e o transporte — pelo mesmo corte que o
+`sync.rs` recebeu em 2026-08-30. Catraca: 20 → 19 arquivos em débito.
+
+*Novo requisito de ambiente:* `cargo test` passa a exigir `python3`, que já era
+requisito de 4 das 13 verificações do gate. Faltar é FALHA, nunca teste pulado.
 
 ### Etapa 4 — Reabrir documentos após `cmake.configure` (§5b do `roadmaps/29`)
 
-O terreno já está pronto: `lsp/sync.rs` nasceu em 2026-08-30 e o `manager.rs`
-caiu de 732 para 556 linhas, abrindo espaço. Falta a peça: um objeto
-compartilhado entre o job do configure e o manager (ver `arquitetura/04` §3,
-sobre a fronteira de thread), para que a próxima sincronização de um documento
-C/C++ faça `didClose` + `didOpen` de verdade.
+**Desbloqueada em 2026-09-02.** O terreno está pronto: `lsp/sync.rs` nasceu em
+2026-08-30, `lsp/session.rs` em 2026-09-02, o `manager.rs` caiu de 732 para 392
+linhas, e — o que barrava de verdade — `did_close` agora existe e é provado por
+mutação. Falta a peça: um objeto compartilhado entre o job do configure e o
+manager (ver `arquitetura/04` §3, sobre a fronteira de thread), para que a
+próxima sincronização de um documento C/C++ faça `didClose` + `didOpen` de
+verdade.
 
-*Estava barrado por prova, não por espaço — por isso vem depois da etapa 3.*
+*Estava barrado por prova, não por espaço — e a prova chegou na etapa 3.*
 
 ### Etapa 5 — Toolchain como entidade (B2 do TR2)
 
@@ -170,7 +202,7 @@ recebida e nunca usada). Limpeza de um gesto.
 
 ```text
 FECHA O MVP        1 (feita), 2 (feita), 7, 8, 10
-SEPARA MVP DE      3, 4, 5, 6, 9
+SEPARA MVP DE      3 (feita), 4, 5, 6, 9
 DAILY DRIVER
 ```
 

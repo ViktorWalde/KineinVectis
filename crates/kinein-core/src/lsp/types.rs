@@ -71,12 +71,12 @@ pub enum LspError {
     /// O executavel do language server nao foi encontrado.
     MissingServer {
         /// Comando esperado.
-        command: &'static str,
+        command: String,
     },
     /// Falha ao iniciar ou inicializar o servidor.
     ServerFailed {
         /// Comando do servidor.
-        command: &'static str,
+        command: String,
         /// Mensagem tecnica.
         message: String,
     },

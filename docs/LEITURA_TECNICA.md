@@ -54,7 +54,7 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**112 métodos IPC** roteados, **18 domínios** no core, **401 testes** Rust
+**112 métodos IPC** roteados, **18 domínios** no core, **409 testes** Rust
 verdes (medido em 2026-09-02). Protocolo `0.63.0`.
 
 Domínios do core, por profundidade real:
@@ -63,7 +63,11 @@ Domínios do core, por profundidade real:
 SOLIDO      fsops     confinamento ao root, escrita atomica, transacao com
                       rollback, search/replace com walk unico e teste de paridade
             workspace deteccao de projeto, sessao, recentes, criacao por template
-            lsp       manager, framing, parse, transacao de WorkspaceEdit
+            lsp       manager (operacoes interativas), session (qual executavel,
+                      subir/reiniciar/encerrar), sync (o TEXTO), framing, parse,
+                      transacao de WorkspaceEdit. Desde 2026-09-02 os testes
+                      sobem um servidor FALSO e olham o wire: didOpen/didChange/
+                      didClose deixaram de ser afirmacao
             git       operacoes reais contra repositorio, 12 testes de integracao
             jobs      cancelamento cooperativo, progresso, drain no shutdown
 
@@ -105,7 +109,7 @@ nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
 provado, está sem evidência — por isso cada um é testado por mutação.
 
-**2. A catraca de arquitetura congela 20 arquivos (medido em 2026-09-02) e só
+**2. A catraca de arquitetura congela 19 arquivos (medido em 2026-09-02) e só
 deixa diminuir.** Ela não é limite duro. O critério é **responsabilidade**; linhas são só o detector de
 fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de

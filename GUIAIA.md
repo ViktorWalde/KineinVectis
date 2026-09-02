@@ -441,12 +441,22 @@ ui/qml/diagnostics/DiagnosticsController.qml
 ui/qml/ipc/EditorEventRouter.qml
     ↕ crates/kinein-protocol/src/{lsp,syntax,diagnostic}.rs
 crates/kinein-core/src/handlers/{lsp,syntax}.rs
-    ├─ crates/kinein-core/src/lsp/{manager,server,framing,parse,edit,transaction,uri}.rs
+    ├─ crates/kinein-core/src/lsp/{manager,session,sync,server,framing,parse,
+    │                              edit,transaction,uri}.rs
     └─ crates/kinein-core/src/lang/{registry,service,positions,outline,folding}.rs
 ```
 
-- Testes: `crates/kinein-core/src/tests/{lsp,syntax}.rs` e
-  `scripts/qml-harness/{tst_completion,tst_outline}.qml`.
+- Testes: `crates/kinein-core/src/tests/{lsp,lsp_server,syntax}.rs` e
+  `scripts/qml-harness/{tst_completion,tst_outline}.qml`. O `lsp.rs` cobre as
+  GUARDAS; o `lsp_server.rs` sobe o `scripts/fake_lsp_server.py` e olha o WIRE
+  (didOpen/didChange/didClose, versão do documento, curto-circuito por hash).
+  Para observar uma conversa nova, aponte a linguagem para o servidor falso com
+  `Core::use_language_server_command` — não instale rust-analyzer no teste.
+- Três donos dentro de `lsp/`, e a fronteira é para valer: `manager` são as
+  operações interativas, `session` é qual executável / subir / reiniciar /
+  encerrar / transporte, `sync` é o que o servidor sabe sobre o TEXTO. Método
+  novo entra no dono certo; foi juntar os três num arquivo só que gerou o
+  débito pago em 2026-08-30 e 2026-09-02.
 - Fontes: spec Editor/Language Intelligence, spec Tree-sitter,
   `docs/roadmaps/25-syntax-tree-semantic-foundation.md` e especificação KSWE.
 - Tree-sitter entrega estrutura/fallback; clangd e rust-analyzer são a

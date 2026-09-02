@@ -14,6 +14,7 @@ mod fs;
 mod git;
 mod jobs;
 mod lsp;
+mod lsp_server;
 mod run;
 mod runconfig;
 mod runners;

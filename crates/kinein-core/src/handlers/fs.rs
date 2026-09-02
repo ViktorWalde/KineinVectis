@@ -372,7 +372,7 @@ impl Core {
     }
 
     fn fs_delete_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -385,12 +385,21 @@ impl Core {
             "fs.delete requer o campo path",
         ) {
             Ok(parsed) => match fsops::delete(&root, Path::new(&parsed.path)) {
-                Ok(path) => JsonRpcResponse::success(
-                    request_id,
-                    json!(FsDeleteResult {
-                        path: path.display().to_string(),
-                    }),
-                ),
+                Ok(path) => {
+                    // Documento apagado que continua aberto no servidor deixa
+                    // diagnostico de um arquivo que nao existe mais na aba
+                    // Problemas. Fechar e' a unica forma de o servidor
+                    // esquece-lo (protocolo 0.63.0).
+                    if let Some(lsp) = self.lsp.as_mut() {
+                        lsp.did_close(&path);
+                    }
+                    JsonRpcResponse::success(
+                        request_id,
+                        json!(FsDeleteResult {
+                            path: path.display().to_string(),
+                        }),
+                    )
+                }
                 Err(error) => fs_error_response(request_id, &error),
             },
             Err(response) => *response,

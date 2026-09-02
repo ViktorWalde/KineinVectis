@@ -352,7 +352,11 @@ confinado à raiz do workspace (`INVALID_PARAMS` se escapar).
   do workspace. A raiz do workspace não pode ser renomeada (`INVALID_PARAMS`).
 - `fs.delete { path }` → `{ path }`. Criado no protocolo `0.19.0`; remove um
   arquivo ou diretório (recursivo para diretórios) dentro do workspace. A raiz
-  do workspace não pode ser removida (`INVALID_PARAMS`).
+  do workspace não pode ser removida (`INVALID_PARAMS`). **Desde 2026-09-02**,
+  se o arquivo estava aberto num language server, o core manda
+  `textDocument/didClose`: documento apagado que continua aberto deixa
+  diagnóstico de um arquivo que não existe mais na aba Problemas. A forma da
+  mensagem IPC não mudou.
 
 **Mudanças externas (protocolo `0.45.0`, T2):** ao abrir o workspace, o core
 inicia `notify` com backend nativo (`inotify` no Linux) e fallback por polling.
