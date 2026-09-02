@@ -457,6 +457,13 @@ crates/kinein-core/src/handlers/{lsp,syntax}.rs
   encerrar / transporte, `sync` é o que o servidor sabe sobre o TEXTO. Método
   novo entra no dono certo; foi juntar os três num arquivo só que gerou o
   débito pago em 2026-08-30 e 2026-09-02.
+- O dispatch C++ do domínio vive em `ui/src/core_client_dispatch_lsp.cpp`
+  (eventos + respostas `lsp.*`), não no `core_client_dispatch.cpp`.
+- **Reação a evento de job mora no core, não na UI.** Um `cmake.configure` bem
+  sucedido fecha os documentos C/C++ abertos (`Core::observe_notification` →
+  `on_cmake_configure_finished`) e emite `event.lsp.documentsClosed`; a UI só
+  re-sincroniza o arquivo ativo. Não mover essa decisão para o QML: um
+  "reenviar didOpen" pela UI é inerte por causa do curto-circuito por hash.
 - Fontes: spec Editor/Language Intelligence, spec Tree-sitter,
   `docs/roadmaps/25-syntax-tree-semantic-foundation.md` e especificação KSWE.
 - Tree-sitter entrega estrutura/fallback; clangd e rust-analyzer são a

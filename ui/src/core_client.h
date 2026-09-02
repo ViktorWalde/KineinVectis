@@ -277,6 +277,7 @@ signals:
     void lspSwitchSourceHeaderResolved(const QString& path);
     // M4.3b: um servidor LSP reiniciou — a UI re-sincroniza o arquivo ativo.
     void lspRestarted(const QString& language);
+    void lspDocumentsClosed(const QString& language, int count);
     void fileSearchResults(const QVariantList& matches, bool truncated);
     void searchResults(const QVariantList& matches, bool truncated);
     void filesReplaced(const QStringList& files, int replacements);

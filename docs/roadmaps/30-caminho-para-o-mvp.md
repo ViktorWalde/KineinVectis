@@ -147,17 +147,49 @@ executável, subir, reiniciar, encerrar e o transporte — pelo mesmo corte que 
 *Novo requisito de ambiente:* `cargo test` passa a exigir `python3`, que já era
 requisito de 4 das 13 verificações do gate. Faltar é FALHA, nunca teste pulado.
 
-### Etapa 4 — Reabrir documentos após `cmake.configure` (§5b do `roadmaps/29`)
+### Etapa 4 — Reabrir documentos após `cmake.configure` ✅ FEITA (2026-09-02)
 
-**Desbloqueada em 2026-09-02.** O terreno está pronto: `lsp/sync.rs` nasceu em
-2026-08-30, `lsp/session.rs` em 2026-09-02, o `manager.rs` caiu de 732 para 392
-linhas, e — o que barrava de verdade — `did_close` agora existe e é provado por
-mutação. Falta a peça: um objeto compartilhado entre o job do configure e o
-manager (ver `arquitetura/04` §3, sobre a fronteira de thread), para que a
-próxima sincronização de um documento C/C++ faça `didClose` + `didOpen` de
-verdade.
+O §5b do `roadmaps/29`: o clangd recarrega a `compile_commands.json` sozinho
+desde a v12, mas o **documento já aberto fica com a compilação em cache**.
+Reiniciar o servidor resolveria e jogaria o índice fora; a ação certa é reabrir
+os documentos.
 
-*Estava barrado por prova, não por espaço — e a prova chegou na etapa 3.*
+**O objeto compartilhado não foi preciso, e isso é o achado da etapa.** A
+`arquitetura/04` §3 dava duas saídas — um `Arc<Atomic…>` entre o job e o manager,
+ou uma requisição nova vinda da UI. Existe uma terceira, e ela já estava no
+código: **o evento que o job emite volta ao dono do estado**. O loop principal
+recebe `event.cmake.finished` como `LoopEvent::Notification` *antes* de escrevê-lo
+no stdout, e é ele que possui o `Core`. Reagir ali fecha a fronteira sem um
+segundo caminho para o mesmo fato, e sem dois donos. Nasceu
+`Core::observe_notification` — o irmão do `handle_request`: aquele roteia
+PEDIDO, este roteia FATO.
+
+O core **fecha**, e não reabre. Reabrir do disco daria ao servidor o texto
+gravado enquanto o editor tem um buffer sujo; fechado, o documento sai de
+`versions` e o `didOpen` seguinte — disparado pela UI ao ver
+`event.lsp.documentsClosed` — leva o **buffer real**. É a mesma re-sincronização
+que a UI já fazia no `recovered()` e no `lspRestarted`.
+
+*Aceite*, cinco mutações:
+
+```text
+o loop nao entrega o fato ao core       -> 2 testes caem
+guarda de sucesso removida              -> configure que falhou passa a fechar
+close_documents nao faz nada            -> 2 testes caem
+evento para a UI suprimido              -> o arquivo ativo ficaria mudo
+fecha no servidor mas nao esquece a      -> o "reabrir" nao seria real
+  versao                                   (versao 2 onde tinha que ser 1)
+```
+
+**A primeira versão do teste ficou VERDE com a fiação do loop removida**, porque
+chamava `observe_notification` direto. Foi preciso extrair
+`runtime::drain_loop_events` e fazer o teste passar pelo loop de verdade — a
+falha silenciosa da §8 (*"ligar/escutar no lugar errado não falha no build"*),
+que já custou três fatias a este repositório, quase custou a quarta.
+
+**`core_client_dispatch.cpp` encolheu de 751 para 640** pelo mesmo movimento de
+2026-08-30: o domínio LSP foi para `core_client_dispatch_lsp.cpp` em vez de
+fazer um arquivo em débito crescer por causa de um evento novo.
 
 ### Etapa 5 — Toolchain como entidade (B2 do TR2)
 
@@ -202,7 +234,7 @@ recebida e nunca usada). Limpeza de um gesto.
 
 ```text
 FECHA O MVP        1 (feita), 2 (feita), 7, 8, 10
-SEPARA MVP DE      3 (feita), 4, 5, 6, 9
+SEPARA MVP DE      3 (feita), 4 (feita), 5, 6, 9
 DAILY DRIVER
 ```
 

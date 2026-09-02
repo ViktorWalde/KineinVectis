@@ -150,6 +150,46 @@ impl LspManager {
         true
     }
 
+    /// Fecha TODOS os documentos abertos de uma linguagem; devolve quantos.
+    ///
+    /// Existe para o caso medido no `roadmaps/29` §5b: o clangd tem hot-reload
+    /// da `compile_commands.json` desde a v12 (reconfere a cada ~5 s,
+    /// <https://reviews.llvm.org/D92663>), mas **o documento ja aberto fica com
+    /// a compilacao em cache**. Reiniciar o servidor resolveria e jogaria o
+    /// indice fora; a acao certa e reabrir os documentos.
+    ///
+    /// E por que FECHAR e nao "reenviar didOpen": o curto-circuito por hash
+    /// deste modulo torna um `didOpen` repetido INERTE — depois do configure o
+    /// texto nao mudou. Fechado, o documento sai de `versions`, e o proximo
+    /// `didOpen` volta a ser real, **com o buffer do editor**, nao com o que o
+    /// core teria lido do disco.
+    pub fn close_documents(&mut self, language: &str) -> usize {
+        let uris: Vec<String> = self
+            .servers
+            .get(language)
+            .map(|handle| handle.versions.keys().cloned().collect())
+            .unwrap_or_default();
+        if uris.is_empty() {
+            return 0;
+        }
+        let Some(handle) = self.servers.get_mut(language) else {
+            return 0;
+        };
+        for uri in &uris {
+            handle.versions.remove(uri);
+            handle.content_hashes.remove(uri);
+        }
+        self.active_code_actions = None;
+        let Some(handle) = self.servers.get(language) else {
+            return 0;
+        };
+        for uri in &uris {
+            let params = json!({ "textDocument": { "uri": uri } });
+            send_notification(&handle.stdin, "textDocument/didClose", &params);
+        }
+        uris.len()
+    }
+
     /// Re-sincroniza um documento que ja esta aberto no servidor.
     ///
     /// Usado depois de um rename reescrever arquivos no disco; documentos que

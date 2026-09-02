@@ -281,16 +281,17 @@ FEITO    aviso de CDB velha NA TELA (§5c), em 2026-08-30. O core media
          acionavel do auto-configure, nomeando o arquivo que invalidou a CDB, e
          `scripts/qml-harness/tst_project_health.qml` trava o comportamento
          (provado por mutacao: sem o ramo, cai com bitmask=60).
-ABERTO   REABRIR os documentos apos configure (§5b) — ver a nota da §5b: NAO e'
-         fatia so de UI, ao contrario do que esta secao dizia. O TERRENO ja foi
-         preparado em 2026-08-30: `lsp/sync.rs` nasceu com o dominio de
-         sincronizacao de documentos, e o `manager.rs` caiu de 732 para 556, o
-         que abre espaco para a peca nova sem ginástica. Falta a peca em si:
-         um flag compartilhado entre o job do configure e o manager, para que a
-         proxima sincronizacao de um documento C/C++ faca didClose+didOpen de
-         verdade. Segue barrado por PROVA, nao por espaco: nenhum teste deste
-         repositorio sobe um language server, entao o efeito real nao tem como
-         ser provado por mutacao hoje.
+FEITO    REABRIR os documentos apos configure (§5b), em 2026-09-02. A nota da
+         §5b estava certa nos dois pontos: era fatia de CORE, e precisava do
+         `didClose`, que nao existia. O que mudou em relacao ao previsto: o
+         FLAG COMPARTILHADO nao foi preciso. O evento `event.cmake.finished`
+         que o job emite ja volta ao dono do estado — o loop principal o recebe
+         antes de repassa-lo a UI —, entao a reacao mora la
+         (`Core::observe_notification`), sem `Arc<Atomic…>` e sem dois donos.
+         O core FECHA; o `didOpen` seguinte vem da UI (por
+         `event.lsp.documentsClosed`) com o BUFFER do editor, nao com o disco.
+         Provado por mutacao, 5 delas, contra um language server FALSO —
+         a barreira de prova caiu na etapa 3 do roadmap 30.
 ETAPA    toolchain como entidade (§5d) — etapa PROPRIA, por decisao do autor.
 PROPRIA
 ```

@@ -54,7 +54,7 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**112 métodos IPC** roteados, **18 domínios** no core, **409 testes** Rust
+**112 métodos IPC** roteados, **18 domínios** no core, **413 testes** Rust
 verdes (medido em 2026-09-02). Protocolo `0.63.0`.
 
 Domínios do core, por profundidade real:
@@ -67,7 +67,9 @@ SOLIDO      fsops     confinamento ao root, escrita atomica, transacao com
                       subir/reiniciar/encerrar), sync (o TEXTO), framing, parse,
                       transacao de WorkspaceEdit. Desde 2026-09-02 os testes
                       sobem um servidor FALSO e olham o wire: didOpen/didChange/
-                      didClose deixaram de ser afirmacao
+                      didClose deixaram de ser afirmacao. Um configure
+                      bem-sucedido fecha os documentos C/C++ abertos, e a UI os
+                      reabre com o buffer real
             git       operacoes reais contra repositorio, 12 testes de integracao
             jobs      cancelamento cooperativo, progresso, drain no shutdown
 
@@ -154,6 +156,15 @@ categoria e o arquivo nessa ordem, e aqui o culpado era o terceiro.
 O caminho previsto no contrato é `função → arquivo → pasta → crate`, com os
 nomes dos crates futuros já escolhidos. Nenhum foi criado ainda: hoje é um crate
 só, e isso está certo enquanto couber.
+
+**A fronteira de thread do job tem três saídas, não duas.** O
+`arquitetura/04` §3 registrava que um job não alcança o `Core` e listava duas
+formas de atravessar: um objeto compartilhado ou uma requisição nova da UI. Em
+2026-09-02 apareceu a terceira, e é a mais barata: **o evento que o job emite já
+volta ao dono do estado** — o loop principal o recebe antes de repassá-lo à UI.
+Reagir ali (`Core::observe_notification`) não cria estado compartilhado nem um
+segundo dono. Foi assim que a reabertura de documentos após o `cmake.configure`
+saiu sem um `Arc<Atomic…>`.
 
 **A UI tem um padrão que o core não tinha.** `WorkspaceUiResetter` é dono único
 do "esqueça tudo do workspace anterior" — exatamente o padrão que faltava no core

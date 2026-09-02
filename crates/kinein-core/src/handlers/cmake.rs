@@ -3,14 +3,54 @@
 
 use kinein_protocol::{
     BuildSystem, CmakeConfigureParams, CmakePresetsResult, CmakeStatusResult, CmakeTargetsResult,
-    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    JobAcceptedResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcRequest, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
 use crate::rpc::{no_workspace_response, parse_params};
 use crate::{Core, cmake, jobs, process};
 
+/// Linguagem cujos documentos o `cmake.configure` invalida.
+const CPP_LANGUAGE: &str = "cpp";
+
 impl Core {
+    /// Reage ao fim de um `cmake.configure` bem-sucedido fechando os documentos
+    /// C/C++ que o language server conhece.
+    ///
+    /// **Por que isto mora no CORE e nao na UI** (medido em 2026-08-30,
+    /// `roadmaps/29` §5b): a UI nao consegue fazer sozinha. Um "reenviar
+    /// didOpen" e inerte, porque o texto nao mudou e o curto-circuito por hash
+    /// do `lsp/sync` engole a notificacao. Fechar e' operacao de core.
+    ///
+    /// **Por que aqui e nao num objeto compartilhado com o job** (a saida que o
+    /// `arquitetura/04` §3 previa): nao e preciso atravessar a fronteira de
+    /// thread. O evento do job JA volta ao dono do estado — o loop principal o
+    /// recebe como `LoopEvent::Notification` antes de escrever no stdout, e e
+    /// ele que possui o `Core`. Um `Arc<Atomic…>` seria um segundo caminho para
+    /// o mesmo fato, com dois donos.
+    ///
+    /// O `didOpen` seguinte vem da UI, com o BUFFER do editor: o core nao le o
+    /// disco aqui, entao arquivo com edicao nao salva nao regride para a versao
+    /// gravada.
+    pub(crate) fn on_cmake_configure_finished(&mut self, success: bool) {
+        if !success {
+            return;
+        }
+        let Some(lsp) = self.lsp.as_mut() else {
+            return;
+        };
+        let closed = lsp.close_documents(CPP_LANGUAGE);
+        if closed == 0 {
+            return;
+        }
+        if let Some(events) = self.events.as_ref() {
+            drop(events.send(JsonRpcRequest::notification(
+                "event.lsp.documentsClosed",
+                Some(json!({ "language": CPP_LANGUAGE, "count": closed })),
+            )));
+        }
+    }
+
     /// Roteia os metodos `cmake.*`; `None` quando o metodo nao e `CMake`.
     pub(crate) fn cmake_request_response(
         &self,

@@ -1,8 +1,9 @@
 # Boot e comunicação: do processo ao primeiro frame
 
 > **Classe: ESTADO** (`docs/README.md`). Descreve o que o código faz **hoje**.
-> Tudo aqui foi medido em **2026-08-30** no protocolo `0.62.0`, lendo o código,
-> não a intenção. Se divergir do código, o código vence e este documento se
+> Medido em **2026-08-30** no protocolo `0.62.0` e revisto em **2026-09-02** no
+> `0.63.0` (a §3 ganhou a terceira travessia da fronteira de thread), lendo o
+> código, não a intenção. Se divergir do código, o código vence e este documento se
 > corrige no mesmo gesto.
 >
 > **Para que serve:** o `03-ipc-protocol.md` responde *"qual é a forma da
@@ -72,7 +73,7 @@ handleStarted()  (sinal do QProcess)
 ```
 
 **`enable_lsp` e `enable_persistence` são chamados SÓ no processo real.** Um
-`Core::new()` puro — o que os 378 testes usam — tem LSP, run, debug, jobs e
+`Core::new()` puro — o que os 413 testes usam — tem LSP, run, debug, jobs e
 terminal **desligados**, e persistência global **ausente**. Isso não é detalhe de
 teste: é a barreira que impede a suíte de escrever no `$XDG_CONFIG_HOME` do
 autor. Antes de 2026-08-29 ela não existia, e a suíte apagou a lista de projetos
@@ -111,10 +112,25 @@ recebe apenas um `JobContext` (id, cancelamento, `emit_output`, `emit_event`).
 Ele **não alcança o `Core`** e portanto não alcança o `LspManager`, o
 `TerminalManager` nem a store de rascunhos. Medido em 2026-08-30 ao investigar
 o §5b do `roadmaps/29`: um job de `cmake.configure` **não consegue** invalidar
-as flags de compilação do LSP como efeito colateral. Atravessar essa fronteira
-exige um objeto compartilhado explícito (um `Arc<Atomic…>`) ou uma requisição
-nova vinda da UI. Não é limitação a corrigir; é a fronteira que mantém o estado
-com um dono só.
+as flags de compilação do LSP como efeito colateral. Não é limitação a corrigir;
+é a fronteira que mantém o estado com um dono só.
+
+**Como atravessá-la, medido em 2026-09-02.** Há três formas, e a terceira é a
+barata — ela estava no código desde sempre e passou despercebida até a etapa 4
+do `roadmaps/30`:
+
+```text
+(a) objeto compartilhado explicito (Arc<Atomic…>)  cria um SEGUNDO dono do fato
+(b) requisicao nova vinda da UI                    poe politica de core na UI
+(c) reagir ao EVENTO no loop principal             <- sem estado novo, um dono
+```
+
+A (c) funciona porque **o evento que o job emite já volta ao dono do estado**: a
+ponte de notificações o entrega como `LoopEvent::Notification`, e o loop
+principal — que possui o `Core` — o vê *antes* de escrevê-lo no stdout. É ali
+que mora `Core::observe_notification`, o irmão do `handle_request`: aquele
+roteia PEDIDO, este roteia FATO. Foi assim que o fechamento dos documentos C/C++
+após um configure saiu sem sincronização nova.
 
 ## 4. O caminho de uma requisição
 
@@ -236,6 +252,10 @@ scripts/sonda_terminal.py    D2.1/D2.2: comando no grid; resize 100x30 visto
                              pelo PROGRAMA (tput cols); topo do historico
 scripts/sonda_scrollback.py  clamp do offset de scroll e multi-sessao (D2.3)
 scripts/sonda_m43b.py        auto-restart de servidor LSP por timeout
+scripts/fake_lsp_server.py   NAO e sonda: e o language server FALSO que os
+                             testes do core sobem para observar o wire
+                             (didOpen/didChange/didClose). Ver
+                             crates/kinein-core/src/tests/lsp_server.rs
 ```
 
 ## 9. O que este desenho custa, dito de frente
@@ -252,6 +272,6 @@ scripts/sonda_m43b.py        auto-restart de servidor LSP por timeout
   um dos dois lados; o log do `CoreClient` (`-> pedido` / `core stderr:`) existe
   para tornar isso legível.
 
-O que o desenho compra em troca: um core testável sem GUI (378 testes rodam sem
+O que o desenho compra em troca: um core testável sem GUI (413 testes rodam sem
 subir Qt), uma UI que não pode chamar ferramenta externa nem por acidente, e
 um crash de qualquer ferramenta externa que não derruba a IDE.

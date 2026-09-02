@@ -29,6 +29,16 @@ Item {
             root.editorController.refreshSemanticTokens();
         }
 
+        // Etapa 4 (roadmap 30): apos um cmake.configure o core FECHOU os
+        // documentos C/C++ que o servidor conhecia — reenviar didOpen sem
+        // fechar seria inerte (curto-circuito por hash no lsp/sync). Aqui a UI
+        // reabre o arquivo ativo com o BUFFER real, e o clangd recompila com as
+        // flags novas. Sem isto, o arquivo fica sem diagnostico ate o usuario
+        // digitar.
+        function onLspDocumentsClosed(language, count) {
+            root.editorController.refreshSemanticTokens();
+        }
+
         function onFileSaved(path) {
             root.editorController.handleFileSaved(path);
         }

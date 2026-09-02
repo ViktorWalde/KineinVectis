@@ -35,9 +35,10 @@ struct Harness {
     core: Core,
     root: PathBuf,
     log: PathBuf,
-    /// Segura a ponta receptora dos eventos: sem ela, todo `send` do core
-    /// falharia e a thread leitora do servidor morreria calada.
-    _events: mpsc::Receiver<JsonRpcRequest>,
+    /// Ponta receptora dos eventos que o CORE emite. Segurar e obrigatorio —
+    /// sem ela, todo `send` falharia e a thread leitora do servidor morreria
+    /// calada —, e [`Harness::wait_for_event`] a consome.
+    events: mpsc::Receiver<JsonRpcRequest>,
 }
 
 /// Caminho absoluto do servidor falso, versionado junto com os testes.
@@ -78,6 +79,12 @@ fn harness(name: &str) -> Harness {
     std::fs::create_dir_all(root.join("src")).unwrap();
     std::fs::write(root.join("Cargo.toml"), "[package]\nname = \"demo\"\n").unwrap();
     std::fs::write(root.join("src/main.rs"), "fn main() {}\n").unwrap();
+    std::fs::write(
+        root.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.24)\nproject(demo CXX)\n",
+    )
+    .unwrap();
+    std::fs::write(root.join("src/main.cpp"), "int main() { return 0; }\n").unwrap();
     let root = root.canonicalize().unwrap();
     let log = root.join("lsp-wire.jsonl");
 
@@ -93,18 +100,20 @@ fn harness(name: &str) -> Harness {
     assert!(opened.response().error.is_none(), "workspace.open falhou");
 
     let script = fake_server();
-    let replaced = core.use_language_server_command(
-        "rust",
-        python3(),
-        &[script.to_str().unwrap(), log.to_str().unwrap()],
-    );
-    assert!(replaced, "a linguagem rust precisa existir na tabela");
+    for language in ["rust", "cpp"] {
+        let replaced = core.use_language_server_command(
+            language,
+            python3(),
+            &[script.to_str().unwrap(), log.to_str().unwrap()],
+        );
+        assert!(replaced, "a linguagem {language} precisa existir na tabela");
+    }
 
     Harness {
         core,
         root,
         log,
-        _events: receiver,
+        events: receiver,
     }
 }
 
@@ -123,6 +132,38 @@ impl Harness {
 
     fn main_rs(&self) -> String {
         self.root.join("src/main.rs").display().to_string()
+    }
+
+    fn main_cpp(&self) -> String {
+        self.root.join("src/main.cpp").display().to_string()
+    }
+
+    /// Empurra pelo LOOP REAL o mesmo evento que o job do configure emite.
+    ///
+    /// Passa pelo [`crate::runtime::drain_loop_events`], e nao por uma chamada
+    /// direta a `observe_notification`, de proposito: a primeira versao deste
+    /// teste chamava o core direto e ficava VERDE com a fiacao do loop
+    /// removida — a falha silenciosa que a §8 do `ARCHITECTURE.md` descreve.
+    ///
+    /// Rodar o cmake de verdade traria uma ferramenta externa e nenhuma prova a
+    /// mais sobre ESTE comportamento: o contrato entre job e loop e o evento.
+    fn configure_finished(&mut self, success: bool) {
+        let (sender, inbox) = mpsc::channel::<crate::runtime::LoopEvent>();
+        sender
+            .send(crate::runtime::LoopEvent::Notification(Box::new(
+                JsonRpcRequest::notification(
+                    "event.cmake.finished",
+                    Some(json!({ "jobId": "job-1", "success": success })),
+                ),
+            )))
+            .unwrap();
+        drop(sender);
+        let mut saida = Vec::new();
+        crate::runtime::drain_loop_events(&mut self.core, &mut saida, &inbox).unwrap();
+        assert!(
+            String::from_utf8_lossy(&saida).contains("event.cmake.finished"),
+            "o loop tem que repassar o evento para a UI tambem"
+        );
     }
 
     /// Mensagens que o servidor falso recebeu ate agora.
@@ -156,6 +197,20 @@ impl Harness {
             "{method} #{occurrence} nao chegou ao servidor em {DEADLINE:?}; wire: {:#?}",
             self.messages()
         );
+    }
+
+    /// Espera um evento que o CORE emitiu (nao o que o servidor recebeu).
+    fn wait_for_event(&self, method: &str) -> JsonRpcRequest {
+        let deadline = Instant::now() + DEADLINE;
+        while Instant::now() < deadline {
+            match self.events.recv_timeout(Duration::from_millis(50)) {
+                Ok(event) if event.method == method => return event,
+                // Outro evento, ou nada ainda: seguir esperando ate o prazo.
+                Ok(_) | Err(mpsc::RecvTimeoutError::Timeout) => {}
+                Err(mpsc::RecvTimeoutError::Disconnected) => break,
+            }
+        }
+        panic!("o core nao emitiu {method} em {DEADLINE:?}");
     }
 
     fn count_of(&self, method: &str) -> usize {
@@ -333,4 +388,78 @@ fn replacing_the_command_does_not_kill_a_running_server() {
         json!({ "path": harness.main_rs(), "content": "fn main() { }\n" }),
     );
     harness.wait_for("textDocument/didChange", 0);
+}
+
+/// Configure bem-sucedido FECHA os documentos C/C++ abertos (roadmap 30 §4).
+///
+/// O clangd recarrega a `compile_commands.json` sozinho, mas o documento ja
+/// aberto fica com a compilacao em cache (`roadmaps/29` §5b). Fechar e' o unico
+/// jeito de o proximo `didOpen` ser real — reenviar `didOpen` seria inerte por
+/// causa do curto-circuito por hash.
+#[test]
+fn a_successful_configure_closes_the_open_cpp_documents() {
+    let mut harness = harness("configure");
+    let cpp = harness.main_cpp();
+    harness.ok("fs.read", json!({ "path": &cpp }));
+    let did_open = harness.wait_for("textDocument/didOpen", 0);
+    let uri = did_open["params"]["textDocument"]["uri"].clone();
+
+    harness.configure_finished(true);
+
+    let did_close = harness.wait_for("textDocument/didClose", 0);
+    assert_eq!(did_close["params"]["textDocument"]["uri"], uri);
+
+    // E o proximo didOpen volta a ser REAL: versao 1, com o buffer do editor
+    // (nao com o disco — o texto abaixo nunca foi gravado).
+    harness.ok(
+        "lsp.didChange",
+        json!({ "path": &cpp, "content": "int main() { return 1; }\n" }),
+    );
+    let reopened = harness.wait_for("textDocument/didOpen", 1);
+    assert_eq!(reopened["params"]["textDocument"]["version"], 1);
+    assert_eq!(
+        reopened["params"]["textDocument"]["text"], "int main() { return 1; }\n",
+        "o reabrir carrega o BUFFER, nao o disco"
+    );
+}
+
+/// Configure que FALHOU nao mexe em documento nenhum.
+#[test]
+fn a_failed_configure_closes_nothing() {
+    let mut harness = harness("configure-falho");
+    harness.ok("fs.read", json!({ "path": harness.main_cpp() }));
+    harness.wait_for("textDocument/didOpen", 0);
+
+    harness.configure_finished(false);
+
+    std::thread::sleep(Duration::from_millis(150));
+    assert_eq!(harness.count_of("textDocument/didClose"), 0);
+}
+
+/// O configure e de C/C++: documento Rust aberto nao e' afetado.
+#[test]
+fn a_configure_does_not_touch_documents_of_other_languages() {
+    let mut harness = harness("configure-rust");
+    harness.ok("fs.read", json!({ "path": harness.main_rs() }));
+    harness.wait_for("textDocument/didOpen", 0);
+
+    harness.configure_finished(true);
+
+    std::thread::sleep(Duration::from_millis(150));
+    assert_eq!(harness.count_of("textDocument/didClose"), 0);
+}
+
+/// A UI precisa saber que fechou, senao o arquivo ativo fica sem diagnostico
+/// ate o usuario digitar. O evento e o gatilho da re-sincronizacao.
+#[test]
+fn closing_after_a_configure_tells_the_ui_to_resync() {
+    let mut harness = harness("configure-evento");
+    harness.ok("fs.read", json!({ "path": harness.main_cpp() }));
+    harness.wait_for("textDocument/didOpen", 0);
+
+    harness.configure_finished(true);
+
+    let event = harness.wait_for_event("event.lsp.documentsClosed");
+    assert_eq!(event.params.as_ref().unwrap()["language"], "cpp");
+    assert_eq!(event.params.as_ref().unwrap()["count"], 1);
 }

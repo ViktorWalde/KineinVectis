@@ -49,8 +49,14 @@ where
     writer.flush().map_err(CoreError::Write)
 }
 
-/// Internal event of the stdio loop.
-enum LoopEvent {
+/// Evento interno do loop stdio.
+///
+/// `pub(crate)` para que o [`drain_loop_events`] seja testavel: ate 2026-09-02
+/// o corpo do loop so existia dentro do `run_stdio`, entao a fiacao "o core
+/// observa o evento ANTES de a UI ve-lo" nao tinha como reprovar. Ligar no
+/// lugar errado nao quebra build — deixa de funcionar em silencio
+/// (`ARCHITECTURE.md` §8).
+pub(crate) enum LoopEvent {
     /// One request line arrived on stdin.
     Line(String),
     /// An async notification (LSP diagnostics, server status) must be sent.
@@ -105,6 +111,24 @@ pub fn run_stdio() -> Result<(), CoreError> {
     let stdout = io::stdout();
     let mut writer = stdout.lock();
 
+    drain_loop_events(&mut core, &mut writer, &inbox)
+}
+
+/// Drena os eventos do loop aplicando a politica do processo real.
+///
+/// Separado do [`run_stdio`] para ser testavel sem stdio: o que se prova aqui e
+/// que **toda notificacao passa por [`Core::observe_notification`] antes de ir
+/// para a UI**. E o ponto em que a fronteira de thread do `arquitetura/04` §3
+/// se fecha sem estado compartilhado — o job emite o evento, e quem possui o
+/// `Core` e este loop.
+pub(crate) fn drain_loop_events<W>(
+    core: &mut Core,
+    writer: &mut W,
+    inbox: &std::sync::mpsc::Receiver<LoopEvent>,
+) -> Result<(), CoreError>
+where
+    W: Write,
+{
     for event in inbox {
         match event {
             LoopEvent::Line(line) => {
@@ -113,14 +137,15 @@ pub fn run_stdio() -> Result<(), CoreError> {
                 }
 
                 let outcome = core.handle_json_line(&line);
-                write_json_line(&mut writer, outcome.response())?;
+                write_json_line(writer, outcome.response())?;
 
                 if outcome.should_shutdown() {
                     break;
                 }
             }
             LoopEvent::Notification(notification) => {
-                write_json_line(&mut writer, notification.as_ref())?;
+                core.observe_notification(notification.as_ref());
+                write_json_line(writer, notification.as_ref())?;
             }
             LoopEvent::Eof => break,
         }

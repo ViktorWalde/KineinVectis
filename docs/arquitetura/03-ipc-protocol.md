@@ -851,6 +851,34 @@ do `fs.replace`: arquivos atômicos e rollback de todos os já gravados em caso
 de falha. Só após sucesso editor, watcher e LSP são ressincronizados. A UI
 mostra `before`/`after` lado a lado e nunca aplica edits por conta própria.
 
+### Documentos fechados após um configure (`event.lsp.documentsClosed`)
+
+Nasceu em 2026-09-02 (etapa 4 do `docs/roadmaps/30-caminho-para-o-mvp.md`).
+`{ language, count }`, hoje sempre `language: "cpp"`.
+
+**O que aconteceu:** um `cmake.configure` terminou com sucesso, e o core fechou
+(`textDocument/didClose`) os documentos C/C++ que o language server conhecia.
+
+**Por que o core faz isso.** O clangd recarrega a `compile_commands.json`
+sozinho desde a v12 — reconfere a cada ~5 s
+(<https://reviews.llvm.org/D92663>) —, mas **o documento já aberto fica com a
+compilação em cache**. Reiniciar o servidor resolveria e jogaria o índice fora;
+a ação certa é reabrir o documento. E reabrir exige **fechar antes**: o
+curto-circuito por hash do core torna um `didOpen` repetido inerte, porque
+depois do configure o texto não mudou.
+
+**O que a UI deve fazer:** re-sincronizar o arquivo ativo, exatamente como já
+faz em `event.lsp.restarted` e no `recovered()`. É esse `didOpen` seguinte que
+leva o **buffer do editor** (não o disco) ao servidor, agora com as flags novas.
+Sem reagir ao evento, o arquivo ativo fica sem diagnóstico até o usuário digitar.
+
+**Onde a decisão mora, e por quê.** No core, e não na UI: a UI não consegue
+fazê-lo sozinha (o `didOpen` seria inerte e o `didClose` não existia até
+2026-09-02). O gatilho é o próprio `event.cmake.finished` do job, observado pelo
+loop principal antes de ser repassado — o job roda em thread própria e não
+alcança o `Core`, mas o evento dele volta ao dono do estado
+(`docs/arquitetura/04-boot-e-comunicacao.md` §3).
+
 ### Sintaxe incremental (`syntaxTree.update`)
 
 Implementado no protocolo `0.46.0` para C, C++ e Rust. Recebe
@@ -1451,6 +1479,7 @@ event.terminal.render
 event.terminal.closed
 event.lsp.status
 event.lsp.diagnostics
+event.lsp.documentsClosed
 event.fs.changed
 event.fs.watchError
 ```

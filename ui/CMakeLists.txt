@@ -285,6 +285,7 @@ qt_add_qml_module(kinein-vectis
         src/debug_flags.h
         src/core_client_dispatch.cpp
         src/core_client_dispatch_cmake.cpp
+        src/core_client_dispatch_lsp.cpp
         src/core_client_configaction.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp

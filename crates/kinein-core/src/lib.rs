@@ -296,6 +296,28 @@ impl Core {
         }
     }
 
+    /// Deixa o core reagir a um evento assincrono ANTES de ele ir para a UI.
+    ///
+    /// E o irmao do [`Self::handle_request`]: aquele roteia PEDIDO, este roteia
+    /// FATO. Existe porque um job roda em thread propria e nao alcanca o
+    /// `Core` (`arquitetura/04` §3) — mas o evento que ele emite volta ao loop
+    /// principal, que e o dono do estado. Reagir aqui evita um segundo caminho
+    /// (um `Arc<Atomic…>` compartilhado) para o mesmo fato.
+    ///
+    /// Silencioso de proposito: um evento sem reacao registrada nao e erro.
+    pub fn observe_notification(&mut self, notification: &JsonRpcRequest) {
+        if notification.method != "event.cmake.finished" {
+            return;
+        }
+        let success = notification
+            .params
+            .as_ref()
+            .and_then(|params| params.get("success"))
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        self.on_cmake_configure_finished(success);
+    }
+
     /// Parses and handles a single line-delimited JSON-RPC request.
     ///
     /// Long-running methods (`build.run`, `quality.run`, `test.run`) return a
