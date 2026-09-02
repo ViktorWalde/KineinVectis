@@ -223,9 +223,11 @@ pagamento. Meia refatoração é pior que nenhuma: fica a indireção *e* fica o
 problema.
 
 ```text
-ui/qml/app/AppDomains.qml   (EXECUTADO em 0686213; 335 linhas — limite 400,
-                             a categoria foi corrigida: composicao nao e visual)
-  dono dos 12 controllers + dos 14 routers.
+ui/qml/app/AppDomains.qml   (EXECUTADO em 0686213 — limite 400, e a categoria
+                             foi corrigida: composicao nao e visual)
+  dono dos controllers + dos routers de dominio; cresce com a CONTAGEM de
+  dominios, que e o desenho (§4 regra 8). Tinha 335 linhas em 2026-07-17 e
+  356 em 2026-09-02, quando as Configuration Actions nasceram.
   recebe:  coreClient, shellController, workspaceHost, shellOverlays
   expoe:   readonly property alias <x>Controller  (um por dominio)
 
@@ -356,6 +358,15 @@ apareceu; ele não conhece a forma do contrato.
 
 O que o autor descreveu quando chegar a vez: simulador integrado usando OpenGL,
 **desativado por padrão**, que o usuário instala/ativa.
+
+**Atualização de 2026-09-01:** o autor acrescentou ao pedido a **autoria por
+layout** (montar a simulação e digitar a fórmula na tela) e o **cálculo feito
+pela IDE** a partir de um conceito físico/matemático selecionado. Isso não
+invalida nada desta seção — mas põe em tensão a saída (a) da §6.3, porque
+"calcular" e "desenhar com GPU" passariam a viver em processos diferentes. O
+estudo, com as perguntas ainda em aberto, está em
+`docs/roadmaps/31-simulacao-fisica-matematica.md`. Continua **fora de escopo
+atual**.
 
 O valor de registrar agora é um só: a 6.2 mostra que essa feature **colide com
 uma garantia já conquistada** do AppImage. Saber disso desde já evita que as

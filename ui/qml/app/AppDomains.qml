@@ -30,6 +30,7 @@ Item {
     readonly property alias jobsController: jobsController
     readonly property alias diagnosticsController: diagnosticsController
     readonly property alias settingsController: settingsController
+    readonly property alias configActionController: configActionController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
     readonly property alias debugController: debugController
@@ -120,6 +121,15 @@ Item {
         }
     }
 
+    // Configuration Actions (roadmap 30, etapa 2): dominio proprio, nasce nas
+    // quatro camadas. Quem abre o dialogo e a paleta/atalho; o host visual dele
+    // e o ShellOverlays, como os demais dialogos.
+    ConfigActionController {
+        id: configActionController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+    }
+
     // Configuracoes salvas saem do RuntimeController: "guardar como rodar um
     // programa" nao e "manter uma sessao de terminal".
     RunConfigController {
@@ -205,6 +215,7 @@ Item {
         runtimeController: runtimeController
         settingsController: settingsController
         searchController: searchController
+        configActionController: configActionController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
@@ -320,6 +331,16 @@ Item {
     DebugRequestRouter {
         coreClient: root.coreClient
         debugController: debugController
+    }
+
+    ConfigActionEventRouter {
+        coreClient: root.coreClient
+        configActionController: configActionController
+    }
+
+    ConfigActionRequestRouter {
+        coreClient: root.coreClient
+        configActionController: configActionController
     }
 
     GitEventRouter {

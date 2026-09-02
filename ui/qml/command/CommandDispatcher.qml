@@ -12,6 +12,7 @@ Item {
     property var gitController: null
     property var settingsController: null
     property var searchController: null
+    property var configActionController: null
 
     signal openWorkspaceRequested()
     signal showTabRequested(string tab)
@@ -91,6 +92,8 @@ Item {
             editorController.requestSwitchSourceHeader();
         } else if (commandId === "lsp.restart") {
             coreClient.lspRestart("");
+        } else if (commandId === "configAction.list") {
+            configActionController.openDialog();
         } else if (commandId === "settings.get") {
             settingsController.openDialog();
         } else if (commandId === "fs.createFile") {

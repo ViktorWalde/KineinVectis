@@ -48,6 +48,12 @@ set_source_files_properties(qml/settings/SettingsController.qml PROPERTIES QT_RE
 set_source_files_properties(qml/settings/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
 set_source_files_properties(qml/settings/SettingsToggleRow.qml PROPERTIES QT_RESOURCE_ALIAS SettingsToggleRow.qml)
 set_source_files_properties(qml/ipc/SettingsEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SettingsEventRouter.qml)
+set_source_files_properties(qml/configaction/ConfigActionController.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionController.qml)
+set_source_files_properties(qml/configaction/ConfigActionsDialog.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionsDialog.qml)
+set_source_files_properties(qml/configaction/ConfigActionList.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionList.qml)
+set_source_files_properties(qml/configaction/ConfigActionPreview.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionPreview.qml)
+set_source_files_properties(qml/ipc/ConfigActionEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionEventRouter.qml)
+set_source_files_properties(qml/ipc/ConfigActionRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionRequestRouter.qml)
 set_source_files_properties(qml/git/GitController.qml PROPERTIES QT_RESOURCE_ALIAS GitController.qml)
 set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiffDialog.qml)
 set_source_files_properties(qml/git/GitDiscardDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiscardDialog.qml)
@@ -177,6 +183,12 @@ qt_add_qml_module(kinein-vectis
         qml/settings/SettingsDialog.qml
         qml/settings/SettingsToggleRow.qml
         qml/ipc/SettingsEventRouter.qml
+        qml/configaction/ConfigActionController.qml
+        qml/configaction/ConfigActionsDialog.qml
+        qml/configaction/ConfigActionList.qml
+        qml/configaction/ConfigActionPreview.qml
+        qml/ipc/ConfigActionEventRouter.qml
+        qml/ipc/ConfigActionRequestRouter.qml
         qml/git/GitController.qml
         qml/git/GitDiffDialog.qml
         qml/git/GitDiscardDialog.qml
@@ -273,6 +285,7 @@ qt_add_qml_module(kinein-vectis
         src/debug_flags.h
         src/core_client_dispatch.cpp
         src/core_client_dispatch_cmake.cpp
+        src/core_client_configaction.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp

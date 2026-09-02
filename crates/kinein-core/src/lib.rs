@@ -11,6 +11,7 @@ pub mod cargo;
 pub mod cdb;
 pub mod cmake;
 pub mod commands;
+pub mod configaction;
 pub mod dap;
 pub mod db;
 pub mod format;
@@ -220,6 +221,7 @@ impl Core {
             .or_else(|| self.runconfig_request_response(method, request_id.clone(), params))
             .or_else(|| self.settings_request_response(method, request_id.clone(), params))
             .or_else(|| self.cmake_request_response(method, request_id.clone(), params))
+            .or_else(|| self.configaction_request_response(method, request_id.clone(), params))
             .or_else(|| self.format_request_response(method, request_id.clone(), params))
             .or_else(|| self.run_request_response(method, request_id.clone(), params))
             .or_else(|| self.debug_request_response(method, request_id.clone(), params))

@@ -1,8 +1,9 @@
 # Leitura técnica da Kinein Vectis
 
 > **Classe: ESTADO** (`docs/README.md`). Tem que ser verdade hoje. Todo número
-> aqui foi **medido em 2026-08-30** com a toolchain fixada e o gate completo
-> verde, e está datado por isso. Se divergir do código, o código vence e este documento se corrige no
+> aqui foi **medido em 2026-08-30**, e os da §3 e da §7 remedidos em
+> **2026-09-02**, com a toolchain fixada e o gate completo verde; está datado
+> por isso. Se divergir do código, o código vence e este documento se corrige no
 > mesmo gesto.
 >
 > **Para que serve:** dar em uma leitura o que hoje exige abrir dez documentos —
@@ -53,8 +54,8 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**109 métodos IPC** roteados, **17 domínios** no core, **378 testes** Rust
-verdes (medido em 2026-08-30). Protocolo `0.62.0`.
+**112 métodos IPC** roteados, **18 domínios** no core, **401 testes** Rust
+verdes (medido em 2026-09-02). Protocolo `0.63.0`.
 
 Domínios do core, por profundidade real:
 
@@ -80,6 +81,14 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       testes de integracao, nao mudou uma linha no corte.
             draft     handler sem arquivo de teste proprio; coberto de lado
                       por tests/workspace.rs e tests/fs.rs desde 2026-08-29
+
+            configaction  as 16 Configuration Actions da spec de MVP §12, com
+                      preview e consentimento (0.63.0). Pasta desde que nasceu:
+                      catalogo (a tabela), disponibilidade (mede o workspace),
+                      plano (o que sera escrito) e um planejador por arquivo
+                      editado — CMakeLists.txt, CMakePresets.json, Cargo.toml e
+                      o build dir. Nao executa ferramenta nem duplica dominio:
+                      `cargo.check` devolve o job que ja existia.
 ```
 
 **O que mudou em 2026-08-29/30, e é o que destrava o resto:** o terminal deixou
@@ -96,8 +105,8 @@ nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
 provado, está sem evidência — por isso cada um é testado por mutação.
 
-**2. A catraca de arquitetura congela 21 arquivos e só deixa diminuir.** Ela não
-é limite duro. O critério é **responsabilidade**; linhas são só o detector de
+**2. A catraca de arquitetura congela 20 arquivos (medido em 2026-09-02) e só
+deixa diminuir.** Ela não é limite duro. O critério é **responsabilidade**; linhas são só o detector de
 fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de
 três casos.
@@ -132,7 +141,7 @@ parte; o resto é binding e bloco de host, que **é** trabalho de composition ro
 Chegar abaixo do limite exige módulos por domínio — decisão registrada como
 proposta em `arquitetura/27`, **não** implementada.
 
-**O core tem 17 handlers e um `lib.rs` de 361 linhas** (limite 500) — ele
+**O core tem 18 handlers e um `lib.rs` de 365 linhas** (limite 500) — ele
 **saiu do débito em 2026-08-30**, quando ~140 linhas do domínio `tools` que
 moravam ali voltaram para `handlers/tools.rs`. Quem cobrou foi a catraca, ao
 reprovar UMA linha de outra fatia: a §4 regra 9 manda olhar a mudança, a
@@ -177,10 +186,16 @@ isso é demorado. O que isso significa em concreto:
 
 A ordem das etapas até o MVP está em
 [roadmaps/30-caminho-para-o-mvp.md](roadmaps/30-caminho-para-o-mvp.md),
-decidida pelo autor em 2026-08-30 e medida item por item contra a spec de MVP:
-**19 dos 21 itens já existem**, 1 é item morto (a linha de IA, cancelada) e **1
-falta inteiro** — Configuration Actions. O resto da lista é dívida de
+decidida pelo autor em 2026-08-30 e medida item por item contra a spec de MVP.
+Medido em **2026-09-02**, os **21 itens do MVP essencial estão fechados**: 20
+existem e 1 é item morto (a linha de IA, cancelada). As Configuration Actions —
+o único que faltava — entraram na etapa 2. O resto da lista é dívida de
 honestidade e de hardening, não funcionalidade.
+
+O que vem depois do MVP, e **ainda não está arquitetado**, está em
+[roadmaps/31-simulacao-fisica-matematica.md](roadmaps/31-simulacao-fisica-matematica.md):
+montar simulações física/matemática por layout e desenhá-las em OpenGL. É
+estudo, não plano de execução.
 
 Como o processo da UI e o do core conversam — boot, threads, ordem garantida,
 crash e recuperação — está em

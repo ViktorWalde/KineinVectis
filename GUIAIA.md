@@ -487,6 +487,34 @@ crates/kinein-core/src/handlers/{cmake,cargo,build,jobs,runconfig,tools}.rs
   em projeto híbrido. `workspace.kind` continua apenas como primário compatível;
   não voltar a inferir capacidade isoladamente na UI.
 
+### 5.4b Configuration Actions (CMake/Cargo com preview e consentimento)
+
+```text
+ui/qml/configaction/{ConfigActionController,ConfigActionsDialog,
+                     ConfigActionList,ConfigActionPreview}.qml
+ui/qml/ipc/{ConfigActionEventRouter,ConfigActionRequestRouter}.qml
+ui/src/core_client_configaction.cpp   (pedidos + dispatch do dominio)
+    ↕ crates/kinein-protocol/src/configaction.rs
+crates/kinein-core/src/handlers/configaction.rs
+    → crates/kinein-core/src/configaction/{mod,catalog,availability,plan,
+                                           cmakelists,presets,builddir,
+                                           cargotoml,error}.rs
+    → fsops (escrita atômica + compare-before-save), runconfig, cmake, cdb
+```
+
+- O ciclo é `list → preview → apply`, e é o contrato: preview e apply calculam
+  **o mesmo plano**; o preview só não grava. Não criar um caminho de escrita
+  que não passe pelo plano.
+- `catalog.rs` é a tabela das 16 ações (dado estático); `availability.rs` mede o
+  workspace. Ação nova = uma entrada no catálogo + um planejador no módulo do
+  arquivo que ela edita. **Não** há registro dinâmico.
+- Não executa ferramenta nem duplica domínio: `cargo.check` devolve o job que o
+  `handlers/cargo.rs` já dispara, e a run config é salva pelo `runconfig.rs`.
+- Testes: `crates/kinein-core/src/tests/configaction.rs` (efeito contra arquivo
+  real) e `scripts/qml-harness/tst_configaction.qml` (o consentimento na UI).
+- Fontes: specs 9.1/9.2 (Dual Workflow e Scoped Configuration Actions),
+  `docs/roadmaps/30-caminho-para-o-mvp.md` etapa 2.
+
 ### 5.5 Run e Debug
 
 ```text

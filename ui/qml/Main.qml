@@ -124,6 +124,7 @@ Window {
     }
 
     GlobalShortcuts {
+        configActionController: domains.configActionController
         debugController: domains.debugController
         editorController: domains.editorController
         jobsController: domains.jobsController
@@ -248,6 +249,7 @@ Window {
         runConfigController: domains.runConfigController
         gitController: domains.gitController
         settingsController: domains.settingsController
+        configActionController: domains.configActionController
         onAppMenuActionRequested: function(action) {
             header.executeMenuAction(action);
         }

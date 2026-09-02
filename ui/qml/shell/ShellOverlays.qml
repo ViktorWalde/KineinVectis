@@ -14,6 +14,7 @@ Item {
     property var runConfigController: null
     property var gitController: null
     property var settingsController: null
+    property var configActionController: null
     property bool aboutVisible: false
     property bool manualVisible: false
     property bool appMenuVisible: false
@@ -147,6 +148,16 @@ Item {
             values[key] = value;
             root.settingsController.setGlobal(values);
         }
+    }
+
+    ConfigActionsDialog {
+        anchors.fill: parent
+        visible: root.configActionController.dialogVisible
+        z: 99
+        controller: root.configActionController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.configActionController.closeDialog()
     }
 
     AboutDialog {

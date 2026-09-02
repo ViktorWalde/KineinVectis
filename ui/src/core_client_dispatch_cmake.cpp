@@ -48,7 +48,12 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
                       .arg(result.value(QStringLiteral("jobId")).toString()));
         return true;
     }
-    return false;
+    // As Configuration Actions sao a configuracao de CMake/Cargo e entram no
+    // fim desta mesma cadeia: assim o `core_client_dispatch.cpp` — que esta na
+    // catraca e cuja entrada na §5 ja manda dividir por dominio — nao ganha
+    // uma linha por causa de um dominio novo. O codigo delas vive no arquivo
+    // proprio (`core_client_configaction.cpp`).
+    return dispatchConfigActionResult(method, result);
 }
 
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)

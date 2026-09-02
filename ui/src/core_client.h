@@ -134,6 +134,10 @@ public:
     Q_INVOKABLE void cargoMetadata();
     Q_INVOKABLE void cmakeConfigure();
     Q_INVOKABLE void cmakeStatus();
+    Q_INVOKABLE void configActionList(bool includeHiddenByScope = false);
+    Q_INVOKABLE void configActionPreview(const QString& id, const QVariantMap& params);
+    Q_INVOKABLE void configActionApply(const QString& id, const QVariantMap& params,
+                                       const QVariantList& expected);
     Q_INVOKABLE void runBuild(const QString& buildSystem = QString());
     Q_INVOKABLE void runTests(const QString& filter = QString(),
                               const QString& buildSystem = QString());
@@ -221,6 +225,10 @@ signals:
                              const QString& cdbStaleBecause);
     void cmakeConfigureFinished(bool success);
     void cargoMetadataResolved(int packages);
+    void configActionsListed(const QVariantList& actions, const QStringList& activeBuildSystems);
+    void configActionPreviewed(const QVariantMap& preview);
+    void configActionApplied(const QString& id, const QString& message, const QStringList& files,
+                             const QString& jobId);
     void runConfigsResolved(const QVariantList& configs, const QString& activeId);
     void scanningEnvironmentChanged();
     void recoveringChanged();
@@ -324,6 +332,7 @@ private:
     bool dispatchLspResult(const QString& method, const QJsonObject& result);
     bool dispatchSyntaxResult(const QString& method, const QJsonObject& result);
     bool dispatchCmakeResult(const QString& method, const QJsonObject& result);
+    bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);
     void handleWorkspaceOpened(const QJsonObject& result);

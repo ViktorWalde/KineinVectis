@@ -1,0 +1,244 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+
+// Estado das Configuration Actions (roadmap 30, etapa 2).
+//
+// Guarda a lista contextual, a acao selecionada, os parametros digitados e o
+// preview devolvido pelo core. NAO decide nada de configuracao: quem sabe se
+// uma acao esta disponivel, o que ela escreve e se o disco mudou e o core —
+// aqui so mora estado de UI (ARCHITECTURE.md §3.1 regra 3).
+//
+// Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
+Item {
+    id: root
+
+    property string workspaceRoot: ""
+    property bool dialogVisible: false
+
+    // O que o core devolveu no ultimo `configAction.list`. O ListModel carrega
+    // so os papeis PLANOS que a lista desenha; os objetos crus ficam no mapa
+    // ao lado. Motivo medido: o ListModel do QML converte array/objeto aninhado
+    // em ListModel proprio, e `params[0].name` deixa de existir — a validacao
+    // de parametro obrigatorio passava a nao ver parametro nenhum.
+    property var actionsModel: ListModel {}
+    property var actionsById: ({})
+    property var activeBuildSystems: []
+    // Filtro de escopo escolhido pelo usuario: "" = todos (spec 9.2 §6.3).
+    property string scopeFilter: ""
+    property string searchQuery: ""
+
+    // Acao selecionada e o que o usuario digitou nos campos dela.
+    property string selectedId: ""
+    property var selectedAction: null
+    property var paramValues: ({})
+
+    // Preview vigente. `previewId` diz de QUAL acao ele e: sem isso, uma
+    // resposta atrasada de outra acao pintaria o diff errado na tela.
+    property string previewId: ""
+    property var previewFiles: []
+    property var previewReport: []
+    property var previewNotes: []
+    property string previewSummary: ""
+    property bool previewLoading: false
+    property string errorText: ""
+    property string statusText: ""
+
+    signal listRequested(bool includeHiddenByScope)
+    signal previewRequested(string id, var params)
+    signal applyRequested(string id, var params, var expected)
+
+    visible: false
+
+    onWorkspaceRootChanged: {
+        clear();
+        if (workspaceRoot !== "") {
+            listRequested(false);
+        }
+    }
+
+    function clear() {
+        actionsModel.clear();
+        actionsById = ({});
+        activeBuildSystems = [];
+        scopeFilter = "";
+        searchQuery = "";
+        clearSelection();
+        statusText = "";
+    }
+
+    function clearSelection() {
+        selectedId = "";
+        selectedAction = null;
+        paramValues = {};
+        clearPreview();
+    }
+
+    function clearPreview() {
+        previewId = "";
+        previewFiles = [];
+        previewReport = [];
+        previewNotes = [];
+        previewSummary = "";
+        previewLoading = false;
+        errorText = "";
+    }
+
+    function openDialog() {
+        dialogVisible = true;
+        if (workspaceRoot !== "") {
+            listRequested(false);
+        }
+    }
+
+    function closeDialog() {
+        dialogVisible = false;
+    }
+
+    function refresh() {
+        listRequested(false);
+    }
+
+    // Preenche a lista com o que o core mandou. A ordem e a do catalogo: a UI
+    // nao reordena, so filtra.
+    function handleListed(actions, buildSystems) {
+        const previous = selectedId;
+        const byId = {};
+        actionsModel.clear();
+        for (let index = 0; index < actions.length; ++index) {
+            const action = actions[index];
+            byId[action.id] = action;
+            actionsModel.append({
+                actionId: action.id,
+                title: action.title,
+                description: action.description,
+                scope: action.scope,
+                category: action.category,
+                risk: action.risk,
+                effect: action.effect,
+                // `state` e propriedade do QQuickItem: o papel do modelo tem que
+                // ter outro nome, senao o delegate sombreia o estado visual.
+                actionState: action.state,
+                reason: action.reason !== undefined ? action.reason : "",
+                affects: action.affects.join(", ")
+            });
+        }
+        actionsById = byId;
+        activeBuildSystems = buildSystems;
+        statusText = "";
+        if (previous !== "") {
+            select(previous);
+        }
+    }
+
+    function actionAt(id) {
+        const entry = actionsById[id];
+        return entry !== undefined ? entry : null;
+    }
+
+    function select(id) {
+        const entry = actionAt(id);
+        if (entry === null) {
+            clearSelection();
+            return;
+        }
+        const changed = id !== selectedId;
+        selectedId = id;
+        selectedAction = entry;
+        if (changed) {
+            paramValues = {};
+            clearPreview();
+        }
+        requestPreview();
+    }
+
+    function setParam(name, value) {
+        const values = {};
+        for (const key in paramValues) {
+            values[key] = paramValues[key];
+        }
+        values[name] = value;
+        paramValues = values;
+    }
+
+    // Falta algum parametro obrigatorio? Enquanto faltar, nem se pede preview:
+    // o core recusaria, e um erro previsivel nao e diagnostico, e ruido.
+    function missingRequiredParam() {
+        if (selectedAction === null) {
+            return "";
+        }
+        const declared = selectedAction.params;
+        for (let index = 0; index < declared.length; ++index) {
+            const param = declared[index];
+            const value = paramValues[param.name];
+            if (param.required && (value === undefined || value.trim() === "")) {
+                return param.label;
+            }
+        }
+        return "";
+    }
+
+    function canPreview() {
+        return selectedAction !== null && selectedAction.state !== "unavailable"
+                && selectedAction.state !== "hiddenByScope" && missingRequiredParam() === "";
+    }
+
+    function requestPreview() {
+        if (!canPreview()) {
+            clearPreview();
+            return;
+        }
+        previewLoading = true;
+        errorText = "";
+        previewRequested(selectedId, paramValues);
+    }
+
+    function handlePreviewed(preview) {
+        previewLoading = false;
+        if (preview.id !== selectedId) {
+            return;
+        }
+        previewId = preview.id;
+        previewSummary = preview.summary;
+        previewFiles = preview.files !== undefined ? preview.files : [];
+        previewReport = preview.report !== undefined ? preview.report : [];
+        previewNotes = preview.notes !== undefined ? preview.notes : [];
+        errorText = "";
+    }
+
+    // O Apply devolve ao core o `before` que o preview mostrou: e o mesmo
+    // compare-before-save do editor, aplicado ao CONSENTIMENTO (ARCHITECTURE
+    // §7.1). Sem isso, um Apply dado dez minutos depois sobrescreveria em
+    // silencio uma edicao feita nesse intervalo.
+    function apply() {
+        if (previewId !== selectedId || previewId === "") {
+            return;
+        }
+        const expected = [];
+        for (let index = 0; index < previewFiles.length; ++index) {
+            const file = previewFiles[index];
+            const entry = { path: file.path };
+            if (file.before !== undefined) {
+                entry.content = file.before;
+            }
+            expected.push(entry);
+        }
+        applyRequested(selectedId, paramValues, expected);
+    }
+
+    function handleApplied(id, message, files, jobId) {
+        statusText = jobId !== "" ? qsTr("%1 (job %2)").arg(message).arg(jobId) : message;
+        errorText = "";
+        paramValues = {};
+        clearPreview();
+        // O efeito mudou o disco: o estado das acoes mudou junto.
+        listRequested(false);
+    }
+
+    function handleFailed(method, message) {
+        if (method !== "configAction.preview" && method !== "configAction.apply") {
+            return;
+        }
+        previewLoading = false;
+        errorText = message;
+    }
+}

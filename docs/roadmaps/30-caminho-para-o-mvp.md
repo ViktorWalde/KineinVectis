@@ -27,11 +27,13 @@ código:
                E' item morto na spec, nao pendencia. A spec §11.1 nao foi
                reescrita porque e' PLANO datado; esta linha e' a reconciliacao.
 
- 1 FALTA       Configuration Actions — ZERO ocorrencias em `crates/` e `ui/`.
+ 1 FALTAVA     Configuration Actions — ZERO ocorrencias em `crates/` e `ui/`
+               naquela data. ENTREGUE em 2026-09-02 (etapa 2 abaixo).
 ```
 
-**Ou seja: o MVP não está longe; falta uma feature e sobra dívida de
-honestidade.** É isso que a ordem abaixo reflete.
+**Medição de 2026-09-02: os 21 itens do MVP essencial estão fechados** — 20
+existem e 1 é item morto. O que resta desta lista é dívida de honestidade e de
+hardening, não funcionalidade. É isso que a ordem abaixo reflete.
 
 Duas correções à fila que circulava antes desta medição, ambas verificadas:
 
@@ -62,9 +64,9 @@ reabertura.
 *Veio primeiro porque era a mais barata e porque tudo abaixo lê esses
 documentos como estado.*
 
-### Etapa 2 — Configuration Actions
+### Etapa 2 — Configuration Actions ✅ FEITA (2026-09-02)
 
-O único item de MVP que não existe, e o diferencial do produto. Escopo fechado
+O único item de MVP que não existia, e o diferencial do produto. Escopo fechado
 pela §12 da spec de MVP: **10 ações CMake** (habilitar `compile_commands.json`,
 criar preset Debug, criar preset Release, adicionar executável, adicionar
 biblioteca estática, adicionar fonte a um target, adicionar include dir,
@@ -72,12 +74,35 @@ adicionar `target_link_libraries`, inspecionar o cache, reparar build dir
 obsoleto) e **6 Cargo** (add dependency, add dev-dependency, add feature, set
 edition, cargo check, criar run config).
 
-Nasce como **domínio novo** — protocolo, core, handler, UI —, portanto nasce
-dentro do limite da catraca e **não paga dívida de ninguém**. É a razão de ela
-vir antes das etapas de dívida.
+Entregue nas quatro camadas no protocolo `0.63.0`: `configaction.rs` no
+protocolo, a pasta `configaction/` no core (catálogo, disponibilidade, plano e
+um planejador por arquivo editado), `handlers/configaction.rs`, e na UI o
+`ConfigActionController` + o diálogo de três painéis, acessível pela paleta
+(`Ctrl+Alt+P`). Contrato em `docs/arquitetura/03-ipc-protocol.md`.
 
-*Aceite:* domínio completo nas quatro camadas + `src/tests/configaction.rs` com
-teste de integração, e cada ação com efeito verificado contra arquivo real.
+*Aceite cumprido:* `src/tests/configaction.rs` verifica **cada uma das 16
+ações contra arquivo real** — abre um workspace de verdade, manda a requisição
+pelo dispatch e lê o disco depois. Provado por mutação: desligar o filtro de
+escopo, ignorar o snapshot do preview e mover a inserção do
+`CMAKE_EXPORT_COMPILE_COMMANDS` para o fim do arquivo derrubam três testes
+diferentes. Na UI, `scripts/qml-harness/tst_configaction.qml` cobre o
+consentimento (o `expected` que volta ao core), e cai quando ele é omitido.
+
+**Duas coisas que a etapa ensinou, e valem mais que ela:**
+
+1. **Recusar é a funcionalidade, não a falta dela.** A IDE edita `Cargo.toml`
+   e `CMakeLists.txt` por linha, sem parser universal (que é NÃO-MVP explícito,
+   spec §11.2). Onde a forma do arquivo não é entendida — string multilinha,
+   `dependencies` como tabela inline, `edition.workspace` herdada, target
+   inexistente — ela **recusa com motivo** em vez de gravar por aproximação.
+   Corromper o manifest do usuário não tem desfazer.
+2. **O `commands.rs` virou pasta, e não por tamanho.** Uma entrada nova na
+   paleta fez a catraca cobrar um arquivo de 696 linhas que fazia UMA coisa.
+   O diagnóstico da §4 regra 8 é o mesmo do `AppDomains.qml`: aquele arquivo
+   cresce com o NÚMERO DE DOMÍNIOS, não com a complexidade de nenhum. A saída
+   foi dividir o catálogo por área (`commands/{ide,editor,build,run,git}.rs`),
+   fazendo a contagem de arquivos crescer — nunca subir o baseline. A catraca
+   caiu de 21 para 20 arquivos em débito **como efeito colateral**.
 
 ### Etapa 3 — Servidor LSP falso para os testes
 
@@ -144,7 +169,7 @@ recebida e nunca usada). Limpeza de um gesto.
 ## 3. Onde cortar, se a pergunta for "o mínimo para ser distribuível"
 
 ```text
-FECHA O MVP        1 (feita), 2, 7, 8, 10
+FECHA O MVP        1 (feita), 2 (feita), 7, 8, 10
 SEPARA MVP DE      3, 4, 5, 6, 9
 DAILY DRIVER
 ```
@@ -152,6 +177,16 @@ DAILY DRIVER
 As etapas 1, 2, 7, 8 e 10 entregam o MVP com honestidade e algo que se
 distribui. As demais são o que transforma MVP em ferramenta de uso diário — que
 é o alvo **seguinte**, não este.
+
+## 3.1 O que vem depois desta lista
+
+Nada aqui, e é de propósito: esta lista termina no MVP mais o que o transforma
+em ferramenta de uso diário. O horizonte seguinte — **simulação física/matemática
+montada por layout, calculada pela IDE e exibida em OpenGL**, pedida pelo autor em
+2026-09-01 — está registrado em
+[31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md) como
+**estudo, não fila**: ele lista as perguntas que precisam de resposta antes de
+existir arquitetura, e não compete por prioridade com nenhuma etapa acima.
 
 ## 4. O que esta lista deliberadamente NÃO inclui
 

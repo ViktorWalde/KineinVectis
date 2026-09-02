@@ -13,6 +13,7 @@ Item {
     property var debugController: null
     property var searchController: null
     property var settingsController: null
+    property var configActionController: null
 
     visible: false
 
@@ -203,6 +204,11 @@ Item {
     Shortcut {
         sequence: "Ctrl+Alt+S"
         onActivated: root.settingsController.openDialog()
+    }
+
+    Shortcut {
+        sequence: "Ctrl+Alt+P"
+        onActivated: root.configActionController.openDialog()
     }
 
     Shortcut {
