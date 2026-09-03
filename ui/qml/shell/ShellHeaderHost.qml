@@ -13,6 +13,7 @@ Column {
     property var editorController: null
     property var projectTree: null
     property var searchController: null
+    property var searchEverywhereController: null
     property var settingsController: null
     property var recentWorkspacesController: null
     property bool windowMaximized: false
@@ -57,11 +58,11 @@ Column {
         case "view.terminal": root.runtimeController.openTerminalPanel(); break;
         case "view.tools": root.shellController.toggleBottomTab("tools"); break;
         case "view.git": root.shellController.toggleBottomTab("git"); break;
-        case "search.everywhere": root.searchController.openSearchEverywhere(); break;
-        case "search.recent": root.searchController.openRecentFiles(); break;
+        case "search.everywhere": root.searchEverywhereController.openSearchEverywhere(); break;
+        case "search.recent": root.searchEverywhereController.openRecentFiles(); break;
         case "search.documentSymbols":
-            root.searchController.openSearchEverywhere();
-            root.searchController.runSymbolSearch("@");
+            root.searchEverywhereController.openSearchEverywhere();
+            root.searchEverywhereController.runSymbolSearch("@");
             break;
         case "lsp.rename": root.editorController.openRenameDialog(); break;
         case "lsp.codeActions": root.editorController.requestCodeActions(); break;

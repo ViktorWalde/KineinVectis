@@ -1,7 +1,7 @@
 import QtQuick
 
 // Espelho do SearchEventRouter: aquele traz os resultados, este leva ao core o
-// que o SearchController pede.
+// que os dois donos da busca pedem.
 //
 // POR QUE CONHECE O EDITOR, como o GitRequestRouter. Duas arestas reais:
 //
@@ -18,6 +18,7 @@ Item {
 
     property var coreClient: null
     property var searchController: null
+    property var searchEverywhereController: null
     property var editorController: null
 
     visible: false
@@ -36,6 +37,14 @@ Item {
             }
             root.coreClient.replaceInFiles(query, replacement, caseSensitive);
         }
+
+    }
+
+    // Segundo dono: a caixa modal. Bloco proprio pelo mesmo motivo do
+    // EditorRequestRouter — escutar no objeto errado nao quebra build, o
+    // handler so nunca dispara (ARCHITECTURE.md §8).
+    Connections {
+        target: root.searchEverywhereController
 
         function onFindFilesRequested(query) {
             root.coreClient.findFiles(query);

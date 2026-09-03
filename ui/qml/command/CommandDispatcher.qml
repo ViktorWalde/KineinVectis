@@ -12,6 +12,7 @@ Item {
     property var gitController: null
     property var settingsController: null
     property var searchController: null
+    property var searchEverywhereController: null
     property var configActionController: null
 
     signal openWorkspaceRequested()
@@ -40,7 +41,7 @@ Item {
         } else if (commandId === "editor.replace") {
             editorController.openFindReplace();
         } else if (commandId === "fs.findFiles" || commandId === "command.list") {
-            searchController.openSearchEverywhere();
+            searchEverywhereController.openSearchEverywhere();
         } else if (commandId === "cargo.check") {
             showTabRequested("problems");
             coreClient.cargoCheck();

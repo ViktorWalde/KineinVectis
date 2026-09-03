@@ -21,6 +21,7 @@ Item {
     property var editorController: null
     property var jobsController: null
     property var searchController: null
+    property var searchEverywhereController: null
     property var runtimeController: null
     property var runConfigController: null
     property var debugController: null
@@ -35,6 +36,7 @@ Item {
         editorController.clear();
         jobsController.clear();
         searchController.clear();
+        searchEverywhereController.clear();
         runtimeController.clear();
         runConfigController.clear();
         debugController.clear();

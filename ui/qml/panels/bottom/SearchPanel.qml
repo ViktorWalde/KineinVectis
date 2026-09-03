@@ -72,7 +72,7 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: searchInput.text === ""
-                    text: qsTr("Buscar texto no workspace (Enter)")
+                    text: qsTr("Buscar no workspace (Enter) — \\n quebra linha")
                     color: Theme.textMuted
                     font.pixelSize: 11
                 }
@@ -164,7 +164,7 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: replaceInput.text === ""
-                    text: qsTr("Substituir por (vazio remove)")
+                    text: qsTr("Substituir por (vazio remove) — \\n quebra linha")
                     color: Theme.textMuted
                     font.pixelSize: 11
                 }

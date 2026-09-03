@@ -54,14 +54,18 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**114 métodos IPC** roteados, **19 domínios** no core, **429 testes** Rust
-verdes (medido em 2026-09-02). Protocolo `0.64.0`.
+**114 métodos IPC** roteados, **19 domínios** no core, **433 testes** Rust
+verdes (medido em 2026-09-02). Protocolo `0.65.0`.
 
 Domínios do core, por profundidade real:
 
 ```text
 SOLIDO      fsops     confinamento ao root, escrita atomica, transacao com
-                      rollback, search/replace com walk unico e teste de paridade
+                      rollback, search/replace com walk unico e teste de
+                      paridade. Desde 2026-09-02 (0.65.0) a busca varre o
+                      CONTEUDO, nao linha a linha: query com \n acha, e o
+                      preview mostra o trecho inteiro com ` ⏎ ` no lugar das
+                      quebras — e por isso a recusa de \n pode sair
             workspace deteccao de projeto, sessao, recentes, criacao por template
             lsp       manager (operacoes interativas), session (qual executavel,
                       subir/reiniciar/encerrar), sync (o TEXTO), framing, parse,

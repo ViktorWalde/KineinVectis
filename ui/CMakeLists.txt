@@ -105,6 +105,7 @@ set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
 set_source_files_properties(qml/runtime/RunConfigController.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigController.qml)
 set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
+set_source_files_properties(qml/search/SearchEverywhereController.qml PROPERTIES QT_RESOURCE_ALIAS SearchEverywhereController.qml)
 set_source_files_properties(qml/ipc/WorkspaceEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceEventRouter.qml)
 set_source_files_properties(qml/ipc/EditorEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EditorEventRouter.qml)
 set_source_files_properties(qml/ipc/EditorRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS EditorRequestRouter.qml)
@@ -248,6 +249,7 @@ qt_add_qml_module(kinein-vectis
         qml/runtime/RuntimeController.qml
         qml/runtime/RunConfigController.qml
         qml/search/SearchController.qml
+        qml/search/SearchEverywhereController.qml
         qml/ipc/WorkspaceEventRouter.qml
         qml/ipc/EditorEventRouter.qml
         qml/ipc/EditorRequestRouter.qml

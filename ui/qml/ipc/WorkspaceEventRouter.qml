@@ -6,7 +6,7 @@ Item {
     property var coreClient: null
     property var folderPicker: null
     property var projectTree: null
-    property var searchController: null
+    property var searchEverywhereController: null
     property var workspaceController: null
     property var projectHealthController: null
     property var recentWorkspacesController: null
@@ -17,7 +17,7 @@ Item {
         target: root.coreClient
 
         function onStatusChanged() {
-            if (root.coreClient.connected && !root.searchController.hasCommands) {
+            if (root.coreClient.connected && !root.searchEverywhereController.hasCommands) {
                 root.coreClient.listCommands();
             }
         }

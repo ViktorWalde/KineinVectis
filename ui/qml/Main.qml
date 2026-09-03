@@ -60,6 +60,7 @@ Window {
         editorController: domains.editorController
         jobsController: domains.jobsController
         searchController: domains.searchController
+        searchEverywhereController: domains.searchEverywhereController
         runtimeController: domains.runtimeController
         runConfigController: domains.runConfigController
         bottomPanelHost: workspaceHost
@@ -129,6 +130,7 @@ Window {
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
         searchController: domains.searchController
+        searchEverywhereController: domains.searchEverywhereController
         settingsController: domains.settingsController
     }
 
@@ -147,6 +149,7 @@ Window {
         editorController: domains.editorController
         projectTree: domains.projectTree
         searchController: domains.searchController
+        searchEverywhereController: domains.searchEverywhereController
         settingsController: domains.settingsController
         recentWorkspacesController: domains.recentWorkspacesController
         windowMaximized: windowChromeController.maximized
@@ -245,7 +248,7 @@ Window {
         z: 1000
         hostWidth: root.width
         hostHeight: root.height
-        searchController: domains.searchController
+        searchEverywhereController: domains.searchEverywhereController
         projectTree: domains.projectTree
         editorController: domains.editorController
         shellController: domains.shellController

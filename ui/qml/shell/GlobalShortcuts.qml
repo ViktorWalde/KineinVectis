@@ -12,6 +12,7 @@ Item {
     property var runtimeController: null
     property var debugController: null
     property var searchController: null
+    property var searchEverywhereController: null
     property var settingsController: null
     property var configActionController: null
 
@@ -125,7 +126,7 @@ Item {
 
     Shortcut {
         sequence: "Ctrl+E"
-        onActivated: root.searchController.openRecentFiles()
+        onActivated: root.searchEverywhereController.openRecentFiles()
     }
 
     Shortcut {
@@ -213,12 +214,12 @@ Item {
 
     Shortcut {
         sequence: "Ctrl+Shift+N"
-        onActivated: root.searchController.openSearchEverywhere()
+        onActivated: root.searchEverywhereController.openSearchEverywhere()
     }
 
     Shortcut {
         sequence: "Ctrl+Shift+A"
-        onActivated: root.searchController.openSearchEverywhere()
+        onActivated: root.searchEverywhereController.openSearchEverywhere()
     }
 
     Shortcut {

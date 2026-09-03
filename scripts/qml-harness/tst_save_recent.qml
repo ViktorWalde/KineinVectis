@@ -39,7 +39,9 @@ Item {
             }
         }
 
-        SearchController {
+        // Desde 2026-09-02 a lista de recentes e' da caixa modal, nao do
+        // painel de baixo (roadmap 30, etapa 9).
+        SearchEverywhereController {
             id: search
             workspaceRoot: "/tmp/ws"
             recentFiles: documents.recentFiles

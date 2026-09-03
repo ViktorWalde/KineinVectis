@@ -64,26 +64,17 @@ impl Core {
                 ),
             );
         }
-        // Query multi-linha e' RECUSADA porque `fs.search` nao consegue
-        // mostra-la: a busca casa linha a linha (o resultado carrega `line`,
-        // `column` e um `preview` de uma linha so), enquanto a substituicao
-        // casa no conteudo inteiro. Aceitar `\n` aqui significaria reescrever
-        // arquivos a partir de um preview que devolveu "0 resultados" — e
-        // `fs.replace` e' destrutivo. Transacao, snapshot e rollback protegem
-        // contra falha de ESCRITA, nao contra o usuario aprovar o que nao viu.
-        // Busca multi-linha e' fatia propria; ate la, o contrato e' honesto
-        // sobre o que nao sabe fazer.
-        if parsed.query.contains('\n') || parsed.replacement.contains('\n') {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    "fs.replace nao aceita quebra de linha: a busca do projeto \
-                     casa linha a linha e nao conseguiria pre-visualizar o efeito",
-                    None,
-                ),
-            );
-        }
+        // A RECUSA de quebra de linha caiu em 2026-09-02 (etapa 9 do
+        // `roadmaps/30`), e caiu pelo motivo certo: ela existia porque a busca
+        // casava LINHA A LINHA enquanto a substituicao casava no conteudo
+        // inteiro, entao uma query com `\n` era invisivel para o preview e
+        // ativa para a escrita. O usuario via "0 resultados", mandava
+        // substituir, e arquivos eram reescritos.
+        //
+        // O que mudou nao foi a guarda — foi a busca. Agora as duas casam no
+        // MESMO texto, com o mesmo `find_literal`, e o preview de um casamento
+        // multi-linha mostra as quebras. Remover a guarda antes disso teria
+        // sido trocar honestidade por funcionalidade.
         match fsops::replace(
             &root,
             &parsed.query,

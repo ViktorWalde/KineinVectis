@@ -437,25 +437,34 @@ fn fs_find_files_requires_workspace_and_non_empty_query() {
     );
 }
 
-/// `fs.replace` recusa quebra de linha na query.
+/// Busca e substituição MULTI-LINHA, e a invariante que as amarra.
 ///
-/// A busca do projeto casa LINHA A LINHA (o resultado carrega `line`, `column`
-/// e um `preview` de uma linha só); a substituição casava no conteúdo inteiro.
-/// Uma query com `\n` era, portanto, invisível para o preview e ativa para a
-/// escrita: o usuário via "0 resultados", mandava substituir e arquivos eram
-/// reescritos. `fs.replace` é destrutivo — transação, snapshot e rollback
-/// protegem contra falha de escrita, não contra aprovar o que não se viu.
+/// Até 2026-09-02 uma query com `\n` era **recusada**, e pela razão certa: a
+/// busca casava LINHA A LINHA enquanto a substituição casava no conteúdo
+/// inteiro. A query multi-linha era, portanto, invisível para o preview e ativa
+/// para a escrita — o usuário via "0 resultados", mandava substituir e arquivos
+/// eram reescritos. `fs.replace` é destrutivo: transação, snapshot e rollback
+/// protegem contra falha de ESCRITA, não contra aprovar o que não se viu.
+///
+/// A etapa 9 do `roadmaps/30` não removeu a guarda — ela **consertou a busca**.
+/// O que este teste trava é a igualdade que tornou a remoção legítima: o número
+/// de resultados da busca é o número de substituições do replace, também
+/// quando o casamento atravessa linhas.
 #[test]
-fn fs_replace_refuses_a_multiline_query_the_search_cannot_preview() {
+fn multiline_search_previews_exactly_what_replace_will_rewrite() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
-        .join(format!("{}-fs-replace-multilinha", std::process::id()));
+        .join(format!("{}-fs-multilinha", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
-    std::fs::write(dir.join("a.txt"), "primeira\nsegunda\n").unwrap();
+    std::fs::write(
+        dir.join("a.txt"),
+        "antes\nprimeira\nsegunda\ndepois\nprimeira\nsegunda\nfim\n",
+    )
+    .unwrap();
 
-    let mut core = core_with_empty_search_path("fs-replace-multilinha");
+    let mut core = core_with_empty_search_path("fs-multilinha");
     let aberto = core.handle_request(&JsonRpcRequest::new(
         190_i64,
         "workspace.open",
@@ -463,47 +472,86 @@ fn fs_replace_refuses_a_multiline_query_the_search_cannot_preview() {
     ));
     assert!(aberto.response().error.is_none());
 
-    // A busca nao acha isto — e nunca acharia.
+    // A busca ACHA as duas ocorrências, e diz onde cada uma começa.
     let busca = core.handle_request(&JsonRpcRequest::new(
         191_i64,
         "fs.search",
         Some(json!({ "query": "primeira\nsegunda" })),
     ));
-    assert_eq!(
-        busca.response().result.as_ref().unwrap()["matches"]
-            .as_array()
-            .unwrap()
-            .len(),
-        0
-    );
+    let encontrados = busca.response().result.as_ref().unwrap()["matches"]
+        .as_array()
+        .unwrap()
+        .clone();
+    assert_eq!(encontrados.len(), 2);
+    assert_eq!(encontrados[0]["line"], 2);
+    assert_eq!(encontrados[0]["column"], 1);
+    assert_eq!(encontrados[1]["line"], 5);
+
+    // E o PREVIEW mostra a quebra: sem isso, um casamento de duas linhas
+    // pareceria de uma, e o usuário aprovaria mais do que viu.
+    assert_eq!(encontrados[0]["preview"], "primeira ⏎ segunda");
 
     let troca = core.handle_request(&JsonRpcRequest::new(
         192_i64,
         "fs.replace",
         Some(json!({ "query": "primeira\nsegunda", "replacement": "unica" })),
     ));
-    assert_eq!(
-        troca.response().error.as_ref().unwrap().code,
-        kinein_protocol::JsonRpcErrorCode::InvalidParams
-    );
+    let resultado = troca.response().result.as_ref().unwrap();
 
-    // E o arquivo continua intacto: a recusa e' ANTES de qualquer escrita.
+    // A INVARIANTE: o preview contou exatamente o que a escrita fez.
+    assert_eq!(resultado["replacements"], encontrados.len());
     assert_eq!(
         std::fs::read_to_string(dir.join("a.txt")).unwrap(),
-        "primeira\nsegunda\n"
+        "antes\nunica\ndepois\nunica\nfim\n"
+    );
+}
+
+/// Substituir por texto MULTI-LINHA também vale, e a próxima busca enxerga.
+///
+/// O replacement com `\n` era recusado junto com a query, porque quebraria o
+/// casamento linha a linha da busca seguinte sobre o mesmo arquivo. Com a busca
+/// casando no conteúdo, isso deixou de ser verdade — e este teste é quem prova,
+/// buscando DEPOIS de escrever.
+#[test]
+fn a_multiline_replacement_is_found_by_the_next_search() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-fs-multilinha-repl", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
+    std::fs::write(dir.join("a.txt"), "alfa\n").unwrap();
+
+    let mut core = core_with_empty_search_path("fs-multilinha-repl");
+    let aberto = core.handle_request(&JsonRpcRequest::new(
+        193_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(aberto.response().error.is_none());
+
+    let troca = core.handle_request(&JsonRpcRequest::new(
+        194_i64,
+        "fs.replace",
+        Some(json!({ "query": "alfa", "replacement": "um\ndois" })),
+    ));
+    assert!(troca.response().error.is_none());
+    assert_eq!(
+        std::fs::read_to_string(dir.join("a.txt")).unwrap(),
+        "um\ndois\n"
     );
 
-    // O replacement multi-linha tambem e' recusado: ele quebraria o casamento
-    // linha a linha da PROXIMA busca sobre o mesmo arquivo.
-    let troca_quebra = core.handle_request(&JsonRpcRequest::new(
-        193_i64,
-        "fs.replace",
-        Some(json!({ "query": "primeira", "replacement": "a\nb" })),
+    let busca = core.handle_request(&JsonRpcRequest::new(
+        195_i64,
+        "fs.search",
+        Some(json!({ "query": "um\ndois" })),
     ));
-    assert_eq!(
-        troca_quebra.response().error.as_ref().unwrap().code,
-        kinein_protocol::JsonRpcErrorCode::InvalidParams
-    );
+    let encontrados = busca.response().result.as_ref().unwrap()["matches"]
+        .as_array()
+        .unwrap()
+        .clone();
+    assert_eq!(encontrados.len(), 1, "o que foi escrito tem de ser achavel");
+    assert_eq!(encontrados[0]["line"], 1);
 }
 
 /// O rascunho acompanha o `fs.rename`.

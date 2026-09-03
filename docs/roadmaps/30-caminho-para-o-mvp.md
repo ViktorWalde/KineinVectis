@@ -371,10 +371,43 @@ rodou o smoke completo nele — estrutura, instalador, `core.ping` do binário
 empacotado e o smoke offscreen, que confirma o renderer portátil e o primeiro
 frame.
 
-### Etapa 9 — Busca e substituição multi-linha
+### Etapa 9 — Busca e substituição multi-linha ✅ FEITA (2026-09-02)
 
-`handlers/fs.rs:76` recusa `\n` em `query` e `replacement`. O autor confirmou
-que vai precisar. Fatia própria.
+`handlers/fs.rs` recusava `\n` em `query` e `replacement` desde 2026-08-29. A
+recusa não era capricho: a busca casava **linha a linha**, então uma query
+multi-linha ficava invisível para o preview e ativa para a escrita — o usuário
+via "0 resultados" e o `fs.replace` reescrevia mesmo assim.
+
+**Por isso a fatia começou pela busca, não pela guarda.** Tirar a guarda antes
+teria devolvido exatamente o defeito que ela cobria.
+
+1. **`fsops/search.rs` passou a varrer o CONTEÚDO**, não uma linha de cada vez.
+   `line`/`column` são calculados incrementalmente a partir do offset do match
+   (o cursor de linha nunca volta atrás), e o `preview` mostra o trecho inteiro
+   com as quebras internas trocadas por ` ⏎ ` — o usuário vê numa linha o que
+   ocupa três no arquivo.
+2. **A guarda saiu**, com um comentário no lugar dizendo que o que mudou foi a
+   busca. Os dois testes que sustentam isso são
+   `multiline_search_previews_exactly_what_replace_will_rewrite` (o contador do
+   preview bate com o número de reescritas) e
+   `a_multiline_replacement_is_found_by_the_next_search` (o texto que a
+   substituição escreveu é achável pela busca seguinte — o ciclo fecha).
+3. **A UI ganhou como alcançar isso.** O campo do painel é um `TextInput` de uma
+   linha: sem um caminho de entrada, a capacidade seria "mecanismo sem usuário"
+   (`ARCHITECTURE.md` §8). `SearchController.expandLineBreaks()` traduz `\n`
+   digitado em quebra real, e `\\n` no literal barra-ene, para quem procura a
+   sequência de escape dentro do código. A tradução mora na UI de propósito: o
+   `query` do protocolo é texto literal, e um core que interpretasse escapes
+   tornaria impossível procurar por um `\n` de verdade.
+4. **`SearchController` foi cortado ao meio** para caber a fatia. Ele tinha 420
+   linhas e dois donos que dividiam só o nome: o painel de baixo (persistente,
+   com uma operação DESTRUTIVA atrás) e a caixa modal (efêmera, sem escrita,
+   teclado-primeiro). A caixa saiu para `SearchEverywhereController.qml` (352) e
+   o painel ficou com 185 — o arquivo saiu inteiro da catraca.
+
+Mutação que provou o teste novo (`tst_search_multiline.qml`): tornar
+`expandLineBreaks` a identidade, remover o escape de `\\`, e mandar o
+`replacement` sem tradução — as três reprovam.
 
 ### Etapa 10 — `WorkspaceUiResetter`: remover `shellController` ✅ FEITA (2026-09-02)
 
@@ -394,7 +427,7 @@ faltava.
 
 ```text
 FECHA O MVP        1, 2, 7, 8, 10  — TODAS FEITAS em 2026-09-02
-SEPARA MVP DE      3 (feita), 4 (feita), 5 (feita), 6 (em parte), 9
+SEPARA MVP DE      3 (feita), 4 (feita), 5 (feita), 6 (em parte), 9 (feita)
 DAILY DRIVER
 ```
 

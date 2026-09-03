@@ -6,7 +6,7 @@ Item {
 
     property real hostWidth: 0
     property real hostHeight: 0
-    property var searchController: null
+    property var searchEverywhereController: null
     property var projectTree: null
     property var editorController: null
     property var shellController: null
@@ -83,34 +83,34 @@ Item {
     SearchEverywhereDialog {
         id: searchEverywhereDialog
 
-        visible: root.searchController.everywhereVisible
+        visible: root.searchEverywhereController.everywhereVisible
         z: 90
         anchors.centerIn: parent
-        resultsModel: root.searchController.everywhereModel
-        resultCount: root.searchController.everywhereModel.count
-        currentIndex: root.searchController.everywhereIndex
-        loading: root.searchController.everywhereLoading
-        truncated: root.searchController.everywhereTruncated
-        errorText: root.searchController.everywhereError
-        titleText: root.searchController.everywhereTitle
-        recentMode: root.searchController.recentMode
+        resultsModel: root.searchEverywhereController.everywhereModel
+        resultCount: root.searchEverywhereController.everywhereModel.count
+        currentIndex: root.searchEverywhereController.everywhereIndex
+        loading: root.searchEverywhereController.everywhereLoading
+        truncated: root.searchEverywhereController.everywhereTruncated
+        errorText: root.searchEverywhereController.everywhereError
+        titleText: root.searchEverywhereController.everywhereTitle
+        recentMode: root.searchEverywhereController.recentMode
         maxAvailableWidth: root.hostWidth - 80
         maxAvailableHeight: root.hostHeight - 120
-        onQueryChanged: root.searchController.scheduleSearchEverywhere(
+        onQueryChanged: root.searchEverywhereController.scheduleSearchEverywhere(
                             searchEverywhereDialog.currentQuery())
-        onAcceptRequested: root.searchController.acceptSearchEverywhere()
+        onAcceptRequested: root.searchEverywhereController.acceptSearchEverywhere()
         onDismissRequested: {
-            root.searchController.everywhereVisible = false;
+            root.searchEverywhereController.everywhereVisible = false;
             root.editorController.focusEditor();
         }
-        onMoveDownRequested: root.searchController.moveEverywhereDown()
-        onMoveUpRequested: root.searchController.moveEverywhereUp()
+        onMoveDownRequested: root.searchEverywhereController.moveEverywhereDown()
+        onMoveUpRequested: root.searchEverywhereController.moveEverywhereUp()
         onResultHovered: function(index) {
-            root.searchController.everywhereIndex = index;
+            root.searchEverywhereController.everywhereIndex = index;
         }
         onResultActivated: function(index) {
-            root.searchController.everywhereIndex = index;
-            root.searchController.acceptSearchEverywhere();
+            root.searchEverywhereController.everywhereIndex = index;
+            root.searchEverywhereController.acceptSearchEverywhere();
         }
     }
 

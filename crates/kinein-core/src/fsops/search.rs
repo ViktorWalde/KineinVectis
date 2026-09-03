@@ -1,4 +1,19 @@
 //! Literal content search with a deterministic depth-first walk.
+//!
+//! # A busca casa no CONTEUDO, e nao linha a linha (2026-09-02)
+//!
+//! Ate a etapa 9 do `roadmaps/30` ela iterava `content.lines()`, o que a tornava
+//! incapaz de achar uma query com `\n` — e era por isso que o `fs.replace`
+//! RECUSAVA quebra de linha: a substituicao casa no conteudo inteiro, entao
+//! aceitar `\n` significaria reescrever arquivos a partir de um preview que
+//! devolveu "0 resultados". Transacao, snapshot e rollback protegem contra
+//! falha de ESCRITA, nao contra o usuario aprovar o que nao viu.
+//!
+//! Agora as duas casam do mesmo jeito, no mesmo texto, com o mesmo
+//! `find_literal`. **Essa igualdade e a invariante desta fatia**, e ela ja tinha
+//! teste antes de existir multi-linha: o numero de resultados da busca tem de
+//! ser o numero de substituicoes do replace. Preview de operacao destrutiva que
+//! conta errado e pior que preview nenhum.
 
 use std::{fs, path::Path};
 
@@ -10,13 +25,20 @@ use super::{FsError, MAX_READ_BYTES, MAX_SEARCH_MATCHES};
 /// Maximum preview length of a search match, in characters.
 const MAX_PREVIEW_CHARS: usize = 200;
 
+/// Marca a quebra de linha dentro do preview de um casamento multi-linha.
+///
+/// Um `\n` cru viraria uma linha nova na lista de resultados e desalinharia a
+/// tabela; o simbolo mantem o resultado em UMA linha e diz que ha quebra ali.
+const LINE_BREAK_MARK: &str = " ⏎ ";
+
 /// Searches every UTF-8 text file of the workspace for a literal query.
 ///
 /// The walk is depth-first in case-insensitive name order, so results are
 /// deterministic. Directories in [`SEARCH_SKIP_DIRS`], files larger than
 /// [`MAX_READ_BYTES`], non-UTF-8 files, and symlinks are skipped silently;
 /// individual IO failures skip the entry instead of aborting the search.
-/// At most one match per line is reported, capped at [`MAX_SEARCH_MATCHES`].
+/// Every occurrence is reported — including matches that span lines — capped at
+/// [`MAX_SEARCH_MATCHES`].
 pub fn search(
     root: &Path,
     query: &str,
@@ -56,32 +78,73 @@ fn search_file(
         .unwrap_or(file)
         .display()
         .to_string();
-    for (index, line) in content.lines().enumerate() {
-        // TODAS as ocorrencias da linha, nao so a primeira.
-        //
-        // `fs.replace` substitui todas; enquanto a busca parava na primeira, a
-        // linha "Alpha alpha" aparecia como 1 resultado e virava 2 substituicoes.
-        // O preview de uma operacao destrutiva tem de contar o que ela vai fazer.
-        let mut cursor = 0_usize;
-        while let Some(offset) = find_literal(&line[cursor..], query, case_sensitive) {
-            let start = cursor + offset;
-            let column = line[..start].chars().count() as u64 + 1;
-            matches.push(FsSearchMatch {
-                path: relative.clone(),
-                line: index as u64 + 1,
-                column,
-                preview: line.trim().chars().take(MAX_PREVIEW_CHARS).collect(),
-            });
-            if matches.len() >= MAX_SEARCH_MATCHES {
-                return true;
+
+    // TODAS as ocorrencias, nao so a primeira de cada linha.
+    //
+    // `fs.replace` substitui todas; enquanto a busca parava na primeira, a
+    // linha "Alpha alpha" aparecia como 1 resultado e virava 2 substituicoes.
+    // O preview de uma operacao destrutiva tem de contar o que ela vai fazer.
+    let mut cursor = 0_usize;
+    // Posicao humana do inicio da linha corrente, avancada INCREMENTALMENTE.
+    // Recontar do inicio do arquivo a cada casamento seria quadratico num
+    // arquivo com muitas ocorrencias.
+    let mut line_number = 1_u64;
+    let mut line_start = 0_usize;
+
+    while let Some(offset) = find_literal(&content[cursor..], query, case_sensitive) {
+        let start = cursor + offset;
+        for (index, byte) in content.as_bytes().iter().enumerate().skip(line_start) {
+            if index >= start {
+                break;
             }
-            // Avanca o comprimento da QUERY: `find_literal` casa byte a byte
-            // (case-insensitive e' ASCII), entao o casamento tem o mesmo
-            // tamanho e `start + len` cai em fronteira de caractere.
-            cursor = start.saturating_add(query.len()).min(line.len());
+            if *byte == b'\n' {
+                line_number += 1;
+                line_start = index + 1;
+            }
         }
+        let column = content[line_start..start].chars().count() as u64 + 1;
+        let end = start.saturating_add(query.len()).min(content.len());
+        matches.push(FsSearchMatch {
+            path: relative.clone(),
+            line: line_number,
+            column,
+            preview: preview_for(content.as_str(), line_start, start, end),
+        });
+        if matches.len() >= MAX_SEARCH_MATCHES {
+            return true;
+        }
+        // Avanca o comprimento da QUERY: `find_literal` casa byte a byte
+        // (case-insensitive e' ASCII), entao o casamento tem o mesmo tamanho e
+        // `start + len` cai em fronteira de caractere.
+        cursor = end;
     }
     false
+}
+
+/// Texto de preview de um casamento.
+///
+/// Casamento de UMA linha mostra a linha inteira (contexto e o que ajuda a
+/// reconhecer o lugar). Casamento MULTI-LINHA mostra o texto CASADO, com as
+/// quebras visiveis: mostrar so a primeira linha faria um casamento de tres
+/// linhas parecer um de uma — e o usuario aprovaria uma reescrita maior do que
+/// a que viu.
+fn preview_for(content: &str, line_start: usize, start: usize, end: usize) -> String {
+    if content[start..end].contains('\n') {
+        return content[start..end]
+            .replace('\n', LINE_BREAK_MARK)
+            .trim()
+            .chars()
+            .take(MAX_PREVIEW_CHARS)
+            .collect();
+    }
+    let line_end = content[line_start..]
+        .find('\n')
+        .map_or(content.len(), |offset| line_start + offset);
+    content[line_start..line_end]
+        .trim()
+        .chars()
+        .take(MAX_PREVIEW_CHARS)
+        .collect()
 }
 
 /// Finds the byte offset of the first literal occurrence of `query` in `line`.
@@ -193,6 +256,62 @@ sem nada
             matches.iter().map(|item| item.column).collect::<Vec<_>>(),
             [1, 3]
         );
+    }
+
+    /// Casamento que ATRAVESSA linhas: posicao do inicio e preview honesto.
+    ///
+    /// O preview de uma linha so mostraria "primeira" e faria um casamento de
+    /// duas linhas parecer de uma — o usuario aprovaria uma reescrita maior do
+    /// que a que viu.
+    #[test]
+    fn search_finds_a_match_that_spans_lines() {
+        let root = temp_root("search-multilinha");
+        // A ISCA e a segunda "primeira": ela casa o COMECO da query e nao a
+        // query. Sem ela, uma busca que truncasse a query no primeiro `\n`
+        // passaria neste teste por coincidencia — e foi exatamente o que a
+        // primeira versao dele deixou passar na prova por mutacao.
+        fs::write(
+            root.join("a.txt"),
+            "antes\n  primeira\nsegunda\ndepois\nprimeira\noutra\n",
+        )
+        .unwrap();
+
+        let (matches, _) = search(&root, "primeira\nsegunda", true).unwrap();
+
+        assert_eq!(matches.len(), 1, "a query inteira casa uma vez so");
+        assert_eq!(matches[0].line, 2, "a linha e a do INICIO do casamento");
+        assert_eq!(matches[0].column, 3, "e a coluna tambem, contando o recuo");
+        assert_eq!(matches[0].preview, "primeira ⏎ segunda");
+    }
+
+    /// A contagem da busca continua sendo a do replace quando ha multi-linha.
+    ///
+    /// E a invariante que tornou legitimo remover a recusa de `\n` no
+    /// `fs.replace`: preview que conta errado e pior que preview nenhum.
+    #[test]
+    fn multiline_search_and_replace_agree_on_the_count() {
+        let root = temp_root("search-multilinha-contagem");
+        fs::write(root.join("a.txt"), "ab\nab\nab\nab\n").unwrap();
+
+        let (matches, _) = search(&root, "ab\nab", true).unwrap();
+        let (_, substituicoes) =
+            super::super::replace::replace(&root, "ab\nab", "X", true).unwrap();
+
+        // Casamentos NAO se sobrepoem: "ab\nab\nab\nab" tem dois, nao tres.
+        assert_eq!(matches.len(), 2);
+        assert_eq!(substituicoes, matches.len() as u64);
+        assert_eq!(fs::read_to_string(root.join("a.txt")).unwrap(), "X\nX\n");
+    }
+
+    /// Casamento de UMA linha continua mostrando a linha inteira como contexto.
+    #[test]
+    fn a_single_line_match_still_previews_the_whole_line() {
+        let root = temp_root("search-preview-linha");
+        fs::write(root.join("a.txt"), "  int total = somar(1, 2);  \n").unwrap();
+
+        let (matches, _) = search(&root, "somar", true).unwrap();
+
+        assert_eq!(matches[0].preview, "int total = somar(1, 2);");
     }
 
     #[test]

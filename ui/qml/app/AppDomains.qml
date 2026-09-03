@@ -37,6 +37,7 @@ Item {
     readonly property alias debugController: debugController
     readonly property alias gitController: gitController
     readonly property alias searchController: searchController
+    readonly property alias searchEverywhereController: searchEverywhereController
     readonly property alias commandDispatcher: commandDispatcher
     readonly property alias editorController: editorController
     readonly property alias projectTree: projectTree
@@ -189,19 +190,29 @@ Item {
         // no GitRequestRouter.
     }
 
+    // Busca e substituicao NO PROJETO (painel de baixo). A operacao destrutiva
+    // mora aqui; a caixa modal e outro dono.
     SearchController {
         id: searchController
 
         workspaceRoot: root.coreClient.workspaceRoot
-        recentFiles: editorController.recentFiles
-        hasActiveEditorFile: editorController.currentTab >= 0
-        // Pedido ao core (inclusive a guarda de replace e os symbols, que
-        // precisam do editor) mora no SearchRequestRouter.
+        // Pedido ao core (inclusive a guarda de replace) mora no
+        // SearchRequestRouter.
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
         }
         onFocusSearchInputRequested: root.workspaceHost.focusSearchInput()
         onFocusReplaceInputRequested: root.workspaceHost.focusSearchReplaceInput()
+    }
+
+    // Search Everywhere: a caixa modal que acha arquivo, simbolo e comando.
+    // Separada em 2026-09-02 — efemera, sem escrita, teclado-primeiro.
+    SearchEverywhereController {
+        id: searchEverywhereController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+        recentFiles: editorController.recentFiles
+        hasActiveEditorFile: editorController.currentTab >= 0
         onResetAndFocusEverywhereRequested: root.shellOverlays.resetSearchEverywhereAndFocus()
         onOpenAtRequested: function(path, line, column) {
             editorController.openDiagnostic(path, line, column);
@@ -224,6 +235,7 @@ Item {
         runtimeController: runtimeController
         settingsController: settingsController
         searchController: searchController
+        searchEverywhereController: searchEverywhereController
         configActionController: configActionController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {
@@ -285,7 +297,7 @@ Item {
         coreClient: root.coreClient
         folderPicker: root.folderPicker
         projectTree: projectTree
-        searchController: searchController
+        searchEverywhereController: searchEverywhereController
         workspaceController: workspaceController
         projectHealthController: projectHealthController
         recentWorkspacesController: recentWorkspacesController
@@ -315,11 +327,13 @@ Item {
     SearchEventRouter {
         coreClient: root.coreClient
         searchController: searchController
+        searchEverywhereController: searchEverywhereController
     }
 
     SearchRequestRouter {
         coreClient: root.coreClient
         searchController: searchController
+        searchEverywhereController: searchEverywhereController
         editorController: editorController
     }
 
