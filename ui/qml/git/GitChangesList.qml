@@ -20,20 +20,6 @@ ListView {
     signal discardRequested(int index)
     signal openRequested(string absPath)
 
-    // Cor por tipo de mudanca. Mora AQUI porque so' esta lista pinta por tipo —
-    // no GitPanel ela era usada num lugar so'.
-    function kindColor(kind) {
-        if (kind === "conflicted") {
-            return Theme.errorSoft;
-        }
-        if (kind === "untracked" || kind === "added") {
-            return Theme.successSoft;
-        }
-        if (kind === "deleted") {
-            return Theme.textDisabled;
-        }
-        return Theme.infoSoft;
-    }
 
 
     // B2 (docs/roadmaps/24): barra de rolagem. `parent: root` é OBRIGATÓRIO — um filho
@@ -118,7 +104,7 @@ ListView {
             anchors.right: diffChip.left
             anchors.rightMargin: Theme.spacingSmall
             text: changeRow.path
-            color: root.kindColor(changeRow.kind)
+            color: StatusColors.gitKind(changeRow.kind)
             font.pixelSize: 11
             font.family: Theme.monoFont
             elide: Text.ElideMiddle

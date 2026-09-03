@@ -89,15 +89,6 @@ Item {
         return info === undefined ? "" : info.message;
     }
 
-    function diagnosticColor(severity) {
-        if (severity === "warning") {
-            return Theme.warningSoft;
-        }
-        if (severity === "note") {
-            return Theme.infoSoft;
-        }
-        return Theme.errorSoft;
-    }
 
     function isFoldableLine(line, revision) {
         return root.highlighter !== null
@@ -206,7 +197,7 @@ Item {
                 color: root.executionLine === gutterLine.lineNumber
                        ? Theme.accent
                        : (diagnosticSeverity !== ""
-                          ? root.diagnosticColor(diagnosticSeverity)
+                          ? StatusColors.severity(diagnosticSeverity)
                           : Theme.textMuted)
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fontSizeEditor - 2
@@ -228,7 +219,7 @@ Item {
                 height: root.diagnosticSize
                 radius: root.diagnosticSize / 2
                 visible: severity !== ""
-                color: root.diagnosticColor(severity)
+                color: StatusColors.severity(severity)
                 border.width: 1
                 border.color: Theme.background0
 

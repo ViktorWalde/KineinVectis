@@ -1,0 +1,14 @@
+activeTab===tools 2
+createMode===project 2
+entryKind===directory 2
+kind===command 3
+kind===deleted 2
+kind===directory 2
+kind===file 2
+kind===info 2
+kind===stderr 2
+status===detected 4
+status===failed 3
+status===warning 2
+terminalSession===run 3
+terminalSession===shell 2

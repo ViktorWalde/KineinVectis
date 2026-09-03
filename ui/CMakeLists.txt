@@ -14,6 +14,7 @@ qt_add_executable(kinein-vectis
 )
 
 set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
 set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
@@ -173,6 +174,7 @@ qt_add_qml_module(kinein-vectis
     QML_FILES
         qml/Main.qml
         qml/Theme.qml
+        qml/StatusColors.qml
         qml/components/KvIcon.qml
         qml/components/KvTooltip.qml
         qml/components/KvTooltipHost.qml

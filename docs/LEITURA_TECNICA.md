@@ -131,7 +131,7 @@ passou sem uma única mudança nos testes.
 
 ## 4. Cinco fatos que mudam decisão
 
-**1. O gate é o produto, não cerimônia.** **Quinze** verificações (2026-09-03), e **cada uma
+**1. O gate é o produto, não cerimônia.** **Dezesseis** verificações (2026-09-03), e **cada uma
 nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §4 regra
 11). Não se cria gate aqui por gosto de rigor; cria-se quando uma classe de erro
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está

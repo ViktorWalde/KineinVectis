@@ -213,6 +213,14 @@ Regras:
    timers, parsing, estado de domínio nem helpers que conheçam domínio.
 2. **Componente visual é burro.** Recebe dados por `property`, expõe ações por
    `signal` e não chama ferramenta externa, filesystem ou core diretamente.
+
+   **A UI traduz; não deriva duas vezes** (2026-09-03). Mapear um estado que o
+   core decidiu para uma cor ou um rótulo é trabalho da UI. Escrever *a mesma*
+   derivação em dois arquivos não é — as cópias divergem em silêncio, e já
+   divergiram: `severity` desconhecida ficou **azul** no `ProblemsPanel` e
+   **vermelha** na `EditorGutter`, com o gate inteiro verde, porque cada cópia
+   sozinha estava certa. Estado de domínio → token do tema tem dono único
+   (`StatusColors`), e a catraca `verificar-qml-duplicacao.sh` congela o resto.
 3. **Controller/store QML guarda estado de UI.** Ele pode coordenar modelos,
    timers e intenção de IPC, mas não executa regra de negócio nem parsing de
    saída de ferramenta.

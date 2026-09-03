@@ -33,15 +33,6 @@ ListView {
 
     signal openRequested(string file, int line, int column)
 
-    function severityColor(severity) {
-        if (severity === "error") {
-            return Theme.errorSoft;
-        }
-        if (severity === "warning") {
-            return Theme.warningSoft;
-        }
-        return Theme.infoSoft;
-    }
 
     clip: true
     spacing: 2
@@ -85,7 +76,7 @@ ListView {
                 height: 8
                 radius: 4
                 anchors.verticalCenter: parent.verticalCenter
-                color: panel.severityColor(problemDelegate.severity)
+                color: StatusColors.severity(problemDelegate.severity)
             }
 
             Text {

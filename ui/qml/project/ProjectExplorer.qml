@@ -23,21 +23,12 @@ Rectangle {
     signal contextMenuRequested(string path, string kind, string name,
                                 real sceneX, real sceneY)
 
+    // `revision` existe so' para o binding reavaliar quando o git muda.
+    // Arquivo SEM estado de git nao e' um estado de git: cai na cor normal da
+    // arvore, e por isso este caso fica aqui e nao no StatusColors.
     function gitFileColor(path, revision) {
         const kind = gitKinds[path];
-        if (kind === undefined) {
-            return Theme.textSecondary;
-        }
-        if (kind === "conflicted") {
-            return Theme.errorSoft;
-        }
-        if (kind === "untracked" || kind === "added") {
-            return Theme.successSoft;
-        }
-        if (kind === "deleted") {
-            return Theme.textDisabled;
-        }
-        return Theme.infoSoft;
+        return kind === undefined ? Theme.textSecondary : StatusColors.gitKind(kind);
     }
 
     function treeIconName(name, kind, expanded) {
