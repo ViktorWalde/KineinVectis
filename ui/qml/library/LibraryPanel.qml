@@ -22,6 +22,7 @@ Item {
     signal librarySelected(string id)
     signal targetEdited(string name)
     signal closeRequested()
+    signal applyStepRequested(string actionId, var params)
 
     Text {
         id: titulo
@@ -193,5 +194,9 @@ Item {
         errorText: root.errorText
         hasTarget: root.target !== ""
         hasSelection: root.selectedId !== ""
+
+        onApplyStepRequested: function(actionId, params) {
+            root.applyStepRequested(actionId, params);
+        }
     }
 }

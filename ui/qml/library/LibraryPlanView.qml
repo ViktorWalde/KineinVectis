@@ -16,6 +16,8 @@ Item {
     property bool hasTarget: false
     property bool hasSelection: false
 
+    signal applyStepRequested(string actionId, var params)
+
     Rectangle {
         anchors.fill: parent
         radius: Theme.radius
@@ -72,14 +74,59 @@ Item {
             Repeater {
                 model: root.plan ? root.plan.steps : []
 
-                delegate: Text {
+                delegate: Item {
+                    id: passo
+
                     required property var modelData
 
                     width: parent.width
-                    wrapMode: Text.WordWrap
-                    text: "• " + modelData.summary
-                    color: Theme.textPrimary
-                    font.pixelSize: 10
+                    height: rotulo.implicitHeight + 4
+
+                    Text {
+                        id: rotulo
+
+                        anchors.left: parent.left
+                        anchors.right: aplicar.left
+                        anchors.rightMargin: Theme.spacingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        wrapMode: Text.WordWrap
+                        text: "• " + passo.modelData.summary
+                        color: Theme.textPrimary
+                        font.pixelSize: 10
+                    }
+
+                    // O botao NAO escreve nada: ele entrega a acao ao dominio
+                    // configaction, que abre o preview e pede consentimento.
+                    // Aplicar sem mostrar o diff seria a IDE mexendo no arquivo
+                    // do usuario por conta propria.
+                    Rectangle {
+                        id: aplicar
+
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 68
+                        height: 16
+                        radius: Theme.radiusXSmall
+                        color: area.containsMouse ? Theme.surface2 : "transparent"
+                        border.width: 1
+                        border.color: Theme.borderSoft
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: qsTr("revisar…")
+                            color: Theme.textMuted
+                            font.pixelSize: 9
+                        }
+
+                        MouseArea {
+                            id: area
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: root.applyStepRequested(passo.modelData.actionId,
+                                                               passo.modelData.params)
+                        }
+                    }
                 }
             }
 

@@ -1,5 +1,7 @@
 //! Types for the `library.*` domain: the curated C/C++ library catalog.
 
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
 
 /// Whether the package was found on this machine.
@@ -57,6 +59,12 @@ pub struct LibraryStep {
     pub action_id: String,
     /// What it does, in the user's words.
     pub summary: String,
+    /// Parameters to hand to that action.
+    ///
+    /// Without these the UI could name the action but not run it, and the
+    /// button would have to rebuild them — putting the same knowledge in two
+    /// places. The plan carries what it decided.
+    pub params: BTreeMap<String, String>,
 }
 
 /// What it would take for a target to use a library.

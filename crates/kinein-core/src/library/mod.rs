@@ -23,6 +23,8 @@
 mod availability;
 mod catalog;
 
+use std::collections::BTreeMap;
+
 use kinein_protocol::{LibraryInfo, LibraryPlan, LibraryStatus, LibraryStep};
 
 use availability::Availability;
@@ -86,6 +88,7 @@ pub fn plan(id: &str, target: &str) -> Result<LibraryPlan, String> {
                 "find_package({} CONFIG REQUIRED) — o pacote esta instalado nesta maquina",
                 entry.package_name
             ),
+            params: BTreeMap::from([("package".to_owned(), entry.package_name.to_owned())]),
         });
     } else {
         steps.push(LibraryStep {
@@ -95,6 +98,11 @@ pub fn plan(id: &str, target: &str) -> Result<LibraryPlan, String> {
                  entao ele e baixado e compilado junto, com a versao PINADA",
                 entry.repository, entry.pinned_version
             ),
+            params: BTreeMap::from([
+                ("name".to_owned(), entry.id.to_owned()),
+                ("repository".to_owned(), entry.repository.to_owned()),
+                ("tag".to_owned(), entry.pinned_version.to_owned()),
+            ]),
         });
     }
     steps.push(LibraryStep {
@@ -103,6 +111,11 @@ pub fn plan(id: &str, target: &str) -> Result<LibraryPlan, String> {
             "target_link_libraries({target} PRIVATE {})",
             entry.targets.join(" ")
         ),
+        params: BTreeMap::from([
+            ("target".to_owned(), target.to_owned()),
+            ("libraries".to_owned(), entry.targets.join(" ")),
+            ("visibility".to_owned(), "PRIVATE".to_owned()),
+        ]),
     });
 
     Ok(LibraryPlan {

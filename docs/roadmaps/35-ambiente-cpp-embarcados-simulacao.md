@@ -237,7 +237,35 @@ AppRouters.qml  novo,  138   quem liga os donos ao IPC
 property por controller e repassar cada uma — dezoito propriedades de passagem,
 que é exatamente o que fez do `EditorController` uma fachada de 791 linhas.
 
-### 4.4 O que NÃO é esta frente
+### 4.4 Como o plano vira arquivo, sem o `library` escrever nada
+
+O botão de cada passo **não escreve**. Ele entrega ao `configaction`:
+
+```text
+library.plan  ->  passo { actionId, params }
+                        |
+                        v
+   ConfigActionController.openWith(actionId, params)
+                        |
+                        v
+        o dialogo que ja existe: preview + consentimento
+```
+
+O passo carrega os `params` porque, sem eles, a UI saberia **nomear** a ação mas
+não **executá-la** — e o botão teria de remontar os parâmetros, pondo o mesmo
+conhecimento em dois lugares. O plano carrega o que ele decidiu.
+
+O rótulo do botão é **"revisar…"**, não "aplicar". Aplicar sem mostrar o diff
+seria a IDE mexendo no arquivo do usuário por conta própria, e o consentimento
+já é contrato deste projeto desde as Configuration Actions (0.63.0).
+
+**Um detalhe de ordem que custou um bug:** `openWith` não pode selecionar a ação
+na hora — `select` procura no catálogo, e o catálogo só existe depois de
+`configAction.list` responder. Por isso o pedido fica pendente e é consumido no
+`handleListed`, com precedência sobre a seleção anterior: quem acabou de chamar
+`openWith` disse o que quer ver.
+
+### 4.5 O que NÃO é esta frente
 
 Não é gerenciador de pacotes, não é resolver dependência transitiva, e não é
 substituir vcpkg/Conan para quem já os usa (§2.2). É **reduzir o custo de
@@ -293,6 +321,9 @@ muda por decisão registrada e o AppImage passa a exigir GPU.
                                            configaction: 16 -> 18 acoes.
                                            AppDomains cruzou 400 e virou
                                            AppDomains + AppRouters (§4.3).
+                                           FECHADA em 2026-09-03 com a entrada
+                                           na paleta (Ctrl+Alt+L) e o botao que
+                                           entrega o passo ao configaction.
 
 21  Levantamento de embarcados             §5. Documento, nao codigo. Sem ele
     (licenca, manutencao, alvos)           a frente F nao abre.

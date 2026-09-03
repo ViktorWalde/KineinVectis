@@ -246,6 +246,7 @@ Item {
         searchController: searchController
         searchEverywhereController: searchEverywhereController
         configActionController: configActionController
+        libraryController: libraryController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);

@@ -48,6 +48,7 @@ set_source_files_properties(qml/shell/RunConfigMenu.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/debug/DebugController.qml PROPERTIES QT_RESOURCE_ALIAS DebugController.qml)
 set_source_files_properties(qml/library/LibraryController.qml PROPERTIES QT_RESOURCE_ALIAS LibraryController.qml)
 set_source_files_properties(qml/library/LibraryPanel.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanel.qml)
+set_source_files_properties(qml/library/LibraryPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanelHost.qml)
 set_source_files_properties(qml/library/LibraryPlanView.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPlanView.qml)
 set_source_files_properties(qml/ipc/LibraryRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryRequestRouter.qml)
 set_source_files_properties(qml/ipc/LibraryEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryEventRouter.qml)
@@ -207,6 +208,7 @@ qt_add_qml_module(kinein-vectis
         qml/debug/DebugController.qml
         qml/library/LibraryController.qml
         qml/library/LibraryPanel.qml
+        qml/library/LibraryPanelHost.qml
         qml/library/LibraryPlanView.qml
         qml/ipc/LibraryRequestRouter.qml
         qml/ipc/LibraryEventRouter.qml

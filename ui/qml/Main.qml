@@ -256,6 +256,7 @@ Window {
         runConfigController: domains.runConfigController
         gitController: domains.gitController
         settingsController: domains.settingsController
+        libraryController: domains.libraryController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
         onAppMenuActionRequested: function(action) {

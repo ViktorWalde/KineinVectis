@@ -94,12 +94,34 @@ Item {
         dialogVisible = false;
     }
 
+    // Abre o dialogo JA na acao pedida, com os parametros preenchidos.
+    //
+    // E por aqui que o catalogo de bibliotecas entrega o trabalho: o plano dele
+    // decide QUAL acao e com quais parametros, e a escrita continua acontecendo
+    // aqui — com o preview e o consentimento que este dominio ja tem. O
+    // `library` nunca escreve arquivo, e este metodo e a fronteira.
+    //
+    // A selecao so' acontece depois da lista chegar: `select` procura no
+    // catalogo, e pedir antes acharia vazio. Por isso o pedido fica pendente.
+    function openWith(actionId, params) {
+        dialogVisible = true;
+        pendingSelection = actionId;
+        pendingParams = params === undefined ? ({}) : params;
+        if (workspaceRoot !== "") {
+            listRequested(false);
+        }
+    }
+
     function refresh() {
         listRequested(false);
     }
 
     // Preenche a lista com o que o core mandou. A ordem e a do catalogo: a UI
     // nao reordena, so filtra.
+    // Acao pedida por outro dominio antes de a lista existir.
+    property string pendingSelection: ""
+    property var pendingParams: ({})
+
     function handleListed(actions, buildSystems) {
         const previous = selectedId;
         const byId = {};
@@ -125,7 +147,23 @@ Item {
         actionsById = byId;
         activeBuildSystems = buildSystems;
         statusText = "";
-        if (previous !== "") {
+        // Pedido vindo de outro dominio tem precedencia sobre a selecao
+        // anterior: quem chamou `openWith` acabou de dizer o que quer ver.
+        if (pendingSelection !== "") {
+            const pedida = pendingSelection;
+            const parametros = pendingParams;
+            pendingSelection = "";
+            pendingParams = ({});
+            select(pedida);
+            if (selectedId === pedida) {
+                for (const nome in parametros) {
+                    setParam(nome, parametros[nome]);
+                }
+                if (!missingRequiredParam()) {
+                    previewRequested(selectedId, paramValues);
+                }
+            }
+        } else if (previous !== "") {
             select(previous);
         }
     }

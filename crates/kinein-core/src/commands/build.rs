@@ -131,3 +131,24 @@ pub(super) fn configaction_command_descriptors() -> Vec<CommandDescriptor> {
         requires_workspace: true,
     }]
 }
+
+/// Bibliotecas C/C++ (roadmaps/35): o catalogo curado.
+///
+/// UM descriptor, nao treze — mesma razao do `configaction` acima. A paleta
+/// anuncia a ENTRADA do painel; a lista de bibliotecas vem do `library.list`.
+/// Anunciar as treze aqui duplicaria o catalogo em dois lugares que
+/// envelheceriam separados, e o catalogo ja e' divida por ENTRADA.
+///
+/// `requires_workspace` e' true embora o dominio `library` seja stateless: sem
+/// projeto aberto nao ha alvo de `CMake` para linkar, e oferecer a acao seria
+/// oferecer um caminho que termina em nada.
+pub(super) fn library_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "library.list".to_owned(),
+        title: "Bibliotecas C/C++...".to_owned(),
+        category: "Projeto".to_owned(),
+        description: "Catalogo auditado: licenca, versao fixada e o que cada uma faz".to_owned(),
+        default_shortcut: Some("Ctrl+Alt+L".to_owned()),
+        requires_workspace: true,
+    }]
+}

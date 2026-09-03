@@ -15,6 +15,7 @@ Item {
     property var gitController: null
     property var settingsController: null
     property var configActionController: null
+    property var libraryController: null
     property var toolchainController: null
     property bool aboutVisible: false
     property bool manualVisible: false
@@ -169,6 +170,20 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.configActionController.closeDialog()
+    }
+
+    LibraryPanelHost {
+        anchors.fill: parent
+        visible: root.libraryController.panelVisible
+        z: 99
+        controller: root.libraryController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.libraryController.close()
+        onApplyStepRequested: function(actionId, params) {
+            root.libraryController.close();
+            root.configActionController.openWith(actionId, params);
+        }
     }
 
     AboutDialog {

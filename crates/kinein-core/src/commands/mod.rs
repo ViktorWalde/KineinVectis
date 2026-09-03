@@ -41,6 +41,7 @@ pub(crate) fn command_descriptors() -> Vec<CommandDescriptor> {
     descriptors.extend(build::cmake_command_descriptors());
     descriptors.extend(build::cargo_command_descriptors());
     descriptors.extend(build::configaction_command_descriptors());
+    descriptors.extend(build::library_command_descriptors());
     descriptors.extend(run::runconfig_command_descriptors());
     descriptors.extend(run::debug_command_descriptors());
     descriptors.extend(git::git_command_descriptors());
