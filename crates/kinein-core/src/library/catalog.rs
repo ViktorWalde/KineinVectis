@@ -42,6 +42,16 @@ pub(super) struct LibraryDefinition {
     pub(super) repository: &'static str,
     /// Documentacao oficial.
     pub(super) documentation: &'static str,
+    /// O sinal FORTE, quando existe: a biblioteca virou padrao ISO, ou passou
+    /// pela revisao formal do Boost. `None` = so' tem adocao e manutencao.
+    ///
+    /// **NAO existe "certificacao oficial" de biblioteca C++.** O WG21
+    /// padroniza a linguagem e a biblioteca padrao; a Standard C++ Foundation
+    /// apoia a comunidade e declara explicitamente que seu objetivo e reduzir
+    /// barreiras para ADOTAR bibliotecas no proprio Standard — nao certificar
+    /// as de terceiros. Este campo registra o sinal que EXISTE de verdade, em
+    /// vez de inventar um selo que ninguem emite.
+    pub(super) standard_lineage: Option<&'static str>,
 }
 
 // NAO ha campo "caminho de integracao suportado" aqui, e a ausencia e
@@ -72,6 +82,10 @@ pub(super) const fn definitions() -> &'static [LibraryDefinition] {
             targets: &["fmt::fmt"],
             repository: "https://github.com/fmtlib/fmt",
             documentation: "https://fmt.dev/latest/index.html",
+            // O README do proprio fmt se descreve como "Implementation of
+            // C++20 std::format and C++23 std::print" — o comite ISO pegou a
+            // biblioteca e a tornou padrao. E' o sinal mais forte que existe.
+            standard_lineage: Some("virou std::format no C++20"),
         },
         LibraryDefinition {
             id: "spdlog",
@@ -85,6 +99,7 @@ pub(super) const fn definitions() -> &'static [LibraryDefinition] {
             targets: &["spdlog::spdlog"],
             repository: "https://github.com/gabime/spdlog",
             documentation: "https://github.com/gabime/spdlog/wiki",
+            standard_lineage: None,
         },
         LibraryDefinition {
             id: "nlohmann_json",
@@ -98,6 +113,7 @@ pub(super) const fn definitions() -> &'static [LibraryDefinition] {
             targets: &["nlohmann_json::nlohmann_json"],
             repository: "https://github.com/nlohmann/json",
             documentation: "https://json.nlohmann.me/",
+            standard_lineage: None,
         },
         LibraryDefinition {
             id: "catch2",
@@ -111,6 +127,7 @@ pub(super) const fn definitions() -> &'static [LibraryDefinition] {
             targets: &["Catch2::Catch2WithMain"],
             repository: "https://github.com/catchorg/Catch2",
             documentation: "https://github.com/catchorg/Catch2/blob/devel/docs/Readme.md",
+            standard_lineage: None,
         },
         LibraryDefinition {
             id: "googletest",
@@ -124,6 +141,7 @@ pub(super) const fn definitions() -> &'static [LibraryDefinition] {
             targets: &["GTest::gtest_main"],
             repository: "https://github.com/google/googletest",
             documentation: "https://google.github.io/googletest/",
+            standard_lineage: None,
         },
         LibraryDefinition {
             id: "cli11",
@@ -137,6 +155,7 @@ pub(super) const fn definitions() -> &'static [LibraryDefinition] {
             targets: &["CLI11::CLI11"],
             repository: "https://github.com/CLIUtils/CLI11",
             documentation: "https://cliutils.github.io/CLI11/book/",
+            standard_lineage: None,
         },
         LibraryDefinition {
             id: "benchmark",
@@ -150,6 +169,7 @@ pub(super) const fn definitions() -> &'static [LibraryDefinition] {
             targets: &["benchmark::benchmark"],
             repository: "https://github.com/google/benchmark",
             documentation: "https://github.com/google/benchmark/blob/main/docs/user_guide.md",
+            standard_lineage: None,
         },
     ]
 }

@@ -48,6 +48,7 @@ pub fn list() -> Vec<LibraryInfo> {
                 documentation: entry.documentation.to_owned(),
                 repository: entry.repository.to_owned(),
                 status,
+                standard_lineage: entry.standard_lineage.map(str::to_owned),
             }
         })
         .collect()
@@ -161,6 +162,16 @@ mod tests {
                 entry.id
             );
             assert!(!entry.targets.is_empty(), "{} sem alvo a linkar", entry.id);
+            // O sinal forte e' OPCIONAL, mas quando existe tem que dizer QUAL
+            // e' — "certificada" sem dizer por quem e' exatamente o selo vazio
+            // que este campo existe para nao ser.
+            if let Some(linhagem) = entry.standard_lineage {
+                assert!(
+                    linhagem.len() > 10,
+                    "{} afirma linhagem sem dizer qual: {linhagem:?}",
+                    entry.id
+                );
+            }
         }
     }
 

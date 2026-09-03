@@ -1,4 +1,8 @@
-//! O catalogo: a TABELA das 16 acoes do MVP, e mais nada.
+//! O catalogo: a TABELA das acoes de configuracao, e mais nada.
+//!
+//! Eram as 16 do MVP; desde 2026-09-03 sao 18 — `cmake.findPackage` e
+//! `cmake.fetchContent` entraram com o dominio `library` (etapa 20 do
+//! `roadmaps/35`), que produz planos nomeando as duas.
 //!
 //! A lista fechada vem da §12 da spec de MVP (10 de `CMake`, 6 de Cargo). Ela e
 //! DADO ESTATICO de proposito: nao ha registro dinamico nem contribuicao de
@@ -35,7 +39,8 @@ pub(super) struct ActionDefinition {
     pub(super) docs: &'static [(&'static str, &'static str, &'static str)],
 }
 
-/// As 16 acoes do MVP, na ordem em que a UI as mostra.
+/// As acoes, na ordem em que a UI as mostra. O tamanho do array e' trava de
+/// compilacao sobre a contagem: acrescentar sem atualizar reprova no build.
 #[must_use]
 pub(super) fn definitions() -> &'static [ActionDefinition] {
     &DEFINITIONS
@@ -54,7 +59,7 @@ const NO_FILE: &[&str] = &[];
 
 const VISIBILITY_PARAM: (&str, &str, bool, &str) = ("visibility", "Visibilidade", false, "PRIVATE");
 
-static DEFINITIONS: [ActionDefinition; 16] = [
+static DEFINITIONS: [ActionDefinition; 18] = [
     ActionDefinition {
         id: "cmake.enableCompileCommands",
         title: "Habilitar compile_commands.json",
@@ -168,6 +173,42 @@ static DEFINITIONS: [ActionDefinition; 16] = [
             "CMake: target_include_directories",
             "cmake.target_include_directories",
         )],
+    },
+    ActionDefinition {
+        id: "cmake.findPackage",
+        title: "Encontrar um pacote instalado",
+        description: "Declara find_package para uma biblioteca ja instalada no sistema.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Intermediate",
+        risk: ConfigActionRisk::Low,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("package", "Pacote", true, "fmt"),
+            ("version", "Versao minima", false, "12.2.0"),
+        ],
+        docs: &[("officialDoc", "CMake: find_package", "cmake.find_package")],
+    },
+    ActionDefinition {
+        id: "cmake.fetchContent",
+        title: "Baixar uma dependencia na versao fixada",
+        description: "Declara FetchContent com a tag PINADA quando o pacote nao esta no sistema.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Intermediate",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("name", "Nome", true, "fmt"),
+            (
+                "repository",
+                "Repositorio",
+                true,
+                "https://github.com/fmtlib/fmt",
+            ),
+            ("tag", "Tag PINADA", true, "12.2.0"),
+        ],
+        docs: &[("officialDoc", "CMake: FetchContent", "cmake.fetchcontent")],
     },
     ActionDefinition {
         id: "cmake.addTargetLinkLibraries",

@@ -27,6 +27,7 @@ set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
 set_source_files_properties(qml/shell/ShellLayout.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayout.qml)
 set_source_files_properties(qml/app/AppDomains.qml PROPERTIES QT_RESOURCE_ALIAS AppDomains.qml)
+set_source_files_properties(qml/app/AppRouters.qml PROPERTIES QT_RESOURCE_ALIAS AppRouters.qml)
 set_source_files_properties(qml/shell/ShellController.qml PROPERTIES QT_RESOURCE_ALIAS ShellController.qml)
 set_source_files_properties(qml/shell/GlobalShortcuts.qml PROPERTIES QT_RESOURCE_ALIAS GlobalShortcuts.qml)
 set_source_files_properties(qml/shell/ShellOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellOverlays.qml)
@@ -44,6 +45,11 @@ set_source_files_properties(qml/shell/VerticalScrollBar.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/shell/RunConfigDialog.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigDialog.qml)
 set_source_files_properties(qml/shell/RunConfigMenu.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigMenu.qml)
 set_source_files_properties(qml/debug/DebugController.qml PROPERTIES QT_RESOURCE_ALIAS DebugController.qml)
+set_source_files_properties(qml/library/LibraryController.qml PROPERTIES QT_RESOURCE_ALIAS LibraryController.qml)
+set_source_files_properties(qml/library/LibraryPanel.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanel.qml)
+set_source_files_properties(qml/library/LibraryPlanView.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPlanView.qml)
+set_source_files_properties(qml/ipc/LibraryRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryRequestRouter.qml)
+set_source_files_properties(qml/ipc/LibraryEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryEventRouter.qml)
 set_source_files_properties(qml/debug/DebugWatches.qml PROPERTIES QT_RESOURCE_ALIAS DebugWatches.qml)
 set_source_files_properties(qml/debug/DebugInspector.qml PROPERTIES QT_RESOURCE_ALIAS DebugInspector.qml)
 set_source_files_properties(qml/diagnostics/DiagnosticsController.qml PROPERTIES QT_RESOURCE_ALIAS DiagnosticsController.qml)
@@ -179,6 +185,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/SideRail.qml
         qml/shell/ShellLayout.qml
         qml/app/AppDomains.qml
+        qml/app/AppRouters.qml
         qml/shell/ShellController.qml
         qml/shell/GlobalShortcuts.qml
         qml/shell/ShellOverlays.qml
@@ -196,6 +203,11 @@ qt_add_qml_module(kinein-vectis
         qml/shell/RunConfigDialog.qml
         qml/shell/RunConfigMenu.qml
         qml/debug/DebugController.qml
+        qml/library/LibraryController.qml
+        qml/library/LibraryPanel.qml
+        qml/library/LibraryPlanView.qml
+        qml/ipc/LibraryRequestRouter.qml
+        qml/ipc/LibraryEventRouter.qml
         qml/debug/DebugWatches.qml
         qml/debug/DebugInspector.qml
         qml/diagnostics/DiagnosticsController.qml
@@ -324,6 +336,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_requests_debug.cpp
         src/core_client_configaction.cpp
         src/core_client_toolchain.cpp
+        src/core_client_library.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp

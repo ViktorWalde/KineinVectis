@@ -196,6 +196,58 @@ pub(super) fn add_target_link_libraries(
     ))
 }
 
+/// `find_package(<pkg> [<versao>] CONFIG REQUIRED)`.
+///
+/// `CONFIG` e' explicito de proposito: sem ele o `CMake` tambem aceita um
+/// find module do proprio `CMake`, e a mensagem de erro quando nada e' achado
+/// fica ambigua entre "nao instalado" e "nao ha find module".
+pub(super) fn find_package(
+    root: &std::path::Path,
+    params: &BTreeMap<String, String>,
+) -> Result<ActionPlan, ConfigActionError> {
+    let before = read_required(root, CMAKELISTS)?;
+    let package = one_argument(required_param(params, "package")?, "package")?;
+    let version = params
+        .get("version")
+        .map(String::as_str)
+        .filter(|v| !v.trim().is_empty());
+    let argumentos = match version {
+        Some(version) => {
+            let version = one_argument(version, "version")?;
+            format!("{package} {version} CONFIG REQUIRED")
+        }
+        None => format!("{package} CONFIG REQUIRED"),
+    };
+    Ok(edit_plan(
+        format!("Procura o pacote {package} instalado no sistema"),
+        before,
+        &format!("find_package({argumentos})\n"),
+    ))
+}
+
+/// `FetchContent_Declare` mais `FetchContent_MakeAvailable`, com tag PINADA.
+///
+/// A tag e' obrigatoria e nunca e' um nome de branch por acidente: `main` muda
+/// sob os pes do usuario e transforma um build que passava em um build que
+/// falha sem ninguem ter mexido no codigo.
+pub(super) fn fetch_content(
+    root: &std::path::Path,
+    params: &BTreeMap<String, String>,
+) -> Result<ActionPlan, ConfigActionError> {
+    let before = read_required(root, CMAKELISTS)?;
+    let name = one_argument(required_param(params, "name")?, "name")?;
+    let repository = one_argument(required_param(params, "repository")?, "repository")?;
+    let tag = one_argument(required_param(params, "tag")?, "tag")?;
+    let bloco = format!(
+        "include(FetchContent)\nFetchContent_Declare(\n    {name}\n             GIT_REPOSITORY {repository}\n    GIT_TAG {tag}\n)\n         FetchContent_MakeAvailable({name})\n"
+    );
+    Ok(edit_plan(
+        format!("Baixa {name} na tag {tag} e disponibiliza ao projeto"),
+        before,
+        &bloco,
+    ))
+}
+
 fn edit_plan(summary: String, before: String, block: &str) -> ActionPlan {
     let after = append_block(&before, block);
     ActionPlan::edit(
@@ -347,6 +399,19 @@ fn validate_sources(raw: &str) -> Result<Vec<String>, ConfigActionError> {
 }
 
 /// Quebra a lista por espaco/virgula e recusa o que quebraria a sintaxe.
+/// Um argumento so', com a MESMA validacao de caractere dos varios: um pacote
+/// nao pode carregar `$` ou `)` por acidente e virar comando de `CMake`.
+fn one_argument(raw: &str, name: &'static str) -> Result<String, ConfigActionError> {
+    let mut valores = validate_arguments(raw, name)?;
+    if valores.len() != 1 {
+        return Err(ConfigActionError::InvalidParam {
+            name,
+            reason: format!("esperado um valor so', veio {}", valores.len()),
+        });
+    }
+    Ok(valores.remove(0))
+}
+
 fn validate_arguments(raw: &str, name: &'static str) -> Result<Vec<String>, ConfigActionError> {
     let values: Vec<String> = raw
         .split([',', ' ', '\t', '\n'])

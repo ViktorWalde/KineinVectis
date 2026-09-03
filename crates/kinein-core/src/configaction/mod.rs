@@ -212,6 +212,8 @@ fn build_plan(
         "cmake.addStaticLibrary" => cmakelists::add_static_library(root, params),
         "cmake.addSourceToTarget" => cmakelists::add_source_to_target(root, params),
         "cmake.addIncludeDirectory" => cmakelists::add_include_directory(root, params),
+        "cmake.findPackage" => cmakelists::find_package(root, params),
+        "cmake.fetchContent" => cmakelists::fetch_content(root, params),
         "cmake.addTargetLinkLibraries" => cmakelists::add_target_link_libraries(root, params),
         "cmake.inspectCache" => builddir::inspect_cache(root),
         "cmake.repairBuildDir" => builddir::repair_plan(root),

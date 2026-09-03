@@ -141,6 +141,8 @@ public:
     Q_INVOKABLE void cmakeStatus();
     // `preset` vazio = o kit padrao do workspace (etapa 14: a escolha passou a
     // ser por KIT, nao por workspace).
+    Q_INVOKABLE void libraryList();
+    Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
     Q_INVOKABLE void toolchainGet(const QString& preset);
     Q_INVOKABLE void toolchainSet(const QString& role, const QString& id, const QString& preset);
     Q_INVOKABLE void toolchainSetKit(const QString& preset, const QString& sysroot,
@@ -236,6 +238,8 @@ signals:
                              const QString& cdbStaleBecause);
     void cmakeConfigureFinished(bool success);
     void cargoMetadataResolved(int packages);
+    void libraryListResolved(const QVariantList& libraries);
+    void libraryPlanResolved(const QVariantMap& plan);
     void toolchainResolved(const QVariantList& selections, const QVariantList& candidates,
                            const QString& preset, const QString& sysroot,
                            const QString& targetTriple, const QString& presetToolchainFile);
@@ -352,6 +356,7 @@ private:
     bool dispatchCmakeResult(const QString& method, const QJsonObject& result);
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
+    bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);
     void handleWorkspaceOpened(const QJsonObject& result);

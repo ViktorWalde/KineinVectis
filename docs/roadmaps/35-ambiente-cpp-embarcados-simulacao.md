@@ -198,7 +198,26 @@ auditoria.
 `"latest"` no lugar do pino, sem data de release ou sem a frase explicativa
 reprova em `every_catalog_entry_carries_its_audit`, não no uso.
 
-### 4.3 O que NÃO é esta frente
+### 4.3 O corte que a etapa 20 cobrou
+
+`AppDomains.qml` cruzou 400 ao ganhar o domínio `library`. Ele é composition
+root, e a `ARCHITECTURE.md` §4 regra 8 nomeia o caso: dividir a composição **por
+área**, deixando a contagem de arquivos crescer — nunca subir o limite.
+
+A costura já estava visível no arquivo: as primeiras 300 linhas **instanciam** os
+donos; as últimas 110 **ligam** os donos ao IPC. Instanciar e ligar são coisas
+diferentes.
+
+```text
+AppDomains.qml  416 -> 308   quem instancia os donos
+AppRouters.qml  novo,  138   quem liga os donos ao IPC
+```
+
+**O `AppRouters` recebe o DONO, não 18 cópias.** A alternativa era declarar uma
+property por controller e repassar cada uma — dezoito propriedades de passagem,
+que é exatamente o que fez do `EditorController` uma fachada de 791 linhas.
+
+### 4.4 O que NÃO é esta frente
 
 Não é gerenciador de pacotes, não é resolver dependência transitiva, e não é
 substituir vcpkg/Conan para quem já os usa (§2.2). É **reduzir o custo de
@@ -246,8 +265,14 @@ muda por decisão registrada e o AppImage passa a exigir GPU.
                                            que delega a escrita. 8 testes.
                                            O criterio do grep volta ZERO.
 
-20  UI do catalogo: escolher, entender     §4. O "explicando o que cada uma
-    e aplicar                              faz" mora aqui.
+20  UI do catalogo: escolher, entender     FEITA em 2026-09-03. LibraryPanel +
+    e aplicar                              LibraryPlanView + controller e os
+                                           dois roteadores. As duas acoes que
+                                           o plano nomeava (findPackage e
+                                           fetchContent) nasceram no
+                                           configaction: 16 -> 18 acoes.
+                                           AppDomains cruzou 400 e virou
+                                           AppDomains + AppRouters (§4.3).
 
 21  Levantamento de embarcados             §5. Documento, nao codigo. Sem ele
     (licenca, manutencao, alvos)           a frente F nao abre.

@@ -112,7 +112,9 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       workspace. NAO escreve arquivo de build: devolve plano,
                       e quem escreve e' o configaction
 
-            configaction  as 16 Configuration Actions da spec de MVP §12, com
+            configaction  as 18 Configuration Actions (16 da spec de MVP §12
+                      mais findPackage e fetchContent, que o dominio library
+                      nomeia), com
                       preview e consentimento (0.63.0). Pasta desde que nasceu:
                       catalogo (a tabela), disponibilidade (mede o workspace),
                       plano (o que sera escrito) e um planejador por arquivo

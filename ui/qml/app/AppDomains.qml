@@ -32,6 +32,7 @@ Item {
     readonly property alias settingsController: settingsController
     readonly property alias configActionController: configActionController
     readonly property alias toolchainController: toolchainController
+    readonly property alias libraryController: libraryController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
     readonly property alias debugController: debugController
@@ -127,6 +128,14 @@ Item {
     // projeto. Sem escolha, tudo e automatico e o PATH continua decidindo.
     ToolchainController {
         id: toolchainController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+    }
+
+    // Bibliotecas C/C++ (roadmaps/35, etapa 19/20): o catalogo curado. Nao
+    // escreve arquivo — produz plano, e quem escreve e o configaction.
+    LibraryController {
+        id: libraryController
 
         workspaceRoot: root.coreClient.workspaceRoot
     }
@@ -293,105 +302,7 @@ Item {
         onFocusEditorRequested: editorController.focusEditor()
     }
 
-    WorkspaceEventRouter {
-        coreClient: root.coreClient
-        folderPicker: root.folderPicker
-        projectTree: projectTree
-        searchEverywhereController: searchEverywhereController
-        workspaceController: workspaceController
-        projectHealthController: projectHealthController
-        recentWorkspacesController: recentWorkspacesController
-    }
-
-    EditorEventRouter {
-        coreClient: root.coreClient
-        editorController: editorController
-    }
-
-    EditorRequestRouter {
-        coreClient: root.coreClient
-        editorController: editorController
-    }
-
-    JobsEventRouter {
-        coreClient: root.coreClient
-        jobsController: jobsController
-        diagnosticsController: diagnosticsController
-    }
-
-    SettingsEventRouter {
-        coreClient: root.coreClient
-        settingsController: settingsController
-    }
-
-    SearchEventRouter {
-        coreClient: root.coreClient
-        searchController: searchController
-        searchEverywhereController: searchEverywhereController
-    }
-
-    SearchRequestRouter {
-        coreClient: root.coreClient
-        searchController: searchController
-        searchEverywhereController: searchEverywhereController
-        editorController: editorController
-    }
-
-    ProjectTreeRequestRouter {
-        coreClient: root.coreClient
-        projectTree: projectTree
-    }
-
-    RuntimeEventRouter {
-        coreClient: root.coreClient
-        runtimeController: runtimeController
-        runConfigController: runConfigController
-    }
-
-    RuntimeRequestRouter {
-        coreClient: root.coreClient
-        runtimeController: runtimeController
-        runConfigController: runConfigController
-    }
-
-    DebugEventRouter {
-        coreClient: root.coreClient
-        debugController: debugController
-    }
-
-    DebugRequestRouter {
-        coreClient: root.coreClient
-        debugController: debugController
-    }
-
-    ToolchainEventRouter {
-        coreClient: root.coreClient
-        toolchainController: toolchainController
-    }
-
-    ToolchainRequestRouter {
-        coreClient: root.coreClient
-        toolchainController: toolchainController
-    }
-
-    ConfigActionEventRouter {
-        coreClient: root.coreClient
-        configActionController: configActionController
-    }
-
-    ConfigActionRequestRouter {
-        coreClient: root.coreClient
-        configActionController: configActionController
-    }
-
-    GitEventRouter {
-        coreClient: root.coreClient
-        gitController: gitController
-    }
-
-    GitRequestRouter {
-        coreClient: root.coreClient
-        gitController: gitController
-        editorController: editorController
+    AppRouters {
+        domains: root
     }
 }

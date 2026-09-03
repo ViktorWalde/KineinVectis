@@ -37,6 +37,16 @@ pub struct LibraryInfo {
     pub repository: String,
     /// Whether this machine already has it.
     pub status: LibraryStatus,
+    /// The STRONG signal, when there is one: the library became part of the ISO
+    /// standard, or passed Boost's formal review.
+    ///
+    /// **There is no official certification body for C++ libraries.** WG21
+    /// standardises the language and the standard library; the Standard C++
+    /// Foundation supports the community and states its goal as reducing the
+    /// barriers to *adopting* libraries into the Standard itself — not
+    /// certifying third-party ones. This field records the signal that really
+    /// exists instead of inventing a seal nobody issues.
+    pub standard_lineage: Option<String>,
 }
 
 /// One step of a plan, naming the Configuration Action that would run it.
