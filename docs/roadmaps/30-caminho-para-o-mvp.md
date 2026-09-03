@@ -440,8 +440,13 @@ distribui. As demais são o que transforma MVP em ferramenta de uso diário — 
 
 ## 3.1 O que vem depois desta lista
 
-Nada aqui, e é de propósito: esta lista termina no MVP mais o que o transforma
-em ferramenta de uso diário. O horizonte seguinte — **simulação física/matemática
+**Esta lista fechou em 2026-09-02** (9 etapas feitas, a 6 paga em parte com uma
+decisão em aberto). O sucessor é
+[34-depois-do-mvp.md](34-depois-do-mvp.md): as quatro frentes do pós-MVP —
+dívida que cobra pedágio, atrito diário medido, profundidade (TR2) e a
+simulação — cada uma com o comando que mede se ainda está pendente.
+
+O horizonte mais distante — **simulação física/matemática
 montada por layout, calculada pela IDE e exibida em OpenGL**, pedida pelo autor em
 2026-09-01 — está registrado em
 [31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md) como

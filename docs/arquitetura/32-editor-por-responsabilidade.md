@@ -212,6 +212,11 @@ evidência"*. Corrigido o prazo para 1.900 ms, a mutação cai.
 
 ## 8. A decisão que ficou em ABERTO
 
+> **Esta decisão virou a etapa 11 de
+> [`roadmaps/34-depois-do-mvp.md`](../roadmaps/34-depois-do-mvp.md) §3.2** — a
+> primeira da fila do pós-MVP, porque é pergunta ao autor e bloqueia qualquer
+> fatia que toque o editor.
+
 `EditorController.qml` continua na catraca, em **791/400**. Isto não é omissão —
 é uma decisão que não é da sessão, e a §4 regra 8 é clara: *"subir um limite é
 decisão explícita, registrada e justificada, nunca silenciosa"*.

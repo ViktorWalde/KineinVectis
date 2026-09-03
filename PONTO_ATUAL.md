@@ -1194,7 +1194,31 @@ O BUILD ERRADO   COMPILADO: o `.rsp` nasce na configuracao, o `.qmltypes` so
 **Nao repetir:** instalar rustup com `--no-modify-path` sem acrescentar a linha
 ao perfil. Foi o que criou o primeiro defeito.
 
-### 0.2m Busca/substituicao MULTI-LINHA (fatia propria, pedida em 2026-08-29)
+### 0.2m Busca/substituicao MULTI-LINHA — ✅ FEITA em 2026-09-02 (0.65.0)
+
+**Entregue como etapa 9 do `roadmaps/30`.** A documentacao completa do dominio
+esta em `docs/arquitetura/33-busca-no-projeto.md`; o que segue e' o registro do
+plano de 2026-08-29, mantido porque duas previsoes dele NAO se confirmaram:
+
+```text
+CONFIRMADO   comecar pela BUSCA, nao pela guarda. Tirar a recusa antes teria
+             devolvido o defeito que ela cobria.
+CONFIRMADO   o walk unico e o teste de PARIDADE continuaram valendo sem
+             mudanca.
+NAO SE       `endLine` + `endColumn` no protocolo. Ao construir, o fim
+CONFIRMOU    mostrou-se derivavel e SEM CONSUMIDOR: navega-se pelo inicio e
+             ve-se a extensao no preview. Campo que ninguem le' e' contrato
+             que nunca mais sai.
+NAO SE       `lang/positions.rs`. O avanco incremental dentro do proprio laco
+CONFIRMOU    e' O(n) e nao cria dependencia de `fsops` para o dominio de
+             linguagem.
+RESPONDIDO   "como mostrar um casamento de 3 linhas numa linha da lista?" ->
+             o casamento INTEIRO com a marca " ⏎ " no lugar das quebras. Nao
+             a primeira linha + reticencias do Code OSS: aqui o preview
+             AUTORIZA uma escrita destrutiva.
+```
+
+O registro original do plano, de 2026-08-29:
 
 O autor respondeu que **vai precisar** buscar/substituir trecho que atravessa
 mais de uma linha. Hoje `fs.replace` RECUSA `\n` (INVALID_PARAMS) porque a busca
@@ -1218,6 +1242,10 @@ UI          lista de resultados e navegacao ate o resultado assumem uma linha.
 Quando entrar, a recusa do `\n` sai junto — e o teste
 `fs_replace_refuses_a_multiline_query_the_search_cannot_preview` vira o teste do
 comportamento novo, nao lixo a remover.
+
+**Foi exatamente o que aconteceu:** aquele teste virou
+`multiline_search_previews_exactly_what_replace_will_rewrite`, e ganhou um irmao
+que fecha o ciclo — `a_multiline_replacement_is_found_by_the_next_search`.
 
 ### 0.2n terminal.rs: rede antes do corte (2026-08-29)
 

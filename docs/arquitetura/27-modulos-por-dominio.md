@@ -74,6 +74,14 @@ atribui por escrito**:
 foi verificado. É o mesmo diagnóstico da §0.2g — regra boa apodrecendo calada —
 só que aqui ninguém tinha olhado ainda.
 
+> **Este parágrafo e a lista acima são registro de 2026-07-16 e NÃO valem mais.**
+> A catraca varre `crates/` desde aquele mesmo dia (é o item ENTREGUE do
+> cabeçalho), e **4 dos 7 arquivos foram cortados** desde então: `terminal.rs`
+> (955 → pasta), `lsp/manager.rs` (732 → `lsp/session.rs`), `commands.rs`
+> (696 → pasta `commands/`) e `lib.rs` (505). Sobram `dap/session.rs`,
+> `handlers/lsp.rs` e `lsp/parse.rs`. **Fonte viva:**
+> `cat scripts/arquitetura-baseline.txt` — nunca esta lista.
+
 **UI — o composition root não fecha por router.** O split em andando
 (`<X>RequestRouter`) levou `Main.qml` de 700 a 610. O que resta é
 `GitController` (58), `ShellWorkspaceHost` (50), `SearchController` (45),

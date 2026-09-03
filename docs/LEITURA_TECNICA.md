@@ -222,7 +222,15 @@ existem e 1 é item morto (a linha de IA, cancelada). As Configuration Actions �
 o único que faltava — entraram na etapa 2. O resto da lista é dívida de
 honestidade e de hardening, não funcionalidade.
 
-O que vem depois do MVP, e **ainda não está arquitetado**, está em
+**Essa lista fechou em 2026-09-02** — 9 etapas feitas, a 6 paga em parte com uma
+decisão em aberto. O sucessor é
+[roadmaps/34-depois-do-mvp.md](roadmaps/34-depois-do-mvp.md): as quatro frentes
+do pós-MVP — dívida que cobra pedágio, atrito diário medido, profundidade (TR2)
+e a simulação —, cada item com o comando que mede se ainda está pendente. A
+recomendação de ordem começa por **uma pergunta ao autor**, não por código: o
+`EditorController.qml` em 791/400 (§3.2).
+
+O horizonte mais distante, e **ainda não arquitetado**, está em
 [roadmaps/31-simulacao-fisica-matematica.md](roadmaps/31-simulacao-fisica-matematica.md):
 montar simulações física/matemática por layout e desenhá-las em OpenGL. É
 estudo, não plano de execução.

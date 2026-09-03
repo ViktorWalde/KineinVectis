@@ -37,7 +37,6 @@ Item {
             }
             root.coreClient.replaceInFiles(query, replacement, caseSensitive);
         }
-
     }
 
     // Segundo dono: a caixa modal. Bloco proprio pelo mesmo motivo do

@@ -314,6 +314,14 @@ raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
 | `docs/roadmaps/24-paridade-e-fundacao.md` | fases D1–D4: completion, terminal, Tree-sitter e remake |
 | `docs/roadmaps/25-syntax-tree-semantic-foundation.md` | contrato da camada sintática, versões e workspace edits |
 | `docs/roadmaps/26-terminal-rendering-parity-roadmap.md` | cursor/TUI aberto, referência Code OSS e etapas R0–R7 da paridade nativa |
+| `docs/arquitetura/27-modulos-por-dominio.md` | módulo por domínio: a catraca do core saiu daqui; a Frente 1 (`<X>Domain` na UI) segue aberta |
+| `docs/roadmaps/28-plataforma-de-plugins-e-verticais.md` | plataforma `integration` v1; Docker e banco como domínios NATIVOS, não plugins |
+| `docs/roadmaps/29-verticais-de-linguagem.md` | C/C++, Rust e Python medidos por linguagem; onde está o risco proprietário (Pylance) |
+| `docs/roadmaps/30-caminho-para-o-mvp.md` | as 10 etapas do MVP em ordem linear. **Fechado em 2026-09-02** |
+| `docs/roadmaps/31-simulacao-fisica-matematica.md` | ESTUDO da simulação por layout + OpenGL. Não é fila |
+| `docs/arquitetura/32-editor-por-responsabilidade.md` | o editor cortado em quatro donos; a decisão do `EditorController` que ficou EM ABERTO |
+| `docs/arquitetura/33-busca-no-projeto.md` | os três buscadores, o casamento multi-linha e por que a sintaxe `\n` mora na UI |
+| `docs/roadmaps/34-depois-do-mvp.md` | sucessor do 30: as quatro frentes do pós-MVP, medidas, com a ordem linear recomendada |
 | `docs/roadmaps/BACKEND_TO_UI_UX_ROADMAP.md` | ponte entre capacidade de backend e experiência visual |
 | `docs/build/COMANDOS_BUILD_VERIFICACAO.md` | comandos oficiais do gate |
 | `docs/adr/*` | por que uma decisão externa/estrutural foi adotada |
@@ -427,6 +435,40 @@ crates/kinein-core/src/handlers/{fs,draft,format}.rs
   (precedência nome exato → padrão → caminho → extensão composta → extensão →
   genérico). Ao ligar no delegate, honrar a regra de segurança do `.env` (não
   vazar valores/segredos) e não dar o ícone Docker a YAML genérico.
+
+### 5.2b Busca: os TRÊS buscadores (não confundir)
+
+```text
+NO ARQUIVO      ui/qml/editor/EditorFindController.qml     Ctrl+F
+                UI pura, ZERO RPC — o buffer ja' esta na memoria.
+
+NO PROJETO      ui/qml/search/SearchController.qml         Ctrl+Shift+F
+                painel de baixo, PERSISTENTE. A unica das tres que ESCREVE.
+                ↕ crates/kinein-protocol/src/fs.rs
+                crates/kinein-core/src/handlers/fs.rs -> fsops/{search,replace}.rs
+
+SEARCH          ui/qml/search/SearchEverywhereController.qml  Ctrl+Shift+A
+EVERYWHERE      caixa MODAL, efemera, sem escrita. Arquivo, simbolo (`@`
+                documento, `#` workspace) e comando. Ctrl+E abre em recentes.
+                → fs.findFiles, lsp.documentSymbols/workspaceSymbols, command.list
+
+ui/qml/ipc/SearchEventRouter.qml + SearchRequestRouter.qml
+    dois blocos `Connections`, um por dono — escutar no objeto errado nao
+    quebra build, o handler so' nunca dispara (ARCHITECTURE.md §8).
+```
+
+- **Documento do domínio:** `docs/arquitetura/33-busca-no-projeto.md`.
+- Regra prática: se a pergunta tem "substituir", é a do meio; se tem "abrir
+  rápido", é a de baixo; se não sai da tela do editor, é a de cima.
+- A busca do projeto casa no **conteúdo**, não linha a linha (desde 2026-09-02,
+  protocolo `0.65.0`): `query` com `\n` acha, e o `preview` mostra o casamento
+  inteiro com ` ⏎ ` no lugar das quebras.
+- A sintaxe `\n` do campo é **tradução da UI** (`expandLineBreaks`), nunca do
+  core: `query` é texto literal, e um core que interpretasse escapes tornaria
+  impossível procurar por um `\n` de verdade no código.
+- Invariante travada: **o número de resultados da busca é o número de
+  substituições do replace**. Testes em `crates/kinein-core/src/tests/fs.rs` e
+  `scripts/qml-harness/tst_search_multiline.qml`.
 
 ### 5.3 Editor, Tree-sitter, LSP e diagnósticos
 
