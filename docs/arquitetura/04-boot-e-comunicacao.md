@@ -31,13 +31,13 @@
    clangd · rust-analyzer · cmake · cargo · git · lldb-dap · $SHELL (PTY)
 ```
 
-**O adaptador de debug é HOJE uma constante**, não uma escolha:
-`ADAPTER_BINARY = "lldb-dap"` em `crates/kinein-core/src/dap/session.rs`. Isso
-basta para C/C++/Rust no desktop e **não basta para embarcado**, que debuga com
-`probe-rs dap-server`, OpenOCD ou pyOCD. Torná-lo escolha do kit é o obstáculo
-medido em [`roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md)
-§5.3, e o corte da etapa 15 deixou o encaixe limpo — o spawn está isolado em
-`session.rs`.
+**O adaptador de debug é escolha do KIT desde 2026-09-03** (protocolo
+`0.69.0`), e era uma constante até então. `lldb-dap` continua sendo o padrão —
+sem escolha, o comportamento é byte a byte o de antes —, e `probe-rs` entra com
+o subcomando `dap-server`, que faz ele falar DAP **por stdin/stdout**: a mesma
+forma que este diagrama já descreve. Ver
+[`roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §5.3 e
+[`integracoes/36`](../integracoes/36-ferramentas-de-embarcados.md) §3.
 
 **A UI é o pai e o core é o filho, não o contrário.** Isso decide três coisas
 que aparecem o tempo todo:

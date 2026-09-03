@@ -142,14 +142,30 @@ impl DebugManager {
     }
 
     /// Launches a debug session for `program`, replaying stored breakpoints.
-    pub fn start(&mut self, root: &Path, program: &Path) -> Result<(), DebugError> {
+    ///
+    /// `adapter_id`/`adapter_path` vem do KIT (papel `debugAdapter`). Sem
+    /// escolha, cai no `lldb-dap` e o comportamento e o de sempre — foi assim
+    /// que o desktop continuou funcionando quando o embarcado entrou.
+    pub fn start(
+        &mut self,
+        root: &Path,
+        program: &Path,
+        adapter_id: Option<&str>,
+        adapter_path: Option<&Path>,
+    ) -> Result<(), DebugError> {
         if self.is_running() {
             return Err(DebugError::AlreadyRunning);
         }
         // Sessao morta (terminated/EOF) ainda ocupa o slot: descarta antes.
         self.session = None;
-        let session =
-            session::DapSession::launch(root, program, &self.breakpoints, self.events.clone())?;
+        let adapter = session::Adapter::from_choice(adapter_id, adapter_path);
+        let session = session::DapSession::launch(
+            root,
+            program,
+            &self.breakpoints,
+            self.events.clone(),
+            &adapter,
+        )?;
         self.session = Some(session);
         Ok(())
     }

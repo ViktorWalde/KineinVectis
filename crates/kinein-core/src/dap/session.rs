@@ -37,8 +37,32 @@ use super::reader::{note_continued, send_event, spawn_reader};
 use super::wire::Wire;
 use crate::lsp::EventSender;
 
-/// Binario do debug adapter (pacote `lldb` no Arch).
-pub(super) const ADAPTER_BINARY: &str = "lldb-dap";
+/// Adaptador usado quando o kit nao escolheu nenhum.
+///
+/// Era uma CONSTANTE ate 2026-09-03 (etapa 22 do `roadmaps/35`), e por isso nao
+/// havia debug de embarcado nenhum: embarcado nao debuga com `lldb-dap`. Virou
+/// padrao, nao imposicao — sem escolha, o comportamento e byte a byte o de
+/// antes.
+pub(super) const DEFAULT_ADAPTER: &str = "lldb-dap";
+
+/// Como cada adaptador conhecido e' invocado.
+///
+/// **Por que este mapa mora aqui e nao no catalogo da toolchain.** O catalogo
+/// responde *"quais binarios interessam a cada papel"*; ele nao sabe — nem deve
+/// saber — que o `probe-rs` precisa do subcomando `dap-server` para falar DAP.
+/// Quem sobe o processo e' este modulo, e o argumento e' parte de subir.
+///
+/// Adaptador desconhecido nao e' erro: ele e' executado sem argumento, que e' a
+/// forma da maioria dos adaptadores DAP. Recusar o que nao esta na lista
+/// impediria o usuario de apontar um adaptador que nos nao conhecemos.
+fn adapter_arguments(id: &str) -> &'static [&'static str] {
+    match id {
+        // `probe-rs dap-server` sem `--port` fala DAP por stdin/stdout — a
+        // MESMA forma que este modulo ja usa (`integracoes/36` §3).
+        "probe-rs" => &["dap-server"],
+        _ => &[],
+    }
+}
 
 /// Tempo maximo aguardando respostas comuns do adapter.
 pub(super) const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
@@ -64,6 +88,30 @@ pub(super) struct DapSession {
     stopped_thread: Arc<Mutex<Option<i64>>>,
 }
 
+/// O adaptador escolhido: o que executar e com que argumentos.
+#[derive(Debug, Clone)]
+pub(super) struct Adapter {
+    /// Executavel — caminho resolvido pelo kit, ou o nome nu para o `PATH`.
+    pub(super) program: std::path::PathBuf,
+    /// Argumentos que fazem esse executavel falar DAP.
+    pub(super) arguments: &'static [&'static str],
+}
+
+impl Adapter {
+    /// Monta o adaptador a partir do id escolhido no kit.
+    ///
+    /// `id` `None` = o padrao. `resolved` e' o caminho que o kit fixou; sem
+    /// ele, usa-se o nome nu e o `PATH` decide — o mesmo contrato de
+    /// `Toolchain::program_for`.
+    pub(super) fn from_choice(id: Option<&str>, resolved: Option<&Path>) -> Self {
+        let id = id.unwrap_or(DEFAULT_ADAPTER);
+        Self {
+            program: resolved.map_or_else(|| std::path::PathBuf::from(id), Path::to_path_buf),
+            arguments: adapter_arguments(id),
+        }
+    }
+}
+
 impl Drop for DapSession {
     fn drop(&mut self) {
         drop(self.child.kill());
@@ -80,8 +128,10 @@ impl DapSession {
         program: &Path,
         breakpoints: &BTreeMap<String, Vec<SourceBreakpointParams>>,
         events: EventSender,
+        adapter: &Adapter,
     ) -> Result<Self, DebugError> {
-        let mut child = Command::new(ADAPTER_BINARY)
+        let mut child = Command::new(&adapter.program)
+            .args(adapter.arguments)
             .current_dir(root)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -92,14 +142,17 @@ impl DapSession {
                     DebugError::MissingAdapter
                 } else {
                     DebugError::Adapter {
-                        message: format!("falha ao iniciar {ADAPTER_BINARY}: {error}"),
+                        message: format!("falha ao iniciar {}: {error}", adapter.program.display()),
                     }
                 }
             })?;
         let (Some(stdin), Some(stdout)) = (child.stdin.take(), child.stdout.take()) else {
             drop(child.kill());
             return Err(DebugError::Adapter {
-                message: format!("{ADAPTER_BINARY} subiu sem stdin/stdout utilizaveis"),
+                message: format!(
+                    "{} subiu sem stdin/stdout utilizaveis",
+                    adapter.program.display()
+                ),
             });
         };
 
@@ -328,5 +381,57 @@ impl DapSession {
         self.wire
             .wait_response("launch", launch_seq, &launch_receiver, LAUNCH_TIMEOUT)?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// Sem escolha no kit, o adaptador e o de sempre e SEM argumento — e' o
+    /// que garante que o desktop nao mudou quando o embarcado entrou.
+    #[test]
+    fn no_choice_keeps_the_previous_behaviour() {
+        let padrao = super::Adapter::from_choice(None, None);
+        assert_eq!(padrao.program, std::path::PathBuf::from("lldb-dap"));
+        assert!(
+            padrao.arguments.is_empty(),
+            "o padrao ganhou argumento: {:?}",
+            padrao.arguments
+        );
+    }
+
+    /// `probe-rs` so' fala DAP com o subcomando `dap-server`. Sem ele o
+    /// processo sobe e nao responde ao `initialize` — falha que so' apareceria
+    /// como timeout, longe da causa.
+    #[test]
+    fn probe_rs_gets_the_subcommand_that_makes_it_speak_dap() {
+        let escolhido = super::Adapter::from_choice(Some("probe-rs"), None);
+        assert_eq!(escolhido.program, std::path::PathBuf::from("probe-rs"));
+        assert_eq!(escolhido.arguments, &["dap-server"]);
+    }
+
+    /// O caminho fixado pelo kit vence o nome nu; os argumentos continuam
+    /// vindo do ID, nao do caminho — um `probe-rs` em /opt ainda precisa do
+    /// subcomando.
+    #[test]
+    fn a_pinned_path_keeps_the_arguments_of_its_id() {
+        let fixado = super::Adapter::from_choice(
+            Some("probe-rs"),
+            Some(std::path::Path::new("/opt/embarcado/probe-rs")),
+        );
+        assert_eq!(
+            fixado.program,
+            std::path::PathBuf::from("/opt/embarcado/probe-rs")
+        );
+        assert_eq!(fixado.arguments, &["dap-server"]);
+    }
+
+    /// Adaptador que nao conhecemos NAO e' recusado: roda sem argumento, que e'
+    /// a forma da maioria dos adaptadores DAP. Recusar impediria o usuario de
+    /// apontar um que nos nao listamos.
+    #[test]
+    fn an_unknown_adapter_runs_bare_instead_of_being_refused() {
+        let outro = super::Adapter::from_choice(Some("meu-dap"), None);
+        assert_eq!(outro.program, std::path::PathBuf::from("meu-dap"));
+        assert!(outro.arguments.is_empty());
     }
 }

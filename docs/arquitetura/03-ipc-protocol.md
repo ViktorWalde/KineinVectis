@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.68.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
+> (JSON-RPC 0.69.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
 > `draft.*`, `format.*`, `cmake.*`, `cargo.*`, `configAction.*`, `runConfig.*`,
 > `settings.*`, `debug.*`, `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
@@ -1180,6 +1180,27 @@ mexeu na toolchain.
 **Em `toolchain.setKit`, campo ausente NÃO é campo vazio.** Ausente preserva o
 valor atual; string vazia (ou só de espaços) limpa. Sem essa distinção, mexer no
 `sysroot` apagaria o `targetTriple` e o usuário só descobriria no próximo build.
+
+**O papel `debugAdapter` entrou no protocolo `0.69.0`** (etapa 22 do
+`roadmaps/35`). Antes, o adaptador DAP era uma **constante** no core
+(`ADAPTER_BINARY = "lldb-dap"`), e por isso não havia debug de embarcado
+nenhum: embarcado não debuga com `lldb-dap`.
+
+```text
+lldb-dap    desktop; sem argumento          (o PADRAO — nada muda sem escolha)
+probe-rs    embarcado; `probe-rs dap-server` fala DAP por stdin/stdout
+```
+
+**O catálogo da toolchain NÃO sabe os argumentos, e a fronteira é deliberada.**
+O cabeçalho dele diz que responde *"quais binários interessam a cada papel"* —
+não *"com quais argumentos"*. Que o `probe-rs` precisa do subcomando
+`dap-server` é conhecimento de quem **sobe o processo**, e isso mora no domínio
+`dap/`.
+
+**Adaptador desconhecido não é recusado:** roda sem argumento, que é a forma da
+maioria dos adaptadores DAP. Recusar o que não está na lista impediria o usuário
+de apontar um adaptador que a IDE não conhece — e a lista é curta por ser nova,
+não por ser completa.
 
 O que o kit vira, no build:
 

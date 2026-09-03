@@ -383,7 +383,7 @@ domínio tem fio.
 
 ```text
 21  levantamento (licenca, manutencao, alvos, protocolo)   FEITO (2026-09-03)
-22  adaptador DAP vira escolha do kit                      §5.3 item 1
+22  adaptador DAP vira escolha do kit                      FEITO (2026-09-03)
 23  papeis novos: cross-compilador, sonda, gdbserver       §5.3 item 2
 24  deteccao da sonda + kit sugerido                       o "plug"
 25  ciclo build -> flash -> debug, com QEMU no gate        o "play"
@@ -493,8 +493,12 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            exigiriam ponte. Recomendacao:
                                            comecar por probe-rs.
 
-22  Adaptador DAP vira escolha do kit      §5.3 item 1. Hoje e' CONSTANTE, e
-                                           sem isso nao ha debug de embarcado.
+22  Adaptador DAP vira escolha do kit      FEITA em 2026-09-03 (0.69.0). O
+                                           papel `debugAdapter` entrou no
+                                           toolchain; lldb-dap segue padrao e
+                                           probe-rs ganha `dap-server`. O
+                                           catalogo diz QUAL binario; o dap/
+                                           diz COMO invocar.
 
 23  Papeis novos no toolchain: cross-      §5.3 item 2.
     compilador, sonda, gdbserver

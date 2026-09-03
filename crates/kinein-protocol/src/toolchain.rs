@@ -28,6 +28,9 @@ pub enum ToolchainRole {
     Cmake,
     /// O proprio `cargo`.
     Cargo,
+    /// Adaptador de debug (DAP). `lldb-dap` no desktop; `probe-rs` em
+    /// embarcado, que fala DAP nativamente por stdin/stdout.
+    DebugAdapter,
 }
 
 impl ToolchainRole {
@@ -40,6 +43,7 @@ impl ToolchainRole {
             Self::Generator => "generator",
             Self::Cmake => "cmake",
             Self::Cargo => "cargo",
+            Self::DebugAdapter => "debugAdapter",
         }
     }
 
@@ -52,6 +56,7 @@ impl ToolchainRole {
             Self::Generator,
             Self::Cmake,
             Self::Cargo,
+            Self::DebugAdapter,
         ]
     }
 }
@@ -178,7 +183,14 @@ mod tests {
         let value = serde_json::to_value(ToolchainRole::CxxCompiler).unwrap();
         assert_eq!(value, "cxxCompiler");
         assert_eq!(ToolchainRole::CxxCompiler.as_str(), "cxxCompiler");
-        assert_eq!(ToolchainRole::all().len(), 5);
+        assert_eq!(ToolchainRole::all().len(), 6);
+
+        // A chave e' CONTRATO: ela vai para o `.kinein/toolchain.json` e para o
+        // wire. Renomear quebra o arquivo de quem ja escolheu.
+        assert_eq!(
+            serde_json::to_value(ToolchainRole::DebugAdapter).unwrap(),
+            "debugAdapter"
+        );
     }
 
     #[test]

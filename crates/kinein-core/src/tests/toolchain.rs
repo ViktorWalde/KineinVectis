@@ -112,7 +112,9 @@ fn a_fresh_workspace_is_fully_automatic() {
     let resultado = call(&mut core, "toolchain.get", &json!({}));
     let selecoes = resultado["selections"].as_array().unwrap();
 
-    assert_eq!(selecoes.len(), 5, "um por papel do protocolo");
+    // 6 desde 2026-09-03: `debugAdapter` entrou com a etapa 22 do roadmaps/35,
+    // quando o adaptador DAP deixou de ser constante.
+    assert_eq!(selecoes.len(), 6, "um por papel do protocolo");
     for selecao in selecoes {
         assert!(
             selecao.get("id").is_none(),

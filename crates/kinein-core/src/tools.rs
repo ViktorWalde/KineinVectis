@@ -164,6 +164,13 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         install_command: None,
     },
     ToolSpec {
+        id: "probe-rs",
+        display_name: "probe-rs",
+        binary: "probe-rs",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
         id: "ripgrep",
         display_name: "ripgrep",
         binary: "rg",
@@ -420,6 +427,9 @@ mod tests {
                 "gdb",
                 "lldb",
                 "lldb-dap",
+                // Entrou em 2026-09-03 (roadmaps/35 etapa 22): adaptador DAP
+                // de embarcado, que fala DAP nativo por stdin/stdout.
+                "probe-rs",
                 "ripgrep",
                 "fd",
                 "claude",

@@ -34,6 +34,7 @@ pub(super) fn candidates_for(role: ToolchainRole) -> &'static [RoleCandidate] {
         ToolchainRole::Generator => GENERATORS,
         ToolchainRole::Cmake => CMAKE,
         ToolchainRole::Cargo => CARGO,
+        ToolchainRole::DebugAdapter => DEBUG_ADAPTERS,
     }
 }
 
@@ -93,3 +94,28 @@ static CARGO: &[RoleCandidate] = &[RoleCandidate {
     label: "Cargo",
     tool_id: "cargo",
 }];
+
+/// Adaptadores de debug (DAP).
+///
+/// A ordem e' a preferencia: `lldb-dap` primeiro porque e' o alvo de desktop, e
+/// era a CONSTANTE que este papel substituiu. `probe-rs` vem em seguida porque
+/// fala DAP nativamente por stdin/stdout — a mesma forma que o dominio `dap/`
+/// ja usa (`integracoes/36` §3).
+///
+/// **Este arquivo nao sabe COMO invocar cada um**, e a fronteira e' deliberada:
+/// o cabecalho deste modulo diz que ele responde "quais binarios interessam a
+/// cada papel", nao "com quais argumentos". `probe-rs` precisa do subcomando
+/// `dap-server` e `lldb-dap` nao precisa de nenhum — esse conhecimento e' do
+/// dominio `dap`, que e quem sobe o processo.
+static DEBUG_ADAPTERS: &[RoleCandidate] = &[
+    RoleCandidate {
+        id: "lldb-dap",
+        label: "lldb-dap",
+        tool_id: "lldb-dap",
+    },
+    RoleCandidate {
+        id: "probe-rs",
+        label: "probe-rs (embarcado)",
+        tool_id: "probe-rs",
+    },
+];

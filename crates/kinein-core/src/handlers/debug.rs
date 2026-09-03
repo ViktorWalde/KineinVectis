@@ -77,10 +77,24 @@ impl Core {
             },
         };
 
+        // O kit decide QUAL adaptador sobe. Resolve-se antes de pegar o
+        // manager emprestado: `Toolchain::resolve` le o disco e a lista de
+        // ferramentas detectadas, e os dois pedem `&self`.
+        let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
+        let adapter_id = toolchain
+            .chosen(kinein_protocol::ToolchainRole::DebugAdapter)
+            .map(str::to_owned);
+        let adapter_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
+
         let Some(manager) = self.debug.as_mut() else {
             return debug_unavailable_response(request_id, "debug.start");
         };
-        match manager.start(root, &program) {
+        match manager.start(
+            root,
+            &program,
+            adapter_id.as_deref(),
+            adapter_path.as_deref(),
+        ) {
             Ok(()) => JsonRpcResponse::success(
                 request_id,
                 json!(DebugStartResult {
