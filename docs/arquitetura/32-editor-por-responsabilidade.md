@@ -210,12 +210,17 @@ evidência"*. Corrigido o prazo para 1.900 ms, a mutação cai.
 > Checagem que acontece antes de o efeito ser possível não é checagem. É ruído
 > verde.
 
-## 8. A decisão que ficou em ABERTO
+## 8. A decisão que estava em aberto — RESPONDIDA em 2026-09-03
 
-> **Esta decisão virou a etapa 11 de
-> [`roadmaps/34-depois-do-mvp.md`](../roadmaps/34-depois-do-mvp.md) §3.2** — a
-> primeira da fila do pós-MVP, porque é pergunta ao autor e bloqueia qualquer
-> fatia que toque o editor.
+> **DECIDIDA pelo autor em 2026-09-03: saída (a), a terceira fatia.** Corta-se
+> o `ShellWorkspaceHost.qml` PRIMEIRO; só depois se reavalia a fachada. Nenhum
+> limite foi levantado — a §4 regra 8 não foi acionada. O registro da decisão,
+> com a medição que a sustenta, está na §8.4.
+>
+> Esta era a etapa 11 de
+> [`roadmaps/34-depois-do-mvp.md`](../roadmaps/34-depois-do-mvp.md) §3.2 — a
+> primeira da fila do pós-MVP, porque era pergunta ao autor e bloqueava qualquer
+> fatia que tocasse o editor. **Deixou de bloquear.**
 
 `EditorController.qml` continua na catraca, em **791/400**. Isto não é omissão —
 é uma decisão que não é da sessão, e a §4 regra 8 é clara: *"subir um limite é
@@ -279,6 +284,59 @@ que não é a etapa 6:
 Enquanto essa fatia não existir, o `EditorController` fica na catraca em 791 —
 **congelado e só podendo diminuir**, que é exatamente o que a catraca existe
 para garantir.
+
+### 8.4 O registro da decisão (2026-09-03)
+
+**Escolha do autor: (a), a terceira fatia.** `EditorController.qml` continua em
+791/400 na catraca — congelado e só podendo diminuir — e **não recebe limite
+próprio**. O trabalho vai para o `ShellWorkspaceHost.qml` antes.
+
+O que mudou entre a §8.3 (recomendação) e esta decisão foi **uma medição nova**,
+feita em 2026-09-03. A §8.3 dizia que as 92 leituras "viram um punhado de
+propriedades agregadas" sem mostrar que isso era possível. Era a parte fraca do
+argumento: 92 leituras podem ser 92 conceitos distintos, e nesse caso agregar não
+reduz nada — só muda o nome do acoplamento. Medido:
+
+```text
+92 pontos de leitura  ->  73 membros DISTINTOS   (quase nao ha' repeticao)
+```
+
+**73 membros distintos derrubariam a saída (a)** se não caíssem em lugar nenhum.
+Eles caem — e caem nos donos que a etapa 6 já criou:
+
+```text
+find/replace ......... ~20 membros  -> EditorFindController
+actions (code action) .. 7          -> EditorLanguageController
+workspaceEdit .......... 7          -> EditorLanguageController
+texto (indent/newline) . 7          -> EditorTextController
+abas/arquivos .......... 6          -> EditorDocumentController
+completion ............. 5          -> EditorCompletionController
+externo (conflito) ..... 5          -> EditorDocumentController
+goToLine / rename ...... 6
+hover / usages / watch . 5          -> EditorLanguageController
+```
+
+**É isto que torna a (a) um corte por responsabilidade e não por tamanho** (§4
+regra 9): a agregação não inventa camada nova nem cria pass-through — ela liga o
+host aos **sete subcontrollers que já existem**. O anti-precedente do
+`AppDomains.qml` citado na §8.2 (espremer gerou "13 propriedades de
+pass-through") não se aplica, porque ali não havia dono para onde apontar; aqui
+há.
+
+**Critério de aceite da fatia, quando ela vier** — o mesmo da §4 regra 9, e é o
+que a distingue de cerimônia:
+
+```text
+1. grep -c "editorController\." ui/qml/shell/ShellWorkspaceHost.qml  CAI
+2. ShellWorkspaceHost.qml sai de 576/400 ou encolhe de verdade
+3. nenhum membro agregado vira pass-through de um so' consumidor
+4. a catraca aceita sem --atualizar-baseline para CRESCER
+```
+
+**O que esta decisão NÃO autoriza:** quebrar a fachada do `EditorController`
+agora. A saída (b) — limite próprio para fachada — foi **descartada**, e a (c)
+— deixar como está — foi descartada como destino final, não como estado
+transitório: até a fatia existir, o arquivo fica em 791, congelado.
 
 ## 9. Onde cada coisa mora agora
 

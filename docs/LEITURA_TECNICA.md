@@ -121,7 +121,7 @@ nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
 provado, está sem evidência — por isso cada um é testado por mutação.
 
-**2. A catraca de arquitetura congela 19 arquivos (medido em 2026-09-02) e só
+**2. A catraca de arquitetura congela 18 arquivos (medido em 2026-09-03) e só
 deixa diminuir.** Ela não é limite duro. O critério é **responsabilidade**; linhas são só o detector de
 fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de
@@ -132,9 +132,11 @@ três casos.
 2026-09-02, quando quatro donos nasceram do corte (1.070 → 791; ver
 [arquitetura/32](arquitetura/32-editor-por-responsabilidade.md)). O que resta
 dele **não é mais implementação misturada** — são 64 funções de delegação pura,
-a fachada única do editor. A pergunta que ficou aberta não é "como cortar mais",
-é por que o `ShellWorkspaceHost.qml` precisa de 92 propriedades do editor:
-resolver isso encolhe os dois arquivos em débito de uma vez.
+a fachada única do editor. A pergunta que ficou aberta não era "como cortar
+mais", era por que o `ShellWorkspaceHost.qml` precisa de 92 propriedades do
+editor. **O autor respondeu em 2026-09-03: corta-se o host primeiro** (saída (a);
+`arquitetura/32` §8.4), o que encolhe os dois arquivos em débito de uma vez.
+Nenhum limite foi levantado.
 
 **4. O core não escreve nada fora do workspace sem gesto explícito.** Desde
 2026-08-29 a persistência global entra por `Core::enable_persistence`, chamada só
@@ -223,12 +225,13 @@ o único que faltava — entraram na etapa 2. O resto da lista é dívida de
 honestidade e de hardening, não funcionalidade.
 
 **Essa lista fechou em 2026-09-02** — 9 etapas feitas, a 6 paga em parte com uma
-decisão em aberto. O sucessor é
+decisão que ficou em aberto e foi **respondida em 2026-09-03**. O sucessor é
 [roadmaps/34-depois-do-mvp.md](roadmaps/34-depois-do-mvp.md): as quatro frentes
 do pós-MVP — dívida que cobra pedágio, atrito diário medido, profundidade (TR2)
 e a simulação —, cada item com o comando que mede se ainda está pendente. A
-recomendação de ordem começa por **uma pergunta ao autor**, não por código: o
-`EditorController.qml` em 791/400 (§3.2).
+recomendação de ordem começava por **uma pergunta ao autor**, não por código: o
+`EditorController.qml` em 791/400 (§3.2). Respondida em 2026-09-03 — a fila
+agora abre na fatia do `ShellWorkspaceHost.qml` (34 §7, etapa 11.1).
 
 O horizonte mais distante, e **ainda não arquitetado**, está em
 [roadmaps/31-simulacao-fisica-matematica.md](roadmaps/31-simulacao-fisica-matematica.md):

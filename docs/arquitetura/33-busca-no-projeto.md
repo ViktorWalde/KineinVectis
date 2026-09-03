@@ -53,7 +53,7 @@ O corte veio pela `ARCHITECTURE.md` §4 regra 9 (**responsabilidade, não
 tamanho**) e o gatilho foi concreto: a etapa 9 precisava acrescentar a tradução
 de `\n` num arquivo que já estava em 420/400. Resultado medido em 2026-09-02:
 `SearchController.qml` 185 linhas, `SearchEverywhereController.qml` 352 — e o
-arquivo **saiu da catraca**, de 18 para 17 arquivos em débito.
+arquivo **saiu da catraca**, de 19 para 18 arquivos em débito.
 
 A prova de que o corte foi por vocabulário e não por tesoura: `grep -i
 everywhere ui/qml/search/SearchController.qml` volta **vazio**.

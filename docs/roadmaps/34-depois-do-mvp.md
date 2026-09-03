@@ -27,7 +27,7 @@ protocolo 0.65.0                crates/kinein-protocol/src/lib.rs
 gate completo verde             bash scripts/verificar.sh
 AppImage no gate                scripts/verificar-appimage.sh
 5 sondas                        scripts/sonda_*.py
-17 arquivos em debito           cat scripts/arquitetura-baseline.txt
+18 arquivos em debito           cat scripts/arquitetura-baseline.txt
 ```
 
 O MVP fechou. O que vem agora não é "terminar" — é **transformar MVP em
@@ -37,7 +37,7 @@ ao CLion em profundidade (TR2).
 ## 2. As quatro frentes, e por que a ordem não é óbvia
 
 ```text
-A  DIVIDA QUE JA COBRA PEDAGIO   17 arquivos acima do limite da catraca.
+A  DIVIDA QUE JA COBRA PEDAGIO   18 arquivos acima do limite da catraca.
                                  Nao e' limpeza: e' imposto sobre a PROXIMA
                                  fatia.
 
@@ -84,7 +84,7 @@ existe.
 
 ## 3. FRENTE A — a dívida, medida e ordenada
 
-`cat scripts/arquitetura-baseline.txt` (2026-09-02, 17 arquivos):
+`cat scripts/arquitetura-baseline.txt` (2026-09-03, 18 arquivos):
 
 | arquivo | linhas/limite | o que provavelmente está misturado |
 | --- | ---: | --- |
@@ -126,33 +126,42 @@ a regra já disse. Alvo: `lsp.rs` roteia; o que ele faz de pesado desce para
 
 **Medir:** `wc -l crates/kinein-core/src/handlers/lsp.rs` e `grep -c 'fn '` nele.
 
-### 3.2 A decisão em aberto: `EditorController.qml` 791/400
+### 3.2 A decisão do `EditorController.qml` 791/400 — RESPONDIDA em 2026-09-03
 
-Registrada em
-[`arquitetura/32-editor-por-responsabilidade.md`](../arquitetura/32-editor-por-responsabilidade.md)
-§8, e **é decisão do autor, não da sessão** (`ARCHITECTURE.md` §4 regra 8:
-levantar um limite é decisão explícita registrada).
+> **Não é mais pergunta.** O autor escolheu a saída **(a), a terceira fatia**, em
+> 2026-09-03. Registro completo, com a medição que a sustenta, em
+> [`arquitetura/32`](../arquitetura/32-editor-por-responsabilidade.md) §8.4.
+> **Nenhum limite foi levantado**: a §4 regra 8 não foi acionada.
 
-O estado, medido em 2026-09-02: das 97 funções restantes, **64 são delegação de
-uma linha**. O arquivo é fachada, não lógica. Quebrá-la custa ~180 pontos de
-chamada em 13 arquivos, **92 deles em `ShellWorkspaceHost.qml`** — que está em
-576/400 e ficaria pior.
+O estado, remedido em 2026-09-03 e inalterado: das 97 funções, **64 são
+delegação de uma linha**. O arquivo é fachada, não lógica. Quebrá-la custa
+**185 pontos de chamada em 12 arquivos**, **92 deles em `ShellWorkspaceHost.qml`**
+— que está em 576/400 e ficaria pior.
 
-Três saídas, e nenhuma é obviamente certa:
+As três saídas que estavam sobre a mesa, e o que aconteceu com cada uma:
 
 ```text
-(a) TERCEIRA FATIA        cortar ANTES o ShellWorkspaceHost: as 92 leituras de
-    -- recomendada        propriedade do editor viram um punhado de
-                          propriedades agregadas. Os dois arquivos melhoram, e
-                          so' entao o EditorController se quebra.
-(b) LEVANTAR O LIMITE     decisao registrada do autor: "fachada de composicao
-                          tem limite proprio". Honesto se for escrito e
-                          justificado; perigoso se virar habito.
-(c) DEIXAR COMO ESTA      a catraca ja' impede crescer. Custa nada hoje e
-                          cobra na proxima fatia que tocar o editor.
+(a) TERCEIRA FATIA        ESCOLHIDA. Cortar ANTES o ShellWorkspaceHost: as 92
+                          leituras viram propriedades agregadas apontando para
+                          os subcontrollers que a etapa 6 ja' criou. Os dois
+                          arquivos em debito encolhem juntos, e so' entao o
+                          EditorController se reavalia.
+(b) LEVANTAR O LIMITE     DESCARTADA. 791 contra 400 e' ~2x; nenhum limite
+                          defensavel cobre isso (arquitetura/32 §8.2).
+(c) DEIXAR COMO ESTA      DESCARTADA como destino. Continua sendo o estado
+                          TRANSITORIO ate' a fatia existir: 791, congelado.
 ```
 
-**Esta é a primeira pergunta que a próxima sessão deve fazer ao autor.**
+**O que destravou a escolha foi uma medição que faltava.** A recomendação
+original supunha que as 92 leituras agregariam; não tinha mostrado que sim. Em
+2026-09-03: são **73 membros distintos** (quase nenhuma repetição) e eles
+**caem nos sete subcontrollers existentes** — find ~20, actions 7,
+workspaceEdit 7, texto 7, abas 6, completion 5, externo 5, goToLine/rename 6,
+hover/usages/watch 5. Sem esse dado, (a) seria corte por tamanho; com ele, é
+corte por responsabilidade.
+
+**Medir:** `grep -c "editorController\." ui/qml/shell/ShellWorkspaceHost.qml`
+— hoje 92. A fatia só terminou quando esse número cai e o arquivo encolhe.
 
 ## 4. FRENTE B — o atrito diário (TR1)
 
@@ -242,8 +251,15 @@ Recomendação, não decreto. O autor corta onde quiser — mas cada troca de or
 tem um custo escrito acima.
 
 ```text
-11  DECIDIR o EditorController (§3.2)      pergunta, nao codigo. Bloqueia
-                                           qualquer fatia que toque o editor.
+11  DECIDIR o EditorController (§3.2)      FEITA em 2026-09-03: saida (a).
+                                           Nenhum limite levantado. Deixou de
+                                           bloquear o editor.
+
+11.1 ShellWorkspaceHost.qml (576/400):     o que a decisao (a) mandou fazer.
+     92 leituras -> propriedades           Corta os DOIS arquivos em debito de
+     agregadas por subcontroller           uma vez. Nao tem fatia funcional
+                                           esperando: e' a excecao §2.2, uma
+                                           decisao do autor ja' registrada.
 
 12  Registro de saidas do dogfooding       §4.1. Pequeno, e ordena a frente C
     (§4.1)                                 inteira. Sem ele, o resto e' palpite.
