@@ -170,33 +170,53 @@ arquivo é a forma de eles divergirem em silêncio.
 tem que voltar **0**. Se o domínio de bibliotecas souber escrever no arquivo, o
 corte falhou.
 
-### 4.2 O catálogo inicial — auditado em 2026-09-03
+### 4.2 O catálogo — 13 entradas auditadas em 2026-09-03
 
-Sete entradas, cada uma com a licença lida **na fonte** e a versão pinada:
+Cada licença foi lida **na fonte**, não no campo automático:
 
-| id | licença | versão pinada | release |
-| --- | --- | --- | --- |
-| `fmt` | MIT | 12.2.0 | 2026-06-16 |
-| `spdlog` | MIT | v1.17.0 | 2026-01-04 |
-| `nlohmann_json` | MIT | v3.12.0 | 2025-04-11 |
-| `catch2` | BSL-1.0 | v3.16.0 | 2026-08-25 |
-| `googletest` | BSD-3-Clause | v1.18.0 | 2026-08-10 |
-| `cli11` | BSD-3-Clause | v2.7.2 | 2026-08-02 |
-| `benchmark` | Apache-2.0 | v1.9.5 | 2026-01-21 |
+| id | licença | versão pinada | release | sinal forte |
+| --- | --- | --- | --- | --- |
+| `fmt` | MIT | 12.2.0 | 2026-06-16 | virou `std::format` no C++20 |
+| `boost` | BSL-1.0 | boost-1.92.0 | 2026-08-12 | revisão formal por pares |
+| `spdlog` | MIT | v1.17.0 | 2026-01-04 | — |
+| `nlohmann_json` | MIT | v3.12.0 | 2025-04-11 | — |
+| `catch2` | BSL-1.0 | v3.16.0 | 2026-08-25 | — |
+| `googletest` | BSD-3-Clause | v1.18.0 | 2026-08-10 | — |
+| `cli11` | BSD-3-Clause | v2.7.2 | 2026-08-02 | — |
+| `benchmark` | Apache-2.0 | v1.9.5 | 2026-01-21 | — |
+| `asio` | BSL-1.0 | asio-1-38-2 | 2026-07-19 | — |
+| `abseil` | Apache-2.0 | 20260817.0 | 2026-08-18 | — |
+| `zlib` | Zlib | v1.3.2 | 2026-02-17 | — |
+| `sqlite3` | domínio público | version-3.53.4 | 2026-07-24 | — |
+| `eigen` | **MPL-2.0 (copyleft fraco)** | 5.0.1 | 2025-11-08 | — |
 
-**Ler a fonte é o método, e a auditoria provou por que.** O campo `license` da
-API do GitHub devolveu `NOASSERTION` para **spdlog e CLI11** — as duas têm
-licença permissiva; o detector é que falhou. Copiar o campo teria marcado as
-duas como desconhecidas. Abrir o arquivo `LICENSE` acha MIT e BSD-3-Clause.
+**LER A FONTE É O MÉTODO, e a auditoria provou quatro vezes.** O campo
+`license` da API do GitHub devolveu `NOASSERTION` para **spdlog, CLI11, zlib e
+asio** — as quatro têm licença permissiva; o detector é que falha. Copiar o
+campo teria marcado quatro das treze como desconhecidas. Abrir o arquivo acha
+MIT, BSD-3-Clause, Zlib e BSL-1.0.
 
-**Candidatas ainda não auditadas**, que entram quando alguém as medir: Eigen
-(atenção: MPL-2.0, classe de licença diferente das acima), SQLite, zlib, asio,
-Abseil, Boost. A lista não é o catálogo — o catálogo é o que passou pela
-auditoria.
+**Duas entradas exigiram cuidado extra:**
 
-**Um teste cobra a auditoria:** entrada sem licença, sem versão pinada, com
-`"latest"` no lugar do pino, sem data de release ou sem a frase explicativa
-reprova em `every_catalog_entry_carries_its_audit`, não no uso.
+- **SQLite não tem licença — está em domínio público.** Verificado em
+  `sqlite.org/copyright.html`: *"All of the code and documentation in SQLite has
+  been dedicated to the public domain by the authors."* Isso é *menos*
+  restritivo que permissivo, não mais.
+- **Eigen é MPL-2.0, classe diferente do resto.** Copyleft fraco, verificado no
+  `COPYING.README`: *"Eigen is primarily licensed under the Mozilla Public
+  License 2.0"* — e há dependências externas **opcionais** sob outras licenças,
+  algumas GPL. Usar o Eigen básico não contamina; ligar uma dessas opcionais
+  pode. O campo `license` diz isso na cara, em vez de esconder atrás de um
+  identificador SPDX que o usuário teria de ir pesquisar.
+
+**Um erro de memória que a verificação pegou:** eu ia registrar Eigen em 3.4.0
+(2021). O atual é **5.0.1 (2025-11-08)** — quatro anos de diferença. Foi a
+consulta ao GitLab que corrigiu, não a revisão do texto.
+
+**O Boost entrou como bloco**, com `Boost::boost` (as partes header-only) como
+alvo. A IDE **não chuta a lista de `COMPONENTS`**: quem precisa de uma parte
+compilada (filesystem, thread) acrescenta o componente, porque linkar o que o
+usuário não pediu é pior que pedir que ele complete.
 
 ### 4.3 O corte que a etapa 20 cobrou
 
