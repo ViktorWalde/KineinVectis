@@ -12,12 +12,16 @@ Item {
     Connections {
         target: root.toolchainController
 
-        function onGetRequested() {
-            root.coreClient.toolchainGet();
+        function onGetRequested(preset) {
+            root.coreClient.toolchainGet(preset);
         }
 
-        function onSetRequested(role, id) {
-            root.coreClient.toolchainSet(role, id);
+        function onSetRequested(role, id, preset) {
+            root.coreClient.toolchainSet(role, id, preset);
+        }
+
+        function onSetKitRequested(preset, sysroot, targetTriple) {
+            root.coreClient.toolchainSetKit(preset, sysroot, targetTriple);
         }
     }
 }

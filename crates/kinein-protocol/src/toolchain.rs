@@ -102,6 +102,22 @@ pub struct ToolchainSelection {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ToolchainResult {
+    /// Kit lido/escrito; vazio = o kit padrao do workspace.
+    #[serde(default)]
+    pub preset: String,
+    /// Raiz do sistema alvo, quando escolhida.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sysroot: Option<String>,
+    /// Triple do alvo, quando escolhido.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_triple: Option<String>,
+    /// Arquivo de toolchain que o PRESET declara (`toolchainFile`), quando ha.
+    ///
+    /// E informacao, nao escolha: quem manda nele e o `CMakePresets.json`, e a
+    /// IDE mostra para o usuario nao procurar no lugar errado quando o
+    /// compilador efetivo nao for o que ele escolheu aqui.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset_toolchain_file: Option<String>,
     /// Escolha atual de cada papel, na ordem de [`ToolchainRole::all`].
     pub selections: Vec<ToolchainSelection>,
     /// O que existe nesta maquina para cada papel.
@@ -110,8 +126,12 @@ pub struct ToolchainResult {
 
 /// Parameters for `toolchain.get`.
 #[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ToolchainGetParams {}
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ToolchainGetParams {
+    /// Kit to read. `None` = the workspace default kit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset: Option<String>,
+}
 
 /// Parameters for `toolchain.set`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -122,6 +142,27 @@ pub struct ToolchainSetParams {
     /// Id do candidato; ausente volta para automatico.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// Kit a mudar. `None` = o kit padrao do workspace.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset: Option<String>,
+}
+
+/// Parameters for `toolchain.setKit` — sysroot e alvo de cross-compilacao.
+///
+/// Campo ausente NAO e o mesmo que campo vazio: ausente preserva o valor
+/// atual, string vazia limpa. Sem isso, mexer no sysroot apagaria o target.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ToolchainSetKitParams {
+    /// Kit a mudar. `None` = o kit padrao do workspace.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset: Option<String>,
+    /// Raiz do sistema alvo (`CMAKE_SYSROOT`). `""` limpa.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sysroot: Option<String>,
+    /// Triple do alvo (`--target` do cargo, `CMAKE_SYSTEM_*`). `""` limpa.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_triple: Option<String>,
 }
 
 #[cfg(test)]
@@ -143,6 +184,10 @@ mod tests {
     #[test]
     fn selection_omits_the_automatic_choice_and_the_missing_path() {
         let value = serde_json::to_value(ToolchainResult {
+            preset: String::new(),
+            sysroot: None,
+            target_triple: None,
+            preset_toolchain_file: None,
             selections: vec![ToolchainSelection {
                 role: ToolchainRole::Cmake,
                 id: None,

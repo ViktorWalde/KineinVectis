@@ -6,7 +6,8 @@
 //! detecta continua sendo o `ToolDetector`.
 
 use kinein_protocol::{
-    JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ToolchainGetParams, ToolchainSetParams,
+    JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ToolchainGetParams, ToolchainSetKitParams,
+    ToolchainSetParams,
 };
 use serde_json::{Value, json};
 
@@ -24,6 +25,7 @@ impl Core {
         match method {
             "toolchain.get" => Some(self.toolchain_get_response(request_id, params)),
             "toolchain.set" => Some(self.toolchain_set_response(request_id, params)),
+            "toolchain.setKit" => Some(self.toolchain_set_kit_response(request_id, params)),
             _ => None,
         }
     }
@@ -36,14 +38,19 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "toolchain.get");
         };
-        if let Err(response) = parse_params::<ToolchainGetParams>(
+        let parsed = match parse_params::<ToolchainGetParams>(
             request_id.as_ref(),
             params,
-            "toolchain.get nao aceita parametros",
+            "toolchain.get aceita apenas preset",
         ) {
-            return *response;
-        }
-        let resolvida = toolchain::Toolchain::resolve(&root, &self.detected_tools());
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let resolvida = toolchain::Toolchain::resolve_kit(
+            &root,
+            &self.detected_tools(),
+            parsed.preset.as_deref().unwrap_or_default(),
+        );
         JsonRpcResponse::success(request_id, json!(resolvida.to_result()))
     }
 
@@ -68,6 +75,39 @@ impl Core {
             &self.detected_tools(),
             parsed.role,
             parsed.id.as_deref(),
+            parsed.preset.as_deref().unwrap_or_default(),
+        ) {
+            Ok(resolvida) => JsonRpcResponse::success(request_id, json!(resolvida.to_result())),
+            Err(message) => JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
+            ),
+        }
+    }
+
+    /// `toolchain.setKit` — sysroot e triple do alvo de um kit.
+    fn toolchain_set_kit_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let Some(root) = self.workspace_root() else {
+            return no_workspace_response(request_id, "toolchain.setKit");
+        };
+        let parsed = match parse_params::<ToolchainSetKitParams>(
+            request_id.as_ref(),
+            params,
+            "toolchain.setKit aceita preset, sysroot e targetTriple",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        match toolchain::set_kit(
+            &root,
+            &self.detected_tools(),
+            parsed.preset.as_deref().unwrap_or_default(),
+            parsed.sysroot.as_deref(),
+            parsed.target_triple.as_deref(),
         ) {
             Ok(resolvida) => JsonRpcResponse::success(request_id, json!(resolvida.to_result())),
             Err(message) => JsonRpcResponse::failure(

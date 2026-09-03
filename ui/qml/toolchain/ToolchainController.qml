@@ -19,8 +19,21 @@ Item {
     property real menuY: 0
     property string errorText: ""
 
-    signal getRequested()
-    signal setRequested(string role, string id)
+    // O KIT ativo (etapa 14): nome do preset, vazio = o padrao do workspace.
+    // A escolha de toolchain deixou de ser do workspace e passou a ser do kit.
+    property string preset: ""
+    property string sysroot: ""
+    property string targetTriple: ""
+    // `toolchainFile` que o PRESET declara. E informacao, nao escolha: quando
+    // existe, ele tem precedencia sobre o que o usuario escolher aqui, e a tela
+    // precisa dizer isso em vez de deixar procurar no lugar errado.
+    property string presetToolchainFile: ""
+
+    readonly property bool crossCompiling: targetTriple !== ""
+
+    signal getRequested(string preset)
+    signal setRequested(string role, string id, string preset)
+    signal setKitRequested(string preset, string sysroot, string targetTriple)
 
     visible: false
 
@@ -29,15 +42,36 @@ Item {
         candidates = [];
         errorText = "";
         menuVisible = false;
+        preset = "";
+        sysroot = "";
+        targetTriple = "";
+        presetToolchainFile = "";
         if (workspaceRoot !== "") {
-            getRequested();
+            getRequested("");
         }
     }
 
-    function handleResolved(newSelections, newCandidates) {
+    function handleResolved(newSelections, newCandidates, newPreset, newSysroot,
+                            newTargetTriple, newPresetToolchainFile) {
         selections = newSelections;
         candidates = newCandidates;
+        preset = newPreset === undefined ? "" : newPreset;
+        sysroot = newSysroot === undefined ? "" : newSysroot;
+        targetTriple = newTargetTriple === undefined ? "" : newTargetTriple;
+        presetToolchainFile = newPresetToolchainFile === undefined ? "" : newPresetToolchainFile;
         errorText = "";
+    }
+
+    // Troca o kit ativo e recarrega — o que muda e o preset, nao o workspace.
+    function selectKit(name) {
+        preset = name === undefined ? "" : name;
+        getRequested(preset);
+    }
+
+    // `undefined` PRESERVA o campo; string vazia LIMPA. O core trata igual, e
+    // e por isso que mexer no sysroot nao apaga o alvo.
+    function applyKit(newSysroot, newTargetTriple) {
+        setKitRequested(preset, newSysroot, newTargetTriple);
     }
 
     function handleFailed(method, message) {
@@ -107,6 +141,6 @@ Item {
     }
 
     function choose(role, id) {
-        setRequested(role, id);
+        setRequested(role, id, preset);
     }
 }

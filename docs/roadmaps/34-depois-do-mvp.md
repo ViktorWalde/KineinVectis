@@ -21,9 +21,9 @@ sem forma de medir não entra aqui.
 ## 1. Onde o projeto está, medido em 2026-09-02
 
 ```text
-437 testes Rust verdes          cargo test
-protocolo 0.66.0                crates/kinein-protocol/src/lib.rs
-115 metodos IPC, 19 dominios    docs/LEITURA_TECNICA.md §3
+441 testes Rust verdes          cargo test
+protocolo 0.67.0                crates/kinein-protocol/src/lib.rs
+116 metodos IPC, 19 dominios    docs/LEITURA_TECNICA.md §3
 gate completo verde             bash scripts/verificar.sh
 AppImage no gate                scripts/verificar-appimage.sh
 5 sondas                        scripts/sonda_*.py
@@ -245,7 +245,7 @@ A ordem arquitetural do `GUIAIA.md` §2, conferida contra o disco em 2026-09-02:
 | ---: | --- | --- | --- |
 | 1 | CMake File API + Cargo Metadata | ✅ `codemodel-v2` oficial, nunca parser próprio | `crates/kinein-core/src/cmake.rs` |
 | 2 | Unified Project Graph + Context Matrix | ❌ ausente | — |
-| 3 | targets, perfis e **toolchains** como entidades | ⚠️ **em parte** (2026-09-02): papel → executável, persistido, chega ao configure e ao build. Faltam **sysroot, cross-compilação e kit por preset** | `crates/kinein-core/src/toolchain/` |
+| 3 | targets, perfis e **toolchains** como entidades | ✅ (2026-09-03): papel → executável, **sysroot**, **cross** (`--target` + `CMAKE_SYSTEM_*`) e **kit por preset**, com o `toolchainFile` do preset exposto como informação | `crates/kinein-core/src/toolchain/` |
 | 4 | scheduler LSP por documento/contexto, cancelamento, backpressure | ❌ ausente. Existem os **dois relógios** (`syntaxVersion`/`semanticVersion`), que descartam resposta obsoleta — é outra coisa | `arquitetura/32` §3 |
 | 5 | Symbol Broker e Diagnostic Broker | ❌ ausente | — |
 | 6 | painel de Effective Compile Context | ❌ ausente. O diagnóstico de CDB (0.62.0) é o primeiro degrau dele | `crates/kinein-core/src/cdb.rs` |
@@ -253,9 +253,10 @@ A ordem arquitetural do `GUIAIA.md` §2, conferida contra o disco em 2026-09-02:
 | 8 | split editor, multicursor, EditorConfig | ❌ os três (ver §4.2) | — |
 | 9 | testes prolongados em projetos reais | ⚠️ existe soak sintético; falta projeto real | `scripts/sonda_soak.py` |
 
-**O item 3 é o mais barato agora**, porque o encaixe existe: o domínio
-`toolchain/` foi construído em 2026-09-02 e sysroot/cross/kit são campos e regras
-dentro dele, não uma entidade nova.
+**O item 3 era o mais barato, e foi** (2026-09-03): o encaixe existia mesmo, e
+sysroot/cross/kit sairam como campos e regras dentro do domínio `toolchain/`.
+O que ele custou a mais foi um corte não previsto — `build.rs` cruzou 500 ao
+receber o `--target` e virou pasta.
 
 **O item 7 encaixa na dívida**: `dap/session.rs` está em 672/500, e `evaluate`
 (watches) + breakpoint condicional são exatamente o tipo de acréscimo que a
@@ -314,8 +315,12 @@ tem um custo escrito acima.
                                            A cauda duplicada de rename e
                                            applyCodeAction virou dono unico.
 
-14  Toolchain: sysroot + cross + kit por   TR2 item 3. O encaixe ja' existe;
-    preset                                 e' o item barato da frente C.
+14  Toolchain: sysroot + cross + kit por   FEITA em 2026-09-03 (0.67.0). O
+    preset                                 store virou schema 2 (kits), com
+                                           migracao do 1 NA LEITURA. build.rs
+                                           passou de 500 no caminho e virou
+                                           pasta: mod (orquestracao) + parse
+                                           (saida das ferramentas).
 
 15  Debug: `evaluate` (watches) +          FEITA em 2026-09-03. dap/ virou
     breakpoint condicional                 wire/parse/reader/session; watches e

@@ -139,8 +139,12 @@ public:
     Q_INVOKABLE void cargoMetadata();
     Q_INVOKABLE void cmakeConfigure();
     Q_INVOKABLE void cmakeStatus();
-    Q_INVOKABLE void toolchainGet();
-    Q_INVOKABLE void toolchainSet(const QString& role, const QString& id);
+    // `preset` vazio = o kit padrao do workspace (etapa 14: a escolha passou a
+    // ser por KIT, nao por workspace).
+    Q_INVOKABLE void toolchainGet(const QString& preset);
+    Q_INVOKABLE void toolchainSet(const QString& role, const QString& id, const QString& preset);
+    Q_INVOKABLE void toolchainSetKit(const QString& preset, const QString& sysroot,
+                                     const QString& targetTriple);
     Q_INVOKABLE void configActionList(bool includeHiddenByScope = false);
     Q_INVOKABLE void configActionPreview(const QString& id, const QVariantMap& params);
     Q_INVOKABLE void configActionApply(const QString& id, const QVariantMap& params,
@@ -232,7 +236,9 @@ signals:
                              const QString& cdbStaleBecause);
     void cmakeConfigureFinished(bool success);
     void cargoMetadataResolved(int packages);
-    void toolchainResolved(const QVariantList& selections, const QVariantList& candidates);
+    void toolchainResolved(const QVariantList& selections, const QVariantList& candidates,
+                           const QString& preset, const QString& sysroot,
+                           const QString& targetTriple, const QString& presetToolchainFile);
     void configActionsListed(const QVariantList& actions, const QStringList& activeBuildSystems);
     void configActionPreviewed(const QVariantMap& preview);
     void configActionApplied(const QString& id, const QString& message, const QStringList& files,

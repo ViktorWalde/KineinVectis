@@ -36,8 +36,13 @@ use kinein_protocol::{
 /// A toolchain de um workspace, ja cruzada com o que existe na maquina.
 #[derive(Debug, Clone)]
 pub struct Toolchain {
+    /// Kit lido; vazio = o padrao do workspace.
+    preset: String,
     selections: Vec<ToolchainSelection>,
     candidates: Vec<ToolchainCandidate>,
+    sysroot: Option<String>,
+    target_triple: Option<String>,
+    preset_toolchain_file: Option<String>,
 }
 
 impl Toolchain {
@@ -47,7 +52,18 @@ impl Toolchain {
     /// mantem este modulo sem I/O de processo e deixa o teste hermetico.
     #[must_use]
     pub fn resolve(root: &Path, tools: &[ToolInfo]) -> Self {
-        let escolhas = store::load(root);
+        Self::resolve_kit(root, tools, "")
+    }
+
+    /// Idem, para um KIT especifico (nome do preset; `""` = o padrao).
+    ///
+    /// Um kit desconhecido nao e' erro: ele simplesmente ainda nao tem escolha,
+    /// e tudo cai no `PATH` — o mesmo comportamento de um workspace novo.
+    #[must_use]
+    pub fn resolve_kit(root: &Path, tools: &[ToolInfo], preset: &str) -> Self {
+        let kits = store::load(root);
+        let kit = kits.get(preset).cloned().unwrap_or_default();
+        let escolhas = kit.selections;
         let mut candidates = Vec::new();
         let mut selections = Vec::new();
 
@@ -80,6 +96,10 @@ impl Toolchain {
         }
 
         Self {
+            preset: preset.to_owned(),
+            sysroot: kit.sysroot,
+            target_triple: kit.target_triple,
+            preset_toolchain_file: preset_toolchain_file(root, preset),
             selections,
             candidates,
         }
@@ -89,6 +109,10 @@ impl Toolchain {
     #[must_use]
     pub fn to_result(&self) -> ToolchainResult {
         ToolchainResult {
+            preset: self.preset.clone(),
+            sysroot: self.sysroot.clone(),
+            target_triple: self.target_triple.clone(),
+            preset_toolchain_file: self.preset_toolchain_file.clone(),
             selections: self.selections.clone(),
             candidates: self.candidates.clone(),
         }
@@ -138,7 +162,66 @@ impl Toolchain {
                 argumentos.push(format!("-D{variavel}={}", caminho.display()));
             }
         }
+        if let Some(sysroot) = self.sysroot.as_deref() {
+            argumentos.push(format!("-DCMAKE_SYSROOT={sysroot}"));
+        }
+        // Cross-compilacao: `CMAKE_SYSTEM_NAME` e' o que faz o CMake entrar em
+        // modo cross (documentacao do CMake: defini-lo liga `CMAKE_CROSSCOMPILING`).
+        // O nome do sistema sai do triple, que e a unica coisa que o usuario
+        // digitou — inventar mais que isso seria adivinhar o alvo dele.
+        if let Some(sistema) = self.cmake_system_name() {
+            argumentos.push(format!("-DCMAKE_SYSTEM_NAME={sistema}"));
+            if let Some(processador) = self.cmake_system_processor() {
+                argumentos.push(format!("-DCMAKE_SYSTEM_PROCESSOR={processador}"));
+            }
+        }
         argumentos
+    }
+
+    /// Triple do alvo, quando escolhido — o `--target` do cargo.
+    #[must_use]
+    pub fn target_triple(&self) -> Option<&str> {
+        self.target_triple.as_deref()
+    }
+
+    /// Raiz do sistema alvo, quando escolhida.
+    #[must_use]
+    pub fn sysroot(&self) -> Option<&str> {
+        self.sysroot.as_deref()
+    }
+
+    /// `CMAKE_SYSTEM_NAME` derivado do triple (`<arch>-<vendor>-<os>-<abi>`).
+    ///
+    /// So' traduz o que e' inequivoco. Triple que este mapa nao conhece nao
+    /// vira palpite: fica `None`, o `CMake` nao entra em modo cross e o usuario
+    /// continua podendo usar um `toolchainFile` do preset, que e' o caminho
+    /// oficial para alvos exoticos.
+    fn cmake_system_name(&self) -> Option<&'static str> {
+        let triple = self.target_triple.as_deref()?;
+        let baixo = triple.to_ascii_lowercase();
+        if baixo.contains("linux") {
+            Some("Linux")
+        } else if baixo.contains("windows") || baixo.contains("mingw") {
+            Some("Windows")
+        } else if baixo.contains("darwin") || baixo.contains("apple") {
+            Some("Darwin")
+        } else if baixo.contains("android") {
+            Some("Android")
+        } else if baixo.contains("none") || baixo.contains("-eabi") {
+            // Bare metal: e' o que o CMake chama de Generic.
+            Some("Generic")
+        } else {
+            None
+        }
+    }
+
+    /// Arquitetura do triple: o primeiro campo, e so' ele.
+    fn cmake_system_processor(&self) -> Option<&str> {
+        self.target_triple
+            .as_deref()?
+            .split('-')
+            .next()
+            .filter(|arch| !arch.is_empty())
     }
 }
 
@@ -148,6 +231,7 @@ pub fn set(
     tools: &[ToolInfo],
     role: ToolchainRole,
     id: Option<&str>,
+    preset: &str,
 ) -> Result<Toolchain, String> {
     if let Some(id) = id {
         if !catalog::is_known(role, id) {
@@ -163,17 +247,74 @@ pub fn set(
         }
     }
 
-    let mut escolhas = store::load(root);
+    let mut kits = store::load(root);
+    let kit = kits.entry(preset.to_owned()).or_default();
     match id {
         Some(id) => {
-            escolhas.insert(role.as_str().to_owned(), id.to_owned());
+            kit.selections
+                .insert(role.as_str().to_owned(), id.to_owned());
         }
         None => {
-            escolhas.remove(role.as_str());
+            kit.selections.remove(role.as_str());
         }
     }
-    store::save(root, &escolhas)?;
-    Ok(Toolchain::resolve(root, tools))
+    store::save(root, &kits)?;
+    Ok(Toolchain::resolve_kit(root, tools, preset))
+}
+
+/// Fixa sysroot e/ou triple do kit. `Some("")` LIMPA; `None` preserva.
+pub fn set_kit(
+    root: &Path,
+    tools: &[ToolInfo],
+    preset: &str,
+    sysroot: Option<&str>,
+    target_triple: Option<&str>,
+) -> Result<Toolchain, String> {
+    let mut kits = store::load(root);
+    let kit = kits.entry(preset.to_owned()).or_default();
+    if let Some(valor) = sysroot {
+        let limpo = valor.trim();
+        kit.sysroot = (!limpo.is_empty()).then(|| limpo.to_owned());
+    }
+    if let Some(valor) = target_triple {
+        let limpo = valor.trim();
+        kit.target_triple = (!limpo.is_empty()).then(|| limpo.to_owned());
+    }
+    store::save(root, &kits)?;
+    Ok(Toolchain::resolve_kit(root, tools, preset))
+}
+
+/// O `toolchainFile` que o preset declara, se declarar.
+///
+/// Le o `CMakePresets.json`/`CMakeUserPresets.json` cru: e' informacao para a
+/// tela, nao entrada de decisao. O campo existe no schema de presets desde a
+/// versao 3 (`CMake` 3.21) e tem precedencia sobre `CMAKE_TOOLCHAIN_FILE`, entao
+/// quando ele esta la' o compilador efetivo pode NAO ser o que o usuario
+/// escolheu aqui — e a IDE precisa dizer isso em vez de deixar procurar.
+fn preset_toolchain_file(root: &Path, preset: &str) -> Option<String> {
+    if preset.is_empty() {
+        return None;
+    }
+    for arquivo in ["CMakePresets.json", "CMakeUserPresets.json"] {
+        let Ok(body) = std::fs::read_to_string(root.join(arquivo)) else {
+            continue;
+        };
+        let Ok(valor) = serde_json::from_str::<serde_json::Value>(&body) else {
+            continue;
+        };
+        let encontrado = valor
+            .get("configurePresets")
+            .and_then(serde_json::Value::as_array)
+            .into_iter()
+            .flatten()
+            .find(|entry| entry.get("name").and_then(serde_json::Value::as_str) == Some(preset))
+            .and_then(|entry| entry.get("toolchainFile"))
+            .and_then(serde_json::Value::as_str);
+        if let Some(caminho) = encontrado {
+            return Some(caminho.to_owned());
+        }
+    }
+    None
 }
 
 /// Candidatos de um papel que existem nesta maquina, na ordem do catalogo.
@@ -201,7 +342,7 @@ mod tests {
 
     use kinein_protocol::{ToolInfo, ToolStatus, ToolchainRole};
 
-    use super::{Toolchain, set};
+    use super::{Toolchain, set, set_kit};
 
     fn detectado(id: &str, caminho: &str) -> ToolInfo {
         ToolInfo {
@@ -266,8 +407,22 @@ mod tests {
     #[test]
     fn a_choice_becomes_a_cmake_argument() {
         let root = temp_root("escolha");
-        let escolhida = set(&root, &maquina(), ToolchainRole::CxxCompiler, Some("gxx")).unwrap();
-        let com_gerador = set(&root, &maquina(), ToolchainRole::Generator, Some("Ninja")).unwrap();
+        let escolhida = set(
+            &root,
+            &maquina(),
+            ToolchainRole::CxxCompiler,
+            Some("gxx"),
+            "",
+        )
+        .unwrap();
+        let com_gerador = set(
+            &root,
+            &maquina(),
+            ToolchainRole::Generator,
+            Some("Ninja"),
+            "",
+        )
+        .unwrap();
 
         assert_eq!(
             escolhida.program_for(ToolchainRole::CxxCompiler),
@@ -287,12 +442,12 @@ mod tests {
     #[test]
     fn the_choice_survives_a_reload_and_can_be_released() {
         let root = temp_root("persiste");
-        set(&root, &maquina(), ToolchainRole::CCompiler, Some("gcc")).unwrap();
+        set(&root, &maquina(), ToolchainRole::CCompiler, Some("gcc"), "").unwrap();
 
         let relido = Toolchain::resolve(&root, &maquina());
         assert_eq!(relido.chosen(ToolchainRole::CCompiler), Some("gcc"));
 
-        let liberado = set(&root, &maquina(), ToolchainRole::CCompiler, None).unwrap();
+        let liberado = set(&root, &maquina(), ToolchainRole::CCompiler, None, "").unwrap();
         assert_eq!(liberado.chosen(ToolchainRole::CCompiler), None);
         assert!(liberado.cmake_arguments().is_empty());
     }
@@ -316,18 +471,26 @@ mod tests {
                 &root,
                 &maquina(),
                 ToolchainRole::Generator,
-                Some("Unix Makefiles")
+                Some("Unix Makefiles"),
+                ""
             )
             .is_err()
         );
-        assert!(set(&root, &maquina(), ToolchainRole::CCompiler, Some("tcc")).is_err());
+        assert!(set(&root, &maquina(), ToolchainRole::CCompiler, Some("tcc"), "").is_err());
     }
 
     /// A escolha some da maquina: a IDE nao pode fixar um caminho inexistente.
     #[test]
     fn a_choice_whose_tool_vanished_stops_pinning_anything() {
         let root = temp_root("sumiu");
-        set(&root, &maquina(), ToolchainRole::CxxCompiler, Some("gxx")).unwrap();
+        set(
+            &root,
+            &maquina(),
+            ToolchainRole::CxxCompiler,
+            Some("gxx"),
+            "",
+        )
+        .unwrap();
 
         let sem_gxx: Vec<ToolInfo> = maquina()
             .into_iter()
@@ -347,5 +510,111 @@ mod tests {
             toolchain.cmake_arguments().is_empty(),
             "sem binario, nada de -DCMAKE_CXX_COMPILER apontando para o vazio"
         );
+    }
+
+    /// Sysroot e triple viram argumento de `cmake` e `--target` do cargo.
+    #[test]
+    fn sysroot_and_target_become_build_arguments() {
+        let root = temp_root("cross");
+        let kit = set_kit(
+            &root,
+            &maquina(),
+            "",
+            Some("/opt/sysroots/arm"),
+            Some("aarch64-unknown-linux-gnu"),
+        )
+        .unwrap();
+
+        let argumentos = kit.cmake_arguments();
+        assert!(
+            argumentos.contains(&"-DCMAKE_SYSROOT=/opt/sysroots/arm".to_owned()),
+            "sysroot nao virou argumento: {argumentos:?}"
+        );
+        // `CMAKE_SYSTEM_NAME` e o que liga o modo cross do CMake; sem ele o
+        // sysroot sozinho nao muda a decisao de compilador.
+        assert!(argumentos.contains(&"-DCMAKE_SYSTEM_NAME=Linux".to_owned()));
+        assert!(argumentos.contains(&"-DCMAKE_SYSTEM_PROCESSOR=aarch64".to_owned()));
+        assert_eq!(kit.target_triple(), Some("aarch64-unknown-linux-gnu"));
+    }
+
+    /// Triple que o mapa nao conhece NAO vira palpite de `CMAKE_SYSTEM_NAME`.
+    #[test]
+    fn unknown_triple_does_not_guess_a_system_name() {
+        let root = temp_root("exotico");
+        let kit = set_kit(&root, &maquina(), "", None, Some("riscv64-esquisito-xyz")).unwrap();
+
+        let argumentos = kit.cmake_arguments();
+        assert!(
+            !argumentos
+                .iter()
+                .any(|a| a.starts_with("-DCMAKE_SYSTEM_NAME")),
+            "adivinhou o sistema de um triple desconhecido: {argumentos:?}"
+        );
+        // O triple continua valendo para o cargo, que sabe o que fazer com ele.
+        assert_eq!(kit.target_triple(), Some("riscv64-esquisito-xyz"));
+    }
+
+    /// Kits sao independentes: mexer num nao mexe no outro.
+    #[test]
+    fn kits_do_not_leak_into_each_other() {
+        let root = temp_root("kits-isolados");
+        set_kit(
+            &root,
+            &maquina(),
+            "cross",
+            Some("/opt/arm"),
+            Some("armv7-unknown-linux-gnueabihf"),
+        )
+        .unwrap();
+        set(
+            &root,
+            &maquina(),
+            ToolchainRole::CxxCompiler,
+            Some("gxx"),
+            "",
+        )
+        .unwrap();
+
+        let padrao = Toolchain::resolve_kit(&root, &maquina(), "");
+        assert_eq!(
+            padrao.sysroot(),
+            None,
+            "o sysroot do cross vazou para o padrao"
+        );
+        assert_eq!(padrao.chosen(ToolchainRole::CxxCompiler), Some("gxx"));
+
+        let cross = Toolchain::resolve_kit(&root, &maquina(), "cross");
+        assert_eq!(cross.sysroot(), Some("/opt/arm"));
+        assert_eq!(
+            cross.chosen(ToolchainRole::CxxCompiler),
+            None,
+            "a escolha do kit padrao vazou para o cross"
+        );
+    }
+
+    /// `Some("")` LIMPA; `None` preserva. Sem isso, mexer no sysroot apagaria
+    /// o alvo — e o usuario so' descobriria no proximo build.
+    #[test]
+    fn absent_field_preserves_and_empty_clears() {
+        let root = temp_root("preserva");
+        set_kit(
+            &root,
+            &maquina(),
+            "",
+            Some("/opt/a"),
+            Some("x86_64-unknown-linux-gnu"),
+        )
+        .unwrap();
+
+        let so_sysroot = set_kit(&root, &maquina(), "", Some("/opt/b"), None).unwrap();
+        assert_eq!(so_sysroot.sysroot(), Some("/opt/b"));
+        assert_eq!(
+            so_sysroot.target_triple(),
+            Some("x86_64-unknown-linux-gnu"),
+            "campo ausente apagou o alvo"
+        );
+
+        let limpo = set_kit(&root, &maquina(), "", Some("  "), None).unwrap();
+        assert_eq!(limpo.sysroot(), None, "string em branco tinha que limpar");
     }
 }

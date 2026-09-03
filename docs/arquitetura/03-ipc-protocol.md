@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.66.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
+> (JSON-RPC 0.67.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
 > `draft.*`, `format.*`, `cmake.*`, `cargo.*`, `configAction.*`, `runConfig.*`,
 > `settings.*`, `debug.*`, `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
@@ -1160,6 +1160,48 @@ ao usuário um seletor sem efeito.
   existe no catálogo, ou que existe mas **não foi detectado nesta máquina**,
   responde `INVALID_PARAMS`: oferecer um compilador ausente é oferecer um
   configure que vai falhar.
+
+**A escolha passou a ser do KIT, não do workspace (protocolo `0.67.0`).** Um kit
+é um preset do CMake mais o que ele precisa para compilar: os executáveis por
+papel, o `sysroot` e o triple do alvo.
+
+```text
+toolchain.get  { preset? }                         -> ToolchainResult
+toolchain.set  { role, id?, preset? }              -> ToolchainResult
+toolchain.setKit { preset?, sysroot?, targetTriple? } -> ToolchainResult   NOVO
+```
+
+`preset` ausente é **o kit padrão do workspace** — que é exatamente o que o
+schema 1 do `.kinein/toolchain.json` guardava, e por isso a migração é direta:
+as seleções antigas viram o kit padrão **na leitura**, não na escrita. Migrar na
+leitura é o que impede a IDE de perder a escolha de quem abriu o projeto e não
+mexeu na toolchain.
+
+**Em `toolchain.setKit`, campo ausente NÃO é campo vazio.** Ausente preserva o
+valor atual; string vazia (ou só de espaços) limpa. Sem essa distinção, mexer no
+`sysroot` apagaria o `targetTriple` e o usuário só descobriria no próximo build.
+
+O que o kit vira, no build:
+
+```text
+sysroot        -> -DCMAKE_SYSROOT=<caminho>
+targetTriple   -> --target <triple>          (cargo: check, clippy e build)
+               -> -DCMAKE_SYSTEM_NAME=<...>  quando o triple é inequívoco
+               -> -DCMAKE_SYSTEM_PROCESSOR=<arch>
+```
+
+`CMAKE_SYSTEM_NAME` é o que faz o CMake entrar em modo cross; o sysroot sozinho
+não muda a decisão de compilador. **Triple que o mapa não conhece não vira
+palpite:** fica sem `CMAKE_SYSTEM_NAME`, e o caminho oficial para alvos exóticos
+continua sendo um `toolchainFile` do preset. O `--target` do cargo vale para
+check e clippy também — compilar para o alvo e checar para o host daria
+diagnóstico do host, que é pior que não ter porque parece certo.
+
+O resultado carrega `presetToolchainFile` quando o preset declara um
+`toolchainFile` (campo do schema de presets desde a versão 3 / CMake 3.21, com
+precedência sobre `CMAKE_TOOLCHAIN_FILE`). **É informação, não escolha:** quando
+ele existe, o compilador efetivo pode não ser o que o usuário escolheu aqui, e a
+IDE diz isso em vez de deixar procurar no lugar errado.
 - `candidates` traz só o que existe aqui. `Unix Makefiles` só aparece se o
   `make` existir — por isso ele entrou no `tools.detect` na mesma fatia.
 

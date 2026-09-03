@@ -5,6 +5,8 @@
 //! `--message-format=json`, CMake/compilers via the classic
 //! `file:line:column: level: message` format.
 
+mod parse;
+
 use std::{
     error::Error,
     fmt, io,
@@ -13,12 +15,11 @@ use std::{
     sync::{Arc, atomic::AtomicBool},
 };
 
-use kinein_protocol::{
-    BuildDiagnostic, BuildDiagnosticSeverity, ProjectKind, RigorProfile, ToolchainRole,
-};
+use kinein_protocol::{BuildDiagnostic, ProjectKind, RigorProfile, ToolchainRole};
+
+use parse::{parse_cargo_json_line, parse_gcc_like_line};
 
 use crate::toolchain::Toolchain;
-use serde::Deserialize;
 
 use crate::process::{self, ProcessError};
 
@@ -152,6 +153,17 @@ pub(crate) fn project_kind_name(kind: ProjectKind) -> String {
         .unwrap_or_else(|| format!("{kind:?}"))
 }
 
+/// Acrescenta `--target <triple>` quando o kit escolheu um alvo.
+///
+/// Vale para check, clippy e build: compilar o binario para o alvo e checar
+/// para o host daria diagnostico do host — que e' pior que nao ter, porque
+/// parece certo. Sem alvo escolhido nada muda e o cargo decide como sempre.
+fn aplica_alvo(command: &mut Command, toolchain: &Toolchain) {
+    if let Some(triple) = toolchain.target_triple() {
+        command.arg("--target").arg(triple);
+    }
+}
+
 /// Executavel de um papel da toolchain, caindo no nome nu quando nao ha
 /// escolha fixada — que e o padrao e mantem o `PATH` no comando.
 fn programa(toolchain: &Toolchain, role: ToolchainRole, padrao: &str) -> std::path::PathBuf {
@@ -200,6 +212,7 @@ pub fn run_cargo_check(
         .arg("--all-targets")
         .arg("--message-format=json")
         .current_dir(root);
+    aplica_alvo(&mut command, toolchain);
     stream_command(
         command,
         "cargo check",
@@ -231,6 +244,7 @@ pub fn run_quality(
                 .arg("--message-format=json")
                 .args(clippy_profile_args(profile))
                 .current_dir(root);
+            aplica_alvo(&mut command, toolchain);
             stream_command(
                 command,
                 "cargo clippy",
@@ -257,6 +271,7 @@ fn run_cargo_build(
         .arg("build")
         .arg("--message-format=json")
         .current_dir(root);
+    aplica_alvo(&mut command, toolchain);
     // Strict: warning vira erro no build do usuario (invalida o cache do
     // cargo ao trocar de perfil — aceito, ver docs-privada/diario/18 M4.5).
     if let Some(flags) = rust_build_rustflags(profile) {
@@ -366,186 +381,9 @@ fn stream_command(
     })
 }
 
-/// Parsed cargo JSON message: rendered text plus optional structured data.
-struct CargoParsed {
-    rendered: Option<String>,
-    structured: Option<BuildDiagnostic>,
-}
-
-#[derive(Deserialize)]
-struct CargoMessage {
-    reason: String,
-    message: Option<CargoCompilerMessage>,
-}
-
-#[derive(Deserialize)]
-struct CargoCompilerMessage {
-    level: String,
-    message: String,
-    rendered: Option<String>,
-    #[serde(default)]
-    spans: Vec<CargoSpan>,
-}
-
-#[derive(Deserialize)]
-struct CargoSpan {
-    file_name: String,
-    line_start: u64,
-    column_start: u64,
-    is_primary: bool,
-}
-
-fn parse_cargo_json_line(line: &str) -> Option<CargoParsed> {
-    let message = serde_json::from_str::<CargoMessage>(line).ok()?;
-    if message.reason != "compiler-message" {
-        return None;
-    }
-    let compiler_message = message.message?;
-
-    let severity = match compiler_message.level.as_str() {
-        "error" | "error: internal compiler error" => BuildDiagnosticSeverity::Error,
-        "warning" => BuildDiagnosticSeverity::Warning,
-        _ => {
-            return Some(CargoParsed {
-                rendered: compiler_message.rendered,
-                structured: None,
-            });
-        }
-    };
-
-    let primary_span = compiler_message
-        .spans
-        .iter()
-        .find(|span| span.is_primary)
-        .or_else(|| compiler_message.spans.first());
-
-    Some(CargoParsed {
-        rendered: compiler_message.rendered.clone(),
-        structured: Some(BuildDiagnostic {
-            severity,
-            message: compiler_message.message,
-            file: primary_span.map(|span| span.file_name.clone()),
-            line: primary_span.map(|span| span.line_start),
-            column: primary_span.map(|span| span.column_start),
-        }),
-    })
-}
-
-/// Parses `file:line[:column]: level: message` lines from compilers and `CMake`.
-fn parse_gcc_like_line(line: &str) -> Option<BuildDiagnostic> {
-    const MARKERS: [(&str, BuildDiagnosticSeverity); 4] = [
-        (": fatal error: ", BuildDiagnosticSeverity::Error),
-        (": error: ", BuildDiagnosticSeverity::Error),
-        (": warning: ", BuildDiagnosticSeverity::Warning),
-        (": note: ", BuildDiagnosticSeverity::Note),
-    ];
-
-    for (marker, severity) in MARKERS {
-        let Some(position) = line.find(marker) else {
-            continue;
-        };
-        let location = &line[..position];
-        let message = line[position + marker.len()..].trim().to_owned();
-        if message.is_empty() {
-            return None;
-        }
-
-        // Tenta arquivo:linha:coluna, depois arquivo:linha.
-        let mut pieces = location.rsplitn(3, ':');
-        let last = pieces.next()?;
-        let middle = pieces.next();
-        let head = pieces.next();
-
-        if let (Some(head), Some(middle)) = (head, middle) {
-            if let (Ok(line_number), Ok(column)) = (middle.parse::<u64>(), last.parse::<u64>()) {
-                return Some(BuildDiagnostic {
-                    severity,
-                    message,
-                    file: Some(head.to_owned()),
-                    line: Some(line_number),
-                    column: Some(column),
-                });
-            }
-        }
-
-        let mut pieces = location.rsplitn(2, ':');
-        let last = pieces.next()?;
-        let head = pieces.next();
-        if let (Some(head), Ok(line_number)) = (head, last.parse::<u64>()) {
-            return Some(BuildDiagnostic {
-                severity,
-                message,
-                file: Some(head.to_owned()),
-                line: Some(line_number),
-                column: None,
-            });
-        }
-
-        return Some(BuildDiagnostic {
-            severity,
-            message,
-            file: None,
-            line: None,
-            column: None,
-        });
-    }
-
-    None
-}
-
 #[cfg(test)]
 mod tests {
-    use kinein_protocol::BuildDiagnosticSeverity;
-
-    use super::{BuildEvent, parse_cargo_json_line, parse_gcc_like_line};
-
-    #[test]
-    fn gcc_line_with_column_is_parsed() {
-        let diagnostic =
-            parse_gcc_like_line("src/main.cpp:42:13: error: expected ';' after expression")
-                .unwrap();
-
-        assert_eq!(diagnostic.severity, BuildDiagnosticSeverity::Error);
-        assert_eq!(diagnostic.file.as_deref(), Some("src/main.cpp"));
-        assert_eq!(diagnostic.line, Some(42));
-        assert_eq!(diagnostic.column, Some(13));
-        assert!(diagnostic.message.contains("expected"));
-    }
-
-    #[test]
-    fn gcc_line_without_column_is_parsed() {
-        let diagnostic =
-            parse_gcc_like_line("CMakeLists.txt:7: error: unknown command foo").unwrap();
-
-        assert_eq!(diagnostic.file.as_deref(), Some("CMakeLists.txt"));
-        assert_eq!(diagnostic.line, Some(7));
-        assert_eq!(diagnostic.column, None);
-    }
-
-    #[test]
-    fn ordinary_lines_are_not_diagnostics() {
-        assert!(parse_gcc_like_line("[2/10] Building CXX object foo.o").is_none());
-        assert!(parse_gcc_like_line("Compiling kinein-core v0.1.0").is_none());
-    }
-
-    #[test]
-    fn cargo_compiler_message_becomes_diagnostic() {
-        let line = r#"{"reason":"compiler-message","message":{"level":"error","message":"mismatched types","rendered":"error[E0308]: mismatched types\n","spans":[{"file_name":"src/lib.rs","line_start":10,"column_start":5,"is_primary":true}]}}"#;
-
-        let parsed = parse_cargo_json_line(line).unwrap();
-        let diagnostic = parsed.structured.unwrap();
-
-        assert_eq!(diagnostic.severity, BuildDiagnosticSeverity::Error);
-        assert_eq!(diagnostic.file.as_deref(), Some("src/lib.rs"));
-        assert_eq!(diagnostic.line, Some(10));
-        assert!(parsed.rendered.unwrap().contains("E0308"));
-    }
-
-    #[test]
-    fn cargo_non_compiler_messages_are_ignored() {
-        assert!(parse_cargo_json_line(r#"{"reason":"build-finished","success":true}"#).is_none());
-        assert!(parse_cargo_json_line("nao e json").is_none());
-    }
+    use super::BuildEvent;
 
     #[cfg(unix)]
     #[test]

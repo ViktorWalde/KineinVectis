@@ -54,8 +54,8 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**115 métodos IPC** roteados, **19 domínios** no core, **437 testes** Rust
-verdes (medido em 2026-09-03). Protocolo `0.66.0`.
+**116 métodos IPC** roteados, **19 domínios** no core, **441 testes** Rust
+verdes (medido em 2026-09-03). Protocolo `0.67.0`.
 
 Domínios do core, por profundidade real:
 
@@ -98,10 +98,13 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       por tests/workspace.rs e tests/fs.rs desde 2026-08-29
 
             toolchain qual executavel cumpre cada papel (compilador C/C++,
-                      gerador, cmake, cargo) neste workspace, persistido em
+                      gerador, cmake, cargo), persistido em
                       .kinein/toolchain.json. Sem escolha, o PATH decide — o
                       comportamento historico. A escolha vira argumento de
-                      cmake e executavel do build (0.64.0)
+                      cmake e executavel do build (0.64.0). Desde 0.67.0 a
+                      escolha e' do KIT, nao do workspace: um kit e' um preset
+                      mais sysroot e triple do alvo, e o schema 1 migra para o
+                      kit padrao NA LEITURA, sem perder escolha de ninguem
 
             configaction  as 16 Configuration Actions da spec de MVP §12, com
                       preview e consentimento (0.63.0). Pasta desde que nasceu:

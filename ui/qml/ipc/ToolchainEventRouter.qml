@@ -16,8 +16,10 @@ Item {
     Connections {
         target: root.coreClient
 
-        function onToolchainResolved(selections, candidates) {
-            root.toolchainController.handleResolved(selections, candidates);
+        function onToolchainResolved(selections, candidates, preset, sysroot, targetTriple,
+                                     presetToolchainFile) {
+            root.toolchainController.handleResolved(selections, candidates, preset, sysroot,
+                                                    targetTriple, presetToolchainFile);
         }
 
         function onRequestFailed(method, message) {
