@@ -399,12 +399,27 @@ Continua sendo a etapa 18 do roadmap 34 e continua **ESTUDO**. As sete perguntas
 de [31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md)
 precisam de resposta antes de existir arquitetura.
 
-**A primeira pergunta colide com um invariante travado no gate:**
+**A primeira pergunta foi RESPONDIDA em 2026-09-03**, e o invariante fica de pé.
+
 `scripts/verificar-appimage.sh` reprova `ShaderEffect|QOpenGL|QRhi|QtQuick3D`
-porque o AppImage força renderer por software, e é isso que faz a IDE abrir em
-qualquer máquina. OpenGL na mesma janela quebra essa garantia **em silêncio** —
-o build passa. Ou a simulação roda em processo/janela separada, ou o invariante
-muda por decisão registrada e o AppImage passa a exigir GPU.
+porque o AppImage força renderer por software — é isso que faz a IDE abrir em
+qualquer máquina. **Decisão do autor: processo `kinein-sim` separado calcula e
+desenha; a IDE exibe o frame como IMAGEM 2D dentro do layout.**
+
+```text
+kinein-sim   calcula + OpenGL offscreen + le o framebuffer
+kinein-vectis  pinta a imagem 2D no layout — sem GPU, invariante intacto
+```
+
+**Visualmente embutido, GPU no outro processo.** Pintar imagem é 2D, e é a mesma
+forma que o terminal já usa (`event.terminal.render`: o core computa a grade, o
+QML desenha a ~30fps).
+
+**Embutir a JANELA do outro processo está fora**, e não por escolha: XEmbed é
+mecanismo do X11, e o Wayland rejeitou deliberadamente um equivalente. O autor
+usa Wayland (medido em 2026-09-03). Detalhe e os dois custos — o render não cabe
+no JSON-RPC, e ler o framebuffer é stall de pipeline — em
+[`roadmaps/31`](31-simulacao-fisica-matematica.md) §5.1.1.
 
 ## 7. FRENTE H — banco de dados e observabilidade
 
@@ -514,7 +529,10 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
 27  Temporal (TimescaleDB) e Grafana        §7.2. Grafana por HTTP API,
     por API                                nunca embutido.
 
-28  Responder as perguntas do roadmaps/31  §6 + roadmap 34 etapa 18.
+28  Simulacao: calculo sem tela            roadmaps/31 §5.7 passo 1. A §5.1
+    (o passo 1 da escada)                  ja foi respondida: kinein-sim
+                                           separado, IDE pinta imagem 2D.
+                                           Faltam as outras seis perguntas.
 
 29  Fase de polimento / pente-fino          §8. Comeca quando E, F, G e H
                                            estiverem documentadas e medidas.

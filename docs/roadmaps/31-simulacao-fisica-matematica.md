@@ -101,7 +101,11 @@ for tomada por acidente dentro de uma fatia.
 Cada uma está aqui porque a resposta **muda o desenho**, não porque é um detalhe
 a preencher depois. Nenhuma tem resposta hoje.
 
-### 5.1 Quem calcula, e onde o resultado é desenhado
+### 5.1 Quem calcula, e onde o resultado é desenhado — RESPONDIDA em 2026-09-03
+
+> **DECIDIDO: (ii) — processo `kinein-sim` separado calcula E desenha, e a IDE
+> exibe o frame como IMAGEM 2D dentro do layout.** Visualmente embutido, GPU no
+> outro processo, invariante do AppImage **intacto**. Detalhe em §5.1.1.
 
 Três formas, com custos diferentes:
 
@@ -119,6 +123,48 @@ Três formas, com custos diferentes:
 **O que decide não é gosto: é medição.** Qual o volume de dados por frame de uma
 simulação real do autor? Antes de escrever qualquer coisa, esse número existe ou
 não existe.
+
+### 5.1.1 Como "processo separado" e "visualmente embutido" convivem
+
+Pergunta do autor em 2026-09-03: *dá para ser processo separado mas visualmente
+dentro da IDE?* **Dá — e não pelo caminho óbvio.**
+
+**O caminho óbvio está fechado.** Embutir a janela de outro processo é XEmbed,
+que é mecanismo do X11 (reparenting). **Wayland rejeitou deliberadamente** um
+equivalente; a orientação é "escreva um compositor embutido". As alternativas —
+`wl_subsurface` e `xdg-foreign` — ou exigem que a IDE **seja** um compositor, ou
+só definem parentesco entre janelas de topo, sem embutir num layout. O autor usa
+Wayland (`XDG_SESSION_TYPE=wayland`, medido em 2026-09-03), então esse caminho
+não serve nem em teoria nem na prática.
+
+**O caminho que funciona:**
+
+```text
+kinein-sim (processo)            kinein-vectis (IDE)
+  calcula                          recebe o frame PRONTO
+  desenha OpenGL OFFSCREEN   -->   pinta como IMAGEM 2D no layout
+  le o framebuffer                 sem GPU, sem QRhi, sem ShaderEffect
+```
+
+**Pintar imagem é 2D**, e por isso o invariante sobrevive: a GPU está no *outro*
+processo. E a forma não é nova aqui — **é a do terminal**: o core computa a
+grade, emite `event.terminal.render` a ~30fps, o QML desenha. "Backend calcula,
+UI pinta 2D" é idioma existente.
+
+**Os dois custos, ditos de frente:**
+
+1. **O render não passa pelo JSON-RPC.** Um frame 1920×1080 RGBA é ~8 MB; a
+   30fps, ~250 MB/s. A grade do terminal é minúscula em comparação. Isso exige
+   um **segundo canal — memória compartilhada** — ao lado do protocolo de linha,
+   e o `arquitetura/04` §1 diz que stdout é o canal de dados e nada mais escreve
+   ali. É adição arquitetural real, não detalhe.
+2. **Ler o framebuffer da GPU é um stall de pipeline** no processo da simulação.
+
+**E o que muda o cálculo inteiro:** simulação física/matemática raramente precisa
+de 60fps contínuo. Se o render for **sob demanda** — o usuário rotaciona, muda um
+parâmetro, e só então redesenha —, o custo por frame deixa de importar e a
+memória compartilhada pode nem ser necessária. **É esse o número que a medição
+da §5.1 tem que produzir antes de escolher o transporte.**
 
 ### 5.2 O que é, exatamente, um "conceito matemático/físico selecionado"
 
