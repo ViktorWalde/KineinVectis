@@ -246,6 +246,7 @@ material interno de desenvolvimento e não integram a documentação pública.
 | --- | --- |
 | [../docs-privada/ContextoIA.md](../docs-privada/ContextoIA.md) | **LOG datado.** Responde "por que isto é assim?"; nunca "o que existe hoje?" |
 | [../docs-privada/diario/18-daily-driver-plan.md](../docs-privada/diario/18-daily-driver-plan.md) | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. Registro de processo, não contrato |
+| [../docs-privada/diario/19-registro-de-saidas.md](../docs-privada/diario/19-registro-de-saidas.md) | **Registro de saídas do dogfooding** (2026-09-03): cada saída da Kinein para outra ferramenta, com reprodução mínima. É o que ordena a frente C do `roadmaps/34` por dor real — entrada sem reprodução não conta |
 | [../docs-privada/prompts/](../docs-privada/prompts/) | Prompts de bootstrap para retomada em terminal |
 
 ## docs-legada/ — superado ou cancelado (não implementar a partir daqui)

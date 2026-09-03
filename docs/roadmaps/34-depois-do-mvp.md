@@ -165,19 +165,35 @@ corte por responsabilidade.
 
 ## 4. FRENTE B — o atrito diário (TR1)
 
-### 4.1 O registro de saídas NÃO EXISTE
+### 4.1 O registro de saídas — CRIADO em 2026-09-03
 
 O `GUIAIA.md` §2 define o protocolo: ao ouvir *"estou no Kinein"*, registrar cada
 saída para outra ferramenta com **motivo exato, projeto/arquivo, ação que
 faltou, impacto e reprodução mínima**. O gatilho já foi recebido (PONTO_ATUAL
-§0), e o que existe é **prosa de sessão**, não uma lista consultável.
+§0). O protocolo existia; **o artefato não** — o que havia era prosa de sessão,
+que não se consulta.
 
-**Medir:** não há artefato. `ls docs*/` não mostra nenhum registro de saídas.
+**Artefato:** `docs-privada/diario/19-registro-de-saidas.md` (etapa 12).
+Append-only, com o formato de entrada, a ordem de prioridade do `GUIAIA.md` §2 e
+a regra de que **entrada sem reprodução mínima não conta**.
 
-A fatia é pequena e desbloqueia toda a frente C: um arquivo append-only
-(`docs-privada/diario/` é o lugar natural) com uma linha por saída, e a regra de
-que **entrada sem reprodução mínima não conta**. Sem isso, "o que falta na IDE" é
-opinião.
+**Medir:** `ls docs-privada/diario/19-registro-de-saidas.md` e contar as entradas
+sob "## Entradas".
+
+**O que a criação mediu, e não era o esperado: ZERO saídas registradas.** A prosa
+do PONTO_ATUAL §0 registra **regressões dentro da Kinein** (scrollback do
+Assistente, resize, faixa da entrada, caret, verde do prompt) — e regressão não é
+saída: é bug, foi tratada nas correções 0.52/0.56/0.57, e o único item ainda
+aberto tem dono em `roadmaps/26`. Zero saídas **não** quer dizer que a IDE
+substituiu o VS Code; quer dizer que o dogfooding até aqui exercitou o
+**Assistente/terminal**, não o ciclo completo de desenvolvimento. O critério do
+TR1 é uma semana de C/C++ e Rust sem abrir outro editor, e essa semana não
+aconteceu.
+
+**Consequência para a frente C, e é o ponto todo:** ela continua **sem critério
+de ordenação por dor real**. O registro agora existe e está pronto, mas só
+produz o critério quando tiver entradas. Ordenar a frente C hoje ainda é
+palpite — a diferença é que agora isso está medido em vez de suposto.
 
 ### 4.2 O que está medidamente ausente hoje
 
@@ -265,8 +281,14 @@ tem um custo escrito acima.
                                            Produziu o 15o gate: verificar-qml-
                                            propriedades.sh (arquitetura/32 §8.6).
 
-12  Registro de saidas do dogfooding       §4.1. Pequeno, e ordena a frente C
-    (§4.1)                                 inteira. Sem ele, o resto e' palpite.
+12  Registro de saidas do dogfooding       FEITA em 2026-09-03: docs-privada/
+    (§4.1)                                 diario/19-registro-de-saidas.md.
+                                           Nasceu com ZERO entradas, e isso e'
+                                           medicao, nao lacuna: a prosa do
+                                           PONTO_ATUAL §0 era regressao, nao
+                                           saida. A frente C SEGUE sem criterio
+                                           de ordenacao ate' a primeira entrada
+                                           real — agora medido, nao suposto.
 
 13  handlers/lsp.rs: handler volta a ser   §3.1. Violacao de REGRA; nao precisa
     fino                                   esperar fatia funcional.

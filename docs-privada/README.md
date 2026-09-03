@@ -11,6 +11,10 @@ ContextoIA.md    LOG datado, append-only. Responde "POR QUE isto ficou assim?".
                  NAO responde "o que existe hoje?" — isso se mede no codigo.
 diario/          Registro de sessoes: marcos de dogfooding, decisoes por sessao
                  e a escada de rigor. Processo, nao contrato.
+  18-daily-driver-plan.md    as fatias e a escada de rigor.
+  19-registro-de-saidas.md   append-only: cada SAIDA da Kinein para outra
+                 ferramenta, com reproducao minima. E' o que ordena a frente C
+                 do roadmaps/34 por dor real. Entrada sem reproducao nao conta.
 prompts/         Bootstrap de retomada em terminal.
 ```
 
