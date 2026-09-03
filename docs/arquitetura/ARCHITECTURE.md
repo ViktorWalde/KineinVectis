@@ -257,6 +257,19 @@ EM ABERTO — 23 arquivos no baseline. Os maiores bloqueiam a propria area:
   editor_highlighter.cpp  910 (500)
   core_client_dispatch.cpp 804 (500)   a §5 ja manda dividir por dominio
   ShellWorkspaceHost.qml  576 (400)    composition host: cortar por area
+
+Onde esses cinco estao em 2026-09-02 (a fonte viva continua sendo a baseline):
+  terminal.rs              PAGO em 2026-08-30 — virou pasta, saiu da catraca
+  core_client_dispatch.cpp 804 -> 640 — os dominios `cmake`, `configaction`,
+                           `toolchain` e `lsp` foram para arquivos proprios
+  EditorController.qml     1070 -> 791, com quatro donos novos. Continua em
+                           debito, e o que sobrou e FACHADA, nao implementacao:
+                           ver `32-editor-por-responsabilidade.md` §8, que
+                           registra a decisao ainda NAO tomada e o custo medido
+                           das duas saidas
+  editor_highlighter.cpp   910 — intocado
+  ShellWorkspaceHost.qml   576 — intocado, e agora e ele quem segura a proxima
+                           fatia do editor (le 92 propriedades do controller)
 ```
 
 O `CoreClient` preserva a API QML única, com a implementação C++ fatiada em

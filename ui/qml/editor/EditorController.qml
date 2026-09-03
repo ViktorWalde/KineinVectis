@@ -14,7 +14,7 @@ Item {
     property alias filesModel: documents.filesModel
     property alias recentFiles: documents.recentFiles
     property alias completionModel: completionController.completionModel
-    property alias usagesModel: usagesItemsModel
+    property alias usagesModel: language.usagesModel
     property alias currentTab: documents.currentTab
     property alias externalConflict: documents.currentExternalConflict
     property alias externalDeleted: documents.currentExternalDeleted
@@ -27,20 +27,20 @@ Item {
     // false sob pai invisível. Era essa a causa do popup nunca abrir.
     property alias completionVisible: completionController.popupVisible
     property alias completionIndex: completionController.index
-    property bool hoverVisible: false
-    property string hoverText: ""
-    property bool usagesVisible: false
-    property bool renameDialogVisible: false
-    property string renameError: ""
-    property bool workspaceEditPreviewVisible: false
-    property string workspaceEditTransactionId: ""
-    property string workspaceEditTitle: ""
-    property var workspaceEditFiles: []
-    property int workspaceEditCount: 0
-    property string workspaceEditError: ""
-    property alias actionsModel: actionsItemsModel
-    property bool actionsVisible: false
-    property int actionsIndex: 0
+    property alias hoverVisible: language.hoverVisible
+    property alias hoverText: language.hoverText
+    property alias usagesVisible: language.usagesVisible
+    property alias renameDialogVisible: language.renameDialogVisible
+    property alias renameError: language.renameError
+    property alias workspaceEditPreviewVisible: language.workspaceEditPreviewVisible
+    property alias workspaceEditTransactionId: language.workspaceEditTransactionId
+    property alias workspaceEditTitle: language.workspaceEditTitle
+    property alias workspaceEditFiles: language.workspaceEditFiles
+    property alias workspaceEditCount: language.workspaceEditCount
+    property alias workspaceEditError: language.workspaceEditError
+    property alias actionsModel: language.actionsModel
+    property alias actionsVisible: language.actionsVisible
+    property alias actionsIndex: language.actionsIndex
     property bool goToLineVisible: false
     // D1b (docs/roadmaps/24): Find/Replace no arquivo. Mesma regra do D1 — alias para
     // a property PRÓPRIA do controller, nunca para o `visible` do Item.
@@ -54,12 +54,17 @@ Item {
     property alias findInvalidRegex: findController.invalidRegex
     property alias findMatchCount: findController.matchCount
     property alias findCurrentDisplay: findController.currentDisplay
-    property int syntaxVersion: 0
-    property int semanticVersion: 0
-    property string syntaxLanguage: "plain"
-    property bool syntaxHasErrors: false
-    property var syntaxOutline: []
-    property var syntaxLocals: []
+    property alias syntaxVersion: highlight.syntaxVersion
+    property alias semanticVersion: highlight.semanticVersion
+    property alias syntaxLanguage: highlight.syntaxLanguage
+    property alias syntaxHasErrors: highlight.syntaxHasErrors
+    property alias syntaxOutline: highlight.syntaxOutline
+    property alias syntaxLocals: highlight.syntaxLocals
+    // O dono da camada de linguagem, exposto por nome: os roteadores IPC falam
+    // com ELE, nao com um repasse daqui. Fachada de pass-through foi
+    // justamente o que engordou este arquivo ate 1.070 linhas.
+    readonly property alias language: language
+    readonly property alias highlight: highlight
 
     signal readFileRequested(string path)
     signal writeFileRequested(string path, string content, string expectedContent)
@@ -68,34 +73,13 @@ Item {
     signal draftClearRequested(string path)
     signal formatRequested(string path, string content)
     signal fileChangedNotificationRequested(string path, string content)
-    signal semanticTokensRequested(string path, string content, int version)
-    signal syntaxTreeRequested(string path, string content, int version)
-    signal switchSourceHeaderRequested(string path, string content)
-    signal definitionRequested(string path, string content, int line, int column)
-    signal hoverRequested(string path, string content, int line, int column)
     signal completionRequested(string path, string content, int line, int column)
-    signal referencesRequested(string path, string content, int line, int column)
-    signal renameRequested(string path, string content, int line, int column,
-                           string newName)
-    signal renameDialogOpenRequested(string currentName)
-    signal codeActionsRequested(string path, string content, int line, int column)
-    signal codeActionApplyRequested(string path, string content, int actionIndex)
-    signal workspaceEditApplyRequested(string transactionId)
-    signal workspaceEditCancelRequested(string transactionId)
     signal saveSessionRequested(var files, string activeFile)
     signal goToLineDialogOpenRequested(string prefill)
     // D1b: a barra abriu — a UI precisa focar o campo de busca.
     signal findBarOpenRequested()
 
     visible: false
-
-    ListModel {
-        id: usagesItemsModel
-    }
-
-    ListModel {
-        id: actionsItemsModel
-    }
 
     EditorSurfaceBridge {
         id: surfaceBridge
@@ -135,6 +119,67 @@ Item {
         localItems: root.syntaxLocals
         onCompletionRequested: function(path, content, line, column) {
             root.completionRequested(path, content, line, column);
+        }
+    }
+
+    // Camada de linguagem (LSP + Tree-sitter). Extraida em 2026-09-02: era o
+    // que este arquivo AINDA implementava inline, enquanto ja delegava
+    // documentos, texto, completion e find.
+    EditorLanguageController {
+        id: language
+
+        surfaceBridge: surfaceBridge
+        documentController: documents
+        textController: textController
+        completionController: completionController
+        editorSurface: root.editorSurface
+        onFocusEditorRequested: root.focusEditor()
+    }
+
+    // Realce: Tree-sitter e semantic tokens, com os dois relogios de versao.
+    // Separado do `language` porque persegue a DIGITACAO, e nao um gesto.
+    EditorHighlightController {
+        id: highlight
+
+        surfaceBridge: surfaceBridge
+        documentController: documents
+        editorSurface: root.editorSurface
+    }
+
+    // Formatacao e a maquina de estados do format-on-save.
+    // O que o editor lembra entre sessoes: abas abertas e rascunho nao salvo.
+    EditorPersistenceController {
+        id: persistence
+
+        workspaceRoot: root.workspaceRoot
+        surfaceBridge: surfaceBridge
+        documentController: documents
+        filesModel: documents.filesModel
+        onReadFileRequested: function(path) {
+            root.readFileRequested(path);
+        }
+        onDraftSaveRequested: function(path, content) {
+            root.draftSaveRequested(path, content);
+        }
+        onSaveSessionRequested: function(files, activeFile) {
+            root.saveSessionRequested(files, activeFile);
+        }
+    }
+
+    EditorFormatController {
+        id: format
+
+        surfaceBridge: surfaceBridge
+        documentController: documents
+        completionController: completionController
+        settingsController: root.settingsController
+        editorSurface: root.editorSurface
+        onFormatRequested: function(path, content) {
+            root.formatRequested(path, content);
+        }
+        onDismissOverlaysRequested: {
+            completionController.dismiss();
+            language.hoverVisible = false;
         }
     }
 
@@ -248,27 +293,16 @@ Item {
         surfaceBridge.focusEditor();
     }
 
+    // Cada dono limpa o SEU estado; este arquivo so limpa o que e dele
+    // (format-on-save pendente e o aviso do watcher).
     function clear() {
         documents.clear();
         completionController.clear();
         findController.close();
-        hoverText = "";
-        hoverVisible = false;
-        usagesVisible = false;
-        usagesItemsModel.clear();
-        renameDialogVisible = false;
-        renameError = "";
-        resetWorkspaceEditPreview();
-        dismissActions();
-        pendingSaveAfterFormat = false;
-        pendingSaveAllQueue = [];
-        pendingSaveAllItem = null;
+        language.clear();
+        highlight.clear();
+        format.clear();
         watchError = "";
-        syntaxVersion++;
-        syntaxLanguage = "plain";
-        syntaxHasErrors = false;
-        syntaxOutline = [];
-        syntaxLocals = [];
     }
 
     function storeCurrentEditor() {
@@ -296,124 +330,47 @@ Item {
         documents.closeTab(index);
     }
 
-    // M4.1: format-on-save. Ctrl+S formata e SÓ ENTÃO salva. Assíncrono
-    // robusto: pendingSaveAfterFormat salva no resolved E no failed do
-    // format.text (servidor ausente/timeout não trava o save).
-    property bool pendingSaveAfterFormat: false
-    property var pendingSaveAllQueue: []
-    property var pendingSaveAllItem: null
-
-    // Catálogo de formatters publicado pelo core (`format.capabilities`,
-    // protocolo 0.61.0). A UI **não decide** o que é formatável.
+    // --- Formatação e format-on-save -----------------------------------
     //
-    // Até 0.60 havia duas listas escritas à mão aqui — `formattableLanguage()`
-    // por linguagem (2 itens) e `formattablePath()` por extensão (9 itens) — que
-    // nem concordavam entre si, enquanto o core já era a autoridade via
-    // `format::formatter_for_path`. Duas fontes para a mesma verdade divergem
-    // por construção; adicionar linguagem exigia editar QML. Agora o core
-    // publica e isto só consome.
-    //
-    // Vazio até o catálogo chegar: não formatar por não saber ainda é o
-    // comportamento seguro — salvar nunca fica bloqueado por isso.
-    property var formatterExtensions: []
+    // A maquina de estados (fila do salvar-tudo, salvar depois do format e a
+    // perna do FRACASSO) mora no `EditorFormatController`. Aqui so o repasse.
+    property alias pendingSaveAfterFormat: format.pendingSaveAfterFormat
+    property alias formatterExtensions: format.formatterExtensions
 
     function applyFormatCapabilities(formatters) {
-        const extensions = [];
-        for (let i = 0; i < formatters.length; i++) {
-            const lista = formatters[i].extensions || [];
-            for (let j = 0; j < lista.length; j++) {
-                extensions.push(String(lista[j]).toLowerCase());
-            }
-        }
-        formatterExtensions = extensions;
+        format.applyFormatCapabilities(formatters);
     }
 
     function formatOnSaveEnabled() {
-        return settingsController !== null && settingsController.formatOnSave;
+        return format.formatOnSaveEnabled();
+    }
+
+    function formattablePath(path) {
+        return format.formattablePath(path);
     }
 
     function saveCurrentFile() {
-        if (pendingSaveAllItem !== null || pendingSaveAllQueue.length > 0) {
-            return;
-        }
-        if (formatOnSaveEnabled() && editableFileOpen()
-                && formattablePath(documents.currentFilePath())) {
-            pendingSaveAfterFormat = true;
-            formatCurrentFile();
-            return;
-        }
-        documents.saveCurrentFile();
-    }
-
-    // Única pergunta de formatabilidade da UI, respondida pelo catálogo do
-    // core. Antes existiam duas, com listas diferentes.
-    function formattablePath(path) {
-        const ponto = path.lastIndexOf(".");
-        const barra = path.lastIndexOf("/");
-        if (ponto <= barra + 1) {
-            return false;   // sem extensão ("Makefile", ".bashrc")
-        }
-        return formatterExtensions.indexOf(
-            path.substring(ponto + 1).toLowerCase()) >= 0;
+        format.saveCurrentFile();
     }
 
     function saveAllFiles() {
-        if (pendingSaveAllItem !== null || pendingSaveAllQueue.length > 0) {
-            return;
-        }
-        if (!formatOnSaveEnabled()) {
-            documents.saveAllFiles();
-            return;
-        }
-        pendingSaveAllQueue = documents.modifiedDocuments();
-        continueSaveAll();
+        format.saveAllFiles();
     }
 
     function hasModifiedFiles() {
-        return documents.modifiedDocuments().length > 0;
+        return format.hasModifiedFiles();
     }
 
     function continueSaveAll() {
-        while (pendingSaveAllQueue.length > 0) {
-            const item = pendingSaveAllQueue[0];
-            pendingSaveAllQueue = pendingSaveAllQueue.slice(1);
-            if (formattablePath(item.path)) {
-                pendingSaveAllItem = item;
-                formatRequested(item.path, item.content);
-                return;
-            }
-            documents.saveDocumentSnapshot(item.path, item.content, item.content);
-        }
-        pendingSaveAllItem = null;
+        format.continueSaveAll();
     }
 
     function formatCurrentFile() {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        completionController.dismiss();
-        hoverVisible = false;
-        formatRequested(path, surfaceBridge.text());
+        format.formatCurrentFile();
     }
 
     function handleFormatResolved(path, text, changed) {
-        if (pendingSaveAllItem !== null && pendingSaveAllItem.path === path) {
-            const item = pendingSaveAllItem;
-            pendingSaveAllItem = null;
-            documents.saveDocumentSnapshot(path, item.content, text);
-            continueSaveAll();
-            return;
-        }
-        if (editorReady() && path === currentFilePath() && changed) {
-            const cursor = editorSurface.cursorPosition;
-            editorSurface.text = text;
-            editorSurface.cursorPosition = Math.min(cursor, text.length);
-        }
-        if (pendingSaveAfterFormat) {
-            pendingSaveAfterFormat = false;
-            documents.saveCurrentFile();
-        }
+        format.handleFormatResolved(path, text, changed);
     }
 
     function applyPathRenameToTabs(from, to) {
@@ -432,27 +389,122 @@ Item {
         return documents.currentFilePath();
     }
 
+    // --- Camada de linguagem -------------------------------------------
+    //
+    // Repasse DELIBERADO e curto: os chamadores externos (paleta de comandos,
+    // atalhos globais, EditorPane) falam com o editor, e quebrar isso agora
+    // trocaria um arquivo grande por dezenas de call sites reescritos sem
+    // ninguem ficar mais claro. O que saiu daqui foi a IMPLEMENTACAO — 26
+    // funcoes, 12 sinais, dois models e dois timers —, nao o nome do gesto.
+    // Quem quiser o dono direto usa `editorController.language`.
     function requestDefinition() {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        hoverVisible = false;
-        const position = textController.cursorLineColumn();
-        definitionRequested(path, surfaceBridge.text(), position.line, position.column);
+        language.requestDefinition();
     }
 
     function requestHover() {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        const position = textController.cursorLineColumn();
-        hoverRequested(path, surfaceBridge.text(), position.line, position.column);
+        language.requestHover();
+    }
+
+    function handleHoverResolved(content) {
+        language.handleHoverResolved(content);
+    }
+
+    function requestUsages() {
+        language.requestUsages();
+    }
+
+    function handleReferencesResolved(references) {
+        language.handleReferencesResolved(references);
+    }
+
+    function requestSwitchSourceHeader() {
+        language.requestSwitchSourceHeader();
+    }
+
+    function handleSwitchSourceHeader(path) {
+        language.handleSwitchSourceHeader(path);
+    }
+
+    function requestCodeActions() {
+        language.requestCodeActions();
+    }
+
+    function handleCodeActionsResolved(actions) {
+        language.handleCodeActionsResolved(actions);
+    }
+
+    function moveActions(delta) {
+        language.moveActions(delta);
+    }
+
+    function applyCodeAction(index) {
+        language.applyCodeAction(index);
+    }
+
+    function applySelectedAction() {
+        language.applySelectedAction();
+    }
+
+    function dismissActions() {
+        language.dismissActions();
+    }
+
+    function openRenameDialog() {
+        language.openRenameDialog();
+    }
+
+    function confirmRename(name) {
+        language.confirmRename(name);
+    }
+
+    function handleRenameApplied(files) {
+        language.handleRenameApplied(files);
+    }
+
+    function handleWorkspaceEditPreview(transactionId, title, files, edits) {
+        language.handleWorkspaceEditPreview(transactionId, title, files, edits);
+    }
+
+    function applyWorkspaceEdit() {
+        language.applyWorkspaceEdit();
+    }
+
+    function cancelWorkspaceEdit() {
+        language.cancelWorkspaceEdit();
+    }
+
+    function handleWorkspaceEditApplied(files) {
+        language.handleWorkspaceEditApplied(files);
+    }
+
+    function handleWorkspaceEditCancelled() {
+        language.handleWorkspaceEditCancelled();
+    }
+
+    function resetWorkspaceEditPreview() {
+        language.resetWorkspaceEditPreview();
+    }
+
+    function refreshSemanticTokens() {
+        highlight.refreshSemanticTokens();
+    }
+
+    function handleSemanticTokensResolved(path, version, tokens) {
+        highlight.handleSemanticTokensResolved(path, version, tokens);
+    }
+
+    function refreshSyntaxTree() {
+        highlight.refreshSyntaxTree();
+    }
+
+    function handleSyntaxTreeResolved(path, version, syntaxLanguageId, hasErrors,
+                                      highlights, foldingRanges, outline, locals) {
+        highlight.handleSyntaxTreeResolved(path, version, syntaxLanguageId, hasErrors,
+                                           highlights, foldingRanges, outline, locals);
     }
 
     function requestCompletion() {
-        hoverVisible = false;
+        language.hoverVisible = false;
         completionController.requestCompletion();
     }
 
@@ -464,218 +516,24 @@ Item {
         completionController.move(delta);
     }
 
-    function refreshSemanticTokens() {
-        const path = currentFilePath();
-        semanticVersion++;
-        if (path === "" || !editorReady()) {
-            if (editorReady()) {
-                editorSurface.clearSemanticTokens();
-            }
-            return;
-        }
-        semanticTokensRequested(path, surfaceBridge.text(), semanticVersion);
+    function handleCompletionResolved(items, isIncomplete) {
+        completionController.handleResolved(items, isIncomplete);
     }
 
-    function refreshSyntaxTree() {
-        const path = currentFilePath();
-        syntaxVersion++;
-        if (path === "" || !editorReady()) {
-            syntaxLanguage = "plain";
-            syntaxHasErrors = false;
-            syntaxOutline = [];
-            syntaxLocals = [];
-            if (editorReady()) {
-                editorSurface.setSyntaxSnapshot([], []);
-            }
-            return;
-        }
-        syntaxTreeRequested(path, surfaceBridge.text(), syntaxVersion);
-    }
-
-    // T1: alterna header/source (clangd). O core valida a linguagem;
-    // pedir num arquivo não-C/C++ apenas devolve INVALID_PARAMS.
-    function requestSwitchSourceHeader() {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        switchSourceHeaderRequested(path, surfaceBridge.text());
-    }
-
-    function handleSwitchSourceHeader(path) {
-        // path vazio = clangd não achou contraparte; sem primitiva de
-        // aviso discreto ainda (radar docs-privada/diario/18), o v1 apenas não navega.
-        if (path !== "") {
-            documents.openDiagnostic(path, 1, 1);
-        }
-    }
-
-    function requestUsages() {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        hoverVisible = false;
-        const position = textController.cursorLineColumn();
-        referencesRequested(path, surfaceBridge.text(), position.line, position.column);
-    }
-
-    function requestCodeActions() {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        completionController.dismiss();
-        hoverVisible = false;
-        const position = textController.cursorLineColumn();
-        codeActionsRequested(path, surfaceBridge.text(), position.line, position.column);
-    }
-
-    function handleCodeActionsResolved(actions) {
-        actionsItemsModel.clear();
-        for (let i = 0; i < actions.length; i++) {
-            actionsItemsModel.append({
-                title: actions[i].title,
-                kind: actions[i].kind !== undefined ? actions[i].kind : ""
-            });
-        }
-        actionsIndex = 0;
-        actionsVisible = true;
-    }
-
-    function moveActions(delta) {
-        if (actionsItemsModel.count === 0) {
-            return;
-        }
-        const next = actionsIndex + delta;
-        actionsIndex = Math.max(0, Math.min(actionsItemsModel.count - 1, next));
-    }
-
-    function applyCodeAction(index) {
-        const path = currentFilePath();
-        if (!actionsVisible || path === "" || !editorReady()) {
-            return;
-        }
-        if (index < 0 || index >= actionsItemsModel.count) {
-            dismissActions();
-            return;
-        }
-        actionsVisible = false;
-        codeActionApplyRequested(path, surfaceBridge.text(), index);
-    }
-
-    function applySelectedAction() {
-        applyCodeAction(actionsIndex);
-    }
-
-    function dismissActions() {
-        actionsVisible = false;
-        actionsItemsModel.clear();
-    }
-
-    function handleWorkspaceEditPreview(transactionId, title, files, edits) {
-        workspaceEditTransactionId = transactionId;
-        workspaceEditTitle = title;
-        workspaceEditFiles = files;
-        workspaceEditCount = edits;
-        workspaceEditError = "";
-        workspaceEditPreviewVisible = true;
-    }
-
-    function applyWorkspaceEdit() {
-        if (workspaceEditTransactionId === "") {
-            return;
-        }
-        workspaceEditError = "";
-        workspaceEditApplyRequested(workspaceEditTransactionId);
-    }
-
-    function cancelWorkspaceEdit() {
-        if (workspaceEditTransactionId === "") {
-            resetWorkspaceEditPreview();
-            focusEditor();
-            return;
-        }
-        workspaceEditCancelRequested(workspaceEditTransactionId);
-    }
-
-    function handleWorkspaceEditApplied(files) {
-        resetWorkspaceEditPreview();
-        handleRenameApplied(files);
-        focusEditor();
-    }
-
-    function handleWorkspaceEditCancelled() {
-        resetWorkspaceEditPreview();
-        focusEditor();
-    }
-
-    function resetWorkspaceEditPreview() {
-        workspaceEditPreviewVisible = false;
-        workspaceEditTransactionId = "";
-        workspaceEditTitle = "";
-        workspaceEditFiles = [];
-        workspaceEditCount = 0;
-        workspaceEditError = "";
-    }
-
+    // --- Sessao e rascunho ---------------------------------------------
+    //
+    // As duas redes (abas abertas e buffer nao salvo) tem dono proprio no
+    // `EditorPersistenceController`, que explica no topo por que elas sao
+    // diferentes: sessao sobrevive a fechamento normal, rascunho so a CRASH.
     function restoreSession(files, activeFile) {
-        for (let i = 0; i < files.length; i++) {
-            if (files[i] !== activeFile) {
-                readFileRequested(files[i]);
-            }
-        }
-        // A ativa vai por ultimo: o core responde em ordem e cada load
-        // seleciona a propria aba, entao a ultima carregada fica ativa.
-        for (let i = 0; i < files.length; i++) {
-            if (files[i] === activeFile) {
-                readFileRequested(files[i]);
-                break;
-            }
-        }
+        persistence.restoreSession(files, activeFile);
     }
 
     function scheduleSessionSave() {
-        if (workspaceRoot === "") {
-            return;
-        }
-        sessionSaveDebounce.restart();
+        persistence.scheduleSessionSave();
     }
 
-    onCurrentTabChanged: scheduleSessionSave()
-
-    function openRenameDialog() {
-        if (currentFilePath() === "") {
-            return;
-        }
-        completionController.dismiss();
-        hoverVisible = false;
-        renameError = "";
-        renameDialogVisible = true;
-        renameDialogOpenRequested(textController.currentWord());
-    }
-
-    function confirmRename(name) {
-        const path = currentFilePath();
-        if (path === "" || !editorReady()) {
-            return;
-        }
-        if (name === "") {
-            renameError = qsTr("Informe um novo nome.");
-            return;
-        }
-        for (let i = 0; i < filesModel.count; i++) {
-            if (i !== currentTab && filesModel.get(i).modified) {
-                renameError =
-                        qsTr("Salve as outras abas modificadas antes de renomear.");
-                return;
-            }
-        }
-        const position = textController.cursorLineColumn();
-        renameDialogVisible = false;
-        focusEditor();
-        renameRequested(path, surfaceBridge.text(), position.line, position.column, name);
-    }
+    onCurrentTabChanged: persistence.scheduleSessionSave()
 
     function editableFileOpen() {
         return currentFilePath() !== "" && editorReady();
@@ -808,16 +666,13 @@ Item {
 
     function handleTextEdited(text) {
         if (!surfaceBridge.loadingText && documents.markCurrentModified(text)) {
-            // Invalida imediatamente respostas iniciadas para o snapshot
-            // anterior. Semantic tokens antigos também saem da pintura até o
-            // LSP responder; Tree-sitter continua como fallback estrutural.
-            semanticVersion++;
-            syntaxVersion++;
-            editorSurface.clearSemanticTokens();
-            hoverVisible = false;
+            // Cada dono reage a edicao com o que e dele. Este arquivo so
+            // ORQUESTRA: quem invalida realce e o `highlight`, quem esconde o
+            // hover e o `language`, quem agenda rascunho e o `persistence`.
+            highlight.invalidateForEdit();
+            language.hoverVisible = false;
             changeDebounce.restart();
-            syntaxDebounce.restart();
-            autosaveDebounce.restart(); // M-S1: persiste o buffer sujo em breve.
+            persistence.scheduleDraftSave(); // M-S1: rascunho do buffer sujo.
             completionController.handleTextEdited();
             // D1b: o texto mudou → os offsets dos matches envelheceram.
             // Debounce para não revarrer o arquivo a cada tecla.
@@ -885,39 +740,6 @@ Item {
         watchError = "";
     }
 
-    function handleHoverResolved(content) {
-        const text = content.trim();
-        if (text === "") {
-            hoverVisible = false;
-            hoverText = "";
-            return;
-        }
-        hoverText = text;
-        hoverVisible = true;
-        hoverHideTimer.restart();
-    }
-
-    function handleSemanticTokensResolved(path, version, tokens) {
-        if (path !== currentFilePath() || Number(version) !== semanticVersion
-                || !editorReady()) {
-            return;
-        }
-        editorSurface.setSemanticTokens(tokens);
-    }
-
-    function handleSyntaxTreeResolved(path, version, language, hasErrors,
-                                      highlights, foldingRanges, outline, locals) {
-        if (path !== currentFilePath() || Number(version) !== syntaxVersion
-                || !editorReady()) {
-            return;
-        }
-        syntaxLanguage = language;
-        syntaxHasErrors = hasErrors;
-        syntaxOutline = outline;
-        syntaxLocals = locals;
-        editorSurface.setSyntaxSnapshot(highlights, foldingRanges);
-    }
-
     function openOutlineItem(line, column) {
         if (!editableFileOpen()) {
             return;
@@ -926,61 +748,16 @@ Item {
         focusEditor();
     }
 
-    function handleCompletionResolved(items, isIncomplete) {
-        completionController.handleResolved(items, isIncomplete);
-    }
-
-    function handleReferencesResolved(references) {
-        usagesItemsModel.clear();
-        for (let i = 0; i < references.length; i++) {
-            const usage = references[i];
-            const line = usage.line !== undefined ? Number(usage.line) : 1;
-            usagesItemsModel.append({
-                path: usage.path,
-                line: line,
-                column: usage.column !== undefined ? Number(usage.column) : 1,
-                display: documents.relativeToRoot(usage.path) + ":" + line
-            });
-        }
-        usagesVisible = usagesItemsModel.count > 0;
-    }
-
-    function handleRenameApplied(files) {
-        documents.handleRenameApplied(files);
-    }
-
+    // A recusa do core chega a UM ponto e e distribuida por dono: a camada de
+    // linguagem trata os `lsp.*`, o completion trata o dele, e o que sobra —
+    // format-on-save — e desta casa, porque envolve o SALVAR.
     function handleRequestFailed(method, message) {
-        if (method === "lsp.hover") {
-            hoverVisible = false;
-        }
+        language.handleRequestFailed(method, message);
         if (method === "lsp.completion") {
             completionController.handleFailed();
         }
-        if (method === "lsp.rename") {
-            renameError = message;
-            renameDialogVisible = true;
-        }
-        if (method === "lsp.codeActions" || method === "lsp.applyCodeAction") {
-            dismissActions();
-        }
-        if (method === "lsp.workspaceEdit.apply") {
-            workspaceEditError = message;
-            workspaceEditPreviewVisible = workspaceEditTransactionId !== "";
-        }
-        if (method === "lsp.workspaceEdit.cancel") {
-            resetWorkspaceEditPreview();
-        }
-        // Format-on-save: se o format falhou (servidor ausente/timeout),
-        // salva assim mesmo — não trava o Ctrl+S do usuário.
-        if (method === "format.text" && pendingSaveAfterFormat) {
-            pendingSaveAfterFormat = false;
-            documents.saveCurrentFile();
-        }
-        if (method === "format.text" && pendingSaveAllItem !== null) {
-            const item = pendingSaveAllItem;
-            pendingSaveAllItem = null;
-            documents.saveDocumentSnapshot(item.path, item.content, item.content);
-            continueSaveAll();
+        if (method === "format.text") {
+            format.handleFormatFailed();
         }
     }
 
@@ -998,22 +775,6 @@ Item {
         }
     }
 
-    Timer {
-        id: syntaxDebounce
-
-        interval: 180
-        repeat: false
-        onTriggered: root.refreshSyntaxTree()
-    }
-
-    Timer {
-        id: hoverHideTimer
-
-        interval: 9000
-        repeat: false
-        onTriggered: root.hoverVisible = false
-    }
-
     // D1b: revarredura dos matches após a edição parar (o replace já
     // recomputa sozinho; isto cobre a digitação normal com a barra aberta).
     Timer {
@@ -1025,46 +786,6 @@ Item {
             if (findController.barVisible) {
                 findController.recompute(findController.cursorOffset());
             }
-        }
-    }
-
-    // M-S1 (docs/seguranca/23): autosave do buffer sujo na store local (rede de
-    // segurança). Debounce após a última edição; só persiste se modificado.
-    Timer {
-        id: autosaveDebounce
-
-        interval: 1500
-        repeat: false
-        onTriggered: {
-            const path = root.currentFilePath();
-            if (path !== "" && root.editorReady() && documents.currentIsModified()) {
-                root.draftSaveRequested(path, surfaceBridge.text());
-            }
-        }
-    }
-
-    Timer {
-        id: sessionSaveDebounce
-
-        interval: 1200
-        repeat: false
-        onTriggered: {
-            if (root.workspaceRoot === "") {
-                return;
-            }
-            const files = [];
-            for (let i = 0; i < root.filesModel.count; i++) {
-                files.push(root.filesModel.get(i).path);
-            }
-            root.saveSessionRequested(files, root.currentFilePath());
-        }
-    }
-
-    Connections {
-        target: root.filesModel
-
-        function onCountChanged() {
-            root.scheduleSessionSave();
         }
     }
 }

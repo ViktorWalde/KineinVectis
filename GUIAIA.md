@@ -438,7 +438,7 @@ ui/qml/editor/EditorController.qml
     ├─ EditorHoverPopup.qml / EditorUsagesPopup.qml
     └─ EditorWorkspaceEditPreviewDialog.qml
 ui/qml/diagnostics/DiagnosticsController.qml
-ui/qml/ipc/EditorEventRouter.qml
+ui/qml/ipc/EditorEventRouter.qml + EditorRequestRouter.qml (TRES alvos)
     ↕ crates/kinein-protocol/src/{lsp,syntax,diagnostic}.rs
 crates/kinein-core/src/handlers/{lsp,syntax}.rs
     ├─ crates/kinein-core/src/lsp/{manager,session,sync,server,framing,parse,
@@ -446,8 +446,29 @@ crates/kinein-core/src/handlers/{lsp,syntax}.rs
     └─ crates/kinein-core/src/lang/{registry,service,positions,outline,folding}.rs
 ```
 
+- **Os sete donos do editor** (corte de 2026-09-02, registro completo em
+  `docs/arquitetura/32-editor-por-responsabilidade.md`). Função nova entra no
+  dono da PERGUNTA que ela responde; se nenhum responde, o certo é um dono novo,
+  não mais uma função no `EditorController` — foi assim que ele chegou a 1.070:
+
+```text
+EditorController              composition root + fachada unica (791, em debito)
+EditorDocumentController      que arquivo esta aberto, o que esta sujo
+EditorTextController          o que se faz com o TEXTO (cursor, linhas)
+EditorCompletionController    a lista de completion e o filtro local
+EditorFindController          busca e substituicao NO ARQUIVO
+EditorLanguageController      o simbolo sob o cursor (definition/hover/rename)
+EditorHighlightController     o realce do documento (Tree-sitter + semantic)
+EditorFormatController        formatar, e o que format-on-save faz com o salvar
+EditorPersistenceController   sessao (fechamento normal) e rascunho (CRASH)
+```
+
+- **Os roteadores IPC do editor escutam TRES alvos**: `editorController`,
+  `editorController.language` e `editorController.highlight`. Sinal novo de
+  linguagem/realce entra no bloco do dono — escutar no objeto errado não quebra
+  build, o handler só nunca dispara (§8).
 - Testes: `crates/kinein-core/src/tests/{lsp,lsp_server,syntax}.rs` e
-  `scripts/qml-harness/{tst_completion,tst_outline}.qml`. O `lsp.rs` cobre as
+  `scripts/qml-harness/{tst_completion,tst_outline,tst_editor_language,tst_editor_persistence}.qml`. O `lsp.rs` cobre as
   GUARDAS; o `lsp_server.rs` sobe o `scripts/fake_lsp_server.py` e olha o WIRE
   (didOpen/didChange/didClose, versão do documento, curto-circuito por hash).
   Para observar uma conversa nova, aponte a linguagem para o servidor falso com

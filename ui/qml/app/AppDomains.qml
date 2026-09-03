@@ -240,13 +240,21 @@ Item {
         settingsController: settingsController
         // Pedido ao core mora no EditorRequestRouter. O que fica aqui e fiacao
         // de controller para HOST — nao e IPC, e so o Main.qml enxerga os dois.
-        onRenameDialogOpenRequested: function(currentName) {
-            root.workspaceHost.openRenameDialogWithName(currentName);
-        }
         onGoToLineDialogOpenRequested: function(prefill) {
             root.workspaceHost.openGoToLineDialog(prefill);
         }
         onFindBarOpenRequested: root.workspaceHost.focusFindBar()
+    }
+
+    // O dialogo de rename e aberto pela CAMADA DE LINGUAGEM, nao pelo editor:
+    // o gesto nasce de um `textDocument/rename`. Escutar no lugar errado nao
+    // quebra build — deixa de funcionar em silencio (ARCHITECTURE.md §8).
+    Connections {
+        target: editorController.language
+
+        function onRenameDialogOpenRequested(currentName) {
+            root.workspaceHost.openRenameDialogWithName(currentName);
+        }
     }
 
     ProjectTreeController {

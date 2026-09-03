@@ -123,9 +123,14 @@ fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de
 três casos.
 
-**3. O maior débito bloqueia por área, não em geral.** `EditorController.qml`
-(1.070/400) bloqueia qualquer feature de editor. Quem toca a área, paga a
-dela antes — foi o que aconteceu com o terminal, pago em 2026-08-30.
+**3. O maior débito bloqueia por área, não em geral.** Era o
+`EditorController.qml`, e a área do editor ficou travada por ele até
+2026-09-02, quando quatro donos nasceram do corte (1.070 → 791; ver
+[arquitetura/32](arquitetura/32-editor-por-responsabilidade.md)). O que resta
+dele **não é mais implementação misturada** — são 64 funções de delegação pura,
+a fachada única do editor. A pergunta que ficou aberta não é "como cortar mais",
+é por que o `ShellWorkspaceHost.qml` precisa de 92 propriedades do editor:
+resolver isso encolhe os dois arquivos em débito de uma vez.
 
 **4. O core não escreve nada fora do workspace sem gesto explícito.** Desde
 2026-08-29 a persistência global entra por `Core::enable_persistence`, chamada só

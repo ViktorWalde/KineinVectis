@@ -241,13 +241,51 @@ lá é oferecer um configure que vai falhar.
 cross-compilação e kit por preset. A entidade e a rota até o comando existem; o
 que falta é uma fatia própria, e agora ela tem onde encaixar.
 
-### Etapa 6 — Pagar o `EditorController.qml` (1070/400)
+### Etapa 6 — Pagar o `EditorController.qml` ⚠️ PAGA EM PARTE (2026-09-02)
 
-`LEITURA_TECNICA` §4: *"o maior débito bloqueia por área"*. Enquanto ele
-estiver assim, qualquer feature ou polimento de editor entra travado, porque a
-catraca reprova o arquivo que crescer. Ele já tem subcontrollers; é continuar
-movendo por responsabilidade, com o teste de vocabulário da §4 regra 9 como
-critério.
+**1.070 → 791.** Quatro donos nasceram, cada um respondendo uma pergunta que
+ninguém mais no sistema respondia. O registro completo — as invariantes de cada
+um, por que linguagem e realce viraram DOIS arquivos, e o que a mutação provou —
+está em
+[`../arquitetura/32-editor-por-responsabilidade.md`](../arquitetura/32-editor-por-responsabilidade.md).
+
+```text
+EditorLanguageController      376   o simbolo sob o cursor (LSP)
+EditorHighlightController     161   o realce do documento (Tree-sitter + LSP)
+EditorFormatController        203   formatar, e o que format-on-save faz com o salvar
+EditorPersistenceController   138   o que o editor lembra entre sessoes
+```
+
+O critério foi **responsabilidade, não tamanho** — e a prova disso é que o
+segundo corte (realce saindo da linguagem) resolveu um arquivo de 452 linhas sem
+ninguém mirar no número: eram dois RITMOS diferentes sobre o mesmo buffer, um
+que nasce de um gesto e outro que persegue cada tecla.
+
+*Provado por mutação*, cinco vezes. **A quinta não caiu na primeira tentativa**,
+e é o achado do dia: o harness checava a ausência do rascunho aos 700 ms, antes
+de o debounce de 1.500 ms poder disparar — verde por construção. Checagem que
+acontece antes de o efeito ser possível não é checagem, é ruído verde.
+
+**Por que "em parte", e o que fica em aberto.** Depois dos quatro cortes,
+64 das 97 funções restantes são **delegação pura de uma linha**: o que sobrou é
+o composition root do editor mais uma fachada única. Aplicado com honestidade, o
+teste de vocabulário **falha** para ele — não implementa mais hover, realce,
+format ou sessão, mas continua nomeando os quatro.
+
+Quebrar a fachada custa **~180 call sites em 13 arquivos, 92 deles no
+`ShellWorkspaceHost.qml`** — que está ele próprio na catraca, em 576/400, e
+ficaria maior. Isso é cerimônia, não split (§4 regra 9). Corrigir a categoria
+também não fecha: `AppDomains` era 325/300, este é 791/400.
+
+A §4 regra 8 diz que subir ou mudar um limite é **decisão explícita do autor**,
+nunca silenciosa — então ela fica registrada e não tomada. A medição sugere uma
+terceira saída, que é fatia própria: **o problema real não é o
+`EditorController` re-exportar, é o `ShellWorkspaceHost` precisar de 92
+propriedades do editor.** Resolver isso encolhe os dois arquivos em débito de
+uma vez.
+
+Enquanto isso, ele fica congelado em 791 — só podendo diminuir, que é o que a
+catraca existe para garantir.
 
 ### Etapa 7 — soak / estresse ✅ FEITA (2026-09-02)
 
@@ -356,7 +394,7 @@ faltava.
 
 ```text
 FECHA O MVP        1, 2, 7, 8, 10  — TODAS FEITAS em 2026-09-02
-SEPARA MVP DE      3 (feita), 4 (feita), 5 (feita), 6, 9
+SEPARA MVP DE      3 (feita), 4 (feita), 5 (feita), 6 (em parte), 9
 DAILY DRIVER
 ```
 

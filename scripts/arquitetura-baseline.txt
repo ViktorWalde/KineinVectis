@@ -1,7 +1,7 @@
 crates/kinein-core/src/dap/session.rs 672 500
 crates/kinein-core/src/handlers/lsp.rs 653 500
 crates/kinein-core/src/lsp/parse.rs 598 500
-ui/qml/editor/EditorController.qml 1070 400
+ui/qml/editor/EditorController.qml 791 400
 ui/qml/editor/EditorDocumentController.qml 548 400
 ui/qml/editor/EditorFindBar.qml 329 300
 ui/qml/editor/EditorPane.qml 538 300
@@ -14,6 +14,6 @@ ui/qml/panels/bottom/SearchPanel.qml 325 300
 ui/qml/panels/bottom/TerminalViewport.qml 319 300
 ui/qml/search/SearchController.qml 420 400
 ui/qml/shell/ShellWorkspaceHost.qml 576 400
-ui/src/core_client_dispatch.cpp 751 500
+ui/src/core_client_dispatch.cpp 640 500
 ui/src/core_client_requests.cpp 660 500
 ui/src/editor_highlighter.cpp 910 500

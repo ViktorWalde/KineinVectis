@@ -128,6 +128,10 @@ set_source_files_properties(qml/editor/EditorController.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/editor/EditorSurfaceBridge.qml PROPERTIES QT_RESOURCE_ALIAS EditorSurfaceBridge.qml)
 set_source_files_properties(qml/editor/EditorDocumentController.qml PROPERTIES QT_RESOURCE_ALIAS EditorDocumentController.qml)
 set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextController.qml)
+set_source_files_properties(qml/editor/EditorLanguageController.qml PROPERTIES QT_RESOURCE_ALIAS EditorLanguageController.qml)
+set_source_files_properties(qml/editor/EditorHighlightController.qml PROPERTIES QT_RESOURCE_ALIAS EditorHighlightController.qml)
+set_source_files_properties(qml/editor/EditorFormatController.qml PROPERTIES QT_RESOURCE_ALIAS EditorFormatController.qml)
+set_source_files_properties(qml/editor/EditorPersistenceController.qml PROPERTIES QT_RESOURCE_ALIAS EditorPersistenceController.qml)
 set_source_files_properties(qml/editor/EditorCompletionController.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionController.qml)
 set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALIAS EditorPane.qml)
 set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
@@ -267,6 +271,10 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorSurfaceBridge.qml
         qml/editor/EditorDocumentController.qml
         qml/editor/EditorTextController.qml
+        qml/editor/EditorLanguageController.qml
+        qml/editor/EditorHighlightController.qml
+        qml/editor/EditorFormatController.qml
+        qml/editor/EditorPersistenceController.qml
         qml/editor/EditorCompletionController.qml
         qml/editor/EditorPane.qml
         qml/editor/EditorTabsBar.qml

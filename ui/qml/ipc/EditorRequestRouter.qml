@@ -39,6 +39,29 @@ Item {
             root.coreClient.formatFile(path, content);
         }
 
+        function onSaveSessionRequested(files, activeFile) {
+            root.coreClient.saveSession(files, activeFile);
+        }
+
+        function onFileChangedNotificationRequested(path, content) {
+            root.coreClient.notifyFileChanged(path, content);
+        }
+
+        function onCompletionRequested(path, content, line, column) {
+            root.coreClient.requestCompletion(path, content, line, column);
+        }
+
+    }
+
+    // Segundo bloco, e a fronteira e' de DONO, nao de conveniencia: desde
+    // 2026-09-02 quem emite os pedidos de linguagem e o
+    // `EditorLanguageController`, nao o `EditorController`. Escutar no objeto
+    // errado nao quebra o build — o handler simplesmente nunca dispara, que e a
+    // falha silenciosa da ARCHITECTURE.md §8. Ligar aqui, explicitamente, e o
+    // que o `RuntimeRequestRouter` ja fazia com o `runConfigController`.
+    Connections {
+        target: root.editorController.language
+
         function onCodeActionsRequested(path, content, line, column) {
             root.coreClient.requestCodeActions(path, content, line, column);
         }
@@ -55,22 +78,6 @@ Item {
             root.coreClient.cancelWorkspaceEdit(transactionId);
         }
 
-        function onSaveSessionRequested(files, activeFile) {
-            root.coreClient.saveSession(files, activeFile);
-        }
-
-        function onFileChangedNotificationRequested(path, content) {
-            root.coreClient.notifyFileChanged(path, content);
-        }
-
-        function onSemanticTokensRequested(path, content, version) {
-            root.coreClient.requestSemanticTokens(path, content, version);
-        }
-
-        function onSyntaxTreeRequested(path, content, version) {
-            root.coreClient.requestSyntaxTree(path, content, version);
-        }
-
         function onSwitchSourceHeaderRequested(path, content) {
             root.coreClient.requestSwitchSourceHeader(path, content);
         }
@@ -83,16 +90,26 @@ Item {
             root.coreClient.requestHover(path, content, line, column);
         }
 
-        function onCompletionRequested(path, content, line, column) {
-            root.coreClient.requestCompletion(path, content, line, column);
-        }
-
         function onReferencesRequested(path, content, line, column) {
             root.coreClient.requestReferences(path, content, line, column);
         }
 
         function onRenameRequested(path, content, line, column, newName) {
             root.coreClient.requestRename(path, content, line, column, newName);
+        }
+    }
+
+    // Terceiro bloco: o REALCE tem dono proprio desde 2026-09-02. Tres blocos
+    // sao tres donos, e essa e a informacao que o arquivo carrega.
+    Connections {
+        target: root.editorController.highlight
+
+        function onSemanticTokensRequested(path, content, version) {
+            root.coreClient.requestSemanticTokens(path, content, version);
+        }
+
+        function onSyntaxTreeRequested(path, content, version) {
+            root.coreClient.requestSyntaxTree(path, content, version);
         }
     }
 }
