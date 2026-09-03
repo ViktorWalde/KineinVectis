@@ -6,9 +6,7 @@ ui/qml/editor/EditorFindBar.qml 329 300
 ui/qml/editor/EditorPane.qml 538 300
 ui/qml/editor/EditorTextController.qml 574 400
 ui/qml/editor/EditorTextSurface.qml 504 300
-ui/qml/git/GitController.qml 464 400
 ui/qml/panels/bottom/DebugPanel.qml 370 300
-ui/qml/panels/bottom/GitPanel.qml 764 300
 ui/qml/panels/bottom/SearchPanel.qml 325 300
 ui/qml/panels/bottom/TerminalViewport.qml 319 300
 ui/qml/shell/ShellWorkspaceHost.qml 407 400

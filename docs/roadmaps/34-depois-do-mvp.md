@@ -27,7 +27,7 @@ protocolo 0.65.0                crates/kinein-protocol/src/lib.rs
 gate completo verde             bash scripts/verificar.sh
 AppImage no gate                scripts/verificar-appimage.sh
 5 sondas                        scripts/sonda_*.py
-16 arquivos em debito           cat scripts/arquitetura-baseline.txt
+14 arquivos em debito           cat scripts/arquitetura-baseline.txt
 ```
 
 O MVP fechou. O que vem agora não é "terminar" — é **transformar MVP em
@@ -37,7 +37,7 @@ ao CLion em profundidade (TR2).
 ## 2. As quatro frentes, e por que a ordem não é óbvia
 
 ```text
-A  DIVIDA QUE JA COBRA PEDAGIO   16 arquivos acima do limite da catraca.
+A  DIVIDA QUE JA COBRA PEDAGIO   14 arquivos acima do limite da catraca.
                                  Nao e' limpeza: e' imposto sobre a PROXIMA
                                  fatia.
 
@@ -84,12 +84,11 @@ existe.
 
 ## 3. FRENTE A — a dívida, medida e ordenada
 
-`cat scripts/arquitetura-baseline.txt` (2026-09-03, 16 arquivos):
+`cat scripts/arquitetura-baseline.txt` (2026-09-03, 14 arquivos):
 
 | arquivo | linhas/limite | o que provavelmente está misturado |
 | --- | ---: | --- |
 | `ui/qml/editor/EditorController.qml` | 791/400 | fachada (64 de 97 funções delegam) — **decisão em aberto**, §3.2 |
-| `ui/qml/panels/bottom/GitPanel.qml` | 764/300 | status + diff + stage + commit + histórico |
 | `crates/kinein-core/src/dap/session.rs` | 672/500 | handshake DAP + breakpoints + stepping + frames + variáveis |
 | `ui/src/core_client_requests.cpp` | 660/500 | todo request de todo domínio numa fachada |
 | `ui/src/core_client_dispatch.cpp` | 640/500 | já cortado uma vez (751→640) na etapa 4 |
@@ -99,7 +98,6 @@ existe.
 | `ui/qml/editor/EditorDocumentController.qml` | 548/400 | abas + buffers + save + externo |
 | `ui/qml/editor/EditorPane.qml` | 538/300 | visual |
 | `ui/qml/editor/EditorTextSurface.qml` | 504/300 | visual |
-| `ui/qml/git/GitController.qml` | 464/400 | |
 | `ui/qml/panels/bottom/DebugPanel.qml` | 370/300 | visual |
 | `ui/qml/editor/EditorFindBar.qml` | 329/300 | visual |
 | `ui/qml/panels/bottom/SearchPanel.qml` | 325/300 | trava o `TextArea` do replace (`arquitetura/33` §8a) |
@@ -332,8 +330,11 @@ tem um custo escrito acima.
                                            camada que a descricao acima nao
                                            tinha: a DOBRA, que nem realce e'.
 
-17  GitPanel.qml (764/300) +               a frente git inteira, cortada por
-    GitController.qml (464/400)            responsabilidade.
+17  GitPanel.qml (764/300) +               FEITA em 2026-09-03. O painel virou
+    GitController.qml (464/400)            288 (4 componentes novos) e o
+                                           controller 381 (blame+log viraram
+                                           GitHistoryController). SAIRAM os
+                                           DOIS: 16 -> 14 arquivos em debito.
 
 18  Simulacao: responder as perguntas do   §6. Arquitetura, nao implementacao.
     roadmaps/31

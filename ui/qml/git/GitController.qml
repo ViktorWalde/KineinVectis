@@ -34,15 +34,18 @@ Item {
     property string discardDialogAbsPath: ""
     // M3.4: blame do arquivo ativo (toggle por comando; segue a aba) —
     // linha → rótulo "autor, idade"; a revisão força o rebind da gutter.
-    property bool blameVisible: false
-    property string blamePath: ""
-    property var blameLineAnnotations: ({})
-    property int blameRevision: 0
+    // Blame e log moram no GitHistoryController (o PASSADO). Estes alias
+    // existem para os 10 pontos de leitura ja' escritos fora daqui — sao 7,
+    // nao os 50 que fizeram do EditorController uma fachada de 791 linhas.
+    property alias blameVisible: historyController.blameVisible
+    property alias blamePath: historyController.blamePath
+    property alias blameLineAnnotations: historyController.blameLineAnnotations
+    property alias blameRevision: historyController.blameRevision
     // M3.4: histórico de commits (vista da aba Git) e diff de commit no
     // GitDiffDialog reusado (título via diffDialogCommitLabel).
-    property alias historyModel: gitHistoryModel
-    property bool historyVisible: false
-    property bool historyLoading: false
+    property alias historyModel: historyController.historyModel
+    property alias historyVisible: historyController.historyVisible
+    property alias historyLoading: historyController.historyLoading
     property string diffDialogCommitLabel: ""
     property string diffDialogSha: ""
     property alias branchesModel: gitBranchesModel
@@ -72,12 +75,35 @@ Item {
     }
 
     ListModel {
-        id: gitHistoryModel
-    }
-
-    ListModel {
         id: gitBranchesModel
     }
+
+    GitHistoryController {
+        id: historyController
+
+        // Reemite para NAO mudar o contrato: o GitRequestRouter continua com um
+        // `Connections { target: gitController }` so', sem conhecer internals.
+        onBlameRequested: function(path) { root.blameRequested(path); }
+        onLogRequested: root.logRequested()
+    }
+
+    // Delegacoes para o GitHistoryController. Sao 8 linhas de encaminhamento,
+    // e a escolha e' deliberada: mudar os 11 pontos de chamada espalhados em 5
+    // arquivos custaria mais e mudaria o contrato publico do controller. O
+    // limite disto e' conhecido — foi assim que o EditorController virou uma
+    // fachada de 791 linhas —, entao a regra aqui e' NAO crescer esta lista:
+    // dono novo no historico entra por `historyController`, nao por mais um
+    // encaminhamento.
+    function toggleBlame(path) { historyController.toggleBlame(path); }
+    function hideBlame() { historyController.hideBlame(); }
+    function requestBlameFor(path) { historyController.requestBlameFor(path); }
+    function handleBlame(path, isRepo, tracked, groups) {
+        historyController.handleBlame(path, isRepo, tracked, groups);
+    }
+    function openHistory() { historyController.openHistory(); }
+    function showChanges() { historyController.showChanges(); }
+    function refreshHistory() { historyController.refreshHistory(); }
+    function handleLog(isRepo, entries) { historyController.handleLog(isRepo, entries); }
 
     function refresh() {
         if (workspaceRoot === "") {
@@ -163,10 +189,7 @@ Item {
         stagedCount = 0;
         lastMutationError = "";
         discardDialogVisible = false;
-        hideBlame();
-        gitHistoryModel.clear();
-        historyVisible = false;
-        historyLoading = false;
+        historyController.clear();
         gitBranchesModel.clear();
         branchMenuVisible = false;
         remoteOperationRunning = false;
@@ -333,115 +356,6 @@ Item {
     }
 
     // ---- M3.4: blame ----
-
-    function toggleBlame(path) {
-        if (blameVisible) {
-            hideBlame();
-            return;
-        }
-        if (path === "") {
-            return;
-        }
-        blameVisible = true;
-        requestBlameFor(path);
-    }
-
-    function hideBlame() {
-        blameVisible = false;
-        blamePath = "";
-        blameLineAnnotations = {};
-        blameRevision++;
-    }
-
-    // Chamado na troca de aba e no save enquanto o blame está ligado.
-    function requestBlameFor(path) {
-        if (!blameVisible) {
-            return;
-        }
-        if (path === "") {
-            blamePath = "";
-            blameLineAnnotations = {};
-            blameRevision++;
-            return;
-        }
-        blamePath = path;
-        blameRequested(path);
-    }
-
-    // Idade relativa compacta ("min", "h", "d", "m" de meses, "a").
-    function ageLabel(epochSeconds) {
-        if (epochSeconds <= 0) {
-            return "";
-        }
-        const seconds = Math.max(0, Date.now() / 1000 - epochSeconds);
-        if (seconds < 3600) {
-            return qsTr("%1min").arg(Math.max(1, Math.floor(seconds / 60)));
-        }
-        if (seconds < 86400) {
-            return qsTr("%1h").arg(Math.floor(seconds / 3600));
-        }
-        if (seconds < 2592000) {
-            return qsTr("%1d").arg(Math.floor(seconds / 86400));
-        }
-        if (seconds < 31536000) {
-            return qsTr("%1m").arg(Math.floor(seconds / 2592000));
-        }
-        return qsTr("%1a").arg(Math.floor(seconds / 31536000));
-    }
-
-    function handleBlame(path, isRepo, tracked, groups) {
-        if (!blameVisible || path !== blamePath) {
-            return;
-        }
-        const annotations = {};
-        if (isRepo && tracked) {
-            for (let i = 0; i < groups.length; i++) {
-                const group = groups[i];
-                const label = group.committed
-                        ? group.author + ", " + ageLabel(group.authorTime)
-                        : qsTr("não commitado");
-                for (let line = group.startLine;
-                     line < group.startLine + group.lineCount; line++) {
-                    annotations[line] = label;
-                }
-            }
-        }
-        blameLineAnnotations = annotations;
-        blameRevision++;
-    }
-
-    // ---- M3.4: histórico e diff de commit ----
-
-    function openHistory() {
-        historyVisible = true;
-        refreshHistory();
-    }
-
-    function showChanges() {
-        historyVisible = false;
-    }
-
-    function refreshHistory() {
-        historyLoading = true;
-        logRequested();
-    }
-
-    function handleLog(isRepo, entries) {
-        historyLoading = false;
-        gitHistoryModel.clear();
-        if (!isRepo) {
-            return;
-        }
-        for (let i = 0; i < entries.length; i++) {
-            gitHistoryModel.append({
-                sha: entries[i].sha,
-                shortSha: entries[i].shortSha,
-                author: entries[i].author,
-                age: ageLabel(entries[i].authorTime),
-                summary: entries[i].summary
-            });
-        }
-    }
 
     function openCommitDiff(sha, shortSha, summary) {
         diffDialogSha = sha;

@@ -60,6 +60,11 @@ set_source_files_properties(qml/toolchain/ToolchainMenu.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/ipc/ToolchainEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainEventRouter.qml)
 set_source_files_properties(qml/ipc/ToolchainRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainRequestRouter.qml)
 set_source_files_properties(qml/git/GitController.qml PROPERTIES QT_RESOURCE_ALIAS GitController.qml)
+set_source_files_properties(qml/git/GitHistoryController.qml PROPERTIES QT_RESOURCE_ALIAS GitHistoryController.qml)
+set_source_files_properties(qml/git/GitChangesList.qml PROPERTIES QT_RESOURCE_ALIAS GitChangesList.qml)
+set_source_files_properties(qml/git/GitHistoryList.qml PROPERTIES QT_RESOURCE_ALIAS GitHistoryList.qml)
+set_source_files_properties(qml/git/GitBranchMenu.qml PROPERTIES QT_RESOURCE_ALIAS GitBranchMenu.qml)
+set_source_files_properties(qml/git/GitCommitBox.qml PROPERTIES QT_RESOURCE_ALIAS GitCommitBox.qml)
 set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiffDialog.qml)
 set_source_files_properties(qml/git/GitDiscardDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiscardDialog.qml)
 set_source_files_properties(qml/panels/bottom/GitPanel.qml PROPERTIES QT_RESOURCE_ALIAS GitPanel.qml)
@@ -205,6 +210,11 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/ToolchainEventRouter.qml
         qml/ipc/ToolchainRequestRouter.qml
         qml/git/GitController.qml
+        qml/git/GitHistoryController.qml
+        qml/git/GitChangesList.qml
+        qml/git/GitHistoryList.qml
+        qml/git/GitBranchMenu.qml
+        qml/git/GitCommitBox.qml
         qml/git/GitDiffDialog.qml
         qml/git/GitDiscardDialog.qml
         qml/panels/bottom/GitPanel.qml

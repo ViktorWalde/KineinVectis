@@ -46,20 +46,7 @@ Item {
     signal stashRequested(string action)
 
     function clearMessage() {
-        commitInput.text = "";
-    }
-
-    function kindColor(kind) {
-        if (kind === "conflicted") {
-            return Theme.errorSoft;
-        }
-        if (kind === "untracked" || kind === "added") {
-            return Theme.successSoft;
-        }
-        if (kind === "deleted") {
-            return Theme.textDisabled;
-        }
-        return Theme.infoSoft;
+        commitRow.clearMessage();
     }
 
     Row {
@@ -129,150 +116,19 @@ Item {
         }
     }
 
-    Rectangle {
+    GitBranchMenu {
         id: branchMenu
 
         anchors.top: gitActions.bottom
         anchors.left: parent.left
         anchors.topMargin: Theme.spacingXSmall
-        width: Math.min(340, parent.width)
-        height: 190
-        z: 20
         visible: panel.branchMenuVisible
-        radius: Theme.radius
-        color: Theme.background2
-        border.color: Theme.accent
-        border.width: 1
 
-        ListView {
-            id: branchesView
+        branchesModel: panel.branchesModel
 
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: newBranchRow.top
-            anchors.margins: Theme.spacingSmall
-            clip: true
-            model: panel.branchesModel
-
-            delegate: Rectangle {
-                id: branchRow
-
-                required property string name
-                required property bool current
-
-                width: branchesView.width
-                height: 24
-                radius: Theme.radiusXSmall
-                color: branchArea.containsMouse ? Theme.surface2 : "transparent"
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    spacing: Theme.spacingXSmall
-
-                    KvIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: branchRow.current
-                        name: "check"
-                        size: 14
-                        success: true
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: branchRow.name
-                        color: branchRow.current ? Theme.accent : Theme.textPrimary
-                        font.family: Theme.monoFont
-                        font.pixelSize: 11
-                    }
-                }
-
-                MouseArea {
-                    id: branchArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: branchRow.current ? Qt.ArrowCursor : Qt.PointingHandCursor
-                    onClicked: {
-                        if (!branchRow.current) {
-                            panel.branchCheckoutRequested(branchRow.name);
-                        }
-                    }
-                }
-            }
-        }
-
-        Row {
-            id: newBranchRow
-
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: Theme.spacingSmall
-            height: 28
-            spacing: Theme.spacingSmall
-
-            Rectangle {
-                width: parent.width - createBranchButton.width - Theme.spacingSmall
-                height: parent.height
-                radius: Theme.radiusXSmall
-                color: Theme.background0
-                border.color: newBranchInput.activeFocus ? Theme.accent : Theme.borderSoft
-                border.width: 1
-
-                TextInput {
-                    id: newBranchInput
-
-                    anchors.fill: parent
-                    anchors.margins: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: 10
-                    clip: true
-                    onAccepted: panel.branchCreateRequested(text)
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        visible: newBranchInput.text === ""
-                        text: qsTr("nova branch")
-                        color: Theme.textMuted
-                        font.pixelSize: 10
-                    }
-                }
-            }
-
-            Rectangle {
-                id: createBranchButton
-
-                width: createBranchLabel.width + 2 * Theme.spacingSmall
-                height: parent.height
-                radius: Theme.radiusXSmall
-                color: createBranchArea.pressed ? Theme.accentDim : Theme.accent
-
-                Text {
-                    id: createBranchLabel
-
-                    anchors.centerIn: parent
-                    text: qsTr("Criar")
-                    color: Theme.background0
-                    font.pixelSize: 10
-                    font.bold: true
-                }
-
-                MouseArea {
-                    id: createBranchArea
-
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: panel.branchCreateRequested(newBranchInput.text)
-                }
-            }
-        }
+        onBranchCheckoutRequested: function(branch) { panel.branchCheckoutRequested(branch); }
+        onBranchCreateRequested: function(name) { panel.branchCreateRequested(name); }
     }
-
     Row {
         id: viewsHeader
 
@@ -378,387 +234,55 @@ Item {
         }
     }
 
-    ListView {
+    GitHistoryList {
         id: historyView
 
-
-        // B2 (docs/roadmaps/24): barra de rolagem. `parent: historyView` é OBRIGATÓRIO — um filho
-        // declarado dentro de um ListView vira filho do contentItem e ROLARIA
-        // junto com a lista. O ListView segue sendo a fonte da verdade.
-        VerticalScrollBar {
-            id: scrollBar_historyView
-
-            parent: historyView
-            anchors.right: historyView.right
-            anchors.top: historyView.top
-            anchors.bottom: historyView.bottom
-
-            contentSize: historyView.contentHeight
-            viewportSize: historyView.height
-            position: historyView.contentY
-
-            onMoveRequested: function(position) {
-                historyView.contentY = position;
-            }
-        }
         anchors.top: viewsHeader.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        clip: true
         visible: panel.historyVisible
-        model: panel.historyModel
 
-        Text {
-            anchors.centerIn: parent
-            visible: panel.historyModel.count === 0
-            text: panel.historyLoading
-                  ? qsTr("Carregando histórico...")
-                  : (panel.repo
-                     ? qsTr("Sem commits ainda.")
-                     : qsTr("Este workspace não é um repositório git."))
-            color: Theme.textMuted
-            font.pixelSize: 11
-        }
+        historyModel: panel.historyModel
+        historyLoading: panel.historyLoading
+        repo: panel.repo
 
-        delegate: Rectangle {
-            id: commitRowItem
-
-            required property string sha
-            required property string shortSha
-            required property string author
-            required property string age
-            required property string summary
-
-            width: historyView.width
-            height: 24
-            radius: Theme.radiusXSmall
-            color: commitRowArea.containsMouse ? Theme.surface2 : "transparent"
-
-            Text {
-                id: commitShaText
-
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.spacingSmall
-                text: commitRowItem.shortSha
-                color: Theme.accent
-                font.pixelSize: 11
-                font.family: Theme.monoFont
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: commitShaText.right
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.right: commitMetaText.left
-                anchors.rightMargin: Theme.spacingSmall
-                text: commitRowItem.summary
-                color: Theme.textPrimary
-                font.pixelSize: 11
-                elide: Text.ElideRight
-            }
-
-            Text {
-                id: commitMetaText
-
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.spacingSmall
-                text: commitRowItem.author + ", " + commitRowItem.age
-                color: Theme.textMuted
-                font.pixelSize: 10
-            }
-
-            MouseArea {
-                id: commitRowArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: panel.commitActivated(commitRowItem.sha,
-                                                 commitRowItem.shortSha,
-                                                 commitRowItem.summary)
-            }
+        onCommitActivated: function(sha, shortSha, summary) {
+            panel.commitActivated(sha, shortSha, summary);
         }
     }
-
-    ListView {
+    GitChangesList {
         id: changesView
 
-
-        // B2 (docs/roadmaps/24): barra de rolagem. `parent: changesView` é OBRIGATÓRIO — um filho
-        // declarado dentro de um ListView vira filho do contentItem e ROLARIA
-        // junto com a lista. O ListView segue sendo a fonte da verdade.
-        VerticalScrollBar {
-            id: scrollBar_changesView
-
-            parent: changesView
-            anchors.right: changesView.right
-            anchors.top: changesView.top
-            anchors.bottom: changesView.bottom
-
-            contentSize: changesView.contentHeight
-            viewportSize: changesView.height
-            position: changesView.contentY
-
-            onMoveRequested: function(position) {
-                changesView.contentY = position;
-            }
-        }
         anchors.top: viewsHeader.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: commitRow.top
         anchors.bottomMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.right: parent.right
-        clip: true
         visible: !panel.historyVisible
-        model: panel.changesModel
 
-        Text {
-            anchors.centerIn: parent
-            visible: panel.changesModel.count === 0
-            text: panel.repo
-                  ? qsTr("Sem mudanças — árvore limpa.")
-                  : qsTr("Este workspace não é um repositório git.")
-            color: Theme.textMuted
-            font.pixelSize: 11
-        }
+        changesModel: panel.changesModel
+        repo: panel.repo
 
-        delegate: Rectangle {
-            id: changeRow
-
-            required property int index
-            required property string path
-            required property string absPath
-            required property string kind
-            required property bool staged
-
-            width: changesView.width
-            height: 24
-            radius: Theme.radiusXSmall
-            color: changeRowArea.containsMouse ? Theme.surface2 : "transparent"
-
-            Rectangle {
-                id: stageBox
-
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: Theme.spacingSmall
-                width: 14
-                height: 14
-                radius: Theme.radiusXSmall
-                color: changeRow.staged ? Theme.accentDim : "transparent"
-                border.color: changeRow.staged ? Theme.accent : Theme.borderStrong
-                border.width: 1
-
-                KvIcon {
-                    anchors.centerIn: parent
-                    visible: changeRow.staged
-                    name: "check"
-                    size: 11
-                    active: true
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: panel.stageToggleRequested(changeRow.index)
-                }
-            }
-
-            Text {
-                id: changePathText
-
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: stageBox.right
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.right: diffChip.left
-                anchors.rightMargin: Theme.spacingSmall
-                text: changeRow.path
-                color: panel.kindColor(changeRow.kind)
-                font.pixelSize: 11
-                font.family: Theme.monoFont
-                elide: Text.ElideMiddle
-            }
-
-            MouseArea {
-                id: changeRowArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                z: -1
-                onClicked: panel.openRequested(changeRow.absPath)
-            }
-
-            Rectangle {
-                id: diffChip
-
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: discardChip.left
-                anchors.rightMargin: Theme.spacingXSmall
-                width: diffChipLabel.width + 2 * Theme.spacingSmall
-                height: 18
-                radius: Theme.radiusXSmall
-                visible: changeRowArea.containsMouse || diffChipArea.containsMouse
-                         || discardChipArea.containsMouse
-                color: diffChipArea.containsMouse ? Theme.surfaceSelected : Theme.surface1
-                border.color: Theme.borderSoft
-                border.width: 1
-
-                Text {
-                    id: diffChipLabel
-
-                    anchors.centerIn: parent
-                    text: qsTr("diff")
-                    color: Theme.textSecondary
-                    font.pixelSize: 9
-                }
-
-                MouseArea {
-                    id: diffChipArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: panel.diffRequested(changeRow.absPath)
-                }
-            }
-
-            Rectangle {
-                id: discardChip
-
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.right: parent.right
-                anchors.rightMargin: Theme.spacingSmall
-                width: 18
-                height: 18
-                radius: Theme.radiusXSmall
-                visible: diffChip.visible
-                color: discardChipArea.containsMouse ? Theme.surfaceSelected : Theme.surface1
-                border.color: Theme.borderSoft
-                border.width: 1
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "↩"
-                    color: Theme.errorSoft
-                    font.pixelSize: 10
-                }
-
-                MouseArea {
-                    id: discardChipArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: panel.discardRequested(changeRow.index)
-                }
-            }
-        }
+        onStageToggleRequested: function(index) { panel.stageToggleRequested(index); }
+        onDiffRequested: function(absPath) { panel.diffRequested(absPath); }
+        onDiscardRequested: function(index) { panel.discardRequested(index); }
+        onOpenRequested: function(absPath) { panel.openRequested(absPath); }
     }
-
-    Text {
-        anchors.bottom: commitRow.top
-        anchors.bottomMargin: 2 * Theme.spacingSmall + 2
-        anchors.left: parent.left
-        anchors.right: parent.right
-        visible: panel.errorText !== "" && !panel.historyVisible
-        text: panel.errorText
-        color: Theme.errorSoft
-        font.pixelSize: 10
-        elide: Text.ElideRight
-    }
-
-    Row {
+    GitCommitBox {
         id: commitRow
 
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         height: 30
-        spacing: Theme.spacingSmall
-        visible: !panel.historyVisible
 
-        Rectangle {
-            width: parent.width - commitButton.width - Theme.spacingSmall
-            height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: commitInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
+        historyVisible: panel.historyVisible
+        errorText: panel.errorText
+        stagedCount: panel.stagedCount
 
-            TextInput {
-                id: commitInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                font.pixelSize: 12
-                clip: true
-                selectByMouse: true
-                onAccepted: {
-                    panel.commitRequested(commitInput.text);
-                    commitInput.text = "";
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: commitInput.text === ""
-                    text: qsTr("Mensagem do commit...")
-                    color: Theme.textMuted
-                    font.pixelSize: 12
-                }
-            }
-        }
-
-        Rectangle {
-            id: commitButton
-
-            readonly property bool commitEnabled: panel.stagedCount > 0
-                && commitInput.text.trim() !== ""
-
-            anchors.verticalCenter: parent.verticalCenter
-            width: commitLabel.width + 2 * Theme.spacingMedium
-            height: 30
-            radius: Theme.radius
-            opacity: commitEnabled ? 1.0 : 0.5
-            color: commitEnabled
-                   ? (commitButtonArea.pressed ? Theme.accentDim : Theme.accent)
-                   : Theme.surface1
-            border.color: commitEnabled ? "transparent" : Theme.borderSoft
-            border.width: commitEnabled ? 0 : 1
-
-            Text {
-                id: commitLabel
-
-                anchors.centerIn: parent
-                text: panel.stagedCount > 0
-                      ? qsTr("Commit (%1)").arg(panel.stagedCount)
-                      : qsTr("Commit")
-                color: commitButton.commitEnabled
-                       ? Theme.background0 : Theme.textMuted
-                font.pixelSize: 12
-                font.bold: true
-            }
-
-            MouseArea {
-                id: commitButtonArea
-
-                anchors.fill: parent
-                cursorShape: commitButton.commitEnabled
-                             ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: {
-                    if (commitButton.commitEnabled) {
-                        panel.commitRequested(commitInput.text);
-                        commitInput.text = "";
-                    }
-                }
-            }
-        }
+        onCommitRequested: function(message) { panel.commitRequested(message); }
     }
 }
