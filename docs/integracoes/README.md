@@ -121,6 +121,12 @@ Permissões, rede, USB, privilégios e instalação são sempre **visíveis e
 confirmáveis**. Ativar/desativar não pode alterar arquivos ou toolchains do
 projeto do usuário silenciosamente.
 
+## Levantamentos (candidatas, NAO adotadas)
+
+| Documento | Assunto |
+| --- | --- |
+| [36-ferramentas-de-embarcados.md](36-ferramentas-de-embarcados.md) | **probe-rs, OpenOCD, pyOCD e QEMU medidos** (2026-09-03): licença verificada na fonte, versão, manutenção e — o que decide o desenho — **qual protocolo cada uma fala**. probe-rs é o único com DAP nativo sobre stdin/stdout, que é a forma que o `dap/` já usa |
+
 ## Integrações já adotadas
 
 Estado real hoje (detalhe e pins no registry):

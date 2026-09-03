@@ -139,6 +139,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [LEITURA_TECNICA.md](LEITURA_TECNICA.md) | **Comece por aqui se você é novo no projeto**: o que a IDE é e não é, o peso medido de cada camada, o que existe de verdade por domínio, onde a arquitetura está sob tensão e o que a direção escolhida custa |
 | [CONTRIBUINDO.md](CONTRIBUINDO.md) | **Onde olhar para alterar/implementar**: arquitetura, mapa por área, ambiente, ritual da mudança, gate e convenções |
 | [integracoes/README.md](integracoes/README.md) | **Entrada obrigatória para adotar qualquer ferramenta**: modos A–D, gate de auditoria, níveis L0–L10, checklist de 10 passos e o índice do que já está adotado |
+| [integracoes/36-ferramentas-de-embarcados.md](integracoes/36-ferramentas-de-embarcados.md) | **Levantamento de embarcados** (2026-09-03): probe-rs, OpenOCD, pyOCD e QEMU com licença verificada na fonte e — o que decide o desenho — qual protocolo cada uma fala. Candidatas, **não** adotadas |
 
 ## arquitetura/ — contrato e estado implementado
 

@@ -352,16 +352,24 @@ atualizado e não-proprietário, com **licença e manutenção verificadas na fo
 — o mesmo tratamento do catálogo de bibliotecas, pelo mesmo motivo, e com a
 mesma lição: em 2026-09-03 a API do GitHub errou a licença de 4 das 13 libs.
 
-Candidatas a auditar (ponto de partida, **não** adoção):
+**Feito em 2026-09-03:**
+[`integracoes/36-ferramentas-de-embarcados.md`](../integracoes/36-ferramentas-de-embarcados.md).
 
-```text
-probe-rs   flash e debug em Rust; expoe `dap-server`, que fala DAP
-           NATIVAMENTE — encaixa no dominio dap/ que ja existe
-OpenOCD    o veterano; JTAG/SWD, cobertura ampla de alvos, fala GDB remote
-pyOCD      CMSIS-DAP, ecossistema Python
-QEMU       emulacao: permite testar o ciclo inteiro SEM placa, e por isso
-           e' o que torna o gate de embarcado possivel em CI
-```
+| ferramenta | licença | versão | protocolo |
+| --- | --- | --- | --- |
+| probe-rs | MIT **e** Apache-2.0 | v0.32.0 | **DAP nativo, stdin/stdout** |
+| OpenOCD | GPL-2.0-or-later | v0.12.0 | GDB remote |
+| pyOCD | Apache-2.0 | v0.45.1 | GDB remote |
+| QEMU | GPL-2.0 | v11.1.1 | GDB remote |
+
+**O achado que decide a etapa 22:** o `probe-rs dap-server` comunica por
+stdin/stdout quando `--port` é omitido — *exatamente* a forma que o domínio
+`dap/` já usa. Adotá-lo custa tornar `ADAPTER_BINARY` uma escolha do kit e mais
+nada no transporte. As outras três falam GDB remote e exigiriam ponte.
+
+As duas GPL não são eliminadas: `LEITURA_TECNICA` §4 fato 5 já diz que
+ferramenta copyleft é **executada como processo, nunca linkada** — é como o
+`gdb` (GPL-3) já entra.
 
 **O QEMU merece nota:** ele é o que permite testar flash/debug **sem hardware**,
 e sem isso a frente F não teria como ter gate — seria a única frente do projeto
@@ -371,7 +379,7 @@ domínio tem fio.
 ### 5.5 A ordem dentro da frente F
 
 ```text
-21  levantamento (licenca, manutencao, alvos, protocolo)   documento
+21  levantamento (licenca, manutencao, alvos, protocolo)   FEITO (2026-09-03)
 22  adaptador DAP vira escolha do kit                      §5.3 item 1
 23  papeis novos: cross-compilador, sonda, gdbserver       §5.3 item 2
 24  deteccao da sonda + kit sugerido                       o "plug"
@@ -416,10 +424,14 @@ muda por decisão registrada e o AppImage passa a exigir GPU.
                                            na paleta (Ctrl+Alt+L) e o botao que
                                            entrega o passo ao configaction.
 
-21  Levantamento de embarcados             §5.4. Documento, nao codigo. Sem ele
-    (licenca, manutencao, alvos)           a escolha entre probe-rs e OpenOCD
-                                           e' palpite, e ela decide o desenho
-                                           do 22.
+21  Levantamento de embarcados             FEITA em 2026-09-03:
+    (licenca, manutencao, alvos)           integracoes/36-ferramentas-de-
+                                           embarcados.md. RESULTADO: probe-rs
+                                           fala DAP NATIVO por stdin/stdout —
+                                           a mesma forma que o dap/ ja usa. As
+                                           outras tres falam GDB remote e
+                                           exigiriam ponte. Recomendacao:
+                                           comecar por probe-rs.
 
 22  Adaptador DAP vira escolha do kit      §5.3 item 1. Hoje e' CONSTANTE, e
                                            sem isso nao ha debug de embarcado.
