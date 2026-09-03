@@ -12,7 +12,7 @@ ui/qml/panels/bottom/DebugPanel.qml 370 300
 ui/qml/panels/bottom/GitPanel.qml 764 300
 ui/qml/panels/bottom/SearchPanel.qml 325 300
 ui/qml/panels/bottom/TerminalViewport.qml 319 300
-ui/qml/shell/ShellWorkspaceHost.qml 576 400
+ui/qml/shell/ShellWorkspaceHost.qml 407 400
 ui/src/core_client_dispatch.cpp 640 500
 ui/src/core_client_requests.cpp 660 500
 ui/src/editor_highlighter.cpp 910 500

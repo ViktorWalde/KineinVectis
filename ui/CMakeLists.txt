@@ -37,6 +37,7 @@ set_source_files_properties(qml/shell/WindowControls.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/shell/WindowResizeHandles.qml PROPERTIES QT_RESOURCE_ALIAS WindowResizeHandles.qml)
 set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellStatusHost.qml)
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
+set_source_files_properties(qml/shell/ShellEditorHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorHost.qml)
 set_source_files_properties(qml/shell/ProjectHealthBanner.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthBanner.qml)
 set_source_files_properties(qml/shell/PanelSplitter.qml PROPERTIES QT_RESOURCE_ALIAS PanelSplitter.qml)
 set_source_files_properties(qml/shell/VerticalScrollBar.qml PROPERTIES QT_RESOURCE_ALIAS VerticalScrollBar.qml)
@@ -181,6 +182,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/WindowResizeHandles.qml
         qml/shell/ShellStatusHost.qml
         qml/shell/ShellWorkspaceHost.qml
+        qml/shell/ShellEditorHost.qml
         qml/shell/ProjectHealthBanner.qml
         qml/shell/PanelSplitter.qml
         qml/shell/VerticalScrollBar.qml

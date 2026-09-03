@@ -115,7 +115,7 @@ passou sem uma única mudança nos testes.
 
 ## 4. Cinco fatos que mudam decisão
 
-**1. O gate é o produto, não cerimônia.** **Catorze** verificações (2026-09-02), e **cada uma
+**1. O gate é o produto, não cerimônia.** **Quinze** verificações (2026-09-03), e **cada uma
 nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §4 regra
 11). Não se cria gate aqui por gosto de rigor; cria-se quando uma classe de erro
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
@@ -135,8 +135,10 @@ dele **não é mais implementação misturada** — são 64 funções de delega�
 a fachada única do editor. A pergunta que ficou aberta não era "como cortar
 mais", era por que o `ShellWorkspaceHost.qml` precisa de 92 propriedades do
 editor. **O autor respondeu em 2026-09-03: corta-se o host primeiro** (saída (a);
-`arquitetura/32` §8.4), o que encolhe os dois arquivos em débito de uma vez.
-Nenhum limite foi levantado.
+`arquitetura/32` §8.4). Feito no mesmo dia: o `ShellEditorHost.qml` nasceu com a
+fiação do painel e o `ShellWorkspaceHost` caiu de **576 para 407**, com as
+leituras de `editorController` indo de **92 para 2**. Nenhum limite foi
+levantado; o `EditorController` segue congelado em 791.
 
 **4. O core não escreve nada fora do workspace sem gesto explícito.** Desde
 2026-08-29 a persistência global entra por `Core::enable_persistence`, chamada só
@@ -231,7 +233,8 @@ do pós-MVP — dívida que cobra pedágio, atrito diário medido, profundidade 
 e a simulação —, cada item com o comando que mede se ainda está pendente. A
 recomendação de ordem começava por **uma pergunta ao autor**, não por código: o
 `EditorController.qml` em 791/400 (§3.2). Respondida em 2026-09-03 — a fila
-agora abre na fatia do `ShellWorkspaceHost.qml` (34 §7, etapa 11.1).
+agora abre na fatia do `ShellWorkspaceHost.qml` (34 §7, etapa 11.1), **entregue
+em 2026-09-03**.
 
 O horizonte mais distante, e **ainda não arquitetado**, está em
 [roadmaps/31-simulacao-fisica-matematica.md](roadmaps/31-simulacao-fisica-matematica.md):

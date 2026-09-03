@@ -323,6 +323,59 @@ host aos **sete subcontrollers que já existem**. O anti-precedente do
 pass-through") não se aplica, porque ali não havia dono para onde apontar; aqui
 há.
 
+### 8.5 A fatia foi feita no mesmo dia (2026-09-03)
+
+`ui/qml/shell/ShellEditorHost.qml` — 225 linhas, novo — recebeu a fiação inteira
+do painel do editor. O `ShellWorkspaceHost` mantém o **layout** (largura, altura,
+visibilidade), que depende dos irmãos (banner de saúde, painel inferior) e por
+isso não desce.
+
+```text
+ShellWorkspaceHost.qml   576 -> 407   (-29%)
+leituras editorController 92 -> 2     as duas restantes sao `openDiagnostic`,
+                                      de OUTROS paineis: outro consumidor
+ShellEditorHost.qml      novo, 225    limite 400
+catraca                  18 arquivos, nenhum novo
+```
+
+**O corte é por responsabilidade, e o teste de vocabulário passa:** o conceito
+"propriedade do editor" saiu do `ShellWorkspaceHost` — o que sobrou não é
+fiação do painel, é um consumidor diferente. O remédio é o que a
+`ARCHITECTURE.md` §4 regra 8 prescreve **textualmente** para composition root:
+*"dividir a composição por área (`domínios/`, `hosts/`, `atalhos/`), fazendo a
+contagem de arquivos crescer em vez do tamanho — nunca subir o limite"*. O
+precedente interno é o `ShellHeaderHost.qml`, host que recebe 10 controllers e
+nunca entrou na catraca.
+
+**O que NÃO foi feito, de propósito:** o `ShellWorkspaceHost` ficou em **407/400**
+e continua na catraca. Faltam 7 linhas, e cortá-las seria corte por TAMANHO — o
+que a §4 regra 9 proíbe. O que resta ali (`SideRail`, `ProjectExplorer`,
+`ProjectHealthBanner`, `StartScreen`, `ShellEditorHost`, `BottomPanelHost`) é
+composição de workspace legítima, e nenhuma peça é de outro dono.
+
+### 8.6 A fatia produziu um gate, porque produziu uma falha silenciosa
+
+Mover 85 bindings levantou a pergunta: **se um nome estivesse errado, quem
+reclamaria?** Medido por mutação, `findQuery:` → `findQeury:`:
+
+```text
+cmake --build --preset dev-local     EXIT=0   nem um aviso
+verificar-qml-fiacao.sh              EXIT=0
+verificar-qml-logica.sh              EXIT=0
+verificar-arquitetura.sh             EXIT=0
+```
+
+O gate inteiro verde com o Find quebrado. O QML só reclama de propriedade
+inexistente ao **instanciar** o componente, e nenhum teste do harness instancia
+os hosts do shell — eles só nascem na IDE de verdade. É a condição exata da §4
+regra 11, e por isso nasceu `scripts/verificar-qml-propriedades.sh` (o 15º do
+gate): todo `nome:` dentro de um bloco de componente deste repositório tem que
+ser propriedade declarada, alias, `on<Sinal>` ou propriedade do tipo raiz.
+
+Provado por mutação em três formas — propriedade com typo, handler de sinal
+inexistente, e propriedade renomeada no alvo deixando o binding órfão. As três
+reprovam; restaurado, passa limpo em 137 componentes.
+
 **Critério de aceite da fatia, quando ela vier** — o mesmo da §4 regra 9, e é o
 que a distingue de cerimônia:
 

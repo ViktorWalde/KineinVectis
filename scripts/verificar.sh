@@ -73,6 +73,9 @@ scripts/verificar-qml.sh
 passo "scripts/verificar-qml-fiacao.sh (binding auto-referente)"
 bash scripts/verificar-qml-fiacao.sh
 
+passo "scripts/verificar-qml-propriedades.sh (binding para propriedade inexistente)"
+bash scripts/verificar-qml-propriedades.sh
+
 passo "scripts/verificar-docs.sh (numero sem data que mente)"
 bash scripts/verificar-docs.sh
 

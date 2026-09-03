@@ -268,8 +268,12 @@ Onde esses cinco estao em 2026-09-02 (a fonte viva continua sendo a baseline):
                            registra a decisao ainda NAO tomada e o custo medido
                            das duas saidas
   editor_highlighter.cpp   910 — intocado
-  ShellWorkspaceHost.qml   576 — intocado, e agora e ele quem segura a proxima
-                           fatia do editor (le 92 propriedades do controller)
+  ShellWorkspaceHost.qml   576 -> 407 em 2026-09-03: a fiacao do painel do
+                           editor virou ShellEditorHost.qml (225). As leituras
+                           de editorController cairam de 92 para 2. E' a §4
+                           regra 8 aplicada ao pe' da letra — composition root
+                           se divide POR AREA, a contagem de arquivos cresce e
+                           o limite nao sobe. Continua na catraca em 407/400
 ```
 
 O `CoreClient` preserva a API QML única, com a implementação C++ fatiada em

@@ -96,7 +96,7 @@ existe.
 | `crates/kinein-core/src/handlers/lsp.rs` | 653/500 | **viola a §4**, não só o número — §3.1 |
 | `ui/src/core_client_dispatch.cpp` | 640/500 | já cortado uma vez (751→640) na etapa 4 |
 | `crates/kinein-core/src/lsp/parse.rs` | 598/500 | parse de cada resposta LSP no mesmo arquivo |
-| `ui/qml/shell/ShellWorkspaceHost.qml` | 576/400 | host central; **92 leituras** de `editorController` — trava a §3.2 |
+| `ui/qml/shell/ShellWorkspaceHost.qml` | 407/400 | **cortado em 2026-09-03** (etapa 11.1): a fiação do painel virou `ShellEditorHost.qml`; de 576/92 leituras para 407/2 |
 | `ui/qml/editor/EditorTextController.qml` | 574/400 | cursor + seleção + indentação + gestos |
 | `ui/qml/editor/EditorDocumentController.qml` | 548/400 | abas + buffers + save + externo |
 | `ui/qml/editor/EditorPane.qml` | 538/300 | visual |
@@ -255,11 +255,15 @@ tem um custo escrito acima.
                                            Nenhum limite levantado. Deixou de
                                            bloquear o editor.
 
-11.1 ShellWorkspaceHost.qml (576/400):     o que a decisao (a) mandou fazer.
-     92 leituras -> propriedades           Corta os DOIS arquivos em debito de
-     agregadas por subcontroller           uma vez. Nao tem fatia funcional
-                                           esperando: e' a excecao §2.2, uma
-                                           decisao do autor ja' registrada.
+11.1 ShellWorkspaceHost.qml (576/400)      FEITA em 2026-09-03. A fiacao do
+     -> 407/400                            painel desceu para ShellEditorHost
+                                           .qml (225). Leituras de editor-
+                                           Controller: 92 -> 2. Continua na
+                                           catraca por 7 linhas, e fechar
+                                           essas 7 seria corte por TAMANHO
+                                           (§4 regra 9) — nao se faz.
+                                           Produziu o 15o gate: verificar-qml-
+                                           propriedades.sh (arquitetura/32 §8.6).
 
 12  Registro de saidas do dogfooding       §4.1. Pequeno, e ordena a frente C
     (§4.1)                                 inteira. Sem ele, o resto e' palpite.
