@@ -10,12 +10,17 @@
 //! - [`session`]: sessao viva (spawn, handshake, thread leitora, requests);
 //! - [`target`]: resolucao do binario "Automatico" (espelho do run).
 
+mod parse;
+mod reader;
 mod session;
 mod target;
+mod wire;
 
 use std::{collections::BTreeMap, error::Error, fmt, path::Path};
 
-use kinein_protocol::{BreakpointInfo, StackFrameInfo, VariableInfo};
+use kinein_protocol::{
+    BreakpointInfo, DebugEvaluateResult, SourceBreakpointParams, StackFrameInfo, VariableInfo,
+};
 
 use crate::lsp::EventSender;
 
@@ -74,7 +79,7 @@ impl Error for DebugError {}
 #[derive(Debug)]
 pub struct DebugManager {
     events: EventSender,
-    breakpoints: BTreeMap<String, Vec<u32>>,
+    breakpoints: BTreeMap<String, Vec<SourceBreakpointParams>>,
     session: Option<session::DapSession>,
 }
 
@@ -97,6 +102,17 @@ impl DebugManager {
             .is_some_and(session::DapSession::is_alive)
     }
 
+    /// Avalia uma expressao (watch) no frame pedido, ou no do topo.
+    pub fn evaluate(
+        &mut self,
+        expression: &str,
+        frame_id: Option<i64>,
+    ) -> Result<DebugEvaluateResult, DebugError> {
+        self.live_session()
+            .ok_or(DebugError::NotRunning)?
+            .evaluate(expression, frame_id)
+    }
+
     /// Replaces the breakpoint set of `file` (empty clears it).
     ///
     /// Without a live session the set is stored (`verified: false`) and
@@ -105,9 +121,9 @@ impl DebugManager {
     pub fn set_breakpoints(
         &mut self,
         file: &str,
-        lines: &[u32],
+        breakpoints: &[SourceBreakpointParams],
     ) -> Result<Vec<BreakpointInfo>, DebugError> {
-        let normalized = normalize_lines(lines);
+        let normalized = normalize_breakpoints(breakpoints);
         if normalized.is_empty() {
             self.breakpoints.remove(file);
         } else {
@@ -118,8 +134,8 @@ impl DebugManager {
         }
         Ok(normalized
             .iter()
-            .map(|&line| BreakpointInfo {
-                line,
+            .map(|bp| BreakpointInfo {
+                line: bp.line,
                 verified: false,
             })
             .collect())
@@ -212,11 +228,19 @@ impl DebugManager {
     }
 }
 
-/// Sorts, dedupes and drops invalid (zero) breakpoint lines.
-fn normalize_lines(lines: &[u32]) -> Vec<u32> {
-    let mut normalized: Vec<u32> = lines.iter().copied().filter(|&line| line > 0).collect();
-    normalized.sort_unstable();
-    normalized.dedup();
+/// Sorts, dedupes by LINE and drops invalid (zero) breakpoints.
+///
+/// A dedupe por linha, e nao pelo par (linha, condicao): duas condicoes na
+/// mesma linha nao existem no modelo da UI — um breakpoint por linha, com uma
+/// condicao opcional. Se um dia existirem, isto aqui e' o lugar que muda.
+fn normalize_breakpoints(breakpoints: &[SourceBreakpointParams]) -> Vec<SourceBreakpointParams> {
+    let mut normalized: Vec<SourceBreakpointParams> = breakpoints
+        .iter()
+        .filter(|bp| bp.line > 0)
+        .cloned()
+        .collect();
+    normalized.sort_unstable_by_key(|bp| bp.line);
+    normalized.dedup_by_key(|bp| bp.line);
     normalized
 }
 
@@ -224,14 +248,66 @@ fn normalize_lines(lines: &[u32]) -> Vec<u32> {
 mod tests {
     use std::sync::mpsc;
 
+    use kinein_protocol::SourceBreakpointParams;
+
     use super::{DebugError, DebugManager};
+
+    /// Atalho: linhas viram breakpoints sem condicao.
+    fn bps(lines: &[u32]) -> Vec<SourceBreakpointParams> {
+        lines
+            .iter()
+            .map(|&line| SourceBreakpointParams {
+                line,
+                condition: None,
+                hit_condition: None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn breakpoint_store_keeps_condition_through_normalization() {
+        let (sender, _receiver) = mpsc::channel();
+        let mut manager = DebugManager::new(sender);
+
+        // Desordenado, com zero invalido e uma linha repetida: a condicao da
+        // PRIMEIRA ocorrencia da linha e' a que fica.
+        let pedido = vec![
+            SourceBreakpointParams {
+                line: 9,
+                condition: Some("i == 42".into()),
+                hit_condition: None,
+            },
+            SourceBreakpointParams {
+                line: 0,
+                condition: Some("descartado".into()),
+                hit_condition: None,
+            },
+            SourceBreakpointParams {
+                line: 4,
+                condition: None,
+                hit_condition: Some("5".into()),
+            },
+        ];
+        let stored = manager.set_breakpoints("/w/main.c", &pedido).unwrap();
+        assert_eq!(
+            stored.iter().map(|bp| bp.line).collect::<Vec<_>>(),
+            vec![4, 9],
+            "linha zero tinha que sumir e a ordem tinha que ser por linha"
+        );
+
+        let guardado = &manager.breakpoints["/w/main.c"];
+        assert_eq!(guardado[0].hit_condition.as_deref(), Some("5"));
+        assert_eq!(guardado[1].condition.as_deref(), Some("i == 42"));
+    }
 
     #[test]
     fn breakpoint_store_normalizes_and_clears_without_a_session() {
         let (sender, _receiver) = mpsc::channel();
         let mut manager = DebugManager::new(sender);
 
-        let stored = manager.set_breakpoints("/w/main.c", &[7, 3, 7, 0]).unwrap();
+        let stored = manager
+            .set_breakpoints("/w/main.c", &bps(&[7, 3, 7, 0]))
+            .unwrap();
         assert_eq!(
             stored.iter().map(|bp| bp.line).collect::<Vec<_>>(),
             vec![3, 7]

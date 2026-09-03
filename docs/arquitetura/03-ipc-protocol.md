@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.65.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
+> (JSON-RPC 0.66.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
 > `draft.*`, `format.*`, `cmake.*`, `cargo.*`, `configAction.*`, `runConfig.*`,
 > `settings.*`, `debug.*`, `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
@@ -1302,6 +1302,35 @@ Inspeção (protocolo `0.29.0`, fatia M2.5c), sempre da thread pausada
   > 0 = expansível). Exatamente um de `frameId`/`ref` → senão
   `INVALID_PARAMS`. A resposta ECOA a chave pedida para a UI correlacionar
   (mesmo padrão do `format.text`).
+- `debug.evaluate { expression, frameId? }` → `{ expression, result, typeName?,
+  reference }` (protocolo `0.66.0`) — avalia uma expressão (watch) no frame
+  pedido. **Sem `frameId`, o core usa o frame do TOPO** da thread parada: é o
+  que a UI quer quando o usuário digita um watch sem ter escolhido um frame.
+  `reference > 0` significa expansível e alimenta o MESMO `debug.variables
+  { ref }` acima — um watch é uma variável avaliada sob demanda, não uma
+  árvore paralela. A resposta ECOA `expression`, e **o erro também a leva em
+  `details`**: sem isso a UI não sabe qual watch falhou e marcaria todos.
+  Expressão vazia ou só de espaços é `INVALID_PARAMS` no core, antes de chegar
+  ao adapter — a mensagem do lldb para string vazia não ajuda ninguém.
+
+**Mudança de contrato em `debug.setBreakpoints` (protocolo `0.66.0`).** O campo
+`lines: [u32]` virou `breakpoints: [{ line, condition?, hitCondition? }]`.
+
+```text
+ANTES  { file, lines: [3, 7] }
+AGORA  { file, breakpoints: [{ "line": 3 },
+                             { "line": 7, "condition": "i == 42" }] }
+```
+
+`condition` e `hitCondition` mapeiam 1:1 nos campos de mesmo nome do
+`SourceBreakpoint` do DAP — *"the breakpoint stops only when this evaluates to
+true"* e *"how many times the breakpoint must be hit before stopping"* —, e o
+`lldb-dap` anuncia `supportsConditionalBreakpoints` e
+`supportsHitConditionalBreakpoints`. **Campo ausente não vira `null` no wire:**
+mandar `"condition": null` (ou `"  "`) é pedir para um adapter tratar como
+expressão vazia e o breakpoint nunca parar; o core descarta condição em branco
+antes de montar o argumento. Array paralelo de condições foi recusado de
+propósito — é a forma de linha e condição saírem de sincronia em silêncio.
 
 ```text
 event.debug.started   { program }

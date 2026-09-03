@@ -54,8 +54,8 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**114 métodos IPC** roteados, **19 domínios** no core, **433 testes** Rust
-verdes (medido em 2026-09-02). Protocolo `0.65.0`.
+**115 métodos IPC** roteados, **19 domínios** no core, **437 testes** Rust
+verdes (medido em 2026-09-03). Protocolo `0.66.0`.
 
 Domínios do core, por profundidade real:
 
@@ -78,7 +78,12 @@ SOLIDO      fsops     confinamento ao root, escrita atomica, transacao com
             jobs      cancelamento cooperativo, progresso, drain no shutdown
 
 MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
-            dap       sessao de debug; 4 testes de integracao
+            dap       sessao de debug; 4 testes de integracao. Pasta por
+                      responsabilidade desde 2026-09-03: wire (o transporte),
+                      parse (interpretar a resposta, o unico testavel sem
+                      subir processo), reader (a thread leitora) e session.
+                      Desde 0.66.0 tem `evaluate` (watches) e breakpoint com
+                      `condition`/`hitCondition`
             db        rascunhos em SQLite (WAL); a rede de seguranca de dados
 
             cdb       diagnostico da compilation database do C/C++: onde ela
@@ -121,7 +126,7 @@ nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
 provado, está sem evidência — por isso cada um é testado por mutação.
 
-**2. A catraca de arquitetura congela 14 arquivos (medido em 2026-09-03) e só
+**2. A catraca de arquitetura congela 11 arquivos (medido em 2026-09-03) e só
 deixa diminuir.** Ela não é limite duro. O critério é **responsabilidade**; linhas são só o detector de
 fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de

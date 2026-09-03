@@ -17,7 +17,7 @@ fn debug_methods_require_workspace_or_manager() {
     let breakpoints = core.handle_request(&JsonRpcRequest::new(
         2_i64,
         "debug.setBreakpoints",
-        Some(json!({ "file": "/x/main.c", "lines": [1] })),
+        Some(json!({ "file": "/x/main.c", "breakpoints": [{ "line": 1 }] })),
     ));
     assert_eq!(
         breakpoints.response().error.as_ref().unwrap().code,
@@ -57,7 +57,7 @@ fn breakpoint_flow_and_session_guards_through_dispatch() {
     let outside = core.handle_request(&JsonRpcRequest::new(
         11_i64,
         "debug.setBreakpoints",
-        Some(json!({ "file": base.join("fora.rs").to_str().unwrap(), "lines": [1] })),
+        Some(json!({ "file": base.join("fora.rs").to_str().unwrap(), "breakpoints": [{ "line": 1 }] })),
     ));
     assert_eq!(
         outside.response().error.as_ref().unwrap().code,
@@ -67,7 +67,7 @@ fn breakpoint_flow_and_session_guards_through_dispatch() {
     let missing = core.handle_request(&JsonRpcRequest::new(
         12_i64,
         "debug.setBreakpoints",
-        Some(json!({ "file": root.join("nao-existe.rs").to_str().unwrap(), "lines": [1] })),
+        Some(json!({ "file": root.join("nao-existe.rs").to_str().unwrap(), "breakpoints": [{ "line": 1 }] })),
     ));
     assert_eq!(
         missing.response().error.as_ref().unwrap().code,
@@ -77,7 +77,7 @@ fn breakpoint_flow_and_session_guards_through_dispatch() {
     let stored = core.handle_request(&JsonRpcRequest::new(
         13_i64,
         "debug.setBreakpoints",
-        Some(json!({ "file": root.join("main.rs").to_str().unwrap(), "lines": [7, 3, 7] })),
+        Some(json!({ "file": root.join("main.rs").to_str().unwrap(), "breakpoints": [{ "line": 7 }, { "line": 3 }, { "line": 7 }] })),
     ));
     let result = stored.response().result.as_ref().unwrap().clone();
     assert_eq!(result["breakpoints"][0]["line"], 3);
@@ -87,7 +87,7 @@ fn breakpoint_flow_and_session_guards_through_dispatch() {
     let cleared = core.handle_request(&JsonRpcRequest::new(
         14_i64,
         "debug.setBreakpoints",
-        Some(json!({ "file": root.join("main.rs").to_str().unwrap(), "lines": [] })),
+        Some(json!({ "file": root.join("main.rs").to_str().unwrap(), "breakpoints": [] })),
     ));
     let result = cleared.response().result.as_ref().unwrap().clone();
     assert_eq!(result["breakpoints"].as_array().unwrap().len(), 0);
@@ -177,4 +177,48 @@ fn command_list_includes_debug_start() {
         .iter()
         .any(|command| command["id"] == "debug.start");
     assert!(has_debug_start);
+}
+
+/// `debug.evaluate` (watch) recusa antes de chegar ao adapter o que o adapter
+/// responderia mal: expressao vazia. E sem sessao viva, diz que nao ha sessao
+/// em vez de estourar.
+#[test]
+fn evaluate_guards_empty_expression_and_missing_session() {
+    let mut core = core_with_empty_search_path("debug-evaluate");
+
+    // Sem enable_lsp nao ha manager de debug.
+    let sem_sessao = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "debug.evaluate",
+        Some(json!({ "expression": "conta" })),
+    ));
+    // `InternalError` e a convencao ja existente do `debug_unavailable_response`
+    // para "debug nao habilitado neste loop" — nao invento codigo novo aqui.
+    assert_eq!(
+        sem_sessao.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InternalError
+    );
+
+    // Expressao so' de espacos: recusada como params invalidos, e a mensagem
+    // vem do core — a do lldb para string vazia nao ajuda ninguem.
+    let vazia = core.handle_request(&JsonRpcRequest::new(
+        2_i64,
+        "debug.evaluate",
+        Some(json!({ "expression": "   " })),
+    ));
+    assert_eq!(
+        vazia.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidParams
+    );
+
+    // Sem `expression` nenhuma: tambem params invalidos, nao panico.
+    let sem_campo = core.handle_request(&JsonRpcRequest::new(
+        3_i64,
+        "debug.evaluate",
+        Some(json!({})),
+    ));
+    assert_eq!(
+        sem_campo.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidParams
+    );
 }

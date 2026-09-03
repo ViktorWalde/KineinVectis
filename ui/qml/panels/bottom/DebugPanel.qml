@@ -22,9 +22,12 @@ Item {
     property var framesModel: emptyInspectionModel
     property var variablesModel: emptyInspectionModel
     property int currentFrameIndex: -1
+    property var watchesModel
 
     signal frameActivated(int index)
     signal variableToggled(int index)
+    signal watchAdded(string expression)
+    signal watchRemoved(int index)
     signal continueRequested()
     signal pauseRequested()
     signal stepOverRequested()
@@ -155,9 +158,12 @@ Item {
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom
         anchors.left: parent.left
+        // Parado, a saida divide o espaco com o inspetor; rodando, ocupa tudo.
+        // Antes esta conta somava as larguras de framesBox e variablesBox, que
+        // hoje moram no DebugInspector — o vizinho passou a ser ele.
         width: panel.paused
-               ? Math.max(220, parent.width - framesBox.width
-                          - variablesBox.width - 2 * Theme.spacingSmall)
+               ? Math.max(220, parent.width - inspector.width
+                          - watches.width - 2 * Theme.spacingSmall)
                : parent.width
         clip: true
         model: panel.outputModel
@@ -187,184 +193,39 @@ Item {
         }
     }
 
-    Rectangle {
-        id: framesBox
+    DebugInspector {
+        id: inspector
 
         anchors.top: debugControlsRow.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom
         anchors.left: debugOutputView.right
         anchors.leftMargin: Theme.spacingSmall
-        width: 230
-        visible: panel.paused
-        radius: Theme.radius
-        color: Theme.background1
-        border.color: Theme.borderSoft
-        border.width: 1
+        anchors.right: watches.left
+        anchors.rightMargin: Theme.spacingSmall
 
-        Text {
-            id: framesTitle
+        paused: panel.paused
+        framesModel: panel.framesModel
+        variablesModel: panel.variablesModel
+        currentFrameIndex: panel.currentFrameIndex
 
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.margins: Theme.spacingSmall
-            text: qsTr("Frames")
-            color: Theme.textMuted
-            font.pixelSize: 10
-            font.bold: true
-        }
-
-        ListView {
-            anchors.top: framesTitle.bottom
-            anchors.topMargin: Theme.spacingXSmall
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Theme.spacingSmall
-            clip: true
-            model: panel.framesModel
-
-            delegate: Rectangle {
-                id: frameRow
-
-                required property int index
-                required property string name
-                required property string file
-                required property int line
-
-                width: ListView.view.width
-                height: 22
-                radius: Theme.radiusXSmall
-                color: panel.currentFrameIndex === frameRow.index
-                       ? Theme.surfaceSelected
-                       : (frameRowArea.containsMouse ? Theme.surface2
-                                                     : "transparent")
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    text: frameRow.line > 0
-                          ? qsTr("%1  ·  :%2").arg(frameRow.name).arg(frameRow.line)
-                          : frameRow.name
-                    color: panel.currentFrameIndex === frameRow.index
-                           ? Theme.textPrimary : Theme.textSecondary
-                    font.pixelSize: 11
-                    elide: Text.ElideRight
-                }
-
-                MouseArea {
-                    id: frameRowArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: panel.frameActivated(frameRow.index)
-                }
-            }
-        }
+        onFrameActivated: function(index) { panel.frameActivated(index); }
+        onVariableToggled: function(index) { panel.variableToggled(index); }
     }
 
-    Rectangle {
-        id: variablesBox
+    DebugWatches {
+        id: watches
 
         anchors.top: debugControlsRow.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom
-        anchors.left: framesBox.right
-        anchors.leftMargin: Theme.spacingSmall
         anchors.right: parent.right
-        visible: panel.paused
-        radius: Theme.radius
-        color: Theme.background1
-        border.color: Theme.borderSoft
-        border.width: 1
+        width: 240
 
-        Text {
-            id: variablesTitle
+        paused: panel.paused
+        watchesModel: panel.watchesModel
 
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.margins: Theme.spacingSmall
-            text: qsTr("Variáveis")
-            color: Theme.textMuted
-            font.pixelSize: 10
-            font.bold: true
-        }
-
-        ListView {
-            anchors.top: variablesTitle.bottom
-            anchors.topMargin: Theme.spacingXSmall
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Theme.spacingSmall
-            clip: true
-            model: panel.variablesModel
-
-            delegate: Rectangle {
-                id: variableRowDelegate
-
-                required property int index
-                required property string name
-                required property string value
-                required property string typeName
-                required property real reference
-                required property int depth
-                required property bool expanded
-
-                width: ListView.view.width
-                height: 20
-                radius: Theme.radiusXSmall
-                color: variableRowArea.containsMouse
-                       && variableRowDelegate.reference > 0
-                       ? Theme.surface2 : "transparent"
-
-                Text {
-                    id: variableArrow
-
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                                        + variableRowDelegate.depth * 14
-                    width: 12
-                    text: variableRowDelegate.reference > 0
-                          ? (variableRowDelegate.expanded ? "▾" : "▸") : ""
-                    color: Theme.textMuted
-                    font.pixelSize: 10
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: variableArrow.right
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spacingSmall
-                    text: variableRowDelegate.typeName !== ""
-                          ? qsTr("%1 = %2  (%3)")
-                                .arg(variableRowDelegate.name)
-                                .arg(variableRowDelegate.value)
-                                .arg(variableRowDelegate.typeName)
-                          : qsTr("%1 = %2")
-                                .arg(variableRowDelegate.name)
-                                .arg(variableRowDelegate.value)
-                    color: Theme.textSecondary
-                    font.family: Theme.monoFont
-                    font.pixelSize: 11
-                    elide: Text.ElideRight
-                }
-
-                MouseArea {
-                    id: variableRowArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: variableRowDelegate.reference > 0
-                                 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: panel.variableToggled(variableRowDelegate.index)
-                }
-            }
-        }
+        onWatchAdded: function(expression) { panel.watchAdded(expression); }
+        onWatchRemoved: function(index) { panel.watchRemoved(index); }
     }
 }

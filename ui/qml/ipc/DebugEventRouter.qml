@@ -16,6 +16,14 @@ Item {
             root.debugController.handleStarted(program);
         }
 
+        function onDebugEvaluateResolved(expression, value, typeName, ref) {
+            root.debugController.handleEvaluated(expression, value, typeName, ref);
+        }
+
+        function onDebugEvaluateFailed(expression, message) {
+            root.debugController.handleEvaluateFailed(expression, message);
+        }
+
         function onDebugOutput(category, line) {
             root.debugController.handleOutput(category, line);
         }

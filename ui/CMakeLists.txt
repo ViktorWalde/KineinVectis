@@ -44,6 +44,8 @@ set_source_files_properties(qml/shell/VerticalScrollBar.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/shell/RunConfigDialog.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigDialog.qml)
 set_source_files_properties(qml/shell/RunConfigMenu.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigMenu.qml)
 set_source_files_properties(qml/debug/DebugController.qml PROPERTIES QT_RESOURCE_ALIAS DebugController.qml)
+set_source_files_properties(qml/debug/DebugWatches.qml PROPERTIES QT_RESOURCE_ALIAS DebugWatches.qml)
+set_source_files_properties(qml/debug/DebugInspector.qml PROPERTIES QT_RESOURCE_ALIAS DebugInspector.qml)
 set_source_files_properties(qml/diagnostics/DiagnosticsController.qml PROPERTIES QT_RESOURCE_ALIAS DiagnosticsController.qml)
 set_source_files_properties(qml/settings/SettingsController.qml PROPERTIES QT_RESOURCE_ALIAS SettingsController.qml)
 set_source_files_properties(qml/settings/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
@@ -194,6 +196,8 @@ qt_add_qml_module(kinein-vectis
         qml/shell/RunConfigDialog.qml
         qml/shell/RunConfigMenu.qml
         qml/debug/DebugController.qml
+        qml/debug/DebugWatches.qml
+        qml/debug/DebugInspector.qml
         qml/diagnostics/DiagnosticsController.qml
         qml/settings/SettingsController.qml
         qml/settings/SettingsDialog.qml
@@ -316,6 +320,8 @@ qt_add_qml_module(kinein-vectis
         src/core_client_dispatch.cpp
         src/core_client_dispatch_cmake.cpp
         src/core_client_dispatch_lsp.cpp
+        src/core_client_dispatch_debug.cpp
+        src/core_client_requests_debug.cpp
         src/core_client_configaction.cpp
         src/core_client_toolchain.cpp
         src/core_client_log.cpp

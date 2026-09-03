@@ -26,8 +26,29 @@ pub struct DebugStartResult {
 pub struct DebugSetBreakpointsParams {
     /// Absolute file path inside the workspace.
     pub file: String,
-    /// Every 1-based breakpoint line of the file (replaces the previous set).
-    pub lines: Vec<u32>,
+    /// Every breakpoint of the file (replaces the previous set).
+    pub breakpoints: Vec<SourceBreakpointParams>,
+}
+
+/// One breakpoint requested by the UI, with its optional stop conditions.
+///
+/// `condition` and `hit_condition` map 1:1 onto the DAP `SourceBreakpoint`
+/// fields of the same name (DAP specification, `setBreakpoints` request):
+/// *"Expression for conditional breakpoints; the breakpoint stops only when
+/// this evaluates to true"* and *"How many times the breakpoint must be hit
+/// before stopping"*. The adapter in use is `lldb-dap`, which advertises both
+/// `supportsConditionalBreakpoints` and `supportsHitConditionalBreakpoints`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SourceBreakpointParams {
+    /// 1-based line of the breakpoint.
+    pub line: u32,
+    /// Stops only when this expression evaluates true. `None` = always stops.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub condition: Option<String>,
+    /// Stops only after this many hits. `None` = stops on every hit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hit_condition: Option<String>,
 }
 
 /// One breakpoint as acknowledged by the core/adapter.
@@ -158,9 +179,30 @@ mod tests {
 
     #[test]
     fn breakpoints_roundtrip_uses_camel_case() {
-        let params: DebugSetBreakpointsParams =
-            serde_json::from_value(json!({ "file": "/w/main.c", "lines": [3, 7] })).unwrap();
-        assert_eq!(params.lines, vec![3, 7]);
+        let params: DebugSetBreakpointsParams = serde_json::from_value(json!({
+            "file": "/w/main.c",
+            "breakpoints": [{ "line": 3 }, { "line": 7, "condition": "i == 42" }],
+        }))
+        .unwrap();
+        assert_eq!(
+            params
+                .breakpoints
+                .iter()
+                .map(|bp| bp.line)
+                .collect::<Vec<_>>(),
+            vec![3, 7]
+        );
+        assert_eq!(params.breakpoints[0].condition, None);
+        assert_eq!(params.breakpoints[1].condition.as_deref(), Some("i == 42"));
+
+        // `condition`/`hitCondition` ausentes NAO viram `null` no wire: um
+        // adapter pode tratar null como expressao vazia (DAP SourceBreakpoint).
+        let bare = serde_json::to_value(&params.breakpoints[0]).unwrap();
+        assert!(
+            bare.get("condition").is_none(),
+            "condition nula vazou: {bare}"
+        );
+        assert!(bare.get("hitCondition").is_none());
 
         let value = serde_json::to_value(DebugBreakpointsResult {
             breakpoints: vec![BreakpointInfo {
@@ -171,4 +213,33 @@ mod tests {
         .unwrap();
         assert_eq!(value["breakpoints"][0]["verified"], true);
     }
+}
+
+/// Params for `debug.evaluate` — a watch expression on the paused frame.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DebugEvaluateParams {
+    /// Expression to evaluate in the debuggee.
+    pub expression: String,
+    /// Frame to evaluate in; `None` uses the top frame of the stopped thread.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub frame_id: Option<i64>,
+}
+
+/// Result payload for `debug.evaluate`.
+///
+/// Mirrors the DAP `evaluate` response body: `result` is required, `type` is
+/// optional, and `variables_reference` is `> 0` when the value can be expanded
+/// — the same contract `debug.variables` already uses for `reference`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DebugEvaluateResult {
+    /// The expression that was evaluated, echoed back for the UI to match.
+    pub expression: String,
+    /// Rendered value.
+    pub result: String,
+    /// Declared type, when the adapter reports one.
+    pub type_name: Option<String>,
+    /// `> 0` when the value has children; feed it to `debug.variables`.
+    pub reference: i64,
 }

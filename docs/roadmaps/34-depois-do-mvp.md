@@ -21,13 +21,13 @@ sem forma de medir não entra aqui.
 ## 1. Onde o projeto está, medido em 2026-09-02
 
 ```text
-433 testes Rust verdes          cargo test
-protocolo 0.65.0                crates/kinein-protocol/src/lib.rs
-114 metodos IPC, 19 dominios    docs/LEITURA_TECNICA.md §3
+437 testes Rust verdes          cargo test
+protocolo 0.66.0                crates/kinein-protocol/src/lib.rs
+115 metodos IPC, 19 dominios    docs/LEITURA_TECNICA.md §3
 gate completo verde             bash scripts/verificar.sh
 AppImage no gate                scripts/verificar-appimage.sh
 5 sondas                        scripts/sonda_*.py
-14 arquivos em debito           cat scripts/arquitetura-baseline.txt
+11 arquivos em debito           cat scripts/arquitetura-baseline.txt
 ```
 
 O MVP fechou. O que vem agora não é "terminar" — é **transformar MVP em
@@ -37,7 +37,7 @@ ao CLion em profundidade (TR2).
 ## 2. As quatro frentes, e por que a ordem não é óbvia
 
 ```text
-A  DIVIDA QUE JA COBRA PEDAGIO   14 arquivos acima do limite da catraca.
+A  DIVIDA QUE JA COBRA PEDAGIO   11 arquivos acima do limite da catraca.
                                  Nao e' limpeza: e' imposto sobre a PROXIMA
                                  fatia.
 
@@ -84,21 +84,18 @@ existe.
 
 ## 3. FRENTE A — a dívida, medida e ordenada
 
-`cat scripts/arquitetura-baseline.txt` (2026-09-03, 14 arquivos):
+`cat scripts/arquitetura-baseline.txt` (2026-09-03, 11 arquivos):
 
 | arquivo | linhas/limite | o que provavelmente está misturado |
 | --- | ---: | --- |
 | `ui/qml/editor/EditorController.qml` | 791/400 | fachada (64 de 97 funções delegam) — **decisão em aberto**, §3.2 |
-| `crates/kinein-core/src/dap/session.rs` | 672/500 | handshake DAP + breakpoints + stepping + frames + variáveis |
 | `ui/src/core_client_requests.cpp` | 660/500 | todo request de todo domínio numa fachada |
 | `ui/src/core_client_dispatch.cpp` | 640/500 | já cortado uma vez (751→640) na etapa 4 |
 | `crates/kinein-core/src/lsp/parse.rs` | 598/500 | parse de cada resposta LSP no mesmo arquivo |
-| `ui/qml/shell/ShellWorkspaceHost.qml` | 407/400 | **cortado em 2026-09-03** (etapa 11.1): a fiação do painel virou `ShellEditorHost.qml`; de 576/92 leituras para 407/2 |
 | `ui/qml/editor/EditorTextController.qml` | 574/400 | cursor + seleção + indentação + gestos |
 | `ui/qml/editor/EditorDocumentController.qml` | 548/400 | abas + buffers + save + externo |
 | `ui/qml/editor/EditorPane.qml` | 538/300 | visual |
 | `ui/qml/editor/EditorTextSurface.qml` | 504/300 | visual |
-| `ui/qml/panels/bottom/DebugPanel.qml` | 370/300 | visual |
 | `ui/qml/editor/EditorFindBar.qml` | 329/300 | visual |
 | `ui/qml/panels/bottom/SearchPanel.qml` | 325/300 | trava o `TextArea` do replace (`arquitetura/33` §8a) |
 | `ui/qml/panels/bottom/TerminalViewport.qml` | 319/300 | visual |
@@ -228,11 +225,11 @@ EditorConfig        AUSENTE   e' DECISAO, nao esquecimento: auditoria de
                               2026-07-16 (PONTO_ATUAL §0.2e) deu RESULTADO
                               NEGATIVO — nao ha' crate Rust madura. Nao
                               reabrir sem auditoria nova.
-watches no debug    AUSENTE   grep -rn evaluate crates/kinein-core/src/dap/
-                              -> vazio. Ha' `debug.variables` (escopos e
-                              frames), nao ha' avaliacao de expressao.
-breakpoint          AUSENTE   `debug.setBreakpoints` aceita file + lines;
-  condicional                 nao ha' condicao nem hit count.
+watches no debug    EXISTE    desde 2026-09-03 (0.66.0): `debug.evaluate`
+                              com context 'watch'. Reavaliados a cada
+                              parada E a cada troca de frame.
+breakpoint          EXISTE    desde 2026-09-03 (0.66.0): `condition` e
+  condicional                 `hitCondition` por breakpoint.
 TextArea no replace AUSENTE   `arquitetura/33` §8a — a sintaxe `\n` e' a
                               saida honesta, nao a definitiva.
 ```
@@ -252,7 +249,7 @@ A ordem arquitetural do `GUIAIA.md` §2, conferida contra o disco em 2026-09-02:
 | 4 | scheduler LSP por documento/contexto, cancelamento, backpressure | ❌ ausente. Existem os **dois relógios** (`syntaxVersion`/`semanticVersion`), que descartam resposta obsoleta — é outra coisa | `arquitetura/32` §3 |
 | 5 | Symbol Broker e Diagnostic Broker | ❌ ausente | — |
 | 6 | painel de Effective Compile Context | ❌ ausente. O diagnóstico de CDB (0.62.0) é o primeiro degrau dele | `crates/kinein-core/src/cdb.rs` |
-| 7 | debugger com watches, variáveis, pilha, pretty-printers | ⚠️ **em parte**: pilha ✅, variáveis ✅, watches ❌, pretty-printers ❌ | `crates/kinein-core/src/dap/` |
+| 7 | debugger com watches, variáveis, pilha, pretty-printers | ⚠️ **em parte** (2026-09-03): pilha ✅, variáveis ✅, **watches ✅**, **breakpoint condicional ✅**, pretty-printers ❌ | `crates/kinein-core/src/dap/` |
 | 8 | split editor, multicursor, EditorConfig | ❌ os três (ver §4.2) | — |
 | 9 | testes prolongados em projetos reais | ⚠️ existe soak sintético; falta projeto real | `scripts/sonda_soak.py` |
 
@@ -320,8 +317,12 @@ tem um custo escrito acima.
 14  Toolchain: sysroot + cross + kit por   TR2 item 3. O encaixe ja' existe;
     preset                                 e' o item barato da frente C.
 
-15  Debug: `evaluate` (watches) +          TR2 item 7 + divida do dap/session.rs
-    breakpoint condicional                 (672/500) na MESMA fatia.
+15  Debug: `evaluate` (watches) +          FEITA em 2026-09-03. dap/ virou
+    breakpoint condicional                 wire/parse/reader/session; watches e
+                                           condicao de breakpoint atravessam
+                                           protocolo (0.66.0), core, IPC e UI.
+                                           A catraca disparou 3x e cada vez o
+                                           culpado era a MUDANCA: 14 -> 11.
 
 16  editor_highlighter.cpp (910/500)       FEITA em 2026-09-03. Virou 5 arquivos
                                            + 1 header de paleta; o compositor

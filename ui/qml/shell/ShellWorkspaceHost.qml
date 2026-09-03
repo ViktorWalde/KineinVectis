@@ -251,12 +251,7 @@ Item {
                 terminalActive: root.terminalActive
                 workspaceAvailable: root.workspaceOpen
                 runModel: root.runtimeController.runModel
-                debugOutputModel: root.debugController.outputModel
-                debugSessionActive: root.debugController.sessionActive
-                debugPaused: root.debugController.paused
-                debugFramesModel: root.debugController.framesModel
-                debugVariablesModel: root.debugController.variablesModel
-                debugCurrentFrameIndex: root.debugController.currentFrameIndex
+                debugController: root.debugController
                 gitChangesModel: root.gitController.changesModel
                 gitRepo: root.gitController.repo
                 gitStagedCount: root.gitController.stagedCount
@@ -316,18 +311,6 @@ Item {
                 }
                 onRunInputSubmitted: function(text) {
                     root.runtimeController.submitRunInput(text);
-                }
-                onDebugContinueRequested: root.debugController.continueDebug()
-                onDebugPauseRequested: root.debugController.pauseDebug()
-                onDebugStepOverRequested: root.debugController.stepOver()
-                onDebugStepIntoRequested: root.debugController.stepInto()
-                onDebugStepOutRequested: root.debugController.stepOutOf()
-                onDebugStopRequested: root.debugController.stopDebug()
-                onDebugFrameActivated: function(index) {
-                    root.debugController.selectFrame(index, true);
-                }
-                onDebugVariableToggled: function(index) {
-                    root.debugController.toggleVariable(index);
                 }
                 onGitStageToggleRequested: function(index) {
                     root.gitController.toggleStaged(index);

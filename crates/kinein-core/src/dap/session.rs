@@ -1,39 +1,47 @@
-//! Sessao DAP viva: spawn do lldb-dap, handshake, thread leitora e requests.
+//! A SESSAO DAP viva: sobe o adapter, faz o handshake e opera o alvo.
 //!
-//! O corpo DAP nao e JSON-RPC (`{ seq, type, command/event }`), mas o
-//! envelope `Content-Length` e o mesmo do LSP — o framing e reutilizado de
-//! `lsp::framing`. Respostas voltam pelo mapa `pending` (seq -> canal);
-//! eventos do adapter viram notificacoes `event.debug.*` ja mastigadas para
-//! a UI. A thread leitora nunca espera resposta de request (e ela quem as
-//! entrega): o enriquecimento do `stopped` (stackTrace -> file/line) roda em
-//! thread propria.
+//! Cortado em 2026-09-03 (etapa 15 do `roadmaps/34`), que estava em 672/500.
+//! O corte separou o que o arquivo misturava, e cada parte tem dono:
+//!
+//! ```text
+//! dap/wire.rs     o TRANSPORTE — leva e traz, nao interpreta nada
+//! dap/parse.rs    INTERPRETAR a resposta (e o unico testavel sem processo)
+//! dap/reader.rs   a thread LEITORA e os eventos do adapter
+//! dap/session.rs  ESTE: ciclo de vida do alvo e as operacoes de debug
+//! ```
 
 use std::{
-    collections::{BTreeMap, HashMap},
-    io::{self, BufReader},
+    collections::BTreeMap,
+    io,
     path::Path,
-    process::{Child, ChildStdin, ChildStdout, Command, Stdio},
+    process::{Child, Command, Stdio},
     sync::{
         Arc, Mutex,
-        atomic::{AtomicBool, AtomicI64, Ordering},
+        atomic::{AtomicBool, Ordering},
         mpsc,
     },
-    thread,
     time::Duration,
 };
 
-use kinein_protocol::{BreakpointInfo, JsonRpcRequest, StackFrameInfo, VariableInfo};
+use kinein_protocol::{
+    BreakpointInfo, DebugEvaluateResult, SourceBreakpointParams, StackFrameInfo, VariableInfo,
+};
 use serde_json::{Value, json};
 
 use super::DebugError;
+use super::parse::{
+    breakpoints_arguments, first_cheap_scope_reference, parse_breakpoints, parse_evaluate,
+    parse_stack_frames, parse_variables,
+};
+use super::reader::{note_continued, send_event, spawn_reader};
+use super::wire::Wire;
 use crate::lsp::EventSender;
-use crate::lsp::framing::{read_message, write_message};
 
 /// Binario do debug adapter (pacote `lldb` no Arch).
 pub(super) const ADAPTER_BINARY: &str = "lldb-dap";
 
 /// Tempo maximo aguardando respostas comuns do adapter.
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
+pub(super) const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Tempo maximo aguardando a resposta de `launch` (carregar o alvo demora
 /// mais que um request comum em binarios grandes).
@@ -45,94 +53,6 @@ const STACK_TRACE_LEVELS: u32 = 20;
 
 /// Tempo maximo do `disconnect` no encerramento; depois o processo e morto.
 const DISCONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-
-/// Requests DAP aguardando resposta, compartilhados com a thread leitora.
-type Pending = Arc<Mutex<HashMap<i64, mpsc::Sender<Value>>>>;
-
-/// Lado de escrita do adapter: tudo que um request precisa, clonavel para
-/// qualquer thread (handler, leitora, enriquecimento).
-#[derive(Debug, Clone)]
-struct Wire {
-    stdin: Arc<Mutex<ChildStdin>>,
-    pending: Pending,
-    seq: Arc<AtomicI64>,
-}
-
-impl Wire {
-    /// Envia um request e devolve `(seq, receiver)` sem esperar a resposta.
-    fn send_request(
-        &self,
-        command: &str,
-        arguments: &Value,
-    ) -> Result<(i64, mpsc::Receiver<Value>), DebugError> {
-        let seq = self.seq.fetch_add(1, Ordering::SeqCst);
-        let (sender, receiver) = mpsc::channel();
-        if let Ok(mut guard) = self.pending.lock() {
-            guard.insert(seq, sender);
-        }
-        let message = json!({
-            "seq": seq,
-            "type": "request",
-            "command": command,
-            "arguments": arguments,
-        });
-        let written = match self.stdin.lock() {
-            Ok(mut guard) => write_message(&mut *guard, &message).is_ok(),
-            Err(_poisoned) => false,
-        };
-        if !written {
-            self.forget(seq);
-            return Err(DebugError::Adapter {
-                message: format!("falha ao enviar `{command}` ao adapter"),
-            });
-        }
-        Ok((seq, receiver))
-    }
-
-    /// Aguarda a resposta de `seq`; sucesso devolve o `body` do adapter.
-    fn wait_response(
-        &self,
-        command: &str,
-        seq: i64,
-        receiver: &mpsc::Receiver<Value>,
-        timeout: Duration,
-    ) -> Result<Value, DebugError> {
-        let Ok(response) = receiver.recv_timeout(timeout) else {
-            self.forget(seq);
-            return Err(DebugError::Adapter {
-                message: format!("o adapter nao respondeu a `{command}`"),
-            });
-        };
-        if response.get("success").and_then(Value::as_bool) == Some(true) {
-            return Ok(response.get("body").cloned().unwrap_or(Value::Null));
-        }
-        let detail = response
-            .get("message")
-            .and_then(Value::as_str)
-            .unwrap_or("falha no adapter");
-        Err(DebugError::Adapter {
-            message: format!("`{command}` falhou: {detail}"),
-        })
-    }
-
-    /// Request sincrono completo (envia e espera com timeout).
-    fn request(
-        &self,
-        command: &str,
-        arguments: &Value,
-        timeout: Duration,
-    ) -> Result<Value, DebugError> {
-        let (seq, receiver) = self.send_request(command, arguments)?;
-        self.wait_response(command, seq, &receiver, timeout)
-    }
-
-    /// Descarta um request pendente (timeout/falha de escrita).
-    fn forget(&self, seq: i64) {
-        if let Ok(mut guard) = self.pending.lock() {
-            guard.remove(&seq);
-        }
-    }
-}
 
 /// Uma sessao de debug viva (um adapter, um processo alvo).
 #[derive(Debug)]
@@ -158,7 +78,7 @@ impl DapSession {
     pub(super) fn launch(
         root: &Path,
         program: &Path,
-        breakpoints: &BTreeMap<String, Vec<u32>>,
+        breakpoints: &BTreeMap<String, Vec<SourceBreakpointParams>>,
         events: EventSender,
     ) -> Result<Self, DebugError> {
         let mut child = Command::new(ADAPTER_BINARY)
@@ -183,11 +103,7 @@ impl DapSession {
             });
         };
 
-        let wire = Wire {
-            stdin: Arc::new(Mutex::new(stdin)),
-            pending: Arc::new(Mutex::new(HashMap::new())),
-            seq: Arc::new(AtomicI64::new(1)),
-        };
+        let wire = Wire::new(stdin);
         let alive = Arc::new(AtomicBool::new(true));
         let stopped_thread = Arc::new(Mutex::new(None));
         let (initialized_sender, initialized_receiver) = mpsc::channel();
@@ -227,14 +143,46 @@ impl DapSession {
     pub(super) fn set_breakpoints(
         &self,
         file: &str,
-        lines: &[u32],
+        breakpoints: &[SourceBreakpointParams],
     ) -> Result<Vec<BreakpointInfo>, DebugError> {
         let body = self.wire.request(
             "setBreakpoints",
-            &breakpoints_arguments(file, lines),
+            &breakpoints_arguments(file, breakpoints),
             REQUEST_TIMEOUT,
         )?;
-        Ok(parse_breakpoints(&body, lines))
+        let lines: Vec<u32> = breakpoints.iter().map(|bp| bp.line).collect();
+        Ok(parse_breakpoints(&body, &lines))
+    }
+
+    /// Avalia uma expressao no frame pedido (watch).
+    ///
+    /// Sem `frame_id`, usa o frame do TOPO da thread parada — e' o que a UI
+    /// quer quando o usuario digita um watch sem ter clicado num frame. Se
+    /// nao ha' thread parada, `stack_trace` devolve `NotStopped`, que e' a
+    /// resposta honesta: nao existe contexto para avaliar.
+    pub(super) fn evaluate(
+        &self,
+        expression: &str,
+        frame_id: Option<i64>,
+    ) -> Result<DebugEvaluateResult, DebugError> {
+        let frame = match frame_id {
+            Some(id) => id,
+            None => self
+                .stack_trace()?
+                .first()
+                .map(|frame| frame.id)
+                .ok_or(DebugError::NotStopped)?,
+        };
+        let body = self.wire.request(
+            "evaluate",
+            &json!({
+                "expression": expression,
+                "frameId": frame,
+                "context": "watch",
+            }),
+            REQUEST_TIMEOUT,
+        )?;
+        Ok(parse_evaluate(expression, &body))
     }
 
     /// Retoma a execucao a partir da thread pausada.
@@ -339,7 +287,7 @@ impl DapSession {
         &self,
         root: &Path,
         program: &Path,
-        breakpoints: &BTreeMap<String, Vec<u32>>,
+        breakpoints: &BTreeMap<String, Vec<SourceBreakpointParams>>,
         initialized: &mpsc::Receiver<()>,
     ) -> Result<(), DebugError> {
         self.wire.request(
@@ -380,344 +328,5 @@ impl DapSession {
         self.wire
             .wait_response("launch", launch_seq, &launch_receiver, LAUNCH_TIMEOUT)?;
         Ok(())
-    }
-}
-
-/// Monta os `arguments` de `setBreakpoints` para um arquivo.
-fn breakpoints_arguments(file: &str, lines: &[u32]) -> Value {
-    json!({
-        "source": { "path": file },
-        "breakpoints": lines
-            .iter()
-            .map(|line| json!({ "line": line }))
-            .collect::<Vec<_>>(),
-    })
-}
-
-/// Converte o `body` de `setBreakpoints` no resultado do protocolo.
-fn parse_breakpoints(body: &Value, requested: &[u32]) -> Vec<BreakpointInfo> {
-    let Some(items) = body.get("breakpoints").and_then(Value::as_array) else {
-        return requested
-            .iter()
-            .map(|&line| BreakpointInfo {
-                line,
-                verified: false,
-            })
-            .collect();
-    };
-    items
-        .iter()
-        .enumerate()
-        .map(|(index, item)| BreakpointInfo {
-            line: item
-                .get("line")
-                .and_then(Value::as_u64)
-                .and_then(|line| u32::try_from(line).ok())
-                .or_else(|| requested.get(index).copied())
-                .unwrap_or(0),
-            verified: item
-                .get("verified")
-                .and_then(Value::as_bool)
-                .unwrap_or(false),
-        })
-        .collect()
-}
-
-/// Converte o `body` de `stackTrace` nos frames do protocolo.
-fn parse_stack_frames(body: &Value) -> Vec<StackFrameInfo> {
-    let Some(items) = body.get("stackFrames").and_then(Value::as_array) else {
-        return Vec::new();
-    };
-    items
-        .iter()
-        .map(|frame| StackFrameInfo {
-            id: frame.get("id").and_then(Value::as_i64).unwrap_or(0),
-            name: frame
-                .get("name")
-                .and_then(Value::as_str)
-                .unwrap_or("?")
-                .to_owned(),
-            file: frame
-                .get("source")
-                .and_then(|source| source.get("path"))
-                .and_then(Value::as_str)
-                .map(str::to_owned),
-            line: frame
-                .get("line")
-                .and_then(Value::as_u64)
-                .and_then(|line| u32::try_from(line).ok())
-                .filter(|&line| line > 0),
-        })
-        .collect()
-}
-
-/// Acha o `variablesReference` do primeiro escopo nao-caro (Locals).
-fn first_cheap_scope_reference(body: &Value) -> Option<i64> {
-    body.get("scopes")
-        .and_then(Value::as_array)?
-        .iter()
-        .find(|scope| scope.get("expensive").and_then(Value::as_bool) != Some(true))
-        .and_then(|scope| scope.get("variablesReference"))
-        .and_then(Value::as_i64)
-        .filter(|&reference| reference > 0)
-}
-
-/// Converte o `body` de `variables` nas variaveis do protocolo.
-fn parse_variables(body: &Value) -> Vec<VariableInfo> {
-    let Some(items) = body.get("variables").and_then(Value::as_array) else {
-        return Vec::new();
-    };
-    items
-        .iter()
-        .map(|variable| VariableInfo {
-            name: variable
-                .get("name")
-                .and_then(Value::as_str)
-                .unwrap_or("?")
-                .to_owned(),
-            value: variable
-                .get("value")
-                .and_then(Value::as_str)
-                .unwrap_or("")
-                .to_owned(),
-            type_name: variable
-                .get("type")
-                .and_then(Value::as_str)
-                .map(str::to_owned),
-            reference: variable
-                .get("variablesReference")
-                .and_then(Value::as_i64)
-                .unwrap_or(0),
-        })
-        .collect()
-}
-
-/// Sobe a thread leitora do stdout do adapter.
-fn spawn_reader(
-    stdout: ChildStdout,
-    wire: &Wire,
-    events: &EventSender,
-    alive: &Arc<AtomicBool>,
-    stopped_thread: &Arc<Mutex<Option<i64>>>,
-    initialized: mpsc::Sender<()>,
-) {
-    let wire = wire.clone();
-    let events = events.clone();
-    let alive = Arc::clone(alive);
-    let stopped_thread = Arc::clone(stopped_thread);
-    thread::spawn(move || {
-        let exit_code = Arc::new(Mutex::new(None));
-        let mut reader = BufReader::new(stdout);
-        while let Ok(Some(message)) = read_message(&mut reader) {
-            match message.get("type").and_then(Value::as_str) {
-                Some("response") => deliver_response(&wire.pending, &message),
-                Some("event") => handle_adapter_event(
-                    &message,
-                    &wire,
-                    &events,
-                    &alive,
-                    &stopped_thread,
-                    &exit_code,
-                    &initialized,
-                ),
-                _ => {}
-            }
-        }
-        // EOF/erro: destrava quem espera resposta e fecha a sessao uma vez.
-        if let Ok(mut guard) = wire.pending.lock() {
-            guard.clear();
-        }
-        finish_once(&alive, &events, &exit_code);
-    });
-}
-
-/// Entrega uma resposta ao request que a aguarda.
-fn deliver_response(pending: &Pending, message: &Value) {
-    let Some(seq) = message.get("request_seq").and_then(Value::as_i64) else {
-        return;
-    };
-    let sender = match pending.lock() {
-        Ok(mut guard) => guard.remove(&seq),
-        Err(_poisoned) => None,
-    };
-    if let Some(sender) = sender {
-        drop(sender.send(message.clone()));
-    }
-}
-
-/// Traduz um evento do adapter em `event.debug.*` da UI.
-fn handle_adapter_event(
-    message: &Value,
-    wire: &Wire,
-    events: &EventSender,
-    alive: &Arc<AtomicBool>,
-    stopped_thread: &Arc<Mutex<Option<i64>>>,
-    exit_code: &Arc<Mutex<Option<i64>>>,
-    initialized: &mpsc::Sender<()>,
-) {
-    let name = message
-        .get("event")
-        .and_then(Value::as_str)
-        .unwrap_or_default();
-    let body = message.get("body").cloned().unwrap_or(Value::Null);
-    match name {
-        "initialized" => drop(initialized.send(())),
-        "output" => emit_output(events, &body),
-        "stopped" => {
-            let thread_id = body.get("threadId").and_then(Value::as_i64).unwrap_or(0);
-            let reason = body
-                .get("reason")
-                .and_then(Value::as_str)
-                .unwrap_or("stopped")
-                .to_owned();
-            if let Ok(mut guard) = stopped_thread.lock() {
-                *guard = Some(thread_id);
-            }
-            let wire = wire.clone();
-            let events = events.clone();
-            // A leitora nao pode esperar o stackTrace que ela mesma entrega.
-            thread::spawn(move || emit_enriched_stopped(&wire, &events, thread_id, &reason));
-        }
-        "continued" => note_continued(stopped_thread, events),
-        "exited" => {
-            if let Ok(mut guard) = exit_code.lock() {
-                *guard = body.get("exitCode").and_then(Value::as_i64);
-            }
-        }
-        "terminated" => finish_once(alive, events, exit_code),
-        _ => {}
-    }
-}
-
-/// Emite `event.debug.output` linha a linha (telemetry e ignorada).
-fn emit_output(events: &EventSender, body: &Value) {
-    let category = body
-        .get("category")
-        .and_then(Value::as_str)
-        .unwrap_or("console");
-    if category == "telemetry" {
-        return;
-    }
-    let Some(output) = body.get("output").and_then(Value::as_str) else {
-        return;
-    };
-    for line in output.lines() {
-        send_event(
-            events,
-            "event.debug.output",
-            json!({ "category": category, "line": line }),
-        );
-    }
-}
-
-/// Consulta o frame do topo e emite `event.debug.stopped` com file/line.
-fn emit_enriched_stopped(wire: &Wire, events: &EventSender, thread_id: i64, reason: &str) {
-    let mut file = Value::Null;
-    let mut line = Value::Null;
-    if let Ok(body) = wire.request(
-        "stackTrace",
-        &json!({ "threadId": thread_id, "startFrame": 0, "levels": 1 }),
-        REQUEST_TIMEOUT,
-    ) {
-        if let Some(frame) = body
-            .get("stackFrames")
-            .and_then(Value::as_array)
-            .and_then(|frames| frames.first())
-        {
-            file = frame
-                .get("source")
-                .and_then(|source| source.get("path"))
-                .cloned()
-                .unwrap_or(Value::Null);
-            line = frame.get("line").cloned().unwrap_or(Value::Null);
-        }
-    }
-    send_event(
-        events,
-        "event.debug.stopped",
-        json!({
-            "reason": reason,
-            "file": file,
-            "line": line,
-            "threadId": thread_id,
-        }),
-    );
-}
-
-/// Emite `event.debug.continued` uma unica vez por retomada.
-///
-/// Chamada tanto apos um continue/step bem-sucedido quanto no evento
-/// `continued` do adapter: o `take()` do estado pausado deduplica.
-fn note_continued(stopped_thread: &Arc<Mutex<Option<i64>>>, events: &EventSender) {
-    let was_stopped = stopped_thread
-        .lock()
-        .is_ok_and(|mut guard| guard.take().is_some());
-    if was_stopped {
-        send_event(events, "event.debug.continued", json!({}));
-    }
-}
-
-/// Emite `event.debug.finished` exatamente uma vez por sessao.
-fn finish_once(alive: &Arc<AtomicBool>, events: &EventSender, exit_code: &Arc<Mutex<Option<i64>>>) {
-    if alive.swap(false, Ordering::SeqCst) {
-        let code = exit_code.lock().ok().and_then(|guard| *guard);
-        send_event(events, "event.debug.finished", json!({ "exitCode": code }));
-    }
-}
-
-/// Serializa uma notificacao `event.debug.*` no canal assincrono.
-fn send_event(events: &EventSender, method: &str, params: Value) {
-    drop(events.send(JsonRpcRequest::notification(method, Some(params))));
-}
-
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
-
-    use super::{first_cheap_scope_reference, parse_stack_frames, parse_variables};
-
-    #[test]
-    fn stack_frames_map_source_and_drop_zero_lines() {
-        let frames = parse_stack_frames(&json!({
-            "stackFrames": [
-                { "id": 4, "name": "soma", "line": 4,
-                  "source": { "path": "/w/main.c" } },
-                { "id": 5, "name": "??", "line": 0 },
-            ]
-        }));
-        assert_eq!(frames.len(), 2);
-        assert_eq!(frames[0].id, 4);
-        assert_eq!(frames[0].file.as_deref(), Some("/w/main.c"));
-        assert_eq!(frames[0].line, Some(4));
-        assert_eq!(frames[1].file, None);
-        assert_eq!(frames[1].line, None);
-    }
-
-    #[test]
-    fn scope_selection_skips_expensive_and_requires_reference() {
-        let reference = first_cheap_scope_reference(&json!({
-            "scopes": [
-                { "name": "Registers", "expensive": true,
-                  "variablesReference": 9 },
-                { "name": "Locals", "variablesReference": 3 },
-            ]
-        }));
-        assert_eq!(reference, Some(3));
-        assert_eq!(first_cheap_scope_reference(&json!({ "scopes": [] })), None);
-    }
-
-    #[test]
-    fn variables_carry_type_and_expansion_reference() {
-        let variables = parse_variables(&json!({
-            "variables": [
-                { "name": "a", "value": "2", "type": "int",
-                  "variablesReference": 0 },
-                { "name": "p", "value": "{...}", "variablesReference": 12 },
-            ]
-        }));
-        assert_eq!(variables[0].type_name.as_deref(), Some("int"));
-        assert_eq!(variables[0].reference, 0);
-        assert_eq!(variables[1].reference, 12);
-        assert_eq!(variables[1].type_name, None);
     }
 }

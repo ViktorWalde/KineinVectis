@@ -335,52 +335,6 @@ void CoreClient::runConfigSetActive(const QString& id)
     sendRequest(QStringLiteral("runConfig.setActive"), params);
 }
 
-void CoreClient::debugStart(const QString& program)
-{
-    QJsonObject params;
-    if (!program.isEmpty()) {
-        params.insert(QStringLiteral("program"), program);
-    }
-    sendRequest(QStringLiteral("debug.start"), params);
-}
-
-void CoreClient::debugSetBreakpoints(const QString& file, const QVariantList& lines)
-{
-    sendRequest(QStringLiteral("debug.setBreakpoints"),
-                QJsonObject{{QStringLiteral("file"), file},
-                            {QStringLiteral("lines"), QJsonArray::fromVariantList(lines)}});
-}
-
-void CoreClient::debugContinue()
-{
-    sendRequest(QStringLiteral("debug.continue"), QJsonObject{});
-}
-
-void CoreClient::debugNext()
-{
-    sendRequest(QStringLiteral("debug.next"), QJsonObject{});
-}
-
-void CoreClient::debugStepIn()
-{
-    sendRequest(QStringLiteral("debug.stepIn"), QJsonObject{});
-}
-
-void CoreClient::debugStepOut()
-{
-    sendRequest(QStringLiteral("debug.stepOut"), QJsonObject{});
-}
-
-void CoreClient::debugPause()
-{
-    sendRequest(QStringLiteral("debug.pause"), QJsonObject{});
-}
-
-void CoreClient::debugStop()
-{
-    sendRequest(QStringLiteral("debug.stop"), QJsonObject{});
-}
-
 void CoreClient::gitStatus()
 {
     sendRequest(QStringLiteral("git.status"), QJsonObject{});
@@ -475,23 +429,6 @@ void CoreClient::settingsSet(const QString& scope, const QVariantMap& values)
     sendRequest(QStringLiteral("settings.set"),
                 QJsonObject{{QStringLiteral("scope"), scope},
                             {QStringLiteral("values"), QJsonObject::fromVariantMap(values)}});
-}
-
-void CoreClient::debugStackTrace()
-{
-    sendRequest(QStringLiteral("debug.stackTrace"), QJsonObject{});
-}
-
-void CoreClient::debugVariablesForFrame(double frameId)
-{
-    sendRequest(QStringLiteral("debug.variables"),
-                QJsonObject{{QStringLiteral("frameId"), static_cast<qint64>(frameId)}});
-}
-
-void CoreClient::debugVariablesForRef(double ref)
-{
-    sendRequest(QStringLiteral("debug.variables"),
-                QJsonObject{{QStringLiteral("ref"), static_cast<qint64>(ref)}});
 }
 
 void CoreClient::cargoCheck()

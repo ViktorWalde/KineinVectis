@@ -14,6 +14,7 @@ Item {
     property alias outputModel: debugOutputModel
     property alias framesModel: debugFramesModel
     property alias variablesModel: debugVariablesModel
+    property alias watchesModel: debugWatchesModel
     property int currentFrameIndex: -1
     property real currentFrameId: -1
     // Breakpoints por arquivo (objeto js file -> [linhas]); a revisao força
@@ -28,7 +29,8 @@ Item {
     signal stepInRequested()
     signal stepOutRequested()
     signal pauseRequested()
-    signal setBreakpointsRequested(string file, var lines)
+    signal setBreakpointsRequested(string file, var breakpoints)
+    signal evaluateRequested(string expression, real frameId)
     signal stackTraceRequested()
     signal frameVariablesRequested(real frameId)
     signal variablesByRefRequested(real ref)
@@ -49,11 +51,71 @@ Item {
         id: debugVariablesModel
     }
 
+    // Watches: { expression, value, failed }. Sobrevivem ao `continue` de
+    // proposito — a expressao e' do usuario, nao da parada. O que morre e' o
+    // VALOR, reavaliado na parada seguinte.
+    ListModel {
+        id: debugWatchesModel
+    }
+
     function clearInspection() {
         debugFramesModel.clear();
         debugVariablesModel.clear();
         currentFrameIndex = -1;
         currentFrameId = -1;
+        // O valor do watch morre com a parada; a expressao nao.
+        for (let i = 0; i < debugWatchesModel.count; i++) {
+            debugWatchesModel.setProperty(i, "value", "");
+            debugWatchesModel.setProperty(i, "failed", false);
+        }
+    }
+
+    function addWatch(expression) {
+        const limpo = (expression || "").trim();
+        if (limpo === "") {
+            return;
+        }
+        debugWatchesModel.append({ expression: limpo, value: "", failed: false });
+        if (paused) {
+            evaluateRequested(limpo, currentFrameId);
+        }
+    }
+
+    function removeWatch(index) {
+        if (index >= 0 && index < debugWatchesModel.count) {
+            debugWatchesModel.remove(index);
+        }
+    }
+
+    // Reavalia TODOS os watches. Chamado a cada parada e a cada troca de
+    // frame: o valor de uma expressao depende do frame, e mostrar o valor do
+    // frame anterior seria pior que nao mostrar nada.
+    function refreshWatches() {
+        if (!paused) {
+            return;
+        }
+        for (let i = 0; i < debugWatchesModel.count; i++) {
+            evaluateRequested(debugWatchesModel.get(i).expression, currentFrameId);
+        }
+    }
+
+    function handleEvaluated(expression, value, typeName, ref) {
+        for (let i = 0; i < debugWatchesModel.count; i++) {
+            if (debugWatchesModel.get(i).expression === expression) {
+                debugWatchesModel.setProperty(i, "value",
+                                              typeName === "" ? value : value + "  (" + typeName + ")");
+                debugWatchesModel.setProperty(i, "failed", false);
+            }
+        }
+    }
+
+    function handleEvaluateFailed(expression, message) {
+        for (let i = 0; i < debugWatchesModel.count; i++) {
+            if (debugWatchesModel.get(i).expression === expression) {
+                debugWatchesModel.setProperty(i, "value", message);
+                debugWatchesModel.setProperty(i, "failed", true);
+            }
+        }
     }
 
     function clear() {
@@ -74,30 +136,62 @@ Item {
         }
     }
 
+    // A sarjeta do editor so' quer as LINHAS — este contrato nao mudou quando
+    // o breakpoint ganhou condicao (protocolo 0.66.0).
     function breakpointLinesFor(file) {
-        const lines = breakpointsByFile[file];
-        return lines === undefined ? [] : lines;
+        return breakpointsFor(file).map(function(bp) { return bp.line; });
+    }
+
+    // Os breakpoints inteiros: { line, condition, hitCondition }.
+    function breakpointsFor(file) {
+        const items = breakpointsByFile[file];
+        return items === undefined ? [] : items;
+    }
+
+    function breakpointAt(file, line) {
+        return breakpointsFor(file).find(function(bp) { return bp.line === line; }) || null;
+    }
+
+    // Condicao vazia REMOVE a condicao em vez de mandar string vazia: o core
+    // ja' descarta so'-espacos, e guardar "" aqui faria a UI mostrar um
+    // breakpoint como condicional quando ele nao e'.
+    function setBreakpointCondition(file, line, condition, hitCondition) {
+        const items = breakpointsFor(file).slice();
+        const index = items.findIndex(function(bp) { return bp.line === line; });
+        if (index < 0) {
+            return;
+        }
+        const limpo = (condition || "").trim();
+        const limpoHit = (hitCondition || "").trim();
+        items[index] = {
+            line: line,
+            condition: limpo === "" ? undefined : limpo,
+            hitCondition: limpoHit === "" ? undefined : limpoHit
+        };
+        breakpointsByFile[file] = items;
+        breakpointsRevision++;
+        setBreakpointsRequested(file, items);
     }
 
     function toggleBreakpoint(file, line) {
         if (file === "" || line <= 0) {
             return;
         }
-        const lines = breakpointLinesFor(file).slice();
-        const index = lines.indexOf(line);
+        const items = breakpointsFor(file).slice();
+        const index = items.findIndex(function(bp) { return bp.line === line; });
         if (index >= 0) {
-            lines.splice(index, 1);
+            items.splice(index, 1);
         } else {
-            lines.push(line);
-            lines.sort(function(a, b) { return a - b; });
+            items.push({ line: line });
+            items.sort(function(a, b) { return a.line - b.line; });
         }
-        if (lines.length === 0) {
+        if (items.length === 0) {
             delete breakpointsByFile[file];
         } else {
-            breakpointsByFile[file] = lines;
+            breakpointsByFile[file] = items;
         }
         breakpointsRevision++;
-        setBreakpointsRequested(file, lines);
+        setBreakpointsRequested(file, items);
     }
 
     function startDebug() {
@@ -177,6 +271,9 @@ Item {
         currentFrameId = frame.frameId;
         debugVariablesModel.clear();
         frameVariablesRequested(frame.frameId);
+        // O valor de um watch depende do FRAME: trocar de frame sem reavaliar
+        // mostraria o valor do frame anterior, que e pior que nao mostrar.
+        refreshWatches();
         if (navigate && frame.file !== "" && frame.line > 0) {
             openAtRequested(frame.file, frame.line);
         }

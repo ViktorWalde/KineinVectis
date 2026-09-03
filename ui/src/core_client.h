@@ -103,7 +103,12 @@ public:
     Q_INVOKABLE void runConfigDelete(const QString& id);
     Q_INVOKABLE void runConfigSetActive(const QString& id);
     Q_INVOKABLE void debugStart(const QString& program = QString());
-    Q_INVOKABLE void debugSetBreakpoints(const QString& file, const QVariantList& lines);
+    // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.
+    // Trocou a lista crua de linhas no protocolo 0.66.0: a condicao viaja POR
+    // breakpoint, e array paralelo de condicoes seria a forma de eles saírem
+    // de sincronia em silencio.
+    Q_INVOKABLE void debugSetBreakpoints(const QString& file, const QVariantList& breakpoints);
+    Q_INVOKABLE void debugEvaluate(const QString& expression, double frameId);
     Q_INVOKABLE void debugContinue();
     Q_INVOKABLE void debugNext();
     Q_INVOKABLE void debugStepIn();
@@ -296,6 +301,9 @@ signals:
     void debugFinished(int exitCode);
     void debugStackTraceResolved(const QVariantList& frames);
     void debugVariablesResolved(double frameId, double ref, const QVariantList& variables);
+    void debugEvaluateResolved(const QString& expression, const QString& value,
+                               const QString& typeName, double ref);
+    void debugEvaluateFailed(const QString& expression, const QString& message);
     void gitStatusResolved(bool repo, const QString& branch, bool detached, const QString& shortSha,
                            int ahead, int behind, const QVariantList& entries);
     void gitBranchesResolved(bool repo, const QVariantList& branches);

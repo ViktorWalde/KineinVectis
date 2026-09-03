@@ -41,8 +41,12 @@ Item {
             root.coreClient.debugPause();
         }
 
-        function onSetBreakpointsRequested(file, lines) {
-            root.coreClient.debugSetBreakpoints(file, lines);
+        function onSetBreakpointsRequested(file, breakpoints) {
+            root.coreClient.debugSetBreakpoints(file, breakpoints);
+        }
+
+        function onEvaluateRequested(expression, frameId) {
+            root.coreClient.debugEvaluate(expression, frameId);
         }
 
         function onStackTraceRequested() {

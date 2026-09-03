@@ -8,9 +8,9 @@
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::{
-    DebugBreakpointsResult, DebugSetBreakpointsParams, DebugStackTraceResult, DebugStartParams,
-    DebugStartResult, DebugVariablesParams, DebugVariablesResult, JsonRpcError, JsonRpcErrorCode,
-    JsonRpcResponse,
+    DebugBreakpointsResult, DebugEvaluateParams, DebugSetBreakpointsParams, DebugStackTraceResult,
+    DebugStartParams, DebugStartResult, DebugVariablesParams, DebugVariablesResult, JsonRpcError,
+    JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -32,6 +32,7 @@ impl Core {
             "debug.setBreakpoints" => Some(self.debug_set_breakpoints_response(request_id, params)),
             "debug.stackTrace" => Some(self.debug_stack_trace_response(request_id)),
             "debug.variables" => Some(self.debug_variables_response(request_id, params)),
+            "debug.evaluate" => Some(self.debug_evaluate_response(request_id, params)),
             "debug.continue" | "debug.next" | "debug.stepIn" | "debug.stepOut" | "debug.pause"
             | "debug.stop" => Some(self.debug_session_op_response(request_id, method)),
             _ => None,
@@ -122,7 +123,7 @@ impl Core {
         let Some(manager) = self.debug.as_mut() else {
             return debug_unavailable_response(request_id, "debug.setBreakpoints");
         };
-        match manager.set_breakpoints(&file, &parsed.lines) {
+        match manager.set_breakpoints(&file, &parsed.breakpoints) {
             Ok(breakpoints) => {
                 JsonRpcResponse::success(request_id, json!(DebugBreakpointsResult { breakpoints }))
             }
@@ -139,6 +140,47 @@ impl Core {
                 JsonRpcResponse::success(request_id, json!(DebugStackTraceResult { frames }))
             }
             Err(error) => debug_error_response(request_id, &error),
+        }
+    }
+
+    /// `debug.evaluate` — um watch no frame parado.
+    ///
+    /// Sem `frameId`, o core usa o frame do topo: e' o que a UI quer quando o
+    /// usuario digita a expressao sem ter escolhido um frame. Expressao vazia
+    /// e' recusada aqui, no lugar de virar um erro do adapter — a mensagem do
+    /// lldb para string vazia nao ajuda ninguem.
+    fn debug_evaluate_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<DebugEvaluateParams>(
+            request_id.as_ref(),
+            params,
+            "debug.evaluate requer expression",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        if parsed.expression.trim().is_empty() {
+            return invalid_debug_params(request_id, "debug.evaluate requer expression nao vazia");
+        }
+        let Some(manager) = self.debug.as_mut() else {
+            return debug_unavailable_response(request_id, "debug.evaluate");
+        };
+        let expression = parsed.expression.trim().to_owned();
+        match manager.evaluate(&expression, parsed.frame_id) {
+            Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
+            // A expressao vai nos `details` porque a UI precisa saber QUAL
+            // watch falhou: a resposta de erro nao carrega o pedido, e sem
+            // isto a falha de um watch marcaria todos.
+            Err(error) => {
+                let mut response = debug_error_response(request_id, &error);
+                if let Some(rpc_error) = response.error.as_mut() {
+                    rpc_error.details = Some(json!({ "expression": expression }));
+                }
+                response
+            }
         }
     }
 

@@ -19,12 +19,11 @@ Rectangle {
     property bool workspaceAvailable: false
     property var runModel
     property bool running: false
-    property var debugOutputModel
-    property bool debugSessionActive: false
-    property bool debugPaused: false
-    property var debugFramesModel
-    property var debugVariablesModel
-    property int debugCurrentFrameIndex: -1
+    // O dominio de debug entra como CONTROLLER, nao como 7 escalares e 10
+    // sinais de passagem. Mesmo padrao do ShellHeaderHost e do ShellEditorHost:
+    // host recebe dono, nao copia de estado. Foi o que fez o ShellWorkspaceHost
+    // caber de novo quando os watches entraram (etapa 15).
+    property var debugController
     property var gitChangesModel
     property bool gitRepo: false
     property int gitStagedCount: 0
@@ -65,14 +64,6 @@ Rectangle {
     signal terminalNewRequested()
     signal terminalCloseTabRequested(string id)
     signal runInputSubmitted(string text)
-    signal debugContinueRequested()
-    signal debugPauseRequested()
-    signal debugStepOverRequested()
-    signal debugStepIntoRequested()
-    signal debugStepOutRequested()
-    signal debugStopRequested()
-    signal debugFrameActivated(int index)
-    signal debugVariableToggled(int index)
     signal gitStageToggleRequested(int index)
     signal gitDiffRequested(string absPath)
     signal gitDiscardRequested(int index)
@@ -256,24 +247,25 @@ Rectangle {
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
         visible: root.activeTab === "debug"
-        outputModel: root.debugOutputModel
-        sessionActive: root.debugSessionActive
-        paused: root.debugPaused
-        framesModel: root.debugFramesModel
-        variablesModel: root.debugVariablesModel
-        currentFrameIndex: root.debugCurrentFrameIndex
-        onFrameActivated: function(index) {
-            root.debugFrameActivated(index);
-        }
-        onVariableToggled: function(index) {
-            root.debugVariableToggled(index);
-        }
-        onContinueRequested: root.debugContinueRequested()
-        onPauseRequested: root.debugPauseRequested()
-        onStepOverRequested: root.debugStepOverRequested()
-        onStepIntoRequested: root.debugStepIntoRequested()
-        onStepOutRequested: root.debugStepOutRequested()
-        onStopRequested: root.debugStopRequested()
+
+        outputModel: root.debugController.outputModel
+        sessionActive: root.debugController.sessionActive
+        paused: root.debugController.paused
+        framesModel: root.debugController.framesModel
+        variablesModel: root.debugController.variablesModel
+        watchesModel: root.debugController.watchesModel
+        currentFrameIndex: root.debugController.currentFrameIndex
+
+        onFrameActivated: function(index) { root.debugController.selectFrame(index, true); }
+        onVariableToggled: function(index) { root.debugController.toggleVariable(index); }
+        onWatchAdded: function(expression) { root.debugController.addWatch(expression); }
+        onWatchRemoved: function(index) { root.debugController.removeWatch(index); }
+        onContinueRequested: root.debugController.continueDebug()
+        onPauseRequested: root.debugController.pauseDebug()
+        onStepOverRequested: root.debugController.stepOver()
+        onStepIntoRequested: root.debugController.stepInto()
+        onStepOutRequested: root.debugController.stepOutOf()
+        onStopRequested: root.debugController.stopDebug()
     }
 
     GitPanel {
