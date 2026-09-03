@@ -267,7 +267,12 @@ Onde esses cinco estao em 2026-09-02 (a fonte viva continua sendo a baseline):
                            ver `32-editor-por-responsabilidade.md` §8, que
                            registra a decisao ainda NAO tomada e o custo medido
                            das duas saidas
-  editor_highlighter.cpp   910 — intocado
+  editor_highlighter.cpp   910 -> 145 em 2026-09-03: cortado em 5 arquivos por
+                           responsabilidade (regras/tokens/marcacoes/dobra +
+                           o compositor), com a paleta em header proprio para
+                           as cores nao divergirem. SAIU da catraca. A medicao
+                           achou uma QUINTA camada nao registrada: a DOBRA,
+                           que nao e' realce — decide o que aparece, nao a cor
   ShellWorkspaceHost.qml   576 -> 407 em 2026-09-03: a fiacao do painel do
                            editor virou ShellEditorHost.qml (225). As leituras
                            de editorController cairam de 92 para 2. E' a §4

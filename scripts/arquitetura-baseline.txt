@@ -14,4 +14,3 @@ ui/qml/panels/bottom/TerminalViewport.qml 319 300
 ui/qml/shell/ShellWorkspaceHost.qml 407 400
 ui/src/core_client_dispatch.cpp 640 500
 ui/src/core_client_requests.cpp 660 500
-ui/src/editor_highlighter.cpp 910 500

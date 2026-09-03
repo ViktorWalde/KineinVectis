@@ -27,7 +27,7 @@ protocolo 0.65.0                crates/kinein-protocol/src/lib.rs
 gate completo verde             bash scripts/verificar.sh
 AppImage no gate                scripts/verificar-appimage.sh
 5 sondas                        scripts/sonda_*.py
-17 arquivos em debito           cat scripts/arquitetura-baseline.txt
+16 arquivos em debito           cat scripts/arquitetura-baseline.txt
 ```
 
 O MVP fechou. O que vem agora não é "terminar" — é **transformar MVP em
@@ -37,7 +37,7 @@ ao CLion em profundidade (TR2).
 ## 2. As quatro frentes, e por que a ordem não é óbvia
 
 ```text
-A  DIVIDA QUE JA COBRA PEDAGIO   17 arquivos acima do limite da catraca.
+A  DIVIDA QUE JA COBRA PEDAGIO   16 arquivos acima do limite da catraca.
                                  Nao e' limpeza: e' imposto sobre a PROXIMA
                                  fatia.
 
@@ -84,11 +84,10 @@ existe.
 
 ## 3. FRENTE A — a dívida, medida e ordenada
 
-`cat scripts/arquitetura-baseline.txt` (2026-09-03, 17 arquivos):
+`cat scripts/arquitetura-baseline.txt` (2026-09-03, 16 arquivos):
 
 | arquivo | linhas/limite | o que provavelmente está misturado |
 | --- | ---: | --- |
-| `ui/src/editor_highlighter.cpp` | 910/500 | o maior do repositório: regex fallback + Tree-sitter + semantic tokens + diagnósticos + busca, quatro camadas de composição num arquivo |
 | `ui/qml/editor/EditorController.qml` | 791/400 | fachada (64 de 97 funções delegam) — **decisão em aberto**, §3.2 |
 | `ui/qml/panels/bottom/GitPanel.qml` | 764/300 | status + diff + stage + commit + histórico |
 | `crates/kinein-core/src/dap/session.rs` | 672/500 | handshake DAP + breakpoints + stepping + frames + variáveis |
@@ -326,9 +325,12 @@ tem um custo escrito acima.
 15  Debug: `evaluate` (watches) +          TR2 item 7 + divida do dap/session.rs
     breakpoint condicional                 (672/500) na MESMA fatia.
 
-16  editor_highlighter.cpp (910/500)       o maior do repositorio, e as quatro
-                                           camadas de composicao sao a proxima
-                                           coisa a mudar quando o realce mudar.
+16  editor_highlighter.cpp (910/500)       FEITA em 2026-09-03. Virou 5 arquivos
+                                           + 1 header de paleta; o compositor
+                                           ficou em 145. SAIU da catraca:
+                                           17 -> 16. A medicao achou uma QUINTA
+                                           camada que a descricao acima nao
+                                           tinha: a DOBRA, que nem realce e'.
 
 17  GitPanel.qml (764/300) +               a frente git inteira, cortada por
     GitController.qml (464/400)            responsabilidade.

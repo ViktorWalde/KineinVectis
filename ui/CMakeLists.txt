@@ -314,6 +314,11 @@ qt_add_qml_module(kinein-vectis
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
+        src/editor_highlighter_palette.h
+        src/editor_highlighter_rules.cpp
+        src/editor_highlighter_tokens.cpp
+        src/editor_highlighter_overlays.cpp
+        src/editor_highlighter_folding.cpp
         src/typing_perf_harness.cpp
         src/typing_perf_harness.h
         src/window_chrome_controller.cpp

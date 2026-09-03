@@ -127,6 +127,9 @@ private:
     [[nodiscard]] static QTextCharFormat underlineFormatForSeverity(const QString& severity);
     void applyFoldVisibility();
     void showAllBlocks();
+    // Esquece a dobra do documento anterior. Dono unico do "limpa tudo de
+    // dobra": o compositor nao mexe em m_foldingRanges/m_foldedStartLines.
+    void resetFolding();
 
     QQuickTextDocument* m_quickDocument = nullptr;
     QString m_filePath;
