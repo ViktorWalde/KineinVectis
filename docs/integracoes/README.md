@@ -73,6 +73,20 @@ falha/cancelamento, orçamento medido, configuração reversível e nenhum proce
 ou handle órfão. A aba visual não desbloqueia nível; o contrato e o serviço
 comprovados desbloqueiam.
 
+### Embarcados sobe de L6 — decisão do autor em 2026-09-03
+
+A ordem acima punha embarcados em **L6**, depois de L5 (RemoteContext/SSH) e
+L5.5 (banco). **O autor decidiu que embarcados sobe na fila**, e este parágrafo
+é o registro: contrariar decisão registrada exige registro novo, que é como este
+repositório muda de regra.
+
+**O que NÃO muda:** o gate de promoção de nível acima continua valendo integral.
+Subir na fila muda a ordem, não o critério — a frente só abre depois do
+levantamento de licença, manutenção e alvos de cada ferramenta candidata
+(`../roadmaps/35-ambiente-cpp-embarcados-simulacao.md` §5), pelo mesmo motivo
+que o catálogo de bibliotecas é auditado: recomendar ferramenta é afirmar que
+ela serve.
+
 ## Checklist para adicionar uma integração nova
 
 ```text

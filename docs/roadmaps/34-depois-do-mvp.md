@@ -343,8 +343,15 @@ tem um custo escrito acima.
                                            DOIS: 16 -> 14 arquivos em debito.
 
 18  Simulacao: responder as perguntas do   §6. Arquitetura, nao implementacao.
-    roadmaps/31
+    roadmaps/31                            SEGUE ABERTA — virou a frente G do
+                                           roadmaps/35 (2026-09-03).
 ```
+
+> **Esta ordem FECHOU em 2026-09-03**, com 11, 11.1, 12, 13, 14, 15, 16 e 17
+> feitas. Só a 18 restou, e ela continua sendo estudo. O sucessor é
+> [35-ambiente-cpp-embarcados-simulacao.md](35-ambiente-cpp-embarcados-simulacao.md),
+> onde o autor definiu a frente principal (ambiente C/C++) e reordenou
+> embarcados.
 
 **Se o dogfooding (12) produzir um bloqueador concreto, ele fura esta fila.** É a
 regra do `GUIAIA.md` §2 e da PONTO_ATUAL §0: perda de dados / crash / bloqueio
