@@ -22,6 +22,7 @@ mod format;
 mod fs;
 mod git;
 mod job;
+mod library;
 mod lsp;
 mod rpc;
 mod run;
@@ -46,6 +47,7 @@ pub use format::*;
 pub use fs::*;
 pub use git::*;
 pub use job::*;
+pub use library::*;
 pub use lsp::*;
 pub use rpc::*;
 pub use run::*;
@@ -61,4 +63,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.67.0";
+pub const PROTOCOL_VERSION: &str = "0.68.0";

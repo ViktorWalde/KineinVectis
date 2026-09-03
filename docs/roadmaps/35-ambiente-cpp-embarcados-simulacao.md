@@ -170,19 +170,33 @@ arquivo é a forma de eles divergirem em silêncio.
 tem que voltar **0**. Se o domínio de bibliotecas souber escrever no arquivo, o
 corte falhou.
 
-### 4.2 O catálogo inicial
+### 4.2 O catálogo inicial — auditado em 2026-09-03
 
-Começa pequeno e honesto — 10 a 15 bibliotecas que cobrem o comum de C/C++,
-cada uma auditada de verdade. Candidatas a avaliar (a auditoria decide quais
-entram; esta lista é ponto de partida, **não** o catálogo):
+Sete entradas, cada uma com a licença lida **na fonte** e a versão pinada:
 
-```text
-fmt · spdlog · Catch2 · GoogleTest · nlohmann_json · Eigen · SQLite ·
-zlib · CLI11 · Abseil · Boost (subconjunto) · asio · benchmark
-```
+| id | licença | versão pinada | release |
+| --- | --- | --- | --- |
+| `fmt` | MIT | 12.2.0 | 2026-06-16 |
+| `spdlog` | MIT | v1.17.0 | 2026-01-04 |
+| `nlohmann_json` | MIT | v3.12.0 | 2025-04-11 |
+| `catch2` | BSL-1.0 | v3.16.0 | 2026-08-25 |
+| `googletest` | BSD-3-Clause | v1.18.0 | 2026-08-10 |
+| `cli11` | BSD-3-Clause | v2.7.2 | 2026-08-02 |
+| `benchmark` | Apache-2.0 | v1.9.5 | 2026-01-21 |
 
-**Nenhuma entra sem:** licença verificada, último release com data, versão
-pinada e a frase que explica o que ela faz.
+**Ler a fonte é o método, e a auditoria provou por que.** O campo `license` da
+API do GitHub devolveu `NOASSERTION` para **spdlog e CLI11** — as duas têm
+licença permissiva; o detector é que falhou. Copiar o campo teria marcado as
+duas como desconhecidas. Abrir o arquivo `LICENSE` acha MIT e BSD-3-Clause.
+
+**Candidatas ainda não auditadas**, que entram quando alguém as medir: Eigen
+(atenção: MPL-2.0, classe de licença diferente das acima), SQLite, zlib, asio,
+Abseil, Boost. A lista não é o catálogo — o catálogo é o que passou pela
+auditoria.
+
+**Um teste cobra a auditoria:** entrada sem licença, sem versão pinada, com
+`"latest"` no lugar do pino, sem data de release ou sem a frase explicativa
+reprova em `every_catalog_entry_carries_its_audit`, não no uso.
 
 ### 4.3 O que NÃO é esta frente
 
@@ -226,8 +240,11 @@ muda por decisão registrada e o AppImage passa a exigir GPU.
 ## 7. Ordem linear recomendada
 
 ```text
-19  Dominio `library`: catalogo curado +   §4.1. A fatia principal. Reusa o
-    disponibilidade + plano                configaction; nao escreve arquivo.
+19  Dominio `library`: catalogo curado +   FEITA em 2026-09-03 (0.68.0). Sete
+    disponibilidade + plano                bibliotecas auditadas na fonte,
+                                           deteccao por config package e plano
+                                           que delega a escrita. 8 testes.
+                                           O criterio do grep volta ZERO.
 
 20  UI do catalogo: escolher, entender     §4. O "explicando o que cada uma
     e aplicar                              faz" mora aqui.

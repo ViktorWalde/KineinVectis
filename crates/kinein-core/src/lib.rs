@@ -21,6 +21,7 @@ pub mod git;
 pub mod handlers;
 pub mod jobs;
 pub mod lang;
+pub mod library;
 pub mod lsp;
 pub mod process;
 pub mod rpc;
@@ -247,6 +248,7 @@ impl Core {
             .or_else(|| self.terminal_request_response(method, request_id.clone(), params))
             .or_else(|| self.syntax_request_response(method, request_id.clone(), params))
             .or_else(|| self.lsp_request_response(method, request_id.clone(), params))
+            .or_else(|| Self::library_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))
             .unwrap_or_else(|| {

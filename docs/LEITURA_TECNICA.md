@@ -54,8 +54,8 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**116 métodos IPC** roteados, **19 domínios** no core, **441 testes** Rust
-verdes (medido em 2026-09-03). Protocolo `0.67.0`.
+**118 métodos IPC** roteados, **20 domínios** no core, **449 testes** Rust
+verdes (medido em 2026-09-03). Protocolo `0.68.0`.
 
 Domínios do core, por profundidade real:
 
@@ -105,6 +105,12 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       escolha e' do KIT, nao do workspace: um kit e' um preset
                       mais sysroot e triple do alvo, e o schema 1 migra para o
                       kit padrao NA LEITURA, sem perder escolha de ninguem
+
+            library   catalogo CURADO de bibliotecas C/C++ (0.68.0): licenca
+                      verificada na fonte, versao pinada e a frase do que cada
+                      uma faz. Dominio STATELESS — nao depende do Core nem de
+                      workspace. NAO escreve arquivo de build: devolve plano,
+                      e quem escreve e' o configaction
 
             configaction  as 16 Configuration Actions da spec de MVP §12, com
                       preview e consentimento (0.63.0). Pasta desde que nasceu:

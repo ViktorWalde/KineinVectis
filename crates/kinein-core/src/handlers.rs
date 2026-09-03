@@ -14,6 +14,7 @@ pub mod format;
 pub mod fs;
 pub mod git;
 pub mod jobs;
+pub mod library;
 pub mod lsp;
 pub mod run;
 pub mod runconfig;
