@@ -271,25 +271,116 @@ Não é gerenciador de pacotes, não é resolver dependência transitiva, e não
 substituir vcpkg/Conan para quem já os usa (§2.2). É **reduzir o custo de
 começar** um projeto C/C++ bem configurado.
 
-## 5. FRENTE F — embarcados
+## 5. FRENTE F — embarcados, e a decisão de que ela é PLUG AND PLAY
 
-Reordenada em 2026-09-03 (§2.3). **Antes de qualquer código, o levantamento:**
-o que existe de open source, estável, atualizado e não-proprietário, com licença
-e estado de manutenção verificados — o mesmo tratamento do catálogo de
-bibliotecas, pelo mesmo motivo.
+### 5.1 A decisão, registrada em 2026-09-03
 
-Candidatas a auditar (ponto de partida, não adoção):
+**A IDE será plug and play no contexto de sistemas embarcados para C/C++.**
+Decisão explícita do autor, registrada aqui porque é compromisso de produto e
+porque muda o custo da frente inteira.
+
+**O que "plug and play" significa, dito de forma verificável** — sem isto a
+frase é marketing e não critério de aceite:
 
 ```text
-probe-rs   · flash e debug, forte em ARM/RISC-V, ecossistema Rust
-OpenOCD    · o veterano; JTAG/SWD, cobertura ampla de alvos
-pyOCD      · CMSIS-DAP, ecossistema Python
-QEMU       · emulacao, permite testar sem placa
+1  a IDE DETECTA a sonda conectada (probe) sem o usuario configurar nada
+2  DEDUZ o alvo a partir dela e oferece o kit correspondente, ja preenchido
+3  o ciclo build -> flash -> debug roda sem editar arquivo na mao
+4  quando NAO consegue deduzir, diz o que faltou e onde procurou —
+   nunca falha em silencio nem pede "configure ai"
 ```
 
-`docs/integracoes/README.md` §"Checklist para adicionar uma integração nova"
-governa cada uma. A frente F **não abre** antes desse levantamento estar
-escrito.
+**O que plug and play NÃO promete, e dizer isso agora evita a promessa vazia:**
+
+- não adivinha memory map, linker script nem clock de uma placa custom;
+- não dispensa a auditoria de ferramenta (§2.3): plug and play é a experiência
+  do **usuário**, não atalho no gate de adoção;
+- não substitui `openocd.cfg`/`.gdbinit` de quem já tem um afinado — reconhece
+  e usa, em vez de sobrescrever.
+
+O item **4** é o que separa isto de uma demo. Uma IDE que acerta 80% dos casos e
+falha calada nos outros 20% é pior que uma que pergunta sempre, porque o usuário
+perde a confiança e passa a conferir tudo.
+
+### 5.2 O que JÁ existe de fundação, medido em 2026-09-03
+
+A etapa 14 (protocolo `0.67.0`) entregou mais do que parecia:
+
+```text
+kit por preset     um preset = executaveis + sysroot + triple do alvo
+sysroot            -> -DCMAKE_SYSROOT
+cross              -> --target no cargo, CMAKE_SYSTEM_NAME/PROCESSOR no cmake
+toolchainFile      o campo do preset ja e lido e exposto
+```
+
+**Isso é exatamente o formato de um "kit" de embarcado.** Um alvo
+`thumbv7em-none-eabihf` com sysroot do `arm-none-eabi` já cabe no modelo de hoje
+sem entidade nova — que era a aposta da §2.3 e ela se confirmou.
+
+### 5.3 Os dois obstáculos concretos, medidos e não supostos
+
+**1. O adaptador de debug é CONSTANTE, não escolha.**
+
+```rust
+// crates/kinein-core/src/dap/session.rs
+pub(super) const ADAPTER_BINARY: &str = "lldb-dap";
+```
+
+Embarcado não debuga com `lldb-dap`: debuga com `probe-rs dap-server`, com
+OpenOCD mais `gdb`, ou com pyOCD. **Sem tornar o adaptador uma escolha do kit,
+não há debug de embarcado nenhum** — e o `dap/` acabou de ser cortado em quatro
+donos (etapa 15), então o encaixe está limpo: `session.rs` já isola o spawn.
+
+**Medir:** `grep -n ADAPTER_BINARY crates/kinein-core/src/dap/session.rs`.
+
+**2. O catálogo de toolchain não conhece cross-compilador.**
+
+```text
+papeis hoje:      CCompiler · CxxCompiler · Generator · Cmake · Cargo
+candidatos hoje:  gcc · gxx · clang · clangxx · cmake · make · ninja · cargo
+```
+
+Não há `arm-none-eabi-gcc`, nem papel para **sonda** (probe) ou **gdbserver**. O
+kit sabe guardar um sysroot mas não sabe que existe um gravador.
+
+**Medir:** `grep -oE '"[a-z0-9-]+"' crates/kinein-core/src/toolchain/catalog.rs`.
+
+### 5.4 O levantamento das ferramentas vem ANTES
+
+Nada de código antes do levantamento: o que existe de open source, estável,
+atualizado e não-proprietário, com **licença e manutenção verificadas na fonte**
+— o mesmo tratamento do catálogo de bibliotecas, pelo mesmo motivo, e com a
+mesma lição: em 2026-09-03 a API do GitHub errou a licença de 4 das 13 libs.
+
+Candidatas a auditar (ponto de partida, **não** adoção):
+
+```text
+probe-rs   flash e debug em Rust; expoe `dap-server`, que fala DAP
+           NATIVAMENTE — encaixa no dominio dap/ que ja existe
+OpenOCD    o veterano; JTAG/SWD, cobertura ampla de alvos, fala GDB remote
+pyOCD      CMSIS-DAP, ecossistema Python
+QEMU       emulacao: permite testar o ciclo inteiro SEM placa, e por isso
+           e' o que torna o gate de embarcado possivel em CI
+```
+
+**O QEMU merece nota:** ele é o que permite testar flash/debug **sem hardware**,
+e sem isso a frente F não teria como ter gate — seria a única frente do projeto
+verificada só na mão. A regra "gate nasce de falha silenciosa" não muda porque o
+domínio tem fio.
+
+### 5.5 A ordem dentro da frente F
+
+```text
+21  levantamento (licenca, manutencao, alvos, protocolo)   documento
+22  adaptador DAP vira escolha do kit                      §5.3 item 1
+23  papeis novos: cross-compilador, sonda, gdbserver       §5.3 item 2
+24  deteccao da sonda + kit sugerido                       o "plug"
+25  ciclo build -> flash -> debug, com QEMU no gate        o "play"
+```
+
+O **21 não é cerimônia**: sem ele, escolher entre probe-rs e OpenOCD seria
+palpite, e a escolha decide o desenho do 22 (probe-rs fala DAP nativo; OpenOCD
+fala GDB remote, que exigiria uma ponte).
 
 ## 6. FRENTE G — simulação
 
@@ -325,10 +416,23 @@ muda por decisão registrada e o AppImage passa a exigir GPU.
                                            na paleta (Ctrl+Alt+L) e o botao que
                                            entrega o passo ao configaction.
 
-21  Levantamento de embarcados             §5. Documento, nao codigo. Sem ele
-    (licenca, manutencao, alvos)           a frente F nao abre.
+21  Levantamento de embarcados             §5.4. Documento, nao codigo. Sem ele
+    (licenca, manutencao, alvos)           a escolha entre probe-rs e OpenOCD
+                                           e' palpite, e ela decide o desenho
+                                           do 22.
 
-22  Responder as perguntas do roadmaps/31  §6 + roadmap 34 etapa 18.
+22  Adaptador DAP vira escolha do kit      §5.3 item 1. Hoje e' CONSTANTE, e
+                                           sem isso nao ha debug de embarcado.
+
+23  Papeis novos no toolchain: cross-      §5.3 item 2.
+    compilador, sonda, gdbserver
+
+24  Deteccao da sonda + kit sugerido       o "plug" da §5.1.
+
+25  Ciclo build -> flash -> debug,         o "play" da §5.1. QEMU no gate
+    com QEMU no gate                       para haver verificacao sem placa.
+
+26  Responder as perguntas do roadmaps/31  §6 + roadmap 34 etapa 18.
 ```
 
 **O feedback de TR1 fura esta fila.** O autor disse em 2026-09-03 que passará a

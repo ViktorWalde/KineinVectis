@@ -215,7 +215,10 @@ L1     plataforma de integracao (`integration` v1)
 L2-L4  C/C++/Rust SOLIDOS: diagnostico, teste, cobertura, Project Graph, DAP
 L5     RemoteContext — Docker entra AQUI, como contexto remoto
 L5.5   banco de dados
-L6     embarcados
+L6     embarcados — REORDENADO para cima em 2026-09-03, e decidido PLUG
+       AND PLAY: a IDE detecta a sonda, deduz o alvo e roda build/flash/
+       debug sem edicao manual; quando nao deduz, diz o que faltou.
+       Registro em docs/integracoes/README.md e roadmaps/35 §5
 ```
 
 E a decisão que define o custo: **Docker e banco são NATIVOS**, domínios do core

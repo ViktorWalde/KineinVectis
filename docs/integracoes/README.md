@@ -80,6 +80,18 @@ L5.5 (banco). **O autor decidiu que embarcados sobe na fila**, e este parágrafo
 é o registro: contrariar decisão registrada exige registro novo, que é como este
 repositório muda de regra.
 
+**E a frente é PLUG AND PLAY** (decisão do autor, 2026-09-03): a IDE detecta a
+sonda, deduz o alvo e roda build → flash → debug sem o usuário editar arquivo na
+mão — e, quando **não** consegue deduzir, diz o que faltou e onde procurou, em
+vez de falhar calada. O critério verificável está em
+`../roadmaps/35-ambiente-cpp-embarcados-simulacao.md` §5.1.
+
+**Plug and play é a experiência do USUÁRIO, não atalho no gate.** Cada
+ferramenta (probe-rs, OpenOCD, pyOCD, QEMU) entra pelo checklist abaixo, com
+licença e manutenção verificadas na fonte. A conveniência de quem usa a IDE não
+diminui a exigência sobre o que a IDE adota — se diminuísse, "plug and play"
+significaria "adotamos sem olhar".
+
 **O que NÃO muda:** o gate de promoção de nível acima continua valendo integral.
 Subir na fila muda a ordem, não o critério — a frente só abre depois do
 levantamento de licença, manutenção e alvos de cada ferramenta candidata
