@@ -31,6 +31,9 @@ F  EMBARCADOS                  ferramentas open source, estaveis, nao
 
 G  SIMULACAO FISICA/MATEMATICA  roadmaps/31 — continua ESTUDO. A etapa 18 do
    (ver §6)                    roadmap 34 e' esta.
+
+H  BANCO E OBSERVABILIDADE     relacional + temporal (TimescaleDB) e Grafana,
+   (ver §7)                    NATIVOS. Decisao do autor em 2026-09-03.
 ```
 
 A frente **E vem primeiro**, e não por gosto: é a única das três que não
@@ -403,7 +406,64 @@ qualquer máquina. OpenGL na mesma janela quebra essa garantia **em silêncio** 
 o build passa. Ou a simulação roda em processo/janela separada, ou o invariante
 muda por decisão registrada e o AppImage passa a exigir GPU.
 
-## 7. Ordem linear recomendada
+## 7. FRENTE H — banco de dados e observabilidade
+
+### 7.1 A decisão, registrada em 2026-09-03
+
+**A IDE terá integração nativa com bancos relacionais e temporais
+(TimescaleDB) e com Grafana**, tudo plug and play. Decisão do autor, e ela
+estende o que já estava registrado: `LEITURA_TECNICA` §6 diz que **Docker e
+banco são domínios NATIVOS, não plugins**, e a ordem L0–L10 põe banco em L5.5.
+
+Levantamento em
+[`integracoes/37-banco-e-observabilidade.md`](../integracoes/37-banco-e-observabilidade.md).
+
+### 7.2 A licença do Grafana decide a FORMA da integração
+
+Grafana é **AGPL-3.0**, copyleft com cláusula de rede. Isso não impede nada,
+mas separa o que é legal do que não é:
+
+```text
+PODE   a IDE CONVERSA com um Grafana pela HTTP API dele
+NAO    embutir o Grafana na Kinein ou distribui-lo no AppImage
+```
+
+É a mesma fronteira que o `gdb` (GPL-3) já respeita — ferramenta copyleft é
+**executada como processo, nunca linkada** (`LEITURA_TECNICA` §4 fato 5).
+
+**E TimescaleDB não é uma licença só:** Apache-2.0 fora de `tsl/`, e a
+**Timescale License** dentro — que é *source-available*, **não** OSI. A IDE fala
+protocolo Postgres com um servidor que o usuário instalou, então a escolha de
+edição é dele; mas a ressalva fica escrita, porque a frente foi definida como
+"open source, sem ser proprietário".
+
+### 7.3 O risco que esta frente traz e as outras não trouxeram
+
+**Credencial de banco.** Hoje o `.kinein/` guarda rascunho e toolchain em texto
+puro. Senha de banco ali seria **regressão de segurança**, não feature — e o
+projeto tem `docs/seguranca/23` (rede contra perda de dado) mas **não tem
+cofre**. Nenhuma linha de conexão a banco entra antes dessa pergunta ter dono.
+
+## 8. A fase de POLIMENTO, e por que ela é etapa e não sentimento
+
+Decisão do autor em 2026-09-03: **quando as funcionalidades estiverem completas
+e documentadas, começa a fase de polimento/pente-fino.**
+
+Registrar isso agora tem uma razão prática: "polir" sem critério vira refatoração
+infinita. A fase precisa de porta de entrada e de saída, e as duas já existem
+neste repositório:
+
+```text
+ENTRA quando   as frentes E, F, G e H estiverem documentadas e medidas —
+               nao "prontas na sensacao", mas com o comando que prova cada uma
+SAI quando     o registro de saidas do dogfooding parar de crescer, e o debito
+               da catraca parar de cobrar pedagio em fatia nova
+```
+
+**O que a fase de polimento NÃO é:** desculpa para reabrir decisão registrada.
+As de `roadmaps/34` §8 e as deste documento continuam fechadas.
+
+## 9. Ordem linear recomendada
 
 ```text
 19  Dominio `library`: catalogo curado +   FEITA em 2026-09-03 (0.68.0). Sete
@@ -444,7 +504,16 @@ muda por decisão registrada e o AppImage passa a exigir GPU.
 25  Ciclo build -> flash -> debug,         o "play" da §5.1. QEMU no gate
     com QEMU no gate                       para haver verificacao sem placa.
 
-26  Responder as perguntas do roadmaps/31  §6 + roadmap 34 etapa 18.
+26  Banco: dominio relacional + o cofre    §7.3. O cofre vem ANTES da
+    de credencial                          primeira conexao, nao depois.
+
+27  Temporal (TimescaleDB) e Grafana        §7.2. Grafana por HTTP API,
+    por API                                nunca embutido.
+
+28  Responder as perguntas do roadmaps/31  §6 + roadmap 34 etapa 18.
+
+29  Fase de polimento / pente-fino          §8. Comeca quando E, F, G e H
+                                           estiverem documentadas e medidas.
 ```
 
 **O feedback de TR1 fura esta fila.** O autor disse em 2026-09-03 que passará a

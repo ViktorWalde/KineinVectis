@@ -125,6 +125,7 @@ projeto do usuário silenciosamente.
 
 | Documento | Assunto |
 | --- | --- |
+| [37-banco-e-observabilidade.md](37-banco-e-observabilidade.md) | **Grafana e TimescaleDB medidos** (2026-09-03): Grafana é **AGPL-3.0**, o que decide a FORMA da integração (API, nunca embutido); TimescaleDB é Apache-2.0 **mais** a Timescale License, que é source-available e **não** OSI |
 | [36-ferramentas-de-embarcados.md](36-ferramentas-de-embarcados.md) | **probe-rs, OpenOCD, pyOCD e QEMU medidos** (2026-09-03): licença verificada na fonte, versão, manutenção e — o que decide o desenho — **qual protocolo cada uma fala**. probe-rs é o único com DAP nativo sobre stdin/stdout, que é a forma que o `dap/` já usa |
 
 ## Integrações já adotadas

@@ -214,7 +214,10 @@ A ordem decidida em 2026-07-17 é **profundidade antes de superfície**:
 L1     plataforma de integracao (`integration` v1)
 L2-L4  C/C++/Rust SOLIDOS: diagnostico, teste, cobertura, Project Graph, DAP
 L5     RemoteContext — Docker entra AQUI, como contexto remoto
-L5.5   banco de dados
+L5.5   banco de dados — relacional E temporal (TimescaleDB), mais Grafana,
+       decididos NATIVOS e plug and play em 2026-09-03. A licenca do
+       Grafana (AGPL-3.0) decide a FORMA: HTTP API, nunca embutido.
+       Levantamento em docs/integracoes/37
 L6     embarcados — REORDENADO para cima em 2026-09-03, e decidido PLUG
        AND PLAY: a IDE detecta a sonda, deduz o alvo e roda build/flash/
        debug sem edicao manual; quando nao deduz, diz o que faltou.
@@ -228,6 +231,11 @@ isso é demorado. O que isso significa em concreto:
 - **não há atalho de ecossistema.** Sem host de extensões, cada vertical é
   código Rust deste repositório, com testes deste repositório e passando pelos
   mesmos gates. Uma IDE com host de plugins terceiriza esse custo; esta o paga.
+- **credencial de banco ainda não tem onde morar.** O `.kinein/` guarda
+  rascunho e toolchain em TEXTO PURO; senha ali seria regressão de segurança,
+  não feature. O projeto tem rede contra perda de dado (`seguranca/23`) e
+  **não tem cofre**. Registrado em `roadmaps/35` §7.3: nenhuma conexão a banco
+  entra antes dessa pergunta ter dono.
 - **a referência funcional de banco não é o IntelliJ Community** — ele não tem
   Database Tools (é Ultimate). Verificado em 2026-07-17. O idioma visual do
   Community continua sendo a referência; o cliente de banco a auditar é o DBeaver.
