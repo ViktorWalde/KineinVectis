@@ -1,5 +1,4 @@
 crates/kinein-core/src/dap/session.rs 672 500
-crates/kinein-core/src/handlers/lsp.rs 653 500
 crates/kinein-core/src/lsp/parse.rs 598 500
 ui/qml/editor/EditorController.qml 791 400
 ui/qml/editor/EditorDocumentController.qml 548 400

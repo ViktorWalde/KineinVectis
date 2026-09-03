@@ -114,7 +114,8 @@ lsp/manager.rs            732 (500)  bloqueia feature de LSP
 commands.rs               696 (500)
 dap/session.rs            672 (500)  bloqueia feature de debug
 core_client_requests.cpp  660 (500)
-ShellWorkspaceHost.qml    576 (400)  composition host: cortar por area
+ShellWorkspaceHost.qml    407 (400)  cortado em 2026-09-03: a fiacao do
+                                    painel virou ShellEditorHost.qml (225)
 ```
 Quando a catraca disparar, há **três suspeitos nesta ordem: a sua mudança, a
 categoria, o arquivo** (§4 regra 9). Não corte linha para caber e não suba o
@@ -448,7 +449,7 @@ E4. Debito god-file (§0.2g) — 23 arquivos, MEDIDO em 2026-07-17. NAO e' fatia
     commands.rs               696 (500)
     dap/session.rs            672 (500)  bloqueia feature de debug
     core_client_requests.cpp  660 (500)
-    ShellWorkspaceHost.qml    576 (400)  composition host; corte por area
+    ShellWorkspaceHost.qml    407 (400)  cortado 2026-09-03 (ShellEditorHost)
     ```
     ARMADILHA DE MEDICAO: a catraca conta linhas **fora dos testes** (corte no
     `#[cfg(test)]`, §4 regra 10). Contar `wc -l` cru em arquivo Rust da numero

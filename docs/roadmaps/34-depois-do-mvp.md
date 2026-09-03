@@ -27,7 +27,7 @@ protocolo 0.65.0                crates/kinein-protocol/src/lib.rs
 gate completo verde             bash scripts/verificar.sh
 AppImage no gate                scripts/verificar-appimage.sh
 5 sondas                        scripts/sonda_*.py
-18 arquivos em debito           cat scripts/arquitetura-baseline.txt
+17 arquivos em debito           cat scripts/arquitetura-baseline.txt
 ```
 
 O MVP fechou. O que vem agora não é "terminar" — é **transformar MVP em
@@ -37,7 +37,7 @@ ao CLion em profundidade (TR2).
 ## 2. As quatro frentes, e por que a ordem não é óbvia
 
 ```text
-A  DIVIDA QUE JA COBRA PEDAGIO   18 arquivos acima do limite da catraca.
+A  DIVIDA QUE JA COBRA PEDAGIO   17 arquivos acima do limite da catraca.
                                  Nao e' limpeza: e' imposto sobre a PROXIMA
                                  fatia.
 
@@ -84,7 +84,7 @@ existe.
 
 ## 3. FRENTE A — a dívida, medida e ordenada
 
-`cat scripts/arquitetura-baseline.txt` (2026-09-03, 18 arquivos):
+`cat scripts/arquitetura-baseline.txt` (2026-09-03, 17 arquivos):
 
 | arquivo | linhas/limite | o que provavelmente está misturado |
 | --- | ---: | --- |
@@ -93,7 +93,6 @@ existe.
 | `ui/qml/panels/bottom/GitPanel.qml` | 764/300 | status + diff + stage + commit + histórico |
 | `crates/kinein-core/src/dap/session.rs` | 672/500 | handshake DAP + breakpoints + stepping + frames + variáveis |
 | `ui/src/core_client_requests.cpp` | 660/500 | todo request de todo domínio numa fachada |
-| `crates/kinein-core/src/handlers/lsp.rs` | 653/500 | **viola a §4**, não só o número — §3.1 |
 | `ui/src/core_client_dispatch.cpp` | 640/500 | já cortado uma vez (751→640) na etapa 4 |
 | `crates/kinein-core/src/lsp/parse.rs` | 598/500 | parse de cada resposta LSP no mesmo arquivo |
 | `ui/qml/shell/ShellWorkspaceHost.qml` | 407/400 | **cortado em 2026-09-03** (etapa 11.1): a fiação do painel virou `ShellEditorHost.qml`; de 576/92 leituras para 407/2 |
@@ -111,9 +110,12 @@ existe.
 scripts/verificar-arquitetura.sh` — a catraca só permite encolher, então
 qualquer número aqui só pode ter melhorado.
 
-### 3.1 A dívida que é violação de REGRA (paga-se sem esperar fatia)
+### 3.1 A dívida que era violação de REGRA — PAGA em 2026-09-03
 
-`crates/kinein-core/src/handlers/lsp.rs` — 653 linhas. A `ARCHITECTURE.md` §4
+> **Etapa 13 feita.** `handlers/lsp.rs` virou a pasta `handlers/lsp/` e **saiu da
+> catraca** — 18 → 17 arquivos em débito. Detalhe abaixo, no registro original.
+
+`crates/kinein-core/src/handlers/lsp.rs` — era 653 linhas. A `ARCHITECTURE.md` §4
 diz, com todas as letras:
 
 > *"`handlers/<dominio>.rs` é fino. Roteia, valida params, delega, formata a
@@ -124,7 +126,29 @@ domínio. O corte aqui não precisa de uma fatia funcional para saber o que sobr
 a regra já disse. Alvo: `lsp.rs` roteia; o que ele faz de pesado desce para
 `lsp/`, que já é pasta.
 
-**Medir:** `wc -l crates/kinein-core/src/handlers/lsp.rs` e `grep -c 'fn '` nele.
+**Como ficou (2026-09-03).** O corte seguiu as **mesmas costuras que o domínio
+`crate::lsp` já tinha**, para que handler e domínio se leiam em paralelo — não
+foram categorias inventadas:
+
+```text
+handlers/lsp/mod.rs        63   <-> so' o roteador
+handlers/lsp/sessao.rs     45   <-> lsp/session.rs      ciclo de vida
+handlers/lsp/documento.rs  83   <-> lsp/sync.rs         o TEXTO
+handlers/lsp/consulta.rs  255   <-> lsp/manager.rs      operacoes interativas
+handlers/lsp/edicao.rs    294   <-> lsp/transaction.rs  WorkspaceEdit
+```
+
+**O que era lógica pesada de verdade, e não "handler grande":** `rename` e
+`applyCodeAction` terminavam com o **mesmo bloco escrito duas vezes** —
+`validate_versions` mais `workspace_edits.prepare`. Isso não é formatar
+resposta, é orquestrar transação. Virou `workspace_edit_preview_response`, dono
+único: um plano que nasce de origens diferentes agora vira preview pelo mesmo
+caminho, e a barreira de versão não pode divergir entre os dois.
+
+**Medir:** `ls crates/kinein-core/src/handlers/lsp/` e
+`grep -cE "fsops|confine|validate_versions|workspace_edits|parse_params|json!"
+crates/kinein-core/src/handlers/lsp/mod.rs` — tem que dar **0**: roteador que
+não roteia nada além de método → função.
 
 ### 3.2 A decisão do `EditorController.qml` 791/400 — RESPONDIDA em 2026-09-03
 
@@ -290,8 +314,11 @@ tem um custo escrito acima.
                                            de ordenacao ate' a primeira entrada
                                            real — agora medido, nao suposto.
 
-13  handlers/lsp.rs: handler volta a ser   §3.1. Violacao de REGRA; nao precisa
-    fino                                   esperar fatia funcional.
+13  handlers/lsp.rs: handler volta a ser   FEITA em 2026-09-03. Virou pasta
+    fino                                   handlers/lsp/ (5 arquivos, o maior
+                                           294). SAIU da catraca: 18 -> 17.
+                                           A cauda duplicada de rename e
+                                           applyCodeAction virou dono unico.
 
 14  Toolchain: sysroot + cross + kit por   TR2 item 3. O encaixe ja' existe;
     preset                                 e' o item barato da frente C.
