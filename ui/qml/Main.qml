@@ -230,6 +230,11 @@ Window {
         coreClient: coreClient
         shellController: domains.shellController
         gitController: domains.gitController
+        toolchainController: domains.toolchainController
+        onToolchainMenuRequested: function(menuX, menuY) {
+            const pos = statusBar.mapToItem(shellOverlays, menuX, menuY);
+            domains.toolchainController.openMenu(pos.x, pos.y);
+        }
     }
 
     ShellOverlays {
@@ -249,6 +254,7 @@ Window {
         gitController: domains.gitController
         settingsController: domains.settingsController
         configActionController: domains.configActionController
+        toolchainController: domains.toolchainController
         onAppMenuActionRequested: function(action) {
             header.executeMenuAction(action);
         }

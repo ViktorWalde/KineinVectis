@@ -1,8 +1,8 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.63.0: `core.*`, `tools.*`, `workspace.*`, `fs.*`, `draft.*`,
-> `format.*`, `cmake.*`, `cargo.*`, `configAction.*`, `runConfig.*`,
+> (JSON-RPC 0.64.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
+> `draft.*`, `format.*`, `cmake.*`, `cargo.*`, `configAction.*`, `runConfig.*`,
 > `settings.*`, `debug.*`, `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
 > protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
@@ -1107,6 +1107,65 @@ dependência que já está no manifest, `Cargo.toml` com string multilinha ou
 manifest do usuário não tem desfazer; a recusa vem com o motivo, na lista e no
 diálogo.
 
+### Toolchain (`toolchain.get` / `toolchain.set`)
+
+Implementado no protocolo `0.64.0` (etapa 5 de
+`docs/roadmaps/30-caminho-para-o-mvp.md`; B2 do TR2 e §5d do `roadmaps/29`).
+Ambos exigem workspace aberto. Persistência em `.kinein/toolchain.json` com
+`schemaVersion` — arquivo inválido ou de schema desconhecido é tratado como
+vazio, e toolchain quebrada nunca impede a IDE de abrir o projeto.
+
+**A pergunta que o domínio responde:** *qual executável cumpre cada papel?*
+Até 2026-09-02 todo processo externo do core nascia de `Command::new("<nome>")`
+— 28 chamadas, todas resolvidas pelo `PATH` do processo. Trocar de compilador
+significava editar `CMakeLists.txt` à mão ou exportar `CC`/`CXX` antes de abrir
+a IDE.
+
+Os **papéis** são vocabulário fechado (`cCompiler`, `cxxCompiler`, `generator`,
+`cmake`, `cargo`). Papel novo é entrada nova no protocolo e no catálogo do
+core, nunca string livre vinda da UI: um papel que o core não sabe usar daria
+ao usuário um seletor sem efeito.
+
+- `toolchain.get {}` e `toolchain.set { role, id? }` respondem o **mesmo**
+  shape — como as run configs, a UI nunca calcula estado derivado:
+
+```text
+{ selections: [{ role, id?, resolvedPath? }],
+  candidates: [{ role, id, label, path?, version? }] }
+```
+
+- `id` **ausente** em `selections` é AUTOMÁTICO, e é o padrão: nada é fixado e
+  o `PATH` continua decidindo — exatamente o comportamento histórico. Quem
+  nunca abrir o seletor não vê diferença nenhuma.
+- `resolvedPath` no automático é **informação** (o primeiro candidato
+  detectado), não fixação. É o que a UI mostra para dizer o que vai acontecer.
+- `toolchain.set` com `id` ausente volta para automático. Com um `id` que não
+  existe no catálogo, ou que existe mas **não foi detectado nesta máquina**,
+  responde `INVALID_PARAMS`: oferecer um compilador ausente é oferecer um
+  configure que vai falhar.
+- `candidates` traz só o que existe aqui. `Unix Makefiles` só aparece se o
+  `make` existir — por isso ele entrou no `tools.detect` na mesma fatia.
+
+**O que a escolha muda de fato**, e é o que faz dela uma entidade e não um
+enfeite:
+
+```text
+cmake.configure   -DCMAKE_C_COMPILER / -DCMAKE_CXX_COMPILER / -G, e o
+                  EXECUTAVEL do proprio cmake
+build.run         o cmake (configure implicito + --build) e o cargo
+quality.run       o cargo do clippy
+cargo.check       o cargo
+cargo.metadata    o cargo
+```
+
+Só o que o usuário **fixou** entra na linha de comando. Emitir
+`-DCMAKE_CXX_COMPILER` com o que o `PATH` resolveria hoje congelaria no cache do
+`CMake` uma escolha que o usuário não fez.
+
+**O que esta fatia NÃO entrega, e está registrado:** sysroot, cross-compilação e
+kit por preset. São o resto do B2 do TR2, e ficam para uma fatia própria — o
+que existe hoje é a entidade e a rota até o comando.
+
 ### Settings (`settings.get` / `settings.set`)
 
 Implementado no protocolo `0.36.0` (fatia M4.1 de `docs-privada/diario/18`). Dois níveis:
@@ -1400,6 +1459,8 @@ workspace.status
 command.list
 tools.detect
 tools.status
+toolchain.get
+toolchain.set
 environment.scan
 fs.list
 fs.read

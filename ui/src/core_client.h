@@ -134,6 +134,8 @@ public:
     Q_INVOKABLE void cargoMetadata();
     Q_INVOKABLE void cmakeConfigure();
     Q_INVOKABLE void cmakeStatus();
+    Q_INVOKABLE void toolchainGet();
+    Q_INVOKABLE void toolchainSet(const QString& role, const QString& id);
     Q_INVOKABLE void configActionList(bool includeHiddenByScope = false);
     Q_INVOKABLE void configActionPreview(const QString& id, const QVariantMap& params);
     Q_INVOKABLE void configActionApply(const QString& id, const QVariantMap& params,
@@ -225,6 +227,7 @@ signals:
                              const QString& cdbStaleBecause);
     void cmakeConfigureFinished(bool success);
     void cargoMetadataResolved(int packages);
+    void toolchainResolved(const QVariantList& selections, const QVariantList& candidates);
     void configActionsListed(const QVariantList& actions, const QStringList& activeBuildSystems);
     void configActionPreviewed(const QVariantMap& preview);
     void configActionApplied(const QString& id, const QString& message, const QStringList& files,
@@ -334,6 +337,7 @@ private:
     bool dispatchSyntaxResult(const QString& method, const QJsonObject& result);
     bool dispatchCmakeResult(const QString& method, const QJsonObject& result);
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
+    bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);
     void handleWorkspaceOpened(const QJsonObject& result);

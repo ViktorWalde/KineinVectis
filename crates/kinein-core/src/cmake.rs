@@ -11,7 +11,7 @@ use std::{
     process::Command,
 };
 
-use kinein_protocol::{CmakePresetInfo, CmakeTargetInfo};
+use kinein_protocol::{CmakePresetInfo, CmakeTargetInfo, ToolchainRole};
 use serde_json::Value;
 
 /// Maximo de targets repassados a UI por request.
@@ -58,14 +58,30 @@ pub fn write_file_api_query(root: &Path) -> io::Result<()> {
 }
 
 /// Monta o comando de configure com a CDB exportada e o `-B` fixo.
+///
+/// `toolchain` e a escolha do usuario (roadmap 30, etapa 5). Ela entra por
+/// dois caminhos: o EXECUTAVEL do `cmake` (quando fixado) e os argumentos
+/// `-G`/`-DCMAKE_*_COMPILER`. Sem escolha nenhuma, o comando sai byte a byte
+/// como saia antes — o padrao continua sendo o `PATH`.
 #[must_use]
-pub fn configure_command(root: &Path, preset: Option<&str>) -> Command {
-    let mut command = Command::new("cmake");
+pub fn configure_command(
+    root: &Path,
+    preset: Option<&str>,
+    toolchain: &crate::toolchain::Toolchain,
+) -> Command {
+    let programa = toolchain
+        .program_for(ToolchainRole::Cmake)
+        .unwrap_or_else(|| PathBuf::from("cmake"));
+    let mut command = Command::new(programa);
     if let Some(preset) = preset {
         command.arg("--preset").arg(preset);
     }
     command.arg("-S").arg(root).arg("-B").arg(build_dir(root));
     command.arg("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON");
+    // Depois do `-D` fixo e antes de nada: um preset que ja escolhe gerador
+    // conflita com um `-G` explicito, e o CMake reclama em vez de adivinhar —
+    // que e o comportamento certo, e a mensagem dele nomeia o conflito.
+    command.args(toolchain.cmake_arguments());
     command
 }
 
@@ -199,6 +215,7 @@ mod tests {
     use std::path::PathBuf;
 
     use super::{configure_command, list_presets, list_targets, status, write_file_api_query};
+    use crate::toolchain::Toolchain;
 
     fn temp_root(name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -229,7 +246,7 @@ mod tests {
     #[test]
     fn configure_command_pins_build_dir_and_exports_cdb() {
         let root = temp_root("command");
-        let command = configure_command(&root, Some("dev"));
+        let command = configure_command(&root, Some("dev"), &Toolchain::resolve(&root, &[]));
         let arguments = command
             .get_args()
             .map(|argument| argument.to_string_lossy().into_owned())

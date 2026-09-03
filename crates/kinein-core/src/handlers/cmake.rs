@@ -121,6 +121,10 @@ impl Core {
         };
 
         let preset = parsed.preset;
+        // A toolchain e resolvida AQUI, na thread do loop, e vai pronta para o
+        // job: um job nao alcanca o `Core` (arquitetura/04 §3), e resolver la
+        // dentro exigiria o `ToolDetector`, que e estado do core.
+        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
         let job_id = jobs.spawn(
             "cmake.configure",
             "CMake Configure",
@@ -131,7 +135,7 @@ impl Core {
                 if let Err(error) = cmake::write_file_api_query(&root) {
                     ctx.emit_output(&format!("aviso: query do file-api falhou: {error}"));
                 }
-                let command = cmake::configure_command(&root, preset.as_deref());
+                let command = cmake::configure_command(&root, preset.as_deref(), &toolchain);
                 let label = preset.as_deref().map_or_else(
                     || "cmake configure".to_owned(),
                     |name| format!("cmake configure --preset {name}"),

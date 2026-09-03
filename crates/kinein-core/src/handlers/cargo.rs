@@ -55,7 +55,8 @@ impl Core {
             Ok(root) => root,
             Err(response) => return *response,
         };
-        match cargo::run_metadata(&root) {
+        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
+        match cargo::run_metadata(&root, &toolchain) {
             Ok(summary) => JsonRpcResponse::success(request_id, json!(summary)),
             Err(message) => JsonRpcResponse::failure(
                 request_id,
@@ -83,6 +84,7 @@ impl Core {
         // Reusa o pipeline de eventos do quality: mesmo JSON de diagnostics,
         // mesma aba Problems. O titulo do job distingue check de clippy;
         // facetas por origem entram com o Problems 2.0 (roadmap P1).
+        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
         let job_id = jobs.spawn(
             "cargo.check",
             "Cargo Check",
@@ -91,7 +93,7 @@ impl Core {
             move |ctx| {
                 let cancel = ctx.cancellation();
                 let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-                match build::run_cargo_check(&root, &cancel, &mut sink) {
+                match build::run_cargo_check(&root, &toolchain, &cancel, &mut sink) {
                     Ok(outcome) => {
                         ctx.emit_event(
                             "event.quality.finished",

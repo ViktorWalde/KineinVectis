@@ -7,12 +7,18 @@
 
 use std::{path::Path, process::Command};
 
-use kinein_protocol::{CargoMetadataResult, CargoPackageInfo, CargoTargetInfo};
+use kinein_protocol::{CargoMetadataResult, CargoPackageInfo, CargoTargetInfo, ToolchainRole};
 use serde_json::Value;
 
 /// Executa `cargo metadata --no-deps` no root e resume o resultado.
-pub fn run_metadata(root: &Path) -> Result<CargoMetadataResult, String> {
-    let output = Command::new("cargo")
+pub fn run_metadata(
+    root: &Path,
+    toolchain: &crate::toolchain::Toolchain,
+) -> Result<CargoMetadataResult, String> {
+    let programa = toolchain
+        .program_for(ToolchainRole::Cargo)
+        .unwrap_or_else(|| std::path::PathBuf::from("cargo"));
+    let output = Command::new(programa)
         .args(["metadata", "--format-version", "1", "--no-deps"])
         .current_dir(root)
         .output()

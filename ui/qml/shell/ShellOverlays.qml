@@ -15,6 +15,7 @@ Item {
     property var gitController: null
     property var settingsController: null
     property var configActionController: null
+    property var toolchainController: null
     property bool aboutVisible: false
     property bool manualVisible: false
     property bool appMenuVisible: false
@@ -148,6 +149,16 @@ Item {
             values[key] = value;
             root.settingsController.setGlobal(values);
         }
+    }
+
+    ToolchainMenu {
+        anchors.fill: parent
+        visible: root.toolchainController.menuVisible
+        z: 95
+        controller: root.toolchainController
+        menuX: root.toolchainController.menuX
+        menuY: root.toolchainController.menuY
+        onDismissRequested: root.toolchainController.closeMenu()
     }
 
     ConfigActionsDialog {

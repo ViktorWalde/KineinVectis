@@ -19,8 +19,13 @@ Rectangle {
     property int gitAheadCount: 0
     property int gitBehindCount: 0
     property int gitChangeCount: 0
+    // Toolchain (roadmap 30, etapa 5). Vazio esconde o chip: projeto sem
+    // build system nao tem o que escolher.
+    property string toolchainSummary: ""
+    property bool toolchainVisible: false
 
     signal logsRequested()
+    signal toolchainMenuRequested(real menuX, real menuY)
     signal cancelBuildRequested()
     signal cancelTestsRequested()
     signal cancelQualityRequested()
@@ -42,6 +47,41 @@ Rectangle {
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus
             font.family: Theme.monoFont
+        }
+
+        // Chip da toolchain: diz o que vai rodar e abre o seletor.
+        Rectangle {
+            id: toolchainChip
+
+            anchors.verticalCenter: parent.verticalCenter
+            visible: bar.toolchainVisible
+            width: toolchainTexto.width + 2 * Theme.spacingSmall
+            height: 18
+            radius: Theme.radiusXSmall
+            color: toolchainArea.containsMouse ? Theme.surface2 : "transparent"
+            border.color: Theme.borderSoft
+            border.width: 1
+
+            Text {
+                id: toolchainTexto
+
+                anchors.centerIn: parent
+                text: qsTr("toolchain: %1").arg(bar.toolchainSummary)
+                color: Theme.textMuted
+                font.pixelSize: Theme.fontSizeStatus
+            }
+
+            MouseArea {
+                id: toolchainArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    const pos = toolchainChip.mapToItem(bar, 0, 0);
+                    bar.toolchainMenuRequested(pos.x, pos.y);
+                }
+            }
         }
 
         Text {

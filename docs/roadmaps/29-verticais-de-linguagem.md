@@ -292,8 +292,13 @@ FEITO    REABRIR os documentos apos configure (§5b), em 2026-09-02. A nota da
          `event.lsp.documentsClosed`) com o BUFFER do editor, nao com o disco.
          Provado por mutacao, 5 delas, contra um language server FALSO —
          a barreira de prova caiu na etapa 3 do roadmap 30.
-ETAPA    toolchain como entidade (§5d) — etapa PROPRIA, por decisao do autor.
-PROPRIA
+FEITO    toolchain como entidade (§5d), em 2026-09-02, na PARTE que paga: o
+  (parte)  dominio `toolchain/` responde qual executavel cumpre cada papel
+         (compilador C/C++, gerador, cmake, cargo), persiste a escolha em
+         `.kinein/toolchain.json` e a leva ate a linha de comando do configure
+         e do build. O padrao continua sendo o PATH: sem escolha, nada e
+         fixado. FALTA o resto do B2 do TR2 — sysroot, cross-compilacao e kit
+         por preset —, que agora tem onde encaixar.
 ```
 
 As duas ordens abaixo ficam registradas para quando Python voltar à mesa:

@@ -20,5 +20,6 @@ pub mod runconfig;
 pub mod settings;
 pub mod syntax;
 pub mod terminal;
+pub mod toolchain;
 pub mod tools;
 pub mod workspace;

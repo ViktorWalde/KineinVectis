@@ -13,7 +13,11 @@ use std::{
     sync::{Arc, atomic::AtomicBool},
 };
 
-use kinein_protocol::{BuildDiagnostic, BuildDiagnosticSeverity, ProjectKind, RigorProfile};
+use kinein_protocol::{
+    BuildDiagnostic, BuildDiagnosticSeverity, ProjectKind, RigorProfile, ToolchainRole,
+};
+
+use crate::toolchain::Toolchain;
 use serde::Deserialize;
 
 use crate::process::{self, ProcessError};
@@ -148,6 +152,14 @@ pub(crate) fn project_kind_name(kind: ProjectKind) -> String {
         .unwrap_or_else(|| format!("{kind:?}"))
 }
 
+/// Executavel de um papel da toolchain, caindo no nome nu quando nao ha
+/// escolha fixada — que e o padrao e mantem o `PATH` no comando.
+fn programa(toolchain: &Toolchain, role: ToolchainRole, padrao: &str) -> std::path::PathBuf {
+    toolchain
+        .program_for(role)
+        .unwrap_or_else(|| std::path::PathBuf::from(padrao))
+}
+
 /// Runs the build pipeline for the workspace project kind.
 ///
 /// `cancel` is polled while the tool runs; flipping it to `true` kills the
@@ -156,14 +168,15 @@ pub fn run_build(
     root: &Path,
     kind: ProjectKind,
     profile: RigorProfile,
+    toolchain: &Toolchain,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     match kind {
-        ProjectKind::RustCargo => run_cargo_build(root, profile, cancel, sink),
+        ProjectKind::RustCargo => run_cargo_build(root, profile, toolchain, cancel, sink),
         // C++ CMake -Werror por perfil fica para uma fatia futura (injetar
         // flag no build do usuario e invasivo — ver docs-privada/diario/18 M4.5).
-        ProjectKind::Cmake => run_cmake_build(root, cancel, sink),
+        ProjectKind::Cmake => run_cmake_build(root, toolchain, cancel, sink),
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
         }),
@@ -176,10 +189,11 @@ pub fn run_build(
 /// the existing parser and flow into the Problems panel unchanged.
 pub fn run_cargo_check(
     root: &Path,
+    toolchain: &Toolchain,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
-    let mut command = Command::new("cargo");
+    let mut command = Command::new(programa(toolchain, ToolchainRole::Cargo, "cargo"));
     command
         .arg("check")
         .arg("--workspace")
@@ -204,12 +218,13 @@ pub fn run_quality(
     root: &Path,
     kind: ProjectKind,
     profile: RigorProfile,
+    toolchain: &Toolchain,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     match kind {
         ProjectKind::RustCargo => {
-            let mut command = Command::new("cargo");
+            let mut command = Command::new(programa(toolchain, ToolchainRole::Cargo, "cargo"));
             command
                 .arg("clippy")
                 .arg("--all-targets")
@@ -233,10 +248,11 @@ pub fn run_quality(
 fn run_cargo_build(
     root: &Path,
     profile: RigorProfile,
+    toolchain: &Toolchain,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
-    let mut command = Command::new("cargo");
+    let mut command = Command::new(programa(toolchain, ToolchainRole::Cargo, "cargo"));
     command
         .arg("build")
         .arg("--message-format=json")
@@ -258,14 +274,16 @@ fn run_cargo_build(
 
 fn run_cmake_build(
     root: &Path,
+    toolchain: &Toolchain,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     let build_dir = root.join(".kinein").join("build");
 
     if !build_dir.join("CMakeCache.txt").is_file() {
-        let mut configure = Command::new("cmake");
+        let mut configure = Command::new(programa(toolchain, ToolchainRole::Cmake, "cmake"));
         configure.arg("-S").arg(root).arg("-B").arg(&build_dir);
+        configure.args(toolchain.cmake_arguments());
 
         let outcome = stream_command(
             configure,
@@ -279,7 +297,7 @@ fn run_cmake_build(
         }
     }
 
-    let mut build = Command::new("cmake");
+    let mut build = Command::new(programa(toolchain, ToolchainRole::Cmake, "cmake"));
     build.arg("--build").arg(&build_dir);
 
     stream_command(
@@ -576,6 +594,7 @@ mod tests {
             &root,
             ProjectKind::Cmake,
             RigorProfile::Strict,
+            &crate::toolchain::Toolchain::resolve(&root, &[]),
             &cancel,
             &mut |_event| {},
         )

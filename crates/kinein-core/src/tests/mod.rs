@@ -21,6 +21,7 @@ mod runners;
 mod settings;
 mod syntax;
 mod terminal;
+mod toolchain;
 mod tools;
 mod workspace;
 

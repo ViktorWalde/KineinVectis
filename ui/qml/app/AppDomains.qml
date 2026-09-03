@@ -31,6 +31,7 @@ Item {
     readonly property alias diagnosticsController: diagnosticsController
     readonly property alias settingsController: settingsController
     readonly property alias configActionController: configActionController
+    readonly property alias toolchainController: toolchainController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
     readonly property alias debugController: debugController
@@ -119,6 +120,14 @@ Item {
         onSetRequested: function(scope, values) {
             root.coreClient.settingsSet(scope, values);
         }
+    }
+
+    // Toolchain (roadmap 30, etapa 5): qual executavel cumpre cada papel neste
+    // projeto. Sem escolha, tudo e automatico e o PATH continua decidindo.
+    ToolchainController {
+        id: toolchainController
+
+        workspaceRoot: root.coreClient.workspaceRoot
     }
 
     // Configuration Actions (roadmap 30, etapa 2): dominio proprio, nasce nas
@@ -331,6 +340,16 @@ Item {
     DebugRequestRouter {
         coreClient: root.coreClient
         debugController: debugController
+    }
+
+    ToolchainEventRouter {
+        coreClient: root.coreClient
+        toolchainController: toolchainController
+    }
+
+    ToolchainRequestRouter {
+        coreClient: root.coreClient
+        toolchainController: toolchainController
     }
 
     ConfigActionEventRouter {

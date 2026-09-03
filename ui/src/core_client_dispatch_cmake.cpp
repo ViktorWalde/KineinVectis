@@ -53,7 +53,10 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
     // catraca e cuja entrada na §5 ja manda dividir por dominio — nao ganha
     // uma linha por causa de um dominio novo. O codigo delas vive no arquivo
     // proprio (`core_client_configaction.cpp`).
-    return dispatchConfigActionResult(method, result);
+    if (dispatchConfigActionResult(method, result)) {
+        return true;
+    }
+    return dispatchToolchainResult(method, result);
 }
 
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)

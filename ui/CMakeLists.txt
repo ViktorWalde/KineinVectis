@@ -54,6 +54,10 @@ set_source_files_properties(qml/configaction/ConfigActionList.qml PROPERTIES QT_
 set_source_files_properties(qml/configaction/ConfigActionPreview.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionPreview.qml)
 set_source_files_properties(qml/ipc/ConfigActionEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionEventRouter.qml)
 set_source_files_properties(qml/ipc/ConfigActionRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionRequestRouter.qml)
+set_source_files_properties(qml/toolchain/ToolchainController.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainController.qml)
+set_source_files_properties(qml/toolchain/ToolchainMenu.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainMenu.qml)
+set_source_files_properties(qml/ipc/ToolchainEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainEventRouter.qml)
+set_source_files_properties(qml/ipc/ToolchainRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainRequestRouter.qml)
 set_source_files_properties(qml/git/GitController.qml PROPERTIES QT_RESOURCE_ALIAS GitController.qml)
 set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiffDialog.qml)
 set_source_files_properties(qml/git/GitDiscardDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiscardDialog.qml)
@@ -189,6 +193,10 @@ qt_add_qml_module(kinein-vectis
         qml/configaction/ConfigActionPreview.qml
         qml/ipc/ConfigActionEventRouter.qml
         qml/ipc/ConfigActionRequestRouter.qml
+        qml/toolchain/ToolchainController.qml
+        qml/toolchain/ToolchainMenu.qml
+        qml/ipc/ToolchainEventRouter.qml
+        qml/ipc/ToolchainRequestRouter.qml
         qml/git/GitController.qml
         qml/git/GitDiffDialog.qml
         qml/git/GitDiscardDialog.qml
@@ -287,6 +295,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_dispatch_cmake.cpp
         src/core_client_dispatch_lsp.cpp
         src/core_client_configaction.cpp
+        src/core_client_toolchain.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp

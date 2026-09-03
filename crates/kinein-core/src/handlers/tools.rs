@@ -36,12 +36,25 @@ impl Core {
     /// `tools.status`: devolve o último resultado conhecido, varrendo só se
     /// ainda não houver nenhum. É o caminho barato que a UI chama com frequência.
     pub(crate) fn tools_status_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let tools = self.tool_registry_snapshot().unwrap_or_else(|| {
+        JsonRpcResponse::success(
+            request_id,
+            json!(ToolsDetectResult {
+                tools: self.detected_tools()
+            }),
+        )
+    }
+
+    /// As ferramentas detectadas, varrendo o PATH so na primeira vez.
+    ///
+    /// E o mesmo caminho barato do `tools.status`, exposto para quem precisa da
+    /// lista sem responder um request — hoje a toolchain, que cruza a escolha
+    /// do usuario com o que existe na maquina.
+    pub(crate) fn detected_tools(&self) -> Vec<ToolInfo> {
+        self.tool_registry_snapshot().unwrap_or_else(|| {
             let tools = self.detector.detect_all();
             set_tool_registry(&self.tool_registry, tools.clone());
             tools
-        });
-        JsonRpcResponse::success(request_id, json!(ToolsDetectResult { tools }))
+        })
     }
 
     pub(crate) fn tool_registry_snapshot(&self) -> Option<Vec<ToolInfo>> {

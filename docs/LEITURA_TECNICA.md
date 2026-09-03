@@ -54,8 +54,8 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**112 métodos IPC** roteados, **18 domínios** no core, **413 testes** Rust
-verdes (medido em 2026-09-02). Protocolo `0.63.0`.
+**114 métodos IPC** roteados, **19 domínios** no core, **429 testes** Rust
+verdes (medido em 2026-09-02). Protocolo `0.64.0`.
 
 Domínios do core, por profundidade real:
 
@@ -87,6 +87,12 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       testes de integracao, nao mudou uma linha no corte.
             draft     handler sem arquivo de teste proprio; coberto de lado
                       por tests/workspace.rs e tests/fs.rs desde 2026-08-29
+
+            toolchain qual executavel cumpre cada papel (compilador C/C++,
+                      gerador, cmake, cargo) neste workspace, persistido em
+                      .kinein/toolchain.json. Sem escolha, o PATH decide — o
+                      comportamento historico. A escolha vira argumento de
+                      cmake e executavel do build (0.64.0)
 
             configaction  as 16 Configuration Actions da spec de MVP §12, com
                       preview e consentimento (0.63.0). Pasta desde que nasceu:
@@ -147,7 +153,7 @@ parte; o resto é binding e bloco de host, que **é** trabalho de composition ro
 Chegar abaixo do limite exige módulos por domínio — decisão registrada como
 proposta em `arquitetura/27`, **não** implementada.
 
-**O core tem 18 handlers e um `lib.rs` de 365 linhas** (limite 500) — ele
+**O core tem 19 handlers e um `lib.rs` de 406 linhas** (limite 500) — ele
 **saiu do débito em 2026-08-30**, quando ~140 linhas do domínio `tools` que
 moravam ali voltaram para `handlers/tools.rs`. Quem cobrou foi a catraca, ao
 reprovar UMA linha de outra fatia: a §4 regra 9 manda olhar a mudança, a

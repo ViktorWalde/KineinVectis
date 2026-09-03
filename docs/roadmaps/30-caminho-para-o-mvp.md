@@ -191,12 +191,55 @@ que já custou três fatias a este repositório, quase custou a quarta.
 2026-08-30: o domínio LSP foi para `core_client_dispatch_lsp.cpp` em vez de
 fazer um arquivo em débito crescer por causa de um evento novo.
 
-### Etapa 5 — Toolchain como entidade (B2 do TR2)
+### Etapa 5 — Toolchain como entidade ✅ FEITA (2026-09-02)
 
-Compilador, gerador, sysroot e flags são implícitos hoje: o que estiver no
-`PATH`. Não existe o "kit" que CLion e Qt Creator expõem, então trocar de
-compilador ou cruzar-compilar é editar arquivo à mão. É o item caro da §5 do
-`roadmaps/29`, e **etapa própria por decisão do autor**.
+Compilador e gerador eram implícitos: o que estivesse no `PATH`. **Medido antes
+de desenhar:** todo processo externo do core nascia de `Command::new("<nome>")`
+— 28 chamadas, todas resolvidas pelo `PATH` do processo. A afirmação de
+2026-08-30 estava certa.
+
+O domínio `toolchain/` responde uma pergunta só — *qual executável cumpre cada
+papel?* — e a resposta chega ao comando:
+
+```text
+cmake.configure   -DCMAKE_C_COMPILER / -DCMAKE_CXX_COMPILER / -G, e o
+                  EXECUTAVEL do proprio cmake
+build.run         o cmake (configure implicito + --build) e o cargo
+quality.run       o cargo do clippy
+cargo.check / cargo.metadata   o cargo
+```
+
+**O padrão continua sendo o `PATH`**, e isso é a decisão central da fatia: sem
+escolha, nada é fixado e o comando sai byte a byte como saía antes. Quem nunca
+abrir o seletor não vê diferença nenhuma — a fatia acrescenta capacidade, não
+muda o que já funcionava na máquina de ninguém.
+
+Emitir `-DCMAKE_CXX_COMPILER` com o que o `PATH` resolveria hoje seria pior que
+não emitir nada: **congelaria no cache do `CMake` uma escolha que o usuário não
+fez**, e cache de `CMake` guarda compilador para sempre.
+
+*Aceite*, quatro mutações no core e três na UI:
+
+```text
+cmake_arguments devolve vazio        -> 2 testes caem
+configure_command ignora o cmake     -> o executavel escolhido nao roda
+                  escolhido
+set aceita candidato NAO detectado    -> 2 testes caem
+o automatico passa a FIXAR o          -> 6 testes caem (e seria exatamente o
+  primeiro detectado                     defeito do cache congelado)
+liberar manda o id em vez de vazio    -> quebra o contrato com o C++
+o resumo ignora a escolha             -> a barra mentiria "automática"
+trocar de workspace nao esquece       -> toolchain de outro projeto na tela
+```
+
+**Só se oferece o que existe.** `Unix Makefiles` só aparece se o `make` existir
+— e foi por isso que `make` entrou no `tools.detect` na mesma fatia. Escolher um
+candidato ausente responde `INVALID_PARAMS`; oferecer um compilador que não está
+lá é oferecer um configure que vai falhar.
+
+**O que esta fatia NÃO entrega, e é o resto do B2 do TR2:** sysroot,
+cross-compilação e kit por preset. A entidade e a rota até o comando existem; o
+que falta é uma fatia própria, e agora ela tem onde encaixar.
 
 ### Etapa 6 — Pagar o `EditorController.qml` (1070/400)
 
@@ -313,7 +356,7 @@ faltava.
 
 ```text
 FECHA O MVP        1, 2, 7, 8, 10  — TODAS FEITAS em 2026-09-02
-SEPARA MVP DE      3 (feita), 4 (feita), 5, 6, 9
+SEPARA MVP DE      3 (feita), 4 (feita), 5 (feita), 6, 9
 DAILY DRIVER
 ```
 

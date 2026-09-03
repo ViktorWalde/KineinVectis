@@ -90,6 +90,16 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         alternative_binary: None,
         install_command: None,
     },
+    // `make` entrou em 2026-09-02 com a toolchain como entidade: o gerador
+    // "Unix Makefiles" so pode ser OFERECIDO se ele existir na maquina.
+    // Oferecer um gerador ausente e oferecer um configure que vai falhar.
+    ToolSpec {
+        id: "make",
+        display_name: "GNU Make",
+        binary: "make",
+        alternative_binary: Some("gmake"),
+        install_command: None,
+    },
     ToolSpec {
         id: "git",
         display_name: "Git",
@@ -400,6 +410,7 @@ mod tests {
                 "rust-analyzer",
                 "cmake",
                 "ninja",
+                "make",
                 "git",
                 "clangd",
                 "clang",

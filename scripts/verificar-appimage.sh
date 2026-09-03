@@ -138,6 +138,17 @@ artefato="$(
 if [[ -n "$artefato" ]]; then
     echo "-> AppImage encontrado em dist/: rodando o smoke completo"
     bash scripts/testar-appimage.sh "$artefato"
+    # O smoke prova o ARTEFATO, nao que ele corresponde ao HEAD. Dizer isso e'
+    # informacao; reprovar seria alarme falso — regerar um AppImage custa
+    # minutos, e gate que grita falso ensina a apagar o dist/. Mesma armadilha
+    # que a `sonda_soak.py` recusa (binario velho prova o passado), com o
+    # remedio proporcional ao custo.
+    if [[ -n "$(find crates ui -newer "$artefato" -name '*.rs' -o -newer "$artefato" -name '*.cpp' \
+        -o -newer "$artefato" -name '*.qml' 2>/dev/null | head -n 1)" ]]; then
+        echo "   aviso: o AppImage em dist/ e mais VELHO que o codigo-fonte."
+        echo "          O smoke acima validou o artefato ENTREGUE, nao o HEAD."
+        echo "          Antes de distribuir: bash scripts/empacotar-appimage.sh"
+    fi
     echo "✓ distribuicao AppImage: invariantes ok + smoke do artefato entregue"
 else
     echo "✓ distribuicao AppImage: invariantes ok (sem artefato em dist/ para o smoke)"

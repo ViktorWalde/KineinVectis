@@ -47,11 +47,14 @@ impl Core {
 
         // M4.5: o perfil de rigor efetivo regula o build do USUARIO.
         let profile = crate::settings::effective_rigor_profile(&root);
+        // Resolvida na thread do loop: o job nao alcanca o `Core`
+        // (arquitetura/04 §3) e a toolchain precisa do detector de ferramentas.
+        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
         let title = format!("{} Build", project_system_name(kind));
         let job_id = jobs.spawn("build", title, JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "build", &event);
-            match build::run_build(&root, kind, profile, &cancel, &mut sink) {
+            match build::run_build(&root, kind, profile, &toolchain, &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.build.finished",
@@ -101,10 +104,11 @@ impl Core {
         };
 
         let profile = crate::settings::effective_rigor_profile(&root);
+        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
         let job_id = jobs.spawn("quality", "Quality", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-            match build::run_quality(&root, kind, profile, &cancel, &mut sink) {
+            match build::run_quality(&root, kind, profile, &toolchain, &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.quality.finished",

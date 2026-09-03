@@ -532,6 +532,34 @@ crates/kinein-core/src/handlers/configaction.rs
 - Fontes: specs 9.1/9.2 (Dual Workflow e Scoped Configuration Actions),
   `docs/roadmaps/30-caminho-para-o-mvp.md` etapa 2.
 
+### 5.4c Toolchain (qual executável cumpre cada papel)
+
+```text
+ui/qml/toolchain/{ToolchainController,ToolchainMenu}.qml
+ui/qml/ipc/{ToolchainEventRouter,ToolchainRequestRouter}.qml
+ui/src/core_client_toolchain.cpp     (pedidos + dispatch do dominio)
+ui/qml/shell/WorkspaceStatusBar.qml  (o chip que abre o seletor)
+    ↕ crates/kinein-protocol/src/toolchain.rs
+crates/kinein-core/src/handlers/toolchain.rs
+    → crates/kinein-core/src/toolchain/{mod,catalog,store}.rs
+    → crates/kinein-core/src/tools.rs (quem DETECTA continua sendo o
+      ToolDetector; a toolchain só cruza a escolha com o detectado)
+```
+
+- **O padrão é o `PATH`.** Sem escolha, nada é fixado e o comando sai como
+  sempre saiu. Não emitir `-DCMAKE_*_COMPILER` "por completude": isso
+  congelaria no cache do `CMake` uma escolha que o usuário não fez.
+- Papel novo = entrada no `ToolchainRole` **e** no `catalog.rs` **e** rota até
+  um comando. Papel sem efeito é seletor que mente.
+- Candidato só é oferecido se `tools.detect` o encontrou. Ferramenta nova que
+  vira candidato precisa entrar em `KNOWN_TOOLS` junto (foi o caso do `make`).
+- A toolchain é resolvida na **thread do loop** e passada pronta ao job: um job
+  não alcança o `Core` (`arquitetura/04` §3).
+- Testes: `crates/kinein-core/src/tests/toolchain.rs` (a escolha chega à linha
+  de comando) e `scripts/qml-harness/tst_toolchain.qml` (o rótulo e o contrato
+  do "automático" = id vazio → campo ausente).
+- Falta o resto do B2 do TR2: sysroot, cross-compilação e kit por preset.
+
 ### 5.5 Run e Debug
 
 ```text
