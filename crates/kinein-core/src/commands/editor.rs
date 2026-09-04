@@ -79,7 +79,10 @@ pub(super) fn lsp_core_command_descriptors() -> Vec<CommandDescriptor> {
             title: "Code Actions".to_owned(),
             category: "LSP".to_owned(),
             description: "Lista quick fixes e refactors do LSP no ponto do cursor".to_owned(),
-            default_shortcut: Some("Alt+Enter".to_owned()),
+            // "Alt+Return", nao "Alt+Enter": no Qt sao teclas DIFERENTES —
+            // `Key_Enter` e' o do teclado numerico. A UI sempre ligou
+            // Alt+Return; a paleta e' que anunciava a outra.
+            default_shortcut: Some("Alt+Return".to_owned()),
             requires_workspace: true,
         },
         CommandDescriptor {

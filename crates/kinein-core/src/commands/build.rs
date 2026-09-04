@@ -146,7 +146,10 @@ pub(super) fn datasource_command_descriptors() -> Vec<CommandDescriptor> {
         title: "Fontes de dados...".to_owned(),
         category: "Projeto".to_owned(),
         description: "Conexoes a banco: o perfil fica salvo, a senha nunca".to_owned(),
-        default_shortcut: Some("Ctrl+Alt+D".to_owned()),
+        // Ctrl+Alt+J: o Ctrl+Alt+D que este comando anunciava ao nascer ja'
+        // era um alias do `debug.start` na UI, entao o atalho da paleta
+        // DEPURAVA em vez de abrir as fontes de dados.
+        default_shortcut: Some("Ctrl+Alt+J".to_owned()),
         requires_workspace: true,
     }]
 }
@@ -167,7 +170,11 @@ pub(super) fn library_command_descriptors() -> Vec<CommandDescriptor> {
         title: "Bibliotecas C/C++...".to_owned(),
         category: "Projeto".to_owned(),
         description: "Catalogo auditado: licenca, versao fixada e o que cada uma faz".to_owned(),
-        default_shortcut: Some("Ctrl+Alt+L".to_owned()),
+        // Ctrl+Alt+K, e NAO Ctrl+Alt+L: ate 2026-09-04 este comando anunciava
+        // Ctrl+Alt+L, que o `format.text` tambem anunciava e que a UI liga em
+        // FORMATAR. Quem apertava o atalho da paleta formatava o arquivo. Foi
+        // relato de uso do autor que achou; o 17o gate impede a volta.
+        default_shortcut: Some("Ctrl+Alt+K".to_owned()),
         requires_workspace: true,
     }]
 }

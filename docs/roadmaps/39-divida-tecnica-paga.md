@@ -397,10 +397,11 @@ chegou a 1.070 linhas (medição de 2026-09-02).
 ## 8. Como verificar tudo isto
 
 ```bash
-bash scripts/verificar.sh                     # o gate inteiro, 16 verificacoes
+bash scripts/verificar.sh                     # o gate inteiro, 17 verificacoes
 bash scripts/verificar-arquitetura.sh         # a catraca
 bash scripts/verificar-qml-propriedades.sh    # binding orfao
 bash scripts/verificar-qml-duplicacao.sh      # derivacao duplicada
+bash scripts/verificar-atalhos.sh             # atalho que a paleta anuncia
 bash scripts/verificar-qml-logica.sh          # os harnesses, sem GUI
 ```
 
@@ -431,6 +432,54 @@ DENTRO da indentação, o primeiro degrau não é "a linha sem indentação" e s
 linha inteira — aquele candidato *começa depois do cursor*, então não o contém.
 Não é defeito; é consequência direta de "o menor candidato que CONTÉM a
 seleção".
+
+## 8.1 O 17º gate, e ele nasceu de um relato de uso (2026-09-04)
+
+O autor disse: *"eu ainda não consigo acessar as bibliotecas na versão de
+desenvolvimento"*. **A causa não era o painel — era o atalho.**
+
+O core declara um `default_shortcut` por comando, a paleta mostra esse texto ao
+lado do comando, e **nada verificava que a UI honrava a promessa**. Medido no
+mesmo dia, a falha não era uma:
+
+```text
+Ctrl+Alt+L   library.list      a UI FORMATAVA o arquivo — `format.text`
+                               declarava o mesmo atalho, e era esse que a UI
+                               ligava
+Ctrl+Alt+D   datasource.list   a UI iniciava o DEBUG (alias de `debug.start`)
+Ctrl+O       workspace.open    nenhum `Shortcut`: apertar nao fazia nada
+Alt+Enter    lsp.codeActions   a UI liga Alt+Return; no Qt sao teclas
+                               DIFERENTES (`Key_Enter` e' o do numerico)
+```
+
+Nenhuma produzia erro. O build passava e os dezesseis gates passavam. **A única
+forma de descobrir era apertar a tecla** — a definição exata de falha silenciosa
+da §4 regra 11, e por isso nasceu
+[`scripts/verificar-atalhos.sh`](../../scripts/verificar-atalhos.sh).
+
+**A costura é uma anotação**, e ela é deliberada: sem um elo explícito, nenhuma
+máquina sabe que `onActivated: root.libraryController.open()` implementa
+`library.list`.
+
+```qml
+Shortcut {
+    // comando: library.list
+    sequence: "Ctrl+Alt+K"
+    onActivated: root.libraryController.open()
+}
+```
+
+**Provado por mutação, três formas** — e a primeira **reproduz o bug original**:
+
+```text
+library.list volta a Ctrl+Alt+L     reprova (a sequencia do Shortcut diverge)
+a anotacao some                     reprova (comando sem Shortcut anotado)
+a sequencia do Shortcut muda        reprova (promessa != realidade)
+```
+
+**O que este gate diz sobre o resto:** o registro de saídas do dogfooding
+continua sendo o item mais barato e mais valioso da lista. Uma frase do autor
+achou quatro defeitos que dezesseis gates não achavam.
 
 ## 9. O que continua aberto, e não é dívida
 

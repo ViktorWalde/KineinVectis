@@ -79,6 +79,9 @@ bash scripts/verificar-qml-propriedades.sh
 passo "scripts/verificar-qml-duplicacao.sh (mesma derivacao em dois arquivos)"
 bash scripts/verificar-qml-duplicacao.sh
 
+passo "scripts/verificar-atalhos.sh (a paleta promete o que a IDE faz)"
+bash scripts/verificar-atalhos.sh
+
 passo "scripts/verificar-docs.sh (numero sem data que mente)"
 bash scripts/verificar-docs.sh
 

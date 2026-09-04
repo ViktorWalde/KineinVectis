@@ -8,6 +8,7 @@ Item {
     id: root
 
     property var editorController: null
+    property var shellController: null
     property var jobsController: null
     property var runtimeController: null
     property var debugController: null
@@ -15,10 +16,22 @@ Item {
     property var searchEverywhereController: null
     property var settingsController: null
     property var configActionController: null
+    property var libraryController: null
+    property var dataSourceController: null
 
     visible: false
 
     Shortcut {
+        // comando: workspace.open
+        // Ate' 2026-09-04 a paleta anunciava Ctrl+O e NENHUM Shortcut o
+        // ligava: apertar nao fazia nada. Abrir pasta so' existia no menu e
+        // num botao da tela vazia.
+        sequences: [StandardKey.Open]
+        onActivated: root.shellController.requestOpenFolder()
+    }
+
+    Shortcut {
+        // comando: fs.write
         sequences: [StandardKey.Save]
         onActivated: root.editorController.saveCurrentFile()
     }
@@ -29,16 +42,19 @@ Item {
     }
 
     Shortcut {
+        // comando: build.run
         sequences: ["Ctrl+F9", "Ctrl+Alt+B"]
         onActivated: root.jobsController.startBuild()
     }
 
     Shortcut {
+        // comando: test.run
         sequences: ["Ctrl+Shift+F9", "Ctrl+Alt+T"]
         onActivated: root.jobsController.startTests()
     }
 
     Shortcut {
+        // comando: debug.start
         sequences: ["Shift+F9", "Ctrl+Alt+D"]
         onActivated: root.debugController.startDebug()
     }
@@ -68,16 +84,19 @@ Item {
     }
 
     Shortcut {
+        // comando: quality.run
         sequence: "Ctrl+Shift+L"
         onActivated: root.jobsController.startQuality()
     }
 
     Shortcut {
+        // comando: format.text
         sequence: "Ctrl+Alt+L"
         onActivated: root.editorController.formatCurrentFile()
     }
 
     Shortcut {
+        // comando: lsp.codeActions
         sequence: "Alt+Return"
         onActivated: root.editorController.requestCodeActions()
     }
@@ -115,11 +134,13 @@ Item {
     // D1b (docs/roadmaps/24): Find/Replace NO ARQUIVO. Nao confundir com o
     // Ctrl+Shift+F (busca no projeto, ripgrep no core).
     Shortcut {
+        // comando: editor.find
         sequence: "Ctrl+F"
         onActivated: root.editorController.openFind()
     }
 
     Shortcut {
+        // comando: editor.replace
         sequence: "Ctrl+H"
         onActivated: root.editorController.openFindReplace()
     }
@@ -130,6 +151,7 @@ Item {
     }
 
     Shortcut {
+        // comando: fs.replace
         sequence: "Ctrl+Shift+H"
         onActivated: root.searchController.openReplacePanel()
     }
@@ -158,11 +180,13 @@ Item {
     }
 
     Shortcut {
+        // comando: lsp.definition
         sequence: "Ctrl+B"
         onActivated: root.editorController.requestDefinition()
     }
 
     Shortcut {
+        // comando: lsp.switchSourceHeader
         sequence: "Alt+O"
         onActivated: root.editorController.requestSwitchSourceHeader()
     }
@@ -178,61 +202,91 @@ Item {
     }
 
     Shortcut {
+        // comando: lsp.hover
         sequence: "Ctrl+Q"
         onActivated: root.editorController.requestHover()
     }
 
     Shortcut {
+        // comando: lsp.completion
         sequence: "Ctrl+Space"
         onActivated: root.editorController.requestCompletion()
     }
 
     Shortcut {
+        // comando: lsp.rename
         sequences: ["Shift+F6", "Ctrl+Shift+R"]
         onActivated: root.editorController.openRenameDialog()
     }
 
     Shortcut {
+        // comando: lsp.references
         sequences: ["Alt+F7", "Ctrl+Shift+U"]
         onActivated: root.editorController.requestUsages()
     }
 
     Shortcut {
+        // comando: fs.search
         sequence: "Ctrl+Shift+F"
         onActivated: root.searchController.openSearchPanel()
     }
 
     Shortcut {
+        // comando: settings.get
         sequence: "Ctrl+Alt+S"
         onActivated: root.settingsController.openDialog()
     }
 
     Shortcut {
+        // comando: library.list
+        // Ctrl+Alt+K, e NAO Ctrl+Alt+L: ate' 2026-09-04 este painel anunciava
+        // Ctrl+Alt+L na paleta e nao tinha Shortcut nenhum — quem apertava
+        // FORMATAVA o arquivo, porque o `format.text` anunciava o mesmo
+        // atalho e era esse que a UI ligava. Achado por relato de uso.
+        sequence: "Ctrl+Alt+K"
+        onActivated: root.libraryController.open()
+    }
+
+    Shortcut {
+        // comando: datasource.list
+        // Ctrl+Alt+J pelo mesmo motivo: o Ctrl+Alt+D que este comando
+        // anunciava ao nascer ja' era alias do `debug.start` na UI.
+        sequence: "Ctrl+Alt+J"
+        onActivated: root.dataSourceController.open()
+    }
+
+    Shortcut {
+        // comando: configAction.list
         sequence: "Ctrl+Alt+P"
         onActivated: root.configActionController.openDialog()
     }
 
     Shortcut {
+        // comando: fs.findFiles
         sequence: "Ctrl+Shift+N"
         onActivated: root.searchEverywhereController.openSearchEverywhere()
     }
 
     Shortcut {
+        // comando: command.list
         sequence: "Ctrl+Shift+A"
         onActivated: root.searchEverywhereController.openSearchEverywhere()
     }
 
     Shortcut {
+        // comando: run.start
         sequences: ["Shift+F10", "Ctrl+Alt+R"]
         onActivated: root.runtimeController.startRun("")
     }
 
     Shortcut {
+        // comando: run.stop
         sequences: ["Ctrl+F2", "Ctrl+Alt+X"]
         onActivated: root.runtimeController.stopRun()
     }
 
     Shortcut {
+        // comando: terminal.open
         sequences: ["Alt+F12", "Ctrl+`"]
         onActivated: root.runtimeController.openTerminalPanel()
     }

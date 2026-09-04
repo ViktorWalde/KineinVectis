@@ -125,6 +125,8 @@ Window {
 
     GlobalShortcuts {
         configActionController: domains.configActionController
+        libraryController: domains.libraryController
+        dataSourceController: domains.dataSourceController
         debugController: domains.debugController
         editorController: domains.editorController
         jobsController: domains.jobsController
