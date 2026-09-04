@@ -6,12 +6,15 @@
 
 use kinein_protocol::{
     DataSourceListParams, DataSourceListResult, DataSourceRemoveParams, DataSourceSaveParams,
-    DataSourceWriteResult, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    DataSourceTestAccepted, DataSourceTestParams, DataSourceWriteResult, JobRisk, JsonRpcError,
+    JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
 use crate::Core;
-use crate::rpc::{no_workspace_response, parse_params};
+use crate::datasource::secret::{Secret, SecretPlan};
+use crate::jobs::JobOutcome;
+use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
 impl Core {
     /// Roteia os metodos `datasource.*`.
@@ -25,6 +28,7 @@ impl Core {
             "datasource.list" => Some(self.datasource_list_response(request_id, params)),
             "datasource.save" => Some(self.datasource_save_response(request_id, params)),
             "datasource.remove" => Some(self.datasource_remove_response(request_id, params)),
+            "datasource.test" => Some(self.datasource_test_response(request_id, params)),
             _ => None,
         }
     }
@@ -108,5 +112,110 @@ impl Core {
                 JsonRpcError::new(JsonRpcErrorCode::InternalError, mensagem, None),
             ),
         }
+    }
+
+    /// `datasource.test` — conecta uma vez e conta o que aconteceu.
+    ///
+    /// E' a primeira acao util de um cliente de banco, e a unica que prova o
+    /// caminho inteiro: perfil -> politica de segredo -> driver -> servidor.
+    ///
+    /// Roda como JOB porque conectar espera a REDE. Cinco segundos de timeout
+    /// no laco de despacho travariam a IDE inteira — teclado incluso.
+    ///
+    /// Quando a politica do perfil e' "perguntar" e nenhuma senha veio, a
+    /// resposta e' `SECRET_REQUIRED`, um codigo proprio: a UI sabe que deve
+    /// abrir o dialogo e tentar de novo, sem ler texto de mensagem.
+    fn datasource_test_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let Some(root) = self.workspace_root() else {
+            return no_workspace_response(request_id, "datasource.test");
+        };
+        let pedido = match parse_params::<DataSourceTestParams>(
+            request_id.as_ref(),
+            params,
+            "datasource.test exige { name } e aceita { password }",
+        ) {
+            Ok(pedido) => pedido,
+            Err(response) => return *response,
+        };
+        let Some(profile) = crate::datasource::list(&root)
+            .into_iter()
+            .find(|candidato| candidato.name == pedido.name)
+        else {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    format!("nao ha perfil chamado `{}`", pedido.name),
+                    None,
+                ),
+            );
+        };
+
+        let secret = match crate::datasource::secret::plan_for(&profile) {
+            SecretPlan::DelegateToDriver => pedido.password.map(Secret::new),
+            SecretPlan::ReadEnvironment(variavel) => {
+                match crate::datasource::secret::read_environment(&variavel) {
+                    Some(secret) => Some(secret),
+                    None => {
+                        return JsonRpcResponse::failure(
+                            request_id,
+                            JsonRpcError::new(
+                                JsonRpcErrorCode::SecretRequired,
+                                format!(
+                                    "a variavel `{variavel}` nao esta definida (ou esta vazia)"
+                                ),
+                                None,
+                            ),
+                        );
+                    }
+                }
+            }
+            SecretPlan::AskUser => match pedido.password {
+                Some(valor) => Some(Secret::new(valor)),
+                None => {
+                    return JsonRpcResponse::failure(
+                        request_id,
+                        JsonRpcError::new(
+                            JsonRpcErrorCode::SecretRequired,
+                            format!("o perfil `{}` pede a senha a cada sessao", profile.name),
+                            None,
+                        ),
+                    );
+                }
+            },
+        };
+
+        let Some(jobs) = self.jobs.as_ref() else {
+            return jobs_unavailable_response(request_id, "datasource.test");
+        };
+        let titulo = format!("Testar {}", profile.name);
+        let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
+            let resultado = crate::datasource::connection::probe_server(&profile, secret.as_ref());
+            let (ok, versao, mensagem) = match resultado {
+                Ok(versao) => (true, Some(versao), None),
+                Err(mensagem) => (false, None, Some(mensagem)),
+            };
+            ctx.emit_event(
+                "event.datasource.tested",
+                json!({
+                    "jobId": ctx.id(),
+                    "name": profile.name,
+                    "ok": ok,
+                    "serverVersion": versao,
+                    "message": mensagem,
+                }),
+            );
+            if ok {
+                JobOutcome::Success
+            } else {
+                JobOutcome::Failed
+            }
+        });
+
+        JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
     }
 }

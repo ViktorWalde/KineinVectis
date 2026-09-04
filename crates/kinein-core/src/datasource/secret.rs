@@ -56,7 +56,7 @@ impl fmt::Display for Secret {
 
 /// O que o core precisa fazer para obter a senha de um perfil.
 ///
-/// Repare que `Prompt` NAO carrega valor: quem resolve o prompt e' a UI, e o
+/// Repare que `AskUser` NAO carrega valor: quem resolve o prompt e' a UI, e o
 /// valor volta pela chamada de conexao, vivendo so' aquela sessao.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SecretPlan {
@@ -64,11 +64,17 @@ pub enum SecretPlan {
     AskUser,
     /// Ler desta variavel de ambiente.
     ReadEnvironment(String),
-    /// Nao fazer nada: o proprio libpq resolve pelo `~/.pgpass`/`PGPASSFILE`.
+    /// Nao mandar senha nenhuma e deixar o servidor decidir.
     ///
-    /// O modo de falha aqui e' do `PostgreSQL` e e' BOM: permissao mais frouxa
-    /// que 0600 faz o arquivo ser ignorado inteiro, em vez de lido com aviso
-    /// (documentacao do `PostgreSQL` 18, `libpq-pgpass`). Falha fechada.
+    /// Cobre TRES casos de uma vez, e o primeiro e' o mais comum num ambiente
+    /// de desenvolvimento: socket unix com autenticacao `peer` (o usuario do
+    /// SO ja' e' a identidade), `trust` numa maquina de dev, e o
+    /// `~/.pgpass`/`PGPASSFILE`, que o proprio libpq le'.
+    ///
+    /// O modo de falha do `.pgpass` e' do `PostgreSQL` e e' BOM: permissao
+    /// mais frouxa que 0600 faz o arquivo ser ignorado inteiro, em vez de lido
+    /// com aviso (documentacao do `PostgreSQL` 18, `libpq-pgpass`). Falha
+    /// fechada.
     DelegateToDriver,
 }
 
@@ -81,7 +87,7 @@ pub enum SecretPlan {
 pub fn plan_for(profile: &DataSourceProfile) -> SecretPlan {
     match profile.secret_source {
         SecretSource::Prompt => SecretPlan::AskUser,
-        SecretSource::PasswordFile => SecretPlan::DelegateToDriver,
+        SecretSource::Automatic => SecretPlan::DelegateToDriver,
         SecretSource::Environment => match profile.secret_variable.as_deref() {
             Some(nome) if !nome.trim().is_empty() => {
                 SecretPlan::ReadEnvironment(nome.trim().to_owned())
@@ -139,20 +145,25 @@ mod tests {
         assert_eq!(secret.expose(), "hunter2");
     }
 
+    /// O padrao NAO pode ser pedir senha.
+    ///
+    /// Um `PostgreSQL` local por socket unix com `peer` nao pergunta nada; se
+    /// a IDE perguntasse, o obstaculo teria sido inventado por ela. Ver
+    /// `docs/seguranca/40` §7.
     #[test]
-    fn prompt_e_o_padrao_e_pede_ao_usuario() {
+    fn o_padrao_e_nao_mandar_senha_nenhuma() {
+        assert_eq!(SecretSource::default(), SecretSource::Automatic);
         assert_eq!(
-            plan_for(&perfil(SecretSource::Prompt, None)),
-            SecretPlan::AskUser
+            plan_for(&perfil(SecretSource::Automatic, None)),
+            SecretPlan::DelegateToDriver
         );
-        assert_eq!(SecretSource::default(), SecretSource::Prompt);
     }
 
     #[test]
-    fn arquivo_de_senha_delega_ao_driver() {
+    fn prompt_pede_ao_usuario_quando_escolhido() {
         assert_eq!(
-            plan_for(&perfil(SecretSource::PasswordFile, None)),
-            SecretPlan::DelegateToDriver
+            plan_for(&perfil(SecretSource::Prompt, None)),
+            SecretPlan::AskUser
         );
     }
 

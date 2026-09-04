@@ -215,3 +215,48 @@ funciona e já é testado, não como o caminho único com um remendo embaixo.
 3. nada neste repositorio finge cifrar o que nao cifrou
 4. `cargo deny check licenses` continua verde SEM acrescentar licenca a lista
 ```
+
+## 7. "Para que digitar senha num projeto 100% open source?"
+
+Pergunta do autor em **2026-09-04**, e ela corrigiu um erro de foco desta
+frente. Fica registrada porque a confusão é fácil de repetir.
+
+**São duas coisas diferentes com a mesma palavra.** "Open source" é sobre o
+*código* do Kinein Vectis e suas licenças. A senha não é da IDE — é do
+**servidor PostgreSQL do autor**, que tem controle de acesso próprio. Se o
+banco é de produção, ou está numa máquina remota, quem exige credencial é ele,
+e a IDE não tem como (nem deve) contornar isso.
+
+**Mas no caso mais comum de uma IDE, não deveria haver senha nenhuma:**
+
+```text
+socket unix + peer      o usuario do SO JA' e' a identidade — zero senha
+trust (dev local)       o servidor nao pergunta nada
+scram-sha-256           so' aqui a senha existe de verdade
+```
+
+O `host` do perfil que começa com `/` é, para o libpq, um **diretório de
+socket** (`/var/run/postgresql`) — que é exatamente como se alcança um servidor
+local com `peer`.
+
+### 7.1 O que mudou no código por causa desta pergunta
+
+A primeira versão do domínio, escrita horas antes, tinha `Prompt` como padrão.
+Isso **inventava um obstáculo que o servidor não impunha**: um Postgres local
+por socket não pergunta nada, e a IDE perguntaria mesmo assim.
+
+O padrão passou a ser `Automatic` — **não mandar senha e deixar o servidor
+decidir** —, e essa única opção cobre os três casos de uma vez:
+
+```text
+Automatic     socket/peer, trust, e o ~/.pgpass que o libpq le' sozinho
+Environment   variavel nomeada pelo perfil
+Prompt        perguntar, e guardar so' em memoria pela sessao
+```
+
+Se o servidor **de fato** exigir senha, a UI ainda pode pedir: cair para o
+prompt custa um round trip e é invisível quando não é necessário. O contrário —
+perguntar sempre "por precaução" — é atrito garantido em troca de nada.
+
+**A lição, e ela vale além desta frente:** o padrão de uma IDE tem de ser o
+caso comum do autor, não o caso mais defensivo do desenvolvedor da IDE.

@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QStandardPaths>
 
@@ -125,6 +126,65 @@ void CoreClient::handleErrorOccurred(QProcess::ProcessError error)
     }
 }
 
+namespace {
+
+/// Nomes de campo cujo VALOR nunca pode aparecer no log.
+///
+/// POR QUE EXISTE (2026-09-04). O log do cliente registra os 200 primeiros
+/// bytes de cada pedido enviado ao core, e `appendErrorLog` grava em ARQUIVO.
+/// Quando o dominio `datasource` passou a poder mandar a senha da sessao em
+/// `params`, esse log virou o caminho mais curto para a senha sair do processo
+/// — exatamente a falha que o tipo `Secret` do core fecha do lado Rust
+/// (`docs/seguranca/40`). Redigir por NOME de campo fecha o caminho aqui.
+///
+/// A lista e' de nomes, nao de metodos, de proposito: um metodo novo que mande
+/// `password` ja' nasce protegido, sem ninguem lembrar de acrescenta-lo.
+bool isSecretField(const QString& key)
+{
+    static const QStringList kSecretKeys{
+        QStringLiteral("password"), QStringLiteral("passwd"),     QStringLiteral("secret"),
+        QStringLiteral("token"),    QStringLiteral("credential"),
+    };
+    return kSecretKeys.contains(key, Qt::CaseInsensitive);
+}
+
+/// Copia o objeto trocando por `***` o valor de todo campo sensivel, em
+/// qualquer profundidade.
+QJsonValue redactValue(const QJsonValue& value);
+
+QJsonObject redactObject(const QJsonObject& object)
+{
+    QJsonObject limpo;
+    for (auto it = object.constBegin(); it != object.constEnd(); ++it) {
+        limpo.insert(it.key(), isSecretField(it.key()) ? QJsonValue(QStringLiteral("***"))
+                                                       : redactValue(it.value()));
+    }
+    return limpo;
+}
+
+QJsonValue redactValue(const QJsonValue& value)
+{
+    if (value.isObject()) {
+        return redactObject(value.toObject());
+    }
+    if (value.isArray()) {
+        QJsonArray limpo;
+        const QJsonArray original = value.toArray();
+        for (const auto item : original) {
+            limpo.append(redactValue(item));
+        }
+        return limpo;
+    }
+    return value;
+}
+
+QJsonObject redactSecrets(const QJsonObject& request)
+{
+    return redactObject(request);
+}
+
+} // namespace
+
 void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
 {
     if (m_process.state() != QProcess::Running) {
@@ -148,7 +208,9 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
     const QByteArray payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
     if (method != QStringLiteral("lsp.didChange") && method != QStringLiteral("syntaxTree.update"))
     {
-        appendLog(QStringLiteral("-> %1").arg(QString::fromUtf8(payload.left(200).trimmed())));
+        const QByteArray registrado =
+            QJsonDocument(redactSecrets(request)).toJson(QJsonDocument::Compact);
+        appendLog(QStringLiteral("-> %1").arg(QString::fromUtf8(registrado.left(200).trimmed())));
     }
     m_process.write(payload);
 }

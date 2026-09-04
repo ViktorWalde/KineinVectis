@@ -16,7 +16,7 @@ use kinein_protocol::{
 use serde_json::{Value, json};
 
 use crate::jobs::{JobContext, JobOutcome};
-use crate::rpc::{no_workspace_response, parse_params};
+use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 use crate::{Core, build, test};
 
 impl Core {
@@ -311,17 +311,6 @@ fn unsupported_kind_response(
                 build::project_kind_name(kind)
             ),
             None,
-        ),
-    )
-}
-
-fn jobs_unavailable_response(request_id: Option<Value>, method: &str) -> JsonRpcResponse {
-    JsonRpcResponse::failure(
-        request_id,
-        JsonRpcError::new(
-            JsonRpcErrorCode::InternalError,
-            "jobs nao estao habilitados neste loop do core",
-            Some(json!({ "method": method })),
         ),
     )
 }

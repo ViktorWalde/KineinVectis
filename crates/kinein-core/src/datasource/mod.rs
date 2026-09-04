@@ -26,6 +26,7 @@
 //!
 //! - [`store`]: `.kinein/datasources.json`, com `schemaVersion`.
 //! - [`secret`]: o tipo que nao se imprime, e a politica de onde buscar.
+//! - [`connection`]: o unico lugar que fala com um servidor de banco.
 //!
 //! # Nao confundir com `crate::db`
 //!
@@ -33,6 +34,7 @@
 //! de seguranca do `docs/seguranca/23`). Este modulo e' o banco DO AUTOR. Os
 //! dois dizem "banco" e nao tem nada a ver um com o outro.
 
+pub mod connection;
 pub mod secret;
 mod store;
 
@@ -166,7 +168,7 @@ mod tests {
             port: DEFAULT_PORT,
             database: "app".to_owned(),
             user: "postgres".to_owned(),
-            secret_source: SecretSource::Prompt,
+            secret_source: SecretSource::Automatic,
             secret_variable: None,
         }
     }

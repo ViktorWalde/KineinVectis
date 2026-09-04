@@ -611,19 +611,21 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            precisa de sonda ou de alvo QEMU
                                            suportado.
 
-26  Banco: dominio relacional + o cofre    26.1 FEITA em 2026-09-04
-    de credencial                          (protocolo 0.72.0). O cofre foi
+26  Banco: dominio relacional + o cofre    26.1 e 26.2 FEITAS em 2026-09-04
+    de credencial                          (protocolo 0.73.0). O cofre foi
                                            decidido ANTES da primeira linha
                                            de conexao, como a §7.3 exigia:
                                            `../seguranca/40`, saida (a) — a
                                            IDE guarda o PERFIL e nunca a
                                            senha. Nasceu o dominio
-                                           `datasource` (catalogo + politica
-                                           de segredo + `Secret` que nao se
-                                           imprime), 20 testes. O driver
-                                           esta' auditado em
-                                           `../integracoes/37` §5.1 e entra
-                                           na 26.2.
+                                           `datasource`: catalogo, politica
+                                           de segredo, `Secret` que nao se
+                                           imprime, e `datasource.test`
+                                           contra o driver REAL (`postgres`
+                                           0.19.14, auditado em
+                                           `../integracoes/37` §5.1). 28
+                                           testes. Falta a UI, e falta provar
+                                           uma conexao BEM-SUCEDIDA — ver §9.1.
 
 27  Temporal (TimescaleDB) e Grafana        §7.2. Grafana por HTTP API,
     por API                                nunca embutido.
@@ -641,3 +643,33 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
 usar a IDE e reportar; perda de dados, crash e bloqueio diário vêm antes de
 qualquer item planejado (`GUIAIA.md` §2), e o registro é
 `docs-privada/diario/19-registro-de-saidas.md`.
+
+### 9.1 O que a etapa 26 ainda NÃO prova (medido em 2026-09-04)
+
+**Nenhuma conexão bem-sucedida foi observada**, e isso está aqui para ninguém
+ler "26.2 feita" como "conecta". Esta máquina tem o **cliente** `psql` 18.4 e
+**não tem servidor** (`postgresql-server` não instalado), então o caminho feliz
+não pôde ser exercitado.
+
+O que **foi** exercitado, contra o driver real, pelo binário do core:
+
+```text
+porta fechada       "error connecting to server: Connection refused (os error 111)"
+socket inexistente  "error connecting to server: No such file or directory (os error 2)"
+```
+
+E essa exercitação **achou um defeito**: até ela, as duas frases eram
+idênticas — `"error connecting to server"`, sem causa. O `Display` do
+`postgres::Error` não inclui a causa; ela mora em `source()`. Nasceu daí
+`datasource::connection::describe`, que achata a cadeia. **Nenhum teste com erro
+inventado teria mostrado isso.**
+
+O que falta, em ordem:
+
+```text
+1. subir um PostgreSQL de verdade e provar o caminho feliz, incluindo
+   socket unix com `peer` — o caso SEM senha, que e' o mais comum
+2. a UI: painel de fontes de dados, o dialogo de senha da sessao, e o
+   consumo do codigo SECRET_REQUIRED
+3. introspeccao (esquemas, tabelas, colunas) e execucao de consulta
+```

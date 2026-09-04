@@ -172,3 +172,96 @@ fn senha_enviada_pela_ui_e_recusada_e_nunca_chega_ao_disco() {
         );
     }
 }
+
+/// O caminho "preciso da senha" tem codigo PROPRIO, e isso importa.
+///
+/// A UI precisa distinguir "abra o dialogo e tente de novo" de "este perfil
+/// esta' quebrado" sem ler texto de mensagem — casar por string e' o tipo de
+/// acoplamento que sobrevive calado ate' alguem melhorar a frase.
+///
+/// Estes testes sao HERMETICOS: nenhum deles chega a abrir socket. Provar a
+/// conexao de verdade exige um servidor, e isso e' exercitacao contra
+/// ferramenta real, nao teste de unidade.
+#[test]
+fn perfil_que_pede_senha_responde_com_codigo_proprio() {
+    let dir = workspace("segredo-pedido");
+    let mut core = core_with_empty_search_path("datasource-segredo-pedido");
+    let _ = core.handle_request(&JsonRpcRequest::new(
+        500_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+
+    let mut pergunta = perfil();
+    pergunta["secretSource"] = json!("prompt");
+    pergunta["secretVariable"] = json!(null);
+    let _ = core.handle_request(&JsonRpcRequest::new(
+        501_i64,
+        "datasource.save",
+        Some(json!({ "profile": pergunta })),
+    ));
+
+    let sem_senha = core.handle_request(&JsonRpcRequest::new(
+        502_i64,
+        "datasource.test",
+        Some(json!({ "name": "local" })),
+    ));
+    assert_eq!(
+        sem_senha.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::SecretRequired
+    );
+}
+
+#[test]
+fn variavel_de_ambiente_ausente_tambem_pede_a_senha() {
+    let dir = workspace("segredo-ambiente");
+    let mut core = core_with_empty_search_path("datasource-segredo-ambiente");
+    let _ = core.handle_request(&JsonRpcRequest::new(
+        600_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+
+    let mut do_ambiente = perfil();
+    do_ambiente["secretVariable"] = json!("KINEIN_VECTIS_VARIAVEL_QUE_NAO_EXISTE");
+    let _ = core.handle_request(&JsonRpcRequest::new(
+        601_i64,
+        "datasource.save",
+        Some(json!({ "profile": do_ambiente })),
+    ));
+
+    let resposta = core.handle_request(&JsonRpcRequest::new(
+        602_i64,
+        "datasource.test",
+        Some(json!({ "name": "local" })),
+    ));
+    let erro = resposta.response().error.as_ref().unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::SecretRequired);
+    assert!(
+        erro.message
+            .contains("KINEIN_VECTIS_VARIAVEL_QUE_NAO_EXISTE"),
+        "a mensagem tinha que nomear a variavel, e disse: {}",
+        erro.message
+    );
+}
+
+#[test]
+fn testar_perfil_inexistente_e_erro_de_parametro() {
+    let dir = workspace("inexistente");
+    let mut core = core_with_empty_search_path("datasource-inexistente");
+    let _ = core.handle_request(&JsonRpcRequest::new(
+        700_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+
+    let resposta = core.handle_request(&JsonRpcRequest::new(
+        701_i64,
+        "datasource.test",
+        Some(json!({ "name": "nunca-existiu" })),
+    ));
+    assert_eq!(
+        resposta.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidParams
+    );
+}

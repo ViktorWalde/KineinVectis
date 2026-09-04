@@ -138,6 +138,13 @@ pub enum JsonRpcErrorCode {
     ToolNotFound,
     /// The file changed after the client last read it.
     FileChanged,
+    /// The operation needs a password the core does not have.
+    ///
+    /// Distinct from `InvalidParams` on purpose: the caller is not wrong, it
+    /// simply has to ask the author and try again. Collapsing the two would
+    /// force the UI to match on message text to tell "prompt for a password"
+    /// apart from "this profile is broken".
+    SecretRequired,
 }
 
 #[cfg(test)]

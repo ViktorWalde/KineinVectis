@@ -16,19 +16,34 @@ use serde::{Deserialize, Serialize};
 ///
 /// This is a POLICY, not a secret: it is safe to persist because it says
 /// *where to look*, never *what was found*.
+///
+/// # Why there is a "no password at all" default
+///
+/// The IDE is not the one asking for a password — the user's own server is. A
+/// local development `PostgreSQL` reached over a Unix socket with `peer`
+/// authentication has the OS user *as* the identity, and `trust` asks for
+/// nothing either. Making the author type a password in that case would be an
+/// obstacle the IDE invented on its own.
+///
+/// So the default is [`SecretSource::Automatic`]: send no password and let the
+/// server decide. If it does demand one, the UI can still ask — falling back
+/// costs one round trip and is invisible when it is not needed.
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SecretSource {
-    /// Ask the author when the connection is opened; keep it in memory for the
-    /// session only. The default, because it requires no setup and leaves
-    /// nothing behind.
+    /// Send no password: let the server and libpq settle it.
+    ///
+    /// This one option covers three real cases at once — Unix socket with
+    /// `peer` auth, `trust` on a dev box, and `~/.pgpass` / `PGPASSFILE`
+    /// (which libpq reads on its own, requiring mode 0600 and ignoring the
+    /// file entirely when it is looser).
     #[default]
-    Prompt,
+    Automatic,
     /// Read from an environment variable, named by the profile.
     Environment,
-    /// Let `PostgreSQL` resolve it from `~/.pgpass` / `PGPASSFILE`. libpq
-    /// requires mode 0600 and ignores the file entirely when it is looser.
-    PasswordFile,
+    /// Ask the author when the connection is opened; keep it in memory for the
+    /// session only. Nothing is written to disk.
+    Prompt,
 }
 
 /// A saved connection to a database. Never carries a password.
@@ -47,7 +62,11 @@ pub enum SecretSource {
 pub struct DataSourceProfile {
     /// Stable identity, unique per workspace. Also what the UI shows.
     pub name: String,
-    /// Host name or address as the user typed it.
+    /// Host name, address, or — starting with `/` — a Unix socket DIRECTORY.
+    ///
+    /// libpq treats a host beginning with a slash as a socket directory (for
+    /// example `/var/run/postgresql`), which is the usual way to reach a local
+    /// server with `peer` authentication and no password at all.
     pub host: String,
     /// TCP port.
     pub port: u16,
@@ -101,4 +120,29 @@ pub struct DataSourceRemoveParams {
 pub struct DataSourceWriteResult {
     /// The catalogue after the write, ordered by name.
     pub profiles: Vec<DataSourceProfile>,
+}
+
+/// Parameters for `datasource.test` — connect once and report back.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataSourceTestParams {
+    /// Which saved profile to try.
+    pub name: String,
+    /// The session password, when the profile's policy is `Prompt`.
+    ///
+    /// This is the ONE place a password crosses the wire, and it crosses a
+    /// pipe between two processes of the same user — never the disk. The Qt
+    /// client redacts fields named like this one before writing its request
+    /// log, because that log is also written to a file
+    /// (`ui/src/core_client_process.cpp`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
+}
+
+/// Result payload for `datasource.test` — the job that will report the answer.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceTestAccepted {
+    /// Job to follow; the answer arrives as `event.datasource.tested`.
+    pub job_id: String,
 }

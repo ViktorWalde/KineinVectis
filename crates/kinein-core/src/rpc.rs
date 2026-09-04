@@ -163,6 +163,26 @@ pub(crate) fn lsp_error_response(
     JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
 }
 
+/// O loop deste core nao tem gerenciador de jobs.
+///
+/// Vive aqui, e nao no `handlers/build.rs` onde nasceu, porque desde
+/// 2026-09-04 o `datasource.test` tambem precisa dela — e duas copias de uma
+/// mensagem de erro divergem exatamente como as duas copias de `isWordChar`
+/// divergiram (docs/roadmaps/39 §5).
+pub(crate) fn jobs_unavailable_response(
+    request_id: Option<Value>,
+    method: &str,
+) -> JsonRpcResponse {
+    JsonRpcResponse::failure(
+        request_id,
+        JsonRpcError::new(
+            JsonRpcErrorCode::InternalError,
+            "jobs nao estao habilitados neste loop do core",
+            Some(json!({ "method": method })),
+        ),
+    )
+}
+
 pub(crate) fn parse_params<T>(
     request_id: Option<&Value>,
     params: Option<&Value>,

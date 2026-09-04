@@ -43,6 +43,13 @@ tree-sitter = "=0.26.11"
 tree-sitter-c = "=0.24.2"
 tree-sitter-cpp = "=0.23.4"
 tree-sitter-rust = "=0.24.2"
+# Cliente PostgreSQL SINCRONO (dominio `datasource`, docs/integracoes/37 §5.1).
+# Auditado em 2026-09-04: MIT OR Apache-2.0, +52 crates, `cargo deny` verde sem
+# acrescentar licenca a lista — o `sqlx` reprovaria, por trazer `foldhash`
+# (Zlib). Mesmos mantenedores do `tokio-postgres`; embute um tokio proprio como
+# detalhe de implementacao, e o codigo deste repositorio segue sincrono.
+# Sem TLS de proposito: conexao cifrada e' decisao de outra fatia.
+postgres = "0.19"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
