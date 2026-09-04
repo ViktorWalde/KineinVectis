@@ -54,7 +54,7 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**119 métodos IPC** roteados, **21 domínios** no core, **463 testes** Rust
+**119 métodos IPC** roteados, **21 domínios** no core, **464 testes** Rust
 verdes (medido em 2026-09-03). Protocolo `0.71.0`.
 
 Domínios do core, por profundidade real:

@@ -1224,6 +1224,18 @@ targetTriple   -> --target <triple>          (cargo: check, clippy e build)
                -> -DCMAKE_SYSTEM_PROCESSOR=<arch>
 ```
 
+**Bare metal ganha `CMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY`, e sem isso o
+configure falha SEMPRE.** Medido em 2026-09-03 exercitando
+`thumbv7em-none-eabihf` com o `arm-none-eabi-gcc` real: `CMAKE_SYSTEM_NAME=
+Generic` sozinho não basta — o CMake ainda tenta **linkar** um executável no
+teste de compilador, e bare metal não tem os stubs do newlib
+(`undefined reference to _exit`). O projeto nem chega a ser configurado. A doc
+do CMake diz que `STATIC_LIBRARY` existe exatamente para *"cross-compiling
+toolchains that cannot link without custom flags or linker scripts"*.
+
+Só entra em `Generic`. Em cross para Linux/Windows o link funciona, e forçar o
+teste a virar biblioteca **esconderia** um toolchain de verdade quebrado.
+
 `CMAKE_SYSTEM_NAME` é o que faz o CMake entrar em modo cross; o sysroot sozinho
 não muda a decisão de compilador. **Triple que o mapa não conhece não vira
 palpite:** fica sem `CMAKE_SYSTEM_NAME`, e o caminho oficial para alvos exóticos

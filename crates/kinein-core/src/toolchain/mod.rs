@@ -177,6 +177,26 @@ impl Toolchain {
             if let Some(processador) = self.cmake_system_processor() {
                 argumentos.push(format!("-DCMAKE_SYSTEM_PROCESSOR={processador}"));
             }
+            // BARE METAL PRECISA DISTO, e sem ele o configure falha SEMPRE.
+            //
+            // Medido em 2026-09-03 exercitando `thumbv7em-none-eabihf` com o
+            // `arm-none-eabi-gcc` real: o `CMAKE_SYSTEM_NAME=Generic` sozinho
+            // nao basta. O `CMake` ainda tenta LINKAR um executavel no teste de
+            // compilador, e bare metal nao tem os stubs do newlib —
+            // `undefined reference to _exit`. O projeto do usuario nem chega a
+            // ser configurado.
+            //
+            // A doc do `CMake` diz que `STATIC_LIBRARY` existe exatamente para
+            // isto: "to avoid running the linker and is intended for use with
+            // cross-compiling toolchains that cannot link without custom flags
+            // or linker scripts".
+            //
+            // So entra em `Generic` — que e' como o `CMake` chama bare metal.
+            // Em cross para Linux/Windows o link funciona, e forcar o teste a
+            // virar biblioteca esconderia um toolchain de verdade quebrado.
+            if sistema == "Generic" {
+                argumentos.push("-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY".to_owned());
+            }
         }
         argumentos
     }
@@ -641,5 +661,50 @@ mod tests {
 
         let limpo = set_kit(&root, &maquina(), "", Some("  "), None, None).unwrap();
         assert_eq!(limpo.sysroot(), None, "string em branco tinha que limpar");
+    }
+
+    /// Bare metal ganha `CMAKE_TRY_COMPILE_TARGET_TYPE`; cross "com sistema
+    /// operacional" NAO. Medido exercitando o `arm-none-eabi-gcc` de verdade.
+    #[test]
+    fn bare_metal_skips_the_linker_in_the_compiler_test() {
+        let root = temp_root("baremetal");
+        let bare = set_kit(
+            &root,
+            &maquina(),
+            "",
+            None,
+            Some("thumbv7em-none-eabihf"),
+            None,
+        )
+        .unwrap();
+        let argumentos = bare.cmake_arguments();
+        assert!(
+            argumentos.contains(&"-DCMAKE_SYSTEM_NAME=Generic".to_owned()),
+            "{argumentos:?}"
+        );
+        assert!(
+            argumentos.contains(&"-DCMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY".to_owned()),
+            "sem isto o configure de bare metal falha em `undefined reference to _exit`: \
+             {argumentos:?}"
+        );
+
+        // Cross para Linux LINKA normalmente. Forcar biblioteca esconderia um
+        // toolchain quebrado de verdade.
+        let linux = set_kit(
+            &root,
+            &maquina(),
+            "",
+            None,
+            Some("aarch64-unknown-linux-gnu"),
+            None,
+        )
+        .unwrap();
+        assert!(
+            !linux
+                .cmake_arguments()
+                .iter()
+                .any(|a| a.contains("TRY_COMPILE_TARGET_TYPE")),
+            "cross com SO nao deve pular o linker"
+        );
     }
 }

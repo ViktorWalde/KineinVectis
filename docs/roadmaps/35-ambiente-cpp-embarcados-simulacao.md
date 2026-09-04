@@ -398,7 +398,9 @@ domínio tem fio.
 22  adaptador DAP vira escolha do kit                      FEITO (2026-09-03)
 23  cross-compilador e chip do alvo                        FEITO (2026-09-03)
 24  deteccao da sonda                                      FEITO (2026-09-03)
-25  ciclo build -> flash -> debug, com QEMU no gate        o "play"
+25  ciclo build -> flash -> debug, com QEMU no gate        parcial: cross
+                                                           EXERCITADO em
+                                                           2026-09-03
 ```
 
 O **21 não é cerimônia**: sem ele, escolher entre probe-rs e OpenOCD seria
@@ -549,8 +551,14 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            partir da sonda, que depende de
                                            mapear VID:PID -> chip.
 
-25  Ciclo build -> flash -> debug,         o "play" da §5.1. QEMU no gate
-    com QEMU no gate                       para haver verificacao sem placa.
+25  Ciclo build -> flash -> debug,         PARCIAL. O CROSS foi exercitado em
+    com QEMU no gate                       2026-09-03 contra o arm-none-eabi-
+                                           gcc REAL, e achou um bug: bare
+                                           metal precisa de
+                                           CMAKE_TRY_COMPILE_TARGET_TYPE.
+                                           Falta o flash e o debug, que
+                                           dependem de probe-rs (ausente) e
+                                           qemu-system-arm (ausente).
 
 26  Banco: dominio relacional + o cofre    §7.3. O cofre vem ANTES da
     de credencial                          primeira conexao, nao depois.
