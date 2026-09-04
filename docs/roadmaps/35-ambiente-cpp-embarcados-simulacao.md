@@ -1176,6 +1176,53 @@ corrigida. É a mesma lição do `fd`, do toolchain e agora daqui — **fixture 
 descreve um protocolo que não existe mais não testa nada**, e ela envelhece
 justamente quando o protocolo está mudando rápido.
 
+### 9.3.12 Catálogo auditado: duas entram, duas NÃO entram (2026-09-04)
+
+Pedido do autor: *"deixar tudo completo em quesito de funcionalidades, ter
+todas certificadas/sólidas dentro da IDE, verifique e implemente apenas o que
+for sólido no mercado"*.
+
+**O que entrou, verificado na fonte:**
+
+```text
+GLM       1.0.3     2025-12-31   matematica de grafico — serve a frente de
+                                 simulacao/OpenGL
+libpqxx   8.0.2     2026-07-18   cliente C++ oficial do PostgreSQL — serve a
+                                 frente de banco que esta sessao construiu
+```
+
+**Duas ressalvas de licença que a auditoria produziu, e as duas estão no
+código:**
+
+1. **GLM oferece DUAS licenças** — `copying.txt` diz *"The Happy Bunny License
+   (Modified MIT License)"* **ou** *"The MIT License"*, e quem usa escolhe. A
+   MIT é a saída limpa; a Happy Bunny acrescenta uma cláusula de "não seja mau"
+   que não é OSI. O campo diz as duas.
+2. **O `COPYING` do libpqxx traz o texto da BSD 3-Clause sem escrever o nome
+   dela.** O nome no catálogo é a *identificação do texto*, não uma citação — e
+   a ressalva está ali para ninguém achar que o projeto se declara assim por
+   escrito.
+
+**E o alvo de link do libpqxx foi verificado no `src/CMakeLists.txt`:**
+`add_library(libpqxx::pqxx ALIAS pqxx)`. **Não** é `libpqxx::libpqxx`, que era o
+palpite óbvio — e errar o alvo produziria um plano que **falha no link**, com o
+autor descobrindo só ao compilar.
+
+**O que NÃO entrou, e por quê:**
+
+```text
+Dear ImGui   MIT, v1.92.9b, viva — mas NAO exporta pacote CMake upstream.
+             O catalogo promete find_package/FetchContent + target_link_libraries;
+             uma entrada que nao tem alvo produziria plano que falha.
+oneTBB       a "ultima release" da API do GitHub devolveu a tag `v2023.1.0`
+             com data de 2026-07-13. Nao da' para pinar uma versao que a
+             propria fonte apresenta de forma contraditoria.
+```
+
+**Recusar é parte do trabalho.** O contrato deste catálogo é que cada entrada
+tem licença verificada na fonte e versão pinada que funciona — e uma entrada
+que não cumpre isso vale menos que a ausência dela.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

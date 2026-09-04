@@ -72,7 +72,7 @@ pub(super) struct LibraryDefinition {
 /// reprova no build. E' `static` e nao corpo de funcao pelo mesmo motivo de la:
 /// tabela de DADO nao deve disparar o lint de funcao longa, porque encurta-la
 /// significaria esconder entrada.
-pub(super) static DEFINITIONS: [LibraryDefinition; 13] = [
+pub(super) static DEFINITIONS: [LibraryDefinition; 15] = [
     LibraryDefinition {
         id: "fmt",
         name: "fmt",
@@ -277,6 +277,49 @@ pub(super) static DEFINITIONS: [LibraryDefinition; 13] = [
         targets: &["Eigen3::Eigen"],
         repository: "https://gitlab.com/libeigen/eigen",
         documentation: "https://eigen.tuxfamily.org/dox/",
+        standard_lineage: None,
+    },
+    LibraryDefinition {
+        id: "glm",
+        name: "GLM",
+        summary: "Matematica de grafico: vetor, matriz e quaternion com a mesma \
+                  sintaxe do GLSL.",
+        category: "Matematica",
+        // ATENCAO, e a ressalva importa: o `copying.txt` oferece DUAS licencas
+        // — "The Happy Bunny License (Modified MIT License)" e "The MIT
+        // License" — e quem usa escolhe. A MIT e' a saida limpa; a Happy Bunny
+        // acrescenta uma clausula de "nao seja mau" que nao e' OSI. Verificado
+        // no proprio copying.txt em 2026-09-04.
+        license: "MIT (ou Happy Bunny, a escolha e sua)",
+        pinned_version: "1.0.3",
+        released_at: "2025-12-31",
+        package_name: "glm",
+        targets: &["glm::glm"],
+        repository: "https://github.com/g-truc/glm",
+        documentation: "https://github.com/g-truc/glm/blob/master/manual.md",
+        standard_lineage: None,
+    },
+    LibraryDefinition {
+        id: "libpqxx",
+        name: "libpqxx",
+        summary: "Cliente C++ oficial do PostgreSQL: consulta, transacao e tipos \
+                  com RAII.",
+        category: "Banco de dados",
+        // O COPYING traz o texto da BSD 3-Clause SEM escrever o nome dela no
+        // arquivo — conferido em 2026-09-04. O nome aqui e' a identificacao do
+        // texto, nao uma citacao do arquivo, e esta ressalva existe para
+        // ninguem achar que o projeto se declara assim por escrito.
+        license: "BSD-3-Clause (texto, sem o nome no arquivo)",
+        pinned_version: "8.0.2",
+        released_at: "2026-07-18",
+        package_name: "libpqxx",
+        // `libpqxx::pqxx`, e nao `libpqxx::libpqxx`: o alias vem do
+        // `src/CMakeLists.txt`, `add_library(libpqxx::pqxx ALIAS pqxx)`.
+        // Verificado na fonte porque errar o alvo produz um plano que FALHA no
+        // link, e o autor so' descobriria compilando.
+        targets: &["libpqxx::pqxx"],
+        repository: "https://github.com/jtv/libpqxx",
+        documentation: "https://libpqxx.readthedocs.io/",
         standard_lineage: None,
     },
 ];
