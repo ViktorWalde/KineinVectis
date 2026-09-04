@@ -58,22 +58,12 @@ Item {
 
                     required property var modelData
 
-                    // `KvToggleChip` nasceu quadrado (22x22) para rotulo de um
-                    // caractere; nome de alvo e' palavra. `TextMetrics` mede
-                    // sem desenhar — um Text escondido so' para medir seria um
-                    // item a mais no grafo de cena por alvo.
-                    width: Math.min(140, medida.width + 2 * Theme.spacingSmall)
+                    // O chip mede o proprio rotulo desde 2026-09-04; ate' ai'
+                    // cada chamador refazia a conta com um `TextMetrics`
+                    // proprio. Ver o cabecalho do KvToggleChip.
                     labelText: chip.modelData.name
                     active: chip.modelData.name === root.target
                     onToggled: root.targetEdited(chip.modelData.name)
-
-                    TextMetrics {
-                        id: medida
-
-                        font.family: Theme.monoFont
-                        font.pixelSize: 11
-                        text: chip.modelData.name
-                    }
                 }
             }
         }

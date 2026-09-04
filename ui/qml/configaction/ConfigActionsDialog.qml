@@ -131,19 +131,12 @@ Item {
 
                     required property var modelData
 
-                    width: medidaChip.width + 2 * Theme.spacingMedium
+                    // Sem `width`: o chip mede o proprio rotulo desde
+                    // 2026-09-04. Ver o cabecalho do KvToggleChip.
                     height: 24
                     labelText: chipEscopo.modelData.rotulo
                     active: root.controller.scopeFilter === chipEscopo.modelData.escopo
                     onToggled: root.controller.scopeFilter = chipEscopo.modelData.escopo
-
-                    TextMetrics {
-                        id: medidaChip
-
-                        font.family: Theme.monoFont
-                        font.pixelSize: 11
-                        text: chipEscopo.modelData.rotulo
-                    }
                 }
             }
         }

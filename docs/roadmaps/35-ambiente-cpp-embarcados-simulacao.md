@@ -1223,6 +1223,54 @@ oneTBB       a "ultima release" da API do GitHub devolveu a tag `v2023.1.0`
 tem licença verificada na fonte e versão pinada que funciona — e uma entrada
 que não cumpre isso vale menos que a ausência dela.
 
+### 9.3.13 Polimento: o chip que se mede e o campo que já sabe (2026-09-04)
+
+Relato do autor: *"em algumas coisas já tem botões para eu interagir e clicar
+para selecionar em vez de escrever, mas isso também precisa ser polido, no caso
+o dimensionamento precisa de polimento"*. E: *"a IDE deve detectar
+automaticamente pastas/arquivos para tudo que houver, adaptado ao contexto de
+cada função"*.
+
+**O dimensionamento tinha causa medida: três cópias da mesma conta.** O
+`KvToggleChip` nasceu quadrado (22×22) para rótulo de **um caractere** (`Aa`,
+`.*`). Quando passou a receber palavra — nome de alvo, `Rust · Cargo`,
+`PRIVATE` — **cada chamador recalculava a largura com um `TextMetrics`
+próprio**:
+
+```text
+LibraryTargetPicker.qml    TextMetrics + width: Math.min(140, ...)
+ConfigActionField.qml      TextMetrics + width: Math.min(200, ...)
+ConfigActionsDialog.qml    TextMetrics + width: medidaChip.width + ...
+```
+
+Três contas, três limites diferentes, três resultados diferentes na tela —
+exatamente o que o autor sentiu. **Agora o chip mede o próprio rótulo** e as
+três cópias saíram. Quem precisar de tamanho fixo ainda pode dar `width`,
+porque `implicitWidth` só vale quando ninguém manda.
+
+**E os campos passaram de 6 para 12 com sugestão**, medido no mesmo projeto de
+teste:
+
+```text
+antes    target sources visibility directories standard werror
+depois   + package libraries repository tag sanitizers edition
+```
+
+Os quatro primeiros vêm do **catálogo de bibliotecas**, que a IDE já tinha: até
+aqui ela pedia que o autor lembrasse `Eigen3` (e não `eigen`) e
+`libpqxx::pqxx` (e não `libpqxx::libpqxx`) — **cobrando dele o que ela sabe de
+cor**. `sanitizers` e `edition` são conjuntos fechados: digitar fora deles é
+erro garantido, descoberto só no fim do build.
+
+**Os seis que sobraram continuam livres, e isso é decisão, não falta:**
+
+```text
+name version chip command features enables
+```
+
+São texto que só o autor sabe. Sugerir um `name` seria palpite sobre o que ele
+quer criar — e há um teste que reprova se alguém inventar sugestão para eles.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

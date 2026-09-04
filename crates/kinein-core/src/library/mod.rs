@@ -63,6 +63,37 @@ pub fn list(root: Option<&Path>) -> Vec<LibraryInfo> {
         .collect()
 }
 
+/// Nomes de pacote do catalogo, para o campo `package` do `find_package`.
+///
+/// Existe para o painel de ambiente SUGERIR em vez de esperar digitacao: a IDE
+/// conhece os treze pacotes auditados, e pedir que o autor lembre o nome exato
+/// (`Eigen3`, e nao `eigen`) e' cobrar dele o que ela sabe.
+#[must_use]
+pub fn package_names() -> Vec<String> {
+    catalog::definitions()
+        .iter()
+        .map(|entry| entry.package_name.to_owned())
+        .collect()
+}
+
+/// Alvos de link do catalogo (`fmt::fmt`, `libpqxx::pqxx`, ...).
+#[must_use]
+pub fn link_targets() -> Vec<String> {
+    catalog::definitions()
+        .iter()
+        .flat_map(|entry| entry.targets.iter().map(|alvo| (*alvo).to_owned()))
+        .collect()
+}
+
+/// Repositorio e tag PINADA de cada biblioteca, para o `FetchContent`.
+#[must_use]
+pub fn repositories() -> Vec<(String, String)> {
+    catalog::definitions()
+        .iter()
+        .map(|entry| (entry.repository.to_owned(), entry.pinned_version.to_owned()))
+        .collect()
+}
+
 /// O que seria preciso para o alvo `target` usar a biblioteca `id`.
 ///
 /// Devolve PASSOS, nao texto de arquivo: cada passo nomeia a Configuration
@@ -73,6 +104,9 @@ pub fn list(root: Option<&Path>) -> Vec<LibraryInfo> {
 /// preferencia: se o config package esta no sistema, usa-se ele — baixar e
 /// compilar o que ja esta instalado e desperdicio que o usuario paga em tempo
 /// de build.
+///
+/// # Errors
+/// Biblioteca desconhecida ou alvo vazio.
 pub fn plan(root: Option<&Path>, id: &str, target: &str) -> Result<LibraryPlan, String> {
     let Some(entry) = catalog::find(id) else {
         return Err(format!("biblioteca desconhecida: {id}"));

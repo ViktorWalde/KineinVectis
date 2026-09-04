@@ -118,19 +118,11 @@ Item {
 
                     required property var modelData
 
-                    width: Math.min(200, medida.width + 2 * Theme.spacingSmall)
                     height: 20
                     labelText: String(chipValor.modelData)
                     active: String(chipValor.modelData) === root.value
                     onToggled: root.edited(String(chipValor.modelData))
 
-                    TextMetrics {
-                        id: medida
-
-                        font.family: Theme.monoFont
-                        font.pixelSize: 11
-                        text: String(chipValor.modelData)
-                    }
                 }
             }
         }

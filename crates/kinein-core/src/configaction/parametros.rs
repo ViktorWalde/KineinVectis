@@ -81,6 +81,7 @@ pub(super) fn describe(name: &str) -> &'static str {
         "edition" => "Edition do Rust — muda regras da linguagem, nao a versao do compilador.",
         "features" | "enables" => "Features que este item liga por padrao.",
         "version" => "Versao pedida. Vazio aceita qualquer uma que o sistema tenha.",
+        "command" => "A linha que a IDE executa. Ela roda na raiz do projeto, no seu shell.",
         _ => "",
     }
 }
@@ -117,6 +118,36 @@ pub(super) fn suggestions(root: &Path, name: &str) -> Vec<String> {
             .collect(),
         "sources" | "source" => arquivos_de_fonte(root),
         "directory" | "directories" => diretorios(root),
+        // O CATALOGO DE BIBLIOTECAS ja' sabe estes tres, e ate' 2026-09-04 a
+        // IDE pedia que o autor lembrasse de cor: `Eigen3` e nao `eigen`,
+        // `libpqxx::pqxx` e nao `libpqxx::libpqxx`. Cobrar dele o que ela sabe
+        // e' o atrito que este modulo existe para tirar.
+        "package" => crate::library::package_names(),
+        "libraries" => crate::library::link_targets(),
+        "repository" => crate::library::repositories()
+            .into_iter()
+            .map(|(repositorio, _)| repositorio)
+            .collect(),
+        "tag" => crate::library::repositories()
+            .into_iter()
+            .map(|(_, tag)| tag)
+            .collect(),
+        // Conjuntos FECHADOS: o compilador so' aceita estes, e digitar outro
+        // e' erro garantido descoberto no fim do build.
+        "sanitizers" => [
+            "address,undefined",
+            "address",
+            "undefined",
+            "thread",
+            "leak",
+        ]
+        .iter()
+        .map(|v| (*v).to_owned())
+        .collect(),
+        "edition" => ["2015", "2018", "2021", "2024"]
+            .iter()
+            .map(|v| (*v).to_owned())
+            .collect(),
         _ => Vec::new(),
     }
 }
@@ -250,6 +281,50 @@ mod tests {
         assert_eq!(suggestions(&root, "visibility").len(), 3);
         assert_eq!(suggestions(&root, "werror"), vec!["OFF", "ON"]);
         assert!(suggestions(&root, "standard").contains(&"20".to_owned()));
+    }
+
+    /// O catalogo de bibliotecas responde por quatro campos, e a IDE deixou
+    /// de cobrar do autor o que ela ja' sabe de cor.
+    #[test]
+    fn o_catalogo_preenche_pacote_alvo_repositorio_e_tag() {
+        let root = temp_root("catalogo");
+        assert!(suggestions(&root, "package").contains(&"Eigen3".to_owned()));
+        assert!(
+            suggestions(&root, "libraries").contains(&"libpqxx::pqxx".to_owned()),
+            "o alvo de link tem de vir do catalogo, nao da memoria de quem digita"
+        );
+        assert!(
+            suggestions(&root, "repository")
+                .iter()
+                .any(|url| url.contains("github.com")),
+            "repositorio deveria vir do catalogo"
+        );
+        assert!(!suggestions(&root, "tag").is_empty());
+    }
+
+    /// Conjunto FECHADO nao deveria ser texto livre: digitar fora dele e' erro
+    /// garantido, descoberto so' no fim do build.
+    #[test]
+    fn conjuntos_fechados_vem_completos() {
+        let root = temp_root("fechados-2");
+        assert!(suggestions(&root, "sanitizers").contains(&"address,undefined".to_owned()));
+        assert_eq!(
+            suggestions(&root, "edition"),
+            ["2015", "2018", "2021", "2024"]
+        );
+    }
+
+    /// O que a IDE NAO sabe, ela nao inventa. Um `name` sugerido seria um
+    /// palpite sobre o que o autor quer criar.
+    #[test]
+    fn campo_livre_continua_livre() {
+        let root = temp_root("livre");
+        for campo in ["name", "version", "chip", "features", "command"] {
+            assert!(
+                suggestions(&root, campo).is_empty(),
+                "{campo} ganhou sugestao inventada"
+            );
+        }
     }
 
     /// Melhor nao dizer nada que inventar explicacao para um campo novo.
