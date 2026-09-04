@@ -29,7 +29,7 @@ tinham responsabilidade misturada de verdade, e foram cortados por isso. Ver
 ## 1. O estado, em números
 
 ```bash
-bash scripts/verificar.sh          # 17 verificacoes (medido em 2026-09-04)
+bash scripts/verificar.sh          # 18 verificacoes (medido em 2026-09-04)
 cat scripts/arquitetura-baseline.txt
 ```
 
@@ -38,7 +38,7 @@ protocolo   0.71.0
 testes      467 Rust verdes
 dominios    21 no core
 catraca     8 arquivos em debito  (eram 18 no inicio da sessao)
-gate        17 verificacoes       (eram 14; medido em 2026-09-04)
+gate        18 verificacoes       (eram 14; medido em 2026-09-04)
 ```
 
 ## 2. A dívida restante — 8 arquivos, e cada um tem um diagnóstico DIFERENTE

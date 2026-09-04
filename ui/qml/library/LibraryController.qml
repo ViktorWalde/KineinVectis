@@ -12,6 +12,14 @@ Item {
 
     property string workspaceRoot: ""
     property var libraries: []
+    // Os alvos do CMake que o core conhece, e DE ONDE ele os tirou.
+    //
+    // POR QUE ISTO EXISTE (2026-09-04). Relato de uso do autor: "o SQLite eu
+    // nao consegui ativar". O painel pedia que ele DIGITASSE o nome do alvo, e
+    // sem alvo nao havia plano — a IDE cobrava dele uma informacao que esta'
+    // escrita no CMakeLists do proprio projeto.
+    property var targets: []
+    property string targetsOrigin: ""
     property string selectedId: ""
     property string target: ""
     property var plan: null
@@ -19,6 +27,7 @@ Item {
     property string errorText: ""
 
     signal listRequested()
+    signal targetsRequested()
     signal planRequested(string id, string target)
     // A aplicacao NAO acontece aqui: o plano vira Configuration Action, e quem
     // aplica e o dominio configaction, com o preview e o consentimento dele.
@@ -31,6 +40,9 @@ Item {
         selectedId = "";
         plan = null;
         errorText = "";
+        targets = [];
+        targetsOrigin = "";
+        target = "";
         if (workspaceRoot !== "") {
             listRequested();
         }
@@ -41,6 +53,8 @@ Item {
         if (libraries.length === 0) {
             listRequested();
         }
+        // Sempre: o autor pode ter criado um alvo desde a ultima abertura.
+        targetsRequested();
     }
 
     function close() {
@@ -64,6 +78,17 @@ Item {
 
     function libraryById(id) {
         return libraries.find(function(lib) { return lib.id === id; }) || null;
+    }
+
+    // Um alvo so' NAO e' uma escolha: preencher e' o certo. Com varios, quem
+    // escolhe e' o autor — a IDE nao adivinha em qual binario a biblioteca
+    // entra.
+    function handleTargets(newTargets, origin) {
+        targets = newTargets;
+        targetsOrigin = origin;
+        if (target === "" && newTargets.length === 1) {
+            setTarget(newTargets[0].name);
+        }
     }
 
     function handleList(newLibraries) {

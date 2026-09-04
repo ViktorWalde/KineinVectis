@@ -1,4 +1,4 @@
-"""O atalho que a paleta ANUNCIA e' o atalho que a IDE OBEDECE.
+"""O que a IDE OFERECE, a IDE FAZ: atalhos da paleta e itens de menu.
 
 POR QUE ESTE SCRIPT EXISTE (2026-09-04). Relato de uso do autor: "nao consigo
 acessar as bibliotecas". A causa nao era o painel — era o atalho. O core
@@ -30,6 +30,13 @@ O QUE ESTE GATE EXIGE, e o contrato e' de mao dupla:
 A anotacao e' a costura, e ela e' deliberada: sem um elo explicito nao ha' como
 uma maquina saber que `onActivated: root.libraryController.open()` implementa
 `library.list`. Escrever o elo custa uma linha e torna a mentira impossivel.
+
+O MENU DA BARRA DE TITULO entrou aqui em 2026-09-04, no mesmo relato de uso
+("quero acessar visualmente pelo mouse"), porque a falha e' da mesma familia:
+o `AppMenuBar` declara `action: "X"` e o `ShellHeaderHost` trata `case "X"`.
+Se os dois discordarem, clicar no item NAO FAZ NADA — sem erro, sem log, sem
+nada na tela. Item de menu que nao faz nada e' pior que item ausente: o
+ausente o autor procura em outro lugar; o morto ele repete.
 """
 
 import pathlib
@@ -91,6 +98,36 @@ def atalhos_da_ui():
     return encontrados
 
 
+def menu_e_tratamento():
+    """(acoes declaradas no menu, acoes tratadas pelo host)."""
+    host = (RAIZ / "ui/qml/shell/ShellHeaderHost.qml").read_text()
+    # Os itens do menu da barra de titulo vivem em `ui/qml/shell/AppMenu*.qml`.
+    # O padrao de nome E' o acoplamento, e ele e' deliberado: em 2026-09-04 o
+    # `AppMenuBar` foi partido e os itens foram para o `AppMenuItems`; um gate
+    # preso a UM arquivo teria reprovado por causa de uma refatoracao legitima,
+    # e gate que reprova a toa ensina a ser ignorado.
+    #
+    # Casar pela FORMA (`{ label:..., action:... }`) em todo o QML foi tentado e
+    # e' pior: o painel de git tem menu proprio com a mesma forma e outro
+    # despachante, e os itens dele apareceriam aqui como falha.
+    arquivos = sorted((RAIZ / "ui/qml/shell").glob("AppMenu*.qml"))
+    declaradas = set()
+    for arquivo in arquivos:
+        declaradas |= set(re.findall(r'action:\s*"([^"]+)"', arquivo.read_text()))
+    if not declaradas:
+        raise SystemExit(
+            "verificar_atalhos: nenhum item de menu encontrado em "
+            "ui/qml/shell/AppMenu*.qml — o padrao de nome mudou?"
+        )
+    tratadas = set(re.findall(r'case\s*"([^"]+)":', host))
+    # Acao montada em tempo de execucao (`"workspace.recent.open:" + index`)
+    # nao aparece como `case`: o host casa por PREFIXO, guardado num `const`.
+    # O gate le' esses prefixos em vez de reclamar de um literal que nunca
+    # existiu inteiro.
+    prefixos = set(re.findall(r'const\s+\w*[Pp]refix\w*\s*=\s*"([^"]+)"', host))
+    return declaradas, tratadas, prefixos
+
+
 def main():
     declarados = comandos_declarados()
     na_ui = atalhos_da_ui()
@@ -140,6 +177,23 @@ def main():
                 f"{arquivo}:{linha} liga {sequencias or '(nada)'}"
             )
 
+    do_menu, do_host, prefixos = menu_e_tratamento()
+    for acao in sorted(do_menu):
+        if acao in do_host:
+            continue
+        if any(acao.startswith(p) for p in prefixos):
+            continue
+        falhas.append(
+            f"o menu oferece `{acao}` e o ShellHeaderHost nao trata: clicar "
+            f"nao faz NADA, sem erro nenhum"
+        )
+    for acao in sorted(do_host):
+        if acao not in do_menu:
+            falhas.append(
+                f"o ShellHeaderHost trata `{acao}` e nenhum item de menu o "
+                f"oferece — codigo morto, ou item esquecido"
+            )
+
     for comando, alvos in sorted(anotados.items()):
         if comando not in declarados:
             arquivo, linha, _ = alvos[0]
@@ -164,6 +218,7 @@ def main():
         f"atalhos: {len(declarados)} comandos com atalho, todos ligados ao que "
         f"a paleta anuncia."
     )
+    print(f"menu: {len(do_menu)} itens, todos com tratamento no host.")
     return 0
 
 

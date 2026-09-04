@@ -56,6 +56,11 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
     if (dispatchConfigActionResult(method, result)) {
         return true;
     }
+    if (method == QStringLiteral("cmake.targets.list")) {
+        emit cmakeTargetsResolved(result.value(QStringLiteral("targets")).toArray().toVariantList(),
+                                  result.value(QStringLiteral("origin")).toString());
+        return true;
+    }
     if (dispatchToolchainResult(method, result)) {
         return true;
     }

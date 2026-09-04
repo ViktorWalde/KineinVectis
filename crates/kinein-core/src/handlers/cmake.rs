@@ -206,10 +206,22 @@ impl Core {
             Ok(root) => root,
             Err(response) => return *response,
         };
+        // O file-api e' a verdade, mas so' existe DEPOIS de um configure. Num
+        // projeto recem-aberto ele esta vazio, e e' exatamente ai' que o autor
+        // quer escolher bibliotecas — por isso o CMakeLists e' a segunda
+        // fonte, e a resposta diz qual das duas respondeu.
+        let (targets, origin) = match cmake::list_targets(&root) {
+            confirmados if !confirmados.is_empty() => (confirmados, "fileApi"),
+            _ => match cmake::targets_from_source(&root) {
+                lidos if !lidos.is_empty() => (lidos, "source"),
+                vazio => (vazio, "none"),
+            },
+        };
         JsonRpcResponse::success(
             request_id,
             json!(CmakeTargetsResult {
-                targets: cmake::list_targets(&root),
+                origin: origin.to_owned(),
+                targets,
             }),
         )
     }

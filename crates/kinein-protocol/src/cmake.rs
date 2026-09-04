@@ -46,6 +46,14 @@ pub struct CmakeTargetInfo {
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CmakeTargetsResult {
+    /// Where the names came from. `"fileApi"` is authoritative (kinds are
+    /// real); `"source"` was parsed from `CMakeLists.txt` because the project
+    /// has not been configured yet; `"none"` means neither found anything.
+    ///
+    /// The UI needs this to be honest with the author: a name read from the
+    /// source is a name the author WROTE, not a target `CMake` confirmed.
+    #[serde(default)]
+    pub origin: String,
     /// Targets from the last configure's file-api reply; empty before the
     /// first `cmake.configure`.
     pub targets: Vec<CmakeTargetInfo>,

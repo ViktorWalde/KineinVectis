@@ -15,6 +15,10 @@ Column {
     property var searchController: null
     property var searchEverywhereController: null
     property var settingsController: null
+    property var libraryController: null
+    property var dataSourceController: null
+    property var configActionController: null
+    property var toolchainController: null
     property var recentWorkspacesController: null
     property bool windowMaximized: false
 
@@ -81,6 +85,14 @@ Column {
         case "debug.start": root.debugController.startDebug(); break;
         case "debug.stop": root.debugController.stopDebug(); break;
         case "tools.detect": root.coreClient.detectTools(); break;
+        case "library.list": root.libraryController.open(); break;
+        case "datasource.list": root.dataSourceController.open(); break;
+        case "configAction.list": root.configActionController.openDialog(); break;
+        // O menu de toolchain nasce ANCORADO no botao da barra. Vindo do menu
+        // de Ambiente nao ha' botao para ancorar, e a coordenada negativa cai
+        // no clamp do proprio ToolchainMenu: ele encosta no canto superior
+        // esquerdo, que e' previsivel e nao fica fora da tela.
+        case "toolchain.get": root.toolchainController.openMenu(-1, -1); break;
         case "help.manual": root.manualRequested(); break;
         case "help.about": root.aboutRequested(); break;
         case "app.quit": Qt.quit(); break;

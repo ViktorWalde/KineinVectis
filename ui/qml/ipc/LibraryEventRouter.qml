@@ -20,6 +20,10 @@ Item {
             root.libraryController.handleList(libraries);
         }
 
+        function onCmakeTargetsResolved(targets, origin) {
+            root.libraryController.handleTargets(targets, origin);
+        }
+
         function onLibraryPlanResolved(plan) {
             root.libraryController.handlePlan(plan);
         }

@@ -329,6 +329,11 @@ void CoreClient::cargoMetadata()
     sendRequest(QStringLiteral("cargo.metadata"), QJsonObject{});
 }
 
+void CoreClient::cmakeTargetsList()
+{
+    sendRequest(QStringLiteral("cmake.targets.list"), QJsonObject{});
+}
+
 void CoreClient::cmakeConfigure()
 {
     sendRequest(QStringLiteral("cmake.configure"), QJsonObject{});

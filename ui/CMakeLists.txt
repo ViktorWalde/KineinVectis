@@ -44,6 +44,7 @@ set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/shell/ShellEditorHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorHost.qml)
 set_source_files_properties(qml/shell/ShellEditorOverlayHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorOverlayHost.qml)
 set_source_files_properties(qml/shell/ShellProjectOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellProjectOverlays.qml)
+set_source_files_properties(qml/shell/AppMenuItems.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuItems.qml)
 set_source_files_properties(qml/shell/ProjectHealthBanner.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthBanner.qml)
 set_source_files_properties(qml/shell/PanelSplitter.qml PROPERTIES QT_RESOURCE_ALIAS PanelSplitter.qml)
 set_source_files_properties(qml/shell/VerticalScrollBar.qml PROPERTIES QT_RESOURCE_ALIAS VerticalScrollBar.qml)
@@ -52,6 +53,7 @@ set_source_files_properties(qml/shell/RunConfigMenu.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/debug/DebugController.qml PROPERTIES QT_RESOURCE_ALIAS DebugController.qml)
 set_source_files_properties(qml/library/LibraryController.qml PROPERTIES QT_RESOURCE_ALIAS LibraryController.qml)
 set_source_files_properties(qml/library/LibraryPanel.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanel.qml)
+set_source_files_properties(qml/library/LibraryTargetPicker.qml PROPERTIES QT_RESOURCE_ALIAS LibraryTargetPicker.qml)
 set_source_files_properties(qml/datasource/DataSourceController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceController.qml)
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
 set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanelHost.qml)
@@ -231,6 +233,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/ShellEditorHost.qml
         qml/shell/ShellEditorOverlayHost.qml
         qml/shell/ShellProjectOverlays.qml
+        qml/shell/AppMenuItems.qml
         qml/shell/ProjectHealthBanner.qml
         qml/shell/PanelSplitter.qml
         qml/shell/VerticalScrollBar.qml
@@ -239,6 +242,7 @@ qt_add_qml_module(kinein-vectis
         qml/debug/DebugController.qml
         qml/library/LibraryController.qml
         qml/library/LibraryPanel.qml
+        qml/library/LibraryTargetPicker.qml
         qml/datasource/DataSourceController.qml
         qml/datasource/DataSourcePanel.qml
         qml/datasource/DataSourcePanelHost.qml

@@ -39,8 +39,7 @@ fn find_files_with_binary(
         .arg("--fixed-strings")
         .arg("--hidden")
         .arg("--color")
-        .arg("never")
-        .arg("--strip-cwd-prefix");
+        .arg("never");
     for skipped in SEARCH_SKIP_DIRS {
         command.arg("--exclude").arg(skipped);
     }
@@ -76,7 +75,7 @@ fn find_files_with_binary(
     let mut matches = Vec::new();
     let mut truncated = false;
     for line in String::from_utf8_lossy(&output.stdout).lines() {
-        let relative = line.trim();
+        let relative = strip_cwd_prefix(line.trim());
         if relative.is_empty() {
             continue;
         }
@@ -101,11 +100,38 @@ fn find_files_with_binary(
     Ok((matches, truncated))
 }
 
+/// Tira o `./` que o `fd` poe na frente quando recebe um caminho explicito.
+///
+/// POR QUE ESTA FUNCAO EXISTE, e o motivo e' caro (2026-09-04). Ate' hoje o
+/// core passava `--strip-cwd-prefix` para o `fd` pedir isso a ele. No `fd`
+/// 10.4.2 essa opcao passou a aceitar valor (`--strip-cwd-prefix[=<when>]`) e
+/// virou INCOMPATIVEL com passar um caminho — que e' exatamente o que o core
+/// faz. O resultado, medido:
+///
+/// ```text
+/// fs.findFiles -> INTERNAL_ERROR
+///   "fd falhou: error: the argument '--strip-cwd-prefix[=<when>]' cannot be
+///    used with '[path]...'"
+/// ```
+///
+/// **Toda busca por nome de arquivo da IDE falhava**, e o gate estava verde: o
+/// teste desta funcao roda um `fd` FALSO, um script que imprime linhas fixas.
+/// Fixture inventada nao ve' mudanca de CLI — foi a mesma licao do `probe.rs`
+/// em 2026-09-03, e ela custou de novo.
+///
+/// A saida nao e' voltar a pedir a opcao certa para cada versao: e' **nao
+/// depender dela**. Normalizar aqui funciona com `fd` que prefixa e com `fd`
+/// que nao prefixa, hoje e depois.
+#[must_use]
+fn strip_cwd_prefix(line: &str) -> &str {
+    line.strip_prefix("./").unwrap_or(line)
+}
+
 #[cfg(test)]
 mod tests {
     use std::{fs, path::PathBuf};
 
-    use super::find_files_with_binary;
+    use super::{find_files_with_binary, strip_cwd_prefix};
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -119,6 +145,18 @@ mod tests {
     }
 
     #[cfg(unix)]
+    /// O `fd` 10.4.2 prefixa `./` quando recebe um caminho; versoes com
+    /// `--strip-cwd-prefix` nao prefixavam. Normalizar aqui e' o que faz o
+    /// core sobreviver as duas — ver o cabecalho de `strip_cwd_prefix`.
+    #[test]
+    fn o_prefixo_do_fd_some_com_ou_sem_ele() {
+        assert_eq!(strip_cwd_prefix("./src/main.cpp"), "src/main.cpp");
+        assert_eq!(strip_cwd_prefix("src/main.cpp"), "src/main.cpp");
+        // Um caminho que COMECA com ponto nao pode perder o ponto.
+        assert_eq!(strip_cwd_prefix(".config/x"), ".config/x");
+        assert_eq!(strip_cwd_prefix(""), "");
+    }
+
     #[test]
     fn find_files_uses_fd_output_and_confines_results() {
         use std::os::unix::fs::PermissionsExt;

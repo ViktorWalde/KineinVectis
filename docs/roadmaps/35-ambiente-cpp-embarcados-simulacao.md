@@ -744,6 +744,35 @@ o que o clique direito no explorer abre. Nasceu `ShellProjectOverlays.qml`, e o
 teste de que a área é real está na interface: ela precisa de **três**
 controllers, não dos doze que o `ShellOverlays` carrega.
 
+### 9.3.1 O alvo do CMake deixou de ser digitado (2026-09-04)
+
+Relato de uso: *"o SQLite eu não consegui ativar"*. **A causa não era o
+catálogo nem o plano — era o campo do alvo.** Ele era uma caixa de texto vazia,
+e enquanto ficasse vazia o painel não mostrava plano nenhum: a IDE cobrava do
+autor o nome de um alvo que está escrito no `CMakeLists.txt` do projeto dele.
+
+O `cmake.targets.list` só respondia **depois** de um configure, porque lia o
+file-api — e é justamente num projeto recém-aberto que se escolhem bibliotecas.
+Ganhou uma segunda fonte:
+
+```text
+origin: "fileApi"   alvos confirmados por um configure (kind real)
+origin: "source"    lidos do CMakeLists.txt, sem configurar nada
+origin: "none"      nenhuma das duas achou
+```
+
+**A origem é mostrada na tela de propósito:** nome lido da fonte é nome que o
+autor *escreveu*, não alvo que o `CMake` confirmou. Esconder a diferença faria
+a IDE parecer mais certa do que é.
+
+O scanner é deliberadamente simples e os limites estão no código: nome montado
+por variável (`add_executable(${NOME}`) é **pulado**, `ALIAS`/`IMPORTED` são
+pulados, e ele não avalia `if()`. O pior caso é oferecer um nome a mais numa
+lista que o autor vê antes de escolher.
+
+Com **um** alvo, o painel preenche sozinho. Com vários, quem escolhe é o autor —
+a IDE não adivinha em qual binário a biblioteca entra.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

@@ -16,6 +16,10 @@ Item {
             root.coreClient.libraryList();
         }
 
+        function onTargetsRequested() {
+            root.coreClient.cmakeTargetsList();
+        }
+
         function onPlanRequested(id, target) {
             root.coreClient.libraryPlan(id, target);
         }

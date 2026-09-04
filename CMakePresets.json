@@ -1,5 +1,14 @@
 {
-  "version": 6,
+  "buildPresets": [
+    {
+      "configurePreset": "linux-clang-debug-strict",
+      "name": "debug-strict"
+    },
+    {
+      "configurePreset": "linux-clang-release-hardened",
+      "name": "release-hardened"
+    }
+  ],
   "cmakeMinimumRequired": {
     "major": 3,
     "minor": 25,
@@ -7,9 +16,6 @@
   },
   "configurePresets": [
     {
-      "name": "linux-clang-debug-strict",
-      "displayName": "Linux Clang Debug Strict",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/linux-clang-debug-strict",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -17,12 +23,12 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "KINEIN_ENABLE_SANITIZERS": "ON",
         "KINEIN_WARNINGS_AS_ERRORS": "ON"
-      }
+      },
+      "displayName": "Linux Clang Debug Strict",
+      "generator": "Ninja",
+      "name": "linux-clang-debug-strict"
     },
     {
-      "name": "linux-clang-release-hardened",
-      "displayName": "Linux Clang Release Hardened",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/linux-clang-release-hardened",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -30,26 +36,40 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "KINEIN_ENABLE_HARDENING": "ON",
         "KINEIN_WARNINGS_AS_ERRORS": "ON"
-      }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "debug-strict",
-      "configurePreset": "linux-clang-debug-strict"
+      },
+      "displayName": "Linux Clang Release Hardened",
+      "generator": "Ninja",
+      "name": "linux-clang-release-hardened"
     },
     {
-      "name": "release-hardened",
-      "configurePreset": "linux-clang-release-hardened"
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      },
+      "displayName": "Debug",
+      "generator": "Ninja",
+      "name": "debug"
+    },
+    {
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      },
+      "displayName": "Release",
+      "generator": "Ninja",
+      "name": "release"
     }
   ],
   "testPresets": [
     {
-      "name": "debug-strict",
       "configurePreset": "linux-clang-debug-strict",
+      "name": "debug-strict",
       "output": {
         "outputOnFailure": true
       }
     }
-  ]
+  ],
+  "version": 6
 }

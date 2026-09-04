@@ -120,6 +120,113 @@ pub fn list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
     Ok(presets)
 }
 
+/// Le os nomes de target direto do `CMakeLists.txt`, sem configurar nada.
+///
+/// POR QUE ISTO EXISTE (2026-09-04). Relato de uso do autor: "o `SQLite` eu nao
+/// consegui ativar". O painel de bibliotecas pedia que ele DIGITASSE o nome do
+/// alvo do `CMake` que vai linkar, e enquanto o campo estivesse vazio o plano
+/// nao aparecia. A IDE cobrava do autor uma informacao que esta' escrita no
+/// projeto dele.
+///
+/// O `list_targets` so' responde DEPOIS de um configure, porque le' o file-api.
+/// Num projeto recem-aberto isso e' vazio, e e' justamente ai' que o autor quer
+/// escolher bibliotecas. Este scanner cobre esse buraco lendo a fonte.
+///
+/// LIMITES, e eles sao reais — por isso o resultado vem marcado como `source`
+/// e a UI diz de onde veio:
+///
+/// ```text
+/// add_executable(${NOME} ...)   PULADO: o nome e' variavel, e resolve-lo
+///                               exigiria interpretar CMake
+/// ALIAS / IMPORTED              PULADOS: nao sao alvos aos quais se linka
+/// nome dentro de if()           incluido mesmo se a condicao for falsa —
+///                               este scanner nao avalia condicao
+/// ```
+///
+/// Nada disto e' aproximacao perigosa: o pior caso e' oferecer um nome a mais
+/// numa lista, e o autor ve' a lista antes de escolher.
+#[must_use]
+pub fn targets_from_source(root: &Path) -> Vec<CmakeTargetInfo> {
+    let mut encontrados = Vec::new();
+    let mut vistos = std::collections::BTreeSet::new();
+    for arquivo in cmake_lists_files(root) {
+        let Ok(texto) = fs::read_to_string(&arquivo) else {
+            continue;
+        };
+        for linha in texto.lines() {
+            let limpa = linha.split('#').next().unwrap_or("");
+            for (chamada, tipo) in [
+                ("add_executable(", "executable"),
+                ("add_library(", "library"),
+            ] {
+                let Some(posicao) = limpa.to_ascii_lowercase().find(chamada) else {
+                    continue;
+                };
+                let resto = &limpa[posicao + chamada.len()..];
+                let nome = resto
+                    .split(|c: char| c.is_whitespace() || c == ')')
+                    .find(|parte| !parte.is_empty())
+                    .unwrap_or("");
+                // Nome vazio, com variavel, ou alias/importado: nao serve.
+                if nome.is_empty()
+                    || nome.contains('$')
+                    || resto.to_ascii_uppercase().contains(" ALIAS ")
+                    || resto.to_ascii_uppercase().contains(" IMPORTED")
+                {
+                    continue;
+                }
+                if vistos.insert(nome.to_owned()) {
+                    encontrados.push(CmakeTargetInfo {
+                        name: nome.to_owned(),
+                        kind: tipo.to_owned(),
+                    });
+                }
+            }
+        }
+        if encontrados.len() >= MAX_TARGETS {
+            break;
+        }
+    }
+    encontrados.truncate(MAX_TARGETS);
+    encontrados
+}
+
+/// Os `CMakeLists.txt` do projeto, sem entrar em diretorio de build.
+///
+/// Profundidade limitada de proposito: um projeto com dezenas de milhares de
+/// diretorios nao pode travar a abertura do painel de bibliotecas.
+fn cmake_lists_files(root: &Path) -> Vec<PathBuf> {
+    const PROFUNDIDADE_MAXIMA: usize = 3;
+    const IGNORADOS: [&str; 6] = [".kinein", ".git", "build", "target", "node_modules", "out"];
+
+    let mut arquivos = Vec::new();
+    let mut fila = vec![(root.to_path_buf(), 0usize)];
+    while let Some((diretorio, nivel)) = fila.pop() {
+        let candidato = diretorio.join("CMakeLists.txt");
+        if candidato.is_file() {
+            arquivos.push(candidato);
+        }
+        if nivel >= PROFUNDIDADE_MAXIMA {
+            continue;
+        }
+        let Ok(entradas) = fs::read_dir(&diretorio) else {
+            continue;
+        };
+        for entrada in entradas.flatten() {
+            if !entrada.path().is_dir() {
+                continue;
+            }
+            let nome = entrada.file_name().to_string_lossy().into_owned();
+            if nome.starts_with('.') || IGNORADOS.contains(&nome.as_str()) {
+                continue;
+            }
+            fila.push((entrada.path(), nivel + 1));
+        }
+    }
+    arquivos.sort();
+    arquivos
+}
+
 /// Le os targets do reply `codemodel-v2` do ultimo configure.
 ///
 /// Sem reply (nunca configurado com a query) retorna vazio; a UI explica.
@@ -214,7 +321,10 @@ fn target_kind_name(raw: &str) -> String {
 mod tests {
     use std::path::PathBuf;
 
-    use super::{configure_command, list_presets, list_targets, status, write_file_api_query};
+    use super::{
+        configure_command, list_presets, list_targets, status, targets_from_source,
+        write_file_api_query,
+    };
     use crate::toolchain::Toolchain;
 
     fn temp_root(name: &str) -> PathBuf {
@@ -295,6 +405,62 @@ mod tests {
 
         std::fs::write(root.join("CMakeUserPresets.json"), "nao é json").unwrap();
         assert!(list_presets(&root).is_err());
+    }
+
+    /// O buraco que o relato de uso de 2026-09-04 expos: projeto recem-aberto
+    /// nao tem file-api, e era ai' que o autor queria escolher biblioteca.
+    #[test]
+    fn targets_lidos_da_fonte_quando_nao_houve_configure() {
+        let root = temp_root("targets-fonte");
+        std::fs::write(
+            root.join("CMakeLists.txt"),
+            "cmake_minimum_required(VERSION 3.24)\n\
+             project(demo CXX)\n\
+             add_executable(app main.cpp)   # o alvo principal\n\
+             add_library(core STATIC core.cpp)\n\
+             add_library(core_alias ALIAS core)\n\
+             add_executable(${GERADO} gerado.cpp)\n\
+             # add_executable(comentado x.cpp)\n",
+        )
+        .unwrap();
+
+        let lidos = targets_from_source(&root);
+        let nomes: Vec<_> = lidos.iter().map(|t| t.name.as_str()).collect();
+
+        assert_eq!(nomes, vec!["app", "core"], "leu: {nomes:?}");
+        assert_eq!(lidos[0].kind, "executable");
+        assert_eq!(lidos[1].kind, "library");
+    }
+
+    /// Diretorio de build tem `CMakeLists.txt` gerado; entrar nele traria
+    /// alvos internos do proprio `CMake` para a lista do autor.
+    #[test]
+    fn a_varredura_nao_entra_em_diretorio_de_build() {
+        let root = temp_root("targets-fonte-build");
+        std::fs::write(
+            root.join("CMakeLists.txt"),
+            "add_executable(app main.cpp)\n",
+        )
+        .unwrap();
+        for ignorado in [".kinein", "build", "target", ".git"] {
+            let pasta = root.join(ignorado);
+            std::fs::create_dir_all(&pasta).unwrap();
+            std::fs::write(
+                pasta.join("CMakeLists.txt"),
+                "add_executable(interno x.cpp)\n",
+            )
+            .unwrap();
+        }
+
+        let nomes: Vec<_> = targets_from_source(&root)
+            .into_iter()
+            .map(|t| t.name)
+            .collect();
+        assert_eq!(
+            nomes,
+            vec!["app".to_owned()],
+            "leu de um diretorio ignorado"
+        );
     }
 
     #[test]

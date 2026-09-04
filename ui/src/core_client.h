@@ -138,6 +138,7 @@ public:
     Q_INVOKABLE void cargoCheck();
     Q_INVOKABLE void cargoMetadata();
     Q_INVOKABLE void cmakeConfigure();
+    Q_INVOKABLE void cmakeTargetsList();
     Q_INVOKABLE void cmakeStatus();
     // `preset` vazio = o kit padrao do workspace (etapa 14: a escolha passou a
     // ser por KIT, nao por workspace).
@@ -241,6 +242,9 @@ signals:
     void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
                              const QString& cdbStaleBecause);
     void cmakeConfigureFinished(bool success);
+    /// `origin` diz de onde os nomes vieram: "fileApi" (confirmados por um
+    /// configure), "source" (lidos do CMakeLists) ou "none".
+    void cmakeTargetsResolved(const QVariantList& targets, const QString& origin);
     void cargoMetadataResolved(int packages);
     void dataSourceListResolved(const QVariantList& profiles);
     void dataSourceTestAccepted(const QString& jobId);

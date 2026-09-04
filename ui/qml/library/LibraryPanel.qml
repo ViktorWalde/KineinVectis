@@ -16,6 +16,8 @@ Item {
     property var libraries: []
     property string selectedId: ""
     property string target: ""
+    property var targets: []
+    property string targetsOrigin: ""
     property var plan: null
     property string errorText: ""
 
@@ -49,42 +51,19 @@ Item {
         font.pixelSize: 10
     }
 
-    Rectangle {
+    LibraryTargetPicker {
         id: alvoBox
 
         anchors.top: subtitulo.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.right: parent.right
-        height: 22
-        radius: Theme.radius
-        color: Theme.surface2
-        border.width: 1
-        border.color: alvoInput.activeFocus ? Theme.accent : Theme.borderSoft
 
-        TextInput {
-            id: alvoInput
+        targets: root.targets
+        origin: root.targetsOrigin
+        target: root.target
 
-            anchors.fill: parent
-            anchors.margins: 4
-            verticalAlignment: TextInput.AlignVCenter
-            color: Theme.textPrimary
-            font.pixelSize: 11
-            clip: true
-            text: root.target
-
-            onEditingFinished: root.targetEdited(text.trim())
-        }
-
-        Text {
-            anchors.fill: parent
-            anchors.margins: 4
-            verticalAlignment: Text.AlignVCenter
-            visible: alvoInput.text === ""
-            text: qsTr("alvo do CMake que vai linkar (ex.: app)")
-            color: Theme.textDisabled
-            font.pixelSize: 11
-        }
+        onTargetEdited: name => root.targetEdited(name)
     }
 
     ListView {

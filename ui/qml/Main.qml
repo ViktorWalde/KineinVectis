@@ -153,6 +153,10 @@ Window {
         searchController: domains.searchController
         searchEverywhereController: domains.searchEverywhereController
         settingsController: domains.settingsController
+        libraryController: domains.libraryController
+        dataSourceController: domains.dataSourceController
+        configActionController: domains.configActionController
+        toolchainController: domains.toolchainController
         recentWorkspacesController: domains.recentWorkspacesController
         windowMaximized: windowChromeController.maximized
         onConfigMenuRequested: function(menuX, menuY) {

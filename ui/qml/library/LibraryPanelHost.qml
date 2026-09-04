@@ -45,6 +45,8 @@ Item {
             libraries: root.controller ? root.controller.libraries : []
             selectedId: root.controller ? root.controller.selectedId : ""
             target: root.controller ? root.controller.target : ""
+            targets: root.controller ? root.controller.targets : []
+            targetsOrigin: root.controller ? root.controller.targetsOrigin : ""
             plan: root.controller ? root.controller.plan : null
             errorText: root.controller ? root.controller.errorText : ""
 

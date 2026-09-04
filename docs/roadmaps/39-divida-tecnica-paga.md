@@ -397,7 +397,7 @@ chegou a 1.070 linhas (medição de 2026-09-02).
 ## 8. Como verificar tudo isto
 
 ```bash
-bash scripts/verificar.sh                     # o gate inteiro, 17 verificacoes
+bash scripts/verificar.sh                     # o gate inteiro, 18 verificacoes
 bash scripts/verificar-arquitetura.sh         # a catraca
 bash scripts/verificar-qml-propriedades.sh    # binding orfao
 bash scripts/verificar-qml-duplicacao.sh      # derivacao duplicada
@@ -480,6 +480,88 @@ a sequencia do Shortcut muda        reprova (promessa != realidade)
 **O que este gate diz sobre o resto:** o registro de saídas do dogfooding
 continua sendo o item mais barato e mais valioso da lista. Uma frase do autor
 achou quatro defeitos que dezesseis gates não achavam.
+
+## 8.3 Acesso pelo mouse: o menu "Ambiente" (2026-09-04)
+
+Terceiro relato do mesmo dia: *"tem as opções na top bar de 'Arquivo' até
+'Ajuda', temos que colocar a opção da 'Configuração Ambiente'"*. Medido, os
+quatro painéis de configuração **não tinham entrada de menu nenhuma** — só
+atalho e paleta.
+
+Nasceu o menu **Ambiente**, entre "Executar" e "Ferramentas":
+
+```text
+Bibliotecas C/C++...      Fontes de dados...       Toolchain e kits...
+Ações de configuração...  Configurar CMake         Detectar ferramentas
+Preferências...
+```
+
+**Por que menu próprio e não o quinto item de "Ferramentas":** configurar
+ambiente é o que se faz **antes** de compilar, não uma ferramenta que se usa
+durante. Enfiá-lo em "Ferramentas" seria esconder de novo o que o autor não
+achou.
+
+**O gate cresceu junto**, e pela mesma razão: um item de menu cuja ação o
+`ShellHeaderHost` não trata **não faz nada ao ser clicado — sem erro, sem
+log**. Item morto é pior que item ausente: o ausente o autor procura em outro
+lugar, o morto ele repete. As duas pontas agora são verificadas, e as duas
+foram provadas por mutação.
+
+**E o gate se provou na hora:** ao partir o `AppMenuBar` (que passou de 300 ao
+ganhar o menu), os itens mudaram de arquivo e o gate reprovou na mesma hora,
+porque estava preso a um caminho fixo. A correção foi torná-lo dependente de um
+**padrão de nome** (`ui/qml/shell/AppMenu*.qml`), não de um arquivo — gate que
+reprova por refatoração legítima ensina a ser ignorado.
+
+**O corte do `AppMenuBar` 314 → 212:** o vocabulário misturado estava à vista —
+o arquivo **decidia** o que cada menu contém (com regra de habilitação: "Build
+(CMake)" só se o projeto tiver CMake, "Depurar" só se não estiver depurando) e
+**desenhava** a barra. A primeira metade não tem um pixel; a segunda não tem uma
+regra. Nasceu `AppMenuItems.qml`.
+
+## 8.2 O 18º gate: a busca estava QUEBRADA e o gate estava verde (2026-09-04)
+
+Segundo relato de uso do mesmo dia: *"a barra de pesquisa ser de fato
+funcional"*. Medido, era verdade, e o defeito não estava na UI:
+
+```text
+fs.findFiles -> INTERNAL_ERROR
+  "fd falhou: error: the argument '--strip-cwd-prefix[=<when>]' cannot be
+   used with '[path]...'"
+```
+
+O `fd` **10.4.2** passou a aceitar valor nessa opção (`--strip-cwd-prefix[=<when>]`)
+e ela virou **incompatível com passar um caminho** — que é exatamente o que o
+core faz. **Toda busca por nome de arquivo da IDE falhava**, com dezessete
+gates verdes.
+
+**Por que passava:** o teste de unidade do `find.rs` roda um `fd` **falso**, um
+script que imprime linhas fixas. *Fixture inventada não vê mudança de CLI.* É a
+**mesma lição do `probe.rs`** em 2026-09-03 (§3 do
+[`38`](38-divida-restante-e-continuidade.md)) — e ela custou duas vezes.
+
+**A correção não foi pedir a opção certa para cada versão. Foi não depender
+dela:** o core deixou de passar a flag e normaliza o `./` que o `fd` prefixa.
+Funciona com as duas gerações da ferramenta, hoje e depois.
+
+**O gate que faltava** ([`scripts/verificar-exercitacao.sh`](../../scripts/verificar-exercitacao.sh))
+sobe o core de verdade, abre um workspace de verdade e exercita os endpoints
+que dependem de ferramenta externa:
+
+```text
+fs.findFiles (fd)      acha o arquivo plantado
+fs.search (rg)         acha a agulha plantada
+fs.list                lista o diretorio
+cmake.targets.list     le' o alvo do CMakeLists
+```
+
+**Ferramenta ausente não reprova** (nem toda máquina tem tudo); **ferramenta
+presente que recusa o comando reprova** — e é esse o caso que este gate existe
+para pegar.
+
+**Provado por mutação, e a mutação é o bug original:** devolver
+`--strip-cwd-prefix` ao comando faz o gate reprovar com a mensagem exata que o
+autor viu.
 
 ## 9. O que continua aberto, e não é dívida
 
