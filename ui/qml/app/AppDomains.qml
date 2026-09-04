@@ -164,6 +164,9 @@ Item {
         id: configActionController
 
         workspaceRoot: root.coreClient.workspaceRoot
+        // A lista e' UMA: acoes e bibliotecas lado a lado. Ver o cabecalho de
+        // `libraryController` no ConfigActionController.
+        libraryController: libraryController
     }
 
     // Configuracoes salvas saem do RuntimeController: "guardar como rodar um

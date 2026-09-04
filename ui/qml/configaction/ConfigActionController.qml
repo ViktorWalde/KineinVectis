@@ -21,6 +21,33 @@ Item {
     // em ListModel proprio, e `params[0].name` deixa de existir — a validacao
     // de parametro obrigatorio passava a nao ver parametro nenhum.
     property var actionsModel: ListModel {}
+
+    // AS BIBLIOTECAS ENTRAM NA MESMA LISTA (2026-09-04).
+    //
+    // Pedido do autor: *"em vez de 'Biblioteca C/C++', que só aparece
+    // funcionalidade para C/C++, deveria aparecer o Configure Actions e o nome
+    // mudar"*. Ele estava vendo duas telas que fazem a MESMA coisa — ativar
+    // algo no projeto — com listas separadas, e foi por isso que o Cargo
+    // parecia inalcancavel.
+    //
+    // A juncao nao inventa camada nova: uma biblioteca JA' E' um pacote de
+    // acoes de configuracao (`findPackage` + `addTargetLinkLibraries`). O que
+    // faltava era mostra-las no mesmo lugar.
+    property var libraryController: null
+
+    // As acoes cruas do ultimo `configAction.list`. Guardadas porque a lista
+    // precisa ser RECONSTRUIDA quando as bibliotecas chegam: elas vem de outra
+    // resposta, e sem isto o painel abriria com as acoes e sem as bibliotecas
+    // ate' o proximo `configAction.list`.
+    property var rawActions: []
+
+    Connections {
+        target: root.libraryController
+
+        function onLibrariesChanged() {
+            root.rebuildList();
+        }
+    }
     property var actionsById: ({})
     property var activeBuildSystems: []
     // Filtro de escopo escolhido pelo usuario: "" = todos (spec 9.2 §6.3).
@@ -83,7 +110,12 @@ Item {
         errorText = "";
     }
 
+    // Abrir o painel pede as DUAS listas: acoes e bibliotecas. Sem isto o
+    // painel abriria so' com o que ja' estivesse em memoria.
     function openDialog() {
+        if (libraryController !== null) {
+            libraryController.listRequested();
+        }
         dialogVisible = true;
         if (workspaceRoot !== "") {
             listRequested(false);
@@ -122,12 +154,47 @@ Item {
     property string pendingSelection: ""
     property var pendingParams: ({})
 
-    function handleListed(actions, buildSystems) {
-        const previous = selectedId;
+    // Acrescenta as bibliotecas ao fim da lista, com a MESMA lingua de estado
+    // das acoes: `alreadyApplied` quando ja' estao no projeto.
+    function appendLibraries() {
+        if (libraryController === null) {
+            return;
+        }
+        const libs = libraryController.libraries;
+        for (let index = 0; index < libs.length; ++index) {
+            const lib = libs[index];
+            actionsModel.append({
+                actionId: "library:" + lib.id,
+                title: lib.name,
+                description: lib.summary,
+                scope: "cmake",
+                category: qsTr("Bibliotecas"),
+                risk: "medium",
+                riskLabel: "",
+                riskExplanation: "",
+                effect: "edit",
+                actionState: lib.applied === true ? "alreadyApplied" : "available",
+                reason: lib.license + " · " + lib.pinnedVersion,
+                affects: "CMakeLists.txt"
+            });
+        }
+    }
+
+    // `true` quando o id selecionado e' de uma biblioteca, nao de uma acao.
+    function isLibrary(id) {
+        return typeof id === "string" && id.indexOf("library:") === 0;
+    }
+
+    function libraryIdOf(id) {
+        return id.substring("library:".length);
+    }
+
+    // Reconstroi a lista a partir do que ja' foi recebido dos dois lados.
+    function rebuildList() {
         const byId = {};
         actionsModel.clear();
-        for (let index = 0; index < actions.length; ++index) {
-            const action = actions[index];
+        for (let index = 0; index < rawActions.length; ++index) {
+            const action = rawActions[index];
             byId[action.id] = action;
             actionsModel.append({
                 actionId: action.id,
@@ -146,7 +213,14 @@ Item {
                 affects: action.affects.join(", ")
             });
         }
+        appendLibraries();
         actionsById = byId;
+    }
+
+    function handleListed(actions, buildSystems) {
+        const previous = selectedId;
+        rawActions = actions;
+        rebuildList();
         activeBuildSystems = buildSystems;
         statusText = "";
         // Pedido vindo de outro dominio tem precedencia sobre a selecao
@@ -176,6 +250,16 @@ Item {
     }
 
     function select(id) {
+        // Linha de BIBLIOTECA: quem sabe montar o plano dela e' o dominio
+        // `library`, e ele ja' faz isso. O painel unificado escolhe qual das
+        // duas visoes mostrar; nao reimplementa nenhuma das duas.
+        if (isLibrary(id)) {
+            selectedId = id;
+            selectedAction = null;
+            clearPreview();
+            libraryController.select(libraryIdOf(id));
+            return;
+        }
         const entry = actionAt(id);
         if (entry === null) {
             clearSelection();

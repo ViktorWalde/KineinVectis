@@ -13,10 +13,12 @@ Item {
     id: root
 
     property var controller: null
+    property var libraryController: null
     property real maxAvailableWidth: 1000
     property real maxAvailableHeight: 640
 
     signal dismissRequested()
+    signal applyStepRequested(string actionId, var params)
 
     onVisibleChanged: {
         if (visible) {
@@ -52,7 +54,7 @@ Item {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.margins: Theme.spacingMedium
-            text: qsTr("Configuration Actions")
+            text: qsTr("Ambiente do projeto")
             color: Theme.textPrimary
             font.pixelSize: 14
             font.bold: true
@@ -119,7 +121,7 @@ Item {
                 // antes": os chips diziam "cmake" e "cargo", nomes de
                 // ferramenta que so' quem ja' sabe reconhece.
                 model: [
-                    { escopo: "", rotulo: qsTr("Todas") },
+                    { escopo: "", rotulo: qsTr("Tudo") },
                     { escopo: "cmake", rotulo: qsTr("C/C++ · CMake") },
                     { escopo: "cargo", rotulo: qsTr("Rust · Cargo") }
                 ]
@@ -206,7 +208,32 @@ Item {
             }
         }
 
+        // A visao da direita depende do que foi escolhido: acao mostra
+        // parametros e diff; biblioteca mostra o plano dela. Uma lista so',
+        // duas visoes que ja' existiam.
+        LibraryPlanView {
+            id: planoBiblioteca
+
+            visible: root.controller.isLibrary(root.controller.selectedId)
+            anchors.top: actionList.top
+            anchors.bottom: actionList.bottom
+            anchors.left: actionList.right
+            anchors.right: parent.right
+            anchors.leftMargin: Theme.spacingMedium
+            anchors.rightMargin: Theme.spacingMedium
+            plan: root.libraryController ? root.libraryController.plan : null
+            errorText: root.libraryController ? root.libraryController.errorText : ""
+            hasSelection: root.libraryController
+                          ? root.libraryController.selectedId !== "" : false
+            hasTarget: root.libraryController
+                       ? root.libraryController.target !== "" : false
+
+            onApplyStepRequested: (actionId, params) =>
+                root.applyStepRequested(actionId, params)
+        }
+
         ConfigActionPreview {
+            visible: !root.controller.isLibrary(root.controller.selectedId)
             anchors.top: actionList.top
             anchors.bottom: actionList.bottom
             anchors.left: actionList.right

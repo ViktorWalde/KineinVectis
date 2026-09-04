@@ -169,9 +169,15 @@ Item {
         visible: root.configActionController.dialogVisible
         z: 99
         controller: root.configActionController
+        libraryController: root.libraryController
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.configActionController.closeDialog()
+        // Passo de biblioteca vira Configuration Action, com a previa e o
+        // consentimento dela — o mesmo caminho de antes, agora sem trocar de
+        // painel no meio.
+        onApplyStepRequested: (actionId, params) =>
+            root.configActionController.openWith(actionId, params)
     }
 
     LibraryPanelHost {

@@ -1135,6 +1135,47 @@ mesma bolinha significando coisas diferentes seria pior que não ter bolinha.
 Isso é a metade do caminho para a lista unificada que o autor pediu (Bibliotecas
 + Ações numa lista só): **as duas telas agora falam a mesma língua de estado.**
 
+### 9.3.11 A lista unificada: "Ambiente do projeto" (2026-09-04)
+
+Pedido do autor: *"em vez de 'Biblioteca C/C++', que só aparece funcionalidade
+para C/C++, deveria aparecer o Configure Actions e o nome mudar... vai precisar
+de certa reformulação desse fluxo"*.
+
+Ele estava vendo **duas telas que fazem a mesma coisa** — ativar algo no
+projeto — com listas separadas. Foi por isso que o Cargo parecia inalcançável:
+quem abria "Bibliotecas" nunca via as ações, e vice-versa.
+
+**A junção não inventa camada nova, e é por isso que ela é barata:** uma
+biblioteca **já é** um pacote de ações de configuração (`findPackage` +
+`addTargetLinkLibraries`). O que faltava era mostrá-las no mesmo lugar.
+
+```text
+Ambiente do projeto
+  [ Tudo ]  [ C/C++ · CMake ]  [ Rust · Cargo ]
+  ● Habilitar compile_commands.json   ativa neste projeto
+  ○ Compilador mais rigido            edita configuração
+  ● fmt                               ativa neste projeto   MIT · 12.2.0
+  ○ zlib                                                    Zlib · 1.3.1
+```
+
+**Uma lista, duas visões.** Escolher uma ação mostra os parâmetros e o diff;
+escolher uma biblioteca mostra o plano dela. O painel **escolhe qual visão
+abrir** — não reimplementa nenhuma das duas.
+
+**A língua de estado é a mesma** (§9.3.10): verde é "já está no seu projeto",
+nos dois casos.
+
+**A lista se reconstrói quando as bibliotecas chegam.** Elas vêm de outra
+resposta (`library.list`), e sem isso o painel abriria com as ações e sem as
+bibliotecas até o próximo `configAction.list` — falha que não daria erro
+nenhum, só uma lista incompleta.
+
+**E o harness estava atrasado pela terceira vez nesta sessão:** a fixture das
+ações não tinha `riskLabel` nem `riskExplanation`, que entraram horas antes. Foi
+corrigida. É a mesma lição do `fd`, do toolchain e agora daqui — **fixture que
+descreve um protocolo que não existe mais não testa nada**, e ela envelhece
+justamente quando o protocolo está mudando rápido.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

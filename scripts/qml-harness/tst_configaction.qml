@@ -20,6 +20,24 @@ Item {
     property var lastApply: null
     property int listRequests: 0
 
+    // Duble do LibraryController com a superficie que o painel unificado usa.
+    QtObject {
+        id: bibliotecas
+
+        property var libraries: []
+        property string selecionada: ""
+        property var plan: null
+        property string errorText: ""
+        property string selectedId: ""
+        property string target: ""
+
+        // `librariesChanged` NAO e' declarado: toda `property` do QML ja' cria
+        // o sinal de mudanca dela, e declarar de novo e' erro de carga. E' o
+        // mesmo sinal que o ConfigActionController escuta.
+        function select(id) { bibliotecas.selecionada = id; }
+        function listRequested() {}
+    }
+
     ConfigActionController {
         id: controller
 
@@ -41,6 +59,12 @@ Item {
                 scope: "cmake",
                 category: "CMake Targets",
                 risk: "medium",
+                // O SHAPE E' O DO CORE: `riskLabel` e `riskExplanation`
+                // entraram em 2026-09-04, quando a previa deixou de mostrar a
+                // palavra crua do enum. Fixture atrasada testa um protocolo
+                // que nao existe mais.
+                riskLabel: "edita configuração",
+                riskExplanation: "edita um arquivo de configuração do projeto",
                 effect: "edit",
                 state: "available",
                 affects: ["CMakeLists.txt"],
@@ -57,6 +81,12 @@ Item {
                 scope: "cmake",
                 category: "CMake Basic",
                 risk: "medium",
+                // O SHAPE E' O DO CORE: `riskLabel` e `riskExplanation`
+                // entraram em 2026-09-04, quando a previa deixou de mostrar a
+                // palavra crua do enum. Fixture atrasada testa um protocolo
+                // que nao existe mais.
+                riskLabel: "edita configuração",
+                riskExplanation: "edita um arquivo de configuração do projeto",
                 effect: "edit",
                 state: "unavailable",
                 reason: "o preset debug ja existe em CMakePresets.json",
@@ -165,6 +195,41 @@ Item {
         if (controller.errorText !== "") failures += 262144;
         controller.handleFailed("configAction.apply", "o arquivo mudou");
         if (controller.errorText !== "o arquivo mudou") failures += 524288;
+
+        // A LISTA E' UMA SO' (2026-09-04): acoes e bibliotecas lado a lado.
+        //
+        // O autor relatou que "Biblioteca C/C++" e "Configure Actions" eram
+        // duas telas para a MESMA coisa — ativar algo no projeto — e que por
+        // isso o Cargo parecia inalcancavel. A juncao nao inventa camada: uma
+        // biblioteca ja' E' um pacote de acoes de configuracao.
+        controller.libraryController = bibliotecas;
+        bibliotecas.libraries = [
+            { id: "fmt", name: "fmt", summary: "formatacao", license: "MIT",
+              pinnedVersion: "12.2.0", applied: true },
+            { id: "zlib", name: "zlib", summary: "compressao", license: "Zlib",
+              pinnedVersion: "1.3.1", applied: false }
+        ];
+        controller.rebuildList();
+
+        // As duas bibliotecas entraram DEPOIS das acoes, sem apagar nenhuma.
+        const total = controller.actionsModel.count;
+        if (total < 4) failures += 1048576;
+        const penultima = controller.actionsModel.get(total - 2);
+        const ultima = controller.actionsModel.get(total - 1);
+        if (penultima.actionId !== "library:fmt") failures += 2097152;
+        // A LINGUA DE ESTADO E' A MESMA das acoes: `alreadyApplied` pinta de
+        // verde nos dois casos. Duas telas com a mesma bolinha significando
+        // coisas diferentes seria pior que nao ter bolinha.
+        if (penultima.actionState !== "alreadyApplied") failures += 4194304;
+        if (ultima.actionState !== "available") failures += 8388608;
+
+        // Escolher uma biblioteca NAO pede preview de acao: quem monta o plano
+        // dela e' o dominio `library`, e o painel so' escolhe qual visao abrir.
+        root.lastPreviewId = "";
+        controller.select("library:zlib");
+        if (!controller.isLibrary(controller.selectedId)) failures += 16777216;
+        if (root.lastPreviewId !== "") failures += 33554432;
+        if (bibliotecas.selecionada !== "zlib") failures += 67108864;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
