@@ -85,6 +85,7 @@ set_source_files_properties(qml/configaction/ConfigActionController.qml PROPERTI
 set_source_files_properties(qml/configaction/ConfigActionsDialog.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionsDialog.qml)
 set_source_files_properties(qml/configaction/ConfigActionList.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionList.qml)
 set_source_files_properties(qml/configaction/ConfigActionPreview.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionPreview.qml)
+set_source_files_properties(qml/configaction/ConfigActionDiffView.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionDiffView.qml)
 set_source_files_properties(qml/configaction/ConfigActionField.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionField.qml)
 set_source_files_properties(qml/ipc/ConfigActionEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionEventRouter.qml)
 set_source_files_properties(qml/ipc/ConfigActionRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionRequestRouter.qml)
@@ -282,6 +283,7 @@ qt_add_qml_module(kinein-vectis
         qml/configaction/ConfigActionsDialog.qml
         qml/configaction/ConfigActionList.qml
         qml/configaction/ConfigActionPreview.qml
+        qml/configaction/ConfigActionDiffView.qml
         qml/configaction/ConfigActionField.qml
         qml/ipc/ConfigActionEventRouter.qml
         qml/ipc/ConfigActionRequestRouter.qml

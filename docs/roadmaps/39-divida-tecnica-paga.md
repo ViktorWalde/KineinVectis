@@ -233,6 +233,14 @@ módulo `KineinVectis`, e importar o módulo tornaria as regras inexercitáveis
 fora do app. São sem estado — várias instâncias custam nada, e o que importa é
 haver uma única **definição**.
 
+> **A restrição caiu em 2026-09-04, e o arranjo fica como está.** O
+> `verificar-qml-logica.sh` passou a montar um espelho plano do módulo a partir
+> das fontes ([`35`](35-ambiente-cpp-embarcados-simulacao.md) §9.3.14), então
+> importar `KineinVectis` num harness deixou de tornar nada inexercitável.
+> Mover `TextRules` e `PathRules` agora seria mexer em código que funciona por
+> um motivo que evaporou — o registro existe para quem for decidir isso depois,
+> não para justificar mudança hoje.
+
 ## 5. As duplicações que morreram, e o que elas já tinham quebrado
 
 Isto não é limpeza estética. Cada uma abaixo foi **medida**, e duas já

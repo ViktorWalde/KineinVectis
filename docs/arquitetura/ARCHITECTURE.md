@@ -457,7 +457,14 @@ Regras que mantêm isso saudável:
     verificar-qml-logica.sh    (anterior)  harness headless dos controllers. Em
                                            2026-07-16 descobriu-se que 7 dos 14
                                            NAO conseguiam reprovar: `Qt.exit()`
-                                           trunca em 8 bits (§1.3).
+                                           trunca em 8 bits (§1.3). Em 2026-09-04
+                                           passou a montar um ESPELHO PLANO do
+                                           modulo KineinVectis a partir das
+                                           fontes: ate' ali so' dava para testar
+                                           componente sem Theme, e por esse
+                                           buraco a caixa da previa do
+                                           CMakeLists chegou a 10px numa tela
+                                           1366x768 sem nada acusar.
     verificar-deny.sh          2026-08-30  o `deny.toml` existia e NADA o
       (licencas/advisories)                 executava. A politica de licenca do
                                             projeto era regra que nao rodava. A

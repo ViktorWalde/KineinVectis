@@ -21,7 +21,7 @@ cargo test -q --workspace
 
 ```text
 protocolo   0.80.0
-testes      529 Rust + 23 harnesses QML
+testes      529 Rust + 24 harnesses QML
 metodos     139 IPC roteados, 35 eventos
 catraca     1 arquivo em debito
 gate        18 verificacoes
@@ -72,7 +72,30 @@ campo que EXPLICA e SUGERE              valores reais lidos do projeto
 toolchain automatico e VISIVEL          escolhe e mostra que escolheu
 setup.list                              passo a passo OFICIAL por distro,
                                         com fonte e data
+lista UNIFICADA "Ambiente do projeto"   biblioteca e acao lado a lado, com
+                                        filtro por LINGUAGEM (nao por
+                                        ferramenta) — o Cargo deixou de estar
+                                        atras do C/C++
 ```
+
+**A previa do `CMakeLists.txt` deixou de sumir** (roadmaps/35 §9.3.14). O autor
+pediu polimento de tamanho; a medicao achou defeito: numa tela 1366x768, com uma
+acao de seis campos, a caixa que mostra o arquivo media **10 pixels** — e o
+botao "Ativar" continuava habilitado. A previa ganhou dono
+(`ConfigActionDiffView`), o cabecalho ganhou teto de 40% com rolagem, o dialogo
+cresceu de 1020x660 para 1100x820 e a caixa ganhou barra de rolagem.
+
+```text
+1920x1080, 3 campos    214px (~12 linhas)  ->  374px (~22 linhas)
+1366x768,  6 campos     10px (NENHUMA)     ->  285px (~17 linhas)
+```
+
+**E o harness passou a enxergar tela.** O `verificar-qml-logica.sh` monta um
+espelho plano do modulo `KineinVectis` a partir das fontes; ate' 2026-09-04 so'
+dava para testar componente que nao usa `Theme`, e geometria era zona sem
+cobertura. O `tst_configaction_layout.qml` e o primeiro morador — provado por
+mutacao: tirar o teto derruba a caixa a 70px, devolver o dialogo ao tamanho
+antigo derruba a 249px, e cada mutacao acende um bit diferente.
 
 ## 4. O que está aberto
 
@@ -87,7 +110,6 @@ setup.list                              passo a passo OFICIAL por distro,
 25  handshake DAP com probe-rs           PARCIAL: precisa de sonda fisica ou
                                          alvo QEMU. O resto do ciclo de
                                          embarcado esta' provado
---  unificar Bibliotecas + Acoes         uma lista so', filtro por LINGUAGEM
 --  guias de instalacao para arch/suse   a fonte oficial dos tres projetos NAO
                                          cobre essas familias; entrar exige
                                          fonte de comunidade, marcada como tal
@@ -113,10 +135,19 @@ comando de instalacao        so' com FONTE OFICIAL citada e datada; sem fonte,
 **O registro de saídas do dogfooding continua VAZIO**
 (`docs-privada/diario/19-registro-de-saidas.md`).
 
-E esta sessão deu a prova mais forte que existe de que ele importa: **quatro
+E esta sessão deu a prova mais forte que existe de que ele importa: **cinco
 defeitos reais** — a busca por arquivo quebrada pelo `fd` 10.4.2, o atalho da
 biblioteca que formatava o arquivo, os dezoito alvos de link que não aceitam
-link, e o `CMAKE_CXX_STANDARD` escrito onde não faz efeito — **foram achados por
+link, o `CMAKE_CXX_STANDARD` escrito onde não faz efeito, e a prévia do
+`CMakeLists.txt` com 10 pixels numa tela de notebook — **foram achados por
 frases do autor usando a IDE**, não pelos dezoito gates.
+
+O quinto ensina uma coisa a mais: **a frase apontou o lugar, a medição achou o
+tamanho.** O autor disse *"a caixa ficou com um dimensionamento pequeno"* e
+pediu polimento. Instanciar o diálogo real fora do app e medir mostrou que, na
+tela dele com uma ação de seis campos, a caixa não era pequena — era
+**inexistente**, com o botão de consentimento habilitado do lado. Relato de uso
+diz **onde** olhar; medir diz **quanto**. Aceitar a frase como veredito teria
+produzido um ajuste cosmético e deixado o defeito de pé.
 
 Uma frase de uso vale mais que uma refatoração da lista.

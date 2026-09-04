@@ -1271,6 +1271,89 @@ name version chip command features enables
 São texto que só o autor sabe. Sugerir um `name` seria palpite sobre o que ele
 quer criar — e há um teste que reprova se alguém inventar sugestão para eles.
 
+### 9.3.14 A prévia do CMakeLists tinha 10 pixels (2026-09-04)
+
+Relato do autor: *"preciso apenas de um polimento na parte de exibir a prévia
+de texto da função que vai ser adicionada ao `CMakeLists.txt`; a caixa de texto
+ficou com um dimensionamento pequeno"*.
+
+Ele pediu polimento. **A medição achou um defeito.**
+
+**A causa: a prévia era a única coisa que herdava o que sobrasse.** O painel da
+direita empilha título, campos, prévia e rodapé. Título e rodapé são
+*ancorados* — tamanho próprio, não negociam. A caixa da prévia ficava entre
+`header.bottom` e `footer.top`, isto é, com o **resto**. Quando os campos
+ganharam descrição (§9.3.7) e chips de sugestão (§9.3.13), o cabeçalho engordou
+e o resto encolheu, sem que nada dissesse nada.
+
+**Medido com `cmake.addTargetLinkLibraries` (três campos), instanciando o
+diálogo real fora do app:**
+
+| tela | ação | caixa da prévia | linhas de CMake |
+|---|---|---|---|
+| 1920×1080 | 3 campos | 644×**214px** | ~12 |
+| 1366×768 | 6 campos | 644×**10px** | **nenhuma** |
+
+Os 10px são o achado. Numa tela de notebook comum, com uma ação de seis campos,
+**a caixa que mostra o arquivo desaparece** — e o botão "Ativar" continua ali,
+habilitado, pedindo consentimento sobre um texto que ninguém teve como ler.
+Nenhum dos dezoito gates vê isso: o `qmllint` acha o QML impecável, porque ele
+**é** impecável.
+
+**Três movimentos, nessa ordem.**
+
+**1. A prévia ganhou dono.** Saiu do `ConfigActionPreview` por
+*responsabilidade*, não por tamanho: aquele painel responde *"o que está
+selecionado e o que você precisa preencher"*; a
+[`ConfigActionDiffView`](../../ui/qml/configaction/ConfigActionDiffView.qml)
+responde *"como o arquivo vai ficar"*. São duas perguntas, e só a segunda
+justifica o consentimento. `grep diffLines ConfigActionPreview.qml` devolve
+vazio.
+
+**2. Quem cede espaço passou a ser quem já foi lido.** O cabeçalho tem **teto
+de 40%** do painel e rola quando não cabe; a prévia tem piso. A inversão é o
+conserto: campo já preenchido pode sair de vista, arquivo por ler não pode.
+
+**3. O diálogo cresceu** — `1020×660` → `1100×820`, sempre limitado pela janela
+(`Math.min` com o espaço real). O ganho vai inteiro para a prévia porque o
+resto do layout é ancorado, não proporcional.
+
+**E a caixa ganhou barra de rolagem.** Sem ela, um `CMakeLists.txt` que não
+cabe não *avisa* que continua abaixo — a mesma falha silenciosa em escala
+menor.
+
+**Depois, medido do mesmo jeito:**
+
+| tela | ação | antes | depois |
+|---|---|---|---|
+| 1920×1080 | 3 campos | 214px (~12 linhas) | **374px (~22 linhas)** |
+| 1366×768 | 6 campos | 10px (nenhuma) | **285px (~17 linhas)** |
+
+#### O harness passou a enxergar tela
+
+Este defeito **não tinha como ser testado** até hoje, e o motivo é estrutural:
+todo `tst_*.qml` importava **pasta** (`import "../../ui/qml/editor"`), o que só
+alcança componente que não usa o `Theme`. Componente **visual** usa: ele faz
+`import KineinVectis`, e esse módulo só existia dentro do `qrc` do binário
+compilado. Geometria de tela era zona sem cobertura.
+
+O `verificar-qml-logica.sh` agora monta um **espelho plano** do módulo a partir
+das próprias fontes — os nomes de arquivo já são únicos no projeto, porque o
+`QT_RESOURCE_ALIAS` exige isso, então o `qmldir` sai direto de um `find`. Não é
+cópia de código: são os mesmos arquivos. **Com isso, qualquer componente visual
+virou testável**, e o primeiro é o
+[`tst_configaction_layout.qml`](../../scripts/qml-harness/tst_configaction_layout.qml).
+
+**A mutação que prova o gate** (regra: gate sem mutação é decoração):
+
+```text
+tirar o teto de 40% do cabecalho     285px -> 70px    reprova (bitmask 2)
+devolver o dialogo a 1020x660        374px -> 249px   reprova (bitmask 1)
+```
+
+Cada mutação acende **um bit diferente** — as duas assertivas medem coisas
+distintas e nenhuma cobre a outra por acidente.
+
 ## 9.5 Etapa 27 começa: mais de um motor de banco (2026-09-04)
 
 Correção do autor: *"citei o TimescaleDB como exemplo, mas preciso de

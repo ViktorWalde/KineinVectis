@@ -36,8 +36,22 @@ Item {
 
     Rectangle {
         anchors.centerIn: parent
-        width: Math.min(1020, root.maxAvailableWidth)
-        height: Math.min(660, root.maxAvailableHeight)
+        // O DIALOGO CRESCEU EM 2026-09-04 (660 -> 820 de altura, 1020 -> 1100
+        // de largura). Ele foi dimensionado quando o painel da direita era
+        // titulo + um campo + diff; hoje o campo virou rotulo, descricao e
+        // chips de sugestao, e a previa do CMakeLists — o que o usuario le
+        // antes de consentir — ficou espremida. Relato de uso do autor.
+        //
+        // MEDIDO com `cmake.addTargetLinkLibraries` (tres campos com descricao
+        // e sugestoes): a caixa da previa era 226px, ~13 linhas de CMake; passa
+        // a 388px, ~23 linhas. O ganho vai inteiro para ela porque o resto do
+        // layout e ancorado, nao proporcional.
+        //
+        // Continua limitado pela janela: em tela baixa o `Math.min` devolve o
+        // que cabe, e ai' e' o teto do cabecalho (ConfigActionPreview) que
+        // garante o piso da previa.
+        width: Math.min(1100, root.maxAvailableWidth)
+        height: Math.min(820, root.maxAvailableHeight)
         radius: Theme.radiusDialog
         color: Theme.background2
         border.color: Theme.borderStrong

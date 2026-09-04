@@ -3,13 +3,17 @@ import QtQuick
 import KineinVectis
 
 // Painel lateral do preview (spec 9.1 §12): o que faz, os campos, o DIFF, a
-// documentacao e o Apply.
+// documentacao e o Ativar.
 //
-// O realce do diff usa prefixo/sufixo comum de linhas — exato para o que estas
-// acoes fazem (inserir e acrescentar bloco) e honesto quando nao e: uma
-// reescrita do arquivo inteiro aparece como um bloco grande alterado, que e a
-// verdade. A UI nao inventa um diff mais bonito do que o efeito real; o texto
-// mostrado E o que sera gravado, porque veio do mesmo plano do core.
+// QUEM CEDE ESPACO (2026-09-04). Ate' aqui o diff nascia com o que SOBRASSE:
+// os campos em cima, o rodape embaixo, e a previa herdava o resto. Quando os
+// campos ganharam descricao e chips de sugestao, o resto encolheu — e a previa
+// do CMakeLists, a unica coisa que o usuario le antes de consentir, virou uma
+// janelinha de nove linhas. Relato de uso do autor.
+//
+// A ordem se inverteu: o diff tem PISO (o cabecalho nao passa de 40% do
+// painel) e sao os campos que rolam quando nao cabem. Cede espaco quem ja' foi
+// lido, nao quem ainda precisa ser lido.
 Item {
     id: root
 
@@ -19,148 +23,93 @@ Item {
     readonly property var file: root.controller.previewFiles.length > 0
                                 ? root.controller.previewFiles[0] : null
 
-    // Linhas do resultado, marcadas como alteradas ou nao.
-    function diffLines() {
-        if (root.file === null) {
-            return [];
-        }
-        const after = root.file.after.split("\n");
-        const before = root.file.before !== undefined ? root.file.before.split("\n") : [];
-        let head = 0;
-        while (head < before.length && head < after.length && before[head] === after[head]) {
-            ++head;
-        }
-        let tail = 0;
-        while (tail < before.length - head && tail < after.length - head
-               && before[before.length - 1 - tail] === after[after.length - 1 - tail]) {
-            ++tail;
-        }
-        const lines = [];
-        for (let index = 0; index < after.length; ++index) {
-            lines.push({
-                text: after[index],
-                added: index >= head && index < after.length - tail
-            });
-        }
-        return lines;
-    }
-
-    Column {
-        id: header
+    Flickable {
+        id: headerScroll
 
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        spacing: Theme.spacingXSmall
+        height: Math.min(header.implicitHeight, root.height * 0.4)
+        contentHeight: header.implicitHeight
+        contentWidth: width
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
 
-        Text {
-            width: parent.width
-            text: root.action !== null ? root.action.title : qsTr("Selecione uma ação")
-            color: Theme.textPrimary
-            font.pixelSize: 13
-            font.bold: true
-            elide: Text.ElideRight
-        }
+        Column {
+            id: header
 
-        Text {
-            width: parent.width
-            text: root.controller.previewSummary !== ""
-                  ? root.controller.previewSummary
-                  : (root.action !== null ? root.action.description : "")
-            color: Theme.textSecondary
-            font.pixelSize: 11
-            wrapMode: Text.WordWrap
-        }
+            width: headerScroll.width
+            spacing: Theme.spacingXSmall
 
-        // Campos declarados pela acao. Sem parametro, nada aparece.
-        // Cada campo mostra o que FAZ e o que o projeto oferece; ver
-        // ConfigActionField.qml.
-        Repeater {
-            model: root.action !== null ? root.action.params : []
+            Text {
+                width: parent.width
+                text: root.action !== null ? root.action.title : qsTr("Selecione uma ação")
+                color: Theme.textPrimary
+                font.pixelSize: 13
+                font.bold: true
+                elide: Text.ElideRight
+            }
 
-            delegate: ConfigActionField {
-                id: campo
+            Text {
+                width: parent.width
+                text: root.controller.previewSummary !== ""
+                      ? root.controller.previewSummary
+                      : (root.action !== null ? root.action.description : "")
+                color: Theme.textSecondary
+                font.pixelSize: 11
+                wrapMode: Text.WordWrap
+            }
 
-                required property var modelData
+            // Campos declarados pela acao. Sem parametro, nada aparece.
+            // Cada campo mostra o que FAZ e o que o projeto oferece; ver
+            // ConfigActionField.qml.
+            Repeater {
+                model: root.action !== null ? root.action.params : []
 
-                width: header.width
-                param: campo.modelData
-                value: root.controller.paramValue(campo.modelData.name)
+                delegate: ConfigActionField {
+                    id: campo
 
-                onEdited: texto => {
-                    root.controller.setParam(campo.modelData.name, texto);
-                    root.controller.requestPreview();
+                    required property var modelData
+
+                    width: header.width
+                    param: campo.modelData
+                    value: root.controller.paramValue(campo.modelData.name)
+
+                    onEdited: texto => {
+                        root.controller.setParam(campo.modelData.name, texto);
+                        root.controller.requestPreview();
+                    }
                 }
+            }
+        }
+
+        VerticalScrollBar {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+
+            contentSize: headerScroll.contentHeight
+            viewportSize: headerScroll.height
+            position: headerScroll.contentY
+
+            onMoveRequested: function (position) {
+                headerScroll.contentY = position;
             }
         }
     }
 
-    Rectangle {
-        id: diffBox
-
-        anchors.top: header.bottom
+    ConfigActionDiffView {
+        anchors.top: headerScroll.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: footer.top
         anchors.bottomMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.right: parent.right
-        radius: Theme.radius
-        color: Theme.backgroundEditor
-        border.color: Theme.borderSoft
-        border.width: 1
-        clip: true
 
-        Text {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Theme.spacingSmall
-            text: root.file !== null
-                  ? (root.file.before === undefined
-                     ? qsTr("%1 (arquivo novo)").arg(root.file.path)
-                     : root.file.path)
-                  : ""
-            color: Theme.textMuted
-            font.pixelSize: 10
-            visible: root.file !== null
-            id: diffPath
-        }
-
-        ListView {
-            anchors.top: root.file !== null ? diffPath.bottom : parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: Theme.spacingSmall
-            model: root.file !== null ? root.diffLines() : root.controller.previewReport
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
-
-            delegate: Text {
-                required property var modelData
-
-                text: typeof modelData === "string" ? modelData : modelData.text
-                color: (typeof modelData !== "string" && modelData.added)
-                       ? Theme.successSoft : Theme.textSecondary
-                font.family: Theme.monoFont
-                font.pixelSize: 11
-            }
-        }
-
-        Text {
-            anchors.centerIn: parent
-            width: parent.width - 2 * Theme.spacingMedium
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.WordWrap
-            text: root.controller.previewLoading
-                  ? qsTr("Calculando o plano...")
-                  : (root.controller.missingRequiredParam() !== ""
-                     ? qsTr("Informe: %1").arg(root.controller.missingRequiredParam())
-                     : qsTr("Esta ação não altera arquivo nenhum."))
-            color: Theme.textMuted
-            font.pixelSize: 11
-            visible: root.file === null && root.controller.previewReport.length === 0
-        }
+        file: root.file
+        reportLines: root.controller.previewReport
+        loading: root.controller.previewLoading
+        missingParam: root.controller.missingRequiredParam()
     }
 
     Column {

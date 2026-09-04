@@ -93,7 +93,11 @@ de hoje**, e é o único que vale.
 - **`scripts/verificar.sh` completo: VERDE em 2026-09-04**, depois de
   `scripts/instalar-ambiente.sh` — inclui `verificar-cpp.sh` (clang-format +
   clang-tidy), `verificar-qml.sh` (qmllint estrito) e `verificar-qml-logica.sh`
-  (22 harnesses headless, medido em 2026-09-04; `ls scripts/qml-harness/ | wc -l`).
+  (24 harnesses headless, medido em 2026-09-04; `ls scripts/qml-harness/ | wc -l`).
+  Desde 2026-09-04 o runner monta um **espelho plano** do módulo
+  `KineinVectis` a partir das fontes, então o harness também alcança
+  componente **visual** — o que antes era impossível, porque o módulo só
+  existia dentro do `qrc` do binário compilado.
 
 > **Armadilha do `qmllint`, medida em 2026-08-29.** O response file do lint
 > nasce na **configuração**; o `kinein-vectis.qmltypes` do módulo só na
