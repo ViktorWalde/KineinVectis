@@ -15,6 +15,7 @@ mod cmake;
 mod command;
 mod configaction;
 mod core;
+mod datasource;
 mod debug;
 mod diagnostic;
 mod draft;
@@ -41,6 +42,7 @@ pub use cmake::*;
 pub use command::*;
 pub use configaction::*;
 pub use core::*;
+pub use datasource::*;
 pub use debug::*;
 pub use diagnostic::*;
 pub use draft::*;
@@ -65,4 +67,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.71.0";
+pub const PROTOCOL_VERSION: &str = "0.72.0";

@@ -171,7 +171,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | Documento | Assunto |
 | --- | --- |
 | [seguranca/23-rede-de-seguranca.md](seguranca/23-rede-de-seguranca.md) | Rede de segurança contra perda de dado (escrita atômica + autosave em SQLite) |
-| [seguranca/40-cofre-de-credencial.md](seguranca/40-cofre-de-credencial.md) | **DECISÃO PENDENTE** (2026-09-04): onde mora a senha de banco. As três saídas com custo medido — delegar ao `.pgpass`/ambiente, Secret Service do freedesktop (+87 crates, licenças OK), ou cofre próprio (descartado) —, o modo de falha que o Code OSS paga há anos, e o critério de aceite que não depende da escolha. Nenhuma linha de conexão a banco entra antes disto |
+| [seguranca/40-cofre-de-credencial.md](seguranca/40-cofre-de-credencial.md) | **Decisão registrada** (2026-09-04): a IDE guarda o PERFIL, nunca a senha — onde mora a senha de banco. As três saídas com custo medido — delegar ao `.pgpass`/ambiente, Secret Service do freedesktop (+87 crates, licenças OK), ou cofre próprio (descartado) —, o modo de falha que o Code OSS paga há anos, e o critério de aceite. O Secret Service fica adiado, não descartado: o gatilho é o registro de saídas do dogfooding |
 
 ## roadmaps/ — planos de execução e visão de longo prazo
 

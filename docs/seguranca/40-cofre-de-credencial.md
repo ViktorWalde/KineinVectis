@@ -180,11 +180,32 @@ ela.
 ## 6. O registro da decisão
 
 ```text
-DECISAO   pendente em 2026-09-04
+DECISAO   (a) DELEGAR agora, Secret Service depois — autor, 2026-09-04
 ```
 
-Quando houver decisão, ela entra aqui — data, escolha e o porquê —, e só então
-a primeira linha de conexão a banco pode ser escrita.
+**A escolha do autor foi a (a), com a (b) explicitamente adiada, não
+descartada.** O que isso fixa, e vale como contrato para quem escrever a etapa
+26:
+
+```text
+A IDE GUARDA      perfil de conexao: nome, host, porta, banco, usuario
+A IDE NUNCA       guarda senha em disco. Nao ha' campo de senha no perfil.
+A SENHA VEM DE    1. o prompt da sessao, vivendo SO' em memoria
+                  2. a variavel de ambiente
+                  3. o ~/.pgpass / PGPASSFILE do proprio Postgres
+```
+
+**O preço aceito, dito na hora de aceitar:** sem `.pgpass` configurado, o autor
+digita a senha uma vez por sessão. Isso é atrito conhecido, não descuido — e é
+o gatilho medido para a saída (b) entrar depois: se o registro de saídas do
+dogfooding (`docs-privada/diario/19`) mostrar esse atrito, as +87 crates passam
+a ter justificativa de uso, que hoje não têm.
+
+**Por que a ordem importa, e não é só cautela:** construir (a) primeiro
+*obriga* a existir o caminho "sem segredo guardado". Na saída (b) sozinha esse
+é justamente o caminho esquecido — é onde o Code OSS sangra há anos (§2.1).
+Quando a (b) entrar, ela entra como conveniência sobre um caminho que já
+funciona e já é testado, não como o caminho único com um remendo embaixo.
 
 **Critério de aceite, seja qual for a escolha** (ele não depende dela):
 

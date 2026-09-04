@@ -85,14 +85,41 @@ IntelliJ Community — que não tem Database Tools (é Ultimate), verificado em
 ## 5. O que ainda NÃO foi medido
 
 ```text
-driver Postgres   qual crate Rust, com licenca e manutencao auditadas
-                  (candidatas obvias: tokio-postgres, sqlx — NAO auditadas)
+driver Postgres   AUDITADO em 2026-09-04, ver §5.1 — `postgres` 0.19.14
 Grafana API       quais endpoints bastam para criar/consultar dashboard
 series temporais  o que a IDE MOSTRA de uma tabela hypertable, e onde
-segredo            senha de banco NAO pode ir para .kinein/ em texto puro;
-                   o projeto tem `docs/seguranca/23` e nao tem cofre
+segredo            DECIDIDO em 2026-09-04, ver `../seguranca/40`
 ```
 
-O item de **segredo** é o mais perigoso e o mais fácil de esquecer: hoje o
-`.kinein/` guarda rascunho e toolchain em texto. Credencial de banco ali seria
-uma regressão de segurança, não uma feature.
+O item de **segredo** era o mais perigoso e o mais fácil de esquecer, e foi o
+primeiro a ser resolvido: **a IDE guarda o perfil e nunca a senha**
+([`../seguranca/40-cofre-de-credencial.md`](../seguranca/40-cofre-de-credencial.md),
+decisão do autor em 2026-09-04). O domínio `datasource` do core nasceu com essa
+garantia testada — um campo `password` enviado pela UI é **recusado**, não
+ignorado em silêncio.
+
+### 5.1 O driver, auditado em 2026-09-04
+
+Medido com a *toolchain* pinada do repositório e o `deny.toml` **deste**
+projeto, contra o workspace de 84 crates que ele tinha na data:
+
+```text
+crate            versao     licenca              novas crates   deny.toml
+postgres         0.19.14    MIT OR Apache-2.0        +52         OK
+sqlx             0.9.0      MIT OR Apache-2.0       +105         REPROVA
+```
+
+**O `sqlx` reprova por um motivo concreto e verificável:** ele traz
+`foldhash 0.2.0`, licenciada **Zlib**, que não está na lista do `deny.toml`.
+Zlib é permissiva e OSI-approved — dá para adicioná-la —, mas acrescentar
+licença à lista é ato deliberado neste projeto, não efeito colateral de escolher
+uma dependência.
+
+**O `postgres` 0.19.14** é o cliente *síncrono* dos mesmos mantenedores do
+`tokio-postgres` (repositório `rust-postgres`), atualizado em 2026-06-12. Ele
+embute um `tokio` 1.53.1 como detalhe de implementação — a árvore tem tokio —,
+mas **o código deste repositório continua síncrono**, que é o desenho do core
+(`Core::new()` puro roda sem GUI e sem runtime).
+
+Nenhum backend de TLS entra por padrão: a árvore medida não tem `rustls` nem
+`openssl`. Conexão cifrada é decisão própria, de outra fatia.

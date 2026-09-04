@@ -1,0 +1,195 @@
+//! De onde vem a senha — e o tipo que impede ela de vazar num log.
+//!
+//! DECISAO REGISTRADA (autor, 2026-09-04, `docs/seguranca/40`): a IDE guarda o
+//! PERFIL e nunca a senha. Este modulo e' a outra metade dessa decisao: ele diz
+//! **onde procurar** a senha na hora de conectar, e da' um tipo em que ela pode
+//! viver sem virar texto solto na memoria de um `Debug`.
+
+use std::fmt;
+
+use kinein_protocol::{DataSourceProfile, SecretSource};
+
+/// Uma senha em memoria, que NAO se imprime.
+///
+/// POR QUE UM TIPO PROPRIO. Uma `String` de senha vaza pelo caminho mais banal
+/// que existe: alguem poe `?profile` ou `{:?}` num log de erro de conexao, o
+/// log vai para o painel de saida, e o painel vai para um print de tela num
+/// chamado. `Debug` e `Display` aqui imprimem `***`, entao esse caminho fecha
+/// por construcao — nao por disciplina.
+///
+/// Ler o valor de verdade exige [`Secret::expose`], que e' um nome que alguem
+/// nota numa revisao.
+#[derive(Clone, PartialEq, Eq)]
+pub struct Secret(String);
+
+impl Secret {
+    /// Embrulha um valor vindo de prompt, ambiente ou driver.
+    #[must_use]
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+
+    /// O valor cru. Chame no ponto de uso, nunca para guardar de novo.
+    #[must_use]
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+
+    /// `true` quando nao ha' o que enviar.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl fmt::Debug for Secret {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("Secret(***)")
+    }
+}
+
+impl fmt::Display for Secret {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("***")
+    }
+}
+
+/// O que o core precisa fazer para obter a senha de um perfil.
+///
+/// Repare que `Prompt` NAO carrega valor: quem resolve o prompt e' a UI, e o
+/// valor volta pela chamada de conexao, vivendo so' aquela sessao.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SecretPlan {
+    /// Pedir ao autor agora. A UI abre o dialogo.
+    AskUser,
+    /// Ler desta variavel de ambiente.
+    ReadEnvironment(String),
+    /// Nao fazer nada: o proprio libpq resolve pelo `~/.pgpass`/`PGPASSFILE`.
+    ///
+    /// O modo de falha aqui e' do `PostgreSQL` e e' BOM: permissao mais frouxa
+    /// que 0600 faz o arquivo ser ignorado inteiro, em vez de lido com aviso
+    /// (documentacao do `PostgreSQL` 18, `libpq-pgpass`). Falha fechada.
+    DelegateToDriver,
+}
+
+/// Traduz a politica do perfil no que fazer agora.
+///
+/// `Environment` sem variavel nomeada CAI PARA O PROMPT em vez de falhar:
+/// perfil meio configurado nao pode impedir o autor de conectar, e pedir a
+/// senha e' sempre uma saida segura.
+#[must_use]
+pub fn plan_for(profile: &DataSourceProfile) -> SecretPlan {
+    match profile.secret_source {
+        SecretSource::Prompt => SecretPlan::AskUser,
+        SecretSource::PasswordFile => SecretPlan::DelegateToDriver,
+        SecretSource::Environment => match profile.secret_variable.as_deref() {
+            Some(nome) if !nome.trim().is_empty() => {
+                SecretPlan::ReadEnvironment(nome.trim().to_owned())
+            }
+            _ => SecretPlan::AskUser,
+        },
+    }
+}
+
+/// Executa um [`SecretPlan::ReadEnvironment`] contra o ambiente do processo.
+///
+/// Uma linha so', de proposito: a REGRA esta' em [`secret_from`], que e' pura e
+/// por isso testavel sem mexer no ambiente do processo — mutar `env` em teste
+/// e' corrida garantida assim que a suite roda em paralelo.
+#[must_use]
+pub fn read_environment(variable: &str) -> Option<Secret> {
+    secret_from(std::env::var(variable).ok().as_deref())
+}
+
+/// Valor de ambiente -> senha. Ausente ou VAZIO nao vira senha.
+///
+/// Vazio importa: `PGPASSWORD=` exportado sem valor e' configuracao errada
+/// comum, e tentar conectar com senha vazia produz um erro do servidor bem
+/// pior de entender que "nao achei a senha, digite".
+#[must_use]
+fn secret_from(value: Option<&str>) -> Option<Secret> {
+    match value {
+        Some(valor) if !valor.is_empty() => Some(Secret::new(valor)),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn perfil(source: SecretSource, variable: Option<&str>) -> DataSourceProfile {
+        DataSourceProfile {
+            name: "local".to_owned(),
+            host: "localhost".to_owned(),
+            port: 5432,
+            database: "app".to_owned(),
+            user: "postgres".to_owned(),
+            secret_source: source,
+            secret_variable: variable.map(str::to_owned),
+        }
+    }
+
+    #[test]
+    fn secret_nao_aparece_em_debug_nem_display() {
+        let secret = Secret::new("hunter2");
+        assert_eq!(format!("{secret:?}"), "Secret(***)");
+        assert_eq!(format!("{secret}"), "***");
+        // E o valor continua acessivel por um nome que se ve' numa revisao.
+        assert_eq!(secret.expose(), "hunter2");
+    }
+
+    #[test]
+    fn prompt_e_o_padrao_e_pede_ao_usuario() {
+        assert_eq!(
+            plan_for(&perfil(SecretSource::Prompt, None)),
+            SecretPlan::AskUser
+        );
+        assert_eq!(SecretSource::default(), SecretSource::Prompt);
+    }
+
+    #[test]
+    fn arquivo_de_senha_delega_ao_driver() {
+        assert_eq!(
+            plan_for(&perfil(SecretSource::PasswordFile, None)),
+            SecretPlan::DelegateToDriver
+        );
+    }
+
+    #[test]
+    fn ambiente_usa_a_variavel_nomeada() {
+        assert_eq!(
+            plan_for(&perfil(SecretSource::Environment, Some("  PGPASSWORD  "))),
+            SecretPlan::ReadEnvironment("PGPASSWORD".to_owned())
+        );
+    }
+
+    #[test]
+    fn ambiente_sem_variavel_cai_para_o_prompt() {
+        assert_eq!(
+            plan_for(&perfil(SecretSource::Environment, None)),
+            SecretPlan::AskUser
+        );
+        assert_eq!(
+            plan_for(&perfil(SecretSource::Environment, Some("   "))),
+            SecretPlan::AskUser
+        );
+    }
+
+    #[test]
+    fn variavel_ausente_ou_vazia_nao_vira_senha() {
+        assert!(secret_from(None).is_none());
+        assert!(secret_from(Some("")).is_none());
+        assert_eq!(
+            secret_from(Some("abc")).map(|s| s.expose().to_owned()),
+            Some("abc".to_owned())
+        );
+    }
+
+    #[test]
+    fn ambiente_de_verdade_sem_a_variavel_nao_inventa_senha() {
+        // Nome improvavel de proposito: o teste nao pode depender de quem roda,
+        // e nao muta o ambiente — mutar `env` em teste e' corrida garantida.
+        assert!(read_environment("KINEIN_VECTIS_VARIAVEL_QUE_NAO_EXISTE").is_none());
+    }
+}

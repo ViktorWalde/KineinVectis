@@ -611,8 +611,19 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            precisa de sonda ou de alvo QEMU
                                            suportado.
 
-26  Banco: dominio relacional + o cofre    §7.3. O cofre vem ANTES da
-    de credencial                          primeira conexao, nao depois.
+26  Banco: dominio relacional + o cofre    26.1 FEITA em 2026-09-04
+    de credencial                          (protocolo 0.72.0). O cofre foi
+                                           decidido ANTES da primeira linha
+                                           de conexao, como a §7.3 exigia:
+                                           `../seguranca/40`, saida (a) — a
+                                           IDE guarda o PERFIL e nunca a
+                                           senha. Nasceu o dominio
+                                           `datasource` (catalogo + politica
+                                           de segredo + `Secret` que nao se
+                                           imprime), 20 testes. O driver
+                                           esta' auditado em
+                                           `../integracoes/37` §5.1 e entra
+                                           na 26.2.
 
 27  Temporal (TimescaleDB) e Grafana        §7.2. Grafana por HTTP API,
     por API                                nunca embutido.

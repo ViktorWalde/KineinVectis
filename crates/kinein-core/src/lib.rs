@@ -13,6 +13,7 @@ pub mod cmake;
 pub mod commands;
 pub mod configaction;
 pub mod dap;
+pub mod datasource;
 pub mod db;
 pub mod format;
 pub mod fsops;
@@ -250,6 +251,7 @@ impl Core {
             .or_else(|| self.syntax_request_response(method, request_id.clone(), params))
             .or_else(|| self.lsp_request_response(method, request_id.clone(), params))
             .or_else(|| Self::library_request_response(method, request_id.clone(), params))
+            .or_else(|| self.datasource_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))

@@ -7,6 +7,7 @@ mod build;
 mod cargo;
 mod cmake;
 mod configaction;
+mod datasource;
 mod debug;
 mod dispatch;
 mod format;
