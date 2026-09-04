@@ -109,7 +109,51 @@ pub fn probe_server(
     let linha = client
         .query_one("SELECT version()", &[])
         .map_err(|error| failure_from(&error))?;
-    linha.try_get(0).map_err(|error| failure_from(&error))
+    let versao: String = linha.try_get(0).map_err(|error| failure_from(&error))?;
+    Ok(match extensao_temporal(&mut client) {
+        Some(temporal) => format!("{versao} · {temporal}"),
+        None => versao,
+    })
+}
+
+/// A extensao de SERIE TEMPORAL instalada, quando ha' uma.
+///
+/// POR QUE ISTO EXISTE (2026-09-04). O autor pediu integracao nativa com bancos
+/// relacionais, temporais e nao-relacionais. O `TimescaleDB` e' um caso
+/// especial e bom: ele NAO e' outro banco — e' uma extensao do `PostgreSQL`,
+/// fala o mesmo protocolo e usa o mesmo driver. Tudo que a IDE ja' faz vale
+/// para ele sem uma linha nova.
+///
+/// O que faltava era DIZER. Sem isto o autor conecta num Timescale e a tela
+/// responde "`PostgreSQL` 18.6", que e' verdade e esconde a metade que ele foi
+/// procurar.
+///
+/// A consulta e' `pg_extension`, o catalogo do proprio servidor. Falha em
+/// SILENCIO de proposito: um servidor sem a extensao — ou um usuario sem
+/// permissao de ler o catalogo — nao pode transformar um teste de conexao
+/// BEM-SUCEDIDO em erro.
+fn extensao_temporal(client: &mut postgres::Client) -> Option<String> {
+    const TEMPORAIS: [&str; 2] = ["timescaledb", "timescaledb_toolkit"];
+
+    let linhas = client
+        .query(
+            "SELECT extname, extversion FROM pg_extension WHERE extname = ANY($1)",
+            &[&TEMPORAIS.as_slice()],
+        )
+        .ok()?;
+    let encontradas: Vec<String> = linhas
+        .iter()
+        .map(|linha| {
+            let nome: String = linha.get(0);
+            let versao: String = linha.get(1);
+            format!("{nome} {versao}")
+        })
+        .collect();
+    if encontradas.is_empty() {
+        None
+    } else {
+        Some(encontradas.join(", "))
+    }
 }
 
 /// Traduz um erro do driver na falha que a UI entende.
@@ -182,6 +226,7 @@ pub fn describe(error: &dyn Error) -> String {
 
 #[cfg(test)]
 mod tests {
+    use kinein_protocol::DataSourceEngine;
     use std::fmt;
 
     use kinein_protocol::SecretSource;
@@ -235,6 +280,7 @@ mod tests {
 
     fn perfil(host: &str) -> DataSourceProfile {
         DataSourceProfile {
+            engine: DataSourceEngine::Postgres,
             name: "local".to_owned(),
             host: host.to_owned(),
             port: 5432,

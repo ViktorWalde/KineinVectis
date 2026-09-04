@@ -20,7 +20,7 @@ cargo test -q --workspace
 ```
 
 ```text
-protocolo   0.79.0
+protocolo   0.80.0
 testes      529 Rust + 23 harnesses QML
 metodos     139 IPC roteados, 35 eventos
 catraca     1 arquivo em debito
@@ -77,10 +77,12 @@ setup.list                              passo a passo OFICIAL por distro,
 ## 4. O que está aberto
 
 ```text
-27  TimescaleDB e Grafana por HTTP API   o perfil e a introspeccao ja' servem
-                                         ao Timescale: ele fala o mesmo
-                                         protocolo. Grafana e' AGPL: API,
-                                         nunca embutido
+27  bancos relacional/temporal/nao-     COMECADA em 2026-09-04: o perfil ganhou
+    relacional                           MOTOR, o SQLite entrou (rusqlite ja'
+                                         era dependencia) e o TimescaleDB agora
+                                         aparece por nome. Falta o MongoDB, que
+                                         NAO cabe na arvore atual — ver
+                                         roadmaps/35 §9.5.4
 28  simulacao: CALCULO sem tela          §5.1 do roadmaps/35 ja' respondida
 25  handshake DAP com probe-rs           PARCIAL: precisa de sonda fisica ou
                                          alvo QEMU. O resto do ciclo de

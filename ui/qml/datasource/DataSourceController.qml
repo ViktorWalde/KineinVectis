@@ -72,6 +72,7 @@ Item {
     // (docs/seguranca/40 §7). Por isso host de socket e `automatic`.
     function emptyDraft() {
         return {
+            engine: "postgres",
             name: "",
             host: "/var/run/postgresql",
             port: 5432,
@@ -134,6 +135,7 @@ Item {
     // recusado.
     function cloneProfile(source) {
         return {
+            engine: source.engine || "postgres",
             name: source.name,
             host: source.host,
             port: source.port,

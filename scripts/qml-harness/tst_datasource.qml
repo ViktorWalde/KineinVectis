@@ -81,7 +81,7 @@ Item {
         } else {
             if (enviado.password !== undefined) f += 128;
             if (enviado.extra !== undefined) f += 256;
-            if (Object.keys(enviado).length !== 7) f += 512;
+            if (Object.keys(enviado).length !== 8) f += 512;
         }
 
         // 6) O veredito vem por CAMPO. A mensagem do servidor e' localizada, e

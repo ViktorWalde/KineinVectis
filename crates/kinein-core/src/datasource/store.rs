@@ -69,6 +69,7 @@ pub(super) fn save(root: &Path, profiles: &[DataSourceProfile]) -> Result<(), St
 
 #[cfg(test)]
 mod tests {
+    use kinein_protocol::DataSourceEngine;
     use kinein_protocol::SecretSource;
 
     use super::*;
@@ -88,6 +89,7 @@ mod tests {
 
     fn perfil(name: &str) -> DataSourceProfile {
         DataSourceProfile {
+            engine: DataSourceEngine::Postgres,
             name: name.to_owned(),
             host: "localhost".to_owned(),
             port: 5432,

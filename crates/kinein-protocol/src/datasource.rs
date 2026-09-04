@@ -46,6 +46,28 @@ pub enum SecretSource {
     Prompt,
 }
 
+/// Which engine a profile talks to.
+///
+/// POR QUE ISTO EXISTE (2026-09-04). Decisao do autor: a IDE precisa falar com
+/// bancos **relacionais, temporais e nao-relacionais**, e o perfil ate' aqui
+/// assumia `PostgreSQL` — `host`, `port`, `user`. Um arquivo `.db` do `SQLite` nao
+/// tem nenhum dos tres, e forcar os campos vazios seria pedir ao autor que
+/// preenchesse o que nao existe.
+///
+/// `TimescaleDB` NAO e' um valor daqui, e a ausencia e' a resposta certa: ele
+/// e' uma EXTENSAO do `PostgreSQL`, fala o mesmo protocolo e usa o mesmo driver.
+/// Inventar um valor para ele criaria dois caminhos identicos com nomes
+/// diferentes. A IDE detecta a extensao DEPOIS de conectar, e mostra.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DataSourceEngine {
+    /// `PostgreSQL` e tudo que fala o protocolo dele — `TimescaleDB` incluso.
+    #[default]
+    Postgres,
+    /// `SQLite`: um ARQUIVO, sem servidor, sem porta e sem usuario.
+    Sqlite,
+}
+
 /// A saved connection to a database. Never carries a password.
 ///
 /// `deny_unknown_fields` is deliberate and load-bearing here, not tidiness.
@@ -62,6 +84,13 @@ pub enum SecretSource {
 pub struct DataSourceProfile {
     /// Stable identity, unique per workspace. Also what the UI shows.
     pub name: String,
+    /// Which engine this profile talks to.
+    ///
+    /// Defaults to `postgres` so profiles saved before 2026-09-04 keep
+    /// working: they were all `PostgreSQL`, and a missing field means exactly
+    /// that.
+    #[serde(default)]
+    pub engine: DataSourceEngine,
     /// Host name, address, or — starting with `/` — a Unix socket DIRECTORY.
     ///
     /// libpq treats a host beginning with a slash as a socket directory (for
@@ -70,7 +99,12 @@ pub struct DataSourceProfile {
     pub host: String,
     /// TCP port.
     pub port: u16,
-    /// Database name.
+    /// Database name — or, for `SQLite`, the PATH of the `.db` file.
+    ///
+    /// One field for two meanings is deliberate: it is "what to open" in both
+    /// engines, and the UI labels it per engine. A second field would be empty
+    /// half the time and would make "which one is filled?" a question the
+    /// reader has to ask.
     pub database: String,
     /// Role used to connect.
     pub user: String,

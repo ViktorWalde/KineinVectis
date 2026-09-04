@@ -18,6 +18,12 @@ Item {
     readonly property string secretSource:
         root.draft ? (root.draft.secretSource || "automatic") : "automatic"
 
+    // `SQLite` e' um ARQUIVO: nao tem servidor, porta, usuario nem senha.
+    // Mostrar esses campos vazios seria pedir ao autor que preenchesse o que
+    // nao existe — que e' como a maioria das IDEs trata SQLite.
+    readonly property bool arquivo:
+        root.draft ? root.draft.engine === "sqlite" : false
+
     implicitHeight: coluna.implicitHeight
 
     Column {
@@ -26,6 +32,30 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         spacing: Theme.spacingSmall
+
+        Text {
+            width: parent.width
+            text: qsTr("Motor")
+            color: Theme.textMuted
+            font.pixelSize: 10
+        }
+
+        Row {
+            width: parent.width
+            spacing: Theme.spacingXSmall
+
+            KvToggleChip {
+                labelText: qsTr("PostgreSQL / TimescaleDB")
+                active: !root.arquivo
+                onToggled: root.fieldEdited("engine", "postgres")
+            }
+
+            KvToggleChip {
+                labelText: qsTr("SQLite (arquivo)")
+                active: root.arquivo
+                onToggled: root.fieldEdited("engine", "sqlite")
+            }
+        }
 
         DataSourceField {
             width: parent.width
@@ -37,6 +67,16 @@ Item {
 
         DataSourceField {
             width: parent.width
+            visible: root.arquivo
+            label: qsTr("Arquivo .db")
+            placeholder: qsTr("caminho do banco SQLite neste projeto")
+            value: root.draft ? root.draft.database : ""
+            onEdited: text => root.fieldEdited("database", text)
+        }
+
+        DataSourceField {
+            width: parent.width
+            visible: !root.arquivo
             label: qsTr("Host ou diretório de socket")
             placeholder: qsTr("/var/run/postgresql, ou db.exemplo.com")
             value: root.draft ? root.draft.host : ""
@@ -45,6 +85,7 @@ Item {
 
         Row {
             width: parent.width
+            visible: !root.arquivo
             spacing: Theme.spacingSmall
 
             DataSourceField {
@@ -65,6 +106,7 @@ Item {
 
         DataSourceField {
             width: parent.width
+            visible: !root.arquivo
             label: qsTr("Usuário")
             placeholder: qsTr("o papel que conecta")
             value: root.draft ? root.draft.user : ""
@@ -73,6 +115,7 @@ Item {
 
         Text {
             width: parent.width
+            visible: !root.arquivo
             text: qsTr("De onde vem a senha")
             color: Theme.textMuted
             font.pixelSize: 10
@@ -80,24 +123,22 @@ Item {
 
         Row {
             width: parent.width
+            visible: !root.arquivo
             spacing: Theme.spacingXSmall
 
             KvToggleChip {
-                width: 84
                 labelText: qsTr("Automático")
                 active: root.secretSource === "automatic"
                 onToggled: root.fieldEdited("secretSource", "automatic")
             }
 
             KvToggleChip {
-                width: 84
                 labelText: qsTr("Ambiente")
                 active: root.secretSource === "environment"
                 onToggled: root.fieldEdited("secretSource", "environment")
             }
 
             KvToggleChip {
-                width: 84
                 labelText: qsTr("Perguntar")
                 active: root.secretSource === "prompt"
                 onToggled: root.fieldEdited("secretSource", "prompt")
@@ -106,6 +147,7 @@ Item {
 
         Text {
             width: parent.width
+            visible: !root.arquivo
             wrapMode: Text.WordWrap
             color: Theme.textMuted
             font.pixelSize: 10
@@ -125,7 +167,7 @@ Item {
 
         DataSourceField {
             width: parent.width
-            visible: root.secretSource === "environment"
+            visible: !root.arquivo && root.secretSource === "environment"
             label: qsTr("Variável de ambiente")
             placeholder: "PGPASSWORD"
             value: root.draft ? (root.draft.secretVariable || "") : ""

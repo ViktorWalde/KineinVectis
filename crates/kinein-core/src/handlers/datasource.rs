@@ -159,7 +159,14 @@ impl Core {
         };
         let titulo = format!("Testar {}", profile.name);
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
-            let resultado = crate::datasource::connection::probe_server(&profile, secret.as_ref());
+            // O MOTOR decide quem responde. Um so' `datasource.test` para os
+            // dois: a UI nao precisa saber com qual banco esta falando para
+            // pedir um teste.
+            let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
+                crate::datasource::sqlite::probe_file(&profile)
+            } else {
+                crate::datasource::connection::probe_server(&profile, secret.as_ref())
+            };
             let ok = resultado.is_ok();
             let evento = match &resultado {
                 Ok(versao) => json!({
@@ -280,8 +287,11 @@ impl Core {
         };
         let titulo = format!("Ler {}", profile.name);
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
-            let resultado =
-                crate::datasource::introspect::read_structure(&profile, secret.as_ref());
+            let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
+                crate::datasource::sqlite::read_structure(&profile)
+            } else {
+                crate::datasource::introspect::read_structure(&profile, secret.as_ref())
+            };
             let ok = resultado.is_ok();
             let evento = match &resultado {
                 Ok(schemas) => json!({

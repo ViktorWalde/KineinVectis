@@ -1271,6 +1271,84 @@ name version chip command features enables
 São texto que só o autor sabe. Sugerir um `name` seria palpite sobre o que ele
 quer criar — e há um teste que reprova se alguém inventar sugestão para eles.
 
+## 9.5 Etapa 27 começa: mais de um motor de banco (2026-09-04)
+
+Correção do autor: *"citei o TimescaleDB como exemplo, mas preciso de
+integração nativa com bancos relacionais, não-relacionais e temporais"*. E, na
+sequência: *"pode seguir por SQLite; compatibilidade inicial com foco em
+temporal e relacional; do não-relacional prefiro MongoDB"*.
+
+### 9.5.1 O perfil ganhou motor, e cada motor cobra o que ele pede
+
+```text
+postgres   PostgreSQL e tudo que fala o protocolo dele — TimescaleDB incluso
+sqlite     um ARQUIVO: sem servidor, sem porta, sem usuario, sem senha
+```
+
+**`TimescaleDB` não é um valor do enum, e a ausência é a resposta certa:** ele
+é uma **extensão** do PostgreSQL, fala o mesmo protocolo e usa o mesmo driver.
+Inventar um valor para ele criaria dois caminhos idênticos com nomes
+diferentes.
+
+**O SQLite saiu de graça:** o `rusqlite` já era dependência deste core desde a
+rede de segurança de rascunhos (`docs/seguranca/23`). **Zero crate nova, zero
+auditoria de licença** — ao contrário do `postgres`, que custou +52 crates.
+
+**E a tela deixou de pedir o que não existe.** Escolhido `SQLite`, somem host,
+porta, usuário e toda a política de senha; aparece um campo só: o arquivo
+`.db`. Deixar campos vazios na tela é como a maioria das IDEs trata SQLite, e é
+pedir ao autor que preencha o que o motor não tem.
+
+### 9.5.2 Duas decisões que evitam a IDE mentir
+
+**1. Testar não pode CRIAR.** `Connection::open` do `rusqlite` **cria** o
+arquivo se ele não existe. Um teste de conexão que inventa um banco vazio é
+pior que um erro: o autor pediria um diagnóstico e ganharia um arquivo. A
+abertura verifica a existência antes, e há um teste que reprova se alguém
+remover a verificação.
+
+**2. A árvore é a MESMA.** `sqlite_master` faz aqui o que o
+`information_schema` faz no Postgres, e o resultado sai no mesmo formato
+(`esquema → tabela → coluna`), com um único esquema chamado `main` — que é como
+o próprio SQLite chama o banco principal. **A UI não ganhou um segundo
+formato.**
+
+Exercitado contra um arquivo real:
+
+```text
+main.ativos     [view]  nome:TEXT
+main.clientes   [table] id:INTEGER, nome:TEXT, saldo:REAL
+```
+
+### 9.5.3 O temporal ficou visível
+
+Conectar num TimescaleDB respondia `"PostgreSQL 18.6"` — verdade, e escondendo
+a metade que o autor foi procurar. A resposta agora consulta `pg_extension` e
+acrescenta a extensão quando ela existe:
+
+```text
+PostgreSQL 18.6 ... · timescaledb 2.24.0
+```
+
+**A consulta falha em silêncio de propósito:** um servidor sem a extensão — ou
+um usuário sem permissão de ler o catálogo — não pode transformar um teste de
+conexão **bem-sucedido** em erro.
+
+### 9.5.4 O que falta da etapa 27
+
+```text
+MongoDB    escolhido pelo autor como o primeiro nao-relacional. Ele NAO cabe
+           na arvore esquema->tabela->coluna: e' colecao -> documento sem
+           esquema fixo. Forcar o formato faria a tela mentir, entao ele pede
+           uma segunda forma de exibicao — e essa e' a decisao a tomar antes
+           de escrever qualquer linha
+MySQL      o autor o citou como EXEMPLO de banco bem arquitetado, e disse para
+           entrar so' "se for de fato necessario ao longo do projeto". Fica
+           registrado como nao-pedido, nao como esquecido
+Grafana    por HTTP API, nunca embutido (AGPL). O painel de instalacao ja'
+           entrega o passo a passo oficial dele (§9.3.9)
+```
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

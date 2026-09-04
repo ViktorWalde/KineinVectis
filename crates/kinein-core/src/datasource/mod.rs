@@ -38,11 +38,12 @@
 pub mod connection;
 pub mod introspect;
 pub mod secret;
+pub mod sqlite;
 mod store;
 
 use std::path::Path;
 
-use kinein_protocol::DataSourceProfile;
+use kinein_protocol::{DataSourceEngine, DataSourceProfile};
 
 pub use secret::{Secret, SecretPlan};
 
@@ -67,6 +68,17 @@ pub fn list(root: &Path) -> Vec<DataSourceProfile> {
 pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
     if profile.name.trim().is_empty() {
         return Err("de um nome ao perfil — e' por ele que a IDE o mostra".to_owned());
+    }
+    // CADA MOTOR COBRA O QUE ELE PEDE. Um arquivo `.db` nao tem host, porta
+    // nem usuario; exigir os tres seria pedir ao autor que preenchesse o que
+    // nao existe — e deixar campos vazios na tela e' a forma como a maioria
+    // das IDEs trata SQLite (decisao do autor, 2026-09-04).
+    if profile.engine == DataSourceEngine::Sqlite {
+        return if profile.database.trim().is_empty() {
+            Err("informe o caminho do arquivo .db".to_owned())
+        } else {
+            Ok(())
+        };
     }
     if profile.host.trim().is_empty() {
         return Err("informe o host (use `localhost` para um banco nesta maquina)".to_owned());
@@ -131,6 +143,7 @@ pub fn remove(root: &Path, name: &str) -> Result<Vec<DataSourceProfile>, String>
 /// produz ("host nao encontrado") nao mostra o espaco.
 fn normalize(profile: &DataSourceProfile) -> DataSourceProfile {
     DataSourceProfile {
+        engine: profile.engine,
         name: profile.name.trim().to_owned(),
         host: profile.host.trim().to_owned(),
         port: profile.port,
@@ -148,6 +161,7 @@ fn normalize(profile: &DataSourceProfile) -> DataSourceProfile {
 
 #[cfg(test)]
 mod tests {
+    use kinein_protocol::DataSourceEngine;
     use kinein_protocol::SecretSource;
 
     use super::*;
@@ -165,6 +179,7 @@ mod tests {
 
     fn perfil(name: &str) -> DataSourceProfile {
         DataSourceProfile {
+            engine: DataSourceEngine::Postgres,
             name: name.to_owned(),
             host: "localhost".to_owned(),
             port: DEFAULT_PORT,

@@ -7,7 +7,7 @@
 
 use std::fmt;
 
-use kinein_protocol::{DataSourceProfile, SecretSource};
+use kinein_protocol::{DataSourceEngine, DataSourceProfile, SecretSource};
 
 /// Uma senha em memoria, que NAO se imprime.
 ///
@@ -85,6 +85,12 @@ pub enum SecretPlan {
 /// senha e' sempre uma saida segura.
 #[must_use]
 pub fn plan_for(profile: &DataSourceProfile) -> SecretPlan {
+    // `SQLite` nao tem autenticacao: quem abre o arquivo e' o processo, com a
+    // permissao dele. Perguntar senha aqui seria um dialogo que nao resolve
+    // nada — e a politica salva no perfil nao muda esse fato.
+    if profile.engine == DataSourceEngine::Sqlite {
+        return SecretPlan::DelegateToDriver;
+    }
     match profile.secret_source {
         SecretSource::Prompt => SecretPlan::AskUser,
         SecretSource::Automatic => SecretPlan::DelegateToDriver,
@@ -122,10 +128,13 @@ fn secret_from(value: Option<&str>) -> Option<Secret> {
 
 #[cfg(test)]
 mod tests {
+    use kinein_protocol::DataSourceEngine;
+
     use super::*;
 
     fn perfil(source: SecretSource, variable: Option<&str>) -> DataSourceProfile {
         DataSourceProfile {
+            engine: DataSourceEngine::Postgres,
             name: "local".to_owned(),
             host: "localhost".to_owned(),
             port: 5432,
