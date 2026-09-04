@@ -13,39 +13,7 @@ Rectangle {
     property bool completionVisible: false
     property bool usagesVisible: false
     property bool hoverVisible: false
-    property string hoverText: ""
-    property var completionModel
-    property int completionCount: 0
-    property int completionIndex: 0
     property bool actionsVisible: false
-    property var actionsModel
-    property int actionCount: 0
-    property int actionsIndex: 0
-    property var usagesModel
-    property int usageCount: 0
-    property bool createDialogVisible: false
-    property string createDialogKind: "file"
-    property string createDialogParentDisplayPath: ""
-    property string createDialogError: ""
-    property bool renameDialogVisible: false
-    property string renameError: ""
-    property bool workspaceEditPreviewVisible: false
-    property string workspaceEditTitle: ""
-    property var workspaceEditFiles: []
-    property int workspaceEditCount: 0
-    property string workspaceEditError: ""
-    property bool goToLineDialogVisible: false
-    // D1b (docs/roadmaps/24): barra de Find/Replace do arquivo (Ctrl+F / Ctrl+H).
-    property bool findBarVisible: false
-    property bool findReplaceMode: false
-    property string findQuery: ""
-    property string findReplacement: ""
-    property bool findCaseSensitive: false
-    property bool findWholeWord: false
-    property bool findUseRegex: false
-    property bool findInvalidRegex: false
-    property int findMatchCount: 0
-    property int findCurrentDisplay: 0
     property var breakpointLines: []
     property int executionLine: 0
     // C4: caminho relativo do arquivo atual, "src/lsp/manager.rs" → segmentos.
@@ -87,30 +55,9 @@ Rectangle {
     signal newlineRequested()
     signal closerBraceRequested()
     signal smartHomeRequested(bool extendSelection)
-    signal completionActivated(int index)
     signal actionsMoveRequested(int delta)
     signal actionsAcceptRequested()
     signal actionsDismissRequested()
-    signal actionActivated(int index)
-    signal usageOpenRequested(string path, int line, int column)
-    signal createConfirmRequested(string name)
-    signal createCancelRequested()
-    signal renameConfirmRequested(string name)
-    signal renameCancelRequested()
-    signal workspaceEditApplyRequested()
-    signal workspaceEditCancelRequested()
-    signal goToLineConfirmRequested(string value)
-    signal goToLineCancelRequested()
-    signal findQueryEdited(string text)
-    signal findReplacementEdited(string text)
-    signal findNextRequested()
-    signal findPreviousRequested()
-    signal findReplaceRequested()
-    signal findReplaceAllRequested()
-    signal findCaseToggleRequested()
-    signal findWholeWordToggleRequested()
-    signal findRegexToggleRequested()
-    signal findCloseRequested()
     signal externalReloadRequested()
     signal externalKeepLocalRequested()
     signal watchErrorDismissRequested()
@@ -119,26 +66,14 @@ Rectangle {
     signal outlineResetRequested()
     signal outlineToggleRequested()
 
+    // Onde acaba o cabecalho (abas + trilha + faixa de conflito). O host de
+    // overlay ancora nisso o que flutua no topo; ver ShellEditorOverlayHost.
+    readonly property real overlayTop: externalBanner.y + externalBanner.height
+
     radius: Theme.radiusLarge
     color: Theme.background1
     border.color: Theme.borderSoft
     border.width: 1
-
-    function focusCreateDialog() {
-        createDialog.resetAndFocus();
-    }
-
-    function openRenameDialogWithName(name) {
-        renameDialog.openWithName(name);
-    }
-
-    function openGoToLineDialog(prefill) {
-        goToLineDialog.openWithValue(prefill);
-    }
-
-    function focusFindBar() {
-        findBar.focusQuery();
-    }
 
     EditorTabsBar {
         id: tabBar
@@ -288,173 +223,4 @@ Rectangle {
         onExpandRequested: root.outlineToggleRequested()
     }
 
-    // D1b: flutua sobre o editor no canto superior direito (VS Code), acima
-    // do texto mas abaixo dos popups de completion/actions.
-    EditorFindBar {
-        id: findBar
-
-        visible: root.findBarVisible && root.currentTab >= 0
-        z: 22
-        anchors.top: externalBanner.bottom
-        anchors.right: parent.right
-        anchors.topMargin: Theme.spacingSmall
-        anchors.rightMargin: 2 * Theme.spacingSmall
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        replaceMode: root.findReplaceMode
-        query: root.findQuery
-        replacement: root.findReplacement
-        caseSensitive: root.findCaseSensitive
-        wholeWord: root.findWholeWord
-        useRegex: root.findUseRegex
-        invalidRegex: root.findInvalidRegex
-        matchCount: root.findMatchCount
-        currentMatch: root.findCurrentDisplay
-        onQueryEdited: function(text) {
-            root.findQueryEdited(text);
-        }
-        onReplacementEdited: function(text) {
-            root.findReplacementEdited(text);
-        }
-        onFindNextRequested: root.findNextRequested()
-        onFindPreviousRequested: root.findPreviousRequested()
-        onReplaceRequested: root.findReplaceRequested()
-        onReplaceAllRequested: root.findReplaceAllRequested()
-        onCaseToggleRequested: root.findCaseToggleRequested()
-        onWholeWordToggleRequested: root.findWholeWordToggleRequested()
-        onRegexToggleRequested: root.findRegexToggleRequested()
-        onCloseRequested: root.findCloseRequested()
-    }
-
-    EditorHoverPopup {
-        visible: root.hoverVisible && root.hoverText !== ""
-        z: 20
-        anchors.top: externalBanner.bottom
-        anchors.right: parent.right
-        anchors.topMargin: 2 * Theme.spacingSmall
-        anchors.rightMargin: 2 * Theme.spacingSmall
-        hoverText: root.hoverText
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        onDismissRequested: root.hoverDismissRequested()
-    }
-
-    EditorCompletionPopup {
-        visible: root.completionVisible && root.currentTab >= 0
-        z: 30
-        itemsModel: root.completionModel
-        completionCount: root.completionCount
-        currentIndex: root.completionIndex
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        x: {
-            const rect = editor.cursorRectangle;
-            const point = editor.cursorPointIn(root);
-            return Math.max(Theme.spacingSmall,
-                            Math.min(point.x, root.width - width - Theme.spacingSmall));
-        }
-        y: {
-            const rect = editor.cursorRectangle;
-            const point = editor.cursorPointIn(root);
-            const below = point.y + rect.height + 4;
-            if (below + height > root.height - Theme.spacingSmall) {
-                return Math.max(Theme.spacingSmall, point.y - height - 4);
-            }
-            return below;
-        }
-        onCompletionActivated: function(index) {
-            root.completionActivated(index);
-        }
-    }
-
-    EditorActionsPopup {
-        visible: root.actionsVisible && root.currentTab >= 0
-        z: 30
-        itemsModel: root.actionsModel
-        actionCount: root.actionCount
-        currentIndex: root.actionsIndex
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        x: {
-            const point = editor.cursorPointIn(root);
-            return Math.max(Theme.spacingSmall,
-                            Math.min(point.x, root.width - width - Theme.spacingSmall));
-        }
-        y: {
-            const rect = editor.cursorRectangle;
-            const point = editor.cursorPointIn(root);
-            const below = point.y + rect.height + 4;
-            if (below + height > root.height - Theme.spacingSmall) {
-                return Math.max(Theme.spacingSmall, point.y - height - 4);
-            }
-            return below;
-        }
-        onActionActivated: function(index) {
-            root.actionActivated(index);
-        }
-        onDismissRequested: root.actionsDismissRequested()
-    }
-
-    EditorUsagesPopup {
-        visible: root.usagesVisible
-        z: 25
-        anchors.top: externalBanner.bottom
-        anchors.right: parent.right
-        anchors.topMargin: 2 * Theme.spacingSmall
-        anchors.rightMargin: 2 * Theme.spacingSmall
-        itemsModel: root.usagesModel
-        usageCount: root.usageCount
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        onCloseRequested: root.usagesDismissRequested()
-        onUsageOpenRequested: function(path, line, column) {
-            root.usageOpenRequested(path, line, column);
-        }
-    }
-
-    ProjectCreateDialog {
-        id: createDialog
-
-        visible: root.createDialogVisible
-        z: 40
-        anchors.centerIn: parent
-        dialogKind: root.createDialogKind
-        parentDisplayPath: root.createDialogParentDisplayPath
-        errorText: root.createDialogError
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        onConfirmRequested: root.createConfirmRequested(createDialog.currentName())
-        onCancelRequested: root.createCancelRequested()
-    }
-
-    SymbolRenameDialog {
-        id: renameDialog
-
-        visible: root.renameDialogVisible
-        z: 40
-        anchors.centerIn: parent
-        errorText: root.renameError
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        onConfirmRequested: root.renameConfirmRequested(renameDialog.currentName())
-        onCancelRequested: root.renameCancelRequested()
-    }
-
-    EditorWorkspaceEditPreviewDialog {
-        visible: root.workspaceEditPreviewVisible
-        z: 45
-        anchors.centerIn: parent
-        operationTitle: root.workspaceEditTitle
-        files: root.workspaceEditFiles
-        editCount: root.workspaceEditCount
-        errorText: root.workspaceEditError
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        maxAvailableHeight: root.height - 4 * Theme.spacingSmall
-        onApplyRequested: root.workspaceEditApplyRequested()
-        onCancelRequested: root.workspaceEditCancelRequested()
-    }
-
-    EditorGoToLineDialog {
-        id: goToLineDialog
-
-        visible: root.goToLineDialogVisible
-        z: 40
-        anchors.centerIn: parent
-        maxAvailableWidth: root.width - 4 * Theme.spacingSmall
-        onConfirmRequested: root.goToLineConfirmRequested(goToLineDialog.currentValue())
-        onCancelRequested: root.goToLineCancelRequested()
-    }
 }

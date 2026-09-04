@@ -393,21 +393,85 @@ transitório: até a fatia existir, o arquivo fica em 791, congelado.
 
 ## 9. Onde cada coisa mora agora
 
+> **Atualizado em 2026-09-04.** O mapa completo, com as pastas de shell,
+> components e panels, está em
+> [`../roadmaps/39-divida-tecnica-paga.md`](../roadmaps/39-divida-tecnica-paga.md)
+> §7. Abaixo fica só a pasta do editor.
+
 ```text
 ui/qml/editor/
-├── EditorController.qml            composition root + fachada unica do editor
-├── EditorDocumentController.qml    que arquivo esta aberto, o que esta sujo
-├── EditorTextController.qml        o que se faz com o TEXTO (cursor, linhas)
-├── EditorCompletionController.qml  a lista de completion e o filtro local
-├── EditorFindController.qml        busca e substituicao NO ARQUIVO
-├── EditorLanguageController.qml    o simbolo sob o cursor (LSP)          [novo]
-├── EditorHighlightController.qml   o realce do documento (TS + LSP)      [novo]
-├── EditorFormatController.qml      formatar e format-on-save             [novo]
-├── EditorPersistenceController.qml sessao e rascunho                     [novo]
-└── EditorSurfaceBridge.qml         a ponte fina para a superficie C++
+├── EditorController.qml              composition root + fachada unica do editor
+├── EditorSurfaceBridge.qml           a ponte fina para a superficie C++
+│
+├── EditorDocumentController.qml      que arquivo esta aberto, o que esta sujo
+├── EditorExternalChangeController.qml o disco mudou pelas costas da IDE
+├── EditorJumpController.qml          ir ate' linha/coluna, abrindo antes
+├── EditorRecentFiles.qml             o MRU de arquivos abertos
+├── EditorPersistenceController.qml   sessao e rascunho
+│
+├── EditorTextController.qml          transformar linhas e blocos
+├── EditorTextGeometry.qml            PERGUNTAS sobre o texto (nao modificam)
+├── EditorSelectionLadder.qml         expandir/encolher selecao (tem memoria)
+├── EditorTypingController.qml        o que uma TECLA significa
+├── TextRules.qml                     regras puras de texto de codigo
+├── PathRules.qml                     regras puras de caminho de arquivo
+│
+├── EditorCompletionController.qml    a lista de completion e o filtro local
+├── EditorLanguageController.qml      o simbolo sob o cursor (LSP)
+├── EditorHighlightController.qml     o realce do documento (TS + LSP)
+├── EditorFormatController.qml        formatar e format-on-save
+├── EditorFindController.qml          busca e substituicao NO ARQUIVO
+│
+├── EditorPane.qml                    compoe o painel do editor
+├── EditorTextSurface.qml             sarjeta + rolagem + TextEdit
+├── EditorLineHighlights.qml          faixas da linha do cursor e de execucao
+├── EditorDiagnosticTooltip.qml       o balao de diagnostico da sarjeta
+├── EditorBreadcrumbs.qml             a trilha "src › lsp › manager.rs"
+├── EditorOutlineHandle.qml           a alca de reabrir a Estrutura
+└── (popups e dialogos)               instanciados pelo ShellEditorOverlayHost
 ```
 
 **A regra para quem for acrescentar algo ao editor:** a função entra no dono da
 pergunta que ela responde. Se nenhum dono responde aquela pergunta, o certo é um
 dono novo — não uma função a mais no `EditorController`. Foi assim que ele
-chegou a 1.070.
+chegou a 1.070 linhas (medição de 2026-09-02).
+
+## 10. A fatia seguinte, feita em 2026-09-04
+
+A §8.5 fechou o `ShellWorkspaceHost` criando o `ShellEditorHost`, e deixou a
+fachada do `EditorController` intacta de propósito. A fatia de 2026-09-04
+continuou o mesmo movimento **um nível abaixo**, e o alvo foi o `EditorPane`.
+
+**O diagnóstico.** Depois de saírem dele os dois widgets de verdade (a trilha de
+breadcrumbs e a alça da Estrutura), o painel desenhava três linhas — `radius`,
+`color`, `border` — e o resto era repasse:
+
+```text
+~31 propriedades  levavam um valor do controller ate' um popup
+~21 sinais        levavam um clique do popup de volta
+```
+
+**Por que não se cortou o painel em dois.** Porque os dois pedaços continuariam
+repassando, e é literalmente o anti-precedente que a §4 regra 9 registra no caso
+`AppDomains`: *"13 propriedades de pass-through, nada ficou mais claro"*. A §4
+regra 8 prescreve outra coisa para composition root — **dividir por ÁREA,
+fazendo a contagem de arquivos crescer** — e a área existia sem dono: *o que
+FLUTUA sobre o editor*.
+
+**O resultado, medido em 2026-09-04:**
+
+```text
+EditorPane.qml               538 -> 226   perdeu 31 propriedades e 21 sinais
+ShellEditorHost.qml          225 -> 163   perdeu 30 bindings e 21 handlers
+ShellEditorOverlayHost.qml   novo, 245    limite 400 (composition host)
+```
+
+**O teste que distingue este corte de cerimônia:** as propriedades de travessia
+não mudaram de arquivo — **deixaram de existir**. O host de overlay lê
+`editorController.findQuery` direto, e ninguém no meio repete o nome.
+
+**O que isto NÃO mudou:** o `EditorController` continua em 791/400, congelado
+pela decisão da §8.4. Ele segue sendo o único item da catraca, e as duas saídas
+— dissolver a fachada (~190 pontos de chamada em 15 arquivos, medido em
+2026-09-03) ou corrigir a categoria — continuam sendo decisão do autor, não
+desta sessão. Ver [`../roadmaps/39-divida-tecnica-paga.md`](../roadmaps/39-divida-tecnica-paga.md) §6.

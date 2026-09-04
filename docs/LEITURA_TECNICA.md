@@ -137,7 +137,7 @@ nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
 provado, está sem evidência — por isso cada um é testado por mutação.
 
-**2. A catraca de arquitetura congela 8 arquivos (medido em 2026-09-03) e só
+**2. A catraca de arquitetura congela 1 arquivo (medido em 2026-09-04) e só
 deixa diminuir.** Ela não é limite duro. O critério é **responsabilidade**; linhas são só o detector de
 fumaça. Quando dispara há três suspeitos nesta ordem: **a sua mudança, a
 categoria, o arquivo** — e medido em 2026-07-16/17, o terceiro errou em dois de
@@ -147,14 +147,23 @@ três casos.
 `EditorController.qml`, e a área do editor ficou travada por ele até
 2026-09-02, quando quatro donos nasceram do corte (1.070 → 791; ver
 [arquitetura/32](arquitetura/32-editor-por-responsabilidade.md)). O que resta
-dele **não é mais implementação misturada** — são 64 funções de delegação pura,
-a fachada única do editor. A pergunta que ficou aberta não era "como cortar
-mais", era por que o `ShellWorkspaceHost.qml` precisa de 92 propriedades do
-editor. **O autor respondeu em 2026-09-03: corta-se o host primeiro** (saída (a);
-`arquitetura/32` §8.4). Feito no mesmo dia: o `ShellEditorHost.qml` nasceu com a
-fiação do painel e o `ShellWorkspaceHost` caiu de **576 para 407**, com as
-leituras de `editorController` indo de **92 para 2**. Nenhum limite foi
-levantado; o `EditorController` segue congelado em 791.
+dele **não é mais implementação misturada** — é a fachada única do editor. A
+pergunta que ficou aberta não era "como cortar mais", era por que o
+`ShellWorkspaceHost.qml` precisava de 92 propriedades do editor. **O autor
+respondeu em 2026-09-03: corta-se o host primeiro** (saída (a); `arquitetura/32`
+§8.4). Feito no mesmo dia — o `ShellEditorHost.qml` nasceu com a fiação do painel
+e o `ShellWorkspaceHost` caiu de 576 para 407 (medição de 2026-09-03) — e
+continuado em **2026-09-04**, quando o mesmo movimento desceu um nível: o
+`EditorPane` perdeu 31 propriedades e 21 sinais de puro repasse para o
+`ShellEditorOverlayHost.qml`, e caiu de 538 para 226. Nesse dia a catraca foi de
+**8 arquivos para 1**; ver
+[roadmaps/39](roadmaps/39-divida-tecnica-paga.md).
+
+Nenhum limite foi levantado em nenhuma das duas datas. O `EditorController`
+segue **congelado em 791/400** — é o único item restante, e as duas saídas
+(dissolver a fachada, ou corrigir a categoria) estão medidas no
+[roadmaps/39](roadmaps/39-divida-tecnica-paga.md) §6, esperando decisão do
+autor.
 
 **4. O core não escreve nada fora do workspace sem gesto explícito.** Desde
 2026-08-29 a persistência global entra por `Core::enable_persistence`, chamada só

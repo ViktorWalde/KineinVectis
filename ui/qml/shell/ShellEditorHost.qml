@@ -24,19 +24,19 @@ Item {
     property alias editorSurface: editorPane.editorSurface
 
     function focusCreateDialog() {
-        editorPane.focusCreateDialog();
+        overlayHost.focusCreateDialog();
     }
 
     function openRenameDialogWithName(name) {
-        editorPane.openRenameDialogWithName(name);
+        overlayHost.openRenameDialogWithName(name);
     }
 
     function openGoToLineDialog(prefill) {
-        editorPane.openGoToLineDialog(prefill);
+        overlayHost.openGoToLineDialog(prefill);
     }
 
     function focusFindBar() {
-        editorPane.focusFindBar();
+        overlayHost.focusFindBar();
     }
 
     // Os args de tab/revisao existem so para os bindings reavaliarem
@@ -74,39 +74,7 @@ Item {
         completionVisible: root.editorController.completionVisible
         usagesVisible: root.editorController.usagesVisible
         hoverVisible: root.editorController.hoverVisible
-        hoverText: root.editorController.hoverText
-        completionModel: root.editorController.completionModel
-        completionCount: root.editorController.completionModel.count
-        completionIndex: root.editorController.completionIndex
         actionsVisible: root.editorController.actionsVisible
-        actionsModel: root.editorController.actionsModel
-        actionCount: root.editorController.actionsModel.count
-        actionsIndex: root.editorController.actionsIndex
-        usagesModel: root.editorController.usagesModel
-        usageCount: root.editorController.usagesModel.count
-        createDialogVisible: root.projectTree.createDialogVisible
-        createDialogKind: root.projectTree.createDialogKind
-        createDialogParentDisplayPath: root.shellController.relativeToRoot(
-                                           root.projectTree.createDialogParentPath)
-        createDialogError: root.projectTree.createDialogError
-        renameDialogVisible: root.editorController.renameDialogVisible
-        renameError: root.editorController.renameError
-        workspaceEditPreviewVisible: root.editorController.workspaceEditPreviewVisible
-        workspaceEditTitle: root.editorController.workspaceEditTitle
-        workspaceEditFiles: root.editorController.workspaceEditFiles
-        workspaceEditCount: root.editorController.workspaceEditCount
-        workspaceEditError: root.editorController.workspaceEditError
-        goToLineDialogVisible: root.editorController.goToLineVisible
-        findBarVisible: root.editorController.findBarVisible
-        findReplaceMode: root.editorController.findReplaceMode
-        findQuery: root.editorController.findQuery
-        findReplacement: root.editorController.findReplacement
-        findCaseSensitive: root.editorController.findCaseSensitive
-        findWholeWord: root.editorController.findWholeWord
-        findUseRegex: root.editorController.findUseRegex
-        findInvalidRegex: root.editorController.findInvalidRegex
-        findMatchCount: root.editorController.findMatchCount
-        findCurrentDisplay: root.editorController.findCurrentDisplay
         breakpointLines: root.currentFileBreakpoints(
             root.editorController.currentTab,
             root.debugController.breakpointsRevision)
@@ -156,9 +124,6 @@ Item {
         }
         onActionsAcceptRequested: root.editorController.applySelectedAction()
         onActionsDismissRequested: root.editorController.dismissActions()
-        onActionActivated: function(index) {
-            root.editorController.applyCodeAction(index);
-        }
         onUsagesDismissRequested: root.editorController.usagesVisible = false
         onHoverDismissRequested: root.editorController.hoverVisible = false
         onIndentRequested: root.editorController.indentEditorSelection()
@@ -168,48 +133,6 @@ Item {
         onSmartHomeRequested: function(extendSelection) {
             root.editorController.editorSmartHome(extendSelection);
         }
-        onCompletionActivated: function(index) {
-            root.editorController.completionIndex = index;
-            root.editorController.acceptCompletion();
-        }
-        onUsageOpenRequested: function(path, line, column) {
-            root.editorController.openDiagnostic(path, line, column);
-        }
-        onCreateConfirmRequested: function(name) {
-            root.projectTree.confirmCreateEntry(name);
-        }
-        onCreateCancelRequested: {
-            root.projectTree.createDialogVisible = false;
-            root.editorController.focusEditor();
-        }
-        onRenameConfirmRequested: function(name) {
-            root.editorController.confirmRename(name);
-        }
-        onRenameCancelRequested: {
-            root.editorController.renameDialogVisible = false;
-            root.editorController.focusEditor();
-        }
-        onWorkspaceEditApplyRequested: root.editorController.applyWorkspaceEdit()
-        onWorkspaceEditCancelRequested: root.editorController.cancelWorkspaceEdit()
-        onGoToLineConfirmRequested: function(value) {
-            root.editorController.confirmGoToLine(value);
-        }
-        onGoToLineCancelRequested: root.editorController.cancelGoToLine()
-        onFindQueryEdited: function(text) {
-            root.editorController.setFindQuery(text);
-        }
-        onFindReplacementEdited: function(text) {
-            root.editorController.setFindReplacement(text);
-        }
-        onFindNextRequested: root.editorController.findNext()
-        onFindPreviousRequested: root.editorController.findPrevious()
-        onFindReplaceRequested: root.editorController.replaceFindCurrent()
-        onFindReplaceAllRequested: root.editorController.replaceFindAll()
-        onFindCaseToggleRequested: root.editorController.toggleFindCase()
-        onFindWholeWordToggleRequested:
-            root.editorController.toggleFindWholeWord()
-        onFindRegexToggleRequested: root.editorController.toggleFindRegex()
-        onFindCloseRequested: root.editorController.closeFind()
         onExternalReloadRequested: root.editorController.reloadExternalFile()
         onExternalKeepLocalRequested: root.editorController.keepLocalFile()
         onWatchErrorDismissRequested: root.editorController.dismissWatchError()
@@ -221,5 +144,20 @@ Item {
         }
         onOutlineResetRequested: root.shellController.resetOutlineWidth()
         onOutlineToggleRequested: root.shellController.toggleOutline()
+    }
+
+    // O que FLUTUA sobre o editor tem host proprio, e le' os controllers
+    // direto — sem passar por trinta propriedades do painel.
+    // Ver ShellEditorOverlayHost.qml.
+    ShellEditorOverlayHost {
+        id: overlayHost
+
+        anchors.fill: editorPane
+        contentTop: editorPane.overlayTop
+
+        editorController: root.editorController
+        projectTree: root.projectTree
+        shellController: root.shellController
+        editorSurface: editorPane.editorSurface
     }
 }

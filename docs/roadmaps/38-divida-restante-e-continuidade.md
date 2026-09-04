@@ -7,6 +7,25 @@
 > **Regra zero vale aqui como em tudo:** antes de aceitar qualquer item como
 > pendente, MEÇA. Cada linha carrega o comando.
 
+## 0. Este documento foi SUPERADO na parte de dívida (2026-09-04)
+
+A fila descrita na §2 **foi paga**: a catraca saiu de 8 arquivos para 1. O
+registro do que aconteceu, com o critério de cada corte, está em
+[`39-divida-tecnica-paga.md`](39-divida-tecnica-paga.md) — comece por lá.
+
+Duas coisas deste documento continuam valendo e por isso ele não foi apagado:
+
+- a **§4**, que lista o que está aberto e **não é dívida** (etapas 25 a 28, a UI
+  de embarcado, o registro de saídas vazio);
+- a **§5**, que responde por escrito ao pedido de "pesquisar as melhores
+  arquiteturas".
+
+E uma coisa aqui **estava errada**, o que vale como registro: a §2.3 dizia que
+três arquivos não deviam ser cortados porque cortar 20 linhas acima do limite
+seria corte por tamanho. A conclusão estava certa, a premissa não — os três
+tinham responsabilidade misturada de verdade, e foram cortados por isso. Ver
+[`39`](39-divida-tecnica-paga.md) §2.
+
 ## 1. O estado, em números
 
 ```bash

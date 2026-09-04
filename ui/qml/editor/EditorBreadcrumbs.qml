@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
@@ -34,7 +35,8 @@ Row {
             required property int index
             required property string modelData
 
-            readonly property bool isLast: index === root.segments.length - 1
+            readonly property bool isLast:
+                segment.index === root.segments.length - 1
 
             spacing: Theme.spacingXSmall
 
