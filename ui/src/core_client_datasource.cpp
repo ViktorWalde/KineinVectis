@@ -14,6 +14,11 @@
 
 namespace kinein {
 
+void CoreClient::setupList()
+{
+    sendRequest(QStringLiteral("setup.list"), QJsonObject{});
+}
+
 void CoreClient::dataSourceList()
 {
     sendRequest(QStringLiteral("datasource.list"), QJsonObject{});
@@ -53,6 +58,12 @@ void CoreClient::dataSourceIntrospect(const QString& name, const QString& passwo
 
 bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("setup.list")) {
+        emit setupListResolved(result.value(QStringLiteral("distroName")).toString(),
+                               result.value(QStringLiteral("family")).toString(),
+                               result.value(QStringLiteral("tools")).toArray().toVariantList());
+        return true;
+    }
     if (method == QStringLiteral("datasource.list") ||
         method == QStringLiteral("datasource.save") ||
         method == QStringLiteral("datasource.remove"))

@@ -31,6 +31,7 @@ pub mod run;
 pub mod runconfig;
 pub mod runtime;
 pub mod settings;
+pub mod setup;
 pub mod terminal;
 pub mod test;
 pub mod toolchain;
@@ -251,6 +252,7 @@ impl Core {
             .or_else(|| self.syntax_request_response(method, request_id.clone(), params))
             .or_else(|| self.lsp_request_response(method, request_id.clone(), params))
             .or_else(|| self.library_request_response(method, request_id.clone(), params))
+            .or_else(|| self.setup_request_response(method, request_id.clone(), params))
             .or_else(|| self.datasource_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))

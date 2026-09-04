@@ -33,6 +33,7 @@ Item {
     readonly property alias configActionController: configActionController
     readonly property alias toolchainController: toolchainController
     readonly property alias dataSourceController: dataSourceController
+    readonly property alias setupController: setupController
     readonly property alias libraryController: libraryController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
@@ -149,6 +150,13 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
     }
 
+    // Como instalar o que falta (2026-09-04): passo a passo OFICIAL para a
+    // distro detectada. Nao instala nada — mostra e, se o autor pedir, escreve
+    // no terminal da IDE.
+    SetupController {
+        id: setupController
+    }
+
     // Configuration Actions (roadmap 30, etapa 2): dominio proprio, nasce nas
     // quatro camadas. Quem abre o dialogo e a paleta/atalho; o host visual dele
     // e o ShellOverlays, como os demais dialogos.
@@ -257,6 +265,7 @@ Item {
         configActionController: configActionController
         libraryController: libraryController
         dataSourceController: dataSourceController
+        setupController: setupController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);

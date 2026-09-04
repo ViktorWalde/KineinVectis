@@ -61,6 +61,10 @@ set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
 set_source_files_properties(qml/datasource/DataSourceVerdict.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceVerdict.qml)
 set_source_files_properties(qml/datasource/DataSourceStructure.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceStructure.qml)
+set_source_files_properties(qml/setup/SetupController.qml PROPERTIES QT_RESOURCE_ALIAS SetupController.qml)
+set_source_files_properties(qml/setup/SetupPanel.qml PROPERTIES QT_RESOURCE_ALIAS SetupPanel.qml)
+set_source_files_properties(qml/setup/SetupPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS SetupPanelHost.qml)
+set_source_files_properties(qml/setup/SetupToolRow.qml PROPERTIES QT_RESOURCE_ALIAS SetupToolRow.qml)
 set_source_files_properties(qml/datasource/DataSourceField.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceField.qml)
 set_source_files_properties(qml/library/LibraryPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanelHost.qml)
 set_source_files_properties(qml/library/LibraryPlanView.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPlanView.qml)
@@ -68,6 +72,8 @@ set_source_files_properties(qml/ipc/LibraryRequestRouter.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/ipc/LibraryEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryEventRouter.qml)
 set_source_files_properties(qml/ipc/DataSourceEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceEventRouter.qml)
 set_source_files_properties(qml/ipc/DataSourceRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceRequestRouter.qml)
+set_source_files_properties(qml/ipc/SetupEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SetupEventRouter.qml)
+set_source_files_properties(qml/ipc/SetupRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS SetupRequestRouter.qml)
 set_source_files_properties(qml/debug/DebugWatches.qml PROPERTIES QT_RESOURCE_ALIAS DebugWatches.qml)
 set_source_files_properties(qml/debug/DebugInspector.qml PROPERTIES QT_RESOURCE_ALIAS DebugInspector.qml)
 set_source_files_properties(qml/diagnostics/DiagnosticsController.qml PROPERTIES QT_RESOURCE_ALIAS DiagnosticsController.qml)
@@ -252,6 +258,10 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceList.qml
         qml/datasource/DataSourceVerdict.qml
         qml/datasource/DataSourceStructure.qml
+        qml/setup/SetupController.qml
+        qml/setup/SetupPanel.qml
+        qml/setup/SetupPanelHost.qml
+        qml/setup/SetupToolRow.qml
         qml/datasource/DataSourceField.qml
         qml/library/LibraryPanelHost.qml
         qml/library/LibraryPlanView.qml
@@ -259,6 +269,8 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/LibraryEventRouter.qml
         qml/ipc/DataSourceEventRouter.qml
         qml/ipc/DataSourceRequestRouter.qml
+        qml/ipc/SetupEventRouter.qml
+        qml/ipc/SetupRequestRouter.qml
         qml/debug/DebugWatches.qml
         qml/debug/DebugInspector.qml
         qml/diagnostics/DiagnosticsController.qml

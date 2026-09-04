@@ -17,6 +17,7 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var setupController: null
     property var toolchainController: null
     property bool aboutVisible: false
     property bool manualVisible: false
@@ -195,6 +196,18 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.dataSourceController.close()
+    }
+
+    SetupPanelHost {
+        anchors.fill: parent
+        visible: root.setupController.panelVisible
+        z: 99
+        controller: root.setupController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.setupController.close()
+        // O comando vai para o TERMINAL DA IDE, visivel. Nada roda escondido.
+        onCommandRequested: comando => root.runtimeController.submitShellInput(comando)
     }
 
     AboutDialog {

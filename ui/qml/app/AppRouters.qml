@@ -125,6 +125,16 @@ Item {
         dataSourceController: root.domains.dataSourceController
     }
 
+    SetupEventRouter {
+        coreClient: root.domains.coreClient
+        setupController: root.domains.setupController
+    }
+
+    SetupRequestRouter {
+        coreClient: root.domains.coreClient
+        setupController: root.domains.setupController
+    }
+
     ConfigActionEventRouter {
         coreClient: root.domains.coreClient
         configActionController: root.domains.configActionController

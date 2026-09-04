@@ -18,6 +18,7 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var setupController: null
 
     visible: false
 
@@ -253,6 +254,12 @@ Item {
         // anunciava ao nascer ja' era alias do `debug.start` na UI.
         sequence: "Ctrl+Alt+J"
         onActivated: root.dataSourceController.open()
+    }
+
+    Shortcut {
+        // comando: setup.list
+        sequence: "Ctrl+Alt+H"
+        onActivated: root.setupController.open()
     }
 
     Shortcut {

@@ -1044,6 +1044,60 @@ descreve um protocolo que não existe mais testa nada, e é exatamente como o
 ([`39`](39-divida-tecnica-paga.md) §8.2). As asserções novas foram provadas por
 mutação.
 
+### 9.3.9 "Instalar ferramentas": o passo a passo oficial, na sua distro
+
+Ideia do autor em 2026-09-04: *"mostrar os comandos de acordo com as distros
+mais famosas, auxiliando dentro da própria IDE o usuário iniciante, mostrar o
+comando oficial e dar o link oficial para ele conferir caso haja
+desconfiança"*.
+
+Ela fecha um buraco que o próprio autor tinha apontado antes: quando uma
+biblioteca não está instalada, a IDE escreve `FetchContent` com uma URL do
+GitHub no `CMakeLists.txt`. **O caminho que dispensa a URL é instalar o pacote
+no sistema — e até aqui a IDE dizia "instale" sem dizer COMO.**
+
+**A decisão anterior que precisou ser revista.** O `tools.rs`
+§`install_command` registrou em 2026-08 que sugerir instalação por distro seria
+*"palpite disfarçado de instrução"*. **A decisão continua valendo contra
+palpite.** O que mudou é a premissa:
+
+```text
+nao ADIVINHA a distro   le' /etc/os-release, que a propria distribuicao
+                        escreve sobre si (padrao systemd/freedesktop)
+nao INVENTA o comando   copia da documentacao OFICIAL, com a URL e a DATA em
+                        que foi conferida
+nao EXECUTA nada        devolve TEXTO; quem roda e' o autor
+```
+
+**Ler e citar não é adivinhar.** E sem fonte para uma família, a entrada **não
+existe**: a IDE mostra o site e diz que não tem passo a passo, em vez de
+traduzir um comando de outra distro — que seria exatamente o palpite proibido.
+
+**O que está no catálogo, tudo conferido em 2026-09-04:**
+
+```text
+PostgreSQL    debian, redhat     postgresql.org/download/linux/{ubuntu,redhat}
+TimescaleDB   debian, redhat     tigerdata.com/docs/self-hosted/latest/install
+Grafana       debian, redhat     grafana.com/docs/.../installation/{debian,rpm}
+```
+
+Exercitado nesta máquina: `Fedora Linux 44` → família `redhat`, PostgreSQL
+detectado como já instalado, três passos oficiais, fonte e data ao lado.
+
+**Um teste guarda a regra do arquivo:** todo guia precisa de URL `https://`,
+data de conferência e explicação em cada passo. Quem acrescentar um comando sem
+fonte reprova antes de a IDE mostrar instrução que ninguém conferiu.
+
+**Sobre o botão que executa.** O autor pediu *"ou o próprio usuário clicar em
+instalar e já rodar todo o script oficial"*. Ele **escreve o comando no terminal
+da própria IDE**, visível, onde o autor lê a linha e responde o prompt de senha.
+Instalador silencioso com `sudo` dentro de um editor de texto é poder que
+ninguém pediu — e o método manual (copiar, ou seguir no seu terminal) continua
+ali, como ele também pediu.
+
+**Grafana entra por aqui antes de entrar como integração** (etapa 27): a IDE
+conversa com ele por HTTP API, nunca embutido, porque o Grafana é AGPL.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

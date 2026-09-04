@@ -132,6 +132,21 @@ pub(super) fn configaction_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
+/// Como instalar o que falta (2026-09-04): o passo a passo oficial.
+///
+/// `requires_workspace` e' FALSE, e a ausencia diz algo: quem esta comecando
+/// abre a IDE antes de ter projeto, e e' exatamente ai' que este guia serve.
+pub(super) fn setup_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "setup.list".to_owned(),
+        title: "Instalar ferramentas...".to_owned(),
+        category: "Projeto".to_owned(),
+        description: "Passo a passo oficial para a sua distribuicao, com a fonte junto".to_owned(),
+        default_shortcut: Some("Ctrl+Alt+H".to_owned()),
+        requires_workspace: false,
+    }]
+}
+
 /// Fontes de dados (roadmaps/35, etapa 26): o catalogo de conexoes.
 ///
 /// UM descriptor, pelo mesmo motivo do `library` abaixo: a paleta anuncia a

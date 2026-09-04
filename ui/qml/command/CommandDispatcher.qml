@@ -16,6 +16,7 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var setupController: null
 
     signal openWorkspaceRequested()
     signal showTabRequested(string tab)
@@ -101,6 +102,8 @@ Item {
             libraryController.open();
         } else if (commandId === "datasource.list") {
             dataSourceController.open();
+        } else if (commandId === "setup.list") {
+            setupController.open();
         } else if (commandId === "settings.get") {
             settingsController.openDialog();
         } else if (commandId === "fs.createFile") {

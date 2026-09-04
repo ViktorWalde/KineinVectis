@@ -30,6 +30,7 @@ mod rpc;
 mod run;
 mod runconfig;
 mod settings;
+mod setup;
 mod syntax;
 mod terminal;
 mod toolchain;
@@ -57,6 +58,7 @@ pub use rpc::*;
 pub use run::*;
 pub use runconfig::*;
 pub use settings::*;
+pub use setup::*;
 pub use syntax::*;
 pub use terminal::*;
 pub use toolchain::*;
@@ -67,4 +69,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.77.0";
+pub const PROTOCOL_VERSION: &str = "0.78.0";

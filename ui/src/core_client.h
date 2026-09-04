@@ -142,6 +142,7 @@ public:
     Q_INVOKABLE void cmakeStatus();
     // `preset` vazio = o kit padrao do workspace (etapa 14: a escolha passou a
     // ser por KIT, nao por workspace).
+    Q_INVOKABLE void setupList();
     Q_INVOKABLE void dataSourceList();
     Q_INVOKABLE void dataSourceSave(const QVariantMap& profile);
     Q_INVOKABLE void dataSourceRemove(const QString& name);
@@ -247,6 +248,8 @@ signals:
     /// configure), "source" (lidos do CMakeLists) ou "none".
     void cmakeTargetsResolved(const QVariantList& targets, const QString& origin);
     void cargoMetadataResolved(int packages);
+    void setupListResolved(const QString& distroName, const QString& family,
+                           const QVariantList& tools);
     void dataSourceListResolved(const QVariantList& profiles);
     void dataSourceTestAccepted(const QString& jobId);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;

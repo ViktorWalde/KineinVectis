@@ -127,6 +127,7 @@ Window {
         configActionController: domains.configActionController
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
+        setupController: domains.setupController
         debugController: domains.debugController
         editorController: domains.editorController
         jobsController: domains.jobsController
@@ -155,6 +156,7 @@ Window {
         settingsController: domains.settingsController
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
+        setupController: domains.setupController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
         recentWorkspacesController: domains.recentWorkspacesController
@@ -264,6 +266,7 @@ Window {
         settingsController: domains.settingsController
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
+        setupController: domains.setupController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
         onAppMenuActionRequested: function(action) {

@@ -131,6 +131,8 @@ Item {
                   enabled: workspaceOpen },
                 { label: qsTr("Banco de dados..."), action: "datasource.list",
                   enabled: workspaceOpen },
+                { label: qsTr("Instalar ferramentas..."), action: "setup.list",
+                  enabled: true },
                 { label: qsTr("Toolchain e kits..."), action: "toolchain.get",
                   enabled: workspaceOpen },
                 { label: qsTr("Ações de configuração..."), action: "configAction.list",
