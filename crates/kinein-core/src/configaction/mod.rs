@@ -39,6 +39,7 @@ mod cargotoml;
 mod catalog;
 mod cmakelists;
 mod error;
+mod parametros;
 mod plan;
 mod presets;
 mod remover;
@@ -88,7 +89,7 @@ pub fn list(
             if !in_scope && !include_hidden_by_scope {
                 return None;
             }
-            Some(availability::describe(action, &facts, in_scope))
+            Some(availability::describe(root, action, &facts, in_scope))
         })
         .collect();
     ConfigActionListResult {

@@ -73,64 +73,23 @@ Item {
         }
 
         // Campos declarados pela acao. Sem parametro, nada aparece.
+        // Cada campo mostra o que FAZ e o que o projeto oferece; ver
+        // ConfigActionField.qml.
         Repeater {
             model: root.action !== null ? root.action.params : []
 
-            Row {
-                id: paramRow
+            delegate: ConfigActionField {
+                id: campo
 
                 required property var modelData
 
                 width: header.width
-                spacing: Theme.spacingSmall
+                param: campo.modelData
+                value: root.controller.paramValue(campo.modelData.name)
 
-                Text {
-                    width: 110
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: paramRow.modelData.label + (paramRow.modelData.required ? " *" : "")
-                    color: Theme.textSecondary
-                    font.pixelSize: 11
-                    elide: Text.ElideRight
-                }
-
-                Rectangle {
-                    width: paramRow.width - 110 - Theme.spacingSmall
-                    height: 26
-                    radius: Theme.radius
-                    color: Theme.background0
-                    border.color: input.activeFocus ? Theme.accent : Theme.borderSoft
-                    border.width: 1
-
-                    TextInput {
-                        id: input
-
-                        anchors.fill: parent
-                        anchors.leftMargin: Theme.spacingSmall
-                        anchors.rightMargin: Theme.spacingSmall
-                        verticalAlignment: TextInput.AlignVCenter
-                        color: Theme.textPrimary
-                        selectionColor: Theme.accentDim
-                        selectedTextColor: Theme.textPrimary
-                        font.family: Theme.monoFont
-                        font.pixelSize: 12
-                        clip: true
-                        selectByMouse: true
-                        onTextChanged: {
-                            root.controller.setParam(paramRow.modelData.name, text);
-                            root.controller.requestPreview();
-                        }
-                    }
-
-                    Text {
-                        anchors.left: parent.left
-                        anchors.leftMargin: Theme.spacingSmall
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: paramRow.modelData.placeholder
-                        color: Theme.textDisabled
-                        font.family: Theme.monoFont
-                        font.pixelSize: 12
-                        visible: input.text === ""
-                    }
+                onEdited: texto => {
+                    root.controller.setParam(campo.modelData.name, texto);
+                    root.controller.requestPreview();
                 }
             }
         }

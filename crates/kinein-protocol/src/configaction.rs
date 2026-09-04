@@ -125,6 +125,21 @@ pub struct ConfigActionParamInfo {
     pub required: bool,
     /// Exemplo mostrado no campo vazio.
     pub placeholder: String,
+    /// O que este parametro FAZ, em uma frase.
+    ///
+    /// Pedido do autor em 2026-09-04: *"mostrar o risco de forma explicita, o
+    /// que aquilo faz ou nao no projeto, e ter uma descricao explicando"*. Um
+    /// campo chamado `visibility` com um placeholder `PRIVATE` nao diz a
+    /// ninguem o que acontece se ele virar `PUBLIC`.
+    #[serde(default)]
+    pub description: String,
+    /// Valores REAIS lidos do projeto aberto, para escolher em vez de digitar.
+    ///
+    /// Vazio quando nao ha' o que sugerir (o campo continua livre). A IDE ja'
+    /// sabe quais targets existem e quais arquivos existem; pedir que o autor
+    /// digite o que ela sabe e' o atrito que este campo remove.
+    #[serde(default)]
+    pub suggestions: Vec<String>,
 }
 
 /// Link de documentacao de uma acao (spec 9.2 §12).

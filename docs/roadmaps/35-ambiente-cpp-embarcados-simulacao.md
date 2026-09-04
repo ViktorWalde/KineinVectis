@@ -962,6 +962,48 @@ compartilham `resolve_secret` e `find_profile`. Duas cópias divergiriam
 exatamente como as duas cópias de `isWordChar` divergiram
 ([`../roadmaps/39`](39-divida-tecnica-paga.md) §5).
 
+### 9.3.7 O campo explica e sugere (2026-09-04)
+
+Pedido do autor: *"mostrar o que aquilo faz ou não no projeto, e ter uma
+descrição explicando... e o usuário clicar no campo e, em vez de digitar
+manualmente, ter a opção de selecionar visualmente a leitura que a IDE faz"*.
+
+Eram **duas faltas** e ele juntou as duas com razão:
+
+```text
+o campo nao EXPLICA   `visibility` com placeholder `PRIVATE` nao dizia o que
+                      muda se virar `PUBLIC`
+o campo nao SUGERE    `target` pedia que se digitasse um nome que a IDE ja'
+                      sabe de cor
+```
+
+Agora cada parâmetro leva **o que ele faz** e **os valores reais do projeto**:
+
+```text
+target       ['demo', 'nucleo']                    lidos do CMakeLists
+sources      ['src/main.cpp', 'src/nucleo.cpp']    varridos do projeto
+visibility   ['PRIVATE', 'PUBLIC', 'INTERFACE']    escolha fechada
+werror       ['OFF', 'ON']
+```
+
+**Por NOME de parâmetro, não por ação.** `target` quer dizer a mesma coisa em
+`addSourceToTarget`, `strictWarnings` e `enableOpenMP`; escrever a explicação em
+cada uma criaria cópias que envelhecem separadas — a mesma razão pela qual
+`isWordChar` virou um dono só ([`39`](39-divida-tecnica-paga.md) §5).
+
+**As sugestões são chips, não um combo fechado:** o campo continua livre, porque
+nem todo alvo aparece na leitura (nome montado por variável no CMake). *Sugerir
+sem impedir.*
+
+**A varredura pula o que a própria IDE gerou** (`.kinein/`, `build/`, `target/`)
+— sugerir `.kinein/build/CMakeFiles/...` seria oferecer lixo de build como
+código-fonte do autor.
+
+**E a exercitação contra um projeto real achou um buraco na tabela recém-escrita:**
+o catálogo usa `directories` (plural) e a tabela só tinha `directory`. O campo
+aparecia **sem sugestão e sem explicação** — exatamente o defeito que o módulo
+existia para corrigir. O teste agora cobre as duas grafias.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

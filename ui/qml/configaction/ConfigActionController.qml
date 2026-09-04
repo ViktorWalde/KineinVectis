@@ -191,6 +191,13 @@ Item {
         requestPreview();
     }
 
+    // O valor atual de um campo. Existe para o campo poder ser CONTROLADO —
+    // clicar num chip de sugestao precisa aparecer no texto, e sem leitura o
+    // TextInput seria a unica fonte da verdade.
+    function paramValue(name) {
+        return paramValues[name] !== undefined ? paramValues[name] : "";
+    }
+
     function setParam(name, value) {
         const values = {};
         for (const key in paramValues) {

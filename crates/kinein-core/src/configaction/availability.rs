@@ -61,6 +61,7 @@ impl WorkspaceFacts {
 /// Monta o payload de protocolo de uma acao, ja com o estado medido.
 #[must_use]
 pub(super) fn describe(
+    root: &Path,
     action: &ActionDefinition,
     facts: &WorkspaceFacts,
     in_scope: bool,
@@ -105,6 +106,11 @@ pub(super) fn describe(
                     label: (*label).to_owned(),
                     required: *required,
                     placeholder: (*placeholder).to_owned(),
+                    // O significado e os valores vem do NOME do parametro, e
+                    // nao da acao: `target` quer dizer a mesma coisa em todas
+                    // elas. Ver `parametros.rs`.
+                    description: super::parametros::describe(name).to_owned(),
+                    suggestions: super::parametros::suggestions(root, name),
                 },
             )
             .collect(),

@@ -30,3 +30,5 @@ FetchContent_Declare(
          FetchContent_MakeAvailable(asio)
 
 find_package(fmt CONFIG REQUIRED)
+
+find_package(fmt CONFIG REQUIRED)
