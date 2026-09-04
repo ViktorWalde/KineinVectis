@@ -44,6 +44,11 @@ pub(super) fn is_known(role: ToolchainRole, id: &str) -> bool {
     candidates_for(role).iter().any(|entry| entry.id == id)
 }
 
+// Cross-compilador NAO e' um papel novo, e a medicao de 2026-09-03 corrigiu o
+// esboco do `roadmaps/35` §5.3 que dizia que era. `arm-none-eabi-gcc` escreve a
+// MESMA variavel que o `gcc`: `CMAKE_C_COMPILER`. Dois papeis apontando para a
+// mesma variavel seria a duplicacao que este projeto passa o dia removendo — o
+// cross e' um CANDIDATO do papel que ja existe.
 static C_COMPILERS: &[RoleCandidate] = &[
     RoleCandidate {
         id: "clang",
@@ -54,6 +59,11 @@ static C_COMPILERS: &[RoleCandidate] = &[
         id: "gcc",
         label: "GCC",
         tool_id: "gcc",
+    },
+    RoleCandidate {
+        id: "arm-none-eabi-gcc",
+        label: "GCC (ARM bare-metal)",
+        tool_id: "arm-none-eabi-gcc",
     },
 ];
 
@@ -67,6 +77,11 @@ static CXX_COMPILERS: &[RoleCandidate] = &[
         id: "gxx",
         label: "G++",
         tool_id: "gxx",
+    },
+    RoleCandidate {
+        id: "arm-none-eabi-gxx",
+        label: "G++ (ARM bare-metal)",
+        tool_id: "arm-none-eabi-gxx",
     },
 ];
 

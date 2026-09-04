@@ -163,6 +163,23 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         alternative_binary: None,
         install_command: None,
     },
+    // Cross-compiladores de embarcado. Sao ToolSpec como qualquer outro: quem
+    // DETECTA continua sendo o ToolDetector, e o catalogo da toolchain so' diz
+    // que eles interessam ao papel de compilador.
+    ToolSpec {
+        id: "arm-none-eabi-gcc",
+        display_name: "GCC (ARM bare-metal)",
+        binary: "arm-none-eabi-gcc",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "arm-none-eabi-gxx",
+        display_name: "G++ (ARM bare-metal)",
+        binary: "arm-none-eabi-g++",
+        alternative_binary: None,
+        install_command: None,
+    },
     ToolSpec {
         id: "probe-rs",
         display_name: "probe-rs",
@@ -427,8 +444,10 @@ mod tests {
                 "gdb",
                 "lldb",
                 "lldb-dap",
-                // Entrou em 2026-09-03 (roadmaps/35 etapa 22): adaptador DAP
-                // de embarcado, que fala DAP nativo por stdin/stdout.
+                // Cross-compiladores e adaptador de embarcado, 2026-09-03
+                // (roadmaps/35 etapas 22 e 23).
+                "arm-none-eabi-gcc",
+                "arm-none-eabi-gxx",
                 "probe-rs",
                 "ripgrep",
                 "fd",

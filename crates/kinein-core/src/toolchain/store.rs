@@ -36,12 +36,18 @@ pub(super) struct Kit {
     /// Triple do alvo (`--target` do cargo).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_triple: Option<String>,
+    /// Chip do alvo, para o adaptador de debug de embarcado.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip: Option<String>,
 }
 
 impl Kit {
     /// `true` quando o kit nao guarda nada — nao vale a pena persistir.
     pub(super) fn is_empty(&self) -> bool {
-        self.selections.is_empty() && self.sysroot.is_none() && self.target_triple.is_none()
+        self.selections.is_empty()
+            && self.sysroot.is_none()
+            && self.target_triple.is_none()
+            && self.chip.is_none()
     }
 }
 
@@ -94,6 +100,7 @@ pub(super) fn load(root: &Path) -> BTreeMap<String, Kit> {
                     selections: antigo.selections,
                     sysroot: None,
                     target_triple: None,
+                    chip: None,
                 },
             );
             kits
@@ -151,6 +158,7 @@ mod tests {
                 selections: BTreeMap::from([("cxxCompiler".to_owned(), "gxx".to_owned())]),
                 sysroot: None,
                 target_triple: None,
+                chip: None,
             },
         );
         kits.insert(
@@ -159,6 +167,7 @@ mod tests {
                 selections: BTreeMap::new(),
                 sysroot: Some("/opt/sysroots/arm".to_owned()),
                 target_triple: Some("aarch64-unknown-linux-gnu".to_owned()),
+                chip: None,
             },
         );
         // Kit sem nada nao merece linha no arquivo.

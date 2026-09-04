@@ -152,13 +152,14 @@ impl DebugManager {
         program: &Path,
         adapter_id: Option<&str>,
         adapter_path: Option<&Path>,
+        chip: Option<&str>,
     ) -> Result<(), DebugError> {
         if self.is_running() {
             return Err(DebugError::AlreadyRunning);
         }
         // Sessao morta (terminated/EOF) ainda ocupa o slot: descarta antes.
         self.session = None;
-        let adapter = session::Adapter::from_choice(adapter_id, adapter_path);
+        let adapter = session::Adapter::from_choice(adapter_id, adapter_path, chip);
         let session = session::DapSession::launch(
             root,
             program,

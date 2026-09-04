@@ -42,6 +42,7 @@ pub struct Toolchain {
     candidates: Vec<ToolchainCandidate>,
     sysroot: Option<String>,
     target_triple: Option<String>,
+    chip: Option<String>,
     preset_toolchain_file: Option<String>,
 }
 
@@ -99,6 +100,7 @@ impl Toolchain {
             preset: preset.to_owned(),
             sysroot: kit.sysroot,
             target_triple: kit.target_triple,
+            chip: kit.chip,
             preset_toolchain_file: preset_toolchain_file(root, preset),
             selections,
             candidates,
@@ -112,6 +114,7 @@ impl Toolchain {
             preset: self.preset.clone(),
             sysroot: self.sysroot.clone(),
             target_triple: self.target_triple.clone(),
+            chip: self.chip.clone(),
             preset_toolchain_file: self.preset_toolchain_file.clone(),
             selections: self.selections.clone(),
             candidates: self.candidates.clone(),
@@ -188,6 +191,12 @@ impl Toolchain {
     #[must_use]
     pub fn sysroot(&self) -> Option<&str> {
         self.sysroot.as_deref()
+    }
+
+    /// Chip do alvo, quando escolhido — vai no `launch` do DAP.
+    #[must_use]
+    pub fn chip(&self) -> Option<&str> {
+        self.chip.as_deref()
     }
 
     /// `CMAKE_SYSTEM_NAME` derivado do triple (`<arch>-<vendor>-<os>-<abi>`).
@@ -269,6 +278,7 @@ pub fn set_kit(
     preset: &str,
     sysroot: Option<&str>,
     target_triple: Option<&str>,
+    chip: Option<&str>,
 ) -> Result<Toolchain, String> {
     let mut kits = store::load(root);
     let kit = kits.entry(preset.to_owned()).or_default();
@@ -279,6 +289,10 @@ pub fn set_kit(
     if let Some(valor) = target_triple {
         let limpo = valor.trim();
         kit.target_triple = (!limpo.is_empty()).then(|| limpo.to_owned());
+    }
+    if let Some(valor) = chip {
+        let limpo = valor.trim();
+        kit.chip = (!limpo.is_empty()).then(|| limpo.to_owned());
     }
     store::save(root, &kits)?;
     Ok(Toolchain::resolve_kit(root, tools, preset))
@@ -522,6 +536,7 @@ mod tests {
             "",
             Some("/opt/sysroots/arm"),
             Some("aarch64-unknown-linux-gnu"),
+            None,
         )
         .unwrap();
 
@@ -541,7 +556,15 @@ mod tests {
     #[test]
     fn unknown_triple_does_not_guess_a_system_name() {
         let root = temp_root("exotico");
-        let kit = set_kit(&root, &maquina(), "", None, Some("riscv64-esquisito-xyz")).unwrap();
+        let kit = set_kit(
+            &root,
+            &maquina(),
+            "",
+            None,
+            Some("riscv64-esquisito-xyz"),
+            None,
+        )
+        .unwrap();
 
         let argumentos = kit.cmake_arguments();
         assert!(
@@ -564,6 +587,7 @@ mod tests {
             "cross",
             Some("/opt/arm"),
             Some("armv7-unknown-linux-gnueabihf"),
+            None,
         )
         .unwrap();
         set(
@@ -603,10 +627,11 @@ mod tests {
             "",
             Some("/opt/a"),
             Some("x86_64-unknown-linux-gnu"),
+            None,
         )
         .unwrap();
 
-        let so_sysroot = set_kit(&root, &maquina(), "", Some("/opt/b"), None).unwrap();
+        let so_sysroot = set_kit(&root, &maquina(), "", Some("/opt/b"), None, None).unwrap();
         assert_eq!(so_sysroot.sysroot(), Some("/opt/b"));
         assert_eq!(
             so_sysroot.target_triple(),
@@ -614,7 +639,7 @@ mod tests {
             "campo ausente apagou o alvo"
         );
 
-        let limpo = set_kit(&root, &maquina(), "", Some("  "), None).unwrap();
+        let limpo = set_kit(&root, &maquina(), "", Some("  "), None, None).unwrap();
         assert_eq!(limpo.sysroot(), None, "string em branco tinha que limpar");
     }
 }

@@ -95,6 +95,13 @@ pub(super) struct Adapter {
     pub(super) program: std::path::PathBuf,
     /// Argumentos que fazem esse executavel falar DAP.
     pub(super) arguments: &'static [&'static str],
+    /// Chip do alvo, quando o kit escolheu um.
+    ///
+    /// Vai no `launch`, **nao** na linha de comando: verificado na doc do
+    /// probe-rs, onde `chip` e' campo da configuracao de launch e nao flag do
+    /// `dap-server`. Supor o contrario daria um processo que sobe e falha no
+    /// primeiro request, com a causa longe do sintoma.
+    pub(super) chip: Option<String>,
 }
 
 impl Adapter {
@@ -103,11 +110,16 @@ impl Adapter {
     /// `id` `None` = o padrao. `resolved` e' o caminho que o kit fixou; sem
     /// ele, usa-se o nome nu e o `PATH` decide — o mesmo contrato de
     /// `Toolchain::program_for`.
-    pub(super) fn from_choice(id: Option<&str>, resolved: Option<&Path>) -> Self {
+    pub(super) fn from_choice(
+        id: Option<&str>,
+        resolved: Option<&Path>,
+        chip: Option<&str>,
+    ) -> Self {
         let id = id.unwrap_or(DEFAULT_ADAPTER);
         Self {
             program: resolved.map_or_else(|| std::path::PathBuf::from(id), Path::to_path_buf),
             arguments: adapter_arguments(id),
+            chip: chip.map(str::to_owned),
         }
     }
 }
@@ -178,7 +190,13 @@ impl DapSession {
             stopped_thread,
         };
         // Drop mata o adapter se qualquer passo do handshake falhar.
-        session.handshake(root, program, breakpoints, &initialized_receiver)?;
+        session.handshake(
+            root,
+            program,
+            breakpoints,
+            &initialized_receiver,
+            adapter.chip.as_deref(),
+        )?;
         send_event(
             &session.events,
             "event.debug.started",
@@ -342,6 +360,7 @@ impl DapSession {
         program: &Path,
         breakpoints: &BTreeMap<String, Vec<SourceBreakpointParams>>,
         initialized: &mpsc::Receiver<()>,
+        chip: Option<&str>,
     ) -> Result<(), DebugError> {
         self.wire.request(
             "initialize",
@@ -356,14 +375,18 @@ impl DapSession {
         )?;
         // A resposta de launch so chega depois do configurationDone; o
         // request vai agora e a espera fica para o final.
-        let (launch_seq, launch_receiver) = self.wire.send_request(
-            "launch",
-            &json!({
-                "program": program.display().to_string(),
-                "cwd": root.display().to_string(),
-                "stopOnEntry": false,
-            }),
-        )?;
+        let mut launch_args = json!({
+            "program": program.display().to_string(),
+            "cwd": root.display().to_string(),
+            "stopOnEntry": false,
+        });
+        // O chip so' entra quando o kit escolheu um. Mandar `"chip": null` para
+        // um adaptador que nao o espera e' pedir para ele tratar como valor —
+        // a mesma regra da condicao de breakpoint (0.66.0).
+        if let Some(chip) = chip {
+            launch_args["chip"] = json!(chip);
+        }
+        let (launch_seq, launch_receiver) = self.wire.send_request("launch", &launch_args)?;
         if initialized.recv_timeout(REQUEST_TIMEOUT).is_err() {
             return Err(DebugError::Adapter {
                 message: "o adapter nao publicou o evento initialized".to_owned(),
@@ -390,7 +413,7 @@ mod tests {
     /// que garante que o desktop nao mudou quando o embarcado entrou.
     #[test]
     fn no_choice_keeps_the_previous_behaviour() {
-        let padrao = super::Adapter::from_choice(None, None);
+        let padrao = super::Adapter::from_choice(None, None, None);
         assert_eq!(padrao.program, std::path::PathBuf::from("lldb-dap"));
         assert!(
             padrao.arguments.is_empty(),
@@ -404,7 +427,7 @@ mod tests {
     /// como timeout, longe da causa.
     #[test]
     fn probe_rs_gets_the_subcommand_that_makes_it_speak_dap() {
-        let escolhido = super::Adapter::from_choice(Some("probe-rs"), None);
+        let escolhido = super::Adapter::from_choice(Some("probe-rs"), None, None);
         assert_eq!(escolhido.program, std::path::PathBuf::from("probe-rs"));
         assert_eq!(escolhido.arguments, &["dap-server"]);
     }
@@ -417,6 +440,7 @@ mod tests {
         let fixado = super::Adapter::from_choice(
             Some("probe-rs"),
             Some(std::path::Path::new("/opt/embarcado/probe-rs")),
+            None,
         );
         assert_eq!(
             fixado.program,
@@ -430,8 +454,31 @@ mod tests {
     /// apontar um que nos nao listamos.
     #[test]
     fn an_unknown_adapter_runs_bare_instead_of_being_refused() {
-        let outro = super::Adapter::from_choice(Some("meu-dap"), None);
+        let outro = super::Adapter::from_choice(Some("meu-dap"), None, None);
         assert_eq!(outro.program, std::path::PathBuf::from("meu-dap"));
         assert!(outro.arguments.is_empty());
+    }
+
+    /// O chip NAO vira argumento de linha de comando. Verificado na doc do
+    /// probe-rs: `chip` e' campo da configuracao de LAUNCH, nao flag do
+    /// `dap-server`. Um adaptador que recebesse `--chip` inesperado sobe e
+    /// falha no primeiro request, com a causa longe do sintoma.
+    #[test]
+    fn the_chip_never_becomes_a_command_line_argument() {
+        let com_chip = super::Adapter::from_choice(Some("probe-rs"), None, Some("STM32H745ZITx"));
+        assert_eq!(com_chip.arguments, &["dap-server"]);
+        assert!(
+            !com_chip.arguments.iter().any(|a| a.contains("chip")),
+            "o chip vazou para a linha de comando: {:?}",
+            com_chip.arguments
+        );
+        assert_eq!(com_chip.chip.as_deref(), Some("STM32H745ZITx"));
+    }
+
+    /// Sem chip escolhido, o campo nao existe — e' a mesma regra da condicao
+    /// de breakpoint: campo ausente nao e' campo nulo.
+    #[test]
+    fn no_chip_means_no_field() {
+        assert_eq!(super::Adapter::from_choice(None, None, None).chip, None);
     }
 }

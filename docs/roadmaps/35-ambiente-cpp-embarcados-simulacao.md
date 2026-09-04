@@ -336,7 +336,10 @@ donos (etapa 15), então o encaixe está limpo: `session.rs` já isola o spawn.
 
 **Medir:** `grep -n ADAPTER_BINARY crates/kinein-core/src/dap/session.rs`.
 
-**2. O catálogo de toolchain não conhece cross-compilador.**
+**2. O catálogo de toolchain não conhecia cross-compilador** — resolvido em
+2026-09-03, e a medição corrigiu este próprio texto: veja a nota ao fim do item.
+
+
 
 ```text
 papeis hoje:      CCompiler · CxxCompiler · Generator · Cmake · Cargo
@@ -347,6 +350,15 @@ Não há `arm-none-eabi-gcc`, nem papel para **sonda** (probe) ou **gdbserver**.
 kit sabe guardar um sysroot mas não sabe que existe um gravador.
 
 **Medir:** `grep -oE '"[a-z0-9-]+"' crates/kinein-core/src/toolchain/catalog.rs`.
+
+> **Correção de 2026-09-03.** Este item dizia "papéis novos: cross-compilador,
+> sonda, gdbserver". A medição mostrou que **cross-compilador não é papel**:
+> `arm-none-eabi-gcc` escreve a mesma `CMAKE_C_COMPILER` que o `gcc`, e dois
+> papéis na mesma variável seriam duplicação. Ele entrou como **candidato**.
+> E **`sonda`/`gdbserver` foram descartados**: no caminho probe-rs — o escolhido
+> pelo levantamento — o adaptador fala DAP direto, sem gdbserver, e a sonda é
+> detecção em runtime (etapa 24), não papel de kit. O que faltava de verdade era
+> um campo `chip`, que vai no `launch` do DAP.
 
 ### 5.4 O levantamento das ferramentas vem ANTES
 
@@ -384,7 +396,7 @@ domínio tem fio.
 ```text
 21  levantamento (licenca, manutencao, alvos, protocolo)   FEITO (2026-09-03)
 22  adaptador DAP vira escolha do kit                      FEITO (2026-09-03)
-23  papeis novos: cross-compilador, sonda, gdbserver       §5.3 item 2
+23  cross-compilador e chip do alvo                        FEITO (2026-09-03)
 24  deteccao da sonda + kit sugerido                       o "plug"
 25  ciclo build -> flash -> debug, com QEMU no gate        o "play"
 ```
@@ -515,8 +527,16 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            catalogo diz QUAL binario; o dap/
                                            diz COMO invocar.
 
-23  Papeis novos no toolchain: cross-      §5.3 item 2.
-    compilador, sonda, gdbserver
+23  Cross-compilador e chip do alvo        FEITA em 2026-09-03 (0.70.0), e a
+                                           MEDICAO CORRIGIU O ESBOCO: cross
+                                           NAO e' papel novo — escreve a mesma
+                                           CMAKE_C_COMPILER, entao e'
+                                           CANDIDATO do papel existente. E o
+                                           chip vai no `launch` do DAP, nao na
+                                           linha de comando. Os papeis `sonda`
+                                           e `gdbserver` foram DESCARTADOS:
+                                           especulativos no caminho probe-rs,
+                                           que fala DAP direto.
 
 24  Deteccao da sonda + kit sugerido       o "plug" da §5.1.
 

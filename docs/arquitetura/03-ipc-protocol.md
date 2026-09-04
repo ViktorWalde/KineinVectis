@@ -1,7 +1,7 @@
 # 03 — Protocolo IPC
 
 > **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.69.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
+> (JSON-RPC 0.70.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
 > `draft.*`, `format.*`, `cmake.*`, `cargo.*`, `configAction.*`, `runConfig.*`,
 > `settings.*`, `debug.*`, `git.*`, `build/test/quality.run`,
 > `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
@@ -1196,6 +1196,19 @@ O cabeçalho dele diz que responde *"quais binários interessam a cada papel"* �
 não *"com quais argumentos"*. Que o `probe-rs` precisa do subcomando
 `dap-server` é conhecimento de quem **sobe o processo**, e isso mora no domínio
 `dap/`.
+
+**O kit ganhou `chip` no protocolo `0.70.0`** — o alvo do adaptador de
+embarcado. Ele vai no **`launch` do DAP**, não na linha de comando: verificado
+na documentação do probe-rs, onde `chip` é campo da configuração de launch e não
+flag do `dap-server`. Supor o contrário daria um processo que sobe e falha no
+primeiro request, com a causa longe do sintoma. **Campo ausente não é campo
+nulo** — sem chip escolhido, o `launch` não carrega a chave, mesma regra da
+condição de breakpoint (`0.66.0`).
+
+**Cross-compilador NÃO virou papel novo**, e a medição corrigiu o esboço do
+`roadmaps/35` §5.3 que dizia que sim: `arm-none-eabi-gcc` escreve a **mesma**
+variável que o `gcc` — `CMAKE_C_COMPILER`. Dois papéis apontando para a mesma
+variável seria duplicação. O cross é **candidato** dos papéis que já existem.
 
 **Adaptador desconhecido não é recusado:** roda sem argumento, que é a forma da
 maioria dos adaptadores DAP. Recusar o que não está na lista impediria o usuário

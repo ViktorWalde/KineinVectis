@@ -108,6 +108,7 @@ impl Core {
             parsed.preset.as_deref().unwrap_or_default(),
             parsed.sysroot.as_deref(),
             parsed.target_triple.as_deref(),
+            parsed.chip.as_deref(),
         ) {
             Ok(resolvida) => JsonRpcResponse::success(request_id, json!(resolvida.to_result())),
             Err(message) => JsonRpcResponse::failure(

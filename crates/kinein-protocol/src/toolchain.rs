@@ -116,6 +116,13 @@ pub struct ToolchainResult {
     /// Triple do alvo, quando escolhido.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_triple: Option<String>,
+    /// Chip do alvo, quando escolhido.
+    ///
+    /// Vai no `launch` do DAP, **nao** na linha de comando do adaptador:
+    /// verificado na documentacao do probe-rs, onde `chip` e' campo da
+    /// configuracao de launch e nao flag do `dap-server`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip: Option<String>,
     /// Arquivo de toolchain que o PRESET declara (`toolchainFile`), quando ha.
     ///
     /// E informacao, nao escolha: quem manda nele e o `CMakePresets.json`, e a
@@ -168,6 +175,9 @@ pub struct ToolchainSetKitParams {
     /// Triple do alvo (`--target` do cargo, `CMAKE_SYSTEM_*`). `""` limpa.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub target_triple: Option<String>,
+    /// Chip do alvo, para o adaptador de debug de embarcado. `""` limpa.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip: Option<String>,
 }
 
 #[cfg(test)]
@@ -199,6 +209,7 @@ mod tests {
             preset: String::new(),
             sysroot: None,
             target_triple: None,
+            chip: None,
             preset_toolchain_file: None,
             selections: vec![ToolchainSelection {
                 role: ToolchainRole::Cmake,

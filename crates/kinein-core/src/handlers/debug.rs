@@ -85,6 +85,7 @@ impl Core {
             .chosen(kinein_protocol::ToolchainRole::DebugAdapter)
             .map(str::to_owned);
         let adapter_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
+        let chip = toolchain.chip().map(str::to_owned);
 
         let Some(manager) = self.debug.as_mut() else {
             return debug_unavailable_response(request_id, "debug.start");
@@ -94,6 +95,7 @@ impl Core {
             &program,
             adapter_id.as_deref(),
             adapter_path.as_deref(),
+            chip.as_deref(),
         ) {
             Ok(()) => JsonRpcResponse::success(
                 request_id,
