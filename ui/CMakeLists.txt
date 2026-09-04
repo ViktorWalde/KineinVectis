@@ -334,10 +334,13 @@ qt_add_qml_module(kinein-vectis
         src/debug_flags.cpp
         src/debug_flags.h
         src/core_client_dispatch.cpp
+        src/core_client_notifications.cpp
         src/core_client_dispatch_cmake.cpp
         src/core_client_dispatch_lsp.cpp
         src/core_client_dispatch_debug.cpp
         src/core_client_requests_debug.cpp
+        src/core_client_requests_git.cpp
+        src/core_client_requests_run.cpp
         src/core_client_configaction.cpp
         src/core_client_toolchain.cpp
         src/core_client_library.cpp

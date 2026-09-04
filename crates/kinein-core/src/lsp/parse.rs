@@ -7,7 +7,7 @@
 
 use kinein_protocol::{
     Diagnostic, DiagnosticSeverity, DiagnosticSource, JsonRpcRequest, LspCodeActionInfo,
-    LspCompletionItem, LspSemanticToken, LspSymbolInfo,
+    LspCompletionItem, LspSemanticToken,
 };
 use serde_json::{Value, json};
 
@@ -21,10 +21,10 @@ const MAX_COMPLETION_ITEMS: usize = 100;
 const MAX_REFERENCE_ITEMS: usize = 200;
 
 /// Maximo de simbolos de arquivo (`documentSymbol`) por request.
-const MAX_DOCUMENT_SYMBOLS: usize = 500;
+pub(super) const MAX_DOCUMENT_SYMBOLS: usize = 500;
 
 /// Maximo de simbolos de workspace (`workspace/symbol`) por request.
-const MAX_WORKSPACE_SYMBOLS: usize = 100;
+pub(super) const MAX_WORKSPACE_SYMBOLS: usize = 100;
 
 /// Extrai `result`/`error` de uma resposta LSP em `Result<Value, LspError>`.
 pub(super) fn response_result(method: &'static str, response: &Value) -> Result<Value, LspError> {
@@ -119,7 +119,7 @@ pub(super) fn definition_location(result: &Value) -> Option<LspLocation> {
     location_from_value(result)
 }
 
-fn location_from_value(value: &Value) -> Option<LspLocation> {
+pub(super) fn location_from_value(value: &Value) -> Option<LspLocation> {
     let (uri, range) = if let Some(uri) = value.get("uri").and_then(Value::as_str) {
         (uri, value.get("range")?)
     } else {
@@ -343,7 +343,7 @@ pub(super) fn workspace_edit_plan(result: &Value) -> Result<WorkspaceEditPlan, L
 }
 
 /// Nome plano do `SymbolKind` numerico do LSP (1..=26).
-const fn symbol_kind_name(kind: i64) -> Option<&'static str> {
+pub(super) const fn symbol_kind_name(kind: i64) -> Option<&'static str> {
     Some(match kind {
         1 => "file",
         2 => "module",
@@ -373,130 +373,6 @@ const fn symbol_kind_name(kind: i64) -> Option<&'static str> {
         26 => "typeParameter",
         _ => return None,
     })
-}
-
-/// Achata `textDocument/documentSymbol` nos simbolos do protocolo.
-///
-/// Aceita os dois shapes do LSP: `DocumentSymbol[]` hierarquico (achatado em
-/// pre-ordem, com o pai como `container`) e `SymbolInformation[]` plano.
-/// `fallback_path` e o proprio arquivo consultado (o shape hierarquico nao
-/// carrega URI).
-pub(super) fn document_symbols(result: &Value, fallback_path: &str) -> Vec<LspSymbolInfo> {
-    let Some(items) = result.as_array() else {
-        return Vec::new();
-    };
-    let mut symbols = Vec::new();
-    for item in items {
-        if symbols.len() >= MAX_DOCUMENT_SYMBOLS {
-            break;
-        }
-        if item.get("location").is_some() {
-            if let Some(info) = symbol_information(item) {
-                symbols.push(info);
-            }
-        } else {
-            flatten_document_symbol(item, None, fallback_path, &mut symbols);
-        }
-    }
-    symbols.truncate(MAX_DOCUMENT_SYMBOLS);
-    symbols
-}
-
-fn flatten_document_symbol(
-    item: &Value,
-    container: Option<&str>,
-    path: &str,
-    out: &mut Vec<LspSymbolInfo>,
-) {
-    if out.len() >= MAX_DOCUMENT_SYMBOLS {
-        return;
-    }
-    let Some(name) = item.get("name").and_then(Value::as_str) else {
-        return;
-    };
-    let kind = item
-        .get("kind")
-        .and_then(Value::as_i64)
-        .and_then(symbol_kind_name)
-        .unwrap_or("symbol")
-        .to_owned();
-    let position = item
-        .pointer("/selectionRange/start")
-        .or_else(|| item.pointer("/range/start"));
-    let line = position
-        .and_then(|start| start.get("line"))
-        .and_then(Value::as_u64)
-        .unwrap_or(0)
-        + 1;
-    let column = position
-        .and_then(|start| start.get("character"))
-        .and_then(Value::as_u64)
-        .unwrap_or(0)
-        + 1;
-    out.push(LspSymbolInfo {
-        name: name.to_owned(),
-        kind,
-        path: path.to_owned(),
-        line,
-        column,
-        container: container.map(str::to_owned),
-    });
-    if let Some(children) = item.get("children").and_then(Value::as_array) {
-        for child in children {
-            flatten_document_symbol(child, Some(name), path, out);
-        }
-    }
-}
-
-/// Converte um `SymbolInformation` (com `location.uri`) num simbolo do
-/// protocolo; entradas com URI fora do esquema `file://` sao ignoradas.
-fn symbol_information(item: &Value) -> Option<LspSymbolInfo> {
-    let name = item.get("name")?.as_str()?;
-    let kind = item
-        .get("kind")
-        .and_then(Value::as_i64)
-        .and_then(symbol_kind_name)
-        .unwrap_or("symbol")
-        .to_owned();
-    let uri = item.pointer("/location/uri")?.as_str()?;
-    let path = path_for_uri(uri)?;
-    let start = item.pointer("/location/range/start");
-    let line = start
-        .and_then(|position| position.get("line"))
-        .and_then(Value::as_u64)
-        .unwrap_or(0)
-        + 1;
-    let column = start
-        .and_then(|position| position.get("character"))
-        .and_then(Value::as_u64)
-        .unwrap_or(0)
-        + 1;
-    let container = item
-        .get("containerName")
-        .and_then(Value::as_str)
-        .filter(|value| !value.is_empty())
-        .map(str::to_owned);
-    Some(LspSymbolInfo {
-        name: name.to_owned(),
-        kind,
-        path,
-        line,
-        column,
-        container,
-    })
-}
-
-/// Converte `workspace/symbol` nos simbolos do protocolo (ordem do servidor).
-pub(super) fn workspace_symbols(result: &Value) -> Vec<LspSymbolInfo> {
-    let Some(items) = result.as_array() else {
-        return Vec::new();
-    };
-    let mut symbols = items
-        .iter()
-        .filter_map(symbol_information)
-        .collect::<Vec<_>>();
-    symbols.truncate(MAX_WORKSPACE_SYMBOLS);
-    symbols
 }
 
 /// Converte a resposta de `textDocument/codeAction` em pares (info, ação crua).
@@ -572,7 +448,7 @@ fn file_edits_from_value(
     })
 }
 
-fn position_component(position: Option<&Value>, key: &str) -> u64 {
+pub(super) fn position_component(position: Option<&Value>, key: &str) -> u64 {
     position
         .and_then(|value| value.get(key))
         .and_then(Value::as_u64)
@@ -952,7 +828,7 @@ mod tests {
             },
         ]);
 
-        let symbols = super::document_symbols(&result, "/w/src/main.rs");
+        let symbols = crate::lsp::parse_symbols::document_symbols(&result, "/w/src/main.rs");
 
         assert_eq!(symbols.len(), 3);
         assert_eq!(symbols[0].name, "Ponto");
@@ -988,7 +864,7 @@ mod tests {
             },
         ]);
 
-        let symbols = super::workspace_symbols(&result);
+        let symbols = crate::lsp::parse_symbols::workspace_symbols(&result);
 
         assert_eq!(symbols.len(), 1);
         assert_eq!(symbols[0].name, "Ponto");
@@ -997,6 +873,6 @@ mod tests {
         assert_eq!(symbols[0].line, 3);
         assert_eq!(symbols[0].column, 12);
         assert_eq!(symbols[0].container.as_deref(), Some("geometria"));
-        assert!(super::workspace_symbols(&json!(null)).is_empty());
+        assert!(crate::lsp::parse_symbols::workspace_symbols(&json!(null)).is_empty());
     }
 }

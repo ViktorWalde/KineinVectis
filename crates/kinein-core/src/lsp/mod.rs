@@ -23,6 +23,7 @@ mod edit;
 pub mod framing;
 mod manager;
 mod parse;
+mod parse_symbols;
 mod server;
 mod session;
 mod sync;

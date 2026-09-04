@@ -1,0 +1,258 @@
+// O que o core manda SEM SER PERGUNTADO: as notificacoes `event.*`.
+//
+// Separado do `core_client_dispatch.cpp` em 2026-09-03, e a costura nao foi
+// inventada aqui — o `arquitetura/04` §5 ja a nomeia com todas as letras:
+// "resposta e' consequencia de um PEDIDO; evento e' consequencia do MUNDO".
+// Dois fatos diferentes, dois arquivos.
+//
+// A diferenca tem consequencia pratica registrada na §6 do mesmo documento: um
+// evento pode chegar ENTRE um pedido e a resposta dele, e por isso o cliente
+// nao pode supor que a proxima linha apos um pedido e' a resposta. Quem casa
+// por `id` e o dispatch; quem so' reage e este arquivo.
+#include "core_client.h"
+
+#include <QJsonArray>
+
+namespace kinein {
+
+void CoreClient::handleNotification(const QString& method, const QJsonObject& params)
+{
+    if (handleFileSystemNotification(method, params)) {
+        return;
+    }
+    if (method == QStringLiteral("event.git.remoteFinished")) {
+        emit gitRemoteOperationFinished(params.value(QStringLiteral("operation")).toString(),
+                                        params.value(QStringLiteral("success")).toBool(false),
+                                        params.value(QStringLiteral("message")).toString());
+        return;
+    }
+    if (method == QStringLiteral("event.build.started")) {
+        const QString command = params.value(QStringLiteral("command")).toString();
+        appendLog(QStringLiteral("build iniciado: %1").arg(command));
+        emit buildStarted(command);
+        return;
+    }
+    if (method == QStringLiteral("event.build.output")) {
+        emit buildOutput(params.value(QStringLiteral("line")).toString());
+        return;
+    }
+    if (method == QStringLiteral("event.build.diagnostic")) {
+        emit buildDiagnostic(params.toVariantMap());
+        return;
+    }
+    if (method == QStringLiteral("event.build.finished")) {
+        const bool success = params.value(QStringLiteral("success")).toBool();
+        appendLog(QStringLiteral("build finalizado: %1")
+                      .arg(success ? QStringLiteral("sucesso") : QStringLiteral("falha")));
+        setBuilding(false);
+        m_buildJobId.clear();
+        emit buildFinished(success, params.value(QStringLiteral("exitCode")).toInt(-1),
+                           params.value(QStringLiteral("diagnostics")).toInt(0));
+        return;
+    }
+    if (method == QStringLiteral("event.test.started")) {
+        const QString command = params.value(QStringLiteral("command")).toString();
+        appendLog(QStringLiteral("testes iniciados: %1").arg(command));
+        emit testStarted(command);
+        return;
+    }
+    if (method == QStringLiteral("event.test.output")) {
+        emit testOutput(params.value(QStringLiteral("line")).toString(),
+                        params.value(QStringLiteral("stream")).toString());
+        return;
+    }
+    if (method == QStringLiteral("event.test.case")) {
+        emit testCase(params.value(QStringLiteral("name")).toString(),
+                      params.value(QStringLiteral("status")).toString());
+        return;
+    }
+    if (method == QStringLiteral("event.test.finished")) {
+        setTesting(false);
+        m_testJobId.clear();
+        emit testFinished(params.value(QStringLiteral("success")).toBool(),
+                          params.value(QStringLiteral("passed")).toInt(0),
+                          params.value(QStringLiteral("failed")).toInt(0),
+                          params.value(QStringLiteral("ignored")).toInt(0));
+        return;
+    }
+    if (method == QStringLiteral("event.quality.started")) {
+        const QString command = params.value(QStringLiteral("command")).toString();
+        appendLog(QStringLiteral("analise iniciada: %1").arg(command));
+        emit qualityStarted(command);
+        return;
+    }
+    if (method == QStringLiteral("event.quality.diagnostic")) {
+        emit qualityDiagnostic(params.toVariantMap());
+        return;
+    }
+    if (method == QStringLiteral("event.quality.output")) {
+        return;
+    }
+    if (method == QStringLiteral("event.quality.finished")) {
+        setAnalyzing(false);
+        m_qualityJobId.clear();
+        emit qualityFinished(params.value(QStringLiteral("success")).toBool(),
+                             params.value(QStringLiteral("exitCode")).toInt(-1),
+                             params.value(QStringLiteral("diagnostics")).toInt(0));
+        return;
+    }
+    if (handleCmakeNotification(method, params)) {
+        return;
+    }
+    if (handleDebugNotification(method, params)) {
+        return;
+    }
+    if (method == QStringLiteral("event.run.started")) {
+        const QString command = params.value(QStringLiteral("command")).toString();
+        appendLog(QStringLiteral("execucao iniciada: %1").arg(command));
+        setRunning(true);
+        emit runStarted(command);
+        return;
+    }
+    if (method == QStringLiteral("event.run.output")) {
+        emit runOutput(params.value(QStringLiteral("line")).toString(),
+                       params.value(QStringLiteral("stream")).toString());
+        return;
+    }
+    if (method == QStringLiteral("event.run.finished")) {
+        setRunning(false);
+        emit runFinished(params.value(QStringLiteral("success")).toBool(),
+                         params.value(QStringLiteral("exitCode")).toInt(-1));
+        return;
+    }
+    if (handleTerminalNotification(method, params)) {
+        return;
+    }
+    if (handleLspNotification(method, params)) {
+        return;
+    }
+    if (handleEnvironmentNotification(method, params)) {
+        return;
+    }
+    if (handleJobNotification(method, params)) {
+        return;
+    }
+}
+
+bool CoreClient::handleFileSystemNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.fs.changed")) {
+        emit filesChanged(params.value(QStringLiteral("changes")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("event.fs.watchError")) {
+        const QString message = params.value(QStringLiteral("message")).toString();
+        appendErrorLog(QStringLiteral("watcher do workspace: %1").arg(message));
+        emit fileWatchFailed(message);
+        return true;
+    }
+    return false;
+}
+
+bool CoreClient::handleTerminalNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.terminal.render")) {
+        // D2 (docs/roadmaps/24): grid do emulador (cores/cursor/spans) — a UI só desenha.
+        emit terminalRender(params.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.terminal.closed")) {
+        // D2.3: eventos atrasados de workspaces anteriores não podem alterar o
+        // estado das sessões atuais; por isso removemos o ID exato.
+        const QString id = params.value(QStringLiteral("id")).toString();
+        m_terminalIds.remove(id);
+        setTerminalActive(!m_terminalIds.isEmpty());
+        emit terminalClosed(id, params.value(QStringLiteral("exitCode")).toInt(-1));
+        return true;
+    }
+    return false;
+}
+
+bool CoreClient::handleDebugNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.debug.started")) {
+        const QString program = params.value(QStringLiteral("program")).toString();
+        appendLog(QStringLiteral("debug iniciado: %1").arg(program));
+        setDebugging(true);
+        emit debugStarted(program);
+        return true;
+    }
+    if (method == QStringLiteral("event.debug.output")) {
+        emit debugOutput(params.value(QStringLiteral("category")).toString(),
+                         params.value(QStringLiteral("line")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("event.debug.stopped")) {
+        emit debugStopped(params.value(QStringLiteral("reason")).toString(),
+                          params.value(QStringLiteral("file")).toString(),
+                          params.value(QStringLiteral("line")).toInt(0),
+                          params.value(QStringLiteral("threadId")).toInt(0));
+        return true;
+    }
+    if (method == QStringLiteral("event.debug.continued")) {
+        emit debugContinued();
+        return true;
+    }
+    if (method == QStringLiteral("event.debug.finished")) {
+        setDebugging(false);
+        emit debugFinished(params.value(QStringLiteral("exitCode")).toInt(-1));
+        return true;
+    }
+    return false;
+}
+
+bool CoreClient::handleEnvironmentNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.environment.started")) {
+        setScanningEnvironment(true);
+        appendLog(QStringLiteral("scan de ambiente iniciado"));
+        emit environmentScanStarted(params.value(QStringLiteral("tools")).toInt(0));
+        return true;
+    }
+    if (method == QStringLiteral("event.environment.tool")) {
+        emit environmentTool(params.value(QStringLiteral("tool")).toObject().toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.environment.finished")) {
+        setScanningEnvironment(false);
+        m_environmentJobId.clear();
+        const QVariantList tools = params.value(QStringLiteral("tools")).toArray().toVariantList();
+        appendLog(QStringLiteral("scan de ambiente finalizado"));
+        emit environmentScanFinished(params.value(QStringLiteral("success")).toBool(),
+                                     params.value(QStringLiteral("total")).toInt(0),
+                                     params.value(QStringLiteral("detected")).toInt(0),
+                                     params.value(QStringLiteral("missing")).toInt(0),
+                                     params.value(QStringLiteral("failed")).toInt(0), tools);
+        emit toolsListed(tools);
+        return true;
+    }
+    return false;
+}
+
+bool CoreClient::handleJobNotification(const QString& method, const QJsonObject& params)
+{
+    if (method == QStringLiteral("event.job.created")) {
+        emit jobCreated(params.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("event.job.progress")) {
+        emit jobProgress(params.value(QStringLiteral("jobId")).toString(),
+                         params.value(QStringLiteral("status")).toString(),
+                         params.value(QStringLiteral("progress")).toDouble(0.0),
+                         params.value(QStringLiteral("message")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("event.job.output")) {
+        emit jobOutput(params.value(QStringLiteral("jobId")).toString(),
+                       params.value(QStringLiteral("line")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("event.job.finished")) {
+        emit jobFinished(params.value(QStringLiteral("jobId")).toString(),
+                         params.value(QStringLiteral("status")).toString());
+        return true;
+    }
+    return false;
+}
+
+} // namespace kinein

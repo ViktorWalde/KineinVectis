@@ -23,8 +23,9 @@ use serde_json::{Value, json};
 
 use super::parse::{
     code_action_infos, completion_items, decode_semantic_tokens, definition_location,
-    document_symbols, hover_content, reference_locations, workspace_edit_plan, workspace_symbols,
+    hover_content, reference_locations, workspace_edit_plan,
 };
+use super::parse_symbols::{document_symbols, workspace_symbols};
 use super::server::{ServerHandle, ServerRegistry};
 use super::types::{LspError, LspLocation, WorkspaceEditPlan};
 use super::uri::{path_for_uri, uri_for_path};
