@@ -41,6 +41,7 @@ mod cmakelists;
 mod error;
 mod plan;
 mod presets;
+mod rigor;
 
 use std::{collections::BTreeMap, path::Path};
 
@@ -215,6 +216,12 @@ fn build_plan(
         "cmake.findPackage" => cmakelists::find_package(root, params),
         "cmake.fetchContent" => cmakelists::fetch_content(root, params),
         "cmake.addTargetLinkLibraries" => cmakelists::add_target_link_libraries(root, params),
+        "cmake.strictWarnings" => rigor::strict_warnings(root, params),
+        "cmake.setCxxStandard" => rigor::cxx_standard(root, params),
+        "cmake.enableSanitizers" => rigor::sanitizers(root, params),
+        "cmake.enableOpenMP" => rigor::openmp(root, params),
+        "cmake.generateHexBin" => rigor::hex_and_bin(root, params),
+        "cargo.embeddedTarget" => rigor::cargo_embedded_target(root, params),
         "cmake.inspectCache" => builddir::inspect_cache(root),
         "cmake.repairBuildDir" => builddir::repair_plan(root),
         "cargo.addDependency" => cargotoml::add_dependency(root, params, false),

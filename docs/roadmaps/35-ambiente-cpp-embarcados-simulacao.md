@@ -811,6 +811,53 @@ projeto", cinza é "disponível para ativar" —, e o canto da linha diz
 `ativa neste projeto` / `instalada no sistema` / `baixa junto do projeto` em vez
 do antigo `seria baixada`, que não dizia nem uma coisa nem outra.
 
+### 9.3.3 Seis ações novas: o REGIME de compilação (2026-09-04)
+
+Relato de uso: *"falta funções para exibir para o usuário selecionar como
+opção. Tanto do C/C++ quanto do Cargo. Para deixar o compilador mais rígido ou
+para alguma funcionalidade de sistemas embarcados ou de simulação"*.
+
+Ele estava certo, e o buraco tinha uma forma clara: as dezoito ações existentes
+respondiam **"o que o projeto TEM"** — mais um executável, mais uma
+dependência, mais um include. **Nenhuma respondia "como o projeto COMPILA"**.
+
+```text
+CMake Rigor       cmake.setCxxStandard      padrao C++ fixado, exigido, sem
+                                            extensoes GNU
+                  cmake.strictWarnings      -Wall -Wextra -Wpedantic -Wshadow
+                                            -Wconversion, com -Werror opcional
+                  cmake.enableSanitizers    -fsanitize no compilar E no linkar
+CMake Simulacao   cmake.enableOpenMP        find_package + OpenMP::OpenMP_CXX
+CMake Embarcado   cmake.generateHexBin      objcopy pos-build: .hex e .bin
+Cargo Embarcado   cargo.embeddedTarget      .cargo/config.toml com alvo e o
+                                            runner do probe-rs
+```
+
+**Três decisões que evitam erro conhecido, e estão no código:**
+
+1. **Sanitizer entra nas DUAS metades.** Só nas flags de compilação, o binário
+   linka sem a runtime e falha com `undefined reference to __asan_...`. É o erro
+   mais comum de quem escreve isso à mão.
+2. **`address` e `thread` juntos são recusados antes de compilar.** São
+   incompatíveis, e o compilador só reclama no fim do build — recusar aqui
+   poupa uma compilação inteira.
+3. **O `.hex` usa `${CMAKE_OBJCOPY}`, não `arm-none-eabi-objcopy`.** Assim a
+   ação funciona com o cross-compilador que o kit escolheu, sem hard-code.
+
+**E a exercitação contra o `CMake` real achou uma falha silenciosa na ação
+recém-escrita.** O `set(CMAKE_CXX_STANDARD 20)` saía no fim do arquivo, depois
+do `add_executable`:
+
+```text
+antes    a acao dizia sucesso, o arquivo mudava, e `flags.make` nao tinha
+         -std= NENHUM — o padrao nao vira propriedade de target criado ANTES
+depois   o bloco entra logo apos `cmake_minimum_required`, e o build sai com
+         -std=c++20
+```
+
+O `CMakeLists.txt` gerado foi **configurado e compilado de verdade** (`cmake -S
+. -B build && cmake --build`) antes de esta seção ser escrita.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

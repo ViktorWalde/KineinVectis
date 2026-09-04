@@ -28,3 +28,5 @@ FetchContent_Declare(
     GIT_TAG asio-1-38-2
 )
          FetchContent_MakeAvailable(asio)
+
+find_package(fmt CONFIG REQUIRED)

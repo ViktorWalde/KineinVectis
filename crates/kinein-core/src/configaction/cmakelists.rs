@@ -260,7 +260,7 @@ pub(super) fn fetch_content(
     ))
 }
 
-fn edit_plan(summary: String, before: String, block: &str) -> ActionPlan {
+pub(super) fn edit_plan(summary: String, before: String, block: &str) -> ActionPlan {
     let after = append_block(&before, block);
     ActionPlan::edit(
         summary,
@@ -273,7 +273,7 @@ fn edit_plan(summary: String, before: String, block: &str) -> ActionPlan {
 }
 
 /// Le o `CMakeLists.txt` e exige que o target pedido exista nele.
-fn existing_target(
+pub(super) fn existing_target(
     root: &std::path::Path,
     params: &BTreeMap<String, String>,
 ) -> Result<(String, String), ConfigActionError> {
@@ -309,7 +309,7 @@ fn visibility_of(params: &BTreeMap<String, String>) -> Result<String, ConfigActi
 }
 
 /// Monta o bloco no mesmo estilo dos templates de projeto da IDE.
-fn command_block(command: &str, head: &str, arguments: &[String]) -> String {
+pub(super) fn command_block(command: &str, head: &str, arguments: &[String]) -> String {
     let mut block = format!("{command}({head}\n");
     for argument in arguments {
         block.push_str("    ");
@@ -321,7 +321,7 @@ fn command_block(command: &str, head: &str, arguments: &[String]) -> String {
 }
 
 /// Acrescenta o bloco ao fim do arquivo, sempre com uma linha em branco antes.
-fn append_block(before: &str, block: &str) -> String {
+pub(super) fn append_block(before: &str, block: &str) -> String {
     let mut after = before.trim_end().to_owned();
     if !after.is_empty() {
         after.push_str("\n\n");
@@ -331,7 +331,7 @@ fn append_block(before: &str, block: &str) -> String {
 }
 
 /// Insere `statement` depois do `cmake_minimum_required(...)`; sem ele, no topo.
-fn insert_after_minimum_required(before: &str, statement: &str) -> String {
+pub(super) fn insert_after_minimum_required(before: &str, statement: &str) -> String {
     let lines: Vec<&str> = before.lines().collect();
     let anchor = lines
         .iter()
@@ -413,7 +413,7 @@ fn validate_sources(raw: &str) -> Result<Vec<String>, ConfigActionError> {
 /// Quebra a lista por espaco/virgula e recusa o que quebraria a sintaxe.
 /// Um argumento so', com a MESMA validacao de caractere dos varios: um pacote
 /// nao pode carregar `$` ou `)` por acidente e virar comando de `CMake`.
-fn one_argument(raw: &str, name: &'static str) -> Result<String, ConfigActionError> {
+pub(super) fn one_argument(raw: &str, name: &'static str) -> Result<String, ConfigActionError> {
     let mut valores = validate_arguments(raw, name)?;
     if valores.len() != 1 {
         return Err(ConfigActionError::InvalidParam {

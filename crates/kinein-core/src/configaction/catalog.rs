@@ -55,11 +55,12 @@ pub(super) fn definition(id: &str) -> Option<&'static ActionDefinition> {
 const CMAKELISTS_ONLY: &[&str] = &["CMakeLists.txt"];
 const PRESETS_ONLY: &[&str] = &["CMakePresets.json"];
 const CARGO_ONLY: &[&str] = &["Cargo.toml"];
+const CARGO_CONFIG_ONLY: &[&str] = &[".cargo/config.toml"];
 const NO_FILE: &[&str] = &[];
 
 const VISIBILITY_PARAM: (&str, &str, bool, &str) = ("visibility", "Visibilidade", false, "PRIVATE");
 
-static DEFINITIONS: [ActionDefinition; 18] = [
+static DEFINITIONS: [ActionDefinition; 24] = [
     ActionDefinition {
         id: "cmake.enableCompileCommands",
         title: "Habilitar compile_commands.json",
@@ -229,6 +230,105 @@ static DEFINITIONS: [ActionDefinition; 18] = [
             "CMake: target_link_libraries",
             "cmake.target_link_libraries",
         )],
+    },
+    // --- COMO o projeto compila (2026-09-04) -------------------------------
+    // As acoes acima respondem "o que o projeto TEM". Estas respondem "como
+    // ele COMPILA", que era o buraco que o autor relatou: nao havia como
+    // deixar o compilador mais rigido, ligar sanitizer, paralelizar calculo
+    // ou gerar firmware pela IDE.
+    ActionDefinition {
+        id: "cmake.setCxxStandard",
+        title: "Fixar o padrao C++",
+        description: "Define CMAKE_CXX_STANDARD, exige o padrao e desliga as extensoes GNU.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Rigor",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[("standard", "Padrao (11/14/17/20/23/26)", false, "20")],
+        docs: &[("officialDoc", "CMake: CXX_STANDARD", "cmake.CXX_STANDARD")],
+    },
+    ActionDefinition {
+        id: "cmake.strictWarnings",
+        title: "Compilador mais rigido (avisos)",
+        description: "Liga -Wall -Wextra -Wpedantic -Wshadow -Wconversion no target (GCC/Clang).",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Rigor",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("target", "Target", true, ""),
+            ("werror", "Tratar aviso como erro (ON/OFF)", false, "OFF"),
+        ],
+        docs: &[("officialDoc", "GCC: Warning Options", "gcc.warning-options")],
+    },
+    ActionDefinition {
+        id: "cmake.enableSanitizers",
+        title: "Ligar sanitizers",
+        description: "Acrescenta -fsanitize no compilar E no linkar; pega erro de memoria em teste.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Rigor",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("target", "Target", true, ""),
+            (
+                "sanitizers",
+                "Quais (address,undefined,thread,leak)",
+                false,
+                "address,undefined",
+            ),
+        ],
+        docs: &[(
+            "officialDoc",
+            "Clang: AddressSanitizer",
+            "clang.address-sanitizer",
+        )],
+    },
+    ActionDefinition {
+        id: "cmake.enableOpenMP",
+        title: "Paralelizar com OpenMP",
+        description: "find_package(OpenMP) e link do OpenMP::OpenMP_CXX — calculo em varios nucleos.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Simulacao",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[("target", "Target", true, "")],
+        docs: &[("officialDoc", "CMake: FindOpenMP", "cmake.FindOpenMP")],
+    },
+    ActionDefinition {
+        id: "cmake.generateHexBin",
+        title: "Gerar .hex e .bin para gravar",
+        description: "Converte o ELF com objcopy depois do build — o formato que o gravador aceita.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Embarcado",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[("target", "Target", true, "")],
+        docs: &[(
+            "officialDoc",
+            "CMake: add_custom_command",
+            "cmake.add_custom_command",
+        )],
+    },
+    ActionDefinition {
+        id: "cargo.embeddedTarget",
+        title: "Compilar e gravar numa placa",
+        description: "Cria .cargo/config.toml com o alvo e o runner do probe-rs; `cargo run` grava.",
+        scope: ConfigActionScope::Cargo,
+        category: "Cargo Embarcado",
+        risk: ConfigActionRisk::Medium,
+        affects: CARGO_CONFIG_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("target", "Triple do alvo", true, "thumbv7em-none-eabihf"),
+            ("chip", "Chip (probe-rs)", true, ""),
+        ],
+        docs: &[("officialDoc", "Cargo: configuration", "cargo.config")],
     },
     ActionDefinition {
         id: "cmake.inspectCache",

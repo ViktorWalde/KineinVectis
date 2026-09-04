@@ -142,7 +142,10 @@ fn the_list_is_filtered_by_the_active_build_system() {
         .collect();
     // Eram as 10 da spec de MVP §12.1; `findPackage` e `fetchContent`
     // entraram em 2026-09-03 com o dominio `library` (roadmaps/35 etapa 20).
-    assert_eq!(ids.len(), 12, "as 12 acoes CMake");
+    // As cinco de REGIME de compilacao — padrao C++, avisos rigorosos,
+    // sanitizers, OpenMP e .hex/.bin — entraram em 2026-09-04, de relato de
+    // uso: nao havia como deixar o compilador mais rigido pela IDE.
+    assert_eq!(ids.len(), 17, "as 17 acoes CMake");
     assert!(
         ids.iter().all(|id| id.starts_with("cmake.")),
         "projeto CMake nao pode ver acao Cargo: {ids:?}"
@@ -155,7 +158,7 @@ fn the_list_is_filtered_by_the_active_build_system() {
         "configAction.list",
         &json!({ "includeHiddenByScope": true }),
     );
-    assert_eq!(todas["actions"].as_array().unwrap().len(), 18);
+    assert_eq!(todas["actions"].as_array().unwrap().len(), 24);
     assert_eq!(
         action(&todas, "cargo.addDependency")["state"],
         "hiddenByScope"
@@ -180,7 +183,7 @@ fn a_mixed_workspace_sees_both_toolboxes() {
     open(&mut core, &dir);
 
     let list = ok(&mut core, "configAction.list", &json!({}));
-    assert_eq!(list["actions"].as_array().unwrap().len(), 18);
+    assert_eq!(list["actions"].as_array().unwrap().len(), 24);
     assert_eq!(action(&list, "cargo.addDependency")["state"], "available");
     assert_eq!(action(&list, "cmake.addExecutable")["state"], "available");
 }
