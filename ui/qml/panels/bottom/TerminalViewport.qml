@@ -30,40 +30,9 @@ Item {
             0, grid.width - terminalScrollBar.width - Theme.spacingXSmall)
     readonly property real contentHeight: grid.height
 
-    function ansiColor(value) {
-        if (typeof value === "string") return value;
-        const number = value | 0;
-        if (number < 16) return Theme.terminalPalette[number];
-        if (number < 232) {
-            const cube = number - 16;
-            const convert = function(part) { return part === 0 ? 0 : 55 + part * 40; };
-            return Qt.rgba(convert(Math.floor(cube / 36)) / 255,
-                           convert(Math.floor((cube % 36) / 6)) / 255,
-                           convert(cube % 6) / 255, 1);
-        }
-        const gray = (8 + (number - 232) * 10) / 255;
-        return Qt.rgba(gray, gray, gray, 1);
-    }
-
-    function spanFg(span) {
-        const fg = span.fg !== undefined ? ansiColor(span.fg) : Theme.textPrimary;
-        const bg = span.bg !== undefined ? ansiColor(span.bg) : Theme.backgroundEditor;
-        return span.inverse === true ? bg : fg;
-    }
-
-    function spanBg(span) {
-        const fg = span.fg !== undefined ? ansiColor(span.fg) : Theme.textPrimary;
-        const bg = span.bg !== undefined ? ansiColor(span.bg) : "transparent";
-        return span.inverse === true ? fg : bg;
-    }
-
-    function spanCells(span) {
-        if (span.cells !== undefined) {
-            return Math.max(0, Number(span.cells));
-        }
-        // Compatibilidade defensiva com um frame 0.55 que ainda esteja na
-        // fila durante a troca do core; 0.56 sempre informa células reais.
-        return span.text !== undefined ? Array.from(String(span.text)).length : 0;
+    // Regras puras de trecho; ver TerminalSpanRules.qml.
+    TerminalSpanRules {
+        id: spanRules
     }
 
     function copySelection() {
@@ -142,15 +111,15 @@ Item {
                         // colapso só atingia a LINHA vazia, tratada acima.
                         width: root.metrics
                                ? root.metrics.widthForCells(
-                                     root.spanCells(spanCell.modelData))
+                                     spanRules.cells(spanCell.modelData))
                                : 0
-                        color: root.spanBg(spanCell.modelData)
+                        color: StatusColors.terminalBackground(spanCell.modelData)
 
                         Text {
                             id: spanText
                             anchors.fill: parent
                             text: spanCell.modelData.text
-                            color: root.spanFg(spanCell.modelData)
+                            color: StatusColors.terminalForeground(spanCell.modelData)
                             font.family: Theme.monoFont
                             font.pixelSize: Theme.fontSizeTerminal
                             // ANSI bold continua semanticamente distinto,

@@ -33,8 +33,7 @@ Item {
     }
 
     function focusReplaceInput() {
-        replaceInput.forceActiveFocus();
-        replaceInput.selectAll();
+        replaceControls.focusInput();
     }
 
     Row {
@@ -67,7 +66,7 @@ Item {
                 clip: true
                 selectByMouse: true
                 onAccepted: panel.searchRequested(text)
-                onTextChanged: replaceButton.replaceArmed = false
+                onTextChanged: replaceControls.disarm()
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
@@ -127,90 +126,17 @@ Item {
         }
     }
 
-    Row {
+    SearchReplaceBar {
         id: replaceControls
 
         anchors.top: searchControls.bottom
         anchors.topMargin: Theme.spacingSmall
         width: parent.width
-        height: visible ? 30 : 0
-        spacing: Theme.spacingSmall
         visible: panel.replaceMode
+        busy: panel.replacing
 
-        Rectangle {
-            width: parent.width - replaceButton.width - Theme.spacingSmall
-            height: 30
-            radius: Theme.radius
-            color: Theme.background0
-            border.color: replaceInput.activeFocus ? Theme.accent : Theme.borderSoft
-            border.width: 1
-
-            TextInput {
-                id: replaceInput
-
-                anchors.fill: parent
-                anchors.leftMargin: Theme.spacingSmall
-                anchors.rightMargin: Theme.spacingSmall
-                verticalAlignment: TextInput.AlignVCenter
-                color: Theme.textPrimary
-                selectionColor: Theme.accentDim
-                selectedTextColor: Theme.textPrimary
-                font.family: Theme.monoFont
-                font.pixelSize: Theme.fontSizeTerminal
-                clip: true
-                selectByMouse: true
-                onTextChanged: replaceButton.replaceArmed = false
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: replaceInput.text === ""
-                    text: qsTr("Substituir por (vazio remove) — \\n quebra linha")
-                    color: Theme.textMuted
-                    font.pixelSize: 11
-                }
-            }
-        }
-
-        Rectangle {
-            id: replaceButton
-
-            property bool replaceArmed: false
-
-            width: replaceLabel.width + 2 * Theme.spacingMedium
-            height: 30
-            radius: Theme.radius
-            opacity: panel.replacing ? 0.55 : 1.0
-            color: replaceArmed ? Theme.errorSoft
-                                : (replaceArea.pressed ? Theme.accentDim : Theme.accent)
-
-            Text {
-                id: replaceLabel
-
-                anchors.centerIn: parent
-                text: panel.replacing ? qsTr("Substituindo...")
-                      : (replaceButton.replaceArmed
-                         ? qsTr("Confirmar") : qsTr("Substituir tudo"))
-                color: Theme.background0
-                font.pixelSize: 10
-                font.bold: true
-            }
-
-            MouseArea {
-                id: replaceArea
-
-                anchors.fill: parent
-                enabled: !panel.replacing
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: {
-                    if (!replaceButton.replaceArmed) {
-                        replaceButton.replaceArmed = true;
-                        return;
-                    }
-                    replaceButton.replaceArmed = false;
-                    panel.replaceRequested(searchInput.text, replaceInput.text);
-                }
-            }
-        }
+        onReplaceRequested: replacement =>
+            panel.replaceRequested(searchInput.text, replacement)
     }
 
     Text {

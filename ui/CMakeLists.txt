@@ -17,6 +17,8 @@ set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
+set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
+set_source_files_properties(qml/components/KvBarButton.qml PROPERTIES QT_RESOURCE_ALIAS KvBarButton.qml)
 set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
 set_source_files_properties(qml/components/KvTooltipHost.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltipHost.qml)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_RESOURCE_ALIAS TooltipController.qml)
@@ -95,6 +97,8 @@ set_source_files_properties(qml/panels/bottom/RunPanel.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/panels/bottom/SearchPanel.qml PROPERTIES QT_RESOURCE_ALIAS SearchPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalPanel.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalViewport.qml PROPERTIES QT_RESOURCE_ALIAS TerminalViewport.qml)
+set_source_files_properties(qml/panels/bottom/TerminalSpanRules.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSpanRules.qml)
+set_source_files_properties(qml/panels/bottom/SearchReplaceBar.qml PROPERTIES QT_RESOURCE_ALIAS SearchReplaceBar.qml)
 set_source_files_properties(qml/panels/bottom/TerminalGeometryOverlay.qml PROPERTIES QT_RESOURCE_ALIAS TerminalGeometryOverlay.qml)
 set_source_files_properties(qml/panels/bottom/TerminalMetrics.qml PROPERTIES QT_RESOURCE_ALIAS TerminalMetrics.qml)
 set_source_files_properties(qml/panels/bottom/TerminalScrollController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalScrollController.qml)
@@ -155,6 +159,10 @@ set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
 set_source_files_properties(qml/editor/EditorGutter.qml PROPERTIES QT_RESOURCE_ALIAS EditorGutter.qml)
 set_source_files_properties(qml/editor/TextRules.qml PROPERTIES QT_RESOURCE_ALIAS TextRules.qml)
+set_source_files_properties(qml/editor/EditorBreadcrumbs.qml PROPERTIES QT_RESOURCE_ALIAS EditorBreadcrumbs.qml)
+set_source_files_properties(qml/editor/EditorOutlineHandle.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineHandle.qml)
+set_source_files_properties(qml/editor/EditorTextGeometry.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextGeometry.qml)
+set_source_files_properties(qml/editor/EditorSelectionLadder.qml PROPERTIES QT_RESOURCE_ALIAS EditorSelectionLadder.qml)
 set_source_files_properties(qml/editor/PathRules.qml PROPERTIES QT_RESOURCE_ALIAS PathRules.qml)
 set_source_files_properties(qml/editor/EditorExternalChangeController.qml PROPERTIES QT_RESOURCE_ALIAS EditorExternalChangeController.qml)
 set_source_files_properties(qml/editor/EditorJumpController.qml PROPERTIES QT_RESOURCE_ALIAS EditorJumpController.qml)
@@ -185,6 +193,8 @@ qt_add_qml_module(kinein-vectis
         qml/Theme.qml
         qml/StatusColors.qml
         qml/components/KvIcon.qml
+        qml/components/KvToggleChip.qml
+        qml/components/KvBarButton.qml
         qml/components/KvTooltip.qml
         qml/components/KvTooltipHost.qml
         qml/components/TooltipController.qml
@@ -263,6 +273,8 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/SearchPanel.qml
         qml/panels/bottom/TerminalPanel.qml
         qml/panels/bottom/TerminalViewport.qml
+        qml/panels/bottom/TerminalSpanRules.qml
+        qml/panels/bottom/SearchReplaceBar.qml
         qml/panels/bottom/TerminalGeometryOverlay.qml
         qml/panels/bottom/TerminalMetrics.qml
         qml/panels/bottom/TerminalScrollController.qml
@@ -323,6 +335,10 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorTextSurface.qml
         qml/editor/EditorGutter.qml
         qml/editor/TextRules.qml
+        qml/editor/EditorBreadcrumbs.qml
+        qml/editor/EditorOutlineHandle.qml
+        qml/editor/EditorTextGeometry.qml
+        qml/editor/EditorSelectionLadder.qml
         qml/editor/PathRules.qml
         qml/editor/EditorExternalChangeController.qml
         qml/editor/EditorJumpController.qml

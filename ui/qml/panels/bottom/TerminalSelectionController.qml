@@ -9,6 +9,11 @@ import QtQuick
 Item {
     id: root
 
+    // Regras puras de trecho; ver TerminalSpanRules.qml.
+    TerminalSpanRules {
+        id: spanRules
+    }
+
     property var lines: []
     property TerminalMetrics metrics: null
     property bool selecting: false
@@ -40,19 +45,12 @@ Item {
         return text;
     }
 
-    function spanCells(span) {
-        if (span.cells !== undefined) {
-            return Math.max(0, Number(span.cells));
-        }
-        return Array.from(String(span.text !== undefined ? span.text : "")).length;
-    }
-
     function lineCells(row) {
         if (row < 0 || row >= lines.length) return 0;
         const spans = lines[row];
         let cells = 0;
         for (let index = 0; index < spans.length; index++) {
-            cells += spanCells(spans[index]);
+            cells += spanRules.cells(spans[index]);
         }
         return cells;
     }
@@ -66,7 +64,7 @@ Item {
         let spanStart = 0;
         for (let index = 0; index < spans.length; index++) {
             const span = spans[index];
-            const cells = spanCells(span);
+            const cells = spanRules.cells(span);
             const spanEnd = spanStart + cells;
             const overlapStart = Math.max(first, spanStart);
             const overlapEnd = Math.min(last, spanEnd);

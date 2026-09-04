@@ -56,92 +56,6 @@ Rectangle {
         return qsTr("%1 de %2").arg(currentMatch).arg(matchCount);
     }
 
-    component ToggleButton: Rectangle {
-        id: toggle
-
-        property string labelText: ""
-        property bool active: false
-        property string tooltip: ""
-
-        signal toggled()
-
-        width: 22
-        height: 22
-        radius: Theme.radiusXSmall
-        color: active ? Theme.surfaceSelected : "transparent"
-        border.color: active ? Theme.accent : "transparent"
-        border.width: 1
-
-        Text {
-            anchors.centerIn: parent
-            text: toggle.labelText
-            color: toggle.active ? Theme.accent : Theme.textMuted
-            font.family: Theme.monoFont
-            font.pixelSize: 11
-            font.bold: toggle.active
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-            onClicked: toggle.toggled()
-        }
-    }
-
-    component ActionButton: Rectangle {
-        id: action
-
-        property string labelText: ""
-        property string iconName: ""
-        property bool enabledAction: true
-
-        signal activated()
-
-        width: iconName !== "" ? 22
-                               : Math.max(22, actionLabel.implicitWidth
-                                              + 2 * Theme.spacingSmall)
-        height: 22
-        radius: Theme.radiusXSmall
-        color: actionMouse.containsMouse && action.enabledAction
-               ? Theme.surfaceSelected : "transparent"
-        border.color: Theme.borderSoft
-        border.width: 1
-        opacity: action.enabledAction ? 1.0 : 0.4
-
-        Text {
-            id: actionLabel
-
-            anchors.centerIn: parent
-            visible: action.iconName === ""
-            text: action.labelText
-            color: Theme.textSecondary
-            font.pixelSize: 11
-        }
-
-        KvIcon {
-            anchors.centerIn: parent
-            visible: action.iconName !== ""
-            name: action.iconName
-            size: 14
-            disabled: !action.enabledAction
-        }
-
-        MouseArea {
-            id: actionMouse
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: action.enabledAction ? Qt.PointingHandCursor
-                                              : Qt.ArrowCursor
-            onClicked: {
-                if (action.enabledAction) {
-                    action.activated();
-                }
-            }
-        }
-    }
-
     Column {
         id: barColumn
 
@@ -217,37 +131,37 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXSmall
 
-                ToggleButton {
+                KvToggleChip {
                     labelText: "Aa"
                     active: root.caseSensitive
                     onToggled: root.caseToggleRequested()
                 }
 
-                ToggleButton {
+                KvToggleChip {
                     labelText: "W"
                     active: root.wholeWord
                     onToggled: root.wholeWordToggleRequested()
                 }
 
-                ToggleButton {
+                KvToggleChip {
                     labelText: ".*"
                     active: root.useRegex
                     onToggled: root.regexToggleRequested()
                 }
 
-                ActionButton {
+                KvBarButton {
                     iconName: "chevron-up"
                     enabledAction: root.matchCount > 0
                     onActivated: root.findPreviousRequested()
                 }
 
-                ActionButton {
+                KvBarButton {
                     iconName: "chevron-down"
                     enabledAction: root.matchCount > 0
                     onActivated: root.findNextRequested()
                 }
 
-                ActionButton {
+                KvBarButton {
                     iconName: "close"
                     onActivated: root.closeRequested()
                 }
@@ -304,13 +218,13 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingXSmall
 
-                ActionButton {
+                KvBarButton {
                     labelText: qsTr("Substituir")
                     enabledAction: root.matchCount > 0
                     onActivated: root.replaceRequested()
                 }
 
-                ActionButton {
+                KvBarButton {
                     labelText: qsTr("Tudo")
                     enabledAction: root.matchCount > 0
                     onActivated: root.replaceAllRequested()

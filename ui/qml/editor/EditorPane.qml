@@ -159,7 +159,7 @@ Rectangle {
         onSaveRequested: root.saveRequested()
     }
 
-    Row {
+    EditorBreadcrumbs {
         id: breadcrumbsBar
 
         anchors.top: tabBar.bottom
@@ -167,40 +167,8 @@ Rectangle {
         anchors.right: parent.right
         anchors.leftMargin: Theme.spacingMedium
         anchors.rightMargin: Theme.spacingSmall
-        height: visible ? 18 : 0
         visible: root.currentTab >= 0 && root.breadcrumbPath !== ""
-        spacing: Theme.spacingXSmall
-
-        Repeater {
-            model: root.breadcrumbPath.split("/")
-
-            delegate: Row {
-                id: breadcrumbSegment
-
-                required property int index
-                required property string modelData
-
-                spacing: Theme.spacingXSmall
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: breadcrumbSegment.modelData
-                    color: breadcrumbSegment.index
-                           === root.breadcrumbPath.split("/").length - 1
-                           ? Theme.textSecondary : Theme.textMuted
-                    font.pixelSize: 11
-                }
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: breadcrumbSegment.index
-                             < root.breadcrumbPath.split("/").length - 1
-                    text: "›"
-                    color: Theme.textMuted
-                    font.pixelSize: 11
-                }
-            }
-        }
+        path: root.breadcrumbPath
     }
 
     EditorExternalChangeBanner {
@@ -311,59 +279,13 @@ Rectangle {
         onResetRequested: root.outlineResetRequested()
     }
 
-    Rectangle {
-        id: collapsedOutlineHandle
-
+    EditorOutlineHandle {
         visible: root.outlineItems.length > 0 && !outlinePanel.visible
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
-        width: 28
-        height: 96
-        radius: Theme.radius
-        color: outlineHandleMouse.containsMouse
-               ? Theme.surfaceSelected : Theme.surface1
-        border.color: outlineHandleMouse.containsMouse
-                      ? Theme.accent : Theme.borderSoft
-        border.width: 1
         z: 18
-
-        KvIcon {
-            anchors.top: parent.top
-            anchors.topMargin: Theme.spacingSmall
-            anchors.horizontalCenter: parent.horizontalCenter
-            name: "project"
-            size: 16
-            active: outlineHandleMouse.containsMouse
-        }
-
-        Text {
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: 12
-            text: qsTr("Estrutura")
-            rotation: -90
-            color: Theme.textSecondary
-            font.pixelSize: 10
-            font.bold: true
-        }
-
-        MouseArea {
-            id: outlineHandleMouse
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.outlineToggleRequested()
-            onContainsMouseChanged: {
-                if (containsMouse) {
-                    TooltipController.showFor(collapsedOutlineHandle,
-                                              qsTr("Expandir Estrutura"),
-                                              "bottom");
-                } else {
-                    TooltipController.hideFor(collapsedOutlineHandle);
-                }
-            }
-        }
+        onExpandRequested: root.outlineToggleRequested()
     }
 
     // D1b: flutua sobre o editor no canto superior direito (VS Code), acima

@@ -3,119 +3,45 @@ import QtQuick
 Item {
     id: root
 
-    // Regras puras de texto — uma unica DEFINICAO, ver TextRules.qml.
-    readonly property TextRules rules: TextRules {}
-
     property var surfaceBridge: null
     readonly property string editorIndent: "    "
-    // E3: memória do expand/shrink selection. O histórico só vale
-    // enquanto a seleção atual for a última expansão sobre o mesmo
-    // texto (guarda barata; ver docs-privada/diario/18, fatia E3).
-    property var expandHistory: []
-    property var lastExpansion: null
 
     visible: false
+
+    // As PERGUNTAS sobre o texto; ver EditorTextGeometry.qml.
+    EditorTextGeometry {
+        id: geo
+
+        surfaceBridge: root.surfaceBridge
+    }
+
+    // A escada expandir/encolher selecao, com memoria propria;
+    // ver EditorSelectionLadder.qml.
+    EditorSelectionLadder {
+        id: ladder
+
+        surfaceBridge: root.surfaceBridge
+        geometry: geo
+    }
 
     function ready() {
         return surfaceBridge !== null && surfaceBridge.ready();
     }
 
     function editorText() {
-        return ready() ? surfaceBridge.text() : "";
+        return geo.text();
     }
 
     function cursorLineColumn() {
-        const cursor = ready() ? surfaceBridge.editorSurface.cursorPosition : 0;
-        const text = editorText();
-        let line = 1;
-        let lineStart = 0;
-        let offset = 0;
-        while (offset < cursor) {
-            const next = text.indexOf("\n", offset);
-            if (next < 0 || next >= cursor) {
-                break;
-            }
-            line++;
-            lineStart = next + 1;
-            offset = next + 1;
-        }
-        return {
-            line: line,
-            column: cursor - lineStart + 1
-        };
+        return geo.cursorLineColumn();
     }
 
     function wordStartAt(position) {
-        const text = editorText();
-        let start = position;
-        while (start > 0 && root.rules.isWordChar(text.charAt(start - 1))) {
-            start--;
-        }
-        return start;
+        return geo.wordStartAt(position);
     }
 
     function currentWord() {
-        if (!ready()) {
-            return "";
-        }
-        const text = surfaceBridge.text();
-        const start = wordStartAt(surfaceBridge.editorSurface.cursorPosition);
-        let end = surfaceBridge.editorSurface.cursorPosition;
-        while (end < text.length && root.rules.isWordChar(text.charAt(end))) {
-            end++;
-        }
-        return text.substring(start, end);
-    }
-
-    function lineStartAt(position) {
-        // lastIndexOf com fromIndex 0 ainda olha o índice 0; sem a
-        // guarda, posição 0 com "\n" inicial devolvia linha errada.
-        const previousBreak = position <= 0
-                ? -1 : editorText().lastIndexOf("\n", position - 1);
-        return previousBreak < 0 ? 0 : previousBreak + 1;
-    }
-
-    function lineEndAt(position) {
-        const text = editorText();
-        const nextBreak = text.indexOf("\n", position);
-        return nextBreak < 0 ? text.length : nextBreak;
-    }
-
-    function lineIndentAt(lineStart) {
-        const text = editorText();
-        let end = lineStart;
-        while (end < text.length) {
-            const ch = text.charAt(end);
-            if (ch !== " " && ch !== "\t") {
-                break;
-            }
-            end++;
-        }
-        return text.substring(lineStart, end);
-    }
-
-    function selectedLineStarts() {
-        if (!ready()) {
-            return [];
-        }
-        const surface = surfaceBridge.editorSurface;
-        const selectionStart = Math.min(surface.selectionStart, surface.selectionEnd);
-        const selectionEnd = Math.max(surface.selectionStart, surface.selectionEnd);
-        const effectiveEnd = selectionEnd > selectionStart
-                ? Math.max(selectionStart, selectionEnd - 1)
-                : surface.cursorPosition;
-        const starts = [];
-        let lineStart = lineStartAt(selectionStart);
-        const lastLineStart = lineStartAt(effectiveEnd);
-        while (lineStart <= lastLineStart) {
-            starts.push(lineStart);
-            const lineEnd = lineEndAt(lineStart);
-            if (lineEnd >= editorText().length) {
-                break;
-            }
-            lineStart = lineEnd + 1;
-        }
-        return starts;
+        return geo.currentWord();
     }
 
     function indentSelection() {
@@ -123,7 +49,7 @@ Item {
             return;
         }
         const surface = surfaceBridge.editorSurface;
-        const starts = selectedLineStarts();
+        const starts = geo.selectedLineStarts();
         const hadSelection = surface.selectionStart !== surface.selectionEnd;
         const selectionStart = Math.min(surface.selectionStart, surface.selectionEnd);
         const selectionEnd = Math.max(surface.selectionStart, surface.selectionEnd);
@@ -144,7 +70,7 @@ Item {
             return;
         }
         const surface = surfaceBridge.editorSurface;
-        const starts = selectedLineStarts();
+        const starts = geo.selectedLineStarts();
         const hadSelection = surface.selectionStart !== surface.selectionEnd;
         const selectionStart = Math.min(surface.selectionStart, surface.selectionEnd);
         const selectionEnd = Math.max(surface.selectionStart, surface.selectionEnd);
@@ -181,7 +107,7 @@ Item {
             surface.select(Math.max(0, selectionStart - removedBeforeStart),
                            Math.max(0, selectionEnd - removedBeforeEnd));
         } else {
-            surface.cursorPosition = Math.max(lineStartAt(cursor),
+            surface.cursorPosition = Math.max(geo.lineStartAt(cursor),
                                               cursor - removedBeforeCursor);
         }
     }
@@ -192,9 +118,9 @@ Item {
         }
         const surface = surfaceBridge.editorSurface;
         const cursor = surface.cursorPosition;
-        const lineStart = lineStartAt(cursor);
+        const lineStart = geo.lineStartAt(cursor);
         const beforeCursor = surface.text.substring(lineStart, cursor);
-        const baseIndent = lineIndentAt(lineStart);
+        const baseIndent = geo.lineIndentAt(lineStart);
         const trimmed = beforeCursor.replace(/[ \t]+$/, "");
 
         const lineContent = beforeCursor.substring(baseIndent.length);
@@ -244,7 +170,7 @@ Item {
         const surface = surfaceBridge.editorSurface;
         const cursor = surface.cursorPosition;
         const text = editorText();
-        const lineStart = lineStartAt(cursor);
+        const lineStart = geo.lineStartAt(cursor);
         const beforeCursor = text.substring(lineStart, cursor);
         if (/^[ \t]*$/.test(beforeCursor)) {
             let depth = 1;
@@ -262,7 +188,7 @@ Item {
                 }
             }
             if (opener >= 0) {
-                const openIndent = lineIndentAt(lineStartAt(opener));
+                const openIndent = geo.lineIndentAt(geo.lineStartAt(opener));
                 if (openIndent !== beforeCursor) {
                     surface.remove(lineStart, cursor);
                     surface.insert(lineStart, openIndent + "}");
@@ -283,8 +209,8 @@ Item {
         }
         const surface = surfaceBridge.editorSurface;
         const cursor = surface.cursorPosition;
-        const lineStart = lineStartAt(cursor);
-        const firstText = lineStart + lineIndentAt(lineStart).length;
+        const lineStart = geo.lineStartAt(cursor);
+        const firstText = lineStart + geo.lineIndentAt(lineStart).length;
         const target = cursor === firstText ? lineStart : firstText;
         if (extendSelection) {
             const anchor = surface.selectionStart === surface.selectionEnd
@@ -297,126 +223,12 @@ Item {
         }
     }
 
-    // E3: pares ()/[]/{} que envolvem a seleção, numa varredura única
-    // com pilha (fechador sem par no topo é ignorado — tolerante a
-    // texto desbalanceado). Devolve conteúdo e par-com-delimitadores.
-    function enclosingPairRanges(selectionStart, selectionEnd, text) {
-        const closerToOpener = { ")": "(", "]": "[", "}": "{" };
-        const stack = [];
-        const ranges = [];
-        for (let i = 0; i < text.length; i++) {
-            const character = text.charAt(i);
-            if (character === "(" || character === "[" || character === "{") {
-                stack.push({ character: character, index: i });
-            } else if (closerToOpener[character] !== undefined) {
-                if (stack.length > 0 && stack[stack.length - 1].character
-                        === closerToOpener[character]) {
-                    const opener = stack.pop();
-                    if (opener.index + 1 <= selectionStart && i >= selectionEnd) {
-                        ranges.push({ start: opener.index + 1, end: i });
-                        ranges.push({ start: opener.index, end: i + 1 });
-                    }
-                }
-            }
-        }
-        return ranges;
-    }
-
-    // E3: expande para o MENOR candidato que contém estritamente a
-    // seleção (palavra, linha sem indentação, linha, pares
-    // envolventes, documento) — a escada JetBrains emerge sem máquina
-    // de estados. Design e limitações: docs-privada/diario/18, fatia E3.
     function expandSelection() {
-        if (!ready()) {
-            return;
-        }
-        const surface = surfaceBridge.editorSurface;
-        const selectionStart = Math.min(surface.selectionStart,
-                                        surface.selectionEnd);
-        const selectionEnd = Math.max(surface.selectionStart,
-                                      surface.selectionEnd);
-        const text = editorText();
-        if (lastExpansion === null || lastExpansion.start !== selectionStart
-                || lastExpansion.end !== selectionEnd
-                || lastExpansion.length !== text.length) {
-            expandHistory = [];
-        }
-        const candidates = [];
-        if (selectionStart === selectionEnd) {
-            const wordStart = wordStartAt(selectionStart);
-            let wordEnd = selectionEnd;
-            while (wordEnd < text.length
-                   && root.rules.isWordChar(text.charAt(wordEnd))) {
-                wordEnd++;
-            }
-            if (wordStart < wordEnd) {
-                candidates.push({ start: wordStart, end: wordEnd });
-            }
-        }
-        const lineStart = lineStartAt(selectionStart);
-        const lineEnd = lineEndAt(selectionEnd);
-        candidates.push({ start: lineStart + lineIndentAt(lineStart).length,
-                          end: lineEnd });
-        candidates.push({ start: lineStart, end: lineEnd });
-        const pairs = enclosingPairRanges(selectionStart, selectionEnd, text);
-        for (let i = 0; i < pairs.length; i++) {
-            candidates.push(pairs[i]);
-        }
-        candidates.push({ start: 0, end: text.length });
-        let best = null;
-        for (let i = 0; i < candidates.length; i++) {
-            const candidate = candidates[i];
-            if (candidate.start > selectionStart
-                    || candidate.end < selectionEnd
-                    || (candidate.start === selectionStart
-                        && candidate.end === selectionEnd)) {
-                continue;
-            }
-            if (best === null
-                    || candidate.end - candidate.start < best.end - best.start) {
-                best = candidate;
-            }
-        }
-        if (best === null) {
-            return;
-        }
-        surface.select(best.start, best.end);
-        // O TextEdit pode clampar (ex.: não seleciona o "\n" final do
-        // documento); registrar a seleção REAL mantém o histórico do
-        // shrink válido. Sem mudança efetiva, não vira degrau.
-        const appliedStart = Math.min(surface.selectionStart,
-                                      surface.selectionEnd);
-        const appliedEnd = Math.max(surface.selectionStart,
-                                    surface.selectionEnd);
-        if (appliedStart === selectionStart && appliedEnd === selectionEnd) {
-            return;
-        }
-        expandHistory.push({ start: selectionStart, end: selectionEnd });
-        lastExpansion = { start: appliedStart, end: appliedEnd,
-                          length: text.length };
+        ladder.expand();
     }
 
-    // E3: volta um degrau da escada de expansão.
     function shrinkSelection() {
-        if (!ready()) {
-            return;
-        }
-        const surface = surfaceBridge.editorSurface;
-        const selectionStart = Math.min(surface.selectionStart,
-                                        surface.selectionEnd);
-        const selectionEnd = Math.max(surface.selectionStart,
-                                      surface.selectionEnd);
-        const text = editorText();
-        if (lastExpansion === null || lastExpansion.start !== selectionStart
-                || lastExpansion.end !== selectionEnd
-                || lastExpansion.length !== text.length
-                || expandHistory.length === 0) {
-            return;
-        }
-        const previous = expandHistory.pop();
-        surface.select(previous.start, previous.end);
-        lastExpansion = { start: previous.start, end: previous.end,
-                          length: text.length };
+        ladder.shrink();
     }
 
     function duplicateLineOrSelection() {
@@ -433,8 +245,8 @@ Item {
             return;
         }
         const cursor = surface.cursorPosition;
-        const start = lineStartAt(cursor);
-        const end = lineEndAt(cursor);
+        const start = geo.lineStartAt(cursor);
+        const end = geo.lineEndAt(cursor);
         const line = surface.text.substring(start, end);
         surface.insert(end, "\n" + line);
         surface.cursorPosition = cursor + line.length + 1;
@@ -451,8 +263,8 @@ Item {
         const hadSelection = selectionEnd > selectionStart;
         const cursor = surface.cursorPosition;
         const anchor = hadSelection ? Math.max(selectionStart, selectionEnd - 1) : cursor;
-        const blockStart = lineStartAt(hadSelection ? selectionStart : cursor);
-        const blockEnd = lineEndAt(anchor);
+        const blockStart = geo.lineStartAt(hadSelection ? selectionStart : cursor);
+        const blockEnd = geo.lineEndAt(anchor);
         const block = text.substring(blockStart, blockEnd);
 
         let shift = 0;
@@ -460,7 +272,7 @@ Item {
             if (blockStart === 0) {
                 return;
             }
-            const previousStart = lineStartAt(blockStart - 1);
+            const previousStart = geo.lineStartAt(blockStart - 1);
             const previousLine = text.substring(previousStart, blockStart - 1);
             surface.remove(previousStart, blockEnd);
             surface.insert(previousStart, block + "\n" + previousLine);
@@ -470,7 +282,7 @@ Item {
                 return;
             }
             const nextStart = blockEnd + 1;
-            const nextEnd = lineEndAt(nextStart);
+            const nextEnd = geo.lineEndAt(nextStart);
             const nextLine = text.substring(nextStart, nextEnd);
             surface.remove(blockStart, nextEnd);
             surface.insert(blockStart, nextLine + "\n" + block);
@@ -488,7 +300,7 @@ Item {
             return;
         }
         const surface = surfaceBridge.editorSurface;
-        const starts = selectedLineStarts();
+        const starts = geo.selectedLineStarts();
         if (starts.length === 0) {
             return;
         }
@@ -497,7 +309,7 @@ Item {
         let allCommented = true;
         let hasContent = false;
         for (let i = 0; i < starts.length; i++) {
-            const line = text.substring(starts[i], lineEndAt(starts[i]));
+            const line = text.substring(starts[i], geo.lineEndAt(starts[i]));
             const content = line.replace(/^[ \t]+/, "");
             if (content === "") {
                 continue;
@@ -514,7 +326,7 @@ Item {
 
         for (let i = starts.length - 1; i >= 0; i--) {
             const start = starts[i];
-            const line = text.substring(start, lineEndAt(start));
+            const line = text.substring(start, geo.lineEndAt(start));
             const indentLength = line.length - line.replace(/^[ \t]+/, "").length;
             const contentStart = start + indentLength;
             const content = line.substring(indentLength);
@@ -539,8 +351,8 @@ Item {
         }
         const surface = surfaceBridge.editorSurface;
         const cursor = surface.cursorPosition;
-        const start = lineStartAt(cursor);
-        const end = lineEndAt(cursor);
+        const start = geo.lineStartAt(cursor);
+        const end = geo.lineEndAt(cursor);
         const text = surface.text;
         if (end < text.length) {
             surface.remove(start, end + 1);
@@ -567,7 +379,7 @@ Item {
             target = nextBreak + 1;
             current++;
         }
-        const end = lineEndAt(target);
+        const end = geo.lineEndAt(target);
         surface.cursorPosition = Math.min(target + Math.max(1, column) - 1, end);
     }
 }
