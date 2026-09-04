@@ -16,6 +16,7 @@ Item {
     property var settingsController: null
     property var configActionController: null
     property var libraryController: null
+    property var dataSourceController: null
     property var toolchainController: null
     property bool aboutVisible: false
     property bool manualVisible: false
@@ -34,7 +35,7 @@ Item {
     }
 
     function openEntryRenameWithName(name) {
-        entryRenameDialog.openWithName(name);
+        projectOverlays.openEntryRenameWithName(name);
     }
 
     function openRunConfigDialogWith(name, command) {
@@ -186,6 +187,16 @@ Item {
         }
     }
 
+    DataSourcePanelHost {
+        anchors.fill: parent
+        visible: root.dataSourceController.panelVisible
+        z: 99
+        controller: root.dataSourceController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.dataSourceController.close()
+    }
+
     AboutDialog {
         anchors.fill: parent
         visible: root.aboutVisible
@@ -245,52 +256,13 @@ Item {
         onCancelRequested: root.runConfigController.cancelConfigDialog()
     }
 
-    ProjectEntryContextMenu {
-        anchors.fill: parent
-        visible: root.projectTree.entryMenuVisible
-        z: 100
-        menuX: root.projectTree.entryMenuX
-        menuY: root.projectTree.entryMenuY
-        runnableScript: root.projectTree.entryMenuRunnable
-        onDismissRequested: root.projectTree.entryMenuVisible = false
-        onCreateFileRequested: root.projectTree.openEntryCreate("file")
-        onCreateDirectoryRequested: root.projectTree.openEntryCreate("directory")
-        onRunScriptRequested: root.projectTree.runEntryScript()
-        onRenameRequested: root.projectTree.openEntryRename()
-        onDeleteRequested: root.projectTree.openEntryDelete()
-    }
-
-    ProjectEntryRenameDialog {
-        id: entryRenameDialog
+    ShellProjectOverlays {
+        id: projectOverlays
 
         anchors.fill: parent
-        visible: root.projectTree.entryRenameVisible
-        z: 101
-        entryKind: root.projectTree.entryRenameKind
-        entryDisplayPath: root.shellController.relativeToRoot(
-                              root.projectTree.entryRenamePath)
-        errorText: root.projectTree.entryRenameError
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        onConfirmRequested: root.projectTree.confirmEntryRename(
-                                entryRenameDialog.currentName())
-        onCancelRequested: {
-            root.projectTree.entryRenameVisible = false;
-            root.editorController.focusEditor();
-        }
-    }
-
-    ProjectEntryDeleteDialog {
-        anchors.fill: parent
-        visible: root.projectTree.entryDeleteVisible
-        z: 102
-        entryKind: root.projectTree.entryDeleteKind
-        entryName: root.projectTree.entryDeleteName
-        errorText: root.projectTree.entryDeleteError
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        onConfirmRequested: root.projectTree.confirmEntryDelete()
-        onCancelRequested: {
-            root.projectTree.entryDeleteVisible = false;
-            root.editorController.focusEditor();
-        }
+        hostWidth: root.hostWidth
+        projectTree: root.projectTree
+        shellController: root.shellController
+        editorController: root.editorController
     }
 }

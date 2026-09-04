@@ -15,6 +15,7 @@ Item {
     property var searchEverywhereController: null
     property var configActionController: null
     property var libraryController: null
+    property var dataSourceController: null
 
     signal openWorkspaceRequested()
     signal showTabRequested(string tab)
@@ -98,6 +99,8 @@ Item {
             configActionController.openDialog();
         } else if (commandId === "library.list") {
             libraryController.open();
+        } else if (commandId === "datasource.list") {
+            dataSourceController.open();
         } else if (commandId === "settings.get") {
             settingsController.openDialog();
         } else if (commandId === "fs.createFile") {

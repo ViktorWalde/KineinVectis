@@ -20,25 +20,48 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
     if (handleFileSystemNotification(method, params)) {
         return;
     }
+    if (method == QStringLiteral("event.datasource.tested")) {
+        emit dataSourceTested(params.value(QStringLiteral("name")).toString(),
+                              params.value(QStringLiteral("ok")).toBool(false),
+                              params.value(QStringLiteral("serverVersion")).toString(),
+                              params.value(QStringLiteral("message")).toString(),
+                              params.value(QStringLiteral("secretRequired")).toBool(false));
+        return;
+    }
     if (method == QStringLiteral("event.git.remoteFinished")) {
         emit gitRemoteOperationFinished(params.value(QStringLiteral("operation")).toString(),
                                         params.value(QStringLiteral("success")).toBool(false),
                                         params.value(QStringLiteral("message")).toString());
         return;
     }
+    if (handleRunnerNotification(method, params)) {
+        return;
+    }
+}
+
+/// Eventos dos RUNNERS: build, test, quality e run.
+///
+/// Separado do `handleNotification` em 2026-09-04, e quem mandou separar foi o
+/// gate: acrescentar o evento do `datasource` levou a funcao a complexidade
+/// cognitiva 26 contra um teto de 25. O numero so' mandou OLHAR — o corte e'
+/// por responsabilidade, e a responsabilidade estava na cara: os quatro
+/// runners repetem a mesma forma (`started` / `output` / `diagnostic` /
+/// `finished`) e nao tem nada a ver com git, disco ou banco.
+bool CoreClient::handleRunnerNotification(const QString& method, const QJsonObject& params)
+{
     if (method == QStringLiteral("event.build.started")) {
         const QString command = params.value(QStringLiteral("command")).toString();
         appendLog(QStringLiteral("build iniciado: %1").arg(command));
         emit buildStarted(command);
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.build.output")) {
         emit buildOutput(params.value(QStringLiteral("line")).toString());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.build.diagnostic")) {
         emit buildDiagnostic(params.toVariantMap());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.build.finished")) {
         const bool success = params.value(QStringLiteral("success")).toBool();
@@ -48,23 +71,23 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         m_buildJobId.clear();
         emit buildFinished(success, params.value(QStringLiteral("exitCode")).toInt(-1),
                            params.value(QStringLiteral("diagnostics")).toInt(0));
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.test.started")) {
         const QString command = params.value(QStringLiteral("command")).toString();
         appendLog(QStringLiteral("testes iniciados: %1").arg(command));
         emit testStarted(command);
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.test.output")) {
         emit testOutput(params.value(QStringLiteral("line")).toString(),
                         params.value(QStringLiteral("stream")).toString());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.test.case")) {
         emit testCase(params.value(QStringLiteral("name")).toString(),
                       params.value(QStringLiteral("status")).toString());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.test.finished")) {
         setTesting(false);
@@ -73,20 +96,20 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
                           params.value(QStringLiteral("passed")).toInt(0),
                           params.value(QStringLiteral("failed")).toInt(0),
                           params.value(QStringLiteral("ignored")).toInt(0));
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.quality.started")) {
         const QString command = params.value(QStringLiteral("command")).toString();
         appendLog(QStringLiteral("analise iniciada: %1").arg(command));
         emit qualityStarted(command);
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.quality.diagnostic")) {
         emit qualityDiagnostic(params.toVariantMap());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.quality.output")) {
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.quality.finished")) {
         setAnalyzing(false);
@@ -94,44 +117,45 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit qualityFinished(params.value(QStringLiteral("success")).toBool(),
                              params.value(QStringLiteral("exitCode")).toInt(-1),
                              params.value(QStringLiteral("diagnostics")).toInt(0));
-        return;
+        return true;
     }
     if (handleCmakeNotification(method, params)) {
-        return;
+        return true;
     }
     if (handleDebugNotification(method, params)) {
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.run.started")) {
         const QString command = params.value(QStringLiteral("command")).toString();
         appendLog(QStringLiteral("execucao iniciada: %1").arg(command));
         setRunning(true);
         emit runStarted(command);
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.run.output")) {
         emit runOutput(params.value(QStringLiteral("line")).toString(),
                        params.value(QStringLiteral("stream")).toString());
-        return;
+        return true;
     }
     if (method == QStringLiteral("event.run.finished")) {
         setRunning(false);
         emit runFinished(params.value(QStringLiteral("success")).toBool(),
                          params.value(QStringLiteral("exitCode")).toInt(-1));
-        return;
+        return true;
     }
     if (handleTerminalNotification(method, params)) {
-        return;
+        return true;
     }
     if (handleLspNotification(method, params)) {
-        return;
+        return true;
     }
     if (handleEnvironmentNotification(method, params)) {
-        return;
+        return true;
     }
     if (handleJobNotification(method, params)) {
-        return;
+        return true;
     }
+    return false;
 }
 
 bool CoreClient::handleFileSystemNotification(const QString& method, const QJsonObject& params)

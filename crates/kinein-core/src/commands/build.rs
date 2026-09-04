@@ -132,6 +132,25 @@ pub(super) fn configaction_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
+/// Fontes de dados (roadmaps/35, etapa 26): o catalogo de conexoes.
+///
+/// UM descriptor, pelo mesmo motivo do `library` abaixo: a paleta anuncia a
+/// ENTRADA do painel, e os perfis vem do `datasource.list`.
+///
+/// `requires_workspace` e' true porque o catalogo e' POR PROJETO — os perfis
+/// vivem em `.kinein/datasources.json`. Sem projeto aberto nao ha' onde
+/// guarda-los, e oferecer a acao seria oferecer um caminho que termina em nada.
+pub(super) fn datasource_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "datasource.list".to_owned(),
+        title: "Fontes de dados...".to_owned(),
+        category: "Projeto".to_owned(),
+        description: "Conexoes a banco: o perfil fica salvo, a senha nunca".to_owned(),
+        default_shortcut: Some("Ctrl+Alt+D".to_owned()),
+        requires_workspace: true,
+    }]
+}
+
 /// Bibliotecas C/C++ (roadmaps/35): o catalogo curado.
 ///
 /// UM descriptor, nao treze — mesma razao do `configaction` acima. A paleta

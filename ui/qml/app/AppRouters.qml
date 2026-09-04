@@ -115,6 +115,16 @@ Item {
         libraryController: root.domains.libraryController
     }
 
+    DataSourceEventRouter {
+        coreClient: root.domains.coreClient
+        dataSourceController: root.domains.dataSourceController
+    }
+
+    DataSourceRequestRouter {
+        coreClient: root.domains.coreClient
+        dataSourceController: root.domains.dataSourceController
+    }
+
     ConfigActionEventRouter {
         coreClient: root.domains.coreClient
         configActionController: root.domains.configActionController

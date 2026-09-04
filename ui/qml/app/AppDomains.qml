@@ -32,6 +32,7 @@ Item {
     readonly property alias settingsController: settingsController
     readonly property alias configActionController: configActionController
     readonly property alias toolchainController: toolchainController
+    readonly property alias dataSourceController: dataSourceController
     readonly property alias libraryController: libraryController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
@@ -136,6 +137,14 @@ Item {
     // escreve arquivo — produz plano, e quem escreve e o configaction.
     LibraryController {
         id: libraryController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+    }
+
+    // Fontes de dados (roadmaps/35, etapa 26): o catalogo de conexoes. Guarda
+    // o PERFIL, nunca a senha — a decisao esta em `docs/seguranca/40`.
+    DataSourceController {
+        id: dataSourceController
 
         workspaceRoot: root.coreClient.workspaceRoot
     }
@@ -247,6 +256,7 @@ Item {
         searchEverywhereController: searchEverywhereController
         configActionController: configActionController
         libraryController: libraryController
+        dataSourceController: dataSourceController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);

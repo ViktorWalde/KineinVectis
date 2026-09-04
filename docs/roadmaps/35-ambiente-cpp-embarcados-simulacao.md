@@ -624,10 +624,12 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            contra o driver REAL (`postgres`
                                            0.19.14, auditado em
                                            `../integracoes/37` §5.1). 30
-                                           testes. EXERCITADO contra um
-                                           PostgreSQL 18.6 real: socket unix
-                                           com `peer` conecta sem senha
-                                           nenhuma (§9.1). Falta a UI (§9.3).
+                                           testes Rust + 1 harness QML.
+                                           EXERCITADO contra um PostgreSQL
+                                           18.6 real: socket unix com `peer`
+                                           conecta sem senha nenhuma (§9.1).
+                                           A UI entrou na 26.3 (§9.3);
+                                           `Ctrl+Alt+D`.
 
 27  Temporal (TimescaleDB) e Grafana        §7.2. Grafana por HTTP API,
     por API                                nunca embutido.
@@ -697,11 +699,56 @@ Os três só apareceram porque houve exercitação contra ferramenta real. **As
 fixtures dos testes são as strings capturadas**, não inventadas — é a mesma
 correção que o `probe.rs` recebeu em 2026-09-03.
 
-### 9.3 O que a etapa 26 ainda NÃO tem
+### 9.3 A UI, feita em 2026-09-04 (etapa 26.3)
+
+`Ctrl+Alt+D` ou "Fontes de dados..." na paleta. Quatro áreas, cada uma com dono
+próprio, nenhuma acima do limite de QML visual:
 
 ```text
-1. a UI: painel de fontes de dados, o dialogo de senha da sessao, e o
-   consumo de `secretRequired` — hoje `datasource.*` so' responde por IPC
-2. introspeccao (esquemas, tabelas, colunas) e execucao de consulta
-3. TLS: a arvore auditada nao tem backend, e conexao cifrada e' fatia propria
+DataSourceController   estado + o ciclo de vida da SENHA DA SESSAO
+DataSourceList         os perfis salvos, com a linha de conexao visivel
+DataSourceForm         os campos — e NAO ha' campo de senha aqui
+DataSourceVerdict      o veredito do teste, e o campo de senha quando cabe
+DataSourceField        um campo com rotulo, usado seis vezes
+DataSourcePanel        compoe as quatro areas
+DataSourcePanelHost    o chrome do dialogo
+```
+
+**Três decisões da UI que vêm direto do que foi medido:**
+
+**1. O formulário não tem campo de senha.** O que se escolhe ali é *de onde* a
+senha vem, nunca qual é — o perfil é o que o core persiste. O campo de senha
+aparece no **veredito**, depois de o servidor dizer que precisa, e vive na
+sessão.
+
+**2. O campo de senha aparece por `secretRequired`, nunca por texto.** A
+mensagem do servidor é localizada (§9.2); ler ela para decidir acoplaria a UI
+ao idioma do banco de quem roda.
+
+**3. O padrão do formulário é `/var/run/postgresql` + `automatic`** — o caso que
+conecta **sem senha nenhuma**. O padrão de uma IDE tem de ser o caso comum do
+autor, não o mais defensivo do desenvolvedor da IDE.
+
+**A senha da sessão some sozinha em três momentos**, e isso é testado por
+mutação em `scripts/qml-harness/tst_datasource.qml`: ao trocar de perfil, ao
+fechar o painel e ao trocar de projeto. Nenhuma dessas falhas produziria erro —
+as três produziriam uma senha indo para um servidor que não é o dela.
+
+**A catraca disparou no meio disto, e o diagnóstico foi o terceiro suspeito.**
+O `ShellOverlays` passou de 300 ao ganhar o painel novo. Os três suspeitos da
+§4 regra 9, na ordem: a mudança (onze linhas de fiação legítima — o gatilho,
+não o defeito), a categoria (ele não desenha um pixel próprio; é composição
+medida contra o limite de QML *visual*) e o arquivo. Foi o arquivo: dos
+dezesseis overlays que ele compunha, **três formavam uma área com dono único** —
+o que o clique direito no explorer abre. Nasceu `ShellProjectOverlays.qml`, e o
+teste de que a área é real está na interface: ela precisa de **três**
+controllers, não dos doze que o `ShellOverlays` carrega.
+
+### 9.4 O que a etapa 26 ainda NÃO tem
+
+```text
+1. introspeccao (esquemas, tabelas, colunas) e execucao de consulta
+2. TLS: a arvore auditada nao tem backend, e conexao cifrada e' fatia propria
+3. TimescaleDB e Grafana (etapa 27) — o perfil ja' serve aos dois, porque
+   Timescale FALA protocolo Postgres
 ```

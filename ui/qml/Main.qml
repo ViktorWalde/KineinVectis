@@ -257,6 +257,7 @@ Window {
         gitController: domains.gitController
         settingsController: domains.settingsController
         libraryController: domains.libraryController
+        dataSourceController: domains.dataSourceController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
         onAppMenuActionRequested: function(action) {

@@ -59,7 +59,10 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
     if (dispatchToolchainResult(method, result)) {
         return true;
     }
-    return dispatchLibraryResult(method, result);
+    if (dispatchLibraryResult(method, result)) {
+        return true;
+    }
+    return dispatchDataSourceResult(method, result);
 }
 
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)

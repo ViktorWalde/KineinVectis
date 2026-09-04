@@ -43,6 +43,7 @@ set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
 set_source_files_properties(qml/shell/ShellEditorHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorHost.qml)
 set_source_files_properties(qml/shell/ShellEditorOverlayHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorOverlayHost.qml)
+set_source_files_properties(qml/shell/ShellProjectOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellProjectOverlays.qml)
 set_source_files_properties(qml/shell/ProjectHealthBanner.qml PROPERTIES QT_RESOURCE_ALIAS ProjectHealthBanner.qml)
 set_source_files_properties(qml/shell/PanelSplitter.qml PROPERTIES QT_RESOURCE_ALIAS PanelSplitter.qml)
 set_source_files_properties(qml/shell/VerticalScrollBar.qml PROPERTIES QT_RESOURCE_ALIAS VerticalScrollBar.qml)
@@ -51,10 +52,19 @@ set_source_files_properties(qml/shell/RunConfigMenu.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/debug/DebugController.qml PROPERTIES QT_RESOURCE_ALIAS DebugController.qml)
 set_source_files_properties(qml/library/LibraryController.qml PROPERTIES QT_RESOURCE_ALIAS LibraryController.qml)
 set_source_files_properties(qml/library/LibraryPanel.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanel.qml)
+set_source_files_properties(qml/datasource/DataSourceController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceController.qml)
+set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
+set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanelHost.qml)
+set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceForm.qml)
+set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
+set_source_files_properties(qml/datasource/DataSourceVerdict.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceVerdict.qml)
+set_source_files_properties(qml/datasource/DataSourceField.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceField.qml)
 set_source_files_properties(qml/library/LibraryPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanelHost.qml)
 set_source_files_properties(qml/library/LibraryPlanView.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPlanView.qml)
 set_source_files_properties(qml/ipc/LibraryRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryRequestRouter.qml)
 set_source_files_properties(qml/ipc/LibraryEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryEventRouter.qml)
+set_source_files_properties(qml/ipc/DataSourceEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceEventRouter.qml)
+set_source_files_properties(qml/ipc/DataSourceRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceRequestRouter.qml)
 set_source_files_properties(qml/debug/DebugWatches.qml PROPERTIES QT_RESOURCE_ALIAS DebugWatches.qml)
 set_source_files_properties(qml/debug/DebugInspector.qml PROPERTIES QT_RESOURCE_ALIAS DebugInspector.qml)
 set_source_files_properties(qml/diagnostics/DiagnosticsController.qml PROPERTIES QT_RESOURCE_ALIAS DiagnosticsController.qml)
@@ -220,6 +230,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/ShellWorkspaceHost.qml
         qml/shell/ShellEditorHost.qml
         qml/shell/ShellEditorOverlayHost.qml
+        qml/shell/ShellProjectOverlays.qml
         qml/shell/ProjectHealthBanner.qml
         qml/shell/PanelSplitter.qml
         qml/shell/VerticalScrollBar.qml
@@ -228,10 +239,19 @@ qt_add_qml_module(kinein-vectis
         qml/debug/DebugController.qml
         qml/library/LibraryController.qml
         qml/library/LibraryPanel.qml
+        qml/datasource/DataSourceController.qml
+        qml/datasource/DataSourcePanel.qml
+        qml/datasource/DataSourcePanelHost.qml
+        qml/datasource/DataSourceForm.qml
+        qml/datasource/DataSourceList.qml
+        qml/datasource/DataSourceVerdict.qml
+        qml/datasource/DataSourceField.qml
         qml/library/LibraryPanelHost.qml
         qml/library/LibraryPlanView.qml
         qml/ipc/LibraryRequestRouter.qml
         qml/ipc/LibraryEventRouter.qml
+        qml/ipc/DataSourceEventRouter.qml
+        qml/ipc/DataSourceRequestRouter.qml
         qml/debug/DebugWatches.qml
         qml/debug/DebugInspector.qml
         qml/diagnostics/DiagnosticsController.qml
@@ -378,6 +398,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_configaction.cpp
         src/core_client_toolchain.cpp
         src/core_client_library.cpp
+        src/core_client_datasource.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp
