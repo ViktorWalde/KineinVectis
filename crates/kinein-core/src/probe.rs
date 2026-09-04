@@ -58,6 +58,7 @@ pub fn list(program: Option<&std::path::Path>) -> ProbeListResult {
         cru.push_str(&erro);
     }
 
+    let cru = strip_ansi(&cru);
     let probes = parse_list(&cru);
     let hint = hint_for(&probes, &cru);
     ProbeListResult {
@@ -66,6 +67,29 @@ pub fn list(program: Option<&std::path::Path>) -> ProbeListResult {
         raw_output: cru,
         hint,
     }
+}
+
+/// Remove sequencias de escape ANSI.
+///
+/// O `probe-rs 0.32.0` COLORE os avisos (medido em 2026-09-03). Hoje isso cai em
+/// linha que o parser ignora, mas cor numa linha de sonda quebraria o casamento
+/// — e a saida crua com `\u{1b}[33m` no meio e' ilegivel para quem le a tela.
+fn strip_ansi(texto: &str) -> String {
+    let mut saida = String::with_capacity(texto.len());
+    let mut chars = texto.chars();
+    while let Some(c) = chars.next() {
+        if c != '\u{1b}' {
+            saida.push(c);
+            continue;
+        }
+        // `ESC [ ... <letra final>`; qualquer outra forma some junto.
+        for seguinte in chars.by_ref() {
+            if seguinte.is_ascii_alphabetic() {
+                break;
+            }
+        }
+    }
+    saida
 }
 
 /// Interpreta a saida do `probe-rs list`. Funcao pura: e' o que se testa sem
@@ -134,6 +158,21 @@ fn hint_for(probes: &[ProbeInfo], cru: &str) -> Option<String> {
         return None;
     }
     let baixo = cru.to_ascii_lowercase();
+
+    // O `probe-rs 0.32.0` diz isto explicitamente quando nao ha sonda, E imprime
+    // os avisos de udev JUNTO, sempre, como orientacao de setup no Linux
+    // (medido em 2026-09-03). Culpar udev aqui seria diagnostico FALSO: na
+    // maioria das vezes nao ha sonda plugada mesmo. A ferramenta e' quem sabe a
+    // diferenca, e ela ja disse — entao repetimos a condicional dela em vez de
+    // escolher um culpado.
+    if baixo.contains("no debug probes were found") {
+        return Some(
+            "nenhuma sonda conectada. Se ha uma plugada, a propria ferramenta \
+             aponta permissao: o usuario precisa de acesso ao dispositivo, o que \
+             se resolve com regra de udev — nao rodando a IDE como root."
+                .to_owned(),
+        );
+    }
     if baixo.contains("permission") || baixo.contains("denied") || baixo.contains("udev") {
         return Some(
             "a ferramenta viu um dispositivo mas nao pode abri-lo: falta regra de \
@@ -159,7 +198,7 @@ fn hint_for(probes: &[ProbeInfo], cru: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{hint_for, parse_list};
+    use super::{hint_for, parse_list, strip_ansi};
 
     /// As duas formas observadas de saida do `probe-rs list`.
     #[test]
@@ -243,5 +282,55 @@ mod tests {
     fn no_hint_when_a_probe_was_found() {
         let sondas = parse_list("[0]: Sonda -- 1111:2222:S1 (CMSIS-DAP)\n");
         assert_eq!(hint_for(&sondas, "irrelevante"), None);
+    }
+    /// Saida REAL do `probe-rs 0.32.0` nesta maquina, sem sonda plugada,
+    /// capturada em 2026-09-03. Os escapes ANSI estao preservados de proposito:
+    /// e' o que a ferramenta emite de verdade.
+    const SAIDA_REAL_SEM_SONDA: &str = concat!(
+        "No debug probes were found.\n",
+        "\u{1b}[33m WARN\u{1b}[0m \u{1b}[2mprobe_rs::util::setup_hints::linux\u{1b}[0m\u{1b}[2m:\u{1b}[0m ",
+        "If your probe is plugged in but not listed, or shown as inaccessible, ",
+        "it is most likely a permissions problem.\n",
+        "\u{1b}[33m WARN\u{1b}[0m \u{1b}[2mprobe_rs::util::setup_hints::linux\u{1b}[0m\u{1b}[2m:\u{1b}[0m ",
+        "See https://probe.rs/docs/getting-started/probe-setup/ for how to set up ",
+        "the required udev rules and group membership.\n",
+    );
+
+    /// O `probe-rs` COLORE a saida. Cor numa linha de sonda quebraria o
+    /// casamento, e cor na saida crua deixa a tela ilegivel.
+    #[test]
+    fn ansi_escapes_are_stripped() {
+        let limpo = strip_ansi(SAIDA_REAL_SEM_SONDA);
+        assert!(!limpo.contains('\u{1b}'), "sobrou escape: {limpo:?}");
+        assert!(limpo.contains("No debug probes were found."));
+        assert!(limpo.contains("permissions problem"));
+    }
+
+    /// O BUG QUE A EXERCITACAO ACHOU. O `probe-rs` imprime os avisos de udev
+    /// SEMPRE no Linux, como orientacao de setup — nao porque haja uma sonda
+    /// inacessivel. Culpar udev quando a ferramenta disse "No debug probes were
+    /// found" e' diagnostico FALSO, e manda o usuario mexer em regra de sistema
+    /// quando o cabo e' que nao esta plugado.
+    #[test]
+    fn the_setup_warnings_alone_do_not_accuse_udev() {
+        let limpo = strip_ansi(SAIDA_REAL_SEM_SONDA);
+        assert!(parse_list(&limpo).is_empty(), "aviso virou sonda");
+
+        let dica = hint_for(&[], &limpo).unwrap();
+        assert!(
+            dica.starts_with("nenhuma sonda conectada"),
+            "acusou udev com a ferramenta dizendo que nao ha sonda: {dica}"
+        );
+        // A condicional da propria ferramenta continua sendo repassada: se HA
+        // uma plugada, ai sim e' permissao.
+        assert!(dica.contains("Se ha uma plugada"), "{dica}");
+        assert!(dica.contains("root"), "{dica}");
+    }
+
+    /// Sonda INACESSIVEL (nao "ausente") continua acusando udev direto.
+    #[test]
+    fn an_inaccessible_probe_still_points_at_udev() {
+        let dica = hint_for(&[], "Error: Permission denied opening /dev/bus/usb/001/004").unwrap();
+        assert!(dica.contains("udev"), "{dica}");
     }
 }

@@ -407,6 +407,58 @@ O **21 não é cerimônia**: sem ele, escolher entre probe-rs e OpenOCD seria
 palpite, e a escolha decide o desenho do 22 (probe-rs fala DAP nativo; OpenOCD
 fala GDB remote, que exigiria uma ponte).
 
+### 5.6 O que a exercitação de 2026-09-03 provou, e o que não provou
+
+Exercitado contra ferramentas **reais** nesta máquina — `arm-none-eabi-gcc`
+15.2.0, `probe-rs` 0.32.0 e `qemu-system-arm` 10.2.2 —, dirigindo o core por
+JSON-RPC como o `arquitetura/04` §8 descreve.
+
+**PROVADO:**
+
+```text
+tools.detect      arm-none-eabi-gcc e g++ detectados
+toolchain.set     cross fixado no papel cCompiler
+toolchain.setKit  sysroot + triple + chip gravados no .kinein/toolchain.json
+cmake.configure   success, CDB gerada com --sysroot e o cross
+build.run         ELF 32-bit LSB, ARM, EABI5 — compilou para o ALVO
+probe.list        contra o probe-rs real: toolAvailable, saida limpa, dica certa
+qemu-system-arm   carregou e executou o ELF
+```
+
+**DOIS BUGS ACHADOS, os dois meus, nenhum pego por teste de unidade:**
+
+1. **Bare metal não configurava.** `CMAKE_SYSTEM_NAME=Generic` sozinho não
+   basta; sem `CMAKE_TRY_COMPILE_TARGET_TYPE=STATIC_LIBRARY` o configure morre
+   em `undefined reference to _exit`. Os testes verificavam a *montagem* do
+   argumento — nenhum rodava um configure.
+2. **Diagnóstico falso de udev.** O `probe-rs` imprime os avisos de permissão
+   **sempre** no Linux, como orientação de setup. Meu `hint` os lia e acusava
+   udev quando a ferramenta tinha dito *"No debug probes were found"* — mandando
+   o usuário mexer em regra de sistema quando o cabo é que não estava plugado.
+   Ele também **colore** a saída, e os escapes ANSI iam crus para a tela.
+
+**NÃO PROVADO, e a fronteira importa:**
+
+```text
+flash e debug via DAP   precisa de sonda fisica, ou de um alvo QEMU que o
+                        probe-rs suporte. O handshake com o `probe-rs
+                        dap-server` NUNCA foi executado.
+imagem bootavel         o ELF gerado nao tem vector table nem linker script,
+                        e o QEMU trava em HardFault. Isso e' do PROJETO do
+                        usuario, nao da IDE (§5.1: "nao adivinha memory map,
+                        linker script nem clock").
+```
+
+**A distinção que a exercitação tornou nítida:**
+
+```text
+DA IDE       CMAKE_TRY_COMPILE_TARGET_TYPE — o teste de compilador e' do CMake,
+             nao do usuario. Sem isso, projeto NENHUM configura.
+DO PROJETO   --specs=nosys.specs, linker script, startup, vector table — sao
+             do alvo de quem escreve, e adivinha-los seria a IDE decidindo
+             sobre hardware que nao conhece.
+```
+
 ## 6. FRENTE G — simulação
 
 Continua sendo a etapa 18 do roadmap 34 e continua **ESTUDO**. As sete perguntas
@@ -551,14 +603,13 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            partir da sonda, que depende de
                                            mapear VID:PID -> chip.
 
-25  Ciclo build -> flash -> debug,         PARCIAL. O CROSS foi exercitado em
-    com QEMU no gate                       2026-09-03 contra o arm-none-eabi-
-                                           gcc REAL, e achou um bug: bare
-                                           metal precisa de
-                                           CMAKE_TRY_COMPILE_TARGET_TYPE.
-                                           Falta o flash e o debug, que
-                                           dependem de probe-rs (ausente) e
-                                           qemu-system-arm (ausente).
+25  Ciclo build -> flash -> debug,         PARCIAL, e o que esta provado esta
+    com QEMU no gate                       na §5.6. O cross foi exercitado
+                                           contra ferramentas REAIS em
+                                           2026-09-03 e achou DOIS bugs. Falta
+                                           o handshake DAP com o probe-rs, que
+                                           precisa de sonda ou de alvo QEMU
+                                           suportado.
 
 26  Banco: dominio relacional + o cofre    §7.3. O cofre vem ANTES da
     de credencial                          primeira conexao, nao depois.
