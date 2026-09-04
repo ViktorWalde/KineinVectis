@@ -13,6 +13,7 @@ mod dispatch;
 mod format;
 mod fs;
 mod git;
+mod grafana;
 mod jobs;
 mod lsp;
 mod lsp_server;

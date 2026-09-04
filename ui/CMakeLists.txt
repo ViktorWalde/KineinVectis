@@ -33,6 +33,7 @@ set_source_files_properties(qml/app/AppDomains.qml PROPERTIES QT_RESOURCE_ALIAS 
 set_source_files_properties(qml/app/AppRouters.qml PROPERTIES QT_RESOURCE_ALIAS AppRouters.qml)
 set_source_files_properties(qml/shell/ShellController.qml PROPERTIES QT_RESOURCE_ALIAS ShellController.qml)
 set_source_files_properties(qml/shell/GlobalShortcuts.qml PROPERTIES QT_RESOURCE_ALIAS GlobalShortcuts.qml)
+set_source_files_properties(qml/shell/EnvironmentShortcuts.qml PROPERTIES QT_RESOURCE_ALIAS EnvironmentShortcuts.qml)
 set_source_files_properties(qml/shell/ShellOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellOverlays.qml)
 set_source_files_properties(qml/shell/AboutDialog.qml PROPERTIES QT_RESOURCE_ALIAS AboutDialog.qml)
 set_source_files_properties(qml/shell/DocumentationDialog.qml PROPERTIES QT_RESOURCE_ALIAS DocumentationDialog.qml)
@@ -55,6 +56,14 @@ set_source_files_properties(qml/library/LibraryController.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/library/LibraryPanel.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanel.qml)
 set_source_files_properties(qml/library/LibraryTargetPicker.qml PROPERTIES QT_RESOURCE_ALIAS LibraryTargetPicker.qml)
 set_source_files_properties(qml/datasource/DataSourceController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceController.qml)
+set_source_files_properties(qml/grafana/GrafanaController.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaController.qml)
+set_source_files_properties(qml/grafana/GrafanaPanel.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaPanel.qml)
+set_source_files_properties(qml/grafana/GrafanaPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaPanelHost.qml)
+set_source_files_properties(qml/grafana/GrafanaFindings.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaFindings.qml)
+set_source_files_properties(qml/grafana/GrafanaVerdict.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaVerdict.qml)
+set_source_files_properties(qml/grafana/GrafanaTokenPrompt.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaTokenPrompt.qml)
+set_source_files_properties(qml/ipc/GrafanaEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaEventRouter.qml)
+set_source_files_properties(qml/ipc/GrafanaRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaRequestRouter.qml)
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
 set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanelHost.qml)
 set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceForm.qml)
@@ -231,6 +240,7 @@ qt_add_qml_module(kinein-vectis
         qml/app/AppRouters.qml
         qml/shell/ShellController.qml
         qml/shell/GlobalShortcuts.qml
+        qml/shell/EnvironmentShortcuts.qml
         qml/shell/ShellOverlays.qml
         qml/shell/AboutDialog.qml
         qml/shell/DocumentationDialog.qml
@@ -253,6 +263,14 @@ qt_add_qml_module(kinein-vectis
         qml/library/LibraryPanel.qml
         qml/library/LibraryTargetPicker.qml
         qml/datasource/DataSourceController.qml
+        qml/grafana/GrafanaController.qml
+        qml/grafana/GrafanaPanel.qml
+        qml/grafana/GrafanaPanelHost.qml
+        qml/grafana/GrafanaFindings.qml
+        qml/grafana/GrafanaVerdict.qml
+        qml/grafana/GrafanaTokenPrompt.qml
+        qml/ipc/GrafanaEventRouter.qml
+        qml/ipc/GrafanaRequestRouter.qml
         qml/datasource/DataSourcePanel.qml
         qml/datasource/DataSourcePanelHost.qml
         qml/datasource/DataSourceForm.qml
@@ -421,6 +439,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_toolchain.cpp
         src/core_client_library.cpp
         src/core_client_datasource.cpp
+    src/core_client_grafana.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp

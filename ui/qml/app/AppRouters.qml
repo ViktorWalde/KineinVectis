@@ -125,6 +125,16 @@ Item {
         dataSourceController: root.domains.dataSourceController
     }
 
+    GrafanaEventRouter {
+        coreClient: root.domains.coreClient
+        grafanaController: root.domains.grafanaController
+    }
+
+    GrafanaRequestRouter {
+        coreClient: root.domains.coreClient
+        grafanaController: root.domains.grafanaController
+    }
+
     SetupEventRouter {
         coreClient: root.domains.coreClient
         setupController: root.domains.setupController

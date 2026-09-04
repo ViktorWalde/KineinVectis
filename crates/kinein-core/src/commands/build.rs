@@ -169,6 +169,29 @@ pub(super) fn datasource_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
+/// Observabilidade (roadmaps/35, etapa 27): o Grafana deste projeto.
+///
+/// UM descriptor, e o id e' `grafana.get` porque e' o metodo que a acao chama:
+/// o painel abre lendo a instancia salva. `grafana.probe` NAO entra na paleta —
+/// sondar e' o que se faz DENTRO do painel, com o token da sessao em maos.
+///
+/// `requires_workspace` e' true porque a instancia e' POR PROJETO: ela vive em
+/// `.kinein/grafana.json`, e a pergunta que o painel responde — *"o Grafana ja'
+/// observa os bancos deste projeto?"* — nao existe sem projeto.
+pub(super) fn grafana_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "grafana.get".to_owned(),
+        title: "Observabilidade...".to_owned(),
+        category: "Projeto".to_owned(),
+        description: "O Grafana deste projeto: versao, fontes de dados e dashboards".to_owned(),
+        // Ctrl+Alt+O de Observabilidade. O Ctrl+Alt+G, que seria o obvio, ja'
+        // e' alias do F3 na UI — e atalho anunciado que faz outra coisa e' o
+        // defeito que o `verificar-atalhos.sh` existe para pegar.
+        default_shortcut: Some("Ctrl+Alt+O".to_owned()),
+        requires_workspace: true,
+    }]
+}
+
 /// Bibliotecas C/C++ (roadmaps/35): o catalogo curado.
 ///
 /// UM descriptor, nao treze — mesma razao do `configaction` acima. A paleta

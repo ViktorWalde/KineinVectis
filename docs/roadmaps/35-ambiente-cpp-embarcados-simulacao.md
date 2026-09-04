@@ -1432,6 +1432,172 @@ Grafana    por HTTP API, nunca embutido (AGPL). O painel de instalacao ja'
            entrega o passo a passo oficial dele (§9.3.9)
 ```
 
+## 9.6 A etapa 27 fecha: o Grafana entra pela API (2026-09-04)
+
+Pedido do autor: *"prossiga pela Grafana"*. A frente H do §7 previa
+*"relacional + temporal (TimescaleDB) e Grafana, tudo plug and play"*, e esta é
+a metade que faltava.
+
+### 9.6.1 O que faz isto valer mais que um atalho no navegador
+
+Um link para o Grafana é um favorito — e a IDE não precisaria de um domínio
+para guardar um endereço. O que a IDE tem e o navegador não tem é **o catálogo
+de fontes de dados deste workspace**. Cruzar os dois responde a pergunta que o
+autor faria olhando as duas telas ao mesmo tempo:
+
+```text
+dev  →  kinein-dev      banco `kinein` em localhost:5432
+```
+
+Isso é o `cross_reference`, e é a única parte do domínio que não seria trivial
+em qualquer outro lugar. O resto — listar dashboards, mostrar a versão — o
+navegador também faz.
+
+**O critério é conservador de propósito.** Um falso positivo aqui diria *"seu
+banco já está observado"* apontando para o dashboard de outro ambiente. Por
+isso o nome do banco tem de bater **E** o host tem de bater, e a comparação
+feita vai junto na tela, para o autor conferir sem abrir o Grafana. Há teste
+para o par `localhost`/`127.0.0.1` (o mesmo banco no dia a dia) e para
+`db.producao` (que **não** pode combinar).
+
+### 9.6.2 A licença continua decidindo a forma, e agora ela decide código
+
+```text
+PODE   a IDE CONVERSA com uma instancia pela HTTP API dela
+NAO    embutir o Grafana, ou distribui-lo no AppImage
+```
+
+Na prática: os dashboards abrem com `Qt.openUrlExternally`, no navegador do
+usuário. A IDE não renderiza painel de Grafana, e o comentário que diz isso
+está no `MouseArea` que abre o link — onde alguém que fosse mudar o
+comportamento o leria.
+
+### 9.6.3 O cliente HTTP: medido antes de escolher
+
+O workspace não tinha cliente HTTP. Três candidatos, medidos nesta máquina
+contra o `Cargo.lock` atual:
+
+| candidato | crates novas | licenças fora da allowlist |
+|---|---|---|
+| `ureq` 3.4 **sem features padrão** | **+5** | nenhuma |
+| `ureq` 3.4 com TLS (rustls) | +19 | `subtle` BSD-3-Clause, `webpki-roots` CDLA-Permissive-2.0 |
+| `reqwest` blocking+json | +44 | — |
+
+As cinco novas são `http`, `httparse`, `ureq`, `ureq-proto` e `utf8-zero`,
+todas `MIT OR Apache-2.0`. **Zero decisão de licença**, e o `cargo deny`
+continua verde sem ninguém tocar na allowlist.
+
+**Sem TLS pelo mesmo motivo já registrado no `postgres`**, que entrou em
+2026-09-04 com a nota *"sem TLS de propósito: conexão cifrada é decisão de
+outra fatia"*. A decisão agora é **uma só e vale para os dois** — e para o
+MongoDB, se ele vier: ligar TLS é uma feature do Cargo mais duas entradas na
+`deny.toml`, e essas duas entradas são decisão registrada do autor, nunca do
+assistente.
+
+**A recusa de `https://` é explícita.** Sem as features de TLS, um endereço
+cifrado falharia com um erro de esquema desconhecido que não explica nada. A
+sonda recusa antes de tentar, dizendo o motivo e o que fazer — custa uma linha
+e evita o autor caçando um problema de rede que não existe.
+
+### 9.6.4 Dois booleanos, porque são duas perguntas
+
+`GET /api/health` não pede credencial; o resto pede. Um "ok" só colapsaria
+duas situações que pedem ações opostas. A sonda devolve `reachable` e
+`authenticated` separados, e a tela mostra a frase certa para cada combinação —
+**exercitado contra um Grafana 13.0.2 de verdade**, subido em contêiner:
+
+```text
+token invalido   reachable=1 auth=0  "recusou o token — confira a conta de
+                                      servico e a permissao datasources:read"
+sem token        reachable=1 auth=0  "da' para ver a versao, nao o que ha' dentro"
+porta errada     reachable=0 auth=0  "nada atende em ... — esta' rodando nessa porta?"
+https            reachable=0 auth=0  "cifrado ainda nao entrou, e o motivo e' este"
+politica prompt  recusa SECRET_REQUIRED antes de tocar a rede
+```
+
+**Sem token não é erro, é um estado com resposta própria.** Pedir credencial de
+cara seria o mesmo obstáculo inventado que o autor recusou no banco em
+2026-09-04 (*"para que eu deveria digitar uma senha num projeto 100% open
+source?"*).
+
+### 9.6.5 O token segue a regra da senha
+
+`GrafanaProfile` **não tem campo de token**, e `deny_unknown_fields` faz um
+`"token": "..."` ser **recusado** em vez de silenciosamente descartado com uma
+resposta de sucesso. Dois testes cobrem isso — um no `store.rs` e outro entrando
+pelo caminho real do handler — e ambos reprovam se qualquer chave do JSON
+gravado parecer credencial. O `token` já estava na lista de campos que o cliente
+Qt redige antes de escrever o log.
+
+### 9.6.6 O código do erro chegava à UI e era jogado fora
+
+O comentário do `JsonRpcErrorCode::SecretRequired` dizia, desde que nasceu:
+
+> *"Collapsing the two would force the UI to match on message text to tell
+> 'prompt for a password' apart from 'this profile is broken'."*
+
+E o sinal `requestFailed(method, message)` do cliente Qt **descartava o
+código** — obrigando a UI exatamente ao que o comentário existia para evitar. O
+sinal passou a carregar `code`; handlers QML que declaram menos parâmetros
+continuam válidos, então os onze existentes não mudaram.
+
+### 9.6.7 O defeito que apareceu no meio: o `Ctrl+O` não abria nada
+
+Ao ganhar o atalho da observabilidade, o `GlobalShortcuts.qml` cruzou o limite
+da catraca. Os três suspeitos da §4 regra 9, na ordem: a mudança (um `Shortcut`
+legítimo — o gatilho), a categoria, o arquivo. **Foi o arquivo**, e o
+vocabulário misturado estava à vista: ele liga tecla a AÇÃO — salvar, compilar,
+ir para a definição — e seis atalhos faziam outra coisa, **ABRIR UMA TELA de
+configuração**. São os mesmos seis do menu "Ambiente". Saíram para o
+`EnvironmentShortcuts.qml`, e as seis propriedades de controller **deixaram de
+existir** no arquivo de origem em vez de mudar de lugar.
+
+**No meio do corte apareceu um defeito real.** O `GlobalShortcuts` usa
+`shellController.requestOpenFolder()` no `Ctrl+O`, e essa propriedade **nunca
+era ligada** pelo `Main.qml`. Ela foi retirada em `414972d` com a justificativa
+medida de que era *"recebida e nunca usada"* — verdade naquele momento. Depois o
+`Ctrl+O` passou a chamá-la, e a chamada caía num `null` sem barulho:
+
+```text
+menu "Abrir workspace..."   funcionava (o ShellHeaderHost recebe o controller)
+tecla Ctrl+O                nao fazia nada
+```
+
+O `verificar-atalhos.sh` não pega isto: ele prova que o atalho anunciado
+**existe** e aponta para um comando real, não que o controller do outro lado
+esteja ligado. É o mesmo formato dos quatro defeitos de atalho de 2026-09-04, e
+apareceu do mesmo jeito — mexendo no código de perto, não por gate.
+
+### 9.6.8 Dimensionamento: automático com piso (decisão do autor)
+
+Decisão do autor em 2026-09-04: *"creio que um dimensionamento automático com um
+dimensionamento mínimo está ótimo para a IDE"*. Ela agora tem nome e regra:
+
+```text
+mede o CONTEUDO      nada de altura fixa cortando nome longo de dashboard
+com PISO             nada de linha fina demais para o cursor mirar, nem
+                     dialogo que pisca de tamanho a cada resposta
+com TETO da janela   `Math.min` com o espaco real, sempre
+```
+
+O painel de observabilidade é o primeiro escrito inteiro sob ela: a altura do
+diálogo segue quantos achados a sonda trouxe, entre um piso de 320px e o que a
+janela oferece.
+
+### 9.6.9 O que a etapa 27 ainda NÃO tem
+
+```text
+MongoDB    as sete perguntas foram levantadas e estao com o autor. Ele NAO
+           cabe na arvore esquema->tabela->coluna, e a forma de exibicao e' a
+           decisao antes do codigo — ver §9.5.4
+TLS        uma decisao so' para `postgres`, `ureq` e o que vier: duas licencas
+           permissivas na allowlist, ou nao
+consulta   executar `find`/agregacao pela IDE e' fatia propria, depois da
+           introspeccao — a mesma ordem que o Postgres seguiu
+criar       a IDE le' o Grafana; criar dashboard a partir de um perfil de banco
+dashboard   e' fatia propria, e ela pede desenho antes de codigo
+```
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

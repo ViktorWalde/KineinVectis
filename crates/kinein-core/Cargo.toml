@@ -29,6 +29,9 @@ tree-sitter-rust.workspace = true
 alacritty_terminal = "0.26"
 # Fontes de dados do autor (docs/integracoes/37, docs/seguranca/40).
 postgres.workspace = true
+# Observabilidade (docs/integracoes/37 §2): o Grafana e' AGPL e por isso a IDE
+# so' CONVERSA com ele, pela HTTP API. Este e' o cliente dessa conversa.
+ureq.workspace = true
 
 [lints]
 workspace = true

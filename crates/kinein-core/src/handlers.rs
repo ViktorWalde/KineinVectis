@@ -14,6 +14,7 @@ pub mod draft;
 pub mod format;
 pub mod fs;
 pub mod git;
+pub mod grafana;
 pub mod jobs;
 pub mod library;
 pub mod lsp;

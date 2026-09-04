@@ -33,6 +33,7 @@ Item {
     readonly property alias configActionController: configActionController
     readonly property alias toolchainController: toolchainController
     readonly property alias dataSourceController: dataSourceController
+    readonly property alias grafanaController: grafanaController
     readonly property alias setupController: setupController
     readonly property alias libraryController: libraryController
     readonly property alias runtimeController: runtimeController
@@ -146,6 +147,16 @@ Item {
     // o PERFIL, nunca a senha — a decisao esta em `docs/seguranca/40`.
     DataSourceController {
         id: dataSourceController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+    }
+
+    // Observabilidade (roadmaps/35, etapa 27): o Grafana que observa este
+    // projeto. Guarda o ENDERECO e a politica, nunca o token — mesma regra da
+    // senha de banco. A licenca AGPL do Grafana decide a forma: a IDE conversa
+    // com ele pela HTTP API e nunca o embute.
+    GrafanaController {
+        id: grafanaController
 
         workspaceRoot: root.coreClient.workspaceRoot
     }
@@ -268,6 +279,7 @@ Item {
         configActionController: configActionController
         libraryController: libraryController
         dataSourceController: dataSourceController
+        grafanaController: grafanaController
         setupController: setupController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {

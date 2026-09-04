@@ -14,11 +14,6 @@ Item {
     property var debugController: null
     property var searchController: null
     property var searchEverywhereController: null
-    property var settingsController: null
-    property var configActionController: null
-    property var libraryController: null
-    property var dataSourceController: null
-    property var setupController: null
 
     visible: false
 
@@ -230,42 +225,6 @@ Item {
         // comando: fs.search
         sequence: "Ctrl+Shift+F"
         onActivated: root.searchController.openSearchPanel()
-    }
-
-    Shortcut {
-        // comando: settings.get
-        sequence: "Ctrl+Alt+S"
-        onActivated: root.settingsController.openDialog()
-    }
-
-    Shortcut {
-        // comando: library.list
-        // Ctrl+Alt+K, e NAO Ctrl+Alt+L: ate' 2026-09-04 este painel anunciava
-        // Ctrl+Alt+L na paleta e nao tinha Shortcut nenhum — quem apertava
-        // FORMATAVA o arquivo, porque o `format.text` anunciava o mesmo
-        // atalho e era esse que a UI ligava. Achado por relato de uso.
-        sequence: "Ctrl+Alt+K"
-        onActivated: root.libraryController.open()
-    }
-
-    Shortcut {
-        // comando: datasource.list
-        // Ctrl+Alt+J pelo mesmo motivo: o Ctrl+Alt+D que este comando
-        // anunciava ao nascer ja' era alias do `debug.start` na UI.
-        sequence: "Ctrl+Alt+J"
-        onActivated: root.dataSourceController.open()
-    }
-
-    Shortcut {
-        // comando: setup.list
-        sequence: "Ctrl+Alt+H"
-        onActivated: root.setupController.open()
-    }
-
-    Shortcut {
-        // comando: configAction.list
-        sequence: "Ctrl+Alt+P"
-        onActivated: root.configActionController.openDialog()
     }
 
     Shortcut {

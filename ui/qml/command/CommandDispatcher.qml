@@ -16,6 +16,7 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var grafanaController: null
     property var setupController: null
 
     signal openWorkspaceRequested()
@@ -102,6 +103,8 @@ Item {
             libraryController.open();
         } else if (commandId === "datasource.list") {
             dataSourceController.open();
+        } else if (commandId === "grafana.get") {
+            grafanaController.open();
         } else if (commandId === "setup.list") {
             setupController.open();
         } else if (commandId === "settings.get") {

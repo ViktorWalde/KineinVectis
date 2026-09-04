@@ -91,6 +91,32 @@ series temporais  o que a IDE MOSTRA de uma tabela hypertable, e onde
 segredo            DECIDIDO em 2026-09-04, ver `../seguranca/40`
 ```
 
+## RESPONDIDO em 2026-09-04: os endpoints, e o cliente
+
+A pergunta acima foi respondida implementando (roadmaps/35 §9.6). **Três
+endpoints bastam para LER**, e a IDE só lê:
+
+| endpoint | o que dá | precisa de token |
+|---|---|---|
+| `GET /api/health` | `version`, `database`, `commit` | **não** |
+| `GET /api/datasources` | `uid`, `name`, `type`, `typeName`, `url`, `database`, `isDefault` | sim (`datasources:read`) |
+| `GET /api/search?type=dash-db` | `uid`, `title`, `url`, `folderTitle` | sim |
+
+Fonte: documentação oficial do Grafana, consultada em 2026-09-04; **verificado
+contra um servidor real 13.0.2** subido em contêiner. Duas divergências entre a
+documentação e o servidor, registradas porque importam:
+
+- a doc de `/api/datasources` lista um campo **`password`**; o 13.0.2 **não o
+  envia**. A struct da IDE não tem o campo de qualquer forma, então o `serde` o
+  descartaria — a garantia é estrutural, e há teste;
+- o 13.0.2 envia **`typeName`** (`"PostgreSQL"`), que a doc não lista. A IDE o
+  usa quando existe e cai para o `type` quando não.
+
+**Cliente:** `ureq` 3.4 sem features padrão — +5 crates, todas `MIT OR
+Apache-2.0`, nenhuma decisão de licença. Sem TLS, pelo mesmo motivo já
+registrado no `postgres`; a decisão de cifrar é uma só e está com o autor.
+
+
 O item de **segredo** era o mais perigoso e o mais fácil de esquecer, e foi o
 primeiro a ser resolvido: **a IDE guarda o perfil e nunca a senha**
 ([`../seguranca/40-cofre-de-credencial.md`](../seguranca/40-cofre-de-credencial.md),

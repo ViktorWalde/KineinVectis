@@ -20,8 +20,8 @@ cargo test -q --workspace
 ```
 
 ```text
-protocolo   0.80.0
-testes      529 Rust + 24 harnesses QML
+protocolo   0.81.0
+testes      563 Rust + 24 harnesses QML
 metodos     139 IPC roteados, 35 eventos
 catraca     1 arquivo em debito
 gate        18 verificacoes
@@ -90,6 +90,30 @@ cresceu de 1020x660 para 1100x820 e a caixa ganhou barra de rolagem.
 1366x768,  6 campos     10px (NENHUMA)     ->  285px (~17 linhas)
 ```
 
+**A etapa 27 fechou: o Grafana entra pela API** (roadmaps/35 §9.6). Domínio
+`grafana.*` com quatro métodos e um evento, cliente HTTP próprio (`ureq` sem
+TLS: +5 crates, todas `MIT OR Apache-2.0`, **zero decisão de licença**), e o
+cruzamento que justifica o domínio existir:
+
+```text
+dev  ->  kinein-dev      banco `kinein` em localhost:5432
+```
+
+Exercitado contra um **Grafana 13.0.2 de verdade**, incluindo os quatro modos de
+falha (token inválido, sem token, porta errada, `https` recusado). Os dashboards
+abrem no navegador — a licença AGPL decide a forma, e a IDE nunca embute.
+
+**Dois defeitos apareceram mexendo no código, não em gate:**
+
+```text
+Ctrl+O nao abria nada       `shellController` era usado pelo GlobalShortcuts e
+                            NUNCA ligado pelo Main.qml; a chamada caia num
+                            `null` em silencio. O menu funcionava, a tecla nao
+requestFailed sem `code`    o cliente Qt descartava o codigo do erro, forcando
+                            a UI a casar por TEXTO — exatamente o que o
+                            comentario do `SecretRequired` existe para evitar
+```
+
 **E o harness passou a enxergar tela.** O `verificar-qml-logica.sh` monta um
 espelho plano do modulo `KineinVectis` a partir das fontes; ate' 2026-09-04 so'
 dava para testar componente que nao usa `Theme`, e geometria era zona sem
@@ -100,12 +124,22 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 ## 4. O que está aberto
 
 ```text
-27  bancos relacional/temporal/nao-     COMECADA em 2026-09-04: o perfil ganhou
-    relacional                           MOTOR, o SQLite entrou (rusqlite ja'
-                                         era dependencia) e o TimescaleDB agora
-                                         aparece por nome. Falta o MongoDB, que
-                                         NAO cabe na arvore atual — ver
-                                         roadmaps/35 §9.5.4
+27  bancos relacional/temporal/nao-     QUASE FECHADA. SQLite entrou, o
+    relacional, e o Grafana               TimescaleDB aparece por nome e o
+                                          Grafana entrou pela HTTP API
+                                          (roadmaps/35 §9.6). Falta o MongoDB,
+                                          e ele esta' com o AUTOR: sete
+                                          perguntas levantadas em 2026-09-04,
+                                          porque ele NAO cabe na arvore
+                                          esquema->tabela->coluna — ver
+                                          roadmaps/35 §9.5.4
+--  TLS                                   UMA decisao para `postgres`, `ureq` e
+                                          o que vier: duas licencas permissivas
+                                          (`subtle` BSD-3-Clause, `webpki-roots`
+                                          CDLA-Permissive-2.0) entram na
+                                          allowlist, ou o cifrado nao entra.
+                                          Politica de licenca e' decisao do
+                                          autor, nunca do assistente
 28  simulacao: CALCULO sem tela          §5.1 do roadmaps/35 ja' respondida
 25  handshake DAP com probe-rs           PARCIAL: precisa de sonda fisica ou
                                          alvo QEMU. O resto do ciclo de
@@ -128,6 +162,12 @@ EditorController             congelado ate' decisao do autor (../arquitetura/32 
 senha em disco               PROIBIDA: a IDE guarda o PERFIL (../seguranca/40)
 comando de instalacao        so' com FONTE OFICIAL citada e datada; sem fonte,
                              a IDE mostra o site e diz que nao tem passo a passo
+dimensionamento da UI        AUTOMATICO pelo conteudo, com PISO e com o teto da
+                             janela (autor, 2026-09-04). Altura fixa corta
+                             conteudo; automatica sem piso faz a tela piscar
+UI/UX moderna e minimalista  ETAPA A PARTE, depois do pente-fino (autor,
+                             2026-09-04). Nao se antecipa em fatia de
+                             funcionalidade, e nao reabre decisao registrada
 ```
 
 ## 6. A lacuna que não é técnica, e continua sendo a mais cara

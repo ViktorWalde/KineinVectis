@@ -17,6 +17,7 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var grafanaController: null
     property var setupController: null
     property var toolchainController: null
     property bool aboutVisible: false
@@ -202,6 +203,16 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.dataSourceController.close()
+    }
+
+    GrafanaPanelHost {
+        anchors.fill: parent
+        visible: root.grafanaController.panelVisible
+        z: 99
+        controller: root.grafanaController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.grafanaController.close()
     }
 
     SetupPanelHost {

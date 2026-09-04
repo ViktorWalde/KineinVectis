@@ -55,7 +55,7 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **139 métodos IPC** roteados e **35 eventos**, **17 domínios** no core (mais os
-módulos de arquivo único), **529 testes** Rust verdes e **24 harnesses QML**
+módulos de arquivo único), **563 testes** Rust verdes e **24 harnesses QML**
 (medido em 2026-09-04). Protocolo `0.78.0`. O gate tem **18 verificações**.
 
 Domínios do core, por profundidade real:

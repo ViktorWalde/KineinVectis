@@ -148,6 +148,13 @@ public:
     Q_INVOKABLE void dataSourceRemove(const QString& name);
     Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password);
     Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password);
+
+    // Observabilidade: o Grafana que observa este projeto. A licenca dele
+    // (AGPL-3.0) decide a FORMA — a IDE CONVERSA, nunca embute.
+    Q_INVOKABLE void grafanaGet();
+    Q_INVOKABLE void grafanaSave(const QVariantMap& profile);
+    Q_INVOKABLE void grafanaForget();
+    Q_INVOKABLE void grafanaProbe(const QString& token);
     Q_INVOKABLE void libraryList();
     Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
     Q_INVOKABLE void toolchainGet(const QString& preset);
@@ -259,6 +266,14 @@ signals:
     /// Estrutura lida do banco: esquemas -> tabelas -> colunas.
     void dataSourceIntrospected(const QString& name, bool ok, const QVariantList& schemas,
                                 const QString& message, bool secretRequired);
+    /// A instancia salva neste workspace. `exists` distingue "nao ha' nenhuma"
+    /// de "ha' uma com campos vazios" — a tela desenha coisas diferentes.
+    void grafanaProfileResolved(const QVariantMap& profile, bool exists);
+    void grafanaProbeAccepted(const QString& jobId);
+    /// O que a sonda achou. Um mapa so' porque o resultado e' composto:
+    /// alcance, autenticacao, fontes de dados, dashboards e o CRUZAMENTO com
+    /// os perfis de banco deste workspace.
+    void grafanaProbed(const QVariantMap& result);
     void libraryListResolved(const QVariantList& libraries);
     void libraryPlanResolved(const QVariantMap& plan);
     void toolchainResolved(const QVariantList& selections, const QVariantList& candidates,
@@ -353,7 +368,16 @@ signals:
     // Desde a D2.3 o mapa carrega `id`: a UI roteia pro terminal certo.
     void terminalRender(const QVariantMap& render);
     void terminalClosed(const QString& id, int exitCode);
-    void requestFailed(const QString& method, const QString& message);
+    /// Recusa do core. `code` e' o `JsonRpcErrorCode` estavel — `SECRET_REQUIRED`,
+    /// `INVALID_PARAMS`, ... — e existe para a UI decidir por ELE, nunca pelo
+    /// texto de `message`, que vem localizado e muda.
+    ///
+    /// Ate' 2026-09-04 o codigo era descartado aqui, e o comentario do
+    /// `JsonRpcErrorCode::SecretRequired` no protocolo dizia com todas as
+    /// letras que ele existia para evitar casamento por texto — evitar algo
+    /// que a UI nao tinha como fazer de outro jeito. Handlers QML que declaram
+    /// menos parametros continuam validos.
+    void requestFailed(const QString& method, const QString& message, const QString& code);
 
 private:
     void handleStarted();
@@ -379,6 +403,7 @@ private:
     bool dispatchConfigActionResult(const QString& method, const QJsonObject& result);
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);
+    bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

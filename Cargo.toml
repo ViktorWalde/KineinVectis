@@ -50,6 +50,18 @@ tree-sitter-rust = "=0.24.2"
 # detalhe de implementacao, e o codigo deste repositorio segue sincrono.
 # Sem TLS de proposito: conexao cifrada e' decisao de outra fatia.
 postgres = "0.19"
+# Cliente HTTP SINCRONO do dominio `grafana` (docs/integracoes/37 §2). Medido
+# em 2026-09-04: MIT OR Apache-2.0, e SEM as features padrao sao +5 crates
+# novas (http, httparse, ureq, ureq-proto, utf8-zero), todas MIT OR Apache-2.0.
+# Comparacao que decidiu: `ureq` com TLS custaria +19 e traria `subtle`
+# (BSD-3-Clause) e `webpki-roots` (CDLA-Permissive-2.0), duas licencas FORA da
+# allowlist; `reqwest` com blocking+json custaria +44.
+#
+# Sem TLS pelo mesmo motivo ja' registrado no `postgres` acima: cifrar e'
+# decisao de outra fatia, e ela ficou pendente do autor por trazer licenca
+# nova. Grafana local responde em `http://localhost:3000`, e um perfil `https`
+# recebe recusa EXPLICITA, nunca um erro de rede confuso.
+ureq = { version = "3.4", default-features = false }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

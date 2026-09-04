@@ -17,6 +17,7 @@ Column {
     property var settingsController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var grafanaController: null
     property var setupController: null
     property var configActionController: null
     property var toolchainController: null
@@ -88,6 +89,7 @@ Column {
         case "tools.detect": root.coreClient.detectTools(); break;
         case "library.list": root.libraryController.open(); break;
         case "datasource.list": root.dataSourceController.open(); break;
+        case "grafana.get": root.grafanaController.open(); break;
         case "setup.list": root.setupController.open(); break;
         case "configAction.list": root.configActionController.openDialog(); break;
         // O menu de toolchain nasce ANCORADO no botao da barra. Vindo do menu

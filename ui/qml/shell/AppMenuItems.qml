@@ -131,6 +131,8 @@ Item {
                   enabled: workspaceOpen },
                 { label: qsTr("Banco de dados..."), action: "datasource.list",
                   enabled: workspaceOpen },
+                { label: qsTr("Observabilidade..."), action: "grafana.get",
+                  enabled: workspaceOpen },
                 { label: qsTr("Instalar ferramentas..."), action: "setup.list",
                   enabled: true },
                 { label: qsTr("Toolchain e kits..."), action: "toolchain.get",

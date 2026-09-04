@@ -79,7 +79,7 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
         emit dataSourceTestAccepted(result.value(QStringLiteral("jobId")).toString());
         return true;
     }
-    return false;
+    return dispatchGrafanaResult(method, result);
 }
 
 } // namespace kinein

@@ -124,17 +124,27 @@ Window {
     }
 
     GlobalShortcuts {
-        configActionController: domains.configActionController
-        libraryController: domains.libraryController
-        dataSourceController: domains.dataSourceController
-        setupController: domains.setupController
+        // `shellController` VOLTA A SER LIGADO. Ele foi retirado daqui em
+        // 414972d, com a justificativa medida de que era "recebida e nunca
+        // usada" — e naquele momento era verdade. Depois o Ctrl+O
+        // (`workspace.open`) passou a chama-lo, e a chamada caiu num `null`
+        // sem barulho: o menu "Abrir workspace..." funcionava, a tecla nao.
+        shellController: domains.shellController
         debugController: domains.debugController
         editorController: domains.editorController
         jobsController: domains.jobsController
         runtimeController: domains.runtimeController
         searchController: domains.searchController
         searchEverywhereController: domains.searchEverywhereController
+    }
+
+    EnvironmentShortcuts {
         settingsController: domains.settingsController
+        configActionController: domains.configActionController
+        libraryController: domains.libraryController
+        dataSourceController: domains.dataSourceController
+        grafanaController: domains.grafanaController
+        setupController: domains.setupController
     }
 
     ShellHeaderHost {
@@ -156,6 +166,7 @@ Window {
         settingsController: domains.settingsController
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
+        grafanaController: domains.grafanaController
         setupController: domains.setupController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
@@ -266,6 +277,7 @@ Window {
         settingsController: domains.settingsController
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
+        grafanaController: domains.grafanaController
         setupController: domains.setupController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController

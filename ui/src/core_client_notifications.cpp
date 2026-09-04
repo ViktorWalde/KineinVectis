@@ -37,6 +37,12 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
                               params.value(QStringLiteral("secretRequired")).toBool(false));
         return;
     }
+    if (method == QStringLiteral("event.grafana.probed")) {
+        // Um mapa inteiro em vez de oito parametros: o resultado da sonda e'
+        // composto, e desmontar aqui so' obrigaria a UI a remontar.
+        emit grafanaProbed(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.git.remoteFinished")) {
         emit gitRemoteOperationFinished(params.value(QStringLiteral("operation")).toString(),
                                         params.value(QStringLiteral("success")).toBool(false),
