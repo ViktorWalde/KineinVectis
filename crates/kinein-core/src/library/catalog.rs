@@ -72,7 +72,7 @@ pub(super) struct LibraryDefinition {
 /// reprova no build. E' `static` e nao corpo de funcao pelo mesmo motivo de la:
 /// tabela de DADO nao deve disparar o lint de funcao longa, porque encurta-la
 /// significaria esconder entrada.
-static DEFINITIONS: [LibraryDefinition; 13] = [
+pub(super) static DEFINITIONS: [LibraryDefinition; 13] = [
     LibraryDefinition {
         id: "fmt",
         name: "fmt",

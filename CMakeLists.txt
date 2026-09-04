@@ -20,3 +20,11 @@ FetchContent_Declare(
     GIT_TAG version-3.53.4
 )
          FetchContent_MakeAvailable(sqlite3)
+
+include(FetchContent)
+FetchContent_Declare(
+    asio
+             GIT_REPOSITORY https://github.com/chriskohlhoff/asio
+    GIT_TAG asio-1-38-2
+)
+         FetchContent_MakeAvailable(asio)

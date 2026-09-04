@@ -31,7 +31,7 @@ Item {
 
         anchors.top: parent.top
         anchors.left: parent.left
-        text: qsTr("Bibliotecas C/C++")
+        text: qsTr("Bibliotecas")
         color: Theme.textPrimary
         font.pixelSize: 12
         font.weight: Font.DemiBold
@@ -45,8 +45,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         wrapMode: Text.WordWrap
-        text: qsTr("Auditadas: licença verificada na fonte e versão fixada. "
-                   + "A IDE não usa gerenciador de pacotes — escreve CMake.")
+        text: qsTr("● verde = já está no seu projeto.  ● cinza = disponível "
+                   + "para ativar.  Licença verificada na fonte, versão fixada.")
         color: Theme.textMuted
         font.pixelSize: 10
     }
@@ -94,12 +94,28 @@ Item {
                 onClicked: root.librarySelected(linha.modelData.id)
             }
 
+            // A BOLINHA responde "esta no meu projeto?", nao "existe nesta
+            // maquina?". As duas perguntas sao diferentes e a tela mostrava so'
+            // a segunda — foi a confusao que o autor relatou em 2026-09-04.
+            Rectangle {
+                id: bolinha
+
+                anchors.verticalCenter: nome.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacingSmall
+                width: 8
+                height: 8
+                radius: 4
+                color: linha.modelData.applied === true
+                       ? Theme.successSoft : Theme.textDisabled
+            }
+
             Text {
                 id: nome
 
                 anchors.top: parent.top
                 anchors.topMargin: 4
-                anchors.left: parent.left
+                anchors.left: bolinha.right
                 anchors.leftMargin: Theme.spacingSmall
                 text: linha.modelData.name
                 color: Theme.textPrimary
@@ -126,9 +142,16 @@ Item {
                 anchors.topMargin: 4
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spacingSmall
-                text: linha.modelData.status === "detected"
-                      ? qsTr("instalada") : qsTr("seria baixada")
-                color: linha.modelData.status === "detected"
+                // Duas informacoes, nesta ordem de importancia: se ja' esta
+                // NO PROJETO (o que o autor quer saber primeiro) e, so' quando
+                // nao esta, de onde ela viria. "seria baixada" sozinho nao
+                // dizia nem uma coisa nem outra — relato de 2026-09-04.
+                text: linha.modelData.applied === true
+                      ? qsTr("ativa neste projeto")
+                      : (linha.modelData.status === "detected"
+                         ? qsTr("instalada no sistema")
+                         : qsTr("baixa junto do projeto"))
+                color: linha.modelData.applied === true
                        ? Theme.successSoft : Theme.textMuted
                 font.pixelSize: 9
             }

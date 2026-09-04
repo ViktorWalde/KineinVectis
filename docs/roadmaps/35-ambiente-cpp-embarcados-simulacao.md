@@ -773,6 +773,44 @@ lista que o autor vê antes de escolher.
 Com **um** alvo, o painel preenche sozinho. Com vários, quem escolhe é o autor —
 a IDE não adivinha em qual binário a biblioteca entra.
 
+### 9.3.2 Três defeitos que o uso achou (2026-09-04)
+
+**1. "Onde linkar" listava dezenove alvos, e dezoito não aceitam link.**
+Relato: *"apareceram vários arquivos para onde linkar e isso ficou confuso"*.
+Medido no próprio repositório da IDE, o `cmake.targets.list` devolvia:
+
+```text
+all_qmllint   kinein-vectis_autogen   kinein-vectis_copy_qml   ... e mais 15
+kinein-vectis  <- o UNICO em que `target_link_libraries` funciona
+```
+
+Não era só confuso — era **errado**: linkar num target `utility` falha. A lista
+agora só traz `executable`, `staticLibrary`, `sharedLibrary`, `moduleLibrary` e
+`objectLibrary`. `interfaceLibrary` fica de fora por um motivo diferente e
+igualmente concreto: ela só aceita visibilidade `INTERFACE`, e o plano que a
+IDE escreve usa `PRIVATE`. **19 → 1.**
+
+**2. A IDE escrevia CMake torto no arquivo do autor.** O bloco de
+`FetchContent` saía com treze espaços antes do `GIT_REPOSITORY` e nove antes do
+`FetchContent_MakeAvailable`, porque era um `format!` de uma linha só com `\n`
+embutido — a forma que melhor esconde esse erro. Agora sai com quatro espaços
+uniformes, e o `format!` tem as linhas à vista.
+
+**3. A tela não sabia dizer o que está ativo NO PROJETO.** Relato: *"fica
+confuso sobre o que estou ativado no meu projeto"*. O catálogo respondia apenas
+se a biblioteca existe **nesta máquina** (`status`), que é outra pergunta. Nasceu
+`library::applied`, que lê os `target_link_libraries` do projeto:
+
+```text
+status   detected | notDetected    e' sobre a MAQUINA
+applied  true | false              e' sobre o PROJETO ABERTO
+```
+
+A bolinha do painel passou a responder a segunda — verde é "está no seu
+projeto", cinza é "disponível para ativar" —, e o canto da linha diz
+`ativa neste projeto` / `instalada no sistema` / `baixa junto do projeto` em vez
+do antigo `seria baixada`, que não dizia nem uma coisa nem outra.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

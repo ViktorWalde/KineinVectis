@@ -38,7 +38,19 @@ pub struct LibraryInfo {
     /// Repository.
     pub repository: String,
     /// Whether this machine already has it.
+    ///
+    /// Not the same question as [`Self::applied`], and conflating the two was
+    /// the confusion the author reported on 2026-09-04: "installed on this
+    /// machine" is about the machine, "linked in my project" is about the
+    /// project. A library can be installed and unused, or used and downloaded
+    /// by `FetchContent` without being installed.
     pub status: LibraryStatus,
+    /// Whether the OPEN PROJECT already links it.
+    ///
+    /// Read from the project's `target_link_libraries`. `false` when there is
+    /// no workspace open — nothing is linked in no project.
+    #[serde(default)]
+    pub applied: bool,
     /// The STRONG signal, when there is one: the library became part of the ISO
     /// standard, or passed Boost's formal review.
     ///

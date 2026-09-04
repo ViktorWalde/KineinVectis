@@ -238,8 +238,20 @@ pub(super) fn fetch_content(
     let name = one_argument(required_param(params, "name")?, "name")?;
     let repository = one_argument(required_param(params, "repository")?, "repository")?;
     let tag = one_argument(required_param(params, "tag")?, "tag")?;
+    // Indentacao de QUATRO espacos, uniforme. Ate' 2026-09-04 este bloco saia
+    // com treze espacos antes do `GIT_REPOSITORY` e nove antes do
+    // `FetchContent_MakeAvailable` — a IDE escrevia CMake torto no arquivo do
+    // autor, e foi lendo o proprio resultado que ele reclamou. Um `format!`
+    // de uma linha so' com `\n` embutido esconde exatamente esse tipo de erro;
+    // por isso o bloco agora e' escrito como texto, com as linhas a vista.
     let bloco = format!(
-        "include(FetchContent)\nFetchContent_Declare(\n    {name}\n             GIT_REPOSITORY {repository}\n    GIT_TAG {tag}\n)\n         FetchContent_MakeAvailable({name})\n"
+        "include(FetchContent)\n\
+         FetchContent_Declare(\n\
+         \x20   {name}\n\
+         \x20   GIT_REPOSITORY {repository}\n\
+         \x20   GIT_TAG {tag}\n\
+         )\n\
+         FetchContent_MakeAvailable({name})\n"
     );
     Ok(edit_plan(
         format!("Baixa {name} na tag {tag} e disponibiliza ao projeto"),

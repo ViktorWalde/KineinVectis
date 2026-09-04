@@ -143,7 +143,7 @@ pub(super) fn configaction_command_descriptors() -> Vec<CommandDescriptor> {
 pub(super) fn datasource_command_descriptors() -> Vec<CommandDescriptor> {
     vec![CommandDescriptor {
         id: "datasource.list".to_owned(),
-        title: "Fontes de dados...".to_owned(),
+        title: "Banco de dados...".to_owned(),
         category: "Projeto".to_owned(),
         description: "Conexoes a banco: o perfil fica salvo, a senha nunca".to_owned(),
         // Ctrl+Alt+J: o Ctrl+Alt+D que este comando anunciava ao nascer ja'
@@ -167,7 +167,7 @@ pub(super) fn datasource_command_descriptors() -> Vec<CommandDescriptor> {
 pub(super) fn library_command_descriptors() -> Vec<CommandDescriptor> {
     vec![CommandDescriptor {
         id: "library.list".to_owned(),
-        title: "Bibliotecas C/C++...".to_owned(),
+        title: "Bibliotecas...".to_owned(),
         category: "Projeto".to_owned(),
         description: "Catalogo auditado: licenca, versao fixada e o que cada uma faz".to_owned(),
         // Ctrl+Alt+K, e NAO Ctrl+Alt+L: ate 2026-09-04 este comando anunciava

@@ -127,9 +127,9 @@ Item {
             // de compilar, e por isso ganhou menu proprio em vez de virar o
             // quinto item de Ferramentas.
             environment: [
-                { label: qsTr("Bibliotecas C/C++..."), action: "library.list",
+                { label: qsTr("Bibliotecas..."), action: "library.list",
                   enabled: workspaceOpen },
-                { label: qsTr("Fontes de dados..."), action: "datasource.list",
+                { label: qsTr("Banco de dados..."), action: "datasource.list",
                   enabled: workspaceOpen },
                 { label: qsTr("Toolchain e kits..."), action: "toolchain.get",
                   enabled: workspaceOpen },

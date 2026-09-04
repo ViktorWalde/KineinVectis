@@ -120,6 +120,46 @@ pub fn list_presets(root: &Path) -> Result<Vec<CmakePresetInfo>, String> {
     Ok(presets)
 }
 
+/// Os `kind` de target em que se PODE linkar uma biblioteca.
+///
+/// POR QUE ESTA LISTA EXISTE (2026-09-04). Relato de uso do autor: "apareceram
+/// varios arquivos para onde linkar e isso ficou confuso". Medido no proprio
+/// repositorio da IDE, o `cmake.targets.list` devolvia 19 nomes — e DEZOITO
+/// deles eram utilitarios que o Qt e o `CMake` geram sozinhos:
+///
+/// ```text
+/// all_qmllint            kinein-vectis_autogen        kinein-vectis_copy_qml
+/// all_aotstats           kinein-vectis_qmlimportscan  ... e mais treze
+/// ```
+///
+/// Nao era so' confuso: era ERRADO. `target_link_libraries` num target
+/// `utility` falha. A IDE oferecia dezoito caminhos que terminam em erro e um
+/// que funciona, sem distinguir.
+///
+/// `interfaceLibrary` fica de fora por um motivo diferente e igualmente
+/// concreto: ela SO' aceita visibilidade `INTERFACE`, e o plano que a IDE
+/// escreve usa `PRIVATE`. Oferece-la seria oferecer outro erro.
+const LINKABLE_KINDS: [&str; 5] = [
+    "EXECUTABLE",
+    "STATIC_LIBRARY",
+    "SHARED_LIBRARY",
+    "MODULE_LIBRARY",
+    "OBJECT_LIBRARY",
+];
+
+/// `true` quando da' para linkar uma biblioteca neste target.
+///
+/// O file-api escreve `STATIC_LIBRARY`; a UI e o scanner de fonte usam
+/// `staticLibrary`. Comparar sem `_` e sem caixa cobre as duas grafias sem
+/// precisar de tabela de traducao.
+#[must_use]
+fn is_linkable_kind(kind: &str) -> bool {
+    let normalizado = kind.replace('_', "").to_ascii_uppercase();
+    LINKABLE_KINDS
+        .iter()
+        .any(|aceito| aceito.replace('_', "") == normalizado)
+}
+
 /// Le os nomes de target direto do `CMakeLists.txt`, sem configurar nada.
 ///
 /// POR QUE ISTO EXISTE (2026-09-04). Relato de uso do autor: "o `SQLite` eu nao
@@ -168,10 +208,14 @@ pub fn targets_from_source(root: &Path) -> Vec<CmakeTargetInfo> {
                     .find(|parte| !parte.is_empty())
                     .unwrap_or("");
                 // Nome vazio, com variavel, ou alias/importado: nao serve.
+                let maiusculo = resto.to_ascii_uppercase();
                 if nome.is_empty()
                     || nome.contains('$')
-                    || resto.to_ascii_uppercase().contains(" ALIAS ")
-                    || resto.to_ascii_uppercase().contains(" IMPORTED")
+                    || maiusculo.contains(" ALIAS ")
+                    || maiusculo.contains(" IMPORTED")
+                    // INTERFACE so' aceita visibilidade INTERFACE, e o plano
+                    // que a IDE escreve usa PRIVATE. Ver `LINKABLE_KINDS`.
+                    || maiusculo.contains(" INTERFACE")
                 {
                     continue;
                 }
@@ -195,7 +239,7 @@ pub fn targets_from_source(root: &Path) -> Vec<CmakeTargetInfo> {
 ///
 /// Profundidade limitada de proposito: um projeto com dezenas de milhares de
 /// diretorios nao pode travar a abertura do painel de bibliotecas.
-fn cmake_lists_files(root: &Path) -> Vec<PathBuf> {
+pub(crate) fn cmake_lists_files(root: &Path) -> Vec<PathBuf> {
     const PROFUNDIDADE_MAXIMA: usize = 3;
     const IGNORADOS: [&str; 6] = [".kinein", ".git", "build", "target", "node_modules", "out"];
 
@@ -284,6 +328,12 @@ pub fn list_targets(root: &Path) -> Vec<CmakeTargetInfo> {
                     .map(target_kind_name)
             })
             .unwrap_or_else(|| "unknown".to_owned());
+        // Utilitario gerado pelo Qt/CMake nao aceita `target_link_libraries`;
+        // ver `LINKABLE_KINDS`. Devolve-lo seria oferecer um caminho que
+        // termina em erro.
+        if !is_linkable_kind(&kind) {
+            continue;
+        }
         targets.push(CmakeTargetInfo {
             name: name.to_owned(),
             kind,
@@ -405,6 +455,40 @@ mod tests {
 
         std::fs::write(root.join("CMakeUserPresets.json"), "nao é json").unwrap();
         assert!(list_presets(&root).is_err());
+    }
+
+    /// O relato de uso de 2026-09-04: dezoito dos dezenove "alvos" eram
+    /// utilitarios do Qt, e `target_link_libraries` neles FALHA.
+    #[test]
+    fn utilitario_gerado_nao_entra_na_lista_de_onde_linkar() {
+        let root = temp_root("targets-linkaveis");
+        let reply = root.join(".kinein/build/.cmake/api/v1/reply");
+        std::fs::create_dir_all(&reply).unwrap();
+        std::fs::write(
+            reply.join("codemodel-v2-abc.json"),
+            r#"{ "configurations": [ { "targets": [
+                { "name": "app", "jsonFile": "t-app.json" },
+                { "name": "all_qmllint", "jsonFile": "t-lint.json" },
+                { "name": "core", "jsonFile": "t-core.json" },
+                { "name": "so_interface", "jsonFile": "t-iface.json" }
+            ] } ] }"#,
+        )
+        .unwrap();
+        for (arquivo, tipo) in [
+            ("t-app.json", "EXECUTABLE"),
+            ("t-lint.json", "UTILITY"),
+            ("t-core.json", "STATIC_LIBRARY"),
+            ("t-iface.json", "INTERFACE_LIBRARY"),
+        ] {
+            std::fs::write(reply.join(arquivo), format!(r#"{{ "type": "{tipo}" }}"#)).unwrap();
+        }
+
+        let nomes: Vec<_> = list_targets(&root).into_iter().map(|t| t.name).collect();
+        assert_eq!(
+            nomes,
+            vec!["app".to_owned(), "core".to_owned()],
+            "utilitario ou INTERFACE entrou na lista de onde linkar"
+        );
     }
 
     /// O buraco que o relato de uso de 2026-09-04 expos: projeto recem-aberto

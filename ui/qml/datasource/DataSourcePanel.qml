@@ -40,7 +40,7 @@ Item {
 
         anchors.top: parent.top
         anchors.left: parent.left
-        text: qsTr("Fontes de dados")
+        text: qsTr("Banco de dados")
         color: Theme.textPrimary
         font.pixelSize: 12
         font.weight: Font.DemiBold

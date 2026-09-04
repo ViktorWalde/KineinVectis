@@ -16,26 +16,31 @@ use crate::rpc::parse_params;
 impl Core {
     /// Roteia os metodos `library.*`; `None` quando o metodo nao e deste dominio.
     ///
-    /// Nao recebe `self`, e a ausencia diz algo: este dominio e' STATELESS. O
-    /// catalogo e' estatico e a disponibilidade se le do filesystem — nada aqui
-    /// depende do estado do `Core`, nem de workspace aberto.
+    /// Recebe `self` desde 2026-09-04 por UM motivo: alem do catalogo (estatico)
+    /// e da disponibilidade (filesystem), a resposta diz o que o PROJETO ABERTO
+    /// ja' linka — e isso depende de qual workspace esta aberto.
     pub(crate) fn library_request_response(
+        &self,
         method: &str,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> Option<JsonRpcResponse> {
         match method {
-            "library.list" => Some(Self::library_list_response(request_id, params)),
+            "library.list" => Some(self.library_list_response(request_id, params)),
             "library.plan" => Some(Self::library_plan_response(request_id, params)),
             _ => None,
         }
     }
 
-    /// `library.list` — o catalogo cruzado com esta maquina.
+    /// `library.list` — o catalogo cruzado com esta maquina E com este projeto.
     ///
-    /// Nao exige workspace aberto: o catalogo e o que existe no mundo mais o
-    /// que existe na maquina, e nenhum dos dois depende de projeto aberto.
-    fn library_list_response(request_id: Option<Value>, params: Option<&Value>) -> JsonRpcResponse {
+    /// Nao EXIGE workspace aberto: sem projeto o catalogo ainda vale, e todas
+    /// as bibliotecas voltam com `applied: false`, que e' a verdade.
+    fn library_list_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
         if let Err(response) = parse_params::<LibraryListParams>(
             request_id.as_ref(),
             params,
@@ -46,7 +51,7 @@ impl Core {
         JsonRpcResponse::success(
             request_id,
             json!(LibraryListResult {
-                libraries: library::list(),
+                libraries: library::list(self.workspace_root().as_deref()),
             }),
         )
     }

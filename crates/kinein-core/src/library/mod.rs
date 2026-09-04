@@ -20,10 +20,13 @@
 //!
 //! Se este dominio aprender a escrever, o corte falhou.
 
+pub mod applied;
 mod availability;
 mod catalog;
 
 use std::collections::BTreeMap;
+
+use std::path::Path;
 
 use kinein_protocol::{LibraryInfo, LibraryPlan, LibraryStatus, LibraryStep};
 
@@ -31,7 +34,10 @@ use availability::Availability;
 
 /// O catalogo inteiro, ja cruzado com o que existe nesta maquina.
 #[must_use]
-pub fn list() -> Vec<LibraryInfo> {
+pub fn list(root: Option<&Path>) -> Vec<LibraryInfo> {
+    // Sem projeto aberto nada esta ligado — e essa e' a resposta certa, nao
+    // um caso especial: "ligado no projeto" nao existe sem projeto.
+    let ligados = root.map(applied::applied_ids).unwrap_or_default();
     catalog::definitions()
         .iter()
         .map(|entry| {
@@ -50,6 +56,7 @@ pub fn list() -> Vec<LibraryInfo> {
                 documentation: entry.documentation.to_owned(),
                 repository: entry.repository.to_owned(),
                 status,
+                applied: ligados.contains(entry.id),
                 standard_lineage: entry.standard_lineage.map(str::to_owned),
             }
         })
@@ -280,7 +287,7 @@ mod tests {
 
     #[test]
     fn list_crosses_the_catalog_with_this_machine() {
-        let libs = list();
+        let libs = list(None);
         assert_eq!(libs.len(), catalog::definitions().len());
         assert!(
             libs.iter().all(|l| matches!(
