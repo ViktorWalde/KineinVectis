@@ -195,20 +195,26 @@ impl Core {
         let titulo = format!("Testar {}", profile.name);
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
             let resultado = crate::datasource::connection::probe_server(&profile, secret.as_ref());
-            let (ok, versao, mensagem) = match resultado {
-                Ok(versao) => (true, Some(versao), None),
-                Err(mensagem) => (false, None, Some(mensagem)),
-            };
-            ctx.emit_event(
-                "event.datasource.tested",
-                json!({
+            let ok = resultado.is_ok();
+            let evento = match &resultado {
+                Ok(versao) => json!({
                     "jobId": ctx.id(),
                     "name": profile.name,
-                    "ok": ok,
+                    "ok": true,
                     "serverVersion": versao,
-                    "message": mensagem,
                 }),
-            );
+                Err(falha) => json!({
+                    "jobId": ctx.id(),
+                    "name": profile.name,
+                    "ok": false,
+                    "message": falha.message,
+                    "sqlState": falha.sql_state,
+                    // A UI abre o dialogo de senha por ESTE campo, nunca
+                    // lendo a mensagem: o texto do servidor e' localizado.
+                    "secretRequired": falha.secret_required,
+                }),
+            };
+            ctx.emit_event("event.datasource.tested", evento);
             if ok {
                 JobOutcome::Success
             } else {

@@ -73,21 +73,78 @@ pub fn config_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> Confi
 /// E' a primeira acao util de um cliente de banco, e a unica que prova o
 /// caminho inteiro: perfil -> politica de segredo -> driver -> servidor.
 ///
+/// Por que a conexao nao aconteceu.
+///
+/// Existe em vez de uma `String` por um motivo medido: a mensagem do servidor
+/// e' LOCALIZADA. Exercitando contra o `PostgreSQL` 18.6 desta maquina em
+/// 2026-09-04, a falha de senha voltou como *"autenticação do tipo senha
+/// falhou"* — em portugues. Decidir qualquer coisa lendo esse texto seria um
+/// acoplamento ao idioma do servidor, que quebra calado na maquina do
+/// proximo. O `SQLSTATE` nao muda com o idioma, e e' por ele que se decide.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ConnectionFailure {
+    /// O que mostrar ao autor, com a cadeia de causas ja' achatada.
+    pub message: String,
+    /// O `SQLSTATE` de cinco caracteres, quando o erro veio do SERVIDOR.
+    ///
+    /// Ausente quando a falha foi do lado do cliente (host inalcancavel,
+    /// socket inexistente, configuracao incompleta).
+    pub sql_state: Option<String>,
+    /// `true` quando o caminho a seguir e' PEDIR A SENHA e tentar de novo.
+    pub secret_required: bool,
+}
+
+/// Conecta, pergunta a versao do servidor e desconecta.
+///
 /// # Errors
-/// A cadeia inteira do erro do driver — ver [`describe`], e o porque de ela
-/// existir.
+/// Um [`ConnectionFailure`], com a cadeia de causas achatada ([`describe`]) e
+/// o `SQLSTATE` quando o servidor respondeu.
 pub fn probe_server(
     profile: &DataSourceProfile,
     secret: Option<&Secret>,
-) -> Result<String, String> {
+) -> Result<String, ConnectionFailure> {
     let mut client = config_for(profile, secret)
         .connect(NoTls)
-        .map_err(|error| describe(&error))?;
+        .map_err(|error| failure_from(&error))?;
     let linha = client
         .query_one("SELECT version()", &[])
-        .map_err(|error| describe(&error))?;
-    let versao: String = linha.try_get(0).map_err(|error| describe(&error))?;
-    Ok(versao)
+        .map_err(|error| failure_from(&error))?;
+    linha.try_get(0).map_err(|error| failure_from(&error))
+}
+
+/// Traduz um erro do driver na falha que a UI entende.
+fn failure_from(error: &postgres::Error) -> ConnectionFailure {
+    let sql_state = error.code().map(|code| code.code().to_owned());
+    let message = describe(error);
+    ConnectionFailure {
+        secret_required: secret_required(sql_state.as_deref(), &message),
+        sql_state,
+        message,
+    }
+}
+
+/// `SQLSTATE` de senha invalida (`invalid_password`).
+const SQLSTATE_INVALID_PASSWORD: &str = "28P01";
+
+/// A falha pede que se PECA A SENHA e tente de novo?
+///
+/// Regra pura, e deliberadamente ESTREITA. Duas entradas, nesta ordem:
+///
+/// 1. `28P01` (`invalid_password`) — o servidor disse que a senha esta'
+///    errada ou faltando. E' o unico `SQLSTATE` em que perguntar ajuda.
+///    **Nao** vale `28000`: ele cobre falha de `peer`, de `ident` e papel
+///    inexistente, onde pedir senha nao resolveria nada e so' atrapalharia.
+/// 2. A configuracao incompleta do PROPRIO driver, que nao tem `SQLSTATE`:
+///    quando o servidor pede senha e a `Config` nao tem nenhuma, o
+///    `tokio-postgres` falha antes de sair da maquina.
+///
+/// O texto do item 2 e' do DRIVER, nao do servidor, e por isso nao e'
+/// localizado — foi capturado do `postgres` 0.19.14 em 2026-09-04 e esta'
+/// preso por teste. Se uma versao futura mudar essa frase, o teste reprova,
+/// que e' exatamente o que se quer de um casamento por texto.
+#[must_use]
+fn secret_required(sql_state: Option<&str>, message: &str) -> bool {
+    sql_state == Some(SQLSTATE_INVALID_PASSWORD) || message.contains("password missing")
 }
 
 /// Achata a cadeia de causas de um erro numa frase so'.
@@ -242,6 +299,60 @@ mod tests {
         );
         // Causa que so' repete o topo nao vira eco.
         assert_eq!(describe(&Eco), "mesma frase");
+    }
+
+    /// A decisao de PEDIR A SENHA, com os valores REAIS capturados do
+    /// `PostgreSQL` 18.6 desta maquina em 2026-09-04.
+    ///
+    /// Nenhum deles foi inventado: cada linha saiu do `event.datasource.tested`
+    /// exercitando o binario do core contra um servidor de verdade. Fixture
+    /// inventada e' como os dois bugs do `probe.rs` sobreviveram
+    /// (`docs/roadmaps/38` §3).
+    #[test]
+    fn so_pede_senha_quando_pedir_senha_resolve() {
+        // Senha errada: o servidor respondeu 28P01. Perguntar RESOLVE.
+        assert!(secret_required(
+            Some("28P01"),
+            "db error: FATAL: autenticação do tipo senha falhou para o usuário \"app\""
+        ));
+
+        // O servidor pediu senha e a configuracao nao tinha nenhuma. Erro do
+        // DRIVER, sem SQLSTATE — e a frase e' dele, nao do servidor.
+        assert!(secret_required(
+            None,
+            "invalid configuration: password missing"
+        ));
+
+        // `peer` falhou / papel inexistente: 28000. Perguntar NAO resolve, e
+        // abrir um dialogo de senha aqui so' atrapalharia.
+        assert!(!secret_required(
+            Some("28000"),
+            "db error: FATAL: A autenticação do tipo peer falhou para o usuário \"naoexiste\""
+        ));
+
+        // Servidor fora do ar nao e' problema de credencial.
+        assert!(!secret_required(
+            None,
+            "error connecting to server: Connection refused (os error 111)"
+        ));
+    }
+
+    /// A mensagem do servidor e' LOCALIZADA; o `SQLSTATE` nao.
+    ///
+    /// Este teste existe para que ninguem "simplifique" a regra casando por
+    /// texto: na maquina do autor o servidor responde em portugues, e a mesma
+    /// falha em ingles diria "password authentication failed".
+    #[test]
+    fn a_decisao_nao_depende_do_idioma_do_servidor() {
+        assert!(secret_required(
+            Some("28P01"),
+            "password authentication failed"
+        ));
+        assert!(secret_required(
+            Some("28P01"),
+            "autenticação do tipo senha falhou"
+        ));
+        assert!(secret_required(Some("28P01"), ""));
     }
 
     /// Sem timeout, host errado atras de um firewall que engole pacote

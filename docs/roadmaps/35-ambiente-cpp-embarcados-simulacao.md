@@ -623,9 +623,11 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            imprime, e `datasource.test`
                                            contra o driver REAL (`postgres`
                                            0.19.14, auditado em
-                                           `../integracoes/37` §5.1). 28
-                                           testes. Falta a UI, e falta provar
-                                           uma conexao BEM-SUCEDIDA — ver §9.1.
+                                           `../integracoes/37` §5.1). 30
+                                           testes. EXERCITADO contra um
+                                           PostgreSQL 18.6 real: socket unix
+                                           com `peer` conecta sem senha
+                                           nenhuma (§9.1). Falta a UI (§9.3).
 
 27  Temporal (TimescaleDB) e Grafana        §7.2. Grafana por HTTP API,
     por API                                nunca embutido.
@@ -644,32 +646,62 @@ usar a IDE e reportar; perda de dados, crash e bloqueio diário vêm antes de
 qualquer item planejado (`GUIAIA.md` §2), e o registro é
 `docs-privada/diario/19-registro-de-saidas.md`.
 
-### 9.1 O que a etapa 26 ainda NÃO prova (medido em 2026-09-04)
+### 9.1 A etapa 26 exercitada contra um PostgreSQL REAL (2026-09-04)
 
-**Nenhuma conexão bem-sucedida foi observada**, e isso está aqui para ninguém
-ler "26.2 feita" como "conecta". Esta máquina tem o **cliente** `psql` 18.4 e
-**não tem servidor** (`postgresql-server` não instalado), então o caminho feliz
-não pôde ser exercitado.
+O autor instalou o servidor no mesmo dia, e a exercitação foi feita **duas
+vezes**: contra o `postgresql` do sistema e contra uma instância própria,
+subida pelo usuário comum com `initdb`/`pg_ctl` num socket em `/tmp` — que é o
+que permite provar o caso **sem senha nenhuma**, já que aí o dono do processo
+é o próprio autor.
 
-O que **foi** exercitado, contra o driver real, pelo binário do core:
+**O caminho feliz está provado**, e é exatamente o que a decisão de
+[`../seguranca/40`](../seguranca/40-cofre-de-credencial.md) §7 previu:
 
 ```text
-porta fechada       "error connecting to server: Connection refused (os error 111)"
-socket inexistente  "error connecting to server: No such file or directory (os error 2)"
+socket unix + peer, usuario do SO   ok: true
+                                    "PostgreSQL 18.6 on x86_64-redhat-linux-gnu"
+                                    ZERO senha, zero prompt, zero configuracao
 ```
 
-E essa exercitação **achou um defeito**: até ela, as duas frases eram
-idênticas — `"error connecting to server"`, sem causa. O `Display` do
-`postgres::Error` não inclui a causa; ela mora em `source()`. Nasceu daí
-`datasource::connection::describe`, que achata a cadeia. **Nenhum teste com erro
-inventado teria mostrado isso.**
-
-O que falta, em ordem:
+**E as falhas, todas capturadas do servidor de verdade:**
 
 ```text
-1. subir um PostgreSQL de verdade e provar o caminho feliz, incluindo
-   socket unix com `peer` — o caso SEM senha, que e' o mais comum
-2. a UI: painel de fontes de dados, o dialogo de senha da sessao, e o
-   consumo do codigo SECRET_REQUIRED
-3. introspeccao (esquemas, tabelas, colunas) e execucao de consulta
+caso                          sqlState  secretRequired
+senha errada                  28P01     true     perguntar RESOLVE
+servidor pede senha, nao ha'  (nenhum)  true     erro do DRIVER, sem SQLSTATE
+peer falhou / papel ausente   28000     false    perguntar NAO resolve
+porta fechada                 (nenhum)  false    nao e' credencial
+```
+
+### 9.2 O que a exercitação ensinou, e mudou o código
+
+**1. A mensagem do servidor é LOCALIZADA.** Nesta máquina a falha de senha
+voltou como *"autenticação do tipo senha falhou"*, em português. Qualquer
+decisão tomada lendo esse texto seria acoplamento ao idioma do servidor, que
+quebra calado na máquina do próximo. A decisão passou a ser pelo **`SQLSTATE`**,
+que não muda com o idioma — e a resposta agora carrega `sqlState` e
+`secretRequired`, para a UI abrir o diálogo de senha **por campo, nunca por
+texto**.
+
+**2. `28000` não pode pedir senha.** Ele cobre falha de `peer`, de `ident` e
+papel inexistente. Abrir um diálogo de senha nesses casos seria mandar o autor
+digitar algo que não resolveria nada. A regra ficou estreita de propósito:
+**só `28P01`**, mais o erro de configuração do próprio driver.
+
+**3. O `Display` do `postgres::Error` esconde a causa.** Antes disso, porta
+fechada e socket inexistente produziam a MESMA frase (`"error connecting to
+server"`). A causa mora em `source()`; nasceu daí
+`datasource::connection::describe`.
+
+Os três só apareceram porque houve exercitação contra ferramenta real. **As
+fixtures dos testes são as strings capturadas**, não inventadas — é a mesma
+correção que o `probe.rs` recebeu em 2026-09-03.
+
+### 9.3 O que a etapa 26 ainda NÃO tem
+
+```text
+1. a UI: painel de fontes de dados, o dialogo de senha da sessao, e o
+   consumo de `secretRequired` — hoje `datasource.*` so' responde por IPC
+2. introspeccao (esquemas, tabelas, colunas) e execucao de consulta
+3. TLS: a arvore auditada nao tem backend, e conexao cifrada e' fatia propria
 ```
