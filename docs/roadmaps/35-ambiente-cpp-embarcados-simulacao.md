@@ -1004,6 +1004,46 @@ o catálogo usa `directories` (plural) e a tabela só tinha `directory`. O campo
 aparecia **sem sugestão e sem explicação** — exatamente o defeito que o módulo
 existia para corrigir. O teste agora cobre as duas grafias.
 
+### 9.3.8 Toolchain: a IDE escolhe **e** mostra que escolheu (2026-09-04)
+
+Decisão do autor, mesclando as duas saídas que estavam em aberto: *"acho que
+uma mescla dos dois seria mais interessante, e mostrar o risco de forma
+explícita"*.
+
+```text
+UM candidato        escolhe e mostra qual
+VARIOS candidatos   escolhe o preferido (a ordem do catalogo E' a preferencia)
+                    e MARCA que a escolha foi do core
+kit salvo           respeita a escolha do autor, sempre
+```
+
+**Nunca fica em silêncio, nunca para esperando o menu ser aberto.** O risco de
+escolher errado é mitigado por o autor **ver** a escolha, não por perguntar
+antes de fazer qualquer coisa.
+
+**Por que `effectiveId` é separado de `id`:** `id` continua sendo *"o que o
+autor fixou"*, e ausência ali continua significando *"não fixei nada"*.
+Misturar os dois apagaria a diferença entre **uma escolha e um palpite** — e a
+UI precisa dela para não mostrar como decisão do autor algo que ele nunca
+tomou.
+
+Na tela, `automático` deixou de ser a palavra que **esconde** a informação:
+
+```text
+antes    cCompiler: "automático"              (qual? o autor nao sabe)
+depois   cCompiler: "Clang · automático"      (qual, e que nao foi voce)
+```
+
+E a barra de status, que antes dizia só `automática` num projeto novo —
+verdadeiro e inútil —, passou a dizer o que vai ser **usado**.
+
+**O harness estava com fixture do protocolo antigo**, sem `effectiveId` nem
+`automatic`. Foi corrigido para o shape real, campo por campo: fixture que
+descreve um protocolo que não existe mais testa nada, e é exatamente como o
+`fd` quebrou a busca inteira com o gate verde
+([`39`](39-divida-tecnica-paga.md) §8.2). As asserções novas foram provadas por
+mutação.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

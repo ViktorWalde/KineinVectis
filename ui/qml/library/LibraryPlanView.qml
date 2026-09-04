@@ -116,12 +116,15 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            // O verbo diz o que vai acontecer. Remover tem
-                            // acao propria (`cmake.removeTargetLinkLibraries`),
-                            // e o botao segue o passo em vez de ser fixo.
+                            // O verbo diz o que vai acontecer, e e' o INVERSO
+                            // do que a bolinha diz. Ela diz "ativa neste
+                            // projeto"; o botao tem de dizer "Desativar", nao
+                            // "Remover" — decisao do autor em 2026-09-04, e a
+                            // simetria e' o argumento: dois verbos diferentes
+                            // para o mesmo par de estados confundem.
                             text: passo.modelData.actionId
                                   === "cmake.removeTargetLinkLibraries"
-                                  ? qsTr("Remover…") : qsTr("Detalhes…")
+                                  ? qsTr("Desativar…") : qsTr("Detalhes…")
                             color: area.containsMouse
                                    ? Theme.background0 : Theme.textPrimary
                             font.pixelSize: 10

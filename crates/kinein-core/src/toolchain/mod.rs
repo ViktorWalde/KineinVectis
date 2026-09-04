@@ -88,10 +88,22 @@ impl Toolchain {
                 },
             );
 
+            // A MESCLA que o autor decidiu em 2026-09-04: sem escolha fixada,
+            // o core PEGA o primeiro candidato detectado — a ordem do catalogo
+            // ja' e' a preferencia — e marca que a escolha foi dele, nao do
+            // autor. A IDE nao para esperando o menu ser aberto, e tambem nao
+            // finge que o autor decidiu.
+            let automatic = escolhido.is_none();
+            let effective_id = escolhido
+                .clone()
+                .or_else(|| disponiveis.first().map(|entry| entry.id.clone()));
+
             selections.push(ToolchainSelection {
                 role: *role,
                 id: escolhido,
                 resolved_path,
+                effective_id,
+                automatic,
             });
             candidates.extend(disponiveis);
         }

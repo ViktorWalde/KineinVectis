@@ -228,7 +228,11 @@ Item {
                     id: applyText
 
                     anchors.centerIn: parent
-                    text: qsTr("Ativar")
+                    // O mesmo par de verbos do painel de bibliotecas: quem
+                    // desfaz nao "aplica", desativa.
+                    text: root.action !== null
+                          && root.action.id === "cmake.removeTargetLinkLibraries"
+                          ? qsTr("Desativar") : qsTr("Ativar")
                     color: parent.ready ? Theme.background0 : Theme.textDisabled
                     font.pixelSize: 11
                     font.bold: true

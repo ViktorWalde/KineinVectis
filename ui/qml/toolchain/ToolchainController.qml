@@ -100,33 +100,71 @@ Item {
         return found;
     }
 
-    function labelFor(role) {
-        const selection = selectionFor(role);
-        if (selection === null || selection.id === undefined) {
-            return qsTr("automático");
-        }
+    // O rotulo de um id, ou o proprio id quando ele nao esta' entre os
+    // candidatos desta maquina.
+    function labelOf(role, id) {
         const options = candidatesFor(role);
         for (let index = 0; index < options.length; ++index) {
-            if (options[index].id === selection.id) {
+            if (options[index].id === id) {
                 return options[index].label;
             }
         }
         // Escolhido mas ausente: dizer o nome cru e melhor do que fingir que
         // esta tudo bem — o core tambem para de fixar o caminho nesse caso.
-        return selection.id + qsTr(" (ausente)");
+        return id + qsTr(" (ausente)");
     }
 
-    // Resumo curto para a barra de status: so o que o usuario FIXOU.
+    function labelFor(role) {
+        const selection = selectionFor(role);
+        if (selection === null) {
+            return qsTr("nenhum detectado");
+        }
+        if (selection.id !== undefined) {
+            return labelOf(role, selection.id);
+        }
+        // AUTOMATICO NAO E' MAIS "nao sei": desde 2026-09-04 o core escolhe o
+        // primeiro candidato e diz qual. A palavra "automático" sozinha
+        // escondia justamente a informacao que o autor precisa para discordar.
+        if (selection.effectiveId !== undefined) {
+            return labelOf(role, selection.effectiveId) + qsTr(" · automático");
+        }
+        return qsTr("nenhum detectado");
+    }
+
+    // `true` quando quem escolheu foi o core, e nao o autor.
+    function isAutomatic(role) {
+        const selection = selectionFor(role);
+        return selection !== null && selection.automatic === true;
+    }
+
+    // Resumo curto para a barra de status.
+    //
+    // Antes mostrava SO' o que o autor tinha fixado, e num projeto novo dizia
+    // apenas "automática" — verdadeiro e inutil. Agora diz o que vai ser
+    // USADO, marcando quando a escolha nao foi dele.
     function summary() {
         const partes = [];
-        const papeis = ["cxxCompiler", "cCompiler", "generator"];
+        const papeis = ["cxxCompiler", "generator"];
+        let algumAutomatico = false;
         for (let index = 0; index < papeis.length; ++index) {
             const selection = selectionFor(papeis[index]);
-            if (selection !== null && selection.id !== undefined) {
-                partes.push(labelFor(papeis[index]));
+            if (selection === null) {
+                continue;
+            }
+            const id = selection.id !== undefined
+                     ? selection.id : selection.effectiveId;
+            if (id === undefined) {
+                continue;
+            }
+            partes.push(labelOf(papeis[index], id));
+            if (selection.automatic === true) {
+                algumAutomatico = true;
             }
         }
-        return partes.length === 0 ? qsTr("automática") : partes.join(" · ");
+        if (partes.length === 0) {
+            return qsTr("nenhuma detectada");
+        }
+        return partes.join(" · ") + (algumAutomatico ? qsTr(" · automática") : "");
     }
 
     function openMenu(x, y) {

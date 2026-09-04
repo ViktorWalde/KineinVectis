@@ -28,13 +28,20 @@ Item {
         }
     }
 
+    // O SHAPE E' O DO CORE, campo por campo. Desde 2026-09-04 a resposta traz
+    // `effectiveId` e `automatic`: sem escolha fixada, o core PEGA o primeiro
+    // candidato e diz que a escolha foi dele. Fixture sem esses campos testa
+    // um protocolo que nao existe mais — foi assim que o `fd` quebrou a busca
+    // com o gate verde (docs/roadmaps/39 §8.2).
     function selecoes() {
         return [
-            { role: "cxxCompiler", id: "gxx", resolvedPath: "/usr/bin/g++" },
-            { role: "cCompiler" },
-            { role: "generator", id: "Ninja", resolvedPath: "/usr/bin/ninja" },
-            { role: "cmake" },
-            { role: "cargo" }
+            { role: "cxxCompiler", id: "gxx", effectiveId: "gxx",
+              resolvedPath: "/usr/bin/g++", automatic: false },
+            { role: "cCompiler", effectiveId: "clang", automatic: true },
+            { role: "generator", id: "Ninja", effectiveId: "Ninja",
+              resolvedPath: "/usr/bin/ninja", automatic: false },
+            { role: "cmake", automatic: true },
+            { role: "cargo", automatic: true }
         ];
     }
 
@@ -53,14 +60,19 @@ Item {
         // Workspace novo: nada fixado, e a barra diz isso.
         controller.workspaceRoot = "/tmp/projeto";
         if (root.consultas !== 1) failures += 1;
-        if (controller.summary() !== "automática") failures += 2;
+        if (controller.summary() !== "nenhuma detectada") failures += 2;
 
         controller.handleResolved(root.selecoes(), root.candidatos());
 
-        // O resumo mostra SO o que foi fixado, na ordem C++ / C / gerador.
+        // O resumo mostra o que vai ser USADO — C++ e gerador.
         if (controller.summary() !== "G++ · Ninja") failures += 4;
         if (controller.labelFor("cxxCompiler") !== "G++") failures += 8;
-        if (controller.labelFor("cCompiler") !== "automático") failures += 16;
+        // ESCOLHA AUTOMATICA NAO E' MAIS "nao sei": ela diz QUAL, e diz que
+        // foi o core que escolheu. Sem isso o autor nao tem como discordar de
+        // uma decisao que nem sabe que foi tomada.
+        if (controller.labelFor("cCompiler") !== "Clang · automático") failures += 16;
+        if (!controller.isAutomatic("cCompiler")) failures += 131072;
+        if (controller.isAutomatic("cxxCompiler")) failures += 262144;
 
         // A lista de um papel traz so os candidatos DAQUELE papel.
         const opcoesCxx = controller.candidatesFor("cxxCompiler");
@@ -95,7 +107,7 @@ Item {
         controller.workspaceRoot = "/tmp/outro";
         if (controller.selections.length !== 0) failures += 8192;
         if (controller.errorText !== "") failures += 16384;
-        if (controller.summary() !== "automática") failures += 32768;
+        if (controller.summary() !== "nenhuma detectada") failures += 32768;
         if (root.consultas !== 2) failures += 65536;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);

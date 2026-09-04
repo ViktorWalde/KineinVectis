@@ -98,6 +98,22 @@ pub struct ToolchainSelection {
     /// a UI mostra isso como "nao detectado" em vez de fingir que ha kit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub resolved_path: Option<String>,
+    /// Id do que sera' USADO — a escolha do autor, ou a que o core fez por ele.
+    ///
+    /// POR QUE E' SEPARADO DE [`Self::id`] (2026-09-04). `id` continua sendo
+    /// "o que o AUTOR fixou", e ausencia ali continua significando "nao fixei
+    /// nada". Misturar os dois apagaria a diferenca entre uma escolha e um
+    /// palpite, e a UI precisa dela para nao mostrar como decisao do autor
+    /// algo que ele nunca decidiu.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub effective_id: Option<String>,
+    /// `true` quando o `effective_id` foi escolhido pelo CORE, nao pelo autor.
+    ///
+    /// Decisao do autor em 2026-09-04, mesclando as duas saidas que estavam em
+    /// aberto: a IDE escolhe sozinha (para nao parar esperando) **e** mostra
+    /// que escolheu (para o autor poder discordar). Nunca fica em silencio.
+    #[serde(default)]
+    pub automatic: bool,
 }
 
 /// Result payload de todo metodo `toolchain.*`.
@@ -215,6 +231,8 @@ mod tests {
                 role: ToolchainRole::Cmake,
                 id: None,
                 resolved_path: None,
+                effective_id: None,
+                automatic: true,
             }],
             candidates: vec![ToolchainCandidate {
                 role: ToolchainRole::Cmake,
@@ -228,6 +246,10 @@ mod tests {
 
         assert!(value["selections"][0].get("id").is_none());
         assert!(value["selections"][0].get("resolvedPath").is_none());
+        // `automatic` NAO e' omitido quando false por engano: ele diz "a
+        // escolha nao e' sua", e a UI precisa dessa palavra mesmo quando ha
+        // um id efetivo. Omiti-lo faria "sem informacao" parecer "escolhi eu".
+        assert_eq!(value["selections"][0]["automatic"], true);
         assert_eq!(value["candidates"][0]["path"], "/usr/bin/cmake");
         assert!(value["candidates"][0].get("version").is_none());
     }
