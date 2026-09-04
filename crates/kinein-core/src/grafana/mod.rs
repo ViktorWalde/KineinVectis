@@ -243,6 +243,7 @@ mod tests {
             user: "hugh".to_owned(),
             secret_source: SecretSource::Automatic,
             secret_variable: None,
+            sample_size: None,
         }
     }
 

@@ -29,8 +29,8 @@ Item {
                                                    secretRequired);
         }
 
-        function onDataSourceIntrospected(name, ok, schemas, message, secretRequired) {
-            root.dataSourceController.handleIntrospected(name, ok, schemas, message,
+        function onDataSourceIntrospected(name, ok, schemas, collections, message, secretRequired) {
+            root.dataSourceController.handleIntrospected(name, ok, schemas, collections, message,
                                                          secretRequired);
         }
 

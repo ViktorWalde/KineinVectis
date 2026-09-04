@@ -112,9 +112,29 @@ documentação e o servidor, registradas porque importam:
 - o 13.0.2 envia **`typeName`** (`"PostgreSQL"`), que a doc não lista. A IDE o
   usa quando existe e cai para o `type` quando não.
 
-**Cliente:** `ureq` 3.4 sem features padrão — +5 crates, todas `MIT OR
-Apache-2.0`, nenhuma decisão de licença. Sem TLS, pelo mesmo motivo já
-registrado no `postgres`; a decisão de cifrar é uma só e está com o autor.
+**Cliente:** `ureq` 3.4 — +5 crates sem TLS, todas `MIT OR Apache-2.0`.
+
+## O TLS entrou em 2026-09-04, e a decisão vale para todos os clientes
+
+Decisão do autor, ao escolher que a IDE fale com um MongoDB remoto. Duas
+licenças entraram no `deny.toml` com justificativa datada:
+
+| licença | crate | o que é |
+|---|---|---|
+| BSD-3-Clause | `subtle` | criptografia de tempo constante; permissiva, OSI-approved, mesma família da ISC já aceita |
+| CDLA-Permissive-2.0 | `webpki-roots` | **não é código**: é a lista de certificados raiz da Mozilla, empacotada como crate |
+
+Com elas, o `ureq` ligou o `rustls` e o `mongodb` entrou com as features
+padrão. **O `postgres` continua sem TLS** — a licença está resolvida, mas o
+conector muda a chamada de conexão, e isso é fatia própria.
+
+Custo de dependência medido em 2026-09-04, para comparação futura:
+
+```text
+ureq sem TLS       +5 crates
+postgres           +52 crates
+mongodb 3.9        +104 crates   (o maior que o projeto aceitou)
+```
 
 
 O item de **segredo** era o mais perigoso e o mais fácil de esquecer, e foi o

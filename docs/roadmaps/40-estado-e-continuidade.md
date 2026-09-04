@@ -20,8 +20,8 @@ cargo test -q --workspace
 ```
 
 ```text
-protocolo   0.81.0
-testes      563 Rust + 24 harnesses QML
+protocolo   0.82.0
+testes      581 Rust + 24 harnesses QML
 metodos     139 IPC roteados, 35 eventos
 catraca     1 arquivo em debito
 gate        18 verificacoes
@@ -103,6 +103,25 @@ Exercitado contra um **Grafana 13.0.2 de verdade**, incluindo os quatro modos de
 falha (token inválido, sem token, porta errada, `https` recusado). Os dashboards
 abrem no navegador — a licença AGPL decide a forma, e a IDE nunca embute.
 
+**E a etapa 27 fechou: o MongoDB entrou** (roadmaps/35 §9.7), com as OITO
+decisões do autor respondidas antes da primeira linha de código. O que ele traz
+que nenhum motor anterior trazia:
+
+```text
+duas verdades    DECLARADO (validador `$jsonSchema`) ou INFERIDO de amostra,
+                 e a tela NUNCA deixa os dois parecidos
+o custo na tela  o `$sample` varre a colecao inteira quando N nao e' menor que
+                 5% dela — a IDE conta ANTES e diz qual caminho vai acontecer
+tetos de RAM     2.000 campos, 8 niveis, 10 elementos de array; quando um morde,
+                 a colecao aparece com o aviso em vez de parecer completa
+segunda forma    `DataSourceCollections` ao lado da arvore relacional, com
+                 profundidade, tipo PLURAL e presenca em %
+```
+
+Exercitado contra um **MongoDB 8.2.12** real, e a exercitação achou o de sempre:
+com o servidor em contêiner rootless, **`localhost` não conecta** (resolve para
+IPv6 e o driver não cai para IPv4). A mensagem agora diz `tente 127.0.0.1`.
+
 **Dois defeitos apareceram mexendo no código, não em gate:**
 
 ```text
@@ -124,22 +143,18 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 ## 4. O que está aberto
 
 ```text
-27  bancos relacional/temporal/nao-     QUASE FECHADA. SQLite entrou, o
-    relacional, e o Grafana               TimescaleDB aparece por nome e o
-                                          Grafana entrou pela HTTP API
-                                          (roadmaps/35 §9.6). Falta o MongoDB,
-                                          e ele esta' com o AUTOR: sete
-                                          perguntas levantadas em 2026-09-04,
-                                          porque ele NAO cabe na arvore
-                                          esquema->tabela->coluna — ver
-                                          roadmaps/35 §9.5.4
---  TLS                                   UMA decisao para `postgres`, `ureq` e
-                                          o que vier: duas licencas permissivas
-                                          (`subtle` BSD-3-Clause, `webpki-roots`
-                                          CDLA-Permissive-2.0) entram na
-                                          allowlist, ou o cifrado nao entra.
-                                          Politica de licenca e' decisao do
-                                          autor, nunca do assistente
+27  bancos relacional/temporal/nao-     FECHADA em 2026-09-04. Postgres,
+    relacional, e o Grafana               TimescaleDB por nome, SQLite, MongoDB
+                                          (com a segunda forma de exibicao) e o
+                                          Grafana pela HTTP API. Falta so' o que
+                                          ficou registrado como fatia PROPRIA:
+                                          executar consulta, escrever, e o TLS
+                                          do `postgres` — ver roadmaps/35 §9.7.10
+--  TLS do `postgres`                     a LICENCA ja' esta' decidida (o
+                                          `deny.toml` aceita as duas de 2026-09-04
+                                          e o `ureq` e o `mongodb` ja' cifram).
+                                          Falta o conector, que muda a chamada de
+                                          conexao — fatia propria
 28  simulacao: CALCULO sem tela          §5.1 do roadmaps/35 ja' respondida
 25  handshake DAP com probe-rs           PARCIAL: precisa de sonda fisica ou
                                          alvo QEMU. O resto do ciclo de
@@ -158,6 +173,13 @@ Pylance                      PROIBIDO (licenca)
 Docker e banco               NATIVOS, nao plugins
 EditorConfig                 auditado com resultado NEGATIVO (2026-07-16)
 Grafana embutido             PROIBIDO (AGPL) — integracao por HTTP API
+TLS na IDE                   ENTRA (autor, 2026-09-04): `subtle` (BSD-3-Clause) e
+                             `webpki-roots` (CDLA-Permissive-2.0) estao na
+                             allowlist, com justificativa datada no deny.toml
+esquema de documento         DECLARADO quando ha' validador, INFERIDO de amostra
+                             quando nao — e a tela nunca deixa os dois parecidos
+custo de leitura             sempre VISIVEL: quantos documentos foram lidos e se
+                             a leitura obrigou o servidor a varrer tudo
 EditorController             congelado ate' decisao do autor (../arquitetura/32 §8.4)
 senha em disco               PROIBIDA: a IDE guarda o PERFIL (../seguranca/40)
 comando de instalacao        so' com FONTE OFICIAL citada e datada; sem fonte,

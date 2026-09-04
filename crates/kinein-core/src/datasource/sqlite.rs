@@ -167,6 +167,7 @@ mod tests {
             user: String::new(),
             secret_source: SecretSource::Automatic,
             secret_variable: None,
+            sample_size: None,
         }
     }
 

@@ -97,6 +97,7 @@ mod tests {
             user: "postgres".to_owned(),
             secret_source: SecretSource::Environment,
             secret_variable: Some("PGPASSWORD".to_owned()),
+            sample_size: None,
         }
     }
 

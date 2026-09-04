@@ -25,6 +25,7 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
             params.value(QStringLiteral("name")).toString(),
             params.value(QStringLiteral("ok")).toBool(false),
             params.value(QStringLiteral("schemas")).toArray().toVariantList(),
+            params.value(QStringLiteral("collections")).toArray().toVariantList(),
             params.value(QStringLiteral("message")).toString(),
             params.value(QStringLiteral("secretRequired")).toBool(false));
         return;

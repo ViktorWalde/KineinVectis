@@ -263,9 +263,14 @@ signals:
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.
     void dataSourceTested(const QString& name, bool ok, const QString& serverVersion,
                           const QString& message, bool secretRequired);
-    /// Estrutura lida do banco: esquemas -> tabelas -> colunas.
+    /// Estrutura lida do banco. DUAS FORMAS, e exatamente uma vem preenchida:
+    /// `schemas` e' `esquema -> tabela -> coluna` dos motores relacionais;
+    /// `collections` e' `colecao -> campo` do MongoDB, onde campo tem presenca,
+    /// pode ter mais de um tipo e aninha. Forcar o segundo no primeiro faria a
+    /// tela afirmar tres coisas falsas.
     void dataSourceIntrospected(const QString& name, bool ok, const QVariantList& schemas,
-                                const QString& message, bool secretRequired);
+                                const QVariantList& collections, const QString& message,
+                                bool secretRequired);
     /// A instancia salva neste workspace. `exists` distingue "nao ha' nenhuma"
     /// de "ha' uma com campos vazios" — a tela desenha coisas diferentes.
     void grafanaProfileResolved(const QVariantMap& profile, bool exists);

@@ -265,3 +265,106 @@ fn testar_perfil_inexistente_e_erro_de_parametro() {
         JsonRpcErrorCode::InvalidParams
     );
 }
+
+/// O MOTOR `mongo` atravessa o despacho inteiro, e cobra o que ELE pede.
+///
+/// Nao ha servidor neste teste de proposito: o que se prova aqui e' que o
+/// perfil sobrevive ao caminho real (salvar, ler de volta, normalizar), nao
+/// que o driver conecta — isso e' exercitacao contra servidor de verdade, e
+/// foi feita separadamente contra um `MongoDB` 8.2.12.
+#[test]
+fn mongo_atravessa_o_despacho_com_as_regras_dele() {
+    let dir = workspace("mongo");
+    let mut core = core_with_empty_search_path("datasource-mongo");
+    let _ = core.handle_request(&JsonRpcRequest::new(
+        400_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+
+    // USUARIO VAZIO E' VALIDO: um MongoDB local sem autenticacao e' o caso
+    // comum de desenvolvimento, e exigir o campo seria a IDE pedindo o que o
+    // motor nao pede.
+    let salvo = core.handle_request(&JsonRpcRequest::new(
+        401_i64,
+        "datasource.save",
+        Some(json!({ "profile": {
+            "name": "mongo",
+            "engine": "mongo",
+            "host": "127.0.0.1",
+            "port": 27017,
+            "database": "kinein",
+            "user": "",
+            "secretSource": "automatic",
+            "sampleSize": 150
+        }})),
+    ));
+    let resultado = salvo.response().result.as_ref().unwrap().clone();
+    assert_eq!(resultado["profiles"][0]["engine"], "mongo");
+    assert_eq!(resultado["profiles"][0]["sampleSize"], 150);
+
+    // SEM BANCO NAO DA': e' o unico campo que o Mongo exige alem do host.
+    let sem_banco = core.handle_request(&JsonRpcRequest::new(
+        402_i64,
+        "datasource.save",
+        Some(json!({ "profile": {
+            "name": "vazio", "engine": "mongo", "host": "127.0.0.1",
+            "port": 27017, "database": "", "user": "", "secretSource": "automatic"
+        }})),
+    ));
+    assert_eq!(
+        sem_banco.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidParams
+    );
+
+    // A AMOSTRA E' PRESA NO TETO. Um perfil pedindo cinquenta mil documentos
+    // leria a colecao inteira — o oposto do que amostrar significa.
+    let exagerado = core.handle_request(&JsonRpcRequest::new(
+        403_i64,
+        "datasource.save",
+        Some(json!({ "profile": {
+            "name": "exagerado", "engine": "mongo", "host": "127.0.0.1",
+            "port": 27017, "database": "kinein", "user": "",
+            "secretSource": "automatic", "sampleSize": 50_000
+        }})),
+    ));
+    let perfis = exagerado.response().result.as_ref().unwrap()["profiles"].clone();
+    let preso = perfis
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["name"] == "exagerado")
+        .unwrap();
+    assert_eq!(
+        preso["sampleSize"],
+        crate::datasource::mongo::MAX_SAMPLE,
+        "a amostra passou do teto"
+    );
+}
+
+/// Perfil salvo ANTES do motor `mongo` continua legivel.
+///
+/// O `engine` tem `#[serde(default)]` e o `sampleSize` e' opcional; sem os
+/// dois, atualizar a IDE apagaria o catalogo de quem ja' tinha perfis.
+#[test]
+fn perfil_antigo_sem_campos_novos_continua_valido() {
+    let dir = workspace("compat");
+    std::fs::create_dir_all(dir.join(".kinein")).unwrap();
+    std::fs::write(
+        dir.join(".kinein").join("datasources.json"),
+        r#"{"schemaVersion":1,"profiles":[{"name":"velho","host":"localhost","port":5432,
+            "database":"app","user":"postgres","secretSource":"automatic"}]}"#,
+    )
+    .unwrap();
+    let mut core = core_with_empty_search_path("datasource-compat");
+    let _ = core.handle_request(&JsonRpcRequest::new(
+        410_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let lista = core.handle_request(&JsonRpcRequest::new(411_i64, "datasource.list", None));
+    let perfis = lista.response().result.as_ref().unwrap()["profiles"].clone();
+    assert_eq!(perfis.as_array().unwrap().len(), 1);
+    assert_eq!(perfis[0]["engine"], "postgres");
+    assert!(perfis[0].get("sampleSize").is_none());
+}

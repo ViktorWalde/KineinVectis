@@ -66,6 +66,18 @@ pub enum DataSourceEngine {
     Postgres,
     /// `SQLite`: um ARQUIVO, sem servidor, sem porta e sem usuario.
     Sqlite,
+    /// `MongoDB`: colecao -> documento, sem esquema fixo.
+    ///
+    /// POR QUE ELE NAO CABE NA MESMA ARVORE (decisao do autor, 2026-09-04).
+    /// `PostgreSQL` e `SQLite` respondem `esquema -> tabela -> coluna`, e a
+    /// coluna carrega tres garantias: ela existe em toda linha, tem UM tipo, e
+    /// nao aninha. Nenhuma das tres vale aqui. Desenhar um documento como
+    /// linha faria a tela AFIRMAR as tres — e a tela mentindo e' o defeito que
+    /// nenhum gate pega.
+    ///
+    /// Por isso o resultado da introspeccao tem uma segunda forma
+    /// ([`MongoCollection`]), e nao um preenchimento criativo da primeira.
+    Mongo,
 }
 
 /// A saved connection to a database. Never carries a password.
@@ -117,6 +129,20 @@ pub struct DataSourceProfile {
     /// time and never stored.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub secret_variable: Option<String>,
+    /// Quantos documentos a amostra le', para os motores sem esquema fixo.
+    ///
+    /// So' o `Mongo` usa este campo, e ele mora aqui — e nao num tipo proprio —
+    /// porque e' preferencia do PERFIL: dois bancos Mongo do mesmo autor podem
+    /// merecer amostras de tamanhos diferentes, e a escolha precisa sobreviver
+    /// ao fechamento da IDE.
+    ///
+    /// Ausente significa o padrao do core. O motivo de o padrao NAO ser os
+    /// 1.000 do Compass esta' no `crate::datasource::mongo`: o `$sample` do
+    /// `MongoDB` varre a colecao inteira quando N nao e' menor que 5% dela, e
+    /// 1.000 dispara essa varredura em toda colecao com menos de 20.000
+    /// documentos.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sample_size: Option<u32>,
 }
 
 /// Result payload for `datasource.list`.
@@ -226,4 +252,83 @@ pub struct DataSourceIntrospectParams {
     /// Redacted from the client log exactly like `datasource.test`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
+}
+
+/// Um campo de documento, achatado pelo CAMINHO ate' ele.
+///
+/// O caminho e' a chave: `meta.placa` diz o que `meta` -> `placa` diria numa
+/// arvore, e permite que a lista seja plana no protocolo e vire arvore na
+/// tela sem que nenhum dos dois lados precise de recursao.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MongoField {
+    /// Caminho completo, com pontos: `carga.origem`.
+    pub path: String,
+    /// Quantos pontos ha' no caminho. A UI indenta por este numero.
+    pub depth: u16,
+    /// Os tipos BSON vistos neste caminho, ordenados.
+    ///
+    /// MAIS DE UM NAO E' ERRO, e e' justamente o que uma coluna nao consegue
+    /// dizer: o mesmo campo pode ser `string` num documento e `int` noutro, e
+    /// e' isso que quebra o codigo de quem assumiu um so'.
+    pub types: Vec<String>,
+    /// Fracao dos documentos amostrados em que o campo apareceu, de 0 a 1.
+    ///
+    /// `None` quando o campo veio de um `$jsonSchema` DECLARADO: ali nao houve
+    /// amostra, e inventar uma porcentagem seria a tela afirmando uma medicao
+    /// que nao aconteceu.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presence: Option<f64>,
+    /// Declarado como obrigatorio pelo validador. Sempre `false` no inferido.
+    #[serde(default)]
+    pub required: bool,
+}
+
+/// Uma colecao, com os campos DECLARADOS ou INFERIDOS — nunca os dois.
+///
+/// A distincao e' a decisao central desta frente (autor, 2026-09-04): quando a
+/// colecao tem validador `$jsonSchema`, a IDE mostra o esquema REAL e diz que
+/// e' declarado; sem validador, ela amostra e diz quantos documentos leu. As
+/// duas coisas nunca se parecem na tela.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MongoCollection {
+    /// Nome da colecao.
+    pub name: String,
+    /// `"collection"`, `"view"` ou `"timeseries"`, como o servidor classifica.
+    pub kind: String,
+    /// `true` quando os campos vieram de um validador, `false` quando de amostra.
+    pub declared: bool,
+    /// Campo de tempo declarado, para colecao temporal.
+    ///
+    /// COLECAO TEMPORAL SE ANUNCIA SOZINHA: isto sai do catalogo do servidor,
+    /// sem ler um documento. Nao ha' inferencia envolvida, e por isso ele nao
+    /// aparece como campo comum no meio dos outros.
+    #[serde(default)]
+    pub time_field: String,
+    /// Campo de metadados declarado, para colecao temporal.
+    #[serde(default)]
+    pub meta_field: String,
+    /// Granularidade declarada (`seconds`, `minutes`, `hours`).
+    #[serde(default)]
+    pub granularity: String,
+    /// Quantos documentos a colecao tem. `None` para visao, que nao e' contada.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub document_count: Option<u64>,
+    /// Quantos documentos a amostra leu. `0` quando os campos sao declarados.
+    #[serde(default)]
+    pub sampled: u32,
+    /// `true` quando a amostra obrigou o servidor a VARRER a colecao inteira.
+    ///
+    /// O `$sample` do `MongoDB` so' usa o cursor pseudoaleatorio barato quando
+    /// N e' menor que 5% da colecao E ela tem mais de 100 documentos. Fora
+    /// disso ele le' tudo e ordena. A IDE calcula isso ANTES e conta na tela,
+    /// em vez de disparar trabalho no banco do autor em silencio.
+    #[serde(default)]
+    pub full_scan: bool,
+    /// O que a leitura cortou, em uma frase. Vazio quando nada foi cortado.
+    #[serde(default)]
+    pub truncated: String,
+    /// Campos, ordenados pelo caminho.
+    pub fields: Vec<MongoField>,
 }

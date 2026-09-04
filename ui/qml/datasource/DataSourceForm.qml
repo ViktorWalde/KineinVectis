@@ -24,6 +24,18 @@ Item {
     readonly property bool arquivo:
         root.draft ? root.draft.engine === "sqlite" : false
 
+    // O MongoDB tem servidor e porta como o Postgres, mas NAO exige usuario —
+    // um servidor local sem autenticacao e' o caso comum de desenvolvimento. E
+    // ele ganha um campo que os outros dois nao tem: o tamanho da amostra,
+    // porque nele a estrutura e' INFERIDA e o custo dessa inferencia e' uma
+    // escolha do autor.
+    //
+    // VEM DE FORA, e nao de uma comparacao local com o motor do rascunho: o
+    // controller ja' responde essa pergunta para escolher a VISAO da
+    // estrutura, e duas copias da mesma derivacao divergem em silencio — o
+    // gate de duplicacao pegou a segunda no mesmo dia em que ela nasceu.
+    property bool mongo: false
+
     implicitHeight: coluna.implicitHeight
 
     Column {
@@ -54,6 +66,12 @@ Item {
                 labelText: qsTr("SQLite (arquivo)")
                 active: root.arquivo
                 onToggled: root.fieldEdited("engine", "sqlite")
+            }
+
+            KvToggleChip {
+                labelText: qsTr("MongoDB")
+                active: root.mongo
+                onToggled: root.fieldEdited("engine", "mongo")
             }
         }
 
@@ -104,10 +122,34 @@ Item {
             }
         }
 
+        // O CUSTO DA AMOSTRA E' ESCOLHA DO AUTOR, e a tela conta qual e'.
+        // O padrao NAO e' os 1.000 do Compass: o `$sample` do MongoDB varre a
+        // colecao inteira quando N nao e' menor que 5% dela, e 1.000 dispara
+        // essa varredura em toda colecao com menos de 20.000 documentos.
+        DataSourceField {
+            width: parent.width
+            visible: root.mongo
+            label: qsTr("Documentos na amostra")
+            numeric: true
+            placeholder: "200"
+            value: root.draft && root.draft.sampleSize !== undefined
+                   ? String(root.draft.sampleSize) : ""
+            onEdited: text => root.fieldEdited("sampleSize", parseInt(text, 10) || 0)
+        }
+
+        Text {
+            width: parent.width
+            visible: root.mongo
+            wrapMode: Text.WordWrap
+            text: qsTr("A estrutura de uma coleção é inferida da amostra, não declarada — a leitura diz quantos documentos leu e se precisou varrer a coleção inteira.")
+            color: Theme.textMuted
+            font.pixelSize: 9
+        }
+
         DataSourceField {
             width: parent.width
             visible: !root.arquivo
-            label: qsTr("Usuário")
+            label: root.mongo ? qsTr("Usuário (vazio = sem autenticação)") : qsTr("Usuário")
             placeholder: qsTr("o papel que conecta")
             value: root.draft ? root.draft.user : ""
             onEdited: text => root.fieldEdited("user", text)

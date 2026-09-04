@@ -61,7 +61,17 @@ postgres = "0.19"
 # decisao de outra fatia, e ela ficou pendente do autor por trazer licenca
 # nova. Grafana local responde em `http://localhost:3000`, e um perfil `https`
 # recebe recusa EXPLICITA, nunca um erro de rede confuso.
-ureq = { version = "3.4", default-features = false }
+ureq = { version = "3.4", default-features = false, features = ["rustls"] }
+# Cliente MongoDB SINCRONO (dominio `datasource`, motor `mongo`). Auditado em
+# 2026-09-04: Apache-2.0, +104 crates com as features padrao. Ele traz a pilha
+# de TLS do `rustls`, e com ela duas licencas que NAO estavam na allowlist:
+# `subtle` (BSD-3-Clause) e `webpki-roots` (CDLA-Permissive-2.0). As duas
+# entraram no `deny.toml` por DECISAO DO AUTOR em 2026-09-04 — e a mesma
+# decisao ligou o TLS do `ureq` acima.
+#
+# A feature `sync` da' a API bloqueante; o codigo deste repositorio segue
+# sincrono, como no `postgres`.
+mongodb = { version = "3.9", features = ["sync"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

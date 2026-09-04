@@ -70,6 +70,7 @@ set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
 set_source_files_properties(qml/datasource/DataSourceVerdict.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceVerdict.qml)
 set_source_files_properties(qml/datasource/DataSourceStructure.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceStructure.qml)
+set_source_files_properties(qml/datasource/DataSourceCollections.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceCollections.qml)
 set_source_files_properties(qml/setup/SetupController.qml PROPERTIES QT_RESOURCE_ALIAS SetupController.qml)
 set_source_files_properties(qml/setup/SetupPanel.qml PROPERTIES QT_RESOURCE_ALIAS SetupPanel.qml)
 set_source_files_properties(qml/setup/SetupPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS SetupPanelHost.qml)
@@ -277,6 +278,7 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceList.qml
         qml/datasource/DataSourceVerdict.qml
         qml/datasource/DataSourceStructure.qml
+        qml/datasource/DataSourceCollections.qml
         qml/setup/SetupController.qml
         qml/setup/SetupPanel.qml
         qml/setup/SetupPanelHost.qml

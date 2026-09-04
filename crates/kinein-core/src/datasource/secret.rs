@@ -142,6 +142,7 @@ mod tests {
             user: "postgres".to_owned(),
             secret_source: source,
             secret_variable: variable.map(str::to_owned),
+            sample_size: None,
         }
     }
 

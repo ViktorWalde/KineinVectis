@@ -288,6 +288,7 @@ mod tests {
             user: "postgres".to_owned(),
             secret_source: SecretSource::Automatic,
             secret_variable: None,
+            sample_size: None,
         }
     }
 

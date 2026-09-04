@@ -22,6 +22,20 @@ allow = [
     # 2026-08-30 pelo `notify`. Aceita porque não impõe obrigação nenhuma a
     # jusante, que é o critério desta lista.
     "CC0-1.0",
+    # BSD-3-Clause: permissiva, OSI-approved e FSF Free — a mesma família da
+    # ISC já aceita acima, com uma cláusula a mais (não usar o nome dos autores
+    # para endossar). Não impõe obrigação a jusante, que é o critério desta
+    # lista. DECISÃO DO AUTOR em 2026-09-04, ao escolher que a IDE fale TLS:
+    # ela chega pelo `subtle` (criptografia de tempo constante), na pilha do
+    # `rustls`.
+    "BSD-3-Clause",
+    # CDLA-Permissive-2.0: licença de DADOS, não de código. Entra pelo
+    # `webpki-roots`, que não é software — é a lista de certificados raiz do
+    # programa da Mozilla, empacotada como crate. Permissiva e sem obrigação a
+    # jusante. Mesma decisão do autor em 2026-09-04, pelo mesmo motivo: sem
+    # raízes confiáveis não há verificação de certificado, e sem isso o TLS
+    # seria teatro.
+    "CDLA-Permissive-2.0",
 ]
 
 [bans]

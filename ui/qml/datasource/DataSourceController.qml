@@ -42,6 +42,10 @@ Item {
     // tres consultas pela rede, e fazer isso sozinho ao abrir o painel seria
     // gastar a conexao de quem so' queria conferir a porta.
     property var schemas: []
+    // A SEGUNDA FORMA, para os motores sem esquema fixo. Nunca preenchida ao
+    // mesmo tempo que `schemas`: o core manda uma OU outra, e a tela escolhe a
+    // visao pelo motor do perfil.
+    property var collections: []
     property bool reading: false
 
     // Senha da sessao. Nunca persistida, nunca enviada ao `save`.
@@ -193,24 +197,32 @@ Item {
             return;
         }
         schemas = [];
+        collections = [];
         reading = true;
         testMessage = "";
         introspectRequested(draft.name, sessionPassword);
     }
 
-    function handleIntrospected(name, ok, newSchemas, message, needsSecret) {
+    function handleIntrospected(name, ok, newSchemas, newCollections, message, needsSecret) {
         reading = false;
         testedName = name;
         if (ok) {
             schemas = newSchemas;
+            collections = newCollections;
             testMessage = "";
             secretRequired = false;
         } else {
             schemas = [];
+            collections = [];
             testMessage = message;
             secretRequired = needsSecret;
         }
     }
+
+    // `true` quando o perfil em edicao fala de DOCUMENTO, e nao de tabela.
+    // Um so' dono desta derivacao: o painel e o host leem daqui.
+    readonly property bool documentEngine:
+        root.draft ? root.draft.engine === "mongo" : false
 
     function handleTested(name, ok, version, message, needsSecret) {
         testing = false;

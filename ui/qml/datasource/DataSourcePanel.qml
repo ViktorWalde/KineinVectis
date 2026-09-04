@@ -23,6 +23,8 @@ Item {
     property string testMessage: ""
     property bool secretRequired: false
     property var schemas: []
+    property var collections: []
+    property bool documentEngine: false
     property bool reading: false
     property string sessionPassword: ""
 
@@ -102,6 +104,7 @@ Item {
             DataSourceForm {
                 width: parent.width
                 draft: root.draft
+                mongo: root.documentEngine
                 onFieldEdited: (field, value) => root.fieldEdited(field, value)
             }
 
@@ -118,10 +121,21 @@ Item {
                 onRetryRequested: root.testRequested()
             }
 
+            // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. A visao e' escolhida
+            // pelo MOTOR, e nao por "qual lista veio vazia": uma coleção que
+            // de fato nao tem campo nenhum continua sendo Mongo.
             DataSourceStructure {
                 width: parent.width
+                visible: !root.documentEngine
                 schemas: root.schemas
-                loading: root.reading
+                loading: root.reading && !root.documentEngine
+            }
+
+            DataSourceCollections {
+                width: parent.width
+                visible: root.documentEngine
+                collections: root.collections
+                loading: root.reading && root.documentEngine
             }
 
             Text {

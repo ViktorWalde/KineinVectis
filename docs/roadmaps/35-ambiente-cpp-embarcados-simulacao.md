@@ -1598,6 +1598,192 @@ criar       a IDE le' o Grafana; criar dashboard a partir de um perfil de banco
 dashboard   e' fatia propria, e ela pede desenho antes de codigo
 ```
 
+## 9.7 A etapa 27 fecha de verdade: o MongoDB (2026-09-04)
+
+O autor pediu as perguntas antes do código — *"me faz agora as sete perguntas
+para podermos prosseguir"* — e respondeu as oito de uma vez. Elas ficam aqui
+porque cada uma virou uma linha de código que sem elas seria palpite.
+
+### 9.7.1 As oito decisões
+
+```text
+1  exibicao       DECLARADO quando existe, INFERIDO rotulado quando nao
+2  amostra        200 por padrao, ajustavel no perfil, com o CUSTO na tela
+3  onde calcula   na IDE, lote a lote — o banco do autor nao trabalha por ela
+4  teto de RAM    tres tetos declarados, e a tela DIZ quando um deles morde
+5  forma na UI    segunda forma, com profundidade, tipo(s) e presenca
+6  TLS            entra; duas licencas permissivas entram no `deny.toml`
+7  temporal       marcada, com `timeField`/`metaField` como fatos DECLARADOS
+8  consulta       fatia propria, depois — a mesma ordem que o Postgres seguiu
+```
+
+### 9.7.2 Duas verdades, e só uma é palpite
+
+Um `listCollections` — **zero documentos lidos** — entrega o tipo da coleção, o
+validador `$jsonSchema` quando existe e as opções de série temporal. Isso é o
+`information_schema` do MongoDB. O resto sai de amostra e vem com
+**probabilidade**, nunca com garantia.
+
+A tela nunca deixa os dois parecidos. Medido contra um servidor real:
+
+```text
+clientes [collection]   DECLARADO pelo validador
+   nome: string  obrigatorio
+   email: string  obrigatorio
+   idade: int
+                        (sem porcentagem: nao houve amostra, e inventar uma
+                         seria a tela afirmar uma medicao que nao aconteceu)
+
+eventos [collection]    amostra 200 de 4000 · leitura completa da colecao
+   firmware: int|string  26%
+   carga.origem: string  100%
+```
+
+`firmware` é a linha que justifica a frente inteira: **dois tipos** no mesmo
+campo e **26% de presença**. Uma coluna não consegue dizer nenhuma das duas, e
+são exatamente as duas que quebram o código de quem assumiu o contrário.
+
+### 9.7.3 A armadilha do `$sample`, e por que o padrão não é 1.000
+
+O `$sample` do MongoDB só usa o cursor pseudoaleatório barato quando **N é menor
+que 5% da coleção E ela tem mais de 100 documentos**. Fora disso ele **varre a
+coleção inteira** e faz uma ordenação aleatória, que pode transbordar para disco
+acima de 100 MB. O limiar de 5% **não é configurável** (documentação oficial,
+consultada em 2026-09-04).
+
+```text
+N = 1.000 (o padrao do Compass)   varre tudo abaixo de 20.000 documentos
+N = 200   (o padrao daqui)        varre tudo abaixo de  4.000 documentos
+```
+
+**A IDE conta ANTES e diz na tela** qual dos dois caminhos vai acontecer —
+`estimatedDocumentCount` custa metadado, não varredura. Verificado nos dois
+sentidos contra o servidor real:
+
+```text
+amostra 200 de 4.000  ->  varredura        (200/4000 = 5%, NAO e' menor que 5%)
+amostra 150 de 4.000  ->  cursor aleatorio (3,75%)
+```
+
+Uma **visão** não é contada: `estimatedDocumentCount` não vale nela, e contar de
+verdade seria executar o pipeline inteiro só para preencher um número. Sem a
+contagem, o `$sample` sobre uma visão é sempre o caminho caro — e dizer isso é
+mais honesto que omitir.
+
+### 9.7.4 O teto de RAM é explícito, e ele aparece
+
+O documento é **descartado assim que é dobrado**, então o pico não cresce com o
+tamanho da coleção. O que pode crescer sem limite é o mapa de caminhos: uma
+coleção que usa identificador como **nome** de campo gera um caminho novo por
+documento. Três tetos fecham isso, na linha do `MAX_ROWS = 5000` que a
+introspecção do Postgres já tinha:
+
+```text
+MAX_FIELDS          2.000 caminhos distintos
+MAX_DEPTH               8 niveis de aninhamento
+MAX_ARRAY_ELEMENTS     10 elementos inspecionados por array
+```
+
+Ao bater qualquer um, a coleção aparece com **⚠ parei em 2.000 campos
+distintos** em vez de parecer completa. E o teto morde na *entrada* de um
+caminho novo: campo já conhecido continua sendo contado, senão a presença dele
+sairia menor que a verdadeira. Há teste para as duas metades.
+
+**A armadilha que o teste pegou:** um array com três subdocumentos contaria
+`tags.nome` três vezes, e a presença passaria de 100% — a tela afirmando que o
+campo aparece em mais documentos do que existem. Os caminhos de um documento
+entram num conjunto antes de virar contagem.
+
+### 9.7.5 A segunda forma de exibição
+
+`DataSourceStructure` desenha `esquema → tabela → coluna`, e a coluna carrega
+três garantias: existe em toda linha, tem **um** tipo, e não aninha. Nenhuma
+vale num documento. `DataSourceCollections` nasceu ao lado — não no lugar — e o
+core manda `schemas` **ou** `collections`, nunca os dois.
+
+Detalhe pequeno com motivo grande: presença abaixo de 1% aparece como `<1%`, e
+não `0%`. Um campo que apareceu uma vez em duzentas **não** apareceu zero vezes,
+e arredondar apagaria justamente o campo raro que se foi procurar.
+
+### 9.7.6 O temporal se anuncia sozinho
+
+```text
+leituras [timeseries]
+   temporal DECLARADO: ts / sensor / seconds
+```
+
+Isso sai do catálogo, sem amostrar nada — e por isso não aparece como campo
+comum no meio dos outros. As coleções internas (`system.views`,
+`system.buckets.leituras`) ficam de fora: `system.buckets.*` é o armazenamento
+em balde da própria coleção temporal, e mostrá-lo poria a mesma coisa duas vezes
+na tela.
+
+### 9.7.7 O TLS entrou, e com ele duas licenças
+
+Decisão do autor em 2026-09-04, e ela vale para **todos** os clientes de rede da
+IDE, não só para este:
+
+```text
+subtle          BSD-3-Clause         criptografia de tempo constante. Permissiva,
+                                     OSI-approved, mesma familia da ISC ja' aceita
+webpki-roots    CDLA-Permissive-2.0  NAO e' codigo: e' a lista de certificados
+                                     raiz da Mozilla, empacotada como crate
+```
+
+As duas entraram no `deny.toml` com justificativa datada, ao lado das de ISC e
+CC0-1.0. Com elas, o `ureq` do domínio Grafana ligou o `rustls` na mesma
+mudança — a recusa explícita de `https://` de §9.6.3 deixou de ser necessária.
+
+O `mongodb` 3.9 (Apache-2.0) custa **+104 crates**. Fica registrado como o
+maior custo de dependência que o projeto aceitou até hoje, contra +52 do
+`postgres` e +5 do `ureq`.
+
+### 9.7.8 A senha não entra numa URI
+
+O caminho óbvio seria `mongodb://usuario:senha@host`. Ele criaria uma `String`
+viva na memória com a senha em texto, pronta para cair num `Debug`, num log de
+erro ou numa mensagem de falha de conexão. A conexão é montada com
+`ClientOptions` + `Credential`, o valor é entregue no ponto de uso, e **há teste
+que reprova se a senha aparecer no `Debug` das opções**.
+
+### 9.7.9 O que a exercitação achou: `localhost` não conecta
+
+Exercitado contra um **MongoDB 8.2.12** real, e a primeira tentativa falhou:
+
+```text
+host `localhost`   timeout de 5s, ou "connection reset" — varia
+host `127.0.0.1`   conecta na hora
+```
+
+Com o servidor em contêiner rootless nesta máquina, `localhost` resolve para
+`::1` primeiro, o encaminhador de porta não atende em IPv6, e o driver **não cai
+para IPv4**. Nenhuma das duas mensagens apontava para o nome do host.
+
+Como o sintoma não é estável, a dica vai junto de **toda** falha de conexão
+quando o host é `localhost`:
+
+```text
+o servidor não respondeu em 5s — tente `127.0.0.1`: `localhost` pode resolver
+para IPv6, e nem todo servidor atende nele
+```
+
+Custa três linhas e é a diferença entre um minuto e uma tarde. Vale notar de
+onde veio: **nenhum gate acharia isso** — foi exercitar contra o servidor de
+verdade, que é a mesma lição do `fd` 10.4.2 e do `probe-rs`.
+
+### 9.7.10 O que a etapa 27 ainda NÃO tem
+
+```text
+consulta      executar `find`/agregacao pela IDE. Decisao 8 do autor: fatia
+              propria, depois da introspeccao — a mesma ordem do Postgres
+escrita       a IDE LE'. Inserir, atualizar e apagar documento pede desenho
+              proprio (confirmacao, escopo, desfazer) que nao foi levantado
+TLS do        o `postgres` continua sem TLS. A licenca ja' esta' decidida; falta
+`postgres`    o conector, que muda a chamada de conexao e e' fatia propria
+criar         a IDE le' o Grafana; criar dashboard a partir de um perfil de
+dashboard     banco pede desenho antes de codigo
+```
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

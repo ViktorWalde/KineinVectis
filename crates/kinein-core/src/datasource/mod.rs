@@ -28,6 +28,8 @@
 //! - [`secret`]: o tipo que nao se imprime, e a politica de onde buscar.
 //! - [`connection`]: o unico lugar que fala com um servidor de banco.
 //! - [`introspect`]: o que existe DENTRO do banco.
+//! - [`mongo`]: o unico lugar que fala com um `MongoDB`.
+//! - [`mongo_infer`]: dobrar documentos num mapa de campos, sem rede.
 //!
 //! # Nao confundir com `crate::db`
 //!
@@ -37,6 +39,8 @@
 
 pub mod connection;
 pub mod introspect;
+pub mod mongo;
+pub mod mongo_infer;
 pub mod secret;
 pub mod sqlite;
 mod store;
@@ -82,6 +86,16 @@ pub fn validate(profile: &DataSourceProfile) -> Result<(), String> {
     }
     if profile.host.trim().is_empty() {
         return Err("informe o host (use `localhost` para um banco nesta maquina)".to_owned());
+    }
+    // O MONGO NAO EXIGE USUARIO. Um servidor local sem autenticacao habilitada
+    // e' o caso comum de desenvolvimento, e exigir o campo seria a IDE pedindo
+    // o que o motor nao pede — o mesmo erro que a tela do SQLite corrigiu.
+    if profile.engine == DataSourceEngine::Mongo {
+        return if profile.database.trim().is_empty() {
+            Err("informe o nome do banco".to_owned())
+        } else {
+            Ok(())
+        };
     }
     if profile.port == 0 {
         return Err(format!(
@@ -156,6 +170,12 @@ fn normalize(profile: &DataSourceProfile) -> DataSourceProfile {
             .map(str::trim)
             .filter(|valor| !valor.is_empty())
             .map(str::to_owned),
+        // A amostra so' vale para motor sem esquema fixo, e o valor e' preso
+        // entre 1 e o teto: um perfil pedindo 50.000 documentos amostraria a
+        // colecao inteira, que e' o oposto do que amostrar significa.
+        sample_size: profile
+            .sample_size
+            .map(|valor| valor.clamp(1, mongo::MAX_SAMPLE)),
     }
 }
 
@@ -187,6 +207,7 @@ mod tests {
             user: "postgres".to_owned(),
             secret_source: SecretSource::Automatic,
             secret_variable: None,
+            sample_size: None,
         }
     }
 

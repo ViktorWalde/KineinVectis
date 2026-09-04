@@ -162,30 +162,38 @@ impl Core {
             // O MOTOR decide quem responde. Um so' `datasource.test` para os
             // dois: a UI nao precisa saber com qual banco esta falando para
             // pedir um teste.
-            let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
-                crate::datasource::sqlite::probe_file(&profile)
-            } else {
-                crate::datasource::connection::probe_server(&profile, secret.as_ref())
+            // O MOTOR decide quem responde, e os tres devolvem a MESMA
+            // forma: versao ou (mensagem, precisa de segredo). O `MongoDB` nao
+            // tem SQLSTATE — o campo simplesmente nao vai no evento dele, e a
+            // UI ja' decide pelo `secretRequired`, nunca pelo texto.
+            let evento = match profile.engine {
+                kinein_protocol::DataSourceEngine::Sqlite => resultado_do_teste(
+                    ctx,
+                    &profile,
+                    crate::datasource::sqlite::probe_file(&profile),
+                ),
+                kinein_protocol::DataSourceEngine::Mongo => {
+                    let bruto = crate::datasource::mongo::probe_server(&profile, secret.as_ref());
+                    resultado_do_teste(
+                        ctx,
+                        &profile,
+                        bruto.map_err(|falha| crate::datasource::connection::ConnectionFailure {
+                            message: falha.message,
+                            // O `MongoDB` nao tem SQLSTATE. `None` e' a
+                            // verdade; uma string vazia seria um codigo que
+                            // nao existe se passando por um que existe.
+                            sql_state: None,
+                            secret_required: falha.secret_required,
+                        }),
+                    )
+                }
+                kinein_protocol::DataSourceEngine::Postgres => resultado_do_teste(
+                    ctx,
+                    &profile,
+                    crate::datasource::connection::probe_server(&profile, secret.as_ref()),
+                ),
             };
-            let ok = resultado.is_ok();
-            let evento = match &resultado {
-                Ok(versao) => json!({
-                    "jobId": ctx.id(),
-                    "name": profile.name,
-                    "ok": true,
-                    "serverVersion": versao,
-                }),
-                Err(falha) => json!({
-                    "jobId": ctx.id(),
-                    "name": profile.name,
-                    "ok": false,
-                    "message": falha.message,
-                    "sqlState": falha.sql_state,
-                    // A UI abre o dialogo de senha por ESTE campo, nunca
-                    // lendo a mensagem: o texto do servidor e' localizado.
-                    "secretRequired": falha.secret_required,
-                }),
-            };
+            let ok = evento["ok"].as_bool().unwrap_or(false);
             ctx.emit_event("event.datasource.tested", evento);
             if ok {
                 JobOutcome::Success
@@ -287,28 +295,52 @@ impl Core {
         };
         let titulo = format!("Ler {}", profile.name);
         let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
-            let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
-                crate::datasource::sqlite::read_structure(&profile)
+            // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. `schemas` e' a
+            // arvore `esquema -> tabela -> coluna` dos motores relacionais;
+            // `collections` e' a do `MongoDB`, onde campo nao e' coluna. A UI
+            // escolhe a visao por QUAL das duas chegou — forcar o Mongo na
+            // primeira faria a tela afirmar que todo documento tem o campo,
+            // que ele tem um tipo so' e que nao ha' aninhamento.
+            let evento = if profile.engine == kinein_protocol::DataSourceEngine::Mongo {
+                match crate::datasource::mongo::read_structure(&profile, secret.as_ref()) {
+                    Ok(collections) => json!({
+                        "jobId": ctx.id(),
+                        "name": profile.name,
+                        "ok": true,
+                        "collections": collections,
+                    }),
+                    Err(falha) => json!({
+                        "jobId": ctx.id(),
+                        "name": profile.name,
+                        "ok": false,
+                        "message": falha.message,
+                        "secretRequired": falha.secret_required,
+                    }),
+                }
             } else {
-                crate::datasource::introspect::read_structure(&profile, secret.as_ref())
+                let resultado = if profile.engine == kinein_protocol::DataSourceEngine::Sqlite {
+                    crate::datasource::sqlite::read_structure(&profile)
+                } else {
+                    crate::datasource::introspect::read_structure(&profile, secret.as_ref())
+                };
+                match &resultado {
+                    Ok(schemas) => json!({
+                        "jobId": ctx.id(),
+                        "name": profile.name,
+                        "ok": true,
+                        "schemas": schemas,
+                    }),
+                    Err(falha) => json!({
+                        "jobId": ctx.id(),
+                        "name": profile.name,
+                        "ok": false,
+                        "message": falha.message,
+                        "sqlState": falha.sql_state,
+                        "secretRequired": falha.secret_required,
+                    }),
+                }
             };
-            let ok = resultado.is_ok();
-            let evento = match &resultado {
-                Ok(schemas) => json!({
-                    "jobId": ctx.id(),
-                    "name": profile.name,
-                    "ok": true,
-                    "schemas": schemas,
-                }),
-                Err(falha) => json!({
-                    "jobId": ctx.id(),
-                    "name": profile.name,
-                    "ok": false,
-                    "message": falha.message,
-                    "sqlState": falha.sql_state,
-                    "secretRequired": falha.secret_required,
-                }),
-            };
+            let ok = evento["ok"].as_bool().unwrap_or(false);
             ctx.emit_event("event.datasource.introspected", evento);
             if ok {
                 JobOutcome::Success
@@ -318,6 +350,36 @@ impl Core {
         });
 
         JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
+    }
+}
+
+/// Monta o evento de `datasource.test` a partir do resultado de um motor.
+///
+/// Existe uma vez so' porque os tres motores respondem a MESMA pergunta, e
+/// tres copias do mesmo `json!` divergiriam no campo que menos se olha — que
+/// aqui e' justamente o `secretRequired`, o que faz a UI pedir a senha.
+fn resultado_do_teste(
+    ctx: &crate::jobs::JobContext,
+    profile: &DataSourceProfile,
+    resultado: Result<String, crate::datasource::connection::ConnectionFailure>,
+) -> Value {
+    match resultado {
+        Ok(versao) => json!({
+            "jobId": ctx.id(),
+            "name": profile.name,
+            "ok": true,
+            "serverVersion": versao,
+        }),
+        Err(falha) => json!({
+            "jobId": ctx.id(),
+            "name": profile.name,
+            "ok": false,
+            "message": falha.message,
+            "sqlState": falha.sql_state,
+            // A UI abre o dialogo de senha por ESTE campo, nunca lendo a
+            // mensagem: o texto do servidor e' localizado.
+            "secretRequired": falha.secret_required,
+        }),
     }
 }
 

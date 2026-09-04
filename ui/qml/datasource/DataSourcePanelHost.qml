@@ -51,6 +51,8 @@ Item {
             testMessage: root.controller ? root.controller.testMessage : ""
             secretRequired: root.controller ? root.controller.secretRequired : false
             schemas: root.controller ? root.controller.schemas : []
+            collections: root.controller ? root.controller.collections : []
+            documentEngine: root.controller ? root.controller.documentEngine : false
             reading: root.controller ? root.controller.reading : false
             sessionPassword: root.controller ? root.controller.sessionPassword : ""
 
