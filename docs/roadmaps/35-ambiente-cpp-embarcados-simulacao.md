@@ -397,7 +397,7 @@ domínio tem fio.
 21  levantamento (licenca, manutencao, alvos, protocolo)   FEITO (2026-09-03)
 22  adaptador DAP vira escolha do kit                      FEITO (2026-09-03)
 23  cross-compilador e chip do alvo                        FEITO (2026-09-03)
-24  deteccao da sonda + kit sugerido                       o "plug"
+24  deteccao da sonda                                      FEITO (2026-09-03)
 25  ciclo build -> flash -> debug, com QEMU no gate        o "play"
 ```
 
@@ -538,7 +538,16 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
                                            especulativos no caminho probe-rs,
                                            que fala DAP direto.
 
-24  Deteccao da sonda + kit sugerido       o "plug" da §5.1.
+24  Deteccao da sonda                      FEITA em 2026-09-03 (0.71.0):
+                                           dominio `probe`, `probe.list`. O
+                                           parser e' TOLERANTE porque o
+                                           formato veio da comunidade e nao
+                                           do binario — a saida crua volta
+                                           SEMPRE, e a `hint` cobre o caso de
+                                           udev, que e' onde plug and play
+                                           morre. FALTA: sugerir o kit a
+                                           partir da sonda, que depende de
+                                           mapear VID:PID -> chip.
 
 25  Ciclo build -> flash -> debug,         o "play" da §5.1. QEMU no gate
     com QEMU no gate                       para haver verificacao sem placa.
