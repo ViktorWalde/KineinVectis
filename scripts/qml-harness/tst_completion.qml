@@ -35,7 +35,6 @@ Item {
         id: fakeText
         function wordStartAt(pos) { return 8; }              // inicio de "St"
         function cursorLineColumn() { return { line: 1, column: 11 }; }
-        function isWordChar(c) { return /[A-Za-z0-9_]/.test(c); }
     }
 
     // O controller REAL, dentro de um pai INVISIVEL — exatamente como

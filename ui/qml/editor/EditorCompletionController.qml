@@ -3,6 +3,9 @@ import QtQuick
 Item {
     id: root
 
+    // Regras puras de texto — uma unica DEFINICAO, ver TextRules.qml.
+    readonly property TextRules rules: TextRules {}
+
     property var surfaceBridge: null
     property var documentController: null
     property var textController: null
@@ -272,7 +275,7 @@ Item {
             }
             const previous = root.surfaceBridge.editorSurface.text.charAt(
                         position - 1);
-            const willOpen = root.textController.isWordChar(previous)
+            const willOpen = root.rules.isWordChar(previous)
                     || previous === "." || previous === ":";
             if (willOpen) {
                 root.requestCompletion();

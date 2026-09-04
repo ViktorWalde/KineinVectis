@@ -110,108 +110,6 @@ Rectangle {
     // M4.1: liga/desliga o auto-close de pares (setting autoClosePairs).
     property bool autoCloseEnabled: true
 
-    // E1 (docs-privada/diario/18, trilha E): auto-close de pares, type-over do fechador,
-    // surround da seleção e backspace apagando o par vazio.
-    readonly property var pairOpeners: ({ "(": ")", "[": "]", "{": "}",
-                                          "\"": "\"", "'": "'" })
-    readonly property var pairClosers: ({ ")": true, "]": true, "}": true,
-                                          "\"": true, "'": true })
-
-    function isWordChar(character) {
-        return character !== "" && /[A-Za-z0-9_]/.test(character);
-    }
-
-    // true = tecla consumida (event.accepted pelo chamador).
-    function handleTypingKey(event) {
-        if (event.text === "" || !autoCloseEnabled) {
-            return false;
-        }
-        // Ctrl puro é atalho; Ctrl+Alt (AltGr em layouts europeus) produz
-        // caractere legítimo e passa.
-        if ((event.modifiers & Qt.ControlModifier)
-                && !(event.modifiers & Qt.AltModifier)) {
-            return false;
-        }
-        const character = event.text;
-        const closer = pairOpeners[character];
-        const position = textEditor.cursorPosition;
-        const content = textEditor.text;
-        const hasSelection =
-            textEditor.selectionStart !== textEditor.selectionEnd;
-
-        // CR1: "<" logo após `#include ` fecha em "<>" (contexto seguro;
-        // "<" genérico é comparação/template/shift e NÃO auto-fecha).
-        if (character === "<" && !hasSelection && position > 0) {
-            const lineStart = content.lastIndexOf("\n", position - 1) + 1;
-            const beforeCursor = content.substring(lineStart, position);
-            if (/^\s*#\s*include\s+$/.test(beforeCursor)) {
-                textEditor.insert(position, "<>");
-                textEditor.cursorPosition = position + 1;
-                return true;
-            }
-        }
-
-        if (hasSelection && closer !== undefined) {
-            // Abridor com seleção ativa ENVOLVE em vez de substituir.
-            const start = textEditor.selectionStart;
-            const end = textEditor.selectionEnd;
-            const selected = content.substring(start, end);
-            textEditor.remove(start, end);
-            textEditor.insert(start, character + selected + closer);
-            textEditor.select(start + 1, end + 1);
-            return true;
-        }
-        if (pairClosers[character] !== undefined && !hasSelection
-                && content.charAt(position) === character) {
-            // type-over: pula o fechador já presente em vez de duplicar.
-            textEditor.cursorPosition = position + 1;
-            return true;
-        }
-        if (closer !== undefined) {
-            const previous = position > 0 ? content.charAt(position - 1) : "";
-            const next = content.charAt(position);
-            const quote = character === "\"" || character === "'";
-            // Aspas coladas em palavra não duplicam (don't → don''t);
-            // colchetes/parênteses antes de palavra ou aspas também não.
-            if (quote && (isWordChar(previous) || isWordChar(next))) {
-                return false;
-            }
-            if (!quote && (isWordChar(next) || next === "\"" || next === "'")) {
-                return false;
-            }
-            textEditor.insert(position, character + closer);
-            textEditor.cursorPosition = position + 1;
-            return true;
-        }
-        if (character === "}" && !hasSelection) {
-            // E3: a inserção (com dedent quando a linha é só
-            // whitespace) vive no EditorTextController; o type-over
-            // acima tem precedência e não re-indenta.
-            root.closerBraceRequested();
-            return true;
-        }
-        return false;
-    }
-
-    function handlePairBackspace() {
-        if (!autoCloseEnabled
-                || textEditor.selectionStart !== textEditor.selectionEnd) {
-            return false;
-        }
-        const position = textEditor.cursorPosition;
-        if (position <= 0) {
-            return false;
-        }
-        const content = textEditor.text;
-        const previous = content.charAt(position - 1);
-        const closer = pairOpeners[previous];
-        if (closer !== undefined && content.charAt(position) === closer) {
-            textEditor.remove(position - 1, position + 1);
-            return true;
-        }
-        return false;
-    }
-
     function cursorPointIn(item) {
         const rect = textEditor.cursorRectangle;
         return textEditor.mapToItem(item, rect.x, rect.y);
@@ -221,6 +119,34 @@ Rectangle {
         textEditor.cursorRectangle.height > 0
             ? textEditor.cursorRectangle.height
             : Theme.fontSizeEditor * 1.35)
+
+    // Toda a REGRA de tecla mora aqui (auto-close de pares e roteamento);
+    // esta superficie so' desenha e repassa. Ver EditorTypingController.qml.
+    EditorTypingController {
+        id: typingController
+
+        surface: root
+        autoCloseEnabled: root.autoCloseEnabled
+        completionVisible: root.completionVisible
+        actionsVisible: root.actionsVisible
+        usagesVisible: root.usagesVisible
+        hoverVisible: root.hoverVisible
+
+        onCompletionMoveRequested: delta => root.completionMoveRequested(delta)
+        onCompletionAcceptRequested: root.completionAcceptRequested()
+        onCompletionDismissRequested: root.completionDismissRequested()
+        onActionsMoveRequested: delta => root.actionsMoveRequested(delta)
+        onActionsAcceptRequested: root.actionsAcceptRequested()
+        onActionsDismissRequested: root.actionsDismissRequested()
+        onUsagesDismissRequested: root.usagesDismissRequested()
+        onHoverDismissRequested: root.hoverDismissRequested()
+        onIndentRequested: root.indentRequested()
+        onUnindentRequested: root.unindentRequested()
+        onNewlineRequested: root.newlineRequested()
+        onCloserBraceRequested: root.closerBraceRequested()
+        onSmartHomeRequested: extendSelection =>
+            root.smartHomeRequested(extendSelection)
+    }
 
     Text {
         anchors.centerIn: parent
@@ -290,24 +216,14 @@ Rectangle {
             }
         }
 
-        // C4: linha do cursor destacada (some durante selecao; a linha de
-        // execucao do debugger, mais forte, desenha por cima).
-        Rectangle {
-            visible: root.hasOpenFile
-                     && textEditor.selectionStart === textEditor.selectionEnd
-            y: textEditor.cursorRectangle.y
-            height: textEditor.cursorRectangle.height
+        EditorLineHighlights {
             width: Math.max(editorFlick.contentWidth, editorFlick.width)
-            color: Theme.surfaceSelected
-        }
-
-        Rectangle {
-            visible: root.executionLine > 0
-            y: (root.executionLine - 1) * root.editorLineHeight
-            width: Math.max(editorFlick.contentWidth, editorFlick.width)
-            height: root.editorLineHeight
-            color: Theme.accentDim
-            opacity: 0.35
+            active: root.hasOpenFile
+            cursorY: textEditor.cursorRectangle.y
+            cursorHeight: textEditor.cursorRectangle.height
+            hasSelection: textEditor.selectionStart !== textEditor.selectionEnd
+            executionLine: root.executionLine
+            lineHeight: root.editorLineHeight
         }
 
         TextEdit {
@@ -341,103 +257,7 @@ Rectangle {
             onCursorRectangleChanged: editorFlick.ensureVisible(cursorRectangle)
             onTextChanged: root.textEdited(text)
             Keys.onPressed: function(event) {
-                if (event.key === Qt.Key_Backspace
-                        && root.handlePairBackspace()) {
-                    event.accepted = true;
-                    return;
-                }
-                if (root.handleTypingKey(event)) {
-                    event.accepted = true;
-                    return;
-                }
-                if (root.actionsVisible) {
-                    if (event.key === Qt.Key_Down) {
-                        root.actionsMoveRequested(1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Up) {
-                        root.actionsMoveRequested(-1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        root.actionsAcceptRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Escape) {
-                        root.actionsDismissRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                }
-                if (root.completionVisible) {
-                    if (event.key === Qt.Key_Down) {
-                        root.completionMoveRequested(1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Up) {
-                        root.completionMoveRequested(-1);
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Return
-                            || event.key === Qt.Key_Enter
-                            || event.key === Qt.Key_Tab) {
-                        root.completionAcceptRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (event.key === Qt.Key_Escape) {
-                        root.completionDismissRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                }
-                if (event.key === Qt.Key_Escape) {
-                    if (root.usagesVisible) {
-                        root.usagesDismissRequested();
-                        event.accepted = true;
-                        return;
-                    }
-                    if (root.hoverVisible) {
-                        root.hoverDismissRequested();
-                        event.accepted = true;
-                    }
-                }
-                if (event.key === Qt.Key_Tab
-                        && (event.modifiers & Qt.ShiftModifier)) {
-                    root.unindentRequested();
-                    event.accepted = true;
-                    return;
-                }
-                if (event.key === Qt.Key_Tab) {
-                    root.indentRequested();
-                    event.accepted = true;
-                    return;
-                }
-                if (event.key === Qt.Key_Backtab) {
-                    root.unindentRequested();
-                    event.accepted = true;
-                    return;
-                }
-                if (event.key === Qt.Key_Home
-                        && (event.modifiers === Qt.NoModifier
-                            || event.modifiers === Qt.ShiftModifier)) {
-                    // E3: Home inteligente; Ctrl+Home (início do
-                    // documento) segue com o TextEdit.
-                    root.smartHomeRequested(
-                        event.modifiers === Qt.ShiftModifier);
-                    event.accepted = true;
-                    return;
-                }
-                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                        && event.modifiers === Qt.NoModifier) {
-                    root.newlineRequested();
-                    event.accepted = true;
-                }
+                event.accepted = typingController.route(event);
             }
         }
     }
@@ -463,42 +283,14 @@ Rectangle {
         }
     }
 
-    // T6: tooltip da mensagem do diagnóstico ao passar o mouse na marca
-    // da gutter (a UI não usa QtQuick.Controls; é um popup próprio leve).
-    Rectangle {
+    EditorDiagnosticTooltip {
         id: diagnosticTooltip
 
-        readonly property real lineTop: editorGutter.y
-            + (editorGutter.hoveredDiagnosticLine - 1) * root.editorLineHeight
-            - editorFlick.contentY
-
-        readonly property real maxTextWidth: Math.min(420,
-            root.width - x - 3 * Theme.spacingSmall)
-
-        visible: editorGutter.hoveredDiagnosticText !== ""
-        z: 30
+        message: editorGutter.hoveredDiagnosticText
+        lineHeight: root.editorLineHeight
+        lineTop: editorGutter.y - editorFlick.contentY
+                 + (editorGutter.hoveredDiagnosticLine - 1) * diagnosticTooltip.lineHeight
         x: editorGutter.x + editorGutter.width + Theme.spacingSmall
-        y: Math.max(Theme.spacingSmall,
-                    lineTop + root.editorLineHeight)
-        width: diagnosticTooltipText.width + 2 * Theme.spacingSmall
-        height: diagnosticTooltipText.height + 2 * Theme.spacingSmall
-        radius: Theme.radius
-        color: Theme.background2
-        border.color: Theme.borderStrong
-        border.width: 1
-
-        Text {
-            id: diagnosticTooltipText
-
-            x: Theme.spacingSmall
-            y: Theme.spacingSmall
-            // implicitWidth (não embrulhado) é constante para o texto;
-            // cortar no máximo evita o binding circular do wrap.
-            width: Math.min(implicitWidth, diagnosticTooltip.maxTextWidth)
-            text: editorGutter.hoveredDiagnosticText
-            color: Theme.textPrimary
-            font.pixelSize: Theme.fontSizeEditor - 2
-            wrapMode: Text.WordWrap
-        }
+        maxAvailableWidth: root.width - x - 3 * Theme.spacingSmall
     }
 }

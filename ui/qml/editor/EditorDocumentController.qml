@@ -7,16 +7,13 @@ Item {
     property var surfaceBridge: null
     property alias filesModel: openFilesModel
     property int currentTab: -1
-    property string pendingJumpPath: ""
-    property int pendingJumpLine: 0
-    property int pendingJumpColumn: 0
     property var pendingReloads: ({})
-    property var pendingExternalReads: ({})
     property var pendingSaves: ({})
-    property var recentFiles: []
-    property bool currentExternalConflict: false
-    property bool currentExternalDeleted: false
-    property string currentExternalMessage: ""
+    property alias recentFiles: recent.paths
+    // Conflito externo tem dono proprio; ver EditorExternalChangeController.qml.
+    property alias currentExternalConflict: external.currentConflict
+    property alias currentExternalDeleted: external.currentDeleted
+    property alias currentExternalMessage: external.currentMessage
 
     signal readFileRequested(string path)
     signal writeFileRequested(string path, string content, string expectedContent)
@@ -28,6 +25,40 @@ Item {
         id: openFilesModel
     }
 
+    // Regras puras (sem estado, sem UI); ver PathRules.qml.
+    PathRules {
+        id: pathRules
+    }
+
+    EditorRecentFiles {
+        id: recent
+
+        rules: pathRules
+    }
+
+    EditorJumpController {
+        id: jump
+
+        filesModel: openFilesModel
+        surfaceBridge: root.surfaceBridge
+        workspaceRoot: root.workspaceRoot
+
+        onTabSelectionRequested: index => root.selectTab(index)
+        onReadFileRequested: path => root.readFileRequested(path)
+    }
+
+    EditorExternalChangeController {
+        id: external
+
+        filesModel: openFilesModel
+        currentTab: root.currentTab
+        surfaceBridge: root.surfaceBridge
+        pendingSaves: root.pendingSaves
+
+        onReadFileRequested: path => root.readFileRequested(path)
+        onDocumentChanged: root.currentDocumentChanged()
+    }
+
     function surfaceReady() {
         return surfaceBridge !== null && surfaceBridge.ready();
     }
@@ -36,28 +67,18 @@ Item {
         return surfaceReady() ? surfaceBridge.text() : "";
     }
 
-    function baseName(path) {
-        return path.substring(path.lastIndexOf("/") + 1);
-    }
-
     function relativeToRoot(path) {
-        if (workspaceRoot !== "" && path.indexOf(workspaceRoot + "/") === 0) {
-            return path.substring(workspaceRoot.length + 1);
-        }
-        return path;
+        return pathRules.relativeTo(workspaceRoot, path);
     }
 
     function clear() {
         openFilesModel.clear();
-        pendingJumpPath = "";
-        pendingJumpLine = 0;
-        pendingJumpColumn = 0;
+        jump.reset();
         pendingReloads = {};
-        pendingExternalReads = {};
         pendingSaves = {};
-        recentFiles = [];
+        recent.reset();
         currentTab = -1;
-        syncCurrentExternalState();
+        external.reset();
         if (surfaceBridge !== null) {
             surfaceBridge.setText("");
             surfaceBridge.setPath("");
@@ -104,16 +125,16 @@ Item {
     function selectTab(index) {
         if (index === currentTab) {
             if (index >= 0 && index < openFilesModel.count) {
-                touchRecent(openFilesModel.get(index).path);
+                recent.touch(openFilesModel.get(index).path);
             }
             return;
         }
         storeCurrentEditor();
         currentTab = index;
         if (index >= 0 && index < openFilesModel.count) {
-            touchRecent(openFilesModel.get(index).path);
+            recent.touch(openFilesModel.get(index).path);
         }
-        syncCurrentExternalState();
+        external.syncCurrent();
         if (surfaceBridge !== null) {
             surfaceBridge.setText(index >= 0 ? openFilesModel.get(index).content : "");
             surfaceBridge.setPath(index >= 0 ? openFilesModel.get(index).path : "");
@@ -125,7 +146,7 @@ Item {
         openFilesModel.remove(index);
         if (openFilesModel.count === 0) {
             currentTab = -1;
-            syncCurrentExternalState();
+            external.syncCurrent();
             if (surfaceBridge !== null) {
                 surfaceBridge.setText("");
                 surfaceBridge.setPath("");
@@ -204,151 +225,41 @@ Item {
         }
     }
 
-    function touchRecent(path) {
-        if (path === "") {
-            return;
-        }
-        const updated = [path];
-        for (let i = 0; i < recentFiles.length && updated.length < 50; i++) {
-            if (recentFiles[i] !== path) {
-                updated.push(recentFiles[i]);
-            }
-        }
-        recentFiles = updated;
-    }
-
-    function syncCurrentExternalState() {
-        if (currentTab < 0 || currentTab >= openFilesModel.count) {
-            currentExternalConflict = false;
-            currentExternalDeleted = false;
-            currentExternalMessage = "";
-            return;
-        }
-        const document = openFilesModel.get(currentTab);
-        currentExternalConflict = document.externalConflict === true;
-        currentExternalDeleted = document.externalDeleted === true;
-        currentExternalMessage = document.externalMessage || "";
-    }
-
-    function clearExternalState(index) {
-        openFilesModel.setProperty(index, "externalContent", "");
-        openFilesModel.setProperty(index, "externalConflict", false);
-        openFilesModel.setProperty(index, "externalDeleted", false);
-        openFilesModel.setProperty(index, "externalMessage", "");
-        if (index === currentTab) {
-            syncCurrentExternalState();
-        }
-    }
-
-    function queueExternalRead(path, message) {
-        const reads = pendingExternalReads;
-        reads[path] = message || "";
-        pendingExternalReads = reads;
-        readFileRequested(path);
-    }
-
     function handleExternalChanges(changes) {
         storeCurrentEditor();
-        for (let changeIndex = 0; changeIndex < changes.length; changeIndex++) {
-            const change = changes[changeIndex];
-            for (let i = 0; i < openFilesModel.count; i++) {
-                if (openFilesModel.get(i).path !== change.path) {
-                    continue;
-                }
-                if (change.kind === "deleted") {
-                    openFilesModel.setProperty(i, "externalConflict", true);
-                    openFilesModel.setProperty(i, "externalDeleted", true);
-                    openFilesModel.setProperty(i, "externalMessage",
-                            qsTr("O arquivo foi removido fora da IDE; o buffer local foi preservado."));
-                    openFilesModel.setProperty(i, "modified", true);
-                    if (i === currentTab) {
-                        syncCurrentExternalState();
-                    }
-                } else {
-                    queueExternalRead(change.path, "");
-                }
-                break;
-            }
-        }
+        external.noteChanges(changes);
     }
 
     function applyPathRenameToTabs(from, to) {
         for (let i = 0; i < openFilesModel.count; i++) {
             const current = openFilesModel.get(i).path;
-            let updated = "";
-            if (current === from) {
-                updated = to;
-            } else if (current.indexOf(from + "/") === 0) {
-                updated = to + current.substring(from.length);
-            } else {
+            const updated = pathRules.renamed(current, from, to);
+            if (updated === current) {
                 continue;
             }
             openFilesModel.setProperty(i, "path", updated);
-            openFilesModel.setProperty(i, "name", baseName(updated));
+            openFilesModel.setProperty(i, "name", pathRules.baseName(updated));
             if (i === currentTab && surfaceBridge !== null) {
                 surfaceBridge.setPath(updated);
             }
         }
-        const recent = [];
-        for (let i = 0; i < recentFiles.length; i++) {
-            const current = recentFiles[i];
-            if (current === from) {
-                recent.push(to);
-            } else if (current.indexOf(from + "/") === 0) {
-                recent.push(to + current.substring(from.length));
-            } else {
-                recent.push(current);
-            }
-        }
-        recentFiles = recent;
+        recent.applyRename(from, to);
     }
 
     function closeTabsUnderPath(path) {
         for (let i = openFilesModel.count - 1; i >= 0; i--) {
-            const current = openFilesModel.get(i).path;
-            if (current === path || current.indexOf(path + "/") === 0) {
+            if (pathRules.isUnder(openFilesModel.get(i).path, path)) {
                 closeTab(i);
             }
         }
     }
 
     function openDiagnostic(file, line, column) {
-        if (file === "") {
-            return;
-        }
-        const path = file.startsWith("/") ? file : workspaceRoot + "/" + file;
-        pendingJumpPath = path;
-        pendingJumpLine = line;
-        pendingJumpColumn = column;
-        for (let i = 0; i < openFilesModel.count; i++) {
-            if (openFilesModel.get(i).path === path) {
-                selectTab(i);
-                jumpToPending();
-                return;
-            }
-        }
-        readFileRequested(path);
+        jump.request(file, line, column);
     }
 
     function jumpToPending() {
-        if (!surfaceReady() || pendingJumpPath === "") {
-            return;
-        }
-        const text = surfaceBridge.text();
-        let offset = 0;
-        for (let currentLine = 1; currentLine < pendingJumpLine; currentLine++) {
-            const next = text.indexOf("\n", offset);
-            if (next < 0) {
-                break;
-            }
-            offset = next + 1;
-        }
-        if (pendingJumpColumn > 0) {
-            offset += pendingJumpColumn - 1;
-        }
-        surfaceBridge.editorSurface.cursorPosition = Math.min(offset, text.length);
-        surfaceBridge.focusEditor();
-        pendingJumpPath = "";
+        jump.applyPending();
     }
 
     function currentFilePath() {
@@ -379,50 +290,8 @@ Item {
             }
             return;
         }
-        if (pendingExternalReads[path] !== undefined) {
-            const reads = pendingExternalReads;
-            const failureMessage = reads[path];
-            delete reads[path];
-            pendingExternalReads = reads;
-            for (let i = 0; i < openFilesModel.count; i++) {
-                if (openFilesModel.get(i).path !== path) {
-                    continue;
-                }
-                const document = openFilesModel.get(i);
-                const pendingSave = pendingSaves[path];
-                if ((pendingSave !== undefined && content === pendingSave)
-                        || content === document.savedContent) {
-                    clearExternalState(i);
-                    return;
-                }
-                const localContent = i === currentTab && surfaceReady()
-                        ? surfaceBridge.text() : document.content;
-                if (localContent === document.savedContent) {
-                    openFilesModel.setProperty(i, "content", content);
-                    openFilesModel.setProperty(i, "savedContent", content);
-                    openFilesModel.setProperty(i, "modified", false);
-                    clearExternalState(i);
-                    if (i === currentTab && surfaceReady()) {
-                        const cursor = Math.min(
-                                surfaceBridge.editorSurface.cursorPosition,
-                                content.length);
-                        surfaceBridge.setText(content);
-                        surfaceBridge.editorSurface.cursorPosition = cursor;
-                        currentDocumentChanged();
-                    }
-                    return;
-                }
-                openFilesModel.setProperty(i, "externalContent", content);
-                openFilesModel.setProperty(i, "externalConflict", true);
-                openFilesModel.setProperty(i, "externalDeleted", false);
-                openFilesModel.setProperty(i, "externalMessage",
-                        failureMessage !== "" ? failureMessage
-                        : qsTr("O arquivo mudou no disco enquanto havia alterações locais."));
-                if (i === currentTab) {
-                    syncCurrentExternalState();
-                }
-                return;
-            }
+        if (external.isPendingRead(path)) {
+            external.applyExternalRead(path, content);
             return;
         }
         for (let i = 0; i < openFilesModel.count; i++) {
@@ -435,8 +304,8 @@ Item {
                     surfaceBridge.setText(content);
                     surfaceBridge.setPath(path);
                 }
-                if (pendingJumpPath === path) {
-                    jumpToPending();
+                if (jump.hasPendingFor(path)) {
+                    jump.applyPending();
                 }
                 currentDocumentChanged();
                 return;
@@ -444,7 +313,7 @@ Item {
         }
         openFilesModel.append({
             path: path,
-            name: baseName(path),
+            name: pathRules.baseName(path),
             content: content,
             savedContent: content,
             modified: false,
@@ -454,8 +323,8 @@ Item {
             externalMessage: ""
         });
         selectTab(openFilesModel.count - 1);
-        if (pendingJumpPath === path) {
-            jumpToPending();
+        if (jump.hasPendingFor(path)) {
+            jump.applyPending();
         }
         currentDocumentChanged();
     }
@@ -474,7 +343,7 @@ Item {
                 openFilesModel.setProperty(i, "savedContent", snapshot);
                 openFilesModel.setProperty(i, "content", localContent);
                 openFilesModel.setProperty(i, "modified", localContent !== snapshot);
-                clearExternalState(i);
+                external.clearAt(i);
             }
         }
     }
@@ -485,51 +354,19 @@ Item {
         pendingSaves = saves;
         for (let i = 0; i < openFilesModel.count; i++) {
             if (openFilesModel.get(i).path === path) {
-                openFilesModel.setProperty(i, "externalConflict", true);
-                openFilesModel.setProperty(i, "externalMessage", message);
-                if (i === currentTab) {
-                    syncCurrentExternalState();
-                }
-                queueExternalRead(path, message);
+                external.markConflictAt(i, message);
+                external.queueRead(path, message);
                 return;
             }
         }
     }
 
     function reloadExternalCurrent() {
-        if (currentTab < 0 || currentExternalDeleted) {
-            return "";
-        }
-        const document = openFilesModel.get(currentTab);
-        const content = document.externalContent;
-        const path = document.path;
-        openFilesModel.setProperty(currentTab, "content", content);
-        openFilesModel.setProperty(currentTab, "savedContent", content);
-        openFilesModel.setProperty(currentTab, "modified", false);
-        clearExternalState(currentTab);
-        if (surfaceReady()) {
-            const cursor = Math.min(surfaceBridge.editorSurface.cursorPosition,
-                                    content.length);
-            surfaceBridge.setText(content);
-            surfaceBridge.editorSurface.cursorPosition = cursor;
-        }
-        currentDocumentChanged();
-        return path;
+        return external.reloadCurrent();
     }
 
     function keepLocalAfterExternalChange() {
-        if (currentTab < 0) {
-            return;
-        }
-        const document = openFilesModel.get(currentTab);
-        if (!currentExternalDeleted) {
-            openFilesModel.setProperty(currentTab, "savedContent",
-                                       document.externalContent);
-        }
-        const localContent = surfaceReady() ? surfaceBridge.text() : document.content;
-        openFilesModel.setProperty(currentTab, "content", localContent);
-        openFilesModel.setProperty(currentTab, "modified", true);
-        clearExternalState(currentTab);
+        external.keepLocal();
     }
 
     function handleRenameApplied(files) {

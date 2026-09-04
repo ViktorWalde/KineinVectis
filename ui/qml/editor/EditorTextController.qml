@@ -3,6 +3,9 @@ import QtQuick
 Item {
     id: root
 
+    // Regras puras de texto — uma unica DEFINICAO, ver TextRules.qml.
+    readonly property TextRules rules: TextRules {}
+
     property var surfaceBridge: null
     readonly property string editorIndent: "    "
     // E3: memória do expand/shrink selection. O histórico só vale
@@ -42,15 +45,10 @@ Item {
         };
     }
 
-    function isWordChar(ch) {
-        return (ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z")
-                || (ch >= "0" && ch <= "9") || ch === "_";
-    }
-
     function wordStartAt(position) {
         const text = editorText();
         let start = position;
-        while (start > 0 && isWordChar(text.charAt(start - 1))) {
+        while (start > 0 && root.rules.isWordChar(text.charAt(start - 1))) {
             start--;
         }
         return start;
@@ -63,7 +61,7 @@ Item {
         const text = surfaceBridge.text();
         const start = wordStartAt(surfaceBridge.editorSurface.cursorPosition);
         let end = surfaceBridge.editorSurface.cursorPosition;
-        while (end < text.length && isWordChar(text.charAt(end))) {
+        while (end < text.length && root.rules.isWordChar(text.charAt(end))) {
             end++;
         }
         return text.substring(start, end);
@@ -347,7 +345,8 @@ Item {
         if (selectionStart === selectionEnd) {
             const wordStart = wordStartAt(selectionStart);
             let wordEnd = selectionEnd;
-            while (wordEnd < text.length && isWordChar(text.charAt(wordEnd))) {
+            while (wordEnd < text.length
+                   && root.rules.isWordChar(text.charAt(wordEnd))) {
                 wordEnd++;
             }
             if (wordStart < wordEnd) {
