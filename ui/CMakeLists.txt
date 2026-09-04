@@ -60,6 +60,7 @@ set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT
 set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceForm.qml)
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
 set_source_files_properties(qml/datasource/DataSourceVerdict.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceVerdict.qml)
+set_source_files_properties(qml/datasource/DataSourceStructure.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceStructure.qml)
 set_source_files_properties(qml/datasource/DataSourceField.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceField.qml)
 set_source_files_properties(qml/library/LibraryPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanelHost.qml)
 set_source_files_properties(qml/library/LibraryPlanView.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPlanView.qml)
@@ -249,6 +250,7 @@ qt_add_qml_module(kinein-vectis
         qml/datasource/DataSourceForm.qml
         qml/datasource/DataSourceList.qml
         qml/datasource/DataSourceVerdict.qml
+        qml/datasource/DataSourceStructure.qml
         qml/datasource/DataSourceField.qml
         qml/library/LibraryPanelHost.qml
         qml/library/LibraryPlanView.qml

@@ -42,6 +42,15 @@ void CoreClient::dataSourceTest(const QString& name, const QString& password)
     sendRequest(QStringLiteral("datasource.test"), params);
 }
 
+void CoreClient::dataSourceIntrospect(const QString& name, const QString& password)
+{
+    QJsonObject params{{QStringLiteral("name"), name}};
+    if (!password.isEmpty()) {
+        params.insert(QStringLiteral("password"), password);
+    }
+    sendRequest(QStringLiteral("datasource.introspect"), params);
+}
+
 bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("datasource.list") ||
@@ -52,7 +61,9 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
             result.value(QStringLiteral("profiles")).toArray().toVariantList());
         return true;
     }
-    if (method == QStringLiteral("datasource.test")) {
+    if (method == QStringLiteral("datasource.test") ||
+        method == QStringLiteral("datasource.introspect"))
+    {
         // O teste responde com o JOB; o veredito chega depois, por evento.
         emit dataSourceTestAccepted(result.value(QStringLiteral("jobId")).toString());
         return true;

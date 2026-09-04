@@ -38,6 +38,12 @@ Item {
     // campo, nunca lendo `testMessage` — a mensagem do servidor e' localizada.
     property bool secretRequired: false
 
+    // A estrutura lida do banco. Vazia ate' o autor pedir: ler catalogo custa
+    // tres consultas pela rede, e fazer isso sozinho ao abrir o painel seria
+    // gastar a conexao de quem so' queria conferir a porta.
+    property var schemas: []
+    property bool reading: false
+
     // Senha da sessao. Nunca persistida, nunca enviada ao `save`.
     property string sessionPassword: ""
 
@@ -45,6 +51,7 @@ Item {
     signal saveRequested(var profile)
     signal removeRequested(string name)
     signal testRequested(string name, string password)
+    signal introspectRequested(string name, string password)
 
     visible: false
 
@@ -92,6 +99,8 @@ Item {
     }
 
     function clearVerdict() {
+        schemas = [];
+        reading = false;
         testing = false;
         testedName = "";
         testOk = false;
@@ -177,6 +186,30 @@ Item {
         }
     }
 
+    function introspect() {
+        if (draft.name === "") {
+            return;
+        }
+        schemas = [];
+        reading = true;
+        testMessage = "";
+        introspectRequested(draft.name, sessionPassword);
+    }
+
+    function handleIntrospected(name, ok, newSchemas, message, needsSecret) {
+        reading = false;
+        testedName = name;
+        if (ok) {
+            schemas = newSchemas;
+            testMessage = "";
+            secretRequired = false;
+        } else {
+            schemas = [];
+            testMessage = message;
+            secretRequired = needsSecret;
+        }
+    }
+
     function handleTested(name, ok, version, message, needsSecret) {
         testing = false;
         testedName = name;
@@ -189,6 +222,7 @@ Item {
     function handleFailed(method, message) {
         if (method.indexOf("datasource.") === 0) {
             testing = false;
+            reading = false;
             errorText = message;
         }
     }

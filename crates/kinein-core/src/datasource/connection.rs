@@ -113,7 +113,7 @@ pub fn probe_server(
 }
 
 /// Traduz um erro do driver na falha que a UI entende.
-fn failure_from(error: &postgres::Error) -> ConnectionFailure {
+pub(super) fn failure_from(error: &postgres::Error) -> ConnectionFailure {
     let sql_state = error.code().map(|code| code.code().to_owned());
     let message = describe(error);
     ConnectionFailure {

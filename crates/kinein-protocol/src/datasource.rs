@@ -146,3 +146,50 @@ pub struct DataSourceTestAccepted {
     /// Job to follow; the answer arrives as `event.datasource.tested`.
     pub job_id: String,
 }
+
+/// One column of a table, in the order it was declared.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceColumn {
+    /// Column name.
+    pub name: String,
+    /// SQL type as `information_schema` reports it (`integer`, `text`, ...).
+    pub data_type: String,
+    /// Whether the column accepts NULL.
+    pub nullable: bool,
+}
+
+/// A table or a view, with its columns.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceTable {
+    /// Table name.
+    pub name: String,
+    /// `"table"` or `"view"` — the UI draws them differently.
+    pub kind: String,
+    /// Columns, in declaration order.
+    pub columns: Vec<DataSourceColumn>,
+}
+
+/// A schema the author owns; server catalogues are filtered out.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceSchema {
+    /// Schema name.
+    pub name: String,
+    /// Tables and views in it.
+    pub tables: Vec<DataSourceTable>,
+}
+
+/// Parameters for `datasource.introspect` — same shape as the connection test.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataSourceIntrospectParams {
+    /// Which saved profile to read.
+    pub name: String,
+    /// The session password, when the profile's policy is `Prompt`.
+    ///
+    /// Redacted from the client log exactly like `datasource.test`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
+}

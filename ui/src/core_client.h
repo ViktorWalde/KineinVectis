@@ -146,6 +146,7 @@ public:
     Q_INVOKABLE void dataSourceSave(const QVariantMap& profile);
     Q_INVOKABLE void dataSourceRemove(const QString& name);
     Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password);
+    Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password);
     Q_INVOKABLE void libraryList();
     Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
     Q_INVOKABLE void toolchainGet(const QString& preset);
@@ -252,6 +253,9 @@ signals:
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.
     void dataSourceTested(const QString& name, bool ok, const QString& serverVersion,
                           const QString& message, bool secretRequired);
+    /// Estrutura lida do banco: esquemas -> tabelas -> colunas.
+    void dataSourceIntrospected(const QString& name, bool ok, const QVariantList& schemas,
+                                const QString& message, bool secretRequired);
     void libraryListResolved(const QVariantList& libraries);
     void libraryPlanResolved(const QVariantMap& plan);
     void toolchainResolved(const QVariantList& selections, const QVariantList& candidates,

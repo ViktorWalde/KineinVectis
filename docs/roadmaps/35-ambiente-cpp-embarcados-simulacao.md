@@ -918,6 +918,50 @@ ação, em vez de só informar. Isso exige uma tabela de nomes por distro
 (`sqlite-devel` no Fedora, `libsqlite3-dev` no Debian) — dado que precisa ser
 auditado na fonte antes de entrar, como todo o resto deste catálogo.
 
+### 9.3.6 Introspecção: o que existe dentro do banco (2026-09-04)
+
+O perfil diz **onde** conectar e o teste prova que **dá para** conectar.
+Nenhum dos dois responde a primeira pergunta de quem abre um cliente de banco:
+*"o que tem aqui dentro?"*. Sem ela o painel era um testador de conexão.
+
+`datasource.introspect` faz **três consultas ao `information_schema`** — padrão
+SQL, e por isso vale igual no `PostgreSQL` e no `TimescaleDB`, que fala o mesmo
+protocolo e expõe os mesmos catálogos. **A etapa 27 herda esta leitura sem
+reescrever nada.**
+
+Exercitado contra um `PostgreSQL` 18.6 real, com esquema criado para o teste:
+
+```text
+esquema public
+esquema vendas
+  table pedidos    id:integer NOT NULL, cliente:text NOT NULL, total:numeric
+  view  resumo     cliente:text, count:bigint
+```
+
+**Três decisões visíveis no resultado:**
+
+1. **`view` e `table` são distinguidas**, porque a diferença muda o que se pode
+   fazer: `UPDATE` numa view costuma falhar, e descobrir isso no erro do
+   servidor é pior que ver na lista.
+2. **Colunas na ordem de declaração**, não alfabética — é a ordem que o autor
+   escreveu, e é por ela que ele procura.
+3. **Catálogo do servidor fica de fora** (`pg_catalog`, `information_schema`,
+   `pg_toast`): ninguém abre uma IDE para olhar isso.
+
+**Teto por consulta**, com o resultado dizendo quando truncou: um banco de
+produção tem dezenas de milhares de colunas, e mandar tudo pela pipe travaria a
+UI antes de desenhar a primeira linha.
+
+**A leitura NÃO acontece sozinha ao abrir o painel.** São três consultas pela
+rede; gastá-las com quem só queria conferir a porta seria cobrar caro por nada.
+O botão **"Ler estrutura"** é explícito.
+
+**Duplicação evitada no caminho:** `datasource.test` e `datasource.introspect`
+fazem a mesma pergunta — *"tenho a senha para abrir esta conexão?"* — e agora
+compartilham `resolve_secret` e `find_profile`. Duas cópias divergiriam
+exatamente como as duas cópias de `isWordChar` divergiram
+([`../roadmaps/39`](39-divida-tecnica-paga.md) §5).
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

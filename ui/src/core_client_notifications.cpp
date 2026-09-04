@@ -20,6 +20,15 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
     if (handleFileSystemNotification(method, params)) {
         return;
     }
+    if (method == QStringLiteral("event.datasource.introspected")) {
+        emit dataSourceIntrospected(
+            params.value(QStringLiteral("name")).toString(),
+            params.value(QStringLiteral("ok")).toBool(false),
+            params.value(QStringLiteral("schemas")).toArray().toVariantList(),
+            params.value(QStringLiteral("message")).toString(),
+            params.value(QStringLiteral("secretRequired")).toBool(false));
+        return;
+    }
     if (method == QStringLiteral("event.datasource.tested")) {
         emit dataSourceTested(params.value(QStringLiteral("name")).toString(),
                               params.value(QStringLiteral("ok")).toBool(false),

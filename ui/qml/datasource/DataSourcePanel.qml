@@ -22,6 +22,8 @@ Item {
     property string serverVersion: ""
     property string testMessage: ""
     property bool secretRequired: false
+    property var schemas: []
+    property bool reading: false
     property string sessionPassword: ""
 
     signal profileSelected(string name)
@@ -31,6 +33,7 @@ Item {
     signal saveRequested()
     signal removeRequested()
     signal testRequested()
+    signal introspectRequested()
     signal closeRequested()
 
     readonly property bool draftNamed: root.draft !== null && root.draft.name !== ""
@@ -115,6 +118,12 @@ Item {
                 onRetryRequested: root.testRequested()
             }
 
+            DataSourceStructure {
+                width: parent.width
+                schemas: root.schemas
+                loading: root.reading
+            }
+
             Text {
                 width: parent.width
                 visible: root.errorText !== ""
@@ -139,6 +148,13 @@ Item {
             text: qsTr("Fechar")
             compact: true
             onClicked: root.closeRequested()
+        }
+
+        KvButton {
+            text: qsTr("Ler estrutura")
+            compact: true
+            enabled: root.draftNamed && !root.reading
+            onClicked: root.introspectRequested()
         }
 
         KvButton {

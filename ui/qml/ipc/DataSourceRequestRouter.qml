@@ -29,5 +29,9 @@ Item {
         function onTestRequested(name, password) {
             root.coreClient.dataSourceTest(name, password);
         }
+
+        function onIntrospectRequested(name, password) {
+            root.coreClient.dataSourceIntrospect(name, password);
+        }
     }
 }

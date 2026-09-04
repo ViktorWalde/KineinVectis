@@ -27,6 +27,7 @@
 //! - [`store`]: `.kinein/datasources.json`, com `schemaVersion`.
 //! - [`secret`]: o tipo que nao se imprime, e a politica de onde buscar.
 //! - [`connection`]: o unico lugar que fala com um servidor de banco.
+//! - [`introspect`]: o que existe DENTRO do banco.
 //!
 //! # Nao confundir com `crate::db`
 //!
@@ -35,6 +36,7 @@
 //! dois dizem "banco" e nao tem nada a ver um com o outro.
 
 pub mod connection;
+pub mod introspect;
 pub mod secret;
 mod store;
 

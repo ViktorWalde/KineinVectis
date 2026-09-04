@@ -5,9 +5,9 @@
 //! vive no dominio, nao aqui.
 
 use kinein_protocol::{
-    DataSourceListParams, DataSourceListResult, DataSourceRemoveParams, DataSourceSaveParams,
-    DataSourceTestAccepted, DataSourceTestParams, DataSourceWriteResult, JobRisk, JsonRpcError,
-    JsonRpcErrorCode, JsonRpcResponse,
+    DataSourceIntrospectParams, DataSourceListParams, DataSourceListResult, DataSourceProfile,
+    DataSourceRemoveParams, DataSourceSaveParams, DataSourceTestAccepted, DataSourceTestParams,
+    DataSourceWriteResult, JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -29,6 +29,9 @@ impl Core {
             "datasource.save" => Some(self.datasource_save_response(request_id, params)),
             "datasource.remove" => Some(self.datasource_remove_response(request_id, params)),
             "datasource.test" => Some(self.datasource_test_response(request_id, params)),
+            "datasource.introspect" => {
+                Some(self.datasource_introspect_response(request_id, params))
+            }
             _ => None,
         }
     }
@@ -141,52 +144,14 @@ impl Core {
             Ok(pedido) => pedido,
             Err(response) => return *response,
         };
-        let Some(profile) = crate::datasource::list(&root)
-            .into_iter()
-            .find(|candidato| candidato.name == pedido.name)
-        else {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    format!("nao ha perfil chamado `{}`", pedido.name),
-                    None,
-                ),
-            );
+        let profile = match Self::find_profile(&root, &pedido.name) {
+            Ok(profile) => profile,
+            Err(response) => return com_id(*response, request_id),
         };
 
-        let secret = match crate::datasource::secret::plan_for(&profile) {
-            SecretPlan::DelegateToDriver => pedido.password.map(Secret::new),
-            SecretPlan::ReadEnvironment(variavel) => {
-                match crate::datasource::secret::read_environment(&variavel) {
-                    Some(secret) => Some(secret),
-                    None => {
-                        return JsonRpcResponse::failure(
-                            request_id,
-                            JsonRpcError::new(
-                                JsonRpcErrorCode::SecretRequired,
-                                format!(
-                                    "a variavel `{variavel}` nao esta definida (ou esta vazia)"
-                                ),
-                                None,
-                            ),
-                        );
-                    }
-                }
-            }
-            SecretPlan::AskUser => match pedido.password {
-                Some(valor) => Some(Secret::new(valor)),
-                None => {
-                    return JsonRpcResponse::failure(
-                        request_id,
-                        JsonRpcError::new(
-                            JsonRpcErrorCode::SecretRequired,
-                            format!("o perfil `{}` pede a senha a cada sessao", profile.name),
-                            None,
-                        ),
-                    );
-                }
-            },
+        let secret = match Self::resolve_secret(&profile, pedido.password) {
+            Ok(secret) => secret,
+            Err(response) => return *response,
         };
 
         let Some(jobs) = self.jobs.as_ref() else {
@@ -224,4 +189,133 @@ impl Core {
 
         JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
     }
+
+    /// Traduz a politica do perfil na senha (ou na recusa) desta chamada.
+    ///
+    /// Um dono so' porque `datasource.test` e `datasource.introspect` fazem a
+    /// MESMA pergunta: "tenho a senha para abrir esta conexao?". Duas copias
+    /// divergiriam exatamente como as duas copias de `isWordChar` divergiram
+    /// (`docs/roadmaps/39` §5).
+    fn resolve_secret(
+        profile: &DataSourceProfile,
+        password: Option<String>,
+    ) -> Result<Option<Secret>, Box<JsonRpcResponse>> {
+        let recusa = |mensagem: String| {
+            Box::new(JsonRpcResponse::failure(
+                None,
+                JsonRpcError::new(JsonRpcErrorCode::SecretRequired, mensagem, None),
+            ))
+        };
+        match crate::datasource::secret::plan_for(profile) {
+            SecretPlan::DelegateToDriver => Ok(password.map(Secret::new)),
+            SecretPlan::ReadEnvironment(variavel) => {
+                crate::datasource::secret::read_environment(&variavel)
+                    .map(Some)
+                    .ok_or_else(|| {
+                        recusa(format!(
+                            "a variavel `{variavel}` nao esta definida (ou esta vazia)"
+                        ))
+                    })
+            }
+            SecretPlan::AskUser => password.map(Secret::new).map(Some).ok_or_else(|| {
+                recusa(format!(
+                    "o perfil `{}` pede a senha a cada sessao",
+                    profile.name
+                ))
+            }),
+        }
+    }
+
+    /// Acha o perfil salvo, ou a resposta que explica que ele nao existe.
+    fn find_profile(
+        root: &std::path::Path,
+        name: &str,
+    ) -> Result<DataSourceProfile, Box<JsonRpcResponse>> {
+        crate::datasource::list(root)
+            .into_iter()
+            .find(|candidato| candidato.name == name)
+            .ok_or_else(|| {
+                Box::new(JsonRpcResponse::failure(
+                    None,
+                    JsonRpcError::new(
+                        JsonRpcErrorCode::InvalidParams,
+                        format!("nao ha perfil chamado `{name}`"),
+                        None,
+                    ),
+                ))
+            })
+    }
+
+    /// `datasource.introspect` — esquemas, tabelas e colunas do banco.
+    ///
+    /// Job pelo mesmo motivo do `datasource.test`: sao tres consultas pela
+    /// REDE, e o laco de despacho nao pode esperar por elas.
+    fn datasource_introspect_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let Some(root) = self.workspace_root() else {
+            return no_workspace_response(request_id, "datasource.introspect");
+        };
+        let pedido = match parse_params::<DataSourceIntrospectParams>(
+            request_id.as_ref(),
+            params,
+            "datasource.introspect exige { name } e aceita { password }",
+        ) {
+            Ok(pedido) => pedido,
+            Err(response) => return *response,
+        };
+        let profile = match Self::find_profile(&root, &pedido.name) {
+            Ok(profile) => profile,
+            Err(response) => return com_id(*response, request_id),
+        };
+        let secret = match Self::resolve_secret(&profile, pedido.password) {
+            Ok(secret) => secret,
+            Err(response) => return com_id(*response, request_id),
+        };
+
+        let Some(jobs) = self.jobs.as_ref() else {
+            return jobs_unavailable_response(request_id, "datasource.introspect");
+        };
+        let titulo = format!("Ler {}", profile.name);
+        let job_id = jobs.spawn("datasource", titulo, JobRisk::Low, false, move |ctx| {
+            let resultado =
+                crate::datasource::introspect::read_structure(&profile, secret.as_ref());
+            let ok = resultado.is_ok();
+            let evento = match &resultado {
+                Ok(schemas) => json!({
+                    "jobId": ctx.id(),
+                    "name": profile.name,
+                    "ok": true,
+                    "schemas": schemas,
+                }),
+                Err(falha) => json!({
+                    "jobId": ctx.id(),
+                    "name": profile.name,
+                    "ok": false,
+                    "message": falha.message,
+                    "sqlState": falha.sql_state,
+                    "secretRequired": falha.secret_required,
+                }),
+            };
+            ctx.emit_event("event.datasource.introspected", evento);
+            if ok {
+                JobOutcome::Success
+            } else {
+                JobOutcome::Failed
+            }
+        });
+
+        JsonRpcResponse::success(request_id, json!(DataSourceTestAccepted { job_id }))
+    }
+}
+
+/// Poe o `id` do pedido numa resposta de recusa construida sem ele.
+///
+/// As recusas nascem em funcoes que nao conhecem o `request_id` (elas servem
+/// a dois metodos); o `id` e' colado aqui, no unico lugar que o tem.
+fn com_id(mut resposta: JsonRpcResponse, request_id: Option<Value>) -> JsonRpcResponse {
+    resposta.id = request_id;
+    resposta
 }

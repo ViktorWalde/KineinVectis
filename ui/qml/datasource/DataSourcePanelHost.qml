@@ -50,6 +50,8 @@ Item {
             serverVersion: root.controller ? root.controller.serverVersion : ""
             testMessage: root.controller ? root.controller.testMessage : ""
             secretRequired: root.controller ? root.controller.secretRequired : false
+            schemas: root.controller ? root.controller.schemas : []
+            reading: root.controller ? root.controller.reading : false
             sessionPassword: root.controller ? root.controller.sessionPassword : ""
 
             onProfileSelected: name => root.controller.select(name)
@@ -59,6 +61,7 @@ Item {
             onSaveRequested: root.controller.save()
             onRemoveRequested: root.controller.remove()
             onTestRequested: root.controller.test()
+            onIntrospectRequested: root.controller.introspect()
             onCloseRequested: root.dismissRequested()
         }
     }
