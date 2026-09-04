@@ -73,12 +73,44 @@ pub fn list(root: Option<&Path>) -> Vec<LibraryInfo> {
 /// preferencia: se o config package esta no sistema, usa-se ele — baixar e
 /// compilar o que ja esta instalado e desperdicio que o usuario paga em tempo
 /// de build.
-pub fn plan(id: &str, target: &str) -> Result<LibraryPlan, String> {
+pub fn plan(root: Option<&Path>, id: &str, target: &str) -> Result<LibraryPlan, String> {
     let Some(entry) = catalog::find(id) else {
         return Err(format!("biblioteca desconhecida: {id}"));
     };
     if target.trim().is_empty() {
         return Err("o alvo do CMake nao pode ser vazio".to_owned());
+    }
+
+    // JA' LIGADA? Entao o plano e' o INVERSO. Sem isto a unica saida do autor
+    // que ativou a biblioteca errada era editar o `CMakeLists.txt` a mao — que
+    // e' exatamente o que este dominio existe para evitar (relato de uso,
+    // 2026-09-04).
+    let ja_ligada = root.is_some_and(|raiz| applied::applied_ids(raiz).contains(id));
+    if ja_ligada {
+        return Ok(LibraryPlan {
+            id: entry.id.to_owned(),
+            target: target.to_owned(),
+            detected: true,
+            uses_find_package: false,
+            pinned_version: entry.pinned_version.to_owned(),
+            searched_paths: Vec::new(),
+            targets: entry
+                .targets
+                .iter()
+                .map(|alvo| (*alvo).to_owned())
+                .collect(),
+            steps: vec![LibraryStep {
+                action_id: "cmake.removeTargetLinkLibraries".to_owned(),
+                summary: format!(
+                    "Remove {} de {target} — a biblioteca ja esta ligada neste projeto",
+                    entry.targets.join(", ")
+                ),
+                params: BTreeMap::from([
+                    ("target".to_owned(), target.to_owned()),
+                    ("libraries".to_owned(), entry.targets.join(" ")),
+                ]),
+            }],
+        });
     }
 
     // O caminho sai da MEDICAO: se o config package esta no sistema, usa-se
@@ -100,9 +132,16 @@ pub fn plan(id: &str, target: &str) -> Result<LibraryPlan, String> {
     } else {
         steps.push(LibraryStep {
             action_id: "cmake.fetchContent".to_owned(),
+            // A URL no `CMakeLists.txt` incomoda, e com razao — o autor
+            // apontou isso em 2026-09-04. Ela existe porque o `CMake` nao tem
+            // gerenciador de pacotes: quem compilar o projeto depois precisa
+            // saber DE ONDE vem a dependencia, senao o build nao e'
+            // reprodutivel fora desta maquina. O resumo diz o caminho que
+            // dispensa a URL, em vez de deixar o autor descobrir sozinho.
             summary: format!(
-                "FetchContent de {} na tag {} — o pacote nao foi encontrado no sistema, \
-                 entao ele e baixado e compilado junto, com a versao PINADA",
+                "FetchContent de {} na tag {} — o pacote nao foi encontrado no sistema. \
+                 Se voce instalar o pacote de desenvolvimento da sua distro, a IDE passa \
+                 a usar find_package e NENHUMA URL entra no CMakeLists",
                 entry.repository, entry.pinned_version
             ),
             params: BTreeMap::from([
@@ -242,7 +281,7 @@ mod tests {
     /// linka-la deixaria o projeto compilando e falhando no linker.
     #[test]
     fn a_plan_always_ends_by_linking_the_target() {
-        let plano = plan("fmt", "meu_app").unwrap();
+        let plano = plan(None, "fmt", "meu_app").unwrap();
         assert_eq!(plano.target, "meu_app");
         assert!(
             plano
@@ -263,7 +302,7 @@ mod tests {
     /// dizer onde manda o usuario adivinhar.
     #[test]
     fn a_plan_that_found_nothing_says_where_it_looked() {
-        let plano = plan("benchmark", "app").unwrap();
+        let plano = plan(None, "benchmark", "app").unwrap();
         if plano.detected {
             assert!(
                 plano.searched_paths.is_empty(),
@@ -281,8 +320,8 @@ mod tests {
 
     #[test]
     fn unknown_library_and_empty_target_are_refused() {
-        assert!(plan("nao-existe", "app").is_err());
-        assert!(plan("fmt", "  ").is_err(), "alvo em branco passou");
+        assert!(plan(None, "nao-existe", "app").is_err());
+        assert!(plan(None, "fmt", "  ").is_err(), "alvo em branco passou");
     }
 
     #[test]

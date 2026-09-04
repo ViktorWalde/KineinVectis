@@ -27,7 +27,7 @@ impl Core {
     ) -> Option<JsonRpcResponse> {
         match method {
             "library.list" => Some(self.library_list_response(request_id, params)),
-            "library.plan" => Some(Self::library_plan_response(request_id, params)),
+            "library.plan" => Some(self.library_plan_response(request_id, params)),
             _ => None,
         }
     }
@@ -57,7 +57,11 @@ impl Core {
     }
 
     /// `library.plan` — o que seria preciso para um alvo usar a biblioteca.
-    fn library_plan_response(request_id: Option<Value>, params: Option<&Value>) -> JsonRpcResponse {
+    fn library_plan_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
         let parsed = match parse_params::<LibraryPlanParams>(
             request_id.as_ref(),
             params,
@@ -66,7 +70,7 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        match library::plan(&parsed.id, &parsed.target) {
+        match library::plan(self.workspace_root().as_deref(), &parsed.id, &parsed.target) {
             Ok(plan) => JsonRpcResponse::success(request_id, json!(plan)),
             Err(message) => JsonRpcResponse::failure(
                 request_id,

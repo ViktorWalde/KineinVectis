@@ -105,17 +105,27 @@ Item {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
                         width: 68
-                        height: 16
+                        height: 20
                         radius: Theme.radiusXSmall
-                        color: area.containsMouse ? Theme.surface2 : "transparent"
+                        // O botao PRIMARIO da tela precisa parecer um botao.
+                        // "revisar…" em 9px sem preenchimento nao parecia
+                        // clicavel — relato de uso em 2026-09-04.
+                        color: area.containsMouse ? Theme.accent : Theme.surface2
                         border.width: 1
-                        border.color: Theme.borderSoft
+                        border.color: area.containsMouse ? Theme.accent : Theme.borderSoft
 
                         Text {
                             anchors.centerIn: parent
-                            text: qsTr("revisar…")
-                            color: Theme.textMuted
-                            font.pixelSize: 9
+                            // O verbo diz o que vai acontecer. Remover tem
+                            // acao propria (`cmake.removeTargetLinkLibraries`),
+                            // e o botao segue o passo em vez de ser fixo.
+                            text: passo.modelData.actionId
+                                  === "cmake.removeTargetLinkLibraries"
+                                  ? qsTr("Remover…") : qsTr("Detalhes…")
+                            color: area.containsMouse
+                                   ? Theme.background0 : Theme.textPrimary
+                            font.pixelSize: 10
+                            font.weight: Font.DemiBold
                         }
 
                         MouseArea {
@@ -123,6 +133,7 @@ Item {
 
                             anchors.fill: parent
                             hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
                             onClicked: root.applyStepRequested(passo.modelData.actionId,
                                                                passo.modelData.params)
                         }

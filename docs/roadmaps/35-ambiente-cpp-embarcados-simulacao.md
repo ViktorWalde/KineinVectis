@@ -858,6 +858,66 @@ depois   o bloco entra logo apos `cmake_minimum_required`, e o build sai com
 O `CMakeLists.txt` gerado foi **configurado e compilado de verdade** (`cmake -S
 . -B build && cmake --build`) antes de esta seção ser escrita.
 
+### 9.3.4 O ciclo fechou: ativar E remover (2026-09-04)
+
+A bolinha verde da §9.3.2 só fecha o ciclo se houver como **voltar**. Até aqui
+a IDE sabia acrescentar e não sabia tirar: quem ativasse a biblioteca errada
+tinha de editar o `CMakeLists.txt` à mão — que é exatamente o que este domínio
+existe para evitar.
+
+Nasceu `cmake.removeTargetLinkLibraries`, e o `library.plan` **se inverte
+sozinho** quando a biblioteca já está ligada:
+
+```text
+nao ligada   findPackage (ou fetchContent) -> addTargetLinkLibraries
+ja' ligada   removeTargetLinkLibraries
+```
+
+O botão segue o passo: diz **"Detalhes…"** quando vai acrescentar e
+**"Remover…"** quando vai tirar. Ele também deixou de ser um `revisar…` de 9px
+sem preenchimento — era o botão primário da tela e não parecia clicável.
+
+**A remoção é cirúrgica.** Tira os alvos pedidos de dentro da chamada e, se não
+sobrar biblioteca nenhuma, tira a chamada inteira: deixar
+`target_link_libraries(app PRIVATE)` para trás seria lixo que o `CMake` aceita
+e ninguém entende depois.
+
+**O nome é "Remover", não "Desativar"**, por ser o que de fato acontece — a
+linha sai do arquivo. "Desativar" sugeriria um interruptor que guarda estado em
+algum lugar, e não há lugar nenhum: o `CMakeLists.txt` **é** o estado.
+
+**Ciclo exercitado inteiro contra o `CMake` real:** ativar → `applied: true` →
+o plano vira remoção → remover → `applied: false` → `cmake -S . -B` ainda
+configura.
+
+### 9.3.5 Sobre a URL do GitHub no `CMakeLists.txt`
+
+Pergunta do autor: *"de fato para adicionar uma funcionalidade precisa do link
+do github dentro do CMakeLists?"*
+
+**Não — depende do caminho, e a IDE escolhe pelo que mediu:**
+
+```text
+find_package(fmt CONFIG REQUIRED)      a lib esta' no sistema. ZERO URL.
+FetchContent(... GIT_REPOSITORY ...)   a lib NAO esta'. O CMake precisa saber
+                                       de onde baixar.
+```
+
+A URL não é capricho da IDE: o `CMake` **não tem gerenciador de pacotes**, e
+quem compilar o projeto depois — um colega, a CI — precisa que o build file
+diga de onde vem a dependência. Guardá-la "só na IDE" faria o projeto compilar
+apenas dentro do Kinein, que é o oposto de um projeto open source.
+
+O resumo do passo passou a dizer o caminho que dispensa a URL, em vez de deixar
+o autor descobrir sozinho: *"se você instalar o pacote de desenvolvimento da
+sua distro, a IDE passa a usar `find_package` e NENHUMA URL entra no
+`CMakeLists`"*.
+
+**O que ainda falta aqui:** oferecer a instalação do pacote do sistema como
+ação, em vez de só informar. Isso exige uma tabela de nomes por distro
+(`sqlite-devel` no Fedora, `libsqlite3-dev` no Debian) — dado que precisa ser
+auditado na fonte antes de entrar, como todo o resto deste catálogo.
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

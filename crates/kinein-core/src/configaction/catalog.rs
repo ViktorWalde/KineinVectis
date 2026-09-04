@@ -60,7 +60,7 @@ const NO_FILE: &[&str] = &[];
 
 const VISIBILITY_PARAM: (&str, &str, bool, &str) = ("visibility", "Visibilidade", false, "PRIVATE");
 
-static DEFINITIONS: [ActionDefinition; 24] = [
+static DEFINITIONS: [ActionDefinition; 25] = [
     ActionDefinition {
         id: "cmake.enableCompileCommands",
         title: "Habilitar compile_commands.json",
@@ -224,6 +224,25 @@ static DEFINITIONS: [ActionDefinition; 24] = [
             ("target", "Target", true, "app"),
             ("libraries", "Bibliotecas", true, "core Threads::Threads"),
             VISIBILITY_PARAM,
+        ],
+        docs: &[(
+            "officialDoc",
+            "CMake: target_link_libraries",
+            "cmake.target_link_libraries",
+        )],
+    },
+    ActionDefinition {
+        id: "cmake.removeTargetLinkLibraries",
+        title: "Remover bibliotecas do target",
+        description: "Tira os alvos do target_link_libraries; se nao sobrar nenhum, tira a chamada.",
+        scope: ConfigActionScope::Cmake,
+        category: "CMake Intermediate",
+        risk: ConfigActionRisk::Medium,
+        affects: CMAKELISTS_ONLY,
+        effect: ConfigActionEffect::Edit,
+        params: &[
+            ("target", "Target", true, ""),
+            ("libraries", "Bibliotecas a remover", true, ""),
         ],
         docs: &[(
             "officialDoc",

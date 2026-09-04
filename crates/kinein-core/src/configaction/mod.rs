@@ -41,6 +41,7 @@ mod cmakelists;
 mod error;
 mod plan;
 mod presets;
+mod remover;
 mod rigor;
 
 use std::{collections::BTreeMap, path::Path};
@@ -216,6 +217,7 @@ fn build_plan(
         "cmake.findPackage" => cmakelists::find_package(root, params),
         "cmake.fetchContent" => cmakelists::fetch_content(root, params),
         "cmake.addTargetLinkLibraries" => cmakelists::add_target_link_libraries(root, params),
+        "cmake.removeTargetLinkLibraries" => remover::remove_target_link_libraries(root, params),
         "cmake.strictWarnings" => rigor::strict_warnings(root, params),
         "cmake.setCxxStandard" => rigor::cxx_standard(root, params),
         "cmake.enableSanitizers" => rigor::sanitizers(root, params),
