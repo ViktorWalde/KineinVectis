@@ -135,3 +135,89 @@ pub(super) fn workspace_symbols(result: &Value) -> Vec<LspSymbolInfo> {
     symbols.truncate(MAX_WORKSPACE_SYMBOLS);
     symbols
 }
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::{document_symbols, workspace_symbols};
+
+    #[test]
+    fn document_symbols_flattens_hierarchical_shape_with_containers() {
+        let result = json!([
+            {
+                "name": "Ponto",
+                "kind": 23,
+                "range": { "start": { "line": 3, "character": 0 },
+                           "end": { "line": 8, "character": 1 } },
+                "selectionRange": { "start": { "line": 3, "character": 11 },
+                                    "end": { "line": 3, "character": 16 } },
+                "children": [
+                    {
+                        "name": "tamanho",
+                        "kind": 6,
+                        "selectionRange": { "start": { "line": 5, "character": 7 },
+                                            "end": { "line": 5, "character": 14 } },
+                        "range": { "start": { "line": 5, "character": 4 },
+                                   "end": { "line": 7, "character": 5 } },
+                    },
+                ],
+            },
+            {
+                "name": "main",
+                "kind": 12,
+                "selectionRange": { "start": { "line": 10, "character": 3 },
+                                    "end": { "line": 10, "character": 7 } },
+                "range": { "start": { "line": 10, "character": 0 },
+                           "end": { "line": 12, "character": 1 } },
+            },
+        ]);
+
+        let symbols = document_symbols(&result, "/w/src/main.rs");
+
+        assert_eq!(symbols.len(), 3);
+        assert_eq!(symbols[0].name, "Ponto");
+        assert_eq!(symbols[0].kind, "struct");
+        assert_eq!(symbols[0].line, 4);
+        assert_eq!(symbols[0].column, 12);
+        assert_eq!(symbols[0].container, None);
+        assert_eq!(symbols[1].name, "tamanho");
+        assert_eq!(symbols[1].kind, "method");
+        assert_eq!(symbols[1].container.as_deref(), Some("Ponto"));
+        assert_eq!(symbols[1].path, "/w/src/main.rs");
+        assert_eq!(symbols[2].name, "main");
+        assert_eq!(symbols[2].kind, "function");
+    }
+
+    #[test]
+    fn workspace_symbols_parses_symbol_information_and_skips_bad_uris() {
+        let result = json!([
+            {
+                "name": "Ponto",
+                "kind": 23,
+                "containerName": "geometria",
+                "location": {
+                    "uri": "file:///w/src/lib.rs",
+                    "range": { "start": { "line": 2, "character": 11 },
+                               "end": { "line": 2, "character": 16 } },
+                },
+            },
+            {
+                "name": "quebrado",
+                "kind": 12,
+                "location": { "uri": "untitled:sem-arquivo" },
+            },
+        ]);
+
+        let symbols = workspace_symbols(&result);
+
+        assert_eq!(symbols.len(), 1);
+        assert_eq!(symbols[0].name, "Ponto");
+        assert_eq!(symbols[0].kind, "struct");
+        assert_eq!(symbols[0].path, "/w/src/lib.rs");
+        assert_eq!(symbols[0].line, 3);
+        assert_eq!(symbols[0].column, 12);
+        assert_eq!(symbols[0].container.as_deref(), Some("geometria"));
+        assert!(workspace_symbols(&json!(null)).is_empty());
+    }
+}

@@ -404,10 +404,33 @@ bash scripts/verificar-qml-duplicacao.sh      # derivacao duplicada
 bash scripts/verificar-qml-logica.sh          # os harnesses, sem GUI
 ```
 
-O que **não** existe e devia: nenhum harness instancia `EditorTypingController`
-nem `EditorSelectionLadder`, embora os dois sejam hoje os melhores candidatos do
-repositório — regra pura, API pequena, e duble de cinco funções basta. Está
-registrado aqui como a primeira dívida de teste da fase de polimento.
+**Dois harnesses nasceram junto com os cortes**, e é isso que torna a extração
+mais que arrumação — a regra saiu de arquivos que nenhum teste instancia e caiu
+em arquivos que o gate exercita:
+
+```text
+scripts/qml-harness/tst_editor_typing.qml     12 casos, mask ate' 2^26
+scripts/qml-harness/tst_selection_ladder.qml  10 casos, mask ate' 2^14
+```
+
+Os dois foram **provados por mutação**, como o contrato exige de todo gate:
+
+```text
+EditorTypingController  cursor do auto-close +1 -> +2     bitmask=2      reprova
+EditorSelectionLadder   guarda do historico perde o
+                        `lastExpansion.length !== text.length`  bitmask=2048  reprova
+```
+
+O segundo é o mais valioso: a guarda de tamanho do texto é o que impede o
+`Ctrl+Shift+W` de encolher para offsets que uma edição já deslocou, e **até
+2026-09-03 ela não tinha teste nenhum** — quebrá-la não produzia erro, produzia
+uma seleção no lugar errado.
+
+**O que o teste da escada documentou de comportamento não óbvio:** com o cursor
+DENTRO da indentação, o primeiro degrau não é "a linha sem indentação" e sim a
+linha inteira — aquele candidato *começa depois do cursor*, então não o contém.
+Não é defeito; é consequência direta de "o menor candidato que CONTÉM a
+seleção".
 
 ## 9. O que continua aberto, e não é dívida
 

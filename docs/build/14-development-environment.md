@@ -90,10 +90,10 @@ de hoje**, e é o único que vale.
   instalados** — sem eles não há `qmllint` nem `qmake6`, e os gates
   `verificar-cpp.sh`, `verificar-qml.sh` e `verificar-qml-logica.sh` não rodam.
   É o que `scripts/instalar-ambiente.sh` resolve.
-- **`scripts/verificar.sh` completo: VERDE em 2026-08-30**, depois de
+- **`scripts/verificar.sh` completo: VERDE em 2026-09-04**, depois de
   `scripts/instalar-ambiente.sh` — inclui `verificar-cpp.sh` (clang-format +
   clang-tidy), `verificar-qml.sh` (qmllint estrito) e `verificar-qml-logica.sh`
-  (15 harnesses headless).
+  (22 harnesses headless, medido em 2026-09-04; `ls scripts/qml-harness/ | wc -l`).
 
 > **Armadilha do `qmllint`, medida em 2026-08-29.** O response file do lint
 > nasce na **configuração**; o `kinein-vectis.qmltypes` do módulo só na
