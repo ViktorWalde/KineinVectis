@@ -38,17 +38,38 @@ Rectangle {
                 || entry.category.toLowerCase().includes(query);
     }
 
+    // A MESMA convencao do painel de bibliotecas, e de proposito: verde e'
+    // "ja' esta no seu projeto", cinza e' "disponivel para ativar". Duas telas
+    // com a mesma bolinha significando coisas diferentes seria pior que nao
+    // ter bolinha (relato de uso, 2026-09-04).
     function stateColor(state) {
+        if (state === "alreadyApplied") {
+            return Theme.successSoft;
+        }
         if (state === "recommended") {
             return Theme.accent;
-        }
-        if (state === "available") {
-            return Theme.successSoft;
         }
         if (state === "partiallyAvailable") {
             return Theme.warningSoft;
         }
         return Theme.textDisabled;
+    }
+
+    // O que a bolinha quer dizer, em palavra.
+    function stateLabel(state) {
+        if (state === "alreadyApplied") {
+            return qsTr("ativa neste projeto");
+        }
+        if (state === "recommended") {
+            return qsTr("recomendada");
+        }
+        if (state === "partiallyAvailable") {
+            return qsTr("falta condição");
+        }
+        if (state === "unavailable") {
+            return qsTr("não se aplica aqui");
+        }
+        return "";
     }
 
     function riskColor(risk) {
@@ -125,9 +146,18 @@ Rectangle {
 
                     Text {
                         text: entry.title
-                        color: entry.actionState === "unavailable" ? Theme.textMuted : Theme.textPrimary
+                        color: entry.actionState === "unavailable"
+                               ? Theme.textMuted : Theme.textPrimary
                         font.pixelSize: 12
                         font.bold: entry.selected
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: root.stateLabel(entry.actionState)
+                        color: entry.actionState === "alreadyApplied"
+                               ? Theme.successSoft : Theme.textMuted
+                        font.pixelSize: 10
                     }
                 }
 

@@ -20,7 +20,7 @@ cargo test -q --workspace
 ```
 
 ```text
-protocolo   0.78.0
+protocolo   0.79.0
 testes      529 Rust + 23 harnesses QML
 metodos     139 IPC roteados, 35 eventos
 catraca     1 arquivo em debito

@@ -35,6 +35,8 @@ pub(super) struct WorkspaceFacts {
     pub(super) stale: Option<String>,
     /// Targets declarados literalmente no `CMakeLists.txt`.
     pub(super) targets: Vec<String>,
+    /// `.cargo/config.toml` existe — a acao de embarcado do Cargo ja rodou.
+    pub(super) cargo_config: bool,
 }
 
 impl WorkspaceFacts {
@@ -52,6 +54,9 @@ impl WorkspaceFacts {
             configured: builddir::is_configured(root),
             has_cdb: crate::cdb::status(root).directory.is_some(),
             stale: builddir::stale_reason(root),
+            // `.cargo/config.toml` e' o que a acao de embarcado do Cargo cria;
+            // sem isso ela nao teria como dizer "ja' esta feito".
+            cargo_config: root.join(".cargo/config.toml").is_file(),
             targets,
             cmakelists,
         }
@@ -145,7 +150,7 @@ fn evaluate(
         "cmake.enableCompileCommands" => {
             let text = facts.cmakelists.as_deref().unwrap_or_default();
             if cmakelists::exports_compile_commands(text) {
-                unavailable(format!(
+                already_applied(format!(
                     "o CMakeLists.txt ja define {}",
                     cmakelists::EXPORT_COMPILE_COMMANDS
                 ))
@@ -154,6 +159,34 @@ fn evaluate(
             } else {
                 recommended("sem compilation database, o clangd nao resolve includes")
             }
+        }
+        // As acoes de REGIME de compilacao (2026-09-04): cada uma sabe dizer
+        // se o efeito dela JA' esta no arquivo. Sem isso a lista unificada
+        // mostraria como "disponivel" o que o autor ja' ligou — que e' a
+        // confusao que o estado `AlreadyApplied` existe para acabar.
+        "cmake.setCxxStandard" => marca_no_cmakelists(
+            facts,
+            "CMAKE_CXX_STANDARD",
+            "o CMakeLists.txt ja fixa o padrao C++",
+        ),
+        "cmake.strictWarnings" => {
+            marca_no_cmakelists(facts, "-Wpedantic", "este projeto ja liga avisos rigorosos")
+        }
+        "cmake.enableSanitizers" => {
+            marca_no_cmakelists(facts, "-fsanitize", "este projeto ja liga sanitizers")
+        }
+        "cmake.enableOpenMP" => marca_no_cmakelists(
+            facts,
+            "OpenMP::OpenMP_CXX",
+            "este projeto ja linka o OpenMP",
+        ),
+        "cmake.generateHexBin" => marca_no_cmakelists(
+            facts,
+            "CMAKE_OBJCOPY",
+            "este projeto ja gera .hex/.bin depois do build",
+        ),
+        "cargo.embeddedTarget" if facts.cargo_config => {
+            already_applied(".cargo/config.toml ja existe neste projeto".to_owned())
         }
         "cmake.createDebugPreset" => preset_state(facts, "debug"),
         "cmake.createReleasePreset" => preset_state(facts, "release"),
@@ -184,7 +217,7 @@ fn preset_state(facts: &WorkspaceFacts, name: &str) -> (ConfigActionState, Optio
         .as_deref()
         .is_some_and(|text| presets::has_preset(text, name));
     if exists {
-        unavailable(format!("o preset {name} ja existe em CMakePresets.json"))
+        already_applied(format!("o preset {name} ja existe em CMakePresets.json"))
     } else {
         available()
     }
@@ -192,6 +225,34 @@ fn preset_state(facts: &WorkspaceFacts, name: &str) -> (ConfigActionState, Optio
 
 const fn available() -> (ConfigActionState, Option<String>) {
     (ConfigActionState::Available, None)
+}
+
+/// `AlreadyApplied` quando a marca esta no `CMakeLists.txt`.
+///
+/// A marca e' um trecho do que a PROPRIA acao escreve — `-Wpedantic`,
+/// `-fsanitize`, `OpenMP::OpenMP_CXX`. Busca textual, e o limite e' honesto:
+/// um projeto que escreveu a flag a mao, com outra grafia, aparece como
+/// disponivel. O pior caso e' oferecer de novo, e a previa mostra o diff antes
+/// — nunca o contrario, que seria esconder uma acao que o autor ainda precisa.
+fn marca_no_cmakelists(
+    facts: &WorkspaceFacts,
+    marca: &str,
+    razao: &str,
+) -> (ConfigActionState, Option<String>) {
+    if facts
+        .cmakelists
+        .as_deref()
+        .is_some_and(|texto| texto.contains(marca))
+    {
+        already_applied(razao.to_owned())
+    } else {
+        available()
+    }
+}
+
+/// O efeito JA' esta no projeto — verde na tela, nao cinza.
+fn already_applied(reason: impl Into<String>) -> (ConfigActionState, Option<String>) {
+    (ConfigActionState::AlreadyApplied, Some(reason.into()))
 }
 
 fn recommended(reason: impl Into<String>) -> (ConfigActionState, Option<String>) {

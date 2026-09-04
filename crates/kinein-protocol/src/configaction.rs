@@ -107,7 +107,18 @@ pub enum ConfigActionState {
     Recommended,
     /// O build system existe, mas falta condicao (target, arquivo, configure).
     PartiallyAvailable,
-    /// O efeito ja esta no projeto ou nao faz sentido aqui.
+    /// O efeito JA' ESTA no projeto.
+    ///
+    /// POR QUE E' ESTADO PROPRIO (2026-09-04). Ate' aqui isto e "nao faz
+    /// sentido neste projeto" eram o MESMO `Unavailable`, e a tela nao tinha
+    /// como distinguir "voce ja tem" de "nao da' para ter". Foi a confusao que
+    /// o autor relatou: *"fica confuso sobre o que estou ativado no meu
+    /// projeto, com o que tenho de opcao de ativar"*.
+    ///
+    /// Separadas, a UI pinta a primeira de VERDE — a mesma bolinha do painel
+    /// de bibliotecas, e pelo mesmo motivo.
+    AlreadyApplied,
+    /// Nao faz sentido neste projeto.
     Unavailable,
     /// O build system dela nao esta ativo neste workspace.
     HiddenByScope,

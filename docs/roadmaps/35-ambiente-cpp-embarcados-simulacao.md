@@ -1098,6 +1098,43 @@ ali, como ele também pediu.
 **Grafana entra por aqui antes de entrar como integração** (etapa 27): a IDE
 conversa com ele por HTTP API, nunca embutido, porque o Grafana é AGPL.
 
+### 9.3.10 "Já ativo" virou estado próprio (2026-09-04)
+
+Relato de uso: *"fica confuso sobre o que estou ativado no meu projeto, com o
+que tenho de opção de ativar"*. Medido, a causa estava no protocolo: o estado
+`Unavailable` colapsava **duas coisas diferentes** — *"o efeito já está no
+projeto"* e *"não faz sentido aqui"*. A tela não tinha como pintar uma de verde
+e a outra de cinza porque o core mandava a mesma palavra para as duas.
+
+```text
+antes    unavailable      "voce ja tem"  E  "nao da' para ter"
+depois   alreadyApplied   voce ja tem          -> verde
+         unavailable      nao se aplica aqui   -> cinza
+```
+
+E as ações de regime de compilação passaram a saber responder:
+
+```text
+setCxxStandard     CMAKE_CXX_STANDARD no CMakeLists
+strictWarnings     -Wpedantic
+enableSanitizers   -fsanitize
+enableOpenMP       OpenMP::OpenMP_CXX
+generateHexBin     CMAKE_OBJCOPY
+cargo.embeddedTarget   .cargo/config.toml existe
+```
+
+**O limite é honesto e está no código:** a busca é textual, então um projeto que
+escreveu a flag à mão com outra grafia aparece como disponível. O pior caso é
+**oferecer de novo** — e a prévia mostra o diff antes. Nunca o contrário, que
+seria esconder uma ação que o autor ainda precisa.
+
+**A bolinha é a MESMA convenção do painel de bibliotecas**, de propósito: verde
+é "já está no seu projeto", cinza é "disponível para ativar". Duas telas com a
+mesma bolinha significando coisas diferentes seria pior que não ter bolinha.
+
+Isso é a metade do caminho para a lista unificada que o autor pediu (Bibliotecas
++ Ações numa lista só): **as duas telas agora falam a mesma língua de estado.**
+
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
 ```text

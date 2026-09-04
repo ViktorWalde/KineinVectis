@@ -215,7 +215,10 @@ fn the_state_of_each_action_is_measured_in_the_workspace() {
 
     let depois = ok(&mut core, "configAction.list", &json!({}));
     let acao = action(&depois, "cmake.enableCompileCommands");
-    assert_eq!(acao["state"], "unavailable");
+    // `alreadyApplied`, e NAO `unavailable`: desde 2026-09-04 os dois sao
+    // estados diferentes. "voce ja tem" e "nao da' para ter" ficavam no mesmo
+    // balde, e a tela nao tinha como pintar um de verde e o outro de cinza.
+    assert_eq!(acao["state"], "alreadyApplied");
     assert!(
         acao["reason"]
             .as_str()
