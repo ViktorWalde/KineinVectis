@@ -34,10 +34,11 @@ cat scripts/arquitetura-baseline.txt
 ```
 
 ```text
-protocolo   0.71.0
-testes      467 Rust verdes
-dominios    21 no core
-catraca     8 arquivos em debito  (eram 18 no inicio da sessao)
+protocolo   0.78.0  (era 0.71.0 quando este documento nasceu)
+testes      529 Rust verdes  (eram 467 quando este documento nasceu)
+dominios    17 no core        (contagem por pasta; a de 21 misturava modulo
+                              de arquivo unico com dominio de pasta)
+catraca     1 arquivo em debito   (eram 8 aqui, e 18 no inicio daquela sessao)
 gate        18 verificacoes       (eram 14; medido em 2026-09-04)
 ```
 
