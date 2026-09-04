@@ -246,7 +246,9 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.action !== null ? qsTr("risco: %1").arg(root.action.risk) : ""
+                // A palavra crua do enum ("medium") nao dizia nada a quem
+                // clica. A frase vem do core, ao lado da definicao do valor.
+                text: root.action !== null ? root.action.riskExplanation : ""
                 color: Theme.textMuted
                 font.pixelSize: 10
             }
@@ -267,7 +269,7 @@ Item {
                     id: applyText
 
                     anchors.centerIn: parent
-                    text: qsTr("Aplicar")
+                    text: qsTr("Ativar")
                     color: parent.ready ? Theme.background0 : Theme.textDisabled
                     font.pixelSize: 11
                     font.bold: true

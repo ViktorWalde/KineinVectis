@@ -114,33 +114,33 @@ Item {
             visible: root.controller.activeBuildSystems.length > 1
 
             Repeater {
-                model: ["", "cmake", "cargo"]
+                // Rotulo pela LINGUAGEM, nao pela ferramenta. O autor relatou
+                // em 2026-09-04 que nao achava o Cargo "sem passar pelo C/C++
+                // antes": os chips diziam "cmake" e "cargo", nomes de
+                // ferramenta que so' quem ja' sabe reconhece.
+                model: [
+                    { escopo: "", rotulo: qsTr("Todas") },
+                    { escopo: "cmake", rotulo: qsTr("C/C++ · CMake") },
+                    { escopo: "cargo", rotulo: qsTr("Rust · Cargo") }
+                ]
 
-                Rectangle {
-                    required property string modelData
+                delegate: KvToggleChip {
+                    id: chipEscopo
 
-                    readonly property bool selected: root.controller.scopeFilter === modelData
+                    required property var modelData
 
-                    width: chipText.width + 2 * Theme.spacingSmall
-                    height: 22
-                    radius: Theme.radius
-                    color: selected ? Theme.accentDim : Theme.surface1
-                    border.color: selected ? Theme.accent : Theme.borderSoft
-                    border.width: 1
+                    width: medidaChip.width + 2 * Theme.spacingMedium
+                    height: 24
+                    labelText: chipEscopo.modelData.rotulo
+                    active: root.controller.scopeFilter === chipEscopo.modelData.escopo
+                    onToggled: root.controller.scopeFilter = chipEscopo.modelData.escopo
 
-                    Text {
-                        id: chipText
+                    TextMetrics {
+                        id: medidaChip
 
-                        anchors.centerIn: parent
-                        text: parent.modelData === "" ? qsTr("Todas") : parent.modelData
-                        color: parent.selected ? Theme.textPrimary : Theme.textSecondary
+                        font.family: Theme.monoFont
                         font.pixelSize: 11
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.controller.scopeFilter = parent.modelData
+                        text: chipEscopo.modelData.rotulo
                     }
                 }
             }

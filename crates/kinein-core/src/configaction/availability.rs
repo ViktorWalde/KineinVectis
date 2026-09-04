@@ -86,6 +86,8 @@ pub(super) fn describe(
         scope: action.scope,
         category: action.category.to_owned(),
         risk: action.risk,
+        risk_label: action.risk.label().to_owned(),
+        risk_explanation: action.risk.explanation().to_owned(),
         affects: action
             .affects
             .iter()

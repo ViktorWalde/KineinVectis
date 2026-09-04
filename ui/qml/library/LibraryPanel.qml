@@ -85,7 +85,7 @@ Item {
             required property var modelData
 
             width: lista.width
-            height: 52
+            height: 58
             radius: Theme.radius
             color: linha.modelData.id === root.selectedId ? Theme.surface2 : "transparent"
 
@@ -134,7 +134,7 @@ Item {
                          && linha.modelData.standardLineage !== ""
                 text: "★ " + (linha.modelData.standardLineage || "")
                 color: Theme.accent
-                font.pixelSize: 9
+                font.pixelSize: 10
             }
 
             Text {
@@ -153,7 +153,7 @@ Item {
                          : qsTr("baixa junto do projeto"))
                 color: linha.modelData.applied === true
                        ? Theme.successSoft : Theme.textMuted
-                font.pixelSize: 9
+                font.pixelSize: 10
             }
 
             Text {
@@ -172,14 +172,58 @@ Item {
             }
 
             Text {
+                id: ficha
+
                 anchors.top: resumo.bottom
-                anchors.topMargin: 1
+                anchors.topMargin: 2
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.spacingSmall
                 text: linha.modelData.license + " · " + linha.modelData.pinnedVersion
                       + " · " + linha.modelData.releasedAt
-                color: Theme.textDisabled
-                font.pixelSize: 9
+                color: Theme.textMuted
+                font.pixelSize: 10
+            }
+
+            // O REPOSITORIO a um clique, para o autor olhar ANTES de ativar.
+            //
+            // Pedido explicito em 2026-09-04: "o link do github deveria ficar
+            // acessivel la na biblioteca, para o usuario olhar antes de clicar
+            // em ativar". Ate' entao o catalogo TINHA a URL e a tela nunca a
+            // mostrava — auditar uma dependencia exigia procurar fora da IDE.
+            Row {
+                anchors.verticalCenter: ficha.verticalCenter
+                anchors.left: ficha.right
+                anchors.leftMargin: Theme.spacingSmall
+                spacing: Theme.spacingSmall
+
+                Repeater {
+                    model: [
+                        { rotulo: qsTr("repositório"), url: linha.modelData.repository },
+                        { rotulo: qsTr("documentação"), url: linha.modelData.documentation }
+                    ]
+
+                    delegate: Text {
+                        id: atalhoExterno
+
+                        required property var modelData
+
+                        visible: atalhoExterno.modelData.url !== undefined
+                                 && atalhoExterno.modelData.url !== ""
+                        text: atalhoExterno.modelData.rotulo + " ↗"
+                        color: linkArea.containsMouse ? Theme.accent : Theme.textSecondary
+                        font.pixelSize: 10
+                        font.underline: linkArea.containsMouse
+
+                        MouseArea {
+                            id: linkArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Qt.openUrlExternally(atalhoExterno.modelData.url)
+                        }
+                    }
+                }
             }
         }
     }

@@ -78,6 +78,7 @@ Rectangle {
             required property string scope
             required property string category
             required property string risk
+            required property string riskLabel
             required property string actionState
             required property string reason
             required property string affects
@@ -141,7 +142,7 @@ Rectangle {
                 Text {
                     width: parent.width
                     text: (entry.affects !== "" ? entry.affects : entry.category) + " · "
-                          + entry.risk
+                          + entry.riskLabel
                     color: root.riskColor(entry.risk)
                     font.pixelSize: 10
                     elide: Text.ElideRight

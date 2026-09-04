@@ -136,6 +136,8 @@ Item {
                 scope: action.scope,
                 category: action.category,
                 risk: action.risk,
+                riskLabel: action.riskLabel,
+                riskExplanation: action.riskExplanation,
                 effect: action.effect,
                 // `state` e propriedade do QQuickItem: o papel do modelo tem que
                 // ter outro nome, senao o delegate sombreia o estado visual.

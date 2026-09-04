@@ -47,6 +47,42 @@ pub enum ConfigActionRisk {
     High,
 }
 
+impl ConfigActionRisk {
+    /// O que este risco significa, em uma frase, para quem vai clicar.
+    ///
+    /// POR QUE ISTO EXISTE (2026-09-04). Relato de uso do autor: *"a parte de
+    /// risco que mostra em cada funcionalidade, apenas dizer 'medium' ou
+    /// 'high' fica muito ambiguo para o usuario, de o motivo"*. Ele estava
+    /// certo: a tela mostrava a palavra crua do enum, e o significado — que
+    /// esta escrito aqui desde sempre — nunca chegava a quem decide.
+    ///
+    /// A frase vive no PROTOCOLO, ao lado do enum, e nao na UI, por dois
+    /// motivos: ela e' a definicao do valor (mudar o enum sem mudar a frase
+    /// fica obvio no mesmo arquivo), e regra de dominio nao mora na UI.
+    #[must_use]
+    pub const fn explanation(self) -> &'static str {
+        match self {
+            Self::Low => "não altera nenhum arquivo do seu projeto",
+            Self::Medium => {
+                "edita um arquivo de configuração do projeto; a prévia mostra o diff exato antes"
+            }
+            Self::High => {
+                "apaga artefatos de build ou muda o contrato de compilação — pode exigir recompilar tudo"
+            }
+        }
+    }
+
+    /// Rotulo curto, em portugues, para a linha da lista.
+    #[must_use]
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Low => "sem risco",
+            Self::Medium => "edita configuração",
+            Self::High => "muda o build",
+        }
+    }
+}
+
 /// O que `configAction.apply` faz de verdade.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -122,6 +158,12 @@ pub struct ConfigActionInfo {
     pub category: String,
     /// Risco declarado.
     pub risk: ConfigActionRisk,
+    /// Rotulo curto do risco, em portugues.
+    #[serde(default)]
+    pub risk_label: String,
+    /// O que esse risco significa, em uma frase.
+    #[serde(default)]
+    pub risk_explanation: String,
     /// Arquivos que a acao toca, relativos a raiz.
     pub affects: Vec<String>,
     /// O que `apply` faz.
@@ -261,6 +303,8 @@ mod tests {
             scope: ConfigActionScope::Cmake,
             category: "CMake Basic".to_owned(),
             risk: ConfigActionRisk::Medium,
+            risk_label: ConfigActionRisk::Medium.label().to_owned(),
+            risk_explanation: ConfigActionRisk::Medium.explanation().to_owned(),
             affects: vec!["CMakeLists.txt".to_owned()],
             effect: ConfigActionEffect::Edit,
             state: ConfigActionState::Available,
