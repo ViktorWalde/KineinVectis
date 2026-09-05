@@ -1494,10 +1494,16 @@ MongoDB, se ele vier: ligar TLS é uma feature do Cargo mais duas entradas na
 `deny.toml`, e essas duas entradas são decisão registrada do autor, nunca do
 assistente.
 
-**A recusa de `https://` é explícita.** Sem as features de TLS, um endereço
-cifrado falharia com um erro de esquema desconhecido que não explica nada. A
-sonda recusa antes de tentar, dizendo o motivo e o que fazer — custa uma linha
-e evita o autor caçando um problema de rede que não existe.
+**A recusa de `https://` era explícita — e durou algumas horas.** Sem as
+features de TLS, um endereço cifrado falharia com um erro de esquema
+desconhecido que não explica nada, então a sonda recusava antes de tentar,
+dizendo o motivo. Quando o autor decidiu a política de licença ainda no mesmo
+dia (§9.7.7), o TLS entrou e **a recusa virou mentira**: ela dizia "compilado
+sem TLS" de um binário que passou a ter TLS. Foi removida na mesma mudança, e o
+teste dela foi invertido — hoje ele reprova se a recusa voltar.
+
+Fica registrado como o formato mais barato de defeito que existe: uma mensagem
+que era verdade quando foi escrita.
 
 ### 9.6.4 Dois booleanos, porque são duas perguntas
 
@@ -1511,7 +1517,8 @@ token invalido   reachable=1 auth=0  "recusou o token — confira a conta de
                                       servico e a permissao datasources:read"
 sem token        reachable=1 auth=0  "da' para ver a versao, nao o que ha' dentro"
 porta errada     reachable=0 auth=0  "nada atende em ... — esta' rodando nessa porta?"
-https            reachable=0 auth=0  "cifrado ainda nao entrou, e o motivo e' este"
+https            reachable=0 auth=0  recusa explicita (removida horas depois,
+                                     quando o TLS entrou — ver acima)
 politica prompt  recusa SECRET_REQUIRED antes de tocar a rede
 ```
 

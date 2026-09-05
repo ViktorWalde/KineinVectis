@@ -17,15 +17,29 @@
 bash scripts/verificar.sh                 # 18 verificacoes
 cat scripts/arquitetura-baseline.txt      # a catraca
 cargo test -q --workspace
+
+# metodos IPC roteados (bracos de despacho, sem duplicata):
+grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
+     crates/kinein-core/src/handlers/ crates/kinein-core/src/lib.rs \
+  | grep -oE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"' | sort -u | wc -l
+# eventos:
+grep -rhoE '"event\.[a-zA-Z.]+"' crates/kinein-core/src/ | sort -u | wc -l
 ```
 
 ```text
 protocolo   0.82.0
 testes      581 Rust + 24 harnesses QML
-metodos     139 IPC roteados, 35 eventos
+metodos     121 IPC roteados, 36 eventos
 catraca     1 arquivo em debito
 gate        18 verificacoes
 ```
+
+> **O par `metodos` foi CORRIGIDO em 2026-09-04.** Ele dizia `139 IPC roteados,
+> 35 eventos` e nenhum dos dois batia com o disco: medidos, sao 121 e 36. O
+> numero entrou numa sessao anterior sem comando que o reproduzisse, e por isso
+> envelheceu sozinho — exatamente o vicio que o `verificar-docs.sh` existe para
+> pegar, e que ele nao pegou porque so' confere numeros que sabe medir. Os
+> comandos acima ficam junto para o proximo que ler nao ter de confiar.
 
 ## 2. A dívida da catraca: 1 arquivo, e ele tem decisão do autor
 
@@ -90,20 +104,22 @@ cresceu de 1020x660 para 1100x820 e a caixa ganhou barra de rolagem.
 1366x768,  6 campos     10px (NENHUMA)     ->  285px (~17 linhas)
 ```
 
-**A etapa 27 fechou: o Grafana entra pela API** (roadmaps/35 §9.6). Domínio
-`grafana.*` com quatro métodos e um evento, cliente HTTP próprio (`ureq` sem
-TLS: +5 crates, todas `MIT OR Apache-2.0`, **zero decisão de licença**), e o
-cruzamento que justifica o domínio existir:
+**A observabilidade entrou: o Grafana pela API** (roadmaps/35 §9.6). Domínio
+`grafana.*` com quatro métodos e um evento, cliente HTTP próprio (`ureq`: +5
+crates, todas `MIT OR Apache-2.0`; o TLS foi ligado horas depois, quando o autor
+decidiu a política de licença — §9.7.7), e o cruzamento que justifica o domínio
+existir:
 
 ```text
 dev  ->  kinein-dev      banco `kinein` em localhost:5432
 ```
 
 Exercitado contra um **Grafana 13.0.2 de verdade**, incluindo os quatro modos de
-falha (token inválido, sem token, porta errada, `https` recusado). Os dashboards
+falha (token inválido, sem token, porta errada, `https` — que na época era
+recusado por falta de TLS e hoje conecta). Os dashboards
 abrem no navegador — a licença AGPL decide a forma, e a IDE nunca embute.
 
-**E a etapa 27 fechou: o MongoDB entrou** (roadmaps/35 §9.7), com as OITO
+**E a etapa 27 FECHOU, com o MongoDB** (roadmaps/35 §9.7), com as OITO
 decisões do autor respondidas antes da primeira linha de código. O que ele traz
 que nenhum motor anterior trazia:
 

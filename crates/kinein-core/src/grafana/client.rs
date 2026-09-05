@@ -90,29 +90,6 @@ pub fn normalize_url(url: &str) -> String {
     url.trim().trim_end_matches('/').to_owned()
 }
 
-/// Recusa explicita para o que este binario nao consegue fazer.
-///
-/// POR QUE UMA RECUSA E NAO UMA TENTATIVA. O `ureq` entrou sem as features de
-/// TLS (medido em 2026-09-04: com TLS custaria +19 crates e traria duas
-/// licencas fora da allowlist do `deny.toml`). Sem elas, um `https://` falha
-/// com um erro de esquema desconhecido que nao explica nada. Dizer a verdade —
-/// *"cifrado ainda nao entrou, e o motivo e' este"* — custa uma linha e evita
-/// o autor caçando um problema de rede que nao existe.
-fn refuse_https(url: &str) -> Option<GrafanaProbeResult> {
-    if !url.starts_with("https://") {
-        return None;
-    }
-    Some(GrafanaProbeResult {
-        reachable: false,
-        authenticated: false,
-        message: "conexão cifrada (https) ainda não entrou nesta IDE: o cliente HTTP \
-                  foi compilado sem TLS porque isso traria licenças fora da política \
-                  do projeto. Use http:// para um Grafana local, ou peça a fatia de TLS."
-            .to_owned(),
-        ..GrafanaProbeResult::default()
-    })
-}
-
 /// Monta o agente. Um por sonda: a sonda e' rara e nao paga pool.
 fn agent() -> ureq::Agent {
     ureq::Agent::config_builder()
@@ -177,9 +154,6 @@ fn describe(error: &str, url: &str) -> String {
 #[must_use]
 pub fn probe(url: &str, token: Option<&Secret>) -> GrafanaProbeResult {
     let url = normalize_url(url);
-    if let Some(recusa) = refuse_https(&url) {
-        return recusa;
-    }
     let agent = agent();
 
     let (status, body) = match get(&agent, &format!("{url}/api/health"), None) {
@@ -309,13 +283,31 @@ mod tests {
         );
     }
 
-    /// A recusa de `https` precisa DIZER o motivo, senao vira erro de rede.
+    /// `https` DEIXOU DE SER RECUSADO em 2026-09-04.
+    ///
+    /// Ate' aquele dia o `ureq` entrava sem TLS, e um endereco cifrado recebia
+    /// uma recusa explicita — a alternativa era um erro de esquema desconhecido
+    /// que nao explicava nada. Quando o autor decidiu a politica de licenca
+    /// (`subtle` e `webpki-roots` na allowlist), o TLS entrou e a recusa virou
+    /// mentira: ela dizia "compilado sem TLS" de um binario que tem TLS.
+    ///
+    /// Este teste guarda a inversao. Ele NAO alcanca a rede: um dominio
+    /// reservado pela RFC 2606 nao resolve, entao o que se prova e' que a falha
+    /// vem de RESOLUCAO — e nao de uma recusa nossa antes de tentar.
     #[test]
-    fn https_e_recusado_com_explicacao() {
-        let resultado = probe("https://grafana.exemplo.com", None);
+    fn https_nao_e_mais_recusado_de_saida() {
+        let resultado = probe("https://grafana.invalid", None);
         assert!(!resultado.reachable);
-        assert!(resultado.message.contains("TLS"));
-        assert!(resultado.message.contains("http://"));
+        assert!(
+            !resultado.message.contains("TLS"),
+            "a recusa de TLS sobreviveu ao TLS: {}",
+            resultado.message
+        );
+        assert!(
+            resultado.message.contains("grafana.invalid"),
+            "a falha deveria nomear o endereco tentado: {}",
+            resultado.message
+        );
     }
 
     /// O CAMPO QUE NAO PODE EXISTIR. A documentacao do `/api/datasources`
