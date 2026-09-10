@@ -449,27 +449,13 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          diferente de um com logica. A (b) e'
                                          mexer em limite, e isso e' decisao do
                                          autor — nunca do assistente
---  sim: a coluna `exato` responde        ACHADO em 2026-09-06 (roadmaps/31
-    por OUTRA equacao                    §19.0), contra o binario real. O
-                                         `sim.run` tira o valor exato de
-                                         `catalogo::exata(conceito.id)` e NAO
-                                         olha a formula digitada; o
-                                         `sim.checkFormula` aprova, porque ele
-                                         confere ligacao e nao fisica. Medido:
-                                         com `-(k/m)*x - 2*(c/m)*v` no oscilador
-                                         amortecido a IDE acusa erro de 2,5e-2
-                                         numa integracao certa ate' 3,2e-7 —
-                                         78 mil vezes. NAO CONSERTADO: o conserto
-                                         e' decisao de desenho (o catalogo nao
-                                         guarda a formula, por decisao registrada
-                                         em arquitetura/34 §4.2). Reproduz com
-                                         `python3 scripts/exercitar-sim-oraculo.py`
---  03-ipc nao cobre 5 dominios           `command`, `datasource`, `grafana`,
-                                          `setup` e `sim` estao roteados no core
-                                          e AUSENTES do docs/arquitetura/03. O
-                                          cabecalho foi corrigido em 2026-09-05
-                                          para parar de afirmar cobertura que
-                                          nao tem; escrever os cinco e' fatia
+--  FECHADOS nesta passada, e ficam       a coluna `exato` que respondia por
+    aqui so' como registro                OUTRA equacao (§19.0) — consertada em
+                                          2026-09-10 pela PROCEDENCIA, §7.3; e o
+                                          `03-ipc` sem cobertura de 5 dominios,
+                                          escrito em 2026-09-06. Conferido em
+                                          2026-09-10: dos 130 metodos roteados,
+                                          ZERO estao ausentes do documento
 25  handshake DAP com probe-rs           PARCIAL: precisa de sonda fisica ou
                                          alvo QEMU. O resto do ciclo de
                                          embarcado esta' provado
