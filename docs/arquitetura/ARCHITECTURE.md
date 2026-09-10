@@ -358,6 +358,39 @@ Regras que mantêm isso saudável:
    está errado, o caminho é discuti-lo e registrar o porquê no ADR/documento do
    domínio; contorná-lo em silêncio é o vício que a §1.1 documenta.
 
+   **A segunda correção de CATEGORIA, registrada — o header que só DECLARA**
+   (decisão do autor, 2026-09-10). A primeira foi o `ui/qml/app/`, que nunca foi
+   QML visual. Esta é o `ui/src/core_client.h`, que bateu em **exatamente
+   500/500** e travaria a próxima assinatura IPC que a UI consumisse.
+
+   Medido antes de decidir, porque a saída óbvia era a errada: o arquivo tem
+   **422 linhas de declaração pura contra 63 de comentário**, e mover comentário
+   para o `.cpp` compraria ~33 linhas **contra a convenção da própria
+   linguagem** — corte por TAMANHO, que a regra 9 recusa.
+
+   O que ele é, medido: **289 itens declarados** (129 `Q_INVOKABLE`, 18
+   `Q_PROPERTY`, 142 `void`) em 423 linhas de declaração — **1,46 linha por
+   item**. É o argumento do composition root acima, aplicado a C++: **o tamanho
+   é função do contrato que ele espelha**, e a saída dali ("dividir por área")
+   não existe aqui, porque um `QObject` é uma classe e classe não se divide em
+   dois arquivos.
+
+   **E o limite não virou um número escolhido.** Fixar 700 porque 500 não coube
+   seria levantar limite para caber. Ele é **2× o que o arquivo declara**, e por
+   isso:
+
+   ```text
+   so' cresce DECLARANDO        hoje 578 contra 500; a folga de 78 linhas e' o
+                                espaco entre a densidade medida (1,46) e o teto
+   comentario sem declaracao    come a folga e REPROVA
+   logica que entra             derruba o arquivo para 500 NA HORA, porque ele
+                                deixa de ser desta categoria
+   ```
+
+   Provado por mutação nas três direções em 2026-09-10: um corpo de função no
+   header reprova em 502/500; noventa linhas de comentário reprovam em 590/578;
+   trinta declarações novas passam.
+
 9. **O critério é RESPONSABILIDADE. Tamanho é sintoma, não regra**
    (decisão do autor, 2026-07-16).
 

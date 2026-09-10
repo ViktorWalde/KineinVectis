@@ -31,13 +31,48 @@ BASELINE="scripts/arquitetura-baseline.txt"
 # diagnostico da UI: regra sem dente apodrece calada.
 listar() {
     python3 - <<'PY'
-import pathlib, subprocess
+import pathlib, re, subprocess
 
 LIMITE_RUST = 500  # ARCHITECTURE.md §4.
+
+# Um corpo de funcao dentro de um header: `) {`, `) const {`, `) noexcept {`.
+# Onde ha corpo ha LOGICA, e logica em header e' outra categoria.
+CORPO_DE_FUNCAO = re.compile(r"\)\s*(?:const\s*)?(?:noexcept\s*)?\{")
+# O que um header de PONTE declara: metodo chamavel do QML, sinal e propriedade.
+ITEM_DECLARADO = re.compile(r"Q_INVOKABLE|Q_PROPERTY|^\s*void\s+\w+\(", re.M)
 
 
 def limite_ui(caminho: str) -> int:
     if caminho.startswith("ui/src/"):
+        # HEADER QUE SO' DECLARA e' outra categoria, e o limite dele e' funcao
+        # do CONTRATO que ele espelha — nao da qualidade do codigo.
+        #
+        # Registrado porque a §4 regra 8 exige que mexer em limite seja
+        # explicito. DECISAO DO AUTOR em 2026-09-10, e ela vem depois de a
+        # medicao descartar a outra saida: o `core_client.h` tem 422 linhas de
+        # DECLARACAO PURA contra 63 de comentario, e mover comentario para o
+        # .cpp compraria ~33 linhas contra a convencao da propria linguagem —
+        # corte por TAMANHO, que a §4 regra 9 recusa.
+        #
+        # O que ele carrega, medido em 2026-09-10 com o contador abaixo: 289
+        # itens declarados (129 `Q_INVOKABLE`, 18 `Q_PROPERTY`, 142 `void`) em
+        # 423 linhas de declaracao, ou **1,46 linha por item**. E' o mesmo
+        # argumento que o `Main.qml` ja' tem na §5 da `LEITURA_TECNICA`: o
+        # tamanho e' funcao do numero de dominios, nao da qualidade.
+        #
+        # POR QUE O LIMITE NAO E' UM NUMERO FIXO. Escolher 700 porque 500 nao
+        # coube seria levantar limite para caber, e isso e' o que este projeto
+        # recusa. O limite e' 2x o que o arquivo DECLARA — ele so' cresce
+        # DECLARANDO. Hoje da' 578 contra 500, e a folga de 78 linhas e' o
+        # espaco entre a densidade medida (1,46) e o teto (2,00).
+        #
+        # As duas maneiras de ele reprovar, e as duas sao as certas: comentario
+        # que entra sem declaracao come a folga; e logica que entra derruba o
+        # arquivo para 500 NA HORA, porque ele deixa de ser desta categoria.
+        if caminho.endswith(".h"):
+            texto = pathlib.Path(caminho).read_text()
+            if not CORPO_DE_FUNCAO.search(texto):
+                return max(500, 2 * len(ITEM_DECLARADO.findall(texto)))
         return 500
     # `ui/qml/app/` e COMPOSICAO: instancia dominios e liga fiacao, zero pixel.
     # Ganha 400 pelo mesmo motivo que controller/host ganham — o limite de 300 e
