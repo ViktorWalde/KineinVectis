@@ -1,10 +1,21 @@
 # Leitura técnica da Kinein Vectis
 
 > **Classe: ESTADO** (`docs/README.md`). Tem que ser verdade hoje. Todo número
-> aqui foi **medido em 2026-08-30**, e os da §3 e da §7 remedidos em
-> **2026-09-02**, com a toolchain fixada e o gate completo verde; está datado
-> por isso. Se divergir do código, o código vence e este documento se corrige no
-> mesmo gesto.
+> aqui foi **remedido em 2026-09-10**, com o gate completo verde. Se divergir do
+> código, o código vence e este documento se corrige no mesmo gesto.
+>
+> **A remedição de 2026-09-06 achou este documento MUITO desatualizado**, e vale
+> registrar por quê: os números da §2 eram de 2026-08-29 e os da §3 de
+> 2026-09-04, e **estarem datados fez o gate os aceitar** — `verificar-docs.sh`
+> trata número com data como registro. Num documento de classe ESTADO, porém,
+> data não é licença para envelhecer: ela só diz **quando** a afirmação sobre
+> hoje foi conferida pela última vez. O core estava listado com 25.823 linhas e
+> tem 43.750; os métodos, com 139 e são 128.
+>
+> **E o pior caso era o par `139 métodos / 35 eventos`:** ele já tinha sido
+> identificado como errado em 2026-09-04 e corrigido no `roadmaps/40` — mas a
+> cópia daqui ficou, com a data ao lado, parecendo medição. **Data não conserta
+> número errado; ela só o faz passar no gate.**
 >
 > **Para que serve:** dar em uma leitura o que hoje exige abrir dez documentos —
 > o que o projeto é, o que existe de verdade, onde o peso está, onde a
@@ -29,7 +40,7 @@ nao reimplementa compilador,    clangd, rust-analyzer, CMake, Cargo, GDB/LLDB,
 LSP nem debugador               ripgrep e fd sao orquestrados, nao substituidos
 ```
 
-## 2. As três camadas, e onde está o peso (medido em 2026-08-29)
+## 2. As três camadas, e onde está o peso (medido em 2026-09-10)
 
 ```text
 Qt/QML  ──── IPC JSON-RPC (stdio, uma linha por mensagem) ──── Rust Core
@@ -37,26 +48,47 @@ Qt/QML  ──── IPC JSON-RPC (stdio, uma linha por mensagem) ──── R
 
 | Camada | Linhas | Arquivos | O que carrega |
 | --- | ---: | ---: | --- |
-| `crates/kinein-core` | 25.823 | 96 | Toda a lógica: build, run, debug, LSP, git, terminal, fs, jobs |
-| `ui/qml` | 23.227 | 139 | Apresentação e estado visual |
-| `crates/kinein-protocol` | 3.879 | 22 | Os tipos do contrato, um módulo por domínio |
-| `ui/src` (C++) | 4.115 | 21 | Ponte fina: `CoreClient`, realce, clipboard, chrome de janela |
-| `scripts/` | 4.071 | 26 | Gates, sondas, ambiente, packaging |
+| `crates/kinein-core` | 46.641 | 182 | Toda a lógica: build, run, debug, LSP, git, terminal, fs, jobs |
+| `ui/qml` | 33.753 | 228 | Apresentação e estado visual |
+| `crates/kinein-protocol` | 6.257 | 31 | Os tipos do contrato, um módulo por domínio |
+| `ui/src` (C++) | 5.144 | 38 | Ponte fina: `CoreClient`, realce, clipboard, chrome de janela |
+| `scripts/` | 10.613 | 76 | Gates, sondas, ambiente, packaging |
 
-**O fato que mais surpreende quem chega:** a documentação tem **62.697 linhas em
-87 arquivos** — mais do que o core e a UI **somados**. Isso é uma escolha
+**O fato que mais surpreende quem chega:** a documentação tem **69.557 linhas em
+96 arquivos** — as três árvores (`docs/`, `docs-privada/`, `docs-legada/`), quase
+tanto quanto o core e a UI **somados**. Isso é uma escolha
 consciente (o projeto é conduzido por sessões que trocam de contexto), mas cobra
 um preço, e é a razão de existirem as três árvores e o gate de veracidade.
 
-**A camada C++ é fina de propósito e isso é o desenho certo.** 4.115 linhas para
+**A camada C++ é fina de propósito e isso é o desenho certo.** 5.144 linhas para
 uma ponte: se ela engordar, é sinal de que lógica de negócio vazou da UI ou do
 core para o meio.
 
 ## 3. O que existe de verdade
 
-**139 métodos IPC** roteados e **35 eventos**, **17 domínios** no core (mais os
-módulos de arquivo único), **581 testes** Rust verdes e **24 harnesses QML**
-(medido em 2026-09-04). Protocolo `0.78.0`. O gate tem **18 verificações**.
+**130 métodos IPC** roteados e **41 eventos**, em **30 domínios de protocolo**;
+**18 pastas de domínio** no core mais 14 módulos de arquivo único; **658 testes**
+Rust verdes e **31 harnesses QML** (remedido em 2026-09-10). Protocolo `0.87.0`.
+O gate tem **19 verificações**.
+
+**Os comandos que provam os dois primeiros estão no
+[`arquitetura/03`](arquitetura/03-ipc-protocol.md)**, com o motivo de cada
+filtro: sem eles, um grep ingênuo devolve 132 métodos (conta dois nomes de
+evento que aparecem num `match` de teste) e 36 eventos (não vê cinco montados
+com `format!`).
+
+**As 18 pastas de domínio também precisam de filtro, e esta linha já mentiu por
+isso.** Ela dizia 20, que é o que `find -maxdepth 1 -type d` devolve — mas duas
+das vinte são `handlers/` e `tests/`, que não são domínio nenhum. O mesmo
+critério já estava sendo aplicado do outro lado da frase: os "14 módulos de
+arquivo único" excluem `handlers.rs` e `main.rs`. **Contar os dois lados com
+réguas diferentes é o bastante para o número mentir**, e foi o caso até
+2026-09-10:
+
+```bash
+find crates/kinein-core/src -mindepth 1 -maxdepth 1 -type d \
+  | grep -vE '/(handlers|tests)$' | wc -l       # 18
+```
 
 Domínios do core, por profundidade real:
 
@@ -122,6 +154,24 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       editado — CMakeLists.txt, CMakePresets.json, Cargo.toml e
                       o build dir. Nao executa ferramenta nem duplica dominio:
                       `cargo.check` devolve o job que ja existia.
+
+            datasource  banco NATIVO (0.79.0-0.84.0): perfil sem senha em disco,
+                      tres motores (Postgres/Timescale, SQLite, MongoDB) e
+                      introspeccao. A forma de DOCUMENTO e' uma segunda tela, e
+                      nao um preenchimento criativo da primeira
+            grafana   observabilidade pela HTTP API (0.85.0). A licenca AGPL
+                      decide a forma: nunca embutido. O token nao tem onde ser
+                      gravado, e isso e' garantia estrutural
+            setup     o passo a passo OFICIAL de instalacao por distro, com
+                      fonte e data. Sem fonte, a IDE mostra o link e diz que
+                      nao tem passo a passo — nunca traduz comando de distro
+
+            sim       simulacao por conceito (0.83.0-0.87.0): catalogo de duas
+                      camadas, ligacao EXPLICITA de variaveis, integrador
+                      escalar e vetorial verificados por ORDEM DE CONVERGENCIA,
+                      e o ORACULO — que desde 2026-09-10 resolve a equacao que
+                      o usuario DIGITOU num processo externo opcional. A coluna
+                      `exato` tem PROCEDENCIA: sem ela, ela mentia por 78.000x
 ```
 
 **O que mudou em 2026-08-29/30, e é o que destrava o resto:** o terminal deixou
@@ -132,7 +182,7 @@ passou sem uma única mudança nos testes.
 
 ## 4. Cinco fatos que mudam decisão
 
-**1. O gate é o produto, não cerimônia.** **Dezesseis** verificações (2026-09-03), e **cada uma
+**1. O gate é o produto, não cerimônia.** **Dezenove** verificações (2026-09-10), e **cada uma
 nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §4 regra
 11). Não se cria gate aqui por gosto de rigor; cria-se quando uma classe de erro
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está
@@ -192,7 +242,7 @@ parte; o resto é binding e bloco de host, que **é** trabalho de composition ro
 Chegar abaixo do limite exige módulos por domínio — decisão registrada como
 proposta em `arquitetura/27`, **não** implementada.
 
-**O core tem 19 handlers e um `lib.rs` de 406 linhas** (limite 500) — ele
+**O core tem 24 handlers e um `lib.rs` de 418 linhas** (limite 500) — ele
 **saiu do débito em 2026-08-30**, quando ~140 linhas do domínio `tools` que
 moravam ali voltaram para `handlers/tools.rs`. Quem cobrou foi a catraca, ao
 reprovar UMA linha de outra fatia: a §4 regra 9 manda olhar a mudança, a

@@ -28,7 +28,16 @@ distribuída como AppImage para Linux x86_64.
 - build, testes, análise, execução e debug;
 - terminal PTY com múltiplas sessões;
 - Git diário: status, diff, stage, commit, branches, pull, push e stash;
-- configurações e Project Health.
+- configurações e Project Health;
+- **ambiente do projeto**: catálogo curado de bibliotecas C/C++, 18 ações de
+  configuração de CMake/Cargo com prévia e consentimento, escolha de toolchain
+  por kit, e o passo a passo oficial de instalação da sua distro;
+- **banco de dados** nativo (PostgreSQL/TimescaleDB, SQLite e MongoDB): perfil
+  sem senha em disco, teste de conexão e leitura de esquemas, tabelas e colunas;
+- **observabilidade**: o Grafana pela HTTP API;
+- **simulação física e matemática**: catálogo de conceitos, a equação escrita
+  por você, integração numérica com o erro exibido ao lado do resultado, e
+  gráfico 2D.
 
 Não há IA embutida, chat nem painel de assistente: agentes de linha de comando
 (Claude Code, Codex, …) rodam no terminal da IDE como qualquer outro programa.

@@ -347,11 +347,21 @@ apareceu; ele não conhece a forma do contrato.
 
 ## 6. Horizonte registrado — subsistema opcional (o simulador OpenGL)
 
-> **NÃO É ESCOPO ATUAL. Nada aqui entra em fila de execução.** O autor foi
-> explícito em 2026-07-16: o simulador foi **menção de exemplo** para deixar
-> clara a preocupação com arquitetura, não pedido de trabalho. A seção existe
-> para o achado da 6.2 não se perder — ele é caro de redescobrir e barato de
-> registrar.
+> **ATUALIZADO em 2026-09-05: isto deixou de ser horizonte.** O domínio `sim`
+> existe em código, com nove métodos, catálogo, integrador verificado por ordem
+> de convergência e tela. O desenho está em
+> [`34-simulacao-por-conceito.md`](34-simulacao-por-conceito.md); a medição que
+> o sustenta, em [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md)
+> §8 a §18.
+>
+> **O que esta seção ainda decide, e continua valendo:** a colisão da §6.2 (o
+> AppImage força renderer por software, e é isso que faz a IDE abrir em qualquer
+> máquina). Ela segue intacta — o gráfico 2D de hoje é `Canvas` raster, e a GPU
+> só aparece quando o processo `kinein-sim` nascer, que ainda não aconteceu.
+>
+> **O texto abaixo é de 2026-07-16 e fica como registro** de quando o simulador
+> era menção de exemplo, não pedido de trabalho. Ele explica por que a colisão
+> foi encontrada antes de custar caro.
 >
 > **Ordem real do projeto, decidida pelo autor:**
 >

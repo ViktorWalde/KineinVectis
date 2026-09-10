@@ -471,7 +471,228 @@ pode ser disparado pelo banner de Project Health.
 
 ---
 
-## 9. Quando algo der errado
+## 9. Menu **Ambiente** — preparar o projeto antes de compilar
+
+Este menu existe porque configurar o ambiente **não é "ferramenta"**: é o que se
+faz antes de compilar. São sete painéis, e todos seguem a mesma regra — a IDE
+**mostra o que vai fazer e espera você aceitar**; nenhum deles escreve no seu
+projeto sozinho.
+
+### Bibliotecas
+
+Um catálogo **curado** de bibliotecas C/C++ — hoje 15 —, cada uma com a licença
+verificada na fonte, a versão fixada e a frase do que ela faz. A bolinha ao lado
+do nome diz o que está **no seu projeto**, não o que está instalado na máquina.
+
+Ativar escreve no `CMakeLists.txt` por meio de uma ação de configuração, com
+prévia. **Desativar existe** e usa o mesmo caminho — o botão diz qual dos dois
+vai acontecer.
+
+Uma biblioteca só entra no catálogo depois de auditada. Duas já foram
+**recusadas** por licença, e a recusa fica registrada.
+
+### Ações de configuração
+
+São **18**, e elas respondem duas perguntas diferentes: *o que o projeto tem*
+(dependência, feature, edição, alvo, preset) e *como ele compila* (rigor,
+sanitizers, OpenMP, `.hex`/`.bin`, alvo embarcado).
+
+**Nenhuma escreve sem prévia.** A caixa mostra o arquivo como ele ficará, e o
+botão de aceitar só vale para o que está na tela. Os campos explicam o que
+esperam e sugerem valores lidos do **seu** projeto — não exemplos genéricos.
+
+### Banco de dados
+
+A IDE guarda o **perfil** da conexão: motor, endereço, porta, base e usuário.
+**Nunca a senha** — quando ela é necessária, a IDE pede na hora, e nada de
+credencial vai para o disco. Três motores:
+
+```text
+PostgreSQL   e tudo que fala o protocolo dele — TimescaleDB incluso
+SQLite       um ARQUIVO: sem servidor, sem porta, sem usuario
+MongoDB      colecao -> documento, e a tela dele e' OUTRA
+```
+
+O MongoDB tem uma forma de exibição própria de propósito: uma coluna de tabela
+garante que existe em toda linha, tem um tipo e não aninha, e **nenhuma das três
+vale para um documento**. Desenhar documento como linha faria a tela afirmar três
+coisas falsas.
+
+Além de testar a conexão, o painel **lê o banco**: esquemas, tabelas e colunas —
+ou coleções e a forma dos documentos. Escrever e executar consulta ainda não
+existem.
+
+### Observabilidade (Grafana)
+
+A IDE conversa com o Grafana pela **HTTP API** e nunca o embute — a licença dele
+(AGPL-3.0) decide essa forma. Ela guarda o endereço e a política; **o token não
+tem onde ser gravado**, e isso é garantia estrutural, não disciplina.
+
+### Instalar ferramentas
+
+Falta o `cmake`, o `clangd` ou o `gdb`? Este painel mostra o passo a passo
+**oficial** para a sua distro — copiado da documentação do próprio projeto, com a
+URL e a data em que foi conferida. Onde a fonte oficial não cobre a sua família
+de distro, **a entrada não existe**: a IDE mostra o link e diz que não tem passo
+a passo, em vez de traduzir um comando de outra distro.
+
+**A IDE não instala nada sozinha.** O botão escreve os comandos no terminal
+dela, visível, e quem aperta Enter é você.
+
+### Toolchain e kits
+
+Qual executável cumpre cada papel — compilador C/C++, gerador, `cmake`, `cargo`.
+Sem escolha, o `PATH` decide, que é o comportamento de sempre. A escolha é do
+**kit**, e um kit é um preset mais o sysroot e o *triple* do alvo — é assim que
+compilação cruzada e embarcados entram sem um segundo mecanismo.
+
+A IDE escolhe automaticamente quando dá, e **mostra que escolheu**.
+
+---
+
+## 10. Simulação física e matemática (menu **Ambiente → Simulação...**)
+
+A IDE traz um **catálogo de conceitos** de física e matemática. Você escolhe o
+conceito, **escreve a equação**, e a IDE confere se as duas coisas combinam
+enquanto você digita.
+
+### Como funciona, passo a passo
+
+1. **Escolha o conceito** na lista à esquerda — cada um mostra a disciplina a
+   que pertence, e a fonte da formulação com a data em que foi revisada.
+2. **Escreva a fórmula.** A borda do campo fica verde quando ela bate com o
+   conceito, e âmbar quando não bate. Os problemas aparecem em frases: *"este
+   conceito precisa de constante elástica, e nenhuma variável da sua fórmula foi
+   ligada a ela"*.
+3. **Diga o que cada variável é.** A IDE **não adivinha**: ela lista as
+   variáveis que encontrou e você liga cada uma à grandeza que ela representa,
+   com a unidade ao lado. Chamar de `x` alguma coisa que não é posição não pode
+   passar despercebido.
+4. **Preencha os valores.** Campo vazio **não vira zero** — a conta não parte
+   enquanto faltar um.
+5. **Calcule** (conceitos algébricos) ou **Integre** (equações diferenciais).
+
+### O que a tela mostra, e por quê
+
+```text
+o calculo         a formula que voce escreveu, os valores substituidos por
+                  extenso, e o resultado. Nao e' uma explicacao: e' literalmente
+                  a conta que rodou
+a trajetoria      o grafico de y(t) e y'(t), mais a trilha em numeros
+o metodo          "Runge-Kutta 4, dt = 1e-3" — nunca um numero sem procedencia
+o ERRO            o valor exato ao lado do calculado, a diferenca absoluta e a
+                  RELATIVA — e, acima de tudo, DE ONDE o exato veio
+```
+
+### De onde vem o "valor exato" — e por que isso importa
+
+Duas procedências, e a tela sempre diz qual é:
+
+```text
+da SUA equacao    a IDE resolveu o que voce escreveu, e mostra a solucao
+                  fechada ao lado do numero calculado. Precisa do SymPy
+                  instalado no Python desta maquina
+do CONCEITO       a solucao canonica do conceito. Continua util, mas se voce
+                  mudou a equacao ela responde por OUTRA pergunta — e a tela
+                  avisa, dizendo tambem por que o oraculo nao respondeu
+```
+
+**Por que a distinção não é detalhe.** Medido: com a equação do oscilador
+amortecido escrita com o coeficiente de atrito dobrado, a IDE chegava a acusar
+um erro de `2,5e-2` numa integração que estava certa até `3,2e-7` — setenta e
+oito mil vezes. Ela culpava a integração por uma divergência que era da própria
+pergunta. Hoje o número tem procedência, e quando ele é do conceito a tela diz.
+
+**E o erro relativo entrou junto**, porque só o absoluto engana nos dois
+sentidos: `1,474` de erro sobre um valor de 83 mil é uma integração excelente, e
+o mesmo `1,474` ao lado de um resultado de `0,032` seria catástrofe.
+
+### O aviso que vale a pena ler
+
+**Conceito certo e fórmula válida não significam resultado certo.** Uma fórmula
+errada dentro do conceito certo usa as variáveis certas e produz um número — e o
+número está errado. A IDE não tem como saber, e diz isso na tela.
+
+### Por que o método importa mais do que parece
+
+Ele não muda só o tempo: **muda o resultado**. No oscilador amortecido, com o
+mesmo passo `dt = 0,1`:
+
+```text
+Euler explicito     erro 3,11        <- onze vezes o valor da resposta (-0,276)
+Euler simpletico    erro 0,0396
+Runge-Kutta 4       erro 0,000049
+```
+
+Por isso a IDE não escolhe por você, e não preenche o campo. Ela mostra o custo
+antes de rodar — quantos passos, quanto a trilha vai ocupar — e a escolha é sua.
+
+**E passo menor nem sempre é melhor:** abaixo de certo ponto o arredondamento do
+`f64` passa a dominar, e o erro volta a subir.
+
+### Salvar
+
+O botão **Salvar** grava a simulação em `.kinein/simulacoes/`, um arquivo de
+texto por simulação, versionável junto com o projeto. Ele guarda o que você
+montou — conceito, fórmula, ligações, valores, método e passo — e **não guarda o
+resultado**: ele se refaz rodando de novo.
+
+### Conceitos de várias equações
+
+Alguns conceitos — **órbita de dois corpos, pêndulo duplo, duas massas acopladas
+por molas** — não cabem em uma equação só. Ao escolher um deles a tela muda: em
+vez de um campo de fórmula, você recebe **um por componente do estado**.
+
+```text
+orbita, como voce a escreve
+  dx/dt  = vx           <- quatro componentes, quatro equacoes
+  dy/dt  = vy
+  dvx/dt = -mu*x/(x^2+y^2)^1.5
+  dvy/dt = -mu*y/(x^2+y^2)^1.5
+```
+
+O resto é igual: você liga cada variável ao que ela representa — e aqui uma
+variável pode ser **um componente do estado**, um parâmetro ou o tempo —,
+preenche um valor inicial por componente e escolhe o método.
+
+**O método simplético só aparece habilitado onde ele existe.** Ele precisa saber
+quais componentes são posição e velocidade um do outro; num sistema em que o
+conceito não declara esse par, o método não está definido e a IDE **diz isso** em
+vez de integrar outra coisa. Onde ele existe, vale muito: numa órbita circular
+de dez voltas com `dt = 0,01`, o Euler explícito leva o raio de 1 para 1,65 e o
+simplético erra `2,4e-5`.
+
+O resultado mostra **dois sinais de exatidão**, e eles não são a mesma coisa:
+
+```text
+erro contra a       quando o conceito tem solucao fechada naquele caso. E' o
+solucao exata       erro de verdade, componente a componente
+deriva do que a     energia, momento angular. Nao e' erro: e' o quanto uma
+fisica CONSERVA     grandeza que deveria ficar parada se mexeu. Existe mesmo
+                    quando nao ha' solucao fechada — e' o unico sinal que um
+                    pendulo duplo admite
+```
+
+Deriva pequena **não** significa resultado certo: um erro que respeita a
+grandeza conservada passa por ela sem aparecer. A tela diz isso também.
+
+O gráfico tem dois modos: **componentes no tempo** (serve a qualquer sistema) e
+**trajetória no plano** (quando o conceito declara qual par de componentes vai
+nos dois eixos — numa órbita, `x` contra `y`).
+
+### O que ainda não existe
+
+Vista 3D de trajetória e campos (equação da onda, calor, Laplace). A conferência
+da equação digitada vale para as formas de **uma** equação; num conceito de
+várias, o valor exato ainda é o do conceito — e a tela diz isso, deixando as
+grandezas conservadas como o sinal medido na sua própria trajetória. E **salvar
+ainda não vale para conceitos de várias equações**: o arquivo de simulação
+guarda uma fórmula, e esses conceitos têm uma por componente — a tela diz isso
+no lugar de gravar algo que não volta.
+
+---
+
+## 11. Quando algo der errado
 
 1. **Aba "IDE"** (painel inferior): fluxo interno da IDE ao vivo — o que
    foi pedido e o que respondeu.
@@ -498,7 +719,7 @@ pode ser disparado pelo banner de Project Health.
 
 ---
 
-## 10. Tabela-resumo de todos os atalhos
+## 12. Tabela-resumo de todos os atalhos
 
 | Categoria | Atalho | Ação |
 | --- | --- | --- |

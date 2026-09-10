@@ -81,7 +81,7 @@ handleStarted()  (sinal do QProcess)
 ```
 
 **`enable_lsp` e `enable_persistence` são chamados SÓ no processo real.** Um
-`Core::new()` puro — o que os 413 testes usam — tem LSP, run, debug, jobs e
+`Core::new()` puro — o que os 658 testes usam — tem LSP, run, debug, jobs e
 terminal **desligados**, e persistência global **ausente**. Isso não é detalhe de
 teste: é a barreira que impede a suíte de escrever no `$XDG_CONFIG_HOME` do
 autor. Antes de 2026-08-29 ela não existia, e a suíte apagou a lista de projetos
@@ -280,6 +280,6 @@ scripts/fake_lsp_server.py   NAO e sonda: e o language server FALSO que os
   um dos dois lados; o log do `CoreClient` (`-> pedido` / `core stderr:`) existe
   para tornar isso legível.
 
-O que o desenho compra em troca: um core testável sem GUI (413 testes rodam sem
+O que o desenho compra em troca: um core testável sem GUI (658 testes rodam sem
 subir Qt), uma UI que não pode chamar ferramenta externa nem por acidente, e
 um crash de qualquer ferramenta externa que não derruba a IDE.

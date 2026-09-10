@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-07-15",
+  "updatedAt": "2026-09-10",
   "components": [
     {
       "id": "alacritty-terminal",
@@ -333,6 +333,74 @@
         "Official runtime SHA256 verified before packaging"
       ],
       "decision": "docs/adr/ADR-0003-linuxdeploy-appimage-packaging.md"
+    },
+    {
+      "id": "exmex",
+      "name": "exmex",
+      "role": "Expression parser and evaluator for the `sim` domain: parses the formula the user types, reports which variables it uses, and evaluates it per integration step",
+      "adoptionMode": "A",
+      "integration": "Rust crate linked only by kinein-core, behind the `sim` domain. `var_names()` feeds the concept check that runs on every keystroke; `eval()` runs the integration step. The evaluation vector is assembled from the user's explicit variable binding, never from the crate's positional order.",
+      "upstream": {
+        "repository": "https://github.com/bertiqwerty/exmex/",
+        "documentation": "https://docs.rs/exmex"
+      },
+      "version": {
+        "selected": "0.21.0",
+        "pin": "Cargo constraint =0.21.0 plus Cargo.lock checksum e9a53dccfc387af263e69c1eb53d13a4e9b26a7134ffdd38398a208374cbf851",
+        "reason": "Current release (2026-05-23) and the only MAINTAINED expression evaluator that passes this repository's deny.toml. MSRV 1.80.1 is below the workspace 1.85. The `partial` feature (partial derivatives) adds no dependency: it is `partial = []`."
+      },
+      "license": {
+        "spdx": "MIT OR Apache-2.0",
+        "accepted": true,
+        "source": "Published crate manifest, read from the vendored source on 2026-09-05"
+      },
+      "maintenance": {
+        "statusAtReview": "Active: latest release 2026-05-23. Compared against five alternatives; evalexpr relicensed MIT -> AGPL-3.0-only at v12.0.0 (2024-10-17) and is rejected, mexprp is rejected for LGPL-3.0-or-later reaching in through rug/gmp-mpfr-sys, and fasteval/meval/rsc pass the licence gate but last shipped in 2020/2018/2024.",
+        "reviewedAt": "2026-09-05"
+      },
+      "runtimeSecurity": {
+        "telemetry": false,
+        "network": false,
+        "shellExecution": false,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "nativeCode": false,
+        "notes": "Measured on 2026-09-05 by grepping the vendored src/: zero occurrences of std::net, std::process, std::fs, std::env, `unsafe`, or any HTTP client. It is pure computation over f64. Four behavioural traps were found by exercising it and are recorded in ADR-0006: alphabetical variable order (defused by the explicit binding in arquitetura/34 5.0), lowercase `pi` parsed as a free variable, division by zero yielding silent inf/NaN, and parser error text containing a raw pointer address, which the IDE never forwards to the screen."
+      },
+      "cost": {
+        "addedCrates": 1,
+        "notes": "Measured against this workspace, not an empty project: its six transitive dependencies (regex, regex-automata, regex-syntax, aho-corasick, memchr, smallvec) were already present, so only exmex itself is new. An isolated measurement reports +7 and does not apply here."
+      },
+      "verification": "cargo deny check (advisories, bans, licenses, sources) green on the real workspace with the crate in place, 2026-09-05",
+      "adr": "docs/adr/ADR-0006-exmex-avaliador-de-expressao.md"
+    },
+    {
+      "id": "sympy",
+      "name": "SymPy",
+      "role": "Exactness ORACLE for the `sim` domain: solves the differential equation the user actually typed, so the `exato` column stops answering for the concept's canonical equation",
+      "adoptionMode": "A",
+      "integration": "External process, ORCHESTRATED and never linked — the same boundary as GDB. The core spawns `python3 -c <program>` with a JSON request on stdin and reads one JSON line back; the program is embedded in `crates/kinein-core/src/sim/oraculo.rs`. ONE trip per FORMULA, never per point: SymPy returns the closed form and `exmex` evaluates the whole trail. Absent, it degrades in the open: the `exato` column keeps the concept's answer and the screen says so (`SimAccuracySource`).",
+      "upstream": {
+        "repository": "https://github.com/sympy/sympy",
+        "documentation": "https://docs.sympy.org/"
+      },
+      "version": {
+        "selected": "1.14.0 (as packaged by Fedora 44: python3-sympy 1.14.0-11.fc44)",
+        "pin": "NOT pinned, and it must not be: this is a tool on the USER's machine, like clangd or GDB. The IDE detects it and says when it is missing; it never installs it.",
+        "reason": "Optional dependency. Measured on 2026-09-06 and again on 2026-09-10: it is ABSENT on the author's machine, which is exactly why the degraded path is the one the product ships with by default."
+      },
+      "license": {
+        "spdx": "BSD-3-Clause AND MIT",
+        "accepted": true,
+        "source": "Fedora 44 package metadata for python3-sympy, read on 2026-09-06 (roadmaps/31 §19.3.1). Not linked, so no license obligation propagates to the binary either way."
+      },
+      "maintenance": {
+        "statusAtReview": "Active: 1.14.0 is the current release, packaged by every major distribution. No alternative was adopted — the CAS written in Rust (symbolica) is source-available with proprietary terms and is FORBIDDEN here (roadmaps/31 §12.3, the Pylance category); Maxima was measured and refused as a narrator (§13.1, upstream marked the step-by-step request won't fix)."
+      },
+      "runtimeSecurity": "Runs as a child process with stdin/stdout piped and stderr discarded, with a 5-second ceiling and a kill on expiry. It receives only the formula the user typed plus numeric parameters — never a file path, never the workspace. Its answer is NEVER trusted as code: it goes through a gate that requires `exmex` to parse it and its only free variable to be `t`, which is what stops the silent `pi` trap measured in §19.3.4.",
+      "cost": "425-506 ms per run measured end to end on 2026-09-10, of which ~200 ms is `import sympy`. Paid once per explicit 'Integrar', never per keystroke.",
+      "verification": "crates/kinein-core/src/tests/sim_oraculo.rs — 9 tests against a FAKE python3 (scripts/fake_sympy_oracle.py) that records the request it received. Five mutations prove the gates. Exercised against the real binary and real SymPy on 2026-09-10 (roadmaps/40 §7.3).",
+      "adr": "docs/arquitetura/34-simulacao-por-conceito.md §13.10"
     }
   ]
 }

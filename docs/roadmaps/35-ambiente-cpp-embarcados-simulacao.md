@@ -461,9 +461,19 @@ DO PROJETO   --specs=nosys.specs, linker script, startup, vector table — sao
 
 ## 6. FRENTE G — simulação
 
-Continua sendo a etapa 18 do roadmap 34 e continua **ESTUDO**. As sete perguntas
-de [31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md)
-precisam de resposta antes de existir arquitetura.
+> **DEIXOU DE SER ESTUDO em 2026-09-05.** As sete perguntas da §5 do
+> [`31`](31-simulacao-fisica-matematica.md) estão respondidas, a arquitetura
+> está em [`../arquitetura/34`](../arquitetura/34-simulacao-por-conceito.md), e
+> o domínio `sim` existe em código: catálogo de 17 conceitos, checagem de
+> conceito com ligação explícita, integrador verificado por ordem de
+> convergência, gráfico 2D e persistência em `.kinein/simulacoes/`.
+>
+> O texto abaixo é de 2026-09-03 e fica como registro de quando a frente ainda
+> era estudo.
+
+Continua sendo a etapa 18 do roadmap 34, e era **ESTUDO** até 2026-09-05. As
+sete perguntas de [31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md)
+precisavam de resposta antes de existir arquitetura.
 
 **A primeira pergunta foi RESPONDIDA em 2026-09-03**, e o invariante fica de pé.
 
@@ -486,6 +496,24 @@ mecanismo do X11, e o Wayland rejeitou deliberadamente um equivalente. O autor
 usa Wayland (medido em 2026-09-03). Detalhe e os dois custos — o render não cabe
 no JSON-RPC, e ler o framebuffer é stall de pipeline — em
 [`roadmaps/31`](31-simulacao-fisica-matematica.md) §5.1.1.
+
+**A medição de 2026-09-05 desmentiu metade disso**, e o registro fica em
+[`roadmaps/31`](31-simulacao-fisica-matematica.md) §8. Em uma linha: *"o render
+não cabe no JSON-RPC"* vale para frame **cru**; um quadro realista de simulação
+comprime de 8× (heatmap) a 176× (gráfico de linha), e um gráfico 1920×1080
+comprimido a 30fps são **1,42 MB/s** — três vezes a grade do terminal, que o
+JSON-RPC já carrega hoje. A memória compartilhada deixa de ser exigência do
+transporte. **A §5.1 não reabre**: muda só o transporte, que a §5.1.1 já deixara
+em aberto.
+
+**E a §8 mediu as outras perguntas antes de arquitetar**, que é o que a etapa 28
+pede: os crates de expressão contra o `deny.toml` real (o `evalexpr`, o mais
+usado do ecossistema, **trocou de MIT para AGPL-3.0 em 2024-10-17** e reprova; o
+`mexprp` reprova por LGPL na transitiva, via `rug`/`gmp-mpfr-sys`), o
+`exmex` exercitado (quatro armadilhas, uma delas **silenciosa**: a ordem das
+variáveis é alfabética, não a da fórmula), e o ponto de equilíbrio entre
+interpretar e compilar — **compilar custa 490 ms por edição de fórmula para
+economizar 3 ms de conta**.
 
 ## 7. FRENTE H — banco de dados e observabilidade
 
@@ -1793,9 +1821,22 @@ dashboard     banco pede desenho antes de codigo
 
 ### 9.4 O que a etapa 26 ainda NÃO tem
 
+> **DESATUALIZADA, e corrigida em 2026-09-06.** Esta lista é de quando a etapa
+> 26 fechou e **dois dos três itens já foram entregues depois dela** — a
+> introspecção na 26.4 e o TimescaleDB/Grafana na 27. Ela ficou aqui afirmando
+> ausência de coisa que existe, que é a mesma classe de mentira que o
+> `verificar-docs.sh` persegue, num eixo que ele não mede: ele confere número,
+> não ausência.
+
 ```text
-1. introspeccao (esquemas, tabelas, colunas) e execucao de consulta
-2. TLS: a arvore auditada nao tem backend, e conexao cifrada e' fatia propria
-3. TimescaleDB e Grafana (etapa 27) — o perfil ja' serve aos dois, porque
-   Timescale FALA protocolo Postgres
+1. introspeccao      ENTREGUE na 26.4: esquemas, tabelas e colunas do
+                     information_schema, mais a forma de documento do MongoDB
+2. TimescaleDB       ENTREGUE na 27, e o Grafana junto
+   e Grafana
+3. execucao de       PENDENTE. Rodar `SELECT`/`find` pela IDE e' fatia propria,
+   consulta          e a decisao 8 do autor a poe depois da introspeccao
+4. TLS do            PENDENTE. A licenca ja' esta decidida (2026-09-04); falta o
+   `postgres`        conector, que muda a chamada de conexao
+5. escrita em        PENDENTE, e nem levantada: inserir/atualizar/apagar pede
+   banco             desenho proprio — confirmacao, escopo, desfazer
 ```

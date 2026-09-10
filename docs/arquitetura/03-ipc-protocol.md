@@ -1,12 +1,63 @@
 # 03 — Protocolo IPC
 
-> **Escopo:** este documento descreve o protocolo **implementado** hoje
-> (JSON-RPC 0.71.0: `core.*`, `tools.*`, `toolchain.*`, `workspace.*`, `fs.*`,
-> `draft.*`, `format.*`, `cmake.*`, `cargo.*`, `configAction.*`, `runConfig.*`,
-> `settings.*`, `debug.*`, `git.*`, `build/test/quality.run`,
-> `lsp.*`, `syntaxTree.*`, `run.*`, `terminal.*`). O
-> protocolo-**alvo** completo (setup, targets, contexto semântico profundo,
-> etc.) está em
+> **RECONFERIDO em 2026-09-10**, com o gate completo verde: `0.87.0`, **130
+> métodos**, **41 eventos**, **30 domínios**, e os 30 com seção aqui.
+>
+> **O `0.87.0` não trouxe método novo — trouxe PROCEDÊNCIA.** O `SimAccuracy` do
+> `sim.run` ganhou `source` (`concept` ou `oracle`), `relativeError`,
+> `solvedBy` e `closedForm`, e o `SimRunResult`/`SimRunSystemResult` ganharam
+> `oracleNote`. O `source` é campo **obrigatório**, e é por isso que o minor
+> sobe: quem ler a resposta antiga não o encontra. A razão de ele existir está
+> medida no [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md)
+> §19.0 — sem ele a coluna `exato` respondia por outra equação, e errava por
+> 78.000x.
+>
+> Antes disso, a sincronização de 2026-09-06 e os dois métodos da forma vetorial
+> (`sim.checkSystem` e `sim.runSystem`) — e **os comentários dentro dos
+> comandos, que ainda diziam 128/130**. Comentário dentro de comando envelhece
+> igual a número solto; a diferença é que o gate não o vê.
+>
+> **Escopo, SINCRONIZADO em 2026-09-06 — e a dívida que este cabeçalho
+> declarava foi paga.** Em 2026-09-05 ele foi corrigido para parar de afirmar
+> cobertura que não tinha: cinco domínios estavam roteados pelo core e ausentes
+> daqui. **Os cinco agora têm seção**: `command.*`, `setup.*`, `datasource.*`,
+> `grafana.*` e `sim.*`, no fim do documento.
+>
+> **E a sincronização achou dois números errados — nos comandos que os provam.**
+> Ambos pela mesma causa: eles grepam literais sem saber o que os literais são.
+>
+> ```bash
+> # METODOS: o braco de despacho nunca comeca com `event.`. Sem o filtro, a
+> # contagem inclui dois nomes de EVENTO que aparecem num `match` dentro de
+> # `#[cfg(test)]` em handlers/build.rs — e da' 132 em vez de 130.
+> grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
+>      crates/kinein-core/src/handlers/ crates/kinein-core/src/lib.rs \
+>   | grep -oE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"' | tr -d '"' \
+>   | grep -v '^event\.' | sort -u | wc -l          # 130
+>
+> # EVENTOS: cinco sao construidos por `format!("event.{domain}.*")` em
+> # handlers/build.rs, com `domain` em {build, quality}. Um grep de literal
+> # NAO OS VE, e da' 36 em vez de 41.
+> { grep -rhoE '"event\.[a-zA-Z.]+"' crates/kinein-core/src/ | tr -d '"'
+>   for d in build quality; do
+>     for s in started output diagnostic finished; do echo "event.$d.$s"; done
+>   done
+> } | sort -u | wc -l                                # 41
+> ```
+>
+> ```text
+> protocolo   0.87.0
+> metodos     130 roteados
+> eventos     41 (36 literais + 5 construidos por format!)
+> dominios    30, e os 30 tem secao neste documento
+> ```
+>
+> **Os cinco que só existem por `format!`:** `event.build.started`,
+> `event.build.output`, `event.build.diagnostic`, `event.quality.started` e
+> `event.quality.output`. Os outros três da mesma família aparecem como literal
+> em algum ponto do código e por isso o grep os via.
+>
+> O protocolo-**alvo** completo está em
 > `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md`. Onde
 > divergir, vale o que está implementado no código + `docs-privada/ContextoIA.md`.
 
@@ -1574,109 +1625,238 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Métodos principais implementados
+## Os 130 métodos roteados — a lista inteira
+
+> **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
+> que era parcial, o que fazia um domínio inteiro parecer inexistente.
+> Refeita em 2026-09-06 pelo comando do cabeçalho, agrupada por domínio, e
+> refeita de novo no mesmo dia quando a forma vetorial acrescentou
+> `sim.checkSystem` e `sim.runSystem`.
 
 ```text
+build.run
+
+cargo.check
+cargo.metadata
+
+cmake.configure
+cmake.presets.list
+cmake.status
+cmake.targets.list
+
+command.list
+
+configAction.apply
+configAction.list
+configAction.preview
+
 core.ping
 core.shutdown
-workspace.open
+
+datasource.introspect
+datasource.list
+datasource.remove
+datasource.save
+datasource.test
+
+debug.continue
+debug.evaluate
+debug.next
+debug.pause
+debug.setBreakpoints
+debug.stackTrace
+debug.start
+debug.stepIn
+debug.stepOut
+debug.stop
+debug.variables
+
+draft.clear
+draft.save
+
+environment.scan
+
+format.capabilities
+format.text
+
+fs.createDirectory
+fs.createFile
+fs.delete
+fs.findFiles
+fs.list
+fs.read
+fs.rename
+fs.replace
+fs.search
+fs.write
+
+git.blame
+git.branchCreate
+git.branches
+git.checkout
+git.commit
+git.commitDiff
+git.discard
+git.fileDiff
+git.log
+git.pull
+git.push
+git.stage
+git.stash
+git.status
+git.unstage
+
+grafana.forget
+grafana.get
+grafana.probe
+grafana.save
+
+job.cancel
+job.list
+
+library.list
+library.plan
+
+lsp.applyCodeAction
+lsp.codeActions
+lsp.completion
+lsp.definition
+lsp.didChange
+lsp.documentSymbols
+lsp.hover
+lsp.references
+lsp.rename
+lsp.restart
+lsp.semanticTokens
+lsp.switchSourceHeader
+lsp.workspaceEdit.apply
+lsp.workspaceEdit.cancel
+lsp.workspaceSymbols
+
+probe.list
+
+quality.run
+
+run.script
+run.start
+run.stdin
+run.stop
+
+runConfig.delete
+runConfig.list
+runConfig.save
+runConfig.setActive
+
+settings.get
+settings.set
+
+setup.list
+
+sim.catalog
+sim.checkFormula
+sim.checkSystem
+sim.estimate
+sim.evaluate
+sim.forget
+sim.inspectFormula
+sim.list
+sim.run
+sim.runSystem
+sim.save
+
+syntaxTree.update
+
+terminal.close
+terminal.input
+terminal.mouse
+terminal.open
+terminal.resize
+terminal.scroll
+
+test.run
+
+toolchain.get
+toolchain.set
+toolchain.setKit
+
+tools.detect
+tools.status
+
 workspace.browse
+workspace.close
 workspace.createFolder
 workspace.createProject
-workspace.saveSession
+workspace.open
+workspace.recent.clear
 workspace.recent.list
 workspace.recent.pin
 workspace.recent.remove
-workspace.recent.clear
-workspace.close
+workspace.saveSession
 workspace.status
-command.list
-tools.detect
-tools.status
-toolchain.get
-toolchain.set
-environment.scan
-fs.list
-fs.read
-fs.createFile
-fs.createDirectory
-fs.write
-fs.rename
-fs.delete
-fs.findFiles
-fs.search
-fs.replace
-build.run
-test.run
-quality.run
-run.start
-run.script
-run.stdin
-run.stop
-terminal.open
-terminal.input
-terminal.resize
-terminal.scroll
-terminal.mouse
-terminal.close
-lsp.didChange
-lsp.semanticTokens
-lsp.definition
-lsp.hover
-lsp.completion
-lsp.references
-lsp.rename
-lsp.codeActions
-lsp.applyCodeAction
-lsp.workspaceEdit.apply
-lsp.workspaceEdit.cancel
-syntaxTree.update
-configAction.list
-configAction.preview
-configAction.apply
-git.status
-git.branches
-git.checkout
-git.branchCreate
-git.pull
-git.push
-git.stash
-job.list
-job.cancel
 ```
 
-## Eventos iniciais
+## Os 41 eventos emitidos — a lista inteira
+
+> **Era "Eventos iniciais", e faltavam três** — os dois do `datasource` e o do
+> `grafana`. Refeita em 2026-09-06. **Cinco não são literais no código**: eles
+> nascem de `format!("event.{domain}.*")` em `handlers/build.rs`, com `domain`
+> valendo `build` ou `quality`, e por isso um grep ingênuo não os encontra.
 
 ```text
-event.build.started
-event.build.output
-event.build.diagnostic
+event.build.diagnostic              <- so por format!
 event.build.finished
-event.quality.started
-event.quality.output
-event.quality.diagnostic
-event.quality.finished
+event.build.output                  <- so por format!
+event.build.started                 <- so por format!
+
+event.cmake.finished
+event.cmake.started
+
+event.datasource.introspected
+event.datasource.tested
+
+event.debug.continued
+event.debug.finished
+event.debug.output
+event.debug.started
+event.debug.stopped
+
+event.environment.finished
 event.environment.started
 event.environment.tool
-event.environment.finished
-event.test.started
-event.test.output
-event.test.case
-event.test.finished
-event.job.created
-event.job.progress
-event.job.output
-event.job.finished
-event.run.started
-event.run.output
-event.run.finished
-event.terminal.render
-event.terminal.closed
-event.lsp.status
-event.lsp.diagnostics
-event.lsp.documentsClosed
+
 event.fs.changed
 event.fs.watchError
+
+event.git.remoteFinished
+
+event.grafana.probed
+
+event.job.created
+event.job.finished
+event.job.output
+event.job.progress
+
+event.lsp.diagnostics
+event.lsp.documentsClosed
+event.lsp.restarted
+event.lsp.status
+
+event.quality.diagnostic
+event.quality.finished
+event.quality.output                <- so por format!
+event.quality.started               <- so por format!
+
+event.run.finished
+event.run.output
+event.run.started
+
+event.terminal.closed
+event.terminal.render
+
+event.test.case
+event.test.finished
+event.test.output
+event.test.started
 ```
 
 ## Regras
@@ -1767,3 +1947,233 @@ nao reconhecida   -> "o formato mudou e o parser precisa acompanhar"
 Sem regra de udev a ferramenta roda, não acha nada, e o usuário conclui que a
 placa está com defeito. **Plug and play morre exatamente aí**, e é a lacuna que
 `integracoes/36` §5 já tinha nomeado como a mais subestimada.
+## `command.*` — o catálogo de comandos que a UI mostra
+
+Um método, e ele é a fonte única de **tudo que a IDE oferece por nome**: paleta,
+menus, botões e atalhos leem daqui.
+
+```text
+command.list {}   ->  { commands: [CommandDescriptor] }
+```
+
+```json
+{
+  "id": "editor.save",
+  "title": "Salvar arquivo",
+  "category": "Editor",
+  "description": "Grava o buffer atual no disco",
+  "defaultShortcut": "Ctrl+S",
+  "requiresWorkspace": true
+}
+```
+
+**Não exige workspace aberto** — a paleta existe antes de haver projeto, e é o
+`requiresWorkspace` de cada descritor que diz o que fica desabilitado.
+
+**São 76 descritores, medidos em 2026-09-06**, em cinco grupos que são cinco
+arquivos em `crates/kinein-core/src/commands/`:
+
+```text
+ide.rs      24    editor.rs   19    build.rs    16    git.rs       9    run.rs    8
+```
+
+**Por que este domínio existe em vez de a UI ter a lista:** porque o atalho que a
+paleta **anuncia** tem de ser o que a IDE **obedece**, e isso é gate desde
+2026-09-03 (`scripts/verificar-atalhos.sh`). Com a lista no core, o gate compara
+uma fonte com o host; com a lista na UI, ele compararia a UI consigo mesma.
+
+## `setup.*` — o passo a passo oficial de instalação, por distro
+
+```text
+setup.list {}  ->  { distroId, distroName, family, tools: [SetupToolInfo] }
+```
+
+```text
+SetupToolInfo   id · name · summary · website · installed · guide?
+SetupGuide      family · sourceUrl · checkedAt · steps: [SetupStep]
+SetupStep       explanation · command
+```
+
+**Não exige workspace**: instalar o PostgreSQL não depende de projeto aberto, e
+quem está começando abre a IDE antes de ter projeto — que é exatamente quando
+este guia serve.
+
+**A regra que governa o domínio inteiro: sem fonte oficial, a IDE não afirma.**
+Cada `SetupGuide` carrega `sourceUrl` e `checkedAt`, e uma família de distro sem
+fonte oficial **não recebe guia** — o `guide` volta `None` e a tela mostra o site
+do projeto dizendo que não tem passo a passo. É a decisão registrada em
+`../roadmaps/40` §5, e é por isso que Arch e openSUSE continuam sem passos: a
+fonte dos três projetos não cobre essas famílias.
+
+O `installed` vem do `ToolDetector` — detectar é capacidade, e a política de o
+que fazer com a detecção fica na UI (`27-modulos-por-dominio.md` §6).
+
+## `datasource.*` — os perfis de banco, e a senha que não mora em disco
+
+Domínio da etapa 26/27 (`../roadmaps/35` §9). Cinco métodos, dois eventos.
+
+```text
+datasource.list       {}                      -> { profiles: [DataSourceProfile] }
+datasource.save       { profile }             -> DataSourceWriteResult
+datasource.remove     { name }                -> DataSourceWriteResult
+datasource.test       { name, password? }     -> DataSourceTestAccepted   (job)
+datasource.introspect { name, password? }     -> aceite + job
+```
+
+**Os quatro últimos exigem workspace aberto**; o perfil mora no projeto.
+
+```text
+event.datasource.tested        { jobId, ok, message, ... }
+event.datasource.introspected  { jobId, schemas | collections, ... }
+```
+
+**A senha nunca entra no perfil.** O `DataSourceProfile` guarda motor, host,
+porta, banco, usuário e um `SecretSource` — *de onde* o segredo vem —, e o
+`password` viaja só no parâmetro do método que precisa dele, por chamada. É a
+decisão de `../seguranca/40`, e a UI abre o diálogo de senha por
+`secretRequired` no erro, **nunca casando texto de mensagem**.
+
+**Duas formas de resultado, porque há dois tipos de banco.** O relacional
+devolve `schemas → tables → columns` lido do `information_schema`; o MongoDB
+devolve `collections → fields` com profundidade, tipo **plural** e presença em
+%, e a origem do esquema declarada:
+
+```text
+DECLARADO   veio do validador `$jsonSchema` da colecao
+INFERIDO    veio de `$sample` sobre a colecao
+```
+
+**A tela nunca deixa os dois parecidos**, e o custo da leitura vai junto:
+quantos documentos foram lidos, e se a amostragem obrigou o servidor a varrer a
+coleção inteira (`$sample` varre tudo quando N não é menor que 5% dela). Tetos
+de RAM — 2.000 campos, 8 níveis, 10 elementos de array — aparecem como aviso na
+coleção em vez de a deixarem com cara de completa.
+
+## `grafana.*` — a observabilidade pela HTTP API, e só
+
+Quatro métodos, um evento.
+
+```text
+grafana.get    {}          -> { profile: GrafanaProfile | null }
+grafana.save   { profile }
+grafana.forget {}
+grafana.probe  { token? }  -> GrafanaProbeAccepted   (job)
+```
+
+```text
+event.grafana.probed  { jobId, datasources, dashboards, matches, ... }
+```
+
+**Os quatro exigem workspace aberto.**
+
+**O Grafana nunca é embutido** — licença AGPL, decisão registrada em
+`../roadmaps/40` §5. A integração é HTTP, o cliente é o `ureq`, e os dashboards
+**abrem no navegador do sistema**. O que justifica o domínio existir é o
+`GrafanaMatch`: o cruzamento entre o datasource do Grafana e o perfil de banco
+do projeto, que é a pergunta que nenhuma das duas ferramentas responde sozinha.
+
+O token segue a mesma regra da senha: `GrafanaTokenSource` diz de onde ele vem,
+e o valor viaja por chamada.
+
+## `sim.*` — a simulação por conceito
+
+Domínio da etapa 28. **Onze métodos**, nenhum evento — as corridas de hoje
+terminam dentro da resposta. O desenho está em
+[`34-simulacao-por-conceito.md`](34-simulacao-por-conceito.md), e os tipos em
+`crates/kinein-protocol/src/sim.rs`.
+
+```text
+sim.catalog        { course? }                     -> { concepts: [SimConcept] }
+sim.inspectFormula { formula }                     -> { variables: [String] }
+sim.checkFormula   { concept, formula, bindings }  -> SimCheckResult
+sim.evaluate       { concept, formula, bindings, values }        -> SimEvaluateResult
+sim.estimate       { duration, step, samples }     -> SimEstimateResult
+sim.run            { concept, formula, bindings, values, initial,
+                     duration, step, method, samples }           -> SimRunResult
+sim.list           {}                              -> { simulations: [SimSaved] }
+sim.save           { simulation }
+sim.forget         { name }
+
+sim.checkSystem    { concept, equations }          -> SimCheckSystemResult
+sim.runSystem      { concept, equations, values, initial,
+                     duration, step, method, samples }  -> SimRunSystemResult
+```
+
+**Os dois últimos são a forma VETORIAL** (`dY/dt = F(t, Y)`), entrada em
+2026-09-06 e desenhada em [`34`](34-simulacao-por-conceito.md) §13. O
+`equations` traz **uma fórmula por componente**, cada uma com a ligação dela, e
+a ORDEM da lista não importa: o core casa pelo campo `component`, porque supor
+que a n-ésima fórmula é do n-ésimo componente seria adivinhar.
+
+**O método `eulerSymplectic` é recusado quando o conceito não declara o
+pareamento posição/velocidade**, com `reason: "noPairing"`. Não é limitação a
+contornar: sem o par, o método não está definido. E ele importa — medido numa
+órbita circular de raio verdadeiro 1 com `dt=0,01` por dez voltas, o Euler
+explícito termina com raio `1,647957` e o simplético com `1,000024`.
+
+**O `SimRunSystemResult` traz DOIS sinais de exatidão**, e o segundo não existia
+na forma escalar:
+
+```text
+accuracy     o erro contra a solucao fechada, quando ela existe. Na orbita ela
+             vale so' no caso CIRCULAR — a eliptica exige a equacao de Kepler,
+             que e' transcendental, e o oraculo recusa em vez de aproximar
+invariants   a DERIVA de cada grandeza que a fisica conserva. Existe mesmo sem
+             solucao fechada, e e' o unico sinal que um sistema caotico admite.
+             A tela chama de DERIVA e nunca de erro: invariante conservado nao
+             significa resultado certo
+```
+
+**Os seis primeiros não exigem workspace** — montar e conferir uma fórmula não
+depende de projeto aberto. Os três últimos exigem, porque a persistência mora em
+`.kinein/simulacoes/`.
+
+**A decisão que governa cada tipo deste domínio: nada é adivinhado.** Todo campo
+que decide um resultado é **obrigatório** — não há método padrão, passo padrão
+nem amostragem padrão. A IDE calcula e MOSTRA; quem escolhe é o usuário.
+
+**A ligação é dado do usuário, nunca casamento por nome.** O `SimBinding` diz
+qual grandeza cada variável da fórmula é. Isso não é rigor: o avaliador devolve
+as variáveis em ordem **alfabética**, e montar o vetor de avaliação pela ordem de
+leitura da fórmula produz um número com a física errada e **sem erro nenhum**
+(ADR-0006, armadilha 1).
+
+**O `sim.estimate` existe porque contar passos é regra de negócio.** A IDE mostra
+o custo antes de rodar — quantos passos, quanto a trilha ocuparia inteira e
+amostrada, e se compilar valeria a pena nesta escala. A UI pergunta e desenha;
+ela não faz a conta (`ARCHITECTURE.md` §2).
+
+**O `SimCheckResult` devolve TODOS os problemas, não o primeiro**, cada um como
+uma variante tipada — `parseFailed`, `missingQuantity`, `unboundVariable`,
+`unknownQuantity`, `duplicateQuantity`, `variableNotInFormula` — para a UI nunca
+casar por texto de mensagem. E o erro de parse carrega a mensagem **da IDE**: o
+texto do avaliador tem endereço de ponteiro dentro e nunca é repassado.
+
+**O `SimRunResult.accuracy` só existe quando o conceito tem solução fechada**, e
+a tela **diz** quando não tem, em vez de omitir a coluna e deixar parecer que o
+número é exato.
+
+> **Defeito conhecido, medido em 2026-09-06 e registrado em `../roadmaps/31`
+> §19.0:** o `accuracy` vem do CONCEITO e não olha a fórmula digitada. Quando as
+> duas divergem — o que o `sim.checkFormula` permite, porque ele confere ligação
+> e não física — o `absoluteError` é calculado contra a solução de outra equação.
+> Reproduz com `python3 scripts/exercitar-sim-oraculo.py`. O conserto depende de
+> decisão de desenho e está na fila do `../roadmaps/40` §4.
+
+## `core.*` — o handshake e o encerramento
+
+Dois métodos, e eles são os únicos que **nunca** dependem de nada: não exigem
+workspace, não tocam o filesystem e respondem mesmo com o resto do core inerte.
+
+```text
+core.ping     {}  ->  { protocolVersion, ... }
+core.shutdown {}  ->  { message: "shutdown requested" }
+```
+
+**O `core.ping` é como a UI descobre com que protocolo está falando** — é o par
+do `PROTOCOL_VERSION` em `crates/kinein-protocol/src/lib.rs`, e é o primeiro
+pedido que a UI faz depois de subir o processo (`04-boot-e-comunicacao.md`).
+
+**O `core.shutdown` pede, não mata.** Ele responde e deixa o encerramento
+acontecer com o drain dos jobs em andamento, que é o que impede um build a meio
+caminho de virar processo órfão.
