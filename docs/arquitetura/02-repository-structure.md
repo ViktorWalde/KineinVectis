@@ -1,7 +1,7 @@
 # 02 — Estrutura do Repositório
 
-> **Classe: ESTADO** (`../README.md`). Tem que ser verdade hoje. Medido em
-> **2026-09-10**, com o gate completo verde. Se divergir do código, o código
+> **Classe: ESTADO** (`../README.md`). Tem que ser verdade hoje. Remedido no
+> fim do dia **2026-09-10**, com o gate completo verde. Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
 >
 > **A remedição de 2026-09-10 achou este documento MENTINDO, e o pior caso não
@@ -74,6 +74,8 @@ kinein-vectis/
 │   │   ├── sim/                 catalogo entradas entradas_sistema formula corrida
 │   │   │                        corrida_sistema integrador sistema exata invariante
 │   │   │                        persistencia
+│   │   │   └── oraculo/         mod (a fachada) programa (o Python embutido)
+│   │   │                        processo (o transporte) portao (o que se aceita)
 │   │   ├── terminal/            session state render input error
 │   │   ├── toolchain/           catalog store
 │   │   ├── workspace/           detect open create session recent error
@@ -83,7 +85,7 @@ kinein-vectis/
 │   │   └── rpc command core tools workspace fs run terminal lsp syntax git build
 │   │      cargo cmake configaction datasource debug diagnostic draft format
 │   │      grafana job library probe runconfig settings setup sim sim_corrida
-│   │      toolchain
+│   │      sim_sistema toolchain
 │   │
 │   ├── kinein-config/src/lib.rs
 │   └── kinein-cli/src/          main.rs lib.rs commands.rs error.rs

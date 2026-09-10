@@ -893,6 +893,7 @@ Alvos complementares:
 | Mudança | Prova mínima adicional |
 | --- | --- |
 | Controller QML | `bash scripts/verificar-qml-logica.sh` + novo caso de regressão |
+| Arquitetura, antes de propor | `docs/arquitetura/35-crescer-sem-god-object.md` — a análise MEDIDA de 2026-09-10: o que está saudável e não se mexe, o god object que a catraca de ARQUIVO não vê, e as duas soluções da literatura que este projeto deve **recusar**, com o motivo medido |
 | Componente QML novo | `bash scripts/verificar-qml-alcance.sh` — componente no `QML_FILES` que nenhuma tela instancia é tela que o usuário não alcança. Foi assim que o `SimPlotSystem` ficou pronto, testado e invisível por um dia |
 | Terminal | `cargo build -p kinein-core` + `python3 scripts/sonda_scrollback.py` |
 | LSP/KSWE | teste de core + fixture real + latência/cancelamento |

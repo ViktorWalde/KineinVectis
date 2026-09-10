@@ -1,7 +1,9 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **Classe: ESTADO** (`docs/README.md`). Remedido em **2026-09-10**, com o gate
-> completo verde. Se divergir do código, o código vence e este documento se
+> **Classe: ESTADO** (`docs/README.md`). Remedido no fim do dia **2026-09-10**,
+> com o gate completo verde. Onze commits nesse dia: o domínio `sim` inteiro
+> (motor, tela e oráculo), o 19º gate, a checagem de unidades, a correção de
+> categoria do `core_client.h`, a varredura e a análise de arquitetura. Se divergir do código, o código vence e este documento se
 > corrige no mesmo gesto.
 >
 > **AVISO que a sessão de 2026-09-05 aprendeu na pele:** "gate verde" tem prazo

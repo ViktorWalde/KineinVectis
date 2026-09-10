@@ -48,14 +48,14 @@ Qt/QML  ──── IPC JSON-RPC (stdio, uma linha por mensagem) ──── R
 
 | Camada | Linhas | Arquivos | O que carrega |
 | --- | ---: | ---: | --- |
-| `crates/kinein-core` | 46.641 | 182 | Toda a lógica: build, run, debug, LSP, git, terminal, fs, jobs |
-| `ui/qml` | 33.753 | 228 | Apresentação e estado visual |
-| `crates/kinein-protocol` | 6.257 | 31 | Os tipos do contrato, um módulo por domínio |
+| `crates/kinein-core` | 47.478 | 185 | Toda a lógica: build, run, debug, LSP, git, terminal, fs, jobs |
+| `ui/qml` | 33.903 | 229 | Apresentação e estado visual |
+| `crates/kinein-protocol` | 6.339 | 32 | Os tipos do contrato, um módulo por domínio |
 | `ui/src` (C++) | 5.144 | 38 | Ponte fina: `CoreClient`, realce, clipboard, chrome de janela |
-| `scripts/` | 10.613 | 76 | Gates, sondas, ambiente, packaging |
+| `scripts/` | 10.701 | 76 | Gates, sondas, ambiente, packaging |
 
-**O fato que mais surpreende quem chega:** a documentação tem **69.557 linhas em
-96 arquivos** — as três árvores (`docs/`, `docs-privada/`, `docs-legada/`), quase
+**O fato que mais surpreende quem chega:** a documentação tem **70.246 linhas em
+97 arquivos** — as três árvores (`docs/`, `docs-privada/`, `docs-legada/`), quase
 tanto quanto o core e a UI **somados**. Isso é uma escolha
 consciente (o projeto é conduzido por sessões que trocam de contexto), mas cobra
 um preço, e é a razão de existirem as três árvores e o gate de veracidade.
@@ -171,7 +171,11 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       escalar e vetorial verificados por ORDEM DE CONVERGENCIA,
                       e o ORACULO — que desde 2026-09-10 resolve a equacao que
                       o usuario DIGITOU num processo externo opcional. A coluna
-                      `exato` tem PROCEDENCIA: sem ela, ela mentia por 78.000x
+                      `exato` tem PROCEDENCIA: sem ela, ela mentia por 78.000x.
+                      E desde 2026-09-10 as UNIDADES sao checadas nas formas que
+                      integram — argumento de transcendente, os termos entre si,
+                      e o lado esquerdo. O limite vai na tela junto: unidade que
+                      fecha nao quer dizer fisica certa
 ```
 
 **O que mudou em 2026-08-29/30, e é o que destrava o resto:** o terminal deixou
@@ -242,7 +246,7 @@ parte; o resto é binding e bloco de host, que **é** trabalho de composition ro
 Chegar abaixo do limite exige módulos por domínio — decisão registrada como
 proposta em `arquitetura/27`, **não** implementada.
 
-**O core tem 24 handlers e um `lib.rs` de 418 linhas** (limite 500) — ele
+**O core tem 24 handlers e um `lib.rs` de 442 linhas** (limite 500) — ele
 **saiu do débito em 2026-08-30**, quando ~140 linhas do domínio `tools` que
 moravam ali voltaram para `handlers/tools.rs`. Quem cobrou foi a catraca, ao
 reprovar UMA linha de outra fatia: a §4 regra 9 manda olhar a mudança, a
