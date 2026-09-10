@@ -1009,3 +1009,88 @@ significa que a IDE substituiu o VS Code. Significa que a semana de
 desenvolvimento C/C++ e Rust dentro dela — o critério do TR1 — ainda não
 aconteceu. E agora há um motivo medido para ela não ter acontecido: **quem
 compila do checkout não consegue abrir a IDE nesta máquina.**
+
+## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
+
+Feita a pedido do autor, antes do pente-fino. **Ela procura uma classe só, e é a
+que já bateu duas vezes nesta etapa:** algo que o core calcula, a ponte
+transporta, e nenhuma tela mostra. Foi assim que o motor vetorial ficou um dia
+sem porta, e foi assim que a coluna `exato` respondeu por outra equação.
+
+**Os comandos que a reproduzem** — nenhuma linha abaixo pede confiança:
+
+```bash
+# metodos IPC roteados no core que o C++ nunca pede
+# sinais do CoreClient que ninguem escuta (descontando NOTIFY de Q_PROPERTY)
+# Q_INVOKABLE que o QML nunca chama
+# sinais QML declarados sem tratador
+```
+
+### 8.1 O que é calculado e nunca aparece — prioridade real
+
+```text
+event.test.output      EMITIDO e DESCARTADO. O `JobsEventRouter` roteia
+                       `onBuildOutput` e NAO roteia `onTestOutput`; o
+                       `JobsController` tem `handleBuildOutput` e nao tem o par.
+                       O `BuildPanel` tem `outputModel`; o `TestsPanel` tem
+                       `casesModel` e `summary`, e nao tem saida nenhuma.
+
+                       O ESTRAGO: num teste que falha, a razao esta' na SAIDA —
+                       a mensagem do panico, a diferenca da assercao, o erro do
+                       compilador. A tela mostra "falhou" e engole o porque.
+
+                       Conferido: o core emite esta saida SO' em
+                       `event.test.output` (handlers/build.rs:170); ela nao
+                       chega por `event.job.output` nem por outro caminho.
+
+event.test.started     idem, e o build mostra o dele: o comando que rodou nao
+                       aparece nos testes
+
+event.quality.started  idem, na analise
+
+event.quality.output   pior: descartado no PROPRIO C++, com `return true` e sem
+                       emitir sinal nenhum. Ele nao chega nem a ter dono
+
+environmentScan        `Started`, `Tool` e `Finished` nao tem ouvinte. O painel
+  (tres sinais)        de Ferramentas recebe a lista PRONTA; o progresso da
+                       varredura, que existe, nao aparece
+```
+
+### 8.2 Superfície morta — o protocolo afirma o que ninguém consome
+
+```text
+sim.inspectFormula    round-trip COMPLETO e sem uso: metodo no protocolo,
+                      handler no core, `simInspectFormula` no C++ e o sinal
+                      `simFormulaInspected` — e o QML nunca chama nenhum deles.
+                      A tela usa `sim.checkFormula`, que ja' devolve `variables`
+
+cmake.presets.list    roteados no core e nao pedidos nem pela UI nem pela CLI
+job.list
+probe.list
+
+dataSourceTestAccepted  o `jobId` do teste de conexao e da sonda do Grafana e'
+grafanaProbeAccepted    emitido e ninguem escuta
+```
+
+**Não confundir com superfície morta:** `core.shutdown` e `workspace.status` não
+são pedidos pelo C++ **porque quem os usa é a `kinein-cli`**. Ela é cliente do
+protocolo tanto quanto a UI, e a varredura que olhasse só a UI os acusaria por
+engano.
+
+### 8.3 Menor
+
+```text
+GitPanel.branchMenuDismissRequested        sinal QML declarado sem tratador
+TerminalScrollController.sessionChanged
+```
+
+### 8.4 O que a varredura NÃO cobre, e vale dizer
+
+Ela mede **fiação**: o que existe e não está ligado. Ela não mede se a tela que
+está ligada mostra a coisa certa, nem se o que aparece é legível — isso é o
+pente-fino, e ele precisa da IDE **abrindo** (§4, prioridade 1).
+
+**E a classe da §8.1 não tem gate.** O 19º pega componente QML entregue e não
+instanciado; falta o andar de cima — **evento que o core emite e nenhuma tela
+consome**. É o mesmo critério, uma camada acima, e os cinco achados de hoje
+teriam saído dele automaticamente.
