@@ -1,202 +1,205 @@
 # 02 — Estrutura do Repositório
 
-## Estrutura inicial recomendada
+> **Classe: ESTADO** (`../README.md`). Tem que ser verdade hoje. Medido em
+> **2026-09-10**, com o gate completo verde. Se divergir do código, o código
+> vence e este documento se corrige no mesmo gesto.
+>
+> **A remedição de 2026-09-10 achou este documento MENTINDO, e o pior caso não
+> era um número — era uma pasta.** Ele listava `templates/` com cinco scaffolds
+> (`cpp-console-strict`, `cpp-qt-qml-strict`, `java-backend-strict`,
+> `python-backend-strict`, `embedded-linux-strict`); **essa pasta não existe e
+> nunca existiu neste checkout**. Os templates são escritos por código, em
+> `crates/kinein-core/src/workspace/create.rs`. Uma sessão que fosse "editar o
+> template" procuraria um diretório ausente, e a saída provável seria criá-lo —
+> inventando um segundo mecanismo para o que já tem um.
+>
+> **O resto do desvio, medido:** a árvore de `docs/` listava oito arquivos que
+> não existem mais (`00-product-vision.md`, `01-architecture.md`,
+> `04-command-system.md`, `05-design-system.md`, `07`–`10`) e nenhuma das nove
+> pastas que existem; `commands.rs` virou pasta; onze pastas de domínio do core
+> e sete handlers estavam ausentes; o `kinein-protocol` aparecia com doze
+> módulos e tem trinta; a lista de pastas do `ui/qml` tinha seis de vinte e
+> três; e `prompts/` estava na raiz, quando mora em `docs-privada/`.
+>
+> **Por que ele envelheceu calado:** este documento não tem número solto, e o
+> `verificar-docs.sh` só confere número. Árvore de arquivos é afirmação sobre o
+> disco tanto quanto um número é — e não havia quem a conferisse. Ver §4.
+
+## 1. A árvore, como ela é
 
 ```text
 kinein-vectis/
-├── README.md
-├── AGENTS.md
-├── Cargo.toml
-├── rust-toolchain.toml
-├── deny.toml
-├── .gitignore
-├── .editorconfig
+├── README.md  MANUAL.md  Tutorial.md      os TRES markdown publicos
+├── AGENTS.md  GUIAIA.md  PONTO_ATUAL.md   continuidade interna
+├── COMO_EXECUTAR.md
+├── Cargo.toml  rust-toolchain.toml  deny.toml
+├── .gitignore  .editorconfig
 │
 ├── crates/
-│   ├── kinein-core/
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   │       ├── main.rs          # binary entry (calls run_stdio)
-│   │       ├── lib.rs           # Core struct + handle_request dispatch + re-exports
-│   │       ├── runtime.rs       # stdio JSON-RPC loop (run_stdio / run_json_lines)
-│   │       ├── rpc.rs           # JSON-RPC error responses + param parsing
-│   │       ├── commands.rs      # command.list descriptors
-│   │       ├── tools.rs process.rs build.rs test.rs run.rs  # domain services
-│   │       ├── cdb.rs           # diagnostico da compilation database do C/C++
-│   │       ├── handlers/        # request routers by domain (impl Core blocks)
-│   │       │   └── workspace.rs fs.rs lsp.rs syntax.rs git.rs run.rs terminal.rs build.rs
-│   │       │       tools.rs cmake.rs cargo.rs debug.rs draft.rs format.rs jobs.rs
-│   │       │       runconfig.rs settings.rs
-│   │       ├── terminal/        # PTY real + emulador VT (ADR-0004)
-│   │       │   └── mod.rs session.rs state.rs render.rs input.rs error.rs
-│   │       ├── lsp/             # LSP client subsystem
-│   │       │   └── mod.rs types.rs manager.rs sync.rs server.rs framing.rs parse.rs
-│   │       │       transaction.rs edit.rs uri.rs
-│   │       ├── lang/            # Tree-sitter local, incremental e LSP-independent
-│   │       │   └── registry.rs service.rs positions.rs outline.rs folding.rs
-│   │       ├── git/             # orquestração tipada do binário git
-│   │       │   └── mod.rs status.rs diff.rs mutate.rs history.rs branches.rs
-│   │       ├── fsops/           # workspace-confined filesystem operations
-│   │       │   └── mod.rs error.rs ops.rs search.rs find.rs replace.rs transaction.rs
-│   │       ├── fswatch.rs       # notify lazy/debounced + eventos de mudança externa
-│   │       ├── workspace/       # open/detect/create + sessão e recentes
-│   │       │   └── mod.rs error.rs detect.rs open.rs create.rs session.rs recent.rs
-│   │       └── tests/           # integration tests grouped by domain
-│   │           └── mod.rs dispatch.rs workspace.rs fs.rs lsp.rs syntax.rs git.rs
+│   ├── kinein-core/src/
+│   │   ├── main.rs              binario: chama run_stdio
+│   │   ├── lib.rs               Core + dispatch de handle_request + re-exports
+│   │   ├── runtime.rs           laco JSON-RPC sobre stdio
+│   │   ├── rpc.rs               erros JSON-RPC + parse de params
+│   │   ├── handlers.rs          o modulo que agrega os handlers por dominio
+│   │   ├── cargo.rs cmake.rs format.rs run.rs test.rs tools.rs process.rs
+│   │   ├── cdb.rs               compilation database do C/C++: onde esta e se envelheceu
+│   │   ├── fswatch.rs           notify debounced + mudanca externa
+│   │   ├── probe.rs runconfig.rs settings.rs
+│   │   │
+│   │   ├── handlers/            roteadores por dominio (blocos impl Core)
+│   │   │   └── build cargo cmake configaction datasource debug draft format fs
+│   │   │      git grafana jobs library probe run runconfig settings setup sim
+│   │   │      syntax terminal toolchain tools workspace
+│   │   │
+│   │   ├── build/               mod parse
+│   │   ├── commands/            mod build editor git ide run
+│   │   ├── configaction/        catalog availability plan + um planejador por
+│   │   │                        arquivo editado (cmakelists, presets, cargotoml,
+│   │   │                        builddir), mais parametros, rigor, remover, error
+│   │   ├── dap/                 wire parse reader session target
+│   │   ├── datasource/          connection store secret introspect sqlite mongo
+│   │   │                        mongo_infer
+│   │   ├── db/                  rascunhos em SQLite (WAL)
+│   │   ├── fsops/               confine ops search find replace transaction walk error
+│   │   ├── git/                 operations parse
+│   │   ├── grafana/             client store
+│   │   ├── jobs/                context manager
+│   │   ├── lang/                Tree-sitter local: registry service positions
+│   │   │                        outline folding
+│   │   ├── library/             catalog availability applied
+│   │   ├── lsp/                 manager session sync server framing parse
+│   │   │                        parse_symbols transaction edit uri types
+│   │   ├── setup/               catalog distro
+│   │   ├── sim/                 catalogo entradas entradas_sistema formula corrida
+│   │   │                        corrida_sistema integrador sistema exata invariante
+│   │   │                        persistencia
+│   │   ├── terminal/            session state render input error
+│   │   ├── toolchain/           catalog store
+│   │   ├── workspace/           detect open create session recent error
+│   │   └── tests/               testes de integracao, um arquivo por dominio
 │   │
-│   ├── kinein-protocol/
-│   │   ├── Cargo.toml
-│   │   └── src/                 # per-domain modules re-exported flat from lib.rs
-│   │       └── lib.rs rpc.rs command.rs core.rs tools.rs workspace.rs fs.rs
-│   │           run.rs terminal.rs lsp.rs syntax.rs git.rs build.rs
+│   ├── kinein-protocol/src/     um modulo por dominio, re-exportado plano do lib.rs
+│   │   └── rpc command core tools workspace fs run terminal lsp syntax git build
+│   │      cargo cmake configaction datasource debug diagnostic draft format
+│   │      grafana job library probe runconfig settings setup sim sim_corrida
+│   │      toolchain
 │   │
-│   ├── kinein-config/
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   │       └── lib.rs
-│   │
-│   └── kinein-cli/
-│       ├── Cargo.toml
-│       └── src/
-│           ├── main.rs          # thin binary shim over kinein_cli::run
-│           ├── lib.rs           # library target: re-exports run + CliError
-│           ├── commands.rs      # argv → JSON-RPC request dispatch
-│           └── error.rs         # CliError
+│   ├── kinein-config/src/lib.rs
+│   └── kinein-cli/src/          main.rs lib.rs commands.rs error.rs
 │
 ├── ui/
-│   ├── CMakeLists.txt
-│   ├── src/                     # CoreClient IPC + EditorHighlighter
-│   ├── assets/icons/tree/       # SVGs autorais de pasta/C/C++/Rust
+│   ├── CMakeLists.txt           qt_add_qml_module: o QML_FILES e' a lista do que
+│   │                            o modulo ENTREGA (ver verificar-qml-alcance.sh)
+│   ├── src/                     ponte C++: CoreClient (um .cpp por dominio),
+│   │                            realce do editor, clipboard, chrome de janela
+│   ├── assets/icons/tree/       SVGs autorais de pasta/C/C++/Rust
 │   └── qml/
-│       ├── components/          # KvIcon/KvButton/KvTooltip reutilizáveis
-│       ├── shell/               # App/toolbar, rail, layout, overlays, status
-│       ├── workspace/           # picker, Start Screen e Project Health
-│       ├── editor/              # renderer, controllers, outline/folding
-│       ├── panels/              # tool windows inferiores
-│       └── ipc/                 # routers de eventos por domínio
+│       ├── Main.qml  Theme.qml  StatusColors.qml
+│       ├── app/                 composition: AppDomains, AppRouters
+│       ├── ipc/                 routers por dominio (<X>EventRouter/<X>RequestRouter)
+│       ├── shell/               toolbar, rail, layout, overlays, status, menus
+│       ├── components/          KvIcon/KvButton/KvTooltip reutilizaveis
+│       ├── editor/              renderer, controllers, outline/folding
+│       ├── panels/bottom/       tool windows inferiores
+│       ├── workspace/           picker, Start Screen e Project Health
+│       └── command/ configaction/ datasource/ debug/ diagnostics/ git/ grafana/
+│           jobs/ library/ project/ runtime/ search/ settings/ setup/ sim/
+│           toolchain/
 │
-├── scripts/                     # gates, launcher e packaging/instalação
-├── dist/                        # saída única: AppImage/checksum/instalador/tutorial
+├── scripts/                     gates, sondas, ambiente, launcher, packaging
+│   └── qml-harness/             tst_*.qml — logica QML headless
+├── packaging/appimage/          Containerfile e receita do AppImage
+├── cmake/                       politicas estritas da propria UI
+├── dist/                        saida unica: AppImage/checksum/instalador
+├── schemas/                     ipc, settings, project, workspace, recent-workspaces
+├── imagens/
 │
-├── schemas/
-│   ├── ipc.schema.json
-│   ├── settings.schema.json
-│   ├── recent-workspaces.schema.json
-│   └── project.schema.json
-│
-├── templates/
-│   ├── cpp-console-strict/
-│   ├── cpp-qt-qml-strict/
-│   ├── java-backend-strict/
-│   ├── python-backend-strict/
-│   └── embedded-linux-strict/
-│
-├── docs/
-│   ├── adr/                     # decisões de adoção e arquitetura
-│   ├── tooling/                 # registro auditável de componentes externos
-│   ├── 00-product-vision.md
-│   ├── 01-architecture.md
-│   ├── 02-repository-structure.md
-│   ├── 03-ipc-protocol.md
-│   ├── 04-command-system.md
-│   ├── 05-design-system.md
-│   ├── 06-strict-mode.md
-│   ├── 07-tooling-lifecycle.md
-│   ├── 08-performance-budget.md
-│   ├── 09-roadmap.md
-│   └── 10-mvp-plan.md
-│
-└── prompts/
-    └── GPT_TERMINAL_BOOTSTRAP.md
+├── docs/                        LIDA EM TODA SESSAO
+│   └── adr/ arquitetura/ build/ iconografia/ integracoes/ roadmaps/ seguranca/
+│      specs/ tooling/
+├── docs-privada/                continuidade interna
+│   └── ContextoIA.md diario/ prompts/
+└── docs-legada/                 superado ou cancelado; nao implementar dali
 ```
 
-## Por que começar com Rust workspace
+**Não existe `templates/`.** Criar projeto novo escreve os arquivos a partir de
+`crates/kinein-core/src/workspace/create.rs`. Template novo é código lá, com
+teste em `crates/kinein-core/src/tests/workspace.rs` — não é arquivo numa pasta
+de scaffold, e não há mecanismo de template externo.
 
-O core é o cérebro do projeto. Começar com Rust evita que a lógica da IDE fique presa ao Qt/C++ cedo demais.
-
-A UI pode ser adicionada depois em `ui/` como:
+## 2. Os quatro crates, e por que são quatro
 
 ```text
-ui/
-├── CMakeLists.txt
-├── src/
-└── qml/
+kinein-core       toda a logica: build, run, debug, LSP, git, terminal, fs, jobs
+kinein-protocol   os TIPOS do contrato. Um modulo por dominio, re-exportado plano
+kinein-config     configuracao tipada
+kinein-cli        cliente fino do protocolo; nao replica o core
 ```
 
-ou integrada via CXX-Qt futuramente, se fizer sentido.
+O core é o cérebro. Começar por Rust foi o que evitou que a lógica da IDE
+ficasse presa ao Qt/C++ cedo demais — a UI conversa por JSON-RPC sobre stdio e
+não linka nada do core.
 
-## Nomes de packages e crates
+**O caminho de crescimento é `função → arquivo → pasta → crate`**
+(`ARCHITECTURE.md` §6). Hoje o core é **um crate só**, e isso está certo
+enquanto couber: nenhum dos crates futuros já nomeados foi criado. As 18 pastas
+de domínio acima nasceram do passo `arquivo → pasta`, cada uma quando um arquivo
+único deixou de fazer uma coisa só.
 
-Usar hífen no nome do pacote:
+## 3. Nomes e convenções
+
+Pacote com hífen, crate com underscore:
 
 ```toml
 [package]
 name = "kinein-core"
 ```
 
-No código Rust, o crate será referenciado como:
-
 ```rust
 use kinein_core::...
 ```
 
-Convenção prática:
-
-- diretórios/packages: `kebab-case`;
-- crates/imports/módulos Rust: `snake_case`;
-- tipos Rust: `PascalCase`;
-- funções: `snake_case`.
-
-## Arquivo Cargo.toml raiz sugerido
-
-```toml
-[workspace]
-resolver = "2"
-members = [
-    "crates/kinein-core",
-    "crates/kinein-protocol",
-    "crates/kinein-config",
-    "crates/kinein-cli",
-]
-
-[workspace.package]
-edition = "2024"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/SEU_USUARIO/kinein-vectis"
-homepage = "https://github.com/SEU_USUARIO/kinein-vectis"
-readme = "README.md"
-rust-version = "1.85"
-
-[workspace.lints.rust]
-unsafe_code = "forbid"
-warnings = "deny"
-missing_docs = "warn"
-
-[workspace.lints.clippy]
-all = "deny"
-pedantic = "deny"
-nursery = "deny"
-cargo = "warn"
-unwrap_used = "deny"
-expect_used = "deny"
-panic = "deny"
-todo = "deny"
-dbg_macro = "deny"
-print_stdout = "warn"
-print_stderr = "warn"
-module_name_repetitions = "allow"
-missing_errors_doc = "allow"
-missing_panics_doc = "allow"
-
-[profile.dev]
-debug = true
-incremental = true
-
-[profile.release]
-lto = "fat"
-codegen-units = 1
-strip = true
-panic = "abort"
+```text
+diretorios/packages          kebab-case
+crates/imports/modulos Rust  snake_case
+tipos Rust                   PascalCase
+funcoes                      snake_case
 ```
 
-A versão exata de `rust-version` deve ser ajustada ao toolchain instalado.
+## 4. O `Cargo.toml` raiz — a FONTE é o arquivo
+
+O workspace declara `resolver = "2"`, `edition = "2024"`, `rust-version`
+e os lints estritos em `[workspace.lints]`, herdados por todos os crates.
+
+**Não há cópia deles aqui, e a ausência é deliberada.** Uma cópia de
+configuração num documento é exatamente o que envelhece calado: a versão
+anterior desta seção dizia `missing_docs = "warn"` quando o arquivo já dizia
+`deny`, e listava três lints a menos do que existem. O que os lints exigem, e
+por quê, está em [`06-strict-mode.md`](06-strict-mode.md); o que eles **são**
+está em `Cargo.toml`, que é o único lugar onde a resposta não pode envelhecer.
+
+```bash
+sed -n '/\[workspace.lints/,/^\[profile/p' Cargo.toml
+```
+
+## 5. Como conferir que esta página ainda é verdade
+
+Nenhuma afirmação aqui depende de acreditar nela:
+
+```bash
+find crates/kinein-core/src -mindepth 1 -maxdepth 1 -type d | sort
+ls crates/kinein-protocol/src/*.rs | wc -l          # modulos do protocolo
+ls crates/kinein-core/src/handlers/*.rs | wc -l     # handlers
+find ui/qml -mindepth 1 -maxdepth 1 -type d | sort
+find docs -mindepth 1 -maxdepth 1 -type d | sort
+ls -d templates 2>&1                                # tem de FALHAR
+```
+
+**A lição desta remedição, e ela vale para o repositório inteiro:** o gate de
+veracidade confere número, e este documento não tinha nenhum. **Árvore de
+arquivos é afirmação sobre o disco tanto quanto um número é.** A última vez que
+esta página foi tocada foi em 2026-08-30, e mesmo então só nas duas linhas do
+`terminal/` e do `lsp/` que a fatia daquele dia mexeu — a `templates/` inexistente
+já estava aqui e passou por todas as revisões desde então. Quando um documento
+descreve estrutura, os comandos acima são o que o mantém honesto.

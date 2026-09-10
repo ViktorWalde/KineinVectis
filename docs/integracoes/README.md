@@ -143,9 +143,20 @@ Estado real hoje (detalhe e pins no registry):
 | notify | A | Mudanças externas no filesystem | [ADR-0001](../adr/ADR-0001-notify-filesystem-watcher.md) |
 | alacritty_terminal | A | Emulador VT do terminal integrado | [ADR-0004](../adr/ADR-0004-alacritty-terminal-emulator.md) |
 | linuxdeploy (+ plugin Qt) | A | Empacotamento AppImage (build-time) | [ADR-0003](../adr/ADR-0003-linuxdeploy-appimage-packaging.md) |
+| exmex | A | Avaliador da fórmula que o usuário digita (domínio `sim`) | [ADR-0006](../adr/ADR-0006-exmex-avaliador-de-expressao.md) |
+| SymPy | A | **Oráculo de exatidão** (domínio `sim`): resolve a equação que o usuário digitou. Processo externo, opcional — ausente, a IDE diz que a coluna do erro trocou de procedência | [arquitetura/34 §13.10](../arquitetura/34-simulacao-por-conceito.md) |
 
-Próxima integração recomendada: **EditorConfig** (L1), a primeira fatia pequena
-depois de fechar a baseline A3.
+> **CORRIGIDO em 2026-09-10.** Esta linha dizia *"Próxima integração recomendada:
+> **EditorConfig** (L1)"* — e o EditorConfig foi **auditado com resultado
+> NEGATIVO em 2026-07-16**, decisão registrada em
+> [`../roadmaps/40`](../roadmaps/40-estado-e-continuidade.md) §5 como uma das que
+> **não se reabrem**. Um índice de adoção recomendando o que foi recusado é a
+> forma mais cara de documento errado: ele não confunde, ele **manda fazer**.
+>
+> A ordem viva de integrações está em
+> [`../roadmaps/40`](../roadmaps/40-estado-e-continuidade.md) §4 e §7. O que este
+> índice responde é outra pergunta — *"o que já está adotado, em que modo e com
+> que licença"* — e é só isso que ele deve responder.
 
 ## Referência profissional é obrigatória
 

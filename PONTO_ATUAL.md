@@ -1,5 +1,36 @@
 # PONTO ATUAL — fila viva do Kinein Vectis (2026-07-15)
 
+> **A FILA VIVA MUDOU DE ENDEREÇO. Remedido em 2026-09-10.**
+>
+> Este arquivo continua sendo leitura útil — o **porquê** de muita decisão está
+> aqui e em lugar nenhum mais —, mas **ele não é mais onde a próxima tarefa
+> mora**. Quem cumpre esse papel é
+> [`docs/roadmaps/40-estado-e-continuidade.md`](docs/roadmaps/40-estado-e-continuidade.md),
+> e o `docs/README.md` já o anuncia como "COMECE POR AQUI ao retomar" desde
+> 2026-09-04.
+>
+> **O que a remedição de 2026-09-10 mediu, e é por isso que este aviso existe:**
+>
+> ```text
+> campo         este arquivo dizia   medido em 2026-09-10
+> protocolo     0.62.0               0.87.0
+> gates         13                   19
+> testes Rust   378                  658
+> debito        22 arquivos          1 (ui/qml/editor/EditorController.qml)
+> ```
+>
+> **E ele se contradiz internamente**, que é o modo de falha que a §regra zero
+> deste próprio arquivo existe para pegar: a "trilha" da §TRILHA dá o `E1`
+> (flake do `tools::`) como **FECHADO em 2026-08-29**, e a seção `PRÓXIMO GESTO`,
+> 300 linhas abaixo, ainda o descreve como *"VERIFICADO EM ABERTO"* com um
+> caminho de conserto. O commit `2e5448e` fechou-o, e o `tools.rs` de hoje trata
+> `ETXTBSY` por **retentativa com espera** — nem o caminho que a seção prescreve.
+>
+> **Tudo abaixo desta linha é REGISTRO DATADO**, e vale como tal: as medições
+> têm data e as decisões têm motivo. O que **não** se deve fazer é ler a seção
+> `PRÓXIMO GESTO` como fila — ela é de 2026-07-17, e a fila de hoje está no
+> `roadmaps/40` §4 e §7.
+>
 > Este arquivo contém somente trabalho presente ou futuro, em ordem de
 > execução. Trabalho concluído deve ser registrado no documento do domínio e
 > em `docs-privada/ContextoIA.md`, e então removido daqui.
@@ -370,6 +401,13 @@ VALIDAÇÃO JÁ FEITA — NÃO REPETIR SEM MUDANÇA DE CÓDIGO
   Fedora/Wayland. AppImage 0.1.0 regenerado e testado com este código.
 
 PRÓXIMO GESTO — ordem explicita, montada em 2026-07-17
+
+> **REGISTRO, não fila (marcado em 2026-09-10).** Esta ordem é de 2026-07-17 e
+> vários itens dela fecharam desde então — o `E1` abaixo aparece como "EM
+> ABERTO" e foi fechado em 2026-08-29 pelo commit `2e5448e`. A fila de hoje está
+> em [`docs/roadmaps/40-estado-e-continuidade.md`](docs/roadmaps/40-estado-e-continuidade.md)
+> §4 (o que está aberto) e §7 (a ordem escolhida pelo autor). Leia o que segue
+> pelo **motivo** de cada decisão, nunca como próxima tarefa.
 
 A ordem abaixo e' por DESBLOQUEIO, nao por tamanho. O que nao exige decisao vem
 primeiro; o que exige esta marcado com [DECISAO SUA] e tem recomendacao pronta,

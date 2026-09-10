@@ -59,9 +59,29 @@ envelhecer, o que acontece?"*
 | Classe | Regra | O que acontece se envelhecer | Onde |
 | --- | --- | --- | --- |
 | **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `AGENTS.md`, `arquitetura/ARCHITECTURE.md` §2/§4/§5, `adr/` |
-| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `PONTO_ATUAL.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
+| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `roadmaps/40` (a fila), `LEITURA_TECNICA.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
 | **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `docs/specs/`, `docs/roadmaps/` |
 | **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `docs-privada/ContextoIA.md`, `diario/`, `adr/` |
+
+### Por que o `PONTO_ATUAL.md` saiu de "fila viva" (2026-09-10)
+
+Ele era o primeiro item da linha ESTADO e a §1 do `GUIAIA.md` mandava lê-lo como
+*"próxima tarefa executável"*. **Medido em 2026-09-10, ele dizia protocolo
+`0.62.0`, 13 gates, 378 testes Rust e 22 arquivos em débito** — contra `0.87.0`,
+19, 658 e 1 no disco. Pior que os números: a §TRILHA dá o `E1` como fechado em
+2026-08-29 e a seção `PRÓXIMO GESTO`, 300 linhas abaixo, ainda o descreve como
+aberto, com caminho de conserto que o código não seguiu.
+
+O papel de fila passou para
+[`roadmaps/40-estado-e-continuidade.md`](roadmaps/40-estado-e-continuidade.md),
+que já era anunciado como "COMECE POR AQUI" desde 2026-09-04 — a mudança aqui só
+para de mandar a sessão para dois lugares. **O `PONTO_ATUAL.md` não foi legado
+nem esvaziado:** ele continua sendo onde mora o *porquê* de decisões que nenhum
+outro documento carrega, e o cabeçalho dele agora diz exatamente isso.
+
+**A lição é a mesma da nota abaixo, num eixo diferente:** um documento que
+*já foi* estado não vira log sozinho quando para de ser atualizado — ele vira
+mentira, e continua com o crachá de estado no pescoço.
 
 ### Por que o `docs-privada/ContextoIA.md` saiu de "estado real" (2026-07-17)
 
@@ -136,7 +156,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 
 | Documento | Assunto |
 | --- | --- |
-| [LEITURA_TECNICA.md](LEITURA_TECNICA.md) | **Comece por aqui se você é novo no projeto**: o que a IDE é e não é, o peso medido de cada camada, o que existe de verdade por domínio, onde a arquitetura está sob tensão e o que a direção escolhida custa |
+| [LEITURA_TECNICA.md](LEITURA_TECNICA.md) | **Comece por aqui se você é novo no projeto** (remedida em 2026-09-10): o que a IDE é e não é, o peso medido de cada camada, o que existe de verdade por domínio, onde a arquitetura está sob tensão e o que a direção escolhida custa |
 | [CONTRIBUINDO.md](CONTRIBUINDO.md) | **Onde olhar para alterar/implementar**: arquitetura, mapa por área, ambiente, ritual da mudança, gate e convenções |
 | [integracoes/README.md](integracoes/README.md) | **Entrada obrigatória para adotar qualquer ferramenta**: modos A–D, gate de auditoria, níveis L0–L10, checklist de 10 passos e o índice do que já está adotado |
 | [integracoes/36-ferramentas-de-embarcados.md](integracoes/36-ferramentas-de-embarcados.md) | **Levantamento de embarcados** (2026-09-03): probe-rs, OpenOCD, pyOCD e QEMU com licença verificada na fonte e — o que decide o desenho — qual protocolo cada uma fala. Candidatas, **não** adotadas |
@@ -147,7 +167,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | Documento | Assunto |
 | --- | --- |
 | [arquitetura/ARCHITECTURE.md](arquitetura/ARCHITECTURE.md) | **LEITURA OBRIGATÓRIA — contrato de arquitetura (camadas, regra de split, crescimento). Verificado por catraca. Antes de propor arquitetura nova: MEDIR — o problema costuma ser regra não cumprida, não regra ausente (§1.1)** |
-| [arquitetura/02-repository-structure.md](arquitetura/02-repository-structure.md) | Estrutura real do repositório e crates |
+| [arquitetura/02-repository-structure.md](arquitetura/02-repository-structure.md) | **Estrutura real do repositório e crates** (remedida em 2026-09-10): a árvore como ela é, os comandos que a conferem, e o registro de quando ela mentiu — listava uma pasta `templates/` que nunca existiu |
 | [arquitetura/03-ipc-protocol.md](arquitetura/03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado — a **forma** de cada mensagem, por domínio |
 | [arquitetura/04-boot-e-comunicacao.md](arquitetura/04-boot-e-comunicacao.md) | **Boot e comunicação, fim a fim**: quem sobe quem, as threads do core e o que fala com quais, o caminho de uma requisição e de um evento, o que é e o que NÃO é garantido em ordem, crash e recuperação, e como falar com o core na mão |
 | [arquitetura/06-strict-mode.md](arquitetura/06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
@@ -157,6 +177,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [arquitetura/27-modulos-por-dominio.md](arquitetura/27-modulos-por-dominio.md) | Módulos por domínio. **Parcialmente entregue** (a catraca do core saiu daqui); resta a Frente 1 — `<X>Domain` na UI, o caminho para o `Main.qml` sair do débito |
 | [arquitetura/32-editor-por-responsabilidade.md](arquitetura/32-editor-por-responsabilidade.md) | **O editor cortado por responsabilidade** (2026-09-02): o pagamento do maior débito do repositório, os quatro donos que nasceram, as invariantes que cada um guarda — e a decisão que ficou EM ABERTO, com o custo medido das duas saídas |
 | [arquitetura/33-busca-no-projeto.md](arquitetura/33-busca-no-projeto.md) | **Os TRÊS buscadores e o casamento multi-linha** (2026-09-02): qual é qual e por que confundi-los é o defeito clássico, como a busca passou a casar no conteúdo, a invariante "preview conta o que a escrita faz", e por que a sintaxe `\n` mora na UI e não pode descer para o core |
+| [arquitetura/34-simulacao-por-conceito.md](arquitetura/34-simulacao-por-conceito.md) | **A simulação por conceito** (2026-09-05): o catálogo de duas camadas, a LIGAÇÃO EXPLÍCITA de variáveis (a IDE não casa por nome), o princípio de que nada é adivinhado, o oráculo de exatidão que separa resultado de animação, e o gate de ordem de convergência que decide se um conceito entra |
 
 ## build/ — ambiente, compilação e verificação
 
@@ -187,7 +208,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [roadmaps/31-simulacao-fisica-matematica.md](roadmaps/31-simulacao-fisica-matematica.md) | **Etapa futura, NÃO arquitetada**: montar simulação física/matemática por layout, a IDE calcular e exibir em OpenGL. Estudo registrado a pedido do autor (2026-09-01) — as sete perguntas que precisam de resposta antes de qualquer código |
 | [roadmaps/34-depois-do-mvp.md](roadmaps/34-depois-do-mvp.md) | **Sucessor do 30, o pós-MVP** (2026-09-02): as quatro frentes — dívida que cobra pedágio, atrito diário medido, profundidade (TR2) e a simulação —, o estado medido item a item, a ordem linear recomendada e o comando que decide se cada item ainda existe |
 | [roadmaps/35-ambiente-cpp-embarcados-simulacao.md](roadmaps/35-ambiente-cpp-embarcados-simulacao.md) | **Sucessor parcial do 34** (2026-09-03): ambiente C/C++ facilitado (catálogo de bibliotecas curado e auditado, `find_package`/`FetchContent` pinado), embarcados reordenado de L6 por decisão registrada, e a simulação — com as decisões de escopo tomadas pelo autor e o que já existe medido |
-| [roadmaps/40-estado-e-continuidade.md](roadmaps/40-estado-e-continuidade.md) | **COMECE POR AQUI ao retomar** (2026-09-04): o estado medido, o único arquivo que resta na catraca e por que ele não se corta, o que esta sessão entregou, o que está aberto e as decisões que não se reabrem |
+| [roadmaps/40-estado-e-continuidade.md](roadmaps/40-estado-e-continuidade.md) | **COMECE POR AQUI ao retomar — é a FILA VIVA** (remedido em 2026-09-10, com o gate verde): o estado medido, o único arquivo que resta na catraca e por que ele não se corta, o que cada sessão entregou, o que está aberto e as decisões que não se reabrem. Ele substituiu o `PONTO_ATUAL.md` nesse papel |
 | [roadmaps/39-divida-tecnica-paga.md](roadmaps/39-divida-tecnica-paga.md) | **O registro da dívida paga** (2026-09-04): a dívida da catraca paga de 8 arquivos para 1 — cada corte com a pergunta que o justifica, as regras que saíram da UI, as duplicações que já tinham divergido, e o único arquivo restante com as duas saídas medidas para o autor decidir |
 | [roadmaps/38-divida-restante-e-continuidade.md](roadmaps/38-divida-restante-e-continuidade.md) | **Superado pelo 39** na parte de dívida (2026-09-03): registro de como a fila estava quando o contexto acabou. A §4 (o que está aberto e NÃO é dívida) continua valendo |
 | [roadmaps/29-verticais-de-linguagem.md](roadmaps/29-verticais-de-linguagem.md) | **Verticais C/C++, Rust e Python, medidas**: por que Python é reconhecido e ignorado, o que falta para C/C++ sem atrito, e onde está o risco proprietário real (Pylance) — com fontes citadas |
@@ -223,6 +244,7 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | [adr/ADR-0003-linuxdeploy-appimage-packaging.md](adr/ADR-0003-linuxdeploy-appimage-packaging.md) | Empacotamento AppImage, pins, baseline Linux e auditoria |
 | [adr/ADR-0004-alacritty-terminal-emulator.md](adr/ADR-0004-alacritty-terminal-emulator.md) | Adoção do `alacritty_terminal` como motor de emulação VT |
 | [adr/ADR-0005-tres-arvores-de-documentacao.md](adr/ADR-0005-tres-arvores-de-documentacao.md) | As três árvores (`docs/`, `docs-privada/`, `docs-legada/`) e por que contrariam a remoção da `docs/archive/` |
+| [adr/ADR-0006-exmex-avaliador-de-expressao.md](adr/ADR-0006-exmex-avaliador-de-expressao.md) | Adoção do `exmex` para a fórmula que o usuário digita — e as duas recusas que ensinam: o `evalexpr` trocou de MIT para AGPL na v12, e o `mexprp` reprova por LGPL na transitiva |
 | [tooling/OPEN_COMPONENT_REGISTRY.json](tooling/OPEN_COMPONENT_REGISTRY.json) | Registro auditável de componentes open-source adotados |
 
 ## iconografia/ — sistema visual e ícones

@@ -265,12 +265,26 @@ catraca vai barrar. Cortar e acrescentar na mesma fatia é o padrão que o roadm
 
 ## 6. FRENTE D — a simulação física/matemática
 
-[`31-simulacao-fisica-matematica.md`](31-simulacao-fisica-matematica.md), pedida
-pelo autor em 2026-09-01: configuração e entrada de fórmulas **por layout**, a
-IDE calculando a partir do conceito matemático/físico selecionado mais a equação
-do usuário, exibição via OpenGL.
+> **DEIXOU DE SER ESTUDO em 2026-09-05, e o texto abaixo é de 2026-09-02.**
+> As sete perguntas da §5 do [`31`](31-simulacao-fisica-matematica.md) estão
+> respondidas, a arquitetura está em
+> [`../arquitetura/34`](../arquitetura/34-simulacao-por-conceito.md), e o domínio
+> `sim` existe em código: 11 métodos IPC, catálogo de 20 conceitos, integrador
+> escalar **e** vetorial verificados por ordem de convergência, gráfico 2D nos
+> dois modos e persistência em `.kinein/simulacoes/`.
+>
+> **A pergunta que o parágrafo abaixo trata como aberta foi respondida**, e a
+> resposta manteve o invariante: a UI segue **100% 2D**. Quem desenharia em
+> OpenGL é um processo `kinein-sim` separado, e ele **não existe ainda** — a
+> medição de 2026-09-05 mostrou que o quadro comprimido cabe no JSON-RPC
+> (1,42 MB/s a 30fps), então a memória compartilhada deixou de ser exigência do
+> transporte.
+>
+> O que falta está na fila viva:
+> [`40`](40-estado-e-continuidade.md) §4 — o oráculo SymPy, o motor de EDP (com
+> o motor compilado como pré-requisito), a vista 3D e salvar um sistema.
 
-**Continua sendo ESTUDO, e de propósito.** Ele lista as perguntas que precisam de
+**Era ESTUDO até 2026-09-05, e era de propósito.** Ele lista as perguntas que precisam de
 resposta antes de existir arquitetura — e uma delas colide com um invariante já
 travado no gate: `scripts/verificar-appimage.sh` verifica que a UI é **100% 2D**
 (sem `ShaderEffect`, `QOpenGL`, `QRhi`, `QtQuick3D`), porque o AppImage força

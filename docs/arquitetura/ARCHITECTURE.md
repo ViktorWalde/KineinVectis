@@ -505,6 +505,40 @@ Regras que mantêm isso saudável:
                                             `self.drafts`: o autosave do projeto
                                             NOVO ia para o banco do ANTERIOR.
                                             Build, clippy e 271 testes verdes.
+    verificar-qml-              2026-09-03  binding para propriedade que NAO
+      propriedades.sh                       existe. Medido por mutacao antes de
+                                            o script existir: trocar `findQuery`
+                                            por `findQeury` no ShellEditorHost
+                                            deixava build, qmllint, fiacao,
+                                            logica e catraca TODOS verdes, com o
+                                            Find quebrado. O QML so reclama de
+                                            propriedade inexistente quando o
+                                            componente e INSTANCIADO, e nenhum
+                                            harness instancia os hosts do shell.
+    verificar-qml-              2026-09-03  a MESMA derivacao em dois arquivos
+      duplicacao.sh                         diverge em silencio. Medido:
+      (catraca)                             `ProblemsPanel.severityColor` pintava
+                                            severidade desconhecida de AZUL e
+                                            `EditorGutter.diagnosticColor` de
+                                            VERMELHO. O mesmo diagnostico, duas
+                                            cores, gate inteiro verde — cada
+                                            copia, sozinha, estava certa.
+    verificar-qml-alcance.sh    2026-09-07  componente que o modulo ENTREGA e
+      (tela inalcancavel)                   nenhuma tela instancia. O
+                                            `SimPlotSystem` estava no QML_FILES,
+                                            tinha harness proprio que PASSAVA, e
+                                            nao era instanciado em lugar nenhum:
+                                            o motor vetorial ficou um dia inteiro
+                                            sem porta com os 18 gates verdes. A
+                                            razao de nenhum ver e estrutural —
+                                            cada um confere o componente por SI,
+                                            e faltava perguntar se ALGUMA tela
+                                            chega ali, que e a pergunta do
+                                            usuario. Efeito medido contra o
+                                            binario: os 3 conceitos de sistema
+                                            apareciam na lista e a tela ESCALAR
+                                            os aceitava, aprovando `mu*2` na
+                                            "Orbita de dois corpos".
     ```
 
     **Um gate que nunca reprovou não está provado — está sem evidência.** Ao
