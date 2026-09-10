@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **O `0.88.0` (2026-09-10) acrescentou o veredito de UNIDADE:**
+> `SimDimensionCheck` e `SimDimensionVerdict`, no `dimensions` do `sim.run`
+> (um) e do `sim.runSystem` (um por componente). Tipos novos no contrato sobem
+> o minor. A medicao que os sustenta esta no
+> [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md) §19.5 — e o
+> que ela achou primeiro foram TRES armadilhas que dariam veredito errado em
+> silencio.
+>
 > **RECONFERIDO em 2026-09-10**, com o gate completo verde: `0.87.0`, **130
 > métodos**, **41 eventos**, **30 domínios**, e os 30 com seção aqui.
 >
@@ -46,7 +54,7 @@
 > ```
 >
 > ```text
-> protocolo   0.87.0
+> protocolo   0.88.0
 > metodos     130 roteados
 > eventos     41 (36 literais + 5 construidos por format!)
 > dominios    30, e os 30 tem secao neste documento

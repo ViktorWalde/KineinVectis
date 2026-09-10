@@ -67,8 +67,8 @@ envelhecer, o que acontece?"*
 
 Ele era o primeiro item da linha ESTADO e a §1 do `GUIAIA.md` mandava lê-lo como
 *"próxima tarefa executável"*. **Medido em 2026-09-10, ele dizia protocolo
-`0.62.0`, 13 gates, 378 testes Rust e 22 arquivos em débito** — contra `0.87.0`,
-19, 658 e 1 no disco. Pior que os números: a §TRILHA dá o `E1` como fechado em
+`0.62.0`, 13 gates, 378 testes Rust e 22 arquivos em débito** — contra `0.88.0`,
+19, 666 e 1 no disco. Pior que os números: a §TRILHA dá o `E1` como fechado em
 2026-08-29 e a seção `PRÓXIMO GESTO`, 300 linhas abaixo, ainda o descreve como
 aberto, com caminho de conserto que o código não seguiu.
 

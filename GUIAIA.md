@@ -40,7 +40,7 @@ Leia nesta ordem antes de alterar código:
 4. `docs/roadmaps/40-estado-e-continuidade.md` — **a fila viva**: o estado
    medido, o que está aberto e a ordem escolhida pelo autor. Ele substituiu o
    `PONTO_ATUAL.md` nesse papel; medido em 2026-09-10, o `PONTO_ATUAL` ainda
-   dizia protocolo `0.62.0`, 13 gates e 378 testes (hoje: `0.87.0`, 19 e 658).
+   dizia protocolo `0.62.0`, 13 gates e 378 testes (hoje: `0.88.0`, 19 e 666).
    O `PONTO_ATUAL.md` continua valendo como **registro do porquê** — leia-o por
    isso, nunca como próxima tarefa.
 5. O documento específico indicado nas tabelas deste guia.
@@ -763,13 +763,16 @@ ui/qml/sim/Sim{FormulaField,BindingTable,ValueTable,Calculation,
                 RunControls,RunResultView,Plot2d}.qml          ramo ESCALAR
 ui/qml/sim/Sim{SystemAuthoring,ComponentEquation,SystemAccuracy,
                 SystemResultView,PlotSystem}.qml               ramo VETORIAL
+ui/qml/sim/Sim{AccuracyProvenance,DimensionsView}.qml   os DOIS, procedencia
+                                                        do exato e as unidades
 ui/qml/sim/SimFormat.qml             singleton: como um numero de simulacao
                                      aparece, num dono so'
     ↕ crates/kinein-protocol/src/{sim,sim_corrida}.rs
 crates/kinein-core/src/handlers/sim.rs
     → crates/kinein-core/src/sim/{catalogo,entradas,entradas_sistema,formula,
         corrida,corrida_sistema,integrador,sistema,exata,invariante,
-        oraculo,persistencia}.rs
+        persistencia}.rs
+    → crates/kinein-core/src/sim/oraculo/{mod,programa,processo,portao}.rs
         ↕ python3 + SymPy, processo EXTERNO e opcional (a fronteira do GDB)
 ```
 
@@ -786,6 +789,10 @@ crates/kinein-core/src/handlers/sim.rs
   definido, e a tela o recusa com o motivo em vez de integrar outra coisa.
 - **Salvar ainda não vale para a forma vetorial:** o `SimSaved` carrega uma
   fórmula, e um sistema tem uma por componente. A tela diz isso.
+- **As UNIDADES são checadas** nas formas que integram (2026-09-10), no mesmo
+  processo do oráculo. Três camadas: argumento de transcendente, os termos entre
+  si, e o LADO ESQUERDO. O limite vai na tela: unidade que fecha não quer dizer
+  física certa — `E = m·v²` sem o meio passa.
 - **A coluna `exato` tem PROCEDÊNCIA** (`SimAccuracySource`, 2026-09-10). Com o
   SymPy presente ela responde pela equação DIGITADA; sem ele, pela do conceito —
   e a tela diz qual, com o motivo. Sem esse campo ela mentia por 78.000x, medido.

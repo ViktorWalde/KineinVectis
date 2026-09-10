@@ -67,8 +67,8 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **130 métodos IPC** roteados e **41 eventos**, em **30 domínios de protocolo**;
-**18 pastas de domínio** no core mais 14 módulos de arquivo único; **658 testes**
-Rust verdes e **31 harnesses QML** (remedido em 2026-09-10). Protocolo `0.87.0`.
+**18 pastas de domínio** no core mais 14 módulos de arquivo único; **666 testes**
+Rust verdes e **31 harnesses QML** (remedido em 2026-09-10). Protocolo `0.88.0`.
 O gate tem **19 verificações**.
 
 **Os comandos que provam os dois primeiros estão no
@@ -166,7 +166,7 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       fonte e data. Sem fonte, a IDE mostra o link e diz que
                       nao tem passo a passo — nunca traduz comando de distro
 
-            sim       simulacao por conceito (0.83.0-0.87.0): catalogo de duas
+            sim       simulacao por conceito (0.83.0-0.88.0): catalogo de duas
                       camadas, ligacao EXPLICITA de variaveis, integrador
                       escalar e vetorial verificados por ORDEM DE CONVERGENCIA,
                       e o ORACULO — que desde 2026-09-10 resolve a equacao que

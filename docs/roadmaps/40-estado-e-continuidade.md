@@ -46,8 +46,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.87.0
-testes      658 Rust + 31 harnesses QML
+protocolo   0.88.0
+testes      666 Rust + 31 harnesses QML
 metodos     130 IPC roteados, 41 eventos
 dominios    30, e os 30 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -422,9 +422,15 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                           FORMULA, nao por ponto. Cobertura nova
                                           no catalogo de hoje: ZERO. O valor dele
                                           e' consertar o defeito da §19.0
---  sim: unidades CHECADAS                decisao de 2026-09-05 (o
-                                          `check_dimensions` do SymPy checa em
-                                          RUNTIME). Depende do oraculo entrar
+--  sim: unidades CHECADAS                FECHADO em 2026-09-10 (§7.4) para as
+                                          formas que INTEGRAM. Falta a ALGEBRICA,
+                                          e o motivo e' de catalogo: ela nao
+                                          declara a unidade do RESULTADO
+                                          (`energia-cinetica` declara `m` e `v`,
+                                          nao o joule), entao so' metade da
+                                          checagem seria possivel — e meia
+                                          checagem numa tela que promete conferir
+                                          e' pior que nenhuma
 --  sim: `kinein-sim` e a vista 3D        o processo separado com OpenGL
                                           offscreen. Depende do SISTEMA_EDO ou
                                           da EDP existirem — antes disso nao ha'
@@ -826,3 +832,74 @@ a tela do sistema carrega a ressalva, e o sinal honesto dela continua sendo o
 síncrono e bloqueia o laço do core. Ele já podia levar minutos (o teto é 100
 milhões de passos); o oráculo acrescenta 5 s no pior caso. Virar job é fatia
 própria, e vale para os dois.
+
+### 7.4 As unidades passaram a ser CHECADAS — 2026-09-10
+
+**Decisão do autor em 2026-09-05, e ela dependia do oráculo existir.** A decisão
+original desta etapa era rótulo SEM checagem, tomada sobre a medição de que o
+`uom` checa em tempo de COMPILAÇÃO e uma fórmula digitada não tem tipo Rust
+nenhum. O SymPy checa em EXECUÇÃO, que é quando a fórmula do usuário existe.
+
+Entrou **na mesma ida do oráculo**: o processo custa ~200 ms de `import` antes
+de qualquer conta.
+
+**Três camadas, e a terceira é a que pega o caso difícil:**
+
+```text
+1. argumento de transcendente   `sin(x)` com `x` em metros
+2. os TERMOS entre si           `x + x^3` nao se soma
+3. o LADO ESQUERDO              a equacao tem de ser da grandeza do estado
+                                dividida pelo tempo elevado a ordem — e' o que
+                                pega `-(k/m)*x*x*x` SOZINHO, coerente consigo
+                                mesmo e que nao e' uma aceleracao
+```
+
+**Na forma vetorial ela vale mais**, e a razão é aritmética: são `n` equações.
+Medido — `vx' = x` (a posição no lugar da velocidade) **passa no
+`sim.checkSystem`**, porque ele confere ligação e não física, e sai `wrongSide`
+aqui.
+
+**A medição achou TRÊS armadilhas antes do código, e as três dariam veredito
+errado em silêncio** (`31` §19.5):
+
+```text
+substituir pela UNIDADE crua   `a*x - b*v` vira `u - u = 0`, e a dimensao de
+faz os termos CANCELAREM       zero e' 1
+o `check_dimensions` fica      medido: ele ACEITA `length^3/time^2 +
+CEGO com simbolo livre         length/time^2`. A defesa NAO e' usa-lo
+o expoente volta FLOAT         `length^1.00000000000000` != `length^1` num
+                               dicionario, e as quatro equacoes CERTAS da
+                               orbita foram reprovadas por isso
+```
+
+**E uma quarta, que mudou o protocolo com o processo.** O `dsolve` do pêndulo
+não linearizado não volta, o teto de 5 s o mata, e **o veredito de unidade
+morria junto** — pronto em 3 ms, dizendo exatamente o que estava errado. O
+processo passou a responder em **duas linhas, a barata primeiro**, e o core lê
+linha a linha; o teto não descarta mais o que já chegou. Medido contra o
+binário real, com SymPy 1.14.0:
+
+```text
+formula                  unidades              ms      procedencia do exato
+-(k/m)*sin(x)            dimensionalArgument   5024    concept (com a ressalva)
+-(k/m)*x*x*x             wrongSide             5018    concept (com a ressalva)
+```
+
+**O limite vai na tela junto com o recurso:** unidade que fecha não quer dizer
+física certa — `E = m·v²` sem o meio passa, porque coerência dimensional não vê
+constante adimensional.
+
+**A catraca reprovou dois arquivos, e os dois cortes foram por
+RESPONSABILIDADE:** o `oraculo.rs` em 714/500 virou pasta (`mod` a fachada,
+`programa` o Python embutido, `processo` o transporte, `portao` o que se
+aceita de volta), e o `sim_corrida.rs` do protocolo em 509/500 perdeu a forma
+vetorial para o `sim_sistema.rs` — o mesmo corte que o core já tinha entre
+`corrida.rs` e `corrida_sistema.rs`, pela mesma razão. Nenhum limite levantado.
+
+**O que ficou de fora, e por quê:** a forma **algébrica**. Ela não declara a
+unidade do RESULTADO (`energia-cinetica` declara `m` e `v`, não o joule), então
+só metade da checagem seria possível — e meia checagem numa tela que promete
+conferir é pior que nenhuma. Fechar isso é trabalho de tabela, não de motor.
+
+  protocolo  0.88.0 — `SimDimensionCheck` e `SimDimensionVerdict`
+  testes     666 Rust (+8) e 31 harnesses; 3 mutacoes no core, 2 no QML

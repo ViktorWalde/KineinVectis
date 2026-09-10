@@ -13,9 +13,9 @@
 >
 > ```text
 > campo         este arquivo dizia   medido em 2026-09-10
-> protocolo     0.62.0               0.87.0
+> protocolo     0.62.0               0.88.0
 > gates         13                   19
-> testes Rust   378                  658
+> testes Rust   378                  666
 > debito        22 arquivos          1 (ui/qml/editor/EditorController.qml)
 > ```
 >

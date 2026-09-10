@@ -607,6 +607,26 @@ pergunta. Hoje o número tem procedência, e quando ele é do conceito a tela di
 sentidos: `1,474` de erro sobre um valor de 83 mil é uma integração excelente, e
 o mesmo `1,474` ao lado de um resultado de `0,032` seria catástrofe.
 
+### As unidades
+
+Com o SymPy instalado, a IDE também confere as **unidades** da equação que você
+escreveu, em três camadas:
+
+```text
+o argumento de seno, cosseno, exponencial e logaritmo tem de ser numero PURO
+os termos da soma tem de ter a mesma unidade — `x + x^3` nao se soma
+a equacao tem de ser da grandeza do lado esquerdo: a derivada segunda de uma
+posicao e' uma aceleracao, e nao outra coisa
+```
+
+Num conceito de várias equações ela vale ainda mais, porque cada componente tem
+o seu lado esquerdo — escrever a derivada da posição no lugar da derivada da
+velocidade passa despercebido em tudo o mais, e não passa aqui.
+
+**O limite vem escrito junto com o resultado, e é importante:** unidade que
+fecha **não** quer dizer física certa. `E = m·v²` sem o meio tem a unidade certa
+e o valor errado — coerência de unidade não enxerga um coeficiente.
+
 ### O aviso que vale a pena ler
 
 **Conceito certo e fórmula válida não significam resultado certo.** Uma fórmula

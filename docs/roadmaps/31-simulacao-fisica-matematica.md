@@ -2205,6 +2205,122 @@ fórmula errada —, mas o exemplo precisa ser um que **passe**: `E = m·v²` se
 meio, ou um coeficiente errado em fórmula coerente. Coerência dimensional não vê
 constante adimensional.
 
+### 19.5 As unidades, medidas em 2026-09-10 — e as TRÊS armadilhas do caminho
+
+A §15.6 e a §19.3.6 deixaram a checagem dimensional pronta para entrar. Medi-la
+antes de escrever código achou três coisas, e **as três teriam produzido veredito
+errado em silêncio**.
+
+#### 19.5.1 O vocabulário fecha, e é pequeno
+
+As **24 unidades distintas** que o catálogo declara hoje viram objeto do SymPy
+com um vocabulário de **12 símbolos** (`m s kg N J C K mol A rad Hz ohm`), depois
+de trocar `.` por `*` e `^` por `**`. Zero falhas.
+
+```text
+m/s^2      -> Dimension(length/time**2)      N.s/m  -> Dimension(force*time/length)
+rad        -> Dimension(1)                   rad/s  -> Dimension(1/time)
+J/(mol.K)  -> Dimension(energy/(amount_of_substance*temperature))
+```
+
+**E o vocabulário virou gate**, porque ele mora do lado do Python e o catálogo
+mora do lado do Rust: `todo_conceito_declara_unidade_que_o_oraculo_conhece`. Sem
+ele, um `furlong` no catálogo vira **símbolo livre**, símbolo livre é
+**adimensional** para o SymPy, e o veredito sai "coerente" sem nada reclamar.
+
+#### 19.5.2 Substituir a variável pela UNIDADE faz os termos se CANCELAREM
+
+```text
+formula          -(k/m)*x - (c/m)*v
+substituido      (N/m)/kg*m - (N.s/m)/kg*(m/s)   =   N/kg - N/kg   =   0
+dimensao de 0    1  (adimensional)
+```
+
+A conta é **exata**, os dois termos somem, e a dimensão da equação vira
+adimensional. A defesa é dar a cada variável um **símbolo positivo próprio**:
+`x → kv0·m`, e aí `kv0·N/kg − kv1·N/kg` não cancela.
+
+#### 19.5.3 O `check_dimensions` fica CEGO quando há símbolo livre
+
+Esta é a pior, porque a defesa da anterior a causa. Medido:
+
+```text
+termo cubico     (N/m)/kg * m^3   ->  base {length: 3, time: -2}
+termo do atrito  (N.s/m)/kg * m/s ->  base {length: 1, time: -2}
+
+check_dimensions(soma)      SEM simbolos livres  ->  RECUSOU (certo)
+check_dimensions(soma)      COM simbolos livres  ->  ACEITOU (errado)
+get_dimensional_expr(soma)                       ->  force/mass
+```
+
+Ele pega **um** dos termos e cala — a mesma mentira que a §15.5 atribui ao
+`get_dimensional_expr`, agora dentro da função que existe para não cometê-la.
+
+**A defesa não é usar o `check_dimensions`.** É decompor cada parcela em
+dimensões de BASE (`get_dimensional_dependencies`) e comparar as parcelas entre
+si, na mão. Determinístico, e não depende de uma função que emudece.
+
+#### 19.5.4 O expoente volta como FLOAT, e reprova equação certa
+
+```text
+-mu*x/(x^2+y^2)^1.5   com mu = m^3/s^2, x,y = m
+esquerda  {length: 1,               time: -2}
+direita   {length: 1.00000000000000, time: -2.00000000000000}
+```
+
+São a mesma dimensão. Comparadas por dicionário, **não são iguais** — e as
+quatro equações CERTAS da órbita foram reprovadas por isso na primeira medição.
+A comparação passou a ser numérica, com folga de `1e-9`.
+
+#### 19.5.5 O que a checagem pega, e o que ela não pega
+
+Contra o SymPy real, no oscilador amortecido (`y=m, dy=m/s, k=N/m, m=kg,
+c=N.s/m`, lado esquerdo `m/s²`):
+
+```text
+-(k/m)*x - (c/m)*v         coherent
+-(k/m)*x - 2*(c/m)*v       coherent      <- o LIMITE: coeficiente errado PASSA
+-(k/m)*x*x*x - (c/m)*v     incoherent    length*time^-2 != length^3*time^-2
+-(k/m)*x - (c/m)*v + k     incoherent    length*time^-2 != mass*time^-2
+-(k/m)*x*x*x               wrongSide     length*time^-2 != length^3*time^-2
+-(k/m)*sin(x)              dimensionalArgument   (sin)
+```
+
+E na órbita, um veredito **por componente** — que é onde ela vale mais, porque
+são quatro equações:
+
+```text
+as quatro equacoes CERTAS                          x, y, vx, vy   coherent
+`vx' = x` (a POSICAO no lugar da velocidade)       vx   wrongSide  length*time^-2 != length
+```
+
+**Essa última é o caso que justifica a feature.** Trocar a derivada de uma
+posição pela de uma velocidade **passa no `sim.checkSystem`**, porque ele confere
+ligação e não física — e não passa aqui.
+
+**O limite honesto, e ele vai na tela junto com o recurso:** `E = m·v²` sem o
+meio **passa**. Coerência dimensional não vê constante adimensional, e por isso
+ela reforça — nunca substitui — o aviso de que conceito certo e fórmula válida
+não significam resultado certo.
+
+#### 19.5.6 O `dsolve` que trava levava junto o veredito que já estava pronto
+
+Medido contra o binário real: `-(k/m)*sin(x)` é o pêndulo não linearizado, o
+`dsolve` não volta, e o teto de 5 s mata o processo. **Com uma resposta só, o
+veredito de unidade morria junto** — e ele estava pronto em 3 ms, dizendo
+`dimensionalArgument`, que é exatamente o que o autor precisa ler.
+
+A defesa é o processo responder em **duas linhas, a barata primeiro**, e o core
+ler linha a linha. Medido depois do conserto:
+
+```text
+formula                  unidades              ms      procedencia do exato
+-(k/m)*sin(x)            dimensionalArgument   5024    concept (com a ressalva)
+-(k/m)*x*x*x             wrongSide             5018    concept (com a ressalva)
+```
+
+Os 5 s são o teto fazendo o que ele existe para fazer. O veredito chega.
+
 ### 19.4 O quadro para a escolha
 
 ```text

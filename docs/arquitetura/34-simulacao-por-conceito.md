@@ -1152,6 +1152,59 @@ sem cache                  duas corridas com a mesma equacao perguntam duas
                            (formula, parametros, condicoes iniciais)
 ```
 
+### 13.12 As unidades passaram a ser CHECADAS — 2026-09-10
+
+**A decisão é de 2026-09-05 e dependia do oráculo existir** (§7.2). Ela entrou na
+mesma ida: o processo custa ~200 ms de `import` antes de qualquer conta, e
+perguntar duas vezes por corrida seria desenho ruim.
+
+**O que a IDE confere, em três camadas:**
+
+```text
+1. argumento de funcao   `sin(x)` com `x` em metros nao e' fisica: e' erro de
+   transcendente          unidade que produz numero
+2. os TERMOS entre si     `x + x^3` nao se soma. Pega o expoente errado
+3. o LADO ESQUERDO        a equacao tem de ser da grandeza do estado dividida
+                          pelo tempo elevado a ordem. E' esta camada que pega
+                          `-(k/m)*x*x*x` SOZINHO, que e' coerente consigo mesmo
+                          e nao e' uma aceleracao
+```
+
+**Na forma vetorial ela vale mais, e a razão é aritmética:** são `n` equações, e
+cada uma tem o próprio lado esquerdo. Medido — trocar a derivada de uma POSIÇÃO
+pela de uma VELOCIDADE **passa no `sim.checkSystem`**, porque ele confere ligação
+e não física, e **não passa aqui**.
+
+**Três armadilhas medidas antes do código** (`../roadmaps/31` §19.5), e as três
+produziriam veredito errado em silêncio:
+
+```text
+substituir pela UNIDADE   `a*x - b*v` vira `u - u = 0`, e a dimensao de zero e'
+crua faz cancelar         1. Cada variavel ganha um SIMBOLO POSITIVO proprio
+o `check_dimensions`      medido: ele ACEITA `length^3/time^2 + length/time^2`
+fica CEGO com simbolo     quando ha' simbolo livre. A defesa NAO e' usa-lo: e'
+livre                     decompor cada parcela em dimensoes de BASE e comparar
+o expoente volta FLOAT    `(x^2+y^2)^1.5` da' `length^1.00000000000000`, que num
+                          dicionario nao e' igual a `length^1` — e as quatro
+                          equacoes CERTAS da orbita foram reprovadas por isso
+```
+
+**E uma quarta, que mudou o protocolo com o processo:** o `dsolve` do pêndulo não
+linearizado não volta, o teto o mata, e **o veredito de unidade morria junto** —
+pronto em 3 ms, dizendo exatamente o que estava errado. O processo passou a
+responder em **duas linhas, a barata primeiro**, e o core lê linha a linha. O
+teto não descarta mais o que já chegou.
+
+**O limite vai na tela junto com o recurso, e é o mesmo da §7.2:** checagem
+dimensional pega incoerência, nunca pega fórmula errada. `E = m·v²` sem o meio
+passa. Isso reforça — nunca substitui — o aviso da §5.1.
+
+**O que ficou de fora, e por quê:** a forma **algébrica**. Ela não declara a
+unidade do RESULTADO (o `energia-cinetica` declara `m` e `v`, não o joule),
+então só metade da checagem seria possível — e meia checagem numa tela que
+promete conferir é pior que nenhuma. Fechar isso é acrescentar unidade de
+resultado ao catálogo, que é trabalho de tabela, não de motor.
+
 ## Apêndice A — O catálogo mapeado, e "tudo" virando número
 
 > **Rascunho de ESCOPO, não catálogo auditado.** Levantado em 2026-09-05 a partir
