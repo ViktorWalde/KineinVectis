@@ -121,6 +121,15 @@ Column {
         }
     }
 
+    // AS UNIDADES da equacao que voce escreveu.
+    SimDimensionsView {
+        visible: root.run !== null
+        width: root.width
+        checks: root.run === null || root.run.dimensions === undefined
+                ? [] : [root.run.dimensions]
+        note: root.oracleNote
+    }
+
     // DE ONDE veio o valor exato. Sem esta linha, a coluna acima afirma o que a
     // IDE nao sabe — foi o defeito medido em 2026-09-06.
     SimAccuracyProvenance {

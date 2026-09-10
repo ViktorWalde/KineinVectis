@@ -15,12 +15,17 @@
 //   1. com o oraculo, a tela diz que resolveu a SUA equacao, e mostra a solucao
 //   2. sem o oraculo, a RESSALVA aparece — o numero e' de outra pergunta
 //   3. o erro RELATIVO aparece ao lado do absoluto
+//   4. o veredito de UNIDADE aparece, com o LIMITE dito junto
+//   5. sem a ferramenta, a tela diz que NAO conferiu
 //
 // MUTACOES QUE PROVAM O GATE:
 //   - tire o `SimAccuracyProvenance` do `SimRunResultView`   -> falha 1 e 2
 //   - troque `root.source === "oracle"` por `false`
 //     no `SimAccuracyProvenance`                              -> falha 1
 //   - tire a linha do erro relativo                           -> falha 4
+//   - tire o `SimDimensionsView` do `SimRunResultView`         -> falha 256
+//   - tire a linha do LIMITE ("unidade que fecha nao quer
+//     dizer fisica certa")                                     -> falha 512
 import QtQuick
 import KineinVectis
 
@@ -47,11 +52,14 @@ Item {
                 source: "oracle",
                 solvedBy: "SymPy 1.14.0",
                 closedForm: "(sqrt(31)*sin(sqrt(31)*t/4)/31 + cos(sqrt(31)*t/4))*exp(-t/4)"
-            }
+            },
+            dimensions: { equation: "", verdict: "wrongSide",
+                          detail: "length*time^-2 != length^3*time^-2" }
         };
     }
 
     // E o que ele devolve quando nao ha' oraculo nesta maquina.
+    // Sem a ferramenta NAO ha' veredito de unidade — e a tela tem de dizer.
     function semOraculo() {
         return {
             stepsTaken: 100,
@@ -142,6 +150,19 @@ Item {
                 root.falhas += 4;
             }
 
+            // 4. O veredito de UNIDADE, e o LIMITE dito junto com ele.
+            const unidades = root.achar(vista, "SimDimensionsView");
+            const textoUnidades = unidades === null ? "" : root.textoVisivel(unidades);
+            if (textoUnidades.indexOf("não é da grandeza do lado esquerdo") < 0) {
+                console.warn("o veredito de unidade nao esta na tela: " + textoUnidades);
+                root.falhas += 256;
+            }
+            if (textoUnidades.indexOf("não quer dizer física certa") < 0) {
+                console.warn("o LIMITE nao esta na tela — sem ele, 'as unidades fecham' "
+                             + "vira promessa de que a fisica esta certa");
+                root.falhas += 512;
+            }
+
             vista.run = root.semOraculo();
             vista.oracleNote = root.ressalva;
             depois.restart();
@@ -166,6 +187,15 @@ Item {
             if (semOraculo.indexOf("SymPy 1.14.0") >= 0) {
                 console.warn("a tela diz que o oraculo resolveu quando ele nao resolveu");
                 root.falhas += 16;
+            }
+
+            // 5. Sem a ferramenta, a tela DIZ que nao conferiu as unidades — em
+            //    vez de parar de conferir em silencio.
+            const unidades = root.achar(vista, "SimDimensionsView");
+            const texto = unidades === null ? "" : root.textoVisivel(unidades);
+            if (texto.indexOf("não foram verificadas nesta sessão") < 0) {
+                console.warn("a tela nao diz que deixou de conferir as unidades: " + texto);
+                root.falhas += 1024;
             }
 
             if (root.falhas !== 0) console.error("FALHAS bitmask=" + root.falhas);

@@ -67,6 +67,7 @@ set_source_files_properties(qml/sim/SimSystemAuthoring.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/sim/SimSystemResultView.qml PROPERTIES QT_RESOURCE_ALIAS SimSystemResultView.qml)
 set_source_files_properties(qml/sim/SimSystemAccuracy.qml PROPERTIES QT_RESOURCE_ALIAS SimSystemAccuracy.qml)
 set_source_files_properties(qml/sim/SimAccuracyProvenance.qml PROPERTIES QT_RESOURCE_ALIAS SimAccuracyProvenance.qml)
+set_source_files_properties(qml/sim/SimDimensionsView.qml PROPERTIES QT_RESOURCE_ALIAS SimDimensionsView.qml)
 set_source_files_properties(qml/sim/SimComponentEquation.qml PROPERTIES QT_RESOURCE_ALIAS SimComponentEquation.qml)
 set_source_files_properties(qml/sim/SimFormat.qml PROPERTIES QT_RESOURCE_ALIAS SimFormat.qml)
 set_source_files_properties(qml/sim/SimFormat.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
@@ -305,6 +306,7 @@ qt_add_qml_module(kinein-vectis
         qml/sim/SimSystemResultView.qml
         qml/sim/SimSystemAccuracy.qml
         qml/sim/SimAccuracyProvenance.qml
+        qml/sim/SimDimensionsView.qml
         qml/sim/SimComponentEquation.qml
         qml/sim/SimFormat.qml
         qml/sim/SimSavedList.qml

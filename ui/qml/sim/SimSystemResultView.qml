@@ -78,6 +78,18 @@ Column {
         font.pixelSize: Theme.fontSizeStatus
     }
 
+    // AS UNIDADES, uma por componente. Aqui a checagem vale mais que na forma
+    // escalar: sao `n` equacoes, e trocar a derivada de uma POSICAO pela de uma
+    // VELOCIDADE passa no checador de ligacao — ele confere ligacao, nao fisica.
+    SimDimensionsView {
+        visible: root.run !== null
+        width: root.width
+        checks: root.run === null || root.run.dimensions === undefined
+                ? [] : root.run.dimensions
+        note: root.run === null || root.run.oracleNote === undefined
+              ? "" : root.run.oracleNote
+    }
+
     SimSystemAccuracy {
         width: root.width
         run: root.run
