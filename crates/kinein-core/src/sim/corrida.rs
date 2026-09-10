@@ -25,8 +25,8 @@ use std::collections::BTreeMap;
 
 use exmex::prelude::*;
 use kinein_protocol::{
-    SimAccuracy, SimAccuracySource, SimBinding, SimConcept, SimForm, SimMethod, SimRunResult,
-    SimValue,
+    SimAccuracy, SimAccuracySource, SimBinding, SimConcept, SimDimensionCheck, SimDimensionVerdict,
+    SimForm, SimMethod, SimRunResult, SimValue,
 };
 
 use super::catalogo;
@@ -168,7 +168,7 @@ pub fn executar(
         .map_err(ErroDeExecucao::Integrador)?;
 
     // O instante ALCANCADO, nao o pedido: ver `Saida::t_final`.
-    let (accuracy, oracle_note) = exatidao(
+    let do_oraculo = exatidao(
         oraculo,
         &Alvo {
             conceito,
@@ -186,8 +186,9 @@ pub fn executar(
         steps_taken: saida.passos,
         sample_every: saida.a_cada,
         trail: saida.trilha,
-        accuracy,
-        oracle_note,
+        accuracy: do_oraculo.accuracy,
+        oracle_note: do_oraculo.nota,
+        dimensions: do_oraculo.dimensoes,
         method_label: super::integrador::rotulo(metodo, passo),
     })
 }
@@ -212,6 +213,16 @@ struct Alvo<'a> {
     dy0: f64,
 }
 
+/// O que o oraculo respondeu sobre esta corrida.
+pub(super) struct DoOraculo {
+    /// A comparacao com a verdade, e de onde ela veio.
+    pub accuracy: Option<SimAccuracy>,
+    /// A frase que explica a procedencia, quando ela nao e' a do oraculo.
+    pub nota: Option<String>,
+    /// O veredito de UNIDADE da equacao.
+    pub dimensoes: Option<SimDimensionCheck>,
+}
+
 /// A comparacao com a verdade — e DE ONDE a verdade veio.
 ///
 /// **Duas procedencias, e a diferenca entre elas foi medida** (`roadmaps/31`
@@ -224,54 +235,74 @@ struct Alvo<'a> {
 /// conceito e' deliberado: sem `SymPy` na maquina, ele continua sendo a melhor
 /// resposta disponivel — o que faltava era **dizer que e' ele**.
 ///
-/// Devolve a comparacao e a frase que explica a procedencia, quando ela nao e'
-/// a do oraculo.
-fn exatidao(
-    config: &oraculo::Config,
-    alvo: &Alvo<'_>,
-    t: f64,
-    numerico: f64,
-) -> (Option<SimAccuracy>, Option<String>) {
+/// **A checagem de UNIDADE vem na MESMA ida.** O processo custa ~200 ms de
+/// `import` antes de qualquer conta, e perguntar duas vezes por corrida seria
+/// desenho ruim, nao acidente.
+fn exatidao(config: &oraculo::Config, alvo: &Alvo<'_>, t: f64, numerico: f64) -> DoOraculo {
     let (conceito, valores) = (alvo.conceito, alvo.valores);
-    let (do_oraculo, nota) = match perguntar_ao_oraculo(config, alvo) {
-        Ok(solucao) => match oraculo::avaliar(&solucao, t) {
-            Ok(verdadeiro) => (Some((verdadeiro, solucao)), None),
-            Err(motivo) => (None, Some(motivo.frase())),
-        },
-        Err(motivo) => (None, Some(motivo.frase())),
+    let resposta = consultar(config, alvo);
+
+    let (do_oraculo, nota, dimensoes) = match resposta {
+        Ok(r) => {
+            let dim = r.dimensoes.first().map(veredito_para_protocolo);
+            match (r.solucao, r.sem_solucao) {
+                (Some(solucao), _) => match oraculo::avaliar(&solucao, t) {
+                    Ok(verdadeiro) => (Some((verdadeiro, solucao)), None, dim),
+                    Err(motivo) => (None, Some(motivo.frase()), dim),
+                },
+                (None, Some(motivo)) => (None, Some(motivo.frase()), dim),
+                (None, None) => (None, None, dim),
+            }
+        }
+        Err(motivo) => (None, Some(motivo.frase()), None),
     };
 
     if let Some((verdadeiro, solucao)) = do_oraculo {
-        return (
-            Some(comparar(
+        return DoOraculo {
+            accuracy: Some(comparar(
                 verdadeiro,
                 numerico,
                 SimAccuracySource::Oracle,
                 Some(solucao),
             )),
-            None,
-        );
+            nota: None,
+            dimensoes,
+        };
     }
 
-    let Some(exata) = catalogo::exata(&conceito.id) else {
-        return (None, nota);
-    };
-    let mapa: BTreeMap<String, f64> = valores
-        .iter()
-        .map(|(k, v)| ((*k).to_string(), *v))
-        .collect();
-    let Some(verdadeiro) = exata(&mapa, alvo.y0, alvo.dy0, t) else {
-        return (None, nota);
-    };
-    (
-        Some(comparar(
-            verdadeiro,
-            numerico,
-            SimAccuracySource::Concept,
-            None,
-        )),
+    let verdadeiro = catalogo::exata(&conceito.id).and_then(|exata| {
+        let mapa: BTreeMap<String, f64> = valores
+            .iter()
+            .map(|(k, v)| ((*k).to_string(), *v))
+            .collect();
+        exata(&mapa, alvo.y0, alvo.dy0, t)
+    });
+    DoOraculo {
+        accuracy: verdadeiro.map(|v| comparar(v, numerico, SimAccuracySource::Concept, None)),
         nota,
-    )
+        dimensoes,
+    }
+}
+
+/// Traduz o veredito do modulo para o tipo do protocolo.
+///
+/// A traducao mora aqui, e nao no `oraculo`, porque o modulo responde sobre
+/// UNIDADE e o protocolo responde sobre TELA — sao vocabularios diferentes, e
+/// juntar os dois faria o `oraculo` conhecer o `kinein-protocol` por um motivo
+/// que nao e' dele.
+pub(crate) fn veredito_para_protocolo(v: &oraculo::Veredito) -> SimDimensionCheck {
+    SimDimensionCheck {
+        equation: v.label.clone(),
+        verdict: match v.achado {
+            oraculo::Achado::Coerente => SimDimensionVerdict::Coherent,
+            oraculo::Achado::Incoerente => SimDimensionVerdict::Incoherent,
+            oraculo::Achado::LadoErrado => SimDimensionVerdict::WrongSide,
+            oraculo::Achado::ArgumentoComDimensao => SimDimensionVerdict::DimensionalArgument,
+            oraculo::Achado::UnidadeDesconhecida => SimDimensionVerdict::UnknownUnit,
+            oraculo::Achado::Ilegivel => SimDimensionVerdict::Unreadable,
+        },
+        detail: v.detalhe.clone(),
+    }
 }
 
 /// Monta a comparacao, com o erro RELATIVO junto.
@@ -303,24 +334,32 @@ fn comparar(
     }
 }
 
-/// Monta a pergunta do oraculo a partir da LIGACAO que o usuario fez.
+/// Monta a consulta a partir da LIGACAO que o usuario fez.
 ///
 /// Os papeis viajam NOMEADOS: qual variavel e' a posicao, qual e' a velocidade,
-/// qual e' o tempo. Nada e' deduzido do nome nem da posicao na formula — e' a
-/// mesma regra que governa o vetor de avaliacao (ADR-0006, armadilha 1).
-fn perguntar_ao_oraculo(
+/// qual e' o tempo, e qual e' a UNIDADE de cada uma. Nada e' deduzido do nome
+/// nem da posicao na formula — e' a mesma regra que governa o vetor de
+/// avaliacao (ADR-0006, armadilha 1).
+fn consultar(
     config: &oraculo::Config,
     alvo: &Alvo<'_>,
-) -> Result<oraculo::Solucao, oraculo::NaoSei> {
+) -> Result<oraculo::Resposta, oraculo::NaoSei> {
     let (conceito, texto) = (alvo.conceito, alvo.texto);
     let (grandeza_de, valores) = (alvo.grandeza_de, alvo.valores);
-    let (y0, dy0) = (alvo.y0, alvo.dy0);
     let segunda_ordem = conceito.form == SimForm::Ode2;
+    let ordem = if segunda_ordem { 2 } else { 1 };
+    let unidade_de = unidades_do_conceito(conceito);
+
     let mut estado = None;
     let mut derivada = None;
     let mut tempo = None;
     let mut parametros = Vec::new();
+    let mut unidades = Vec::new();
     for (variavel, grandeza) in grandeza_de {
+        unidades.push((
+            (*variavel).to_string(),
+            unidade_da_grandeza(&unidade_de, grandeza),
+        ));
         match *grandeza {
             GRANDEZA_ESTADO => estado = Some((*variavel).to_string()),
             GRANDEZA_DERIVADA => derivada = Some((*variavel).to_string()),
@@ -334,25 +373,68 @@ fn perguntar_ao_oraculo(
             }
         }
     }
-    let Some(estado) = estado else {
+    let Some(estado_nome) = estado else {
         return Err(oraculo::NaoSei::NaoResolve);
     };
-    if !y0.is_finite() || (segunda_ordem && !dy0.is_finite()) {
-        return Err(oraculo::NaoSei::NaoResolve);
-    }
-    oraculo::resolver(
-        config,
-        &oraculo::Pergunta {
+
+    // A EDO so' vai quando as condicoes iniciais existem; a checagem de unidade
+    // vai SEMPRE, porque ela nao depende de numero nenhum.
+    let edo =
+        (alvo.y0.is_finite() && (!segunda_ordem || alvo.dy0.is_finite())).then(|| oraculo::Edo {
             formula: texto.to_owned(),
-            estado,
+            estado: estado_nome,
             derivada,
             tempo,
             parametros,
-            ordem: if segunda_ordem { 2 } else { 1 },
-            y0: decimal(y0),
-            dy0: segunda_ordem.then(|| decimal(dy0)),
+            ordem,
+            y0: decimal(alvo.y0),
+            dy0: segunda_ordem.then(|| decimal(alvo.dy0)),
+        });
+
+    oraculo::perguntar(
+        config,
+        &oraculo::Consulta {
+            edo,
+            dimensoes: vec![oraculo::PedidoDimensao {
+                label: String::new(),
+                formula: texto.to_owned(),
+                unidades,
+                esquerda: lado_esquerdo(&unidade_da_grandeza(&unidade_de, GRANDEZA_ESTADO), ordem),
+            }],
         },
     )
+}
+
+/// A unidade de cada grandeza que o conceito declara.
+pub(crate) fn unidades_do_conceito(conceito: &SimConcept) -> BTreeMap<&str, &str> {
+    conceito
+        .quantities
+        .iter()
+        .map(|q| (q.id.as_str(), q.unit.as_str()))
+        .collect()
+}
+
+/// A unidade de uma grandeza. O tempo nao e' declarado pelo conceito: ele e'
+/// do dominio, e vale segundo em todos.
+pub(crate) fn unidade_da_grandeza(mapa: &BTreeMap<&str, &str>, grandeza: &str) -> String {
+    if grandeza == GRANDEZA_TEMPO {
+        return "s".to_owned();
+    }
+    mapa.get(grandeza).copied().unwrap_or_default().to_owned()
+}
+
+/// A unidade do lado ESQUERDO: a do estado dividida pelo tempo elevado a ordem.
+///
+/// E' este pedaco que transforma "os termos combinam entre si" em "a equacao e'
+/// da grandeza certa" — e e' o que pega `-(k/m)*x*x*x` sozinho, que e' coerente
+/// consigo mesmo e nao e' uma aceleracao.
+pub(crate) fn lado_esquerdo(unidade_do_estado: &str, ordem: u8) -> String {
+    let numerador = if unidade_do_estado.trim().is_empty() {
+        "1".to_owned()
+    } else {
+        format!("({unidade_do_estado})")
+    };
+    format!("{numerador}/s^{ordem}")
 }
 
 /// Um `f64` como TEXTO decimal, para o outro lado racionalizar exato.

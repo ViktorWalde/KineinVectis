@@ -32,7 +32,7 @@ use kinein_protocol::{
 
 use super::corrida::GRANDEZA_TEMPO;
 use super::sistema::{CorridaSistema, ErroDeSistema};
-use super::{catalogo, formula};
+use super::{catalogo, corrida, formula};
 
 /// De onde sai o valor de cada posicao de um vetor de avaliacao.
 enum Fonte {
@@ -222,6 +222,7 @@ pub fn executar(
     passo: f64,
     metodo: SimMethod,
     amostras: usize,
+    oraculo: &super::oraculo::Config,
 ) -> Result<SimRunSystemResult, ErroDeSistemaExec> {
     if conceito.form != SimForm::OdeSystem {
         return Err(ErroDeSistemaExec::FormaNaoEhSistema);
@@ -320,6 +321,7 @@ pub fn executar(
         .map(|(k, v)| ((*k).to_string(), *v))
         .collect();
     let accuracy = exatidao(conceito, &mapa, inicial, saida.t_final, &saida.estado_final);
+    let dimensions = conferir_unidades(oraculo, conceito, equacoes);
     Ok(SimRunSystemResult {
         steps_taken: saida.passos,
         sample_every: saida.a_cada,
@@ -328,6 +330,7 @@ pub fn executar(
         // ainda nao sabe conferir num sistema.
         oracle_note: accuracy.as_ref().map(|_| RESSALVA_DO_CONCEITO.to_owned()),
         accuracy,
+        dimensions,
         invariants: derivas(conceito, &mapa, inicial, &saida.estado_final),
         trail: saida.trilha,
         method_label: super::integrador::rotulo(metodo, passo),
@@ -340,6 +343,73 @@ pub fn executar(
 /// solucao fechada do CONCEITO, e o `sim.checkSystem` aprova as equacoes por
 /// LIGACAO, nao por fisica. Se o autor escreveu outra equacao, este numero e' a
 /// distancia ate' outra pergunta.
+/// Confere a UNIDADE de cada uma das `n` equacoes, numa ida so'.
+///
+/// **Aqui a checagem vale mais que na forma escalar**, e a razao e' aritmetica:
+/// sao `n` equacoes para escrever, e cada uma tem o proprio lado esquerdo. A
+/// derivada de uma POSICAO e' uma velocidade e a de uma VELOCIDADE e' uma
+/// aceleracao — trocar as duas de lugar passa no checador de ligacao, porque
+/// ele confere ligacao e nao fisica, e nao passa aqui.
+///
+/// Vazio quando a ferramenta falta: a IDE diz que NAO checou, em vez de parar
+/// de checar em silencio.
+fn conferir_unidades(
+    config: &super::oraculo::Config,
+    conceito: &SimConcept,
+    equacoes: &[SimComponentFormula],
+) -> Vec<kinein_protocol::SimDimensionCheck> {
+    let das_grandezas = corrida::unidades_do_conceito(conceito);
+    let mut pedidos = Vec::with_capacity(equacoes.len());
+    for componente in &conceito.components {
+        let Some(equacao) = equacoes.iter().find(|e| e.component == componente.id) else {
+            continue;
+        };
+        let unidades = equacao
+            .bindings
+            .iter()
+            .map(|l| {
+                let alvo = l.quantity.as_str();
+                // O alvo pode ser um COMPONENTE do estado, uma grandeza ou o
+                // tempo — e a unidade de cada um mora em lugar diferente.
+                let unidade = conceito
+                    .components
+                    .iter()
+                    .find(|c| c.id == alvo)
+                    .map_or_else(
+                        || corrida::unidade_da_grandeza(&das_grandezas, alvo),
+                        |c| c.unit.clone(),
+                    );
+                (l.variable.clone(), unidade)
+            })
+            .collect();
+        pedidos.push(super::oraculo::PedidoDimensao {
+            label: componente.id.clone(),
+            formula: equacao.formula.clone(),
+            unidades,
+            // A forma vetorial e' de PRIMEIRA ordem: cada equacao e' a derivada
+            // do seu componente, e nunca a segunda (`arquitetura/34` §13.1).
+            esquerda: corrida::lado_esquerdo(&componente.unit, 1),
+        });
+    }
+    if pedidos.is_empty() {
+        return Vec::new();
+    }
+    super::oraculo::perguntar(
+        config,
+        &super::oraculo::Consulta {
+            edo: None,
+            dimensoes: pedidos,
+        },
+    )
+    .map(|r| {
+        r.dimensoes
+            .iter()
+            .map(corrida::veredito_para_protocolo)
+            .collect()
+    })
+    .unwrap_or_default()
+}
+
 const RESSALVA_DO_CONCEITO: &str = "O valor exato vem da solução do conceito, não das equações \
      que você escreveu: a IDE ainda não sabe resolver um sistema para conferir. As grandezas \
      conservadas abaixo, essas sim, são medidas na SUA trajetória.";

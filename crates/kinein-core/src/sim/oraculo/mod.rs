@@ -67,11 +67,8 @@
 //! ferramenta auditavel (`roadmaps/31` §13), e inventar narrativa plausivel e'
 //! o anti-padrao da `ARCHITECTURE.md` §8.1.
 
-use std::io::{BufReader, Read, Write};
-use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use exmex::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// Quanto o oraculo pode pensar antes de a IDE desistir dele.
@@ -84,7 +81,7 @@ use serde::{Deserialize, Serialize};
 const TETO: Duration = Duration::from_secs(5);
 
 /// De quanto em quanto se pergunta se o processo terminou.
-const RESPIRO: Duration = Duration::from_millis(20);
+pub(super) const RESPIRO: Duration = Duration::from_millis(20);
 
 /// Variavel de ambiente que troca o interpretador.
 ///
@@ -149,6 +146,12 @@ pub enum NaoSei {
     TempoEsgotado,
     /// O `dsolve` respondeu que nao sabe resolver esta equacao.
     NaoResolve,
+    /// Ele nao respondeu "nao sei": ele QUEBROU.
+    ///
+    /// A distincao importa para quem le: "nao sei resolver" e' comum e nao diz
+    /// nada sobre a equacao; "quebrou" e' outra coisa, e a frase nao pode
+    /// prometer que esta tudo bem com o que voce escreveu.
+    Falhou,
     /// Ele resolveu, e a resposta nao passou no portao do `exmex`.
     RespostaIlegivel {
         /// O que exatamente foi recusado, para o registro nao sumir.
@@ -184,6 +187,9 @@ impl NaoSei {
                  resolver a SUA equação e o resolvedor respondeu que não sabe. Isso é comum \
                  e não quer dizer que a sua equação esteja errada."
                 .to_owned(),
+            Self::Falhou => "O valor exato vem da solução do conceito: a IDE tentou resolver \
+                 a SUA equação e o resolvedor falhou — não é o mesmo que \"não sei resolver\"."
+                .to_owned(),
             Self::RespostaIlegivel { motivo } => format!(
                 "O valor exato vem da solução do conceito: a IDE resolveu a SUA equação e \
                  não conseguiu ler a resposta ({motivo})."
@@ -192,13 +198,13 @@ impl NaoSei {
     }
 }
 
-/// A pergunta que se faz ao oraculo.
+/// A EDO a resolver.
 ///
 /// Os nomes vem da LIGACAO que o usuario fez, nunca da posicao na formula — e
 /// e' por isso que eles viajam nomeados ate' aqui.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Pergunta {
+pub struct Edo {
     /// A formula como ele digitou.
     pub formula: String,
     /// Qual variavel dela e' a posicao.
@@ -218,204 +224,209 @@ pub struct Pergunta {
     pub dy0: Option<String>,
 }
 
-/// A resposta crua do processo, antes do portao.
+/// Uma equacao a conferir por UNIDADE.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PedidoDimensao {
+    /// Como a tela chama esta equacao. Vazio na forma escalar, que so' tem uma;
+    /// o id do componente na vetorial, que tem `n`.
+    pub label: String,
+    /// A formula como ele digitou.
+    pub formula: String,
+    /// A unidade DECLARADA de cada variavel, pela ligacao que ele fez.
+    pub unidades: Vec<(String, String)>,
+    /// A unidade do lado ESQUERDO: a do estado dividida pelo tempo elevado a
+    /// ordem. E' o que transforma "os termos combinam entre si" em "a equacao
+    /// e' daquela grandeza".
+    pub esquerda: String,
+}
+
+/// Tudo que se pergunta numa IDA.
+///
+/// Uma ida so', e as duas perguntas juntas: o processo custa ~200 ms de
+/// `import` antes de qualquer conta, e pagar isso duas vezes por corrida seria
+/// desenho, nao acidente.
+#[derive(Debug, Clone, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Consulta {
+    /// A EDO, quando ha' uma para resolver.
+    pub edo: Option<Edo>,
+    /// Uma entrada por equacao a conferir.
+    pub dimensoes: Vec<PedidoDimensao>,
+}
+
+/// O veredito de unidade de UMA equacao.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Veredito {
+    /// De que equacao e' este veredito.
+    pub label: String,
+    /// O que foi achado.
+    pub achado: Achado,
+    /// O detalhe, quando ha' um.
+    pub detalhe: String,
+}
+
+/// O que a checagem de unidade achou.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Achado {
+    /// Os termos combinam entre si E com o lado esquerdo.
+    Coerente,
+    /// Dois termos da soma tem dimensoes diferentes.
+    Incoerente,
+    /// Os termos combinam, mas a equacao nao e' da grandeza do lado esquerdo.
+    LadoErrado,
+    /// `sin(x)` com `x` em metros. Nao e' fisica: e' erro que produz numero.
+    ArgumentoComDimensao,
+    /// O conceito declarou uma unidade que o vocabulario nao conhece.
+    ///
+    /// **Recusar e' obrigatorio.** Simbolo que o `SymPy` nao reconhece e'
+    /// ADIMENSIONAL para ele, e o veredito sairia "coerente" sem nada
+    /// reclamar — a falha silenciosa que este dominio persegue.
+    UnidadeDesconhecida,
+    /// A formula nao pode ser lida como expressao.
+    Ilegivel,
+}
+
+/// A resposta de uma ida.
+#[derive(Debug, Clone)]
+pub struct Resposta {
+    /// A solucao da EDO, quando ela foi pedida e saiu.
+    pub solucao: Option<Solucao>,
+    /// Por que a EDO nao saiu, quando foi pedida e nao saiu.
+    pub sem_solucao: Option<NaoSei>,
+    /// Um veredito por equacao pedida.
+    pub dimensoes: Vec<Veredito>,
+}
+
+/// Uma LINHA da resposta, antes do portao.
+///
+/// O processo escreve duas: a checagem de unidade (barata) e a EDO (que pode
+/// nao voltar). Ler linha a linha e' o que faz a primeira sobreviver ao teto
+/// que mata a segunda.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct RespostaCrua {
+struct LinhaCrua {
+    kind: String,
+    #[serde(default)]
+    reason: String,
+    #[serde(default)]
+    sympy: String,
+    #[serde(default)]
     ok: bool,
     #[serde(default)]
     expression: String,
     #[serde(default)]
-    sympy: String,
-    #[serde(default)]
-    reason: String,
+    itens: Vec<DimensaoCrua>,
 }
 
-/// O programa que roda do outro lado.
-///
-/// Ele e' pequeno de proposito: tudo que pode ser decidido em Rust e' decidido
-/// em Rust. O que so' o `SymPy` sabe fazer e' `sympify`, `nsimplify`, `dsolve` e
-/// `sstr` — e e' exatamente isso que esta aqui.
-const PROGRAMA: &str = r#"
-import json, sys
+/// O que o outro lado devolve sobre uma equacao conferida.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DimensaoCrua {
+    #[serde(default)]
+    label: String,
+    verdict: String,
+    #[serde(default)]
+    detail: String,
+}
 
-def responde(objeto):
-    sys.stdout.write(json.dumps(objeto))
-    sys.stdout.flush()
-    raise SystemExit(0)
-
-try:
-    import sympy as sp
-except Exception as erro:
-    responde({"ok": False, "reason": "noSympy"})
-
-try:
-    pedido = json.load(sys.stdin)
-except Exception as erro:
-    responde({"ok": False, "reason": "badRequest"})
-
-try:
-    t = sp.Symbol("t")
-    y = sp.Function("y")
-    # `nsimplify(..., rational=True)` troca todo literal float por Rational.
-    # Sem isso o `dsolve` cai em RecursionError depois de 4 segundos.
-    corpo = sp.nsimplify(sp.sympify(pedido["formula"]), rational=True)
-    troca = {}
-    if pedido.get("estado"):
-        troca[sp.Symbol(pedido["estado"])] = y(t)
-    if pedido.get("derivada"):
-        troca[sp.Symbol(pedido["derivada"])] = y(t).diff(t)
-    if pedido.get("tempo"):
-        troca[sp.Symbol(pedido["tempo"])] = t
-    for nome, valor in pedido.get("parametros", []):
-        troca[sp.Symbol(nome)] = sp.Rational(valor)
-    # `simultaneous=True` impede que a troca de `x` por `y(t)` seja reprocessada
-    # pela troca seguinte — substituicao em cascata daria outra equacao.
-    lado = corpo.subs(troca, simultaneous=True)
-    ordem = int(pedido["ordem"])
-    equacao = sp.Eq(y(t).diff(t, ordem), lado)
-    inicio = {y(0): sp.Rational(pedido["y0"])}
-    if ordem == 2:
-        inicio[y(t).diff(t).subs(t, 0)] = sp.Rational(pedido["dy0"])
-    solucao = sp.dsolve(equacao, y(t), ics=inicio)
-except NotImplementedError:
-    responde({"ok": False, "reason": "cannotSolve"})
-except RecursionError:
-    responde({"ok": False, "reason": "cannotSolve"})
-except SystemExit:
-    raise
-except Exception as erro:
-    responde({"ok": False, "reason": "failed"})
-
-if isinstance(solucao, (list, tuple)):
-    responde({"ok": False, "reason": "cannotSolve"})
-
-responde({"ok": True, "expression": sp.sstr(solucao.rhs), "sympy": sp.__version__})
-"#;
-
-/// Pergunta ao oraculo. Uma ida, uma resposta, ou um motivo.
+/// Pergunta ao oraculo. UMA ida, e as duas respostas.
 ///
 /// # Errors
 ///
-/// Devolve [`NaoSei`] quando a ferramenta falta, quando ela passa do
-/// [`TETO`], quando ela responde que nao sabe, ou quando a resposta nao passa
-/// no portao do `exmex`.
-pub fn resolver(config: &Config, pergunta: &Pergunta) -> Result<Solucao, NaoSei> {
-    let corpo = serde_json::to_string(pergunta).map_err(|_| NaoSei::NaoResolve)?;
-    let bruta = executar(config, &corpo)?;
-    let resposta: RespostaCrua =
-        serde_json::from_str(bruta.trim()).map_err(|_| NaoSei::NaoResolve)?;
-    if !resposta.ok {
-        return Err(match resposta.reason.as_str() {
-            "noSympy" => NaoSei::SemSympy,
-            _ => NaoSei::NaoResolve,
+/// Devolve [`NaoSei`] quando a ferramenta falta ou quando ela passa do
+/// [`TETO`] — falhas de TRANSPORTE, que atingem as duas perguntas. O que falha
+/// por pergunta vem dentro da [`Resposta`].
+pub fn perguntar(config: &Config, consulta: &Consulta) -> Result<Resposta, NaoSei> {
+    let corpo = serde_json::to_string(consulta).map_err(|_| NaoSei::NaoResolve)?;
+    let (bruta, esgotou) = processo::executar(config, &corpo)?;
+
+    let mut sympy = String::new();
+    let mut dimensoes = Vec::new();
+    let mut solucao = None;
+    let mut sem_solucao = None;
+    let mut viu_edo = false;
+
+    for texto in bruta.lines().filter(|l| !l.trim().is_empty()) {
+        let Ok(linha) = serde_json::from_str::<LinhaCrua>(texto) else {
+            continue;
+        };
+        if !linha.sympy.is_empty() {
+            sympy.clone_from(&linha.sympy);
+        }
+        match linha.kind.as_str() {
+            "fatal" => {
+                return Err(if linha.reason == "noSympy" {
+                    NaoSei::SemSympy
+                } else {
+                    NaoSei::Falhou
+                });
+            }
+            "dimensoes" => {
+                dimensoes = linha
+                    .itens
+                    .into_iter()
+                    .map(|d| Veredito {
+                        label: d.label,
+                        achado: match d.verdict.as_str() {
+                            "coherent" => Achado::Coerente,
+                            "incoherent" => Achado::Incoerente,
+                            "wrongSide" => Achado::LadoErrado,
+                            "dimensionalArgument" => Achado::ArgumentoComDimensao,
+                            "unknownUnit" => Achado::UnidadeDesconhecida,
+                            _ => Achado::Ilegivel,
+                        },
+                        detalhe: d.detail,
+                    })
+                    .collect();
+            }
+            "edo" => {
+                viu_edo = true;
+                if linha.ok {
+                    match portao(&linha.expression) {
+                        Ok(expressao) => {
+                            solucao = Some(Solucao {
+                                expressao,
+                                resolvedor: format!("SymPy {sympy}"),
+                            });
+                        }
+                        Err(motivo) => sem_solucao = Some(motivo),
+                    }
+                } else {
+                    sem_solucao = Some(if linha.reason == "cannotSolve" {
+                        NaoSei::NaoResolve
+                    } else {
+                        NaoSei::Falhou
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // A EDO foi pedida e a linha dela nao veio: ou o teto matou o processo no
+    // meio do `dsolve`, ou ele morreu. O veredito de unidade, que ja' chegou,
+    // continua valendo — e' para isso que sao duas linhas.
+    if consulta.edo.is_some() && !viu_edo && sem_solucao.is_none() {
+        sem_solucao = Some(if esgotou {
+            NaoSei::TempoEsgotado
+        } else {
+            NaoSei::Falhou
         });
     }
-    let expressao = portao(&resposta.expression)?;
-    Ok(Solucao {
-        expressao,
-        resolvedor: format!("SymPy {}", resposta.sympy),
+    if dimensoes.is_empty() && solucao.is_none() && sem_solucao.is_none() {
+        return Err(NaoSei::Falhou);
+    }
+
+    Ok(Resposta {
+        solucao,
+        sem_solucao,
+        dimensoes,
     })
 }
 
-/// Roda o processo com o [`TETO`] e devolve o que ele escreveu.
-fn executar(config: &Config, corpo: &str) -> Result<String, NaoSei> {
-    let mut filho = Command::new(&config.interpretador)
-        .arg("-c")
-        .arg(PROGRAMA)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|_| NaoSei::SemPython)?;
+mod portao;
+mod processo;
+mod programa;
 
-    if let Some(mut entrada) = filho.stdin.take() {
-        // Erro de escrita nao e' motivo proprio: o processo morreu, e o que
-        // interessa e' o que ele respondeu (ou nao).
-        let _ = entrada.write_all(corpo.as_bytes());
-    }
-
-    let Some(saida) = filho.stdout.take() else {
-        let _ = filho.kill();
-        let _ = filho.wait();
-        return Err(NaoSei::NaoResolve);
-    };
-    // Thread leitora: a resposta e' pequena, mas um traceback nao e', e um pipe
-    // cheio com ninguem lendo trava o filho ate' o teto — que seria um
-    // "TempoEsgotado" mentindo sobre a causa.
-    let leitor = std::thread::spawn(move || {
-        let mut texto = String::new();
-        let _ = BufReader::new(saida).read_to_string(&mut texto);
-        texto
-    });
-
-    let limite = Instant::now() + config.teto;
-    loop {
-        // Terminou, ou nao da' mais para perguntar: nos dois casos o que
-        // interessa esta no pipe, e quem decide se e' resposta e' o parse.
-        if !matches!(filho.try_wait(), Ok(None)) {
-            break;
-        }
-        if Instant::now() >= limite {
-            let _ = filho.kill();
-            let _ = filho.wait();
-            let _ = leitor.join();
-            return Err(NaoSei::TempoEsgotado);
-        }
-        std::thread::sleep(RESPIRO);
-    }
-    Ok(leitor.join().unwrap_or_default())
-}
-
-/// O PORTAO: so' passa expressao que o `exmex` le' e cuja unica variavel e' `t`.
-///
-/// A segunda metade e' a que defende contra a falha SILENCIOSA. Medido em
-/// 2026-09-06: `0.1*cos(pi*t)` tem `var_names() == ["pi", "t"]`, e preencher o
-/// vetor pelo tamanho — que e' o que um codigo descuidado faz — devolve
-/// `0,086232` onde a resposta e' `0,100000`, **sem erro nenhum**.
-///
-/// # Errors
-///
-/// [`NaoSei::RespostaIlegivel`] quando o `exmex` recusa a expressao ou quando
-/// ela tem variavel que nao seja `t`.
-pub fn portao(expressao: &str) -> Result<String, NaoSei> {
-    // `**` so' significa potencia; a troca e' segura por construcao.
-    let convertida = expressao.replace("**", "^");
-    let analisada = exmex::parse::<f64>(&convertida).map_err(|erro| NaoSei::RespostaIlegivel {
-        motivo: format!("o avaliador recusou a expressão: {erro}"),
-    })?;
-    let variaveis = analisada.var_names();
-    let so_o_tempo = variaveis.len() == 1 && variaveis[0] == VARIAVEL_DO_TEMPO;
-    if !so_o_tempo {
-        return Err(NaoSei::RespostaIlegivel {
-            motivo: format!(
-                "a solução depende de {} além do tempo",
-                variaveis
-                    .iter()
-                    .filter(|nome| *nome != VARIAVEL_DO_TEMPO)
-                    .map(String::as_str)
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            ),
-        });
-    }
-    Ok(convertida)
-}
-
-/// Avalia a solucao do oraculo num instante.
-///
-/// # Errors
-///
-/// [`NaoSei::RespostaIlegivel`] quando a avaliacao falha — o portao ja' provou
-/// que a expressao tem uma variavel so', entao aqui so' sobra erro numerico.
-pub fn avaliar(solucao: &Solucao, t: f64) -> Result<f64, NaoSei> {
-    let analisada =
-        exmex::parse::<f64>(&solucao.expressao).map_err(|erro| NaoSei::RespostaIlegivel {
-            motivo: format!("o avaliador recusou a expressão: {erro}"),
-        })?;
-    analisada
-        .eval(&[t])
-        .map_err(|erro| NaoSei::RespostaIlegivel {
-            motivo: format!("a solução não pôde ser avaliada: {erro}"),
-        })
-}
+pub use portao::{avaliar, portao};

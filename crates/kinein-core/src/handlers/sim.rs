@@ -38,7 +38,7 @@ impl Core {
             "sim.evaluate" => Some(Self::sim_evaluate_response(request_id, params)),
             "sim.run" => Some(self.sim_run_response(request_id, params)),
             "sim.checkSystem" => Some(Self::sim_check_system_response(request_id, params)),
-            "sim.runSystem" => Some(Self::sim_run_system_response(request_id, params)),
+            "sim.runSystem" => Some(self.sim_run_system_response(request_id, params)),
             "sim.estimate" => Some(Self::sim_estimate_response(request_id, params)),
             "sim.list" => Some(self.sim_list_response(request_id)),
             "sim.save" => Some(self.sim_save_response(request_id, params)),
@@ -262,6 +262,7 @@ impl Core {
 
     /// `sim.runSystem` — integra `dY/dt = F(t, Y)`.
     fn sim_run_system_response(
+        &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -286,6 +287,7 @@ impl Core {
             parsed.step,
             parsed.method,
             parsed.samples,
+            self.oraculo(),
         ) {
             Ok(resultado) => JsonRpcResponse::success(request_id, json!(resultado)),
             Err(erro) => erro_de_sistema(request_id, &erro),

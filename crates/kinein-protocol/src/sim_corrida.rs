@@ -21,7 +21,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::sim::{SimBinding, SimComponentFormula, SimInvariantDrift};
+use super::sim::SimBinding;
 
 /// Params of `sim.evaluate`: run the ALGEBRAIC form once.
 ///
@@ -220,6 +220,59 @@ pub enum SimAccuracySource {
     Oracle,
 }
 
+/// O veredito de UNIDADE de uma equacao.
+///
+/// **Por que ele existe** (decisao do autor, 2026-09-05; entregue em
+/// 2026-09-10). A decisao original desta etapa era rotulo SEM checagem, tomada
+/// sobre a medicao de que o `uom` checa em tempo de COMPILACAO e uma formula
+/// digitada pelo usuario nao tem tipo Rust nenhum. O `SymPy` — que entrou por
+/// outro motivo, como oraculo — checa em tempo de EXECUCAO, que e' quando a
+/// formula do usuario existe, e isso mudou a premissa.
+///
+/// **O limite vai na tela junto com o recurso, e ele nao e' pequeno:** checagem
+/// dimensional pega INCOERENCIA, nunca pega formula errada. Medido em
+/// 2026-09-10: `E = m*v^2` sem o meio passa, porque coerencia dimensional nao
+/// ve' constante adimensional. Isso nao enfraquece o aviso de que conceito
+/// certo e formula valida nao significam resultado certo — reforca.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SimDimensionCheck {
+    /// De que equacao e' este veredito. Vazio na forma escalar, que so' tem
+    /// uma; o id do componente na vetorial.
+    pub equation: String,
+    /// O que foi achado.
+    pub verdict: SimDimensionVerdict,
+    /// O detalhe, quando ha' um: as duas dimensoes que nao batem, ou a unidade
+    /// que o vocabulario nao conhece.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub detail: String,
+}
+
+/// O que a checagem de unidade achou.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SimDimensionVerdict {
+    /// Os termos combinam entre si E com o lado esquerdo.
+    Coherent,
+    /// Dois termos da soma tem dimensoes diferentes — `x + x^3`.
+    Incoherent,
+    /// Os termos combinam, mas a equacao nao e' da grandeza do lado esquerdo.
+    ///
+    /// E' o que pega `-(k/m)*x*x*x` sozinho: coerente consigo mesmo, e nao e'
+    /// uma aceleracao.
+    WrongSide,
+    /// `sin(x)` com `x` em metros. Nao e' fisica: e' erro que produz numero.
+    DimensionalArgument,
+    /// O conceito declarou uma unidade que o vocabulario nao conhece.
+    ///
+    /// **Recusar e' obrigatorio, e a razao e' silenciosa:** simbolo que o
+    /// `SymPy` nao reconhece e' ADIMENSIONAL para ele, e o veredito sairia
+    /// "coerente" sem nada reclamar.
+    UnknownUnit,
+    /// A formula nao pode ser lida como expressao.
+    Unreadable,
+}
+
 /// Resultado de `sim.run`.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -246,6 +299,13 @@ pub struct SimRunResult {
     /// em silencio.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub oracle_note: Option<String>,
+    /// O veredito de UNIDADE da equacao, quando a IDE conseguiu checar.
+    ///
+    /// `None` tem a mesma causa do `oracle_note`: sem a ferramenta, a IDE diz
+    /// que NAO checou, em vez de parar de checar em silencio
+    /// (`arquitetura/34` §7.2).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dimensions: Option<SimDimensionCheck>,
     /// O nome do metodo e o passo, para a tela nunca mostrar numero sem
     /// procedencia.
     pub method_label: String,
@@ -347,100 +407,4 @@ pub struct SimSaveParams {
 pub struct SimForgetParams {
     /// O nome da simulacao a remover.
     pub name: String,
-}
-
-/// Uma amostra da trilha de um SISTEMA: o estado inteiro num instante.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SimSystemSample {
-    /// Instante.
-    pub t: f64,
-    /// Um valor por componente, na ORDEM que o conceito declara.
-    pub values: Vec<f64>,
-}
-
-/// Params de `sim.runSystem`: integrar `dY/dt = F(t, Y)`.
-///
-/// **Todo campo que decide o resultado e' obrigatorio**, como em toda a familia
-/// (`arquitetura/34` §2.1): nao ha' metodo padrao, passo padrao, amostragem
-/// padrao nem estado inicial padrao.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SimRunSystemParams {
-    /// O conceito escolhido.
-    pub concept: String,
-    /// Uma formula por componente, cada uma com a sua ligacao.
-    pub equations: Vec<SimComponentFormula>,
-    /// Os valores dos parametros (massa, G, comprimento, ...).
-    pub values: Vec<SimValue>,
-    /// Estado inicial: um numero por componente, na ordem do conceito.
-    pub initial: Vec<f64>,
-    /// Ate' quando integrar.
-    pub duration: f64,
-    /// O passo.
-    pub step: f64,
-    /// O metodo.
-    ///
-    /// `eulerSymplectic` so' e' aceito quando o conceito DECLARA o pareamento
-    /// posicao/velocidade; sem ele o metodo nao esta' definido e a corrida e'
-    /// recusada com o motivo (`arquitetura/34` §13.3).
-    pub method: SimMethod,
-    /// Quantos pontos guardar na trilha.
-    pub samples: usize,
-}
-
-/// Resultado de `sim.runSystem`.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SimRunSystemResult {
-    /// Quantos passos foram dados.
-    pub steps_taken: u64,
-    /// Quantos passos ha' entre duas amostras guardadas.
-    pub sample_every: u64,
-    /// A trilha amostrada.
-    pub trail: Vec<SimSystemSample>,
-    /// A comparacao com a verdade, quando o conceito tem solucao fechada.
-    ///
-    /// Um erro por componente, mais a norma do maximo — que e' a grandeza em
-    /// que a ordem de convergencia e' medida, porque grandeza DERIVADA cancela
-    /// erro: medido em 2026-09-06, o raio da orbita circular da' ordem 5,00
-    /// para um metodo de ordem 4 (`../roadmaps/31` §19.1.2).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub accuracy: Option<SimSystemAccuracy>,
-    /// O que aconteceu com cada invariante declarado.
-    ///
-    /// Existe mesmo quando `accuracy` e' `None`, e e' o unico sinal de exatidao
-    /// que um sistema caotico admite.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub invariants: Vec<SimInvariantDrift>,
-    /// Por que a comparacao nao tem a procedencia da equacao DIGITADA.
-    ///
-    /// Mesma funcao do `oracle_note` da forma escalar: dizer que mudou, e por
-    /// que, em vez de degradar calado.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub oracle_note: Option<String>,
-    /// O nome do metodo e o passo.
-    pub method_label: String,
-}
-
-/// A comparacao do estado final com a verdade, componente a componente.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SimSystemAccuracy {
-    /// DE ONDE veio o estado verdadeiro.
-    ///
-    /// Hoje sempre [`SimAccuracySource::Concept`]: o oraculo resolve EDO
-    /// escalar, e resolver um SISTEMA com `dsolve` nao foi medido — entrar sem
-    /// medir seria o oposto do que este dominio faz. A consequencia e' que a
-    /// tela do sistema carrega a mesma ressalva da forma escalar sem oraculo:
-    /// este valor responde pela equacao do CONCEITO, nao pela que voce digitou.
-    pub source: SimAccuracySource,
-    /// O estado verdadeiro no instante final.
-    pub exact: Vec<f64>,
-    /// O que a integracao produziu.
-    pub numeric: Vec<f64>,
-    /// `|numerico - exato|` por componente.
-    pub absolute_error: Vec<f64>,
-    /// A norma do MAXIMO do erro — a grandeza do estudo de convergencia.
-    pub max_error: f64,
 }

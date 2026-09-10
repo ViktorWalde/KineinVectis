@@ -28,7 +28,7 @@ use std::time::Duration;
 use kinein_protocol::{SimAccuracySource, SimBinding, SimInitial, SimMethod, SimValue};
 
 use crate::sim::corrida;
-use crate::sim::oraculo::{self, Config, NaoSei, Pergunta};
+use crate::sim::oraculo::{self, Achado, Config, Consulta, Edo, NaoSei, PedidoDimensao};
 
 /// O `python3` falso, pelo caminho do repositorio.
 fn falso() -> PathBuf {
@@ -174,19 +174,40 @@ fn o_oraculo_recebe_os_papeis_nomeados_e_os_parametros_como_decimal() {
     let bruto = std::fs::read_to_string(&log).expect("o falso gravou o pedido");
     let pedido: serde_json::Value = serde_json::from_str(&bruto).expect("o pedido e JSON");
 
-    assert_eq!(pedido["estado"], "x", "a POSICAO tem de viajar nomeada");
+    let edo = &pedido["edo"];
+    assert_eq!(edo["estado"], "x", "a POSICAO tem de viajar nomeada");
+    assert_eq!(edo["derivada"], "v", "a VELOCIDADE tem de viajar nomeada");
+    assert_eq!(edo["ordem"], 2);
+    assert_eq!(edo["y0"], "1");
+    assert_eq!(edo["dy0"], "0");
+
+    // UMA ida, DUAS perguntas: o processo custa ~200 ms de `import` antes de
+    // qualquer conta, e pagar isso duas vezes por corrida seria desenho ruim.
+    let dimensoes = pedido["dimensoes"].as_array().expect("dimensoes e lista");
+    assert_eq!(dimensoes.len(), 1, "uma checagem por equacao");
     assert_eq!(
-        pedido["derivada"], "v",
-        "a VELOCIDADE tem de viajar nomeada"
+        dimensoes[0]["esquerda"], "(m)/s^2",
+        "o lado ESQUERDO e' a unidade do estado sobre o tempo elevado a ordem"
     );
-    assert_eq!(pedido["ordem"], 2);
-    assert_eq!(pedido["y0"], "1");
-    assert_eq!(pedido["dy0"], "0");
+    let unidades: BTreeMap<String, String> = dimensoes[0]["unidades"]
+        .as_array()
+        .expect("unidades e lista")
+        .iter()
+        .map(|par| {
+            (
+                par[0].as_str().unwrap_or_default().to_owned(),
+                par[1].as_str().unwrap_or_default().to_owned(),
+            )
+        })
+        .collect();
+    assert_eq!(unidades.get("x").map(String::as_str), Some("m"));
+    assert_eq!(unidades.get("v").map(String::as_str), Some("m/s"));
+    assert_eq!(unidades.get("c").map(String::as_str), Some("N.s/m"));
 
     // Os parametros vao como TEXTO decimal, e nao como float: `Rational("0.5")`
     // do outro lado e' exato, e `dsolve` com float da' RecursionError depois de
     // 4,2 s (`roadmaps/31` §19.3.3).
-    let parametros: BTreeMap<String, String> = pedido["parametros"]
+    let parametros: BTreeMap<String, String> = edo["parametros"]
         .as_array()
         .expect("parametros e lista")
         .iter()
@@ -316,25 +337,84 @@ fn o_oraculo_que_trava_perde_o_prazo_em_vez_de_travar_a_ide() {
         teto: Duration::from_millis(300),
     };
     let comeco = std::time::Instant::now();
-    let saida = oraculo::resolver(
+    let saida = oraculo::perguntar(
         &travado,
-        &Pergunta {
-            formula: "-sin(x)".to_owned(),
-            estado: "x".to_owned(),
-            derivada: None,
-            tempo: None,
-            parametros: Vec::new(),
-            ordem: 2,
-            y0: "1".to_owned(),
-            dy0: Some("0".to_owned()),
+        &Consulta {
+            edo: Some(Edo {
+                formula: "-sin(x)".to_owned(),
+                estado: "x".to_owned(),
+                derivada: None,
+                tempo: None,
+                parametros: Vec::new(),
+                ordem: 2,
+                y0: "1".to_owned(),
+                dy0: Some("0".to_owned()),
+            }),
+            dimensoes: Vec::new(),
         },
     );
-    assert_eq!(saida, Err(NaoSei::TempoEsgotado));
+    let resposta = saida.expect("o teto devolve o que chegou, e nada chegou");
+    assert_eq!(resposta.sem_solucao, Some(NaoSei::TempoEsgotado));
     assert!(
         comeco.elapsed() < Duration::from_secs(3),
         "o teto nao foi respeitado: {:?}",
         comeco.elapsed()
     );
+}
+
+/// **O VEREDITO DE UNIDADE SOBREVIVE AO `dsolve` QUE TRAVA.**
+///
+/// ACHADO em 2026-09-10, contra o `SymPy` real: `-(k/m)*sin(x)` e' o pendulo
+/// nao linearizado, e o `dsolve` nao volta. Com uma resposta so', o teto matava
+/// o processo e levava junto o veredito de unidade — que estava pronto em 3 ms
+/// e teria dito `dimensionalArgument`, que e' exatamente o que o autor precisa
+/// ler.
+///
+/// A defesa e' o processo responder em DUAS linhas, a barata primeiro, e o core
+/// ler linha a linha. MUTACAO QUE PROVA: faca o `executar` devolver
+/// `Err(TempoEsgotado)` ao estourar o teto, em vez do que ja' chegou.
+#[test]
+fn o_veredito_de_unidade_sobrevive_ao_dsolve_que_trava() {
+    let travado = Config {
+        interpretador: invocador("trava-edo", "travaedo", None, None)
+            .to_string_lossy()
+            .into_owned(),
+        teto: Duration::from_millis(400),
+    };
+    let resposta = oraculo::perguntar(
+        &travado,
+        &Consulta {
+            edo: Some(Edo {
+                formula: "-sin(x)".to_owned(),
+                estado: "x".to_owned(),
+                derivada: None,
+                tempo: None,
+                parametros: Vec::new(),
+                ordem: 2,
+                y0: "1".to_owned(),
+                dy0: Some("0".to_owned()),
+            }),
+            dimensoes: vec![PedidoDimensao {
+                label: String::new(),
+                formula: "-sin(x)".to_owned(),
+                unidades: vec![("x".to_owned(), "m".to_owned())],
+                esquerda: "(m)/s^2".to_owned(),
+            }],
+        },
+    )
+    .expect("a linha que chegou vale");
+
+    assert_eq!(
+        resposta.sem_solucao,
+        Some(NaoSei::TempoEsgotado),
+        "a EDO travou, e isso tem de aparecer"
+    );
+    assert_eq!(
+        resposta.dimensoes.len(),
+        1,
+        "o veredito de unidade ja' tinha chegado e NAO pode morrer junto"
+    );
+    assert_eq!(resposta.dimensoes[0].achado, Achado::Coerente);
 }
 
 /// **O PORTAO, e a falha SILENCIOSA que ele existe para pegar.**
@@ -403,4 +483,242 @@ fn a_solucao_do_oraculo_e_a_analitica_concordam() {
         (do_oraculo - a_mao).abs() < 1e-12,
         "oraculo {do_oraculo} contra analitica {a_mao}"
     );
+}
+
+// ---------------------------------------------------------------------------
+// A CHECAGEM DE UNIDADE
+//
+// Decisao do autor em 2026-09-05, e ela REVERTEU uma tomada horas antes: a
+// original era rotulo SEM checagem, apoiada na medicao de que o `uom` checa em
+// tempo de COMPILACAO e formula digitada nao tem tipo Rust nenhum. O `SymPy`
+// checa em EXECUCAO, que e' quando a formula do usuario existe.
+//
+// Estes testes NAO usam o falso: eles medem a montagem do pedido (o que a IDE
+// pergunta) e a leitura do veredito. O que o `SymPy` responde de verdade esta
+// medido no `roadmaps/31` §20 e nao se reproduz sem a ferramenta.
+// ---------------------------------------------------------------------------
+
+/// O lado ESQUERDO e' a unidade do estado sobre o tempo elevado a ordem.
+///
+/// E' este pedaco que transforma "os termos combinam entre si" em "a equacao e'
+/// da grandeza certa" — e sem ele `-(k/m)*x*x*x` sozinho passaria, porque ele e'
+/// coerente CONSIGO MESMO e nao e' uma aceleracao.
+#[test]
+fn o_lado_esquerdo_e_a_unidade_do_estado_sobre_o_tempo() {
+    assert_eq!(corrida::lado_esquerdo("m", 2), "(m)/s^2");
+    assert_eq!(corrida::lado_esquerdo("m", 1), "(m)/s^1");
+    assert_eq!(corrida::lado_esquerdo("rad", 1), "(rad)/s^1");
+    // Estado ADIMENSIONAL — o decaimento exponencial e' assim. `/s^1` sem
+    // numerador nao e' expressao; o `1` tem de estar la'.
+    assert_eq!(corrida::lado_esquerdo("", 1), "1/s^1");
+    assert_eq!(corrida::lado_esquerdo("   ", 2), "1/s^2");
+}
+
+/// O tempo NAO e' declarado pelo conceito: ele e' do dominio.
+#[test]
+fn a_unidade_do_tempo_vem_do_dominio_e_nao_do_catalogo() {
+    let conceito = crate::sim::catalogo::conceito("oscilador-amortecido")
+        .expect("o oscilador amortecido esta no catalogo");
+    let mapa = corrida::unidades_do_conceito(&conceito);
+    assert_eq!(corrida::unidade_da_grandeza(&mapa, "t"), "s");
+    assert_eq!(corrida::unidade_da_grandeza(&mapa, "y"), "m");
+    assert_eq!(corrida::unidade_da_grandeza(&mapa, "dy"), "m/s");
+    // Grandeza que o conceito nao declara vira unidade VAZIA (adimensional), e
+    // nao um palpite.
+    assert_eq!(corrida::unidade_da_grandeza(&mapa, "inexistente"), "");
+}
+
+/// TODO conceito do catalogo declara unidade que o vocabulario do oraculo
+/// conhece.
+///
+/// **Este e' o gate que impede a falha SILENCIOSA.** Um simbolo que o `SymPy`
+/// nao reconhece e' ADIMENSIONAL para ele, e o veredito sairia "coerente" sem
+/// nada reclamar. Como o vocabulario mora do lado do `Python` e o catalogo mora
+/// aqui, os dois podem divergir num commit que nao toca nenhum dos dois —
+/// entao a conferencia e' feita contra a MESMA lista.
+///
+/// MUTACAO QUE PROVA O GATE: acrescente `G("z", "coisa", "furlong", true)` a
+/// qualquer entrada do catalogo e este teste cai.
+#[test]
+fn todo_conceito_declara_unidade_que_o_oraculo_conhece() {
+    // O vocabulario do `PROGRAMA`, na mesma ordem em que ele o declara.
+    const VOCABULARIO: &[&str] = &[
+        "m", "s", "kg", "N", "J", "C", "K", "mol", "A", "rad", "Hz", "ohm", "V", "W", "Pa",
+    ];
+    let simbolo_conhecido = |simbolo: &str| {
+        simbolo.is_empty()
+            || simbolo.chars().all(|c| c.is_ascii_digit())
+            || VOCABULARIO.contains(&simbolo)
+    };
+    let mut desconhecidas = Vec::new();
+    for conceito in crate::sim::catalogo::conceitos() {
+        let unidades = conceito
+            .quantities
+            .iter()
+            .map(|q| (q.id.clone(), q.unit.clone()))
+            .chain(
+                conceito
+                    .components
+                    .iter()
+                    .map(|c| (c.id.clone(), c.unit.clone())),
+            );
+        for (id, unidade) in unidades {
+            for simbolo in unidade
+                .split(['.', '/', '^', '(', ')', '*'])
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+            {
+                if !simbolo_conhecido(simbolo) {
+                    desconhecidas.push(format!("{}/{id}: {simbolo}", conceito.id));
+                }
+            }
+        }
+    }
+    assert!(
+        desconhecidas.is_empty(),
+        "o catalogo declara unidade que o oraculo nao conhece — o veredito sairia \
+         'coerente' em silencio: {desconhecidas:?}"
+    );
+}
+
+/// Sem a ferramenta, a IDE diz que NAO checou — nao para de checar calada.
+#[test]
+fn sem_a_ferramenta_o_veredito_de_unidade_e_ausente() {
+    let resultado = rodar(&config("sem-dimensao", "nosympy"), "-(k/m)*x - (c/m)*v");
+    assert!(
+        resultado.dimensions.is_none(),
+        "sem SymPy nao ha' veredito — e a nota diz por que"
+    );
+    assert!(resultado.oracle_note.is_some());
+}
+
+/// O veredito do outro lado vira o tipo do protocolo, cada palavra no seu lugar.
+#[test]
+fn o_veredito_do_oraculo_vira_o_tipo_do_protocolo() {
+    use kinein_protocol::SimDimensionVerdict;
+    let casos = [
+        (Achado::Coerente, SimDimensionVerdict::Coherent),
+        (Achado::Incoerente, SimDimensionVerdict::Incoherent),
+        (Achado::LadoErrado, SimDimensionVerdict::WrongSide),
+        (
+            Achado::ArgumentoComDimensao,
+            SimDimensionVerdict::DimensionalArgument,
+        ),
+        (
+            Achado::UnidadeDesconhecida,
+            SimDimensionVerdict::UnknownUnit,
+        ),
+        (Achado::Ilegivel, SimDimensionVerdict::Unreadable),
+    ];
+    for (achado, esperado) in casos {
+        let traduzido = corrida::veredito_para_protocolo(&oraculo::Veredito {
+            label: "x".to_owned(),
+            achado,
+            detalhe: "detalhe".to_owned(),
+        });
+        assert_eq!(traduzido.verdict, esperado);
+        assert_eq!(traduzido.equation, "x");
+        assert_eq!(traduzido.detail, "detalhe");
+    }
+}
+
+/// A forma VETORIAL pede um veredito POR COMPONENTE, com o lado esquerdo de
+/// cada um.
+///
+/// Aqui a checagem vale mais que na escalar, e a razao e' aritmetica: sao `n`
+/// equacoes para escrever. A derivada de uma POSICAO e' uma velocidade e a de
+/// uma VELOCIDADE e' uma aceleracao — trocar as duas passa no checador de
+/// ligacao, que confere ligacao e nao fisica.
+#[test]
+fn a_forma_vetorial_pergunta_por_componente() {
+    let log = std::env::temp_dir().join("kinein-oraculo-sistema.json");
+    let _ = std::fs::remove_file(&log);
+    let oraculo = Config {
+        interpretador: invocador("sistema", "ok", Some(&log), None)
+            .to_string_lossy()
+            .into_owned(),
+        teto: Duration::from_secs(5),
+    };
+    let conceito =
+        crate::sim::catalogo::conceito("orbita-dois-corpos").expect("a orbita esta no catalogo");
+    // As QUATRO equacoes: a corrida so' chega a conferir unidade depois de a
+    // checagem de conceito passar, e ela exige uma formula por componente.
+    let equacao = |componente: &str, formula: &str, ligacoes: Vec<SimBinding>| {
+        kinein_protocol::SimComponentFormula {
+            component: componente.to_owned(),
+            formula: formula.to_owned(),
+            bindings: ligacoes,
+        }
+    };
+    let equacoes = vec![
+        equacao("x", "vx", vec![liga("vx", "vx")]),
+        equacao("y", "vy", vec![liga("vy", "vy")]),
+        equacao(
+            "vx",
+            "-mu*x/(x^2+y^2)^1.5",
+            vec![liga("mu", "mu"), liga("x", "x"), liga("y", "y")],
+        ),
+        equacao(
+            "vy",
+            "-mu*y/(x^2+y^2)^1.5",
+            vec![liga("mu", "mu"), liga("x", "x"), liga("y", "y")],
+        ),
+    ];
+    let _ = crate::sim::corrida_sistema::executar(
+        &conceito,
+        &equacoes,
+        &[SimValue {
+            quantity: "mu".to_owned(),
+            value: 1.0,
+        }],
+        &[1.0, 0.0, 0.0, 1.0],
+        1.0,
+        0.1,
+        SimMethod::Rk4,
+        10,
+        &oraculo,
+    );
+
+    let bruto = std::fs::read_to_string(&log).expect("o falso gravou o pedido");
+    let pedido: serde_json::Value = serde_json::from_str(&bruto).expect("o pedido e JSON");
+    assert!(
+        pedido["edo"].is_null(),
+        "num sistema nao ha' EDO escalar para resolver: so' as unidades"
+    );
+    let dimensoes = pedido["dimensoes"].as_array().expect("lista");
+    let por_componente: BTreeMap<String, String> = dimensoes
+        .iter()
+        .map(|d| {
+            (
+                d["label"].as_str().unwrap_or_default().to_owned(),
+                d["esquerda"].as_str().unwrap_or_default().to_owned(),
+            )
+        })
+        .collect();
+    // A forma vetorial e' de PRIMEIRA ordem: cada equacao e' a derivada do SEU
+    // componente (`arquitetura/34` §13.1).
+    assert_eq!(por_componente.get("x").map(String::as_str), Some("(m)/s^1"));
+    assert_eq!(
+        por_componente.get("vx").map(String::as_str),
+        Some("(m/s)/s^1")
+    );
+    let _ = std::fs::remove_file(&log);
+}
+
+/// O pedido monta a unidade certa mesmo quando a variavel esta ligada a um
+/// COMPONENTE, e nao a uma grandeza.
+#[test]
+fn a_ligacao_a_um_componente_traz_a_unidade_do_componente() {
+    let pedido = PedidoDimensao {
+        label: "vx".to_owned(),
+        formula: "-mu*x".to_owned(),
+        unidades: vec![
+            ("mu".to_owned(), "m^3/s^2".to_owned()),
+            ("x".to_owned(), "m".to_owned()),
+        ],
+        esquerda: "(m/s)/s^1".to_owned(),
+    };
+    let json = serde_json::to_string(&pedido).expect("serializa");
+    assert!(json.contains("\"esquerda\":\"(m/s)/s^1\""), "json: {json}");
+    assert!(json.contains("m^3/s^2"), "json: {json}");
 }

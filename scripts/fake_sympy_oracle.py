@@ -14,9 +14,13 @@ testa aqui e' o contrato entre o core e o processo, nao o `SymPy`.
 
 Controle por ARGUMENTO, nao por ambiente:
 
-    --modo=ok|nosympy|cannotsolve|hang|livre     o que responder
+    --modo=ok|nosympy|cannotsolve|hang|travaedo|livre
+                                                 o que responder
     --log=<arquivo>                              onde gravar o PEDIDO recebido
     --expr=<expressao>                           a resposta, no modo `livre`
+    --dim=<veredito>                             o veredito de unidade que ele
+                                                 devolve para CADA equacao
+                                                 pedida (padrao: coherent)
 
 **Por argumento de proposito.** Este repositorio proibe `unsafe`
 (`unsafe_code = "forbid"`), e escrever variavel de ambiente virou `unsafe` na
@@ -60,19 +64,38 @@ def main() -> int:
         while True:
             time.sleep(3600)
 
+    def linha(objeto):
+        sys.stdout.write(json.dumps(objeto) + "\n")
+        sys.stdout.flush()
+
+    # A falta do SymPy e' de TRANSPORTE: ela atinge as duas perguntas.
     if modo == "nosympy":
-        sys.stdout.write(json.dumps({"ok": False, "reason": "noSympy"}))
+        linha({"kind": "fatal", "reason": "noSympy"})
         return 0
 
-    if modo == "cannotsolve":
-        sys.stdout.write(json.dumps({"ok": False, "reason": "cannotSolve"}))
-        return 0
+    try:
+        pedido = json.loads(pedido_bruto) if pedido_bruto.strip() else {}
+    except Exception:
+        pedido = {}
 
-    expressao = opcao("expr", OSCILADOR) if modo == "livre" else OSCILADOR
+    # A BARATA primeiro, como o programa de verdade: o que ja' foi descarregado
+    # sobrevive ao teto que mata o `dsolve`.
+    veredito = opcao("dim", "coherent")
+    linha({"kind": "dimensoes", "sympy": "1.14.0",
+           "itens": [{"label": item.get("label", ""), "verdict": veredito, "detail": ""}
+                     for item in pedido.get("dimensoes", [])]})
 
-    sys.stdout.write(
-        json.dumps({"ok": True, "expression": expressao, "sympy": "1.14.0"})
-    )
+    if modo == "travaedo":
+        # As unidades ja' foram; a EDO nunca vem. E' o pendulo nao linearizado.
+        while True:
+            time.sleep(3600)
+
+    if pedido.get("edo"):
+        if modo == "cannotsolve":
+            linha({"kind": "edo", "sympy": "1.14.0", "ok": False, "reason": "cannotSolve"})
+        else:
+            expressao = opcao("expr", OSCILADOR) if modo == "livre" else OSCILADOR
+            linha({"kind": "edo", "sympy": "1.14.0", "ok": True, "expression": expressao})
     return 0
 
 

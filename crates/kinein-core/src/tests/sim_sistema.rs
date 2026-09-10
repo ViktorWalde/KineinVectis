@@ -27,6 +27,19 @@ use std::collections::BTreeMap;
 use kinein_protocol::{SimBinding, SimComponentFormula, SimMethod, SimValue};
 
 use crate::sim::corrida_sistema::{self, ErroDeSistemaExec};
+
+/// Um oraculo que NAO alcanca o host.
+///
+/// Os testes desta suite medem o INTEGRADOR, e o veredito de unidade viria de
+/// um processo externo que pode ou nao existir na maquina. Apontar para um
+/// caminho ausente torna a resposta deterministica — mesma razao do
+/// `ToolDetector` com caminho de busca vazio.
+fn oraculo_ausente() -> crate::sim::oraculo::Config {
+    crate::sim::oraculo::Config {
+        interpretador: "kinein-oraculo-ausente-de-proposito".to_owned(),
+        teto: std::time::Duration::from_secs(1),
+    }
+}
 use crate::sim::sistema::ErroDeSistema;
 use crate::sim::{catalogo, exata, invariante};
 
@@ -90,6 +103,7 @@ fn roda(metodo: SimMethod, passo: f64, duracao: f64) -> kinein_protocol::SimRunS
         passo,
         metodo,
         100,
+        &oraculo_ausente(),
     )
     .expect("a corrida da orbita tem de sair")
 }
@@ -167,6 +181,7 @@ fn o_simpletico_e_recusado_quando_o_conceito_nao_declara_pareamento() {
         0.01,
         SimMethod::EulerSymplectic,
         10,
+        &oraculo_ausente(),
     )
     .expect_err("sem pareamento o simpletico tem de ser recusado");
     assert_eq!(
@@ -186,6 +201,7 @@ fn o_simpletico_e_recusado_quando_o_conceito_nao_declara_pareamento() {
             0.01,
             metodo,
             10,
+            &oraculo_ausente(),
         )
         .unwrap_or_else(|erro| panic!("{metodo:?} nao deveria depender do pareamento: {erro:?}"));
     }
@@ -213,6 +229,7 @@ fn trocar_duas_ligacoes_de_papel_muda_o_resultado() {
         0.01,
         SimMethod::Rk4,
         100,
+        &oraculo_ausente(),
     )
     .expect("a corrida com a ligacao trocada ainda RODA — ela so' calcula outra coisa");
 
@@ -292,6 +309,7 @@ fn o_estado_inicial_precisa_de_um_valor_por_componente() {
         0.01,
         SimMethod::Rk4,
         10,
+        &oraculo_ausente(),
     )
     .expect_err("estado incompleto tem de ser recusado");
     assert_eq!(
@@ -404,6 +422,7 @@ fn o_pendulo_duplo_nao_tem_oraculo_e_a_energia_e_o_que_sobra() {
         1e-4,
         SimMethod::Rk4,
         50,
+        &oraculo_ausente(),
     )
     .expect("o pendulo duplo roda");
 
