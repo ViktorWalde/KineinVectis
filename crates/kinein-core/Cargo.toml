@@ -34,6 +34,10 @@ postgres.workspace = true
 ureq.workspace = true
 # Bancos nao-relacionais (roadmaps/35 §9.7): colecao -> documento.
 mongodb.workspace = true
+# Simulacao por conceito (arquitetura/34): avalia a formula que o usuario digita
+# e, antes disso, diz QUAIS variaveis ela usa — que e' o que a checagem de
+# conceito precisa e um compilador nao daria. ADR-0006.
+exmex.workspace = true
 
 [lints]
 workspace = true

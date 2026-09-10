@@ -32,6 +32,8 @@ mod run;
 mod runconfig;
 mod settings;
 mod setup;
+mod sim;
+mod sim_corrida;
 mod syntax;
 mod terminal;
 mod toolchain;
@@ -61,6 +63,8 @@ pub use run::*;
 pub use runconfig::*;
 pub use settings::*;
 pub use setup::*;
+pub use sim::*;
+pub use sim_corrida::*;
 pub use syntax::*;
 pub use terminal::*;
 pub use toolchain::*;
@@ -71,4 +75,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.82.0";
+pub const PROTOCOL_VERSION: &str = "0.87.0";

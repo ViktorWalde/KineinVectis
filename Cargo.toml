@@ -43,6 +43,17 @@ tree-sitter = "=0.26.11"
 tree-sitter-c = "=0.24.2"
 tree-sitter-cpp = "=0.23.4"
 tree-sitter-rust = "=0.24.2"
+# Avaliador de expressao do dominio `sim` (arquitetura/34 §5). Auditado em
+# 2026-09-05: MIT OR Apache-2.0, MSRV 1.80.1 (abaixo do 1.85 do workspace), e
+# ZERO uso de rede, processo, arquivo, env ou `unsafe` — e' calculo puro.
+# Custa +1 CRATE nesta arvore: os seis transitivos dele (regex, regex-automata,
+# regex-syntax, aho-corasick, memchr, smallvec) ja' estavam todos aqui.
+# A feature `partial` (derivada parcial) nao traz dependencia: e' `partial = []`.
+# Escolhido contra cinco alternativas medidas (roadmaps/31 §8.1): `evalexpr`
+# reprova por AGPL-3.0-only desde a v12, `mexprp` reprova por LGPL na transitiva
+# (rug/gmp-mpfr-sys), e `fasteval`/`meval`/`rsc` passam mas pararam em
+# 2020/2018/2024. O exmex e' o unico MANTIDO que passa no deny.toml. ADR-0006.
+exmex = { version = "=0.21.0", features = ["partial"] }
 # Cliente PostgreSQL SINCRONO (dominio `datasource`, docs/integracoes/37 §5.1).
 # Auditado em 2026-09-04: MIT OR Apache-2.0, +52 crates, `cargo deny` verde sem
 # acrescentar licenca a lista — o `sqlx` reprovaria, por trazer `foldhash`
