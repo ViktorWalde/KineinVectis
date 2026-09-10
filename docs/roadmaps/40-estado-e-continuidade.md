@@ -438,23 +438,58 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
 --  sim: janela em resolucao cheia        a trilha e' amostrada; pedir um trecho
                                           em detalhe re-executa aquele pedaco
                                           (arquitetura/34 §7.1)
---  core_client.h em 500/500            MEDIDO em 2026-09-06: o header ficou em
-                                         EXATAMENTE o limite. A proxima
-                                         assinatura que entrar reprova a
-                                         catraca, e o conserto NAO e' obvio: os
-                                         .cpp ja' estao divididos por dominio
-                                         (`core_client_sim.cpp`,
-                                         `core_client_grafana.cpp`, ...), mas o
-                                         header declara UMA classe QObject, e
-                                         classe nao se divide em dois arquivos.
-                                         As saidas sao (a) mover mais comentario
-                                         para junto da implementacao, que e' a
-                                         convencao que o proprio arquivo ja'
-                                         segue, ou (b) corrigir a CATEGORIA: um
-                                         header que so' DECLARA tem densidade
-                                         diferente de um com logica. A (b) e'
-                                         mexer em limite, e isso e' decisao do
-                                         autor — nunca do assistente
+--  core_client.h em 500/500            FECHADO em 2026-09-10 (§7.5), por
+                                         DECISAO DO AUTOR e pela saida (b): a
+                                         categoria estava errada, nao o arquivo.
+                                         Um header que so' DECLARA nao tem
+                                         logica para esconder, e o limite dele
+                                         passou a ser 2x o que ele declara — nao
+                                         um numero escolhido. A saida (a) foi
+                                         MEDIDA e descartada: 422 linhas de
+                                         declaracao contra 63 de comentario, e
+                                         mover comentario compraria ~33 linhas
+                                         contra a convencao da linguagem
+--  A IDE DO CHECKOUT NAO ABRE, e     ACHADO em 2026-09-10. Prioridade 1
+    o gate inteiro fica verde         (crash), e NAO e' regressao desta
+                                      sessao: o binario de release de
+                                      2026-09-06, anterior a tudo, aborta
+                                      igual.
+
+                                      MEDIDO, com display real E offscreen:
+
+                                        build/dev-local            SIGABRT
+                                        build/linux-clang-debug-   SIGABRT
+                                          strict
+                                        dist/*.AppImage            ABRE
+
+                                      O AppImage empacota o proprio Qt; o
+                                      checkout usa o do sistema, 6.11.2. A
+                                      pilha aponta o QML compilado em AOT:
+                                      `GlobalShortcuts.qml` montando um
+                                      `QList<QVariant>` a partir de
+                                      initializer list, e o assert estoura
+                                      dentro do `QGenericArrayOps`.
+
+                                      ISOLADO por dois contornos INDEPENDENTES,
+                                      os dois em runtime:
+
+                                        QV4_FORCE_INTERPRETER=1   abre
+                                        QML_DISABLE_DISK_CACHE=1  abre
+                                        QT_ENABLE_REGEXP_JIT=0    aborta
+                                                                  (controle)
+
+                                      POR QUE O GATE NAO VE: o
+                                      `verificar-appimage.sh` roda o smoke do
+                                      ARTEFATO em dist/, que empacota outro Qt
+                                      — e ele passa. Nada executa o binario que
+                                      sai do `cmake --build`. E' a mesma classe
+                                      de falha do 19o gate, num eixo novo:
+                                      "compila" e "abre" sao afirmacoes
+                                      diferentes.
+
+                                      NAO E' SAIDA de dogfooding (o registro
+                                      recusa bug contornado dentro da Kinein);
+                                      e' bug, e mora aqui
 --  FECHADOS nesta passada, e ficam       a coluna `exato` que respondia por
     aqui so' como registro                OUTRA equacao (§19.0) — consertada em
                                           2026-09-10 pela PROCEDENCIA, §7.3; e o
@@ -903,3 +938,74 @@ conferir é pior que nenhuma. Fechar isso é trabalho de tabela, não de motor.
 
   protocolo  0.88.0 — `SimDimensionCheck` e `SimDimensionVerdict`
   testes     666 Rust (+8) e 31 harnesses; 3 mutacoes no core, 2 no QML
+
+### 7.5 O `core_client.h` saiu de 500/500 — a CATEGORIA estava errada, 2026-09-10
+
+**Decisão do autor**, e ela vem depois da medição descartar a outra saída.
+
+O arquivo bateu em **exatamente 500/500** e travaria a próxima assinatura IPC que
+a UI consumisse — três dos itens abertos acrescentam método. As duas saídas
+estavam escritas desde 2026-09-06: **(a)** mover comentário para junto da
+implementação, ou **(b)** corrigir a categoria.
+
+**A medição matou a (a).** O header tem **422 linhas de declaração pura contra 63
+de comentário**; mover os `///` das declarações compraria ~33 linhas e custaria a
+convenção da própria linguagem — corte por TAMANHO, que a `ARCHITECTURE` §4
+regra 9 recusa em qualquer arquivo.
+
+**O que ele é, medido:** 289 itens declarados (129 `Q_INVOKABLE`, 18
+`Q_PROPERTY`, 142 `void`) em 423 linhas — **1,46 linha por item**. É o argumento
+do composition root aplicado a C++: o tamanho é função do **contrato** que ele
+espelha. E a saída padrão do composition root ("dividir a composição por área")
+não existe aqui: um `QObject` é **uma** classe, e classe não se divide em dois
+arquivos.
+
+**O limite não virou um número escolhido**, e essa é a parte que importa. Fixar
+700 porque 500 não coube seria levantar limite para caber. Ele é **2× o que o
+arquivo declara**:
+
+```text
+so' cresce DECLARANDO        hoje 578 contra 500 — a folga de 78 linhas e' o
+                             espaco entre a densidade medida (1,46) e o teto (2)
+comentario sem declaracao    come a folga e REPROVA
+logica que entra no header   derruba o arquivo para 500 NA HORA, porque ele
+                             deixa de ser desta categoria
+```
+
+Provado por mutação nas três direções: um corpo de função reprova em 502/500;
+noventa linhas de comentário reprovam em 590/578; trinta declarações novas
+passam.
+
+**A catraca continua com UM arquivo em débito** — o `EditorController.qml` em
+791/400, que segue congelado por decisão registrada (`../arquitetura/32` §8.4).
+Nenhum limite foi levantado nesta passada: corrigiu-se a categoria de um arquivo
+que nunca teve lógica, que é a segunda vez que isso acontece (a primeira foi o
+`ui/qml/app/`, que nunca foi QML visual).
+
+### 7.6 O registro de saídas: o que foi feito, e o que continua faltando
+
+**O registro continua VAZIO, e isso está certo** — não porque ninguém olhou,
+mas porque a regra do arquivo é estreita de propósito:
+
+```text
+E' SAIDA        abandonei a Kinein e abri outra ferramenta para terminar
+NAO E' SAIDA    bug que contornei DENTRO da Kinein — isso vai para a fila
+                normal. "Misturar os dois esvazia o valor deste arquivo"
+```
+
+**Um assistente não pode preenchê-lo.** Uma saída é o autor largando a IDE no
+meio de uma tarefa; escrever entrada sem isso ter acontecido é inventar o dado
+que o arquivo existe para coletar. O que a sessão de 2026-09-10 pôde fazer foi o
+oposto disso: **medir**, e mandar o achado para o lugar certo.
+
+**E o achado é grande.** Ao tentar rodar a IDE para conferir a tela da
+simulação, os dois builds do checkout abortaram — com display real e offscreen —
+enquanto o AppImage abre. Prioridade 1, anterior a esta sessão, e **com o gate
+de dezenove verificações verde**. Está registrado na §4, com os dois contornos
+que o isolam.
+
+**A leitura honesta, e ela não mudou desde 2026-09-03:** o registro vazio não
+significa que a IDE substituiu o VS Code. Significa que a semana de
+desenvolvimento C/C++ e Rust dentro dela — o critério do TR1 — ainda não
+aconteceu. E agora há um motivo medido para ela não ter acontecido: **quem
+compila do checkout não consegue abrir a IDE nesta máquina.**
