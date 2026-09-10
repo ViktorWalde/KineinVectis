@@ -79,6 +79,9 @@ bash scripts/verificar-qml-propriedades.sh
 passo "scripts/verificar-qml-duplicacao.sh (mesma derivacao em dois arquivos)"
 bash scripts/verificar-qml-duplicacao.sh
 
+passo "scripts/verificar-qml-alcance.sh (componente entregue que nenhuma tela abre)"
+bash scripts/verificar-qml-alcance.sh
+
 passo "scripts/verificar-exercitacao.sh (o core contra ferramenta real)"
 bash scripts/verificar-exercitacao.sh
 
