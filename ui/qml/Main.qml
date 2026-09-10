@@ -281,6 +281,9 @@ Window {
         setupController: domains.setupController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
+        simController: domains.simController
+        simRunController: domains.simRunController
+        simSystemController: domains.simSystemController
         onAppMenuActionRequested: function(action) {
             header.executeMenuAction(action);
         }

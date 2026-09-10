@@ -58,7 +58,7 @@ bool CoreClient::dispatchGrafanaResult(const QString& method, const QJsonObject&
         emit grafanaProbeAccepted(result.value(QStringLiteral("jobId")).toString());
         return true;
     }
-    return false;
+    return dispatchSimResult(method, result);
 }
 
 } // namespace kinein

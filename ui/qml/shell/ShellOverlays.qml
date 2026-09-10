@@ -17,6 +17,9 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var simController: null
+    property var simRunController: null
+    property var simSystemController: null
     property var grafanaController: null
     property var setupController: null
     property var toolchainController: null
@@ -181,50 +184,26 @@ Item {
             root.configActionController.openWith(actionId, params)
     }
 
-    LibraryPanelHost {
+    // Os cinco paineis de AMBIENTE DO PROJETO moram em arquivo proprio.
+    //
+    // O corte e' por RESPONSABILIDADE, e nao por tamanho: os cinco tem a mesma
+    // forma — moldura de dialogo sobre um controller com `panelVisible`, e o
+    // mesmo ciclo abrir/fechar — e sao o mesmo agrupamento que o menu ja'
+    // chama de "Ambiente do projeto". O resto deste arquivo sao overlays de
+    // natureza diferente: menus, dialogos modais e o popup do menu principal.
+    ShellEnvironmentOverlays {
         anchors.fill: parent
-        visible: root.libraryController.panelVisible
-        z: 99
-        controller: root.libraryController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.libraryController.close()
-        onApplyStepRequested: function(actionId, params) {
-            root.libraryController.close();
-            root.configActionController.openWith(actionId, params);
-        }
-    }
-
-    DataSourcePanelHost {
-        anchors.fill: parent
-        visible: root.dataSourceController.panelVisible
-        z: 99
-        controller: root.dataSourceController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.dataSourceController.close()
-    }
-
-    GrafanaPanelHost {
-        anchors.fill: parent
-        visible: root.grafanaController.panelVisible
-        z: 99
-        controller: root.grafanaController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.grafanaController.close()
-    }
-
-    SetupPanelHost {
-        anchors.fill: parent
-        visible: root.setupController.panelVisible
-        z: 99
-        controller: root.setupController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.setupController.close()
-        // O comando vai para o TERMINAL DA IDE, visivel. Nada roda escondido.
-        onCommandRequested: comando => root.runtimeController.submitShellInput(comando)
+        hostWidth: root.hostWidth
+        hostHeight: root.hostHeight
+        libraryController: root.libraryController
+        dataSourceController: root.dataSourceController
+        simController: root.simController
+        simRunController: root.simRunController
+        simSystemController: root.simSystemController
+        grafanaController: root.grafanaController
+        setupController: root.setupController
+        configActionController: root.configActionController
+        runtimeController: root.runtimeController
     }
 
     AboutDialog {

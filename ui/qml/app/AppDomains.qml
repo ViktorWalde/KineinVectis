@@ -33,6 +33,9 @@ Item {
     readonly property alias configActionController: configActionController
     readonly property alias toolchainController: toolchainController
     readonly property alias dataSourceController: dataSourceController
+    readonly property alias simController: simController
+    readonly property alias simRunController: simRunController
+    readonly property alias simSystemController: simSystemController
     readonly property alias grafanaController: grafanaController
     readonly property alias setupController: setupController
     readonly property alias libraryController: libraryController
@@ -149,6 +152,39 @@ Item {
         id: dataSourceController
 
         workspaceRoot: root.coreClient.workspaceRoot
+    }
+
+    // Simulacao por conceito (etapa 28, docs/arquitetura/34). Guarda o que o
+    // autor esta' montando; nao calcula nada e nao adivinha nada — nem qual
+    // grandeza cada variavel e', que e' escolha explicita dele (§2.1).
+    SimController {
+        id: simController
+
+        onConceptChanged: simRunController.reset()
+        onNumericsRequested: destino => simRunController.fillNumerics(destino)
+        onNumericsRestored: salva => simRunController.restoreNumerics(salva)
+    }
+
+    // COMO RESOLVER a equacao, separado de COMO MONTA-LA. Le o conceito e a
+    // ligacao do vizinho; nao guarda nenhum dos dois.
+    SimRunController {
+        id: simRunController
+
+        concept: simController.currentConcept()
+        conceptId: simController.selectedConcept
+        formula: simController.formula
+        bindings: simController.bindings
+        values: simController.values
+        checkOk: simController.checkOk
+    }
+
+    // A forma VETORIAL, separada porque as REGRAS sao outras: uma formula e uma
+    // tabela de ligacao POR COMPONENTE, e o simpletico so' e' oferecido quando o
+    // conceito declara o pareamento (arquitetura/34 §13.3).
+    SimSystemController {
+        id: simSystemController
+
+        concept: simController.currentConcept()
     }
 
     // Observabilidade (roadmaps/35, etapa 27): o Grafana que observa este
@@ -281,6 +317,7 @@ Item {
         dataSourceController: dataSourceController
         grafanaController: grafanaController
         setupController: setupController
+        simController: simController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);

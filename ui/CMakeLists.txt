@@ -55,6 +55,32 @@ set_source_files_properties(qml/debug/DebugController.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/library/LibraryController.qml PROPERTIES QT_RESOURCE_ALIAS LibraryController.qml)
 set_source_files_properties(qml/library/LibraryPanel.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPanel.qml)
 set_source_files_properties(qml/library/LibraryTargetPicker.qml PROPERTIES QT_RESOURCE_ALIAS LibraryTargetPicker.qml)
+set_source_files_properties(qml/sim/SimRunController.qml PROPERTIES QT_RESOURCE_ALIAS SimRunController.qml)
+set_source_files_properties(qml/sim/SimRunControls.qml PROPERTIES QT_RESOURCE_ALIAS SimRunControls.qml)
+set_source_files_properties(qml/sim/SimNumberField.qml PROPERTIES QT_RESOURCE_ALIAS SimNumberField.qml)
+set_source_files_properties(qml/sim/SimEstimateLine.qml PROPERTIES QT_RESOURCE_ALIAS SimEstimateLine.qml)
+set_source_files_properties(qml/sim/SimRunResultView.qml PROPERTIES QT_RESOURCE_ALIAS SimRunResultView.qml)
+set_source_files_properties(qml/sim/SimPlot2d.qml PROPERTIES QT_RESOURCE_ALIAS SimPlot2d.qml)
+set_source_files_properties(qml/sim/SimPlotSystem.qml PROPERTIES QT_RESOURCE_ALIAS SimPlotSystem.qml)
+set_source_files_properties(qml/sim/SimSystemController.qml PROPERTIES QT_RESOURCE_ALIAS SimSystemController.qml)
+set_source_files_properties(qml/sim/SimSystemAuthoring.qml PROPERTIES QT_RESOURCE_ALIAS SimSystemAuthoring.qml)
+set_source_files_properties(qml/sim/SimSystemResultView.qml PROPERTIES QT_RESOURCE_ALIAS SimSystemResultView.qml)
+set_source_files_properties(qml/sim/SimSystemAccuracy.qml PROPERTIES QT_RESOURCE_ALIAS SimSystemAccuracy.qml)
+set_source_files_properties(qml/sim/SimAccuracyProvenance.qml PROPERTIES QT_RESOURCE_ALIAS SimAccuracyProvenance.qml)
+set_source_files_properties(qml/sim/SimComponentEquation.qml PROPERTIES QT_RESOURCE_ALIAS SimComponentEquation.qml)
+set_source_files_properties(qml/sim/SimFormat.qml PROPERTIES QT_RESOURCE_ALIAS SimFormat.qml)
+set_source_files_properties(qml/sim/SimFormat.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+set_source_files_properties(qml/sim/SimSavedList.qml PROPERTIES QT_RESOURCE_ALIAS SimSavedList.qml)
+set_source_files_properties(qml/sim/SimConceptList.qml PROPERTIES QT_RESOURCE_ALIAS SimConceptList.qml)
+set_source_files_properties(qml/sim/SimController.qml PROPERTIES QT_RESOURCE_ALIAS SimController.qml)
+set_source_files_properties(qml/sim/SimPanel.qml PROPERTIES QT_RESOURCE_ALIAS SimPanel.qml)
+set_source_files_properties(qml/sim/SimPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS SimPanelHost.qml)
+set_source_files_properties(qml/sim/SimBindingTable.qml PROPERTIES QT_RESOURCE_ALIAS SimBindingTable.qml)
+set_source_files_properties(qml/sim/SimValueTable.qml PROPERTIES QT_RESOURCE_ALIAS SimValueTable.qml)
+set_source_files_properties(qml/sim/SimFormulaField.qml PROPERTIES QT_RESOURCE_ALIAS SimFormulaField.qml)
+set_source_files_properties(qml/sim/SimIssueList.qml PROPERTIES QT_RESOURCE_ALIAS SimIssueList.qml)
+set_source_files_properties(qml/sim/SimCalculation.qml PROPERTIES QT_RESOURCE_ALIAS SimCalculation.qml)
+set_source_files_properties(qml/sim/SimActions.qml PROPERTIES QT_RESOURCE_ALIAS SimActions.qml)
 set_source_files_properties(qml/datasource/DataSourceController.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceController.qml)
 set_source_files_properties(qml/grafana/GrafanaController.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaController.qml)
 set_source_files_properties(qml/grafana/GrafanaPanel.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaPanel.qml)
@@ -80,6 +106,9 @@ set_source_files_properties(qml/library/LibraryPanelHost.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/library/LibraryPlanView.qml PROPERTIES QT_RESOURCE_ALIAS LibraryPlanView.qml)
 set_source_files_properties(qml/ipc/LibraryRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryRequestRouter.qml)
 set_source_files_properties(qml/ipc/LibraryEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS LibraryEventRouter.qml)
+set_source_files_properties(qml/shell/ShellEnvironmentOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellEnvironmentOverlays.qml)
+set_source_files_properties(qml/ipc/SimEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SimEventRouter.qml)
+set_source_files_properties(qml/ipc/SimRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS SimRequestRouter.qml)
 set_source_files_properties(qml/ipc/DataSourceEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceEventRouter.qml)
 set_source_files_properties(qml/ipc/DataSourceRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceRequestRouter.qml)
 set_source_files_properties(qml/ipc/SetupEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS SetupEventRouter.qml)
@@ -242,6 +271,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/ShellController.qml
         qml/shell/GlobalShortcuts.qml
         qml/shell/EnvironmentShortcuts.qml
+        qml/shell/ShellEnvironmentOverlays.qml
         qml/shell/ShellOverlays.qml
         qml/shell/AboutDialog.qml
         qml/shell/DocumentationDialog.qml
@@ -263,6 +293,31 @@ qt_add_qml_module(kinein-vectis
         qml/library/LibraryController.qml
         qml/library/LibraryPanel.qml
         qml/library/LibraryTargetPicker.qml
+        qml/sim/SimRunController.qml
+        qml/sim/SimRunControls.qml
+        qml/sim/SimNumberField.qml
+        qml/sim/SimEstimateLine.qml
+        qml/sim/SimRunResultView.qml
+        qml/sim/SimPlot2d.qml
+        qml/sim/SimPlotSystem.qml
+        qml/sim/SimSystemController.qml
+        qml/sim/SimSystemAuthoring.qml
+        qml/sim/SimSystemResultView.qml
+        qml/sim/SimSystemAccuracy.qml
+        qml/sim/SimAccuracyProvenance.qml
+        qml/sim/SimComponentEquation.qml
+        qml/sim/SimFormat.qml
+        qml/sim/SimSavedList.qml
+        qml/sim/SimConceptList.qml
+        qml/sim/SimController.qml
+        qml/sim/SimPanel.qml
+        qml/sim/SimPanelHost.qml
+        qml/sim/SimBindingTable.qml
+        qml/sim/SimValueTable.qml
+        qml/sim/SimFormulaField.qml
+        qml/sim/SimIssueList.qml
+        qml/sim/SimCalculation.qml
+        qml/sim/SimActions.qml
         qml/datasource/DataSourceController.qml
         qml/grafana/GrafanaController.qml
         qml/grafana/GrafanaPanel.qml
@@ -288,6 +343,8 @@ qt_add_qml_module(kinein-vectis
         qml/library/LibraryPlanView.qml
         qml/ipc/LibraryRequestRouter.qml
         qml/ipc/LibraryEventRouter.qml
+        qml/ipc/SimEventRouter.qml
+        qml/ipc/SimRequestRouter.qml
         qml/ipc/DataSourceEventRouter.qml
         qml/ipc/DataSourceRequestRouter.qml
         qml/ipc/SetupEventRouter.qml
@@ -442,6 +499,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_library.cpp
         src/core_client_datasource.cpp
     src/core_client_grafana.cpp
+    src/core_client_sim.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp
