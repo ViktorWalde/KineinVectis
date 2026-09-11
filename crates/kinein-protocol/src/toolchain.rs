@@ -139,6 +139,24 @@ pub struct ToolchainResult {
     /// configuracao de launch e nao flag do `dap-server`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub chip: Option<String>,
+    /// Alvo REMOTO do depurador, quando o kit fala com um servidor GDB:
+    /// `host:porta` que vai no `target remote` (0.89.0).
+    ///
+    /// E' o que liga o `gdb -i dap` a um QEMU, a um `OpenOCD` ou a um `pyOCD` —
+    /// o GDB fala DAP desde a v14 (NEWS do gdb) e o `attach` dele leva
+    /// `target`, "passed to the `target remote` command" (manual, capitulo
+    /// Debugger Adapter Protocol). Sem este campo o adaptador `gdb` faz
+    /// `launch`, que e' o desktop.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remote_target: Option<String>,
+    /// Comando que a IDE sobe ANTES de conectar ao alvo remoto, e derruba ao
+    /// fim da sessao. `{program}` e' substituido pelo ELF (0.89.0).
+    ///
+    /// Ex.: `qemu-system-arm -machine lm3s6965evb -nographic -S -gdb tcp::3333
+    /// -kernel {program}`, ou `openocd -f openocd.cfg`. Declarado pelo usuario,
+    /// nunca deduzido: a IDE nao sabe qual maquina do QEMU e' a placa dele.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub debug_server: Option<String>,
     /// Arquivo de toolchain que o PRESET declara (`toolchainFile`), quando ha.
     ///
     /// E informacao, nao escolha: quem manda nele e o `CMakePresets.json`, e a
@@ -194,6 +212,12 @@ pub struct ToolchainSetKitParams {
     /// Chip do alvo, para o adaptador de debug de embarcado. `""` limpa.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub chip: Option<String>,
+    /// `host:porta` do servidor GDB (`target remote`). `""` limpa.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remote_target: Option<String>,
+    /// Comando do servidor que a IDE sobe antes de conectar. `""` limpa.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub debug_server: Option<String>,
 }
 
 #[cfg(test)]
@@ -226,6 +250,8 @@ mod tests {
             sysroot: None,
             target_triple: None,
             chip: None,
+            remote_target: None,
+            debug_server: None,
             preset_toolchain_file: None,
             selections: vec![ToolchainSelection {
                 role: ToolchainRole::Cmake,

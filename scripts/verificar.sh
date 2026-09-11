@@ -85,6 +85,9 @@ bash scripts/verificar-qml-alcance.sh
 passo "scripts/verificar-exercitacao.sh (o core contra ferramenta real)"
 bash scripts/verificar-exercitacao.sh
 
+passo "scripts/verificar-embarcado.sh (ciclo de embarcado no QEMU, sem placa)"
+bash scripts/verificar-embarcado.sh
+
 passo "scripts/verificar-atalhos.sh (a paleta promete o que a IDE faz)"
 bash scripts/verificar-atalhos.sh
 

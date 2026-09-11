@@ -10,8 +10,10 @@
 //! - [`session`]: sessao viva (spawn, handshake, thread leitora, requests);
 //! - [`target`]: resolucao do binario "Automatico" (espelho do run).
 
+mod adapter;
 mod parse;
 mod reader;
+mod server;
 mod session;
 mod target;
 mod wire;
@@ -24,13 +26,17 @@ use kinein_protocol::{
 
 use crate::lsp::EventSender;
 
+pub use adapter::AdapterChoice;
 pub use target::resolve_program;
 
 /// Error produced by the debug manager.
 #[derive(Debug)]
 pub enum DebugError {
-    /// The `lldb-dap` binary is not on `PATH`.
-    MissingAdapter,
+    /// The chosen adapter binary is not on `PATH` (nor at the pinned path).
+    MissingAdapter {
+        /// What was looked for — `lldb-dap`, `probe-rs`, `gdb`, or a path.
+        program: String,
+    },
     /// A debug session is already running in this workspace.
     AlreadyRunning,
     /// No debug session is currently running.
@@ -52,10 +58,13 @@ pub enum DebugError {
 impl fmt::Display for DebugError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::MissingAdapter => write!(
+            // Diz QUAL adaptador faltou: desde 2026-09-03 ele e' escolha do
+            // kit, e "lldb-dap nao foi encontrado" para um kit com probe-rs
+            // mandaria o usuario instalar a ferramenta errada.
+            Self::MissingAdapter { program } => write!(
                 formatter,
-                "lldb-dap nao foi encontrado no PATH (vem no pacote lldb; \
-                 ex.: sudo pacman -S lldb)"
+                "o adaptador de debug `{program}` nao foi encontrado (lldb-dap vem no \
+                 pacote lldb; probe-rs e gdb tem passo a passo em Instalar ferramentas)"
             ),
             Self::AlreadyRunning => write!(
                 formatter,
@@ -150,16 +159,14 @@ impl DebugManager {
         &mut self,
         root: &Path,
         program: &Path,
-        adapter_id: Option<&str>,
-        adapter_path: Option<&Path>,
-        chip: Option<&str>,
+        choice: &AdapterChoice<'_>,
     ) -> Result<(), DebugError> {
         if self.is_running() {
             return Err(DebugError::AlreadyRunning);
         }
         // Sessao morta (terminated/EOF) ainda ocupa o slot: descarta antes.
         self.session = None;
-        let adapter = session::Adapter::from_choice(adapter_id, adapter_path, chip);
+        let adapter = adapter::Adapter::from_choice(choice);
         let session = session::DapSession::launch(
             root,
             program,

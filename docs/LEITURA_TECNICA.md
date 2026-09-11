@@ -67,10 +67,11 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **130 métodos IPC** roteados e **41 eventos**, em **30 domínios de protocolo**;
-**18 pastas de domínio** no core mais 14 módulos de arquivo único; **666 testes**
-Rust verdes e **32 harnesses QML** (remedido em 2026-09-11). Protocolo `0.88.0`.
-O gate tem **20 verificações** — a vigésima (2026-09-11) executa o binário que
-ele acabou de compilar, porque "compila" e "abre" são afirmações diferentes.
+**18 pastas de domínio** no core mais 14 módulos de arquivo único; **672 testes**
+Rust verdes e **32 harnesses QML** (remedido em 2026-09-11). Protocolo `0.89.0`.
+O gate tem **21 verificações** — a vigésima (2026-09-11) executa o binário que
+ele acabou de compilar, porque "compila" e "abre" são afirmações diferentes; a
+vigésima primeira roda o ciclo de embarcado no QEMU, sem placa.
 
 **Os comandos que provam os dois primeiros estão no
 [`arquitetura/03`](arquitetura/03-ipc-protocol.md)**, com o motivo de cada

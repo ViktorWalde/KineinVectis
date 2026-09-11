@@ -32,7 +32,7 @@ determinístico, e verificam o que o core FALA com ele (`didOpen`, `didChange`,
 pulados: teste que pula não prova nada, e essa era exatamente a lacuna que a
 etapa 3 do `docs/roadmaps/30-caminho-para-o-mvp.md` fechou.
 
-`python3` já era requisito de 7 das 20 verificações do gate (veracidade dos
+`python3` já era requisito de 8 das 21 verificações do gate (veracidade dos
 `.md`, links, catraca de arquitetura, duplicação e alcance QML, o binário que
 abre, mais as sondas; medido em 2026-09-11), então isto não acrescenta
 dependência ao ambiente — só a torna explícita para quem roda `cargo test`
@@ -84,6 +84,7 @@ scripts/verificar-qml-propriedades.sh        # binding para propriedade inexiste
 scripts/verificar-qml-duplicacao.sh          # mesma derivacao em dois arquivos
 scripts/verificar-qml-alcance.sh             # componente entregue que nenhuma tela abre
 scripts/verificar-exercitacao.sh             # o core contra ferramenta real
+scripts/verificar-embarcado.sh               # ciclo de embarcado no QEMU, sem placa
 scripts/verificar-atalhos.sh                 # a paleta promete o que a IDE faz
 scripts/verificar-docs.sh                    # numero sem data que mente
 scripts/verificar-links-docs.sh              # link de documentacao morto

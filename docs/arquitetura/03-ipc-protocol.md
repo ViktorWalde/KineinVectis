@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **O `0.89.0` (2026-09-11) acrescentou o ALVO REMOTO do depurador:**
+> `remoteTarget` e `debugServer` no `toolchain.setKit` e no `ToolchainResult`.
+> Com eles o adaptador `gdb` (que fala DAP desde a v14) faz `attach` a um
+> servidor GDB — QEMU, OpenOCD — que a IDE sobe e mata com a sessao, em vez de
+> `launch`. Campos novos no contrato sobem o minor. A medicao esta' no
+> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §5.7
+> e o ciclo completo e' provado no QEMU pelo `scripts/verificar-embarcado.sh`.
+>
 > **O `0.88.0` (2026-09-10) acrescentou o veredito de UNIDADE:**
 > `SimDimensionCheck` e `SimDimensionVerdict`, no `dimensions` do `sim.run`
 > (um) e do `sim.runSystem` (um por componente). Tipos novos no contrato sobem
@@ -1227,7 +1235,8 @@ papel, o `sysroot` e o triple do alvo.
 ```text
 toolchain.get  { preset? }                         -> ToolchainResult
 toolchain.set  { role, id?, preset? }              -> ToolchainResult
-toolchain.setKit { preset?, sysroot?, targetTriple? } -> ToolchainResult   NOVO
+toolchain.setKit { preset?, sysroot?, targetTriple?, chip?,               NOVO
+                   remoteTarget?, debugServer? } -> ToolchainResult
 ```
 
 `preset` ausente é **o kit padrão do workspace** — que é exatamente o que o
@@ -1263,6 +1272,18 @@ flag do `dap-server`. Supor o contrário daria um processo que sobe e falha no
 primeiro request, com a causa longe do sintoma. **Campo ausente não é campo
 nulo** — sem chip escolhido, o `launch` não carrega a chave, mesma regra da
 condição de breakpoint (`0.66.0`).
+
+**O kit ganhou `remoteTarget` e `debugServer` no `0.89.0`** — o caminho para
+depurar o que não está na máquina. Quando o kit escolhe o adaptador `gdb` (que
+fala DAP nativamente desde a v14, fonte `/usr/share/doc/gdb/NEWS`) e declara um
+`remoteTarget` (`host:porta`), o `debug.start` faz **`attach`** com esse alvo —
+*"passed to the `target remote` command"* (manual do GDB, capítulo Debugger
+Adapter Protocol) — em vez de `launch`. O `debugServer` é o comando do servidor
+(QEMU, OpenOCD) que a IDE sobe antes de conectar, com `{program}` trocado pelo
+ELF; ela o mata com a sessão. **Ambos são declarados, nunca deduzidos** (a IDE
+não sabe qual máquina do QEMU é a placa): `roadmaps/35` §5.1. Isso derruba o que
+o `integracoes/36` §3 dizia — não há protocolo GDB-remote novo a escrever, é um
+segundo candidato do papel `debugAdapter`.
 
 **Cross-compilador NÃO virou papel novo**, e a medição corrigiu o esboço do
 `roadmaps/35` §5.3 que dizia que sim: `arm-none-eabi-gcc` escreve a **mesma**

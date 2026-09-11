@@ -112,11 +112,25 @@ pub(super) fn parse_stack_frames(body: &Value) -> Vec<StackFrameInfo> {
 }
 
 /// Acha o `variablesReference` do primeiro escopo nao-caro (Locals).
-pub(super) fn first_cheap_scope_reference(body: &Value) -> Option<i64> {
-    body.get("scopes")
+pub(super) fn preferred_scope_reference(body: &Value) -> Option<i64> {
+    let scopes: Vec<&Value> = body
+        .get("scopes")
         .and_then(Value::as_array)?
         .iter()
-        .find(|scope| scope.get("expensive").and_then(Value::as_bool) != Some(true))
+        .filter(|scope| scope.get("expensive").and_then(Value::as_bool) != Some(true))
+        .collect();
+    // O lldb-dap lista `Locals` primeiro; o GDB lista `Registers` primeiro e
+    // `Globals` depois (medido em 2026-09-11 contra o gdb 17.2 num alvo
+    // bare-metal). "O primeiro escopo barato" mostrava r0..r15 onde o usuario
+    // esperava a variavel dele. Registradores so' quando nao ha' mais nada.
+    let is_registers = |scope: &&Value| {
+        scope.get("presentationHint").and_then(Value::as_str) == Some("registers")
+            || scope.get("name").and_then(Value::as_str) == Some("Registers")
+    };
+    scopes
+        .iter()
+        .find(|scope| !is_registers(scope))
+        .or_else(|| scopes.first())
         .and_then(|scope| scope.get("variablesReference"))
         .and_then(Value::as_i64)
         .filter(|&reference| reference > 0)
@@ -159,8 +173,8 @@ mod tests {
     use kinein_protocol::SourceBreakpointParams;
 
     use super::{
-        breakpoints_arguments, first_cheap_scope_reference, parse_evaluate, parse_stack_frames,
-        parse_variables,
+        breakpoints_arguments, parse_evaluate, parse_stack_frames, parse_variables,
+        preferred_scope_reference,
     };
 
     #[test]
@@ -182,7 +196,7 @@ mod tests {
 
     #[test]
     fn scope_selection_skips_expensive_and_requires_reference() {
-        let reference = first_cheap_scope_reference(&json!({
+        let reference = preferred_scope_reference(&json!({
             "scopes": [
                 { "name": "Registers", "expensive": true,
                   "variablesReference": 9 },
@@ -190,7 +204,28 @@ mod tests {
             ]
         }));
         assert_eq!(reference, Some(3));
-        assert_eq!(first_cheap_scope_reference(&json!({ "scopes": [] })), None);
+        assert_eq!(preferred_scope_reference(&json!({ "scopes": [] })), None);
+    }
+
+    /// O GDB lista `Registers` PRIMEIRO e barato (medido em 2026-09-11 num
+    /// alvo bare-metal: `[Registers, Globals]`). O primeiro escopo barato
+    /// mostraria r0..r15 no lugar da variavel do usuario.
+    #[test]
+    fn registers_come_last_even_when_the_adapter_lists_them_first() {
+        let gdb = json!({
+            "scopes": [
+                { "name": "Registers", "presentationHint": "registers",
+                  "expensive": false, "variablesReference": 1 },
+                { "name": "Globals", "expensive": false, "variablesReference": 2 },
+            ]
+        });
+        assert_eq!(preferred_scope_reference(&gdb), Some(2));
+        // So' registradores: melhor eles do que nada.
+        let so_registradores = json!({
+            "scopes": [{ "name": "Registers", "presentationHint": "registers",
+                         "variablesReference": 1 }]
+        });
+        assert_eq!(preferred_scope_reference(&so_registradores), Some(1));
     }
 
     #[test]

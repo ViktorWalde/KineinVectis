@@ -33,7 +33,7 @@
 ## 1. O estado, em números
 
 ```bash
-bash scripts/verificar.sh                 # 20 verificacoes
+bash scripts/verificar.sh                 # 21 verificacoes
 cat scripts/arquitetura-baseline.txt      # a catraca
 cargo test -q --workspace
 
@@ -57,12 +57,12 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.88.0
-testes      666 Rust + 32 harnesses QML
+protocolo   0.89.0
+testes      672 Rust + 32 harnesses QML
 metodos     130 IPC roteados, 41 eventos
 dominios    30, e os 30 documentados no arquitetura/03
 catraca     1 arquivo em debito
-gate        20 verificacoes
+gate        21 verificacoes
 ```
 
 > **O par `metodos`/`eventos` foi CORRIGIDO DE NOVO em 2026-09-06, e desta vez
@@ -1171,6 +1171,73 @@ catraca   nenhum limite tocado; AppDomains em 390/400 — a proxima fatia que
 sobe o depurador — isso é a fatia 3. E o `probe-rs` continua sem sonda no USB
 desta máquina, então o painel mostra hoje o estado "nenhuma sonda conectada"
 com a dica do core.
+
+### 7.9 Frente F, fatia 2 — o QEMU e a ponte: o ciclo de embarcado provado sem placa, 2026-09-11
+
+**A ordem da §5.7 do [`35`](35-ambiente-cpp-embarcados-simulacao.md) era fio →
+QEMU → tela → polimento.** A fatia 1 (§7.8) ligou a tela ao que o core tinha; a
+2 dá ao core o que faltava para depurar o que **não está na máquina**, e prova
+o ciclo inteiro no emulador.
+
+**O achado que encurtou a fatia, medido antes de escrever:** o `integracoes/36`
+§3 dizia que OpenOCD/QEMU exigiriam "uma ponte a mais" ou "protocolo novo
+inteiro". **O GDB fala DAP nativamente desde a v14** (`/usr/share/doc/gdb/NEWS`,
+*"Changes in GDB 14"*), por stdin/stdout, com `-i dap` — medido aqui no gdb 17.2
+do Fedora, multiarch (`arm`, `riscv:rv32`). A ponte é um **segundo candidato do
+papel `debugAdapter`**, não um cliente GDB-remote no core. O 36 §3 foi corrigido.
+
+```text
+protocolo 0.89.0   `remoteTarget` (host:porta, vai no `target remote`) e
+                   `debugServer` (comando que a IDE sobe, `{program}` = ELF) no
+                   toolchain.setKit e no ToolchainResult
+dap/adapter.rs     saiu do session.rs: QUAL adaptador, com que argumentos, e que
+                   PEDIDO — `attach` quando ha' remoteTarget, `launch` senao.
+                   O `gdb` ganhou `-i dap` + dois `-iex` (medido: sem desligar o
+                   debuginfod e o confirm, o attach TRAVA mudo perguntando)
+dap/server.rs      o processo servidor: sobe com `exec` antes do adaptador,
+                   ESPERA a porta abrir (QEMU em 0,05 s), morre com a sessao
+gdb candidato      o papel debugAdapter agora oferece lldb-dap, probe-rs e gdb
+escopo preferido   o GDB lista `Registers` PRIMEIRO; o core agora prefere
+                   Globals/Locals — senao a tela de variaveis mostrava r0..pc
+```
+
+**O ciclo provado contra o core REAL, por stdio, no QEMU `lm3s6965evb`** (uma
+fixture bare-metal NOSSA em `scripts/fixtures/embarcado/`, não do usuário):
+`setKit(gdb, remoteTarget, debugServer)` → `setBreakpoints` → `debug.start`
+sobe o QEMU e faz `attach` → `continue` para no breakpoint em `main.c:4` →
+`evaluate contador` lê `0`, depois `1` → as variáveis **não** são registradores
+→ `stop` → `finished(exitCode 0)`, e o QEMU morreu com a sessão. 19 ms do
+`continue` ao `stop`.
+
+**Provado por mutação, e uma mutação foi descartada por medição:**
+
+```text
+attach vira launch       o ciclo nunca para (sem servidor a que conectar)
+escopo = primeiro barato  a tela mostra r0..pc no lugar de `contador`
+Drop do servidor sem kill o teste de server.rs mede o TEMPO do drop: sem kill
+                          ele espera 30 s o `sleep` sair sozinho
+DESCARTADA: `sh -c` sem   nao muda nada — o shell exec-otimiza comando unico, e
+  `exec`                  o QEMU ainda morre. O `exec` defende o caso de comando
+                          COMPOSTO; o kill do Drop defende o OpenOCD, que NAO se
+                          mata sozinho no pacote `k` do GDB (o QEMU se mata)
+```
+
+**O limite honesto, dito aqui e no código:** o QEMU se mata sozinho ao receber
+o pacote `k` do GDB no `disconnect`, então o ciclo no QEMU **não** prova o
+`kill` do servidor no `Drop` — quem prova é o teste de `server.rs`, que mede o
+tempo do drop. O `kill` existe para o **OpenOCD**, que não se mata, e esse
+caminho fica NÃO PROVADO até haver uma sonda. Sonda física e ESP32 continuam
+fora desta passada (decisão do autor, §5.7).
+
+```text
+gate      21 verificacoes (+verificar-embarcado.sh), roda no gate so' onde
+          arm-none-eabi-gcc, qemu-system-arm e gdb existem — ausente nao reprova
+codigo    protocolo: remoteTarget/debugServer; core: dap/adapter.rs e
+          dap/server.rs novos, gdb no catalogo, escopo preferido; fixture e
+          driver stdio. Nenhuma linha de QML
+testes    672 Rust (+6: adapter, server, escopo); mutacoes: 3 no ciclo de
+          embarcado + 1 no Drop do servidor
+```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

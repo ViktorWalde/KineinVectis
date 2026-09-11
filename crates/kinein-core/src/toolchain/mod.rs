@@ -43,6 +43,8 @@ pub struct Toolchain {
     sysroot: Option<String>,
     target_triple: Option<String>,
     chip: Option<String>,
+    remote_target: Option<String>,
+    debug_server: Option<String>,
     preset_toolchain_file: Option<String>,
 }
 
@@ -113,6 +115,8 @@ impl Toolchain {
             sysroot: kit.sysroot,
             target_triple: kit.target_triple,
             chip: kit.chip,
+            remote_target: kit.remote_target,
+            debug_server: kit.debug_server,
             preset_toolchain_file: preset_toolchain_file(root, preset),
             selections,
             candidates,
@@ -127,6 +131,8 @@ impl Toolchain {
             sysroot: self.sysroot.clone(),
             target_triple: self.target_triple.clone(),
             chip: self.chip.clone(),
+            remote_target: self.remote_target.clone(),
+            debug_server: self.debug_server.clone(),
             preset_toolchain_file: self.preset_toolchain_file.clone(),
             selections: self.selections.clone(),
             candidates: self.candidates.clone(),
@@ -231,6 +237,18 @@ impl Toolchain {
         self.chip.as_deref()
     }
 
+    /// `host:porta` do servidor GDB, quando o kit e' remoto — vai no `attach`.
+    #[must_use]
+    pub fn remote_target(&self) -> Option<&str> {
+        self.remote_target.as_deref()
+    }
+
+    /// Comando do servidor que a IDE sobe antes de conectar, quando declarado.
+    #[must_use]
+    pub fn debug_server(&self) -> Option<&str> {
+        self.debug_server.as_deref()
+    }
+
     /// `CMAKE_SYSTEM_NAME` derivado do triple (`<arch>-<vendor>-<os>-<abi>`).
     ///
     /// So' traduz o que e' inequivoco. Triple que este mapa nao conhece nao
@@ -303,29 +321,43 @@ pub fn set(
     Ok(Toolchain::resolve_kit(root, tools, preset))
 }
 
-/// Fixa sysroot e/ou triple do kit. `Some("")` LIMPA; `None` preserva.
+/// Os campos do kit que `toolchain.setKit` pode mudar. `Some("")` LIMPA;
+/// `None` preserva — um por campo, para mexer num nao apagar os outros.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct KitUpdate<'a> {
+    /// Raiz do sistema alvo (`CMAKE_SYSROOT`).
+    pub sysroot: Option<&'a str>,
+    /// Triple do alvo (`--target` do cargo, `CMAKE_SYSTEM_*`).
+    pub target_triple: Option<&'a str>,
+    /// Chip do alvo, para o `launch` do adaptador de embarcado.
+    pub chip: Option<&'a str>,
+    /// `host:porta` do servidor GDB (`target remote`).
+    pub remote_target: Option<&'a str>,
+    /// Comando do servidor que a IDE sobe antes de conectar.
+    pub debug_server: Option<&'a str>,
+}
+
+/// Fixa os campos do kit que vieram em `update`.
 pub fn set_kit(
     root: &Path,
     tools: &[ToolInfo],
     preset: &str,
-    sysroot: Option<&str>,
-    target_triple: Option<&str>,
-    chip: Option<&str>,
+    update: KitUpdate<'_>,
 ) -> Result<Toolchain, String> {
     let mut kits = store::load(root);
     let kit = kits.entry(preset.to_owned()).or_default();
-    if let Some(valor) = sysroot {
-        let limpo = valor.trim();
-        kit.sysroot = (!limpo.is_empty()).then(|| limpo.to_owned());
-    }
-    if let Some(valor) = target_triple {
-        let limpo = valor.trim();
-        kit.target_triple = (!limpo.is_empty()).then(|| limpo.to_owned());
-    }
-    if let Some(valor) = chip {
-        let limpo = valor.trim();
-        kit.chip = (!limpo.is_empty()).then(|| limpo.to_owned());
-    }
+    // Aparado, e vazio vira ausente: e' o contrato de "string vazia limpa".
+    let aplica = |campo: &mut Option<String>, valor: Option<&str>| {
+        if let Some(valor) = valor {
+            let limpo = valor.trim();
+            *campo = (!limpo.is_empty()).then(|| limpo.to_owned());
+        }
+    };
+    aplica(&mut kit.sysroot, update.sysroot);
+    aplica(&mut kit.target_triple, update.target_triple);
+    aplica(&mut kit.chip, update.chip);
+    aplica(&mut kit.remote_target, update.remote_target);
+    aplica(&mut kit.debug_server, update.debug_server);
     store::save(root, &kits)?;
     Ok(Toolchain::resolve_kit(root, tools, preset))
 }
@@ -388,7 +420,7 @@ mod tests {
 
     use kinein_protocol::{ToolInfo, ToolStatus, ToolchainRole};
 
-    use super::{Toolchain, set, set_kit};
+    use super::{KitUpdate, Toolchain, set, set_kit};
 
     fn detectado(id: &str, caminho: &str) -> ToolInfo {
         ToolInfo {
@@ -566,9 +598,12 @@ mod tests {
             &root,
             &maquina(),
             "",
-            Some("/opt/sysroots/arm"),
-            Some("aarch64-unknown-linux-gnu"),
-            None,
+            KitUpdate {
+                sysroot: Some("/opt/sysroots/arm"),
+                target_triple: Some("aarch64-unknown-linux-gnu"),
+                chip: None,
+                ..KitUpdate::default()
+            },
         )
         .unwrap();
 
@@ -592,9 +627,12 @@ mod tests {
             &root,
             &maquina(),
             "",
-            None,
-            Some("riscv64-esquisito-xyz"),
-            None,
+            KitUpdate {
+                sysroot: None,
+                target_triple: Some("riscv64-esquisito-xyz"),
+                chip: None,
+                ..KitUpdate::default()
+            },
         )
         .unwrap();
 
@@ -617,9 +655,12 @@ mod tests {
             &root,
             &maquina(),
             "cross",
-            Some("/opt/arm"),
-            Some("armv7-unknown-linux-gnueabihf"),
-            None,
+            KitUpdate {
+                sysroot: Some("/opt/arm"),
+                target_triple: Some("armv7-unknown-linux-gnueabihf"),
+                chip: None,
+                ..KitUpdate::default()
+            },
         )
         .unwrap();
         set(
@@ -657,13 +698,25 @@ mod tests {
             &root,
             &maquina(),
             "",
-            Some("/opt/a"),
-            Some("x86_64-unknown-linux-gnu"),
-            None,
+            KitUpdate {
+                sysroot: Some("/opt/a"),
+                target_triple: Some("x86_64-unknown-linux-gnu"),
+                chip: None,
+                ..KitUpdate::default()
+            },
         )
         .unwrap();
 
-        let so_sysroot = set_kit(&root, &maquina(), "", Some("/opt/b"), None, None).unwrap();
+        let so_sysroot = set_kit(
+            &root,
+            &maquina(),
+            "",
+            KitUpdate {
+                sysroot: Some("/opt/b"),
+                ..KitUpdate::default()
+            },
+        )
+        .unwrap();
         assert_eq!(so_sysroot.sysroot(), Some("/opt/b"));
         assert_eq!(
             so_sysroot.target_triple(),
@@ -671,7 +724,16 @@ mod tests {
             "campo ausente apagou o alvo"
         );
 
-        let limpo = set_kit(&root, &maquina(), "", Some("  "), None, None).unwrap();
+        let limpo = set_kit(
+            &root,
+            &maquina(),
+            "",
+            KitUpdate {
+                sysroot: Some("  "),
+                ..KitUpdate::default()
+            },
+        )
+        .unwrap();
         assert_eq!(limpo.sysroot(), None, "string em branco tinha que limpar");
     }
 
@@ -684,9 +746,12 @@ mod tests {
             &root,
             &maquina(),
             "",
-            None,
-            Some("thumbv7em-none-eabihf"),
-            None,
+            KitUpdate {
+                sysroot: None,
+                target_triple: Some("thumbv7em-none-eabihf"),
+                chip: None,
+                ..KitUpdate::default()
+            },
         )
         .unwrap();
         let argumentos = bare.cmake_arguments();
@@ -706,9 +771,12 @@ mod tests {
             &root,
             &maquina(),
             "",
-            None,
-            Some("aarch64-unknown-linux-gnu"),
-            None,
+            KitUpdate {
+                sysroot: None,
+                target_triple: Some("aarch64-unknown-linux-gnu"),
+                chip: None,
+                ..KitUpdate::default()
+            },
         )
         .unwrap();
         assert!(

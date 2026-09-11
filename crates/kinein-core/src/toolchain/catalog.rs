@@ -133,4 +133,13 @@ static DEBUG_ADAPTERS: &[RoleCandidate] = &[
         label: "probe-rs (embarcado)",
         tool_id: "probe-rs",
     },
+    // O GDB fala DAP desde a v14 (`/usr/share/doc/gdb/NEWS`). E' a ponte para
+    // tudo que fala GDB remote — QEMU, OpenOCD, pyOCD, `probe-rs gdb` — e por
+    // isso o `integracoes/36` §3 foi corrigido em 2026-09-11: nao ha' protocolo
+    // novo a escrever. O kit diz a que porta conectar (`remoteTarget`).
+    RoleCandidate {
+        id: "gdb",
+        label: "GDB (alvo remoto: QEMU, OpenOCD)",
+        tool_id: "gdb",
+    },
 ];

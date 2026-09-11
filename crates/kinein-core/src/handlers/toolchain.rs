@@ -97,7 +97,7 @@ impl Core {
         let parsed = match parse_params::<ToolchainSetKitParams>(
             request_id.as_ref(),
             params,
-            "toolchain.setKit aceita preset, sysroot e targetTriple",
+            "toolchain.setKit aceita preset, sysroot, targetTriple, chip, remoteTarget e debugServer",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -106,9 +106,13 @@ impl Core {
             &root,
             &self.detected_tools(),
             parsed.preset.as_deref().unwrap_or_default(),
-            parsed.sysroot.as_deref(),
-            parsed.target_triple.as_deref(),
-            parsed.chip.as_deref(),
+            toolchain::KitUpdate {
+                sysroot: parsed.sysroot.as_deref(),
+                target_triple: parsed.target_triple.as_deref(),
+                chip: parsed.chip.as_deref(),
+                remote_target: parsed.remote_target.as_deref(),
+                debug_server: parsed.debug_server.as_deref(),
+            },
         ) {
             Ok(resolvida) => JsonRpcResponse::success(request_id, json!(resolvida.to_result())),
             Err(message) => JsonRpcResponse::failure(

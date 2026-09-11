@@ -524,7 +524,8 @@ commit            o trabalho de 2026-09-11 (IDE que nao abria + 20o gate)
                   commitado antes da frente comecar: 2a5e277
 ```
 
-**Estado:** fatia 1 (o fio) ENTREGUE em 2026-09-11 — `40` §7.8.
+**Estado:** fatia 1 (o fio) e fatia 2 (QEMU + ponte `gdb -i dap`) ENTREGUES em
+2026-09-11 — `40` §7.8 e §7.9.
 
 **O que sustenta "fio primeiro":** foi assim que o motor vetorial ficou um dia
 sem porta (`40` §7.2). Expor `debugAdapter`, `chip` e `probe.list` na tela é a

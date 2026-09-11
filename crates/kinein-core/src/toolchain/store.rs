@@ -39,6 +39,12 @@ pub(super) struct Kit {
     /// Chip do alvo, para o adaptador de debug de embarcado.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub chip: Option<String>,
+    /// `host:porta` do servidor GDB (`target remote`), quando o kit e' remoto.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remote_target: Option<String>,
+    /// Comando do servidor que a IDE sobe antes de conectar (`{program}` = ELF).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub debug_server: Option<String>,
 }
 
 impl Kit {
@@ -48,6 +54,8 @@ impl Kit {
             && self.sysroot.is_none()
             && self.target_triple.is_none()
             && self.chip.is_none()
+            && self.remote_target.is_none()
+            && self.debug_server.is_none()
     }
 }
 
@@ -101,6 +109,8 @@ pub(super) fn load(root: &Path) -> BTreeMap<String, Kit> {
                     sysroot: None,
                     target_triple: None,
                     chip: None,
+                    remote_target: None,
+                    debug_server: None,
                 },
             );
             kits
@@ -159,6 +169,8 @@ mod tests {
                 sysroot: None,
                 target_triple: None,
                 chip: None,
+                remote_target: None,
+                debug_server: None,
             },
         );
         kits.insert(
@@ -168,6 +180,8 @@ mod tests {
                 sysroot: Some("/opt/sysroots/arm".to_owned()),
                 target_triple: Some("aarch64-unknown-linux-gnu".to_owned()),
                 chip: None,
+                remote_target: None,
+                debug_server: None,
             },
         );
         // Kit sem nada nao merece linha no arquivo.

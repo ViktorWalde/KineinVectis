@@ -128,7 +128,7 @@ pub(crate) fn debug_error_response(
     error: &crate::dap::DebugError,
 ) -> JsonRpcResponse {
     let code = match error {
-        crate::dap::DebugError::MissingAdapter => JsonRpcErrorCode::ToolNotFound,
+        crate::dap::DebugError::MissingAdapter { .. } => JsonRpcErrorCode::ToolNotFound,
         crate::dap::DebugError::Adapter { .. } => JsonRpcErrorCode::InternalError,
         crate::dap::DebugError::AlreadyRunning
         | crate::dap::DebugError::NotRunning
