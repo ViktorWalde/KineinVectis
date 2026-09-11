@@ -28,6 +28,7 @@ Item {
     property var libraryController: null
     property var dataSourceController: null
     property var grafanaController: null
+    property var embeddedController: null
     property var setupController: null
 
     visible: false
@@ -64,6 +65,13 @@ Item {
         // `verificar-atalhos.sh` nasceu para pegar.
         sequence: "Ctrl+Alt+O"
         onActivated: root.grafanaController.open()
+    }
+
+    Shortcut {
+        // comando: probe.list
+        // Ctrl+Alt+M de eMbarcados: o Ctrl+Alt+E ja' e' de outra coisa na UI.
+        sequence: "Ctrl+Alt+M"
+        onActivated: root.embeddedController.open()
     }
 
     Shortcut {

@@ -17,9 +17,9 @@ Item {
         target: root.coreClient
 
         function onToolchainResolved(selections, candidates, preset, sysroot, targetTriple,
-                                     presetToolchainFile) {
+                                     chip, presetToolchainFile) {
             root.toolchainController.handleResolved(selections, candidates, preset, sysroot,
-                                                    targetTriple, presetToolchainFile);
+                                                    targetTriple, chip, presetToolchainFile);
         }
 
         function onRequestFailed(method, message) {

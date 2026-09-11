@@ -58,7 +58,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.88.0
-testes      666 Rust + 31 harnesses QML
+testes      666 Rust + 32 harnesses QML
 metodos     130 IPC roteados, 41 eventos
 dominios    30, e os 30 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -483,7 +483,14 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                           ZERO estao ausentes do documento
 25  handshake DAP com probe-rs           PARCIAL: precisa de sonda fisica ou
                                          alvo QEMU. O resto do ciclo de
-                                         embarcado esta' provado
+                                         embarcado esta' provado no CORE; na
+                                         TELA, nada dele chega (medido em
+                                         2026-09-11: menu de toolchain sem
+                                         `debugAdapter`, kit sem `chip`,
+                                         `probe.list` sem consumidor). As DOZE
+                                         decisoes do autor para fechar a frente
+                                         estao no roadmaps/35 §5.7, e a ordem
+                                         e' fio -> QEMU -> tela -> polimento
 --  guias de instalacao para arch/suse   a fonte oficial dos tres projetos NAO
                                          cobre essas familias; entrar exige
                                          fonte de comunidade, marcada como tal
@@ -560,6 +567,19 @@ dimensionamento da UI        AUTOMATICO pelo conteudo, com PISO e com o teto da
 UI/UX moderna e minimalista  ETAPA A PARTE, depois do pente-fino (autor,
                              2026-09-04). Nao se antecipa em fatia de
                              funcionalidade, e nao reabre decisao registrada
+embarcados: escopo           ARM Cortex-M via probe-rs nesta etapa; RISC-V e
+                             ESP32 depois; AVR/Arduino NAO entra (2026-09-11)
+embarcados: ponte GDB        ENTRA como `gdb -i dap`, 2o candidato do papel
+                             debugAdapter — o GDB fala DAP desde a v14, e isso
+                             derruba o "protocolo novo inteiro" do 36 §3
+                             (2026-09-11)
+embarcados: prova            QEMU no gate com fixture propria; sonda real so'
+                             quando plugada, e ate' la' NAO PROVADO e dito
+                             (2026-09-11)
+embarcados: deducao          `probe-rs info` SUGERE, o usuario CONFIRMA; a IDE
+                             nunca escolhe o chip calada (2026-09-11)
+embarcados: templates        catalogo CURADO com fonte e licenca, nunca
+                             linker script adivinhado (2026-09-11)
 ```
 
 ## 6. A lacuna que não é técnica, e continua sendo a mais cara
@@ -1070,9 +1090,12 @@ resolve. O ninja não tem modo por ctime; a defesa é gate.
 verificar-binario-abre.sh   depois de CADA `cmake --build` do verificar.sh:
                             1. nenhum objeto da arvore e' mais velho (mtime) que
                                a chegada ao disco (ctime) de uma dependencia
-                               que o ninja registrou para ele. Se for, diz qual
-                               header, quando chegou, e imprime o comando que
-                               remove exatamente aqueles objetos
+                               FORA da arvore de build que o ninja registrou
+                               para ele — o que esta' dentro e' do ninja, e a
+                               primeira rodada do gate provou isso com um falso
+                               positivo num gerado. Se for, diz qual header,
+                               quando chegou, e imprime o comando que remove
+                               exatamente aqueles objetos
                             2. o binario chega ao primeiro frame offscreen e
                                sai com 0 — o MESMO mecanismo do smoke do
                                AppImage (KINEIN_PERF_MARKER + KINEIN_PERF_EXIT),
@@ -1100,6 +1123,54 @@ codigo  scripts/verificar-binario-abre.sh, scripts/verificar_binario_abre.py,
 **O que NÃO mudou:** protocolo `0.88.0`, 666 testes, 31 harnesses, catraca com
 um arquivo. O defeito era da árvore de build, não do fonte — e por isso nenhum
 `git log` o explicava.
+
+### 7.8 Frente F, fatia 1 — o fio: a tela passa a alcançar o que o core já tinha, 2026-09-11
+
+**As doze decisões estão no [`35`](35-ambiente-cpp-embarcados-simulacao.md)
+§5.7; a ordem escolhida foi fio → QEMU → tela → polimento.** Esta é a primeira,
+e ela não escreve motor nenhum: liga à tela três coisas que existiam no core
+desde 2026-09-03 e que nenhuma tela pedia.
+
+```text
+papel `debugAdapter`   o menu de toolchain listava 5 papeis e omitia o sexto:
+                       ninguem escolhia o probe-rs pela tela. Uma linha
+`chip` do kit          o `toolchainSetKit` do C++ nao levava `chip`, e a
+                       resposta nao o devolvia: so' a CLI gravava um. Agora
+                       viaja nos dois sentidos (ponte, controller, roteadores)
+`probe.list`           ganhou consumidor: `EmbeddedController` + painel
+                       "Embarcados" em Ambiente do projeto (Ctrl+Alt+M, menu
+                       e paleta), com a sonda reconhecida, a dica do core, a
+                       saida CRUA quando nada foi reconhecido, e os tres campos
+                       do kit (chip, alvo, sysroot) EDITAVEIS num gesto so' —
+                       `toolchain.setKit` e' uma escrita, nao tres
+```
+
+**Exercitado contra o core real por stdio:** `probe.list` devolve
+`probes`/`toolAvailable`/`rawOutput`/`hint` — os nomes que o C++ lê — com a
+saída sem escapes ANSI; `toolchain.setKit { chip }` grava e `toolchain.get`
+devolve `STM32F401CC`; o papel `debugAdapter` oferece `lldb-dap` e `probe-rs`
+nesta máquina, com `lldb-dap` automático.
+
+**Provado por mutação:** três no `EmbeddedController` (a linha da sonda esquece
+a família; o erro de outro domínio acende este painel; trocar de workspace não
+esquece a sonda) e uma no fio — tirar o `EmbeddedPanelHost` do
+`ShellEnvironmentOverlays` reprova no 19º gate, que é exatamente o buraco que
+esta fatia fecha.
+
+```text
+gate      20 verificacoes, 32 harnesses (+tst_embedded)
+codigo    core: 1 descriptor de paleta (`probe.list`, Ctrl+Alt+M)
+          C++:  core_client_probe.cpp (novo), `chip` na ponte da toolchain
+          QML:  embedded/ (controller, painel, host, campo), 2 roteadores,
+                `debugAdapter` no menu, `chip` no controller da toolchain
+catraca   nenhum limite tocado; AppDomains em 390/400 — a proxima fatia que
+          precisar de dominio novo la' corta por responsabilidade
+```
+
+**O que esta fatia NÃO faz, e está dito na tela:** não grava, não roda, não
+sobe o depurador — isso é a fatia 3. E o `probe-rs` continua sem sonda no USB
+desta máquina, então o painel mostra hoje o estado "nenhuma sonda conectada"
+com a dica do core.
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

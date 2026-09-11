@@ -21,6 +21,7 @@ Item {
     property var simRunController: null
     property var simSystemController: null
     property var grafanaController: null
+    property var embeddedController: null
     property var setupController: null
     property var toolchainController: null
     property bool aboutVisible: false
@@ -201,6 +202,8 @@ Item {
         simRunController: root.simRunController
         simSystemController: root.simSystemController
         grafanaController: root.grafanaController
+        embeddedController: root.embeddedController
+        toolchainController: root.toolchainController
         setupController: root.setupController
         configActionController: root.configActionController
         runtimeController: root.runtimeController

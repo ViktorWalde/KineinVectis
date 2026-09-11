@@ -133,6 +133,8 @@ Item {
                   enabled: workspaceOpen },
                 { label: qsTr("Observabilidade..."), action: "grafana.get",
                   enabled: workspaceOpen },
+                { label: qsTr("Embarcados..."), action: "probe.list",
+                  enabled: workspaceOpen },
                 { label: qsTr("Simulação..."), action: "sim.catalog",
                   enabled: true },
                 { label: qsTr("Instalar ferramentas..."), action: "setup.list",

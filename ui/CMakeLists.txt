@@ -91,6 +91,12 @@ set_source_files_properties(qml/grafana/GrafanaVerdict.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/grafana/GrafanaTokenPrompt.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaTokenPrompt.qml)
 set_source_files_properties(qml/ipc/GrafanaEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaEventRouter.qml)
 set_source_files_properties(qml/ipc/GrafanaRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaRequestRouter.qml)
+set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
+set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
+set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanelHost.qml)
+set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
+set_source_files_properties(qml/ipc/EmbeddedEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedEventRouter.qml)
+set_source_files_properties(qml/ipc/EmbeddedRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedRequestRouter.qml)
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
 set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanelHost.qml)
 set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceForm.qml)
@@ -329,6 +335,12 @@ qt_add_qml_module(kinein-vectis
         qml/grafana/GrafanaTokenPrompt.qml
         qml/ipc/GrafanaEventRouter.qml
         qml/ipc/GrafanaRequestRouter.qml
+        qml/embedded/EmbeddedController.qml
+        qml/embedded/EmbeddedPanel.qml
+        qml/embedded/EmbeddedPanelHost.qml
+        qml/embedded/EmbeddedKitField.qml
+        qml/ipc/EmbeddedEventRouter.qml
+        qml/ipc/EmbeddedRequestRouter.qml
         qml/datasource/DataSourcePanel.qml
         qml/datasource/DataSourcePanelHost.qml
         qml/datasource/DataSourceForm.qml
@@ -501,6 +513,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_library.cpp
         src/core_client_datasource.cpp
     src/core_client_grafana.cpp
+    src/core_client_probe.cpp
     src/core_client_sim.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp

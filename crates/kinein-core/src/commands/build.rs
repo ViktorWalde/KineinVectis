@@ -192,6 +192,28 @@ pub(super) fn grafana_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
+/// Embarcados (roadmaps/35 §5.7, 2026-09-11): a sonda, o alvo e o depurador.
+///
+/// UM descriptor, e o id e' `probe.list` porque e' o metodo que a acao chama:
+/// o painel abre perguntando a ferramenta o que esta' no USB. Ate' esta data o
+/// `probe.list` era roteado no core e NENHUMA tela o pedia (`roadmaps/40`
+/// §8.2) — o mesmo buraco que deixou o motor vetorial um dia sem porta.
+///
+/// `requires_workspace` e' true porque o painel edita o KIT (chip, alvo,
+/// sysroot), e kit e' por projeto: sem workspace nao ha' `.kinein/toolchain.json`
+/// para escrever.
+pub(super) fn probe_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "probe.list".to_owned(),
+        title: "Embarcados...".to_owned(),
+        category: "Projeto".to_owned(),
+        description: "A sonda conectada, o chip do alvo e o depurador do kit".to_owned(),
+        // Ctrl+Alt+M de eMbarcados. O Ctrl+Alt+E ja' e' usado pela UI.
+        default_shortcut: Some("Ctrl+Alt+M".to_owned()),
+        requires_workspace: true,
+    }]
+}
+
 /// Bibliotecas C/C++ (roadmaps/35): o catalogo curado.
 ///
 /// UM descriptor, nao treze — mesma razao do `configaction` acima. A paleta

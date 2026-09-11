@@ -105,9 +105,9 @@ kinein-vectis/
 │       ├── editor/              renderer, controllers, outline/folding
 │       ├── panels/bottom/       tool windows inferiores
 │       ├── workspace/           picker, Start Screen e Project Health
-│       └── command/ configaction/ datasource/ debug/ diagnostics/ git/ grafana/
-│           jobs/ library/ project/ runtime/ search/ settings/ setup/ sim/
-│           toolchain/
+│       └── command/ configaction/ datasource/ debug/ diagnostics/ embedded/
+│           git/ grafana/ jobs/ library/ project/ runtime/ search/ settings/
+│           setup/ sim/ toolchain/
 │
 ├── scripts/                     gates, sondas, ambiente, launcher, packaging
 │   └── qml-harness/             tst_*.qml — logica QML headless

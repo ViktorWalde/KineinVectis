@@ -44,6 +44,7 @@ pub(crate) fn command_descriptors() -> Vec<CommandDescriptor> {
     descriptors.extend(build::library_command_descriptors());
     descriptors.extend(build::datasource_command_descriptors());
     descriptors.extend(build::grafana_command_descriptors());
+    descriptors.extend(build::probe_command_descriptors());
     descriptors.extend(build::setup_command_descriptors());
     descriptors.extend(run::runconfig_command_descriptors());
     descriptors.extend(run::debug_command_descriptors());

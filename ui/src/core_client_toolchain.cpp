@@ -20,7 +20,7 @@ void CoreClient::toolchainGet(const QString& preset)
 }
 
 void CoreClient::toolchainSetKit(const QString& preset, const QString& sysroot,
-                                 const QString& targetTriple)
+                                 const QString& targetTriple, const QString& chip)
 {
     QJsonObject params{};
     if (!preset.isEmpty()) {
@@ -33,6 +33,11 @@ void CoreClient::toolchainSetKit(const QString& preset, const QString& sysroot,
     }
     if (!targetTriple.isNull()) {
         params.insert(QStringLiteral("targetTriple"), targetTriple);
+    }
+    // O chip existia no protocolo desde 2026-09-03 e a ponte o omitia: so' a
+    // CLI conseguia gravar um. Fio ligado em 2026-09-11 (roadmaps/35 §5.7).
+    if (!chip.isNull()) {
+        params.insert(QStringLiteral("chip"), chip);
     }
     sendRequest(QStringLiteral("toolchain.setKit"), params);
 }
@@ -65,6 +70,7 @@ bool CoreClient::dispatchToolchainResult(const QString& method, const QJsonObjec
                            result.value(QStringLiteral("preset")).toString(),
                            result.value(QStringLiteral("sysroot")).toString(),
                            result.value(QStringLiteral("targetTriple")).toString(),
+                           result.value(QStringLiteral("chip")).toString(),
                            result.value(QStringLiteral("presetToolchainFile")).toString());
     return true;
 }

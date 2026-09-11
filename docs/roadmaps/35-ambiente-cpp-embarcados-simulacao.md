@@ -400,7 +400,10 @@ domínio tem fio.
 24  deteccao da sonda                                      FEITO (2026-09-03)
 25  ciclo build -> flash -> debug, com QEMU no gate        parcial: cross
                                                            EXERCITADO em
-                                                           2026-09-03
+                                                           2026-09-03; as
+                                                           decisoes para
+                                                           fechar estao na
+                                                           §5.7 (2026-09-11)
 ```
 
 O **21 não é cerimônia**: sem ele, escolher entre probe-rs e OpenOCD seria
@@ -458,6 +461,75 @@ DO PROJETO   --specs=nosys.specs, linker script, startup, vector table — sao
              do alvo de quem escreve, e adivinha-los seria a IDE decidindo
              sobre hardware que nao conhece.
 ```
+
+### 5.7 As decisões do autor para a frente F — 2026-09-11
+
+**Medido antes de perguntar**, e a medição mudou duas premissas (uma no
+[`36`](../integracoes/36-ferramentas-de-embarcados.md) §3, corrigida lá). O
+estado da frente em 2026-09-11:
+
+```text
+core/protocolo   tools.detect ve arm-none-eabi-gcc/g++, probe-rs, gdb; o kit
+                 guarda sysroot, targetTriple e chip; o dap/ sobe `probe-rs
+                 dap-server` por stdio e manda `chip` no launch; probe.list
+                 devolve sonda + hint + saida crua; bare-metal configura
+UI               NADA disso chega a tela: o menu de toolchain lista 5 papeis e
+                 omite `debugAdapter`; o `toolchainSetKit` do C++ nao leva
+                 `chip`; `probe.list` nao tem consumidor. A classe da varredura
+                 do `40` §8, de novo
+esta maquina     probe-rs 0.32.0 (261 familias, ZERO AVR), OpenOCD 0.12, QEMU
+                 10.2.2 com 18 maquinas Cortex-M, arm-none-eabi-gcc 15.2 +
+                 newlib, cargo-embed/flash 0.32, gdb 17.2 multiarch com DAP.
+                 Sem pyOCD, sem alvos rustup thumb*, sem sonda no USB
+```
+
+**As doze decisões, na ordem em que foram perguntadas:**
+
+```text
+hardware          ESP32-C3/C6/S3 existe mas NAO pode ser plugado agora. Esta
+                  etapa prova no QEMU; sonda real fica NAO PROVADA e dita
+escopo            ARM Cortex-M via probe-rs. RISC-V/ESP32 depois; AVR/Arduino
+                  e' outro ecossistema (probe-rs tem zero AVR) e nao entra
+ponte GDB-remote  ENTRA: `gdb -i dap` como 2o candidato do papel debugAdapter.
+                  Abre QEMU no gate e OpenOCD para quem tem openocd.cfg. Custo:
+                  processo servidor gerenciado + caminho `attach` no dap/
+gate              QEMU no gate (fixture bare-metal NOSSA, compilada no gate,
+                  `-S -gdb`, ciclo attach -> breakpoint -> variavel) + placa
+                  exercitada na mao quando houver
+gravar/rodar      `probe-rs run` (grava, reseta, RTT/defmt no console) e
+                  `probe-rs download`, como JOB com saida em evento; debug =
+                  DAP launch com flashingEnabled
+deducao do alvo   `probe-rs info` le o part number; a IDE FILTRA o `chip list`
+                  pela familia lida e SUGERE; o usuario confirma o chip exato.
+                  Nunca escolhe calada, e diz o que leu e onde
+RTT/defmt e SVD   RTT/defmt na primeira fatia; SVD depois (cada arquivo de
+                  fabricante passa pela auditoria de licenca do catalogo)
+tela              painel "Embarcados" em Ambiente do projeto (sonda, udev,
+                  chip, adaptador, Gravar/Rodar, console RTT) + o menu de
+                  toolchain ganha `debugAdapter` e o kit ganha chip/sysroot/
+                  triple EDITAVEIS
+templates         catalogo CURADO com fonte e licenca, como o de bibliotecas:
+                  Rust = cortex-m-quickstart (MIT/Apache-2.0); C = startup +
+                  linker minimos por familia derivados do CMSIS (Apache-2.0).
+                  Cada um auditado na fonte antes de entrar
+polimento         os QUATRO: clangd sem falso erro no cross (--query-driver
+                  para o newlib), estado do udev + passo oficial datado,
+                  tamanho de flash/RAM apos o build (arm-none-eabi-size),
+                  monitor serial UART no painel de terminal (dominio novo)
+ordem             1 fio (a UI expoe o que ja existe) -> 2 QEMU (gdb -i dap,
+                  servidor, attach, fixture no gate) -> 3 tela (painel com
+                  Gravar/Rodar/RTT) -> 4 polimento. Cada fatia com gate e
+                  mutacao antes da proxima
+commit            o trabalho de 2026-09-11 (IDE que nao abria + 20o gate)
+                  commitado antes da frente comecar: 2a5e277
+```
+
+**Estado:** fatia 1 (o fio) ENTREGUE em 2026-09-11 — `40` §7.8.
+
+**O que sustenta "fio primeiro":** foi assim que o motor vetorial ficou um dia
+sem porta (`40` §7.2). Expor `debugAdapter`, `chip` e `probe.list` na tela é a
+menor fatia da lista, é medível contra o binário hoje, e é pré-requisito de
+todas as outras.
 
 ## 6. FRENTE G — simulação
 

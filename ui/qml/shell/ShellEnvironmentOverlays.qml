@@ -1,8 +1,8 @@
 import QtQuick
 import KineinVectis
 
-// Os cinco paineis de AMBIENTE DO PROJETO: bibliotecas, banco, simulacao,
-// observabilidade e instalacao de ferramentas.
+// Os seis paineis de AMBIENTE DO PROJETO: bibliotecas, banco, simulacao,
+// observabilidade, embarcados e instalacao de ferramentas.
 //
 // Nasceu em 2026-09-05, quando a catraca reprovou o `ShellOverlays` ao ganhar o
 // painel de simulacao. O corte e' por RESPONSABILIDADE: os cinco tem a mesma
@@ -21,6 +21,9 @@ Item {
     property var simRunController: null
     property var simSystemController: null
     property var grafanaController: null
+    property var embeddedController: null
+    // O painel de embarcados edita o KIT (chip, alvo, depurador), que mora aqui.
+    property var toolchainController: null
     property var setupController: null
     // Nao e' painel de ambiente: e' quem recebe o plano que a biblioteca produz.
     property var configActionController: null
@@ -72,6 +75,17 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.grafanaController.close()
+    }
+
+    EmbeddedPanelHost {
+        anchors.fill: parent
+        visible: root.embeddedController.panelVisible
+        z: 99
+        controller: root.embeddedController
+        toolchainController: root.toolchainController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.embeddedController.close()
     }
 
     SetupPanelHost {

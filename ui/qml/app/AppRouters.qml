@@ -149,6 +149,16 @@ Item {
         grafanaController: root.domains.grafanaController
     }
 
+    EmbeddedEventRouter {
+        coreClient: root.domains.coreClient
+        embeddedController: root.domains.embeddedController
+    }
+
+    EmbeddedRequestRouter {
+        coreClient: root.domains.coreClient
+        embeddedController: root.domains.embeddedController
+    }
+
     SetupEventRouter {
         coreClient: root.domains.coreClient
         setupController: root.domains.setupController

@@ -17,6 +17,7 @@ Item {
     id: root
 
     property var pedidos: []
+    property var kits: []
     property int consultas: 0
 
     ToolchainController {
@@ -25,6 +26,10 @@ Item {
         onGetRequested: root.consultas += 1
         onSetRequested: function (role, id) {
             root.pedidos.push({ role: role, id: id });
+        }
+        onSetKitRequested: function (preset, sysroot, targetTriple, chip) {
+            root.kits.push({ preset: preset, sysroot: sysroot,
+                             targetTriple: targetTriple, chip: chip });
         }
     }
 
@@ -89,6 +94,19 @@ Item {
             if (root.pedidos[0].role !== "cCompiler" || root.pedidos[0].id !== "clang") failures += 256;
             if (root.pedidos[1].role !== "cxxCompiler" || root.pedidos[1].id !== "") failures += 512;
         }
+
+        // O CHIP do kit chega e volta (2026-09-11): ele existia no protocolo e
+        // a ponte o omitia. `applyKit` manda os TRES campos, chip inclusive.
+        controller.handleResolved([], [], "nucleo", "/opt/sysroot",
+                                  "thumbv7em-none-eabihf", "STM32F401CC", "");
+        if (controller.chip !== "STM32F401CC") failures += 524288;
+        if (controller.preset !== "nucleo") failures += 1048576;
+        controller.applyKit("/opt/sysroot", "thumbv7em-none-eabihf", "STM32F401CC");
+        if (root.kits.length !== 1 || root.kits[0].chip !== "STM32F401CC"
+                || root.kits[0].preset !== "nucleo") failures += 2097152;
+        // `toolchain.setKit` recusado e' erro DESTE menu.
+        controller.handleFailed("toolchain.setKit", "chip desconhecido");
+        if (controller.errorText !== "chip desconhecido") failures += 4194304;
 
         // Escolha cujo binario sumiu da maquina: a UI DIZ que sumiu em vez de
         // mostrar um rotulo bonito. O core tambem para de fixar o caminho.

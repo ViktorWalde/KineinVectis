@@ -77,20 +77,33 @@ def objetos_obsoletos(build_dir: Path) -> list[tuple[Path, Path, int, int]]:
 
     def ctime_de(caminho: str) -> int | None:
         if caminho not in ctime:
-            try:
-                ctime[caminho] = os.stat(build_dir / caminho).st_ctime_ns
-            except FileNotFoundError:
-                # Dependencia que sumiu: o ninja ja' recompila por conta propria.
+            completo = build_dir / caminho
+            # Dependencia DENTRO da arvore de build e' do ninja: ele a gera, a
+            # reescreve e sabe quando ela mudou de verdade (restat). A armadilha
+            # deste gate e' o que o ninja NAO gerencia — o header que o pacote
+            # instalou com mtime antigo. Medido em 2026-09-11: sem este filtro o
+            # `mocs_compilation.cpp` reprovava por causa de um `_conf.cmake` que
+            # cada build reescreve com o mesmo conteudo.
+            if completo.resolve().is_relative_to(build_dir.resolve()):
                 ctime[caminho] = None
+            else:
+                try:
+                    ctime[caminho] = os.stat(completo).st_ctime_ns
+                except FileNotFoundError:
+                    # Dependencia que sumiu: o ninja ja' recompila por conta propria.
+                    ctime[caminho] = None
         return ctime[caminho]
 
     achados: list[tuple[Path, Path, int, int]] = []
+    vistos: set[Path] = set()
     objeto: Path | None = None
     mtime = 0
     pior: tuple[int, str] | None = None
 
     def fecha() -> None:
-        if objeto is not None and pior is not None and pior[0] > mtime:
+        # O mesmo alvo pode aparecer mais de uma vez no `-t deps`; uma linha basta.
+        if objeto is not None and pior is not None and pior[0] > mtime and objeto not in vistos:
+            vistos.add(objeto)
             achados.append((objeto, build_dir / pior[1], mtime, pior[0]))
 
     for linha in saida.splitlines():
@@ -185,7 +198,7 @@ def main() -> int:
         return 0
 
     if obsoletos:
-        print(f"✗ {len(obsoletos)} objeto(s) compilado(s) ANTES de uma dependencia mudar no disco:", file=sys.stderr)
+        print(f"✗ {len(obsoletos)} alvo(s) compilado(s) ANTES de uma dependencia instalada mudar no disco:", file=sys.stderr)
         for objeto, dep, mtime, c in obsoletos:
             print(
                 f"    {objeto.relative_to(build_dir)}\n"

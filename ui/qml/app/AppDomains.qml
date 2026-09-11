@@ -37,6 +37,7 @@ Item {
     readonly property alias simRunController: simRunController
     readonly property alias simSystemController: simSystemController
     readonly property alias grafanaController: grafanaController
+    readonly property alias embeddedController: embeddedController
     readonly property alias setupController: setupController
     readonly property alias libraryController: libraryController
     readonly property alias runtimeController: runtimeController
@@ -197,6 +198,14 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
     }
 
+    // Embarcados (roadmaps/35 §5.7): a sonda no USB. O kit (chip, alvo,
+    // depurador) continua no toolchainController — e' kit, nao sonda.
+    EmbeddedController {
+        id: embeddedController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+    }
+
     // Como instalar o que falta (2026-09-04): passo a passo OFICIAL para a
     // distro detectada. Nao instala nada — mostra e, se o autor pedir, escreve
     // no terminal da IDE.
@@ -316,6 +325,7 @@ Item {
         libraryController: libraryController
         dataSourceController: dataSourceController
         grafanaController: grafanaController
+        embeddedController: embeddedController
         setupController: setupController
         simController: simController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()

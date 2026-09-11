@@ -181,7 +181,7 @@ bool CoreClient::dispatchSimResult(const QString& method, const QJsonObject& res
             result.value(QStringLiteral("simulations")).toArray().toVariantList());
         return true;
     }
-    return false;
+    return dispatchProbeResult(method, result);
 }
 
 } // namespace kinein

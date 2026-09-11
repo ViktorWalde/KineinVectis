@@ -23,7 +23,11 @@ Item {
         { key: "cCompiler", label: qsTr("Compilador C") },
         { key: "generator", label: qsTr("Gerador") },
         { key: "cmake", label: qsTr("CMake") },
-        { key: "cargo", label: qsTr("Cargo") }
+        { key: "cargo", label: qsTr("Cargo") },
+        // O papel existia no core desde 2026-09-03 (etapa 22) e esta lista o
+        // omitia: ninguem conseguia escolher o probe-rs pela tela. Fio ligado
+        // em 2026-09-11 (roadmaps/35 §5.7).
+        { key: "debugAdapter", label: qsTr("Depurador") }
     ]
 
     signal dismissRequested()

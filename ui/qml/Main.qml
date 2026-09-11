@@ -144,6 +144,7 @@ Window {
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
         grafanaController: domains.grafanaController
+        embeddedController: domains.embeddedController
         setupController: domains.setupController
     }
 
@@ -167,6 +168,7 @@ Window {
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
         grafanaController: domains.grafanaController
+        embeddedController: domains.embeddedController
         setupController: domains.setupController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
@@ -278,6 +280,7 @@ Window {
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
         grafanaController: domains.grafanaController
+        embeddedController: domains.embeddedController
         setupController: domains.setupController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController

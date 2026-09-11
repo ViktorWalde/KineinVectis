@@ -181,7 +181,9 @@ public:
     Q_INVOKABLE void toolchainGet(const QString& preset);
     Q_INVOKABLE void toolchainSet(const QString& role, const QString& id, const QString& preset);
     Q_INVOKABLE void toolchainSetKit(const QString& preset, const QString& sysroot,
-                                     const QString& targetTriple);
+                                     const QString& targetTriple, const QString& chip);
+    // Embarcados (roadmaps/35 §5.7): a sonda que esta' no USB agora.
+    Q_INVOKABLE void probeList();
     Q_INVOKABLE void configActionList(bool includeHiddenByScope = false);
     Q_INVOKABLE void configActionPreview(const QString& id, const QVariantMap& params);
     Q_INVOKABLE void configActionApply(const QString& id, const QVariantMap& params,
@@ -314,7 +316,10 @@ signals:
     void libraryPlanResolved(const QVariantMap& plan);
     void toolchainResolved(const QVariantList& selections, const QVariantList& candidates,
                            const QString& preset, const QString& sysroot,
-                           const QString& targetTriple, const QString& presetToolchainFile);
+                           const QString& targetTriple, const QString& chip,
+                           const QString& presetToolchainFile);
+    void probesResolved(const QVariantList& probes, bool toolAvailable, const QString& rawOutput,
+                        const QString& hint);
     void configActionsListed(const QVariantList& actions, const QStringList& activeBuildSystems);
     void configActionPreviewed(const QVariantMap& preview);
     void configActionApplied(const QString& id, const QString& message, const QStringList& files,
@@ -441,6 +446,7 @@ private:
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
     bool dispatchSimResult(const QString& method, const QJsonObject& result);
+    bool dispatchProbeResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

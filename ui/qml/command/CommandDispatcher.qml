@@ -18,6 +18,7 @@ Item {
     property var dataSourceController: null
     property var simController: null
     property var grafanaController: null
+    property var embeddedController: null
     property var setupController: null
 
     signal openWorkspaceRequested()
@@ -108,6 +109,8 @@ Item {
             simController.open();
         } else if (commandId === "grafana.get") {
             grafanaController.open();
+        } else if (commandId === "probe.list") {
+            embeddedController.open();
         } else if (commandId === "setup.list") {
             setupController.open();
         } else if (commandId === "settings.get") {

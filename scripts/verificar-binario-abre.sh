@@ -34,8 +34,10 @@
 #
 # O que este gate confere, nesta ordem, porque a primeira EXPLICA a segunda:
 #   1. nenhum objeto da arvore e' mais velho (mtime) que a chegada ao disco
-#      (ctime) de uma dependencia que o ninja registrou para ele — e, se for,
-#      diz qual e imprime o comando que o remove;
+#      (ctime) de uma dependencia FORA da arvore de build que o ninja registrou
+#      para ele — e, se for, diz qual e imprime o comando que o remove. O que
+#      esta' dentro da arvore e' do ninja (restat), e conferi-lo deu falso
+#      positivo num gerado na primeira rodada;
 #   2. o binario chega ao primeiro frame offscreen (KINEIN_PERF_MARKER, o
 #      mesmo mecanismo do smoke do AppImage) e sai com 0.
 #

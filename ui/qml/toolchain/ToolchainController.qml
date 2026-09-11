@@ -24,6 +24,9 @@ Item {
     property string preset: ""
     property string sysroot: ""
     property string targetTriple: ""
+    // Chip do alvo embarcado: vai no `launch` do DAP (probe-rs). Existia no
+    // protocolo e nao chegava a tela ate' 2026-09-11.
+    property string chip: ""
     // `toolchainFile` que o PRESET declara. E informacao, nao escolha: quando
     // existe, ele tem precedencia sobre o que o usuario escolher aqui, e a tela
     // precisa dizer isso em vez de deixar procurar no lugar errado.
@@ -33,7 +36,7 @@ Item {
 
     signal getRequested(string preset)
     signal setRequested(string role, string id, string preset)
-    signal setKitRequested(string preset, string sysroot, string targetTriple)
+    signal setKitRequested(string preset, string sysroot, string targetTriple, string chip)
 
     visible: false
 
@@ -45,6 +48,7 @@ Item {
         preset = "";
         sysroot = "";
         targetTriple = "";
+        chip = "";
         presetToolchainFile = "";
         if (workspaceRoot !== "") {
             getRequested("");
@@ -52,12 +56,13 @@ Item {
     }
 
     function handleResolved(newSelections, newCandidates, newPreset, newSysroot,
-                            newTargetTriple, newPresetToolchainFile) {
+                            newTargetTriple, newChip, newPresetToolchainFile) {
         selections = newSelections;
         candidates = newCandidates;
         preset = newPreset === undefined ? "" : newPreset;
         sysroot = newSysroot === undefined ? "" : newSysroot;
         targetTriple = newTargetTriple === undefined ? "" : newTargetTriple;
+        chip = newChip === undefined ? "" : newChip;
         presetToolchainFile = newPresetToolchainFile === undefined ? "" : newPresetToolchainFile;
         errorText = "";
     }
@@ -70,12 +75,13 @@ Item {
 
     // `undefined` PRESERVA o campo; string vazia LIMPA. O core trata igual, e
     // e por isso que mexer no sysroot nao apaga o alvo.
-    function applyKit(newSysroot, newTargetTriple) {
-        setKitRequested(preset, newSysroot, newTargetTriple);
+    function applyKit(newSysroot, newTargetTriple, newChip) {
+        setKitRequested(preset, newSysroot, newTargetTriple, newChip);
     }
 
     function handleFailed(method, message) {
-        if (method !== "toolchain.set" && method !== "toolchain.get") {
+        if (method !== "toolchain.set" && method !== "toolchain.get"
+                && method !== "toolchain.setKit") {
             return;
         }
         errorText = message;

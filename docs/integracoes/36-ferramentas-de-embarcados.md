@@ -81,6 +81,23 @@ duas:
 Nenhuma das duas é impossível; as duas são **muito** mais caras que trocar uma
 constante por um campo do kit.
 
+> **CORRIGIDO em 2026-09-11 — a (a) já existe pronta, e não é ponte "a mais".**
+> O GDB fala DAP **nativamente** desde a versão 14 (fonte: `/usr/share/doc/gdb/NEWS`,
+> seção *Changes in GDB 14*: *"GDB has initial built-in support for the Debugger
+> Adapter Protocol"*; exige GDB compilado com Python). Medido nesta máquina com o
+> gdb 17.2 do Fedora: `gdb -i dap` responde `initialize` com `success: true`, e
+> ele é multiarch (`set architecture arm` e `riscv:rv32` aceitos). O manual
+> (sourceware, capítulo *Debugger Adapter Protocol*) documenta o pedido `attach`
+> com o campo `target`, *"passed to the `target remote` command"*, mais `program`.
+>
+> **Consequência:** OpenOCD, pyOCD, QEMU e o próprio `probe-rs gdb` entram pelo
+> `dap/` existente como um **segundo candidato do papel `debugAdapter`** —
+> `gdb` com `-i dap` — sem cliente GDB remote no core. O custo real, que a
+> versão anterior deste parágrafo não via: gerenciar o **processo servidor**
+> (openocd/qemu) ao lado do adaptador, e um caminho de `attach` na sessão, que
+> hoje só faz `launch`. Decisão do autor em 2026-09-11: entra
+> (`roadmaps/35` §5.7).
+
 ## 4. A recomendação, e o que ela não decide
 
 **Começar por probe-rs**, e a razão é arquitetural, não preferência:
@@ -99,6 +116,13 @@ remote continua na fila — só não é a **primeira** coisa a construir.
 que permite exercitar flash e debug **sem placa**, e por isso é o que torna o
 gate da frente possível em CI. Sem ele, a frente de embarcados seria a única do
 projeto verificada apenas na mão.
+
+**Medido em 2026-09-11, e uma linha do §3 caiu:** a doc web do probe-rs mostra
+só o modo `--port`; o binário 0.32.0 é a fonte — `probe-rs dap-server --help`:
+*"When omitted, the DAP server communicates over stdin/stdout"*. O §3 estava
+certo. E o `qemu-system-arm` 10.2.2 desta máquina traz 18 máquinas Cortex-M
+(`lm3s6965evb`, `mps2-an385/386/500/505`, `microbit`, `netduinoplus2`,
+`stm32vldiscovery`…): o gate tem onde rodar.
 
 ## 5. O que falta medir antes de adotar
 
