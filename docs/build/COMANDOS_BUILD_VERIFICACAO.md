@@ -32,9 +32,9 @@ determinístico, e verificam o que o core FALA com ele (`didOpen`, `didChange`,
 pulados: teste que pula não prova nada, e essa era exatamente a lacuna que a
 etapa 3 do `docs/roadmaps/30-caminho-para-o-mvp.md` fechou.
 
-`python3` já era requisito de 6 das 19 verificações do gate (veracidade dos
-`.md`, links, catraca de arquitetura, duplicação e alcance QML, mais as sondas;
-medido em 2026-09-07), então isto não acrescenta
+`python3` já era requisito de 7 das 20 verificações do gate (veracidade dos
+`.md`, links, catraca de arquitetura, duplicação e alcance QML, o binário que
+abre, mais as sondas; medido em 2026-09-11), então isto não acrescenta
 dependência ao ambiente — só a torna explícita para quem roda `cargo test`
 sozinho. O `scripts/instalar-ambiente.sh` continua sendo o bootstrap.
 
@@ -91,8 +91,10 @@ scripts/verificar-arquitetura.sh             # catraca da regra de split
 scripts/verificar-transicao-workspace.sh     # estado por-workspace com um dono
 scripts/verificar-qml-logica.sh              # controllers QML headless
 cmake --build --preset dev-local             # UI debug (KINEIN_PRESET_DEBUG)
+scripts/verificar-binario-abre.sh --preset dev-local          # o binario que saiu do build ABRE
 cargo build --release -p kinein-core
 cmake --build --preset dev-local-release     # UI release (KINEIN_PRESET_RELEASE)
+scripts/verificar-binario-abre.sh --preset dev-local-release  # idem, release
 ```
 
 Esta lista tem de bater com `scripts/verificar.sh` — o script é a fonte, e a

@@ -572,6 +572,25 @@ Regras que mantêm isso saudável:
                                             apareciam na lista e a tela ESCALAR
                                             os aceitava, aprovando `mu*2` na
                                             "Orbita de dois corpos".
+    verificar-binario-abre.sh   2026-09-11  o binario que o PROPRIO gate compila
+      (compila mas nao abre)                nunca era executado: o smoke so'
+                                            rodava o AppImage, que empacota outro
+                                            Qt. Os dois builds do checkout
+                                            abortavam ao abrir (SIGABRT) com as
+                                            19 verificacoes verdes. Causa: o rpm
+                                            instala header com mtime de quando o
+                                            pacote foi construido, o ninja compara
+                                            mtime, e 11 objetos compilados antes
+                                            de o Qt subir de 6.11.1 para 6.11.2
+                                            ficaram no link — violacao de ODR num
+                                            inline dobrado pelo linker. Duas
+                                            perguntas: objeto mais velho que o
+                                            ctime de uma dependencia (e qual), e
+                                            o primeiro frame offscreen. Uma
+                                            sessao inteira foi gasta na hipotese
+                                            errada porque o stderr era mudo — o
+                                            Qt do Fedora manda o assert para o
+                                            journal.
     ```
 
     **Um gate que nunca reprovou não está provado — está sem evidência.** Ao

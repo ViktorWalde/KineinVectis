@@ -69,7 +69,8 @@ core para o meio.
 **130 métodos IPC** roteados e **41 eventos**, em **30 domínios de protocolo**;
 **18 pastas de domínio** no core mais 14 módulos de arquivo único; **666 testes**
 Rust verdes e **31 harnesses QML** (remedido em 2026-09-10). Protocolo `0.88.0`.
-O gate tem **19 verificações**.
+O gate tem **20 verificações** — a vigésima (2026-09-11) executa o binário que
+ele acabou de compilar, porque "compila" e "abre" são afirmações diferentes.
 
 **Os comandos que provam os dois primeiros estão no
 [`arquitetura/03`](arquitetura/03-ipc-protocol.md)**, com o motivo de cada

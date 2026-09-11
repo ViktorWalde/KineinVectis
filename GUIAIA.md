@@ -895,6 +895,7 @@ Alvos complementares:
 | Controller QML | `bash scripts/verificar-qml-logica.sh` + novo caso de regressão |
 | Arquitetura, antes de propor | `docs/arquitetura/35-crescer-sem-god-object.md` — a análise MEDIDA de 2026-09-10: o que está saudável e não se mexe, o god object que a catraca de ARQUIVO não vê, e as duas soluções da literatura que este projeto deve **recusar**, com o motivo medido |
 | Componente QML novo | `bash scripts/verificar-qml-alcance.sh` — componente no `QML_FILES` que nenhuma tela instancia é tela que o usuário não alcança. Foi assim que o `SimPlotSystem` ficou pronto, testado e invisível por um dia |
+| Qt ou toolchain do sistema atualizado, ou binário que "compila e não abre" | `bash scripts/verificar-binario-abre.sh --preset dev-local` — objeto mais velho que a chegada ao disco de um header que ele inclui (o ninja compara mtime; o rpm instala header com mtime antigo), e o primeiro frame offscreen. Reconfigurar (`cmake --preset`) NÃO invalida objeto: foi assim que a IDE ficou um dia sem abrir com o gate verde (2026-09-10) |
 | Terminal | `cargo build -p kinein-core` + `python3 scripts/sonda_scrollback.py` |
 | LSP/KSWE | teste de core + fixture real + latência/cancelamento |
 | Filesystem/save | conflito externo + rollback + crash/draft |

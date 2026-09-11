@@ -1,10 +1,11 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **Classe: ESTADO** (`docs/README.md`). Remedido no fim do dia **2026-09-10**,
-> com o gate completo verde. Onze commits nesse dia: o domínio `sim` inteiro
-> (motor, tela e oráculo), o 19º gate, a checagem de unidades, a correção de
-> categoria do `core_client.h`, a varredura e a análise de arquitetura. Se divergir do código, o código vence e este documento se
-> corrige no mesmo gesto.
+> **Classe: ESTADO** (`docs/README.md`). Remedido em **2026-09-11**, com o gate
+> completo verde e **a IDE do checkout abrindo de novo** (§7.7). O dia anterior
+> teve onze commits: o domínio `sim` inteiro (motor, tela e oráculo), o 19º
+> gate, a checagem de unidades, a correção de categoria do `core_client.h`, a
+> varredura e a análise de arquitetura. Se divergir do código, o código vence e
+> este documento se corrige no mesmo gesto.
 >
 > **AVISO que a sessão de 2026-09-05 aprendeu na pele:** "gate verde" tem prazo
 > de validade de uma atualização de sistema. Ao abrir a sessão o gate
@@ -13,6 +14,14 @@
 > antigo. `cmake --preset dev-local` **e** `cmake --preset dev-local-release`,
 > seguidos de rebuild, resolvem. **Cada árvore carrega o caminho por si; consertar
 > uma não conserta a outra.** Detalhe em [`31`](31-simulacao-fisica-matematica.md) §8.0.
+>
+> **E esse remédio era INCOMPLETO — medido em 2026-09-11 (§7.7).** Reconfigurar
+> troca o caminho da biblioteca e **não invalida objeto nenhum**: onze objetos
+> compilados na tarde de 2026-09-04, contra os headers do 6.11.1, continuaram
+> no link porque o rpm instala header com mtime de maio e o ninja compara mtime.
+> O gate ficou verde e a IDE abortava ao abrir. O remédio inteiro para troca de
+> Qt é reconfigurar **e** recompilar o que ficou velho — o 20º gate agora diz
+> quais objetos são, e imprime o comando.
 >
 > **COMECE POR AQUI ao retomar.** Ele substitui o
 > [`38`](38-divida-restante-e-continuidade.md) nesse papel; o 38 vira registro
@@ -24,7 +33,7 @@
 ## 1. O estado, em números
 
 ```bash
-bash scripts/verificar.sh                 # 19 verificacoes
+bash scripts/verificar.sh                 # 20 verificacoes
 cat scripts/arquitetura-baseline.txt      # a catraca
 cargo test -q --workspace
 
@@ -53,7 +62,7 @@ testes      666 Rust + 31 harnesses QML
 metodos     130 IPC roteados, 41 eventos
 dominios    30, e os 30 documentados no arquitetura/03
 catraca     1 arquivo em debito
-gate        19 verificacoes
+gate        20 verificacoes
 ```
 
 > **O par `metodos`/`eventos` foi CORRIGIDO DE NOVO em 2026-09-06, e desta vez
@@ -451,47 +460,20 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          declaracao contra 63 de comentario, e
                                          mover comentario compraria ~33 linhas
                                          contra a convencao da linguagem
---  A IDE DO CHECKOUT NAO ABRE, e     ACHADO em 2026-09-10. Prioridade 1
-    o gate inteiro fica verde         (crash), e NAO e' regressao desta
-                                      sessao: o binario de release de
-                                      2026-09-06, anterior a tudo, aborta
-                                      igual.
-
-                                      MEDIDO, com display real E offscreen:
-
-                                        build/dev-local            SIGABRT
-                                        build/linux-clang-debug-   SIGABRT
-                                          strict
-                                        dist/*.AppImage            ABRE
-
-                                      O AppImage empacota o proprio Qt; o
-                                      checkout usa o do sistema, 6.11.2. A
-                                      pilha aponta o QML compilado em AOT:
-                                      `GlobalShortcuts.qml` montando um
-                                      `QList<QVariant>` a partir de
-                                      initializer list, e o assert estoura
-                                      dentro do `QGenericArrayOps`.
-
-                                      ISOLADO por dois contornos INDEPENDENTES,
-                                      os dois em runtime:
-
-                                        QV4_FORCE_INTERPRETER=1   abre
-                                        QML_DISABLE_DISK_CACHE=1  abre
-                                        QT_ENABLE_REGEXP_JIT=0    aborta
-                                                                  (controle)
-
-                                      POR QUE O GATE NAO VE: o
-                                      `verificar-appimage.sh` roda o smoke do
-                                      ARTEFATO em dist/, que empacota outro Qt
-                                      — e ele passa. Nada executa o binario que
-                                      sai do `cmake --build`. E' a mesma classe
-                                      de falha do 19o gate, num eixo novo:
-                                      "compila" e "abre" sao afirmacoes
-                                      diferentes.
-
-                                      NAO E' SAIDA de dogfooding (o registro
-                                      recusa bug contornado dentro da Kinein);
-                                      e' bug, e mora aqui
+--  A IDE DO CHECKOUT NAO ABRE            FECHADO em 2026-09-11 (§7.7). Achado em
+                                          2026-09-10 como prioridade 1: os dois
+                                          builds abortavam (SIGABRT, display real
+                                          e offscreen) com os 19 gates verdes,
+                                          e o AppImage abria. A HIPOTESE do dia
+                                          — "QML compilado em AOT contra o Qt
+                                          6.11.2" — estava ERRADA na causa e
+                                          certa no sintoma: o chamador era o
+                                          AOT, mas o culpado eram 11 OBJETOS
+                                          compilados antes da troca de Qt que o
+                                          ninja nunca recompilou (rpm instala
+                                          header com mtime de maio). Violacao de
+                                          ODR no `copyAppend` inline. Nasceu o
+                                          20o gate: `verificar-binario-abre.sh`
 --  FECHADOS nesta passada, e ficam       a coluna `exato` que respondia por
     aqui so' como registro                OUTRA equacao (§19.0) — consertada em
                                           2026-09-10 pela PROCEDENCIA, §7.3; e o
@@ -1010,7 +992,114 @@ que o isolam.
 significa que a IDE substituiu o VS Code. Significa que a semana de
 desenvolvimento C/C++ e Rust dentro dela — o critério do TR1 — ainda não
 aconteceu. E agora há um motivo medido para ela não ter acontecido: **quem
-compila do checkout não consegue abrir a IDE nesta máquina.**
+compila do checkout não consegue abrir a IDE nesta máquina.** *(Removido em
+2026-09-11, §7.7: os três binários do checkout abrem, e o gate passou a
+executá-los.)*
+
+### 7.7 A IDE do checkout voltou a abrir — e a hipótese registrada estava errada, 2026-09-11
+
+**A regra zero mandou medir a §4 antes de aceitá-la, e a primeira medição
+confirmou o sintoma e derrubou a causa.** `exit=134` nos dois builds, offscreen
+e com display; `exit=0` no AppImage. Até aí, igual ao registro. O que o gdb
+acrescentou foi **um número que não batia**: a pilha apontava o assert em
+`qarraydataops.h:286`, e no header em disco (6.11.2) a linha 286 é `private:` —
+o `copyAppend` com seus quatro `Q_ASSERT` está na 301–304. O binário tinha sido
+compilado contra um header que **não é o que está no disco**.
+
+**A causa, medida em quatro passos:**
+
+```text
+1. onze objetos de 2026-09-04 14:23    main.cpp.o, clipboard, documentation, os
+   nas TRES arvores de build           cinco editor_highlighter*, debug_flags,
+                                       window_chrome_controller e um qrc — todos
+                                       anteriores ao Qt subir para 6.11.2 as
+                                       22:21 do mesmo dia
+2. o ninja os da' como VALID           `ninja -t deps` compara MTIME; o rpm
+                                       instala o header com o mtime de quando o
+                                       PACOTE foi construido: 2026-05-11. Header
+                                       "mais velho" que o objeto = nada a fazer
+3. dois objetos definem o mesmo        `QGenericArrayOps<QVariant>::copyAppend`
+   inline, em duas versoes             e' template inline (COMDAT). So' dois .o
+                                       o instanciam: `editor_highlighter_
+                                       folding.cpp.o` (VELHO, 6.11.1, assert na
+                                       286) e o `GlobalShortcuts` compilado em
+                                       AOT (NOVO, 6.11.2, assert na 301)
+4. o linker dobra na versao velha      no 6.11.1 a classe HERDA de
+                                       QArrayDataPointer e `this` e' o dado; no
+                                       6.11.2 ela guarda `m_ptr`. O chamador novo
+                                       passa um ponteiro para o ponteiro, o
+                                       callee velho le como se fosse o dado, e
+                                       `!this->isShared() || b == e` estoura na
+                                       primeira `QVariantList{"Alt+F12","Ctrl+`"}`
+                                       que o QML compilado monta
+```
+
+O `this->` no texto do assert é a prova final: a sintaxe do 6.11.2 é
+`that()->`. **E os dois contornos registrados na §4 explicam-se pela mesma
+causa:** `QV4_FORCE_INTERPRETER` e `QML_DISABLE_DISK_CACHE` desligam o AOT, que
+era o **único chamador novo** daquele inline — a versão velha nunca recebia o
+layout que não entende.
+
+**Por que o stderr estava vazio, e isso custou uma sessão:** o Qt do Fedora é
+compilado com journald. Sem tty, o assert vai para o journal, e quem roda por
+`timeout` ou por pipe vê um SIGABRT mudo. `journalctl --user _COMM=kinein-vectis`
+tinha a linha o tempo todo. `QT_FORCE_STDERR_LOGGING=1` a traz de volta — o
+`atualizar-tudo.sh` já usava, o smoke novo também.
+
+**O conserto, medido:** remover os onze objetos e relinkar — 9,5 s no
+`dev-local`. Os três binários do checkout abrem; a cópia do anterior, guardada
+antes do conserto, continua abortando:
+
+```text
+build/dev-local                       primeiro frame em 239 ms   exit 0
+build/linux-clang-debug-strict        primeiro frame em 548 ms   exit 0
+build/dev-local-release               primeiro frame em 235 ms   exit 0
+o binario de 2026-09-10 (copia)       SIGABRT                    exit 134
+```
+
+**A lição que corrige o registro:** o remédio da §8.0 do
+[`31`](31-simulacao-fisica-matematica.md) — reconfigurar as duas árvores depois
+da troca de Qt — **resolvia o gate e não a IDE**. Reconfigurar troca o caminho
+da biblioteca no `build.ninja`; não toca em objeto. Só `--clean-first` (que o
+`atualizar-tudo.sh` faz e o `verificar.sh` não) ou remover os objetos velhos
+resolve. O ninja não tem modo por ctime; a defesa é gate.
+
+**O gate que nasceu — o 20º, e a pergunta que ele faz é a que faltava:**
+
+```text
+verificar-binario-abre.sh   depois de CADA `cmake --build` do verificar.sh:
+                            1. nenhum objeto da arvore e' mais velho (mtime) que
+                               a chegada ao disco (ctime) de uma dependencia
+                               que o ninja registrou para ele. Se for, diz qual
+                               header, quando chegou, e imprime o comando que
+                               remove exatamente aqueles objetos
+                            2. o binario chega ao primeiro frame offscreen e
+                               sai com 0 — o MESMO mecanismo do smoke do
+                               AppImage (KINEIN_PERF_MARKER + KINEIN_PERF_EXIT),
+                               que existia desde o M4.2 e nunca foi apontado
+                               para o binario do checkout
+```
+
+O ctime é a hora em que o inode entrou **neste** disco; nenhum gerenciador de
+pacote o falsifica, e é o que o ninja não olha. A primeira pergunta existe
+porque a segunda, sozinha, dá um SIGABRT — e foi um SIGABRT sem explicação que
+produziu a hipótese errada da véspera.
+
+**Provado por mutação nas duas metades:** `touch -d` num objeto para antes da
+instalação do Qt reprova em (1) e nomeia `QtQuick/qtquickglobal.h` chegando às
+22:21:19; o comando impresso remove o objeto, o rebuild recompila, e o gate
+volta a passar. O binário de 2026-09-10 no lugar do relinkado reprova em (2)
+mostrando o assert — que agora aparece, porque o smoke força o stderr.
+
+```text
+gate    20 verificacoes (+1)
+codigo  scripts/verificar-binario-abre.sh, scripts/verificar_binario_abre.py,
+        dois passos no verificar.sh — nenhuma linha de core, protocolo ou QML
+```
+
+**O que NÃO mudou:** protocolo `0.88.0`, 666 testes, 31 harnesses, catraca com
+um arquivo. O defeito era da árvore de build, não do fonte — e por isso nenhum
+`git log` o explicava.
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 
@@ -1093,6 +1182,6 @@ está ligada mostra a coisa certa, nem se o que aparece é legível — isso é 
 pente-fino, e ele precisa da IDE **abrindo** (§4, prioridade 1).
 
 **E a classe da §8.1 não tem gate.** O 19º pega componente QML entregue e não
-instanciado; falta o andar de cima — **evento que o core emite e nenhuma tela
-consome**. É o mesmo critério, uma camada acima, e os cinco achados de hoje
+instanciado; o 20º (2026-09-11) pega binário que compila e não abre; falta o
+andar de cima — **evento que o core emite e nenhuma tela consome**. É o mesmo critério, uma camada acima, e os cinco achados de hoje
 teriam saído dele automaticamente.

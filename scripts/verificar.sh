@@ -6,7 +6,7 @@
 # sensacao de "tudo passou". Ver docs/arquitetura/15-engineering-debt-and-refactor.md.
 #
 # Uso:
-#   scripts/verificar.sh            # completo: lint + testes + C++ + builds debug/release
+#   scripts/verificar.sh            # completo: lint + testes + C++ + builds debug/release + o binario ABRE
 #   scripts/verificar.sh --rapido   # rapido:   lint + testes + C++ (sem builds)
 #
 # Antes de rodar, formate o codigo:  cargo fmt --all
@@ -107,11 +107,20 @@ if [ "$modo" = "completo" ]; then
     passo "cmake --build --preset $preset_debug (UI debug sanitized)"
     cmake --build --preset "$preset_debug"
 
+    # "Compila" e "abre" sao afirmacoes diferentes (2026-09-10: dois builds
+    # verdes que abortavam ao abrir). Roda DEPOIS do build, e para cada preset:
+    # o objeto obsoleto vive na arvore, nao no fonte.
+    passo "scripts/verificar-binario-abre.sh --preset $preset_debug (o binario que saiu do build ABRE)"
+    bash scripts/verificar-binario-abre.sh --preset "$preset_debug"
+
     passo "cargo build --release -p kinein-core"
     cargo build --release -p kinein-core
 
     passo "cmake --build --preset $preset_release (UI release)"
     cmake --build --preset "$preset_release"
+
+    passo "scripts/verificar-binario-abre.sh --preset $preset_release (o binario que saiu do build ABRE)"
+    bash scripts/verificar-binario-abre.sh --preset "$preset_release"
 fi
 
 etapa=""

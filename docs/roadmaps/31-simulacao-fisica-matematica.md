@@ -369,6 +369,13 @@ o sistema atualizou o Qt depois da medicao    libQt6Quick.so.6.11.2
 **`cmake --preset <nome>` seguido de rebuild resolve** — confirmado, 401 alvos,
 verde. Não houve mudança de código.
 
+> **Resolvia o GATE, não a IDE — medido em 2026-09-11.** Reconfigurar troca o
+> caminho da biblioteca e não invalida objeto nenhum: onze objetos compilados
+> antes da troca de Qt ficaram no link (o rpm instala header com mtime de maio,
+> e o ninja compara mtime), e o binário abortava ao abrir com o gate verde. A
+> metade **silenciosa** desta falha nasceu gate, o 20º —
+> [`40`](40-estado-e-continuidade.md) §7.7.
+
 **E resolver um não resolve o outro.** Reconfigurado só o `dev-local`, o gate
 avançou e reprovou de novo, no passo seguinte, com a mesma mensagem — porque
 `build/dev-local-release` guardava a mesma referência velha. **Cada árvore de
