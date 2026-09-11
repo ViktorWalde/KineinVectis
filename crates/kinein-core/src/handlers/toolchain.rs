@@ -17,7 +17,7 @@ use crate::{Core, toolchain};
 impl Core {
     /// Roteia os metodos `toolchain.*`; `None` quando o metodo nao e deles.
     pub(crate) fn toolchain_request_response(
-        &self,
+        &mut self,
         method: &str,
         request_id: Option<Value>,
         params: Option<&Value>,
@@ -55,7 +55,7 @@ impl Core {
     }
 
     fn toolchain_set_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -77,7 +77,12 @@ impl Core {
             parsed.id.as_deref(),
             parsed.preset.as_deref().unwrap_or_default(),
         ) {
-            Ok(resolvida) => JsonRpcResponse::success(request_id, json!(resolvida.to_result())),
+            Ok(resolvida) => {
+                // Trocar o compilador muda o `--query-driver` do clangd; vale
+                // na proxima subida do servidor cpp (ou num `lsp.restart`).
+                self.configure_clangd_from_toolchain(&root);
+                JsonRpcResponse::success(request_id, json!(resolvida.to_result()))
+            }
             Err(message) => JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
@@ -87,7 +92,7 @@ impl Core {
 
     /// `toolchain.setKit` — sysroot e triple do alvo de um kit.
     fn toolchain_set_kit_response(
-        &self,
+        &mut self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -114,7 +119,10 @@ impl Core {
                 debug_server: parsed.debug_server.as_deref(),
             },
         ) {
-            Ok(resolvida) => JsonRpcResponse::success(request_id, json!(resolvida.to_result())),
+            Ok(resolvida) => {
+                self.configure_clangd_from_toolchain(&root);
+                JsonRpcResponse::success(request_id, json!(resolvida.to_result()))
+            }
             Err(message) => JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),

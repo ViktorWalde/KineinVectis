@@ -135,7 +135,7 @@ arquitetura em Rust e rodá-las no CI. **E aqui vai a ressalva que decide:** ele
 se enfia no `rustc` como o clippy faz e **exige nightly**. Este repositório fixa
 o toolchain em `rust-toolchain.toml` e proíbe `unsafe`; trazer nightly para
 dentro do gate é um preço alto por uma capacidade que 60 linhas de Python já
-dão, no mesmo estilo dos vinte e um gates existentes.
+dão, no mesmo estilo dos vinte e dois gates existentes.
 
 **Qt/QML.** A recomendação é substituir um objeto de contexto único por
 singletons por domínio. Metade já está feita aqui (`QML_ELEMENT`, roteadores

@@ -163,6 +163,53 @@ impl Toolchain {
         selection.resolved_path.as_ref().map(PathBuf::from)
     }
 
+    /// O caminho EFETIVO de um papel (o que sera' usado), fixado ou automatico.
+    ///
+    /// Difere de [`Self::program_for`], que so' devolve caminho quando o autor
+    /// FIXOU: aqui vale tambem a escolha que o core fez sozinho, porque o
+    /// clangd precisa saber o compilador que de fato roda, nao so' o que foi
+    /// digitado no menu.
+    fn effective_program(&self, role: ToolchainRole) -> Option<(&str, &str)> {
+        let selection = self.selections.iter().find(|s| s.role == role)?;
+        let id = selection.effective_id.as_deref()?;
+        let path = selection.resolved_path.as_deref()?;
+        Some((id, path))
+    }
+
+    /// Argumentos do `clangd` para ESTE kit.
+    ///
+    /// Sempre `--background-index`. E, quando o compilador C ou C++ efetivo e'
+    /// um CROSS (`arm-none-eabi-gcc` e os que vierem), um `--query-driver` com
+    /// o caminho resolvido dele.
+    ///
+    /// POR QUE (medido em 2026-09-11). Sem o `--query-driver`, o clangd 22 do
+    /// Fedora acha `<stdint.h>` do cross sozinho, mas NAO os cabecalhos de
+    /// `libstdc++` do GCC ARM (`<array>`, `<cstdint>` em
+    /// `/usr/lib/gcc/arm-none-eabi/.../c++`): um `.cpp` de bare metal fica com
+    /// 4 erros vermelhos. Com o driver na allowlist, o clangd pergunta ao GCC
+    /// seus `-isystem` e os 4 somem. O clangd EXIGE a allowlist explicita por
+    /// seguranca — rodar um driver arbitrario e' risco —, entao so' se passa o
+    /// compilador que o proprio usuario escolheu, nunca um glob aberto.
+    #[must_use]
+    pub fn clangd_args(&self) -> Vec<String> {
+        // Ids nativos: o clangd ja' os entende sem ajuda. Qualquer outro e'
+        // cross — a regra e' por EXCLUSAO para nao envelhecer a cada alvo novo.
+        const NATIVOS: [&str; 4] = ["clang", "gcc", "clangxx", "gxx"];
+        let mut args = vec!["--background-index".to_owned()];
+        let mut drivers: Vec<String> = Vec::new();
+        for role in [ToolchainRole::CCompiler, ToolchainRole::CxxCompiler] {
+            if let Some((id, path)) = self.effective_program(role) {
+                if !NATIVOS.contains(&id) && !drivers.iter().any(|d| d == path) {
+                    drivers.push(path.to_owned());
+                }
+            }
+        }
+        if !drivers.is_empty() {
+            args.push(format!("--query-driver={}", drivers.join(",")));
+        }
+        args
+    }
+
     /// Argumentos de `cmake` que materializam a escolha.
     ///
     /// So entra o que o usuario FIXOU. Emitir `-DCMAKE_CXX_COMPILER` com o que
@@ -455,6 +502,80 @@ mod tests {
         }
         std::fs::create_dir_all(&dir).unwrap();
         dir.canonicalize().unwrap()
+    }
+
+    /// Uma maquina que TEM o cross ARM alem dos nativos.
+    fn maquina_com_cross() -> Vec<ToolInfo> {
+        let mut tools = maquina();
+        tools.push(detectado("arm-none-eabi-gcc", "/usr/bin/arm-none-eabi-gcc"));
+        tools.push(detectado("arm-none-eabi-gxx", "/usr/bin/arm-none-eabi-g++"));
+        tools
+    }
+
+    /// Sem cross, o clangd so' ganha o `--background-index` — nada de
+    /// `--query-driver`, que o clangd 22 nem precisa para os nativos.
+    #[test]
+    fn clangd_args_nativo_nao_tem_query_driver() {
+        let root = temp_root("clangd-nativo");
+        let tc = Toolchain::resolve(&root, &maquina());
+        let args = tc.clangd_args();
+        assert_eq!(args, vec!["--background-index".to_owned()]);
+    }
+
+    /// Com o compilador C++ fixado no cross, o clangd ganha `--query-driver`
+    /// apontando o caminho RESOLVIDO dele. E' o que faz `<array>`/`<cstdint>`
+    /// do libstdc++ ARM pararem de ficar vermelhos (medido, roadmaps/35 §5.7).
+    #[test]
+    fn clangd_args_cross_ganha_query_driver_com_o_caminho_resolvido() {
+        let root = temp_root("clangd-cross");
+        set(
+            &root,
+            &maquina_com_cross(),
+            ToolchainRole::CxxCompiler,
+            Some("arm-none-eabi-gxx"),
+            "",
+        )
+        .unwrap();
+        let args = Toolchain::resolve(&root, &maquina_com_cross()).clangd_args();
+        assert!(args.contains(&"--background-index".to_owned()), "{args:?}");
+        assert!(
+            args.iter()
+                .any(|a| a == "--query-driver=/usr/bin/arm-none-eabi-g++"),
+            "o clangd nao recebeu o driver cross: {args:?}"
+        );
+    }
+
+    /// C e C++ cross ao mesmo tempo: os dois caminhos entram, sem repetir, numa
+    /// lista unica separada por virgula — que e' a forma que o clangd aceita.
+    #[test]
+    fn clangd_args_junta_c_e_cxx_cross_sem_repetir() {
+        let root = temp_root("clangd-cross-dois");
+        set(
+            &root,
+            &maquina_com_cross(),
+            ToolchainRole::CCompiler,
+            Some("arm-none-eabi-gcc"),
+            "",
+        )
+        .unwrap();
+        set(
+            &root,
+            &maquina_com_cross(),
+            ToolchainRole::CxxCompiler,
+            Some("arm-none-eabi-gxx"),
+            "",
+        )
+        .unwrap();
+        let args = Toolchain::resolve(&root, &maquina_com_cross()).clangd_args();
+        let driver: Vec<&String> = args
+            .iter()
+            .filter(|a| a.starts_with("--query-driver="))
+            .collect();
+        assert_eq!(driver.len(), 1, "mais de um --query-driver: {args:?}");
+        assert_eq!(
+            driver[0],
+            "--query-driver=/usr/bin/arm-none-eabi-gcc,/usr/bin/arm-none-eabi-g++"
+        );
     }
 
     fn maquina() -> Vec<ToolInfo> {

@@ -33,7 +33,7 @@
 ## 1. O estado, em números
 
 ```bash
-bash scripts/verificar.sh                 # 21 verificacoes
+bash scripts/verificar.sh                 # 22 verificacoes
 cat scripts/arquitetura-baseline.txt      # a catraca
 cargo test -q --workspace
 
@@ -58,11 +58,11 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.89.0
-testes      672 Rust + 32 harnesses QML
+testes      675 Rust + 32 harnesses QML
 metodos     130 IPC roteados, 41 eventos
 dominios    30, e os 30 documentados no arquitetura/03
 catraca     1 arquivo em debito
-gate        21 verificacoes
+gate        22 verificacoes
 ```
 
 > **O par `metodos`/`eventos` foi CORRIGIDO DE NOVO em 2026-09-06, e desta vez
@@ -1238,6 +1238,53 @@ codigo    protocolo: remoteTarget/debugServer; core: dap/adapter.rs e
 testes    672 Rust (+6: adapter, server, escopo); mutacoes: 3 no ciclo de
           embarcado + 1 no Drop do servidor
 ```
+
+### 7.10 Frente F, fatia 4.1 — o clangd enxerga o compilador cross, 2026-09-11
+
+**Primeiro dos quatro itens de polimento da §5.7.** A fatia 3 (painel com
+Gravar/Rodar/RTT via probe-rs) foi PAUSADA por decisão do autor até haver uma
+sonda — ela não é exercitável no QEMU. O polimento, que é, segue.
+
+**O que a medição achou, e derrubou meia premissa:** o clangd 22 do Fedora
+acha `<stdint.h>` de um alvo `arm-none-eabi` sozinho (ele traz um
+`-internal-isystem .../arm-none-eabi/include`). O `.c` de bare metal **não**
+fica vermelho. Mas o `.cpp` fica: os cabeçalhos de `libstdc++` do GCC ARM
+(`<array>`, `<cstdint>` em `/usr/lib/gcc/arm-none-eabi/15.2.0/.../c++`) o clangd
+não encontra — **32 erros** medidos num arquivo de quatro linhas. Com
+`--query-driver=<cross>` na allowlist, o clangd pergunta ao GCC seus `-isystem`
+e os 32 somem.
+
+```text
+Toolchain::clangd_args   `--background-index` sempre; mais
+                         `--query-driver=<caminho do cross>` quando o
+                         compilador C ou C++ EFETIVO do kit nao e' um nativo
+                         (clang/gcc/clangxx/gxx). Regra por EXCLUSAO: cada alvo
+                         cross novo entra sem tocar aqui
+fiacao                   configure_clangd_from_toolchain roda no workspace.open
+                         e em toolchain.set/setKit; vale na PROXIMA subida do
+                         servidor cpp (o server vivo nao e' trocado, mesmo
+                         contrato do use_server_command)
+seguranca                o clangd EXIGE a allowlist explicita — rodar driver
+                         arbitrario e' risco. So' entra o compilador que o
+                         usuario escolheu, nunca um glob aberto
+```
+
+**Provado em dois níveis:** três testes de unidade sobre `clangd_args` (nativo
+sem driver; C++ cross com o caminho resolvido; C+C++ cross numa lista só sem
+repetir), mutação-provados (contar o cross como nativo derruba os dois); e o
+`verificar-clangd-cross.sh` (22º gate), que roda o **clangd de verdade** contra
+o `arm-none-eabi-g++` real e mede 32 erros sem o driver, 0 com ele — e se
+declara NÃO CONCLUSIVO onde o clangd achar tudo sozinho, em vez de passar em
+falso. É a lição do `probe.rs`/`fd`: fixture não vê mudança de ferramenta.
+
+```text
+gate    22 verificacoes (+verificar-clangd-cross.sh)
+testes  675 Rust (+3). Nenhuma linha de QML
+```
+
+**Faltam três itens de polimento** (§5.7), todos exercitáveis sem sonda:
+tamanho de flash/RAM após o build (`arm-none-eabi-size`), estado do udev +
+passo oficial, e o monitor serial UART.
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

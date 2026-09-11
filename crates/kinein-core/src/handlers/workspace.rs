@@ -266,6 +266,11 @@ impl Core {
         if let Some(lsp) = self.lsp.as_mut() {
             lsp.set_root(Some(root.clone()));
         }
+        // O clangd deste workspace aprende o compilador CROSS do kit: sem o
+        // `--query-driver`, um `.cpp` de bare metal fica com os cabecalhos de
+        // libstdc++ do GCC ARM em vermelho (medido em 2026-09-11). Vale na
+        // PROXIMA subida do servidor cpp — o primeiro `.c/.cpp` aberto.
+        self.configure_clangd_from_toolchain(&root);
         // M-S1: store local de rascunhos, uma por workspace (docs/seguranca/23).
         self.drafts = self
             .global_storage
@@ -291,6 +296,16 @@ impl Core {
             lsp.set_root(None);
         }
         closed
+    }
+
+    /// Ensina o clangd a entender o compilador cross do kit, via
+    /// `--query-driver`. Resolve o toolchain e atualiza a tabela do LSP; o
+    /// servidor JA' em execucao nao e' trocado (a troca so' vale na proxima
+    /// subida), que e' o mesmo contrato de [`LspManager::use_server_command`].
+    pub(crate) fn configure_clangd_from_toolchain(&mut self, root: &std::path::Path) {
+        let args = crate::toolchain::Toolchain::resolve(root, &self.detected_tools()).clangd_args();
+        let refs: Vec<&str> = args.iter().map(String::as_str).collect();
+        self.use_language_server_command("cpp", "clangd", &refs);
     }
 
     pub(crate) fn close_workspace_response(
