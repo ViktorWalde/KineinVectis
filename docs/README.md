@@ -161,6 +161,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [integracoes/README.md](integracoes/README.md) | **Entrada obrigatória para adotar qualquer ferramenta**: modos A–D, gate de auditoria, níveis L0–L10, checklist de 10 passos e o índice do que já está adotado |
 | [integracoes/36-ferramentas-de-embarcados.md](integracoes/36-ferramentas-de-embarcados.md) | **Levantamento de embarcados** (2026-09-03): probe-rs, OpenOCD, pyOCD e QEMU com licença verificada na fonte e — o que decide o desenho — qual protocolo cada uma fala. Candidatas, **não** adotadas |
 | [integracoes/37-banco-e-observabilidade.md](integracoes/37-banco-e-observabilidade.md) | **Levantamento de banco e observabilidade** (2026-09-03): Grafana (AGPL-3.0) e TimescaleDB (Apache-2.0 + Timescale License). A licença do Grafana decide a **forma** da integração; a do TimescaleDB tem parte não-OSI, e isso está dito |
+| [integracoes/38-conectividade-bare-metal.md](integracoes/38-conectividade-bare-metal.md) | **Conectividade bare metal, medida com um ESP32 no USB** (2026-09-11): os três canais (serial, depuração, massa/DFU) e a camada de identidade que valem para ESP32, STM32, RP2040 e Pi; o que a placa plugada permite hoje (gravar, monitorar) e o que não (depurar); as ferramentas com licença lida no arquivo — e por que o `espflash` como crate não passa no `deny.toml` |
 
 ## arquitetura/ — contrato e estado implementado
 

@@ -525,7 +525,19 @@ commit            o trabalho de 2026-09-11 (IDE que nao abria + 20o gate)
 ```
 
 **Estado:** fatia 1 (o fio) e fatia 2 (QEMU + ponte `gdb -i dap`) ENTREGUES em
-2026-09-11 — `40` §7.8 e §7.9.
+2026-09-11 — `40` §7.8 e §7.9. Fatias 4.1 e 4.2 também (`40` §7.10 e §7.11).
+
+> **A linha `hardware` envelheceu no mesmo dia (2026-09-11, tarde).** O autor
+> plugou um ESP32 — e é o **clássico** (ESP32-D0WD-V3, Xtensa LX6, ponte
+> CP2102), não um C3/C6/S3: só tem o canal serial, sem USB-JTAG embutido. O
+> que isso permite (gravar e monitorar hoje), o que não permite (depurar sem
+> ESP-Prog + fork do OpenOCD + GDB xtensa) e o mapa que vale para STM32 e
+> Raspberry Pi estão em
+> [`integracoes/38`](../integracoes/38-conectividade-bare-metal.md); a fila
+> está no `40` §4 e §7.12. **Nenhuma das doze decisões acima foi reaberta por
+> aquele documento** — a de `escopo` ("RISC-V/ESP32 depois") é a que o autor
+> terá de rever, e três decisões novas ficaram apontadas lá (MPL-2.0 no
+> `deny.toml`, onde mora `flash`, e a ordem das fatias E1–E6).
 
 **O que sustenta "fio primeiro":** foi assim que o motor vetorial ficou um dia
 sem porta (`40` §7.2). Expor `debugAdapter`, `chip` e `probe.list` na tela é a

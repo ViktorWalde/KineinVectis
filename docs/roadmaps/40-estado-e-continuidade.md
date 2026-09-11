@@ -491,6 +491,31 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          decisoes do autor para fechar a frente
                                          estao no roadmaps/35 §5.7, e a ordem
                                          e' fio -> QEMU -> tela -> polimento
+--  ESP32 NA MESA: conectividade         LEVANTADO em 2026-09-11 (§7.12,
+    bare metal                           integracoes/38). O autor plugou um
+                                         ESP32 na tarde do dia em que a §5.7 do
+                                         35 dizia que nao podia. MEDIDO: e' um
+                                         ESP32-D0WD-V3 CLASSICO (Xtensa) atras
+                                         de CP2102 em /dev/ttyUSB0, dialout
+                                         OK, auto-reset OK, flash 4 MB — sem
+                                         USB-JTAG embutido. Gravar e monitorar
+                                         sao exercitaveis HOJE; depurar exige
+                                         ESP-Prog + openocd-esp32 + esp-gdb, e
+                                         NAO esta' na mesa. O core nao sabe o
+                                         que e' porta serial. Seis fatias
+                                         propostas (E1 serial.list -> E3
+                                         monitor -> E5 identidade Espressif ->
+                                         E2 permissao por canal -> E4 gravar
+                                         como JOB com motor por familia; E6
+                                         debug bloqueado por hardware). TRES
+                                         DECISOES DO AUTOR antes de codigo:
+                                         MPL-2.0 no deny.toml (abre espflash/
+                                         serialport como crate; senao,
+                                         processo), flash como dominio proprio
+                                         ou dentro de toolchain/build, e a
+                                         ordem. As fatias 4.3 (udev) e 4.4
+                                         (monitor UART) da frente F continuam
+                                         as proximas — agora com placa
 --  guias de instalacao para arch/suse   a fonte oficial dos tres projetos NAO
                                          cobre essas familias; entrar exige
                                          fonte de comunidade, marcada como tal
@@ -1348,6 +1373,80 @@ testes  680 Rust (+5). QML: painel Embarcados ganhou a seção de tamanho
 
 **Faltam dois itens de polimento** (§5.7): estado do udev + passo oficial, e o
 monitor serial UART.
+
+### 7.12 O ESP32 chegou à mesa — o levantamento da conectividade bare metal, 2026-09-11
+
+**Na tarde do mesmo dia em que a §5.7 do [`35`](35-ambiente-cpp-embarcados-simulacao.md)
+registrou *"ESP32-C3/C6/S3 existe mas NÃO pode ser plugado agora"*, o autor
+plugou um ESP32** e pediu três coisas: o mapa de como um microcontrolador bare
+metal se conecta, o que existe de open source para cada elo, e se o que vale
+para o ESP32 vale para STM32 e Raspberry Pi. A resposta é o
+[`integracoes/38`](../integracoes/38-conectividade-bare-metal.md) — documento,
+não código, pela mesma regra que fez o 36 vir antes da etapa 22.
+
+**Medido antes de ler qualquer fonte, e a medição mudou a pergunta:**
+
+```text
+o que esta' no USB   ESP32-D0WD-V3 rev v3.1 — o ESP32 CLASSICO (Xtensa LX6),
+                     nao um S3/C3/C6. Ponte CP2102 (10c4:ea60) -> /dev/ttyUSB0
+                     root:dialout 0660; o autor esta' em dialout; o esptool
+                     5.3.1 conectou, leu chip e flash (4 MB) e resetou por RTS
+                     sem ninguem apertar BOOT
+o que isso implica   o classico NAO tem USB-JTAG embutido: so' tem o canal
+                     SERIAL. Gravar (esptool/espflash) e monitorar (UART
+                     115200) sao exercitaveis hoje; DEPURAR exige 4 GPIOs + um
+                     adaptador FT2232H (ESP-Prog) + o fork openocd-esp32 + o
+                     esp-gdb xtensa — o gdb do Fedora nao tem xtensa, e o
+                     OpenOCD upstream desta maquina conhece o alvo mas NAO
+                     grava nele (sem flash bank, sem program_esp)
+quem mais olha       o ModemManager EXAMINOU a porta 4 s depois do plug
+a porta              (journal: "couldn't check support ... not supported by
+                     any plugin") — ID_MM_CANDIDATE=1 sem ID_MM_DEVICE_IGNORE.
+                     brltty instalado, inativo, sem regra para 10c4
+permissao USB        o 60-openocd.rules do Fedora e' o upstream SEM
+                     GROUP="plugdev" (so' TAG+="uaccess"); o 69-probe-rs.rules
+                     oficial nao esta' instalado e usa plugdev + uaccess;
+                     plugdev nao existe nesta maquina. O passo oficial e o que
+                     a distro ja' fez NAO sao o mesmo — a fatia 4.3 tem de
+                     dizer qual vale
+o core               NAO sabe o que e' porta serial: o unico ttyUSB0 nos
+                     fontes e' um teste negativo do dap/server.rs
+```
+
+**O mapa que generaliza** (38 §2 e §5): todo bare metal chega por até três
+canais — **A serial** (ROM bootloader + console + DTR/RTS), **B depuração**
+(SWD/JTAG por sonda ou embutido) e **C massa/DFU** (UF2, `dfu-util`) — mais
+uma camada de **identidade** (VID:PID → família do elo → chip lido **pelo
+canal**). O que vale para as cinco colunas (ESP32 clássico, S3/C3/C6, STM32,
+RP2040/RP2350, Pi) é o canal A inteiro, a identidade, o mecanismo de permissão
+e o canal B, que já está feito. O que **não** vale é o protocolo do
+bootloader — SLIP da Espressif, AN3155/DFU da ST, picoboot/UF2 da Raspberry
+Pi — e a IDE não implementa nenhum: orquestra a ferramenta oficial como
+processo. **A Raspberry Pi 4/5 como computador não é este domínio**: é o item
+"SSH remoto" da §4.
+
+**A licença decidiu uma forma, de novo:** o `espflash` (MIT OR Apache-2.0)
+como **crate** não passa no `deny.toml` — a serial dele é o `serialport`
+4.10.1, **MPL-2.0**, e a política é "nada de copyleft, nem LGPL". Admitir MPL
+é decisão do autor; até lá, `esptool` (GPL-2.0) e `espflash` entram iguais:
+processo filho, saída em evento, `NO_COLOR` injetado no `Command`. O monitor
+serial abre o tty com `rustix` (já transitivo) — sem crate novo.
+
+**O que entra na fila** (38 §6, proposta): E1 `serial.list` → E3 monitor UART
+(a fatia 4.4) → E5 identidade Espressif (`chip-id`/`flash-id` como o
+`probe-rs info`) → E2 permissão por canal (a fatia 4.3, redesenhada) → E4
+gravar como JOB com motor por família. E6, o debug do clássico, fica
+**bloqueado por hardware** ao lado da fatia 3. **Nenhuma das doze decisões da
+§5.7 foi reaberta por este documento**; a de *escopo* ("RISC-V/ESP32 depois") é
+a que o autor vai ter de rever, e a nota datada no 35 diz isso.
+
+```text
+gate      22 verificacoes, inalterado — nenhuma linha de codigo
+docs      integracoes/38 (novo), indices em docs/README e integracoes/README,
+          nota datada no 35 §5.7, esta secao e a entrada da §4
+provado   nada gravado no chip: so' leituras (chip-id, flash-id). O 38 §7 diz
+          o que NAO foi provado, item a item
+```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

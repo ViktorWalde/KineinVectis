@@ -125,6 +125,7 @@ projeto do usuário silenciosamente.
 
 | Documento | Assunto |
 | --- | --- |
+| [38-conectividade-bare-metal.md](38-conectividade-bare-metal.md) | **Conectividade bare metal medida com um ESP32 no USB** (2026-09-11): três canais + identidade, o que generaliza para STM32/RP2040/Pi e o que não (o protocolo do bootloader é do fabricante); esptool GPL-2.0 e openocd-esp32 como processo; `espflash` MIT/Apache **barrado como crate** pela transitiva `serialport` MPL-2.0 |
 | [37-banco-e-observabilidade.md](37-banco-e-observabilidade.md) | **Grafana e TimescaleDB medidos** (2026-09-03): Grafana é **AGPL-3.0**, o que decide a FORMA da integração (API, nunca embutido); TimescaleDB é Apache-2.0 **mais** a Timescale License, que é source-available e **não** OSI |
 | [36-ferramentas-de-embarcados.md](36-ferramentas-de-embarcados.md) | **probe-rs, OpenOCD, pyOCD e QEMU medidos** (2026-09-03): licença verificada na fonte, versão, manutenção e — o que decide o desenho — **qual protocolo cada uma fala**. probe-rs é o único com DAP nativo sobre stdin/stdout, que é a forma que o `dap/` já usa |
 
