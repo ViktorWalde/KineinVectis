@@ -19,6 +19,10 @@ Item {
             root.embeddedController.handleProbes(probes, toolAvailable, rawOutput, hint);
         }
 
+        function onBuildSizeResolved(sections, regions, toolAvailable, tool, rawOutput) {
+            root.embeddedController.handleBuildSize(sections, regions, toolAvailable, tool, rawOutput);
+        }
+
         function onRequestFailed(method, message) {
             root.embeddedController.handleFailed(method, message);
         }

@@ -95,6 +95,7 @@ set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RE
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanelHost.qml)
 set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
+set_source_files_properties(qml/embedded/EmbeddedSizeView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSizeView.qml)
 set_source_files_properties(qml/ipc/EmbeddedEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedEventRouter.qml)
 set_source_files_properties(qml/ipc/EmbeddedRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedRequestRouter.qml)
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
@@ -339,6 +340,7 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedPanel.qml
         qml/embedded/EmbeddedPanelHost.qml
         qml/embedded/EmbeddedKitField.qml
+        qml/embedded/EmbeddedSizeView.qml
         qml/ipc/EmbeddedEventRouter.qml
         qml/ipc/EmbeddedRequestRouter.qml
         qml/datasource/DataSourcePanel.qml

@@ -185,6 +185,12 @@ Item {
             font.pixelSize: 10
         }
 
+        // O tamanho do binario: dono proprio (a catraca cobrou em 2026-09-11).
+        EmbeddedSizeView {
+            width: parent.width
+            controller: root.controller
+        }
+
         // --- Depurador -----------------------------------------------------
         Text {
             text: qsTr("Depurador do kit: %1").arg(

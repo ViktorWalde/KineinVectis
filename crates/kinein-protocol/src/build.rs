@@ -7,6 +7,15 @@ use crate::{BuildSystem, Diagnostic, DiagnosticSource};
 /// Backwards-compatible name for diagnostic severity used by build payloads.
 pub use crate::DiagnosticSeverity as BuildDiagnosticSeverity;
 
+/// Parameters for `build.size` — mede o ELF com `<prefix>size`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BuildSizeParams {
+    /// ELF a medir. Ausente = o alvo resolvido como no `debug.start`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub program: Option<String>,
+}
+
 /// Parameters for `build.run`.
 #[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

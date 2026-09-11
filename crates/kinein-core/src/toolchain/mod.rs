@@ -176,6 +176,25 @@ impl Toolchain {
         Some((id, path))
     }
 
+    /// O prefixo das binutils do cross, de `arm-none-eabi-gcc` -> `arm-none-eabi-`.
+    ///
+    /// De onde sai o `arm-none-eabi-size`, `arm-none-eabi-objcopy` etc. Vem do
+    /// compilador C/C++ EFETIVO; `None` quando o compilador e' nativo, e ai o
+    /// `size` do sistema serve. Regra: o id cross termina em `-gcc`/`-g++`, e o
+    /// prefixo e' tudo ate' o ultimo `-` inclusive.
+    #[must_use]
+    pub fn binutils_prefix(&self) -> Option<String> {
+        for role in [ToolchainRole::CCompiler, ToolchainRole::CxxCompiler] {
+            let (id, _) = self.effective_program(role)?;
+            for sufixo in ["-gcc", "-g++", "-gxx"] {
+                if let Some(base) = id.strip_suffix(sufixo) {
+                    return Some(format!("{base}-"));
+                }
+            }
+        }
+        None
+    }
+
     /// Argumentos do `clangd` para ESTE kit.
     ///
     /// Sempre `--background-index`. E, quando o compilador C ou C++ efetivo e'

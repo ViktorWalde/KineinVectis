@@ -163,6 +163,20 @@ def main() -> int:
             core.rpc("debug.stop")
             code = core.evento("event.debug.finished").get("exitCode")
             ciclo_ms = int((time.monotonic() - t0) * 1000)
+
+            # build.size: o `arm-none-eabi-size` do kit mede o ELF e o core
+            # cruza com o linker script. Prova o mesmo par do 4.2 contra a
+            # ferramenta REAL — o parse unitario nao ve mudanca de binutils.
+            core.rpc("toolchain.set", {"role": "cCompiler", "id": "arm-none-eabi-gcc"})
+            tam = core.rpc("build.size", {"program": str(elf)})
+            assert tam["tool"] == "arm-none-eabi-size", tam["tool"]
+            regioes = {r["name"]: r for r in tam["regions"]}
+            assert "FLASH" in regioes and "SRAM" in regioes, tam["regions"]
+            # 132 B de codigo+vetor na FLASH de 256 KiB; 4 B de .bss na SRAM de
+            # 64 KiB. O `.comment`/`.ARM.attributes` (addr 0) NAO contam.
+            assert regioes["FLASH"]["used"] == 132, regioes["FLASH"]
+            assert regioes["FLASH"]["size"] == 256 * 1024, regioes["FLASH"]
+            assert regioes["SRAM"]["used"] == 4, regioes["SRAM"]
         finally:
             core.proc.stdin.close()
             core.proc.wait(10)
@@ -185,7 +199,8 @@ def main() -> int:
 
     print(f"embarcado no QEMU ({MAQUINA}, gdb -i dap): attach, breakpoint em main.c:4, "
           f"contador 0 -> 1, variaveis sem registradores, exitCode {code}, servidor morto "
-          f"com a sessao; {ciclo_ms} ms do continue ao stop")
+          f"com a sessao; {ciclo_ms} ms do continue ao stop. "
+          f"build.size: FLASH 132/262144, SRAM 4/65536 (arm-none-eabi-size)")
     return 0
 
 

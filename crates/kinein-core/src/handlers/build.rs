@@ -10,14 +10,14 @@
 use std::path::PathBuf;
 
 use kinein_protocol::{
-    BuildRunParams, BuildSystem, DiagnosticSource, JobAcceptedResult, JobRisk, JsonRpcError,
-    JsonRpcErrorCode, JsonRpcResponse, ProjectKind, QualityRunParams, TestRunParams,
+    BuildRunParams, BuildSizeParams, BuildSystem, DiagnosticSource, JobAcceptedResult, JobRisk,
+    JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, ProjectKind, QualityRunParams, TestRunParams,
 };
 use serde_json::{Value, json};
 
 use crate::jobs::{JobContext, JobOutcome};
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
-use crate::{Core, build, test};
+use crate::{Core, build, dap, size, test};
 
 impl Core {
     pub(crate) fn build_run_response(
@@ -75,6 +75,62 @@ impl Core {
         });
 
         JsonRpcResponse::success(request_id, json!(JobAcceptedResult { job_id }))
+    }
+
+    /// `build.size` — quanto o ELF ocupa de nao-volatil e de RAM.
+    ///
+    /// Sincrono: o `size` le um arquivo e volta em milissegundos, ao contrario
+    /// do build. Resolve o ELF como o `debug.start` (ou aceita `program`), o
+    /// prefixo das binutils vem do cross do kit, e o linker script e' o unico
+    /// `.ld` do workspace quando ha' exatamente um — zero ou varios deixa as
+    /// regioes vazias e a UI mostra so' os totais, sem adivinhar qual `.ld` vale.
+    pub(crate) fn build_size_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let Some(workspace) = self.workspace.clone() else {
+            return no_workspace_response(request_id, "build.size");
+        };
+        let parsed = match parse_params::<BuildSizeParams>(
+            request_id.as_ref(),
+            params,
+            "build.size aceita apenas o campo opcional program",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let root = PathBuf::from(&workspace.root);
+        let program = match parsed.program.filter(|p| !p.trim().is_empty()) {
+            Some(explicit) => {
+                let path = PathBuf::from(explicit);
+                if !path.is_file() {
+                    return JsonRpcResponse::failure(
+                        request_id,
+                        JsonRpcError::new(
+                            JsonRpcErrorCode::InvalidParams,
+                            format!("programa nao encontrado: {}", path.display()),
+                            None,
+                        ),
+                    );
+                }
+                path
+            }
+            None => match dap::resolve_program(workspace.kind, &root) {
+                Ok(program) => program,
+                Err(error) => {
+                    return JsonRpcResponse::failure(
+                        request_id,
+                        JsonRpcError::new(JsonRpcErrorCode::InvalidParams, error.to_string(), None),
+                    );
+                }
+            },
+        };
+        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
+        let prefixo = toolchain.binutils_prefix();
+        let linker = unico_linker_script(&root);
+        let relatorio = size::measure(&program, prefixo.as_deref(), linker.as_deref());
+        JsonRpcResponse::success(request_id, json!(relatorio))
     }
 
     pub(crate) fn quality_run_response(
@@ -236,6 +292,40 @@ impl Core {
             workspace.kind
         };
         Ok((PathBuf::from(&workspace.root), kind))
+    }
+}
+
+/// O unico `.ld` do workspace, quando ha' exatamente um.
+///
+/// Procura na raiz e um nivel abaixo (onde moram `linker/`, `ld/`, `boards/`),
+/// sem descer na arvore inteira — um `.ld` de dependencia em `build/` nao e' o
+/// do projeto. Zero ou mais de um devolve `None`: escolher entre varios seria
+/// adivinhar (roadmaps/35 §5.6), e a UI entao mostra os totais sem a barra.
+fn unico_linker_script(root: &std::path::Path) -> Option<PathBuf> {
+    let mut achados = Vec::new();
+    let mut olhar = |dir: &std::path::Path| {
+        if let Ok(entradas) = std::fs::read_dir(dir) {
+            for entrada in entradas.flatten() {
+                let caminho = entrada.path();
+                if caminho.extension().and_then(|e| e.to_str()) == Some("ld") {
+                    achados.push(caminho);
+                }
+            }
+        }
+    };
+    olhar(root);
+    if let Ok(entradas) = std::fs::read_dir(root) {
+        for entrada in entradas.flatten() {
+            if entrada.file_type().is_ok_and(|t| t.is_dir()) {
+                olhar(&entrada.path());
+            }
+        }
+    }
+    achados.sort();
+    achados.dedup();
+    match achados.as_slice() {
+        [unico] => Some(unico.clone()),
+        _ => None,
     }
 }
 

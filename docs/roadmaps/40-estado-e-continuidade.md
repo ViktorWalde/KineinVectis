@@ -57,9 +57,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.89.0
-testes      675 Rust + 32 harnesses QML
-metodos     130 IPC roteados, 41 eventos
+protocolo   0.90.0
+testes      680 Rust + 32 harnesses QML
+metodos     131 IPC roteados, 41 eventos
 dominios    30, e os 30 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
@@ -494,6 +494,22 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
 --  guias de instalacao para arch/suse   a fonte oficial dos tres projetos NAO
                                          cobre essas familias; entrar exige
                                          fonte de comunidade, marcada como tal
+--  SSH REMOTO nativo                    DECIDIDO pelo autor em 2026-09-11,
+                                         NAO arquitetado. Abrir e trabalhar num
+                                         workspace REMOTO por SSH — editar,
+                                         compilar, rodar e depurar na maquina do
+                                         outro lado —, nativo como Docker e
+                                         banco sao nativos (§5), nunca plugin.
+                                         Antes de qualquer codigo, MEDIR: onde o
+                                         core assume caminho LOCAL (fs, fswatch,
+                                         run, terminal, build, dap, toolchain
+                                         resolvem no disco desta maquina), o que
+                                         vira canal remoto e o que continua
+                                         local, e a licenca do transporte (o
+                                         `ssh` do sistema como PROCESSO, ou uma
+                                         crate — a decidir com fonte). E' fatia
+                                         grande e propria; entra na fila sem
+                                         data de execucao
 ```
 
 ## 5. As decisões registradas que NÃO se reabrem
@@ -1108,6 +1124,15 @@ pacote o falsifica, e é o que o ninja não olha. A primeira pergunta existe
 porque a segunda, sozinha, dá um SIGABRT — e foi um SIGABRT sem explicação que
 produziu a hipótese errada da véspera.
 
+**O critério afinou duas vezes depois de nascer.** A primeira rodada excluiu
+dependências DENTRO da árvore de build (o ninja as gerencia). A segunda
+(2026-09-11, ao editar o próprio `CMakeLists.txt`) restringiu ao TRAP exato: a
+dependência parece velha para o ninja (`mtime <= objeto`, então ele não
+recompila) **e** chegou depois (`ctime > objeto`). Um arquivo do repo que o
+autor acabou de editar tem `mtime > objeto` — o ninja o recompila sozinho, e
+não é este gate que cuida disso. Sem essa segunda trava, editar um `.md` no
+`CMakeLists` reprovava um `mocs_compilation` que o próximo build já conserta.
+
 **Provado por mutação nas duas metades:** `touch -d` num objeto para antes da
 instalação do Qt reprova em (1) e nomeia `QtQuick/qtquickglobal.h` chegando às
 22:21:19; o comando impresso remove o objeto, o rebuild recompila, e o gate
@@ -1285,6 +1310,44 @@ testes  675 Rust (+3). Nenhuma linha de QML
 **Faltam três itens de polimento** (§5.7), todos exercitáveis sem sonda:
 tamanho de flash/RAM após o build (`arm-none-eabi-size`), estado do udev +
 passo oficial, e o monitor serial UART.
+
+### 7.11 Frente F, fatia 4.2 — o tamanho do ELF depois do build, 2026-09-11
+
+**Segundo dos quatro itens de polimento.** Quanto o firmware ocupa de
+não-volátil e de RAM — o número que decide se o próximo commit ainda cabe no
+chip.
+
+```text
+build.size (0.90.0)   sincrono (o size le um arquivo em ms). `{ program? }`:
+                      ausente, resolve o ELF como o debug.start. Roda
+                      `<prefix>size -A` (prefixo do cross do kit) e devolve
+                      secoes + regioes do linker script com a fracao usada
+core/size.rs          parse do SysV e do bloco MEMORY do `.ld`; regiao = soma
+                      das secoes ALOCADAS por endereco (`.comment`/
+                      `.ARM.attributes`, addr 0, NAO contam — senao 35 B da
+                      string de versao virariam "flash usada")
+Toolchain::binutils_prefix  `arm-none-eabi-gcc` -> `arm-none-eabi-`; de onde
+                      sai o size, o objcopy, o objdump do alvo
+UI                    painel Embarcados: botao "Medir tamanho" e uma barra por
+                      regiao (usado/capacidade), amarela e com aviso a partir
+                      de 90%. Sem linker script legivel, mostra os totais por
+                      secao
+```
+
+**Exercitado contra o `arm-none-eabi-size` real** (dobrado no gate de embarcado,
+que já compila a fixture): FLASH 132/262144, SRAM 4/65536, ferramenta
+`arm-none-eabi-size` escolhida pelo prefixo do kit. Provado por mutação: 5
+testes de unidade sobre o parse; anular a exclusão de seção não-alocada faz a
+FLASH medir 212 em vez de 132 e o teste cai (a mutação por dead-code foi
+descartada — o compilador a pega antes do teste, a armadilha já registrada).
+
+```text
+protocolo 0.90.0 — BuildSizeParams, SizeReport
+testes  680 Rust (+5). QML: painel Embarcados ganhou a seção de tamanho
+```
+
+**Faltam dois itens de polimento** (§5.7): estado do udev + passo oficial, e o
+monitor serial UART.
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

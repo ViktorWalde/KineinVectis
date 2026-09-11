@@ -34,6 +34,7 @@ pub mod runtime;
 pub mod settings;
 pub mod setup;
 pub mod sim;
+pub mod size;
 pub mod terminal;
 pub mod test;
 pub mod toolchain;
@@ -244,6 +245,7 @@ impl Core {
                 RequestOutcome::Continue(self.close_workspace_response(request_id))
             }
             "build.run" => RequestOutcome::Continue(self.build_run_response(request_id, params)),
+            "build.size" => RequestOutcome::Continue(self.build_size_response(request_id, params)),
             "quality.run" => {
                 RequestOutcome::Continue(self.quality_run_response(request_id, params))
             }

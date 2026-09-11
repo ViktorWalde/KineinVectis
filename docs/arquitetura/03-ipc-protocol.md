@@ -1,5 +1,11 @@
 # 03 — Protocolo IPC
 
+> **O `0.90.0` (2026-09-11) acrescentou `build.size`:** o tamanho do ELF
+> medido por `<prefix>size` do kit, com a fração usada de cada região do
+> linker script (`BuildSizeParams` → `SizeReport`). Método e tipos novos sobem
+> o minor. Detalhe na seção Build; a medição está no
+> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §5.7.
+>
 > **O `0.89.0` (2026-09-11) acrescentou o ALVO REMOTO do depurador:**
 > `remoteTarget` e `debugServer` no `toolchain.setKit` e no `ToolchainResult`.
 > Com eles o adaptador `gdb` (que fala DAP desde a v14) faz `attach` a um
@@ -63,7 +69,7 @@
 >
 > ```text
 > protocolo   0.88.0
-> metodos     130 roteados
+> metodos     131 roteados
 > eventos     41 (36 literais + 5 construidos por format!)
 > dominios    30, e os 30 tem secao neste documento
 > ```
@@ -748,6 +754,19 @@ Consequência de produto: rodar um agente dentro da Kinein passa a ser
 indistinguível de rodá-lo fora dela — que era o requisito original. Uma
 superfície visual de atalho (Assistente) pode voltar depois **como UI pura**,
 abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
+
+### `build.size` — o tamanho do ELF (síncrono)
+
+Implementado no protocolo `0.90.0`. **Síncrono**, ao contrário do `build.run`:
+o `size` lê um arquivo e volta em milissegundos. `{ "program"? }` — ausente, o
+core resolve o ELF como o `debug.start`. Roda `<prefix>size -A` (o prefixo vem
+do compilador cross do kit: `arm-none-eabi-gcc` → `arm-none-eabi-size`; sem
+cross, o `size` do sistema) e responde `SizeReport { toolAvailable, tool,
+program, sections: [{ name, size, addr }], regions: [{ name, used, size }],
+rawOutput }`. As `regions` saem do bloco `MEMORY` do único `.ld` do workspace,
+com `used` = soma das seções **alocadas** cujo endereço cai na região —
+`.comment`/`.ARM.attributes` (metadados do ELF, endereço 0) não contam. Sem
+linker script legível, `regions` vem vazio e a UI mostra os totais por seção.
 
 ### Build (`build.run` — job assíncrono)
 
@@ -1654,7 +1673,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 130 métodos roteados — a lista inteira
+## Os 131 métodos roteados — a lista inteira
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -1664,6 +1683,7 @@ pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
 ```text
 build.run
+build.size
 
 cargo.check
 cargo.metadata

@@ -24,9 +24,19 @@ Item {
     property bool busy: false
     property string errorText: ""
 
+    // Tamanho do ELF (build.size): regioes do linker script com uso, e as
+    // secoes cruas. `sizeMeasured` separa "ainda nao medi" de "medi e deu zero".
+    property var sizeRegions: []
+    property var sizeSections: []
+    property string sizeTool: ""
+    property bool sizeToolAvailable: true
+    property bool sizeMeasured: false
+    property bool sizeBusy: false
+
     readonly property bool probeFound: probes.length > 0
 
     signal listRequested()
+    signal sizeRequested(string program)
 
     visible: false
 
@@ -37,6 +47,12 @@ Item {
         hint = "";
         busy = false;
         errorText = "";
+        sizeRegions = [];
+        sizeSections = [];
+        sizeTool = "";
+        sizeToolAvailable = true;
+        sizeMeasured = false;
+        sizeBusy = false;
         panelVisible = false;
     }
 
@@ -67,11 +83,39 @@ Item {
     }
 
     function handleFailed(method, message) {
+        if (method === "build.size") {
+            sizeBusy = false;
+            errorText = message;
+            return;
+        }
         if (method !== "probe.list") {
             return;
         }
         busy = false;
         errorText = message;
+    }
+
+    // O core resolve o ELF sozinho (como o debug.start); por isso o programa
+    // vai vazio. Sobrescrever nao e' desta fatia.
+    function measureSize() {
+        sizeBusy = true;
+        errorText = "";
+        sizeRequested("");
+    }
+
+    function handleBuildSize(sections, regions, toolAvailable, tool, rawOutput) {
+        sizeSections = sections === undefined ? [] : sections;
+        sizeRegions = regions === undefined ? [] : regions;
+        sizeToolAvailable = toolAvailable === undefined ? true : toolAvailable;
+        sizeTool = tool === undefined ? "" : tool;
+        sizeMeasured = true;
+        sizeBusy = false;
+    }
+
+    // Fracao usada de uma regiao, 0..1. Regiao sem capacidade (nao deveria
+    // ocorrer) nao divide por zero.
+    function fracaoUsada(region) {
+        return region.size > 0 ? region.used / region.size : 0;
     }
 
     // Uma linha por sonda: nome, familia, VID:PID e serial — o que o probe-rs

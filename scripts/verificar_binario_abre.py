@@ -73,26 +73,38 @@ def objetos_obsoletos(build_dir: Path) -> list[tuple[Path, Path, int, int]]:
         text=True,
         check=True,
     ).stdout
-    ctime: dict[str, int | None] = {}
+    # Para cada dependencia: o instante em que ela CHEGOU ao disco (ctime), mas
+    # SO' quando esse instante e' invisivel ao ninja — ver `armadilha_de`.
+    armadilha: dict[str, int | None] = {}
 
-    def ctime_de(caminho: str) -> int | None:
-        if caminho not in ctime:
-            completo = build_dir / caminho
-            # Dependencia DENTRO da arvore de build e' do ninja: ele a gera, a
-            # reescreve e sabe quando ela mudou de verdade (restat). A armadilha
-            # deste gate e' o que o ninja NAO gerencia — o header que o pacote
-            # instalou com mtime antigo. Medido em 2026-09-11: sem este filtro o
-            # `mocs_compilation.cpp` reprovava por causa de um `_conf.cmake` que
-            # cada build reescreve com o mesmo conteudo.
-            if completo.resolve().is_relative_to(build_dir.resolve()):
-                ctime[caminho] = None
-            else:
-                try:
-                    ctime[caminho] = os.stat(completo).st_ctime_ns
-                except FileNotFoundError:
-                    # Dependencia que sumiu: o ninja ja' recompila por conta propria.
-                    ctime[caminho] = None
-        return ctime[caminho]
+    def armadilha_de(caminho: str, obj_mtime: int) -> int | None:
+        completo = build_dir / caminho
+        # Dependencia DENTRO da arvore de build e' do ninja: ele a gera, a
+        # reescreve e sabe quando ela mudou (restat). A armadilha deste gate e'
+        # o que o ninja NAO gerencia — o header que o PACOTE instalou.
+        if completo.resolve().is_relative_to(build_dir.resolve()):
+            return None
+        if caminho not in armadilha:
+            try:
+                st = os.stat(completo)
+                armadilha[caminho] = (st.st_mtime_ns, st.st_ctime_ns)
+            except FileNotFoundError:
+                # Dependencia que sumiu: o ninja ja' recompila por conta propria.
+                armadilha[caminho] = None
+        par = armadilha[caminho]
+        if par is None:
+            return None
+        dep_mtime, dep_ctime = par
+        # O TRAP, e SO' ele: a dependencia parece velha para o ninja
+        # (mtime <= objeto, entao ele nao recompila) mas CHEGOU depois de o
+        # objeto ser compilado (ctime > objeto). E' a assinatura do pacote que
+        # instala header com mtime de quando foi construido. Um arquivo do REPO
+        # que o autor acabou de editar tem mtime > objeto — o ninja o recompila,
+        # e nao e' este gate que cuida disso (medido em 2026-09-11: editar o
+        # CMakeLists reprovava um mocs_compilation que o proximo build conserta).
+        if dep_mtime <= obj_mtime < dep_ctime:
+            return dep_ctime
+        return None
 
     achados: list[tuple[Path, Path, int, int]] = []
     vistos: set[Path] = set()
@@ -122,7 +134,7 @@ def objetos_obsoletos(build_dir: Path) -> list[tuple[Path, Path, int, int]]:
         if objeto is None:
             continue
         dep = linha.strip()
-        c = ctime_de(dep)
+        c = armadilha_de(dep, mtime)
         if c is not None and (pior is None or c > pior[0]):
             pior = (c, dep)
     fecha()

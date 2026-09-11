@@ -15,10 +15,21 @@ void CoreClient::probeList()
     sendRequest(QStringLiteral("probe.list"), QJsonObject{});
 }
 
+void CoreClient::buildSize(const QString& program)
+{
+    QJsonObject params{};
+    // Campo ausente: o core resolve o ELF como o debug.start. Vazio seria
+    // pedir para medir um caminho em branco.
+    if (!program.isEmpty()) {
+        params.insert(QStringLiteral("program"), program);
+    }
+    sendRequest(QStringLiteral("build.size"), params);
+}
+
 bool CoreClient::dispatchProbeResult(const QString& method, const QJsonObject& result)
 {
     if (method != QStringLiteral("probe.list")) {
-        return false;
+        return dispatchBuildSizeResult(method, result);
     }
     // A saida CRUA viaja sempre, nao so' no erro: quando o parser nao
     // reconheceu nada, ela e' o que deixa o usuario ver se ha' uma sonda ali e
@@ -28,6 +39,19 @@ bool CoreClient::dispatchProbeResult(const QString& method, const QJsonObject& r
                         result.value(QStringLiteral("toolAvailable")).toBool(),
                         result.value(QStringLiteral("rawOutput")).toString(),
                         result.value(QStringLiteral("hint")).toString());
+    return true;
+}
+
+bool CoreClient::dispatchBuildSizeResult(const QString& method, const QJsonObject& result)
+{
+    if (method != QStringLiteral("build.size")) {
+        return false;
+    }
+    emit buildSizeResolved(result.value(QStringLiteral("sections")).toArray().toVariantList(),
+                           result.value(QStringLiteral("regions")).toArray().toVariantList(),
+                           result.value(QStringLiteral("toolAvailable")).toBool(),
+                           result.value(QStringLiteral("tool")).toString(),
+                           result.value(QStringLiteral("rawOutput")).toString());
     return true;
 }
 

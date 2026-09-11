@@ -15,5 +15,9 @@ Item {
         function onListRequested() {
             root.coreClient.probeList();
         }
+
+        function onSizeRequested(program) {
+            root.coreClient.buildSize(program);
+        }
     }
 }
