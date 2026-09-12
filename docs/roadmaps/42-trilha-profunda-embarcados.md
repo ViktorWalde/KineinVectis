@@ -512,9 +512,19 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
                 ja' sobe com --query-driver do compilador do kit; project.model
                 e o indice nascem no proprio open; setup.list diz o que falta
                 COM o comando da distro
-   falta        (a) CMake sem CDB: configurar SOZINHA, em .kinein/build, com o
-                kit efetivo e o preset padrao — como job visivel e cancelavel,
-                sem editar JSON nenhum. Hoje o configure e' explicito
+   CORRIGIDO    a primeira versao desta linha dizia "hoje o configure e'
+   2026-09-12   explicito" — MEDIDO depois, e' FALSO: o ProjectHealthController
+                ja' pede cmake.configure sozinho quando o cmake.status diz
+                "nao configurado" (uma vez por workspace; falha vira o aviso
+                "CMake sem configure — Configurar"), e salvar CMakeLists.txt/
+                CMakePresets.json pela IDE reconfigura (WorkspaceEventRouter).
+                Sempre em .kinein/build, sempre sem preset, sempre com a CDB
+                exportada. Medido neste repositorio: o configure sem preset
+                funciona (47 s, Qt). A regra zero valeu para quem escreveu
+   falta        (a) o PRESET: cmake.presets.list e' roteado e nenhuma tela o
+                consome; o configure automatico ignora os presets do projeto
+                (com um so' nao-oculto, usa-lo nao e' adivinhar); e o core
+                nao prova o automatico na exercitacao (e' a UI que pede)
                 (b) requirements.txt/pyproject.toml sem ambiente: "criar .venv
                 com uv" de UM clique, com o comando mostrado (uv: MIT OR
                 Apache-2.0, LICENSE-MIT lido em 2026-09-12; ausente aqui)

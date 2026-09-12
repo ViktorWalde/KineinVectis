@@ -562,8 +562,11 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
     escrita, sondas visuais              indice -> LSP ja' e' a certa; kit com
                                          sysroot/remoteTarget/debugServer;
                                          attach por `target remote`; probe.list.
-                                         O que FALTA, por pilar: configure
-                                         automatico sem JSON + CDB do file-api
+                                         O que FALTA, por pilar: o PRESET no
+                                         configure automatico (que JA' EXISTE na
+                                         UI — medido em 2026-09-12 depois de
+                                         escrito o contrario; 42 §8 item 1
+                                         corrigido) + CDB do file-api
                                          compileGroups + Bear para Makefile (P0);
                                          ".venv com uv" e "instalar" de um
                                          clique com o comando visivel (P1);
