@@ -33,13 +33,48 @@ pub struct CmakePresetsResult {
 }
 
 /// One build target reported by the `CMake` file API.
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+///
+/// Since 0.96.0 (2026-09-12) the target carries its MODEL: what it compiles,
+/// with which flags, and what it produces — read from the `codemodel-v2`
+/// reply, never from `CMakeLists.txt`. The fields after `kind` are empty when
+/// the origin is `"source"` (the project was not configured yet).
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CmakeTargetInfo {
     /// Target name (`add_executable`/`add_library` name).
     pub name: String,
     /// Target kind (`executable`, `staticLibrary`, `sharedLibrary`, ...).
     pub kind: String,
+    /// Artifacts the build produces (ELF, library), absolute.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub artifacts: Vec<String>,
+    /// Source files written by the author (generated ones excluded).
+    #[serde(default)]
+    pub sources: u64,
+    /// Generated sources (moc, rcc, ...).
+    #[serde(default)]
+    pub generated_sources: u64,
+    /// Languages compiled (`C`, `CXX`, `ASM`), in file-api spelling.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub languages: Vec<String>,
+    /// Language standard of the first compile group (`23`, `17`), when known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub standard: Option<String>,
+    /// Distinct include directories across compile groups.
+    #[serde(default)]
+    pub includes: u64,
+    /// Distinct defines across compile groups.
+    #[serde(default)]
+    pub defines: u64,
+    /// `CMAKE_SYSROOT` in effect, when any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sysroot: Option<String>,
+    /// Names of the targets this one depends on.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dependencies: Vec<String>,
+    /// Source directory of the target, absolute.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_dir: Option<String>,
 }
 
 /// Result payload for `cmake.targets.list`.

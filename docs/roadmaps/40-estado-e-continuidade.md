@@ -57,8 +57,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.95.0
-testes      719 Rust + 34 harnesses QML
+protocolo   0.96.0
+testes      726 Rust + 34 harnesses QML
 metodos     143 IPC roteados, 45 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -544,11 +544,14 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          e a CDB envelhecida por SUBPASTA
                                          detectada; e a sexta (§7.19): a
                                          GRAMATICA PYTHON na fundacao (realce,
-                                         outline, indice); e a setima (§7.20):
+                                         outline, indice); a setima (§7.20):
                                          o indice SEGUE O DISCO INTEIRO (as
-                                         pastas caminhadas entram no watcher).
-                                         O PROXIMO do P0 (42 §3): o modelo por
-                                         alvo/preset, o map file. Depois, o P1
+                                         pastas caminhadas entram no watcher);
+                                         a oitava (§7.21): o MODELO POR ALVO do
+                                         CMake pelo file-api (0.96.0) — a "CDB
+                                         em memoria" do 42 §8. O PROXIMO do P0
+                                         (42 §3): o map file; o modelo por
+                                         PRESET (kits x presets). Depois, o P1
                                          (setup). As tres decisoes do 42
                                          §7 foram
                                          TOMADAS em 2026-09-12: so' o ESP32
@@ -2047,6 +2050,73 @@ registro no `event.index.finished` — saiu, e ficou um caminho só.
 protocolo 0.95.0 (sem mudanca de fio)
 testes  722 Rust (+2), 34 harnesses
 gate    exercitacao: arquivo nascido em pasta nova depois do indice pronto
+```
+
+### 7.21 O MODELO POR ALVO do CMake — a "CDB em memória" do file-api, 2026-09-12
+
+O item "modelo por alvo" do P0 e o item 4 do "efeito JetBrains"
+([`42`](42-trilha-profunda-embarcados.md) §8): o backend extrai flags,
+includes e targets do sistema de build e alimenta o LSP e a tela — na forma
+que o `CMake` oferece de verdade, o **file-api**, nunca parseando
+`CMakeLists.txt`. Protocolo 0.96.0; `cmake.rs` virou `cmake/mod.rs` +
+`cmake/model.rs`.
+
+```text
+cmake/model.rs    CmakeModel::load(build_dir): o codemodel-v2 -> por target:
+                  id, nome, tipo cru, artefatos ABSOLUTOS ao build dir, pasta
+                  de fonte, fontes (geradas marcadas; indice do grupo),
+                  grupos de compilacao (linguagem, languageStandard, includes,
+                  defines, compileCommandFragments, sysroot), dependencias
+                  com os ids RESOLVIDOS para nome (alvo importado, fora do
+                  codemodel, nao entra), linguagem do link; a toolchains-v1
+                  (CMake >= 3.20; a query passou a pedi-la) -> compilador por
+                  linguagem com id, versao e includes implicitos.
+                  targets_for(arquivo) e compile_group_for(arquivo): o INVERSO
+cmake.targets.list cada target com artifacts, sources/generatedSources,
+                  languages, standard, includes/defines distintos, sysroot,
+                  dependencies, sourceDir — utilitarios continuam fora
+index.context     `targets` em todo arquivo C/C++ (cabecalho incluso: o target
+                  o LISTA); sem compile_commands.json, a unidade vem do grupo
+                  de compilacao + compilador da toolchains-v1 ("(CXX do kit)"
+                  quando ela nao existe — dito, nao inventado); com a CDB, a
+                  CDB vence e os targets ficam. O cabecalho ganhou a dica
+                  certa em qualquer caso (antes, sem CDB, dizia "configure")
+UI                o target dono do arquivo no detalhe do chip de contexto
+```
+
+**Medido neste repositório pelo core real:** 19 targets no modelo (1
+linkável: `kinein-vectis`, 301 fontes + 521 geradas, `CXX` 23, 12 includes,
+8 defines, artefato `.kinein/build/ui/kinein-vectis`); `core_client.h` →
+`targets: ["kinein-vectis"]` sem unidade; reconfigure com cache em 1,3 s (o
+configure do zero levou 47 s). **E uma armadilha do gate:** com
+`CMAKE_CXX_STANDARD 20` o GCC 16.2 desta máquina já é C++20 por padrão e o
+CMake **não escreve flag nenhuma** — a CDB sai sem `-std=`; o projeto de
+exercitação passou a pedir 23 para a flag existir e o gate não mentir.
+
+**Provado:** fixture fiel à forma do cmake-file-api(7) (dois targets reais,
+um utilitário, dependência importada, dois grupos com defines repetidos,
+`toolchains-v1` opcional); quatro testes (o modelo; `cmake.targets.list` com
+todos os campos e o utilitário fora; `index.context` sem CDB → unidade do
+file-api com `-std=` do fragmento e o compilador da linguagem certa, cabeçalho
+com targets e sem unidade, arquivo solto com a dica de configurar, e a CDB
+vencendo depois do `event.cmake.finished`; sem `toolchains-v1` o compilador é
+dito como do kit). Exercitação com o **cmake real**: configure em
+`.kinein/build` com a query, `index.context` com a unidade da CDB real e o
+target, `cmake.targets.list` com fontes, padrão e artefato. Onze mutações
+mortas com o compilador calado (dependência não resolvida ficando como id;
+gerada invertida; cabeçalho ganhando grupo; `.` não normalizado; artefato
+relativo à fonte; `languageStandard` vencendo o fragmento; sempre o
+compilador de C++; unidade do file-api nunca; utilitário listado; gerada
+contada como fonte; includes/defines sem dedup; linguagem repetida). Duas
+equivalentes ficaram ditas: include relativo ao build (o file-api escreve
+includes absolutos) e targets pela chave não canônica (raiz canônica nos
+testes).
+
+```text
+protocolo 0.96.0 — CmakeTargetInfo com o modelo; FileContext.targets;
+        ContextSummary.cmakeTargets; a query pede toolchains-v1
+testes  726 Rust (+4), 34 harnesses (tst_index +2 assercoes)
+gate    exercitacao configura com o cmake real e le o modelo por alvo
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

@@ -107,9 +107,9 @@ C/C++/Rust/Python, com as gramáticas do editor, em job, com incremento pelo
 watcher e `#nome` sem LSP). Continuam DELEGADOS ao LSP: tipos, referências,
 rename. O contexto de compilador por arquivo entrou à tarde (`40` §7.18:
 `index.context`, a CDB envelhecida por subpasta detectada) e a gramática
-Python também (`40` §7.19) e o índice passou a seguir o disco inteiro (`40`
-§7.20). Continua **por fazer** no P0: o modelo por alvo/preset, o map file
-(§3, P0) — e o que a §8 acrescenta (o
+Python também (`40` §7.19), o índice passou a seguir o disco inteiro (`40`
+§7.20) e o modelo por alvo do CMake entrou pelo file-api (`40` §7.21).
+Continua **por fazer** no P0: o modelo por preset, o map file (§3, P0) — e o que a §8 acrescenta (o
 preset no configure automático, file-api `compileGroups`, Bear para
 Makefile).
 
@@ -202,9 +202,10 @@ inteira (scheduler, brokers, RAM budget) até que a dor a peça.
                                           com origem e aviso; a CDB envelhecida
                                           por CMakeLists.txt de SUBPASTA; recarga
                                           no configure e no Cargo.toml.
-                                          FALTA: o inverso (que arquivos um alvo
-                                          compila), sys.path do Python, e a CDB
-                                          quando nao ha' (§8 item 4)
+                                          O inverso (arquivo -> targets) e a
+                                          unidade sem CDB vieram pelo file-api
+                                          (40 §7.21, 0.96.0). FALTA: sys.path do
+                                          Python; modelo por PRESET
     referencias/tipos/rename              DELEGADO ao clangd/rust-analyzer/
                                           basedpyright, por decisao — o indice
                                           nao os reimplementa
@@ -579,15 +580,16 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
                 activate_workspace: project.model -> indice (job) -> args do
                 clangd (query-driver do kit); o clangd so' sobe no primeiro
                 .c/.cpp aberto, ja' com tudo isso
-   falta        a "CDB em memoria" do pedido, na forma que o CMake oferece de
-                verdade: a resposta codemodel-v2 do file-api (que a IDE JA'
-                pede para os targets) traz, por compileGroup, includes,
-                defines, compileCommandFragments e sysroot (quando ha'
-                CMAKE_SYSROOT) — a IDE pode ESCREVER a compile_commands.json a
-                partir dela para gerador/framework que nao exporta, e sabe
-                includes/defines por alvo SEM a CDB. toolchains-v1 (CMake >=
-                3.20) da' compilador, versao e includes implicitos por
-                linguagem. Makefile puro: Bear como PROCESSO (`bear -- make`;
+   FEITO        a "CDB em memoria" na forma que o CMake oferece de verdade
+   2026-09-12   (40 §7.21): o codemodel-v2 lido por target (fontes, grupos
+                de compilacao com includes/defines/fragments/sysroot,
+                artefatos, dependencias) + a toolchains-v1 (CMake >= 3.20)
+                com o compilador por linguagem; cmake.targets.list carrega o
+                modelo; index.context da' os targets do arquivo e, sem CDB, a
+                unidade do file-api. Escrever a compile_commands.json a
+                partir dele para gerador que nao exporta nao foi preciso no
+                Linux (a IDE ja' configura com CMAKE_EXPORT_COMPILE_COMMANDS)
+   falta        Makefile puro: Bear como PROCESSO (`bear -- make`;
                 GPL-3.0, COPYING; 3.1.6 instalado aqui) ou compiledb
                 (GPL-3.0). Cargo: o rust-analyzer monta o proprio modelo — o
                 que falta e' a IDE passar o alvo do kit

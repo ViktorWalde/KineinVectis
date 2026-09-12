@@ -105,6 +105,12 @@ Item {
                                source: "compile_commands.json em build" });
         if (indice.contextSummary() !== "c++ · gnu++23 · 3 -I · 2 -D") failures += 8388608;
         if (indice.contextDetail().indexOf("/tmp/proj/build/ui") < 0 || indice.contextDetail().indexOf("compile_commands.json em build") < 0) failures += 16777216;
+        // O target dono do arquivo (file-api) entra no detalhe; sem targets, nada e' inventado.
+        if (indice.contextDetail().indexOf("target") >= 0) failures += 68719476736;
+        indice.handleContext({ path: "/tmp/proj/ui/src/a.cpp", language: "cpp",
+                               unit: { compiler: "cc", directory: "/tmp/proj/build", includes: [], defines: [], arguments: [] },
+                               targets: ["kinein-vectis", "kinein-tests"] });
+        if (indice.contextDetail().indexOf("targets kinein-vectis, kinein-tests") < 0) failures += 137438953472;
         // Unidade velha (CDB envelhecida) leva o aviso no resumo.
         indice.handleContext({ path: "/tmp/proj/ui/src/a.cpp", language: "cpp",
                                unit: { compiler: "cc", directory: "/tmp/proj/build", includes: [], defines: [], arguments: [] },

@@ -114,6 +114,10 @@ pub struct ContextSummary {
     pub cargo_packages: u64,
     /// Cargo targets across them.
     pub cargo_targets: u64,
+    /// `CMake` targets in the file-api model of the IDE's build dir (0 before
+    /// the first configure with the query).
+    #[serde(default)]
+    pub cmake_targets: u64,
     /// Python interpreter resolved for the project, when any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub python_interpreter: Option<String>,
@@ -197,7 +201,12 @@ pub struct FileContext {
     /// Python: the interpreter the project resolves to.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub python: Option<PythonEnv>,
-    /// Where the answer came from (`compile_commands.json em build/dev-local`).
+    /// `CMake` targets that compile (or list) this file, from the file-api
+    /// model — the inverse map: which target owns the file.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub targets: Vec<String>,
+    /// Where the answer came from (`compile_commands.json em build/dev-local`,
+    /// `file-api codemodel-v2 em .kinein/build`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
     /// What could not be decided, in words (header without a unit; file

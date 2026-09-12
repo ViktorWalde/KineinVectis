@@ -112,6 +112,10 @@ Item {
         const c = fileContext;
         if (c.path === undefined) return "";
         const partes = [];
+        if (c.targets !== undefined && c.targets.length > 0) {
+            partes.push(c.targets.length === 1 ? qsTr("target %1").arg(c.targets[0])
+                                               : qsTr("targets %1").arg(c.targets.join(", ")));
+        }
         if (c.unit !== undefined) partes.push(qsTr("diretório %1").arg(c.unit.directory));
         if (c.crate !== undefined) partes.push(qsTr("alvo %1 · %2").arg(c.crate.target).arg(c.crate.manifest));
         if (c.python !== undefined) partes.push(c.python.interpreter);

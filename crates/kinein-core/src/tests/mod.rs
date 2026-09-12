@@ -6,6 +6,7 @@
 mod build;
 mod cargo;
 mod cmake;
+mod cmake_model;
 mod configaction;
 mod container;
 mod datasource;

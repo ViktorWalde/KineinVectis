@@ -43,6 +43,7 @@ mkdir -p "$raiz/src"
 cat > "$raiz/CMakeLists.txt" <<'CMAKE'
 cmake_minimum_required(VERSION 3.24)
 project(exercitacao CXX)
+set(CMAKE_CXX_STANDARD 23)
 add_executable(alvo_da_exercitacao src/main.cpp)
 CMAKE
 printf 'int main() { return 0; }  // AGULHA_DA_EXERCITACAO\n' > "$raiz/src/main.cpp"
@@ -57,6 +58,21 @@ mkdir -p "$raiz/build"
 cat > "$raiz/build/compile_commands.json" <<CDB
 [{"directory": "$raiz/build", "command": "/usr/bin/c++ -DEXERCITACAO=1 -I$raiz/src -std=c++20 -o main.o -c $raiz/src/main.cpp", "file": "$raiz/src/main.cpp"}]
 CDB
+# Com o cmake REAL: um configure no build dir da IDE (.kinein/build) com a
+# query do file-api (codemodel-v2 + toolchains-v1), como o job de configure
+# da IDE faz. Dai saem o MODELO POR ALVO (cmake.targets.list com fontes,
+# artefato, padrao) e o "arquivo -> target" do index.context; e a CDB deste
+# build dir passa a valer (ele tem precedencia sobre build/). Sem cmake, fica
+# a CDB a mao e os dois itens do modelo sao ditos como nao exercitados.
+configurado=0
+if command -v cmake >/dev/null 2>&1; then
+    mkdir -p "$raiz/.kinein/build/.cmake/api/v1/query"
+    : > "$raiz/.kinein/build/.cmake/api/v1/query/codemodel-v2"
+    : > "$raiz/.kinein/build/.cmake/api/v1/query/toolchains-v1"
+    if cmake -S "$raiz" -B "$raiz/.kinein/build" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON >/dev/null 2>&1; then
+        configurado=1
+    fi
+fi
 
 resposta="$(
     {
@@ -82,6 +98,7 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":13,"method":"index.context","params":{"path":"src/main.cpp"}}\n'
         printf '{"jsonrpc":"2.0","id":14,"method":"index.symbols","params":{"query":"gera_tabela"}}\n'
         printf '{"jsonrpc":"2.0","id":15,"method":"index.symbols","params":{"query":"chegou_tarde"}}\n'
+        printf '{"jsonrpc":"2.0","id":16,"method":"cmake.targets.list","params":{}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -149,7 +166,20 @@ verifica 12 "index.symbols (main sem LSP)" '"name":"main"'
 # (`cdbEntries` no status) e o src/main.cpp volta com a sua unidade — o -std=
 # separado do resto. Sem CDB a resposta traz `hint`, nao erro.
 verifica 11 "index.status (contexto carregado no job)" '"cdbEntries":1'
-verifica 13 "index.context (a unidade do src/main.cpp)" '"standard":"c++20"'
+if [ "$configurado" -eq 1 ]; then
+    # O configure real escreveu a CDB em .kinein/build: -std=gnu++23 vem do
+    # CMAKE_CXX_STANDARD 23 (extensoes GNU sao o padrao do CMake). Medido em
+    # 2026-09-12: com 20 o GCC 16.2 desta maquina ja' e' C++20 por padrao e o
+    # CMake NAO escreve flag nenhuma — a CDB sai sem -std= e o gate mentiria.
+    verifica 13 "index.context (a unidade do src/main.cpp, CDB do configure real)" '"standard":"gnu++23"'
+    verifica 13 "index.context (o target que compila o arquivo, pelo file-api)" '"targets":["alvo_da_exercitacao"]'
+    verifica 16 "cmake.targets.list (o modelo por alvo: fontes e artefato)" '"sources":1'
+    verifica 16 "cmake.targets.list (o padrao da linguagem pelo file-api)" '"standard":"23"'
+    verifica 16 "cmake.targets.list (artefato absoluto do file-api)" 'alvo_da_exercitacao"]'
+else
+    verifica 13 "index.context (a unidade do src/main.cpp, CDB a mao)" '"standard":"c++20"'
+    echo "  - cmake.targets.list / arquivo->target: cmake ausente nesta maquina (nao exercitado)"
+fi
 verifica 14 "index.symbols (Python pela gramatica)" '"language":"python"'
 verifica 15 "index.symbols (arquivo nascido depois, em pasta nova, pelo watcher)" '"name":"chegou_tarde"'
 

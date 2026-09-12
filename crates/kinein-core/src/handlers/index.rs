@@ -137,6 +137,7 @@ impl Core {
             unit: None,
             cargo: None,
             python: None,
+            targets: Vec::new(),
             source: None,
             hint: Some("o contexto do projeto ainda esta' sendo carregado".to_owned()),
         });

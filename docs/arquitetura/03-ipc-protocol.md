@@ -1,5 +1,15 @@
 # 03 — Protocolo IPC
 
+> **O `0.96.0` (2026-09-12, fim de tarde) acrescentou o MODELO POR ALVO do
+> `CMake`:** `cmake.targets.list` passa a trazer, por target, artefatos,
+> fontes (geradas à parte), linguagens, padrão, includes/defines, sysroot,
+> dependências e pasta de fonte — lidos do `codemodel-v2` do file-api, com a
+> `toolchains-v1` (CMake ≥ 3.20) pedida junto; e `index.context` ganha
+> `targets` (que targets compilam ou listam o arquivo — o inverso) e, quando
+> não há `compile_commands.json`, a **unidade vinda do file-api** (grupo de
+> compilação + compilador da `toolchains-v1`) — a "CDB em memória" do
+> `roadmaps/42` §8. Campos novos sobem o minor.
+>
 > **O `0.95.0` (2026-09-12) acrescentou o CONTEXTO DE COMPILADOR por arquivo
 > ao domínio `index`:** `index.context { path }` diz COM QUE cada arquivo é
 > compilado ou executado — a unidade da `compile_commands.json` (compilador,
@@ -1132,9 +1142,23 @@ explícito tem precedência).
   configure presets não ocultos de `CMakePresets.json` +
   `CMakeUserPresets.json`, na ordem dos arquivos; JSON inválido → erro
   humano.
-- `cmake.targets.list {}` → `{ targets: [{ name, kind }] }` — lidos da
-  resposta codemodel-v2 do file-api do último configure (`kind`:
-  `executable`, `staticLibrary`, ...); vazio antes do primeiro configure.
+- `cmake.targets.list {}` → `{ origin, targets: [{ name, kind, artifacts[],
+  sources, generatedSources, languages[], standard?, includes, defines,
+  sysroot?, dependencies[], sourceDir? }] }` — lidos da resposta codemodel-v2
+  do file-api do último configure (`kind`: `executable`, `staticLibrary`,
+  ...; utilitários ficam de fora); vazio antes do primeiro configure. **Desde
+  o `0.96.0` (2026-09-12) cada target carrega o seu MODELO** (`cmake/model.rs`):
+  `artifacts` absolutos ao build dir (o ELF que o P2 grava), `sources` do
+  autor e `generatedSources` (moc/rcc) separados, `languages` na grafia do
+  file-api (`C`, `CXX`), `standard` do `languageStandard` do primeiro grupo,
+  `includes`/`defines` distintos entre os grupos, `sysroot` quando há
+  `CMAKE_SYSROOT`, `dependencies` com os ids resolvidos para nome (um alvo
+  importado, fora do codemodel, não entra). Medido neste repositório:
+  `kinein-vectis` com 301 fontes + 521 geradas, `CXX` 23, 12 includes, 8
+  defines, artefato `.kinein/build/ui/kinein-vectis`. A query passou a pedir
+  também a `toolchains-v1` (CMake ≥ 3.20, cmake-file-api(7)): compilador,
+  id, versão e includes implícitos por linguagem — vale a partir do próximo
+  configure.
 - `cmake.status {}` → `{ configured, hasCompileCommands, buildDir,
   cdbDirectory?, cdbStale?, cdbStaleBecause? }` — stat de
   `CMakeCache.txt`/`compile_commands.json`, mais o **diagnóstico da compilation
@@ -2144,11 +2168,13 @@ IndexStats   state (idle|building|ready|failed), folders, files, sourceFiles,
              lines, bytes, symbols, functions, types, byLanguage[] { language,
              files, lines, symbols }, skipped[], elapsedMs, error?, context?
 ContextSummary cdbDirectory?, cdbEntries, cdbStale, cdbStaleBecause?,
-             cargoPackages, cargoTargets, pythonInterpreter?, pythonOrigin?
+             cargoPackages, cargoTargets, cmakeTargets (0.96.0),
+             pythonInterpreter?, pythonOrigin?
 IndexSymbol  name, kind, path (relativo a raiz), language, line, endLine,
              container?
 FileContext  path (absoluto), language (c|cpp|rust|python|other), unit?, crate?,
-             python?, source?, hint?
+             python?, targets[] (0.96.0: os targets do CMake que compilam ou
+             listam o arquivo), source?, hint?
 CompileUnit  compiler, directory, standard?, includes[] (absolutos), defines[],
              output?, arguments[]
 CargoUnit    package, target, kind (lib|bin|test|bench|example|custom-build…),
@@ -2193,6 +2219,16 @@ job, logo depois dos arquivos:
   env info -p`, e por último o `python3` do PATH **com aviso** (instalar
   pacote nele quebra a distro). `version` é o `--version` do interpretador
   achado.
+- **O modelo por alvo do `CMake` (0.96.0):** o `codemodel-v2` do build dir da
+  IDE (`.kinein/build`) entra no mesmo contexto. Todo arquivo C/C++ ganha
+  `targets` — cabeçalho incluso, porque o target o *lista* mesmo sem o
+  compilar. E quando **não há** `compile_commands.json`, a unidade vem do
+  grupo de compilação do target (includes, defines, `compileCommandFragments`
+  inteiros em `arguments`, `-std=` do fragmento antes do `languageStandard`)
+  com o compilador da `toolchains-v1` — ou `"(CXX do kit)"` quando ela não
+  foi respondida (CMake < 3.20 ou query antiga), dito em vez de inventado;
+  `source` diz `file-api codemodel-v2 (target X), sem compile_commands.json`.
+  Com a CDB presente, a CDB vence a unidade e os `targets` ficam.
 - **Quando recarrega:** `event.cmake.finished` (o configure reescreve a CDB) e
   um `Cargo.toml` em `event.fs.changed` (um alvo novo muda a que pacote cada
   arquivo pertence) recarregam **só o contexto**, num job curto; os arquivos

@@ -5,6 +5,8 @@
 //! explicito tem precedencia). Targets vem da resposta `codemodel-v2` do
 //! file-api oficial do `CMake`, nunca de parser proprio de `CMakeLists.txt`.
 
+pub mod model;
+
 use std::{
     fs, io,
     path::{Path, PathBuf},
@@ -54,6 +56,10 @@ pub fn write_file_api_query(root: &Path) -> io::Result<()> {
         .join("v1")
         .join("query");
     fs::create_dir_all(&query)?;
+    // A toolchains-v1 (CMake >= 3.20) da' o compilador de cada linguagem com
+    // versao e includes implicitos: e' o que preenche a unidade de compilacao
+    // de um arquivo quando nao ha' compile_commands.json (cmake/model.rs).
+    fs::write(query.join("toolchains-v1"), "")?;
     fs::write(query.join("codemodel-v2"), "")
 }
 
@@ -223,6 +229,7 @@ pub fn targets_from_source(root: &Path) -> Vec<CmakeTargetInfo> {
                     encontrados.push(CmakeTargetInfo {
                         name: nome.to_owned(),
                         kind: tipo.to_owned(),
+                        ..CmakeTargetInfo::default()
                     });
                 }
             }
@@ -271,80 +278,66 @@ pub(crate) fn cmake_lists_files(root: &Path) -> Vec<PathBuf> {
     arquivos
 }
 
-/// Le os targets do reply `codemodel-v2` do ultimo configure.
+/// Le os targets do reply `codemodel-v2` do ultimo configure, com o MODELO
+/// de cada um (`cmake/model.rs`): fontes, artefatos, linguagens, flags,
+/// sysroot, dependencias.
 ///
 /// Sem reply (nunca configurado com a query) retorna vazio; a UI explica.
 #[must_use]
 pub fn list_targets(root: &Path) -> Vec<CmakeTargetInfo> {
-    let reply_dir = build_dir(root)
-        .join(".cmake")
-        .join("api")
-        .join("v1")
-        .join("reply");
-    let Ok(entries) = fs::read_dir(&reply_dir) else {
+    let Some(modelo) = model::CmakeModel::load(&build_dir(root)) else {
         return Vec::new();
     };
-
-    let mut codemodel: Option<PathBuf> = None;
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().into_owned();
-        if name.starts_with("codemodel-v2")
-            && std::path::Path::new(&name)
-                .extension()
-                .is_some_and(|ext| ext.eq_ignore_ascii_case("json"))
-        {
-            codemodel = Some(entry.path());
-            break;
-        }
-    }
-    let Some(codemodel) = codemodel else {
-        return Vec::new();
-    };
-    let Some(model) = read_json(&codemodel) else {
-        return Vec::new();
-    };
-
-    let mut targets = Vec::new();
-    let configurations = model
-        .pointer("/configurations/0/targets")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
-    for target in configurations {
-        if targets.len() >= MAX_TARGETS {
-            break;
-        }
-        let Some(name) = target.get("name").and_then(Value::as_str) else {
-            continue;
-        };
-        let kind = target
-            .get("jsonFile")
-            .and_then(Value::as_str)
-            .and_then(|file| read_json(&reply_dir.join(file)))
-            .and_then(|detail| {
-                detail
-                    .get("type")
-                    .and_then(Value::as_str)
-                    .map(target_kind_name)
-            })
-            .unwrap_or_else(|| "unknown".to_owned());
+    modelo
+        .targets
+        .iter()
+        .map(|t| (target_kind_name(&t.kind), t))
         // Utilitario gerado pelo Qt/CMake nao aceita `target_link_libraries`;
         // ver `LINKABLE_KINDS`. Devolve-lo seria oferecer um caminho que
         // termina em erro.
-        if !is_linkable_kind(&kind) {
-            continue;
-        }
-        targets.push(CmakeTargetInfo {
-            name: name.to_owned(),
-            kind,
-        });
-    }
-    targets
-}
-
-fn read_json(path: &Path) -> Option<Value> {
-    let body = fs::read_to_string(path).ok()?;
-    serde_json::from_str(&body).ok()
+        .filter(|(kind, _)| is_linkable_kind(kind))
+        .take(MAX_TARGETS)
+        .map(|(kind, t)| {
+            let mut includes: Vec<&str> = Vec::new();
+            let mut defines: Vec<&str> = Vec::new();
+            let mut languages: Vec<String> = Vec::new();
+            for g in &t.compile_groups {
+                includes.extend(g.includes.iter().map(String::as_str));
+                defines.extend(g.defines.iter().map(String::as_str));
+                if !languages.contains(&g.language) {
+                    languages.push(g.language.clone());
+                }
+            }
+            includes.sort_unstable();
+            includes.dedup();
+            defines.sort_unstable();
+            defines.dedup();
+            CmakeTargetInfo {
+                name: t.name.clone(),
+                kind,
+                artifacts: t
+                    .artifacts
+                    .iter()
+                    .map(|p| p.display().to_string())
+                    .collect(),
+                sources: t.sources.iter().filter(|s| !s.generated).count() as u64,
+                generated_sources: t.sources.iter().filter(|s| s.generated).count() as u64,
+                languages,
+                standard: t
+                    .compile_groups
+                    .first()
+                    .and_then(|g| g.standard.clone()),
+                includes: includes.len() as u64,
+                defines: defines.len() as u64,
+                sysroot: t
+                    .compile_groups
+                    .iter()
+                    .find_map(|g| g.sysroot.clone()),
+                dependencies: t.dependencies.clone(),
+                source_dir: Some(t.source_dir.display().to_string()),
+            }
+        })
+        .collect()
 }
 
 /// Converte o `type` do file-api (`EXECUTABLE`, `STATIC_LIBRARY`, ...) para

@@ -67,8 +67,8 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **143 métodos IPC** roteados e **45 eventos**, em **34 domínios de protocolo**;
-**719 testes** Rust verdes e **34 harnesses QML** (remedido em 2026-09-12 à
-tarde). Protocolo `0.95.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+**726 testes** Rust verdes e **34 harnesses QML** (remedido em 2026-09-12 no
+fim da tarde). Protocolo `0.96.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -216,7 +216,10 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       arquivo — index.context diz com que cada arquivo e'
                       compilado (unidade da CDB, alvo do cargo, interpretador
                       Python) e denuncia a CDB envelhecida por CMakeLists.txt
-                      de subpasta, que o cdb::status da raiz nao via
+                      de subpasta, que o cdb::status da raiz nao via. E o
+                      MODELO POR ALVO do CMake (0.96.0, 40 §7.21): o file-api
+                      lido por target — fontes, flags, artefatos — o arquivo
+                      -> seus targets, e a unidade sem CDB
 ```
 
 **O que mudou em 2026-08-29/30, e é o que destrava o resto:** o terminal deixou

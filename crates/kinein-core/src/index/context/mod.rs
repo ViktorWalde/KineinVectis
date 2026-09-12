@@ -19,8 +19,10 @@
 //! [`Ferramentas`]: o teste passa `None` e nada da maquina entra.
 //!
 //! Um leitor por responsabilidade: [`cdb`] (a `compile_commands.json`),
-//! [`cargo`] (o `cargo metadata`), [`python`] (o interpretador). Este arquivo
-//! e' o modelo e a consulta por arquivo.
+//! [`cargo`] (o `cargo metadata`), [`python`] (o interpretador), e o modelo
+//! por alvo do `CMake` (`crate::cmake::model`, o file-api do build dir da
+//! IDE: que targets compilam o arquivo, e a unidade quando nao ha' CDB). Este
+//! arquivo e' o modelo e a consulta por arquivo.
 
 mod cargo;
 mod cdb;
@@ -33,6 +35,7 @@ use kinein_protocol::{CargoUnit, CompileUnit, ContextSummary, FileContext, Pytho
 
 use self::cargo::AlvoCargo;
 use self::cdb::Unidade;
+use crate::cmake::model::CmakeModel;
 
 /// O que o contexto pode EXECUTAR, e so' se estiver aqui.
 #[derive(Debug, Clone, Default)]
@@ -59,6 +62,7 @@ pub struct CompileContext {
     pacotes: u64,
     alvos: Vec<AlvoCargo>,
     python: Option<PythonEnv>,
+    cmake: Option<CmakeModel>,
 }
 
 impl CompileContext {
@@ -86,6 +90,7 @@ impl CompileContext {
             }
         }
         ctx.python = python::python_env(root, ferramentas);
+        ctx.cmake = CmakeModel::load(&crate::cmake::build_dir(root));
         ctx
     }
 
@@ -99,6 +104,7 @@ impl CompileContext {
             cdb_stale_because: self.cdb_stale_because.clone(),
             cargo_packages: self.pacotes,
             cargo_targets: self.alvos.len() as u64,
+            cmake_targets: self.cmake.as_ref().map_or(0, |m| m.targets.len() as u64),
             python_interpreter: self.python.as_ref().map(|p| p.interpreter.clone()),
             python_origin: self.python.as_ref().map(|p| p.origin.clone()),
         }
@@ -118,6 +124,7 @@ impl CompileContext {
             unit: None,
             cargo: None,
             python: None,
+            targets: Vec::new(),
             source: None,
             hint: None,
         };
@@ -143,6 +150,14 @@ impl CompileContext {
 
     fn contexto_c(&self, absoluto: &Path, ctx: &mut FileContext) {
         let chave = std::fs::canonicalize(absoluto).unwrap_or_else(|_| absoluto.to_path_buf());
+        // O inverso: que targets do CMake compilam este arquivo (file-api).
+        if let Some(modelo) = &self.cmake {
+            ctx.targets = modelo
+                .targets_for(&chave)
+                .iter()
+                .map(|t| t.name.clone())
+                .collect();
+        }
         if let Some(u) = self
             .unidades
             .get(&chave)
@@ -169,22 +184,27 @@ impl CompileContext {
             }
             return;
         }
+        if self.unidade_do_file_api(&chave, ctx) {
+            return;
+        }
         let ext = absoluto
             .extension()
             .and_then(|e| e.to_str())
             .map(str::to_ascii_lowercase)
             .unwrap_or_default();
         let e_cabecalho = matches!(ext.as_str(), "h" | "hh" | "hpp" | "hxx" | "ipp");
+        // Cabecalho nunca tem unidade, com ou sem CDB: a dica de configurar
+        // seria falsa para ele.
         ctx.hint = Some(
             match (&self.cdb_directory, e_cabecalho, &self.cdb_stale_because) {
-                (None, _, _) => {
-                    "sem compile_commands.json: configure o projeto (cmake) para a IDE saber \
-                            como cada arquivo e' compilado"
-                        .to_owned()
-                }
-                (Some(_), true, _) => {
+                (_, true, _) => {
                     "cabecalho: nao tem unidade de compilacao propria; o clangd deduz as \
                                   flags pela unidade que o inclui"
+                        .to_owned()
+                }
+                (None, false, _) => {
+                    "sem compile_commands.json: configure o projeto (cmake) para a IDE saber \
+                            como cada arquivo e' compilado"
                         .to_owned()
                 }
                 (Some(dir), false, Some(porque)) => format!(
@@ -196,6 +216,42 @@ impl CompileContext {
                 }
             },
         );
+    }
+
+    /// Sem unidade na CDB, mas o file-api sabe como o arquivo e' compilado: a
+    /// "CDB em memoria" — o grupo de compilacao do target + o compilador da
+    /// `toolchains-v1`. So' vale para o que o codemodel COMPILA (cabecalho e'
+    /// listado, nao compilado). `true` quando preencheu.
+    fn unidade_do_file_api(&self, chave: &Path, ctx: &mut FileContext) -> bool {
+        let Some(modelo) = &self.cmake else {
+            return false;
+        };
+        let Some((target, grupo)) = modelo.compile_group_for(chave) else {
+            return false;
+        };
+        let compilador = modelo.compiler_for(&grupo.language);
+        let standard = grupo
+            .fragments
+            .iter()
+            .find_map(|f| f.strip_prefix("-std=").map(str::to_owned))
+            .or_else(|| grupo.standard.clone());
+        ctx.unit = Some(CompileUnit {
+            compiler: compilador.map_or_else(
+                || format!("({} do kit)", grupo.language),
+                |c| c.path.clone(),
+            ),
+            directory: modelo.build_dir.display().to_string(),
+            standard,
+            includes: grupo.includes.clone(),
+            defines: grupo.defines.clone(),
+            output: None,
+            arguments: grupo.fragments.clone(),
+        });
+        ctx.source = Some(format!(
+            "file-api codemodel-v2 (target {}), sem compile_commands.json",
+            target.name
+        ));
+        true
     }
 
     fn contexto_rust(&self, absoluto: &Path, ctx: &mut FileContext) {

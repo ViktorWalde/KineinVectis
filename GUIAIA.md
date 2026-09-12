@@ -831,6 +831,8 @@ crates/kinein-core/src/project/{mod,detect,sdk,artifacts,esp}.rs
                                              LIDOS), alvo com evidencia
 crates/kinein-core/src/index/mod.rs          o projeto INTEIRO: pastas, arquivos,
 crates/kinein-core/src/lang/extract.rs       declaracoes (Tree-sitter tags), busca
+crates/kinein-core/src/cmake/model.rs         o MODELO POR ALVO do CMake (file-api:
+                                             fontes, grupos, artefatos, toolchains)
 crates/kinein-core/src/index/context/{mod,cdb,cargo,python}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida
@@ -852,7 +854,7 @@ scripts/fixtures/projetos/<framework>/       fixtures reais minimas (9 framework
 scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
 ```
 
-- Testes: `tests/{serial,container,project,index,index_context}.rs`, `size.rs`;
+- Testes: `tests/{serial,container,project,index,index_context,cmake_model}.rs`, `size.rs`;
   harnesses `tst_{embedded,container,index}.qml`; a exercitação
   (`verificar-exercitacao.sh`) pede `serial.list/monitor`,
   `container.status/list`, `project.model`, `index.status/symbols/context` ao
@@ -860,7 +862,7 @@ scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
 - Documentos: `docs/integracoes/38` (conectividade medida com o ESP32),
   `docs/roadmaps/41` (o ecossistema aberto, o que NÃO entra) e `42` (a trilha
   profunda, oito pilares; §8 o "efeito JetBrains" como critério de pronto; §9 a
-  trilha Python completa); estado em `docs/roadmaps/40` §7.8–§7.18.
+  trilha Python completa); estado em `docs/roadmaps/40` §7.8–§7.21.
 
 ### 5.10 CLI, schemas, templates e tooling
 

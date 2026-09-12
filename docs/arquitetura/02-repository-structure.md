@@ -42,7 +42,10 @@ kinein-vectis/
 │   │   ├── runtime.rs           laco JSON-RPC sobre stdio
 │   │   ├── rpc.rs               erros JSON-RPC + parse de params
 │   │   ├── handlers.rs          o modulo que agrega os handlers por dominio
-│   │   ├── cargo.rs cmake.rs format.rs run.rs test.rs tools.rs process.rs
+│   │   ├── cargo.rs format.rs run.rs test.rs tools.rs process.rs
+│   │   ├── cmake/               mod model  (configure, presets, targets; model = o MODELO
+│   │   │                        POR ALVO lido do file-api: fontes, grupos de compilacao,
+│   │   │                        artefatos, dependencias, toolchains-v1)
 │   │   ├── cdb.rs               compilation database do C/C++: onde esta e se envelheceu
 │   │   ├── fswatch.rs           notify debounced + mudanca externa
 │   │   ├── probe.rs runconfig.rs settings.rs size.rs
