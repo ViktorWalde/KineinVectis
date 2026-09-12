@@ -44,6 +44,12 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit grafanaProbed(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.project.changed")) {
+        // O core recomputa o modelo ao abrir o workspace e ao fim de um
+        // configure/build; a tela SEGUE o modelo em vez de perguntar.
+        emit projectChanged(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.container.finished")) {
         // Mapa inteiro pelo mesmo motivo do grafana.probed: jobId, acao, alvo,
         // ok e a mensagem viajam juntos, e a UI decide o que mostrar.

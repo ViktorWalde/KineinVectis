@@ -18,6 +18,7 @@ mod grafana;
 mod jobs;
 mod lsp;
 mod lsp_server;
+mod project;
 mod run;
 mod runconfig;
 mod runners;

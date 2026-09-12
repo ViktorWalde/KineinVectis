@@ -98,6 +98,7 @@ set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RES
 set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
 set_source_files_properties(qml/embedded/EmbeddedSizeView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSizeView.qml)
 set_source_files_properties(qml/embedded/EmbeddedSerialView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSerialView.qml)
+set_source_files_properties(qml/embedded/EmbeddedProjectView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedProjectView.qml)
 set_source_files_properties(qml/container/ContainerController.qml PROPERTIES QT_RESOURCE_ALIAS ContainerController.qml)
 set_source_files_properties(qml/container/ContainerPanel.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanel.qml)
 set_source_files_properties(qml/container/ContainerListView.qml PROPERTIES QT_RESOURCE_ALIAS ContainerListView.qml)
@@ -352,6 +353,7 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedKitField.qml
         qml/embedded/EmbeddedSizeView.qml
         qml/embedded/EmbeddedSerialView.qml
+        qml/embedded/EmbeddedProjectView.qml
         qml/container/ContainerController.qml
         qml/container/ContainerPanel.qml
         qml/container/ContainerListView.qml

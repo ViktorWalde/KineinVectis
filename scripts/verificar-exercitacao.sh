@@ -58,6 +58,7 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":7,"method":"container.status","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":8,"method":"container.list","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":9,"method":"serial.monitor","params":{"device":"/dev/null"}}\n'
+        printf '{"jsonrpc":"2.0","id":10,"method":"project.model","params":{}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -113,6 +114,9 @@ verifica 8 "container.list (ps --format json)" '"containers"'
 # deles, a resposta traz `tool` — a ferramenta falhar DENTRO da aba (/dev/null
 # nao e' porta) e' assunto da aba, nao deste gate.
 verifica 9 "serial.monitor (tio|picocom|minicom|espflash)" '"tool"'
+# project.model le os marcadores do workspace (o de exercitacao e' CMake puro):
+# responde sempre, com `embedded` — false aqui, e nenhum alvo inventado.
+verifica 10 "project.model (o modelo do projeto)" '"embedded"'
 
 if [ "$falhou" -ne 0 ]; then
     echo

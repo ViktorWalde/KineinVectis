@@ -33,6 +33,11 @@ void CoreClient::serialMonitor(const QString& device, int baud)
     sendRequest(QStringLiteral("serial.monitor"), params);
 }
 
+void CoreClient::projectModel()
+{
+    sendRequest(QStringLiteral("project.model"), QJsonObject{});
+}
+
 void CoreClient::buildSize(const QString& program)
 {
     QJsonObject params{};
@@ -75,6 +80,13 @@ bool CoreClient::dispatchBuildSizeResult(const QString& method, const QJsonObjec
 
 bool CoreClient::dispatchSerialResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("project.model")) {
+        // O MODELO inteiro (pilar 0 do roadmaps/42): framework com evidencia,
+        // SDKs, artefatos, alvo deduzido. Mapa, porque e' composto e a UI so'
+        // mostra — desmontar aqui obrigaria a remontar la'.
+        emit projectModelResolved(result.toVariantMap());
+        return true;
+    }
     if (method == QStringLiteral("serial.monitor")) {
         // Sessao de terminal como outra qualquer: mesma contabilidade do
         // `terminal.open`, senao input/resize/close nao a reconhecem.

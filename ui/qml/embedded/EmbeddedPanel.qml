@@ -45,7 +45,7 @@ Item {
             wrapMode: Text.WordWrap
             // O QUE A TELA PROMETE E' O QUE ELA FAZ: detectar pelo probe-rs,
             // guardar o kit, subir o depurador escolhido. Nada roda como root.
-            text: qsTr("A sonda é lida pelo probe-rs e as portas seriais pelo sysfs, sem abrir nenhuma; o chip, o alvo e o depurador ficam no kit do projeto. Nada roda como root.")
+            text: qsTr("O projeto é lido pelos seus marcadores, a sonda pelo probe-rs e as portas pelo sysfs, sem abrir nenhuma; o chip, o alvo e o depurador ficam no kit. Nada roda como root.")
             color: Theme.textMuted
             font.pixelSize: 10
         }
@@ -57,6 +57,12 @@ Item {
             text: root.controller ? root.controller.errorText : ""
             color: Theme.errorSoft
             font.pixelSize: 10
+        }
+
+        // O MODELO do projeto: dono proprio (pilar 0 do roadmaps/42).
+        EmbeddedProjectView {
+            width: parent.width
+            controller: root.controller
         }
 
         // --- Sonda ---------------------------------------------------------

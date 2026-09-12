@@ -169,6 +169,9 @@ monitor/debug  porta serial provavel (serial.list + identidade), sonda (probe.li
 
 **O que já existe.** Detecção por marcador na raiz; kits; file-api do CMake;
 `build.size` lendo `.ld`; `serial.list`; `probe.list`; catálogo de toolchain.
+**E, desde 2026-09-12 (`40` §7.16), a primeira fatia deste pilar:** o domínio
+`project` com os 9 frameworks reconhecidos por evidência, SDKs, artefatos e
+alvo deduzido, o evento `event.project.changed` e a vista no painel.
 
 **O que falta para ser profundo.** O modelo em si (tipos no protocolo, um
 serviço que o computa e RE-computa quando o build muda), a detecção por

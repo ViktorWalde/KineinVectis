@@ -57,10 +57,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.92.0
-testes      695 Rust + 33 harnesses QML
-metodos     139 IPC roteados, 42 eventos
-dominios    32, e os 32 documentados no arquitetura/03
+protocolo   0.93.0
+testes      700 Rust + 33 harnesses QML
+metodos     140 IPC roteados, 43 eventos
+dominios    33, e os 33 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
 ```
@@ -526,10 +526,16 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          ORGANIZACAO antes de seguir: a trilha
                                          PROFUNDA de embarcados e' o roadmaps/42
                                          — oito pilares, pronto POR FAMILIA. O
-                                         PROXIMO e' o PILAR 0: o MODELO do
-                                         projeto embarcado (framework, SDK,
-                                         alvo, artefatos), sem botao novo antes
-                                         dele. As tres decisoes do 42 §7 foram
+                                         PILAR 0 (o MODELO do projeto) teve a
+                                         primeira fatia em 2026-09-12 (§7.16):
+                                         dominio `project`, 9 frameworks com
+                                         evidencia, SDKs, artefatos, alvo. O
+                                         PROXIMO e' o que falta do P0 (42 §3):
+                                         o modelo por ALVO/preset, o
+                                         flasher_args.json e a tabela de
+                                         particoes LIDOS, o map file, e o
+                                         P1 (setup com as ferramentas). As
+                                         tres decisoes do 42 §7 foram
                                          TOMADAS em 2026-09-12: so' o ESP32
                                          classico na mesa (o resto fecha no
                                          gate e fica dito como nao exercitado);
@@ -1641,6 +1647,61 @@ espflash para qualquer chip; ignorar a escolha fixada — as três reprovam.
 
 ```text
 testes  695 Rust (+2), tst_embedded (+2 assercoes); exercitacao pede serial.monitor
+```
+
+### 7.16 Pilar 0, primeira fatia — o MODELO do projeto embarcado, 2026-09-12
+
+**A resposta em código à pergunta do autor** ("a IDE já lê todo o projeto?",
+[`42`](42-trilha-profunda-embarcados.md) §1): até hoje o `workspace` olhava
+marcadores só na raiz e não conhecia framework de embarcado nenhum. Nasceu o
+domínio `project` (protocolo 0.93.0).
+
+```text
+project.model / event.project.changed   o que o projeto E', com evidencia
+detect.rs     9 frameworks — ESP-IDF, Zephyr, pico-sdk, PlatformIO, STM32Cube,
+              Rust embarcado, MicroPython, Yocto, Buildroot — reconhecidos ate'
+              3 niveis abaixo, LENDO o marcador (project.cmake, find_package
+              (Zephyr), pico_sdk_init, `import machine`...), ignorando pastas
+              de saida, com o detalhe que o arquivo diz (IDF_TARGET, PICO_BOARD,
+              DeviceId, triple, MACHINE, ambientes do PlatformIO)
+sdk.rs        o que cada framework exige e se esta' aqui — variavel, pasta
+              padrao ou binario; ~/.espressif/tools e' vasculhado para a
+              toolchain que so' o export.sh poe no PATH; o passo oficial em
+              cada falta; nenhum processo roda
+artifacts.rs  ELF/bin/hex/uf2/map dos build dirs de cada framework, do mais
+              novo ao mais velho; flasher_args.json; tabela de particoes;
+              memory.x; linker scripts da fonte; o ELF sem extensao do cargo
+              pelo magico
+alvo          kit > framework; familia; motores por familia — e o ESP32
+              classico recebe "sem depurador: ESP-Prog" em vez de um probe-rs
+              que nao funcionaria
+evento        emitido em activate_workspace (open e createProject) e ao fim de
+              event.cmake.finished / event.build.finished: a tela SEGUE o modelo
+tela          EmbeddedProjectView no painel Embarcados: framework · evidencia ·
+              detalhe; alvo com as linhas de evidencia; ✓/✗ por SDK com o
+              passo; as dicas
+fixtures      scripts/fixtures/projetos/<framework>/ — reais e minimas, as
+              que os testes leem
+```
+
+**Exercitado contra o core real** com a fixture ESP-IDF como workspace: o
+evento chega na abertura com `espIdf · CMakeLists.txt · IDF_TARGET esp32c3`,
+o alvo `esp32c3/espressif` com `esptool/espflash/probe-rs`, `esptool` achado
+em `~/.local/bin`, ESP-IDF e a toolchain riscv **faltando** com o passo — que
+é exatamente o estado desta máquina. **Provado por mutação** (compilador
+calado): descer em `build/` (a cópia gerada venceria); o framework vencer o
+kit; pasta "achada" sem existir; e no QML: trocar workspace sem esquecer o
+modelo, `refresh` sem pedir, resumo do alvo sem o depurador.
+
+**O que falta do P0** ([`42`](42-trilha-profunda-embarcados.md) §3): o modelo
+por **alvo/preset** (hoje é um por workspace), `flasher_args.json` e a tabela
+de partições **lidos** (hoje só localizados), o map file interpretado, e a
+detecção de SDK que hoje o modelo declara "não medido" (alvo rustup).
+
+```text
+protocolo 0.93.0 — project.*, event.project.changed
+testes  700 Rust (+5, tests/project.rs), tst_embedded (+7 assercoes)
+gate    exercitacao pede project.model
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

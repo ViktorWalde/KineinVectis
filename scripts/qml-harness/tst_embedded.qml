@@ -16,6 +16,7 @@ Item {
     property int consultas: 0
     property int consultasSerial: 0
     property var monitores: []
+    property int projetos: 0
 
     EmbeddedController {
         id: controller
@@ -23,6 +24,7 @@ Item {
         onListRequested: root.consultas += 1
         onSerialListRequested: root.consultasSerial += 1
         onMonitorRequested: function(device, baud) { root.monitores.push(device + "@" + baud); }
+        onProjectRequested: root.projetos += 1
     }
 
     Component.onCompleted: {
@@ -112,6 +114,27 @@ Item {
         controller.handleFailed("serial.monitor", "nenhum monitor serial nesta maquina");
         if (controller.errorText !== "nenhum monitor serial nesta maquina") failures += 8589934592;
 
+        // --- O modelo do projeto (pilar 0 do roadmaps/42) --------------------
+        // Abrir pergunta o modelo junto com sonda e portas.
+        if (root.projetos !== root.consultas) failures += 17179869184;
+        controller.handleProject({ embedded: true,
+            frameworks: [{ framework: "espIdf", evidence: "CMakeLists.txt", detail: "IDF_TARGET esp32c3" }],
+            sdks: [{ id: "esp-idf", label: "ESP-IDF", found: false, hint: "install.sh" },
+                   { id: "esptool", label: "esptool", found: true, path: "/x/esptool" }],
+            target: { chip: "esp32c3", family: "espressif", flashEngine: "esptool", monitor: "espflash",
+                      debugAdapter: "probe-rs", evidence: ["chip: CMakeLists.txt (CONFIG_IDF_TARGET)"] },
+            hints: ["falta ESP-IDF: install.sh"] });
+        if (!controller.projectEmbedded || controller.projectBusy) failures += 34359738368;
+        if (controller.frameworkSummary(controller.projectFrameworks[0])
+                !== "ESP-IDF · CMakeLists.txt · IDF_TARGET esp32c3") failures += 68719476736;
+        if (controller.targetSummary(controller.projectTarget)
+                !== "esp32c3 · espressif · gravar: esptool, monitor: espflash, debug: probe-rs") failures += 137438953472;
+        // Campo ausente nao vira "undefined": um alvo vazio e' uma linha vazia.
+        if (controller.targetSummary({}) !== "") failures += 274877906944;
+        // O evento substitui o modelo inteiro (nao mescla).
+        controller.handleProject({ embedded: false, frameworks: [], sdks: [], target: {}, hints: [] });
+        if (controller.projectEmbedded || controller.projectFrameworks.length !== 0) failures += 549755813888;
+
         // Lista vazia guarda a dica do core; a falha do serial.list nao apaga a
         // sonda que ja' veio.
         controller.handleSerialPorts([], "nenhuma porta serial USB apareceu.");
@@ -125,9 +148,12 @@ Item {
         // Trocar de workspace FECHA e esquece: a lista da ultima vez e'
         // exatamente o que nao se pode mostrar — sonda E porta.
         controller.handleSerialPorts([cp2102], "");
+        controller.handleProject({ embedded: true, frameworks: [{ framework: "picoSdk", evidence: "CMakeLists.txt" }],
+                                   sdks: [], target: {}, hints: [] });
         controller.workspaceRoot = "/tmp/outro";
         if (controller.panelVisible) failures += 1073741824;
         if (controller.probes.length !== 0 || controller.ports.length !== 0) failures += 2147483648;
+        if (controller.projectEmbedded) failures += 1099511627776;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

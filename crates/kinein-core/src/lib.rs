@@ -28,6 +28,7 @@ pub mod library;
 pub mod lsp;
 pub mod probe;
 pub mod process;
+pub mod project;
 pub mod rpc;
 pub mod run;
 pub mod runconfig;
@@ -288,6 +289,7 @@ impl Core {
             .or_else(|| self.grafana_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
             .or_else(|| self.container_request_response(method, request_id.clone(), params))
+            .or_else(|| self.project_request_response(method, request_id.clone(), params))
             .or_else(|| self.serial_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))
@@ -350,6 +352,15 @@ impl Core {
     ///
     /// Silencioso de proposito: um evento sem reacao registrada nao e erro.
     pub fn observe_notification(&mut self, notification: &JsonRpcRequest) {
+        // O modelo do projeto (pilar 0 do roadmaps/42) muda quando o build
+        // muda: configure escreve a CDB e a file-api, build escreve os
+        // artefatos. Recomputar aqui e' o que faz a tela SEGUIR o modelo.
+        if matches!(
+            notification.method.as_str(),
+            "event.build.finished" | "event.cmake.finished"
+        ) {
+            self.emit_project_changed();
+        }
         if notification.method != "event.cmake.finished" {
             return;
         }

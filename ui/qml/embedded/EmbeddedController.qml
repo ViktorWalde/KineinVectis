@@ -44,11 +44,22 @@ Item {
     property string portsHint: ""
     property bool portsBusy: false
 
+    // O MODELO do projeto (project.model / event.project.changed): o que o
+    // projeto E'. A tela so' mostra; quem deduz e' o core, com evidencia.
+    property var project: ({})
+    property bool projectBusy: false
+    readonly property bool projectEmbedded: project.embedded === true
+    readonly property var projectFrameworks: project.frameworks !== undefined ? project.frameworks : []
+    readonly property var projectSdks: project.sdks !== undefined ? project.sdks : []
+    readonly property var projectHints: project.hints !== undefined ? project.hints : []
+    readonly property var projectTarget: project.target !== undefined ? project.target : ({})
+
     readonly property bool probeFound: probes.length > 0
     readonly property bool portFound: ports.length > 0
 
     signal listRequested()
     signal serialListRequested()
+    signal projectRequested()
     signal monitorRequested(string device, int baud)
     signal sizeRequested(string program)
 
@@ -70,6 +81,8 @@ Item {
         ports = [];
         portsHint = "";
         portsBusy = false;
+        project = ({});
+        projectBusy = false;
         panelVisible = false;
     }
 
@@ -87,9 +100,46 @@ Item {
     function refresh() {
         busy = true;
         portsBusy = true;
+        projectBusy = true;
         errorText = "";
         listRequested();
         serialListRequested();
+        projectRequested();
+    }
+
+    // O modelo chega por evento (abrir workspace, fim de configure/build) e
+    // por pedido: os dois caem aqui. Um modelo novo substitui o anterior.
+    function handleProject(model) {
+        project = model === undefined || model === null ? ({}) : model;
+        projectBusy = false;
+    }
+
+    // Uma linha por framework: nome, o arquivo que o provou e o detalhe.
+    function frameworkSummary(info) {
+        const nomes = { espIdf: "ESP-IDF", zephyr: "Zephyr", picoSdk: "pico-sdk", platformIo: "PlatformIO",
+                        stm32Cube: "STM32Cube", cargoEmbedded: "Rust embarcado", microPython: "MicroPython",
+                        yocto: "Yocto", buildroot: "Buildroot" };
+        const partes = [nomes[info.framework] !== undefined ? nomes[info.framework] : String(info.framework)];
+        partes.push(info.evidence);
+        if (info.detail !== undefined && info.detail !== "") {
+            partes.push(info.detail);
+        }
+        return partes.join(" · ");
+    }
+
+    // O alvo em uma linha: chip, familia e os motores sugeridos — cada um
+    // com a evidencia disponivel no tooltip do painel.
+    function targetSummary(target) {
+        const partes = [];
+        if (target.chip !== undefined) partes.push(target.chip);
+        if (target.family !== undefined) partes.push(target.family);
+        if (target.triple !== undefined) partes.push(target.triple);
+        const motores = [];
+        if (target.flashEngine !== undefined) motores.push("gravar: " + target.flashEngine);
+        if (target.monitor !== undefined) motores.push("monitor: " + target.monitor);
+        if (target.debugAdapter !== undefined) motores.push("debug: " + target.debugAdapter);
+        if (motores.length > 0) partes.push(motores.join(", "));
+        return partes.join(" · ");
     }
 
     // O monitor e' um PROCESSO numa aba de terminal (decisao do autor,
@@ -127,6 +177,11 @@ Item {
             return;
         }
         if (method === "serial.monitor") {
+            errorText = message;
+            return;
+        }
+        if (method === "project.model") {
+            projectBusy = false;
             errorText = message;
             return;
         }

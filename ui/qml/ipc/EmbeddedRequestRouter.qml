@@ -24,6 +24,10 @@ Item {
             root.coreClient.serialList();
         }
 
+        function onProjectRequested() {
+            root.coreClient.projectModel();
+        }
+
         function onMonitorRequested(device, baud) {
             root.coreClient.serialMonitor(device, baud);
         }

@@ -190,6 +190,8 @@ public:
     Q_INVOKABLE void serialList();
     // Monitor serial (serial.monitor): tio/picocom/minicom/espflash numa aba de terminal.
     Q_INVOKABLE void serialMonitor(const QString& device, int baud = 0);
+    // O modelo do projeto embarcado (project.model): framework, SDKs, artefatos, alvo.
+    Q_INVOKABLE void projectModel();
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -337,6 +339,8 @@ signals:
                            bool toolAvailable, const QString& tool, const QString& rawOutput);
     void serialPortsResolved(const QVariantList& ports, const QString& hint);
     void serialMonitorOpened(const QString& id, const QString& command, const QString& tool);
+    void projectModelResolved(const QVariantMap& model);
+    void projectChanged(const QVariantMap& model);
     void containerStatusResolved(const QVariantMap& status);
     void containersResolved(const QVariantList& containers, const QString& engine,
                             const QString& rawOutput, const QString& hint);

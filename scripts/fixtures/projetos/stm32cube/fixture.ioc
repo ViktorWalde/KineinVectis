@@ -1,0 +1,5 @@
+#MicroXplorer Configuration settings - do not modify
+Mcu.Family=STM32F4
+Mcu.Name=STM32F401C(B-C)Ux
+ProjectManager.DeviceId=STM32F401CCUx
+ProjectManager.TargetToolchain=CMake

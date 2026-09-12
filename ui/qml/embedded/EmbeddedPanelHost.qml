@@ -20,8 +20,8 @@ Item {
     property real maxAvailableHeight: 560
 
     // Piso: cabem as tres secoes com um estado vazio de sonda.
-    readonly property int alturaMinima: 420
-    readonly property int alturaMaxima: 640
+    readonly property int alturaMinima: 480
+    readonly property int alturaMaxima: 720
 
     readonly property int quantasSondas: root.controller ? root.controller.probes.length : 0
 

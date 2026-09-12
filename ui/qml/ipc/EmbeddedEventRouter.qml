@@ -24,6 +24,14 @@ Item {
             root.embeddedController.handleBuildSize(sections, regions, toolAvailable, tool, rawOutput);
         }
 
+        function onProjectModelResolved(model) {
+            root.embeddedController.handleProject(model);
+        }
+
+        function onProjectChanged(model) {
+            root.embeddedController.handleProject(model);
+        }
+
         function onSerialPortsResolved(ports, hint) {
             root.embeddedController.handleSerialPorts(ports, hint);
         }

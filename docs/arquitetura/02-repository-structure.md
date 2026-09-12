@@ -49,12 +49,13 @@ kinein-vectis/
 │   │   │
 │   │   ├── handlers/            roteadores por dominio (blocos impl Core)
 │   │   │   └── build cargo cmake configaction datasource debug draft format fs
-│   │   │      container git grafana jobs library probe run runconfig serial
-│   │   │      settings setup sim syntax terminal toolchain tools workspace
+│   │   │      container git grafana jobs library probe project run runconfig
+│   │   │      serial settings setup sim syntax terminal toolchain tools workspace
 │   │   │
 │   │   ├── build/               mod parse
 │   │   ├── container/           mod parse   (docker|podman pela mesma CLI)
 │   │   ├── serial/              mod monitor (portas USB; monitor como processo)
+│   │   ├── project/             mod detect sdk artifacts (o MODELO do projeto embarcado)
 │   │   ├── commands/            mod build editor git ide run
 │   │   ├── configaction/        catalog availability plan + um planejador por
 │   │   │                        arquivo editado (cmakelists, presets, cargotoml,

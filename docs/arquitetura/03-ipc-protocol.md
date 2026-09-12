@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **O `0.93.0` (2026-09-12) acrescentou o domínio `project`:** o MODELO do
+> projeto embarcado (pilar 0 do `roadmaps/42`). `project.model` diz o que o
+> projeto É — framework com o arquivo que o prova, SDKs exigidos e se estão
+> aqui, artefatos do último build, alvo deduzido com evidência — e
+> `event.project.changed` o reemite ao abrir o workspace e ao fim de
+> configure/build. Nada é adivinhado calado; o que não se decide vira `hint`.
+> No mesmo minor, `serial.monitor` e o papel `serialMonitor` do kit.
+>
 > **O `0.92.0` (2026-09-12) acrescentou o domínio `container`:** Docker e
 > Podman como domínio NATIVO (decisão do autor de 2026-07-17, `roadmaps/28`
 > §0, priorizada em 2026-09-12). `container.status` é a tela de "ativar a
@@ -191,7 +199,9 @@ gRPC/local socket
 
 Implementado no protocolo `0.20.0` como modelo comum para Problems. Os eventos
 continuam sendo por domínio (`event.build.diagnostic`,
-`event.quality.diagnostic`, `event.lsp.diagnostics`), mas os itens de
+`event.quality.diagnostic`, `event.project.changed
+
+event.lsp.diagnostics`), mas os itens de
 diagnóstico usam campos comuns:
 
 ```text
@@ -1808,6 +1818,8 @@ lsp.workspaceSymbols
 
 probe.list
 
+project.model
+
 quality.run
 
 run.script
@@ -2081,6 +2093,52 @@ uma sessão de terminal (`terminal.input`/`resize`/`close` a reconhecem). O
 shell dentro do container é a semente do *contexto remoto* do `roadmaps/28`
 §4 — o que falta para *dev containers* é o path mapping e o ciclo de vida,
 não o transporte.
+
+## `project.*` — o modelo do projeto embarcado
+
+Domínio novo no protocolo `0.93.0` (pilar 0 do `roadmaps/42`, 2026-09-12).
+`workspace.open` diz *que build system* a raiz tem; este domínio diz *o que o
+projeto é*.
+
+```text
+project.model {} -> ProjectModel        (exige workspace)
+event.project.changed  ProjectModel     (ao abrir o workspace; ao fim de
+                                         event.cmake.finished e event.build.finished)
+
+ProjectModel   root, embedded, frameworks[], sdks[], artifacts, target, hints[]
+FrameworkInfo  framework (espIdf|zephyr|picoSdk|platformIo|stm32Cube|cargoEmbedded|
+               microPython|yocto|buildroot), evidence (caminho relativo do
+               marcador), detail? (IDF_TARGET, PICO_BOARD, DeviceId do Cube,
+               triple do cargo, MACHINE do Yocto, ambientes do PlatformIO)
+SdkRequirement id, label, env?, path?, found, hint?
+ProjectArtifacts elf[], bin[], hex[], uf2[], map[], flasherArgs?, partitionTable?,
+               memoryX?, linkerScripts[]
+TargetModel    chip?, family?, triple?, flashEngine?, monitor?, debugAdapter?,
+               evidence[]  — uma linha por dedução
+```
+
+**A detecção desce até 3 níveis e LÊ o marcador**: um `CMakeLists.txt` é
+ESP-IDF se inclui o `project.cmake` do `IDF_PATH`, Zephyr se faz
+`find_package(Zephyr)`, pico-sdk se chama `pico_sdk_init()`; um `main.py` é
+MicroPython se importa `machine`/`board`. Pastas de saída (`build/`, `target/`,
+`.pio/`, `.kinein/`) não contam. Entre dois achados do mesmo framework vence o
+marcador que **decide** (`.cargo/config.toml` com o triple, não um `memory.x`
+solto) e, empatando, o mais raso. Um `CMakeLists.txt` comum **não** é
+embarcado; um `main.py` que não importa hardware **não** é MicroPython.
+
+**O alvo tem evidência ou não tem alvo.** O chip do **kit** vence o do
+framework (é a palavra do usuário); a família vem do chip ou do triple; os
+motores vêm da família — e o ESP32 clássico (sem USB-JTAG) recebe `debugAdapter`
+**ausente** com a evidência dizendo que depurar exige ESP-Prog, em vez de um
+`probe-rs` que não funcionaria.
+
+**"Achado" só vem de variável, pasta padrão ou binário.** `IDF_PATH` definido
+mas apontando para pasta inexistente é `found: false`; a toolchain xtensa fora
+do `PATH` mas em `~/.espressif/tools` é `found: true` com o caminho. O alvo
+rustup não é medido aqui (é processo) e diz isso no `hint`. Nenhum comando roda.
+
+**Fixtures reais e mínimas** de cada framework moram em
+`scripts/fixtures/projetos/`; são elas que os testes leem.
 
 ## `serial.*` — as portas seriais USB
 

@@ -259,6 +259,10 @@ impl Core {
     /// `scripts/verificar-transicao-workspace.sh`.
     fn activate_workspace(&mut self, opened: &WorkspaceInfo) {
         self.workspace = Some(opened.clone());
+        // O modelo do projeto embarcado (pilar 0 do roadmaps/42) nasce com o
+        // workspace — por qualquer porta: open, createProject — e vai por
+        // evento: quem quiser ja' o tem antes de perguntar.
+        self.emit_project_changed();
         let root = PathBuf::from(&opened.root);
         self.syntax.clear();
         self.workspace_edits.clear();
