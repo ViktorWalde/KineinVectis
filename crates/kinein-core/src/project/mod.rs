@@ -15,6 +15,7 @@
 
 pub mod artifacts;
 pub mod detect;
+pub mod esp;
 pub mod sdk;
 
 use std::path::{Path, PathBuf};

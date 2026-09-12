@@ -131,6 +131,13 @@ Item {
                 !== "esp32c3 · espressif · gravar: esptool, monitor: espflash, debug: probe-rs") failures += 137438953472;
         // Campo ausente nao vira "undefined": um alvo vazio e' uma linha vazia.
         if (controller.targetSummary({}) !== "") failures += 274877906944;
+        // A receita e as particoes LIDAS aparecem; a app e' a "flash" do ESP32.
+        if (controller.artifactsSummary({ elf: ["a.elf"],
+                flashRecipe: { files: [{}, {}, {}], flashSize: "4MB", flashMode: "dio" },
+                partitions: { entries: [{ kind: "data", size: 24576, offset: 36864 },
+                                        { kind: "app", size: 1048576, offset: 65536 }] } })
+                !== "1 ELF · receita: 3 imagens, flash 4MB dio · 2 partições, app 1 MB em 0x10000") failures += 2199023255552;
+        if (controller.artifactsSummary({}) !== "") failures += 4398046511104;
         // O evento substitui o modelo inteiro (nao mescla).
         controller.handleProject({ embedded: false, frameworks: [], sdks: [], target: {}, hints: [] });
         if (controller.projectEmbedded || controller.projectFrameworks.length !== 0) failures += 549755813888;

@@ -14,7 +14,7 @@ use std::path::{Path, PathBuf};
 use kinein_protocol::Framework;
 
 use crate::project::sdk::Ambiente;
-use crate::project::{artifacts, detect, model_in, sdk};
+use crate::project::{artifacts, detect, esp, model_in, sdk};
 
 fn fixtures() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -394,4 +394,156 @@ fn artifacts_come_from_the_build_dirs_newest_first_and_the_cargo_elf_has_no_exte
             .unwrap()
             .ends_with("partition-table.bin")
     );
+}
+
+/// Um `flasher_args.json` com a forma EXATA do template do ESP-IDF
+/// (`components/esptool_py/flasher_args.json.in` + `project_include.cmake`).
+const FLASHER_ARGS: &str = r#"{
+    "write_flash_args" : [ "--flash-mode", "dio", "--flash-size", "4MB", "--flash-freq", "40m" ],
+    "flash_settings" : { "flash_mode": "dio", "flash_size": "4MB", "flash_freq": "40m" },
+    "flash_files" : {
+        "0x1000" : "bootloader/bootloader.bin",
+        "0x8000" : "partition_table/partition-table.bin",
+        "0x10000" : "hello_world.bin"
+    },
+    "bootloader" : { "offset" : "0x1000", "file" : "bootloader/bootloader.bin", "encrypted" : "false" },
+    "app" : { "offset" : "0x10000", "file" : "hello_world.bin", "encrypted" : "true" },
+    "partition-table" : { "offset" : "0x8000", "file" : "partition_table/partition-table.bin", "encrypted" : "false" },
+    "extra_esptool_args" : { "after" : "hard-reset", "before" : "default-reset", "stub" : true, "chip" : "esp32" }
+}"#;
+
+#[test]
+fn the_flash_recipe_is_read_with_names_offsets_encryption_and_absolute_paths() {
+    let receita = esp::flash_recipe(FLASHER_ARGS, Path::new("/proj/build")).unwrap();
+    assert_eq!(receita.chip.as_deref(), Some("esp32"));
+    assert_eq!(receita.flash_size.as_deref(), Some("4MB"));
+    assert_eq!(receita.flash_size_bytes, Some(4 * 1024 * 1024));
+    assert_eq!(
+        (receita.flash_mode.as_deref(), receita.flash_freq.as_deref()),
+        (Some("dio"), Some("40m"))
+    );
+    assert_eq!(
+        (receita.before.as_deref(), receita.after.as_deref()),
+        (Some("default-reset"), Some("hard-reset"))
+    );
+    assert!(receita.stub);
+    let offsets: Vec<u32> = receita.files.iter().map(|f| f.offset).collect();
+    assert_eq!(
+        offsets,
+        vec![0x1000, 0x8000, 0x10000],
+        "por offset crescente"
+    );
+    let app = receita
+        .files
+        .iter()
+        .find(|f| f.name.as_deref() == Some("app"))
+        .unwrap();
+    assert_eq!(app.file, "/proj/build/hello_world.bin");
+    assert!(app.encrypted);
+    assert!(
+        !receita
+            .files
+            .iter()
+            .find(|f| f.offset == 0x1000)
+            .unwrap()
+            .encrypted
+    );
+    // Um arquivo so' em flash_files (sem entrada nomeada) entra sem nome.
+    let so_plano = r#"{"flash_files": {"0x20000": "extra.bin"}, "extra_esptool_args": {"stub": false, "chip": "esp32c3"}}"#;
+    let r = esp::flash_recipe(so_plano, Path::new("/b")).unwrap();
+    assert_eq!(r.files.len(), 1);
+    assert_eq!(
+        (r.files[0].name.as_deref(), r.files[0].file.as_str()),
+        (None, "/b/extra.bin")
+    );
+    assert!(!r.stub);
+    assert!(esp::flash_recipe("nao e json", Path::new("/b")).is_none());
+}
+
+#[test]
+fn the_partition_table_resolves_blank_offsets_like_gen_esp32part() {
+    // A tabela padrao do ESP-IDF (offsets explicitos) e uma com offsets em
+    // branco: a primeira cai em tabela+0x1000, a `app` alinha a 0x10000.
+    let explicita = std::fs::read_to_string(fixtures().join("esp-idf/partitions.csv")).unwrap();
+    let t = esp::partition_table(&explicita, esp::TABLE_OFFSET_PADRAO);
+    assert_eq!(t.entries.len(), 2);
+    assert_eq!(
+        (
+            t.entries[0].name.as_str(),
+            t.entries[0].offset,
+            t.entries[0].size
+        ),
+        ("nvs", 0x9000, 0x6000)
+    );
+    assert_eq!(
+        (
+            t.entries[1].kind.as_str(),
+            t.entries[1].offset,
+            t.entries[1].size
+        ),
+        ("app", 0x10000, 1024 * 1024)
+    );
+    assert_eq!(t.end, 0x10000 + 1024 * 1024);
+    assert!(t.unreadable.is_empty());
+
+    let em_branco = "# Name, Type, SubType, Offset, Size, Flags\n\
+                     nvs,      data, nvs,     ,        24K,\n\
+                     factory,  app,  factory, ,        1M, encrypted:readonly\n\
+                     phy_init, data, phy,     ,        4K,\n\
+                     storage,  data, spiffs,  ,        0x100000,\n\
+                     linha quebrada sem campos\n";
+    let t = esp::partition_table(em_branco, esp::TABLE_OFFSET_PADRAO);
+    let por_nome = |n: &str| t.entries.iter().find(|p| p.name == n).unwrap();
+    assert_eq!(
+        por_nome("nvs").offset,
+        0x9000,
+        "a primeira vem logo apos a tabela"
+    );
+    // nvs termina em 0xF000; um alinhamento de 4 KB deixaria a app ali. A app
+    // alinha a 64 KB: 0x10000. E' a regra que o gen_esp32part impoe.
+    assert_eq!(por_nome("factory").offset, 0x10000, "app alinha a 64 KB");
+    assert_eq!(
+        por_nome("factory").flags.as_deref(),
+        Some("encrypted:readonly")
+    );
+    assert_eq!(por_nome("phy_init").offset, 0x10000 + 1024 * 1024);
+    assert_eq!(por_nome("storage").offset, 0x10000 + 1024 * 1024 + 0x1000);
+    assert_eq!(t.end, 0x10000 + 1024 * 1024 + 0x1000 + 1024 * 1024);
+    assert_eq!(
+        t.unreadable,
+        vec!["linha quebrada sem campos".to_owned()],
+        "o que nao se le e' dito, nao sumido"
+    );
+
+    // Tabela em 0x9000 (CONFIG_PARTITION_TABLE_OFFSET mudado): tudo se desloca.
+    let t = esp::partition_table(em_branco, 0x9000);
+    assert_eq!(t.entries[0].offset, 0xA000);
+}
+
+#[test]
+fn the_model_reads_the_recipe_and_the_partitions_it_used_to_only_locate() {
+    let raiz = temp_dir("esp-lido");
+    std::fs::copy(
+        fixtures().join("esp-idf/CMakeLists.txt"),
+        raiz.join("CMakeLists.txt"),
+    )
+    .unwrap();
+    std::fs::copy(
+        fixtures().join("esp-idf/partitions.csv"),
+        raiz.join("partitions.csv"),
+    )
+    .unwrap();
+    std::fs::create_dir_all(raiz.join("build")).unwrap();
+    std::fs::write(raiz.join("build/flasher_args.json"), FLASHER_ARGS).unwrap();
+    let amb = ambiente_vazio(&nada_var, &nada_bin);
+    let m = model_in(&raiz, None, &amb);
+    let receita = m.artifacts.flash_recipe.as_ref().unwrap();
+    assert_eq!(receita.chip.as_deref(), Some("esp32"));
+    assert!(
+        receita.files[2]
+            .file
+            .starts_with(raiz.join("build").to_str().unwrap())
+    );
+    let tabela = m.artifacts.partitions.as_ref().unwrap();
+    assert_eq!(tabela.entries[1].name, "factory");
 }

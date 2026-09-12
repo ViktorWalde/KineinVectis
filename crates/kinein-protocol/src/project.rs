@@ -105,6 +105,100 @@ pub struct ProjectArtifacts {
     /// Linker scripts in the source tree (not in build dirs).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub linker_scripts: Vec<String>,
+    /// ESP-IDF flash recipe, READ from `flasher_args.json`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_recipe: Option<FlashRecipe>,
+    /// ESP-IDF partition table, READ from `partitions.csv`, with blank offsets
+    /// resolved the way `gen_esp32part.py` resolves them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub partitions: Option<PartitionTable>,
+}
+
+/// One image the ESP-IDF build wants written to flash.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlashFile {
+    /// Flash offset, bytes.
+    pub offset: u32,
+    /// Absolute path of the image.
+    pub file: String,
+    /// Image name in `flasher_args.json` (`bootloader`, `app`, `partition-table`),
+    /// when the file has a named entry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Marked for flash encryption.
+    pub encrypted: bool,
+}
+
+/// The flash recipe ESP-IDF writes to `build/flasher_args.json` (source:
+/// `components/esptool_py/flasher_args.json.in`, read 2026-09-12).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlashRecipe {
+    /// `extra_esptool_args.chip` (`esp32`, `esp32c3`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip: Option<String>,
+    /// `flash_settings.flash_mode` (`dio`, `qio`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_mode: Option<String>,
+    /// `flash_settings.flash_size` (`2MB`, `4MB`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_size: Option<String>,
+    /// `flash_size` in bytes, when it parses.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_size_bytes: Option<u32>,
+    /// `flash_settings.flash_freq` (`40m`, `80m`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_freq: Option<String>,
+    /// `extra_esptool_args.before` / `after` (`default-reset`, `hard-reset`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub before: Option<String>,
+    /// See `before`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub after: Option<String>,
+    /// `extra_esptool_args.stub`.
+    pub stub: bool,
+    /// Images by ascending offset.
+    pub files: Vec<FlashFile>,
+}
+
+/// One row of an ESP-IDF partition table.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Partition {
+    /// `Name` column.
+    pub name: String,
+    /// `Type` column (`app`, `data`, or a number).
+    pub kind: String,
+    /// `SubType` column (`factory`, `ota_0`, `nvs`, `spiffs`...).
+    pub subtype: String,
+    /// Resolved offset, bytes.
+    pub offset: u32,
+    /// Size, bytes.
+    pub size: u32,
+    /// `Flags` column (`encrypted`, `readonly`), colon-separated as written.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flags: Option<String>,
+}
+
+/// An ESP-IDF partition table read from CSV.
+///
+/// Format: the ESP-IDF *Partition Tables* guide, read 2026-09-12 — 4 KB
+/// alignment, `app` at 64 KB, blank offsets follow the previous partition,
+/// sizes accept `K`/`M`/hex.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PartitionTable {
+    /// Where the table itself lives (`CONFIG_PARTITION_TABLE_OFFSET`, default 0x8000).
+    pub table_offset: u32,
+    /// Rows in file order.
+    pub entries: Vec<Partition>,
+    /// Bytes from 0 to the end of the last partition — the flash the layout
+    /// needs.
+    pub end: u32,
+    /// Lines the parser could not read, verbatim — never dropped silently.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unreadable: Vec<String>,
 }
 
 /// The target the model deduced, each field with where it came from.

@@ -58,7 +58,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.93.0
-testes      700 Rust + 33 harnesses QML
+testes      703 Rust + 33 harnesses QML
 metodos     140 IPC roteados, 43 eventos
 dominios    33, e os 33 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -1693,14 +1693,25 @@ calado): descer em `build/` (a cópia gerada venceria); o framework vencer o
 kit; pasta "achada" sem existir; e no QML: trocar workspace sem esquecer o
 modelo, `refresh` sem pedir, resumo do alvo sem o depurador.
 
+**Segunda fatia, no mesmo dia:** `flasher_args.json` e `partitions.csv`
+passaram de localizados a **lidos** (`project/esp.rs`), com a forma tirada da
+fonte do ESP-IDF (`flasher_args.json.in` + `project_include.cmake`; guia
+*Partition Tables*): a receita com caminhos absolutos, nome e cifragem por
+imagem, e a tabela com os offsets em branco resolvidos como o
+`gen_esp32part.py` (a primeira em tabela+0x1000, `app` a 64 KB). Linha que
+não se lê vai em `unreadable`. Provado por mutação: caminho não resolvido,
+linha ilegível sumindo, `app` alinhada a 4 KB — as três reprovam. A vista do
+projeto mostra "receita: N imagens, flash 4MB dio · N partições, app 1 MB em
+0x10000".
+
 **O que falta do P0** ([`42`](42-trilha-profunda-embarcados.md) §3): o modelo
-por **alvo/preset** (hoje é um por workspace), `flasher_args.json` e a tabela
-de partições **lidos** (hoje só localizados), o map file interpretado, e a
-detecção de SDK que hoje o modelo declara "não medido" (alvo rustup).
+por **alvo/preset** (hoje é um por workspace), o map file interpretado, a
+detecção de SDK que hoje o modelo declara "não medido" (alvo rustup), e o
+consumo da partição `app` pelo `build.size` (hoje ele só lê `.ld`).
 
 ```text
-protocolo 0.93.0 — project.*, event.project.changed
-testes  700 Rust (+5, tests/project.rs), tst_embedded (+7 assercoes)
+protocolo 0.93.0 — project.*, event.project.changed, FlashRecipe, PartitionTable
+testes  703 Rust (+8, tests/project.rs), tst_embedded (+9 assercoes)
 gate    exercitacao pede project.model
 ```
 

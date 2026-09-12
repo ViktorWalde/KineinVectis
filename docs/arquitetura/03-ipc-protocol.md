@@ -2112,7 +2112,14 @@ FrameworkInfo  framework (espIdf|zephyr|picoSdk|platformIo|stm32Cube|cargoEmbedd
                triple do cargo, MACHINE do Yocto, ambientes do PlatformIO)
 SdkRequirement id, label, env?, path?, found, hint?
 ProjectArtifacts elf[], bin[], hex[], uf2[], map[], flasherArgs?, partitionTable?,
-               memoryX?, linkerScripts[]
+               memoryX?, linkerScripts[], flashRecipe?, partitions?
+FlashRecipe    chip?, flashMode?, flashSize?, flashSizeBytes?, flashFreq?, before?,
+               after?, stub, files[] { offset, file (absoluto), name?, encrypted }
+               — LIDO do flasher_args.json (forma do template
+               components/esptool_py/flasher_args.json.in do ESP-IDF)
+PartitionTable tableOffset, entries[] { name, kind, subtype, offset, size, flags? },
+               end, unreadable[] — LIDA do partitions.csv com os offsets em
+               branco resolvidos como o gen_esp32part.py (4 KB; app a 64 KB)
 TargetModel    chip?, family?, triple?, flashEngine?, monitor?, debugAdapter?,
                evidence[]  — uma linha por dedução
 ```
@@ -2136,6 +2143,12 @@ motores vêm da família — e o ESP32 clássico (sem USB-JTAG) recebe `debugAda
 mas apontando para pasta inexistente é `found: false`; a toolchain xtensa fora
 do `PATH` mas em `~/.espressif/tools` é `found: true` com o caminho. O alvo
 rustup não é medido aqui (é processo) e diz isso no `hint`. Nenhum comando roda.
+
+**O que era só localizado passou a ser LIDO** (segunda fatia, 2026-09-12): a
+receita de gravação com os caminhos resolvidos contra o `build/`, e a tabela
+de partições — porque a "flash" de um ESP32 não é o `.ld`, é a partição
+`app`, e é ela que o tamanho e o "Gravar" vão consumir. Linha de CSV que não
+se lê vai em `unreadable`, nunca some.
 
 **Fixtures reais e mínimas** de cada framework moram em
 `scripts/fixtures/projetos/`; são elas que os testes leem.

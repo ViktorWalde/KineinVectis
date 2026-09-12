@@ -53,6 +53,7 @@ Item {
     readonly property var projectSdks: project.sdks !== undefined ? project.sdks : []
     readonly property var projectHints: project.hints !== undefined ? project.hints : []
     readonly property var projectTarget: project.target !== undefined ? project.target : ({})
+    readonly property var projectArtifacts: project.artifacts !== undefined ? project.artifacts : ({})
 
     readonly property bool probeFound: probes.length > 0
     readonly property bool portFound: ports.length > 0
@@ -125,6 +126,37 @@ Item {
             partes.push(info.detail);
         }
         return partes.join(" · ");
+    }
+
+    // Os artefatos em uma linha: quantos ELF, a receita de gravacao LIDA
+    // (imagens, flash) e a tabela de particoes (a "flash" de um ESP32 e' a
+    // particao app, nao o .ld). Vazio quando o build ainda nao existe.
+    function artifactsSummary(art) {
+        const partes = [];
+        if (art.elf !== undefined && art.elf.length > 0) partes.push(art.elf.length + " ELF");
+        if (art.uf2 !== undefined && art.uf2.length > 0) partes.push(art.uf2.length + " UF2");
+        if (art.flashRecipe !== undefined) {
+            const r = art.flashRecipe;
+            let receita = r.files.length + " imagens";
+            if (r.flashSize !== undefined) receita += ", flash " + r.flashSize;
+            if (r.flashMode !== undefined) receita += " " + r.flashMode;
+            partes.push("receita: " + receita);
+        }
+        if (art.partitions !== undefined) {
+            const apps = art.partitions.entries.filter(p => p.kind === "app");
+            let texto = art.partitions.entries.length + " partições";
+            if (apps.length > 0) texto += ", app " + formatSize(apps[0].size) + " em 0x" + apps[0].offset.toString(16);
+            partes.push(texto);
+        }
+        if (art.memoryX !== undefined) partes.push("memory.x");
+        return partes.join(" · ");
+    }
+
+    // Bytes -> MB/kB, como no painel de containers.
+    function formatSize(n) {
+        if (n >= 1048576) return (n / 1048576).toFixed(n % 1048576 === 0 ? 0 : 1) + " MB";
+        if (n >= 1024) return (n / 1024).toFixed(0) + " kB";
+        return n + " B";
     }
 
     // O alvo em uma linha: chip, familia e os motores sugeridos — cada um

@@ -68,6 +68,16 @@ Item {
             font.pixelSize: 11
         }
 
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: root.controller && root.controller.projectEmbedded && text !== ""
+            text: root.controller ? root.controller.artifactsSummary(root.controller.projectArtifacts) : ""
+            color: Theme.textSecondary
+            font.family: Theme.monoFont
+            font.pixelSize: 10
+        }
+
         Repeater {
             model: root.controller && root.controller.projectTarget.evidence !== undefined
                    ? root.controller.projectTarget.evidence : []

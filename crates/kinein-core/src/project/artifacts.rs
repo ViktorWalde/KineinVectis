@@ -64,6 +64,24 @@ pub fn artifacts(root: &Path) -> ProjectArtifacts {
         art.memory_x = Some(memory_x.display().to_string());
     }
     art.linker_scripts = linker_scripts(root);
+
+    // ESP-IDF: o que estava so' LOCALIZADO passa a ser LIDO (segunda fatia do
+    // pilar 0). A receita resolve caminhos contra a pasta do proprio JSON.
+    art.flash_recipe = art.flasher_args.as_deref().and_then(|caminho| {
+        let caminho = Path::new(caminho);
+        let json = std::fs::read_to_string(caminho).ok()?;
+        super::esp::flash_recipe(&json, caminho.parent().unwrap_or(root))
+    });
+    art.partitions = art
+        .partition_table
+        .as_deref()
+        .filter(|p| {
+            Path::new(p)
+                .extension()
+                .is_some_and(|e| e.eq_ignore_ascii_case("csv"))
+        })
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .map(|csv| super::esp::partition_table(&csv, super::esp::TABLE_OFFSET_PADRAO));
     art
 }
 
