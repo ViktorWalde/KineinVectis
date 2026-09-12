@@ -513,7 +513,10 @@ gravar           CONFIGURACAO DE EXECUCAO, nao dominio novo: um tipo de Run,
 ordem            E1 serial.list -> E3 monitor (processo) -> E5 identidade
                  Espressif (`esptool chip-id`/`flash-id` sugerindo o kit) ->
                  E4 gravar -> E2 permissao por canal. E6 (debug do classico)
-                 continua bloqueado por hardware
+                 continua bloqueado por hardware. Na mesma noite esta ordem
+                 virou o BLOCO A do roadmaps/41, que poe o ecossistema
+                 inteiro (Python, MicroPython, profundidade, frameworks)
+                 em fila linear atras dela
 placa            um ESP32-C3 ou C6 vai para a mesa: RISC-V com USB-JTAG
                  embutido (303a:1001, ja' coberto pelo udev do Fedora) — flash,
                  debug, RTT/defmt via probe-rs sem hardware extra, gdb do

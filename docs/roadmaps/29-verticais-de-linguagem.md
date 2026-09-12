@@ -267,6 +267,13 @@ Os quatro juntos são o que separa "funciona quando você sabe o que fazer" de
 
 **Passo 0 — ligar o `cargo-deny` no gate. ✅ FEITO em 2026-08-30** (§3.3).
 
+> **REVERTIDO em 2026-09-11, por decisão do autor:** Python e MicroPython
+> entram como vertical nativa — o bloco B do
+> [`41`](41-ecossistema-embarcados-e-python.md) §5 é a ORDEM B abaixo, inteira
+> e sem anúncio parcial. O trabalho de casa desta página (basedpyright, ruff,
+> debugpy, uv, a precedência do interpretador da §4.1) é o que o 41 executa.
+> Pylance continua proibido.
+
 **Decisão do autor em 2026-08-30: foco em C/C++ e Rust; Python fica para
 depois.** Isso resolve a tensão da §2 pela ORDEM A, e a exceção da gramática
 Tree-sitter de Python **não** foi tomada. Estado dos itens baratos:

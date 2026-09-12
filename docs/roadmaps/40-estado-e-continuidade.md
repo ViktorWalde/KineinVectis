@@ -522,6 +522,27 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          FEITA na mesma noite (§7.13, 0.91.0),
                                          exercitada contra o ESP32 real. E3
                                          (monitor como processo) e' o PROXIMO
+--  O ECOSSISTEMA INTEIRO, em ordem      MAPEADO em 2026-09-11 (roadmaps/41), a
+    linear: embarcados + Python +        pedido do autor: "nada deve ficar de
+    MicroPython                          fora", com o VS Code (Python, C/C++,
+                                         Rust, Cortex-Debug, probe-rs,
+                                         PlatformIO, ESP-IDF, Pico) como
+                                         referencia de FUNCIONALIDADE e a
+                                         ferramenta aberta por tras como
+                                         implementacao, licenca lida no
+                                         arquivo. Seis blocos: A fecha o canal
+                                         serial e o ciclo Espressif (E3->E5->
+                                         E4->E2, + setup + saida do teste); B e'
+                                         Python inteiro (Tree-sitter ->
+                                         interpretador -> basedpyright -> ruff
+                                         -> debugpy -> pytest); C MicroPython
+                                         (mpremote, stubs, firmware); D
+                                         profundidade (RTT, SVD, memoria,
+                                         RTOS, clang-tidy, cobertura, Renode);
+                                         E frameworks (ESP-IDF, pico-sdk,
+                                         Zephyr, PlatformIO); F o grande
+                                         (Jupyter, SSH, Docker). O PROXIMO
+                                         continua sendo A1 = E3, o monitor
 --  guias de instalacao para arch/suse   a fonte oficial dos tres projetos NAO
                                          cobre essas familias; entrar exige
                                          fonte de comunidade, marcada como tal
@@ -592,8 +613,11 @@ simulacao: NADA ADIVINHADO   principio SUPERIOR as outras decisoes (2026-09-05).
                              o motor, e a IDE corrigir o dt instavel da EDP
 symbolica (CAS Rust)         PROIBIDO — fonte visivel, uso proprietario, licenca
                              a adquirir. Categoria Pylance (2026-09-05)
-Python                       adiado
-Pylance                      PROIBIDO (licenca)
+Python                       ENTRA como vertical nativa — DECISAO DO AUTOR em
+                             2026-09-11 (roadmaps/41), REVERTENDO o "adiado" de
+                             2026-08-30. Sem anuncio parcial: a tela so' diz
+                             "Python" quando a cadeia inteira funcionar (41 §5, B8)
+Pylance                      PROIBIDO (licenca) — continua; o motor e' basedpyright
 Docker e banco               NATIVOS, nao plugins
 EditorConfig                 auditado com resultado NEGATIVO (2026-07-16)
 Grafana embutido             PROIBIDO (AGPL) — integracao por HTTP API
