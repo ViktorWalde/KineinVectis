@@ -715,7 +715,6 @@ favorites/recent actions
 ```text
 plugin system público
 marketplace
-simulação OpenGL
 QEMU visual workbench
 remote development completo
 embedded flashing completo

@@ -977,7 +977,6 @@ sem modal automático.
 Se o projeto começar a pesar, cortar primeiro:
 
 ```text
-simulação;
 QEMU visual;
 embedded flash avançado;
 docs cacheadas;

@@ -58,8 +58,7 @@ A Kinein tem identidade própria:
 - toolchain como entidade de primeira classe;
 - target como entidade de primeira classe;
 - Linux-first;
-- embarcados e Linux embarcado no horizonte desde o início;
-- simulação/OpenGL no futuro sem poluir o MVP.
+- embarcados e Linux embarcado no horizonte desde o início.
 ```
 
 ---
@@ -125,7 +124,7 @@ Layout recomendado:
 │                                                              │
 │ Recent Projects                                             │
 │  • motor-firmware                                           │
-│  • vision-sim                                               │
+│  • vision-edge                                              │
 │  • rust-control                                             │
 │                                                              │
 │ Environment Status                                          │
@@ -142,7 +141,6 @@ Evitar:
 - marketing;
 - cards demais;
 - IA chamativa;
-- simulação/OpenGL na primeira tela;
 - botões genéricos sem contexto;
 - excesso de texto.
 ```

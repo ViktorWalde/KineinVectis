@@ -156,26 +156,6 @@ public:
     Q_INVOKABLE void grafanaForget();
     Q_INVOKABLE void grafanaProbe(const QString& token);
 
-    // Simulacao por conceito (docs/arquitetura/34); o porque de cada um esta'
-    // no `core_client_sim.cpp`, junto da implementacao.
-    Q_INVOKABLE void simCatalog(const QString& course = QString());
-    Q_INVOKABLE void simInspectFormula(const QString& formula);
-    Q_INVOKABLE void simCheckFormula(const QString& conceptId, const QString& formula,
-                                     const QVariantList& bindings);
-    Q_INVOKABLE void simEvaluate(const QString& conceptId, const QString& formula,
-                                 const QVariantList& bindings, const QVariantList& values);
-    Q_INVOKABLE void simEstimate(double duration, double step, int samples);
-    Q_INVOKABLE void simList();
-    Q_INVOKABLE void simSave(const QVariantMap& simulation);
-    Q_INVOKABLE void simForget(const QString& name);
-    Q_INVOKABLE void simCheckSystem(const QString& conceptId, const QVariantList& equations);
-    Q_INVOKABLE void simRunSystem(const QString& conceptId, const QVariantList& equations,
-                                  const QVariantList& values, const QVariantList& initial,
-                                  double duration, double step, const QString& method, int samples);
-    Q_INVOKABLE void simRun(const QString& conceptId, const QString& formula,
-                            const QVariantList& bindings, const QVariantList& values,
-                            const QVariantMap& initial, double duration, double step,
-                            const QString& method, int samples);
     Q_INVOKABLE void libraryList();
     Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
     Q_INVOKABLE void toolchainGet(const QString& preset);
@@ -323,15 +303,6 @@ signals:
     /// os perfis de banco deste workspace.
     void grafanaProbed(const QVariantMap& result);
 
-    void simCatalogResolved(const QVariantList& concepts);
-    void simFormulaInspected(const QVariantList& variables);
-    void simFormulaChecked(const QVariantMap& result);
-    void simEvaluated(const QVariantMap& result);
-    void simEstimated(const QVariantMap& result);
-    void simRan(const QVariantMap& result);
-    void simSystemChecked(const QVariantMap& result);
-    void simSystemRan(const QVariantMap& result);
-    void simSavedListResolved(const QVariantList& simulations);
     void libraryListResolved(const QVariantList& libraries);
     void libraryPlanResolved(const QVariantMap& plan);
     void toolchainResolved(const QVariantList& selections, const QVariantList& candidates,
@@ -483,7 +454,6 @@ private:
     bool dispatchToolchainResult(const QString& method, const QJsonObject& result);
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
-    bool dispatchSimResult(const QString& method, const QJsonObject& result);
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
     bool dispatchBuildSizeResult(const QString& method, const QJsonObject& result);
     bool dispatchSerialResult(const QString& method, const QJsonObject& result);

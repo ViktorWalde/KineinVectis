@@ -5,7 +5,7 @@
 **Produto:** Kinein Vectis  
 **Nome de uso diário:** Kinein  
 **Sigla visual:** KV  
-**Foco técnico:** C, C++, Rust, CMake, toolchains, sistemas embarcados, Linux embarcado, software embarcado, debug, flash, simulação, OpenGL e análise física/matemática.
+**Foco técnico:** C, C++, Rust, CMake, toolchains, sistemas embarcados, Linux embarcado, software embarcado, debug e flash.
 
 ---
 
@@ -54,8 +54,7 @@ Ela deve ser uma IDE de engenharia de sistemas, capaz de ajudar o programador a 
 - debug local/remoto;
 - serial monitor;
 - flash de firmware;
-- execução em Linux embarcado;
-- simulação e visualização futuras com OpenGL.
+- execução em Linux embarcado.
 
 A promessa de UX é:
 
@@ -142,12 +141,12 @@ A janela principal da Kinein é dividida em oito regiões.
 | Região | Nome | Função |
 |---|---|---|
 | 1 | Title/App Bar | Identidade, menus, ações globais, janela |
-| 2 | Main Toolbar | Target, perfil, build, run, debug, flash, simulação |
+| 2 | Main Toolbar | Target, perfil, build, run, debug, flash |
 | 3 | Tool Rail | Ícones verticais de janelas/ferramentas |
 | 4 | Left Tool Window | Project, Structure, CMake, Toolchains, Targets |
 | 5 | Editor Area | Código, tabs, breadcrumbs, gutter, diagnósticos |
 | 6 | Assistente | Assistente contextual, explicação, correções e toolchain |
-| 7 | Bottom Tool Window | Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git |
+| 7 | Bottom Tool Window | Terminal, Problems, Build, CMake, Debug, Serial, Git |
 | 8 | Status Bar | Estado do projeto, branch, target, warnings, encoding, posição |
 
 ---
@@ -390,7 +389,7 @@ Este é o layout inicial após abrir um projeto.
 │    │                      │ Code                            │ Explain      │
 │    │                      │ Gutter + Diagnostics            │ Fix          │
 ├────┴──────────────────────┴─────────────────────────────────┴──────────────┤
-│ Terminal | Problems | Build | CMake | Debug | Serial | Simulation | Git     │
+│ Terminal | Problems | Build | CMake | Debug | Serial | Git                  │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ KV main* | 0 errors | 2 warnings | CMake Debug | clang++ | x86_64 | UTF-8   │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -466,7 +465,6 @@ Build
 Run
 Debug
 Flash
-Simulate
 Search
 Settings
 ```
@@ -524,10 +522,6 @@ Inicia sessão GDB/LLDB.
 
 Grava firmware em target embarcado.
 
-#### Simulate
-
-Abre execução/simulação quando disponível.
-
 ### 11.3 Regras de estado
 
 | Estado | Visual |
@@ -557,7 +551,6 @@ Git
 Build
 Debug
 Targets
-Simulate
 Tools
 Extensions
 ```
@@ -581,7 +574,6 @@ Extensions
 | Build | tarefas de build |
 | Debug | sessões e breakpoints |
 | Targets | placas, remotos e toolchains |
-| Simulate | simulação/visualização futura |
 | Tools | CMake, SDK, plugins, ambientes |
 | Extensions | extensões futuras |
 
@@ -831,7 +823,6 @@ CMake
 Debug
 Serial
 Telemetry
-Simulation
 Git
 ```
 
@@ -906,23 +897,6 @@ Painel para embedded:
 - filtros;
 - timestamps;
 - enviar comandos.
-
-### 16.8 Simulation
-
-Inicialmente pode estar vazio ou experimental.
-
-No futuro:
-
-- logs de simulação;
-- parâmetros;
-- stepping;
-- telemetria;
-- plots;
-- viewport OpenGL em layout específico.
-
----
-
-## 17. Status Bar
 
 ### 17.1 Função
 
@@ -1039,31 +1013,6 @@ Painéis:
 - Assistente em Toolchain;
 - Bottom com Serial/Debug/Build.
 
-### 18.6 Simulation Workbench
-
-Uso futuro:
-
-- OpenGL;
-- simulação física;
-- plots;
-- visualização.
-
-Importante:
-
-```text
-Não misturar Simulation Workbench com layout padrão no primeiro MVP.
-```
-
-Este layout é uma evolução futura.
-
-Painéis:
-
-- Editor e viewport lado a lado;
-- Simulation/Telemetry inferior;
-- Assistente opcional;
-- controles de simulação dedicados.
-
----
 
 ## 19. Fluxos principais
 
@@ -1516,8 +1465,7 @@ Callouts possíveis:
 - toolchains visuais;
 - Assistente;
 - embedded targets;
-- debug e serial;
-- simulação futura.
+- debug e serial.
 
 Mas esses elementos não devem aparecer dentro da UI real.
 
@@ -1646,7 +1594,7 @@ Implemente estados de layout para Default Coding, Focus Editor, Build & CMake, D
 Para gerar imagem de referência, usar prompt:
 
 ```text
-Criar mockup de alta resolução de uma IDE profissional chamada Kinein Vectis, nome curto Kinein, sigla KV. A imagem deve mostrar apenas a interface real da IDE, sem callouts de marketing, sem textos promocionais externos e sem elementos fora da janela. Tema escuro grafite confortável, estilo visual polido e profissional, inspirado na sensação de IDEs modernas como JetBrains, mas com identidade própria. Layout: app bar superior com KV | Kinein, menu File/Edit/View/Navigate/Code/Build/Run/Tools/Help; toolbar com Target selector, CMake profile, Configure, Build, Run, Debug, Flash, Simulate; tool rail esquerdo com Project, Search, Git, Build, Debug, Targets, Simulate, Tools; painel esquerdo com Project e Structure; editor central com tabs, breadcrumbs, código C++ legível, gutter e diagnostics; painel direito Assistente com abas Context, Explain, Fix, Toolchain, Docs; painel inferior com Terminal, Problems, Build, CMake, Debug, Serial, Simulation, Git; status bar inferior com branch, errors, warnings, compiler, target, line/column, encoding. Usar acento âmbar industrial com moderação, azul/roxo apenas como acentos técnicos. Interface limpa, densa mas confortável, sem excesso de brilho, sem decoração matemática no layout real.
+Criar mockup de alta resolução de uma IDE profissional chamada Kinein Vectis, nome curto Kinein, sigla KV. A imagem deve mostrar apenas a interface real da IDE, sem callouts de marketing, sem textos promocionais externos e sem elementos fora da janela. Tema escuro grafite confortável, estilo visual polido e profissional, inspirado na sensação de IDEs modernas como JetBrains, mas com identidade própria. Layout: app bar superior com KV | Kinein, menu File/Edit/View/Navigate/Code/Build/Run/Tools/Help; toolbar com Target selector, CMake profile, Configure, Build, Run, Debug, Flash; tool rail esquerdo com Project, Search, Git, Build, Debug, Targets, Tools; painel esquerdo com Project e Structure; editor central com tabs, breadcrumbs, código C++ legível, gutter e diagnostics; painel direito Assistente com abas Context, Explain, Fix, Toolchain, Docs; painel inferior com Terminal, Problems, Build, CMake, Debug, Serial, Git; status bar inferior com branch, errors, warnings, compiler, target, line/column, encoding. Usar acento âmbar industrial com moderação, azul/roxo apenas como acentos técnicos. Interface limpa, densa mas confortável, sem excesso de brilho, sem decoração matemática no layout real.
 ```
 
 ---
@@ -1668,7 +1616,6 @@ Antes de aceitar um layout, verificar:
 - [ ] Existe caminho claro para toolchain ausente?
 - [ ] O layout funciona em 1920×1080?
 - [ ] Existe modo Focus Editor?
-- [ ] Existe separação futura para Simulation Workbench?
 
 ---
 

@@ -37,7 +37,6 @@ pub mod runtime;
 pub mod serial;
 pub mod settings;
 pub mod setup;
-pub mod sim;
 pub mod size;
 pub mod terminal;
 pub mod test;
@@ -85,13 +84,6 @@ pub struct Core {
     /// Raiz do estado GLOBAL quando a persistência está ligada; `None` — o
     /// padrão — é persistência DESLIGADA (ver [`Core::enable_persistence`]).
     global_storage: Option<PathBuf>,
-    /// Com quem o domínio `sim` fala para resolver a equação DIGITADA.
-    ///
-    /// Injetado pelo mesmo motivo que o [`ToolDetector`]: sem isso, o resultado
-    /// de `sim.run` passaria a depender de a máquina ter `SymPy` — verde aqui,
-    /// vermelho ali, que é a classe de falha da qual o `verificar-shell.sh`
-    /// nasceu.
-    oraculo: sim::oraculo::Config,
 }
 
 impl Core {
@@ -99,22 +91,6 @@ impl Core {
     #[must_use]
     pub fn new() -> Self {
         Self::with_detector(ToolDetector::from_environment())
-    }
-
-    /// Troca com quem o domínio `sim` fala para resolver a equação digitada.
-    ///
-    /// Existe para o TESTE ser determinístico: sem isso, `sim.run` responderia
-    /// diferente numa máquina com `SymPy` e numa sem — e a suíte inteira
-    /// passaria a depender do que está instalado no host. Mesmo motivo, e mesmo
-    /// molde, do [`ToolDetector`] com caminho de busca vazio.
-    pub fn set_oraculo(&mut self, config: sim::oraculo::Config) {
-        self.oraculo = config;
-    }
-
-    /// Com quem o domínio `sim` fala. A borda lê daqui, nunca do ambiente.
-    #[must_use]
-    pub(crate) const fn oraculo(&self) -> &sim::oraculo::Config {
-        &self.oraculo
     }
 
     /// Creates a core runtime with an injected tool detector.
@@ -137,7 +113,6 @@ impl Core {
             jobs: None,
             drafts: None,
             global_storage: None,
-            oraculo: sim::oraculo::Config::default(),
         }
     }
 
@@ -291,7 +266,6 @@ impl Core {
             .or_else(|| self.lsp_request_response(method, request_id.clone(), params))
             .or_else(|| self.library_request_response(method, request_id.clone(), params))
             .or_else(|| self.setup_request_response(method, request_id.clone(), params))
-            .or_else(|| self.sim_request_response(method, request_id.clone(), params))
             .or_else(|| self.datasource_request_response(method, request_id.clone(), params))
             .or_else(|| self.grafana_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))

@@ -235,7 +235,7 @@ haver uma única **definição**.
 
 > **A restrição caiu em 2026-09-04, e o arranjo fica como está.** O
 > `verificar-qml-logica.sh` passou a montar um espelho plano do módulo a partir
-> das fontes ([`35`](35-ambiente-cpp-embarcados-simulacao.md) §9.3.14), então
+> das fontes ([`35`](35-ambiente-cpp-e-embarcados.md) §9.3.14), então
 > importar `KineinVectis` num harness deixou de tornar nada inexercitável.
 > Mover `TextRules` e `PathRules` agora seria mexer em código que funciona por
 > um motivo que evaporou — o registro existe para quem for decidir isso depois,
@@ -580,7 +580,7 @@ sem alteração desta sessão:
 25  handshake DAP com probe-rs         precisa de sonda ou alvo QEMU
 26  banco: COFRE DE CREDENCIAL ANTES   §7.3 do roadmaps/35
 27  TimescaleDB e Grafana por HTTP     Grafana e' AGPL: API, nunca embutido
-28  simulacao: CALCULO sem tela        §5.1 ja respondida
+28  (simulacao — SAIU do produto em 2026-09-12)
 --  UI de embarcado                    probe.list responde por IPC, sem painel
 ```
 

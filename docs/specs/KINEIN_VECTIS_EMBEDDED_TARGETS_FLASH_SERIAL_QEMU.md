@@ -6,7 +6,7 @@
 > **Nome curto:** Kinein  
 > **Sigla visual:** KV  
 > **Foco:** C, C++ e Rust  
-> **Posicionamento:** IDE Linux-first para sistemas, toolchains, CMake, Rust/Cargo, software embarcado, Linux embarcado, targets remotos e simulação futura.  
+> **Posicionamento:** IDE Linux-first para sistemas, toolchains, CMake, Rust/Cargo, software embarcado, Linux embarcado e targets remotos.  
 > **Objetivo desta parte:** especificar como a IDE deve tratar ambientes embarcados de forma profissional, previsível e implementável por IA CLI, sem depender inicialmente de hardware físico obrigatório.
 
 ---
@@ -351,7 +351,7 @@ A Kinein deve ter uma Tool Window própria chamada:
 Targets
 ```
 
-Ela fica no painel esquerdo, junto de Project, Search, Git, Build, Debug e Simulation futura.
+Ela fica no painel esquerdo, junto de Project, Search, Git, Build e Debug.
 
 ### 5.1 Estrutura visual
 
@@ -1345,7 +1345,6 @@ RTOS awareness profundo
 edição remota total
 Yocto integration profunda
 Buildroot wizard completo
-simulação OpenGL integrada pesada
 análise elétrica/circuital
 ```
 

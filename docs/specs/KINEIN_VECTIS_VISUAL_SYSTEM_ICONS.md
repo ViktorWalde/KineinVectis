@@ -12,7 +12,6 @@ Este documento cobre **apenas a primeira parte do sistema visual**: a iconografi
 Ele não define ainda, em profundidade:
 
 - layout completo da tela principal;
-- layout das telas de simulação física/matemática;
 - viewport OpenGL;
 - dashboards de telemetria;
 - painéis avançados de target embarcado;
@@ -59,7 +58,7 @@ KV
 ```text
 Kinein Vectis é uma IDE Linux-first para C, C++ e Rust,
 focada em toolchains, CMake, sistemas embarcados, Linux embarcado,
-software embarcado, ambientes de build, debug e simulação técnica.
+software embarcado, ambientes de build e debug.
 ```
 
 ### 1.5 Frase-guia do design
@@ -109,8 +108,6 @@ Essas quatro famílias comunicam diretamente o foco da IDE:
 - sistemas embarcados;
 - Linux embarcado;
 - hardware targets;
-- OpenGL;
-- simulação física/matemática;
 - engenharia de software de baixo e alto nível.
 
 ### 2.2 O que evitar
@@ -485,9 +482,8 @@ Ordem recomendada:
 4. Build
 5. Debug
 6. Targets
-7. Simulate
-8. Tools
-9. Extensions
+7. Tools
+8. Extensions
 ```
 
 Mesmo que algumas áreas sejam implementadas depois, a linguagem visual já deve ser planejada.
@@ -642,29 +638,6 @@ pequeno vetor diagonal interno
 
 ---
 
-### 7.7 Simulate
-
-#### Função
-
-Acesso futuro a simulações, emulação e visualização técnica.
-
-#### Conceito visual
-
-Órbita + ponto.
-
-#### Forma
-
-```text
-arco elíptico
-ponto luminoso pequeno
-linha de referência discreta
-```
-
-#### Observação
-
-Mesmo que a parte de simulação seja detalhada em documento futuro, o ícone precisa existir como família visual.
-
----
 
 ### 7.8 Tools
 
@@ -1561,22 +1534,6 @@ linux-target
 cross-compile
 ```
 
-### 17.4 Prioridade 4 — Simulação futura
-
-```text
-simulate
-opengl-view
-physics
-plot
-mesh
-orbit
-profiler
-telemetry
-```
-
-Observação: a prioridade 4 deve ser desenhada visualmente depois, em documento próprio, para não misturar a IDE padrão com layouts de simulação.
-
----
 
 ## 18. Nomenclatura dos arquivos
 
@@ -1610,7 +1567,6 @@ assets/
       build.svg
       debug.svg
       targets.svg
-      simulate.svg
       tools.svg
       extensions.svg
 
@@ -1890,7 +1846,6 @@ Essa linguagem deve ser usada com cuidado.
 ```text
 QEMU
 Emulation
-Simulation
 OpenGL
 Mesh
 3D View
@@ -1907,7 +1862,7 @@ um ponto de luz em vértice
 ### 24.3 Regras
 
 - não usar como ícone de tudo;
-- não transformar a IDE padrão em tela de simulação;
+- não transformar a IDE padrão em tela de visualização;
 - manter essa família para recursos específicos.
 
 ---
@@ -1919,9 +1874,7 @@ Símbolos matemáticos devem existir como acento, não como ruído.
 ### 25.1 Aplicações
 
 ```text
-Physics
 Plot
-Simulation
 Numerical analysis
 Solver
 ```
@@ -1975,7 +1928,7 @@ Criar uma folha de ícones vetoriais para uma IDE chamada Kinein Vectis, nome cu
 
 Estilo visual: profissional, confortável, JetBrains-like na sensação de maturidade e clareza, mas completamente original. Usar fundo grafite escuro, ícones em cinza claro e versões ativas em âmbar industrial. A linguagem visual deve usar chevrons de código, vetores, nós de circuito, pequenos chips, deltas abertos e malhas técnicas discretas.
 
-Gerar ícones para: Project, Search, Git, Build, Debug, Targets, Simulate, Tools, Extensions, Run, Configure, Rebuild, Stop, Test, CMake, Toolchain, Compiler, Linker, Presets, Environment, Terminal, Problems, Error, Warning, Success, Context, Explain, Fix, Docs.
+Gerar ícones para: Project, Search, Git, Build, Debug, Targets, Tools, Extensions, Run, Configure, Rebuild, Stop, Test, CMake, Toolchain, Compiler, Linker, Presets, Environment, Terminal, Problems, Error, Warning, Success, Context, Explain, Fix, Docs.
 
 Não usar engrenagens grandes, chaves inglesas, foguetes, robôs, cartoons, neon exagerado ou símbolos copiados de IDEs existentes.
 ```
@@ -1985,7 +1938,7 @@ Não usar engrenagens grandes, chaves inglesas, foguetes, robôs, cartoons, neon
 ## 28. Prompt para gerar app icon KV final
 
 ```text
-Criar um app icon profissional para uma IDE chamada Kinein Vectis, nome curto Kinein, sigla KV. O ícone deve ter formato quadrado com bordas arredondadas, fundo externo transparente real e nenhum elemento fora do quadrado. Dentro do ícone, criar um fundo escuro grafite com estética de engenharia, C/C++/Rust, CMake, toolchains, sistemas embarcados, Linux embarcado, OpenGL e simulação física/matemática.
+Criar um app icon profissional para uma IDE chamada Kinein Vectis, nome curto Kinein, sigla KV. O ícone deve ter formato quadrado com bordas arredondadas, fundo externo transparente real e nenhum elemento fora do quadrado. Dentro do ícone, criar um fundo escuro grafite com estética de engenharia, C/C++/Rust, CMake, toolchains, sistemas embarcados, Linux embarcado.
 
 O fundo interno deve conter detalhes sutis de circuitos, trilhas de PCB, malha 3D wireframe, vetores de força, trajetória orbital e integrais discretas, sem poluir e sem competir com o monograma.
 
@@ -2006,7 +1959,6 @@ Depois desta parte de iconografia, criar documentos separados:
 03_EDITOR_EXPERIENCE.md                editor, tabs, breadcrumbs, gutter, diagnóstico
 04_CMAKE_TOOLCHAIN_UX.md               fluxo visual para CMake/toolchain/compilador
 05_EMBEDDED_TARGETS_UX.md              targets, flash, serial, remote debug
-06_SIMULATION_OPENGL_UX.md             OpenGL, física, plot, malhas e simulação
 07_KV_CONTEXT_ASSISTANT_UX.md          painel contextual/assistente
 08_THEME_TOKENS_QML.md                 tokens, componentes e implementação Qt/QML
 09_BRANDING_APP_ICON_SPLASH.md         marca, splash, about, README, site
@@ -2024,7 +1976,6 @@ Chevron como linguagem de ação.
 Nó de circuito como linguagem de fluxo e toolchain.
 Delta aberto como linguagem de CMake/configuração.
 Chip angular como linguagem de target embarcado.
-Órbita/malha/vetor como linguagem futura de simulação.
 Âmbar como guia visual, não como decoração excessiva.
 ```
 

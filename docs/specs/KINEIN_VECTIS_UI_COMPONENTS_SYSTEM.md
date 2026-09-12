@@ -6,7 +6,7 @@
 > Nome de uso diário: **Kinein**  
 > Sigla visual: **KV**  
 > Foco técnico: **C, C++ e Rust**  
-> Direção de produto: **IDE Linux-first para sistemas, toolchains, CMake, embarcados, simulação e desenvolvimento de engenharia**.
+> Direção de produto: **IDE Linux-first para sistemas, toolchains, CMake, embarcados e desenvolvimento de engenharia**.
 
 ---
 
@@ -38,7 +38,7 @@ Este documento deve ser usado para orientar:
 - menus;
 - notificações;
 - Assistente;
-- integração visual com CMake, toolchains, targets, debug e simulação.
+- integração visual com CMake, toolchains, targets e debug.
 
 ---
 
@@ -106,7 +106,7 @@ A interface deve ser pensada em cinco camadas:
    Toolbar, sidebar, editor tab bar, status bar, tool window, Assistente card.
 
 5. Fluxos
-   Coding, build, debug, configure, embedded target, simulation, onboarding.
+   Coding, build, debug, configure, embedded target, onboarding.
 ```
 
 Nenhuma tela deve pular direto para o nível 5 sem respeitar os níveis 1 a 4.
@@ -863,7 +863,7 @@ Altura recomendada:
 Conteúdo:
 
 ```text
-[KV logo] [Kinein] [Project switcher]    [Target] [Profile] [Build] [Run] [Debug] [Flash] [Simulate]    [Search] [Settings] [Window controls]
+[KV logo] [Kinein] [Project switcher]    [Target] [Profile] [Build] [Run] [Debug] [Flash]    [Search] [Settings] [Window controls]
 ```
 
 ### Regras de comportamento
@@ -884,7 +884,6 @@ Build
 Run
 Debug
 Flash
-Simulate
 Search
 Assistente toggle
 Settings
@@ -912,7 +911,6 @@ Git
 Build
 Debug
 Targets
-Simulate
 Tools
 Extensions
 ```
@@ -948,8 +946,7 @@ Exemplos:
 - Debug;
 - Serial;
 - Git;
-- Assistente;
-- Simulation.
+- Assistente.
 
 Estrutura:
 
@@ -2462,7 +2459,7 @@ MVP com editor + explorer + terminal
 para:
 
 ```text
-IDE completa para C/C++/Rust, CMake, debug, toolchains, sistemas embarcados, Linux embarcado, targets remotos, QEMU e simulação física/matemática.
+IDE completa para C/C++/Rust, CMake, debug, toolchains, sistemas embarcados, Linux embarcado, targets remotos e QEMU.
 ```
 
 Cada componente deve passar a sensação de:

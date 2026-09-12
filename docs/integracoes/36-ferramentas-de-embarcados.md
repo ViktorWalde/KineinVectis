@@ -4,7 +4,7 @@
 > **verificada na fonte em 2026-09-03** — no arquivo de licença do projeto
 > quando o detector automático falhou, o que aconteceu em **3 das 4**.
 >
-> **Etapa 21 do [`roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md)
+> **Etapa 21 do [`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md)
 > §5.4.** Documento, não código: sem ele, escolher entre probe-rs e OpenOCD
 > seria palpite, e a escolha **decide o desenho** da etapa 22.
 

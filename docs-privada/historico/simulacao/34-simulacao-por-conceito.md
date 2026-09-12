@@ -3,14 +3,14 @@
 > **FORA DO FOCO desde 2026-09-12 — decisão do autor** (*"esquece a parte de
 > simulação física/matemática; vamos refinar ao máximo para sistemas embarcados
 > e desenvolvimento de software"*, registrada no
-> [`40`](../roadmaps/40-estado-e-continuidade.md) §5). O código do domínio
+> [`40`](../../../docs/roadmaps/40-estado-e-continuidade.md) §5). O código do domínio
 > `sim` e o `kinein-sim` ficam como estão e o gate continua a testá-los;
 > nenhuma fatia nova sai daqui. Este documento permanece como registro para o
 > dia em que o autor reabrir.
 
 > **Classe: PLANO, com a primeira fatia JÁ IMPLEMENTADA** (`docs/README.md`).
 > Este documento é a saída da etapa 28: as sete perguntas do
-> [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md) §5 estão
+> [`../roadmaps/31`](31-simulacao-fisica-matematica.md) §5 estão
 > todas respondidas, e isto é a arquitetura que as respostas produzem.
 >
 > **O que EXISTE em código, medido em 2026-09-05 com o gate verde:**
@@ -63,7 +63,7 @@
 > antes de valer a pena o processo separado.
 >
 > Toda medição citada foi feita em **2026-09-05**, nesta máquina, e mora em
-> [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md) §8 a §14.
+> [`../roadmaps/31`](31-simulacao-fisica-matematica.md) §8 a §14.
 > Números aqui são referências, não medições novas.
 >
 > **O que este documento NÃO faz:** não reabre nenhuma decisão registrada, e não
@@ -1091,8 +1091,8 @@ removê-lo.
 
 ### 13.10 O oráculo entrou — 2026-09-10
 
-**A segunda escolha da §7 do [`../roadmaps/40`](../roadmaps/40-estado-e-continuidade.md)**,
-e o que ela conserta é a §19.0 do [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md):
+**A segunda escolha da §7 do [`../roadmaps/40`](../../../docs/roadmaps/40-estado-e-continuidade.md)**,
+e o que ela conserta é a §19.0 do [`../roadmaps/31`](31-simulacao-fisica-matematica.md):
 a coluna `exato` respondia por outra equação.
 
 **A decisão que governa o desenho, e ela não era óbvia:** o conserto **não é

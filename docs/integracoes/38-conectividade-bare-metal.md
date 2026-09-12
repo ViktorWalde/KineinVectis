@@ -8,7 +8,7 @@
 > `NOASSERTION`; o `espflash` vem como só `Apache-2.0` e é dual).
 >
 > **Por que existe.** A decisão do autor de 2026-09-11
-> ([`roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §5.7)
+> ([`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md) §5.7)
 > dizia *"ESP32-C3/C6/S3 existe mas NÃO pode ser plugado agora"* e o escopo era
 > *"ARM Cortex-M via probe-rs; RISC-V/ESP32 depois"*. **Na tarde do mesmo dia o
 > autor plugou um ESP32** — e pediu o mapa de como um microcontrolador bare

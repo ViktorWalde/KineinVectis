@@ -38,7 +38,6 @@ mongodb.workspace = true
 # Simulacao por conceito (arquitetura/34): avalia a formula que o usuario digita
 # e, antes disso, diz QUAIS variaveis ela usa — que e' o que a checagem de
 # conceito precisa e um compilador nao daria. ADR-0006.
-exmex.workspace = true
 # Portas seriais USB (docs/integracoes/38 §6, E1): `access(2)` sem abrir a porta.
 rustix.workspace = true
 

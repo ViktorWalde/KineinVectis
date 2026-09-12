@@ -142,7 +142,7 @@ sugerir kit      depende de mapear VID:PID -> chip, e esse mapa NAO existe
 ```text
 26  banco relacional + COFRE DE CREDENCIAL ANTES   §7.3 do roadmaps/35
 27  TimescaleDB e Grafana por HTTP API             Grafana e AGPL: API, nunca embutido
-28  simulacao: CALCULO sem tela                    §5.1 ja respondida
+28  (simulacao — SAIU do produto em 2026-09-12)
 29  polimento / pente-fino                         porta de entrada em §8
 ```
 

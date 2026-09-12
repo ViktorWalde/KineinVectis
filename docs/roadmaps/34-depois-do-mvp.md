@@ -47,8 +47,7 @@ B  ATRITO DIARIO MEDIDO          o que forca sair da Kinein para outra
 C  PROFUNDIDADE                  targets, contextos, brokers, debugger de
    (TR2)                         verdade, split/multicursor.
 
-D  SIMULACAO FISICA/MATEMATICA   roadmaps/31 — ESTUDO, nao fila. Vira etapa
-                                 quando as perguntas dele tiverem resposta.
+D  (era a simulacao — SAIU do produto em 2026-09-12, decisao do autor)
 ```
 
 ### A frente A não se paga de uma vez, e a evidência é o roadmap 30 inteiro
@@ -263,36 +262,11 @@ receber o `--target` e virou pasta.
 catraca vai barrar. Cortar e acrescentar na mesma fatia é o padrão que o roadmap
 30 usou cinco vezes.
 
-## 6. FRENTE D — a simulação física/matemática
+## 6. FRENTE D — simulação (REMOVIDA do produto em 2026-09-12)
 
-> **DEIXOU DE SER ESTUDO em 2026-09-05, e o texto abaixo é de 2026-09-02.**
-> As sete perguntas da §5 do [`31`](31-simulacao-fisica-matematica.md) estão
-> respondidas, a arquitetura está em
-> [`../arquitetura/34`](../arquitetura/34-simulacao-por-conceito.md), e o domínio
-> `sim` existe em código: 11 métodos IPC, catálogo de 20 conceitos, integrador
-> escalar **e** vetorial verificados por ordem de convergência, gráfico 2D nos
-> dois modos e persistência em `.kinein/simulacoes/`.
->
-> **A pergunta que o parágrafo abaixo trata como aberta foi respondida**, e a
-> resposta manteve o invariante: a UI segue **100% 2D**. Quem desenharia em
-> OpenGL é um processo `kinein-sim` separado, e ele **não existe ainda** — a
-> medição de 2026-09-05 mostrou que o quadro comprimido cabe no JSON-RPC
-> (1,42 MB/s a 30fps), então a memória compartilhada deixou de ser exigência do
-> transporte.
->
-> O que falta está na fila viva:
-> [`40`](40-estado-e-continuidade.md) §4 — o oráculo SymPy, o motor de EDP (com
-> o motor compilado como pré-requisito), a vista 3D e salvar um sistema.
-
-**Era ESTUDO até 2026-09-05, e era de propósito.** Ele lista as perguntas que precisam de
-resposta antes de existir arquitetura — e uma delas colide com um invariante já
-travado no gate: `scripts/verificar-appimage.sh` verifica que a UI é **100% 2D**
-(sem `ShaderEffect`, `QOpenGL`, `QRhi`, `QtQuick3D`), porque o AppImage força
-renderer por software.
-
-**A etapa, quando vier, é responder às perguntas do 31 e produzir arquitetura** —
-não começar a implementar. E a primeira pergunta é essa: OpenGL na mesma janela
-que hoje é garantidamente 2D, ou processo/janela separada?
+> A frente D saiu do produto por decisão do autor em 2026-09-12; o texto desta
+> seção está íntegro em `DocsPrivate/historico/simulacao/`. A numeração das
+> seções seguintes foi mantida.
 
 ## 7. Ordem linear recomendada
 
@@ -356,14 +330,12 @@ tem um custo escrito acima.
                                            GitHistoryController). SAIRAM os
                                            DOIS: 16 -> 14 arquivos em debito.
 
-18  Simulacao: responder as perguntas do   §6. Arquitetura, nao implementacao.
-    roadmaps/31                            SEGUE ABERTA — virou a frente G do
-                                           roadmaps/35 (2026-09-03).
+18  (simulacao — SAIU do produto em 2026-09-12; historico privado)
 ```
 
 > **Esta ordem FECHOU em 2026-09-03**, com 11, 11.1, 12, 13, 14, 15, 16 e 17
 > feitas. Só a 18 restou, e ela continua sendo estudo. O sucessor é
-> [35-ambiente-cpp-embarcados-simulacao.md](35-ambiente-cpp-embarcados-simulacao.md),
+> [35-ambiente-cpp-e-embarcados.md](35-ambiente-cpp-e-embarcados.md),
 > onde o autor definiu a frente principal (ambiente C/C++) e reordenou
 > embarcados.
 

@@ -66,9 +66,10 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**143 métodos IPC** roteados e **45 eventos**, em **34 domínios de protocolo**;
-**726 testes** Rust verdes e **34 harnesses QML** (remedido em 2026-09-12 no
-fim da tarde). Protocolo `0.96.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+**132 métodos IPC** roteados e **45 eventos**, em **33 domínios de protocolo**;
+**641 testes** Rust verdes e **27 harnesses QML** (remedido em 2026-09-12 à
+noite, depois de a simulação sair do produto: −11 métodos, −85 testes, −7
+harnesses). Protocolo `0.96.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -170,17 +171,6 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
             setup     o passo a passo OFICIAL de instalacao por distro, com
                       fonte e data. Sem fonte, a IDE mostra o link e diz que
                       nao tem passo a passo — nunca traduz comando de distro
-
-            sim       simulacao por conceito (0.83.0-0.88.0): catalogo de duas
-                      camadas, ligacao EXPLICITA de variaveis, integrador
-                      escalar e vetorial verificados por ORDEM DE CONVERGENCIA,
-                      e o ORACULO — que desde 2026-09-10 resolve a equacao que
-                      o usuario DIGITOU num processo externo opcional. A coluna
-                      `exato` tem PROCEDENCIA: sem ela, ela mentia por 78.000x.
-                      E desde 2026-09-10 as UNIDADES sao checadas nas formas que
-                      integram — argumento de transcendente, os termos entre si,
-                      e o lado esquerdo. O limite vai na tela junto: unidade que
-                      fecha nao quer dizer fisica certa
 
             serial    (0.91.0–0.92.0, 2026-09-11/12) as portas seriais USB pelo
                       sysfs, SEM ABRIR a porta (abrir aciona DTR/RTS e reseta a
@@ -365,7 +355,7 @@ honestidade e de hardening, não funcionalidade.
 decisão que ficou em aberto e foi **respondida em 2026-09-03**. O sucessor é
 [roadmaps/34-depois-do-mvp.md](roadmaps/34-depois-do-mvp.md): as quatro frentes
 do pós-MVP — dívida que cobra pedágio, atrito diário medido, profundidade (TR2)
-e a simulação —, cada item com o comando que mede se ainda está pendente. A
+e a simulação (esta removida do produto em 2026-09-12) —, cada item com o comando que mede se ainda está pendente. A
 recomendação de ordem começava por **uma pergunta ao autor**, não por código: o
 `EditorController.qml` em 791/400 (§3.2). Respondida em 2026-09-03 — a fila
 agora abre na fatia do `ShellWorkspaceHost.qml` (34 §7, etapa 11.1), **entregue
@@ -388,11 +378,11 @@ remote deploy & debug, SVD com escrita, sondas visuais — o que já existe
 medido e o que falta por pilar) e a **trilha Python completa** bare metal →
 edge → backend → banco (§9).
 
-A simulação física/matemática
-([roadmaps/31](roadmaps/31-simulacao-fisica-matematica.md),
-[arquitetura/34](arquitetura/34-simulacao-por-conceito.md)) está **fora do
-foco desde 2026-09-12, por decisão do autor**: o código do domínio `sim` fica
-e o gate o testa; nenhuma fatia nova sai dali até ele reabrir.
+A simulação física/matemática **saiu do produto em 2026-09-12, por decisão
+do autor** — código, documentos e decisões foram para o histórico privado
+(`DocsPrivate/historico/simulacao/`). O foco são dois contextos:
+desenvolvimento de software (Python, C/C++, Rust, banco de dados) e sistemas
+embarcados.
 
 Como o processo da UI e o do core conversam — boot, threads, ordem garantida,
 crash e recuperação — está em

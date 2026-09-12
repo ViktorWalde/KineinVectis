@@ -17,7 +17,6 @@ Column {
     property var settingsController: null
     property var libraryController: null
     property var dataSourceController: null
-    property var simController: null
     property var grafanaController: null
     property var embeddedController: null
     property var setupController: null
@@ -92,7 +91,6 @@ Column {
         case "tools.detect": root.coreClient.detectTools(); break;
         case "library.list": root.libraryController.open(); break;
         case "datasource.list": root.dataSourceController.open(); break;
-        case "sim.catalog": root.simController.open(); break;
         case "grafana.get": root.grafanaController.open(); break;
         case "probe.list": root.embeddedController.open(); break;
         case "setup.list": root.setupController.open(); break;

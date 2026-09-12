@@ -58,46 +58,31 @@
 > medido por `<prefix>size` do kit, com a fração usada de cada região do
 > linker script (`BuildSizeParams` → `SizeReport`). Método e tipos novos sobem
 > o minor. Detalhe na seção Build; a medição está no
-> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §5.7.
+> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md) §5.7.
 >
 > **O `0.89.0` (2026-09-11) acrescentou o ALVO REMOTO do depurador:**
 > `remoteTarget` e `debugServer` no `toolchain.setKit` e no `ToolchainResult`.
 > Com eles o adaptador `gdb` (que fala DAP desde a v14) faz `attach` a um
 > servidor GDB — QEMU, OpenOCD — que a IDE sobe e mata com a sessao, em vez de
 > `launch`. Campos novos no contrato sobem o minor. A medicao esta' no
-> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §5.7
+> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md) §5.7
 > e o ciclo completo e' provado no QEMU pelo `scripts/verificar-embarcado.sh`.
 >
-> **O `0.88.0` (2026-09-10) acrescentou o veredito de UNIDADE:**
-> `SimDimensionCheck` e `SimDimensionVerdict`, no `dimensions` do `sim.run`
-> (um) e do `sim.runSystem` (um por componente). Tipos novos no contrato sobem
-> o minor. A medicao que os sustenta esta no
-> [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md) §19.5 — e o
-> que ela achou primeiro foram TRES armadilhas que dariam veredito errado em
-> silencio.
+> **Os `0.83.0`–`0.88.0` (2026-09-05 → 2026-09-10) foram o domínio `sim`** —
+> a simulação por conceito, que **saiu do produto em 2026-09-12** por decisão
+> do autor (métodos `sim.*` e tipos `Sim*`). As notas destas
+> versões estão íntegras em `DocsPrivate/historico/simulacao/`; o número do
+> protocolo não volta atrás: versão é história, não inventário.
 >
-> **RECONFERIDO em 2026-09-10**, com o gate completo verde: `0.87.0`, **130
-> métodos**, **41 eventos**, **30 domínios**, e os 30 com seção aqui.
->
-> **O `0.87.0` não trouxe método novo — trouxe PROCEDÊNCIA.** O `SimAccuracy` do
-> `sim.run` ganhou `source` (`concept` ou `oracle`), `relativeError`,
-> `solvedBy` e `closedForm`, e o `SimRunResult`/`SimRunSystemResult` ganharam
-> `oracleNote`. O `source` é campo **obrigatório**, e é por isso que o minor
-> sobe: quem ler a resposta antiga não o encontra. A razão de ele existir está
-> medida no [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md)
-> §19.0 — sem ele a coluna `exato` respondia por outra equação, e errava por
-> 78.000x.
->
-> Antes disso, a sincronização de 2026-09-06 e os dois métodos da forma vetorial
-> (`sim.checkSystem` e `sim.runSystem`) — e **os comentários dentro dos
+> Antes disso, a sincronização de 2026-09-06 — e **os comentários dentro dos
 > comandos, que ainda diziam 128/130**. Comentário dentro de comando envelhece
 > igual a número solto; a diferença é que o gate não o vê.
 >
 > **Escopo, SINCRONIZADO em 2026-09-06 — e a dívida que este cabeçalho
 > declarava foi paga.** Em 2026-09-05 ele foi corrigido para parar de afirmar
 > cobertura que não tinha: cinco domínios estavam roteados pelo core e ausentes
-> daqui. **Os cinco agora têm seção**: `command.*`, `setup.*`, `datasource.*`,
-> `grafana.*` e `sim.*`, no fim do documento.
+> daqui. **Os cinco ganharam seção**: `command.*`, `setup.*`, `datasource.*`,
+> `grafana.*` e `sim.*` (este último removido com o domínio em 2026-09-12).
 >
 > **E a sincronização achou dois números errados — nos comandos que os provam.**
 > Ambos pela mesma causa: eles grepam literais sem saber o que os literais são.
@@ -1748,13 +1733,12 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 131 métodos roteados — a lista inteira
+## Os 132 métodos roteados — a lista inteira
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
-> Refeita em 2026-09-06 pelo comando do cabeçalho, agrupada por domínio, e
-> refeita de novo no mesmo dia quando a forma vetorial acrescentou
-> `sim.checkSystem` e `sim.runSystem`.
+> Refeita em 2026-09-06 pelo comando do cabeçalho, agrupada por domínio; os
+> `sim.*` saíram dela em 2026-09-12 com o domínio.
 
 ```text
 build.run
@@ -1892,17 +1876,6 @@ settings.set
 
 setup.list
 
-sim.catalog
-sim.checkFormula
-sim.checkSystem
-sim.estimate
-sim.evaluate
-sim.forget
-sim.inspectFormula
-sim.list
-sim.run
-sim.runSystem
-sim.save
 
 syntaxTree.update
 
@@ -1935,7 +1908,7 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 41 eventos emitidos — a lista inteira
+## Os 45 eventos emitidos — a lista inteira
 
 > **Era "Eventos iniciais", e faltavam três** — os dois do `datasource` e o do
 > `grafana`. Refeita em 2026-09-06. **Cinco não são literais no código**: eles
@@ -1986,6 +1959,7 @@ event.lsp.documentsClosed
 event.lsp.restarted
 event.lsp.status
 
+event.project.changed
 event.quality.diagnostic
 event.quality.finished
 event.quality.output                <- so por format!
@@ -2536,91 +2510,6 @@ do projeto, que é a pergunta que nenhuma das duas ferramentas responde sozinha.
 
 O token segue a mesma regra da senha: `GrafanaTokenSource` diz de onde ele vem,
 e o valor viaja por chamada.
-
-## `sim.*` — a simulação por conceito
-
-Domínio da etapa 28. **Onze métodos**, nenhum evento — as corridas de hoje
-terminam dentro da resposta. O desenho está em
-[`34-simulacao-por-conceito.md`](34-simulacao-por-conceito.md), e os tipos em
-`crates/kinein-protocol/src/sim.rs`.
-
-```text
-sim.catalog        { course? }                     -> { concepts: [SimConcept] }
-sim.inspectFormula { formula }                     -> { variables: [String] }
-sim.checkFormula   { concept, formula, bindings }  -> SimCheckResult
-sim.evaluate       { concept, formula, bindings, values }        -> SimEvaluateResult
-sim.estimate       { duration, step, samples }     -> SimEstimateResult
-sim.run            { concept, formula, bindings, values, initial,
-                     duration, step, method, samples }           -> SimRunResult
-sim.list           {}                              -> { simulations: [SimSaved] }
-sim.save           { simulation }
-sim.forget         { name }
-
-sim.checkSystem    { concept, equations }          -> SimCheckSystemResult
-sim.runSystem      { concept, equations, values, initial,
-                     duration, step, method, samples }  -> SimRunSystemResult
-```
-
-**Os dois últimos são a forma VETORIAL** (`dY/dt = F(t, Y)`), entrada em
-2026-09-06 e desenhada em [`34`](34-simulacao-por-conceito.md) §13. O
-`equations` traz **uma fórmula por componente**, cada uma com a ligação dela, e
-a ORDEM da lista não importa: o core casa pelo campo `component`, porque supor
-que a n-ésima fórmula é do n-ésimo componente seria adivinhar.
-
-**O método `eulerSymplectic` é recusado quando o conceito não declara o
-pareamento posição/velocidade**, com `reason: "noPairing"`. Não é limitação a
-contornar: sem o par, o método não está definido. E ele importa — medido numa
-órbita circular de raio verdadeiro 1 com `dt=0,01` por dez voltas, o Euler
-explícito termina com raio `1,647957` e o simplético com `1,000024`.
-
-**O `SimRunSystemResult` traz DOIS sinais de exatidão**, e o segundo não existia
-na forma escalar:
-
-```text
-accuracy     o erro contra a solucao fechada, quando ela existe. Na orbita ela
-             vale so' no caso CIRCULAR — a eliptica exige a equacao de Kepler,
-             que e' transcendental, e o oraculo recusa em vez de aproximar
-invariants   a DERIVA de cada grandeza que a fisica conserva. Existe mesmo sem
-             solucao fechada, e e' o unico sinal que um sistema caotico admite.
-             A tela chama de DERIVA e nunca de erro: invariante conservado nao
-             significa resultado certo
-```
-
-**Os seis primeiros não exigem workspace** — montar e conferir uma fórmula não
-depende de projeto aberto. Os três últimos exigem, porque a persistência mora em
-`.kinein/simulacoes/`.
-
-**A decisão que governa cada tipo deste domínio: nada é adivinhado.** Todo campo
-que decide um resultado é **obrigatório** — não há método padrão, passo padrão
-nem amostragem padrão. A IDE calcula e MOSTRA; quem escolhe é o usuário.
-
-**A ligação é dado do usuário, nunca casamento por nome.** O `SimBinding` diz
-qual grandeza cada variável da fórmula é. Isso não é rigor: o avaliador devolve
-as variáveis em ordem **alfabética**, e montar o vetor de avaliação pela ordem de
-leitura da fórmula produz um número com a física errada e **sem erro nenhum**
-(ADR-0006, armadilha 1).
-
-**O `sim.estimate` existe porque contar passos é regra de negócio.** A IDE mostra
-o custo antes de rodar — quantos passos, quanto a trilha ocuparia inteira e
-amostrada, e se compilar valeria a pena nesta escala. A UI pergunta e desenha;
-ela não faz a conta (`ARCHITECTURE.md` §2).
-
-**O `SimCheckResult` devolve TODOS os problemas, não o primeiro**, cada um como
-uma variante tipada — `parseFailed`, `missingQuantity`, `unboundVariable`,
-`unknownQuantity`, `duplicateQuantity`, `variableNotInFormula` — para a UI nunca
-casar por texto de mensagem. E o erro de parse carrega a mensagem **da IDE**: o
-texto do avaliador tem endereço de ponteiro dentro e nunca é repassado.
-
-**O `SimRunResult.accuracy` só existe quando o conceito tem solução fechada**, e
-a tela **diz** quando não tem, em vez de omitir a coluna e deixar parecer que o
-número é exato.
-
-> **Defeito conhecido, medido em 2026-09-06 e registrado em `../roadmaps/31`
-> §19.0:** o `accuracy` vem do CONCEITO e não olha a fórmula digitada. Quando as
-> duas divergem — o que o `sim.checkFormula` permite, porque ele confere ligação
-> e não física — o `absoluteError` é calculado contra a solução de outra equação.
-> Reproduz com `python3 scripts/exercitar-sim-oraculo.py`. O conserto depende de
-> decisão de desenho e está na fila do `../roadmaps/40` §4.
 
 ## `core.*` — o handshake e o encerramento
 

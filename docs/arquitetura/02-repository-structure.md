@@ -53,7 +53,7 @@ kinein-vectis/
 │   │   ├── handlers/            roteadores por dominio (blocos impl Core)
 │   │   │   └── build cargo cmake configaction datasource debug draft format fs
 │   │   │      container git grafana index jobs library probe project run
-│   │   │      runconfig serial settings setup sim syntax terminal toolchain
+│   │   │      runconfig serial settings setup syntax terminal toolchain
 │   │   │      tools workspace
 │   │   │
 │   │   ├── build/               mod parse
@@ -82,11 +82,6 @@ kinein-vectis/
 │   │   ├── lsp/                 manager session sync server framing parse
 │   │   │                        parse_symbols transaction edit uri types
 │   │   ├── setup/               catalog distro
-│   │   ├── sim/                 catalogo entradas entradas_sistema formula corrida
-│   │   │                        corrida_sistema integrador sistema exata invariante
-│   │   │                        persistencia
-│   │   │   └── oraculo/         mod (a fachada) programa (o Python embutido)
-│   │   │                        processo (o transporte) portao (o que se aceita)
 │   │   ├── terminal/            session state render input error
 │   │   ├── toolchain/           catalog store
 │   │   ├── workspace/           detect open create session recent error
@@ -95,8 +90,8 @@ kinein-vectis/
 │   ├── kinein-protocol/src/     um modulo por dominio, re-exportado plano do lib.rs
 │   │   └── rpc command core tools workspace fs run terminal lsp syntax git build
 │   │      cargo cmake configaction datasource debug diagnostic draft format
-│   │      grafana job library probe runconfig settings setup sim sim_corrida
-│   │      sim_sistema toolchain
+│   │      grafana job library probe runconfig settings setup
+│   │      toolchain serial container project index
 │   │
 │   ├── kinein-config/src/lib.rs
 │   └── kinein-cli/src/          main.rs lib.rs commands.rs error.rs
@@ -118,7 +113,7 @@ kinein-vectis/
 │       ├── workspace/           picker, Start Screen e Project Health
 │       └── command/ configaction/ datasource/ debug/ diagnostics/ embedded/
 │           git/ grafana/ jobs/ library/ project/ runtime/ search/ settings/
-│           setup/ sim/ toolchain/
+│           setup/ toolchain/
 │
 ├── scripts/                     gates, sondas, ambiente, launcher, packaging
 │   └── qml-harness/             tst_*.qml — logica QML headless

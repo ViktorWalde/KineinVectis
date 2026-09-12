@@ -2,7 +2,7 @@
 
 > **Classe: DECISÃO PENDENTE** (`docs/README.md`). Este documento **não**
 > descreve código que existe. Ele existe porque o
-> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §7.3
+> [`../roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md) §7.3
 > registrou uma regra dura:
 >
 > > *"Nenhuma linha de conexão a banco entra antes dessa pergunta ter dono."*

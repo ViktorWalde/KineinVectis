@@ -3,7 +3,7 @@
 > **FORA DO FOCO desde 2026-09-12 — decisão do autor** (*"esquece a parte de
 > simulação física/matemática; vamos refinar ao máximo para sistemas embarcados
 > e desenvolvimento de software"*, registrada no
-> [`40`](40-estado-e-continuidade.md) §5). O código do domínio
+> [`40`](../../../docs/roadmaps/40-estado-e-continuidade.md) §5). O código do domínio
 > `sim` e o `kinein-sim` ficam como estão e o gate continua a testá-los;
 > nenhuma fatia nova sai daqui. Este documento permanece como registro para o
 > dia em que o autor reabrir.
@@ -14,7 +14,7 @@
 > dizia *"nenhuma das perguntas da §5 tem resposta hoje"*. **As sete estão
 > respondidas**, a medição que as sustenta está nas §8 a §13, e a arquitetura que
 > elas produzem está em
-> [`../arquitetura/34`](../arquitetura/34-simulacao-por-conceito.md).
+> [`../arquitetura/34`](34-simulacao-por-conceito.md).
 >
 > **O que continua verdade:** nenhuma linha de código foi escrita, e isto não
 > cria fila — a fila é o `30-caminho-para-o-mvp.md`.
@@ -355,7 +355,7 @@ de dados por frame e a resposta de "o que dói hoje" —, não um diagrama.
 ### 8.0 O gate não estava verde ao abrir a sessão — e não era código
 
 A regra zero mandou medir antes de aceitar estado, e a primeira coisa medida foi
-o próprio gate. O [`40`](40-estado-e-continuidade.md) o registrava verde em
+o próprio gate. O [`40`](../../../docs/roadmaps/40-estado-e-continuidade.md) o registrava verde em
 2026-09-04. Em 2026-09-05 ele **reprovava**, no último passo:
 
 ```text
@@ -382,7 +382,7 @@ verde. Não houve mudança de código.
 > antes da troca de Qt ficaram no link (o rpm instala header com mtime de maio,
 > e o ninja compara mtime), e o binário abortava ao abrir com o gate verde. A
 > metade **silenciosa** desta falha nasceu gate, o 20º —
-> [`40`](40-estado-e-continuidade.md) §7.7.
+> [`40`](../../../docs/roadmaps/40-estado-e-continuidade.md) §7.7.
 
 **E resolver um não resolve o outro.** Reconfigurado só o `dev-local`, o gate
 avançou e reprovou de novo, no passo seguinte, com a mesma mensagem — porque
@@ -1345,7 +1345,7 @@ demanda, **se não derem, a IDE mostra outra simulação e diz que é a mesma.**
 está disponível — mas ele deixa de ser propriedade feliz e passa a ser condição.
 
 O desenho que sai disso está em
-[`../arquitetura/34`](../arquitetura/34-simulacao-por-conceito.md) §7.1.
+[`../arquitetura/34`](34-simulacao-por-conceito.md) §7.1.
 
 ## 15. "Tudo": a grade inteira medida contra o SymPy, em 2026-09-05
 

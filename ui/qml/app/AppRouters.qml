@@ -125,20 +125,6 @@ Item {
         dataSourceController: root.domains.dataSourceController
     }
 
-    SimEventRouter {
-        coreClient: root.domains.coreClient
-        simController: root.domains.simController
-        simRunController: root.domains.simRunController
-        simSystemController: root.domains.simSystemController
-    }
-
-    SimRequestRouter {
-        coreClient: root.domains.coreClient
-        simController: root.domains.simController
-        simRunController: root.domains.simRunController
-        simSystemController: root.domains.simSystemController
-    }
-
     GrafanaEventRouter {
         coreClient: root.domains.coreClient
         grafanaController: root.domains.grafanaController

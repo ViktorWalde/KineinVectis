@@ -357,9 +357,7 @@ empacotamentos, e a primeira é a que mais importa:
 força `QT_QUICK_BACKEND=software`, e isso só funciona porque a UI não tem uma
 linha de `ShaderEffect`/OpenGL. No dia em que alguém acrescentar aceleração,
 essa garantia morre **em silêncio**: build passa, gate passa, e só o usuário com
-driver ruim descobre. É exatamente a colisão que o
-[31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md) §5.1
-deixa em aberto — agora com um gate segurando a porta.
+driver ruim descobre. Agora há um gate segurando a porta.
 
 *Provado por mutação*, cinco vezes: um `ShaderEffect` na UI, o hook trocando
 para `auto`, o smoke deixando de checar o renderer, um pino sem checksum, e uma
@@ -443,15 +441,9 @@ distribui. As demais são o que transforma MVP em ferramenta de uso diário — 
 **Esta lista fechou em 2026-09-02** (9 etapas feitas, a 6 paga em parte com uma
 decisão em aberto). O sucessor é
 [34-depois-do-mvp.md](34-depois-do-mvp.md): as quatro frentes do pós-MVP —
-dívida que cobra pedágio, atrito diário medido, profundidade (TR2) e a
-simulação — cada uma com o comando que mede se ainda está pendente.
-
-O horizonte mais distante — **simulação física/matemática
-montada por layout, calculada pela IDE e exibida em OpenGL**, pedida pelo autor em
-2026-09-01 — está registrado em
-[31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md) como
-**estudo, não fila**: ele lista as perguntas que precisam de resposta antes de
-existir arquitetura, e não compete por prioridade com nenhuma etapa acima.
+dívida que cobra pedágio, atrito diário medido e profundidade (TR2) — cada
+uma com o comando que mede se ainda está pendente. (A quarta frente, a
+simulação, saiu do produto em 2026-09-12 por decisão do autor.)
 
 ## 4. O que esta lista deliberadamente NÃO inclui
 

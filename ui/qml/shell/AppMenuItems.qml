@@ -138,8 +138,6 @@ Item {
                 // Containers nao exigem projeto: o motor e' da maquina.
                 { label: qsTr("Containers..."), action: "container.list",
                   enabled: true },
-                { label: qsTr("Simulação..."), action: "sim.catalog",
-                  enabled: true },
                 { label: qsTr("Instalar ferramentas..."), action: "setup.list",
                   enabled: true },
                 { label: qsTr("Toolchain e kits..."), action: "toolchain.get",

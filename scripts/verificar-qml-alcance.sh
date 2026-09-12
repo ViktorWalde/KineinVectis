@@ -5,7 +5,8 @@
 # entregue em 2026-09-06 e a tela dele nunca foi ligada. O `SimPlotSystem.qml`
 # estava no `QML_FILES` do `CMakeLists`, tinha harness proprio que passava, e
 # nao era instanciado em lugar nenhum do app; o `SimSystemController` nascia no
-# `AppDomains` e ninguem o lia.
+# `AppDomains` e ninguem o lia. (O dominio de simulacao saiu do produto em
+# 2026-09-12 por decisao do autor; o gate fica — a classe de falha e' geral.)
 #
 #   MEDIDO em 2026-09-07, com o buraco de pe:
 #     cmake --build --preset dev-local        EXIT=0

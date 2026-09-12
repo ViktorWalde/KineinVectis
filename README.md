@@ -35,9 +35,13 @@ distribuída como AppImage para Linux x86_64.
 - **banco de dados** nativo (PostgreSQL/TimescaleDB, SQLite e MongoDB): perfil
   sem senha em disco, teste de conexão e leitura de esquemas, tabelas e colunas;
 - **observabilidade**: o Grafana pela HTTP API;
-- **simulação física e matemática**: catálogo de conceitos, a equação escrita
-  por você, integração numérica com o erro exibido ao lado do resultado, e
-  gráfico 2D.
+- **embarcados**: portas seriais vistas sem serem abertas, monitor serial na
+  aba de terminal, o modelo do projeto (ESP-IDF, Zephyr, pico-sdk, PlatformIO,
+  STM32Cube, Rust bare metal, MicroPython, Yocto, Buildroot), ciclo provado no
+  QEMU com `gdb -i dap`;
+- **containers** nativos (Docker ou Podman, pela mesma CLI);
+- **o projeto inteiro lido**: índice próprio de pastas, arquivos e declarações
+  de C/C++/Rust/Python, com o contexto de compilador de cada arquivo.
 
 Não há IA embutida, chat nem painel de assistente: agentes de linha de comando
 (Claude Code, Codex, …) rodam no terminal da IDE como qualquer outro programa.

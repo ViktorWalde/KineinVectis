@@ -4,7 +4,7 @@
 > arquivo do projeto quando o detector automático falhou — o que aconteceu em
 > 1 das 2.
 >
-> **Frente H do [`roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md).**
+> **Frente H do [`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md).**
 > Candidatas, **nenhuma adotada**: a adoção passa pelo checklist de
 > [`README.md`](README.md).
 

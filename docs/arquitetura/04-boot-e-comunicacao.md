@@ -36,7 +36,7 @@
 sem escolha, o comportamento é byte a byte o de antes —, e `probe-rs` entra com
 o subcomando `dap-server`, que faz ele falar DAP **por stdin/stdout**: a mesma
 forma que este diagrama já descreve. Ver
-[`roadmaps/35`](../roadmaps/35-ambiente-cpp-embarcados-simulacao.md) §5.3 e
+[`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md) §5.3 e
 [`integracoes/36`](../integracoes/36-ferramentas-de-embarcados.md) §3.
 
 **A UI é o pai e o core é o filho, não o contrário.** Isso decide três coisas

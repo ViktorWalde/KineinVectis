@@ -17,9 +17,6 @@ Item {
     property real hostHeight: 0
     property var libraryController: null
     property var dataSourceController: null
-    property var simController: null
-    property var simRunController: null
-    property var simSystemController: null
     property var grafanaController: null
     property var embeddedController: null
     // O painel de embarcados edita o KIT (chip, alvo, depurador), que mora aqui.
@@ -54,18 +51,6 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.dataSourceController.close()
-    }
-
-    SimPanelHost {
-        anchors.fill: parent
-        visible: root.simController.panelVisible
-        z: 99
-        controller: root.simController
-        runController: root.simRunController
-        systemController: root.simSystemController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.simController.close()
     }
 
     GrafanaPanelHost {

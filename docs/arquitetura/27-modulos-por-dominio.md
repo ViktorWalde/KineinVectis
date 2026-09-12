@@ -220,7 +220,7 @@ A (b) também responde à exigência do autor de que **os limites acompanhem o
 crescimento do projeto sem que a realidade de hoje trave o amanhã**. E responde
 da única forma que não apodrece: dividida por área, cada arquivo fica pequeno e
 o que cresce é a **contagem** de arquivos, não o tamanho de cada um. Domínio novo
-(embarcados, simulação) traz arquivos novos e a catraca nem percebe — porque
+(embarcados, containers) traz arquivos novos e a catraca nem percebe — porque
 nascem dentro do limite. Ver `ARCHITECTURE.md` §4 regra 8.
 
 ### 4.4 Execução da (b): o corte, medido e pronto para rodar
@@ -345,109 +345,15 @@ irmãos por `pub(in crate::terminal)`, em vez de renomear a variável `span` no
 teste de sessão para escapar do `grep`. Um teste de sessão afirma que a saída
 apareceu; ele não conhece a forma do contrato.
 
-## 6. Horizonte registrado — subsistema opcional (o simulador OpenGL)
+## 6. Horizonte registrado — subsistema opcional (REMOVIDO em 2026-09-12)
 
-> **ATUALIZADO em 2026-09-05: isto deixou de ser horizonte.** O domínio `sim`
-> existe em código, com nove métodos, catálogo, integrador verificado por ordem
-> de convergência e tela. O desenho está em
-> [`34-simulacao-por-conceito.md`](34-simulacao-por-conceito.md); a medição que
-> o sustenta, em [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md)
-> §8 a §18.
->
-> **O que esta seção ainda decide, e continua valendo:** a colisão da §6.2 (o
-> AppImage força renderer por software, e é isso que faz a IDE abrir em qualquer
-> máquina). Ela segue intacta — o gráfico 2D de hoje é `Canvas` raster, e a GPU
-> só aparece quando o processo `kinein-sim` nascer, que ainda não aconteceu.
->
-> **O texto abaixo é de 2026-07-16 e fica como registro** de quando o simulador
-> era menção de exemplo, não pedido de trabalho. Ele explica por que a colisão
-> foi encontrada antes de custar caro.
->
-> **Ordem real do projeto, decidida pelo autor:**
->
-> ```text
-> 1. Solidificar C/C++ e Rust na IDE          <- e aqui que a arquitetura mira AGORA
-> 2. Solidificar embarcados, de forma profissional
-> 3. So entao simulacao fisica/matematica
-> ```
->
-> Até o passo 3 vai levar tempo. As frentes 1 e 2 deste documento (UI por
-> domínio, catraca no core) servem ao passo 1 e não dependem de nada daqui.
-
-O que o autor descreveu quando chegar a vez: simulador integrado usando OpenGL,
-**desativado por padrão**, que o usuário instala/ativa.
-
-**Atualização de 2026-09-01:** o autor acrescentou ao pedido a **autoria por
-layout** (montar a simulação e digitar a fórmula na tela) e o **cálculo feito
-pela IDE** a partir de um conceito físico/matemático selecionado. Isso não
-invalida nada desta seção — mas põe em tensão a saída (a) da §6.3, porque
-"calcular" e "desenhar com GPU" passariam a viver em processos diferentes. O
-estudo, com as perguntas ainda em aberto, está em
-`docs/roadmaps/31-simulacao-fisica-matematica.md`. Continua **fora de escopo
-atual**.
-
-O valor de registrar agora é um só: a 6.2 mostra que essa feature **colide com
-uma garantia já conquistada** do AppImage. Saber disso desde já evita que as
-decisões dos passos 1 e 2 fechem a porta — não obriga a abri-la hoje.
-
-### 6.1 A linha, e ela já tem precedente
-
-```text
-DETECTAR o simulador existe?    → CAPACIDADE. ToolDetector, como claude/codex.
-ATIVAR   o usuario quer?        → POLITICA. Settings + UI.
-EXECUTAR como roda?             → FRONTEIRA. Fora do nucleo.
-```
-
-O passo 1 do §0.2f já provou o padrão: o core detecta `claude` como detecta
-`cargo`, sem ramo por programa. Simulador é o mesmo caso.
-
-### 6.2 A descoberta que muda o desenho
-
-**O AppImage força `QT_QUICK_BACKEND=software` por padrão, de propósito.**
-`packaging/appimage/kinein-portable-graphics-hook.sh` faz
-`KINEIN_GRAPHICS_BACKEND:-software`, e a razão está registrada: o driver do host
-não criava contexto RHI/OpenGL e a UI abortava antes do primeiro frame. A raster
-oficial do Qt Quick desacoplou a abertura de EGL/Mesa/NVIDIA em Wayland e X11. E
-isso só é possível porque **a UI hoje é 100% 2D** — não há uma linha de
-`ShaderEffect`, `QQuickFramebufferObject` ou OpenGL em `ui/`.
-
-O simulador precisa de GPU. Logo:
-
-> Ativar o simulador **colide de frente com a garantia de abertura do AppImage**.
-> Não é detalhe de implementação: é decisão de arquitetura, e tem de ser tomada
-> antes da primeira linha de simulador.
-
-### 6.3 As duas saídas reais
-
-**(a) Simulador em processo próprio, com contexto GL próprio — RECOMENDADA.**
-A UI da IDE continua raster e continua abrindo em qualquer máquina. O simulador é
-um binário separado (`kinein-sim`), detectado como ferramenta, lançado como job,
-falando o **mesmo JSON-RPC stdio** que o core já fala. Se a GPU do usuário falhar,
-falha o simulador — não a IDE. É a lição do host de extensões do VS Code
-(isolamento por processo) sem importar a máquina dele. Pela §6 da
-`ARCHITECTURE.md`, nasce como `crates/kinein-core/src/sim/` e vira crate
-`kinein-sim` quando ganhar corpo — o nome já fica certo desde o início.
-
-**(b) A UI inteira passa a hardware quando o simulador é ativado.**
-`KINEIN_GRAPHICS_BACKEND=hardware` já existe como opt-in reversível, então o
-mecanismo está pronto — mas exige reinício e devolve a IDE inteira à dependência
-de driver que o AppImage evitou. Um bug de GPU volta a impedir a IDE de abrir,
-não só o simulador.
-
-A (a) preserva o que já foi conquistado. A (b) é mais simples de escrever e mais
-cara de manter.
-
-### 6.4 Regra do opt-in, independente da saída escolhida
-
-```text
-- Desativado por padrao significa CUSTO ZERO: sem instancia, sem thread, sem
-  binding. Precedente: TerminalGeometryOverlay atras de Loader (sem a env, o
-  Loader nao instancia).
-- O nucleo nao pode ter `if simulador_ativo` espalhado. Ou o modulo existe e
-  responde, ou nao existe. Fronteira, nao condicional.
-- Embarcados e simulacao entram como DOMINIOS (`sim/`, `target/`), no mesmo
-  molde dos demais — nao como camada nova nem como excecao.
-```
+> Esta seção descrevia o simulador OpenGL como subsistema opcional e a colisão
+> dele com o renderer por software do AppImage (§6.2). A simulação **saiu do
+> produto em 2026-09-12** por decisão do autor; o texto está íntegro em
+> `DocsPrivate/historico/simulacao/`. O que dela continua valendo para
+> qualquer subsistema futuro que peça GPU: o AppImage força renderer por
+> software, e é isso que faz a IDE abrir em qualquer máquina — um subsistema
+> com GPU nasce como processo separado, opt-in, nunca dentro do processo da UI.
 
 ## 7. Nomes explícitos por responsabilidade
 
@@ -455,7 +361,7 @@ Exigência do autor, e ela vira regra verificável:
 
 ```text
 - Arquivo diz O QUE FAZ, nao onde esta: EditorRequestRouter, nao EditorUtils2.
-- Pasta = dominio (editor/, git/, sim/), nunca tipo de arquivo (helpers/, utils/).
+- Pasta = dominio (editor/, git/, serial/), nunca tipo de arquivo (helpers/, utils/).
 - Sufixo carrega a responsabilidade e o limite da catraca depende dele:
     *Controller  estado + decisao   (400)
     *Router      transporte IPC     (300)

@@ -344,7 +344,7 @@ Regras que mantêm isso saudável:
    ficou maior — precisam existir **mais** controllers. Um projeto com 12
    domínios tem 12 arquivos de domínio, não um arquivo de 1000 linhas. É isso
    que faz a regra escalar: o que cresce é a **contagem** de módulos, não o
-   tamanho de cada um. Quando um domínio novo nasce (embarcados, simulação), ele
+   tamanho de cada um. Quando um domínio novo nasce (embarcados, containers), ele
    traz arquivos novos e a catraca nem percebe — porque nascem dentro do limite.
 
    **A exceção legítima é o composition root**, cujo tamanho é função do número

@@ -5,7 +5,7 @@
 > **Sigla visual:** KV  
 > **Foco técnico:** C, C++ e Rust  
 > **Foco inicial do produto:** sistemas embarcados, Linux embarcado, software embarcado e aplicações de alto nível em C++/Rust  
-> **Direção de longo prazo:** toolchains, CMake, Cargo, debug, deploy, targets, OpenGL, simulação física/matemática e engenharia de sistemas
+> **Direção de longo prazo:** toolchains, CMake, Cargo, Python, debug, deploy, targets, Linux embarcado e engenharia de sistemas
 
 Este documento define a **Parte 4** do sistema de produto da Kinein Vectis: os fluxos centrais que fazem a IDE ser útil na prática.
 
@@ -215,7 +215,6 @@ Não inclui ainda:
 - flash em placa;
 - debug remoto;
 - QEMU completo;
-- simulação OpenGL;
 - análise profunda de linker script;
 - auto-correção de CMakeLists.txt.
 ```
@@ -291,12 +290,12 @@ Inclui:
 - debug remoto como fluxo separado.
 ```
 
-### 4.5. MVP 4 — Simulação e QEMU
+### 4.5. MVP 4 — Emulação (QEMU)
 
 Objetivo:
 
 ```text
-Adicionar simulação e emulação como workbench próprio, sem poluir o fluxo padrão.
+Adicionar emulação como workbench próprio, sem poluir o fluxo padrão.
 ```
 
 Inclui futuramente:
@@ -304,11 +303,8 @@ Inclui futuramente:
 ```text
 - QEMU targets;
 - viewer de logs;
-- integração com OpenGL viewport;
 - painéis de telemetria;
-- plots;
-- simulação física/matemática;
-- profiles de execução de simulação.
+- plots.
 ```
 
 ---
@@ -1769,8 +1765,7 @@ Jobs:
 - cargo metadata;
 - run process;
 - debug session;
-- indexação futura;
-- simulation futura.
+- indexação futura.
 ```
 
 Cada job deve ter:
@@ -2185,8 +2180,7 @@ A Kinein deve ser familiar, mas não clone.
 - foco em toolchain visível;
 - CMake como cidadão de primeira classe;
 - Rust como cidadão de primeira classe;
-- sistemas e embedded desde o design inicial;
-- simulação futura sem poluir o MVP.
+- sistemas e embedded desde o design inicial.
 ```
 
 ---
@@ -2282,7 +2276,6 @@ Para proteger qualidade, não implementar nesta etapa:
 
 ```text
 - marketplace de plugins;
-- simulação OpenGL;
 - QEMU completo;
 - flash em placa real;
 - suporte profundo a Make/Meson/Bazel;
@@ -2360,7 +2353,7 @@ Implemente a Parte 4 da Kinein Vectis com foco em fluxos de produto para Toolcha
 
 Priorize a implementação em camadas: modelos, job system, tool detection, toolchain validation, CMake configure, build, problems parser, run local e debug MVP. A UI Qt/QML deve apenas solicitar ações e renderizar estado; o Rust core deve executar processos, validar ferramentas, gerenciar jobs, parsear saída e emitir eventos.
 
-Não implemente simulação OpenGL, QEMU completo, flash real, plugin marketplace ou IA que altera código automaticamente nesta etapa. Mantenha a experiência JetBrains-like na previsibilidade: editor no centro, toolbar compacta, tool windows claras, status bar informativa e feedback discreto.
+Não implemente QEMU completo, flash real, plugin marketplace ou IA que altera código automaticamente nesta etapa. Mantenha a experiência JetBrains-like na previsibilidade: editor no centro, toolbar compacta, tool windows claras, status bar informativa e feedback discreto.
 
 Ao implementar, sempre exponha: comando real executado, estado do job, logs, problemas estruturados, ações de correção e mensagens compreensíveis para o usuário.
 ```
@@ -2385,6 +2378,6 @@ Jobs
 Assistente
 ```
 
-O usuário pode começar com C/C++ local, migrar para Rust, avançar para Linux embarcado e depois chegar em simulação sem que a IDE precise mudar de filosofia.
+O usuário pode começar com C/C++ local, migrar para Rust ou Python, e avançar para Linux embarcado e bare metal sem que a IDE precise mudar de filosofia.
 
 A Kinein deve ser uma IDE para engenharia de sistemas: confortável, explícita, visual, rigorosa e útil.

@@ -326,7 +326,6 @@ raiz                README · MANUAL · Tutorial · COMO_EXECUTAR (+ faixa X)
 | `docs/roadmaps/28-plataforma-de-plugins-e-verticais.md` | plataforma `integration` v1; Docker e banco como domínios NATIVOS, não plugins |
 | `docs/roadmaps/29-verticais-de-linguagem.md` | C/C++, Rust e Python medidos por linguagem; onde está o risco proprietário (Pylance) |
 | `docs/roadmaps/30-caminho-para-o-mvp.md` | as 10 etapas do MVP em ordem linear. **Fechado em 2026-09-02** |
-| `docs/roadmaps/31-simulacao-fisica-matematica.md` | ESTUDO da simulação por layout + OpenGL. Não é fila |
 | `docs/arquitetura/32-editor-por-responsabilidade.md` | o editor cortado em quatro donos; a decisão do `EditorController` que ficou EM ABERTO |
 | `docs/arquitetura/33-busca-no-projeto.md` | os três buscadores, o casamento multi-linha e por que a sintaxe `\n` mora na UI |
 | `docs/roadmaps/34-depois-do-mvp.md` | sucessor do 30: as quatro frentes do pós-MVP, medidas, com a ordem linear recomendada |
@@ -749,64 +748,12 @@ ui/qml/Main.qml
   janela é responsabilidade do shell Qt, não do core/IPC. Aceite é visual em
   Wayland/X11 (`docs/roadmaps/20`).
 
-### 5.9b Simulação por conceito (etapa 28)
+### 5.9b (era a simulação por conceito — REMOVIDA em 2026-09-12)
 
-```text
-ui/qml/sim/SimController.qml         o conceito, a formula ESCALAR, a ligacao,
-                                     os VALORES dos parametros e as salvas
-ui/qml/sim/SimRunController.qml      a escolha NUMERICA — metodo, passo, duracao,
-                                     amostragem. Vale para as DUAS formas
-ui/qml/sim/SimSystemController.qml   a autoria VETORIAL: `n` equacoes, `n`
-                                     ligacoes, `n` estados iniciais
-ui/qml/ipc/{SimEventRouter,SimRequestRouter}.qml
-ui/src/core_client_sim.cpp           pedidos + dispatch do dominio
-ui/qml/sim/SimPanelHost.qml          onde os TRES controllers se encontram
-ui/qml/sim/SimPanel.qml              escolhe o RAMO: escalar ou vetorial
-ui/qml/sim/Sim{FormulaField,BindingTable,ValueTable,Calculation,
-                RunControls,RunResultView,Plot2d}.qml          ramo ESCALAR
-ui/qml/sim/Sim{SystemAuthoring,ComponentEquation,SystemAccuracy,
-                SystemResultView,PlotSystem}.qml               ramo VETORIAL
-ui/qml/sim/Sim{AccuracyProvenance,DimensionsView}.qml   os DOIS, procedencia
-                                                        do exato e as unidades
-ui/qml/sim/SimFormat.qml             singleton: como um numero de simulacao
-                                     aparece, num dono so'
-    ↕ crates/kinein-protocol/src/{sim,sim_corrida}.rs
-crates/kinein-core/src/handlers/sim.rs
-    → crates/kinein-core/src/sim/{catalogo,entradas,entradas_sistema,formula,
-        corrida,corrida_sistema,integrador,sistema,exata,invariante,
-        persistencia}.rs
-    → crates/kinein-core/src/sim/oraculo/{mod,programa,processo,portao}.rs
-        ↕ python3 + SymPy, processo EXTERNO e opcional (a fronteira do GDB)
-```
-
-- **Nada é adivinhado** (`docs/arquitetura/34` §2.1). Campo começa vazio, a
-  ligação variável→grandeza é escolha do autor, e a IDE nunca preenche nem
-  corrige um número dele. Casar por nome é a dedução que erra calada.
-- **O catálogo tem duas camadas:** o CONCEITO que o usuário conhece por cima, a
-  FORMA matemática por baixo. Conceito novo é uma entrada em `entradas.rs` ou
-  `entradas_sistema.rs`, não código novo.
-- **Qual ramo a tela mostra vem do catálogo** (`concept.form`), nunca de olhar a
-  fórmula. Um conceito `odeSystem` na tela escalar aceita fórmula algébrica e
-  devolve número — foi o defeito de 2026-09-06, medido contra o binário real.
-- **O simplético exige pareamento DECLARADO.** Sem ele o método não está
-  definido, e a tela o recusa com o motivo em vez de integrar outra coisa.
-- **Salvar ainda não vale para a forma vetorial:** o `SimSaved` carrega uma
-  fórmula, e um sistema tem uma por componente. A tela diz isso.
-- **As UNIDADES são checadas** nas formas que integram (2026-09-10), no mesmo
-  processo do oráculo. Três camadas: argumento de transcendente, os termos entre
-  si, e o LADO ESQUERDO. O limite vai na tela: unidade que fecha não quer dizer
-  física certa — `E = m·v²` sem o meio passa.
-- **A coluna `exato` tem PROCEDÊNCIA** (`SimAccuracySource`, 2026-09-10). Com o
-  SymPy presente ela responde pela equação DIGITADA; sem ele, pela do conceito —
-  e a tela diz qual, com o motivo. Sem esse campo ela mentia por 78.000x, medido.
-  A dependência é **injetada** (`Core::set_oraculo`): descobrir o `python3` no
-  teste faria a suíte depender do host.
-- Testes: `crates/kinein-core/src/tests/sim{,_integrador,_oraculo,_persistencia,_sistema}.rs`
-  e os harnesses
-  `tst_sim_{controller,run_controller,layout,plot,plot_system,system_panel,provenance}.qml`.
-  O do oráculo fala com um `python3` **falso** (`scripts/fake_sympy_oracle.py`)
-  que grava o pedido — o que se mede é **o que foi perguntado**, não se a
-  resposta chegou.
+O domínio `sim` (core, protocolo, C++, QML, harnesses, oráculo SymPy, `exmex`)
+saiu do produto por decisão do autor em 2026-09-12; o mapa desta seção está
+íntegro em `DocsPrivate/historico/simulacao/`. A numeração fica para as
+citações não quebrarem.
 
 ### 5.9c Embarcados, containers e o projeto inteiro (2026-09-11/12)
 

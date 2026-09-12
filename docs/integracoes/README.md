@@ -63,7 +63,7 @@ L0–L10 está em `../../PONTO_ATUAL.md` A5.2; o resumo:
 L0  baseline medida (A3)                    L6  Target/Device/Probe, flash
 L1  integration v1 + editor diário          L7  streaming/trace com backpressure
 L2  diagnóstico/teste/cobertura comuns      L8  armazenamento + visualização
-L3  Project Graph, artefatos, cache         L9  sandbox de pacote, co-simulação
+L3  Project Graph, artefatos, cache         L9  sandbox de pacote
 L4  DAP sólido, profiling                   L10 laboratório opt-in
 L5  RemoteContext (SSH, path mapping)
 ```
@@ -84,7 +84,7 @@ repositório muda de regra.
 sonda, deduz o alvo e roda build → flash → debug sem o usuário editar arquivo na
 mão — e, quando **não** consegue deduzir, diz o que faltou e onde procurou, em
 vez de falhar calada. O critério verificável está em
-`../roadmaps/35-ambiente-cpp-embarcados-simulacao.md` §5.1.
+`../roadmaps/35-ambiente-cpp-e-embarcados.md` §5.1.
 
 **Plug and play é a experiência do USUÁRIO, não atalho no gate.** Cada
 ferramenta (probe-rs, OpenOCD, pyOCD, QEMU) entra pelo checklist abaixo, com
@@ -95,7 +95,7 @@ significaria "adotamos sem olhar".
 **O que NÃO muda:** o gate de promoção de nível acima continua valendo integral.
 Subir na fila muda a ordem, não o critério — a frente só abre depois do
 levantamento de licença, manutenção e alvos de cada ferramenta candidata
-(`../roadmaps/35-ambiente-cpp-embarcados-simulacao.md` §5), pelo mesmo motivo
+(`../roadmaps/35-ambiente-cpp-e-embarcados.md` §5), pelo mesmo motivo
 que o catálogo de bibliotecas é auditado: recomendar ferramenta é afirmar que
 ela serve.
 
@@ -144,8 +144,6 @@ Estado real hoje (detalhe e pins no registry):
 | notify | A | Mudanças externas no filesystem | [ADR-0001](../adr/ADR-0001-notify-filesystem-watcher.md) |
 | alacritty_terminal | A | Emulador VT do terminal integrado | [ADR-0004](../adr/ADR-0004-alacritty-terminal-emulator.md) |
 | linuxdeploy (+ plugin Qt) | A | Empacotamento AppImage (build-time) | [ADR-0003](../adr/ADR-0003-linuxdeploy-appimage-packaging.md) |
-| exmex | A | Avaliador da fórmula que o usuário digita (domínio `sim`) | [ADR-0006](../adr/ADR-0006-exmex-avaliador-de-expressao.md) |
-| SymPy | A | **Oráculo de exatidão** (domínio `sim`): resolve a equação que o usuário digitou. Processo externo, opcional — ausente, a IDE diz que a coluna do erro trocou de procedência | [arquitetura/34 §13.10](../arquitetura/34-simulacao-por-conceito.md) |
 
 > **CORRIGIDO em 2026-09-10.** Esta linha dizia *"Próxima integração recomendada:
 > **EditorConfig** (L1)"* — e o EditorConfig foi **auditado com resultado

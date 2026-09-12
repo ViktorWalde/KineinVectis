@@ -6,7 +6,7 @@
 > **Nome curto:** Kinein  
 > **Sigla visual:** KV  
 > **Foco:** C, C++ e Rust  
-> **Posicionamento:** IDE Linux-first para sistemas, toolchains, CMake, Rust/Cargo, baixo nível, alto nível e simulação futura.  
+> **Posicionamento:** IDE Linux-first para sistemas, toolchains, CMake, Rust/Cargo, baixo nível e alto nível.  
 > **Objetivo desta parte:** especificar como o editor e a inteligência de linguagem devem funcionar de forma profissional, confortável, previsível e implementável por uma IA CLI.
 
 ---
@@ -24,7 +24,7 @@ A Kinein não deve ser apenas um editor de texto com botões de build. Ela deve 
 - autocompletar contextual;
 - integração com `compile_commands.json`, CMake Presets e Cargo;
 - suporte a toolchains locais e cross-compilers;
-- suporte futuro a sistemas embarcados, Linux embarcado, simulação e OpenGL;
+- suporte a sistemas embarcados e Linux embarcado;
 - UX confortável, inspirada na maturidade das IDEs profissionais, sem copiar visualmente nenhuma delas.
 
 A frase-guia desta etapa:
@@ -57,7 +57,7 @@ Esta especificação cobre:
 16. Contratos internos para IA CLI.
 17. Critérios de aceite.
 
-Esta etapa **não** cobre implementação profunda de renderização OpenGL, simulação física, debugger visual de hardware ou design do marketplace de plugins. Essas partes devem vir depois.
+Esta etapa **não** cobre debugger visual de hardware ou design do marketplace de plugins. Essas partes devem vir depois.
 
 ---
 
@@ -619,7 +619,7 @@ Exemplos:
 - Rust app chamando C via `build.rs`;
 - firmware com C, C++ e Rust experimental;
 - backend C++ com módulos Rust;
-- simulação C++ com Rust tooling.
+- backend Python com módulos nativos em C++/Rust.
 
 ### 11.1 Regra de UX
 
@@ -1463,8 +1463,6 @@ Para proteger qualidade, não implementar no início:
 - refatorações complexas próprias sem LSP;
 - IA escrevendo grandes blocos automaticamente;
 - debugger visual embutido avançado;
-- OpenGL viewport dentro do editor;
-- simulação física integrada;
 - marketplace de plugins;
 - terminal remoto complexo;
 - suporte completo a todos os build systems;
@@ -1536,7 +1534,7 @@ Construa a experiência do editor com abas, gutter, line numbers, syntax highlig
 
 Não implemente refatorações complexas próprias. Use LSP para rename/code actions e sempre mostre preview quando múltiplos arquivos forem alterados. Assistente deve explicar erros e contexto apenas quando acionado pelo usuário, sem popups invasivos.
 
-Implemente em fases, com testes e critérios de aceite claros. Não avance para simulação/OpenGL antes do editor e da inteligência de linguagem estarem confiáveis.
+Implemente em fases, com testes e critérios de aceite claros. Não avance para superfícies novas antes do editor e da inteligência de linguagem estarem confiáveis.
 ```
 
 ---
@@ -1554,7 +1552,6 @@ O editor deve ser:
 - honesto sobre o que entende;
 - excelente em CMake/Cargo;
 - preparado para sistemas embarcados;
-- extensível para simulação futura;
 - familiar para usuários de IDEs profissionais;
 - autoral na identidade visual e na experiência de toolchain.
 

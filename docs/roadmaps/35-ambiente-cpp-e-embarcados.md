@@ -1,11 +1,12 @@
-# 35 — Ambiente C/C++, embarcados e simulação
+# 35 — Ambiente C/C++, embarcados (e a frente de banco/observabilidade)
 
 > **Classe: PLANO.** Diverge da implementação por natureza. Os números da §3
 > foram medidos em **2026-09-03** e cada um diz como remedi-lo.
 >
 > Sucessor parcial de [34-depois-do-mvp.md](34-depois-do-mvp.md), cuja ordem
 > linear (§7) **fechou em 2026-09-03** — 11, 11.1, 12, 13, 14, 15, 16 e 17
-> feitas; só a 18 (simulação) ficou, e ela reaparece aqui como frente G.
+> feitas. A frente G (simulação) que nasceu aqui **saiu do produto em
+> 2026-09-12** por decisão do autor; ficou a §6 como marca.
 
 ## 0. Como ler isto
 
@@ -28,9 +29,6 @@ E  AMBIENTE C/C++ FACILITADO   a PRINCIPAL, decidida pelo autor em 2026-09-03.
 
 F  EMBARCADOS                  ferramentas open source, estaveis, nao
    (reordenada, ver §5)        proprietarias. Sobe de L6 por decisao do autor.
-
-G  SIMULACAO FISICA/MATEMATICA  roadmaps/31 — continua ESTUDO. A etapa 18 do
-   (ver §6)                    roadmap 34 e' esta.
 
 H  BANCO E OBSERVABILIDADE     relacional + temporal (TimescaleDB) e Grafana,
    (ver §7)                    NATIVOS. Decisao do autor em 2026-09-03.
@@ -544,61 +542,11 @@ sem porta (`40` §7.2). Expor `debugAdapter`, `chip` e `probe.list` na tela é a
 menor fatia da lista, é medível contra o binário hoje, e é pré-requisito de
 todas as outras.
 
-## 6. FRENTE G — simulação
+## 6. FRENTE G — simulação (REMOVIDA do produto em 2026-09-12)
 
-> **DEIXOU DE SER ESTUDO em 2026-09-05.** As sete perguntas da §5 do
-> [`31`](31-simulacao-fisica-matematica.md) estão respondidas, a arquitetura
-> está em [`../arquitetura/34`](../arquitetura/34-simulacao-por-conceito.md), e
-> o domínio `sim` existe em código: catálogo de 17 conceitos, checagem de
-> conceito com ligação explícita, integrador verificado por ordem de
-> convergência, gráfico 2D e persistência em `.kinein/simulacoes/`.
->
-> O texto abaixo é de 2026-09-03 e fica como registro de quando a frente ainda
-> era estudo.
-
-Continua sendo a etapa 18 do roadmap 34, e era **ESTUDO** até 2026-09-05. As
-sete perguntas de [31-simulacao-fisica-matematica.md](31-simulacao-fisica-matematica.md)
-precisavam de resposta antes de existir arquitetura.
-
-**A primeira pergunta foi RESPONDIDA em 2026-09-03**, e o invariante fica de pé.
-
-`scripts/verificar-appimage.sh` reprova `ShaderEffect|QOpenGL|QRhi|QtQuick3D`
-porque o AppImage força renderer por software — é isso que faz a IDE abrir em
-qualquer máquina. **Decisão do autor: processo `kinein-sim` separado calcula e
-desenha; a IDE exibe o frame como IMAGEM 2D dentro do layout.**
-
-```text
-kinein-sim   calcula + OpenGL offscreen + le o framebuffer
-kinein-vectis  pinta a imagem 2D no layout — sem GPU, invariante intacto
-```
-
-**Visualmente embutido, GPU no outro processo.** Pintar imagem é 2D, e é a mesma
-forma que o terminal já usa (`event.terminal.render`: o core computa a grade, o
-QML desenha a ~30fps).
-
-**Embutir a JANELA do outro processo está fora**, e não por escolha: XEmbed é
-mecanismo do X11, e o Wayland rejeitou deliberadamente um equivalente. O autor
-usa Wayland (medido em 2026-09-03). Detalhe e os dois custos — o render não cabe
-no JSON-RPC, e ler o framebuffer é stall de pipeline — em
-[`roadmaps/31`](31-simulacao-fisica-matematica.md) §5.1.1.
-
-**A medição de 2026-09-05 desmentiu metade disso**, e o registro fica em
-[`roadmaps/31`](31-simulacao-fisica-matematica.md) §8. Em uma linha: *"o render
-não cabe no JSON-RPC"* vale para frame **cru**; um quadro realista de simulação
-comprime de 8× (heatmap) a 176× (gráfico de linha), e um gráfico 1920×1080
-comprimido a 30fps são **1,42 MB/s** — três vezes a grade do terminal, que o
-JSON-RPC já carrega hoje. A memória compartilhada deixa de ser exigência do
-transporte. **A §5.1 não reabre**: muda só o transporte, que a §5.1.1 já deixara
-em aberto.
-
-**E a §8 mediu as outras perguntas antes de arquitetar**, que é o que a etapa 28
-pede: os crates de expressão contra o `deny.toml` real (o `evalexpr`, o mais
-usado do ecossistema, **trocou de MIT para AGPL-3.0 em 2024-10-17** e reprova; o
-`mexprp` reprova por LGPL na transitiva, via `rug`/`gmp-mpfr-sys`), o
-`exmex` exercitado (quatro armadilhas, uma delas **silenciosa**: a ordem das
-variáveis é alfabética, não a da fórmula), e o ponto de equilíbrio entre
-interpretar e compilar — **compilar custa 490 ms por edição de fórmula para
-economizar 3 ms de conta**.
+> A frente G saiu do produto por decisão do autor em 2026-09-12; o texto desta
+> seção está íntegro em `DocsPrivate/historico/simulacao/`. A numeração das
+> seções seguintes foi mantida porque o resto da documentação as cita.
 
 ## 7. FRENTE H — banco de dados e observabilidade
 
@@ -747,12 +695,9 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
 27  Temporal (TimescaleDB) e Grafana        §7.2. Grafana por HTTP API,
     por API                                nunca embutido.
 
-28  Simulacao: calculo sem tela            roadmaps/31 §5.7 passo 1. A §5.1
-    (o passo 1 da escada)                  ja foi respondida: kinein-sim
-                                           separado, IDE pinta imagem 2D.
-                                           Faltam as outras seis perguntas.
+28  (era a simulacao — SAIU do produto em 2026-09-12; historico privado)
 
-29  Fase de polimento / pente-fino          §8. Comeca quando E, F, G e H
+29  Fase de polimento / pente-fino          §8. Comeca quando E, F e H
                                            estiverem documentadas e medidas.
 ```
 
@@ -1298,8 +1243,8 @@ for sólido no mercado"*.
 **O que entrou, verificado na fonte:**
 
 ```text
-GLM       1.0.3     2025-12-31   matematica de grafico — serve a frente de
-                                 simulacao/OpenGL
+GLM       1.0.3     2025-12-31   matematica de grafico (OpenGL) para o codigo
+                                 do USUARIO que desenha
 libpqxx   8.0.2     2026-07-18   cliente C++ oficial do PostgreSQL — serve a
                                  frente de banco que esta sessao construiu
 ```

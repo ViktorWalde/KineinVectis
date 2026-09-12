@@ -27,7 +27,6 @@ pub mod runconfig;
 pub mod serial;
 pub mod settings;
 pub mod setup;
-pub mod sim;
 pub mod syntax;
 pub mod terminal;
 pub mod toolchain;
