@@ -356,7 +356,7 @@ fn global_snapshot(dir: &std::path::Path) -> std::collections::BTreeMap<String, 
 /// `workspace.createProject` mudava `self.workspace` sem trocar `self.drafts`:
 /// o projeto recem-criado escrevia autosave no banco do projeto ANTERIOR (ou
 /// respondia "persistencia local de rascunhos indisponivel", quando nao havia
-/// anterior). A rede de seguranca de dados (docs/seguranca/23) desligava em
+/// anterior). A rede de seguranca de dados (DocsPublic/seguranca/23) desligava em
 /// silencio. Sem `activate_workspace`, este teste reprova.
 #[test]
 fn creating_a_project_moves_the_draft_store_to_the_new_workspace() {

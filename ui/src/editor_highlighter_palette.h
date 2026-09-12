@@ -18,7 +18,7 @@
 
 namespace kinein::highlight {
 
-// Paleta de docs/05-design-system.md, em QRgb para inicializacao constexpr.
+// Paleta de DocsPublic/05-design-system.md, em QRgb para inicializacao constexpr.
 inline constexpr QRgb kKeywordRgb = 0xffffbb00; // accent
 inline constexpr QRgb kStringRgb = 0xff7fbf7f;  // success soft
 inline constexpr QRgb kCommentRgb = 0xff8f8a7c; // text muted

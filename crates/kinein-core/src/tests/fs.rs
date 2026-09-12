@@ -559,7 +559,7 @@ fn a_multiline_replacement_is_found_by_the_next_search() {
 /// A chave da store é o caminho absoluto. Renomear sem mover deixava o rascunho
 /// órfão: o caminho antigo não existe mais e o novo não tem autosave. Na
 /// abertura seguinte o rascunho era descartado — perda silenciosa dentro da
-/// própria rede de segurança (docs/seguranca/23).
+/// própria rede de segurança (DocsPublic/seguranca/23).
 #[test]
 fn renaming_a_file_moves_its_draft_with_it() {
     let base = std::env::temp_dir()

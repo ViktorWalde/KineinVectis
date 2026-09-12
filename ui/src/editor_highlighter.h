@@ -1,7 +1,7 @@
 // Syntax highlighting local do editor.
 //
 // Colore keywords, strings, comentarios, numeros e metadados por regex,
-// usando a paleta de docs/05-design-system.md. Cores semanticas mais ricas
+// usando a paleta de DocsPublic/05-design-system.md. Cores semanticas mais ricas
 // virao do LSP (Fase 5); este highlighter continua como base offline.
 
 #pragma once

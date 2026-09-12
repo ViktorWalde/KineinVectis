@@ -54,9 +54,9 @@ as ferramentas usadas pelos projetos continuam opcionais e externas.
 
 Para saber exatamente quais arquivos enviar, verificar o SHA-256, executar,
 atualizar com segurança ou gerar uma nova versão, consulte o
-[Tutorial.md](Tutorial.md).
+[Tutorial.md](DocsPublic/tutorial.md).
 
-Depois de abrir a IDE, o [MANUAL.md](MANUAL.md) explica os recursos, fluxos e
+Depois de abrir a IDE, o [MANUAL.md](DocsPublic/manual.md) explica os recursos, fluxos e
 atalhos. O manual trata somente do uso da Kinein; instalação e distribuição
 ficam no tutorial.
 
@@ -91,8 +91,8 @@ a terceiros, será usada uma cópia sanitizada, sem o histórico Git privado, qu
 contém o código do projeto e, entre arquivos Markdown, somente:
 
 - `README.md`;
-- `MANUAL.md`;
-- `Tutorial.md`.
+- `DocsPublic/manual.md`;
+- `DocsPublic/tutorial.md`.
 
 Documentos internos de IA, contexto, planejamento, prompts, roadmaps e specs de
 trabalho não fazem parte dessa cópia. A visibilidade do repositório-fonte não

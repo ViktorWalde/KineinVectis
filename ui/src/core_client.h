@@ -221,7 +221,7 @@ public:
     Q_INVOKABLE void requestSwitchSourceHeader(const QString& path, const QString& content);
     // M4.3b: reinicia servidor(es) LSP; language vazio = todos.
     Q_INVOKABLE void lspRestart(const QString& language);
-    // M-S1 (docs/seguranca/23): autosave/limpeza de rascunho não salvo (rede de segurança).
+    // M-S1 (DocsPublic/seguranca/23): autosave/limpeza de rascunho não salvo (rede de segurança).
     Q_INVOKABLE void draftSave(const QString& path, const QString& content);
     Q_INVOKABLE void draftClear(const QString& path);
     Q_INVOKABLE void findFiles(const QString& query);
@@ -232,7 +232,7 @@ public:
     Q_INVOKABLE void runScript(const QString& path);
     Q_INVOKABLE void runStdin(const QString& data);
     Q_INVOKABLE void runStop();
-    // D2.3 (docs/roadmaps/24): multi-terminal — todo comando leva o id da sessão.
+    // D2.3 (DocsPublic/roadmaps/24): multi-terminal — todo comando leva o id da sessão.
     Q_INVOKABLE void terminalOpen();
     Q_INVOKABLE void terminalInput(const QString& id, const QString& data);
     Q_INVOKABLE void terminalResize(const QString& id, int cols, int rows);
@@ -255,7 +255,7 @@ signals:
                                const QVariantList& entries);
     void workspaceFolderCreated(const QString& path);
     void sessionRestored(const QStringList& files, const QString& activeFile);
-    // M-S1 (docs/seguranca/23): rascunhos não salvos recuperados de um crash.
+    // M-S1 (DocsPublic/seguranca/23): rascunhos não salvos recuperados de um crash.
     void draftsRecovered(const QVariantList& drafts);
     void dirListed(const QString& path, const QVariantList& entries);
     void fileLoaded(const QString& path, const QString& content);
@@ -414,7 +414,7 @@ signals:
     void terminalActiveChanged();
     // D2.3: a sessão nasceu; o id identifica a aba dela daqui pra frente.
     void terminalOpened(const QString& id, const QString& shell);
-    // D2 (docs/roadmaps/24): grid renderizável do terminal (cols/rows/cursor/lines).
+    // D2 (DocsPublic/roadmaps/24): grid renderizável do terminal (cols/rows/cursor/lines).
     // Desde a D2.3 o mapa carrega `id`: a UI roteia pro terminal certo.
     void terminalRender(const QVariantMap& render);
     void terminalClosed(const QString& id, int exitCode);

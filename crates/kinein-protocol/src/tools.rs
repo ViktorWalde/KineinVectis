@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 /// Lifecycle status of an external tool managed by the core.
 ///
-/// The full lifecycle is documented in `docs/07-tooling-lifecycle.md`. Tool
+/// The full lifecycle is documented in `DocsPublic/07-tooling-lifecycle.md`. Tool
 /// detection uses `Missing`, `Detected`, and `Failed`; the remaining states are
 /// reserved for process management.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]

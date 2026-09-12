@@ -18,7 +18,7 @@ import QtQuick
 // RASCUNHO   o TEXTO não salvo de um buffer sujo.
 //            Sobrevive a um CRASH — e SÓ a um crash: salvar limpa o rascunho,
 //            porque o disco passou a ser a verdade. É rede de segurança de
-//            DADO (`docs/seguranca/23`, pilar 2).
+//            DADO (`DocsPublic/seguranca/23`, pilar 2).
 //            → .kinein/kinein.db (SQLite/WAL), via `draft.save`
 // ```
 //

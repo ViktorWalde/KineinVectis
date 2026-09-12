@@ -38,7 +38,7 @@ Item {
     }
 
     // Fontes de dados (roadmaps/35, etapa 26): o catalogo de conexoes. Guarda
-    // o PERFIL, nunca a senha — a decisao esta em `docs/seguranca/40`.
+    // o PERFIL, nunca a senha — a decisao esta em `DocsPublic/seguranca/40`.
     DataSourceController {
         id: dataSourceController
 

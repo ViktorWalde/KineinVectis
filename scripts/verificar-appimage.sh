@@ -19,10 +19,10 @@
 # O CHEQUE MAIS IMPORTANTE E O PRIMEIRO. A garantia de abertura do AppImage —
 # ele sobe em qualquer maquina — depende de a UI ser 100% 2D: o hook forca
 # `QT_QUICK_BACKEND=software` porque driver do host quebrava a inicializacao
-# (ADR-0003 e docs/arquitetura/27 §6.2). No dia em que alguem acrescentar um
+# (ADR-0003 e DocsPublic/arquitetura/27 §6.2). No dia em que alguem acrescentar um
 # `ShaderEffect` a UI, essa garantia morre **em silencio**: o build passa, o
 # gate passa, e so o usuario com driver ruim descobre. Ver
-# `docs/roadmaps/31-simulacao-fisica-matematica.md` §5.1, onde essa colisao e
+# `DocsPublic/roadmaps/31-simulacao-fisica-matematica.md` §5.1, onde essa colisao e
 # uma decisao ainda em aberto.
 #
 # Uso: bash scripts/verificar-appimage.sh
@@ -68,8 +68,8 @@ entradas=(
     ui/assets/app-icon.png
     LICENSE-MIT.txt
     LICENSE-APACHE-2.0.txt
-    MANUAL.md
-    Tutorial.md
+    DocsPublic/manual.md
+    DocsPublic/tutorial.md
 )
 for entrada in "${entradas[@]}"; do
     [[ -f "$entrada" ]] || reprovar "entrada de empacotamento ausente: $entrada"

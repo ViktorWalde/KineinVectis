@@ -187,7 +187,7 @@ Column {
 
                 // ABRIR NO NAVEGADOR, e nao dentro da IDE. A licenca AGPL do
                 // Grafana decide a forma da integracao: a IDE CONVERSA com ele,
-                // nunca o embute (docs/integracoes/37 §2).
+                // nunca o embute (DocsPublic/integracoes/37 §2).
                 MouseArea {
                     id: areaPainel
 

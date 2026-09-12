@@ -2,8 +2,8 @@
 //!
 //! A job is a long-running operation the core executes asynchronously: it is
 //! tracked by id, reports progress through events and can be cancelled. See
-//! `docs/specs/KINEIN_VECTIS_INTERNAL_ARCHITECTURE_CORE_IPC_JOBS.md` for the
-//! target model and `docs/arquitetura/ARCHITECTURE.md` for why this is built early.
+//! `DocsPublic/especificacoes/arquitetura-interna-core-ipc-jobs.md` for the
+//! target model and `DocsPublic/arquitetura/ARCHITECTURE.md` for why this is built early.
 
 use serde::{Deserialize, Serialize};
 

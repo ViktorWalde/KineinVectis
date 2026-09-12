@@ -1,6 +1,6 @@
-// Design tokens da spec canonica (fatia C1 de docs/roadmaps/20):
-// paleta/estados de docs/specs/KINEIN_VECTIS_LAYOUT_SYSTEM.md §7 e
-// KINEIN_VECTIS_UI_COMPONENTS_SYSTEM.md §5-§10; escalas de LAYOUT §6 e
+// Design tokens da spec canonica (fatia C1 de DocsPublic/roadmaps/20):
+// paleta/estados de DocsPublic/especificacoes/sistema-de-layout.md §7 e
+// sistema-de-componentes-de-ui.md §5-§10; escalas de LAYOUT §6 e
 // COMPONENTS §6-§7; tipografia de LAYOUT §8.
 pragma Singleton
 import QtQuick
@@ -25,7 +25,7 @@ QtObject {
     readonly property color accentDim: "#b97900"
 
     // Paleta ANSI de 16 cores do terminal (0–7 normais, 8–15 brilhantes),
-    // usada pelo renderer de grade (docs/roadmaps/24 D2).
+    // usada pelo renderer de grade (DocsPublic/roadmaps/24 D2).
     readonly property var terminalPalette: [
         "#171b21", "#d05f5f", "#78aa98", "#d0b05f",
         "#6f93c0", "#b07fb0", "#5fb0b0", "#a9a39a",

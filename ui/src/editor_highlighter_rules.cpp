@@ -66,7 +66,7 @@ void EditorHighlighter::rebuildRules()
     const QTextCharFormat numberFormat = colorFormat(kNumberRgb);
     const QTextCharFormat metaFormat = colorFormat(kMetaRgb);
     // Realce de biblioteca padrao (fallback pre-LSP; semantic tokens
-    // refinam depois). Reusa os tokens de docs/05: tipos=teal, callables
+    // refinam depois). Reusa os tokens de DocsPublic/05: tipos=teal, callables
     // da stdlib=gold — mesmas cores dos semantic tokens de tipo/funcao.
     const QTextCharFormat typeFormat = colorFormat(kTypeRgb);
     const QTextCharFormat stdlibFormat = colorFormat(kFunctionRgb);

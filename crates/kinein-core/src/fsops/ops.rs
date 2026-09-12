@@ -190,7 +190,7 @@ pub fn write_file_if_unchanged(
 }
 
 /// Grava `bytes` em `target` de forma ATÔMICA (rede de segurança da fatia S1,
-/// ver `docs/seguranca/23`): escreve num arquivo temporário no MESMO diretório, faz
+/// ver `DocsPublic/seguranca/23`): escreve num arquivo temporário no MESMO diretório, faz
 /// `fsync`, e `rename` por cima do alvo. Como o `rename` no mesmo filesystem
 /// é atômico, um crash/kill no meio da escrita nunca deixa o alvo truncado ou
 /// zerado — ele fica com o conteúdo ANTIGO ou o NOVO, jamais pela metade.

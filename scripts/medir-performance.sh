@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2 de docs-privada/diario/18).
+# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2 de DocsPrivate/diario/18).
 #
 # ZERO telemetria/rede: mede via stdio (core) e /proc, imprime uma tabela e
-# sai. Roda quando o dev quiser; o orcamento (numeros-alvo) vive no docs/roadmaps/21.
+# sai. Roda quando o dev quiser; o orcamento (numeros-alvo) vive no DocsPublic/roadmaps/21.
 # Cada metrica roda N vezes (KINEIN_PERF_N, default 5) e reporta a MEDIANA.
 #
 # Metricas:
@@ -122,7 +122,7 @@ echo
 # --- A3.3 item 1. UI: digitacao tecla -> frame no editor real ---
 # Roda no processo REAL (harness atras de KINEIN_PERF_TYPING), porque o runner
 # `qml` nao carrega o modulo KineinVectis: o qmldir gerado aponta para caminhos
-# qrc:, que so existem dentro do binario. Evidencia em docs/roadmaps/21.
+# qrc:, que so existem dentro do binario. Evidencia em DocsPublic/roadmaps/21.
 #
 # Offscreen NAO tem vsync. O numero e o custo PROPRIO da Kinein da tecla ao
 # frame — piso do que o usuario sente num compositor a 60 Hz, nao o total.
@@ -176,7 +176,7 @@ core_out="$(python3 "$REPO_ROOT/scripts/medir-core.py" "$CORE_BIN" "$REPO_ROOT" 
 echo "$core_out" | sed 's/^/   /'
 echo
 
-echo "== fim. Compare com o ORCAMENTO em docs/roadmaps/21 (M4.2 e A3.1-A3.4). =="
+echo "== fim. Compare com o ORCAMENTO em DocsPublic/roadmaps/21 (M4.2 e A3.1-A3.4). =="
 echo
 echo "A3.4 — reacao a regressao (nao e sugestao, e o gate):"
 echo "  1. numero acima do orcamento ABRE fatia de causa-raiz. Nao se aprofunda"

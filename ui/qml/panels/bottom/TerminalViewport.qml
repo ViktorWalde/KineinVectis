@@ -70,7 +70,7 @@ Item {
         anchors.margins: Theme.spacingSmall
         clip: true
 
-        // CAUSA-RAIZ do cursor "desalocado" (2026-07-16, docs/roadmaps/26 §4.7).
+        // CAUSA-RAIZ do cursor "desalocado" (2026-07-16, DocsPublic/roadmaps/26 §4.7).
         //
         // Antes isto era um `Column` de `Row`s. O positioner do Qt Quick
         // DESCARTA filhos de largura zero — e uma linha vazia vem do core como

@@ -1,4 +1,4 @@
-//! O dominio `serial` (E1 do `docs/integracoes/38` §6): as portas seriais USB
+//! O dominio `serial` (E1 do `DocsPublic/integracoes/38` §6): as portas seriais USB
 //! lidas de um `/sys`, `/dev` e `/proc` FALSOS, montados como o kernel os
 //! monta — e a fixture e' o ESP32 classico medido em 2026-09-11.
 //!

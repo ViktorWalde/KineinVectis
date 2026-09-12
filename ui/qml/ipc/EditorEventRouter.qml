@@ -63,7 +63,7 @@ Item {
             root.editorController.restoreSession(files, activeFile);
         }
 
-        // M-S1 (docs/seguranca/23): rascunhos não salvos recuperados de um crash.
+        // M-S1 (DocsPublic/seguranca/23): rascunhos não salvos recuperados de um crash.
         function onDraftsRecovered(drafts) {
             root.editorController.restoreDrafts(drafts);
         }

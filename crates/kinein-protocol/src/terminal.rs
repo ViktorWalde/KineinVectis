@@ -27,11 +27,11 @@ pub struct TerminalInputParams {
     /// Id da sessão (D2.3).
     pub id: String,
     /// Raw bytes forwarded to the shell PTY (keys, control chars). The UI
-    /// sends each keystroke, not whole lines (D2, docs/roadmaps/24).
+    /// sends each keystroke, not whole lines (D2, DocsPublic/roadmaps/24).
     pub data: String,
 }
 
-/// Parameters for `terminal.resize` (D2, docs/roadmaps/24): new grid size in cells.
+/// Parameters for `terminal.resize` (D2, DocsPublic/roadmaps/24): new grid size in cells.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TerminalResizeParams {
@@ -57,7 +57,7 @@ pub struct TerminalScrollParams {
     pub offset: u16,
 }
 
-/// Botão de mouse relatável a uma aplicação (R4, `docs/roadmaps/26`).
+/// Botão de mouse relatável a uma aplicação (R4, `DocsPublic/roadmaps/26`).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TerminalMouseButton {

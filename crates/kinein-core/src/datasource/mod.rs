@@ -1,13 +1,13 @@
 //! Fontes de dados: as conexoes do autor a bancos relacionais e temporais.
 //!
 //! Este dominio nasceu em 2026-09-04 como a etapa 26 do
-//! `docs/roadmaps/35-ambiente-cpp-embarcados-simulacao.md`, e a primeira coisa
+//! `DocsPublic/roadmaps/35-ambiente-cpp-embarcados-simulacao.md`, e a primeira coisa
 //! que ele faz e' cumprir a regra que o §7.3 daquele documento escreveu:
 //!
 //! > *"Nenhuma linha de conexao a banco entra antes dessa pergunta ter dono."*
 //!
 //! A pergunta era onde mora a senha. A resposta esta' registrada em
-//! `docs/seguranca/40-cofre-de-credencial.md` (autor, 2026-09-04): **a IDE
+//! `DocsPublic/seguranca/40-cofre-de-credencial.md` (autor, 2026-09-04): **a IDE
 //! guarda o PERFIL, que nao e' segredo, e nunca a senha.**
 //!
 //! # O que este dominio e' e o que ele NAO e'
@@ -34,7 +34,7 @@
 //! # Nao confundir com `crate::db`
 //!
 //! `crate::db` e' a persistencia LOCAL da IDE (rascunhos em `SQLite`, a rede
-//! de seguranca do `docs/seguranca/23`). Este modulo e' o banco DO AUTOR. Os
+//! de seguranca do `DocsPublic/seguranca/23`). Este modulo e' o banco DO AUTOR. Os
 //! dois dizem "banco" e nao tem nada a ver um com o outro.
 
 pub mod connection;

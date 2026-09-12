@@ -234,7 +234,7 @@ set_source_files_properties(qml/editor/EditorExternalChangeBanner.qml PROPERTIES
 set_source_files_properties(qml/editor/EditorOutlineController.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineController.qml)
 set_source_files_properties(qml/editor/EditorOutlinePanel.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlinePanel.qml)
 
-set(KINEIN_MANUAL_FILE "${CMAKE_SOURCE_DIR}/MANUAL.md")
+set(KINEIN_MANUAL_FILE "${CMAKE_SOURCE_DIR}/DocsPublic/manual.md")
 set_source_files_properties("${KINEIN_MANUAL_FILE}" PROPERTIES QT_RESOURCE_ALIAS MANUAL.md)
 
 qt_add_qml_module(kinein-vectis

@@ -35,7 +35,7 @@ Item {
 
         // 1) O padrao e' o caso comum do autor: socket unix, sem senha.
         //    Se isto virar "prompt", a IDE volta a inventar um obstaculo que o
-        //    servidor nao impoe (docs/seguranca/40 §7).
+        //    servidor nao impoe (DocsPublic/seguranca/40 §7).
         const padrao = fontes.emptyDraft();
         if (padrao.secretSource !== "automatic") f += 1;
         if (padrao.host.charAt(0) !== "/") f += 2;

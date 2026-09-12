@@ -6,7 +6,7 @@ import KineinVectis
 //
 // NAO HA' CAMPO DE SENHA AQUI, e e' deliberado. O que se escolhe neste
 // formulario e' DE ONDE a senha vem, nunca qual e' ela — o perfil e' o que o
-// core persiste, e senha nao vai para o disco (`docs/seguranca/40`). O campo
+// core persiste, e senha nao vai para o disco (`DocsPublic/seguranca/40`). O campo
 // de senha, quando aparece, vive no veredito do teste e some com a sessao.
 Item {
     id: root

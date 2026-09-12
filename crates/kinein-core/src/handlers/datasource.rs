@@ -210,7 +210,7 @@ impl Core {
     /// Um dono so' porque `datasource.test` e `datasource.introspect` fazem a
     /// MESMA pergunta: "tenho a senha para abrir esta conexao?". Duas copias
     /// divergiriam exatamente como as duas copias de `isWordChar` divergiram
-    /// (`docs/roadmaps/39` §5).
+    /// (`DocsPublic/roadmaps/39` §5).
     fn resolve_secret(
         profile: &DataSourceProfile,
         password: Option<String>,

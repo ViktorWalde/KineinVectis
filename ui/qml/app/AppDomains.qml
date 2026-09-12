@@ -3,7 +3,7 @@ import QtQuick
 // Dono dos controllers de dominio e do IPC dos dois sentidos (EventRouter +
 // RequestRouter). Existe porque o composition root cresce LINEARMENTE com o
 // numero de dominios quando nao ha registro/contribuicao — e registro dinamico e
-// a maquina que este projeto recusou (ver docs/arquitetura/27-modulos-por-dominio.md).
+// a maquina que este projeto recusou (ver DocsPublic/arquitetura/27-modulos-por-dominio.md).
 //
 // A saida e dividir a COMPOSICAO por area: aqui os dominios, no Main.qml a janela
 // e os hosts visuais. Assim o que cresce quando um dominio novo nasce e a

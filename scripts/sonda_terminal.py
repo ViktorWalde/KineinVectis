@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sonda e2e do terminal: D2.1 e D2.2 (docs/roadmaps/24).
+"""Sonda e2e do terminal: D2.1 e D2.2 (DocsPublic/roadmaps/24).
 
 Este arquivo existe porque as fatias D2.1 e D2.2 estao marcadas [FEITA]
 citando uma sonda `sonda_terminal.py` que NUNCA foi commitada. Um item que

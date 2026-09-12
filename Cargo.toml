@@ -27,9 +27,9 @@ kinein-config = { path = "crates/kinein-config" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 # SQLite vendorizado (feature bundled): sem dep de sistema, reprodutível.
-# Rede de segurança de dados (docs/23). FFI C fica na dependência.
+# Rede de segurança de dados (DocsPublic/23). FFI C fica na dependência.
 rusqlite = { version = "0.32", features = ["bundled"] }
-# Terminal profissional (docs/24 D2): PTY real (wezterm) para a sessão. O
+# Terminal profissional (DocsPublic/24 D2): PTY real (wezterm) para a sessão. O
 # emulador VT vive no `alacritty_terminal`, declarado pelo core (ADR-0004): a
 # Kinein anuncia `xterm-256color` ao processo, então precisa entregar um VT de
 # verdade — tela alternada, mouse, reflow, wide chars e DECSCUSR inclusos.
@@ -37,21 +37,21 @@ portable-pty = "0.9"
 # External file changes: mature cross-platform watcher (inotify on Linux)
 # with a polling fallback selected by the core when the native backend fails.
 notify = "=8.2.0"
-# D3 syntax layer (docs/25): mature incremental parser plus the official
+# D3 syntax layer (DocsPublic/25): mature incremental parser plus the official
 # C/C++/Rust grammars. Exact pins are audited in the component registry.
 tree-sitter = "=0.26.11"
 tree-sitter-c = "=0.24.2"
 tree-sitter-cpp = "=0.23.4"
 tree-sitter-rust = "=0.24.2"
 tree-sitter-python = "=0.25.0"
-# Cliente PostgreSQL SINCRONO (dominio `datasource`, docs/integracoes/37 §5.1).
+# Cliente PostgreSQL SINCRONO (dominio `datasource`, DocsPublic/integracoes/37 §5.1).
 # Auditado em 2026-09-04: MIT OR Apache-2.0, +52 crates, `cargo deny` verde sem
 # acrescentar licenca a lista — o `sqlx` reprovaria, por trazer `foldhash`
 # (Zlib). Mesmos mantenedores do `tokio-postgres`; embute um tokio proprio como
 # detalhe de implementacao, e o codigo deste repositorio segue sincrono.
 # Sem TLS de proposito: conexao cifrada e' decisao de outra fatia.
 postgres = "0.19"
-# Cliente HTTP SINCRONO do dominio `grafana` (docs/integracoes/37 §2). Medido
+# Cliente HTTP SINCRONO do dominio `grafana` (DocsPublic/integracoes/37 §2). Medido
 # em 2026-09-04: MIT OR Apache-2.0, e SEM as features padrao sao +5 crates
 # novas (http, httparse, ureq, ureq-proto, utf8-zero), todas MIT OR Apache-2.0.
 # Comparacao que decidiu: `ureq` com TLS custaria +19 e traria `subtle`
@@ -63,7 +63,7 @@ postgres = "0.19"
 # nova. Grafana local responde em `http://localhost:3000`, e um perfil `https`
 # recebe recusa EXPLICITA, nunca um erro de rede confuso.
 ureq = { version = "3.4", default-features = false, features = ["rustls"] }
-# `access(2)` seguro para o dominio `serial` (docs/integracoes/38 §6, E1): a
+# `access(2)` seguro para o dominio `serial` (DocsPublic/integracoes/38 §6, E1): a
 # IDE precisa saber se o usuario le/escreve `/dev/ttyUSB0` SEM ABRIR a porta —
 # abrir aciona DTR/RTS na maioria das pontes e isso RESETA a placa. `access`
 # honra ACL, que e' como `TAG+="uaccess"` da' acesso sem grupo nenhum; `stat`
@@ -104,7 +104,7 @@ print_stderr = "warn"
 module_name_repetitions = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
-# portable-pty/alacritty_terminal (terminal profissional, docs/24 D2) trazem
+# portable-pty/alacritty_terminal (terminal profissional, DocsPublic/24 D2) trazem
 # bitflags 1.x por transitividade enquanto o resto usa 2.x — fora do nosso
 # controle.
 multiple_crate_versions = "allow"

@@ -12,7 +12,7 @@ import QtQuick
 //   - ao fechar o painel;
 //   - ao trocar de workspace.
 // Ela nunca vai para o perfil (que e' o que o core persiste) e nunca aparece
-// no log do cliente, que redige por nome de campo. Ver `docs/seguranca/40`.
+// no log do cliente, que redige por nome de campo. Ver `DocsPublic/seguranca/40`.
 //
 // Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
 Item {
@@ -73,7 +73,7 @@ Item {
 
     // O padrao e' o caso comum do autor, nao o mais defensivo da IDE: um
     // PostgreSQL local por socket unix com `peer` conecta sem senha nenhuma
-    // (docs/seguranca/40 §7). Por isso host de socket e `automatic`.
+    // (DocsPublic/seguranca/40 §7). Por isso host de socket e `automatic`.
     function emptyDraft() {
         return {
             engine: "postgres",

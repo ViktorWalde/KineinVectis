@@ -428,7 +428,7 @@ impl TerminalManager {
     /// Rola o histórico (scrollback): `offset` linhas acima do fundo (0 = ao
     /// vivo). O contrato da UI é ABSOLUTO; o emulador trabalha por delta, então
     /// convertemos e deixamos ele clampar ao histórico real, mantendo o eco da
-    /// verdade no render (D2.2, docs/roadmaps/24).
+    /// verdade no render (D2.2, DocsPublic/roadmaps/24).
     pub fn scroll(&mut self, id: &str, offset: u16) -> Result<(), TerminalError> {
         let session = self.live(id)?;
         if let Ok(mut state) = session.state.lock() {

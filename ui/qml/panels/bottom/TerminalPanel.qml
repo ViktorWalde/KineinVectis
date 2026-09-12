@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Terminal profissional (D2, docs/roadmaps/24): renderiza o GRID vindo do core
+// Terminal profissional (D2, DocsPublic/roadmaps/24): renderiza o GRID vindo do core
 // (event.terminal.render → { cols, rows, cursor, lines:[[span]] }) com cores,
 // cursor e atributos, e captura o teclado CARACTERE-A-CARACTERE, mandando
 // bytes crus pro PTY (incl. control chars). Calcula cols/rows do tamanho do
@@ -23,7 +23,7 @@ Item {
     // para o contrato. Quem decide o destino é o core (protocolo 0.60.0).
     signal wheelRequested(int col, int row, int lines, int modifiers)
 
-    // D2.2 (docs/roadmaps/24): scrollback sintetico; estado/coalescencia vivem no
+    // D2.2 (DocsPublic/roadmaps/24): scrollback sintetico; estado/coalescencia vivem no
     // controller dedicado para serem testados fora da superficie visual.
     property alias scrollOffset: scrollController.scrollOffset
     readonly property int pendingScrollOffset:
@@ -45,7 +45,7 @@ Item {
     readonly property bool bracketedPaste: render
                                                   && render.bracketedPaste === true
 
-    // B2 (docs/roadmaps/24): quantas linhas cabem na tela e quanto histórico existe. O
+    // B2 (DocsPublic/roadmaps/24): quantas linhas cabem na tela e quanto histórico existe. O
     // core manda os dois no render (protocolo 0.43.0) — sem `scrollbackMax` a
     // UI não tem como desenhar uma barra proporcional nem saber se há o que
     // rolar (0 = terminal recém-aberto, "não rolar" é o correto).
@@ -74,7 +74,7 @@ Item {
         scrollController.queueScroll(next);
     }
 
-    // R1 (docs/roadmaps/26 §4.6): a ÚNICA fonte de métricas de célula. Antes o
+    // R1 (DocsPublic/roadmaps/26 §4.6): a ÚNICA fonte de métricas de célula. Antes o
     // painel media aqui (`TextMetrics.advanceWidth`/`height`) e cada consumidor
     // arredondava do seu jeito — o cursor com `Math.floor`, o texto sem
     // arredondar. Com a célula fracionária isso divergia até 0,95px, variando

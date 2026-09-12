@@ -135,7 +135,7 @@ namespace {
 /// Quando o dominio `datasource` passou a poder mandar a senha da sessao em
 /// `params`, esse log virou o caminho mais curto para a senha sair do processo
 /// — exatamente a falha que o tipo `Secret` do core fecha do lado Rust
-/// (`docs/seguranca/40`). Redigir por NOME de campo fecha o caminho aqui.
+/// (`DocsPublic/seguranca/40`). Redigir por NOME de campo fecha o caminho aqui.
 ///
 /// A lista e' de nomes, nao de metodos, de proposito: um metodo novo que mande
 /// `password` ja' nasce protegido, sem ninguem lembrar de acrescenta-lo.

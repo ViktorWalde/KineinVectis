@@ -47,7 +47,7 @@ void erro(const QString& motivo)
 // Mede tecla -> frame apresentado no editor real, com arquivo grande aberto.
 //
 // POR QUE NAO DA PARA MEDIR ISSO NUM HARNESS QML. A rota `qml -I build/.../ui`
-// esta fechada com evidencia (docs/roadmaps/21): o qmldir gerado aponta para
+// esta fechada com evidencia (DocsPublic/roadmaps/21): o qmldir gerado aponta para
 // caminhos qrc:, que so existem dentro do binario compilado, entao o runner
 // nunca carrega EditorTextSurface. Por isso o harness vive aqui, no processo
 // real, atras de env.

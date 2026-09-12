@@ -213,7 +213,7 @@ bool CoreClient::handleFileSystemNotification(const QString& method, const QJson
 bool CoreClient::handleTerminalNotification(const QString& method, const QJsonObject& params)
 {
     if (method == QStringLiteral("event.terminal.render")) {
-        // D2 (docs/roadmaps/24): grid do emulador (cores/cursor/spans) — a UI só desenha.
+        // D2 (DocsPublic/roadmaps/24): grid do emulador (cores/cursor/spans) — a UI só desenha.
         emit terminalRender(params.toVariantMap());
         return true;
     }

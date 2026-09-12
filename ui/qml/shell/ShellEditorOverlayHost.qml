@@ -77,7 +77,7 @@ Item {
         return below;
     }
 
-    // D1b (docs/roadmaps/24): flutua no canto superior direito (VS Code), acima
+    // D1b (DocsPublic/roadmaps/24): flutua no canto superior direito (VS Code), acima
     // do texto mas abaixo dos popups de completacao/acoes.
     EditorFindBar {
         id: findBar

@@ -1,4 +1,4 @@
-// Ponte mínima para a área de transferência do sistema (fatia D2.2, docs/roadmaps/24).
+// Ponte mínima para a área de transferência do sistema (fatia D2.2, DocsPublic/roadmaps/24).
 //
 // Utilitário de UI exposto ao QML como singleton `Clipboard`, para o terminal
 // (e futuros consumidores) copiar/colar sem falar com o CoreClient — copiar/

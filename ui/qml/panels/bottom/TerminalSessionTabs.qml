@@ -27,7 +27,7 @@ Row {
 
     spacing: Theme.spacingSmall
 
-    // D2.3 (docs/roadmaps/24): uma aba por terminal aberto. A "Execução" continua
+    // D2.3 (DocsPublic/roadmaps/24): uma aba por terminal aberto. A "Execução" continua
     // sendo uma sessão à parte — ela NÃO é um PTY (é o backend run.*),
     // por isso não entra no mesmo modelo.
     Repeater {

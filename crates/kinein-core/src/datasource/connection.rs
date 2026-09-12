@@ -13,7 +13,7 @@
 //!
 //! # Sem TLS, de proposito
 //!
-//! A arvore auditada em 2026-09-04 (`docs/integracoes/37` §5.1) nao tem
+//! A arvore auditada em 2026-09-04 (`DocsPublic/integracoes/37` §5.1) nao tem
 //! `rustls` nem `openssl`, e a conexao usa [`postgres::NoTls`]. Ligar TLS traz
 //! backend, cadeia de certificados e politica de verificacao — decisao propria,
 //! de outra fatia. Enquanto isso, o alvo suportado e' banco local ou rede
@@ -42,7 +42,7 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 /// **Host que comeca com `/` vira SOCKET UNIX**, nao nome de maquina: e' assim
 /// que o libpq entende `/var/run/postgresql`, e e' o caminho mais comum para um
 /// servidor local com autenticacao `peer` — aquele que nao pede senha nenhuma
-/// (`docs/seguranca/40` §7).
+/// (`DocsPublic/seguranca/40` §7).
 ///
 /// A senha so' entra se houver uma E ela nao for vazia. Mandar senha vazia nao
 /// e' o mesmo que nao mandar senha: o servidor responde com uma falha de
@@ -354,7 +354,7 @@ mod tests {
     /// Nenhum deles foi inventado: cada linha saiu do `event.datasource.tested`
     /// exercitando o binario do core contra um servidor de verdade. Fixture
     /// inventada e' como os dois bugs do `probe.rs` sobreviveram
-    /// (`docs/roadmaps/38` §3).
+    /// (`DocsPublic/roadmaps/38` §3).
     #[test]
     fn so_pede_senha_quando_pedir_senha_resolve() {
         // Senha errada: o servidor respondeu 28P01. Perguntar RESOLVE.

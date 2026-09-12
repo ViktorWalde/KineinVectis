@@ -98,7 +98,7 @@ Rectangle {
             font.pixelSize: 11
         }
 
-        // B2 (docs/roadmaps/24): sem ela, um CMakeLists que nao cabe na caixa
+        // B2 (DocsPublic/roadmaps/24): sem ela, um CMakeLists que nao cabe na caixa
         // nao AVISA que continua abaixo — e o usuario consente com o que viu.
         // `parent: linhas` e obrigatorio: filho declarado dentro de um ListView
         // vira filho do contentItem e rolaria junto.

@@ -182,7 +182,7 @@ impl Core {
     }
 
     /// Rascunhos que DIFEREM do disco (recuperáveis após um crash) e apaga os
-    /// obsoletos (já salvos). Chamado no `workspace.open` (docs/seguranca/23, M-S1).
+    /// obsoletos (já salvos). Chamado no `workspace.open` (DocsPublic/seguranca/23, M-S1).
     fn recover_drafts(&self) -> Vec<DraftInfo> {
         let Some(store) = self.drafts.as_ref() else {
             return Vec::new();
@@ -252,7 +252,7 @@ impl Core {
     /// banco do projeto ANTERIOR — ou sem autosave nenhum, respondendo
     /// "persistencia local de rascunhos indisponivel", quando nao havia
     /// projeto anterior. Falha silenciosa: a rede de seguranca de dados
-    /// (docs/seguranca/23) desligava sem ninguem reclamar.
+    /// (DocsPublic/seguranca/23) desligava sem ninguem reclamar.
     ///
     /// Regra: quem acrescentar estado por-workspace ao `Core` acrescenta a
     /// troca dele AQUI, e em lugar nenhum mais. Verificado por
@@ -280,7 +280,7 @@ impl Core {
         // libstdc++ do GCC ARM em vermelho (medido em 2026-09-11). Vale na
         // PROXIMA subida do servidor cpp — o primeiro `.c/.cpp` aberto.
         self.configure_clangd_from_toolchain(&root);
-        // M-S1: store local de rascunhos, uma por workspace (docs/seguranca/23).
+        // M-S1: store local de rascunhos, uma por workspace (DocsPublic/seguranca/23).
         self.drafts = self
             .global_storage
             .as_ref()
@@ -440,7 +440,7 @@ impl Core {
                 Ok(opened) => {
                     self.activate_workspace(&opened);
                     // Recupera buffers não salvos que sobreviveram a um crash
-                    // da UI (docs/seguranca/23). Só o `open` recupera: um
+                    // da UI (DocsPublic/seguranca/23). Só o `open` recupera: um
                     // projeto recém-criado não tem rascunho anterior.
                     let recovered = self.recover_drafts();
                     let session = workspace::load_session(Path::new(&opened.root));

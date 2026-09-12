@@ -1,6 +1,6 @@
 import QtQuick
 
-// R0 item 6 (docs/roadmaps/26): tabela numerica das metricas de celula.
+// R0 item 6 (DocsPublic/roadmaps/26): tabela numerica das metricas de celula.
 // Nao desenha terminal, nao le sessao, nao loga texto do usuario. So mede a
 // fonte que o Theme pede ("monospace", 13) do jeito que o TerminalViewport a usa.
 Item {

@@ -24,7 +24,7 @@ Item {
     property bool fallbackVisible: false
     property bool serverRequestPending: false
     property bool refreshQueued: false
-    // D1 (docs/roadmaps/24): estado do popup em property PRÓPRIA — NÃO no `visible`
+    // D1 (DocsPublic/roadmaps/24): estado do popup em property PRÓPRIA — NÃO no `visible`
     // do Item. `Item.visible` LÊ a visibilidade EFETIVA (explicitVisible &&
     // pai efetivamente visível); como este controller vive dentro do
     // EditorController (Item invisível, pois é controller e não UI), gravar
@@ -124,7 +124,7 @@ Item {
         refilter(true);
     }
 
-    // D1 (docs/roadmaps/24): match FUZZY por subsequência (estilo VS Code). O filtro
+    // D1 (DocsPublic/roadmaps/24): match FUZZY por subsequência (estilo VS Code). O filtro
     // só-prefixo antigo escondia matches legítimos do servidor (ex.:
     // `into_iter` ao digitar `iter`), deixando o popup vazio. Preserva a
     // ORDEM do servidor (ele já ranqueia), então os melhores ficam no topo.

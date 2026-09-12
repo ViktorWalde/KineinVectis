@@ -46,7 +46,7 @@ pub struct ToolSpec {
     pub install_command: Option<&'static str>,
 }
 
-/// Tools detected by MVP 0.2, as defined in `docs/10-mvp-plan.md`.
+/// Tools detected by MVP 0.2, as defined in `DocsPublic/10-mvp-plan.md`.
 pub const KNOWN_TOOLS: &[ToolSpec] = &[
     ToolSpec {
         id: "cargo",

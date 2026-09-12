@@ -6,7 +6,7 @@ import KineinVectis
 //
 // Ele so' existe enquanto a resposta esta' na tela: o texto nunca e' gravado,
 // nunca vai para o perfil e some quando o painel fecha. Mesma regra da senha
-// de banco (`docs/seguranca/40`).
+// de banco (`DocsPublic/seguranca/40`).
 Item {
     id: root
 

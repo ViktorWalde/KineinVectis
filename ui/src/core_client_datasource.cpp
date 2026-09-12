@@ -7,7 +7,7 @@
 // A SENHA PASSA POR AQUI, e e' o unico lugar da UI onde isso acontece. Ela
 // viaja em `params` de `datasource.test`, nunca e' guardada e nunca chega ao
 // log: `sendRequest` redige por NOME de campo antes de registrar
-// (`core_client_process.cpp`). A decisao esta' em `docs/seguranca/40`.
+// (`core_client_process.cpp`). A decisao esta' em `DocsPublic/seguranca/40`.
 #include "core_client.h"
 
 #include <QJsonArray>

@@ -1,6 +1,6 @@
 //! De onde vem a senha — e o tipo que impede ela de vazar num log.
 //!
-//! DECISAO REGISTRADA (autor, 2026-09-04, `docs/seguranca/40`): a IDE guarda o
+//! DECISAO REGISTRADA (autor, 2026-09-04, `DocsPublic/seguranca/40`): a IDE guarda o
 //! PERFIL e nunca a senha. Este modulo e' a outra metade dessa decisao: ele diz
 //! **onde procurar** a senha na hora de conectar, e da' um tipo em que ela pode
 //! viver sem virar texto solto na memoria de um `Debug`.
@@ -159,7 +159,7 @@ mod tests {
     ///
     /// Um `PostgreSQL` local por socket unix com `peer` nao pergunta nada; se
     /// a IDE perguntasse, o obstaculo teria sido inventado por ela. Ver
-    /// `docs/seguranca/40` §7.
+    /// `DocsPublic/seguranca/40` §7.
     #[test]
     fn o_padrao_e_nao_mandar_senha_nenhuma() {
         assert_eq!(SecretSource::default(), SecretSource::Automatic);

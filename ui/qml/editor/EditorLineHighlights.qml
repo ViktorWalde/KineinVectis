@@ -11,7 +11,7 @@ import KineinVectis
 //
 // Este componente nao sabe rolar, nao sabe texto e nao sabe sarjeta: recebe as
 // coordenadas ja calculadas e pinta. O POSICIONAMENTO fica no pai, como no
-// corte do GitPanel (docs/roadmaps/38 §2.2).
+// corte do GitPanel (DocsPublic/roadmaps/38 §2.2).
 Item {
     id: root
 

@@ -79,7 +79,7 @@ pub struct Core {
     debug: Option<dap::DebugManager>,
     terminal: Option<terminal::TerminalManager>,
     jobs: Option<jobs::JobManager>,
-    /// Store local de rascunhos (autosave), aberta por-workspace (docs/seguranca/23).
+    /// Store local de rascunhos (autosave), aberta por-workspace (DocsPublic/seguranca/23).
     drafts: Option<db::DraftStore>,
     /// Raiz do estado GLOBAL quando a persistência está ligada; `None` — o
     /// padrão — é persistência DESLIGADA (ver [`Core::enable_persistence`]).

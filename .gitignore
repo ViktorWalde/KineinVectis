@@ -9,3 +9,7 @@ CMakeUserPresets.json
 /.cache/
 /.kinein/
 .claude/settings.local.json*
+
+# Documentacao privada de continuidade (conversas com IA, prompts de retomada,
+# diario, historico). Fica so no disco do autor.
+/DocsPrivate/

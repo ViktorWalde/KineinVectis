@@ -400,7 +400,7 @@ void CoreClient::terminalWheel(const QString& id, int col, int row, int lines, i
 {
     // Fronteira UI→contrato: os modificadores do Qt param aqui. O core recebe o
     // gesto tipado e decide o destino (relatorio a aplicacao, cursor keys ou
-    // historico local) lendo o modo VT — ver docs/arquitetura/03-ipc-protocol.md.
+    // historico local) lendo o modo VT — ver DocsPublic/arquitetura/03-ipc-protocol.md.
     const auto keys = static_cast<Qt::KeyboardModifiers>(modifiers);
     sendRequest(
         QStringLiteral("terminal.mouse"),

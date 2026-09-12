@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sonda e2e da rede de seguranca de dados (docs/seguranca/23, pilar 2).
+"""Sonda e2e da rede de seguranca de dados (DocsPublic/seguranca/23, pilar 2).
 
 Este arquivo existe porque o item P2.6 daquele documento dizia "[x] validado
 e2e" citando uma sonda que NUNCA foi commitada. Um `[x]` que aponta para
@@ -213,7 +213,7 @@ def main():
         if fails:
             print(f"✗ FALHOU: {fails}")
             return 1
-        print("✓ rede de seguranca (pilar 2, docs/seguranca/23 P2.6): tudo verde")
+        print("✓ rede de seguranca (pilar 2, DocsPublic/seguranca/23 P2.6): tudo verde")
         return 0
     finally:
         shutil.rmtree(raiz, ignore_errors=True)

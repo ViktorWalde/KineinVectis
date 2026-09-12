@@ -168,7 +168,7 @@ pub(crate) fn lsp_error_response(
 /// Vive aqui, e nao no `handlers/build.rs` onde nasceu, porque desde
 /// 2026-09-04 o `datasource.test` tambem precisa dela — e duas copias de uma
 /// mensagem de erro divergem exatamente como as duas copias de `isWordChar`
-/// divergiram (docs/roadmaps/39 §5).
+/// divergiram (DocsPublic/roadmaps/39 §5).
 pub(crate) fn jobs_unavailable_response(
     request_id: Option<Value>,
     method: &str,

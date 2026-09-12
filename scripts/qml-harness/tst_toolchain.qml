@@ -37,7 +37,7 @@ Item {
     // `effectiveId` e `automatic`: sem escolha fixada, o core PEGA o primeiro
     // candidato e diz que a escolha foi dele. Fixture sem esses campos testa
     // um protocolo que nao existe mais — foi assim que o `fd` quebrou a busca
-    // com o gate verde (docs/roadmaps/39 §8.2).
+    // com o gate verde (DocsPublic/roadmaps/39 §8.2).
     function selecoes() {
         return [
             { role: "cxxCompiler", id: "gxx", effectiveId: "gxx",

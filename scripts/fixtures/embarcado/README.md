@@ -11,7 +11,7 @@ startup.c   vector table minima (sp, Reset, NMI, HardFault) e o copy/zero
 main.c      `volatile int contador` que so' incrementa
 ```
 
-**E' NOSSA, nao do usuario.** A regra da frente F (`docs/roadmaps/35` §5.6)
+**E' NOSSA, nao do usuario.** A regra da frente F (`DocsPublic/roadmaps/35` §5.6)
 e' que a IDE nao adivinha linker script nem startup — e continua nao
 adivinhando: esta fixture existe para o `scripts/verificar-embarcado.sh`
 provar que o ciclo `debug.start` -> `attach` a um servidor que a IDE sobe ->

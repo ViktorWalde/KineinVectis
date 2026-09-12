@@ -1,4 +1,4 @@
-//! Handlers de `draft.*` (autosave/rascunhos) — rede de segurança (docs/seguranca/23).
+//! Handlers de `draft.*` (autosave/rascunhos) — rede de segurança (DocsPublic/seguranca/23).
 //!
 //! `draft.save { path, content }` persiste o buffer não salvo de um arquivo
 //! na store `SQLite`; `draft.clear { path }` remove o rascunho (save/close
@@ -96,7 +96,7 @@ impl Core {
 /// Best-effort, como o `clear_draft_after_save`: renomear não pode falhar por
 /// causa do autosave. Sem isto o rascunho ficava órfão no caminho antigo e era
 /// descartado na próxima abertura — perda silenciosa exatamente na rede de
-/// segurança que a docs/seguranca/23 existe para não ter.
+/// segurança que a DocsPublic/seguranca/23 existe para não ter.
 pub(super) fn rename_draft_after_move(core: &Core, de: &Path, para: &Path) {
     if let Some(store) = core.drafts.as_ref() {
         drop(store.rename(&de.display().to_string(), &para.display().to_string()));

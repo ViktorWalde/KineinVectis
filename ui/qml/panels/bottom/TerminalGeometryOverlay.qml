@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
-// R0 item 5 (docs/roadmaps/26): overlay de diagnostico da geometria do terminal.
+// R0 item 5 (DocsPublic/roadmaps/26): overlay de diagnostico da geometria do terminal.
 //
 // Ligado so por KINEIN_TERMINAL_DEBUG_GEOMETRY=1. Existe para responder UMA
 // pergunta que numero nao respondeu: o cursor esta onde a celula diz que ele

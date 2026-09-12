@@ -1,7 +1,7 @@
 //! Types for the `datasource.*` domain: connections to the user's databases.
 //!
 //! **There is no password field in this file, and that is the point.** The
-//! decision is registered in `docs/seguranca/40-cofre-de-credencial.md`
+//! decision is registered in `DocsPublic/seguranca/40-cofre-de-credencial.md`
 //! (author, 2026-09-04): the IDE owns the PROFILE — which is not a secret —
 //! and never writes a password to disk. The password reaches the driver from
 //! the session prompt (memory only), from an environment variable, or from

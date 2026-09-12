@@ -1,7 +1,7 @@
 import QtQuick
 import "../../ui/qml/panels/bottom"
 
-// R1 (docs/roadmaps/26 §4.6): a grade do terminal cai em pixel FISICO inteiro,
+// R1 (DocsPublic/roadmaps/26 §4.6): a grade do terminal cai em pixel FISICO inteiro,
 // e texto e cursor derivam da mesma fonte de metricas.
 //
 // A regressao que isto protege: o cursor era posicionado por

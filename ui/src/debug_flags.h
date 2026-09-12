@@ -1,5 +1,5 @@
 // Flags de diagnostico da UI, ligadas por variavel de ambiente (R0,
-// docs/roadmaps/26).
+// DocsPublic/roadmaps/26).
 //
 // Existe porque investigar geometria de terminal exige VER a grade, e a unica
 // forma honesta de fazer isso e desenhar por cima do render real — nao numa

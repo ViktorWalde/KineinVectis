@@ -19,7 +19,7 @@
 //! coisa em `addSourceToTarget`, `strictWarnings` e `enableOpenMP`; escrever a
 //! explicacao em cada uma das acoes criaria copias que envelhecem separadas —
 //! e' a mesma razao pela qual `isWordChar` virou um dono so'
-//! (`docs/roadmaps/39` §5). O nome do parametro E' a convencao, e ela ja'
+//! (`DocsPublic/roadmaps/39` §5). O nome do parametro E' a convencao, e ela ja'
 //! existia neste catalogo antes deste modulo.
 
 use std::path::Path;

@@ -262,7 +262,7 @@ Rectangle {
         }
     }
 
-    // B2 (docs/roadmaps/24): barra de rolagem do editor. Até 2026-07-12 o editor era um
+    // B2 (DocsPublic/roadmaps/24): barra de rolagem do editor. Até 2026-07-12 o editor era um
     // Flickable SEM indicador nenhum — não dava pra saber o tamanho do arquivo
     // nem onde se estava nele. O Flickable segue sendo a fonte da verdade: a
     // barra só reflete `contentY` e PEDE mudança por `moveRequested`.

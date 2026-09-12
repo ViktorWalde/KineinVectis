@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fixture de geometria do terminal (R0, docs/roadmaps/26).
+"""Fixture de geometria do terminal (R0, DocsPublic/roadmaps/26).
 
 Emite um padrao DETERMINISTICO no stdout para comparar a grade da Kinein com a
 de um terminal externo com a mesma fonte/tamanho. Nao le arquivo, nao acessa

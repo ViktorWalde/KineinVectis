@@ -4,7 +4,7 @@
 //! falar com bancos relacionais, temporais e nao-relacionais. O `SQLite` e' o
 //! primeiro passo dessa lista e o mais barato de todos — o `rusqlite` JA' e'
 //! dependencia deste core desde a rede de seguranca de rascunhos
-//! (`docs/seguranca/23`). Zero crate nova, zero auditoria de licenca.
+//! (`DocsPublic/seguranca/23`). Zero crate nova, zero auditoria de licenca.
 //!
 //! # O que muda em relacao ao `PostgreSQL`
 //!

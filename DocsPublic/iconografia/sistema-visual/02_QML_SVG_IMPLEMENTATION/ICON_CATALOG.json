@@ -1,0 +1,784 @@
+{
+  "schemaVersion": 2,
+  "product": "Kinein Vectis",
+  "scope": "icons-only",
+  "style": {
+    "canvas": "20x20",
+    "strokeWidth": 1.45,
+    "symbolic": true,
+    "baseColor": "#FFFFFF",
+    "runtimeColorization": "Qt Quick MultiEffect",
+    "activeToken": "#FFB000",
+    "defaultToken": "#AAA39A"
+  },
+  "icons": [
+    {
+      "id": "kv.view.project",
+      "label": "Projeto",
+      "category": "Primary Views",
+      "asset": "icons/view/project.svg"
+    },
+    {
+      "id": "kv.view.search",
+      "label": "Buscar",
+      "category": "Primary Views",
+      "asset": "icons/view/search.svg"
+    },
+    {
+      "id": "kv.view.git",
+      "label": "Git",
+      "category": "Primary Views",
+      "asset": "icons/view/git.svg"
+    },
+    {
+      "id": "kv.view.build",
+      "label": "Build",
+      "category": "Primary Views",
+      "asset": "icons/view/build.svg"
+    },
+    {
+      "id": "kv.view.run",
+      "label": "Executar",
+      "category": "Primary Views",
+      "asset": "icons/view/run.svg"
+    },
+    {
+      "id": "kv.view.debug",
+      "label": "Depurar",
+      "category": "Primary Views",
+      "asset": "icons/view/debug.svg"
+    },
+    {
+      "id": "kv.view.tests",
+      "label": "Testes",
+      "category": "Primary Views",
+      "asset": "icons/view/tests.svg"
+    },
+    {
+      "id": "kv.view.quality",
+      "label": "Qualidade",
+      "category": "Primary Views",
+      "asset": "icons/view/quality.svg"
+    },
+    {
+      "id": "kv.view.embedded",
+      "label": "Embedded & Remote",
+      "category": "Primary Views",
+      "asset": "icons/view/embedded.svg"
+    },
+    {
+      "id": "kv.view.terminal",
+      "label": "Terminal",
+      "category": "Primary Views",
+      "asset": "icons/view/terminal.svg"
+    },
+    {
+      "id": "kv.view.problems",
+      "label": "Problemas",
+      "category": "Primary Views",
+      "asset": "icons/view/problems.svg"
+    },
+    {
+      "id": "kv.view.tasks",
+      "label": "Tarefas",
+      "category": "Primary Views",
+      "asset": "icons/view/tasks.svg"
+    },
+    {
+      "id": "kv.view.services",
+      "label": "Serviços",
+      "category": "Primary Views",
+      "asset": "icons/view/services.svg"
+    },
+    {
+      "id": "kv.view.settings",
+      "label": "Configurações",
+      "category": "Primary Views",
+      "asset": "icons/view/settings.svg"
+    },
+    {
+      "id": "kv.action.new",
+      "label": "Novo",
+      "category": "Global Actions",
+      "asset": "icons/action/new.svg"
+    },
+    {
+      "id": "kv.action.open",
+      "label": "Abrir",
+      "category": "Global Actions",
+      "asset": "icons/action/open.svg"
+    },
+    {
+      "id": "kv.action.save",
+      "label": "Salvar",
+      "category": "Global Actions",
+      "asset": "icons/action/save.svg"
+    },
+    {
+      "id": "kv.action.save_all",
+      "label": "Salvar tudo",
+      "category": "Global Actions",
+      "asset": "icons/action/save_all.svg"
+    },
+    {
+      "id": "kv.action.back",
+      "label": "Voltar",
+      "category": "Global Actions",
+      "asset": "icons/action/back.svg"
+    },
+    {
+      "id": "kv.action.forward",
+      "label": "Avançar",
+      "category": "Global Actions",
+      "asset": "icons/action/forward.svg"
+    },
+    {
+      "id": "kv.action.refresh",
+      "label": "Atualizar",
+      "category": "Global Actions",
+      "asset": "icons/action/refresh.svg"
+    },
+    {
+      "id": "kv.action.sync",
+      "label": "Sincronizar",
+      "category": "Global Actions",
+      "asset": "icons/action/sync.svg"
+    },
+    {
+      "id": "kv.action.command_palette",
+      "label": "Ações",
+      "category": "Global Actions",
+      "asset": "icons/action/command_palette.svg"
+    },
+    {
+      "id": "kv.action.search_everywhere",
+      "label": "Buscar em tudo",
+      "category": "Global Actions",
+      "asset": "icons/action/search_everywhere.svg"
+    },
+    {
+      "id": "kv.action.notifications",
+      "label": "Notificações",
+      "category": "Global Actions",
+      "asset": "icons/action/notifications.svg"
+    },
+    {
+      "id": "kv.action.layout",
+      "label": "Layout",
+      "category": "Global Actions",
+      "asset": "icons/action/layout.svg"
+    },
+    {
+      "id": "kv.action.fullscreen",
+      "label": "Tela cheia",
+      "category": "Global Actions",
+      "asset": "icons/action/fullscreen.svg"
+    },
+    {
+      "id": "kv.action.zen",
+      "label": "Modo foco",
+      "category": "Global Actions",
+      "asset": "icons/action/zen.svg"
+    },
+    {
+      "id": "kv.action.help",
+      "label": "Ajuda",
+      "category": "Global Actions",
+      "asset": "icons/action/help.svg"
+    },
+    {
+      "id": "kv.action.close",
+      "label": "Fechar",
+      "category": "Global Actions",
+      "asset": "icons/action/close.svg"
+    },
+    {
+      "id": "kv.editor.split_right",
+      "label": "Dividir à direita",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/split_right.svg"
+    },
+    {
+      "id": "kv.editor.split_down",
+      "label": "Dividir abaixo",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/split_down.svg"
+    },
+    {
+      "id": "kv.editor.pin",
+      "label": "Fixar aba",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/pin.svg"
+    },
+    {
+      "id": "kv.editor.preview",
+      "label": "Aba de pré-visualização",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/preview.svg"
+    },
+    {
+      "id": "kv.editor.modified",
+      "label": "Arquivo modificado",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/modified.svg"
+    },
+    {
+      "id": "kv.editor.readonly",
+      "label": "Somente leitura",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/readonly.svg"
+    },
+    {
+      "id": "kv.editor.rename",
+      "label": "Renomear símbolo",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/rename.svg"
+    },
+    {
+      "id": "kv.editor.quick_fix",
+      "label": "Correção rápida",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/quick_fix.svg"
+    },
+    {
+      "id": "kv.editor.definition",
+      "label": "Ir para definição",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/definition.svg"
+    },
+    {
+      "id": "kv.editor.references",
+      "label": "Encontrar usos",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/references.svg"
+    },
+    {
+      "id": "kv.editor.format",
+      "label": "Formatar",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/format.svg"
+    },
+    {
+      "id": "kv.editor.wrap",
+      "label": "Quebra de linha",
+      "category": "Editor & Navigation",
+      "asset": "icons/editor/wrap.svg"
+    },
+    {
+      "id": "kv.project.new_file",
+      "label": "Novo arquivo",
+      "category": "Project & Search",
+      "asset": "icons/project/new_file.svg"
+    },
+    {
+      "id": "kv.project.new_folder",
+      "label": "Nova pasta",
+      "category": "Project & Search",
+      "asset": "icons/project/new_folder.svg"
+    },
+    {
+      "id": "kv.project.collapse_all",
+      "label": "Recolher tudo",
+      "category": "Project & Search",
+      "asset": "icons/project/collapse_all.svg"
+    },
+    {
+      "id": "kv.project.follow_active",
+      "label": "Seguir arquivo ativo",
+      "category": "Project & Search",
+      "asset": "icons/project/follow_active.svg"
+    },
+    {
+      "id": "kv.search.regex",
+      "label": "Regex",
+      "category": "Project & Search",
+      "asset": "icons/search/regex.svg"
+    },
+    {
+      "id": "kv.search.case_sensitive",
+      "label": "Diferenciar maiúsculas",
+      "category": "Project & Search",
+      "asset": "icons/search/case_sensitive.svg"
+    },
+    {
+      "id": "kv.search.whole_word",
+      "label": "Palavra inteira",
+      "category": "Project & Search",
+      "asset": "icons/search/whole_word.svg"
+    },
+    {
+      "id": "kv.search.replace",
+      "label": "Substituir",
+      "category": "Project & Search",
+      "asset": "icons/search/replace.svg"
+    },
+    {
+      "id": "kv.git.commit",
+      "label": "Commit",
+      "category": "Git",
+      "asset": "icons/git/commit.svg"
+    },
+    {
+      "id": "kv.git.push",
+      "label": "Push",
+      "category": "Git",
+      "asset": "icons/git/push.svg"
+    },
+    {
+      "id": "kv.git.pull",
+      "label": "Pull",
+      "category": "Git",
+      "asset": "icons/git/pull.svg"
+    },
+    {
+      "id": "kv.git.fetch",
+      "label": "Fetch",
+      "category": "Git",
+      "asset": "icons/git/fetch.svg"
+    },
+    {
+      "id": "kv.git.branch",
+      "label": "Branch",
+      "category": "Git",
+      "asset": "icons/git/branch.svg"
+    },
+    {
+      "id": "kv.git.merge",
+      "label": "Merge",
+      "category": "Git",
+      "asset": "icons/git/merge.svg"
+    },
+    {
+      "id": "kv.git.rebase",
+      "label": "Rebase",
+      "category": "Git",
+      "asset": "icons/git/rebase.svg"
+    },
+    {
+      "id": "kv.git.stash",
+      "label": "Stash",
+      "category": "Git",
+      "asset": "icons/git/stash.svg"
+    },
+    {
+      "id": "kv.git.stage",
+      "label": "Stage",
+      "category": "Git",
+      "asset": "icons/git/stage.svg"
+    },
+    {
+      "id": "kv.git.unstage",
+      "label": "Unstage",
+      "category": "Git",
+      "asset": "icons/git/unstage.svg"
+    },
+    {
+      "id": "kv.git.conflict",
+      "label": "Conflito",
+      "category": "Git",
+      "asset": "icons/git/conflict.svg"
+    },
+    {
+      "id": "kv.git.blame",
+      "label": "Blame",
+      "category": "Git",
+      "asset": "icons/git/blame.svg"
+    },
+    {
+      "id": "kv.build.configure",
+      "label": "Configurar",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/build/configure.svg"
+    },
+    {
+      "id": "kv.build.compile",
+      "label": "Compilar",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/build/compile.svg"
+    },
+    {
+      "id": "kv.build.rebuild",
+      "label": "Recompilar",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/build/rebuild.svg"
+    },
+    {
+      "id": "kv.build.clean",
+      "label": "Limpar build",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/build/clean.svg"
+    },
+    {
+      "id": "kv.run.start",
+      "label": "Executar",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/run/start.svg"
+    },
+    {
+      "id": "kv.run.stop",
+      "label": "Parar",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/run/stop.svg"
+    },
+    {
+      "id": "kv.run.rerun",
+      "label": "Executar novamente",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/run/rerun.svg"
+    },
+    {
+      "id": "kv.debug.start",
+      "label": "Iniciar debug",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/start.svg"
+    },
+    {
+      "id": "kv.debug.attach",
+      "label": "Anexar debugger",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/attach.svg"
+    },
+    {
+      "id": "kv.debug.pause",
+      "label": "Pausar",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/pause.svg"
+    },
+    {
+      "id": "kv.debug.resume",
+      "label": "Continuar",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/resume.svg"
+    },
+    {
+      "id": "kv.debug.step_over",
+      "label": "Step over",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/step_over.svg"
+    },
+    {
+      "id": "kv.debug.step_into",
+      "label": "Step into",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/step_into.svg"
+    },
+    {
+      "id": "kv.debug.step_out",
+      "label": "Step out",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/step_out.svg"
+    },
+    {
+      "id": "kv.debug.breakpoint",
+      "label": "Breakpoint",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/breakpoint.svg"
+    },
+    {
+      "id": "kv.debug.memory",
+      "label": "Memória",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/memory.svg"
+    },
+    {
+      "id": "kv.debug.registers",
+      "label": "Registradores",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/debug/registers.svg"
+    },
+    {
+      "id": "kv.test.run_all",
+      "label": "Executar todos os testes",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/test/run_all.svg"
+    },
+    {
+      "id": "kv.test.run_nearest",
+      "label": "Executar teste atual",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/test/run_nearest.svg"
+    },
+    {
+      "id": "kv.test.coverage",
+      "label": "Cobertura",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/test/coverage.svg"
+    },
+    {
+      "id": "kv.quality.run",
+      "label": "Executar verificações",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/quality/run.svg"
+    },
+    {
+      "id": "kv.quality.profile",
+      "label": "Perfil de qualidade",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/quality/profile.svg"
+    },
+    {
+      "id": "kv.quality.static_analysis",
+      "label": "Análise estática",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/quality/static_analysis.svg"
+    },
+    {
+      "id": "kv.quality.sanitizers",
+      "label": "Sanitizers",
+      "category": "Build/Run/Debug/Test/Quality",
+      "asset": "icons/quality/sanitizers.svg"
+    },
+    {
+      "id": "kv.embedded.target",
+      "label": "Target",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/target.svg"
+    },
+    {
+      "id": "kv.embedded.local_linux",
+      "label": "Linux local",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/local_linux.svg"
+    },
+    {
+      "id": "kv.embedded.remote_linux",
+      "label": "Linux remoto",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/remote_linux.svg"
+    },
+    {
+      "id": "kv.embedded.ssh",
+      "label": "SSH",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/ssh.svg"
+    },
+    {
+      "id": "kv.embedded.deploy",
+      "label": "Deploy",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/deploy.svg"
+    },
+    {
+      "id": "kv.embedded.remote_run",
+      "label": "Executar remotamente",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/remote_run.svg"
+    },
+    {
+      "id": "kv.embedded.gdbserver",
+      "label": "gdbserver",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/gdbserver.svg"
+    },
+    {
+      "id": "kv.embedded.serial",
+      "label": "Serial Monitor",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/serial.svg"
+    },
+    {
+      "id": "kv.embedded.qemu",
+      "label": "QEMU",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/qemu.svg"
+    },
+    {
+      "id": "kv.embedded.qemu_display",
+      "label": "Display QEMU",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/qemu_display.svg"
+    },
+    {
+      "id": "kv.embedded.cross_compile",
+      "label": "Cross-compilation",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/cross_compile.svg"
+    },
+    {
+      "id": "kv.embedded.sysroot",
+      "label": "Sysroot",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/sysroot.svg"
+    },
+    {
+      "id": "kv.embedded.sdk",
+      "label": "SDK",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/sdk.svg"
+    },
+    {
+      "id": "kv.embedded.board",
+      "label": "Placa",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/board.svg"
+    },
+    {
+      "id": "kv.embedded.mcu",
+      "label": "Microcontrolador",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/mcu.svg"
+    },
+    {
+      "id": "kv.embedded.probe",
+      "label": "Debug probe",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/probe.svg"
+    },
+    {
+      "id": "kv.embedded.flash",
+      "label": "Gravar firmware",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/flash.svg"
+    },
+    {
+      "id": "kv.embedded.reset",
+      "label": "Resetar target",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/reset.svg"
+    },
+    {
+      "id": "kv.embedded.power",
+      "label": "Ligar/desligar target",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/power.svg"
+    },
+    {
+      "id": "kv.embedded.port_forward",
+      "label": "Port forwarding",
+      "category": "Embedded & Remote",
+      "asset": "icons/embedded/port_forward.svg"
+    },
+    {
+      "id": "kv.status.lsp",
+      "label": "LSP",
+      "category": "Status & File Types",
+      "asset": "icons/status/lsp.svg"
+    },
+    {
+      "id": "kv.status.toolchain",
+      "label": "Toolchain",
+      "category": "Status & File Types",
+      "asset": "icons/status/toolchain.svg"
+    },
+    {
+      "id": "kv.status.encoding",
+      "label": "Encoding",
+      "category": "Status & File Types",
+      "asset": "icons/status/encoding.svg"
+    },
+    {
+      "id": "kv.status.line_endings",
+      "label": "Fim de linha",
+      "category": "Status & File Types",
+      "asset": "icons/status/line_endings.svg"
+    },
+    {
+      "id": "kv.status.lock",
+      "label": "Seguro/verificado",
+      "category": "Status & File Types",
+      "asset": "icons/status/lock.svg"
+    },
+    {
+      "id": "kv.file.cpp",
+      "label": "Arquivo C++",
+      "category": "Status & File Types",
+      "asset": "icons/file/cpp.svg"
+    },
+    {
+      "id": "kv.file.c",
+      "label": "Arquivo C",
+      "category": "Status & File Types",
+      "asset": "icons/file/c.svg"
+    },
+    {
+      "id": "kv.file.header",
+      "label": "Header",
+      "category": "Status & File Types",
+      "asset": "icons/file/header.svg"
+    },
+    {
+      "id": "kv.file.rust",
+      "label": "Arquivo Rust",
+      "category": "Status & File Types",
+      "asset": "icons/file/rust.svg"
+    },
+    {
+      "id": "kv.file.cmake",
+      "label": "CMake",
+      "category": "Status & File Types",
+      "asset": "icons/file/cmake.svg"
+    },
+    {
+      "id": "kv.file.qml",
+      "label": "QML",
+      "category": "Status & File Types",
+      "asset": "icons/file/qml.svg"
+    },
+    {
+      "id": "kv.file.toml",
+      "label": "TOML/Cargo",
+      "category": "Status & File Types",
+      "asset": "icons/file/toml.svg"
+    },
+    {
+      "id": "kv.file.device_tree",
+      "label": "Device Tree",
+      "category": "Status & File Types",
+      "asset": "icons/file/device_tree.svg"
+    },
+    {
+      "id": "kv.file.linker_script",
+      "label": "Linker script",
+      "category": "Status & File Types",
+      "asset": "icons/file/linker_script.svg"
+    },
+    {
+      "id": "kv.view.ai_terminal",
+      "label": "AI Terminal",
+      "category": "AI CLI Bridge",
+      "asset": "icons/view/ai_terminal.svg"
+    },
+    {
+      "id": "kv.action.open_ai_terminal",
+      "label": "Abrir AI Terminal",
+      "category": "AI CLI Bridge",
+      "asset": "icons/action/open_ai_terminal.svg"
+    },
+    {
+      "id": "kv.action.ai_context_preview",
+      "label": "Prévia do contexto IA",
+      "category": "AI CLI Bridge",
+      "asset": "icons/action/ai_context_preview.svg"
+    },
+    {
+      "id": "kv.view.configuration_actions",
+      "label": "Configuration Actions",
+      "category": "Configuration",
+      "asset": "icons/view/configuration_actions.svg"
+    },
+    {
+      "id": "kv.view.project_health",
+      "label": "Project Health",
+      "category": "Configuration",
+      "asset": "icons/view/project_health.svg"
+    },
+    {
+      "id": "kv.view.resources",
+      "label": "Background Services",
+      "category": "Configuration",
+      "asset": "icons/view/resources.svg"
+    },
+    {
+      "id": "kv.view.toolchains",
+      "label": "Toolchains",
+      "category": "Configuration",
+      "asset": "icons/view/toolchains.svg"
+    },
+    {
+      "id": "kv.view.targets",
+      "label": "Targets",
+      "category": "Configuration",
+      "asset": "icons/view/targets.svg"
+    }
+  ]
+}

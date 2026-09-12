@@ -33,7 +33,7 @@ Item {
         }
 
         function onFileSaved(path) {
-            // Auto-setup (radar docs-privada/diario/18): salvar CMakeLists/Presets pela
+            // Auto-setup (radar DocsPrivate/diario/18): salvar CMakeLists/Presets pela
             // IDE reconfigura sozinho (job na aba Jobs, sem roubar foco).
             if (root.coreClient.workspaceBuildSystems.indexOf("cmake") < 0) {
                 return;

@@ -21,7 +21,7 @@ Item {
     property alias externalMessage: documents.currentExternalMessage
     property string watchError: ""
     property alias loadingEditorText: surfaceBridge.loadingText
-    // D1 (docs/roadmaps/24): alias para a property PRÓPRIA do controller, nunca para o
+    // D1 (DocsPublic/roadmaps/24): alias para a property PRÓPRIA do controller, nunca para o
     // `visible` do Item — este EditorController é invisível (é controller), e
     // `Item.visible` de um filho lê a visibilidade EFETIVA, que fica presa em
     // false sob pai invisível. Era essa a causa do popup nunca abrir.
@@ -42,7 +42,7 @@ Item {
     property alias actionsVisible: language.actionsVisible
     property alias actionsIndex: language.actionsIndex
     property bool goToLineVisible: false
-    // D1b (docs/roadmaps/24): Find/Replace no arquivo. Mesma regra do D1 — alias para
+    // D1b (DocsPublic/roadmaps/24): Find/Replace no arquivo. Mesma regra do D1 — alias para
     // a property PRÓPRIA do controller, nunca para o `visible` do Item.
     property alias findBarVisible: findController.barVisible
     property alias findReplaceMode: findController.replaceMode
@@ -68,7 +68,7 @@ Item {
 
     signal readFileRequested(string path)
     signal writeFileRequested(string path, string content, string expectedContent)
-    // M-S1 (docs/seguranca/23): autosave/limpeza de rascunho não salvo (rede de segurança).
+    // M-S1 (DocsPublic/seguranca/23): autosave/limpeza de rascunho não salvo (rede de segurança).
     signal draftSaveRequested(string path, string content)
     signal draftClearRequested(string path)
     signal formatRequested(string path, string content)
@@ -682,7 +682,7 @@ Item {
         }
     }
 
-    // M-S1 (docs/seguranca/23): rascunhos aguardando o load do disco para sobrepor.
+    // M-S1 (DocsPublic/seguranca/23): rascunhos aguardando o load do disco para sobrepor.
     property var pendingDraftContent: ({})
 
     function handleFileLoaded(path, content) {

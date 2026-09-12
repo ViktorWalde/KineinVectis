@@ -20,7 +20,7 @@ import QtQuick
 // so' resolve o que esta na MESMA pasta. Enquanto os dois modelos coexistirem,
 // um tipo compartilhado precisa morar junto de quem o harness exercita.
 // Consolidar as copias de jobs/shell/search/project depende de resolver essa
-// diferenca primeiro — esta registrado em docs/roadmaps/39 §4.
+// diferenca primeiro — esta registrado em DocsPublic/roadmaps/39 §4.
 QtObject {
     function baseName(path) {
         return path.substring(path.lastIndexOf("/") + 1);

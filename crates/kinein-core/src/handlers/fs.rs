@@ -345,7 +345,7 @@ impl Core {
                 match fsops::rename(&root, Path::new(&parsed.from), Path::new(&parsed.to)) {
                     Ok((from, to)) => {
                         // O rascunho acompanha o arquivo: a chave da store e' o
-                        // caminho absoluto (docs/seguranca/23).
+                        // caminho absoluto (DocsPublic/seguranca/23).
                         super::draft::rename_draft_after_move(self, &from, &to);
                         JsonRpcResponse::success(
                             request_id,

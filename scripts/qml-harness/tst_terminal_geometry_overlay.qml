@@ -1,7 +1,7 @@
 import QtQuick
 import "../../ui/qml/panels/bottom"
 
-// R0 item 5/6 (docs/roadmaps/26): o overlay de geometria mede o cursor REAL e
+// R0 item 5/6 (DocsPublic/roadmaps/26): o overlay de geometria mede o cursor REAL e
 // aponta divergencia; ele nao pode concordar consigo mesmo.
 //
 // Por que testar instrumentacao: um overlay que calcula o proprio "esperado" e

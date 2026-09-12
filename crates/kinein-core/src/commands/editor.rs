@@ -13,7 +13,7 @@ pub(super) fn format_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
-/// Find/Replace dentro do arquivo aberto (D1b, docs/roadmaps/24).
+/// Find/Replace dentro do arquivo aberto (D1b, DocsPublic/roadmaps/24).
 ///
 /// Sao comandos de UI PURA: o buffer vive no editor, entao a busca nao passa
 /// pelo core (diferente do `fs.search`, que roda ripgrep no DISCO). O core so

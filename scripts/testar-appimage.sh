@@ -38,7 +38,7 @@ if [[ ! -f "$DISTRIBUTION_DIR/Tutorial.md" ]]; then
     exit 1
 fi
 
-if ! cmp -s "$REPO_ROOT/Tutorial.md" "$DISTRIBUTION_DIR/Tutorial.md"; then
+if ! cmp -s "$REPO_ROOT/DocsPublic/tutorial.md" "$DISTRIBUTION_DIR/Tutorial.md"; then
     echo "erro: Tutorial.md distribuído está desatualizado." >&2
     exit 1
 fi

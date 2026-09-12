@@ -13,7 +13,7 @@ import QtQuick
 //   - ao esquecer a instancia.
 // Ele nunca vai para o perfil (que e' o que o core persiste) e nunca aparece
 // no log do cliente, que redige por nome de campo. Mesma regra da senha de
-// banco; ver `docs/seguranca/40`.
+// banco; ver `DocsPublic/seguranca/40`.
 //
 // Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
 Item {

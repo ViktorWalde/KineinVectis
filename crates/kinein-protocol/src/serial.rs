@@ -1,7 +1,7 @@
 //! Types for the `serial.*` domain: USB serial ports on this machine.
 //!
 //! The serial port is the one channel every bare-metal family shares
-//! (`docs/integracoes/38` §2): ROM bootloader, console and the DTR/RTS reset
+//! (`DocsPublic/integracoes/38` §2): ROM bootloader, console and the DTR/RTS reset
 //! lines all ride on it. This domain only ENUMERATES and DESCRIBES — it never
 //! opens a port, because opening one asserts DTR/RTS on most bridges and that
 //! resets the board.

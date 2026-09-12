@@ -8,7 +8,7 @@ import KineinVectis
 // O CAMPO DE SENHA APARECE POR `secretRequired`, NUNCA POR TEXTO. O core decide
 // isso pelo `SQLSTATE`, que nao muda de idioma; a mensagem do servidor vem
 // localizada, e ler ela aqui acoplaria a UI ao idioma do banco de quem roda
-// (medido em 2026-09-04, `docs/roadmaps/35` §9.2).
+// (medido em 2026-09-04, `DocsPublic/roadmaps/35` §9.2).
 //
 // A senha digitada aqui vive na sessao e some ao trocar de perfil ou fechar o
 // painel — ela nunca entra no perfil, que e' o que vai para o disco.

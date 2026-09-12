@@ -1,6 +1,6 @@
 import QtQuick
 
-// R1 (docs/roadmaps/26): fonte UNICA de metricas de celula do terminal.
+// R1 (DocsPublic/roadmaps/26): fonte UNICA de metricas de celula do terminal.
 //
 // Por que existe. Ate 0.60 o texto e o cursor eram posicionados por sistemas
 // independentes: o texto por layout (Column/Row, posicoes reais) e o cursor por
@@ -8,7 +8,7 @@ import QtQuick
 // fracionaria — medido em 2026-07-16: charWidth 7.796875, lineHeight 17.6875,
 // DPR 1 — o `floor` descartava ate 0,95px, e o erro VARIAVA com a coluna
 // (0,36 a 0,95). O cursor barra tem 2px, entao isso era metade dele. Ver a
-// tabela em docs/roadmaps/26 §4.6.
+// tabela em DocsPublic/roadmaps/26 §4.6.
 //
 // A correcao (R1.3): arredondar a grade em pixels FISICOS primeiro e derivar os
 // logicos. Com a celula em pixel fisico inteiro, `col * cellWidth` e exato dos

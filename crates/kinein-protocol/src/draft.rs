@@ -1,4 +1,4 @@
-//! Draft (autosave) payloads — rede de segurança de dados (docs/seguranca/23).
+//! Draft (autosave) payloads — rede de segurança de dados (DocsPublic/seguranca/23).
 //!
 //! Rascunhos de buffers não salvos, persistidos em `SQLite` no core. Salvar/
 //! limpar reusam `FsWriteParams` (`{ path, content }`) e `FsPathParams`

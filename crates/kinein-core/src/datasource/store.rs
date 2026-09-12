@@ -6,7 +6,7 @@
 //! impedir a IDE de abrir o projeto.
 //!
 //! **O que este arquivo NUNCA grava: senha.** A decisao esta' registrada em
-//! `docs/seguranca/40-cofre-de-credencial.md` (autor, 2026-09-04), e o tipo
+//! `DocsPublic/seguranca/40-cofre-de-credencial.md` (autor, 2026-09-04), e o tipo
 //! `DataSourceProfile` nao tem campo para uma — a garantia e' estrutural, nao
 //! uma lembranca de quem escreve. Ha' um teste que serializa um perfil e
 //! reprova se qualquer chave do JSON parecer segredo, para que a garantia
@@ -166,7 +166,7 @@ mod tests {
                                     || minuscula == "secretsource"
                                     || minuscula == "secretvariable",
                                 "campo `{chave}` no JSON gravado parece segredo — \
-                                 ver docs/seguranca/40"
+                                 ver DocsPublic/seguranca/40"
                             );
                         }
                         pendentes.push(filho);

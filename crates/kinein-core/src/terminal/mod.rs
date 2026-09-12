@@ -1,4 +1,4 @@
-//! Terminal profissional: PTY real + emulador VT (grid), fatia D2 (docs/roadmaps/24).
+//! Terminal profissional: PTY real + emulador VT (grid), fatia D2 (DocsPublic/roadmaps/24).
 //!
 //! Antes o core usava `script` como PTY falso com `TERM=dumb` e removia todo
 //! o ANSI (texto puro, sem cor/cursor/TUI). Agora:

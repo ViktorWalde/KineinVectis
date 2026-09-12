@@ -2,7 +2,7 @@ import QtQuick
 
 // Estado local de seleção da grade VT. Não conhece IPC nem clipboard.
 //
-// R1.4 (docs/roadmaps/26): a conversão pixel→célula NÃO mora aqui. Ela é uma
+// R1.4 (DocsPublic/roadmaps/26): a conversão pixel→célula NÃO mora aqui. Ela é uma
 // só, no TerminalMetrics, e texto, cursor, seleção, mouse e resize consomem a
 // mesma instância. Quando cada consumidor fazia a própria conta, o cursor e o
 // texto divergiam até 0,95px (§4.6).

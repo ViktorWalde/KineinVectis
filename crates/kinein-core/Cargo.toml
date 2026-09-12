@@ -17,9 +17,9 @@ kinein-config.workspace = true
 kinein-protocol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-# Rede de segurança de dados (docs/23): autosave de rascunhos em SQLite.
+# Rede de segurança de dados (DocsPublic/23): autosave de rascunhos em SQLite.
 rusqlite.workspace = true
-# Terminal profissional (docs/24 D2): PTY real + emulador VT com grid.
+# Terminal profissional (DocsPublic/24 D2): PTY real + emulador VT com grid.
 portable-pty.workspace = true
 notify.workspace = true
 tree-sitter.workspace = true
@@ -28,9 +28,9 @@ tree-sitter-cpp.workspace = true
 tree-sitter-rust.workspace = true
 tree-sitter-python.workspace = true
 alacritty_terminal = "0.26"
-# Fontes de dados do autor (docs/integracoes/37, docs/seguranca/40).
+# Fontes de dados do autor (DocsPublic/integracoes/37, DocsPublic/seguranca/40).
 postgres.workspace = true
-# Observabilidade (docs/integracoes/37 §2): o Grafana e' AGPL e por isso a IDE
+# Observabilidade (DocsPublic/integracoes/37 §2): o Grafana e' AGPL e por isso a IDE
 # so' CONVERSA com ele, pela HTTP API. Este e' o cliente dessa conversa.
 ureq.workspace = true
 # Bancos nao-relacionais (roadmaps/35 §9.7): colecao -> documento.
@@ -38,7 +38,7 @@ mongodb.workspace = true
 # Simulacao por conceito (arquitetura/34): avalia a formula que o usuario digita
 # e, antes disso, diz QUAIS variaveis ela usa — que e' o que a checagem de
 # conceito precisa e um compilador nao daria. ADR-0006.
-# Portas seriais USB (docs/integracoes/38 §6, E1): `access(2)` sem abrir a porta.
+# Portas seriais USB (DocsPublic/integracoes/38 §6, E1): `access(2)` sem abrir a porta.
 rustix.workspace = true
 
 [lints]

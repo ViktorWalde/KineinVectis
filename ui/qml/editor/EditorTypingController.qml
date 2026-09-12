@@ -60,7 +60,7 @@ QtObject {
 
     // Unico ponto de entrada. true = tecla CONSUMIDA (o chamador marca
     // event.accepted). A ordem dos testes e' significativa e esta' descrita
-    // em docs/roadmaps/39, §2.1.
+    // em DocsPublic/roadmaps/39, §2.1.
     function route(event) {
         if (surface === null) {
             return false;
@@ -148,7 +148,7 @@ QtObject {
         return false;
     }
 
-    // E1 (docs-privada/diario/18, trilha E): auto-close de pares, type-over do
+    // E1 (DocsPrivate/diario/18, trilha E): auto-close de pares, type-over do
     // fechador, surround da seleção e `#include <`.
     // true = tecla consumida.
     function handleTypingKey(event) {

@@ -218,7 +218,7 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
             emit sessionRestored(files, session.value(QStringLiteral("activeFile")).toString());
         }
     }
-    // M-S1: rascunhos não salvos recuperados de um crash (docs/seguranca/23). Só em
+    // M-S1: rascunhos não salvos recuperados de um crash (DocsPublic/seguranca/23). Só em
     // abertura normal — a recuperação de crash do core (acima) sai antes.
     if (result.contains(QStringLiteral("drafts"))) {
         const QVariantList drafts =

@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// D1b (docs/roadmaps/24): a barra de busca/substituição do arquivo aberto. Puro
+// D1b (DocsPublic/roadmaps/24): a barra de busca/substituição do arquivo aberto. Puro
 // renderer + entrada — toda a lógica vive no EditorFindController.
 Rectangle {
     id: root

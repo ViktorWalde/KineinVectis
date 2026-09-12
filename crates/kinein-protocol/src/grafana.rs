@@ -12,7 +12,7 @@
 //!
 //! # The licence decides the SHAPE of this integration
 //!
-//! Grafana is **AGPL-3.0** (`docs/integracoes/37-banco-e-observabilidade.md`
+//! Grafana is **AGPL-3.0** (`DocsPublic/integracoes/37-banco-e-observabilidade.md`
 //! §2, author decision 2026-09-03). The IDE may *talk* to a Grafana the user
 //! runs; it may never embed or redistribute one. Everything in this file is a
 //! description of a conversation with a process that belongs to the user.

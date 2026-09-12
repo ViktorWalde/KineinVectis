@@ -15,7 +15,7 @@ Item {
     property real viewportHeight: 720
     property bool layoutLoaded: false
     property bool persistedLayout: false
-    // Dimensoes padrao e limites de docs/specs/KINEIN_VECTIS_LAYOUT_SYSTEM.md
+    // Dimensoes padrao e limites de DocsPublic/especificacoes/sistema-de-layout.md
     // §6.4; persistencia de layout entra com Settings (M4).
     property real explorerWidth: 280
     property real contextWidth: 360

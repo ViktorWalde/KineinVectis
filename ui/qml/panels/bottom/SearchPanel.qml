@@ -157,7 +157,7 @@ Item {
         id: searchResultsView
 
 
-        // B2 (docs/roadmaps/24): barra de rolagem. `parent: searchResultsView` é OBRIGATÓRIO — um filho
+        // B2 (DocsPublic/roadmaps/24): barra de rolagem. `parent: searchResultsView` é OBRIGATÓRIO — um filho
         // declarado dentro de um ListView vira filho do contentItem e ROLARIA
         // junto com a lista. O ListView segue sendo a fonte da verdade.
         VerticalScrollBar {

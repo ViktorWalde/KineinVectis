@@ -1,6 +1,6 @@
 # AGENTS.md — Instruções para GPT/Claude no terminal
 
-> **Classe: CONTRATO** (`docs/README.md`). São as regras de como se trabalha
+> **Classe: CONTRATO** (`DocsPublic/README.md`). São as regras de como se trabalha
 > neste repositório. Só mudam por decisão explícita e registrada — não por
 > conveniência de uma sessão. Não contêm inventário nem número medido: número é
 > o que apodrece, e ele mora no código.
@@ -26,10 +26,10 @@ O projeto deve evitar reimplementar ferramentas já existentes. Sempre que poss�
 - Backend: Docker/Podman Compose, HTTP client, OpenAPI, PostgreSQL, Redis, logs.
 - IA: GPT CLI, Claude CLI, Ollama, OpenAI/Anthropic/OpenRouter via providers configuráveis.
 
-## Leitura obrigatória: `docs/arquitetura/ARCHITECTURE.md`
+## Leitura obrigatória: `DocsPublic/arquitetura/ARCHITECTURE.md`
 
 **Antes de propor arquitetura, split, módulo, pasta ou "plano" de organização,
-leia `docs/arquitetura/ARCHITECTURE.md` inteiro.** Ele é contrato de engenharia,
+leia `DocsPublic/arquitetura/ARCHITECTURE.md` inteiro.** Ele é contrato de engenharia,
 não referência de consulta: define camadas (§2), organização do core (§4), onde
 colocar código novo (§5) e o caminho de crescimento `função → arquivo → pasta →
 crate` (§6), com os nomes dos crates futuros já escolhidos.
@@ -106,21 +106,23 @@ Todo código Rust deve seguir o máximo rigor possível:
 
 Antes de criar código:
 
-0. **Ler `docs/` — e só `docs/`.** Desde 2026-08-29 a documentação tem três
-   árvores e uma regra: **`docs/` é auto-suficiente para trabalhar.**
+0. **Ler `DocsPublic/` — e só `DocsPublic/`.** Desde 2026-09-12 a documentação
+   tem duas árvores e uma regra: **`DocsPublic/` é auto-suficiente para trabalhar.**
 
    ```text
-   docs/          LIDA EM TODA SESSAO. Contrato, estado, plano, specs, build.
-   docs-privada/  Continuidade interna (log ContextoIA, diario, prompts).
+   DocsPublic/    LIDA EM TODA SESSAO. Contrato, estado, plano, specs, build.
+                  Pastas com nome explicito; documento = numero + nome.
+   DocsPrivate/   NAO versionada. Continuidade interna (log ContextoIA, diario,
+                  prompts de retomada, historico do que saiu, legado/).
                   Consulta SOB DEMANDA, para "por que isto ficou assim?".
-   docs-legada/   Superado ou CANCELADO. Nunca e' alvo; nao implementar dali.
    ```
 
-   Entrada: `docs/README.md`; **primeira leitura de quem é novo no projeto:**
-   `docs/LEITURA_TECNICA.md` (o que existe, medido, e o que a direção custa).
-   A `docs-legada/` existe porque spec cancelada
-   dentro de `docs/specs/` é armadilha — grande, completa e persuasiva. Detalhe
-   e a decisão registrada em `docs/README.md`, "As três árvores".
+   Entrada: `DocsPublic/README.md`; **primeira leitura de quem é novo no projeto:**
+   `DocsPublic/leitura-tecnica.md` (o que existe, medido, e o que a direção custa).
+   A `DocsPrivate/legado/` existe porque spec cancelada dentro de
+   `DocsPublic/especificacoes/` é armadilha — grande, completa e persuasiva.
+   Detalhe e a decisão registrada em `DocsPublic/README.md`, "Como a
+   documentação está organizada".
 
 1. **MEDIR no código o que a tarefa afirma.** Antes de aceitar qualquer item de
    fila (`PONTO_ATUAL` §PRÓXIMO GESTO, roadmap, spec) como pendente: `ls` no
@@ -128,22 +130,22 @@ Antes de criar código:
    Em 2026-07-17 o `PRÓXIMO GESTO` listava como "design pronto" um harness que a
    §A3 do MESMO arquivo dava como entregue — e o arquivo existia. Medir custa 30
    segundos; reimplementar o que existe custa uma fatia.
-2. **NÃO** comece pelo log. `docs-privada/ContextoIA.md` é LOG datado e está
+2. **NÃO** comece pelo log. `DocsPrivate/ContextoIA.md` é LOG datado e está
    fora da árvore de leitura desde 2026-08-29: serve para "por que isto é
    assim?", jamais para "o que existe hoje?".
 3. Ler `GUIAIA.md` para localizar o domínio, as conexões e os documentos
    específicos da tarefa. Ele é um mapa, não substitui as fontes seguintes.
-4. Ler `docs/arquitetura/ARCHITECTURE.md` **inteiro** (camadas, convenções de
+4. Ler `DocsPublic/arquitetura/ARCHITECTURE.md` **inteiro** (camadas, convenções de
    módulo, regra de split, caminho de crescimento). Obrigatório e verificado por
    catraca — ver a seção "Leitura obrigatória" no topo deste arquivo. Se a
    tarefa é propor arquitetura: **medir antes de propor**.
-5. Ler `docs/arquitetura/02-repository-structure.md` e `docs/arquitetura/03-ipc-protocol.md` (estrutura e contrato IPC atual).
-6. Ler `docs/arquitetura/06-strict-mode.md` (rigor Rust/C++).
-7. Consultar `docs/specs/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).
+5. Ler `DocsPublic/arquitetura/02-repository-structure.md` e `DocsPublic/arquitetura/03-ipc-protocol.md` (estrutura e contrato IPC atual).
+6. Ler `DocsPublic/arquitetura/06-strict-mode.md` (rigor Rust/C++).
+7. Consultar `DocsPublic/especificacoes/` para a visão-alvo do que está sendo construído (entrada: `SPEC_INDEX`).
 8. Verificar se a tarefa pertence ao core, UI, tooling, docs ou protocolo — e ao domínio certo dentro do core.
 9. Se a tarefa criar ou alterar uma funcionalidade de IDE, seguir a política
    obrigatória de referência profissional de
-   `docs/roadmaps/KINEIN_VECTIS_OPEN_PLUGIN_ADAPTATION_ROADMAP.md`: estudar a implementação
+   `DocsPublic/roadmaps/adaptacao-de-plugins-abertos.md`: estudar a implementação
    atual e oficial relevante em Code OSS, IntelliJ IDEA Community, Zed, Lapce
    e/ou Apache NetBeans; registrar revisão, invariantes e adaptação; escrever a
    solução nativa da Kinein sem copiar função, classe ou módulo e sem fazer
@@ -165,22 +167,22 @@ Ao propor implementação:
 
 ## Política de leitura de documentação
 
-Use a ordem de precedência definida em `docs/README.md`:
+Use a ordem de precedência definida em `DocsPublic/README.md`:
 
 ```text
 0. O CÓDIGO + os gates  → a ÚNICA fonte do que existe. Mede-se, não se lê.
 1. CONTRATO             → AGENTS.md, ARCHITECTURE.md, adr/. Só muda por decisão.
-2. ESTADO               → PONTO_ATUAL.md, GUIAIA.md. Tem que ser verdade hoje.
-3. PLANO / ALVO         → docs/specs/, docs/roadmaps/. Diverge por natureza.
-4. LOG                  → docs-privada/ContextoIA.md, diario/. Datado; nunca reescrever.
+2. ESTADO               → DocsPrivate/historico/PONTO_ATUAL.md, GUIAIA.md. Tem que ser verdade hoje.
+3. PLANO / ALVO         → DocsPublic/especificacoes/, DocsPublic/roadmaps/. Diverge por natureza.
+4. LOG                  → DocsPrivate/ContextoIA.md, diario/. Datado; nunca reescrever.
 ```
 
 **Em conflito, o código vence sempre. Nenhum documento derruba uma medição.**
-As quatro classes e o porquê estão em `docs/README.md`.
+As quatro classes e o porquê estão em `DocsPublic/README.md`.
 
-A **UI/UX segue `docs/specs/`** como alvo; o que EXISTE se mede no código. Não existe
-mais pasta de arquivo morto (`docs/archive/` foi removida em 2026-07-05 — ver
-`docs/README.md`); não recriar uma só para guardar material descontinuado.
+A **UI/UX segue `DocsPublic/especificacoes/`** como alvo; o que EXISTE se mede no código. Não existe
+mais pasta de arquivo morto (`DocsPublic/archive/` foi removida em 2026-07-05 — ver
+`DocsPublic/README.md`); não recriar uma só para guardar material descontinuado.
 `GUIAIA.md` apenas encurta a navegação entre essas fontes e o código.
 
 ## Padrão de commits sugerido

@@ -15,7 +15,7 @@ import KineinVectis
 //
 // O rotulo diz "vazio remove" porque substituicao vazia e' apagamento legitimo
 // e nao pode parecer engano; "\n" no texto vira quebra de linha (o core
-// interpreta a sequencia, ver docs/arquitetura/33 §8).
+// interpreta a sequencia, ver DocsPublic/arquitetura/33 §8).
 Row {
     id: root
 

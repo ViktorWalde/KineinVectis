@@ -2,7 +2,7 @@ import QtQuick
 import KineinVectis
 
 // Alca de redimensionamento entre regioes (KVSplitter minimo da fatia C1 de
-// docs/roadmaps/20). Emite deltas incrementais: como a alca acompanha a borda que
+// DocsPublic/roadmaps/20). Emite deltas incrementais: como a alca acompanha a borda que
 // move, o offset em relacao ao ponto de press e o delta a aplicar.
 MouseArea {
     id: root

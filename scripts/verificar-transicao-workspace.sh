@@ -14,7 +14,7 @@
 # Consequencia medida: depois de criar um projeto pelo assistente, o autosave do
 # projeto NOVO ia para o banco `.kinein/kinein.db` do projeto ANTERIOR — ou
 # respondia "persistencia local de rascunhos indisponivel" quando nao havia
-# anterior. A rede de seguranca de dados (docs/seguranca/23) desligava sem que
+# anterior. A rede de seguranca de dados (DocsPublic/seguranca/23) desligava sem que
 # nada reclamasse: build verde, clippy verde, 271 testes verdes.
 #
 # Classe de falha: "estado que precisa ser trocado JUNTO, espalhado por N

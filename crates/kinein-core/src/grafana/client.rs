@@ -7,7 +7,7 @@
 //!
 //! Ele nao embute, nao redistribui e nao modifica o Grafana — a licenca
 //! AGPL-3.0 decide a FORMA da integracao, e a forma e' esta: uma conversa HTTP
-//! com um processo que e' do usuario (`docs/integracoes/37` §2, decisao do
+//! com um processo que e' do usuario (`DocsPublic/integracoes/37` §2, decisao do
 //! autor em 2026-09-03).
 
 use std::time::Duration;

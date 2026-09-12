@@ -7,11 +7,11 @@ Item {
     property bool running: false
     property bool terminalActive: false
     property bool terminalPanelVisible: false
-    // D2 (docs/roadmaps/24): grid do terminal (cores/cursor/spans) vindo do core. Com a
+    // D2 (DocsPublic/roadmaps/24): grid do terminal (cores/cursor/spans) vindo do core. Com a
     // D2.3 há VÁRIAS sessões: este é o grid da ABA ATIVA. Os demais ficam em
     // `terminalRenders` e voltam intactos ao trocar de aba.
     property var terminalRender: ({})
-    // D2.3 (docs/roadmaps/24): multi-terminal. O core dá um `id` por sessão; a UI guarda
+    // D2.3 (DocsPublic/roadmaps/24): multi-terminal. O core dá um `id` por sessão; a UI guarda
     // a lista (pras abas), o render de cada uma e quem está ativa.
     property alias terminalsModel: terminalsListModel
     property string activeTerminalId: ""

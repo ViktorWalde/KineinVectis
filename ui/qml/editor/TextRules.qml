@@ -12,7 +12,7 @@ import QtQuick
 // "$" (comum em identificador gerado) para o autocomplete e o auto-close
 // discordarem sobre onde comeca uma palavra, sem nada reclamar. Foi
 // exatamente assim que a divergencia de cor de severidade nasceu, e ela virou
-// o 16o gate (docs/roadmaps/38 §3).
+// o 16o gate (DocsPublic/roadmaps/38 §3).
 //
 // As tabelas de par vieram junto porque sao a MESMA classe de coisa: regra de
 // dominio sobre texto de codigo. Elas moravam dentro de um componente VISUAL

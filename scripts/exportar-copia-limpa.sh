@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Exportador da copia limpa do codigo (M7.3 de docs/roadmaps/21; A6 da fila).
+# Exportador da copia limpa do codigo (M7.3 de DocsPublic/roadmaps/21; A6 da fila).
 #
 # Gera, numa arvore SEPARADA, uma copia do projeto contendo o codigo e apenas
-# tres arquivos Markdown: README.md, MANUAL.md e Tutorial.md. Tudo o mais que e
+# tres arquivos Markdown: README.md, DocsPublic/manual.md e DocsPublic/tutorial.md.
+# Tudo o mais que e
 # Markdown, e todo o material interno/pessoal, fica de fora — inclusive como
 # NOME de caminho.
 #
@@ -41,8 +42,8 @@ done
 ALLOW_DIRS="crates ui cmake packaging schemas scripts"
 ALLOW_FILES="
 README.md
-MANUAL.md
-Tutorial.md
+DocsPublic/manual.md
+DocsPublic/tutorial.md
 LICENSE-MIT.txt
 LICENSE-APACHE-2.0.txt
 Cargo.toml
@@ -63,22 +64,22 @@ imagens/app-icon.png
 "
 
 # Markdown permitido na copia. Qualquer outro .md e um erro, nao um aviso.
-ALLOWED_MD="README.md MANUAL.md Tutorial.md"
+ALLOWED_MD="README.md DocsPublic/manual.md DocsPublic/tutorial.md"
 
 # ------------------------------------------------------------------ denylist
 # Caminhos que nao podem aparecer NEM COMO NOME na copia. Sao a camada pessoal
-# (faixa X, definida em docs/README.md) e o material interno de engenharia.
+# (faixa X, definida em DocsPublic/README.md) e o material interno de engenharia.
 #
-# As tres arvores de documentacao sao TODAS internas: `docs/` e' faixa T
-# (tecnica, para quem compila) e `docs-privada/`/`docs-legada/` sao faixa X.
+# As tres arvores de documentacao sao TODAS internas: `DocsPublic/` e' faixa T
+# (tecnica, para quem compila) e `DocsPrivate/`/`DocsPrivate/legado/` sao faixa X.
 # Publico e' so o que estiver em ALLOWED_MD.
 DENY="
-PONTO_ATUAL.md
+DocsPrivate/historico/PONTO_ATUAL.md
 GUIAIA.md
 AGENTS.md
 docs
-docs-privada
-docs-legada
+DocsPrivate
+DocsPrivate/legado
 imagens/bugs
 .claude
 .codex

@@ -470,7 +470,7 @@ install \
 
 install \
     -m 0644 \
-    "$REPO_ROOT/Tutorial.md" \
+    "$REPO_ROOT/DocsPublic/tutorial.md" \
     "$DELIVERY_STAGING_DIR/Tutorial.md"
 
 publish_delivery_file() {

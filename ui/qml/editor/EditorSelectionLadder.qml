@@ -8,7 +8,7 @@ import QtQuick
 // um controller de 573 linhas que so' transforma texto e' vocabulario
 // misturado; aqui ele fica sozinho, com a invariante escrita ao lado.
 //
-// O DESENHO (fatia E3, docs-privada/diario/18). Nao ha maquina de estados: a
+// O DESENHO (fatia E3, DocsPrivate/diario/18). Nao ha maquina de estados: a
 // cada Ctrl+W o codigo gera os candidatos que CONTEM a selecao atual — palavra,
 // linha sem indentacao, linha inteira, cada par ()/[]/{} que a envolve, e o
 // documento — e escolhe o MENOR deles. A escada do JetBrains emerge disso.

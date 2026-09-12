@@ -22,7 +22,7 @@ BASELINE="scripts/arquitetura-baseline.txt"
 
 # Limites: UI pela ARCHITECTURE.md §6 (QML visual 300, controller/host 400,
 # C++ 500); CORE pela ARCHITECTURE.md §4 (~400-500 linhas de codigo fora dos
-# testes) — ver docs/arquitetura/27-modulos-por-dominio.md.
+# testes) — ver DocsPublic/arquitetura/27-modulos-por-dominio.md.
 #
 # O core entrou em 2026-07-16. Antes disso a catraca varria SO a UI, e a §4 —
 # que existe desde sempre e e boa — nunca foi verificada por ninguem: 7 arquivos

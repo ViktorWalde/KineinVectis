@@ -6,7 +6,7 @@
 #   scripts/instalar-ambiente.sh              # instala o conjunto base
 #   scripts/instalar-ambiente.sh --extras     # + shellcheck e cargo-deny
 #                                             #   (degraus da escada de rigor,
-#                                             #   docs-privada/diario/18-daily-driver-plan.md)
+#                                             #   DocsPrivate/diario/18-daily-driver-plan.md)
 #   scripts/instalar-ambiente.sh --dry-run    # so mostra o que seria executado
 #
 # Distros suportadas: Arch/CachyOS (pacman, alvo principal), Debian/Ubuntu/
@@ -16,7 +16,7 @@
 # O script e idempotente (pacman --needed / apt-get install so instala o que
 # falta) e usa sudo por comando — nao rode como root. Nada aqui mexe no
 # repositorio; depois de instalar, configure os presets e rode o gate
-# (docs/build/COMANDOS_BUILD_VERIFICACAO.md).
+# (DocsPublic/build/comandos-de-build-e-verificacao.md).
 
 set -eu
 
@@ -68,7 +68,7 @@ fi
 echo "distro detectada: $DISTRO"
 
 # ---------------------------------------------------------------------------
-# Pacotes por distro. Conjunto base = o que docs/build/14-development-environment.md
+# Pacotes por distro. Conjunto base = o que DocsPublic/build/14-development-environment.md
 # e o ToolDetector do core esperam: cmake, ninja, clang (format/tidy/clangd),
 # gcc, gdb, lldb, Qt6 (base/declarative/tools), git, ripgrep, fd e rustup.
 # ---------------------------------------------------------------------------
@@ -321,7 +321,7 @@ fi
 # arquivo se ele faltar; se ja existir, nao encosta (e' arquivo do usuario).
 #
 # Os presets herdam os oficiais e desligam sanitizers/clang, seguindo o que o
-# COMO_EXECUTAR.md ja documentava para a maquina do autor. Quem quiser o rigor
+# DocsPublic/build/como-executar.md ja documentava para a maquina do autor. Quem quiser o rigor
 # maximo usa os presets oficiais direto:
 #   cmake --preset linux-clang-debug-strict
 # ---------------------------------------------------------------------------

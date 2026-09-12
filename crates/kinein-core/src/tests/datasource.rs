@@ -1,7 +1,7 @@
 //! Perfis de conexao a banco (`datasource.*`) pelo despacho JSON-RPC.
 //!
 //! O que estes testes provam nao e' "o CRUD funciona" — e' que a decisao
-//! registrada em `docs/seguranca/40-cofre-de-credencial.md` sobrevive ao
+//! registrada em `DocsPublic/seguranca/40-cofre-de-credencial.md` sobrevive ao
 //! caminho REAL, o que a UI de fato chama. Um perfil que nasce limpo no
 //! dominio e vaza senha pelo handler seria a mesma classe de defeito que a
 //! regra existe para impedir.
@@ -168,7 +168,7 @@ fn senha_enviada_pela_ui_e_recusada_e_nunca_chega_ao_disco() {
     if let Ok(conteudo) = std::fs::read_to_string(&arquivo) {
         assert!(
             !conteudo.contains("hunter2"),
-            "a senha chegou ao disco — ver docs/seguranca/40"
+            "a senha chegou ao disco — ver DocsPublic/seguranca/40"
         );
     }
 }

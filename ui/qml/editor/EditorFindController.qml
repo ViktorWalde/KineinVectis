@@ -1,6 +1,6 @@
 import QtQuick
 
-// D1b (docs/roadmaps/24): busca e substituição DENTRO do arquivo aberto (Ctrl+F /
+// D1b (DocsPublic/roadmaps/24): busca e substituição DENTRO do arquivo aberto (Ctrl+F /
 // Ctrl+H). Lógica pura sobre o buffer do editor — nada de IPC: o texto já
 // está na UI (o Ctrl+Shift+F, que varre o DISCO, é que vive no core).
 Item {
@@ -9,7 +9,7 @@ Item {
     property var surfaceBridge: null
     property var textController: null
 
-    // D1 (docs/roadmaps/24): estado da barra em property PRÓPRIA. NUNCA usar o
+    // D1 (DocsPublic/roadmaps/24): estado da barra em property PRÓPRIA. NUNCA usar o
     // `visible` do Item como estado — este controller vive dentro do
     // EditorController (Item invisível) e `Item.visible` lê a visibilidade
     // EFETIVA, que ficaria presa em false.

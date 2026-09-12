@@ -380,7 +380,7 @@ pub(super) const fn symbol_kind_name(kind: i64) -> Option<&'static str> {
 /// So ações aplicáveis localmente entram: `CodeAction` literal com `edit`
 /// inline e sem `disabled`. Comandos puros e ações que dependem de
 /// `workspace/executeCommand` são filtrados (decisão registrada em
-/// docs-privada/diario/18, fatia M1.3). A ordem do servidor é preservada.
+/// DocsPrivate/diario/18, fatia M1.3). A ordem do servidor é preservada.
 pub(super) fn code_action_infos(result: &Value) -> (Vec<LspCodeActionInfo>, Vec<Value>) {
     let Some(items) = result.as_array() else {
         return (Vec::new(), Vec::new());

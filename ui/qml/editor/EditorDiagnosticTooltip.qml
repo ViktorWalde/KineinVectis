@@ -12,7 +12,7 @@ import KineinVectis
 // A UI da IDE nao usa QtQuick.Controls; este e' um popup proprio, leve.
 //
 // O POSICIONAMENTO fica no pai (x, lineTop e maxAvailableWidth chegam prontos),
-// mesmo padrao do corte do GitPanel (docs/roadmaps/38 §2.2).
+// mesmo padrao do corte do GitPanel (DocsPublic/roadmaps/38 §2.2).
 Rectangle {
     id: root
 

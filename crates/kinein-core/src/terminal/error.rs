@@ -17,7 +17,7 @@ pub enum TerminalError {
     /// No session with the given id (or it already died).
     NotOpen,
     /// Gesto de mouse cujo contrato existe mas ainda não tem comportamento
-    /// (clique/arrasto/movimento, fatia R5 de `docs/roadmaps/26`).
+    /// (clique/arrasto/movimento, fatia R5 de `DocsPublic/roadmaps/26`).
     MouseUnimplemented,
     /// The session process could not be spawned or reached.
     Process {

@@ -1,6 +1,6 @@
 //! Portas seriais USB: o que esta em `/dev` desta maquina, e quem mais a segura.
 //!
-//! Nasceu em 2026-09-11 (E1 do `docs/integracoes/38` §6), no dia em que um
+//! Nasceu em 2026-09-11 (E1 do `DocsPublic/integracoes/38` §6), no dia em que um
 //! ESP32 chegou a mesa. A porta serial e' o canal que TODA familia bare metal
 //! compartilha — bootloader de ROM, console e as linhas DTR/RTS de reset — e
 //! por isso e' a fundacao do monitor UART e do "Gravar".

@@ -1,7 +1,7 @@
 //! Observabilidade: o Grafana que observa este projeto.
 //!
 //! Este dominio nasceu em 2026-09-04 e fecha a etapa 27 do
-//! `docs/roadmaps/35-ambiente-cpp-embarcados-simulacao.md`. Ele existe porque
+//! `DocsPublic/roadmaps/35-ambiente-cpp-embarcados-simulacao.md`. Ele existe porque
 //! a decisao do autor em 2026-09-03 foi *"banco e observabilidade sao NATIVOS,
 //! nao plugins"* — e a licenca do Grafana decidiu o que "nativo" pode
 //! significar aqui.
@@ -14,7 +14,7 @@
 //! NAO    embutir o Grafana na Kinein, ou distribui-lo no AppImage.
 //! ```
 //!
-//! (`docs/integracoes/37-banco-e-observabilidade.md` §2, AGPL-3.0.)
+//! (`DocsPublic/integracoes/37-banco-e-observabilidade.md` §2, AGPL-3.0.)
 //!
 //! # O que faz este dominio valer mais que um atalho no navegador
 //!

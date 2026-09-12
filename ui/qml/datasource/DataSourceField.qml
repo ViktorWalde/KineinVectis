@@ -6,7 +6,7 @@ import KineinVectis
 //
 // POR QUE EXISTE. Sao seis campos com a mesma moldura, o mesmo foco e o mesmo
 // placeholder. Repetir isso seis vezes no formulario e' como as derivacoes
-// duplicadas que o 16o gate passou a caçar (`docs/roadmaps/39` §5): uma delas
+// duplicadas que o 16o gate passou a caçar (`DocsPublic/roadmaps/39` §5): uma delas
 // diverge, e a divergencia aparece como "aquele campo se comporta diferente".
 //
 // `secret: true` esconde o texto E impede o eco no `echoMode` — e' o campo da

@@ -17,7 +17,7 @@
 //! compilacao.
 //!
 //! COMPILADOR: as flags aqui sao de `GCC` e `Clang`, que sao os compiladores que
-//! esta IDE suporta (`docs/roadmaps/29`). MSVC usa outra grafia e nao esta no
+//! esta IDE suporta (`DocsPublic/roadmaps/29`). MSVC usa outra grafia e nao esta no
 //! escopo; a descricao de cada acao diz isso ao autor antes de ele aplicar.
 
 use std::collections::BTreeMap;
