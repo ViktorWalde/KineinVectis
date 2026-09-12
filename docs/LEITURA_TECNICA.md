@@ -66,9 +66,9 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**142 métodos IPC** roteados e **45 eventos**, em **34 domínios de protocolo**;
-**712 testes** Rust verdes e **34 harnesses QML** (remedido em 2026-09-12).
-Protocolo `0.94.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+**143 métodos IPC** roteados e **45 eventos**, em **34 domínios de protocolo**;
+**719 testes** Rust verdes e **34 harnesses QML** (remedido em 2026-09-12 à
+tarde). Protocolo `0.95.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -209,8 +209,12 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       Rust (Python contado ate' a gramatica entrar) com as
                       gramaticas do editor, em job ao abrir o workspace, com
                       busca por nome sem LSP (`#nome`) e incremento pelo
-                      watcher. E' o Project Graph do KSWE comecando a existir;
-                      o contexto de compilador por arquivo e' o proximo passo
+                      watcher. E' o Project Graph do KSWE comecando a existir.
+                      Desde a tarde (0.95.0): o CONTEXTO DE COMPILADOR por
+                      arquivo — index.context diz com que cada arquivo e'
+                      compilado (unidade da CDB, alvo do cargo, interpretador
+                      Python) e denuncia a CDB envelhecida por CMakeLists.txt
+                      de subpasta, que o cdb::status da raiz nao via
 ```
 
 **O que mudou em 2026-08-29/30, e é o que destrava o resto:** o terminal deixou
@@ -371,12 +375,19 @@ autor no lugar de cortes verticais rasos; o
 ecossistema aberto (com o que NÃO entra e por quê) e registra a decisão que
 reverteu o "Python adiado". As decisões do dia: Python/MicroPython nativos,
 Pylance proibido continua, só o ESP32 clássico na mesa, Raspberry Pi OS como
-alvo Linux, e **a IDE lê o projeto inteiro** (o domínio `index`, §3).
+alvo Linux, e **a IDE lê o projeto inteiro** (o domínio `index`, §3). Na tarde
+de 2026-09-12 o 42 ganhou o **"efeito JetBrains" como critério de pronto**
+(§8: zero-config = detectar + um clique com o comando visível, indexação
+visível, Alt+Enter proativo, project model antes do LSP, sysroot visual,
+remote deploy & debug, SVD com escrita, sondas visuais — o que já existe
+medido e o que falta por pilar) e a **trilha Python completa** bare metal →
+edge → backend → banco (§9).
 
-O horizonte mais distante, e **ainda não arquitetado**, está em
-[roadmaps/31-simulacao-fisica-matematica.md](roadmaps/31-simulacao-fisica-matematica.md):
-montar simulações física/matemática por layout e desenhá-las em OpenGL. É
-estudo, não plano de execução.
+A simulação física/matemática
+([roadmaps/31](roadmaps/31-simulacao-fisica-matematica.md),
+[arquitetura/34](arquitetura/34-simulacao-por-conceito.md)) está **fora do
+foco desde 2026-09-12, por decisão do autor**: o código do domínio `sim` fica
+e o gate o testa; nenhuma fatia nova sai dali até ele reabrir.
 
 Como o processo da UI e o do core conversam — boot, threads, ordem garantida,
 crash e recuperação — está em

@@ -831,12 +831,19 @@ crates/kinein-core/src/project/{mod,detect,sdk,artifacts,esp}.rs
                                              LIDOS), alvo com evidencia
 crates/kinein-core/src/index/mod.rs          o projeto INTEIRO: pastas, arquivos,
 crates/kinein-core/src/lang/extract.rs       declaracoes (Tree-sitter tags), busca
+crates/kinein-core/src/index/context/{mod,cdb,cargo,python}.rs
+                                             o CONTEXTO DE COMPILADOR por arquivo:
+                                             unidade da CDB (e a CDB envelhecida
+                                             por subpasta), alvo do cargo,
+                                             interpretador Python — processos
+                                             INJETADOS por `Ferramentas`
 crates/kinein-core/src/size.rs               build.size (+ a particao app do IDF)
 handlers/{probe,serial,container,project,index}.rs
 ui/src/core_client_{probe,container,index}.cpp   (serial e project moram no _probe)
 ui/qml/embedded/Embedded{Controller,Panel,PanelHost,KitField,SizeView,SerialView,ProjectView}.qml
 ui/qml/container/Container{Controller,Panel,ListView,PanelHost}.qml
-ui/qml/index/IndexController.qml             totais na barra de status
+ui/qml/index/IndexController.qml             totais e o contexto do arquivo ativo
+                                             na barra de status
 ui/qml/search/SearchEverywhereController.qml `#nome` pede ao indice E ao LSP
 ui/qml/app/AppEnvironmentDomains.qml         os donos do "Ambiente do projeto"
 ui/qml/ipc/{Embedded,Container,Index}{Event,Request}Router.qml
@@ -845,13 +852,15 @@ scripts/fixtures/projetos/<framework>/       fixtures reais minimas (9 framework
 scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
 ```
 
-- Testes: `tests/{serial,container,project,index}.rs`, `size.rs`; harnesses
-  `tst_{embedded,container,index}.qml`; a exercitação (`verificar-exercitacao.sh`)
-  pede `serial.list/monitor`, `container.status/list`, `project.model`,
-  `index.status/symbols` ao core real.
+- Testes: `tests/{serial,container,project,index,index_context}.rs`, `size.rs`;
+  harnesses `tst_{embedded,container,index}.qml`; a exercitação
+  (`verificar-exercitacao.sh`) pede `serial.list/monitor`,
+  `container.status/list`, `project.model`, `index.status/symbols/context` ao
+  core real (com uma CDB escrita à mão, para provar o job).
 - Documentos: `docs/integracoes/38` (conectividade medida com o ESP32),
   `docs/roadmaps/41` (o ecossistema aberto, o que NÃO entra) e `42` (a trilha
-  profunda, oito pilares); estado em `docs/roadmaps/40` §7.8–§7.17.
+  profunda, oito pilares; §8 o "efeito JetBrains" como critério de pronto; §9 a
+  trilha Python completa); estado em `docs/roadmaps/40` §7.8–§7.18.
 
 ### 5.10 CLI, schemas, templates e tooling
 
