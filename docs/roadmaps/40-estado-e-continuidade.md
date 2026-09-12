@@ -529,9 +529,12 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          PROXIMO e' o PILAR 0: o MODELO do
                                          projeto embarcado (framework, SDK,
                                          alvo, artefatos), sem botao novo antes
-                                         dele. Tres decisoes do autor no 42 §7
-                                         (as placas da mesa; Yocto/Buildroot
-                                         proprio?; confirmar P0 primeiro)
+                                         dele. As tres decisoes do 42 §7 foram
+                                         TOMADAS em 2026-09-12: so' o ESP32
+                                         classico na mesa (o resto fecha no
+                                         gate e fica dito como nao exercitado);
+                                         Raspberry Pi OS como alvo Linux; P0
+                                         primeiro
 --  O ECOSSISTEMA INTEIRO, em ordem      MAPEADO em 2026-09-11 (roadmaps/41), a
     linear: embarcados + Python +        pedido do autor: "nada deve ficar de
     MicroPython                          fora", com o VS Code (Python, C/C++,

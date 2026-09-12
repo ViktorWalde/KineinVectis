@@ -38,8 +38,18 @@ Linguagens       C/C++ (ESP-IDF, Zephyr, pico-sdk, CMSIS/Cube, CMake puro)
                  MCU, CPython no Linux embarcado)
 ```
 
-**Decisão pendente do autor (§7):** quais placas exatamente ficam na mesa por
-família — a "definição de pronto" de cada pilar é *exercitado nelas*.
+**Decidido pelo autor em 2026-09-12 (as três perguntas da §7):**
+
+```text
+a mesa           SO' o ESP32 classico, por ora. C3/C6, STM32 e Pico: pronto = gate
+                 no QEMU/Renode + motores falsos, e a exercitacao real fica DITA
+                 como pendente ate' a placa chegar — nunca marcada como provada
+Linux embarcado  Raspberry Pi 4/5 com Raspberry Pi OS: Linux pronto do outro lado.
+                 Yocto/Buildroot entram como RECONHECIMENTO de projeto (P0), sem
+                 imagem propria agora
+P0 primeiro      confirmado: a proxima fatia de codigo e' o MODELO do projeto
+                 embarcado, sem botao novo ate' ele existir
+```
 
 ## 1. O estado medido em 2026-09-12 — o que a IDE lê de um projeto hoje
 
@@ -396,13 +406,12 @@ Connect, Wokwi, Dependi, MPL como crate, symbolica), mais: **AVR/Arduino**
 nunca gerado), **J-Link Software** (a sonda funciona via probe-rs/OpenOCD),
 **IA na IDE**.
 
-## 7. As decisões que este documento pede ao autor
+## 7. As decisões que este documento pediu ao autor — respondidas em 2026-09-12
 
 ```text
-1  a MESA: quais placas por familia definem "pronto" (§0). O que ha' e o que
-   vai chegar
-2  Linux embarcado: a Raspberry Pi e' o alvo; ha' uma imagem Yocto/Buildroot
-   propria hoje, ou isso e' alvo futuro?
-3  P0 primeiro — confirmar que a proxima fatia de codigo e' o MODELO (dominio
-   `project`), sem botao novo ate' ele existir
+1  a MESA: so' o ESP32 classico hoje (§0). As outras familias fecham no gate e
+   ficam DITAS como nao exercitadas ate' a placa chegar
+2  Linux embarcado: Raspberry Pi 4/5 com Raspberry Pi OS. Yocto/Buildroot so'
+   como reconhecimento de projeto; sem imagem propria agora
+3  P0 primeiro: confirmado
 ```
