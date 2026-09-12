@@ -58,7 +58,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.93.0
-testes      703 Rust + 33 harnesses QML
+testes      705 Rust + 33 harnesses QML
 metodos     140 IPC roteados, 43 eventos
 dominios    33, e os 33 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -1704,14 +1704,24 @@ linha ilegível sumindo, `app` alinhada a 4 KB — as três reprovam. A vista do
 projeto mostra "receita: N imagens, flash 4MB dio · N partições, app 1 MB em
 0x10000".
 
+**Terceira fatia, no mesmo dia — o modelo passa a ser CONSUMIDO:** o
+`build.size` de um projeto ESP-IDF ganha a região `factory (particao app
+@0x10000)`, com a **imagem** (`.bin` que a receita aponta como `app`) como
+usado e a partição como capacidade — a partição que casa é a que **começa**
+no offset da receita, não "a primeira app" (numa tabela OTA seria outra).
+É o que o `idf.py size` chama de *total image size*; até aqui o ESP32 não
+tinha flash nenhuma no painel porque o `.ld` do IDF não a declara. Provado
+por mutação: "a primeira app" e "usado = capacidade" reprovam; o teste de
+despacho monta um workspace ESP-IDF falso com receita, tabela e uma imagem
+de 123.456 bytes.
+
 **O que falta do P0** ([`42`](42-trilha-profunda-embarcados.md) §3): o modelo
-por **alvo/preset** (hoje é um por workspace), o map file interpretado, a
-detecção de SDK que hoje o modelo declara "não medido" (alvo rustup), e o
-consumo da partição `app` pelo `build.size` (hoje ele só lê `.ld`).
+por **alvo/preset** (hoje é um por workspace), o map file interpretado, e a
+detecção de SDK que hoje o modelo declara "não medido" (alvo rustup).
 
 ```text
 protocolo 0.93.0 — project.*, event.project.changed, FlashRecipe, PartitionTable
-testes  703 Rust (+8, tests/project.rs), tst_embedded (+9 assercoes)
+testes  705 Rust (+10, tests/project.rs e size.rs), tst_embedded (+9 assercoes)
 gate    exercitacao pede project.model
 ```
 

@@ -11,7 +11,10 @@
 
 use std::path::{Path, PathBuf};
 
-use kinein_protocol::Framework;
+use kinein_protocol::{Framework, JsonRpcRequest};
+use serde_json::json;
+
+use super::core_with_empty_search_path;
 
 use crate::project::sdk::Ambiente;
 use crate::project::{artifacts, detect, esp, model_in, sdk};
@@ -546,4 +549,58 @@ fn the_model_reads_the_recipe_and_the_partitions_it_used_to_only_locate() {
     );
     let tabela = m.artifacts.partitions.as_ref().unwrap();
     assert_eq!(tabela.entries[1].name, "factory");
+}
+
+/// `build.size` num projeto ESP-IDF: a regiao de flash e' a particao `app`
+/// que a receita aponta, e o usado e' a IMAGEM. Pelo despacho REAL, porque e'
+/// no handler que o modelo e o `size` se encontram.
+#[test]
+fn build_size_reports_the_esp_idf_app_partition_as_the_flash_region() {
+    let raiz = temp_dir("size-esp").canonicalize().unwrap();
+    std::fs::copy(
+        fixtures().join("esp-idf/CMakeLists.txt"),
+        raiz.join("CMakeLists.txt"),
+    )
+    .unwrap();
+    std::fs::copy(
+        fixtures().join("esp-idf/partitions.csv"),
+        raiz.join("partitions.csv"),
+    )
+    .unwrap();
+    std::fs::create_dir_all(raiz.join("build")).unwrap();
+    std::fs::write(raiz.join("build/flasher_args.json"), FLASHER_ARGS).unwrap();
+    // A imagem do app tem 123.456 bytes; o "ELF" e' so' um arquivo para o
+    // `size` recusar — o que interessa aqui e' a regiao, nao as secoes.
+    std::fs::write(raiz.join("build/hello_world.bin"), vec![0u8; 123_456]).unwrap();
+    std::fs::write(raiz.join("build/hello_world.elf"), b"nao e um elf").unwrap();
+
+    let mut core = core_with_empty_search_path("size-esp");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({ "path": raiz.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let outcome = core.handle_request(&JsonRpcRequest::new(
+        2_i64,
+        "build.size",
+        Some(json!({ "program": raiz.join("build/hello_world.elf").to_str().unwrap() })),
+    ));
+    let resposta = outcome.response();
+    let resultado = resposta
+        .result
+        .clone()
+        .unwrap_or_else(|| panic!("build.size falhou: {:?}", resposta.error));
+    let regioes = resultado["regions"].as_array().unwrap();
+    let app = regioes
+        .iter()
+        .find(|r| {
+            r["name"]
+                .as_str()
+                .unwrap()
+                .starts_with("factory (particao app")
+        })
+        .unwrap_or_else(|| panic!("sem regiao da particao: {regioes:?}"));
+    assert_eq!(app["used"], 123_456);
+    assert_eq!(app["size"], 1024 * 1024);
 }

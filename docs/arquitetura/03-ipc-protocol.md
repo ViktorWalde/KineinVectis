@@ -784,6 +784,11 @@ abrindo uma sessão de terminal comum, sem regra de negócio própria no core.
 
 ### `build.size` — o tamanho do ELF (síncrono)
 
+**Desde 2026-09-12 (pilar 0 do `roadmaps/42`)**, num projeto ESP-IDF a lista
+de regiões ganha a partição `app` que o `flasher_args.json` aponta — usado =
+tamanho da imagem, capacidade = a partição que **começa** naquele offset. O
+`.ld` do IDF não declara a flash; a partição é a flash.
+
 Implementado no protocolo `0.90.0`. **Síncrono**, ao contrário do `build.run`:
 o `size` lê um arquivo e volta em milissegundos. `{ "program"? }` — ausente, o
 core resolve o ELF como o `debug.start`. Roda `<prefix>size -A` (o prefixo vem

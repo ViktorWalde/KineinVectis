@@ -232,9 +232,34 @@ pub fn regions_from(memoria: &BTreeMap<String, (u64, u64)>, sections: &[Section]
         .collect()
 }
 
+/// A regiao de FLASH de um projeto ESP-IDF: a particao `app`.
+///
+/// E' a particao que a receita de gravacao aponta, com o tamanho da IMAGEM
+/// (o `.bin` que vai para ela) como usado — o que o `idf.py size` chama de
+/// "total image size" e o que a checagem de particao do build compara. O
+/// `.ld` do ESP-IDF nao declara a flash; a particao e' a capacidade de verdade.
+///
+/// `app_offset` e' o offset do `app` na receita; a particao que casa e' a que
+/// COMECA nele — nao "a primeira app", que numa tabela OTA seria outra.
+#[must_use]
+pub fn region_from_partition(
+    partitions: &[kinein_protocol::Partition],
+    app_offset: u32,
+    app_image_bytes: u64,
+) -> Option<Region> {
+    let particao = partitions
+        .iter()
+        .find(|p| p.kind == "app" && p.offset == app_offset)?;
+    Some(Region {
+        name: format!("{} (particao app @0x{:x})", particao.name, particao.offset),
+        used: app_image_bytes,
+        size: u64::from(particao.size),
+    })
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{parse_memory, parse_sysv, parse_tamanho, regions_from};
+    use super::{parse_memory, parse_sysv, parse_tamanho, region_from_partition, regions_from};
 
     const SAIDA: &str = "\
 /tmp/fw.elf  :
@@ -245,6 +270,43 @@ section           size        addr
 .comment            35           0
 .ARM.attributes     45           0
 Total              216";
+
+    #[test]
+    fn a_regiao_da_particao_app_casa_pelo_offset_da_receita() {
+        let particoes = vec![
+            kinein_protocol::Partition {
+                name: "factory".into(),
+                kind: "app".into(),
+                subtype: "factory".into(),
+                offset: 0x10000,
+                size: 0x10_0000,
+                flags: None,
+            },
+            kinein_protocol::Partition {
+                name: "ota_0".into(),
+                kind: "app".into(),
+                subtype: "ota_0".into(),
+                offset: 0x11_0000,
+                size: 0x10_0000,
+                flags: None,
+            },
+            kinein_protocol::Partition {
+                name: "nvs".into(),
+                kind: "data".into(),
+                subtype: "nvs".into(),
+                offset: 0x9000,
+                size: 0x6000,
+                flags: None,
+            },
+        ];
+        // A receita aponta a app em 0x110000 (OTA): e' a ota_0, nao a factory.
+        let r = region_from_partition(&particoes, 0x11_0000, 200_000).unwrap();
+        assert_eq!(r.name, "ota_0 (particao app @0x110000)");
+        assert_eq!((r.used, r.size), (200_000, 0x10_0000));
+        // Offset que nao e' de particao app: nenhuma regiao, nenhum palpite.
+        assert!(region_from_partition(&particoes, 0x9000, 10).is_none());
+        assert!(region_from_partition(&particoes, 0x20000, 10).is_none());
+    }
 
     #[test]
     fn sysv_ignora_cabecalho_total_e_secao_vazia() {

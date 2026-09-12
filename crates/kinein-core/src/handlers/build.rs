@@ -129,7 +129,28 @@ impl Core {
         let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
         let prefixo = toolchain.binutils_prefix();
         let linker = unico_linker_script(&root);
-        let relatorio = size::measure(&program, prefixo.as_deref(), linker.as_deref());
+        let mut relatorio = size::measure(&program, prefixo.as_deref(), linker.as_deref());
+        // ESP-IDF: a flash e' a particao `app` que a receita de gravacao aponta,
+        // e o usado e' a IMAGEM que vai para ela (pilar 0 do roadmaps/42). Sem
+        // receita ou sem tabela, nada e' acrescentado — e a UI mostra os totais.
+        let modelo = self.compute_project_model(&root);
+        if let (Some(receita), Some(tabela)) =
+            (modelo.artifacts.flash_recipe, modelo.artifacts.partitions)
+        {
+            let app = receita
+                .files
+                .iter()
+                .find(|f| f.name.as_deref() == Some("app"));
+            if let Some(app) = app {
+                if let Ok(meta) = std::fs::metadata(&app.file) {
+                    if let Some(regiao) =
+                        size::region_from_partition(&tabela.entries, app.offset, meta.len())
+                    {
+                        relatorio.regions.push(regiao);
+                    }
+                }
+            }
+        }
         JsonRpcResponse::success(request_id, json!(relatorio))
     }
 
