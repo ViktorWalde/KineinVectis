@@ -106,8 +106,13 @@ fn test_run_starts_a_job_and_reports_a_passing_case() {
             .recv_timeout(Duration::from_secs(90))
             .expect("eventos de teste dentro do timeout");
         match event.method.as_str() {
+            // Desde 2026-09-12 o workspace.open sobe TAMBEM o job do indice do
+            // projeto (roadmaps/42 P0): os eventos de job aqui sao filtrados
+            // pelo id do test.run — o do indice nao e' o que se prova.
             "event.job.created" => {
-                saw_created = event.params.as_ref().unwrap()["id"] == job_id.as_str();
+                if event.params.as_ref().unwrap()["id"] == job_id.as_str() {
+                    saw_created = true;
+                }
             }
             "event.job.output" => {
                 let params = event.params.as_ref().unwrap();
@@ -129,7 +134,11 @@ fn test_run_starts_a_job_and_reports_a_passing_case() {
                 saw_test_finished = true;
             }
             "event.job.finished" => {
-                assert_eq!(event.params.as_ref().unwrap()["status"], "success");
+                let params = event.params.as_ref().unwrap();
+                if params["jobId"] != job_id.as_str() {
+                    continue;
+                }
+                assert_eq!(params["status"], "success");
                 break;
             }
             _ => {}

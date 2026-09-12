@@ -47,6 +47,7 @@ Item {
     readonly property alias gitController: gitController
     readonly property alias searchController: searchController
     readonly property alias searchEverywhereController: searchEverywhereController
+    readonly property alias indexController: indexController
     readonly property alias commandDispatcher: commandDispatcher
     readonly property alias editorController: editorController
     readonly property alias projectTree: projectTree
@@ -142,6 +143,15 @@ Item {
         id: environment
 
         coreClient: root.coreClient
+    }
+
+    // O indice do projeto INTEIRO (pilar 0 do roadmaps/42, 2026-09-12): os
+    // totais que o core manda ao construir; a busca por nome mora no
+    // SearchEverywhere.
+    IndexController {
+        id: indexController
+
+        workspaceRoot: root.coreClient.workspaceRoot
     }
 
     // Simulacao por conceito (etapa 28, docs/arquitetura/34). Guarda o que o

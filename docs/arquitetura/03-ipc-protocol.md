@@ -1,5 +1,14 @@
 # 03 — Protocolo IPC
 
+> **O `0.94.0` (2026-09-12) acrescentou o domínio `index`:** a IDE passa a
+> ler o projeto INTEIRO que abre — todas as pastas, arquivos e declarações
+> (funções, tipos) de C, C++, Rust e Python — por decisão do autor no mesmo
+> dia, sem esperar language server. `index.status` dá os totais, `index.symbols`
+> busca por nome, `event.index.progress`/`finished` acompanham o job que o
+> `workspace.open` sobe. É a primeira forma concreta do "entender o projeto
+> inteiro" da especificação do KSWE, com as gramáticas Tree-sitter do editor.
+> Domínio novo sobe o minor.
+>
 > **O `0.93.0` (2026-09-12) acrescentou o domínio `project`:** o MODELO do
 > projeto embarcado (pilar 0 do `roadmaps/42`). `project.model` diz o que o
 > projeto É — framework com o arquivo que o prova, SDKs exigidos e se estão
@@ -1797,6 +1806,9 @@ git.unstage
 grafana.forget
 grafana.get
 grafana.probe
+
+index.status
+index.symbols
 grafana.save
 
 job.cancel
@@ -1925,6 +1937,9 @@ event.fs.watchError
 event.git.remoteFinished
 
 event.grafana.probed
+
+event.index.finished
+event.index.progress
 
 event.job.created
 event.job.finished
@@ -2098,6 +2113,59 @@ uma sessão de terminal (`terminal.input`/`resize`/`close` a reconhecem). O
 shell dentro do container é a semente do *contexto remoto* do `roadmaps/28`
 §4 — o que falta para *dev containers* é o path mapping e o ciclo de vida,
 não o transporte.
+
+## `index.*` — o índice do projeto inteiro
+
+Domínio novo no protocolo `0.94.0` (pilar 0 do `roadmaps/42`, 2026-09-12).
+**Decisão do autor:** *"a IDE deve ler o projeto inteiro que for aberto… todas
+as funções/arquivos/pastas"* — para Python, C, C++ e Rust.
+
+```text
+index.status  {}                        -> IndexStats   (responde tambem sem workspace: idle)
+index.symbols { query, limit?, kind? }  -> { symbols[], total, state }   (exige workspace)
+
+event.index.progress { files, symbols }     a cada ~200 arquivos
+event.index.finished IndexStats             ao fim do build, e a cada incremento
+
+IndexStats   state (idle|building|ready|failed), folders, files, sourceFiles,
+             lines, bytes, symbols, functions, types, byLanguage[] { language,
+             files, lines, symbols }, skipped[], elapsedMs, error?
+IndexSymbol  name, kind, path (relativo a raiz), language, line, endLine,
+             container?
+```
+
+**O que ele lê, e como.** Ao abrir o workspace, um job caminha a árvore
+inteira com a **mesma lista de pastas ignoradas do watcher** (`.git`,
+`.kinein`, `target`, `build`, `node_modules`…, para os dois verem o mesmo
+projeto), conta **todo** arquivo, lê os de fonte (C/C++/Rust/Python) e extrai
+as declarações de C/C++/Rust com as **gramáticas Tree-sitter do editor** (a
+mesma query `tags` oficial de cada gramática, sem cache — `lang/extract.rs`).
+Python é contado e medido; as declarações entram quando a gramática entrar
+(bloco B do `roadmaps/41`). Arquivo acima de 4 MiB ou ilegível é contado e
+**dito** em `skipped`, nunca sumido. Medido em 2026-09-12 neste repositório:
+1.010 arquivos, 146 pastas, 70.030 linhas, 4.658 declarações em ~2 s (build
+de depuração).
+
+**O incremento.** Os caminhos de `event.fs.changed` são reindexados no loop
+principal (um arquivo é milissegundos) e os totais reemitidos. **Limite
+honesto:** o watcher só observa as pastas que a UI expandiu/abriu
+(ADR-0001, não recursivo), então mudanças fora delas só entram no próximo
+`workspace.open` — o watch recursivo é a próxima fatia do pilar 0.
+
+**Sem duplicata e sem renomear a gramática.** A `tags` do Rust captura um `fn`
+dentro de `impl` duas vezes (`function` e `method`); o índice fica com a mais
+específica por (linha, nome). O que a gramática chama de `class` (a `struct`
+do Rust) o índice **não** renomeia.
+
+**A busca** ordena exato > prefixo > substring, sem diferenciar caixa, com
+filtro por `kind` e `total` antes do limite. Na UI, `#nome` no Search
+Everywhere pede ao índice **e** ao LSP: o índice responde primeiro e **sem
+arquivo aberto**; o LSP, quando responde, substitui.
+
+**O que este domínio NÃO é:** semântica (tipos, referências, rename continuam
+no clangd/rust-analyzer) nem o contexto de compilador por arquivo (flags da
+CDB, crate do cargo, interpretador do Python) — esse é o passo seguinte do
+pilar 0.
 
 ## `project.*` — o modelo do projeto embarcado
 

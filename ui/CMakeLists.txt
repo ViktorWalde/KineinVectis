@@ -100,6 +100,9 @@ set_source_files_properties(qml/embedded/EmbeddedSizeView.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/embedded/EmbeddedSerialView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSerialView.qml)
 set_source_files_properties(qml/embedded/EmbeddedProjectView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedProjectView.qml)
 set_source_files_properties(qml/container/ContainerController.qml PROPERTIES QT_RESOURCE_ALIAS ContainerController.qml)
+set_source_files_properties(qml/index/IndexController.qml PROPERTIES QT_RESOURCE_ALIAS IndexController.qml)
+set_source_files_properties(qml/ipc/IndexEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexEventRouter.qml)
+set_source_files_properties(qml/ipc/IndexRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexRequestRouter.qml)
 set_source_files_properties(qml/container/ContainerPanel.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanel.qml)
 set_source_files_properties(qml/container/ContainerListView.qml PROPERTIES QT_RESOURCE_ALIAS ContainerListView.qml)
 set_source_files_properties(qml/container/ContainerPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanelHost.qml)
@@ -355,6 +358,9 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedSerialView.qml
         qml/embedded/EmbeddedProjectView.qml
         qml/container/ContainerController.qml
+        qml/index/IndexController.qml
+        qml/ipc/IndexEventRouter.qml
+        qml/ipc/IndexRequestRouter.qml
         qml/container/ContainerPanel.qml
         qml/container/ContainerListView.qml
         qml/container/ContainerPanelHost.qml
@@ -537,6 +543,7 @@ qt_add_qml_module(kinein-vectis
     src/core_client_grafana.cpp
     src/core_client_probe.cpp
     src/core_client_container.cpp
+    src/core_client_index.cpp
     src/core_client_sim.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp

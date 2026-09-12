@@ -105,7 +105,11 @@ UI coerente, incremental, explicável e orientada ao target ativo
 Para atingir primeiro o patamar “um nível abaixo do CLion”, fortalecer, nesta
 ordem arquitetural e por fatias medidas:
 
-1. Project Graph, Context Matrix e CMake File API completa;
+1. Project Graph, Context Matrix e CMake File API completa — **começou em
+   2026-09-12** pelo domínio `index` (o mapa estrutural do projeto inteiro) e
+   pelo domínio `project` (framework, SDK, artefatos, alvo), por exigência do
+   autor; o contexto de compilador por arquivo é o próximo passo
+   (`roadmaps/42` P0, `40` §7.16–§7.17);
 2. modelos de targets e toolchains como entidades de primeira classe;
 3. debugger, watches, inspeção de variáveis e qualidade dos pretty-printers;
 4. flash, serial, QEMU, OpenOCD/pyOCD e debug remoto;

@@ -130,7 +130,10 @@ como um arquivo é compilado.
 Ordem arquitetural:
 
 1. CMake File API completa + Cargo Metadata;
-2. Unified Project Graph + Context Matrix do KSWE;
+2. Unified Project Graph + Context Matrix do KSWE — **começou em 2026-09-12**
+   pelo domínio `index` (o projeto inteiro: pastas, arquivos, declarações) e
+   pelo `project` (framework, SDK, artefatos, alvo), por exigência do autor;
+   falta o contexto de compilador por arquivo (`docs/roadmaps/42` P0);
 3. targets, perfis e toolchains como entidades de primeira classe;
 4. scheduler LSP por documento/contexto, cancelamento e backpressure;
 5. Symbol Broker e Diagnostic Broker, sem duplicar clangd/rust-analyzer;
@@ -804,6 +807,51 @@ crates/kinein-core/src/handlers/sim.rs
   O do oráculo fala com um `python3` **falso** (`scripts/fake_sympy_oracle.py`)
   que grava o pedido — o que se mede é **o que foi perguntado**, não se a
   resposta chegou.
+
+### 5.9c Embarcados, containers e o projeto inteiro (2026-09-11/12)
+
+Os domínios nascidos na frente F e no pilar 0 do `docs/roadmaps/42`. Todos
+seguem a receita da §6: protocolo → core → handler → `core_client_*.cpp` →
+roteadores → controller → painel/harness, e a UI **nunca** chama a
+ferramenta.
+
+```text
+crates/kinein-core/src/probe.rs              probe.list (probe-rs list)
+crates/kinein-core/src/serial/{mod,monitor}.rs   serial.list (sysfs, SEM abrir a
+                                             porta) e serial.monitor (processo
+                                             tio/picocom/minicom/espflash numa
+                                             aba de terminal; papel serialMonitor)
+crates/kinein-core/src/container/{mod,parse}.rs  docker|podman pela mesma CLI:
+                                             status, list, images, action/compose
+                                             (jobs), open (logs/shell na aba)
+crates/kinein-core/src/project/{mod,detect,sdk,artifacts,esp}.rs
+                                             o MODELO do projeto embarcado:
+                                             frameworks por evidencia, SDKs,
+                                             artefatos (flasher_args e particoes
+                                             LIDOS), alvo com evidencia
+crates/kinein-core/src/index/mod.rs          o projeto INTEIRO: pastas, arquivos,
+crates/kinein-core/src/lang/extract.rs       declaracoes (Tree-sitter tags), busca
+crates/kinein-core/src/size.rs               build.size (+ a particao app do IDF)
+handlers/{probe,serial,container,project,index}.rs
+ui/src/core_client_{probe,container,index}.cpp   (serial e project moram no _probe)
+ui/qml/embedded/Embedded{Controller,Panel,PanelHost,KitField,SizeView,SerialView,ProjectView}.qml
+ui/qml/container/Container{Controller,Panel,ListView,PanelHost}.qml
+ui/qml/index/IndexController.qml             totais na barra de status
+ui/qml/search/SearchEverywhereController.qml `#nome` pede ao indice E ao LSP
+ui/qml/app/AppEnvironmentDomains.qml         os donos do "Ambiente do projeto"
+ui/qml/ipc/{Embedded,Container,Index}{Event,Request}Router.qml
+ui/qml/shell/SideRail.qml + components/KvIconGlyphs.js   icones container/observability
+scripts/fixtures/projetos/<framework>/       fixtures reais minimas (9 frameworks)
+scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
+```
+
+- Testes: `tests/{serial,container,project,index}.rs`, `size.rs`; harnesses
+  `tst_{embedded,container,index}.qml`; a exercitação (`verificar-exercitacao.sh`)
+  pede `serial.list/monitor`, `container.status/list`, `project.model`,
+  `index.status/symbols` ao core real.
+- Documentos: `docs/integracoes/38` (conectividade medida com o ESP32),
+  `docs/roadmaps/41` (o ecossistema aberto, o que NÃO entra) e `42` (a trilha
+  profunda, oito pilares); estado em `docs/roadmaps/40` §7.8–§7.17.
 
 ### 5.10 CLI, schemas, templates e tooling
 

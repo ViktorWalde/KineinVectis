@@ -192,6 +192,9 @@ public:
     Q_INVOKABLE void serialMonitor(const QString& device, int baud = 0);
     // O modelo do projeto embarcado (project.model): framework, SDKs, artefatos, alvo.
     Q_INVOKABLE void projectModel();
+    // O indice do projeto inteiro (index.*): totais e busca por nome, sem LSP.
+    Q_INVOKABLE void indexStatus();
+    Q_INVOKABLE void indexSymbols(const QString& query, int limit = 0);
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -341,6 +344,10 @@ signals:
     void serialMonitorOpened(const QString& id, const QString& command, const QString& tool);
     void projectModelResolved(const QVariantMap& model);
     void projectChanged(const QVariantMap& model);
+    void indexStatusResolved(const QVariantMap& stats);
+    void indexSymbolsResolved(const QVariantList& symbols, int total, const QString& state);
+    void indexProgressed(int files, int symbols);
+    void indexFinished(const QVariantMap& stats);
     void containerStatusResolved(const QVariantMap& status);
     void containersResolved(const QVariantList& containers, const QString& engine,
                             const QString& rawOutput, const QString& hint);
@@ -478,6 +485,7 @@ private:
     bool dispatchBuildSizeResult(const QString& method, const QJsonObject& result);
     bool dispatchSerialResult(const QString& method, const QJsonObject& result);
     bool dispatchContainerResult(const QString& method, const QJsonObject& result);
+    bool dispatchIndexResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

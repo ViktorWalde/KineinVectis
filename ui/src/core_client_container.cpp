@@ -88,7 +88,7 @@ bool CoreClient::dispatchContainerResult(const QString& method, const QJsonObjec
         appendLog(QStringLiteral("terminal de container aberto (%1): %2").arg(id, command));
         return true;
     }
-    return false;
+    return dispatchIndexResult(method, result);
 }
 
 } // namespace kinein

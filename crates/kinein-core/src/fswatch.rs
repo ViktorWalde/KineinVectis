@@ -26,7 +26,7 @@ use crate::lsp::EventSender;
 
 const DEBOUNCE: Duration = Duration::from_millis(180);
 const POLL_INTERVAL: Duration = Duration::from_secs(2);
-const SKIP_DIRS: &[&str] = &[
+pub(crate) const SKIP_DIRS: &[&str] = &[
     ".git",
     ".kinein",
     ".idea",

@@ -15,6 +15,7 @@ mod format;
 mod fs;
 mod git;
 mod grafana;
+mod index;
 mod jobs;
 mod lsp;
 mod lsp_server;

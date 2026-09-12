@@ -44,6 +44,15 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit grafanaProbed(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.index.progress")) {
+        emit indexProgressed(params.value(QStringLiteral("files")).toInt(),
+                             params.value(QStringLiteral("symbols")).toInt());
+        return;
+    }
+    if (method == QStringLiteral("event.index.finished")) {
+        emit indexFinished(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.project.changed")) {
         // O core recomputa o modelo ao abrir o workspace e ao fim de um
         // configure/build; a tela SEGUE o modelo em vez de perguntar.

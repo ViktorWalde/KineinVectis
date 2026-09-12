@@ -59,6 +59,9 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":8,"method":"container.list","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":9,"method":"serial.monitor","params":{"device":"/dev/null"}}\n'
         printf '{"jsonrpc":"2.0","id":10,"method":"project.model","params":{}}\n'
+        sleep 2
+        printf '{"jsonrpc":"2.0","id":11,"method":"index.status","params":{}}\n'
+        printf '{"jsonrpc":"2.0","id":12,"method":"index.symbols","params":{"query":"main"}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -117,6 +120,11 @@ verifica 9 "serial.monitor (tio|picocom|minicom|espflash)" '"tool"'
 # project.model le os marcadores do workspace (o de exercitacao e' CMake puro):
 # responde sempre, com `embedded` — false aqui, e nenhum alvo inventado.
 verifica 10 "project.model (o modelo do projeto)" '"embedded"'
+# O indice do projeto INTEIRO e' construido em job ao abrir o workspace; dois
+# segundos depois o de exercitacao (um .cpp) esta' `ready`, e `main` — a
+# funcao do src/main.cpp — e' achada sem LSP nenhum.
+verifica 11 "index.status (o indice do projeto)" '"ready"'
+verifica 12 "index.symbols (main sem LSP)" '"name":"main"'
 
 if [ "$falhou" -ne 0 ]; then
     echo

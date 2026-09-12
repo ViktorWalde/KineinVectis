@@ -23,6 +23,9 @@ Rectangle {
     // build system nao tem o que escolher.
     property string toolchainSummary: ""
     property bool toolchainVisible: false
+    // O indice do projeto inteiro: "N arquivos · N linhas · N simbolos", ou
+    // o progresso enquanto constroi. Vazio = nada a mostrar.
+    property string indexSummary: ""
 
     signal logsRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
@@ -82,6 +85,14 @@ Rectangle {
                     bar.toolchainMenuRequested(pos.x, pos.y);
                 }
             }
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: bar.indexSummary !== ""
+            text: qsTr("índice: %1").arg(bar.indexSummary)
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeStatus
         }
 
         Text {

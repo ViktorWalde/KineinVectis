@@ -49,13 +49,15 @@ kinein-vectis/
 │   │   │
 │   │   ├── handlers/            roteadores por dominio (blocos impl Core)
 │   │   │   └── build cargo cmake configaction datasource debug draft format fs
-│   │   │      container git grafana jobs library probe project run runconfig
-│   │   │      serial settings setup sim syntax terminal toolchain tools workspace
+│   │   │      container git grafana index jobs library probe project run
+│   │   │      runconfig serial settings setup sim syntax terminal toolchain
+│   │   │      tools workspace
 │   │   │
 │   │   ├── build/               mod parse
 │   │   ├── container/           mod parse   (docker|podman pela mesma CLI)
 │   │   ├── serial/              mod monitor (portas USB; monitor como processo)
 │   │   ├── project/             mod detect sdk artifacts (o MODELO do projeto embarcado)
+│   │   ├── index/               o indice do projeto INTEIRO (pastas, arquivos, declaracoes)
 │   │   ├── commands/            mod build editor git ide run
 │   │   ├── configaction/        catalog availability plan + um planejador por
 │   │   │                        arquivo editado (cmakelists, presets, cargotoml,
@@ -68,7 +70,8 @@ kinein-vectis/
 │   │   ├── git/                 operations parse
 │   │   ├── grafana/             client store
 │   │   ├── jobs/                context manager
-│   │   ├── lang/                Tree-sitter local: registry service positions
+│   │   ├── lang/                Tree-sitter local: registry service positions extract
+│   │   │                        (extract = declaracoes de um arquivo inteiro, para o index/)
 │   │   │                        outline folding
 │   │   ├── library/             catalog availability applied
 │   │   ├── lsp/                 manager session sync server framing parse

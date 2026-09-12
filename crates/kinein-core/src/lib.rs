@@ -22,6 +22,7 @@ pub mod fswatch;
 pub mod git;
 pub mod grafana;
 pub mod handlers;
+pub mod index;
 pub mod jobs;
 pub mod lang;
 pub mod library;
@@ -68,6 +69,10 @@ pub struct Core {
     workspace: Option<WorkspaceInfo>,
     fswatch: Option<fswatch::WorkspaceWatcher>,
     syntax: lang::SyntaxTreeService,
+    /// O indice do projeto inteiro (pilar 0 do roadmaps/42): construido por um
+    /// job, consultado pelo loop; o extrator reindexa o que o watcher trouxe.
+    index: Arc<Mutex<index::ProjectIndex>>,
+    extractor: lang::extract::SymbolExtractor,
     events: Option<lsp::EventSender>,
     lsp: Option<lsp::LspManager>,
     workspace_edits: lsp::WorkspaceEditTransactions,
@@ -121,6 +126,8 @@ impl Core {
             workspace: None,
             fswatch: None,
             syntax: lang::SyntaxTreeService::default(),
+            index: Arc::new(Mutex::new(index::ProjectIndex::default())),
+            extractor: lang::extract::SymbolExtractor::default(),
             events: None,
             lsp: None,
             workspace_edits: lsp::WorkspaceEditTransactions::default(),
@@ -290,6 +297,7 @@ impl Core {
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
             .or_else(|| self.container_request_response(method, request_id.clone(), params))
             .or_else(|| self.project_request_response(method, request_id.clone(), params))
+            .or_else(|| self.index_request_response(method, request_id.clone(), params))
             .or_else(|| self.serial_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))
@@ -360,6 +368,24 @@ impl Core {
             "event.build.finished" | "event.cmake.finished"
         ) {
             self.emit_project_changed();
+        }
+        // O indice segue o disco: o que o watcher viu mudar e' reindexado
+        // aqui, no loop principal, antes de o evento chegar a UI.
+        if notification.method == "event.fs.changed" {
+            let paths: Vec<PathBuf> = notification
+                .params
+                .as_ref()
+                .and_then(|p| p.get("changes"))
+                .and_then(Value::as_array)
+                .map(|changes| {
+                    changes
+                        .iter()
+                        .filter_map(|c| c.get("path").and_then(Value::as_str))
+                        .map(PathBuf::from)
+                        .collect()
+                })
+                .unwrap_or_default();
+            self.reindex_changed_paths(&paths);
         }
         if notification.method != "event.cmake.finished" {
             return;

@@ -57,10 +57,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.93.0
-testes      705 Rust + 33 harnesses QML
-metodos     140 IPC roteados, 43 eventos
-dominios    33, e os 33 documentados no arquitetura/03
+protocolo   0.94.0
+testes      712 Rust + 34 harnesses QML
+metodos     142 IPC roteados, 45 eventos
+dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
 ```
@@ -526,16 +526,26 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          ORGANIZACAO antes de seguir: a trilha
                                          PROFUNDA de embarcados e' o roadmaps/42
                                          — oito pilares, pronto POR FAMILIA. O
-                                         PILAR 0 (o MODELO do projeto) teve a
-                                         primeira fatia em 2026-09-12 (§7.16):
-                                         dominio `project`, 9 frameworks com
-                                         evidencia, SDKs, artefatos, alvo. O
-                                         PROXIMO e' o que falta do P0 (42 §3):
-                                         o modelo por ALVO/preset, o
-                                         flasher_args.json e a tabela de
-                                         particoes LIDOS, o map file, e o
-                                         P1 (setup com as ferramentas). As
-                                         tres decisoes do 42 §7 foram
+                                         PILAR 0 (o MODELO do projeto) teve
+                                         quatro fatias em 2026-09-12: dominio
+                                         `project` (9 frameworks com evidencia,
+                                         SDKs, artefatos, alvo — §7.16), a
+                                         receita e as particoes do ESP-IDF
+                                         LIDAS, o build.size consumindo a
+                                         particao app, e o INDICE DO PROJETO
+                                         INTEIRO (§7.17) — este por exigencia
+                                         nova do autor: "a IDE deve ler o
+                                         projeto inteiro, todas as funcoes/
+                                         arquivos/pastas, C/C++/Rust/Python".
+                                         O PROXIMO do P0 (42 §3): o CONTEXTO
+                                         DE COMPILADOR por arquivo (flags da
+                                         CDB por TU, crate/target do cargo
+                                         metadata, interpretador do Python),
+                                         o watch recursivo (o indice so' segue
+                                         as pastas que a UI observa), o modelo
+                                         por alvo/preset e o map file. Depois,
+                                         o P1 (setup). As tres decisoes do 42
+                                         §7 foram
                                          TOMADAS em 2026-09-12: so' o ESP32
                                          classico na mesa (o resto fecha no
                                          gate e fica dito como nao exercitado);
@@ -639,6 +649,13 @@ Python                       ENTRA como vertical nativa — DECISAO DO AUTOR em
 Pylance                      PROIBIDO (licenca) — continua; o motor e' basedpyright
 Docker e banco               NATIVOS, nao plugins. Docker/Podman IMPLEMENTADO
                              em 2026-09-12 (§7.14): dominio `container`
+A IDE LE O PROJETO INTEIRO   DECISAO DO AUTOR em 2026-09-12: todas as pastas,
+                             arquivos, funcoes e tipos de C/C++/Rust/Python,
+                             com integracao PROFUNDA do contexto de codigo e
+                             compilador. Primeira forma: o dominio `index`
+                             (§7.17). E' o "entender o projeto inteiro" da
+                             especificacao do KSWE — reaberto pelo autor nesta
+                             forma, sem adotar a especificacao inteira
 EditorConfig                 auditado com resultado NEGATIVO (2026-07-16)
 Grafana embutido             PROIBIDO (AGPL) — integracao por HTTP API
 TLS na IDE                   ENTRA (autor, 2026-09-04): `subtle` (BSD-3-Clause) e
@@ -1723,6 +1740,65 @@ detecção de SDK que hoje o modelo declara "não medido" (alvo rustup).
 protocolo 0.93.0 — project.*, event.project.changed, FlashRecipe, PartitionTable
 testes  705 Rust (+10, tests/project.rs e size.rs), tst_embedded (+9 assercoes)
 gate    exercitacao pede project.model
+```
+
+### 7.17 Pilar 0, quarta fatia — o índice do projeto INTEIRO, 2026-09-12
+
+**A exigência do autor, textual:** *"a IDE deve ler o projeto inteiro que
+for aberto, ter integração profunda de leitura do contexto do
+código/compilador, deve ser lido todas funções/arquivos/pastas, etc. Tudo que
+for de acordo com python/c/c++ e rust."* Até aqui a IDE lia de forma
+preguiçosa e delegada ([`42`](42-trilha-profunda-embarcados.md) §1). Nasceu
+o domínio `index` (protocolo 0.94.0).
+
+```text
+index/mod.rs      ao abrir o workspace, um JOB caminha a arvore inteira (a
+                  MESMA lista de pastas ignoradas do watcher), conta todo
+                  arquivo, le os de fonte, extrai as declaracoes de C/C++/Rust
+                  com as gramaticas Tree-sitter do editor (lang/extract.rs:
+                  a query `tags` oficial, sem cache); Python contado e medido
+                  ate' a gramatica entrar; >4 MiB ou ilegivel = contado e DITO
+                  em `skipped`; cancelavel; progresso a cada 200 arquivos
+index.status      totais: pastas, arquivos, fonte, linhas, bytes, simbolos,
+                  funcoes, tipos, por linguagem, elapsed, estado
+index.symbols     exato > prefixo > substring, sem caixa, filtro por kind,
+                  total antes do limite
+incremento        os caminhos de event.fs.changed sao reindexados no loop
+                  principal e os totais reemitidos
+UI                barra de status: "indice: 1.010 arquivos · 70.030 linhas ·
+                  4.658 simbolos" (e o progresso enquanto constroi);
+                  `#nome` no Search Everywhere pede ao indice E ao LSP — o
+                  indice responde primeiro e SEM arquivo aberto (antes,
+                  `#nome` recusava sem editor com LSP); o LSP substitui
+sem duplicata     a `tags` do Rust captura o fn de impl como function E
+                  method (medido aqui: handle_request em dobro); fica a mais
+                  especifica por (linha, nome). `struct` vem como `class` da
+                  gramatica e o indice NAO renomeia
+```
+
+**Medido neste repositório pelo core real:** 1.010 arquivos, 146 pastas,
+307 de fonte, 70.030 linhas, 4.658 declarações (3.802 funções, 524 tipos) em
+1,97 s no build de depuração; `escolher` e `handle_request` achados sem LSP.
+Um projeto de 1 M de linhas leva ~30 s neste ritmo, em job com progresso.
+
+**Provado por mutação** (compilador calado): Rust — entrar em pastas de saída
+(os números mentiriam); substring antes de prefixo; arquivo apagado ficando
+no índice; dedup por kind em vez de nome. QML — o índice voltar por cima do
+LSP; caminho relativo não virar absoluto (o clique não abriria); fechar o
+workspace deixando o resumo do anterior. O teste `test_run_starts_a_job` foi
+corrigido para filtrar os eventos de job pelo id — ele assumia um job só, e
+agora o `workspace.open` sobe o do índice.
+
+**Limite honesto, e é a próxima fatia:** o watcher observa só as pastas que
+a UI expandiu (ADR-0001); mudança fora delas entra no próximo `workspace.open`.
+E o índice é **estrutural**: o contexto de compilador por arquivo (flags da
+CDB por TU, crate/target do `cargo metadata`, interpretador/ambiente do
+Python) — a segunda metade da exigência — é o que vem em seguida no P0.
+
+```text
+protocolo 0.94.0 — index.status, index.symbols, event.index.progress/finished
+testes  712 Rust (+7, tests/index.rs), 34 harnesses (+tst_index)
+gate    exercitacao pede index.status e index.symbols (main sem LSP)
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

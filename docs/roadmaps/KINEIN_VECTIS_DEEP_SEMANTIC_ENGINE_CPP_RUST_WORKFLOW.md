@@ -8,6 +8,18 @@
 
 ---
 
+> **Estado em 2026-09-12.** Esta especificação continua sendo ALVO, não
+> implementação — com uma exceção nascida da exigência do autor de que *"a
+> IDE deve ler o projeto inteiro"*: a §2 ("entender o projeto inteiro") tem
+> agora a primeira forma concreta no domínio `index` do core
+> ([`40`](40-estado-e-continuidade.md) §7.17): todas as pastas, arquivos e
+> declarações de C/C++/Rust (Python quando a gramática entrar), com as
+> gramáticas Tree-sitter do editor, em job, com busca por nome sem LSP. O
+> passo seguinte é o *contexto de compilador por arquivo* (§6: CMake File
+> API/CDB, Cargo Metadata) — é o Project Graph desta página começando a
+> existir, fatia a fatia, pelo `roadmaps/42` P0. Scheduler, brokers e RAM
+> budget continuam só aqui.
+
 ## 1. Decisão executiva
 
 É tecnicamente viável fazer o Kinein Vectis oferecer um fluxo mais coerente, transparente e moderno que o fluxo típico de VS Code/VSCodium e, em áreas específicas, mais conveniente que o CLion.

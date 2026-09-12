@@ -65,6 +65,10 @@ Item {
     signal findFilesRequested(string query)
     signal documentSymbolsRequested()
     signal workspaceSymbolsRequested(string query)
+    // O indice proprio do projeto (pilar 0 do roadmaps/42) responde em
+    // milissegundos e sem LSP; o LSP, quando responder, substitui.
+    signal indexSymbolsRequested(string query)
+    property bool lspSymbolsAnswered: false
     signal listCommandsRequested()
     signal readFileRequested(string path)
     signal openAtRequested(string path, int line, int column)
@@ -186,10 +190,9 @@ Item {
         const isDocument = query.charAt(0) === "@";
         const needle = query.substring(1).trim();
         symbolFilter = isDocument ? needle.toLowerCase() : "";
-        if (workspaceRoot === "" || !hasActiveEditorFile) {
+        if (workspaceRoot === "") {
             everywhereLoading = false;
-            everywhereError =
-                    qsTr("Abra um arquivo com LSP para buscar símbolos.");
+            everywhereError = qsTr("Abra um workspace para buscar símbolos.");
             return;
         }
         if (!isDocument && needle === "") {
@@ -197,12 +200,47 @@ Item {
             everywhereError = qsTr("Digite o nome do símbolo após #.");
             return;
         }
-        everywhereLoading = true;
         if (isDocument) {
+            // Os simbolos DO DOCUMENTO continuam sendo do LSP do arquivo aberto.
+            if (!hasActiveEditorFile) {
+                everywhereLoading = false;
+                everywhereError = qsTr("Abra um arquivo com LSP para buscar símbolos do documento.");
+                return;
+            }
+            everywhereLoading = true;
             documentSymbolsRequested();
-        } else {
+            return;
+        }
+        // `#nome` no PROJETO: o indice proprio responde desde o primeiro
+        // segundo e sem arquivo aberto (pilar 0 do roadmaps/42); o LSP, quando
+        // ha' um arquivo aberto para ancora-lo, responde depois e substitui.
+        everywhereLoading = true;
+        lspSymbolsAnswered = false;
+        indexSymbolsRequested(needle);
+        if (hasActiveEditorFile) {
             workspaceSymbolsRequested(needle);
         }
+    }
+
+    // Os simbolos do INDICE: caminhos relativos a raiz viram absolutos (o
+    // clique abre o arquivo), e so' entram enquanto o LSP nao respondeu — a
+    // resposta dele e' mais rica e vence quando chega.
+    function handleIndexSymbols(symbols, total, state) {
+        if (lspSymbolsAnswered || !everywhereVisible) {
+            return;
+        }
+        const absolutos = [];
+        for (let i = 0; i < symbols.length; i++) {
+            const s = symbols[i];
+            const caminho = s.path !== undefined && s.path.indexOf("/") !== 0 && workspaceRoot !== ""
+                    ? workspaceRoot + "/" + s.path : s.path;
+            absolutos.push({ name: s.name, kind: s.kind, container: s.container,
+                             line: s.line, column: 1, path: caminho });
+        }
+        applySymbols(absolutos);
+        // O LSP ainda pode responder: a caixa continua "carregando" so' se o
+        // indice nao achou nada (senao a lista ja' e' util).
+        everywhereLoading = absolutos.length === 0;
     }
 
     function appendSearchEverywhereCommands(query) {
@@ -292,10 +330,15 @@ Item {
     }
 
     function handleSymbolsResolved(symbols) {
+        lspSymbolsAnswered = true;
         everywhereLoading = false;
         if (!everywhereVisible) {
             return;
         }
+        applySymbols(symbols);
+    }
+
+    function applySymbols(symbols) {
         everywhereItemsModel.clear();
         for (let i = 0; i < symbols.length; i++) {
             const symbol = symbols[i];

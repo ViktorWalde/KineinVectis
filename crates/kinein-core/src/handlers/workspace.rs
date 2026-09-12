@@ -263,6 +263,9 @@ impl Core {
         // workspace — por qualquer porta: open, createProject — e vai por
         // evento: quem quiser ja' o tem antes de perguntar.
         self.emit_project_changed();
+        // E o indice do projeto INTEIRO comeca a ser construido agora, em job:
+        // a IDE le todas as pastas, arquivos e declaracoes sem esperar LSP.
+        self.start_index_build(Path::new(&opened.root));
         let root = PathBuf::from(&opened.root);
         self.syntax.clear();
         self.workspace_edits.clear();

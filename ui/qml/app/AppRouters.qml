@@ -160,6 +160,18 @@ Item {
         embeddedController: root.domains.embeddedController
     }
 
+    IndexEventRouter {
+        coreClient: root.domains.coreClient
+        indexController: root.domains.indexController
+        searchEverywhereController: root.domains.searchEverywhereController
+    }
+
+    IndexRequestRouter {
+        coreClient: root.domains.coreClient
+        indexController: root.domains.indexController
+        searchEverywhereController: root.domains.searchEverywhereController
+    }
+
     ContainerEventRouter {
         coreClient: root.domains.coreClient
         containerController: root.domains.containerController

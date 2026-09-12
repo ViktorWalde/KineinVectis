@@ -259,6 +259,7 @@ Window {
         shellController: domains.shellController
         gitController: domains.gitController
         toolchainController: domains.toolchainController
+        indexController: domains.indexController
         onToolchainMenuRequested: function(menuX, menuY) {
             const pos = statusBar.mapToItem(shellOverlays, menuX, menuY);
             domains.toolchainController.openMenu(pos.x, pos.y);

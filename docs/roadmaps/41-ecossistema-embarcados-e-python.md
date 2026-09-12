@@ -82,8 +82,11 @@ teste         cargo test e ctest (test.rs) — a SAIDA ainda nao chega a tela
               (event.test.output sem ouvinte, roadmaps/40 §8)
 qualidade     cargo clippy (quality.run). clang-tidy: NAO; cppcheck: NAO
 formato       clang-format, rustfmt
-sintaxe       Tree-sitter C, C++, Rust. Python: NAO
-embarcado     probe.list, serial.list (sem abrir a porta), build.size,
+sintaxe       Tree-sitter C, C++, Rust. Python: NAO. Desde 2026-09-12 as
+              MESMAS gramaticas indexam o projeto INTEIRO (dominio `index`)
+embarcado     probe.list, serial.list (sem abrir a porta), serial.monitor
+              (processo), project.model (9 frameworks, SDKs, artefatos, alvo),
+              build.size (regioes do .ld E a particao app do ESP-IDF),
               fixture bare-metal + QEMU no gate, catalogo com arm-none-eabi
 banco/obs     Postgres, TimescaleDB, SQLite, MongoDB, Grafana pela HTTP API
 setup         "instalar ferramentas": catalogo com grafana, postgresql,
@@ -324,9 +327,9 @@ ferramenta REAL, e a saída "o que faltou e onde procurei" quando não der.
 
 ```text
 BLOCO A — fechar o canal serial e o ciclo Espressif (ja' decidido, 38 §6)
- A1  E3 monitor serial como PROCESSO       tio | picocom | minicom | espflash monitor
-     numa aba de terminal (open_command)    --elf; papel `serialMonitor` no kit com
-                                            candidatos auto; a porta vem do serial.list
+ A1  E3 monitor serial como PROCESSO       FEITO 2026-09-12 (40 §7.15): papel
+     numa aba de terminal (open_command)    `serialMonitor`, serial.monitor, picocom
+                                            exercitado no ESP32
  A2  E5 identidade Espressif                `esptool chip-id`/`flash-id` -> sugere
                                             IDF_TARGET, compilador, capacidade da flash
  A3  E4 gravar como CONFIGURACAO DE         motores esptool/espflash/probe-rs/picotool/

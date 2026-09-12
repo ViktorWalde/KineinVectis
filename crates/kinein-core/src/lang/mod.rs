@@ -3,6 +3,7 @@
 //! This layer only owns structure-local features. Project semantics and safe
 //! refactorings remain delegated to clangd and rust-analyzer through `lsp`.
 
+pub mod extract;
 mod folding;
 mod outline;
 mod positions;

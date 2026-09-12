@@ -54,7 +54,14 @@ P0 primeiro      confirmado: a proxima fatia de codigo e' o MODELO do projeto
 ## 1. O estado medido em 2026-09-12 — o que a IDE lê de um projeto hoje
 
 Pergunta do autor: *"a IDE atualmente já lê todo o projeto, correto?"*
-Resposta medida — **lê o que precisa, de forma preguiçosa e delegada**:
+Resposta medida **na manhã de 2026-09-12** — **lia o que precisava, de forma
+preguiçosa e delegada**. **A resposta do autor, no mesmo dia, virou
+exigência:** *"a IDE deve ler o projeto inteiro que for aberto, ter integração
+profunda de leitura do contexto do código/compilador, deve ser lido todas
+funções/arquivos/pastas — tudo de Python/C/C++/Rust"*. A primeira forma dessa
+exigência é o domínio `index` ([`40`](40-estado-e-continuidade.md) §7.17);
+o que segue abaixo é o retrato de ANTES dele, mantido porque é a linha de
+base que a exigência mede:
 
 ```text
 deteccao do projeto   `workspace/detect.rs`: marcadores SO' NA RAIZ
@@ -80,12 +87,21 @@ artefatos             o ELF e' resolvido por convencao (dap::resolve_program);
                       .hex/.uf2, map file, flasher_args.json, tabela de particoes
 ```
 
-**Consequência:** para desktop isso basta e é a arquitetura certa (delegar ao
-LSP). Para embarcado é a **primeira lacuna profunda**: a IDE não tem um
-**modelo do projeto embarcado** — que framework é, que SDK precisa, que alvo
-gera, que artefatos saem, como se grava e se depura. Cada botão que se
-acrescentasse agora teria de adivinhar isso de novo. É por isso que o pilar 0
-vem primeiro.
+**Consequência:** para desktop isso bastava como *ponto de partida*; o autor
+decidiu que não basta como *destino* — a IDE tem de ler o projeto inteiro, e
+o LSP passa a ser a camada de semântica profunda **por cima** de um índice
+próprio, não o único leitor. Para embarcado havia ainda a **lacuna do
+modelo**: que framework é, que SDK precisa, que alvo gera, que artefatos saem,
+como se grava e se depura. O pilar 0 responde às duas coisas.
+
+**O que mudou depois desta medição (2026-09-12, `40` §7.16–§7.17):** o
+domínio `project` (9 frameworks por evidência, SDKs, artefatos, alvo;
+receita e partições do ESP-IDF lidas; `build.size` consumindo a partição
+`app`) e o domínio `index` (todas as pastas, arquivos e declarações de
+C/C++/Rust/Python, com as gramáticas do editor, em job, com incremento pelo
+watcher e `#nome` sem LSP). Continuam DELEGADOS ao LSP: tipos, referências,
+rename. Continua **por fazer** no P0: o contexto de compilador por arquivo e
+o watch recursivo (§3, P0).
 
 **O que os últimos dois dias entregaram e ENTRA nos pilares** (não se refaz):
 `serial.list` (E1), `serial.monitor` (E3), `container.*` (Docker/Podman
@@ -142,10 +158,43 @@ P7  RUST EMBARCADO PROFUNDO            atravessa P0-P6; o que e' so' dele fica a
 Cada pilar abaixo diz: **o que é**, **o que já existe**, **o que falta para
 ser profundo**, **como se prova**, e **o que NÃO entra**.
 
-### P0 — O modelo do projeto embarcado
+### P0 — O modelo do projeto embarcado, e o projeto INTEIRO lido
 
-**O que é.** Um domínio `project` (ou a evolução do `workspace`) que responde,
-para o workspace aberto e para cada *alvo* dele:
+**O que é.** Duas coisas, por decisão do autor em 2026-09-12: (a) o
+**modelo** do projeto embarcado — o domínio `project`; (b) a **leitura do
+projeto inteiro** — o domínio `index` (todas as pastas, arquivos, funções e
+tipos, C/C++/Rust/Python) **mais o contexto de código/compilador por arquivo**.
+A parte (b) é o "entender o projeto inteiro" da especificação do KSWE
+([`KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE…`](KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE_CPP_RUST_WORKFLOW.md)
+§2), reaberta pelo autor **nesta forma** — índice estrutural próprio +
+contexto de compilador, com o LSP por cima — sem adotar a especificação
+inteira (scheduler, brokers, RAM budget) até que a dor a peça.
+
+```text
+(b) o projeto inteiro                     hoje (2026-09-12)
+    pastas, arquivos, linguagem, linhas   FEITO — index/, job ao abrir, 4 MiB/arquivo
+    funcoes e tipos (C/C++/Rust)          FEITO — Tree-sitter tags, dedup, container
+    funcoes e tipos (Python)              FALTA a gramatica (41 bloco B, B1)
+    busca por nome sem LSP (#nome)        FEITO — indice primeiro, LSP substitui
+    incremento                            PARCIAL — so' nas pastas que o watcher
+                                          observa (ADR-0001: nao recursivo);
+                                          FALTA watch recursivo ou re-varredura
+    contexto de compilador por arquivo    FALTA — o ARQUIVO -> sua unidade de
+                                          compilacao: flags/includes/defines/std
+                                          da compile_commands.json (C/C++),
+                                          crate/target/features do `cargo
+                                          metadata` (Rust), interpretador,
+                                          sys.path e ambiente (Python); e o
+                                          inverso: que arquivos um alvo compila
+    referencias/tipos/rename              DELEGADO ao clangd/rust-analyzer/
+                                          basedpyright, por decisao — o indice
+                                          nao os reimplementa
+    o que o indice NAO le                 pastas de saida (a lista do watcher),
+                                          links simbolicos, >4 MiB, nao-UTF-8
+                                          — contados e DITOS em skipped
+```
+
+O domínio `project` responde, para o workspace aberto e para cada *alvo* dele:
 
 ```text
 framework      cmake-puro | esp-idf | zephyr | pico-sdk | stm32cube | platformio |
@@ -180,15 +229,20 @@ partições do IDF, `memory.x` do Rust), e o **evento** `event.project.changed`
 para as telas seguirem o modelo em vez de perguntar.
 
 **Como se prova.** Fixtures **reais e mínimas** de cada framework no
-repositório (o `hello_world` do ESP-IDF sem o SDK, um `west` workspace
-esqueleto, o `blink` do pico-sdk, um `platformio.ini`, um `Embed.toml`) e
-testes que dizem framework/alvo/artefato de cada uma; mutação: trocar o
-marcador e ver a detecção mentir. Exercitação: o ESP32 da mesa com um
-projeto ESP-IDF real (instalar o IDF é passo do autor — P1 diz como).
+repositório (`scripts/fixtures/projetos/`: ESP-IDF, Zephyr, pico-sdk,
+PlatformIO, STM32Cube, cargo embarcado, MicroPython, Yocto, Buildroot —
+FEITAS) e testes que dizem framework/alvo/artefato de cada uma; mutação:
+trocar o marcador e ver a detecção mentir. O índice se prova contra um
+projeto de quatro linguagens com `build/` que não conta, e contra este
+próprio repositório pelo core real (1.010 arquivos, 4.658 declarações).
+Exercitação: o ESP32 da mesa com um projeto ESP-IDF real (instalar o IDF é
+passo do autor — P1 diz como).
 
-**O que NÃO entra.** Índice semântico próprio (KSWE) — continua delegado ao
-clangd/rust-analyzer; o que P0 acrescenta é o modelo de *build e alvo*, que o
-LSP não tem.
+**O que NÃO entra.** Semântica própria (tipos, referências, rename) — continua
+delegada ao clangd/rust-analyzer/basedpyright. O que P0 acrescenta é o modelo
+de *build e alvo* e o *mapa estrutural* do projeto com o *contexto de
+compilador* por arquivo — o que o LSP não tem, e o que ele precisa para
+funcionar bem (a CDB certa, o crate certo, o interpretador certo).
 
 ### P1 — Ambiente: toolchains, SDKs, interpretadores, permissões
 
@@ -368,7 +422,10 @@ rp-hal — todos MIT/Apache, decisao 35 §5.7), flip-link, cargo-binutils
 
 ```text
 1  P0  modelo do projeto        sem ele, P2/P3/P6 adivinham; e' a resposta a
-                                "a IDE le o projeto?" para embarcado
+   + projeto inteiro lido       "a IDE le o projeto?" — e, por decisao do
+                                autor, a leitura de TUDO (indice + contexto
+                                de compilador por arquivo) vem antes de
+                                qualquer botao novo
 2  P1  ambiente                 o que P0 descobre que falta, com o passo oficial;
                                 inclui o E2 (permissao) que estava na fila
 3  P2  ciclo MCU                o loop diario nas placas da mesa — inclui E4/E5

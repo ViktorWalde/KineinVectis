@@ -66,13 +66,15 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**131 métodos IPC** roteados e **41 eventos**, em **30 domínios de protocolo**;
-**18 pastas de domínio** no core mais 14 módulos de arquivo único; **680 testes**
-Rust verdes e **32 harnesses QML** (remedido em 2026-09-11). Protocolo `0.90.0`.
-O gate tem **22 verificações** — a vigésima (2026-09-11) executa o binário que
-ele acabou de compilar, porque "compila" e "abre" são afirmações diferentes; a
-vigésima primeira roda o ciclo de embarcado no QEMU, sem placa; a vigésima
-segunda confere que o clangd enxerga os cabeçalhos do compilador cross.
+**142 métodos IPC** roteados e **45 eventos**, em **34 domínios de protocolo**;
+**712 testes** Rust verdes e **34 harnesses QML** (remedido em 2026-09-12).
+Protocolo `0.94.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+executa o binário que ele acabou de compilar, porque "compila" e "abre" são
+afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
+sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
+compilador cross. (Em 2026-09-11 eram 131/41/30 e 680 testes: os quatro
+domínios de 2026-09-12 — `serial`, `container`, `project`, `index` — estão
+abaixo.)
 
 **Os comandos que provam os dois primeiros estão no
 [`arquitetura/03`](arquitetura/03-ipc-protocol.md)**, com o motivo de cada
@@ -179,6 +181,36 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       integram — argumento de transcendente, os termos entre si,
                       e o lado esquerdo. O limite vai na tela junto: unidade que
                       fecha nao quer dizer fisica certa
+
+            serial    (0.91.0–0.92.0, 2026-09-11/12) as portas seriais USB pelo
+                      sysfs, SEM ABRIR a porta (abrir aciona DTR/RTS e reseta a
+                      placa); permissao MEDIDA com access(2), que honra a ACL do
+                      uaccess; o ModemManager candidato e' dito. E o monitor
+                      serial como PROCESSO numa aba de terminal (papel
+                      `serialMonitor` do kit: tio/picocom/minicom/espflash) —
+                      decisao do autor: nunca codigo serial nosso
+            container Docker E Podman como dominio NATIVO (0.92.0, 2026-09-12;
+                      a decisao era de 2026-07-17). Nesta maquina `docker` e' o
+                      shim podman-docker: a deteccao pergunta ao binario. status
+                      (a tela de ATIVAR: motor, versao, rootless, socket,
+                      compose, o passo oficial), list/images nas duas formas de
+                      JSON, start/stop/restart/rm e compose como JOBS, logs e
+                      shell numa aba de terminal. Icone no rail (com o Grafana)
+            project   o MODELO do projeto embarcado (0.93.0, 2026-09-12; pilar 0
+                      do roadmaps/42): 9 frameworks reconhecidos por EVIDENCIA
+                      ate' 3 niveis (ESP-IDF, Zephyr, pico-sdk, PlatformIO,
+                      STM32Cube, Rust embarcado, MicroPython, Yocto, Buildroot),
+                      SDKs exigidos e se estao aqui, artefatos do build (a
+                      receita de gravacao e as particoes do ESP-IDF LIDAS), alvo
+                      deduzido com uma linha de evidencia por deducao; o
+                      build.size consome a particao `app` como flash
+            index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
+                      autor): todas as pastas, arquivos e declaracoes de C/C++/
+                      Rust (Python contado ate' a gramatica entrar) com as
+                      gramaticas do editor, em job ao abrir o workspace, com
+                      busca por nome sem LSP (`#nome`) e incremento pelo
+                      watcher. E' o Project Graph do KSWE comecando a existir;
+                      o contexto de compilador por arquivo e' o proximo passo
 ```
 
 **O que mudou em 2026-08-29/30, e é o que destrava o resto:** o terminal deixou
@@ -329,6 +361,17 @@ recomendação de ordem começava por **uma pergunta ao autor**, não por códig
 `EditorController.qml` em 791/400 (§3.2). Respondida em 2026-09-03 — a fila
 agora abre na fatia do `ShellWorkspaceHost.qml` (34 §7, etapa 11.1), **entregue
 em 2026-09-03**.
+
+**Desde 2026-09-12 a ordem é a do
+[roadmaps/42-trilha-profunda-embarcados.md](roadmaps/42-trilha-profunda-embarcados.md)**
+— a trilha PROFUNDA de embarcados (MCU bare metal e Linux embarcado, com
+C/C++, Rust e Python), em oito pilares com "pronto" por família, pedida pelo
+autor no lugar de cortes verticais rasos; o
+[roadmaps/41](roadmaps/41-ecossistema-embarcados-e-python.md) é o inventário do
+ecossistema aberto (com o que NÃO entra e por quê) e registra a decisão que
+reverteu o "Python adiado". As decisões do dia: Python/MicroPython nativos,
+Pylance proibido continua, só o ESP32 clássico na mesa, Raspberry Pi OS como
+alvo Linux, e **a IDE lê o projeto inteiro** (o domínio `index`, §3).
 
 O horizonte mais distante, e **ainda não arquitetado**, está em
 [roadmaps/31-simulacao-fisica-matematica.md](roadmaps/31-simulacao-fisica-matematica.md):
