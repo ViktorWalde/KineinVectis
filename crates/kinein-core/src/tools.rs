@@ -211,6 +211,36 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         alternative_binary: None,
         install_command: None,
     },
+    // Monitores seriais (E3 do integracoes/38 §6): processos prontos que a IDE
+    // abre numa aba de terminal. Nenhum e' linkado; nenhum codigo serial nosso.
+    ToolSpec {
+        id: "tio",
+        display_name: "tio",
+        binary: "tio",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "picocom",
+        display_name: "picocom",
+        binary: "picocom",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "minicom",
+        display_name: "minicom",
+        binary: "minicom",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "espflash",
+        display_name: "espflash",
+        binary: "espflash",
+        alternative_binary: None,
+        install_command: Some("cargo install espflash"),
+    },
     ToolSpec {
         id: "ripgrep",
         display_name: "ripgrep",
@@ -479,6 +509,11 @@ mod tests {
                 "docker",
                 "podman",
                 "podman-compose",
+                // Monitores seriais, 2026-09-12 (E3 do integracoes/38 §6).
+                "tio",
+                "picocom",
+                "minicom",
+                "espflash",
                 "ripgrep",
                 "fd",
                 "claude",

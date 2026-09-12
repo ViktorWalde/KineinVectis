@@ -28,6 +28,8 @@
 //!                   ponte); fontes no `integracoes/38` §5
 //! ```
 
+pub mod monitor;
+
 use std::collections::BTreeMap;
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;

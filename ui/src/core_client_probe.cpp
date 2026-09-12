@@ -22,6 +22,17 @@ void CoreClient::serialList()
     sendRequest(QStringLiteral("serial.list"), QJsonObject{});
 }
 
+void CoreClient::serialMonitor(const QString& device, int baud)
+{
+    QJsonObject params{{QStringLiteral("device"), device}};
+    // Zero ou negativo = "o padrao do core" (115200); mandar 0 seria pedir um
+    // baud de zero.
+    if (baud > 0) {
+        params.insert(QStringLiteral("baud"), baud);
+    }
+    sendRequest(QStringLiteral("serial.monitor"), params);
+}
+
 void CoreClient::buildSize(const QString& program)
 {
     QJsonObject params{};
@@ -64,6 +75,17 @@ bool CoreClient::dispatchBuildSizeResult(const QString& method, const QJsonObjec
 
 bool CoreClient::dispatchSerialResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("serial.monitor")) {
+        // Sessao de terminal como outra qualquer: mesma contabilidade do
+        // `terminal.open`, senao input/resize/close nao a reconhecem.
+        const QString id = result.value(QStringLiteral("id")).toString();
+        const QString command = result.value(QStringLiteral("command")).toString();
+        m_terminalIds.insert(id);
+        setTerminalActive(!m_terminalIds.isEmpty());
+        emit serialMonitorOpened(id, command, result.value(QStringLiteral("tool")).toString());
+        appendLog(QStringLiteral("monitor serial aberto (%1): %2").arg(id, command));
+        return true;
+    }
     if (method != QStringLiteral("serial.list")) {
         return dispatchContainerResult(method, result);
     }

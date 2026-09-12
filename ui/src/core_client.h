@@ -188,6 +188,8 @@ public:
     Q_INVOKABLE void buildSize(const QString& program);
     // Portas seriais USB (serial.list): o canal que toda placa compartilha.
     Q_INVOKABLE void serialList();
+    // Monitor serial (serial.monitor): tio/picocom/minicom/espflash numa aba de terminal.
+    Q_INVOKABLE void serialMonitor(const QString& device, int baud = 0);
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -334,6 +336,7 @@ signals:
     void buildSizeResolved(const QVariantList& sections, const QVariantList& regions,
                            bool toolAvailable, const QString& tool, const QString& rawOutput);
     void serialPortsResolved(const QVariantList& ports, const QString& hint);
+    void serialMonitorOpened(const QString& id, const QString& command, const QString& tool);
     void containerStatusResolved(const QVariantMap& status);
     void containersResolved(const QVariantList& containers, const QString& engine,
                             const QString& rawOutput, const QString& hint);

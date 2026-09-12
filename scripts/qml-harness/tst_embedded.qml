@@ -15,12 +15,14 @@ Item {
 
     property int consultas: 0
     property int consultasSerial: 0
+    property var monitores: []
 
     EmbeddedController {
         id: controller
 
         onListRequested: root.consultas += 1
         onSerialListRequested: root.consultasSerial += 1
+        onMonitorRequested: function(device, baud) { root.monitores.push(device + "@" + baud); }
     }
 
     Component.onCompleted: {
@@ -102,6 +104,13 @@ Item {
         if (controller.modemManagerWarns({ modemManager: { candidate: true, ignored: false, running: false } }))
             failures += 16777216;
         if (controller.modemManagerWarns({ device: "/dev/ttyACM0" })) failures += 33554432;
+
+        // O monitor e' PEDIDO (baud 0 = o padrao do core), nunca rodado aqui;
+        // e a recusa do serial.monitor acende o erro deste painel.
+        controller.openMonitor("/dev/ttyUSB0");
+        if (root.monitores.join(",") !== "/dev/ttyUSB0@0") failures += 4294967296;
+        controller.handleFailed("serial.monitor", "nenhum monitor serial nesta maquina");
+        if (controller.errorText !== "nenhum monitor serial nesta maquina") failures += 8589934592;
 
         // Lista vazia guarda a dica do core; a falha do serial.list nao apaga a
         // sonda que ja' veio.

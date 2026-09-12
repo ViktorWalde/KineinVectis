@@ -9,6 +9,7 @@ Item {
 
     property var coreClient: null
     property var embeddedController: null
+    property var runtimeController: null
 
     visible: false
 
@@ -25,6 +26,13 @@ Item {
 
         function onSerialPortsResolved(ports, hint) {
             root.embeddedController.handleSerialPorts(ports, hint);
+        }
+
+        // A aba do monitor e' uma sessao de terminal como outra: o painel de
+        // embarcados fecha para ela aparecer, com o comando como titulo.
+        function onSerialMonitorOpened(id, command, tool) {
+            root.embeddedController.close();
+            root.runtimeController.handleTerminalOpened(id, command, command);
         }
 
         function onRequestFailed(method, message) {

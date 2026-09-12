@@ -31,6 +31,11 @@ pub enum ToolchainRole {
     /// Adaptador de debug (DAP). `lldb-dap` no desktop; `probe-rs` em
     /// embarcado, que fala DAP nativamente por stdin/stdout.
     DebugAdapter,
+    /// Monitor serial: o PROCESSO que a IDE abre numa aba de terminal sobre a
+    /// porta da placa (`tio`, `picocom`, `minicom`, `espflash monitor`).
+    /// Decisao do autor em 2026-09-11: processo pronto, nunca codigo serial
+    /// nosso (`integracoes/38` §6).
+    SerialMonitor,
 }
 
 impl ToolchainRole {
@@ -44,6 +49,7 @@ impl ToolchainRole {
             Self::Cmake => "cmake",
             Self::Cargo => "cargo",
             Self::DebugAdapter => "debugAdapter",
+            Self::SerialMonitor => "serialMonitor",
         }
     }
 
@@ -57,6 +63,7 @@ impl ToolchainRole {
             Self::Cmake,
             Self::Cargo,
             Self::DebugAdapter,
+            Self::SerialMonitor,
         ]
     }
 }
@@ -233,7 +240,7 @@ mod tests {
         let value = serde_json::to_value(ToolchainRole::CxxCompiler).unwrap();
         assert_eq!(value, "cxxCompiler");
         assert_eq!(ToolchainRole::CxxCompiler.as_str(), "cxxCompiler");
-        assert_eq!(ToolchainRole::all().len(), 6);
+        assert_eq!(ToolchainRole::all().len(), 7);
 
         // A chave e' CONTRATO: ela vai para o `.kinein/toolchain.json` e para o
         // wire. Renomear quebra o arquivo de quem ja escolheu.

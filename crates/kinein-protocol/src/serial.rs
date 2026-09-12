@@ -107,3 +107,29 @@ pub struct SerialListResult {
 #[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SerialListParams {}
+
+/// Parameters for `serial.monitor`: open a monitor process on a port, in a
+/// terminal tab.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SerialMonitorParams {
+    /// Device node, `/dev/ttyUSB0`.
+    pub device: String,
+    /// Baud rate; absent, 115200 — what ESP32, Pico stdio and most firmware
+    /// default to.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub baud: Option<u32>,
+}
+
+/// Result payload for `serial.monitor`: a terminal session, like
+/// `terminal.open`, plus what runs in it.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialMonitorResult {
+    /// Terminal session id.
+    pub id: String,
+    /// The command line running in the tab.
+    pub command: String,
+    /// Catalogue id of the tool chosen (`tio`, `picocom`, `minicom`, `espflash`).
+    pub tool: String,
+}

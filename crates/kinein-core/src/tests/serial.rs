@@ -11,7 +11,10 @@ use std::path::{Path, PathBuf};
 
 use kinein_protocol::SerialPortKind;
 
+use crate::serial::monitor::{DEFAULT_BAUD, command_line, escolher};
 use crate::serial::{Ambiente, familia, list_in, modo_simbolico, parse_udev_properties};
+use crate::toolchain::{KitUpdate, Toolchain};
+use kinein_protocol::{ToolInfo, ToolStatus, ToolchainRole};
 
 fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir()
@@ -246,4 +249,148 @@ fn udev_properties_and_symbolic_mode() {
     assert_eq!(props.len(), 2);
     assert_eq!(modo_simbolico(0o020_660), "crw-rw----");
     assert_eq!(modo_simbolico(0o100_755), "-rwxr-xr-x");
+}
+
+/// Uma ferramenta DETECTADA num caminho, como o `tools.detect` a descreveria.
+fn detectada(id: &str, path: &str) -> ToolInfo {
+    ToolInfo {
+        id: id.to_owned(),
+        display_name: id.to_owned(),
+        status: ToolStatus::Detected,
+        path: Some(path.to_owned()),
+        version: Some("x".to_owned()),
+        suggested_install: None,
+        message: None,
+    }
+}
+
+#[test]
+fn monitor_command_lines_follow_each_tool_and_only_espflash_takes_the_elf() {
+    let elf = Path::new("/tmp/fw.elf");
+    let (p, a) = command_line(
+        "tio",
+        "/usr/bin/tio",
+        "/dev/ttyUSB0",
+        DEFAULT_BAUD,
+        Some(elf),
+    );
+    assert_eq!(
+        (p.as_str(), a),
+        (
+            "/usr/bin/tio",
+            vec!["-b".into(), "115200".into(), "/dev/ttyUSB0".into()]
+        )
+    );
+    let (_, a) = command_line("picocom", "/usr/bin/picocom", "/dev/ttyACM0", 9600, None);
+    assert_eq!(a, vec!["-b", "9600", "/dev/ttyACM0"]);
+    let (_, a) = command_line("minicom", "/usr/bin/minicom", "/dev/ttyUSB1", 57600, None);
+    assert_eq!(a, vec!["-D", "/dev/ttyUSB1", "-b", "57600"]);
+    // espflash: e' `--monitor-baud`, NAO `--baud` (que e' o baud de gravacao).
+    let (_, a) = command_line(
+        "espflash",
+        "/x/espflash",
+        "/dev/ttyUSB0",
+        DEFAULT_BAUD,
+        Some(elf),
+    );
+    assert_eq!(
+        a,
+        vec![
+            "monitor",
+            "--port",
+            "/dev/ttyUSB0",
+            "--monitor-baud",
+            "115200",
+            "--elf",
+            "/tmp/fw.elf"
+        ]
+    );
+    assert!(!a.contains(&"--baud".to_owned()));
+    let (_, a) = command_line(
+        "espflash",
+        "/x/espflash",
+        "/dev/ttyUSB0",
+        DEFAULT_BAUD,
+        None,
+    );
+    assert_eq!(a.len(), 5, "sem ELF, sem --elf");
+}
+
+#[test]
+fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fixed_choice() {
+    let raiz = temp_dir("monitor-escolha");
+    let tools = vec![
+        detectada("picocom", "/usr/bin/picocom"),
+        detectada("minicom", "/usr/bin/minicom"),
+        detectada("espflash", "/home/x/.cargo/bin/espflash"),
+    ];
+    // Sem chip: o primeiro detectado na ordem do catalogo (tio nao esta').
+    let tc = Toolchain::resolve(&raiz, &tools);
+    let escolha = escolher(&tc).unwrap();
+    assert_eq!(
+        (escolha.id.as_str(), escolha.program.as_str()),
+        ("picocom", "/usr/bin/picocom")
+    );
+
+    // Chip Espressif no kit: espflash passa a frente, sem ninguem fixar nada.
+    let tc = crate::toolchain::set_kit(
+        &raiz,
+        &tools,
+        "",
+        KitUpdate {
+            chip: Some("ESP32-C3"),
+            ..KitUpdate::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(escolher(&tc).unwrap().id, "espflash");
+
+    // Chip que NAO e' Espressif (um STM32) com espflash presente: o espflash
+    // NAO passa a frente — ele so' fala com chips Espressif.
+    let tc = crate::toolchain::set_kit(
+        &raiz,
+        &tools,
+        "",
+        KitUpdate {
+            chip: Some("STM32F401CC"),
+            ..KitUpdate::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(escolher(&tc).unwrap().id, "picocom");
+    let tc = crate::toolchain::set_kit(
+        &raiz,
+        &tools,
+        "",
+        KitUpdate {
+            chip: Some("esp32s3"),
+            ..KitUpdate::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(escolher(&tc).unwrap().id, "espflash");
+
+    // Chip Espressif SEM espflash detectado: volta ao efetivo, nao falha.
+    let sem_espflash: Vec<ToolInfo> = tools
+        .iter()
+        .filter(|t| t.id != "espflash")
+        .cloned()
+        .collect();
+    let tc = Toolchain::resolve(&raiz, &sem_espflash);
+    assert_eq!(escolher(&tc).unwrap().id, "picocom");
+
+    // O autor FIXOU minicom: vale mesmo com chip Espressif e espflash presente.
+    let tc = crate::toolchain::set(
+        &raiz,
+        &tools,
+        ToolchainRole::SerialMonitor,
+        Some("minicom"),
+        "",
+    )
+    .unwrap();
+    assert_eq!(escolher(&tc).unwrap().id, "minicom");
+
+    // Nenhum monitor detectado: None, e o handler diz o que instalar.
+    let tc = Toolchain::resolve(&raiz, &[]);
+    assert!(escolher(&tc).is_none());
 }

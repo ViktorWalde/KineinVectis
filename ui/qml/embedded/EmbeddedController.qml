@@ -49,6 +49,7 @@ Item {
 
     signal listRequested()
     signal serialListRequested()
+    signal monitorRequested(string device, int baud)
     signal sizeRequested(string program)
 
     visible: false
@@ -91,6 +92,14 @@ Item {
         serialListRequested();
     }
 
+    // O monitor e' um PROCESSO numa aba de terminal (decisao do autor,
+    // 2026-09-11): a IDE so' escolhe a porta e pede; a ferramenta vem do kit
+    // (papel serialMonitor) e a aba e' do RuntimeController.
+    function openMonitor(device) {
+        errorText = "";
+        monitorRequested(device, 0);
+    }
+
     function handleSerialPorts(newPorts, newHint) {
         ports = newPorts === undefined ? [] : newPorts;
         portsHint = newHint === undefined ? "" : newHint;
@@ -114,6 +123,10 @@ Item {
         }
         if (method === "serial.list") {
             portsBusy = false;
+            errorText = message;
+            return;
+        }
+        if (method === "serial.monitor") {
             errorText = message;
             return;
         }

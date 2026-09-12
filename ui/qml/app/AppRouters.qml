@@ -152,6 +152,7 @@ Item {
     EmbeddedEventRouter {
         coreClient: root.domains.coreClient
         embeddedController: root.domains.embeddedController
+        runtimeController: root.domains.runtimeController
     }
 
     EmbeddedRequestRouter {

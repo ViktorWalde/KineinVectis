@@ -469,12 +469,11 @@ E2  permissao por canal       a fatia 4.3, redesenhada: para CADA dispositivo,
                               regra ID_MM_DEVICE_IGNORE do MM) e o que a distro
                               JA' fez (o 60-openocd do Fedora). Nunca roda sudo;
                               imprime o comando.
-E3  monitor UART (core+tela)  a fatia 4.4: abrir tty com termios via rustix,
-                              baud, DTR/RTS explicitos na abertura, stream para
-                              o painel de terminal como leitura (nao e' PTY;
-                              nao e' shell). Gate: par de PTYs faz de tty
-                              (termios e' o mesmo syscall). Exercitado no
-                              ESP32: o log de boot a 115200.
+E3  monitor UART              FEITA em 2026-09-12 (`roadmaps/40` §7.15) na
+                              forma DECIDIDA abaixo (processo, nao termios):
+                              papel `serialMonitor` no kit, `serial.monitor`
+                              abre tio/picocom/minicom/espflash numa aba de
+                              terminal; exercitada no ESP32 com o picocom.
 E4  gravar como JOB com       `flash.run { engine, args }` com motor por familia:
     motor por familia         esptool/espflash (le flasher_args.json quando ha'),
                               probe-rs download (ja' decidido na §5.7), picotool,

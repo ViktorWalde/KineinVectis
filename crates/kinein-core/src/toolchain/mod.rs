@@ -169,11 +169,21 @@ impl Toolchain {
     /// FIXOU: aqui vale tambem a escolha que o core fez sozinho, porque o
     /// clangd precisa saber o compilador que de fato roda, nao so' o que foi
     /// digitado no menu.
-    fn effective_program(&self, role: ToolchainRole) -> Option<(&str, &str)> {
+    pub(crate) fn effective_program(&self, role: ToolchainRole) -> Option<(&str, &str)> {
         let selection = self.selections.iter().find(|s| s.role == role)?;
         let id = selection.effective_id.as_deref()?;
         let path = selection.resolved_path.as_deref()?;
         Some((id, path))
+    }
+
+    /// O caminho de um candidato DETECTADO de um papel, pelo id do catalogo —
+    /// para quem prefere um candidato especifico numa condicao que o catalogo
+    /// nao conhece (o `espflash` quando o chip e' Espressif).
+    pub(crate) fn candidate_path(&self, role: ToolchainRole, id: &str) -> Option<&str> {
+        self.candidates
+            .iter()
+            .find(|c| c.role == role && c.id == id)
+            .and_then(|c| c.path.as_deref())
     }
 
     /// O prefixo das binutils do cross, de `arm-none-eabi-gcc` -> `arm-none-eabi-`.

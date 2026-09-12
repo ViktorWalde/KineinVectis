@@ -58,8 +58,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.92.0
-testes      693 Rust + 33 harnesses QML
-metodos     138 IPC roteados, 42 eventos
+testes      695 Rust + 33 harnesses QML
+metodos     139 IPC roteados, 42 eventos
 dominios    32, e os 32 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
@@ -521,7 +521,10 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          probe-rs sem fork). E1 `serial.list`
                                          FEITA na mesma noite (§7.13, 0.91.0),
                                          exercitada contra o ESP32 real. E3
-                                         (monitor como processo) e' o PROXIMO
+                                         (monitor como processo) FEITA em
+                                         2026-09-12 (§7.15). O autor pediu uma
+                                         ORGANIZACAO antes de seguir: a trilha
+                                         PROFUNDA de embarcados (roadmaps/42)
 --  O ECOSSISTEMA INTEIRO, em ordem      MAPEADO em 2026-09-11 (roadmaps/41), a
     linear: embarcados + Python +        pedido do autor: "nada deve ficar de
     MicroPython                          fora", com o VS Code (Python, C/C++,
@@ -1594,6 +1597,41 @@ contexto remoto:** *dev containers* de verdade — abrir o workspace **dentro**
 do container (path mapping, `devcontainer.json` como formato de entrada, build
 e LSP do outro lado). É o mesmo contrato do SSH remoto da §4, e os dois devem
 nascer da mesma abstração, não de duas.
+
+### 7.15 E3 — o monitor serial como processo numa aba de terminal, 2026-09-12
+
+**A decisão era de 2026-09-11** (38 §6: processo pronto, nunca código serial
+nosso — a forma da extensão oficial da Espressif para o VS Code) e a aba com
+título que o domínio `container` acabara de dar ao `RuntimeController` era
+exatamente o que faltava.
+
+```text
+papel `serialMonitor` (kit)   candidatos tio, picocom, minicom, espflash — a
+                              ordem e' a preferencia automatica; a UI lista o
+                              papel no menu de toolchain desde o nascimento
+serial.monitor (0.92.0)       { device, baud? } -> aba de terminal com o
+                              comando no titulo. Chip Espressif no kit E
+                              espflash detectado -> `espflash monitor --elf`;
+                              escolha FIXADA vence; sem monitor nenhum,
+                              TOOL_NOT_FOUND com o que instalar
+linhas de comando             lidas na fonte: espflash e' `--monitor-baud` —
+                              o `--baud` dele e' o de GRAVACAO (pegadinha que
+                              a fonte mostrou); tio/picocom `-b`; minicom `-D -b`
+UI                            botao de monitor por porta no painel Embarcados
+                              (so' com acesso a porta); a aba abre e o painel
+                              fecha
+```
+
+**Exercitado no ESP32 real:** `serial.monitor { device: /dev/ttyUSB0 }` →
+`/usr/bin/picocom -b 115200 /dev/ttyUSB0` numa aba (`picocom` e `minicom` são
+os detectados nesta máquina; `tio` e `espflash` não estão), e o render da aba
+mostrou o banner do picocom com a porta aberta. Nenhuma linha de código serial
+foi escrita. **Provado por mutação:** `--baud` no lugar de `--monitor-baud`;
+espflash para qualquer chip; ignorar a escolha fixada — as três reprovam.
+
+```text
+testes  695 Rust (+2), tst_embedded (+2 assercoes); exercitacao pede serial.monitor
+```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

@@ -1821,6 +1821,7 @@ runConfig.save
 runConfig.setActive
 
 serial.list
+serial.monitor
 
 settings.get
 settings.set
@@ -2089,7 +2090,8 @@ de ROM, console e as linhas DTR/RTS de reset — e por isso é a fundação do
 monitor UART e do "Gravar".
 
 ```text
-serial.list {} -> { ports: [SerialPortInfo], hint? }
+serial.list    {}                   -> { ports: [SerialPortInfo], hint? }
+serial.monitor { device, baud? }    -> { id, command, tool }   (aba de terminal; 0.92.0)
 
 SerialPortInfo  device, byId?, kind (usbUartBridge|usbCdc), vid, pid,
                 manufacturer?, product?, serial?, interface?, driver?, family?,
@@ -2119,6 +2121,18 @@ CP210x — o chip do outro lado não se lê pelo USB"*; `303a:1001` é *"Espress
 USB Serial/JTAG — o próprio chip"*. A identidade do chip vem **pelo canal**
 (`esptool chip-id`, `probe-rs info`), que é a fatia E5. Fontes da tabela no
 `integracoes/38` §5.
+
+**`serial.monitor` é o monitor como PROCESSO numa aba de terminal** (E3 do
+`integracoes/38` §6, decisão do autor em 2026-09-11: nunca código serial
+nosso). A ferramenta vem do papel novo do kit, `serialMonitor` — candidatos
+`tio`, `picocom`, `minicom`, `espflash` nessa ordem —, com uma regra a mais
+que o catálogo não conhece: chip Espressif no kit **e** `espflash` detectado
+→ `espflash monitor --elf <ELF>`, que decodifica o backtrace; escolha
+**fixada** pelo autor vence tudo. Linhas de comando lidas na fonte: `tio -b`,
+`picocom -b`, `minicom -D … -b`, e no espflash é `--monitor-baud` (o `--baud`
+dele é o de **gravação**). Baud ausente = 115200. Sem nenhum monitor
+instalado, `TOOL_NOT_FOUND` com o que instalar. Exige workspace (a aba nasce
+no cwd do projeto) e volta como sessão de terminal, com o comando no título.
 
 **A `hint` de acesso é o passo oficial, nunca um `sudo` que a IDE rodaria:**
 *"`/dev/ttyUSB0` é `crw-rw----` do grupo `dialout` e você não está nele …

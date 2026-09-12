@@ -35,6 +35,7 @@ pub(super) fn candidates_for(role: ToolchainRole) -> &'static [RoleCandidate] {
         ToolchainRole::Cmake => CMAKE,
         ToolchainRole::Cargo => CARGO,
         ToolchainRole::DebugAdapter => DEBUG_ADAPTERS,
+        ToolchainRole::SerialMonitor => SERIAL_MONITORS,
     }
 }
 
@@ -141,5 +142,35 @@ static DEBUG_ADAPTERS: &[RoleCandidate] = &[
         id: "gdb",
         label: "GDB (alvo remoto: QEMU, OpenOCD)",
         tool_id: "gdb",
+    },
+];
+
+/// Monitor serial (E3 do `integracoes/38` §6, 2026-09-12): o processo que a
+/// IDE abre numa aba de terminal sobre a porta. A ordem e' a preferencia
+/// AUTOMATICA para uma porta qualquer: `tio` e' o padrao de mercado moderno,
+/// `picocom` e `minicom` sao os classicos que quase toda distro tem. O
+/// `espflash` vem por ultimo NO CATALOGO e por primeiro NA PRATICA quando o
+/// kit e' Espressif — quem decide isso e' o `serial.monitor`, que conhece o
+/// chip; este arquivo, como sempre, so' diz quais binarios interessam.
+static SERIAL_MONITORS: &[RoleCandidate] = &[
+    RoleCandidate {
+        id: "tio",
+        label: "tio",
+        tool_id: "tio",
+    },
+    RoleCandidate {
+        id: "picocom",
+        label: "picocom",
+        tool_id: "picocom",
+    },
+    RoleCandidate {
+        id: "minicom",
+        label: "minicom",
+        tool_id: "minicom",
+    },
+    RoleCandidate {
+        id: "espflash",
+        label: "espflash monitor (Espressif: decodifica backtrace)",
+        tool_id: "espflash",
     },
 ];

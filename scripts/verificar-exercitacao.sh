@@ -57,6 +57,7 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":6,"method":"serial.list","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":7,"method":"container.status","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":8,"method":"container.list","params":{}}\n'
+        printf '{"jsonrpc":"2.0","id":9,"method":"serial.monitor","params":{"device":"/dev/null"}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -107,6 +108,11 @@ verifica 6 "serial.list (sysfs + udevadm)" '"ports"'
 # containers do autor e o motor identificado como podman.
 verifica 7 "container.status (docker|podman)" '"reachable"'
 verifica 8 "container.list (ps --format json)" '"containers"'
+# serial.monitor abre o monitor do kit (tio|picocom|minicom|espflash) numa aba
+# de terminal; sem nenhum instalado vem TOOL_NOT_FOUND e nao reprova. Com um
+# deles, a resposta traz `tool` — a ferramenta falhar DENTRO da aba (/dev/null
+# nao e' porta) e' assunto da aba, nao deste gate.
+verifica 9 "serial.monitor (tio|picocom|minicom|espflash)" '"tool"'
 
 if [ "$falhou" -ne 0 ]; then
     echo

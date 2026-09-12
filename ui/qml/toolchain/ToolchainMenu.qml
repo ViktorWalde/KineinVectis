@@ -27,7 +27,11 @@ Item {
         // O papel existia no core desde 2026-09-03 (etapa 22) e esta lista o
         // omitia: ninguem conseguia escolher o probe-rs pela tela. Fio ligado
         // em 2026-09-11 (roadmaps/35 §5.7).
-        { key: "debugAdapter", label: qsTr("Depurador") }
+        { key: "debugAdapter", label: qsTr("Depurador") },
+        // Monitor serial (2026-09-12): o processo que abre na aba de terminal
+        // sobre a porta da placa. Nasceu ja' na lista, para nao repetir o
+        // buraco do debugAdapter.
+        { key: "serialMonitor", label: qsTr("Monitor serial") }
     ]
 
     signal dismissRequested()

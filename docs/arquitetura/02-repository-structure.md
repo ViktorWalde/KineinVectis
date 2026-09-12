@@ -45,7 +45,7 @@ kinein-vectis/
 │   │   ├── cargo.rs cmake.rs format.rs run.rs test.rs tools.rs process.rs
 │   │   ├── cdb.rs               compilation database do C/C++: onde esta e se envelheceu
 │   │   ├── fswatch.rs           notify debounced + mudanca externa
-│   │   ├── probe.rs runconfig.rs settings.rs size.rs serial.rs
+│   │   ├── probe.rs runconfig.rs settings.rs size.rs
 │   │   │
 │   │   ├── handlers/            roteadores por dominio (blocos impl Core)
 │   │   │   └── build cargo cmake configaction datasource debug draft format fs
@@ -54,6 +54,7 @@ kinein-vectis/
 │   │   │
 │   │   ├── build/               mod parse
 │   │   ├── container/           mod parse   (docker|podman pela mesma CLI)
+│   │   ├── serial/              mod monitor (portas USB; monitor como processo)
 │   │   ├── commands/            mod build editor git ide run
 │   │   ├── configaction/        catalog availability plan + um planejador por
 │   │   │                        arquivo editado (cmakelists, presets, cargotoml,

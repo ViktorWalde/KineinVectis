@@ -23,5 +23,9 @@ Item {
         function onSerialListRequested() {
             root.coreClient.serialList();
         }
+
+        function onMonitorRequested(device, baud) {
+            root.coreClient.serialMonitor(device, baud);
+        }
     }
 }

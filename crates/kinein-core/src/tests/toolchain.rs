@@ -113,8 +113,9 @@ fn a_fresh_workspace_is_fully_automatic() {
     let selecoes = resultado["selections"].as_array().unwrap();
 
     // 6 desde 2026-09-03: `debugAdapter` entrou com a etapa 22 do roadmaps/35,
-    // quando o adaptador DAP deixou de ser constante.
-    assert_eq!(selecoes.len(), 6, "um por papel do protocolo");
+    // quando o adaptador DAP deixou de ser constante. 7 desde 2026-09-12:
+    // `serialMonitor`, o processo da aba de terminal (integracoes/38 §6, E3).
+    assert_eq!(selecoes.len(), 7, "um por papel do protocolo");
     for selecao in selecoes {
         assert!(
             selecao.get("id").is_none(),

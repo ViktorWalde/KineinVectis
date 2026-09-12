@@ -42,13 +42,31 @@ Item {
                 width: coluna.width
                 spacing: Theme.spacingXSmall
 
-                Text {
+                Row {
                     width: parent.width
-                    text: "● " + root.controller.portSummary(linhaPorta.modelData)
-                    color: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: 11
-                    elide: Text.ElideMiddle
+                    spacing: Theme.spacingSmall
+
+                    Text {
+                        width: parent.width - 26 - Theme.spacingSmall
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "● " + root.controller.portSummary(linhaPorta.modelData)
+                        color: Theme.textPrimary
+                        font.family: Theme.monoFont
+                        font.pixelSize: 11
+                        elide: Text.ElideMiddle
+                    }
+
+                    // O monitor abre numa aba de terminal com a ferramenta do
+                    // kit (tio/picocom/minicom/espflash). Sem acesso a porta,
+                    // nao se oferece o que vai falhar.
+                    KvIconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        iconName: "terminal"
+                        tooltip: qsTr("Monitor serial a 115200 (aba de terminal)")
+                        compact: true
+                        enabled: linhaPorta.modelData.access.readableWritable
+                        onClicked: root.controller.openMonitor(linhaPorta.modelData.device)
+                    }
                 }
 
                 Text {
