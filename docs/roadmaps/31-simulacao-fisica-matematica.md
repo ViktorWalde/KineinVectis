@@ -1,5 +1,13 @@
 # Simulação física/matemática por layout, com exibição em OpenGL
 
+> **FORA DO FOCO desde 2026-09-12 — decisão do autor** (*"esquece a parte de
+> simulação física/matemática; vamos refinar ao máximo para sistemas embarcados
+> e desenvolvimento de software"*, registrada no
+> [`40`](40-estado-e-continuidade.md) §5). O código do domínio
+> `sim` e o `kinein-sim` ficam como estão e o gate continua a testá-los;
+> nenhuma fatia nova sai daqui. Este documento permanece como registro para o
+> dia em que o autor reabrir.
+
 > **Classe: PLANO** (`docs/README.md`).
 >
 > **ATUALIZADO em 2026-09-05, e o cabeçalho antigo virou mentira nesse dia.** Ele

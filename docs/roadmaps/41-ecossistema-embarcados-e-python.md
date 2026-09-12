@@ -30,6 +30,14 @@
 > entra (§4) desta página continuam valendo como fonte; a ORDEM passa a ser a
 > do 42 §4.
 
+> **2026-09-12 (tarde):** o autor acrescentou o *critério de experiência* — o
+> "efeito JetBrains" (zero-config, indexação visível, Alt+Enter proativo,
+> project model antes do LSP, sysroot visual, remote deploy & debug, SVD com
+> escrita, sondas visuais) — e a **trilha Python completa** (bare metal → edge
+> → backend → banco). Os dois estão mapeados no [`42`](42-trilha-profunda-embarcados.md)
+> §8 e §9, com o que já existe medido e o que falta por pilar; este inventário
+> continua sendo a lista de ferramentas com licença.
+
 ## 0. Como ler isto
 
 ```text

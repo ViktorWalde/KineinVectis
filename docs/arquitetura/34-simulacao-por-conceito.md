@@ -1,5 +1,13 @@
 # 34 — A simulação por conceito: arquitetura
 
+> **FORA DO FOCO desde 2026-09-12 — decisão do autor** (*"esquece a parte de
+> simulação física/matemática; vamos refinar ao máximo para sistemas embarcados
+> e desenvolvimento de software"*, registrada no
+> [`40`](../roadmaps/40-estado-e-continuidade.md) §5). O código do domínio
+> `sim` e o `kinein-sim` ficam como estão e o gate continua a testá-los;
+> nenhuma fatia nova sai daqui. Este documento permanece como registro para o
+> dia em que o autor reabrir.
+
 > **Classe: PLANO, com a primeira fatia JÁ IMPLEMENTADA** (`docs/README.md`).
 > Este documento é a saída da etapa 28: as sete perguntas do
 > [`../roadmaps/31`](../roadmaps/31-simulacao-fisica-matematica.md) §5 estão

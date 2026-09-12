@@ -554,6 +554,47 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          gate e fica dito como nao exercitado);
                                          Raspberry Pi OS como alvo Linux; P0
                                          primeiro
+--  O EFEITO JETBRAINS como criterio    MAPEADO em 2026-09-12 (42 §8), a pedido
+    de pronto: zero-config, indexacao,   do autor. O que JA' EXISTE, medido: kit
+    Alt+Enter proativo, project model    automatico + clangd com query-driver;
+    antes do LSP, sysroot visual,        indice e contexto na barra; Alt+Return
+    remote deploy & debug, SVD com       -> lsp.codeActions; a ORDEM model ->
+    escrita, sondas visuais              indice -> LSP ja' e' a certa; kit com
+                                         sysroot/remoteTarget/debugServer;
+                                         attach por `target remote`; probe.list.
+                                         O que FALTA, por pilar: configure
+                                         automatico sem JSON + CDB do file-api
+                                         compileGroups + Bear para Makefile (P0);
+                                         ".venv com uv" e "instalar" de um
+                                         clique com o comando visivel (P1);
+                                         lampada na margem + clang-tidy no
+                                         clangd + ruff LSP (P5/editor);
+                                         seletor de sysroot que LE a pasta,
+                                         toolchain file gerado, importar kit
+                                         Yocto (environment-setup) e Buildroot
+                                         (P1/P6); "Remoto (SSH)" de um clique
+                                         com gdbserver (P6); painel SVD com
+                                         ESCRITA — svd-parser 0.14.10 MIT/Apache
+                                         + DAP readMemory/writeMemory, que o gdb
+                                         17.2 daqui implementa (P3); sonda
+                                         escolhida na lista e OpenOCD deduzido
+                                         do VID:PID (P2/P3). Nada muda na ordem
+                                         do 42 §4
+--  A TRILHA PYTHON COMPLETA:            MAPEADA em 2026-09-12 (42 §9): MicroPython
+    bare metal -> edge -> backend ->     no ESP32 (mpremote 1.29.0 aqui) ->
+    banco                                Mosquitto como container (EPL/EDL) ->
+                                         Pi com CPython/SQLite/Podman por SSH ->
+                                         FastAPI + uv -> Postgres/Timescale/
+                                         SQLite/Mongo (datasource ja' conecta e
+                                         le) -> Grafana pela API. O que a IDE
+                                         precisa de NOVO: MicroPython gravado e
+                                         REPL (P2/P4), .venv de um clique (P1),
+                                         a Pi como alvo (P6), a primeira RECEITA
+                                         de container (Mosquitto), o projeto
+                                         Python com CMake/cargo dentro
+                                         (pybind11/nanobind/PyO3/maturin)
+                                         reconhecido pelo project.model (P0),
+                                         executar/escrever no banco (item 27)
 --  O ECOSSISTEMA INTEIRO, em ordem      MAPEADO em 2026-09-11 (roadmaps/41), a
     linear: embarcados + Python +        pedido do autor: "nada deve ficar de
     MicroPython                          fora", com o VS Code (Python, C/C++,
@@ -652,6 +693,28 @@ Python                       ENTRA como vertical nativa — DECISAO DO AUTOR em
 Pylance                      PROIBIDO (licenca) — continua; o motor e' basedpyright
 Docker e banco               NATIVOS, nao plugins. Docker/Podman IMPLEMENTADO
                              em 2026-09-12 (§7.14): dominio `container`
+simulacao: FORA DO FOCO      DECISAO DO AUTOR em 2026-09-12 (tarde): "esquece a
+                             parte de simulacao fisica/matematica; vamos refinar
+                             ao maximo para sistemas embarcados e desenvolvimento
+                             de software". O dominio `sim` e o `kinein-sim` FICAM
+                             como estao (o gate continua a testa-los); NENHUMA
+                             fatia nova; a fila de simulacao do §4 e a etapa 28
+                             param onde estao. Reabrir e' do autor. As decisoes
+                             de simulacao acima continuam registradas para o dia
+                             em que reabrir — nao se reescrevem
+o efeito JetBrains           CRITERIO DE PRONTO, nao pilar novo (autor, 2026-09-12;
+                             42 §8): zero-config = DETECTAR + UM CLIQUE com o
+                             comando visivel, nunca download calado (a regra de
+                             instalacao acima continua); indexacao visivel;
+                             intention actions proativas; project model ANTES
+                             do LSP; toolchain manager com sysroot; remote
+                             deploy & debug; SVD com ESCRITA; sondas visuais
+a trilha Python completa     bare metal -> edge -> backend -> banco, com C/C++/
+                             Rust onde o Python nao cabe (autor, 2026-09-12; 42
+                             §9). Ferramentas do PROJETO do usuario, que a IDE
+                             reconhece, sobe, observa e depura — nao dependencias
+                             da IDE. Python desta maquina: 3.14.7; 3.15.0 final
+                             em 2026-10-01 (PEP 790); "3.16" e' outubro de 2027
 A IDE LE O PROJETO INTEIRO   DECISAO DO AUTOR em 2026-09-12: todas as pastas,
                              arquivos, funcoes e tipos de C/C++/Rust/Python,
                              com integracao PROFUNDA do contexto de codigo e

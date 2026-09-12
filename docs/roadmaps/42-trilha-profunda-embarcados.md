@@ -6,7 +6,12 @@
 > profundidade**, a pedido do autor em 2026-09-12 — *"quero profundidade e não
 > um monte de corte vertical raso"* — e amplia o alvo para **Linux/software
 > embarcado**. A fila continua sendo o [`40`](40-estado-e-continuidade.md) §4;
-> este é o mapa que a ordena daqui em diante.
+> este é o mapa que a ordena daqui em diante. **Em 2026-09-12 à tarde ganhou
+> a §8** (o "efeito JetBrains": zero-config, indexação visível, intention
+> actions, project model antes do LSP, toolchain manager com sysroot, remote
+> deploy & debug, SVD com escrita, sondas visuais — o que já existe medido, o
+> que falta e em que pilar) **e a §9** (a trilha completa em Python com
+> C/C++/Rust: bare metal → edge → backend → banco), a pedido do autor.
 >
 > **O que "profundo" significa aqui, dito de forma verificável** — sem isto a
 > palavra é sentimento:
@@ -100,8 +105,11 @@ receita e partições do ESP-IDF lidas; `build.size` consumindo a partição
 `app`) e o domínio `index` (todas as pastas, arquivos e declarações de
 C/C++/Rust/Python, com as gramáticas do editor, em job, com incremento pelo
 watcher e `#nome` sem LSP). Continuam DELEGADOS ao LSP: tipos, referências,
-rename. Continua **por fazer** no P0: o contexto de compilador por arquivo e
-o watch recursivo (§3, P0).
+rename. O contexto de compilador por arquivo entrou à tarde (`40` §7.18:
+`index.context`, a CDB envelhecida por subpasta detectada). Continua **por
+fazer** no P0: o watch recursivo, o modelo por alvo/preset, o map file, a
+gramática Python (§3, P0) — e o que a §8 acrescenta (configure automático,
+file-api `compileGroups`, Bear para Makefile).
 
 **O que os últimos dois dias entregaram e ENTRA nos pilares** (não se refaz):
 `serial.list` (E1), `serial.monitor` (E3), `container.*` (Docker/Podman
@@ -179,13 +187,17 @@ inteira (scheduler, brokers, RAM budget) até que a dor a peça.
     incremento                            PARCIAL — so' nas pastas que o watcher
                                           observa (ADR-0001: nao recursivo);
                                           FALTA watch recursivo ou re-varredura
-    contexto de compilador por arquivo    FALTA — o ARQUIVO -> sua unidade de
-                                          compilacao: flags/includes/defines/std
-                                          da compile_commands.json (C/C++),
-                                          crate/target/features do `cargo
-                                          metadata` (Rust), interpretador,
-                                          sys.path e ambiente (Python); e o
-                                          inverso: que arquivos um alvo compila
+    contexto de compilador por arquivo    FEITO (2026-09-12 tarde, 40 §7.18) —
+                                          index.context: unidade da CDB (nas
+                                          duas formas; chave canonica; -I/-D/
+                                          -std), crate/target/features do
+                                          cargo metadata, interpretador Python
+                                          com origem e aviso; a CDB envelhecida
+                                          por CMakeLists.txt de SUBPASTA; recarga
+                                          no configure e no Cargo.toml.
+                                          FALTA: o inverso (que arquivos um alvo
+                                          compila), sys.path do Python, e a CDB
+                                          quando nao ha' (§8 item 4)
     referencias/tipos/rename              DELEGADO ao clangd/rust-analyzer/
                                           basedpyright, por decisao — o indice
                                           nao os reimplementa
@@ -475,3 +487,235 @@ nunca gerado), **J-Link Software** (a sonda funciona via probe-rs/OpenOCD),
    como reconhecimento de projeto; sem imagem propria agora
 3  P0 primeiro: confirmado
 ```
+
+## 8. O "efeito JetBrains" — a experiência como critério de pronto (autor, 2026-09-12)
+
+**O pedido do autor, na tarde de 2026-09-12**, depois da quinta fatia do P0:
+o que faz alguém amar o CLion/PyCharm/RustRover é a sensação de *baterias
+inclusas* — **zero-config ao abrir**, **indexação agressiva** visível,
+**intention actions** (Alt+Enter) proativas, um **Project Model** construído
+pelo backend **antes** de alimentar o LSP, um **Toolchain Manager visual**
+que lê o sysroot do alvo, **Remote Deploy & Debug** de um clique (SSH +
+gdbserver), **SVD ao vivo** com escrita de bits no breakpoint, e **sondas
+visuais** (J-Link/ST-Link) com probe-rs/OpenOCD invisíveis por baixo.
+*"Parte já deve ter sido desenvolvida; o resto dá um bom norte."*
+
+Esta seção é o mapa **medido**: para cada item, o que a IDE **já faz** (com
+onde), o que **falta**, em **que pilar** entra e **com que ferramenta aberta**
+(licença lida na fonte, versão medida nesta máquina em 2026-09-12). A ordem
+dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada um.
+
+```text
+1  ZERO-CONFIG AO ABRIR
+   ja' faz      workspace.open detecta os build systems; o kit e' automatico
+                (o primeiro detectado por papel) e fica por projeto; o clangd
+                ja' sobe com --query-driver do compilador do kit; project.model
+                e o indice nascem no proprio open; setup.list diz o que falta
+                COM o comando da distro
+   falta        (a) CMake sem CDB: configurar SOZINHA, em .kinein/build, com o
+                kit efetivo e o preset padrao — como job visivel e cancelavel,
+                sem editar JSON nenhum. Hoje o configure e' explicito
+                (b) requirements.txt/pyproject.toml sem ambiente: "criar .venv
+                com uv" de UM clique, com o comando mostrado (uv: MIT OR
+                Apache-2.0, LICENSE-MIT lido em 2026-09-12; ausente aqui)
+                (c) o que falta na maquina: UM clique que abre o terminal com o
+                comando oficial ja' digitado (setup)
+   NAO entra    baixar toolchain CALADA. O JetBrains faz isso porque distribui
+                os binarios; aqui a decisao registrada (40 §5, "comando de
+                instalacao") e' fonte oficial citada, nunca sudo, nunca em
+                silencio. A ausencia de JSON vem da DETECCAO + UM CLIQUE, nao
+                do download escondido
+   pilar        P0 (a), P1 (b, c)
+
+2  INDEXACAO AGRESSIVA, VISIVEL
+   ja' faz      "indice: 1.010 arquivos · 70.030 linhas · 4.658 simbolos" e
+                "indexando… N arquivos" na barra (40 §7.17); o contexto de
+                compilador do arquivo ativo ao lado (§7.18): "contexto: c++ ·
+                gnu++23 · 12 -I · 9 -D"
+   falta        watch recursivo (o incremento so' segue as pastas abertas);
+                a gramatica Python para os simbolos; um painel do indice ("o
+                que li, o que pulei e por que")
+   pilar        P0
+
+3  INTENTION ACTIONS (Alt+Enter)
+   ja' faz      lsp.codeActions + lsp.applyCodeAction, atalho Alt+Return
+                (shell/GlobalShortcuts.qml), no menu "Acoes de codigo" —
+                SOB DEMANDA. As assists do rust-analyzer e os fix-its do
+                clangd ja' chegam por esse caminho; "o borrow checker avisar
+                antes de compilar" ja' e' o flycheck do rust-analyzer chegando
+                como diagnostico
+   falta        o PROATIVO: a lampada na margem quando a linha do cursor tem
+                acao (codeAction com o diagnostico da linha); clang-tidy
+                DENTRO do clangd (--clang-tidy com o .clang-tidy do projeto: e'
+                dai que sai "este loop pode ser otimizado", como
+                performance-* e modernize-*); ruff como servidor LSP para
+                Python (fixes viram acoes; ruff instalado aqui);
+                basedpyright idem
+   pilar        P5 (qualidade) para as fontes; a lampada e' UMA fatia de
+                editor — respeitando o EditorController congelado (40 §5):
+                mora no EditorLanguageController, que e' quem ja' pede as acoes
+
+4  PROJECT MODEL ANTES DO LSP
+   ja' faz      a ORDEM ja' e' essa, medida em handlers/workspace.rs
+                activate_workspace: project.model -> indice (job) -> args do
+                clangd (query-driver do kit); o clangd so' sobe no primeiro
+                .c/.cpp aberto, ja' com tudo isso
+   falta        a "CDB em memoria" do pedido, na forma que o CMake oferece de
+                verdade: a resposta codemodel-v2 do file-api (que a IDE JA'
+                pede para os targets) traz, por compileGroup, includes,
+                defines, compileCommandFragments e sysroot (quando ha'
+                CMAKE_SYSROOT) — a IDE pode ESCREVER a compile_commands.json a
+                partir dela para gerador/framework que nao exporta, e sabe
+                includes/defines por alvo SEM a CDB. toolchains-v1 (CMake >=
+                3.20) da' compilador, versao e includes implicitos por
+                linguagem. Makefile puro: Bear como PROCESSO (`bear -- make`;
+                GPL-3.0, COPYING; 3.1.6 instalado aqui) ou compiledb
+                (GPL-3.0). Cargo: o rust-analyzer monta o proprio modelo — o
+                que falta e' a IDE passar o alvo do kit
+                (rust-analyzer.cargo.target). ESP-IDF, Zephyr, pico-sdk sao
+                CMake por baixo (a CDB esta' no build/ deles); PlatformIO:
+                `pio run -t compiledb`
+   pilar        P0
+
+5  TOOLCHAIN MANAGER VISUAL (sysroot do alvo)
+   ja' faz      kit por projeto com sysroot, triple, chip, remoteTarget e
+                debugServer (toolchain.setKit; EmbeddedKitField no painel de
+                embarcados); o clangd aprende o compilador cross
+   falta        (a) seletor de PASTA no lugar do campo de texto; (b) LER o
+                sysroot: usr/include, usr/lib, lib, usr/lib/<triple>, os .pc
+                do pkg-config, a versao da glibc — e mostrar o que ha';
+                (c) injetar: CMAKE_SYSROOT via um toolchain file gerado pela
+                IDE em .kinein/ (o --sysroot entra nos comandos, a CDB o carrega
+                e o clangd o le SEM configuracao propria), e o --query-driver
+                que ja' existe; (d) IMPORTAR kit de SDK: Yocto —
+                `sh -c '. environment-setup-<arch>; env'` e ler CC/CXX/
+                SDKTARGETSYSROOT/OECORE_* (o CC do SDK ja' traz
+                --sysroot=$SDKTARGETSYSROOT; docs.yoctoproject.org, sdk-manual,
+                lido em 2026-09-12); Buildroot — output/host/bin/<triple>-gcc,
+                output/host/<triple>/sysroot e o toolchainfile.cmake que o
+                Buildroot gera. NAO MEDIDO: nao ha' SDK Yocto nem arvore
+                Buildroot nesta maquina — vira fixture minima + exercitacao
+                quando houver
+   pilar        P1 (o manager), P6 (Yocto/Buildroot)
+
+6  REMOTE DEPLOY & DEBUG (SSH + gdbserver) DE UM CLIQUE
+   ja' faz      remoteTarget no kit vira `attach` com `target remote` (dap/
+                adapter.rs, 40 §7.9); o servidor de debug (OpenOCD/QEMU) e'
+                subido pela IDE; configuracoes de execucao existem
+   falta        o transporte SSH (ssh/scp/rsync como PROCESSO: OpenSSH BSD,
+                rsync GPL-3 — decisao do P6) e UMA configuracao "Remoto (SSH)":
+                build cross com o kit -> rsync do binario -> `ssh alvo
+                gdbserver :porta ./bin` -> attach com `gdb -i dap` (17.2 aqui;
+                gdbserver 17.2 e OpenOCD instalados). debugpy attach para o
+                Python do alvo pelo mesmo caminho
+   prova        sshd local em porta alta + gdbserver local no gate (o truque
+                do QEMU); exercitacao na Raspberry Pi do autor
+   pilar        P6
+
+7  SVD AO VIVO (ler E ESCREVER bits no breakpoint)
+   ja' faz      nada de SVD. O DAP ja' e' o caminho de tudo
+   como         dois caminhos, o mesmo painel:
+                - probe-rs: `svdFile` por core na configuracao e os perifericos
+                  aparecem como escopo de Variables (probe.rs/docs/tools/
+                  debugger, lido em 2026-09-12; leitura confirmada na doc,
+                  escrita A CONFIRMAR no adaptador)
+                - gdb -i dap (OpenOCD, QEMU, gdbserver): a IDE LE o SVD com o
+                  crate svd-parser (0.14.10, MIT OR Apache-2.0, rust-embedded/
+                  svd, atualizado 2026-08-11) e usa DAP readMemory/
+                  writeMemory. MEDIDO: o gdb 17.2 desta maquina implementa os
+                  dois (/usr/share/gdb/python/gdb/dap/memory.py:
+                  supportsReadMemoryRequest e supportsWriteMemoryRequest)
+                painel Qt proprio: periferico -> registrador -> campo, valor
+                lido no breakpoint, campo EDITAVEL (o "ligar o clock do GPIO
+                pela UI" do autor) com o write confirmado por releitura; os
+                perifericos escolhidos ficam no projeto
+                de onde vem o SVD: o fabricante (CMSIS-Pack .pdsc -> .svd;
+                espressif/svd e' Apache-2.0, LICENSE lido em 2026-09-12; o
+                cmsis-svd-data tem licenca POR FABRICANTE — ler o arquivo, nao
+                o repositorio); o P0 ja' preve o SVD no modelo de artefatos
+                referencia de comportamento (nao de codigo — sao extensoes
+                JS): CLion Peripheral view (Embedded GDB Server e OpenOCD
+                Download & Run), mcu-debug/peripheral-viewer e
+                eclipse-cdt-cloud/vscode-peripheral-inspector (ambos MIT)
+   pilar        P3
+
+8  SONDAS VISUAIS (J-Link, ST-Link, CMSIS-DAP)
+   ja' faz      probe.list (probe-rs list) e a sonda no painel de embarcados;
+                `probe-rs info` SUGERE o chip e o usuario confirma (decisao
+                2026-09-11); debugServer no kit
+   falta        escolher a sonda na LISTA (VID:PID:serial) e grava-la no kit;
+                a config do OpenOCD deduzida do VID:PID (interface/stlink.cfg
+                0483:3748/374b/374e/3752; interface/jlink.cfg 1366:*;
+                interface/cmsis-dap.cfg — o Debug Probe da Pico 2e8a:000c);
+                J-Link pelo probe-rs direto por USB (o software da SEGGER
+                continua fora, §6)
+   pilar        P2 (gravar) e P3 (depurar)
+```
+
+**O que isto muda no §4:** nada na ordem; muda o que cada pilar precisa
+entregar para fechar. E deixa **duas coisas ditas**: (1) o zero-config aqui é
+*detectar e propor com um clique*, nunca *baixar calado* — é a mesma
+experiência de "não editei JSON nenhum", sem quebrar a regra de instalação;
+(2) o SVD com escrita é a peça de maior valor que **não existe em nenhuma
+forma** hoje, e o caminho pelo `gdb -i dap` já está medido do nosso lado.
+
+## 9. A trilha completa em Python (com C/C++ e Rust): bare metal → edge → backend → banco (autor, 2026-09-12)
+
+**O pedido do autor:** *"esquece a parte de simulação física/matemática;
+vamos refinar ao máximo para sistemas embarcados e também para
+desenvolvimento de software — no Python dá para fazer, com C/C++ ou Rust, um
+projeto desde bare metal → edge computing → backend e banco de dados de
+forma completa."* A decisão sobre a simulação está registrada no
+[`40`](40-estado-e-continuidade.md) §5. Esta seção é a trilha.
+
+**Sobre a versão do Python, com fonte** (o autor citou o 3.16): nesta máquina
+o Python é **3.14.7** (medido em 2026-09-12). O **3.15.0 final sai em
+2026-10-01** (PEP 790; o rc2 já está publicado). O **3.16** segue o ciclo
+anual — outubro de **2027** — e em 2026-09-12 não tem calendário publicado.
+A IDE não depende de versão: o interpretador é o do projeto (`.venv`, uv,
+poetry, sistema — `roadmaps/29` §4.1, hoje lido pelo `index.context`).
+
+```text
+estagio        ferramenta aberta (licenca lida na fonte, 2026-09-12)      dominio da IDE
+bare metal     MicroPython (MIT) no ESP32; mpremote 1.29.0 (instalado     P2 gravar (esptool
+               aqui via pipx; vive no repositorio do MicroPython, MIT);   5.3.1), P4 REPL/
+               umqtt para publicar; ou C/C++ (ESP-IDF) e Rust (esp-hal)   arquivos, serial.*
+               quando o Python nao cabe — o mesmo projeto, dois alvos
+transporte     MQTT: Mosquitto como CONTAINER no Podman (EPL-2.0 OR       container.* (ja':
+               EDL-1.0, LICENSE.txt); alternativa Zenoh (Apache-2.0 OR    listar, logs, shell,
+               EPL-2.0). Como processo/imagem, nunca como crate            compose)
+edge           Raspberry Pi OS: CPython no alvo, servico Python           P6 (SSH: deploy,
+               (systemd), Podman no Pi, SQLite local (dominio publico);   run, debugpy attach,
+               modulo nativo quando precisar de velocidade: pybind11 e     journalctl)
+               nanobind (BSD-3), PyO3 + maturin (MIT OR Apache-2.0) — o
+               build do modulo e' CMake ou cargo: a MESMA CDB e o MESMO
+               cargo metadata que o index.context ja' le
+backend        FastAPI (MIT) + uvicorn; uv (MIT OR Apache-2.0) para o      41 bloco A (ruff,
+               ambiente; ruff, basedpyright, pytest, debugpy               basedpyright, pytest,
+                                                                          debugpy) + run/test
+banco          PostgreSQL e TimescaleDB (series temporais), SQLite,        datasource.* (ja':
+               MongoDB — conectar, introspecionar, ler; executar e         postgres, timescaledb,
+               escrever ainda sao fatia propria (40 §4 item 27)            sqlite, mongo)
+observar       Grafana pela HTTP API (embutir e' PROIBIDO, AGPL)           grafana.*
+```
+
+**O que a IDE precisa fazer de NOVO para essa trilha existir de ponta a
+ponta — e onde já está planejado:**
+
+```text
+1  o ESP32 da mesa com MicroPython oficial gravado e o REPL na aba          P2, P4
+2  "criar .venv com uv" de um clique + ruff/basedpyright/pytest ligados      P1, 41 A
+3  a Pi como alvo: SSH, deploy, rodar, debugpy attach, journalctl            P6
+4  o Mosquitto de um clique: uma RECEITA de container (imagem oficial,       container
+   porta, volume) no painel de containers — a primeira receita do dominio
+5  o modulo nativo: o projeto Python com CMake/cargo dentro reconhecido        P0 (project)
+   pelo project.model (scikit-build-core, maturin) e a CDB/cargo do modulo
+   no index.context — hoje o modelo so' olha frameworks de embarcado
+6  o banco: executar consulta e escrever (a fatia propria do item 27)         datasource
+```
+
+Nada aqui é ferramenta nova para a IDE **adotar como dependência**: são
+ferramentas que o **projeto do usuário** usa e que a IDE **reconhece, sobe,
+observa e depura**. A regra de licença vale para o que entra no binário
+(`deny.toml`) e para o que a IDE executa (processo com licença lida); as
+bibliotecas do projeto são escolha do autor do projeto.
