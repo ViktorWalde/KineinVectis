@@ -524,7 +524,14 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          (monitor como processo) FEITA em
                                          2026-09-12 (§7.15). O autor pediu uma
                                          ORGANIZACAO antes de seguir: a trilha
-                                         PROFUNDA de embarcados (roadmaps/42)
+                                         PROFUNDA de embarcados e' o roadmaps/42
+                                         — oito pilares, pronto POR FAMILIA. O
+                                         PROXIMO e' o PILAR 0: o MODELO do
+                                         projeto embarcado (framework, SDK,
+                                         alvo, artefatos), sem botao novo antes
+                                         dele. Tres decisoes do autor no 42 §7
+                                         (as placas da mesa; Yocto/Buildroot
+                                         proprio?; confirmar P0 primeiro)
 --  O ECOSSISTEMA INTEIRO, em ordem      MAPEADO em 2026-09-11 (roadmaps/41), a
     linear: embarcados + Python +        pedido do autor: "nada deve ficar de
     MicroPython                          fora", com o VS Code (Python, C/C++,

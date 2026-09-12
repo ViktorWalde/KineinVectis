@@ -23,6 +23,13 @@
 >    que está por trás dela, adotada **pronta** (MODE-A: processo ou protocolo),
 >    nunca reescrita. Padrão de mercado, solução pronta, nada do zero.
 
+> **SUCEDIDO na parte de embarcados pelo [`42`](42-trilha-profunda-embarcados.md)
+> (2026-09-12).** O autor pediu profundidade em vez de cortes verticais rasos:
+> o 42 reorganiza os blocos A–F em oito pilares com critério de pronto por
+> família e amplia o alvo para Linux embarcado. O inventário (§3) e o que não
+> entra (§4) desta página continuam valendo como fonte; a ORDEM passa a ser a
+> do 42 §4.
+
 ## 0. Como ler isto
 
 ```text
