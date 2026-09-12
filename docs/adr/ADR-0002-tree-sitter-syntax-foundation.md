@@ -3,6 +3,13 @@
 - Status: aceito
 - Data: 2026-07-14
 - Escopo: D3 / protocolo 0.46.0
+- Nota datada (2026-09-12): a fundação ganhou a **quarta gramática, Python**
+  (`tree-sitter-python` 0.25.0, MIT — LICENSE lido no repositório), pela
+  decisão do autor de 2026-09-11 (Python entra como vertical nativa,
+  `roadmaps/41` bloco B). Mesma forma: highlights e tags oficiais da
+  gramática, `locals` mínimo escrito aqui. O que vale para C/C++/Rust neste
+  ADR vale para Python; o índice do projeto inteiro (`roadmaps/42` P0) passou
+  a ver as declarações dos `.py` no mesmo gesto.
 
 ## Contexto
 

@@ -43,9 +43,9 @@ Item {
         // Progresso aparece; o fim vira o resumo com numeros legiveis.
         indice.handleProgress(200, 950);
         if (indice.summary().indexOf("200") < 0 || indice.summary().indexOf("950") < 0) failures += 8;
-        indice.handleFinished({ state: "ready", files: 1010, lines: 70030, symbols: 4658 });
+        indice.handleFinished({ state: "ready", files: 1022, lines: 72000, symbols: 3939 });
         if (!indice.ready) failures += 16;
-        if (indice.summary() !== "1.010 arquivos · 70.030 linhas · 4.658 símbolos") failures += 32;
+        if (indice.summary() !== "1.022 arquivos · 72.000 linhas · 3.939 símbolos") failures += 32;
         // Acima de cem mil, arredonda para "mil": o numero exato e' do painel.
         if (indice.formatCount(120400) !== "120 mil") failures += 262144;
         indice.handleFinished({ state: "failed", error: "indexacao cancelada" });

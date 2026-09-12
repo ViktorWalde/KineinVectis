@@ -106,10 +106,11 @@ receita e partições do ESP-IDF lidas; `build.size` consumindo a partição
 C/C++/Rust/Python, com as gramáticas do editor, em job, com incremento pelo
 watcher e `#nome` sem LSP). Continuam DELEGADOS ao LSP: tipos, referências,
 rename. O contexto de compilador por arquivo entrou à tarde (`40` §7.18:
-`index.context`, a CDB envelhecida por subpasta detectada). Continua **por
-fazer** no P0: o watch recursivo, o modelo por alvo/preset, o map file, a
-gramática Python (§3, P0) — e o que a §8 acrescenta (configure automático,
-file-api `compileGroups`, Bear para Makefile).
+`index.context`, a CDB envelhecida por subpasta detectada) e a gramática
+Python também (`40` §7.19). Continua **por fazer** no P0: o watch recursivo,
+o modelo por alvo/preset, o map file (§3, P0) — e o que a §8 acrescenta (o
+preset no configure automático, file-api `compileGroups`, Bear para
+Makefile).
 
 **O que os últimos dois dias entregaram e ENTRA nos pilares** (não se refaz):
 `serial.list` (E1), `serial.monitor` (E3), `container.*` (Docker/Podman
@@ -182,7 +183,9 @@ inteira (scheduler, brokers, RAM budget) até que a dor a peça.
 (b) o projeto inteiro                     hoje (2026-09-12)
     pastas, arquivos, linguagem, linhas   FEITO — index/, job ao abrir, 4 MiB/arquivo
     funcoes e tipos (C/C++/Rust)          FEITO — Tree-sitter tags, dedup, container
-    funcoes e tipos (Python)              FALTA a gramatica (41 bloco B, B1)
+    funcoes e tipos (Python)              FEITO (2026-09-12, 40 §7.19) — a gramatica
+                                          oficial (tree-sitter-python 0.25.0, MIT)
+                                          na mesma fundacao: indice, realce, outline
     busca por nome sem LSP (#nome)        FEITO — indice primeiro, LSP substitui
     incremento                            PARCIAL — so' nas pastas que o watcher
                                           observa (ADR-0001: nao recursivo);
@@ -246,7 +249,9 @@ PlatformIO, STM32Cube, cargo embarcado, MicroPython, Yocto, Buildroot —
 FEITAS) e testes que dizem framework/alvo/artefato de cada uma; mutação:
 trocar o marcador e ver a detecção mentir. O índice se prova contra um
 projeto de quatro linguagens com `build/` que não conta, e contra este
-próprio repositório pelo core real (1.010 arquivos, 4.658 declarações).
+próprio repositório pelo core real (1.022 arquivos, 3.939 declarações em
+2026-09-12 à tarde — o "4.658" da manhã foi medido antes de o dedup do `fn`
+em `impl` entrar no mesmo commit; corrigido no `40` §7.17).
 Exercitação: o ESP32 da mesa com um projeto ESP-IDF real (instalar o IDF é
 passo do autor — P1 diz como).
 
@@ -538,13 +543,13 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
    pilar        P0 (a), P1 (b, c)
 
 2  INDEXACAO AGRESSIVA, VISIVEL
-   ja' faz      "indice: 1.010 arquivos · 70.030 linhas · 4.658 simbolos" e
+   ja' faz      "indice: 1.022 arquivos · 72.000 linhas · 3.939 simbolos" e
                 "indexando… N arquivos" na barra (40 §7.17); o contexto de
                 compilador do arquivo ativo ao lado (§7.18): "contexto: c++ ·
                 gnu++23 · 12 -I · 9 -D"
    falta        watch recursivo (o incremento so' segue as pastas abertas);
-                a gramatica Python para os simbolos; um painel do indice ("o
-                que li, o que pulei e por que")
+                um painel do indice ("o que li, o que pulei e por que"). A
+                gramatica Python entrou em 2026-09-12 a tarde (40 §7.19)
    pilar        P0
 
 3  INTENTION ACTIONS (Alt+Enter)

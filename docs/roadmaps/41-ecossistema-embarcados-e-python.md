@@ -172,8 +172,8 @@ A tradução para a Kinein, com a licença lida no arquivo:
 
 | funcionalidade | ferramenta aberta | licença | forma | hoje |
 | --- | --- | --- | --- | --- |
-| realce + outline | tree-sitter-python | MIT | crate (gramática) | ✗ — o único item que não depende de nada instalado |
-| **interpretador** (o `compile_commands.json` do Python) | precedência do 29 §4.1: `$VIRTUAL_ENV` → `.venv/` → `venv/` → `uv.lock` → `poetry.lock` (`poetry env info -p`) → sistema (avisando); **uv** | uv: MIT OR Apache-2.0 | processo | ✗ |
+| realce + outline | tree-sitter-python 0.25.0 | MIT | crate (gramática) | ✓ 2026-09-12 — realce, outline, folding, locals no editor e as declarações no índice (`40` §7.19) |
+| **interpretador** (o `compile_commands.json` do Python) | precedência do 29 §4.1: `$VIRTUAL_ENV` → `.venv/` → `venv/` → `uv.lock` → `poetry.lock` (`poetry env info -p`) → sistema (avisando); **uv** | uv: MIT OR Apache-2.0 | processo | parcial 2026-09-12 — a precedência está LIDA pelo `index.context` (origem, versão, aviso do sistema); falta `python.select` e o uv (`40` §7.18) |
 | LSP | **basedpyright** (PyPI, sem Node) / pyright | MIT (`LICENSE.txt`) | LSP | ✗ |
 | lint + formato + imports | **ruff** (`ruff server`; medir `--preview` na versão instalada, 29 §3.1) | MIT | LSP | ✗ |
 | formato alternativo | black | MIT | processo | ✗ |
@@ -351,7 +351,8 @@ BLOCO A — fechar o canal serial e o ciclo Espressif (ja' decidido, 38 §6)
                                             mais barata que ja' estava na fila)
 
 BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial)
- B1  Tree-sitter Python                     realce + outline; zero dependencia externa
+ B1  Tree-sitter Python                     FEITO 2026-09-12 (40 §7.19): realce + outline +
+                                            indice; zero dependencia externa
  B2  interpretador                          precedencia do 29 §4.1; `python.interpreters`
                                             / `python.select`; uv quando existir
  B3  basedpyright como 3o ServerSpec        sobe com o interpretador do B2 (senao mente)

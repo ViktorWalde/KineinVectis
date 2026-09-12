@@ -115,7 +115,7 @@
     },
     {
       "id": "tree-sitter-foundation",
-      "name": "Tree-sitter runtime and C/C++/Rust grammars",
+      "name": "Tree-sitter runtime and C/C++/Rust/Python grammars",
       "role": "Incremental local syntax parsing for highlights, folding, outline and locals",
       "adoptionMode": "A",
       "integration": "Rust crates linked only by kinein-core; generated C parsers stay encapsulated upstream",
@@ -124,6 +124,7 @@
         "cRepository": "https://github.com/tree-sitter/tree-sitter-c",
         "cppRepository": "https://github.com/tree-sitter/tree-sitter-cpp",
         "rustRepository": "https://github.com/tree-sitter/tree-sitter-rust",
+        "pythonRepository": "https://github.com/tree-sitter/tree-sitter-python",
         "documentation": "https://tree-sitter.github.io/tree-sitter/"
       },
       "version": {
@@ -131,6 +132,7 @@
         "cGrammar": "0.24.2",
         "cppGrammar": "0.23.4",
         "rustGrammar": "0.24.2",
+        "pythonGrammar": "0.25.0 (added 2026-09-12; LICENSE read at the repository: MIT)",
         "pin": "Exact Cargo constraints plus Cargo.lock",
         "reason": "Current stable official releases; runtime MSRV 1.77 is below project MSRV 1.85 and grammar ABI is covered by integration tests"
       },

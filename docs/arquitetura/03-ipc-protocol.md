@@ -2216,13 +2216,16 @@ limpa até a resposta chegar.
 inteira com a **mesma lista de pastas ignoradas do watcher** (`.git`,
 `.kinein`, `target`, `build`, `node_modules`…, para os dois verem o mesmo
 projeto), conta **todo** arquivo, lê os de fonte (C/C++/Rust/Python) e extrai
-as declarações de C/C++/Rust com as **gramáticas Tree-sitter do editor** (a
-mesma query `tags` oficial de cada gramática, sem cache — `lang/extract.rs`).
-Python é contado e medido; as declarações entram quando a gramática entrar
-(bloco B do `roadmaps/41`). Arquivo acima de 4 MiB ou ilegível é contado e
-**dito** em `skipped`, nunca sumido. Medido em 2026-09-12 neste repositório:
-1.010 arquivos, 146 pastas, 70.030 linhas, 4.658 declarações em ~2 s (build
-de depuração).
+as declarações com as **gramáticas Tree-sitter do editor** (a mesma query
+`tags` oficial de cada gramática, sem cache — `lang/extract.rs`). Python
+entrou na fundação em 2026-09-12 à tarde (`tree-sitter-python` 0.25.0, MIT;
+bloco B do `roadmaps/41`): a `tags` oficial dá `function` e `class` (o método
+vem como `function` com `container`). Arquivo acima de 4 MiB ou ilegível é
+contado e **dito** em `skipped`, nunca sumido. Medido em 2026-09-12 à tarde
+neste repositório: 1.022 arquivos, 148 pastas, 72.000 linhas, 3.939
+declarações (217 delas em 18 `.py`) em ~2,1 s (build de depuração). O
+"4.658" da manhã foi medido antes de o dedup do `fn` em `impl` entrar no
+mesmo commit — remedido sem Python, o mesmo código dá 3.720.
 
 **O incremento.** Os caminhos de `event.fs.changed` são reindexados no loop
 principal (um arquivo é milissegundos) e os totais reemitidos. **Limite

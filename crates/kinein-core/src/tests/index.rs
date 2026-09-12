@@ -53,6 +53,8 @@ fn projeto(name: &str) -> PathBuf {
     )
     .unwrap();
     std::fs::write(raiz.join("tools/gera.py"), "def gera():\n    pass\n").unwrap();
+    // Um stub .pyi: e' Python para a gramatica tanto quanto o .py.
+    std::fs::write(raiz.join("tools/gera.pyi"), "def gera() -> None: ...\n").unwrap();
     std::fs::write(raiz.join("README.md"), "# projeto\n").unwrap();
     // O build/ tem fonte com muitas funcoes: se contasse, os numeros mentiriam.
     std::fs::write(
@@ -74,14 +76,14 @@ fn the_whole_tree_is_seen_source_is_read_and_output_dirs_are_not() {
     let indice = build(&raiz);
     let stats = indice.stats();
     assert_eq!(stats.state, IndexState::Ready);
-    // README conta; build/gerado.c NAO; as 4 fontes sao lidas.
+    // README conta; build/gerado.c NAO; as 5 fontes sao lidas.
     assert_eq!(
         stats.files,
-        5,
+        6,
         "{:?}",
         indice.files.keys().collect::<Vec<_>>()
     );
-    assert_eq!(stats.source_files, 4);
+    assert_eq!(stats.source_files, 5);
     assert_eq!(stats.folders, 4, "raiz, src, src/net, tools — build/ fora");
     assert!(!indice.files.contains_key("build/gerado.c"));
     let por = |l: &str| {
@@ -94,11 +96,11 @@ fn the_whole_tree_is_seen_source_is_read_and_output_dirs_are_not() {
     };
     assert_eq!((por("rust").files, por("rust").lines), (1, 8));
     assert_eq!(por("cpp").files, 1);
-    assert_eq!(por("python").files, 1);
+    assert_eq!(por("python").files, 2, ".py e .pyi");
     assert_eq!(
         por("python").symbols,
-        0,
-        "Python: contado e medido; sem gramatica, sem simbolos"
+        2,
+        "Python: a gramatica entrou em 2026-09-12 — `gera` e' declaracao nos dois"
     );
     assert_eq!(por("other").files, 1);
     assert!(stats.lines >= 8 + 7 + 1 + 2);
@@ -148,6 +150,13 @@ fn declarations_come_with_line_kind_and_container_and_no_duplicates() {
         todos
             .iter()
             .any(|s| s.name == "soma" && s.language == "c" && s.kind == "function")
+    );
+    // Python: a funcao, pela gramatica oficial.
+    assert!(
+        todos
+            .iter()
+            .any(|s| s.name == "gera" && s.language == "python" && s.kind == "function"),
+        "{nomes:?}"
     );
     let stats = indice.stats();
     assert!(stats.functions >= 5 && stats.types >= 2, "{stats:?}");
@@ -265,7 +274,7 @@ fn opening_a_workspace_builds_the_index_and_symbols_answer() {
         core.handle_request(&JsonRpcRequest::new(3_i64, "index.status", Some(json!({}))));
     let totais = resposta.response().result.clone().unwrap();
     assert_eq!(totais["state"], "ready");
-    assert_eq!(totais["sourceFiles"], 4);
+    assert_eq!(totais["sourceFiles"], 5);
     let busca = core.handle_request(&JsonRpcRequest::new(
         4_i64,
         "index.symbols",

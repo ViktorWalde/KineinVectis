@@ -1,4 +1,4 @@
-//! Registry of the initial C, C++ and Rust grammars and queries.
+//! Registry of the C, C++, Rust and Python grammars and queries.
 
 use std::{
     collections::{HashMap, hash_map::Entry},
@@ -30,12 +30,23 @@ const RUST_LOCALS_QUERY: &str = r"
 (identifier) @local.reference
 ";
 
+// Python (2026-09-12, bloco B do roadmaps/41): a gramatica oficial traz
+// highlights e tags; o `locals` e' o minimo local, como nas outras tres —
+// funcao e' escopo, parametro e atribuicao definem, identificador referencia.
+const PYTHON_LOCALS_QUERY: &str = r"
+(function_definition) @local.scope
+(parameters (identifier) @local.definition)
+(assignment left: (identifier) @local.definition)
+(identifier) @local.reference
+";
+
 /// Languages supported by the first syntax-tree foundation.
 #[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub(super) enum LanguageId {
     C,
     Cpp,
     Rust,
+    Python,
 }
 
 impl LanguageId {
@@ -46,6 +57,7 @@ impl LanguageId {
             "c" => Some(Self::C),
             "h" | "hh" | "hpp" | "hxx" | "ipp" | "cc" | "cpp" | "cxx" => Some(Self::Cpp),
             "rs" => Some(Self::Rust),
+            "py" | "pyi" | "pyw" => Some(Self::Python),
             _ => None,
         }
     }
@@ -56,6 +68,7 @@ impl LanguageId {
             Self::C => "c",
             Self::Cpp => "cpp",
             Self::Rust => "rust",
+            Self::Python => "python",
         }
     }
 }
@@ -155,6 +168,12 @@ fn compile_runtime(id: LanguageId) -> Result<LanguageRuntime, RegistryError> {
             tree_sitter_rust::HIGHLIGHTS_QUERY,
             tree_sitter_rust::TAGS_QUERY,
             RUST_LOCALS_QUERY,
+        ),
+        LanguageId::Python => (
+            tree_sitter_python::LANGUAGE.into(),
+            tree_sitter_python::HIGHLIGHTS_QUERY,
+            tree_sitter_python::TAGS_QUERY,
+            PYTHON_LOCALS_QUERY,
         ),
     };
     Ok(LanguageRuntime {

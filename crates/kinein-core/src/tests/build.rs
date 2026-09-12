@@ -165,8 +165,12 @@ fn build_run_starts_a_job_and_finishes_successfully() {
             .recv_timeout(Duration::from_secs(60))
             .expect("eventos do build dentro do timeout");
         match event.method.as_str() {
+            // O workspace.open sobe o job do INDICE junto: os eventos de job
+            // sao filtrados pelo id, como no tests/runners.rs — sem isso o
+            // job.finished do indice, que chega quando quer, e' tomado pelo
+            // do build (falhou ao acaso em 2026-09-12).
             "event.job.created" => {
-                saw_created = event.params.as_ref().unwrap()["id"] == job_id.as_str();
+                saw_created |= event.params.as_ref().unwrap()["id"] == job_id.as_str();
             }
             "event.build.finished" => {
                 let params = event.params.as_ref().unwrap();
@@ -176,7 +180,9 @@ fn build_run_starts_a_job_and_finishes_successfully() {
             }
             "event.job.finished" => {
                 let params = event.params.as_ref().unwrap();
-                assert_eq!(params["jobId"], job_id.as_str());
+                if params["jobId"] != job_id.as_str() {
+                    continue;
+                }
                 assert_eq!(params["status"], "success");
                 break;
             }

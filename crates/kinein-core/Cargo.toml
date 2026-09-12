@@ -26,6 +26,7 @@ tree-sitter.workspace = true
 tree-sitter-c.workspace = true
 tree-sitter-cpp.workspace = true
 tree-sitter-rust.workspace = true
+tree-sitter-python.workspace = true
 alacritty_terminal = "0.26"
 # Fontes de dados do autor (docs/integracoes/37, docs/seguranca/40).
 postgres.workspace = true

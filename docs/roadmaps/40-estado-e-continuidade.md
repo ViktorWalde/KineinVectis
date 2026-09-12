@@ -542,12 +542,13 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          — `index.context` (unidade da CDB,
                                          alvo do cargo, interpretador Python)
                                          e a CDB envelhecida por SUBPASTA
-                                         detectada. O PROXIMO do P0 (42 §3):
-                                         o watch recursivo (o indice so' segue
-                                         as pastas que a UI observa), o modelo
-                                         por alvo/preset, o map file e a
-                                         gramatica Python. Depois, o P1
-                                         (setup). As tres decisoes do 42
+                                         detectada; e a sexta (§7.19): a
+                                         GRAMATICA PYTHON na fundacao (realce,
+                                         outline, indice). O PROXIMO do P0
+                                         (42 §3): o watch recursivo (o indice
+                                         so' segue as pastas que a UI observa),
+                                         o modelo por alvo/preset, o map file.
+                                         Depois, o P1 (setup). As tres decisoes do 42
                                          §7 foram
                                          TOMADAS em 2026-09-12: so' o ESP32
                                          classico na mesa (o resto fecha no
@@ -1826,7 +1827,8 @@ index/mod.rs      ao abrir o workspace, um JOB caminha a arvore inteira (a
                   arquivo, le os de fonte, extrai as declaracoes de C/C++/Rust
                   com as gramaticas Tree-sitter do editor (lang/extract.rs:
                   a query `tags` oficial, sem cache); Python contado e medido
-                  ate' a gramatica entrar; >4 MiB ou ilegivel = contado e DITO
+                  ate' a gramatica entrar (entrou a tarde, §7.19); >4 MiB ou
+                  ilegivel = contado e DITO
                   em `skipped`; cancelavel; progresso a cada 200 arquivos
 index.status      totais: pastas, arquivos, fonte, linhas, bytes, simbolos,
                   funcoes, tipos, por linguagem, elapsed, estado
@@ -1835,7 +1837,7 @@ index.symbols     exato > prefixo > substring, sem caixa, filtro por kind,
 incremento        os caminhos de event.fs.changed sao reindexados no loop
                   principal e os totais reemitidos
 UI                barra de status: "indice: 1.010 arquivos · 70.030 linhas ·
-                  4.658 simbolos" (e o progresso enquanto constroi);
+                  3.720 simbolos" (e o progresso enquanto constroi);
                   `#nome` no Search Everywhere pede ao indice E ao LSP — o
                   indice responde primeiro e SEM arquivo aberto (antes,
                   `#nome` recusava sem editor com LSP); o LSP substitui
@@ -1846,9 +1848,12 @@ sem duplicata     a `tags` do Rust captura o fn de impl como function E
 ```
 
 **Medido neste repositório pelo core real:** 1.010 arquivos, 146 pastas,
-307 de fonte, 70.030 linhas, 4.658 declarações (3.802 funções, 524 tipos) em
-1,97 s no build de depuração; `escolher` e `handle_request` achados sem LSP.
-Um projeto de 1 M de linhas leva ~30 s neste ritmo, em job com progresso.
+307 de fonte, 70.030 linhas em 1,97 s no build de depuração; `escolher` e
+`handle_request` achados sem LSP. Um projeto de 1 M de linhas leva ~30 s neste
+ritmo, em job com progresso. **CORRIGIDO à tarde (§7.19):** o número de
+declarações aqui dizia 4.658 (3.802 funções, 524 tipos) — medido ANTES de o
+dedup do `fn` em `impl` entrar no mesmo commit. O mesmo código, remedido, dá
+**3.720**; com a gramática Python, 3.939.
 
 **Provado por mutação** (compilador calado): Rust — entrar em pastas de saída
 (os números mentiriam); substring antes de prefixo; arquivo apagado ficando
@@ -1949,14 +1954,51 @@ mesmo risco existe entre módulos de teste que fazem o mesmo (container,
 toolchain, serial), e fica anotado.
 
 **O que ainda falta no P0** ([`42`](42-trilha-profunda-embarcados.md) §3):
-watch recursivo; modelo por alvo/preset; map file; gramática Python para os
-símbolos; `rustup target list --installed` medido.
+watch recursivo; modelo por alvo/preset; map file; `rustup target list
+--installed` medido. (A gramática Python entrou logo depois — §7.19.)
 
 ```text
 protocolo 0.95.0 — index.context; IndexStats.context (ContextSummary)
 testes  719 Rust (+7, tests/index_context.rs), 34 harnesses (tst_index +12 assercoes)
 gate    exercitacao escreve uma CDB a mao e pede index.context (standard c++20)
         e ve cdbEntries no status — e' o que prova o JOB carregando o contexto
+```
+
+### 7.19 Python entra na fundação sintática — a quarta gramática, 2026-09-12
+
+O B1 do [`41`](41-ecossistema-embarcados-e-python.md) e o item "gramática
+Python" do P0 ([`42`](42-trilha-profunda-embarcados.md) §3): `tree-sitter-python`
+0.25.0 (MIT, LICENSE lido no repositório; publicado em 2025-09-11) entrou no
+registro ao lado de C/C++/Rust, com a `highlights` e a `tags` oficiais e um
+`locals` mínimo escrito aqui (função é escopo; parâmetro e atribuição definem;
+identificador referencia). Zero dependência externa — é o único item do
+bloco B que não precisa de nada instalado.
+
+```text
+o que muda        .py/.pyi/.pyw sao linguagem `python` na fundacao: realce,
+                  outline (classe > metodo), folding e locals no editor pelo
+                  MESMO syntaxTree.update; o indice extrai as declaracoes (a
+                  tags oficial da' function e class; o metodo vem como
+                  function com container); index.context ja' classificava
+                  Python — agora pela gramatica, nao pela extensao
+medido            neste repositorio: 18 .py, 3.577 linhas, 217 declaracoes
+                  (scripts/medir-core.py, verificar_qml_propriedades.py, ...);
+                  o indice inteiro em 2,1 s
+o numero errado   o §7.17 dizia 4.658 declaracoes — medido ANTES de o dedup
+                  entrar no mesmo commit. Remedido: 3.720 sem Python, 3.939
+                  com. Corrigido no §7.17, no 03-ipc, no 42 e no harness
+```
+
+**Provado:** teste de `syntaxTree.update` com Python (linguagem, sem erro,
+outline com a classe/o método filho/a função de módulo nas linhas certas,
+escopos `keyword`/`function`/`comment`/`string` no realce, folding, escopo
+local); o teste do índice passa a exigir a declaração Python; a exercitação
+escreve um `tools/gera.py` e pede `index.symbols` (`"language":"python"`).
+
+```text
+protocolo 0.95.0 (sem mudanca de fio: a linguagem ja' era um campo)
+testes  720 Rust (+1), 34 harnesses; deps: +tree-sitter-python 0.25.0 (MIT)
+gate    exercitacao pede index.symbols de um .py
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

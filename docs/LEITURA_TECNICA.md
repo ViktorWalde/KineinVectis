@@ -206,8 +206,8 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       build.size consome a particao `app` como flash
             index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
                       autor): todas as pastas, arquivos e declaracoes de C/C++/
-                      Rust (Python contado ate' a gramatica entrar) com as
-                      gramaticas do editor, em job ao abrir o workspace, com
+                      Rust e Python (a gramatica Python entrou a tarde, 40
+                      §7.19) com as gramaticas do editor, em job, com
                       busca por nome sem LSP (`#nome`) e incremento pelo
                       watcher. E' o Project Graph do KSWE comecando a existir.
                       Desde a tarde (0.95.0): o CONTEXTO DE COMPILADOR por

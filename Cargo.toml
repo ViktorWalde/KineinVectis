@@ -43,6 +43,7 @@ tree-sitter = "=0.26.11"
 tree-sitter-c = "=0.24.2"
 tree-sitter-cpp = "=0.23.4"
 tree-sitter-rust = "=0.24.2"
+tree-sitter-python = "=0.25.0"
 # Avaliador de expressao do dominio `sim` (arquitetura/34 §5). Auditado em
 # 2026-09-05: MIT OR Apache-2.0, MSRV 1.80.1 (abaixo do 1.85 do workspace), e
 # ZERO uso de rede, processo, arquivo, env ou `unsafe` — e' calculo puro.

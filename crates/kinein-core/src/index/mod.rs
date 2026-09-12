@@ -43,10 +43,6 @@ use self::context::CompileContext;
 /// editor: 4 MiB).
 pub const ARQUIVO_MAXIMO: u64 = 4 * 1024 * 1024;
 
-/// Extensoes de Python: contadas e medidas ja'; declaracoes quando a gramatica
-/// entrar (bloco B do `roadmaps/41`).
-const PYTHON: &[&str] = &["py", "pyi"];
-
 /// Um arquivo indexado.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IndexedFile {
@@ -357,22 +353,11 @@ fn indexar_arquivo(
     })
 }
 
-/// `c`/`cpp`/`rust` pela gramatica do editor; `python` pela extensao; o resto
-/// e' `other` — contado, nao lido.
+/// `c`/`cpp`/`rust`/`python` pela gramatica do editor (o Python entrou em
+/// 2026-09-12, bloco B do `roadmaps/41`); o resto e' `other` — contado, nao
+/// lido.
 pub(crate) fn linguagem_de(caminho: &Path) -> &'static str {
-    if let Some(l) = SymbolExtractor::language_for(caminho) {
-        return l;
-    }
-    let ext = caminho
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(str::to_ascii_lowercase)
-        .unwrap_or_default();
-    if PYTHON.contains(&ext.as_str()) {
-        "python"
-    } else {
-        "other"
-    }
+    SymbolExtractor::language_for(caminho).unwrap_or("other")
 }
 
 /// O outline aninhado do editor vira lista plana com `container`.

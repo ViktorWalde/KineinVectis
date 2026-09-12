@@ -46,6 +46,10 @@ project(exercitacao CXX)
 add_executable(alvo_da_exercitacao src/main.cpp)
 CMAKE
 printf 'int main() { return 0; }  // AGULHA_DA_EXERCITACAO\n' > "$raiz/src/main.cpp"
+# Um .py ao lado: o indice le Python com a gramatica oficial (2026-09-12), e a
+# declaracao tem de aparecer no index.symbols com a linguagem certa.
+mkdir -p "$raiz/tools"
+printf 'def gera_tabela(n):\n    return list(range(n))\n' > "$raiz/tools/gera.py"
 # Uma compile_commands.json escrita a mao, na forma `command` do padrao do
 # clang: e' o que o contexto de compilador por arquivo le, e o que prova que o
 # job do indice carrega o contexto (nos testes de unidade nao ha' job).
@@ -70,6 +74,7 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":11,"method":"index.status","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":12,"method":"index.symbols","params":{"query":"main"}}\n'
         printf '{"jsonrpc":"2.0","id":13,"method":"index.context","params":{"path":"src/main.cpp"}}\n'
+        printf '{"jsonrpc":"2.0","id":14,"method":"index.symbols","params":{"query":"gera_tabela"}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -138,6 +143,7 @@ verifica 12 "index.symbols (main sem LSP)" '"name":"main"'
 # separado do resto. Sem CDB a resposta traz `hint`, nao erro.
 verifica 11 "index.status (contexto carregado no job)" '"cdbEntries":1'
 verifica 13 "index.context (a unidade do src/main.cpp)" '"standard":"c++20"'
+verifica 14 "index.symbols (Python pela gramatica)" '"language":"python"'
 
 if [ "$falhou" -ne 0 ]; then
     echo
