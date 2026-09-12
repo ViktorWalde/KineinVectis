@@ -46,6 +46,13 @@ project(exercitacao CXX)
 add_executable(alvo_da_exercitacao src/main.cpp)
 CMAKE
 printf 'int main() { return 0; }  // AGULHA_DA_EXERCITACAO\n' > "$raiz/src/main.cpp"
+# Uma compile_commands.json escrita a mao, na forma `command` do padrao do
+# clang: e' o que o contexto de compilador por arquivo le, e o que prova que o
+# job do indice carrega o contexto (nos testes de unidade nao ha' job).
+mkdir -p "$raiz/build"
+cat > "$raiz/build/compile_commands.json" <<CDB
+[{"directory": "$raiz/build", "command": "/usr/bin/c++ -DEXERCITACAO=1 -I$raiz/src -std=c++20 -o main.o -c $raiz/src/main.cpp", "file": "$raiz/src/main.cpp"}]
+CDB
 
 resposta="$(
     {
@@ -62,6 +69,7 @@ resposta="$(
         sleep 2
         printf '{"jsonrpc":"2.0","id":11,"method":"index.status","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":12,"method":"index.symbols","params":{"query":"main"}}\n'
+        printf '{"jsonrpc":"2.0","id":13,"method":"index.context","params":{"path":"src/main.cpp"}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -125,6 +133,11 @@ verifica 10 "project.model (o modelo do projeto)" '"embedded"'
 # funcao do src/main.cpp — e' achada sem LSP nenhum.
 verifica 11 "index.status (o indice do projeto)" '"ready"'
 verifica 12 "index.symbols (main sem LSP)" '"name":"main"'
+# O contexto de compilador por arquivo: o job carregou a CDB junto do indice
+# (`cdbEntries` no status) e o src/main.cpp volta com a sua unidade — o -std=
+# separado do resto. Sem CDB a resposta traz `hint`, nao erro.
+verifica 11 "index.status (contexto carregado no job)" '"cdbEntries":1'
+verifica 13 "index.context (a unidade do src/main.cpp)" '"standard":"c++20"'
 
 if [ "$falhou" -ne 0 ]; then
     echo

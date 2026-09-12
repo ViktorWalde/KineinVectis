@@ -16,11 +16,18 @@ Item {
     property int progressFiles: 0
     property int progressSymbols: 0
 
+    // O contexto de compilador do arquivo ATIVO (a segunda metade do P0):
+    // `contextPath` e' o que a UI perguntou; `fileContext` e' a ultima
+    // resposta PARA ESSE caminho — resposta de arquivo anterior e' descartada.
+    property string contextPath: ""
+    property var fileContext: ({})
+
     readonly property string indexState: stats.state !== undefined ? stats.state : "idle"
     readonly property bool ready: indexState === "ready"
     readonly property bool building: indexState === "building"
 
     signal statusRequested()
+    signal contextRequested(string path)
 
     visible: false
 
@@ -30,6 +37,8 @@ Item {
         stats = ({});
         progressFiles = 0;
         progressSymbols = 0;
+        contextPath = "";
+        fileContext = ({});
         if (workspaceRoot !== "") {
             stats = ({ state: "building" });
             statusRequested();
@@ -50,6 +59,72 @@ Item {
 
     function handleFinished(newStats) {
         handleStatus(newStats);
+        // O contexto pode ter mudado com o indice (configure novo, Cargo.toml
+        // salvo): a resposta do arquivo ativo e' pedida de novo.
+        if (contextPath !== "" && ready) {
+            contextRequested(contextPath);
+        }
+    }
+
+    // O arquivo ativo mudou (aba trocada, aberta ou fechada). Vazio limpa.
+    function setActivePath(path) {
+        const novo = path === undefined || path === null ? "" : path;
+        if (novo === contextPath) return;
+        contextPath = novo;
+        fileContext = ({});
+        if (novo !== "" && workspaceRoot !== "") {
+            contextRequested(novo);
+        }
+    }
+
+    function handleContext(context) {
+        if (context === undefined || context === null || context.path === undefined) return;
+        // Resposta atrasada de outro arquivo: fica a do arquivo ativo.
+        if (context.path !== contextPath) return;
+        fileContext = context;
+    }
+
+    // O resumo curto para a barra: o que o arquivo E' para o compilador.
+    function contextSummary() {
+        const c = fileContext;
+        if (contextPath === "" || c.path === undefined) return "";
+        if (c.unit !== undefined) {
+            const partes = [baseName(c.unit.compiler)];
+            if (c.unit.standard !== undefined) partes.push(c.unit.standard);
+            partes.push(qsTr("%1 -I").arg(c.unit.includes.length));
+            partes.push(qsTr("%1 -D").arg(c.unit.defines.length));
+            return partes.join(" · ") + (c.hint !== undefined ? " ⚠" : "");
+        }
+        if (c.crate !== undefined) {
+            return qsTr("cargo · %1 (%2, %3)").arg(c.crate.package).arg(c.crate.kind).arg(c.crate.edition);
+        }
+        if (c.python !== undefined) {
+            const partes = ["python", c.python.origin];
+            if (c.python.version !== undefined) partes.push(c.python.version.replace(/^Python /, ""));
+            return partes.join(" · ") + (c.python.warning !== undefined ? " ⚠" : "");
+        }
+        if (c.hint !== undefined) return qsTr("sem contexto ⚠");
+        return "";
+    }
+
+    // O detalhe ao pairar: a origem e a dica, ou os caminhos que importam.
+    function contextDetail() {
+        const c = fileContext;
+        if (c.path === undefined) return "";
+        const partes = [];
+        if (c.unit !== undefined) partes.push(qsTr("diretório %1").arg(c.unit.directory));
+        if (c.crate !== undefined) partes.push(qsTr("alvo %1 · %2").arg(c.crate.target).arg(c.crate.manifest));
+        if (c.python !== undefined) partes.push(c.python.interpreter);
+        if (c.source !== undefined) partes.push(c.source);
+        if (c.hint !== undefined) partes.push(c.hint);
+        if (c.python !== undefined && c.python.warning !== undefined) partes.push(c.python.warning);
+        return partes.join(" — ");
+    }
+
+    function baseName(caminho) {
+        if (caminho === undefined || caminho === null) return "";
+        const i = String(caminho).lastIndexOf("/");
+        return i < 0 ? String(caminho) : String(caminho).substring(i + 1);
     }
 
     // "1.010 arquivos · 70 mil linhas · 4.658 símbolos" — ou o progresso.

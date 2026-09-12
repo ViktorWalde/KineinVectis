@@ -195,6 +195,8 @@ public:
     // O indice do projeto inteiro (index.*): totais e busca por nome, sem LSP.
     Q_INVOKABLE void indexStatus();
     Q_INVOKABLE void indexSymbols(const QString& query, int limit = 0);
+    // Como UM arquivo e' compilado/executado (CDB, cargo, interpretador).
+    Q_INVOKABLE void indexContext(const QString& path);
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -346,6 +348,7 @@ signals:
     void projectChanged(const QVariantMap& model);
     void indexStatusResolved(const QVariantMap& stats);
     void indexSymbolsResolved(const QVariantList& symbols, int total, const QString& state);
+    void indexContextResolved(const QVariantMap& context);
     void indexProgressed(int files, int symbols);
     void indexFinished(const QVariantMap& stats);
     void containerStatusResolved(const QVariantMap& status);

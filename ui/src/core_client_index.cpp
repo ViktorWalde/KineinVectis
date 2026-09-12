@@ -22,10 +22,19 @@ void CoreClient::indexSymbols(const QString& query, int limit)
     sendRequest(QStringLiteral("index.symbols"), params);
 }
 
+void CoreClient::indexContext(const QString& path)
+{
+    sendRequest(QStringLiteral("index.context"), QJsonObject{{QStringLiteral("path"), path}});
+}
+
 bool CoreClient::dispatchIndexResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("index.status")) {
         emit indexStatusResolved(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("index.context")) {
+        emit indexContextResolved(result.toVariantMap());
         return true;
     }
     if (method == QStringLiteral("index.symbols")) {

@@ -47,6 +47,7 @@ Window {
             domains.gitController.requestDiffFor(domains.editorController.currentFilePath());
             domains.gitController.requestBlameFor(domains.editorController.currentFilePath());
             domains.diagnosticsController.setActivePath(domains.editorController.currentFilePath());
+            domains.indexController.setActivePath(domains.editorController.currentFilePath());
         }
     }
 

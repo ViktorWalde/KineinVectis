@@ -21,6 +21,12 @@
 //!
 //! O que NAO entra: conteudo de arquivo em memoria (so' as declaracoes e os
 //! numeros), pastas de saida, arquivos acima de [`ARQUIVO_MAXIMO`].
+//!
+//! O CONTEXTO DE COMPILADOR (com que cada arquivo e' compilado) mora em
+//! [`context`] e e' carregado junto do indice — o mapa diz o que ha'; o
+//! contexto diz como se compila.
+
+pub mod context;
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -30,6 +36,8 @@ use std::time::Instant;
 use kinein_protocol::{IndexState, IndexStats, IndexSymbol, LanguageStats, SyntaxOutlineItem};
 
 use crate::lang::extract::SymbolExtractor;
+
+use self::context::CompileContext;
 
 /// Arquivo maior que isto e' contado, mas nao parseado (o mesmo teto do
 /// editor: 4 MiB).
@@ -71,6 +79,8 @@ pub struct ProjectIndex {
     pub error: Option<String>,
     /// Duracao do ultimo build completo.
     pub elapsed_ms: u64,
+    /// O contexto de compilador, quando ja' carregado.
+    pub context: Option<CompileContext>,
 }
 
 impl Default for ProjectIndex {
@@ -91,6 +101,7 @@ impl ProjectIndex {
             state: IndexState::Idle,
             error: None,
             elapsed_ms: 0,
+            context: None,
         }
     }
 
@@ -144,6 +155,7 @@ impl ProjectIndex {
             skipped: self.skipped.clone(),
             elapsed_ms: self.elapsed_ms,
             error: self.error.clone(),
+            context: self.context.as_ref().map(CompileContext::summary),
         }
     }
 
@@ -347,7 +359,7 @@ fn indexar_arquivo(
 
 /// `c`/`cpp`/`rust` pela gramatica do editor; `python` pela extensao; o resto
 /// e' `other` — contado, nao lido.
-fn linguagem_de(caminho: &Path) -> &'static str {
+pub(crate) fn linguagem_de(caminho: &Path) -> &'static str {
     if let Some(l) = SymbolExtractor::language_for(caminho) {
         return l;
     }

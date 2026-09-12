@@ -26,6 +26,10 @@ Item {
             root.indexController.handleFinished(stats);
         }
 
+        function onIndexContextResolved(context) {
+            root.indexController.handleContext(context);
+        }
+
         function onIndexSymbolsResolved(symbols, total, state) {
             root.searchEverywhereController.handleIndexSymbols(symbols, total, state);
         }

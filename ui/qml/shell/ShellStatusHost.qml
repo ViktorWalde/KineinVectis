@@ -32,6 +32,8 @@ WorkspaceStatusBar {
                       && coreClient.workspaceBuildSystems.length > 0
     toolchainSummary: toolchainController.summary()
     indexSummary: indexController !== null ? indexController.summary() : ""
+    contextSummary: indexController !== null ? indexController.contextSummary() : ""
+    contextDetail: indexController !== null ? indexController.contextDetail() : ""
     onLogsRequested: shellController.toggleBottomTab("logs")
     onCancelBuildRequested: coreClient.cancelBuild()
     onCancelTestsRequested: coreClient.cancelTests()

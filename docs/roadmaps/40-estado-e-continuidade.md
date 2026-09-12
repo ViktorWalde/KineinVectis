@@ -57,9 +57,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.94.0
-testes      712 Rust + 34 harnesses QML
-metodos     142 IPC roteados, 45 eventos
+protocolo   0.95.0
+testes      719 Rust + 34 harnesses QML
+metodos     143 IPC roteados, 45 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
@@ -537,14 +537,17 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          nova do autor: "a IDE deve ler o
                                          projeto inteiro, todas as funcoes/
                                          arquivos/pastas, C/C++/Rust/Python".
-                                         O PROXIMO do P0 (42 §3): o CONTEXTO
-                                         DE COMPILADOR por arquivo (flags da
-                                         CDB por TU, crate/target do cargo
-                                         metadata, interpretador do Python),
+                                         A quinta fatia (§7.18, 2026-09-12):
+                                         o CONTEXTO DE COMPILADOR por arquivo
+                                         — `index.context` (unidade da CDB,
+                                         alvo do cargo, interpretador Python)
+                                         e a CDB envelhecida por SUBPASTA
+                                         detectada. O PROXIMO do P0 (42 §3):
                                          o watch recursivo (o indice so' segue
                                          as pastas que a UI observa), o modelo
-                                         por alvo/preset e o map file. Depois,
-                                         o P1 (setup). As tres decisoes do 42
+                                         por alvo/preset, o map file e a
+                                         gramatica Python. Depois, o P1
+                                         (setup). As tres decisoes do 42
                                          §7 foram
                                          TOMADAS em 2026-09-12: so' o ESP32
                                          classico na mesa (o resto fecha no
@@ -1799,6 +1802,95 @@ Python) — a segunda metade da exigência — é o que vem em seguida no P0.
 protocolo 0.94.0 — index.status, index.symbols, event.index.progress/finished
 testes  712 Rust (+7, tests/index.rs), 34 harnesses (+tst_index)
 gate    exercitacao pede index.status e index.symbols (main sem LSP)
+```
+
+### 7.18 Pilar 0, quinta fatia — o CONTEXTO DE COMPILADOR por arquivo, 2026-09-12
+
+A segunda metade da exigência do §7.17: *"integração profunda de leitura do
+contexto do código/compilador"*. O índice dizia **o que há** em cada arquivo;
+agora diz **com que** cada arquivo é compilado ou executado (protocolo
+0.95.0, `index/context.rs`, `index.context { path }`).
+
+```text
+C/C++     a unidade da compile_commands.json que o cdb::status acha, nas DUAS
+          formas do padrao (arguments[] e command dividido como shell); file
+          relativo resolvido contra directory e chave pelo caminho REAL
+          (canonicalize: a CDB do Ninja escreve ../src/a.cpp); -I/-isystem/
+          -iquote colados ou separados -> includes absolutos; -D -> defines;
+          -std= -> standard; output vence -o; o resto inteiro em arguments.
+          Cabecalho: sem unidade, com a dica (o clangd deduz pela unidade que
+          o inclui). Fonte fora da CDB: "nenhum alvo o compila" — ou QUAL
+          arquivo envelheceu a CDB
+Rust      cargo metadata --no-deps com o cargo do kit EFETIVO (so' se ha'
+          Cargo.toml na raiz e o cargo existe; PATH vazio nos testes = nada
+          roda). src_path EXATO > diretorio de src_path mais longo > lib em
+          empate (src/x.rs e' do lib E do bin; o rust-analyzer prefere o lib).
+          build.rs (custom-build) so' casa exato: por prefixo seria dono de
+          tudo
+Python    a precedencia do roadmaps/29 §4.1: VIRTUAL_ENV (se o interpretador
+          existir) > .venv/ > venv/ > env/ > poetry.lock + `poetry env info
+          -p` > python3 do PATH COM AVISO; version = --version
+recarga   event.cmake.finished (o configure reescreve a CDB) e Cargo.toml em
+          event.fs.changed recarregam SO' o contexto, em job curto; os
+          arquivos ficam; event.index.finished sai com o context novo e a UI
+          pergunta de novo pelo arquivo ativo
+injecao   o que roda processo (cargo, poetry, python --version) vem por
+          `Ferramentas`, injetado pelo Core: teste passa None e nada da
+          maquina entra (a regra do `unsafe`/env var, aplicada a processo)
+UI        barra de status: "contexto: c++ · gnu++23 · 12 -I · 9 -D",
+          "cargo · kinein-core (lib, 2024)", "python · sistema · 3.14.7 ⚠";
+          o detalhe (diretorio, origem, dica) ao pairar; resposta atrasada de
+          outro arquivo descartada; trocar de arquivo limpa ate' chegar
+```
+
+**A falha silenciosa que este gesto achou — e fechou.** Medido neste
+repositório pelo core real: a CDB de `.kinein/build` era de **04/09** e não
+tinha `core_client_probe.cpp` nem `core_client_index.cpp` (cinco fontes que o
+`ui/CMakeLists.txt` de **12/09** acrescentou), e o `cdb::status` dizia
+`stale: false` — ele só compara a CDB com os arquivos de build da **raiz**.
+O contexto, com as unidades em mãos, sobe de cada diretório de fonte até a
+raiz procurando um `CMakeLists.txt` mais novo que a CDB: `cdbStale: true,
+cdbStaleBecause: "ui/CMakeLists.txt"`, e a unidade velha vem com a dica
+"reconfigure". Reconfigurado, 288 unidades e `core_client_index.cpp` com
+`c++`, `gnu++23`, 12 `-I`, 9 `-D`. A subida **para na raiz do workspace** (um
+`CMakeLists.txt` alheio acima dela não vale — testado).
+
+**Medido neste repositório:** 288 unidades; 4 pacotes, 6 alvos do cargo
+(`context.rs` → `kinein-core`/`kinein_core` lib 2024; `main.rs` → bin);
+Python do sistema `/usr/bin/python3` 3.14.7 com o aviso. `cargo metadata
+--no-deps` leva 32 ms aqui.
+
+**Provado por mutação** (compilador calado, 24 em Rust + 9 em QML): lib
+perdendo o empate; sem `src_path` exato; sem "diretório mais longo" (precisou
+do alvo `src/bin/tool/main.rs` dentro de `src/` para morrer); `build.rs` dono
+de tudo; envelhecer ao contrário; `staleBecause` absoluto; subir além da
+raiz; `venv` antes de `.venv`; `VIRTUAL_ENV` fantasma valendo; `-o` vencendo
+`output`; forma separada `-I x` perdida; chave sem canonicalizar; `stale`
+sempre falso; sistema sem aviso; versão invertida; features sem ordem
+(precisou de três features fora de ordem: com duas, o inverso da inserção
+era o ordenado); `kind` errado; Python virando `other` no handler; gatilho
+`Cargo.lock`; recarregar quando NÃO é `Cargo.toml`; C sem contexto; `.h` não
+cabeçalho; sem `-iquote`; nunca achar a CDB. QML — resposta atrasada aceita;
+não perguntar de novo ao terminar; mesmo caminho perguntando de novo;
+perguntar sem workspace; CDB velha sem aviso; sistema sem aviso; só-dica
+sumindo; trocar de arquivo mantendo o contexto velho; detalhe sem a dica.
+
+**Um teste que falhava ao acaso, e por quê:** dois testes escrevem scripts
+executáveis e os executam; quando correm em threads paralelas, o `exec` de um
+acha o script do outro ainda aberto para escrita (`ETXTBSY`: o filho herda o
+descritor entre o fork e o exec). Um `Mutex` estático serializa os dois — o
+mesmo risco existe entre módulos de teste que fazem o mesmo (container,
+toolchain, serial), e fica anotado.
+
+**O que ainda falta no P0** ([`42`](42-trilha-profunda-embarcados.md) §3):
+watch recursivo; modelo por alvo/preset; map file; gramática Python para os
+símbolos; `rustup target list --installed` medido.
+
+```text
+protocolo 0.95.0 — index.context; IndexStats.context (ContextSummary)
+testes  719 Rust (+7, tests/index_context.rs), 34 harnesses (tst_index +12 assercoes)
+gate    exercitacao escreve uma CDB a mao e pede index.context (standard c++20)
+        e ve cdbEntries no status — e' o que prova o JOB carregando o contexto
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

@@ -26,6 +26,11 @@ Rectangle {
     // O indice do projeto inteiro: "N arquivos · N linhas · N simbolos", ou
     // o progresso enquanto constroi. Vazio = nada a mostrar.
     property string indexSummary: ""
+    // O contexto de compilador do arquivo ATIVO: "c++ · gnu++23 · 12 -I · 9 -D",
+    // "cargo · kinein-core (lib, 2024)", "python · .venv · 3.12.3". Vazio =
+    // sem arquivo ou sem o que dizer; o detalhe aparece ao pairar.
+    property string contextSummary: ""
+    property string contextDetail: ""
 
     signal logsRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
@@ -93,6 +98,28 @@ Rectangle {
             text: qsTr("índice: %1").arg(bar.indexSummary)
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus
+        }
+
+        Text {
+            id: contextoTexto
+
+            anchors.verticalCenter: parent.verticalCenter
+            visible: bar.contextSummary !== ""
+            text: contextoArea.containsMouse && bar.contextDetail !== ""
+                  ? bar.contextDetail
+                  : qsTr("contexto: %1").arg(bar.contextSummary)
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeStatus
+            elide: Text.ElideMiddle
+            width: Math.min(implicitWidth, 520)
+
+            MouseArea {
+                id: contextoArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+            }
         }
 
         Text {

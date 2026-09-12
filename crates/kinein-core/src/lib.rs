@@ -369,6 +369,10 @@ impl Core {
         ) {
             self.emit_project_changed();
         }
+        // O contexto de compilador segue a CDB: o configure a reescreve.
+        if notification.method == "event.cmake.finished" {
+            self.reload_index_context();
+        }
         // O indice segue o disco: o que o watcher viu mudar e' reindexado
         // aqui, no loop principal, antes de o evento chegar a UI.
         if notification.method == "event.fs.changed" {

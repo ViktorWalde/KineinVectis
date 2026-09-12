@@ -1,5 +1,15 @@
 # 03 — Protocolo IPC
 
+> **O `0.95.0` (2026-09-12) acrescentou o CONTEXTO DE COMPILADOR por arquivo
+> ao domínio `index`:** `index.context { path }` diz COM QUE cada arquivo é
+> compilado ou executado — a unidade da `compile_commands.json` (compilador,
+> `-std`, `-I`, `-D`, diretório) para C/C++, o pacote e alvo do
+> `cargo metadata` para Rust, o interpretador resolvido para Python — e
+> `IndexStats.context` resume o que o índice carregou (`cdbEntries`,
+> `cdbStale`/`cdbStaleBecause`, `cargoTargets`, `pythonInterpreter`). É a
+> segunda metade da exigência do autor ("integração profunda de leitura do
+> contexto do código/compilador"). Campo e método novos sobem o minor.
+>
 > **O `0.94.0` (2026-09-12) acrescentou o domínio `index`:** a IDE passa a
 > ler o projeto INTEIRO que abre — todas as pastas, arquivos e declarações
 > (funções, tipos) de C, C++, Rust e Python — por decisão do autor no mesmo
@@ -1807,6 +1817,7 @@ grafana.forget
 grafana.get
 grafana.probe
 
+index.context
 index.status
 index.symbols
 grafana.save
@@ -2123,16 +2134,83 @@ as funções/arquivos/pastas"* — para Python, C, C++ e Rust.
 ```text
 index.status  {}                        -> IndexStats   (responde tambem sem workspace: idle)
 index.symbols { query, limit?, kind? }  -> { symbols[], total, state }   (exige workspace)
+index.context { path }                  -> FileContext  (exige workspace; 0.95.0)
 
 event.index.progress { files, symbols }     a cada ~200 arquivos
-event.index.finished IndexStats             ao fim do build, e a cada incremento
+event.index.finished IndexStats             ao fim do build, a cada incremento e
+                                            a cada recarga do contexto
 
 IndexStats   state (idle|building|ready|failed), folders, files, sourceFiles,
              lines, bytes, symbols, functions, types, byLanguage[] { language,
-             files, lines, symbols }, skipped[], elapsedMs, error?
+             files, lines, symbols }, skipped[], elapsedMs, error?, context?
+ContextSummary cdbDirectory?, cdbEntries, cdbStale, cdbStaleBecause?,
+             cargoPackages, cargoTargets, pythonInterpreter?, pythonOrigin?
 IndexSymbol  name, kind, path (relativo a raiz), language, line, endLine,
              container?
+FileContext  path (absoluto), language (c|cpp|rust|python|other), unit?, crate?,
+             python?, source?, hint?
+CompileUnit  compiler, directory, standard?, includes[] (absolutos), defines[],
+             output?, arguments[]
+CargoUnit    package, target, kind (lib|bin|test|bench|example|custom-build…),
+             edition, manifest, srcPath, features[]
+PythonEnv    interpreter, version?, origin (VIRTUAL_ENV|.venv|venv|env|poetry|
+             sistema), warning?
 ```
+
+**O contexto de compilador (0.95.0).** O índice diz *o que há* em cada
+arquivo; o contexto diz *com que* ele é compilado — e é carregado no mesmo
+job, logo depois dos arquivos:
+
+- **C/C++:** a `compile_commands.json` que o `cdb::status` encontra
+  (`.kinein/build`, raiz, `build`, `builddir`, `out/build`), nas **duas
+  formas** do padrão do clang (`arguments[]` e `command` dividido como um
+  shell: aspas agrupam, `\` escapa); `file` relativo é resolvido contra o
+  `directory` e a chave é o caminho **real** (`canonicalize`), porque a CDB do
+  Ninja/Meson escreve `../src/a.cpp` e o editor pergunta pelo absoluto.
+  `-I`/`-isystem`/`-iquote` colados ou separados viram `includes` absolutos;
+  `-D` viram `defines`; `-std=` vira `standard`; `output` vence `-o`. O resto
+  segue inteiro em `arguments`. Cabeçalho não tem unidade própria e a `hint`
+  diz isso (o clangd deduz pela unidade que o inclui); fonte fora da CDB diz
+  "nenhum alvo o compila" — ou, se a CDB envelheceu, qual arquivo a envelheceu.
+- **A CDB envelhecida por SUBPASTA.** Medido em 2026-09-12 neste repositório:
+  a CDB de 04/09 sem cinco fontes que o `ui/CMakeLists.txt` de 12/09
+  acrescentou, e o `cdb::status` dizendo "não envelheceu" porque só compara
+  com os arquivos de build da **raiz**. O contexto, com as unidades em mãos,
+  sobe de cada diretório de fonte até a raiz procurando um `CMakeLists.txt`
+  mais novo que a CDB; acha → `cdbStale` com `cdbStaleBecause`
+  (`ui/CMakeLists.txt`) e a `hint` da unidade pede reconfigure. A subida
+  **para na raiz do workspace**.
+- **Rust:** `cargo metadata --format-version 1 --no-deps` com o `cargo` do kit
+  efetivo (se houver `Cargo.toml` na raiz e o cargo existir — nos testes o
+  PATH é vazio e nada roda). O arquivo pertence ao alvo pelo `src_path`
+  **exato**; senão pelo alvo cujo diretório de `src_path` é o prefixo **mais
+  longo** do arquivo; `lib` vence o empate (um `src/x.rs` pertence ao lib e
+  ao bin do mesmo pacote, como o rust-analyzer prefere). O `build.rs`
+  (`custom-build`) só casa exato: mora na raiz do pacote e, por prefixo, seria
+  dono de tudo.
+- **Python:** a precedência do `roadmaps/29` §4.1 — `$VIRTUAL_ENV` (só se o
+  interpretador existir), `.venv/`, `venv/`, `env/`, `poetry.lock` + `poetry
+  env info -p`, e por último o `python3` do PATH **com aviso** (instalar
+  pacote nele quebra a distro). `version` é o `--version` do interpretador
+  achado.
+- **Quando recarrega:** `event.cmake.finished` (o configure reescreve a CDB) e
+  um `Cargo.toml` em `event.fs.changed` (um alvo novo muda a que pacote cada
+  arquivo pertence) recarregam **só o contexto**, num job curto; os arquivos
+  ficam. O `event.index.finished` sai de novo com o `context` novo, e a UI
+  pergunta de novo pelo arquivo ativo.
+
+Medido neste repositório pelo core real (2026-09-12): 288 unidades na CDB de
+`.kinein/build`, 4 pacotes e 6 alvos do cargo, Python do sistema
+(`/usr/bin/python3`, 3.14.7). `ui/src/core_client_index.cpp` → `c++`,
+`gnu++23`, 12 `-I`, 9 `-D`; `crates/kinein-core/src/index/context.rs` →
+`kinein-core`/`kinein_core` (lib, 2024); `crates/kinein-core/src/main.rs` →
+`kinein-core` (bin).
+
+**Na UI:** a barra de status mostra o contexto do arquivo ativo —
+`contexto: c++ · gnu++23 · 12 -I · 9 -D`, `cargo · kinein-core (lib, 2024)`,
+`python · sistema · 3.14.7 ⚠` — e o detalhe (diretório, origem, dica) ao
+pairar. Resposta atrasada de outro arquivo é descartada; trocar de arquivo
+limpa até a resposta chegar.
 
 **O que ele lê, e como.** Ao abrir o workspace, um job caminha a árvore
 inteira com a **mesma lista de pastas ignoradas do watcher** (`.git`,
@@ -2163,9 +2241,8 @@ Everywhere pede ao índice **e** ao LSP: o índice responde primeiro e **sem
 arquivo aberto**; o LSP, quando responde, substitui.
 
 **O que este domínio NÃO é:** semântica (tipos, referências, rename continuam
-no clangd/rust-analyzer) nem o contexto de compilador por arquivo (flags da
-CDB, crate do cargo, interpretador do Python) — esse é o passo seguinte do
-pilar 0.
+no clangd/rust-analyzer). O contexto de compilador por arquivo entrou no
+`0.95.0` (acima); o que ainda falta no pilar 0 está no `roadmaps/42` §3 P0.
 
 ## `project.*` — o modelo do projeto embarcado
 

@@ -16,6 +16,10 @@ Item {
         function onStatusRequested() {
             root.coreClient.indexStatus();
         }
+
+        function onContextRequested(path) {
+            root.coreClient.indexContext(path);
+        }
     }
 
     Connections {
