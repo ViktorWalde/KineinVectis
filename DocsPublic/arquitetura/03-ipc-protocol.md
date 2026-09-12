@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **O `0.97.0` (2026-09-12, noite) acrescentou ao `ToolchainResult` o que só
+> um processo responde:** `rustTargets` (os alvos Rust instalados, pelo
+> `rustup` detectado) e `sysrootHint` (o compilador cross de distro sem o
+> sistema alvo, medido com `-print-sysroot`) — a base do gerenciador de
+> toolchains do [`integracoes/39`](../integracoes/39-toolchains-por-alvo.md),
+> que no mesmo dia pôs no catálogo os triples da indústria e ensinou o
+> detector a procurar além do `PATH`. Campos novos sobem o minor.
+>
 > **O `0.96.0` (2026-09-12, fim de tarde) acrescentou o MODELO POR ALVO do
 > `CMake`:** `cmake.targets.list` passa a trazer, por target, artefatos,
 > fontes (geradas à parte), linguagens, padrão, includes/defines, sysroot,
@@ -1317,6 +1325,23 @@ toolchain.set  { role, id?, preset? }              -> ToolchainResult
 toolchain.setKit { preset?, sysroot?, targetTriple?, chip?,               NOVO
                    remoteTarget?, debugServer? } -> ToolchainResult
 ```
+
+**Desde o `0.97.0` (2026-09-12, [`integracoes/39`](../integracoes/39-toolchains-por-alvo.md))
+o `ToolchainResult` carrega dois campos que só um processo responde:**
+`rustTargets` — os alvos Rust INSTALADOS (`rustup target list --installed`,
+pelo `rustup` detectado; **ausente** sem rustup, e a UI então não avisa nada;
+com o `targetTriple` do kit fora da lista a UI diz o `rustup target add`) — e
+`sysrootHint` — quando o compilador C efetivo é `*-linux-gnu*`, o kit não tem
+`sysroot` e o sysroot que o próprio compilador declara (`-print-sysroot`) não
+tem `usr/include`: é como as distros empacotam o `gcc-aarch64-linux-gnu`
+(medido no Fedora 44), compila e não linka programa de usuário nenhum, e a
+dica nomeia as três saídas (rsync da placa, Bootlin, SDK Yocto/Buildroot).
+Bare metal não entra. Os candidatos de `cCompiler`/`cxxCompiler`/`debugAdapter`
+ganharam no mesmo dia os triples da indústria (`riscv-none-elf`,
+`xtensa-esp-elf`, `riscv32-esp-elf`, `aarch64-linux-gnu`,
+`arm-linux-gnueabihf`, `riscv64-linux-gnu`; `gdb-multiarch` e os
+`<triple>-gdb`), e o detector procura além do `PATH` (o store do xpm, o
+`~/.espressif/tools`, a pasta da IDE, `/opt/*/bin`).
 
 `preset` ausente é **o kit padrão do workspace** — que é exatamente o que o
 schema 1 do `.kinein/toolchain.json` guardava, e por isso a migração é direta:

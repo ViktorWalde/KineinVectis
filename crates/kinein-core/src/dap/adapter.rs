@@ -52,8 +52,10 @@ fn adapter_arguments(id: &str) -> &'static [&'static str] {
         // GDB 14"), por stdin/stdout, com `-i dap`. Os dois `-iex` vem de
         // medicao em 2026-09-11: com `DEBUGINFOD_URLS` no ambiente (o Fedora
         // o exporta) o `file` PERGUNTA se pode baixar debuginfo e o `attach`
-        // trava mudo; um ELF de embarcado nao tem debuginfod nenhum.
-        "gdb" => &[
+        // trava mudo; um ELF de embarcado nao tem debuginfod nenhum. Vale para
+        // TODO GDB — `gdb-multiarch`, `arm-none-eabi-gdb`, `xtensa-esp-elf-gdb`
+        // (integracoes/39): sao o mesmo programa com outro alvo compilado.
+        id if e_um_gdb(id) => &[
             "-q",
             "-iex",
             "set debuginfod enabled off",
@@ -64,6 +66,11 @@ fn adapter_arguments(id: &str) -> &'static [&'static str] {
         ],
         _ => &[],
     }
+}
+
+/// `gdb`, `gdb-multiarch`, `<triple>-gdb`: o GDB em qualquer grafia.
+fn e_um_gdb(id: &str) -> bool {
+    id == "gdb" || id == "gdb-multiarch" || id.ends_with("-gdb")
 }
 
 /// O adaptador escolhido: o que executar, com que argumentos, e como pedir.
@@ -180,6 +187,34 @@ mod tests {
         });
         assert_eq!(escolhido.program, PathBuf::from("probe-rs"));
         assert_eq!(escolhido.arguments, &["dap-server"]);
+    }
+
+    /// Todo GDB e' o mesmo programa com outro alvo: `gdb-multiarch` e os
+    /// `<triple>-gdb` dos tarballs recebem os mesmos argumentos; um adaptador
+    /// que so' TERMINA parecido (`mygdb`) nao.
+    #[test]
+    fn every_gdb_spelling_gets_the_dap_arguments() {
+        for id in [
+            "gdb-multiarch",
+            "arm-none-eabi-gdb",
+            "xtensa-esp-elf-gdb",
+            "riscv32-esp-elf-gdb",
+        ] {
+            let variante = adapter(AdapterChoice {
+                id: Some(id),
+                ..AdapterChoice::default()
+            });
+            assert!(
+                variante.arguments.ends_with(&["-i", "dap"]),
+                "{id}: {:?}",
+                variante.arguments
+            );
+        }
+        let estranho = adapter(AdapterChoice {
+            id: Some("mygdb"),
+            ..AdapterChoice::default()
+        });
+        assert!(estranho.arguments.is_empty(), "{:?}", estranho.arguments);
     }
 
     /// O GDB precisa de `-i dap` para falar DAP, e dos dois `-iex` para nao

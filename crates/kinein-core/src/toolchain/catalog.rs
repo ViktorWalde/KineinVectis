@@ -66,6 +66,37 @@ static C_COMPILERS: &[RoleCandidate] = &[
         label: "GCC (ARM bare-metal)",
         tool_id: "arm-none-eabi-gcc",
     },
+    // Os triples do integracoes/39 (2026-09-12), bare metal e Linux embarcado.
+    RoleCandidate {
+        id: "riscv-none-elf-gcc",
+        label: "GCC (RISC-V bare-metal)",
+        tool_id: "riscv-none-elf-gcc",
+    },
+    RoleCandidate {
+        id: "riscv32-esp-elf-gcc",
+        label: "GCC (Espressif RISC-V)",
+        tool_id: "riscv32-esp-elf-gcc",
+    },
+    RoleCandidate {
+        id: "xtensa-esp-elf-gcc",
+        label: "GCC (Espressif Xtensa)",
+        tool_id: "xtensa-esp-elf-gcc",
+    },
+    RoleCandidate {
+        id: "aarch64-linux-gnu-gcc",
+        label: "GCC (AArch64 Linux)",
+        tool_id: "aarch64-linux-gnu-gcc",
+    },
+    RoleCandidate {
+        id: "arm-linux-gnueabihf-gcc",
+        label: "GCC (ARM 32 Linux hard-float)",
+        tool_id: "arm-linux-gnueabihf-gcc",
+    },
+    RoleCandidate {
+        id: "riscv64-linux-gnu-gcc",
+        label: "GCC (RISC-V 64 Linux)",
+        tool_id: "riscv64-linux-gnu-gcc",
+    },
 ];
 
 static CXX_COMPILERS: &[RoleCandidate] = &[
@@ -83,6 +114,36 @@ static CXX_COMPILERS: &[RoleCandidate] = &[
         id: "arm-none-eabi-gxx",
         label: "G++ (ARM bare-metal)",
         tool_id: "arm-none-eabi-gxx",
+    },
+    RoleCandidate {
+        id: "riscv-none-elf-gxx",
+        label: "G++ (RISC-V bare-metal)",
+        tool_id: "riscv-none-elf-gxx",
+    },
+    RoleCandidate {
+        id: "riscv32-esp-elf-gxx",
+        label: "G++ (Espressif RISC-V)",
+        tool_id: "riscv32-esp-elf-gxx",
+    },
+    RoleCandidate {
+        id: "xtensa-esp-elf-gxx",
+        label: "G++ (Espressif Xtensa)",
+        tool_id: "xtensa-esp-elf-gxx",
+    },
+    RoleCandidate {
+        id: "aarch64-linux-gnu-gxx",
+        label: "G++ (AArch64 Linux)",
+        tool_id: "aarch64-linux-gnu-gxx",
+    },
+    RoleCandidate {
+        id: "arm-linux-gnueabihf-gxx",
+        label: "G++ (ARM 32 Linux hard-float)",
+        tool_id: "arm-linux-gnueabihf-gxx",
+    },
+    RoleCandidate {
+        id: "riscv64-linux-gnu-gxx",
+        label: "G++ (RISC-V 64 Linux)",
+        tool_id: "riscv64-linux-gnu-gxx",
     },
 ];
 
@@ -142,6 +203,28 @@ static DEBUG_ADAPTERS: &[RoleCandidate] = &[
         id: "gdb",
         label: "GDB (alvo remoto: QEMU, OpenOCD)",
         tool_id: "gdb",
+    },
+    // Os GDBs de alvo (integracoes/39): falam DAP como o `gdb` do sistema —
+    // e' o `dap/adapter.rs` que reconhece qualquer id de GDB pelo nome.
+    RoleCandidate {
+        id: "gdb-multiarch",
+        label: "GDB multi-arquitetura (Debian/Ubuntu)",
+        tool_id: "gdb-multiarch",
+    },
+    RoleCandidate {
+        id: "arm-none-eabi-gdb",
+        label: "GDB ARM bare-metal (tarball da Arm)",
+        tool_id: "arm-none-eabi-gdb",
+    },
+    RoleCandidate {
+        id: "xtensa-esp-elf-gdb",
+        label: "GDB Espressif Xtensa",
+        tool_id: "xtensa-esp-elf-gdb",
+    },
+    RoleCandidate {
+        id: "riscv32-esp-elf-gdb",
+        label: "GDB Espressif RISC-V",
+        tool_id: "riscv32-esp-elf-gdb",
     },
 ];
 

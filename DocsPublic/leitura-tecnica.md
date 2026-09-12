@@ -67,9 +67,9 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **132 métodos IPC** roteados e **45 eventos**, em **33 domínios de protocolo**;
-**641 testes** Rust verdes e **27 harnesses QML** (remedido em 2026-09-12 à
+**645 testes** Rust verdes e **27 harnesses QML** (remedido em 2026-09-12 à
 noite, depois de a simulação sair do produto: −11 métodos, −85 testes, −7
-harnesses). Protocolo `0.96.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+harnesses). Protocolo `0.97.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do

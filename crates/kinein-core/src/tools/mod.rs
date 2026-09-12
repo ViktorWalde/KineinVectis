@@ -11,6 +11,11 @@
 //! distribution. Guessing a package manager, or translating package names per
 //! distribution, would be a guess dressed up as an instruction.
 
+mod known;
+pub mod search_dirs;
+
+use search_dirs::extra_search_dirs;
+
 use std::{
     env,
     ffi::OsString,
@@ -46,240 +51,7 @@ pub struct ToolSpec {
     pub install_command: Option<&'static str>,
 }
 
-/// Tools detected by MVP 0.2, as defined in `DocsPublic/10-mvp-plan.md`.
-pub const KNOWN_TOOLS: &[ToolSpec] = &[
-    ToolSpec {
-        id: "cargo",
-        display_name: "Cargo",
-        binary: "cargo",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "rustc",
-        display_name: "Rust Compiler",
-        binary: "rustc",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "rustup",
-        display_name: "rustup",
-        binary: "rustup",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "rust-analyzer",
-        display_name: "rust-analyzer",
-        binary: "rust-analyzer",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "cmake",
-        display_name: "CMake",
-        binary: "cmake",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "ninja",
-        display_name: "Ninja",
-        binary: "ninja",
-        alternative_binary: None,
-        install_command: None,
-    },
-    // `make` entrou em 2026-09-02 com a toolchain como entidade: o gerador
-    // "Unix Makefiles" so pode ser OFERECIDO se ele existir na maquina.
-    // Oferecer um gerador ausente e oferecer um configure que vai falhar.
-    ToolSpec {
-        id: "make",
-        display_name: "GNU Make",
-        binary: "make",
-        alternative_binary: Some("gmake"),
-        install_command: None,
-    },
-    ToolSpec {
-        id: "git",
-        display_name: "Git",
-        binary: "git",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "clangd",
-        display_name: "clangd",
-        binary: "clangd",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "clang",
-        display_name: "clang",
-        binary: "clang",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "clangxx",
-        display_name: "clang++",
-        binary: "clang++",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "gcc",
-        display_name: "GCC",
-        binary: "gcc",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "gxx",
-        display_name: "g++",
-        binary: "g++",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "gdb",
-        display_name: "GDB",
-        binary: "gdb",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "lldb",
-        display_name: "LLDB",
-        binary: "lldb",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "lldb-dap",
-        display_name: "lldb-dap",
-        binary: "lldb-dap",
-        alternative_binary: None,
-        install_command: None,
-    },
-    // Cross-compiladores de embarcado. Sao ToolSpec como qualquer outro: quem
-    // DETECTA continua sendo o ToolDetector, e o catalogo da toolchain so' diz
-    // que eles interessam ao papel de compilador.
-    ToolSpec {
-        id: "arm-none-eabi-gcc",
-        display_name: "GCC (ARM bare-metal)",
-        binary: "arm-none-eabi-gcc",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "arm-none-eabi-gxx",
-        display_name: "G++ (ARM bare-metal)",
-        binary: "arm-none-eabi-g++",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "probe-rs",
-        display_name: "probe-rs",
-        binary: "probe-rs",
-        alternative_binary: None,
-        install_command: None,
-    },
-    // Containers (roadmaps/28 §0: dominio NATIVO). Os dois motores falam a
-    // mesma CLI; no Fedora `docker` costuma ser o shim `podman-docker`, e e' o
-    // dominio `container` que descobre qual dos dois responde de verdade.
-    ToolSpec {
-        id: "docker",
-        display_name: "Docker",
-        binary: "docker",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "podman",
-        display_name: "Podman",
-        binary: "podman",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "podman-compose",
-        display_name: "podman-compose",
-        binary: "podman-compose",
-        alternative_binary: None,
-        install_command: None,
-    },
-    // Monitores seriais (E3 do integracoes/38 §6): processos prontos que a IDE
-    // abre numa aba de terminal. Nenhum e' linkado; nenhum codigo serial nosso.
-    ToolSpec {
-        id: "tio",
-        display_name: "tio",
-        binary: "tio",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "picocom",
-        display_name: "picocom",
-        binary: "picocom",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "minicom",
-        display_name: "minicom",
-        binary: "minicom",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "espflash",
-        display_name: "espflash",
-        binary: "espflash",
-        alternative_binary: None,
-        install_command: Some("cargo install espflash"),
-    },
-    ToolSpec {
-        id: "ripgrep",
-        display_name: "ripgrep",
-        binary: "rg",
-        alternative_binary: None,
-        install_command: None,
-    },
-    ToolSpec {
-        id: "fd",
-        display_name: "fd",
-        binary: "fd",
-        alternative_binary: Some("fdfind"),
-        install_command: None,
-    },
-    // CLIs de IA. Detectar `claude` e o MESMO que detectar `cargo`: e
-    // CAPACIDADE ("existe no PATH?"), e capacidade pode viver no core. O que
-    // NAO pode voltar e POLITICA — como o programa e executado. O core nao tem
-    // ramo por programa: nao injeta flag, nao filtra saida e nao sabe que estas
-    // entradas sao "de IA". Quem escolhe e roda e a UI.
-    //
-    // Aqui o `install_command` existe porque npm e canonico e independente de
-    // distro — nao e palpite. (Claude Code tambem tem instalador nativo; a
-    // sugestao aponta um caminho que funciona em qualquer distro, e o core
-    // nunca a executa.)
-    ToolSpec {
-        id: "claude",
-        display_name: "Claude Code",
-        binary: "claude",
-        alternative_binary: None,
-        install_command: Some("npm install -g @anthropic-ai/claude-code"),
-    },
-    ToolSpec {
-        id: "codex",
-        display_name: "Codex",
-        binary: "codex",
-        alternative_binary: None,
-        install_command: Some("npm install -g @openai/codex"),
-    },
-];
+pub use known::KNOWN_TOOLS;
 
 /// Detects external tools on a configurable search path.
 ///
@@ -291,10 +63,29 @@ pub struct ToolDetector {
 }
 
 impl ToolDetector {
-    /// Builds a detector that reads `PATH` from the environment.
+    /// Builds a detector that reads `PATH` from the environment — and, desde
+    /// 2026-09-12 (`integracoes/39`), os diretorios onde os distribuidores de
+    /// toolchain instalam por padrao (`~/.local/xPacks`, `~/.espressif/tools`,
+    /// a pasta da IDE, `/opt/*/bin`): o `arm-none-eabi-gcc` de um tarball em
+    /// `/opt` e' achado sem o usuario editar o PATH. O `PATH` vem PRIMEIRO,
+    /// para o que o usuario escolheu vencer o que a IDE encontrou.
     #[must_use]
-    pub const fn from_environment() -> Self {
-        Self { search_path: None }
+    pub fn from_environment() -> Self {
+        let mut dirs: Vec<PathBuf> = env::var_os("PATH")
+            .map(|p| env::split_paths(&p).collect())
+            .unwrap_or_default();
+        if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
+            let xpacks = env::var_os("XPACKS_STORE_FOLDER").map(PathBuf::from);
+            let idf = env::var_os("IDF_TOOLS_PATH").map(PathBuf::from);
+            for extra in extra_search_dirs(&home, xpacks.as_deref(), idf.as_deref()) {
+                if !dirs.contains(&extra) {
+                    dirs.push(extra);
+                }
+            }
+        }
+        Self {
+            search_path: env::join_paths(dirs).ok(),
+        }
     }
 
     /// Builds a detector with a fixed search path instead of `PATH`.
@@ -504,6 +295,30 @@ mod tests {
                 // (roadmaps/35 etapas 22 e 23).
                 "arm-none-eabi-gcc",
                 "arm-none-eabi-gxx",
+                // As toolchains por alvo e as meta-ferramentas, 2026-09-12
+                // (integracoes/39).
+                "riscv-none-elf-gcc",
+                "riscv-none-elf-gxx",
+                "riscv32-esp-elf-gcc",
+                "riscv32-esp-elf-gxx",
+                "xtensa-esp-elf-gcc",
+                "xtensa-esp-elf-gxx",
+                "aarch64-linux-gnu-gcc",
+                "aarch64-linux-gnu-gxx",
+                "arm-linux-gnueabihf-gcc",
+                "arm-linux-gnueabihf-gxx",
+                "riscv64-linux-gnu-gcc",
+                "riscv64-linux-gnu-gxx",
+                "gdb-multiarch",
+                "arm-none-eabi-gdb",
+                "xtensa-esp-elf-gdb",
+                "riscv32-esp-elf-gdb",
+                "west",
+                "pio",
+                "picotool",
+                "dfu-util",
+                "openocd",
+                "espup",
                 "probe-rs",
                 // Containers como dominio nativo, 2026-09-12 (roadmaps/28 §0).
                 "docker",
@@ -753,5 +568,50 @@ mod tests {
 
         assert_eq!(tools.len(), KNOWN_TOOLS.len());
         assert!(tools.iter().all(|tool| tool.status == ToolStatus::Missing));
+    }
+
+    /// Os diretorios de toolchain alem do PATH: a pasta da IDE, o xpm, o
+    /// ESP-IDF, o cargo/pipx do usuario — so' os que EXISTEM, na ordem, sem
+    /// repetir; e as duas variaveis de ambiente (lidas por quem chama) mandam
+    /// no lugar do padrao.
+    #[test]
+    fn extra_search_dirs_finds_the_toolchain_homes_that_exist() {
+        let home = temp_bin_dir("extra-dirs-home");
+        let mk = |rel: &str| std::fs::create_dir_all(home.join(rel)).unwrap();
+        mk(".local/share/kinein-vectis/toolchains/arm-none-eabi/15.2.rel1/bin");
+        mk(".local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/15.2.0-1/.content/bin");
+        mk(".espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin");
+        mk(".cargo/bin");
+        // Sem `bin`: nao entra.
+        mk(".local/xPacks/@xpack-dev-tools/openocd/0.12.0-7/.content/share");
+        let dirs = super::extra_search_dirs(&home, None, None);
+        let rel: Vec<String> = dirs
+            .iter()
+            .filter(|d| d.starts_with(&home))
+            .map(|d| d.strip_prefix(&home).unwrap().display().to_string())
+            .collect();
+        assert_eq!(
+            rel,
+            vec![
+                ".local/share/kinein-vectis/toolchains/arm-none-eabi/15.2.rel1/bin",
+                ".local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/15.2.0-1/.content/bin",
+                ".espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin",
+                ".cargo/bin",
+            ]
+        );
+        // XPACKS_STORE_FOLDER e IDF_TOOLS_PATH sobrescrevem o padrao.
+        let outro = home.join("outro-store");
+        std::fs::create_dir_all(outro.join("@xpack-dev-tools/gcc/1.0/.content/bin")).unwrap();
+        let idf = home.join("idf-tools");
+        std::fs::create_dir_all(idf.join("riscv32-esp-elf/v1/riscv32-esp-elf/bin")).unwrap();
+        let dirs = super::extra_search_dirs(&home, Some(&outro), Some(&idf));
+        assert!(dirs.contains(&outro.join("@xpack-dev-tools/gcc/1.0/.content/bin")));
+        assert!(dirs.contains(&idf.join("riscv32-esp-elf/v1/riscv32-esp-elf/bin")));
+        assert!(
+            !dirs
+                .iter()
+                .any(|d| d.starts_with(home.join(".local/xPacks"))),
+            "com a variavel, o padrao do xpm nao e' lido"
+        );
     }
 }

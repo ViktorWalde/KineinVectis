@@ -564,7 +564,7 @@ crates/kinein-core/src/handlers/{cmake,cargo,build,jobs,runconfig,tools}.rs
 - Exceção real a não ampliar: `tools.detect`, `tools.status` e
   `environment.scan` ainda entram pelo dispatch de
   `crates/kinein-core/src/lib.rs`;
-  a lógica de detecção vive em `tools.rs` e o scan usa Jobs. Se esse fluxo
+  a lógica de detecção vive em `tools/mod.rs` (a tabela em `tools/known.rs`, os diretórios além do PATH em `tools/search_dirs.rs`) e o scan usa Jobs. Se esse fluxo
   crescer, extrair `handlers/tools.rs` antes de adicionar mais casos ao `lib.rs`.
 - Testes: `crates/kinein-core/src/tests/{cmake,cargo,build,runners,jobs,tools,runconfig}.rs`.
 - Fontes: spec Build/Run/Debug, `DocsPublic/build/22-compilacao-c-cpp-rust.md`,
@@ -612,7 +612,7 @@ ui/qml/shell/WorkspaceStatusBar.qml  (o chip que abre o seletor)
     ↕ crates/kinein-protocol/src/toolchain.rs
 crates/kinein-core/src/handlers/toolchain.rs
     → crates/kinein-core/src/toolchain/{mod,catalog,store}.rs
-    → crates/kinein-core/src/tools.rs (quem DETECTA continua sendo o
+    → crates/kinein-core/src/tools/{mod,known,search_dirs}.rs (quem DETECTA continua sendo o
       ToolDetector; a toolchain só cruza a escolha com o detectado)
 ```
 

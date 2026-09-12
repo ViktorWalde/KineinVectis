@@ -175,6 +175,17 @@ pub struct ToolchainResult {
     pub selections: Vec<ToolchainSelection>,
     /// O que existe nesta maquina para cada papel.
     pub candidates: Vec<ToolchainCandidate>,
+    /// Alvos Rust INSTALADOS (`rustup target list --installed`), quando o
+    /// `rustup` existe; `None` sem rustup (0.97.0, `integracoes/39`). Com o
+    /// `targetTriple` do kit fora desta lista, a IDE diz o `rustup target add`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rust_targets: Option<Vec<String>>,
+    /// O compilador cross efetivo nao traz o sistema alvo (0.97.0): medido com
+    /// `<cc> -print-sysroot`, e' o caso dos `gcc-aarch64-linux-gnu` das
+    /// distros — sem `usr/include` no sysroot, nenhum programa de usuario
+    /// compila. Diz de onde vem um sysroot: a placa, a Bootlin, o SDK Yocto.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sysroot_hint: Option<String>,
 }
 
 /// Parameters for `toolchain.get`.
@@ -274,10 +285,14 @@ mod tests {
                 path: Some("/usr/bin/cmake".to_owned()),
                 version: None,
             }],
+            rust_targets: None,
+            sysroot_hint: None,
         })
         .unwrap();
 
         assert!(value["selections"][0].get("id").is_none());
+        assert!(value.get("rustTargets").is_none(), "sem rustup, sem campo");
+        assert!(value.get("sysrootHint").is_none());
         assert!(value["selections"][0].get("resolvedPath").is_none());
         // `automatic` NAO e' omitido quando false por engano: ele diz "a
         // escolha nao e' sua", e a UI precisa dessa palavra mesmo quando ha

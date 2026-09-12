@@ -601,8 +601,20 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
 5  TOOLCHAIN MANAGER VISUAL (sysroot do alvo)
    ja' faz      kit por projeto com sysroot, triple, chip, remoteTarget e
                 debugServer (toolchain.setKit; EmbeddedKitField no painel de
-                embarcados); o clangd aprende o compilador cross
-   falta        (a) seletor de PASTA no lugar do campo de texto; (b) LER o
+                embarcados); o clangd aprende o compilador cross. E desde a
+                noite de 2026-09-12 (integracoes/39, 40 §7.23): o catalogo
+                reconhece os triples da industria (riscv-none-elf, xtensa-
+                esp-elf, riscv32-esp-elf, aarch64-linux-gnu, arm-linux-
+                gnueabihf, riscv64-linux-gnu, e os <triple>-gdb) na grafia de
+                cada distribuidor; procura ALEM do PATH (~/.local/xPacks,
+                ~/.espressif/tools, a pasta da IDE, /opt/*/bin); o
+                toolchain.get diz os alvos Rust INSTALADOS e denuncia o
+                compilador cross de distro SEM sysroot (medido no Fedora)
+   falta        (0) o PROVEDOR DE INSTALACAO (39 §5): botao "instalar
+                <toolchain> na pasta da IDE" com URL/sha256 visiveis, download
+                em job, checksum antes de desempacotar — decisao do autor de
+                2026-09-12, refinando a de "comando de instalacao"; (a)
+                seletor de PASTA no lugar do campo de texto; (b) LER o
                 sysroot: usr/include, usr/lib, lib, usr/lib/<triple>, os .pc
                 do pkg-config, a versao da glibc — e mostrar o que ha';
                 (c) injetar: CMAKE_SYSROOT via um toolchain file gerado pela

@@ -309,6 +309,8 @@ signals:
                            const QString& preset, const QString& sysroot,
                            const QString& targetTriple, const QString& chip,
                            const QString& presetToolchainFile);
+    void toolchainAdvice(const QString& sysrootHint, const QVariantList& rustTargets,
+                         bool rustTargetsKnown);
     void probesResolved(const QVariantList& probes, bool toolAvailable, const QString& rawOutput,
                         const QString& hint);
     void buildSizeResolved(const QVariantList& sections, const QVariantList& regions,

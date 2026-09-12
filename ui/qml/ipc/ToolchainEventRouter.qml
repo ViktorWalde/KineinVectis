@@ -22,6 +22,10 @@ Item {
                                                     targetTriple, chip, presetToolchainFile);
         }
 
+        function onToolchainAdvice(sysrootHint, rustTargets, rustTargetsKnown) {
+            root.toolchainController.handleAdvice(sysrootHint, rustTargets, rustTargetsKnown);
+        }
+
         function onRequestFailed(method, message) {
             root.toolchainController.handleFailed(method, message);
         }

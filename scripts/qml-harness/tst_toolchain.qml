@@ -108,6 +108,20 @@ Item {
         controller.handleFailed("toolchain.setKit", "chip desconhecido");
         if (controller.errorText !== "chip desconhecido") failures += 4194304;
 
+        // O alvo Rust do kit (integracoes/39): sem rustup nada a dizer; com
+        // rustup e o alvo fora da lista, o comando exato; instalado, silencio.
+        controller.handleAdvice("", [], false);
+        if (controller.rustTargetHint() !== "") failures += 8388608;
+        controller.handleAdvice("", ["x86_64-unknown-linux-gnu"], true);
+        if (controller.rustTargetHint() !== "alvo Rust thumbv7em-none-eabihf não instalado: rustup target add thumbv7em-none-eabihf") failures += 16777216;
+        controller.handleAdvice("", ["x86_64-unknown-linux-gnu", "thumbv7em-none-eabihf"], true);
+        if (controller.rustTargetHint() !== "") failures += 33554432;
+        // A dica de sysroot chega como veio; ausente = vazia.
+        controller.handleAdvice("o compilador cross nao traz o sistema alvo", [], false);
+        if (controller.sysrootHint.indexOf("sistema alvo") < 0) failures += 67108864;
+        controller.handleAdvice(undefined, undefined, undefined);
+        if (controller.sysrootHint !== "" || controller.rustTargetHint() !== "") failures += 134217728;
+
         // Escolha cujo binario sumiu da maquina: a UI DIZ que sumiu em vez de
         // mostrar um rotulo bonito. O core tambem para de fixar o caminho.
         controller.handleResolved(

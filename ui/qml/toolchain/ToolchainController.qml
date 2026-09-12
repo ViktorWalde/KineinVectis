@@ -55,6 +55,28 @@ Item {
         }
     }
 
+    // O que so' um processo responde (integracoes/39): a dica de sysroot do
+    // compilador cross de distro, e os alvos Rust INSTALADOS. `rustTargetsKnown`
+    // separa "sem rustup" (nada a dizer) de "rustup sem o alvo" (dizer o comando).
+    property string sysrootHint: ""
+    property var rustTargets: []
+    property bool rustTargetsKnown: false
+
+    function handleAdvice(newSysrootHint, newRustTargets, known) {
+        sysrootHint = newSysrootHint === undefined || newSysrootHint === null ? "" : newSysrootHint;
+        rustTargets = newRustTargets === undefined || newRustTargets === null ? [] : newRustTargets;
+        rustTargetsKnown = known === true;
+    }
+
+    // O alvo Rust do kit nao esta' instalado: o comando exato, nao um aviso vago.
+    function rustTargetHint() {
+        if (!rustTargetsKnown || targetTriple === "") return "";
+        for (let i = 0; i < rustTargets.length; i++) {
+            if (rustTargets[i] === targetTriple) return "";
+        }
+        return qsTr("alvo Rust %1 não instalado: rustup target add %1").arg(targetTriple);
+    }
+
     function handleResolved(newSelections, newCandidates, newPreset, newSysroot,
                             newTargetTriple, newChip, newPresetToolchainFile) {
         selections = newSelections;

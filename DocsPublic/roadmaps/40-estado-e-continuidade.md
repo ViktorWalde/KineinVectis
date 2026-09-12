@@ -57,8 +57,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.96.0
-testes      641 Rust + 27 harnesses QML   (2026-09-12 noite: a simulacao saiu)
+protocolo   0.97.0
+testes      645 Rust + 27 harnesses QML   (2026-09-12 noite: a simulacao saiu)
 metodos     132 IPC roteados, 45 eventos
 dominios    33, e os 33 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -354,6 +354,21 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          escolhida na lista e OpenOCD deduzido
                                          do VID:PID (P2/P3). Nada muda na ordem
                                          do 42 §4
+--  TOOLCHAINS POR ALVO                  CONFERIDAS na fonte em 2026-09-12
+    (integracoes/39): o catalogo,        (integracoes/39): o levantamento
+    a busca alem do PATH, o sysroot,     recebido tinha 2 afirmacoes desatualizadas
+    o provedor de instalacao             (Espressif por chip; LLVM Embedded) e 1
+                                         errada (pasta do xpm), e faltavam Zephyr
+                                         SDK, servidores de debug e o SYSROOT.
+                                         FEITO (§7.23): 13 candidatos novos de
+                                         compilador, 4 GDBs, 6 meta-ferramentas;
+                                         busca em xPacks/espressif/IDE//opt;
+                                         rustTargets e sysrootHint no
+                                         toolchain.get (0.97.0). FALTA: o
+                                         provedor de instalacao (39 §5: clique,
+                                         checksum, pasta da IDE), o seletor de
+                                         pasta do sysroot, importar kit Yocto/
+                                         Buildroot/Zephyr SDK
 --  A TRILHA PYTHON COMPLETA:            MAPEADA em 2026-09-12 (42 §9): MicroPython
     bare metal -> edge -> backend ->     no ESP32 (mpremote 1.29.0 aqui) ->
     banco                                Mosquitto como container (EPL/EDL) ->
@@ -447,6 +462,15 @@ documentacao: DUAS ARVORES   DECISAO DO AUTOR em 2026-09-12: `DocsPublic/` (toda
                              que saiu, legado/). Sucede as tres arvores de
                              2026-08-29 (ADR-0005 anotado). Os numeros dos
                              documentos ficam: sao o sistema de citacao
+instalar toolchain           REFINAMENTO de "comando de instalacao" (autor,
+                             2026-09-12, integracoes/39 §5): instalar NO SISTEMA
+                             continua sendo comando visivel com fonte, nunca
+                             sudo; instalar NA PASTA DA IDE
+                             (~/.local/share/kinein-vectis/toolchains) pode ser
+                             download — DEPOIS de um clique, com URL, tamanho e
+                             sha256 mostrados antes e verificados depois, de
+                             fonte com checksum publicado e versao pinada.
+                             Nunca calado, nunca "latest", nunca fora da pasta
 foco do produto              DOIS contextos, por decisao do autor em 2026-09-12:
                              desenvolvimento de software (Python, C/C++, Rust,
                              banco de dados) e sistemas embarcados (MCU bare
@@ -1569,6 +1593,67 @@ dos documentos, a `iconografia/` por dentro (assets com checksum). O gate de
 links (`verificar-links-docs.sh`) foi o que segurou a mudança: 222 links
 relativos, nenhum morto ao fim; o de veracidade e o do AppImage (que embarca o
 manual e entrega o tutorial) continuam verdes.
+
+
+### 7.23 Toolchains por alvo — o catálogo credível entra no detector e no kit, 2026-09-12
+
+O autor trouxe um levantamento (de outra IA) sobre toolchains por target
+triple e pediu para conferir a credibilidade, implementar o que fosse real e
+achar o que faltava. O resultado está no
+[`integracoes/39`](../integracoes/39-toolchains-por-alvo.md): linha a linha na
+fonte, com data. Duas afirmações desatualizadas (a Espressif unificou as
+toolchains em `xtensa-esp-elf`/`riscv32-esp-elf` desde o IDF 5; o LLVM
+Embedded Toolchain for Arm parou em 19.1.5 e o sucessor é o Arm Toolchain for
+Embedded 23.1.0, de 2026-09-10), uma errada (a pasta do xpm é
+`~/.local/xPacks`), e três ausências (o Zephyr SDK como bundle oficial, os
+servidores de debug, e o **sysroot** — o problema real do Linux embarcado).
+
+```text
+tools/known.rs        a tabela de ferramentas saiu do tools.rs (tools/mod.rs):
+                      +13 compiladores cross (riscv-none-elf, riscv32-esp-elf,
+                      xtensa-esp-elf, aarch64-linux-gnu, arm-linux-gnueabihf,
+                      riscv64-linux-gnu, C e C++, com a grafia do OUTRO
+                      distribuidor como binario alternativo), +4 GDBs de alvo,
+                      +6 meta-ferramentas (west, pio, picotool, dfu-util,
+                      openocd, espup)
+toolchain/catalog.rs  os mesmos como candidatos dos papeis cCompiler,
+                      cxxCompiler e debugAdapter; dap/adapter.rs reconhece
+                      QUALQUER GDB pelo nome (gdb, gdb-multiarch, <triple>-gdb)
+                      e lhe da' o `-i dap` — nao um adaptador que so' termina
+                      parecido
+tools/search_dirs.rs  onde procurar ALEM do PATH: a pasta da IDE, o store do
+                      xpm (XPACKS_STORE_FOLDER), o ~/.espressif/tools
+                      (IDF_TOOLS_PATH), ~/.cargo/bin, ~/.local/bin, /opt/*/bin
+                      — so' o que existe, deterministico, puro; o PATH primeiro
+toolchain.get         rustTargets (rustup target list --installed, do rustup
+(0.97.0)              DETECTADO; ausente sem rustup) e sysrootHint: compilador
+                      cross `*-linux-gnu*` sem sysroot no kit e sem usr/include
+                      no sysroot que ele mesmo declara (-print-sysroot) ganha a
+                      dica com as tres saidas (rsync da placa, Bootlin, SDK)
+```
+
+**Medido nesta máquina:** o detector passou a ver `aarch64-linux-gnu-gcc` e
+`arm-linux-gnu-gcc` (Fedora 16.1.1) como candidatos; `rustTargets:
+["x86_64-unknown-linux-gnu"]`; fixando o `aarch64-linux-gnu-gcc` no kit, a
+dica veio com o sysroot real (`/usr/aarch64-linux-gnu/sys-root` sem
+`usr/include`) — o pacote da distro compila e não linka programa de usuário
+nenhum, e agora a IDE diz isso em vez de deixar o link falhar.
+
+**Provado:** os diretórios extras com uma `$HOME` falsa (ordem exata, só o
+que existe, as duas variáveis mandando); os alvos Rust por um `rustup` falso
+que só responde a lista com `--installed`; a dica de sysroot por um
+`aarch64-linux-gnu-gcc` falso (automático em bare metal sem dica; fixado com
+dica; `usr/include` presente sem dica; sysroot no kit sem dica); todo GDB
+recebendo `-i dap` e `mygdb` não. Onze mutações mortas com o compilador
+calado; uma equivalente dita (o dedup dos diretórios).
+
+**A decisão registrada em §5:** instalar na pasta da IDE pode ser download
+depois de um clique, com checksum — o provedor é a próxima fatia (39 §5).
+
+```text
+protocolo 0.97.0 — ToolchainResult.rustTargets, sysrootHint
+testes  645 Rust (+4), 27 harnesses; ferramentas conhecidas: 52 (+23)
+```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

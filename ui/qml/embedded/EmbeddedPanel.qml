@@ -197,6 +197,27 @@ Item {
             font.pixelSize: 10
         }
 
+        // O que o kit ainda nao tem, dito com o remedio (integracoes/39): o
+        // sysroot do compilador cross de distro, o alvo Rust por instalar.
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: text !== ""
+            text: root.toolchainController ? root.toolchainController.sysrootHint : ""
+            color: Theme.warningSoft
+            font.pixelSize: 10
+        }
+
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: text !== ""
+            text: root.toolchainController ? root.toolchainController.rustTargetHint() : ""
+            color: Theme.warningSoft
+            font.family: Theme.monoFont
+            font.pixelSize: 10
+        }
+
         // O tamanho do binario: dono proprio (a catraca cobrou em 2026-09-11).
         EmbeddedSizeView {
             width: parent.width

@@ -38,6 +38,13 @@
 > §8 e §9, com o que já existe medido e o que falta por pilar; este inventário
 > continua sendo a lista de ferramentas com licença.
 
+> **2026-09-12 (noite):** as **toolchains por alvo** ganharam documento
+> próprio — [`integracoes/39`](../integracoes/39-toolchains-por-alvo.md): o
+> catálogo credível (Arm, xPack, Espressif unificada, ATfE, Bootlin, Yocto/
+> Buildroot, Zephyr SDK, Rust por `rustup target add`), o problema do sysroot,
+> onde a IDE procura além do `PATH`, e a regra do provedor de instalação. Este
+> inventário continua sendo a lista das ferramentas de FUNCIONALIDADE.
+
 ## 0. Como ler isto
 
 ```text

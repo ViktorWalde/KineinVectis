@@ -42,7 +42,9 @@ kinein-vectis/
 │   │   ├── runtime.rs           laco JSON-RPC sobre stdio
 │   │   ├── rpc.rs               erros JSON-RPC + parse de params
 │   │   ├── handlers.rs          o modulo que agrega os handlers por dominio
-│   │   ├── cargo.rs format.rs run.rs test.rs tools.rs process.rs
+│   │   ├── cargo.rs format.rs run.rs test.rs process.rs
+│   │   ├── tools/               mod known search_dirs  (o detector; a tabela das
+│   │   │                        52 ferramentas; onde procurar alem do PATH)
 │   │   ├── cmake/               mod model  (configure, presets, targets; model = o MODELO
 │   │   │                        POR ALVO lido do file-api: fontes, grupos de compilacao,
 │   │   │                        artefatos, dependencias, toolchains-v1)

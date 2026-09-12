@@ -136,6 +136,8 @@ impl Toolchain {
             preset_toolchain_file: self.preset_toolchain_file.clone(),
             selections: self.selections.clone(),
             candidates: self.candidates.clone(),
+            rust_targets: None,
+            sysroot_hint: None,
         }
     }
 

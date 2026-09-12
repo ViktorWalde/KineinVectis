@@ -72,6 +72,13 @@ bool CoreClient::dispatchToolchainResult(const QString& method, const QJsonObjec
                            result.value(QStringLiteral("targetTriple")).toString(),
                            result.value(QStringLiteral("chip")).toString(),
                            result.value(QStringLiteral("presetToolchainFile")).toString());
+    // O que so' um processo responde (integracoes/39, 0.97.0): os alvos Rust
+    // instalados (ausente = sem rustup) e a dica de sysroot. Sinal proprio para
+    // o de cima nao crescer em argumento posicional.
+    const QJsonValue alvosRust = result.value(QStringLiteral("rustTargets"));
+    emit toolchainAdvice(result.value(QStringLiteral("sysrootHint")).toString(),
+                         alvosRust.isArray() ? alvosRust.toArray().toVariantList() : QVariantList{},
+                         alvosRust.isArray());
     return true;
 }
 

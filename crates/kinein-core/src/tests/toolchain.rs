@@ -284,3 +284,93 @@ fn the_choice_reaches_the_cmake_command_line() {
         Some(bin.join("cmake"))
     );
 }
+
+/// Os alvos Rust instalados vem do `rustup` DETECTADO (`integracoes/39`):
+/// sem rustup, `rustTargets` nao existe na resposta — a IDE nao sabe e diz;
+/// com um rustup falso, e' a lista dele, linha a linha.
+#[test]
+fn rust_targets_come_from_the_detected_rustup_or_are_absent() {
+    let (root, bin) = workspace_with_tools("rust-targets", &["cargo"]);
+    let mut core = core_with_path(&bin);
+    open(&mut core, &root);
+    let sem = call(&mut core, "toolchain.get", &json!({}));
+    assert!(sem.get("rustTargets").is_none(), "{sem}");
+
+    std::fs::write(
+        bin.join("rustup"),
+        "#!/bin/sh\nif [ \"$1\" = target ] && [ \"$3\" = --installed ]; then printf 'x86_64-unknown-linux-gnu\\nthumbv7em-none-eabihf\\n'; elif [ \"$1\" = target ]; then printf 'x86_64-unknown-linux-gnu\\nthumbv7em-none-eabihf\\nriscv32imc-unknown-none-elf\\n'; else echo 1.29.0; fi\n",
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(bin.join("rustup"), std::fs::Permissions::from_mode(0o755))
+            .unwrap();
+    }
+    let mut core = core_with_path(&bin);
+    open(&mut core, &root);
+    let com = call(&mut core, "toolchain.get", &json!({}));
+    assert_eq!(
+        com["rustTargets"],
+        json!(["x86_64-unknown-linux-gnu", "thumbv7em-none-eabihf"]),
+        "{com}"
+    );
+}
+
+/// O compilador cross de Linux que a distro empacota SEM o sistema alvo
+/// (medido no Fedora 44: `gcc-aarch64-linux-gnu` com sys-root vazio) recebe a
+/// dica de sysroot; com `usr/include` no sysroot que ele declara, ou com um
+/// sysroot no kit, nao; e bare metal (`arm-none-eabi-gcc`) nunca entra.
+#[test]
+fn a_linux_cross_compiler_without_a_sysroot_gets_the_hint() {
+    let (root, bin) = workspace_with_tools("sysroot-hint", &["cmake", "arm-none-eabi-gcc"]);
+    let sysroot = root.join("sysroot-vazio");
+    std::fs::create_dir_all(&sysroot).unwrap();
+    std::fs::write(
+        bin.join("aarch64-linux-gnu-gcc"),
+        format!(
+            "#!/bin/sh\nif [ \"$1\" = -print-sysroot ]; then echo {}; else echo 16.1.1; fi\n",
+            sysroot.display()
+        ),
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(
+            bin.join("aarch64-linux-gnu-gcc"),
+            std::fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+    }
+    let mut core = core_with_path(&bin);
+    open(&mut core, &root);
+    // Automatico: o primeiro candidato detectado e' o arm-none-eabi-gcc (bare
+    // metal) — sem dica.
+    let auto = call(&mut core, "toolchain.get", &json!({}));
+    assert!(auto.get("sysrootHint").is_none(), "{auto}");
+    // Fixado o cross de Linux: a dica aparece e diz de onde vem um sysroot.
+    let fixado = call(
+        &mut core,
+        "toolchain.set",
+        &json!({ "role": "cCompiler", "id": "aarch64-linux-gnu-gcc" }),
+    );
+    let dica = fixado["sysrootHint"].as_str().unwrap_or_default();
+    assert!(
+        dica.contains("aarch64-linux-gnu-gcc") && dica.contains("Bootlin"),
+        "{fixado}"
+    );
+    assert!(dica.contains("sem usr/include"), "{dica}");
+    // Com usr/include no sysroot declarado: nada a dizer.
+    std::fs::create_dir_all(sysroot.join("usr/include")).unwrap();
+    let ok = call(&mut core, "toolchain.get", &json!({}));
+    assert!(ok.get("sysrootHint").is_none(), "{ok}");
+    std::fs::remove_dir_all(sysroot.join("usr")).unwrap();
+    // Com sysroot no kit: a escolha do usuario vale, sem dica.
+    let com_kit = call(
+        &mut core,
+        "toolchain.setKit",
+        &json!({ "sysroot": root.join("meu-sysroot").display().to_string() }),
+    );
+    assert!(com_kit.get("sysrootHint").is_none(), "{com_kit}");
+}
