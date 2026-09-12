@@ -16,6 +16,8 @@ Item {
     property var diagnosticsController
     property var searchController
     property var recentWorkspacesController
+    property var containerController
+    property var grafanaController
     property alias editorSurface: editorPaneHost.editorSurface
     property bool workspaceOpen: false
     property string workspaceRoot: ""
@@ -113,6 +115,12 @@ Item {
             onBuildRequested: root.shellController.toggleBottomTab("build")
             onDebugRequested: root.shellController.toggleBottomTab("debug")
             onToolsRequested: root.shellController.toggleBottomTab("tools")
+            containersActive: root.containerController !== undefined && root.containerController !== null
+                              && root.containerController.panelVisible
+            observabilityActive: root.grafanaController !== undefined && root.grafanaController !== null
+                                 && root.grafanaController.panelVisible
+            onContainersRequested: root.containerController.open()
+            onObservabilityRequested: root.grafanaController.open()
         }
 
         ProjectExplorer {

@@ -21,6 +21,7 @@ Column {
     property var grafanaController: null
     property var embeddedController: null
     property var setupController: null
+    property var containerController: null
     property var configActionController: null
     property var toolchainController: null
     property var recentWorkspacesController: null
@@ -95,6 +96,7 @@ Column {
         case "grafana.get": root.grafanaController.open(); break;
         case "probe.list": root.embeddedController.open(); break;
         case "setup.list": root.setupController.open(); break;
+        case "container.list": root.containerController.open(); break;
         case "configAction.list": root.configActionController.openDialog(); break;
         // O menu de toolchain nasce ANCORADO no botao da barra. Vindo do menu
         // de Ambiente nao ha' botao para ancorar, e a coordenada negativa cai

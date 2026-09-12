@@ -1,4 +1,5 @@
 import QtQuick
+import "KvIconGlyphs.js" as Glyphs
 
 // Iconografia vetorial central da Kinein. Os desenhos usam o grid 24x24,
 // stroke 1.75px e cores de estado definidos pela spec visual. Canvas evita
@@ -260,6 +261,11 @@ Item {
                 break;
             case "file":
             default:
+                // Ferramentas nativas (containers, observabilidade) moram no
+                // KvIconGlyphs.js; quem nao esta' la' e' o "file" de sempre.
+                if (Glyphs.draw(root.name, context, line, node)) {
+                    break;
+                }
                 context.moveTo(6, 3);
                 context.lineTo(14, 3);
                 context.lineTo(19, 8);

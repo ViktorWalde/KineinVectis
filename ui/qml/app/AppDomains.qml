@@ -31,15 +31,16 @@ Item {
     readonly property alias diagnosticsController: diagnosticsController
     readonly property alias settingsController: settingsController
     readonly property alias configActionController: configActionController
-    readonly property alias toolchainController: toolchainController
-    readonly property alias dataSourceController: dataSourceController
+    readonly property alias toolchainController: environment.toolchainController
+    readonly property alias dataSourceController: environment.dataSourceController
     readonly property alias simController: simController
     readonly property alias simRunController: simRunController
     readonly property alias simSystemController: simSystemController
-    readonly property alias grafanaController: grafanaController
-    readonly property alias embeddedController: embeddedController
-    readonly property alias setupController: setupController
-    readonly property alias libraryController: libraryController
+    readonly property alias grafanaController: environment.grafanaController
+    readonly property alias embeddedController: environment.embeddedController
+    readonly property alias setupController: environment.setupController
+    readonly property alias containerController: environment.containerController
+    readonly property alias libraryController: environment.libraryController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
     readonly property alias debugController: debugController
@@ -131,28 +132,16 @@ Item {
         }
     }
 
-    // Toolchain (roadmap 30, etapa 5): qual executavel cumpre cada papel neste
-    // projeto. Sem escolha, tudo e automatico e o PATH continua decidindo.
-    ToolchainController {
-        id: toolchainController
+    // Os donos do "Ambiente do projeto" — toolchain, bibliotecas, banco,
+    // observabilidade, embarcados, containers, instalar ferramentas — moram
+    // juntos em AppEnvironmentDomains: sairam daqui em 2026-09-12, quando o
+    // dominio `container` nasceu e este arquivo estava em 390/400. Corte por
+    // RESPONSABILIDADE (a Frente 1 do arquitetura/27: <X>Domain na UI), nao
+    // por tamanho: os seis tem a mesma forma e o menu ja' os agrupa.
+    AppEnvironmentDomains {
+        id: environment
 
-        workspaceRoot: root.coreClient.workspaceRoot
-    }
-
-    // Bibliotecas C/C++ (roadmaps/35, etapa 19/20): o catalogo curado. Nao
-    // escreve arquivo — produz plano, e quem escreve e o configaction.
-    LibraryController {
-        id: libraryController
-
-        workspaceRoot: root.coreClient.workspaceRoot
-    }
-
-    // Fontes de dados (roadmaps/35, etapa 26): o catalogo de conexoes. Guarda
-    // o PERFIL, nunca a senha — a decisao esta em `docs/seguranca/40`.
-    DataSourceController {
-        id: dataSourceController
-
-        workspaceRoot: root.coreClient.workspaceRoot
+        coreClient: root.coreClient
     }
 
     // Simulacao por conceito (etapa 28, docs/arquitetura/34). Guarda o que o
@@ -188,31 +177,6 @@ Item {
         concept: simController.currentConcept()
     }
 
-    // Observabilidade (roadmaps/35, etapa 27): o Grafana que observa este
-    // projeto. Guarda o ENDERECO e a politica, nunca o token — mesma regra da
-    // senha de banco. A licenca AGPL do Grafana decide a forma: a IDE conversa
-    // com ele pela HTTP API e nunca o embute.
-    GrafanaController {
-        id: grafanaController
-
-        workspaceRoot: root.coreClient.workspaceRoot
-    }
-
-    // Embarcados (roadmaps/35 §5.7): a sonda no USB. O kit (chip, alvo,
-    // depurador) continua no toolchainController — e' kit, nao sonda.
-    EmbeddedController {
-        id: embeddedController
-
-        workspaceRoot: root.coreClient.workspaceRoot
-    }
-
-    // Como instalar o que falta (2026-09-04): passo a passo OFICIAL para a
-    // distro detectada. Nao instala nada — mostra e, se o autor pedir, escreve
-    // no terminal da IDE.
-    SetupController {
-        id: setupController
-    }
-
     // Configuration Actions (roadmap 30, etapa 2): dominio proprio, nasce nas
     // quatro camadas. Quem abre o dialogo e a paleta/atalho; o host visual dele
     // e o ShellOverlays, como os demais dialogos.
@@ -222,7 +186,7 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
         // A lista e' UMA: acoes e bibliotecas lado a lado. Ver o cabecalho de
         // `libraryController` no ConfigActionController.
-        libraryController: libraryController
+        libraryController: environment.libraryController
     }
 
     // Configuracoes salvas saem do RuntimeController: "guardar como rodar um
@@ -322,11 +286,12 @@ Item {
         searchController: searchController
         searchEverywhereController: searchEverywhereController
         configActionController: configActionController
-        libraryController: libraryController
-        dataSourceController: dataSourceController
-        grafanaController: grafanaController
-        embeddedController: embeddedController
-        setupController: setupController
+        libraryController: environment.libraryController
+        dataSourceController: environment.dataSourceController
+        grafanaController: environment.grafanaController
+        embeddedController: environment.embeddedController
+        setupController: environment.setupController
+        containerController: environment.containerController
         simController: simController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {

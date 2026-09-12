@@ -10,6 +10,8 @@ Rectangle {
     property bool buildActive: false
     property bool debugActive: false
     property bool toolsActive: false
+    property bool containersActive: false
+    property bool observabilityActive: false
 
     signal explorerToggled()
     signal searchRequested()
@@ -17,6 +19,8 @@ Rectangle {
     signal buildRequested()
     signal debugRequested()
     signal toolsRequested()
+    signal containersRequested()
+    signal observabilityRequested()
 
     width: 52
     radius: Theme.radiusLarge
@@ -125,6 +129,23 @@ Rectangle {
             tooltip: qsTr("Ferramentas")
             active: root.toolsActive
             onActivated: root.toolsRequested()
+        }
+
+        // Ferramentas NATIVAS com atalho visual (decisao do autor,
+        // 2026-09-12): containers e observabilidade abrem daqui, sem projeto
+        // aberto — o motor e o Grafana sao da maquina, nao do workspace.
+        RailButton {
+            iconName: "container"
+            tooltip: qsTr("Containers (Ctrl+Alt+W)")
+            active: root.containersActive
+            onActivated: root.containersRequested()
+        }
+
+        RailButton {
+            iconName: "observability"
+            tooltip: qsTr("Observabilidade — Grafana (Ctrl+Alt+O)")
+            active: root.observabilityActive
+            onActivated: root.observabilityRequested()
         }
 
     }

@@ -8,6 +8,7 @@ pub mod build;
 pub mod cargo;
 pub mod cmake;
 pub mod configaction;
+pub mod container;
 pub mod datasource;
 pub mod debug;
 pub mod draft;

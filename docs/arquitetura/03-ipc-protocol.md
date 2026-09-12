@@ -1,5 +1,14 @@
 # 03 — Protocolo IPC
 
+> **O `0.92.0` (2026-09-12) acrescentou o domínio `container`:** Docker e
+> Podman como domínio NATIVO (decisão do autor de 2026-07-17, `roadmaps/28`
+> §0, priorizada em 2026-09-12). `container.status` é a tela de "ativar a
+> ferramenta" (motor, versão, rootless, socket, responde, compose, passo
+> oficial); `list`/`images` leem `ps`/`images` em JSON dos dois motores;
+> `action` e `compose` são JOBS com `event.container.finished`; `open` abre
+> logs ou um shell numa aba de terminal. A UI nunca chama `docker`. Domínio
+> novo sobe o minor.
+>
 > **O `0.91.0` (2026-09-11) acrescentou o domínio `serial`:** `serial.list`
 > enumera as portas seriais USB desta máquina pelo sysfs — `ttyUSB*` (ponte)
 > e `ttyACM*` (CDC) — com VID:PID, driver, o que o VID:PID diz do **elo** (nunca
@@ -1707,6 +1716,13 @@ configAction.apply
 configAction.list
 configAction.preview
 
+container.action
+container.compose
+container.images
+container.list
+container.open
+container.status
+
 core.ping
 core.shutdown
 
@@ -1881,6 +1897,8 @@ event.debug.stopped
 
 event.environment.finished
 event.environment.started
+event.container.finished
+
 event.environment.tool
 
 event.fs.changed
@@ -2006,6 +2024,63 @@ nao reconhecida   -> "o formato mudou e o parser precisa acompanhar"
 Sem regra de udev a ferramenta roda, não acha nada, e o usuário conclui que a
 placa está com defeito. **Plug and play morre exatamente aí**, e é a lacuna que
 `integracoes/36` §5 já tinha nomeado como a mais subestimada.
+## `container.*` — Docker e Podman como domínio nativo
+
+Domínio novo no protocolo `0.92.0` (2026-09-12). A decisão é de 2026-07-17
+(`roadmaps/28` §0: *"vão ser cidadãos nativos"*), e as invariantes registradas
+lá em §4 são o desenho: **a UI nunca chama `docker`**, **toda ação é Job
+cancelável**, **permissão é visível**, e **Podman é motor de primeira** — nesta
+máquina `docker` é o shim `podman-docker`, medido em 2026-09-12.
+
+```text
+container.status  {}                       -> ContainerStatus
+container.list    { all? = true }          -> { containers, engine, rawOutput, hint? }
+container.images  {}                       -> { images, engine, rawOutput, hint? }
+container.action  { id, action }           -> { jobId }            (job; start|stop|restart|remove)
+container.open    { id, mode }             -> { id, command }      (aba de terminal; logs|shell)
+container.compose { action, file? }        -> { jobId }            (job; up|down; exige workspace)
+
+ContainerStatus   engine? (docker|podman), binary?, version?, emulated, rootless?,
+                  socket?, reachable, compose?, hint?, rawOutput
+ContainerInfo     id, names[], image, state, status, ports[], created
+ImageInfo         id, repository, tag, size, created
+
+event.container.finished { jobId, action, target, ok, message }
+```
+
+**A detecção pergunta ao binário, não ao nome.** `docker --version` do shim
+escreve *"Emulate Docker CLI using podman"* em stderr; tratar isso como Docker
+Engine erraria o formato de `ps` (o Podman devolve um **array** em `--format
+json`; o Docker, **um objeto por linha** em `--format '{{json .}}'`) e o
+diagnóstico (não há daemon nem grupo `docker` num Podman rootless). Quando o
+`docker` é o shim, o core prefere o `podman` real e diz `emulated: true`.
+
+**O parser aceita as duas formas e devolve a saída crua sempre** — a mesma
+regra do `probe.list`. A forma do Docker foi lida da documentação e **não**
+verificada contra um Docker Engine real (esta máquina não tem um); a do Podman
+5.8.4 foi medida, inclusive o detalhe de que `images --format json` não traz
+`repository`/`tag` e sim `Names ["repo:tag"]`.
+
+**`status` é a tela de "ativar a ferramenta".** Sem motor: o passo de
+instalação da distro. Motor que não responde: `permission denied` no socket →
+grupo `docker` e relogar; daemon parado → `systemctl enable --now docker`;
+Podman → a saída crua e o `podman.socket` do usuário. A IDE **imprime** o
+comando; nunca roda `sudo`.
+
+**`action` e `compose` são jobs** (`JobRisk::Medium`; `remove` é `High`): cada
+linha do motor vai para `event.job.output`, cancelar mata o filho, e o
+`event.container.finished` leva as últimas linhas como motivo. `rm` vai **sem
+`-f`**: remover o que roda é dois gestos (parar, remover), de propósito.
+`compose up` é `-d` — um job que nunca termina não é job; a saída viva mora
+na aba de logs.
+
+**`open` reaproveita o terminal.** `logs -f --tail 200 <id>` e `exec -it <id>
+/bin/sh` sobem pelo mesmo `open_command` do domínio `terminal` e voltam como
+uma sessão de terminal (`terminal.input`/`resize`/`close` a reconhecem). O
+shell dentro do container é a semente do *contexto remoto* do `roadmaps/28`
+§4 — o que falta para *dev containers* é o path mapping e o ciclo de vida,
+não o transporte.
+
 ## `serial.*` — as portas seriais USB
 
 Domínio novo no protocolo `0.91.0` (E1 do `integracoes/38` §6, 2026-09-11). A

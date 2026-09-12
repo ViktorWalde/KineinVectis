@@ -30,6 +30,7 @@ Item {
     property var grafanaController: null
     property var embeddedController: null
     property var setupController: null
+    property var containerController: null
 
     visible: false
 
@@ -78,6 +79,16 @@ Item {
         // comando: setup.list
         sequence: "Ctrl+Alt+H"
         onActivated: root.setupController.open()
+    }
+
+    Shortcut {
+        // comando: container.list
+        // Ctrl+Alt+W: o C (Containers) e' Continuar do debug, o D (Docker) e'
+        // alias do debug.start — as duas letras obvias ja' tem dono na UI, e um
+        // atalho que a paleta anuncia e a UI usa para outra coisa e' o defeito
+        // que o `verificar-atalhos.sh` pega. W de "whale", o simbolo do Docker.
+        sequence: "Ctrl+Alt+W"
+        onActivated: root.containerController.open()
     }
 
     Shortcut {

@@ -160,6 +160,13 @@ RemoteContext (L5)
 - a especificação **devcontainer.json** é aberta e é o padrão de fato. Adotá-la
   como formato de entrada é MODE-D (referência) sem transplantar runtime.
 
+> **IMPLEMENTADO em 2026-09-12** — o domínio `container` do core
+> ([`40`](40-estado-e-continuidade.md) §7.14): status/list/images/action/open/
+> compose, com **Podman como motor de primeira** (nesta máquina `docker` é o
+> shim `podman-docker`, medido). As invariantes abaixo viraram código. O que
+> ainda não existe é o **contexto remoto** deste parágrafo — trabalhar dentro
+> do container — e ele deve nascer da mesma abstração que o SSH remoto.
+
 **Invariantes:** a UI nunca chama `docker` direto (§2 — proibição não negociável);
 todo comando de container é Job cancelável; permissões (socket do Docker,
 privilégios) são visíveis e confirmáveis; **não** rodar a própria IDE dentro do

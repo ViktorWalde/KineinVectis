@@ -214,6 +214,26 @@ pub(super) fn probe_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
+/// Containers (roadmaps/28 §0: Docker e Podman NATIVOS; priorizado em
+/// 2026-09-12): o painel do motor, dos containers, das imagens e do compose.
+///
+/// UM descriptor, e o id e' `container.list` porque e' a pergunta que o painel
+/// faz ao abrir. `requires_workspace` e' FALSE: o motor e' da maquina, e ver
+/// o que esta' rodando nao precisa de projeto — so' o compose precisa, e o
+/// painel diz isso ao desabilitar os dois botoes.
+pub(super) fn container_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "container.list".to_owned(),
+        title: "Containers...".to_owned(),
+        category: "Ambiente".to_owned(),
+        description: "Docker ou Podman: o motor, os containers, as imagens e o compose".to_owned(),
+        // Ctrl+Alt+W de "whale": C e' Continuar do debug, D e' alias do
+        // debug.start — as letras obvias ja' tem dono na UI.
+        default_shortcut: Some("Ctrl+Alt+W".to_owned()),
+        requires_workspace: false,
+    }]
+}
+
 /// Bibliotecas C/C++ (roadmaps/35): o catalogo curado.
 ///
 /// UM descriptor, nao treze — mesma razao do `configaction` acima. A paleta

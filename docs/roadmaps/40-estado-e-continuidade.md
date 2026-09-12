@@ -57,10 +57,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.91.0
-testes      685 Rust + 32 harnesses QML
-metodos     132 IPC roteados, 41 eventos
-dominios    31, e os 31 documentados no arquitetura/03
+protocolo   0.92.0
+testes      693 Rust + 33 harnesses QML
+metodos     138 IPC roteados, 42 eventos
+dominios    32, e os 32 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
 ```
@@ -618,7 +618,8 @@ Python                       ENTRA como vertical nativa — DECISAO DO AUTOR em
                              2026-08-30. Sem anuncio parcial: a tela so' diz
                              "Python" quando a cadeia inteira funcionar (41 §5, B8)
 Pylance                      PROIBIDO (licenca) — continua; o motor e' basedpyright
-Docker e banco               NATIVOS, nao plugins
+Docker e banco               NATIVOS, nao plugins. Docker/Podman IMPLEMENTADO
+                             em 2026-09-12 (§7.14): dominio `container`
 EditorConfig                 auditado com resultado NEGATIVO (2026-07-16)
 Grafana embutido             PROIBIDO (AGPL) — integracao por HTTP API
 TLS na IDE                   ENTRA (autor, 2026-09-04): `subtle` (BSD-3-Clause) e
@@ -1525,6 +1526,74 @@ protocolo 0.91.0 — SerialPortInfo, SerialAccess, ModemManagerState
 testes  685 Rust (+5, em tests/serial.rs), harness tst_embedded (+16 assercoes)
 gate    22 verificacoes; exercitacao ganhou serial.list
 ```
+
+### 7.14 Containers: Docker e Podman viraram domínio nativo de verdade, 2026-09-12
+
+**A decisão era de 2026-07-17** ([`28`](28-plataforma-de-plugins-e-verticais.md)
+§0: *"vão ser cidadãos nativos"*) e até ontem tinha **zero código**. O autor a
+priorizou hoje, com um pedido a mais: *"deverá ter um ícone/atalho/visual para
+auxiliar no uso, para ativar a ferramenta"* — para Docker **e** para o Grafana,
+que já era nativo mas só se alcançava por menu, paleta e Ctrl+Alt+O.
+
+**Medido antes de escrever, e mudou o desenho:** nesta máquina `docker` é o
+shim **`podman-docker`** (imprime *"Emulate Docker CLI using podman"* em
+stderr); não há Docker Engine; há **Podman 5.8.4 rootless**, socket do usuário
+ativo, `podman-compose` 1.6.0 e `podman compose` delegando. Exatamente o
+"Podman é alternativa a auditar" do 28 §4 — então o domínio nasceu com **motor**
+(docker | podman) atrás da mesma CLI, e a detecção **pergunta ao binário** em
+vez de confiar no nome.
+
+```text
+protocolo 0.92.0   container.status/list/images (sincronos), action e compose
+                   (JOBS, event.container.finished), open (logs|shell numa ABA
+                   DE TERMINAL pelo open_command que existia sem chamador)
+core/container/    mod.rs: deteccao, status (versao, rootless, socket,
+                   responde, compose, passo oficial), comandos; parse.rs: as
+                   DUAS formas de JSON (array do Podman, objeto-por-linha do
+                   Docker) numa lista so', saida crua sempre
+tools.rs           docker, podman, podman-compose no catalogo (tools.detect)
+UI                 ContainerController/Panel/ListView/PanelHost + 2 roteadores;
+                   AppDomains cortado por RESPONSABILIDADE: os donos do
+                   "Ambiente do projeto" foram para AppEnvironmentDomains (ele
+                   estava em 390/400); RuntimeController: aba com TITULO
+                   opcional (o comando que roda nela)
+icone/atalho       SideRail ganhou dois botoes — `container` e `observability`
+                   (glifos proprios em KvIconGlyphs.js; nenhum e' marca
+                   registrada) — que abrem os paineis SEM projeto; menu
+                   Ambiente > Containers...; paleta `container.list`;
+                   Ctrl+Alt+W (C e D ja' tinham dono na UI)
+invariantes do 28  a UI nunca chama docker (so' o core); acao = job cancelavel;
+                   permissao visivel (status e' a tela de ATIVAR: instalar,
+                   grupo docker, daemon, podman.socket — impresso, nunca sudo);
+                   rm SEM -f; compose up e' -d
+```
+
+**Exercitado contra o Podman real:** `status` bate com a medição manual
+(podman 5.8.4, emulated, rootless, socket, compose); `list` devolve os 5
+containers do autor com nomes, estado, status humano e portas; `images` os 12
+(o Podman em `--format json` **não** traz `repository`/`tag` — vem de `Names`,
+e o parser aprendeu isso na exercitação, não no teste); o ciclo **start →
+logs em aba → rm** num container descartável (`podman create … true`) rodou
+por jobs com `event.container.finished { ok: true }` e o container sumiu. O
+`verificar-exercitacao.sh` agora pede `container.status` e `container.list`.
+
+**Provado por mutação** (compilador calado): Rust — o shim tratado como Docker
+(reprova na detecção); `rm -f` (reprova); `host_ip` ignorado nas portas
+(reprova). QML — job falho sem motivo na tela; `isRunning` pelo status humano;
+trocar de workspace esquecer o motor. **O que NÃO foi provado:** um Docker
+Engine real (a forma `{{json .}}` é da documentação); `compose up/down` de
+verdade (só a montagem do comando); o shell dentro do container (só o comando).
+
+```text
+testes  693 Rust (+8 em tests/container.rs), 33 harnesses (+tst_container)
+docs    03-ipc (dominio + indice), 02 (container/), 28 §4 (nota), 41 (F3)
+```
+
+**O que fica para a fatia seguinte deste domínio, e é o que o 28 §4 chama de
+contexto remoto:** *dev containers* de verdade — abrir o workspace **dentro**
+do container (path mapping, `devcontainer.json` como formato de entrada, build
+e LSP do outro lado). É o mesmo contrato do SSH remoto da §4, e os dois devem
+nascer da mesma abstração, não de duas.
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 

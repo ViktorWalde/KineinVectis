@@ -12,6 +12,7 @@ pub mod cdb;
 pub mod cmake;
 pub mod commands;
 pub mod configaction;
+pub mod container;
 pub mod dap;
 pub mod datasource;
 pub mod db;
@@ -286,6 +287,7 @@ impl Core {
             .or_else(|| self.datasource_request_response(method, request_id.clone(), params))
             .or_else(|| self.grafana_request_response(method, request_id.clone(), params))
             .or_else(|| self.probe_request_response(method, request_id.clone(), params))
+            .or_else(|| self.container_request_response(method, request_id.clone(), params))
             .or_else(|| Self::serial_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))

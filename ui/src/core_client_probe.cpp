@@ -65,7 +65,7 @@ bool CoreClient::dispatchBuildSizeResult(const QString& method, const QJsonObjec
 bool CoreClient::dispatchSerialResult(const QString& method, const QJsonObject& result)
 {
     if (method != QStringLiteral("serial.list")) {
-        return false;
+        return dispatchContainerResult(method, result);
     }
     // O core nunca ABRIU a porta para responder isto (abrir reseta a placa);
     // cada entrada ja' traz o veredito de permissao MEDIDO e o estado do

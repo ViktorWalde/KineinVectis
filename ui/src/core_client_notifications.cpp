@@ -44,6 +44,12 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit grafanaProbed(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.container.finished")) {
+        // Mapa inteiro pelo mesmo motivo do grafana.probed: jobId, acao, alvo,
+        // ok e a mensagem viajam juntos, e a UI decide o que mostrar.
+        emit containerFinished(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.git.remoteFinished")) {
         emit gitRemoteOperationFinished(params.value(QStringLiteral("operation")).toString(),
                                         params.value(QStringLiteral("success")).toBool(false),

@@ -146,6 +146,7 @@ Window {
         grafanaController: domains.grafanaController
         embeddedController: domains.embeddedController
         setupController: domains.setupController
+        containerController: domains.containerController
     }
 
     ShellHeaderHost {
@@ -170,6 +171,7 @@ Window {
         grafanaController: domains.grafanaController
         embeddedController: domains.embeddedController
         setupController: domains.setupController
+        containerController: domains.containerController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
         recentWorkspacesController: domains.recentWorkspacesController
@@ -214,6 +216,8 @@ Window {
         diagnosticsController: domains.diagnosticsController
         searchController: domains.searchController
         recentWorkspacesController: domains.recentWorkspacesController
+        containerController: domains.containerController
+        grafanaController: domains.grafanaController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName
@@ -282,6 +286,7 @@ Window {
         grafanaController: domains.grafanaController
         embeddedController: domains.embeddedController
         setupController: domains.setupController
+        containerController: domains.containerController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
         simController: domains.simController

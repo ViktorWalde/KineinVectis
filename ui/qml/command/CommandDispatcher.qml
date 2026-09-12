@@ -20,6 +20,7 @@ Item {
     property var grafanaController: null
     property var embeddedController: null
     property var setupController: null
+    property var containerController: null
 
     signal openWorkspaceRequested()
     signal showTabRequested(string tab)
@@ -113,6 +114,8 @@ Item {
             embeddedController.open();
         } else if (commandId === "setup.list") {
             setupController.open();
+        } else if (commandId === "container.list") {
+            containerController.open();
         } else if (commandId === "settings.get") {
             settingsController.openDialog();
         } else if (commandId === "fs.createFile") {

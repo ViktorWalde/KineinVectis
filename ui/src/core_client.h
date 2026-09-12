@@ -188,6 +188,13 @@ public:
     Q_INVOKABLE void buildSize(const QString& program);
     // Portas seriais USB (serial.list): o canal que toda placa compartilha.
     Q_INVOKABLE void serialList();
+    // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
+    Q_INVOKABLE void containerStatus();
+    Q_INVOKABLE void containerList(bool all = true);
+    Q_INVOKABLE void containerImages();
+    Q_INVOKABLE void containerAction(const QString& id, const QString& action);
+    Q_INVOKABLE void containerOpen(const QString& id, const QString& mode);
+    Q_INVOKABLE void containerCompose(const QString& action, const QString& file);
     Q_INVOKABLE void configActionList(bool includeHiddenByScope = false);
     Q_INVOKABLE void configActionPreview(const QString& id, const QVariantMap& params);
     Q_INVOKABLE void configActionApply(const QString& id, const QVariantMap& params,
@@ -327,6 +334,13 @@ signals:
     void buildSizeResolved(const QVariantList& sections, const QVariantList& regions,
                            bool toolAvailable, const QString& tool, const QString& rawOutput);
     void serialPortsResolved(const QVariantList& ports, const QString& hint);
+    void containerStatusResolved(const QVariantMap& status);
+    void containersResolved(const QVariantList& containers, const QString& engine,
+                            const QString& rawOutput, const QString& hint);
+    void containerImagesResolved(const QVariantList& images, const QString& hint);
+    void containerActionAccepted(const QString& jobId);
+    void containerTerminalOpened(const QString& id, const QString& command);
+    void containerFinished(const QVariantMap& event);
     void configActionsListed(const QVariantList& actions, const QStringList& activeBuildSystems);
     void configActionPreviewed(const QVariantMap& preview);
     void configActionApplied(const QString& id, const QString& message, const QStringList& files,
@@ -456,6 +470,7 @@ private:
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
     bool dispatchBuildSizeResult(const QString& method, const QJsonObject& result);
     bool dispatchSerialResult(const QString& method, const QJsonObject& result);
+    bool dispatchContainerResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

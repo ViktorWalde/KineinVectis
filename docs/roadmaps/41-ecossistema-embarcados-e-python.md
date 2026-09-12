@@ -83,7 +83,8 @@ setup         "instalar ferramentas": catalogo com grafana, postgresql,
               timescaledb — NENHUMA ferramenta de embarcado ou Python
 terminal      PTY real (portable-pty + alacritty_terminal), multi-aba;
               `open_command` (processo arbitrario num PTY) existe SEM chamador
-docker        DECIDIDO nativo (40 §5) e NAO IMPLEMENTADO: zero codigo
+docker        DECIDIDO nativo (40 §5); IMPLEMENTADO em 2026-09-12 (40 §7.14),
+              docker|podman pela mesma CLI. Dev containers: NAO
 remoto/SSH    DECIDIDO (40 §4), nao arquitetado
 ```
 
@@ -387,7 +388,11 @@ BLOCO E — frameworks: a IDE reconhece o projeto e configura, sem editar a mao
 BLOCO F — grande e proprio; entra sem data, um de cada vez
  F1  Jupyter / janela interativa            kernel via jupyter_client, protocolo e render
  F2  SSH remoto                             ja' na fila (40 §4)
- F3  Docker                                 decidido nativo; medir antes
+ F3  Docker                                 FEITO em 2026-09-12 (40 §7.14): dominio
+                                            `container` — docker|podman, status/list/
+                                            images/action/open/compose, icone no rail,
+                                            Ctrl+Alt+W. Falta o CONTEXTO REMOTO (dev
+                                            containers), que nasce junto com o F2
  F4  SWO/ITM, semihosting, core dump        quando houver placa e dor
  F5  taplo (Cargo.toml), cargo-nextest,     polimento Rust
      cargo-llvm-cov

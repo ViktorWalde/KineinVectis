@@ -100,12 +100,16 @@ Item {
     ///
     /// Para o core toda sessão é um `$SHELL` no PTY, igual — o número da aba é
     /// decisão da UI e por isso não é parâmetro do protocolo.
-    function handleTerminalOpened(id, shell) {
+    /// `title` e' opcional: quem abre um PROCESSO numa aba (logs de um
+    /// container, um monitor serial) nomeia a aba pelo que roda nela; o shell
+    /// continua "Terminal N".
+    function handleTerminalOpened(id, shell, title) {
         root.terminalRenders[id] = ({});
         root.terminalSeq += 1;
         terminalsListModel.append({
             "termId": id,
-            "title": qsTr("Terminal %1").arg(root.terminalSeq)
+            "title": title !== undefined && title !== "" ? title
+                                                        : qsTr("Terminal %1").arg(root.terminalSeq)
         });
         root.terminalsRevision += 1;
         selectTerminal(id);

@@ -23,6 +23,7 @@ Item {
     property var grafanaController: null
     property var embeddedController: null
     property var setupController: null
+    property var containerController: null
     property var toolchainController: null
     property bool aboutVisible: false
     property bool manualVisible: false
@@ -205,6 +206,7 @@ Item {
         embeddedController: root.embeddedController
         toolchainController: root.toolchainController
         setupController: root.setupController
+        containerController: root.containerController
         configActionController: root.configActionController
         runtimeController: root.runtimeController
     }

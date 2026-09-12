@@ -187,6 +187,30 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         alternative_binary: None,
         install_command: None,
     },
+    // Containers (roadmaps/28 §0: dominio NATIVO). Os dois motores falam a
+    // mesma CLI; no Fedora `docker` costuma ser o shim `podman-docker`, e e' o
+    // dominio `container` que descobre qual dos dois responde de verdade.
+    ToolSpec {
+        id: "docker",
+        display_name: "Docker",
+        binary: "docker",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "podman",
+        display_name: "Podman",
+        binary: "podman",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "podman-compose",
+        display_name: "podman-compose",
+        binary: "podman-compose",
+        alternative_binary: None,
+        install_command: None,
+    },
     ToolSpec {
         id: "ripgrep",
         display_name: "ripgrep",
@@ -306,7 +330,9 @@ impl ToolDetector {
         spec.install_command.map(ToOwned::to_owned)
     }
 
-    fn find_in_path(&self, binary: &str) -> Option<PathBuf> {
+    /// Where `binary` lives on the search path, if anywhere. `pub(crate)` for
+    /// the domains that pick between binaries (`container`: docker vs podman).
+    pub(crate) fn find_in_path(&self, binary: &str) -> Option<PathBuf> {
         let search_path = self.search_path.clone().or_else(|| env::var_os("PATH"))?;
 
         env::split_paths(&search_path)
@@ -449,6 +475,10 @@ mod tests {
                 "arm-none-eabi-gcc",
                 "arm-none-eabi-gxx",
                 "probe-rs",
+                // Containers como dominio nativo, 2026-09-12 (roadmaps/28 §0).
+                "docker",
+                "podman",
+                "podman-compose",
                 "ripgrep",
                 "fd",
                 "claude",

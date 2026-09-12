@@ -159,6 +159,17 @@ Item {
         embeddedController: root.domains.embeddedController
     }
 
+    ContainerEventRouter {
+        coreClient: root.domains.coreClient
+        containerController: root.domains.containerController
+        runtimeController: root.domains.runtimeController
+    }
+
+    ContainerRequestRouter {
+        coreClient: root.domains.coreClient
+        containerController: root.domains.containerController
+    }
+
     SetupEventRouter {
         coreClient: root.domains.coreClient
         setupController: root.domains.setupController

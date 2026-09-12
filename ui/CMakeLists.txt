@@ -17,6 +17,7 @@ set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
+set_source_files_properties(qml/components/KvIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvIconGlyphs.js)
 set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
 set_source_files_properties(qml/components/KvBarButton.qml PROPERTIES QT_RESOURCE_ALIAS KvBarButton.qml)
 set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
@@ -97,6 +98,13 @@ set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RES
 set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
 set_source_files_properties(qml/embedded/EmbeddedSizeView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSizeView.qml)
 set_source_files_properties(qml/embedded/EmbeddedSerialView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSerialView.qml)
+set_source_files_properties(qml/container/ContainerController.qml PROPERTIES QT_RESOURCE_ALIAS ContainerController.qml)
+set_source_files_properties(qml/container/ContainerPanel.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanel.qml)
+set_source_files_properties(qml/container/ContainerListView.qml PROPERTIES QT_RESOURCE_ALIAS ContainerListView.qml)
+set_source_files_properties(qml/container/ContainerPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanelHost.qml)
+set_source_files_properties(qml/ipc/ContainerEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ContainerEventRouter.qml)
+set_source_files_properties(qml/ipc/ContainerRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ContainerRequestRouter.qml)
+set_source_files_properties(qml/app/AppEnvironmentDomains.qml PROPERTIES QT_RESOURCE_ALIAS AppEnvironmentDomains.qml)
 set_source_files_properties(qml/ipc/EmbeddedEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedEventRouter.qml)
 set_source_files_properties(qml/ipc/EmbeddedRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedRequestRouter.qml)
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
@@ -263,6 +271,7 @@ qt_add_qml_module(kinein-vectis
         qml/Theme.qml
         qml/StatusColors.qml
         qml/components/KvIcon.qml
+        qml/components/KvIconGlyphs.js
         qml/components/KvToggleChip.qml
         qml/components/KvBarButton.qml
         qml/components/KvTooltip.qml
@@ -343,6 +352,13 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedKitField.qml
         qml/embedded/EmbeddedSizeView.qml
         qml/embedded/EmbeddedSerialView.qml
+        qml/container/ContainerController.qml
+        qml/container/ContainerPanel.qml
+        qml/container/ContainerListView.qml
+        qml/container/ContainerPanelHost.qml
+        qml/ipc/ContainerEventRouter.qml
+        qml/ipc/ContainerRequestRouter.qml
+        qml/app/AppEnvironmentDomains.qml
         qml/ipc/EmbeddedEventRouter.qml
         qml/ipc/EmbeddedRequestRouter.qml
         qml/datasource/DataSourcePanel.qml
@@ -518,6 +534,7 @@ qt_add_qml_module(kinein-vectis
         src/core_client_datasource.cpp
     src/core_client_grafana.cpp
     src/core_client_probe.cpp
+    src/core_client_container.cpp
     src/core_client_sim.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp

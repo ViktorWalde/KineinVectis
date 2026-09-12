@@ -25,6 +25,7 @@ Item {
     // O painel de embarcados edita o KIT (chip, alvo, depurador), que mora aqui.
     property var toolchainController: null
     property var setupController: null
+    property var containerController: null
     // Nao e' painel de ambiente: e' quem recebe o plano que a biblioteca produz.
     property var configActionController: null
     // Nao e' painel de ambiente: e' o terminal onde o comando de instalacao
@@ -86,6 +87,16 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.embeddedController.close()
+    }
+
+    ContainerPanelHost {
+        anchors.fill: parent
+        visible: root.containerController.panelVisible
+        z: 99
+        controller: root.containerController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.containerController.close()
     }
 
     SetupPanelHost {

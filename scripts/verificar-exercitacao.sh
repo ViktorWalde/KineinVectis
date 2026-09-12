@@ -55,6 +55,8 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":4,"method":"fs.list","params":{"path":"%s/src"}}\n' "$raiz"
         printf '{"jsonrpc":"2.0","id":5,"method":"cmake.targets.list","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":6,"method":"serial.list","params":{}}\n'
+        printf '{"jsonrpc":"2.0","id":7,"method":"container.status","params":{}}\n'
+        printf '{"jsonrpc":"2.0","id":8,"method":"container.list","params":{}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -99,6 +101,12 @@ verifica 5 "cmake.targets.list" "alvo_da_exercitacao"
 # USB (medido em 2026-09-11 com um ESP32 em /dev/ttyUSB0), a entrada traz o
 # veredito de acesso e o estado do ModemManager, e a porta NAO e' aberta.
 verifica 6 "serial.list (sysfs + udevadm)" '"ports"'
+# container.status responde SEMPRE (motor ausente e' um estado, nao um erro);
+# container.list depende do motor: sem docker/podman vem TOOL_NOT_FOUND e nao
+# reprova. Com o Podman rootless desta maquina (2026-09-12), a lista vem com os
+# containers do autor e o motor identificado como podman.
+verifica 7 "container.status (docker|podman)" '"reachable"'
+verifica 8 "container.list (ps --format json)" '"containers"'
 
 if [ "$falhou" -ne 0 ]; then
     echo
