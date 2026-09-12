@@ -19,5 +19,9 @@ Item {
         function onSizeRequested(program) {
             root.coreClient.buildSize(program);
         }
+
+        function onSerialListRequested() {
+            root.coreClient.serialList();
+        }
     }
 }

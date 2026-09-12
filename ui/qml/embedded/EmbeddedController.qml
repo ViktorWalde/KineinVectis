@@ -9,6 +9,11 @@ import QtQuick
 // O chip, o alvo e o depurador moram no `ToolchainController` — sao KIT, nao
 // sonda — e o painel os edita por ele.
 //
+// Desde 2026-09-11 (E1 do integracoes/38 §6) guarda tambem as PORTAS SERIAIS
+// USB do `serial.list`: o canal que toda placa compartilha, com a permissao
+// MEDIDA pelo core e o estado do ModemManager. O core nunca abre a porta para
+// responder (abrir reseta a placa), e a tela nunca deduz o chip pela ponte.
+//
 // Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
 Item {
     id: root
@@ -33,9 +38,17 @@ Item {
     property bool sizeMeasured: false
     property bool sizeBusy: false
 
+    // Portas seriais (serial.list). `portsHint` e' a dica do core para a lista
+    // VAZIA; a dica de PERMISSAO vem dentro de cada porta.
+    property var ports: []
+    property string portsHint: ""
+    property bool portsBusy: false
+
     readonly property bool probeFound: probes.length > 0
+    readonly property bool portFound: ports.length > 0
 
     signal listRequested()
+    signal serialListRequested()
     signal sizeRequested(string program)
 
     visible: false
@@ -53,6 +66,9 @@ Item {
         sizeToolAvailable = true;
         sizeMeasured = false;
         sizeBusy = false;
+        ports = [];
+        portsHint = "";
+        portsBusy = false;
         panelVisible = false;
     }
 
@@ -65,12 +81,20 @@ Item {
         panelVisible = false;
     }
 
-    // Toda abertura PERGUNTA de novo: sonda e' coisa que se pluga e despluga,
-    // e a lista da ultima vez e' exatamente o que nao se pode mostrar.
+    // Toda abertura PERGUNTA de novo: sonda e porta sao coisa que se pluga e
+    // despluga, e a lista da ultima vez e' exatamente o que nao se pode mostrar.
     function refresh() {
         busy = true;
+        portsBusy = true;
         errorText = "";
         listRequested();
+        serialListRequested();
+    }
+
+    function handleSerialPorts(newPorts, newHint) {
+        ports = newPorts === undefined ? [] : newPorts;
+        portsHint = newHint === undefined ? "" : newHint;
+        portsBusy = false;
     }
 
     function handleProbes(newProbes, newToolAvailable, newRawOutput, newHint) {
@@ -85,6 +109,11 @@ Item {
     function handleFailed(method, message) {
         if (method === "build.size") {
             sizeBusy = false;
+            errorText = message;
+            return;
+        }
+        if (method === "serial.list") {
+            portsBusy = false;
             errorText = message;
             return;
         }
@@ -116,6 +145,29 @@ Item {
     // ocorrer) nao divide por zero.
     function fracaoUsada(region) {
         return region.size > 0 ? region.used / region.size : 0;
+    }
+
+    // Uma linha por porta: o no', o produto que o USB declarou, VID:PID e o
+    // driver — na ordem em que se confere no `lsusb`/`dmesg`. Campo ausente nao
+    // vira "undefined" na tela.
+    function portSummary(port) {
+        const partes = [port.device];
+        if (port.product !== undefined && port.product !== "") {
+            partes.push(port.product);
+        }
+        partes.push(port.vid + ":" + port.pid);
+        if (port.driver !== undefined && port.driver !== "") {
+            partes.push(port.driver);
+        }
+        return partes.join(" · ");
+    }
+
+    // O aviso do ModemManager so' vale quando ele esta' RODANDO, a porta e'
+    // candidata e nenhuma regra ja' o mandou ignorar. Estado desconhecido
+    // (sem udevadm) nao acusa nada.
+    function modemManagerWarns(port) {
+        const mm = port.modemManager;
+        return mm !== undefined && mm !== null && mm.running && mm.candidate && !mm.ignored;
     }
 
     // Uma linha por sonda: nome, familia, VID:PID e serial — o que o probe-rs

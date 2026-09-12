@@ -45,7 +45,7 @@ Item {
             wrapMode: Text.WordWrap
             // O QUE A TELA PROMETE E' O QUE ELA FAZ: detectar pelo probe-rs,
             // guardar o kit, subir o depurador escolhido. Nada roda como root.
-            text: qsTr("A sonda é lida pelo probe-rs; o chip, o alvo e o depurador ficam no kit do projeto. Nada roda como root.")
+            text: qsTr("A sonda é lida pelo probe-rs e as portas seriais pelo sysfs, sem abrir nenhuma; o chip, o alvo e o depurador ficam no kit do projeto. Nada roda como root.")
             color: Theme.textMuted
             font.pixelSize: 10
         }
@@ -142,6 +142,12 @@ Item {
                     font.pixelSize: 10
                 }
             }
+        }
+
+        // As portas seriais: dono proprio (E1 do integracoes/38 §6).
+        EmbeddedSerialView {
+            width: parent.width
+            controller: root.controller
         }
 
         // --- Alvo do kit ---------------------------------------------------
@@ -251,7 +257,7 @@ Item {
         }
 
         KvButton {
-            text: qsTr("Procurar sonda")
+            text: qsTr("Procurar sonda e portas")
             compact: true
             enabled: root.controller !== null && !root.controller.busy
             onClicked: root.controller.refresh()

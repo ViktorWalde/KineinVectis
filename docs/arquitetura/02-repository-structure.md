@@ -45,12 +45,12 @@ kinein-vectis/
 │   │   ├── cargo.rs cmake.rs format.rs run.rs test.rs tools.rs process.rs
 │   │   ├── cdb.rs               compilation database do C/C++: onde esta e se envelheceu
 │   │   ├── fswatch.rs           notify debounced + mudanca externa
-│   │   ├── probe.rs runconfig.rs settings.rs
+│   │   ├── probe.rs runconfig.rs settings.rs size.rs serial.rs
 │   │   │
 │   │   ├── handlers/            roteadores por dominio (blocos impl Core)
 │   │   │   └── build cargo cmake configaction datasource debug draft format fs
-│   │   │      git grafana jobs library probe run runconfig settings setup sim
-│   │   │      syntax terminal toolchain tools workspace
+│   │   │      git grafana jobs library probe run runconfig serial settings setup
+│   │   │      sim syntax terminal toolchain tools workspace
 │   │   │
 │   │   ├── build/               mod parse
 │   │   ├── commands/            mod build editor git ide run

@@ -30,6 +30,7 @@ mod probe;
 mod rpc;
 mod run;
 mod runconfig;
+mod serial;
 mod settings;
 mod setup;
 mod sim;
@@ -62,6 +63,7 @@ pub use probe::*;
 pub use rpc::*;
 pub use run::*;
 pub use runconfig::*;
+pub use serial::*;
 pub use settings::*;
 pub use setup::*;
 pub use sim::*;
@@ -77,4 +79,4 @@ pub use workspace::*;
 pub const JSON_RPC_VERSION: &str = "2.0";
 
 /// Kinein Vectis IPC protocol version implemented by this workspace.
-pub const PROTOCOL_VERSION: &str = "0.90.0";
+pub const PROTOCOL_VERSION: &str = "0.91.0";

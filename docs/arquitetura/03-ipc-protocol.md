@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **O `0.91.0` (2026-09-11) acrescentou o domínio `serial`:** `serial.list`
+> enumera as portas seriais USB desta máquina pelo sysfs — `ttyUSB*` (ponte)
+> e `ttyACM*` (CDC) — com VID:PID, driver, o que o VID:PID diz do **elo** (nunca
+> do chip atrás de uma ponte), a permissão **medida** com `access(2)` e o estado
+> do ModemManager via `udevadm`. Nunca abre a porta: abrir aciona DTR/RTS e
+> reseta a placa. Domínio novo sobe o minor. É a E1 do
+> [`../integracoes/38`](../integracoes/38-conectividade-bare-metal.md) §6.
+>
 > **O `0.90.0` (2026-09-11) acrescentou `build.size`:** o tamanho do ELF
 > medido por `<prefix>size` do kit, com a fração usada de cada região do
 > linker script (`BuildSizeParams` → `SizeReport`). Método e tipos novos sobem
@@ -1796,6 +1804,8 @@ runConfig.list
 runConfig.save
 runConfig.setActive
 
+serial.list
+
 settings.get
 settings.set
 
@@ -1996,6 +2006,49 @@ nao reconhecida   -> "o formato mudou e o parser precisa acompanhar"
 Sem regra de udev a ferramenta roda, não acha nada, e o usuário conclui que a
 placa está com defeito. **Plug and play morre exatamente aí**, e é a lacuna que
 `integracoes/36` §5 já tinha nomeado como a mais subestimada.
+## `serial.*` — as portas seriais USB
+
+Domínio novo no protocolo `0.91.0` (E1 do `integracoes/38` §6, 2026-09-11). A
+porta serial é o **canal que toda família bare metal compartilha** — bootloader
+de ROM, console e as linhas DTR/RTS de reset — e por isso é a fundação do
+monitor UART e do "Gravar".
+
+```text
+serial.list {} -> { ports: [SerialPortInfo], hint? }
+
+SerialPortInfo  device, byId?, kind (usbUartBridge|usbCdc), vid, pid,
+                manufacturer?, product?, serial?, interface?, driver?, family?,
+                access { readableWritable, mode, group?, hint? },
+                modemManager? { candidate, ignored, running }
+```
+
+**Não exige workspace**, ao contrário do `probe.list`: não há ferramenta vinda
+do kit — é o sysfs desta máquina, o mesmo com ou sem projeto aberto.
+
+**Nunca abre a porta.** Abrir um tty aciona DTR/RTS na maioria das pontes
+(CP210x, CH340, FTDI) e isso **reseta a placa**; um `serial.list` que
+resetasse o firmware a cada abertura do painel seria um defeito. A permissão é
+medida com `access(2)`, que honra ACL — é assim que `TAG+="uaccess"` dá acesso
+ao usuário da sessão sem grupo nenhum; um `stat` sozinho mentiria nesse caso.
+
+**De onde vem cada campo:** VID:PID, `manufacturer`/`product`/`serial` e
+`bInterfaceNumber` subindo de `/sys/class/tty/<n>/device` até o diretório USB
+com `idVendor` (ABI documentada do kernel); `driver` do link `device/driver`;
+`byId` de `/dev/serial/by-id`; `modemManager` de `udevadm info -q property`
+(`ID_MM_CANDIDATE`, `ID_MM_DEVICE_IGNORE`) mais `/proc/*/comm` — e é `null`,
+não `false`, quando o `udevadm` não existe. Medido em 2026-09-11: o
+ModemManager examinou o ESP32 4 s depois do plug.
+
+**`family` fala do ELO, nunca do chip.** `10c4:ea60` é *"ponte USB-UART
+CP210x — o chip do outro lado não se lê pelo USB"*; `303a:1001` é *"Espressif
+USB Serial/JTAG — o próprio chip"*. A identidade do chip vem **pelo canal**
+(`esptool chip-id`, `probe-rs info`), que é a fatia E5. Fontes da tabela no
+`integracoes/38` §5.
+
+**A `hint` de acesso é o passo oficial, nunca um `sudo` que a IDE rodaria:**
+*"`/dev/ttyUSB0` é `crw-rw----` do grupo `dialout` e você não está nele …
+`sudo usermod -aG dialout $USER` e sair/entrar da sessão. A IDE não roda isso."*
+
 ## `command.*` — o catálogo de comandos que a UI mostra
 
 Um método, e ele é a fonte única de **tudo que a IDE oferece por nome**: paleta,

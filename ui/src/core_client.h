@@ -186,6 +186,8 @@ public:
     Q_INVOKABLE void probeList();
     // Tamanho do ELF do kit (build.size): flash/RAM usados.
     Q_INVOKABLE void buildSize(const QString& program);
+    // Portas seriais USB (serial.list): o canal que toda placa compartilha.
+    Q_INVOKABLE void serialList();
     Q_INVOKABLE void configActionList(bool includeHiddenByScope = false);
     Q_INVOKABLE void configActionPreview(const QString& id, const QVariantMap& params);
     Q_INVOKABLE void configActionApply(const QString& id, const QVariantMap& params,
@@ -324,6 +326,7 @@ signals:
                         const QString& hint);
     void buildSizeResolved(const QVariantList& sections, const QVariantList& regions,
                            bool toolAvailable, const QString& tool, const QString& rawOutput);
+    void serialPortsResolved(const QVariantList& ports, const QString& hint);
     void configActionsListed(const QVariantList& actions, const QStringList& activeBuildSystems);
     void configActionPreviewed(const QVariantMap& preview);
     void configActionApplied(const QString& id, const QString& message, const QStringList& files,
@@ -452,6 +455,7 @@ private:
     bool dispatchSimResult(const QString& method, const QJsonObject& result);
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
     bool dispatchBuildSizeResult(const QString& method, const QJsonObject& result);
+    bool dispatchSerialResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

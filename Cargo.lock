@@ -1073,6 +1073,7 @@ dependencies = [
  "portable-pty",
  "postgres",
  "rusqlite",
+ "rustix",
  "serde",
  "serde_json",
  "tree-sitter",

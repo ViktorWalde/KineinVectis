@@ -57,10 +57,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.90.0
-testes      680 Rust + 32 harnesses QML
-metodos     131 IPC roteados, 41 eventos
-dominios    30, e os 30 documentados no arquitetura/03
+protocolo   0.91.0
+testes      685 Rust + 32 harnesses QML
+metodos     132 IPC roteados, 41 eventos
+dominios    31, e os 31 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
 ```
@@ -507,15 +507,21 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          monitor -> E5 identidade Espressif ->
                                          E2 permissao por canal -> E4 gravar
                                          como JOB com motor por familia; E6
-                                         debug bloqueado por hardware). TRES
-                                         DECISOES DO AUTOR antes de codigo:
-                                         MPL-2.0 no deny.toml (abre espflash/
-                                         serialport como crate; senao,
-                                         processo), flash como dominio proprio
-                                         ou dentro de toolchain/build, e a
-                                         ordem. As fatias 4.3 (udev) e 4.4
-                                         (monitor UART) da frente F continuam
-                                         as proximas — agora com placa
+                                         debug bloqueado por hardware).
+                                         DECIDIDO pelo autor na mesma noite
+                                         (38 §6), com a regra "padrao de
+                                         mercado, solucao pronta, nada
+                                         escrito do zero": monitor = PROCESSO
+                                         (`espflash monitor` / `tio`) no
+                                         painel de terminal, MPL-2.0 NAO
+                                         entra; gravar = CONFIGURACAO DE
+                                         EXECUCAO, nao dominio novo; ordem
+                                         E1 -> E3 -> E5 -> E4 -> E2; um C3/C6
+                                         vai para a mesa (USB-JTAG embutido,
+                                         probe-rs sem fork). E1 `serial.list`
+                                         FEITA na mesma noite (§7.13, 0.91.0),
+                                         exercitada contra o ESP32 real. E3
+                                         (monitor como processo) e' o PROXIMO
 --  guias de instalacao para arch/suse   a fonte oficial dos tres projetos NAO
                                          cobre essas familias; entrar exige
                                          fonte de comunidade, marcada como tal
@@ -1446,6 +1452,54 @@ docs      integracoes/38 (novo), indices em docs/README e integracoes/README,
           nota datada no 35 §5.7, esta secao e a entrada da §4
 provado   nada gravado no chip: so' leituras (chip-id, flash-id). O 38 §7 diz
           o que NAO foi provado, item a item
+```
+
+### 7.13 E1 — `serial.list`: a IDE passa a ver a porta serial, 2026-09-11
+
+**Primeira das fatias decididas na §7.12.** O core não sabia o que era uma
+porta serial (o único `ttyUSB0` nos fontes era um teste negativo do
+`dap/server.rs`); agora enumera as USB, e o painel Embarcados as mostra.
+
+```text
+serial.list (0.91.0)  /sys/class/tty/ttyUSB* e ttyACM*; sobe ate' o diretorio
+                      USB com idVendor (ABI do kernel) para VID:PID, nomes,
+                      serial e bInterfaceNumber; driver pelo link; by-id de
+                      /dev/serial/by-id; ModemManager por `udevadm info` +
+                      /proc/*/comm (null sem udevadm, nao false)
+core/serial.rs        NUNCA abre a porta — abrir aciona DTR/RTS e reseta a
+                      placa. Permissao MEDIDA com access(2) via `rustix`
+                      (+0 crates: ja' era transitiva), porque access honra a
+                      ACL do `uaccess`; stat sozinho mentiria
+familia               VID:PID -> o que o ELO e' (ponte CP210x, USB-JTAG da
+                      Espressif, VCP do ST-Link, Debug Probe...), nunca o chip
+                      atras da ponte. Fontes no 38 §5
+handler               NAO exige workspace: nao ha' ferramenta do kit aqui
+UI                    EmbeddedSerialView (dono proprio; o painel estava em
+                      260/300), controller com ports/portsHint/portsBusy, o
+                      aviso do ModemManager so' com vivo + candidata + sem
+                      IGNORE, e a dica de acesso sem `sudo` que a IDE rodasse
+```
+
+**Exercitado contra o core real com o ESP32 plugado:** a resposta bate campo
+a campo com a medição manual da tarde — `/dev/ttyUSB0`, CP2102 `10c4:ea60`,
+`cp210x`, `if00`, `crw-rw---- dialout` com `readableWritable: true`, e
+`modemManager { candidate: true, ignored: false, running: true }`. O chip não
+foi resetado. O `verificar-exercitacao.sh` agora pede `serial.list` ao core
+real (sem placa: lista vazia com `ports` presente).
+
+**Provado por mutação** (todas com o compilador calado): Rust — parar a subida
+do sysfs na interface (reprova nos dois testes de sysfs); trocar `access(2)`
+por "bits do grupo no modo" (reprova no caso `0o060`, que é dono sem bits);
+trocar vid/pid na família (reprova). QML — o aviso do MM ignorar `running`;
+`refresh()` não pedir as portas; trocar de workspace esquecer a sonda e não a
+porta. **O limite honesto do teste de acesso:** o caso real do `uaccess` (nó
+de root com ACL nomeada) não se monta sem root — medido: numa ACL o dono é
+julgado pela entrada do dono; quem prova é a exercitação contra `/dev/ttyUSB0`.
+
+```text
+protocolo 0.91.0 — SerialPortInfo, SerialAccess, ModemManagerState
+testes  685 Rust (+5, em tests/serial.rs), harness tst_embedded (+16 assercoes)
+gate    22 verificacoes; exercitacao ganhou serial.list
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

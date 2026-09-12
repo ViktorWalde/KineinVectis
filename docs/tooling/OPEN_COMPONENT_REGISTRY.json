@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-10",
+  "updatedAt": "2026-09-11",
   "components": [
     {
       "id": "alacritty-terminal",
@@ -373,6 +373,45 @@
       },
       "verification": "cargo deny check (advisories, bans, licenses, sources) green on the real workspace with the crate in place, 2026-09-05",
       "adr": "docs/adr/ADR-0006-exmex-avaliador-de-expressao.md"
+    },
+    {
+      "id": "rustix",
+      "name": "rustix",
+      "role": "Safe `access(2)` for the `serial` domain: tells whether the user can read and write a serial device node WITHOUT opening it (opening asserts DTR/RTS on most USB-UART bridges and resets the board)",
+      "adoptionMode": "A",
+      "integration": "Rust crate linked only by kinein-core, one call site in serial.rs (`rustix::fs::access`). Declared with default-features = false and features [\"std\", \"fs\"]. Chosen over a stat()-based check because access(2) honours POSIX ACLs, which is how udev's TAG+=\"uaccess\" grants the seat user access without any group; a mode-bit heuristic would report `root:dialout 0660` as writable for a user outside dialout, or as denied for a user covered by the ACL.",
+      "upstream": {
+        "repository": "https://github.com/bytecodealliance/rustix",
+        "documentation": "https://docs.rs/rustix"
+      },
+      "version": {
+        "selected": "1.1.4",
+        "pin": "Cargo constraint 1.1 plus Cargo.lock checksum b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190",
+        "reason": "Already resolved at 1.1.4 in Cargo.lock as a transitive dependency of portable-pty (rustix-openpty) and alacritty_terminal (polling) before this adoption; declaring it directly adds no crate and no second version."
+      },
+      "license": {
+        "spdx": "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT",
+        "accepted": true,
+        "source": "crates.io version metadata for 1.1.4, read on 2026-09-11; MIT and Apache-2.0 are already in deny.toml"
+      },
+      "maintenance": {
+        "statusAtReview": "Active: Bytecode Alliance project, latest release 2026-02-22; it is the syscall layer under std-adjacent crates such as tempfile and the async-io stack.",
+        "reviewedAt": "2026-09-11"
+      },
+      "runtimeSecurity": {
+        "telemetry": false,
+        "network": false,
+        "shellExecution": false,
+        "secretsAccess": false,
+        "userContentUpload": false,
+        "nativeCode": true,
+        "notes": "It is a thin wrapper over Linux syscalls (raw syscalls or libc, chosen by the crate's backend); the `unsafe` lives inside it and none in this repository (#![forbid(unsafe_code)] stays). Kinein calls only fs::access, which reads nothing and writes nothing."
+      },
+      "cost": {
+        "addedCrates": 0,
+        "notes": "Measured with `cargo tree -i rustix` on 2026-09-11: the crate was already in the graph via polling and rustix-openpty; the direct declaration only widens its feature set by `fs`."
+      },
+      "verification": "cargo deny check (advisories, bans, licenses, sources) green on the real workspace with the crate declared, 2026-09-11; the `serial` tests exercise access() against 0o000, 0o060 and 0o600 nodes"
     },
     {
       "id": "sympy",

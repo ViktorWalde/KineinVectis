@@ -457,12 +457,12 @@ polimento — e cada fatia tem gate que roda **sem** a placa e exercitação
 **com** ela:
 
 ```text
-E1  serial.list (core)        enumera /dev/serial/by-id + VID:PID + driver +
-                              quem segura (ID_MM_CANDIDATE sem IGNORE, brltty)
-                              -> familia do elo. Puro sysfs, sem crate. Gate:
-                              fixture de sysfs; mutacao: trocar ttyACM por
-                              ttyUSB na classificacao. E' o que as fatias 4.3 e
-                              4.4 ja' pediam; agora tem placa para exercitar.
+E1  serial.list (core)        FEITA em 2026-09-11 (`roadmaps/40` §7.13,
+                              protocolo 0.91.0): sysfs + udevadm, sem abrir a
+                              porta; permissao por access(2) via rustix (ja'
+                              era transitiva); familia do elo; painel com
+                              EmbeddedSerialView. Exercitada contra o ESP32
+                              real, provada por 3 mutacoes Rust + 3 QML.
 E2  permissao por canal       a fatia 4.3, redesenhada: para CADA dispositivo,
     (core + painel)           qual das tres formas falta, o passo OFICIAL datado
                               (probe.rs/probe-setup para B; dialout para A; a
@@ -492,14 +492,35 @@ E6  debug do ESP32 classico   BLOQUEADO por hardware (ESP-Prog) e por toolchain
                               sem fatia nova — e' `chip` no kit.
 ```
 
-**O que este documento não decide, e é do autor:** (a) MPL-2.0 no
-`deny.toml` — abre `espflash`/`serialport` como crate; sem isso, processo;
-(b) se `flash` é domínio próprio ou vive em `toolchain`/`build`; (c) se a
-identidade Espressif entra antes ou depois do monitor. A recomendação, pelo
-critério de "a menor fatia medível contra o binário": **E1 → E3 → E5 → E2 →
-E4**, porque E1+E3 fecham as duas fatias de polimento que já estavam na fila
-com a placa que está na mesa, e E5 é o primeiro gesto de plug and play
-Espressif sem escrever motor nenhum.
+**As decisões do autor — 2026-09-11, à noite, depois de ler este documento.**
+A regra que ele deu antes de responder, e que passa a ordenar a frente:
+*"seguir o padrão estabelecido no mercado e as soluções open source já
+adotadas; apenas incluir algo pronto na IDE"* — não escrever o que já existe.
+
+```text
+monitor serial   PROCESSO PRONTO no painel de terminal: `espflash monitor
+                 --elf <firmware>` para Espressif (decodifica backtrace) e
+                 `tio` para STM32/Pico/Pi (GPL-2.0, empacotado no Fedora). E' a
+                 forma da extensao oficial da Espressif para o VS Code (`idf.py
+                 monitor` num terminal). Zero codigo serial, zero licenca nova:
+                 MPL-2.0 NAO entra no deny.toml, e `serialport`/`espflash`
+                 como crate ficam FORA. A IDE escolhe a porta e passa o ELF
+gravar           CONFIGURACAO DE EXECUCAO, nao dominio novo: um tipo de Run,
+                 como o "Upload" do PlatformIO e o "OpenOCD Download & Run" do
+                 CLion. Reaproveita run/runconfig/jobs e o evento de saida. O
+                 motor (esptool, probe-rs download, picotool, dfu-util) e'
+                 sugerido pela identidade da porta e confirmado pelo usuario
+ordem            E1 serial.list -> E3 monitor (processo) -> E5 identidade
+                 Espressif (`esptool chip-id`/`flash-id` sugerindo o kit) ->
+                 E4 gravar -> E2 permissao por canal. E6 (debug do classico)
+                 continua bloqueado por hardware
+placa            um ESP32-C3 ou C6 vai para a mesa: RISC-V com USB-JTAG
+                 embutido (303a:1001, ja' coberto pelo udev do Fedora) — flash,
+                 debug, RTT/defmt via probe-rs sem hardware extra, gdb do
+                 Fedora serve, Rust com rustc upstream. Destrava o E6 sem
+                 nenhuma ferramenta fork. Na placa, a porta marcada USB, nao a
+                 UART. O classico fica para provar o canal serial
+```
 
 ## 7. O que NÃO foi provado (a fronteira, dita)
 

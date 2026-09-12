@@ -14,11 +14,13 @@ Item {
     id: root
 
     property int consultas: 0
+    property int consultasSerial: 0
 
     EmbeddedController {
         id: controller
 
         onListRequested: root.consultas += 1
+        onSerialListRequested: root.consultasSerial += 1
     }
 
     Component.onCompleted: {
@@ -67,12 +69,56 @@ Item {
         if (controller.errorText !== "probe-rs saiu com 1") failures += 16384;
         if (controller.busy) failures += 32768;
 
-        // Trocar de workspace FECHA e esquece: a lista da ultima vez e'
-        // exatamente o que nao se pode mostrar.
+        // --- Portas seriais (E1 do integracoes/38 §6) ------------------------
+        // Abrir/atualizar pergunta as portas JUNTO com a sonda: sao dois
+        // pedidos, e o segundo nao pode depender do primeiro voltar.
+        if (root.consultasSerial !== root.consultas) failures += 65536;
+        if (!controller.portsBusy) failures += 131072;
+
+        // A porta medida em 2026-09-11: o resumo diz no', produto, VID:PID e
+        // driver — e a familia fala do ELO, nunca do chip.
+        const cp2102 = {
+            device: "/dev/ttyUSB0", kind: "usbUartBridge", vid: "10c4", pid: "ea60",
+            product: "CP2102 USB to UART Bridge Controller", driver: "cp210x",
+            family: "ponte USB-UART CP210x",
+            access: { readableWritable: true, mode: "crw-rw----", group: "dialout" },
+            modemManager: { candidate: true, ignored: false, running: true }
+        };
+        controller.handleSerialPorts([cp2102], "");
+        if (!controller.portFound) failures += 262144;
+        if (controller.portsBusy) failures += 524288;
+        if (controller.portSummary(cp2102)
+                !== "/dev/ttyUSB0 · CP2102 USB to UART Bridge Controller · 10c4:ea60 · cp210x")
+            failures += 1048576;
+        // Campo ausente NAO vira "undefined".
+        if (controller.portSummary({ device: "/dev/ttyACM0", vid: "303a", pid: "1001" })
+                !== "/dev/ttyACM0 · 303a:1001") failures += 2097152;
+
+        // O aviso do ModemManager exige as TRES condicoes: vivo, candidata, sem
+        // regra de ignorar. Estado desconhecido nao acusa.
+        if (!controller.modemManagerWarns(cp2102)) failures += 4194304;
+        if (controller.modemManagerWarns({ modemManager: { candidate: true, ignored: true, running: true } }))
+            failures += 8388608;
+        if (controller.modemManagerWarns({ modemManager: { candidate: true, ignored: false, running: false } }))
+            failures += 16777216;
+        if (controller.modemManagerWarns({ device: "/dev/ttyACM0" })) failures += 33554432;
+
+        // Lista vazia guarda a dica do core; a falha do serial.list nao apaga a
+        // sonda que ja' veio.
+        controller.handleSerialPorts([], "nenhuma porta serial USB apareceu.");
+        if (controller.portFound) failures += 67108864;
+        if (controller.portsHint !== "nenhuma porta serial USB apareceu.") failures += 134217728;
         controller.handleProbes([{ name: "x", vid: "1", pid: "2" }], true, "", "");
+        controller.handleFailed("serial.list", "sysfs indisponivel");
+        if (controller.errorText !== "sysfs indisponivel") failures += 268435456;
+        if (!controller.probeFound) failures += 536870912;
+
+        // Trocar de workspace FECHA e esquece: a lista da ultima vez e'
+        // exatamente o que nao se pode mostrar — sonda E porta.
+        controller.handleSerialPorts([cp2102], "");
         controller.workspaceRoot = "/tmp/outro";
-        if (controller.panelVisible) failures += 65536;
-        if (controller.probes.length !== 0) failures += 131072;
+        if (controller.panelVisible) failures += 1073741824;
+        if (controller.probes.length !== 0 || controller.ports.length !== 0) failures += 2147483648;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

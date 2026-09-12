@@ -21,6 +21,7 @@ pub mod lsp;
 pub mod probe;
 pub mod run;
 pub mod runconfig;
+pub mod serial;
 pub mod settings;
 pub mod setup;
 pub mod sim;

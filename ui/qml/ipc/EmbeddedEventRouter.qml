@@ -1,6 +1,6 @@
 import QtQuick
 
-// O que o core responde de `probe.*` -> EmbeddedController.
+// O que o core responde de `probe.*`, `build.size` e `serial.*` -> EmbeddedController.
 //
 // Inclui o `requestFailed` pelo mesmo motivo do ToolchainEventRouter: a recusa
 // e' informacao de produto — "probe-rs nao encontrado" e' a resposta.
@@ -21,6 +21,10 @@ Item {
 
         function onBuildSizeResolved(sections, regions, toolAvailable, tool, rawOutput) {
             root.embeddedController.handleBuildSize(sections, regions, toolAvailable, tool, rawOutput);
+        }
+
+        function onSerialPortsResolved(ports, hint) {
+            root.embeddedController.handleSerialPorts(ports, hint);
         }
 
         function onRequestFailed(method, message) {

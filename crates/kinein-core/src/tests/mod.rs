@@ -20,6 +20,7 @@ mod lsp_server;
 mod run;
 mod runconfig;
 mod runners;
+mod serial;
 mod settings;
 mod sim;
 mod sim_integrador;

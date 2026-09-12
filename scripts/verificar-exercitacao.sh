@@ -54,6 +54,7 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":3,"method":"fs.search","params":{"query":"AGULHA_DA_EXERCITACAO"}}\n'
         printf '{"jsonrpc":"2.0","id":4,"method":"fs.list","params":{"path":"%s/src"}}\n' "$raiz"
         printf '{"jsonrpc":"2.0","id":5,"method":"cmake.targets.list","params":{}}\n'
+        printf '{"jsonrpc":"2.0","id":6,"method":"serial.list","params":{}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -93,6 +94,11 @@ verifica 2 "fs.findFiles (fd)" "src/main.cpp"
 verifica 3 "fs.search (rg)" "AGULHA_DA_EXERCITACAO"
 verifica 4 "fs.list" "main.cpp"
 verifica 5 "cmake.targets.list" "alvo_da_exercitacao"
+# serial.list le o sysfs e o udevadm DESTA maquina: sem placa a lista e' vazia
+# e a resposta ainda tem `ports` — e' isso que se verifica. Com uma placa no
+# USB (medido em 2026-09-11 com um ESP32 em /dev/ttyUSB0), a entrada traz o
+# veredito de acesso e o estado do ModemManager, e a porta NAO e' aberta.
+verifica 6 "serial.list (sysfs + udevadm)" '"ports"'
 
 if [ "$falhou" -ne 0 ]; then
     echo
