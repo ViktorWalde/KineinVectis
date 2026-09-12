@@ -27,6 +27,13 @@ abrir; `fs.list` adiciona diretórios expandidos e `fs.read` adiciona o pai de
 arquivos abertos, sempre `NonRecursive`. Eventos são filtrados, deduplicados e
 agrupados em 180 ms antes de `event.fs.changed`.
 
+> **Nota datada (2026-09-12):** o índice do projeto inteiro (`roadmaps/42`
+> P0) passou a registrar no watcher **todas as pastas que caminhou**, uma a
+> uma e `NonRecursive`, com a mesma lista de pastas ignoradas — a decisão
+> deste ADR (nada recursivo na raiz) fica de pé; o que muda é *quem* pede o
+> registro. Medido: 148 watches neste repositório. O registro para no
+> primeiro erro e o relata uma vez (`event.fs.watchError`).
+
 O watcher é apenas aviso antecipado. A garantia contra perda de dados é
 `fs.write { expectedContent }`: o core compara o snapshot com o disco e retorna
 `FILE_CHANGED` sem escrever quando divergem. A UI só atualiza a base esperada

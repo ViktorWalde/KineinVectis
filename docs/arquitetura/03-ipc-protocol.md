@@ -2227,11 +2227,22 @@ declarações (217 delas em 18 `.py`) em ~2,1 s (build de depuração). O
 "4.658" da manhã foi medido antes de o dedup do `fn` em `impl` entrar no
 mesmo commit — remedido sem Python, o mesmo código dá 3.720.
 
-**O incremento.** Os caminhos de `event.fs.changed` são reindexados no loop
-principal (um arquivo é milissegundos) e os totais reemitidos. **Limite
-honesto:** o watcher só observa as pastas que a UI expandiu/abriu
-(ADR-0001, não recursivo), então mudanças fora delas só entram no próximo
-`workspace.open` — o watch recursivo é a próxima fatia do pilar 0.
+**O incremento — e o índice segue o disco INTEIRO (2026-09-12 à tarde).**
+Os caminhos de `event.fs.changed` são reindexados no loop principal (um
+arquivo é milissegundos) e os totais reemitidos. Uma **pasta nova** é
+caminhada inteira (com a mesma lista de pastas ignoradas); uma pasta apagada
+leva os arquivos e as subpastas dela. E o que fecha o buraco que existia até
+então: a cada `event.index.finished` o Core **registra no watcher todas as
+pastas que o índice caminhou** — uma a uma, `NonRecursive`, como o ADR-0001
+manda —, então um arquivo criado pelo terminal numa pasta que nenhuma tela
+listou chega ao índice pelo mesmo caminho. Antes, só as pastas que a UI
+expandiu eram observadas e o arquivo ficava fora até o próximo
+`workspace.open`, em silêncio. Medido neste repositório: **148 inotify
+watches** (as 148 pastas), contra o limite de 186.243 desta máquina
+(`fs.inotify.max_user_watches`); num projeto grande o registro **para no
+primeiro erro** e o relata uma vez (`event.fs.watchError`). Provado pelo
+core real na exercitação: um arquivo nascido em `src/tarde/` depois do índice
+pronto aparece no `index.symbols` sem reabrir nada.
 
 **Sem duplicata e sem renomear a gramática.** A `tags` do Rust captura um `fn`
 dentro de `impl` duas vezes (`function` e `method`); o índice fica com a mais

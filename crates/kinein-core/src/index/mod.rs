@@ -15,7 +15,13 @@
 //!                   por linguagem, le e parseia os arquivos-fonte, extrai as
 //!                   declaracoes; reporta progresso; respeita cancelamento
 //! reindex_paths()   o incremento: os caminhos que o `event.fs.changed` trouxe
-//!                   sao relidos (ou removidos) e os totais recalculados
+//!                   sao relidos (ou removidos) e os totais recalculados; uma
+//!                   PASTA nova e' caminhada inteira, uma pasta apagada leva
+//!                   os arquivos dela junto
+//! folder_paths      as pastas caminhadas, para o Core REGISTRA-LAS no watcher
+//!                   (uma a uma, nao recursivo — ADR-0001): e' assim que o
+//!                   indice segue o disco inteiro, e nao so' as pastas que a
+//!                   UI abriu
 //! query()           nome exato > prefixo > substring, sem diferenciar caixa
 //! ```
 //!
@@ -65,8 +71,8 @@ pub struct ProjectIndex {
     pub root: PathBuf,
     /// Por caminho relativo, em ordem.
     pub files: BTreeMap<String, IndexedFile>,
-    /// Pastas vistas.
-    pub folders: u64,
+    /// Pastas caminhadas (absolutas, a raiz inclusa), na ordem em que entraram.
+    pub folder_paths: Vec<PathBuf>,
     /// Arquivos que nao deu para ler/parsear.
     pub skipped: Vec<String>,
     /// Estado e ultimo tempo de build.
@@ -92,7 +98,7 @@ impl ProjectIndex {
         Self {
             root: root.to_path_buf(),
             files: BTreeMap::new(),
-            folders: 0,
+            folder_paths: Vec::new(),
             skipped: Vec::new(),
             state: IndexState::Idle,
             error: None,
@@ -139,7 +145,7 @@ impl ProjectIndex {
         });
         IndexStats {
             state: self.state,
-            folders: self.folders,
+            folders: self.folder_paths.len() as u64,
             files: self.files.len() as u64,
             source_files,
             lines,
@@ -201,8 +207,11 @@ impl ProjectIndex {
         )
     }
 
-    /// Reindexa os caminhos que mudaram: relidos se existem e sao fonte,
-    /// removidos se sumiram. Devolve quantos entraram/sairam.
+    /// Reindexa os caminhos que mudaram: arquivo relido se existe e e' fonte;
+    /// pasta nova caminhada inteira (ela entra em `folder_paths`, e o Core
+    /// registra no watcher tudo que esta' la' a cada `event.index.finished`);
+    /// o que sumiu sai — e uma pasta que sumiu leva os arquivos e as subpastas
+    /// dela junto. Devolve quantos arquivos/pastas entraram ou sairam.
     pub(crate) fn reindex_paths(
         &mut self,
         paths: &[PathBuf],
@@ -221,12 +230,51 @@ impl ProjectIndex {
                     self.files.insert(chave, arquivo);
                     mudou += 1;
                 }
-            } else if self.files.remove(&chave).is_some() {
-                mudou += 1;
+            } else if caminho.is_dir() {
+                if pasta_ignorada(&self.root, caminho) || self.folder_paths.contains(caminho) {
+                    continue;
+                }
+                let root = self.root.clone();
+                let antes = self.folder_paths.len();
+                let parado = AtomicBool::new(false);
+                mudou += caminhar(&root, caminho, &parado, extractor, self, &|_, _| {});
+                mudou += self.folder_paths.len() - antes;
+            } else {
+                if self.files.remove(&chave).is_some() {
+                    mudou += 1;
+                }
+                let prefixo = format!("{chave}/");
+                let embaixo: Vec<String> = self
+                    .files
+                    .keys()
+                    .filter(|k| k.starts_with(&prefixo))
+                    .cloned()
+                    .collect();
+                for k in embaixo {
+                    self.files.remove(&k);
+                    mudou += 1;
+                }
+                let pastas_antes = self.folder_paths.len();
+                self.folder_paths.retain(|p| !p.starts_with(caminho));
+                mudou += pastas_antes - self.folder_paths.len();
             }
         }
         mudou
     }
+}
+
+/// Uma pasta que o indice (e o watcher) nao seguem: qualquer componente na
+/// lista de pastas ignoradas.
+fn pasta_ignorada(root: &Path, caminho: &Path) -> bool {
+    caminho
+        .strip_prefix(root)
+        .unwrap_or(caminho)
+        .components()
+        .any(|c| {
+            c.as_os_str()
+                .to_str()
+                .is_some_and(|nome| crate::fswatch::SKIP_DIRS.contains(&nome))
+        })
 }
 
 /// Constroi o indice de `root`. `progress` recebe (arquivos, simbolos) de
@@ -238,14 +286,37 @@ pub fn build(root: &Path, cancel: &AtomicBool, progress: &dyn Fn(u64, u64)) -> P
     let mut indice = ProjectIndex::empty(root);
     indice.state = IndexState::Building;
     let mut extractor = SymbolExtractor::default();
-    let mut pilha = vec![root.to_path_buf()];
-    let mut simbolos: u64 = 0;
+    caminhar(root, root, cancel, &mut extractor, &mut indice, progress);
+    if cancel.load(Ordering::SeqCst) {
+        indice.state = IndexState::Failed;
+        indice.error = Some("indexacao cancelada".to_owned());
+    } else {
+        indice.state = IndexState::Ready;
+    }
+    indice.elapsed_ms = u64::try_from(inicio.elapsed().as_millis()).unwrap_or(u64::MAX);
+    let simbolos: u64 = indice.files.values().map(|a| a.symbols.len() as u64).sum();
+    progress(indice.files.len() as u64, simbolos);
+    indice
+}
+
+/// Caminha a subarvore de `inicio` (dentro de `root`) para dentro de
+/// `indice`: cada pasta entra em `folder_paths`, cada arquivo e' lido. E' o
+/// mesmo caminho do build inteiro e do incremento por pasta nova. Devolve
+/// quantos arquivos entraram.
+fn caminhar(
+    root: &Path,
+    inicio: &Path,
+    cancel: &AtomicBool,
+    extractor: &mut SymbolExtractor,
+    indice: &mut ProjectIndex,
+    progress: &dyn Fn(u64, u64),
+) -> usize {
+    let mut pilha = vec![inicio.to_path_buf()];
+    let mut lidos = 0;
+    let mut simbolos: u64 = indice.files.values().map(|a| a.symbols.len() as u64).sum();
     while let Some(dir) = pilha.pop() {
         if cancel.load(Ordering::SeqCst) {
-            indice.state = IndexState::Failed;
-            indice.error = Some("indexacao cancelada".to_owned());
-            indice.elapsed_ms = u64::try_from(inicio.elapsed().as_millis()).unwrap_or(u64::MAX);
-            return indice;
+            return lidos;
         }
         let Ok(entradas) = std::fs::read_dir(&dir) else {
             indice
@@ -253,7 +324,7 @@ pub fn build(root: &Path, cancel: &AtomicBool, progress: &dyn Fn(u64, u64)) -> P
                 .push(relativo(root, &dir) + " (pasta ilegivel)");
             continue;
         };
-        indice.folders += 1;
+        indice.folder_paths.push(dir.clone());
         let mut arquivos: Vec<PathBuf> = Vec::new();
         for entrada in entradas.filter_map(Result::ok) {
             let caminho = entrada.path();
@@ -273,21 +344,17 @@ pub fn build(root: &Path, cancel: &AtomicBool, progress: &dyn Fn(u64, u64)) -> P
         }
         arquivos.sort();
         for caminho in arquivos {
-            if let Some(arquivo) =
-                indexar_arquivo(root, &caminho, &mut extractor, &mut indice.skipped)
-            {
+            if let Some(arquivo) = indexar_arquivo(root, &caminho, extractor, &mut indice.skipped) {
                 simbolos += arquivo.symbols.len() as u64;
                 indice.files.insert(arquivo.path.clone(), arquivo);
+                lidos += 1;
                 if indice.files.len() % 200 == 0 {
                     progress(indice.files.len() as u64, simbolos);
                 }
             }
         }
     }
-    indice.state = IndexState::Ready;
-    indice.elapsed_ms = u64::try_from(inicio.elapsed().as_millis()).unwrap_or(u64::MAX);
-    progress(indice.files.len() as u64, simbolos);
-    indice
+    lidos
 }
 
 fn relativo(root: &Path, caminho: &Path) -> String {

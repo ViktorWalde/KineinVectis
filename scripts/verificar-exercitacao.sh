@@ -71,10 +71,17 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":9,"method":"serial.monitor","params":{"device":"/dev/null"}}\n'
         printf '{"jsonrpc":"2.0","id":10,"method":"project.model","params":{}}\n'
         sleep 2
+        # O indice ja' esta' pronto e registrou as pastas no watcher: um arquivo
+        # criado AGORA, numa pasta NOVA que nenhuma tela listou, tem de entrar
+        # sozinho (inotify real -> event.fs.changed -> reindex).
+        mkdir -p "$raiz/src/tarde"
+        printf 'int chegou_tarde(void) { return 1; }\n' > "$raiz/src/tarde/tarde.c"
+        sleep 1
         printf '{"jsonrpc":"2.0","id":11,"method":"index.status","params":{}}\n'
         printf '{"jsonrpc":"2.0","id":12,"method":"index.symbols","params":{"query":"main"}}\n'
         printf '{"jsonrpc":"2.0","id":13,"method":"index.context","params":{"path":"src/main.cpp"}}\n'
         printf '{"jsonrpc":"2.0","id":14,"method":"index.symbols","params":{"query":"gera_tabela"}}\n'
+        printf '{"jsonrpc":"2.0","id":15,"method":"index.symbols","params":{"query":"chegou_tarde"}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -144,6 +151,7 @@ verifica 12 "index.symbols (main sem LSP)" '"name":"main"'
 verifica 11 "index.status (contexto carregado no job)" '"cdbEntries":1'
 verifica 13 "index.context (a unidade do src/main.cpp)" '"standard":"c++20"'
 verifica 14 "index.symbols (Python pela gramatica)" '"language":"python"'
+verifica 15 "index.symbols (arquivo nascido depois, em pasta nova, pelo watcher)" '"name":"chegou_tarde"'
 
 if [ "$falhou" -ne 0 ]; then
     echo

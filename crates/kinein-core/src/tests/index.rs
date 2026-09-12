@@ -222,6 +222,63 @@ fn incremental_reindex_follows_edits_and_deletions() {
     );
 }
 
+/// O incremento por PASTA: uma pasta nova (que o watcher viu nascer no pai)
+/// e' caminhada inteira e devolvida para o Core registrar; uma pasta apagada
+/// leva os arquivos e as subpastas dela; pasta ignorada nao entra.
+#[test]
+fn a_new_folder_is_walked_and_a_removed_folder_takes_its_files_along() {
+    let raiz = projeto("pastas");
+    let mut indice = build(&raiz);
+    let mut extractor = SymbolExtractor::default();
+    let pastas_antes = indice.stats().folders;
+    // Nasce src/drivers/uart/ com dois arquivos em dois niveis.
+    std::fs::create_dir_all(raiz.join("src/drivers/uart")).unwrap();
+    std::fs::write(
+        raiz.join("src/drivers/spi.c"),
+        "int spi_init(void) { return 0; }\n",
+    )
+    .unwrap();
+    std::fs::write(
+        raiz.join("src/drivers/uart/uart.c"),
+        "int uart_init(void) { return 0; }\nint uart_write(int c) { return c; }\n",
+    )
+    .unwrap();
+    let mudou = indice.reindex_paths(&[raiz.join("src/drivers")], &mut extractor);
+    assert_eq!(mudou, 4, "dois arquivos lidos e duas pastas");
+    assert!(
+        indice
+            .folder_paths
+            .ends_with(&[raiz.join("src/drivers"), raiz.join("src/drivers/uart")]),
+        "as duas pastas novas entram na lista que o Core registra no watcher: {:?}",
+        indice.folder_paths
+    );
+    assert_eq!(indice.stats().folders, pastas_antes + 2);
+    assert_eq!(indice.query("uart_write", None, 5).1, 1);
+    // A mesma pasta de novo: nada muda (idempotente).
+    assert_eq!(
+        indice.reindex_paths(&[raiz.join("src/drivers")], &mut extractor),
+        0
+    );
+    assert_eq!(indice.stats().folders, pastas_antes + 2);
+    // Uma pasta IGNORADA nasce: fica fora, e o watcher nao a recebe.
+    std::fs::create_dir_all(raiz.join("src/target")).unwrap();
+    std::fs::write(raiz.join("src/target/gerado.c"), "int g() {}\n").unwrap();
+    assert_eq!(
+        indice.reindex_paths(&[raiz.join("src/target")], &mut extractor),
+        0
+    );
+    assert!(!indice.files.contains_key("src/target/gerado.c"));
+    assert!(!indice.folder_paths.contains(&raiz.join("src/target")));
+    // A pasta some: os arquivos dela e a subpasta saem.
+    std::fs::remove_dir_all(raiz.join("src/drivers")).unwrap();
+    let apagada = indice.reindex_paths(&[raiz.join("src/drivers")], &mut extractor);
+    assert_eq!(apagada, 4, "2 arquivos + 2 pastas");
+    assert_eq!(indice.query("uart_write", None, 5).1, 0);
+    assert_eq!(indice.query("spi_init", None, 5).1, 0);
+    assert_eq!(indice.stats().folders, pastas_antes);
+    assert!(!indice.files.contains_key("src/drivers/spi.c"));
+}
+
 #[test]
 fn oversized_and_unreadable_files_are_counted_and_named_in_skipped() {
     let raiz = temp_dir("pulados");
@@ -284,4 +341,100 @@ fn opening_a_workspace_builds_the_index_and_symbols_answer() {
     assert_eq!(resultado["total"], 1);
     assert_eq!(resultado["symbols"][0]["container"], "Sensor");
     assert_eq!(resultado["state"], "ready");
+}
+
+/// De ponta a ponta, com o watcher REAL (inotify): um arquivo criado numa
+/// pasta que a UI NUNCA abriu — e uma pasta que nasce depois — chegam ao
+/// indice pelo `event.fs.changed`, porque o indice registrou no watcher todas
+/// as pastas que caminhou. Antes disto o watcher so' via a raiz e as pastas
+/// listadas pela UI, e o arquivo ficava fora ate' o proximo `workspace.open`,
+/// em silencio.
+#[test]
+fn files_born_in_unopened_folders_reach_the_index_through_the_watcher() {
+    use std::time::{Duration, Instant};
+
+    let raiz = projeto("watcher").canonicalize().unwrap();
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("index-watcher");
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({ "path": raiz.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    // O loop real: toda notificacao passa por observe_notification. Espera
+    // ate' o indice ficar pronto (o build e' job) — e o Core registra as pastas.
+    let espera = |core: &mut crate::Core, ate: &dyn Fn(&JsonRpcRequest) -> bool| {
+        let limite = Instant::now() + Duration::from_secs(20);
+        loop {
+            let restante = limite.saturating_duration_since(Instant::now());
+            let evento = receiver
+                .recv_timeout(restante)
+                .expect("evento dentro do prazo");
+            core.observe_notification(&evento);
+            if ate(&evento) {
+                return evento;
+            }
+        }
+    };
+    espera(&mut core, &|e| {
+        e.method == "event.index.finished"
+            && e.params.as_ref().is_some_and(|p| p["state"] == "ready")
+    });
+
+    // 1. Arquivo novo em src/net/ — pasta que ninguem listou.
+    std::fs::write(
+        raiz.join("src/net/radio.c"),
+        "int radio_send(int b) { return b; }\n",
+    )
+    .unwrap();
+    espera(&mut core, &|e| e.method == "event.index.finished");
+    let busca = |core: &mut crate::Core, nome: &str| {
+        core.handle_request(&JsonRpcRequest::new(
+            9_i64,
+            "index.symbols",
+            Some(json!({ "query": nome })),
+        ))
+        .response()
+        .result
+        .clone()
+        .unwrap()["total"]
+            .as_u64()
+            .unwrap()
+    };
+    assert_eq!(busca(&mut core, "radio_send"), 1, "o arquivo novo entrou");
+
+    // 2. Uma PASTA nova com arquivo dentro: o pai (src/) esta' no watcher, a
+    //    pasta e' caminhada, e passa a ser observada tambem.
+    std::fs::create_dir_all(raiz.join("src/hal")).unwrap();
+    std::fs::write(
+        raiz.join("src/hal/gpio.c"),
+        "int gpio_set(int p) { return p; }\n",
+    )
+    .unwrap();
+    espera(&mut core, &|e| e.method == "event.index.finished");
+    assert_eq!(
+        busca(&mut core, "gpio_set"),
+        1,
+        "a pasta nova foi caminhada"
+    );
+    std::fs::write(
+        raiz.join("src/hal/adc.c"),
+        "int adc_read(void) { return 0; }\n",
+    )
+    .unwrap();
+    espera(&mut core, &|e| e.method == "event.index.finished");
+    assert_eq!(
+        busca(&mut core, "adc_read"),
+        1,
+        "a pasta nova ja' era observada"
+    );
+
+    // 3. Apagar a pasta leva os dois.
+    std::fs::remove_dir_all(raiz.join("src/hal")).unwrap();
+    espera(&mut core, &|e| e.method == "event.index.finished");
+    assert_eq!(busca(&mut core, "gpio_set"), 0);
+    assert_eq!(busca(&mut core, "adc_read"), 0);
 }

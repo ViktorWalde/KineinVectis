@@ -179,6 +179,8 @@ impl Core {
             if let Ok(mut indice) = compartilhado.lock() {
                 *indice = construido;
             }
+            // Sem jobs nao ha' eventos, e sem eventos nao ha' watcher (os dois
+            // nascem no enable_lsp): nada a registrar aqui.
             return;
         };
         let titulo = format!("Indexar {}", raiz.display());
@@ -259,9 +261,12 @@ impl Core {
     }
 
     /// O incremento: os caminhos de um `event.fs.changed` sao reindexados no
-    /// loop principal (um arquivo e' milissegundos) e os totais reemitidos.
-    /// Um `Cargo.toml` salvo tambem recarrega o contexto: um alvo novo muda a
-    /// que pacote cada arquivo pertence.
+    /// loop principal (um arquivo e' milissegundos; uma pasta nova e'
+    /// caminhada inteira) e os totais reemitidos — e o `event.index.finished`
+    /// que sai daqui e' o que registra a pasta nova no watcher, pelo mesmo
+    /// caminho do fim do build (`observe_notification`). Um `Cargo.toml`
+    /// salvo tambem recarrega o contexto: um alvo novo muda a que pacote cada
+    /// arquivo pertence.
     pub(crate) fn reindex_changed_paths(&mut self, paths: &[PathBuf]) {
         let mudou = match self.index.lock() {
             Ok(mut indice) if matches!(indice.state, IndexState::Ready) => {
@@ -285,5 +290,25 @@ impl Core {
             "event.index.finished",
             Some(json!(indice.stats())),
         )));
+    }
+
+    /// Registra no watcher TODAS as pastas que o indice caminhou — uma a uma,
+    /// nao recursivo, com a mesma lista de pastas ignoradas (ADR-0001). Antes
+    /// disto o watcher so' via as pastas que a UI abriu, e um arquivo criado
+    /// pelo terminal numa pasta fechada ficava fora do indice ate' o proximo
+    /// `workspace.open` — em silencio. Idempotente: o watcher ignora pasta ja'
+    /// registrada. Para no PRIMEIRO erro (o limite de inotify e' o caso real),
+    /// e o `watch_workspace_directory` ja' o relata uma vez.
+    pub(crate) fn watch_index_folders(&mut self) {
+        let pastas: Vec<PathBuf> = self
+            .index
+            .lock()
+            .map(|indice| indice.folder_paths.clone())
+            .unwrap_or_default();
+        for pasta in pastas {
+            if !self.watch_workspace_directory(&pasta) {
+                break;
+            }
+        }
     }
 }

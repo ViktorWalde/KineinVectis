@@ -336,18 +336,24 @@ impl Core {
         }
     }
 
-    /// Lazily observes a directory reached by the explorer or editor.
-    fn watch_workspace_directory(&mut self, directory: &Path) {
+    /// Lazily observes a directory reached by the explorer, the editor — or
+    /// the index, that registers every folder it walked. Returns `false` when
+    /// the watcher refused (the error is reported once, here).
+    fn watch_workspace_directory(&mut self, directory: &Path) -> bool {
         let error = self
             .fswatch
             .as_mut()
             .and_then(|watcher| watcher.watch_directory(directory).err());
-        if let (Some(error), Some(events)) = (error, self.events.as_ref()) {
+        let Some(error) = error else {
+            return true;
+        };
+        if let Some(events) = self.events.as_ref() {
             drop(events.send(JsonRpcRequest::notification(
                 "event.fs.watchError",
                 Some(json!({ "message": error.to_string() })),
             )));
         }
+        false
     }
 
     /// Deixa o core reagir a um evento assincrono ANTES de ele ir para a UI.
@@ -372,6 +378,11 @@ impl Core {
         // O contexto de compilador segue a CDB: o configure a reescreve.
         if notification.method == "event.cmake.finished" {
             self.reload_index_context();
+        }
+        // O indice terminou (em job): as pastas que ele caminhou entram no
+        // watcher, para o incremento alcancar o projeto INTEIRO.
+        if notification.method == "event.index.finished" {
+            self.watch_index_folders();
         }
         // O indice segue o disco: o que o watcher viu mudar e' reindexado
         // aqui, no loop principal, antes de o evento chegar a UI.

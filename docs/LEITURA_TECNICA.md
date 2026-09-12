@@ -209,7 +209,9 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       Rust e Python (a gramatica Python entrou a tarde, 40
                       §7.19) com as gramaticas do editor, em job, com
                       busca por nome sem LSP (`#nome`) e incremento pelo
-                      watcher. E' o Project Graph do KSWE comecando a existir.
+                      watcher — que desde a tarde observa TODAS as pastas que o
+                      indice caminhou (40 §7.20). E' o Project Graph do KSWE
+                      comecando a existir.
                       Desde a tarde (0.95.0): o CONTEXTO DE COMPILADOR por
                       arquivo — index.context diz com que cada arquivo e'
                       compilado (unidade da CDB, alvo do cargo, interpretador

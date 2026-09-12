@@ -107,8 +107,9 @@ C/C++/Rust/Python, com as gramáticas do editor, em job, com incremento pelo
 watcher e `#nome` sem LSP). Continuam DELEGADOS ao LSP: tipos, referências,
 rename. O contexto de compilador por arquivo entrou à tarde (`40` §7.18:
 `index.context`, a CDB envelhecida por subpasta detectada) e a gramática
-Python também (`40` §7.19). Continua **por fazer** no P0: o watch recursivo,
-o modelo por alvo/preset, o map file (§3, P0) — e o que a §8 acrescenta (o
+Python também (`40` §7.19) e o índice passou a seguir o disco inteiro (`40`
+§7.20). Continua **por fazer** no P0: o modelo por alvo/preset, o map file
+(§3, P0) — e o que a §8 acrescenta (o
 preset no configure automático, file-api `compileGroups`, Bear para
 Makefile).
 
@@ -187,9 +188,12 @@ inteira (scheduler, brokers, RAM budget) até que a dor a peça.
                                           oficial (tree-sitter-python 0.25.0, MIT)
                                           na mesma fundacao: indice, realce, outline
     busca por nome sem LSP (#nome)        FEITO — indice primeiro, LSP substitui
-    incremento                            PARCIAL — so' nas pastas que o watcher
-                                          observa (ADR-0001: nao recursivo);
-                                          FALTA watch recursivo ou re-varredura
+    incremento                            FEITO (2026-09-12 tarde, 40 §7.20) — o
+                                          indice registra no watcher TODAS as
+                                          pastas que caminhou (uma a uma, nao
+                                          recursivo: ADR-0001 de pe'); pasta
+                                          nova caminhada, pasta apagada limpa;
+                                          148 watches neste repositorio
     contexto de compilador por arquivo    FEITO (2026-09-12 tarde, 40 §7.18) —
                                           index.context: unidade da CDB (nas
                                           duas formas; chave canonica; -I/-D/
@@ -547,9 +551,9 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
                 "indexando… N arquivos" na barra (40 §7.17); o contexto de
                 compilador do arquivo ativo ao lado (§7.18): "contexto: c++ ·
                 gnu++23 · 12 -I · 9 -D"
-   falta        watch recursivo (o incremento so' segue as pastas abertas);
-                um painel do indice ("o que li, o que pulei e por que"). A
-                gramatica Python entrou em 2026-09-12 a tarde (40 §7.19)
+   falta        um painel do indice ("o que li, o que pulei e por que"). A
+                gramatica Python (40 §7.19) e o indice seguindo o disco inteiro
+                (40 §7.20) entraram em 2026-09-12 a tarde
    pilar        P0
 
 3  INTENTION ACTIONS (Alt+Enter)

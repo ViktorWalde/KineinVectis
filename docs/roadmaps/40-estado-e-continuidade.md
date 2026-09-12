@@ -544,11 +544,12 @@ que a premissa estava errada. O CAS entrou na função que ele de fato cumpre �
                                          e a CDB envelhecida por SUBPASTA
                                          detectada; e a sexta (§7.19): a
                                          GRAMATICA PYTHON na fundacao (realce,
-                                         outline, indice). O PROXIMO do P0
-                                         (42 §3): o watch recursivo (o indice
-                                         so' segue as pastas que a UI observa),
-                                         o modelo por alvo/preset, o map file.
-                                         Depois, o P1 (setup). As tres decisoes do 42
+                                         outline, indice); e a setima (§7.20):
+                                         o indice SEGUE O DISCO INTEIRO (as
+                                         pastas caminhadas entram no watcher).
+                                         O PROXIMO do P0 (42 §3): o modelo por
+                                         alvo/preset, o map file. Depois, o P1
+                                         (setup). As tres decisoes do 42
                                          §7 foram
                                          TOMADAS em 2026-09-12: so' o ESP32
                                          classico na mesa (o resto fecha no
@@ -1864,10 +1865,11 @@ corrigido para filtrar os eventos de job pelo id — ele assumia um job só, e
 agora o `workspace.open` sobe o do índice.
 
 **Limite honesto, e é a próxima fatia:** o watcher observa só as pastas que
-a UI expandiu (ADR-0001); mudança fora delas entra no próximo `workspace.open`.
-E o índice é **estrutural**: o contexto de compilador por arquivo (flags da
-CDB por TU, crate/target do `cargo metadata`, interpretador/ambiente do
-Python) — a segunda metade da exigência — é o que vem em seguida no P0.
+a UI expandiu (ADR-0001); mudança fora delas entra no próximo `workspace.open`
+(fechado à tarde — §7.20). E o índice é **estrutural**: o contexto de
+compilador por arquivo (flags da CDB por TU, crate/target do `cargo
+metadata`, interpretador/ambiente do Python) — a segunda metade da exigência
+— é o que vem em seguida no P0 (§7.18).
 
 ```text
 protocolo 0.94.0 — index.status, index.symbols, event.index.progress/finished
@@ -1954,8 +1956,9 @@ mesmo risco existe entre módulos de teste que fazem o mesmo (container,
 toolchain, serial), e fica anotado.
 
 **O que ainda falta no P0** ([`42`](42-trilha-profunda-embarcados.md) §3):
-watch recursivo; modelo por alvo/preset; map file; `rustup target list
---installed` medido. (A gramática Python entrou logo depois — §7.19.)
+modelo por alvo/preset; map file; `rustup target list --installed` medido. (A
+gramática Python e o índice seguindo o disco inteiro entraram logo depois —
+§7.19 e §7.20.)
 
 ```text
 protocolo 0.95.0 — index.context; IndexStats.context (ContextSummary)
@@ -1999,6 +2002,51 @@ escreve um `tools/gera.py` e pede `index.symbols` (`"language":"python"`).
 protocolo 0.95.0 (sem mudanca de fio: a linguagem ja' era um campo)
 testes  720 Rust (+1), 34 harnesses; deps: +tree-sitter-python 0.25.0 (MIT)
 gate    exercitacao pede index.symbols de um .py
+```
+
+### 7.20 O índice segue o disco INTEIRO — as pastas caminhadas entram no watcher, 2026-09-12
+
+O "limite honesto" do §7.17: o watcher só observava a raiz e as pastas que a
+UI expandiu (ADR-0001, `NonRecursive` por decisão), então um arquivo criado
+pelo terminal — ou por um `git checkout` — numa pasta fechada ficava fora do
+índice até o próximo `workspace.open`, **em silêncio**. Era a "indexação
+agressiva" mentindo por omissão.
+
+```text
+o que muda        ProjectIndex guarda `folder_paths` (as pastas que caminhou,
+                  a raiz inclusa); a cada event.index.finished o Core
+                  registra TODAS no watcher, uma a uma, NonRecursive, com a
+                  mesma lista de pastas ignoradas — o ADR-0001 fica de pe':
+                  nada de recursivo na raiz (que arrastaria target/, build/,
+                  .git/); idempotente (o watcher ignora pasta ja' registrada);
+                  para no PRIMEIRO erro e o relata uma vez (o limite de
+                  inotify e' o caso real)
+pasta nova        reindex_paths caminha a subarvore inteira (o mesmo
+                  `caminhar` do build), ela entra em folder_paths e, pelo
+                  event.index.finished que sai dai, no watcher
+pasta apagada     leva os arquivos dela e as subpastas; pasta ignorada que
+                  nasce (src/target/) nao entra
+medido            148 inotify watches neste repositorio (= 148 pastas), contra
+                  186.243 de fs.inotify.max_user_watches nesta maquina
+```
+
+**Provado:** unidade (pasta nova caminhada com dois níveis, idempotência,
+pasta ignorada fora, pasta apagada limpando 2 arquivos + 2 pastas); **ponta a
+ponta com o inotify real** (`enable_lsp`, `workspace.open`, um arquivo em
+`src/net/` que ninguém listou, uma pasta nova `src/hal/` e um segundo arquivo
+nela, a pasta apagada — tudo pelo `event.fs.changed` → `index.symbols`); a
+exercitação cria `src/tarde/tarde.c` depois do índice pronto e o acha. Seis
+mutações mortas com o compilador calado (registrar só a primeira pasta; nunca
+registrar ao terminar; pasta ignorada entrando; só a pasta de partida na
+lista; pasta nova nunca caminhada; pasta apagada deixando os arquivos;
+subpasta apagada ficando). Uma mutação **sobreviveu e mudou o código**: o
+registro explícito das pastas novas no incremento era redundante com o
+registro no `event.index.finished` — saiu, e ficou um caminho só.
+
+```text
+protocolo 0.95.0 (sem mudanca de fio)
+testes  722 Rust (+2), 34 harnesses
+gate    exercitacao: arquivo nascido em pasta nova depois do indice pronto
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
