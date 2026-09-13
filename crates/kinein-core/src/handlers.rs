@@ -30,6 +30,7 @@ pub mod settings;
 pub mod setup;
 pub mod syntax;
 pub mod terminal;
+pub mod test_discover;
 pub mod toolchain;
 pub mod toolchain_import;
 pub mod toolchain_install;

@@ -49,6 +49,10 @@ Item {
             root.jobsController.handleTestFinished(success, passed, failed, ignored, error);
         }
 
+        function onTestsDiscovered(outcome) {
+            root.jobsController.handleTestsDiscovered(outcome);
+        }
+
         function onQualityDiagnostic(diagnostic) {
             root.jobsController.handleQualityDiagnostic(diagnostic);
         }

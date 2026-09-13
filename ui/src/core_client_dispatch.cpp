@@ -249,6 +249,13 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         emit toolsListed(result.value(QStringLiteral("tools")).toArray().toVariantList());
         return;
     }
+    if (method == QStringLiteral("test.discover")) {
+        // Job de listagem: o resultado vem por event.test.discovered; nao e' o
+        // job de testes (m_testJobId), entao nao entra em `testing`.
+        appendLog(QStringLiteral("job aceito (test.discover): %1")
+                      .arg(result.value(QStringLiteral("jobId")).toString()));
+        return;
+    }
     if (method == QStringLiteral("build.run") || method == QStringLiteral("test.run") ||
         method == QStringLiteral("quality.run") || method == QStringLiteral("environment.scan") ||
         method == QStringLiteral("git.pull") || method == QStringLiteral("git.push"))

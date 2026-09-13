@@ -2,21 +2,26 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
+// A aba Testes: a ARVORE dos testes listados (test.discover, 2026-09-13) com o
+// status do ultimo run e um "rodar so' este" por linha; sem arvore, os casos
+// que rodaram; embaixo, a saida bruta do runner (e' onde o pytest explica a
+// falha). Burro: le e pede ao JobsController.
 Item {
     id: panel
 
+    property var controller: null
+    property bool running: false
+
     ListModel {
-        id: emptyCasesModel
+        id: modeloVazio
     }
 
-    property var casesModel: emptyCasesModel
-    // A saida bruta do runner (event.test.output). Vazia = so' a lista de
-    // casos; com linhas, a metade de baixo do painel e' dela — e' onde o
-    // pytest explica a falha e onde "No module named pytest" aparece.
-    property var outputModel: emptyCasesModel
-    property string summary: ""
-    property bool running: false
-    readonly property bool hasOutput: outputModel !== undefined && outputModel.count > 0
+    readonly property var discovered: panel.controller ? panel.controller.discoveredModel : modeloVazio
+    readonly property var cases: panel.controller ? panel.controller.testModel : modeloVazio
+    readonly property var output: panel.controller ? panel.controller.testOutputModel : modeloVazio
+    readonly property string summary: panel.controller ? panel.controller.testSummary : ""
+    readonly property bool hasTree: panel.discovered.count > 0
+    readonly property bool hasOutput: panel.output.count > 0
 
     function statusColor(status) {
         if (status === "passed") {
@@ -28,87 +33,110 @@ Item {
         return Theme.textMuted;
     }
 
-    Text {
-        id: testSummaryLabel
+    Row {
+        id: cabecalho
 
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        visible: panel.summary !== ""
-        text: panel.summary
-        color: Theme.textSecondary
-        font.pixelSize: 11
-        font.bold: true
+        spacing: Theme.spacingSmall
+
+        KvButton {
+            text: panel.controller && panel.controller.discovering ? qsTr("listando…") : qsTr("Listar testes")
+            compact: true
+            enabled: panel.controller !== null && !panel.controller.discovering && !panel.running
+            onClicked: panel.controller.discoverTests("")
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: panel.summary !== ""
+            text: panel.summary
+            color: Theme.textSecondary
+            font.pixelSize: 11
+            font.bold: true
+        }
     }
 
     ListView {
-        id: testCasesView
+        id: lista
 
-
-        // B2 (DocsPublic/roadmaps/24): barra de rolagem. `parent: testCasesView` é OBRIGATÓRIO — um filho
-        // declarado dentro de um ListView vira filho do contentItem e ROLARIA
-        // junto com a lista. O ListView segue sendo a fonte da verdade.
-        VerticalScrollBar {
-            id: scrollBar_testCasesView
-
-            parent: testCasesView
-            anchors.right: testCasesView.right
-            anchors.top: testCasesView.top
-            anchors.bottom: testCasesView.bottom
-
-            contentSize: testCasesView.contentHeight
-            viewportSize: testCasesView.height
-            position: testCasesView.contentY
-
-            onMoveRequested: function(position) {
-                testCasesView.contentY = position;
-            }
-        }
-        anchors.top: panel.summary !== "" ? testSummaryLabel.bottom : parent.top
-        anchors.topMargin: panel.summary !== "" ? Theme.spacingSmall : 0
+        anchors.top: cabecalho.bottom
+        anchors.topMargin: Theme.spacingSmall
         anchors.bottom: panel.hasOutput ? outputSeparator.top : parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         clip: true
         spacing: 1
-        model: panel.casesModel
-        onCountChanged: positionViewAtEnd()
+        model: panel.hasTree ? panel.discovered : panel.cases
+        onCountChanged: if (!panel.hasTree) positionViewAtEnd()
+
+        VerticalScrollBar {
+            parent: lista
+            anchors.right: lista.right
+            anchors.top: lista.top
+            anchors.bottom: lista.bottom
+            contentSize: lista.contentHeight
+            viewportSize: lista.height
+            position: lista.contentY
+            onMoveRequested: function(position) {
+                lista.contentY = position;
+            }
+        }
 
         Text {
             anchors.centerIn: parent
-            visible: panel.casesModel.count === 0 && !panel.running
-            text: qsTr("Nenhum teste rodado. Use Testes (Ctrl+Shift+F9).")
+            visible: lista.count === 0 && !panel.running
+            text: qsTr("Nenhum teste. Listar testes mostra a árvore; Testes (Ctrl+Shift+F9) roda tudo.")
             color: Theme.textMuted
             font.pixelSize: 11
         }
 
-        delegate: Row {
-            id: testDelegate
+        delegate: Item {
+            id: linha
 
-            required property string name
-            required property string status
+            required property var model
 
-            width: testCasesView.width
-            height: 18
-            spacing: Theme.spacingSmall
+            width: lista.width
+            height: 20
 
             Rectangle {
+                id: ponto
+
                 width: 7
                 height: 7
                 radius: 4
                 anchors.verticalCenter: parent.verticalCenter
-                color: panel.statusColor(testDelegate.status)
+                color: panel.statusColor(linha.model.status)
             }
 
             Text {
+                anchors.left: ponto.right
+                anchors.leftMargin: Theme.spacingSmall
+                anchors.right: botaoUm.visible ? botaoUm.left : parent.right
+                anchors.rightMargin: Theme.spacingSmall
                 anchors.verticalCenter: parent.verticalCenter
-                text: testDelegate.name
-                color: testDelegate.status === "failed"
-                       ? Theme.textPrimary : Theme.textSecondary
+                text: panel.hasTree && linha.model.file !== undefined && linha.model.file !== ""
+                      ? linha.model.file + "  " + linha.model.name : linha.model.name
+                color: linha.model.status === "failed" ? Theme.textPrimary : Theme.textSecondary
                 font.family: Theme.monoFont
                 font.pixelSize: 11
-                elide: Text.ElideRight
-                width: testCasesView.width - 16
+                elide: Text.ElideMiddle
+            }
+
+            // Rodar SO' este: o id exato que o core deu (pytest posicional,
+            // cargo --exact, ctest -R ancorado).
+            KvIconButton {
+                id: botaoUm
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: panel.hasTree
+                iconName: "run"
+                tooltip: qsTr("Rodar só este teste")
+                compact: true
+                enabled: !panel.running && panel.controller !== null
+                onClicked: panel.controller.runOneTest(linha.model.id, "")
             }
         }
     }
@@ -134,7 +162,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         clip: true
-        model: panel.outputModel
+        model: panel.output
         onCountChanged: positionViewAtEnd()
 
         VerticalScrollBar {

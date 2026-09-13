@@ -49,7 +49,7 @@ void CoreClient::runBuild(const QString& buildSystem)
     sendRequest(QStringLiteral("build.run"), params);
 }
 
-void CoreClient::runTests(const QString& filter, const QString& buildSystem)
+void CoreClient::runTests(const QString& filter, const QString& buildSystem, const QString& testId)
 {
     if (m_testing || m_process.state() != QProcess::Running) {
         return;
@@ -61,8 +61,21 @@ void CoreClient::runTests(const QString& filter, const QString& buildSystem)
     if (!buildSystem.trimmed().isEmpty()) {
         params.insert(QStringLiteral("buildSystem"), buildSystem);
     }
+    // UM teste pelo id que o test.discover deu (2026-09-13); vence o filter.
+    if (!testId.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("testId"), testId);
+    }
     setTesting(true);
     sendRequest(QStringLiteral("test.run"), params);
+}
+
+void CoreClient::discoverTests(const QString& buildSystem)
+{
+    QJsonObject params;
+    if (!buildSystem.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("buildSystem"), buildSystem);
+    }
+    sendRequest(QStringLiteral("test.discover"), params);
 }
 
 void CoreClient::runQuality(const QString& buildSystem)

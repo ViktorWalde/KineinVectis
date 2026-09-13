@@ -11,11 +11,18 @@ Item {
     property alias problemsModel: problemItemsModel
     property alias testModel: testItemsModel
     property alias testOutputModel: testOutputItemsModel
+    // A ARVORE de testes antes do run (test.discover, 2026-09-13): id exato,
+    // nome, arquivo e o status do ultimo run (vazio = nunca rodou).
+    property alias discoveredModel: discoveredItemsModel
+    property string discoverRunner: ""
+    property bool discovering: false
     property alias jobsModel: jobItemsModel
     property string testSummary: ""
 
     signal runBuildRequested(string buildSystem)
     signal runTestsRequested(string buildSystem)
+    signal runOneTestRequested(string testId, string buildSystem)
+    signal discoverTestsRequested(string buildSystem)
     signal runQualityRequested()
     signal showTabRequested(string tab)
 
@@ -41,6 +48,10 @@ Item {
     }
 
     ListModel {
+        id: discoveredItemsModel
+    }
+
+    ListModel {
         id: jobItemsModel
     }
 
@@ -51,6 +62,9 @@ Item {
         removeProblemsBySource("quality");
         testItemsModel.clear();
         testOutputItemsModel.clear();
+        discoveredItemsModel.clear();
+        discoverRunner = "";
+        discovering = false;
         jobItemsModel.clear();
         testSummary = "";
     }
@@ -69,11 +83,67 @@ Item {
         if (testing || workspaceRoot === "") {
             return;
         }
+        prepareTestRun();
+        runTestsRequested(buildSystem || "");
+    }
+
+    // Rodar UM teste da arvore, pelo id exato que o core deu.
+    function runOneTest(testId, buildSystem) {
+        if (testing || workspaceRoot === "" || testId === undefined || testId === "") {
+            return;
+        }
+        prepareTestRun();
+        runOneTestRequested(testId, buildSystem || "");
+    }
+
+    // Um run novo: os casos soltos e a saida zeram; a arvore FICA, com os
+    // status apagados — e' ela que vai receber os resultados.
+    function prepareTestRun() {
         testItemsModel.clear();
         testOutputItemsModel.clear();
+        for (let i = 0; i < discoveredItemsModel.count; i++) {
+            discoveredItemsModel.setProperty(i, "status", "");
+        }
         testSummary = qsTr("rodando testes...");
         showTabRequested("tests");
-        runTestsRequested(buildSystem || "");
+    }
+
+    function discoverTests(buildSystem) {
+        if (discovering || workspaceRoot === "") {
+            return;
+        }
+        discovering = true;
+        showTabRequested("tests");
+        discoverTestsRequested(buildSystem || "");
+    }
+
+    // O job de listagem acabou: a arvore e' a do core, na ordem dele. Falhou
+    // (sem pytest, sem runner): o motivo vira o resumo, a arvore some.
+    function handleTestsDiscovered(outcome) {
+        discovering = false;
+        if (outcome === undefined || outcome === null) return;
+        discoveredItemsModel.clear();
+        if (outcome.success !== true) {
+            discoverRunner = "";
+            testSummary = qsTr("nao listou: %1").arg(outcome.error);
+            appendTestLine(String(outcome.error));
+            return;
+        }
+        discoverRunner = outcome.runner === undefined ? "" : outcome.runner;
+        const tests = outcome.tests === undefined || outcome.tests === null ? [] : outcome.tests;
+        for (let i = 0; i < tests.length; i++) {
+            const t = tests[i];
+            discoveredItemsModel.append({ id: t.id, name: t.name === undefined ? t.id : t.name,
+                                          file: t.file === undefined ? "" : t.file, status: "" });
+        }
+        testSummary = qsTr("%1 teste(s) listado(s) (%2)").arg(tests.length).arg(discoverRunner);
+    }
+
+    function discoveredIndex(id) {
+        for (let i = 0; i < discoveredItemsModel.count; i++) {
+            if (discoveredItemsModel.get(i).id === id) return i;
+        }
+        return -1;
     }
 
     function startQuality() {
@@ -156,7 +226,15 @@ Item {
         appendTestLine(line);
     }
 
+    // O caso que rodou e' o mesmo id que a arvore listou (pytest: o node id;
+    // cargo/ctest: o nome): o status vai para a linha da arvore; o que a
+    // arvore nao conhece continua na lista de casos soltos.
     function handleTestCase(name, status) {
+        const i = discoveredIndex(name);
+        if (i >= 0) {
+            discoveredItemsModel.setProperty(i, "status", status);
+            return;
+        }
         testItemsModel.append({ name: name, status: status });
         while (testItemsModel.count > 5000) {
             testItemsModel.remove(0);

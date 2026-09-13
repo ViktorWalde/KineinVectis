@@ -245,6 +245,7 @@ impl Core {
             return unsupported_kind_response(request_id, "test", kind);
         }
         let filter = parsed.filter;
+        let test_id = parsed.test_id;
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "test.run");
         };
@@ -280,7 +281,7 @@ impl Core {
             match test::run_tests(
                 &root,
                 kind,
-                filter.as_deref(),
+                test::Selection::from_params(filter.as_deref(), test_id.as_deref()),
                 python.as_ref(),
                 &cancel,
                 &mut sink,
@@ -311,7 +312,7 @@ impl Core {
 
     /// Resolves an explicit hybrid build-system selection against the one
     /// workspace snapshot. With no selection, preserves the primary `kind`.
-    fn runner_workspace(
+    pub(super) fn runner_workspace(
         &self,
         request_id: Option<&Value>,
         method: &str,
@@ -437,7 +438,7 @@ pub(super) const fn job_outcome(success: bool) -> JobOutcome {
     }
 }
 
-fn unsupported_kind_response(
+pub(super) fn unsupported_kind_response(
     request_id: Option<Value>,
     action: &str,
     kind: ProjectKind,

@@ -44,6 +44,55 @@ pub struct TestRunParams {
     /// Explicit build system in a hybrid workspace; primary kind when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub build_system: Option<BuildSystem>,
+    /// Run exactly ONE test, by the id `test.discover` gave (`0.106.0`):
+    /// a pytest node id, a libtest name (`-- --exact`), a ctest name
+    /// (`-R ^name$`). Takes precedence over `filter`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test_id: Option<String>,
+}
+
+/// Parameters for `test.discover` (`0.106.0`).
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TestDiscoverParams {
+    /// Explicit build system in a hybrid workspace; primary kind when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_system: Option<BuildSystem>,
+}
+
+/// One test the runner knows about, before it runs.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TestCaseInfo {
+    /// The exact id the runner accepts to run this one test — and the name
+    /// `event.test.case` reports when it runs.
+    pub id: String,
+    /// Human name (the part after the file for pytest; the id otherwise).
+    pub name: String,
+    /// Source file, when the runner says it (pytest node ids carry it).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
+}
+
+/// Payload of `event.test.discovered`: the listing job ended.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TestDiscoveredEvent {
+    /// Job id.
+    pub job_id: String,
+    /// `pytest`, `cargo`, `ctest`.
+    pub runner: String,
+    /// The listing command, for the output.
+    pub command: String,
+    /// What was found, in the runner's order.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tests: Vec<TestCaseInfo>,
+    /// `true` when the runner listed without error (zero tests is still a
+    /// success — an empty project has none).
+    pub success: bool,
+    /// Why it failed, in words (missing tool, exit code).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
 }
 
 /// Structured diagnostic extracted from build output.

@@ -16,12 +16,16 @@ Item {
     id: root
 
     property var abas: []
+    property var descobertas: []
+    property var umSo: []
 
     JobsController {
         id: jobs
 
         workspaceRoot: "/tmp/proj"
         onShowTabRequested: function(tab) { root.abas.push(tab); }
+        onDiscoverTestsRequested: function(buildSystem) { root.descobertas.push(buildSystem); }
+        onRunOneTestRequested: function(testId, buildSystem) { root.umSo.push(testId); }
     }
 
     ProjectTreeController {
@@ -64,6 +68,31 @@ Item {
         // clear() esquece a saida junto com o resto.
         jobs.clear();
         if (jobs.testOutputModel.count !== 0 || jobs.testSummary !== "") failures += 2048;
+
+        // A ARVORE (test.discover, 2026-09-13): listar pede UMA vez; o resultado
+        // vira linhas com status vazio; um caso que roda com o MESMO id pinta a
+        // linha em vez de virar caso solto; rodar um pede o id exato; um run
+        // novo apaga os status mas mantem a arvore; a falha da listagem vira o
+        // resumo e nao deixa arvore.
+        jobs.discoverTests("");
+        jobs.discoverTests("");
+        if (root.descobertas.length !== 1 || !jobs.discovering) failures += 131072;
+        jobs.handleTestsDiscovered({ success: true, runner: "pytest", command: "python -m pytest --collect-only -q",
+                                     tests: [ { id: "tests/test_a.py::test_soma", name: "test_soma", file: "tests/test_a.py" },
+                                              { id: "tests/test_a.py::test_x[a b]", name: "test_x[a b]", file: "tests/test_a.py" } ] });
+        if (jobs.discovering || jobs.discoveredModel.count !== 2 || jobs.discoverRunner !== "pytest") failures += 262144;
+        if (jobs.testSummary.indexOf("2 teste(s) listado(s)") !== 0) failures += 524288;
+        jobs.handleTestCase("tests/test_a.py::test_x[a b]", "failed");
+        jobs.handleTestCase("tests/outro.py::solto", "passed");
+        if (jobs.discoveredModel.get(1).status !== "failed" || jobs.discoveredModel.get(0).status !== "") failures += 1048576;
+        if (jobs.testModel.count !== 1 || jobs.testModel.get(0).name !== "tests/outro.py::solto") failures += 2097152;
+        jobs.runOneTest("tests/test_a.py::test_x[a b]", "");
+        if (root.umSo.length !== 1 || root.umSo[0] !== "tests/test_a.py::test_x[a b]") failures += 4194304;
+        if (jobs.discoveredModel.count !== 2 || jobs.discoveredModel.get(1).status !== "" || jobs.testModel.count !== 0) failures += 8388608;
+        jobs.runOneTest("", "");
+        if (root.umSo.length !== 1) failures += 16777216;
+        jobs.handleTestsDiscovered({ success: false, error: "pytest ausente: instale-o NO ambiente do projeto" });
+        if (jobs.discoveredModel.count !== 0 || jobs.testSummary.indexOf("nao listou: pytest ausente") !== 0) failures += 33554432;
 
         // Executar: shells e .py; nao pastas, nao .txt.
         if (!tree.isRunnableScript("/tmp/proj/tools/gera.py", "file")) failures += 4096;

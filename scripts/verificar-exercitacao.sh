@@ -130,6 +130,13 @@ resposta="$(
         sleep 2
         printf '{"jsonrpc":"2.0","id":23,"method":"test.run","params":{"buildSystem":"python"}}\n'
         sleep 4
+        # A arvore de testes (test.discover, 2026-09-13): o ctest REAL lista o
+        # projeto CMake configurado acima (zero testes declarados = lista vazia
+        # com sucesso), e o pytest do .venv novo — sem o modulo — diz o passo.
+        printf '{"jsonrpc":"2.0","id":26,"method":"test.discover","params":{"buildSystem":"cmake"}}\n'
+        sleep 3
+        printf '{"jsonrpc":"2.0","id":27,"method":"test.discover","params":{"buildSystem":"python"}}\n'
+        sleep 3
         # O provedor de instalacao (39 §5): o catalogo com URL, tamanho e
         # sha256 VISIVEIS — sem baixar nada (o download e' um clique, nunca o gate).
         printf '{"jsonrpc":"2.0","id":24,"method":"toolchain.installable","params":{}}\n'
@@ -274,6 +281,25 @@ else
     echo "  - run.script/test.run de Python: sem python3 nesta maquina (nao exercitado)"
 fi
 
+if command -v ctest >/dev/null 2>&1 && command -v cmake >/dev/null 2>&1; then
+    verifica 26 "test.discover (ctest -N no projeto configurado: aceito como job)" '"jobId"'
+    if printf '%s\n' "$resposta" | grep '"event.test.discovered"' | grep -q '"runner":"ctest".*"success":true'; then
+        echo "  ok test.discover (o ctest real listou: zero testes declarados, sem erro)"
+    else
+        echo "  ✗ test.discover: o ctest real nao listou com sucesso" >&2
+        printf '%s\n' "$resposta" | grep '"event.test.discovered"' >&2
+        falhou=1
+    fi
+fi
+if command -v python3 >/dev/null 2>&1; then
+    if printf '%s\n' "$resposta" | grep '"event.test.discovered"' | grep '"runner":"pytest"' | grep -q '"tests":\[\|uv add --dev pytest'; then
+        echo "  ok test.discover de Python (a arvore, ou o passo para instalar o pytest no ambiente)"
+    else
+        echo "  ✗ test.discover de Python: nem arvore nem o passo do pytest" >&2
+        printf '%s\n' "$resposta" | grep '"event.test.discovered"' >&2
+        falhou=1
+    fi
+fi
 verifica 24 "toolchain.installable (o catalogo pinado, com sha256 e a pasta da IDE)" '"installRoot"'
 verifica 24 "toolchain.installable (a Arm GNU 15.2.rel1 com o sha256 publicado)" '"sha256":"597893282ac8c6ab1a4073977f2362990184599643b4c5ee34870a8215783a16"'
 verifica 25 "toolchain.inspectSysroot (uma pasta sem usr/include e' dita vazia)" '"verdict":"vazia para o compilador'

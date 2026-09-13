@@ -789,9 +789,11 @@ handlers/python.rs::configure_python_lsp     o basedpyright sobe COM esse interp
                                              quando o .venv nasce
 format.rs (Ruff) + build/parse.rs (concise)  `ruff format` no format.text e `ruff check`
                                              no quality.run — o binario DETECTADO
-python/run.rs + handlers/run.rs + test.rs    COM QUE se executa (interpretador do projeto
-                                             ou `uv run`), o ponto de entrada por
-                                             evidencia, `.py` no run.script, pytest -v
+python/run.rs + handlers/run.rs              COM QUE se executa (interpretador do projeto
+test/{mod,runners,parse,discover}.rs         ou `uv run`), o ponto de entrada por
+                                             evidencia, `.py` no run.script; os runners
+                                             (pytest -v, cargo, ctest), os parsers e a
+                                             ARVORE (test.discover) com "rodar so' este"
 python/debug.rs + dap/{adapter,target}.rs    o debugpy e' MODULO do interpretador: sonda
                                              `import debugpy`, `-m debugpy.adapter` para
                                              todo alvo .py; ciclo real em

@@ -198,7 +198,9 @@ public:
                                        const QVariantList& expected);
     Q_INVOKABLE void runBuild(const QString& buildSystem = QString());
     Q_INVOKABLE void runTests(const QString& filter = QString(),
-                              const QString& buildSystem = QString());
+                              const QString& buildSystem = QString(),
+                              const QString& testId = QString());
+    Q_INVOKABLE void discoverTests(const QString& buildSystem = QString());
     Q_INVOKABLE void runQuality(const QString& buildSystem = QString());
     Q_INVOKABLE void cancelBuild();
     Q_INVOKABLE void cancelTests();
@@ -386,6 +388,9 @@ signals:
     void testOutput(const QString& line, const QString& stream);
     void testCase(const QString& name, const QString& status);
     void testFinished(bool success, int passed, int failed, int ignored, const QString& error);
+    /// `event.test.discovered`: a arvore de testes antes do run (jobId,
+    /// runner, command, tests[], success, error).
+    void testsDiscovered(const QVariantMap& outcome);
     void analyzingChanged();
     void qualityStarted(const QString& command);
     void qualityDiagnostic(const QVariantMap& diagnostic);

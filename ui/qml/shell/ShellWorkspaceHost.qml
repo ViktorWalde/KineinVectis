@@ -245,9 +245,7 @@ Item {
                 problemCount: root.jobsController.problemsModel.count
                 buildOutputModel: root.jobsController.buildOutputModel
                 jobsModel: root.jobsController.jobsModel
-                testModel: root.jobsController.testModel
-                testOutputModel: root.jobsController.testOutputModel
-                testSummary: root.jobsController.testSummary
+                jobsController: root.jobsController
                 testing: root.testing
                 problemsModel: root.jobsController.problemsModel
                 terminalRender: root.runtimeController.terminalRender

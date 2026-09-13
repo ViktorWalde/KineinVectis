@@ -392,8 +392,9 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             -v` com o interpretador do projeto (ou `uv run`),
                                             `-k` como filtro, casos pelo `-v`, saida no
                                             painel do A6; sem pytest no ambiente, o passo
-                                            para instalar NELE. Falta a descoberta
-                                            (`--collect-only -q`) como arvore antes de rodar
+                                            para instalar NELE. A descoberta (`--collect-only
+                                            -q`) como ARVORE antes de rodar, com "rodar so'
+                                            este": FEITA 2026-09-13 (40 §7.32, 0.106.0)
  B6b executar Python                        FEITO 2026-09-13 (40 §7.26): "Executar" num
                                             `.py` e o botao Executar (ponto de entrada por
                                             evidencia: main.py/app.py/__main__.py, pacote

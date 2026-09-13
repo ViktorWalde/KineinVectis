@@ -1,5 +1,17 @@
 # 03 — Protocolo IPC
 
+> **O `0.106.0` (2026-09-13) é a ÁRVORE DE TESTES antes do primeiro run** —
+> o que faltou do B6 do [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md):
+> `test.discover { buildSystem? }` é um JOB que lista sem rodar (`pytest
+> --collect-only -q`, `cargo test -- --list`, `ctest -N`) e termina em
+> `event.test.discovered` com um `TestCaseInfo { id, name, file? }` por
+> caso, no **id exato** que o mesmo runner aceita; `test.run` ganhou
+> `testId?` — pytest recebe o node id **posicional** (não `-k`), cargo
+> `<nome> -- --exact`, ctest `-R ^nome$` escapado — e ele vence `filter`. O
+> painel Testes mostra a árvore com o status do último run e um "rodar só
+> este" por linha; o caso que roda pinta a linha da árvore porque o id é o
+> mesmo. Método, evento e campo novos sobem o minor.
+>
 > **O `0.105.0` (2026-09-13, à tarde) faz o Python APARECER na IDE** — o B8
 > do [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md)
 > ("só aqui a tela diz Python"), pedido do autor: `workspace.createProject`
@@ -1048,7 +1060,7 @@ instalação) — não o "tipo de projeto não suportado" de antes. `success` é
 `false` quando o ruff achou problemas (exit ≠ 0). Exercitado no gate com o
 ruff real (`F401` do `tools/gera.py` do projeto de exercitação).
 
-### Testes (`test.run` — job assíncrono)
+### Testes (`test.run` / `test.discover` — jobs assíncronos)
 
 Implementado no protocolo `0.17.0`; migrado para **job assíncrono/cancelável**.
 Requer workspace aberto. Responde na hora com `{ "jobId" }`; roda o runner do
@@ -1078,6 +1090,35 @@ resumo curto — `FAILED arquivo::caso - assert …`, estado na frente — não 
 caso, senão cada falha contaria duas vezes); a linha de resumo do libtest é
 ignorada. Tipos sem integração retornam `INVALID_REQUEST` (síncrono, antes do
 job); o resultado vem em `event.test.finished`, não na resposta.
+
+**A árvore antes do run (`test.discover`, `0.106.0`, 2026-09-13).**
+`test.discover { buildSystem? }` → `{ jobId }`; o job lista **sem rodar** e
+termina em `event.test.discovered { jobId, runner, command, tests:
+[TestCaseInfo { id, name, file? }], success, error? }`:
+
+```text
+pytest   python -m pytest --collect-only -q    tests/test_a.py::test_x[a b]  (medido, 9.1.1:
+         um node id por linha; o resumo "N tests collected" e as linhas vazias
+         não contam; só o stdout — o pytest escreve avisos no stderr; exit 5
+         = "no tests ran" = lista VAZIA com sucesso, um projeto novo não tem testes)
+cargo    cargo test -- --list                  tests::alpha: test  (`: benchmark`
+         e o resumo não contam; COMPILA os testes — por isso é job)
+ctest    ctest --test-dir .kinein/build -N     "  Test #N: Nome"  (medido, ctest 4.x)
+```
+
+O `id` é o que o **mesmo** runner aceita para rodar um só, e é o `name` que
+`event.test.case` reporta quando ele roda — a UI pinta a linha da árvore
+sem tabela de tradução. `test.run { testId }` (vence `filter`; vazio e
+espaços não contam): pytest recebe o node id **posicional** (`pytest
+tests/a.py::x` — `-k` casaria por substring), cargo `cargo test <nome> --
+--exact` (o `--exact` é do libtest, depois do `--`), ctest `-R ^nome$` com
+os metacaracteres escapados (`Broken.Case` não pode casar `BrokenXCase`;
+provado contra o ctest real com `Core` e `CoreParsing` lado a lado). Sem
+runner para o tipo, `INVALID_REQUEST`; sem interpretador ou sem o módulo
+pytest no ambiente, `event.test.discovered { success: false, error }` com o
+passo. A UI (`TestsPanel`, que agora recebe o `JobsController` inteiro em
+vez de quatro escalares): "Listar testes", a árvore com o ponto de status e
+um ▶ por linha; um run novo apaga os status e mantém a árvore.
 
 **Python (`0.100.0`).** O pytest roda com o **interpretador do projeto** (ou
 `uv run python` — a mesma regra do `run.script`), cwd no root: é lá que os
@@ -2146,7 +2187,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 138 métodos roteados — a lista inteira
+## Os 139 métodos roteados — a lista inteira
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -2301,6 +2342,7 @@ terminal.open
 terminal.resize
 terminal.scroll
 
+test.discover
 test.run
 
 toolchain.get
@@ -2327,7 +2369,7 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 47 eventos emitidos — a lista inteira
+## Os 48 eventos emitidos — a lista inteira
 
 > **Era "Eventos iniciais", e faltavam três** — os dois do `datasource` e o do
 > `grafana`. Refeita em 2026-09-06. **Cinco não são literais no código**: eles
@@ -2393,6 +2435,7 @@ event.terminal.closed
 event.terminal.render
 
 event.test.case
+event.test.discovered
 event.test.finished
 event.test.output
 event.test.started

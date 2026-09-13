@@ -236,6 +236,9 @@ impl Core {
                 RequestOutcome::Continue(self.quality_run_response(request_id, params))
             }
             "test.run" => RequestOutcome::Continue(self.test_run_response(request_id, params)),
+            "test.discover" => {
+                RequestOutcome::Continue(self.test_discover_response(request_id, params))
+            }
             method => {
                 RequestOutcome::Continue(self.service_request_response(method, request_id, params))
             }

@@ -15,6 +15,12 @@ use std::{
     sync::{Arc, atomic::AtomicBool},
 };
 
+pub mod discover;
+mod parse;
+mod runners;
+
+pub use discover::discover_tests;
+
 use kinein_protocol::ProjectKind;
 
 use crate::{
@@ -156,123 +162,69 @@ impl TestError {
 pub fn run_tests(
     root: &Path,
     kind: ProjectKind,
-    filter: Option<&str>,
+    selection: Selection<'_>,
     python: Option<&PythonLauncher>,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
     match kind {
-        ProjectKind::RustCargo => run_cargo_test(root, filter, cancel, sink),
-        ProjectKind::Cmake => run_ctest(root, filter, cancel, sink),
-        ProjectKind::Python => run_pytest(root, filter, python, cancel, sink),
+        ProjectKind::RustCargo => runners::run_cargo_test(root, selection, cancel, sink),
+        ProjectKind::Cmake => runners::run_ctest(root, selection, cancel, sink),
+        ProjectKind::Python => runners::run_pytest(root, selection, python, cancel, sink),
         other => Err(TestError::Unsupported {
             kind: project_kind_name(other),
         }),
     }
 }
 
-/// `python -m pytest -v` com o Python DO PROJETO: o pytest tem de ser o do
-/// ambiente (e' la' que os pacotes do projeto estao). `-v` da' uma linha por
-/// caso (`arquivo::caso PASSED [ 50%]`), que `parse_pytest_case` le. Sem o
-/// modulo, o pytest nao existe naquele ambiente — e o erro diz como instalar.
-fn run_pytest(
-    root: &Path,
-    filter: Option<&str>,
-    python: Option<&PythonLauncher>,
-    cancel: &Arc<AtomicBool>,
-    sink: &mut dyn FnMut(TestEvent),
-) -> Result<TestOutcome, TestError> {
-    let Some(launcher) = python else {
-        return Err(TestError::ToolMissing {
-            tool: "python".to_owned(),
-            hint: "sem interpretador para este projeto: crie o ambiente (.venv) pela faixa de \
-                   saude ou instale o python3"
-                .to_owned(),
-        });
-    };
-    let (program, prefix) = launcher.program();
-    let mut command = Command::new(program);
-    command
-        .args(prefix)
-        .args(["-m", "pytest", "-v"])
-        .current_dir(root);
-    let mut display = format!("{} -m pytest -v", launcher.display(root));
-    if let Some(filter) = filter.map(str::trim).filter(|filter| !filter.is_empty()) {
-        command.arg("-k").arg(filter);
-        display.push_str(" -k ");
-        display.push_str(filter);
-    }
+/// O que rodar: tudo, um filtro do runner, ou UM teste pelo id exato que o
+/// `test.discover` deu (2026-09-13).
+#[derive(Debug, Clone, Copy, Default)]
+pub enum Selection<'a> {
+    /// A suite inteira.
+    #[default]
+    All,
+    /// O filtro na forma do runner (posicional do cargo, `-R` do ctest,
+    /// `-k` do pytest).
+    Filter(&'a str),
+    /// Exatamente um: node id do pytest, nome do libtest com `--exact`, nome
+    /// do ctest ancorado.
+    Exact(&'a str),
+}
 
-    let mut sem_pytest = false;
-    let mut observando = |event: TestEvent| {
-        if let TestEvent::Output { line, .. } = &event {
-            if line.contains("No module named pytest") {
-                sem_pytest = true;
-            }
+impl<'a> Selection<'a> {
+    /// A selecao a partir dos dois campos do `test.run`: `testId` vence.
+    #[must_use]
+    pub fn from_params(filter: Option<&'a str>, test_id: Option<&'a str>) -> Self {
+        let limpo = |s: Option<&'a str>| s.map(str::trim).filter(|s| !s.is_empty());
+        match (limpo(test_id), limpo(filter)) {
+            (Some(id), _) => Self::Exact(id),
+            (None, Some(f)) => Self::Filter(f),
+            (None, None) => Self::All,
         }
-        sink(event);
-    };
-    let outcome = stream_command(
-        command,
-        &display,
-        parse_pytest_case,
-        cancel,
-        &mut observando,
-    )?;
-    if sem_pytest {
-        return Err(TestError::ToolMissing {
-            tool: "pytest".to_owned(),
-            hint: "instale-o NO ambiente do projeto: `uv add --dev pytest` (projeto do uv) ou \
-                   `.venv/bin/python -m pip install pytest`"
-                .to_owned(),
-        });
     }
-    Ok(outcome)
 }
 
-fn run_cargo_test(
-    root: &Path,
-    filter: Option<&str>,
-    cancel: &Arc<AtomicBool>,
-    sink: &mut dyn FnMut(TestEvent),
-) -> Result<TestOutcome, TestError> {
-    let mut command = Command::new("cargo");
-    command.arg("test").current_dir(root);
-    let mut display = String::from("cargo test");
-    if let Some(filter) = filter.map(str::trim).filter(|filter| !filter.is_empty()) {
-        command.arg(filter);
-        display.push(' ');
-        display.push_str(filter);
+pub(super) fn sem_interpretador() -> TestError {
+    TestError::ToolMissing {
+        tool: "python".to_owned(),
+        hint: "sem interpretador para este projeto: crie o ambiente (.venv) pela faixa de \
+               saude ou instale o python3"
+            .to_owned(),
     }
-
-    stream_command(command, &display, parse_cargo_case, cancel, sink)
 }
 
-fn run_ctest(
-    root: &Path,
-    filter: Option<&str>,
-    cancel: &Arc<AtomicBool>,
-    sink: &mut dyn FnMut(TestEvent),
-) -> Result<TestOutcome, TestError> {
-    let build_dir = root.join(".kinein").join("build");
-    let mut command = Command::new("ctest");
-    command
-        .arg("--test-dir")
-        .arg(&build_dir)
-        .arg("--output-on-failure")
-        .current_dir(root);
-    let mut display = String::from("ctest --output-on-failure");
-    if let Some(filter) = filter.map(str::trim).filter(|filter| !filter.is_empty()) {
-        command.arg("-R").arg(filter);
-        display.push_str(" -R ");
-        display.push_str(filter);
+pub(super) fn sem_modulo_pytest() -> TestError {
+    TestError::ToolMissing {
+        tool: "pytest".to_owned(),
+        hint: "instale-o NO ambiente do projeto: `uv add --dev pytest` (projeto do uv) ou \
+               `.venv/bin/python -m pip install pytest`"
+            .to_owned(),
     }
-
-    stream_command(command, &display, parse_ctest_case, cancel, sink)
 }
 
 /// Spawns the runner, streams output, and tallies parsed cases.
-fn stream_command(
+pub(super) fn stream_command(
     command: Command,
     display_name: &str,
     parse_case: fn(&str) -> Option<(String, CaseStatus)>,
@@ -317,96 +269,235 @@ fn stream_command(
     })
 }
 
-/// Parses a libtest case line: `test <name> ... <outcome>`.
-///
-/// The summary line `test result: ...` is intentionally not matched: it lacks
-/// the ` ... ` separator that every case line carries.
-fn parse_cargo_case(line: &str) -> Option<(String, CaseStatus)> {
-    let rest = line.trim().strip_prefix("test ")?;
-    let separator = rest.rfind(" ... ")?;
-    let name = rest[..separator].trim();
-    if name.is_empty() {
-        return None;
-    }
-    let outcome = rest[separator + " ... ".len()..].trim();
-    let status = match outcome {
-        "ok" => CaseStatus::Passed,
-        "FAILED" => CaseStatus::Failed,
-        // "ignored" or "ignored, <reason>".
-        _ if outcome == "ignored" || outcome.starts_with("ignored,") => CaseStatus::Ignored,
-        // Benchmarks and anything else are not pass/fail cases.
-        _ => return None,
-    };
-    Some((name.to_owned(), status))
-}
-
-/// Parses a pytest `-v` case line: `tests/test_x.py::test_a PASSED [ 50%]`.
-///
-/// O nome vem ANTES do estado e sempre tem `::` (`arquivo::caso`, com
-/// parametros entre colchetes, que podem ter espaco); o estado e' a ULTIMA
-/// palavra-chave da linha antes do `[ nn%]`. Linhas do resumo (`FAILED
-/// tests/x.py::a - assert`) comecam pelo estado e nao casam — senao cada
-/// falha contaria duas vezes.
-fn parse_pytest_case(line: &str) -> Option<(String, CaseStatus)> {
-    const ESTADOS: [(&str, CaseStatus); 6] = [
-        ("PASSED", CaseStatus::Passed),
-        ("XPASS", CaseStatus::Passed),
-        ("FAILED", CaseStatus::Failed),
-        ("ERROR", CaseStatus::Failed),
-        ("SKIPPED", CaseStatus::Ignored),
-        ("XFAIL", CaseStatus::Ignored),
-    ];
-    let line = line.trim();
-    let mut melhor: Option<(usize, CaseStatus)> = None;
-    for (palavra, status) in ESTADOS {
-        let marcador = format!(" {palavra}");
-        if let Some(pos) = line.rfind(&marcador) {
-            if melhor.is_none_or(|(p, _)| pos > p) {
-                melhor = Some((pos, status));
-            }
-        }
-    }
-    let (pos, status) = melhor?;
-    let name = line[..pos].trim();
-    if name.is_empty() || !name.contains("::") {
-        return None;
-    }
-    Some((name.to_owned(), status))
-}
-
-/// Parses a ctest case line: `1/3 Test #1: Name .... Passed|***Failed`.
-fn parse_ctest_case(line: &str) -> Option<(String, CaseStatus)> {
-    let marker = line.find("Test #")?;
-    let after_hash = line[marker + "Test #".len()..].split_once(':')?.1;
-    // `after_hash` is like `  Name .................   Passed    0.01 sec`.
-    let status = if line.contains("***Failed") || line.contains("***Not Run") {
-        CaseStatus::Failed
-    } else if line.contains("***Skipped") || line.contains("***Disabled") {
-        CaseStatus::Ignored
-    } else if line.contains("   Passed") {
-        CaseStatus::Passed
-    } else {
-        return None;
-    };
-    let name = after_hash
-        .trim_start()
-        .split(" ..")
-        .next()?
-        .split("   ")
-        .next()?
-        .trim();
-    if name.is_empty() {
-        return None;
-    }
-    Some((name.to_owned(), status))
-}
-
 #[cfg(test)]
 mod tests {
-    use super::{
-        CaseStatus, TestEvent, parse_cargo_case, parse_ctest_case, parse_pytest_case,
-        stream_command,
-    };
+    use super::parse::{parse_cargo_case, parse_ctest_case, parse_pytest_case};
+    use super::runners::regex_literal;
+    use super::{CaseStatus, Selection, TestEvent, stream_command};
+
+    /// `testId` vence `filter`; vazios e espacos nao contam.
+    #[test]
+    fn selection_prefers_the_exact_id_and_ignores_blanks() {
+        assert!(matches!(Selection::from_params(None, None), Selection::All));
+        assert!(matches!(
+            Selection::from_params(Some("  "), Some("")),
+            Selection::All
+        ));
+        assert!(matches!(
+            Selection::from_params(Some(" soma "), None),
+            Selection::Filter("soma")
+        ));
+        assert!(matches!(
+            Selection::from_params(Some("soma"), Some("tests/a.py::x")),
+            Selection::Exact("tests/a.py::x")
+        ));
+    }
+
+    /// O nome exato do ctest vira regex ANCORADA com os metacaracteres
+    /// escapados: `Broken.Case` nao pode casar `BrokenXCase`.
+    #[test]
+    fn ctest_exact_name_is_an_anchored_escaped_regex() {
+        assert_eq!(regex_literal("Broken.Case"), "Broken\\.Case");
+        assert_eq!(regex_literal("a+b(c)[d]"), "a\\+b\\(c\\)\\[d\\]");
+        assert_eq!(regex_literal("CoreParsing"), "CoreParsing");
+    }
+
+    fn args_de(command: &std::process::Command) -> Vec<String> {
+        command
+            .get_args()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect()
+    }
+
+    /// Os comandos por selecao, lidos sem rodar nada: o `--exact` do libtest
+    /// vai DEPOIS do `--`; o ctest exato e' `-R ^id$` escapado.
+    #[test]
+    fn the_runner_commands_carry_the_selection() {
+        use std::path::Path;
+        let root = Path::new("/w");
+        assert_eq!(
+            args_de(&super::runners::cargo_command(root, Selection::All).0),
+            ["test"]
+        );
+        assert_eq!(
+            args_de(&super::runners::cargo_command(root, Selection::Filter("alpha")).0),
+            ["test", "alpha"]
+        );
+        let (c, d) = super::runners::cargo_command(root, Selection::Exact("tests::alpha"));
+        assert_eq!(args_de(&c), ["test", "tests::alpha", "--", "--exact"]);
+        assert_eq!(d, "cargo test tests::alpha -- --exact");
+
+        let (c, d) = super::runners::ctest_command(root, Selection::Exact("Broken.Case"));
+        assert_eq!(
+            args_de(&c),
+            [
+                "--test-dir",
+                "/w/.kinein/build",
+                "--output-on-failure",
+                "-R",
+                "^Broken\\.Case$"
+            ]
+        );
+        assert!(d.ends_with("-R ^Broken\\.Case$"), "{d}");
+        assert_eq!(
+            args_de(&super::runners::ctest_command(root, Selection::Filter("Core")).0)[3..],
+            ["-R", "Core"]
+        );
+    }
+
+    /// A descoberta do pytest com um interpretador FALSO: so' o stdout conta
+    /// (um id que aparece no stderr — o pytest escreve avisos la' — nao e'
+    /// teste), e o exit 5 do pytest ("no tests ran") e' lista vazia, nao erro.
+    #[test]
+    #[cfg(unix)]
+    fn pytest_discovery_reads_stdout_only_and_treats_exit_5_as_empty() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir()
+            .join("kinein-core-tests")
+            .join(format!("{}-pytest-discover", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let falso = dir.join("python");
+        std::fs::write(
+            &falso,
+            "#!/bin/sh\necho 'tests/a.py::no_stderr' >&2\necho 'tests/a.py::test_x'\necho '1 test collected in 0.00s'\nexit 0\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&falso, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let launcher = crate::python::run::PythonLauncher::Interpreter(falso.clone());
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let casos = super::discover_tests(
+            &dir,
+            kinein_protocol::ProjectKind::Python,
+            Some(&launcher),
+            &cancel,
+            &mut |_| {},
+        )
+        .unwrap();
+        assert_eq!(
+            casos.iter().map(|c| c.id.as_str()).collect::<Vec<_>>(),
+            ["tests/a.py::test_x"]
+        );
+
+        std::fs::write(&falso, "#!/bin/sh\necho 'no tests ran in 0.01s'\nexit 5\n").unwrap();
+        let casos = super::discover_tests(
+            &dir,
+            kinein_protocol::ProjectKind::Python,
+            Some(&launcher),
+            &cancel,
+            &mut |_| {},
+        )
+        .unwrap();
+        assert!(casos.is_empty(), "exit 5 = sem testes, nao erro");
+
+        std::fs::write(&falso, "#!/bin/sh\necho 'erro de coleta' >&2\nexit 2\n").unwrap();
+        let erro = super::discover_tests(
+            &dir,
+            kinein_protocol::ProjectKind::Python,
+            Some(&launcher),
+            &cancel,
+            &mut |_| {},
+        )
+        .unwrap_err();
+        assert!(erro.to_string().contains("saiu com"), "{erro}");
+    }
+
+    /// A descoberta contra o `ctest` REAL: um projeto minimo de dois testes
+    /// (um deles com `.` no nome) configurado pelo cmake real; e rodar UM pelo
+    /// id exato roda so' ele. Sem cmake na maquina, o teste nao prova nada e
+    /// diz isso.
+    #[test]
+    #[cfg(unix)]
+    fn ctest_discovery_and_exact_run_against_the_real_ctest() {
+        use std::process::Command;
+        let cmake = Command::new("cmake")
+            .arg("--version")
+            .output()
+            .is_ok_and(|o| o.status.success());
+        let ctest = Command::new("ctest")
+            .arg("--version")
+            .output()
+            .is_ok_and(|o| o.status.success());
+        if !cmake || !ctest {
+            eprintln!("cmake/ctest ausentes: descoberta do ctest NAO provada aqui");
+            return;
+        }
+        let root = std::env::temp_dir()
+            .join("kinein-core-tests")
+            .join(format!("{}-ctest-discover", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join(".kinein")).unwrap();
+        std::fs::write(
+            root.join("CMakeLists.txt"),
+            "cmake_minimum_required(VERSION 3.24)\nproject(t NONE)\nenable_testing()\n\
+             add_test(NAME Core COMMAND true)\nadd_test(NAME CoreParsing COMMAND true)\n\
+             add_test(NAME Broken.Case COMMAND false)\n",
+        )
+        .unwrap();
+        let configurado = Command::new("cmake")
+            .args(["-S", ".", "-B", ".kinein/build"])
+            .current_dir(&root)
+            .output()
+            .unwrap();
+        assert!(
+            configurado.status.success(),
+            "{}",
+            String::from_utf8_lossy(&configurado.stderr)
+        );
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let mut eventos = Vec::new();
+        let casos = super::discover_tests(
+            &root,
+            kinein_protocol::ProjectKind::Cmake,
+            None,
+            &cancel,
+            &mut |e| eventos.push(e),
+        )
+        .unwrap();
+        let ids: Vec<&str> = casos.iter().map(|c| c.id.as_str()).collect();
+        assert_eq!(ids, vec!["Core", "CoreParsing", "Broken.Case"]);
+        assert!(
+            eventos
+                .iter()
+                .any(|e| matches!(e, TestEvent::Started { command } if command == "ctest -N"))
+        );
+
+        // Rodar so' o Broken.Case: um caso, falhou; o CoreParsing NAO rodou.
+        let mut eventos = Vec::new();
+        let outcome = super::run_tests(
+            &root,
+            kinein_protocol::ProjectKind::Cmake,
+            Selection::Exact("Broken.Case"),
+            None,
+            &cancel,
+            &mut |e| eventos.push(e),
+        )
+        .unwrap();
+        assert_eq!((outcome.passed, outcome.failed), (0, 1), "{eventos:?}");
+        assert!(eventos.iter().any(|e| matches!(e, TestEvent::Case { name, status: CaseStatus::Failed } if name == "Broken.Case")));
+        assert!(
+            !eventos
+                .iter()
+                .any(|e| matches!(e, TestEvent::Case { name, .. } if name == "CoreParsing"))
+        );
+        // "Core" exato NAO arrasta "CoreParsing": a regex e' ancorada.
+        let mut eventos = Vec::new();
+        let outcome = super::run_tests(
+            &root,
+            kinein_protocol::ProjectKind::Cmake,
+            Selection::Exact("Core"),
+            None,
+            &cancel,
+            &mut |e| eventos.push(e),
+        )
+        .unwrap();
+        assert_eq!((outcome.passed, outcome.failed), (1, 0), "{eventos:?}");
+        assert!(
+            !eventos
+                .iter()
+                .any(|e| matches!(e, TestEvent::Case { name, .. } if name == "CoreParsing"))
+        );
+    }
 
     /// As linhas do `pytest -v` (medidas na doc do pytest 9, 2026-09-13):
     /// caso com estado e percentual, parametro com espaco, SKIPPED com motivo,

@@ -57,9 +57,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.105.0
-testes      701 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
-metodos     138 IPC roteados, 47 eventos
+protocolo   0.106.0
+testes      708 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+metodos     139 IPC roteados, 48 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -425,10 +425,9 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          so' o nome (`python3.14t`) e o GIL. Nada
                                          a fazer ate' um projeto precisar; medir
                                          antes (nesta maquina ha' 3.14.7 padrao)
---  descoberta do pytest como arvore     `pytest --collect-only -q` antes de rodar
-    (41 B6, o que faltou)                (a arvore de testes que o JetBrains mostra
-                                         antes do primeiro run); hoje os casos so'
-                                         aparecem quando rodam
+--  descoberta do pytest como arvore     FEITA em 2026-09-13 (§7.32, 0.106.0):
+    (41 B6, o que faltou)                test.discover para pytest, cargo e ctest; a
+                                         arvore no painel com "rodar so' este"
 --  ruff como SERVIDOR LSP               DIVIDA da fatia 2 (2026-09-13): as code
     (o Alt+Enter em Python)              actions do ruff ("organizar imports",
                                          "corrigir F401") pedem DOIS servidores
@@ -2289,6 +2288,61 @@ protocolo 0.105.0 — template `python` no workspace.createProject
 testes  701 Rust (+1), 32 harnesses (tst_container ganhou o caso sem projeto)
 proximo o polimento da cadeia Python (40 §4): ruff servidor, arvore do pytest,
         `-m`/attach no debugpy, run.capabilities — e o relato do Docker
+```
+
+### 7.32 A árvore de testes antes do primeiro run — e rodar só um, 2026-09-13
+
+O que faltou do 41 B6: *"a árvore de testes que o JetBrains mostra antes do
+primeiro run"*. Hoje os casos só apareciam quando rodavam. Protocolo 0.106.0.
+
+```text
+test/discover.rs       parse_pytest_collect_line / parse_cargo_list_line /
+                       parse_ctest_list_line — cada linha do modo de listar do
+                       runner vira TestCaseInfo { id, name, file? } com o id EXATO
+                       que o mesmo runner aceita para rodar um so'
+test/mod.rs            discover_tests(): `pytest --collect-only -q` (so' o stdout
+                       conta; exit 5 = sem testes = lista vazia), `cargo test --
+                       --list`, `ctest -N`; Selection { All | Filter | Exact }
+                       substitui o `filter: Option<&str>` — Exact e' posicional no
+                       pytest, `<nome> -- --exact` no cargo, `-R ^nome$` escapado
+                       no ctest (regex_literal); os comandos viraram funcoes puras
+                       (cargo_command/ctest_command) para o teste ler os
+                       argumentos sem compilar; test.rs virou test/{mod,runners,
+                       parse,discover}.rs — a catraca pegou o mod.rs em 585 linhas
+                       e o corte foi por responsabilidade (rodar, ler, listar)
+handlers/test_discover test.discover como JOB (o cargo compila para listar) ->
+                       event.test.discovered; test.run ganhou testId (vence filter)
+UI                     JobsController.discoveredModel/discoverTests/runOneTest;
+                       handleTestCase pinta a linha da arvore quando o id bate
+                       (senao caso solto); um run novo zera os status e mantem a
+                       arvore; TestsPanel recebe o JobsController inteiro (o
+                       BottomPanelHost e o ShellWorkspaceHost ENCOLHERAM: -3
+                       escalares) e mostra "Listar testes", a arvore com ▶ por linha
+```
+
+**Medido:** pytest 9.1.1 (`--collect-only -q`: um node id por linha, o
+resumo no fim, avisos no stderr; rodar um node id posicional roda só ele);
+libtest (`nome: test`); ctest 4.x (`  Test #N: Nome`, `Total Tests: N`) — e
+o ctest REAL no teste de unidade: `Core` exato não arrasta `CoreParsing` (a
+regex é ancorada), `Broken.Case` roda só ele (o `.` escapado). A exercitação
+lista o projeto CMake do gate pelo ctest real (zero testes declarados = lista
+vazia com sucesso) e pede a árvore ao `.venv` novo, que não tem pytest e
+responde o passo.
+
+**Provado (14 mutações, 11 mortas com o compilador calado; 3 sobreviveram e
+viraram teste):** o `--exact` do cargo e a âncora do ctest (viraram o teste
+dos comandos puros), só o stdout conta e o exit 5 do pytest (viraram o teste
+com o python falso), o `testId` vencendo o `filter`, o `: test` do libtest;
+no QML, a linha da árvore pintada pelo id, os status zerados no run novo, a
+listagem pedida uma vez. Uma sobrevivente era redundante (uma cláusula do
+parser do pytest para uma linha que não existe) e saiu.
+
+```text
+protocolo 0.106.0 — test.discover, event.test.discovered, testId no test.run
+testes  708 Rust (+7), 32 harnesses; 139 metodos, 48 eventos
+gate    exercitacao: test.discover pelo ctest real e pelo .venv real
+proximo o polimento da cadeia Python (40 §4): ruff servidor, `-m`/attach no debugpy,
+        run.capabilities, a porta no Executar de MicroPython
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

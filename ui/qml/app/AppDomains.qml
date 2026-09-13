@@ -116,6 +116,8 @@ Item {
         analyzing: root.coreClient.analyzing
         onRunBuildRequested: buildSystem => root.coreClient.runBuild(buildSystem)
         onRunTestsRequested: buildSystem => root.coreClient.runTests("", buildSystem)
+        onRunOneTestRequested: (testId, buildSystem) => root.coreClient.runTests("", buildSystem, testId)
+        onDiscoverTestsRequested: buildSystem => root.coreClient.discoverTests(buildSystem)
         onRunQualityRequested: root.coreClient.runQuality()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);

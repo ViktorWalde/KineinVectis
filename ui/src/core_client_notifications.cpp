@@ -59,6 +59,10 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit projectChanged(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.test.discovered")) {
+        emit testsDiscovered(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.toolchain.installed")) {
         emit toolchainInstalled(params.toVariantMap());
         return;

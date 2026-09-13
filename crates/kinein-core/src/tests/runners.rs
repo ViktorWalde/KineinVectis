@@ -503,3 +503,128 @@ fn test_run_in_a_micropython_project_stays_on_the_host() {
     );
     assert_eq!(finished["passed"], 1, "{finished}");
 }
+
+/// Pede `test.discover` e espera o `event.test.discovered` desse job.
+fn discover_and_wait(
+    core: &mut crate::Core,
+    receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
+) -> serde_json::Value {
+    use std::time::{Duration, Instant};
+
+    let started = core.handle_request(&JsonRpcRequest::new(
+        96_i64,
+        "test.discover",
+        Some(json!({})),
+    ));
+    let job_id = started.response().result.clone().unwrap()["jobId"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let limite = Instant::now() + Duration::from_secs(20);
+    loop {
+        let e = receiver
+            .recv_timeout(limite.saturating_duration_since(Instant::now()))
+            .expect("evento");
+        if e.method == "event.test.discovered"
+            && e.params
+                .as_ref()
+                .is_some_and(|p| p["jobId"] == job_id.as_str())
+        {
+            break e.params.unwrap();
+        }
+    }
+}
+
+/// Descobre e roda um so' (41 B6, o que faltou; 2026-09-13): `test.discover`
+/// e' um job que lista pelo `--collect-only -q` e termina em
+/// `event.test.discovered` com o node id de cada caso; `test.run { testId }`
+/// passa esse id POSICIONAL ao pytest (nao `-k`), e o `testId` vence o
+/// `filter`. Sem pytest no ambiente, o discover diz como instalar nele.
+#[test]
+#[cfg(unix)]
+fn tests_are_discovered_and_one_runs_by_its_exact_id() {
+    use std::time::{Duration, Instant};
+
+    let dir = pytest_workspace(
+        "descobrir",
+        Some(concat!(
+            "#!/bin/sh\n",
+            "echo \"args: $*\"\n",
+            "case \"$*\" in\n",
+            "  *--collect-only*) printf 'tests/test_a.py::test_soma\\ntests/test_a.py::test_x[a b]\\n\\n2 tests collected in 0.00s\\n'; exit 0;;\n",
+            "  *) echo 'tests/test_a.py::test_soma PASSED [100%]'; exit 0;;\n",
+            "esac\n"
+        )),
+    );
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        95_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let descoberto = discover_and_wait(&mut core, &receiver);
+    assert_eq!(descoberto["runner"], "pytest");
+    assert_eq!(descoberto["success"], true, "{descoberto}");
+    assert_eq!(
+        descoberto["command"],
+        ".venv/bin/python -m pytest --collect-only -q"
+    );
+    let tests = descoberto["tests"].as_array().unwrap();
+    assert_eq!(tests.len(), 2, "{tests:?}");
+    assert_eq!(tests[1]["id"], "tests/test_a.py::test_x[a b]");
+    assert_eq!(tests[1]["name"], "test_x[a b]");
+    assert_eq!(tests[1]["file"], "tests/test_a.py");
+
+    // Rodar UM: o id posicional, e o filter e' ignorado quando ha' testId.
+    let (eventos, finished) = {
+        let params = json!({ "testId": "tests/test_a.py::test_x[a b]", "filter": "soma" });
+        let started = core.handle_request(&JsonRpcRequest::new(97_i64, "test.run", Some(params)));
+        let job_id = started.response().result.clone().unwrap()["jobId"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let mut eventos = Vec::new();
+        let limite = Instant::now() + Duration::from_secs(20);
+        loop {
+            let e = receiver
+                .recv_timeout(limite.saturating_duration_since(Instant::now()))
+                .expect("evento");
+            if e.params
+                .as_ref()
+                .is_none_or(|p| p["jobId"] != job_id.as_str())
+            {
+                continue;
+            }
+            if e.method == "event.test.finished" {
+                break (eventos, e.params.unwrap());
+            }
+            eventos.push(e);
+        }
+    };
+    let started = eventos
+        .iter()
+        .find(|e| e.method == "event.test.started")
+        .unwrap();
+    assert_eq!(
+        started.params.as_ref().unwrap()["command"],
+        ".venv/bin/python -m pytest -v tests/test_a.py::test_x[a b]"
+    );
+    let args: Vec<&str> = eventos
+        .iter()
+        .filter(|e| e.method == "event.test.output")
+        .filter_map(|e| e.params.as_ref().unwrap()["line"].as_str())
+        .filter(|l| l.starts_with("args:"))
+        .collect();
+    assert_eq!(
+        args,
+        vec!["args: -m pytest -v tests/test_a.py::test_x[a b]"],
+        "sem -k"
+    );
+    assert_eq!(finished["passed"], 1);
+}
