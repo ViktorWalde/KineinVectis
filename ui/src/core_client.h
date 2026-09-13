@@ -93,6 +93,8 @@ public:
     /// escritas a mao que divergiam entre si e do core. O catalogo e estatico,
     /// entao basta pedir uma vez ao conectar.
     Q_INVOKABLE void formatCapabilities();
+    /// Pede o catalogo do que "Executar"/"Depurar" aceitam (`run.capabilities`).
+    Q_INVOKABLE void runCapabilities();
     Q_INVOKABLE void renamePath(const QString& from, const QString& to);
     Q_INVOKABLE void deletePath(const QString& path);
     Q_INVOKABLE void listCommands();
@@ -281,6 +283,7 @@ signals:
     void commandsListed(const QVariantList& commands);
     void toolsListed(const QVariantList& tools);
     void formatCapabilitiesListed(const QVariantList& formatters);
+    void runCapabilitiesListed(const QVariantList& runnable, const QVariantList& debuggable);
     void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
                              const QString& cdbStaleBecause);
     void cmakeConfigureFinished(bool success);

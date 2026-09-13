@@ -34,6 +34,12 @@ Item {
 
     Component.onCompleted: {
         let failures = 0;
+        // Antes do catalogo do core (run.capabilities), NADA e' executavel nem
+        // depuravel: uma lista escrita a mao aqui responderia "sim" sem o core
+        // ter falado — o defeito que o format.capabilities corrigiu em 0.61.
+        if (tree.isRunnableScript("/tmp/proj/tools/gera.py", "file")) failures += 1 << 28;
+        if (tree.isDebuggableScript("/tmp/proj/tools/gera.py", "file")) failures += 1 << 29;
+        tree.applyRunCapabilities(["sh", "bash", "zsh", "py"], ["py"]);
 
         // Comecar limpa e abre a aba.
         jobs.handleTestOutput("lixo de antes");

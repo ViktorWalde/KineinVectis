@@ -97,6 +97,10 @@ Window {
             domains.editorController.applyFormatCapabilities(formatters);
         }
 
+        function onRunCapabilitiesListed(runnable, debuggable) {
+            domains.projectTree.applyRunCapabilities(runnable, debuggable);
+        }
+
         function onConnectedChanged() {
             if (coreClient.connected && domains.workspaceController.toolsList.length === 0) {
                 coreClient.detectTools();
@@ -104,9 +108,11 @@ Window {
             if (coreClient.connected) {
                 coreClient.settingsGet();
                 domains.recentWorkspacesController.listRequested();
-                // O catalogo de formatters e estatico: pedir uma vez por
-                // conexao basta. A UI nao mantem lista propria (0.61.0).
+                // Os catalogos de formatters e do Executar/Depurar sao
+                // estaticos: pedir uma vez por conexao basta. A UI nao mantem
+                // lista propria (0.61.0; run.capabilities 0.107.0).
                 coreClient.formatCapabilities();
+                coreClient.runCapabilities();
             }
         }
 

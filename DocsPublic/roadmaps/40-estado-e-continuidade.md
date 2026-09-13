@@ -57,9 +57,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.106.0
-testes      708 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
-metodos     139 IPC roteados, 48 eventos
+protocolo   0.107.0
+testes      709 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+metodos     140 IPC roteados, 48 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -385,12 +385,12 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          por linha da lista. Uma escolha persistida
                                          (EmbeddedController.selectedPort) e o
                                          RuntimeRequestRouter a passa
---  debugpy: `-m pacote` e attach        o que a fatia 4 deixou: um ponto de entrada
-                                         que e' pacote so' se depura apontando o
-                                         __main__.py (o launch por `module` do
-                                         debugpy resolveria); e o attach a um
+--  debugpy: attach                      o `-m pacote` FEITO em 2026-09-13 (§7.33:
+                                         DebugTarget::Module -> `module` no launch,
+                                         provado pelo core real). Falta o attach a um
                                          processo/porta (`debugpy --listen`) para
-                                         servicos. Ambos pequenos; medir antes
+                                         servicos: o `attach` do DAP com
+                                         `connect { host, port }` e um campo na tela
 --  stderr dos processos filhos vai      LACUNA vista na fatia 4 (2026-09-13): o
     para /dev/null (adaptador DAP,       gate falhou UMA vez com "o adapter nao
     servidor de debug, servidores LSP)   respondeu a `initialize`" e nao havia como
@@ -406,15 +406,9 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          venv temporario. Para o gate provar sempre:
                                          `sudo dnf install python3-debugpy` ou um
                                          venv fixo e a variavel no ambiente
---  `run.capabilities` (o que "Executar"  DIVIDA anotada na fatia 3 (2026-09-13): a
-    aceita, publicado pelo core)         lista de extensoes executaveis (.sh/.bash/
-                                         .zsh/.py) vive em DOIS QML (ProjectTree-
-                                         Controller e ProjectExplorer) e no core
-                                         (run.script). E' o mesmo defeito que o
-                                         format.capabilities (0.61.0) corrigiu para
-                                         formatar: duas fontes divergem por
-                                         construcao. Fatia pequena: o core publica,
-                                         a UI consome
+--  `run.capabilities` (o que "Executar"  FEITO em 2026-09-13 (§7.33, 0.107.0): o
+    aceita, publicado pelo core)         core publica runnable/debuggable, a UI
+                                         consome e nao tem lista propria
 --  Python free-threaded (3.14t+, PEP    PONTUACAO do autor (2026-09-13), sem
     703/779; 3.15 final em 2026-10-01,   prioridade: se for util, a IDE le se o
     PEP 790)                             interpretador do projeto e' free-threaded
@@ -2343,6 +2337,49 @@ testes  708 Rust (+7), 32 harnesses; 139 metodos, 48 eventos
 gate    exercitacao: test.discover pelo ctest real e pelo .venv real
 proximo o polimento da cadeia Python (40 §4): ruff servidor, `-m`/attach no debugpy,
         run.capabilities, a porta no Executar de MicroPython
+```
+
+### 7.33 O módulo como alvo de debug, e o catálogo do Executar publicado pelo core, 2026-09-13
+
+Dois itens pequenos do polimento Python, fechados juntos. Protocolo 0.107.0.
+
+```text
+dap/target.rs        DebugTarget { Program(PathBuf) | Module(String) }; resolve_program
+                     devolve o alvo: um pacote com __main__.py e' Module (antes era
+                     recusa "aponte o __main__.py"); program_path() para quem precisa
+                     de um ELF (servidor de debug, build.size, espflash)
+dap/adapter.rs       start_request: Program -> `program`, Module -> `module` (o -m do
+                     debugpy, medido no 1.8.21); o attach continua com `program`
+dap/session.rs       um servidor de debug do kit com um Module e' recusa com motivo
+handlers/debug.rs    e_um_alvo_python: .py OU modulo; DebugStartResult.program mostra
+                     `-m pacote`
+run.rs               SHELL_SCRIPTS e PYTHON_SCRIPTS como FONTE UNICA de script_interpreter,
+                     do braco Python do run.script e de capabilities()
+run.capabilities     { runnable: [sh, bash, zsh, py], debuggable: [py] }; sem workspace
+UI                   ProjectTreeController.applyRunCapabilities (antes do catalogo nada
+                     e' executavel); ProjectExplorer le runnableExtensions do controller
+                     (a lista duplicada saiu); Main pede uma vez por conexao, como o
+                     format.capabilities
+gate                 verificar-python-debug.sh ganhou o 7o passo: sem main.py, o pacote
+                     e' lancado como `-m pacote` — breakpoint em pacote/__init__.py:2,
+                     x=21, `dobro 42`, exitCode 0 — contra o debugpy REAL
+```
+
+**Provado (9 mutações, 8 mortas com o compilador calado; 1 sobreviveu e
+virou teste):** `module` em vez de `program`; o `py` no catálogo e no
+braço do `run.script`; `debuggable` vazio; a extensão sem caixa no QML (a
+sobrevivente: `APP.PY` virou caso); sem catálogo nada é executável (o
+harness funcional do shell agora começa sem catálogo e o aplica no meio).
+Uma falsa "compilador pegou" no meio: um `use` que faltava no módulo de
+testes do `run.rs` mascarou três mutações como erro de compilação até o
+import ser corrigido — a classificação só vale com a suíte compilando.
+
+```text
+protocolo 0.107.0 — run.capabilities; DebugTarget::Module no debug.start
+testes  709 Rust (+1), 32 harnesses; 140 metodos, 48 eventos
+gate    python-debug: o 7o passo (-m pacote) contra o debugpy real
+proximo o polimento da cadeia Python (40 §4): ruff servidor, attach no debugpy,
+        a porta no Executar de MicroPython
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

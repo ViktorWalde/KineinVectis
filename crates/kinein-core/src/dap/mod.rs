@@ -27,7 +27,7 @@ use kinein_protocol::{
 use crate::lsp::EventSender;
 
 pub use adapter::{AdapterChoice, DEBUGPY};
-pub use target::resolve_program;
+pub use target::{DebugTarget, resolve_program};
 
 /// Error produced by the debug manager.
 #[derive(Debug)]
@@ -166,7 +166,7 @@ impl DebugManager {
     pub fn start(
         &mut self,
         root: &Path,
-        program: &Path,
+        target: &DebugTarget,
         choice: &AdapterChoice<'_>,
     ) -> Result<(), DebugError> {
         if self.is_running() {
@@ -177,7 +177,7 @@ impl DebugManager {
         let adapter = adapter::Adapter::from_choice(choice);
         let session = session::DapSession::launch(
             root,
-            program,
+            target,
             &self.breakpoints,
             self.events.clone(),
             &adapter,

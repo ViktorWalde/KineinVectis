@@ -60,23 +60,34 @@ Item {
         return slash > 0 ? path.substring(0, slash) : path;
     }
 
-    // O que "Executar" aceita: shells e, desde a fatia 3 da cadeia Python
-    // (2026-09-13), `.py` — o core roda com o interpretador DO PROJETO.
-    // A mesma lista vive em ProjectExplorer.isRunnableScript (o icone da
-    // linha); publicar isto pelo core (`run.capabilities`) esta' na fila do 40 §4.
+    // O que "Executar" e "Depurar" aceitam vem do CORE (`run.capabilities`,
+    // 0.107.0): antes do catalogo chegar, NADA e' executavel — uma lista
+    // escrita a mao aqui divergiu da do core por construcao (era o defeito do
+    // format.capabilities em 0.60). O ProjectExplorer le `runnableExtensions`
+    // para o icone da linha; a decisao mora aqui.
+    property var runnableExtensions: []
+    property var debuggableExtensions: []
+
+    function applyRunCapabilities(runnable, debuggable) {
+        runnableExtensions = runnable === undefined || runnable === null ? [] : runnable;
+        debuggableExtensions = debuggable === undefined || debuggable === null ? [] : debuggable;
+    }
+
+    function extensionOf(path) {
+        const nome = String(path);
+        const ponto = nome.lastIndexOf(".");
+        return ponto < 0 ? "" : nome.substring(ponto + 1).toLowerCase();
+    }
+
     function isRunnableScript(path, kind) {
         if (kind !== "file") {
             return false;
         }
-        const lower = path.toLowerCase();
-        return lower.endsWith(".sh") || lower.endsWith(".bash")
-                || lower.endsWith(".zsh") || lower.endsWith(".py");
+        return runnableExtensions.indexOf(extensionOf(path)) >= 0;
     }
 
-    // O que "Depurar" aceita: so' `.py` (o core sobe o debugpy DO interpretador
-    // do projeto — fatia 4 da cadeia Python, 2026-09-13). Um shell nao se depura.
     function isDebuggableScript(path, kind) {
-        return isRunnableScript(path, kind) && path.toLowerCase().endsWith(".py");
+        return isRunnableScript(path, kind) && debuggableExtensions.indexOf(extensionOf(path)) >= 0;
     }
 
     function clear() {

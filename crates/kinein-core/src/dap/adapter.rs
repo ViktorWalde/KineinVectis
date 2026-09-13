@@ -10,6 +10,8 @@ use std::path::{Path, PathBuf};
 
 use serde_json::{Value, json};
 
+use super::target::DebugTarget;
+
 /// Adaptador usado quando o kit nao escolheu nenhum.
 ///
 /// Era uma CONSTANTE ate 2026-09-03 (etapa 22 do `roadmaps/35`), e por isso nao
@@ -129,21 +131,26 @@ impl Adapter {
     /// e' o desktop de sempre. Nos dois o adaptador ADIA a resposta ate' o
     /// `configurationDone` (medido no GDB 17.2 e no lldb-dap), e e' por isso
     /// que a sessao manda o pedido e so' espera a resposta no fim.
-    pub(super) fn start_request(&self, root: &Path, program: &Path) -> (&'static str, Value) {
-        if let Some(target) = &self.remote_target {
+    pub(super) fn start_request(&self, root: &Path, target: &DebugTarget) -> (&'static str, Value) {
+        if let Some(remote) = &self.remote_target {
             return (
                 "attach",
                 json!({
-                    "target": target,
-                    "program": program.display().to_string(),
+                    "target": remote,
+                    "program": target.display(),
                 }),
             );
         }
+        // Um executavel vai em `program`; um pacote Python vai em `module` (o
+        // `-m` do debugpy — medido no 1.8.21: e' o campo que ele aceita).
         let mut arguments = json!({
-            "program": program.display().to_string(),
             "cwd": root.display().to_string(),
             "stopOnEntry": false,
         });
+        match target {
+            DebugTarget::Program(p) => arguments["program"] = json!(p.display().to_string()),
+            DebugTarget::Module(m) => arguments["module"] = json!(m),
+        }
         // O chip so' entra quando o kit escolheu um. Mandar `"chip": null` para
         // um adaptador que nao o espera e' pedir para ele tratar como valor —
         // a mesma regra da condicao de breakpoint (0.66.0).
@@ -165,7 +172,7 @@ impl Adapter {
 mod tests {
     use std::path::{Path, PathBuf};
 
-    use super::{Adapter, AdapterChoice};
+    use super::{Adapter, AdapterChoice, DebugTarget};
 
     fn adapter(choice: AdapterChoice<'_>) -> Adapter {
         Adapter::from_choice(&choice)
@@ -182,7 +189,10 @@ mod tests {
             "o padrao ganhou argumento: {:?}",
             padrao.arguments
         );
-        let (pedido, argumentos) = padrao.start_request(Path::new("/w"), Path::new("/w/app"));
+        let (pedido, argumentos) = padrao.start_request(
+            Path::new("/w"),
+            &DebugTarget::Program(PathBuf::from("/w/app")),
+        );
         assert_eq!(pedido, "launch");
         assert_eq!(argumentos["program"], "/w/app");
         assert_eq!(argumentos["cwd"], "/w");
@@ -206,12 +216,21 @@ mod tests {
         });
         assert_eq!(escolhido.program, PathBuf::from("/w/.venv/bin/python"));
         assert_eq!(escolhido.arguments, &["-m", "debugpy.adapter"]);
-        let (pedido, argumentos) = escolhido.start_request(Path::new("/w"), Path::new("/w/app.py"));
+        let (pedido, argumentos) = escolhido.start_request(
+            Path::new("/w"),
+            &DebugTarget::Program(PathBuf::from("/w/app.py")),
+        );
         assert_eq!(pedido, "launch");
         assert_eq!(argumentos["program"], "/w/app.py");
         assert_eq!(argumentos["cwd"], "/w");
         assert!(argumentos.get("console").is_none(), "{argumentos}");
         assert!(argumentos.get("chip").is_none());
+        // Um pacote vai em `module`, e NAO em `program` (medido no 1.8.21).
+        let (_, modulo) =
+            escolhido.start_request(Path::new("/w"), &DebugTarget::Module("pacote".to_owned()));
+        assert_eq!(modulo["module"], "pacote");
+        assert!(modulo.get("program").is_none(), "{modulo}");
+        assert_eq!(modulo["cwd"], "/w");
     }
 
     /// `probe-rs` so' fala DAP com o subcomando `dap-server`. Sem ele o
@@ -319,7 +338,10 @@ mod tests {
             ..AdapterChoice::default()
         });
         assert_eq!(com_chip.arguments, &["dap-server"]);
-        let (pedido, argumentos) = com_chip.start_request(Path::new("/w"), Path::new("/w/fw.elf"));
+        let (pedido, argumentos) = com_chip.start_request(
+            Path::new("/w"),
+            &DebugTarget::Program(PathBuf::from("/w/fw.elf")),
+        );
         assert_eq!(pedido, "launch");
         assert_eq!(argumentos["chip"], "STM32H745ZITx");
     }
@@ -336,7 +358,10 @@ mod tests {
             debug_server: Some("qemu-system-arm -S -gdb tcp::3333 -kernel {program}"),
             ..AdapterChoice::default()
         });
-        let (pedido, argumentos) = remoto.start_request(Path::new("/w"), Path::new("/w/fw.elf"));
+        let (pedido, argumentos) = remoto.start_request(
+            Path::new("/w"),
+            &DebugTarget::Program(PathBuf::from("/w/fw.elf")),
+        );
         assert_eq!(pedido, "attach");
         assert_eq!(argumentos["target"], "localhost:3333");
         assert_eq!(argumentos["program"], "/w/fw.elf");

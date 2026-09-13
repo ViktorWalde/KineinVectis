@@ -34,12 +34,20 @@ Item {
 
     Component.onCompleted: {
         let failures = 0;
+        // Antes do catalogo do core (run.capabilities), NADA e' executavel nem
+        // depuravel: uma lista escrita a mao aqui responderia "sim" sem o core
+        // ter falado — o defeito que o format.capabilities corrigiu em 0.61.
+        if (tree.isRunnableScript("/tmp/proj/tools/gera.py", "file")) failures += 1 << 28;
+        if (tree.isDebuggableScript("/tmp/proj/tools/gera.py", "file")) failures += 1 << 29;
+        tree.applyRunCapabilities(["sh", "bash", "zsh", "py"], ["py"]);
 
         // Depurar: so' .py; Executar: shells e .py.
         if (!tree.isDebuggableScript("/tmp/proj/tools/gera.py", "file")) failures += 1;
         if (tree.isDebuggableScript("/tmp/proj/build.sh", "file")) failures += 2;
         if (tree.isDebuggableScript("/tmp/proj/pacote", "directory")) failures += 4;
         if (tree.isDebuggableScript("/tmp/proj/stubs.pyi", "file")) failures += 8;
+        // A extensao e' comparada sem caixa: o catalogo do core e' minusculo.
+        if (!tree.isDebuggableScript("/tmp/proj/APP.PY", "file") || !tree.isRunnableScript("/tmp/proj/BUILD.SH", "file")) failures += 1 << 27;
 
         // O menu aberto num .py liga as duas acoes; num .sh so' Executar.
         tree.openEntryMenu("/tmp/proj/tools/gera.py", "file", "gera.py", 10, 10);

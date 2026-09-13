@@ -26,12 +26,26 @@ impl Core {
         params: Option<&Value>,
     ) -> Option<JsonRpcResponse> {
         match method {
+            "run.capabilities" => Some(Self::run_capabilities_response(request_id)),
             "run.start" => Some(self.run_start_response(request_id, params)),
             "run.script" => Some(self.run_script_response(request_id, params)),
             "run.stdin" => Some(self.run_stdin_response(request_id, params)),
             "run.stop" => Some(self.run_stop_response(request_id)),
             _ => None,
         }
+    }
+
+    /// O catalogo estatico do que "Executar"/"Depurar" aceitam: nao exige
+    /// workspace, e' o mesmo com ou sem projeto.
+    fn run_capabilities_response(request_id: Option<Value>) -> JsonRpcResponse {
+        let (runnable, debuggable) = run::capabilities();
+        JsonRpcResponse::success(
+            request_id,
+            json!(kinein_protocol::RunCapabilitiesResult {
+                runnable: runnable.into_iter().map(str::to_owned).collect(),
+                debuggable: debuggable.into_iter().map(str::to_owned).collect(),
+            }),
+        )
     }
 
     fn run_script_response(
@@ -57,7 +71,11 @@ impl Core {
         };
         // Um .py roda com o Python DO PROJETO (ou `uv run`), nao com um
         // interpretador fixo: e' a fatia 3 da cadeia Python (41 bloco B).
-        if script.extension().and_then(OsStr::to_str) == Some("py") {
+        if script
+            .extension()
+            .and_then(OsStr::to_str)
+            .is_some_and(|ext| run::PYTHON_SCRIPTS.contains(&ext))
+        {
             return self.run_python_script_response(
                 request_id,
                 &root,

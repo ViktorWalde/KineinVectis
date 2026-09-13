@@ -242,14 +242,35 @@ impl RunManager {
     }
 }
 
+/// Extensoes de shell que `run.script` aceita, e o interpretador de cada uma.
+/// **Fonte unica** com `script_interpreter` e com `run.capabilities`: a UI
+/// nao mantem lista propria (a mesma regra do `format.capabilities`, que
+/// nasceu de duas listas divergindo em silencio).
+const SHELL_SCRIPTS: [(&str, &str); 3] = [("sh", "bash"), ("bash", "bash"), ("zsh", "zsh")];
+
+/// Extensoes que `run.script` entrega ao Python do projeto (`handlers/run`).
+pub const PYTHON_SCRIPTS: [&str; 1] = ["py"];
+
 /// Interpreter for shell-script file types intentionally exposed by the UI.
 #[must_use]
 pub fn script_interpreter(path: &Path) -> Option<&'static str> {
-    match path.extension().and_then(OsStr::to_str) {
-        Some("sh" | "bash") => Some("bash"),
-        Some("zsh") => Some("zsh"),
-        _ => None,
-    }
+    let extension = path.extension().and_then(OsStr::to_str)?;
+    SHELL_SCRIPTS
+        .iter()
+        .find(|(ext, _)| *ext == extension)
+        .map(|(_, interpreter)| *interpreter)
+}
+
+/// O que "Executar" e "Depurar" aceitam por extensao (`run.capabilities`):
+/// os shells e o Python; so' o Python se depura (o debugpy do projeto).
+#[must_use]
+pub fn capabilities() -> (Vec<&'static str>, Vec<&'static str>) {
+    let runnable = SHELL_SCRIPTS
+        .iter()
+        .map(|(ext, _)| *ext)
+        .chain(PYTHON_SCRIPTS)
+        .collect();
+    (runnable, PYTHON_SCRIPTS.to_vec())
 }
 
 /// Shell-like label used only for display in the Run panel and events.
@@ -372,12 +393,17 @@ pub(crate) fn is_executable(_path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::{path::PathBuf, sync::mpsc, time::Duration};
+    use std::{
+        path::{Path, PathBuf},
+        sync::mpsc,
+        time::Duration,
+    };
 
     use kinein_protocol::{JsonRpcRequest, ProjectKind};
 
     use super::{
-        RunError, RunManager, default_command, script_display_command, script_interpreter,
+        PYTHON_SCRIPTS, RunError, RunManager, capabilities, default_command,
+        script_display_command, script_interpreter,
     };
 
     fn temp_root(test_name: &str) -> PathBuf {
@@ -423,6 +449,25 @@ mod tests {
         assert_eq!(finished["success"], true);
         assert_eq!(finished["exitCode"], 0);
         assert!(!manager.is_running());
+    }
+
+    /// O catalogo que a UI recebe e' a decisao do `run.script`: toda extensao
+    /// runnable de shell resolve um interpretador, o `py` e' o do Python, e
+    /// so' o Python e' debuggable. Uma segunda lista em QML diverge por
+    /// construcao — foi assim com o format.capabilities.
+    #[test]
+    fn the_published_catalogue_matches_the_decision() {
+        let (runnable, debuggable) = capabilities();
+        assert_eq!(runnable, ["sh", "bash", "zsh", "py"]);
+        assert_eq!(debuggable, ["py"]);
+        for ext in &runnable {
+            let caminho = PathBuf::from(format!("x.{ext}"));
+            let e_shell = script_interpreter(&caminho).is_some();
+            let e_python = PYTHON_SCRIPTS.contains(ext);
+            assert!(e_shell != e_python, ".{ext} e' shell OU python");
+        }
+        assert!(script_interpreter(Path::new("x.py")).is_none());
+        assert!(script_interpreter(Path::new("x.txt")).is_none());
     }
 
     #[test]

@@ -69,6 +69,7 @@ impl Core {
             self.workspace
                 .as_ref()
                 .and_then(|w| crate::dap::resolve_program(w.kind, &root).ok())
+                .and_then(|alvo| alvo.program_path().map(std::path::Path::to_path_buf))
         } else {
             None
         };

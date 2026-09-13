@@ -58,12 +58,15 @@ Rectangle {
         return "file";
     }
 
-    // Espelha ProjectTreeController.isRunnableScript (a decisao); aqui so' o icone.
+    // As extensoes executaveis vem do core pelo ProjectTreeController
+    // (run.capabilities): aqui so' o icone da linha, sem lista propria.
+    property var runnableExtensions: []
+
     function isRunnableScript(name, kind) {
         if (kind !== "file") return false;
-        const lower = name.toLowerCase();
-        return lower.endsWith(".sh") || lower.endsWith(".bash")
-                || lower.endsWith(".zsh") || lower.endsWith(".py");
+        const ponto = name.lastIndexOf(".");
+        const ext = ponto < 0 ? "" : name.substring(ponto + 1).toLowerCase();
+        return runnableExtensions.indexOf(ext) >= 0;
     }
 
     implicitWidth: 260

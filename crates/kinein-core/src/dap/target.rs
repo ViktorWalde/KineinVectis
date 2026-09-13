@@ -11,14 +11,48 @@ use kinein_protocol::ProjectKind;
 
 use super::DebugError;
 
-/// Resolves the executable `debug.start` should hand to the adapter.
+/// O que o adaptador vai depurar.
+///
+/// Um executavel (ou um `.py`), ou um MODULO Python (`python -m pacote`, o
+/// `module` do launch do debugpy — medido no 1.8.21 em 2026-09-13: para no
+/// breakpoint dentro do pacote e a saida vem por `output`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DebugTarget {
+    /// Caminho absoluto de um executavel ou script.
+    Program(PathBuf),
+    /// Nome de um pacote/modulo Python com `__main__.py`.
+    Module(String),
+}
+
+impl DebugTarget {
+    /// O caminho, quando o alvo e' um arquivo (o servidor de debug e o
+    /// `build.size` precisam de um ELF; um modulo nao tem).
+    #[must_use]
+    pub fn program_path(&self) -> Option<&Path> {
+        match self {
+            Self::Program(p) => Some(p),
+            Self::Module(_) => None,
+        }
+    }
+
+    /// Como a tela mostra: o caminho, ou `-m <pacote>`.
+    #[must_use]
+    pub fn display(&self) -> String {
+        match self {
+            Self::Program(p) => p.display().to_string(),
+            Self::Module(m) => format!("-m {m}"),
+        }
+    }
+}
+
+/// Resolves the target `debug.start` should hand to the adapter.
 ///
 /// Mirrors `run::default_command`: a single obvious binary or a clear,
 /// actionable error — never a guess between candidates.
-pub fn resolve_program(kind: ProjectKind, root: &Path) -> Result<PathBuf, DebugError> {
+pub fn resolve_program(kind: ProjectKind, root: &Path) -> Result<DebugTarget, DebugError> {
     match kind {
-        ProjectKind::RustCargo => cargo_binary(root),
-        ProjectKind::Cmake => cmake_binary(root),
+        ProjectKind::RustCargo => cargo_binary(root).map(DebugTarget::Program),
+        ProjectKind::Cmake => cmake_binary(root).map(DebugTarget::Program),
         ProjectKind::Python => python_entry(root),
         ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Unknown => {
             Err(DebugError::NoTarget {
@@ -30,23 +64,19 @@ pub fn resolve_program(kind: ProjectKind, root: &Path) -> Result<PathBuf, DebugE
     }
 }
 
-/// O ponto de entrada do Executar, como arquivo: `main.py`/`app.py`/
+/// O ponto de entrada do Executar, como alvo: `main.py`/`app.py`/
 /// `__main__.py` na raiz ou o script de `[project.scripts]` instalado (um
-/// arquivo Python com shebang — o debugpy o lanca como `program`). Um pacote
-/// (`-m x`) nao e' arquivo: o erro diz para apontar o `.py`.
-fn python_entry(root: &Path) -> Result<PathBuf, DebugError> {
+/// arquivo Python com shebang — o debugpy o lanca como `program`); um pacote
+/// com `__main__.py` vira `Module` (o `module` do launch, desde 2026-09-13).
+fn python_entry(root: &Path) -> Result<DebugTarget, DebugError> {
     use crate::python::run::EntryPoint;
 
     match crate::python::run::entry_point(root) {
-        Some(EntryPoint::File(arquivo)) => Ok(root.join(arquivo)),
-        Some(EntryPoint::InstalledScript(nome)) => Ok(root.join(".venv/bin").join(nome)),
-        Some(EntryPoint::Module(pacote)) => Err(DebugError::NoTarget {
-            message: format!(
-                "o ponto de entrada e' o pacote `{pacote}` (python -m {pacote}); para depurar, \
-                 informe o arquivo em debug.start {{ program }} — por exemplo o \
-                 {pacote}/__main__.py"
-            ),
-        }),
+        Some(EntryPoint::File(arquivo)) => Ok(DebugTarget::Program(root.join(arquivo))),
+        Some(EntryPoint::InstalledScript(nome)) => {
+            Ok(DebugTarget::Program(root.join(".venv/bin").join(nome)))
+        }
+        Some(EntryPoint::Module(pacote)) => Ok(DebugTarget::Module(pacote)),
         None => Err(DebugError::NoTarget {
             message: "nenhum ponto de entrada Python (main.py, app.py, __main__.py na raiz; um \
                       pacote com __main__.py; um script de [project.scripts] instalado); \
@@ -150,7 +180,12 @@ mod tests {
         std::fs::write(debug_dir.join("app.d"), "dep info").unwrap();
         write_executable(&debug_dir.join("deps").join("ignorado"));
         let program = resolve_program(ProjectKind::RustCargo, &root).unwrap();
-        assert!(program.ends_with("target/debug/app"));
+        assert!(
+            program
+                .program_path()
+                .unwrap()
+                .ends_with("target/debug/app")
+        );
 
         write_executable(&debug_dir.join("outro"));
         let error = resolve_program(ProjectKind::RustCargo, &root).unwrap_err();
@@ -166,7 +201,7 @@ mod tests {
         write_executable(&build.join("app"));
 
         let program = resolve_program(ProjectKind::Cmake, &root).unwrap();
-        assert!(program.ends_with("app"));
+        assert!(program.program_path().unwrap().ends_with("app"));
     }
 
     /// Python: o alvo e' o MESMO ponto de entrada do Executar — arquivo na
@@ -180,8 +215,11 @@ mod tests {
 
         std::fs::create_dir_all(root.join("pacote")).unwrap();
         std::fs::write(root.join("pacote/__main__.py"), "").unwrap();
-        let error = resolve_program(ProjectKind::Python, &root).unwrap_err();
-        assert!(error.to_string().contains("pacote/__main__.py"), "{error}");
+        // Um pacote e' um alvo: `-m pacote` (o launch por `module`).
+        let alvo = resolve_program(ProjectKind::Python, &root).unwrap();
+        assert_eq!(alvo, super::DebugTarget::Module("pacote".to_owned()));
+        assert_eq!(alvo.display(), "-m pacote");
+        assert!(alvo.program_path().is_none());
 
         std::fs::create_dir_all(root.join(".venv/bin")).unwrap();
         std::fs::write(
@@ -191,18 +229,21 @@ mod tests {
         .unwrap();
         std::fs::write(root.join(".venv/bin/cli"), "#!/w/.venv/bin/python\n").unwrap();
         // O script instalado NAO vence o pacote (o run tambem nao o faz)...
-        assert!(resolve_program(ProjectKind::Python, &root).is_err());
+        assert!(matches!(
+            resolve_program(ProjectKind::Python, &root).unwrap(),
+            super::DebugTarget::Module(_)
+        ));
         std::fs::remove_dir_all(root.join("pacote")).unwrap();
         // ...mas vale quando e' o unico.
         assert_eq!(
             resolve_program(ProjectKind::Python, &root).unwrap(),
-            root.join(".venv/bin/cli")
+            super::DebugTarget::Program(root.join(".venv/bin/cli"))
         );
 
         std::fs::write(root.join("app.py"), "").unwrap();
         assert_eq!(
             resolve_program(ProjectKind::Python, &root).unwrap(),
-            root.join("app.py")
+            super::DebugTarget::Program(root.join("app.py"))
         );
     }
 

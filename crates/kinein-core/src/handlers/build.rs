@@ -116,7 +116,13 @@ impl Core {
                 }
                 path
             }
-            None => match dap::resolve_program(workspace.kind, &root) {
+            None => match dap::resolve_program(workspace.kind, &root).and_then(|alvo| {
+                alvo.program_path()
+                    .map(std::path::Path::to_path_buf)
+                    .ok_or_else(|| dap::DebugError::NoTarget {
+                        message: "o alvo e' um modulo Python, nao um ELF".to_owned(),
+                    })
+            }) {
                 Ok(program) => program,
                 Err(error) => {
                     return JsonRpcResponse::failure(

@@ -25,6 +25,21 @@ pub struct RunScriptParams {
     pub device: Option<String>,
 }
 
+/// Result of `run.capabilities` (`0.107.0`).
+///
+/// What "Executar" and "Depurar" accept as a file, by extension. Static — the
+/// UI asks once per connection and keeps no list of its own (the same
+/// invariant as `format.capabilities`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RunCapabilitiesResult {
+    /// Extensions `run.script` accepts (`sh`, `bash`, `zsh`, `py`).
+    pub runnable: Vec<String>,
+    /// Extensions `debug.start { program }` routes to a language adapter
+    /// without the kit (`py`).
+    pub debuggable: Vec<String>,
+}
+
 /// Result payload for `run.start`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

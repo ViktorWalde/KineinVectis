@@ -141,6 +141,7 @@ Item {
                                     root.workspaceBuildSystems)
             selectedPath: root.projectTree.selectedPath
             entriesModel: root.projectTree.entriesModel
+            runnableExtensions: root.projectTree.runnableExtensions
             gitKinds: root.gitController.gitKinds
             gitRevision: root.gitController.revision
             onCreateFileRequested: root.projectTree.openCreateDialog("file")

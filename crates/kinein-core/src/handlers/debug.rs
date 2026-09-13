@@ -60,7 +60,7 @@ impl Core {
         }
 
         let root = Path::new(&workspace.root);
-        let program = match parsed.program.filter(|program| !program.trim().is_empty()) {
+        let target = match parsed.program.filter(|program| !program.trim().is_empty()) {
             Some(explicit) => {
                 let path = PathBuf::from(explicit);
                 if !path.is_file() {
@@ -69,10 +69,10 @@ impl Core {
                         &format!("programa nao encontrado: {}", path.display()),
                     );
                 }
-                path
+                dap::DebugTarget::Program(path)
             }
             None => match dap::resolve_program(workspace.kind, root) {
-                Ok(program) => program,
+                Ok(target) => target,
                 Err(error) => return debug_error_response(request_id, &error),
             },
         };
@@ -91,7 +91,7 @@ impl Core {
         // Um alvo Python (fatia 4 da cadeia do 41) nao passa pelo kit: o
         // adaptador e' o debugpy DO interpretador do projeto — o mesmo que
         // run, pytest e basedpyright usam — e so' sobe se o modulo existe la'.
-        if e_um_alvo_python(&program) {
+        if e_um_alvo_python(&target) {
             let Some(interpretador) = self.python_interpreter(root) else {
                 return debug_error_response(
                     request_id,
@@ -117,7 +117,7 @@ impl Core {
         };
         match manager.start(
             root,
-            &program,
+            &target,
             &dap::AdapterChoice {
                 id: adapter_id.as_deref(),
                 path: adapter_path.as_deref(),
@@ -129,7 +129,7 @@ impl Core {
             Ok(()) => JsonRpcResponse::success(
                 request_id,
                 json!(DebugStartResult {
-                    program: program.display().to_string(),
+                    program: target.display(),
                 }),
             ),
             Err(error) => debug_error_response(request_id, &error),
@@ -315,13 +315,17 @@ fn invalid_debug_params(request_id: Option<Value>, message: &str) -> JsonRpcResp
     )
 }
 
-/// Um `.py` e' alvo do debugpy, seja qual for o tipo do workspace (um
-/// projeto `CMake` com um `tools/gera.py` depura o script com Python).
-fn e_um_alvo_python(program: &Path) -> bool {
-    program
-        .extension()
-        .and_then(std::ffi::OsStr::to_str)
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("py"))
+/// Um `.py` — ou um modulo Python — e' alvo do debugpy, seja qual for o tipo
+/// do workspace (um projeto `CMake` com um `tools/gera.py` depura o script
+/// com Python).
+fn e_um_alvo_python(target: &dap::DebugTarget) -> bool {
+    match target {
+        dap::DebugTarget::Module(_) => true,
+        dap::DebugTarget::Program(program) => program
+            .extension()
+            .and_then(std::ffi::OsStr::to_str)
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("py")),
+    }
 }
 
 #[cfg(test)]
@@ -329,20 +333,23 @@ mod tests {
     use std::path::Path;
 
     use super::e_um_alvo_python;
+    use crate::dap::DebugTarget;
 
-    /// So' o `.py` (em qualquer caixa) vai para o debugpy; o binario nativo,
-    /// o stub `.pyi` e o `.rs` seguem pelo kit.
+    /// So' o `.py` (em qualquer caixa) e o modulo vao para o debugpy; o
+    /// binario nativo, o stub `.pyi` e o `.rs` seguem pelo kit.
     #[test]
-    fn only_python_files_are_python_targets() {
-        assert!(e_um_alvo_python(Path::new("/w/tools/gera.py")));
-        assert!(e_um_alvo_python(Path::new("/w/APP.PY")));
+    fn only_python_files_and_modules_are_python_targets() {
+        let programa = |p: &str| DebugTarget::Program(Path::new(p).to_path_buf());
+        assert!(e_um_alvo_python(&programa("/w/tools/gera.py")));
+        assert!(e_um_alvo_python(&programa("/w/APP.PY")));
+        assert!(e_um_alvo_python(&DebugTarget::Module("pacote".to_owned())));
         for outro in [
             "/w/target/debug/app",
             "/w/src/main.rs",
             "/w/stubs/x.pyi",
             "/w/a.pyc",
         ] {
-            assert!(!e_um_alvo_python(Path::new(outro)), "{outro}");
+            assert!(!e_um_alvo_python(&programa(outro)), "{outro}");
         }
     }
 }

@@ -16,6 +16,9 @@ O que prova:
      (stdout: "resultado 5") -> `event.debug.finished { exitCode: 0 }`
   6. o adaptador MORREU com a sessao (o debugpy nao sai sozinho no disconnect —
      medido no 1.8.21 — e' o kill da sessao que o encerra)
+  7. o mesmo ciclo com um PACOTE como ponto de entrada (`pacote/__main__.py`,
+     sem main.py): `debug.start {}` lanca `-m pacote` (o `module` do debugpy,
+     2026-09-13) e para no breakpoint dentro do pacote
 
 Uso: verificar_python_debug.py <interpretador-com-debugpy>
 """
@@ -169,6 +172,29 @@ def main() -> int:
             fim = core.evento("event.debug.finished")
             assert fim.get("exitCode") == 0, fim
             ciclo_ms = int((time.monotonic() - t0) * 1000)
+
+            # 7. O pacote como ponto de entrada: sem main.py, `-m pacote`.
+            # (os breakpoints do app.py saem ANTES de apaga-lo: o setBreakpoints
+            # exige que o arquivo exista)
+            core.rpc("debug.setBreakpoints", {"file": str(app), "breakpoints": []})
+            app.unlink()
+            pacote = raiz / "pacote"
+            pacote.mkdir()
+            (pacote / "__init__.py").write_text("def dobro(x):\n    y = x * 2\n    return y\n")
+            (pacote / "__main__.py").write_text('from pacote import dobro\nprint("dobro", dobro(21))\n')
+            core.rpc("debug.setBreakpoints", {"file": str(pacote / "__init__.py"), "breakpoints": [{"line": 2}]})
+            inicio = core.rpc("debug.start", {})
+            assert inicio["program"] == "-m pacote", inicio
+            core.evento("event.debug.started")
+            parado = core.evento("event.debug.stopped")
+            assert parado.get("reason") == "breakpoint", parado
+            assert str(parado.get("file", "")).endswith("pacote/__init__.py") and parado.get("line") == 2, parado
+            fid = core.rpc("debug.stackTrace")["frames"][0]["id"]
+            assert core.rpc("debug.evaluate", {"expression": "x", "frameId": fid})["result"] == "21"
+            core.rpc("debug.continue")
+            saida = core.evento("event.debug.output", onde=lambda p: "dobro" in p.get("line", ""))
+            assert saida.get("line") == "dobro 42", saida
+            assert core.evento("event.debug.finished").get("exitCode") == 0
         except Exception:
             core.log.flush()
             print("--- stderr do core (ultimas linhas) ---", file=sys.stderr)
@@ -196,7 +222,8 @@ def main() -> int:
         return 1
 
     print(f"depurar Python (debugpy do interpretador do projeto): breakpoint em app.py:2, "
-          f"a=2 b=3, a+b=5, saida do programa, exitCode 0, adaptador morto — ciclo em {ciclo_ms} ms")
+          f"a=2 b=3, a+b=5, saida do programa, exitCode 0, adaptador morto — ciclo em {ciclo_ms} ms; "
+          f"e o pacote como `-m pacote` (breakpoint em pacote/__init__.py:2, x=21, dobro 42)")
     return 0
 
 

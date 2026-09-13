@@ -97,6 +97,12 @@ bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& re
         emit fileSaved(result.value(QStringLiteral("path")).toString());
         return true;
     }
+    if (method == QStringLiteral("run.capabilities")) {
+        emit runCapabilitiesListed(
+            result.value(QStringLiteral("runnable")).toArray().toVariantList(),
+            result.value(QStringLiteral("debuggable")).toArray().toVariantList());
+        return true;
+    }
     if (method == QStringLiteral("format.capabilities")) {
         emit formatCapabilitiesListed(
             result.value(QStringLiteral("formatters")).toArray().toVariantList());

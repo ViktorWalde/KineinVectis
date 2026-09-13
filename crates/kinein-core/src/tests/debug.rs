@@ -309,7 +309,7 @@ fn a_python_target_needs_the_project_interpreter_with_debugpy() {
 }
 
 /// Num workspace Python, `debug.start {}` acha o mesmo ponto de entrada do
-/// Executar; um pacote (`-m`) nao e' arquivo e o erro aponta o `__main__.py`.
+/// Executar; um pacote com `__main__.py` e' o alvo `-m pacote` (2026-09-13).
 #[test]
 fn debug_start_without_program_uses_the_python_entry_point() {
     let dir = std::env::temp_dir()
@@ -335,10 +335,16 @@ fn debug_start_without_program_uses_the_python_entry_point() {
         .error
         .clone()
         .unwrap();
+    // O pacote E' um alvo (`-m pacote`, desde 2026-09-13): passou pela
+    // resolucao e chegou ao caminho do Python — a recusa e' a do interpretador.
     assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
-    assert!(erro.message.contains("pacote/__main__.py"), "{erro:?}");
+    assert!(erro.message.contains("interpretador"), "{erro:?}");
+    assert_eq!(
+        crate::dap::resolve_program(kinein_protocol::ProjectKind::Python, &dir).unwrap(),
+        crate::dap::DebugTarget::Module("pacote".to_owned())
+    );
 
-    // Com main.py, o alvo e' ele — e a recusa seguinte ja' e' a do
+    // Com main.py, o alvo e' ele — e a recusa seguinte continua a do
     // interpretador (o alvo foi resolvido).
     std::fs::write(dir.join("main.py"), "").unwrap();
     let erro = core

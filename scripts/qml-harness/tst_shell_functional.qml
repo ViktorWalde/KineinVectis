@@ -80,6 +80,12 @@ Item {
         projectTree.confirmCreateEntry("invalid/name");
         if (projectTree.createDialogError === "") failures += 1;
 
+        // O que e' executavel vem do core (run.capabilities, 0.107.0): sem o
+        // catalogo, o .sh NAO e' executavel; com ele, e'.
+        projectTree.openEntryMenu("/work/scripts/check.sh", "file",
+                                  "check.sh", 10, 10);
+        if (projectTree.entryMenuRunnable) failures += 1;
+        projectTree.applyRunCapabilities(["sh", "bash", "zsh", "py"], ["py"]);
         projectTree.openEntryMenu("/work/scripts/check.sh", "file",
                                   "check.sh", 10, 10);
         if (!projectTree.entryMenuRunnable) failures += 1;

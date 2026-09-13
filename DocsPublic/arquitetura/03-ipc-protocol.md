@@ -1,5 +1,16 @@
 # 03 — Protocolo IPC
 
+> **O `0.107.0` (2026-09-13) fecha dois itens do polimento Python:** o
+> **módulo como alvo de debug** — um projeto cujo ponto de entrada é um
+> pacote com `__main__.py` é depurado como `-m pacote` (o `module` do launch
+> do debugpy, medido no 1.8.21 e provado pelo core real no gate: para no
+> breakpoint dentro do pacote, `x=21`, `dobro 42`); `DebugStartResult.program`
+> mostra `-m pacote` — e **`run.capabilities`**: o core publica o que
+> "Executar" e "Depurar" aceitam por extensão (`runnable: sh bash zsh py`,
+> `debuggable: py`), a UI pede uma vez por conexão e não mantém lista
+> própria (a mesma invariante do `format.capabilities`; a árvore e o
+> explorador tinham a lista duplicada em dois QML). Método novo sobe o minor.
+>
 > **O `0.106.0` (2026-09-13) é a ÁRVORE DE TESTES antes do primeiro run** —
 > o que faltou do B6 do [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md):
 > `test.discover { buildSystem? }` é um JOB que lista sem rodar (`pytest
@@ -770,6 +781,15 @@ um comando via `sh -c` na raiz do workspace SEM bloquear o loop de IPC: a
 saída chega como notificações assíncronas (mesmo canal dos eventos LSP) e o
 processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
 
+- `run.capabilities {}` → `{ runnable: [ext], debuggable: [ext] }`
+  (`0.107.0`). **Não** requer workspace: é o mapa estático do que
+  `run.script` aceita (`sh`, `bash`, `zsh`, `py`) e do que `debug.start
+  { program }` roteia para um adaptador de linguagem sem o kit (`py`),
+  derivado da mesma tabela que `script_interpreter` usa para decidir. A UI
+  pede uma vez por conexão; antes do catálogo chegar, nada é executável —
+  uma lista escrita à mão em QML divergiu da do core por construção (o
+  defeito que o `format.capabilities` corrigiu em 0.61.0 voltou a aparecer
+  em dois arquivos da árvore, e este método o fecha).
 - `run.start { command? }` → `{ command }`. Sem `command`, o core deriva o
   padrão do tipo de projeto: `cargo run` para Rust/Cargo; para CMake, o
   único executável em `.kinein/build` (erro claro se não houver ou houver
@@ -1958,9 +1978,14 @@ por workspace.
   ausente), `INVALID_REQUEST` (sem alvo/sessao ja viva), `INVALID_PARAMS`
   (program inexistente), `INTERNAL_ERROR` (falha do adapter).
 
-  **Alvo `.py` (`0.101.0`, fatia 4 da cadeia Python, 2026-09-13).** Seja
-  qual for o tipo do workspace (um CMake com `tools/gera.py` inclusive), um
-  `program` terminado em `.py` não passa pelo kit: o adaptador é o
+  **Alvo `.py` — ou um MÓDULO (`0.101.0`/`0.107.0`, cadeia Python,
+  2026-09-13).** Seja qual for o tipo do workspace (um CMake com
+  `tools/gera.py` inclusive), um `program` terminado em `.py` não passa pelo
+  kit; e num workspace Python cujo ponto de entrada é um pacote com
+  `__main__.py`, o alvo automático é o módulo — o `launch` leva `module:
+  "pacote"` em vez de `program` (medido no debugpy 1.8.21: para no
+  breakpoint dentro do pacote; `DebugStartResult.program` = `-m pacote`;
+  um servidor de debug do kit não aceita módulo, e diz isso): o adaptador é o
   **debugpy do interpretador do projeto** (`python/env.rs`, a precedência do
   `29` §4.1) — `<interpretador> -m debugpy.adapter`, DAP por stdin/stdout,
   `launch { program, cwd }` como o desktop. O `console` fica de fora de
@@ -2187,7 +2212,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 139 métodos roteados — a lista inteira
+## Os 140 métodos roteados — a lista inteira
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -2314,6 +2339,7 @@ python.status
 
 quality.run
 
+run.capabilities
 run.script
 run.start
 run.stdin

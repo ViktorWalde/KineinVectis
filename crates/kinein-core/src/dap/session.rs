@@ -42,6 +42,7 @@ use super::parse::{
 };
 use super::reader::{note_continued, send_event, spawn_reader};
 use super::server::DebugServer;
+use super::target::DebugTarget;
 use super::wire::Wire;
 use crate::lsp::EventSender;
 
@@ -87,7 +88,7 @@ impl DapSession {
     /// breakpoints -> configurationDone) e emite `event.debug.started`.
     pub(super) fn launch(
         root: &Path,
-        program: &Path,
+        target: &DebugTarget,
         breakpoints: &BTreeMap<String, Vec<SourceBreakpointParams>>,
         events: EventSender,
         adapter: &Adapter,
@@ -96,8 +97,17 @@ impl DapSession {
         // remoto para esperar: um `debugServer` sem `remoteTarget` e' um
         // processo que subiria e ninguem conectaria — recusado com o motivo.
         let server = match (&adapter.debug_server, &adapter.remote_target) {
-            (Some(command), Some(target)) => {
-                Some(DebugServer::spawn(root, command, program, target)?)
+            (Some(command), Some(remote)) => {
+                // O servidor recebe o ELF no `{program}`: um modulo Python nao
+                // tem arquivo para dar — e nao ha' servidor de debug para Python.
+                let Some(program) = target.program_path() else {
+                    return Err(DebugError::Adapter {
+                        message: "o servidor de debug do kit precisa de um executavel; o alvo e' \
+                                  um modulo Python"
+                            .to_owned(),
+                    });
+                };
+                Some(DebugServer::spawn(root, command, program, remote)?)
             }
             (Some(_), None) => {
                 return Err(DebugError::Adapter {
@@ -160,11 +170,11 @@ impl DapSession {
         };
         // Drop mata o adapter (e o servidor) se qualquer passo do handshake
         // falhar.
-        session.handshake(root, program, breakpoints, &initialized_receiver, adapter)?;
+        session.handshake(root, target, breakpoints, &initialized_receiver, adapter)?;
         send_event(
             &session.events,
             "event.debug.started",
-            json!({ "program": program.display().to_string() }),
+            json!({ "program": target.display() }),
         );
         Ok(session)
     }
@@ -321,7 +331,7 @@ impl DapSession {
     fn handshake(
         &self,
         root: &Path,
-        program: &Path,
+        target: &DebugTarget,
         breakpoints: &BTreeMap<String, Vec<SourceBreakpointParams>>,
         initialized: &mpsc::Receiver<()>,
         adapter: &Adapter,
@@ -340,7 +350,7 @@ impl DapSession {
         // A resposta de launch/attach so chega depois do configurationDone
         // (o GDB o diz na fonte: `_LaunchOrAttachDeferredRequest`); o request
         // vai agora e a espera fica para o final.
-        let (start_command, start_args) = adapter.start_request(root, program);
+        let (start_command, start_args) = adapter.start_request(root, target);
         let (launch_seq, launch_receiver) = self.wire.send_request(start_command, &start_args)?;
         if initialized.recv_timeout(REQUEST_TIMEOUT).is_err() {
             return Err(DebugError::Adapter {

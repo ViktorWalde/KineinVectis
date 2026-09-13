@@ -386,8 +386,9 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             com a sonda `import debugpy` antes e o passo
                                             para instalar no ambiente; "Depurar" na arvore;
                                             ciclo provado contra o debugpy 1.8.21 real
-                                            (verificar-python-debug.sh). Falta o `-m pacote`
-                                            (launch por `module`) e o attach a processo
+                                            (verificar-python-debug.sh). O `-m pacote`
+                                            (launch por `module`) FEITO 2026-09-13 (40
+                                            §7.33); falta o attach a processo
  B6  pytest no test.rs                      FEITO 2026-09-13 (40 §7.26): `python -m pytest
                                             -v` com o interpretador do projeto (ou `uv run`),
                                             `-k` como filtro, casos pelo `-v`, saida no
