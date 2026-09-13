@@ -74,6 +74,7 @@ set_source_files_properties(qml/embedded/EmbeddedSerialView.qml PROPERTIES QT_RE
 set_source_files_properties(qml/embedded/EmbeddedProjectView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedProjectView.qml)
 set_source_files_properties(qml/embedded/EmbeddedAdapterView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedAdapterView.qml)
 set_source_files_properties(qml/embedded/EmbeddedInstallView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedInstallView.qml)
+set_source_files_properties(qml/embedded/EmbeddedKitImportView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitImportView.qml)
 set_source_files_properties(qml/container/ContainerController.qml PROPERTIES QT_RESOURCE_ALIAS ContainerController.qml)
 set_source_files_properties(qml/index/IndexController.qml PROPERTIES QT_RESOURCE_ALIAS IndexController.qml)
 set_source_files_properties(qml/ipc/IndexEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexEventRouter.qml)
@@ -309,6 +310,7 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedProjectView.qml
         qml/embedded/EmbeddedAdapterView.qml
         qml/embedded/EmbeddedInstallView.qml
+        qml/embedded/EmbeddedKitImportView.qml
         qml/container/ContainerController.qml
         qml/index/IndexController.qml
         qml/ipc/IndexEventRouter.qml

@@ -260,6 +260,7 @@ impl Core {
             .or_else(|| self.configaction_request_response(method, request_id.clone(), params))
             .or_else(|| self.toolchain_request_response(method, request_id.clone(), params))
             .or_else(|| self.toolchain_install_request_response(method, request_id.clone(), params))
+            .or_else(|| Self::toolchain_import_request_response(method, request_id.clone(), params))
             .or_else(|| self.format_request_response(method, request_id.clone(), params))
             .or_else(|| self.run_request_response(method, request_id.clone(), params))
             .or_else(|| self.debug_request_response(method, request_id.clone(), params))

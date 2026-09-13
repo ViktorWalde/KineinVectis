@@ -171,6 +171,12 @@ pub struct ToolchainResult {
     /// compilador efetivo nao for o que ele escolheu aqui.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub preset_toolchain_file: Option<String>,
+    /// Arquivo de toolchain do KIT (`0.104.0`): o `toolchainfile.cmake` do
+    /// Buildroot, o `OEToolchainConfig.cmake` do SDK Yocto — importado ou
+    /// digitado. Vira `-DCMAKE_TOOLCHAIN_FILE` no configure quando o preset
+    /// nao declara um (o do preset vence).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_file: Option<String>,
     /// Escolha atual de cada papel, na ordem de [`ToolchainRole::all`].
     pub selections: Vec<ToolchainSelection>,
     /// O que existe nesta maquina para cada papel.
@@ -236,6 +242,97 @@ pub struct ToolchainSetKitParams {
     /// Comando do servidor que a IDE sobe antes de conectar. `""` limpa.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub debug_server: Option<String>,
+    /// Arquivo de toolchain do kit (`CMAKE_TOOLCHAIN_FILE`). `""` limpa
+    /// (`0.104.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_file: Option<String>,
+}
+
+/// Parameters for `toolchain.inspectSysroot`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SysrootInspectParams {
+    /// The folder to read (absolute).
+    pub path: String,
+}
+
+/// What a sysroot folder actually contains (`0.104.0`, `integracoes/39` §3):
+/// the answer to "will `--sysroot` here find headers and libraries?".
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SysrootReport {
+    /// The folder as given.
+    pub path: String,
+    /// The folder exists and is a directory.
+    pub exists: bool,
+    /// Which of the three folders a compiler needs are there.
+    pub folders: SysrootFolders,
+    /// Multiarch/triple library dirs found (`usr/lib/aarch64-linux-gnu`, …).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub triple_lib_dirs: Vec<String>,
+    /// `.pc` files under `usr/lib*/pkgconfig` and `usr/share/pkgconfig`.
+    pub pkgconfig_files: u32,
+    /// The C library, when readable (`glibc 2.39`, `musl`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub libc: Option<String>,
+    /// One line: usable, generic, or empty — and why.
+    pub verdict: String,
+}
+
+/// The three folders `--sysroot` needs, each present or not.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SysrootFolders {
+    /// `usr/include` — headers.
+    pub usr_include: bool,
+    /// `usr/lib` — libraries.
+    pub usr_lib: bool,
+    /// `lib` — the loader and the libc of a real root.
+    pub lib: bool,
+}
+
+/// Parameters for `toolchain.importKit`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct KitImportParams {
+    /// A Yocto SDK `environment-setup-*` script (or its folder), a Buildroot
+    /// `output/` (or `output/host`), or a toolchain folder with `bin/`.
+    pub path: String,
+}
+
+/// A kit PROPOSED from an SDK on disk (`0.104.0`): nothing is written until
+/// `toolchain.setKit` applies it.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KitImport {
+    /// `yocto`, `buildroot`, `toolchain-dir`.
+    pub kind: String,
+    /// The path that was read.
+    pub path: String,
+    /// One line per file that proved something.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<String>,
+    /// Absolute path of the C compiler, when found.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub c_compiler: Option<String>,
+    /// Absolute path of the C++ compiler, when found.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cxx_compiler: Option<String>,
+    /// Absolute path of the target `gdb`, when found.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gdb: Option<String>,
+    /// The target sysroot.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sysroot: Option<String>,
+    /// The target triple (`aarch64-poky-linux`, `aarch64-buildroot-linux-gnu`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_triple: Option<String>,
+    /// The `CMake` toolchain file the SDK ships, when it ships one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_file: Option<String>,
+    /// What the IDE could not decide, in words.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hint: Option<String>,
 }
 
 /// One toolchain the IDE can install into its own folder (`integracoes/39`
@@ -347,6 +444,7 @@ mod tests {
             remote_target: None,
             debug_server: None,
             preset_toolchain_file: None,
+            toolchain_file: None,
             selections: vec![ToolchainSelection {
                 role: ToolchainRole::Cmake,
                 id: None,

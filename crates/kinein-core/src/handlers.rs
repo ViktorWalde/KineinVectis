@@ -31,6 +31,7 @@ pub mod setup;
 pub mod syntax;
 pub mod terminal;
 pub mod toolchain;
+pub mod toolchain_import;
 pub mod toolchain_install;
 pub mod tools;
 pub mod workspace;

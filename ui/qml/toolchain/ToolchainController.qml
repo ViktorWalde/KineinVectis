@@ -36,7 +36,18 @@ Item {
 
     signal getRequested(string preset)
     signal setRequested(string role, string id, string preset)
-    signal setKitRequested(string preset, string sysroot, string targetTriple, string chip)
+    signal setKitRequested(string preset, string sysroot, string targetTriple, string chip,
+                           string toolchainFile)
+    signal inspectSysrootRequested(string path)
+    signal importKitRequested(string path)
+
+    // O GERENCIADOR QUE LE O DISCO (42 §8 itens b e d, 2026-09-13): o arquivo
+    // de toolchain do kit; o relatorio do sysroot; a proposta de kit lida de
+    // um SDK — nada disso grava ate' `applyProposal`.
+    property string toolchainFile: ""
+    property var sysrootReport: ({})
+    property var kitProposal: ({})
+    property string importError: ""
     signal installableRequested()
     signal installRequested(string id)
 
@@ -66,6 +77,10 @@ Item {
         projectFamily = "";
         installing = "";
         lastInstallOutcome = "";
+        toolchainFile = "";
+        sysrootReport = ({});
+        kitProposal = ({});
+        importError = "";
         if (workspaceRoot !== "") {
             getRequested("");
             installableRequested();
@@ -148,12 +163,83 @@ Item {
     }
 
     // `undefined` PRESERVA o campo; string vazia LIMPA. O core trata igual, e
-    // e por isso que mexer no sysroot nao apaga o alvo.
-    function applyKit(newSysroot, newTargetTriple, newChip) {
-        setKitRequested(preset, newSysroot, newTargetTriple, newChip);
+    // e por isso que mexer no sysroot nao apaga o alvo. O arquivo de toolchain
+    // ausente na chamada preserva o atual (um sinal nao carrega `undefined`).
+    function applyKit(newSysroot, newTargetTriple, newChip, newToolchainFile) {
+        setKitRequested(preset, newSysroot, newTargetTriple, newChip,
+                        newToolchainFile === undefined ? toolchainFile : newToolchainFile);
+    }
+
+    function handleKitFile(newToolchainFile) {
+        toolchainFile = newToolchainFile === undefined || newToolchainFile === null
+                ? "" : newToolchainFile;
+    }
+
+    function inspectSysroot(path) {
+        const limpo = path === undefined ? "" : String(path).trim();
+        if (limpo === "") return;
+        inspectSysrootRequested(limpo);
+    }
+
+    function handleSysrootReport(report) {
+        sysrootReport = report === undefined || report === null ? ({}) : report;
+    }
+
+    // Uma linha: o veredito do core, mais o que ha' (libc, .pc).
+    function sysrootSummary() {
+        const r = sysrootReport;
+        if (r.verdict === undefined) return "";
+        return r.verdict;
+    }
+
+    function importKit(path) {
+        const limpo = path === undefined ? "" : String(path).trim();
+        if (limpo === "") return;
+        kitProposal = ({});
+        importError = "";
+        importKitRequested(limpo);
+    }
+
+    function handleKitProposal(proposal) {
+        kitProposal = proposal === undefined || proposal === null ? ({}) : proposal;
+        importError = "";
+    }
+
+    readonly property bool hasKitProposal: kitProposal.kind !== undefined
+
+    // A proposta em linhas: o que o SDK declarou, para o autor ler antes de aplicar.
+    function proposalLines() {
+        const p = kitProposal;
+        if (p.kind === undefined) return [];
+        const linhas = [qsTr("%1: %2").arg(p.kind).arg(p.path)];
+        if (p.cCompiler !== undefined) linhas.push(qsTr("CC: %1").arg(p.cCompiler));
+        if (p.cxxCompiler !== undefined) linhas.push(qsTr("CXX: %1").arg(p.cxxCompiler));
+        if (p.gdb !== undefined) linhas.push(qsTr("gdb: %1").arg(p.gdb));
+        if (p.sysroot !== undefined) linhas.push(qsTr("sysroot: %1").arg(p.sysroot));
+        if (p.targetTriple !== undefined) linhas.push(qsTr("alvo: %1").arg(p.targetTriple));
+        if (p.toolchainFile !== undefined) linhas.push(qsTr("toolchain file: %1").arg(p.toolchainFile));
+        if (p.hint !== undefined) linhas.push(p.hint);
+        return linhas;
+    }
+
+    // Aplica a proposta ao kit: sysroot, alvo e arquivo de toolchain, num
+    // gesto so'. O chip fica como esta' (a proposta nao fala de chip).
+    function applyProposal() {
+        const p = kitProposal;
+        if (p.kind === undefined || workspaceRoot === "") return;
+        setKitRequested(preset,
+                        p.sysroot === undefined ? "" : p.sysroot,
+                        p.targetTriple === undefined ? "" : p.targetTriple,
+                        chip,
+                        p.toolchainFile === undefined ? "" : p.toolchainFile);
     }
 
     function handleFailed(method, message) {
+        if (method === "toolchain.importKit") {
+            kitProposal = ({});
+            importError = message;
+            return;
+        }
         if (method !== "toolchain.set" && method !== "toolchain.get"
                 && method !== "toolchain.setKit") {
             return;

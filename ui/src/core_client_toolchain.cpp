@@ -31,8 +31,20 @@ void CoreClient::toolchainInstall(const QString& id)
     sendRequest(QStringLiteral("toolchain.install"), QJsonObject{{QStringLiteral("id"), id}});
 }
 
+void CoreClient::toolchainInspectSysroot(const QString& path)
+{
+    sendRequest(QStringLiteral("toolchain.inspectSysroot"),
+                QJsonObject{{QStringLiteral("path"), path}});
+}
+
+void CoreClient::toolchainImportKit(const QString& path)
+{
+    sendRequest(QStringLiteral("toolchain.importKit"), QJsonObject{{QStringLiteral("path"), path}});
+}
+
 void CoreClient::toolchainSetKit(const QString& preset, const QString& sysroot,
-                                 const QString& targetTriple, const QString& chip)
+                                 const QString& targetTriple, const QString& chip,
+                                 const QString& toolchainFile)
 {
     QJsonObject params{};
     if (!preset.isEmpty()) {
@@ -50,6 +62,11 @@ void CoreClient::toolchainSetKit(const QString& preset, const QString& sysroot,
     // CLI conseguia gravar um. Fio ligado em 2026-09-11 (roadmaps/35 §5.7).
     if (!chip.isNull()) {
         params.insert(QStringLiteral("chip"), chip);
+    }
+    // O arquivo de toolchain do kit (0.104.0): a mesma regra — nulo preserva,
+    // vazio limpa.
+    if (!toolchainFile.isNull()) {
+        params.insert(QStringLiteral("toolchainFile"), toolchainFile);
     }
     sendRequest(QStringLiteral("toolchain.setKit"), params);
 }
@@ -82,6 +99,14 @@ bool CoreClient::dispatchToolchainResult(const QString& method, const QJsonObjec
         // desfecho por event.toolchain.installed.
         return true;
     }
+    if (method == QStringLiteral("toolchain.inspectSysroot")) {
+        emit sysrootInspected(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("toolchain.importKit")) {
+        emit kitImported(result.toVariantMap());
+        return true;
+    }
     if (method != QStringLiteral("toolchain.get") && method != QStringLiteral("toolchain.set") &&
         method != QStringLiteral("toolchain.setKit"))
     {
@@ -96,6 +121,7 @@ bool CoreClient::dispatchToolchainResult(const QString& method, const QJsonObjec
                            result.value(QStringLiteral("targetTriple")).toString(),
                            result.value(QStringLiteral("chip")).toString(),
                            result.value(QStringLiteral("presetToolchainFile")).toString());
+    emit toolchainKitFileResolved(result.value(QStringLiteral("toolchainFile")).toString());
     // O que so' um processo responde (integracoes/39, 0.97.0): os alvos Rust
     // instalados (ausente = sem rustup) e a dica de sysroot. Sinal proprio para
     // o de cima nao crescer em argumento posicional.

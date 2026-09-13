@@ -19,9 +19,10 @@ Item {
     property real maxAvailableWidth: 720
     property real maxAvailableHeight: 560
 
-    // Piso: cabem as tres secoes com um estado vazio de sonda.
-    readonly property int alturaMinima: 480
-    readonly property int alturaMaxima: 720
+    // Piso: cabem as secoes com um estado vazio de sonda (o importar kit e o
+    // catalogo de toolchains entraram em 2026-09-13).
+    readonly property int alturaMinima: 560
+    readonly property int alturaMaxima: 780
 
     readonly property int quantasSondas: root.controller ? root.controller.probes.length : 0
     // O catalogo de toolchains aberto pede a altura da lista (168) e do aviso.
@@ -41,7 +42,7 @@ Item {
         height: Math.min(
             root.maxAvailableHeight,
             Math.min(root.alturaMaxima + root.alturaDoCatalogo,
-                     Math.max(root.alturaMinima, 400 + root.quantasSondas * 20)
+                     Math.max(root.alturaMinima, 480 + root.quantasSondas * 20)
                      + root.alturaDoCatalogo))
         radius: Theme.radius
         color: Theme.background1

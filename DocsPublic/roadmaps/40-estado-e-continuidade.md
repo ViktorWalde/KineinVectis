@@ -57,9 +57,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.103.0
-testes      692 Rust + 31 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
-metodos     136 IPC roteados, 47 eventos
+protocolo   0.104.0
+testes      700 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+metodos     138 IPC roteados, 47 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -445,13 +445,19 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          0.103.0): nove releases pinados com o
                                          SHA-256 lido na fonte, download em job,
                                          checksum antes de desempacotar, tar como
-                                         processo, botao no painel. FALTA: o
-                                         seletor de pasta do sysroot, importar kit
-                                         Yocto/Buildroot/Zephyr SDK, e um ciclo
-                                         REAL de download no gate (hoje o download
-                                         real e' provado contra um servidor local
-                                         — baixar 155 MB no gate nao e' decisao
-                                         deste repositorio)
+                                         processo, botao no painel. O GERENCIADOR
+                                         QUE LE O DISCO FEITO em 2026-09-13 (§7.30,
+                                         0.104.0): inspectSysroot com veredito;
+                                         importKit de Yocto (environment-setup pelo
+                                         sh), Buildroot (output/host) e pasta de
+                                         toolchain; toolchainFile no kit. FALTA:
+                                         um SDK Yocto/arvore Buildroot REAIS para
+                                         medir (nao ha' nesta maquina); Zephyr SDK
+                                         (setup.sh + ZEPHYR_SDK_INSTALL_DIR — e'
+                                         do P6/Zephyr); um seletor de pasta nativo
+                                         (hoje o caminho e' digitado); e um ciclo
+                                         REAL de download no gate (baixar 155 MB
+                                         no gate nao e' decisao deste repositorio)
 --  A TRILHA PYTHON COMPLETA:            MAPEADA em 2026-09-12 (42 §9): MicroPython
     bare metal -> edge -> backend ->     no ESP32 (mpremote 1.29.0 aqui) ->
     banco                                Mosquitto como container (EPL/EDL) ->
@@ -2156,6 +2162,75 @@ testes  692 Rust (+9), 31 harnesses (+tst_toolchain_install); 136 metodos, 47 ev
 gate    exercitacao: toolchain.installable com o sha256 da Arm GNU 15.2.rel1
 proximo seletor de pasta do sysroot; importar kit Yocto/Buildroot/Zephyr; ou o
         polimento da cadeia Python (40 §4) — a fila decide
+```
+
+### 7.30 O gerenciador que lê o disco — o sysroot com veredito, o kit importado do SDK, 2026-09-13
+
+Os itens (b) e (d) do 42 §8: *"LER o sysroot e mostrar o que há"* e
+*"IMPORTAR kit de SDK: Yocto pelo environment-setup, Buildroot pelo
+output/host"*. Protocolo 0.104.0.
+
+```text
+toolchain/sysroot.rs       inspect(path): usr/include, usr/lib, lib, os usr/lib/<triple>
+                           e lib/<triple> do multiarch, os .pc onde o pkg-config
+                           procura, a libc (glibc por features.h, musl pela libc.so)
+                           e um VEREDITO: utilizavel (com/sem .pc), so' headers, so'
+                           bibliotecas, vazia (o sysroot de distro do Fedora) — com
+                           o remedio
+toolchain/import.rs        import(path): yocto (o environment-setup carregado pelo sh;
+                           CC/CXX/GDB resolvidos por command -v no PATH que ele monta;
+                           SDKTARGETSYSROOT; OEToolchainConfig.cmake no
+                           OECORE_NATIVE_SYSROOT; TARGET_PREFIX), buildroot (a marca e'
+                           share/buildroot/ — os tarballs da Bootlin entram por aqui),
+                           toolchain-dir (bin/<triple>-gcc; sysroot por -print-sysroot
+                           quando o gcc roda e a pasta existe, senao <triple>/libc ou
+                           <triple>/sysroot). Propoe; nao grava
+store/mod/handlers         Kit.toolchain_file; KitUpdate; setKit { toolchainFile } ("" limpa);
+                           ToolchainResult.toolchainFile; cmake_arguments emite
+                           -DCMAKE_TOOLCHAIN_FILE so' sem toolchainFile no PRESET (o do
+                           preset vence)
+handlers/toolchain_import  toolchain.inspectSysroot e toolchain.importKit (caminho
+                           absoluto; nada reconhecido = INVALID_REQUEST que diz o que
+                           procurou)
+UI                         EmbeddedKitImportView: campo de caminho, "Ler sysroot",
+                           "Importar kit", a proposta em linhas, "Aplicar proposta ao
+                           kit" (um setKit; o chip fica); ToolchainController.
+                           toolchainFile chega por sinal proprio (toolchainKitFileResolved)
+                           e o applyKit do painel o PRESERVA; core_client_toolchain.cpp
+```
+
+**Não medido** contra um SDK Yocto ou uma árvore Buildroot reais — não há
+nenhum nesta máquina (42 §8 item 5 já o dizia). O que está provado é o
+contrato documentado: um `environment-setup` que exporta as variáveis do
+sdk-manual e uma `output/host` com a forma do manual do Buildroot, ambos
+como fixtures; e a exercitação do gate lê uma pasta real como sysroot
+"vazia". Quando um SDK real aparecer, a fixture vira exercitação.
+
+**Provado (23 mutações, 20 mortas com o compilador calado; 3 sobreviveram e
+viraram teste ou código a menos):** o `toolchainFile` do preset vencendo o
+do kit; `usr/include` + `lib` (sem `usr/lib`) ainda utilizável; `usr/lib/
+python3.11` não é um triple; só `.pc` conta; `share/buildroot` como a marca
+do Buildroot; dois `environment-setup` na pasta = recusa; o `-print-sysroot`
+que aponta pasta inexistente cai na convenção da Arm; `TARGET_PREFIX` sem o
+`-` final; no QML, o arquivo preservado pelo `applyKit` do painel, o chip
+mantido pela proposta, a recusa do `importKit` como erro do painel. As
+sobreviventes: o `count('-') >= 3` do `gcc_em` (redundante: `gcc` não termina
+em `-gcc`) saiu; as outras duas viraram os testes acima.
+
+**Duas correções de desenho no caminho:** `SysrootReport` com quatro `bool`
+reprovou no clippy (`struct_excessive_bools`) — os três de pasta viraram
+`folders { usrInclude, usrLib, lib }`, que também lê melhor no wire. E o
+`toolchainFile` levou `toolchain/mod.rs` a 512 linhas: a catraca mandou
+olhar, e o corte foi por responsabilidade — a escolha EXPRESSA em argumentos
+(`cmake_arguments`, `clangd_args`, `binutils_prefix`, o sistema e o
+processador do triple) saiu para `toolchain/arguments.rs`; resolver e
+expressar são coisas diferentes.
+
+```text
+protocolo 0.104.0 — toolchain.inspectSysroot, toolchain.importKit, toolchainFile no kit
+testes  700 Rust (+8), 32 harnesses (+tst_toolchain_import); 138 metodos, 47 eventos
+gate    exercitacao: inspectSysroot de uma pasta real ("vazia para o compilador")
+proximo o polimento da cadeia Python (40 §4) ou o P0 que falta — a fila decide
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

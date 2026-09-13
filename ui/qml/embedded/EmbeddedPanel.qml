@@ -232,6 +232,12 @@ Item {
             width: parent.width
             toolchainController: root.toolchainController
         }
+
+        // Ler o sysroot e importar kit de SDK (42 §8 itens b e d).
+        EmbeddedKitImportView {
+            width: parent.width
+            toolchainController: root.toolchainController
+        }
     }
 
     Row {

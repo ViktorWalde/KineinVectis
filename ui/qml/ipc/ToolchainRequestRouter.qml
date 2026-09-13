@@ -20,8 +20,16 @@ Item {
             root.coreClient.toolchainSet(role, id, preset);
         }
 
-        function onSetKitRequested(preset, sysroot, targetTriple, chip) {
-            root.coreClient.toolchainSetKit(preset, sysroot, targetTriple, chip);
+        function onSetKitRequested(preset, sysroot, targetTriple, chip, toolchainFile) {
+            root.coreClient.toolchainSetKit(preset, sysroot, targetTriple, chip, toolchainFile);
+        }
+
+        function onInspectSysrootRequested(path) {
+            root.coreClient.toolchainInspectSysroot(path);
+        }
+
+        function onImportKitRequested(path) {
+            root.coreClient.toolchainImportKit(path);
         }
 
         function onInstallableRequested() {

@@ -66,10 +66,10 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**136 métodos IPC** roteados e **47 eventos**, em **34 domínios de protocolo**;
-**692 testes** Rust verdes e **31 harnesses QML** (remedido em 2026-09-13;
+**138 métodos IPC** roteados e **47 eventos**, em **34 domínios de protocolo**;
+**700 testes** Rust verdes e **32 harnesses QML** (remedido em 2026-09-13;
 em 2026-09-12 à noite a simulação saiu do produto: −11 métodos, −85 testes,
-−7 harnesses). Protocolo `0.103.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
+−7 harnesses). Protocolo `0.104.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -154,7 +154,11 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       (toolchain/install): catalogo pinado com o SHA-256 lido
                       na fonte, download em job para a pasta da IDE, checksum
                       antes de desempacotar, `tar` como processo; o detector
-                      le a pasta a cada busca
+                      le a pasta a cada busca. E o GERENCIADOR QUE LE O DISCO
+                      (0.104.0): toolchain/sysroot (o que a pasta contem, com
+                      veredito) e toolchain/import (kit proposto de um SDK
+                      Yocto pelo environment-setup, de uma arvore Buildroot ou
+                      de uma pasta de toolchain); o kit ganhou toolchainFile
 
             library   catalogo CURADO de bibliotecas C/C++ (0.68.0): licenca
                       verificada na fonte, versao pinada e a frase do que cada

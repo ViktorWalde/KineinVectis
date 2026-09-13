@@ -120,6 +120,7 @@ impl Core {
                 chip: parsed.chip.as_deref(),
                 remote_target: parsed.remote_target.as_deref(),
                 debug_server: parsed.debug_server.as_deref(),
+                toolchain_file: parsed.toolchain_file.as_deref(),
             },
         ) {
             Ok(resolvida) => {

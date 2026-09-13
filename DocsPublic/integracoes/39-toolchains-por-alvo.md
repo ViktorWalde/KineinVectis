@@ -172,6 +172,13 @@ saídas honestas, em ordem de fidelidade:
    Buildroot        kit do environment-setup (42 §8 item 5)
 ```
 
+> **Estado (2026-09-13, 0.104.0):** a IDE **lê** a pasta de sysroot e diz o
+> que há (`toolchain.inspectSysroot`: headers, bibliotecas, multiarch, `.pc`,
+> libc, veredito) e **importa** o kit de um SDK Yocto, de uma árvore Buildroot
+> (e dos tarballs da Bootlin, que são SDKs do Buildroot) ou de uma pasta de
+> toolchain (`toolchain.importKit`), com o arquivo de toolchain do SDK no kit
+> (`roadmaps/40` §7.30). Não medido contra um SDK real ainda.
+
 Bare metal não entra: a libc vem dentro do tarball.
 
 ## 4. Onde a IDE procura (além do `PATH`) — implementado

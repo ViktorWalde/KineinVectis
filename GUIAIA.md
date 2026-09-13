@@ -611,7 +611,7 @@ ui/src/core_client_toolchain.cpp     (pedidos + dispatch do dominio)
 ui/qml/shell/WorkspaceStatusBar.qml  (o chip que abre o seletor)
     ↕ crates/kinein-protocol/src/toolchain.rs
 crates/kinein-core/src/handlers/toolchain.rs
-    → crates/kinein-core/src/toolchain/{mod,catalog,store}.rs
+    → crates/kinein-core/src/toolchain/{mod,arguments,catalog,store}.rs
     → crates/kinein-core/src/tools/{mod,known,search_dirs}.rs (quem DETECTA continua sendo o
       ToolDetector; a toolchain só cruza a escolha com o detectado)
 ```
@@ -804,6 +804,10 @@ toolchain/install/{catalog,mod}.rs           o PROVEDOR DE INSTALACAO: nove rele
 handlers/toolchain_install.rs                pinados com o SHA-256 lido na fonte; download
 ui/qml/embedded/EmbeddedInstallView.qml      em job, checksum ANTES do tar, pasta da IDE
                                              (tools/search_dirs lida a cada busca)
+toolchain/{sysroot,import}.rs                o GERENCIADOR QUE LE O DISCO: o sysroot com
+handlers/toolchain_import.rs                 veredito; o kit proposto de um SDK Yocto
+ui/qml/embedded/EmbeddedKitImportView.qml    (environment-setup pelo sh), Buildroot ou
+                                             pasta de toolchain; toolchainFile no kit
 crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida

@@ -45,6 +45,10 @@ pub(super) struct Kit {
     /// Comando do servidor que a IDE sobe antes de conectar (`{program}` = ELF).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub debug_server: Option<String>,
+    /// Arquivo de toolchain do kit (`CMAKE_TOOLCHAIN_FILE`), importado de um
+    /// SDK ou digitado (0.104.0).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub toolchain_file: Option<String>,
 }
 
 impl Kit {
@@ -56,6 +60,7 @@ impl Kit {
             && self.chip.is_none()
             && self.remote_target.is_none()
             && self.debug_server.is_none()
+            && self.toolchain_file.is_none()
     }
 }
 
@@ -111,6 +116,7 @@ pub(super) fn load(root: &Path) -> BTreeMap<String, Kit> {
                     chip: None,
                     remote_target: None,
                     debug_server: None,
+                    toolchain_file: None,
                 },
             );
             kits
@@ -171,6 +177,7 @@ mod tests {
                 chip: None,
                 remote_target: None,
                 debug_server: None,
+                toolchain_file: None,
             },
         );
         kits.insert(
@@ -182,6 +189,7 @@ mod tests {
                 chip: None,
                 remote_target: None,
                 debug_server: None,
+                toolchain_file: None,
             },
         );
         // Kit sem nada nao merece linha no arquivo.

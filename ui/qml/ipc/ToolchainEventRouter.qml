@@ -26,6 +26,18 @@ Item {
             root.toolchainController.handleAdvice(sysrootHint, rustTargets, rustTargetsKnown);
         }
 
+        function onToolchainKitFileResolved(toolchainFile) {
+            root.toolchainController.handleKitFile(toolchainFile);
+        }
+
+        function onSysrootInspected(report) {
+            root.toolchainController.handleSysrootReport(report);
+        }
+
+        function onKitImported(proposal) {
+            root.toolchainController.handleKitProposal(proposal);
+        }
+
         function onToolchainInstallableResolved(toolchains, installRoot, projectFamily) {
             root.toolchainController.handleInstallable(toolchains, installRoot, projectFamily);
         }

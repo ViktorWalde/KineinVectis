@@ -160,10 +160,13 @@ public:
     Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
     Q_INVOKABLE void toolchainGet(const QString& preset);
     Q_INVOKABLE void toolchainInstallable();
+    Q_INVOKABLE void toolchainInspectSysroot(const QString& path);
+    Q_INVOKABLE void toolchainImportKit(const QString& path);
     Q_INVOKABLE void toolchainInstall(const QString& id);
     Q_INVOKABLE void toolchainSet(const QString& role, const QString& id, const QString& preset);
     Q_INVOKABLE void toolchainSetKit(const QString& preset, const QString& sysroot,
-                                     const QString& targetTriple, const QString& chip);
+                                     const QString& targetTriple, const QString& chip,
+                                     const QString& toolchainFile = QString());
     // Embarcados (roadmaps/35 §5.7): a sonda que esta' no USB agora.
     Q_INVOKABLE void probeList();
     // Tamanho do ELF do kit (build.size): flash/RAM usados.
@@ -316,6 +319,13 @@ signals:
                            const QString& presetToolchainFile);
     void toolchainAdvice(const QString& sysrootHint, const QVariantList& rustTargets,
                          bool rustTargetsKnown);
+    /// O arquivo de toolchain do KIT (0.104.0), ao lado do toolchainResolved —
+    /// sinal proprio para o de cima nao crescer em argumento posicional.
+    void toolchainKitFileResolved(const QString& toolchainFile);
+    /// `toolchain.inspectSysroot`: o que a pasta contem (SysrootReport).
+    void sysrootInspected(const QVariantMap& report);
+    /// `toolchain.importKit`: a proposta de kit lida do SDK (KitImport).
+    void kitImported(const QVariantMap& proposal);
     /// O catalogo de toolchains instalaveis (integracoes/39 §5): URL, tamanho,
     /// sha256, licenca e fonte de cada uma, o estado nesta maquina e a
     /// familia que o projeto aberto recomenda.

@@ -1,5 +1,18 @@
 # 03 — Protocolo IPC
 
+> **O `0.104.0` (2026-09-13) é o GERENCIADOR DE TOOLCHAIN QUE LÊ O DISCO**
+> (`roadmaps/42` §8 itens b e d; `integracoes/39` §3): `toolchain.
+> inspectSysroot { path }` diz o que uma pasta de sysroot contém (headers,
+> bibliotecas, `lib/`, os `usr/lib/<triple>` do multiarch, quantos `.pc`,
+> qual libc — e um veredito: utilizável, só headers, só bibliotecas, vazia);
+> `toolchain.importKit { path }` lê um SDK Yocto (o `environment-setup-*`
+> carregado pelo `sh`), uma árvore Buildroot (`output/host`) ou uma pasta de
+> toolchain e devolve uma PROPOSTA de kit — compiladores, gdb, sysroot,
+> triple, arquivo de toolchain, evidência — sem gravar nada; o kit ganhou
+> `toolchainFile` (`setKit`/`ToolchainResult`), que vira
+> `-DCMAKE_TOOLCHAIN_FILE` no configure quando o preset não declara um.
+> Métodos e campo novos sobem o minor.
+>
 > **O `0.103.0` (2026-09-13) é o PROVEDOR DE INSTALAÇÃO de toolchain**
 > ([`integracoes/39`](../integracoes/39-toolchains-por-alvo.md) §5, o item
 > de cima da fila depois da cadeia Python): `toolchain.installable` publica
@@ -1466,7 +1479,7 @@ dependência que já está no manifest, `Cargo.toml` com string multilinha ou
 manifest do usuário não tem desfazer; a recusa vem com o motivo, na lista e no
 diálogo.
 
-### Toolchain (`toolchain.get` / `toolchain.set` / `toolchain.installable` / `toolchain.install`)
+### Toolchain (`toolchain.get` / `toolchain.set` / `toolchain.setKit` / `toolchain.installable` / `toolchain.install` / `toolchain.inspectSysroot` / `toolchain.importKit`)
 
 Implementado no protocolo `0.64.0` (etapa 5 de
 `DocsPublic/roadmaps/30-caminho-para-o-mvp.md`; B2 do TR2 e §5d do `roadmaps/29`).
@@ -1708,6 +1721,76 @@ vencendo a pasta da IDE: o que o usuário escolheu vence o que a IDE
 encontrou. A UI (`EmbeddedInstallView`) mostra label, versão, tamanho, URL,
 sha256 e licença de cada entrada, recomendadas primeiro, e um botão por linha;
 uma instalação por vez.
+
+### O gerenciador que lê o disco (`toolchain.inspectSysroot` / `toolchain.importKit`, `0.104.0`)
+
+Os itens (b) e (d) do `roadmaps/42` §8 e o §3 do `integracoes/39`, entregues
+em 2026-09-13. Nenhum dos dois exige workspace nem grava nada: leem caminhos
+desta máquina e respondem; aplicar é o `toolchain.setKit` de sempre.
+
+```text
+toolchain.inspectSysroot { path }  -> SysrootReport { path, exists,
+                                      folders { usrInclude, usrLib, lib },
+                                      tripleLibDirs[], pkgconfigFiles, libc?, verdict }
+toolchain.importKit { path }       -> KitImport { kind (yocto | buildroot | toolchain-dir),
+                                      path, evidence[], cCompiler?, cxxCompiler?, gdb?,
+                                      sysroot?, targetTriple?, toolchainFile?, hint? }
+toolchain.setKit { …, toolchainFile? }   ("" limpa; ausente preserva)
+ToolchainResult.toolchainFile?           (o do KIT; presetToolchainFile e' o do preset)
+```
+
+**`inspectSysroot` responde "o `--sysroot` aqui vai achar headers e
+bibliotecas?"** Lê `usr/include`, `usr/lib`, `lib`, os `usr/lib/<triple>` e
+`lib/<triple>` do multiarch (Debian/Raspberry Pi OS), conta os `.pc` onde o
+pkg-config procura (`usr/lib/pkgconfig`, `usr/lib64/pkgconfig`,
+`usr/share/pkgconfig`, `<triple>/pkgconfig`), e identifica a libc — glibc pela
+`__GLIBC__`/`__GLIBC_MINOR__` de `usr/include/features.h`, musl pela
+`libc.so`. O veredito é uma frase: *utilizável* (com libc e `.pc`, ou o aviso
+"sem .pc — o pkg-config não vai achar bibliotecas de terceiros"), *só
+headers*, *só bibliotecas*, ou *vazia para o compilador* — que é o sysroot de
+distro do Fedora medido em 2026-09-12 — com o remédio. Caminho relativo →
+`INVALID_PARAMS`; pasta inexistente não é erro, é um relatório com
+`exists: false`.
+
+**`importKit` propõe, não grava.** Por evidência no caminho:
+- **Yocto** — um `environment-setup-*` (o arquivo, ou a pasta do SDK que
+  contém UM). O script é **carregado pelo `sh`** — é o que o manual do SDK
+  manda fazer (`. environment-setup-…`, docs.yoctoproject.org sdk-manual,
+  lido em 2026-09-13) — e as variáveis que ele exporta são lidas: `CC`/`CXX`/
+  `GDB` (o `CC` do SDK já traz `--sysroot=$SDKTARGETSYSROOT`; o binário é
+  resolvido por `command -v` no `PATH` que o script montou), `SDKTARGETSYSROOT`,
+  `OECORE_NATIVE_SYSROOT` (o toolchain file do SDK mora em
+  `usr/share/cmake/OEToolchainConfig.cmake`), `TARGET_PREFIX` (o triple). Um
+  script que não exporta `CC`, ou que falha ao carregar, é recusa que diz isso;
+  dois scripts na pasta = a IDE não escolhe (aponte o arquivo).
+- **Buildroot** — `output/`, `output/host` ou a raiz da árvore: a marca é
+  `host/share/buildroot/` (onde fica o `toolchainfile.cmake`), mais
+  `host/bin/<triple>-gcc` e `host/<triple>/sysroot` (manual do Buildroot,
+  "Using the generated toolchain outside Buildroot", 2026-09-13). Os tarballs
+  da **Bootlin** entram por aqui — são SDKs do Buildroot, com o arquivo de
+  CMake.
+- **toolchain-dir** — uma pasta com `bin/<triple>-gcc` (o tarball da Arm, o
+  que a IDE instalou): o sysroot é o que o próprio gcc declara
+  (`-print-sysroot`, se ele roda aqui e a pasta existe com conteúdo), senão as
+  convenções `<triple>/libc` (Arm) e `<triple>/sysroot`; sem arquivo de CMake —
+  o `CMAKE_SYSTEM_NAME` sai do triple, como sempre.
+
+Caminho relativo → `INVALID_PARAMS`; nada reconhecido → `INVALID_REQUEST`
+dizendo o que se procurou. **Não medido contra um SDK Yocto ou uma árvore
+Buildroot reais** — não há nenhum nesta máquina (42 §8 item 5): o que está
+provado é o contrato (um `environment-setup` que exporta as variáveis
+documentadas; uma `output/host` com a forma documentada), e a exercitação do
+gate lê a raiz do projeto como sysroot "vazia".
+
+**O `toolchainFile` do kit** vira `-DCMAKE_TOOLCHAIN_FILE=<arquivo>` no
+configure **só quando o preset não declara o seu** — o do `CMakePresets.json`
+vence (dois arquivos brigariam), e a tela já dizia isso. Com o arquivo do
+Buildroot/Yocto no kit, o configure é o do SDK: compiladores e sysroot vêm
+dele. A UI (`EmbeddedKitImportView`): um campo de caminho, "Ler sysroot",
+"Importar kit", a proposta em linhas e "Aplicar proposta ao kit" — um `setKit`
+com sysroot, alvo e arquivo; o chip fica. O painel, ao aplicar chip/alvo/
+sysroot, **preserva** o arquivo (um sinal não carrega `undefined`: o
+controller substitui pelo atual).
 
 ### Settings (`settings.get` / `settings.set`)
 
@@ -2038,7 +2121,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 136 métodos roteados — a lista inteira
+## Os 138 métodos roteados — a lista inteira
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -2196,6 +2279,8 @@ terminal.scroll
 test.run
 
 toolchain.get
+toolchain.importKit
+toolchain.inspectSysroot
 toolchain.install
 toolchain.installable
 toolchain.set

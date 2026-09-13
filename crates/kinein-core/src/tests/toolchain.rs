@@ -555,3 +555,179 @@ fn an_installed_toolchain_becomes_a_candidate_on_the_next_toolchain_get() {
         .unwrap();
     assert_eq!(c["path"], gcc.display().to_string());
 }
+
+/// Uma arvore Buildroot minima ao lado do `bin` falso: gcc do triple, o
+/// sysroot com headers e libs, e o toolchainfile.cmake.
+#[cfg(unix)]
+fn buildroot_tree(bin: &Path) -> PathBuf {
+    use std::os::unix::fs::PermissionsExt;
+    let host = bin.parent().unwrap().join("br/output/host");
+    let gcc = host.join("bin/aarch64-buildroot-linux-gnu-gcc");
+    std::fs::create_dir_all(gcc.parent().unwrap()).unwrap();
+    std::fs::write(&gcc, "#!/bin/sh\n").unwrap();
+    std::fs::set_permissions(&gcc, std::fs::Permissions::from_mode(0o755)).unwrap();
+    std::fs::create_dir_all(host.join("aarch64-buildroot-linux-gnu/sysroot/usr/include")).unwrap();
+    std::fs::create_dir_all(host.join("aarch64-buildroot-linux-gnu/sysroot/usr/lib")).unwrap();
+    std::fs::create_dir_all(host.join("share/buildroot")).unwrap();
+    std::fs::write(host.join("share/buildroot/toolchainfile.cmake"), "# br\n").unwrap();
+    host
+}
+
+fn set_kit(core: &mut Core, id: i64, params: Value) -> Value {
+    core.handle_request(&JsonRpcRequest::new(id, "toolchain.setKit", Some(params)))
+        .response()
+        .result
+        .clone()
+        .unwrap()
+}
+
+/// O gerenciador que LE o disco (42 §8 itens b e d, 2026-09-13):
+/// `toolchain.inspectSysroot` diz o que a pasta contem e `toolchain.importKit`
+/// propoe um kit de uma arvore Buildroot SEM gravar nada; um caminho relativo
+/// e' recusado antes de ler qualquer coisa.
+#[test]
+#[cfg(unix)]
+fn a_kit_is_proposed_from_an_sdk_without_writing_anything() {
+    let (root, bin) = workspace_with_tools("importar-kit", &["cmake"]);
+    let mut core = core_with_path(&bin);
+    open(&mut core, &root);
+
+    let relativo = core.handle_request(&JsonRpcRequest::new(
+        50_i64,
+        "toolchain.importKit",
+        Some(json!({ "path": "output/host" })),
+    ));
+    assert_eq!(
+        relativo.response().error.clone().unwrap().code,
+        JsonRpcErrorCode::InvalidParams
+    );
+
+    let host = buildroot_tree(&bin);
+    let proposta = core.handle_request(&JsonRpcRequest::new(
+        51_i64,
+        "toolchain.importKit",
+        Some(json!({ "path": host.parent().unwrap().to_str().unwrap() })),
+    ));
+    let kit = proposta.response().result.clone().unwrap();
+    assert_eq!(kit["kind"], "buildroot");
+    assert_eq!(kit["targetTriple"], "aarch64-buildroot-linux-gnu");
+    let sysroot = kit["sysroot"].as_str().unwrap().to_owned();
+    assert!(
+        kit["toolchainFile"]
+            .as_str()
+            .unwrap()
+            .ends_with("share/buildroot/toolchainfile.cmake")
+    );
+    // Nada foi gravado: o kit continua sem sysroot.
+    let antes = core.handle_request(&JsonRpcRequest::new(
+        52_i64,
+        "toolchain.get",
+        Some(json!({})),
+    ));
+    assert!(
+        antes
+            .response()
+            .result
+            .clone()
+            .unwrap()
+            .get("sysroot")
+            .is_none()
+    );
+
+    // O sysroot proposto, lido: headers e libs, sem .pc.
+    let relatorio = core.handle_request(&JsonRpcRequest::new(
+        53_i64,
+        "toolchain.inspectSysroot",
+        Some(json!({ "path": sysroot })),
+    ));
+    let r = relatorio.response().result.clone().unwrap();
+    assert_eq!(
+        (
+            &r["exists"],
+            &r["folders"]["usrInclude"],
+            &r["folders"]["usrLib"]
+        ),
+        (&json!(true), &json!(true), &json!(true))
+    );
+    assert!(
+        r["verdict"].as_str().unwrap().starts_with("utilizavel"),
+        "{r}"
+    );
+    // Um sysroot que nao existe nao e' erro: e' um relatorio que diz isso.
+    let sumido = core.handle_request(&JsonRpcRequest::new(
+        57_i64,
+        "toolchain.inspectSysroot",
+        Some(json!({ "path": "/nao/existe" })),
+    ));
+    assert_eq!(sumido.response().result.clone().unwrap()["exists"], false);
+}
+
+/// Aplicar a proposta e' o `setKit` de sempre — que agora leva
+/// `toolchainFile`: ele vira `-DCMAKE_TOOLCHAIN_FILE` no configure quando o
+/// preset nao declara um; `""` limpa; e o do PRESET vence o do kit.
+#[test]
+#[cfg(unix)]
+fn the_kit_toolchain_file_reaches_cmake_unless_the_preset_declares_one() {
+    let (root, bin) = workspace_with_tools("kit-toolchain-file", &["cmake"]);
+    let mut core = core_with_path(&bin);
+    open(&mut core, &root);
+    let host = buildroot_tree(&bin);
+    let arquivo = host
+        .join("share/buildroot/toolchainfile.cmake")
+        .display()
+        .to_string();
+    let sysroot = host
+        .join("aarch64-buildroot-linux-gnu/sysroot")
+        .display()
+        .to_string();
+
+    let result = set_kit(
+        &mut core,
+        54,
+        json!({ "sysroot": sysroot, "targetTriple": "aarch64-buildroot-linux-gnu", "toolchainFile": arquivo }),
+    );
+    assert_eq!(result["toolchainFile"], arquivo);
+    assert_eq!(result["sysroot"], sysroot);
+    let args = Toolchain::resolve(&root, &core.detected_tools()).cmake_arguments();
+    assert!(
+        args.contains(&format!("-DCMAKE_TOOLCHAIN_FILE={arquivo}")),
+        "{args:?}"
+    );
+    assert!(
+        args.contains(&format!("-DCMAKE_SYSROOT={sysroot}")),
+        "{args:?}"
+    );
+
+    // Limpar com "" tira o arquivo, e o argumento some.
+    let limpo = set_kit(&mut core, 55, json!({ "toolchainFile": "" }));
+    assert!(limpo.get("toolchainFile").is_none());
+    let args = Toolchain::resolve(&root, &core.detected_tools()).cmake_arguments();
+    assert!(
+        !args
+            .iter()
+            .any(|a| a.starts_with("-DCMAKE_TOOLCHAIN_FILE=")),
+        "{args:?}"
+    );
+
+    // O preset que DECLARA toolchainFile vence o do kit: o argumento nao vai
+    // (o CMake ja' o aplica pelo preset, e dois arquivos brigariam).
+    std::fs::write(
+        root.join("CMakePresets.json"),
+        r#"{ "version": 3, "configurePresets": [ { "name": "cross", "toolchainFile": "cmake/cross.cmake" } ] }"#,
+    )
+    .unwrap();
+    let result = set_kit(
+        &mut core,
+        56,
+        json!({ "preset": "cross", "toolchainFile": arquivo }),
+    );
+    assert_eq!(result["toolchainFile"], arquivo, "o kit guarda");
+    assert_eq!(result["presetToolchainFile"], "cmake/cross.cmake");
+    let args = Toolchain::resolve_kit(&root, &core.detected_tools(), "cross").cmake_arguments();
+    assert!(
+        !args
+            .iter()
+            .any(|a| a.starts_with("-DCMAKE_TOOLCHAIN_FILE=")),
+        "o do preset vence: {args:?}"
+    );
+}
