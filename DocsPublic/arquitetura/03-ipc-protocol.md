@@ -1,5 +1,20 @@
 # 03 — Protocolo IPC
 
+> **O `0.102.0` (2026-09-13) fecha a cadeia Python do
+> [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B
+> — a fatia 5, MicroPython e o módulo nativo:** num projeto MicroPython (a
+> MESMA evidência do `project.model`: `main.py`/`boot.py` importando
+> `machine`/`board`) o `serial.monitor` abre o **REPL da placa** (`mpremote
+> connect <porta> repl`, candidato novo — e último — do papel
+> `serialMonitor`) e o `run.script`/`run.start` de um `.py` roda o arquivo
+> **na placa** (`mpremote [connect <porta>] run <arquivo>`; `run.script`
+> ganhou `device?`); sem mpremote o erro diz o que instalar, em vez de rodar
+> um `import machine` no Python do desktop — o pytest continua no host. E
+> `python.status` ganhou `nativeModule` (pybind11/nanobind/PyO3 e a
+> ferramenta que o instala no ambiente: maturin, scikit-build-core,
+> setuptools-rust, setuptools — com a evidência e o comando oficial). Campo e
+> parâmetro novos sobem o minor.
+>
 > **O `0.101.0` (2026-09-13) é a fatia 4 da cadeia Python do
 > [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B —
 > depurar Python com o debugpy DO interpretador do projeto:** um alvo `.py`
@@ -706,9 +721,9 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   o que fazer (criar o `.venv` pela faixa de saúde; "Executar" num `.py`).
   Outros tipos ainda não têm padrão (`INVALID_REQUEST` com mensagem
   orientando digitar o comando).
-- `run.script { path }` → `{ command }` (protocolo `0.55.0`). Aceita
-  arquivo regular `.sh`, `.bash`, `.zsh` ou (`0.100.0`) `.py` dentro do
-  workspace. O core canonicaliza/confina o caminho e chama `bash`/`zsh` com
+- `run.script { path, device? }` → `{ command }` (protocolo `0.55.0`).
+  Aceita arquivo regular `.sh`, `.bash`, `.zsh` ou (`0.100.0`) `.py` dentro
+  do workspace. O core canonicaliza/confina o caminho e chama `bash`/`zsh` com
   argv explícito (`--`, caminho), sem interpolação por `sh -c`; nomes com
   espaços ou aspas são dados, não sintaxe. Um `.py` roda com o **Python do
   projeto** (`python/env.rs`, o mesmo do `python.status`, do `index.context`
@@ -716,9 +731,17 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   `uv run python`, o arquivo como único argumento, cwd no root; `command`
   ecoa `.venv/bin/python 'tools/gera.py'` (interpretador relativo ao root
   quando mora nele) ou `uv run python '…'`. Sem interpretador nenhum,
-  `INVALID_REQUEST` orientando a criar o ambiente. Reutiliza os mesmos
-  eventos e a mesma sessão única de `run.start`; extensão inválida é
-  `INVALID_PARAMS`.
+  `INVALID_REQUEST` orientando a criar o ambiente. **Projeto MicroPython
+  (`0.102.0`)**: o `.py` roda **na placa** — `mpremote [connect <device>]
+  run <arquivo>` (mpremote 1.29.0, `mpremote run --help`: `run [--follow]
+  path`; sem `connect` o mpremote usa a primeira porta serial que acha);
+  `device?` é a porta que a tela escolheu (campo ausente ≠ vazio). Sem
+  mpremote detectado, `INVALID_REQUEST` dizendo `pipx install mpremote` —
+  nunca o Python do desktop, que não tem os pinos de `import machine`. O
+  mesmo vale para o `run.start` sem comando (`main.py` na placa, mesmo num
+  workspace sem `pyproject.toml`); um pacote com `__main__.py` não roda com
+  `-m` na placa e o erro o diz. Reutiliza os mesmos eventos e a mesma sessão
+  única de `run.start`; extensão inválida é `INVALID_PARAMS`.
 - `run.stdin { data }` → `{ status: "ok" }`. Encaminha `data` cru ao stdin
   do processo (a UI acrescenta o `\n`).
 - `run.stop {}` → `{ status: "ok" }`. Mata o processo; o término é
@@ -2347,6 +2370,8 @@ python.createEnvironment { tool? }     -> { jobId }          (job; tool = uv | v
 event.python.finished { jobId, success, tool, command, path }
 
 PythonStatus   interpreter? (PythonEnv: interpreter, version?, origin, warning?),
+               nativeModule? (PythonNativeModule: kind, tool, evidence[], buildHint;
+               0.102.0),
                hasEnvironment (origin != sistema), environmentTool? (uv|venv:
                o que a IDE usaria), uv? (caminho), projectFiles[] (pyproject.toml,
                requirements.txt, setup.py, uv.lock, poetry.lock, Pipfile),
@@ -2370,6 +2395,22 @@ dentro conta.
 Exercitação: o projeto de exercitação ganhou um `pyproject.toml`; o gate cria
 o `.venv` com a ferramenta REAL desta máquina (`python3 -m venv`, 2026-09-12)
 e vê o `python.status` passar de `sistema` para `.venv`.
+
+**`nativeModule` (`0.102.0`, fatia 5).** A ponte entre as duas metades da
+IDE: um projeto Python com extensão em C++/Rust é TAMBÉM um projeto
+CMake/Cargo (o índice e o clangd/rust-analyzer já o leem), mas quem o instala
+no `.venv` é o build do Python. Por evidência nos arquivos da raiz —
+`pyproject.toml` (`[build-system] requires` com maturin, scikit-build-core,
+setuptools-rust, pybind11 ou nanobind; `[tool.maturin]`), `Cargo.toml`
+(dependência `pyo3`), `CMakeLists.txt` (`pybind11`/`nanobind`), `setup.py`
+(`pybind11`/`nanobind`) — o status diz `kind` (`pybind11`, `nanobind`,
+`PyO3`, ou `Rust` para maturin/setuptools-rust sem pyo3 explícito), `tool`
+(`maturin`, `scikit-build-core`, `setuptools-rust`, `setuptools`), uma linha
+de `evidence` por arquivo, e `buildHint` como a fonte oficial escreve:
+`maturin develop` (no ambiente: `uv run maturin develop` ou
+`.venv/bin/maturin develop`), `pip install -e .` para scikit-build-core e
+setuptools. Projeto Python puro não tem o campo — nem com um `Cargo.toml` sem
+pyo3 ou um `CMakeLists.txt` sem binding ao lado.
 
 ## `index.*` — o índice do projeto inteiro
 
@@ -2618,10 +2659,14 @@ USB Serial/JTAG — o próprio chip"*. A identidade do chip vem **pelo canal**
 **`serial.monitor` é o monitor como PROCESSO numa aba de terminal** (E3 do
 `integracoes/38` §6, decisão do autor em 2026-09-11: nunca código serial
 nosso). A ferramenta vem do papel novo do kit, `serialMonitor` — candidatos
-`tio`, `picocom`, `minicom`, `espflash` nessa ordem —, com uma regra a mais
-que o catálogo não conhece: chip Espressif no kit **e** `espflash` detectado
-→ `espflash monitor --elf <ELF>`, que decodifica o backtrace; escolha
-**fixada** pelo autor vence tudo. Linhas de comando lidas na fonte: `tio -b`,
+`tio`, `picocom`, `minicom`, `espflash`, `mpremote` nessa ordem —, com duas
+regras a mais que o catálogo não conhece: **projeto MicroPython e `mpremote`
+detectado → `mpremote connect <dev> repl`** (`0.102.0`: num firmware
+MicroPython o monitor É o REPL — um tio a 115200 mostraria o mesmo texto sem
+o raw-paste nem o Ctrl-] de sair; o mpremote é o último do catálogo e nunca
+vence sozinho fora de MicroPython); chip Espressif no kit **e** `espflash`
+detectado → `espflash monitor --elf <ELF>`, que decodifica o backtrace;
+escolha **fixada** pelo autor vence tudo. Linhas de comando lidas na fonte: `tio -b`,
 `picocom -b`, `minicom -D … -b`, e no espflash é `--monitor-baud` (o `--baud`
 dele é o de **gravação**). Baud ausente = 115200. Sem nenhum monitor
 instalado, `TOOL_NOT_FOUND` com o que instalar. Exige workspace (a aba nasce

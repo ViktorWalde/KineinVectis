@@ -24,6 +24,18 @@ use kinein_protocol::{Framework, FrameworkInfo, ProjectModel, TargetModel};
 
 use crate::tools::ToolDetector;
 
+/// O workspace e' um projeto `MicroPython`/`CircuitPython`.
+///
+/// Pela MESMA evidencia do `project.model` (`boot.py`/`main.py` importando
+/// `machine`/`board`, stubs em `typings/`). Quem executa e monitora Python
+/// pergunta aqui.
+#[must_use]
+pub fn e_micropython(root: &Path) -> bool {
+    detect::frameworks(root)
+        .iter()
+        .any(|f| f.framework == Framework::MicroPython)
+}
+
 /// Computa o modelo lendo o ambiente REAL do processo.
 #[must_use]
 pub fn model(root: &Path, kit_chip: Option<&str>) -> ProjectModel {

@@ -74,14 +74,30 @@ Item {
     }
 
     // Uma linha: "python: .venv · Python 3.14.7" / "python: sistema (3.14.7) ⚠"
-    // / "python: nenhum ⚠".
+    // / "python: nenhum ⚠" — e, num projeto com extensao nativa, " · pybind11
+    // (scikit-build-core)" (fatia 5 da cadeia Python, 2026-09-13).
     function summary() {
         if (!isPython || !known) return "";
         const i = status.interpreter;
         if (i === undefined || i === null) return qsTr("python: nenhum ⚠");
         const versao = i.version !== undefined ? " · " + String(i.version).replace(/^Python /, "") : "";
-        return hasEnvironment ? qsTr("python: %1%2").arg(i.origin).arg(versao)
-                              : qsTr("python: sistema%1 ⚠").arg(versao);
+        const base = hasEnvironment ? qsTr("python: %1%2").arg(i.origin).arg(versao)
+                                    : qsTr("python: sistema%1 ⚠").arg(versao);
+        const nativo = nativeModuleLine();
+        return nativo === "" ? base : base + " · " + nativo;
+    }
+
+    // "pybind11 (scikit-build-core)" / "PyO3 (maturin)"; vazio sem modulo nativo.
+    function nativeModuleLine() {
+        const m = status.nativeModule;
+        if (m === undefined || m === null) return "";
+        return qsTr("%1 (%2)").arg(m.kind).arg(m.tool);
+    }
+
+    // O comando oficial que compila a extensao no ambiente — o core o escreve.
+    function nativeModuleBuildHint() {
+        const m = status.nativeModule;
+        return m === undefined || m === null ? "" : String(m.buildHint);
     }
 
     // O rotulo do botao diz a FERRAMENTA e a pasta: nada de "configurar".

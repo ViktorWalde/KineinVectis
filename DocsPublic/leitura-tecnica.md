@@ -67,9 +67,9 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **134 métodos IPC** roteados e **46 eventos**, em **34 domínios de protocolo**;
-**675 testes** Rust verdes e **30 harnesses QML** (remedido em 2026-09-13;
+**683 testes** Rust verdes e **30 harnesses QML** (remedido em 2026-09-13;
 em 2026-09-12 à noite a simulação saiu do produto: −11 métodos, −85 testes,
-−7 harnesses). Protocolo `0.101.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
+−7 harnesses). Protocolo `0.102.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -216,7 +216,11 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       python/debug — o debugpy e' modulo do interpretador, a
                       sonda `import debugpy` antes de subir, `-m debugpy.adapter`
                       como adaptador de todo alvo .py, "Depurar" na arvore.
-                      O que ainda falta esta' no 40 §4
+                      Fatia 5 (0.102.0, 2026-09-13): MicroPython pelo mpremote
+                      (o REPL como monitor, o .py rodando NA PLACA) e o modulo
+                      nativo (pybind11/nanobind/PyO3 + maturin/scikit-build)
+                      no python.status. A cadeia fechou; o polimento que
+                      sobrou esta' no 40 §4
 
             index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
                       autor): todas as pastas, arquivos e declaracoes de C/C++/

@@ -87,9 +87,16 @@ void CoreClient::runStart(const QString& command)
     sendRequest(QStringLiteral("run.start"), params);
 }
 
-void CoreClient::runScript(const QString& path)
+void CoreClient::runScript(const QString& path, const QString& device)
 {
-    sendRequest(QStringLiteral("run.script"), QJsonObject{{QStringLiteral("path"), path}});
+    QJsonObject params{{QStringLiteral("path"), path}};
+    // A porta so' vai quando a tela a escolheu: num projeto MicroPython o
+    // core roda o .py NA PLACA (`mpremote connect <porta> run`); sem porta o
+    // mpremote usa a primeira que achar. Campo ausente nao e' campo vazio.
+    if (!device.isEmpty()) {
+        params.insert(QStringLiteral("device"), device);
+    }
+    sendRequest(QStringLiteral("run.script"), params);
 }
 
 void CoreClient::runStdin(const QString& data)

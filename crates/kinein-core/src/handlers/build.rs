@@ -250,8 +250,10 @@ impl Core {
         };
         // O pytest roda com o Python DO PROJETO (ou `uv run`): resolvido aqui,
         // fora do job, como o ruff da qualidade.
+        // (Num projeto MicroPython o Executar vai para a placa; o pytest fica
+        // no host — por isso o lancador do HOST, nunca o mpremote.)
         let python = (kind == ProjectKind::Python)
-            .then(|| self.python_launcher(&root))
+            .then(|| self.python_host_launcher(&root))
             .flatten();
 
         let title = format!("{} Tests", project_system_name(kind));

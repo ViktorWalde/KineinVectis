@@ -16,6 +16,9 @@
 //! espflash  espflash monitor --port <dev> --monitor-baud <baud> [--elf <ELF>]
 //!           ATENCAO: o `-B/--baud` do espflash e' o baud de GRAVACAO; o do
 //!           monitor e' `-r/--monitor-baud` (espflash/src/cli/mod.rs, 4.6.0)
+//! mpremote  mpremote connect <dev> repl       (1.29.0, `mpremote connect --help`:
+//!           `connect device next_command`; o REPL nao tem baud — e' o raw REPL
+//!           do `MicroPython` a 115200). Fatia 5 da cadeia Python, 2026-09-13
 //! ```
 
 use std::path::Path;
@@ -38,14 +41,26 @@ pub struct Escolha {
 
 /// Qual monitor abrir para este kit.
 ///
-/// Fixado pelo autor no papel `serialMonitor` -> esse. Senao, se o chip do kit
-/// e' Espressif E o `espflash` esta' detectado -> `espflash monitor`, que
-/// decodifica o backtrace. Senao, o efetivo do papel (o primeiro detectado na
-/// ordem do catalogo: tio, picocom, minicom, espflash).
+/// Fixado pelo autor no papel `serialMonitor` -> esse. Senao, num projeto
+/// `MicroPython` com `mpremote` detectado -> o REPL da placa (`mpremote connect
+/// <dev> repl`): num firmware `MicroPython` o "monitor" E' o REPL, e um tio a
+/// 115200 mostraria o mesmo texto sem o raw-paste nem o Ctrl-] de sair.
+/// Senao, se o chip do kit e' Espressif E o `espflash` esta' detectado ->
+/// `espflash monitor`, que decodifica o backtrace. Senao, o efetivo do papel
+/// (o primeiro detectado na ordem do catalogo: tio, picocom, minicom,
+/// espflash — o mpremote e' o ultimo e nunca vence sozinho).
 #[must_use]
-pub fn escolher(toolchain: &Toolchain) -> Option<Escolha> {
+pub fn escolher(toolchain: &Toolchain, micropython: bool) -> Option<Escolha> {
     let (efetivo_id, efetivo_path) = toolchain.effective_program(ToolchainRole::SerialMonitor)?;
     let fixado = toolchain.chosen(ToolchainRole::SerialMonitor).is_some();
+    if !fixado && micropython {
+        if let Some(mpremote) = toolchain.candidate_path(ToolchainRole::SerialMonitor, "mpremote") {
+            return Some(Escolha {
+                id: "mpremote".to_owned(),
+                program: mpremote.to_owned(),
+            });
+        }
+    }
     if !fixado && chip_e_espressif(toolchain.chip()) {
         if let Some(espflash) = toolchain.candidate_path(ToolchainRole::SerialMonitor, "espflash") {
             return Some(Escolha {
@@ -93,6 +108,8 @@ pub fn command_line(
             args
         }
         "minicom" => vec!["-D".to_owned(), device.to_owned(), "-b".to_owned(), baud],
+        // O REPL nao tem baud: o mpremote fala o raw REPL do MicroPython.
+        "mpremote" => vec!["connect".to_owned(), device.to_owned(), "repl".to_owned()],
         // tio e picocom: `-b <baud> <dev>`, e qualquer outro monitor que
         // entre no catalogo com essa forma classica.
         _ => vec!["-b".to_owned(), baud, device.to_owned()],

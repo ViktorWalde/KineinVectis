@@ -39,6 +39,27 @@ pub struct PythonStatus {
     /// What is missing, in words, with the remedy.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hint: Option<String>,
+    /// The native extension this project builds (pybind11/nanobind/PyO3), when
+    /// the root files say so (`0.102.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_module: Option<PythonNativeModule>,
+}
+
+/// A native extension module recognised at the workspace root.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PythonNativeModule {
+    /// `pybind11`, `nanobind`, `PyO3`, or `Rust` (maturin/setuptools-rust
+    /// without an explicit pyo3 dependency).
+    pub kind: String,
+    /// What builds and installs it: `maturin`, `scikit-build-core`,
+    /// `setuptools-rust`, `setuptools`.
+    pub tool: String,
+    /// One line per file that proved it.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<String>,
+    /// The official command to build it into the project environment.
+    pub build_hint: String,
 }
 
 /// Parameters for `python.status`.

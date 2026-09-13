@@ -18,6 +18,11 @@ pub struct RunStartParams {
 pub struct RunScriptParams {
     /// Shell script path confined to the currently opened workspace.
     pub path: String,
+    /// Serial device to run a `.py` ON THE BOARD in a `MicroPython` project
+    /// (`mpremote connect <device> run`); omitted = mpremote picks the first
+    /// serial device it finds (`0.102.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device: Option<String>,
 }
 
 /// Result payload for `run.start`.

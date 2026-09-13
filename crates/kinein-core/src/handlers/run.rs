@@ -58,7 +58,12 @@ impl Core {
         // Um .py roda com o Python DO PROJETO (ou `uv run`), nao com um
         // interpretador fixo: e' a fatia 3 da cadeia Python (41 bloco B).
         if script.extension().and_then(OsStr::to_str) == Some("py") {
-            return self.run_python_script_response(request_id, &root, &script);
+            return self.run_python_script_response(
+                request_id,
+                &root,
+                &script,
+                parsed.device.as_deref(),
+            );
         }
         let Some(interpreter) = run::script_interpreter(&script) else {
             return JsonRpcResponse::failure(
@@ -81,10 +86,11 @@ impl Core {
         }
     }
 
-    /// O lancador Python deste workspace: `uv run` se o projeto e' do uv e o
-    /// uv existe; senao o interpretador da precedencia do 29 §4.1. Sem medir
-    /// a versao — executar nao precisa dela.
-    pub(crate) fn python_launcher(
+    /// O lancador do HOST: `uv run` se o projeto e' do uv e o uv existe;
+    /// senao o interpretador da precedencia do 29 §4.1. Sem medir a versao —
+    /// executar nao precisa dela. E' o que o pytest usa: testes rodam na
+    /// maquina, nunca na placa.
+    pub(crate) fn python_host_launcher(
         &self,
         root: &Path,
     ) -> Option<crate::python::run::PythonLauncher> {
@@ -93,21 +99,48 @@ impl Core {
         crate::python::run::PythonLauncher::resolve(root, &tools, self.detector.find_in_path("uv"))
     }
 
+    /// O lancador de EXECUTAR: num projeto `MicroPython` e' o mpremote (o
+    /// arquivo roda NA PLACA; `device` = a porta escolhida, ou a primeira que
+    /// o mpremote achar) — e sem mpremote o erro diz o que instalar, porque
+    /// cair no Python do desktop rodaria um `main.py` de placa onde nao ha'
+    /// pinos. Fora de `MicroPython`, o lancador do host.
+    pub(crate) fn python_launcher(
+        &self,
+        root: &Path,
+        device: Option<&str>,
+    ) -> Result<crate::python::run::PythonLauncher, run::RunError> {
+        use crate::python::run::PythonLauncher;
+
+        if crate::project::e_micropython(root) {
+            return self
+                .detector
+                .find_in_path("mpremote")
+                .map(|mpremote| PythonLauncher::mpremote(mpremote, device))
+                .ok_or_else(|| run::RunError::NoDefaultCommand {
+                    message: "projeto MicroPython: o arquivo roda na placa pelo mpremote, que \
+                              nao esta' nesta maquina (pipx install mpremote — o painel de \
+                              instalacao mostra o passo)"
+                        .to_owned(),
+                });
+        }
+        self.python_host_launcher(root)
+            .ok_or_else(|| run::RunError::NoDefaultCommand {
+                message: "sem interpretador Python para este workspace: crie o ambiente (.venv) \
+                          pela faixa de saude ou instale o python3"
+                    .to_owned(),
+            })
+    }
+
     fn run_python_script_response(
         &mut self,
         request_id: Option<Value>,
         root: &Path,
         script: &Path,
+        device: Option<&str>,
     ) -> JsonRpcResponse {
-        let Some(launcher) = self.python_launcher(root) else {
-            return run_error_response(
-                request_id,
-                &run::RunError::NoDefaultCommand {
-                    message: "sem interpretador Python para este workspace: crie o ambiente \
-                              (.venv) pela faixa de saude ou instale o python3"
-                        .to_owned(),
-                },
-            );
+        let launcher = match self.python_launcher(root, device) {
+            Ok(launcher) => launcher,
+            Err(error) => return run_error_response(request_id, &error),
         };
         let Some(runner) = self.run.as_mut() else {
             return run_unavailable_response(request_id, "run.script");
@@ -144,23 +177,28 @@ impl Core {
 
         let root = Path::new(&workspace.root);
         let explicito = parsed.command.filter(|command| !command.trim().is_empty());
-        let command =
-            if let Some(command) = explicito.or_else(|| crate::runconfig::active_command(root)) {
-                command
+        let command = if let Some(command) =
+            explicito.or_else(|| crate::runconfig::active_command(root))
+        {
+            command
+        } else {
+            // Python nao passa por run::default_command: precisa do lancador do
+            // projeto (interpretador ou `uv run`).
+            // (Um projeto MicroPython pode nao ter pyproject — o tipo e'
+            // Unknown — e mesmo assim o botao roda o main.py na placa.)
+            let padrao = if workspace.kind == kinein_protocol::ProjectKind::Python
+                || crate::project::e_micropython(root)
+            {
+                self.python_launcher(root, None)
+                    .and_then(|launcher| crate::python::run::default_command(root, Some(&launcher)))
             } else {
-                // Python nao passa por run::default_command: precisa do lancador do
-                // projeto (interpretador ou `uv run`).
-                let padrao = if workspace.kind == kinein_protocol::ProjectKind::Python {
-                    let launcher = self.python_launcher(root);
-                    crate::python::run::default_command(root, launcher.as_ref())
-                } else {
-                    run::default_command(workspace.kind, root)
-                };
-                match padrao {
-                    Ok(command) => command,
-                    Err(error) => return run_error_response(request_id, &error),
-                }
+                run::default_command(workspace.kind, root)
             };
+            match padrao {
+                Ok(command) => command,
+                Err(error) => return run_error_response(request_id, &error),
+            }
+        };
 
         let Some(runner) = self.run.as_mut() else {
             return run_unavailable_response(request_id, "run.start");

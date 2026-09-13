@@ -796,6 +796,10 @@ python/debug.rs + dap/{adapter,target}.rs    o debugpy e' MODULO do interpretado
                                              `import debugpy`, `-m debugpy.adapter` para
                                              todo alvo .py; ciclo real em
                                              scripts/verificar-python-debug.sh
+python/native.rs + serial/monitor.rs         o modulo nativo (pybind11/nanobind/PyO3 e
+                                             a ferramenta) no python.status; MicroPython:
+                                             o REPL do mpremote como monitor e o .py
+                                             rodando NA PLACA (python/run.rs Mpremote)
 crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida

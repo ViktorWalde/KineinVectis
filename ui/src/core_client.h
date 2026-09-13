@@ -232,7 +232,7 @@ public:
     Q_INVOKABLE void replaceInFiles(const QString& query, const QString& replacement,
                                     bool caseSensitive);
     Q_INVOKABLE void runStart(const QString& command);
-    Q_INVOKABLE void runScript(const QString& path);
+    Q_INVOKABLE void runScript(const QString& path, const QString& device = QString());
     Q_INVOKABLE void runStdin(const QString& data);
     Q_INVOKABLE void runStop();
     // D2.3 (DocsPublic/roadmaps/24): multi-terminal — todo comando leva o id da sessão.

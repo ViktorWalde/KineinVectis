@@ -18,6 +18,12 @@
 //!
 //! O `run.script` de um `.py` (clique direito em "Executar") usa o mesmo COM
 //! QUE, com o arquivo como argumento.
+//!
+//! **`MicroPython`** (fatia 5, 2026-09-13) e' outro COM QUE: o arquivo roda NA
+//! PLACA, por `mpremote [connect <porta>] run <arquivo>` (mpremote 1.29.0,
+//! `mpremote run --help`: `run [--follow] path`; sem `connect` ele usa a
+//! primeira porta serial que acha). Um `main.py` que importa `machine` nao
+//! roda no Python do desktop — o host nao tem os pinos.
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -33,6 +39,15 @@ pub enum PythonLauncher {
     Uv(PathBuf),
     /// O interpretador resolvido pela precedencia do 29 §4.1.
     Interpreter(PathBuf),
+    /// `mpremote [connect <porta>] …` — o projeto e' `MicroPython` e o arquivo
+    /// roda na placa. `device` = a porta escolhida; `None` = a primeira que
+    /// o mpremote achar.
+    Mpremote {
+        /// O executavel detectado.
+        program: PathBuf,
+        /// A porta serial, quando a UI a deu.
+        device: Option<String>,
+    },
 }
 
 impl PythonLauncher {
@@ -47,17 +62,42 @@ impl PythonLauncher {
         Some(Self::Interpreter(PathBuf::from(env.interpreter)))
     }
 
+    /// O lancador de um projeto `MicroPython`: o `mpremote` detectado e a
+    /// porta escolhida (`None` = a primeira que ele achar). Sem mpremote o
+    /// chamador diz para instala-lo, em vez de rodar um `main.py` de placa no
+    /// Python do desktop.
+    #[must_use]
+    pub fn mpremote(program: PathBuf, device: Option<&str>) -> Self {
+        Self::Mpremote {
+            program,
+            device: device.map(str::to_owned),
+        }
+    }
+
     /// O programa a executar e os argumentos que vem ANTES dos do usuario.
+    ///
+    /// No mpremote o "argumento do usuario" e' o arquivo: os prefixos sao
+    /// `connect <porta>` (quando ha') e `run`.
     #[must_use]
     pub fn program(&self) -> (PathBuf, Vec<OsString>) {
         match self {
             Self::Uv(uv) => (uv.clone(), vec!["run".into(), "python".into()]),
             Self::Interpreter(python) => (python.clone(), Vec::new()),
+            Self::Mpremote { program, device } => {
+                let mut prefix: Vec<OsString> = Vec::new();
+                if let Some(device) = device {
+                    prefix.push("connect".into());
+                    prefix.push(device.into());
+                }
+                prefix.push("run".into());
+                (program.clone(), prefix)
+            }
         }
     }
 
-    /// Como a tela mostra o lancador: `uv run python` ou o interpretador
-    /// relativo ao root quando mora dentro dele (`.venv/bin/python`).
+    /// Como a tela mostra o lancador: `uv run python`, `mpremote [connect
+    /// <porta>] run`, ou o interpretador relativo ao root quando mora dentro
+    /// dele (`.venv/bin/python`).
     #[must_use]
     pub fn display(&self, root: &Path) -> String {
         match self {
@@ -67,6 +107,10 @@ impl PythonLauncher {
                 .unwrap_or(python)
                 .display()
                 .to_string(),
+            Self::Mpremote { device, .. } => device.as_ref().map_or_else(
+                || "mpremote run".to_owned(),
+                |porta| format!("mpremote connect {porta} run"),
+            ),
         }
     }
 
@@ -190,6 +234,16 @@ pub fn default_command(root: &Path, launcher: Option<&PythonLauncher>) -> Result
     };
     match entry_point(root) {
         Some(EntryPoint::File(arquivo)) => Ok(launcher.shell_command(&[&arquivo])),
+        // Na placa nao ha' `-m` nem script instalado: o mpremote roda ARQUIVOS.
+        Some(EntryPoint::Module(pacote)) if matches!(launcher, PythonLauncher::Mpremote { .. }) => {
+            Err(RunError::NoDefaultCommand {
+                message: format!(
+                    "projeto MicroPython sem main.py na raiz (o ponto de entrada achado e' o \
+                     pacote `{pacote}`, que a placa nao roda com -m); clique com o direito \
+                     num .py e escolha Executar"
+                ),
+            })
+        }
         Some(EntryPoint::Module(pacote)) => Ok(launcher.shell_command(&["-m", &pacote])),
         Some(EntryPoint::InstalledScript(nome)) => Ok(aspas(
             &root.join(".venv/bin").join(nome).display().to_string(),
@@ -293,6 +347,57 @@ mod tests {
         assert_eq!(
             interp.shell_command(&["it's.py"]),
             format!("'{}' 'it'\\''s.py'", py.display())
+        );
+    }
+
+    /// `MicroPython`: `mpremote [connect <porta>] run <arquivo>`; sem mpremote
+    /// detectado nao ha' lancador (o handler manda instalar); o `-m` de um
+    /// pacote nao existe na placa.
+    #[test]
+    fn mpremote_runs_the_file_on_the_board() {
+        let root = raiz("mpremote");
+        let sem_porta = PythonLauncher::mpremote(PathBuf::from("/x/mpremote"), None);
+        assert_eq!(
+            sem_porta.program(),
+            (PathBuf::from("/x/mpremote"), vec!["run".into()])
+        );
+        assert_eq!(sem_porta.display(&root), "mpremote run");
+        assert_eq!(
+            sem_porta.shell_command(&["main.py"]),
+            "'/x/mpremote' run 'main.py'"
+        );
+        let com_porta =
+            PythonLauncher::mpremote(PathBuf::from("/x/mpremote"), Some("/dev/ttyUSB0"));
+        assert_eq!(
+            com_porta.program(),
+            (
+                PathBuf::from("/x/mpremote"),
+                vec!["connect".into(), "/dev/ttyUSB0".into(), "run".into()]
+            )
+        );
+        assert_eq!(
+            com_porta.display(&root),
+            "mpremote connect /dev/ttyUSB0 run"
+        );
+        assert_eq!(
+            com_porta.script_display(&root, &root.join("main.py")),
+            "mpremote connect /dev/ttyUSB0 run 'main.py'"
+        );
+
+        std::fs::write(root.join("main.py"), "import machine\n").unwrap();
+        assert_eq!(
+            default_command(&root, Some(&sem_porta)).unwrap(),
+            "'/x/mpremote' run 'main.py'"
+        );
+        std::fs::remove_file(root.join("main.py")).unwrap();
+        std::fs::create_dir_all(root.join("app")).unwrap();
+        std::fs::write(root.join("app/__main__.py"), "").unwrap();
+        let erro = default_command(&root, Some(&sem_porta))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            erro.contains("MicroPython") && erro.contains("`app`"),
+            "{erro}"
         );
     }
 

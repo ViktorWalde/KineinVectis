@@ -49,13 +49,16 @@ impl Core {
             return no_workspace_response(request_id, "serial.monitor");
         };
         let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
-        let Some(escolha) = monitor::escolher(&toolchain) else {
+        // Num projeto MicroPython o monitor e' o REPL do mpremote (fatia 5 da
+        // cadeia Python): a evidencia vem do mesmo detector do project.model.
+        let micropython = crate::project::e_micropython(&root);
+        let Some(escolha) = monitor::escolher(&toolchain, micropython) else {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::ToolNotFound,
-                    "nenhum monitor serial nesta maquina: instale tio, picocom, minicom ou \
-                     espflash — ou fixe um no papel `serialMonitor` do kit",
+                    "nenhum monitor serial nesta maquina: instale tio, picocom, minicom, \
+                     espflash ou mpremote — ou fixe um no papel `serialMonitor` do kit",
                     Some(json!({ "method": "serial.monitor" })),
                 ),
             );

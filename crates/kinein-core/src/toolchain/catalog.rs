@@ -256,4 +256,11 @@ static SERIAL_MONITORS: &[RoleCandidate] = &[
         label: "espflash monitor (Espressif: decodifica backtrace)",
         tool_id: "espflash",
     },
+    // Ultimo de proposito: so' vira automatico num projeto MicroPython
+    // (serial/monitor.rs); o autor pode fixa-lo em qualquer projeto.
+    RoleCandidate {
+        id: "mpremote",
+        label: "mpremote repl (MicroPython: o REPL da placa)",
+        tool_id: "mpremote",
+    },
 ];

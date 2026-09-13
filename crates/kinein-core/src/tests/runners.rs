@@ -469,3 +469,37 @@ fn test_run_runs_pytest_with_the_project_interpreter() {
         (Some(1), Some(1), Some(1))
     );
 }
+
+/// Num projeto `MicroPython` o Executar vai para a placa, mas o pytest fica no
+/// HOST: `test.run` usa o interpretador do projeto, nunca o mpremote.
+#[test]
+#[cfg(unix)]
+fn test_run_in_a_micropython_project_stays_on_the_host() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = pytest_workspace(
+        "micropython",
+        Some("#!/bin/sh\necho 'tests/test_a.py::test_soma PASSED [100%]'\n"),
+    );
+    std::fs::write(dir.join("main.py"), "import machine\n").unwrap();
+    std::fs::write(
+        dir.join("bin/mpremote"),
+        "#!/bin/sh\necho NAO-DEVERIA\nexit 1\n",
+    )
+    .unwrap();
+    std::fs::set_permissions(
+        dir.join("bin/mpremote"),
+        std::fs::Permissions::from_mode(0o755),
+    )
+    .unwrap();
+    let (eventos, finished) = run_tests_and_collect(&dir, None);
+    let started = eventos
+        .iter()
+        .find(|e| e.method == "event.test.started")
+        .unwrap();
+    assert_eq!(
+        started.params.as_ref().unwrap()["command"],
+        ".venv/bin/python -m pytest -v"
+    );
+    assert_eq!(finished["passed"], 1, "{finished}");
+}

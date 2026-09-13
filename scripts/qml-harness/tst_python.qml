@@ -81,6 +81,15 @@ Item {
         py.createEnvironment();
         if (root.pedidosCriar.length !== pedidos) failures += 32768;
 
+        // Modulo nativo (fatia 5): entra no resumo e a dica e' a do core.
+        py.handleStatus({ interpreter: { interpreter: "/tmp/proj/.venv/bin/python", version: "Python 3.14.7", origin: ".venv" },
+                          hasEnvironment: true, environmentTool: "uv",
+                          nativeModule: { kind: "pybind11", tool: "scikit-build-core", evidence: ["CMakeLists.txt: pybind11"], buildHint: "pip install -e . (o scikit-build-core chama o CMake)" } });
+        if (py.summary() !== "python: .venv · 3.14.7 · pybind11 (scikit-build-core)") failures += 131072;
+        if (py.nativeModuleBuildHint().indexOf("pip install -e .") !== 0) failures += 262144;
+        py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv" });
+        if (py.nativeModuleLine() !== "" || py.summary() !== "python: .venv") failures += 524288;
+
         // Trocar de workspace esquece tudo.
         py.workspaceRoot = "/tmp/outro";
         if (py.known || py.creating || py.lastOutcome !== "") failures += 65536;

@@ -201,7 +201,7 @@ da mesa roda hoje sem toolchain nenhum: grava-se o firmware `.bin` oficial pelo
 
 | funcionalidade | ferramenta aberta | licença | forma | hoje |
 | --- | --- | --- | --- | --- |
-| falar com a placa: REPL, `run`, `exec`, `fs cp/ls/cat/rm/mkdir/tree`, `mount`, `mip install`, `edit`, `reset`, `bootloader` | **mpremote** (oficial, `pip install mpremote`; atalhos `a0`/`u0`, `id:<serial>`) | MIT (repo micropython) | processo — o REPL numa aba de terminal, o `fs` como comandos | ✗ |
+| falar com a placa: REPL, `run`, `exec`, `fs cp/ls/cat/rm/mkdir/tree`, `mount`, `mip install`, `edit`, `reset`, `bootloader` | **mpremote** (oficial, `pip install mpremote`; atalhos `a0`/`u0`, `id:<serial>`) | MIT (repo micropython) | processo — o REPL numa aba de terminal, o `fs` como comandos | ◐ 2026-09-13 — REPL pelo `serial.monitor` e `run` pelo Executar (`40` §7.28); `fs`/`mip`/`mount` ainda não |
 | completar/tipos do `machine`, `network`… | **micropython-stubs** (`pip install micropython-esp32-stubs --target typings`) + basedpyright com `typingsPath` | MIT (`LICENSE.md`) | passo por projeto | ✗ |
 | gerar stubs de uma placa | micropython-stubber | MIT | processo | ✗ |
 | firmware | `.bin`/`.uf2` oficiais; `esptool write-flash`, UF2 no Pico | MIT (firmware) | motor de gravar (E4) | ✗ |
@@ -402,11 +402,19 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
  B8  ANUNCIAR Python                        so' aqui a tela diz "Python"
 
 BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
- C1  mpremote no terminal                   REPL na aba de terminal com a porta do
-                                            serial.list; `u0`/`a0` nunca adivinhados
+ C1  mpremote no terminal                   FEITO 2026-09-13 (40 §7.28): num projeto
+                                            MicroPython o serial.monitor abre `mpremote
+                                            connect <porta> repl` (porta do serial.list;
+                                            `u0`/`a0` nunca adivinhados); o autor pode
+                                            fixar outro monitor
  C2  arquivos no dispositivo                `mpremote fs ls/cp/rm/mkdir/tree` como painel
                                             (referencia: Thonny "Files on device")
- C3  rodar o arquivo atual na placa         `mpremote run <arquivo>` como config. de execucao
+ C3  rodar o arquivo atual na placa         FEITO no core 2026-09-13 (40 §7.28): "Executar"
+                                            num .py e o botao Executar (main.py) rodam
+                                            `mpremote [connect <porta>] run <arquivo>`;
+                                            run.script aceita `device`. FALTA a tela
+                                            passar a porta escolhida (hoje: a primeira
+                                            que o mpremote acha)
  C4  stubs por placa                        micropython-<port>-stubs em typings/ +
                                             typingsPath no basedpyright do projeto
  C5  firmware MicroPython                   gravar o .bin/.uf2 oficial pelo motor do A3

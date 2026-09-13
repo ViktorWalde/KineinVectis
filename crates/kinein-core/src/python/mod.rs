@@ -15,10 +15,13 @@
 //!           QUE o botao Executar roda (ponto de entrada por evidencia)
 //! debug     o debugpy e' modulo do interpretador: a sonda `import debugpy`
 //!           antes de subir o adaptador, e o passo para instalar no ambiente
+//! native    o modulo nativo (pybind11/nanobind/PyO3) e a ferramenta que o
+//!           instala no ambiente — a ponte entre Python e C++/Rust
 //! ```
 
 pub mod debug;
 pub mod env;
+pub mod native;
 pub mod run;
 
 use std::path::{Path, PathBuf};
@@ -98,6 +101,7 @@ pub fn status(root: &Path, tools: &PythonTools, criadores: &CriadoresDeAmbiente)
         uv: criadores.uv.as_ref().map(|p| p.display().to_string()),
         project_files,
         hint,
+        native_module: native::detect(root),
     }
 }
 

@@ -57,8 +57,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.101.0
-testes      675 Rust + 30 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+protocolo   0.102.0
+testes      683 Rust + 30 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
 metodos     134 IPC roteados, 46 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -354,22 +354,29 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          escolhida na lista e OpenOCD deduzido
                                          do VID:PID (P2/P3). Nada muda na ordem
                                          do 42 §4
---  A CADEIA PYTHON (41 bloco B)         MEDIDA em 2026-09-12 a pedido do autor:
-    fatias 1-4 FEITAS (§7.24-§7.27);     fundacao pronta (projeto, editor, indice,
-    falta 5 MicroPython+modulo nativo    interpretador), cadeia por fazer. Ordem
-                                         decidida: 1 toolchains+setup+.venv de um
-                                         clique (FEITA, dominio `python` 0.98.0);
-                                         2 basedpyright SUBINDO COM O INTERPRETADOR
-                                         + ruff no formatar e na qualidade (FEITA,
-                                         0.99.0, 2026-09-13); 3 run (python arquivo
-                                         / -m / uv run) e pytest com a saida no
-                                         painel (FEITA, 0.100.0, 2026-09-13);
-                                         4 debugpy no DAP (FEITA, 0.101.0,
-                                         2026-09-13; provada contra o debugpy real);
-                                         5 mpremote (MicroPython) e o modulo nativo
-                                         (pybind11/nanobind/PyO3/maturin) no
-                                         project.model. O provedor de download de
-                                         toolchain (39 §5) vem DEPOIS da cadeia
+--  A CADEIA PYTHON (41 bloco B)         FECHADA em 2026-09-13: as cinco fatias
+    FEITA (§7.24-§7.28); o que ficou     (§7.24 ambiente; §7.25 basedpyright+ruff;
+    e' polimento, listado abaixo         §7.26 run+pytest; §7.27 debugpy; §7.28
+                                         MicroPython+modulo nativo). O que a cadeia
+                                         deixou de fora esta' em itens proprios:
+                                         ruff como SERVIDOR, run.capabilities, a
+                                         arvore do pytest, `-m pacote`/attach no
+                                         debugpy, a porta escolhida no Executar de
+                                         MicroPython, o resumo Python na barra.
+                                         PROXIMO da fila: o provedor de download de
+                                         toolchain (39 §5), que a cadeia adiou
+--  o resumo Python nao chega a barra    PythonController.summary() existe desde
+    de status (WorkspaceStatusBar        a fatia 1 e ninguem o mostra (o mesmo
+    esta' em 298/300)                    defeito do A6): a barra ja' tem toolchain,
+                                         indice e contexto, e esta' a 2 linhas da
+                                         catraca. Fatia: extrair os textos da barra
+                                         para um componente e ligar pythonSummary
+                                         (com o modulo nativo da fatia 5)
+--  a porta escolhida no Executar de     run.script ja' aceita `device` (0.102.0);
+    MicroPython                          a tela nao tem "porta atual" — o monitor e'
+                                         por linha da lista. Uma escolha persistida
+                                         (EmbeddedController.selectedPort) e o
+                                         RuntimeRequestRouter a passa
 --  debugpy: `-m pacote` e attach        o que a fatia 4 deixou: um ponto de entrada
                                          que e' pacote so' se depura apontando o
                                          __main__.py (o launch por `module` do
@@ -2018,6 +2025,59 @@ testes  675 Rust (+6), 30 harnesses (+tst_debug_python); gate 23 verificacoes
         (+verificar-python-debug.sh)
 proximo fatia 5: mpremote (MicroPython) no terminal e o modulo nativo (pybind11/
         nanobind/PyO3/maturin) no project.model
+```
+
+### 7.28 A cadeia Python, fatia 5 — MicroPython pelo mpremote e o módulo nativo, 2026-09-13
+
+A última fatia da cadeia. Duas coisas que a fundação já sabia reconhecer e
+não sabia USAR: um projeto MicroPython (o `project.model` o via desde
+2026-09-12) e um projeto Python com extensão em C++/Rust. Protocolo 0.102.0.
+
+```text
+serial/monitor.rs    escolher(toolchain, micropython): projeto MicroPython + mpremote
+                     detectado -> `mpremote connect <dev> repl` (o REPL E' o monitor
+                     de um firmware MicroPython); fixado pelo autor vence; fora de
+                     MicroPython o mpremote e' o ULTIMO candidato e nunca vence so'
+toolchain/catalog    mpremote como 5o candidato de serialMonitor
+project/mod.rs       e_micropython(root): a MESMA evidencia do project.model
+python/run.rs        PythonLauncher::Mpremote{program, device}: `[connect <porta>]
+                     run` como prefixo; display "mpremote connect /dev/ttyUSB0 run";
+                     default_command recusa `-m pacote` na placa
+handlers/run.rs      python_launcher(root, device): MicroPython -> mpremote ou o erro
+                     "pipx install mpremote" (NUNCA o Python do desktop — nao ha'
+                     pinos para `import machine`); python_host_launcher para o
+                     pytest; run.start sem comando roda main.py na placa mesmo sem
+                     pyproject (tipo Unknown)
+protocolo            RunScriptParams.device?; PythonStatus.nativeModule?
+                     (PythonNativeModule{kind, tool, evidence[], buildHint})
+python/native.rs     detect(root): pyproject [build-system] requires (maturin |
+                     scikit-build-core | setuptools-rust | pybind11 | nanobind),
+                     [tool.maturin], Cargo.toml pyo3, CMakeLists pybind11/nanobind,
+                     setup.py; buildHint = `maturin develop` / `pip install -e .`
+UI                   PythonController.summary() ganha " · pybind11 (scikit-build-
+                     core)"; nativeModuleLine()/nativeModuleBuildHint();
+                     CoreClient.runScript(path, device = "") — campo ausente, nao vazio
+```
+
+**Medido:** mpremote 1.29.0 (`~/.local/bin`): `connect device next_command`,
+`run [--follow] path`, `repl`; sem `connect` o mpremote usa a primeira porta
+que acha (`--help`). O ESP32 da mesa não tem firmware MicroPython gravado
+(41 P4/C5), então o `run` real na placa fica para quando ele tiver — o que
+está provado é o comando que o core monta e o processo que ele sobe (um
+`mpremote` falso grava os argumentos).
+
+**Provado (11 mutações, 8 mortas com o compilador calado; 3 sobreviveram e
+viraram código a menos):** `[tool.maturin]` como evidência; setuptools-rust como Rust; o `!fixado` do mpremote; os dois
+`e_micropython` do run (script e botão); o pytest que fica no host num
+projeto MicroPython (a mutação que trocava o lançador morreu por um teste
+novo). As três sobreviventes eram os dois `break` do leitor de `requires`
+(o próximo `[` já encerra a seção) e o braço `"Rust" => maturin` (Rust só
+existe COM ferramenta) — saíram.
+
+```text
+protocolo 0.102.0 — device no run.script; nativeModule no python.status; mpremote no serialMonitor
+testes  683 Rust (+8), 30 harnesses; 134 metodos, 46 eventos, 34 dominios
+proximo o provedor de download de toolchain (integracoes/39 §5) — a fila do §4
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

@@ -328,3 +328,89 @@ fn python_projects_of_uv_run_through_uv() {
     let linhas = saida_ate_terminar(&receiver);
     assert_eq!(linhas[0], "uv-falso run python main.py");
 }
+
+/// Fatia 5 da cadeia Python (41 bloco B / C3): num projeto `MicroPython` o
+/// `.py` roda NA PLACA — `mpremote [connect <porta>] run <arquivo>` — e o
+/// botao Executar leva o `main.py` pelo mesmo caminho, mesmo sem
+/// pyproject.toml. Sem mpremote na maquina, o erro diz o que instalar em vez
+/// de rodar um `import machine` no Python do desktop.
+#[test]
+#[cfg(unix)]
+fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-run-micropython", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    std::fs::create_dir_all(dir.join(".venv/bin")).unwrap();
+    // main.py que importa `machine`: a evidencia do project.model.
+    std::fs::write(dir.join("main.py"), "import machine\nprint('led')\n").unwrap();
+    std::fs::write(dir.join("util.py"), "def f():\n    pass\n").unwrap();
+    let dir = dir.canonicalize().unwrap();
+    // Um interpretador do host EXISTE — e nao e' usado: a placa e' o alvo.
+    executavel(
+        &dir.join(".venv/bin/python"),
+        "#!/bin/sh\necho NAO-DEVERIA\n",
+    );
+
+    // Sem mpremote: erro que orienta (e o host nao roda o script).
+    let (mut core, _receiver) = core_aberto_em(&dir);
+    let erro = run_script(&mut core, &dir.join("main.py")).error.unwrap();
+    assert!(
+        erro.message.contains("MicroPython") && erro.message.contains("pipx install mpremote"),
+        "{erro:?}"
+    );
+    let erro = core
+        .handle_request(&JsonRpcRequest::new(70_i64, "run.start", None))
+        .response()
+        .error
+        .clone()
+        .unwrap();
+    assert!(erro.message.contains("mpremote"), "{erro:?}");
+
+    // Com mpremote: `run <arquivo>` (auto-porta) e `connect <porta> run`.
+    executavel(
+        &dir.join("bin/mpremote"),
+        "#!/bin/sh\necho \"mpremote-falso $*\"\n",
+    );
+    let (mut core, receiver) = core_aberto_em(&dir);
+    let started = run_script(&mut core, &dir.join("util.py"));
+    assert_eq!(started.result.unwrap()["command"], "mpremote run 'util.py'");
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(
+        linhas[0],
+        format!("mpremote-falso run {}", dir.join("util.py").display())
+    );
+
+    let com_porta = core
+        .handle_request(&JsonRpcRequest::new(
+            71_i64,
+            "run.script",
+            Some(
+                json!({ "path": dir.join("util.py").to_str().unwrap(), "device": "/dev/ttyUSB9" }),
+            ),
+        ))
+        .response()
+        .clone();
+    assert_eq!(
+        com_porta.result.unwrap()["command"],
+        "mpremote connect /dev/ttyUSB9 run 'util.py'"
+    );
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(
+        linhas[0],
+        format!(
+            "mpremote-falso connect /dev/ttyUSB9 run {}",
+            dir.join("util.py").display()
+        )
+    );
+
+    // O botao Executar: main.py na placa, sem pyproject (tipo Unknown).
+    let padrao = core.handle_request(&JsonRpcRequest::new(72_i64, "run.start", None));
+    assert_eq!(
+        padrao.response().result.as_ref().unwrap()["command"],
+        format!("'{}' run 'main.py'", dir.join("bin/mpremote").display())
+    );
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(linhas[0], "mpremote-falso run main.py");
+}
