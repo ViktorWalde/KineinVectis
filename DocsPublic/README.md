@@ -291,7 +291,7 @@ são material interno de desenvolvimento e não integram a documentação públi
 | [../DocsPrivate/ContextoIA.md](../DocsPrivate/ContextoIA.md) | **LOG datado.** Responde "por que isto é assim?"; nunca "o que existe hoje?" |
 | [../DocsPrivate/diario/18-daily-driver-plan.md](../DocsPrivate/diario/18-daily-driver-plan.md) | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. Registro de processo, não contrato |
 | [../DocsPrivate/diario/19-registro-de-saidas.md](../DocsPrivate/diario/19-registro-de-saidas.md) | **Registro de saídas do dogfooding** (2026-09-03): cada saída da Kinein para outra ferramenta, com reprodução mínima. É o que ordena a frente C do `roadmaps/34` por dor real — entrada sem reprodução não conta |
-| [../DocsPrivate/prompts/](../DocsPrivate/prompts/) | Prompts de bootstrap para retomada em terminal. O atual é o `RETOMADA_2026-09-12.md`; os anteriores ficam como registro |
+| [../DocsPrivate/prompts/](../DocsPrivate/prompts/) | Prompts de bootstrap para retomada em terminal. O atual é o `RETOMADA_2026-09-13.md`; os anteriores ficam como registro |
 
 ## DocsPrivate/legado/ — superado ou cancelado (não implementar a partir daqui)
 

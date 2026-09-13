@@ -569,8 +569,11 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
                 DENTRO do clangd (--clang-tidy com o .clang-tidy do projeto: e'
                 dai que sai "este loop pode ser otimizado", como
                 performance-* e modernize-*); ruff como servidor LSP para
-                Python (fixes viram acoes; ruff instalado aqui);
-                basedpyright idem
+                Python (fixes viram acoes; ruff instalado aqui — em
+                2026-09-13 o ruff entrou no formatar e na qualidade, 40
+                §7.25, e o servidor espera dois servidores por linguagem,
+                40 §4); o basedpyright ja' sobe com o interpretador do
+                projeto (40 §7.25) — suas acoes chegam pelo Alt+Enter
    pilar        P5 (qualidade) para as fontes; a lampada e' UMA fatia de
                 editor — respeitando o EditorController congelado (40 §5):
                 mora no EditorLanguageController, que e' quem ja' pede as acoes
@@ -737,13 +740,19 @@ ponta — e onde já está planejado:**
 
 ```text
 1  o ESP32 da mesa com MicroPython oficial gravado e o REPL na aba          P2, P4
+   (2026-09-13: o REPL ja' e' o serial.monitor de um projeto MicroPython e o
+   .py roda na placa pelo Executar — 40 §7.28; falta GRAVAR o firmware)
 2  "criar .venv com uv" de um clique + ruff/basedpyright/pytest ligados      P1, 41 A
+   (FEITO 2026-09-12/13: a cadeia Python inteira, 40 §7.24-§7.28 — ambiente,
+   basedpyright com o interpretador, ruff, run, pytest, debugpy)
 3  a Pi como alvo: SSH, deploy, rodar, debugpy attach, journalctl            P6
 4  o Mosquitto de um clique: uma RECEITA de container (imagem oficial,       container
    porta, volume) no painel de containers — a primeira receita do dominio
 5  o modulo nativo: o projeto Python com CMake/cargo dentro reconhecido        P0 (project)
    pelo project.model (scikit-build-core, maturin) e a CDB/cargo do modulo
-   no index.context — hoje o modelo so' olha frameworks de embarcado
+   no index.context (FEITO em 2026-09-13 no python.status.nativeModule —
+   40 §7.28; o project.model ficou para o embarcado; a CDB/cargo do modulo
+   o index.context ja' lia)
 6  o banco: executar consulta e escrever (a fatia propria do item 27)         datasource
 ```
 
