@@ -568,7 +568,13 @@ DEPOIS do backend            a UI para C/C++ e Rust; agora com o Python vai
                              com o EFEITO PSICOLOGICO e a UI/UX/HUD do
                              JetBrains (DataGrip) ADAPTADOS ao Kinein Vectis —
                              nao copiados; (2) o Python como cidadao da tela,
-                             nao um acrescimo. Ate' la': polimento de tela so'
+                             nao um acrescimo; (3) a APRESENTACAO da IDE
+                             (autor, 2026-09-13, fim de tarde): listar
+                             "Python, C/C++, Rust e sistemas embarcados" na
+                             StartScreen/About/.desktop/appdata "fica muita
+                             coisa" — precisa de algo melhor para exibir o que
+                             a IDE e' (uma frase, ou a forma visual, nao a
+                             enumeracao). Ate' la': polimento de tela so'
                              quando e' DEFEITO (a promessa errada do botao,
                              §7.34), nunca reformulacao
 simulacao: FORA DO PRODUTO   DECISAO DO AUTOR em 2026-09-12, em dois tempos.
