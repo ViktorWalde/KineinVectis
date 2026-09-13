@@ -35,9 +35,10 @@ Item {
     signal readFileRequested(string path)
     signal closeWorkspaceRequested()
     signal toolsDetectionRequested()
-    signal environmentScanRequested()
-    signal cmakeConfigureRequested()
-    signal cargoMetadataRequested()
+    // A acao da faixa de saude vai INTEIRA para quem tem os controllers
+    // (Main.qml): "scan", "cmakeConfigure", "cargoMetadata",
+    // "pythonEnvironment", ou o nome de uma aba.
+    signal healthActionRequested(string target)
     signal createProjectRequested(string templateId)
     signal settingsRequested()
 
@@ -178,18 +179,7 @@ Item {
                 status: root.projectHealthController.status
                 message: root.projectHealthController.message
                 actionLabel: root.projectHealthController.actionLabel
-                onActionRequested: {
-                    const target = root.projectHealthController.actionTarget;
-                    if (target === "scan") {
-                        root.environmentScanRequested();
-                    } else if (target === "cmakeConfigure") {
-                        root.cmakeConfigureRequested();
-                    } else if (target === "cargoMetadata") {
-                        root.cargoMetadataRequested();
-                    } else if (target !== "") {
-                        root.shellController.showTab(target);
-                    }
-                }
+                onActionRequested: root.healthActionRequested(root.projectHealthController.actionTarget)
                 onDismissRequested: root.projectHealthController.dismiss()
             }
 

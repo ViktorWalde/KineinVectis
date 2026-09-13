@@ -25,6 +25,7 @@ use serde_json::json;
 
 use super::core_with_empty_search_path;
 use crate::index::context::{CompileContext, Ferramentas};
+use crate::python::env::PythonTools;
 
 fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir()
@@ -402,8 +403,11 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
 
     // 2. So' o sistema: vem com aviso e com a versao medida.
     let so_sistema = Ferramentas {
-        python_sistema: Some(sistema),
-        medir_versao: true,
+        python: PythonTools {
+            python_sistema: Some(sistema),
+            medir_versao: true,
+            ..PythonTools::default()
+        },
         ..Ferramentas::default()
     };
     let ctx = CompileContext::load(&raiz, &so_sistema);
@@ -423,7 +427,10 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
         &ambiente_poetry.display().to_string(),
     );
     let com_poetry = Ferramentas {
-        poetry: Some(poetry),
+        python: PythonTools {
+            poetry: Some(poetry),
+            ..so_sistema.python.clone()
+        },
         ..so_sistema.clone()
     };
     let ctx = CompileContext::load(&raiz, &com_poetry);
@@ -458,7 +465,10 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
     // 5. VIRTUAL_ENV ativo vence tudo — mas so' se o interpretador existir.
     let ativo = py("ativos/outro");
     let com_ativo = Ferramentas {
-        virtual_env: Some(raiz.join("ativos/outro").display().to_string()),
+        python: PythonTools {
+            virtual_env: Some(raiz.join("ativos/outro").display().to_string()),
+            ..com_poetry.python.clone()
+        },
         ..com_poetry.clone()
     };
     let ctx = CompileContext::load(&raiz, &com_ativo);
@@ -466,7 +476,10 @@ fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system(
     assert_eq!(resumo.python_origin.as_deref(), Some("VIRTUAL_ENV"));
     assert_eq!(resumo.python_interpreter.as_deref(), ativo.to_str());
     let fantasma = Ferramentas {
-        virtual_env: Some(raiz.join("ativos/apagado").display().to_string()),
+        python: PythonTools {
+            virtual_env: Some(raiz.join("ativos/apagado").display().to_string()),
+            ..com_poetry.python.clone()
+        },
         ..com_poetry
     };
     let ctx = CompileContext::load(&raiz, &fantasma);

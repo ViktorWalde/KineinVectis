@@ -19,14 +19,13 @@
 //! [`Ferramentas`]: o teste passa `None` e nada da maquina entra.
 //!
 //! Um leitor por responsabilidade: [`cdb`] (a `compile_commands.json`),
-//! [`cargo`] (o `cargo metadata`), [`python`] (o interpretador), e o modelo
+//! [`cargo`] (o `cargo metadata`), `crate::python::env` (o interpretador), e o modelo
 //! por alvo do `CMake` (`crate::cmake::model`, o file-api do build dir da
 //! IDE: que targets compilam o arquivo, e a unidade quando nao ha' CDB). Este
 //! arquivo e' o modelo e a consulta por arquivo.
 
 mod cargo;
 mod cdb;
-mod python;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -42,14 +41,8 @@ use crate::cmake::model::CmakeModel;
 pub struct Ferramentas {
     /// O `cargo` a rodar para `metadata`; `None` = nao rodar.
     pub cargo: Option<PathBuf>,
-    /// O `poetry` a perguntar pelo ambiente; `None` = nao perguntar.
-    pub poetry: Option<PathBuf>,
-    /// O `python3` do sistema, ultimo recurso; `None` = sem sistema.
-    pub python_sistema: Option<PathBuf>,
-    /// `$VIRTUAL_ENV`, lido por quem chama.
-    pub virtual_env: Option<String>,
-    /// Rodar `python --version` no interpretador achado.
-    pub medir_versao: bool,
+    /// O que o resolvedor do interpretador Python pode executar e ler.
+    pub python: crate::python::env::PythonTools,
 }
 
 /// O contexto carregado uma vez por workspace (e recarregado quando o build
@@ -89,7 +82,7 @@ impl CompileContext {
                 }
             }
         }
-        ctx.python = python::python_env(root, ferramentas);
+        ctx.python = crate::python::env::python_env(root, &ferramentas.python);
         ctx.cmake = CmakeModel::load(&crate::cmake::build_dir(root));
         ctx
     }

@@ -71,6 +71,42 @@ pub(super) static TOOLS: &[Tool] = &[
         website: "https://www.tigerdata.com/docs/self-hosted/latest/install/installation-linux",
         probe_binary: "timescaledb-tune",
     },
+    // Python (bloco B do roadmaps/41, 2026-09-12). As fontes oficiais destas
+    // tres sao agnosticas de distro (pipx / uv tool / instalador da Astral): o
+    // guia vale para a familia `any`, e a familia especifica ganha quando a
+    // fonte a documenta (ruff no Arch e no openSUSE).
+    Tool {
+        id: "pipx",
+        name: "pipx",
+        summary: "Instala ferramentas Python isoladas, cada uma no proprio ambiente. E' o \
+                  caminho oficial do uv, do ruff e do poetry numa distro que segue a PEP 668.",
+        website: "https://pipx.pypa.io/stable/how-to/install-pipx.html",
+        probe_binary: "pipx",
+    },
+    Tool {
+        id: "uv",
+        name: "uv",
+        summary: "Ambientes e pacotes Python, rapido. E' com ele que a IDE cria o .venv do \
+                  projeto num clique (`uv venv .venv`).",
+        website: "https://docs.astral.sh/uv/getting-started/installation/",
+        probe_binary: "uv",
+    },
+    Tool {
+        id: "ruff",
+        name: "ruff",
+        summary: "Lint e formato de Python num programa so'. Na IDE vira diagnostico, correcao \
+                  (Alt+Enter) e formatar.",
+        website: "https://docs.astral.sh/ruff/installation/",
+        probe_binary: "ruff",
+    },
+    Tool {
+        id: "basedpyright",
+        name: "basedpyright",
+        summary: "Language server de Python (completar, ir para definicao, tipos, rename). \
+                  Pelo PyPI, sem Node; a IDE o sobe com o interpretador do projeto.",
+        website: "https://docs.basedpyright.com/latest/installation/command-line-and-language-server/",
+        probe_binary: "basedpyright-langserver",
+    },
     Tool {
         id: "grafana",
         name: "Grafana",
@@ -196,7 +232,121 @@ static GRAFANA_REDHAT: &[Step] = &[Step {
     command: "sudo dnf install -y grafana",
 }];
 
+// --------------------------------------------------------------------------
+// Python: pipx, uv, ruff, basedpyright — conferido 2026-09-12.
+// pipx: pipx.pypa.io/stable/how-to/install-pipx.html (Fedora e Ubuntu 23.04+
+// documentados; "outras distros" via pip --user, que a PEP 668 bloqueia nas
+// distros novas — por isso nao entra como guia).
+// uv: docs.astral.sh/uv/getting-started/installation (pipx, pip, curl; nenhuma
+// distro documentada). ruff: docs.astral.sh/ruff/installation (pipx, uv tool,
+// curl; pacman no Arch; zypper no openSUSE). basedpyright:
+// docs.basedpyright.com (uv tool install, pip, npm; sem pipx documentado).
+// --------------------------------------------------------------------------
+
+static PIPX_REDHAT: &[Step] = &[
+    Step {
+        explanation: "Instala o pipx pelo gerenciador da distro (a PEP 668 bloqueia o pip --user).",
+        command: "sudo dnf install pipx",
+    },
+    Step {
+        explanation: "Poe ~/.local/bin no PATH, onde o pipx instala as ferramentas.",
+        command: "pipx ensurepath",
+    },
+];
+
+static PIPX_DEBIAN: &[Step] = &[
+    Step {
+        explanation: "Atualiza a lista de pacotes.",
+        command: "sudo apt update",
+    },
+    Step {
+        explanation: "Instala o pipx pelo gerenciador da distro (Ubuntu 23.04 ou mais novo).",
+        command: "sudo apt install pipx",
+    },
+    Step {
+        explanation: "Poe ~/.local/bin no PATH, onde o pipx instala as ferramentas.",
+        command: "pipx ensurepath",
+    },
+];
+
+static UV_ANY: &[Step] = &[Step {
+    explanation: "Instala o uv para o seu usuario, isolado, via pipx (a fonte tambem oferece \
+                  `curl -LsSf https://astral.sh/uv/install.sh | sh`).",
+    command: "pipx install uv",
+}];
+
+static RUFF_ANY: &[Step] = &[Step {
+    explanation: "Instala o ruff para o seu usuario, isolado, via pipx (a fonte tambem oferece \
+                  `uv tool install ruff@latest`).",
+    command: "pipx install ruff",
+}];
+
+static RUFF_ARCH: &[Step] = &[Step {
+    explanation: "Instala o ruff pelo gerenciador da distro, como a fonte escreve.",
+    command: "pacman -S ruff",
+}];
+
+static RUFF_SUSE: &[Step] = &[Step {
+    explanation: "Instala o ruff pelo gerenciador da distro (openSUSE Tumbleweed).",
+    command: "sudo zypper install python3-ruff",
+}];
+
+static BASEDPYRIGHT_ANY: &[Step] = &[Step {
+    explanation: "Instala o basedpyright para o seu usuario via uv (precisa do uv; a fonte \
+                  tambem oferece `pip install basedpyright`).",
+    command: "uv tool install basedpyright",
+}];
+
 pub(super) static GUIDES: &[Guide] = &[
+    Guide {
+        tool: "pipx",
+        family: "redhat",
+        steps: PIPX_REDHAT,
+        source_url: "https://pipx.pypa.io/stable/how-to/install-pipx.html",
+        checked_at: "2026-09-12",
+    },
+    Guide {
+        tool: "pipx",
+        family: "debian",
+        steps: PIPX_DEBIAN,
+        source_url: "https://pipx.pypa.io/stable/how-to/install-pipx.html",
+        checked_at: "2026-09-12",
+    },
+    Guide {
+        tool: "uv",
+        family: "any",
+        steps: UV_ANY,
+        source_url: "https://docs.astral.sh/uv/getting-started/installation/",
+        checked_at: "2026-09-12",
+    },
+    Guide {
+        tool: "ruff",
+        family: "any",
+        steps: RUFF_ANY,
+        source_url: "https://docs.astral.sh/ruff/installation/",
+        checked_at: "2026-09-12",
+    },
+    Guide {
+        tool: "ruff",
+        family: "arch",
+        steps: RUFF_ARCH,
+        source_url: "https://docs.astral.sh/ruff/installation/",
+        checked_at: "2026-09-12",
+    },
+    Guide {
+        tool: "ruff",
+        family: "suse",
+        steps: RUFF_SUSE,
+        source_url: "https://docs.astral.sh/ruff/installation/",
+        checked_at: "2026-09-12",
+    },
+    Guide {
+        tool: "basedpyright",
+        family: "any",
+        steps: BASEDPYRIGHT_ANY,
+        source_url: "https://docs.basedpyright.com/latest/installation/command-line-and-language-server/",
+        checked_at: "2026-09-12",
+    },
     Guide {
         tool: "postgresql",
         family: "redhat",

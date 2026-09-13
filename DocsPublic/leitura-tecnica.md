@@ -66,10 +66,10 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**132 métodos IPC** roteados e **45 eventos**, em **33 domínios de protocolo**;
-**645 testes** Rust verdes e **27 harnesses QML** (remedido em 2026-09-12 à
+**134 métodos IPC** roteados e **46 eventos**, em **34 domínios de protocolo**;
+**649 testes** Rust verdes e **28 harnesses QML** (remedido em 2026-09-12 à
 noite, depois de a simulação sair do produto: −11 métodos, −85 testes, −7
-harnesses). Protocolo `0.97.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+harnesses). Protocolo `0.98.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -194,6 +194,13 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       receita de gravacao e as particoes do ESP-IDF LIDAS), alvo
                       deduzido com uma linha de evidencia por deducao; o
                       build.size consome a particao `app` como flash
+            python    (0.98.0, 2026-09-12 noite; fatia 1 da cadeia Python do
+                      41 bloco B) o AMBIENTE do projeto: o interpretador por
+                      precedencia (29 §4.1), se e' ambiente proprio ou o Python
+                      do sistema, e criar o .venv num clique (`uv venv .venv`
+                      ou `python3 -m venv .venv`, como a fonte escreve, em
+                      job). O que ainda falta da cadeia esta' no 40 §4
+
             index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
                       autor): todas as pastas, arquivos e declaracoes de C/C++/
                       Rust e Python (a gramatica Python entrou a tarde, 40

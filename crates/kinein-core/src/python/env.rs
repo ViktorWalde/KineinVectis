@@ -1,15 +1,34 @@
 //! O interpretador Python do projeto, na precedencia do `roadmaps/29` §4.1.
+//!
+//! E' o `compile_commands.json` do Python: sem o interpretador certo, o
+//! language server indexa a stdlib errada, o pytest roda no ambiente errado e
+//! o debugpy nao acha o modulo. Por isso ele e' resolvido UMA vez aqui e lido
+//! por todos — o `index.context`, o `python.status`, e (nas fatias seguintes)
+//! o basedpyright, o run, o pytest e o debugpy.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use kinein_protocol::PythonEnv;
 
-use super::Ferramentas;
+/// O que o resolvedor pode EXECUTAR e LER, injetado: o teste passa `None` e
+/// nada da maquina entra — a regra do `Ferramentas` do indice.
+#[derive(Debug, Clone, Default)]
+pub struct PythonTools {
+    /// O `poetry` a perguntar pelo ambiente; `None` = nao perguntar.
+    pub poetry: Option<PathBuf>,
+    /// O `python3` do sistema, ultimo recurso; `None` = sem sistema.
+    pub python_sistema: Option<PathBuf>,
+    /// `$VIRTUAL_ENV`, lido por quem chama.
+    pub virtual_env: Option<String>,
+    /// Rodar `python --version` no interpretador achado.
+    pub medir_versao: bool,
+}
 
 /// A precedencia do `roadmaps/29` §4.1. Cada degrau so' vale se o
 /// interpretador EXISTE; `poetry` e `sistema` so' se a ferramenta foi dada.
-pub(super) fn python_env(root: &Path, f: &Ferramentas) -> Option<PythonEnv> {
+#[must_use]
+pub fn python_env(root: &Path, f: &PythonTools) -> Option<PythonEnv> {
     let com_versao = |interpreter: PathBuf, origin: &str, warning: Option<&str>| PythonEnv {
         version: f.medir_versao.then(|| versao_de(&interpreter)).flatten(),
         interpreter: interpreter.display().to_string(),

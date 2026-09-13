@@ -16,6 +16,12 @@ Item {
     property bool autoConfigureFailed: false
     property bool cargoMetadataFailed: false
     property string cargoMetadataError: ""
+    // O ambiente Python (bloco B do roadmaps/41): o PythonController diz se
+    // falta ambiente e qual e' o botao; este controller so' escolhe a faixa.
+    property bool pythonNeedsEnvironment: false
+    property bool pythonCreating: false
+    property string pythonMessage: ""
+    property string pythonActionLabel: ""
     // §5c do roadmap 29: a CDB alcancavel pelo clangd e' mais velha que um
     // arquivo de build que a define, entao o clangd esta usando flags de um
     // projeto que mudou. O core mede (cdb.rs) e reporta no `cmake.status`;
@@ -50,6 +56,9 @@ Item {
     onWorkspaceBuildSystemsChanged: update()
     onToolsListChanged: update()
     onScanningEnvironmentChanged: update()
+    onPythonNeedsEnvironmentChanged: update()
+    onPythonCreatingChanged: update()
+    onPythonMessageChanged: update()
     Component.onCompleted: update()
 
     function handleCmakeStatus(configured, stale, staleBecause) {
@@ -236,6 +245,14 @@ Item {
             apply("warning",
                   qsTr("cargo metadata falhou: %1").arg(cargoMetadataError),
                   qsTr("Tentar de novo"), "cargoMetadata");
+            return;
+        }
+        if (pythonNeedsEnvironment) {
+            if (pythonCreating) {
+                apply("info", pythonMessage, qsTr("Jobs"), "jobs");
+                return;
+            }
+            apply("warning", pythonMessage, pythonActionLabel, "pythonEnvironment");
             return;
         }
         apply("ok", "", "", "");

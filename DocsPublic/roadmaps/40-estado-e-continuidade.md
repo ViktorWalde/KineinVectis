@@ -57,10 +57,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.97.0
-testes      645 Rust + 27 harnesses QML   (2026-09-12 noite: a simulacao saiu)
-metodos     132 IPC roteados, 45 eventos
-dominios    33, e os 33 documentados no arquitetura/03
+protocolo   0.98.0
+testes      649 Rust + 28 harnesses QML   (2026-09-12 noite: a simulacao saiu)
+metodos     134 IPC roteados, 46 eventos
+dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        22 verificacoes
 ```
@@ -354,6 +354,20 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          escolhida na lista e OpenOCD deduzido
                                          do VID:PID (P2/P3). Nada muda na ordem
                                          do 42 §4
+--  A CADEIA PYTHON (41 bloco B)         MEDIDA em 2026-09-12 a pedido do autor:
+    fatia 1 FEITA (§7.24); faltam        fundacao pronta (projeto, editor, indice,
+    2 basedpyright+ruff, 3 run+pytest,   interpretador), cadeia por fazer. Ordem
+    4 debugpy, 5 MicroPython+modulo      decidida: 1 toolchains+setup+.venv de um
+    nativo                               clique (FEITA, dominio `python` 0.98.0);
+                                         2 basedpyright SUBINDO COM O INTERPRETADOR
+                                         + ruff como servidor (o Alt+Enter em
+                                         Python); 3 run (python arquivo / -m / uv
+                                         run) e pytest com a saida no painel; 4
+                                         debugpy no DAP; 5 mpremote (MicroPython) e
+                                         o modulo nativo (pybind11/nanobind/PyO3/
+                                         maturin) no project.model. O provedor de
+                                         download de toolchain (39 §5) vem DEPOIS
+                                         da cadeia
 --  TOOLCHAINS POR ALVO                  CONFERIDAS na fonte em 2026-09-12
     (integracoes/39): o catalogo,        (integracoes/39): o levantamento
     a busca alem do PATH, o sysroot,     recebido tinha 2 afirmacoes desatualizadas
@@ -1653,6 +1667,72 @@ depois de um clique, com checksum — o provedor é a próxima fatia (39 §5).
 ```text
 protocolo 0.97.0 — ToolchainResult.rustTargets, sysrootHint
 testes  645 Rust (+4), 27 harnesses; ferramentas conhecidas: 52 (+23)
+```
+
+
+### 7.24 A cadeia Python, fatia 1 — o ambiente do projeto num clique, 2026-09-12
+
+O autor perguntou *"como está para desenvolver em Python na IDE, o que falta"*
+e a resposta medida foi: fundação pronta (projeto reconhecido, editor, índice,
+interpretador resolvido), **cadeia por fazer** (LSP, ruff, run, pytest,
+debugpy, ambiente). Ele mandou seguir a cadeia recomendada, fatia 1: as
+toolchains Python no detector, os guias oficiais no painel de instalação, e
+**criar o `.venv` num clique**. Domínio `python` (0.98.0).
+
+```text
+python/env.rs        o resolvedor do interpretador (29 §4.1) saiu do index/context
+                     para um lugar so' — index.context e python.status leem dele;
+                     PythonTools injeta poetry, python3, VIRTUAL_ENV, medir versao
+python/mod.rs        status(): interpretador, hasEnvironment (origem != sistema),
+                     environmentTool (uv > venv; uv SEM python3 basta — ele baixa
+                     um Python), arquivos de projeto, a dica com o remedio;
+                     create_environment_command(): `uv venv .venv` ou `python3 -m
+                     venv .venv`, como a fonte oficial escreve
+handlers/python.rs   python.status; python.createEnvironment como JOB: `$ comando`
+                     na saida, success SO' com .venv/bin/python existindo,
+                     event.python.finished; o observe_notification recarrega o
+                     contexto — o interpretador do projeto passa a ser o novo
+tools/known.rs       +9: python3, uv, pipx, ruff, basedpyright(-langserver),
+                     pytest, mypy, poetry, mpremote (61 ferramentas)
+setup/catalog.rs     +4 ferramentas (pipx, uv, ruff, basedpyright) e 7 guias com
+                     fonte e data: pipx por distro (Fedora, Ubuntu), uv/ruff/
+                     basedpyright agnosticos (familia `any`, que a familia da
+                     maquina vence — ruff no Arch e no openSUSE)
+UI                   PythonController (so' em workspace com `python` nos build
+                     systems); a faixa de saude: "o projeto usa o Python do
+                     SISTEMA: crie um ambiente" + botao "Criar .venv com uv";
+                     ShellWorkspaceHost passou a emitir UM sinal
+                     (healthActionRequested) e o Main.qml despacha — o host
+                     estava a 398/400
+```
+
+**Medido nesta máquina:** python3 3.14.7, pipx, ruff, mypy, poetry 2.4.1,
+mpremote 1.29.0 detectados; uv, basedpyright, pytest ausentes; a exercitação
+criou o `.venv` do projeto de exercitação com `python3 -m venv .venv` (real)
+e o `python.status` passou de `sistema` para `.venv`.
+
+**Provado:** os três estados do status (sem Python; sistema com uv/venv;
+ambiente próprio), o uv sem python3, as recusas com motivo, o job com um `uv`
+falso que grava o pedido (`venv .venv`), o contexto seguindo o ambiente novo
+(`index.context` → `.venv`, versão do interpretador novo), a ferramenta que
+sai com 0 sem criar o interpretador = `success: false` e job `failed`; a
+precedência família > `any` no setup; o harness `tst_python` (resumo, botão,
+criar uma vez, falha, esquecer ao trocar de workspace) e a faixa em
+`tst_project_health`. Onze mutações mortas com o compilador calado (Rust 6,
+QML 5); uma sobreviveu e virou caso de teste (uv sem python3).
+
+**Uma armadilha de QML:** dentro de `onWorkspaceBuildSystemsChanged` o
+binding de uma propriedade derivada (`isPython`) pode ainda não ter sido
+reavaliado — o handler lia `false` e não perguntava o status. Os handlers
+leem a função, não a propriedade.
+
+```text
+protocolo 0.98.0 — python.status, python.createEnvironment, event.python.finished
+testes  649 Rust (+4), 28 harnesses (+tst_python); 134 metodos, 46 eventos,
+        34 dominios; ferramentas conhecidas 61
+gate    exercitacao: pyproject.toml no projeto; python.status; createEnvironment
+        com a ferramenta REAL; status de novo -> .venv
+proximo fatia 2: basedpyright com o interpretador + ruff como servidor
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

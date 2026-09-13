@@ -45,6 +45,7 @@ Item {
     readonly property alias searchController: searchController
     readonly property alias searchEverywhereController: searchEverywhereController
     readonly property alias indexController: indexController
+    readonly property alias pythonController: pythonController
     readonly property alias commandDispatcher: commandDispatcher
     readonly property alias editorController: editorController
     readonly property alias projectTree: projectTree
@@ -82,6 +83,10 @@ Item {
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         toolsList: workspaceController.toolsList
         scanningEnvironment: root.coreClient.scanningEnvironment
+        pythonNeedsEnvironment: pythonController.needsEnvironment
+        pythonCreating: pythonController.creating
+        pythonMessage: pythonController.bannerMessage()
+        pythonActionLabel: pythonController.actionLabel()
         onAutoConfigureRequested: root.coreClient.cmakeConfigure()
     }
 
@@ -149,6 +154,16 @@ Item {
         id: indexController
 
         workspaceRoot: root.coreClient.workspaceRoot
+    }
+
+    // O ambiente Python do projeto (bloco B do roadmaps/41): o interpretador
+    // que o core resolveu e o botao de criar o .venv. So' pergunta em projeto
+    // Python.
+    PythonController {
+        id: pythonController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+        workspaceBuildSystems: root.coreClient.workspaceBuildSystems
     }
 
     // Configuration Actions (roadmap 30, etapa 2): dominio proprio, nasce nas

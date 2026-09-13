@@ -305,6 +305,73 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         alternative_binary: None,
         install_command: Some("cargo install espup --locked"),
     },
+    // Python (bloco B do roadmaps/41, 2026-09-12): o interpretador do sistema
+    // (ultimo recurso do resolvedor), o uv que cria ambientes e instala
+    // ferramentas, o pipx, e a cadeia que as fatias seguintes ligam (ruff,
+    // basedpyright, pytest, mypy, poetry). O mpremote e' o Python no MCU.
+    ToolSpec {
+        id: "python3",
+        display_name: "Python 3",
+        binary: "python3",
+        alternative_binary: Some("python"),
+        install_command: None,
+    },
+    ToolSpec {
+        id: "uv",
+        display_name: "uv (ambientes e pacotes Python)",
+        binary: "uv",
+        alternative_binary: None,
+        install_command: Some("pipx install uv"),
+    },
+    ToolSpec {
+        id: "pipx",
+        display_name: "pipx",
+        binary: "pipx",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "ruff",
+        display_name: "ruff (lint e formato Python)",
+        binary: "ruff",
+        alternative_binary: None,
+        install_command: Some("pipx install ruff"),
+    },
+    ToolSpec {
+        id: "basedpyright",
+        display_name: "basedpyright (language server Python)",
+        binary: "basedpyright-langserver",
+        alternative_binary: Some("basedpyright"),
+        install_command: Some("uv tool install basedpyright"),
+    },
+    ToolSpec {
+        id: "pytest",
+        display_name: "pytest",
+        binary: "pytest",
+        alternative_binary: None,
+        install_command: None,
+    },
+    ToolSpec {
+        id: "mypy",
+        display_name: "mypy",
+        binary: "mypy",
+        alternative_binary: None,
+        install_command: Some("pipx install mypy"),
+    },
+    ToolSpec {
+        id: "poetry",
+        display_name: "Poetry",
+        binary: "poetry",
+        alternative_binary: None,
+        install_command: Some("pipx install poetry"),
+    },
+    ToolSpec {
+        id: "mpremote",
+        display_name: "mpremote (MicroPython)",
+        binary: "mpremote",
+        alternative_binary: None,
+        install_command: Some("pipx install mpremote"),
+    },
     ToolSpec {
         id: "probe-rs",
         display_name: "probe-rs",

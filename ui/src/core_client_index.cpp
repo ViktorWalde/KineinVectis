@@ -43,7 +43,7 @@ bool CoreClient::dispatchIndexResult(const QString& method, const QJsonObject& r
                                   result.value(QStringLiteral("state")).toString());
         return true;
     }
-    return false;
+    return dispatchPythonResult(method, result);
 }
 
 } // namespace kinein

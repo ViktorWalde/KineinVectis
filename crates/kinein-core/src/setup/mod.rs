@@ -65,9 +65,16 @@ pub fn guides(detector: &ToolDetector) -> Vec<SetupToolInfo> {
                 })
                 .path
                 .is_some(),
+            // A familia desta maquina primeiro; o guia `any` (fonte oficial
+            // agnostica de distro: pipx, uv tool) quando ela nao tem um proprio.
             guide: catalog::GUIDES
                 .iter()
                 .find(|guia| guia.tool == tool.id && guia.family == familia)
+                .or_else(|| {
+                    catalog::GUIDES
+                        .iter()
+                        .find(|guia| guia.tool == tool.id && guia.family == "any")
+                })
                 .map(|guia| SetupGuide {
                     family: guia.family.to_owned(),
                     source_url: guia.source_url.to_owned(),
@@ -149,6 +156,37 @@ mod tests {
                 "guia de `{}` sem ferramenta correspondente",
                 guia.tool
             );
+        }
+    }
+
+    /// A familia desta maquina vence o guia `any`; o `any` so' vale quando a
+    /// fonte oficial e' agnostica de distro (uv, basedpyright) — e uma
+    /// ferramenta sem guia nenhum continua na lista, so' com o site.
+    #[test]
+    fn a_familia_da_maquina_vence_o_guia_agnostico() {
+        let familia = distro::detect().family.to_string();
+        let detector = ToolDetector::with_search_path(std::env::temp_dir());
+        let lista = guides(&detector);
+        let ruff = lista.iter().find(|t| t.id == "ruff").unwrap();
+        let guia = ruff.guide.as_ref().expect("ruff tem guia any");
+        let esperado = if matches!(familia.as_str(), "arch" | "suse") {
+            familia.as_str()
+        } else {
+            "any"
+        };
+        assert_eq!(guia.family, esperado);
+        let uv = lista.iter().find(|t| t.id == "uv").unwrap();
+        assert_eq!(uv.guide.as_ref().unwrap().family, "any");
+        assert_eq!(
+            uv.guide.as_ref().unwrap().steps[0].command,
+            "pipx install uv"
+        );
+        // Ferramenta com guia so' para algumas familias: fora delas, sem guia
+        // e com o site.
+        let pipx = lista.iter().find(|t| t.id == "pipx").unwrap();
+        assert!(pipx.website.starts_with("https://pipx.pypa.io"));
+        if !matches!(familia.as_str(), "redhat" | "debian") {
+            assert!(pipx.guide.is_none());
         }
     }
 

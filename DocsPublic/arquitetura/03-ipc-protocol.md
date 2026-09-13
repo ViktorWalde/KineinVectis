@@ -1,5 +1,14 @@
 # 03 — Protocolo IPC
 
+> **O `0.98.0` (2026-09-12, noite) acrescentou o domínio `python`** — a fatia
+> 1 da cadeia Python do [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md)
+> bloco B: `python.status` (o interpretador que o projeto resolve, se é
+> ambiente próprio ou o Python do sistema, com que ferramenta a IDE criaria um
+> `.venv`, os arquivos de projeto, a dica) e `python.createEnvironment` (`uv
+> venv .venv` ou `python3 -m venv .venv` como JOB, com `event.python.finished`
+> ao fim — e o `index.context` recarregado, para o interpretador do projeto
+> passar a ser o do ambiente novo). Domínio novo sobe o minor.
+>
 > **O `0.97.0` (2026-09-12, noite) acrescentou ao `ToolchainResult` o que só
 > um processo responde:** `rustTargets` (os alvos Rust instalados, pelo
 > `rustup` detectado) e `sysrootHint` (o compilador cross de distro sem o
@@ -1758,7 +1767,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 132 métodos roteados — a lista inteira
+## Os 134 métodos roteados — a lista inteira
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -1880,6 +1889,8 @@ lsp.workspaceSymbols
 probe.list
 
 project.model
+python.createEnvironment
+python.status
 
 quality.run
 
@@ -1933,7 +1944,7 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 45 eventos emitidos — a lista inteira
+## Os 46 eventos emitidos — a lista inteira
 
 > **Era "Eventos iniciais", e faltavam três** — os dois do `datasource` e o do
 > `grafana`. Refeita em 2026-09-06. **Cinco não são literais no código**: eles
@@ -1985,6 +1996,7 @@ event.lsp.restarted
 event.lsp.status
 
 event.project.changed
+event.python.finished
 event.quality.diagnostic
 event.quality.finished
 event.quality.output                <- so por format!
@@ -2147,6 +2159,46 @@ uma sessão de terminal (`terminal.input`/`resize`/`close` a reconhecem). O
 shell dentro do container é a semente do *contexto remoto* do `roadmaps/28`
 §4 — o que falta para *dev containers* é o path mapping e o ciclo de vida,
 não o transporte.
+
+## `python.*` — o ambiente do projeto Python
+
+Domínio novo no protocolo `0.98.0` (fatia 1 da cadeia Python, 2026-09-12).
+O interpretador é o `compile_commands.json` do Python: quem o resolve é
+`python::env` (a precedência do `roadmaps/29` §4.1), e é o MESMO que o
+`index.context` mostra; as fatias seguintes (basedpyright, run, pytest,
+debugpy) leem daqui.
+
+```text
+python.status {}                       -> PythonStatus       (exige workspace)
+python.createEnvironment { tool? }     -> { jobId }          (job; tool = uv | venv;
+                                                              omitido = uv se houver,
+                                                              senao venv)
+event.python.finished { jobId, success, tool, command, path }
+
+PythonStatus   interpreter? (PythonEnv: interpreter, version?, origin, warning?),
+               hasEnvironment (origin != sistema), environmentTool? (uv|venv:
+               o que a IDE usaria), uv? (caminho), projectFiles[] (pyproject.toml,
+               requirements.txt, setup.py, uv.lock, poetry.lock, Pipfile),
+               hint? (o que falta, com o remedio)
+```
+
+**As regras, ditas.** `success` só é `true` quando `.venv/bin/python` existe
+depois de a ferramenta sair com 0 — uma ferramenta que "termina bem" sem
+criar o interpretador não vira ambiente anunciado. O comando é o da fonte
+oficial, mostrado no job (`$ uv venv .venv`), nunca escondido. `uv` sem
+`python3` no PATH basta (o uv baixa um Python; docs do uv). Sem uv e sem
+python3 o pedido é recusado com o motivo — e o painel de instalação tem os
+guias oficiais de `pipx`, `uv`, `ruff` e `basedpyright` (fonte e data em
+cada um; família `any` quando a fonte é agnóstica de distro). Na UI: a faixa
+de saúde do projeto ganha "o projeto usa o Python do SISTEMA: crie um
+ambiente" com o botão **Criar .venv com uv** (ou `python3 -m venv`); um
+clique, o job aparece, o status é perguntado de novo. Só em workspace cujo
+`buildSystems` inclui `python` — um projeto Cargo/CMake com `pyproject.toml`
+dentro conta.
+
+Exercitação: o projeto de exercitação ganhou um `pyproject.toml`; o gate cria
+o `.venv` com a ferramenta REAL desta máquina (`python3 -m venv`, 2026-09-12)
+e vê o `python.status` passar de `sistema` para `.venv`.
 
 ## `index.*` — o índice do projeto inteiro
 

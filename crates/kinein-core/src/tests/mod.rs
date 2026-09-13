@@ -22,6 +22,7 @@ mod jobs;
 mod lsp;
 mod lsp_server;
 mod project;
+mod python;
 mod run;
 mod runconfig;
 mod runners;

@@ -59,6 +59,27 @@ Item {
         if (controller.message.indexOf("desatualizada") >= 0) failures += 128;
         if (root.configureRequests !== 1) failures += 256;
 
+        // Python sem ambiente (bloco B do roadmaps/41): a faixa e' ACIONAVEL,
+        // com o rotulo da ferramenta e o alvo do gesto; enquanto cria, vira
+        // informativa apontando para os jobs; com ambiente, nada.
+        controller.handleCmakeStatus(true, false, "");
+        controller.pythonMessage = "o projeto usa o Python do SISTEMA: crie um ambiente";
+        controller.pythonActionLabel = "Criar .venv com uv";
+        controller.pythonNeedsEnvironment = true;
+        if (controller.status !== "warning" || controller.actionTarget !== "pythonEnvironment"
+                || controller.actionLabel !== "Criar .venv com uv") failures += 512;
+        controller.pythonCreating = true;
+        controller.pythonMessage = "criando o ambiente Python…";
+        if (controller.status !== "info" || controller.actionTarget !== "jobs") failures += 1024;
+        controller.pythonCreating = false;
+        controller.pythonNeedsEnvironment = false;
+        if (controller.status !== "ok" || controller.active) failures += 2048;
+        // A CDB velha do C++ vem ANTES do Python: um aviso de cada vez, o mais
+        // grave primeiro.
+        controller.pythonNeedsEnvironment = true;
+        controller.handleCmakeStatus(true, true, "CMakeLists.txt");
+        if (controller.actionTarget !== "cmakeConfigure") failures += 4096;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

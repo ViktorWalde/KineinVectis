@@ -51,6 +51,9 @@ printf 'int main() { return 0; }  // AGULHA_DA_EXERCITACAO\n' > "$raiz/src/main.
 # declaracao tem de aparecer no index.symbols com a linguagem certa.
 mkdir -p "$raiz/tools"
 printf 'def gera_tabela(n):\n    return list(range(n))\n' > "$raiz/tools/gera.py"
+# Um pyproject.toml faz o workspace ser Python TAMBEM (cmake por fora): o
+# python.status resolve o interpretador desta maquina e diz se ha' ambiente.
+printf '[project]\nname = "exercitacao"\nversion = "0.1.0"\n' > "$raiz/pyproject.toml"
 # Uma compile_commands.json escrita a mao, na forma `command` do padrao do
 # clang: e' o que o contexto de compilador por arquivo le, e o que prova que o
 # job do indice carrega o contexto (nos testes de unidade nao ha' job).
@@ -99,6 +102,13 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":14,"method":"index.symbols","params":{"query":"gera_tabela"}}\n'
         printf '{"jsonrpc":"2.0","id":15,"method":"index.symbols","params":{"query":"chegou_tarde"}}\n'
         printf '{"jsonrpc":"2.0","id":16,"method":"cmake.targets.list","params":{}}\n'
+        printf '{"jsonrpc":"2.0","id":17,"method":"python.status","params":{}}\n'
+        # Criar o ambiente com a ferramenta REAL desta maquina (uv se houver,
+        # senao `python3 -m venv .venv`): o job roda, o evento sai, e o status
+        # seguinte tem de apontar o .venv — e' o gesto de um clique da fatia 1.
+        printf '{"jsonrpc":"2.0","id":18,"method":"python.createEnvironment","params":{}}\n'
+        sleep 6
+        printf '{"jsonrpc":"2.0","id":19,"method":"python.status","params":{}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -182,6 +192,15 @@ else
 fi
 verifica 14 "index.symbols (Python pela gramatica)" '"language":"python"'
 verifica 15 "index.symbols (arquivo nascido depois, em pasta nova, pelo watcher)" '"name":"chegou_tarde"'
+# Python (bloco B do roadmaps/41, fatia 1): sem python3 nem uv na maquina o
+# createEnvironment recusa com motivo (nao reprova); com um deles, o .venv
+# nasce e o status passa a apontar para ele.
+verifica 17 "python.status (o interpretador desta maquina)" '"hasEnvironment"'
+if printf '%s\n' "$resposta" | grep -q '"id":18,.*"jobId"'; then
+    verifica 19 "python.status depois de python.createEnvironment (o .venv nasceu)" '"origin":".venv"'
+else
+    echo "  - python.createEnvironment: sem python3 nem uv nesta maquina (nao exercitado)"
+fi
 
 if [ "$falhou" -ne 0 ]; then
     echo

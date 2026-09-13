@@ -147,12 +147,20 @@ impl Core {
     /// O que o contexto pode EXECUTAR nesta maquina: o cargo do kit efetivo,
     /// o poetry e o python3 do PATH, o `VIRTUAL_ENV` da sessao. Nos testes o
     /// PATH e' vazio e nada disto existe — e nada roda.
-    fn index_tools(&self, root: &Path) -> Ferramentas {
+    pub(crate) fn index_tools(&self, root: &Path) -> Ferramentas {
         let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
         Ferramentas {
             cargo: toolchain
                 .effective_program(ToolchainRole::Cargo)
                 .map(|(_, path)| PathBuf::from(path)),
+            python: self.python_tools(),
+        }
+    }
+
+    /// O que o resolvedor do interpretador Python pode executar e ler nesta
+    /// maquina: o poetry e o python3 do PATH, o `VIRTUAL_ENV` da sessao.
+    pub(crate) fn python_tools(&self) -> crate::python::env::PythonTools {
+        crate::python::env::PythonTools {
             poetry: self.detector.find_in_path("poetry"),
             python_sistema: self.detector.find_in_path("python3"),
             virtual_env: std::env::var("VIRTUAL_ENV").ok(),

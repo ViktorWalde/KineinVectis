@@ -62,6 +62,8 @@ kinein-vectis/
 │   │   ├── container/           mod parse   (docker|podman pela mesma CLI)
 │   │   ├── serial/              mod monitor (portas USB; monitor como processo)
 │   │   ├── project/             mod detect sdk artifacts (o MODELO do projeto embarcado)
+│   │   ├── python/              mod env  (o ambiente Python: o interpretador por precedencia,
+│   │   │                        o status e o comando que cria o .venv)
 │   │   ├── index/               mod context (o indice do projeto INTEIRO: pastas, arquivos,
 │   │   │                        declaracoes; context = com que cada arquivo e' compilado:
 │   │   │                        CDB por unidade, alvo do cargo, interpretador Python)

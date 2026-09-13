@@ -158,6 +158,16 @@ Item {
         searchEverywhereController: root.domains.searchEverywhereController
     }
 
+    PythonEventRouter {
+        coreClient: root.domains.coreClient
+        pythonController: root.domains.pythonController
+    }
+
+    PythonRequestRouter {
+        coreClient: root.domains.coreClient
+        pythonController: root.domains.pythonController
+    }
+
     ContainerEventRouter {
         coreClient: root.domains.coreClient
         containerController: root.domains.containerController

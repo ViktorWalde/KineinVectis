@@ -22,6 +22,7 @@ pub mod library;
 pub mod lsp;
 pub mod probe;
 pub mod project;
+pub mod python;
 pub mod run;
 pub mod runconfig;
 pub mod serial;

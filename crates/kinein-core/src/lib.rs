@@ -30,6 +30,7 @@ pub mod lsp;
 pub mod probe;
 pub mod process;
 pub mod project;
+pub mod python;
 pub mod rpc;
 pub mod run;
 pub mod runconfig;
@@ -272,6 +273,7 @@ impl Core {
             .or_else(|| self.container_request_response(method, request_id.clone(), params))
             .or_else(|| self.project_request_response(method, request_id.clone(), params))
             .or_else(|| self.index_request_response(method, request_id.clone(), params))
+            .or_else(|| self.python_request_response(method, request_id.clone(), params))
             .or_else(|| self.serial_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))
@@ -349,8 +351,12 @@ impl Core {
         ) {
             self.emit_project_changed();
         }
-        // O contexto de compilador segue a CDB: o configure a reescreve.
-        if notification.method == "event.cmake.finished" {
+        // O contexto de compilador segue a CDB: o configure a reescreve. E o
+        // interpretador Python segue o ambiente: criar o .venv muda a resposta.
+        if matches!(
+            notification.method.as_str(),
+            "event.cmake.finished" | "event.python.finished"
+        ) {
             self.reload_index_context();
         }
         // O indice terminou (em job): as pastas que ele caminhou entram no

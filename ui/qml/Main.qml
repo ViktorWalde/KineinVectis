@@ -238,12 +238,22 @@ Window {
         }
         onCloseWorkspaceRequested: coreClient.closeWorkspace()
         onToolsDetectionRequested: coreClient.detectTools()
-        onEnvironmentScanRequested: coreClient.scanEnvironment()
-        onCmakeConfigureRequested: {
-            domains.shellController.showTab("jobs");
-            coreClient.cmakeConfigure();
+        // A faixa de saude do projeto: cada alvo e' um gesto de um clique.
+        onHealthActionRequested: function(target) {
+            if (target === "scan") {
+                coreClient.scanEnvironment();
+            } else if (target === "cmakeConfigure") {
+                domains.shellController.showTab("jobs");
+                coreClient.cmakeConfigure();
+            } else if (target === "cargoMetadata") {
+                coreClient.cargoMetadata();
+            } else if (target === "pythonEnvironment") {
+                domains.shellController.showTab("jobs");
+                domains.pythonController.createEnvironment();
+            } else if (target !== "") {
+                domains.shellController.showTab(target);
+            }
         }
-        onCargoMetadataRequested: coreClient.cargoMetadata()
         onCreateProjectRequested: function(templateId) {
             folderPicker.openCreateProject(coreClient.homeDir, templateId);
         }

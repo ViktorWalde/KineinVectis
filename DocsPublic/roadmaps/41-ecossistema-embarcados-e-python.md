@@ -180,7 +180,7 @@ A tradução para a Kinein, com a licença lida no arquivo:
 | funcionalidade | ferramenta aberta | licença | forma | hoje |
 | --- | --- | --- | --- | --- |
 | realce + outline | tree-sitter-python 0.25.0 | MIT | crate (gramática) | ✓ 2026-09-12 — realce, outline, folding, locals no editor e as declarações no índice (`40` §7.19) |
-| **interpretador** (o `compile_commands.json` do Python) | precedência do 29 §4.1: `$VIRTUAL_ENV` → `.venv/` → `venv/` → `uv.lock` → `poetry.lock` (`poetry env info -p`) → sistema (avisando); **uv** | uv: MIT OR Apache-2.0 | processo | parcial 2026-09-12 — a precedência está LIDA pelo `index.context` (origem, versão, aviso do sistema); falta `python.select` e o uv (`40` §7.18) |
+| **interpretador** (o `compile_commands.json` do Python) | precedência do 29 §4.1: `$VIRTUAL_ENV` → `.venv/` → `venv/` → `uv.lock` → `poetry.lock` (`poetry env info -p`) → sistema (avisando); **uv** | uv: MIT OR Apache-2.0 | processo | ✓ na base 2026-09-12 — precedência lida (`index.context`, `python.status`); `.venv` de um clique com `uv venv .venv` ou `python3 -m venv .venv` (`40` §7.24); falta `python.select` e o `uv.lock` |
 | LSP | **basedpyright** (PyPI, sem Node) / pyright | MIT (`LICENSE.txt`) | LSP | ✗ |
 | lint + formato + imports | **ruff** (`ruff server`; medir `--preview` na versão instalada, 29 §3.1) | MIT | LSP | ✗ |
 | formato alternativo | black | MIT | processo | ✗ |
@@ -360,8 +360,14 @@ BLOCO A — fechar o canal serial e o ciclo Espressif (ja' decidido, 38 §6)
 BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial)
  B1  Tree-sitter Python                     FEITO 2026-09-12 (40 §7.19): realce + outline +
                                             indice; zero dependencia externa
- B2  interpretador                          precedencia do 29 §4.1; `python.interpreters`
-                                            / `python.select`; uv quando existir
+ B2  interpretador                          FEITO na base 2026-09-12 (40 §7.18 e §7.24):
+                                            precedencia do 29 §4.1 resolvida UMA vez
+                                            (python::env), lida pelo index.context e pelo
+                                            python.status; `.venv` de um clique com o uv
+                                            (ou venv) pela faixa de saude; guias oficiais
+                                            de pipx/uv/ruff/basedpyright no painel de
+                                            instalacao. FALTA `python.select` (escolher
+                                            entre varios) e ler o uv.lock
  B3  basedpyright como 3o ServerSpec        sobe com o interpretador do B2 (senao mente)
  B4  ruff server                            lint + formato + imports; medir `--preview`
  B5  debugpy como candidato do              `python -m debugpy.adapter` e' DAP por stdio,

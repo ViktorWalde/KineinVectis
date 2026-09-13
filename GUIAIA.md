@@ -780,29 +780,33 @@ crates/kinein-core/src/index/mod.rs          o projeto INTEIRO: pastas, arquivos
 crates/kinein-core/src/lang/extract.rs       declaracoes (Tree-sitter tags), busca
 crates/kinein-core/src/cmake/model.rs         o MODELO POR ALVO do CMake (file-api:
                                              fontes, grupos, artefatos, toolchains)
-crates/kinein-core/src/index/context/{mod,cdb,cargo,python}.rs
+crates/kinein-core/src/python/{mod,env}.rs      o AMBIENTE Python: o interpretador por
+                                             precedencia (lido tambem pelo indice),
+                                             status, `uv venv`/`python3 -m venv` em job
+crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida
                                              por subpasta), alvo do cargo,
                                              interpretador Python — processos
                                              INJETADOS por `Ferramentas`
 crates/kinein-core/src/size.rs               build.size (+ a particao app do IDF)
-handlers/{probe,serial,container,project,index}.rs
-ui/src/core_client_{probe,container,index}.cpp   (serial e project moram no _probe)
+handlers/{probe,serial,container,project,index,python}.rs
+ui/src/core_client_{probe,container,index,python}.cpp   (serial e project moram no _probe)
 ui/qml/embedded/Embedded{Controller,Panel,PanelHost,KitField,SizeView,SerialView,ProjectView}.qml
 ui/qml/container/Container{Controller,Panel,ListView,PanelHost}.qml
 ui/qml/index/IndexController.qml             totais e o contexto do arquivo ativo
                                              na barra de status
 ui/qml/search/SearchEverywhereController.qml `#nome` pede ao indice E ao LSP
 ui/qml/app/AppEnvironmentDomains.qml         os donos do "Ambiente do projeto"
-ui/qml/ipc/{Embedded,Container,Index}{Event,Request}Router.qml
+ui/qml/python/PythonController.qml           o ambiente Python: faixa de saude + .venv
+ui/qml/ipc/{Embedded,Container,Index,Python}{Event,Request}Router.qml
 ui/qml/shell/SideRail.qml + components/KvIconGlyphs.js   icones container/observability
 scripts/fixtures/projetos/<framework>/       fixtures reais minimas (9 frameworks)
 scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
 ```
 
-- Testes: `tests/{serial,container,project,index,index_context,cmake_model}.rs`, `size.rs`;
-  harnesses `tst_{embedded,container,index}.qml`; a exercitação
+- Testes: `tests/{serial,container,project,index,index_context,cmake_model,python}.rs`, `size.rs`;
+  harnesses `tst_{embedded,container,index,python}.qml`; a exercitação
   (`verificar-exercitacao.sh`) pede `serial.list/monitor`,
   `container.status/list`, `project.model`, `index.status/symbols/context` ao
   core real (com uma CDB escrita à mão, para provar o job).

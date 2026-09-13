@@ -177,6 +177,9 @@ public:
     Q_INVOKABLE void indexSymbols(const QString& query, int limit = 0);
     // Como UM arquivo e' compilado/executado (CDB, cargo, interpretador).
     Q_INVOKABLE void indexContext(const QString& path);
+    // O ambiente Python do projeto (python.*): o que vale, e criar o .venv.
+    Q_INVOKABLE void pythonStatus();
+    Q_INVOKABLE void pythonCreateEnvironment(const QString& tool = QString());
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -322,6 +325,9 @@ signals:
     void indexStatusResolved(const QVariantMap& stats);
     void indexSymbolsResolved(const QVariantList& symbols, int total, const QString& state);
     void indexContextResolved(const QVariantMap& context);
+    void pythonStatusResolved(const QVariantMap& status);
+    void pythonEnvironmentAccepted(const QString& jobId);
+    void pythonEnvironmentFinished(const QVariantMap& outcome);
     void indexProgressed(int files, int symbols);
     void indexFinished(const QVariantMap& stats);
     void containerStatusResolved(const QVariantMap& status);
@@ -461,6 +467,7 @@ private:
     bool dispatchSerialResult(const QString& method, const QJsonObject& result);
     bool dispatchContainerResult(const QString& method, const QJsonObject& result);
     bool dispatchIndexResult(const QString& method, const QJsonObject& result);
+    bool dispatchPythonResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

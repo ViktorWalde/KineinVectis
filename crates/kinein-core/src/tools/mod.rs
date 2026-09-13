@@ -319,6 +319,16 @@ mod tests {
                 "dfu-util",
                 "openocd",
                 "espup",
+                // Python, 2026-09-12 (bloco B do roadmaps/41).
+                "python3",
+                "uv",
+                "pipx",
+                "ruff",
+                "basedpyright",
+                "pytest",
+                "mypy",
+                "poetry",
+                "mpremote",
                 "probe-rs",
                 // Containers como dominio nativo, 2026-09-12 (roadmaps/28 §0).
                 "docker",
