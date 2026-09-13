@@ -57,8 +57,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.99.0
-testes      658 Rust + 28 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+protocolo   0.100.0
+testes      669 Rust + 29 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
 metodos     134 IPC roteados, 46 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -355,19 +355,43 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          do VID:PID (P2/P3). Nada muda na ordem
                                          do 42 §4
 --  A CADEIA PYTHON (41 bloco B)         MEDIDA em 2026-09-12 a pedido do autor:
-    fatias 1 e 2 FEITAS (§7.24, §7.25);  fundacao pronta (projeto, editor, indice,
-    faltam 3 run+pytest, 4 debugpy,      interpretador), cadeia por fazer. Ordem
+    fatias 1, 2 e 3 FEITAS (§7.24,       fundacao pronta (projeto, editor, indice,
+    §7.25, §7.26); faltam 4 debugpy,     interpretador), cadeia por fazer. Ordem
     5 MicroPython+modulo nativo          decidida: 1 toolchains+setup+.venv de um
                                          clique (FEITA, dominio `python` 0.98.0);
                                          2 basedpyright SUBINDO COM O INTERPRETADOR
                                          + ruff no formatar e na qualidade (FEITA,
                                          0.99.0, 2026-09-13); 3 run (python arquivo
                                          / -m / uv run) e pytest com a saida no
-                                         painel; 4 debugpy no DAP; 5 mpremote
-                                         (MicroPython) e o modulo nativo (pybind11/
-                                         nanobind/PyO3/maturin) no project.model.
-                                         O provedor de download de toolchain (39
-                                         §5) vem DEPOIS da cadeia
+                                         painel (FEITA, 0.100.0, 2026-09-13);
+                                         4 debugpy no DAP; 5 mpremote (MicroPython)
+                                         e o modulo nativo (pybind11/nanobind/PyO3/
+                                         maturin) no project.model. O provedor de
+                                         download de toolchain (39 §5) vem DEPOIS
+                                         da cadeia
+--  `run.capabilities` (o que "Executar"  DIVIDA anotada na fatia 3 (2026-09-13): a
+    aceita, publicado pelo core)         lista de extensoes executaveis (.sh/.bash/
+                                         .zsh/.py) vive em DOIS QML (ProjectTree-
+                                         Controller e ProjectExplorer) e no core
+                                         (run.script). E' o mesmo defeito que o
+                                         format.capabilities (0.61.0) corrigiu para
+                                         formatar: duas fontes divergem por
+                                         construcao. Fatia pequena: o core publica,
+                                         a UI consome
+--  Python free-threaded (3.14t+, PEP    PONTUACAO do autor (2026-09-13), sem
+    703/779; 3.15 final em 2026-10-01,   prioridade: se for util, a IDE le se o
+    PEP 790)                             interpretador do projeto e' free-threaded
+                                         (`sysconfig.get_config_var("Py_GIL_
+                                         DISABLED")` / `sys._is_gil_enabled()`) e
+                                         mostra no python.status; o run/pytest/
+                                         debugpy nao mudam — e' o MESMO binario,
+                                         so' o nome (`python3.14t`) e o GIL. Nada
+                                         a fazer ate' um projeto precisar; medir
+                                         antes (nesta maquina ha' 3.14.7 padrao)
+--  descoberta do pytest como arvore     `pytest --collect-only -q` antes de rodar
+    (41 B6, o que faltou)                (a arvore de testes que o JetBrains mostra
+                                         antes do primeiro run); hoje os casos so'
+                                         aparecem quando rodam
 --  ruff como SERVIDOR LSP               DIVIDA da fatia 2 (2026-09-13): as code
     (o Alt+Enter em Python)              actions do ruff ("organizar imports",
                                          "corrigir F401") pedem DOIS servidores
@@ -1829,6 +1853,78 @@ testes  658 Rust (+9), 28 harnesses; 134 metodos, 46 eventos, 34 dominios
 gate    exercitacao: format.text de um .py com o ruff REAL; quality.run de Python
         com o F401 do gera.py como diagnostico
 proximo fatia 3: run (python arquivo / -m / uv run) e pytest com a saida no painel
+```
+
+### 7.26 A cadeia Python, fatia 3 — executar e testar com o interpretador do projeto, e a saída dos testes na tela, 2026-09-13
+
+"Executar" num `.py` e o botão Executar não existiam para Python; o `test.run`
+recusava o tipo; e a saída bruta de qualquer runner de testes ia para um sinal
+sem ouvinte (41 A6). Protocolo 0.100.0.
+
+```text
+python/run.rs        PythonLauncher: Uv(uv) quando o projeto tem uv.lock E o uv
+                     foi detectado, senao Interpreter(o de python::env) — com
+                     program()/display()/shell_command()/script_display().
+                     entry_point(root) por EVIDENCIA: main.py > app.py >
+                     __main__.py na raiz; UM pacote com __main__.py (raiz, depois
+                     src/) -> `-m pacote`, dois = ambiguidade = None; script de
+                     [project.scripts] SO' se instalado em .venv/bin. default_
+                     command() erra dizendo o que procurou
+handlers/run.rs      python_launcher(root) (sem medir versao — custo do status);
+                     run.script de .py -> start_program(interpretador, [arquivo])
+                     sem shell, cwd no root; run.start sem comando em projeto
+                     Python -> python::run::default_command
+test.rs              run_tests(.., python: Option<&PythonLauncher>, ..): braco
+                     Python = `python -m pytest -v [-k filtro]` no root;
+                     parse_pytest_case (nome antes do estado, com `::`; o estado
+                     e' a ULTIMA palavra-chave; resumo curto nao conta);
+                     TestError::ToolMissing{tool,hint}: sem interpretador, e sem
+                     o modulo pytest naquele ambiente ("No module named pytest"
+                     do proprio Python) — o passo para instalar NELE
+handlers/build.rs    test.run aceita RustCargo | Cmake | Python; o lancador
+                     resolvido fora do job
+core_client          testFinished ganhou `error` (o emit_run_error do core)
+JobsController       testOutputModel (teto 2000), handleTestStarted/Output;
+                     handleTestFinished com `error` = resumo "nao rodou: …"
+JobsEventRouter      onTestStarted/onTestOutput ligados (o A6)
+TestsPanel           a metade de baixo e' a saida bruta quando ha' linhas
+ProjectTree/Explorer .py e' executavel ("Executar" no menu e o icone da linha)
+```
+
+**Medido:** python3 3.14.7; a exercitação do gate roda `tools/gera.py` com o
+`.venv` recém-criado (`.venv/bin/python 'tools/gera.py'`, a saída do programa
+por `event.run.output`) e pede `test.run` de Python — sem pytest no `.venv`
+novo, o `event.test.finished` traz o `error` que nomeia o pytest e o `uv add
+--dev pytest`: a string `No module named pytest` que a detecção espera é a que
+o Python 3.14 real escreve. uv não está nesta máquina — o caminho `uv run`
+foi provado com um `uv` falso que grava os argumentos.
+
+**Provado (20 mutações mortas com o compilador calado, 16 Rust + 4 QML; 4
+sobreviveram à primeira rodada e viraram teste ou código a menos):** o
+`uv.lock` como condição do uv; pasta oculta não é pacote; dois pacotes =
+`None`; raiz antes de `src/`; só `[project.scripts]` (não outra tabela) e só
+instalado; `-v`, `-k`, cwd do pytest; XPASS = passou; o estado é o último
+(`test_p[caso FAILED antes] PASSED`); o `::` obrigatório (o print de um
+programa sob teste com `-s` não é caso); executar não mede versão (o falso
+registra cada chamada — depois de esperar o `event.index.finished`, que mede);
+o `.py` antes do `script_interpreter`; o lançador chega ao `test.run`. Uma
+sobrevivente revelou código redundante: a checagem de fronteira depois do
+estado do pytest saiu. No QML: `return` do `error`, limpar a saída ao começar,
+o `$ ` do comando, o `.py` da lista.
+
+**Uma armadilha de teste:** três testes que compartilhavam a pasta do
+workspace (`{pid}-run-python`) corriam em paralelo e um apagava o `.venv` do
+outro — cada teste tem a sua pasta agora. E o índice do `workspace.open` mede
+a versão do Python em thread própria: a asserção "executar não mede versão" só
+vale depois do `event.index.finished`.
+
+```text
+protocolo 0.100.0 — .py no run.script; Python no run.start e no test.run; error no event.test.finished
+testes  669 Rust (+11), 29 harnesses (+tst_tests_output); 134 metodos, 46 eventos, 34 dominios
+gate    exercitacao: run.script de um .py com o .venv REAL (saida do programa);
+        test.run de Python (pytest ausente no ambiente -> o passo para instalar nele)
+proximo fatia 4: debugpy como adaptador DAP (`python -m debugpy.adapter`), dap/target.rs
+        para Python
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

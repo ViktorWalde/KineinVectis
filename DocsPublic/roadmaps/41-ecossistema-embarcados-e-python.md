@@ -186,7 +186,8 @@ A tradução para a Kinein, com a licença lida no arquivo:
 | formato alternativo | black | MIT | processo | ✗ |
 | tipos | mypy; `ty` (Astral — medir maturidade antes) | MIT | processo | ✗ |
 | depurar | **debugpy** — fala DAP; sobe como `python -m debugpy.adapter` | MIT | DAP (**candidato do papel `debugAdapter`**, como o gdb) | ✗ |
-| testes | pytest (`--collect-only -q` para descobrir; `-q` + `--junitxml` para rodar), unittest | MIT | processo (runner novo em `test.rs`) | ✗ |
+| testes | pytest (`--collect-only -q` para descobrir; `-q` + `--junitxml` para rodar), unittest | MIT | processo (runner novo em `test.rs`) | ◐ 2026-09-13 — `python -m pytest -v` com o interpretador do projeto, `-k`, casos e saída no painel (`40` §7.26); falta a descoberta como árvore |
+| executar | o interpretador do projeto, ou `uv run` quando há `uv.lock` | — | processo (`run.script` de `.py`; `run.start` com ponto de entrada por evidência) | ✓ 2026-09-13 (`40` §7.26) |
 | REPL | `python -i` / `ipython` no painel de terminal | — | processo | ✗ |
 | notebooks | vscode-jupyter (MIT) sobre jupyterlab (BSD-3) + ipykernel | BSD-3 | processo (kernel via `jupyter_client`) | ✗ — fatia grande e própria (protocolo + renderização); fica no fim |
 | ambientes: criar | `uv venv` / `python -m venv` | — | processo | ✗ |
@@ -354,8 +355,9 @@ BLOCO A — fechar o canal serial e o ciclo Espressif (ja' decidido, 38 §6)
  A5  setup: ferramentas de embarcado        o catalogo do `setup` ganha tio, esptool,
                                             espflash, probe-rs, openocd, picotool, dfu-util,
                                             arm-none-eabi, qemu — comando oficial por distro
- A6  a saida do teste chega a tela          event.test.output com ouvinte (40 §8: a fatia
-                                            mais barata que ja' estava na fila)
+ A6  a saida do teste chega a tela          FEITO 2026-09-13 (40 §7.26, com a fatia 3 da
+                                            cadeia Python): o painel Testes mostra a saida
+                                            bruta e o `error` de um runner que nem correu
 
 BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial)
  B1  Tree-sitter Python                     FEITO 2026-09-12 (40 §7.19): realce + outline +
@@ -380,8 +382,16 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             em lsp/session.rs — divida no 40 §4
  B5  debugpy como candidato do              `python -m debugpy.adapter` e' DAP por stdio,
      papel debugAdapter                     entra como o gdb entrou
- B6  pytest no test.rs                      descoberta (`--collect-only -q`) + execucao,
-                                            saida no painel do A6
+ B6  pytest no test.rs                      FEITO 2026-09-13 (40 §7.26): `python -m pytest
+                                            -v` com o interpretador do projeto (ou `uv run`),
+                                            `-k` como filtro, casos pelo `-v`, saida no
+                                            painel do A6; sem pytest no ambiente, o passo
+                                            para instalar NELE. Falta a descoberta
+                                            (`--collect-only -q`) como arvore antes de rodar
+ B6b executar Python                        FEITO 2026-09-13 (40 §7.26): "Executar" num
+                                            `.py` e o botao Executar (ponto de entrada por
+                                            evidencia: main.py/app.py/__main__.py, pacote
+                                            com __main__.py, [project.scripts] instalado)
  B7  setup Python                           uv, basedpyright, ruff — comando oficial
  B8  ANUNCIAR Python                        so' aqui a tela diz "Python"
 

@@ -132,3 +132,199 @@ fn run_script_confines_path_and_bypasses_shell_interpolation() {
         kinein_protocol::JsonRpcErrorCode::InvalidParams
     );
 }
+
+/// Workspace Python da fatia 3 (pyproject, `tools/gera.py`, `main.py`, uma
+/// pasta `bin` para as ferramentas falsas), canonizado.
+#[cfg(unix)]
+fn python_run_workspace(nome: &str) -> std::path::PathBuf {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-run-python-{nome}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("tools")).unwrap();
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
+    std::fs::write(dir.join("tools/gera.py"), "print('x')\n").unwrap();
+    std::fs::write(dir.join("main.py"), "print('main')\n").unwrap();
+    dir.canonicalize().unwrap()
+}
+
+#[cfg(unix)]
+fn executavel(caminho: &std::path::Path, corpo: &str) {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::create_dir_all(caminho.parent().unwrap()).unwrap();
+    std::fs::write(caminho, corpo).unwrap();
+    std::fs::set_permissions(caminho, std::fs::Permissions::from_mode(0o755)).unwrap();
+}
+
+/// Um core com jobs cuja busca de ferramentas e' SO' `dir/bin`, com `dir`
+/// aberto e o indice terminado (o indice mede a versao do Python — o que os
+/// testes provam depois e' o que EXECUTAR faz, sem esse ruido).
+fn core_aberto_em(
+    dir: &std::path::Path,
+) -> (crate::Core, std::sync::mpsc::Receiver<JsonRpcRequest>) {
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        60_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    loop {
+        let event = receiver
+            .recv_timeout(std::time::Duration::from_secs(20))
+            .expect("indice dentro do timeout");
+        if event.method == "event.index.finished" {
+            break;
+        }
+    }
+    (core, receiver)
+}
+
+/// As linhas de `event.run.output` ate o `event.run.finished` (com sucesso).
+fn saida_ate_terminar(receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>) -> Vec<String> {
+    let mut linhas = Vec::new();
+    loop {
+        let event = receiver
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .expect("evento run dentro do timeout");
+        match event.method.as_str() {
+            "event.run.output" => {
+                linhas.push(
+                    event.params.as_ref().unwrap()["line"]
+                        .as_str()
+                        .unwrap()
+                        .to_owned(),
+                );
+            }
+            "event.run.finished" => {
+                assert_eq!(event.params.as_ref().unwrap()["success"], true);
+                return linhas;
+            }
+            _ => {}
+        }
+    }
+}
+
+fn run_script(core: &mut crate::Core, path: &std::path::Path) -> kinein_protocol::JsonRpcResponse {
+    core.handle_request(&JsonRpcRequest::new(
+        61_i64,
+        "run.script",
+        Some(json!({ "path": path.to_str().unwrap() })),
+    ))
+    .response()
+    .clone()
+}
+
+/// Fatia 3 da cadeia Python (41 bloco B): sem interpretador nenhum (sem
+/// .venv, busca vazia), executar um `.py` ou apertar Executar erra dizendo o
+/// que fazer — nao cai num `python` qualquer.
+#[test]
+#[cfg(unix)]
+fn python_without_an_interpreter_says_what_to_do() {
+    let dir = python_run_workspace("sem-interpretador");
+    let (mut core, _receiver) = core_aberto_em(&dir);
+    let erro = run_script(&mut core, &dir.join("tools/gera.py"))
+        .error
+        .unwrap();
+    assert!(
+        erro.message.contains("interpretador") && erro.message.contains(".venv"),
+        "{erro:?}"
+    );
+    let sem_padrao = core.handle_request(&JsonRpcRequest::new(62_i64, "run.start", None));
+    assert!(
+        sem_padrao
+            .response()
+            .error
+            .clone()
+            .unwrap()
+            .message
+            .contains("interpretador")
+    );
+}
+
+/// Com `.venv`: o `.py` roda com o interpretador DO PROJETO, sem shell, com o
+/// arquivo como argumento e cwd no root; o botao Executar sem comando acha o
+/// `main.py`; e executar NAO mede a versao do Python (custo do status, nao do
+/// botao).
+#[test]
+#[cfg(unix)]
+fn python_files_run_with_the_project_interpreter() {
+    let dir = python_run_workspace("venv");
+    let chamadas = dir.join("chamadas.txt");
+    executavel(
+        &dir.join(".venv/bin/python"),
+        &format!(
+            "#!/bin/sh\necho \"$*\" >> {}\necho \"python-do-venv $*\"\npwd\n",
+            chamadas.display()
+        ),
+    );
+    let (mut core, receiver) = core_aberto_em(&dir);
+    std::fs::write(&chamadas, "").unwrap();
+
+    let started = run_script(&mut core, &dir.join("tools/gera.py"));
+    assert_eq!(
+        started.result.unwrap()["command"],
+        ".venv/bin/python 'tools/gera.py'"
+    );
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(
+        linhas[0],
+        format!("python-do-venv {}", dir.join("tools/gera.py").display())
+    );
+    assert_eq!(std::path::Path::new(&linhas[1]), dir, "cwd = root");
+
+    let padrao = core.handle_request(&JsonRpcRequest::new(64_i64, "run.start", None));
+    assert_eq!(
+        padrao.response().result.as_ref().unwrap()["command"],
+        format!("'{}' 'main.py'", dir.join(".venv/bin/python").display())
+    );
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(linhas[0], "python-do-venv main.py");
+    let registro = std::fs::read_to_string(&chamadas).unwrap();
+    assert!(
+        !registro.contains("--version"),
+        "executar nao mede versao: {registro}"
+    );
+}
+
+/// Projeto do uv (`uv.lock`) com o uv detectado: o arquivo e o botao Executar
+/// passam por `uv run python` — o uv sincroniza o ambiente antes de rodar.
+#[test]
+#[cfg(unix)]
+fn python_projects_of_uv_run_through_uv() {
+    let dir = python_run_workspace("uv");
+    executavel(
+        &dir.join(".venv/bin/python"),
+        "#!/bin/sh\necho nao-deveria\n",
+    );
+    std::fs::write(dir.join("uv.lock"), "").unwrap();
+    executavel(&dir.join("bin/uv"), "#!/bin/sh\necho \"uv-falso $*\"\n");
+    let (mut core, receiver) = core_aberto_em(&dir);
+
+    let started = run_script(&mut core, &dir.join("tools/gera.py"));
+    assert_eq!(
+        started.result.unwrap()["command"],
+        "uv run python 'tools/gera.py'"
+    );
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(
+        linhas[0],
+        format!(
+            "uv-falso run python {}",
+            dir.join("tools/gera.py").display()
+        )
+    );
+
+    let padrao = core.handle_request(&JsonRpcRequest::new(66_i64, "run.start", None));
+    assert_eq!(
+        padrao.response().result.as_ref().unwrap()["command"],
+        format!("'{}' run python 'main.py'", dir.join("bin/uv").display())
+    );
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(linhas[0], "uv-falso run python main.py");
+}

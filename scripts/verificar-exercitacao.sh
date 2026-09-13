@@ -53,7 +53,12 @@ mkdir -p "$raiz/tools"
 # O `import os` solto e' de proposito: o `quality.run` de Python (ruff, fatia 2)
 # tem de apontar o F401 NESTE arquivo — e o buffer mal indentado que o
 # `format.text` recebe abaixo tem de voltar formatado pelo ruff real.
-printf 'import os\n\n\ndef gera_tabela(n):\n    return list(range(n))\n' > "$raiz/tools/gera.py"
+printf 'import os\n\n\ndef gera_tabela(n):\n    return list(range(n))\n\n\nprint("gera_tabela", gera_tabela(3))\n' > "$raiz/tools/gera.py"
+# Um teste pytest: o test.run de Python (fatia 3) roda `python -m pytest -v`
+# com o interpretador do projeto — e sem o modulo pytest naquele ambiente diz
+# como instalar NELE (o .venv recem-criado nao tem pytest).
+mkdir -p "$raiz/tests"
+printf 'def test_soma():\n    assert 1 + 1 == 2\n' > "$raiz/tests/test_gera.py"
 # Um pyproject.toml faz o workspace ser Python TAMBEM (cmake por fora): o
 # python.status resolve o interpretador desta maquina e diz se ha' ambiente.
 printf '[project]\nname = "exercitacao"\nversion = "0.1.0"\n' > "$raiz/pyproject.toml"
@@ -118,6 +123,13 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":20,"method":"format.text","params":{"path":"%s/tools/gera.py","text":"def  f( a,b ):\\n  return a+b\\n"}}\n' "$raiz"
         printf '{"jsonrpc":"2.0","id":21,"method":"quality.run","params":{"buildSystem":"python"}}\n'
         sleep 3
+        # Fatia 3: "Executar" num .py roda com o interpretador DO PROJETO (o
+        # .venv que nasceu acima) e a saida do programa chega por event.run.output;
+        # test.run de Python roda o pytest no mesmo interpretador.
+        printf '{"jsonrpc":"2.0","id":22,"method":"run.script","params":{"path":"%s/tools/gera.py"}}\n' "$raiz"
+        sleep 2
+        printf '{"jsonrpc":"2.0","id":23,"method":"test.run","params":{"buildSystem":"python"}}\n'
+        sleep 4
     } | "$binario" 2>/dev/null
 )"
 
@@ -224,6 +236,35 @@ if command -v ruff >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ruff" ]; then
     fi
 else
     echo "  - format.text/quality.run de Python: sem ruff nesta maquina (nao exercitado)"
+fi
+# Python, fatia 3: precisa de um interpretador (o .venv criado acima, ou o
+# python3 do sistema).
+if command -v python3 >/dev/null 2>&1; then
+    verifica 22 "run.script de um .py (o interpretador do projeto, o arquivo relativo)" "'tools/gera.py'"
+    if printf '%s\n' "$resposta" | grep -q '"event.run.output".*gera_tabela \[0, 1, 2\]'; then
+        echo "  ok run.script de um .py (a saida do programa chegou por event.run.output)"
+    else
+        echo "  ✗ run.script de um .py: a saida do gera.py nao chegou como event.run.output" >&2
+        falhou=1
+    fi
+    verifica 23 "test.run de Python (aceito como job)" '"jobId"'
+    if printf '%s\n' "$resposta" | grep -q '"event.test.started".*-m pytest -v'; then
+        echo "  ok test.run de Python (python -m pytest -v com o interpretador do projeto)"
+    else
+        echo "  ✗ test.run de Python: o event.test.started nao mostra 'python -m pytest -v'" >&2
+        falhou=1
+    fi
+    # Com pytest no ambiente o finished traz os totais; sem ele, o erro NOMEIA o
+    # pytest e o passo para instalar no ambiente. Qualquer outra coisa reprova.
+    if printf '%s\n' "$resposta" | grep '"event.test.finished"' | grep -q '"passed":[1-9]\|uv add --dev pytest'; then
+        echo "  ok test.run de Python (totais, ou o passo para instalar o pytest no ambiente)"
+    else
+        echo "  ✗ test.run de Python: o event.test.finished nem trouxe totais nem orientou a instalar o pytest" >&2
+        printf '%s\n' "$resposta" | grep '"event.test.finished"' >&2
+        falhou=1
+    fi
+else
+    echo "  - run.script/test.run de Python: sem python3 nesta maquina (nao exercitado)"
 fi
 
 if [ "$falhou" -ne 0 ]; then

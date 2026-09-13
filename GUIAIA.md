@@ -789,6 +789,9 @@ handlers/python.rs::configure_python_lsp     o basedpyright sobe COM esse interp
                                              quando o .venv nasce
 format.rs (Ruff) + build/parse.rs (concise)  `ruff format` no format.text e `ruff check`
                                              no quality.run — o binario DETECTADO
+python/run.rs + handlers/run.rs + test.rs    COM QUE se executa (interpretador do projeto
+                                             ou `uv run`), o ponto de entrada por
+                                             evidencia, `.py` no run.script, pytest -v
 crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida
@@ -815,9 +818,10 @@ scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
   harnesses `tst_{embedded,container,index,python}.qml`; a exercitação
   (`verificar-exercitacao.sh`) pede `serial.list/monitor`,
   `container.status/list`, `project.model`, `index.status/symbols/context`,
-  `python.status/createEnvironment`, `format.text` de um `.py` e `quality.run`
-  de Python (ruff REAL) ao core real (com o configure real do CMake, para
-  provar o job).
+  `python.status/createEnvironment`, `format.text` de um `.py`, `quality.run`
+  de Python (ruff REAL), `run.script` de um `.py` e `test.run` de Python (o
+  `.venv` REAL) ao core real (com o configure real do CMake, para provar o
+  job).
 - Documentos: `DocsPublic/integracoes/38` (conectividade medida com o ESP32),
   `DocsPublic/roadmaps/41` (o ecossistema aberto, o que NÃO entra) e `42` (a trilha
   profunda, oito pilares; §8 o "efeito JetBrains" como critério de pronto; §9 a

@@ -1,5 +1,20 @@
 # 03 — Protocolo IPC
 
+> **O `0.100.0` (2026-09-13) é a fatia 3 da cadeia Python do
+> [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B —
+> executar e testar Python com o interpretador DO PROJETO:** `run.script`
+> aceita `.py` (o interpretador da precedência do `29` §4.1, ou `uv run
+> python` quando o projeto tem `uv.lock` e o uv existe; sem shell, cwd no
+> root); `run.start` sem comando acha o **ponto de entrada por evidência**
+> (`main.py`/`app.py`/`__main__.py` na raiz, UM pacote com `__main__.py`, um
+> script de `[project.scripts]` instalado) e diz o que procurou quando não
+> acha; `test.run` aceita workspace Python — `python -m pytest -v` no mesmo
+> interpretador, `-k` com o filtro, cada linha `-v` um `event.test.case`, e
+> **sem o módulo pytest naquele ambiente** o erro diz como instalar NELE.
+> `event.test.finished` ganhou `error` quando o runner nem correu (campo novo
+> no wire, daí o minor). E a saída bruta dos testes finalmente chega à tela
+> (`41` A6): o painel Testes mostra `event.test.started`/`output`.
+>
 > **O `0.99.0` (2026-09-13) é a fatia 2 da cadeia Python do
 > [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B —
 > três contratos existentes ganharam Python, sem método novo:** o servidor de
@@ -664,14 +679,31 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
 - `run.start { command? }` → `{ command }`. Sem `command`, o core deriva o
   padrão do tipo de projeto: `cargo run` para Rust/Cargo; para CMake, o
   único executável em `.kinein/build` (erro claro se não houver ou houver
-  mais de um). Outros tipos ainda não têm padrão (`INVALID_REQUEST` com
-  mensagem orientando digitar o comando).
-- `run.script { path }` → `{ command }` (protocolo `0.55.0`). Aceita somente
-  arquivo regular `.sh`, `.bash` ou `.zsh` dentro do workspace. O core
-  canonicaliza/confina o caminho e chama `bash`/`zsh` com argv explícito
-  (`--`, caminho), sem interpolação por `sh -c`; nomes com espaços ou aspas são
-  dados, não sintaxe. Reutiliza os mesmos eventos e a mesma sessão única de
-  `run.start`; extensão inválida é `INVALID_PARAMS`.
+  mais de um); **para Python (`0.100.0`, 2026-09-13)**, o ponto de entrada
+  por EVIDÊNCIA — `main.py`, `app.py` ou `__main__.py` na raiz (nesta
+  ordem); senão UM pacote com `__main__.py` na raiz, depois em `src/`
+  (`python -m <pacote>`; dois candidatos = ambiguidade = a IDE não escolhe);
+  senão um script de `[project.scripts]` JÁ instalado em `.venv/bin/<nome>`
+  — lançado pelo interpretador do projeto ou por `uv run python` (só quando
+  o projeto tem `uv.lock` E o uv foi detectado: o uv sincroniza o ambiente
+  com o lock antes de rodar, que é o que quem adotou o uv quis). Sem
+  interpretador, ou sem entrada, `INVALID_REQUEST` dizendo o que procurou e
+  o que fazer (criar o `.venv` pela faixa de saúde; "Executar" num `.py`).
+  Outros tipos ainda não têm padrão (`INVALID_REQUEST` com mensagem
+  orientando digitar o comando).
+- `run.script { path }` → `{ command }` (protocolo `0.55.0`). Aceita
+  arquivo regular `.sh`, `.bash`, `.zsh` ou (`0.100.0`) `.py` dentro do
+  workspace. O core canonicaliza/confina o caminho e chama `bash`/`zsh` com
+  argv explícito (`--`, caminho), sem interpolação por `sh -c`; nomes com
+  espaços ou aspas são dados, não sintaxe. Um `.py` roda com o **Python do
+  projeto** (`python/env.rs`, o mesmo do `python.status`, do `index.context`
+  e do basedpyright — sem medir a versão, que é custo do status) ou com
+  `uv run python`, o arquivo como único argumento, cwd no root; `command`
+  ecoa `.venv/bin/python 'tools/gera.py'` (interpretador relativo ao root
+  quando mora nele) ou `uv run python '…'`. Sem interpretador nenhum,
+  `INVALID_REQUEST` orientando a criar o ambiente. Reutiliza os mesmos
+  eventos e a mesma sessão única de `run.start`; extensão inválida é
+  `INVALID_PARAMS`.
 - `run.stdin { data }` → `{ status: "ok" }`. Encaminha `data` cru ao stdin
   do processo (a UI acrescenta o `\n`).
 - `run.stop {}` → `{ status: "ok" }`. Mata o processo; o término é
@@ -931,25 +963,46 @@ ruff real (`F401` do `tools/gera.py` do projeto de exercitação).
 Implementado no protocolo `0.17.0`; migrado para **job assíncrono/cancelável**.
 Requer workspace aberto. Responde na hora com `{ "jobId" }`; roda o runner do
 tipo de projeto em background (`cargo test` para Rust/Cargo; `ctest --test-dir
-.kinein/build --output-on-failure` para CMake) e transmite cada caso conforme
-sai da saída do runner. Aceita `{ "filter"? }` (posicional do cargo; `-R` do
-ctest) e, desde `0.55.0`, `{ "buildSystem"? }` com a mesma validação de
-capacidade do build. `job.cancel` mata o runner.
+.kinein/build --output-on-failure` para CMake; **`python -m pytest -v` para
+Python** desde `0.100.0`, 2026-09-13) e transmite cada caso conforme sai da
+saída do runner. Aceita `{ "filter"? }` (posicional do cargo; `-R` do ctest;
+`-k` do pytest) e, desde `0.55.0`, `{ "buildSystem"? }` com a mesma validação
+de capacidade do build. `job.cancel` mata o runner.
 
 ```text
 event.test.started   { "jobId", "command": "cargo test" }
 event.test.output    { "jobId", "stream": "stdout|stderr", "line": "..." }
 event.test.case      { "jobId", "name": "modulo::caso", "status": "passed|failed|ignored" }
 event.test.finished  { "jobId", "success", "exitCode", "passed", "failed", "ignored" }
+event.test.finished  { "jobId", "success": false, "error": "…" }   (o runner nem correu)
 ```
 
 Além destes, `event.job.created`/`event.job.output`/`event.job.finished`. Cada
 `event.test.output` tambem gera `event.job.output { "jobId", "line" }` para o
 historico generico do job. Os casos são extraídos das linhas
-`test <nome> ... ok|FAILED|ignored` (libtest) e `... Test #N: <nome> ...
-Passed|***Failed` (ctest); a linha de resumo do libtest é ignorada. Tipos sem
-integração retornam `INVALID_REQUEST` (síncrono, antes do job); o resultado vem
-em `event.test.finished`, não na resposta.
+`test <nome> ... ok|FAILED|ignored` (libtest), `... Test #N: <nome> ...
+Passed|***Failed` (ctest) e `arquivo::caso PASSED|FAILED|ERROR|SKIPPED|XFAIL|
+XPASS [ nn%]` (pytest `-v`: o nome vem antes do estado e tem `::`; `PASSED`/
+`XPASS` = passou, `FAILED`/`ERROR` = falhou, `SKIPPED`/`XFAIL` = ignorado; o
+resumo curto — `FAILED arquivo::caso - assert …`, estado na frente — não é
+caso, senão cada falha contaria duas vezes); a linha de resumo do libtest é
+ignorada. Tipos sem integração retornam `INVALID_REQUEST` (síncrono, antes do
+job); o resultado vem em `event.test.finished`, não na resposta.
+
+**Python (`0.100.0`).** O pytest roda com o **interpretador do projeto** (ou
+`uv run python` — a mesma regra do `run.script`), cwd no root: é lá que os
+pacotes do projeto estão, e um pytest de fora do ambiente testaria outra
+coisa. Sem interpretador, `event.test.finished { success: false, error }`
+orienta a criar o ambiente; com interpretador mas **sem o módulo pytest
+naquele ambiente** (o `No module named pytest` do próprio Python, medido no
+3.14 desta máquina pela exercitação do gate), o `error` diz como instalar
+NELE: `uv add --dev pytest` (projeto do uv) ou `.venv/bin/python -m pip
+install pytest`. O `error` é a forma geral de "o runner nem correu" (o
+`emit_run_error` que build e quality já usavam); a UI (`0.100.0`) mostra-o
+como resumo do painel Testes em vez de "passou: 0". **O painel Testes passou a
+mostrar a saída bruta** (`event.test.started` + `event.test.output`, a metade
+de baixo quando há linhas): é onde o pytest explica a falha — o sinal existia
+no C++ desde o `test.run` e ninguém ouvia (`roadmaps/41` A6).
 
 > **Nota:** com build/quality/test todos como jobs assíncronos, não existe mais
 > caminho de streaming síncrono no core — toda operação longa retorna `jobId` e

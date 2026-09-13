@@ -297,6 +297,9 @@ pub(crate) fn drain_readers(pending: &Arc<AtomicUsize>) {
 }
 
 /// Derives the default run command for the magic Run button.
+///
+/// Python nao passa por aqui: precisa do lancador do projeto (interpretador
+/// ou `uv run`), que o handler resolve — `crate::python::run::default_command`.
 pub fn default_command(kind: ProjectKind, root: &Path) -> Result<String, RunError> {
     match kind {
         ProjectKind::RustCargo => Ok("cargo run".to_owned()),

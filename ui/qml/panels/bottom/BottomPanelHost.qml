@@ -11,6 +11,7 @@ Rectangle {
     property var buildOutputModel
     property var jobsModel
     property var testModel
+    property var testOutputModel
     property string testSummary: ""
     property bool testing: false
     property var problemsModel
@@ -150,6 +151,7 @@ Rectangle {
         anchors.margins: Theme.spacingSmall
         visible: root.activeTab === "tests"
         casesModel: root.testModel
+        outputModel: root.testOutputModel
         summary: root.testSummary
         running: root.testing
     }

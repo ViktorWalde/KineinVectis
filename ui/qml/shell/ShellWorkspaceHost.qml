@@ -242,6 +242,7 @@ Item {
                 buildOutputModel: root.jobsController.buildOutputModel
                 jobsModel: root.jobsController.jobsModel
                 testModel: root.jobsController.testModel
+                testOutputModel: root.jobsController.testOutputModel
                 testSummary: root.jobsController.testSummary
                 testing: root.testing
                 problemsModel: root.jobsController.problemsModel

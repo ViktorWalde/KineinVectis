@@ -50,17 +50,22 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
-        let root = Path::new(&workspace.root);
-        let script = match crate::fsops::confine_file(root, Path::new(&parsed.path)) {
+        let root = Path::new(&workspace.root).to_path_buf();
+        let script = match crate::fsops::confine_file(&root, Path::new(&parsed.path)) {
             Ok(script) => script,
             Err(error) => return fs_error_response(request_id, &error),
         };
+        // Um .py roda com o Python DO PROJETO (ou `uv run`), nao com um
+        // interpretador fixo: e' a fatia 3 da cadeia Python (41 bloco B).
+        if script.extension().and_then(OsStr::to_str) == Some("py") {
+            return self.run_python_script_response(request_id, &root, &script);
+        }
         let Some(interpreter) = run::script_interpreter(&script) else {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "run.script aceita scripts .sh, .bash ou .zsh",
+                    "run.script aceita scripts .sh, .bash, .zsh ou .py",
                     Some(json!({ "path": parsed.path })),
                 ),
             );
@@ -68,9 +73,50 @@ impl Core {
         let Some(runner) = self.run.as_mut() else {
             return run_unavailable_response(request_id, "run.script");
         };
-        let command = run::script_display_command(root, interpreter, &script);
+        let command = run::script_display_command(&root, interpreter, &script);
         let args = [OsStr::new("--"), script.as_os_str()];
-        match runner.start_program(root, interpreter, &args, &command) {
+        match runner.start_program(&root, interpreter, &args, &command) {
+            Ok(()) => JsonRpcResponse::success(request_id, json!(RunStartResult { command })),
+            Err(error) => run_error_response(request_id, &error),
+        }
+    }
+
+    /// O lancador Python deste workspace: `uv run` se o projeto e' do uv e o
+    /// uv existe; senao o interpretador da precedencia do 29 §4.1. Sem medir
+    /// a versao — executar nao precisa dela.
+    pub(crate) fn python_launcher(
+        &self,
+        root: &Path,
+    ) -> Option<crate::python::run::PythonLauncher> {
+        let mut tools = self.python_tools();
+        tools.medir_versao = false;
+        crate::python::run::PythonLauncher::resolve(root, &tools, self.detector.find_in_path("uv"))
+    }
+
+    fn run_python_script_response(
+        &mut self,
+        request_id: Option<Value>,
+        root: &Path,
+        script: &Path,
+    ) -> JsonRpcResponse {
+        let Some(launcher) = self.python_launcher(root) else {
+            return run_error_response(
+                request_id,
+                &run::RunError::NoDefaultCommand {
+                    message: "sem interpretador Python para este workspace: crie o ambiente \
+                              (.venv) pela faixa de saude ou instale o python3"
+                        .to_owned(),
+                },
+            );
+        };
+        let Some(runner) = self.run.as_mut() else {
+            return run_unavailable_response(request_id, "run.script");
+        };
+        let (program, prefix) = launcher.program();
+        let mut args: Vec<&OsStr> = prefix.iter().map(std::ffi::OsString::as_os_str).collect();
+        args.push(script.as_os_str());
+        let command = launcher.script_display(root, script);
+        match runner.start_program(root, &program.display().to_string(), &args, &command) {
             Ok(()) => JsonRpcResponse::success(request_id, json!(RunStartResult { command })),
             Err(error) => run_error_response(request_id, &error),
         }
@@ -92,22 +138,33 @@ impl Core {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
+        if self.run.is_none() {
+            return run_unavailable_response(request_id, "run.start");
+        }
+
+        let root = Path::new(&workspace.root);
+        let explicito = parsed.command.filter(|command| !command.trim().is_empty());
+        let command =
+            if let Some(command) = explicito.or_else(|| crate::runconfig::active_command(root)) {
+                command
+            } else {
+                // Python nao passa por run::default_command: precisa do lancador do
+                // projeto (interpretador ou `uv run`).
+                let padrao = if workspace.kind == kinein_protocol::ProjectKind::Python {
+                    let launcher = self.python_launcher(root);
+                    crate::python::run::default_command(root, launcher.as_ref())
+                } else {
+                    run::default_command(workspace.kind, root)
+                };
+                match padrao {
+                    Ok(command) => command,
+                    Err(error) => return run_error_response(request_id, &error),
+                }
+            };
+
         let Some(runner) = self.run.as_mut() else {
             return run_unavailable_response(request_id, "run.start");
         };
-
-        let root = Path::new(&workspace.root);
-        let command = match parsed.command.filter(|command| !command.trim().is_empty()) {
-            Some(command) => command,
-            None => match crate::runconfig::active_command(root) {
-                Some(command) => command,
-                None => match run::default_command(workspace.kind, root) {
-                    Ok(command) => command,
-                    Err(error) => return run_error_response(request_id, &error),
-                },
-            },
-        };
-
         match runner.start(root, &command) {
             Ok(()) => JsonRpcResponse::success(request_id, json!(RunStartResult { command })),
             Err(error) => run_error_response(request_id, &error),

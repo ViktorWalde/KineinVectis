@@ -135,10 +135,13 @@ bool CoreClient::handleRunnerNotification(const QString& method, const QJsonObje
     if (method == QStringLiteral("event.test.finished")) {
         setTesting(false);
         m_testJobId.clear();
+        // `error` so' vem quando o runner nem correu (emit_run_error no core):
+        // a UI mostra a mensagem em vez de um "passou: 0".
         emit testFinished(params.value(QStringLiteral("success")).toBool(),
                           params.value(QStringLiteral("passed")).toInt(0),
                           params.value(QStringLiteral("failed")).toInt(0),
-                          params.value(QStringLiteral("ignored")).toInt(0));
+                          params.value(QStringLiteral("ignored")).toInt(0),
+                          params.value(QStringLiteral("error")).toString());
         return true;
     }
     if (method == QStringLiteral("event.quality.started")) {

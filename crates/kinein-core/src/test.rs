@@ -1,9 +1,11 @@
 //! Test execution with streamed, per-case results.
 //!
 //! The core runs the project's test tool (`cargo test` for Rust, `ctest` for
-//! `CMake`), streams every output line, and parses the individual test outcomes
-//! from the tool's normal text output. Nothing here reimplements a test
-//! framework: it orchestrates the mature runners and structures their output.
+//! `CMake`, `pytest` for Python — with the project's own interpreter, fatia 3
+//! of the Python chain, 2026-09-13), streams every output line, and parses the
+//! individual test outcomes from the tool's normal text output. Nothing here
+//! reimplements a test framework: it orchestrates the mature runners and
+//! structures their output.
 
 use std::{
     error::Error,
@@ -18,6 +20,7 @@ use kinein_protocol::ProjectKind;
 use crate::{
     build::project_kind_name,
     process::{self, ProcessError},
+    python::run::PythonLauncher,
 };
 
 /// Outcome of a single test case.
@@ -97,6 +100,14 @@ pub enum TestError {
         /// Underlying IO error.
         source: std::io::Error,
     },
+    /// A ferramenta que o projeto exige nao existe onde deveria (o pytest fora
+    /// do ambiente, o interpretador ausente): o erro diz qual e o passo.
+    ToolMissing {
+        /// Nome da ferramenta (`pytest`, `python`).
+        tool: String,
+        /// O que fazer, como a fonte oficial escreve.
+        hint: String,
+    },
     /// IO failure while waiting for the runner.
     Io(std::io::Error),
 }
@@ -113,6 +124,7 @@ impl fmt::Display for TestError {
             Self::Spawn { command, source } => {
                 write!(formatter, "falha ao iniciar '{command}': {source}")
             }
+            Self::ToolMissing { tool, hint } => write!(formatter, "{tool} ausente: {hint}"),
             Self::Io(error) => write!(formatter, "falha de IO durante os testes: {error}"),
         }
     }
@@ -122,7 +134,7 @@ impl Error for TestError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Spawn { source, .. } | Self::Io(source) => Some(source),
-            Self::Unsupported { .. } => None,
+            Self::Unsupported { .. } | Self::ToolMissing { .. } => None,
         }
     }
 }
@@ -131,28 +143,91 @@ impl TestError {
     /// Returns `true` when the failure is a missing test tool.
     #[must_use]
     pub const fn is_missing_tool(&self) -> bool {
-        matches!(self, Self::Spawn { .. })
+        matches!(self, Self::Spawn { .. } | Self::ToolMissing { .. })
     }
 }
 
 /// Runs the test suite for the workspace project kind.
 ///
 /// `filter` narrows the run to matching test names when the runner supports
-/// it (cargo's positional filter, ctest's `-R`).
+/// it (cargo's positional filter, ctest's `-R`, pytest's `-k`). `python` e' o
+/// lancador do projeto (interpretador ou `uv run`), resolvido por quem chama;
+/// so' o Python o usa.
 pub fn run_tests(
     root: &Path,
     kind: ProjectKind,
     filter: Option<&str>,
+    python: Option<&PythonLauncher>,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(TestEvent),
 ) -> Result<TestOutcome, TestError> {
     match kind {
         ProjectKind::RustCargo => run_cargo_test(root, filter, cancel, sink),
         ProjectKind::Cmake => run_ctest(root, filter, cancel, sink),
+        ProjectKind::Python => run_pytest(root, filter, python, cancel, sink),
         other => Err(TestError::Unsupported {
             kind: project_kind_name(other),
         }),
     }
+}
+
+/// `python -m pytest -v` com o Python DO PROJETO: o pytest tem de ser o do
+/// ambiente (e' la' que os pacotes do projeto estao). `-v` da' uma linha por
+/// caso (`arquivo::caso PASSED [ 50%]`), que `parse_pytest_case` le. Sem o
+/// modulo, o pytest nao existe naquele ambiente — e o erro diz como instalar.
+fn run_pytest(
+    root: &Path,
+    filter: Option<&str>,
+    python: Option<&PythonLauncher>,
+    cancel: &Arc<AtomicBool>,
+    sink: &mut dyn FnMut(TestEvent),
+) -> Result<TestOutcome, TestError> {
+    let Some(launcher) = python else {
+        return Err(TestError::ToolMissing {
+            tool: "python".to_owned(),
+            hint: "sem interpretador para este projeto: crie o ambiente (.venv) pela faixa de \
+                   saude ou instale o python3"
+                .to_owned(),
+        });
+    };
+    let (program, prefix) = launcher.program();
+    let mut command = Command::new(program);
+    command
+        .args(prefix)
+        .args(["-m", "pytest", "-v"])
+        .current_dir(root);
+    let mut display = format!("{} -m pytest -v", launcher.display(root));
+    if let Some(filter) = filter.map(str::trim).filter(|filter| !filter.is_empty()) {
+        command.arg("-k").arg(filter);
+        display.push_str(" -k ");
+        display.push_str(filter);
+    }
+
+    let mut sem_pytest = false;
+    let mut observando = |event: TestEvent| {
+        if let TestEvent::Output { line, .. } = &event {
+            if line.contains("No module named pytest") {
+                sem_pytest = true;
+            }
+        }
+        sink(event);
+    };
+    let outcome = stream_command(
+        command,
+        &display,
+        parse_pytest_case,
+        cancel,
+        &mut observando,
+    )?;
+    if sem_pytest {
+        return Err(TestError::ToolMissing {
+            tool: "pytest".to_owned(),
+            hint: "instale-o NO ambiente do projeto: `uv add --dev pytest` (projeto do uv) ou \
+                   `.venv/bin/python -m pip install pytest`"
+                .to_owned(),
+        });
+    }
+    Ok(outcome)
 }
 
 fn run_cargo_test(
@@ -265,6 +340,40 @@ fn parse_cargo_case(line: &str) -> Option<(String, CaseStatus)> {
     Some((name.to_owned(), status))
 }
 
+/// Parses a pytest `-v` case line: `tests/test_x.py::test_a PASSED [ 50%]`.
+///
+/// O nome vem ANTES do estado e sempre tem `::` (`arquivo::caso`, com
+/// parametros entre colchetes, que podem ter espaco); o estado e' a ULTIMA
+/// palavra-chave da linha antes do `[ nn%]`. Linhas do resumo (`FAILED
+/// tests/x.py::a - assert`) comecam pelo estado e nao casam — senao cada
+/// falha contaria duas vezes.
+fn parse_pytest_case(line: &str) -> Option<(String, CaseStatus)> {
+    const ESTADOS: [(&str, CaseStatus); 6] = [
+        ("PASSED", CaseStatus::Passed),
+        ("XPASS", CaseStatus::Passed),
+        ("FAILED", CaseStatus::Failed),
+        ("ERROR", CaseStatus::Failed),
+        ("SKIPPED", CaseStatus::Ignored),
+        ("XFAIL", CaseStatus::Ignored),
+    ];
+    let line = line.trim();
+    let mut melhor: Option<(usize, CaseStatus)> = None;
+    for (palavra, status) in ESTADOS {
+        let marcador = format!(" {palavra}");
+        if let Some(pos) = line.rfind(&marcador) {
+            if melhor.is_none_or(|(p, _)| pos > p) {
+                melhor = Some((pos, status));
+            }
+        }
+    }
+    let (pos, status) = melhor?;
+    let name = line[..pos].trim();
+    if name.is_empty() || !name.contains("::") {
+        return None;
+    }
+    Some((name.to_owned(), status))
+}
+
 /// Parses a ctest case line: `1/3 Test #1: Name .... Passed|***Failed`.
 fn parse_ctest_case(line: &str) -> Option<(String, CaseStatus)> {
     let marker = line.find("Test #")?;
@@ -294,7 +403,76 @@ fn parse_ctest_case(line: &str) -> Option<(String, CaseStatus)> {
 
 #[cfg(test)]
 mod tests {
-    use super::{CaseStatus, TestEvent, parse_cargo_case, parse_ctest_case, stream_command};
+    use super::{
+        CaseStatus, TestEvent, parse_cargo_case, parse_ctest_case, parse_pytest_case,
+        stream_command,
+    };
+
+    /// As linhas do `pytest -v` (medidas na doc do pytest 9, 2026-09-13):
+    /// caso com estado e percentual, parametro com espaco, SKIPPED com motivo,
+    /// XFAIL/XPASS/ERROR; e o que NAO e' caso: o resumo curto (estado na
+    /// frente), a linha de sessao, o cabecalho do arquivo no modo `-q`.
+    #[test]
+    fn pytest_verbose_lines_are_parsed_and_summary_is_ignored() {
+        assert_eq!(
+            parse_pytest_case("tests/test_a.py::test_soma PASSED                 [ 50%]"),
+            Some(("tests/test_a.py::test_soma".to_owned(), CaseStatus::Passed))
+        );
+        assert_eq!(
+            parse_pytest_case("tests/test_a.py::test_x[a b] FAILED [100%]"),
+            Some((
+                "tests/test_a.py::test_x[a b]".to_owned(),
+                CaseStatus::Failed
+            ))
+        );
+        assert_eq!(
+            parse_pytest_case("tests/test_a.py::test_lento SKIPPED (precisa de rede) [ 33%]"),
+            Some((
+                "tests/test_a.py::test_lento".to_owned(),
+                CaseStatus::Ignored
+            ))
+        );
+        assert_eq!(
+            parse_pytest_case("tests/test_a.py::test_bug XFAIL [ 66%]")
+                .unwrap()
+                .1,
+            CaseStatus::Ignored
+        );
+        assert_eq!(
+            parse_pytest_case("tests/test_a.py::test_bug XPASS [ 66%]")
+                .unwrap()
+                .1,
+            CaseStatus::Passed
+        );
+        assert_eq!(
+            parse_pytest_case("tests/test_a.py::test_fixture ERROR [ 10%]")
+                .unwrap()
+                .1,
+            CaseStatus::Failed
+        );
+        // Parametro que CONTEM uma palavra de estado: o estado e' o ULTIMO.
+        assert_eq!(
+            parse_pytest_case("tests/t.py::test_p[caso FAILED antes] PASSED [ 10%]"),
+            Some((
+                "tests/t.py::test_p[caso FAILED antes]".to_owned(),
+                CaseStatus::Passed
+            ))
+        );
+        for ruido in [
+            "FAILED tests/test_a.py::test_x[a b] - assert 1 == 2",
+            "PASSED tests/test_a.py::test_soma",
+            // O print de um programa sob teste (com -s) nao e' caso: sem `::`.
+            "tudo PASSED",
+            "resultado: 3 FAILED [ 50%]",
+            "============ 1 failed, 1 passed in 0.02s ============",
+            "tests/test_a.py .F                                    [100%]",
+            "collected 2 items",
+            "PASSED",
+            "",
+        ] {
+            assert!(parse_pytest_case(ruido).is_none(), "nao e' caso: {ruido:?}");
+        }
+    }
 
     #[test]
     fn cargo_case_lines_are_parsed_and_summary_is_ignored() {

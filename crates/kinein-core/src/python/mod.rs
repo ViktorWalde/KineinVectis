@@ -11,9 +11,12 @@
 //!           arquivos de projeto existem
 //! create_environment_command()   `uv venv .venv` ou `python3 -m venv .venv`,
 //!           como a fonte oficial escreve — rodado como JOB, com a saida na tela
+//! run       COM QUE se executa (o interpretador do projeto ou `uv run`) e O
+//!           QUE o botao Executar roda (ponto de entrada por evidencia)
 //! ```
 
 pub mod env;
+pub mod run;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;

@@ -58,13 +58,17 @@ Item {
         return slash > 0 ? path.substring(0, slash) : path;
     }
 
+    // O que "Executar" aceita: shells e, desde a fatia 3 da cadeia Python
+    // (2026-09-13), `.py` — o core roda com o interpretador DO PROJETO.
+    // A mesma lista vive em ProjectExplorer.isRunnableScript (o icone da
+    // linha); publicar isto pelo core (`run.capabilities`) esta' na fila do 40 §4.
     function isRunnableScript(path, kind) {
         if (kind !== "file") {
             return false;
         }
         const lower = path.toLowerCase();
         return lower.endsWith(".sh") || lower.endsWith(".bash")
-                || lower.endsWith(".zsh");
+                || lower.endsWith(".zsh") || lower.endsWith(".py");
     }
 
     function clear() {

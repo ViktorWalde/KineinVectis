@@ -33,12 +33,20 @@ Item {
             root.diagnosticsController.handleLspDiagnostics(path, diagnostics);
         }
 
+        function onTestStarted(command) {
+            root.jobsController.handleTestStarted(command);
+        }
+
+        function onTestOutput(line, stream) {
+            root.jobsController.handleTestOutput(line);
+        }
+
         function onTestCase(name, status) {
             root.jobsController.handleTestCase(name, status);
         }
 
-        function onTestFinished(success, passed, failed, ignored) {
-            root.jobsController.handleTestFinished(success, passed, failed, ignored);
+        function onTestFinished(success, passed, failed, ignored, error) {
+            root.jobsController.handleTestFinished(success, passed, failed, ignored, error);
         }
 
         function onQualityDiagnostic(diagnostic) {

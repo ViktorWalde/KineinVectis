@@ -10,8 +10,13 @@ Item {
     }
 
     property var casesModel: emptyCasesModel
+    // A saida bruta do runner (event.test.output). Vazia = so' a lista de
+    // casos; com linhas, a metade de baixo do painel e' dela — e' onde o
+    // pytest explica a falha e onde "No module named pytest" aparece.
+    property var outputModel: emptyCasesModel
     property string summary: ""
     property bool running: false
+    readonly property bool hasOutput: outputModel !== undefined && outputModel.count > 0
 
     function statusColor(status) {
         if (status === "passed") {
@@ -61,7 +66,7 @@ Item {
         }
         anchors.top: panel.summary !== "" ? testSummaryLabel.bottom : parent.top
         anchors.topMargin: panel.summary !== "" ? Theme.spacingSmall : 0
-        anchors.bottom: parent.bottom
+        anchors.bottom: panel.hasOutput ? outputSeparator.top : parent.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         clip: true
@@ -105,6 +110,56 @@ Item {
                 elide: Text.ElideRight
                 width: testCasesView.width - 16
             }
+        }
+    }
+
+    Rectangle {
+        id: outputSeparator
+
+        visible: panel.hasOutput
+        height: visible ? 1 : 0
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: testOutputView.top
+        anchors.bottomMargin: visible ? Theme.spacingSmall : 0
+        color: Theme.borderSoft
+    }
+
+    ListView {
+        id: testOutputView
+
+        visible: panel.hasOutput
+        height: visible ? Math.floor(panel.height * 0.45) : 0
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        clip: true
+        model: panel.outputModel
+        onCountChanged: positionViewAtEnd()
+
+        VerticalScrollBar {
+            parent: testOutputView
+            anchors.right: testOutputView.right
+            anchors.top: testOutputView.top
+            anchors.bottom: testOutputView.bottom
+            contentSize: testOutputView.contentHeight
+            viewportSize: testOutputView.height
+            position: testOutputView.contentY
+            onMoveRequested: function(position) {
+                testOutputView.contentY = position;
+            }
+        }
+
+        delegate: Text {
+            required property string line
+
+            width: testOutputView.width - 16
+            text: line
+            color: Theme.textSecondary
+            font.family: Theme.monoFont
+            font.pixelSize: 11
+            wrapMode: Text.NoWrap
+            elide: Text.ElideRight
         }
     }
 }

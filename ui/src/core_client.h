@@ -365,7 +365,7 @@ signals:
     void testStarted(const QString& command);
     void testOutput(const QString& line, const QString& stream);
     void testCase(const QString& name, const QString& status);
-    void testFinished(bool success, int passed, int failed, int ignored);
+    void testFinished(bool success, int passed, int failed, int ignored, const QString& error);
     void analyzingChanged();
     void qualityStarted(const QString& command);
     void qualityDiagnostic(const QVariantMap& diagnostic);

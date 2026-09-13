@@ -36,6 +36,8 @@ fn quality_run_rejects_kinds_without_a_linter() {
     assert!(error.message.contains("cmake"));
 }
 
+/// Rust, `CMake` e (desde a fatia 3 da cadeia Python) Python tem runner de
+/// testes; um projeto Maven continua recusado com "tipo nao suportado".
 #[test]
 fn test_run_rejects_unsupported_kind() {
     let dir = std::env::temp_dir()
@@ -43,7 +45,7 @@ fn test_run_rejects_unsupported_kind() {
         .join(format!("{}-test-unsupported", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
-    std::fs::write(dir.join("pyproject.toml"), "[project]\n").unwrap();
+    std::fs::write(dir.join("pom.xml"), "<project/>\n").unwrap();
     let mut core = core_with_empty_search_path("test-unsupported");
 
     let opened = core.handle_request(&JsonRpcRequest::new(
@@ -59,7 +61,7 @@ fn test_run_rejects_unsupported_kind() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert!(error.message.contains("python"));
+    assert!(error.message.contains("maven"), "{error:?}");
 }
 
 #[test]
@@ -295,4 +297,175 @@ fn quality_run_lints_python_with_the_detected_ruff() {
     );
     assert_eq!(diagnosticos[1]["severity"], "error");
     assert_eq!(finished["success"], false, "achou problemas = nao passou");
+}
+
+/// Workspace Python com um teste, e um `.venv/bin/python` falso com `corpo`
+/// quando dado.
+#[cfg(unix)]
+fn pytest_workspace(nome: &str, corpo_do_python: Option<&str>) -> std::path::PathBuf {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-test-python-{nome}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    std::fs::create_dir_all(dir.join("tests")).unwrap();
+    std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
+    std::fs::write(
+        dir.join("tests/test_a.py"),
+        "def test_soma():\n    assert 1 + 1 == 2\n",
+    )
+    .unwrap();
+    if let Some(corpo) = corpo_do_python {
+        let py = dir.join(".venv/bin/python");
+        std::fs::create_dir_all(py.parent().unwrap()).unwrap();
+        std::fs::write(&py, corpo).unwrap();
+        std::fs::set_permissions(&py, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    dir.canonicalize().unwrap()
+}
+
+/// Abre `dir`, pede `test.run` (com `filter`) e devolve os eventos do job ate
+/// o `event.test.finished`, e este.
+fn run_tests_and_collect(
+    dir: &std::path::Path,
+    filter: Option<&str>,
+) -> (Vec<JsonRpcRequest>, serde_json::Value) {
+    use std::time::{Duration, Instant};
+
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        90_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let params = filter.map_or(json!({}), |f| json!({ "filter": f }));
+    let started = core.handle_request(&JsonRpcRequest::new(91_i64, "test.run", Some(params)));
+    let job_id = started.response().result.clone().unwrap()["jobId"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let mut eventos = Vec::new();
+    let limite = Instant::now() + Duration::from_secs(20);
+    loop {
+        let e = receiver
+            .recv_timeout(limite.saturating_duration_since(Instant::now()))
+            .expect("evento");
+        if e.params
+            .as_ref()
+            .is_none_or(|p| p["jobId"] != job_id.as_str())
+        {
+            continue;
+        }
+        if e.method == "event.test.finished" {
+            return (eventos, e.params.unwrap());
+        }
+        eventos.push(e);
+    }
+}
+
+/// Fatia 3 da cadeia Python: sem interpretador o `test.run` erra orientando a
+/// criar o ambiente; com interpretador mas sem o modulo pytest NAQUELE
+/// ambiente, diz como instalar nele (nao num Python qualquer).
+#[test]
+#[cfg(unix)]
+fn test_run_without_python_or_pytest_says_how_to_install() {
+    let dir = pytest_workspace("sem-python", None);
+    let (_eventos, finished) = run_tests_and_collect(&dir, None);
+    assert_eq!(finished["success"], false);
+    assert!(
+        finished["error"].as_str().unwrap().contains(".venv"),
+        "{finished}"
+    );
+
+    let dir = pytest_workspace(
+        "sem-pytest",
+        Some("#!/bin/sh\necho \"$0: No module named pytest\" >&2\nexit 1\n"),
+    );
+    let (_eventos, finished) = run_tests_and_collect(&dir, None);
+    assert_eq!(finished["success"], false);
+    let erro = finished["error"].as_str().unwrap();
+    assert!(
+        erro.contains("pytest") && erro.contains("uv add --dev pytest"),
+        "{erro}"
+    );
+}
+
+/// `test.run` num workspace Python roda `python -m pytest -v` com o
+/// interpretador DO PROJETO (cwd no root; `-k` com o filtro), cada linha `-v`
+/// vira `event.test.case` — o resumo curto (estado na frente) nao conta duas
+/// vezes — e o total vai no `finished`.
+#[test]
+#[cfg(unix)]
+fn test_run_runs_pytest_with_the_project_interpreter() {
+    let dir = pytest_workspace(
+        "com-pytest",
+        Some(concat!(
+            "#!/bin/sh\n",
+            "echo \"args: $*\"\n",
+            "echo \"cwd: $(pwd)\"\n",
+            "echo 'tests/test_a.py::test_soma PASSED [ 33%]'\n",
+            "echo 'tests/test_a.py::test_lento SKIPPED (rede) [ 66%]'\n",
+            "echo 'tests/test_a.py::test_quebra FAILED [100%]'\n",
+            "echo 'FAILED tests/test_a.py::test_quebra - assert 1 == 2'\n",
+            "exit 1\n"
+        )),
+    );
+    let (eventos, finished) = run_tests_and_collect(&dir, Some("soma"));
+    let started = eventos
+        .iter()
+        .find(|e| e.method == "event.test.started")
+        .unwrap();
+    assert_eq!(
+        started.params.as_ref().unwrap()["command"],
+        ".venv/bin/python -m pytest -v -k soma"
+    );
+    let saidas: Vec<&str> = eventos
+        .iter()
+        .filter(|e| e.method == "event.test.output")
+        .map(|e| e.params.as_ref().unwrap()["line"].as_str().unwrap())
+        .collect();
+    assert!(saidas.contains(&"args: -m pytest -v -k soma"), "{saidas:?}");
+    let cwd = format!("cwd: {}", dir.display());
+    assert!(saidas.contains(&cwd.as_str()), "{saidas:?}");
+    let casos: Vec<(String, String)> = eventos
+        .iter()
+        .filter(|e| e.method == "event.test.case")
+        .map(|e| {
+            let p = e.params.as_ref().unwrap();
+            (
+                p["name"].as_str().unwrap().to_owned(),
+                p["status"].as_str().unwrap().to_owned(),
+            )
+        })
+        .collect();
+    assert_eq!(
+        casos,
+        vec![
+            ("tests/test_a.py::test_soma".to_owned(), "passed".to_owned()),
+            (
+                "tests/test_a.py::test_lento".to_owned(),
+                "ignored".to_owned()
+            ),
+            (
+                "tests/test_a.py::test_quebra".to_owned(),
+                "failed".to_owned()
+            ),
+        ]
+    );
+    assert_eq!(finished["success"], false);
+    assert_eq!(
+        (
+            finished["passed"].as_u64(),
+            finished["failed"].as_u64(),
+            finished["ignored"].as_u64()
+        ),
+        (Some(1), Some(1), Some(1))
+    );
 }

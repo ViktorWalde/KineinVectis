@@ -10,6 +10,7 @@ Item {
     property alias buildOutputModel: buildOutputItemsModel
     property alias problemsModel: problemItemsModel
     property alias testModel: testItemsModel
+    property alias testOutputModel: testOutputItemsModel
     property alias jobsModel: jobItemsModel
     property string testSummary: ""
 
@@ -32,6 +33,13 @@ Item {
         id: testItemsModel
     }
 
+    // A saida BRUTA do runner (event.test.output): e' onde o pytest explica a
+    // falha e onde "No module named pytest" aparece. Ate 2026-09-13 o sinal
+    // existia no C++ e ninguem ouvia (41 A6).
+    ListModel {
+        id: testOutputItemsModel
+    }
+
     ListModel {
         id: jobItemsModel
     }
@@ -42,6 +50,7 @@ Item {
         removeProblemsBySource("lsp");
         removeProblemsBySource("quality");
         testItemsModel.clear();
+        testOutputItemsModel.clear();
         jobItemsModel.clear();
         testSummary = "";
     }
@@ -61,6 +70,7 @@ Item {
             return;
         }
         testItemsModel.clear();
+        testOutputItemsModel.clear();
         testSummary = qsTr("rodando testes...");
         showTabRequested("tests");
         runTestsRequested(buildSystem || "");
@@ -131,6 +141,21 @@ Item {
         }
     }
 
+    function appendTestLine(line) {
+        testOutputItemsModel.append({ line: line });
+        while (testOutputItemsModel.count > 2000) {
+            testOutputItemsModel.remove(0);
+        }
+    }
+
+    function handleTestStarted(command) {
+        appendTestLine("$ " + command);
+    }
+
+    function handleTestOutput(line) {
+        appendTestLine(line);
+    }
+
     function handleTestCase(name, status) {
         testItemsModel.append({ name: name, status: status });
         while (testItemsModel.count > 5000) {
@@ -138,7 +163,14 @@ Item {
         }
     }
 
-    function handleTestFinished(success, passed, failed, ignored) {
+    // `error` vem quando o runner nem correu (interpretador ou pytest
+    // ausentes, tipo sem runner): e' a mensagem do core, com o passo a dar.
+    function handleTestFinished(success, passed, failed, ignored, error) {
+        if (error !== undefined && error !== "") {
+            testSummary = qsTr("nao rodou: %1").arg(error);
+            appendTestLine(error);
+            return;
+        }
         testSummary = (success
                        ? qsTr("passou: %1")
                        : qsTr("FALHOU — passou: %1")).arg(passed)

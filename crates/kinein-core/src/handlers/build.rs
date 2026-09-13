@@ -238,13 +238,21 @@ impl Core {
                 Ok(context) => context,
                 Err(response) => return *response,
             };
-        if !matches!(kind, ProjectKind::RustCargo | ProjectKind::Cmake) {
+        if !matches!(
+            kind,
+            ProjectKind::RustCargo | ProjectKind::Cmake | ProjectKind::Python
+        ) {
             return unsupported_kind_response(request_id, "test", kind);
         }
         let filter = parsed.filter;
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "test.run");
         };
+        // O pytest roda com o Python DO PROJETO (ou `uv run`): resolvido aqui,
+        // fora do job, como o ruff da qualidade.
+        let python = (kind == ProjectKind::Python)
+            .then(|| self.python_launcher(&root))
+            .flatten();
 
         let title = format!("{} Tests", project_system_name(kind));
         let job_id = jobs.spawn("test", title, JobRisk::Medium, true, move |ctx| {
@@ -267,7 +275,14 @@ impl Core {
                 };
                 ctx.emit_event(method, params);
             };
-            match test::run_tests(&root, kind, filter.as_deref(), &cancel, &mut sink) {
+            match test::run_tests(
+                &root,
+                kind,
+                filter.as_deref(),
+                python.as_ref(),
+                &cancel,
+                &mut sink,
+            ) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.test.finished",

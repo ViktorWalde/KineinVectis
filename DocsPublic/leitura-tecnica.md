@@ -67,9 +67,9 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **134 métodos IPC** roteados e **46 eventos**, em **34 domínios de protocolo**;
-**658 testes** Rust verdes e **28 harnesses QML** (remedido em 2026-09-13;
+**669 testes** Rust verdes e **29 harnesses QML** (remedido em 2026-09-13;
 em 2026-09-12 à noite a simulação saiu do produto: −11 métodos, −85 testes,
-−7 harnesses). Protocolo `0.99.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+−7 harnesses). Protocolo `0.100.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -207,7 +207,11 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       job). Fatia 2 (0.99.0, 2026-09-13): basedpyright com o
                       interpretador do projeto, `ruff format` no format.text e
                       `ruff check` no quality.run, sempre o binario DETECTADO
-                      (~/.local/bin). O que ainda falta da cadeia esta' no 40 §4
+                      (~/.local/bin). Fatia 3 (0.100.0, 2026-09-13): python/run
+                      — o lancador (interpretador do projeto ou `uv run` com
+                      uv.lock), "Executar" num .py, o ponto de entrada por
+                      evidencia, e `python -m pytest -v` no test.run com a
+                      saida no painel. O que ainda falta esta' no 40 §4
 
             index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
                       autor): todas as pastas, arquivos e declaracoes de C/C++/

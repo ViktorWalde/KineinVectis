@@ -52,11 +52,12 @@ Rectangle {
         return "file";
     }
 
+    // Espelha ProjectTreeController.isRunnableScript (a decisao); aqui so' o icone.
     function isRunnableScript(name, kind) {
         if (kind !== "file") return false;
         const lower = name.toLowerCase();
         return lower.endsWith(".sh") || lower.endsWith(".bash")
-                || lower.endsWith(".zsh");
+                || lower.endsWith(".zsh") || lower.endsWith(".py");
     }
 
     implicitWidth: 260
