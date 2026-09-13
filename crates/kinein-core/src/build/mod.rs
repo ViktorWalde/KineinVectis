@@ -23,6 +23,29 @@ use crate::toolchain::Toolchain;
 
 use crate::process::{self, ProcessError};
 
+/// Regras do ruff por perfil de rigor — SO' quando o projeto nao as declara.
+///
+/// `ruff.toml`, `.ruff.toml` ou `[tool.ruff]` no `pyproject.toml` vencem o
+/// perfil, como o `.clang-tidy` vence. Balanced = o padrao do ruff (E4, E7,
+/// E9, F); Strict acrescenta os conjuntos que o mercado liga (W, I, UP, B, N);
+/// Relaxed so' o que quebra (`E9` sintaxe, `F63`/`F7`/`F82` nomes e
+/// comparacoes indefinidos).
+#[must_use]
+pub fn ruff_profile_args(root: &Path, profile: RigorProfile) -> Vec<&'static str> {
+    let projeto_declara = root.join("ruff.toml").is_file()
+        || root.join(".ruff.toml").is_file()
+        || std::fs::read_to_string(root.join("pyproject.toml"))
+            .is_ok_and(|t| t.contains("[tool.ruff"));
+    if projeto_declara {
+        return Vec::new();
+    }
+    match profile {
+        RigorProfile::Strict => vec!["--select", "E,F,W,I,UP,B,N"],
+        RigorProfile::Balanced => Vec::new(),
+        RigorProfile::Relaxed => vec!["--select", "E9,F63,F7,F82"],
+    }
+}
+
 /// Flags de lint do clippy por perfil de rigor (fatia M4.5). Vão DEPOIS do
 /// `--` do `cargo clippy`. Balanced usa o clippy default (sem extras).
 #[must_use]
@@ -99,6 +122,13 @@ pub enum BuildError {
     },
     /// IO failure while reading build output.
     Io(io::Error),
+    /// The tool the project kind needs is not on this machine.
+    ToolMissing {
+        /// Tool id (`ruff`).
+        tool: String,
+        /// How to get it, with the official step.
+        hint: String,
+    },
 }
 
 impl fmt::Display for BuildError {
@@ -109,6 +139,9 @@ impl fmt::Display for BuildError {
                     formatter,
                     "build ainda nao e suportado para projetos do tipo {kind}"
                 )
+            }
+            Self::ToolMissing { tool, hint } => {
+                write!(formatter, "{tool} nao foi detectado nesta maquina: {hint}")
             }
             Self::Spawn { command, source } => {
                 write!(formatter, "falha ao iniciar '{command}': {source}")
@@ -123,7 +156,7 @@ impl Error for BuildError {
         match self {
             Self::Spawn { source, .. } => Some(source),
             Self::Io(error) => Some(error),
-            Self::Unsupported { .. } => None,
+            Self::Unsupported { .. } | Self::ToolMissing { .. } => None,
         }
     }
 }
@@ -132,7 +165,7 @@ impl BuildError {
     /// Returns `true` when the failure is a missing build tool.
     #[must_use]
     pub const fn is_missing_tool(&self) -> bool {
-        matches!(self, Self::Spawn { .. })
+        matches!(self, Self::Spawn { .. } | Self::ToolMissing { .. })
     }
 }
 
@@ -143,6 +176,8 @@ enum DiagnosticFormat {
     CargoJson,
     /// `file:line:column: level: message` lines from compilers and `CMake`.
     GccLike,
+    /// `ruff check --output-format concise`: `file:line:column: CODE message`.
+    RuffConcise,
 }
 
 /// Serialized (camelCase) name of a project kind, for error messages.
@@ -232,10 +267,38 @@ pub fn run_quality(
     kind: ProjectKind,
     profile: RigorProfile,
     toolchain: &Toolchain,
+    ruff: Option<&Path>,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
     match kind {
+        // Python (cadeia do roadmaps/41 bloco B, fatia 2, 2026-09-12): o ruff
+        // DETECTADO, `check` no root com a configuracao do projeto
+        // (ruff.toml / pyproject [tool.ruff]); o perfil de rigor escolhe as
+        // regras so' quando o projeto nao as declara.
+        ProjectKind::Python => {
+            let Some(ruff) = ruff else {
+                return Err(BuildError::ToolMissing {
+                    tool: "ruff".to_owned(),
+                    hint: "instale o ruff (o painel de instalacao mostra o passo oficial: pipx \
+                           install ruff)"
+                        .to_owned(),
+                });
+            };
+            let mut command = Command::new(ruff);
+            command
+                .args(["check", "--output-format", "concise", "--no-fix"])
+                .args(ruff_profile_args(root, profile))
+                .arg(".")
+                .current_dir(root);
+            stream_command(
+                command,
+                "ruff check",
+                DiagnosticFormat::RuffConcise,
+                cancel,
+                sink,
+            )
+        }
         ProjectKind::RustCargo => {
             let mut command = Command::new(programa(toolchain, ToolchainRole::Cargo, "cargo"));
             command
@@ -355,6 +418,13 @@ fn stream_command(
                 }
             }
         }
+        DiagnosticFormat::RuffConcise => {
+            if let Some(structured) = parse::parse_ruff_concise_line(&line) {
+                diagnostics += 1;
+                sink(BuildEvent::Diagnostic(structured));
+            }
+            sink(BuildEvent::Output { stream, line });
+        }
         _ => {
             if let Some(structured) = parse_gcc_like_line(&line) {
                 diagnostics += 1;
@@ -384,6 +454,54 @@ fn stream_command(
 #[cfg(test)]
 mod tests {
     use super::BuildEvent;
+
+    /// Perfil de rigor do ruff (fatia Python 2): a IDE so' escolhe regras quando
+    /// o PROJETO nao declarou as suas — `ruff.toml`, `.ruff.toml` ou
+    /// `[tool.ruff*]` no `pyproject.toml` vencem sempre. Sem declaracao,
+    /// Balanced = default do ruff, Strict amplia, Relaxed so' o que quebra.
+    #[test]
+    fn ruff_profile_args_defer_to_the_project_when_it_declares_rules() {
+        use super::ruff_profile_args;
+        use kinein_protocol::RigorProfile;
+
+        let dir = std::env::temp_dir()
+            .join("kinein-core-tests")
+            .join(format!("{}-ruff-profile", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        // Sem declaracao: o perfil manda.
+        assert_eq!(
+            ruff_profile_args(&dir, RigorProfile::Strict),
+            vec!["--select", "E,F,W,I,UP,B,N"]
+        );
+        assert!(ruff_profile_args(&dir, RigorProfile::Balanced).is_empty());
+        assert_eq!(
+            ruff_profile_args(&dir, RigorProfile::Relaxed),
+            vec!["--select", "E9,F63,F7,F82"]
+        );
+
+        // pyproject sem [tool.ruff]: continua sendo o perfil.
+        std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"x\"\n").unwrap();
+        assert!(!ruff_profile_args(&dir, RigorProfile::Strict).is_empty());
+        // [tool.ruff.lint] (subtabela) tambem conta como declaracao.
+        std::fs::write(
+            dir.join("pyproject.toml"),
+            "[project]\nname = \"x\"\n[tool.ruff.lint]\nselect = [\"E\"]\n",
+        )
+        .unwrap();
+        assert!(ruff_profile_args(&dir, RigorProfile::Strict).is_empty());
+        assert!(ruff_profile_args(&dir, RigorProfile::Relaxed).is_empty());
+
+        // ruff.toml e .ruff.toml, cada um sozinho.
+        std::fs::remove_file(dir.join("pyproject.toml")).unwrap();
+        std::fs::write(dir.join("ruff.toml"), "").unwrap();
+        assert!(ruff_profile_args(&dir, RigorProfile::Strict).is_empty());
+        std::fs::remove_file(dir.join("ruff.toml")).unwrap();
+        std::fs::write(dir.join(".ruff.toml"), "").unwrap();
+        assert!(ruff_profile_args(&dir, RigorProfile::Strict).is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[cfg(unix)]
     #[test]
@@ -433,6 +551,7 @@ mod tests {
             ProjectKind::Cmake,
             RigorProfile::Strict,
             &crate::toolchain::Toolchain::resolve(&root, &[]),
+            None,
             &cancel,
             &mut |_event| {},
         )

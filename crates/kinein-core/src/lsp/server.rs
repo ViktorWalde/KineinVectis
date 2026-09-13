@@ -39,6 +39,12 @@ pub(super) struct ServerSpec {
     pub(super) command: String,
     pub(super) args: Vec<String>,
     pub(super) language_id: &'static str,
+    /// Configuracao que o servidor le como `settings` (secoes por nome):
+    /// vai num `workspace/didChangeConfiguration` logo apos o `initialized`
+    /// e responde os `workspace/configuration` que ele pedir. `Null` = nada.
+    /// E' assim que o basedpyright recebe `python.pythonPath` — o
+    /// interpretador do projeto (2026-09-12).
+    pub(super) settings: Value,
 }
 
 /// Tabela de servidores por linguagem.
@@ -66,12 +72,24 @@ impl Default for ServerRegistry {
                     command: "clangd".to_owned(),
                     args: vec!["--background-index".to_owned()],
                     language_id: "cpp",
+                    settings: Value::Null,
                 },
                 ServerSpec {
                     language: "rust",
                     command: "rust-analyzer".to_owned(),
                     args: Vec::new(),
                     language_id: "rust",
+                    settings: Value::Null,
+                },
+                // Python (cadeia do roadmaps/41 bloco B, fatia 2, 2026-09-12):
+                // basedpyright pelo PyPI, `--stdio`; o interpretador do projeto
+                // chega em `settings` pelo Core (`configure_python_lsp`).
+                ServerSpec {
+                    language: "python",
+                    command: "basedpyright-langserver".to_owned(),
+                    args: vec!["--stdio".to_owned()],
+                    language_id: "python",
+                    settings: Value::Null,
                 },
             ],
         }
@@ -100,6 +118,15 @@ impl ServerRegistry {
         spec.args = args.iter().map(|argument| (*argument).to_owned()).collect();
         true
     }
+
+    /// Troca a configuracao que uma linguagem recebe; vale na PROXIMA subida.
+    pub(super) fn set_settings(&mut self, language: &str, settings: Value) -> bool {
+        let Some(spec) = self.specs.iter_mut().find(|spec| spec.language == language) else {
+            return false;
+        };
+        spec.settings = settings;
+        true
+    }
 }
 
 /// Linguagem do arquivo pela extensao, quando ha uma suportada.
@@ -108,6 +135,7 @@ pub(super) fn language_for_path(path: &Path) -> Option<&'static str> {
     match suffix.as_str() {
         "c" | "h" | "cc" | "cpp" | "cxx" | "hpp" | "hh" | "ipp" => Some("cpp"),
         "rs" => Some("rust"),
+        "py" | "pyi" | "pyw" => Some("python"),
         _ => None,
     }
 }
@@ -217,6 +245,21 @@ pub(super) fn spawn_server(
         command: spec.command.clone(),
         message: format!("falha no initialized: {error}"),
     })?;
+    // A configuracao vai EMPURRADA logo depois do initialized (e' como o
+    // pyright a le: `workspace/didChangeConfiguration` com `settings`), e
+    // fica com a thread leitora para responder os `workspace/configuration`.
+    let settings = Arc::new(spec.settings.clone());
+    if !settings.is_null() {
+        let configuration = json!({
+            "jsonrpc": "2.0",
+            "method": "workspace/didChangeConfiguration",
+            "params": { "settings": *settings },
+        });
+        write_locked_message(&stdin, &configuration).map_err(|error| LspError::ServerFailed {
+            command: spec.command.clone(),
+            message: format!("falha no didChangeConfiguration: {error}"),
+        })?;
+    }
 
     let diagnostics_by_uri = Arc::new(Mutex::new(HashMap::new()));
     spawn_reader_thread(
@@ -226,6 +269,7 @@ pub(super) fn spawn_server(
         events,
         pending,
         Arc::clone(&diagnostics_by_uri),
+        settings,
     );
 
     Ok(ServerHandle {
@@ -319,7 +363,7 @@ fn wait_for_initialize(
                 return Ok(semantic_token_legend(result));
             }
         }
-        answer_server_request(&message, stdin);
+        answer_server_request(&message, stdin, &Value::Null);
     }
     Err(LspError::ServerFailed {
         command: command.to_owned(),
@@ -348,13 +392,14 @@ fn spawn_reader_thread(
     events: super::EventSender,
     pending: PendingResponses,
     diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
+    settings: Arc<Value>,
 ) {
     thread::spawn(move || {
         while let Ok(Some(message)) = read_message(&mut reader) {
             if route_response(&message, &pending) {
                 continue;
             }
-            answer_server_request(&message, &stdin);
+            answer_server_request(&message, &stdin, &settings);
 
             if message.get("method").and_then(Value::as_str)
                 == Some("textDocument/publishDiagnostics")
@@ -409,16 +454,47 @@ fn cache_diagnostics(cache: &Arc<Mutex<HashMap<String, Value>>>, params: &Value)
     }
 }
 
-/// Responde `null` a requests servidor->cliente que nao suportamos ainda.
-fn answer_server_request(message: &Value, stdin: &Arc<Mutex<ChildStdin>>) {
+/// Responde os requests servidor->cliente: `workspace/configuration` com as
+/// secoes pedidas de `settings` (e' como o pyright pergunta `python` e
+/// `basedpyright`); os demais, `null` — ainda nao suportados.
+fn answer_server_request(message: &Value, stdin: &Arc<Mutex<ChildStdin>>, settings: &Value) {
     let Some(id) = message.get("id") else {
         return;
     };
-    if message.get("method").is_none() {
+    let Some(method) = message.get("method").and_then(Value::as_str) else {
         return;
-    }
-    let reply = json!({ "jsonrpc": "2.0", "id": id, "result": Value::Null });
+    };
+    let result = if method == "workspace/configuration" {
+        configuration_answer(message.get("params"), settings)
+    } else {
+        Value::Null
+    };
+    let reply = json!({ "jsonrpc": "2.0", "id": id, "result": result });
     drop(write_locked_message(stdin, &reply));
+}
+
+/// Um valor por item pedido: a secao (com pontos: `python.analysis`) dentro
+/// de `settings`, ou `null` quando ela nao existe. Sem `section`, o objeto
+/// inteiro — e' o que a especificacao LSP 3.6 descreve.
+fn configuration_answer(params: Option<&Value>, settings: &Value) -> Value {
+    let itens = params
+        .and_then(|p| p.get("items"))
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    Value::Array(
+        itens
+            .iter()
+            .map(|item| match item.get("section").and_then(Value::as_str) {
+                Some(secao) if !secao.is_empty() => secao
+                    .split('.')
+                    .try_fold(settings, |atual, chave| atual.get(chave))
+                    .cloned()
+                    .unwrap_or(Value::Null),
+                _ => settings.clone(),
+            })
+            .collect(),
+    )
 }
 
 #[cfg(test)]

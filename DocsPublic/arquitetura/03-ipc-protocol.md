@@ -1,5 +1,19 @@
 # 03 — Protocolo IPC
 
+> **O `0.99.0` (2026-09-13) é a fatia 2 da cadeia Python do
+> [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B —
+> três contratos existentes ganharam Python, sem método novo:** o servidor de
+> Python (`basedpyright-langserver --stdio`, o binário DETECTADO) sobe **com o
+> interpretador do projeto** — o core empurra `workspace/didChangeConfiguration
+> { python.pythonPath, … }` logo após o `initialized` e responde ao
+> `workspace/configuration` que o servidor pergunta, seção a seção; o
+> `event.python.finished` com sucesso reinicia esse servidor com o ambiente
+> novo. `format.text` formata `.py`/`.pyi` com `ruff format` (o `format.
+> capabilities` publica o id `ruff` — valor novo no catálogo, daí o minor). E
+> `quality.run` aceita workspace Python: `ruff check --output-format concise
+> --no-fix` no root, cada linha um `event.quality.diagnostic`, e sem ruff o
+> erro **nomeia a ferramenta e o passo oficial**, não "tipo não suportado".
+>
 > **O `0.98.0` (2026-09-12, noite) acrescentou o domínio `python`** — a fatia
 > 1 da cadeia Python do [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md)
 > bloco B: `python.status` (o interpretador que o projeto resolve, se é
@@ -524,11 +538,18 @@ workspace, então `rustfmt.toml`/`.clang-format` do projeto valem.
 - Formatter por extensão: `.rs` → `rustfmt` (`--emit stdout`; acrescenta
   `--edition 2021` apenas quando o root não tem `rustfmt.toml`/
   `.rustfmt.toml`); `.c/.cc/.cpp/.cxx/.h/.hh/.hpp/.hxx` → `clang-format`
-  (`--assume-filename=<path> --style=file --fallback-style=LLVM`). Extensão
-  sem formatter → `INVALID_PARAMS`.
+  (`--assume-filename=<path> --style=file --fallback-style=LLVM`);
+  `.py/.pyi` → `ruff` (`0.99.0`, 2026-09-13: `ruff format --stdin-filename
+  <path>` — o nome do arquivo decide qual `ruff.toml`/`pyproject [tool.ruff]`
+  vale; com `--stdin-filename` e sem caminhos o ruff lê stdin, medido no
+  0.16.4). Extensão sem formatter → `INVALID_PARAMS`.
 - `changed: false` quando a saída é idêntica ao texto enviado.
-- Binário ausente no `PATH` → `TOOL_NOT_FOUND` (com `data.tool`); formatter
-  com exit ≠ 0 → `INTERNAL_ERROR` com o stderr na mensagem.
+- **O binário é o DETECTADO** (`0.99.0`): o handler pergunta ao detector de
+  ferramentas — que procura no `PATH` e em `~/.local/bin`, onde pipx/uv põem o
+  ruff e o `PATH` do processo da IDE pode não alcançar — e só cai no nome nu
+  quando o detector não acha. Binário ausente → `TOOL_NOT_FOUND` (com
+  `data.tool`); formatter com exit ≠ 0 → `INTERNAL_ERROR` com o stderr na
+  mensagem.
 - `format.capabilities {}` → `{ formatters: [ { id, extensions[] } ] }`
   (`0.61.0`). **Não** requer workspace: é o mapa estático de extensões, derivado
   da mesma constante que `formatter_for_path` usa para decidir — o que a UI
@@ -878,10 +899,32 @@ diagnósticos estruturados sem parser novo. Emite, com `jobId`,
 `event.job.output`. Diagnosticos usam o mesmo payload de build, mas com
 `source: "quality"` e `category: "lint"`. A UI adiciona os diagnósticos à aba Problemas
 com origem `quality`. `job.cancel` mata o clippy. Validação síncrona: tudo que
-não é Rust/Cargo retorna `INVALID_REQUEST` (CMake via clang-tidy é o próximo
-passo). Falhas (`cargo` ausente etc.) chegam por `event.quality.finished`.
-O parâmetro opcional `buildSystem` de `0.55.0` é tipado pelo mesmo enum; hoje a
-única capacidade executável por `quality.run` continua sendo `cargo`.
+não é Rust/Cargo **nem Python** retorna `INVALID_REQUEST` (CMake via clang-tidy
+é o próximo passo). Falhas (`cargo` ausente etc.) chegam por
+`event.quality.finished`. O parâmetro opcional `buildSystem` de `0.55.0` é
+tipado pelo mesmo enum; as capacidades executáveis por `quality.run` são
+`cargo` e `python`.
+
+**Python (`0.99.0`, 2026-09-13 — fatia 2 da cadeia do `roadmaps/41` bloco
+B).** Workspace Python (`buildSystem: "python"`, ou o detectado): roda o
+**ruff DETECTADO** (`~/.local/bin` do pipx/uv entra pelo detector) com
+`ruff check --output-format concise --no-fix [--select …] .`, cwd no root —
+os caminhos dos diagnósticos são relativos ao root e a configuração do
+projeto (`ruff.toml`, `.ruff.toml`, `pyproject [tool.ruff*]`) é a que o ruff
+acha a partir dali. O `--select` vem do **perfil de rigor** (`settings`)
+apenas quando o projeto NÃO declara regras — `strict` = `E,F,W,I,UP,B,N`,
+`balanced` = o default do ruff (sem flag), `relaxed` = `E9,F63,F7,F82` (só o
+que quebra); projeto que declara vence sempre. Cada linha
+`arquivo:linha:coluna: CODIGO [*] mensagem` vira `event.quality.diagnostic`
+com `file`/`line`/`column`; severidade `error` para `E9xx` e `SyntaxError`,
+`warning` para o resto; o `[*]` do ruff vira o sufixo `(corrigivel: ruff
+check --fix)` na mensagem. Resumo (`Found N errors.`), `All checks passed!` e
+avisos de configuração não viram diagnóstico. **Sem ruff detectado** o
+`event.quality.finished` traz `success: false` e `error` que NOMEIA a
+ferramenta e o passo oficial (`pipx install ruff`, o mesmo do painel de
+instalação) — não o "tipo de projeto não suportado" de antes. `success` é
+`false` quando o ruff achou problemas (exit ≠ 0). Exercitado no gate com o
+ruff real (`F401` do `tools/gera.py` do projeto de exercitação).
 
 ### Testes (`test.run` — job assíncrono)
 
@@ -925,10 +968,41 @@ aberto, alterado ou salvo:
 
 - C/C++: `clangd --background-index`
 - Rust: `rust-analyzer`
+- Python (`0.99.0`, 2026-09-13): `basedpyright-langserver --stdio` — o binário
+  **detectado** (`~/.local/bin` do pipx/npm entra pelo detector; o `PATH` do
+  processo da IDE pode não o ter), `languageId: "python"` para `.py/.pyi/.pyw`.
 
 Se o servidor não estiver instalado ou falhar no `initialize`, o core emite
 `event.lsp.status` com `status: "failed"` e mensagem humana. O MVP usa
 sincronização de documento inteiro.
+
+**Configuração do servidor (`0.99.0`).** Um `ServerSpec` pode carregar
+`settings` (JSON). Quando os há, o core envia `workspace/didChangeConfiguration
+{ settings }` **logo após o `initialized`** e responde ao
+`workspace/configuration` que o servidor pergunta (LSP 3.17): um valor por
+`ConfigurationItem`, navegando `section` com pontos (`python.analysis` →
+`settings.python.analysis`); seção inexistente → `null`; item sem `section`
+(ou vazia) → a configuração inteira. Servidor sem `settings` (clangd,
+rust-analyzer) não recebe configuração alguma — o wire é o mesmo de antes.
+
+Para Python os `settings` são montados pelo core a partir do **interpretador
+que o projeto resolve** (`python/env.rs`, a precedência do `roadmaps/29`
+§4.1 — o mesmo que `python.status` e `index.context` mostram):
+`{ python: { pythonPath, analysis: { autoSearchPaths, diagnosticMode:
+"openFilesOnly" } }, basedpyright: { analysis: {…} } }`. Sem interpretador
+nenhum (workspace sem `.venv`, sem `python3`) não se empurra configuração — a
+IDE não inventa `pythonPath`. `diagnosticMode: "openFilesOnly"` é decisão: o
+modo `workspace` faria o basedpyright analisar o projeto inteiro a cada
+mudança. O `event.python.finished` com `success: true` (o `.venv` nasceu)
+reconfigura e, se o servidor de Python estiver vivo, **reinicia-o** — sai
+`event.lsp.restarted { language: "python" }` e a UI reabre os documentos; um
+`success: false` não reinicia nada. Sem isto o basedpyright indexaria a stdlib
+do Python do `PATH` e o completar mentiria sobre os pacotes do projeto.
+
+**Dívida registrada:** o ruff como *servidor* LSP (code actions "organizar
+imports"/"corrigir F401" no Alt+Enter) exige **mais de um servidor por
+linguagem** em `lsp/session.rs` — hoje a tabela é `language → um spec`. Fica
+no `roadmaps/40` §4; o ruff entrou por `format.text` e `quality.run`.
 
 `lsp.definition` e `lsp.hover` foram adicionados no protocolo `0.8.0`. Ambos
 recebem posição 1-based e o buffer atual para o core sincronizar o documento

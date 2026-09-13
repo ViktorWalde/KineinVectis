@@ -1,7 +1,9 @@
 //! Buffer formatting by orchestrating the project's own formatters.
 //!
 //! `format.text` runs the same tools the verification gate uses (`rustfmt`,
-//! `clang-format`) over the editor buffer via stdin/stdout: no file is
+//! `clang-format`; and `ruff format` for Python since 2026-09-12, the
+//! Python chain of `roadmaps/41` block B) over the editor buffer via
+//! stdin/stdout: no file is
 //! touched on disk, and the formatter runs with the workspace root as its
 //! working directory so project configuration (`rustfmt.toml`,
 //! `.clang-format`) applies. Formatting one buffer is a short operation, so
@@ -21,6 +23,10 @@ pub enum FormatterKind {
     Rustfmt,
     /// `clang-format`, for C/C++ sources and headers.
     ClangFormat,
+    /// `ruff format`, for Python (`ruff.toml`/`pyproject.toml [tool.ruff]`
+    /// resolved from the working directory; the same tool the chain uses for
+    /// lint).
+    Ruff,
 }
 
 impl FormatterKind {
@@ -31,6 +37,7 @@ impl FormatterKind {
         match self {
             Self::Rustfmt => "rustfmt",
             Self::ClangFormat => "clang-format",
+            Self::Ruff => "ruff",
         }
     }
 }
@@ -40,8 +47,9 @@ impl FormatterKind {
 /// `format.capabilities` publica isto para a UI. Uma segunda lista em qualquer
 /// lugar (inclusive no QML) diverge desta por construção — foi exatamente o que
 /// aconteceu até o protocolo 0.61.0.
-const FORMATTER_EXTENSIONS: [(FormatterKind, &[&str]); 2] = [
+const FORMATTER_EXTENSIONS: [(FormatterKind, &[&str]); 3] = [
     (FormatterKind::Rustfmt, &["rs"]),
+    (FormatterKind::Ruff, &["py", "pyi"]),
     (
         FormatterKind::ClangFormat,
         &["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx"],
@@ -73,13 +81,16 @@ pub fn formatter_for_path(path: &Path) -> Option<FormatterKind> {
 
 /// Builds the formatter invocation for `path`, rooted at the workspace `root`.
 ///
+/// `program` e' o binario a executar: o que o detector achou (pipx/uv poem o
+/// ruff em `~/.local/bin`, que o `PATH` do processo da IDE pode nao ter) ou,
+/// sem deteccao, o nome nu de [`FormatterKind::id`] resolvido pelo `PATH`.
 /// `rustfmt` reads project style from `rustfmt.toml`/`.rustfmt.toml` in the
 /// working directory; when the workspace has neither, `--edition 2021` keeps
 /// modern syntax parseable (standalone `rustfmt` does not read `Cargo.toml`).
 /// `clang-format` resolves `.clang-format` upwards from `--assume-filename`.
 #[must_use]
-pub fn formatter_command(kind: FormatterKind, root: &Path, path: &Path) -> Command {
-    let mut command = Command::new(kind.id());
+pub fn formatter_command(kind: FormatterKind, program: &Path, root: &Path, path: &Path) -> Command {
+    let mut command = Command::new(program);
     command.current_dir(root);
     match kind {
         FormatterKind::Rustfmt => {
@@ -91,6 +102,16 @@ pub fn formatter_command(kind: FormatterKind, root: &Path, path: &Path) -> Comma
         FormatterKind::ClangFormat => {
             command.arg(format!("--assume-filename={}", path.display()));
             command.args(["--style=file", "--fallback-style=LLVM"]);
+        }
+        // `ruff format --stdin-filename <caminho>`: com `--stdin-filename` e
+        // sem caminhos o ruff le stdin e escreve stdout (medido no 0.16.4 em
+        // 2026-09-13; o `-` explicito e' aceito mas redundante), e resolve a
+        // configuracao (ruff.toml / pyproject [tool.ruff]) a partir do caminho
+        // dado — docs.astral.sh/ruff/formatter.
+        FormatterKind::Ruff => {
+            command.arg("format");
+            command.arg("--stdin-filename");
+            command.arg(path);
         }
     }
     command
@@ -266,7 +287,7 @@ mod capability_tests {
 
     #[test]
     fn extensao_fora_do_catalogo_nao_tem_formatter() {
-        for extensao in ["md", "txt", "json", "toml", "py", ""] {
+        for extensao in ["md", "txt", "json", "toml", "sh", ""] {
             let caminho = PathBuf::from(format!("arquivo.{extensao}"));
             assert!(
                 formatter_for_path(&caminho).is_none(),

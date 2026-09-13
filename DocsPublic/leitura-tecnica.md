@@ -67,9 +67,9 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **134 métodos IPC** roteados e **46 eventos**, em **34 domínios de protocolo**;
-**649 testes** Rust verdes e **28 harnesses QML** (remedido em 2026-09-12 à
-noite, depois de a simulação sair do produto: −11 métodos, −85 testes, −7
-harnesses). Protocolo `0.98.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+**658 testes** Rust verdes e **28 harnesses QML** (remedido em 2026-09-13;
+em 2026-09-12 à noite a simulação saiu do produto: −11 métodos, −85 testes,
+−7 harnesses). Protocolo `0.99.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -112,7 +112,12 @@ SOLIDO      fsops     confinamento ao root, escrita atomica, transacao com
                       sobem um servidor FALSO e olham o wire: didOpen/didChange/
                       didClose deixaram de ser afirmacao. Um configure
                       bem-sucedido fecha os documentos C/C++ abertos, e a UI os
-                      reabre com o buffer real
+                      reabre com o buffer real. Desde 0.99.0 (2026-09-13) um
+                      spec pode ter `settings`: o core empurra
+                      didChangeConfiguration apos o initialized e responde ao
+                      workspace/configuration secao a secao — e' assim que o
+                      basedpyright sobe com o interpretador DO PROJETO e
+                      reinicia quando o .venv nasce
             git       operacoes reais contra repositorio, 12 testes de integracao
             jobs      cancelamento cooperativo, progresso, drain no shutdown
 
@@ -199,7 +204,10 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       precedencia (29 §4.1), se e' ambiente proprio ou o Python
                       do sistema, e criar o .venv num clique (`uv venv .venv`
                       ou `python3 -m venv .venv`, como a fonte escreve, em
-                      job). O que ainda falta da cadeia esta' no 40 §4
+                      job). Fatia 2 (0.99.0, 2026-09-13): basedpyright com o
+                      interpretador do projeto, `ruff format` no format.text e
+                      `ruff check` no quality.run, sempre o binario DETECTADO
+                      (~/.local/bin). O que ainda falta da cadeia esta' no 40 §4
 
             index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
                       autor): todas as pastas, arquivos e declaracoes de C/C++/

@@ -139,11 +139,55 @@ pub(super) fn parse_gcc_like_line(line: &str) -> Option<BuildDiagnostic> {
     None
 }
 
+/// `ruff check --output-format concise`: `arquivo:linha:coluna: CODIGO [*] mensagem`
+/// (docs.astral.sh/ruff/settings/#output-format, lido em 2026-09-12). O `[*]`
+/// diz "corrigivel com --fix" e vai para a mensagem, porque a tela e' onde
+/// isso importa. Erro de sintaxe (`SyntaxError`) e os `E9xx` sao erro; o
+/// resto e' aviso — lint nao impede o programa de rodar.
+pub(super) fn parse_ruff_concise_line(line: &str) -> Option<BuildDiagnostic> {
+    let mut partes = line.splitn(4, ':');
+    let file = partes.next()?.trim();
+    let linha: u64 = partes.next()?.trim().parse().ok()?;
+    let coluna: u64 = partes.next()?.trim().parse().ok()?;
+    let resto = partes.next()?.trim();
+    if file.is_empty() || resto.is_empty() {
+        return None;
+    }
+    let (codigo, mensagem) = resto.split_once(' ').unwrap_or((resto, ""));
+    let e_codigo = codigo
+        .chars()
+        .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        && codigo.chars().any(|c| c.is_ascii_digit());
+    if !e_codigo && codigo != "SyntaxError:" {
+        return None;
+    }
+    let severity = if codigo.starts_with("E9") || codigo.starts_with("SyntaxError") {
+        BuildDiagnosticSeverity::Error
+    } else {
+        BuildDiagnosticSeverity::Warning
+    };
+    let mensagem = mensagem.trim();
+    let message = if codigo.starts_with("SyntaxError") {
+        format!("SyntaxError: {mensagem}")
+    } else if let Some(fix) = mensagem.strip_prefix("[*] ") {
+        format!("{codigo}: {fix} (corrigivel: ruff check --fix)")
+    } else {
+        format!("{codigo}: {mensagem}")
+    };
+    Some(BuildDiagnostic {
+        severity,
+        message,
+        file: Some(file.to_owned()),
+        line: Some(linha),
+        column: Some(coluna),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use kinein_protocol::BuildDiagnosticSeverity;
 
-    use super::{parse_cargo_json_line, parse_gcc_like_line};
+    use super::{parse_cargo_json_line, parse_gcc_like_line, parse_ruff_concise_line};
 
     #[test]
     fn gcc_line_with_column_is_parsed() {
@@ -191,5 +235,59 @@ mod tests {
     fn cargo_non_compiler_messages_are_ignored() {
         assert!(parse_cargo_json_line(r#"{"reason":"build-finished","success":true}"#).is_none());
         assert!(parse_cargo_json_line("nao e json").is_none());
+    }
+
+    /// `ruff check --output-format concise` (docs.astral.sh, 2026-09-12):
+    /// `arquivo:linha:coluna: CODIGO [*] mensagem`; erros de sintaxe vem como
+    /// `arquivo:l:c: SyntaxError: mensagem`. O `[*]` = corrigivel por `--fix`.
+    #[test]
+    fn ruff_concise_lines_become_diagnostics() {
+        let aviso = parse_ruff_concise_line("src/app.py:1:8: F401 [*] `os` imported but unused")
+            .expect("linha concise");
+        assert_eq!(aviso.severity, BuildDiagnosticSeverity::Warning);
+        assert_eq!(aviso.file.as_deref(), Some("src/app.py"));
+        assert_eq!((aviso.line, aviso.column), (Some(1), Some(8)));
+        assert_eq!(
+            aviso.message,
+            "F401: `os` imported but unused (corrigivel: ruff check --fix)"
+        );
+
+        let sem_fix = parse_ruff_concise_line("app.py:3:1: E402 Module level import not at top")
+            .expect("sem [*]");
+        assert_eq!(sem_fix.message, "E402: Module level import not at top");
+        assert!(!sem_fix.message.contains("corrigivel"));
+
+        let e9 = parse_ruff_concise_line("app.py:2:5: E902 No such file").unwrap();
+        assert_eq!(e9.severity, BuildDiagnosticSeverity::Error, "E9xx e' erro");
+
+        let sintaxe = parse_ruff_concise_line("app.py:4:9: SyntaxError: Expected an expression")
+            .expect("erro de sintaxe");
+        assert_eq!(sintaxe.severity, BuildDiagnosticSeverity::Error);
+        assert_eq!(sintaxe.message, "SyntaxError: Expected an expression");
+        assert_eq!((sintaxe.line, sintaxe.column), (Some(4), Some(9)));
+    }
+
+    /// O resumo e o ruido do ruff nao viram diagnostico: `Found 2 errors.`,
+    /// `[*] 1 fixable with the --fix option`, linhas vazias, e caminhos com
+    /// dois-pontos sem numero (nao e' `arquivo:linha:coluna`).
+    #[test]
+    fn ruff_summary_and_noise_are_not_diagnostics() {
+        for linha in [
+            "Found 2 errors.",
+            "[*] 1 fixable with the `--fix` option.",
+            "",
+            "All checks passed!",
+            "warning: The top-level linter settings are deprecated",
+            "app.py:x:1: F401 nao numerico",
+            "app.py:1:2: minusculo nao e codigo",
+            "app.py:1:2: TODO sem digito nao e codigo",
+            ":1:2: F401 sem arquivo",
+            "app.py:1:2:",
+        ] {
+            assert!(
+                parse_ruff_concise_line(linha).is_none(),
+                "nao deveria virar diagnostico: {linha:?}"
+            );
+        }
     }
 }

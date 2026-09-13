@@ -50,7 +50,10 @@ printf 'int main() { return 0; }  // AGULHA_DA_EXERCITACAO\n' > "$raiz/src/main.
 # Um .py ao lado: o indice le Python com a gramatica oficial (2026-09-12), e a
 # declaracao tem de aparecer no index.symbols com a linguagem certa.
 mkdir -p "$raiz/tools"
-printf 'def gera_tabela(n):\n    return list(range(n))\n' > "$raiz/tools/gera.py"
+# O `import os` solto e' de proposito: o `quality.run` de Python (ruff, fatia 2)
+# tem de apontar o F401 NESTE arquivo — e o buffer mal indentado que o
+# `format.text` recebe abaixo tem de voltar formatado pelo ruff real.
+printf 'import os\n\n\ndef gera_tabela(n):\n    return list(range(n))\n' > "$raiz/tools/gera.py"
 # Um pyproject.toml faz o workspace ser Python TAMBEM (cmake por fora): o
 # python.status resolve o interpretador desta maquina e diz se ha' ambiente.
 printf '[project]\nname = "exercitacao"\nversion = "0.1.0"\n' > "$raiz/pyproject.toml"
@@ -109,6 +112,11 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":18,"method":"python.createEnvironment","params":{}}\n'
         sleep 6
         printf '{"jsonrpc":"2.0","id":19,"method":"python.status","params":{}}\n'
+        # Fatia 2 da cadeia Python: o ruff REAL formata o buffer (o binario que
+        # o detector achou — pipx/uv em ~/.local/bin, fora do PATH da IDE) e
+        # o quality.run de Python emite o F401 do gera.py como diagnostico.
+        printf '{"jsonrpc":"2.0","id":20,"method":"format.text","params":{"path":"%s/tools/gera.py","text":"def  f( a,b ):\\n  return a+b\\n"}}\n' "$raiz"
+        printf '{"jsonrpc":"2.0","id":21,"method":"quality.run","params":{"buildSystem":"python"}}\n'
         sleep 3
     } | "$binario" 2>/dev/null
 )"
@@ -200,6 +208,22 @@ if printf '%s\n' "$resposta" | grep -q '"id":18,.*"jobId"'; then
     verifica 19 "python.status depois de python.createEnvironment (o .venv nasceu)" '"origin":".venv"'
 else
     echo "  - python.createEnvironment: sem python3 nem uv nesta maquina (nao exercitado)"
+fi
+
+# Python, fatia 2: so' com o ruff nesta maquina (o detector procura no PATH e
+# em ~/.local/bin, como a IDE).
+if command -v ruff >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ruff" ]; then
+    verifica 20 "format.text de um .py (ruff real formatou o buffer)" '"formatter":"ruff"'
+    verifica 20 "format.text de um .py (o texto mudou)" '"changed":true'
+    verifica 21 "quality.run de Python (aceito como job)" '"jobId"'
+    if printf '%s\n' "$resposta" | grep -q '"event.quality.diagnostic".*F401\|F401.*"event.quality.diagnostic"'; then
+        echo "  ok quality.run de Python (o ruff real apontou o F401 do gera.py)"
+    else
+        echo "  ✗ quality.run de Python: o F401 do gera.py nao chegou como event.quality.diagnostic" >&2
+        falhou=1
+    fi
+else
+    echo "  - format.text/quality.run de Python: sem ruff nesta maquina (nao exercitado)"
 fi
 
 if [ "$falhou" -ne 0 ]; then

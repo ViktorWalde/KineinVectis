@@ -57,8 +57,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.98.0
-testes      649 Rust + 28 harnesses QML   (2026-09-12 noite: a simulacao saiu)
+protocolo   0.99.0
+testes      658 Rust + 28 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
 metodos     134 IPC roteados, 46 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -355,19 +355,28 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          do VID:PID (P2/P3). Nada muda na ordem
                                          do 42 §4
 --  A CADEIA PYTHON (41 bloco B)         MEDIDA em 2026-09-12 a pedido do autor:
-    fatia 1 FEITA (§7.24); faltam        fundacao pronta (projeto, editor, indice,
-    2 basedpyright+ruff, 3 run+pytest,   interpretador), cadeia por fazer. Ordem
-    4 debugpy, 5 MicroPython+modulo      decidida: 1 toolchains+setup+.venv de um
-    nativo                               clique (FEITA, dominio `python` 0.98.0);
+    fatias 1 e 2 FEITAS (§7.24, §7.25);  fundacao pronta (projeto, editor, indice,
+    faltam 3 run+pytest, 4 debugpy,      interpretador), cadeia por fazer. Ordem
+    5 MicroPython+modulo nativo          decidida: 1 toolchains+setup+.venv de um
+                                         clique (FEITA, dominio `python` 0.98.0);
                                          2 basedpyright SUBINDO COM O INTERPRETADOR
-                                         + ruff como servidor (o Alt+Enter em
-                                         Python); 3 run (python arquivo / -m / uv
-                                         run) e pytest com a saida no painel; 4
-                                         debugpy no DAP; 5 mpremote (MicroPython) e
-                                         o modulo nativo (pybind11/nanobind/PyO3/
-                                         maturin) no project.model. O provedor de
-                                         download de toolchain (39 §5) vem DEPOIS
-                                         da cadeia
+                                         + ruff no formatar e na qualidade (FEITA,
+                                         0.99.0, 2026-09-13); 3 run (python arquivo
+                                         / -m / uv run) e pytest com a saida no
+                                         painel; 4 debugpy no DAP; 5 mpremote
+                                         (MicroPython) e o modulo nativo (pybind11/
+                                         nanobind/PyO3/maturin) no project.model.
+                                         O provedor de download de toolchain (39
+                                         §5) vem DEPOIS da cadeia
+--  ruff como SERVIDOR LSP               DIVIDA da fatia 2 (2026-09-13): as code
+    (o Alt+Enter em Python)              actions do ruff ("organizar imports",
+                                         "corrigir F401") pedem DOIS servidores
+                                         para a mesma linguagem — hoje lsp/session
+                                         e' `linguagem -> um spec` (basedpyright).
+                                         Fatia propria: multiplexar didOpen/
+                                         didChange/diagnosticos por linguagem e
+                                         juntar as code actions; so' depois o ruff
+                                         entra como `ruff server`
 --  TOOLCHAINS POR ALVO                  CONFERIDAS na fonte em 2026-09-12
     (integracoes/39): o catalogo,        (integracoes/39): o levantamento
     a busca alem do PATH, o sysroot,     recebido tinha 2 afirmacoes desatualizadas
@@ -1733,6 +1742,93 @@ testes  649 Rust (+4), 28 harnesses (+tst_python); 134 metodos, 46 eventos,
 gate    exercitacao: pyproject.toml no projeto; python.status; createEnvironment
         com a ferramenta REAL; status de novo -> .venv
 proximo fatia 2: basedpyright com o interpretador + ruff como servidor
+```
+
+### 7.25 A cadeia Python, fatia 2 — o basedpyright com o interpretador do projeto, e o ruff, 2026-09-13
+
+Sem esta fatia o basedpyright subiria com o Python do `PATH` e o completar
+mentiria sobre os pacotes do `.venv`; e um `.py` não tinha formatar nem lint.
+Três contratos existentes ganharam Python, sem método novo (0.99.0).
+
+```text
+lsp/server.rs        ServerSpec.settings (JSON). Com settings, o core envia
+                     workspace/didChangeConfiguration LOGO APOS o initialized e
+                     responde ao workspace/configuration do servidor (LSP 3.17):
+                     um valor por item, `python.analysis` navegado por pontos,
+                     secao inexistente = null, item sem secao = tudo. Spec de
+                     Python: basedpyright-langserver --stdio, languageId python
+lsp/session.rs       use_server_settings, is_running
+handlers/python.rs   configure_python_lsp(root): settings a partir do
+                     interpretador que python::env resolve (o MESMO do
+                     python.status e do index.context); comando = o
+                     basedpyright DETECTADO (~/.local/bin) ou o nome nu; sem
+                     interpretador nao se empurra nada. on_python_environment_
+                     finished(success): reconfigura e, se o servidor esta' vivo,
+                     reinicia (event.lsp.restarted) — so' no sucesso
+handlers/workspace   activate_workspace chama configure_python_lsp depois do
+                     clangd
+format.rs            FormatterKind::Ruff (.py/.pyi): `ruff format
+                     --stdin-filename <arquivo>` (sem `-`: com --stdin-filename
+                     e sem caminhos o ruff le stdin — medido no 0.16.4);
+                     formatter_command recebe o PROGRAMA — o handler passa o
+                     binario detectado, e so' cai no nome nu sem deteccao
+build/mod.rs         run_quality(.., ruff: Option<&Path>, ..): braco Python =
+                     `ruff check --output-format concise --no-fix [--select] .`
+                     no root; ruff_profile_args: o perfil de rigor SO' quando o
+                     projeto nao declara (ruff.toml, .ruff.toml, [tool.ruff*]);
+                     BuildError::ToolMissing{tool,hint} — o erro nomeia o ruff e
+                     o passo do painel de instalacao
+build/parse.rs       parse_ruff_concise_line: `arquivo:l:c: CODIGO [*] msg`;
+                     E9xx/SyntaxError = erro, resto aviso, `[*]` = "(corrigivel:
+                     ruff check --fix)"; resumo e ruido nao viram diagnostico
+handlers/build.rs    quality.run aceita RustCargo | Python; passa o ruff detectado
+scripts/fake_lsp_    depois do initialized pergunta workspace/configuration (id
+server.py            9001) com 5 itens: python, python.analysis, inexistente,
+                     sem secao, secao vazia
+```
+
+**Medido:** ruff 0.16.4 em `~/.local/bin` (pipx); basedpyright ausente nesta
+máquina — o wire foi provado com o servidor falso, e o binário detectado com
+um `basedpyright-langserver` falso na pasta de busca do detector que grava os
+argumentos (`--stdio`) e encaminha para o servidor falso. A exercitação do
+gate formata um buffer com o **ruff real** (`changed: true`) e o
+`quality.run` de Python emite o `F401` do `tools/gera.py` como
+`event.quality.diagnostic`.
+
+**Provado (26 mutações mortas com o compilador calado; 9 sobreviveram à
+primeira rodada e cada uma virou caso de teste):** no wire, `initialized` antes do `didChangeConfiguration`,
+`pythonPath` = `.venv/bin/python` do workspace, `diagnosticMode:
+openFilesOnly` nas duas seções, a resposta ao `workspace/configuration`
+(objeto, sub-seção, `null`, tudo ×2), `didOpen` com `languageId: python`, o
+`event.python.finished` falho NÃO reinicia (nenhum `event.lsp.restarted` em
+300 ms) e o bem-sucedido reinicia; sem interpretador nenhuma configuração sai
+(nem para o Rust). No formatar, um `ruff` falso grava argumentos, cwd e stdin:
+`format --stdin-filename <root>/pacote/app.py`, cwd = root, o buffer por
+stdin — e o ruff real devolve `def f(a, b):`. Na qualidade, sem ruff o erro
+diz `ruff` e `pipx`; com um `ruff` falso: `check --output-format concise
+--no-fix --select E,F,W,I,UP,B,N .` (perfil `strict` em
+`.kinein/settings.json`, projeto sem regras), cwd = root, dois diagnósticos
+(`F401` aviso corrigível em 1:8; `E999` erro), `success: false`. O parser:
+sete formas de ruído (resumo, `All checks passed!`, aviso de configuração,
+linha sem número, código minúsculo, código sem dígito, sem arquivo) e
+`ruff_profile_args` com `pyproject` sem e com `[tool.ruff.lint]`, `ruff.toml`
+e `.ruff.toml` sozinhos. As sobreviventes que viraram teste: código sem
+dígito; `--select` do perfil e cwd do ruff no despacho; item sem seção e seção
+vazia do `workspace/configuration`; `diagnosticMode`; `--stdio`; falha do
+ambiente que não reinicia; `--stdin-filename` com o arquivo (não o root).
+
+**Uma descoberta do mutante:** `command.arg("-")` no ruff era redundante — o
+ruff lê stdin sempre que há `--stdin-filename` e nenhum caminho. Saiu.
+
+**Dívida:** o ruff como *servidor* (code actions no Alt+Enter) precisa de dois
+servidores por linguagem em `lsp/session.rs`. Registrada no §4.
+
+```text
+protocolo 0.99.0 — settings no ServerSpec; ruff no format.capabilities; Python no quality.run
+testes  658 Rust (+9), 28 harnesses; 134 metodos, 46 eventos, 34 dominios
+gate    exercitacao: format.text de um .py com o ruff REAL; quality.run de Python
+        com o F401 do gera.py como diagnostico
+proximo fatia 3: run (python arquivo / -m / uv run) e pytest com a saida no painel
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

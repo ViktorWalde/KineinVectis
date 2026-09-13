@@ -19,6 +19,57 @@ use crate::python::{self, CriadoresDeAmbiente, PASTA_DO_AMBIENTE};
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
 impl Core {
+    /// O basedpyright sobe COM o interpretador do projeto (fatia 2 da cadeia,
+    /// 2026-09-12): `python.pythonPath` em `settings` — e' o `--query-driver`
+    /// do Python. Sem isto ele indexa a stdlib do Python que achar no PATH e o
+    /// completar mente. O executavel e' o DETECTADO (`basedpyright-langserver`
+    /// do pipx/uv em ~/.local/bin); ausente, fica o nome nu e a subida falha
+    /// dizendo qual. Vale na PROXIMA subida do servidor python.
+    pub(crate) fn configure_python_lsp(&mut self, root: &Path) {
+        let interpretador =
+            crate::python::env::python_env(root, &self.python_tools()).map(|e| e.interpreter);
+        let settings = interpretador.map_or(Value::Null, |caminho| {
+            json!({
+                "python": {
+                    "pythonPath": caminho,
+                    "analysis": { "autoSearchPaths": true, "diagnosticMode": "openFilesOnly" }
+                },
+                "basedpyright": {
+                    "analysis": { "autoSearchPaths": true, "diagnosticMode": "openFilesOnly" }
+                }
+            })
+        });
+        let comando = self
+            .detector
+            .find_in_path("basedpyright-langserver")
+            .map_or_else(
+                || "basedpyright-langserver".to_owned(),
+                |p| p.display().to_string(),
+            );
+        if let Some(lsp) = self.lsp.as_mut() {
+            lsp.use_server_command("python", &comando, &["--stdio"]);
+            lsp.use_server_settings("python", settings);
+        }
+    }
+
+    /// O ambiente mudou (`event.python.finished` com sucesso): o basedpyright
+    /// precisa subir de novo com o interpretador novo — reconfigura e, se ele
+    /// esta' vivo, reinicia (a UI reabre os documentos no `event.lsp.restarted`).
+    pub(crate) fn on_python_environment_finished(&mut self, success: bool) {
+        if !success {
+            return;
+        }
+        let Some(root) = self.workspace_root() else {
+            return;
+        };
+        self.configure_python_lsp(&root);
+        if let Some(lsp) = self.lsp.as_mut() {
+            if lsp.is_running("python") {
+                lsp.restart_language("python");
+            }
+        }
+    }
+
     /// Roteia os metodos `python.*`.
     pub(crate) fn python_request_response(
         &self,

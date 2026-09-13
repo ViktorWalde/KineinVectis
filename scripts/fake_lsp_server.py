@@ -131,6 +131,19 @@ def main():
         metodo = mensagem.get("method")
         if metodo == "exit":
             return 0
+        if metodo == "initialized":
+            # Como o pyright faz: logo depois do initialized, pergunta a
+            # configuracao ao cliente. A resposta do core entra no log como
+            # qualquer mensagem (sem `method`, com este id) — e' o que o teste
+            # da fatia 2 da cadeia Python confere.
+            escrever(saida, {
+                "jsonrpc": "2.0",
+                "id": 9001,
+                "method": "workspace/configuration",
+                "params": {"items": [{"section": "python"}, {"section": "python.analysis"},
+                                     {"section": "inexistente"}, {}, {"section": ""}]},
+            })
+            continue
         if "id" not in mensagem:
             continue  # notificacao: so o log importa
         if metodo == "shutdown":

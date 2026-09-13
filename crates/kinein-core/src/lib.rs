@@ -382,16 +382,17 @@ impl Core {
                 .unwrap_or_default();
             self.reindex_changed_paths(&paths);
         }
-        if notification.method != "event.cmake.finished" {
-            return;
-        }
         let success = notification
             .params
             .as_ref()
             .and_then(|params| params.get("success"))
             .and_then(Value::as_bool)
             .unwrap_or(false);
-        self.on_cmake_configure_finished(success);
+        match notification.method.as_str() {
+            "event.cmake.finished" => self.on_cmake_configure_finished(success),
+            "event.python.finished" => self.on_python_environment_finished(success),
+            _ => {}
+        }
     }
 
     /// Parses and handles a single line-delimited JSON-RPC request.

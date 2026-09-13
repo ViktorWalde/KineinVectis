@@ -172,8 +172,9 @@ impl Core {
                 Ok(context) => context,
                 Err(response) => return *response,
             };
-        // Only Rust/Cargo has a linter integration (cargo clippy) so far.
-        if kind != ProjectKind::RustCargo {
+        // Rust/Cargo (cargo clippy) e Python (ruff check) tem linter; os demais
+        // ainda nao.
+        if !matches!(kind, ProjectKind::RustCargo | ProjectKind::Python) {
             return unsupported_kind_response(request_id, "quality", kind);
         }
         let Some(jobs) = self.jobs.as_ref() else {
@@ -182,10 +183,21 @@ impl Core {
 
         let profile = crate::settings::effective_rigor_profile(&root);
         let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
+        // O ruff DETECTADO (pipx/uv em ~/.local/bin entram pelo detector; o
+        // PATH do processo da IDE pode nao os ter).
+        let ruff = self.detector.find_in_path("ruff");
         let job_id = jobs.spawn("quality", "Quality", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-            match build::run_quality(&root, kind, profile, &toolchain, &cancel, &mut sink) {
+            match build::run_quality(
+                &root,
+                kind,
+                profile,
+                &toolchain,
+                ruff.as_deref(),
+                &cancel,
+                &mut sink,
+            ) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.quality.finished",

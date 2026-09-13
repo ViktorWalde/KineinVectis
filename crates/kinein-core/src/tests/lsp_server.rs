@@ -85,6 +85,23 @@ fn harness(name: &str) -> Harness {
     )
     .unwrap();
     std::fs::write(root.join("src/main.cpp"), "int main() { return 0; }\n").unwrap();
+    std::fs::write(root.join("app.py"), "def main():\n    pass\n").unwrap();
+    // Um .venv com interpretador: e' ele que o basedpyright tem de receber.
+    std::fs::create_dir_all(root.join(".venv/bin")).unwrap();
+    std::fs::write(
+        root.join(".venv/bin/python"),
+        "#!/bin/sh\necho Python 3.13.0\n",
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(
+            root.join(".venv/bin/python"),
+            std::fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+    }
     let root = root.canonicalize().unwrap();
     let log = root.join("lsp-wire.jsonl");
 
@@ -100,7 +117,7 @@ fn harness(name: &str) -> Harness {
     assert!(opened.response().error.is_none(), "workspace.open falhou");
 
     let script = fake_server();
-    for language in ["rust", "cpp"] {
+    for language in ["rust", "cpp", "python"] {
         let replaced = core.use_language_server_command(
             language,
             python3(),
@@ -462,4 +479,196 @@ fn closing_after_a_configure_tells_the_ui_to_resync() {
     let event = harness.wait_for_event("event.lsp.documentsClosed");
     assert_eq!(event.params.as_ref().unwrap()["language"], "cpp");
     assert_eq!(event.params.as_ref().unwrap()["count"], 1);
+}
+
+/// Fatia 2 da cadeia Python (2026-09-12): o servidor de Python sobe COM o
+/// interpretador do projeto. No fio: o `workspace/didChangeConfiguration`
+/// logo apos o `initialized`, com `python.pythonPath` = o `.venv/bin/python`
+/// do workspace; e o `workspace/configuration` que o servidor pergunta (como
+/// o pyright faz) respondido secao a secao — `python`, `python.analysis`, e
+/// `null` para o que nao existe. Sem isto o basedpyright indexaria a stdlib
+/// do Python do PATH e o completar mentiria.
+#[test]
+fn the_python_server_receives_the_project_interpreter() {
+    let mut h = harness("python-interpretador");
+    // O Core configurou o python ao abrir o workspace; o harness trocou o
+    // COMANDO pelo falso, e o settings do Core tem de continuar valendo.
+    let path = h.root.join("app.py");
+    h.ok("fs.read", json!({ "path": path.to_str().unwrap() }));
+    let config = h.wait_for("workspace/didChangeConfiguration", 0);
+    let settings = &config["params"]["settings"];
+    let esperado = h.root.join(".venv/bin/python").display().to_string();
+    assert_eq!(settings["python"]["pythonPath"], esperado, "{settings}");
+    assert_eq!(settings["python"]["analysis"]["autoSearchPaths"], true);
+    // So' os arquivos abertos: `workspace` mandaria o basedpyright analisar o
+    // projeto inteiro a cada mudanca — pesado e fora do que a tela mostra.
+    for secao in ["python", "basedpyright"] {
+        assert_eq!(
+            settings[secao]["analysis"]["diagnosticMode"], "openFilesOnly",
+            "{settings}"
+        );
+    }
+    // O initialized veio ANTES da configuracao (ordem do protocolo).
+    let mensagens = h.messages();
+    let pos = |m: &str| mensagens.iter().position(|x| x["method"] == m).unwrap();
+    assert!(pos("initialized") < pos("workspace/didChangeConfiguration"));
+    // A resposta ao workspace/configuration do servidor: uma entrada por item.
+    let deadline = Instant::now() + DEADLINE;
+    let resposta = loop {
+        if let Some(r) = h
+            .messages()
+            .into_iter()
+            .find(|m| m["id"] == 9001 && m.get("result").is_some())
+        {
+            break r;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "o core nao respondeu ao workspace/configuration"
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    };
+    let itens = resposta["result"].as_array().unwrap();
+    assert_eq!(itens.len(), 5, "{resposta}");
+    assert_eq!(itens[0]["pythonPath"], esperado);
+    assert_eq!(
+        itens[1]["autoSearchPaths"], true,
+        "secao com ponto: python.analysis"
+    );
+    assert!(itens[2].is_null(), "secao inexistente e' null, nao erro");
+    // Item sem `section` (ou com secao vazia) = a configuracao INTEIRA (LSP
+    // 3.17, ConfigurationItem.section opcional).
+    for inteiro in [&itens[3], &itens[4]] {
+        assert_eq!(inteiro["python"]["pythonPath"], esperado, "{inteiro}");
+        assert!(inteiro["basedpyright"].is_object(), "{inteiro}");
+    }
+    // O didOpen do .py vai com languageId python.
+    let aberto = h.wait_for("textDocument/didOpen", 0);
+    assert_eq!(aberto["params"]["textDocument"]["languageId"], "python");
+
+    // O ambiente mudou (event.python.finished com sucesso): o servidor de
+    // Python e' REINICIADO para subir com o interpretador novo; um evento de
+    // falha nao reinicia nada.
+    h.core.observe_notification(&JsonRpcRequest::notification(
+        "event.python.finished",
+        Some(json!({ "jobId": "j", "success": false, "tool": "uv", "command": "uv venv .venv", "path": "x" })),
+    ));
+    // Emitido de forma sincrona pelo restart: se nada chegou em 300 ms, nao
+    // houve restart.
+    let prazo = Instant::now() + Duration::from_millis(300);
+    while let Ok(evento) = h
+        .events
+        .recv_timeout(prazo.saturating_duration_since(Instant::now()))
+    {
+        assert_ne!(
+            evento.method, "event.lsp.restarted",
+            "falha do ambiente nao reinicia o servidor"
+        );
+    }
+    h.core.observe_notification(&JsonRpcRequest::notification(
+        "event.python.finished",
+        Some(json!({ "jobId": "j", "success": true, "tool": "uv", "command": "uv venv .venv", "path": "x" })),
+    ));
+    let reiniciado = h.wait_for_event("event.lsp.restarted");
+    assert_eq!(reiniciado.params.unwrap()["language"], "python");
+}
+
+/// O comando do basedpyright e' o DETECTADO (`~/.local/bin` do pipx/npm, que o
+/// PATH do processo da IDE pode nao ter), com `--stdio` — a unica forma de
+/// transporte que o core fala. Aqui ninguem troca o comando: um
+/// `basedpyright-langserver` falso na pasta de busca do detector grava os
+/// argumentos e encaminha para o servidor falso.
+#[test]
+#[cfg(unix)]
+fn the_python_server_is_the_detected_binary_with_stdio() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let base = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-lspwire-python-detectado", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    std::fs::create_dir_all(base.join("bin")).unwrap();
+    std::fs::create_dir_all(base.join("ws")).unwrap();
+    std::fs::write(
+        base.join("ws/pyproject.toml"),
+        "[project]\nname = \"demo\"\n",
+    )
+    .unwrap();
+    std::fs::write(base.join("ws/app.py"), "x = 1\n").unwrap();
+    let base = base.canonicalize().unwrap();
+    let log = base.join("lsp-wire.jsonl");
+    let args = base.join("args.txt");
+    std::fs::write(
+        base.join("bin/basedpyright-langserver"),
+        format!(
+            "#!/bin/sh\necho \"$@\" > {args}\nexec {py} {script} {log}\n",
+            args = args.display(),
+            py = python3(),
+            script = fake_server().display(),
+            log = log.display()
+        ),
+    )
+    .unwrap();
+    std::fs::set_permissions(
+        base.join("bin/basedpyright-langserver"),
+        std::fs::Permissions::from_mode(0o755),
+    )
+    .unwrap();
+
+    let (sender, receiver) = mpsc::channel::<JsonRpcRequest>();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        base.join("bin"),
+    ));
+    core.enable_lsp(sender as lsp::EventSender);
+    let ws = base.join("ws");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "workspace.open",
+        Some(json!({ "path": ws.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let mut h = Harness {
+        core,
+        root: ws.clone(),
+        log,
+        events: receiver,
+    };
+    let app = ws.join("app.py");
+    h.ok("fs.read", json!({ "path": app.to_str().unwrap() }));
+    let aberto = h.wait_for("textDocument/didOpen", 0);
+    assert_eq!(aberto["params"]["textDocument"]["languageId"], "python");
+    assert_eq!(std::fs::read_to_string(&args).unwrap().trim(), "--stdio");
+}
+
+/// Sem interpretador nenhum (workspace sem .venv, PATH vazio), o servidor sobe
+/// SEM configuracao — a IDE nao inventa um pythonPath — e o servidor de Rust
+/// continua sem receber configuracao alguma.
+#[test]
+fn without_an_interpreter_no_configuration_is_pushed() {
+    let mut h = harness("python-sem-interpretador");
+    std::fs::remove_dir_all(h.root.join(".venv")).unwrap();
+    // Reabrir o workspace refaz a configuracao do python sem o .venv.
+    let root = h.root.clone();
+    h.ok("workspace.open", json!({ "path": root.to_str().unwrap() }));
+    let script = fake_server();
+    let log = h.log.clone();
+    for language in ["rust", "python"] {
+        h.core.use_language_server_command(
+            language,
+            python3(),
+            &[script.to_str().unwrap(), log.to_str().unwrap()],
+        );
+    }
+    let py = h.root.join("app.py");
+    h.ok("fs.read", json!({ "path": py.to_str().unwrap() }));
+    h.wait_for("textDocument/didOpen", 0);
+    let rs = h.main_rs();
+    h.ok("fs.read", json!({ "path": rs }));
+    h.wait_for("textDocument/didOpen", 1);
+    assert_eq!(
+        h.count_of("workspace/didChangeConfiguration"),
+        0,
+        "{:?}",
+        h.messages()
+    );
 }

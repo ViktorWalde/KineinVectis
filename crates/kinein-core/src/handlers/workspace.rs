@@ -280,6 +280,9 @@ impl Core {
         // libstdc++ do GCC ARM em vermelho (medido em 2026-09-11). Vale na
         // PROXIMA subida do servidor cpp — o primeiro `.c/.cpp` aberto.
         self.configure_clangd_from_toolchain(&root);
+        // E o basedpyright aprende o INTERPRETADOR do projeto (fatia 2 da
+        // cadeia Python): sem ele, completar e tipos vem da stdlib errada.
+        self.configure_python_lsp(&root);
         // M-S1: store local de rascunhos, uma por workspace (DocsPublic/seguranca/23).
         self.drafts = self
             .global_storage

@@ -181,8 +181,8 @@ A tradução para a Kinein, com a licença lida no arquivo:
 | --- | --- | --- | --- | --- |
 | realce + outline | tree-sitter-python 0.25.0 | MIT | crate (gramática) | ✓ 2026-09-12 — realce, outline, folding, locals no editor e as declarações no índice (`40` §7.19) |
 | **interpretador** (o `compile_commands.json` do Python) | precedência do 29 §4.1: `$VIRTUAL_ENV` → `.venv/` → `venv/` → `uv.lock` → `poetry.lock` (`poetry env info -p`) → sistema (avisando); **uv** | uv: MIT OR Apache-2.0 | processo | ✓ na base 2026-09-12 — precedência lida (`index.context`, `python.status`); `.venv` de um clique com `uv venv .venv` ou `python3 -m venv .venv` (`40` §7.24); falta `python.select` e o `uv.lock` |
-| LSP | **basedpyright** (PyPI, sem Node) / pyright | MIT (`LICENSE.txt`) | LSP | ✗ |
-| lint + formato + imports | **ruff** (`ruff server`; medir `--preview` na versão instalada, 29 §3.1) | MIT | LSP | ✗ |
+| LSP | **basedpyright** (PyPI, sem Node) / pyright | MIT (`LICENSE.txt`) | LSP | ✓ 2026-09-13 — `basedpyright-langserver --stdio` detectado, com `python.pythonPath` do interpretador do projeto empurrado após o `initialized` e o `workspace/configuration` respondido; reinicia quando o `.venv` nasce (`40` §7.25) |
+| lint + formato + imports | **ruff** (`ruff server`; medir `--preview` na versão instalada, 29 §3.1) | MIT | LSP | ◐ 2026-09-13 — `ruff format` no `format.text` e `ruff check --output-format concise` no `quality.run` (perfil de rigor quando o projeto não declara regras); o `ruff server` (code actions) espera 2 servidores por linguagem (`40` §4) |
 | formato alternativo | black | MIT | processo | ✗ |
 | tipos | mypy; `ty` (Astral — medir maturidade antes) | MIT | processo | ✗ |
 | depurar | **debugpy** — fala DAP; sobe como `python -m debugpy.adapter` | MIT | DAP (**candidato do papel `debugAdapter`**, como o gdb) | ✗ |
@@ -368,8 +368,16 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             de pipx/uv/ruff/basedpyright no painel de
                                             instalacao. FALTA `python.select` (escolher
                                             entre varios) e ler o uv.lock
- B3  basedpyright como 3o ServerSpec        sobe com o interpretador do B2 (senao mente)
- B4  ruff server                            lint + formato + imports; medir `--preview`
+ B3  basedpyright como 3o ServerSpec        FEITO 2026-09-13 (40 §7.25): sobe com o
+                                            interpretador do B2 por didChangeConfiguration
+                                            + workspace/configuration; reinicia quando o
+                                            .venv nasce; binario detectado (~/.local/bin)
+ B4  ruff server                            PARCIAL 2026-09-13 (40 §7.25): `ruff format`
+                                            no format.text e `ruff check` no quality.run,
+                                            com o perfil de rigor e o binario detectado.
+                                            FALTA o ruff como SERVIDOR (code actions no
+                                            Alt+Enter): exige 2 servidores por linguagem
+                                            em lsp/session.rs — divida no 40 §4
  B5  debugpy como candidato do              `python -m debugpy.adapter` e' DAP por stdio,
      papel debugAdapter                     entra como o gdb entrou
  B6  pytest no test.rs                      descoberta (`--collect-only -q`) + execucao,

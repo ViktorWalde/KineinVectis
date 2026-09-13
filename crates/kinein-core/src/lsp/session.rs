@@ -115,6 +115,17 @@ impl LspManager {
         self.registry.set_command(language, command, args)
     }
 
+    /// Troca a configuracao (`settings`) que uma linguagem recebe ao subir.
+    pub fn use_server_settings(&mut self, language: &str, settings: Value) -> bool {
+        self.registry.set_settings(language, settings)
+    }
+
+    /// Ha' um servidor vivo para a linguagem?
+    #[must_use]
+    pub fn is_running(&self, language: &str) -> bool {
+        self.servers.contains_key(language)
+    }
+
     pub(super) fn ensure_server(&mut self, spec: &ServerSpec) -> Result<(), LspError> {
         if self.servers.contains_key(spec.language) {
             return Ok(());

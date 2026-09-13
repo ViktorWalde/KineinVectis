@@ -783,6 +783,12 @@ crates/kinein-core/src/cmake/model.rs         o MODELO POR ALVO do CMake (file-a
 crates/kinein-core/src/python/{mod,env}.rs      o AMBIENTE Python: o interpretador por
                                              precedencia (lido tambem pelo indice),
                                              status, `uv venv`/`python3 -m venv` em job
+handlers/python.rs::configure_python_lsp     o basedpyright sobe COM esse interpretador
+                                             (ServerSpec.settings -> didChangeConfiguration
+                                             + workspace/configuration) e reinicia
+                                             quando o .venv nasce
+format.rs (Ruff) + build/parse.rs (concise)  `ruff format` no format.text e `ruff check`
+                                             no quality.run — o binario DETECTADO
 crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida
@@ -808,8 +814,10 @@ scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
 - Testes: `tests/{serial,container,project,index,index_context,cmake_model,python}.rs`, `size.rs`;
   harnesses `tst_{embedded,container,index,python}.qml`; a exercitação
   (`verificar-exercitacao.sh`) pede `serial.list/monitor`,
-  `container.status/list`, `project.model`, `index.status/symbols/context` ao
-  core real (com uma CDB escrita à mão, para provar o job).
+  `container.status/list`, `project.model`, `index.status/symbols/context`,
+  `python.status/createEnvironment`, `format.text` de um `.py` e `quality.run`
+  de Python (ruff REAL) ao core real (com o configure real do CMake, para
+  provar o job).
 - Documentos: `DocsPublic/integracoes/38` (conectividade medida com o ESP32),
   `DocsPublic/roadmaps/41` (o ecossistema aberto, o que NÃO entra) e `42` (a trilha
   profunda, oito pilares; §8 o "efeito JetBrains" como critério de pronto; §9 a

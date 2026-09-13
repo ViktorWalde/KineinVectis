@@ -8,8 +8,10 @@ use serde_json::json;
 use super::core_with_empty_search_path;
 use kinein_protocol::JsonRpcRequest;
 
+/// So' Rust/Cargo (clippy) e Python (ruff) tem linter no `quality.run`; um
+/// workspace `CMake` continua recusado com "tipo nao suportado".
 #[test]
-fn quality_run_rejects_non_rust_kind() {
+fn quality_run_rejects_kinds_without_a_linter() {
     let dir = std::env::temp_dir()
         .join("kinein-core-tests")
         .join(format!("{}-quality-unsupported", std::process::id()));
@@ -148,4 +150,149 @@ fn test_run_starts_a_job_and_reports_a_passing_case() {
     assert!(saw_job_output, "faltou event.job.output");
     assert!(saw_passing_case, "faltou event.test.case passed");
     assert!(saw_test_finished, "faltou event.test.finished");
+}
+
+/// Workspace Python (pyproject + app.py com um import solto) e um core com
+/// jobs cuja busca de ferramentas e' SO' a pasta `bin` do workspace.
+fn python_quality_fixture(
+    name: &str,
+) -> (
+    std::path::PathBuf,
+    crate::Core,
+    std::sync::mpsc::Receiver<JsonRpcRequest>,
+) {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-quality-python-{name}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
+    std::fs::write(dir.join("app.py"), "import os\nx=1\n").unwrap();
+    let dir = dir.canonicalize().unwrap();
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        80_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    (dir, core, receiver)
+}
+
+/// Pede `quality.run` e devolve o `jobId` e, do fluxo de eventos, o
+/// `event.quality.finished` desse job com todos os `event.quality.diagnostic`
+/// que vieram antes dele.
+fn run_quality_and_collect(
+    core: &mut crate::Core,
+    receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
+) -> (Vec<serde_json::Value>, serde_json::Value) {
+    use std::time::{Duration, Instant};
+
+    let started = core.handle_request(&JsonRpcRequest::new(81_i64, "quality.run", Some(json!({}))));
+    let job_id = started.response().result.clone().unwrap()["jobId"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let mut diagnosticos = Vec::new();
+    let limite = Instant::now() + Duration::from_secs(20);
+    loop {
+        let e = receiver
+            .recv_timeout(limite.saturating_duration_since(Instant::now()))
+            .expect("evento");
+        let do_job = e
+            .params
+            .as_ref()
+            .is_some_and(|p| p["jobId"] == job_id.as_str());
+        match e.method.as_str() {
+            "event.quality.diagnostic" if do_job => diagnosticos.push(e.params.clone().unwrap()),
+            "event.quality.finished" if do_job => return (diagnosticos, e.params.clone().unwrap()),
+            _ => {}
+        }
+    }
+}
+
+/// Python (cadeia do roadmaps/41 bloco B, fatia 2): sem ruff detectado, o
+/// `quality.run` falha NOMEANDO a ferramenta e o passo oficial — nao com o
+/// "tipo de projeto nao suportado" de antes.
+#[test]
+fn quality_run_without_ruff_names_the_tool() {
+    let (_dir, mut core, receiver) = python_quality_fixture("sem-ruff");
+    let (diagnosticos, finished) = run_quality_and_collect(&mut core, &receiver);
+    assert!(diagnosticos.is_empty());
+    assert_eq!(finished["success"], false);
+    let erro = finished["error"].as_str().unwrap();
+    assert!(
+        erro.contains("ruff") && erro.contains("pipx"),
+        "erro nomeia a ferramenta e o passo: {erro}"
+    );
+}
+
+/// Com ruff detectado: `check --output-format concise --no-fix` NO root, com o
+/// `--select` do perfil de rigor quando o projeto nao declara regras; cada
+/// linha vira diagnostico com arquivo/linha/coluna e severidade (E9/SyntaxError
+/// = erro; o resto aviso, com "corrigivel" quando o ruff marca `[*]`).
+#[test]
+fn quality_run_lints_python_with_the_detected_ruff() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let (dir, mut core, receiver) = python_quality_fixture("com-ruff");
+    // O workspace pede perfil strict e NAO declara regras: o `--select` do
+    // perfil tem de ir na linha de comando.
+    std::fs::create_dir_all(dir.join(".kinein")).unwrap();
+    std::fs::write(
+        dir.join(".kinein/settings.json"),
+        r#"{"rigorProfile":"strict"}"#,
+    )
+    .unwrap();
+    let registro = dir.join("pedido.txt");
+    std::fs::write(
+        dir.join("bin/ruff"),
+        format!(
+            "#!/bin/sh\necho \"$@\" > {reg}\npwd >> {reg}\nprintf 'app.py:1:8: F401 [*] `os` imported but unused\\napp.py:2:1: E999 SyntaxError: nao\\nFound 2 errors.\\n'\nexit 1\n",
+            reg = registro.display()
+        ),
+    )
+    .unwrap();
+    std::fs::set_permissions(dir.join("bin/ruff"), std::fs::Permissions::from_mode(0o755)).unwrap();
+
+    let (diagnosticos, finished) = run_quality_and_collect(&mut core, &receiver);
+
+    let pedido = std::fs::read_to_string(&registro).unwrap();
+    assert!(
+        pedido.contains("check --output-format concise --no-fix"),
+        "{pedido}"
+    );
+    assert!(
+        pedido.contains("--select E,F,W,I,UP,B,N"),
+        "perfil strict sem regras do projeto: {pedido}"
+    );
+    let mut linhas = pedido.lines();
+    assert!(
+        linhas.next().unwrap().ends_with(" ."),
+        "o check e' no root: {pedido}"
+    );
+    assert_eq!(
+        std::path::Path::new(linhas.next().unwrap()),
+        dir,
+        "o ruff corre NO root (caminhos relativos e ruff.toml dependem disso)"
+    );
+    assert_eq!(diagnosticos.len(), 2, "{diagnosticos:?}");
+    let f401 = &diagnosticos[0];
+    assert_eq!(f401["file"], "app.py");
+    assert_eq!(
+        (f401["line"].as_u64(), f401["column"].as_u64()),
+        (Some(1), Some(8))
+    );
+    assert_eq!(f401["severity"], "warning");
+    let mensagem = f401["message"].as_str().unwrap();
+    assert!(
+        mensagem.contains("F401") && mensagem.contains("corrigivel"),
+        "{f401}"
+    );
+    assert_eq!(diagnosticos[1]["severity"], "error");
+    assert_eq!(finished["success"], false, "achou problemas = nao passou");
 }

@@ -75,7 +75,13 @@ impl Core {
             );
         };
 
-        let command = format::formatter_command(kind, &root, &file);
+        // O binario DETECTADO quando existe (pipx/uv em ~/.local/bin entram
+        // pelo detector); senao o nome nu, resolvido pelo PATH do processo.
+        let program = self
+            .detector
+            .find_in_path(kind.id())
+            .unwrap_or_else(|| std::path::PathBuf::from(kind.id()));
+        let command = format::formatter_command(kind, &program, &root, &file);
         match format::run_formatter(command, kind.id(), &parsed.text) {
             Ok(text) => {
                 let changed = text != parsed.text;
