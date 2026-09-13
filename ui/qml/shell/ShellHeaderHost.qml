@@ -83,6 +83,7 @@ Column {
         case "test.run": root.jobsController.startTests(); break;
         case "test.run.cargo": root.jobsController.startTests("cargo"); break;
         case "test.run.cmake": root.jobsController.startTests("cmake"); break;
+        case "test.run.python": root.jobsController.startTests("python"); break;
         case "quality.run": root.jobsController.startQuality(); break;
         case "run.start": root.runtimeController.startRun(""); break;
         case "run.stop": root.runtimeController.stopRun(); break;

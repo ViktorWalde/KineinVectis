@@ -68,6 +68,7 @@ Item {
         );
         const cargoAvailable = hasBuildSystem("cargo");
         const cmakeAvailable = hasBuildSystem("cmake");
+        const pythonAvailable = hasBuildSystem("python");
         const hybrid = cargoAvailable && cmakeAvailable;
         const buildItems = [
             { label: qsTr("Configurar CMake"), action: "cmake.configure",
@@ -86,8 +87,16 @@ Item {
                 { label: qsTr("Testes"), action: "test.run", enabled: workspaceOpen && coreConnected }
             );
         }
-        buildItems.push({ label: qsTr("Análise Cargo"), action: "quality.run",
-                          enabled: workspaceOpen && cargoAvailable && coreConnected });
+        // Python (2026-09-13): o pytest e o ruff pelo menu, como Cargo e CMake
+        // ja' tinham — num projeto hibrido (CMake + Python, Cargo + Python) o
+        // "Testes" generico iria para o outro sistema.
+        if (pythonAvailable && (cargoAvailable || cmakeAvailable)) {
+            buildItems.push({ label: qsTr("Testar com pytest"), action: "test.run.python",
+                              enabled: workspaceOpen && coreConnected });
+        }
+        buildItems.push({ label: cargoAvailable ? qsTr("Análise Cargo") : qsTr("Análise (ruff)"),
+                          action: "quality.run",
+                          enabled: workspaceOpen && (cargoAvailable || pythonAvailable) && coreConnected });
         const menus = {
             file: fileItems,
             edit: [

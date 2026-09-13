@@ -18,6 +18,7 @@ Item {
     property var recentWorkspacesController
     property var containerController
     property var grafanaController
+    property var dataSourceController
     property alias editorSurface: editorPaneHost.editorSurface
     property bool workspaceOpen: false
     property string workspaceRoot: ""
@@ -120,6 +121,9 @@ Item {
                               && root.containerController.panelVisible
             observabilityActive: root.grafanaController !== undefined && root.grafanaController !== null
                                  && root.grafanaController.panelVisible
+            databaseActive: root.dataSourceController !== undefined && root.dataSourceController !== null
+                            && root.dataSourceController.panelVisible
+            onDatabaseRequested: root.dataSourceController.open()
             onContainersRequested: root.containerController.open()
             onObservabilityRequested: root.grafanaController.open()
         }

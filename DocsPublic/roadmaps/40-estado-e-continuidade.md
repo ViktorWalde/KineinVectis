@@ -57,8 +57,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.104.0
-testes      700 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+protocolo   0.105.0
+testes      701 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
 metodos     138 IPC roteados, 47 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -365,13 +365,21 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          MicroPython, o resumo Python na barra.
                                          PROXIMO da fila: o provedor de download de
                                          toolchain (39 §5), que a cadeia adiou
---  o resumo Python nao chega a barra    PythonController.summary() existe desde
-    de status (WorkspaceStatusBar        a fatia 1 e ninguem o mostra (o mesmo
-    esta' em 298/300)                    defeito do A6): a barra ja' tem toolchain,
-                                         indice e contexto, e esta' a 2 linhas da
-                                         catraca. Fatia: extrair os textos da barra
-                                         para um componente e ligar pythonSummary
-                                         (com o modulo nativo da fatia 5)
+--  o resumo Python nao chega a barra    FEITO em 2026-09-13 (§7.31): os resumos do
+    de status                            projeto (indice, contexto, python) sairam
+                                         para StatusBarProjectSummaries e a barra
+                                         mostra "python: .venv · 3.14.7 · pybind11
+                                         (scikit-build-core)"
+--  Docker/Podman "nao esta' dando       RELATO do autor em 2026-09-13, ainda sem o
+    certo" (relato)                      sintoma: o core responde status/list/
+                                         images/action/open contra o Podman 5.8.4
+                                         daqui (medido: start e stop do postgres-dev
+                                         pelo core, ok). O que se achou e corrigiu:
+                                         Logs/Shell sem projeto aberto recusavam
+                                         DEPOIS do clique ("nenhum workspace
+                                         aberto") — agora o botao diz antes. Falta
+                                         o autor dizer o que viu (icone, lista,
+                                         botao, mensagem) para medir o resto
 --  a porta escolhida no Executar de     run.script ja' aceita `device` (0.102.0);
     MicroPython                          a tela nao tem "porta atual" — o monitor e'
                                          por linha da lista. Uma escolha persistida
@@ -2231,6 +2239,56 @@ protocolo 0.104.0 — toolchain.inspectSysroot, toolchain.importKit, toolchainFi
 testes  700 Rust (+8), 32 harnesses (+tst_toolchain_import); 138 metodos, 47 eventos
 gate    exercitacao: inspectSysroot de uma pasta real ("vazia para o compilador")
 proximo o polimento da cadeia Python (40 §4) ou o P0 que falta — a fila decide
+```
+
+### 7.31 O Python aparece na IDE, o rail do autor, e o Docker sem projeto, 2026-09-13
+
+O autor redirecionou a fila: *"vamos pela fila/polimento de Python por hora
+[…] falta ter o reconhecimento de Python na IDE, e na UI/UX ter a parte do
+Python ser incluído também"* — mais três pontos: o Docker *"aparenta não
+estar dando certo"*, o banco de dados com ícone no rail acima de Containers,
+e "Ferramentas" por último. Protocolo 0.105.0.
+
+```text
+Novo projeto     template `python` (workspace/create.rs): PEP 621, pytest em
+                 [dev], ruff, main.py, o pacote NA RAIZ (layout plano: roda e
+                 testa sem `pip install -e .`), tests/, .gitignore, README —
+                 geracao interna, nada executado; chip "Python" no painel de
+                 criar, com a previa do que nasce
+barra de status  StatusBarProjectSummaries (indice, contexto, python) saiu da
+                 WorkspaceStatusBar (298/300); "python: .venv · 3.14.7 ·
+                 pybind11 (scikit-build-core)", em ambar quando ha' ⚠
+arvore           .py/.pyi/.pyw com icone proprio (tree-file-python: o `>>>` do
+                 REPL e o cursor — nao o logotipo, marca da PSF), no mesmo
+                 desenho de documento dos icones C/C++/Rust
+menu Build       "Testar com pytest" quando o projeto e' Python E outro sistema
+                 (senao "Testes" ja' vai para o pytest); "Analise (ruff)" no
+                 lugar de "Analise Cargo" num projeto sem Cargo
+rail             ordem do autor: Projeto, Busca, Git, Build, Debug, BANCO DE
+                 DADOS (glifo novo: o cilindro), Containers, Observabilidade,
+                 Ferramentas por ultimo; o banco abre o DataSourceController
+containers       Logs/Shell sem projeto aberto: o botao desabilita e diz que a
+                 aba de terminal e' do projeto (o core recusava depois do clique)
+C++              o kind `python` entra nos buildSystems de tolerancia (core
+                 antigo) como cargo/cmake ja' entravam
+```
+
+**Medido:** o projeto Python gerado roda (`Ola, mundo!`), passa no pytest
+(1 passed) e no `ruff check`/`ruff format --check` com um interpretador e um
+pytest reais — e um primeiro rascunho do template tinha a indentação do
+código-fonte Rust vazando para os arquivos gerados (uma string literal
+multilinha); ficou visível ao ler o `pyproject.toml` gerado e ao rodá-lo, não
+no teste, que só procurava substrings — a medição com a ferramenta real é o
+que pegou. O Docker: o core responde `container.status/list/images` e um `action`
+start/stop contra o Podman 5.8.4 daqui (o `postgres-dev` subiu e desceu pelo
+core); `container.open` sem workspace recusava com "nenhum workspace
+aberto" — é o único defeito encontrado sem o relato do sintoma.
+
+```text
+protocolo 0.105.0 — template `python` no workspace.createProject
+testes  701 Rust (+1), 32 harnesses (tst_container ganhou o caso sem projeto)
+proximo o polimento da cadeia Python (40 §4): ruff servidor, arvore do pytest,
+        `-m`/attach no debugpy, run.capabilities — e o relato do Docker
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

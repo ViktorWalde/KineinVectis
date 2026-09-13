@@ -9,6 +9,7 @@ WorkspaceStatusBar {
     property var gitController: null
     property var toolchainController: null
     property var indexController: null
+    property var pythonController: null
 
     workspaceRoot: coreClient.workspaceRoot
     workspaceKindLabel: shellController.kindLabel(
@@ -34,6 +35,7 @@ WorkspaceStatusBar {
     indexSummary: indexController !== null ? indexController.summary() : ""
     contextSummary: indexController !== null ? indexController.contextSummary() : ""
     contextDetail: indexController !== null ? indexController.contextDetail() : ""
+    pythonSummary: pythonController !== null ? pythonController.summary() : ""
     onLogsRequested: shellController.toggleBottomTab("logs")
     onCancelBuildRequested: coreClient.cancelBuild()
     onCancelTestsRequested: coreClient.cancelTests()

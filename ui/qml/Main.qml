@@ -219,6 +219,7 @@ Window {
         recentWorkspacesController: domains.recentWorkspacesController
         containerController: domains.containerController
         grafanaController: domains.grafanaController
+        dataSourceController: domains.dataSourceController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName
@@ -271,6 +272,7 @@ Window {
         gitController: domains.gitController
         toolchainController: domains.toolchainController
         indexController: domains.indexController
+        pythonController: domains.pythonController
         onToolchainMenuRequested: function(menuX, menuY) {
             const pos = statusBar.mapToItem(shellOverlays, menuX, menuY);
             domains.toolchainController.openMenu(pos.x, pos.y);

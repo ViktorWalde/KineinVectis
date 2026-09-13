@@ -1,5 +1,19 @@
 # 03 — Protocolo IPC
 
+> **O `0.105.0` (2026-09-13, à tarde) faz o Python APARECER na IDE** — o B8
+> do [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md)
+> ("só aqui a tela diz Python"), pedido do autor: `workspace.createProject`
+> ganhou o template `python` (PEP 621, layout plano, pytest em `[dev]`,
+> `ruff`, `main.py` como ponto de entrada — nada é executado; o `.venv` é o
+> clique da faixa de saúde), a barra de status mostra o Python do projeto
+> (`python: .venv · 3.14.7 · pybind11 (scikit-build-core)`), o `.py` tem
+> ícone na árvore (o `>>>` do REPL — não o logotipo, marca da PSF), o menu
+> Build ganhou "Testar com pytest" e "Análise (ruff)". Na mesma passada, por
+> decisão do autor: o rail ganhou o ícone de **banco de dados** acima de
+> Containers e "Ferramentas" fecha a lista; e Logs/Shell de um container sem
+> projeto aberto passaram a dizer antes do clique que a aba de terminal é do
+> projeto (o core recusava depois). Valor novo de enum no wire sobe o minor.
+>
 > **O `0.104.0` (2026-09-13) é o GERENCIADOR DE TOOLCHAIN QUE LÊ O DISCO**
 > (`roadmaps/42` §8 itens b e d; `integracoes/39` §3): `toolchain.
 > inspectSysroot { path }` diz o que uma pasta de sysroot contém (headers,
@@ -475,7 +489,7 @@ O core canonicaliza `parent`, valida que `name` é apenas um segmento de caminho
 e cria o diretório filho. A resposta é `{ "path": "/dir/modulo" }`.
 
 `workspace.createProject` recebe
-`{ "parent": "/dir", "name": "demo", "template": "empty|cppCmake|rustCargo" }`.
+`{ "parent": "/dir", "name": "demo", "template": "empty|cppCmake|rustCargo|python" }`.
 O core cria o diretório do projeto, aplica o template e abre o projeto como
 workspace, retornando o mesmo payload de `workspace.open`.
 
@@ -485,6 +499,17 @@ workspace, retornando o mesmo payload de `workspace.open`.
   `include/` e `tests/`, `.gitignore` e `README.md`.
 - `rustCargo`: usa `cargo new --bin --vcs none`; se `cargo` não existir,
   retorna `TOOL_NOT_FOUND`.
+- `python` (`0.105.0`, 2026-09-13): geração interna, sem ferramenta —
+  `pyproject.toml` como a PEP 621 escreve (`requires-python = ">=3.12"`,
+  `[project.optional-dependencies] dev = ["pytest"]`, `[tool.ruff]`,
+  `[tool.pytest.ini_options]` com `testpaths` e `pythonpath = ["."]`),
+  `main.py` (o ponto de entrada que o botão Executar procura primeiro), o
+  pacote `<nome_com_underscores>/__init__.py` **na raiz** — layout plano, para
+  `python main.py` e `python -m pytest` acharem o pacote sem `pip install -e .`
+  antes do primeiro clique —, `tests/test_main.py`, `.gitignore` com o `.venv`
+  e `README.md`. O workspace nasce como `python`; o ambiente é o clique da
+  faixa de saúde. Medido em 2026-09-13: o projeto gerado roda, passa no pytest
+  e no `ruff check`/`format --check` sem editar nada.
 
 `workspace.status` responde `{ "workspace": <objeto acima> | null }`.
 `workspace.close` responde `{ "status": "ok", "closed": <root | null> }`.

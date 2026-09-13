@@ -95,20 +95,29 @@ Item {
                         onClicked: root.controller.act(linha.alvo, "restart")
                     }
 
+                    // Logs e shell nascem numa ABA DE TERMINAL, e a aba e' do
+                    // projeto aberto: sem workspace o core recusava com
+                    // "nenhum workspace aberto" DEPOIS do clique (medido em
+                    // 2026-09-13). Agora o botao diz antes.
                     KvIconButton {
                         anchors.verticalCenter: parent.verticalCenter
                         iconName: "file"
-                        tooltip: qsTr("Logs (aba de terminal)")
+                        tooltip: root.controller.canOpenTerminals
+                                 ? qsTr("Logs (aba de terminal)")
+                                 : qsTr("Logs: abra um projeto — a aba de terminal é do projeto")
                         compact: true
+                        enabled: root.controller.canOpenTerminals
                         onClicked: root.controller.openLogs(linha.alvo)
                     }
 
                     KvIconButton {
                         anchors.verticalCenter: parent.verticalCenter
                         iconName: "terminal"
-                        tooltip: qsTr("Shell dentro do container (só rodando)")
+                        tooltip: root.controller.canOpenTerminals
+                                 ? qsTr("Shell dentro do container (só rodando)")
+                                 : qsTr("Shell: abra um projeto — a aba de terminal é do projeto")
                         compact: true
-                        enabled: linha.rodando
+                        enabled: linha.rodando && root.controller.canOpenTerminals
                         onClicked: root.controller.openShell(linha.alvo)
                     }
 

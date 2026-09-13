@@ -37,6 +37,14 @@ Rectangle {
                  + "  src/main.rs\n\n"
                  + qsTr("Comando: cargo new --bin --vcs none %1").arg(name);
         }
+        if (root.controller.createTemplate === "python") {
+            return name + "/\n"
+                 + "  pyproject.toml  · PEP 621, pytest em [dev], ruff\n"
+                 + "  main.py  · o ponto de entrada do Executar\n"
+                 + "  " + name.replace(/-/g, "_") + "/__init__.py  tests/test_main.py\n"
+                 + "  .gitignore  README.md\n"
+                 + qsTr("Geração interna: nenhum comando externo; o .venv é um clique depois");
+        }
         return name + "/  " + qsTr("(diretório vazio)");
     }
 
@@ -116,6 +124,7 @@ Rectangle {
                 model: [
                     { key: "cppCmake", label: "C++ CMake" },
                     { key: "rustCargo", label: "Rust Cargo" },
+                    { key: "python", label: "Python" },
                     { key: "empty", label: qsTr("Vazio") }
                 ]
 

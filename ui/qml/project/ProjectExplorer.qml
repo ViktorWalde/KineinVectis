@@ -49,6 +49,12 @@ Rectangle {
         if (lowerName.endsWith(".rs")) {
             return "tree-file-rust";
         }
+        // Python entrou na fundacao em 2026-09-12 e na arvore em 2026-09-13:
+        // o icone e' o `>>>` do REPL, nao o logotipo (marca da PSF).
+        if (lowerName.endsWith(".py") || lowerName.endsWith(".pyi")
+                || lowerName.endsWith(".pyw")) {
+            return "tree-file-python";
+        }
         return "file";
     }
 

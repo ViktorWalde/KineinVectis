@@ -50,7 +50,115 @@ pub fn create_project(
         }
         WorkspaceProjectTemplate::CppCmake => create_cpp_cmake_project(parent, name),
         WorkspaceProjectTemplate::RustCargo => create_rust_cargo_project(parent, name),
+        WorkspaceProjectTemplate::Python => create_python_project(parent, name),
     }
+}
+
+/// Um projeto Python como a PEP 621 escreve, sem rodar ferramenta nenhuma:
+/// `pyproject.toml` (nome, versao, `requires-python`, `[project.optional-
+/// dependencies] dev = ["pytest"]`, `[tool.ruff]`, `[tool.pytest.ini_options]`
+/// com `pythonpath = ["."]`), `main.py` como ponto de entrada (o que o botao
+/// Executar procura primeiro), o pacote `<pacote>/__init__.py` NA RAIZ (layout
+/// plano: `python main.py` e `python -m pytest` acham o pacote sem instalar
+/// nada — um `src/` exigiria `pip install -e .` antes do primeiro Executar),
+/// `tests/test_main.py`, `.gitignore` com o `.venv`. Criar o ambiente e' o
+/// clique da faixa de saude; instalar o pytest e' `uv add --dev pytest` ou
+/// `pip install -e .[dev]` — a IDE nao roda nada aqui.
+fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, WorkspaceError> {
+    let parent = canonical_directory(parent)?;
+    let name = validate_child_name(name, NameKind::Project)?;
+    let root = parent.join(name);
+    if root.exists() {
+        return Err(WorkspaceError::AlreadyExists {
+            path: root.display().to_string(),
+        });
+    }
+    // O nome do pacote e' o do projeto em forma de modulo: `-` vira `_`.
+    let pacote = name.replace('-', "_");
+    let src = root.join(&pacote);
+    let tests = root.join("tests");
+    for directory in [&root, &src, &tests] {
+        fs::create_dir(directory).map_err(|source| WorkspaceError::CreateDirectory {
+            path: directory.display().to_string(),
+            source,
+        })?;
+    }
+    let pyproject = [
+        "[project]".to_owned(),
+        format!("name = \"{name}\""),
+        "version = \"0.1.0\"".to_owned(),
+        "description = \"\"".to_owned(),
+        "requires-python = \">=3.12\"".to_owned(),
+        "dependencies = []".to_owned(),
+        String::new(),
+        "[project.optional-dependencies]".to_owned(),
+        "dev = [\"pytest\"]".to_owned(),
+        String::new(),
+        "[tool.ruff]".to_owned(),
+        "line-length = 100".to_owned(),
+        String::new(),
+        "[tool.pytest.ini_options]".to_owned(),
+        "testpaths = [\"tests\"]".to_owned(),
+        "pythonpath = [\".\"]".to_owned(),
+    ]
+    .join("\n")
+        + "\n";
+    write_template(&root.join("pyproject.toml"), &pyproject)?;
+    let main = [
+        format!("\"\"\"Ponto de entrada de {name}: e' o que o botao Executar roda.\"\"\""),
+        String::new(),
+        format!("from {pacote} import saudacao"),
+        String::new(),
+        String::new(),
+        "def main() -> None:".to_owned(),
+        "    print(saudacao(\"mundo\"))".to_owned(),
+        String::new(),
+        String::new(),
+        "if __name__ == \"__main__\":".to_owned(),
+        "    main()".to_owned(),
+    ]
+    .join("\n")
+        + "\n";
+    write_template(&root.join("main.py"), &main)?;
+    let init = [
+        format!("\"\"\"{pacote}: o pacote de {name}.\"\"\""),
+        String::new(),
+        String::new(),
+        "def saudacao(nome: str) -> str:".to_owned(),
+        "    return f\"Ola, {nome}!\"".to_owned(),
+    ]
+    .join("\n")
+        + "\n";
+    write_template(&src.join("__init__.py"), &init)?;
+    let test_main = [
+        format!("from {pacote} import saudacao"),
+        String::new(),
+        String::new(),
+        "def test_saudacao() -> None:".to_owned(),
+        "    assert saudacao(\"mundo\") == \"Ola, mundo!\"".to_owned(),
+    ]
+    .join("\n")
+        + "\n";
+    write_template(&tests.join("test_main.py"), &test_main)?;
+    write_template(
+        &root.join(".gitignore"),
+        ".venv/\n__pycache__/\n*.pyc\n.pytest_cache/\n.ruff_cache/\ndist/\n",
+    )?;
+    let readme = [
+        format!("# {name}"),
+        String::new(),
+        "Projeto Python criado pelo Kinein Vectis.".to_owned(),
+        String::new(),
+        "- Ambiente: o botao \"Criar .venv\" da IDE (`uv venv .venv` ou `python3 -m venv .venv`)."
+            .to_owned(),
+        "- Testes: `uv add --dev pytest` (ou `.venv/bin/pip install -e .[dev]`) e o botao Testes."
+            .to_owned(),
+        "- Executar: o botao Executar roda `main.py` com o interpretador do projeto.".to_owned(),
+    ]
+    .join("\n")
+        + "\n";
+    write_template(&root.join("README.md"), &readme)?;
+    open_workspace(&root)
 }
 
 fn canonical_directory(path: &Path) -> Result<PathBuf, WorkspaceError> {
@@ -289,5 +397,56 @@ mod tests {
 
         assert!(error.is_invalid_path());
         assert!(error.to_string().contains("letras"));
+    }
+}
+
+#[cfg(test)]
+mod python_template_tests {
+    use kinein_protocol::{ProjectKind, WorkspaceProjectTemplate};
+
+    use super::create_project;
+
+    /// O template Python (2026-09-13): PEP 621, layout plano, pytest nos
+    /// extras — e o workspace ja' e' reconhecido como Python. Nada e'
+    /// executado: um projeto nasce mesmo sem python3 na maquina.
+    #[test]
+    fn create_python_project_writes_a_pep_621_project_that_runs_without_installing() {
+        let dir = std::env::temp_dir()
+            .join("kinein-core-tests")
+            .join(format!("{}-create-python", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let workspace = create_project(&dir, "demo-py", WorkspaceProjectTemplate::Python).unwrap();
+        assert_eq!(workspace.kind, ProjectKind::Python);
+        let root = dir.join("demo-py");
+        let pyproject = std::fs::read_to_string(root.join("pyproject.toml")).unwrap();
+        assert!(pyproject.contains("name = \"demo-py\""), "{pyproject}");
+        assert!(pyproject.contains("dev = [\"pytest\"]"));
+        assert!(
+            pyproject.contains("pythonpath = [\".\"]"),
+            "o pytest acha o pacote sem instalar"
+        );
+        // O nome vira modulo: `-` -> `_`, e o pacote fica na RAIZ.
+        assert!(root.join("demo_py/__init__.py").is_file());
+        assert!(!root.join("src").exists(), "layout plano");
+        let main = std::fs::read_to_string(root.join("main.py")).unwrap();
+        assert!(main.contains("from demo_py import saudacao"));
+        assert!(
+            std::fs::read_to_string(root.join("tests/test_main.py"))
+                .unwrap()
+                .contains("from demo_py import")
+        );
+        assert!(
+            std::fs::read_to_string(root.join(".gitignore"))
+                .unwrap()
+                .contains(".venv/")
+        );
+        // O botao Executar acha o main.py como ponto de entrada.
+        assert_eq!(
+            crate::python::run::entry_point(&root),
+            Some(crate::python::run::EntryPoint::File("main.py".to_owned()))
+        );
+        // Existe: recusa.
+        assert!(create_project(&dir, "demo-py", WorkspaceProjectTemplate::Python).is_err());
     }
 }

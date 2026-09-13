@@ -145,6 +145,7 @@ set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/ipc/DebugRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugRequestRouter.qml)
 set_source_files_properties(qml/panels/bottom/DebugPanel.qml PROPERTIES QT_RESOURCE_ALIAS DebugPanel.qml)
 set_source_files_properties(qml/shell/BottomTabBar.qml PROPERTIES QT_RESOURCE_ALIAS BottomTabBar.qml)
+set_source_files_properties(qml/shell/StatusBarProjectSummaries.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarProjectSummaries.qml)
 set_source_files_properties(qml/shell/WorkspaceStatusBar.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceStatusBar.qml)
 set_source_files_properties(qml/panels/bottom/BottomPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS BottomPanelHost.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSessionTabs.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSessionTabs.qml)
@@ -381,6 +382,7 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/DebugPanel.qml
         qml/shell/BottomTabBar.qml
         qml/shell/WorkspaceStatusBar.qml
+        qml/shell/StatusBarProjectSummaries.qml
         qml/panels/bottom/BottomPanelHost.qml
         qml/panels/bottom/TerminalSessionTabs.qml
         qml/panels/bottom/BuildPanel.qml
@@ -521,6 +523,7 @@ qt_add_qml_module(kinein-vectis
         assets/icons/tree/file-c.svg
         assets/icons/tree/file-cpp.svg
         assets/icons/tree/file-rust.svg
+        assets/icons/tree/file-python.svg
         "${KINEIN_MANUAL_FILE}"
 )
 

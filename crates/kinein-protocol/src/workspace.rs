@@ -223,6 +223,10 @@ pub enum WorkspaceProjectTemplate {
     CppCmake,
     /// Rust binary project created through `cargo new`.
     RustCargo,
+    /// Python project: `pyproject.toml` (PEP 621), `main.py`, a `tests/` with
+    /// pytest — no tool is run; the environment is one click away in the IDE
+    /// (`0.105.0`, 2026-09-13).
+    Python,
 }
 
 /// Parameters for `workspace.createFolder`.

@@ -399,7 +399,12 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             evidencia: main.py/app.py/__main__.py, pacote
                                             com __main__.py, [project.scripts] instalado)
  B7  setup Python                           uv, basedpyright, ruff — comando oficial
- B8  ANUNCIAR Python                        so' aqui a tela diz "Python"
+ B8  ANUNCIAR Python                        FEITO 2026-09-13 (40 §7.31), a pedido do autor:
+                                            template "Python" no Novo projeto, o resumo
+                                            Python na barra de status, o icone do .py na
+                                            arvore, "Testar com pytest"/"Analise (ruff)" no
+                                            menu. O que falta e' polimento: ruff servidor,
+                                            arvore do pytest, `-m`/attach no debugpy
 
 BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
  C1  mpremote no terminal                   FEITO 2026-09-13 (40 §7.28): num projeto

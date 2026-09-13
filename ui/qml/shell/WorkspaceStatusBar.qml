@@ -31,6 +31,8 @@ Rectangle {
     // sem arquivo ou sem o que dizer; o detalhe aparece ao pairar.
     property string contextSummary: ""
     property string contextDetail: ""
+    // O Python do projeto (PythonController.summary()); vazio fora de Python.
+    property string pythonSummary: ""
 
     signal logsRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
@@ -92,34 +94,13 @@ Rectangle {
             }
         }
 
-        Text {
+        // Os resumos do projeto (indice, contexto, python): dono proprio.
+        StatusBarProjectSummaries {
             anchors.verticalCenter: parent.verticalCenter
-            visible: bar.indexSummary !== ""
-            text: qsTr("índice: %1").arg(bar.indexSummary)
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontSizeStatus
-        }
-
-        Text {
-            id: contextoTexto
-
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.contextSummary !== ""
-            text: contextoArea.containsMouse && bar.contextDetail !== ""
-                  ? bar.contextDetail
-                  : qsTr("contexto: %1").arg(bar.contextSummary)
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontSizeStatus
-            elide: Text.ElideMiddle
-            width: Math.min(implicitWidth, 520)
-
-            MouseArea {
-                id: contextoArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.NoButton
-            }
+            indexSummary: bar.indexSummary
+            contextSummary: bar.contextSummary
+            contextDetail: bar.contextDetail
+            pythonSummary: bar.pythonSummary
         }
 
         Text {

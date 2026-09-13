@@ -31,6 +31,8 @@ Item {
             return "qrc:/KineinVectis/assets/icons/tree/file-cpp.svg";
         case "tree-file-rust":
             return "qrc:/KineinVectis/assets/icons/tree/file-rust.svg";
+        case "tree-file-python":
+            return "qrc:/KineinVectis/assets/icons/tree/file-python.svg";
         default:
             return "";
         }

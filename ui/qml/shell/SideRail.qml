@@ -10,6 +10,7 @@ Rectangle {
     property bool buildActive: false
     property bool debugActive: false
     property bool toolsActive: false
+    property bool databaseActive: false
     property bool containersActive: false
     property bool observabilityActive: false
 
@@ -19,6 +20,7 @@ Rectangle {
     signal buildRequested()
     signal debugRequested()
     signal toolsRequested()
+    signal databaseRequested()
     signal containersRequested()
     signal observabilityRequested()
 
@@ -124,16 +126,18 @@ Rectangle {
             onActivated: root.debugRequested()
         }
 
+        // Ferramentas NATIVAS com atalho visual (decisao do autor,
+        // 2026-09-12; a ordem e o banco em 2026-09-13): banco de dados,
+        // containers e observabilidade abrem daqui, sem projeto aberto — os
+        // perfis, o motor e o Grafana sao da maquina, nao do workspace.
+        // "Ferramentas" fecha a lista, por decisao do autor.
         RailButton {
-            iconName: "tools"
-            tooltip: qsTr("Ferramentas")
-            active: root.toolsActive
-            onActivated: root.toolsRequested()
+            iconName: "database"
+            tooltip: qsTr("Banco de dados (Ctrl+Alt+J)")
+            active: root.databaseActive
+            onActivated: root.databaseRequested()
         }
 
-        // Ferramentas NATIVAS com atalho visual (decisao do autor,
-        // 2026-09-12): containers e observabilidade abrem daqui, sem projeto
-        // aberto — o motor e o Grafana sao da maquina, nao do workspace.
         RailButton {
             iconName: "container"
             tooltip: qsTr("Containers (Ctrl+Alt+W)")
@@ -148,5 +152,11 @@ Rectangle {
             onActivated: root.observabilityRequested()
         }
 
+        RailButton {
+            iconName: "tools"
+            tooltip: qsTr("Ferramentas")
+            active: root.toolsActive
+            onActivated: root.toolsRequested()
+        }
     }
 }

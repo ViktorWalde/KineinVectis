@@ -47,6 +47,10 @@ Item {
     property string errorText: ""
 
     readonly property bool containerFound: containers.length > 0
+    // Logs e shell sao abas de terminal, e a aba pertence ao projeto aberto:
+    // sem workspace o core recusa (`container.open` exige root para o cwd).
+    // O painel abre sem projeto (o motor e' da maquina) — os botoes nao.
+    readonly property bool canOpenTerminals: workspaceRoot !== ""
 
     signal statusRequested()
     signal listRequested(bool all)
@@ -147,10 +151,18 @@ Item {
     }
 
     function openLogs(id) {
+        if (!canOpenTerminals) {
+            errorText = qsTr("abra um projeto para ver os logs: a aba de terminal é do projeto");
+            return;
+        }
         openRequested(id, "logs");
     }
 
     function openShell(id) {
+        if (!canOpenTerminals) {
+            errorText = qsTr("abra um projeto para o shell: a aba de terminal é do projeto");
+            return;
+        }
         openRequested(id, "shell");
     }
 

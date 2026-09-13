@@ -72,8 +72,17 @@ Item {
         if (controller.formatSize("431MB") !== "431MB") failures += 16384;
         if (controller.imageSummary({ repository: "postgres", tag: "16", size: 452984832 }) !== "postgres:16 · 453.0 MB") failures += 32768;
 
-        // Agir e' PEDIR: o controller nao roda nada.
+        // Agir e' PEDIR: o controller nao roda nada. Logs/shell sao abas de
+        // terminal, e a aba e' do projeto: sem workspace o pedido nao sai e o
+        // motivo aparece (2026-09-13 — antes o core recusava depois do clique).
         controller.act("pg", "stop");
+        const rootAntes = controller.workspaceRoot;
+        controller.workspaceRoot = "";
+        controller.openLogs("pg");
+        if (root.aberturas.length !== 0 || controller.errorText.indexOf("abra um projeto") !== 0
+                || controller.canOpenTerminals) failures += 4194304;
+        controller.workspaceRoot = rootAntes === "" ? "/tmp/proj" : rootAntes;
+        controller.errorText = "";
         controller.openLogs("pg");
         controller.openShell("pg");
         if (root.acoes.join(",") !== "pg:stop") failures += 65536;

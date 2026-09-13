@@ -182,6 +182,9 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
         else if (m_workspaceKind == QStringLiteral("cmake")) {
             m_workspaceBuildSystems.append(QStringLiteral("cmake"));
         }
+        else if (m_workspaceKind == QStringLiteral("python")) {
+            m_workspaceBuildSystems.append(QStringLiteral("python"));
+        }
     }
     // M4.3: lembra o root para recuperar de um crash futuro.
     m_lastWorkspaceRoot = m_workspaceRoot;
