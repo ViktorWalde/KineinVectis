@@ -238,6 +238,82 @@ pub struct ToolchainSetKitParams {
     pub debug_server: Option<String>,
 }
 
+/// One toolchain the IDE can install into its own folder (`integracoes/39`
+/// §5): a pinned release with the checksum its source published.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InstallableToolchain {
+    /// Catalogue id, also the folder under the install root
+    /// (`arm-gnu-arm-none-eabi`).
+    pub id: String,
+    /// Human label (`Arm GNU Toolchain (arm-none-eabi)`).
+    pub label: String,
+    /// Pinned version (`15.2.rel1`) — never "latest".
+    pub version: String,
+    /// The family it serves: `cortex-m`, `riscv`, `aarch64-linux`,
+    /// `arm-linux`, `riscv64-linux`.
+    pub family: String,
+    /// Exact download URL, shown before the click.
+    pub url: String,
+    /// Size of the archive in bytes, as the server reported when catalogued.
+    pub size_bytes: u64,
+    /// SHA-256 the source published (hex, lowercase), verified before
+    /// extraction.
+    pub sha256: String,
+    /// License of the toolchain, read in its source.
+    pub license: String,
+    /// Where the checksum was read (`arm.com .sha256asc`, `GitHub release
+    /// .sha`, `toolchains.bootlin.com .sha256`).
+    pub source: String,
+    /// Where it lands: `<install root>/<id>/<version>`.
+    pub install_dir: String,
+    /// `true` when `<install_dir>/bin` already exists.
+    pub installed: bool,
+    /// `true` when the open project's family matches this toolchain.
+    pub recommended: bool,
+}
+
+/// Result of `toolchain.installable`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ToolchainInstallableResult {
+    /// The IDE's toolchain folder.
+    pub install_root: String,
+    /// Every catalogued toolchain, with its state on this machine.
+    pub toolchains: Vec<InstallableToolchain>,
+    /// The family the open project asks for, when a workspace is open and the
+    /// model deduced one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub project_family: Option<String>,
+}
+
+/// Parameters for `toolchain.install`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ToolchainInstallParams {
+    /// Catalogue id of the toolchain to install.
+    pub id: String,
+}
+
+/// Payload of `event.toolchain.installed`: the install job ended.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ToolchainInstalledEvent {
+    /// Job id.
+    pub job_id: String,
+    /// Catalogue id.
+    pub id: String,
+    /// Pinned version.
+    pub version: String,
+    /// Where it was installed (`<root>/<id>/<version>`).
+    pub path: String,
+    /// `true` when the archive was verified, extracted and `bin/` exists.
+    pub success: bool,
+    /// Why it failed, in words (checksum mismatch names both digests).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
 #[cfg(test)]
 mod tests {
     use serde_json::json;

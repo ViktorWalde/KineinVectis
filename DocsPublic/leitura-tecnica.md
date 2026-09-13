@@ -66,10 +66,10 @@ core para o meio.
 
 ## 3. O que existe de verdade
 
-**134 métodos IPC** roteados e **46 eventos**, em **34 domínios de protocolo**;
-**683 testes** Rust verdes e **30 harnesses QML** (remedido em 2026-09-13;
+**136 métodos IPC** roteados e **47 eventos**, em **34 domínios de protocolo**;
+**692 testes** Rust verdes e **31 harnesses QML** (remedido em 2026-09-13;
 em 2026-09-12 à noite a simulação saiu do produto: −11 métodos, −85 testes,
-−7 harnesses). Protocolo `0.102.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
+−7 harnesses). Protocolo `0.103.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -149,7 +149,12 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       cmake e executavel do build (0.64.0). Desde 0.67.0 a
                       escolha e' do KIT, nao do workspace: um kit e' um preset
                       mais sysroot e triple do alvo, e o schema 1 migra para o
-                      kit padrao NA LEITURA, sem perder escolha de ninguem
+                      kit padrao NA LEITURA, sem perder escolha de ninguem.
+                      Desde 0.103.0 (2026-09-13) tem o PROVEDOR DE INSTALACAO
+                      (toolchain/install): catalogo pinado com o SHA-256 lido
+                      na fonte, download em job para a pasta da IDE, checksum
+                      antes de desempacotar, `tar` como processo; o detector
+                      le a pasta a cada busca
 
             library   catalogo CURADO de bibliotecas C/C++ (0.68.0): licenca
                       verificada na fonte, versao pinada e a frase do que cada

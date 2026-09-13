@@ -374,3 +374,184 @@ fn a_linux_cross_compiler_without_a_sysroot_gets_the_hint() {
     );
     assert!(com_kit.get("sysrootHint").is_none(), "{com_kit}");
 }
+
+/// O provedor de instalacao (integracoes/39 §5, 2026-09-13): o catalogo
+/// chega INTEIRO com URL, tamanho, sha256, licenca e fonte VISIVEIS antes de
+/// qualquer clique; o estado desta maquina (instalada ou nao, e onde) vem da
+/// pasta da IDE; num projeto STM32 a familia `cortex-m` e' a recomendada; um
+/// id fora do catalogo e uma toolchain ja' instalada sao recusas — e o `tar`
+/// ausente e' recusa ANTES de baixar. Nada aqui toca a rede: o download
+/// real e' o teste do dominio (`toolchain::install`), com um servidor local.
+#[test]
+#[cfg(unix)]
+fn the_install_catalogue_is_visible_before_any_click_and_refuses_what_it_must() {
+    let (root, bin) = workspace_with_tools("instalavel", &["cmake", "tar"]);
+    // Um .ioc (a fixture real do STM32Cube): o project.model deduz a familia
+    // stm32, que o catalogo traduz para cortex-m.
+    std::fs::copy(
+        concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../../scripts/fixtures/projetos/stm32cube/fixture.ioc"
+        ),
+        root.join("fixture.ioc"),
+    )
+    .unwrap();
+    let raiz = bin.parent().unwrap().join("toolchains");
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = Core::with_detector(
+        crate::tools::ToolDetector::with_search_path(&bin).with_install_root(&raiz),
+    );
+    core.enable_lsp(sender);
+    open(&mut core, &root);
+
+    let lista = core.handle_request(&JsonRpcRequest::new(30_i64, "toolchain.installable", None));
+    let result = lista.response().result.clone().unwrap();
+    assert_eq!(result["installRoot"], raiz.display().to_string());
+    assert_eq!(result["projectFamily"], "stm32", "{result}");
+    let toolchains = result["toolchains"].as_array().unwrap();
+    assert_eq!(toolchains.len(), crate::toolchain::install::CATALOGO.len());
+    let arm = toolchains
+        .iter()
+        .find(|t| t["id"] == "arm-gnu-arm-none-eabi")
+        .expect("Arm GNU no catalogo");
+    assert_eq!(arm["version"], "15.2.rel1");
+    assert!(
+        arm["url"]
+            .as_str()
+            .unwrap()
+            .starts_with("https://developer.arm.com/")
+    );
+    assert_eq!(arm["sha256"].as_str().unwrap().len(), 64);
+    assert_eq!(arm["sizeBytes"], 155_499_480_u64);
+    assert!(arm["license"].as_str().unwrap().contains("GPL"));
+    assert!(arm["source"].as_str().unwrap().contains("2026-09-13"));
+    assert_eq!(arm["installed"], false);
+    assert_eq!(arm["recommended"], true, "STM32 e' Cortex-M");
+    assert_eq!(
+        arm["installDir"],
+        raiz.join("arm-gnu-arm-none-eabi/15.2.rel1")
+            .display()
+            .to_string()
+    );
+    let bootlin = toolchains
+        .iter()
+        .find(|t| t["id"] == "bootlin-aarch64-glibc-stable")
+        .unwrap();
+    assert_eq!(
+        bootlin["recommended"], false,
+        "Linux aarch64 nao e' o alvo de um STM32"
+    );
+
+    // Fora do catalogo: INVALID_PARAMS que aponta o metodo da lista.
+    let fora = core.handle_request(&JsonRpcRequest::new(
+        31_i64,
+        "toolchain.install",
+        Some(json!({ "id": "latest" })),
+    ));
+    let erro = fora.response().error.clone().unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::InvalidParams);
+    assert!(erro.message.contains("toolchain.installable"));
+
+    // Ja' instalada (a pasta com bin/ existe): recusa que diz onde esta'.
+    std::fs::create_dir_all(raiz.join("arm-gnu-arm-none-eabi/15.2.rel1/bin")).unwrap();
+    let lista = core.handle_request(&JsonRpcRequest::new(32_i64, "toolchain.installable", None));
+    let result = lista.response().result.clone().unwrap();
+    let arm = result["toolchains"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["id"] == "arm-gnu-arm-none-eabi")
+        .unwrap();
+    assert_eq!(arm["installed"], true);
+    let de_novo = core.handle_request(&JsonRpcRequest::new(
+        33_i64,
+        "toolchain.install",
+        Some(json!({ "id": "arm-gnu-arm-none-eabi" })),
+    ));
+    let erro = de_novo.response().error.clone().unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
+    assert!(erro.message.contains("ja' esta' instalada"), "{erro:?}");
+
+    // Sem `tar` no PATH falso: TOOL_NOT_FOUND antes de qualquer download.
+    std::fs::remove_file(bin.join("tar")).unwrap();
+    let sem_tar = core.handle_request(&JsonRpcRequest::new(
+        34_i64,
+        "toolchain.install",
+        Some(json!({ "id": "xpack-riscv-none-elf-gcc" })),
+    ));
+    let erro = sem_tar.response().error.clone().unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::ToolNotFound, "{erro:?}");
+    assert!(erro.message.contains("tar"));
+    drop(receiver);
+}
+
+/// Depois de `event.toolchain.installed` com sucesso, o registro de
+/// ferramentas e' refeito e o `toolchain.get` lista o compilador que nasceu
+/// na pasta da IDE — sem reiniciar, sem `tools.detect` a mao.
+#[test]
+#[cfg(unix)]
+fn an_installed_toolchain_becomes_a_candidate_on_the_next_toolchain_get() {
+    use std::os::unix::fs::PermissionsExt;
+    let (root, bin) = workspace_with_tools("instalada-vira-candidato", &["cmake"]);
+    let raiz = bin.parent().unwrap().join("toolchains");
+    let (sender, _receiver) = std::sync::mpsc::channel();
+    let mut core = Core::with_detector(
+        crate::tools::ToolDetector::with_search_path(&bin).with_install_root(&raiz),
+    );
+    core.enable_lsp(sender);
+    open(&mut core, &root);
+    let antes = core.handle_request(&JsonRpcRequest::new(
+        40_i64,
+        "toolchain.get",
+        Some(json!({})),
+    ));
+    let candidatos = |r: &Value| -> Vec<String> {
+        r["candidates"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| c["id"].as_str().unwrap().to_owned())
+            .collect()
+    };
+    assert!(
+        !candidatos(&antes.response().result.clone().unwrap())
+            .contains(&"arm-none-eabi-gcc".to_owned())
+    );
+
+    // A "instalacao": a pasta nasce com o binario (o que o job faria).
+    let gcc = raiz.join("arm-gnu-arm-none-eabi/15.2.rel1/bin/arm-none-eabi-gcc");
+    std::fs::create_dir_all(gcc.parent().unwrap()).unwrap();
+    std::fs::write(&gcc, "#!/bin/sh\necho 15.2\n").unwrap();
+    std::fs::set_permissions(&gcc, std::fs::Permissions::from_mode(0o755)).unwrap();
+    // Sem o evento, o registro antigo ainda vale (o toolchain.get e' barato).
+    let ainda = core.handle_request(&JsonRpcRequest::new(
+        41_i64,
+        "toolchain.get",
+        Some(json!({})),
+    ));
+    assert!(
+        !candidatos(&ainda.response().result.clone().unwrap())
+            .contains(&"arm-none-eabi-gcc".to_owned())
+    );
+    core.observe_notification(&JsonRpcRequest::notification(
+        "event.toolchain.installed",
+        Some(json!({ "jobId": "j", "id": "arm-gnu-arm-none-eabi", "version": "15.2.rel1", "path": gcc.parent().unwrap().parent().unwrap().to_str().unwrap(), "success": true })),
+    ));
+    let depois = core.handle_request(&JsonRpcRequest::new(
+        42_i64,
+        "toolchain.get",
+        Some(json!({})),
+    ));
+    let result = depois.response().result.clone().unwrap();
+    assert!(
+        candidatos(&result).contains(&"arm-none-eabi-gcc".to_owned()),
+        "{result}"
+    );
+    let c = result["candidates"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["id"] == "arm-none-eabi-gcc")
+        .unwrap();
+    assert_eq!(c["path"], gcc.display().to_string());
+}

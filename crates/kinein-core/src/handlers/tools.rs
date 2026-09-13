@@ -44,6 +44,12 @@ impl Core {
         )
     }
 
+    /// Refaz a deteccao e publica no registro — para quando o disco mudou
+    /// por acao da propria IDE (uma toolchain instalada na pasta dela).
+    pub(crate) fn refresh_tool_registry(&self) {
+        set_tool_registry(&self.tool_registry, self.detector.detect_all());
+    }
+
     /// As ferramentas detectadas, varrendo o PATH so na primeira vez.
     ///
     /// E o mesmo caminho barato do `tools.status`, exposto para quem precisa da

@@ -24,6 +24,9 @@ Item {
     readonly property int alturaMaxima: 720
 
     readonly property int quantasSondas: root.controller ? root.controller.probes.length : 0
+    // O catalogo de toolchains aberto pede a altura da lista (168) e do aviso.
+    readonly property int alturaDoCatalogo: root.toolchainController
+        && root.toolchainController.installCatalogVisible ? 200 : 0
 
     signal dismissRequested()
 
@@ -37,8 +40,9 @@ Item {
         width: Math.min(560, root.maxAvailableWidth)
         height: Math.min(
             root.maxAvailableHeight,
-            Math.min(root.alturaMaxima,
-                     Math.max(root.alturaMinima, 400 + root.quantasSondas * 20)))
+            Math.min(root.alturaMaxima + root.alturaDoCatalogo,
+                     Math.max(root.alturaMinima, 400 + root.quantasSondas * 20)
+                     + root.alturaDoCatalogo))
         radius: Theme.radius
         color: Theme.background1
         border.width: 1

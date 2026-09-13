@@ -57,9 +57,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.102.0
-testes      683 Rust + 30 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
-metodos     134 IPC roteados, 46 eventos
+protocolo   0.103.0
+testes      692 Rust + 31 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+metodos     136 IPC roteados, 47 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -440,11 +440,18 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          compilador, 4 GDBs, 6 meta-ferramentas;
                                          busca em xPacks/espressif/IDE//opt;
                                          rustTargets e sysrootHint no
-                                         toolchain.get (0.97.0). FALTA: o
-                                         provedor de instalacao (39 §5: clique,
-                                         checksum, pasta da IDE), o seletor de
-                                         pasta do sysroot, importar kit Yocto/
-                                         Buildroot/Zephyr SDK
+                                         toolchain.get (0.97.0). O PROVEDOR DE
+                                         INSTALACAO FEITO em 2026-09-13 (§7.29,
+                                         0.103.0): nove releases pinados com o
+                                         SHA-256 lido na fonte, download em job,
+                                         checksum antes de desempacotar, tar como
+                                         processo, botao no painel. FALTA: o
+                                         seletor de pasta do sysroot, importar kit
+                                         Yocto/Buildroot/Zephyr SDK, e um ciclo
+                                         REAL de download no gate (hoje o download
+                                         real e' provado contra um servidor local
+                                         — baixar 155 MB no gate nao e' decisao
+                                         deste repositorio)
 --  A TRILHA PYTHON COMPLETA:            MAPEADA em 2026-09-12 (42 §9): MicroPython
     bare metal -> edge -> backend ->     no ESP32 (mpremote 1.29.0 aqui) ->
     banco                                Mosquitto como container (EPL/EDL) ->
@@ -2078,6 +2085,77 @@ existe COM ferramenta) — saíram.
 protocolo 0.102.0 — device no run.script; nativeModule no python.status; mpremote no serialMonitor
 testes  683 Rust (+8), 30 harnesses; 134 metodos, 46 eventos, 34 dominios
 proximo o provedor de download de toolchain (integracoes/39 §5) — a fila do §4
+```
+
+### 7.29 O provedor de instalação de toolchain — nove releases pinados, o checksum antes do tar, 2026-09-13
+
+O item de cima da fila depois da cadeia Python (`integracoes/39` §5): *"se o
+usuário abrir um projeto de STM32 e a máquina estiver limpa, a IDE oferece um
+botão"*. Com a regra que a decisão do autor exige — zero-config é DETECTAR +
+UM CLIQUE com o comando visível, NUNCA download calado. Protocolo 0.103.0.
+
+```text
+toolchain/install/catalog.rs   nove Entradas PINADAS: Arm GNU 15.2.rel1 (arm-none-eabi,
+                               aarch64-none-linux-gnu, arm-none-linux-gnueabihf), xPack
+                               arm-none-eabi-gcc 15.2.1-1.1 e riscv-none-elf-gcc 15.2.0-1,
+                               ATfE 23.1.0, Bootlin glibc stable 2026.08-1 (aarch64,
+                               armv7-eabihf, riscv64-lp64d) — URL, tamanho (HEAD),
+                               SHA-256 lido no .sha256asc/.sha/.sha256 da fonte em
+                               2026-09-13, licenca, fonte com data
+toolchain/install/mod.rs       install(): <id>/<versao>.part -> download por ureq (TLS
+                               rustls; prazo de 60 s ENTRE bytes) com SHA-256 no caminho
+                               -> digest conferido ANTES do tar -> `tar -xf
+                               --strip-components=1 -C` (processo) -> exige bin/ ->
+                               rename para <versao>; qualquer falha deixa so' o .part,
+                               que a proxima tentativa apaga
+tools/search_dirs.rs           install_root(home) e installed_bin_dirs(root): a pasta
+                               da IDE e' enumerada A CADA busca (nao na construcao do
+                               detector); ToolDetector.with_install_root para os testes
+handlers/toolchain_install.rs  toolchain.installable (nao exige workspace; com um, a
+                               familia do project.model marca `recommended`) e
+                               toolchain.install (recusas ANTES da rede: id fora do
+                               catalogo, ja' instalada, tar ausente; job com progresso
+                               por ponto percentual; event.toolchain.installed)
+lib.rs                         event.toolchain.installed com sucesso refaz o registro
+                               de ferramentas: o toolchain.get seguinte ja' lista o
+                               compilador novo como candidato
+UI                             EmbeddedInstallView (catalogo recolhido por padrao;
+                               label, versao, MiB, URL, sha256, licenca; recomendadas
+                               primeiro; um botao por linha, UMA instalacao por vez);
+                               EmbeddedAdapterView saiu do EmbeddedPanel para abrir
+                               espaco (293/300); ToolchainController.install/
+                               handleInstalled; core_client_toolchain.cpp
+protocolo                      InstallableToolchain, ToolchainInstallableResult,
+                               ToolchainInstallParams, ToolchainInstalledEvent
+Cargo                          sha2 0.11 (ja' no lock via mongodb/postgres; +0 crates)
+```
+
+**Medido em 2026-09-13:** os nove arquivos de checksum baixados e lidos; a
+Bootlin publica o `.sha256` ao LADO do tarball e não com o sufixo `.tar.xz.
+sha256` (o primeiro chute deu 404 — a listagem do diretório mostrou o nome);
+tamanhos de 91 a 433 MB. Não entram: Espressif (`idf_tools.py` é o instalador
+oficial; a IDE já lê `~/.espressif/tools`), Zephyr SDK (`setup.sh` — importar
+kit) e "latest".
+
+**Provado (15 mutações, 13 mortas com o compilador calado; 2 sobreviveram e
+viraram teste ou código a menos):** o download REAL pelo ureq contra um
+servidor HTTP local, o SHA-256 REAL, o `tar` REAL com `--strip-components=1`
+e o `bin/` no lugar que o detector procura; checksum errado = nada
+desempacotado e os dois digests no erro; HTTP 404, cancelamento e `tar`
+ausente sem pasta final nem `.part`; tarball sem `bin/` recusado (a
+sobrevivente que virou teste); o `.part` apagado; a recusa de reinstalar;
+`recommended` só pela família; `installed` pela pasta; o registro refeito
+só no sucesso; a pasta da IDE lida a cada busca e depois do `PATH`. No QML:
+uma instalação por vez, instalada não pede, recomendadas primeiro, o
+catálogo pedido de novo no desfecho. A outra sobrevivente era o
+`remove_file` do tarball dentro do `.part` que já cai inteiro — saiu.
+
+```text
+protocolo 0.103.0 — toolchain.installable, toolchain.install, event.toolchain.installed
+testes  692 Rust (+9), 31 harnesses (+tst_toolchain_install); 136 metodos, 47 eventos
+gate    exercitacao: toolchain.installable com o sha256 da Arm GNU 15.2.rel1
+proximo seletor de pasta do sysroot; importar kit Yocto/Buildroot/Zephyr; ou o
+        polimento da cadeia Python (40 §4) — a fila decide
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

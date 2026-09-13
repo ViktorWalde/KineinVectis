@@ -63,6 +63,11 @@ postgres = "0.19"
 # nova. Grafana local responde em `http://localhost:3000`, e um perfil `https`
 # recebe recusa EXPLICITA, nunca um erro de rede confuso.
 ureq = { version = "3.4", default-features = false, features = ["rustls"] }
+# SHA-256 do provedor de instalacao de toolchain (DocsPublic/integracoes/39 §5):
+# o tarball baixado e' conferido contra o checksum PUBLICADO pela fonte ANTES
+# de desempacotar. Medido em 2026-09-13: ja' estava no Cargo.lock (0.11.0) como
+# transitiva do `mongodb` e do `postgres-protocol`; +0 crates. MIT OR Apache-2.0.
+sha2 = "0.11"
 # `access(2)` seguro para o dominio `serial` (DocsPublic/integracoes/38 §6, E1): a
 # IDE precisa saber se o usuario le/escreve `/dev/ttyUSB0` SEM ABRIR a porta —
 # abrir aciona DTR/RTS na maioria das pontes e isso RESETA a placa. `access`

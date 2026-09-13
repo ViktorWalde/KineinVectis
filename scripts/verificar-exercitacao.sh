@@ -130,6 +130,10 @@ resposta="$(
         sleep 2
         printf '{"jsonrpc":"2.0","id":23,"method":"test.run","params":{"buildSystem":"python"}}\n'
         sleep 4
+        # O provedor de instalacao (39 §5): o catalogo com URL, tamanho e
+        # sha256 VISIVEIS — sem baixar nada (o download e' um clique, nunca o gate).
+        printf '{"jsonrpc":"2.0","id":24,"method":"toolchain.installable","params":{}}\n'
+        sleep 1
     } | "$binario" 2>/dev/null
 )"
 
@@ -266,6 +270,9 @@ if command -v python3 >/dev/null 2>&1; then
 else
     echo "  - run.script/test.run de Python: sem python3 nesta maquina (nao exercitado)"
 fi
+
+verifica 24 "toolchain.installable (o catalogo pinado, com sha256 e a pasta da IDE)" '"installRoot"'
+verifica 24 "toolchain.installable (a Arm GNU 15.2.rel1 com o sha256 publicado)" '"sha256":"597893282ac8c6ab1a4073977f2362990184599643b4c5ee34870a8215783a16"'
 
 if [ "$falhou" -ne 0 ]; then
     echo

@@ -159,6 +159,8 @@ public:
     Q_INVOKABLE void libraryList();
     Q_INVOKABLE void libraryPlan(const QString& id, const QString& target);
     Q_INVOKABLE void toolchainGet(const QString& preset);
+    Q_INVOKABLE void toolchainInstallable();
+    Q_INVOKABLE void toolchainInstall(const QString& id);
     Q_INVOKABLE void toolchainSet(const QString& role, const QString& id, const QString& preset);
     Q_INVOKABLE void toolchainSetKit(const QString& preset, const QString& sysroot,
                                      const QString& targetTriple, const QString& chip);
@@ -314,6 +316,14 @@ signals:
                            const QString& presetToolchainFile);
     void toolchainAdvice(const QString& sysrootHint, const QVariantList& rustTargets,
                          bool rustTargetsKnown);
+    /// O catalogo de toolchains instalaveis (integracoes/39 §5): URL, tamanho,
+    /// sha256, licenca e fonte de cada uma, o estado nesta maquina e a
+    /// familia que o projeto aberto recomenda.
+    void toolchainInstallableResolved(const QVariantList& toolchains, const QString& installRoot,
+                                      const QString& projectFamily);
+    /// `event.toolchain.installed`: o job acabou (jobId, id, version, path,
+    /// success, error).
+    void toolchainInstalled(const QVariantMap& outcome);
     void probesResolved(const QVariantList& probes, bool toolAvailable, const QString& rawOutput,
                         const QString& hint);
     void buildSizeResolved(const QVariantList& sections, const QVariantList& regions,

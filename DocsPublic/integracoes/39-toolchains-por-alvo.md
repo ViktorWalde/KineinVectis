@@ -191,7 +191,15 @@ Só diretórios que **existem** entram; a lista é determinística (ordem de
 nome); as duas variáveis de ambiente são lidas por quem chama e passadas por
 parâmetro — a função é pura e o teste a prova com uma `$HOME` falsa.
 
-## 5. O provedor de instalação — a fatia seguinte, com a regra decidida
+## 5. O provedor de instalação — FEITO em 2026-09-13 (0.103.0), com a regra decidida
+
+> **Estado (2026-09-13):** entregue como `toolchain.installable` /
+> `toolchain.install` (`arquitetura/03`, `roadmaps/40` §7.29). O catálogo tem
+> nove releases pinados com o SHA-256 lido na fonte nesse dia; o botão está no
+> painel de embarcados. O que o texto abaixo descrevia é o que existe — as
+> diferenças: o gatilho é a família do `project.model` (recomendada, não
+> obrigatória: o catálogo inteiro aparece), e Espressif/Zephyr ficaram de fora
+> pelas razões do §6.
 
 *"Se o usuário abrir um projeto de STM32 e a máquina estiver limpa, a IDE
 oferece um botão: Instalar toolchain Arm Cortex-M recomendada."* Entra, com a

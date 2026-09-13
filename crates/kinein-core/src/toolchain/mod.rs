@@ -25,6 +25,7 @@
 //! - [`store`]: `.kinein/toolchain.json`, com `schemaVersion`.
 
 mod catalog;
+pub mod install;
 mod store;
 
 use std::path::{Path, PathBuf};

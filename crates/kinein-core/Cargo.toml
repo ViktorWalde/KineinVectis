@@ -33,6 +33,7 @@ postgres.workspace = true
 # Observabilidade (DocsPublic/integracoes/37 §2): o Grafana e' AGPL e por isso a IDE
 # so' CONVERSA com ele, pela HTTP API. Este e' o cliente dessa conversa.
 ureq.workspace = true
+sha2.workspace = true
 # Bancos nao-relacionais (roadmaps/35 §9.7): colecao -> documento.
 mongodb.workspace = true
 # Simulacao por conceito (arquitetura/34): avalia a formula que o usuario digita

@@ -23,5 +23,13 @@ Item {
         function onSetKitRequested(preset, sysroot, targetTriple, chip) {
             root.coreClient.toolchainSetKit(preset, sysroot, targetTriple, chip);
         }
+
+        function onInstallableRequested() {
+            root.coreClient.toolchainInstallable();
+        }
+
+        function onInstallRequested(id) {
+            root.coreClient.toolchainInstall(id);
+        }
     }
 }

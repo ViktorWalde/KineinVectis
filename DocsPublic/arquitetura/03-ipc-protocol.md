@@ -1,5 +1,19 @@
 # 03 — Protocolo IPC
 
+> **O `0.103.0` (2026-09-13) é o PROVEDOR DE INSTALAÇÃO de toolchain**
+> ([`integracoes/39`](../integracoes/39-toolchains-por-alvo.md) §5, o item
+> de cima da fila depois da cadeia Python): `toolchain.installable` publica
+> um catálogo PINADO — nove toolchains (Arm GNU 15.2.rel1 ×3, xPack ×2,
+> ATfE 23.1.0, Bootlin 2026.08-1 ×3) com URL, tamanho, SHA-256 **lido na
+> fonte em 2026-09-13**, licença, onde vai parar e se já está lá, e o que o
+> projeto aberto recomenda; `toolchain.install { id }` é um JOB que baixa
+> (`ureq`, TLS por rustls) para `~/.local/share/kinein-vectis/toolchains/
+> <id>/<versão>`, confere o SHA-256 **antes** de desempacotar, desempacota
+> com o `tar` do sistema e termina em `event.toolchain.installed`; o detector
+> lê a pasta da IDE a cada busca, então a toolchain vira candidato do kit sem
+> reiniciar. Nunca sem clique, nunca no sistema, nunca sem checksum, nunca
+> "latest". Métodos e evento novos sobem o minor.
+>
 > **O `0.102.0` (2026-09-13) fecha a cadeia Python do
 > [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B
 > — a fatia 5, MicroPython e o módulo nativo:** num projeto MicroPython (a
@@ -1452,7 +1466,7 @@ dependência que já está no manifest, `Cargo.toml` com string multilinha ou
 manifest do usuário não tem desfazer; a recusa vem com o motivo, na lista e no
 diálogo.
 
-### Toolchain (`toolchain.get` / `toolchain.set`)
+### Toolchain (`toolchain.get` / `toolchain.set` / `toolchain.installable` / `toolchain.install`)
 
 Implementado no protocolo `0.64.0` (etapa 5 de
 `DocsPublic/roadmaps/30-caminho-para-o-mvp.md`; B2 do TR2 e §5d do `roadmaps/29`).
@@ -1631,6 +1645,69 @@ Só o que o usuário **fixou** entra na linha de comando. Emitir
 **O que esta fatia NÃO entrega, e está registrado:** sysroot, cross-compilação e
 kit por preset. São o resto do B2 do TR2, e ficam para uma fatia própria — o
 que existe hoje é a entidade e a rota até o comando.
+
+### O provedor de instalação de toolchain (`toolchain.installable` / `toolchain.install`, `0.103.0`)
+
+A fatia do [`integracoes/39`](../integracoes/39-toolchains-por-alvo.md) §5,
+entregue em 2026-09-13 com a regra que a decisão registrada e o pedido do
+autor juntos permitem: *"zero-config = DETECTAR + UM CLIQUE com o comando
+visível, NUNCA download calado"* (`roadmaps/42` §8).
+
+```text
+toolchain.installable {}       -> { installRoot, toolchains: [InstallableToolchain],
+                                    projectFamily? }
+toolchain.install { id }       -> { jobId }        (job; event.toolchain.installed no fim)
+
+InstallableToolchain   id, label, version, family (cortex-m | riscv | aarch64-linux |
+                       arm-linux | riscv64-linux), url, sizeBytes, sha256, license,
+                       source, installDir, installed, recommended
+event.toolchain.installed { jobId, id, version, path, success, error? }
+```
+
+**O catálogo é PINADO e medido.** Nove entradas (Linux x86_64): Arm GNU
+Toolchain 15.2.rel1 (`arm-none-eabi`, `aarch64-none-linux-gnu`,
+`arm-none-linux-gnueabihf`), xPack `arm-none-eabi-gcc` 15.2.1-1.1 e
+`riscv-none-elf-gcc` 15.2.0-1, Arm Toolchain for Embedded 23.1.0, Bootlin
+glibc stable 2026.08-1 (`aarch64`, `armv7-eabihf`, `riscv64-lp64d`). Cada
+SHA-256 foi **lido no arquivo que a fonte publica** em 2026-09-13
+(`.sha256asc` da Arm, `.sha` do GitHub release da xPack, `.sha256` da ATfE e
+da Bootlin) e cada tamanho veio do `Content-Length` de um HEAD no tarball —
+`toolchain/install/catalog.rs` guarda a fonte e a data ao lado de cada
+número. Não entram: Espressif (o `idf_tools.py` é o instalador oficial e a
+IDE já lê `~/.espressif/tools`), Zephyr SDK (precisa do `setup.sh` —
+importar kit, P1), e "latest" de qualquer fonte.
+
+**`toolchain.installable` não exige workspace** (catálogo e pasta são desta
+máquina); com um, a `family` do `project.model` marca `recommended` —
+`stm32`/`rp2040`/`nrf`/`cortex-m` → `cortex-m`, `riscv` → `riscv`;
+`espressif` e `linux` não recomendam nada. `installed` é
+`<installRoot>/<id>/<version>/bin` existir.
+
+**`toolchain.install` recusa antes de gastar rede:** id fora do catálogo →
+`INVALID_PARAMS` apontando o método da lista; já instalada →
+`INVALID_REQUEST` dizendo onde está; `tar` ausente → `TOOL_NOT_FOUND`. O job
+então: baixa por `ureq` (TLS por rustls; prazo de 60 s **entre bytes**, não
+total — um tarball de 400 MB numa rede lenta leva o que levar) para
+`<id>/<version>.part/`, calculando o SHA-256 no caminho e reportando
+`event.job.progress` por ponto percentual; **confere o digest ANTES de
+desempacotar** — divergiu, o erro mostra os dois digests e nada é
+desempacotado; `tar -xf … --strip-components=1 -C` (o `tar` do sistema, GPL,
+como processo; todos os tarballs do catálogo trazem uma pasta de topo, e é
+ela que sai) numa pasta dentro do `.part`; exige `bin/` no resultado; só então
+renomeia para `<version>` e apaga o `.part`. Cancelamento, HTTP ≠ 200, disco
+e `tar` com erro deixam no máximo um `.part`, que a próxima tentativa apaga.
+Provado com as peças REAIS num servidor local: ureq de verdade, SHA-256 de
+verdade, `tar` de verdade (`toolchain/install/mod.rs`, testes).
+
+**Depois do sucesso o detector já enxerga** (`tools/search_dirs.rs`,
+`installed_bin_dirs`): a pasta da IDE é enumerada a cada busca, não na
+construção do detector; o core refaz o registro de ferramentas ao ver
+`event.toolchain.installed { success: true }`, e o `toolchain.get` seguinte
+lista o compilador novo como candidato — o kit pode fixá-lo. O `PATH` continua
+vencendo a pasta da IDE: o que o usuário escolheu vence o que a IDE
+encontrou. A UI (`EmbeddedInstallView`) mostra label, versão, tamanho, URL,
+sha256 e licença de cada entrada, recomendadas primeiro, e um botão por linha;
+uma instalação por vez.
 
 ### Settings (`settings.get` / `settings.set`)
 
@@ -1961,7 +2038,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 134 métodos roteados — a lista inteira
+## Os 136 métodos roteados — a lista inteira
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -2119,6 +2196,8 @@ terminal.scroll
 test.run
 
 toolchain.get
+toolchain.install
+toolchain.installable
 toolchain.set
 toolchain.setKit
 
@@ -2138,7 +2217,7 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 46 eventos emitidos — a lista inteira
+## Os 47 eventos emitidos — a lista inteira
 
 > **Era "Eventos iniciais", e faltavam três** — os dois do `datasource` e o do
 > `grafana`. Refeita em 2026-09-06. **Cinco não são literais no código**: eles
@@ -2207,6 +2286,8 @@ event.test.case
 event.test.finished
 event.test.output
 event.test.started
+
+event.toolchain.installed
 ```
 
 ## Regras

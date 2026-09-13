@@ -37,6 +37,18 @@ Item {
     signal getRequested(string preset)
     signal setRequested(string role, string id, string preset)
     signal setKitRequested(string preset, string sysroot, string targetTriple, string chip)
+    signal installableRequested()
+    signal installRequested(string id)
+
+    // O PROVEDOR DE INSTALACAO (integracoes/39 §5, 2026-09-13): o catalogo
+    // que o core publica, com URL/tamanho/sha256 VISIVEIS antes do clique;
+    // `installing` e' o id em andamento (um por vez: sao centenas de MB).
+    property var installable: []
+    property string installRoot: ""
+    property string projectFamily: ""
+    property string installing: ""
+    property string lastInstallOutcome: ""
+    property bool installCatalogVisible: false
 
     visible: false
 
@@ -50,9 +62,49 @@ Item {
         targetTriple = "";
         chip = "";
         presetToolchainFile = "";
+        installable = [];
+        projectFamily = "";
+        installing = "";
+        lastInstallOutcome = "";
         if (workspaceRoot !== "") {
             getRequested("");
+            installableRequested();
         }
+    }
+
+    function handleInstallable(toolchains, newInstallRoot, newProjectFamily) {
+        installable = toolchains === undefined || toolchains === null ? [] : toolchains;
+        installRoot = newInstallRoot === undefined ? "" : newInstallRoot;
+        projectFamily = newProjectFamily === undefined ? "" : newProjectFamily;
+    }
+
+    // Recomendadas primeiro, o resto na ordem do catalogo — apresentacao;
+    // quem decide o que e' recomendado e' o core.
+    function installableSorted() {
+        const recomendadas = installable.filter(t => t.recommended === true);
+        const outras = installable.filter(t => t.recommended !== true);
+        return recomendadas.concat(outras);
+    }
+
+    function install(id) {
+        if (installing !== "" || workspaceRoot === "") return;
+        const alvo = installable.find(t => t.id === id);
+        if (alvo === undefined || alvo.installed === true) return;
+        installing = id;
+        lastInstallOutcome = "";
+        installRequested(id);
+    }
+
+    // O job acabou: o catalogo e os candidatos sao pedidos de novo — a
+    // toolchain nova ja' e' candidato do kit (o core refez a deteccao).
+    function handleInstalled(outcome) {
+        installing = "";
+        if (outcome === undefined || outcome === null) return;
+        lastInstallOutcome = outcome.success === true
+                ? qsTr("%1 %2 instalada em %3").arg(outcome.id).arg(outcome.version).arg(outcome.path)
+                : qsTr("falhou: %1").arg(outcome.error);
+        installableRequested();
+        getRequested(preset);
     }
 
     // O que so' um processo responde (integracoes/39): a dica de sysroot do

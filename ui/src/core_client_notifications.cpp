@@ -59,6 +59,10 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit projectChanged(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.toolchain.installed")) {
+        emit toolchainInstalled(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.python.finished")) {
         // jobId, success, tool, command e path viajam juntos: a tela diz o que
         // rodou e se o ambiente existe, e pede o status de novo.

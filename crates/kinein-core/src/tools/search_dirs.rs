@@ -6,6 +6,7 @@
 //!
 //! ```text
 //! ~/.local/share/kinein-vectis/toolchains/<id>/<versao>/bin   a pasta da IDE
+//!                                            (installed_bin_dirs: lida a cada busca)
 //! ~/.local/xPacks/@xpack-dev-tools/<nome>/<versao>/.content/bin   xpm (fonte:
 //!                                            xpack.github.io/xpm/docs/user/folders,
 //!                                            XPACKS_STORE_FOLDER sobrescreve)
@@ -20,9 +21,31 @@
 
 use std::path::{Path, PathBuf};
 
-/// Os diretorios `bin` de toolchain que existem sob `home` (e sob os dois
-/// caminhos que as variaveis de ambiente podem sobrescrever), na ordem de
-/// preferencia: a pasta da IDE primeiro, `/opt` por ultimo.
+/// A pasta onde a IDE instala toolchains (`integracoes/39` §5): nunca fora
+/// dela, nunca no sistema.
+#[must_use]
+pub fn install_root(home: &Path) -> PathBuf {
+    home.join(".local/share/kinein-vectis/toolchains")
+}
+
+/// Os `bin` das toolchains que a IDE instalou em `root` (`<id>/<versao>/bin`).
+///
+/// Os que EXISTEM agora: enumerado a cada busca, e nao na construcao do
+/// detector — uma toolchain instalada nesta sessao aparece na proxima
+/// deteccao sem reiniciar nada.
+#[must_use]
+pub fn installed_bin_dirs(root: &Path) -> Vec<PathBuf> {
+    let mut saida = Vec::new();
+    for versao in subpastas_ate(root, 2) {
+        empurrar(&mut saida, versao.join("bin"));
+    }
+    saida
+}
+
+/// Os diretorios `bin` de toolchain que existem sob `home` ALEM da pasta da IDE.
+///
+/// E sob os dois caminhos que as variaveis de ambiente podem sobrescrever; na
+/// ordem de preferencia: xpm primeiro, `/opt` por ultimo.
 #[must_use]
 pub fn extra_search_dirs(
     home: &Path,
@@ -30,25 +53,21 @@ pub fn extra_search_dirs(
     idf_tools: Option<&Path>,
 ) -> Vec<PathBuf> {
     let mut saida = Vec::new();
-    // 1. o que a IDE instalou: toolchains/<id>/<versao>/bin
-    for versao in subpastas_ate(&home.join(".local/share/kinein-vectis/toolchains"), 2) {
-        empurrar(&mut saida, versao.join("bin"));
-    }
-    // 2. xpm: @xpack-dev-tools/<nome>/<versao>/.content/bin
+    // 1. xpm: @xpack-dev-tools/<nome>/<versao>/.content/bin
     let store = xpacks_store.map_or_else(|| home.join(".local/xPacks"), Path::to_path_buf);
     for versao in subpastas_ate(&store.join("@xpack-dev-tools"), 2) {
         empurrar(&mut saida, versao.join(".content/bin"));
         empurrar(&mut saida, versao.join("bin"));
     }
-    // 3. ESP-IDF: tools/<nome>/<versao>/<nome>/bin
+    // 2. ESP-IDF: tools/<nome>/<versao>/<nome>/bin
     let esp = idf_tools.map_or_else(|| home.join(".espressif/tools"), Path::to_path_buf);
     for pasta in subpastas_ate(&esp, 3) {
         empurrar(&mut saida, pasta.join("bin"));
     }
-    // 4. o que rustup/cargo/pipx instalam para o usuario
+    // 3. o que rustup/cargo/pipx instalam para o usuario
     empurrar(&mut saida, home.join(".cargo/bin"));
     empurrar(&mut saida, home.join(".local/bin"));
-    // 5. tarballs desempacotados em /opt
+    // 4. tarballs desempacotados em /opt
     for pasta in subpastas_ate(Path::new("/opt"), 1) {
         empurrar(&mut saida, pasta.join("bin"));
     }

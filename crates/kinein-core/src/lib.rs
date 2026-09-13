@@ -259,6 +259,7 @@ impl Core {
             .or_else(|| self.cmake_request_response(method, request_id.clone(), params))
             .or_else(|| self.configaction_request_response(method, request_id.clone(), params))
             .or_else(|| self.toolchain_request_response(method, request_id.clone(), params))
+            .or_else(|| self.toolchain_install_request_response(method, request_id.clone(), params))
             .or_else(|| self.format_request_response(method, request_id.clone(), params))
             .or_else(|| self.run_request_response(method, request_id.clone(), params))
             .or_else(|| self.debug_request_response(method, request_id.clone(), params))
@@ -391,6 +392,10 @@ impl Core {
         match notification.method.as_str() {
             "event.cmake.finished" => self.on_cmake_configure_finished(success),
             "event.python.finished" => self.on_python_environment_finished(success),
+            // Uma toolchain nova na pasta da IDE: o registro de ferramentas e'
+            // refeito (o detector le a pasta a cada busca), para o
+            // toolchain.get seguinte ja' lista-la como candidato.
+            "event.toolchain.installed" if success => self.refresh_tool_registry(),
             _ => {}
         }
     }

@@ -1065,6 +1065,7 @@ dependencies = [
  "rustix",
  "serde",
  "serde_json",
+ "sha2",
  "tree-sitter",
  "tree-sitter-c",
  "tree-sitter-cpp",

@@ -19,6 +19,18 @@ void CoreClient::toolchainGet(const QString& preset)
     sendRequest(QStringLiteral("toolchain.get"), params);
 }
 
+void CoreClient::toolchainInstallable()
+{
+    sendRequest(QStringLiteral("toolchain.installable"), QJsonObject{});
+}
+
+void CoreClient::toolchainInstall(const QString& id)
+{
+    // O clique E' o consentimento (integracoes/39 §5): a tela ja' mostrou a
+    // URL, o tamanho e o sha256 antes; o core baixa como job cancelavel.
+    sendRequest(QStringLiteral("toolchain.install"), QJsonObject{{QStringLiteral("id"), id}});
+}
+
 void CoreClient::toolchainSetKit(const QString& preset, const QString& sysroot,
                                  const QString& targetTriple, const QString& chip)
 {
@@ -58,6 +70,18 @@ void CoreClient::toolchainSet(const QString& role, const QString& id, const QStr
 
 bool CoreClient::dispatchToolchainResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("toolchain.installable")) {
+        emit toolchainInstallableResolved(
+            result.value(QStringLiteral("toolchains")).toArray().toVariantList(),
+            result.value(QStringLiteral("installRoot")).toString(),
+            result.value(QStringLiteral("projectFamily")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("toolchain.install")) {
+        // A resposta e' so' o jobId: o andamento chega pelos event.job.* e o
+        // desfecho por event.toolchain.installed.
+        return true;
+    }
     if (method != QStringLiteral("toolchain.get") && method != QStringLiteral("toolchain.set") &&
         method != QStringLiteral("toolchain.setKit"))
     {

@@ -17,9 +17,6 @@ Item {
 
     readonly property string preset: root.toolchainController && root.toolchainController.preset !== ""
                                     ? root.toolchainController.preset : qsTr("padrão")
-    readonly property var adapterOptions: root.toolchainController
-        ? root.toolchainController.candidatesFor("debugAdapter") : []
-
     signal closeRequested()
 
     Column {
@@ -224,36 +221,16 @@ Item {
             controller: root.controller
         }
 
-        // --- Depurador -----------------------------------------------------
-        Text {
-            text: qsTr("Depurador do kit: %1").arg(
-                      root.toolchainController ? root.toolchainController.labelFor("debugAdapter") : "")
-            color: Theme.textSecondary
-            font.pixelSize: 11
-            font.bold: true
+        // O depurador do kit: dono proprio (saiu daqui em 2026-09-13).
+        EmbeddedAdapterView {
+            width: parent.width
+            toolchainController: root.toolchainController
         }
 
-        Flow {
+        // O provedor de instalacao de toolchain (integracoes/39 §5).
+        EmbeddedInstallView {
             width: parent.width
-            spacing: Theme.spacingXSmall
-
-            Repeater {
-                model: root.adapterOptions
-
-                KvToggleChip {
-                    id: chipAdaptador
-
-                    required property var modelData
-
-                    labelText: String(chipAdaptador.modelData.label)
-                    active: {
-                        const selecao = root.toolchainController.selectionFor("debugAdapter");
-                        return selecao !== null && selecao.id === chipAdaptador.modelData.id;
-                    }
-                    onToggled: root.toolchainController.choose("debugAdapter",
-                                                               chipAdaptador.modelData.id)
-                }
-            }
+            toolchainController: root.toolchainController
         }
     }
 

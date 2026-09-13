@@ -800,6 +800,10 @@ python/native.rs + serial/monitor.rs         o modulo nativo (pybind11/nanobind/
                                              a ferramenta) no python.status; MicroPython:
                                              o REPL do mpremote como monitor e o .py
                                              rodando NA PLACA (python/run.rs Mpremote)
+toolchain/install/{catalog,mod}.rs           o PROVEDOR DE INSTALACAO: nove releases
+handlers/toolchain_install.rs                pinados com o SHA-256 lido na fonte; download
+ui/qml/embedded/EmbeddedInstallView.qml      em job, checksum ANTES do tar, pasta da IDE
+                                             (tools/search_dirs lida a cada busca)
 crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida

@@ -14,7 +14,8 @@
 mod known;
 pub mod search_dirs;
 
-use search_dirs::extra_search_dirs;
+pub use search_dirs::install_root;
+use search_dirs::{extra_search_dirs, installed_bin_dirs};
 
 use std::{
     env,
@@ -56,10 +57,18 @@ pub use known::KNOWN_TOOLS;
 /// Detects external tools on a configurable search path.
 ///
 /// The default detector uses the `PATH` environment variable. Tests inject a
-/// fixed search path so detection stays hermetic.
+/// fixed search path so detection stays hermetic. A pasta onde a IDE instala
+/// toolchains (`install_root`) e' enumerada A CADA busca — o que o provedor
+/// de instalacao acabou de desempacotar entra na proxima deteccao.
 #[derive(Debug, Clone, Default)]
 pub struct ToolDetector {
+    /// O `PATH` (do ambiente ou fixado) mais os diretorios extras, na ordem.
     search_path: Option<OsString>,
+    /// Os diretorios que entram logo DEPOIS do `PATH` (os extras de
+    /// `search_dirs`), quando o detector veio do ambiente.
+    extra_dirs: Vec<PathBuf>,
+    /// A pasta da IDE (`toolchains/<id>/<versao>/bin`), lida a cada busca.
+    install_root: Option<PathBuf>,
 }
 
 impl ToolDetector {
@@ -68,23 +77,20 @@ impl ToolDetector {
     /// toolchain instalam por padrao (`~/.local/xPacks`, `~/.espressif/tools`,
     /// a pasta da IDE, `/opt/*/bin`): o `arm-none-eabi-gcc` de um tarball em
     /// `/opt` e' achado sem o usuario editar o PATH. O `PATH` vem PRIMEIRO,
-    /// para o que o usuario escolheu vencer o que a IDE encontrou.
+    /// para o que o usuario escolheu vencer o que a IDE encontrou; a pasta da
+    /// IDE vem logo depois dele.
     #[must_use]
     pub fn from_environment() -> Self {
-        let mut dirs: Vec<PathBuf> = env::var_os("PATH")
-            .map(|p| env::split_paths(&p).collect())
-            .unwrap_or_default();
-        if let Some(home) = env::var_os("HOME").map(PathBuf::from) {
+        let home = env::var_os("HOME").map(PathBuf::from);
+        let extra_dirs = home.as_ref().map_or_else(Vec::new, |home| {
             let xpacks = env::var_os("XPACKS_STORE_FOLDER").map(PathBuf::from);
             let idf = env::var_os("IDF_TOOLS_PATH").map(PathBuf::from);
-            for extra in extra_search_dirs(&home, xpacks.as_deref(), idf.as_deref()) {
-                if !dirs.contains(&extra) {
-                    dirs.push(extra);
-                }
-            }
-        }
+            extra_search_dirs(home, xpacks.as_deref(), idf.as_deref())
+        });
         Self {
-            search_path: env::join_paths(dirs).ok(),
+            search_path: env::var_os("PATH"),
+            extra_dirs,
+            install_root: home.map(|home| install_root(&home)),
         }
     }
 
@@ -93,7 +99,47 @@ impl ToolDetector {
     pub fn with_search_path(search_path: impl Into<OsString>) -> Self {
         Self {
             search_path: Some(search_path.into()),
+            extra_dirs: Vec::new(),
+            install_root: None,
         }
+    }
+
+    /// A pasta onde a IDE instala toolchains — para um teste apontar uma
+    /// pasta temporaria e para o provedor saber onde desempacotar.
+    #[must_use]
+    pub fn with_install_root(mut self, root: impl Into<PathBuf>) -> Self {
+        self.install_root = Some(root.into());
+        self
+    }
+
+    /// A pasta da IDE deste detector, se ha' uma.
+    #[must_use]
+    pub fn install_root(&self) -> Option<&Path> {
+        self.install_root.as_deref()
+    }
+
+    /// Todos os diretorios onde se procura, na ordem: `PATH`, a pasta da IDE
+    /// (o que existe AGORA), os extras dos distribuidores.
+    fn search_dirs(&self) -> Vec<PathBuf> {
+        let mut dirs: Vec<PathBuf> = self
+            .search_path
+            .as_ref()
+            .map(|p| env::split_paths(p).collect())
+            .unwrap_or_default();
+        let instaladas = self
+            .install_root
+            .as_deref()
+            .map(installed_bin_dirs)
+            .unwrap_or_default();
+        for extra in instaladas
+            .into_iter()
+            .chain(self.extra_dirs.iter().cloned())
+        {
+            if !dirs.contains(&extra) {
+                dirs.push(extra);
+            }
+        }
+        dirs
     }
 
     /// Detects every tool in [`KNOWN_TOOLS`].
@@ -154,9 +200,8 @@ impl ToolDetector {
     /// Where `binary` lives on the search path, if anywhere. `pub(crate)` for
     /// the domains that pick between binaries (`container`: docker vs podman).
     pub(crate) fn find_in_path(&self, binary: &str) -> Option<PathBuf> {
-        let search_path = self.search_path.clone().or_else(|| env::var_os("PATH"))?;
-
-        env::split_paths(&search_path)
+        self.search_dirs()
+            .into_iter()
             .map(|directory| directory.join(binary))
             .find(|candidate| is_executable(candidate))
     }
@@ -580,15 +625,15 @@ mod tests {
         assert!(tools.iter().all(|tool| tool.status == ToolStatus::Missing));
     }
 
-    /// Os diretorios de toolchain alem do PATH: a pasta da IDE, o xpm, o
-    /// ESP-IDF, o cargo/pipx do usuario — so' os que EXISTEM, na ordem, sem
-    /// repetir; e as duas variaveis de ambiente (lidas por quem chama) mandam
-    /// no lugar do padrao.
+    /// Os diretorios de toolchain alem do PATH: o xpm, o ESP-IDF, o
+    /// cargo/pipx do usuario — so' os que EXISTEM, na ordem, sem repetir; e
+    /// as duas variaveis de ambiente (lidas por quem chama) mandam no lugar
+    /// do padrao. (A pasta da IDE e' lida a parte, a cada busca: teste
+    /// `the_install_root_is_read_on_every_lookup`.)
     #[test]
     fn extra_search_dirs_finds_the_toolchain_homes_that_exist() {
         let home = temp_bin_dir("extra-dirs-home");
         let mk = |rel: &str| std::fs::create_dir_all(home.join(rel)).unwrap();
-        mk(".local/share/kinein-vectis/toolchains/arm-none-eabi/15.2.rel1/bin");
         mk(".local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/15.2.0-1/.content/bin");
         mk(".espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin");
         mk(".cargo/bin");
@@ -603,7 +648,6 @@ mod tests {
         assert_eq!(
             rel,
             vec![
-                ".local/share/kinein-vectis/toolchains/arm-none-eabi/15.2.rel1/bin",
                 ".local/xPacks/@xpack-dev-tools/riscv-none-elf-gcc/15.2.0-1/.content/bin",
                 ".espressif/tools/xtensa-esp-elf/esp-16.1.0_20260609/xtensa-esp-elf/bin",
                 ".cargo/bin",
@@ -622,6 +666,49 @@ mod tests {
                 .iter()
                 .any(|d| d.starts_with(home.join(".local/xPacks"))),
             "com a variavel, o padrao do xpm nao e' lido"
+        );
+    }
+
+    /// A pasta da IDE nao e' congelada na construcao: uma toolchain que o
+    /// provedor desempacotou depois de o detector existir aparece na busca
+    /// seguinte — sem isso, "Instalar" exigiria reiniciar a IDE para valer.
+    /// E ela vem DEPOIS do PATH: o que o usuario escolheu vence.
+    #[test]
+    #[cfg(unix)]
+    fn the_install_root_is_read_on_every_lookup() {
+        use std::os::unix::fs::PermissionsExt;
+        let base = temp_bin_dir("install-root");
+        let path_dir = base.join("path");
+        let raiz = base.join("toolchains");
+        std::fs::create_dir_all(&path_dir).unwrap();
+        let detector = ToolDetector::with_search_path(&path_dir).with_install_root(&raiz);
+        assert_eq!(detector.install_root(), Some(raiz.as_path()));
+        assert_eq!(detector.find_in_path("arm-none-eabi-gcc"), None);
+
+        // A toolchain nasce DEPOIS: a mesma instancia a encontra.
+        let bin = raiz.join("arm-gnu-arm-none-eabi/15.2.rel1/bin");
+        std::fs::create_dir_all(&bin).unwrap();
+        std::fs::write(bin.join("arm-none-eabi-gcc"), "#!/bin/sh\n").unwrap();
+        std::fs::set_permissions(
+            bin.join("arm-none-eabi-gcc"),
+            std::fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+        assert_eq!(
+            detector.find_in_path("arm-none-eabi-gcc"),
+            Some(bin.join("arm-none-eabi-gcc"))
+        );
+
+        // O PATH vence a pasta da IDE.
+        std::fs::write(path_dir.join("arm-none-eabi-gcc"), "#!/bin/sh\n").unwrap();
+        std::fs::set_permissions(
+            path_dir.join("arm-none-eabi-gcc"),
+            std::fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
+        assert_eq!(
+            detector.find_in_path("arm-none-eabi-gcc"),
+            Some(path_dir.join("arm-none-eabi-gcc"))
         );
     }
 }
