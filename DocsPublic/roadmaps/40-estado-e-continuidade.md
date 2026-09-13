@@ -518,6 +518,30 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          crate — a decidir com fonte). E' fatia
                                          grande e propria; entra na fila sem
                                          data de execucao
+--  o que a VARREDURA do §8 ainda acusa  REMEDIDO em 2026-09-13: event.quality.
+    (calculado e nao mostrado)           started sem ouvinte QML; event.quality.
+                                         output descartado no C++; os 3 sinais de
+                                         environmentScan sem ouvinte (o progresso
+                                         da varredura de ferramentas nao aparece);
+                                         cmake.presets.list e job.list sem cliente;
+                                         dataSourceTestAccepted/grafanaProbeAccepted
+                                         sem ouvinte. Cada um e' fatia pequena; o
+                                         quality.output e' o que mais esconde (a
+                                         saida do clippy/ruff quando NAO ha'
+                                         diagnostico parseavel)
+--  SINCRONIZACAO DE DOCUMENTACAO         PEDIDO do autor em 2026-09-13 (fim de
+    antes da etapa de UX/UI/HUD          tarde): "atualize/sincronize a documentacao
+                                         do projeto para refletir o estado atual de
+                                         tudo feito e para nao haver perda de
+                                         contexto" — e ela vem ANTES da etapa de
+                                         UX/UI/HUD (§5). Feita na mesma tarde
+                                         (§7.35): manual sem simulacao e com
+                                         Python/Embarcados/Containers, README com
+                                         Python, 41/42/29/37 com estado, §8
+                                         remedido, prompt de retomada novo. Vale
+                                         como REGRA para as proximas: a passada de
+                                         sincronizacao e' um item da fila, nao um
+                                         gesto implicito
 ```
 
 ## 5. As decisões registradas que NÃO se reabrem
@@ -2470,6 +2494,56 @@ proximo o polimento da cadeia Python (40 §4): ruff servidor, attach no debugpy,
         a porta no Executar de MicroPython; depois o bloco A de embarcados
 ```
 
+### 7.35 A passada de sincronização de documentação, 2026-09-13
+
+Pedido do autor, no fim da tarde: *"atualize/sincronize a documentação do
+projeto para refletir o estado atual de tudo feito e para não haver perda de
+contexto"* — e ele a colocou **antes** da etapa de UX/UI/HUD. A regra zero
+valeu para os documentos: cada afirmação de estado foi conferida no código
+antes de ser reescrita.
+
+```text
+manual.md            ainda tinha a §10 "Simulacao fisica e matematica" (FORA do
+                     produto desde 2026-09-12) e a frase "IDE para ... e
+                     simulacao"; nao tinha Embarcados, Containers nem Python.
+                     Agora: §9 com Embarcados (Ctrl+Alt+M) e Containers
+                     (Ctrl+Alt+W), §10 Python (ambiente, linguagem, executar,
+                     testar, depurar, modulo nativo, MicroPython), a arvore de
+                     testes na §4, debugpy/gdb -i dap na §4.1, o rail na ordem
+                     do autor, os 7 atalhos de Ambiente na tabela
+README.md (raiz)     "para C, C++ e Rust" -> "C, C++, Rust e Python — no desktop
+                     e em sistemas embarcados"; bullets de Python e toolchains
+roadmaps/29          cabecalho: a coluna Python da §1 FECHOU (o que cada linha
+                     virou); a tabela fica como a medicao de 2026-08-29
+integracoes/37       cabecalho: as candidatas foram ADOTADAS em 2026-09-04; o
+                     que falta; a experiencia "a DataGrip" e' a etapa de UX
+roadmaps/41 §5       B7 FEITO (setup Python ja' estava no catalogo desde
+                     0.98.0 — a fila mentia); B8 e F3 com o estado de hoje
+roadmaps/42 §8       item 1 (b)(c) FEITOS (o .venv de um clique; o comando no
+                     terminal); item 5: (0)(b)(c)(d) FEITOS em 0.103/0.104, o
+                     "falta" reescrito (pasta nativa, Zephyr SDK, medir Yocto/
+                     Buildroot reais, toolchain file gerado)
+40 §8                REMEDIDO: test.output/test.started chegam a tela desde
+                     §7.26; probe.list tem consumidor desde §7.8; o resto
+                     continua e virou entrada do §4
+40 §4                + a varredura restante; + esta passada como ITEM DA FILA
+leitura-tecnica      gate 23 (era "dezenove" de 2026-09-10); container e python
+                     com 0.105–0.108
+GUIAIA §5.9c         KvButton/KvIconButton, StatusBarProjectSummaries,
+                     TestsPanel/discover, run.capabilities, os harnesses novos
+build/comandos       o passo verificar-python-debug.sh (e como ele e' provado)
+prompt de retomada   RETOMADA_2026-09-13-noite.md, consolidado: as DUAS etapas
+                     na ordem, o que sobrou, a mesa e a maquina (inclusive o
+                     AppImage de 2026-09-03 no menu), as decisoes
+```
+
+**O que a passada revelou de método:** a fila do 41 dizia B7 pendente e ele
+estava feito há um dia; o manual anunciava um painel que não existe mais. Os
+dois são a mesma falha — documento atualizado *por domínio tocado*, nunca
+*por leitura completa*. Por isso a sincronização entrou no §4 como item da
+fila, a ser feito antes de cada etapa nova, e não como gesto implícito de
+cada commit (que continua valendo para o que o commit toca).
+
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 
 Feita a pedido do autor, antes do pente-fino. **Ela procura uma classe só, e é a
@@ -2485,6 +2559,19 @@ sem porta, e foi assim que a coluna `exato` respondeu por outra equação.
 # Q_INVOKABLE que o QML nunca chama
 # sinais QML declarados sem tratador
 ```
+
+> **Remedido em 2026-09-13 (fim de tarde).** Do que a varredura acusou:
+> `event.test.output` e `event.test.started` **chegam à tela desde
+> 2026-09-13** (§7.26, o A6 do 41: o painel Testes mostra o comando, a saída
+> bruta e o `error` do runner); `probe.list` **tem consumidor desde
+> 2026-09-11** (§7.8, o `EmbeddedRequestRouter`). Continuam como a varredura
+> os deixou: `event.quality.started` é emitido pelo C++ e nenhum QML o
+> escuta; `event.quality.output` continua descartado no próprio C++
+> (`core_client_notifications.cpp`, `return true`); os três sinais de
+> `environmentScan` sem ouvinte; `cmake.presets.list` e `job.list` sem
+> cliente; os dois `*Accepted` do banco/Grafana sem ouvinte; os dois sinais
+> QML do §8.3. O texto abaixo é o achado de 2026-09-10, mantido como
+> registro.
 
 ### 8.1 O que é calculado e nunca aparece — prioridade real
 

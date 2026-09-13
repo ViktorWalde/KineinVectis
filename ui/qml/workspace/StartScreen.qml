@@ -70,7 +70,7 @@ Rectangle {
                 }
 
                 Text {
-                    text: qsTr("IDE para C, C++, Rust, sistemas embarcados e simulação")
+                    text: qsTr("IDE para C, C++, Rust, Python e sistemas embarcados")
                     color: Theme.textSecondary
                     font.pixelSize: 12
                 }

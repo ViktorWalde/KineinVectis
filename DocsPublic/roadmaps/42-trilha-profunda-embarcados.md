@@ -535,11 +535,12 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
                 consome; o configure automatico ignora os presets do projeto
                 (com um so' nao-oculto, usa-lo nao e' adivinhar); e o core
                 nao prova o automatico na exercitacao (e' a UI que pede)
-                (b) requirements.txt/pyproject.toml sem ambiente: "criar .venv
-                com uv" de UM clique, com o comando mostrado (uv: MIT OR
-                Apache-2.0, LICENSE-MIT lido em 2026-09-12; ausente aqui)
-                (c) o que falta na maquina: UM clique que abre o terminal com o
-                comando oficial ja' digitado (setup)
+                (b) FEITO 2026-09-12 (40 §7.24): pyproject/requirements sem
+                ambiente -> "criar .venv" de UM clique pela faixa de saude
+                (uv se houver, senao `python -m venv`), comando mostrado
+                (c) FEITO: o painel de instalacao manda o comando oficial para
+                o TERMINAL da IDE, visivel, e nada roda escondido (o
+                SetupPanelHost.commandRequested -> submitShellInput)
    NAO entra    baixar toolchain CALADA. O JetBrains faz isso porque distribui
                 os binarios; aqui a decisao registrada (40 §5, "comando de
                 instalacao") e' fonte oficial citada, nunca sudo, nunca em
@@ -612,26 +613,24 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
                 cada distribuidor; procura ALEM do PATH (~/.local/xPacks,
                 ~/.espressif/tools, a pasta da IDE, /opt/*/bin); o
                 toolchain.get diz os alvos Rust INSTALADOS e denuncia o
-                compilador cross de distro SEM sysroot (medido no Fedora)
-   falta        (0) o PROVEDOR DE INSTALACAO (39 §5): botao "instalar
-                <toolchain> na pasta da IDE" com URL/sha256 visiveis, download
-                em job, checksum antes de desempacotar — decisao do autor de
-                2026-09-12, refinando a de "comando de instalacao"; (a)
-                seletor de PASTA no lugar do campo de texto; (b) LER o
-                sysroot: usr/include, usr/lib, lib, usr/lib/<triple>, os .pc
-                do pkg-config, a versao da glibc — e mostrar o que ha';
-                (c) injetar: CMAKE_SYSROOT via um toolchain file gerado pela
-                IDE em .kinein/ (o --sysroot entra nos comandos, a CDB o carrega
-                e o clangd o le SEM configuracao propria), e o --query-driver
-                que ja' existe; (d) IMPORTAR kit de SDK: Yocto —
-                `sh -c '. environment-setup-<arch>; env'` e ler CC/CXX/
-                SDKTARGETSYSROOT/OECORE_* (o CC do SDK ja' traz
-                --sysroot=$SDKTARGETSYSROOT; docs.yoctoproject.org, sdk-manual,
-                lido em 2026-09-12); Buildroot — output/host/bin/<triple>-gcc,
-                output/host/<triple>/sysroot e o toolchainfile.cmake que o
-                Buildroot gera. NAO MEDIDO: nao ha' SDK Yocto nem arvore
-                Buildroot nesta maquina — vira fixture minima + exercitacao
-                quando houver
+                compilador cross de distro SEM sysroot (medido no Fedora).
+                E desde 2026-09-13 (40 §7.29 e §7.30): (0) o PROVEDOR DE
+                INSTALACAO existe — nove releases pinados (Arm GNU, xPack,
+                ATfE, Bootlin) com SHA-256 lido na fonte, download em job,
+                checksum ANTES do tar, pasta da IDE lida pelo detector, botao
+                no painel de embarcados; (b) `toolchain.inspectSysroot` LE a
+                pasta (usr/include, usr/lib, lib, usr/lib/<triple>, os .pc, a
+                glibc/musl) e da' um VEREDITO; (c) o kit injeta
+                -DCMAKE_SYSROOT e -DCMAKE_TOOLCHAIN_FILE (quando o preset nao
+                declara um) e o --sysroot no clangd; (d) `toolchain.importKit`
+                de Yocto (environment-setup-* por `sh -c`), Buildroot
+                (share/buildroot/) e pasta de toolchain (-print-sysroot)
+   falta        (a) seletor de PASTA nativo no lugar do campo de texto; o SDK
+                do Zephyr (setup.sh + ZEPHYR_SDK_INSTALL_DIR) no importKit;
+                medir o importKit contra um SDK Yocto e uma arvore Buildroot
+                REAIS (nao ha' nenhum nesta maquina — hoje e' fixture minima
+                do padrao dos dois); o toolchain file GERADO pela IDE em
+                .kinein/ (hoje o kit usa o do SDK ou o que o autor apontar)
    pilar        P1 (o manager), P6 (Yocto/Buildroot)
 
 6  REMOTE DEPLOY & DEBUG (SSH + gdbserver) DE UM CLIQUE

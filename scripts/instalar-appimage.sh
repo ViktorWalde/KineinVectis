@@ -69,7 +69,7 @@ cat >"$DESKTOP_FILE" <<EOF
 Type=Application
 Name=Kinein Vectis
 GenericName=Integrated Development Environment
-Comment=IDE para C, C++, Rust, sistemas embarcados e simulação
+Comment=IDE para C, C++, Rust, Python e sistemas embarcados
 Exec="$ESCAPED_EXEC" %F
 Icon=$ICON_FILE
 Terminal=false

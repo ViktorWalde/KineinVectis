@@ -4,9 +4,10 @@ Guia completo para usar e testar a IDE depois que ela estiver aberta. Este
 documento cobre os fluxos, recursos, atalhos e problemas encontrados durante o
 uso.
 
-> **O que é:** Kinein Vectis é uma IDE para C, C++, Rust, sistemas embarcados
-> e simulação. Ela orquestra ferramentas maduras (clangd, rust-analyzer,
-> cargo, CMake, clang-format...) em vez de reimplementá-las. Os fluxos da IDE
+> **O que é:** Kinein Vectis é uma IDE para C, C++, Rust, Python e sistemas
+> embarcados. Ela orquestra ferramentas maduras (clangd, rust-analyzer,
+> basedpyright, cargo, CMake, pytest, debugpy, clang-format, ruff...) em vez
+> de reimplementá-las. Os fluxos da IDE
 > são locais e não têm telemetria; somente uma CLI externa iniciada
 > explicitamente por você no terminal pode usar rede conforme a política dela.
 >
@@ -81,7 +82,8 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
 ```
 
 - **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
-  Build, Debug e Ferramentas.
+  Build, Debug e, embaixo, os painéis de ambiente na ordem Banco de dados,
+  Containers, Observabilidade e Ferramentas (por último).
 - Clicar numa aba do painel inferior que já está aberta **recolhe** o
   painel.
 - Os painéis laterais e o painel inferior são **redimensionáveis**: arraste
@@ -250,8 +252,8 @@ grupo capturado.
 | Atalho | Ação | Onde ver o resultado |
 | --- | --- | --- |
 | `Ctrl+F9` ou `Ctrl+Alt+B` | **Build** do projeto (cargo build / cmake) | aba Build + Problemas |
-| `Ctrl+Shift+F9` ou `Ctrl+Alt+T` | **Testes** (cargo test / ctest) | aba Testes |
-| `Ctrl+Shift+L` | **Análise de qualidade** (clippy) | aba Problemas |
+| `Ctrl+Shift+F9` ou `Ctrl+Alt+T` | **Testes** (cargo test / ctest / `python -m pytest -v`) | aba Testes |
+| `Ctrl+Shift+L` | **Análise de qualidade** (clippy / clang-tidy / `ruff check`) | aba Problemas |
 
 > Todos esses também são **botões na barra superior** — atalho nenhum é
 > obrigatório. Onde houver tecla `F1`–`F12` há sempre uma alternativa sem
@@ -267,17 +269,29 @@ problemas caindo na mesma aba Problemas. Se o `cargo metadata` do projeto
 estiver quebrado (Cargo.toml inválido), o banner de Project Health avisa
 com a mensagem do cargo e um botão para tentar de novo.
 
-**Scripts do projeto:** arquivos `.sh`, `.bash` e `.zsh` mostram um botão de
-executar ao passar o mouse na árvore. A mesma ação fica no clique direito como
-**Executar script**. A saída abre na sessão **Execução** do Terminal e pode ser
-interrompida pelo controle normal de Run. Só arquivos dentro do workspace são
-aceitos; não é necessário abrir um terminal e digitar o caminho.
+**A árvore de testes.** Na aba **Testes**, **Listar testes** mostra os casos
+**sem rodar nenhum** (`pytest --collect-only`, `cargo test -- --list`,
+`ctest -N`), e cada linha tem **Rodar só este teste**. O caso que roda pinta a
+própria linha com o resultado; a saída bruta do runner fica logo abaixo — e
+se o runner nem chegou a correr (sem `pytest` no ambiente, por exemplo), a aba
+mostra **o motivo e o passo para instalar**, em vez de "0 testes".
+
+**Scripts do projeto:** arquivos `.sh`, `.bash`, `.zsh` e `.py` mostram um
+botão de executar ao passar o mouse na árvore. A mesma ação fica no clique
+direito como **Executar script** (e **Depurar**, num `.py`). A saída abre na
+sessão **Execução** do Terminal e pode ser interrompida pelo controle normal de
+Run. Só arquivos dentro do workspace são aceitos; não é necessário abrir um
+terminal e digitar o caminho. O que a árvore aceita como executável é o core
+quem diz — a lista não mora na tela.
 
 ---
 
 ### 4.1 Depurar (debugger)
 
-Funciona em C/C++ e Rust via `lldb-dap` (instalado junto com o lldb).
+Funciona em C/C++ e Rust via `lldb-dap` (instalado junto com o lldb), em
+**Python via `debugpy`** (o módulo do interpretador do projeto — veja §10) e,
+em projetos embarcados, pelo `gdb -i dap` contra o servidor de debug do kit
+(OpenOCD, QEMU, `probe-rs`) — veja §9, *Embarcados*.
 
 1. **Compile antes** (`Ctrl+F9`) — o debug usa o binário já compilado.
 2. Clique na **gutter** (a coluna dos números de linha) para marcar
@@ -302,8 +316,10 @@ valem sempre; a segunda não depende de `Fn`):
 | `Shift+F8` | `Ctrl+Alt+U` | Step out (sai da função atual) |
 
 O alvo é escolhido automaticamente (o binário único de `target/debug` no
-Rust, ou de `.kinein/build` no CMake). Se houver mais de um, a mensagem
-de erro lista os candidatos.
+Rust, ou de `.kinein/build` no CMake; num projeto Python, o ponto de entrada —
+`main.py`, `app.py`, `__main__.py` ou um pacote com `__main__.py`, lançado
+como `-m pacote`). Se houver mais de um, a mensagem de erro lista os
+candidatos.
 
 **Inspecionar o estado:** com o programa pausado, a aba Debug mostra os
 **Frames** (a pilha de chamadas — clique num frame para abrir o código
@@ -474,9 +490,11 @@ pode ser disparado pelo banner de Project Health.
 ## 9. Menu **Ambiente** — preparar o projeto antes de compilar
 
 Este menu existe porque configurar o ambiente **não é "ferramenta"**: é o que se
-faz antes de compilar. São sete painéis, e todos seguem a mesma regra — a IDE
+faz antes de compilar. São oito painéis, e todos seguem a mesma regra — a IDE
 **mostra o que vai fazer e espera você aceitar**; nenhum deles escreve no seu
-projeto sozinho.
+projeto sozinho. Os quatro que se usam todo dia também estão na **barra lateral
+esquerda**, nesta ordem: Banco de dados, Containers, Observabilidade e, por
+último, Ferramentas.
 
 ### Bibliotecas
 
@@ -548,167 +566,113 @@ compilação cruzada e embarcados entram sem um segundo mecanismo.
 
 A IDE escolhe automaticamente quando dá, e **mostra que escolheu**.
 
+### Embarcados (`Ctrl+Alt+M`)
+
+O painel de quem escreve firmware. Ele **lê**, e diz o que leu:
+
+```text
+o projeto        o framework pelos marcadores dele (ESP-IDF, Zephyr, pico-sdk,
+                 PlatformIO, STM32Cube, Rust bare metal, MicroPython, Yocto,
+                 Buildroot), o alvo deduzido, o que falta na maquina com o
+                 passo oficial, e o que o modelo NAO conseguiu decidir
+portas seriais   vistas pelo sysfs, SEM abrir nenhuma: quem faz a ponte
+                 (CP2102, CH340, USB Serial/JTAG...), se voce tem acesso e o
+                 aviso do ModemManager quando ele pode ocupar a porta
+monitor serial   um botao por porta abre tio/picocom/minicom (ou o REPL do
+                 mpremote num projeto MicroPython) NUMA ABA DE TERMINAL —
+                 e' um processo, como qualquer outro
+sonda e kit      a sonda pelo `probe-rs list`; o chip, o alvo (triple), o
+                 sysroot e o depurador ficam no KIT do projeto
+tamanho          "Medir" le o ELF e mostra uma barra por regiao do linker
+                 script (flash, RAM) depois do build
+toolchains       o catalogo do que a IDE sabe instalar NA PASTA DELA
+instalaveis      (~/.local/share/kinein-vectis/toolchains): URL, tamanho e
+                 SHA-256 visiveis ANTES do clique; o download e' um job e o
+                 checksum e' conferido antes de desempacotar. Nada no sistema
+sysroot e SDK    "Ler sysroot" diz o que uma pasta contem (headers,
+                 bibliotecas, libc, .pc do pkg-config) e se ela serve;
+                 "Importar kit" le um SDK Yocto, uma arvore Buildroot ou uma
+                 pasta de toolchain e PROPOE o kit — voce aplica
+```
+
+Depurar um alvo embarcado é o mesmo `[Debug]` de sempre: o kit diz o
+servidor (OpenOCD, QEMU ou `probe-rs`) e a IDE o sobe e conecta o `gdb -i dap`.
+Nada aqui roda como root; permissão de porta e de sonda é mostrada, com o
+passo oficial da distro, nunca executada.
+
+### Containers (`Ctrl+Alt+W`)
+
+Docker **ou** Podman — o que responder nesta máquina (no Fedora, `docker`
+costuma ser o `podman-docker`, e o painel diz isso). A primeira linha é o
+**motor**: versão, rootless ou com daemon, o socket, se responde e qual
+`compose` existe. Se algo falta, o painel imprime o passo oficial (grupo
+`docker`, `systemctl`, `podman.socket`) — **e não o executa**.
+
+Abaixo, os containers (os parados também, pelo chip **parados também**) com o
+que cada estado permite: **iniciar** o que parou, **parar/reiniciar** o que
+roda, **remover** só o parado (remover o que roda é dois gestos, de
+propósito). **Logs** e **Shell** abrem numa aba de terminal — por isso pedem um
+projeto aberto: a aba é do projeto. As imagens locais fecham a lista.
+
+**compose up / compose down** são do **projeto**: só acendem quando há motor
+respondendo, uma ferramenta de compose **e um arquivo de compose na raiz do
+workspace** (`compose.yaml`, `docker-compose.yml`...). Sem um deles, a linha do
+motor diz o que falta. `up` é `-d`; a saída viva mora nos logs de cada
+container. Toda ação é um job cancelável, e o que falhou vira motivo no topo
+do painel.
+
 ---
 
-## 10. Simulação física e matemática (menu **Ambiente → Simulação...**)
+## 10. Python
 
-A IDE traz um **catálogo de conceitos** de física e matemática. Você escolhe o
-conceito, **escreve a equação**, e a IDE confere se as duas coisas combinam
-enquanto você digita.
+Python é vertical **nativa** da IDE, não um plugin — e a tela só diz "Python"
+porque a cadeia inteira funciona: ambiente, linguagem, executar, testar,
+depurar, e a placa.
 
-### Como funciona, passo a passo
-
-1. **Escolha o conceito** na lista à esquerda — cada um mostra a disciplina a
-   que pertence, e a fonte da formulação com a data em que foi revisada.
-2. **Escreva a fórmula.** A borda do campo fica verde quando ela bate com o
-   conceito, e âmbar quando não bate. Os problemas aparecem em frases: *"este
-   conceito precisa de constante elástica, e nenhuma variável da sua fórmula foi
-   ligada a ela"*.
-3. **Diga o que cada variável é.** A IDE **não adivinha**: ela lista as
-   variáveis que encontrou e você liga cada uma à grandeza que ela representa,
-   com a unidade ao lado. Chamar de `x` alguma coisa que não é posição não pode
-   passar despercebido.
-4. **Preencha os valores.** Campo vazio **não vira zero** — a conta não parte
-   enquanto faltar um.
-5. **Calcule** (conceitos algébricos) ou **Integre** (equações diferenciais).
-
-### O que a tela mostra, e por quê
+**O interpretador é o `compile_commands.json` do Python.** Ao abrir um projeto
+com `pyproject.toml`, `requirements.txt` ou `setup.py`, a IDE resolve **qual
+Python** o projeto usa — o `VIRTUAL_ENV` ativo, o `.venv/` (ou `venv/`,
+`env/`) do projeto, o ambiente do Poetry, o `python3` do sistema em último
+caso, com aviso — e mostra na **barra de status**
+(`python: .venv · 3.14.7`). Sem ambiente, o banner de Project Health oferece
+**Criar .venv com uv** (ou `python3 -m venv`, se o `uv` não estiver na
+máquina), com o comando visível; nada é criado sem clique.
 
 ```text
-o calculo         a formula que voce escreveu, os valores substituidos por
-                  extenso, e o resultado. Nao e' uma explicacao: e' literalmente
-                  a conta que rodou
-a trajetoria      o grafico de y(t) e y'(t), mais a trilha em numeros
-o metodo          "Runge-Kutta 4, dt = 1e-3" — nunca um numero sem procedencia
-o ERRO            o valor exato ao lado do calculado, a diferenca absoluta e a
-                  RELATIVA — e, acima de tudo, DE ONDE o exato veio
+linguagem     realce e outline pelo Tree-sitter; completar, navegar, renomear,
+              diagnosticos pelo basedpyright — que SOBE COM O INTERPRETADOR DO
+              PROJETO e reinicia sozinho quando o .venv nasce
+formatar      Ctrl+Alt+L = `ruff format`
+analise       Ctrl+Shift+L = `ruff check`, com o mesmo perfil de rigor dos
+              outros (os problemas caem na aba Problemas)
+executar      o botao Executar (Shift+F10) roda o PONTO DE ENTRADA do projeto —
+              main.py, app.py, __main__.py, um pacote com __main__.py (como
+              `-m pacote`) ou o script de [project.scripts] instalado —, com o
+              interpretador do projeto (`uv run` quando ha' uv.lock). Qualquer
+              .py da arvore tambem roda pelo botao ou pelo clique direito
+testar        Ctrl+Shift+F9 = `python -m pytest -v`; a arvore de casos antes de
+              rodar e "rodar so' este" (§4). Sem pytest no ambiente, a aba diz
+              o passo para instalar NELE, nao no sistema
+depurar       o mesmo [Debug]: o `debugpy` e' modulo do interpretador do
+              projeto (`-m debugpy.adapter`); sem ele, a IDE diz `pip install
+              debugpy` no ambiente certo. Breakpoints, frames e variaveis como
+              em C/C++/Rust
+modulo nativo um projeto com pybind11, nanobind ou PyO3 (maturin, scikit-build)
+              e' reconhecido, e a barra diz qual e como se constroi — o C/C++
+              ou Rust dentro dele e' lido pelo mesmo indice
+novo projeto  Arquivo -> Novo projeto -> template "Python": layout plano,
+              pyproject PEP 621, pytest em [dev], ruff configurado
 ```
 
-### De onde vem o "valor exato" — e por que isso importa
+**MicroPython.** Num projeto MicroPython, o **monitor serial** do painel de
+Embarcados abre o **REPL do `mpremote`** na porta escolhida, e **Executar** num
+`.py` roda o arquivo **na placa** (`mpremote run`). O firmware oficial ainda se
+grava fora da IDE — é a próxima fatia da frente de embarcados.
 
-Duas procedências, e a tela sempre diz qual é:
-
-```text
-da SUA equacao    a IDE resolveu o que voce escreveu, e mostra a solucao
-                  fechada ao lado do numero calculado. Precisa do SymPy
-                  instalado no Python desta maquina
-do CONCEITO       a solucao canonica do conceito. Continua util, mas se voce
-                  mudou a equacao ela responde por OUTRA pergunta — e a tela
-                  avisa, dizendo tambem por que o oraculo nao respondeu
-```
-
-**Por que a distinção não é detalhe.** Medido: com a equação do oscilador
-amortecido escrita com o coeficiente de atrito dobrado, a IDE chegava a acusar
-um erro de `2,5e-2` numa integração que estava certa até `3,2e-7` — setenta e
-oito mil vezes. Ela culpava a integração por uma divergência que era da própria
-pergunta. Hoje o número tem procedência, e quando ele é do conceito a tela diz.
-
-**E o erro relativo entrou junto**, porque só o absoluto engana nos dois
-sentidos: `1,474` de erro sobre um valor de 83 mil é uma integração excelente, e
-o mesmo `1,474` ao lado de um resultado de `0,032` seria catástrofe.
-
-### As unidades
-
-Com o SymPy instalado, a IDE também confere as **unidades** da equação que você
-escreveu, em três camadas:
-
-```text
-o argumento de seno, cosseno, exponencial e logaritmo tem de ser numero PURO
-os termos da soma tem de ter a mesma unidade — `x + x^3` nao se soma
-a equacao tem de ser da grandeza do lado esquerdo: a derivada segunda de uma
-posicao e' uma aceleracao, e nao outra coisa
-```
-
-Num conceito de várias equações ela vale ainda mais, porque cada componente tem
-o seu lado esquerdo — escrever a derivada da posição no lugar da derivada da
-velocidade passa despercebido em tudo o mais, e não passa aqui.
-
-**O limite vem escrito junto com o resultado, e é importante:** unidade que
-fecha **não** quer dizer física certa. `E = m·v²` sem o meio tem a unidade certa
-e o valor errado — coerência de unidade não enxerga um coeficiente.
-
-### O aviso que vale a pena ler
-
-**Conceito certo e fórmula válida não significam resultado certo.** Uma fórmula
-errada dentro do conceito certo usa as variáveis certas e produz um número — e o
-número está errado. A IDE não tem como saber, e diz isso na tela.
-
-### Por que o método importa mais do que parece
-
-Ele não muda só o tempo: **muda o resultado**. No oscilador amortecido, com o
-mesmo passo `dt = 0,1`:
-
-```text
-Euler explicito     erro 3,11        <- onze vezes o valor da resposta (-0,276)
-Euler simpletico    erro 0,0396
-Runge-Kutta 4       erro 0,000049
-```
-
-Por isso a IDE não escolhe por você, e não preenche o campo. Ela mostra o custo
-antes de rodar — quantos passos, quanto a trilha vai ocupar — e a escolha é sua.
-
-**E passo menor nem sempre é melhor:** abaixo de certo ponto o arredondamento do
-`f64` passa a dominar, e o erro volta a subir.
-
-### Salvar
-
-O botão **Salvar** grava a simulação em `.kinein/simulacoes/`, um arquivo de
-texto por simulação, versionável junto com o projeto. Ele guarda o que você
-montou — conceito, fórmula, ligações, valores, método e passo — e **não guarda o
-resultado**: ele se refaz rodando de novo.
-
-### Conceitos de várias equações
-
-Alguns conceitos — **órbita de dois corpos, pêndulo duplo, duas massas acopladas
-por molas** — não cabem em uma equação só. Ao escolher um deles a tela muda: em
-vez de um campo de fórmula, você recebe **um por componente do estado**.
-
-```text
-orbita, como voce a escreve
-  dx/dt  = vx           <- quatro componentes, quatro equacoes
-  dy/dt  = vy
-  dvx/dt = -mu*x/(x^2+y^2)^1.5
-  dvy/dt = -mu*y/(x^2+y^2)^1.5
-```
-
-O resto é igual: você liga cada variável ao que ela representa — e aqui uma
-variável pode ser **um componente do estado**, um parâmetro ou o tempo —,
-preenche um valor inicial por componente e escolhe o método.
-
-**O método simplético só aparece habilitado onde ele existe.** Ele precisa saber
-quais componentes são posição e velocidade um do outro; num sistema em que o
-conceito não declara esse par, o método não está definido e a IDE **diz isso** em
-vez de integrar outra coisa. Onde ele existe, vale muito: numa órbita circular
-de dez voltas com `dt = 0,01`, o Euler explícito leva o raio de 1 para 1,65 e o
-simplético erra `2,4e-5`.
-
-O resultado mostra **dois sinais de exatidão**, e eles não são a mesma coisa:
-
-```text
-erro contra a       quando o conceito tem solucao fechada naquele caso. E' o
-solucao exata       erro de verdade, componente a componente
-deriva do que a     energia, momento angular. Nao e' erro: e' o quanto uma
-fisica CONSERVA     grandeza que deveria ficar parada se mexeu. Existe mesmo
-                    quando nao ha' solucao fechada — e' o unico sinal que um
-                    pendulo duplo admite
-```
-
-Deriva pequena **não** significa resultado certo: um erro que respeita a
-grandeza conservada passa por ela sem aparecer. A tela diz isso também.
-
-O gráfico tem dois modos: **componentes no tempo** (serve a qualquer sistema) e
-**trajetória no plano** (quando o conceito declara qual par de componentes vai
-nos dois eixos — numa órbita, `x` contra `y`).
-
-### O que ainda não existe
-
-Vista 3D de trajetória e campos (equação da onda, calor, Laplace). A conferência
-da equação digitada vale para as formas de **uma** equação; num conceito de
-várias, o valor exato ainda é o do conceito — e a tela diz isso, deixando as
-grandezas conservadas como o sinal medido na sua própria trajetória. E **salvar
-ainda não vale para conceitos de várias equações**: o arquivo de simulação
-guarda uma fórmula, e esses conceitos têm uma por componente — a tela diz isso
-no lugar de gravar algo que não volta.
+**O que a IDE não faz:** instalar o `uv`, o `basedpyright`, o `ruff` ou o
+`debugpy` por conta própria. O painel **Instalar ferramentas** (`Ctrl+Alt+H`)
+mostra o passo oficial de cada um; o botão escreve o comando no terminal da
+IDE, e quem aperta Enter é você.
 
 ---
 
@@ -735,7 +699,7 @@ no lugar de gravar algo que não volta.
 
 - O que você fez, o que esperava, o que aconteceu.
 - O arquivo de log acima + a saída do terminal se houver.
-- Distro, e se o projeto era Rust ou C++.
+- Distro, e se o projeto era Rust, C/C++, Python ou embarcado (qual placa).
 
 ---
 
@@ -780,3 +744,10 @@ no lugar de gravar algo que não volta.
 | Terminal | `Shift+F10` ou `Ctrl+Alt+R` | Executar projeto (sessão Execução) |
 | Terminal | `Ctrl+F2` ou `Ctrl+Alt+X` | Parar execução |
 | Terminal | `Alt+F12` ou ``Ctrl+` `` | Terminal integrado (sessão Shell) |
+| Ambiente | `Ctrl+Alt+K` | Bibliotecas |
+| Ambiente | `Ctrl+Alt+P` | Ações de configuração |
+| Ambiente | `Ctrl+Alt+J` | Banco de dados |
+| Ambiente | `Ctrl+Alt+O` | Observabilidade (Grafana) |
+| Ambiente | `Ctrl+Alt+M` | Embarcados |
+| Ambiente | `Ctrl+Alt+W` | Containers |
+| Ambiente | `Ctrl+Alt+H` | Instalar ferramentas |

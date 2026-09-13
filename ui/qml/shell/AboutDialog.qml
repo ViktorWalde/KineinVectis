@@ -58,7 +58,7 @@ Item {
             Text {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
-                text: qsTr("IDE para C, C++, Rust, sistemas embarcados e simulação")
+                text: qsTr("IDE para C, C++, Rust, Python e sistemas embarcados")
                 color: Theme.textSecondary
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap

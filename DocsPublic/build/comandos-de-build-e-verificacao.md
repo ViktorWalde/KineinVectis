@@ -86,6 +86,10 @@ scripts/verificar-qml-duplicacao.sh          # mesma derivacao em dois arquivos
 scripts/verificar-qml-alcance.sh             # componente entregue que nenhuma tela abre
 scripts/verificar-exercitacao.sh             # o core contra ferramenta real
 scripts/verificar-embarcado.sh               # ciclo de embarcado no QEMU, sem placa
+scripts/verificar-python-debug.sh            # ciclo de depurar Python com o debugpy REAL
+                                             # (python3 que importa debugpy, ou
+                                             # KINEIN_PYTHON_DEBUGPY=<venv>/bin/python;
+                                             # senao "nao provado", sem falhar)
 scripts/verificar-clangd-cross.sh            # clangd enxerga o cross do kit
 scripts/verificar-atalhos.sh                 # a paleta promete o que a IDE faz
 scripts/verificar-docs.sh                    # numero sem data que mente

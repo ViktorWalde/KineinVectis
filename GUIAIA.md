@@ -769,8 +769,10 @@ crates/kinein-core/src/serial/{mod,monitor}.rs   serial.list (sysfs, SEM abrir a
                                              tio/picocom/minicom/espflash numa
                                              aba de terminal; papel serialMonitor)
 crates/kinein-core/src/container/{mod,parse}.rs  docker|podman pela mesma CLI:
-                                             status, list, images, action/compose
-                                             (jobs), open (logs/shell na aba)
+                                             status (com o composeFile do projeto),
+                                             list, images, action/compose (jobs;
+                                             compose recusa sem arquivo), open
+                                             (logs/shell na aba)
 crates/kinein-core/src/project/{mod,detect,sdk,artifacts,esp}.rs
                                              o MODELO do projeto embarcado:
                                              frameworks por evidencia, SDKs,
@@ -819,8 +821,18 @@ crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
 crates/kinein-core/src/size.rs               build.size (+ a particao app do IDF)
 handlers/{probe,serial,container,project,index,python}.rs
 ui/src/core_client_{probe,container,index,python}.cpp   (serial e project moram no _probe)
-ui/qml/embedded/Embedded{Controller,Panel,PanelHost,KitField,SizeView,SerialView,ProjectView}.qml
+ui/qml/embedded/Embedded{Controller,Panel,PanelHost,KitField,SizeView,SerialView,ProjectView,InstallView,KitImportView,AdapterView}.qml
 ui/qml/container/Container{Controller,Panel,ListView,PanelHost}.qml
+ui/qml/components/Kv{Button,IconButton}.qml   `accented = primary && enabled`: o botao
+                                             primario DESLIGADO nao veste o acento
+                                             (2026-09-13; tst_kvbutton_states)
+ui/qml/shell/StatusBarProjectSummaries.qml   indice/contexto/python na barra
+ui/qml/panels/bottom/TestsPanel.qml          a arvore de casos (discoveredModel) e
+                                             "rodar so' este" pelo JobsController
+ui/qml/project/ProjectTreeController.qml     applyRunCapabilities: o que e' executavel
+                                             vem do core (run.capabilities)
+run.rs::capabilities + workspace/create.rs   SHELL_SCRIPTS/PYTHON_SCRIPTS como fonte
+                                             unica; o template `python` do Novo projeto
 ui/qml/index/IndexController.qml             totais e o contexto do arquivo ativo
                                              na barra de status
 ui/qml/search/SearchEverywhereController.qml `#nome` pede ao indice E ao LSP
@@ -832,8 +844,8 @@ scripts/fixtures/projetos/<framework>/       fixtures reais minimas (9 framework
 scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
 ```
 
-- Testes: `tests/{serial,container,project,index,index_context,cmake_model,python}.rs`, `size.rs`;
-  harnesses `tst_{embedded,container,index,python}.qml`; a exercitação
+- Testes: `tests/{serial,container,project,index,index_context,cmake_model,python,runners,toolchain}.rs`, `size.rs`;
+  harnesses `tst_{embedded,container,container_panel,index,python,tests_output,debug_python,toolchain_install,toolchain_import,kvbutton_states}.qml`; a exercitação
   (`verificar-exercitacao.sh`) pede `serial.list/monitor`,
   `container.status/list`, `project.model`, `index.status/symbols/context`,
   `python.status/createEnvironment`, `format.text` de um `.py`, `quality.run`
@@ -843,7 +855,8 @@ scripts/fixtures/embarcado/                  a fixture bare-metal do QEMU
 - Documentos: `DocsPublic/integracoes/38` (conectividade medida com o ESP32),
   `DocsPublic/roadmaps/41` (o ecossistema aberto, o que NÃO entra) e `42` (a trilha
   profunda, oito pilares; §8 o "efeito JetBrains" como critério de pronto; §9 a
-  trilha Python completa); estado em `DocsPublic/roadmaps/40` §7.8–§7.21.
+  trilha Python completa); `DocsPublic/integracoes/39` (toolchains por alvo e o
+  provedor de instalação); estado em `DocsPublic/roadmaps/40` §7.8–§7.34.
 
 ### 5.10 CLI, schemas, templates e tooling
 

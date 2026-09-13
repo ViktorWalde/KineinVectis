@@ -200,7 +200,11 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       (a tela de ATIVAR: motor, versao, rootless, socket,
                       compose, o passo oficial), list/images nas duas formas de
                       JSON, start/stop/restart/rm e compose como JOBS, logs e
-                      shell numa aba de terminal. Icone no rail (com o Grafana)
+                      shell numa aba de terminal. Icone no rail (com o Grafana).
+                      Desde 2026-09-13 (0.108.0, 40 §7.34) o compose e' do
+                      PROJETO: status.composeFile diz o arquivo que a
+                      ferramenta pegaria na raiz e o compose sem arquivo recusa
+                      antes do job — a tela promete so' o que funciona
             project   o MODELO do projeto embarcado (0.93.0, 2026-09-12; pilar 0
                       do roadmaps/42): 9 frameworks reconhecidos por EVIDENCIA
                       ate' 3 niveis (ESP-IDF, Zephyr, pico-sdk, PlatformIO,
@@ -229,7 +233,14 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       (o REPL como monitor, o .py rodando NA PLACA) e o modulo
                       nativo (pybind11/nanobind/PyO3 + maturin/scikit-build)
                       no python.status. A cadeia fechou; o polimento que
-                      sobrou esta' no 40 §4
+                      sobrou esta' no 40 §4. Depois, na tarde de 2026-09-13
+                      (0.105.0–0.107.0, 40 §7.31–§7.33): o Python APARECE —
+                      template de projeto, resumo na barra, icone na arvore,
+                      pytest/ruff no menu; test.discover (a arvore de casos
+                      antes do primeiro run, `testId` para rodar so' um);
+                      `-m pacote` como alvo de debug; run.capabilities
+                      publicado pelo core. A REFORMULACAO da tela para o
+                      Python e' etapa propria, depois do backend (40 §5)
 
             index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
                       autor): todas as pastas, arquivos e declaracoes de C/C++/
@@ -257,7 +268,7 @@ passou sem uma única mudança nos testes.
 
 ## 4. Cinco fatos que mudam decisão
 
-**1. O gate é o produto, não cerimônia.** **Dezenove** verificações (2026-09-10), e **cada uma
+**1. O gate é o produto, não cerimônia.** **Vinte e três** verificações (2026-09-13; eram dezenove em 2026-09-10), e **cada uma
 nasceu de uma falha que passou verde por todas as outras** (`ARCHITECTURE.md` §4 regra
 11). Não se cria gate aqui por gosto de rigor; cria-se quando uma classe de erro
 não tem quem reclame. A recíproca também vale: gate que nunca reprovou não está

@@ -42,9 +42,12 @@ kinein-vectis/
 │   │   ├── runtime.rs           laco JSON-RPC sobre stdio
 │   │   ├── rpc.rs               erros JSON-RPC + parse de params
 │   │   ├── handlers.rs          o modulo que agrega os handlers por dominio
-│   │   ├── cargo.rs format.rs run.rs test.rs process.rs
+│   │   ├── cargo.rs format.rs run.rs process.rs
+│   │   ├── test/                mod runners parse discover (os runners cargo/ctest/
+│   │   │                        pytest, os parsers, a ARVORE de casos sem rodar)
 │   │   ├── tools/               mod known search_dirs  (o detector; a tabela das
-│   │   │                        52 ferramentas; onde procurar alem do PATH)
+│   │   │                        61 ferramentas em 2026-09-13; onde procurar alem do
+│   │   │                        PATH: ~/.local/xPacks, ~/.espressif, a pasta da IDE)
 │   │   ├── cmake/               mod model  (configure, presets, targets; model = o MODELO
 │   │   │                        POR ALVO lido do file-api: fontes, grupos de compilacao,
 │   │   │                        artefatos, dependencias, toolchains-v1)
@@ -54,16 +57,20 @@ kinein-vectis/
 │   │   │
 │   │   ├── handlers/            roteadores por dominio (blocos impl Core)
 │   │   │   └── build cargo cmake configaction datasource debug draft format fs
-│   │   │      container git grafana index jobs library probe project run
-│   │   │      runconfig serial settings setup syntax terminal toolchain
-│   │   │      tools workspace
+│   │   │      container git grafana index jobs library probe project python run
+│   │   │      runconfig serial settings setup syntax terminal test_discover
+│   │   │      toolchain toolchain_import toolchain_install tools workspace
+│   │   │      (+ lsp/ como subpasta)
 │   │   │
 │   │   ├── build/               mod parse
 │   │   ├── container/           mod parse   (docker|podman pela mesma CLI)
 │   │   ├── serial/              mod monitor (portas USB; monitor como processo)
 │   │   ├── project/             mod detect sdk artifacts (o MODELO do projeto embarcado)
-│   │   ├── python/              mod env  (o ambiente Python: o interpretador por precedencia,
-│   │   │                        o status e o comando que cria o .venv)
+│   │   ├── python/              mod env run debug native  (o ambiente Python: o
+│   │   │                        interpretador por precedencia, o status e o .venv;
+│   │   │                        run = COM QUE se executa (interpretador, uv, mpremote)
+│   │   │                        e o ponto de entrada; debug = a sonda do debugpy;
+│   │   │                        native = pybind11/nanobind/PyO3 detectados)
 │   │   ├── index/               mod context (o indice do projeto INTEIRO: pastas, arquivos,
 │   │   │                        declaracoes; context = com que cada arquivo e' compilado:
 │   │   │                        CDB por unidade, alvo do cargo, interpretador Python)
@@ -71,7 +78,9 @@ kinein-vectis/
 │   │   ├── configaction/        catalog availability plan + um planejador por
 │   │   │                        arquivo editado (cmakelists, presets, cargotoml,
 │   │   │                        builddir), mais parametros, rigor, remover, error
-│   │   ├── dap/                 wire parse reader session target
+│   │   ├── dap/                 wire parse reader session server adapter target
+│   │   │                        (adapter = lldb-dap | gdb -i dap | -m debugpy.adapter;
+│   │   │                        target = Program(ELF/.py) | Module(-m pacote))
 │   │   ├── datasource/          connection store secret introspect sqlite mongo
 │   │   │                        mongo_infer
 │   │   ├── db/                  rascunhos em SQLite (WAL)
@@ -87,7 +96,11 @@ kinein-vectis/
 │   │   │                        parse_symbols transaction edit uri types
 │   │   ├── setup/               catalog distro
 │   │   ├── terminal/            session state render input error
-│   │   ├── toolchain/           catalog store
+│   │   ├── toolchain/           mod catalog store arguments sysroot import install/
+│   │   │                        (arguments = o que o kit injeta no cmake/clangd;
+│   │   │                        sysroot = a pasta lida com veredito; import = kit
+│   │   │                        de SDK Yocto/Buildroot/pasta; install/ = o provedor
+│   │   │                        de download com sha256 antes do tar)
 │   │   ├── workspace/           detect open create session recent error
 │   │   └── tests/               testes de integracao, um arquivo por dominio
 │   │
@@ -115,9 +128,9 @@ kinein-vectis/
 │       ├── editor/              renderer, controllers, outline/folding
 │       ├── panels/bottom/       tool windows inferiores
 │       ├── workspace/           picker, Start Screen e Project Health
-│       └── command/ configaction/ datasource/ debug/ diagnostics/ embedded/
-│           git/ grafana/ jobs/ library/ project/ runtime/ search/ settings/
-│           setup/ toolchain/
+│       └── command/ configaction/ container/ datasource/ debug/ diagnostics/
+│           embedded/ git/ grafana/ index/ jobs/ library/ project/ python/
+│           runtime/ search/ settings/ setup/ toolchain/
 │
 ├── scripts/                     gates, sondas, ambiente, launcher, packaging
 │   └── qml-harness/             tst_*.qml — logica QML headless

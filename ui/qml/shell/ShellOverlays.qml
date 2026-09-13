@@ -183,9 +183,9 @@ Item {
             root.configActionController.openWith(actionId, params)
     }
 
-    // Os cinco paineis de AMBIENTE DO PROJETO moram em arquivo proprio.
+    // Os seis paineis de AMBIENTE DO PROJETO moram em arquivo proprio.
     //
-    // O corte e' por RESPONSABILIDADE, e nao por tamanho: os cinco tem a mesma
+    // O corte e' por RESPONSABILIDADE, e nao por tamanho: os seis tem a mesma
     // forma — moldura de dialogo sobre um controller com `panelVisible`, e o
     // mesmo ciclo abrir/fechar — e sao o mesmo agrupamento que o menu ja'
     // chama de "Ambiente do projeto". O resto deste arquivo sao overlays de

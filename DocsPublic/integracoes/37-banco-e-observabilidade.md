@@ -5,8 +5,14 @@
 > 1 das 2.
 >
 > **Frente H do [`roadmaps/35`](../roadmaps/35-ambiente-cpp-e-embarcados.md).**
-> Candidatas, **nenhuma adotada**: a adoção passa pelo checklist de
-> [`README.md`](README.md).
+> Escrito quando eram candidatas; **ADOTADAS em 2026-09-04** (`roadmaps/40` §4
+> item 27, fechado): PostgreSQL/TimescaleDB, SQLite e MongoDB no domínio
+> `datasource` (perfil sem senha em disco, teste de conexão, leitura de
+> esquemas/tabelas/colunas ou coleções), o Grafana pela HTTP API no domínio
+> `grafana`. Falta, como fatia própria: executar consulta e escrever, e o TLS
+> do `postgres`. A experiência de banco "à JetBrains (DataGrip), adaptada" é
+> a etapa de UX/UI/HUD que o autor separou em 2026-09-13 (`40` §5) — depois do
+> backend impecável.
 
 ## 1. As duas, medidas
 

@@ -400,13 +400,20 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             `.py` e o botao Executar (ponto de entrada por
                                             evidencia: main.py/app.py/__main__.py, pacote
                                             com __main__.py, [project.scripts] instalado)
- B7  setup Python                           uv, basedpyright, ruff — comando oficial
+ B7  setup Python                           FEITO 2026-09-12 (40 §7.24, com o B2): pipx,
+                                            uv, ruff e basedpyright no catalogo do setup
+                                            com o guia oficial (a fonte e' agnostica de
+                                            distro; PEP 668 respeitada)
  B8  ANUNCIAR Python                        FEITO 2026-09-13 (40 §7.31), a pedido do autor:
                                             template "Python" no Novo projeto, o resumo
                                             Python na barra de status, o icone do .py na
                                             arvore, "Testar com pytest"/"Analise (ruff)" no
-                                            menu. O que falta e' polimento: ruff servidor,
-                                            arvore do pytest, `-m`/attach no debugpy
+                                            menu. Depois vieram a arvore do pytest (§7.32),
+                                            o `-m pacote` e o run.capabilities (§7.33). O
+                                            que falta e' polimento: ruff servidor, attach
+                                            no debugpy, a porta do MicroPython (40 §4). A
+                                            REFORMULACAO da tela para o Python e' etapa
+                                            PROPRIA, depois do backend (40 §5, 2026-09-13)
 
 BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
  C1  mpremote no terminal                   FEITO 2026-09-13 (40 §7.28): num projeto
@@ -462,7 +469,9 @@ BLOCO F — grande e proprio; entra sem data, um de cada vez
  F3  Docker                                 FEITO em 2026-09-12 (40 §7.14): dominio
                                             `container` — docker|podman, status/list/
                                             images/action/open/compose, icone no rail,
-                                            Ctrl+Alt+W. Falta o CONTEXTO REMOTO (dev
+                                            Ctrl+Alt+W. Em 2026-09-13 (40 §7.34) o compose
+                                            passou a prometer so' o que funciona
+                                            (composeFile). Falta o CONTEXTO REMOTO (dev
                                             containers), que nasce junto com o F2
  F4  SWO/ITM, semihosting, core dump        quando houver placa e dor
  F5  taplo (Cargo.toml), cargo-nextest,     polimento Rust

@@ -1,11 +1,12 @@
 import QtQuick
 import KineinVectis
 
-// Os seis paineis de AMBIENTE DO PROJETO: bibliotecas, banco, simulacao,
-// observabilidade, embarcados e instalacao de ferramentas.
+// Os seis paineis de AMBIENTE DO PROJETO: bibliotecas, banco, observabilidade,
+// embarcados, containers e instalacao de ferramentas (a simulacao saiu do
+// produto em 2026-09-12).
 //
-// Nasceu em 2026-09-05, quando a catraca reprovou o `ShellOverlays` ao ganhar o
-// painel de simulacao. O corte e' por RESPONSABILIDADE: os cinco tem a mesma
+// Nasceu em 2026-09-05, quando a catraca reprovou o `ShellOverlays` ao ganhar
+// mais um painel. O corte e' por RESPONSABILIDADE: todos tem a mesma
 // forma — moldura de dialogo sobre um controller com `panelVisible`, mesmo
 // ciclo abrir/fechar, mesma folga de janela — e sao o agrupamento que o menu
 // ja' chama de "Ambiente do projeto". Cortar por tamanho teria juntado coisas

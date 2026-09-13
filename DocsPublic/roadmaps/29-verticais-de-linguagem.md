@@ -7,6 +7,18 @@
 > **Pedido do autor:** integração nativa ao contexto de uso de C/C++, Rust e
 > Python; atrito zero; 100% open source; abstrair a configuração de ambiente de
 > C/C++ para o usuário.
+>
+> **A coluna Python da §1 FECHOU em 2026-09-12/13** (`roadmaps/40` §7.19 e
+> §7.24–§7.33; o mapa é o `roadmaps/41` bloco B): Tree-sitter ✅, language
+> server ✅ (basedpyright com o interpretador do projeto), run ✅ (ponto de
+> entrada por evidência, `uv run`), test ✅ (`python -m pytest -v`, árvore de
+> casos, rodar só um), qualidade ✅ (`ruff check`), formatar ✅ (`ruff
+> format`), debug ✅ (`debugpy` como módulo do interpretador, `-m pacote`).
+> "Build" continua sem sentido para Python puro; o módulo nativo (pybind11/
+> nanobind/PyO3) é detectado e o build dele é do CMake/cargo de dentro. A
+> precedência do interpretador da §4.1 está implementada em `python/env.rs`
+> (VIRTUAL_ENV → .venv/venv/env → poetry → sistema com aviso). A tabela da §1
+> fica como a medição de 2026-08-29 que motivou tudo.
 
 ## 1. O estado medido, antes de qualquer plano
 

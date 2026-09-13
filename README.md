@@ -1,9 +1,10 @@
 # Kinein Vectis
 
 Kinein Vectis é uma IDE open source, Linux-first e rígida por padrão para C,
-C++ e Rust. A interface nativa em Qt/QML conversa por JSON-RPC local com um
-core em Rust e orquestra ferramentas maduras, em vez de reimplementar
-compiladores, servidores de linguagem, build systems ou debugadores.
+C++, Rust e Python — no desktop e em sistemas embarcados. A interface nativa
+em Qt/QML conversa por JSON-RPC local com um core em Rust e orquestra
+ferramentas maduras, em vez de reimplementar compiladores, servidores de
+linguagem, build systems ou debugadores.
 
 O projeto está em desenvolvimento ativo. A versão de teste atual é a `0.1.0`,
 distribuída como AppImage para Linux x86_64.
@@ -13,8 +14,8 @@ distribuída como AppImage para Linux x86_64.
 - execução local, sem telemetria;
 - UI e lógica de negócio separadas;
 - qualidade estrita por padrão;
-- CMake/Cargo, clangd/rust-analyzer e LLDB integrados como ferramentas
-  externas;
+- CMake/Cargo, clangd/rust-analyzer/basedpyright, LLDB/debugpy/`gdb -i dap`
+  integrados como ferramentas externas;
 - nenhuma instalação silenciosa de toolchain;
 - nenhuma chamada de IA ou envio de código sem ação explícita do usuário.
 
@@ -39,7 +40,15 @@ distribuída como AppImage para Linux x86_64.
   aba de terminal, o modelo do projeto (ESP-IDF, Zephyr, pico-sdk, PlatformIO,
   STM32Cube, Rust bare metal, MicroPython, Yocto, Buildroot), ciclo provado no
   QEMU com `gdb -i dap`;
-- **containers** nativos (Docker ou Podman, pela mesma CLI);
+- **containers** nativos (Docker ou Podman, pela mesma CLI): motor, ciclo de
+  vida como jobs, logs e shell numa aba de terminal, compose do projeto;
+- **Python** como vertical nativa: o interpretador do projeto resolvido uma
+  vez (`.venv` de um clique com `uv`), basedpyright com esse interpretador,
+  `ruff` para formatar e analisar, executar o ponto de entrada, `pytest` com a
+  árvore de casos, depurar com `debugpy`, MicroPython pelo `mpremote`;
+- **toolchains por alvo**: catálogo conferido na fonte, instalação na pasta da
+  IDE com SHA-256 conferido antes de desempacotar, leitura de sysroot e
+  importação de kit de SDK (Yocto, Buildroot);
 - **o projeto inteiro lido**: índice próprio de pastas, arquivos e declarações
   de C/C++/Rust/Python, com o contexto de compilador de cada arquivo.
 
@@ -67,7 +76,8 @@ Qt/QML Frontend
        ↕ JSON-RPC local
 Rust Core
        ↕
-CMake · Cargo · clangd · rust-analyzer · LLDB · Git · outras ferramentas
+CMake · Cargo · clangd · rust-analyzer · basedpyright · LLDB · debugpy · gdb
+· Git · docker/podman · esptool/mpremote · outras ferramentas
 ```
 
 A UI apresenta e recebe ações. O core valida, mantém estado e chama as
