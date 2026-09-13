@@ -88,6 +88,9 @@ bash scripts/verificar-exercitacao.sh
 passo "scripts/verificar-embarcado.sh (ciclo de embarcado no QEMU, sem placa)"
 bash scripts/verificar-embarcado.sh
 
+passo "scripts/verificar-python-debug.sh (ciclo de depurar Python com o debugpy real)"
+bash scripts/verificar-python-debug.sh
+
 passo "scripts/verificar-clangd-cross.sh (clangd enxerga o cross do kit)"
 bash scripts/verificar-clangd-cross.sh
 

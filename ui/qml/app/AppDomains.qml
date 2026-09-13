@@ -324,6 +324,9 @@ Item {
         onRunScriptRequested: function(path) {
             runtimeController.startScript(path);
         }
+        onDebugScriptRequested: function(path) {
+            debugController.startDebugProgram(path);
+        }
         onTabsRenameRequested: function(from, to) {
             editorController.applyPathRenameToTabs(from, to);
         }

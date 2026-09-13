@@ -195,11 +195,17 @@ Item {
     }
 
     function startDebug() {
+        startDebugProgram("");
+    }
+
+    // "Depurar" num arquivo da arvore (um .py): o programa vai explicito; vazio
+    // e' o alvo automatico do core.
+    function startDebugProgram(program) {
         if (workspaceRoot === "" || sessionActive) {
             return;
         }
         showTabRequested("debug");
-        startRequested("");
+        startRequested(program);
     }
 
     function stopDebug() {

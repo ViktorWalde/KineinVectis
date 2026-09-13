@@ -792,6 +792,10 @@ format.rs (Ruff) + build/parse.rs (concise)  `ruff format` no format.text e `ruf
 python/run.rs + handlers/run.rs + test.rs    COM QUE se executa (interpretador do projeto
                                              ou `uv run`), o ponto de entrada por
                                              evidencia, `.py` no run.script, pytest -v
+python/debug.rs + dap/{adapter,target}.rs    o debugpy e' MODULO do interpretador: sonda
+                                             `import debugpy`, `-m debugpy.adapter` para
+                                             todo alvo .py; ciclo real em
+                                             scripts/verificar-python-debug.sh
 crates/kinein-core/src/index/context/{mod,cdb,cargo}.rs
                                              o CONTEXTO DE COMPILADOR por arquivo:
                                              unidade da CDB (e a CDB envelhecida

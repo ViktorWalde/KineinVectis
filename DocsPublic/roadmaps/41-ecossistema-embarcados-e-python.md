@@ -185,7 +185,7 @@ A tradução para a Kinein, com a licença lida no arquivo:
 | lint + formato + imports | **ruff** (`ruff server`; medir `--preview` na versão instalada, 29 §3.1) | MIT | LSP | ◐ 2026-09-13 — `ruff format` no `format.text` e `ruff check --output-format concise` no `quality.run` (perfil de rigor quando o projeto não declara regras); o `ruff server` (code actions) espera 2 servidores por linguagem (`40` §4) |
 | formato alternativo | black | MIT | processo | ✗ |
 | tipos | mypy; `ty` (Astral — medir maturidade antes) | MIT | processo | ✗ |
-| depurar | **debugpy** — fala DAP; sobe como `python -m debugpy.adapter` | MIT | DAP (**candidato do papel `debugAdapter`**, como o gdb) | ✗ |
+| depurar | **debugpy** — fala DAP; sobe como `python -m debugpy.adapter` | MIT | DAP — **módulo do interpretador do projeto**, não candidato do kit (a medição corrigiu o esboço) | ✓ 2026-09-13 — breakpoint, locais, evaluate, saída, exitCode, adaptador morto com a sessão, contra o debugpy 1.8.21 real (`40` §7.27); falta `-m pacote` e attach |
 | testes | pytest (`--collect-only -q` para descobrir; `-q` + `--junitxml` para rodar), unittest | MIT | processo (runner novo em `test.rs`) | ◐ 2026-09-13 — `python -m pytest -v` com o interpretador do projeto, `-k`, casos e saída no painel (`40` §7.26); falta a descoberta como árvore |
 | executar | o interpretador do projeto, ou `uv run` quando há `uv.lock` | — | processo (`run.script` de `.py`; `run.start` com ponto de entrada por evidência) | ✓ 2026-09-13 (`40` §7.26) |
 | REPL | `python -i` / `ipython` no painel de terminal | — | processo | ✗ |
@@ -380,8 +380,14 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             FALTA o ruff como SERVIDOR (code actions no
                                             Alt+Enter): exige 2 servidores por linguagem
                                             em lsp/session.rs — divida no 40 §4
- B5  debugpy como candidato do              `python -m debugpy.adapter` e' DAP por stdio,
-     papel debugAdapter                     entra como o gdb entrou
+ B5  debugpy como adaptador                 FEITO 2026-09-13 (40 §7.27): NAO e' candidato
+                                            do kit — e' modulo do interpretador do projeto;
+                                            todo alvo .py sobe `<interp> -m debugpy.adapter`,
+                                            com a sonda `import debugpy` antes e o passo
+                                            para instalar no ambiente; "Depurar" na arvore;
+                                            ciclo provado contra o debugpy 1.8.21 real
+                                            (verificar-python-debug.sh). Falta o `-m pacote`
+                                            (launch por `module`) e o attach a processo
  B6  pytest no test.rs                      FEITO 2026-09-13 (40 §7.26): `python -m pytest
                                             -v` com o interpretador do projeto (ou `uv run`),
                                             `-k` como filtro, casos pelo `-v`, saida no

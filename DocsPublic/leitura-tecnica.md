@@ -67,13 +67,14 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **134 métodos IPC** roteados e **46 eventos**, em **34 domínios de protocolo**;
-**669 testes** Rust verdes e **29 harnesses QML** (remedido em 2026-09-13;
+**675 testes** Rust verdes e **30 harnesses QML** (remedido em 2026-09-13;
 em 2026-09-12 à noite a simulação saiu do produto: −11 métodos, −85 testes,
-−7 harnesses). Protocolo `0.100.0`. O gate tem **22 verificações** — a vigésima (2026-09-11)
+−7 harnesses). Protocolo `0.101.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
-compilador cross. (Em 2026-09-11 eram 131/41/30 e 680 testes: os quatro
+compilador cross; a vigésima terceira (2026-09-13) roda o ciclo de depurar
+Python contra o debugpy real quando há um na máquina. (Em 2026-09-11 eram 131/41/30 e 680 testes: os quatro
 domínios de 2026-09-12 — `serial`, `container`, `project`, `index` — estão
 abaixo.)
 
@@ -211,7 +212,11 @@ MEDIO       build/run/test/format/cmake/cargo   orquestracao + parse de saida
                       — o lancador (interpretador do projeto ou `uv run` com
                       uv.lock), "Executar" num .py, o ponto de entrada por
                       evidencia, e `python -m pytest -v` no test.run com a
-                      saida no painel. O que ainda falta esta' no 40 §4
+                      saida no painel. Fatia 4 (0.101.0, 2026-09-13):
+                      python/debug — o debugpy e' modulo do interpretador, a
+                      sonda `import debugpy` antes de subir, `-m debugpy.adapter`
+                      como adaptador de todo alvo .py, "Depurar" na arvore.
+                      O que ainda falta esta' no 40 §4
 
             index     o projeto INTEIRO lido (0.94.0, 2026-09-12; exigencia do
                       autor): todas as pastas, arquivos e declaracoes de C/C++/

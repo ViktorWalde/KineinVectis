@@ -222,3 +222,130 @@ fn evaluate_guards_empty_expression_and_missing_session() {
         JsonRpcErrorCode::InvalidParams
     );
 }
+
+/// Fatia 4 da cadeia Python (41 bloco B): um alvo `.py` — mesmo num
+/// workspace `CMake` — vai para o debugpy DO interpretador do projeto, e o
+/// `debug.start` recusa com o passo certo quando nao ha' interpretador ou
+/// quando o interpretador nao tem o modulo. O adaptador real e' provado pelo
+/// gate (verificar-python-debug.sh); aqui sao os desvios que o precedem.
+#[test]
+#[cfg(unix)]
+fn a_python_target_needs_the_project_interpreter_with_debugpy() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-debug-python", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("tools")).unwrap();
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    // Workspace CMake com um script Python ao lado — como o projeto da
+    // exercitacao do gate.
+    std::fs::write(
+        dir.join("CMakeLists.txt"),
+        "cmake_minimum_required(VERSION 3.24)\nproject(x CXX)\n",
+    )
+    .unwrap();
+    std::fs::write(dir.join("tools/gera.py"), "print('x')\n").unwrap();
+    let dir = dir.canonicalize().unwrap();
+    let gera = dir.join("tools/gera.py");
+    let abrir = || {
+        let (sender, _receiver) = std::sync::mpsc::channel();
+        let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+            dir.join("bin"),
+        ));
+        core.enable_lsp(sender);
+        let opened = core.handle_request(&JsonRpcRequest::new(
+            30_i64,
+            "workspace.open",
+            Some(json!({ "path": dir.to_str().unwrap() })),
+        ));
+        assert!(opened.response().error.is_none());
+        core
+    };
+    let iniciar = |core: &mut crate::Core| {
+        core.handle_request(&JsonRpcRequest::new(
+            31_i64,
+            "debug.start",
+            Some(json!({ "program": gera.to_str().unwrap() })),
+        ))
+        .response()
+        .clone()
+    };
+
+    // Sem interpretador nenhum: orienta a criar o ambiente.
+    let mut core = abrir();
+    let erro = iniciar(&mut core).error.unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
+    assert!(erro.message.contains(".venv"), "{erro:?}");
+
+    // Interpretador SEM o modulo: TOOL_NOT_FOUND com o passo para instalar
+    // NO ambiente — e a sonda e' o `import` isolado, nao o adaptador subindo.
+    let python = dir.join(".venv/bin/python");
+    std::fs::create_dir_all(python.parent().unwrap()).unwrap();
+    let registro = dir.join("chamadas.txt");
+    std::fs::write(
+        &python,
+        format!(
+            "#!/bin/sh\necho \"$*\" >> {reg}\necho 'No module named debugpy' >&2\nexit 1\n",
+            reg = registro.display()
+        ),
+    )
+    .unwrap();
+    std::fs::set_permissions(&python, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let mut core = abrir();
+    let erro = iniciar(&mut core).error.unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::ToolNotFound, "{erro:?}");
+    assert!(
+        erro.message.contains("debugpy ausente") && erro.message.contains("uv add --dev debugpy"),
+        "{erro:?}"
+    );
+    let chamadas = std::fs::read_to_string(&registro).unwrap();
+    assert!(chamadas.contains("-I -c import debugpy"), "{chamadas}");
+    assert!(
+        !chamadas.contains("debugpy.adapter"),
+        "nao sobe o adaptador sem o modulo: {chamadas}"
+    );
+}
+
+/// Num workspace Python, `debug.start {}` acha o mesmo ponto de entrada do
+/// Executar; um pacote (`-m`) nao e' arquivo e o erro aponta o `__main__.py`.
+#[test]
+fn debug_start_without_program_uses_the_python_entry_point() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-debug-python-entrada", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("pacote")).unwrap();
+    std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
+    std::fs::write(dir.join("pacote/__main__.py"), "").unwrap();
+    let dir = dir.canonicalize().unwrap();
+    let (sender, _receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("debug-python-entrada");
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        40_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let erro = core
+        .handle_request(&JsonRpcRequest::new(41_i64, "debug.start", None))
+        .response()
+        .error
+        .clone()
+        .unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
+    assert!(erro.message.contains("pacote/__main__.py"), "{erro:?}");
+
+    // Com main.py, o alvo e' ele — e a recusa seguinte ja' e' a do
+    // interpretador (o alvo foi resolvido).
+    std::fs::write(dir.join("main.py"), "").unwrap();
+    let erro = core
+        .handle_request(&JsonRpcRequest::new(42_i64, "debug.start", None))
+        .response()
+        .error
+        .clone()
+        .unwrap();
+    assert!(erro.message.contains("interpretador"), "{erro:?}");
+}

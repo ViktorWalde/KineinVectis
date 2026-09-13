@@ -33,7 +33,7 @@
 ## 1. O estado, em números
 
 ```bash
-bash scripts/verificar.sh                 # 22 verificacoes
+bash scripts/verificar.sh                 # 23 verificacoes
 cat scripts/arquitetura-baseline.txt      # a catraca
 cargo test -q --workspace
 
@@ -57,12 +57,12 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.100.0
-testes      669 Rust + 29 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+protocolo   0.101.0
+testes      675 Rust + 30 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
 metodos     134 IPC roteados, 46 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
-gate        22 verificacoes
+gate        23 verificacoes
 ```
 
 > **O par `metodos`/`eventos` foi CORRIGIDO DE NOVO em 2026-09-06, e desta vez
@@ -355,20 +355,42 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          do VID:PID (P2/P3). Nada muda na ordem
                                          do 42 §4
 --  A CADEIA PYTHON (41 bloco B)         MEDIDA em 2026-09-12 a pedido do autor:
-    fatias 1, 2 e 3 FEITAS (§7.24,       fundacao pronta (projeto, editor, indice,
-    §7.25, §7.26); faltam 4 debugpy,     interpretador), cadeia por fazer. Ordem
-    5 MicroPython+modulo nativo          decidida: 1 toolchains+setup+.venv de um
+    fatias 1-4 FEITAS (§7.24-§7.27);     fundacao pronta (projeto, editor, indice,
+    falta 5 MicroPython+modulo nativo    interpretador), cadeia por fazer. Ordem
+                                         decidida: 1 toolchains+setup+.venv de um
                                          clique (FEITA, dominio `python` 0.98.0);
                                          2 basedpyright SUBINDO COM O INTERPRETADOR
                                          + ruff no formatar e na qualidade (FEITA,
                                          0.99.0, 2026-09-13); 3 run (python arquivo
                                          / -m / uv run) e pytest com a saida no
                                          painel (FEITA, 0.100.0, 2026-09-13);
-                                         4 debugpy no DAP; 5 mpremote (MicroPython)
-                                         e o modulo nativo (pybind11/nanobind/PyO3/
-                                         maturin) no project.model. O provedor de
-                                         download de toolchain (39 §5) vem DEPOIS
-                                         da cadeia
+                                         4 debugpy no DAP (FEITA, 0.101.0,
+                                         2026-09-13; provada contra o debugpy real);
+                                         5 mpremote (MicroPython) e o modulo nativo
+                                         (pybind11/nanobind/PyO3/maturin) no
+                                         project.model. O provedor de download de
+                                         toolchain (39 §5) vem DEPOIS da cadeia
+--  debugpy: `-m pacote` e attach        o que a fatia 4 deixou: um ponto de entrada
+                                         que e' pacote so' se depura apontando o
+                                         __main__.py (o launch por `module` do
+                                         debugpy resolveria); e o attach a um
+                                         processo/porta (`debugpy --listen`) para
+                                         servicos. Ambos pequenos; medir antes
+--  stderr dos processos filhos vai      LACUNA vista na fatia 4 (2026-09-13): o
+    para /dev/null (adaptador DAP,       gate falhou UMA vez com "o adapter nao
+    servidor de debug, servidores LSP)   respondeu a `initialize`" e nao havia como
+                                         saber por que — a sessao nula o stderr do
+                                         adaptador (dap/session.rs:116, dap/server.rs,
+                                         lsp/server.rs). Nao reproduziu em 5 rodadas
+                                         seguintes. Fatia pequena: guardar as ultimas
+                                         linhas do stderr e po-las no erro de subida
+                                         (e em event.debug.output como `console`)
+--  debugpy no gate desta maquina        o ciclo real so' roda onde `python3`
+                                         importa debugpy ou KINEIN_PYTHON_DEBUGPY
+                                         aponta um venv — aqui foi provado com um
+                                         venv temporario. Para o gate provar sempre:
+                                         `sudo dnf install python3-debugpy` ou um
+                                         venv fixo e a variavel no ambiente
 --  `run.capabilities` (o que "Executar"  DIVIDA anotada na fatia 3 (2026-09-13): a
     aceita, publicado pelo core)         lista de extensoes executaveis (.sh/.bash/
                                          .zsh/.py) vive em DOIS QML (ProjectTree-
@@ -1925,6 +1947,77 @@ gate    exercitacao: run.script de um .py com o .venv REAL (saida do programa);
         test.run de Python (pytest ausente no ambiente -> o passo para instalar nele)
 proximo fatia 4: debugpy como adaptador DAP (`python -m debugpy.adapter`), dap/target.rs
         para Python
+```
+
+### 7.27 A cadeia Python, fatia 4 — depurar com o debugpy do interpretador do projeto, 2026-09-13
+
+O esboço do 41 dizia "debugpy como candidato do papel `debugAdapter`, como o
+gdb entrou". A medição corrigiu: o debugpy **não é um binário** — é um
+módulo do interpretador, e o adaptador é `<interpretador> -m debugpy.adapter`.
+Um candidato do kit apontaria para um executável que não existe; o que existe
+é o Python do projeto, o mesmo do status, do índice, do basedpyright, do run e
+do pytest. Protocolo 0.101.0.
+
+```text
+dap/adapter.rs       DEBUGPY: argumentos `-m debugpy.adapter`; o launch e' o do
+                     desktop (program, cwd) — o `console` ficou de FORA: sem
+                     supportsRunInTerminalRequest no initialize o debugpy cai no
+                     internalConsole sozinho (a mutacao que tirou o campo
+                     sobreviveu contra o debugpy real; campo redundante saiu)
+dap/target.rs        Python -> o ponto de entrada do Executar como ARQUIVO
+                     (main.py/app.py/__main__.py, script de [project.scripts]
+                     instalado); pacote (-m) nao e' arquivo: o erro aponta o
+                     __main__.py
+python/debug.rs      debugpy_available(interp): `-I -c "import debugpy"` com
+                     prazo de 10 s — e' o que o adaptador vai ver; o erro nomeia
+                     o interpretador e o passo (uv add --dev debugpy /
+                     .venv/bin/python -m pip install debugpy)
+handlers/debug.rs    alvo .py (qualquer workspace) -> interpretador do projeto
+                     (sem medir versao) + sonda + AdapterChoice{debugpy, path};
+                     DebugError::MissingAdapterModule -> TOOL_NOT_FOUND com a
+                     mensagem inteira (a de MissingAdapter fala de lldb-dap)
+UI                   "Depurar" no menu da arvore para .py (ProjectTreeController.
+                     isDebuggableScript = runnable && .py — o mesmo `kind` de
+                     sempre, a catraca de duplicacao pegou a copia);
+                     DebugController.startDebugProgram(program)
+gate                 scripts/verificar-python-debug.sh (+ verificar_python_debug.py):
+                     o ciclo pelo core real, com KINEIN_PYTHON_DEBUGPY ou o
+                     python3 que importa debugpy; sem nenhum, "nao provado"
+```
+
+**Medido (debugpy 1.8.21 num venv temporário, Python 3.14.7):** o adaptador
+manda `initialized` só depois do `launch` (a ordem que a sessão já esperava
+do GDB); telemetria vem como `output` de categoria `telemetry` (o leitor já a
+ignorava); `stopped { reason: breakpoint }`, `stackTrace` com `soma` no topo,
+`scopes` Locals/Globals, `variables` a=2 b=3, `evaluate a + b` = 5, a saída
+do programa por `output` stdout, `exited { exitCode: 0 }`, `terminated`; e o
+adaptador **não sai** no `disconnect` — o `Drop` da sessão o mata. Ciclo
+inteiro pelo core: 1,4 s. O pytest real (9.1.1) no mesmo venv confirmou as
+formas que o parser da fatia 3 espera (PASSED/SKIPPED (motivo)/XFAIL/FAILED
+e o resumo `FAILED arquivo::caso - …`).
+
+**Provado (11 mutações mortas, 8 Rust + 3 QML; 2 contra o debugpy REAL):**
+trocar o id do adaptador ou o interpretador → "o adapter nao respondeu a
+`initialize`" no ciclo real; `-I` da sonda; o script instalado em `.venv/bin`
+e o arquivo sob o root; `.py` em qualquer caixa e só ele (`.pyi`, `.pyc`, `.rs`
+não); no QML, a guarda de workspace, fechar o menu, e o programa que chega
+inteiro ao `startRequested`. Duas sobreviveram: o `console` (redundante,
+saiu) e uma mutação equivalente (`.and(Ok(()))`, sem mudança de
+comportamento). Os desvios que precedem o adaptador (sem interpretador; sem o
+módulo; a sonda não sobe o adaptador) são teste de despacho com um python
+falso.
+
+**Uma armadilha de symlink:** o `python` de um venv é um symlink para o do
+sistema; `Path.resolve()` no driver do gate jogou o venv fora (e o debugpy
+com ele) — `absolute()` mantém o link, e o `$VIRTUAL_ENV` que o driver passa
+ao core é lido, nunca escrito, pelo core.
+
+```text
+protocolo 0.101.0 — alvo .py no debug.start -> debugpy do interpretador; MissingAdapterModule
+testes  675 Rust (+6), 30 harnesses (+tst_debug_python); gate 23 verificacoes
+        (+verificar-python-debug.sh)
+proximo fatia 5: mpremote (MicroPython) no terminal e o modulo nativo (pybind11/
+        nanobind/PyO3/maturin) no project.model
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

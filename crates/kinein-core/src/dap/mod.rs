@@ -26,7 +26,7 @@ use kinein_protocol::{
 
 use crate::lsp::EventSender;
 
-pub use adapter::AdapterChoice;
+pub use adapter::{AdapterChoice, DEBUGPY};
 pub use target::resolve_program;
 
 /// Error produced by the debug manager.
@@ -36,6 +36,12 @@ pub enum DebugError {
     MissingAdapter {
         /// What was looked for — `lldb-dap`, `probe-rs`, `gdb`, or a path.
         program: String,
+    },
+    /// O adaptador e' um MODULO do interpretador do projeto (debugpy) e o
+    /// interpretador nao o tem: a mensagem ja' traz o passo para instalar la'.
+    MissingAdapterModule {
+        /// O que a sonda do interpretador respondeu.
+        message: String,
     },
     /// A debug session is already running in this workspace.
     AlreadyRunning,
@@ -75,7 +81,9 @@ impl fmt::Display for DebugError {
                 formatter,
                 "o processo nao esta pausado; pause ou aguarde um breakpoint"
             ),
-            Self::NoTarget { message } | Self::Adapter { message } => {
+            Self::NoTarget { message }
+            | Self::Adapter { message }
+            | Self::MissingAdapterModule { message } => {
                 write!(formatter, "{message}")
             }
         }

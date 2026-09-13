@@ -20,6 +20,7 @@ Item {
     property string entryMenuKind: ""
     property string entryMenuName: ""
     property bool entryMenuRunnable: false
+    property bool entryMenuDebuggable: false
     property bool entryRenameVisible: false
     property string entryRenamePath: ""
     property string entryRenameKind: ""
@@ -37,6 +38,7 @@ Item {
     signal renamePathRequested(string from, string to)
     signal deletePathRequested(string path)
     signal runScriptRequested(string path)
+    signal debugScriptRequested(string path)
     signal tabsRenameRequested(string from, string to)
     signal tabsCloseRequested(string path)
     signal createDialogFocusRequested()
@@ -69,6 +71,12 @@ Item {
         const lower = path.toLowerCase();
         return lower.endsWith(".sh") || lower.endsWith(".bash")
                 || lower.endsWith(".zsh") || lower.endsWith(".py");
+    }
+
+    // O que "Depurar" aceita: so' `.py` (o core sobe o debugpy DO interpretador
+    // do projeto — fatia 4 da cadeia Python, 2026-09-13). Um shell nao se depura.
+    function isDebuggableScript(path, kind) {
+        return isRunnableScript(path, kind) && path.toLowerCase().endsWith(".py");
     }
 
     function clear() {
@@ -202,6 +210,7 @@ Item {
         entryMenuKind = kind;
         entryMenuName = name;
         entryMenuRunnable = isRunnableScript(path, kind);
+        entryMenuDebuggable = isDebuggableScript(path, kind);
         entryMenuX = Math.max(0, Math.min(sceneX, hostWidth - 172));
         entryMenuY = Math.max(0, Math.min(sceneY, hostHeight - 190));
         entryMenuVisible = true;
@@ -220,6 +229,14 @@ Item {
             return;
         }
         runScript(entryMenuPath);
+    }
+
+    function debugEntryScript() {
+        if (!entryMenuDebuggable || workspaceRoot === "") {
+            return;
+        }
+        entryMenuVisible = false;
+        debugScriptRequested(entryMenuPath);
     }
 
     function openEntryRename() {

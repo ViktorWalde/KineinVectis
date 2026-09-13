@@ -32,9 +32,10 @@ determinístico, e verificam o que o core FALA com ele (`didOpen`, `didChange`,
 pulados: teste que pula não prova nada, e essa era exatamente a lacuna que a
 etapa 3 do `DocsPublic/roadmaps/30-caminho-para-o-mvp.md` fechou.
 
-`python3` já era requisito de 9 das 22 verificações do gate (veracidade dos
-`.md`, links, catraca de arquitetura, duplicação e alcance QML, o binário que
-abre, mais as sondas; medido em 2026-09-11), então isto não acrescenta
+`python3` já era requisito de 9 das 22 verificações do gate de então (veracidade
+dos `.md`, links, catraca de arquitetura, duplicação e alcance QML, o binário
+que abre, mais as sondas; medido em 2026-09-11 — a 23ª, o ciclo de depurar
+Python de 2026-09-13, também o usa), então isto não acrescenta
 dependência ao ambiente — só a torna explícita para quem roda `cargo test`
 sozinho. O `scripts/instalar-ambiente.sh` continua sendo o bootstrap.
 

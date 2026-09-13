@@ -13,8 +13,11 @@
 //!           como a fonte oficial escreve — rodado como JOB, com a saida na tela
 //! run       COM QUE se executa (o interpretador do projeto ou `uv run`) e O
 //!           QUE o botao Executar roda (ponto de entrada por evidencia)
+//! debug     o debugpy e' modulo do interpretador: a sonda `import debugpy`
+//!           antes de subir o adaptador, e o passo para instalar no ambiente
 //! ```
 
+pub mod debug;
 pub mod env;
 pub mod run;
 

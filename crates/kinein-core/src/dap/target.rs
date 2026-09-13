@@ -1,7 +1,9 @@
 //! Resolucao do binario a depurar ("Automatico", espelho da heuristica do
 //! run): cargo usa o unico executavel no topo de `target/debug`, cmake o
-//! unico executavel de `.kinein/build`. O Target selector visual da spec
-//! substitui isso na C5+.
+//! unico executavel de `.kinein/build`; Python (fatia 4 da cadeia do
+//! `roadmaps/41`, 2026-09-13) usa o MESMO ponto de entrada do botao Executar
+//! (`python::run::entry_point`). O Target selector visual da spec substitui
+//! isso na C5+.
 
 use std::path::{Path, PathBuf};
 
@@ -17,13 +19,40 @@ pub fn resolve_program(kind: ProjectKind, root: &Path) -> Result<PathBuf, DebugE
     match kind {
         ProjectKind::RustCargo => cargo_binary(root),
         ProjectKind::Cmake => cmake_binary(root),
-        ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Python | ProjectKind::Unknown => {
+        ProjectKind::Python => python_entry(root),
+        ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Unknown => {
             Err(DebugError::NoTarget {
                 message: "este tipo de projeto ainda nao tem alvo de debug automatico; \
                           informe o executavel em debug.start { program }"
                     .to_owned(),
             })
         }
+    }
+}
+
+/// O ponto de entrada do Executar, como arquivo: `main.py`/`app.py`/
+/// `__main__.py` na raiz ou o script de `[project.scripts]` instalado (um
+/// arquivo Python com shebang — o debugpy o lanca como `program`). Um pacote
+/// (`-m x`) nao e' arquivo: o erro diz para apontar o `.py`.
+fn python_entry(root: &Path) -> Result<PathBuf, DebugError> {
+    use crate::python::run::EntryPoint;
+
+    match crate::python::run::entry_point(root) {
+        Some(EntryPoint::File(arquivo)) => Ok(root.join(arquivo)),
+        Some(EntryPoint::InstalledScript(nome)) => Ok(root.join(".venv/bin").join(nome)),
+        Some(EntryPoint::Module(pacote)) => Err(DebugError::NoTarget {
+            message: format!(
+                "o ponto de entrada e' o pacote `{pacote}` (python -m {pacote}); para depurar, \
+                 informe o arquivo em debug.start {{ program }} — por exemplo o \
+                 {pacote}/__main__.py"
+            ),
+        }),
+        None => Err(DebugError::NoTarget {
+            message: "nenhum ponto de entrada Python (main.py, app.py, __main__.py na raiz; um \
+                      pacote com __main__.py; um script de [project.scripts] instalado); \
+                      informe o arquivo em debug.start { program }"
+                .to_owned(),
+        }),
     }
 }
 
@@ -138,6 +167,43 @@ mod tests {
 
         let program = resolve_program(ProjectKind::Cmake, &root).unwrap();
         assert!(program.ends_with("app"));
+    }
+
+    /// Python: o alvo e' o MESMO ponto de entrada do Executar — arquivo na
+    /// raiz ou script instalado; um pacote nao e' arquivo e o erro aponta o
+    /// `__main__.py`; sem nada, o erro diz o que procurou.
+    #[test]
+    fn python_target_is_the_run_entry_point_as_a_file() {
+        let root = temp_root("python");
+        let error = resolve_program(ProjectKind::Python, &root).unwrap_err();
+        assert!(error.to_string().contains("main.py"), "{error}");
+
+        std::fs::create_dir_all(root.join("pacote")).unwrap();
+        std::fs::write(root.join("pacote/__main__.py"), "").unwrap();
+        let error = resolve_program(ProjectKind::Python, &root).unwrap_err();
+        assert!(error.to_string().contains("pacote/__main__.py"), "{error}");
+
+        std::fs::create_dir_all(root.join(".venv/bin")).unwrap();
+        std::fs::write(
+            root.join("pyproject.toml"),
+            "[project.scripts]\ncli = \"p:m\"\n",
+        )
+        .unwrap();
+        std::fs::write(root.join(".venv/bin/cli"), "#!/w/.venv/bin/python\n").unwrap();
+        // O script instalado NAO vence o pacote (o run tambem nao o faz)...
+        assert!(resolve_program(ProjectKind::Python, &root).is_err());
+        std::fs::remove_dir_all(root.join("pacote")).unwrap();
+        // ...mas vale quando e' o unico.
+        assert_eq!(
+            resolve_program(ProjectKind::Python, &root).unwrap(),
+            root.join(".venv/bin/cli")
+        );
+
+        std::fs::write(root.join("app.py"), "").unwrap();
+        assert_eq!(
+            resolve_program(ProjectKind::Python, &root).unwrap(),
+            root.join("app.py")
+        );
     }
 
     #[test]

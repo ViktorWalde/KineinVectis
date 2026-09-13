@@ -81,13 +81,36 @@ impl Core {
         // manager emprestado: `Toolchain::resolve` le o disco e a lista de
         // ferramentas detectadas, e os dois pedem `&self`.
         let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
-        let adapter_id = toolchain
+        let mut adapter_id = toolchain
             .chosen(kinein_protocol::ToolchainRole::DebugAdapter)
             .map(str::to_owned);
-        let adapter_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
+        let mut adapter_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
         let chip = toolchain.chip().map(str::to_owned);
         let remote_target = toolchain.remote_target().map(str::to_owned);
         let debug_server = toolchain.debug_server().map(str::to_owned);
+        // Um alvo Python (fatia 4 da cadeia do 41) nao passa pelo kit: o
+        // adaptador e' o debugpy DO interpretador do projeto — o mesmo que
+        // run, pytest e basedpyright usam — e so' sobe se o modulo existe la'.
+        if e_um_alvo_python(&program) {
+            let Some(interpretador) = self.python_interpreter(root) else {
+                return debug_error_response(
+                    request_id,
+                    &dap::DebugError::NoTarget {
+                        message: "sem interpretador Python para este workspace: crie o \
+                                  ambiente (.venv) pela faixa de saude ou instale o python3"
+                            .to_owned(),
+                    },
+                );
+            };
+            if let Err(message) = crate::python::debug::debugpy_available(&interpretador) {
+                return debug_error_response(
+                    request_id,
+                    &dap::DebugError::MissingAdapterModule { message },
+                );
+            }
+            adapter_id = Some(dap::DEBUGPY.to_owned());
+            adapter_path = Some(interpretador);
+        }
 
         let Some(manager) = self.debug.as_mut() else {
             return debug_unavailable_response(request_id, "debug.start");
@@ -111,6 +134,13 @@ impl Core {
             ),
             Err(error) => debug_error_response(request_id, &error),
         }
+    }
+
+    /// O interpretador do projeto (precedencia do 29 §4.1), sem medir versao.
+    fn python_interpreter(&self, root: &Path) -> Option<PathBuf> {
+        let mut tools = self.python_tools();
+        tools.medir_versao = false;
+        crate::python::env::python_env(root, &tools).map(|env| PathBuf::from(env.interpreter))
     }
 
     fn debug_set_breakpoints_response(
@@ -283,4 +313,36 @@ fn invalid_debug_params(request_id: Option<Value>, message: &str) -> JsonRpcResp
         request_id,
         JsonRpcError::new(JsonRpcErrorCode::InvalidParams, message, None),
     )
+}
+
+/// Um `.py` e' alvo do debugpy, seja qual for o tipo do workspace (um
+/// projeto `CMake` com um `tools/gera.py` depura o script com Python).
+fn e_um_alvo_python(program: &Path) -> bool {
+    program
+        .extension()
+        .and_then(std::ffi::OsStr::to_str)
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("py"))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::path::Path;
+
+    use super::e_um_alvo_python;
+
+    /// So' o `.py` (em qualquer caixa) vai para o debugpy; o binario nativo,
+    /// o stub `.pyi` e o `.rs` seguem pelo kit.
+    #[test]
+    fn only_python_files_are_python_targets() {
+        assert!(e_um_alvo_python(Path::new("/w/tools/gera.py")));
+        assert!(e_um_alvo_python(Path::new("/w/APP.PY")));
+        for outro in [
+            "/w/target/debug/app",
+            "/w/src/main.rs",
+            "/w/stubs/x.pyi",
+            "/w/a.pyc",
+        ] {
+            assert!(!e_um_alvo_python(Path::new(outro)), "{outro}");
+        }
+    }
 }

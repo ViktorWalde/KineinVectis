@@ -1,5 +1,20 @@
 # 03 — Protocolo IPC
 
+> **O `0.101.0` (2026-09-13) é a fatia 4 da cadeia Python do
+> [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B —
+> depurar Python com o debugpy DO interpretador do projeto:** um alvo `.py`
+> em `debug.start` (explícito, ou o ponto de entrada do Executar num
+> workspace Python) não passa pelo kit — o adaptador é `<interpretador> -m
+> debugpy.adapter`, o mesmo interpretador do status, do índice, do
+> basedpyright, do run e do pytest. Antes de subir, o core **pergunta ao
+> interpretador** se o módulo existe (`-I -c "import debugpy"`); sem ele,
+> `TOOL_NOT_FOUND` com o passo para instalar NO ambiente (nova variante
+> `MissingAdapterModule`, daí o minor). O ciclo inteiro — breakpoint,
+> locais, evaluate, saída do programa, `exitCode`, adaptador morto com a
+> sessão — está provado contra o debugpy 1.8.21 real por
+> `scripts/verificar-python-debug.sh` (a 23ª verificação do gate; fica "não
+> provado" na máquina sem debugpy). A árvore ganhou "Depurar" para `.py`.
+>
 > **O `0.100.0` (2026-09-13) é a fatia 3 da cadeia Python do
 > [`roadmaps/41`](../roadmaps/41-ecossistema-embarcados-e-python.md) bloco B —
 > executar e testar Python com o interpretador DO PROJETO:** `run.script`
@@ -1497,6 +1512,9 @@ nenhum: embarcado não debuga com `lldb-dap`.
 ```text
 lldb-dap    desktop; sem argumento          (o PADRAO — nada muda sem escolha)
 probe-rs    embarcado; `probe-rs dap-server` fala DAP por stdin/stdout
+gdb         `gdb -q -iex ... -i dap`; todo GDB (`gdb-multiarch`, `<triple>-gdb`)
+debugpy     Python (0.101.0); NAO vem do kit: o programa e' o INTERPRETADOR do
+            projeto e o adaptador e' `-m debugpy.adapter` (DAP por stdin/stdout)
 ```
 
 **O catálogo da toolchain NÃO sabe os argumentos, e a fronteira é deliberada.**
@@ -1682,11 +1700,37 @@ por workspace.
 
 - `debug.start { program? }` → `{ program }`. Sem `program`, resolve o
   alvo "Automatico" espelhando o run: cargo → unico executavel no topo de
-  `target/debug`; cmake → unico executavel de `.kinein/build`; zero ou
+  `target/debug`; cmake → unico executavel de `.kinein/build`; **Python
+  (`0.101.0`) → o mesmo ponto de entrada do Executar** (`main.py`/`app.py`/
+  `__main__.py` na raiz, ou o script de `[project.scripts]` instalado; um
+  pacote `-m x` não é arquivo — o erro aponta o `x/__main__.py`); zero ou
   varios candidatos → erro claro com a acao a tomar. NAO compila antes
   (build e acao explicita, Ctrl+F9). Erros: `TOOL_NOT_FOUND` (lldb-dap
   ausente), `INVALID_REQUEST` (sem alvo/sessao ja viva), `INVALID_PARAMS`
   (program inexistente), `INTERNAL_ERROR` (falha do adapter).
+
+  **Alvo `.py` (`0.101.0`, fatia 4 da cadeia Python, 2026-09-13).** Seja
+  qual for o tipo do workspace (um CMake com `tools/gera.py` inclusive), um
+  `program` terminado em `.py` não passa pelo kit: o adaptador é o
+  **debugpy do interpretador do projeto** (`python/env.rs`, a precedência do
+  `29` §4.1) — `<interpretador> -m debugpy.adapter`, DAP por stdin/stdout,
+  `launch { program, cwd }` como o desktop. O `console` fica de fora de
+  propósito: o `initialize` desta sessão não declara
+  `supportsRunInTerminalRequest`, e o debugpy cai sozinho no
+  `internalConsole` (stdout/stderr do programa chegam como `event.debug.
+  output`) — medido no 1.8.21 com e sem o campo. Antes de subir, o core
+  roda `<interpretador> -I -c "import debugpy"` (isolado: o que o adaptador
+  vai ver; prazo de 10 s): sem interpretador → `INVALID_REQUEST` orientando
+  a criar o ambiente; sem o módulo → `TOOL_NOT_FOUND` dizendo o passo para
+  instalar NELE (`uv add --dev debugpy` ou `.venv/bin/python -m pip install
+  debugpy`) — sem isso o adaptador morreria no primeiro request e a falha
+  seria um timeout do `initialize`, longe da causa. O debugpy **não sai
+  sozinho** no `disconnect` (medido): é o `Drop` da sessão que o mata, como
+  já fazia com os outros. Provado ponta a ponta pelo core real em
+  `scripts/verificar-python-debug.sh` (breakpoint em `app.py:2`, `soma` no
+  topo da pilha, `a=2 b=3` em Locals — não Globals —, `a + b` = `5`,
+  `resultado 5` por `event.debug.output`, `exitCode 0`, adaptador morto;
+  1,4 s).
 - `debug.setBreakpoints { file, lines: [int] }` →
   `{ breakpoints: [{ line, verified }] }`. Conjunto COMPLETO por arquivo
   (lines vazio limpa); `file` confinado ao workspace. Sem sessao viva o

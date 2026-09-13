@@ -6,11 +6,13 @@ Item {
     property real menuX: 0
     property real menuY: 0
     property bool runnableScript: false
+    property bool debuggableScript: false
 
     signal dismissRequested()
     signal createFileRequested()
     signal createDirectoryRequested()
     signal runScriptRequested()
+    signal debugScriptRequested()
     signal renameRequested()
     signal deleteRequested()
 
@@ -132,6 +134,44 @@ Item {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: root.runScriptRequested()
+                }
+            }
+
+            Rectangle {
+                width: parent.width
+                height: root.debuggableScript ? 26 : 0
+                visible: root.debuggableScript
+                radius: Theme.radius
+                color: entryDebugHover.containsMouse
+                       ? Theme.surface2 : "transparent"
+
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingSmall
+                    spacing: Theme.spacingSmall
+
+                    KvIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        name: "debug"
+                        size: 14
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: qsTr("Depurar")
+                        color: Theme.textPrimary
+                        font.pixelSize: 12
+                    }
+                }
+
+                MouseArea {
+                    id: entryDebugHover
+
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.debugScriptRequested()
                 }
             }
 

@@ -18,6 +18,10 @@ use serde_json::{Value, json};
 /// antes.
 pub(super) const DEFAULT_ADAPTER: &str = "lldb-dap";
 
+/// Id do adaptador de Python. O handler o escolhe quando o alvo e' um `.py`;
+/// nao vem do kit — o kit escolhe para o nativo.
+pub const DEBUGPY: &str = "debugpy";
+
 /// O que o kit escolheu, como chega do handler de `debug.start`.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct AdapterChoice<'a> {
@@ -48,6 +52,12 @@ fn adapter_arguments(id: &str) -> &'static [&'static str] {
         // `probe-rs dap-server` sem `--port` fala DAP por stdin/stdout — a
         // MESMA forma que este modulo ja usa (`integracoes/36` §3).
         "probe-rs" => &["dap-server"],
+        // O debugpy (fatia 4 da cadeia Python, 2026-09-13): o PROGRAMA e' o
+        // interpretador do projeto e o adaptador e' o modulo `debugpy.adapter`,
+        // que fala DAP por stdin/stdout — medido com o debugpy 1.8.21: e' ele
+        // que sobe o launcher e o servidor, e responde ao `launch` depois do
+        // `configurationDone` como o GDB e o lldb-dap.
+        DEBUGPY => &["-m", "debugpy.adapter"],
         // O GDB fala DAP desde a v14 (`/usr/share/doc/gdb/NEWS`, "Changes in
         // GDB 14"), por stdin/stdout, com `-i dap`. Os dois `-iex` vem de
         // medicao em 2026-09-11: com `DEBUGINFOD_URLS` no ambiente (o Fedora
@@ -140,6 +150,13 @@ impl Adapter {
         if let Some(chip) = &self.chip {
             arguments["chip"] = json!(chip);
         }
+        // debugpy: o `console` NAO vai. O padrao dele e' `integratedTerminal`,
+        // mas como o `initialize` desta sessao nao declara
+        // `supportsRunInTerminalRequest`, o debugpy cai sozinho no
+        // `internalConsole` e manda stdout/stderr do programa como eventos
+        // `output` — medido no 1.8.21 pelo ciclo real (verificar-python-debug):
+        // com e sem o campo, `resultado 5` chegou igual. Campo redundante nao
+        // entra (a mutacao que o removeu sobreviveu).
         ("launch", arguments)
     }
 }
@@ -174,6 +191,27 @@ mod tests {
             "campo ausente nao e' campo nulo"
         );
         assert!(argumentos.get("target").is_none());
+    }
+
+    /// O debugpy e' um MODULO do interpretador do projeto: o programa e' o
+    /// python que o kit nao escolheu (vem do `python::env`) e os argumentos
+    /// sobem o adaptador; o `launch` e' o mesmo do desktop (`program`, `cwd`)
+    /// — o `console` fica de fora de proposito (ver `start_request`).
+    #[test]
+    fn debugpy_is_the_module_of_the_project_interpreter() {
+        let escolhido = adapter(AdapterChoice {
+            id: Some(super::DEBUGPY),
+            path: Some(Path::new("/w/.venv/bin/python")),
+            ..AdapterChoice::default()
+        });
+        assert_eq!(escolhido.program, PathBuf::from("/w/.venv/bin/python"));
+        assert_eq!(escolhido.arguments, &["-m", "debugpy.adapter"]);
+        let (pedido, argumentos) = escolhido.start_request(Path::new("/w"), Path::new("/w/app.py"));
+        assert_eq!(pedido, "launch");
+        assert_eq!(argumentos["program"], "/w/app.py");
+        assert_eq!(argumentos["cwd"], "/w");
+        assert!(argumentos.get("console").is_none(), "{argumentos}");
+        assert!(argumentos.get("chip").is_none());
     }
 
     /// `probe-rs` so' fala DAP com o subcomando `dap-server`. Sem ele o
