@@ -80,7 +80,7 @@ Item {
         controller.workspaceRoot = "";
         controller.openLogs("pg");
         if (root.aberturas.length !== 0 || controller.errorText.indexOf("abra um projeto") !== 0
-                || controller.canOpenTerminals) failures += 4194304;
+                || controller.canOpenTerminals) failures += 536870912;
         controller.workspaceRoot = rootAntes === "" ? "/tmp/proj" : rootAntes;
         controller.errorText = "";
         controller.openLogs("pg");
@@ -107,6 +107,24 @@ Item {
         controller.composeUp();
         controller.composeDown();
         if (root.composes.join(",") !== "up:,down:") failures += 16777216;
+
+        // O botao so' promete o que funciona: ferramenta DA MAQUINA + arquivo
+        // DO PROJETO (o core diz qual). Cada falta tem a sua frase na linha do
+        // motor (2026-09-13: "compose up" aceso sem projeto parecia defeito).
+        controller.workspaceRoot = "";
+        controller.handleStatus({ engine: "podman", reachable: true, emulated: true });
+        if (controller.canCompose || controller.composeSummary !== "sem compose") failures += 268435456;
+        controller.handleStatus({ engine: "podman", reachable: true, emulated: true, compose: "/usr/bin/podman compose" });
+        if (controller.canCompose || controller.composeSummary.indexOf("abra um projeto") < 0) failures += 268435456;
+        controller.workspaceRoot = "/tmp/proj";
+        if (controller.canCompose || controller.composeSummary.indexOf("não tem compose.yaml") < 0) failures += 268435456;
+        controller.handleStatus({ engine: "podman", reachable: true, emulated: true,
+                                  compose: "/usr/bin/podman compose", composeFile: "docker-compose.yml" });
+        if (!controller.canCompose
+                || controller.composeSummary !== "compose: /usr/bin/podman compose · docker-compose.yml") failures += 268435456;
+        controller.handleStatus({ engine: "podman", reachable: false, emulated: true,
+                                  compose: "/usr/bin/podman compose", composeFile: "docker-compose.yml" });
+        if (controller.canCompose) failures += 268435456;
 
         // "parados tambem" desligado relista SEM os parados.
         controller.setShowAll(false);

@@ -15,11 +15,18 @@ Rectangle {
 
     signal clicked()
 
+    // Desligado, nem o primario veste o acento nem o perigoso veste o
+    // vermelho: o icone fica APAGADO (Theme.textDisabled). Antes, `iconColor`
+    // sobrescrevia o `disabled` do KvIcon e um botao desligado so' perdia 28%
+    // de opacidade — na fileira de acoes de um container, "Logs" sem projeto
+    // parecia tao clicavel quanto "Iniciar" (medido em 2026-09-13).
+    readonly property bool accented: primary && enabled
+
     implicitWidth: compact ? 24 : 32
     implicitHeight: compact ? 24 : 32
     radius: Theme.radius
-    color: primary ? (buttonArea.pressed ? Theme.accentDim : Theme.accent)
-                   : active ? Theme.surfaceSelected
+    color: accented ? (buttonArea.pressed ? Theme.accentDim : Theme.accent)
+                    : active ? Theme.surfaceSelected
                    : (buttonArea.containsMouse || activeFocus
                       ? Theme.surface2 : "transparent")
     border.color: activeFocus ? Theme.accent : "transparent"
@@ -38,12 +45,13 @@ Rectangle {
         active: root.active
         disabled: !root.enabled
         error: root.danger
-        iconColor: root.primary ? Theme.background0
-                                : (root.danger ? Theme.errorSoft
-                                   : (root.active ? Theme.accent
-                                      : (buttonArea.containsMouse
-                                         ? Theme.textPrimary
-                                         : Theme.textSecondary)))
+        iconColor: !root.enabled ? Theme.textDisabled
+                                 : root.primary ? Theme.background0
+                                 : (root.danger ? Theme.errorSoft
+                                    : (root.active ? Theme.accent
+                                       : (buttonArea.containsMouse
+                                          ? Theme.textPrimary
+                                          : Theme.textSecondary)))
     }
 
     MouseArea {

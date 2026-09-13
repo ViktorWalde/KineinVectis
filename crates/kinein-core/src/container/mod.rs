@@ -41,6 +41,22 @@ const SHIM_BANNER: &str = "Emulate Docker CLI using podman";
 /// Quantas linhas de log o `logs -f` traz do passado ao abrir a aba.
 const LOG_TAIL: &str = "200";
 
+/// Os nomes que a ferramenta de compose procura sozinha, na ordem do
+/// podman-compose 1.6.0 (`COMPOSE_DEFAULT_LS`, lido em 2026-09-13; os
+/// `*.override.*` ficam de fora porque sozinhos nao sobem nada). O `docker
+/// compose` conhece so' os quatro primeiros nomes sem prefixo `podman-`/
+/// `container-`, e os dois concordam no primeiro: `compose.yaml`.
+const COMPOSE_FILES: &[&str] = &[
+    "compose.yaml",
+    "compose.yml",
+    "podman-compose.yaml",
+    "podman-compose.yml",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "container-compose.yml",
+    "container-compose.yaml",
+];
+
 /// O motor que responde nesta maquina.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Engine {
@@ -125,9 +141,21 @@ fn pergunta(engine: &Engine, args: &[&str]) -> Option<String> {
         .then(|| String::from_utf8_lossy(&saida.stdout).trim().to_owned())
 }
 
-/// O estado do motor: existe, que versao, rootless, socket, responde, compose.
+/// O arquivo de compose que a ferramenta pegaria sozinha em `root`, relativo
+/// a raiz — ou `None`, e ai' `compose up` sem `-f` so' pode falhar.
 #[must_use]
-pub fn status(engine: Option<&Engine>) -> ContainerStatus {
+pub fn compose_file_in(root: &Path) -> Option<String> {
+    COMPOSE_FILES
+        .iter()
+        .find(|nome| root.join(nome).is_file())
+        .map(|nome| (*nome).to_owned())
+}
+
+/// O estado do motor: existe, que versao, rootless, socket, responde, compose
+/// — e, com um workspace aberto, o arquivo de compose que o projeto tem.
+#[must_use]
+pub fn status(engine: Option<&Engine>, workspace_root: Option<&Path>) -> ContainerStatus {
+    let compose_file = workspace_root.and_then(compose_file_in);
     let Some(engine) = engine else {
         return ContainerStatus {
             engine: None,
@@ -138,6 +166,7 @@ pub fn status(engine: Option<&Engine>) -> ContainerStatus {
             socket: None,
             reachable: false,
             compose: None,
+            compose_file,
             hint: Some(
                 "nenhum motor de container no PATH. No Fedora, `sudo dnf install podman` (rootless, \
                  sem daemon); o Docker Engine vem do repositorio oficial em docs.docker.com. A IDE \
@@ -197,6 +226,7 @@ pub fn status(engine: Option<&Engine>) -> ContainerStatus {
         socket,
         reachable,
         compose,
+        compose_file,
         hint,
         raw_output,
     }

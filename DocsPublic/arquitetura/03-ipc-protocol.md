@@ -1,5 +1,15 @@
 # 03 — Protocolo IPC
 
+> **O `0.108.0` (2026-09-13, fim de tarde) é o "sintoma do Docker" medido e
+> fechado até onde a medição alcança:** o core respondeu certo o tempo todo
+> (`status`/`list`/`images` reais do Podman 5.8.4, start/stop reais); o que
+> estava errado era a PROMESSA da tela — "compose up" primário e aceso sem
+> projeto (um botão primário desligado vestia o âmbar), e aceso com projeto
+> sem arquivo de compose (o job só podia falhar). `ContainerStatus.composeFile`
+> nasce (o arquivo que a ferramenta pegaria na raiz do workspace), o
+> `container.compose` sem arquivo recusa antes do job, e os botões da IDE só
+> acendem com o que funciona. Campo novo sobe o minor.
+>
 > **O `0.107.0` (2026-09-13) fecha dois itens do polimento Python:** o
 > **módulo como alvo de debug** — um projeto cujo ponto de entrada é um
 > pacote com `__main__.py` é depurado como `-m pacote` (o `module` do launch
@@ -2571,10 +2581,11 @@ container.list    { all? = true }          -> { containers, engine, rawOutput, h
 container.images  {}                       -> { images, engine, rawOutput, hint? }
 container.action  { id, action }           -> { jobId }            (job; start|stop|restart|remove)
 container.open    { id, mode }             -> { id, command }      (aba de terminal; logs|shell)
-container.compose { action, file? }        -> { jobId }            (job; up|down; exige workspace)
+container.compose { action, file? }        -> { jobId }            (job; up|down; exige workspace
+                                                                     E arquivo de compose, ou `file`)
 
 ContainerStatus   engine? (docker|podman), binary?, version?, emulated, rootless?,
-                  socket?, reachable, compose?, hint?, rawOutput
+                  socket?, reachable, compose?, composeFile?, hint?, rawOutput
 ContainerInfo     id, names[], image, state, status, ports[], created
 ImageInfo         id, repository, tag, size, created
 
@@ -2606,6 +2617,25 @@ linha do motor vai para `event.job.output`, cancelar mata o filho, e o
 `-f`**: remover o que roda é dois gestos (parar, remover), de propósito.
 `compose up` é `-d` — um job que nunca termina não é job; a saída viva mora
 na aba de logs.
+
+**O compose é do PROJETO, e o core diz se ele existe (`0.108.0`,
+2026-09-13).** A ferramenta é da máquina (`compose`); o arquivo é do workspace
+aberto: `composeFile` é o primeiro dos nomes que a ferramenta procura sozinha
+na raiz (`compose.yaml`, `compose.yml`, `podman-compose.*`,
+`docker-compose.yml|yaml`, `container-compose.*` — a ordem do podman-compose
+1.6.0, lida em `COMPOSE_DEFAULT_LS`; os `*.override.*` não contam porque
+sozinhos não sobem nada), ausente sem workspace ou quando o projeto não tem
+nenhum. `container.compose` sem `file` num projeto sem arquivo **recusa com
+`INVALID_PARAMS` antes de subir um job** — medido: o podman-compose sai com
+255 e *"no compose.yaml, docker-compose.yml or container-compose.yml file
+found"*, e um job que só pode falhar não é job. Na UI, "compose up"/"compose
+down" só acendem com motor respondendo + ferramenta + arquivo, e a linha do
+motor diz o que falta ("abra um projeto" / "o projeto não tem compose.yaml").
+A mesma tarde corrigiu a classe visual que escondia isso: um botão primário
+DESLIGADO vestia o âmbar a 72% de opacidade e continuava a coisa mais chamativa
+do painel — o clique que não fazia nada lia-se como "o Docker não funciona";
+agora desligado é um botão comum e apagado (`KvButton`/`KvIconButton`,
+provado por `tst_kvbutton_states.qml` e `tst_container_panel.qml`).
 
 **`open` reaproveita o terminal.** `logs -f --tail 200 <id>` e `exec -it <id>
 /bin/sh` sobem pelo mesmo `open_command` do domínio `terminal` e voltam como

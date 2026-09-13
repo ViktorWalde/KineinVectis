@@ -87,8 +87,7 @@ Item {
                 if (s.rootless === true) partes.push("rootless");
                 if (s.rootless === false) partes.push(qsTr("com daemon/root"));
                 if (s.socket !== undefined && s.socket !== "") partes.push(s.socket);
-                partes.push(s.compose !== undefined && s.compose !== "" ? qsTr("compose: %1").arg(s.compose)
-                                                                        : qsTr("sem compose"));
+                partes.push(root.controller.composeSummary);
                 return partes.join(" · ");
             }
             color: Theme.textMuted
@@ -139,14 +138,14 @@ Item {
             onClicked: root.controller.refresh()
         }
 
-        // Compose do PROJETO: o arquivo padrao no workspace. `up` e' -d; a
-        // saida viva mora na aba de logs de cada container.
+        // Compose do PROJETO: o arquivo padrao na raiz do workspace (o core
+        // diz qual). `up` e' -d; a saida viva mora na aba de logs de cada
+        // container. Sem arquivo o botao fica desligado — e a linha do motor
+        // diz o que falta.
         KvButton {
             text: qsTr("compose down")
             compact: true
-            enabled: root.controller !== null && root.controller.reachable
-                     && root.controller.status.compose !== undefined
-                     && root.controller.workspaceRoot !== ""
+            enabled: root.controller !== null && root.controller.canCompose
             onClicked: root.controller.composeDown()
         }
 
@@ -154,9 +153,7 @@ Item {
             text: qsTr("compose up")
             primary: true
             compact: true
-            enabled: root.controller !== null && root.controller.reachable
-                     && root.controller.status.compose !== undefined
-                     && root.controller.workspaceRoot !== ""
+            enabled: root.controller !== null && root.controller.canCompose
             onClicked: root.controller.composeUp()
         }
 

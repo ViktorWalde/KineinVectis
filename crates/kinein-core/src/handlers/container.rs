@@ -37,7 +37,7 @@ impl Core {
         params: Option<&Value>,
     ) -> Option<JsonRpcResponse> {
         match method {
-            "container.status" => Some(Self::container_status_response(request_id, params)),
+            "container.status" => Some(self.container_status_response(request_id, params)),
             "container.list" => Some(Self::container_list_response(request_id, params)),
             "container.images" => Some(Self::container_images_response(request_id, params)),
             "container.action" => Some(self.container_action_response(request_id, params)),
@@ -47,8 +47,10 @@ impl Core {
         }
     }
 
-    /// `container.status` — o motor existe? responde? com que permissao?
+    /// `container.status` — o motor existe? responde? com que permissao? E o
+    /// projeto aberto tem arquivo de compose?
     fn container_status_response(
+        &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
@@ -60,7 +62,11 @@ impl Core {
             return *response;
         }
         let engine = container::detect();
-        JsonRpcResponse::success(request_id, json!(container::status(engine.as_ref())))
+        let root = self.workspace_root();
+        JsonRpcResponse::success(
+            request_id,
+            json!(container::status(engine.as_ref(), root.as_deref())),
+        )
     }
 
     /// `container.list` — os containers, parados inclusive por padrao.
@@ -190,6 +196,20 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "container.compose");
         };
+        // Sem `-f` a ferramenta procura o arquivo padrao na raiz; se nao ha'
+        // nenhum, o job so' poderia falhar (medido em 2026-09-13: exit 255 do
+        // podman-compose) — a recusa vem ANTES, com o que falta.
+        if pedido.file.is_none() && container::compose_file_in(&root).is_none() {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    "o projeto nao tem arquivo de compose (compose.yaml, docker-compose.yml, \
+                     container-compose.yml...); crie um na raiz ou passe `file`",
+                    Some(json!({ "root": root.display().to_string() })),
+                ),
+            );
+        }
         let Some(engine) = container::detect() else {
             return no_engine_response(request_id, "container.compose");
         };

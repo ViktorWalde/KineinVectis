@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use kinein_protocol::{ComposeAction, ContainerAction, ContainerEngine, ContainerOpenMode};
 
 use crate::container::{
-    Engine, action_command, compose_command, detect_with, open_program_args, parse,
+    Engine, action_command, compose_command, compose_file_in, detect_with, open_program_args, parse,
 };
 use crate::tools::ToolDetector;
 
@@ -236,4 +236,92 @@ fn commands_are_built_as_the_cli_expects_and_rm_is_never_forced() {
         .map(|a| a.to_string_lossy().into_owned())
         .collect();
     assert_eq!(args, vec!["down"]);
+}
+
+/// O arquivo de compose e' do PROJETO: o primeiro dos nomes que a ferramenta
+/// procura sozinha, na ordem em que ela prefere; pasta com esse nome nao vale.
+#[test]
+fn the_compose_file_is_the_first_the_tool_would_pick_up() {
+    let dir = temp_dir("compose-file");
+    assert_eq!(compose_file_in(&dir), None, "pasta vazia");
+    std::fs::write(dir.join("docker-compose.yml"), "services: {}\n").unwrap();
+    assert_eq!(
+        compose_file_in(&dir).as_deref(),
+        Some("docker-compose.yml"),
+        "o nome classico ainda conta"
+    );
+    std::fs::write(dir.join("compose.yml"), "services: {}\n").unwrap();
+    std::fs::write(dir.join("compose.yaml"), "services: {}\n").unwrap();
+    assert_eq!(
+        compose_file_in(&dir).as_deref(),
+        Some("compose.yaml"),
+        "compose.yaml ganha de compose.yml e do docker-compose.yml, como nas duas ferramentas"
+    );
+    for nome in ["podman-compose.yml", "container-compose.yml"] {
+        let dir = temp_dir(&format!("compose-{nome}"));
+        std::fs::write(dir.join(nome), "services: {}\n").unwrap();
+        assert_eq!(
+            compose_file_in(&dir).as_deref(),
+            Some(nome),
+            "{nome}: o podman-compose acha"
+        );
+    }
+    let so_pasta = temp_dir("compose-pasta");
+    std::fs::create_dir_all(so_pasta.join("compose.yaml")).unwrap();
+    assert_eq!(
+        compose_file_in(&so_pasta),
+        None,
+        "uma PASTA compose.yaml nao e' arquivo"
+    );
+}
+
+/// `container.status` diz o arquivo de compose do workspace aberto (e nada sem
+/// workspace); `container.compose` sem arquivo recusa ANTES de subir um job
+/// que so' poderia falhar — o motivo diz o que criar.
+#[test]
+fn status_reports_the_compose_file_and_compose_refuses_without_one() {
+    use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
+    use serde_json::json;
+
+    let mut core = super::core_with_empty_search_path("container-compose");
+    let status = core.handle_request(&JsonRpcRequest::new(
+        1_i64,
+        "container.status",
+        Some(json!({})),
+    ));
+    let result = status.response().result.clone().unwrap();
+    assert!(
+        result.get("composeFile").is_none(),
+        "sem workspace nao ha' arquivo: {result}"
+    );
+
+    let dir = temp_dir("compose-workspace");
+    std::fs::write(dir.join("Cargo.toml"), "[package]\n").unwrap();
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        2_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let recusa = core.handle_request(&JsonRpcRequest::new(
+        3_i64,
+        "container.compose",
+        Some(json!({ "action": "up" })),
+    ));
+    let erro = recusa
+        .response()
+        .error
+        .clone()
+        .expect("sem arquivo, recusa");
+    assert_eq!(erro.code, JsonRpcErrorCode::InvalidParams);
+    assert!(erro.message.contains("compose.yaml"), "{}", erro.message);
+
+    std::fs::write(dir.join("compose.yml"), "services: {}\n").unwrap();
+    let status = core.handle_request(&JsonRpcRequest::new(
+        4_i64,
+        "container.status",
+        Some(json!({})),
+    ));
+    let result = status.response().result.clone().unwrap();
+    assert_eq!(result["composeFile"], "compose.yml", "{result}");
 }

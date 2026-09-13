@@ -57,8 +57,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.107.0
-testes      709 Rust + 32 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+protocolo   0.108.0
+testes      711 Rust + 34 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
 metodos     140 IPC roteados, 48 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -370,16 +370,20 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          para StatusBarProjectSummaries e a barra
                                          mostra "python: .venv · 3.14.7 · pybind11
                                          (scikit-build-core)"
---  Docker/Podman "nao esta' dando       RELATO do autor em 2026-09-13, ainda sem o
-    certo" (relato)                      sintoma: o core responde status/list/
-                                         images/action/open contra o Podman 5.8.4
-                                         daqui (medido: start e stop do postgres-dev
-                                         pelo core, ok). O que se achou e corrigiu:
-                                         Logs/Shell sem projeto aberto recusavam
-                                         DEPOIS do clique ("nenhum workspace
-                                         aberto") — agora o botao diz antes. Falta
-                                         o autor dizer o que viu (icone, lista,
-                                         botao, mensagem) para medir o resto
+--  Docker/Podman "nao esta' dando       MEDIDO ATE' ONDE ALCANCA em 2026-09-13
+    certo" (relato)                      (§7.34, 0.108.0). O core respondeu certo
+                                         o tempo todo; o painel REAL renderizado
+                                         offscreen com a resposta REAL do Podman
+                                         mostrou o defeito: "compose up" primario
+                                         e ACESO sem projeto (botao primario
+                                         desligado vestia o ambar), e aceso com
+                                         projeto sem arquivo de compose (o job so'
+                                         podia falhar). Corrigido nos dois lados:
+                                         composeFile no status + recusa antes do
+                                         job; KvButton/KvIconButton desligados
+                                         apagam. Se o autor viu OUTRA coisa
+                                         (icone, lista vazia, mensagem), e' um
+                                         sintoma novo: dizer o que apareceu
 --  a porta escolhida no Executar de     run.script ja' aceita `device` (0.102.0);
     MicroPython                          a tela nao tem "porta atual" — o monitor e'
                                          por linha da lista. Uma escolha persistida
@@ -529,6 +533,20 @@ Python                       ENTRA como vertical nativa — DECISAO DO AUTOR em
 Pylance                      PROIBIDO (licenca) — continua; o motor e' basedpyright
 Docker e banco               NATIVOS, nao plugins. Docker/Podman IMPLEMENTADO
                              em 2026-09-12 (§7.14): dominio `container`
+UX/UI/HUD: ETAPA PROPRIA,    DECISAO DO AUTOR em 2026-09-13: "a IDE focou muito
+DEPOIS do backend            a UI para C/C++ e Rust; agora com o Python vai
+                             precisar de uma formulacao melhor da UX/UI/HUD,
+                             mas vamos deixar isso para uma etapa propria;
+                             vamos fazer tudo referente a backend e integracao
+                             de toolchains de forma impecavel antes de
+                             arquitetar a reformulacao". Dois pedidos ja'
+                             registrados para essa etapa: (1) o banco de dados
+                             com o EFEITO PSICOLOGICO e a UI/UX/HUD do
+                             JetBrains (DataGrip) ADAPTADOS ao Kinein Vectis —
+                             nao copiados; (2) o Python como cidadao da tela,
+                             nao um acrescimo. Ate' la': polimento de tela so'
+                             quando e' DEFEITO (a promessa errada do botao,
+                             §7.34), nunca reformulacao
 simulacao: FORA DO PRODUTO   DECISAO DO AUTOR em 2026-09-12, em dois tempos.
                              Tarde: "esquece a parte de simulacao fisica/
                              matematica; vamos refinar ao maximo para sistemas
@@ -2380,6 +2398,76 @@ testes  709 Rust (+1), 32 harnesses; 140 metodos, 48 eventos
 gate    python-debug: o 7o passo (-m pacote) contra o debugpy real
 proximo o polimento da cadeia Python (40 §4): ruff servidor, attach no debugpy,
         a porta no Executar de MicroPython
+```
+
+### 7.34 O "sintoma do Docker": o core estava certo, a tela prometia errado, 2026-09-13
+
+O autor pediu *"prossiga para o sintoma do docker"* sem descrever o sintoma. A
+regra zero, então, foi **reproduzir o que ele viu** sem ter o clique dele: o
+core real (`target/release/kinein-core`) respondeu `container.status/list/
+images` pelo stdio contra o Podman 5.8.4 (motor, 5 containers, 12 imagens,
+cada comando medido em <0,2 s), e o **`ContainerPanelHost` real** foi
+instanciado offscreen com essas respostas reais e fotografado
+(`grabToImage`). A foto mostrou o defeito que nenhum gate via:
+
+```text
+o que a foto mostrou          "compose up" — o UNICO botao primario do painel — ACESO
+                              em ambar sem projeto aberto. Estava `enabled: false`;
+                              o KvButton desligado so' perdia 28% de opacidade e
+                              continuava vestindo o acento. Clique = nada. A leitura
+                              humana e' "o Docker nao funciona"
+o que a foto nao mostrou      com projeto aberto o botao acendia SEM arquivo de
+mas o codigo dizia            compose: o job `podman compose up -d` so' podia falhar
+                              (medido: exit 255, "no compose.yaml, docker-compose.yml
+                              or container-compose.yml file found")
+a mesma classe, na fileira    KvIconButton: `iconColor` sobrescrevia o `disabled` do
+                              KvIcon — "Logs"/"Shell" sem projeto (desligados desde
+                              §7.31) pareciam tao clicaveis quanto "Iniciar"
+```
+
+```text
+container/mod.rs     COMPOSE_FILES na ordem do podman-compose 1.6.0 (COMPOSE_DEFAULT_LS,
+                     lido do fonte; os *.override.* fora); compose_file_in(root);
+                     status(engine, workspace_root) preenche composeFile
+handlers/container   container.compose sem `file` num projeto sem arquivo recusa com
+                     INVALID_PARAMS ANTES do job, dizendo o que criar
+protocolo 0.108.0    ContainerStatus.composeFile?
+KvButton             `accented = primary && enabled`: desligado e' um botao comum e
+KvIconButton         apagado (fundo surface1, borda, texto e icone textDisabled);
+                     nem o perigoso veste o vermelho desligado
+ContainerController  composeTool/composeFile/canCompose/composeSummary — a linha do
+                     motor diz "abra um projeto" ou "o projeto nao tem compose.yaml"
+ContainerPanel       compose up/down acendem so' com canCompose
+harness              tst_kvbutton_states (o estado visual dos dois botoes) e
+                     tst_container_panel (o PAINEL real sobre o controller real — o
+                     painel "burro" nunca era instanciado, e foi nele que o defeito
+                     morava); tst_container ganhou os 4 estados do compose;
+                     verificar-qml-logica copia os .js do modulo para o espelho
+                     (KvIcon importa KvIconGlyphs.js — sem isso nenhum harness podia
+                     instanciar um botao com icone)
+```
+
+**Provado (16 mutações, 14 mortas com o compilador calado; 2 sobreviventes):**
+Rust — `is_file`→`exists`, a ordem `compose.yaml`/`compose.yml`, cada par de
+nomes removido (o `[&str; 8]` virou `&[&str]` para o compilador se calar),
+a recusa invertida, `composeFile` sempre `None`. QML — cada `accented` de
+volta a `primary`, `canCompose` sem o arquivo e sem `reachable`, a frase do
+"abra um projeto", o `enabled` de cada botão de compose, a `composeSummary`
+trocada por texto fixo. Os dois sobreviventes: um virou teste (o ícone do
+primário desligado — o harness não tinha botão com ícone) e um revelou
+redundância (`accented` no segundo ramo do `iconColor` do KvIconButton, já
+coberto pelo `!enabled` antes dele — voltou a `primary`).
+
+**O que continua sem medida:** o clique do autor. Se o que ele viu foi outra
+coisa — o ícone do rail, a lista vazia, uma mensagem — é sintoma novo, e a
+entrada do §4 pede a descrição.
+
+```text
+protocolo 0.108.0 — ContainerStatus.composeFile; container.compose recusa sem arquivo
+testes  711 Rust (+2), 34 harnesses (+2); 140 metodos, 48 eventos
+decisao UX/UI/HUD e' etapa PROPRIA depois do backend impecavel (§5)
+proximo o polimento da cadeia Python (40 §4): ruff servidor, attach no debugpy,
+        a porta no Executar de MicroPython; depois o bloco A de embarcados
 ```
 
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela

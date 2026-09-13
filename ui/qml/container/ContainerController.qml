@@ -29,6 +29,22 @@ Item {
         return nome + versao + emulado;
     }
     property bool statusBusy: false
+    // O compose e' do PROJETO: a ferramenta e' da maquina (`status.compose`),
+    // o arquivo e' do workspace aberto (`status.composeFile`, o que o core
+    // achou na raiz). Sem os dois, `compose up` so' poderia falhar — e o botao
+    // nao promete.
+    readonly property string composeTool: status.compose !== undefined && status.compose !== null
+                                          ? status.compose : ""
+    readonly property string composeFile: status.composeFile !== undefined && status.composeFile !== null
+                                          ? status.composeFile : ""
+    readonly property bool canCompose: reachable && composeTool !== "" && composeFile !== ""
+    // A frase do compose na linha do motor: o que existe e o que falta.
+    readonly property string composeSummary: {
+        if (composeTool === "") return qsTr("sem compose");
+        if (workspaceRoot === "") return qsTr("compose: %1 · abra um projeto").arg(composeTool);
+        if (composeFile === "") return qsTr("compose: %1 · o projeto não tem compose.yaml").arg(composeTool);
+        return qsTr("compose: %1 · %2").arg(composeTool).arg(composeFile);
+    }
 
     property var containers: []
     property string containersEngine: ""

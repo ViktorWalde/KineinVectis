@@ -50,6 +50,12 @@ pub struct ContainerStatus {
     /// Compose tool found: `docker compose`, `docker-compose` or `podman-compose`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub compose: Option<String>,
+    /// The compose file the tool would pick up in the open workspace
+    /// (`compose.yaml`, `docker-compose.yml`, ...), relative to the root.
+    /// `None` without a workspace or when the project has none — `compose up`
+    /// cannot work then, and the UI must not promise it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compose_file: Option<String>,
     /// What to do when something is missing — the official step, never `sudo`
     /// run by the IDE.
     #[serde(default, skip_serializing_if = "Option::is_none")]

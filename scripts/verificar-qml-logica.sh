@@ -58,6 +58,11 @@ while IFS= read -r fonte; do
         printf '%s 1.0 %s\n' "$tipo" "$base" >> "$espelho/KineinVectis/qmldir"
     fi
 done < <(find ui/qml -name '*.qml')
+# Os .js do modulo (KvIconGlyphs.js) viajam junto: um componente que os
+# importa por caminho relativo (KvIcon) so' carrega se eles estiverem ao lado.
+while IFS= read -r fonte; do
+    cp "$fonte" "$espelho/KineinVectis/$(basename "$fonte")"
+done < <(find ui/qml -name '*.js')
 
 falhou=0
 
