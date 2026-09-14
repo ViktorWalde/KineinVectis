@@ -10,6 +10,11 @@
 //! identico ao ultimo sincronizado nao gera notificacao nenhuma. Alem de evitar
 //! reparse, ele preserva os fix-its que o clangd amarra a versao do documento —
 //! e e por isso que cada request posicional pode re-sincronizar sem custo.
+//!
+//! Desde 2026-09-13 uma linguagem pode ter mais de um servidor (o principal e
+//! os companheiros, ver [`super::server::ServerSpec`]): o TEXTO vai para
+//! todos, cada um com a propria versao do documento; o que e' pergunta
+//! interativa continua indo so' ao principal.
 
 use std::path::Path;
 
@@ -17,12 +22,12 @@ use serde_json::json;
 
 use super::framing::{full_change_params, send_notification};
 use super::manager::LspManager;
-use super::server::language_for_path;
+use super::server::{ServerHandle, language_for_path};
 use super::types::LspError;
 use super::uri::uri_for_path;
 
 impl LspManager {
-    /// Abre (ou re-sincroniza) um documento no servidor da linguagem dele.
+    /// Abre (ou re-sincroniza) um documento nos servidores da linguagem dele.
     ///
     /// Conteudo identico ao ultimo sincronizado nao gera notificacao nova:
     /// alem de evitar reparse no servidor, preserva a consulta ativa de code
@@ -36,34 +41,17 @@ impl LspManager {
         }
         let uri = uri_for_path(path);
         let hash = content_hash(content);
-        let Some(handle) = self.servers.get_mut(spec.language) else {
-            return;
-        };
-
-        if let Some(version) = handle.versions.get_mut(&uri) {
-            if handle.content_hashes.get(&uri) == Some(&hash) {
-                return;
+        let mut enviou = false;
+        let mut keys = vec![spec.key];
+        keys.extend(self.ensure_companions(path).iter().map(|c| c.key));
+        for key in keys {
+            if let Some(handle) = self.servers.get_mut(key) {
+                enviou |= open_or_change(handle, &uri, spec.language_id, content, hash, true);
             }
-            self.active_code_actions = None;
-            *version += 1;
-            let params = full_change_params(&uri, *version, content);
-            handle.content_hashes.insert(uri.clone(), hash);
-            send_notification(&handle.stdin, "textDocument/didChange", &params);
-            return;
         }
-
-        self.active_code_actions = None;
-        handle.versions.insert(uri.clone(), 1);
-        handle.content_hashes.insert(uri.clone(), hash);
-        let params = json!({
-            "textDocument": {
-                "uri": uri,
-                "languageId": spec.language_id,
-                "version": 1,
-                "text": content,
-            }
-        });
-        send_notification(&handle.stdin, "textDocument/didOpen", &params);
+        if enviou {
+            self.active_code_actions = None;
+        }
     }
 
     /// Sincroniza o conteudo atual de um documento (texto completo).
@@ -83,20 +71,18 @@ impl LspManager {
             return;
         }
         let hash = content_hash(content);
-        let Some(handle) = self.servers.get_mut(language) else {
-            return;
-        };
-        if handle.content_hashes.get(&uri) == Some(&hash) {
-            return;
+        let language_id = self.registry.language_id_of(language);
+        let mut enviou = false;
+        for key in self.registry.keys_of(language) {
+            if let Some(handle) = self.servers.get_mut(key) {
+                if handle.versions.contains_key(&uri) {
+                    enviou |= open_or_change(handle, &uri, language_id, content, hash, true);
+                }
+            }
         }
-        let Some(version) = handle.versions.get_mut(&uri) else {
-            return;
-        };
-        self.active_code_actions = None;
-        *version += 1;
-        let params = full_change_params(&uri, *version, content);
-        handle.content_hashes.insert(uri.clone(), hash);
-        send_notification(&handle.stdin, "textDocument/didChange", &params);
+        if enviou {
+            self.active_code_actions = None;
+        }
     }
 
     /// Notifica salvamento de um documento.
@@ -105,17 +91,21 @@ impl LspManager {
         let Some(language) = language_for_path(path) else {
             return;
         };
-        let Some(handle) = self.servers.get(language) else {
-            return;
-        };
+        let uri = uri_for_path(path);
         let params = json!({
-            "textDocument": { "uri": uri_for_path(path) },
+            "textDocument": { "uri": uri },
             "text": content,
         });
-        send_notification(&handle.stdin, "textDocument/didSave", &params);
+        for key in self.registry.keys_of(language) {
+            if let Some(handle) = self.servers.get(key) {
+                if handle.versions.contains_key(&uri) {
+                    send_notification(&handle.stdin, "textDocument/didSave", &params);
+                }
+            }
+        }
     }
 
-    /// Fecha um documento no servidor da linguagem dele.
+    /// Fecha um documento nos servidores da linguagem dele.
     ///
     /// Devolve `true` quando havia mesmo um documento aberto para fechar. O
     /// servidor descarta o texto e os diagnosticos daquele URI; a proxima
@@ -132,25 +122,23 @@ impl LspManager {
             return false;
         };
         let uri = uri_for_path(path);
-        let Some(handle) = self.servers.get_mut(language) else {
-            return false;
-        };
-        if handle.versions.remove(&uri).is_none() {
-            return false;
+        let mut fechou = false;
+        for key in self.registry.keys_of(language) {
+            if let Some(handle) = self.servers.get_mut(key) {
+                fechou |= close_in(handle, &uri);
+            }
         }
-        handle.content_hashes.remove(&uri);
-        // As posicoes das code actions valem para o conteudo que o servidor
-        // viu; fechar o documento invalida a consulta como qualquer sync.
-        self.active_code_actions = None;
-        let Some(handle) = self.servers.get(language) else {
-            return false;
-        };
-        let params = json!({ "textDocument": { "uri": uri } });
-        send_notification(&handle.stdin, "textDocument/didClose", &params);
-        true
+        if fechou {
+            // As posicoes das code actions valem para o conteudo que o
+            // servidor viu; fechar o documento invalida a consulta como
+            // qualquer sync.
+            self.active_code_actions = None;
+        }
+        fechou
     }
 
-    /// Fecha TODOS os documentos abertos de uma linguagem; devolve quantos.
+    /// Fecha TODOS os documentos abertos de uma linguagem; devolve quantos
+    /// (contados no principal — os companheiros seguem o mesmo conjunto).
     ///
     /// Existe para o caso medido no `roadmaps/29` §5b: o clangd tem hot-reload
     /// da `compile_commands.json` desde a v12 (reconfere a cada ~5 s,
@@ -164,33 +152,26 @@ impl LspManager {
     /// `didOpen` volta a ser real, **com o buffer do editor**, nao com o que o
     /// core teria lido do disco.
     pub fn close_documents(&mut self, language: &str) -> usize {
-        let uris: Vec<String> = self
-            .servers
-            .get(language)
-            .map(|handle| handle.versions.keys().cloned().collect())
-            .unwrap_or_default();
-        if uris.is_empty() {
-            return 0;
+        let mut fechados = 0;
+        for key in self.registry.keys_of(language) {
+            let Some(handle) = self.servers.get_mut(key) else {
+                continue;
+            };
+            let uris: Vec<String> = handle.versions.keys().cloned().collect();
+            for uri in &uris {
+                close_in(handle, uri);
+            }
+            if key == language {
+                fechados = uris.len();
+            }
         }
-        let Some(handle) = self.servers.get_mut(language) else {
-            return 0;
-        };
-        for uri in &uris {
-            handle.versions.remove(uri);
-            handle.content_hashes.remove(uri);
+        if fechados > 0 {
+            self.active_code_actions = None;
         }
-        self.active_code_actions = None;
-        let Some(handle) = self.servers.get(language) else {
-            return 0;
-        };
-        for uri in &uris {
-            let params = json!({ "textDocument": { "uri": uri } });
-            send_notification(&handle.stdin, "textDocument/didClose", &params);
-        }
-        uris.len()
+        fechados
     }
 
-    /// Re-sincroniza um documento que ja esta aberto no servidor.
+    /// Re-sincroniza um documento que ja esta aberto nos servidores.
     ///
     /// Usado depois de um rename reescrever arquivos no disco; documentos que
     /// o servidor nao conhece ficam intactos (nenhum `didOpen` novo).
@@ -200,22 +181,18 @@ impl LspManager {
         };
         let uri = uri_for_path(path);
         let hash = content_hash(content);
-        let Some(handle) = self.servers.get_mut(language) else {
-            return;
-        };
-        let Some(version) = handle.versions.get_mut(&uri) else {
-            return;
-        };
-        if handle.content_hashes.get(&uri) == Some(&hash) {
-            return;
+        let language_id = self.registry.language_id_of(language);
+        for key in self.registry.keys_of(language) {
+            if let Some(handle) = self.servers.get_mut(key) {
+                if handle.versions.contains_key(&uri) {
+                    open_or_change(handle, &uri, language_id, content, hash, true);
+                }
+            }
         }
-        *version += 1;
-        let params = full_change_params(&uri, *version, content);
-        handle.content_hashes.insert(uri.clone(), hash);
-        send_notification(&handle.stdin, "textDocument/didChange", &params);
     }
 
-    /// Versao do documento que o servidor da linguagem conhece, se aberto.
+    /// Versao do documento que o servidor PRINCIPAL da linguagem conhece, se
+    /// aberto.
     ///
     /// Usada para rejeitar `WorkspaceEdit.documentChanges` obsoleto antes de
     /// criar uma transacao de escrita.
@@ -229,8 +206,14 @@ impl LspManager {
             .copied()
     }
 
-    /// Garante o servidor da linguagem e sincroniza o texto; devolve a
-    /// LINGUAGEM, que e o que todo chamador precisa daqui.
+    /// Garante o servidor principal da linguagem e sincroniza o texto nele e
+    /// nos companheiros vivos; devolve a LINGUAGEM (= a chave do principal),
+    /// que e o que todo chamador precisa daqui.
+    ///
+    /// No principal o `didChange` vai SEMPRE (e' o que o roadmap 30 §3 mediu
+    /// e os testes do fio esperam); nos companheiros so' quando o texto
+    /// mudou — um linter re-analisa a cada didChange, e a pergunta
+    /// interativa nao e' para ele.
     pub(super) fn sync_document(
         &mut self,
         path: &Path,
@@ -243,31 +226,69 @@ impl LspManager {
         };
         self.ensure_server(&spec)?;
         let uri = uri_for_path(path);
-        let Some(handle) = self.servers.get_mut(spec.language) else {
+        let hash = content_hash(content);
+        let Some(handle) = self.servers.get_mut(spec.key) else {
             return Err(LspError::Transport {
-                message: format!("servidor {} nao esta registrado", spec.language),
+                message: format!("servidor {} nao esta registrado", spec.key),
             });
         };
-
-        if let Some(version) = handle.versions.get_mut(&uri) {
-            *version += 1;
-            let params = full_change_params(&uri, *version, content);
-            send_notification(&handle.stdin, "textDocument/didChange", &params);
-        } else {
-            handle.versions.insert(uri.clone(), 1);
-            let params = json!({
-                "textDocument": {
-                    "uri": uri,
-                    "languageId": spec.language_id,
-                    "version": 1,
-                    "text": content,
-                }
-            });
-            send_notification(&handle.stdin, "textDocument/didOpen", &params);
+        open_or_change(handle, &uri, spec.language_id, content, hash, false);
+        for companion in self.ensure_companions(path) {
+            if let Some(handle) = self.servers.get_mut(companion.key) {
+                open_or_change(handle, &uri, spec.language_id, content, hash, true);
+            }
         }
-
         Ok(spec.language)
     }
+
+}
+
+/// `didOpen` na primeira vez; depois `didChange` com a versao seguinte — ou
+/// nada, quando `skip_if_same` e o texto e' o ultimo que este servidor viu.
+/// Devolve se alguma notificacao saiu.
+fn open_or_change(
+    handle: &mut ServerHandle,
+    uri: &str,
+    language_id: &str,
+    content: &str,
+    hash: u64,
+    skip_if_same: bool,
+) -> bool {
+    if let Some(version) = handle.versions.get_mut(uri) {
+        if skip_if_same && handle.content_hashes.get(uri) == Some(&hash) {
+            return false;
+        }
+        *version += 1;
+        let params = full_change_params(uri, *version, content);
+        if skip_if_same {
+            handle.content_hashes.insert(uri.to_owned(), hash);
+        }
+        send_notification(&handle.stdin, "textDocument/didChange", &params);
+        return true;
+    }
+    handle.versions.insert(uri.to_owned(), 1);
+    handle.content_hashes.insert(uri.to_owned(), hash);
+    let params = json!({
+        "textDocument": {
+            "uri": uri,
+            "languageId": language_id,
+            "version": 1,
+            "text": content,
+        }
+    });
+    send_notification(&handle.stdin, "textDocument/didOpen", &params);
+    true
+}
+
+/// `didClose` num servidor, se ele tinha o documento; devolve se tinha.
+fn close_in(handle: &mut ServerHandle, uri: &str) -> bool {
+    if handle.versions.remove(uri).is_none() {
+        return false;
+    }
+    handle.content_hashes.remove(uri);
+    let params = json!({ "textDocument": { "uri": uri } });
+    send_notification(&handle.stdin, "textDocument/didClose", &params);
+    true
 }
 
 /// Hash estavel do conteudo de um documento para detectar sync redundante.

@@ -25,6 +25,7 @@ use super::parse::{
     code_action_infos, completion_items, decode_semantic_tokens, definition_location,
     hover_content, reference_locations, workspace_edit_plan,
 };
+use super::diagnostics_merge::MergedDiagnostics;
 use super::parse_symbols::{document_symbols, workspace_symbols};
 use super::server::{ServerHandle, ServerRegistry};
 use super::types::{LspError, LspLocation, WorkspaceEditPlan};
@@ -40,23 +41,30 @@ use super::{EventSender, PendingResponses};
 #[derive(Debug)]
 pub(super) struct ActiveCodeActions {
     path: PathBuf,
-    actions: Vec<Value>,
+    /// Cada acao crua com a CHAVE do servidor que a ofereceu: o principal e
+    /// os companheiros entram na mesma lista, e o indice que a UI devolve
+    /// aponta para uma so'.
+    actions: Vec<(&'static str, Value)>,
 }
 
 /// Gerencia os language servers do workspace aberto.
 #[derive(Debug)]
 pub struct LspManager {
     pub(super) events: EventSender,
+    /// Servidores vivos pela CHAVE do spec (`python`, `python-ruff`).
     pub(super) servers: HashMap<&'static str, ServerHandle>,
     pub(super) pending: PendingResponses,
     pub(super) root: Option<PathBuf>,
     pub(super) next_request_id: i64,
     pub(super) active_code_actions: Option<ActiveCodeActions>,
-    /// Timeouts consecutivos por linguagem; zera em qualquer resposta. A
+    /// Timeouts consecutivos por servidor; zera em qualquer resposta. A
     /// politica que o consome vive em [`super::session`].
     pub(super) timeout_streak: HashMap<&'static str, u32>,
     /// Qual executavel roda cada linguagem. Ver [`ServerRegistry`].
     pub(super) registry: ServerRegistry,
+    /// Os diagnosticos de cada servidor por arquivo, fundidos num evento so'
+    /// (ver [`super::diagnostics_merge`]).
+    pub(super) merged_diagnostics: MergedDiagnostics,
 }
 
 impl LspManager {
@@ -72,6 +80,7 @@ impl LspManager {
             active_code_actions: None,
             timeout_streak: HashMap::new(),
             registry: ServerRegistry::default(),
+            merged_diagnostics: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -193,12 +202,15 @@ impl LspManager {
         workspace_edit_plan(&result)
     }
 
-    /// Resolve `textDocument/codeAction` no ponto do cursor.
+    /// Resolve `textDocument/codeAction` no ponto do cursor — no servidor
+    /// principal E nos companheiros vivos da linguagem, numa lista so'.
     ///
-    /// O `context` leva os diagnostics que o proprio servidor publicou para a
-    /// linha (cache da thread leitora); a UI nao devolve diagnostico nenhum.
+    /// O `context` de cada servidor leva os diagnostics que ELE publicou para
+    /// a linha (cache da thread leitora); a UI nao devolve diagnostico nenhum.
     /// As acoes cruas aplicaveis ficam guardadas como consulta ativa para o
-    /// `lsp.applyCodeAction` seguinte.
+    /// `lsp.applyCodeAction` seguinte, cada uma com o servidor de origem. Um
+    /// companheiro que falha ou demora nao derruba a consulta: as acoes dele
+    /// so' nao aparecem.
     pub fn code_actions(
         &mut self,
         path: &Path,
@@ -207,10 +219,38 @@ impl LspManager {
         column: u64,
     ) -> Result<Vec<LspCodeActionInfo>, LspError> {
         let language = self.sync_document(path, content)?;
+        let mut infos = Vec::new();
+        let mut raw = Vec::new();
+        let result = self.code_actions_from(language, path, line, column)?;
+        let (principal_infos, principal_raw) = code_action_infos(&result);
+        infos.extend(principal_infos);
+        raw.extend(principal_raw.into_iter().map(|action| (language, action)));
+        for key in self.running_companion_keys(language) {
+            if let Ok(result) = self.code_actions_from(key, path, line, column) {
+                let (mais_infos, mais_raw) = code_action_infos(&result);
+                infos.extend(mais_infos);
+                raw.extend(mais_raw.into_iter().map(|action| (key, action)));
+            }
+        }
+        self.active_code_actions = Some(ActiveCodeActions {
+            path: path.to_path_buf(),
+            actions: raw,
+        });
+        Ok(infos)
+    }
+
+    /// O `textDocument/codeAction` de UM servidor, com o contexto dele.
+    fn code_actions_from(
+        &mut self,
+        key: &'static str,
+        path: &Path,
+        line: u64,
+        column: u64,
+    ) -> Result<Value, LspError> {
         let uri = uri_for_path(path);
         let context_diagnostics = self
             .servers
-            .get(language)
+            .get(key)
             .map(|handle| diagnostics_for_line(&handle.diagnostics_by_uri, &uri, line))
             .unwrap_or_default();
         let position = json!({
@@ -222,13 +262,16 @@ impl LspManager {
             "range": { "start": position, "end": position },
             "context": { "diagnostics": context_diagnostics },
         });
-        let result = self.send_request(language, "textDocument/codeAction", &params)?;
-        let (infos, raw) = code_action_infos(&result);
-        self.active_code_actions = Some(ActiveCodeActions {
-            path: path.to_path_buf(),
-            actions: raw,
-        });
-        Ok(infos)
+        self.send_request(key, "textDocument/codeAction", &params)
+    }
+
+    /// Os companheiros de `language` que estao VIVOS agora.
+    pub(super) fn running_companion_keys(&self, language: &str) -> Vec<&'static str> {
+        self.registry
+            .keys_of(language)
+            .into_iter()
+            .filter(|key| *key != language && self.servers.contains_key(key))
+            .collect()
     }
 
     /// Consome a acao `index` da consulta ativa de `path`, se ela existir.
@@ -246,7 +289,7 @@ impl LspManager {
         if active.path != path {
             return None;
         }
-        let action = active.actions.get(index)?;
+        let (_servidor, action) = active.actions.get(index)?;
         let title = action
             .get("title")
             .and_then(Value::as_str)

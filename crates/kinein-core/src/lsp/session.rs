@@ -35,26 +35,53 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
 const MAX_TIMEOUT_STREAK: u32 = 3;
 
 impl LspManager {
-    /// Reinicia o servidor de UMA linguagem: mata o processo e o remove; sobe
-    /// de novo (lazy) no próximo request. `true` se havia servidor. A UI
-    /// re-sincroniza o arquivo ativo ao ver `event.lsp.restarted` (M4.3b).
+    /// Reinicia os servidores de UMA linguagem — o principal e os
+    /// companheiros vivos: mata cada processo e o remove; sobem de novo
+    /// (lazy) no proximo request. `true` se havia algum. A UI re-sincroniza o
+    /// arquivo ativo ao ver `event.lsp.restarted` (M4.3b) — um evento por
+    /// linguagem, nao por processo.
     pub fn restart_language(&mut self, language: &str) -> bool {
-        let Some(key) = self.servers.keys().copied().find(|k| *k == language) else {
+        let keys: Vec<&'static str> = self
+            .servers
+            .keys()
+            .copied()
+            .filter(|key| self.registry.keys_of(language).contains(key) || *key == language)
+            .collect();
+        if keys.is_empty() {
             return false;
-        };
+        }
+        for key in &keys {
+            self.kill_server(key);
+            self.emit_status(key, "restarting");
+        }
+        if let Some(key) = keys.iter().find(|key| **key == language).or(keys.first()) {
+            self.emit_restarted(key);
+        }
+        true
+    }
+
+    /// Mata UM servidor pela chave e esquece o que ele publicou (a tela
+    /// perde os diagnosticos dele na hora, nao no proximo evento).
+    fn kill_server(&mut self, key: &'static str) {
         if let Some(mut handle) = self.servers.remove(key) {
             drop(handle.child.kill());
             drop(handle.child.wait());
         }
         self.timeout_streak.remove(key);
-        self.emit_status(key, "restarting");
-        self.emit_restarted(key);
-        true
+        for event in super::diagnostics_merge::forget(&self.merged_diagnostics, key) {
+            drop(self.events.send(event));
+        }
     }
 
     /// Reinicia TODOS os servidores vivos; devolve as linguagens reiniciadas.
     pub fn restart_all(&mut self) -> Vec<String> {
-        let languages: Vec<&'static str> = self.servers.keys().copied().collect();
+        let mut languages: Vec<&'static str> = self
+            .servers
+            .keys()
+            .filter_map(|key| self.registry.language_of(key))
+            .collect();
+        languages.sort_unstable();
+        languages.dedup();
         let mut restarted = Vec::new();
         for language in languages {
             if self.restart_language(language) {
@@ -64,16 +91,19 @@ impl LspManager {
         restarted
     }
 
-    /// Registra um timeout do servidor; ao acumular `MAX_TIMEOUT_STREAK`
-    /// seguidos, auto-reinicia aquela linguagem (M4.3b).
-    fn note_timeout(&mut self, language: &'static str) {
+    /// Registra um timeout de um servidor; ao acumular `MAX_TIMEOUT_STREAK`
+    /// seguidos, auto-reinicia so' ELE (M4.3b) — um companheiro travado nao
+    /// derruba o principal.
+    fn note_timeout(&mut self, key: &'static str) {
         let streak = {
-            let entry = self.timeout_streak.entry(language).or_insert(0);
+            let entry = self.timeout_streak.entry(key).or_insert(0);
             *entry += 1;
             *entry
         };
         if streak >= MAX_TIMEOUT_STREAK {
-            self.restart_language(language);
+            self.kill_server(key);
+            self.emit_status(key, "restarting");
+            self.emit_restarted(key);
         }
     }
 
@@ -89,13 +119,14 @@ impl LspManager {
     /// Encerra todos os servidores gerenciados.
     pub fn shutdown_all(&mut self) {
         self.active_code_actions = None;
+        super::diagnostics_merge::clear(&self.merged_diagnostics);
         let drained: Vec<(&'static str, ServerHandle)> = self.servers.drain().collect();
-        for (language, mut handle) in drained {
+        for (key, mut handle) in drained {
             // Melhor esforco: mata o processo; shutdown educado fica para
             // quando houver cancelamento generico no core.
             drop(handle.child.kill());
             drop(handle.child.wait());
-            self.emit_status(language, "stopped");
+            self.emit_status(key, "stopped");
         }
     }
 
@@ -120,14 +151,39 @@ impl LspManager {
         self.registry.set_settings(language, settings)
     }
 
-    /// Ha' um servidor vivo para a linguagem?
+    /// Poe um COMPANHEIRO ao lado do principal de `language` (o `ruff server`
+    /// ao lado do basedpyright): mesmo texto, diagnosticos fundidos, code
+    /// actions na mesma lista. Registrar de novo troca o executavel sem
+    /// derrubar o que esta' vivo (como `use_server_command`). `false` quando a
+    /// linguagem nao existe ou a chave e' de um principal.
+    pub fn use_companion(
+        &mut self,
+        language: &'static str,
+        key: &'static str,
+        command: &str,
+        args: &[&str],
+    ) -> bool {
+        self.registry.add_companion(language, key, command, args)
+    }
+
+    /// Tira um companheiro: mata o processo se vivo, e a tela perde os
+    /// diagnosticos dele. `false` se nao estava registrado.
+    pub fn disable_companion(&mut self, key: &str) -> bool {
+        if let Some(vivo) = self.servers.keys().copied().find(|k| *k == key) {
+            self.kill_server(vivo);
+            self.emit_status(vivo, "stopped");
+        }
+        self.registry.remove(key)
+    }
+
+    /// Ha' um servidor vivo com esta chave (`python`, `python-ruff`)?
     #[must_use]
-    pub fn is_running(&self, language: &str) -> bool {
-        self.servers.contains_key(language)
+    pub fn is_running(&self, key: &str) -> bool {
+        self.servers.contains_key(key)
     }
 
     pub(super) fn ensure_server(&mut self, spec: &ServerSpec) -> Result<(), LspError> {
-        if self.servers.contains_key(spec.language) {
+        if self.servers.contains_key(spec.key) {
             return Ok(());
         }
         let Some(root) = self.root.clone() else {
@@ -136,31 +192,52 @@ impl LspManager {
             });
         };
 
-        match spawn_server(spec, &root, self.events.clone(), Arc::clone(&self.pending)) {
+        match spawn_server(
+            spec,
+            &root,
+            self.events.clone(),
+            Arc::clone(&self.pending),
+            Arc::clone(&self.merged_diagnostics),
+        ) {
             Ok(handle) => {
-                self.servers.insert(spec.language, handle);
-                self.emit_status(spec.language, "running");
+                self.servers.insert(spec.key, handle);
+                self.emit_status(spec.key, "running");
                 Ok(())
             }
             Err(error) => {
                 let message = error.to_string();
-                self.emit_status_message(spec.language, "failed", Some(&message));
+                self.emit_status_message(spec.key, "failed", Some(&message));
                 Err(error)
             }
         }
     }
 
+    /// Sobe os companheiros de um arquivo, se ainda nao estao vivos. Um que
+    /// nao sobe SAI da tabela: o motivo vai uma vez no `event.lsp.status`
+    /// (`failed`), e o principal nao paga por ele a cada sincronizacao.
+    pub(super) fn ensure_companions(&mut self, path: &std::path::Path) -> Vec<ServerSpec> {
+        let mut vivos = Vec::new();
+        for spec in self.registry.companions_for_path(path) {
+            if self.ensure_server(&spec).is_ok() {
+                vivos.push(spec);
+            } else {
+                self.registry.remove(spec.key);
+            }
+        }
+        vivos
+    }
+
     pub(super) fn send_request(
         &mut self,
-        language: &'static str,
+        key: &'static str,
         method: &'static str,
         params: &Value,
     ) -> Result<Value, LspError> {
         let id = self.next_request_id;
         self.next_request_id += 1;
-        let Some(handle) = self.servers.get(language) else {
+        let Some(handle) = self.servers.get(key) else {
             return Err(LspError::Transport {
-                message: format!("servidor {language} nao esta em execucao"),
+                message: format!("servidor {key} nao esta em execucao"),
             });
         };
         let (response_tx, response_rx) = mpsc::channel::<Value>();
@@ -185,12 +262,12 @@ impl LspManager {
             Ok(response) => {
                 // Qualquer resposta (mesmo erro do LSP) prova que o servidor
                 // está vivo: zera a contagem de timeouts (M4.3b).
-                self.timeout_streak.remove(language);
+                self.timeout_streak.remove(key);
                 response_result(method, &response)
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 self.remove_pending(id);
-                self.note_timeout(language);
+                self.note_timeout(key);
                 Err(LspError::Timeout { method })
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => Err(LspError::Transport {

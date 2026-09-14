@@ -38,14 +38,23 @@ Responde:
 
 Notificacoes nao geram resposta — so entram no log, que e o ponto.
 
-Uso (sempre indireto, pelo `Core::use_language_server_command`):
+Com `--publica NOME` (2026-09-13, o companheiro de linguagem): a cada
+`didOpen`/`didChange` publica UM diagnostico na linha 1 com a mensagem
+`NOME: diagnostico falso` e responde `textDocument/codeAction` com UMA acao
+`NOME: corrigir` (quickfix com `edit.changes` na linha 1). Com dois servidores
+falsos publicando nomes diferentes para o mesmo arquivo, o teste ve se o core
+FUNDE os diagnosticos e as acoes — ou se um apaga o outro.
 
-    python3 scripts/fake_lsp_server.py /tmp/mensagens.jsonl
+Uso (sempre indireto, pelo `Core::use_language_server_command` e pelo
+`Core::use_language_server_companion`):
+
+    python3 scripts/fake_lsp_server.py /tmp/mensagens.jsonl [--publica NOME]
 """
 import json
 import sys
 
 LOG = sys.argv[1] if len(sys.argv) > 1 else None
+PUBLICA = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--publica" else None
 
 # Legend anunciada no initialize. O core a le em
 # `capabilities.semanticTokensProvider.legend.tokenTypes` e a usa para decodificar
@@ -117,7 +126,33 @@ def resultado(metodo, params):
         }
     if metodo == "textDocument/hover":
         return {"contents": {"kind": "markdown", "value": "fake hover"}}
+    if metodo == "textDocument/codeAction" and PUBLICA:
+        uri = params.get("textDocument", {}).get("uri", "")
+        linha = {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}}
+        return [{
+            "title": f"{PUBLICA}: corrigir",
+            "kind": "quickfix",
+            "edit": {"changes": {uri: [{"range": linha, "newText": f"# {PUBLICA}\n"}]}},
+        }]
     return None
+
+
+def diagnostico_falso(uri):
+    """O `publishDiagnostics` do modo --publica: um aviso fixo na linha 1."""
+    return {
+        "jsonrpc": "2.0",
+        "method": "textDocument/publishDiagnostics",
+        "params": {
+            "uri": uri,
+            "diagnostics": [{
+                "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 3}},
+                "severity": 2,
+                "code": PUBLICA.upper(),
+                "source": PUBLICA,
+                "message": f"{PUBLICA}: diagnostico falso",
+            }],
+        },
+    }
 
 
 def main():
@@ -145,6 +180,14 @@ def main():
             })
             continue
         if "id" not in mensagem:
+            if PUBLICA and metodo in ("textDocument/didOpen", "textDocument/didChange"):
+                uri = (mensagem.get("params") or {}).get("textDocument", {}).get("uri", "")
+                escrever(saida, diagnostico_falso(uri))
+            if PUBLICA and metodo == "textDocument/didClose":
+                uri = (mensagem.get("params") or {}).get("textDocument", {}).get("uri", "")
+                vazio = diagnostico_falso(uri)
+                vazio["params"]["diagnostics"] = []
+                escrever(saida, vazio)
             continue  # notificacao: so o log importa
         if metodo == "shutdown":
             escrever(saida, {"jsonrpc": "2.0", "id": mensagem["id"], "result": None})

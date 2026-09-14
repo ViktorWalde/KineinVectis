@@ -150,6 +150,23 @@ impl Core {
             .is_some_and(|lsp| lsp.use_server_command(language, command, args))
     }
 
+    /// Poe (ou troca) um COMPANHEIRO de language server ao lado do principal
+    /// de `language` — o `ruff server` ao lado do basedpyright. Mesma costura
+    /// do [`Self::use_language_server_command`]: e' por aqui que o gate poe um
+    /// servidor falso no lugar do companheiro e observa a fusao dos
+    /// diagnosticos e das code actions.
+    pub fn use_language_server_companion(
+        &mut self,
+        language: &'static str,
+        key: &'static str,
+        command: &str,
+        args: &[&str],
+    ) -> bool {
+        self.lsp
+            .as_mut()
+            .is_some_and(|lsp| lsp.use_companion(language, key, command, args))
+    }
+
     /// Handles one already parsed JSON-RPC request.
     #[must_use]
     pub fn handle_request(&mut self, request: &JsonRpcRequest) -> RequestOutcome {

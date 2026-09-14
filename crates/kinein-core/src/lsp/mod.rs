@@ -19,6 +19,7 @@
 //! - [`edit`]: aplicacao de edits de texto sobre conteudo UTF-8;
 //! - [`uri`]: conversao entre caminhos e URIs `file://`.
 
+mod diagnostics_merge;
 mod edit;
 pub mod framing;
 mod manager;

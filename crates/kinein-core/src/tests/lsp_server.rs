@@ -42,7 +42,7 @@ struct Harness {
 }
 
 /// Caminho absoluto do servidor falso, versionado junto com os testes.
-fn fake_server() -> PathBuf {
+pub(super) fn fake_server() -> PathBuf {
     let script = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .join("scripts/fake_lsp_server.py");
@@ -57,7 +57,7 @@ fn fake_server() -> PathBuf {
 
 /// `python3` e requisito do gate deste repositorio (4 das 13 verificacoes o
 /// usam). Faltar e' FALHA, nunca teste pulado: teste que pula nao prova nada.
-fn python3() -> &'static str {
+pub(super) fn python3() -> &'static str {
     let ok = std::process::Command::new("python3")
         .arg("--version")
         .output()

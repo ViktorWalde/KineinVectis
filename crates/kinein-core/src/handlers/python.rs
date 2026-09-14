@@ -18,6 +18,9 @@ use crate::jobs::JobOutcome;
 use crate::python::{self, CriadoresDeAmbiente, PASTA_DO_AMBIENTE};
 use crate::rpc::{jobs_unavailable_response, no_workspace_response, parse_params};
 
+/// A chave do `ruff server` como companheiro do servidor `python`.
+pub(crate) const RUFF_COMPANION: &str = "python-ruff";
+
 impl Core {
     /// O basedpyright sobe COM o interpretador do projeto (fatia 2 da cadeia,
     /// 2026-09-12): `python.pythonPath` em `settings` — e' o `--query-driver`
@@ -46,9 +49,27 @@ impl Core {
                 || "basedpyright-langserver".to_owned(),
                 |p| p.display().to_string(),
             );
+        // O ruff como SERVIDOR ao lado do basedpyright (40 §4, 2026-09-13):
+        // companheiro da linguagem — mesmo texto, diagnosticos fundidos, as
+        // correcoes dele (F401, I001, `noqa`, fix all) no Alt+Enter. So' entra
+        // quando o binario existe: sem ruff nao ha' companheiro, e nada falha.
+        let ruff = self.detector.find_in_path("ruff");
         if let Some(lsp) = self.lsp.as_mut() {
             lsp.use_server_command("python", &comando, &["--stdio"]);
             lsp.use_server_settings("python", settings);
+            match ruff {
+                Some(caminho) => {
+                    lsp.use_companion(
+                        "python",
+                        RUFF_COMPANION,
+                        &caminho.display().to_string(),
+                        &["server"],
+                    );
+                }
+                None => {
+                    lsp.disable_companion(RUFF_COMPANION);
+                }
+            }
         }
     }
 

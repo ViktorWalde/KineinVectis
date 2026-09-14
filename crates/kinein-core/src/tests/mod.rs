@@ -20,6 +20,7 @@ mod index;
 mod index_context;
 mod jobs;
 mod lsp;
+mod lsp_companion;
 mod lsp_server;
 mod project;
 mod python;

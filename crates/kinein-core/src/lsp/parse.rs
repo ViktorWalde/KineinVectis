@@ -39,8 +39,17 @@ pub(super) fn response_result(method: &'static str, response: &Value) -> Result<
     Ok(response.get("result").cloned().unwrap_or(Value::Null))
 }
 
-/// Converte `textDocument/publishDiagnostics` no evento Kinein Vectis.
-pub(super) fn diagnostics_event(params: &Value) -> Option<JsonRpcRequest> {
+/// O `event.lsp.diagnostics` de um arquivo com a lista ja' convertida.
+pub(super) fn diagnostics_notification(path: &str, diagnostics: &[Diagnostic]) -> JsonRpcRequest {
+    JsonRpcRequest::notification(
+        "event.lsp.diagnostics",
+        Some(json!({ "path": path, "diagnostics": diagnostics })),
+    )
+}
+
+/// Le um `publishDiagnostics`: o caminho do arquivo e os diagnosticos no
+/// vocabulario Kinein. `None` sem URI local.
+pub(super) fn published_diagnostics(params: &Value) -> Option<(String, Vec<Diagnostic>)> {
     let uri = params.get("uri")?.as_str()?;
     let path = path_for_uri(uri)?;
     let empty = Vec::new();
@@ -93,10 +102,7 @@ pub(super) fn diagnostics_event(params: &Value) -> Option<JsonRpcRequest> {
         })
         .collect::<Vec<_>>();
 
-    Some(JsonRpcRequest::notification(
-        "event.lsp.diagnostics",
-        Some(json!({ "path": path, "diagnostics": diagnostics })),
-    ))
+    Some((path, diagnostics))
 }
 
 /// Normaliza o `code` de um diagnostico LSP (string OU numero) em string.
@@ -478,7 +484,8 @@ mod tests {
 
     use super::{
         MAX_COMPLETION_ITEMS, completion_items, decode_semantic_tokens, definition_location,
-        diagnostics_event, hover_content, reference_locations, workspace_edit_plan,
+        diagnostics_notification, hover_content, published_diagnostics, reference_locations,
+        workspace_edit_plan,
     };
 
     #[test]
@@ -530,7 +537,8 @@ mod tests {
             }],
         });
 
-        let event = diagnostics_event(&params).unwrap();
+        let (path, diagnostics) = published_diagnostics(&params).unwrap();
+        let event = diagnostics_notification(&path, &diagnostics);
 
         assert_eq!(event.method, "event.lsp.diagnostics");
         let event_params = event.params.unwrap();
@@ -570,7 +578,8 @@ mod tests {
             ],
         });
 
-        let event = diagnostics_event(&params).unwrap();
+        let (path, diagnostics) = published_diagnostics(&params).unwrap();
+        let event = diagnostics_notification(&path, &diagnostics);
         let diagnostics = &event.params.unwrap()["diagnostics"];
 
         // Range multi-linha preservado (1-based) + code string.
