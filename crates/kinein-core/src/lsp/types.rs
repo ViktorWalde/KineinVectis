@@ -47,6 +47,9 @@ pub struct FileEdits {
 /// Plano de aplicacao de um `WorkspaceEdit` de rename.
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct WorkspaceEditPlan {
+    /// Chave do servidor que produziu o plano. `None` usa o principal da
+    /// linguagem; origem interna, nunca fornecida pela UI ou pelo wire LSP.
+    pub server: Option<&'static str>,
     /// Arquivos afetados; vazio quando o servidor nao encontrou o simbolo.
     pub files: Vec<FileEdits>,
 }

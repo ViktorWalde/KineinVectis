@@ -8,6 +8,8 @@ Item {
 
     property string workspaceRoot: ""
     property bool sessionActive: false
+    property bool starting: false
+    property bool attached: false
     property bool paused: false
     property string currentFile: ""
     property int currentLine: 0
@@ -22,7 +24,7 @@ Item {
     property var breakpointsByFile: ({})
     property int breakpointsRevision: 0
 
-    signal startRequested(string program)
+    signal startRequested(string program, var connect)
     signal stopRequested()
     signal continueRequested()
     signal nextRequested()
@@ -121,6 +123,8 @@ Item {
     function clear() {
         clearInspection();
         debugOutputModel.clear();
+        starting = false;
+        attached = false;
         sessionActive = false;
         paused = false;
         currentFile = "";
@@ -194,18 +198,14 @@ Item {
         setBreakpointsRequested(file, items);
     }
 
-    function startDebug() {
-        startDebugProgram("");
-    }
-
-    // "Depurar" num arquivo da arvore (um .py): o programa vai explicito; vazio
-    // e' o alvo automatico do core.
-    function startDebugProgram(program) {
-        if (workspaceRoot === "" || sessionActive) {
+    // One start intent for automatic targets, files and TCP attach.
+    function startDebug(program, connect) {
+        if (workspaceRoot === "" || sessionActive || starting) {
             return;
         }
+        starting = true;
         showTabRequested("debug");
-        startRequested(program);
+        startRequested(program || "", connect || {});
     }
 
     function stopDebug() {
@@ -244,7 +244,9 @@ Item {
         }
     }
 
-    function handleStarted(program) {
+    function handleStarted(program, isAttached) {
+        starting = false;
+        attached = isAttached === true;
         sessionActive = true;
         paused = false;
         currentFile = "";
@@ -365,6 +367,8 @@ Item {
     }
 
     function handleFinished(exitCode) {
+        starting = false;
+        attached = false;
         sessionActive = false;
         paused = false;
         currentFile = "";
@@ -380,6 +384,9 @@ Item {
     }
 
     function handleRequestFailed(method, message) {
+        if (method === "debug.start") {
+            starting = false;
+        }
         if (method.startsWith("debug.")) {
             showTabRequested("debug");
             appendLine(message, "stderr");

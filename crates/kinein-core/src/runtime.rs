@@ -4,6 +4,8 @@
 //! with LSP/run/terminal notifications; `run_json_lines` is the pure,
 //! testable line-by-line driver used by the tests.
 
+mod services;
+
 use std::io::{self, BufRead, Write};
 
 use kinein_protocol::JsonRpcRequest;

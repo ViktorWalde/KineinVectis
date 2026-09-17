@@ -6,8 +6,7 @@
 //! thread propria, e nao aqui dentro.
 
 use std::{
-    io::BufReader,
-    process::ChildStdout,
+    io::{BufReader, Read},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
@@ -24,9 +23,9 @@ use super::wire::{Pending, Wire};
 use crate::lsp::EventSender;
 use crate::lsp::framing::read_message;
 
-/// Sobe a thread leitora do stdout do adapter.
+/// Sobe a thread leitora do stdout ou socket do adapter.
 pub(super) fn spawn_reader(
-    stdout: ChildStdout,
+    stdout: impl Read + Send + 'static,
     wire: &Wire,
     events: &EventSender,
     alive: &Arc<AtomicBool>,

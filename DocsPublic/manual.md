@@ -303,6 +303,19 @@ em projetos embarcados, pelo `gdb -i dap` contra o servidor de debug do kit
 4. Na aba **Debug** do painel inferior ficam os controles e a saída do
    programa.
 
+**Conectar a um Python já iniciado.** No ambiente do serviço, rode:
+
+```bash
+python -m debugpy --listen 127.0.0.1:5678 --wait-for-client app.py
+```
+
+Abra as fontes correspondentes na IDE e marque os breakpoints. Na aba **Debug**,
+preencha **Host do Python** e **Porta** e clique **Conectar ao Python**.
+Frames, variáveis e watches usam os controles habituais. **Desconectar** encerra
+apenas a sessão de depuração; o serviço continua rodando. O adaptador precisa
+informar caminhos acessíveis neste workspace; SSH e mapeamento de caminhos
+remotos continuam na etapa de Linux embarcado.
+
 Todos os controles são **botões clicáveis na aba Debug** — dá para
 depurar inteiro sem atalho. Para quem prefere teclado (as duas colunas
 valem sempre; a segunda não depende de `Fn`):
@@ -642,6 +655,10 @@ máquina), com o comando visível; nada é criado sem clique.
 linguagem     realce e outline pelo Tree-sitter; completar, navegar, renomear,
               diagnosticos pelo basedpyright — que SOBE COM O INTERPRETADOR DO
               PROJETO e reinicia sozinho quando o .venv nasce
+correcoes     Alt+Enter = acoes do basedpyright e do `ruff server`, quando Ruff
+              e' encontrado pelo detector. Diagnosticos dos dois convivem na
+              aba Problemas; remover import inutilizado, organizar imports e
+              corrigir pelo Ruff usam o mesmo preview confirmavel do editor
 formatar      Ctrl+Alt+L = `ruff format`
 analise       Ctrl+Shift+L = `ruff check`, com o mesmo perfil de rigor dos
               outros (os problemas caem na aba Problemas)

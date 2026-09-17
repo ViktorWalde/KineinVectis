@@ -49,7 +49,7 @@ void WindowChromeController::setWindow(QQuickWindow* window)
         connect(m_window.data(), &QWindow::windowStateChanged, this,
                 [this](Qt::WindowState) { emit maximizedChanged(); });
         connect(m_window.data(), &QObject::destroyed, this, [this]() {
-            m_window = nullptr;
+            // QObject::destroyed chega depois de o Qt limpar os QPointer.
             emit windowChanged();
             emit maximizedChanged();
         });

@@ -50,7 +50,7 @@ impl Core {
         let parsed = match parse_params::<DebugStartParams>(
             request_id.as_ref(),
             params,
-            "debug.start aceita apenas o campo opcional program",
+            "debug.start aceita program ou connect { host, port }, nunca ambos",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -60,87 +60,101 @@ impl Core {
         }
 
         let root = Path::new(&workspace.root);
-        let target = match parsed.program.filter(|program| !program.trim().is_empty()) {
-            Some(explicit) => {
-                let path = PathBuf::from(explicit);
-                if !path.is_file() {
-                    return invalid_debug_params(
-                        request_id,
-                        &format!("programa nao encontrado: {}", path.display()),
-                    );
-                }
-                dap::DebugTarget::Program(path)
+        let target = if let Some(mut endpoint) = parsed.connect {
+            if parsed.program.is_some() {
+                return invalid_debug_params(
+                    request_id,
+                    "program e connect sao mutuamente exclusivos",
+                );
             }
-            None => match dap::resolve_program(workspace.kind, root) {
-                Ok(target) => target,
-                Err(error) => return debug_error_response(request_id, &error),
-            },
+            endpoint.host = endpoint.host.trim().to_owned();
+            if endpoint.host.is_empty()
+                || endpoint
+                    .host
+                    .chars()
+                    .any(|c| c.is_whitespace() || c.is_control())
+                || endpoint.host.contains('/')
+                || endpoint.port == 0
+            {
+                return invalid_debug_params(
+                    request_id,
+                    "connect requer host valido e port entre 1 e 65535",
+                );
+            }
+            dap::DebugTarget::PythonAttach(endpoint)
+        } else {
+            match parsed.program.filter(|program| !program.trim().is_empty()) {
+                Some(explicit) => {
+                    let path = PathBuf::from(explicit);
+                    if !path.is_file() {
+                        return invalid_debug_params(
+                            request_id,
+                            &format!("programa nao encontrado: {}", path.display()),
+                        );
+                    }
+                    dap::DebugTarget::Program(path)
+                }
+                None => match dap::resolve_program(workspace.kind, root) {
+                    Ok(target) => target,
+                    Err(error) => return debug_error_response(request_id, &error),
+                },
+            }
         };
 
-        // O kit decide QUAL adaptador sobe. Resolve-se antes de pegar o
-        // manager emprestado: `Toolchain::resolve` le o disco e a lista de
-        // ferramentas detectadas, e os dois pedem `&self`.
         let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
-        let mut adapter_id = toolchain
-            .chosen(kinein_protocol::ToolchainRole::DebugAdapter)
-            .map(str::to_owned);
-        let mut adapter_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
-        let chip = toolchain.chip().map(str::to_owned);
-        let remote_target = toolchain.remote_target().map(str::to_owned);
-        let debug_server = toolchain.debug_server().map(str::to_owned);
-        // Um alvo Python (fatia 4 da cadeia do 41) nao passa pelo kit: o
-        // adaptador e' o debugpy DO interpretador do projeto — o mesmo que
-        // run, pytest e basedpyright usam — e so' sobe se o modulo existe la'.
-        if e_um_alvo_python(&target) {
-            let Some(interpretador) = self.python_interpreter(root) else {
-                return debug_error_response(
-                    request_id,
-                    &dap::DebugError::NoTarget {
-                        message: "sem interpretador Python para este workspace: crie o \
-                                  ambiente (.venv) pela faixa de saude ou instale o python3"
-                            .to_owned(),
-                    },
-                );
-            };
-            if let Err(message) = crate::python::debug::debugpy_available(&interpretador) {
-                return debug_error_response(
-                    request_id,
-                    &dap::DebugError::MissingAdapterModule { message },
-                );
+        let python = e_um_alvo_python(&target);
+        let interpreter = if python && !target.is_attached() {
+            match self.python_debug_interpreter(root) {
+                Ok(path) => Some(path),
+                Err(error) => return debug_error_response(request_id, &error),
             }
-            adapter_id = Some(dap::DEBUGPY.to_owned());
-            adapter_path = Some(interpretador);
-        }
-
+        } else {
+            None
+        };
+        // Python never inherits a native kit's remoteTarget/debugServer/chip.
+        // TCP attach uses the adapter that debugpy.listen already started.
+        let native_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
+        let choice = if python {
+            dap::AdapterChoice {
+                id: Some(dap::DEBUGPY),
+                path: interpreter.as_deref(),
+                ..dap::AdapterChoice::default()
+            }
+        } else {
+            dap::AdapterChoice {
+                id: toolchain.chosen(kinein_protocol::ToolchainRole::DebugAdapter),
+                path: native_path.as_deref(),
+                chip: toolchain.chip(),
+                remote_target: toolchain.remote_target(),
+                debug_server: toolchain.debug_server(),
+            }
+        };
         let Some(manager) = self.debug.as_mut() else {
             return debug_unavailable_response(request_id, "debug.start");
         };
-        match manager.start(
-            root,
-            &target,
-            &dap::AdapterChoice {
-                id: adapter_id.as_deref(),
-                path: adapter_path.as_deref(),
-                chip: chip.as_deref(),
-                remote_target: remote_target.as_deref(),
-                debug_server: debug_server.as_deref(),
-            },
-        ) {
+        match manager.start(root, &target, &choice) {
             Ok(()) => JsonRpcResponse::success(
                 request_id,
                 json!(DebugStartResult {
                     program: target.display(),
+                    attached: target.is_attached(),
                 }),
             ),
             Err(error) => debug_error_response(request_id, &error),
         }
     }
 
-    /// O interpretador do projeto (precedencia do 29 §4.1), sem medir versao.
-    fn python_interpreter(&self, root: &Path) -> Option<PathBuf> {
+    /// Launch needs debugpy in the project's interpreter; TCP attach does not.
+    fn python_debug_interpreter(&self, root: &Path) -> Result<PathBuf, dap::DebugError> {
         let mut tools = self.python_tools();
         tools.medir_versao = false;
-        crate::python::env::python_env(root, &tools).map(|env| PathBuf::from(env.interpreter))
+        let env = crate::python::env::python_env(root, &tools).ok_or_else(|| dap::DebugError::NoTarget {
+            message: "sem interpretador Python para este workspace: crie o ambiente (.venv) pela faixa de saude ou instale o python3".to_owned(),
+        })?;
+        let interpreter = PathBuf::from(env.interpreter);
+        crate::python::debug::debugpy_available(&interpreter)
+            .map_err(|message| dap::DebugError::MissingAdapterModule { message })?;
+        Ok(interpreter)
     }
 
     fn debug_set_breakpoints_response(
@@ -320,7 +334,7 @@ fn invalid_debug_params(request_id: Option<Value>, message: &str) -> JsonRpcResp
 /// com Python).
 fn e_um_alvo_python(target: &dap::DebugTarget) -> bool {
     match target {
-        dap::DebugTarget::Module(_) => true,
+        dap::DebugTarget::Module(_) | dap::DebugTarget::PythonAttach(_) => true,
         dap::DebugTarget::Program(program) => program
             .extension()
             .and_then(std::ffi::OsStr::to_str)

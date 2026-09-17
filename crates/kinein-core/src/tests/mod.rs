@@ -11,6 +11,7 @@ mod configaction;
 mod container;
 mod datasource;
 mod debug;
+mod debug_attach;
 mod dispatch;
 mod format;
 mod fs;

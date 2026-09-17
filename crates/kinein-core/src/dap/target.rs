@@ -7,7 +7,7 @@
 
 use std::path::{Path, PathBuf};
 
-use kinein_protocol::ProjectKind;
+use kinein_protocol::{DebugConnectParams, ProjectKind};
 
 use super::DebugError;
 
@@ -22,16 +22,24 @@ pub enum DebugTarget {
     Program(PathBuf),
     /// Nome de um pacote/modulo Python com `__main__.py`.
     Module(String),
+    /// Existing Python process, exposed by debugpy.listen / --listen.
+    PythonAttach(DebugConnectParams),
 }
 
 impl DebugTarget {
+    /// Only the Python TCP attach leaves the debuggee owned externally.
+    #[must_use]
+    pub const fn is_attached(&self) -> bool {
+        matches!(self, Self::PythonAttach(_))
+    }
+
     /// O caminho, quando o alvo e' um arquivo (o servidor de debug e o
     /// `build.size` precisam de um ELF; um modulo nao tem).
     #[must_use]
     pub fn program_path(&self) -> Option<&Path> {
         match self {
             Self::Program(p) => Some(p),
-            Self::Module(_) => None,
+            Self::Module(_) | Self::PythonAttach(_) => None,
         }
     }
 
@@ -41,6 +49,7 @@ impl DebugTarget {
         match self {
             Self::Program(p) => p.display().to_string(),
             Self::Module(m) => format!("-m {m}"),
+            Self::PythonAttach(endpoint) => format!("debugpy {}:{}", endpoint.host, endpoint.port),
         }
     }
 }

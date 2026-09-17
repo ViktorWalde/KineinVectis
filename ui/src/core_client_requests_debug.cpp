@@ -12,11 +12,14 @@
 
 namespace kinein {
 
-void CoreClient::debugStart(const QString& program)
+void CoreClient::debugStart(const QString& program, const QVariantMap& connect)
 {
     QJsonObject params;
     if (!program.isEmpty()) {
         params.insert(QStringLiteral("program"), program);
+    }
+    if (!connect.isEmpty()) {
+        params.insert(QStringLiteral("connect"), QJsonObject::fromVariantMap(connect));
     }
     sendRequest(QStringLiteral("debug.start"), params);
 }

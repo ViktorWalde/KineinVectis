@@ -41,7 +41,9 @@ void erro(const QString& motivo)
 {
     // A3.2 item 3: ausencia produz motivo explicito, nunca sucesso falso.
     qInfo().noquote().nospace() << "KINEIN_PERF typing_error=" << motivo;
-    QCoreApplication::exit(1);
+    // A instalacao tambem pode falhar antes de app.exec(): exit direto se perde.
+    QMetaObject::invokeMethod(QCoreApplication::instance(), "exit", Qt::QueuedConnection,
+                              Q_ARG(int, 1));
 }
 
 // Mede tecla -> frame apresentado no editor real, com arquivo grande aberto.
@@ -58,6 +60,8 @@ void erro(const QString& motivo)
 // nao a cronometragem, que custa.
 class TypingHarness : public QObject
 {
+    Q_OBJECT
+
 public:
     TypingHarness(QQuickWindow* window, CoreClient* client, QObject* editor, QObject* parent)
         : QObject(parent), m_window(window), m_client(client), m_editor(editor),
@@ -70,6 +74,9 @@ public:
     }
 
     void iniciar();
+
+signals:
+    void amostraColetada(double /*ms*/);
 
 private:
     void aoConectar();
@@ -140,6 +147,9 @@ void TypingHarness::iniciar()
         }
     });
 
+    connect(this, &TypingHarness::amostraColetada, this, &TypingHarness::registrarAmostra,
+            Qt::QueuedConnection);
+
     // O carimbo do frame TEM de sair na render thread, no instante do swap.
     // frameSwapped e emitido la; uma conexao queued mediria de brinde a fila
     // de eventos da GUI thread — ruido irrelevante nos 250 ms do startup, mas
@@ -154,8 +164,7 @@ void TypingHarness::iniciar()
                 return;
             }
             const double ms = static_cast<double>(agora - enviada) / 1000000.0;
-            QMetaObject::invokeMethod(
-                this, [this, ms]() { registrarAmostra(ms); }, Qt::QueuedConnection);
+            emit amostraColetada(ms);
         },
         Qt::DirectConnection);
 
@@ -322,9 +331,11 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
         return;
     }
     auto* client = qobject_cast<CoreClient*>(ctx->objectForName(QStringLiteral("coreClient")));
-    QObject* editor = ctx->objectForName(QStringLiteral("editorController"));
+    QObject* domains = ctx->objectForName(QStringLiteral("domains"));
+    QObject* editor =
+        domains == nullptr ? nullptr : domains->property("editorController").value<QObject*>();
     if (client == nullptr || editor == nullptr) {
-        erro(QStringLiteral("coreClient/editorController nao encontrados no contexto"));
+        erro(QStringLiteral("coreClient/domains.editorController nao encontrados no contexto"));
         return;
     }
     // Dono e o parent-child do Qt: `app` destroi o harness junto com a
@@ -336,3 +347,5 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
 }
 
 } // namespace kinein
+
+#include "typing_perf_harness.moc"

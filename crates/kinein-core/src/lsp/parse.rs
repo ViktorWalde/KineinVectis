@@ -312,7 +312,10 @@ pub(super) fn reference_locations(result: &Value) -> Vec<LspLocation> {
 pub(super) fn workspace_edit_plan(result: &Value) -> Result<WorkspaceEditPlan, LspError> {
     let mut files = Vec::new();
     if result.is_null() {
-        return Ok(WorkspaceEditPlan { files });
+        return Ok(WorkspaceEditPlan {
+            files,
+            ..WorkspaceEditPlan::default()
+        });
     }
 
     if let Some(changes) = result.get("changes").and_then(Value::as_object) {
@@ -345,7 +348,10 @@ pub(super) fn workspace_edit_plan(result: &Value) -> Result<WorkspaceEditPlan, L
     }
 
     files.retain(|file| !file.edits.is_empty());
-    Ok(WorkspaceEditPlan { files })
+    Ok(WorkspaceEditPlan {
+        files,
+        ..WorkspaceEditPlan::default()
+    })
 }
 
 /// Nome plano do `SymbolKind` numerico do LSP (1..=26).

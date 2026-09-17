@@ -75,11 +75,93 @@ vivem em `DocsPublic/roadmaps/21`, seção "M4.2". Detalhe do gancho `KINEIN_PER
 (marker env-gated na `main.cpp`, sem efeito no uso normal): `DocsPrivate/diario/18`,
 "Fatia M4.2".
 
-## Estado observado no ambiente atual (Fedora 44, 2026-08-29)
+## Estado observado no notebook (Ubuntu 24.04.5, 2026-09-16)
 
-A máquina trocou de distro de novo — era Arch em 2026-07-08. O registro
-anterior fica em `DocsPrivate/ContextoIA.md`; **este bloco descreve o ambiente
-de hoje**, e é o único que vale.
+**Atualização posterior — debugpy attach, protocolo 0.109.0:** core e UI debug/release
+recompilados; atalho usa a release nova. Attach real (breakpoint, locais, evaluate,
+reconexões e desconexão preservando o processo) passou com debugpy 1.8.0. Foram
+aprovados 723 testes Rust, 35 harnesses QML e Clang-Tidy dos arquivos C++ desta
+fatia. Primeiro frame offscreen: 3151 ms debug / 988 ms release, amostras pontuais.
+O lint QML ainda reprova nos dois avisos StandardKey conhecidos; os demais
+impedimentos anteriores permanecem descritos abaixo. Detalhes no roadmap 40 §7.38.
+
+Ambiente atual: Ubuntu x86_64, Rust 1.96.1, Clang 18.1.3 e Qt 6.4.2.
+CMake/Ninja, Qt dev, libfmt-dev, OpenSSL dev, cargo-deny, ShellCheck,
+rustfmt, Clippy e rust-analyzer estão disponíveis; rust-src foi acrescentado.
+
+O bootstrap acima continua sendo a entrada para uma máquina limpa. No
+Ubuntu, conferir também as dependências abaixo; algumas já estavam
+instaladas neste notebook antes da preparação:
+
+```bash
+sudo apt-get install --yes libfmt-dev libssl-dev pkg-config \
+  python3-venv pipx python3-pytest python3-debugpy qml-qt6 \
+  podman uidmap slirp4netns fuse-overlayfs \
+  qemu-system-arm gcc-arm-none-eabi gdb-multiarch \
+  patchelf libfuse2t64 libxcb-cursor0 \
+  qml6-module-qt-labs-platform qml6-module-qtquick-dialogs
+pipx install 'ruff==0.16.7'
+pipx install 'basedpyright==1.40.1'
+pipx install 'uv==0.12.15'
+pipx install 'mpremote==1.29.0'
+pipx install 'esptool==5.4.0'
+rustup component add --toolchain 1.96.1 rust-src
+```
+
+As ferramentas Python usam ambientes pipx separados. `~/.local/bin` e
+`~/.cargo/bin` precisam estar no PATH; já estavam neste notebook. Foram
+criados os nomes `fd` (para `/usr/bin/fdfind`) e `lldb-dap` (para
+`/usr/lib/llvm-18/bin/lldb-dap`) em `~/.local/bin`, sem substituir binários
+do sistema. Podman 4.9.3 executou um contêiner Alpine sem root.
+
+**Validação medida:** UI debug compilada e primeiro frame offscreen em
+2874 ms; teste real de debugpy passou (breakpoint, variáveis, evaluate,
+stdout e execução de módulo). Ruff/basedpyright passaram na prova LSP real.
+UI e core release também foram compilados; a UI chegou ao primeiro frame
+em 1071 ms e o launcher real permaneceu vivo por oito segundos offscreen.
+**Retomada de compatibilidade, 2026-09-16:** o pacote `qml-qt6` foi
+instalado e incluído no bootstrap apt. O runner de lógica prefere
+`/usr/lib/qt6/bin/qml` ao wrapper `qml` do Qt 5; os **34 harnesses QML
+passaram**. O lint agora aceita builds sem `.rsp`, usando o alvo CMake/JSON
+e rejeitando avisos, relatório vazio/inválido ou resultado antigo. Dependências
+QtQuick/QtQuick.Window explícitas, conversão de URL e animação com alvo
+explícito resolveram cinco das sete advertências reveladas pelo lint 6.4.
+
+O harness de digitação entrega amostras por sinal tipado queued, mantendo o
+carimbo na render thread; seu Clang-Tidy passou. A limpeza redundante do
+QPointer em `destroyed` foi removida; troca/destruição de janelas passaram em
+prova com ASan/UBSan. Os builds atualizados chegaram ao primeiro frame em
+2891 ms (debug) e 1070 ms (release), medições pontuais offscreen.
+
+A prova do harness revelou e corrigiu a busca do editor no contexto errado
+(agora usa `domains.editorController`) e a saída por erro antes de `app.exec()`.
+Uma tecla inseriu um caractere e gerou amostra; a sequência de cinco teclas
+continua expirando após a primeira amostra. A medição completa ainda não é
+um benchmark validado neste notebook.
+
+O **gate completo continua pendente**:
+
+- Clang-Tidy 18/Qt 6.4.2: `NewDelete` na atribuição de QPointer em
+  `window_chrome_controller.cpp:47`; a prova de runtime não encerra a
+  investigação desse diagnóstico;
+- qmllint 6.4: dois avisos de acesso não qualificado em
+  `GlobalShortcuts.qml:25/31`, ambos `StandardKey`. Um exemplo mínimo
+  executa com sucesso no runtime 6.4, mas reprova no lint da mesma versão;
+- o teste QEMU não para com GDB nativo; com gdb-multiarch 15.1 chega ao
+  breakpoint, mas retorna registradores em vez da global `contador`
+  (medição anterior, não repetida nesta fatia).
+
+Não confundir dependência instalada, build que abre e gate completo verde.
+Os comandos de execução estão em [como executar](como-executar.md).
+O registro detalhado local, com logs e próximos passos para o Claude CLI,
+está em `DocsPrivate/Codex/2026-09-16-compatibilidade-qt64.md`; a instalação
+e o handoff inicial estão em `2026-09-15-ambiente-notebook-e-handoff.md`.
+
+## Histórico observado (Fedora 44, 2026-08-29 a 2026-09-04)
+
+Este bloco preserva a medição do ambiente anterior. Não descreve o notebook
+Ubuntu atual nem comprova os gates nele. O registro anterior fica em
+`DocsPrivate/ContextoIA.md`.
 
 - Fedora Linux 44 (Workstation), kernel 7.1.
 - Rust 1.96.1 (a toolchain fixada), rustfmt e clippy via `cargo` direto.

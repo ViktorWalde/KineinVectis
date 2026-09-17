@@ -122,7 +122,7 @@ Atalho para tudo isso (detecta a distro, instala o que falta e verifica):
 Ou manualmente:
 
 ```bash
-# Arch / CachyOS (alvo principal do projeto e máquina atual)
+# Arch / CachyOS (alvo principal do projeto)
 sudo pacman -S cmake ninja clang qt6-base qt6-declarative qt6-tools rustup
 
 # Debian / Ubuntu / Pop!_OS (referência)
@@ -132,6 +132,42 @@ sudo apt install cmake ninja-build clang \
     qml6-module-qtquick qml6-module-qtquick-controls \
     qml6-module-qtquick-layouts qml6-module-qtquick-window
 ```
+
+## AppImage: gerar ou baixar
+
+Em 2026-09-16, `ViktorWalde/KineinVectis` tinha **zero releases** na API do
+GitHub. Portanto, não há AppImage publicado para baixar nesta data.
+Com Podman ou Docker instalado, o fluxo existente para gerar localmente é:
+
+```bash
+bash scripts/empacotar-appimage.sh
+bash scripts/testar-appimage.sh
+(cd dist && sha256sum -c Kinein-Vectis-0.1.0-x86_64.AppImage.sha256)
+./dist/Kinein-Vectis-0.1.0-x86_64.AppImage
+```
+
+O primeiro build baixa o builder Debian 12, dependências e ferramentas
+fixadas pelo projeto. A validação acima deve passar antes de distribuir.
+Para acrescentar o artefato ao menu: `bash scripts/instalar-appimage.sh dist`.
+Sem FUSE, executar com `APPIMAGE_EXTRACT_AND_RUN=1` antes do caminho do
+AppImage. A versão `0.1.0` corresponde ao projeto nesta data.
+
+**Somente depois de uma release ser publicada**, este comando baixa o
+AppImage e seu checksum usando o GitHub CLI:
+
+```bash
+gh release download --repo ViktorWalde/KineinVectis \
+  --pattern '*.AppImage' --pattern '*.AppImage.sha256' \
+  --dir "$HOME/Downloads/KineinVectis"
+cd "$HOME/Downloads/KineinVectis"
+sha256sum --check ./*.AppImage.sha256
+chmod u+x ./*.AppImage
+# Execute o nome exato do arquivo baixado, por exemplo:
+./Kinein-Vectis-0.1.0-x86_64.AppImage
+```
+
+Para o estado das ferramentas no notebook e os gates ainda pendentes, ler
+[ambiente de desenvolvimento](14-development-environment.md).
 
 ## Logs de erro da IDE
 

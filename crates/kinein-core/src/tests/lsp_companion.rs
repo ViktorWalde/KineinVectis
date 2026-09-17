@@ -211,7 +211,10 @@ fn both_servers_get_the_text_and_their_diagnostics_are_merged_into_one_event() {
     assert_eq!(mudou["params"]["textDocument"]["version"], 2);
     Dupla::espera_no_wire(&d.log_principal, "textDocument/didChange");
     let vistos = d.diagnosticos_ate(|m| m.len() == 2);
-    assert_eq!(vistos.last().unwrap(), &[PYRIGHT.to_owned(), RUFF.to_owned()]);
+    assert_eq!(
+        vistos.last().unwrap(),
+        &[PYRIGHT.to_owned(), RUFF.to_owned()]
+    );
 }
 
 /// As code actions dos dois servidores vem numa lista so', e aplicar a do
@@ -221,6 +224,11 @@ fn code_actions_of_both_servers_come_in_one_list_and_the_companion_one_applies()
     let mut d = dupla("acoes");
     d.ok("fs.read", json!({ "path": d.app() }));
     d.diagnosticos_ate(|m| m.len() == 2);
+    // Hover sem mudar o texto avanca apenas a versao do principal.
+    d.ok(
+        "lsp.hover",
+        json!({ "path": d.app(), "content": "import os\n", "line": 1, "column": 1 }),
+    );
     // O buffer mudou desde o didOpen: a consulta sincroniza o texto nos
     // DOIS antes de perguntar — no companheiro, um didChange (versao 2)
     // ANTES do codeAction, senao as posicoes das acoes dele seriam de outro
@@ -231,13 +239,18 @@ fn code_actions_of_both_servers_come_in_one_list_and_the_companion_one_applies()
         json!({ "path": d.app(), "content": texto, "line": 1, "column": 1 }),
     );
     let wire = Dupla::mensagens(&d.log_companheiro);
-    let pos = |m: &str| wire.iter().position(|x| x["method"] == m).unwrap_or(usize::MAX);
+    let pos = |m: &str| {
+        wire.iter()
+            .position(|x| x["method"] == m)
+            .unwrap_or(usize::MAX)
+    };
     assert!(
         pos("textDocument/didChange") < pos("textDocument/codeAction"),
         "o companheiro tem de ver o texto novo antes da pergunta: {wire:#?}"
     );
     assert_eq!(
-        wire[pos("textDocument/didChange")]["params"]["textDocument"]["version"], 2
+        wire[pos("textDocument/didChange")]["params"]["textDocument"]["version"],
+        2
     );
     let titulos: Vec<&str> = acoes["actions"]
         .as_array()
@@ -300,7 +313,10 @@ fn restarting_a_language_restarts_its_companion_too_with_one_restarted_event() {
             break;
         }
     }
-    assert!(statuses.contains(&("python".to_owned(), "restarting".to_owned())), "{statuses:?}");
+    assert!(
+        statuses.contains(&("python".to_owned(), "restarting".to_owned())),
+        "{statuses:?}"
+    );
     assert!(
         statuses.contains(&("python-ruff".to_owned(), "restarting".to_owned())),
         "{statuses:?}"
@@ -326,10 +342,11 @@ fn a_companion_that_fails_to_start_leaves_the_table_after_one_failed_status() {
         &["server"],
     ));
     d.ok("fs.read", json!({ "path": d.app() }));
-    d.diagnosticos_ate(|m| m == [PYRIGHT.to_owned()]);
     std::fs::write(d.root.join("outro.py"), "x = 1\n").unwrap();
-    d.ok("fs.read", json!({ "path": d.root.join("outro.py").to_str().unwrap() }));
-    d.diagnosticos_ate(|m| m == [PYRIGHT.to_owned()]);
+    d.ok(
+        "fs.read",
+        json!({ "path": d.root.join("outro.py").to_str().unwrap() }),
+    );
     d.ok(
         "lsp.hover",
         json!({ "path": d.app(), "content": "import os\n", "line": 1, "column": 1 }),
@@ -340,6 +357,11 @@ fn a_companion_that_fails_to_start_leaves_the_table_after_one_failed_status() {
         .filter(|s| s.0 == "python-ruff" && s.1 == "failed")
         .count();
     assert_eq!(falhas, 1, "uma falha, nao uma por sincronizacao");
+    let abertos = Dupla::mensagens(&d.log_principal)
+        .into_iter()
+        .filter(|m| m["method"] == "textDocument/didOpen")
+        .count();
+    assert_eq!(abertos, 2, "o principal recebeu os dois documentos");
 }
 
 /// O Core poe o `ruff server` como companheiro SOZINHO quando o binario
@@ -406,9 +428,15 @@ fn the_core_registers_ruff_as_a_companion_when_the_binary_is_detected() {
     };
     d.ok("fs.read", json!({ "path": d.app() }));
     let vistos = d.diagnosticos_ate(|m| m.len() == 2);
-    assert_eq!(vistos.last().unwrap(), &[PYRIGHT.to_owned(), RUFF.to_owned()]);
+    assert_eq!(
+        vistos.last().unwrap(),
+        &[PYRIGHT.to_owned(), RUFF.to_owned()]
+    );
     let comando = Dupla::mensagens(&d.log_companheiro);
-    assert!(!comando.is_empty(), "o wrapper `ruff` foi o processo que subiu");
+    assert!(
+        !comando.is_empty(),
+        "o wrapper `ruff` foi o processo que subiu"
+    );
 }
 
 /// Sem o binario do companheiro (a maquina sem ruff), o Core o tira: os

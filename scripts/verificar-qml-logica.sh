@@ -19,7 +19,7 @@ cd "$(dirname "$0")/.." || exit 1
 
 qml_runner="${KINEIN_QML_RUNNER:-}"
 if [ -z "$qml_runner" ]; then
-    for candidate in qml6 qml-qt6 qml; do
+    for candidate in qml6 qml-qt6 /usr/lib/qt6/bin/qml qml; do
         if command -v "$candidate" >/dev/null 2>&1; then
             qml_runner="$candidate"
             break

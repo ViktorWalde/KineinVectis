@@ -16,6 +16,7 @@ mod reader;
 mod server;
 mod session;
 mod target;
+mod transport;
 mod wire;
 
 use std::{collections::BTreeMap, error::Error, fmt, path::Path};
@@ -240,18 +241,21 @@ impl DebugManager {
         self.live_session().ok_or(DebugError::NotRunning)?.pause()
     }
 
-    /// Stops the session (polite disconnect, then the adapter is killed).
+    /// Disconnects the session; only an adapter spawned by us is killed.
     pub fn stop(&mut self) -> Result<(), DebugError> {
         let Some(session) = self.session.take() else {
             return Err(DebugError::NotRunning);
         };
-        if session.is_alive() {
-            session.shutdown();
-        }
         // Drop mata o adapter; terminated/EOF ja emitiram (ou emitem agora)
         // o event.debug.finished unico da sessao.
         drop(session);
         Ok(())
+    }
+
+    /// Release the session and breakpoints when changing/closing a workspace.
+    pub fn clear(&mut self) {
+        drop(self.stop());
+        self.breakpoints.clear();
     }
 
     /// The session, only while the adapter is alive.

@@ -10,7 +10,6 @@
 
 use std::{
     collections::HashMap,
-    process::ChildStdin,
     sync::{
         Arc, Mutex,
         atomic::{AtomicI64, Ordering},
@@ -21,7 +20,7 @@ use std::{
 
 use serde_json::{Value, json};
 
-use super::DebugError;
+use super::{DebugError, transport::Writer};
 use crate::lsp::framing::write_message;
 
 /// Requests DAP aguardando resposta, compartilhados com a thread leitora.
@@ -30,14 +29,14 @@ pub(super) type Pending = Arc<Mutex<HashMap<i64, mpsc::Sender<Value>>>>;
 /// qualquer thread (handler, leitora, enriquecimento).
 #[derive(Debug, Clone)]
 pub(super) struct Wire {
-    stdin: Arc<Mutex<ChildStdin>>,
+    stdin: Arc<Mutex<Writer>>,
     pub(super) pending: Pending,
     seq: Arc<AtomicI64>,
 }
 
 impl Wire {
-    /// Monta o transporte sobre o stdin do adapter recem-nascido.
-    pub(super) fn new(stdin: ChildStdin) -> Self {
+    /// Monta o wire sobre stdin de um filho ou socket do adapter externo.
+    pub(super) fn new(stdin: Writer) -> Self {
         Self {
             stdin: Arc::new(Mutex::new(stdin)),
             pending: Arc::new(Mutex::new(HashMap::new())),

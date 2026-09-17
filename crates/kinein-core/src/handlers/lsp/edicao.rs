@@ -34,7 +34,7 @@ impl Core {
             return lsp_unavailable_response(request_id, "lsp.workspaceEdit");
         };
         if let Err(error) = lsp::WorkspaceEditTransactions::validate_versions(plan, |path| {
-            lsp.document_version(path)
+            lsp.document_version(path, plan.server)
         }) {
             return workspace_edit_error_response(request_id, &error);
         }

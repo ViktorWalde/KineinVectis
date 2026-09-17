@@ -11,6 +11,7 @@
 //! Organizacao interna:
 //! - [`types`]: DTOs e o erro estruturado que cruzam a fronteira do modulo;
 //! - [`manager`]: estado da sessao e as operacoes interativas;
+//! - [`registry`]: servidores principais e companheiros por linguagem;
 //! - [`server`]: ciclo de vida do processo, handshake e thread leitora;
 //! - [`session`]: qual executavel, subir/reiniciar/encerrar e o transporte;
 //! - [`sync`]: o que o servidor sabe sobre o TEXTO (didOpen/didChange/didSave);
@@ -25,6 +26,7 @@ pub mod framing;
 mod manager;
 mod parse;
 mod parse_symbols;
+mod registry;
 mod server;
 mod session;
 mod sync;

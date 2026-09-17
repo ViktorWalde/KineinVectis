@@ -182,10 +182,10 @@ A tradução para a Kinein, com a licença lida no arquivo:
 | realce + outline | tree-sitter-python 0.25.0 | MIT | crate (gramática) | ✓ 2026-09-12 — realce, outline, folding, locals no editor e as declarações no índice (`40` §7.19) |
 | **interpretador** (o `compile_commands.json` do Python) | precedência do 29 §4.1: `$VIRTUAL_ENV` → `.venv/` → `venv/` → `uv.lock` → `poetry.lock` (`poetry env info -p`) → sistema (avisando); **uv** | uv: MIT OR Apache-2.0 | processo | ✓ na base 2026-09-12 — precedência lida (`index.context`, `python.status`); `.venv` de um clique com `uv venv .venv` ou `python3 -m venv .venv` (`40` §7.24); falta `python.select` e o `uv.lock` |
 | LSP | **basedpyright** (PyPI, sem Node) / pyright | MIT (`LICENSE.txt`) | LSP | ✓ 2026-09-13 — `basedpyright-langserver --stdio` detectado, com `python.pythonPath` do interpretador do projeto empurrado após o `initialized` e o `workspace/configuration` respondido; reinicia quando o `.venv` nasce (`40` §7.25) |
-| lint + formato + imports | **ruff** (`ruff server`; medir `--preview` na versão instalada, 29 §3.1) | MIT | LSP | ◐ 2026-09-13 — `ruff format` no `format.text` e `ruff check --output-format concise` no `quality.run` (perfil de rigor quando o projeto não declara regras); o `ruff server` (code actions) espera 2 servidores por linguagem (`40` §4) |
+| lint + formato + imports | **ruff** (`ruff server`) | MIT | LSP | ✓ Validado em 2026-09-15 (`40` §7.36): servidor companheiro do basedpyright, diagnósticos fundidos e ações no Alt+Enter com preview. `ruff format` e `ruff check` continuam nos caminhos existentes. |
 | formato alternativo | black | MIT | processo | ✗ |
 | tipos | mypy; `ty` (Astral — medir maturidade antes) | MIT | processo | ✗ |
-| depurar | **debugpy** — fala DAP; sobe como `python -m debugpy.adapter` | MIT | DAP — **módulo do interpretador do projeto**, não candidato do kit (a medição corrigiu o esboço) | ✓ 2026-09-13 — breakpoint, locais, evaluate, saída, exitCode, adaptador morto com a sessão, contra o debugpy 1.8.21 real (`40` §7.27); falta `-m pacote` e attach |
+| depurar | **debugpy** — fala DAP; sobe como `python -m debugpy.adapter` | MIT | DAP — **módulo do interpretador do projeto**, não candidato do kit (a medição corrigiu o esboço) | ✓ 2026-09-13 — breakpoint, locais, evaluate, saída, exitCode, adaptador morto com a sessão, contra o debugpy 1.8.21 real (`40` §7.27); módulo feito (§7.33) e attach TCP com host/porta validado em 2026-09-16 (§7.38) |
 | testes | pytest (`--collect-only -q` para descobrir; `-q` + `--junitxml` para rodar), unittest | MIT | processo (runner novo em `test.rs`) | ◐ 2026-09-13 — `python -m pytest -v` com o interpretador do projeto, `-k`, casos e saída no painel (`40` §7.26); falta a descoberta como árvore |
 | executar | o interpretador do projeto, ou `uv run` quando há `uv.lock` | — | processo (`run.script` de `.py`; `run.start` com ponto de entrada por evidência) | ✓ 2026-09-13 (`40` §7.26) |
 | REPL | `python -i` / `ipython` no painel de terminal | — | processo | ✗ |
@@ -374,12 +374,12 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             interpretador do B2 por didChangeConfiguration
                                             + workspace/configuration; reinicia quando o
                                             .venv nasce; binario detectado (~/.local/bin)
- B4  ruff server                            PARCIAL 2026-09-13 (40 §7.25): `ruff format`
-                                            no format.text e `ruff check` no quality.run,
-                                            com o perfil de rigor e o binario detectado.
-                                            FALTA o ruff como SERVIDOR (code actions no
-                                            Alt+Enter): exige 2 servidores por linguagem
-                                            em lsp/session.rs — divida no 40 §4
+ B4  ruff server                            FEITO, validado em 2026-09-15 (40 §7.36):
+                                            companheiro do basedpyright, sincronizacao
+                                            nos dois, diagnosticos fundidos e acoes no
+                                            Alt+Enter. Preview valida a versao do Ruff;
+                                            aplica pela transacao existente. Provado
+                                            com Ruff 0.16.7 e basedpyright 1.40.1 reais
  B5  debugpy como adaptador                 FEITO 2026-09-13 (40 §7.27): NAO e' candidato
                                             do kit — e' modulo do interpretador do projeto;
                                             todo alvo .py sobe `<interp> -m debugpy.adapter`,
@@ -388,7 +388,9 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             ciclo provado contra o debugpy 1.8.21 real
                                             (verificar-python-debug.sh). O `-m pacote`
                                             (launch por `module`) FEITO 2026-09-13 (40
-                                            §7.33); falta o attach a processo
+                                            §7.33); attach TCP FEITO em 2026-09-16
+                                            (40 §7.38), com campos de host/porta e
+                                            desconexao preservando o processo externo
  B6  pytest no test.rs                      FEITO 2026-09-13 (40 §7.26): `python -m pytest
                                             -v` com o interpretador do projeto (ou `uv run`),
                                             `-k` como filtro, casos pelo `-v`, saida no
@@ -410,8 +412,8 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             arvore, "Testar com pytest"/"Analise (ruff)" no
                                             menu. Depois vieram a arvore do pytest (§7.32),
                                             o `-m pacote` e o run.capabilities (§7.33). O
-                                            que falta e' polimento: ruff servidor, attach
-                                            no debugpy, a porta do MicroPython (40 §4). A
+                                            que falta e' polimento: porta escolhida do
+                                            MicroPython e stderr DAP/LSP (40 §4.1). A
                                             REFORMULACAO da tela para o Python e' etapa
                                             PROPRIA, depois do backend (40 §5, 2026-09-13)
 

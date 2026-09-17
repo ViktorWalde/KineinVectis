@@ -13,8 +13,8 @@ Item {
     Connections {
         target: root.debugController
 
-        function onStartRequested(program) {
-            root.coreClient.debugStart(program);
+        function onStartRequested(program, connect) {
+            root.coreClient.debugStart(program, connect);
         }
 
         function onStopRequested() {

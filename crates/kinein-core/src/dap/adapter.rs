@@ -150,6 +150,9 @@ impl Adapter {
         match target {
             DebugTarget::Program(p) => arguments["program"] = json!(p.display().to_string()),
             DebugTarget::Module(m) => arguments["module"] = json!(m),
+            DebugTarget::PythonAttach(endpoint) => {
+                return ("attach", json!({ "connect": endpoint }));
+            }
         }
         // O chip so' entra quando o kit escolheu um. Mandar `"chip": null` para
         // um adaptador que nao o espera e' pedir para ele tratar como valor —

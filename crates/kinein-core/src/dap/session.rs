@@ -18,9 +18,7 @@
 
 use std::{
     collections::BTreeMap,
-    io,
     path::Path,
-    process::{Child, Command, Stdio},
     sync::{
         Arc, Mutex,
         atomic::{AtomicBool, Ordering},
@@ -30,7 +28,8 @@ use std::{
 };
 
 use kinein_protocol::{
-    BreakpointInfo, DebugEvaluateResult, SourceBreakpointParams, StackFrameInfo, VariableInfo,
+    BreakpointInfo, DebugEvaluateResult, DebugStartResult, SourceBreakpointParams, StackFrameInfo,
+    VariableInfo,
 };
 use serde_json::{Value, json};
 
@@ -43,6 +42,7 @@ use super::parse::{
 use super::reader::{note_continued, send_event, spawn_reader};
 use super::server::DebugServer;
 use super::target::DebugTarget;
+use super::transport::Transport;
 use super::wire::Wire;
 use crate::lsp::EventSender;
 
@@ -63,22 +63,24 @@ const DISCONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 /// Uma sessao de debug viva (um adapter, um processo alvo).
 #[derive(Debug)]
 pub(super) struct DapSession {
-    child: Child,
+    _transport: Transport,
+    terminate_debuggee: bool,
     wire: Wire,
     events: EventSender,
     alive: Arc<AtomicBool>,
     stopped_thread: Arc<Mutex<Option<i64>>>,
     /// O servidor do alvo remoto, quando o kit declarou um. Guarda de RAII:
     /// ninguem o le, ele existe para CAIR junto com a sessao. Fica DEPOIS do
-    /// `child` de proposito: o `Drop` mata o adaptador primeiro (desconecta),
+    /// transporte de proposito: o `Drop` desconecta o adaptador primeiro,
     /// e so' entao o campo cai e mata o servidor.
     _server: Option<DebugServer>,
 }
 
 impl Drop for DapSession {
     fn drop(&mut self) {
-        drop(self.child.kill());
-        drop(self.child.wait());
+        if self.is_alive() {
+            self.shutdown();
+        }
     }
 }
 
@@ -118,33 +120,7 @@ impl DapSession {
             }
             (None, _) => None,
         };
-        let mut child = Command::new(&adapter.program)
-            .args(adapter.arguments)
-            .current_dir(root)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()
-            .map_err(|error| {
-                if error.kind() == io::ErrorKind::NotFound {
-                    DebugError::MissingAdapter {
-                        program: adapter.program.display().to_string(),
-                    }
-                } else {
-                    DebugError::Adapter {
-                        message: format!("falha ao iniciar {}: {error}", adapter.program.display()),
-                    }
-                }
-            })?;
-        let (Some(stdin), Some(stdout)) = (child.stdin.take(), child.stdout.take()) else {
-            drop(child.kill());
-            return Err(DebugError::Adapter {
-                message: format!(
-                    "{} subiu sem stdin/stdout utilizaveis",
-                    adapter.program.display()
-                ),
-            });
-        };
+        let (transport, stdin, stdout) = Transport::open(root, adapter, target)?;
 
         let wire = Wire::new(stdin);
         let alive = Arc::new(AtomicBool::new(true));
@@ -161,7 +137,8 @@ impl DapSession {
         );
 
         let session = Self {
-            child,
+            _transport: transport,
+            terminate_debuggee: !target.is_attached(),
             wire,
             events,
             alive,
@@ -174,7 +151,10 @@ impl DapSession {
         send_event(
             &session.events,
             "event.debug.started",
-            json!({ "program": target.display() }),
+            json!(DebugStartResult {
+                program: target.display(),
+                attached: target.is_attached()
+            }),
         );
         Ok(session)
     }
@@ -313,7 +293,7 @@ impl DapSession {
     pub(super) fn shutdown(&self) {
         drop(self.wire.request(
             "disconnect",
-            &json!({ "terminateDebuggee": true }),
+            &json!({ "terminateDebuggee": self.terminate_debuggee }),
             DISCONNECT_TIMEOUT,
         ));
     }
@@ -353,6 +333,9 @@ impl DapSession {
         let (start_command, start_args) = adapter.start_request(root, target);
         let (launch_seq, launch_receiver) = self.wire.send_request(start_command, &start_args)?;
         if initialized.recv_timeout(REQUEST_TIMEOUT).is_err() {
+            // Preserve an explicit attach refusal instead of hiding it behind initialized.
+            self.wire
+                .wait_response(start_command, launch_seq, &launch_receiver, Duration::ZERO)?;
             return Err(DebugError::Adapter {
                 message: "o adapter nao publicou o evento initialized".to_owned(),
             });

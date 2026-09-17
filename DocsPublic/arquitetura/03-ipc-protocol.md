@@ -1,5 +1,10 @@
 # 03 — Protocolo IPC
 
+> **0.109.0 (2026-09-16):** debugpy attach via `debug.start { connect: { host,
+> port } }`. Transporte DAP TCP reutiliza a sessão existente; `attached` no
+> resultado/evento diferencia desconectar um processo externo de encerrar launch.
+
+
 > **O `0.108.0` (2026-09-13, fim de tarde) é o "sintoma do Docker" medido e
 > fechado até onde a medição alcança:** o core respondeu certo o tempo todo
 > (`status`/`list`/`images` reais do Podman 5.8.4, start/stop reais); o que
@@ -1213,10 +1218,15 @@ reconfigura e, se o servidor de Python estiver vivo, **reinicia-o** — sai
 `success: false` não reinicia nada. Sem isto o basedpyright indexaria a stdlib
 do Python do `PATH` e o completar mentiria sobre os pacotes do projeto.
 
-**Dívida registrada:** o ruff como *servidor* LSP (code actions "organizar
-imports"/"corrigir F401" no Alt+Enter) exige **mais de um servidor por
-linguagem** em `lsp/session.rs` — hoje a tabela é `language → um spec`. Fica
-no `roadmaps/40` §4; o ruff entrou por `format.text` e `quality.run`.
+**Dois servidores Python (validado em 2026-09-15, sem mudar o IPC).** O
+`lsp/registry.rs` mantém o principal `python` (basedpyright) e o companheiro
+`python-ruff` (`ruff server`), registrado quando o detector encontra Ruff.
+`didOpen`/`didChange`/`didSave`/`didClose` alcançam os dois, com versões
+independentes. Navegação, hover e completion continuam no principal; as code
+actions consultam ambos. Cada `event.lsp.diagnostics` leva a união das listas
+por arquivo, e limpar/remover um servidor preserva a parte do outro. Ruff
+ausente não impede o principal; falha de subida do companheiro gera status e
+o retira do registro para não repetir a falha a cada sincronização.
 
 `lsp.definition` e `lsp.hover` foram adicionados no protocolo `0.8.0`. Ambos
 recebem posição 1-based e o buffer atual para o core sincronizar o documento
@@ -1279,7 +1289,10 @@ Tree-sitter de uma versão mais nova.
   thread leitora — a UI não devolve diagnóstico). Só entram na lista ações
   `CodeAction` literais com `edit` inline e sem `disabled`; ações que
   dependem de `workspace/executeCommand` são filtradas (decisão registrada
-  em DocsPrivate/diario/18). As ações cruas ficam guardadas como **consulta ativa**.
+  em DocsPrivate/diario/18). As ações cruas ficam guardadas como **consulta ativa**,
+  junto da chave do servidor que as produziu. A lista reúne principal e
+  companheiros; o contexto enviado a cada servidor contém seus próprios
+  diagnósticos. O preview valida versões no servidor de origem da ação.
 - `lsp.applyCodeAction { path, content, actionIndex }` cria a mesma transação
   confirmável de `lsp.rename`. A consulta é consumida na chamada; índice
   inválido, arquivo diferente ou consulta
@@ -1392,7 +1405,8 @@ de `DocsPrivate/diario/18-daily-driver-plan.md`, trilha T de `DocsPublic/roadmap
 do LSP travado):
 
 - `lsp.restart { language? }` → `{ restarted: [string] }`. Reinicia o
-  servidor de UMA linguagem (`"rust"`|`"cpp"`); sem `language`, reinicia
+  principal e os companheiros de UMA linguagem (`"rust"`|`"cpp"`|`"python"`);
+  emite um `event.lsp.restarted` por linguagem. Sem `language`, reinicia
   TODOS os vivos. Reiniciar = matar o processo e removê-lo; sobe de novo
   (lazy) no próximo request. `restarted` lista as linguagens que tinham
   servidor rodando.
@@ -1405,10 +1419,10 @@ do LSP travado):
   `recovered()` do crash). Na UI: comando "LSP: Reiniciar servidor" no
   Search Everywhere.
 
-Restart/cancelamento de requests LSP ainda não fazem parte deste contrato.
+Cancelamento de requests LSP ainda não faz parte deste contrato.
 
 ```text
-event.lsp.status       { "language": "cpp|rust", "status": "running|failed|stopped|exited", "message"? }
+event.lsp.status       { "language": "cpp|rust|python|python-ruff", "status": "running|failed|stopped|exited|restarting", "message"? }
 event.lsp.diagnostics  { "path": "/abs/file", "diagnostics": [{ "source": "lsp", "category": "lsp", "severity": "error|warning|note", "message", "line", "column" }] }
 ```
 
@@ -1977,12 +1991,12 @@ orquestra o `lldb-dap` (pacote `lldb`) pelo Debug Adapter Protocol; a UI
 nunca fala DAP — recebe eventos `event.debug.*` ja mastigados. Uma sessao
 por workspace.
 
-- `debug.start { program? }` → `{ program }`. Sem `program`, resolve o
+- `debug.start { program?, connect? }` → `{ program, attached }`. Sem ambos, resolve o
   alvo "Automatico" espelhando o run: cargo → unico executavel no topo de
   `target/debug`; cmake → unico executavel de `.kinein/build`; **Python
   (`0.101.0`) → o mesmo ponto de entrada do Executar** (`main.py`/`app.py`/
   `__main__.py` na raiz, ou o script de `[project.scripts]` instalado; um
-  pacote `-m x` não é arquivo — o erro aponta o `x/__main__.py`); zero ou
+  pacote com `__main__.py` vira `module: "x"` desde `0.107.0`); zero ou
   varios candidatos → erro claro com a acao a tomar. NAO compila antes
   (build e acao explicita, Ctrl+F9). Erros: `TOOL_NOT_FOUND` (lldb-dap
   ausente), `INVALID_REQUEST` (sem alvo/sessao ja viva), `INVALID_PARAMS`
@@ -1995,7 +2009,7 @@ por workspace.
   `__main__.py`, o alvo automático é o módulo — o `launch` leva `module:
   "pacote"` em vez de `program` (medido no debugpy 1.8.21: para no
   breakpoint dentro do pacote; `DebugStartResult.program` = `-m pacote`;
-  um servidor de debug do kit não aceita módulo, e diz isso): o adaptador é o
+  configurações de servidor/chip do kit nativo não são herdadas): o adaptador é o
   **debugpy do interpretador do projeto** (`python/env.rs`, a precedência do
   `29` §4.1) — `<interpretador> -m debugpy.adapter`, DAP por stdin/stdout,
   `launch { program, cwd }` como o desktop. O `console` fica de fora de
@@ -2015,6 +2029,16 @@ por workspace.
   topo da pilha, `a=2 b=3` em Locals — não Globals —, `a + b` = `5`,
   `resultado 5` por `event.debug.output`, `exitCode 0`, adaptador morto;
   1,4 s).
+  **Attach Python (`0.109.0`).** `connect: { host: "127.0.0.1", port: 5678 }`
+  conecta por TCP ao adaptador já criado por `debugpy --listen`/`debugpy.listen`.
+  `program` e `connect` juntos são `INVALID_PARAMS`; host vazio ou com espaços,
+  controles/URL e porta fora de 1–65535 também. Campos desconhecidos são recusados.
+  Não resolve executável automático nem exige interpretador local. O mesmo
+  handshake envia `attach { connect }`, reaplica breakpoints e configurationDone.
+  Resultado/evento `attached: true`; `program` exibe `debugpy host:porta`.
+  Launch devolve `attached: false`. Fechar/trocar workspace limpa a sessão e
+  seus breakpoints. Sem SSH, attach por PID ou mapeamento de caminhos nesta fatia.
+
 - `debug.setBreakpoints { file, lines: [int] }` →
   `{ breakpoints: [{ line, verified }] }`. Conjunto COMPLETO por arquivo
   (lines vazio limpa); `file` confinado ao workspace. Sem sessao viva o
@@ -2022,7 +2046,9 @@ por workspace.
   com sessao, o adapter responde o que de fato amarrou.
 - `debug.continue` / `debug.next` / `debug.stepIn` / `debug.stepOut`
   exigem processo pausado; `debug.pause` pausa o processo em execucao;
-  `debug.stop` desconecta educadamente e mata o adapter. Todos respondem
+  `debug.stop` desconecta educadamente: no attach Python envia
+  `terminateDebuggee: false` e fecha o socket, preservando o processo externo;
+  em launch encerra o processo e o adaptador filho da IDE. Todos respondem
   `{ status: "ok" }`; exigem apenas o manager (como `run.stop`).
 
 Inspeção (protocolo `0.29.0`, fatia M2.5c), sempre da thread pausada
@@ -2069,7 +2095,7 @@ antes de montar o argumento. Array paralelo de condições foi recusado de
 propósito — é a forma de linha e condição saírem de sincronia em silêncio.
 
 ```text
-event.debug.started   { program }
+event.debug.started   { program, attached }
 event.debug.output    { category, line }   (stdout|stderr|console)
 event.debug.stopped   { reason, file?, line?, threadId }  (file/line podem
                         vir null; o core ja enriquece com o frame do topo)

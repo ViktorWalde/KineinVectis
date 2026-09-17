@@ -21,13 +21,14 @@ use std::{
 use kinein_protocol::{LspCodeActionInfo, LspCompletionItem, LspSemanticToken, LspSymbolInfo};
 use serde_json::{Value, json};
 
+use super::diagnostics_merge::MergedDiagnostics;
 use super::parse::{
     code_action_infos, completion_items, decode_semantic_tokens, definition_location,
     hover_content, reference_locations, workspace_edit_plan,
 };
-use super::diagnostics_merge::MergedDiagnostics;
 use super::parse_symbols::{document_symbols, workspace_symbols};
-use super::server::{ServerHandle, ServerRegistry};
+use super::registry::ServerRegistry;
+use super::server::ServerHandle;
 use super::types::{LspError, LspLocation, WorkspaceEditPlan};
 use super::uri::{path_for_uri, uri_for_path};
 use super::{EventSender, PendingResponses};
@@ -289,14 +290,17 @@ impl LspManager {
         if active.path != path {
             return None;
         }
-        let (_servidor, action) = active.actions.get(index)?;
+        let (server, action) = active.actions.get(index)?;
         let title = action
             .get("title")
             .and_then(Value::as_str)
             .unwrap_or("code action")
             .to_owned();
         let edit = action.get("edit")?;
-        Some(workspace_edit_plan(edit).map(|plan| (title, plan)))
+        Some(workspace_edit_plan(edit).map(|mut plan| {
+            plan.server = Some(*server);
+            (title, plan)
+        }))
     }
 
     /// Resolve `textDocument/documentSymbol`: a estrutura achatada do arquivo.

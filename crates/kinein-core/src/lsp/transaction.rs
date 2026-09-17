@@ -342,6 +342,7 @@ mod tests {
 
     fn replace(path: &Path, old_len: u64, new_text: &str) -> WorkspaceEditPlan {
         WorkspaceEditPlan {
+            server: None,
             files: vec![FileEdits {
                 path: path.display().to_string(),
                 version: None,
@@ -416,6 +417,7 @@ mod tests {
         fs::write(&first, "alpha\n").unwrap();
         fs::write(&second, "beta\n").unwrap();
         let plan = WorkspaceEditPlan {
+            server: None,
             files: vec![
                 replace(&first, 5, "new-alpha").files.remove(0),
                 replace(&second, 4, "new-beta").files.remove(0),

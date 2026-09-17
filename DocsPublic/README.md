@@ -127,9 +127,10 @@ fonte viva.
 [contribuindo.md](contribuindo.md): arquitetura em uma tela, tabela de "quero
 mudar X → olhe aqui", ritual de uma mudança e o gate.
 
-Para localizar rapidamente quais documentos e arquivos se conectam em cada
-domínio, use também o [GUIAIA.md](../GUIAIA.md), cuja seção 3 é um roteador por
-tipo de tarefa (integração nova, polimento, bug, funcionalidade, contrato).
+Para localizar os arquivos de cada domínio, use [contribuindo.md](contribuindo.md)
+§3. Para a ordem de execução, use o [roadmap 40](roadmaps/40-estado-e-continuidade.md)
+§4.1: Etapa 1 de backend/toolchains e Etapa 2 de UX/UI/HUD. O antigo
+`GUIAIA.md` não está neste checkout (conferido em 2026-09-15).
 
 ## Estrutura
 
@@ -284,23 +285,29 @@ trabalha no código), `../AGENTS.md` (as regras para agentes) e a árvore
 `../DocsPrivate/` (não versionada: log, diário, prompts, histórico, legado) —
 são material interno de desenvolvimento e não integram a documentação pública.
 
-## DocsPrivate/ — continuidade interna (não é leitura de sessão)
+## DocsPrivate/ — continuidade interna (consulta sob demanda)
+
+Em 2026-09-15, os registros presentes neste checkout estão em
+`DocsPrivate/Codex/`, lidos a pedido do autor. Os caminhos históricos
+listados abaixo e em `legado/` não estão disponíveis nesta cópia: ficam
+como referências nominais, sem links nem instrução para recriá-los.
+A fila vigente é o roadmap 40 §4.1.
 
 | Documento | Assunto |
 | --- | --- |
-| [../DocsPrivate/ContextoIA.md](../DocsPrivate/ContextoIA.md) | **LOG datado.** Responde "por que isto é assim?"; nunca "o que existe hoje?" |
-| [../DocsPrivate/diario/18-daily-driver-plan.md](../DocsPrivate/diario/18-daily-driver-plan.md) | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. Registro de processo, não contrato |
-| [../DocsPrivate/diario/19-registro-de-saidas.md](../DocsPrivate/diario/19-registro-de-saidas.md) | **Registro de saídas do dogfooding** (2026-09-03): cada saída da Kinein para outra ferramenta, com reprodução mínima. É o que ordena a frente C do `roadmaps/34` por dor real — entrada sem reprodução não conta |
-| [../DocsPrivate/prompts/](../DocsPrivate/prompts/) | Prompts de bootstrap para retomada em terminal. O atual é o `RETOMADA_2026-09-13-noite.md` (a passada de sincronização de 2026-09-13); os anteriores ficam como registro |
+| `../DocsPrivate/ContextoIA.md` | **LOG datado.** Responde "por que isto é assim?"; nunca "o que existe hoje?" |
+| `../DocsPrivate/diario/18-daily-driver-plan.md` | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. Registro de processo, não contrato |
+| `../DocsPrivate/diario/19-registro-de-saidas.md` | **Registro de saídas do dogfooding** (2026-09-03): cada saída da Kinein para outra ferramenta, com reprodução mínima. É o que ordena a frente C do `roadmaps/34` por dor real — entrada sem reprodução não conta |
+| `../DocsPrivate/prompts/` | Prompts de bootstrap para retomada em terminal. O atual é o `RETOMADA_2026-09-13-noite.md` (a passada de sincronização de 2026-09-13); os anteriores ficam como registro |
 
 ## DocsPrivate/legado/ — superado ou cancelado (não implementar a partir daqui)
 
 | Documento | Por que saiu de `DocsPublic/` |
 | --- | --- |
-| [../DocsPrivate/legado/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md](../DocsPrivate/legado/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md) | ⛔ Linha de IA na IDE **cancelada** pelo autor em 2026-07-17 |
-| [../DocsPrivate/legado/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md](../DocsPrivate/legado/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md) | ⛔ Idem — o `aiBridge` foi removido do código no protocolo 0.59.0 |
-| [../DocsPrivate/legado/17-architecture-hygiene-plan.md](../DocsPrivate/legado/17-architecture-hygiene-plan.md) | Fase concluída em 2026-07-06. Os números envelheceram 3,4x e enganaram uma sessão; os guardrails vivos estão em `arquitetura/ARCHITECTURE.md` §4 |
-| [../DocsPrivate/legado/PLANO_ORGANIZACAO_E_HANDOFF.md](../DocsPrivate/legado/PLANO_ORGANIZACAO_E_HANDOFF.md) | Descreve o estado **anterior** à reorganização de 2026-07-16, executada. O que continua valendo (faixas P/T/X) foi extraído para cá — ver abaixo |
+| `../DocsPrivate/legado/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md` | ⛔ Linha de IA na IDE **cancelada** pelo autor em 2026-07-17 |
+| `../DocsPrivate/legado/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md` | ⛔ Idem — o `aiBridge` foi removido do código no protocolo 0.59.0 |
+| `../DocsPrivate/legado/17-architecture-hygiene-plan.md` | Fase concluída em 2026-07-06. Os números envelheceram 3,4x e enganaram uma sessão; os guardrails vivos estão em `arquitetura/ARCHITECTURE.md` §4 |
+| `../DocsPrivate/legado/PLANO_ORGANIZACAO_E_HANDOFF.md` | Descreve o estado **anterior** à reorganização de 2026-07-16, executada. O que continua valendo (faixas P/T/X) foi extraído para cá — ver abaixo |
 
 ### Extraído do handoff antes de legar: as faixas P/T/X
 

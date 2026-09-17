@@ -252,7 +252,7 @@ bool CoreClient::handleDebugNotification(const QString& method, const QJsonObjec
         const QString program = params.value(QStringLiteral("program")).toString();
         appendLog(QStringLiteral("debug iniciado: %1").arg(program));
         setDebugging(true);
-        emit debugStarted(program);
+        emit debugStarted(program, params.value(QStringLiteral("attached")).toBool());
         return true;
     }
     if (method == QStringLiteral("event.debug.output")) {

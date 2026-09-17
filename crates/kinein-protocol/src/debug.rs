@@ -10,14 +10,30 @@ pub struct DebugStartParams {
     /// (single cargo/cmake binary, mirroring the run heuristic).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub program: Option<String>,
+    /// Attach to an existing debugpy adapter; mutually exclusive with program.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connect: Option<DebugConnectParams>,
+}
+
+/// TCP endpoint already listening for a debugpy DAP client.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DebugConnectParams {
+    /// Hostname or IP address (without a URL scheme).
+    pub host: String,
+    /// TCP port, validated as nonzero by the core.
+    pub port: u16,
 }
 
 /// Result payload for `debug.start`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DebugStartResult {
-    /// Absolute path of the executable handed to the debug adapter.
+    /// Display target: executable, Python module, or debugpy endpoint.
     pub program: String,
+    /// The process belongs to the caller; stopping detaches without killing it.
+    #[serde(default)]
+    pub attached: bool,
 }
 
 /// Parameters for `debug.setBreakpoints` (full set per file; empty clears).

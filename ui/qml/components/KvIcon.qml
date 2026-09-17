@@ -50,7 +50,7 @@ Item {
         id: iconCanvas
 
         anchors.fill: parent
-        visible: root.assetSource.toString() === ""
+        visible: String(root.assetSource) === ""
         antialiasing: true
 
         function line(context, x1, y1, x2, y2) {
@@ -287,7 +287,7 @@ Item {
     // recoloridos nem redesenhados pelo contrato simbolico do Canvas.
     Image {
         anchors.fill: parent
-        visible: root.assetSource.toString() !== ""
+        visible: String(root.assetSource) !== ""
         source: root.assetSource
         fillMode: Image.PreserveAspectFit
         asynchronous: false

@@ -29,13 +29,13 @@ pub(super) type MergedDiagnostics =
 pub(super) fn record(
     merged: &MergedDiagnostics,
     key: &'static str,
-    path: String,
+    path: &str,
     diagnostics: Vec<Diagnostic>,
 ) -> JsonRpcRequest {
     let Ok(mut cache) = merged.lock() else {
-        return diagnostics_notification(&path, &diagnostics);
+        return diagnostics_notification(path, &diagnostics);
     };
-    let por_servidor = cache.entry(path.clone()).or_default();
+    let por_servidor = cache.entry(path.to_owned()).or_default();
     if diagnostics.is_empty() {
         por_servidor.remove(key);
     } else {
@@ -43,9 +43,9 @@ pub(super) fn record(
     }
     let uniao = union(por_servidor);
     if por_servidor.is_empty() {
-        cache.remove(&path);
+        cache.remove(path);
     }
-    diagnostics_notification(&path, &uniao)
+    diagnostics_notification(path, &uniao)
 }
 
 /// Esquece tudo o que `key` publicou; devolve um evento por arquivo afetado,
@@ -81,8 +81,8 @@ fn union(por_servidor: &BTreeMap<&'static str, Vec<Diagnostic>>) -> Vec<Diagnost
 mod tests {
     use std::sync::{Arc, Mutex};
 
-    use kinein_protocol::{Diagnostic, DiagnosticSeverity, DiagnosticSource};
     use super::{MergedDiagnostics, clear, forget, record};
+    use kinein_protocol::{Diagnostic, DiagnosticSeverity, DiagnosticSource};
 
     fn diag(mensagem: &str) -> Diagnostic {
         Diagnostic {
@@ -124,21 +124,28 @@ mod tests {
     /// das chaves; a lista vazia de um apaga so' a parte dele.
     #[test]
     fn each_event_carries_the_union_and_an_empty_publish_removes_only_that_server() {
-        let merged: MergedDiagnostics = Arc::new(Mutex::new(Default::default()));
-        let e1 = record(&merged, "python", "/p/a.py".to_owned(), vec![diag("pyright")]);
+        let merged: MergedDiagnostics = Arc::new(Mutex::new(std::collections::HashMap::default()));
+        let e1 = record(&merged, "python", "/p/a.py", vec![diag("pyright")]);
         assert_eq!(e1.method, "event.lsp.diagnostics");
         assert_eq!(caminho(&e1), "/p/a.py");
         assert_eq!(mensagens(&e1), ["pyright"]);
-        let e2 = record(&merged, "python-ruff", "/p/a.py".to_owned(), vec![diag("ruff")]);
-        assert_eq!(mensagens(&e2), ["pyright", "ruff"], "a uniao, principal primeiro");
-        let e3 = record(&merged, "python", "/p/a.py".to_owned(), Vec::new());
+        let e2 = record(&merged, "python-ruff", "/p/a.py", vec![diag("ruff")]);
+        assert_eq!(
+            mensagens(&e2),
+            ["pyright", "ruff"],
+            "a uniao, principal primeiro"
+        );
+        let e3 = record(&merged, "python", "/p/a.py", Vec::new());
         assert_eq!(mensagens(&e3), ["ruff"], "o pyright limpou; o ruff fica");
-        let e4 = record(&merged, "python-ruff", "/p/a.py".to_owned(), Vec::new());
+        let e4 = record(&merged, "python-ruff", "/p/a.py", Vec::new());
         assert!(mensagens(&e4).is_empty());
-        assert!(merged.lock().unwrap().is_empty(), "arquivo sem nada sai do cache");
+        assert!(
+            merged.lock().unwrap().is_empty(),
+            "arquivo sem nada sai do cache"
+        );
         // Outro arquivo nao se mistura.
-        record(&merged, "python", "/p/a.py".to_owned(), vec![diag("a")]);
-        let eb = record(&merged, "python-ruff", "/p/b.py".to_owned(), vec![diag("b")]);
+        record(&merged, "python", "/p/a.py", vec![diag("a")]);
+        let eb = record(&merged, "python-ruff", "/p/b.py", vec![diag("b")]);
         assert_eq!(mensagens(&eb), ["b"]);
     }
 
@@ -146,11 +153,11 @@ mod tests {
     /// ja' sem a parte dele — e nada para os arquivos em que nao falava.
     #[test]
     fn forgetting_a_server_reemits_only_the_files_it_touched() {
-        let merged: MergedDiagnostics = Arc::new(Mutex::new(Default::default()));
-        record(&merged, "python", "/p/a.py".to_owned(), vec![diag("pyright")]);
-        record(&merged, "python-ruff", "/p/a.py".to_owned(), vec![diag("ruff")]);
-        record(&merged, "python-ruff", "/p/b.py".to_owned(), vec![diag("ruff-b")]);
-        record(&merged, "python", "/p/c.py".to_owned(), vec![diag("pyright-c")]);
+        let merged: MergedDiagnostics = Arc::new(Mutex::new(std::collections::HashMap::default()));
+        record(&merged, "python", "/p/a.py", vec![diag("pyright")]);
+        record(&merged, "python-ruff", "/p/a.py", vec![diag("ruff")]);
+        record(&merged, "python-ruff", "/p/b.py", vec![diag("ruff-b")]);
+        record(&merged, "python", "/p/c.py", vec![diag("pyright-c")]);
         let mut eventos = forget(&merged, "python-ruff");
         eventos.sort_by_key(caminho);
         assert_eq!(eventos.len(), 2, "a.py e b.py; c.py nao tinha ruff");
@@ -159,7 +166,10 @@ mod tests {
         assert_eq!(caminho(&eventos[1]), "/p/b.py");
         assert!(mensagens(&eventos[1]).is_empty(), "b.py fica limpo na tela");
         assert_eq!(merged.lock().unwrap().len(), 2, "a.py e c.py continuam");
-        assert!(forget(&merged, "python-ruff").is_empty(), "segunda vez: nada");
+        assert!(
+            forget(&merged, "python-ruff").is_empty(),
+            "segunda vez: nada"
+        );
         clear(&merged);
         assert!(merged.lock().unwrap().is_empty());
     }

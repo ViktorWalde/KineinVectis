@@ -104,7 +104,8 @@ public:
     Q_INVOKABLE void runConfigSave(const QString& id, const QString& name, const QString& command);
     Q_INVOKABLE void runConfigDelete(const QString& id);
     Q_INVOKABLE void runConfigSetActive(const QString& id);
-    Q_INVOKABLE void debugStart(const QString& program = QString());
+    Q_INVOKABLE void debugStart(const QString& program = QString(),
+                                const QVariantMap& connect = QVariantMap());
     // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.
     // Trocou a lista crua de linhas no protocolo 0.66.0: a condicao viaja POR
     // breakpoint, e array paralelo de condicoes seria a forma de eles saírem
@@ -426,7 +427,7 @@ signals:
     void runOutput(const QString& line, const QString& stream);
     void runFinished(bool success, int exitCode);
     void debuggingChanged();
-    void debugStarted(const QString& program);
+    void debugStarted(const QString& program, bool attached);
     void debugOutput(const QString& category, const QString& line);
     void debugStopped(const QString& reason, const QString& file, int line, int threadId);
     void debugContinued();

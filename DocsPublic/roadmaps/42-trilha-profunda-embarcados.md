@@ -27,6 +27,11 @@
 >    embarcado (§1.1) — e sem isso todo botao adivinha
 > ```
 
+> **Atualização 2026-09-16:** attach do debugpy por `connect {host, port}`
+> entregue e validado no fluxo DAP existente (40 §7.38). Isso não fecha P6:
+> contexto SSH, deploy, execução remota e mapeamento de caminhos continuam
+> pendentes. A sequência vigente de implementação continua em 40 §4.1.
+
 ## 0. O escopo, em famílias — e as placas que definem "pronto"
 
 ```text
@@ -564,17 +569,14 @@ dos pilares (§4) **não muda** — o que muda é o critério de pronto de cada 
                 SOB DEMANDA. As assists do rust-analyzer e os fix-its do
                 clangd ja' chegam por esse caminho; "o borrow checker avisar
                 antes de compilar" ja' e' o flycheck do rust-analyzer chegando
-                como diagnostico
+                como diagnostico. Ruff como companheiro do basedpyright
+                VALIDADO em 2026-09-15 (40 §7.36): diagnosticos fundidos,
+                acoes na mesma lista e preview com versao do servidor de origem
    falta        o PROATIVO: a lampada na margem quando a linha do cursor tem
                 acao (codeAction com o diagnostico da linha); clang-tidy
                 DENTRO do clangd (--clang-tidy com o .clang-tidy do projeto: e'
                 dai que sai "este loop pode ser otimizado", como
-                performance-* e modernize-*); ruff como servidor LSP para
-                Python (fixes viram acoes; ruff instalado aqui — em
-                2026-09-13 o ruff entrou no formatar e na qualidade, 40
-                §7.25, e o servidor espera dois servidores por linguagem,
-                40 §4); o basedpyright ja' sobe com o interpretador do
-                projeto (40 §7.25) — suas acoes chegam pelo Alt+Enter
+                performance-* e modernize-*)
    pilar        P5 (qualidade) para as fontes; a lampada e' UMA fatia de
                 editor — respeitando o EditorController congelado (40 §5):
                 mora no EditorLanguageController, que e' quem ja' pede as acoes

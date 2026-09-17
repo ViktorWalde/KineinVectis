@@ -41,7 +41,7 @@ Notificacoes nao geram resposta — so entram no log, que e o ponto.
 Com `--publica NOME` (2026-09-13, o companheiro de linguagem): a cada
 `didOpen`/`didChange` publica UM diagnostico na linha 1 com a mensagem
 `NOME: diagnostico falso` e responde `textDocument/codeAction` com UMA acao
-`NOME: corrigir` (quickfix com `edit.changes` na linha 1). Com dois servidores
+`NOME: corrigir` (quickfix com `edit.documentChanges` versionado na linha 1). Com dois servidores
 falsos publicando nomes diferentes para o mesmo arquivo, o teste ve se o core
 FUNDE os diagnosticos e as acoes — ou se um apaga o outro.
 
@@ -59,6 +59,8 @@ PUBLICA = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--publica" else N
 # Legend anunciada no initialize. O core a le em
 # `capabilities.semanticTokensProvider.legend.tokenTypes` e a usa para decodificar
 # os tokens; fixa-la aqui torna essa leitura verificavel.
+VERSOES = {}
+
 TOKEN_TYPES = ["variable", "function", "keyword"]
 
 
@@ -132,7 +134,10 @@ def resultado(metodo, params):
         return [{
             "title": f"{PUBLICA}: corrigir",
             "kind": "quickfix",
-            "edit": {"changes": {uri: [{"range": linha, "newText": f"# {PUBLICA}\n"}]}},
+            "edit": {"documentChanges": [{
+                "textDocument": {"uri": uri, "version": VERSOES.get(uri)},
+                "edits": [{"range": linha, "newText": f"# {PUBLICA}\n"}],
+            }]},
         }]
     return None
 
@@ -181,7 +186,9 @@ def main():
             continue
         if "id" not in mensagem:
             if PUBLICA and metodo in ("textDocument/didOpen", "textDocument/didChange"):
-                uri = (mensagem.get("params") or {}).get("textDocument", {}).get("uri", "")
+                documento = (mensagem.get("params") or {}).get("textDocument", {})
+                uri = documento.get("uri", "")
+                VERSOES[uri] = documento.get("version")
                 escrever(saida, diagnostico_falso(uri))
             if PUBLICA and metodo == "textDocument/didClose":
                 uri = (mensagem.get("params") or {}).get("textDocument", {}).get("uri", "")

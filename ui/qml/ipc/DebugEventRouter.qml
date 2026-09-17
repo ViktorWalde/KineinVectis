@@ -12,8 +12,8 @@ Item {
     Connections {
         target: root.coreClient
 
-        function onDebugStarted(program) {
-            root.debugController.handleStarted(program);
+        function onDebugStarted(program, attached) {
+            root.debugController.handleStarted(program, attached);
         }
 
         function onDebugEvaluateResolved(expression, value, typeName, ref) {

@@ -168,11 +168,17 @@ Item {
             color: Theme.accentActive
             opacity: baseOpacity * (blinking ? blinkFactor : 1.0)
 
-            SequentialAnimation on blinkFactor {
+            SequentialAnimation {
                 running: cursorBar.visible && cursorBar.blinking
                 loops: Animation.Infinite
-                NumberAnimation { from: 1.0; to: 0.29; duration: 520 }
-                NumberAnimation { from: 0.29; to: 1.0; duration: 520 }
+                NumberAnimation {
+                    target: cursorBar; property: "blinkFactor"
+                    from: 1.0; to: 0.29; duration: 520
+                }
+                NumberAnimation {
+                    target: cursorBar; property: "blinkFactor"
+                    from: 0.29; to: 1.0; duration: 520
+                }
             }
         }
 

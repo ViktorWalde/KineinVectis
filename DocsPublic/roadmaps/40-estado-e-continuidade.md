@@ -29,6 +29,14 @@
 >
 > **Regra zero vale aqui como em tudo:** antes de aceitar qualquer item como
 > pendente, MEÇA. Cada seção carrega o comando.
+>
+> **Retomada de 2026-09-15:** a ordem vigente está na **§4.1**: backend e
+> toolchains primeiro; UX/UI/HUD em etapa própria, aberta pelo autor.
+> Ruff como segundo LSP já existe e foi validado nesta retomada (§7.36).
+> **2026-09-16:** debugpy attach implementado e validado (§7.38). Próximo:
+> porta selecionada no Executar de MicroPython, depois stderr DAP/LSP.
+> **2026-09-16:** compatibilidade dos verificadores Ubuntu/Qt 6.4 avançou
+> (§7.37). Lógica QML verde; gate completo ainda tem impedimentos explícitos.
 
 ## 1. O estado, em números
 
@@ -57,8 +65,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.108.0
-testes      711 Rust + 34 harnesses QML   (2026-09-13; 2026-09-12 noite: a simulacao saiu)
+protocolo   0.109.0
+testes      723 Rust aprovados; 35 harnesses QML (medicao de 2026-09-16, §7.38)
 metodos     140 IPC roteados, 48 eventos
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
@@ -391,15 +399,15 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          RuntimeRequestRouter a passa
 --  debugpy: attach                      o `-m pacote` FEITO em 2026-09-13 (§7.33:
                                          DebugTarget::Module -> `module` no launch,
-                                         provado pelo core real). Falta o attach a um
-                                         processo/porta (`debugpy --listen`) para
-                                         servicos: o `attach` do DAP com
-                                         `connect { host, port }` e um campo na tela
+                                         provado pelo core real). Attach TCP FEITO
+                                         em 2026-09-16 (§7.38): connect {host, port},
+                                         campos na aba Debug, breakpoint/inspecao e
+                                         desconexao preservando o processo externo
 --  stderr dos processos filhos vai      LACUNA vista na fatia 4 (2026-09-13): o
     para /dev/null (adaptador DAP,       gate falhou UMA vez com "o adapter nao
     servidor de debug, servidores LSP)   respondeu a `initialize`" e nao havia como
                                          saber por que — a sessao nula o stderr do
-                                         adaptador (dap/session.rs:116, dap/server.rs,
+                                         adaptador (agora dap/transport.rs), dap/server.rs,
                                          lsp/server.rs). Nao reproduziu em 5 rodadas
                                          seguintes. Fatia pequena: guardar as ultimas
                                          linhas do stderr e po-las no erro de subida
@@ -426,15 +434,15 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
 --  descoberta do pytest como arvore     FEITA em 2026-09-13 (§7.32, 0.106.0):
     (41 B6, o que faltou)                test.discover para pytest, cargo e ctest; a
                                          arvore no painel com "rodar so' este"
---  ruff como SERVIDOR LSP               DIVIDA da fatia 2 (2026-09-13): as code
-    (o Alt+Enter em Python)              actions do ruff ("organizar imports",
-                                         "corrigir F401") pedem DOIS servidores
-                                         para a mesma linguagem — hoje lsp/session
-                                         e' `linguagem -> um spec` (basedpyright).
-                                         Fatia propria: multiplexar didOpen/
-                                         didChange/diagnosticos por linguagem e
-                                         juntar as code actions; so' depois o ruff
-                                         entra como `ruff server`
+--  ruff como SERVIDOR LSP               FEITO, validado em 2026-09-15 (§7.36):
+    (o Alt+Enter em Python)              `ruff server` ao lado do basedpyright,
+                                         documentos sincronizados nos dois,
+                                         diagnosticos fundidos e code actions na
+                                         lista existente. Preview valida a versao
+                                         no servidor que produziu a acao; aplica
+                                         pela transacao existente. Seis testes de
+                                         integracao e prova com servidores reais.
+                                         Nao reimplementar; seguir para debugpy attach
 --  TOOLCHAINS POR ALVO                  CONFERIDAS na fonte em 2026-09-12
     (integracoes/39): o catalogo,        (integracoes/39): o levantamento
     a busca alem do PATH, o sysroot,     recebido tinha 2 afirmacoes desatualizadas
@@ -543,6 +551,44 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          sincronizacao e' um item da fila, nao um
                                          gesto implicito
 ```
+
+### 4.1 Ordem vigente — duas etapas (decisão do autor, 2026-09-15)
+
+Esta seção consolida a sequência pedida pelo autor. As seções anteriores e
+os roadmaps 41/42 detalham cada frente; referências antigas a "próximo" não
+substituem esta ordem. Antes de cada item, conferir o código e reaproveitar os
+serviços, contratos e testes existentes.
+
+**Continuidade em 2026-09-16:** a instalação do notebook preparou a base de
+desenvolvimento; as correções Qt/QML e de instrumentação (§7.37) são manutenção.
+Elas não concluem os itens de toolchains nem alteram a sequência abaixo.
+O attach do debugpy foi validado na §7.38; o próximo item é a porta do
+MicroPython. Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+o item em curso ou repararem regressões da própria mudança. Continuar executando
+as verificações exigidas e distinguindo falhas preexistentes; o gate completo
+ainda não está verde.
+
+**Etapa 1 — backend e toolchains impecáveis (agora).** Seguir linearmente:
+
+| Frente | Trabalho restante e estado |
+| --- | --- |
+| Polimento Python | **Ruff validado (§7.36) e debugpy attach (`connect {host, port}`) validado em 2026-09-16 (§7.38). Próximo: porta escolhida no Executar de MicroPython** (o core e a ponte C++ já aceitam `device`; a tela precisa selecionar e passá-la). Depois, stderr dos processos filhos DAP/LSP que hoje vai para `/dev/null`. |
+| Embarcados, bloco A | E5 identidade Espressif (`esptool flash-id` → sugerir kit); E4 gravar como configuração de execução (`esptool`, `probe-rs`, `picotool`, `dfu-util`); E2 permissão por canal (`dialout`, `uaccess`, ModemManager, comando impresso); A5 ferramentas de embarcado no painel de instalação. |
+| Toolchains | Seletor de pasta nativo; SDK do Zephyr no `importKit`; medir `importKit` com Yocto/Buildroot reais, ainda sem exemplares locais validados. |
+| P0 — modelo do projeto | Preset no configure automático; Bear para Makefile puro; alvo do kit para o rust-analyzer. |
+| P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
+| P3 — depuração profunda | SVD com escrita pelo `gdb -i dap`; RTT/defmt; memória/disassembly; RTOS threads. |
+| P5 — qualidade | clang-tidy dentro do clangd; lâmpada proativa do Alt+Enter; gtest/catch2; cobertura. |
+| P6 — Linux embarcado | SSH remoto, decidido e ainda não arquitetado: deploy, gdbserver e debugpy attach. |
+| Frameworks, bloco E | ESP-IDF, pico-sdk, Zephyr e PlatformIO reconhecidos e configurados sem edição manual. |
+| Banco | Executar consultas e escrever; TLS do PostgreSQL. |
+| Varredura 40 §8 | `quality.output` descartado no C++; `environmentScan` sem ouvinte; presets sem tela. Os demais achados permanecem detalhados no §8. |
+| Frentes grandes, bloco F | Jupyter; dev containers com contexto remoto; polimento Rust com nextest e llvm-cov. |
+
+**Etapa 2 — UX/UI/HUD (o autor abre).** Banco com experiência à DataGrip
+adaptada ao Kinein Vectis; Python como cidadão da tela; apresentação da IDE
+com frase e forma próprias no lugar da enumeração. A reformulação começa
+depois da Etapa 1 e da sincronização da documentação, por abertura do autor.
 
 ## 5. As decisões registradas que NÃO se reabrem
 
@@ -2550,6 +2596,58 @@ dois são a mesma falha — documento atualizado *por domínio tocado*, nunca
 fila, a ser feito antes de cada etapa nova, e não como gesto implícito de
 cada commit (que continua valendo para o que o commit toca).
 
+### 7.36 Ruff como segundo LSP — retomada e prova, 2026-09-15
+
+A implementação já estava no checkout. A retomada preservou o trabalho
+existente: `LspManager`, sincronização, aba Problemas, lista do Alt+Enter e
+transação de workspace edit continuam sendo os mesmos caminhos.
+
+- `lsp/registry.rs` guarda os servidores principais e companheiros;
+  `handlers/python.rs` registra `ruff server` quando o detector encontra Ruff.
+- `lsp/sync.rs` envia documentos aos dois servidores e mantém suas versões
+  separadas; `diagnostics_merge.rs` combina os diagnósticos por arquivo.
+- `lsp/manager.rs` guarda a origem de cada ação. O preview em
+  `handlers/lsp/edicao.rs` valida `documentChanges` contra a versão desse
+  servidor, inclusive quando hover/completion avançaram só a do principal.
+- `runtime/services.rs` concentra a habilitação dos serviços antes presente
+  em `lib.rs`; o transporte continua em `lsp/server.rs`.
+
+**Prova em 2026-09-15:** seis testes de integração `lsp_companion` aprovados;
+720 testes Rust do workspace aprovados, Clippy estrito e auditoria de
+dependências aprovados. Com **Ruff 0.16.7 e basedpyright 1.40.1 reais** em
+ambiente temporário, o core publicou juntos `reportAssignmentType`, F401 e
+I001, retornou as ações dos dois servidores e aplicou a remoção de import
+inutilizado após duas consultas de hover. O preview não escreveu no disco;
+`lsp.workspaceEdit.apply` realizou a correção.
+
+O protocolo continua `0.108.0`: não houve método nem campo IPC novo. O
+aceite visual do gesto no editor não foi realizado nesta prova por stdio.
+
+**Gate desta retomada (2026-09-15): não está verde.** A UI debug compilou
+com `cmake --build --preset debug-strict --parallel 2` (Clang 18.1.3,
+Qt 6.4.2). O gate parou em `verificar-cpp.sh`: o Clang-Tidy apontou
+`NewDeleteLeaks` na chamada a `QMetaObject::invokeMethod` de
+`ui/src/typing_perf_harness.cpp:157` e `NewDelete` na atribuição de
+`QPointer` de `ui/src/window_chrome_controller.cpp:52`, com os diagnósticos
+emitidos nos headers do Qt. Esses arquivos não foram alterados nesta retomada;
+a causa dos achados ainda precisa de investigação, sem supressão dos checks.
+
+A verificação QML separada também não passou: o script não encontrou o
+response file de qmllint esperado, mesmo após esse build. O build release e
+os checks posteriores à falha C++ não foram concluídos pelo gate. Em
+separado, arquitetura, veracidade da documentação e links passaram; nove
+links históricos ausentes no índice foram corrigidos (229 links relativos
+válidos). Logs locais: `/tmp/kinein-codex-ruff-gate.log`,
+`/tmp/kinein-codex-ruff-ui-build.log` e `/tmp/kinein-codex-ruff-qml.log`.
+
+Referências consultadas em 2026-09-15: [configuração do Ruff](https://docs.astral.sh/ruff/editors/setup/),
+[ações do servidor](https://docs.astral.sh/ruff/editors/features/) e
+[integração Python do Zed, revisão `main` consultada nessa data](https://github.com/zed-industries/zed/blob/main/crates/languages/src/python.rs).
+As lições são separar análise de tipos e lint, manter a origem das ações e
+reutilizar o cliente LSP. Nenhum código dessas referências foi transplantado.
+
+**Próximo:** attach do debugpy, seguido pelos demais itens da §4.1.
+
 ## 8. A VARREDURA de 2026-09-10 — o que está entregue e não chega à tela
 
 Feita a pedido do autor, antes do pente-fino. **Ela procura uma classe só, e é a
@@ -2642,3 +2740,91 @@ pente-fino, e ele precisa da IDE **abrindo** (§4, prioridade 1).
 instanciado; o 20º (2026-09-11) pega binário que compila e não abre; falta o
 andar de cima — **evento que o core emite e nenhuma tela consome**. É o mesmo critério, uma camada acima, e os cinco achados de hoje
 teriam saído dele automaticamente.
+
+
+### 7.37 Verificadores no Ubuntu/Qt 6.4 — estado medido, 2026-09-16
+
+Antes de avançar no attach, a retomada confirmou os impedimentos do ambiente
+registrados na §7.36. **Ruff/rustls e o protocolo foram preservados**; esta
+fatia corrigiu ferramentas de verificação e instrumentação existentes.
+
+**Feito e medido:**
+
+- `verificar-qml.sh` aceita builds sem `.rsp`: `verificar_qml.py` usa o alvo
+  `kinein-vectis_qmllint_json` gerado pelo Qt, com os mesmos fontes/imports.
+  Avisos, JSON vazio/inválido, relatório antigo e falha do build reprovam.
+  Nove provas do runner passaram, incluindo o caminho `.rsp` com `-W 0`.
+- `qml-qt6` instalado e incorporado ao bootstrap apt. O runner de lógica
+  encontra `/usr/lib/qt6/bin/qml`; antes escolhia o wrapper Qt 5 sem runtime.
+  **34 harnesses QML passaram** depois da correção.
+- Dependências QML QtQuick/QtQuick.Window explícitas e ajustes equivalentes
+  de URL/animação eliminaram cinco de sete warnings do qmllint 6.4.
+- Harness de digitação: amostra vai à GUI por sinal tipado queued; o tempo
+  continua capturado na render thread. Passou no Clang-Tidy. A localização
+  do editor usa `domains.editorController`, a composição real do Main.qml.
+  Erros antes de `app.exec()` agora encerram com exit 1, em vez de esperar
+  o timeout externo. Prova de uma tecla inseriu um caractere e registrou uma
+  amostra; o caso sem configuração encerrou com exit 1.
+- WindowChrome: limpeza redundante de QPointer em `destroyed` removida;
+  troca, destruição e notificações passaram sob ASan/UBSan.
+- Debug e release recompilados; abertura offscreen validada. ShellCheck,
+  fiação/propriedades/duplicação QML e catraca de arquitetura passaram.
+
+**Não confundir esses resultados com gate completo verde. Restam:**
+
+1. Clang-Tidy 18: `NewDelete` no header Qt, a partir da atribuição de
+   `m_window` em `window_chrome_controller.cpp:47`. O teste de runtime não
+   prova sozinho que o diagnóstico está errado; investigar a reprodução
+   mínima e versões das ferramentas antes de qualquer exceção.
+2. qmllint 6.4: dois `Unqualified access` em `StandardKey.Open/Save`, no
+   `GlobalShortcuts.qml:25/31`. Exemplo mínimo executa no runtime Qt 6.4 e
+   reprova no lint da mesma instalação. Nenhum warning foi desativado.
+3. A medição de cinco teclas expira após a primeira amostra. A prova de uma
+   tecla passou; a sequência completa continua pendente, inclusive o ciclo
+   de espera por quietude entre amostras. Não publicar benchmark de digitação.
+4. QEMU/GDB 15.1: escopo com registradores em vez de `contador`, conforme a
+   medição anterior do notebook; não alterado nem revalidado nesta fatia.
+
+Logs e provas reproduzíveis: `DocsPrivate/Codex/2026-09-16-compatibilidade-qt64.md`.
+O ambiente de build atualizado está em `build/14-development-environment.md`.
+A próxima funcionalidade permanece **debugpy attach** (§4.1), usando o DAP
+existente; não abrir a etapa UX/UI/HUD.
+
+
+### 7.38 Debugpy attach por TCP — 2026-09-16, protocolo 0.109.0
+
+O próximo item da §4.1 foi implementado no fluxo DAP existente. `debug.start`
+aceita `connect: { host, port }`, exclusivo com `program`. Conecta ao adaptador
+já aberto por `debugpy --listen`/`debugpy.listen`; não inicia outro adaptador
+nem exige interpretador local para attach. `dap/transport.rs` concentra a posse
+de filho stdio/socket; sessão, framing, breakpoints e inspeção são compartilhados.
+
+A aba Debug recebe host/porta e **Conectar ao Python**. A mesma intenção de
+início cobre automático, arquivo e attach, com bloqueio durante o pedido e
+retry após falha. `attached` no resultado/evento permite mostrar **Desconectar**.
+O disconnect do attach usa `terminateDebuggee: false`. Fechar/trocar workspace
+agora solta a sessão e limpa breakpoints nos donos centrais da transição.
+
+**Medido:** 723 testes Rust e 35 harnesses QML passaram; Clippy, formatação C++,
+Clang-Tidy dos dois arquivos C++ alterados e verificações de arquitetura,
+fiação, propriedades, duplicação, alcance e transição de workspace passaram.
+O gate real Python (debugpy 1.8.0, Python 3.12.3) preservou launch de arquivo e
+módulo; attach provou breakpoint, stack, locais, evaluate e duas reconexões.
+Desconectar pausado, desconectar rodando e fechar workspace mantiveram o mesmo
+processo vivo, com heartbeat avançando. Build debug e primeiro frame passaram
+(3151 ms offscreen, medida pontual). O lint QML continua com apenas os dois
+avisos StandardKey preexistentes; nenhum aviso novo nos componentes do attach.
+
+A prova real adicional (`scripts/verificar_python_attach.py`) reutiliza o
+cliente Core do gate Python existente. Não há SSH, attach por PID ou
+pathMappings nesta entrega; P6 continua pendente. O gate completo mantém as
+falhas da §7.37; isso não foi declarado verde. Core/UI release recompilados;
+primeiro frame release em 988 ms offscreen (uma amostra), e launcher validado
+com os binários novos. Nenhum AppImage gerado/publicado nesta fatia.
+
+**Próximo:** porta selecionada no Executar de MicroPython. Medido no código:
+`CoreClient::runScript(path, device)` e `run.script` já aceitam a porta;
+`RuntimeRequestRouter.qml` chama apenas `runScript(path)` e
+`EmbeddedController.qml` ainda não declara `selectedPort`. Reaproveitar esse
+fluxo e os testes existentes; depois stderr DAP/LSP → E5 → E4 → E2 → A5.
+Registro detalhado e prompt de continuidade: `DocsPrivate/Codex/`.

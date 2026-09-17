@@ -86,7 +86,7 @@ scripts/verificar-qml-duplicacao.sh          # mesma derivacao em dois arquivos
 scripts/verificar-qml-alcance.sh             # componente entregue que nenhuma tela abre
 scripts/verificar-exercitacao.sh             # o core contra ferramenta real
 scripts/verificar-embarcado.sh               # ciclo de embarcado no QEMU, sem placa
-scripts/verificar-python-debug.sh            # ciclo de depurar Python com o debugpy REAL
+scripts/verificar-python-debug.sh            # launch de arquivo/modulo e attach TCP com debugpy REAL
                                              # (python3 que importa debugpy, ou
                                              # KINEIN_PYTHON_DEBUGPY=<venv>/bin/python;
                                              # senao "nao provado", sem falhar)
@@ -110,8 +110,18 @@ regra 11 (todo gate aqui nasceu de uma falha que passou verde por todos os
 outros).
 
 `scripts/verificar-qml.sh` roda o qmllint em modo estrito (zero warnings)
-com o contexto de modulo do build debug; se um `.qml` novo nao aparecer no
-lint, reconfigure o preset debug para regenerar o response file.
+com o contexto do módulo do build debug. Em Qt recente usa `.rsp` e `-W 0`;
+sem `.rsp` (como no Qt 6.4), `scripts/verificar_qml.py` executa o alvo
+`kinein-vectis_qmllint_json` gerado pelo Qt e valida o relatório novo. Avisos
+reprovam mesmo com exit zero; JSON vazio/inválido e falha do CMake também.
+Não há lista paralela de fontes ou imports. Se um `.qml` novo não aparecer,
+reconfigure o preset debug. O build precisa ter gerado o `.qmltypes`.
+
+`KINEIN_QML_RSP` e `KINEIN_QMLLINT` continuam disponíveis para o caminho
+explícito de response file. Sem `.rsp`, o alvo CMake usa o binário da mesma
+instalação Qt do build; um `KINEIN_QMLLINT` isolado é rejeitado.
+No Ubuntu, os testes de lógica precisam do pacote `qml-qt6`: o executável
+é `/usr/lib/qt6/bin/qml`, não o wrapper de Qt 5 que pode existir no PATH.
 
 Execucao manual da IDE:
 

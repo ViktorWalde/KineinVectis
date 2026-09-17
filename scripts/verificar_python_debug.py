@@ -19,6 +19,8 @@ O que prova:
   7. o mesmo ciclo com um PACOTE como ponto de entrada (`pacote/__main__.py`,
      sem main.py): `debug.start {}` lanca `-m pacote` (o `module` do debugpy,
      2026-09-13) e para no breakpoint dentro do pacote
+  8. attach TCP a debugpy.listen: breakpoint, locais, evaluate e reconexao;
+     debug.stop (pausado/rodando) e workspace.close preservam o processo.
 
 Uso: verificar_python_debug.py <interpretador-com-debugpy>
 """
@@ -34,13 +36,15 @@ import tempfile
 import threading
 import time
 
+from verificar_python_attach import verify_attach
+
 RAIZ = pathlib.Path(__file__).resolve().parents[1]
 
 
 class Core:
     def __init__(self, binario: pathlib.Path, ambiente: dict[str, str], log: pathlib.Path) -> None:
-        # O stderr do core (e o do adaptador, que ele herda) vai para um
-        # arquivo: quando o ciclo falha, e' ele que diz por que — um
+        # O stderr do core vai para um arquivo. O stderr dos adaptadores
+        # filhos ainda e' uma pendencia propria do roadmap. Um
         # "o adapter nao respondeu" sem o stderr e' um sintoma sem causa.
         self.log = open(log, "w", encoding="utf-8")
         self.proc = subprocess.Popen(
@@ -195,6 +199,7 @@ def main() -> int:
             saida = core.evento("event.debug.output", onde=lambda p: "dobro" in p.get("line", ""))
             assert saida.get("line") == "dobro 42", saida
             assert core.evento("event.debug.finished").get("exitCode") == 0
+            verify_attach(core, raiz, interpretador)
         except Exception:
             core.log.flush()
             print("--- stderr do core (ultimas linhas) ---", file=sys.stderr)

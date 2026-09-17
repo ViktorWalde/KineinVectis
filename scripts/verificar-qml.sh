@@ -1,35 +1,47 @@
 #!/bin/sh
 # Verificacao rigorosa do QML da UI: qmllint estrito (zero warnings).
 #
-# Usa o response file gerado pelo qt_add_qml_module no build debug local, que
+# Usa o contexto gerado pelo qt_add_qml_module no build debug local, que
 # carrega import paths, qmldir e resources do modulo KineinVectis — o mesmo
-# contexto do alvo `all_qmllint` do CMake, mas com `-W 0` para falhar em
-# qualquer warning. Se um .qml novo nao aparecer no lint, reconfigure o build
-# debug (o .rsp e regenerado na configuracao do CMake).
+# contexto do alvo `all_qmllint` do CMake. Qt recente usa .rsp e -W 0;
+# Qt 6.4 usa o alvo JSON gerado e reprova qualquer warning do relatorio.
+# Se um .qml novo nao aparecer no lint, reconfigure o build debug.
 
 set -eu
 
 REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 
-# O `.rsp` nasce na CONFIGURACAO; o `.qmltypes` do modulo so na COMPILACAO. Um
-# diretorio configurado e nao compilado tem o primeiro e nao o segundo, e o
-# qmllint responde com uma parede de "QML types file does not exist" em vez de
-# uma mensagem util — parece defeito no QML e e' build faltando (medido em
-# 2026-08-29). Por isso o candidato so vale se os DOIS existirem.
+# O `.qmltypes` nasce na COMPILACAO. Sem ele o lint reclama dos tipos por
+# falta de build, nao por defeito no QML. Qt recente tambem gera .rsp na
+# configuracao; Qt 6.4 usa o alvo CMake/JSON, com o mesmo contexto de imports.
 RSP="${KINEIN_QML_RSP:-}"
 configurado_sem_build=""
+native_build=""
 if [ -z "$RSP" ]; then
     for base in \
         "$REPO_ROOT/build/linux-clang-debug-strict" \
         "$REPO_ROOT/build/dev-local"; do
         candidato="$base/ui/.rcc/qmllint/kinein-vectis.rsp"
-        [ -f "$candidato" ] || continue
-        if [ -f "$base/ui/KineinVectis/kinein-vectis.qmltypes" ]; then
-            RSP="$candidato"
-            break
+        [ -f "$base/CMakeCache.txt" ] || continue
+        if [ ! -f "$base/ui/KineinVectis/kinein-vectis.qmltypes" ]; then
+            configurado_sem_build="$base"
+            continue
         fi
-        configurado_sem_build="$base"
+        if [ -f "$candidato" ]; then
+            RSP="$candidato"
+        else
+            native_build="$base"
+        fi
+        break
     done
+fi
+if [ -n "$native_build" ]; then
+    if [ -n "${KINEIN_QMLLINT:-}" ]; then
+        echo "erro: KINEIN_QMLLINT exige KINEIN_QML_RSP neste build sem .rsp." >&2
+        echo "      O alvo CMake usa o qmllint da mesma instalacao Qt do build." >&2
+        exit 1
+    fi
+    exec python3 "$REPO_ROOT/scripts/verificar_qml.py" "$native_build"
 fi
 if [ -z "$RSP" ] || [ ! -f "$RSP" ]; then
     if [ -n "$configurado_sem_build" ]; then

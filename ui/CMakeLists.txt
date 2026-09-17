@@ -143,6 +143,7 @@ set_source_files_properties(qml/ipc/GitEventRouter.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/ipc/GitRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitRequestRouter.qml)
 set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
 set_source_files_properties(qml/ipc/DebugRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugRequestRouter.qml)
+set_source_files_properties(qml/debug/DebugAttachForm.qml PROPERTIES QT_RESOURCE_ALIAS DebugAttachForm.qml)
 set_source_files_properties(qml/panels/bottom/DebugPanel.qml PROPERTIES QT_RESOURCE_ALIAS DebugPanel.qml)
 set_source_files_properties(qml/shell/BottomTabBar.qml PROPERTIES QT_RESOURCE_ALIAS BottomTabBar.qml)
 set_source_files_properties(qml/shell/StatusBarProjectSummaries.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarProjectSummaries.qml)
@@ -248,6 +249,7 @@ qt_add_qml_module(kinein-vectis
     URI KineinVectis
     VERSION 1.0
     RESOURCE_PREFIX /
+    DEPENDENCIES QtQuick QtQuick.Window
     QML_FILES
         qml/Main.qml
         qml/Theme.qml
@@ -379,6 +381,7 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/GitRequestRouter.qml
         qml/ipc/DebugEventRouter.qml
         qml/ipc/DebugRequestRouter.qml
+        qml/debug/DebugAttachForm.qml
         qml/panels/bottom/DebugPanel.qml
         qml/shell/BottomTabBar.qml
         qml/shell/WorkspaceStatusBar.qml

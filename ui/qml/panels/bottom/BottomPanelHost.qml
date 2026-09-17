@@ -251,6 +251,10 @@ Rectangle {
 
         outputModel: root.debugController.outputModel
         sessionActive: root.debugController.sessionActive
+        attached: root.debugController.attached
+        canStart: root.debugController.workspaceRoot !== ""
+                  && !root.debugController.sessionActive && !root.debugController.starting
+        onAttachRequested: function(host, port) { root.debugController.startDebug("", { host: host, port: port }); }
         paused: root.debugController.paused
         framesModel: root.debugController.framesModel
         variablesModel: root.debugController.variablesModel

@@ -12,7 +12,7 @@
 //! e e por isso que cada request posicional pode re-sincronizar sem custo.
 //!
 //! Desde 2026-09-13 uma linguagem pode ter mais de um servidor (o principal e
-//! os companheiros, ver [`super::server::ServerSpec`]): o TEXTO vai para
+//! os companheiros, ver [`super::registry::ServerSpec`]): o TEXTO vai para
 //! todos, cada um com a propria versao do documento; o que e' pergunta
 //! interativa continua indo so' ao principal.
 
@@ -22,7 +22,8 @@ use serde_json::json;
 
 use super::framing::{full_change_params, send_notification};
 use super::manager::LspManager;
-use super::server::{ServerHandle, language_for_path};
+use super::registry::language_for_path;
+use super::server::ServerHandle;
 use super::types::LspError;
 use super::uri::uri_for_path;
 
@@ -191,14 +192,14 @@ impl LspManager {
         }
     }
 
-    /// Versao do documento que o servidor PRINCIPAL da linguagem conhece, se
-    /// aberto.
+    /// Versao do documento no servidor de origem do plano, se aberto.
+    /// Sem origem explicita, consulta o principal da linguagem (rename).
     ///
     /// Usada para rejeitar `WorkspaceEdit.documentChanges` obsoleto antes de
     /// criar uma transacao de escrita.
     #[must_use]
-    pub fn document_version(&self, path: &Path) -> Option<i64> {
-        let language = language_for_path(path)?;
+    pub fn document_version(&self, path: &Path, server: Option<&str>) -> Option<i64> {
+        let language = server.or_else(|| language_for_path(path))?;
         let uri = uri_for_path(path);
         self.servers
             .get(language)
@@ -240,7 +241,6 @@ impl LspManager {
         }
         Ok(spec.language)
     }
-
 }
 
 /// `didOpen` na primeira vez; depois `didChange` com a versao seguinte — ou

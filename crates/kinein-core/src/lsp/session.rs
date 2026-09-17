@@ -24,7 +24,8 @@ use serde_json::{Value, json};
 use super::framing::write_locked_message;
 use super::manager::LspManager;
 use super::parse::response_result;
-use super::server::{ServerHandle, ServerSpec, spawn_server};
+use super::registry::ServerSpec;
+use super::server::{ServerHandle, spawn_server};
 use super::types::LspError;
 
 /// Tempo maximo aguardando respostas interativas do LSP.
@@ -54,7 +55,11 @@ impl LspManager {
             self.kill_server(key);
             self.emit_status(key, "restarting");
         }
-        if let Some(key) = keys.iter().find(|key| **key == language).or(keys.first()) {
+        if let Some(key) = keys
+            .iter()
+            .find(|key| **key == language)
+            .or_else(|| keys.first())
+        {
             self.emit_restarted(key);
         }
         true

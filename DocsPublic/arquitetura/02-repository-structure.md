@@ -40,6 +40,7 @@ kinein-vectis/
 │   │   ├── main.rs              binario: chama run_stdio
 │   │   ├── lib.rs               Core + dispatch de handle_request + re-exports
 │   │   ├── runtime.rs           laco JSON-RPC sobre stdio
+│   │   ├── runtime/services.rs  habilitacao dos servicos externos e costuras LSP
 │   │   ├── rpc.rs               erros JSON-RPC + parse de params
 │   │   ├── handlers.rs          o modulo que agrega os handlers por dominio
 │   │   ├── cargo.rs format.rs run.rs process.rs
@@ -78,9 +79,10 @@ kinein-vectis/
 │   │   ├── configaction/        catalog availability plan + um planejador por
 │   │   │                        arquivo editado (cmakelists, presets, cargotoml,
 │   │   │                        builddir), mais parametros, rigor, remover, error
-│   │   ├── dap/                 wire parse reader session server adapter target
+│   │   ├── dap/                 wire parse reader session server adapter target transport
 │   │   │                        (adapter = lldb-dap | gdb -i dap | -m debugpy.adapter;
-│   │   │                        target = Program(ELF/.py) | Module(-m pacote))
+│   │   │                        target = Program(ELF/.py) | Module(-m pacote) | PythonAttach;
+│   │   │                        transport = filho stdio ou socket TCP externo)
 │   │   ├── datasource/          connection store secret introspect sqlite mongo
 │   │   │                        mongo_infer
 │   │   ├── db/                  rascunhos em SQLite (WAL)
@@ -92,8 +94,8 @@ kinein-vectis/
 │   │   │                        (extract = declaracoes de um arquivo inteiro, para o index/)
 │   │   │                        outline folding
 │   │   ├── library/             catalog availability applied
-│   │   ├── lsp/                 manager session sync server framing parse
-│   │   │                        parse_symbols transaction edit uri types
+│   │   ├── lsp/                 manager session registry sync server framing parse
+│   │   │                        diagnostics_merge parse_symbols transaction edit uri types
 │   │   ├── setup/               catalog distro
 │   │   ├── terminal/            session state render input error
 │   │   ├── toolchain/           mod catalog store arguments sysroot import install/

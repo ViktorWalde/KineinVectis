@@ -258,6 +258,9 @@ impl Core {
     /// troca dele AQUI, e em lugar nenhum mais. Verificado por
     /// `scripts/verificar-transicao-workspace.sh`.
     fn activate_workspace(&mut self, opened: &WorkspaceInfo) {
+        if let Some(debug) = self.debug.as_mut() {
+            debug.clear();
+        }
         self.workspace = Some(opened.clone());
         // O modelo do projeto embarcado (pilar 0 do roadmaps/42) nasce com o
         // workspace — por qualquer porta: open, createProject — e vai por
@@ -299,6 +302,9 @@ impl Core {
     /// Inverso de [`Self::activate_workspace`]: solta tudo que era do workspace
     /// que sai. Devolve o que estava aberto.
     fn deactivate_workspace(&mut self) -> Option<WorkspaceInfo> {
+        if let Some(debug) = self.debug.as_mut() {
+            debug.clear();
+        }
         let closed = self.workspace.take();
         self.fswatch = None;
         self.syntax.clear();

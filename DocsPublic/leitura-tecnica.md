@@ -20,11 +20,11 @@
 > **Para que serve:** dar em uma leitura o que hoje exige abrir dez documentos —
 > o que o projeto é, o que existe de verdade, onde o peso está, onde a
 > arquitetura está sob tensão e o que a direção escolhida custa. Não substitui
-> `ARCHITECTURE.md` (contrato) nem `DocsPrivate/historico/PONTO_ATUAL.md` (fila).
+> `ARCHITECTURE.md` (contrato) nem `roadmaps/40-estado-e-continuidade.md` (fila).
 
 ## 1. O que é, em uma frase honesta
 
-Uma IDE Linux-first para **C, C++ e Rust**, que **orquestra ferramentas
+Uma IDE Linux-first para **C, C++, Rust e Python**, que **orquestra ferramentas
 consolidadas** em vez de reimplementá-las, com frontend Qt/QML e um core Rust
 separados por JSON-RPC sobre stdio.
 
@@ -67,9 +67,9 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **140 métodos IPC** roteados e **48 eventos**, em **34 domínios de protocolo**;
-**711 testes** Rust verdes e **34 harnesses QML** (remedido em 2026-09-13;
-em 2026-09-12 à noite a simulação saiu do produto: −11 métodos, −85 testes,
-−7 harnesses). Protocolo `0.108.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
+**723 testes Rust e 35 harnesses QML aprovados em 2026-09-16**.
+O resultado desta retomada está no roadmap 40 §7.38 (gate completo ainda pendente)
+(em 2026-09-12 à noite a simulação saiu: −11 métodos, −85 testes, −7 harnesses). Protocolo `0.109.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -118,7 +118,10 @@ SOLIDO      fsops     confinamento ao root, escrita atomica, transacao com
                       didChangeConfiguration apos o initialized e responde ao
                       workspace/configuration secao a secao — e' assim que o
                       basedpyright sobe com o interpretador DO PROJETO e
-                      reinicia quando o .venv nasce
+                      reinicia quando o .venv nasce. Validado em 2026-09-15:
+                      Ruff como companheiro, diagnosticos fundidos e acoes
+                      dos dois servidores na lista existente; o preview
+                      valida a versao no servidor de origem (40 §7.36)
             git       operacoes reais contra repositorio, 12 testes de integracao
             jobs      cancelamento cooperativo, progresso, drain no shutdown
 

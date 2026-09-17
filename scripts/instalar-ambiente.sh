@@ -89,7 +89,7 @@ instalar_debian() {
     executar sudo apt-get install -y \
         build-essential git cmake ninja-build \
         clang clangd clang-format clang-tidy lldb gdb \
-        qt6-base-dev qt6-declarative-dev qt6-tools-dev \
+        qt6-base-dev qt6-declarative-dev qt6-tools-dev qml-qt6 \
         qml6-module-qtqml qml6-module-qtqml-workerscript \
         qml6-module-qtqml-models qml6-module-qtquick \
         qml6-module-qtquick-controls qml6-module-qtquick-layouts \

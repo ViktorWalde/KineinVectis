@@ -18,6 +18,9 @@ Item {
 
     property var outputModel: emptyOutputModel
     property bool sessionActive: false
+    property bool attached: false
+    property bool canStart: false
+    signal attachRequested(string host, real port)
     property bool paused: false
     property var framesModel: emptyInspectionModel
     property var variablesModel: emptyInspectionModel
@@ -48,10 +51,20 @@ Item {
         return Theme.textSecondary;
     }
 
+    DebugAttachForm {
+        id: attachForm
+        anchors.top: parent.top
+        anchors.left: parent.left
+        visible: !panel.sessionActive
+        height: visible ? 42 : 0
+        available: panel.canStart
+        onAttachRequested: function(host, port) { panel.attachRequested(host, port); }
+    }
+
     Row {
         id: debugControlsRow
 
-        anchors.top: parent.top
+        anchors.top: attachForm.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         height: 26
@@ -68,7 +81,7 @@ Item {
                   needsPaused: true },
                 { key: "stepOut", label: qsTr("Step Out (Ctrl+Alt+U)"),
                   needsPaused: true },
-                { key: "stop", label: qsTr("Parar"), needsPaused: false }
+                { key: "stop", label: panel.attached ? qsTr("Desconectar") : qsTr("Parar"), needsPaused: false }
             ]
 
             delegate: Rectangle {

@@ -15,6 +15,7 @@ RUN apt-get update \
         file \
         appstream \
         libegl1-mesa-dev \
+        libfmt-dev \
         libgl1-mesa-dev \
         libxcb-cursor0 \
         ninja-build \

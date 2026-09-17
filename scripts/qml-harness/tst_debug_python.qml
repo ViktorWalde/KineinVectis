@@ -68,16 +68,19 @@ Item {
 
         // O DebugController: sem workspace nada; com workspace o programa vai
         // como veio e a aba de debug abre; com sessao viva, nada.
-        dbg.startDebugProgram("/tmp/proj/tools/gera.py");
+        dbg.startDebug("/tmp/proj/tools/gera.py");
         if (root.programas.length !== 0) failures += 1024;
         dbg.workspaceRoot = "/tmp/proj";
-        dbg.startDebugProgram("/tmp/proj/tools/gera.py");
+        dbg.startDebug("/tmp/proj/tools/gera.py");
         if (root.programas.length !== 1 || root.programas[0] !== "/tmp/proj/tools/gera.py") failures += 2048;
         if (root.abas.indexOf("debug") < 0) failures += 4096;
         dbg.startDebug();
+        if (root.programas.length !== 1 || !dbg.starting) failures += 1 << 26;
+        dbg.handleRequestFailed("debug.start", "falha simulada");
+        dbg.startDebug();
         if (root.programas.length !== 2 || root.programas[1] !== "") failures += 8192;
         dbg.sessionActive = true;
-        dbg.startDebugProgram("/tmp/proj/tools/gera.py");
+        dbg.startDebug("/tmp/proj/tools/gera.py");
         if (root.programas.length !== 2) failures += 16384;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
