@@ -39,13 +39,17 @@ distribuída como AppImage para Linux x86_64.
 - **embarcados**: portas seriais vistas sem serem abertas, monitor serial na
   aba de terminal, o modelo do projeto (ESP-IDF, Zephyr, pico-sdk, PlatformIO,
   STM32Cube, Rust bare metal, MicroPython, Yocto, Buildroot), ciclo provado no
-  QEMU com `gdb -i dap`;
+  QEMU com `gdb -i dap`; a identidade do chip pelo `esptool` com sugestão de
+  kit, "Gravar" como configuração de execução (esptool, probe-rs, picotool,
+  dfu-util) e a permissão de cada canal medida com o passo oficial — a IDE
+  nunca roda `sudo`;
 - **containers** nativos (Docker ou Podman, pela mesma CLI): motor, ciclo de
   vida como jobs, logs e shell numa aba de terminal, compose do projeto;
 - **Python** como vertical nativa: o interpretador do projeto resolvido uma
   vez (`.venv` de um clique com `uv`), basedpyright com esse interpretador,
   `ruff` para formatar e analisar, executar o ponto de entrada, `pytest` com a
-  árvore de casos, depurar com `debugpy`, MicroPython pelo `mpremote`;
+  árvore de casos, depurar com `debugpy` (launch ou attach por TCP),
+  MicroPython pelo `mpremote` na porta que você escolher;
 - **toolchains por alvo**: catálogo conferido na fonte, instalação na pasta da
   IDE com SHA-256 conferido antes de desempacotar, leitura de sysroot e
   importação de kit de SDK (Yocto, Buildroot);

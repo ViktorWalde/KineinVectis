@@ -55,6 +55,12 @@ kinein-vectis/
 │   │   ├── cdb.rs               compilation database do C/C++: onde esta e se envelheceu
 │   │   ├── fswatch.rs           notify debounced + mudanca externa
 │   │   ├── probe.rs runconfig.rs settings.rs size.rs
+│   │   ├── flash.rs             "Gravar" como configuracao de execucao: compoe a
+│   │   │                        linha do motor (esptool/probe-rs/picotool/dfu-util)
+│   │   │                        do modelo e da porta; puro, nada roda (0.113.0)
+│   │   ├── stderr_tail.rs       o stderr dos filhos de longa vida (adaptador DAP,
+│   │   │                        servidor de debug, LSP): cauda de 64 linhas + evento
+│   │   │                        por linha; era /dev/null ate' 0.111.0
 │   │   │
 │   │   ├── handlers/            roteadores por dominio (blocos impl Core)
 │   │   │   └── build cargo cmake configaction datasource debug draft format fs
@@ -65,7 +71,10 @@ kinein-vectis/
 │   │   │
 │   │   ├── build/               mod parse
 │   │   ├── container/           mod parse   (docker|podman pela mesma CLI)
-│   │   ├── serial/              mod monitor (portas USB; monitor como processo)
+│   │   ├── serial/              mod monitor identify access (portas USB sem abrir;
+│   │   │                        monitor como processo; identidade Espressif pelo
+│   │   │                        esptool como job; permissao por canal com o passo
+│   │   │                        oficial)
 │   │   ├── project/             mod detect sdk artifacts (o MODELO do projeto embarcado)
 │   │   ├── python/              mod env run debug native  (o ambiente Python: o
 │   │   │                        interpretador por precedencia, o status e o .venv;
@@ -133,6 +142,9 @@ kinein-vectis/
 │       └── command/ configaction/ container/ datasource/ debug/ diagnostics/
 │           embedded/ git/ grafana/ index/ jobs/ library/ project/ python/
 │           runtime/ search/ settings/ setup/ toolchain/
+│           (embedded/: o EmbeddedController tem tres controllers FILHOS —
+│            identity, flash, access — cada um com a sua view; e' o que evita
+│            propriedade de repasse nova em AppDomains/Shell/Host)
 │
 ├── scripts/                     gates, sondas, ambiente, launcher, packaging
 │   └── qml-harness/             tst_*.qml — logica QML headless
