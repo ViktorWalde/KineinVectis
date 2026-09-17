@@ -39,6 +39,7 @@ pub mod serial;
 pub mod settings;
 pub mod setup;
 pub mod size;
+pub mod stderr_tail;
 pub mod terminal;
 pub mod test;
 pub mod toolchain;

@@ -346,8 +346,12 @@ BLOCO A — fechar o canal serial e o ciclo Espressif (ja' decidido, 38 §6)
  A1  E3 monitor serial como PROCESSO       FEITO 2026-09-12 (40 §7.15): papel
      numa aba de terminal (open_command)    `serialMonitor`, serial.monitor, picocom
                                             exercitado no ESP32
- A2  E5 identidade Espressif                `esptool chip-id`/`flash-id` -> sugere
-                                            IDF_TARGET, compilador, capacidade da flash
+ A2  E5 identidade Espressif                FEITO 2026-09-17 (40 §7.41, 0.112.0):
+                                            serial.identify roda `esptool flash-id`
+                                            como job, le chip/features/MAC/flash e
+                                            SUGERE o kit (tabelas do project.model);
+                                            "Usar chip no kit" e' clique. Provado com
+                                            esptool falso — sem placa nesta maquina
  A3  E4 gravar como CONFIGURACAO DE         motores esptool/espflash/probe-rs/picotool/
      EXECUCAO                               dfu-util; le flasher_args.json; JOB com evento
  A4  E2 permissao por canal                 dialout / uaccess+plugdev / ID_MM_DEVICE_IGNORE;
@@ -411,9 +415,10 @@ BLOCO B — Python, a vertical inteira (reverte o adiamento; sem anuncio parcial
                                             Python na barra de status, o icone do .py na
                                             arvore, "Testar com pytest"/"Analise (ruff)" no
                                             menu. Depois vieram a arvore do pytest (§7.32),
-                                            o `-m pacote` e o run.capabilities (§7.33). O
-                                            que falta e' polimento: porta escolhida do
-                                            MicroPython e stderr DAP/LSP (40 §4.1). A
+                                            o `-m pacote` e o run.capabilities (§7.33), a
+                                            porta escolhida do MicroPython (§7.39). O
+                                            que falta e' polimento: stderr DAP/LSP
+                                            (40 §4.1). A
                                             REFORMULACAO da tela para o Python e' etapa
                                             PROPRIA, depois do backend (40 §5, 2026-09-13)
 
@@ -425,12 +430,16 @@ BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
                                             fixar outro monitor
  C2  arquivos no dispositivo                `mpremote fs ls/cp/rm/mkdir/tree` como painel
                                             (referencia: Thonny "Files on device")
- C3  rodar o arquivo atual na placa         FEITO no core 2026-09-13 (40 §7.28): "Executar"
-                                            num .py e o botao Executar (main.py) rodam
-                                            `mpremote [connect <porta>] run <arquivo>`;
-                                            run.script aceita `device`. FALTA a tela
-                                            passar a porta escolhida (hoje: a primeira
-                                            que o mpremote acha)
+ C3  rodar o arquivo atual na placa         FEITO 2026-09-13 no core (40 §7.28) e
+                                            2026-09-17 na tela (40 §7.39, 0.110.0):
+                                            "Executar" num .py e o botao Executar
+                                            (main.py) rodam `mpremote [connect <porta>]
+                                            run <arquivo>`; a porta se escolhe no painel
+                                            de Embarcados (chip "Executar" por porta) e
+                                            vai como `device` em run.script E run.start.
+                                            Sem escolha, a primeira que o mpremote acha.
+                                            Provado com mpremote falso: sem placa nesta
+                                            maquina
  C4  stubs por placa                        micropython-<port>-stubs em typings/ +
                                             typingsPath no basedpyright do projeto
  C5  firmware MicroPython                   gravar o .bin/.uf2 oficial pelo motor do A3

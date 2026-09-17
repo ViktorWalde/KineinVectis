@@ -43,6 +43,14 @@ Item {
             root.runtimeController.handleTerminalOpened(id, command, command);
         }
 
+        function onSerialIdentifyStarted(jobId, command) {
+            root.embeddedController.handleIdentifyStarted(jobId, command);
+        }
+
+        function onSerialIdentified(outcome) {
+            root.embeddedController.handleIdentified(outcome);
+        }
+
         function onRequestFailed(method, message) {
             root.embeddedController.handleFailed(method, message);
         }

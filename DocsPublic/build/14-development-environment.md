@@ -77,6 +77,23 @@ vivem em `DocsPublic/roadmaps/21`, seção "M4.2". Detalhe do gancho `KINEIN_PER
 
 ## Estado observado no notebook (Ubuntu 24.04.5, 2026-09-16)
 
+**Atualização de 2026-09-17 — o sistema mudou:** a máquina está em **Ubuntu
+26.04.1**, Qt **6.10.2**, Clang **21.1.8** (clang-18 ainda instalado), GCC 15.2,
+CMake 4.2, Python 3.14.4. Tudo abaixo que fala de Qt 6.4.2/Clang 18 é registro
+da época. Dois efeitos medidos: (1) os presets `linux-clang-*` **não
+configuram** — `clang++` escolhe a instalação GCC 16 (existe `libgcc-16-dev`)
+e não há `libstdc++-16-dev`, logo `ld: cannot find -lstdc++` no try-compile;
+remédio `sudo apt-get install libstdc++-16-dev` e reconfigurar os dois presets;
+(2) o `dev-local` (g++) compila a UI com zero avisos, o qmllint 6.10 fica
+**limpo** (os avisos StandardKey do 6.4 não existem nele) e o binário abre.
+Shims do pipx (`mpremote`) apontam para o Python antigo: `pipx reinstall-all`.
+Detalhe no roadmap 40 §7.39. **À tarde**, com `libstdc++-16-dev` instalado, os
+dois presets clang configuraram e compilaram; a única correção de código foi a
+isenção do `-Wctad-maybe-unsupported` no `.moc` inline do
+`typing_perf_harness.cpp` (moc do Qt 6.10). Clang-Tidy e qmllint nativo
+voltaram a rodar (40 §7.40). O `verificar-qml.sh` agora testa o `qmllint`
+candidato com `--version`: o do PATH é um wrapper Qt 5 sem alvo.
+
 **Atualização posterior — debugpy attach, protocolo 0.109.0:** core e UI debug/release
 recompilados; atalho usa a release nova. Attach real (breakpoint, locais, evaluate,
 reconexões e desconexão preservando o processo) passou com debugpy 1.8.0. Foram

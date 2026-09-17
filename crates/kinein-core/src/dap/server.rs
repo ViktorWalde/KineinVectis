@@ -23,6 +23,7 @@ use std::{
 };
 
 use super::DebugError;
+use crate::stderr_tail::{CAPACIDADE_PADRAO, StderrTail};
 
 /// Quanto se espera pela porta do servidor antes de desistir.
 ///
@@ -36,6 +37,11 @@ const PORT_POLL: Duration = Duration::from_millis(50);
 #[derive(Debug)]
 pub(super) struct DebugServer {
     child: Child,
+    /// O stderr do servidor (2026-09-17): sem evento ao vivo — um QEMU pode
+    /// ser verboso — mas a cauda entra na mensagem quando a porta nao abre.
+    /// "o servidor saiu antes de abrir a porta" sem o `could not load
+    /// kernel` do QEMU era um sintoma sem causa.
+    stderr: StderrTail,
 }
 
 impl DebugServer {
@@ -48,24 +54,45 @@ impl DebugServer {
         remote_target: &str,
     ) -> Result<Self, DebugError> {
         let command = render_command(template, program);
-        let child = Command::new("sh")
+        let mut child = Command::new("sh")
             .arg("-c")
             .arg(format!("exec {command}"))
             .current_dir(root)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stderr(Stdio::piped())
             .spawn()
             .map_err(|error| DebugError::Adapter {
                 message: format!("falha ao subir o servidor de debug `{command}`: {error}"),
             })?;
-        let mut server = Self { child };
+        let Some(stderr) = child.stderr.take() else {
+            drop(child.kill());
+            return Err(DebugError::Adapter {
+                message: format!("o servidor de debug `{command}` subiu sem stderr utilizavel"),
+            });
+        };
+        let stderr = StderrTail::spawn(stderr, CAPACIDADE_PADRAO, None);
+        let mut server = Self { child, stderr };
         if let Err(error) = server.wait_for_port(remote_target) {
-            // O erro ja' explica; o processo nao pode ficar orfao.
+            // O erro ja' explica — e leva o que o servidor disse. O processo
+            // nao pode ficar orfao.
             drop(server.child.kill());
-            return Err(error);
+            drop(server.child.wait());
+            return Err(server.with_stderr(error));
         }
         Ok(server)
+    }
+
+    /// Anexa a cauda do stderr do servidor a um `DebugError::Adapter`.
+    fn with_stderr(&self, error: DebugError) -> DebugError {
+        // O `wait` acima ja' fechou o pipe; um instante para a leitora esvaziar.
+        thread::sleep(Duration::from_millis(50));
+        match error {
+            DebugError::Adapter { message } => DebugError::Adapter {
+                message: self.stderr.anexar(&message, "stderr do servidor de debug"),
+            },
+            other => other,
+        }
     }
 
     /// Espera `host:porta` aceitar TCP, ou o processo morrer antes disso.
@@ -187,6 +214,37 @@ mod tests {
         .unwrap_err()
         .to_string();
         assert!(erro.contains("saiu") && erro.contains('3'), "{erro}");
+    }
+
+    /// O que o servidor DISSE antes de morrer vai na mensagem (2026-09-17):
+    /// e' o `could not load kernel` do QEMU, o `Error: no device found` do
+    /// `OpenOCD`. Sem isso o status era um sintoma sem causa.
+    #[test]
+    fn stderr_of_a_dead_server_is_in_the_message() {
+        let erro = DebugServer::spawn(
+            Path::new("/tmp"),
+            "sh -c 'echo qemu: could not load kernel >&2; exit 1'",
+            Path::new("fw.elf"),
+            "127.0.0.1:1",
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(
+            erro.contains("saiu")
+                && erro.contains("--- stderr do servidor de debug ---")
+                && erro.contains("could not load kernel"),
+            "{erro}"
+        );
+        // Sem stderr, sem cabecalho vazio.
+        let mudo = DebugServer::spawn(
+            Path::new("/tmp"),
+            "sh -c 'exit 3'",
+            Path::new("fw.elf"),
+            "127.0.0.1:1",
+        )
+        .unwrap_err()
+        .to_string();
+        assert!(!mudo.contains("---"), "{mudo}");
     }
 
     /// Porta ja' aberta: a espera termina no primeiro connect. Aqui o

@@ -86,7 +86,11 @@ scripts/verificar-qml-duplicacao.sh          # mesma derivacao em dois arquivos
 scripts/verificar-qml-alcance.sh             # componente entregue que nenhuma tela abre
 scripts/verificar-exercitacao.sh             # o core contra ferramenta real
 scripts/verificar-embarcado.sh               # ciclo de embarcado no QEMU, sem placa
-scripts/verificar-python-debug.sh            # launch de arquivo/modulo e attach TCP com debugpy REAL
+scripts/verificar-python-debug.sh            # (1) a porta escolhida chega ao mpremote — run.start/
+                                             # run.script { device } contra o core REAL com um mpremote
+                                             # falso que ecoa os argv; sem placa, sem interpretador
+                                             # (scripts/verificar_micropython_porta.py, 0.110.0);
+                                             # (2) launch de arquivo/modulo e attach TCP com debugpy REAL
                                              # (python3 que importa debugpy, ou
                                              # KINEIN_PYTHON_DEBUGPY=<venv>/bin/python;
                                              # senao "nao provado", sem falhar)

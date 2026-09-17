@@ -14,6 +14,13 @@ import QtQuick
 // MEDIDA pelo core e o estado do ModemManager. O core nunca abre a porta para
 // responder (abrir reseta a placa), e a tela nunca deduz o chip pela ponte.
 //
+// Desde 2026-09-17 (C3 do roadmaps/41, o que faltava) guarda a PORTA
+// ESCOLHIDA: a que o Executar de um projeto MicroPython passa ao core como
+// `device` (`mpremote connect <porta> run`). E' ESCOLHA da tela, nao estado
+// do core — por isso mora aqui e nao volta por evento; o RuntimeController a
+// le por binding na composicao (AppDomains). A identidade PELO CANAL (E5,
+// `serial.identify`) e' dono proprio, filho deste: `identity`.
+//
 // Nao fala com o CoreClient direto: pede por sinal e recebe do roteador.
 Item {
     id: root
@@ -43,6 +50,10 @@ Item {
     property var ports: []
     property string portsHint: ""
     property bool portsBusy: false
+    // A porta que o Executar usa (`device` de run.start/run.script). Vazio =
+    // nenhuma escolhida: o campo nao vai, e o mpremote pega a primeira que
+    // acha. So' aponta para uma porta da LISTA ATUAL — ver handleSerialPorts.
+    property string selectedPort: ""
 
     // O MODELO do projeto (project.model / event.project.changed): o que o
     // projeto E'. A tela so' mostra; quem deduz e' o core, com evidencia.
@@ -57,6 +68,14 @@ Item {
 
     readonly property bool probeFound: probes.length > 0
     readonly property bool portFound: ports.length > 0
+
+    // A identidade pelo canal (E5) e' dono proprio, filho deste: quem tem o
+    // EmbeddedController alcanca `identity` sem propriedade de repasse.
+    readonly property alias identity: identityController
+
+    EmbeddedIdentityController {
+        id: identityController
+    }
 
     signal listRequested()
     signal serialListRequested()
@@ -82,6 +101,8 @@ Item {
         ports = [];
         portsHint = "";
         portsBusy = false;
+        selectedPort = "";
+        identityController.clear();
         project = ({});
         projectBusy = false;
         panelVisible = false;
@@ -182,10 +203,37 @@ Item {
         monitorRequested(device, 0);
     }
 
+    // A escolha e' um TOGGLE: clicar na escolhida desfaz. Uma porta que nao
+    // esta' na lista nao se escolhe — a lista e' o que o core mediu.
+    function selectPort(device) {
+        if (device === selectedPort) {
+            selectedPort = "";
+            return;
+        }
+        if (indexOfPort(device) >= 0) {
+            selectedPort = device;
+        }
+    }
+
+    function indexOfPort(device) {
+        for (let i = 0; i < ports.length; i++) {
+            if (ports[i].device === device) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // Lista nova substitui a anterior; a escolha so' sobrevive se a porta
+    // continua la'. Placa desplugada nao deixa um `device` fantasma no
+    // proximo Executar — o campo simplesmente deixa de ir.
     function handleSerialPorts(newPorts, newHint) {
         ports = newPorts === undefined ? [] : newPorts;
         portsHint = newHint === undefined ? "" : newHint;
         portsBusy = false;
+        if (selectedPort !== "" && indexOfPort(selectedPort) < 0) {
+            selectedPort = "";
+        }
     }
 
     function handleProbes(newProbes, newToolAvailable, newRawOutput, newHint) {

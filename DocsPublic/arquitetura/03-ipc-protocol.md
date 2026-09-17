@@ -1,5 +1,34 @@
 # 03 — Protocolo IPC
 
+> **0.112.0 (2026-09-17, fim de tarde) — E5, a identidade Espressif PELO
+> CANAL:** `serial.identify { device, tool? }` → `{ jobId, command }` roda
+> `esptool --port <device> … flash-id` como JOB (reseta a placa: gesto
+> explícito, nunca ao abrir o painel), com parser tolerante e queda para o
+> `flash_id` da v4; o desfecho é **`event.serial.identified`** (evento 50) com
+> `identity` (chip, features, cristal, MAC, flash) e `target` — o kit que o
+> chip SUGERE pelas tabelas do `project.model`; aplicar é clique
+> (`toolchain.setKit`). Recusa antes de abrir a porta: nó inexistente,
+> sem permissão, sem esptool. Método 141.
+>
+> **0.111.0 (2026-09-17, à tarde):** o stderr dos filhos de longa vida deixou
+> de ir para `/dev/null`. Adaptador DAP: cada linha sai como `event.debug.output
+> { category: "adapter" }` e a cauda (últimas 64 linhas) entra na mensagem do
+> `debug.start` que falha. Servidor de debug do kit (`debugServer`): a cauda
+> entra em "saiu antes de abrir a porta"/"não abriu em N s". Language server:
+> evento novo **`event.lsp.log { language, line }`** por linha, e a cauda entra
+> no `event.lsp.status` `failed` (via mensagem) e `exited` (`message`). Um LSP
+> que falha o `initialize` agora é morto, não fica órfão. Medido nesta máquina
+> (30 s após abrir um arquivo): rust-analyzer 4 linhas, clangd 66 (pico 18/s no
+> índice), basedpyright+ruff 3 — sem agrupamento, por número.
+>
+> **0.110.0 (2026-09-17):** a porta escolhida chega ao Executar de MicroPython.
+> `run.start { device? }` — o mesmo `device?` que `run.script` já tinha desde
+> `0.102.0` — leva ao lançador padrão (`mpremote connect <device> run main.py`).
+> `device` com `command` é contradição (`INVALID_PARAMS`); `device` presente e
+> vazio é recusado nos dois métodos ("campo ausente" é o mpremote escolhendo;
+> "campo vazio" seria `mpremote connect '' run`). A tela agora ESCOLHE a porta
+> no painel de Embarcados (chip "Executar" por porta) e a passa nos dois gestos.
+>
 > **0.109.0 (2026-09-16):** debugpy attach via `debug.start { connect: { host,
 > port } }`. Transporte DAP TCP reutiliza a sessão existente; `attached` no
 > resultado/evento diferencia desconectar um processo externo de encerrar launch.
@@ -805,7 +834,7 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   uma lista escrita à mão em QML divergiu da do core por construção (o
   defeito que o `format.capabilities` corrigiu em 0.61.0 voltou a aparecer
   em dois arquivos da árvore, e este método o fecha).
-- `run.start { command? }` → `{ command }`. Sem `command`, o core deriva o
+- `run.start { command?, device? }` → `{ command }`. Sem `command`, o core deriva o
   padrão do tipo de projeto: `cargo run` para Rust/Cargo; para CMake, o
   único executável em `.kinein/build` (erro claro se não houver ou houver
   mais de um); **para Python (`0.100.0`, 2026-09-13)**, o ponto de entrada
@@ -819,7 +848,15 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   interpretador, ou sem entrada, `INVALID_REQUEST` dizendo o que procurou e
   o que fazer (criar o `.venv` pela faixa de saúde; "Executar" num `.py`).
   Outros tipos ainda não têm padrão (`INVALID_REQUEST` com mensagem
-  orientando digitar o comando).
+  orientando digitar o comando). **`device?` (`0.110.0`)** é a porta serial
+  que a tela escolheu para o lançador padrão de um projeto MicroPython
+  (`mpremote connect <device> run 'main.py'`); é parâmetro do LANÇADOR
+  PADRÃO e por isso é exclusivo com `command` (`INVALID_PARAMS` quando vêm
+  os dois — um comando explícito roda como foi escrito e não tem onde
+  receber a porta). Uma configuração de execução ATIVA é um comando salvo
+  pelo autor: vence o lançador padrão e tampouco recebe a porta; o `command`
+  ecoado diz o que rodou. Fora de MicroPython o campo não tem efeito. Vazio
+  ou só espaço é `INVALID_PARAMS` (ver `run.script`).
 - `run.script { path, device? }` → `{ command }` (protocolo `0.55.0`).
   Aceita arquivo regular `.sh`, `.bash`, `.zsh` ou (`0.100.0`) `.py` dentro
   do workspace. O core canonicaliza/confina o caminho e chama `bash`/`zsh` com
@@ -834,7 +871,10 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   (`0.102.0`)**: o `.py` roda **na placa** — `mpremote [connect <device>]
   run <arquivo>` (mpremote 1.29.0, `mpremote run --help`: `run [--follow]
   path`; sem `connect` o mpremote usa a primeira porta serial que acha);
-  `device?` é a porta que a tela escolheu (campo ausente ≠ vazio). Sem
+  `device?` é a porta que a tela escolheu (campo ausente ≠ vazio: desde
+  `0.110.0` um `device` presente e vazio, só espaço ou com caractere de
+  controle é `INVALID_PARAMS` dizendo para omitir o campo — antes virava
+  `mpremote connect '' run`, que falhava longe de quem errou). Sem
   mpremote detectado, `INVALID_REQUEST` dizendo `pipx install mpremote` —
   nunca o Python do desktop, que não tem os pinos de `import machine`. O
   mesmo vale para o `run.start` sem comando (`main.py` na placa, mesmo num
@@ -1424,10 +1464,23 @@ Cancelamento de requests LSP ainda não faz parte deste contrato.
 ```text
 event.lsp.status       { "language": "cpp|rust|python|python-ruff", "status": "running|failed|stopped|exited|restarting", "message"? }
 event.lsp.diagnostics  { "path": "/abs/file", "diagnostics": [{ "source": "lsp", "category": "lsp", "severity": "error|warning|note", "message", "line", "column" }] }
+event.lsp.log          { "language": "cpp|rust|python|python-ruff", "line": "..." }   (0.111.0)
 ```
 
 `line` e `column` dos diagnósticos são 1-based para consumo direto da UI. A
 UI integra esses eventos à aba Problemas com origem `lsp`.
+
+**`event.lsp.log` (`0.111.0`)** é o stderr do servidor, uma linha por evento,
+sem interpretação: o `clangd` anunciando a versão e onde procurou o
+`compile_commands.json`, o rust-analyzer contando o índice, o traceback de um
+basedpyright que morreu no `import`. Linhas são UTF-8 com perda e cortadas em
+4 KiB com marcador; o core guarda as últimas 64 (a cauda). A UI as escreve na
+aba IDE. A cauda também vai no **`message`** do `event.lsp.status` quando
+`status` é `failed` (dentro do texto do erro, sob `--- stderr do servidor ---`)
+ou `exited` (o `message` inteiro; ausente quando o servidor não disse nada).
+Um servidor que falha o `initialize` é morto pelo core — antes ficava vivo e
+mudo. Sem agrupamento: medido em 2026-09-17 com os servidores reais nesta
+máquina, o pico foi 18 linhas/s (clangd indexando), longe de justificar lote.
 
 ### CMake service (`cmake.configure` / `cmake.presets.list` / `cmake.targets.list` / `cmake.status`)
 
@@ -1532,7 +1585,9 @@ na raiz pelo `run.start`.
 - `runConfig.setActive { id? }`: `id` ausente = automático; id inexistente →
   `INVALID_PARAMS`.
 - `run.start {}` (sem `command`) resolve: comando explícito > config ativa >
-  heurística (`cargo run` / executável único do CMake).
+  heurística (`cargo run` / executável único do CMake / o ponto de entrada
+  Python — na placa, com o `device?` escolhido, quando o projeto é
+  MicroPython). Só a heurística recebe `device`.
 
 ### Configuration Actions (`configAction.list` / `configAction.preview` / `configAction.apply`)
 
@@ -2096,12 +2151,24 @@ propósito — é a forma de linha e condição saírem de sincronia em silênci
 
 ```text
 event.debug.started   { program, attached }
-event.debug.output    { category, line }   (stdout|stderr|console)
+event.debug.output    { category, line }   (stdout|stderr|console|adapter)
 event.debug.stopped   { reason, file?, line?, threadId }  (file/line podem
                         vir null; o core ja enriquece com o frame do topo)
 event.debug.continued {}                   (um por retomada, deduplicado)
 event.debug.finished  { exitCode? }        (exatamente um por sessao)
 ```
+
+**`category: "adapter"` (`0.111.0`)** é o stderr do PRÓPRIO adaptador que a
+IDE criou (`lldb-dap`, `probe-rs dap-server`, `gdb -i dap`, `python -m
+debugpy.adapter`), uma linha por evento — as outras três categorias vêm do
+evento DAP `output` e falam do programa. Num attach TCP não há `adapter`: o
+processo é de outro dono. As últimas 64 linhas ficam na sessão e entram na
+mensagem do `debug.start` que falha no handshake (sob `--- stderr do
+adaptador ---`): "o adapter nao respondeu a `initialize`" agora vem com o
+`ImportError` que o causou. O servidor de debug do kit (`debugServer`) tem
+a mesma cauda, sem evento por linha (um QEMU é verboso): ela entra em "o
+servidor de debug saiu (…) antes de abrir …" e "nao abriu … em N s". A UI
+pinta `adapter` como `stderr`.
 
 ### Git (`git.status` e operações diárias)
 
@@ -2248,7 +2315,9 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 140 métodos roteados — a lista inteira
+## Os 141 métodos roteados — a lista inteira
+
+> **2026-09-17:** `serial.identify` entrou (0.112.0); eram 140.
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -2386,6 +2455,7 @@ runConfig.list
 runConfig.save
 runConfig.setActive
 
+serial.identify
 serial.list
 serial.monitor
 
@@ -2431,7 +2501,10 @@ workspace.saveSession
 workspace.status
 ```
 
-## Os 48 eventos emitidos — a lista inteira
+## Os 50 eventos emitidos — a lista inteira
+
+> **2026-09-17:** `event.lsp.log` (0.111.0) e `event.serial.identified`
+> (0.112.0) entraram; eram 48.
 
 > **Era "Eventos iniciais", e faltavam três** — os dois do `datasource` e o do
 > `grafana`. Refeita em 2026-09-06. **Cinco não são literais no código**: eles
@@ -2479,6 +2552,7 @@ event.job.progress
 
 event.lsp.diagnostics
 event.lsp.documentsClosed
+event.lsp.log
 event.lsp.restarted
 event.lsp.status
 
@@ -2492,6 +2566,8 @@ event.quality.started               <- so por format!
 event.run.finished
 event.run.output
 event.run.started
+
+event.serial.identified
 
 event.terminal.closed
 event.terminal.render
@@ -2940,8 +3016,14 @@ de ROM, console e as linhas DTR/RTS de reset — e por isso é a fundação do
 monitor UART e do "Gravar".
 
 ```text
-serial.list    {}                   -> { ports: [SerialPortInfo], hint? }
-serial.monitor { device, baud? }    -> { id, command, tool }   (aba de terminal; 0.92.0)
+serial.list     {}                   -> { ports: [SerialPortInfo], hint? }
+serial.monitor  { device, baud? }    -> { id, command, tool }   (aba de terminal; 0.92.0)
+serial.identify { device, tool? }    -> { jobId, command }      (job; 0.112.0)
+
+event.serial.identified { jobId, device, command, success, error?,
+                          identity?: SerialIdentity, target?: TargetModel, raw }
+SerialIdentity  chip? (esp32c3), chipDescription?, features[], crystal?, usbMode?,
+                mac?, flashManufacturer?, flashDevice?, flashSize? (4MB), flashSizeBytes?
 
 SerialPortInfo  device, byId?, kind (usbUartBridge|usbCdc), vid, pid,
                 manufacturer?, product?, serial?, interface?, driver?, family?,
@@ -2991,6 +3073,33 @@ no cwd do projeto) e volta como sessão de terminal, com o comando no título.
 **A `hint` de acesso é o passo oficial, nunca um `sudo` que a IDE rodaria:**
 *"`/dev/ttyUSB0` é `crw-rw----` do grupo `dialout` e você não está nele …
 `sudo usermod -aG dialout $USER` e sair/entrar da sessão. A IDE não roda isso."*
+
+**`serial.identify` é a identidade PELO CANAL (E5 do `integracoes/38` §6,
+`0.112.0`)** — o único `serial.*` que ABRE a porta, e por isso um job pedido
+por clique: o esptool puxa DTR/RTS e a placa reseta para o bootloader de ROM.
+Linha: `esptool --port <device> --chip auto --before default-reset --after
+hard-reset flash-id` (`--after hard-reset` devolve a placa ao firmware ao
+terminar). A v4 (`esptool.py`, argparse) não conhece `flash-id`: o job vê
+"invalid choice"/"No such command" e repete com `flash_id`; o `command` do
+evento é o que rodou por último. O parser é **tolerante** como o do
+`probe.list` — o formato foi lido no código do esptool 5.4.0 desta máquina
+(`Chip type:`, `Features:`, `Crystal frequency:`, `USB mode:`, `MAC:`,
+`Manufacturer:`, `Device:`, `Detected flash size:`; `BASE MAC:`/`MAC_EXT:`
+não confundem o `MAC:`; `Unknown` não vira tamanho) — linha que não casa é
+ignorada e `raw` volta sempre; `success` exige `Chip type:` lido E exit 0.
+`chip` é a chave do IDF (`ESP32-C3 (QFN32) (revision v0.4)` → `esp32c3`;
+`ESP8685/8686` → `esp32c3`, `ESP8684` → `esp32c2`). **`target`** é o que o
+chip sugere pelas MESMAS tabelas de família e motores do `project.model`
+(`espressif`; `esptool`/`espflash`/`probe-rs` nos chips com USB-JTAG, sem
+depurador no ESP32 clássico), com `evidence` dizendo que veio do
+`flash-id`; nada vira kit sem `toolchain.setKit`. Não exige workspace.
+Recusas ANTES de abrir a porta: `device` inexistente → `INVALID_PARAMS`;
+sem leitura/escrita → `INVALID_REQUEST` com a `hint` de `serial.list`; sem
+`esptool`/`esptool.py` no PATH (ou `tool` dado) → `TOOL_NOT_FOUND` com `pipx
+install esptool`. Prazo de 30 s no job (o esptool tenta sincronizar várias
+vezes): estourou → `success: false` com "não respondeu em 30 s"; cancelado
+(`job.cancel`) → mata o esptool e diz "cancelada". `JobRisk::Medium` porque
+reseta a placa; nada é escrito nela.
 
 ## `command.*` — o catálogo de comandos que a UI mostra
 

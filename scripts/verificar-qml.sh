@@ -56,16 +56,21 @@ if [ -z "$RSP" ] || [ ! -f "$RSP" ]; then
     exit 1
 fi
 
+# O binario do Qt 6 PRIMEIRO, e cada candidato tem de RESPONDER `--version`:
+# no Ubuntu 26.04 o `qmllint` do PATH e' o wrapper do qtchooser apontando para
+# um Qt 5 que nao existe ("could not exec /usr/lib/qt5/bin/qmllint") — a mesma
+# licao do `qml` no verificar-qml-logica.sh: estar no PATH nao e' prova de
+# ferramenta funcional (medido em 2026-09-17).
 QMLLINT="${KINEIN_QMLLINT:-}"
 if [ -z "$QMLLINT" ]; then
-    if command -v qmllint >/dev/null 2>&1; then
-        QMLLINT="qmllint"
-    elif command -v qmllint-qt6 >/dev/null 2>&1; then
-        QMLLINT="qmllint-qt6"
-    elif [ -x /usr/lib/qt6/bin/qmllint ]; then
-        QMLLINT="/usr/lib/qt6/bin/qmllint"
-    else
-        echo "erro: qmllint nao encontrado (instale qt6-declarative)" >&2
+    for candidato in /usr/lib/qt6/bin/qmllint qmllint-qt6 qmllint; do
+        if "$candidato" --version >/dev/null 2>&1; then
+            QMLLINT="$candidato"
+            break
+        fi
+    done
+    if [ -z "$QMLLINT" ]; then
+        echo "erro: qmllint do Qt 6 nao encontrado (instale qt6-declarative-dev-tools)" >&2
         exit 1
     fi
 fi

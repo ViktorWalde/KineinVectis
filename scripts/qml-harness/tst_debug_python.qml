@@ -83,6 +83,17 @@ Item {
         dbg.startDebug("/tmp/proj/tools/gera.py");
         if (root.programas.length !== 2) failures += 16384;
 
+        // O stderr do adaptador (0.111.0, categoria `adapter`) veste stderr,
+        // como o do programa; `console` e' informativo; o resto e' stdout.
+        const antes = dbg.outputModel.count;
+        dbg.handleOutput("adapter", "ImportError: boom");
+        dbg.handleOutput("stderr", "erro do programa");
+        dbg.handleOutput("console", "aviso");
+        dbg.handleOutput("stdout", "ola");
+        const tipos = [];
+        for (let i = antes; i < dbg.outputModel.count; i++) tipos.push(dbg.outputModel.get(i).kind);
+        if (tipos.join(",") !== "stderr,stderr,info,stdout") failures += 1 << 27;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

@@ -10,6 +10,11 @@ import KineinVectis
 // o que o VID:PID diz do ELO (nunca do chip atras de uma ponte), a permissao
 // MEDIDA pelo core com a dica quando falta, e o aviso do ModemManager quando
 // ele esta' vivo e a porta e' candidata.
+//
+// Desde 2026-09-17 a porta tambem se ESCOLHE (chip "Executar"): num projeto
+// MicroPython o Executar roda o .py na placa por `mpremote connect <porta>
+// run`, e sem escolha o mpremote pega a primeira que acha. A escolha e' do
+// controller; aqui so' se mostra e se pede.
 Item {
     id: root
 
@@ -38,6 +43,7 @@ Item {
                 id: linhaPorta
 
                 required property var modelData
+                readonly property bool escolhida: root.controller.selectedPort === modelData.device
 
                 width: coluna.width
                 spacing: Theme.spacingXSmall
@@ -47,13 +53,44 @@ Item {
                     spacing: Theme.spacingSmall
 
                     Text {
-                        width: parent.width - 26 - Theme.spacingSmall
+                        width: parent.width - escolha.width - 2 * 26 - 3 * Theme.spacingSmall
                         anchors.verticalCenter: parent.verticalCenter
                         text: "● " + root.controller.portSummary(linhaPorta.modelData)
-                        color: Theme.textPrimary
+                        // A escolhida veste o acento junto com o chip ativo:
+                        // dois sinais, como o KvToggleChip pede de si mesmo.
+                        color: linhaPorta.escolhida ? Theme.accent : Theme.textPrimary
                         font.family: Theme.monoFont
                         font.pixelSize: 11
                         elide: Text.ElideMiddle
+                    }
+
+                    // A porta do Executar. Sem acesso nao se escolhe o que vai
+                    // falhar; a escolhida some da lista -> a escolha cai (controller).
+                    KvToggleChip {
+                        id: escolha
+
+                        anchors.verticalCenter: parent.verticalCenter
+                        labelText: qsTr("Executar")
+                        active: linhaPorta.escolhida
+                        enabled: linhaPorta.modelData.access.readableWritable
+                        opacity: enabled ? 1.0 : 0.5
+                        tooltip: linhaPorta.escolhida
+                                 ? qsTr("Executar usa esta porta (mpremote connect %1 run); clique para desfazer").arg(linhaPorta.modelData.device)
+                                 : qsTr("Usar esta porta no Executar de um projeto MicroPython")
+                        onToggled: root.controller.selectPort(linhaPorta.modelData.device)
+                    }
+
+                    // Identificar PELO CANAL (E5): o esptool abre a porta e a
+                    // placa reseta — por isso e' um clique, nunca automatico.
+                    // Um pedido por vez (o esptool prende a porta).
+                    KvIconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        iconName: "search"
+                        tooltip: qsTr("Identificar o chip pelo esptool (flash-id): abre a porta e RESETA a placa")
+                        compact: true
+                        enabled: linhaPorta.modelData.access.readableWritable
+                                 && !root.controller.identity.busy
+                        onClicked: root.controller.identity.identify(linhaPorta.modelData.device)
                     }
 
                     // O monitor abre numa aba de terminal com a ferramenta do
@@ -100,6 +137,21 @@ Item {
                     font.pixelSize: 10
                 }
             }
+        }
+
+        // O que o Executar vai fazer com a escolha — dito aqui, onde se
+        // escolhe, e nao descoberto na aba Terminal depois do clique.
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: root.controller && root.controller.portFound
+            text: root.controller
+                  ? (root.controller.selectedPort !== ""
+                     ? qsTr("Executar (MicroPython): mpremote connect %1 run").arg(root.controller.selectedPort)
+                     : qsTr("nenhuma porta escolhida: o Executar de MicroPython usa a primeira que o mpremote achar"))
+                  : ""
+            color: Theme.textMuted
+            font.pixelSize: 10
         }
 
         Text {

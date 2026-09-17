@@ -27,6 +27,13 @@ Item {
     // Sessao visivel dentro da aba Terminal (fatia M2.1): o shell PTY e o
     // processo controlado (run.*) dividem a mesma aba, mas nunca o backend.
     property string terminalSession: "shell"
+    // A porta serial que o Executar leva ao core como `device` (run.start /
+    // run.script, 0.110.0): num projeto MicroPython o arquivo roda na placa
+    // por `mpremote connect <porta> run`. Vazio = campo ausente = o mpremote
+    // escolhe. E' ESCOLHA feita no painel de Embarcados (EmbeddedController.
+    // selectedPort) e chega aqui por binding na composicao; este controller
+    // nao a guarda nem a valida — so' a repassa no gesto de executar.
+    property string serialDevice: ""
 
     signal showTabRequested(string tab)
     signal terminalOpenRequested()
@@ -36,8 +43,8 @@ Item {
     signal terminalWheelRequested(string id, int col, int row, int lines,
                                   int modifiers)
     signal terminalCloseRequested(string id)
-    signal runStartRequested(string command)
-    signal runScriptRequested(string path)
+    signal runStartRequested(string command, string device)
+    signal runScriptRequested(string path, string device)
     signal runStopRequested()
     signal runStdinRequested(string data)
     signal focusTerminalInputRequested()
@@ -177,6 +184,8 @@ Item {
         clearTerminalInputRequested();
     }
 
+    // A porta so' acompanha o LANCADOR PADRAO (command vazio): um comando
+    // digitado roda como foi escrito, e o core recusa os dois juntos.
     function startRun(command) {
         if (workspaceRoot === "" || running) {
             return;
@@ -184,7 +193,7 @@ Item {
         terminalSession = "run";
         showTabRequested("terminal");
         focusTerminalInputRequested();
-        runStartRequested(command);
+        runStartRequested(command, command === "" ? serialDevice : "");
     }
 
     function startScript(path) {
@@ -194,7 +203,7 @@ Item {
         terminalSession = "run";
         showTabRequested("terminal");
         focusTerminalInputRequested();
-        runScriptRequested(path);
+        runScriptRequested(path, serialDevice);
     }
 
     function stopRun() {
@@ -305,8 +314,8 @@ Item {
     }
 
     function handleRequestFailed(method, message) {
-        if (method === "run.start" || method === "run.stdin"
-                || method === "run.stop") {
+        if (method === "run.start" || method === "run.script"
+                || method === "run.stdin" || method === "run.stop") {
             appendRunLine(message, "stderr");
         }
     }

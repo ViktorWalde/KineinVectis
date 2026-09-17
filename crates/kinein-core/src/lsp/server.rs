@@ -24,6 +24,7 @@ use super::parse::published_diagnostics;
 use super::registry::ServerSpec;
 use super::types::LspError;
 use super::uri::uri_for_path;
+use crate::stderr_tail::{CAPACIDADE_PADRAO, StderrTail};
 use kinein_protocol::JsonRpcRequest;
 
 /// Tempo maximo aguardando a resposta de `initialize` de um servidor.
@@ -93,7 +94,7 @@ pub(super) fn spawn_server(
     let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+        .stderr(Stdio::piped())
         .spawn()
         .map_err(|error| {
             if error.kind() == io::ErrorKind::NotFound {
@@ -122,7 +123,79 @@ pub(super) fn spawn_server(
             message: "stdout indisponivel".to_owned(),
         });
     };
+    let Some(stderr) = child.stderr.take() else {
+        drop(child.kill());
+        return Err(LspError::ServerFailed {
+            command: spec.command.clone(),
+            message: "stderr indisponivel".to_owned(),
+        });
+    };
+    // O stderr do servidor (2026-09-17): cada linha vira `event.lsp.log` e a
+    // cauda entra no `initialize` que falha e no `status: exited` (a thread
+    // leitora fica com um clone). E' onde o clangd diz "compile_commands.json
+    // not found" e o rust-analyzer conta o indice — antes ia para /dev/null.
+    let stderr = StderrTail::spawn(
+        stderr,
+        CAPACIDADE_PADRAO,
+        Some(log_collector(spec.key, &events)),
+    );
 
+    // Um handshake que falha MATA o filho (antes ele ficava orfao, vivo e
+    // mudo) e leva na mensagem o que o servidor escreveu no stderr.
+    match handshake(spec, root, stdin, stdout, &stderr, events, pending, merged) {
+        Ok(parts) => Ok(ServerHandle {
+            child,
+            stdin: parts.0,
+            versions: HashMap::new(),
+            content_hashes: HashMap::new(),
+            semantic_token_types: parts.1,
+            diagnostics_by_uri: parts.2,
+        }),
+        Err(error) => {
+            drop(child.kill());
+            drop(child.wait());
+            thread::sleep(Duration::from_millis(50));
+            Err(match error {
+                LspError::ServerFailed { command, message } => LspError::ServerFailed {
+                    command,
+                    message: stderr.anexar(&message, "stderr do servidor"),
+                },
+                other => other,
+            })
+        }
+    }
+}
+
+/// Cada linha do stderr do servidor sai como `event.lsp.log { language,
+/// line }` (protocolo 0.111.0): a aba IDE mostra; nada e' interpretado.
+fn log_collector(key: &'static str, events: &super::EventSender) -> crate::stderr_tail::Coletor {
+    let events = events.clone();
+    Box::new(move |linha: &str| {
+        drop(events.send(JsonRpcRequest::notification(
+            "event.lsp.log",
+            Some(json!({ "language": key, "line": linha })),
+        )));
+    })
+}
+
+type Handshaken = (
+    Arc<Mutex<ChildStdin>>,
+    Vec<String>,
+    Arc<Mutex<HashMap<String, Value>>>,
+);
+
+/// `initialize` -> `initialized` -> configuracao -> thread leitora.
+#[allow(clippy::too_many_arguments)]
+fn handshake(
+    spec: &ServerSpec,
+    root: &Path,
+    stdin: ChildStdin,
+    stdout: ChildStdout,
+    stderr: &StderrTail,
+    events: super::EventSender,
+    pending: PendingResponses,
+    merged: MergedDiagnostics,
+) -> Result<Handshaken, LspError> {
     let stdin = Arc::new(Mutex::new(stdin));
     let mut reader = BufReader::new(stdout);
 
@@ -165,16 +238,10 @@ pub(super) fn spawn_server(
         Arc::clone(&diagnostics_by_uri),
         settings,
         merged,
+        stderr.clone(),
     );
 
-    Ok(ServerHandle {
-        child,
-        stdin,
-        versions: HashMap::new(),
-        content_hashes: HashMap::new(),
-        semantic_token_types,
-        diagnostics_by_uri,
-    })
+    Ok((stdin, semantic_token_types, diagnostics_by_uri))
 }
 
 /// Monta o request `initialize` com as capabilities do cliente Kinein.
@@ -290,6 +357,7 @@ fn spawn_reader_thread(
     diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
     settings: Arc<Value>,
     merged: MergedDiagnostics,
+    stderr: StderrTail,
 ) {
     thread::spawn(move || {
         while let Ok(Some(message)) = read_message(&mut reader) {
@@ -317,9 +385,17 @@ fn spawn_reader_thread(
             }
         }
 
+        // O servidor saiu: a cauda do stderr e' o motivo que a faixa de saude
+        // mostra (campo `message`, ja' opcional no contrato).
+        thread::sleep(Duration::from_millis(50));
+        let cauda = stderr.tail();
+        let mut params = json!({ "language": key, "status": "exited" });
+        if !cauda.is_empty() {
+            params["message"] = Value::String(cauda);
+        }
         drop(events.send(JsonRpcRequest::notification(
             "event.lsp.status",
-            Some(json!({ "language": key, "status": "exited" })),
+            Some(params),
         )));
     });
 }

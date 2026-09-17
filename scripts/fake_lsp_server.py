@@ -45,16 +45,26 @@ Com `--publica NOME` (2026-09-13, o companheiro de linguagem): a cada
 falsos publicando nomes diferentes para o mesmo arquivo, o teste ve se o core
 FUNDE os diagnosticos e as acoes — ou se um apaga o outro.
 
+Com `--stderr N` (2026-09-17, o stderr dos filhos): escreve N linhas
+`fake-lsp stderr K` no stderr ANTES de ler qualquer coisa — como o clangd
+que anuncia a versao e o `compile_commands.json` ao subir. Com `--morre`,
+sai com codigo 2 logo depois, sem responder o `initialize`: e' o servidor
+que morre no berco, e o que o core tem de mostrar e' o que ele disse.
+
 Uso (sempre indireto, pelo `Core::use_language_server_command` e pelo
 `Core::use_language_server_companion`):
 
     python3 scripts/fake_lsp_server.py /tmp/mensagens.jsonl [--publica NOME]
+                                       [--stderr N] [--morre]
 """
 import json
 import sys
 
 LOG = sys.argv[1] if len(sys.argv) > 1 else None
-PUBLICA = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--publica" else None
+ARGS = sys.argv[2:]
+PUBLICA = ARGS[ARGS.index("--publica") + 1] if "--publica" in ARGS else None
+STDERR = int(ARGS[ARGS.index("--stderr") + 1]) if "--stderr" in ARGS else 0
+MORRE = "--morre" in ARGS
 
 # Legend anunciada no initialize. O core a le em
 # `capabilities.semanticTokensProvider.legend.tokenTypes` e a usa para decodificar
@@ -161,6 +171,10 @@ def diagnostico_falso(uri):
 
 
 def main():
+    for k in range(1, STDERR + 1):
+        print(f"fake-lsp stderr {k}", file=sys.stderr, flush=True)
+    if MORRE:
+        return 2
     entrada = sys.stdin.buffer
     saida = sys.stdout.buffer
     while True:

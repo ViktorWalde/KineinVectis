@@ -28,6 +28,7 @@
 //!                   ponte); fontes no `integracoes/38` §5
 //! ```
 
+pub mod identify;
 pub mod monitor;
 
 use std::collections::BTreeMap;
@@ -207,6 +208,15 @@ fn by_id(dev: &Path, nome: &str) -> Option<String> {
         let alvo = std::fs::read_link(e.path()).ok()?;
         (alvo.file_name()? == nome).then(|| e.path().to_string_lossy().into_owned())
     })
+}
+
+/// A permissao MEDIDA de um no' desta maquina (`/etc/group` real).
+///
+/// E' o que o `serial.identify` confere antes de entregar a porta ao esptool:
+/// abrir o que vai falhar por permissao resetaria a placa por nada.
+#[must_use]
+pub fn acesso_de(no: &Path) -> SerialAccess {
+    acesso(no, Path::new("/etc/group"))
 }
 
 /// `access(2)` para o veredito; `stat` para explicar o veredito.

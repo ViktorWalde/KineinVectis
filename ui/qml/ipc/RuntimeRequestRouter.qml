@@ -44,12 +44,13 @@ Item {
             root.coreClient.terminalClose(id);
         }
 
-        function onRunStartRequested(command) {
-            root.coreClient.runStart(command);
+        // `device` (0.110.0) vai como veio: vazio e' campo ausente na ponte.
+        function onRunStartRequested(command, device) {
+            root.coreClient.runStart(command, device);
         }
 
-        function onRunScriptRequested(path) {
-            root.coreClient.runScript(path);
+        function onRunScriptRequested(path, device) {
+            root.coreClient.runScript(path, device);
         }
 
         function onRunStopRequested() {

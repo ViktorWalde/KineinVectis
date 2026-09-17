@@ -33,6 +33,14 @@ void CoreClient::serialMonitor(const QString& device, int baud)
     sendRequest(QStringLiteral("serial.monitor"), params);
 }
 
+void CoreClient::serialIdentify(const QString& device)
+{
+    // Gesto explicito: o esptool ABRE a porta e a placa reseta. A ferramenta
+    // vem do PATH (campo `tool` ausente); o desfecho chega por
+    // event.serial.identified.
+    sendRequest(QStringLiteral("serial.identify"), QJsonObject{{QStringLiteral("device"), device}});
+}
+
 void CoreClient::projectModel()
 {
     sendRequest(QStringLiteral("project.model"), QJsonObject{});
@@ -96,6 +104,13 @@ bool CoreClient::dispatchSerialResult(const QString& method, const QJsonObject& 
         setTerminalActive(!m_terminalIds.isEmpty());
         emit serialMonitorOpened(id, command, result.value(QStringLiteral("tool")).toString());
         appendLog(QStringLiteral("monitor serial aberto (%1): %2").arg(id, command));
+        return true;
+    }
+    if (method == QStringLiteral("serial.identify")) {
+        // So' o jobId e o comando: o andamento vem por event.job.* e o
+        // desfecho por event.serial.identified.
+        emit serialIdentifyStarted(result.value(QStringLiteral("jobId")).toString(),
+                                   result.value(QStringLiteral("command")).toString());
         return true;
     }
     if (method != QStringLiteral("serial.list")) {

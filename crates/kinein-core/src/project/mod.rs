@@ -161,6 +161,33 @@ fn deduzir_alvo(frameworks: &[FrameworkInfo], kit_chip: Option<&str>) -> TargetM
     alvo
 }
 
+/// O alvo que um CHIP LIDO PELO CANAL sugere (E5, `serial.identify`).
+///
+/// As mesmas tabelas de familia e motores do `project.model`, com a evidencia
+/// dizendo de onde o chip veio. E' SUGESTAO — vira kit so' no clique do
+/// usuario (`toolchain.setKit`), porque o modelo do projeto continua mandando
+/// no que o projeto E'.
+#[must_use]
+pub fn alvo_do_chip(chip: &str, evidencia: &str) -> TargetModel {
+    let mut alvo = TargetModel {
+        chip: Some(chip.to_owned()),
+        evidence: vec![format!("chip: {evidencia}")],
+        ..TargetModel::default()
+    };
+    alvo.family = familia(Some(chip), None, None);
+    if let Some(f) = &alvo.family {
+        alvo.evidence.push(format!("familia: {f}"));
+    }
+    let (gravar, monitor, debug, porque) = motores(alvo.family.as_deref(), Some(chip), None);
+    alvo.flash_engine = gravar.map(str::to_owned);
+    alvo.monitor = monitor.map(str::to_owned);
+    alvo.debug_adapter = debug.map(str::to_owned);
+    if let Some(p) = porque {
+        alvo.evidence.push(p);
+    }
+    alvo
+}
+
 fn chip_do_framework(info: &FrameworkInfo) -> Option<(String, String)> {
     let detalhe = info.detail.as_deref()?;
     match info.framework {

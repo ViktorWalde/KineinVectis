@@ -53,6 +53,12 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit indexFinished(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.serial.identified")) {
+        // Mapa inteiro (identity, target, raw, error viajam juntos): a tela
+        // mostra o que o esptool leu e a sugestao de kit — aplicar e' clique.
+        emit serialIdentified(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.project.changed")) {
         // O core recomputa o modelo ao abrir o workspace e ao fim de um
         // configure/build; a tela SEGUE o modelo em vez de perguntar.

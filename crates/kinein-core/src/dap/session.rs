@@ -63,7 +63,7 @@ const DISCONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 /// Uma sessao de debug viva (um adapter, um processo alvo).
 #[derive(Debug)]
 pub(super) struct DapSession {
-    _transport: Transport,
+    transport: Transport,
     terminate_debuggee: bool,
     wire: Wire,
     events: EventSender,
@@ -120,7 +120,7 @@ impl DapSession {
             }
             (None, _) => None,
         };
-        let (transport, stdin, stdout) = Transport::open(root, adapter, target)?;
+        let (transport, stdin, stdout) = Transport::open(root, adapter, target, &events)?;
 
         let wire = Wire::new(stdin);
         let alive = Arc::new(AtomicBool::new(true));
@@ -137,7 +137,7 @@ impl DapSession {
         );
 
         let session = Self {
-            _transport: transport,
+            transport,
             terminate_debuggee: !target.is_attached(),
             wire,
             events,
@@ -146,8 +146,13 @@ impl DapSession {
             _server: server,
         };
         // Drop mata o adapter (e o servidor) se qualquer passo do handshake
-        // falhar.
-        session.handshake(root, target, breakpoints, &initialized_receiver, adapter)?;
+        // falhar — e a mensagem leva o que o adaptador disse no stderr, que
+        // e' onde um `python -m debugpy` conta por que morreu.
+        if let Err(error) =
+            session.handshake(root, target, breakpoints, &initialized_receiver, adapter)
+        {
+            return Err(session.with_adapter_stderr(error));
+        }
         send_event(
             &session.events,
             "event.debug.started",
@@ -157,6 +162,20 @@ impl DapSession {
             }),
         );
         Ok(session)
+    }
+
+    /// Um `DebugError::Adapter` com a cauda do stderr do adaptador anexada.
+    /// Outros erros (e o attach TCP, sem stderr proprio) passam intactos.
+    fn with_adapter_stderr(&self, error: DebugError) -> DebugError {
+        // Um instante para a thread leitora entregar o que o pipe ja' tem:
+        // o filho costuma morrer logo depois de escrever o traceback.
+        std::thread::sleep(Duration::from_millis(50));
+        match (error, self.transport.stderr_tail()) {
+            (DebugError::Adapter { message }, Some(stderr)) => DebugError::Adapter {
+                message: stderr.anexar(&message, "stderr do adaptador"),
+            },
+            (error, _) => error,
+        }
     }
 
     /// `true` enquanto o adapter esta vivo (nem `terminated` nem EOF).

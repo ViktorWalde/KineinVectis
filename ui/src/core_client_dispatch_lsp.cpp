@@ -28,9 +28,23 @@ bool CoreClient::handleLspNotification(const QString& method, const QJsonObject&
         if (status == QStringLiteral("failed")) {
             appendErrorLog(QStringLiteral("lsp %1: %2 (%3)").arg(language, status, message));
         }
+        else if (!message.isEmpty()) {
+            // `exited` traz a cauda do stderr do servidor (0.111.0): o motivo
+            // de ele ter saido, que antes ia para /dev/null.
+            appendLog(QStringLiteral("lsp %1: %2 (%3)").arg(language, status, message));
+        }
         else {
             appendLog(QStringLiteral("lsp %1: %2").arg(language, status));
         }
+        return true;
+    }
+    if (method == QStringLiteral("event.lsp.log")) {
+        // O stderr do servidor, linha a linha (0.111.0): vai para a aba IDE,
+        // sem interpretacao — e' o que o clangd/rust-analyzer/basedpyright
+        // contam de si mesmos.
+        appendLog(QStringLiteral("lsp %1 · %2")
+                      .arg(params.value(QStringLiteral("language")).toString(),
+                           params.value(QStringLiteral("line")).toString()));
         return true;
     }
     if (method == QStringLiteral("event.lsp.restarted")) {

@@ -152,15 +152,45 @@ Item {
         if (controller.errorText !== "sysfs indisponivel") failures += 268435456;
         if (!controller.probeFound) failures += 536870912;
 
-        // Trocar de workspace FECHA e esquece: a lista da ultima vez e'
-        // exatamente o que nao se pode mostrar — sonda E porta.
+        // --- A porta ESCOLHIDA do Executar (C3 do roadmaps/41, 2026-09-17) ---
+        // Nasce vazia: o campo `device` nao vai e o mpremote escolhe.
+        const acm0 = { device: "/dev/ttyACM0", vid: "303a", pid: "1001",
+                       access: { readableWritable: true, mode: "crw-rw----" } };
+        controller.handleSerialPorts([cp2102, acm0], "");
+        if (controller.selectedPort !== "") failures += 8796093022208;
+        // Escolher e' apontar para uma porta DA LISTA; fora dela, nada muda.
+        controller.selectPort("/dev/ttyACM0");
+        if (controller.selectedPort !== "/dev/ttyACM0") failures += 17592186044416;
+        controller.selectPort("/dev/ttyS99");
+        if (controller.selectedPort !== "/dev/ttyACM0") failures += 35184372088832;
+        // Trocar de porta substitui; clicar na escolhida desfaz (toggle).
+        controller.selectPort("/dev/ttyUSB0");
+        if (controller.selectedPort !== "/dev/ttyUSB0") failures += 70368744177664;
+        controller.selectPort("/dev/ttyUSB0");
+        if (controller.selectedPort !== "") failures += 140737488355328;
+        // A lista nova decide: a escolhida continua se ainda esta' la', e cai
+        // se a placa foi desplugada — sem `device` fantasma no proximo Executar.
+        controller.selectPort("/dev/ttyACM0");
+        controller.handleSerialPorts([acm0], "");
+        if (controller.selectedPort !== "/dev/ttyACM0") failures += 281474976710656;
         controller.handleSerialPorts([cp2102], "");
+        if (controller.selectedPort !== "") failures += 562949953421312;
+        // A falha do serial.list nao mexe na escolha (a lista nao mudou).
+        controller.selectPort("/dev/ttyUSB0");
+        controller.handleFailed("serial.list", "sysfs indisponivel");
+        if (controller.selectedPort !== "/dev/ttyUSB0") failures += 1125899906842624;
+
+        // Trocar de workspace FECHA e esquece: a lista da ultima vez e'
+        // exatamente o que nao se pode mostrar — sonda E porta, e a escolha.
+        controller.handleSerialPorts([cp2102], "");
+        controller.selectPort("/dev/ttyUSB0");
         controller.handleProject({ embedded: true, frameworks: [{ framework: "picoSdk", evidence: "CMakeLists.txt" }],
                                    sdks: [], target: {}, hints: [] });
         controller.workspaceRoot = "/tmp/outro";
         if (controller.panelVisible) failures += 1073741824;
         if (controller.probes.length !== 0 || controller.ports.length !== 0) failures += 2147483648;
         if (controller.projectEmbedded) failures += 1099511627776;
+        if (controller.selectedPort !== "") failures += 2251799813685248;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

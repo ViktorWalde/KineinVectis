@@ -31,5 +31,9 @@ Item {
         function onMonitorRequested(device, baud) {
             root.coreClient.serialMonitor(device, baud);
         }
+
+        function onIdentifyRequested(device) {
+            root.coreClient.serialIdentify(device);
+        }
     }
 }

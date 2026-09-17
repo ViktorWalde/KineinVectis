@@ -348,4 +348,16 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
 
 } // namespace kinein
 
+// O .moc e' codigo GERADO e recebe a mesma isencao que o mocs_compilation.cpp
+// tem no CMakeLists: o moc do Qt 6.10 monta os QtMocHelpers por CTAD, que o
+// -Wctad-maybe-unsupported (Clang 21, medido em 2026-09-17) reprova sob
+// -Werror. A isencao fica presa ao include gerado; o resto do arquivo segue
+// integralmente sob os warnings rigorosos.
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wctad-maybe-unsupported"
+#endif
 #include "typing_perf_harness.moc"
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif

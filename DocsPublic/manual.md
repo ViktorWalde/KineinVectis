@@ -594,6 +594,21 @@ portas seriais   vistas pelo sysfs, SEM abrir nenhuma: quem faz a ponte
 monitor serial   um botao por porta abre tio/picocom/minicom (ou o REPL do
                  mpremote num projeto MicroPython) NUMA ABA DE TERMINAL —
                  e' um processo, como qualquer outro
+identidade       a lupa ao lado de cada porta pergunta ao `esptool` o que ha'
+pelo canal       do outro lado (chip, flash, MAC) — ABRE a porta e a placa
+                 RESETA, por isso e' um clique, nunca automatico. O painel
+                 mostra o que leu e o kit que isso sugere; "Usar chip no kit"
+                 grava so' o chip. Sem esptool, a linha diz `pipx install
+                 esptool`; sem acesso a porta, o passo oficial do grupo
+porta do         o chip "Executar" ao lado de cada porta a ESCOLHE para o
+Executar         Executar de um projeto MicroPython (`mpremote connect
+                 <porta> run`); clicar de novo desfaz. Sem escolha, o
+                 mpremote usa a primeira porta que achar. A escolha vale
+                 para o botao Executar (main.py) e para "Executar" num .py,
+                 nao para um comando digitado nem para uma configuracao de
+                 execucao salva — esses rodam como foram escritos. Uma porta
+                 que some da lista (placa desplugada, painel reaberto) deixa
+                 de ser a escolhida; trocar de projeto tambem limpa
 sonda e kit      a sonda pelo `probe-rs list`; o chip, o alvo (triple), o
                  sysroot e o depurador ficam no KIT do projeto
 tamanho          "Medir" le o ELF e mostra uma barra por regiao do linker
@@ -682,9 +697,15 @@ novo projeto  Arquivo -> Novo projeto -> template "Python": layout plano,
 ```
 
 **MicroPython.** Num projeto MicroPython, o **monitor serial** do painel de
-Embarcados abre o **REPL do `mpremote`** na porta escolhida, e **Executar** num
-`.py` roda o arquivo **na placa** (`mpremote run`). O firmware oficial ainda se
-grava fora da IDE — é a próxima fatia da frente de embarcados.
+Embarcados abre o **REPL do `mpremote`** na porta do botão, e **Executar** num
+`.py` (ou o botão Executar, com o `main.py`) roda o arquivo **na placa**
+(`mpremote run`). Com mais de uma placa plugada, escolha a porta pelo chip
+**Executar** ao lado dela no painel de Embarcados: o comando vira `mpremote
+connect <porta> run`, e a linha abaixo da lista diz qual porta está valendo.
+Sem escolha, o `mpremote` usa a primeira porta que achar. Se o `mpremote` não
+está na máquina, a aba de execução diz o que instalar em vez de rodar um
+`import machine` no Python do desktop. O firmware oficial ainda se grava fora
+da IDE — é a próxima fatia da frente de embarcados.
 
 **O que a IDE não faz:** instalar o `uv`, o `basedpyright`, o `ruff` ou o
 `debugpy` por conta própria. O painel **Instalar ferramentas** (`Ctrl+Alt+H`)
@@ -696,7 +717,10 @@ IDE, e quem aperta Enter é você.
 ## 11. Quando algo der errado
 
 1. **Aba "IDE"** (painel inferior): fluxo interno da IDE ao vivo — o que
-   foi pedido e o que respondeu.
+   foi pedido e o que respondeu, e o que os servidores de linguagem escrevem
+   no stderr deles (`lsp cpp · …`): a versão do clangd, onde ele procurou o
+   `compile_commands.json`, o traceback de um basedpyright que não subiu.
+   Um servidor que sai deixa o motivo na mesma aba.
 2. **Log de erros persistente**:
    `~/.cache/kinein-vectis/logs/kinein-ui-erros.txt` — anexe este arquivo ao
    reportar um bug.
@@ -706,7 +730,12 @@ IDE, e quem aperta Enter é você.
    termina a primeira preparação.
 4. **Ferramenta faltando?** Veja a aba Ferramentas e siga a sugestão exibida
    para o seu sistema.
-5. **O motor (core) caiu?** A IDE se recupera sozinha: a barra de status
+5. **"O adapter não respondeu"?** A aba Debug mostra, em vermelho, o que o
+   próprio adaptador (debugpy, lldb-dap, probe-rs, gdb) escreveu antes de
+   morrer, e a mensagem de erro traz as últimas linhas dele. Num projeto com
+   `debugServer` no kit, o que o QEMU/OpenOCD disse antes de sair também
+   vem na mensagem.
+6. **O motor (core) caiu?** A IDE se recupera sozinha: a barra de status
    mostra "recuperando..." por um instante e reconecta ao mesmo projeto,
    mantendo suas abas abertas — sem reiniciar a janela. Se ele cair várias
    vezes seguidas, a recuperação pausa e a status bar avisa; aí veja o log

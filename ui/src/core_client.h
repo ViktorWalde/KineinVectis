@@ -178,6 +178,8 @@ public:
     Q_INVOKABLE void serialList();
     // Monitor serial (serial.monitor): tio/picocom/minicom/espflash numa aba de terminal.
     Q_INVOKABLE void serialMonitor(const QString& device, int baud = 0);
+    // Identidade Espressif pelo canal (serial.identify): esptool flash-id como job (0.112.0).
+    Q_INVOKABLE void serialIdentify(const QString& device);
     // O modelo do projeto embarcado (project.model): framework, SDKs, artefatos, alvo.
     Q_INVOKABLE void projectModel();
     // O indice do projeto inteiro (index.*): totais e busca por nome, sem LSP.
@@ -241,7 +243,7 @@ public:
     Q_INVOKABLE void searchInFiles(const QString& query, bool caseSensitive);
     Q_INVOKABLE void replaceInFiles(const QString& query, const QString& replacement,
                                     bool caseSensitive);
-    Q_INVOKABLE void runStart(const QString& command);
+    Q_INVOKABLE void runStart(const QString& command, const QString& device = QString());
     Q_INVOKABLE void runScript(const QString& path, const QString& device = QString());
     Q_INVOKABLE void runStdin(const QString& data);
     Q_INVOKABLE void runStop();
@@ -346,6 +348,8 @@ signals:
                            bool toolAvailable, const QString& tool, const QString& rawOutput);
     void serialPortsResolved(const QVariantList& ports, const QString& hint);
     void serialMonitorOpened(const QString& id, const QString& command, const QString& tool);
+    void serialIdentifyStarted(const QString& jobId, const QString& command);
+    void serialIdentified(const QVariantMap& outcome);
     void projectModelResolved(const QVariantMap& model);
     void projectChanged(const QVariantMap& model);
     void indexStatusResolved(const QVariantMap& stats);

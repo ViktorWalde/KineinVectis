@@ -40,9 +40,12 @@ Item {
             root.runtimeController.handleRunFinished(success, exitCode);
         }
 
+        // `run.script` entrou em 2026-09-17: a recusa do core ("mpremote nao
+        // esta' nesta maquina", porta invalida) ia so' para o log da IDE, e a
+        // aba que o Executar acabou de abrir ficava muda.
         function onRequestFailed(method, message) {
-            if (method === "run.start" || method === "run.stdin"
-                    || method === "run.stop") {
+            if (method === "run.start" || method === "run.script"
+                    || method === "run.stdin" || method === "run.stop") {
                 root.runtimeController.handleRequestFailed(method, message);
             }
         }

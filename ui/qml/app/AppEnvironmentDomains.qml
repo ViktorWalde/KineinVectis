@@ -63,6 +63,18 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
     }
 
+    // A identidade lida pelo canal (E5) SUGERE o chip; quem grava o kit e' o
+    // ToolchainController, e so' o chip muda — alvo/sysroot ficam como estao.
+    // Fiacao entre dois donos: mora aqui, na composicao, nao em nenhum deles.
+    Connections {
+        target: embeddedController.identity
+
+        function onKitChipRequested(chip) {
+            toolchainController.applyKit(toolchainController.sysroot,
+                                         toolchainController.targetTriple, chip);
+        }
+    }
+
     // Como instalar o que falta (2026-09-04): passo a passo OFICIAL para a
     // distro detectada. Nao instala nada — mostra e, se o autor pedir, escreve
     // no terminal da IDE.

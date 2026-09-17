@@ -21,6 +21,16 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
+# A porta do MicroPython (40 §7.39) vem ANTES da guarda do debugpy: so'
+# precisa do core e de um mpremote falso — prova sem placa e sem interpretador.
+binario="target/debug/kinein-core"
+if [ ! -x "$binario" ]; then
+    echo "-> compilando o core para o ciclo"
+    cargo build -q -p kinein-core
+fi
+echo "== a porta escolhida chega ao mpremote (run.start/run.script { device }) =="
+python3 scripts/verificar_micropython_porta.py
+
 echo "== ciclo de depurar Python (debugpy do interpretador do projeto) =="
 
 interpretador="${KINEIN_PYTHON_DEBUGPY:-}"
@@ -37,12 +47,6 @@ fi
 if ! "$interpretador" -I -c "import debugpy" >/dev/null 2>&1; then
     echo "erro: $interpretador nao importa debugpy" >&2
     exit 1
-fi
-
-binario="target/debug/kinein-core"
-if [ ! -x "$binario" ]; then
-    echo "-> compilando o core para o ciclo"
-    cargo build -q -p kinein-core
 fi
 
 python3 scripts/verificar_python_debug.py "$interpretador"

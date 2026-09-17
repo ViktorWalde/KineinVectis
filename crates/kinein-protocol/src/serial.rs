@@ -133,3 +133,97 @@ pub struct SerialMonitorResult {
     /// Catalogue id of the tool chosen (`tio`, `picocom`, `minicom`, `espflash`).
     pub tool: String,
 }
+
+/// Parameters for `serial.identify` (`0.112.0`, E5 of `integracoes/38` §6):
+/// ask `esptool` what chip and flash sit behind a port.
+///
+/// This is the one `serial.*` request that OPENS the port — and therefore
+/// resets the board (DTR/RTS into the ROM bootloader). It runs only on an
+/// explicit gesture, never when the panel opens.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SerialIdentifyParams {
+    /// Device node, `/dev/ttyUSB0`. Must be a port `serial.list` returned and
+    /// the user can read/write.
+    pub device: String,
+    /// `esptool` executable to use; absent, the one found on `PATH`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool: Option<String>,
+}
+
+/// Result payload for `serial.identify`: the job that is now talking to the
+/// board. The outcome arrives as `event.serial.identified`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialIdentifyResult {
+    /// Job id (`event.job.*`).
+    pub job_id: String,
+    /// The command line the job runs.
+    pub command: String,
+}
+
+/// What `esptool flash-id` said about the chip and its flash. Every field is
+/// what the tool printed, parsed line by line; a line the parser does not
+/// know is ignored and stays in `raw`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialIdentity {
+    /// Chip key as the kit/IDF want it (`esp32c3`), derived from `Chip type:`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip: Option<String>,
+    /// `Chip type:` verbatim (`ESP32-C3 (QFN32) (revision v0.4)`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip_description: Option<String>,
+    /// `Features:` split on commas.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub features: Vec<String>,
+    /// `Crystal frequency:` (`40MHz`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub crystal: Option<String>,
+    /// `USB mode:` when the chip has a native USB.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub usb_mode: Option<String>,
+    /// `MAC:` (`aa:bb:cc:dd:ee:ff`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mac: Option<String>,
+    /// `Manufacturer:` of the SPI flash (JEDEC id, hex).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_manufacturer: Option<String>,
+    /// `Device:` of the SPI flash (hex).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_device: Option<String>,
+    /// `Detected flash size:` verbatim (`4MB`); absent when `Unknown`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_size: Option<String>,
+    /// `flash_size` in bytes, when it parses (`4MB` → 4194304).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_size_bytes: Option<u64>,
+}
+
+/// `event.serial.identified`: the outcome of a `serial.identify` job.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialIdentifiedEvent {
+    /// The job that ran.
+    pub job_id: String,
+    /// The port that was asked.
+    pub device: String,
+    /// The command line that ran (v5 `flash-id`, or the v4 `flash_id` retry).
+    pub command: String,
+    /// The tool answered and at least the chip was read.
+    pub success: bool,
+    /// Why not, when `success` is false: the tool's last lines, the timeout.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    /// What was read, when `success`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub identity: Option<SerialIdentity>,
+    /// The kit the chip SUGGESTS (`project.model`'s target tables: family,
+    /// flash/monitor/debug engines). A suggestion: applying it to the kit is
+    /// the user's click (`toolchain.setKit`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target: Option<crate::TargetModel>,
+    /// Everything the tool printed (stdout+stderr), for the panel to show
+    /// when the parser understood nothing.
+    pub raw: String,
+}

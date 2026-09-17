@@ -33,8 +33,12 @@
 > **Retomada de 2026-09-15:** a ordem vigente está na **§4.1**: backend e
 > toolchains primeiro; UX/UI/HUD em etapa própria, aberta pelo autor.
 > Ruff como segundo LSP já existe e foi validado nesta retomada (§7.36).
-> **2026-09-16:** debugpy attach implementado e validado (§7.38). Próximo:
-> porta selecionada no Executar de MicroPython, depois stderr DAP/LSP.
+> **2026-09-16:** debugpy attach implementado e validado (§7.38).
+> **2026-09-17:** a porta escolhida no Executar de MicroPython — FEITO e
+> medido (§7.39, 0.110.0). À tarde, o stderr dos filhos DAP/LSP — FEITO e
+> medido (§7.40, 0.111.0); os presets clang voltaram a compilar nesta máquina.
+> Fim de tarde: **E5 identidade Espressif** — FEITO e provado com esptool
+> falso (§7.41, 0.112.0). Próximo: E4 gravar como configuração de execução.
 > **2026-09-16:** compatibilidade dos verificadores Ubuntu/Qt 6.4 avançou
 > (§7.37). Lógica QML verde; gate completo ainda tem impedimentos explícitos.
 
@@ -65,9 +69,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.109.0
-testes      723 Rust aprovados; 35 harnesses QML (medicao de 2026-09-16, §7.38)
-metodos     140 IPC roteados, 48 eventos
+protocolo   0.112.0
+testes      745 Rust aprovados; 37 harnesses QML (medicao de 2026-09-17, §7.41)
+metodos     141 IPC roteados, 50 eventos (serial.identify, event.lsp.log e
+            event.serial.identified entraram em 2026-09-17)
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -392,26 +397,32 @@ antigo derruba a 249px, e cada mutacao acende um bit diferente.
                                          apagam. Se o autor viu OUTRA coisa
                                          (icone, lista vazia, mensagem), e' um
                                          sintoma novo: dizer o que apareceu
---  a porta escolhida no Executar de     run.script ja' aceita `device` (0.102.0);
-    MicroPython                          a tela nao tem "porta atual" — o monitor e'
-                                         por linha da lista. Uma escolha persistida
-                                         (EmbeddedController.selectedPort) e o
-                                         RuntimeRequestRouter a passa
+--  a porta escolhida no Executar de     FEITO em 2026-09-17 (§7.39, 0.110.0): o chip
+    MicroPython                          "Executar" por porta no painel de Embarcados
+                                         (EmbeddedController.selectedPort, toggle, cai
+                                         quando a porta some da lista ou o workspace
+                                         troca) -> RuntimeController.serialDevice por
+                                         binding -> `device` em run.script E em
+                                         run.start (que nao o aceitava: o botao
+                                         Executar sempre ia sem porta). Sem placa
+                                         nesta maquina: provado com mpremote falso
 --  debugpy: attach                      o `-m pacote` FEITO em 2026-09-13 (§7.33:
                                          DebugTarget::Module -> `module` no launch,
                                          provado pelo core real). Attach TCP FEITO
                                          em 2026-09-16 (§7.38): connect {host, port},
                                          campos na aba Debug, breakpoint/inspecao e
                                          desconexao preservando o processo externo
---  stderr dos processos filhos vai      LACUNA vista na fatia 4 (2026-09-13): o
-    para /dev/null (adaptador DAP,       gate falhou UMA vez com "o adapter nao
-    servidor de debug, servidores LSP)   respondeu a `initialize`" e nao havia como
-                                         saber por que — a sessao nula o stderr do
-                                         adaptador (agora dap/transport.rs), dap/server.rs,
-                                         lsp/server.rs). Nao reproduziu em 5 rodadas
-                                         seguintes. Fatia pequena: guardar as ultimas
-                                         linhas do stderr e po-las no erro de subida
-                                         (e em event.debug.output como `console`)
+--  stderr dos processos filhos vai      FEITO em 2026-09-17 (§7.40, 0.111.0). Era a
+    para /dev/null (adaptador DAP,       LACUNA vista na fatia 4 (2026-09-13): o gate
+    servidor de debug, servidores LSP)   falhou UMA vez com "o adapter nao respondeu a
+                                         `initialize`" sem causa. Agora `stderr_tail.rs`
+                                         (uma thread por filho, cauda de 64 linhas) nos
+                                         tres: adaptador -> event.debug.output
+                                         `adapter` + cauda no erro do handshake;
+                                         servidor de debug -> cauda no "saiu antes de
+                                         abrir"; LSP -> event.lsp.log + cauda no
+                                         status failed/exited; LSP que falha o
+                                         initialize e' morto, nao fica orfao
 --  debugpy no gate desta maquina        o ciclo real so' roda onde `python3`
                                          importa debugpy ou KINEIN_PYTHON_DEBUGPY
                                          aponta um venv — aqui foi provado com um
@@ -562,8 +573,9 @@ serviços, contratos e testes existentes.
 **Continuidade em 2026-09-16:** a instalação do notebook preparou a base de
 desenvolvimento; as correções Qt/QML e de instrumentação (§7.37) são manutenção.
 Elas não concluem os itens de toolchains nem alteram a sequência abaixo.
-O attach do debugpy foi validado na §7.38; o próximo item é a porta do
-MicroPython. Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+O attach do debugpy foi validado na §7.38, a porta do MicroPython na §7.39 e
+o stderr dos filhos DAP/LSP na §7.40 e o E5 na §7.41; o próximo item é o E4
+(gravar como configuração de execução). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -572,8 +584,8 @@ ainda não está verde.
 
 | Frente | Trabalho restante e estado |
 | --- | --- |
-| Polimento Python | **Ruff validado (§7.36) e debugpy attach (`connect {host, port}`) validado em 2026-09-16 (§7.38). Próximo: porta escolhida no Executar de MicroPython** (o core e a ponte C++ já aceitam `device`; a tela precisa selecionar e passá-la). Depois, stderr dos processos filhos DAP/LSP que hoje vai para `/dev/null`. |
-| Embarcados, bloco A | E5 identidade Espressif (`esptool flash-id` → sugerir kit); E4 gravar como configuração de execução (`esptool`, `probe-rs`, `picotool`, `dfu-util`); E2 permissão por canal (`dialout`, `uaccess`, ModemManager, comando impresso); A5 ferramentas de embarcado no painel de instalação. |
+| Polimento Python | **CONCLUÍDO em 2026-09-17:** Ruff (§7.36), debugpy attach (§7.38), a porta escolhida no Executar de MicroPython (§7.39, 0.110.0) e o stderr dos filhos DAP/LSP (§7.40, 0.111.0). O que resta de Python é o bloco P4 (MicroPython) e o P6 (remoto). |
+| Embarcados, bloco A | **E5 identidade Espressif FEITO em 2026-09-17 (§7.41, 0.112.0: `serial.identify` como job, esptool falso; sem placa para exercitar).** Próximo: E4 gravar como configuração de execução (`esptool`, `probe-rs`, `picotool`, `dfu-util`); E2 permissão por canal (`dialout`, `uaccess`, ModemManager, comando impresso); A5 ferramentas de embarcado no painel de instalação. |
 | Toolchains | Seletor de pasta nativo; SDK do Zephyr no `importKit`; medir `importKit` com Yocto/Buildroot reais, ainda sem exemplares locais validados. |
 | P0 — modelo do projeto | Preset no configure automático; Bear para Makefile puro; alvo do kit para o rust-analyzer. |
 | P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
@@ -2822,9 +2834,160 @@ falhas da §7.37; isso não foi declarado verde. Core/UI release recompilados;
 primeiro frame release em 988 ms offscreen (uma amostra), e launcher validado
 com os binários novos. Nenhum AppImage gerado/publicado nesta fatia.
 
-**Próximo:** porta selecionada no Executar de MicroPython. Medido no código:
-`CoreClient::runScript(path, device)` e `run.script` já aceitam a porta;
-`RuntimeRequestRouter.qml` chama apenas `runScript(path)` e
-`EmbeddedController.qml` ainda não declara `selectedPort`. Reaproveitar esse
-fluxo e os testes existentes; depois stderr DAP/LSP → E5 → E4 → E2 → A5.
-Registro detalhado e prompt de continuidade: `DocsPrivate/Codex/`.
+**Próximo (na época):** porta selecionada no Executar de MicroPython — feita
+na §7.39. Registro detalhado e prompt de continuidade: `DocsPrivate/Codex/`.
+
+### 7.39 A porta escolhida no Executar de MicroPython — 2026-09-17, protocolo 0.110.0
+
+O item seguinte da §4.1, fechado de ponta a ponta: **seleção → estado →
+roteador → `device`**. O que a leitura do código mostrou antes de escrever —
+e que o resumo anterior não dizia — é que **`run.start` não aceitava
+`device`**: o botão Executar (toolbar, atalho, paleta), que num projeto
+MicroPython roda o `main.py` na placa, iria sem porta mesmo depois de a tela
+passá-la ao `run.script`. O contrato ganhou `run.start { device? }`
+(0.110.0), exclusivo com `command` (`INVALID_PARAMS` nos dois juntos: a
+porta é do lançador padrão; um comando digitado roda como foi escrito). Uma
+configuração de execução ativa continua vencendo o lançador e não recebe a
+porta. `device` presente e vazio/só espaço/com controle é recusado nos dois
+métodos — antes `run.script { device: "" }` virava `mpremote connect '' run`.
+
+Na tela: `EmbeddedController.selectedPort` (toggle; só porta da lista atual;
+cai quando a lista nova não a tem — placa desplugada — e ao trocar de
+workspace), um chip **Executar** por porta no `EmbeddedSerialView` (desligado
+sem acesso R/W, como o botão do monitor) e a linha que diz o comando que vai
+valer. `RuntimeController.serialDevice` recebe a escolha por binding em
+`AppDomains` e a repassa em `runStartRequested(command, device)` /
+`runScriptRequested(path, device)` — só com `command` vazio no primeiro.
+`CoreClient::runStart(command, device)` espelha a regra. De quebra, a recusa
+do core ao `run.script` (mpremote ausente, porta inválida) agora aparece na
+sessão de execução que o gesto abriu — `RuntimeEventRouter` só repassava
+`run.start|stdin|stop`, e a aba ficava muda.
+
+**Medido em 2026-09-17:** 725 testes Rust (14 CLI, 1 config, 639 core, 71
+protocol) e **36 harnesses QML** passaram — `tst_run_device.qml` é novo e
+`tst_embedded.qml` ganhou o bloco da escolha; mutação `runScriptRequested(path,
+"")` reprovou o harness (bitmask 10). Clippy, `cargo fmt`, `git diff --check`,
+fiação, propriedades, alcance, duplicação, arquitetura (catraca intacta),
+veracidade dos .md e links passaram. Prova contra o **core real**
+(`scripts/verificar_micropython_porta.py`, agora na primeira metade do
+`verificar-python-debug.sh`): `run.start {}` → `mpremote run main.py`;
+`run.start { device }` e `run.script { device }` → `connect <porta> run
+<arquivo>` nos argv que o mpremote falso ecoou; troca de porta entre
+execuções; contradição e vazio recusados sem nenhum `event.run.*`. O ciclo
+debugpy (launch, `-m`, três attaches) continuou verde na mesma rodada.
+UI compilada com `dev-local` (g++ 15, zero avisos), **qmllint estrito
+limpo** (os dois avisos StandardKey eram do Qt 6.4; com o Qt 6.10.2 desta
+máquina não existem) e o binário abre (primeiro frame 248 ms offscreen, uma
+amostra).
+
+**O que NÃO foi provado, dito:** não há placa nesta máquina — a execução na
+placa fica provada pelos argv, não pelo LED. O `mpremote` do PATH está
+quebrado pela atualização do sistema (shim do pipx para um Python que não
+existe mais; `pipx reinstall mpremote`). **Os presets clang não configuram
+no Ubuntu 26.04 desta máquina**: `clang++` 21 escolhe a GCC 16
+(`libgcc-16-dev` presente) e não há `libstdc++-16-dev` — `ld: cannot find
+-lstdc++` no try-compile. Remédio: `sudo apt-get install libstdc++-16-dev` e
+reconfigurar `linux-clang-debug-strict`/`release-hardened`. Até lá,
+Clang-Tidy e o lint QML pelo alvo desse preset ficam sem prova, e o gate
+completo continua não verde por impedimento de ambiente, não de código.
+
+**Próximo (na época):** stderr dos processos filhos DAP/LSP — feito na §7.40.
+
+### 7.40 O stderr dos filhos DAP/LSP — 2026-09-17 (tarde), protocolo 0.111.0
+
+A lacuna da §4 fechada nos três pontos que a nomeavam. `stderr_tail.rs` é o
+dono novo: uma thread por filho lê o stderr linha a linha (`read_until`, UTF-8
+com perda, corte em 4 KiB com marcador), guarda as últimas 64 numa cauda e,
+quando o dono quer, entrega cada linha a um coletor. Adaptador DAP
+(`dap/transport.rs`): `Transport::Process { child, stderr }`, cada linha vira
+`event.debug.output { category: "adapter" }` e a cauda entra no
+`DebugError::Adapter` do handshake sob `--- stderr do adaptador ---` (o attach
+TCP não tem: o processo é de outro dono). Servidor de debug (`dap/server.rs`):
+só cauda, nas duas mensagens de `wait_for_port`. LSP (`lsp/server.rs`): o
+handshake saiu para `handshake()`, cada linha vira **`event.lsp.log {
+language, line }`** (evento 49), a cauda entra no `status: failed` (dentro do
+erro) e no `status: exited` (`message`) — e um servidor que falha o
+`initialize` agora é morto, não fica órfão, vivo e mudo. UI: `event.lsp.log`
+e o `exited` com motivo vão para a aba IDE (`appendLog`); `adapter` veste
+`stderr` no `DebugController`.
+
+**Medido em 2026-09-17:** 734 testes Rust (+9: 4 do `stderr_tail`, 1 do
+servidor de debug morto com `could not load kernel` na mensagem, 1 do
+adaptador que morre com `ImportError` no erro E como eventos `adapter`, 3 do
+LSP com o `fake_lsp_server.py --stderr N [--morre]`: log ao vivo com
+`running`, cauda no `failed`, cauda no `exited` após `lsp.restart`); 36
+harnesses QML (`tst_debug_python` cobre a categoria). Clippy, fmt,
+`diff --check`, fiação, propriedades, alcance, duplicação, arquitetura, docs,
+links e shell passaram. Verbosidade dos servidores REAIS desta máquina, 30 s
+após abrir um arquivo deste repositório: rust-analyzer 4 linhas, clangd 66
+(pico 18/s durante o índice), basedpyright+ruff 3 — sem lote, por número.
+O gate Python real continuou verde (attach ×3, launch, `-m`).
+
+**Os presets clang voltaram:** com `libstdc++-16-dev` instalado pelo autor,
+`linux-clang-debug-strict` e `release-hardened` configuraram e compilaram
+(Clang 21 + Qt 6.10.2) — depois de UMA correção: o moc do Qt 6.10 monta os
+`QtMocHelpers` por CTAD e `-Wctad-maybe-unsupported -Werror` reprovava o
+`.moc` que o `typing_perf_harness.cpp` inclui inline (o `mocs_compilation.cpp`
+já tinha `-w`); a isenção ficou presa ao `#include` gerado, sob `#ifdef
+__clang__`. Clang-Tidy dos arquivos alterados: limpo (o inteiro só apontou
+os dois `#if defined` da própria correção, trocados por `#ifdef`). qmllint
+estrito pelo alvo nativo: limpo — e `verificar-qml.sh` passou a exigir que o
+`qmllint` candidato responda `--version` (o do PATH no Ubuntu 26.04 é um
+wrapper Qt 5 quebrado). Ambos os binários abrem: 623 ms debug (sanitizers),
+275 ms release; launcher vivo no smoke de 8 s.
+
+**Não provado:** nenhum adaptador/servidor real foi posto a falhar de
+propósito nesta máquina além dos falsos; o `adapter` no lldb-dap/probe-rs
+reais fica para a exercitação com placa. **Próximo (na época):** E5 — feito
+na §7.41.
+
+### 7.41 E5 — a identidade Espressif pelo canal — 2026-09-17 (fim de tarde), protocolo 0.112.0
+
+O A2 do bloco A do roadmap 41, na forma decidida em `integracoes/38` §6:
+**`serial.identify { device, tool? }`** roda `esptool --port <device> --chip
+auto --before default-reset --after hard-reset flash-id` como **job**
+(`JobRisk::Medium`: reseta a placa, não escreve nela; cancelável — o cancel
+mata o esptool) e emite **`event.serial.identified`** com `identity` (chip na
+chave do IDF, descrição, features, cristal, USB mode, MAC, fabricante/ID e
+tamanho da flash em texto e bytes), `target` (o kit que o chip SUGERE pelas
+mesmas tabelas de família e motores do `project.model` — `project::alvo_do_chip`
+reutiliza `familia`/`motores`, sem segunda tabela), `raw` sempre, `error`
+quando não. `serial/identify.rs` é o dono: linha de comando, parser
+TOLERANTE (o formato veio do código do esptool 5.4.0 instalado —
+`__init__.py` e `cmds.py` —, não de uma placa), chave do chip
+(`ESP8685/8686 → esp32c3`, `ESP8684 → esp32c2`) e a queda para o `flash_id`
+da v4 quando a ferramenta diz "invalid choice"/"No such command". Recusas
+ANTES de abrir a porta: nó inexistente (`INVALID_PARAMS`), sem R/W
+(`INVALID_REQUEST` com a `hint` do `serial.list` — `serial::acesso_de` mede
+com `access(2)`), sem esptool (`TOOL_NOT_FOUND`, `pipx install esptool`).
+Prazo de 30 s com "não respondeu" distinto de "cancelada".
+
+Na tela, sem propriedade de repasse nova: `EmbeddedIdentityController.qml` é
+FILHO do `EmbeddedController` (`embeddedController.identity`; o pai estava em
+335/400 e ganhou 9 linhas), com um pedido por vez, desfecho de outra porta
+ignorado, resumo sem `undefined`, recusa como erro, `applyToKit` emitindo só
+o chip; a fiação até o `ToolchainController.applyKit(sysroot, targetTriple,
+chip)` mora no `AppEnvironmentDomains` (composição de dois donos). Um botão
+"Identificar" (lupa) por porta com acesso no `EmbeddedSerialView` — o tooltip
+diz que reseta a placa — e o resultado num `EmbeddedIdentityView.qml` novo:
+chip · flash · MAC, as features, "sugere: chip … · gravar/monitor/debug" com
+**Usar chip no kit**, o erro, e a saída crua só quando nenhum chip foi lido.
+Ponte C++: `serialIdentify(device)`, `serialIdentifyStarted(jobId, command)`,
+`serialIdentified(map)`.
+
+**Medido em 2026-09-17:** 745 testes Rust (+11: 6 do parser/linha de comando,
+5 do handler com esptool FALSO — v5 com a fixture, v4 com a queda, recusas sem
+job nascer, falha com as últimas linhas, cancel matando um `sleep 30`); **37
+harnesses QML** (`tst_embedded_identity` novo); clippy, fmt, `diff --check`,
+fiação, propriedades (230 componentes), alcance (229), duplicação,
+arquitetura (o pai em 335/400), docs e links passaram; qmllint estrito
+limpo; Clang-Tidy dos dois .cpp alterados limpo; `debug-strict` compila e
+abre (773 ms, sanitizers); 141 métodos e 50 eventos pelos comandos da §1.
+
+**Não provado, dito:** nenhuma placa nesta máquina — a fixture é a forma do
+código do esptool, não uma saída real; a primeira placa deve substituí-la e
+registrar a diferença. `esptool v5.4.0` do PATH funciona (`pipx
+reinstall-all` do autor) mas só foi visto pelo `--help`. `chip-id` não é
+usado: o `flash-id` já imprime tudo o que o `chip-id` imprime mais a flash.
+**Próximo:** E4 gravar como configuração de execução — detalhe técnico em
+`DocsPrivate/Codex/PROMPT-proxima-sessao.md`.

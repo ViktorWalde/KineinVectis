@@ -10,6 +10,12 @@ pub struct RunStartParams {
     /// derives a default from the project kind (e.g. `cargo run`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub command: Option<String>,
+    /// Serial device for the DEFAULT launcher of a `MicroPython` project
+    /// (`mpremote connect <device> run main.py`); omitted = mpremote picks the
+    /// first serial device it finds. Exclusive with `command`: an explicit
+    /// command is run verbatim and has no port to receive (`0.110.0`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device: Option<String>,
 }
 
 /// Parameters for `run.script`.
@@ -60,7 +66,7 @@ pub struct RunStdinParams {
 mod tests {
     use serde_json::json;
 
-    use super::RunScriptParams;
+    use super::{RunScriptParams, RunStartParams};
 
     #[test]
     fn run_script_params_require_only_a_path() {
@@ -76,6 +82,28 @@ mod tests {
                 "command": "other"
             }))
             .is_err()
+        );
+    }
+
+    /// `run.start` carrega `device` desde `0.110.0`; a exclusividade com
+    /// `command` e' regra do handler, nao do parser.
+    #[test]
+    fn run_start_params_accept_an_optional_device() {
+        let parsed = serde_json::from_value::<RunStartParams>(json!({
+            "device": "/dev/ttyUSB0"
+        }))
+        .unwrap();
+        assert_eq!(parsed.command, None);
+        assert_eq!(parsed.device.as_deref(), Some("/dev/ttyUSB0"));
+        assert_eq!(
+            serde_json::from_value::<RunStartParams>(json!({})).unwrap(),
+            RunStartParams {
+                command: None,
+                device: None
+            }
+        );
+        assert!(
+            serde_json::from_value::<RunStartParams>(json!({ "port": "/dev/ttyUSB0" })).is_err()
         );
     }
 }

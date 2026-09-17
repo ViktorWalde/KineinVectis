@@ -8,15 +8,24 @@ use std::{
 };
 
 use kinein_protocol::DebugConnectParams;
+use serde_json::json;
 
-use super::{DebugError, adapter::Adapter, target::DebugTarget};
+use super::{DebugError, adapter::Adapter, reader::send_event, target::DebugTarget};
+use crate::{lsp::EventSender, stderr_tail::StderrTail};
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 
 /// Dropping a TCP connection never kills the externally owned debuggee.
 #[derive(Debug)]
 pub(super) enum Transport {
-    Process(Child),
+    /// O adaptador que a IDE criou, com o stderr dele ouvido (2026-09-17):
+    /// cada linha vira `event.debug.output { category: "adapter" }` e a
+    /// cauda entra na mensagem quando o handshake falha. Antes era
+    /// `Stdio::null()`, e "o adapter nao respondeu" vinha sem causa.
+    Process {
+        child: Child,
+        stderr: StderrTail,
+    },
     Tcp(TcpStream),
 }
 
@@ -45,7 +54,7 @@ impl Write for Writer {
 impl Drop for Transport {
     fn drop(&mut self) {
         match self {
-            Self::Process(child) => {
+            Self::Process { child, .. } => {
                 drop(child.kill());
                 drop(child.wait());
             }
@@ -61,6 +70,7 @@ impl Transport {
         root: &Path,
         adapter: &Adapter,
         target: &DebugTarget,
+        events: &EventSender,
     ) -> Result<Opened, DebugError> {
         if let DebugTarget::PythonAttach(endpoint) = target {
             let socket = connect(endpoint).map_err(|error| DebugError::Adapter {
@@ -78,7 +88,7 @@ impl Transport {
             .current_dir(root)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::null())
+            .stderr(Stdio::piped())
             .spawn()
             .map_err(|error| {
                 if error.kind() == io::ErrorKind::NotFound {
@@ -91,15 +101,44 @@ impl Transport {
                     }
                 }
             })?;
-        let pipes = (child.stdin.take(), child.stdout.take());
-        let transport = Self::Process(child);
-        let (Some(stdin), Some(stdout)) = pipes else {
+        let pipes = (child.stdin.take(), child.stdout.take(), child.stderr.take());
+        let (Some(stdin), Some(stdout), Some(stderr)) = pipes else {
+            // O `Child` cai aqui e mata o processo.
             return Err(DebugError::Adapter {
-                message: "adapter subiu sem stdin/stdout utilizaveis".to_owned(),
+                message: "adapter subiu sem stdin/stdout/stderr utilizaveis".to_owned(),
             });
         };
+        let stderr = StderrTail::spawn(
+            stderr,
+            crate::stderr_tail::CAPACIDADE_PADRAO,
+            Some(coletor(events)),
+        );
+        let transport = Self::Process { child, stderr };
         Ok((transport, Writer::Stdio(stdin), Box::new(stdout)))
     }
+
+    /// A cauda do stderr do adaptador; vazia num attach TCP (o processo e'
+    /// de outro dono e o stderr dele nao passa por aqui).
+    pub(super) const fn stderr_tail(&self) -> Option<&StderrTail> {
+        match self {
+            Self::Process { stderr, .. } => Some(stderr),
+            Self::Tcp(_) => None,
+        }
+    }
+}
+
+/// Cada linha do stderr do adaptador sai como `event.debug.output` com a
+/// categoria `adapter` — o mesmo evento que o DAP `output` usa, para a aba
+/// Debug mostrar sem canal novo.
+fn coletor(events: &EventSender) -> crate::stderr_tail::Coletor {
+    let events = events.clone();
+    Box::new(move |linha: &str| {
+        send_event(
+            &events,
+            "event.debug.output",
+            json!({ "category": "adapter", "line": linha }),
+        );
+    })
 }
 
 fn io_error(error: &io::Error) -> DebugError {

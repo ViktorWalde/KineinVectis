@@ -12,3 +12,5 @@ CMakeUserPresets.json
 
 /DocsPrivate/
 .claude
+__pycache__/
+*.pyc

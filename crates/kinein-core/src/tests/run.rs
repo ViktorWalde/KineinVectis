@@ -413,4 +413,107 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     );
     let linhas = saida_ate_terminar(&receiver);
     assert_eq!(linhas[0], "mpremote-falso run main.py");
+
+    // O botao Executar COM a porta escolhida na tela (0.110.0): o mesmo
+    // main.py, agora por `connect <porta> run`.
+    let padrao_com_porta = core.handle_request(&JsonRpcRequest::new(
+        73_i64,
+        "run.start",
+        Some(json!({ "device": "/dev/ttyACM3" })),
+    ));
+    assert_eq!(
+        padrao_com_porta.response().result.as_ref().unwrap()["command"],
+        format!(
+            "'{}' connect /dev/ttyACM3 run 'main.py'",
+            dir.join("bin/mpremote").display()
+        )
+    );
+    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(linhas[0], "mpremote-falso connect /dev/ttyACM3 run main.py");
+}
+
+/// A porta e' parametro do LANCADOR PADRAO: com `command` explicito e'
+/// contradicao (`INVALID_PARAMS`), e vazia/so' espaco e' recusada nos dois
+/// metodos — "campo ausente" e' o mpremote escolhendo, "campo vazio" seria
+/// `mpremote connect '' run` falhando longe de quem errou.
+#[test]
+#[cfg(unix)]
+fn run_device_is_exclusive_with_command_and_never_blank() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-run-device", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    std::fs::write(dir.join("main.py"), "import machine\n").unwrap();
+    let dir = dir.canonicalize().unwrap();
+    executavel(
+        &dir.join("bin/mpremote"),
+        "#!/bin/sh\necho \"mpremote-falso $*\"\n",
+    );
+    let (mut core, receiver) = core_aberto_em(&dir);
+
+    let contradicao = core
+        .handle_request(&JsonRpcRequest::new(
+            80_i64,
+            "run.start",
+            Some(json!({ "command": "echo host", "device": "/dev/ttyUSB0" })),
+        ))
+        .response()
+        .clone();
+    let erro = contradicao.error.unwrap();
+    assert_eq!(erro.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+    assert!(
+        erro.message.contains("device so' vale sem command"),
+        "{erro:?}"
+    );
+
+    for (id, method, params) in [
+        (81_i64, "run.start", json!({ "device": "" })),
+        (82_i64, "run.start", json!({ "device": "   " })),
+        (
+            83_i64,
+            "run.script",
+            json!({ "path": dir.join("main.py").to_str().unwrap(), "device": "" }),
+        ),
+        (
+            84_i64,
+            "run.script",
+            json!({ "path": dir.join("main.py").to_str().unwrap(), "device": "/dev/tty\nUSB0" }),
+        ),
+    ] {
+        let resposta = core
+            .handle_request(&JsonRpcRequest::new(id, method, Some(params)))
+            .response()
+            .clone();
+        let erro = resposta
+            .error
+            .unwrap_or_else(|| panic!("{method} #{id} deveria recusar"));
+        assert_eq!(erro.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
+        assert!(erro.message.contains("porta serial"), "{erro:?}");
+    }
+    // Nada rodou: nenhum evento `run.*` saiu (outros dominios podem falar).
+    while let Ok(event) = receiver.recv_timeout(std::time::Duration::from_millis(200)) {
+        assert!(
+            !event
+                .method
+                .strip_prefix("event.")
+                .is_some_and(|m| m.starts_with("run")),
+            "{}",
+            event.method
+        );
+    }
+
+    // Campo desconhecido continua recusado (deny_unknown_fields).
+    let desconhecido = core
+        .handle_request(&JsonRpcRequest::new(
+            85_i64,
+            "run.start",
+            Some(json!({ "port": "/dev/ttyUSB0" })),
+        ))
+        .response()
+        .clone();
+    assert_eq!(
+        desconhecido.error.unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
 }

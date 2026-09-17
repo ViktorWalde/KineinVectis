@@ -91,11 +91,17 @@ void CoreClient::runQuality(const QString& buildSystem)
     sendRequest(QStringLiteral("quality.run"), params);
 }
 
-void CoreClient::runStart(const QString& command)
+void CoreClient::runStart(const QString& command, const QString& device)
 {
     QJsonObject params;
+    // A porta e' do LANCADOR PADRAO (`mpremote connect <porta> run main.py`):
+    // so' vai sem comando explicito, porque o core recusa os dois juntos —
+    // um comando digitado roda como foi escrito. Campo ausente nao e' vazio.
     if (!command.trimmed().isEmpty()) {
         params.insert(QStringLiteral("command"), command);
+    }
+    else if (!device.isEmpty()) {
+        params.insert(QStringLiteral("device"), device);
     }
     sendRequest(QStringLiteral("run.start"), params);
 }

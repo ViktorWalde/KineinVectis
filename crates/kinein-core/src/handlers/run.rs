@@ -59,11 +59,14 @@ impl Core {
         let parsed = match parse_params::<RunScriptParams>(
             request_id.as_ref(),
             params,
-            "run.script requer apenas o campo path",
+            "run.script requer o campo path e aceita o campo opcional device",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
+        if let Some(response) = porta_invalida(request_id.as_ref(), parsed.device.as_deref()) {
+            return response;
+        }
         let root = Path::new(&workspace.root).to_path_buf();
         let script = match crate::fsops::confine_file(&root, Path::new(&parsed.path)) {
             Ok(script) => script,
@@ -184,17 +187,37 @@ impl Core {
         let parsed = match parse_params::<RunStartParams>(
             request_id.as_ref(),
             params,
-            "run.start aceita apenas o campo opcional command",
+            "run.start aceita apenas os campos opcionais command e device",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
         };
+        if let Some(response) = porta_invalida(request_id.as_ref(), parsed.device.as_deref()) {
+            return response;
+        }
         if self.run.is_none() {
             return run_unavailable_response(request_id, "run.start");
         }
 
         let root = Path::new(&workspace.root);
         let explicito = parsed.command.filter(|command| !command.trim().is_empty());
+        // A porta e' parametro do LANCADOR PADRAO (mpremote); um comando
+        // explicito roda como foi digitado e nao tem onde recebe-la. Mandar os
+        // dois e' contradicao, e contradicao se recusa — nao se escolhe.
+        if explicito.is_some() && parsed.device.is_some() {
+            return JsonRpcResponse::failure(
+                request_id,
+                JsonRpcError::new(
+                    JsonRpcErrorCode::InvalidParams,
+                    "run.start: device so' vale sem command (a porta e' do lancador padrao \
+                     do MicroPython; um comando explicito roda como foi escrito)",
+                    None,
+                ),
+            );
+        }
+        // Uma configuracao de execucao ATIVA e' um comando que o autor salvou:
+        // vence o lancador padrao e, como o comando explicito, nao recebe a
+        // porta. O `command` ecoado diz o que rodou.
         let command = if let Some(command) =
             explicito.or_else(|| crate::runconfig::active_command(root))
         {
@@ -203,11 +226,12 @@ impl Core {
             // Python nao passa por run::default_command: precisa do lancador do
             // projeto (interpretador ou `uv run`).
             // (Um projeto MicroPython pode nao ter pyproject — o tipo e'
-            // Unknown — e mesmo assim o botao roda o main.py na placa.)
+            // Unknown — e mesmo assim o botao roda o main.py na placa, na
+            // porta que a tela escolheu quando `device` veio.)
             let padrao = if workspace.kind == kinein_protocol::ProjectKind::Python
                 || crate::project::e_micropython(root)
             {
-                self.python_launcher(root, None)
+                self.python_launcher(root, parsed.device.as_deref())
                     .and_then(|launcher| crate::python::run::default_command(root, Some(&launcher)))
             } else {
                 run::default_command(workspace.kind, root)
@@ -258,4 +282,23 @@ impl Core {
             Err(error) => run_error_response(request_id, &error),
         }
     }
+}
+
+/// `device` presente e vazio (ou so' espaco) e' recusado: "campo ausente" e'
+/// a porta que o mpremote escolhe; "campo vazio" viraria `mpremote connect
+/// '' run`, que falha longe de quem errou. `None` = nada a recusar.
+fn porta_invalida(request_id: Option<&Value>, device: Option<&str>) -> Option<JsonRpcResponse> {
+    let device = device?;
+    if !device.trim().is_empty() && !device.chars().any(char::is_control) {
+        return None;
+    }
+    Some(JsonRpcResponse::failure(
+        request_id.cloned(),
+        JsonRpcError::new(
+            JsonRpcErrorCode::InvalidParams,
+            "device precisa ser uma porta serial (ex.: /dev/ttyUSB0); para deixar o mpremote \
+             escolher, omita o campo",
+            Some(json!({ "device": device })),
+        ),
+    ))
 }

@@ -378,8 +378,11 @@ Item {
                    exitCode === 0 ? "info" : "stderr");
     }
 
+    // `adapter` (0.111.0) e' o stderr do PROPRIO adaptador — o traceback de
+    // um debugpy que morreu, o aviso do lldb-dap — e veste stderr: e' erro
+    // de quem depura, nao saida do programa.
     function handleOutput(category, line) {
-        appendLine(line, category === "stderr" ? "stderr"
+        appendLine(line, category === "stderr" || category === "adapter" ? "stderr"
                    : (category === "console" ? "info" : "stdout"));
     }
 

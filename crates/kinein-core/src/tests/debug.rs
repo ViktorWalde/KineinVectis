@@ -308,6 +308,77 @@ fn a_python_target_needs_the_project_interpreter_with_debugpy() {
     );
 }
 
+/// O adaptador que MORRE sem responder deixa o motivo (2026-09-17): o que ele
+/// escreveu no stderr sai ao vivo como `event.debug.output { category:
+/// "adapter" }` e entra na mensagem do `debug.start` que falhou. Antes o
+/// stderr ia para /dev/null e o gate viu "o adapter nao respondeu a
+/// `initialize`" sem causa. O "adaptador" e' o interpretador falso: passa no
+/// `import debugpy` e, chamado como `-m debugpy.adapter`, reclama e sai.
+#[test]
+#[cfg(unix)]
+fn a_dying_adapter_leaves_its_stderr_in_the_error_and_as_events() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-debug-adapter-stderr", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join(".venv/bin")).unwrap();
+    std::fs::write(dir.join("pyproject.toml"), "[project]\nname = \"demo\"\n").unwrap();
+    std::fs::write(dir.join("main.py"), "print('x')\n").unwrap();
+    let dir = dir.canonicalize().unwrap();
+    let python = dir.join(".venv/bin/python");
+    std::fs::write(
+        &python,
+        "#!/bin/sh\ncase \"$*\" in\n  *'import debugpy'*) exit 0 ;;\n  *debugpy.adapter*) \
+         echo 'Traceback (most recent call last):' >&2; echo 'ImportError: boom no adaptador' >&2; \
+         exit 1 ;;\nesac\nexit 0\n",
+    )
+    .unwrap();
+    std::fs::set_permissions(&python, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = core_with_empty_search_path("debug-adapter-stderr");
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        50_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let erro = core
+        .handle_request(&JsonRpcRequest::new(
+            51_i64,
+            "debug.start",
+            Some(json!({ "program": dir.join("main.py").to_str().unwrap() })),
+        ))
+        .response()
+        .error
+        .clone()
+        .unwrap();
+    assert!(
+        erro.message.contains("--- stderr do adaptador ---")
+            && erro.message.contains("ImportError: boom no adaptador"),
+        "{erro:?}"
+    );
+    // As mesmas linhas sairam ao vivo, com a categoria propria.
+    let mut vivas = Vec::new();
+    while let Ok(event) = receiver.recv_timeout(std::time::Duration::from_millis(300)) {
+        if event.method == "event.debug.output" {
+            let params = event.params.unwrap();
+            assert_eq!(params["category"], "adapter");
+            vivas.push(params["line"].as_str().unwrap().to_owned());
+        }
+    }
+    assert_eq!(
+        vivas,
+        [
+            "Traceback (most recent call last):",
+            "ImportError: boom no adaptador"
+        ]
+    );
+}
+
 /// Num workspace Python, `debug.start {}` acha o mesmo ponto de entrada do
 /// Executar; um pacote com `__main__.py` e' o alvo `-m pacote` (2026-09-13).
 #[test]

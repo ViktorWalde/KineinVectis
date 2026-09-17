@@ -198,6 +198,9 @@ Item {
         terminalActive: root.coreClient.terminalActive
         terminalPanelVisible: shellController.showBottomPanel
                               && shellController.bottomTab === "terminal"
+        // A porta escolhida no painel de Embarcados e' o `device` do Executar
+        // (MicroPython na placa). Composicao, nao IPC: o controller so' le.
+        serialDevice: environment.embeddedController.selectedPort
         // Pedido ao core mora no RuntimeRequestRouter. Aqui fica so fiacao de
         // controller para HOST/shell, que nao e IPC.
         onShowTabRequested: function(tab) {
