@@ -126,14 +126,7 @@ impl Core {
         // Antes o configure automatico rodava SEM preset num projeto que os
         // tem — e o CMakeLists que exige um (cmake_minimum_required + presets
         // com toolchain file) falhava ou configurava outra coisa.
-        let (preset, preset_origem): (Option<String>, Option<&'static str>) =
-            parsed.preset.filter(|p| !p.trim().is_empty()).map_or_else(
-                || {
-                    cmake::default_preset(&root)
-                        .map_or((None, None), |(p, arquivo)| (Some(p), Some(arquivo)))
-                },
-                |p| (Some(p), Some("kit")),
-            );
+        let (preset, preset_origem) = escolher_preset(&root, parsed.preset);
         // A toolchain e resolvida AQUI, na thread do loop, e vai pronta para o
         // job: um job nao alcanca o `Core` (arquitetura/04 §3), e resolver la
         // dentro exigiria o `ToolDetector`, que e estado do core.
@@ -146,6 +139,7 @@ impl Core {
         };
         let toolchain =
             crate::toolchain::Toolchain::resolve_kit(&root, &self.detected_tools(), &kit);
+        let extra = self.framework_cmake_args(&root);
         let job_id = jobs.spawn(
             "cmake.configure",
             "CMake Configure",
@@ -156,7 +150,8 @@ impl Core {
                 if let Err(error) = cmake::write_file_api_query(&root) {
                     ctx.emit_output(&format!("aviso: query do file-api falhou: {error}"));
                 }
-                let command = cmake::configure_command(&root, preset.as_deref(), &toolchain);
+                let command =
+                    cmake::configure_command(&root, preset.as_deref(), &toolchain, &extra);
                 let label = preset.as_deref().map_or_else(
                     || "cmake configure".to_owned(),
                     |name| format!("cmake configure --preset {name}"),
@@ -212,6 +207,17 @@ impl Core {
         );
 
         JsonRpcResponse::success(request_id, json!(JobAcceptedResult { job_id }))
+    }
+
+    /// O que o framework acrescenta ao configure (bloco E do 41): o
+    /// `-DPICO_SDK_PATH` do pico-sdk. Nada para os demais; um framework com
+    /// ferramenta ausente nao impede o configure (o build.run e' quem recusa).
+    fn framework_cmake_args(&self, root: &std::path::Path) -> Vec<String> {
+        self.framework_engine(root)
+            .ok()
+            .flatten()
+            .map(|motor| motor.cmake_extra_args())
+            .unwrap_or_default()
     }
 
     fn cmake_presets_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
@@ -279,4 +285,19 @@ impl Core {
             }),
         )
     }
+}
+
+/// O preset do configure (P0): o pedido (o kit ativo, `"kit"`) vence; senao
+/// o padrao do projeto, com o arquivo de onde veio; senao nenhum.
+fn escolher_preset(
+    root: &std::path::Path,
+    pedido: Option<String>,
+) -> (Option<String>, Option<&'static str>) {
+    pedido.filter(|p| !p.trim().is_empty()).map_or_else(
+        || {
+            cmake::default_preset(root)
+                .map_or((None, None), |(p, arquivo)| (Some(p), Some(arquivo)))
+        },
+        |p| (Some(p), Some("kit")),
+    )
 }

@@ -63,13 +63,15 @@ pub fn resolve_program(kind: ProjectKind, root: &Path) -> Result<DebugTarget, De
         ProjectKind::RustCargo => cargo_binary(root).map(DebugTarget::Program),
         ProjectKind::Cmake => cmake_binary(root).map(DebugTarget::Program),
         ProjectKind::Python => python_entry(root),
-        ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Make | ProjectKind::Unknown => {
-            Err(DebugError::NoTarget {
-                message: "este tipo de projeto ainda nao tem alvo de debug automatico; \
+        ProjectKind::Maven
+        | ProjectKind::Gradle
+        | ProjectKind::Make
+        | ProjectKind::PlatformIo
+        | ProjectKind::Unknown => Err(DebugError::NoTarget {
+            message: "este tipo de projeto ainda nao tem alvo de debug automatico; \
                           informe o executavel em debug.start { program }"
-                    .to_owned(),
-            })
-        }
+                .to_owned(),
+        }),
     }
 }
 

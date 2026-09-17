@@ -329,6 +329,7 @@ pub fn default_command(kind: ProjectKind, root: &Path) -> Result<String, RunErro
         | ProjectKind::Gradle
         | ProjectKind::Python
         | ProjectKind::Make
+        | ProjectKind::PlatformIo
         | ProjectKind::Unknown => Err(RunError::NoDefaultCommand {
             message: "este tipo de projeto ainda nao tem comando de execucao padrao; \
                           digite o comando no painel Terminal"

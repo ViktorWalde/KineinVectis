@@ -79,8 +79,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.116.0
-testes      782 Rust aprovados; 41 harnesses QML (medicao de 2026-09-17, §7.47)
+protocolo   0.117.0
+testes      791 Rust aprovados; 41 harnesses QML (medicao de 2026-09-17, §7.48)
 metodos     145 IPC roteados, 52 eventos (serial.identify, runConfig.flashProposal,
             serial.access, serial.files, python.stubs, event.lsp.log,
             event.serial.identified, event.serial.files e event.python.stubs
@@ -590,9 +590,10 @@ o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41, o E4 na §7.42 e o E2
 na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; Toolchains
 (seletor de pasta nativo; SDK do Zephyr no `importKit`) na §7.45 e o P0
 (preset no configure automático; Bear; alvo do kit para o rust-analyzer) na
-§7.46, e o P4 MicroPython (arquivos na placa, firmware oficial, stubs por
-placa — provado no ESP32 real) na §7.47. O próximo item é o bloco E
-(frameworks como motores de build/flash). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+§7.46, o P4 MicroPython (arquivos na placa, firmware oficial, stubs por
+placa — provado no ESP32 real) na §7.47, e o bloco E (ESP-IDF, Zephyr,
+pico-sdk e PlatformIO como motores de build/gravar/monitorar) na §7.48. O
+próximo item é o P3 (depuração profunda). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -609,7 +610,7 @@ ainda não está verde.
 | P3 — depuração profunda | SVD com escrita pelo `gdb -i dap`; RTT/defmt; memória/disassembly; RTOS threads. |
 | P5 — qualidade | clang-tidy dentro do clangd; lâmpada proativa do Alt+Enter; gtest/catch2; cobertura. |
 | P6 — Linux embarcado | SSH remoto, decidido e ainda não arquitetado: deploy, gdbserver e debugpy attach. |
-| Frameworks, bloco E | ESP-IDF, pico-sdk, Zephyr e PlatformIO reconhecidos e configurados sem edição manual. |
+| Frameworks, bloco E | **FEITO em 2026-09-17 (§7.48, 0.117.0):** `build.run` compila pelo wrapper de cada um (`pio run`; `idf.py build` no ambiente ativado — export.sh ou EIM; `west build -d build -b <placa>`; CMake com `-DPICO_SDK_PATH`), Gravar ganhou `idf.py`/`west`/`platformio`, o monitor ganhou o IDF Monitor e o `pio device monitor`, `platformio.ini` é tipo de projeto. Provado com wrappers falsos — nenhum SDK real nesta máquina. Resta: E5 templates curados, E6 Unity/Ceedling. |
 | Banco | Executar consultas e escrever; TLS do PostgreSQL. |
 | Varredura 40 §8 | `quality.output` descartado no C++; `environmentScan` sem ouvinte; presets sem tela. Os demais achados permanecem detalhados no §8. |
 | Frentes grandes, bloco F | Jupyter; dev containers com contexto remoto; polimento Rust com nextest e llvm-cov. |
@@ -3325,3 +3326,53 @@ fora do core — no core, com o uv falso; o passo do ModemManager (E2) e a
 gravação do E4 continuam sendo do autor. C6 (CircuitPython) não foi feito.
 **Próximo:** bloco E — ESP-IDF, pico-sdk, Zephyr e PlatformIO como motores
 de build/flash/monitor.
+
+### 7.48 Bloco E — os frameworks como MOTORES de build, gravar e monitorar — 2026-09-17 (noite), protocolo 0.117.0
+
+O `project.model` reconhecia os quatro frameworks e dizia o que faltava; o
+build continuava sendo cargo/cmake/make. Agora `build/engine.rs` decide, pelo
+modelo e sem tocar o disco de novo, com que motor o `build.run` roda —
+**sem campo novo no contrato**: PlatformIO → `pio run` (o `platformio.ini`
+virou `kind: platformIo`, atrás do CMake e na frente do Makefile; um
+`CMakeLists.txt` do ESP-IDF ao lado não tira o `pio` do comando); ESP-IDF →
+`idf.py build` DENTRO do ambiente ativado — `bash -c '. "$1" >/dev/null ||
+…; shift; exec idf.py "$@"' idf <ativação> build`, a ativação sendo o
+`export.sh` de `IDF_PATH`/`~/esp/esp-idf` ou o `activate_idf_<versão>.sh`
+mais novo de `~/.espressif/tools` (as duas formas do "Get Started" v6, lidas
+em 2026-09-17: EIM é o caminho recomendado; o banner vai para /dev/null, o
+erro não); Zephyr → `west build -d build [-b <placa>]`, a placa do
+`CACHED_BOARD` do `build/CMakeCache.txt` ou do `west config build.board` (a
+forma da doc do west — nenhum campo de placa inventado no kit); pico-sdk →
+o CMake de sempre com `-DPICO_SDK_PATH=<sdk>`, no `build.run` e no
+`cmake.configure` automático. Framework reconhecido e ferramenta ausente é
+`TOOL_NOT_FOUND` antes do job, com o passo que o modelo já dava. O
+`handlers/build.rs` passou de 500 no caminho e o `build.size` foi para
+`handlers/build_size.rs` (medir o ELF é outra responsabilidade). **Gravar**
+(`flash/frameworks.rs`): `idf.py` (`-p <porta> flash`, ativado; porta
+exigida), `west` (`west flash -d build`, o padrão do Zephyr — antes o
+`target.flashEngine: west` do modelo era motor DESCONHECIDO para o E4),
+`platformio` (`pio run -t upload [--upload-port]`, o padrão do PlatformIO —
+idem). **Monitor**: o IDF Monitor e o `pio device monitor`, antes do
+catálogo quando o papel não está fixado. E um conserto de base: o modelo do
+projeto lia os binários pelo PATH do processo, não pelo detector do core —
+agora é o detector (o mesmo do build e do kit), e o `Core::with_home` dos
+testes fixa o `$HOME` das pastas padrão dos SDKs sem escrever no ambiente.
+
+**Medido em 2026-09-17:** 791 testes Rust (+9: o motor por framework e o que
+falta; a ativação do IDF (export.sh vs. EIM mais novo); a placa do Zephyr
+(cache, depois `west config`); as linhas de gravar dos três wrappers; e por
+despacho, com wrappers FALSOS: ESP-IDF build+flash+run.start pelo `export.sh`
+falso que põe o `idf.py` falso no PATH, Zephyr build com a placa do `west
+config` e a proposta `west flash`, PlatformIO como tipo de projeto com `pio
+run`/upload e a precedência sobre o CMakeLists, pico-sdk com o `-D` no
+`build.run` e no `cmake.configure`); 41 harnesses QML (`tst_embedded_flash`
+com os motores por framework); clippy, fmt, fiação, propriedades, alcance,
+duplicação, arquitetura (o split do `build.size`), docs, links, qmllint;
+`debug-strict` compila.
+
+**Não provado, dito:** nenhum ESP-IDF, Zephyr, pico-sdk ou PlatformIO REAL
+nesta máquina (`west` e `pio` estão no PATH, mas sem workspace/projeto
+deles) — os wrappers foram exercitados por falsos que ecoam argv; o
+`export.sh` real do IDF nunca foi sourced por `bash -c` aqui. E5 (templates
+curados) e E6 (Unity/Ceedling) não entraram. **Próximo:** P3 — depuração
+profunda (SVD, RTT/defmt, memória/disassembly, threads de RTOS).

@@ -38,7 +38,11 @@ pub const fn runner_name(kind: ProjectKind) -> Option<&'static str> {
         ProjectKind::RustCargo => Some("cargo"),
         ProjectKind::Cmake => Some("ctest"),
         ProjectKind::Python => Some("pytest"),
-        ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Make | ProjectKind::Unknown => None,
+        ProjectKind::Maven
+        | ProjectKind::Gradle
+        | ProjectKind::Make
+        | ProjectKind::PlatformIo
+        | ProjectKind::Unknown => None,
     }
 }
 
@@ -107,7 +111,11 @@ pub fn parser_for(kind: ProjectKind) -> Option<fn(&str) -> Option<TestCaseInfo>>
         ProjectKind::RustCargo => Some(parse_cargo_list_line),
         ProjectKind::Cmake => Some(parse_ctest_list_line),
         ProjectKind::Python => Some(parse_pytest_collect_line),
-        ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Make | ProjectKind::Unknown => None,
+        ProjectKind::Maven
+        | ProjectKind::Gradle
+        | ProjectKind::Make
+        | ProjectKind::PlatformIo
+        | ProjectKind::Unknown => None,
     }
 }
 
@@ -158,7 +166,11 @@ pub fn discover_tests(
                 format!("{} -m pytest --collect-only -q", launcher.display(root)),
             )
         }
-        ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Make | ProjectKind::Unknown => {
+        ProjectKind::Maven
+        | ProjectKind::Gradle
+        | ProjectKind::Make
+        | ProjectKind::PlatformIo
+        | ProjectKind::Unknown => {
             return Err(TestError::Unsupported {
                 kind: project_kind_name(kind),
             });

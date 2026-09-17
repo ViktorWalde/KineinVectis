@@ -5,9 +5,13 @@
 //! `--message-format=json`, CMake/compilers via the classic
 //! `file:line:column: level: message` format.
 
+pub mod engine;
+mod frameworks;
 mod make;
 mod parse;
 
+pub use engine::{Engine, EngineError};
+pub use frameworks::zephyr_board;
 pub use make::MakeTools;
 
 use std::{
@@ -174,7 +178,7 @@ impl BuildError {
 
 /// How diagnostics are extracted from the tool output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum DiagnosticFormat {
+pub(super) enum DiagnosticFormat {
     /// Cargo `--message-format=json` on stdout.
     CargoJson,
     /// `file:line:column: level: message` lines from compilers and `CMake`.
@@ -210,6 +214,17 @@ fn programa(toolchain: &Toolchain, role: ToolchainRole, padrao: &str) -> std::pa
         .unwrap_or_else(|| std::path::PathBuf::from(padrao))
 }
 
+/// O que o handler resolve para o job (o job nao alcanca o detector nem o
+/// modelo): o make/bear desta maquina e o motor do framework, se houver.
+#[derive(Debug, Clone, Default)]
+pub struct BuildTools {
+    /// Makefile puro (P0).
+    pub make: MakeTools,
+    /// O motor do framework (bloco E): `idf.py`, `west`, `pio`, ou o `CMake`
+    /// com o SDK do Pico. `None` = cargo/cmake/make de sempre.
+    pub engine: Option<Engine>,
+}
+
 /// Runs the build pipeline for the workspace project kind.
 ///
 /// `cancel` is polled while the tool runs; flipping it to `true` kills the
@@ -219,15 +234,28 @@ pub fn run_build(
     kind: ProjectKind,
     profile: RigorProfile,
     toolchain: &Toolchain,
-    make_tools: &MakeTools,
+    tools: &BuildTools,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
+    // O motor do framework (bloco E) vem antes do tipo: um projeto ESP-IDF e'
+    // CMake por baixo, mas quem o compila e' o idf.py; o pico-sdk continua
+    // CMake, com o SDK no configure.
+    let make_tools = &tools.make;
+    match &tools.engine {
+        Some(Engine::PicoSdk { .. }) | None => {}
+        Some(motor) => return frameworks::run_engine_build(root, motor, cancel, sink),
+    }
+    let extra = tools
+        .engine
+        .as_ref()
+        .map(Engine::cmake_extra_args)
+        .unwrap_or_default();
     match kind {
         ProjectKind::RustCargo => run_cargo_build(root, profile, toolchain, cancel, sink),
         // C++ CMake -Werror por perfil fica para uma fatia futura (injetar
         // flag no build do usuario e invasivo — ver DocsPrivate/diario/18 M4.5).
-        ProjectKind::Cmake => run_cmake_build(root, toolchain, cancel, sink),
+        ProjectKind::Cmake => run_cmake_build(root, toolchain, &extra, cancel, sink),
         ProjectKind::Make => make::run_make_build(root, make_tools, cancel, sink),
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
@@ -358,6 +386,7 @@ fn run_cargo_build(
 fn run_cmake_build(
     root: &Path,
     toolchain: &Toolchain,
+    extra: &[String],
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
@@ -367,6 +396,8 @@ fn run_cmake_build(
         let mut configure = Command::new(programa(toolchain, ToolchainRole::Cmake, "cmake"));
         configure.arg("-S").arg(root).arg("-B").arg(&build_dir);
         configure.args(toolchain.cmake_arguments());
+        // O que o framework acrescenta (`-DPICO_SDK_PATH`, bloco E).
+        configure.args(extra);
 
         let outcome = stream_command(
             configure,
@@ -392,7 +423,7 @@ fn run_cmake_build(
     )
 }
 
-fn stream_command(
+pub(super) fn stream_command(
     command: Command,
     display_name: &str,
     format: DiagnosticFormat,

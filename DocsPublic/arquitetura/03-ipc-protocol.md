@@ -1,5 +1,28 @@
 # 03 — Protocolo IPC
 
+> **0.117.0 (2026-09-17, noite) — bloco E, os frameworks como MOTORES de
+> build/gravar/monitorar (E1–E4 do `roadmaps/41`).** O `project.model` já
+> reconhecia ESP-IDF, Zephyr, pico-sdk e PlatformIO; agora o `build.run` os
+> COMPILA pelo wrapper de cada um, sem campo novo: **PlatformIO** → `pio run`
+> (`platformio.ini` é tipo de projeto novo, `kind: platformIo` /
+> `buildSystems: [platformIo]`; vence até um `CMakeLists.txt` do ESP-IDF ao
+> lado); **ESP-IDF** → `idf.py build` DENTRO do ambiente ativado (`bash -c
+> '. <ativação> && exec idf.py …'`, a ativação sendo o `export.sh` de
+> `IDF_PATH`/`~/esp/esp-idf` ou o `activate_idf_<versão>.sh` mais novo de
+> `~/.espressif/tools` do EIM — as duas formas do "Get Started"); **Zephyr**
+> → `west build -d build [-b <placa>]`, a placa do `CACHED_BOARD` do
+> CMakeCache ou do `west config build.board`; **pico-sdk** → o CMake de
+> sempre com `-DPICO_SDK_PATH=<sdk>` no configure (também no
+> `cmake.configure` automático). Framework reconhecido e ferramenta ausente é
+> `TOOL_NOT_FOUND` com o passo do modelo ANTES do job. **Gravar** ganhou os
+> motores `idf.py` (`-p <porta> flash`, ativado), `west` (`west flash -d
+> build`, o padrão de um projeto Zephyr) e `platformio` (`pio run -t upload
+> [--upload-port <porta>]`, o padrão de um PlatformIO); **monitor** ganhou
+> o IDF Monitor (`idf.py -p <porta> monitor`, ativado) e `pio device monitor
+> -p <porta> -b <baud>`, antes do catálogo quando o papel não está fixado.
+> O modelo do projeto passou a ler os binários pelo detector do core (não
+> mais o PATH do processo por conta própria). Métodos 145, eventos 52.
+>
 > **0.116.0 (2026-09-17, noite) — P4, MicroPython em três fatias (C2, C5, C4
 > do `roadmaps/41` bloco C).** (1) **Arquivos na placa:** `serial.files
 > { device, action: list|get|put|rm|mkdir, path?, local?, tool? }` →
@@ -611,6 +634,12 @@ seco com uma linha de `event.build.output` dizendo que sem `bear` não há CDB
 para o clangd — nunca um make "diferente" para fingir CDB. Sem alvo de run,
 teste ou debug automático (o `Makefile` não os declara).
 
+**`kind: platformIo` / `buildSystems: [platformIo]` (`0.117.0`, bloco E):**
+um `platformio.ini` na raiz — atrás do `CMakeLists.txt` (um projeto PlatformIO
+com `framework = espidf` também é uma árvore CMake; o MOTOR de build ainda
+escolhe o `pio`, pelo framework), na frente de um `Makefile`. `build.run`
+roda `pio run`; sem alvo de run, teste ou debug automático.
+
 `workspace.browse` recebe `{ "path": "/dir" }`, canonicaliza o diretorio e
 retorna apenas subdiretorios para a UI navegar sem depender de dialogo nativo do
 desktop. A UI continua proibida de listar o filesystem diretamente.
@@ -1166,6 +1195,30 @@ event.build.diagnostic  { "jobId", "source": "build", "category": "compiler", "s
 event.build.finished    { "jobId", "success", "exitCode", "diagnostics" }   // ou { "jobId", "success": false, "error" }
 ```
 
+**Os motores de framework (`0.117.0`, bloco E do `roadmaps/41`).** Antes do
+tipo do projeto, o `build.run` pergunta ao `project.model` (`build/engine.rs`)
+e, se o framework tem wrapper, é ele quem compila — nada de campo novo:
+
+```text
+PlatformIO   pio run                                     (platformio.ini; vence tudo)
+ESP-IDF      bash -c '. "$1" >/dev/null || …; shift; exec idf.py "$@"' idf <ativação> build
+             ativação = <esp-idf>/export.sh (IDF_PATH ou ~/esp/esp-idf) ou o mais novo
+             ~/.espressif/tools/activate_idf_*.sh (EIM, v6) — as duas formas do Get Started
+Zephyr       west build -d build [-b <placa>]            placa: CACHED_BOARD do build/CMakeCache.txt,
+                                                          senão `west config build.board`
+pico-sdk     cmake … -DPICO_SDK_PATH=<sdk>                (o CMake de sempre; o SDK de PICO_SDK_PATH
+                                                          ou ~/pico/pico-sdk)
+```
+
+Diagnósticos: os três wrappers chamam gcc/clang por baixo e o parser
+`arquivo:linha:coluna` casa. O título do job diz o motor (`Build (idf.py)`).
+Framework reconhecido e ferramenta ausente (sem `pio`, sem `west`, sem
+ativação do IDF) é `TOOL_NOT_FOUND` **antes** do job, com o passo que o
+`project.model.sdks` já dava (e, no IDF, o `eim install`). O banner da
+ativação vai para `/dev/null`; o erro dela, não. Os builds do `idf.py` e do
+`west` ficam em `build/` (a pasta de cada um — é onde o `flasher_args.json` e
+o `CMakeCache.txt` são lidos); o do pico-sdk continua em `.kinein/build`.
+
 Além destes, o Job System emite `event.job.created` (ao iniciar),
 `event.job.output` (fan-out da saida bruta) e `event.job.finished` (ao
 encerrar) para a status bar / lista de jobs. O
@@ -1708,6 +1761,16 @@ na raiz pelo `run.start`.
   sem porta, sem chip, família sem tabela) → `INVALID_REQUEST`. A linha
   salva é editável como qualquer configuração — é assim que um `esptool` v4
   troca `write-flash` por `write_flash`.
+- **Os wrappers dos frameworks (`0.117.0`, bloco E):** `engine: "idf.py"`
+  → `bash -c '<wrapper>' idf '<ativação>' -p '<porta>' flash` (a linha do
+  "Start a Project": `idf.py -p PORT flash`; a porta é exigida, como no
+  esptool; sem ativação nesta máquina, `TOOL_NOT_FOUND` com o passo);
+  `engine: "west"` → `'<west>' flash -d build` (o **padrão** de um projeto
+  Zephyr, pelo `target.flashEngine` do modelo; uma porta escolhida vira
+  aviso — o runner do board grava pela sonda/USB); `engine: "platformio"`
+  (ou `pio`) → `'<pio>' run -t upload [--upload-port '<porta>']` (o padrão
+  de um PlatformIO). Num ESP-IDF o padrão continua sendo o esptool com a
+  receita do build; o `idf.py` é escolha explícita.
 - **`firmware` (`0.116.0`, C5 do `roadmaps/41` bloco C):** o id de um
   firmware do catálogo (`toolchain.installable`, `kind: firmware`) já
   BAIXADO substitui os artefatos do build. A linha é a da página da placa
@@ -3288,7 +3351,12 @@ MicroPython o monitor É o REPL — um tio a 115200 mostraria o mesmo texto sem
 o raw-paste nem o Ctrl-] de sair; o mpremote é o último do catálogo e nunca
 vence sozinho fora de MicroPython); chip Espressif no kit **e** `espflash`
 detectado → `espflash monitor --elf <ELF>`, que decodifica o backtrace;
-escolha **fixada** pelo autor vence tudo. Linhas de comando lidas na fonte: `tio -b`,
+escolha **fixada** pelo autor vence tudo. **Bloco E (`0.117.0`):** antes de tudo que não foi fixado, o wrapper do
+framework — num projeto ESP-IDF com ativação nesta máquina, o **IDF
+Monitor** (`bash -c '<wrapper>' idf <ativação> -p <dev> monitor`; decodifica
+o backtrace com o ELF do build); num PlatformIO com `pio`, `pio device
+monitor -p <dev> -b <baud>`. Nenhum dos dois exige monitor no catálogo.
+Linhas de comando lidas na fonte: `tio -b`,
 `picocom -b`, `minicom -D … -b`, e no espflash é `--monitor-baud` (o `--baud`
 dele é o de **gravação**). Baud ausente = 115200. Sem nenhum monitor
 instalado, `TOOL_NOT_FOUND` com o que instalar. Exige workspace (a aba nasce

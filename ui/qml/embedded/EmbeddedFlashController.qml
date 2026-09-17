@@ -31,6 +31,11 @@ Item {
     property string firmware: ""
     readonly property bool found: proposal.command !== undefined && proposal.command !== ""
     readonly property var engines: ["esptool", "probe-rs", "picotool", "dfu-util"]
+    // Os frameworks do projeto (project.model.frameworks, do pai): o wrapper
+    // de cada um entra como motor (bloco E do roadmaps/41): idf.py, west, pio.
+    property var frameworks: []
+    readonly property var frameworkEngines: engineOfFrameworks(frameworks)
+    readonly property var allEngines: engines.concat(frameworkEngines)
 
     signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware)
     signal runRequested(string command)
@@ -53,6 +58,19 @@ Item {
         engine = "";
         proposal = ({});
         errorText = "";
+    }
+
+    // O wrapper de cada framework, na ordem do modelo, sem repetir — a
+    // palavra e' a do core (`runConfig.flashProposal { engine }`).
+    function engineOfFrameworks(lista) {
+        const mapa = { espIdf: "idf.py", zephyr: "west", platformIo: "platformio" };
+        const saida = [];
+        if (lista === undefined || lista === null) return saida;
+        for (let i = 0; i < lista.length; i++) {
+            const motor = mapa[lista[i].framework];
+            if (motor !== undefined && saida.indexOf(motor) < 0) saida.push(motor);
+        }
+        return saida;
     }
 
     // Escolher o motor e' toggle; trocar descarta a previa (era de outro motor).

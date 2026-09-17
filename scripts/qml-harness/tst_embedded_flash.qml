@@ -94,6 +94,18 @@ Item {
         f.selectFirmware("micropython-esp32-generic");
         if (f.firmware !== "" || f.found) failures += 262144;
 
+        // Os wrappers dos frameworks (bloco E) entram como motores, sem
+        // repetir e so' os que o modelo achou; a lista base fica intacta.
+        if (f.allEngines.length !== 4) failures += 524288;
+        controller.handleProject({ embedded: true, frameworks: [{ framework: "espIdf", evidence: "CMakeLists.txt" }, { framework: "platformIo", evidence: "platformio.ini" }, { framework: "espIdf", evidence: "x" }, { framework: "picoSdk", evidence: "y" }] });
+        if (f.frameworkEngines.join(",") !== "idf.py,platformio" || f.allEngines.length !== 6 || f.allEngines[4] !== "idf.py") failures += 1048576;
+        f.selectEngine("idf.py");
+        f.propose("/dev/ttyUSB0", 0);
+        if (root.pedidos[root.pedidos.length - 1] !== "/dev/ttyUSB0|idf.py|0") failures += 2097152;
+        controller.handleProject({ embedded: true, frameworks: [{ framework: "zephyr", evidence: "prj.conf" }] });
+        if (f.frameworkEngines.join(",") !== "west") failures += 4194304;
+        f.handleProposal({ name: "Gravar (west)", engine: "west", command: "w" });
+
         // Trocar de workspace esquece tudo (o pai limpa o filho).
         f.selectEngine("picotool");
         f.selectFirmware("micropython-rpi-pico");

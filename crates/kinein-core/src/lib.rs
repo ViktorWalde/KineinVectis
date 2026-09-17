@@ -82,6 +82,12 @@ pub struct Core {
     debug: Option<dap::DebugManager>,
     terminal: Option<terminal::TerminalManager>,
     jobs: Option<jobs::JobManager>,
+    /// O `$HOME` que o modelo do projeto usa para as pastas padrao dos SDKs
+    /// (`~/esp/esp-idf`, `~/.espressif`, `~/pico/pico-sdk`); `Some` so' nos
+    /// testes, que nao podem escrever no ambiente do processo — e, com ele,
+    /// as variaveis de SDK (`IDF_PATH`…) deixam de ser lidas, para o teste
+    /// ser hermetico.
+    home_override: Option<PathBuf>,
     /// Store local de rascunhos (autosave), aberta por-workspace (DocsPublic/seguranca/23).
     drafts: Option<db::DraftStore>,
     /// Raiz do estado GLOBAL quando a persistência está ligada; `None` — o
@@ -116,7 +122,24 @@ impl Core {
             jobs: None,
             drafts: None,
             global_storage: None,
+            home_override: None,
         }
+    }
+
+    /// Fixa o `$HOME` do modelo do projeto (testes): as pastas padrao dos SDKs
+    /// passam a ser lidas sob `home`, e as variaveis de ambiente de SDK sao
+    /// ignoradas.
+    #[must_use]
+    pub fn with_home(mut self, home: impl Into<PathBuf>) -> Self {
+        self.home_override = Some(home.into());
+        self
+    }
+
+    /// O `$HOME` que vale para as pastas padrao dos SDKs.
+    pub(crate) fn sdk_home(&self) -> Option<PathBuf> {
+        self.home_override
+            .clone()
+            .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
     }
 
     /// Handles one already parsed JSON-RPC request.

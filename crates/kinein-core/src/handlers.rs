@@ -5,6 +5,7 @@
 //! routers and leaf handlers.
 
 pub mod build;
+pub mod build_size;
 pub mod cargo;
 pub mod cmake;
 pub mod configaction;

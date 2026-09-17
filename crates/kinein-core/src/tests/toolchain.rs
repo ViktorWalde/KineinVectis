@@ -227,7 +227,7 @@ fn the_choice_reaches_the_cmake_command_line() {
     // Automatico: o comando sai como sempre saiu.
     let automatico = Toolchain::resolve(&root, &ferramentas);
     let argumentos = |toolchain: &Toolchain| -> Vec<String> {
-        crate::cmake::configure_command(&root, None, toolchain)
+        crate::cmake::configure_command(&root, None, toolchain, &[])
             .get_args()
             .map(|argumento| argumento.to_string_lossy().into_owned())
             .collect()
@@ -273,7 +273,7 @@ fn the_choice_reaches_the_cmake_command_line() {
     );
     let com_cmake = Toolchain::resolve(&root, &ferramentas);
     assert_eq!(
-        crate::cmake::configure_command(&root, None, &com_cmake)
+        crate::cmake::configure_command(&root, None, &com_cmake, &[])
             .get_program()
             .to_string_lossy(),
         bin.join("cmake").to_string_lossy(),

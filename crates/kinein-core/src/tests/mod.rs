@@ -15,6 +15,7 @@ mod debug_attach;
 mod dispatch;
 mod flash_proposal;
 mod format;
+mod frameworks;
 mod fs;
 mod git;
 mod grafana;

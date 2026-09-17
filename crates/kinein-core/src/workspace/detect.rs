@@ -20,6 +20,15 @@ const MARKERS: &[(&str, ProjectKind, BuildSystem)] = &[
     ),
     // Um Makefile puro (P0 do 40 §4.1, 2026-09-17): depois do CMake, porque
     // uma arvore CMake tambem pode carregar um Makefile na raiz.
+    // PlatformIO (bloco E do 41, 2026-09-17): o platformio.ini e' intencao
+    // explicita; atras do CMake (um projeto PlatformIO com framework=espidf
+    // tambem tem CMakeLists — o MOTOR de build ainda escolhe o pio pelo
+    // framework), na frente de um Makefile de conveniencia.
+    (
+        "platformio.ini",
+        ProjectKind::PlatformIo,
+        BuildSystem::PlatformIo,
+    ),
     ("Makefile", ProjectKind::Make, BuildSystem::Make),
     ("GNUmakefile", ProjectKind::Make, BuildSystem::Make),
     ("pyproject.toml", ProjectKind::Python, BuildSystem::Python),

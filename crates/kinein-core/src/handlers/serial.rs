@@ -68,7 +68,10 @@ impl Core {
         // Num projeto MicroPython o monitor e' o REPL do mpremote (fatia 5 da
         // cadeia Python): a evidencia vem do mesmo detector do project.model.
         let micropython = crate::project::e_micropython(&root);
-        let Some(escolha) = monitor::escolher(&toolchain, micropython) else {
+        // O wrapper do framework (bloco E): o IDF Monitor num projeto ESP-IDF
+        // ativavel, o `pio device monitor` num PlatformIO.
+        let framework = self.framework_engine(&root).ok().flatten();
+        let Some(escolha) = monitor::escolher(&toolchain, micropython, framework.as_ref()) else {
             return JsonRpcResponse::failure(
                 request_id,
                 JsonRpcError::new(
@@ -96,6 +99,7 @@ impl Core {
             &pedido.device,
             baud,
             elf.as_deref(),
+            escolha.activation.as_deref(),
         );
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "serial.monitor");

@@ -41,8 +41,11 @@ distribuída como AppImage para Linux x86_64.
   STM32Cube, Rust bare metal, MicroPython, Yocto, Buildroot), ciclo provado no
   QEMU com `gdb -i dap`; a identidade do chip pelo `esptool` com sugestão de
   kit, "Gravar" como configuração de execução (esptool, probe-rs, picotool,
-  dfu-util) e a permissão de cada canal medida com o passo oficial — a IDE
-  nunca roda `sudo`;
+  dfu-util — e `idf.py`, `west`, `pio` nos projetos dos seus frameworks) e a
+  permissão de cada canal medida com o passo oficial — a IDE nunca roda
+  `sudo`; ESP-IDF, Zephyr, pico-sdk e PlatformIO compilam pelo wrapper de
+  cada um (`idf.py build` no ambiente ativado, `west build`, `pio run`,
+  `-DPICO_SDK_PATH`), sem editar nada à mão;
 - **containers** nativos (Docker ou Podman, pela mesma CLI): motor, ciclo de
   vida como jobs, logs e shell numa aba de terminal, compose do projeto;
 - **Python** como vertical nativa: o interpretador do projeto resolvido uma

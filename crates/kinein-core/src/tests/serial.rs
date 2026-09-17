@@ -273,6 +273,7 @@ fn monitor_command_lines_follow_each_tool_and_only_espflash_takes_the_elf() {
         "/dev/ttyUSB0",
         DEFAULT_BAUD,
         Some(elf),
+        None,
     );
     assert_eq!(
         (p.as_str(), a),
@@ -281,9 +282,23 @@ fn monitor_command_lines_follow_each_tool_and_only_espflash_takes_the_elf() {
             vec!["-b".into(), "115200".into(), "/dev/ttyUSB0".into()]
         )
     );
-    let (_, a) = command_line("picocom", "/usr/bin/picocom", "/dev/ttyACM0", 9600, None);
+    let (_, a) = command_line(
+        "picocom",
+        "/usr/bin/picocom",
+        "/dev/ttyACM0",
+        9600,
+        None,
+        None,
+    );
     assert_eq!(a, vec!["-b", "9600", "/dev/ttyACM0"]);
-    let (_, a) = command_line("minicom", "/usr/bin/minicom", "/dev/ttyUSB1", 57600, None);
+    let (_, a) = command_line(
+        "minicom",
+        "/usr/bin/minicom",
+        "/dev/ttyUSB1",
+        57600,
+        None,
+        None,
+    );
     assert_eq!(a, vec!["-D", "/dev/ttyUSB1", "-b", "57600"]);
     // espflash: e' `--monitor-baud`, NAO `--baud` (que e' o baud de gravacao).
     let (_, a) = command_line(
@@ -292,6 +307,7 @@ fn monitor_command_lines_follow_each_tool_and_only_espflash_takes_the_elf() {
         "/dev/ttyUSB0",
         DEFAULT_BAUD,
         Some(elf),
+        None,
     );
     assert_eq!(
         a,
@@ -312,6 +328,7 @@ fn monitor_command_lines_follow_each_tool_and_only_espflash_takes_the_elf() {
         "/dev/ttyUSB0",
         DEFAULT_BAUD,
         None,
+        None,
     );
     assert_eq!(a.len(), 5, "sem ELF, sem --elf");
 }
@@ -326,7 +343,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
     ];
     // Sem chip: o primeiro detectado na ordem do catalogo (tio nao esta').
     let tc = Toolchain::resolve(&raiz, &tools);
-    let escolha = escolher(&tc, false).unwrap();
+    let escolha = escolher(&tc, false, None).unwrap();
     assert_eq!(
         (escolha.id.as_str(), escolha.program.as_str()),
         ("picocom", "/usr/bin/picocom")
@@ -343,7 +360,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
         },
     )
     .unwrap();
-    assert_eq!(escolher(&tc, false).unwrap().id, "espflash");
+    assert_eq!(escolher(&tc, false, None).unwrap().id, "espflash");
 
     // Chip que NAO e' Espressif (um STM32) com espflash presente: o espflash
     // NAO passa a frente — ele so' fala com chips Espressif.
@@ -357,7 +374,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
         },
     )
     .unwrap();
-    assert_eq!(escolher(&tc, false).unwrap().id, "picocom");
+    assert_eq!(escolher(&tc, false, None).unwrap().id, "picocom");
     let tc = crate::toolchain::set_kit(
         &raiz,
         &tools,
@@ -368,7 +385,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
         },
     )
     .unwrap();
-    assert_eq!(escolher(&tc, false).unwrap().id, "espflash");
+    assert_eq!(escolher(&tc, false, None).unwrap().id, "espflash");
 
     // Chip Espressif SEM espflash detectado: volta ao efetivo, nao falha.
     let sem_espflash: Vec<ToolInfo> = tools
@@ -377,7 +394,7 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
         .cloned()
         .collect();
     let tc = Toolchain::resolve(&raiz, &sem_espflash);
-    assert_eq!(escolher(&tc, false).unwrap().id, "picocom");
+    assert_eq!(escolher(&tc, false, None).unwrap().id, "picocom");
 
     // O autor FIXOU minicom: vale mesmo com chip Espressif e espflash presente.
     let tc = crate::toolchain::set(
@@ -388,11 +405,11 @@ fn the_monitor_choice_prefers_espflash_only_for_espressif_kits_and_respects_a_fi
         "",
     )
     .unwrap();
-    assert_eq!(escolher(&tc, false).unwrap().id, "minicom");
+    assert_eq!(escolher(&tc, false, None).unwrap().id, "minicom");
 
     // Nenhum monitor detectado: None, e o handler diz o que instalar.
     let tc = Toolchain::resolve(&raiz, &[]);
-    assert!(escolher(&tc, false).is_none());
+    assert!(escolher(&tc, false, None).is_none());
 }
 
 /// Fatia 5 da cadeia Python (2026-09-13): num projeto `MicroPython` o monitor
@@ -408,8 +425,8 @@ fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
     ];
     let tc = Toolchain::resolve(&raiz, &tools);
     // Projeto comum: picocom (primeiro do catalogo); mpremote so' com MicroPython.
-    assert_eq!(escolher(&tc, false).unwrap().id, "picocom");
-    let escolha = escolher(&tc, true).unwrap();
+    assert_eq!(escolher(&tc, false, None).unwrap().id, "picocom");
+    let escolha = escolher(&tc, true, None).unwrap();
     assert_eq!(
         (escolha.id.as_str(), escolha.program.as_str()),
         ("mpremote", "/home/x/.local/bin/mpremote")
@@ -417,11 +434,11 @@ fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
     // So' o mpremote na maquina: e' o efetivo mesmo fora de MicroPython.
     let so_mpremote = vec![detectada("mpremote", "/home/x/.local/bin/mpremote")];
     let tc = Toolchain::resolve(&raiz, &so_mpremote);
-    assert_eq!(escolher(&tc, false).unwrap().id, "mpremote");
+    assert_eq!(escolher(&tc, false, None).unwrap().id, "mpremote");
     // MicroPython SEM mpremote: volta ao efetivo, nao falha.
     let so_picocom = vec![detectada("picocom", "/usr/bin/picocom")];
     let tc = Toolchain::resolve(&raiz, &so_picocom);
-    assert_eq!(escolher(&tc, true).unwrap().id, "picocom");
+    assert_eq!(escolher(&tc, true, None).unwrap().id, "picocom");
     // Fixado picocom: vale mesmo em MicroPython com mpremote presente.
     let tc = crate::toolchain::set(
         &raiz,
@@ -431,7 +448,7 @@ fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
         "",
     )
     .unwrap();
-    assert_eq!(escolher(&tc, true).unwrap().id, "picocom");
+    assert_eq!(escolher(&tc, true, None).unwrap().id, "picocom");
 
     // A linha de comando do REPL: `connect <dev> repl`, sem baud.
     let (programa, args) = command_line(
@@ -439,6 +456,7 @@ fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
         "/home/x/.local/bin/mpremote",
         "/dev/ttyUSB0",
         DEFAULT_BAUD,
+        None,
         None,
     );
     assert_eq!(programa, "/home/x/.local/bin/mpremote");

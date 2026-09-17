@@ -263,6 +263,7 @@ mod tests {
             Some("/dev/ttyUSB0"),
             Some(1_048_576),
             Some(&fw),
+            None,
             &acha,
         )
         .unwrap();
@@ -292,7 +293,7 @@ mod tests {
 
         // Sem porta: recusa; motor pedido diferente: recusa nomeando a pagina.
         assert!(matches!(
-            propose(&modelo, None, None, None, Some(&fw), &acha),
+            propose(&modelo, None, None, None, Some(&fw), None, &acha),
             Err(FlashError::NoDevice { .. })
         ));
         assert!(matches!(
@@ -302,6 +303,7 @@ mod tests {
                 Some("/dev/ttyUSB0"),
                 None,
                 Some(&fw),
+                None,
                 &acha
             ),
             Err(FlashError::UnknownEngine { .. })
@@ -314,6 +316,7 @@ mod tests {
                 Some("/dev/ttyUSB0"),
                 None,
                 Some(&fw),
+                None,
                 &|_| None
             ),
             Err(FlashError::MissingTool { .. })
@@ -324,7 +327,7 @@ mod tests {
     #[test]
     fn a_picotool_firmware_loads_the_uf2() {
         let fw = imagem("picotool", None, None, "/ide/fw/RPI_PICO.uf2");
-        let p = propose(&modelo(None), None, None, None, Some(&fw), &acha).unwrap();
+        let p = propose(&modelo(None), None, None, None, Some(&fw), None, &acha).unwrap();
         assert_eq!(p.command, "'/x/picotool' load -f -x '/ide/fw/RPI_PICO.uf2'");
         assert!(p.source.iter().any(|s| s.contains("RPI-RP2")));
         assert!(p.warnings.is_empty());

@@ -85,6 +85,8 @@ Item {
 
     EmbeddedFlashController {
         id: flashController
+
+        frameworks: root.projectFrameworks
     }
 
     EmbeddedAccessController {

@@ -68,6 +68,10 @@ impl Core {
             }
         };
         let modelo = self.compute_project_model(&root);
+        // O wrapper do framework (bloco E), quando esta' nesta maquina.
+        let framework = crate::build::engine::resolve(&modelo, self.sdk_home().as_deref())
+            .ok()
+            .flatten();
         let acha = |binario: &str| self.detector.find_in_path(binario);
         match flash::propose(
             &modelo,
@@ -75,6 +79,7 @@ impl Core {
             pedido.device.as_deref(),
             pedido.flash_size_bytes,
             firmware.as_ref(),
+            framework.as_ref(),
             &acha,
         ) {
             Ok(proposta) => JsonRpcResponse::success(request_id, json!(proposta)),

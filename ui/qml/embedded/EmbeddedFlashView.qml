@@ -48,7 +48,7 @@ Item {
 
             // O motor: vazio = o que o modelo do projeto sugere.
             Repeater {
-                model: root.flash ? root.flash.engines : []
+                model: root.flash ? root.flash.allEngines : []
 
                 KvToggleChip {
                     required property string modelData

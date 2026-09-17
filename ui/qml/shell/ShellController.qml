@@ -158,6 +158,7 @@ Item {
             gradle: "Gradle",
             python: "Python",
             make: "Make",
+            platformIo: "PlatformIO",
             unknown: qsTr("Projeto")
         };
         return labels[kind] !== undefined ? labels[kind] : kind;

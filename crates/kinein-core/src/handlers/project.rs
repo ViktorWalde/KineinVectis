@@ -51,7 +51,36 @@ impl Core {
         root: &std::path::Path,
     ) -> kinein_protocol::ProjectModel {
         let toolchain = crate::toolchain::Toolchain::resolve(root, &self.detected_tools());
-        crate::project::model(root, toolchain.chip())
+        // O ambiente do modelo e' o do CORE: os binarios pelo detector (o
+        // mesmo que o build e o kit usam — antes o modelo lia o PATH do
+        // processo por conta propria), o $HOME real ou o fixado pelo teste.
+        let hermetico = self.home_override.is_some();
+        let var = |nome: &str| {
+            if hermetico {
+                None
+            } else {
+                std::env::var(nome).ok()
+            }
+        };
+        let binario = |nome: &str| self.detector.find_in_path(nome);
+        let ambiente = crate::project::sdk::Ambiente {
+            var: &var,
+            binario: &binario,
+            home: self.sdk_home(),
+        };
+        crate::project::model_in(root, toolchain.chip(), &ambiente)
+    }
+
+    /// O motor do framework deste projeto (bloco E): pelo modelo e pelo
+    /// `$HOME` do core. `Err` = framework reconhecido, ferramenta ausente.
+    pub(crate) fn framework_engine(
+        &self,
+        root: &std::path::Path,
+    ) -> Result<Option<crate::build::Engine>, crate::build::EngineError> {
+        crate::build::engine::resolve(
+            &self.compute_project_model(root),
+            self.sdk_home().as_deref(),
+        )
     }
 
     /// Emite `event.project.changed` com o modelo recomputado. Chamado ao abrir

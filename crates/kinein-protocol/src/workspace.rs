@@ -21,6 +21,11 @@ pub enum ProjectKind {
     /// `bear` is installed. Loses to `CMakeLists.txt` in precedence — a `CMake`
     /// tree may also carry a Makefile.
     Make,
+    /// `PlatformIO` project (`platformio.ini`, `0.117.0`): built, uploaded and
+    /// monitored by `pio`. Loses to `CMakeLists.txt` (a `PlatformIO` project
+    /// with `framework = espidf` is also a `CMake` tree — the build engine
+    /// still picks `pio`, by the framework); wins over a plain Makefile.
+    PlatformIo,
     /// No known build system marker was found.
     Unknown,
 }
@@ -45,6 +50,8 @@ pub enum BuildSystem {
     Python,
     /// Plain `Makefile` (`0.115.0`).
     Make,
+    /// `PlatformIO` (`platformio.ini`, `0.117.0`).
+    PlatformIo,
 }
 
 impl BuildSystem {
@@ -58,6 +65,7 @@ impl BuildSystem {
             Self::Gradle => ProjectKind::Gradle,
             Self::Python => ProjectKind::Python,
             Self::Make => ProjectKind::Make,
+            Self::PlatformIo => ProjectKind::PlatformIo,
         }
     }
 }

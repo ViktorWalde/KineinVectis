@@ -271,11 +271,11 @@ E3 entrega o processo; os filtros vêm depois, se forem pedidos por dor real.
 
 | framework | build | licença | o que a IDE precisa saber | hoje |
 | --- | --- | --- | --- | --- |
-| **ESP-IDF** 6.1 | CMake + Ninja (`idf.py` é wrapper; `cmake -G Ninja -DIDF_TARGET=`) | Apache-2.0 | `IDF_PATH`, toolchain `xtensa-esp-elf`/`riscv32-esp-elf` no PATH, `build/flasher_args.json`, `sdkconfig` (menuconfig = `idf.py menuconfig` no terminal) | ✗ |
-| **Zephyr** | `west build -b <board>` (CMake + Kconfig + devicetree) | Apache-2.0 (west também) | workspace `west`, Zephyr SDK, `board`, runners de `west flash/debug` | ✗ |
-| **pico-sdk** | CMake (`PICO_SDK_PATH`, `pico_sdk_import.cmake`) | BSD-3 | SDK, toolchain arm, picotool, UF2 em `build/` | ✗ |
+| **ESP-IDF** 6.1 | CMake + Ninja (`idf.py` é wrapper; `cmake -G Ninja -DIDF_TARGET=`) | Apache-2.0 | `IDF_PATH`, toolchain `xtensa-esp-elf`/`riscv32-esp-elf` no PATH, `build/flasher_args.json`, `sdkconfig` (menuconfig = `idf.py menuconfig` no terminal) | ◐ 2026-09-17 — build/flash/monitor pelo `idf.py` ativado (40 §7.48); menuconfig ✗ |
+| **Zephyr** | `west build -b <board>` (CMake + Kconfig + devicetree) | Apache-2.0 (west também) | workspace `west`, Zephyr SDK, `board`, runners de `west flash/debug` | ◐ 2026-09-17 — `west build`/`west flash` (40 §7.48); debug ✗ |
+| **pico-sdk** | CMake (`PICO_SDK_PATH`, `pico_sdk_import.cmake`) | BSD-3 | SDK, toolchain arm, picotool, UF2 em `build/` | ✓ 2026-09-17 — `-DPICO_SDK_PATH` no configure, UF2 pelo picotool (40 §7.48) |
 | STM32Cube HAL / CMSIS | CMake (CubeMX gera `CMakeLists`; CubeMX é proprietário) | BSD-3 / Apache-2.0 | linker script, startup, `-DSTM32F4xx` | ◐ (kit genérico) |
-| **PlatformIO** | `pio run` (Python; `platformio.ini`) | Apache-2.0 | `pio` como motor de build/upload/monitor/test/check para projetos que já são PlatformIO | ✗ |
+| **PlatformIO** | `pio run` (Python; `platformio.ini`) | Apache-2.0 | `pio` como motor de build/upload/monitor/test/check para projetos que já são PlatformIO | ◐ 2026-09-17 — run/upload/monitor (40 §7.48); test/check ✗ |
 | CMSIS-Pack / csolution | `cbuild` (Open-CMSIS-Pack) | Apache-2.0 | `.csolution.yml` | ✗ (tardio) |
 | FreeRTOS, TinyUSB, lvgl | fontes no projeto | MIT | nada — entram pelo catálogo de bibliotecas se pedidos | catálogo |
 | Arduino | arduino-cli (GPL-3) | — | — | **fora** (decisão 35 §5.7) |
@@ -484,15 +484,25 @@ BLOCO D — embarcado em profundidade: o que o Cortex-Debug/probe-rs MOSTRAM
                                             (nRF52840, STM32F4) que o QEMU nao tem
 
 BLOCO E — frameworks: a IDE reconhece o projeto e configura, sem editar a mao
- E1  ESP-IDF                                detectar (project.cmake), IDF_PATH, IDF_TARGET
-                                            do A2, toolchain no PATH, menuconfig no terminal,
-                                            flasher_args -> A3, size do idf (idf.py size)
- E2  pico-sdk                               PICO_SDK_PATH, UF2 -> A3 (picotool/BOOTSEL),
-                                            Debug Probe -> probe-rs
- E3  Zephyr                                 workspace west, `west build -b`, runners de
-                                            flash/debug, Kconfig/devicetree como texto
- E4  PlatformIO                             `pio` como motor para projeto com platformio.ini:
-                                            run/upload/monitor/test/check
+ E1  ESP-IDF                                FEITO 2026-09-17 (40 §7.48, 0.117.0): build por
+                                            `idf.py build` no ambiente ativado (export.sh ou
+                                            o activate_idf do EIM), `idf.py -p PORT flash`
+                                            no Gravar, IDF Monitor no monitor; detectar,
+                                            IDF_TARGET, flasher_args e size ja' vinham do
+                                            pilar 0. Falta: menuconfig no terminal
+ E2  pico-sdk                               FEITO 2026-09-17 (40 §7.48): -DPICO_SDK_PATH no
+                                            configure (build.run e cmake.configure); UF2 ->
+                                            picotool (E4 do 38). Debug Probe -> probe-rs e'
+                                            o kit de sempre
+ E3  Zephyr                                 FEITO 2026-09-17 (40 §7.48): `west build -d
+                                            build -b <placa>` (placa do CMakeCache ou de
+                                            `west config build.board`), `west flash -d
+                                            build` como padrao do Gravar. Falta: runners
+                                            de debug, Kconfig/devicetree como texto
+ E4  PlatformIO                             FEITO 2026-09-17 (40 §7.48): platformio.ini e'
+                                            tipo de projeto; `pio run`, `pio run -t upload
+                                            [--upload-port]`, `pio device monitor`. Falta:
+                                            test/check pelo pio
  E5  templates curados                      cortex-m-quickstart, startup+linker CMSIS por
                                             familia (ja' decidido 35 §5.7), esp-hal, rp-hal
  E6  Unity/Ceedling                         testes C no host como runner do test.rs

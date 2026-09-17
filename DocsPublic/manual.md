@@ -621,6 +621,20 @@ o projeto        o framework pelos marcadores dele (ESP-IDF, Zephyr, pico-sdk,
                  PlatformIO, STM32Cube, Rust bare metal, MicroPython, Yocto,
                  Buildroot), o alvo deduzido, o que falta na maquina com o
                  passo oficial, e o que o modelo NAO conseguiu decidir
+compilar pelo    o botao Compilar usa o WRAPPER do framework quando ele tem
+framework        um: `pio run` (platformio.ini — vence tudo), `idf.py build`
+                 dentro do ambiente ativado (o export.sh de IDF_PATH/
+                 ~/esp/esp-idf, ou o activate_idf_<versao>.sh do EIM em
+                 ~/.espressif/tools — a IDE faz o `source` por voce, no
+                 job), `west build -d build -b <placa>` (a placa do build
+                 anterior ou de `west config build.board`; sem ela o west
+                 diz o que falta), e o CMake de sempre com -DPICO_SDK_PATH
+                 no pico-sdk. Framework reconhecido sem a ferramenta: a IDE
+                 recusa ANTES de rodar e diz o passo (eim install, pipx
+                 install west/platformio). Em Gravar, os motores `idf.py`,
+                 `west` e `platformio` aparecem ao lado do esptool; o
+                 monitor num projeto ESP-IDF e' o IDF Monitor e num
+                 PlatformIO o `pio device monitor`
 portas seriais   vistas pelo sysfs, SEM abrir nenhuma: quem faz a ponte
                  (CP2102, CH340, USB Serial/JTAG...), se voce tem acesso e o
                  aviso do ModemManager quando ele pode ocupar a porta

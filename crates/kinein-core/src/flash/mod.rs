@@ -34,6 +34,7 @@
 //! usuario deve saber antes de apertar vai em `warnings`.
 
 pub mod firmware;
+pub mod frameworks;
 
 use std::path::PathBuf;
 
@@ -111,12 +112,23 @@ pub fn propose(
     device: Option<&str>,
     flash_size_bytes: Option<u64>,
     firmware: Option<&FirmwareImage>,
+    framework: Option<&crate::build::Engine>,
     find_tool: &FindTool<'_>,
 ) -> Result<FlashProposalResult, FlashError> {
     // Um firmware baixado (C5) substitui os artefatos do build: a linha e'
     // a da pagina da placa, com o motor que ela fixa.
     if let Some(imagem) = firmware {
         return firmware::propose(model, imagem, engine, device, flash_size_bytes, find_tool);
+    }
+    // O wrapper do framework (bloco E): pedido pelo nome, ou o que o modelo
+    // sugere para Zephyr (`west`) e PlatformIO (`platformio`).
+    let pedido = engine.map(str::trim).filter(|e| !e.is_empty());
+    let sugerido = model.target.flash_engine.as_deref();
+    if let Some(nome) = pedido
+        .filter(|e| frameworks::is_framework_engine(e))
+        .or_else(|| sugerido.filter(|e| pedido.is_none() && frameworks::is_framework_engine(e)))
+    {
+        return frameworks::propose(model, nome, device, framework);
     }
     let (engine, engine_source) = if let Some(pedido) =
         engine.map(str::trim).filter(|e| !e.is_empty())
@@ -518,6 +530,7 @@ mod tests {
             Some("/dev/ttyUSB0"),
             Some(4 * 1024 * 1024),
             None,
+            None,
             &acha(&["esptool"]),
         )
         .unwrap();
@@ -556,7 +569,8 @@ mod tests {
     fn esptool_refusals_and_variants() {
         let mut m = modelo("espressif", Some("esptool"), None);
         let acha_tool = acha(&["esptool.py"]);
-        let erro = propose(&m, None, Some("/dev/ttyUSB0"), None, None, &acha_tool).unwrap_err();
+        let erro =
+            propose(&m, None, Some("/dev/ttyUSB0"), None, None, None, &acha_tool).unwrap_err();
         assert!(matches!(erro, FlashError::NoArtifact { .. }), "{erro}");
         assert!(erro.to_string().contains("flasher_args.json"));
 
@@ -564,7 +578,7 @@ mod tests {
         r.stub = false;
         r.chip = None;
         m.artifacts.flash_recipe = Some(r);
-        let erro = propose(&m, None, None, None, None, &acha_tool).unwrap_err();
+        let erro = propose(&m, None, None, None, None, None, &acha_tool).unwrap_err();
         assert!(matches!(erro, FlashError::NoDevice { .. }), "{erro}");
 
         let p = propose(
@@ -572,6 +586,7 @@ mod tests {
             None,
             Some("/dev/ttyACM0"),
             Some(2 * 1024 * 1024),
+            None,
             None,
             &acha_tool,
         )
@@ -591,7 +606,8 @@ mod tests {
             p.warnings
         );
 
-        let erro = propose(&m, None, Some("/dev/ttyACM0"), None, None, &acha(&[])).unwrap_err();
+        let erro =
+            propose(&m, None, Some("/dev/ttyACM0"), None, None, None, &acha(&[])).unwrap_err();
         assert!(matches!(erro, FlashError::MissingTool { .. }));
         assert!(erro.to_string().contains("pipx install esptool"));
     }
@@ -610,6 +626,7 @@ mod tests {
             None,
             None,
             None,
+            None,
             &acha(&["probe-rs", "dfu-util", "picotool"]),
         )
         .unwrap();
@@ -620,7 +637,16 @@ mod tests {
         assert_eq!(p.name, "Gravar (probe-rs)");
 
         // O motor escolhido na tela vence o sugerido.
-        let p = propose(&m, Some("dfu-util"), None, None, None, &acha(&["dfu-util"])).unwrap();
+        let p = propose(
+            &m,
+            Some("dfu-util"),
+            None,
+            None,
+            None,
+            None,
+            &acha(&["dfu-util"]),
+        )
+        .unwrap();
         assert_eq!(
             p.command,
             "'/x/dfu-util' -a 0 -s 0x08000000:leave -D '/p/build/fw.bin'"
@@ -636,27 +662,36 @@ mod tests {
             None,
             None,
             None,
+            None,
             &acha(&["dfu-util"]),
         )
         .unwrap_err();
         assert!(erro.to_string().contains("rp2040"), "{erro}");
 
         pico.artifacts.uf2 = vec!["/p/build/blink.uf2".to_owned()];
-        let p = propose(&pico, None, None, None, None, &acha(&["picotool"])).unwrap();
+        let p = propose(&pico, None, None, None, None, None, &acha(&["picotool"])).unwrap();
         assert_eq!(p.command, "'/x/picotool' load -f -x '/p/build/blink.uf2'");
 
         // probe-rs sem chip: pede o kit; sem ELF: pede o build.
         let mut sem_chip = modelo("cortex-m", Some("probe-rs"), None);
         sem_chip.artifacts.elf = vec!["/p/fw".to_owned()];
         assert!(
-            propose(&sem_chip, None, None, None, None, &acha(&["probe-rs"]))
-                .unwrap_err()
-                .to_string()
-                .contains("--chip")
+            propose(
+                &sem_chip,
+                None,
+                None,
+                None,
+                None,
+                None,
+                &acha(&["probe-rs"])
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("--chip")
         );
         let sem_elf = modelo("cortex-m", Some("probe-rs"), Some("nRF52840_xxAA"));
         assert!(
-            propose(&sem_elf, None, None, None, None, &acha(&["probe-rs"]))
+            propose(&sem_elf, None, None, None, None, None, &acha(&["probe-rs"]))
                 .unwrap_err()
                 .to_string()
                 .contains("sem ELF")
@@ -666,9 +701,9 @@ mod tests {
     #[test]
     fn no_engine_and_unknown_engine_are_named() {
         let m = modelo("linux", None, None);
-        let erro = propose(&m, None, None, None, None, &acha(&[])).unwrap_err();
+        let erro = propose(&m, None, None, None, None, None, &acha(&[])).unwrap_err();
         assert!(matches!(erro, FlashError::NoEngine { .. }));
-        let erro = propose(&m, Some("avrdude"), None, None, None, &acha(&[])).unwrap_err();
+        let erro = propose(&m, Some("avrdude"), None, None, None, None, &acha(&[])).unwrap_err();
         assert_eq!(
             erro.to_string(),
             "motor de gravacao `avrdude` desconhecido: use esptool, probe-rs, picotool ou dfu-util"

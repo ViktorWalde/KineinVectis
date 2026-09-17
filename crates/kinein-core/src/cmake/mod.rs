@@ -159,6 +159,7 @@ pub fn configure_command(
     root: &Path,
     preset: Option<&str>,
     toolchain: &crate::toolchain::Toolchain,
+    extra: &[String],
 ) -> Command {
     let programa = toolchain
         .program_for(ToolchainRole::Cmake)
@@ -173,6 +174,9 @@ pub fn configure_command(
     // conflita com um `-G` explicito, e o CMake reclama em vez de adivinhar —
     // que e o comportamento certo, e a mensagem dele nomeia o conflito.
     command.args(toolchain.cmake_arguments());
+    // O que o framework acrescenta (`-DPICO_SDK_PATH`, bloco E do 41): depois
+    // do kit, para um `-D` do kit nao ser sobreposto em silencio.
+    command.args(extra);
     command
 }
 
@@ -484,7 +488,7 @@ mod tests {
     #[test]
     fn configure_command_pins_build_dir_and_exports_cdb() {
         let root = temp_root("command");
-        let command = configure_command(&root, Some("dev"), &Toolchain::resolve(&root, &[]));
+        let command = configure_command(&root, Some("dev"), &Toolchain::resolve(&root, &[]), &[]);
         let arguments = command
             .get_args()
             .map(|argument| argument.to_string_lossy().into_owned())

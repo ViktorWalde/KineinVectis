@@ -19,12 +19,20 @@
 //! mpremote  mpremote connect <dev> repl       (1.29.0, `mpremote connect --help`:
 //!           `connect device next_command`; o REPL nao tem baud — e' o raw REPL
 //!           do `MicroPython` a 115200). Fatia 5 da cadeia Python, 2026-09-13
+//! idf.py    bash -c '<IDF_WRAPPER>' idf <ativacao> -p <dev> monitor
+//!           (ESP-IDF "Start a Project", 2026-09-17: `idf.py -p PORT monitor` —
+//!           o IDF Monitor decodifica o backtrace com o ELF do build; roda no
+//!           ambiente ativado, como o build). Bloco E do `roadmaps/41`
+//! pio       pio device monitor -p <dev> -b <baud>   (PlatformIO "pio device
+//!           monitor": `-p, --port`, `-b, --baud`). Bloco E
 //! ```
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use kinein_protocol::ToolchainRole;
 
+use crate::build::Engine;
+use crate::build::engine::idf_command_args;
 use crate::toolchain::Toolchain;
 
 /// O baud que ESP32, Pico stdio e a maioria dos firmwares usam por padrao.
@@ -33,10 +41,12 @@ pub const DEFAULT_BAUD: u32 = 115_200;
 /// A ferramenta escolhida: id do catalogo e caminho do executavel.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Escolha {
-    /// `tio`, `picocom`, `minicom`, `espflash`.
+    /// `tio`, `picocom`, `minicom`, `espflash`, `mpremote`, `idf.py`, `pio`.
     pub id: String,
-    /// O executavel resolvido.
+    /// O executavel resolvido (`bash` para o `idf.py`, que roda ativado).
     pub program: String,
+    /// A ativacao do ESP-IDF, so' para `idf.py`.
+    pub activation: Option<PathBuf>,
 }
 
 /// Qual monitor abrir para este kit.
@@ -50,14 +60,41 @@ pub struct Escolha {
 /// (o primeiro detectado na ordem do catalogo: tio, picocom, minicom,
 /// espflash — o mpremote e' o ultimo e nunca vence sozinho).
 #[must_use]
-pub fn escolher(toolchain: &Toolchain, micropython: bool) -> Option<Escolha> {
-    let (efetivo_id, efetivo_path) = toolchain.effective_program(ToolchainRole::SerialMonitor)?;
+pub fn escolher(
+    toolchain: &Toolchain,
+    micropython: bool,
+    framework: Option<&Engine>,
+) -> Option<Escolha> {
     let fixado = toolchain.chosen(ToolchainRole::SerialMonitor).is_some();
+    // O wrapper do framework (bloco E) vem antes de tudo que nao foi fixado:
+    // o IDF Monitor e o `pio device monitor` sao o que a doc de cada um
+    // manda usar — e nao exigem monitor nenhum no catalogo.
+    if !fixado {
+        match framework {
+            Some(Engine::EspIdf { activation }) => {
+                return Some(Escolha {
+                    id: "idf.py".to_owned(),
+                    program: "bash".to_owned(),
+                    activation: Some(activation.clone()),
+                });
+            }
+            Some(Engine::PlatformIo { pio }) => {
+                return Some(Escolha {
+                    id: "pio".to_owned(),
+                    program: pio.display().to_string(),
+                    activation: None,
+                });
+            }
+            _ => {}
+        }
+    }
+    let (efetivo_id, efetivo_path) = toolchain.effective_program(ToolchainRole::SerialMonitor)?;
     if !fixado && micropython {
         if let Some(mpremote) = toolchain.candidate_path(ToolchainRole::SerialMonitor, "mpremote") {
             return Some(Escolha {
                 id: "mpremote".to_owned(),
                 program: mpremote.to_owned(),
+                activation: None,
             });
         }
     }
@@ -66,12 +103,14 @@ pub fn escolher(toolchain: &Toolchain, micropython: bool) -> Option<Escolha> {
             return Some(Escolha {
                 id: "espflash".to_owned(),
                 program: espflash.to_owned(),
+                activation: None,
             });
         }
     }
     Some(Escolha {
         id: efetivo_id.to_owned(),
         program: efetivo_path.to_owned(),
+        activation: None,
     })
 }
 
@@ -90,9 +129,23 @@ pub fn command_line(
     device: &str,
     baud: u32,
     elf: Option<&Path>,
+    activation: Option<&Path>,
 ) -> (String, Vec<String>) {
     let baud = baud.to_string();
     let args = match tool_id {
+        // O IDF Monitor, no ambiente ativado (a mesma forma do build).
+        "idf.py" => idf_command_args(
+            activation.unwrap_or_else(|| Path::new("export.sh")),
+            &["-p", device, "monitor"],
+        ),
+        "pio" => vec![
+            "device".to_owned(),
+            "monitor".to_owned(),
+            "-p".to_owned(),
+            device.to_owned(),
+            "-b".to_owned(),
+            baud,
+        ],
         "espflash" => {
             let mut args = vec![
                 "monitor".to_owned(),
