@@ -43,16 +43,43 @@ Item {
             root.runtimeController.handleTerminalOpened(id, command, command);
         }
 
+        // Os FILHOS do EmbeddedController (identity, flash, access, files)
+        // sao donos proprios: cada desfecho vai ao dono, e a recusa do core
+        // (`requestFailed`) chega a todos — cada um ignora o metodo que nao
+        // e' seu. Ate' 2026-09-17 (C2) isto chamava `handleIdentifyStarted`/
+        // `handleIdentified` NO PAI, onde nao existem, e `flashProposalResolved`/
+        // `serialAccessResolved` nao tinham consumidor: o core respondia e a
+        // tela nunca recebia — o "sintoma do Docker" (40 §7.34) de novo.
         function onSerialIdentifyStarted(jobId, command) {
-            root.embeddedController.handleIdentifyStarted(jobId, command);
+            root.embeddedController.identity.handleStarted(jobId, command);
         }
 
         function onSerialIdentified(outcome) {
-            root.embeddedController.handleIdentified(outcome);
+            root.embeddedController.identity.handleIdentified(outcome);
+        }
+
+        function onFlashProposalResolved(proposal) {
+            root.embeddedController.flash.handleProposal(proposal);
+        }
+
+        function onSerialAccessResolved(channels) {
+            root.embeddedController.access.handleChannels(channels);
+        }
+
+        function onSerialFilesStarted(jobId, command) {
+            root.embeddedController.files.handleStarted(jobId, command);
+        }
+
+        function onSerialFilesResolved(outcome) {
+            root.embeddedController.files.handleOutcome(outcome);
         }
 
         function onRequestFailed(method, message) {
             root.embeddedController.handleFailed(method, message);
+            root.embeddedController.identity.handleFailed(method, message);
+            root.embeddedController.flash.handleFailed(method, message);
+            root.embeddedController.access.handleFailed(method, message);
+            root.embeddedController.files.handleFailed(method, message);
         }
     }
 }

@@ -87,6 +87,9 @@ Item {
         pythonCreating: pythonController.creating
         pythonMessage: pythonController.bannerMessage()
         pythonActionLabel: pythonController.actionLabel()
+        pythonNeedsStubs: pythonController.needsStubs
+        pythonInstallingStubs: pythonController.installingStubs
+        pythonStubsMessage: pythonController.stubsMessage()
         onAutoConfigureRequested: root.coreClient.cmakeConfigure()
     }
 
@@ -224,6 +227,20 @@ Item {
 
         function onSaveRequested(name, command) {
             runConfigController.saveRunConfigRequested("", name, command);
+        }
+    }
+
+    // Arquivos na placa (C2): "enviar o arquivo aberto" pergunta ao editor
+    // qual e' NO CLIQUE; o baixado abre no editor. Fiacao entre dois donos.
+    Connections {
+        target: environment.embeddedController.files
+
+        function onUploadCurrentRequested() {
+            environment.embeddedController.files.upload(editorController.currentFilePath(), "");
+        }
+
+        function onOpenLocalRequested(local) {
+            editorController.openDiagnostic(local, 1, 1);
         }
     }
 

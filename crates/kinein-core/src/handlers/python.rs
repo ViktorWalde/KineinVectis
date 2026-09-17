@@ -31,15 +31,26 @@ impl Core {
     pub(crate) fn configure_python_lsp(&mut self, root: &Path) {
         let interpretador =
             crate::python::env::python_env(root, &self.python_tools()).map(|e| e.interpreter);
+        // Os stubs da placa (C4): `<root>/typings` vai como `stubPath`
+        // (basedpyright.analysis.stubPath, docs.basedpyright.com "Language
+        // server settings", 2026-09-17) e um stub sem modulo de verdade deixa
+        // de ser erro (reportMissingModuleSource: none, como o pyproject de
+        // exemplo dos micropython-stubs) — o `machine` so' existe na placa.
+        let stubs = crate::python::stubs::installed(root);
         let settings = interpretador.map_or(Value::Null, |caminho| {
+            let mut analysis =
+                json!({ "autoSearchPaths": true, "diagnosticMode": "openFilesOnly" });
+            if let Some(pasta) = &stubs {
+                analysis["stubPath"] = json!(pasta.display().to_string());
+                analysis["diagnosticSeverityOverrides"] =
+                    json!({ "reportMissingModuleSource": "none" });
+            }
             json!({
                 "python": {
                     "pythonPath": caminho,
                     "analysis": { "autoSearchPaths": true, "diagnosticMode": "openFilesOnly" }
                 },
-                "basedpyright": {
-                    "analysis": { "autoSearchPaths": true, "diagnosticMode": "openFilesOnly" }
-                }
+                "basedpyright": { "analysis": analysis }
             })
         });
         let comando = self
@@ -100,6 +111,7 @@ impl Core {
     ) -> Option<JsonRpcResponse> {
         match method {
             "python.status" => Some(self.python_status_response(request_id, params)),
+            "python.stubs" => Some(self.python_stubs_response(request_id, params)),
             "python.createEnvironment" => {
                 Some(self.python_create_environment_response(request_id, params))
             }
@@ -130,7 +142,18 @@ impl Core {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "python.status");
         };
-        let status = python::status(&root, &self.python_tools(), &self.criadores_de_ambiente());
+        let mut status = python::status(&root, &self.python_tools(), &self.criadores_de_ambiente());
+        // Os stubs da placa (C4): a pasta quando existe, e o pacote que o
+        // chip do kit/identidade sugere — so' num projeto MicroPython.
+        status.stubs_path = python::stubs::installed(&root).map(|p| p.display().to_string());
+        if crate::project::e_micropython(&root) {
+            let modelo = self.compute_project_model(&root);
+            status.stubs_suggested = python::stubs::suggest(
+                modelo.target.chip.as_deref(),
+                modelo.target.family.as_deref(),
+            )
+            .map(|(port, board)| python::stubs::package(&port, board.as_deref()));
+        }
         JsonRpcResponse::success(request_id, json!(status))
     }
 

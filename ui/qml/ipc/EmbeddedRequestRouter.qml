@@ -42,8 +42,8 @@ Item {
     Connections {
         target: root.embeddedController ? root.embeddedController.flash : null
 
-        function onProposalRequested(device, engine, flashSizeBytes) {
-            root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes);
+        function onProposalRequested(device, engine, flashSizeBytes, firmware) {
+            root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes, firmware);
         }
     }
 
@@ -54,6 +54,16 @@ Item {
 
         function onDiagnoseRequested(device) {
             root.coreClient.serialAccess(device);
+        }
+    }
+
+    // Arquivos na placa (C2): cada gesto e' um job; o que escreve ja' foi
+    // confirmado no controller antes de chegar aqui.
+    Connections {
+        target: root.embeddedController ? root.embeddedController.files : null
+
+        function onFilesRequested(device, action, path, local) {
+            root.coreClient.serialFiles(device, action, path, local);
         }
     }
 }

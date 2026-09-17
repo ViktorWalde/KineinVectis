@@ -655,6 +655,27 @@ gravar           e' uma CONFIGURACAO DE EXECUCAO, nao um botao magico: escolha
                  configuracao (e' assim que um esptool antigo troca
                  write-flash por write_flash). Sem build, a IDE diz "compile";
                  sem porta, "escolha a porta"; sem a ferramenta, o passo
+arquivos na      a pasta ao lado de cada porta abre "Arquivos na placa"
+placa            (MicroPython, pelo `mpremote fs`): a lista da raiz, entrar
+                 em pastas, "Baixar" (para `placa/<caminho>` no seu projeto —
+                 o espelho da placa — e o arquivo abre no editor), "Enviar
+                 arquivo aberto" (o `.py` do editor vai para a placa),
+                 "Apagar". Tudo que ESCREVE na placa pede um segundo clique.
+                 Cada gesto interrompe o programa em execucao (raw REPL) e a
+                 placa reinicia ao fim; se a primeira conexao falhar porque o
+                 firmware inunda a serial, a IDE tenta de novo uma vez. Sem
+                 mpremote, o passo de instalacao.
+firmware         no catalogo de instalacao (secao "Toolchains instalaveis")
+MicroPython      ha' o firmware oficial do micropython.org v1.29.0 para
+                 ESP32, ESP32-C3, ESP32-S3, Pico e Pico W, marcado "firmware":
+                 "Baixar" o traz para a pasta da IDE com o SHA-256 conferido
+                 (a fonte nao publica checksum: o pinado foi medido em
+                 2026-09-17 e a tela o diz). Depois, em Gravar, escolha o
+                 firmware baixado no lugar do build: a linha e' a da pagina
+                 da placa (`write-flash 0x1000` no ESP32 classico, `0x0` em
+                 C3/S3; `picotool load -f -x` no Pico), com o aviso de
+                 apagar a flash na primeira instalacao. Nada grava sem o seu
+                 clique — gravar o firmware APAGA o que esta' na placa.
 porta do         o chip "Executar" ao lado de cada porta a ESCOLHE para o
 Executar         Executar de um projeto MicroPython (`mpremote connect
                  <porta> run`); clicar de novo desfaz. Sem escolha, o
@@ -759,8 +780,15 @@ Embarcados abre o **REPL do `mpremote`** na porta do botão, e **Executar** num
 connect <porta> run`, e a linha abaixo da lista diz qual porta está valendo.
 Sem escolha, o `mpremote` usa a primeira porta que achar. Se o `mpremote` não
 está na máquina, a aba de execução diz o que instalar em vez de rodar um
-`import machine` no Python do desktop. O firmware oficial ainda se grava fora
-da IDE — é a próxima fatia da frente de embarcados.
+`import machine` no Python do desktop. O **firmware oficial** se baixa e se
+grava pelo painel de Embarcados (catálogo de instalação → Gravar), e os
+**arquivos da placa** se leem, enviam e apagam pela pasta ao lado da porta
+(veja a seção Embarcados). **Stubs da placa:** num projeto MicroPython com o
+chip conhecido (kit ou identidade pelo canal), a faixa de saúde oferece
+**Instalar stubs** — `micropython-<port>-<placa>-stubs` em `typings/` na raiz
+do projeto, pelo `uv` (ou o `pip` do interpretador); o basedpyright passa a
+receber a pasta e o `import machine` completa e deixa de ser marcado como
+módulo inexistente. Apague `typings/` para remover.
 
 **O que a IDE não faz:** instalar o `uv`, o `basedpyright`, o `ruff` ou o
 `debugpy` por conta própria. O painel **Instalar ferramentas** (`Ctrl+Alt+H`)

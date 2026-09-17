@@ -16,7 +16,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use kinein_protocol::JsonRpcRequest;
+use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 use serde_json::{Value, json};
 
 use crate::Core;
@@ -295,4 +295,114 @@ fn the_job_runs_the_detected_uv_and_the_context_follows_the_new_environment() {
                 .is_some_and(|p| p["jobId"] == segundo.as_str())
     });
     assert_eq!(job.params.clone().unwrap()["status"], "failed", "{job:?}");
+}
+
+/// C4: os stubs da placa. Num projeto `MicroPython` (o `main.py` importa
+/// `machine`) o `python.status` sugere o pacote pelo chip do kit; o
+/// `python.stubs` roda o `uv pip install --target typings` DETECTADO com o
+/// pacote sugerido (ou o pedido), o desfecho e' `event.python.stubs`, e o
+/// status passa a dizer onde os stubs estao. Sem sugestao nem pedido, recusa
+/// dizendo o que fixar.
+#[test]
+fn the_board_stubs_are_suggested_installed_into_typings_and_reported() {
+    let _serial = EXECUTAVEIS.lock().unwrap();
+    let raiz = temp_dir("stubs");
+    escrever(
+        &raiz.join("main.py"),
+        "import machine\nprint(machine.Pin(2))\n",
+    );
+    let bin = temp_dir("stubs-bin");
+    let registro = raiz.join("pedido.txt");
+    script(&bin.join("python3"), "echo Python 3.14.7");
+    // O uv falso: grava os argv e "instala" um .pyi na pasta --target.
+    script(
+        &bin.join("uv"),
+        &format!(
+            "echo \"$@\" > {reg}\nalvo=\"\"\nwhile [ $# -gt 0 ]; do if [ \"$1\" = --target ]; then alvo=\"$2\"; fi; shift; done\nmkdir -p \"$alvo\" && touch \"$alvo/machine.pyi\"\necho instalado",
+            reg = registro.display()
+        ),
+    );
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = Core::with_detector(ToolDetector::with_search_path(&bin));
+    core.enable_lsp(sender);
+    abrir(&mut core, &raiz);
+    let espera = |core: &mut Core, ate: &dyn Fn(&JsonRpcRequest) -> bool| {
+        let limite = Instant::now() + Duration::from_secs(20);
+        loop {
+            let evento = receiver
+                .recv_timeout(limite.saturating_duration_since(Instant::now()))
+                .expect("evento dentro do prazo");
+            core.observe_notification(&evento);
+            if ate(&evento) {
+                return evento;
+            }
+        }
+    };
+    espera(&mut core, &|e| e.method == "event.index.finished");
+
+    // Sem chip no kit: MicroPython sem placa nao tem sugestao, e o pedido
+    // sem `port` e' recusado dizendo o que fixar.
+    let antes = status(&mut core);
+    assert_eq!(antes["stubsPath"], Value::Null);
+    assert_eq!(antes["stubsSuggested"], Value::Null, "{antes}");
+    let recusa = core.handle_request(&JsonRpcRequest::new(8_i64, "python.stubs", Some(json!({}))));
+    let erro = recusa.response().error.clone().unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
+    assert!(
+        erro.message.contains("fixe o chip no kit"),
+        "{}",
+        erro.message
+    );
+
+    // O chip no kit: a sugestao segue a lista publicada (placa C3).
+    let kit = core.handle_request(&JsonRpcRequest::new(
+        9_i64,
+        "toolchain.setKit",
+        Some(json!({ "chip": "esp32c3" })),
+    ));
+    assert!(kit.response().error.is_none(), "{:?}", kit.response().error);
+    let com_chip = status(&mut core);
+    assert_eq!(
+        com_chip["stubsSuggested"], "micropython-esp32-esp32_generic_c3-stubs",
+        "{com_chip}"
+    );
+
+    // Instalar: a linha do uv com --target <root>/typings e o pacote sugerido.
+    let aceito = core.handle_request(&JsonRpcRequest::new(
+        10_i64,
+        "python.stubs",
+        Some(json!({})),
+    ));
+    let r = aceito.response().result.clone().expect("aceito");
+    assert_eq!(r["package"], "micropython-esp32-esp32_generic_c3-stubs");
+    assert_eq!(r["target"], raiz.join("typings").display().to_string());
+    let fim = espera(&mut core, &|e| e.method == "event.python.stubs");
+    let p = fim.params.unwrap();
+    assert_eq!(p["jobId"], r["jobId"]);
+    assert_eq!(p["success"], true, "{p}");
+    assert_eq!(
+        std::fs::read_to_string(&registro).unwrap().trim(),
+        format!(
+            "pip install -U --link-mode=copy --target {} micropython-esp32-esp32_generic_c3-stubs",
+            raiz.join("typings").display()
+        )
+    );
+    assert!(raiz.join("typings/machine.pyi").is_file());
+    let depois = status(&mut core);
+    assert_eq!(
+        depois["stubsPath"],
+        raiz.join("typings").display().to_string()
+    );
+
+    // O pedido explicito vence a sugestao.
+    let aceito = core.handle_request(&JsonRpcRequest::new(
+        11_i64,
+        "python.stubs",
+        Some(json!({ "port": "rp2", "board": "rpi_pico_w" })),
+    ));
+    assert_eq!(
+        aceito.response().result.clone().unwrap()["package"],
+        "micropython-rp2-rpi_pico_w-stubs"
+    );
+    espera(&mut core, &|e| e.method == "event.python.stubs");
 }

@@ -12,9 +12,51 @@
 //! `~/.espressif/tools`); Zephyr SDK (precisa do `setup.sh` — e' importar
 //! kit, P1); "latest" de qualquer fonte.
 
-/// Uma toolchain instalavel: o que a tela mostra ANTES do clique.
+/// O que uma entrada e': uma toolchain (tarball com `bin/`, desempacotado
+/// pelo `tar`) ou um FIRMWARE (`firmware.rs`: um arquivo `.bin`/`.uf2` que
+/// fica inteiro na pasta e o motor do E4 grava na placa).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Kind {
+    /// Tarball com `bin/` no topo.
+    Toolchain,
+    /// Um arquivo so', gravado pelo motor de `flash.rs`.
+    Firmware,
+}
+
+impl Kind {
+    /// A palavra do protocolo (`InstallableToolchain.kind`).
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Toolchain => "toolchain",
+            Self::Firmware => "firmware",
+        }
+    }
+}
+
+/// Como um firmware se grava: o motor do E4 e o offset que a PAGINA da
+/// placa manda (`write_flash 0x1000` no ESP32 classico, `0` no C3/S3; UF2
+/// no Pico e' copia/`picotool`, sem offset).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Firmware {
+    /// O nome da placa na fonte (`ESP32_GENERIC`, `RPI_PICO_W`).
+    pub board: &'static str,
+    /// `esptool` ou `picotool` — a lingua do `flash.rs`.
+    pub engine: &'static str,
+    /// O offset do `write-flash`, quando o motor e' o esptool.
+    pub offset: Option<&'static str>,
+    /// A chave do chip para o `--chip` do esptool (`esp32`, `esp32c3`), a
+    /// mesma do kit; `None` = o motor detecta.
+    pub chip: Option<&'static str>,
+}
+
+/// Uma toolchain (ou firmware) instalavel: o que a tela mostra ANTES do clique.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Entrada {
+    /// Toolchain ou firmware.
+    pub kind: Kind,
+    /// Como se grava, quando `kind` e' firmware.
+    pub firmware: Option<Firmware>,
     /// Id do catalogo e nome da pasta sob a raiz de instalacao.
     pub id: &'static str,
     /// Rotulo humano.
@@ -38,6 +80,8 @@ pub struct Entrada {
 /// O catalogo, na ordem em que a tela lista.
 pub const CATALOGO: &[Entrada] = &[
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "arm-gnu-arm-none-eabi",
         label: "Arm GNU Toolchain (arm-none-eabi) — Cortex-M/R bare metal",
         version: "15.2.rel1",
@@ -49,6 +93,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "developer.arm.com, arquivo .sha256asc do release, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "xpack-arm-none-eabi-gcc",
         label: "xPack GNU Arm Embedded GCC (arm-none-eabi)",
         version: "15.2.1-1.1",
@@ -60,6 +106,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "GitHub release, arquivo .sha, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "xpack-riscv-none-elf-gcc",
         label: "xPack GNU RISC-V Embedded GCC (riscv-none-elf)",
         version: "15.2.0-1",
@@ -71,6 +119,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "GitHub release, arquivo .sha, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "arm-toolchain-for-embedded",
         label: "Arm Toolchain for Embedded (clang/LLVM, bare metal)",
         version: "23.1.0",
@@ -82,6 +132,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "GitHub release, arquivo .sha256, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "arm-gnu-aarch64-none-linux-gnu",
         label: "Arm GNU Toolchain (aarch64-none-linux-gnu) — Linux 64 bits, com sysroot",
         version: "15.2.rel1",
@@ -93,6 +145,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "developer.arm.com, arquivo .sha256asc do release, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "arm-gnu-arm-none-linux-gnueabihf",
         label: "Arm GNU Toolchain (arm-none-linux-gnueabihf) — Linux 32 bits hard-float, com sysroot",
         version: "15.2.rel1",
@@ -104,6 +158,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "developer.arm.com, arquivo .sha256asc do release, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "bootlin-aarch64-glibc-stable",
         label: "Bootlin aarch64 glibc stable — Linux 64 bits, com sysroot",
         version: "2026.08-1",
@@ -115,6 +171,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "toolchains.bootlin.com, arquivo .sha256, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "bootlin-armv7-eabihf-glibc-stable",
         label: "Bootlin armv7-eabihf glibc stable — Linux 32 bits hard-float, com sysroot",
         version: "2026.08-1",
@@ -126,6 +184,8 @@ pub const CATALOGO: &[Entrada] = &[
         source: "toolchains.bootlin.com, arquivo .sha256, lido em 2026-09-13",
     },
     Entrada {
+        kind: Kind::Toolchain,
+        firmware: None,
         id: "bootlin-riscv64-lp64d-glibc-stable",
         label: "Bootlin riscv64-lp64d glibc stable — Linux RISC-V 64, com sysroot",
         version: "2026.08-1",
@@ -138,10 +198,13 @@ pub const CATALOGO: &[Entrada] = &[
     },
 ];
 
-/// A entrada de `id`, se existe.
+/// A entrada de `id`, se existe — nas toolchains ou nos firmwares.
 #[must_use]
 pub fn entrada(id: &str) -> Option<&'static Entrada> {
-    CATALOGO.iter().find(|e| e.id == id)
+    CATALOGO
+        .iter()
+        .chain(super::firmware::FIRMWARE.iter())
+        .find(|e| e.id == id)
 }
 
 /// A familia do catalogo que serve uma familia do `project.model`.

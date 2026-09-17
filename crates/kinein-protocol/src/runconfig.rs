@@ -117,6 +117,11 @@ pub struct FlashProposalParams {
     /// warning. Absent = no such check.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub flash_size_bytes: Option<u64>,
+    /// Catalogue id of an INSTALLED firmware (`toolchain.installable`,
+    /// `kind: firmware`, `0.116.0`): the line writes that file at the offset
+    /// its source page fixes, instead of the project's build artifacts.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub firmware: Option<String>,
 }
 
 /// Result of `runConfig.flashProposal`: a run configuration to save.

@@ -25,6 +25,11 @@ Item {
     property bool pythonCreating: false
     property string pythonMessage: ""
     property string pythonActionLabel: ""
+    // Os stubs da placa (C4): faixa informativa num projeto MicroPython sem
+    // typings/ — o botao instala pelo core.
+    property bool pythonNeedsStubs: false
+    property bool pythonInstallingStubs: false
+    property string pythonStubsMessage: ""
     // §5c do roadmap 29: a CDB alcancavel pelo clangd e' mais velha que um
     // arquivo de build que a define, entao o clangd esta usando flags de um
     // projeto que mudou. O core mede (cdb.rs) e reporta no `cmake.status`;
@@ -63,6 +68,9 @@ Item {
     onPythonNeedsEnvironmentChanged: update()
     onPythonCreatingChanged: update()
     onPythonMessageChanged: update()
+    onPythonNeedsStubsChanged: update()
+    onPythonInstallingStubsChanged: update()
+    onPythonStubsMessageChanged: update()
     Component.onCompleted: update()
 
     function handleCmakeStatus(configured, stale, staleBecause, preset) {
@@ -268,6 +276,14 @@ Item {
                 return;
             }
             apply("warning", pythonMessage, pythonActionLabel, "pythonEnvironment");
+            return;
+        }
+        if (pythonNeedsStubs) {
+            if (pythonInstallingStubs) {
+                apply("info", pythonStubsMessage, qsTr("Jobs"), "jobs");
+                return;
+            }
+            apply("info", pythonStubsMessage, qsTr("Instalar stubs"), "pythonStubs");
             return;
         }
         apply("ok", "", "", "");

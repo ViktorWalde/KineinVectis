@@ -76,6 +76,8 @@ Item {
     readonly property alias flash: flashController
     // Permissao por canal (E2): idem, filho.
     readonly property alias access: accessController
+    // Arquivos na placa MicroPython (C2): idem, filho.
+    readonly property alias files: filesController
 
     EmbeddedIdentityController {
         id: identityController
@@ -87,6 +89,10 @@ Item {
 
     EmbeddedAccessController {
         id: accessController
+    }
+
+    EmbeddedFilesController {
+        id: filesController
     }
 
     signal listRequested()
@@ -117,6 +123,7 @@ Item {
         identityController.clear();
         flashController.clear();
         accessController.clear();
+        filesController.clear();
         project = ({});
         projectBusy = false;
         panelVisible = false;

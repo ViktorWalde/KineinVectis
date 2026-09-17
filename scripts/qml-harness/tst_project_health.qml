@@ -80,6 +80,20 @@ Item {
         controller.pythonCreating = false;
         controller.pythonNeedsEnvironment = false;
         if (controller.status !== "ok" || controller.active) failures += 2048;
+        // Os stubs da placa (C4, 2026-09-17): faixa INFORMATIVA, depois do
+        // ambiente (que e' aviso); instalando, aponta para os jobs.
+        controller.pythonStubsMessage = "MicroPython sem os stubs da placa (micropython-esp32-stubs)";
+        controller.pythonNeedsStubs = true;
+        if (controller.status !== "info" || controller.actionTarget !== "pythonStubs"
+                || controller.actionLabel !== "Instalar stubs") failures += 33554432;
+        controller.pythonInstallingStubs = true;
+        if (controller.actionTarget !== "jobs") failures += 67108864;
+        controller.pythonInstallingStubs = false;
+        controller.pythonNeedsEnvironment = true;
+        if (controller.actionTarget !== "pythonEnvironment") failures += 134217728;
+        controller.pythonNeedsEnvironment = false;
+        controller.pythonNeedsStubs = false;
+        if (controller.status !== "ok") failures += 268435456;
         // A CDB velha do C++ vem ANTES do Python: um aviso de cada vez, o mais
         // grave primeiro.
         controller.pythonNeedsEnvironment = true;

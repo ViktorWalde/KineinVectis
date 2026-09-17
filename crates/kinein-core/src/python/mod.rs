@@ -23,6 +23,7 @@ pub mod debug;
 pub mod env;
 pub mod native;
 pub mod run;
+pub mod stubs;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -102,6 +103,8 @@ pub fn status(root: &Path, tools: &PythonTools, criadores: &CriadoresDeAmbiente)
         project_files,
         hint,
         native_module: native::detect(root),
+        stubs_path: None,
+        stubs_suggested: None,
     }
 }
 

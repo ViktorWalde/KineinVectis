@@ -24,8 +24,8 @@ Item {
     Connections {
         target: controller.flash
 
-        function onProposalRequested(device, engine, flashSizeBytes) {
-            root.pedidos.push(device + "|" + engine + "|" + flashSizeBytes);
+        function onProposalRequested(device, engine, flashSizeBytes, firmware) {
+            root.pedidos.push(device + "|" + engine + "|" + flashSizeBytes + (firmware !== "" ? "|fw=" + firmware : ""));
         }
         function onRunRequested(command) { root.rodou.push(command); }
         function onSaveRequested(name, command) { root.salvou.push(name + "=" + command); }
@@ -82,11 +82,24 @@ Item {
         f.run();
         if (root.rodou.length !== 1) failures += 16384;
 
+        // O firmware baixado (C5): toggle, solta o motor (a pagina fixa o
+        // motor), descarta a previa, e vai no pedido; escolher de novo desfaz.
+        f.selectEngine("esptool");
+        f.handleProposal({ name: "Gravar (esptool)", engine: "esptool", command: "e" });
+        f.selectFirmware("micropython-esp32-generic");
+        if (f.firmware !== "micropython-esp32-generic" || f.engine !== "" || f.found) failures += 65536;
+        f.propose("/dev/ttyUSB0", 0);
+        if (root.pedidos[root.pedidos.length - 1] !== "/dev/ttyUSB0||0|fw=micropython-esp32-generic") failures += 131072;
+        f.handleProposal({ name: "Gravar firmware (MicroPython — ESP32_GENERIC)", engine: "esptool", command: "x" });
+        f.selectFirmware("micropython-esp32-generic");
+        if (f.firmware !== "" || f.found) failures += 262144;
+
         // Trocar de workspace esquece tudo (o pai limpa o filho).
         f.selectEngine("picotool");
+        f.selectFirmware("micropython-rpi-pico");
         f.handleProposal({ name: "Gravar (picotool)", engine: "picotool", command: "p" });
         controller.workspaceRoot = "/tmp/outro";
-        if (f.found || f.engine !== "" || f.errorText !== "" || f.busy) failures += 32768;
+        if (f.found || f.engine !== "" || f.firmware !== "" || f.errorText !== "" || f.busy) failures += 32768;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

@@ -105,6 +105,17 @@ Item {
         return recomendadas.concat(outras);
     }
 
+    // O catalogo mistura toolchains e firmwares (C5): o `kind` e' do core, e
+    // esta e' a UNICA derivacao dele na tela (catraca de duplicacao).
+    function isFirmware(entrada) {
+        return entrada !== undefined && entrada !== null && entrada.kind === "firmware";
+    }
+
+    // Os firmwares JA' BAIXADOS: o que o "Gravar" oferece no lugar do build.
+    function installedFirmwares() {
+        return installable.filter(t => isFirmware(t) && t.installed === true);
+    }
+
     function install(id) {
         if (installing !== "" || workspaceRoot === "") return;
         const alvo = installable.find(t => t.id === id);

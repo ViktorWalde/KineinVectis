@@ -31,6 +31,7 @@ mod run;
 mod runconfig;
 mod runners;
 mod serial;
+mod serial_files;
 mod serial_identify;
 mod settings;
 mod syntax;

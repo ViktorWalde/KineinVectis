@@ -166,6 +166,12 @@ Item {
         EmbeddedFlashView {
             width: parent.width
             controller: root.controller
+            firmwares: root.toolchainController ? root.toolchainController.installedFirmwares() : []
+        }
+
+        EmbeddedFilesView {
+            width: parent.width
+            controller: root.controller
         }
 
         // --- Alvo do kit ---------------------------------------------------

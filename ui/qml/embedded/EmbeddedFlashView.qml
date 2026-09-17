@@ -14,6 +14,9 @@ Item {
 
     property var controller: null
     readonly property var flash: controller ? controller.flash : null
+    // Os firmwares BAIXADOS (C5): o painel os filtra da lista de instalaveis
+    // do ToolchainController — [{ id, label, version, firmware: {...} }].
+    property var firmwares: []
 
     implicitHeight: coluna.implicitHeight
 
@@ -64,6 +67,35 @@ Item {
                 compact: true
                 enabled: root.flash !== null && !root.flash.busy
                 onClicked: root.flash.propose(root.controller.selectedPort, root.flashBytesDaPorta())
+            }
+        }
+
+        // Um firmware baixado no lugar dos artefatos do build (C5): a linha
+        // e' a da pagina da placa. Solto, grava-se o build do projeto.
+        Row {
+            width: parent.width
+            spacing: Theme.spacingSmall
+            visible: root.firmwares.length > 0
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Firmware baixado:")
+                color: Theme.textMuted
+                font.pixelSize: 10
+            }
+
+            Repeater {
+                model: root.firmwares
+
+                KvToggleChip {
+                    required property var modelData
+
+                    anchors.verticalCenter: parent.verticalCenter
+                    labelText: modelData.firmware !== undefined ? modelData.firmware.board + " " + modelData.version : modelData.id
+                    active: root.flash && root.flash.firmware === modelData.id
+                    tooltip: qsTr("Gravar %1 (%2) no lugar do build; solto, grava o build do projeto").arg(modelData.label).arg(modelData.firmware !== undefined ? modelData.firmware.engine : "")
+                    onToggled: root.flash.selectFirmware(modelData.id)
+                }
             }
         }
 

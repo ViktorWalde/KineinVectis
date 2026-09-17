@@ -297,3 +297,150 @@ pub struct SerialAccessResult {
     /// Per-port serial and `ModemManager` channels, then the probe channel.
     pub channels: Vec<AccessChannel>,
 }
+
+/// What `serial.files` does on the board (`0.116.0`, C2 of `roadmaps/41`
+/// bloco C): the five gestures of a "files on device" panel, each one
+/// `mpremote fs <cmd>`.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SerialFilesAction {
+    /// `fs ls :<path>` — the entries of a directory (root when `path` is
+    /// absent). Interrupts the running program (raw REPL); writes nothing.
+    List,
+    /// `fs cp :<path> <local>` — download one file into `local`.
+    Get,
+    /// `fs cp <local> :<path>` — upload `local` as `path`. WRITES the board.
+    Put,
+    /// `fs rm :<path>` — delete one file. WRITES the board.
+    Rm,
+    /// `fs mkdir :<path>` — create a directory. WRITES the board.
+    Mkdir,
+}
+
+impl SerialFilesAction {
+    /// The `mpremote fs` sub-command.
+    #[must_use]
+    pub const fn fs_command(self) -> &'static str {
+        match self {
+            Self::List => "ls",
+            Self::Get | Self::Put => "cp",
+            Self::Rm => "rm",
+            Self::Mkdir => "mkdir",
+        }
+    }
+
+    /// Whether this writes the board's flash file system.
+    #[must_use]
+    pub const fn writes_board(self) -> bool {
+        matches!(self, Self::Put | Self::Rm | Self::Mkdir)
+    }
+}
+
+/// Parameters for `serial.files`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SerialFilesParams {
+    /// Device node, `/dev/ttyUSB0`: a port `serial.list` returned and the
+    /// user can read/write.
+    pub device: String,
+    /// What to do.
+    pub action: SerialFilesAction,
+    /// Path ON THE BOARD (`main.py`, `lib/wifi.py`); no leading `:`. Absent
+    /// only for `list` (the root).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+    /// Path ON THIS MACHINE for `get` (where the file lands) and `put` (what
+    /// is sent). Relative paths are under the workspace root.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local: Option<String>,
+    /// `mpremote` executable to use; absent, the one found on `PATH`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool: Option<String>,
+}
+
+/// Result payload for `serial.files`: the job now talking to the board. The
+/// outcome arrives as `event.serial.files`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialFilesResult {
+    /// Job id (`event.job.*`).
+    pub job_id: String,
+    /// The command line the job runs.
+    pub command: String,
+}
+
+/// One entry of `fs ls`, as `mpremote` prints it (`{size:12} {name}[/]`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialFileEntry {
+    /// Name without the trailing `/`.
+    pub name: String,
+    /// Size in bytes (0 for directories on most ports).
+    pub size: u64,
+    /// The entry is a directory (`mpremote` appends `/`).
+    pub directory: bool,
+}
+
+/// `event.serial.files`: the outcome of a `serial.files` job.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialFilesEvent {
+    /// The job that ran.
+    pub job_id: String,
+    /// The port that was asked.
+    pub device: String,
+    /// What ran.
+    pub action: SerialFilesAction,
+    /// The board path that was asked (empty = root).
+    pub path: String,
+    /// The command line that ran.
+    pub command: String,
+    /// `mpremote` exited 0.
+    pub success: bool,
+    /// Why not: the `mpremote: …` line, the timeout, the cancellation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    /// The listing, for `list` when `success`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entries: Option<Vec<SerialFileEntry>>,
+    /// The resolved local path, for `get`/`put`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local: Option<String>,
+    /// Everything the tool printed (stdout+stderr).
+    pub raw: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{SerialFilesAction, SerialFilesParams};
+
+    /// The contract is strict: unknown fields are refused, `action` is one
+    /// of the five gestures, `path`/`local` are optional.
+    #[test]
+    fn files_params_parse_strictly() {
+        let p: SerialFilesParams =
+            serde_json::from_str(r#"{"device":"/dev/ttyUSB0","action":"list"}"#).unwrap();
+        assert_eq!(p.action, SerialFilesAction::List);
+        assert_eq!(p.path, None);
+        let p: SerialFilesParams = serde_json::from_str(
+            r#"{"device":"/dev/ttyUSB0","action":"put","path":"main.py","local":"main.py"}"#,
+        )
+        .unwrap();
+        assert_eq!(p.action, SerialFilesAction::Put);
+        assert!(p.action.writes_board());
+        assert_eq!(p.action.fs_command(), "cp");
+        assert!(!SerialFilesAction::Get.writes_board());
+        assert!(
+            serde_json::from_str::<SerialFilesParams>(
+                r#"{"device":"/dev/ttyUSB0","action":"list","baud":9600}"#
+            )
+            .is_err()
+        );
+        assert!(
+            serde_json::from_str::<SerialFilesParams>(
+                r#"{"device":"/dev/ttyUSB0","action":"tree"}"#
+            )
+            .is_err()
+        );
+    }
+}

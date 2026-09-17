@@ -438,8 +438,12 @@ BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
                                             connect <porta> repl` (porta do serial.list;
                                             `u0`/`a0` nunca adivinhados); o autor pode
                                             fixar outro monitor
- C2  arquivos no dispositivo                `mpremote fs ls/cp/rm/mkdir/tree` como painel
-                                            (referencia: Thonny "Files on device")
+ C2  arquivos no dispositivo                FEITO 2026-09-17 (40 §7.47, 0.116.0): o painel
+                                            "Arquivos na placa" (serial.files como job
+                                            sobre `mpremote fs ls/cp/rm/mkdir`): listar,
+                                            baixar para placa/<caminho>, enviar o arquivo
+                                            aberto, apagar — o que escreve pede um segundo
+                                            clique. Lido e reescrito no ESP32 do autor
  C3  rodar o arquivo atual na placa         FEITO 2026-09-13 no core (40 §7.28) e
                                             2026-09-17 na tela (40 §7.39, 0.110.0):
                                             "Executar" num .py e o botao Executar
@@ -450,9 +454,18 @@ BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
                                             Sem escolha, a primeira que o mpremote acha.
                                             Provado com mpremote falso: sem placa nesta
                                             maquina
- C4  stubs por placa                        micropython-<port>-stubs em typings/ +
-                                            typingsPath no basedpyright do projeto
- C5  firmware MicroPython                   gravar o .bin/.uf2 oficial pelo motor do A3
+ C4  stubs por placa                        FEITO 2026-09-17 (40 §7.47): python.stubs instala
+                                            micropython-<port>[-<board>]-stubs em typings/
+                                            (uv, ou o pip do projeto) e o basedpyright
+                                            recebe stubPath + reportMissingModuleSource
+                                            none; o chip do kit/identidade sugere a placa
+ C5  firmware MicroPython                   FEITO 2026-09-17 (40 §7.47): cinco firmwares
+                                            v1.29.0 pinados no catalogo de instalacao
+                                            (kind firmware; SHA-256 medido — a fonte nao
+                                            publica), gravados por runConfig.flashProposal
+                                            { firmware } com a linha da pagina da placa.
+                                            Nao gravado na placa do autor (apagaria o
+                                            main.py dele)
  C6  CircuitPython                          drive CIRCUITPY (copia) + circup
 
 BLOCO D — embarcado em profundidade: o que o Cortex-Debug/probe-rs MOSTRAM

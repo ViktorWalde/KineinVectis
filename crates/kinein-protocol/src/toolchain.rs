@@ -364,10 +364,43 @@ pub struct InstallableToolchain {
     pub source: String,
     /// Where it lands: `<install root>/<id>/<version>`.
     pub install_dir: String,
-    /// `true` when `<install_dir>/bin` already exists.
+    /// `true` when `<install_dir>/bin` already exists (toolchain) or the
+    /// firmware file is in place.
     pub installed: bool,
-    /// `true` when the open project's family matches this toolchain.
+    /// `true` when the open project's family matches this toolchain — or,
+    /// for a firmware, when the project is `MicroPython` on that family.
     pub recommended: bool,
+    /// `toolchain` (tarball with `bin/`) or `firmware` (one `.bin`/`.uf2`
+    /// flashed by `runConfig.flashProposal { firmware }`; `0.116.0`).
+    #[serde(default = "default_kind")]
+    pub kind: String,
+    /// How a firmware is flashed; absent for toolchains.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub firmware: Option<InstallableFirmware>,
+}
+
+fn default_kind() -> String {
+    "toolchain".to_owned()
+}
+
+/// How an installable firmware is written to the board (`0.116.0`, C5 of
+/// `roadmaps/41` bloco C), as the source page says.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InstallableFirmware {
+    /// Board name at the source (`ESP32_GENERIC`, `RPI_PICO_W`).
+    pub board: String,
+    /// Flash engine (`esptool`, `picotool`).
+    pub engine: String,
+    /// `write-flash` offset for `esptool` (`0x1000` on the classic ESP32,
+    /// `0x0` on C3/S3); absent for UF2.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub offset: Option<String>,
+    /// Chip key for `--chip` (`esp32`), when the page fixes one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chip: Option<String>,
+    /// Where the file is once installed (`<install_dir>/<file>`).
+    pub file: String,
 }
 
 /// Result of `toolchain.installable`.

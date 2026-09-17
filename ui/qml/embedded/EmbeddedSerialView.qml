@@ -110,6 +110,18 @@ Item {
                         onClicked: root.controller.identity.identify(linhaPorta.modelData.device)
                     }
 
+                    // Os arquivos na placa (C2): o mpremote entra no raw REPL
+                    // e interrompe o programa dela — clique, nunca automatico.
+                    KvIconButton {
+                        anchors.verticalCenter: parent.verticalCenter
+                        iconName: "folder"
+                        tooltip: qsTr("Arquivos na placa (mpremote fs): interrompe o programa em execução")
+                        compact: true
+                        enabled: linhaPorta.modelData.access.readableWritable
+                                 && !root.controller.files.busy
+                        onClicked: root.controller.files.list(linhaPorta.modelData.device, "")
+                    }
+
                     // O monitor abre numa aba de terminal com a ferramenta do
                     // kit (tio/picocom/minicom/espflash). Sem acesso a porta,
                     // nao se oferece o que vai falhar.

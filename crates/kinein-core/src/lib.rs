@@ -365,6 +365,9 @@ impl Core {
         match notification.method.as_str() {
             "event.cmake.finished" => self.on_cmake_configure_finished(success),
             "event.python.finished" => self.on_python_environment_finished(success),
+            // Os stubs da placa entraram em `typings/`: o basedpyright recebe
+            // o stubPath (reconfigura e reinicia se vivo).
+            "event.python.stubs" => self.on_python_stubs_finished(success),
             // Uma toolchain nova na pasta da IDE: o registro de ferramentas e'
             // refeito (o detector le a pasta a cada busca), para o
             // toolchain.get seguinte ja' lista-la como candidato.

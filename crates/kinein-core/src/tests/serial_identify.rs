@@ -155,7 +155,10 @@ fn a_v4_esptool_gets_the_underscore_command_on_retry() {
         "{}",
         evento["command"]
     );
-    assert_eq!(evento["identity"]["chip"], "esp32d0wdv3");
+    assert_eq!(
+        evento["identity"]["chip"], "esp32",
+        "encapsulamento D0WD-V3 -> esp32"
+    );
     assert_eq!(evento["identity"]["flashSize"], Value::Null);
     // ESP32 classico: sem JTAG embutido, sem depurador sugerido.
     assert_eq!(evento["target"]["debugAdapter"], Value::Null);

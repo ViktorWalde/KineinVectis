@@ -21,6 +21,19 @@ void CoreClient::pythonCreateEnvironment(const QString& tool)
     sendRequest(QStringLiteral("python.createEnvironment"), params);
 }
 
+void CoreClient::pythonStubs(const QString& port, const QString& board)
+{
+    QJsonObject params;
+    // Campo ausente = o modelo do projeto sugere (chip do kit/identidade).
+    if (!port.isEmpty()) {
+        params.insert(QStringLiteral("port"), port);
+    }
+    if (!board.isEmpty()) {
+        params.insert(QStringLiteral("board"), board);
+    }
+    sendRequest(QStringLiteral("python.stubs"), params);
+}
+
 bool CoreClient::dispatchPythonResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("python.status")) {
@@ -30,6 +43,12 @@ bool CoreClient::dispatchPythonResult(const QString& method, const QJsonObject& 
     if (method == QStringLiteral("python.createEnvironment")) {
         // O job foi aceito; o que aconteceu chega por event.python.finished.
         emit pythonEnvironmentAccepted(result.value(QStringLiteral("jobId")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("python.stubs")) {
+        // Idem: o desfecho chega por event.python.stubs.
+        emit pythonStubsAccepted(result.value(QStringLiteral("jobId")).toString(),
+                                 result.value(QStringLiteral("package")).toString());
         return true;
     }
     return false;

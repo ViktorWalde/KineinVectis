@@ -4,11 +4,7 @@
 
 use std::{
     path::{Path, PathBuf},
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use kinein_protocol::{
@@ -22,8 +18,8 @@ use crate::rpc::{
     jobs_unavailable_response, no_workspace_response, parse_params, terminal_error_response,
     terminal_unavailable_response,
 };
-use crate::serial::{identify, monitor};
-use crate::{Core, jobs, process};
+use crate::serial::{identify, job, monitor};
+use crate::{Core, jobs};
 
 /// Quanto o esptool tem para achar o chip. Ele mesmo tenta sincronizar varias
 /// vezes (~7 tentativas de ~1 s com a placa muda); trinta segundos cobrem uma
@@ -44,6 +40,7 @@ impl Core {
             "serial.monitor" => Some(self.serial_monitor_response(request_id, params)),
             "serial.identify" => Some(self.serial_identify_response(request_id, params)),
             "serial.access" => Some(Self::serial_access_response(request_id, params)),
+            "serial.files" => Some(self.serial_files_response(request_id, params)),
             _ => None,
         }
     }
@@ -177,32 +174,8 @@ impl Core {
             Ok(pedido) => pedido,
             Err(response) => return *response,
         };
-        let no = Path::new(&pedido.device);
-        if pedido.device.trim().is_empty() || !no.exists() {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidParams,
-                    format!(
-                        "serial.identify: `{}` nao existe nesta maquina",
-                        pedido.device
-                    ),
-                    Some(json!({ "device": pedido.device })),
-                ),
-            );
-        }
-        let acesso = crate::serial::acesso_de(no);
-        if !acesso.readable_writable {
-            return JsonRpcResponse::failure(
-                request_id,
-                JsonRpcError::new(
-                    JsonRpcErrorCode::InvalidRequest,
-                    acesso.hint.unwrap_or_else(|| {
-                        format!("sem permissao de leitura/escrita em {}", pedido.device)
-                    }),
-                    Some(json!({ "device": pedido.device, "mode": acesso.mode })),
-                ),
-            );
+        if let Err(recusa) = porta_pronta(request_id.as_ref(), "serial.identify", &pedido.device) {
+            return *recusa;
         }
         let Some(esptool) = pedido
             .tool
@@ -225,7 +198,7 @@ impl Core {
         let Some(jobs) = self.jobs.as_ref() else {
             return jobs_unavailable_response(request_id, "serial.identify");
         };
-        let device = pedido.device.clone();
+        let device = pedido.device;
         let (programa, args) = identify::command_line(&esptool, &device, identify::FLASH_ID_V5);
         let comando = identify::display(&programa, &args);
         let job_id = jobs.spawn(
@@ -270,7 +243,7 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
     } else if tentativa.sucesso {
         Some("o esptool terminou sem dizer `Chip type:` — veja a saida crua".to_owned())
     } else {
-        Some(ultimas_linhas(&tentativa.raw))
+        Some(job::ultimas_linhas(&tentativa.raw, "esptool"))
     };
     let target = identity
         .chip
@@ -296,83 +269,45 @@ fn identificar(ctx: &jobs::JobContext, esptool: &Path, device: &str) -> jobs::Jo
     }
 }
 
-struct Tentativa {
-    comando: String,
-    raw: String,
-    sucesso: bool,
-    expirou: bool,
+/// Uma execucao do esptool com o prazo de identificacao (`serial/job.rs`
+/// faz o trabalho; aqui so' a linha de comando do `flash-id`).
+fn rodar(ctx: &jobs::JobContext, esptool: &Path, device: &str, subcomando: &str) -> job::Tentativa {
+    let (_, args) = identify::command_line(esptool, device, subcomando);
+    job::rodar(ctx, esptool, &args, IDENTIFY_TIMEOUT, "esptool")
 }
 
-/// Uma execucao do esptool com prazo: a thread vigia poe o `parar` quando o
-/// job e' cancelado OU o prazo vence — e' `parar`, nao o cancelamento do job,
-/// que o streamer honra, para "expirou" nao virar "cancelado" na tela.
-fn rodar(ctx: &jobs::JobContext, esptool: &Path, device: &str, subcomando: &str) -> Tentativa {
-    let (programa, args) = identify::command_line(esptool, device, subcomando);
-    let comando = identify::display(&programa, &args);
-    ctx.emit_output(&format!("$ {comando}"));
-    let mut command = std::process::Command::new(&programa);
-    command.args(&args);
-
-    let parar = Arc::new(AtomicBool::new(false));
-    let expirou = Arc::new(AtomicBool::new(false));
-    let terminou = Arc::new(AtomicBool::new(false));
-    {
-        let parar = Arc::clone(&parar);
-        let expirou = Arc::clone(&expirou);
-        let terminou = Arc::clone(&terminou);
-        let cancelado = ctx.cancellation();
-        let prazo = Instant::now() + IDENTIFY_TIMEOUT;
-        std::thread::spawn(move || {
-            while !terminou.load(Ordering::SeqCst) {
-                if cancelado.load(Ordering::SeqCst) {
-                    parar.store(true, Ordering::SeqCst);
-                    break;
-                }
-                if Instant::now() >= prazo {
-                    expirou.store(true, Ordering::SeqCst);
-                    parar.store(true, Ordering::SeqCst);
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(50));
-            }
-        });
+/// A recusa ANTES de abrir a porta, comum a `serial.identify` e
+/// `serial.files`: no' inexistente (`INVALID_PARAMS`) e sem leitura/escrita
+/// (`INVALID_REQUEST`, com a `hint` do `serial.list`). Abrir a porta reseta
+/// ou interrompe a placa; abrir para falhar e' defeito.
+pub(super) fn porta_pronta(
+    request_id: Option<&Value>,
+    method: &str,
+    device: &str,
+) -> Result<(), Box<JsonRpcResponse>> {
+    let no = Path::new(device);
+    if device.trim().is_empty() || !no.exists() {
+        return Err(Box::new(JsonRpcResponse::failure(
+            request_id.cloned(),
+            JsonRpcError::new(
+                JsonRpcErrorCode::InvalidParams,
+                format!("{method}: `{device}` nao existe nesta maquina"),
+                Some(json!({ "device": device })),
+            ),
+        )));
     }
-    let mut raw = String::new();
-    let resultado = process::stream_command_lines_cancelable(command, &parar, &mut |_, linha| {
-        ctx.emit_output(&linha);
-        raw.push_str(&linha);
-        raw.push('\n');
-    });
-    terminou.store(true, Ordering::SeqCst);
-    let sucesso = match resultado {
-        Ok(status) => status.success(),
-        Err(error) => {
-            let texto = match error {
-                process::ProcessError::Spawn(e) => format!("esptool nao pode ser iniciado: {e}"),
-                process::ProcessError::Wait(e) => format!("falha aguardando o esptool: {e}"),
-            };
-            ctx.emit_output(&texto);
-            raw.push_str(&texto);
-            false
-        }
-    };
-    Tentativa {
-        comando,
-        raw,
-        sucesso,
-        expirou: expirou.load(Ordering::SeqCst),
+    let acesso = crate::serial::acesso_de(no);
+    if !acesso.readable_writable {
+        return Err(Box::new(JsonRpcResponse::failure(
+            request_id.cloned(),
+            JsonRpcError::new(
+                JsonRpcErrorCode::InvalidRequest,
+                acesso
+                    .hint
+                    .unwrap_or_else(|| format!("sem permissao de leitura/escrita em {device}")),
+                Some(json!({ "device": device, "mode": acesso.mode })),
+            ),
+        )));
     }
-}
-
-/// As ultimas linhas nao vazias da saida: e' onde o esptool diz `A fatal
-/// error occurred: ...`.
-fn ultimas_linhas(raw: &str) -> String {
-    let linhas: Vec<&str> = raw.lines().filter(|l| !l.trim().is_empty()).collect();
-    let inicio = linhas.len().saturating_sub(3);
-    let cauda = linhas[inicio..].join("\n");
-    if cauda.is_empty() {
-        "o esptool saiu com erro sem escrever nada".to_owned()
-    } else {
-        cauda
-    }
+    Ok(())
 }

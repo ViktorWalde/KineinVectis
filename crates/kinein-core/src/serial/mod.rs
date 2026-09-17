@@ -29,7 +29,9 @@
 //! ```
 
 pub mod access;
+pub mod files;
 pub mod identify;
+pub mod job;
 pub mod monitor;
 
 use std::collections::BTreeMap;

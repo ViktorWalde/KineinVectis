@@ -24,11 +24,20 @@ Item {
                                               && status.environmentTool !== null
                                               ? status.environmentTool : ""
     // Falta ambiente E a maquina consegue criar um: e' o caso do botao.
+    // Os stubs da placa (C4 do roadmaps/41): o core sugere o pacote pelo
+    // chip do kit/identidade num projeto MicroPython e diz onde estao.
+    readonly property string stubsSuggested: status.stubsSuggested !== undefined && status.stubsSuggested !== null
+                                             ? status.stubsSuggested : ""
+    readonly property string stubsPath: status.stubsPath !== undefined && status.stubsPath !== null
+                                        ? status.stubsPath : ""
+    readonly property bool needsStubs: isPython && known && stubsSuggested !== "" && stubsPath === ""
+    property bool installingStubs: false
     readonly property bool needsEnvironment: isPython && known && !hasEnvironment
                                              && environmentTool !== ""
 
     signal statusRequested()
     signal createEnvironmentRequested(string tool)
+    signal stubsRequested(string port, string board)
 
     visible: false
 
@@ -42,6 +51,7 @@ Item {
     onWorkspaceRootChanged: {
         status = ({});
         creating = false;
+        installingStubs = false;
         lastOutcome = "";
         if (workspaceRoot !== "" && buildsPython()) {
             statusRequested();
@@ -71,6 +81,28 @@ Item {
                 ? qsTr("ambiente criado em %1 (%2)").arg(outcome.path).arg(outcome.command)
                 : qsTr("falhou: %1 — veja o job").arg(outcome.command);
         statusRequested();
+    }
+
+    // Instalar os stubs sugeridos (vazio = o core decide pelo modelo).
+    function installStubs() {
+        if (!needsStubs || installingStubs) return;
+        installingStubs = true;
+        lastOutcome = "";
+        stubsRequested("", "");
+    }
+
+    function handleStubsFinished(outcome) {
+        installingStubs = false;
+        if (outcome === undefined || outcome === null) return;
+        lastOutcome = outcome.success === true
+                ? qsTr("stubs %1 em %2").arg(outcome.package).arg(outcome.target)
+                : qsTr("falhou: %1 — veja o job").arg(outcome.command);
+        statusRequested();
+    }
+
+    function stubsMessage() {
+        if (installingStubs) return qsTr("instalando os stubs da placa…");
+        return qsTr("MicroPython sem os stubs da placa (%1): `import machine` não completa").arg(stubsSuggested);
     }
 
     // Uma linha: "python: .venv · Python 3.14.7" / "python: sistema (3.14.7) ⚠"

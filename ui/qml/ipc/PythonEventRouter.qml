@@ -19,5 +19,9 @@ Item {
         function onPythonEnvironmentFinished(outcome) {
             root.pythonController.handleEnvironmentFinished(outcome);
         }
+
+        function onPythonStubsFinished(outcome) {
+            root.pythonController.handleStubsFinished(outcome);
+        }
     }
 }

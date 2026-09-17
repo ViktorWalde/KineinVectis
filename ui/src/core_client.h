@@ -105,9 +105,11 @@ public:
     Q_INVOKABLE void runConfigDelete(const QString& id);
     Q_INVOKABLE void runConfigSetActive(const QString& id);
     // "Gravar" como configuracao de execucao (runConfig.flashProposal, 0.113.0): a linha do
-    // motor, sem rodar; flashSizeBytes <= 0 = sem a checagem.
+    // motor, sem rodar; flashSizeBytes <= 0 = sem a checagem; firmware (0.116.0) = id do
+    // catalogo baixado, no lugar dos artefatos do build.
     Q_INVOKABLE void runConfigFlashProposal(const QString& device, const QString& engine,
-                                            double flashSizeBytes = 0);
+                                            double flashSizeBytes = 0,
+                                            const QString& firmware = QString());
     Q_INVOKABLE void debugStart(const QString& program = QString(),
                                 const QVariantMap& connect = QVariantMap());
     // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.
@@ -188,6 +190,9 @@ public:
     Q_INVOKABLE void serialIdentify(const QString& device);
     // Permissao por canal (serial.access, 0.114.0): o que falta e o passo oficial; nao roda nada.
     Q_INVOKABLE void serialAccess(const QString& device = QString());
+    // Arquivos na placa MicroPython (serial.files, 0.116.0): mpremote fs como job.
+    Q_INVOKABLE void serialFiles(const QString& device, const QString& action,
+                                 const QString& path = QString(), const QString& local = QString());
     // O modelo do projeto embarcado (project.model): framework, SDKs, artefatos, alvo.
     Q_INVOKABLE void projectModel();
     // O indice do projeto inteiro (index.*): totais e busca por nome, sem LSP.
@@ -198,6 +203,9 @@ public:
     // O ambiente Python do projeto (python.*): o que vale, e criar o .venv.
     Q_INVOKABLE void pythonStatus();
     Q_INVOKABLE void pythonCreateEnvironment(const QString& tool = QString());
+    // Os stubs da placa MicroPython em typings/ (python.stubs, 0.116.0): job; vazio = o
+    // modelo do projeto decide o pacote.
+    Q_INVOKABLE void pythonStubs(const QString& port = QString(), const QString& board = QString());
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -359,6 +367,8 @@ signals:
     void serialIdentifyStarted(const QString& jobId, const QString& command);
     void serialIdentified(const QVariantMap& outcome);
     void serialAccessResolved(const QVariantList& channels);
+    void serialFilesStarted(const QString& jobId, const QString& command);
+    void serialFilesResolved(const QVariantMap& outcome);
     void projectModelResolved(const QVariantMap& model);
     void projectChanged(const QVariantMap& model);
     void indexStatusResolved(const QVariantMap& stats);
@@ -367,6 +377,8 @@ signals:
     void pythonStatusResolved(const QVariantMap& status);
     void pythonEnvironmentAccepted(const QString& jobId);
     void pythonEnvironmentFinished(const QVariantMap& outcome);
+    void pythonStubsAccepted(const QString& jobId, const QString& package);
+    void pythonStubsFinished(const QVariantMap& outcome);
     void indexProgressed(int files, int symbols);
     void indexFinished(const QVariantMap& stats);
     void containerStatusResolved(const QVariantMap& status);

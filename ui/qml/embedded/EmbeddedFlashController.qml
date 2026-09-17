@@ -25,10 +25,14 @@ Item {
     property string engine: ""
     property var proposal: ({})
     property string errorText: ""
+    // O firmware BAIXADO do catalogo (C5) que a linha grava no lugar dos
+    // artefatos do build; vazio = os artefatos do build. O id vem da lista
+    // de instalaveis do ToolchainController (kind "firmware", installed).
+    property string firmware: ""
     readonly property bool found: proposal.command !== undefined && proposal.command !== ""
     readonly property var engines: ["esptool", "probe-rs", "picotool", "dfu-util"]
 
-    signal proposalRequested(string device, string engine, double flashSizeBytes)
+    signal proposalRequested(string device, string engine, double flashSizeBytes, string firmware)
     signal runRequested(string command)
     signal saveRequested(string name, string command)
 
@@ -36,6 +40,16 @@ Item {
 
     function clear() {
         busy = false;
+        engine = "";
+        firmware = "";
+        proposal = ({});
+        errorText = "";
+    }
+
+    // Escolher o firmware e' toggle; trocar descarta a previa. O motor
+    // e' o da pagina do firmware (o core recusa outro), por isso solta.
+    function selectFirmware(id) {
+        firmware = id === firmware ? "" : id;
         engine = "";
         proposal = ({});
         errorText = "";
@@ -58,7 +72,7 @@ Item {
         busy = true;
         errorText = "";
         proposalRequested(device === undefined ? "" : device, engine,
-                          flashSizeBytes === undefined ? 0 : flashSizeBytes);
+                          flashSizeBytes === undefined ? 0 : flashSizeBytes, firmware);
     }
 
     function handleProposal(nova) {

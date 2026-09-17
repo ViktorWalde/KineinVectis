@@ -14,12 +14,14 @@ Item {
 
     property int pedidosStatus: 0
     property var pedidosCriar: []
+    property var pedidosStubs: []
 
     PythonController {
         id: py
 
         onStatusRequested: root.pedidosStatus += 1
         onCreateEnvironmentRequested: function(tool) { root.pedidosCriar.push(tool); }
+        onStubsRequested: function(port, board) { root.pedidosStubs.push(port + "/" + board); }
     }
 
     Component.onCompleted: {
@@ -89,6 +91,23 @@ Item {
         if (py.nativeModuleBuildHint().indexOf("pip install -e .") !== 0) failures += 262144;
         py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv" });
         if (py.nativeModuleLine() !== "" || py.summary() !== "python: .venv") failures += 524288;
+
+        // Os stubs da placa (C4): so' com sugestao do core E sem typings/;
+        // instalar pede vazio (o core decide), o desfecho reconsulta o status.
+        if (py.needsStubs) failures += 1048576;
+        py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv",
+                          stubsSuggested: "micropython-esp32-esp32_generic_c3-stubs" });
+        if (!py.needsStubs || py.stubsMessage().indexOf("micropython-esp32-esp32_generic_c3-stubs") < 0) failures += 2097152;
+        const statusAntes = root.pedidosStatus;
+        py.installStubs();
+        if (root.pedidosStubs.join(",") !== "/" || !py.installingStubs) failures += 4194304;
+        py.installStubs();
+        if (root.pedidosStubs.length !== 1) failures += 8388608;
+        py.handleStubsFinished({ success: true, package: "micropython-esp32-esp32_generic_c3-stubs", target: "/tmp/proj/typings", command: "uv pip install …" });
+        if (py.installingStubs || py.lastOutcome.indexOf("/tmp/proj/typings") < 0 || root.pedidosStatus !== statusAntes + 1) failures += 16777216;
+        py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv",
+                          stubsSuggested: "micropython-esp32-esp32_generic_c3-stubs", stubsPath: "/tmp/proj/typings" });
+        if (py.needsStubs || py.stubsPath !== "/tmp/proj/typings") failures += 33554432;
 
         // Trocar de workspace esquece tudo.
         py.workspaceRoot = "/tmp/outro";

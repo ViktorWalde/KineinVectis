@@ -67,6 +67,22 @@ void CoreClient::buildSize(const QString& program)
     sendRequest(QStringLiteral("build.size"), params);
 }
 
+void CoreClient::serialFiles(const QString& device, const QString& action, const QString& path,
+                             const QString& local)
+{
+    // Gesto explicito: todo `fs` interrompe o programa da placa (raw REPL).
+    // Campo ausente = a raiz (list) / sem local; o desfecho chega por
+    // event.serial.files, o andamento por event.job.*.
+    QJsonObject params{{QStringLiteral("device"), device}, {QStringLiteral("action"), action}};
+    if (!path.isEmpty()) {
+        params.insert(QStringLiteral("path"), path);
+    }
+    if (!local.isEmpty()) {
+        params.insert(QStringLiteral("local"), local);
+    }
+    sendRequest(QStringLiteral("serial.files"), params);
+}
+
 bool CoreClient::dispatchProbeResult(const QString& method, const QJsonObject& result)
 {
     if (method != QStringLiteral("probe.list")) {
@@ -128,6 +144,11 @@ bool CoreClient::dispatchSerialResult(const QString& method, const QJsonObject& 
         // desfecho por event.serial.identified.
         emit serialIdentifyStarted(result.value(QStringLiteral("jobId")).toString(),
                                    result.value(QStringLiteral("command")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("serial.files")) {
+        emit serialFilesStarted(result.value(QStringLiteral("jobId")).toString(),
+                                result.value(QStringLiteral("command")).toString());
         return true;
     }
     if (method != QStringLiteral("serial.list")) {

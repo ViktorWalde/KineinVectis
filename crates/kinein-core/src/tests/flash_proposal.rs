@@ -265,3 +265,111 @@ fn a_smaller_reported_flash_is_a_warning() {
             .contains("--chip esp32c3")
     );
 }
+
+/// C5: um firmware do catalogo, BAIXADO na pasta da IDE, grava-se pela
+/// proposta do E4 — a linha da pagina da placa (offset 0x1000 no ESP32
+/// classico), com a porta escolhida e o aviso do erase-flash; e roda de
+/// verdade pelo `run.start` com o esptool falso. O que nao foi baixado, ou
+/// nao e' firmware, e' recusado antes de compor a linha.
+#[test]
+#[cfg(unix)]
+fn a_downloaded_firmware_is_flashed_by_the_page_line_and_runs() {
+    let mut c = cenario("firmware", false);
+    c.esptool_falso();
+    let raiz = c.dir.join("toolchains");
+    c.core = {
+        let (sender, receiver) = mpsc::channel();
+        let mut core = crate::Core::with_detector(
+            crate::tools::ToolDetector::with_search_path(c.dir.join("bin"))
+                .with_install_root(&raiz),
+        );
+        core.enable_lsp(sender);
+        c.events = receiver;
+        core
+    };
+    assert!(
+        c.rpc(
+            1,
+            "workspace.open",
+            json!({ "path": c.dir.to_str().unwrap() })
+        )
+        .error
+        .is_none()
+    );
+
+    // Ainda nao baixado: recusa que diz como baixar. Uma toolchain no lugar
+    // de um firmware: recusa. Id desconhecido: recusa.
+    for (id, trecho) in [
+        ("micropython-esp32-generic", "ainda nao foi baixado"),
+        ("arm-gnu-arm-none-eabi", "nao um firmware"),
+        ("nao-existe", "nao esta' no catalogo"),
+    ] {
+        let erro = c
+            .proposta(json!({ "device": "/dev/ttyUSB0", "firmware": id }))
+            .error
+            .unwrap();
+        assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{id}");
+        assert!(erro.message.contains(trecho), "{id}: {}", erro.message);
+    }
+
+    // "Baixado": o arquivo onde o provedor o deixaria.
+    let pasta = raiz.join("micropython-esp32-generic/v1.29.0");
+    std::fs::create_dir_all(&pasta).unwrap();
+    let bin = pasta.join("ESP32_GENERIC-20260824-v1.29.0.bin");
+    std::fs::write(&bin, vec![0xE9; 4096]).unwrap();
+    let r = c
+        .proposta(json!({ "device": "/dev/ttyUSB0", "firmware": "micropython-esp32-generic" }))
+        .result
+        .expect("proposta");
+    assert_eq!(
+        r["command"],
+        format!(
+            "'{}' --chip esp32 --port '/dev/ttyUSB0' --baud 460800 --before default-reset \
+             --after hard-reset write-flash 0x1000 '{}'",
+            c.dir.join("bin/esptool").display(),
+            bin.display()
+        )
+    );
+    assert_eq!(r["engine"], "esptool");
+    assert!(r["name"].as_str().unwrap().starts_with("Gravar firmware"));
+    assert!(
+        r["warnings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|w| w.as_str().unwrap().contains("erase-flash")),
+        "{r}"
+    );
+    // O kit deste projeto diz esp32c3 (sdkconfig) e o firmware e' do esp32
+    // classico: o aviso nomeia os dois.
+    assert!(
+        r["warnings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|w| w.as_str().unwrap().contains("kit diz chip esp32c3")),
+        "{r}"
+    );
+    // O catalogo agora o mostra instalado.
+    let lista = c.rpc(3, "toolchain.installable", json!({})).result.unwrap();
+    let fw = lista["toolchains"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["id"] == "micropython-esp32-generic")
+        .unwrap();
+    assert_eq!(fw["installed"], true);
+
+    // E roda de verdade: o esptool falso ecoa os argv.
+    let started = c.rpc(4, "run.start", json!({ "command": r["command"] }));
+    assert!(started.error.is_none(), "{:?}", started.error);
+    let (linhas, sucesso) = c.saida();
+    assert!(sucesso);
+    assert!(
+        linhas.iter().any(
+            |l| l.contains("esptool-falso --chip esp32 --port /dev/ttyUSB0")
+                && l.contains("write-flash 0x1000")
+        ),
+        "{linhas:?}"
+    );
+}

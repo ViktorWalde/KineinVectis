@@ -409,7 +409,11 @@ fn the_install_catalogue_is_visible_before_any_click_and_refuses_what_it_must() 
     assert_eq!(result["installRoot"], raiz.display().to_string());
     assert_eq!(result["projectFamily"], "stm32", "{result}");
     let toolchains = result["toolchains"].as_array().unwrap();
-    assert_eq!(toolchains.len(), crate::toolchain::install::CATALOGO.len());
+    assert_eq!(
+        toolchains.len(),
+        crate::toolchain::install::CATALOGO.len() + crate::toolchain::install::FIRMWARE.len()
+    );
+    firmwares_no_catalogo(toolchains, &raiz);
     let arm = toolchains
         .iter()
         .find(|t| t["id"] == "arm-gnu-arm-none-eabi")
@@ -730,4 +734,36 @@ fn the_kit_toolchain_file_reaches_cmake_unless_the_preset_declares_one() {
             .any(|a| a.starts_with("-DCMAKE_TOOLCHAIN_FILE=")),
         "o do preset vence: {args:?}"
     );
+}
+
+/// Os firmwares (C5) vem no mesmo catalogo, com `kind: firmware`, como se
+/// gravam, e o arquivo onde vao ficar; num projeto C (STM32) nenhum e'
+/// recomendado.
+fn firmwares_no_catalogo(toolchains: &[Value], raiz: &Path) {
+    let esp32 = toolchains
+        .iter()
+        .find(|t| t["id"] == "micropython-esp32-generic")
+        .expect("firmware ESP32 no catalogo");
+    assert_eq!(esp32["kind"], "firmware");
+    assert_eq!(esp32["firmware"]["engine"], "esptool");
+    assert_eq!(esp32["firmware"]["offset"], "0x1000");
+    assert_eq!(esp32["firmware"]["chip"], "esp32");
+    assert_eq!(
+        esp32["firmware"]["file"],
+        raiz.join("micropython-esp32-generic/v1.29.0/ESP32_GENERIC-20260824-v1.29.0.bin")
+            .display()
+            .to_string()
+    );
+    assert_eq!(esp32["installed"], false);
+    assert_eq!(esp32["recommended"], false, "projeto C nao e' MicroPython");
+    assert_eq!(arm_kind(toolchains), "toolchain");
+}
+
+fn arm_kind(toolchains: &[Value]) -> String {
+    toolchains
+        .iter()
+        .find(|t| t["id"] == "arm-gnu-arm-none-eabi")
+        .and_then(|t| t["kind"].as_str())
+        .unwrap_or_default()
+        .to_owned()
 }

@@ -43,6 +43,59 @@ pub struct PythonStatus {
     /// the root files say so (`0.102.0`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub native_module: Option<PythonNativeModule>,
+    /// `<root>/typings` when it exists: where the `MicroPython` stubs live and
+    /// what basedpyright receives as `stubPath` (`0.116.0`, C4).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stubs_path: Option<String>,
+    /// The stubs package the project model suggests (`MicroPython` project;
+    /// chip from kit/identity), `micropython-esp32-esp32_generic_c3-stubs`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stubs_suggested: Option<String>,
+}
+
+/// Parameters for `python.stubs` (`0.116.0`): install the `MicroPython`
+/// stubs for a port/board into `<root>/typings`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PythonStubsParams {
+    /// Port at micropython-stubs (`esp32`, `rp2`, `stm32`); absent = the
+    /// project model decides (`stubsSuggested`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<String>,
+    /// Board variant (`esp32_generic_c3`, `rpi_pico_w`); absent = the port's
+    /// generic stubs, or the model's suggestion when `port` is absent too.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub board: Option<String>,
+}
+
+/// Result payload for `python.stubs`: the job now installing.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PythonStubsResult {
+    /// Job id.
+    pub job_id: String,
+    /// The package (`micropython-esp32-stubs`).
+    pub package: String,
+    /// The command line, as the source documents it.
+    pub command: String,
+    /// `<root>/typings`.
+    pub target: String,
+}
+
+/// Payload of `event.python.stubs`: the stubs job ended.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PythonStubsEvent {
+    /// Job id.
+    pub job_id: String,
+    /// The installer exited 0 and `<target>/machine.pyi` (or any `.pyi`) exists.
+    pub success: bool,
+    /// The package.
+    pub package: String,
+    /// The command line.
+    pub command: String,
+    /// `<root>/typings`.
+    pub target: String,
 }
 
 /// A native extension module recognised at the workspace root.

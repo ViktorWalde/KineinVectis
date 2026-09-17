@@ -262,6 +262,9 @@ Window {
             } else if (target === "pythonEnvironment") {
                 domains.shellController.showTab("jobs");
                 domains.pythonController.createEnvironment();
+            } else if (target === "pythonStubs") {
+                domains.shellController.showTab("jobs");
+                domains.pythonController.installStubs();
             } else if (target !== "") {
                 domains.shellController.showTab(target);
             }

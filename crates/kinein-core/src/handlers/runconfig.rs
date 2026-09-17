@@ -43,13 +43,29 @@ impl Core {
         let pedido = match parse_params::<FlashProposalParams>(
             request_id.as_ref(),
             params,
-            "runConfig.flashProposal aceita os campos opcionais device, engine e flashSizeBytes",
+            "runConfig.flashProposal aceita os campos opcionais device, engine, flashSizeBytes e firmware",
         ) {
             Ok(pedido) => pedido,
             Err(response) => return *response,
         };
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "runConfig.flashProposal");
+        };
+        // Um firmware do catalogo (C5) substitui os artefatos do build; o
+        // que nao foi baixado e' recusado antes de compor a linha.
+        let firmware = match pedido.firmware.as_deref().map(|id| self.firmware_image(id)) {
+            None => None,
+            Some(Ok(imagem)) => Some(imagem),
+            Some(Err(mensagem)) => {
+                return JsonRpcResponse::failure(
+                    request_id,
+                    JsonRpcError::new(
+                        JsonRpcErrorCode::InvalidRequest,
+                        format!("runConfig.flashProposal: {mensagem}"),
+                        Some(json!({ "method": "runConfig.flashProposal" })),
+                    ),
+                );
+            }
         };
         let modelo = self.compute_project_model(&root);
         let acha = |binario: &str| self.detector.find_in_path(binario);
@@ -58,6 +74,7 @@ impl Core {
             pedido.engine.as_deref(),
             pedido.device.as_deref(),
             pedido.flash_size_bytes,
+            firmware.as_ref(),
             &acha,
         ) {
             Ok(proposta) => JsonRpcResponse::success(request_id, json!(proposta)),

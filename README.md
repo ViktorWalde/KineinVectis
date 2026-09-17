@@ -49,7 +49,10 @@ distribuída como AppImage para Linux x86_64.
   vez (`.venv` de um clique com `uv`), basedpyright com esse interpretador,
   `ruff` para formatar e analisar, executar o ponto de entrada, `pytest` com a
   árvore de casos, depurar com `debugpy` (launch ou attach por TCP),
-  MicroPython pelo `mpremote` na porta que você escolher;
+  MicroPython pelo `mpremote` na porta que você escolher — com os arquivos
+  da placa (listar, baixar, enviar, apagar), o firmware oficial do
+  micropython.org baixado com checksum e gravado pela proposta de "Gravar",
+  e os stubs da placa para o `import machine` completar;
 - **toolchains por alvo**: catálogo conferido na fonte, instalação na pasta da
   IDE com SHA-256 conferido antes de desempacotar, leitura de sysroot e
   importação de kit de SDK (Yocto, Buildroot);

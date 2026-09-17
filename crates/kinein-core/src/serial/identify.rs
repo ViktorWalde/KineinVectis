@@ -122,24 +122,37 @@ fn campo<'a>(linha: &'a str, rotulo: &str) -> Option<&'a str> {
     (resto.is_empty() || resto.starts_with(' ') || resto.starts_with('\t')).then_some(valor)
 }
 
-/// `ESP32-C3 (QFN32) (revision v0.4)` -> `esp32c3`.
+/// As series do IDF (`idf.py --list-targets`, ESP-IDF 5.x): so' elas
+/// entram na chave; qualquer outro sufixo e' encapsulamento do classico.
+const SERIES: [&str; 8] = ["s2", "s3", "c2", "c3", "c5", "c6", "h2", "p4"];
+
+/// `ESP32-C3 (QFN32) (revision v0.4)` -> `esp32c3`; `ESP32-D0WD-V3
+/// (revision v3.1)` -> `esp32`.
 ///
 /// A chave que o kit, o `IDF_TARGET` e as tabelas do `project/mod.rs` usam:
-/// o primeiro token, em minusculas e sem o hifen — `ESP32-S3` e `ESP32` ficam
-/// certos. O `ESP8685 (QFN28)` e' um C3 de outro encapsulamento e o esptool o
-/// nomeia pelo numero comercial: a tabela abaixo o devolve ao alvo do IDF.
+/// `esp32` mais o sufixo da serie (`s2`, `s3`, `c2`…`p4`) quando ha' um.
+/// O que vem depois do `ESP32-` no chip classico e' o ENCAPSULAMENTO
+/// (`D0WD-V3`, `D0WDQ6`, `PICO-D4`, `U4WDH`, `S0WD`), nao a serie: medido no
+/// ESP32 do autor em 2026-09-17 (`ESP32-D0WD-V3`), a chave e' `esp32` — a
+/// primeira versao devolvia `esp32d0wdv3`, que nenhum kit conhece. O
+/// `ESP8685 (QFN28)` e' um C3 de outro encapsulamento e o esptool o nomeia
+/// pelo numero comercial: a tabela abaixo o devolve ao alvo do IDF.
 #[must_use]
 pub fn chip_key(descricao: &str) -> Option<String> {
     let token = descricao.split_whitespace().next()?;
-    let chave = token.to_ascii_lowercase().replace('-', "");
+    let chave = token.to_ascii_lowercase();
     // Variantes de encapsulamento que o esptool nomeia pelo numero comercial
     // (`targets/esp32c3.py`): sao o mesmo alvo do IDF.
-    let chave = match chave.as_str() {
-        "esp8685" | "esp8686" => "esp32c3".to_owned(),
-        "esp8684" => "esp32c2".to_owned(),
-        outra => outra.to_owned(),
-    };
-    (chave.starts_with("esp")).then_some(chave)
+    match chave.as_str() {
+        "esp8685" | "esp8686" => return Some("esp32c3".to_owned()),
+        "esp8684" => return Some("esp32c2".to_owned()),
+        "esp8266" | "esp8266ex" => return Some("esp8266".to_owned()),
+        _ => {}
+    }
+    let serie = chave.strip_prefix("esp32")?;
+    let serie = serie.trim_start_matches('-');
+    let sufixo = SERIES.iter().find(|s| serie == **s).copied().unwrap_or("");
+    Some(format!("esp32{sufixo}"))
 }
 
 /// `4MB` -> 4194304; `512KB` -> 524288. Outra grafia -> `None`.
@@ -159,11 +172,43 @@ fn tamanho_em_bytes(texto: &str) -> Option<u64> {
 mod tests {
     use super::*;
 
-    /// A saida do `flash-id` como o CODIGO do esptool 5.4.0 a imprime
-    /// (`__init__.py` l.558-575, `cmds.py::flash_id`), com os valores de um
-    /// ESP32-C3 — nao medida numa placa: o proximo dono com uma placa troca
-    /// esta fixture pela saida real e registra a diferenca.
+    /// A saida REAL do `flash-id` (esptool 5.4.0) no ESP32 do autor
+    /// (CP2102, `/dev/ttyUSB0`), medida em 2026-09-17 — substituiu a fixture
+    /// escrita a partir do codigo. Diferencas em relacao a ela: ha' um
+    /// cabecalho (`Serial port`, `Detecting chip type...`, `Connected to`) e
+    /// as linhas do stub flasher ANTES do bloco de flash; `Flash voltage set
+    /// by a strapping pin` no lugar de `by eFuse`; sem `USB mode:` (o ESP32
+    /// classico nao tem USB nativo). O parser tolerante nao precisou mudar;
+    /// a chave do chip precisou (`esp32`, nao `esp32d0wdv3`).
     const FIXTURE_V5: &str = "\
+esptool v5.4.0
+Serial port /dev/ttyUSB0:
+Connecting.....
+Detecting chip type... ESP32
+Connected to ESP32 on /dev/ttyUSB0:
+Chip type:          ESP32-D0WD-V3 (revision v3.1)
+Features:           Wi-Fi, BT, Dual Core + LP Core, 240MHz, Vref calibration in eFuse, Coding Scheme None
+Crystal frequency:  40MHz
+MAC:                70:4b:ca:04:54:54
+
+Uploading stub flasher...
+Running stub flasher...
+Stub flasher running.
+
+Flash Memory Information:
+=========================
+Manufacturer: 5e
+Device: 4016
+Detected flash size: 4MB
+Flash voltage set by a strapping pin: 3.3V
+
+Hard resetting via RTS pin...
+";
+
+    /// A fixture anterior, escrita a partir do CODIGO do esptool com os
+    /// valores de um C3 (fica como o segundo formato que o parser cobre:
+    /// `USB mode:` e o bloco de eFuse).
+    const FIXTURE_C3: &str = "\
 esptool v5.4.0
 Connected to ESP32-C3 on /dev/ttyUSB0:
 Chip type:          ESP32-C3 (QFN32) (revision v0.4)
@@ -184,8 +229,27 @@ Hard resetting via RTS pin...
 ";
 
     #[test]
-    fn reads_chip_flash_and_mac_from_the_v5_output() {
+    fn reads_chip_flash_and_mac_from_the_real_esp32_output() {
         let id = parse_flash_id(FIXTURE_V5);
+        assert_eq!(id.chip.as_deref(), Some("esp32"));
+        assert_eq!(
+            id.chip_description.as_deref(),
+            Some("ESP32-D0WD-V3 (revision v3.1)")
+        );
+        assert_eq!(id.features.len(), 6);
+        assert_eq!(id.features[2], "Dual Core + LP Core");
+        assert_eq!(id.crystal.as_deref(), Some("40MHz"));
+        assert_eq!(id.usb_mode, None, "o ESP32 classico nao tem USB nativo");
+        assert_eq!(id.mac.as_deref(), Some("70:4b:ca:04:54:54"));
+        assert_eq!(id.flash_manufacturer.as_deref(), Some("5e"));
+        assert_eq!(id.flash_device.as_deref(), Some("4016"));
+        assert_eq!(id.flash_size.as_deref(), Some("4MB"));
+        assert_eq!(id.flash_size_bytes, Some(4 * 1024 * 1024));
+    }
+
+    #[test]
+    fn reads_chip_flash_and_mac_from_the_c3_output() {
+        let id = parse_flash_id(FIXTURE_C3);
         assert_eq!(id.chip.as_deref(), Some("esp32c3"));
         assert_eq!(
             id.chip_description.as_deref(),
@@ -236,8 +300,13 @@ Hard resetting via RTS pin...
         );
         assert_eq!(
             chip_key("ESP32-D0WD-V3 (revision v3.1)").as_deref(),
-            Some("esp32d0wdv3")
+            Some("esp32"),
+            "encapsulamento do classico nao e' serie"
         );
+        assert_eq!(chip_key("ESP32-PICO-D4").as_deref(), Some("esp32"));
+        assert_eq!(chip_key("ESP32 (revision v1.0)").as_deref(), Some("esp32"));
+        assert_eq!(chip_key("ESP32-C6 (QFN40)").as_deref(), Some("esp32c6"));
+        assert_eq!(chip_key("ESP8266EX").as_deref(), Some("esp8266"));
         assert_eq!(chip_key("ESP8685 (QFN28)").as_deref(), Some("esp32c3"));
         assert_eq!(
             chip_key("ESP32-P4 (revision v1.0)").as_deref(),

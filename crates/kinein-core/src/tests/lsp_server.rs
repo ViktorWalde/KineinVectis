@@ -573,6 +573,69 @@ fn the_python_server_receives_the_project_interpreter() {
     assert_eq!(reiniciado.params.unwrap()["language"], "python");
 }
 
+/// C4: os stubs da placa chegam ao basedpyright. Sem `typings/` nada de
+/// `stubPath`; quando `event.python.stubs` termina com sucesso e a pasta tem
+/// um `.pyi`, o servidor reinicia e o `didChangeConfiguration` novo traz
+/// `basedpyright.analysis.stubPath` = `<root>/typings` e
+/// `reportMissingModuleSource: none` — as chaves do manual do basedpyright
+/// e do `pyproject` de exemplo dos micropython-stubs (2026-09-17).
+#[test]
+fn the_python_server_receives_the_board_stubs_path_after_they_are_installed() {
+    let mut h = harness("python-stubs");
+    let path = h.root.join("app.py");
+    h.ok("fs.read", json!({ "path": path.to_str().unwrap() }));
+    let config = h.wait_for("workspace/didChangeConfiguration", 0);
+    assert!(
+        config["params"]["settings"]["basedpyright"]["analysis"]
+            .get("stubPath")
+            .is_none(),
+        "sem typings/ nao ha' stubPath: {config}"
+    );
+
+    std::fs::create_dir_all(h.root.join("typings")).unwrap();
+    std::fs::write(h.root.join("typings/machine.pyi"), "class Pin: ...\n").unwrap();
+    h.core.observe_notification(&JsonRpcRequest::notification(
+        "event.python.stubs",
+        Some(json!({ "jobId": "j", "success": true, "package": "micropython-esp32-stubs",
+                     "command": "uv pip install …", "target": h.root.join("typings").display().to_string() })),
+    ));
+    let reiniciado = h.wait_for_event("event.lsp.restarted");
+    assert_eq!(reiniciado.params.unwrap()["language"], "python");
+    // A reconfiguracao repos o comando DETECTADO do basedpyright (ausente
+    // nesta maquina de teste): o harness aponta o falso de novo, como fez
+    // ao nascer — o que se prova aqui sao as settings, nao o binario.
+    let script = fake_server();
+    let log = h.log.clone();
+    assert!(h.core.use_language_server_command(
+        "python",
+        python3(),
+        &[script.to_str().unwrap(), log.to_str().unwrap()],
+    ));
+    h.ok("fs.read", json!({ "path": path.to_str().unwrap() }));
+    let esperado = h.root.join("typings").display().to_string();
+    let deadline = Instant::now() + DEADLINE;
+    let analysis = loop {
+        let achado = h.messages().into_iter().find(|m| {
+            m["method"] == "workspace/didChangeConfiguration"
+                && m["params"]["settings"]["basedpyright"]["analysis"]["stubPath"] == esperado
+        });
+        if let Some(m) = achado {
+            break m["params"]["settings"]["basedpyright"]["analysis"].clone();
+        }
+        assert!(
+            Instant::now() < deadline,
+            "o stubPath nao chegou ao basedpyright: {:?}",
+            h.messages()
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    };
+    assert_eq!(
+        analysis["diagnosticSeverityOverrides"]["reportMissingModuleSource"],
+        "none"
+    );
+    assert_eq!(analysis["autoSearchPaths"], true);
+}
+
 /// O comando do basedpyright e' o DETECTADO (`~/.local/bin` do pipx/npm, que o
 /// PATH do processo da IDE pode nao ter), com `--stdio` — a unica forma de
 /// transporte que o core fala. Aqui ninguem troca o comando: um

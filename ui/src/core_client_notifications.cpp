@@ -59,6 +59,11 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit serialIdentified(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.serial.files")) {
+        // Idem: a listagem, o erro do mpremote e a saida crua viajam juntos.
+        emit serialFilesResolved(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.project.changed")) {
         // O core recomputa o modelo ao abrir o workspace e ao fim de um
         // configure/build; a tela SEGUE o modelo em vez de perguntar.
@@ -77,6 +82,11 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         // jobId, success, tool, command e path viajam juntos: a tela diz o que
         // rodou e se o ambiente existe, e pede o status de novo.
         emit pythonEnvironmentFinished(params.toVariantMap());
+        return;
+    }
+    if (method == QStringLiteral("event.python.stubs")) {
+        // jobId, success, package, command e target: a tela diz e pede o status.
+        emit pythonStubsFinished(params.toVariantMap());
         return;
     }
     if (method == QStringLiteral("event.container.finished")) {

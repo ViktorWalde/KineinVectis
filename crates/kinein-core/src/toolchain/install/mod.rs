@@ -19,6 +19,7 @@
 //! detector procura.
 
 pub mod catalog;
+pub mod firmware;
 
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
@@ -30,7 +31,8 @@ use std::time::Duration;
 
 use sha2::{Digest, Sha256};
 
-pub use catalog::{CATALOGO, Entrada, entrada};
+pub use catalog::{CATALOGO, Entrada, Firmware, Kind, entrada};
+pub use firmware::FIRMWARE;
 
 /// Tempo maximo sem um byte novo (nao o total: um tarball de 400 MB numa
 /// rede lenta leva o que levar, mas uma conexao muda nao pode prender o job).
@@ -124,24 +126,40 @@ pub fn install_dir(raiz: &Path, e: &Entrada) -> PathBuf {
     raiz.join(e.id).join(e.version)
 }
 
-/// `true` quando `<raiz>/<id>/<versao>/bin` existe.
+/// O que o detector (toolchain) ou o motor de gravar (firmware) procura:
+/// `<pasta>/bin` ou `<pasta>/<arquivo da URL>`.
 #[must_use]
-pub fn is_installed(raiz: &Path, e: &Entrada) -> bool {
-    install_dir(raiz, e).join("bin").is_dir()
+pub fn installed_path(raiz: &Path, e: &Entrada) -> PathBuf {
+    match e.kind {
+        Kind::Toolchain => install_dir(raiz, e).join("bin"),
+        Kind::Firmware => install_dir(raiz, e).join(firmware::file_name(e)),
+    }
 }
 
-/// Instala `e` sob `raiz`: baixa, confere, desempacota. `tar` e' o programa a
-/// executar (o do PATH, ou um falso no teste). O `sink` recebe o andamento;
-/// `cancel` e' o do job.
+/// `true` quando `<raiz>/<id>/<versao>/bin` existe (toolchain) ou o arquivo
+/// do firmware esta' na pasta.
+#[must_use]
+pub fn is_installed(raiz: &Path, e: &Entrada) -> bool {
+    match e.kind {
+        Kind::Toolchain => installed_path(raiz, e).is_dir(),
+        Kind::Firmware => installed_path(raiz, e).is_file(),
+    }
+}
+
+/// Instala `e` sob `raiz`: baixa, confere, desempacota.
+///
+/// Uma toolchain e' desempacotada pelo `tar` (o do PATH, ou um falso no
+/// teste); um firmware fica inteiro na pasta e `tar` pode ser `None`. O
+/// `sink` recebe o andamento; `cancel` e' o do job.
 pub fn install(
     e: &Entrada,
     raiz: &Path,
-    tar: &Path,
+    tar: Option<&Path>,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(InstallEvent),
 ) -> Result<PathBuf, InstallError> {
     let destino = install_dir(raiz, e);
-    if destino.join("bin").is_dir() {
+    if is_installed(raiz, e) {
         return Err(InstallError::AlreadyInstalled(destino));
     }
     let parcial = raiz.join(e.id).join(format!("{}.part", e.version));
@@ -163,6 +181,16 @@ pub fn install(
             });
         }
         sink(InstallEvent::Verified { sha256: digest });
+        if e.kind == Kind::Firmware {
+            // O firmware e' um arquivo so': a pasta final nasce com ele
+            // dentro, e nada e' desempacotado.
+            fs::create_dir_all(&destino)?;
+            fs::rename(&arquivo, destino.join(nome))?;
+            return Ok(destino.clone());
+        }
+        let tar = tar.ok_or_else(|| {
+            InstallError::Extract("sem `tar` para desempacotar a toolchain".to_owned())
+        })?;
         let extraido = parcial.join("extraido");
         fs::create_dir_all(&extraido)?;
         extract(tar, &arquivo, &extraido, sink)?;
@@ -299,7 +327,7 @@ mod tests {
     use std::sync::Arc;
     use std::sync::atomic::AtomicBool;
 
-    use super::{Entrada, InstallError, InstallEvent, install, is_installed};
+    use super::{Entrada, InstallError, InstallEvent, Kind, install, is_installed};
 
     fn pasta(nome: &str) -> PathBuf {
         let dir = std::env::temp_dir()
@@ -363,8 +391,59 @@ mod tests {
         format!("http://127.0.0.1:{porta}/toolchain.tar.xz")
     }
 
+    /// Um firmware e' um ARQUIVO SO' (C5): baixado, conferido e guardado
+    /// inteiro na pasta — sem `tar`, sem `bin/`. Checksum errado nao deixa
+    /// nada; instalar duas vezes e' recusado pelo arquivo existente.
+    #[test]
+    fn a_firmware_is_a_single_verified_file_and_needs_no_tar() {
+        let dir = pasta("firmware");
+        let bin = dir.join("ESP32_GENERIC-20260824-v1.29.0.bin");
+        let bytes: Vec<u8> = (0..70_000u32).map(|i| (i % 251) as u8).collect();
+        std::fs::write(&bin, &bytes).unwrap();
+        let digest = super::hex(&<sha2::Sha256 as sha2::Digest>::digest(&bytes));
+        // O nome do arquivo vem da URL: o servidor de teste serve o mesmo
+        // corpo em qualquer caminho.
+        let url =
+            servir(bin, 200).replace("toolchain.tar.xz", "ESP32_GENERIC-20260824-v1.29.0.bin");
+        let mut e = entrada(vazar(url), vazar(digest.clone()), bytes.len() as u64);
+        e.kind = Kind::Firmware;
+        e.firmware = Some(super::Firmware {
+            board: "ESP32_GENERIC",
+            engine: "esptool",
+            offset: Some("0x1000"),
+            chip: Some("esp32"),
+        });
+        let raiz = dir.join("toolchains");
+        let cancel = Arc::new(AtomicBool::new(false));
+        let mut eventos = Vec::new();
+        let destino = install(&e, &raiz, None, &cancel, &mut |ev| eventos.push(ev)).unwrap();
+        assert_eq!(destino, raiz.join("teste-arm-none-eabi/1.0"));
+        let arquivo = super::installed_path(&raiz, &e);
+        assert_eq!(arquivo, destino.join("ESP32_GENERIC-20260824-v1.29.0.bin"));
+        assert!(arquivo.is_file() && is_installed(&raiz, &e));
+        assert_eq!(std::fs::read(&arquivo).unwrap(), bytes);
+        assert!(!destino.join("bin").exists());
+        assert!(!raiz.join("teste-arm-none-eabi/1.0.part").exists());
+        assert!(
+            eventos
+                .iter()
+                .any(|ev| matches!(ev, InstallEvent::Verified { sha256 } if *sha256 == digest))
+        );
+        assert!(
+            !eventos
+                .iter()
+                .any(|ev| matches!(ev, InstallEvent::Extracting { .. }))
+        );
+        assert!(matches!(
+            install(&e, &raiz, None, &cancel, &mut |_| {}).unwrap_err(),
+            InstallError::AlreadyInstalled(_)
+        ));
+    }
+
     fn entrada(url: &'static str, sha256: &'static str, size: u64) -> Entrada {
         Entrada {
+            kind: Kind::Toolchain,
+            firmware: None,
             id: "teste-arm-none-eabi",
             label: "toolchain de teste",
             version: "1.0",
@@ -394,7 +473,7 @@ mod tests {
         let cancel = Arc::new(AtomicBool::new(false));
         let mut eventos = Vec::new();
         assert!(!is_installed(&raiz, &e));
-        let destino = install(&e, &raiz, Path::new("tar"), &cancel, &mut |ev| {
+        let destino = install(&e, &raiz, Some(Path::new("tar")), &cancel, &mut |ev| {
             eventos.push(ev);
         })
         .unwrap();
@@ -434,7 +513,7 @@ mod tests {
         assert!(eventos.iter().any(|e| matches!(e, InstallEvent::Extracting { command } if command.contains("--strip-components=1"))));
 
         // Instalar de novo: recusa, sem tocar no que existe.
-        let erro = install(&e, &raiz, Path::new("tar"), &cancel, &mut |_| {}).unwrap_err();
+        let erro = install(&e, &raiz, Some(Path::new("tar")), &cancel, &mut |_| {}).unwrap_err();
         assert!(matches!(erro, InstallError::AlreadyInstalled(_)), "{erro}");
     }
 
@@ -450,7 +529,7 @@ mod tests {
         let raiz = dir.join("toolchains");
         let cancel = Arc::new(AtomicBool::new(false));
         let mut eventos = Vec::new();
-        let erro = install(&e, &raiz, Path::new("tar"), &cancel, &mut |ev| {
+        let erro = install(&e, &raiz, Some(Path::new("tar")), &cancel, &mut |ev| {
             eventos.push(ev);
         })
         .unwrap_err();
@@ -501,7 +580,7 @@ mod tests {
         let erro = install(
             &e,
             &raiz,
-            Path::new("tar"),
+            Some(Path::new("tar")),
             &Arc::new(AtomicBool::new(false)),
             &mut |_| {},
         )
@@ -528,7 +607,7 @@ mod tests {
         let erro = install(
             &e,
             &raiz,
-            Path::new("tar"),
+            Some(Path::new("tar")),
             &Arc::new(AtomicBool::new(false)),
             &mut |_| {},
         )
@@ -541,7 +620,7 @@ mod tests {
         let url = servir(arquivo.clone(), 200);
         let e = entrada(vazar(url), vazar(digest.clone()), tamanho);
         let cancelado = Arc::new(AtomicBool::new(true));
-        let erro = install(&e, &raiz, Path::new("tar"), &cancelado, &mut |_| {}).unwrap_err();
+        let erro = install(&e, &raiz, Some(Path::new("tar")), &cancelado, &mut |_| {}).unwrap_err();
         assert!(matches!(erro, InstallError::Cancelled));
         assert!(!raiz.join("teste-arm-none-eabi/1.0").exists());
 
@@ -550,7 +629,7 @@ mod tests {
         let erro = install(
             &e,
             &raiz,
-            Path::new("/nao/existe/tar"),
+            Some(Path::new("/nao/existe/tar")),
             &Arc::new(AtomicBool::new(false)),
             &mut |_| {},
         )

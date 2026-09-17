@@ -79,11 +79,12 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.115.0
-testes      761 Rust aprovados; 40 harnesses QML (medicao de 2026-09-17, §7.46)
-metodos     143 IPC roteados, 50 eventos (serial.identify, runConfig.flashProposal,
-            serial.access, event.lsp.log e event.serial.identified entraram em
-            2026-09-17)
+protocolo   0.116.0
+testes      782 Rust aprovados; 41 harnesses QML (medicao de 2026-09-17, §7.47)
+metodos     145 IPC roteados, 52 eventos (serial.identify, runConfig.flashProposal,
+            serial.access, serial.files, python.stubs, event.lsp.log,
+            event.serial.identified, event.serial.files e event.python.stubs
+            entraram em 2026-09-17)
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -589,7 +590,9 @@ o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41, o E4 na §7.42 e o E2
 na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; Toolchains
 (seletor de pasta nativo; SDK do Zephyr no `importKit`) na §7.45 e o P0
 (preset no configure automático; Bear; alvo do kit para o rust-analyzer) na
-§7.46. O próximo item é o P4 MicroPython. Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+§7.46, e o P4 MicroPython (arquivos na placa, firmware oficial, stubs por
+placa — provado no ESP32 real) na §7.47. O próximo item é o bloco E
+(frameworks como motores de build/flash). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -602,7 +605,7 @@ ainda não está verde.
 | Embarcados, bloco A | **E5 (§7.41, 0.112.0), E4 (§7.42, 0.113.0) e E2 permissão por canal (§7.43, 0.114.0: `serial.access` medido no ESP32 real — `uaccess` sem grupo, ModemManager candidato, regras de sonda da distro) FEITOS em 2026-09-17, e o A5 (§7.44: catálogo de embarcados no painel de instalação, fonte oficial ou índice da distro, com data) fechou o bloco A.** Resta a exercitação com a placa (E5 `flash-id` real, E4 gravação real, E2 o passo do ModemManager). |
 | Toolchains | **Seletor de pasta nativo e SDK do Zephyr no `importKit` FEITOS em 2026-09-17 (§7.45).** Resta medir `importKit` com Yocto/Buildroot/Zephyr SDK reais — ainda sem exemplares locais. |
 | P0 — modelo do projeto | **FEITO em 2026-09-17 (§7.46, 0.115.0):** preset no configure automático (kit > CMakeUserPresets > CMakePresets, dito e anotado); `kind: make` com `bear -- make`; `rust-analyzer.cargo.target` do kit. |
-| P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
+| P4 — MicroPython | **FEITO em 2026-09-17 (§7.47, 0.116.0):** arquivos na placa (`serial.files`, C2 — lido e reescrito no ESP32 do autor), firmware oficial no catálogo de instalação e gravado pela proposta do E4 (C5), stubs por placa no basedpyright (C4). Resta o C6 (CircuitPython: drive `CIRCUITPY` + `circup`), baixa prioridade. |
 | P3 — depuração profunda | SVD com escrita pelo `gdb -i dap`; RTT/defmt; memória/disassembly; RTOS threads. |
 | P5 — qualidade | clang-tidy dentro do clangd; lâmpada proativa do Alt+Enter; gtest/catch2; cobertura. |
 | P6 — Linux embarcado | SSH remoto, decidido e ainda não arquitetado: deploy, gdbserver e debugpy attach. |
@@ -3230,3 +3233,95 @@ rust-analyzer real com um alvo bare metal não foi observado além do
 `fake_lsp_server`. **Próximo:** P4 MicroPython — firmware oficial gravado
 pela IDE (C5, motor do E4 com o `.bin` do micropython.org), arquivos no
 dispositivo (`mpremote fs`, C2), stubs por placa (C4).
+
+### 7.47 P4 — MicroPython: arquivos na placa, firmware oficial, stubs por placa — 2026-09-17 (noite), protocolo 0.116.0
+
+Três fatias do bloco C do `roadmaps/41`, na ordem do prompt, **com o ESP32
+do autor plugado** (CP2102, `/dev/ttyUSB0`) — a primeira fatia de embarcados
+provada no hardware no mesmo dia em que nasceu. **(1) C2, arquivos na
+placa.** `serial.files { device, action: list|get|put|rm|mkdir, path?,
+local? }` como job sobre `mpremote connect <dev> fs …`, desfecho em
+`event.serial.files`. O formato do `ls` (`{tamanho:12} {nome}[/]`, uma
+linha verbosa antes) e a linha `mpremote: cp: x: No such file or directory.`
+do erro foram MEDIDOS na placa e conferidos no código do mpremote 1.29.0.
+Duas descobertas que só a placa daria: a primeira conexão morreu com
+`could not enter raw repl` porque o firmware do autor inunda a UART (1,3 MB
+de binário em segundos) — o job repete uma vez e as duas saídas viajam em
+`raw`; e o `put` do mesmo conteúdo não regrava (o mpremote confere o hash:
+`Up to date`). `serial/job.rs` nasceu com o "rodar na porta com prazo e
+cancelamento" que o `identify` já tinha (agora compartilhado, sem cópia);
+`handlers/serial.rs` ganhou `porta_pronta` (as recusas antes de tocar a
+porta) para os dois. Na tela: `EmbeddedFilesController` (filho do
+`EmbeddedController`, como identity/flash/access) e `EmbeddedFilesView` —
+pasta ao lado da porta, lista, entrar/subir, Baixar (para `placa/<caminho>`
+sob o workspace, o espelho da placa, e abre no editor), Enviar o arquivo
+aberto (o editor diz qual NO CLIQUE, pelo AppDomains), Apagar; **todo gesto
+que escreve pede um segundo clique** (`pending`). **(2) C5, firmware
+oficial.** O catálogo do provedor de instalação ganhou `kind:
+toolchain|firmware` e `firmware { board, engine, offset?, chip?, file }`:
+cinco releases v1.29.0 (2026-08-24) do micropython.org — ESP32_GENERIC
+(offset `0x1000`), ESP32_GENERIC_C3 e _S3 (`0x0`), RPI_PICO e RPI_PICO_W
+(`.uf2`) — com o offset lido na página de cada placa. **A fonte não publica
+checksum**: o SHA-256 pinado foi medido no download desta sessão (os cinco
+arquivos, 0,7–1,8 MB) e o `source` confessa. O provedor baixa e guarda o
+arquivo inteiro (sem `tar`, sem `bin/`); `runConfig.flashProposal
+{ firmware }` compõe a linha da página (`flash/firmware.rs`; o `flash.rs`
+virou `flash/mod.rs` para não passar de 500) com os avisos: `erase-flash`
+na primeira instalação (a linha pronta no aviso, nunca na de gravar), chip
+do kit ≠ chip da página, flash identificada menor que o arquivo. Na tela: o
+catálogo marca "firmware" e diz Baixar/Baixado; o Gravar oferece os
+firmwares baixados como chips no lugar do build. **(3) C4, stubs por
+placa.** `python.stubs { port?, board? }` — `uv pip install -U
+--link-mode=copy --target <root>/typings micropython-<port>[-<board>]-stubs`
+(a forma da fonte, `--target ./typings`; sem uv, o `pip` do interpretador do
+projeto); o modelo do projeto sugere o pacote pelo chip do kit/identidade
+pela lista publicada (`esp32c3` → `micropython-esp32-esp32_generic_c3-stubs`);
+`python.status` diz `stubsPath`/`stubsSuggested`; ao terminar, o
+basedpyright recebe `basedpyright.analysis.stubPath` e
+`reportMissingModuleSource: none` (as chaves do manual do basedpyright e do
+`pyproject` de exemplo dos micropython-stubs, conferidas) e reinicia. Na
+tela: faixa informativa de saúde com **Instalar stubs**.
+
+**O que a placa consertou.** (a) `serial.identify` devolvia `chip:
+esp32d0wdv3` para o `ESP32-D0WD-V3` do autor — o encapsulamento do clássico
+virava série; agora só `s2/s3/c2/c3/c5/c6/h2/p4` entram na chave e o resto é
+`esp32`. A `FIXTURE_V5` de `serial/identify.rs` passou a ser a saída REAL
+(cabeçalho `Serial port`/`Detecting chip type`, linhas do stub flasher,
+`Flash voltage set by a strapping pin`); a antiga, escrita do código com
+um C3, ficou como segundo formato. (b) O `EmbeddedEventRouter` chamava
+`handleIdentifyStarted`/`handleIdentified` no PAI (onde não existem — moram
+no filho `identity`) e `flashProposalResolved`/`serialAccessResolved` não
+tinham consumidor QML: o core respondia E5/E4/E2 e a tela nunca recebia — o
+"sintoma do Docker" (§7.34) de novo, invisível a todos os gates porque um
+sinal C++ sem ouvinte QML não é erro para ninguém. Corrigido: cada desfecho
+vai ao filho dono, e `requestFailed` chega a todos os filhos.
+
+**Medido em 2026-09-17:** 782 testes Rust (+21: `serial/files` — linha,
+parser sobre a saída real, erro, validação; `serial.files` por despacho —
+list/get/put/rm/mkdir com o risco por ação, a repetição do raw REPL, a
+linha do erro, as recusas, o cancelamento; catálogo de firmware pinado;
+download de firmware servido localmente com checksum e sem `tar`; a
+proposta esptool/picotool com firmware; o despacho `flashProposal
+{ firmware }` até o `run.start` com o esptool falso; `python/stubs` —
+pacote, sugestão, linhas; `python.stubs` por despacho com o uv falso e o
+status antes/depois; o `stubPath` chegando ao servidor falso no
+`didChangeConfiguration` após `event.python.stubs`); 41 harnesses QML
+(`tst_embedded_files` novo; `tst_embedded_flash`, `tst_python`,
+`tst_project_health` estendidos); 145 métodos, 52 eventos; clippy, fmt,
+clang-format, Clang-Tidy dos 4 .cpp tocados, fiação, propriedades, alcance,
+duplicação (a derivação `kind === "firmware"` ficou com um dono só, o
+`ToolchainController`), arquitetura, docs, links, shell; qmllint estrito
+limpo; os dois presets clang compilam e abrem. **Na placa real:** `ls`,
+`get main.py` (13588 B, SHA-256 igual ao `sha256sum` da placa), o erro do
+mpremote, o `put` do mesmo `main.py` (SHA-256 igual antes e depois),
+`flash-id` → `esp32`, 4MB, MAC — registros em
+`DocsPrivate/Codex/evidencias-2026-09-17-p4/`.
+
+**Não provado, dito:** o firmware não foi GRAVADO na placa do autor (apagaria
+o `main.py` dele; a linha foi provada com o esptool falso e roda pelo
+`run.start` real); nenhum Pico (o `picotool` não está nesta máquina); os
+stubs reais foram instalados pelo `uv` desta máquina (2 pacotes em 7 ms)
+fora do core — no core, com o uv falso; o passo do ModemManager (E2) e a
+gravação do E4 continuam sendo do autor. C6 (CircuitPython) não foi feito.
+**Próximo:** bloco E — ESP-IDF, pico-sdk, Zephyr e PlatformIO como motores
+de build/flash/monitor.

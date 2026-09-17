@@ -56,7 +56,7 @@ Item {
             width: parent.width
             visible: root.aberto
             wrapMode: Text.WordWrap
-            text: qsTr("Baixa para %1 com o SHA-256 publicado conferido ANTES de desempacotar; o tar do sistema desempacota. Nada no sistema, nada sem clique.")
+            text: qsTr("Baixa para %1 com o SHA-256 conferido ANTES de desempacotar (toolchains: o publicado pela fonte; firmware MicroPython: o medido no download, a fonte não publica); o tar do sistema desempacota. Nada no sistema, nada sem clique.")
                   .arg(root.toolchainController ? root.toolchainController.installRoot : "")
             color: Theme.textMuted
             font.pixelSize: 10
@@ -103,6 +103,7 @@ Item {
                         text: (linha.modelData.recommended === true ? "★ " : "")
                               + linha.modelData.label + " · " + linha.modelData.version
                               + " · " + root.mib(linha.modelData.sizeBytes) + " MiB"
+                              + (root.toolchainController.isFirmware(linha.modelData) ? qsTr(" · firmware") : "")
                         color: Theme.textPrimary
                         font.pixelSize: 11
                     }
@@ -132,9 +133,11 @@ Item {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     compact: true
-                    text: linha.modelData.installed === true ? qsTr("Instalada")
+                    text: linha.modelData.installed === true
+                          ? (root.toolchainController.isFirmware(linha.modelData) ? qsTr("Baixado") : qsTr("Instalada"))
                           : root.toolchainController.installing === linha.modelData.id
-                            ? qsTr("baixando…") : qsTr("Instalar")
+                            ? qsTr("baixando…")
+                            : (root.toolchainController.isFirmware(linha.modelData) ? qsTr("Baixar") : qsTr("Instalar"))
                     enabled: linha.modelData.installed !== true
                              && root.toolchainController.installing === ""
                     onClicked: root.toolchainController.install(linha.modelData.id)

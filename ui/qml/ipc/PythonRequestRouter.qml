@@ -19,5 +19,9 @@ Item {
         function onCreateEnvironmentRequested(tool) {
             root.coreClient.pythonCreateEnvironment(tool);
         }
+
+        function onStubsRequested(port, board) {
+            root.coreClient.pythonStubs(port, board);
+        }
     }
 }

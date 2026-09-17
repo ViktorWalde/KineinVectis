@@ -1,5 +1,39 @@
 # 03 — Protocolo IPC
 
+> **0.116.0 (2026-09-17, noite) — P4, MicroPython em três fatias (C2, C5, C4
+> do `roadmaps/41` bloco C).** (1) **Arquivos na placa:** `serial.files
+> { device, action: list|get|put|rm|mkdir, path?, local?, tool? }` →
+> `{ jobId, command }` (job `mpremote connect <dev> fs <ls|cp|rm|mkdir>`;
+> `event.serial.files { jobId, device, action, path, command, success,
+> error?, entries?: [{ name, size, directory }], local?, raw }`). Todo `fs`
+> entra no raw REPL e interrompe o programa da placa (`JobRisk::Medium`);
+> o que escreve (`put`/`rm`/`mkdir`) é `High` e a tela confirma antes. Uma
+> repetição quando a placa não deixa entrar no raw REPL (medido no ESP32 do
+> autor: o firmware inundando a UART). `get` baixa para `placa/<caminho>`
+> sob o workspace (o espelho da placa) e abre no editor. (2) **Firmware
+> oficial:** o catálogo de `toolchain.installable` ganhou `kind:
+> toolchain|firmware` e `firmware?: { board, engine, offset?, chip?, file }`
+> — cinco releases pinadas do micropython.org v1.29.0 (ESP32_GENERIC,
+> _C3, _S3, RPI_PICO, RPI_PICO_W), baixadas pelo mesmo provedor (arquivo
+> só, sem `tar`; a fonte NÃO publica checksum: o SHA-256 foi medido no
+> download de 2026-09-17 e o `source` o diz); `runConfig.flashProposal
+> { firmware? }` grava o arquivo baixado pela linha da página da placa
+> (`write-flash 0x1000` no ESP32 clássico, `0x0` em C3/S3; `picotool load
+> -f -x` no Pico) com o aviso do `erase-flash` da primeira vez. (3)
+> **Stubs por placa:** `python.stubs { port?, board? }` → `{ jobId,
+> package, command, target }` (job `uv pip install --target <root>/typings
+> micropython-<port>[-<board>]-stubs`, ou o `pip` do interpretador do
+> projeto; `event.python.stubs { jobId, success, package, command,
+> target }`); `python.status` ganhou `stubsPath?` e `stubsSuggested?` (o
+> chip do kit/identidade escolhe a placa: `esp32c3` →
+> `micropython-esp32-esp32_generic_c3-stubs`); o basedpyright recebe
+> `basedpyright.analysis.stubPath` e `reportMissingModuleSource: none`.
+> Também: `serial.identify` passou a devolver `chip: esp32` para os
+> encapsulamentos do clássico (`ESP32-D0WD-V3` etc.; medido na placa —
+> antes saía `esp32d0wdv3`), e o roteador QML dos filhos do painel de
+> Embarcados (identidade, gravar, permissão) foi consertado — o core
+> respondia e a tela não recebia. Métodos 145, eventos 52.
+>
 > **0.115.0 (2026-09-17) — P0, o modelo do projeto em três fatias.** (1) O
 > `cmake.configure` sem `preset` escolhe o do **kit ativo** (a ponte manda o
 > último `toolchain.get`) ou o **padrão do projeto** — o primeiro
@@ -1648,9 +1682,9 @@ na raiz pelo `run.start`.
   heurística (`cargo run` / executável único do CMake / o ponto de entrada
   Python — na placa, com o `device?` escolhido, quando o projeto é
   MicroPython). Só a heurística recebe `device`.
-- **`runConfig.flashProposal { device?, engine?, flashSizeBytes? }` →
+- **`runConfig.flashProposal { device?, engine?, flashSizeBytes?, firmware? }` →
   `{ name, command, engine, source, warnings }` (`0.113.0`, E4 do
-  `integracoes/38` §6).** "Gravar" como configuração de execução, na forma
+  `integracoes/38` §6; `firmware` em `0.116.0`).** "Gravar" como configuração de execução, na forma
   decidida pelo autor em 2026-09-11 (o Upload do PlatformIO, o Download &
   Run do CLion): **puro** — nada roda, nada é salvo; a resposta é uma
   proposta que a UI mostra como prévia e que vira `runConfig.save` (nome
@@ -1674,6 +1708,20 @@ na raiz pelo `run.start`.
   sem porta, sem chip, família sem tabela) → `INVALID_REQUEST`. A linha
   salva é editável como qualquer configuração — é assim que um `esptool` v4
   troca `write-flash` por `write_flash`.
+- **`firmware` (`0.116.0`, C5 do `roadmaps/41` bloco C):** o id de um
+  firmware do catálogo (`toolchain.installable`, `kind: firmware`) já
+  BAIXADO substitui os artefatos do build. A linha é a da página da placa
+  no micropython.org (lida em 2026-09-17): **esptool** `--chip <chip da
+  página> --port <device> --baud 460800 --before default-reset --after
+  hard-reset write-flash <offset> '<arquivo>'` — `0x1000` no ESP32 clássico,
+  `0x0` em C3/S3 —, com `warnings` para a primeira instalação (a página
+  manda `erase-flash` antes; a linha pronta vai no aviso, nunca na de
+  gravar), para um chip do kit diferente do da página, e para a flash
+  identificada menor que o arquivo; **picotool** `load -f -x '<uf2>'` (o
+  mesmo que copiar para o drive `RPI-RP2`, como a página manda). O motor é
+  o da página: `engine` diferente → `INVALID_PARAMS`; firmware não
+  baixado, id de toolchain ou desconhecido → `INVALID_REQUEST` com o passo.
+  `name` é `Gravar firmware (<rótulo>)`.
 
 ### Configuration Actions (`configAction.list` / `configAction.preview` / `configAction.apply`)
 
@@ -1937,10 +1985,27 @@ toolchain.installable {}       -> { installRoot, toolchains: [InstallableToolcha
 toolchain.install { id }       -> { jobId }        (job; event.toolchain.installed no fim)
 
 InstallableToolchain   id, label, version, family (cortex-m | riscv | aarch64-linux |
-                       arm-linux | riscv64-linux), url, sizeBytes, sha256, license,
-                       source, installDir, installed, recommended
+                       arm-linux | riscv64-linux | espressif | rp2040), url, sizeBytes,
+                       sha256, license, source, installDir, installed, recommended,
+                       kind (toolchain | firmware; 0.116.0),
+                       firmware? { board, engine, offset?, chip?, file }
 event.toolchain.installed { jobId, id, version, path, success, error? }
 ```
+
+**Firmware MicroPython no mesmo catálogo (`0.116.0`, C5 do `roadmaps/41`
+bloco C).** Cinco entradas `kind: firmware`, v1.29.0 (2026-08-24) do
+micropython.org: `ESP32_GENERIC` (esptool, offset `0x1000`, chip `esp32`),
+`ESP32_GENERIC_C3` e `ESP32_GENERIC_S3` (esptool, offset `0x0`),
+`RPI_PICO` e `RPI_PICO_W` (picotool, `.uf2`). O mesmo provedor baixa
+(`.part`, SHA-256 conferido antes de qualquer coisa) e guarda o ARQUIVO
+inteiro em `<installRoot>/<id>/<versão>/<arquivo>` (`firmware.file`) — sem
+`tar`, sem `bin/`; `installed` é o arquivo existir. **A fonte não publica
+checksum** (conferido nas cinco páginas em 2026-09-17): o SHA-256 pinado
+foi medido no download desta sessão e o `source` diz isso — protege contra
+um download corrompido ou trocado depois da medição, não contra a fonte
+ter sido trocada antes. `recommended` só num projeto MicroPython da mesma
+família (`espressif`/`rp2040`); a uma app C do ESP-IDF, nunca. Quem grava é
+`runConfig.flashProposal { firmware }`.
 
 **O catálogo é PINADO e medido.** Nove entradas (Linux x86_64): Arm GNU
 Toolchain 15.2.rel1 (`arm-none-eabi`, `aarch64-none-linux-gnu`,
@@ -2883,7 +2948,10 @@ python.status {}                       -> PythonStatus       (exige workspace)
 python.createEnvironment { tool? }     -> { jobId }          (job; tool = uv | venv;
                                                               omitido = uv se houver,
                                                               senao venv)
+python.stubs { port?, board? }         -> { jobId, package, command, target }
+                                                             (job; 0.116.0)
 event.python.finished { jobId, success, tool, command, path }
+event.python.stubs    { jobId, success, package, command, target }
 
 PythonStatus   interpreter? (PythonEnv: interpreter, version?, origin, warning?),
                nativeModule? (PythonNativeModule: kind, tool, evidence[], buildHint;
@@ -2891,8 +2959,30 @@ PythonStatus   interpreter? (PythonEnv: interpreter, version?, origin, warning?)
                hasEnvironment (origin != sistema), environmentTool? (uv|venv:
                o que a IDE usaria), uv? (caminho), projectFiles[] (pyproject.toml,
                requirements.txt, setup.py, uv.lock, poetry.lock, Pipfile),
-               hint? (o que falta, com o remedio)
+               hint? (o que falta, com o remedio),
+               stubsPath? (<root>/typings quando tem um .pyi; 0.116.0),
+               stubsSuggested? (o pacote que o chip do kit/identidade sugere)
 ```
+
+**`python.stubs` são os STUBS DA PLACA (C4 do `roadmaps/41` bloco C,
+`0.116.0`):** o `import machine` completa e o basedpyright para de dizer
+que o módulo não existe. Fonte (micropython-stubs.readthedocs.io, "Install
+the micropython-stubs", 2026-09-17): `pip install -U
+micropython-<port>[-<board>]-stubs --no-user --target ./typings`; aqui o
+instalador é o `uv` detectado (`uv pip install -U --link-mode=copy --target
+<root>/typings <pacote>`; medido nesta máquina: 2 pacotes em 7 ms) ou, sem
+uv, o `pip` do interpretador do projeto. `port`/`board` ausentes = o modelo
+do projeto decide pelo chip do kit/identidade, pela lista publicada de
+pacotes (`esp32c3` → `micropython-esp32-esp32_generic_c3-stubs`; família
+`rp2040` sem chip → `micropython-rp2-stubs`, porque Pico e Pico W têm stubs
+diferentes); sem evidência, `INVALID_REQUEST` dizendo o que fixar. `success`
+exige exit 0 E um `.pyi` em `typings/`. Ao terminar com sucesso, o
+basedpyright é reconfigurado com `basedpyright.analysis.stubPath =
+<root>/typings` e `diagnosticSeverityOverrides.reportMissingModuleSource =
+none` (a chave do manual do basedpyright e o `pyproject` de exemplo dos
+micropython-stubs) e reinicia se está vivo. Na UI: faixa INFORMATIVA de
+saúde num projeto MicroPython com sugestão e sem `typings/`, botão
+**Instalar stubs**.
 
 **As regras, ditas.** `success` só é `true` quando `.venv/bin/python` existe
 depois de a ferramenta sair com 0 — uma ferramenta que "termina bem" sem
@@ -3144,6 +3234,11 @@ serial.list     {}                   -> { ports: [SerialPortInfo], hint? }
 serial.monitor  { device, baud? }    -> { id, command, tool }   (aba de terminal; 0.92.0)
 serial.identify { device, tool? }    -> { jobId, command }      (job; 0.112.0)
 serial.access   { device? }          -> { channels: [AccessChannel] }   (0.114.0)
+serial.files    { device, action, path?, local?, tool? } -> { jobId, command }   (job; 0.116.0)
+                action: list | get | put | rm | mkdir
+
+event.serial.files { jobId, device, action, path, command, success, error?,
+                     entries?: [{ name, size, directory }], local?, raw }
 
 AccessChannel   kind (serial|probe|modemManager), device?, ok, detail, problem?,
                 fix? { steps: [{ explanation, command }], sourceUrl, checkedOn },
@@ -3229,6 +3324,33 @@ install esptool`. Prazo de 30 s no job (o esptool tenta sincronizar várias
 vezes): estourou → `success: false` com "não respondeu em 30 s"; cancelado
 (`job.cancel`) → mata o esptool e diz "cancelada". `JobRisk::Medium` porque
 reseta a placa; nada é escrito nela.
+
+**`serial.files` são os ARQUIVOS NA PLACA de um MicroPython (C2 do
+`roadmaps/41` bloco C, `0.116.0`; referência de UX: o "Files on device" do
+Thonny)** — `mpremote connect <device> fs <ls|cp|rm|mkdir>` como job, um por
+vez (o mpremote prende a porta). O `:` marca o lado da placa e é a IDE que
+o põe: `path` vai sem ele (`main.py`, `lib/wifi.py`; ausente só em `list`
+= a raiz); `get` é `cp :<path> <local>`, `put` é `cp <local> :<path>`. Um
+`local` relativo é sob o workspace (sem workspace, só absoluto); a tela
+baixa para `placa/<caminho>` — o espelho da placa, que nunca colide com o
+código do projeto e pode ser baixado de novo (o core cria a pasta). O
+formato do `ls` foi medido no ESP32 do autor com o mpremote 1.29.0
+(`{tamanho:12} {nome}[/]`, uma linha verbosa `ls :<path>` antes) e lido
+no código dele (`commands.py::do_filesystem`). **Todo `fs` interrompe o
+programa da placa** (raw REPL, soft reset ao sair) — por isso até o `ls`
+é gesto explícito e `JobRisk::Medium`; `put`/`rm`/`mkdir` escrevem a
+flash e são `High` (a tela pede o segundo clique). **A primeira conexão
+pode falhar:** medido com o firmware do autor inundando a UART (1,3 MB de
+binário em segundos), o mpremote morreu com `could not enter raw repl`;
+a segunda entrou — o job repete UMA vez nesse caso, e as duas saídas
+viajam em `raw`. `error` é a linha `mpremote: <cmd>: <caminho>: <motivo>.`
+que ele escreve no stderr (sem o prefixo). Recusas antes de tocar a
+porta: pedido inválido (`:` na frente, `rm` sem `path`, `get` sem `local`,
+`put` de arquivo inexistente) → `INVALID_PARAMS`; porta inexistente ou
+sem acesso → como `serial.identify`; sem `mpremote` → `TOOL_NOT_FOUND`.
+Prazo de 120 s por execução; cancelar mata o processo. O `put` do mesmo
+conteúdo não regrava: o mpremote confere o hash e diz `Up to date`
+(medido: o `main.py` do autor reenviado, SHA-256 igual antes e depois).
 
 **`serial.access` é a permissão POR CANAL (E2 do `integracoes/38` §6,
 `0.114.0`)** — a fatia 4.3 redesenhada: para CADA canal, o que falta e o
