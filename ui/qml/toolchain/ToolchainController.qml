@@ -40,6 +40,10 @@ Item {
                            string toolchainFile)
     signal inspectSysrootRequested(string path)
     signal importKitRequested(string path)
+    // O seletor de pasta NATIVO da IDE (o FolderPicker da Start Screen) para
+    // o SDK/sysroot (2026-09-17): quem o abre e' a composicao (AppDomains),
+    // e o caminho escolhido volta por `handlePickedPath`.
+    signal folderPickRequested(string purpose, string startPath)
 
     // O GERENCIADOR QUE LE O DISCO (42 §8 itens b e d, 2026-09-13): o arquivo
     // de toolchain do kit; o relatorio do sysroot; a proposta de kit lida de
@@ -173,6 +177,20 @@ Item {
     function handleKitFile(newToolchainFile) {
         toolchainFile = newToolchainFile === undefined || newToolchainFile === null
                 ? "" : newToolchainFile;
+    }
+
+    // O caminho do campo "Pasta/SDK": a tela o le daqui, para o seletor de
+    // pasta e a digitacao escreverem no mesmo lugar.
+    property string importPath: ""
+
+    function pickImportPath() {
+        folderPickRequested("kitPath", importPath !== "" ? importPath : "");
+    }
+
+    function handlePickedPath(purpose, path) {
+        if (purpose === "kitPath") {
+            importPath = path;
+        }
     }
 
     function inspectSysroot(path) {

@@ -10,6 +10,9 @@ Item {
     id: root
 
     property var coreClient: null
+    // O FolderPicker da Start Screen (Main.qml): o seletor de pasta NATIVO
+    // que o kit reutiliza para o SDK/sysroot, em vez de um dialogo proprio.
+    property var folderPicker: null
 
     readonly property alias toolchainController: toolchainController
     readonly property alias libraryController: libraryController
@@ -27,6 +30,13 @@ Item {
         id: toolchainController
 
         workspaceRoot: root.coreClient.workspaceRoot
+        // A escolha de pasta vai ao picker existente com o proposito; a
+        // resposta volta pelo Main.qml (onFolderPicked -> handlePickedPath).
+        onFolderPickRequested: function(purpose, startPath) {
+            if (root.folderPicker) {
+                root.folderPicker.openFor(purpose, startPath !== "" ? startPath : root.coreClient.homeDir);
+            }
+        }
     }
 
     // Bibliotecas C/C++ (roadmaps/35, etapa 19/20): o catalogo curado. Nao

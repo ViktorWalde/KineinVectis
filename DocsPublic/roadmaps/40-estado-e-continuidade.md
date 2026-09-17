@@ -43,7 +43,9 @@
 > 0.113.0). **E2 permissão por canal** — FEITO e MEDIDO no ESP32 real desta
 > máquina (§7.43, 0.114.0). **A5 ferramentas de embarcado no painel de
 > instalação** — FEITO (§7.44); o bloco A do roadmap 41 está fechado.
-> Próximo: Toolchains (seletor de pasta nativo; SDK do Zephyr no importKit).
+> **Toolchains** — seletor de pasta nativo e SDK do Zephyr no `importKit` —
+> FEITOS (§7.45). Próximo: P0 (preset no configure automático; Bear; alvo do
+> kit para o rust-analyzer).
 > **2026-09-16:** compatibilidade dos verificadores Ubuntu/Qt 6.4 avançou
 > (§7.37). Lógica QML verde; gate completo ainda tem impedimentos explícitos.
 
@@ -75,7 +77,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.114.0
-testes      756 Rust aprovados; 39 harnesses QML (medicao de 2026-09-17, §7.44)
+testes      757 Rust aprovados; 40 harnesses QML (medicao de 2026-09-17, §7.45)
 metodos     143 IPC roteados, 50 eventos (serial.identify, runConfig.flashProposal,
             serial.access, event.lsp.log e event.serial.identified entraram em
             2026-09-17)
@@ -581,8 +583,10 @@ desenvolvimento; as correções Qt/QML e de instrumentação (§7.37) são manut
 Elas não concluem os itens de toolchains nem alteram a sequência abaixo.
 O attach do debugpy foi validado na §7.38, a porta do MicroPython na §7.39 e
 o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41, o E4 na §7.42 e o E2
-na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; o próximo item é
-Toolchains (seletor de pasta nativo; SDK do Zephyr no `importKit`). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; Toolchains
+(seletor de pasta nativo; SDK do Zephyr no `importKit`) na §7.45. O próximo
+item é o P0 (preset no configure automático; Bear para Makefile puro; alvo
+do kit para o rust-analyzer). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -593,7 +597,7 @@ ainda não está verde.
 | --- | --- |
 | Polimento Python | **CONCLUÍDO em 2026-09-17:** Ruff (§7.36), debugpy attach (§7.38), a porta escolhida no Executar de MicroPython (§7.39, 0.110.0) e o stderr dos filhos DAP/LSP (§7.40, 0.111.0). O que resta de Python é o bloco P4 (MicroPython) e o P6 (remoto). |
 | Embarcados, bloco A | **E5 (§7.41, 0.112.0), E4 (§7.42, 0.113.0) e E2 permissão por canal (§7.43, 0.114.0: `serial.access` medido no ESP32 real — `uaccess` sem grupo, ModemManager candidato, regras de sonda da distro) FEITOS em 2026-09-17, e o A5 (§7.44: catálogo de embarcados no painel de instalação, fonte oficial ou índice da distro, com data) fechou o bloco A.** Resta a exercitação com a placa (E5 `flash-id` real, E4 gravação real, E2 o passo do ModemManager). |
-| Toolchains | Seletor de pasta nativo; SDK do Zephyr no `importKit`; medir `importKit` com Yocto/Buildroot reais, ainda sem exemplares locais validados. |
+| Toolchains | **Seletor de pasta nativo e SDK do Zephyr no `importKit` FEITOS em 2026-09-17 (§7.45).** Resta medir `importKit` com Yocto/Buildroot/Zephyr SDK reais — ainda sem exemplares locais. |
 | P0 — modelo do projeto | Preset no configure automático; Bear para Makefile puro; alvo do kit para o rust-analyzer. |
 | P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
 | P3 — depuração profunda | SVD com escrita pelo `gdb -i dap`; RTT/defmt; memória/disassembly; RTOS threads. |
@@ -3129,5 +3133,44 @@ páginas das ferramentas e `curl` (HTTP 200) em cada página de pacote citada.
 
 **Não provado, dito:** nenhum dos 26 guias foi executado nesta máquina. O
 bloco A do roadmap 41 (E1 → E3 → E5 → E4 → E2 → A5) está fechado; o que
-resta é a exercitação com a placa. **Próximo:** Toolchains — seletor de
-pasta nativo e o SDK do Zephyr no `importKit` (40 §4.1).
+resta é a exercitação com a placa. **Próximo (na época):** Toolchains — feito
+na §7.45.
+
+### 7.45 Toolchains — seletor de pasta nativo e o SDK do Zephyr no `importKit` — 2026-09-17
+
+Duas fatias, sem contrato novo. **(1) O seletor de pasta nativo.** O campo
+"Pasta/SDK" do gerenciador de toolchain era só texto; agora tem
+**Escolher pasta…**, e o que abre é o `FolderPicker` que a Start Screen já
+tinha — o mesmo navegador de pastas do core (`fs.browse`), o mesmo visual —
+com um PROPÓSITO: `FolderPickerController.purpose` (`"workspace"` abre o
+projeto, como sempre; `"kitPath"` devolve o caminho por `folderPicked` e não
+abre nada; o botão vira "Escolher"). O caminho vai
+`ToolchainController.pickImportPath()` → `folderPickRequested("kitPath",
+atual)` → `AppEnvironmentDomains` abre o picker → `Main.qml onFolderPicked` →
+`ToolchainController.handlePickedPath` → `importPath`, que o campo lê. Nenhum
+diálogo do sistema, nenhum componente novo de seleção; a digitação continua
+valendo. **(2) O SDK do Zephyr.** `toolchain.importKit` reconhece a raiz de
+um Zephyr SDK do sdk-ng pela dupla `sdk_version` + `cmake/Zephyr-sdkConfig.cmake`
+e propõe um kit `zephyr-sdk` (03: `importKit`): as toolchains em
+`gnu/<toolchain>/` (v1.x) ou na raiz (0.16/0.17 e os links de
+bisectability), a `arm-zephyr-eabi` proposta quando há várias — dita na
+evidência com as outras listadas —, `sysroot` pelo `-print-sysroot` (a libc
+da toolchain), `gdb` da toolchain, sem `toolchainFile` e sem board (o `hint`
+diz que o Zephyr compila pelo `west build -b` e acha o SDK por
+`ZEPHYR_SDK_INSTALL_DIR`/registro CMake). O layout foi lido no
+`scripts/template_setup_posix` e no `cmake/` do sdk-ng em 2026-09-17 (a
+página de docs do Zephyr não detalha a estrutura interna; o script é a
+fonte).
+
+**Medido em 2026-09-17:** 757 testes Rust (+1: o SDK falso com duas
+toolchains e o link de bisectability contado uma vez, a proposta ARM, a
+riscv sozinha, o SDK vazio com a dica do `setup.sh`, e o erro geral que
+agora nomeia o Zephyr); **40 harnesses QML** (`tst_folder_picker_purpose`
+novo; `tst_toolchain_import` com o pedido/retorno do picker); clippy, fmt,
+`diff --check`, fiação, propriedades (234), alcance (233), duplicação,
+arquitetura, docs, links, shell; qmllint estrito limpo; `debug-strict`
+compila e abre (598 ms). **Não provado:** nenhum Zephyr SDK real nesta
+máquina — a fixture é a forma do `setup.sh`; o clique real no picker foi
+provado pelo harness da lógica, não por uma sessão gráfica. **Próximo:** P0
+— preset no configure automático; Bear para Makefile puro; alvo do kit para o
+rust-analyzer (40 §4.1).

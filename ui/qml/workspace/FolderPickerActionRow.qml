@@ -4,6 +4,9 @@ import KineinVectis
 Row {
     id: root
 
+    // "Escolher" quando a pasta vai para outro fim que abrir um projeto.
+    property bool pickingFolder: false
+
     signal cancelRequested()
     signal openRequested()
 
@@ -28,7 +31,7 @@ Row {
     FolderPickerButton {
         id: openButton
 
-        text: qsTr("Abrir")
+        text: root.pickingFolder ? qsTr("Escolher") : qsTr("Abrir")
         height: parent.height
         primary: true
         onClicked: root.openRequested()

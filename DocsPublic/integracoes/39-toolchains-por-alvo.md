@@ -129,7 +129,7 @@ RISC-V MCU        riscv-none-elf-gcc           xPack 15.2.0-1                   
 Espressif         xtensa-esp-elf-gcc,          crosstool-NG esp-16.1.0_20260609     candidatos (novos);
                   riscv32-esp-elf-gcc          (o idf_tools.py os instala em        ~/.espressif/tools
                                                ~/.espressif/tools)                  lido (§4)
-Zephyr            zephyr-sdk (todas)           sdk-ng v1.0.1 (Apache-2.0)           P1: importar kit
+Zephyr            zephyr-sdk (todas)           sdk-ng v1.0.1 (Apache-2.0)           importKit FEITO 2026-09-17 (40 §7.45)
 LINUX EMBARCADO
 AArch64           aarch64-linux-gnu-gcc        distro (Fedora 16.1.1, SEM sysroot); candidato (novo) +
                   aarch64-none-linux-gnu-gcc   Arm 15.2.rel1; Bootlin 2026.08-1     dica de sysroot

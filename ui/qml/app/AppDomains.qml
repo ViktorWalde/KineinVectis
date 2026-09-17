@@ -147,6 +147,7 @@ Item {
         id: environment
 
         coreClient: root.coreClient
+        folderPicker: root.folderPicker
     }
 
     // O indice do projeto INTEIRO (pilar 0 do roadmaps/42, 2026-09-12): os

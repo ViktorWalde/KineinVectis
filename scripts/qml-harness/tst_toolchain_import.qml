@@ -17,6 +17,7 @@ Item {
     property var kits: []
     property var inspecoes: []
     property var importacoes: []
+    property var picks: []
 
     ToolchainController {
         id: tc
@@ -26,6 +27,7 @@ Item {
         }
         onInspectSysrootRequested: function(path) { root.inspecoes.push(path); }
         onImportKitRequested: function(path) { root.importacoes.push(path); }
+        onFolderPickRequested: function(purpose, startPath) { root.picks.push(purpose + "|" + startPath); }
     }
 
     Component.onCompleted: {
@@ -86,6 +88,17 @@ Item {
         tc.handleKitProposal({ kind: "yocto", path: "/opt/poky/environment-setup-x" });
         tc.workspaceRoot = "/tmp/outro";
         if (tc.hasKitProposal || tc.toolchainFile !== "" || tc.sysrootSummary() !== "" || tc.importError !== "") failures += 8192;
+
+        // O seletor de pasta NATIVO (2026-09-17): pedir abre o picker com o
+        // proposito "kitPath" e o caminho atual; a resposta certa escreve o
+        // campo; outro proposito (o workspace) nao mexe nele.
+        tc.importPath = "/opt/zephyr-sdk-1.0.1";
+        tc.pickImportPath();
+        if (root.picks.join(",") !== "kitPath|/opt/zephyr-sdk-1.0.1") failures += 16384;
+        tc.handlePickedPath("workspace", "/home/x/proj");
+        if (tc.importPath !== "/opt/zephyr-sdk-1.0.1") failures += 32768;
+        tc.handlePickedPath("kitPath", "/opt/toolchains/arm");
+        if (tc.importPath !== "/opt/toolchains/arm") failures += 65536;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

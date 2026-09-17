@@ -1945,7 +1945,7 @@ desta máquina e respondem; aplicar é o `toolchain.setKit` de sempre.
 toolchain.inspectSysroot { path }  -> SysrootReport { path, exists,
                                       folders { usrInclude, usrLib, lib },
                                       tripleLibDirs[], pkgconfigFiles, libc?, verdict }
-toolchain.importKit { path }       -> KitImport { kind (yocto | buildroot | toolchain-dir),
+toolchain.importKit { path }       -> KitImport { kind (yocto | buildroot | zephyr-sdk | toolchain-dir),
                                       path, evidence[], cCompiler?, cxxCompiler?, gdb?,
                                       sysroot?, targetTriple?, toolchainFile?, hint? }
 toolchain.setKit { …, toolchainFile? }   ("" limpa; ausente preserva)
@@ -1982,6 +1982,27 @@ distro do Fedora medido em 2026-09-12 — com o remédio. Caminho relativo →
   "Using the generated toolchain outside Buildroot", 2026-09-13). Os tarballs
   da **Bootlin** entram por aqui — são SDKs do Buildroot, com o arquivo de
   CMake.
+- **zephyr-sdk** (2026-09-17) — a raiz de um Zephyr SDK do sdk-ng: a prova
+  é `sdk_version` **e** `cmake/Zephyr-sdkConfig.cmake` (o pacote CMake que o
+  `setup.sh` registra em `~/.cmake/packages/Zephyr-sdk`). As toolchains GNU
+  moram em `gnu/<toolchain>/bin/<toolchain>-gcc` (v1.x — o `setup.sh` extrai
+  em `gnu/` e `sdk_gnu_toolchains` lista os nomes) ou na raiz
+  (`<toolchain>/`, o layout 0.16/0.17 e os links de "bisectability" que o
+  `setup.sh -c` cria); caminho canônico conta uma vez. Lido no
+  `scripts/template_setup_posix` e no `cmake/Zephyr-sdkConfig.cmake` do
+  sdk-ng em 2026-09-17. A proposta é **uma** toolchain: `arm-zephyr-eabi`
+  quando há várias (o Cortex-M é o caso comum), **dita** na `evidence` com a
+  lista das outras e a instrução "para outra, importe a pasta dela
+  (`gnu/<toolchain>`)" — que cai no `toolchain-dir`. `targetTriple` é o nome
+  da toolchain (`arm-zephyr-eabi`, `riscv64-zephyr-elf`,
+  `xtensa-espressif_esp32_zephyr-elf`); `sysroot` é o que o gcc declara (a
+  libc da toolchain — picolibc/newlib —, não um sistema de destino); `gdb` o
+  da toolchain; sem `toolchainFile` (um projeto Zephyr compila pelo `west
+  build -b <board>`, que acha o SDK por `ZEPHYR_SDK_INSTALL_DIR` ou pelo
+  registro CMake — o `hint` diz isso; nenhum board é inventado). SDK sem
+  toolchain nenhuma → proposta vazia com o passo (`./setup.sh -t
+  arm-zephyr-eabi`). **Não medido contra um SDK real** (não há nesta máquina;
+  a fixture é a forma do `setup.sh`).
 - **toolchain-dir** — uma pasta com `bin/<triple>-gcc` (o tarball da Arm, o
   que a IDE instalou): o sysroot é o que o próprio gcc declara
   (`-print-sysroot`, se ele roda aqui e a pasta existe com conteúdo), senão as

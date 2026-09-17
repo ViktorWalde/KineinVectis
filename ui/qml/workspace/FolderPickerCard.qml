@@ -75,6 +75,7 @@ Rectangle {
         FolderPickerActionRow {
             id: actionRow
 
+            pickingFolder: root.controller.purpose !== "workspace"
             onCancelRequested: root.closeRequested()
             onOpenRequested: root.controller.openSelected()
         }

@@ -22,6 +22,19 @@
 //! toolchain-dir  uma pasta com bin/<triple>-gcc: o tarball da Arm (sysroot em
 //!              <triple>/libc), da Bootlin (<triple>/sysroot), ou o que a IDE
 //!              instalou — o sysroot vem de `<gcc> -print-sysroot`
+//! zephyr-sdk   a raiz de um Zephyr SDK (sdk-ng): `sdk_version` + `cmake/
+//!              Zephyr-sdkConfig.cmake` provam o que e'; as toolchains GNU moram
+//!              em `gnu/<toolchain>/bin/<toolchain>-gcc` (v1.x — o setup.sh
+//!              extrai em `gnu/`; `sdk_gnu_toolchains` lista os nomes) ou na
+//!              raiz (`<toolchain>/`, o layout 0.16/0.17 e os links de
+//!              "bisectability" que o setup.sh cria). Lido no
+//!              `scripts/template_setup_posix` e no `cmake/Zephyr-sdkConfig.cmake`
+//!              do sdk-ng em 2026-09-17. A proposta e' UMA toolchain (a
+//!              `arm-zephyr-eabi` quando ha' varias — o Cortex-M e' o caso
+//!              comum — dita como escolha, com as outras listadas na evidencia);
+//!              nada de board: quem escolhe o board e' o `west build -b`, e o
+//!              Zephyr acha o SDK por `ZEPHYR_SDK_INSTALL_DIR` ou pelo registro
+//!              CMake (`cmake -P cmake/zephyr_sdk_export.cmake`)
 //! ```
 //!
 //! NAO MEDIDO contra um SDK Yocto ou uma arvore Buildroot reais — nao ha'
@@ -42,6 +55,9 @@ pub fn import(path: &Path) -> Result<KitImport, String> {
     if let Some(script) = environment_setup(path) {
         return yocto(&script);
     }
+    if let Some(kit) = zephyr_sdk(path) {
+        return Ok(kit);
+    }
     if let Some(host) = buildroot_host(path) {
         return Ok(buildroot(&host));
     }
@@ -52,10 +68,114 @@ pub fn import(path: &Path) -> Result<KitImport, String> {
     }
     Err(format!(
         "{} nao e' um SDK que eu reconheca: procurei um environment-setup-* (Yocto), um \
-         host/bin/<triple>-gcc com host/<triple>/sysroot (Buildroot) e um bin/<triple>-gcc \
-         (pasta de toolchain)",
+         host/bin/<triple>-gcc com host/<triple>/sysroot (Buildroot), sdk_version + \
+         cmake/Zephyr-sdkConfig.cmake (Zephyr SDK) e um bin/<triple>-gcc (pasta de toolchain)",
         path.display()
     ))
+}
+
+/// A toolchain do Zephyr SDK que a proposta usa quando ha' varias: o
+/// Cortex-M e' o caso comum, e a escolha e' DITA na evidencia.
+const ZEPHYR_TOOLCHAIN_PREFERIDA: &str = "arm-zephyr-eabi";
+
+/// Um Zephyr SDK (sdk-ng): a raiz com `sdk_version` e o pacote `CMake`.
+fn zephyr_sdk(path: &Path) -> Option<KitImport> {
+    let versao = std::fs::read_to_string(path.join("sdk_version")).ok()?;
+    let versao = versao.trim().to_owned();
+    let config = path.join("cmake/Zephyr-sdkConfig.cmake");
+    if !config.is_file() {
+        return None;
+    }
+    // As toolchains GNU: `gnu/<nome>/bin/<nome>-gcc` (v1.x) e `<nome>/bin/
+    // <nome>-gcc` (0.16/0.17 e os links de bisectability). Caminho canonico
+    // uma vez so' — o link e a pasta sao a mesma toolchain.
+    let mut toolchains: Vec<(String, PathBuf)> = Vec::new();
+    for base in [path.join("gnu"), path.to_path_buf()] {
+        let Ok(entradas) = std::fs::read_dir(&base) else {
+            continue;
+        };
+        for entrada in entradas.flatten() {
+            let nome = entrada.file_name().to_string_lossy().into_owned();
+            let gcc = entrada.path().join("bin").join(format!("{nome}-gcc"));
+            if !gcc.is_file() {
+                continue;
+            }
+            let real = std::fs::canonicalize(&gcc).unwrap_or(gcc);
+            if toolchains.iter().any(|(_, g)| *g == real) {
+                continue;
+            }
+            toolchains.push((nome, real));
+        }
+    }
+    toolchains.sort();
+    let mut evidence = vec![
+        format!(
+            "{}: Zephyr SDK {versao}",
+            path.join("sdk_version").display()
+        ),
+        format!("{}: pacote CMake Zephyr-sdk", config.display()),
+    ];
+    if toolchains.is_empty() {
+        return Some(KitImport {
+            kind: "zephyr-sdk".to_owned(),
+            path: path.display().to_string(),
+            evidence,
+            c_compiler: None,
+            cxx_compiler: None,
+            gdb: None,
+            sysroot: None,
+            target_triple: None,
+            toolchain_file: None,
+            hint: Some(
+                "Zephyr SDK sem toolchain GNU instalada: rode o setup.sh do SDK (`./setup.sh \
+                 -t arm-zephyr-eabi`, ou `-t all`) e importe de novo"
+                    .to_owned(),
+            ),
+        });
+    }
+    let escolhida = toolchains
+        .iter()
+        .position(|(n, _)| n == ZEPHYR_TOOLCHAIN_PREFERIDA)
+        .unwrap_or(0);
+    let (nome, gcc) = toolchains[escolhida].clone();
+    let nomes: Vec<&str> = toolchains.iter().map(|(n, _)| n.as_str()).collect();
+    evidence.push(format!(
+        "toolchains GNU instaladas: {} — proposta: {nome}{}",
+        nomes.join(", "),
+        if toolchains.len() > 1 {
+            "; para outra, importe a pasta dela (gnu/<toolchain>)"
+        } else {
+            ""
+        }
+    ));
+    let bin = gcc.parent().map(Path::to_path_buf).unwrap_or_default();
+    let com = |sufixo: &str| {
+        let p = bin.join(format!("{nome}-{sufixo}"));
+        p.is_file().then(|| p.display().to_string())
+    };
+    // O sysroot de uma toolchain bare metal e' o que o gcc declara (a libc
+    // da toolchain: picolibc/newlib), nao um sistema de destino.
+    let sysroot = print_sysroot(&gcc).filter(|s| s.is_dir());
+    if let Some(s) = &sysroot {
+        evidence.push(format!("sysroot (libc da toolchain) em {}", s.display()));
+    }
+    Some(KitImport {
+        kind: "zephyr-sdk".to_owned(),
+        path: path.display().to_string(),
+        evidence,
+        c_compiler: Some(gcc.display().to_string()),
+        cxx_compiler: com("g++"),
+        gdb: com("gdb"),
+        sysroot: sysroot.map(|s| s.display().to_string()),
+        target_triple: Some(nome.clone()),
+        toolchain_file: None,
+        hint: Some(format!(
+            "projeto Zephyr compila pelo `west build -b <board>`, que acha o SDK por \
+             ZEPHYR_SDK_INSTALL_DIR={} ou pelo registro CMake do setup.sh; o kit serve ao \
+             clangd (compilador cross) e ao depurador (gdb do SDK)",
+            path.display()
+        )),
+    })
 }
 
 /// O `environment-setup-*` dado, ou o unico dentro da pasta.
@@ -554,9 +674,94 @@ mod tests {
         std::fs::create_dir_all(nada.join("docs")).unwrap();
         let erro = import(&nada).unwrap_err();
         assert!(
-            erro.contains("Yocto") && erro.contains("Buildroot"),
+            erro.contains("Yocto") && erro.contains("Buildroot") && erro.contains("Zephyr"),
             "{erro}"
         );
         assert!(import(&nada.join("x")).unwrap_err().contains("nao existe"));
+    }
+
+    /// Um Zephyr SDK na forma do sdk-ng (lida no setup.sh e no
+    /// Zephyr-sdkConfig.cmake em 2026-09-17): `sdk_version`, o pacote `CMake`,
+    /// as toolchains em `gnu/<nome>/` (v1.x) e o link de bisectability na
+    /// raiz (contado uma vez). Com varias, a proposta e' a `arm-zephyr-eabi`
+    /// e a evidencia lista as outras; o sysroot e' o que o gcc declara; sem
+    /// toolchain nenhuma, a proposta e' vazia com a dica do setup.sh.
+    #[test]
+    fn a_zephyr_sdk_proposes_the_arm_toolchain_and_lists_the_others() {
+        let sdk = raiz("zephyr");
+        std::fs::write(sdk.join("sdk_version"), "1.0.1\n").unwrap();
+        std::fs::create_dir_all(sdk.join("cmake")).unwrap();
+        std::fs::write(sdk.join("cmake/Zephyr-sdkConfig.cmake"), "# pacote\n").unwrap();
+        // Sem toolchain: proposta vazia, dica do setup.sh.
+        let vazio = import(&sdk).unwrap();
+        assert_eq!(vazio.kind, "zephyr-sdk");
+        assert!(vazio.c_compiler.is_none());
+        assert!(vazio.hint.as_deref().unwrap().contains("setup.sh"));
+
+        let libc = sdk.join("gnu/arm-zephyr-eabi/arm-zephyr-eabi");
+        std::fs::create_dir_all(libc.join("include")).unwrap();
+        executavel(
+            &sdk.join("gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc"),
+            &format!(
+                "#!/bin/sh\n[ \"$1\" = -print-sysroot ] && echo {}\n",
+                libc.display()
+            ),
+        );
+        executavel(
+            &sdk.join("gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-g++"),
+            "#!/bin/sh\n",
+        );
+        executavel(
+            &sdk.join("gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb"),
+            "#!/bin/sh\n",
+        );
+        executavel(
+            &sdk.join("gnu/riscv64-zephyr-elf/bin/riscv64-zephyr-elf-gcc"),
+            "#!/bin/sh\nexit 1\n",
+        );
+        // O link de bisectability na raiz e' a MESMA toolchain.
+        std::os::unix::fs::symlink(sdk.join("gnu/arm-zephyr-eabi"), sdk.join("arm-zephyr-eabi"))
+            .unwrap();
+
+        let kit = import(&sdk).unwrap();
+        assert_eq!(kit.kind, "zephyr-sdk");
+        assert_eq!(kit.target_triple.as_deref(), Some("arm-zephyr-eabi"));
+        assert!(
+            kit.c_compiler
+                .as_deref()
+                .unwrap()
+                .ends_with("gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc")
+        );
+        assert!(kit.cxx_compiler.is_some() && kit.gdb.is_some());
+        assert_eq!(kit.sysroot.as_deref(), Some(libc.to_str().unwrap()));
+        assert_eq!(kit.toolchain_file, None);
+        let evidencia = kit.evidence.join("\n");
+        assert!(evidencia.contains("Zephyr SDK 1.0.1"), "{evidencia}");
+        assert!(
+            evidencia.contains("toolchains GNU instaladas: arm-zephyr-eabi, riscv64-zephyr-elf — proposta: arm-zephyr-eabi"),
+            "{evidencia}"
+        );
+        assert!(
+            kit.hint
+                .as_deref()
+                .unwrap()
+                .contains("ZEPHYR_SDK_INSTALL_DIR")
+        );
+
+        // So' a RISC-V: a proposta e' ela (a primeira, dita).
+        let so_riscv = raiz("zephyr-riscv");
+        std::fs::write(so_riscv.join("sdk_version"), "1.0.1\n").unwrap();
+        std::fs::create_dir_all(so_riscv.join("cmake")).unwrap();
+        std::fs::write(so_riscv.join("cmake/Zephyr-sdkConfig.cmake"), "").unwrap();
+        executavel(
+            &so_riscv.join("riscv64-zephyr-elf/bin/riscv64-zephyr-elf-gcc"),
+            "#!/bin/sh\nexit 1\n",
+        );
+        let kit = import(&so_riscv).unwrap();
+        assert_eq!(kit.target_triple.as_deref(), Some("riscv64-zephyr-elf"));
+        assert!(kit.sysroot.is_none());
+        // Sem o pacote CMake nao e' um Zephyr SDK: cai no erro geral.
+        std::fs::remove_dir_all(so_riscv.join("cmake")).unwrap();
+        assert!(import(&so_riscv).is_err());
     }
 }

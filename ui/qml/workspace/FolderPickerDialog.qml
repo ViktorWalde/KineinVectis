@@ -14,12 +14,20 @@ Item {
 
     signal browseRequested(string path)
     signal openRequested(string path)
+    signal folderPicked(string purpose, string path)
     signal createFolderRequested(string parent, string name)
     signal createProjectRequested(string parent, string name, string templateId)
 
     function open(startPath) {
         picker.visible = true;
         controller.open(startPath);
+    }
+
+    // Escolher uma pasta para OUTRO fim (o SDK do kit): o mesmo navegador,
+    // o botao vira "Escolher" e o caminho volta por folderPicked.
+    function openFor(purpose, startPath) {
+        picker.visible = true;
+        controller.openFor(purpose, startPath);
     }
 
     function openCreateProject(startPath, templateId) {
@@ -55,6 +63,10 @@ Item {
         }
         onOpenRequested: function(path) {
             picker.openRequested(path);
+        }
+        onFolderPicked: function(purpose, path) {
+            picker.close();
+            picker.folderPicked(purpose, path);
         }
         onCreateFolderRequested: function(parent, name) {
             picker.createFolderRequested(parent, name);

@@ -15,9 +15,16 @@ Item {
     property string pathDraft: ""
     property string createName: ""
     property alias entriesModel: entryModel
+    // Para que a pasta escolhida serve (2026-09-17): "workspace" abre o
+    // projeto (o de sempre); qualquer outro proposito — "kitPath", o
+    // SDK/sysroot do painel de Embarcados — devolve o caminho a quem pediu
+    // por `folderPicked`, sem abrir nada. Um picker, dois usos: o mesmo
+    // navegador de pastas do core (fs.browse), nem um segundo dialogo.
+    property string purpose: "workspace"
 
     signal browseRequested(string path)
     signal openRequested(string path)
+    signal folderPicked(string purpose, string path)
     signal createFolderRequested(string parent, string name)
     signal createProjectRequested(string parent, string name, string templateId)
     signal pathFocusRequested()
@@ -30,6 +37,11 @@ Item {
     }
 
     function open(startPath) {
+        openFor("workspace", startPath);
+    }
+
+    function openFor(newPurpose, startPath) {
+        purpose = newPurpose === undefined || newPurpose === "" ? "workspace" : newPurpose;
         const path = startPath !== "" ? startPath : "/";
         errorText = "";
         selectedPath = path;
@@ -82,8 +94,13 @@ Item {
 
     function openSelected() {
         const path = selectedPath !== "" ? selectedPath : currentPath;
-        if (path !== "") {
+        if (path === "") {
+            return;
+        }
+        if (purpose === "workspace") {
             openRequested(path);
+        } else {
+            folderPicked(purpose, path);
         }
     }
 

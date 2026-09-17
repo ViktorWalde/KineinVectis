@@ -588,6 +588,15 @@ compilação cruzada e embarcados entram sem um segundo mecanismo.
 
 A IDE escolhe automaticamente quando dá, e **mostra que escolheu**.
 
+**Sysroot e SDK do alvo.** O campo "Pasta/SDK" aceita digitação ou
+**Escolher pasta…** — o mesmo navegador de pastas da Start Screen, não um
+diálogo do sistema. "Ler sysroot" diz o que a pasta contém; "Importar kit"
+lê um SDK Yocto (`environment-setup-*`), uma árvore Buildroot
+(`output/host`), um **Zephyr SDK** (a raiz `zephyr-sdk-*`, com as toolchains
+que o `setup.sh` instalou — a IDE propõe a `arm-zephyr-eabi` quando há
+várias e lista as outras) ou uma pasta de toolchain, e mostra a proposta
+antes de "Aplicar proposta ao kit". Nada é gravado sem o segundo clique.
+
 ### Embarcados (`Ctrl+Alt+M`)
 
 O painel de quem escreve firmware. Ele **lê**, e diz o que leu:

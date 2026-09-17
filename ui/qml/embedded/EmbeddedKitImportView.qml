@@ -37,12 +37,23 @@ Item {
             id: campoCaminho
 
             labelText: qsTr("Pasta/SDK")
-            placeholder: qsTr("environment-setup-* (Yocto), output/host (Buildroot) ou pasta com bin/")
+            placeholder: qsTr("environment-setup-* (Yocto), output/host (Buildroot), zephyr-sdk-* ou pasta com bin/")
+            // O seletor de pasta escreve aqui; a digitacao tambem vale.
+            value: root.toolchainController ? root.toolchainController.importPath : ""
         }
 
         Row {
             width: parent.width
             spacing: Theme.spacingSmall
+
+            // O navegador de pastas da propria IDE (o da Start Screen), nao
+            // um dialogo do sistema: a mesma listagem do core, o mesmo visual.
+            KvButton {
+                text: qsTr("Escolher pasta…")
+                compact: true
+                enabled: root.toolchainController !== null
+                onClicked: root.toolchainController.pickImportPath()
+            }
 
             KvButton {
                 text: qsTr("Ler sysroot")

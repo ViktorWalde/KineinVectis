@@ -78,6 +78,11 @@ Window {
         onOpenRequested: function(path) {
             coreClient.openWorkspace(path);
         }
+        // Escolha de pasta para outro fim (o SDK do kit, 2026-09-17): o
+        // caminho volta ao dono que pediu, sem abrir workspace.
+        onFolderPicked: function(purpose, path) {
+            domains.toolchainController.handlePickedPath(purpose, path);
+        }
         onCreateFolderRequested: function(parent, name) {
             coreClient.createWorkspaceFolder(parent, name);
         }
