@@ -41,7 +41,9 @@
 > falso (§7.41, 0.112.0). Noite: **E4 gravar como configuração de execução**
 > — FEITO e provado pelo ciclo real proposta → save → run.start (§7.42,
 > 0.113.0). **E2 permissão por canal** — FEITO e MEDIDO no ESP32 real desta
-> máquina (§7.43, 0.114.0). Próximo: A5 ferramentas de embarcado no setup.
+> máquina (§7.43, 0.114.0). **A5 ferramentas de embarcado no painel de
+> instalação** — FEITO (§7.44); o bloco A do roadmap 41 está fechado.
+> Próximo: Toolchains (seletor de pasta nativo; SDK do Zephyr no importKit).
 > **2026-09-16:** compatibilidade dos verificadores Ubuntu/Qt 6.4 avançou
 > (§7.37). Lógica QML verde; gate completo ainda tem impedimentos explícitos.
 
@@ -73,7 +75,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.114.0
-testes      755 Rust aprovados; 39 harnesses QML (medicao de 2026-09-17, §7.43)
+testes      756 Rust aprovados; 39 harnesses QML (medicao de 2026-09-17, §7.44)
 metodos     143 IPC roteados, 50 eventos (serial.identify, runConfig.flashProposal,
             serial.access, event.lsp.log e event.serial.identified entraram em
             2026-09-17)
@@ -579,8 +581,8 @@ desenvolvimento; as correções Qt/QML e de instrumentação (§7.37) são manut
 Elas não concluem os itens de toolchains nem alteram a sequência abaixo.
 O attach do debugpy foi validado na §7.38, a porta do MicroPython na §7.39 e
 o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41, o E4 na §7.42 e o E2
-na §7.43; o próximo item é o A5 (ferramentas de embarcado no painel de
-instalação). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; o próximo item é
+Toolchains (seletor de pasta nativo; SDK do Zephyr no `importKit`). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -590,7 +592,7 @@ ainda não está verde.
 | Frente | Trabalho restante e estado |
 | --- | --- |
 | Polimento Python | **CONCLUÍDO em 2026-09-17:** Ruff (§7.36), debugpy attach (§7.38), a porta escolhida no Executar de MicroPython (§7.39, 0.110.0) e o stderr dos filhos DAP/LSP (§7.40, 0.111.0). O que resta de Python é o bloco P4 (MicroPython) e o P6 (remoto). |
-| Embarcados, bloco A | **E5 (§7.41, 0.112.0), E4 (§7.42, 0.113.0) e E2 permissão por canal (§7.43, 0.114.0: `serial.access` medido no ESP32 real — `uaccess` sem grupo, ModemManager candidato, regras de sonda da distro) FEITOS em 2026-09-17.** Próximo: A5 ferramentas de embarcado no painel de instalação; depois a exercitação com a placa (E5 `flash-id` real, E4 gravação real, E2 o passo do ModemManager). |
+| Embarcados, bloco A | **E5 (§7.41, 0.112.0), E4 (§7.42, 0.113.0) e E2 permissão por canal (§7.43, 0.114.0: `serial.access` medido no ESP32 real — `uaccess` sem grupo, ModemManager candidato, regras de sonda da distro) FEITOS em 2026-09-17, e o A5 (§7.44: catálogo de embarcados no painel de instalação, fonte oficial ou índice da distro, com data) fechou o bloco A.** Resta a exercitação com a placa (E5 `flash-id` real, E4 gravação real, E2 o passo do ModemManager). |
 | Toolchains | Seletor de pasta nativo; SDK do Zephyr no `importKit`; medir `importKit` com Yocto/Buildroot reais, ainda sem exemplares locais validados. |
 | P0 — modelo do projeto | Preset no configure automático; Bear para Makefile puro; alvo do kit para o rust-analyzer. |
 | P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
@@ -3085,5 +3087,47 @@ limpo; Clang-Tidy do `.cpp` alterado limpo; `debug-strict` compila e abre
 autor, com sudo) — a validação "escrever a regra e o `ID_MM_DEVICE_IGNORE`
 aparecer no `udevadm info`" fica para a noite, com a placa; o canal `probe`
 com uma sonda real (ST-Link/USB-JTAG) idem. QEMU não substitui: o que se
-mede é o nó do host. **Próximo:** A5 ferramentas de embarcado no painel de
-instalação — detalhe técnico em `DocsPrivate/Codex/PROMPT-proxima-sessao.md`.
+mede é o nó do host. **Próximo (na época):** A5 — feito na §7.44.
+
+### 7.44 A5 — ferramentas de embarcado no painel de instalação — 2026-09-17
+
+O último item do bloco A. `setup/catalog_embedded.rs` (arquivo próprio: o
+`catalog.rs` estava em 392/500) traz 11 ferramentas e 26 guias, e o
+`setup.list` une os dois catálogos (`all_tools`/`all_guides` em
+`setup/mod.rs`) — sem mudança de contrato. A regra do `catalog.rs` vale
+inteira: **nenhum comando escrito por quem programou a IDE.** Duas classes de
+fonte, ditas no arquivo: a página da ferramenta, verbatim (esptool: `pip
+install esptool` num venv, como a página recomenda; mpremote: `pipx install
+mpremote`; espflash: `cargo install espflash --locked`; probe-rs: o
+instalador oficial e as dependências Debian; picotool: os cinco passos do
+`BUILDING.md`, inclusive `cmake --install` — o README é explícito que copiar
+o binário não basta ao pico-sdk — e a regra `60-picotool.rules`), e o índice
+de pacotes da distro (a página do pacote prova o nome; o comando é a forma
+padrão do gerenciador) para openocd, dfu-util, picocom, tio,
+gcc-arm-none-eabi/gdb-multiarch (Fedora: `arm-none-eabi-gcc-cs` + newlib +
+binutils; Arch: `arm-none-eabi-gcc` + `gdb`), QEMU (`qemu-system-arm` +
+`misc` no Debian, `riscv` no Fedora/Arch). **Onde o índice não tem o
+pacote, não há guia:** `tio` e `picotool` no Arch oficial (AUR não é
+fonte), `picotool` e `espflash` no Fedora, e `espflash` no Ubuntu 26.04 —
+o Debian trixie o tem, mas a família `debian` cobre os dois e um guia que
+falha em metade dela não entra (o `any` do cargo vale). O
+`install_command` do espflash em `tools/known.rs` passou a `--locked`, como
+o README.
+
+**Medido em 2026-09-17:** `setup.list` real nesta máquina — família
+`debian`, 18 ferramentas, guias certos por família (esptool pelo pacote
+`esptool 4.7.0` do Ubuntu, probe-rs pelas dependências + instalador,
+picotool pelo build), 7 das 11 de embarcado já instaladas (esptool,
+mpremote, dfu-util, picocom, arm-none-eabi, qemu, openocd) e 4 não
+(espflash, probe-rs, picotool, tio) — coincide com o inventário feito à mão
+no início do dia. 756 testes Rust (+1: ids únicos entre os catálogos, toda
+ferramenta de embarcado com site e ≥ 1 guia, as famílias SEM guia são as
+conferidas, nenhum guia traduz comando de outra família); 39 harnesses QML
+(a tela não mudou: o painel já é uma lista rolável); clippy, fmt, `diff
+--check`, arquitetura, docs, links; launcher vivo. Fontes: `WebFetch` nas
+páginas das ferramentas e `curl` (HTTP 200) em cada página de pacote citada.
+
+**Não provado, dito:** nenhum dos 26 guias foi executado nesta máquina. O
+bloco A do roadmap 41 (E1 → E3 → E5 → E4 → E2 → A5) está fechado; o que
+resta é a exercitação com a placa. **Próximo:** Toolchains — seletor de
+pasta nativo e o SDK do Zephyr no `importKit` (40 §4.1).

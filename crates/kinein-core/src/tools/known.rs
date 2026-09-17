@@ -431,7 +431,7 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         display_name: "espflash",
         binary: "espflash",
         alternative_binary: None,
-        install_command: Some("cargo install espflash"),
+        install_command: Some("cargo install espflash --locked"),
     },
     ToolSpec {
         id: "ripgrep",

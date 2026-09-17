@@ -363,9 +363,12 @@ BLOCO A — fechar o canal serial e o ciclo Espressif (ja' decidido, 38 §6)
                                             ModemManager e regra de sonda; passo
                                             oficial datado escrito no terminal da IDE,
                                             nunca sudo. MEDIDO no ESP32 real
- A5  setup: ferramentas de embarcado        o catalogo do `setup` ganha tio, esptool,
-                                            espflash, probe-rs, openocd, picotool, dfu-util,
-                                            arm-none-eabi, qemu — comando oficial por distro
+ A5  setup: ferramentas de embarcado        FEITO 2026-09-17 (40 §7.44): catalogo
+                                            proprio (setup/catalog_embedded.rs) com esptool,
+                                            mpremote, espflash, probe-rs, picotool, dfu-util,
+                                            tio, picocom, arm-none-eabi, qemu, openocd —
+                                            fonte oficial ou indice da distro, com data;
+                                            sem fonte, sem guia. O BLOCO A esta' FECHADO
  A6  a saida do teste chega a tela          FEITO 2026-09-13 (40 §7.26, com a fatia 3 da
                                             cadeia Python): o painel Testes mostra a saida
                                             bruta e o `error` de um runner que nem correu

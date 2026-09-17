@@ -570,6 +570,15 @@ a passo, em vez de traduzir um comando de outra distro.
 **A IDE não instala nada sozinha.** O botão escreve os comandos no terminal
 dela, visível, e quem aperta Enter é você.
 
+O painel cobre o banco, o Grafana, as ferramentas Python e — desde
+2026-09-17 — as de embarcados: `esptool`, `mpremote`, `espflash`,
+`probe-rs`, `picotool`, `dfu-util`, `tio`, `picocom`, o GCC ARM
+(`arm-none-eabi` + GDB), o QEMU (ARM e RISC-V) e o OpenOCD. Cada uma diz se
+já está instalada (a mesma detecção do resto da IDE) e, quando há guia para
+a sua distro, os passos com a fonte. As regras udev de sonda e do
+ModemManager não estão aqui: são o botão **Permissões** do painel de
+Embarcados, que as mede na sua máquina.
+
 ### Toolchain e kits
 
 Qual executável cumpre cada papel — compilador C/C++, gerador, `cmake`, `cargo`.

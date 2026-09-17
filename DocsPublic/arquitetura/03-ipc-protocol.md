@@ -3238,6 +3238,22 @@ do projeto dizendo que não tem passo a passo. É a decisão registrada em
 `../roadmaps/40` §5, e é por isso que Arch e openSUSE continuam sem passos: a
 fonte dos três projetos não cobre essas famílias.
 
+**Embarcados (A5 do `roadmaps/41`, 2026-09-17, sem mudança de contrato):**
+o `setup.list` passou a unir dois catálogos — o geral (`setup/catalog.rs`) e
+o de embarcados (`setup/catalog_embedded.rs`): `esptool`, `mpremote`,
+`espflash`, `probe-rs`, `picotool`, `dfu-util`, `tio`, `picocom`,
+`arm-none-eabi` (gcc + gdb), `qemu-embedded` (ARM e RISC-V), `openocd`.
+Duas classes de fonte, ditas no arquivo: a página da ferramenta (comando
+verbatim — `pip install esptool` num venv, `pipx install mpremote`,
+`cargo install espflash --locked`, o instalador do probe-rs, o `BUILDING.md`
+do picotool) e o índice de pacotes da distro (a página do pacote prova o
+nome; o comando é a forma padrão do gerenciador). Onde o índice não tem o
+pacote — `tio` e `picotool` no Arch oficial, `picotool` e `espflash` no
+Fedora, `espflash` no Ubuntu 26.04 (a família `debian` cobre Debian e
+Ubuntu; um guia que falha em metade da família não entra) — a entrada não
+existe. Medido nesta máquina (Ubuntu 26.04): 18 ferramentas, 7 já instaladas
+entre as de embarcado.
+
 O `installed` vem do `ToolDetector` — detectar é capacidade, e a política de o
 que fazer com a detecção fica na UI (`27-modulos-por-dominio.md` §6).
 

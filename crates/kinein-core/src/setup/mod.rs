@@ -29,24 +29,38 @@
 //! de traduzir um comando de outra distro, que e' exatamente o palpite proibido.
 
 pub mod catalog;
+mod catalog_embedded;
 pub mod distro;
 
 use kinein_protocol::{SetupGuide, SetupStep, SetupToolInfo};
 
 use crate::tools::ToolDetector;
 
+/// Todas as ferramentas: o catalogo geral (banco, Python, Grafana) e o de
+/// embarcados (A5 do roadmaps/41), na ordem em que os arquivos as listam.
+fn all_tools() -> impl Iterator<Item = &'static catalog::Tool> {
+    catalog::TOOLS.iter().chain(catalog_embedded::TOOLS.iter())
+}
+
+/// Todos os guias, dos dois catalogos.
+fn all_guides() -> impl Iterator<Item = &'static catalog::Guide> {
+    catalog::GUIDES
+        .iter()
+        .chain(catalog_embedded::GUIDES.iter())
+}
+
 /// O guia de instalacao de cada ferramenta, para ESTA maquina.
 ///
 /// `installed` sai da mesma deteccao que o resto da IDE usa: o `PATH` e o bit
 /// de execucao. Ferramenta ja' instalada continua na lista, com o guia junto —
 /// quem quer conferir como reinstalar nao deveria ter de desinstalar antes.
+/// Desde 2026-09-17 a lista une os dois catalogos (geral e embarcados).
 #[must_use]
 pub fn guides(detector: &ToolDetector) -> Vec<SetupToolInfo> {
     let atual = distro::detect();
     let familia = atual.family.to_string();
 
-    catalog::TOOLS
-        .iter()
+    all_tools()
         .map(|tool| SetupToolInfo {
             id: tool.id.to_owned(),
             name: tool.name.to_owned(),
@@ -67,14 +81,9 @@ pub fn guides(detector: &ToolDetector) -> Vec<SetupToolInfo> {
                 .is_some(),
             // A familia desta maquina primeiro; o guia `any` (fonte oficial
             // agnostica de distro: pipx, uv tool) quando ela nao tem um proprio.
-            guide: catalog::GUIDES
-                .iter()
+            guide: all_guides()
                 .find(|guia| guia.tool == tool.id && guia.family == familia)
-                .or_else(|| {
-                    catalog::GUIDES
-                        .iter()
-                        .find(|guia| guia.tool == tool.id && guia.family == "any")
-                })
+                .or_else(|| all_guides().find(|guia| guia.tool == tool.id && guia.family == "any"))
                 .map(|guia| SetupGuide {
                     family: guia.family.to_owned(),
                     source_url: guia.source_url.to_owned(),
@@ -116,7 +125,7 @@ mod tests {
     /// reprova antes de a IDE mostrar uma instrucao que ninguem conferiu.
     #[test]
     fn todo_guia_carrega_fonte_e_data() {
-        for guia in catalog::GUIDES {
+        for guia in all_guides() {
             assert!(
                 guia.source_url.starts_with("https://"),
                 "{}/{}: fonte ausente ou nao e' URL",
@@ -150,9 +159,9 @@ mod tests {
     /// Guia so' existe para ferramenta que existe.
     #[test]
     fn nenhum_guia_aponta_para_ferramenta_desconhecida() {
-        for guia in catalog::GUIDES {
+        for guia in all_guides() {
             assert!(
-                catalog::TOOLS.iter().any(|tool| tool.id == guia.tool),
+                all_tools().any(|tool| tool.id == guia.tool),
                 "guia de `{}` sem ferramenta correspondente",
                 guia.tool
             );
@@ -190,6 +199,63 @@ mod tests {
         }
     }
 
+    /// O catalogo de embarcados (A5, 2026-09-17): ids unicos entre os dois
+    /// catalogos; toda ferramenta de embarcado tem site; os guias que a
+    /// conferencia registrou existem para as familias certas — e NAO existem
+    /// onde o indice nao tinha o pacote (tio e picotool no Arch; picotool e
+    /// espflash no Fedora).
+    #[test]
+    fn o_catalogo_de_embarcados_tem_ids_unicos_e_so_as_familias_conferidas() {
+        let mut ids: Vec<&str> = all_tools().map(|t| t.id).collect();
+        let total = ids.len();
+        ids.sort_unstable();
+        ids.dedup();
+        assert_eq!(ids.len(), total, "id duplicado entre os catalogos");
+        for esperado in [
+            "esptool",
+            "mpremote",
+            "espflash",
+            "probe-rs",
+            "picotool",
+            "dfu-util",
+            "tio",
+            "picocom",
+            "arm-none-eabi",
+            "qemu-embedded",
+            "openocd",
+        ] {
+            let tool = all_tools()
+                .find(|t| t.id == esperado)
+                .unwrap_or_else(|| panic!("{esperado}"));
+            assert!(tool.website.starts_with("https://"));
+            assert!(
+                all_guides().any(|g| g.tool == esperado),
+                "{esperado} sem guia nenhum"
+            );
+        }
+        let tem =
+            |tool: &str, family: &str| all_guides().any(|g| g.tool == tool && g.family == family);
+        assert!(!tem("tio", "arch") && !tem("picotool", "arch"));
+        assert!(!tem("picotool", "redhat") && !tem("espflash", "redhat"));
+        assert!(tem("probe-rs", "any") && tem("probe-rs", "debian"));
+        assert!(tem("esptool", "any") && tem("mpremote", "any"));
+        // Nenhum guia de embarcado traduz comando de outra familia.
+        for guia in catalog_embedded::GUIDES {
+            for passo in guia.steps {
+                let c = passo.command;
+                match guia.family {
+                    "debian" => assert!(!c.contains("dnf ") && !c.contains("pacman "), "{c}"),
+                    "redhat" => assert!(!c.contains("apt ") && !c.contains("pacman "), "{c}"),
+                    "arch" => assert!(!c.contains("apt ") && !c.contains("dnf "), "{c}"),
+                    _ => assert!(
+                        !c.contains("apt ") && !c.contains("dnf ") && !c.contains("pacman "),
+                        "{c}"
+                    ),
+                }
+            }
+        }
+    }
+
     /// O comando vai para a tela para ser COPIADO: quebra de linha do fonte
     /// Rust nao pode virar espaco duplo no meio de uma URL.
     #[test]
@@ -198,7 +264,7 @@ mod tests {
             normalizar("sudo apt   install  -y   grafana"),
             "sudo apt install -y grafana"
         );
-        for guia in catalog::GUIDES {
+        for guia in all_guides() {
             for passo in guia.steps {
                 let comando = normalizar(passo.command);
                 assert!(!comando.contains("  "), "espaco duplo em `{comando}`");
