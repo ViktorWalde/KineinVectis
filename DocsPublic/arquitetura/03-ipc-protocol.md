@@ -1,5 +1,20 @@
 # 03 — Protocolo IPC
 
+> **0.115.0 (2026-09-17) — P0, o modelo do projeto em três fatias.** (1) O
+> `cmake.configure` sem `preset` escolhe o do **kit ativo** (a ponte manda o
+> último `toolchain.get`) ou o **padrão do projeto** — o primeiro
+> `configurePresets` não oculto de `CMakeUserPresets.json`, depois de
+> `CMakePresets.json`, cuja `condition` não exclua o Linux —, diz de onde veio
+> em `event.cmake.started { preset?, presetSource? }` e anota o usado para o
+> `cmake.status { preset? }`. (2) **Makefile puro** é `kind: make` /
+> `buildSystems: [make]` (`Makefile`/`GNUmakefile`, atrás do CMake); `build.run`
+> roda `bear -- make` quando o `bear` existe (a CDB sai na raiz, onde o
+> clangd a acha) e `make` a seco dizendo o passo quando não; `bear` entrou
+> nas ferramentas conhecidas e no catálogo de instalação. (3) O `targetTriple`
+> do kit chega ao **rust-analyzer** (`rust-analyzer.cargo.target`, secção
+> `rust-analyzer` no `workspace/configuration` e no `didChangeConfiguration`;
+> servidor vivo é reiniciado ao mudar o kit).
+>
 > **0.114.0 (2026-09-17) — E2, permissão POR CANAL:** `serial.access
 > { device? }` → `{ channels: [{ kind: serial|probe|modemManager, device?,
 > ok, detail, problem?, fix?: { steps: [{ explanation, command }],
@@ -551,6 +566,16 @@ contém todos os sistemas reconhecidos na mesma varredura. Assim, um repositóri
 híbrido pode ser `rustCargo` e oferecer Cargo+CMake simultaneamente. O metadata
 persistido usa `schemas/workspace.schema.json` 0.2.0; a UI consome o snapshot e
 não repete detecção por arquivo.
+
+**`kind: make` / `buildSystems: [make]` (`0.115.0`, P0):** um `Makefile` ou
+`GNUmakefile` na raiz, sem marcador de precedência maior (um Makefile ao lado
+de um `CMakeLists.txt` continua `cmake`, e `make` aparece em `buildSystems`).
+`build.run` num `make` roda `bear -- <make>` na raiz quando o `bear` está
+detectado (Bear 3, README: `bear -- <your-build-command>`; a
+`compile_commands.json` sai na raiz e o `cdb` a vê como `"."`), senão `make` a
+seco com uma linha de `event.build.output` dizendo que sem `bear` não há CDB
+para o clangd — nunca um make "diferente" para fingir CDB. Sem alvo de run,
+teste ou debug automático (o `Makefile` não os declara).
 
 `workspace.browse` recebe `{ "path": "/dir" }`, canonicaliza o diretorio e
 retorna apenas subdiretorios para a UI navegar sem depender de dialogo nativo do
@@ -1515,8 +1540,21 @@ explícito tem precedência).
 - `cmake.configure { preset? }` → `{ jobId }` (job cancelável). Escreve a
   query `codemodel-v2` do file-api antes de rodar e sempre passa
   `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`. Eventos: `event.cmake.started
-  { jobId, command }` e `event.cmake.finished { jobId, success, exitCode,
-  hasCompileCommands }`; saída linha a linha vai por `event.job.output`.
+  { jobId, command, preset?, presetSource? }` e `event.cmake.finished { jobId,
+  success, exitCode, hasCompileCommands }`; saída linha a linha vai por
+  `event.job.output`. **O preset (`0.115.0`, P0):** o do pedido (a ponte C++
+  manda o do kit ativo — o último `toolchain.get` que a tela pediu;
+  `presetSource: "kit"`, e as ESCOLHAS de ferramenta são as desse kit) ou o
+  **padrão do projeto** — `cmake::default_preset`: o primeiro
+  `configurePresets` não `hidden` de `CMakeUserPresets.json` (a escolha do
+  usuário para esta máquina vence), senão de `CMakePresets.json`, pulando o
+  que uma `condition` (`const false`, ou `equals`/`notEquals` sobre
+  `${hostSystemName}`) exclui no Linux; `presetSource` é o arquivo; as
+  escolhas de ferramenta são as do kit padrão. Sem presets, configure sem
+  preset como sempre e `presetSource` ausente. Antes, o configure automático
+  de um projeto com presets rodava SEM preset. No sucesso o core anota o
+  preset em `<buildDir>/.kinein-preset` (o `CMakeCache.txt` não o guarda) e
+  o `cmake.status` o devolve.
 - `cmake.presets.list {}` → `{ presets: [{ name, displayName? }] }` —
   configure presets não ocultos de `CMakePresets.json` +
   `CMakeUserPresets.json`, na ordem dos arquivos; JSON inválido → erro
@@ -1538,7 +1576,7 @@ explícito tem precedência).
   também a `toolchains-v1` (CMake ≥ 3.20, cmake-file-api(7)): compilador,
   id, versão e includes implícitos por linguagem — vale a partir do próximo
   configure.
-- `cmake.status {}` → `{ configured, hasCompileCommands, buildDir,
+- `cmake.status {}` → `{ configured, hasCompileCommands, buildDir, preset? (0.115.0),
   cdbDirectory?, cdbStale?, cdbStaleBecause? }` — stat de
   `CMakeCache.txt`/`compile_commands.json`, mais o **diagnóstico da compilation
   database** (protocolo `0.62.0`).
@@ -1766,6 +1804,20 @@ mexeu na toolchain.
 **Em `toolchain.setKit`, campo ausente NÃO é campo vazio.** Ausente preserva o
 valor atual; string vazia (ou só de espaços) limpa. Sem essa distinção, mexer no
 `sysroot` apagaria o `targetTriple` e o usuário só descobriria no próximo build.
+
+**O kit chega aos language servers** (`handlers/lsp/toolchain.rs`, chamado ao
+abrir o workspace e a cada `toolchain.set`/`setKit`): o compilador cross ao
+clangd por `--query-driver` (desde 2026-09-11) e, **desde `0.115.0` (P0)**, o
+`targetTriple` ao **rust-analyzer** — `rust-analyzer.cargo.target = <triple>`
+("Compilation target override (target tuple)", manual do rust-analyzer,
+conferido em 2026-09-17), entregue como o basedpyright recebe a dele: secção
+`rust-analyzer` respondida no `workspace/configuration` e empurrada no
+`workspace/didChangeConfiguration`. O `cargo build` do kit já levava
+`--target`; o servidor checando para o host daria diagnóstico do host, que
+parece certo e não é. Vale na próxima subida; um servidor de Rust vivo é
+**reiniciado** quando o kit muda (é a UI que o sobe de novo ao re-sincronizar
+o arquivo ativo, como em qualquer `event.lsp.restarted`); sem triple, o
+servidor sobe sem configuração, como sempre.
 
 **O papel `debugAdapter` entrou no protocolo `0.69.0`** (etapa 22 do
 `roadmaps/35`). Antes, o adaptador DAP era uma **constante** no core

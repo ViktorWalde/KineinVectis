@@ -327,6 +327,7 @@ mod tests {
                 "cmake",
                 "ninja",
                 "make",
+                "bear",
                 "git",
                 "clangd",
                 "clang",

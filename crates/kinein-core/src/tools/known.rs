@@ -60,6 +60,16 @@ pub const KNOWN_TOOLS: &[ToolSpec] = &[
         alternative_binary: Some("gmake"),
         install_command: None,
     },
+    // Makefile puro (P0 do 40 §4.1, 2026-09-17): sem o bear nao ha'
+    // compile_commands.json, e sem ela o clangd nao entende o projeto. O
+    // passo de instalacao esta' no catalogo do setup (fonte por distro).
+    ToolSpec {
+        id: "bear",
+        display_name: "Bear (compile_commands.json de um Makefile)",
+        binary: "bear",
+        alternative_binary: None,
+        install_command: None,
+    },
     ToolSpec {
         id: "git",
         display_name: "Git",

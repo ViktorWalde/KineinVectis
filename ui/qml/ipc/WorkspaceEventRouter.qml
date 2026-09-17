@@ -23,9 +23,9 @@ Item {
         }
 
         function onCmakeStatusResolved(configured, hasCompileCommands, cdbStale,
-                                       cdbStaleBecause) {
+                                       cdbStaleBecause, preset) {
             root.projectHealthController.handleCmakeStatus(configured, cdbStale,
-                                                           cdbStaleBecause);
+                                                           cdbStaleBecause, preset);
         }
 
         function onCmakeConfigureFinished(success) {

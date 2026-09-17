@@ -325,13 +325,15 @@ pub fn default_command(kind: ProjectKind, root: &Path) -> Result<String, RunErro
     match kind {
         ProjectKind::RustCargo => Ok("cargo run".to_owned()),
         ProjectKind::Cmake => cmake_binary_command(root),
-        ProjectKind::Maven | ProjectKind::Gradle | ProjectKind::Python | ProjectKind::Unknown => {
-            Err(RunError::NoDefaultCommand {
-                message: "este tipo de projeto ainda nao tem comando de execucao padrao; \
+        ProjectKind::Maven
+        | ProjectKind::Gradle
+        | ProjectKind::Python
+        | ProjectKind::Make
+        | ProjectKind::Unknown => Err(RunError::NoDefaultCommand {
+            message: "este tipo de projeto ainda nao tem comando de execucao padrao; \
                           digite o comando no painel Terminal"
-                    .to_owned(),
-            })
-        }
+                .to_owned(),
+        }),
     }
 }
 

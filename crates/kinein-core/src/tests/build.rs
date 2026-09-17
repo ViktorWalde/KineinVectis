@@ -192,3 +192,135 @@ fn build_run_starts_a_job_and_finishes_successfully() {
     assert!(saw_created, "faltou event.job.created");
     assert!(saw_build_finished, "faltou event.build.finished");
 }
+
+/// Roda um `build.run` e devolve as linhas do job (comando e saida) e o
+/// sucesso — filtrando pelo jobId, porque o indice tambem emite jobs.
+fn roda_build(
+    core: &mut crate::Core,
+    receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
+) -> (Vec<String>, bool) {
+    use std::time::Duration;
+    let started = core.handle_request(&JsonRpcRequest::new(42_i64, "build.run", Some(json!({}))));
+    assert!(
+        started.response().error.is_none(),
+        "{:?}",
+        started.response().error
+    );
+    let job_id = started.response().result.as_ref().unwrap()["jobId"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let mut linhas = Vec::new();
+    loop {
+        let event = receiver
+            .recv_timeout(Duration::from_secs(30))
+            .expect("eventos do build");
+        let params = event.params.clone().unwrap_or_default();
+        if params["jobId"] != job_id.as_str() {
+            continue;
+        }
+        match event.method.as_str() {
+            "event.build.output" => linhas.push(params["line"].as_str().unwrap().to_owned()),
+            "event.build.started" => {
+                linhas.push(format!("$ {}", params["command"].as_str().unwrap()));
+            }
+            "event.build.finished" => return (linhas, params["success"] == true),
+            _ => {}
+        }
+    }
+}
+
+/// Makefile puro (P0 do 40 §4.1, 2026-09-17): o workspace e' `Make`, o
+/// `build.run` roda `bear -- make` quando o bear existe (o bear falso ecoa
+/// os argv e grava a CDB, como o real) e `make` a seco sem ele — com a linha
+/// que diz o passo. Um Makefile ao lado de um `CMakeLists` continua `CMake`.
+#[test]
+#[cfg(unix)]
+fn a_plain_makefile_builds_with_bear_when_it_exists_and_says_so_when_not() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let base = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-build-make", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    let dir = base.join("projeto");
+    let bin = base.join("bin");
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::write(dir.join("Makefile"), "all:\n\t@echo compilando\n").unwrap();
+    let executavel = |nome: &str, corpo: &str| {
+        let p = bin.join(nome);
+        std::fs::write(&p, corpo).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+    };
+    executavel("make", "#!/bin/sh\necho \"make-falso $*\"\n");
+
+    // Sem bear: make a seco e a linha que diz o passo.
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(&bin));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        40_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let info = opened.response().result.clone().unwrap();
+    assert_eq!(info["kind"], "make", "{info}");
+    assert!(
+        info["capabilities"]["buildSystems"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|b| b == "make"),
+        "{info}"
+    );
+    let (linhas, sucesso) = roda_build(&mut core, &receiver);
+    assert!(sucesso, "{linhas:?}");
+    assert!(linhas.iter().any(|l| l == "$ make"), "{linhas:?}");
+    assert!(
+        linhas.iter().any(|l| l.contains("sem `bear`")),
+        "{linhas:?}"
+    );
+    assert!(linhas.iter().any(|l| l == "make-falso "), "{linhas:?}");
+
+    // Com bear: `bear -- <make>`, e a CDB que o bear (falso, como o real)
+    // grava na raiz e' vista pelo cmake.status/cdb como utilizavel.
+    executavel(
+        "bear",
+        "#!/bin/sh\necho \"bear-falso $*\"\nprintf '[]' > compile_commands.json\nshift; exec \"$@\"\n",
+    );
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(&bin));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        41_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let (linhas, sucesso) = roda_build(&mut core, &receiver);
+    assert!(sucesso, "{linhas:?}");
+    assert!(linhas.iter().any(|l| l == "$ bear -- make"), "{linhas:?}");
+    assert!(
+        linhas
+            .iter()
+            .any(|l| l == &format!("bear-falso -- {}", bin.join("make").display())),
+        "{linhas:?}"
+    );
+    assert!(!linhas.iter().any(|l| l.contains("sem `bear`")));
+    assert!(dir.join("compile_commands.json").is_file());
+    let cdb = crate::cdb::status(&dir);
+    assert_eq!(cdb.directory.as_deref(), Some("."));
+
+    // Um Makefile AO LADO de um CMakeLists: continua CMake (precedencia).
+    std::fs::write(dir.join("CMakeLists.txt"), "project(x)\n").unwrap();
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        43_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let info = opened.response().result.clone().unwrap();
+    assert_eq!(info["kind"], "cmake");
+    let sistemas = info["capabilities"]["buildSystems"].as_array().unwrap();
+    assert!(sistemas.iter().any(|b| b == "cmake") && sistemas.iter().any(|b| b == "make"));
+}

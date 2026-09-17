@@ -120,11 +120,32 @@ impl Core {
             );
         };
 
-        let preset = parsed.preset;
+        // O preset (P0 do 40 §4.1, 2026-09-17): o pedido (o kit ativo, que a
+        // UI manda) > o padrao do projeto (CMakeUserPresets, depois
+        // CMakePresets, o primeiro nao oculto que vale no Linux) > nenhum.
+        // Antes o configure automatico rodava SEM preset num projeto que os
+        // tem — e o CMakeLists que exige um (cmake_minimum_required + presets
+        // com toolchain file) falhava ou configurava outra coisa.
+        let (preset, preset_origem): (Option<String>, Option<&'static str>) =
+            parsed.preset.filter(|p| !p.trim().is_empty()).map_or_else(
+                || {
+                    cmake::default_preset(&root)
+                        .map_or((None, None), |(p, arquivo)| (Some(p), Some(arquivo)))
+                },
+                |p| (Some(p), Some("kit")),
+            );
         // A toolchain e resolvida AQUI, na thread do loop, e vai pronta para o
         // job: um job nao alcanca o `Core` (arquitetura/04 §3), e resolver la
         // dentro exigiria o `ToolDetector`, que e estado do core.
-        let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
+        // As ESCOLHAS de ferramenta sao as do kit ativo (nome = preset) quando
+        // o preset veio do kit; um preset escolhido pelo projeto nao tem kit
+        // proprio e usa as escolhas do kit padrao (""), como antes.
+        let kit = match preset_origem {
+            Some("kit") => preset.clone().unwrap_or_default(),
+            _ => String::new(),
+        };
+        let toolchain =
+            crate::toolchain::Toolchain::resolve_kit(&root, &self.detected_tools(), &kit);
         let job_id = jobs.spawn(
             "cmake.configure",
             "CMake Configure",
@@ -142,7 +163,12 @@ impl Core {
                 );
                 ctx.emit_event(
                     "event.cmake.started",
-                    json!({ "jobId": ctx.id(), "command": label }),
+                    json!({
+                        "jobId": ctx.id(),
+                        "command": label,
+                        "preset": preset,
+                        "presetSource": preset_origem,
+                    }),
                 );
 
                 let outcome = process::stream_command_lines_cancelable(
@@ -164,6 +190,9 @@ impl Core {
                         (false, -1)
                     }
                 };
+                if success {
+                    cmake::record_preset(&root, preset.as_deref());
+                }
                 let status = cmake::status(&root);
                 ctx.emit_event(
                     "event.cmake.finished",
@@ -243,6 +272,7 @@ impl Core {
                 configured: status.configured,
                 has_compile_commands: status.has_compile_commands,
                 build_dir: status.build_dir.display().to_string(),
+                preset: status.preset,
                 cdb_directory: cdb.directory,
                 cdb_stale: cdb.stale,
                 cdb_stale_because: cdb.stale_because,

@@ -10,6 +10,9 @@ Item {
     property bool scanningEnvironment: false
     property bool cmakeStatusKnown: false
     property bool cmakeConfigured: false
+    // O preset com que a IDE configurou (P0, 0.115.0): o kit, o
+    // CMakeUserPresets ou o CMakePresets do projeto; vazio = sem preset.
+    property string cmakePreset: ""
     // Auto-setup ao abrir (radar de DocsPrivate/diario/18): o configure dispara sozinho
     // UMA vez por workspace; falha devolve o aviso acionavel (sem loop).
     property bool autoConfigureAttempted: false
@@ -44,6 +47,7 @@ Item {
         dismissedKey = "";
         cmakeStatusKnown = false;
         cmakeConfigured = false;
+        cmakePreset = "";
         autoConfigureAttempted = false;
         autoConfigureFailed = false;
         cargoMetadataFailed = false;
@@ -61,9 +65,10 @@ Item {
     onPythonMessageChanged: update()
     Component.onCompleted: update()
 
-    function handleCmakeStatus(configured, stale, staleBecause) {
+    function handleCmakeStatus(configured, stale, staleBecause, preset) {
         cmakeStatusKnown = true;
         cmakeConfigured = configured;
+        cmakePreset = preset === undefined || preset === null ? "" : preset;
         cdbStale = stale === true;
         cdbStaleBecause = cdbStale && staleBecause !== undefined
                 && staleBecause !== null ? staleBecause : "";
@@ -133,6 +138,12 @@ Item {
         if (kind === "cmake") {
             return [["cmake"], ["ninja"], ["clangd"], ["clangxx", "gxx"]];
         }
+        // Makefile puro (P0, 2026-09-17): o bear entra como ferramenta do
+        // projeto porque sem ele nao ha' compile_commands.json — e a faixa
+        // diz isso antes do primeiro build mudo.
+        if (kind === "make") {
+            return [["make", "gmake"], ["clangd"], ["clangxx", "gxx"], ["bear"]];
+        }
         return [];
     }
 
@@ -147,6 +158,10 @@ Item {
                 systemGroups = requiredToolGroups("rustCargo");
             } else if (systems[index] === "cmake") {
                 systemGroups = requiredToolGroups("cmake");
+            } else if (systems[index] === "make" && systems.indexOf("cmake") < 0) {
+                // Um Makefile ao lado de um CMakeLists e' do CMake: o bear so'
+                // e' exigido quando o make e' o unico build system C/C++.
+                systemGroups = requiredToolGroups("make");
             }
             for (let groupIndex = 0; groupIndex < systemGroups.length;
                  groupIndex++) {

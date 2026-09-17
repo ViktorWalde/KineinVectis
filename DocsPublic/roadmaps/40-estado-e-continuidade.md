@@ -23,7 +23,9 @@
 > Qt é reconfigurar **e** recompilar o que ficou velho — o 20º gate agora diz
 > quais objetos são, e imprime o comando.
 >
-> **COMECE POR AQUI ao retomar.** Ele substitui o
+> **COMECE POR AQUI ao retomar.** (E, para o panorama do que falta em uma
+> página, `DocsPrivate/Codex/HANDOFF-panorama.md`, escrito em 2026-09-17.)
+> Ele substitui o
 > [`38`](38-divida-restante-e-continuidade.md) nesse papel; o 38 vira registro
 > de como a fila estava quando a dívida foi paga.
 >
@@ -44,8 +46,9 @@
 > máquina (§7.43, 0.114.0). **A5 ferramentas de embarcado no painel de
 > instalação** — FEITO (§7.44); o bloco A do roadmap 41 está fechado.
 > **Toolchains** — seletor de pasta nativo e SDK do Zephyr no `importKit` —
-> FEITOS (§7.45). Próximo: P0 (preset no configure automático; Bear; alvo do
-> kit para o rust-analyzer).
+> FEITOS (§7.45). **P0** — preset no configure automático, Bear para Makefile
+> puro, alvo do kit para o rust-analyzer — FEITO (§7.46, 0.115.0). Próximo:
+> P4 MicroPython (firmware C5, arquivos no dispositivo C2, stubs C4).
 > **2026-09-16:** compatibilidade dos verificadores Ubuntu/Qt 6.4 avançou
 > (§7.37). Lógica QML verde; gate completo ainda tem impedimentos explícitos.
 
@@ -76,8 +79,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.114.0
-testes      757 Rust aprovados; 40 harnesses QML (medicao de 2026-09-17, §7.45)
+protocolo   0.115.0
+testes      761 Rust aprovados; 40 harnesses QML (medicao de 2026-09-17, §7.46)
 metodos     143 IPC roteados, 50 eventos (serial.identify, runConfig.flashProposal,
             serial.access, event.lsp.log e event.serial.identified entraram em
             2026-09-17)
@@ -584,9 +587,9 @@ Elas não concluem os itens de toolchains nem alteram a sequência abaixo.
 O attach do debugpy foi validado na §7.38, a porta do MicroPython na §7.39 e
 o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41, o E4 na §7.42 e o E2
 na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; Toolchains
-(seletor de pasta nativo; SDK do Zephyr no `importKit`) na §7.45. O próximo
-item é o P0 (preset no configure automático; Bear para Makefile puro; alvo
-do kit para o rust-analyzer). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+(seletor de pasta nativo; SDK do Zephyr no `importKit`) na §7.45 e o P0
+(preset no configure automático; Bear; alvo do kit para o rust-analyzer) na
+§7.46. O próximo item é o P4 MicroPython. Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -598,7 +601,7 @@ ainda não está verde.
 | Polimento Python | **CONCLUÍDO em 2026-09-17:** Ruff (§7.36), debugpy attach (§7.38), a porta escolhida no Executar de MicroPython (§7.39, 0.110.0) e o stderr dos filhos DAP/LSP (§7.40, 0.111.0). O que resta de Python é o bloco P4 (MicroPython) e o P6 (remoto). |
 | Embarcados, bloco A | **E5 (§7.41, 0.112.0), E4 (§7.42, 0.113.0) e E2 permissão por canal (§7.43, 0.114.0: `serial.access` medido no ESP32 real — `uaccess` sem grupo, ModemManager candidato, regras de sonda da distro) FEITOS em 2026-09-17, e o A5 (§7.44: catálogo de embarcados no painel de instalação, fonte oficial ou índice da distro, com data) fechou o bloco A.** Resta a exercitação com a placa (E5 `flash-id` real, E4 gravação real, E2 o passo do ModemManager). |
 | Toolchains | **Seletor de pasta nativo e SDK do Zephyr no `importKit` FEITOS em 2026-09-17 (§7.45).** Resta medir `importKit` com Yocto/Buildroot/Zephyr SDK reais — ainda sem exemplares locais. |
-| P0 — modelo do projeto | Preset no configure automático; Bear para Makefile puro; alvo do kit para o rust-analyzer. |
+| P0 — modelo do projeto | **FEITO em 2026-09-17 (§7.46, 0.115.0):** preset no configure automático (kit > CMakeUserPresets > CMakePresets, dito e anotado); `kind: make` com `bear -- make`; `rust-analyzer.cargo.target` do kit. |
 | P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
 | P3 — depuração profunda | SVD com escrita pelo `gdb -i dap`; RTT/defmt; memória/disassembly; RTOS threads. |
 | P5 — qualidade | clang-tidy dentro do clangd; lâmpada proativa do Alt+Enter; gtest/catch2; cobertura. |
@@ -3171,6 +3174,59 @@ novo; `tst_toolchain_import` com o pedido/retorno do picker); clippy, fmt,
 arquitetura, docs, links, shell; qmllint estrito limpo; `debug-strict`
 compila e abre (598 ms). **Não provado:** nenhum Zephyr SDK real nesta
 máquina — a fixture é a forma do `setup.sh`; o clique real no picker foi
-provado pelo harness da lógica, não por uma sessão gráfica. **Próximo:** P0
-— preset no configure automático; Bear para Makefile puro; alvo do kit para o
-rust-analyzer (40 §4.1).
+provado pelo harness da lógica, não por uma sessão gráfica. **Próximo (na
+época):** P0 — feito na §7.46.
+
+### 7.46 P0 — o modelo do projeto: preset, Bear e o alvo no rust-analyzer — 2026-09-17, protocolo 0.115.0
+
+Três fatias, na ordem do §4.1. **(1) Preset no configure automático.** O
+`cmake.configure` sem `preset` — o caso do configure automático ao abrir e
+do botão Configurar — escolhe agora: o preset do **kit ativo** (a ponte C++
+guarda o último `toolchain.get` que a tela pediu e o manda; `presetSource:
+"kit"`; as escolhas de ferramenta são as desse kit) ou o **padrão do
+projeto** (`cmake::default_preset`: o primeiro `configurePresets` não
+`hidden` de `CMakeUserPresets.json` — a escolha do usuário para esta máquina
+vence —, senão de `CMakePresets.json`, pulando o que uma `condition` exclui
+no Linux; as escolhas são as do kit padrão). Antes, um projeto com presets
+era configurado SEM preset. `event.cmake.started` diz `preset` e
+`presetSource`; no sucesso o preset fica anotado em `<buildDir>/.kinein-preset`
+(o `CMakeCache.txt` não o guarda) e o `cmake.status { preset? }` o devolve —
+o `ProjectHealthController.cmakePreset` o carrega; a aba IDE registra "preset
+de: kit|CMakeUserPresets.json|CMakePresets.json". **(2) Bear para Makefile
+puro.** `ProjectKind::Make` / `BuildSystem::Make` (marcadores `Makefile` e
+`GNUmakefile`, atrás do CMake — um Makefile ao lado de um `CMakeLists.txt`
+continua `cmake`); `build/make.rs`: `bear -- <make>` na raiz quando o `bear`
+existe (Bear 3, README `bear -- <your-build-command>`, conferido em
+2026-09-17; a CDB sai onde o clangd a acha, e o `cdb` a vê como `"."`),
+senão `make` a seco com a linha que diz o passo — nunca um make "diferente"
+para fingir CDB. `bear` entrou em `tools/known.rs` e no catálogo de
+instalação (páginas de pacote Debian/Fedora/Arch conferidas; Ubuntu 26.04:
+`bear 3.1.6`); o Project Health de um `make` sem bear nomeia o bear como
+ferramenta ausente, com o gesto "Ferramentas"; o rótulo do projeto é
+"Make". **(3) O alvo do kit no rust-analyzer.** `handlers/lsp/toolchain.rs`
+(arquivo novo: o `handlers/workspace.rs` passou de 500 com isto — o kit
+chegando aos servidores é uma responsabilidade): `rust-analyzer.cargo.target
+= <triple>` pela secção `rust-analyzer`, como o basedpyright recebe a dele;
+servidor vivo reiniciado ao mudar o kit; sem triple, sem configuração.
+
+**Medido em 2026-09-17:** 761 testes Rust (+4: o preset padrão com
+`condition`, o ciclo `cmake.configure` real com um `cmake` FALSO fixado no
+kit — padrão do usuário → `--preset meu-local` nos argv, kit → `projeto`, sem
+presets → sem `--preset`, e o `status.preset` em cada caso; o Makefile com e
+sem bear, com a CDB gravada e a precedência do CMake; o rust-analyzer
+recebendo `cargo.target` após `setKit` e reiniciando, e subindo sem
+configuração ao limpar); 40 harnesses QML (`tst_project_health` com o
+`cmakePreset` e o `make` sem/com bear); clippy, fmt, `diff --check`,
+clang-format, Clang-Tidy dos 3 .cpp tocados, fiação, propriedades, alcance,
+duplicação, arquitetura (dois arquivos passaram de 500 no caminho —
+`build/mod.rs` e `handlers/workspace.rs` — e foram DIVIDIDOS por
+responsabilidade: `build/make.rs`, `handlers/lsp/toolchain.rs`; catraca
+intacta), docs, links, shell; qmllint estrito limpo; `debug-strict` compila e
+abre (612 ms). `schemas/workspace.schema.json` ganhou `make`.
+
+**Não provado, dito:** nenhum projeto Makefile real nem `bear` real (o
+`bear` desta máquina não está instalado — o guia está no painel); o
+rust-analyzer real com um alvo bare metal não foi observado além do
+`fake_lsp_server`. **Próximo:** P4 MicroPython — firmware oficial gravado
+pela IDE (C5, motor do E4 com o `.bin` do micropython.org), arquivos no
+dispositivo (`mpremote fs`, C2), stubs por placa (C4).

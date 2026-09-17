@@ -5,7 +5,10 @@
 //! `--message-format=json`, CMake/compilers via the classic
 //! `file:line:column: level: message` format.
 
+mod make;
 mod parse;
+
+pub use make::MakeTools;
 
 use std::{
     error::Error,
@@ -216,6 +219,7 @@ pub fn run_build(
     kind: ProjectKind,
     profile: RigorProfile,
     toolchain: &Toolchain,
+    make_tools: &MakeTools,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
@@ -224,6 +228,7 @@ pub fn run_build(
         // C++ CMake -Werror por perfil fica para uma fatia futura (injetar
         // flag no build do usuario e invasivo — ver DocsPrivate/diario/18 M4.5).
         ProjectKind::Cmake => run_cmake_build(root, toolchain, cancel, sink),
+        ProjectKind::Make => make::run_make_build(root, make_tools, cancel, sink),
         other => Err(BuildError::Unsupported {
             kind: project_kind_name(other),
         }),

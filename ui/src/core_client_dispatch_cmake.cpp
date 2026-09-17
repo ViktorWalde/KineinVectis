@@ -46,7 +46,8 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
         emit cmakeStatusResolved(result.value(QStringLiteral("configured")).toBool(),
                                  result.value(QStringLiteral("hasCompileCommands")).toBool(),
                                  result.value(QStringLiteral("cdbStale")).toBool(),
-                                 result.value(QStringLiteral("cdbStaleBecause")).toString());
+                                 result.value(QStringLiteral("cdbStaleBecause")).toString(),
+                                 result.value(QStringLiteral("preset")).toString());
         return true;
     }
     if (method == QStringLiteral("cmake.configure")) {
@@ -79,8 +80,14 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
 bool CoreClient::handleCmakeNotification(const QString& method, const QJsonObject& params)
 {
     if (method == QStringLiteral("event.cmake.started")) {
-        appendLog(QStringLiteral("cmake configure iniciado: %1")
-                      .arg(params.value(QStringLiteral("command")).toString()));
+        // `presetSource` (0.115.0) diz DE ONDE veio o preset: o kit, o
+        // CMakeUserPresets.json ou o CMakePresets.json — e' a evidencia de
+        // "com que a IDE configurou".
+        const QString source = params.value(QStringLiteral("presetSource")).toString();
+        appendLog(QStringLiteral("cmake configure iniciado: %1%2")
+                      .arg(params.value(QStringLiteral("command")).toString(),
+                           source.isEmpty() ? QString()
+                                            : QStringLiteral(" (preset de: %1)").arg(source)));
         return true;
     }
     if (method == QStringLiteral("event.cmake.finished")) {

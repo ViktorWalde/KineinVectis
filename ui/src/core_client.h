@@ -144,6 +144,8 @@ public:
     Q_INVOKABLE void debugVariablesForRef(double ref);
     Q_INVOKABLE void cargoCheck();
     Q_INVOKABLE void cargoMetadata();
+    // O configure leva o preset do KIT ativo (o ultimo `toolchain.get` pedido pela
+    // tela); vazio = o core escolhe o padrao do projeto (P0, 0.115.0).
     Q_INVOKABLE void cmakeConfigure();
     Q_INVOKABLE void cmakeTargetsList();
     Q_INVOKABLE void cmakeStatus();
@@ -294,7 +296,7 @@ signals:
     void formatCapabilitiesListed(const QVariantList& formatters);
     void runCapabilitiesListed(const QVariantList& runnable, const QVariantList& debuggable);
     void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
-                             const QString& cdbStaleBecause);
+                             const QString& cdbStaleBecause, const QString& preset);
     void cmakeConfigureFinished(bool success);
     /// `origin` diz de onde os nomes vieram: "fileApi" (confirmados por um
     /// configure), "source" (lidos do CMakeLists) ou "none".
@@ -538,6 +540,8 @@ private:
     QString m_workspaceName;
     QString m_workspaceKind;
     QStringList m_workspaceBuildSystems;
+    // O preset do kit ativo, como a tela o pediu por toolchain.get ("" = padrao).
+    QString m_kitPreset;
     // M4.3: recuperacao de crash do core. m_lastWorkspaceRoot sobrevive ao
     // crash (o que a recuperacao reabre); m_recovering suprime o session
     // restore e sinaliza a UI; a janela+contador cortam loop de fork.

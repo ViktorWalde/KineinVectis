@@ -108,6 +108,15 @@ pub(super) static TOOLS: &[Tool] = &[
         probe_binary: "basedpyright-langserver",
     },
     Tool {
+        id: "bear",
+        name: "Bear",
+        summary: "Gera o compile_commands.json de um Makefile puro interceptando o compilador \
+                  (`bear -- make`): e' o que faz o clangd entender um projeto sem CMake. \
+                  O build da IDE o usa sozinho quando ele existe.",
+        website: "https://github.com/rizsotto/Bear",
+        probe_binary: "bear",
+    },
+    Tool {
         id: "grafana",
         name: "Grafana",
         summary: "Paineis e graficos sobre os dados. A IDE conversa com ele por HTTP API — \
@@ -297,6 +306,22 @@ static BASEDPYRIGHT_ANY: &[Step] = &[Step {
     command: "uv tool install basedpyright",
 }];
 
+// Bear — github.com/rizsotto/Bear (README conferido 2026-09-17: "bear --
+// <your-build-command>"; instalacao "pelo gerenciador da distro"; as paginas
+// de pacote responderam 200 nas tres familias).
+static BEAR_DEBIAN: &[Step] = &[Step {
+    explanation: "packages.debian.org/trixie/bear (Ubuntu 26.04: bear 3.1.6, medido).",
+    command: "sudo apt install bear",
+}];
+static BEAR_REDHAT: &[Step] = &[Step {
+    explanation: "packages.fedoraproject.org/pkgs/bear",
+    command: "sudo dnf install bear",
+}];
+static BEAR_ARCH: &[Step] = &[Step {
+    explanation: "archlinux.org/packages/extra/x86_64/bear",
+    command: "sudo pacman -S bear",
+}];
+
 pub(super) static GUIDES: &[Guide] = &[
     Guide {
         tool: "pipx",
@@ -388,5 +413,26 @@ pub(super) static GUIDES: &[Guide] = &[
         steps: GRAFANA_REDHAT,
         source_url: "https://grafana.com/docs/grafana/latest/setup-grafana/installation/redhat-rhel-fedora/",
         checked_at: "2026-09-04",
+    },
+    Guide {
+        tool: "bear",
+        family: "debian",
+        steps: BEAR_DEBIAN,
+        source_url: "https://packages.debian.org/trixie/bear",
+        checked_at: "2026-09-17",
+    },
+    Guide {
+        tool: "bear",
+        family: "redhat",
+        steps: BEAR_REDHAT,
+        source_url: "https://packages.fedoraproject.org/pkgs/bear/bear/",
+        checked_at: "2026-09-17",
+    },
+    Guide {
+        tool: "bear",
+        family: "arch",
+        steps: BEAR_ARCH,
+        source_url: "https://archlinux.org/packages/extra/x86_64/bear/",
+        checked_at: "2026-09-17",
     },
 ];

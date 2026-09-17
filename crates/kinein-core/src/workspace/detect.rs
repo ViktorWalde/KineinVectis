@@ -18,6 +18,10 @@ const MARKERS: &[(&str, ProjectKind, BuildSystem)] = &[
         ProjectKind::Gradle,
         BuildSystem::Gradle,
     ),
+    // Um Makefile puro (P0 do 40 §4.1, 2026-09-17): depois do CMake, porque
+    // uma arvore CMake tambem pode carregar um Makefile na raiz.
+    ("Makefile", ProjectKind::Make, BuildSystem::Make),
+    ("GNUmakefile", ProjectKind::Make, BuildSystem::Make),
     ("pyproject.toml", ProjectKind::Python, BuildSystem::Python),
     ("setup.py", ProjectKind::Python, BuildSystem::Python),
     ("requirements.txt", ProjectKind::Python, BuildSystem::Python),

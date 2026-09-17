@@ -104,6 +104,13 @@ pub struct CmakeStatusResult {
     pub has_compile_commands: bool,
     /// Canonical build directory used by configure/build/run.
     pub build_dir: String,
+    /// The configure preset the IDE used on the last `cmake.configure`
+    /// (`0.115.0`): the one asked for, else the kit's, else the project's
+    /// default (first non-hidden `configurePresets` of `CMakeUserPresets.json`,
+    /// then `CMakePresets.json`, whose `condition` does not exclude Linux).
+    /// Absent when the last configure ran without a preset, or never ran.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preset: Option<String>,
     /// Directory holding the compilation database actually reachable by
     /// clangd, relative to the workspace root (`"."` for the root itself);
     /// absent when the workspace has none.
@@ -168,6 +175,7 @@ mod tests {
             configured: true,
             has_compile_commands: false,
             build_dir: "/w/.kinein/build".to_owned(),
+            preset: Some("linux-clang".to_owned()),
             cdb_directory: Some("build".to_owned()),
             cdb_stale: true,
             cdb_stale_because: Some("CMakeLists.txt".to_owned()),
@@ -180,6 +188,7 @@ mod tests {
         assert_eq!(value["cdbDirectory"], "build");
         assert_eq!(value["cdbStale"], true);
         assert_eq!(value["cdbStaleBecause"], "CMakeLists.txt");
+        assert_eq!(value["preset"], "linux-clang");
     }
 
     /// O caso saudavel nao carrega campo nenhum de diagnostico.
@@ -195,6 +204,7 @@ mod tests {
             configured: true,
             has_compile_commands: true,
             build_dir: "/w/.kinein/build".to_owned(),
+            preset: None,
             cdb_directory: None,
             cdb_stale: false,
             cdb_stale_because: None,
@@ -204,5 +214,6 @@ mod tests {
         assert!(value.get("cdbDirectory").is_none());
         assert!(value.get("cdbStale").is_none());
         assert!(value.get("cdbStaleBecause").is_none());
+        assert!(value.get("preset").is_none());
     }
 }

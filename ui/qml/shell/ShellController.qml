@@ -157,6 +157,7 @@ Item {
             maven: "Maven",
             gradle: "Gradle",
             python: "Python",
+            make: "Make",
             unknown: qsTr("Projeto")
         };
         return labels[kind] !== undefined ? labels[kind] : kind;

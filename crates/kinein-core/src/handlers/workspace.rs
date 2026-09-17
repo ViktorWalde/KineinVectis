@@ -316,16 +316,6 @@ impl Core {
         closed
     }
 
-    /// Ensina o clangd a entender o compilador cross do kit, via
-    /// `--query-driver`. Resolve o toolchain e atualiza a tabela do LSP; o
-    /// servidor JA' em execucao nao e' trocado (a troca so' vale na proxima
-    /// subida), que e' o mesmo contrato de [`LspManager::use_server_command`].
-    pub(crate) fn configure_clangd_from_toolchain(&mut self, root: &std::path::Path) {
-        let args = crate::toolchain::Toolchain::resolve(root, &self.detected_tools()).clangd_args();
-        let refs: Vec<&str> = args.iter().map(String::as_str).collect();
-        self.use_language_server_command("cpp", "clangd", &refs);
-    }
-
     pub(crate) fn close_workspace_response(
         &mut self,
         request_id: Option<Value>,

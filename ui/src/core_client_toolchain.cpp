@@ -12,6 +12,10 @@ namespace kinein {
 
 void CoreClient::toolchainGet(const QString& preset)
 {
+    // O kit que a tela escolheu e' o que o configure automatico deve usar:
+    // guardado aqui, na ponte, para os cinco chamadores de cmakeConfigure()
+    // nao terem de saber de kit (P0 do 40 §4.1, 2026-09-17).
+    m_kitPreset = preset;
     QJsonObject params{};
     if (!preset.isEmpty()) {
         params.insert(QStringLiteral("preset"), preset);

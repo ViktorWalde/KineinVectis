@@ -32,6 +32,12 @@ Item {
         let failures = 0;
 
         // Configurado e CDB fresca: nenhum aviso, e nenhum auto-configure.
+        controller.handleCmakeStatus(true, false, "", "linux-clang");
+        // O preset com que a IDE configurou (P0, 0.115.0) fica visivel;
+        // ausente/nulo vira vazio, nao "undefined".
+        if (controller.cmakePreset !== "linux-clang") failures += 1 << 20;
+        controller.handleCmakeStatus(true, false, "", null);
+        if (controller.cmakePreset !== "") failures += 1 << 21;
         controller.handleCmakeStatus(true, false, "");
         if (controller.status !== "ok" || controller.active) failures += 1;
         if (root.configureRequests !== 0) failures += 2;
@@ -79,6 +85,37 @@ Item {
         controller.pythonNeedsEnvironment = true;
         controller.handleCmakeStatus(true, true, "CMakeLists.txt");
         if (controller.actionTarget !== "cmakeConfigure") failures += 4096;
+
+        // Makefile puro (P0, 2026-09-17): sem bear, a faixa nomeia o bear
+        // como ferramenta ausente (com make, clangd e g++ presentes); com
+        // bear, nada. Um Makefile AO LADO do CMake nao exige bear.
+        controller.pythonNeedsEnvironment = false;
+        controller.handleCmakeStatus(true, false, "");
+        controller.workspaceKind = "make";
+        controller.workspaceBuildSystems = ["make"];
+        controller.toolsList = [
+            { id: "make", status: "detected" },
+            { id: "clangd", status: "detected" },
+            { id: "gxx", status: "detected" }
+        ];
+        if (controller.status !== "warning" || controller.message.indexOf("bear") < 0
+                || controller.actionTarget !== "tools") failures += 1 << 22;
+        controller.toolsList = [
+            { id: "make", status: "detected" },
+            { id: "clangd", status: "detected" },
+            { id: "gxx", status: "detected" },
+            { id: "bear", status: "detected" }
+        ];
+        if (controller.status !== "ok") failures += 1 << 23;
+        controller.workspaceKind = "cmake";
+        controller.workspaceBuildSystems = ["cmake", "make"];
+        controller.toolsList = [
+            { id: "cmake", status: "detected" },
+            { id: "ninja", status: "detected" },
+            { id: "clangd", status: "detected" },
+            { id: "gxx", status: "detected" }
+        ];
+        if (controller.status !== "ok") failures += 1 << 24;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

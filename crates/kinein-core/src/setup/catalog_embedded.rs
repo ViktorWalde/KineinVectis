@@ -224,13 +224,17 @@ static PICOTOOL_DEBIAN: &[Step] = &[
         command: "sudo apt install build-essential pkg-config libusb-1.0-0-dev cmake",
     },
     Step {
-        explanation: "Clona o fonte (o pico-sdk tem de estar em PICO_SDK_PATH ou o cmake o \
-                      baixa com -DPICOTOOL_FETCH_FROM_GIT_PATH).",
+        explanation: "Clona o pico-sdk: o CMakeLists do picotool EXIGE PICO_SDK_PATH (medido \
+                      em 2026-09-17: `PICO_SDK_PATH is not defined` sem ele; nao baixa sozinho).",
+        command: "git clone --depth 1 https://github.com/raspberrypi/pico-sdk.git ~/.local/src/pico-sdk",
+    },
+    Step {
+        explanation: "Clona o fonte do picotool.",
         command: "git clone https://github.com/raspberrypi/picotool.git ~/.local/src/picotool && cd ~/.local/src/picotool",
     },
     Step {
-        explanation: "Compila, como o BUILDING.md escreve.",
-        command: "mkdir -p build && cd build && cmake .. && make",
+        explanation: "Compila, como o BUILDING.md escreve, apontando o SDK.",
+        command: "mkdir -p build && cd build && cmake .. -DPICO_SDK_PATH=$HOME/.local/src/pico-sdk && make",
     },
     Step {
         explanation: "INSTALA — o README e' explicito: copiar o binario para o PATH nao \

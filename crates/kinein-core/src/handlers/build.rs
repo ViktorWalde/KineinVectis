@@ -38,7 +38,10 @@ impl Core {
                 Ok(context) => context,
                 Err(response) => return *response,
             };
-        if !matches!(kind, ProjectKind::RustCargo | ProjectKind::Cmake) {
+        if !matches!(
+            kind,
+            ProjectKind::RustCargo | ProjectKind::Cmake | ProjectKind::Make
+        ) {
             return unsupported_kind_response(request_id, "build", kind);
         }
         let Some(jobs) = self.jobs.as_ref() else {
@@ -50,11 +53,27 @@ impl Core {
         // Resolvida na thread do loop: o job nao alcanca o `Core`
         // (arquitetura/04 §3) e a toolchain precisa do detector de ferramentas.
         let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
+        // Makefile puro (P0): o make e o bear desta maquina, resolvidos aqui.
+        let make_tools = build::MakeTools {
+            make: self
+                .detector
+                .find_in_path("make")
+                .or_else(|| self.detector.find_in_path("gmake")),
+            bear: self.detector.find_in_path("bear"),
+        };
         let title = format!("{} Build", project_system_name(kind));
         let job_id = jobs.spawn("build", title, JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "build", &event);
-            match build::run_build(&root, kind, profile, &toolchain, &cancel, &mut sink) {
+            match build::run_build(
+                &root,
+                kind,
+                profile,
+                &toolchain,
+                &make_tools,
+                &cancel,
+                &mut sink,
+            ) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.build.finished",
@@ -393,6 +412,7 @@ const fn project_system_name(kind: ProjectKind) -> &'static str {
         ProjectKind::Maven => "Maven",
         ProjectKind::Gradle => "Gradle",
         ProjectKind::Python => "Python",
+        ProjectKind::Make => "Make",
         ProjectKind::Unknown => "Unknown",
     }
 }

@@ -588,6 +588,21 @@ compilação cruzada e embarcados entram sem um segundo mecanismo.
 
 A IDE escolhe automaticamente quando dá, e **mostra que escolheu**.
 
+**O kit manda no configure e nos servidores.** Com um kit ativo, o configure
+(automático ao abrir, ou o botão Configurar) usa o preset dele; sem kit, o
+preset padrão do projeto — o primeiro do seu `CMakeUserPresets.json`, senão
+do `CMakePresets.json` — e a aba IDE diz qual (`preset de: kit |
+CMakeUserPresets.json | CMakePresets.json`). O `targetTriple` do kit vai ao
+`cargo build` e ao rust-analyzer (que reinicia ao trocar de kit); o
+compilador cross vai ao clangd.
+
+**Projeto só com Makefile.** É reconhecido como "Make": Build roda `bear --
+make` quando o `bear` está instalado — é ele que escreve o
+`compile_commands.json` que o clangd lê — e `make` a seco quando não, dizendo
+isso; o Project Health nomeia o `bear` como ferramenta ausente e o painel
+Instalar ferramentas tem o passo. Um Makefile ao lado de um `CMakeLists.txt`
+continua sendo um projeto CMake.
+
 **Sysroot e SDK do alvo.** O campo "Pasta/SDK" aceita digitação ou
 **Escolher pasta…** — o mesmo navegador de pastas da Start Screen, não um
 diálogo do sistema. "Ler sysroot" diz o que a pasta contém; "Importar kit"

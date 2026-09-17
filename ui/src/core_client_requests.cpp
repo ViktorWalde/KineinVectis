@@ -341,7 +341,13 @@ void CoreClient::cmakeTargetsList()
 
 void CoreClient::cmakeConfigure()
 {
-    sendRequest(QStringLiteral("cmake.configure"), QJsonObject{});
+    QJsonObject params{};
+    // Campo ausente = o core escolhe o preset padrao do projeto; com kit
+    // ativo, o preset dele.
+    if (!m_kitPreset.isEmpty()) {
+        params.insert(QStringLiteral("preset"), m_kitPreset);
+    }
+    sendRequest(QStringLiteral("cmake.configure"), params);
 }
 
 void CoreClient::cmakeStatus()

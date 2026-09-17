@@ -12,7 +12,7 @@
     "root": { "type": "string", "minLength": 1 },
     "kind": {
       "type": "string",
-      "enum": ["rustCargo", "cmake", "maven", "gradle", "python", "unknown"]
+      "enum": ["rustCargo", "cmake", "maven", "gradle", "python", "make", "unknown"]
     },
     "markers": {
       "type": "array",
@@ -28,7 +28,7 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "enum": ["cargo", "cmake", "maven", "gradle", "python"]
+            "enum": ["cargo", "cmake", "maven", "gradle", "python", "make"]
           }
         }
       }

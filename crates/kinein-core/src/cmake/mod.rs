@@ -34,16 +34,101 @@ pub struct CmakeStatus {
     pub has_compile_commands: bool,
     /// Build dir canonico.
     pub build_dir: PathBuf,
+    /// O preset com que a IDE configurou da ultima vez (`.kinein-preset` no
+    /// build dir; o `CMake` nao guarda o preset no cache).
+    pub preset: Option<String>,
 }
+
+/// O arquivo em que a IDE anota o preset usado: o `CMakeCache.txt` nao o
+/// registra, e a tela precisa dizer COM QUE configurou.
+const PRESET_MARKER: &str = ".kinein-preset";
 
 /// Le o estado atual por stat dos artefatos do configure.
 #[must_use]
 pub fn status(root: &Path) -> CmakeStatus {
     let build_dir = build_dir(root);
+    let configured = build_dir.join("CMakeCache.txt").is_file();
+    let preset = configured
+        .then(|| fs::read_to_string(build_dir.join(PRESET_MARKER)).ok())
+        .flatten()
+        .map(|p| p.trim().to_owned())
+        .filter(|p| !p.is_empty());
     CmakeStatus {
-        configured: build_dir.join("CMakeCache.txt").is_file(),
+        configured,
         has_compile_commands: build_dir.join("compile_commands.json").is_file(),
         build_dir,
+        preset,
+    }
+}
+
+/// Anota (ou apaga) o preset usado num configure que TERMINOU com sucesso.
+pub fn record_preset(root: &Path, preset: Option<&str>) {
+    let marker = build_dir(root).join(PRESET_MARKER);
+    match preset {
+        Some(p) => drop(fs::write(marker, format!("{p}\n"))),
+        None => drop(fs::remove_file(marker)),
+    }
+}
+
+/// O preset PADRAO do projeto, quando nem o pedido nem o kit dizem um.
+///
+/// P0 do 40 §4.1 (2026-09-17): o primeiro `configurePresets` nao oculto de
+/// `CMakeUserPresets.json` (a escolha do usuario para ESTA maquina vence),
+/// senao de `CMakePresets.json`, pulando os que uma `condition` exclui
+/// no Linux. `None` = o projeto nao tem presets: configure sem preset, como
+/// sempre. A escolha vem com a evidencia (o arquivo de onde saiu).
+#[must_use]
+pub fn default_preset(root: &Path) -> Option<(String, &'static str)> {
+    for file in ["CMakeUserPresets.json", "CMakePresets.json"] {
+        let Ok(body) = fs::read_to_string(root.join(file)) else {
+            continue;
+        };
+        let Ok(value) = serde_json::from_str::<Value>(&body) else {
+            continue;
+        };
+        let Some(items) = value.get("configurePresets").and_then(Value::as_array) else {
+            continue;
+        };
+        let escolhido = items.iter().find(|item| {
+            item.get("hidden").and_then(Value::as_bool) != Some(true)
+                && item.get("name").and_then(Value::as_str).is_some()
+                && condition_allows_linux(item.get("condition"))
+        });
+        if let Some(name) = escolhido
+            .and_then(|i| i.get("name"))
+            .and_then(Value::as_str)
+        {
+            return Some((name.to_owned(), file));
+        }
+    }
+    None
+}
+
+/// A `condition` de um preset (cmake-presets(7)): so' as formas que dizem
+/// respeito ao sistema — `const`, e `equals`/`notEquals` sobre
+/// `${hostSystemName}` — sao avaliadas; qualquer outra e' considerada
+/// verdadeira (o `CMake` decide de fato na hora do configure).
+fn condition_allows_linux(condition: Option<&Value>) -> bool {
+    let Some(condition) = condition else {
+        return true;
+    };
+    match condition.get("type").and_then(Value::as_str) {
+        Some("const") => condition.get("value").and_then(Value::as_bool) != Some(false),
+        Some(kind @ ("equals" | "notEquals")) => {
+            let lhs = condition.get("lhs").and_then(Value::as_str).unwrap_or("");
+            let rhs = condition.get("rhs").and_then(Value::as_str).unwrap_or("");
+            let host = |s: &str| s == "${hostSystemName}";
+            let outro = if host(lhs) {
+                rhs
+            } else if host(rhs) {
+                lhs
+            } else {
+                return true;
+            };
+            let iguais = outro == "Linux";
+            if kind == "equals" { iguais } else { !iguais }
+        }
+        _ => true,
     }
 }
 
@@ -365,8 +450,8 @@ mod tests {
     use std::path::PathBuf;
 
     use super::{
-        configure_command, list_presets, list_targets, status, targets_from_source,
-        write_file_api_query,
+        configure_command, default_preset, list_presets, list_targets, record_preset, status,
+        targets_from_source, write_file_api_query,
     };
     use crate::toolchain::Toolchain;
 
@@ -572,5 +657,59 @@ mod tests {
 
         let empty = temp_root("targets-empty");
         assert!(list_targets(&empty).is_empty());
+    }
+
+    /// O preset padrao (P0, 2026-09-17): o do usuario (`CMakeUserPresets`)
+    /// vence o do projeto; ocultos e os que uma `condition` exclui no Linux
+    /// nao contam; sem presets, nenhum. E o preset usado fica anotado no build
+    /// dir para o `cmake.status` dizer com que a IDE configurou.
+    #[test]
+    fn the_default_preset_prefers_the_user_file_and_skips_hidden_or_foreign_ones() {
+        let root = temp_root("preset-padrao");
+        assert_eq!(default_preset(&root), None);
+        std::fs::write(
+            root.join("CMakePresets.json"),
+            r#"{"version": 6, "configurePresets": [
+                {"name": "base", "hidden": true},
+                {"name": "windows", "condition": {"type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows"}},
+                {"name": "desligado", "condition": {"type": "const", "value": false}},
+                {"name": "linux-clang", "condition": {"type": "notEquals", "lhs": "${hostSystemName}", "rhs": "Windows"}},
+                {"name": "outro"}
+            ]}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            default_preset(&root),
+            Some(("linux-clang".to_owned(), "CMakePresets.json"))
+        );
+        std::fs::write(
+            root.join("CMakeUserPresets.json"),
+            r#"{"version": 6, "configurePresets": [{"name": "dev-local", "inherits": "base"}]}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            default_preset(&root),
+            Some(("dev-local".to_owned(), "CMakeUserPresets.json"))
+        );
+        // Um arquivo de usuario invalido nao esconde o do projeto.
+        std::fs::write(root.join("CMakeUserPresets.json"), "{ nao e json").unwrap();
+        assert_eq!(
+            default_preset(&root).map(|p| p.0),
+            Some("linux-clang".to_owned())
+        );
+
+        // O preset usado: anotado so' com CMakeCache (configurado) — e apagado
+        // quando o configure seguinte roda sem preset.
+        std::fs::create_dir_all(root.join(".kinein/build")).unwrap();
+        record_preset(&root, Some("linux-clang"));
+        assert_eq!(
+            status(&root).preset,
+            None,
+            "sem CMakeCache nao esta' configurado"
+        );
+        std::fs::write(root.join(".kinein/build/CMakeCache.txt"), "").unwrap();
+        assert_eq!(status(&root).preset.as_deref(), Some("linux-clang"));
+        record_preset(&root, None);
+        assert_eq!(status(&root).preset, None);
     }
 }

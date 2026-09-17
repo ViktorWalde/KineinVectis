@@ -16,6 +16,11 @@ pub enum ProjectKind {
     Gradle,
     /// Python project (`pyproject.toml`, `setup.py`, `requirements.txt`).
     Python,
+    /// C/C++ driven by a plain `Makefile`/`GNUmakefile` (`0.115.0`): built by
+    /// `make`, with `bear -- make` producing the compilation database when
+    /// `bear` is installed. Loses to `CMakeLists.txt` in precedence — a `CMake`
+    /// tree may also carry a Makefile.
+    Make,
     /// No known build system marker was found.
     Unknown,
 }
@@ -38,6 +43,8 @@ pub enum BuildSystem {
     Gradle,
     /// Python project metadata (`pyproject.toml`, `setup.py`, requirements).
     Python,
+    /// Plain `Makefile` (`0.115.0`).
+    Make,
 }
 
 impl BuildSystem {
@@ -50,6 +57,7 @@ impl BuildSystem {
             Self::Maven => ProjectKind::Maven,
             Self::Gradle => ProjectKind::Gradle,
             Self::Python => ProjectKind::Python,
+            Self::Make => ProjectKind::Make,
         }
     }
 }

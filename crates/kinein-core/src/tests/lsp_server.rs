@@ -672,3 +672,86 @@ fn without_an_interpreter_no_configuration_is_pushed() {
         h.messages()
     );
 }
+
+/// O alvo do kit chega ao rust-analyzer (P0 do 40 §4.1, 2026-09-17). Sem
+/// `targetTriple` no kit, o servidor de Rust sobe SEM configuracao (o caso
+/// acima). Com `toolchain.setKit { targetTriple }`, o servidor vivo e'
+/// reiniciado e o novo sobe com `workspace/didChangeConfiguration` trazendo
+/// `rust-analyzer.cargo.target` = o triple — a chave do manual — e o
+/// `workspace/configuration` de secao `rust-analyzer` responde o mesmo.
+#[test]
+fn the_rust_server_receives_the_kit_target_and_restarts_when_it_changes() {
+    let mut h = harness("rust-alvo-do-kit");
+    let rs = h.main_rs();
+    h.ok("fs.read", json!({ "path": rs }));
+    h.wait_for("textDocument/didOpen", 0);
+    // Sem alvo no kit: nenhuma configuracao foi ao servidor de Rust.
+    assert_eq!(
+        h.messages()
+            .iter()
+            .filter(|m| m["method"] == "workspace/didChangeConfiguration"
+                && m["params"]["settings"].get("rust-analyzer").is_some())
+            .count(),
+        0
+    );
+
+    let antes = h.count_of("initialize");
+    h.ok(
+        "toolchain.setKit",
+        json!({ "targetTriple": "thumbv7em-none-eabihf" }),
+    );
+    // O reinicio derruba o servidor e emite `event.lsp.restarted`; quem o
+    // sobe de novo e' a proxima sincronizacao (a UI re-sincroniza o arquivo
+    // ativo) — aqui, ler o arquivo de novo.
+    h.ok("fs.read", json!({ "path": rs }));
+    // O servidor de Rust reiniciou (um initialize a mais) e recebeu o alvo.
+    let deadline = Instant::now() + DEADLINE;
+    let config = loop {
+        let achado = h.messages().into_iter().find(|m| {
+            m["method"] == "workspace/didChangeConfiguration"
+                && m["params"]["settings"]["rust-analyzer"]["cargo"]["target"]
+                    == "thumbv7em-none-eabihf"
+        });
+        if let Some(m) = achado {
+            break m;
+        }
+        assert!(
+            Instant::now() < deadline,
+            "o alvo nao chegou ao rust-analyzer: {:?}",
+            h.messages()
+        );
+        std::thread::sleep(Duration::from_millis(20));
+    };
+    assert_eq!(
+        config["params"]["settings"]["rust-analyzer"]["cargo"]["target"],
+        "thumbv7em-none-eabihf"
+    );
+    assert!(
+        h.count_of("initialize") > antes,
+        "o servidor de Rust nao reiniciou"
+    );
+
+    // Limpar o alvo ("" limpa, como nos outros campos) tira a configuracao
+    // na proxima subida — o reinicio seguinte sobe sem `rust-analyzer`.
+    let antes = h.count_of("initialize");
+    h.ok("toolchain.setKit", json!({ "targetTriple": "" }));
+    h.ok("fs.read", json!({ "path": rs }));
+    let deadline = Instant::now() + DEADLINE;
+    while h.count_of("initialize") <= antes {
+        assert!(Instant::now() < deadline, "sem reinicio ao limpar o alvo");
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    h.wait_for("textDocument/didOpen", 2);
+    let mensagens = h.messages();
+    let ultimo_init = mensagens
+        .iter()
+        .rposition(|m| m["method"] == "initialize")
+        .unwrap();
+    assert!(
+        !mensagens[ultimo_init..]
+            .iter()
+            .any(|m| m["method"] == "workspace/didChangeConfiguration"
+                && m["params"]["settings"].get("rust-analyzer").is_some()),
+        "a configuracao antiga sobreviveu ao alvo limpo"
+    );
+}

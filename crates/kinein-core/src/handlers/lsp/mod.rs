@@ -21,6 +21,7 @@ mod consulta;
 mod documento;
 mod edicao;
 mod sessao;
+mod toolchain;
 
 use kinein_protocol::JsonRpcResponse;
 use serde_json::Value;
