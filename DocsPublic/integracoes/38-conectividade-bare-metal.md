@@ -463,12 +463,16 @@ E1  serial.list (core)        FEITA em 2026-09-11 (`roadmaps/40` §7.13,
                               era transitiva); familia do elo; painel com
                               EmbeddedSerialView. Exercitada contra o ESP32
                               real, provada por 3 mutacoes Rust + 3 QML.
-E2  permissao por canal       a fatia 4.3, redesenhada: para CADA dispositivo,
-    (core + painel)           qual das tres formas falta, o passo OFICIAL datado
-                              (probe.rs/probe-setup para B; dialout para A; a
-                              regra ID_MM_DEVICE_IGNORE do MM) e o que a distro
-                              JA' fez (o 60-openocd do Fedora). Nunca roda sudo;
-                              imprime o comando.
+E2  permissao por canal       FEITA em 2026-09-17 (`roadmaps/40` §7.43,
+    (core + painel)           protocolo 0.114.0): `serial.access` mede, por
+                              canal, qual das tres formas falta — grupo/ACL
+                              uaccess, ModemManager, regra de sonda — e da' o
+                              passo OFICIAL datado (ESP-IDF para o grupo;
+                              probe.rs/probe-setup para B; a forma das regras
+                              do proprio MM para o ID_MM_DEVICE_IGNORE) e o
+                              que a distro JA' fez (60-openocd/49-stlink no
+                              Ubuntu, medido). Nunca roda sudo; escreve o
+                              comando no terminal da IDE. Medido no ESP32 real.
 E3  monitor UART              FEITA em 2026-09-12 (`roadmaps/40` §7.15) na
                               forma DECIDIDA abaixo (processo, nao termios):
                               papel `serialMonitor` no kit, `serial.monitor`

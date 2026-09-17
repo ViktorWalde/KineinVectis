@@ -46,4 +46,14 @@ Item {
             root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes);
         }
     }
+
+    // Permissao por canal (E2): so' o diagnostico passa por aqui; o passo vai
+    // para o terminal da IDE pelo ShellEnvironmentOverlays, como o setup.
+    Connections {
+        target: root.embeddedController ? root.embeddedController.access : null
+
+        function onDiagnoseRequested(device) {
+            root.coreClient.serialAccess(device);
+        }
+    }
 }

@@ -153,6 +153,11 @@ Item {
             controller: root.controller
         }
 
+        EmbeddedAccessView {
+            width: parent.width
+            controller: root.controller
+        }
+
         EmbeddedIdentityView {
             width: parent.width
             controller: root.controller

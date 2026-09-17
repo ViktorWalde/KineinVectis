@@ -444,3 +444,241 @@ fn a_micropython_project_gets_the_mpremote_repl_as_its_monitor() {
     assert_eq!(programa, "/home/x/.local/bin/mpremote");
     assert_eq!(args, ["connect", "/dev/ttyUSB0", "repl"]);
 }
+
+// ---- E2: permissao por canal (2026-09-17) --------------------------------
+
+/// Monta `/proc/self/status` falso com os grupos dados (gids) — e' de onde
+/// o diagnostico le a que grupos o usuario pertence.
+fn proc_com_grupos(raiz: &Path, gids: &[u32]) {
+    std::fs::create_dir_all(raiz.join("proc/self")).unwrap();
+    let lista: Vec<String> = gids.iter().map(u32::to_string).collect();
+    std::fs::write(
+        raiz.join("proc/self/status"),
+        format!("Name:\tkinein\nGroups:\t{} \n", lista.join(" ")),
+    )
+    .unwrap();
+}
+
+/// O canal `serial`: fora do grupo e sem ACL -> passo `usermod` da fonte
+/// oficial; dentro do grupo -> ok sem "distro fez"; com acesso por ACL
+/// (`TAGS=:uaccess:`) e fora do grupo -> ok E "o udev deu acesso".
+#[test]
+fn serial_channel_names_the_group_step_or_credits_uaccess() {
+    use std::os::unix::fs::PermissionsExt;
+    let raiz = sysfs_medido(&temp_dir("e2-serial"));
+    let no = raiz.join("dev/ttyUSB0");
+    let gid_do_no = std::fs::metadata(&no).unwrap().gid();
+    let raizes = Raizes::em(&raiz);
+    let sem_udev = |_: &Path| None;
+    let sem_regras: Vec<PathBuf> = Vec::new();
+
+    // Dentro do grupo (o gid do no' esta' nos grupos), no' 0600: ok, e a
+    // razao e' o grupo, nao a distro.
+    proc_com_grupos(&raiz, &[gid_do_no]);
+    let r = crate::serial::access::diagnose_in(
+        &raizes.ambiente(&sem_udev),
+        &sem_regras,
+        Some(no.to_str().unwrap()),
+    );
+    let serial = r
+        .channels
+        .iter()
+        .find(|c| c.kind == kinein_protocol::AccessChannelKind::Serial)
+        .unwrap();
+    assert!(
+        serial.ok && serial.fix.is_none() && serial.distro_did_it.is_none(),
+        "{serial:?}"
+    );
+    assert!(
+        serial.detail.contains("faz parte do grupo"),
+        "{}",
+        serial.detail
+    );
+    // So' a porta pedida entrou (o ttyACM0 da fixture nao).
+    assert!(
+        r.channels
+            .iter()
+            .all(|c| c.device.as_deref().is_none_or(|d| d.ends_with("ttyUSB0")))
+    );
+
+    // Fora do grupo, sem ACL, e o no' negado (modo 000; root ignoraria):
+    // passo oficial `usermod -a -G <grupo> $USER` + re-login.
+    std::fs::set_permissions(&no, std::fs::Permissions::from_mode(0o000)).unwrap();
+    if std::fs::File::open(&no).is_err() {
+        proc_com_grupos(&raiz, &[]);
+        let r = crate::serial::access::diagnose_in(
+            &raizes.ambiente(&sem_udev),
+            &sem_regras,
+            Some(no.to_str().unwrap()),
+        );
+        let serial = &r.channels[0];
+        assert!(!serial.ok);
+        let fix = serial.fix.as_ref().unwrap();
+        // O /etc/group falso batiza o gid do no' de `dialout`.
+        assert_eq!(fix.steps[0].command, "sudo usermod -a -G dialout $USER");
+        assert!(fix.steps[1].explanation.contains("re-login"));
+        assert!(fix.source_url.contains("docs.espressif.com"));
+        assert_eq!(fix.checked_on, "2026-09-17");
+    }
+    std::fs::set_permissions(&no, std::fs::Permissions::from_mode(0o600)).unwrap();
+
+    // Acesso ha' (0600, somos o dono) mas NAO pelo grupo: com a tag uaccess
+    // nas propriedades udev, o merito e' do udev.
+    proc_com_grupos(&raiz, &[]);
+    let com_uaccess =
+        |_: &Path| Some("TAGS=:uaccess:seat:systemd:\nID_MM_CANDIDATE=1\n".to_owned());
+    let r = crate::serial::access::diagnose_in(
+        &raizes.ambiente(&com_uaccess),
+        &sem_regras,
+        Some(no.to_str().unwrap()),
+    );
+    let serial = &r.channels[0];
+    assert!(serial.ok);
+    assert!(
+        serial.distro_did_it.as_deref().unwrap().contains("uaccess"),
+        "{serial:?}"
+    );
+}
+
+/// O canal `modemManager`: rodando + candidata + sem regra -> a regra
+/// `ID_MM_DEVICE_IGNORE` com o VID:PID DESTA ponte, numerada antes do 80;
+/// ja' ignorada -> ok com "a regra ja' existe"; sem udevadm -> canal ausente.
+#[test]
+fn modem_manager_channel_writes_the_ignore_rule_for_this_bridge() {
+    let raiz = sysfs_medido(&temp_dir("e2-mm"));
+    proc_com_grupos(&raiz, &[]);
+    let raizes = Raizes::em(&raiz);
+    let no = raiz.join("dev/ttyUSB0");
+    let sem_regras: Vec<PathBuf> = Vec::new();
+
+    let candidata = |_: &Path| Some("ID_MM_CANDIDATE=1\n".to_owned());
+    let r = crate::serial::access::diagnose_in(
+        &raizes.ambiente(&candidata),
+        &sem_regras,
+        Some(no.to_str().unwrap()),
+    );
+    let mm = r
+        .channels
+        .iter()
+        .find(|c| c.kind == kinein_protocol::AccessChannelKind::ModemManager)
+        .unwrap();
+    assert!(!mm.ok, "{mm:?}");
+    let fix = mm.fix.as_ref().unwrap();
+    assert_eq!(
+        fix.steps[0].command,
+        "printf 'ATTRS{idVendor}==\"10c4\", ATTRS{idProduct}==\"ea60\", ENV{ID_MM_DEVICE_IGNORE}=\"1\"\\n' | sudo tee /etc/udev/rules.d/77-mm-kinein-10c4-ea60.rules"
+    );
+    assert!(fix.steps[1].command.contains("udevadm control --reload"));
+    assert!(fix.source_url.contains("80-mm-candidate.rules"));
+
+    let ignorada = |_: &Path| Some("ID_MM_CANDIDATE=1\nID_MM_DEVICE_IGNORE=1\n".to_owned());
+    let r = crate::serial::access::diagnose_in(
+        &raizes.ambiente(&ignorada),
+        &sem_regras,
+        Some(no.to_str().unwrap()),
+    );
+    let mm = r
+        .channels
+        .iter()
+        .find(|c| c.kind == kinein_protocol::AccessChannelKind::ModemManager)
+        .unwrap();
+    assert!(mm.ok && mm.fix.is_none());
+    assert!(
+        mm.distro_did_it
+            .as_deref()
+            .unwrap()
+            .contains("ID_MM_DEVICE_IGNORE")
+    );
+
+    // Sem udevadm nao ha' como saber: o canal nao aparece (nem "ok" nem
+    // "problema" — dizer qualquer um seria inventar).
+    let sem_udev = |_: &Path| None;
+    let r = crate::serial::access::diagnose_in(
+        &raizes.ambiente(&sem_udev),
+        &sem_regras,
+        Some(no.to_str().unwrap()),
+    );
+    assert!(
+        r.channels
+            .iter()
+            .all(|c| c.kind != kinein_protocol::AccessChannelKind::ModemManager)
+    );
+}
+
+/// O canal `probe`: sem regra em nenhuma pasta -> os tres passos do probe.rs
+/// (download, reload, trigger, citados); regra da distro em /usr/lib ->
+/// ok e "a distro ja' instalou"; regra do usuario em /etc -> ok sem credito
+/// a distro; `/lib` link de `/usr/lib` nao conta duas vezes.
+#[test]
+fn probe_channel_finds_rules_in_any_dir_and_credits_the_distro() {
+    let raiz = sysfs_medido(&temp_dir("e2-probe"));
+    proc_com_grupos(&raiz, &[]);
+    let raizes = Raizes::em(&raiz);
+    let sem_udev = |_: &Path| None;
+    let etc = raiz.join("etc/udev/rules.d");
+    let usr = raiz.join("usr/lib/udev/rules.d");
+    std::fs::create_dir_all(&etc).unwrap();
+    std::fs::create_dir_all(&usr).unwrap();
+    let lib = raiz.join("lib");
+    std::os::unix::fs::symlink(raiz.join("usr/lib"), &lib).unwrap();
+    let dirs = vec![etc.clone(), usr.clone(), lib.join("udev/rules.d")];
+    let sonda = |r: &kinein_protocol::SerialAccessResult| {
+        r.channels
+            .iter()
+            .find(|c| c.kind == kinein_protocol::AccessChannelKind::Probe)
+            .unwrap()
+            .clone()
+    };
+
+    let sem = sonda(&crate::serial::access::diagnose_in(
+        &raizes.ambiente(&sem_udev),
+        &dirs,
+        None,
+    ));
+    assert!(!sem.ok && sem.device.is_none());
+    let fix = sem.fix.as_ref().unwrap();
+    assert_eq!(fix.steps.len(), 3);
+    assert!(
+        fix.steps[0]
+            .command
+            .contains("https://probe.rs/files/69-probe-rs.rules")
+    );
+    assert_eq!(fix.steps[1].command, "sudo udevadm control --reload");
+    assert_eq!(fix.steps[2].command, "sudo udevadm trigger");
+    assert_eq!(
+        fix.source_url,
+        "https://probe.rs/docs/getting-started/probe-setup/"
+    );
+
+    std::fs::write(usr.join("60-openocd.rules"), "# fedora/ubuntu\n").unwrap();
+    std::fs::write(usr.join("99-unrelated.rules"), "").unwrap();
+    let distro = sonda(&crate::serial::access::diagnose_in(
+        &raizes.ambiente(&sem_udev),
+        &dirs,
+        None,
+    ));
+    assert!(distro.ok && distro.fix.is_none());
+    assert!(
+        distro
+            .distro_did_it
+            .as_deref()
+            .unwrap()
+            .contains("60-openocd.rules")
+    );
+    assert_eq!(
+        distro.detail.matches("60-openocd.rules").count(),
+        1,
+        "{}",
+        distro.detail
+    );
+
+    std::fs::remove_file(usr.join("60-openocd.rules")).unwrap();
+    std::fs::write(etc.join("69-probe-rs.rules"), "").unwrap();
+    let usuario = sonda(&crate::serial::access::diagnose_in(
+        &raizes.ambiente(&sem_udev),
+        &dirs,
+        None,
+    ));
+    assert!(usuario.ok && usuario.distro_did_it.is_none(), "{usuario:?}");
+    assert!(usuario.detail.contains("69-probe-rs.rules"));
+}

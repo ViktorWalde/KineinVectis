@@ -12,9 +12,9 @@ use std::{
 };
 
 use kinein_protocol::{
-    JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, SerialIdentifiedEvent,
-    SerialIdentifyParams, SerialIdentifyResult, SerialListParams, SerialMonitorParams,
-    SerialMonitorResult,
+    JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, SerialAccessParams,
+    SerialIdentifiedEvent, SerialIdentifyParams, SerialIdentifyResult, SerialListParams,
+    SerialMonitorParams, SerialMonitorResult,
 };
 use serde_json::{Value, json};
 
@@ -43,6 +43,7 @@ impl Core {
             "serial.list" => Some(Self::serial_list_response(request_id, params)),
             "serial.monitor" => Some(self.serial_monitor_response(request_id, params)),
             "serial.identify" => Some(self.serial_identify_response(request_id, params)),
+            "serial.access" => Some(Self::serial_access_response(request_id, params)),
             _ => None,
         }
     }
@@ -113,6 +114,28 @@ impl Core {
             ),
             Err(error) => terminal_error_response(request_id, &error),
         }
+    }
+
+    /// `serial.access` — permissao POR CANAL (E2 do `integracoes/38` §6):
+    /// o que falta em cada porta (grupo/ACL, `ModemManager`) e na regra das
+    /// sondas, com o passo oficial. Nao exige workspace, como o `serial.list`;
+    /// nao roda nada — o passo e' escrito no terminal da IDE pelo usuario.
+    fn serial_access_response(
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let pedido = match parse_params::<SerialAccessParams>(
+            request_id.as_ref(),
+            params,
+            "serial.access aceita o campo opcional device",
+        ) {
+            Ok(pedido) => pedido,
+            Err(response) => return *response,
+        };
+        JsonRpcResponse::success(
+            request_id,
+            json!(crate::serial::access::diagnose(pedido.device.as_deref())),
+        )
     }
 
     /// `serial.list` — as portas seriais USB desta maquina.

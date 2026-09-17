@@ -184,6 +184,8 @@ public:
     Q_INVOKABLE void serialMonitor(const QString& device, int baud = 0);
     // Identidade Espressif pelo canal (serial.identify): esptool flash-id como job (0.112.0).
     Q_INVOKABLE void serialIdentify(const QString& device);
+    // Permissao por canal (serial.access, 0.114.0): o que falta e o passo oficial; nao roda nada.
+    Q_INVOKABLE void serialAccess(const QString& device = QString());
     // O modelo do projeto embarcado (project.model): framework, SDKs, artefatos, alvo.
     Q_INVOKABLE void projectModel();
     // O indice do projeto inteiro (index.*): totais e busca por nome, sem LSP.
@@ -354,6 +356,7 @@ signals:
     void serialMonitorOpened(const QString& id, const QString& command, const QString& tool);
     void serialIdentifyStarted(const QString& jobId, const QString& command);
     void serialIdentified(const QVariantMap& outcome);
+    void serialAccessResolved(const QVariantList& channels);
     void projectModelResolved(const QVariantMap& model);
     void projectChanged(const QVariantMap& model);
     void indexStatusResolved(const QVariantMap& stats);

@@ -28,6 +28,7 @@
 //!                   ponte); fontes no `integracoes/38` §5
 //! ```
 
+pub mod access;
 pub mod identify;
 pub mod monitor;
 
@@ -292,7 +293,7 @@ fn nome_do_grupo(etc_group: &Path, gid: u32) -> Option<String> {
 }
 
 /// `udevadm info -q property -n <dev>`; `None` quando o binario falta.
-fn udevadm_properties(no: &Path) -> Option<String> {
+pub(super) fn udevadm_properties(no: &Path) -> Option<String> {
     let saida = Command::new("udevadm")
         .args(["info", "-q", "property", "-n"])
         .arg(no)

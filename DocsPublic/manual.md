@@ -594,6 +594,15 @@ portas seriais   vistas pelo sysfs, SEM abrir nenhuma: quem faz a ponte
 monitor serial   um botao por porta abre tio/picocom/minicom (ou o REPL do
                  mpremote num projeto MicroPython) NUMA ABA DE TERMINAL —
                  e' um processo, como qualquer outro
+permissoes       o botao "Permissoes" mede cada canal e diz o que falta: o no'
+                 serial (grupo dono, ou a ACL que o udev deu pela tag uaccess
+                 — e' assim que voce pode ter acesso SEM estar no dialout), o
+                 ModemManager (rodando e sem regra de ignorar, ele segura a
+                 porta por segundos depois do plug) e a regra udev das sondas
+                 (a distro pode ja' ter posto a do OpenOCD/ST-Link). Para o
+                 que falta, o passo OFICIAL com a fonte e a data; "Escrever no
+                 terminal" poe o comando no terminal da IDE e o prompt de
+                 senha do sudo aparece la'. A IDE nunca roda sudo
 identidade       a lupa ao lado de cada porta pergunta ao `esptool` o que ha'
 pelo canal       do outro lado (chip, flash, MAC) — ABRE a porta e a placa
                  RESETA, por isso e' um clique, nunca automatico. O painel

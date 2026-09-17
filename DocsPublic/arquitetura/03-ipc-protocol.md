@@ -1,5 +1,17 @@
 # 03 — Protocolo IPC
 
+> **0.114.0 (2026-09-17) — E2, permissão POR CANAL:** `serial.access
+> { device? }` → `{ channels: [{ kind: serial|probe|modemManager, device?,
+> ok, detail, problem?, fix?: { steps: [{ explanation, command }],
+> sourceUrl, checkedOn }, distroDidIt? }] }`. Mede (nunca supõe) o nó serial
+> (grupo do nó × grupos do processo, ACL pela tag `uaccess`), o `ModemManager`
+> (rodando × candidata × regra de ignorar) e a regra udev das sondas nas
+> pastas do udev; para o que falta, o passo OFICIAL com fonte e data —
+> escrito no terminal da IDE pelo usuário, nunca `sudo` pela IDE. Medido com
+> o ESP32 real desta máquina: acesso por `uaccess` sem grupo, `ModemManager`
+> candidato sem regra (passo: `77-mm-kinein-10c4-ea60.rules`), regras de
+> sonda da distro. Método 143.
+>
 > **0.113.0 (2026-09-17, noite) — E4, gravar como CONFIGURAÇÃO DE EXECUÇÃO:**
 > `runConfig.flashProposal { device?, engine?, flashSizeBytes? }` → `{ name,
 > command, engine, source[], warnings[] }` é PURO — compõe a linha do motor
@@ -2351,10 +2363,10 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 142 métodos roteados — a lista inteira
+## Os 143 métodos roteados — a lista inteira
 
-> **2026-09-17:** `serial.identify` (0.112.0) e `runConfig.flashProposal`
-> (0.113.0) entraram; eram 140.
+> **2026-09-17:** `serial.identify` (0.112.0), `runConfig.flashProposal`
+> (0.113.0) e `serial.access` (0.114.0) entraram; eram 140.
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -2493,6 +2505,7 @@ runConfig.list
 runConfig.save
 runConfig.setActive
 
+serial.access
 serial.identify
 serial.list
 serial.monitor
@@ -3057,6 +3070,11 @@ monitor UART e do "Gravar".
 serial.list     {}                   -> { ports: [SerialPortInfo], hint? }
 serial.monitor  { device, baud? }    -> { id, command, tool }   (aba de terminal; 0.92.0)
 serial.identify { device, tool? }    -> { jobId, command }      (job; 0.112.0)
+serial.access   { device? }          -> { channels: [AccessChannel] }   (0.114.0)
+
+AccessChannel   kind (serial|probe|modemManager), device?, ok, detail, problem?,
+                fix? { steps: [{ explanation, command }], sourceUrl, checkedOn },
+                distroDidIt?
 
 event.serial.identified { jobId, device, command, success, error?,
                           identity?: SerialIdentity, target?: TargetModel, raw }
@@ -3138,6 +3156,29 @@ install esptool`. Prazo de 30 s no job (o esptool tenta sincronizar várias
 vezes): estourou → `success: false` com "não respondeu em 30 s"; cancelado
 (`job.cancel`) → mata o esptool e diz "cancelada". `JobRisk::Medium` porque
 reseta a placa; nada é escrito nela.
+
+**`serial.access` é a permissão POR CANAL (E2 do `integracoes/38` §6,
+`0.114.0`)** — a fatia 4.3 redesenhada: para CADA canal, o que falta e o
+passo oficial. Não exige workspace; não roda nada. Canais: **`serial`**, por
+porta — `ok` é o `access(2)` do `serial.list`; `detail` diz o modo, o grupo
+dono e se o processo está nele (`/proc/self/status` `Groups:` × `/etc/group`);
+quando o acesso vem sem grupo e as propriedades udev trazem `TAGS=…:uaccess:…`,
+`distroDidIt` credita a ACL do udev; sem acesso, `fix` é `sudo usermod -a -G
+<grupo> $USER` + re-login (fonte: ESP-IDF *Establish Serial Connection*,
+2026-09-17) para `dialout|uucp|plugdev|tty`, ou uma regra `TAG+="uaccess"`
+para a VID:PID quando o grupo é outro. **`modemManager`**, por porta, só
+quando o `udevadm` respondeu — `ok` = não (rodando ∧ candidata ∧ sem regra);
+`fix` escreve `ATTRS{idVendor}=="…", ATTRS{idProduct}=="…",
+ENV{ID_MM_DEVICE_IGNORE}="1"` em `/etc/udev/rules.d/77-mm-kinein-<vid>-<pid>.rules`
+(o 77 corre ANTES do `80-mm-candidate.rules` que marca toda tty; a forma é a
+das regras que o pacote instala) e recarrega o udev. **`probe`**, da máquina
+— procura `*probe-rs*|*openocd*|*stlink*|*jlink*|*cmsis*.rules` em
+`/etc/udev/rules.d`, `/usr/lib/udev/rules.d` e `/lib/udev/rules.d` (pastas
+canônicas iguais contam uma vez); achado fora de `/etc` é `distroDidIt`;
+nada achado → os três passos do probe.rs *Probe Setup* (baixar
+`69-probe-rs.rules`, `udevadm control --reload`, `udevadm trigger`,
+citados). Cada `fix` traz `sourceUrl` e `checkedOn`; a UI escreve o
+`command` no terminal da IDE pelo mesmo caminho do painel de instalação.
 
 ## `command.*` — o catálogo de comandos que a UI mostra
 

@@ -29,11 +29,28 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingSmall
 
-        Text {
-            text: qsTr("Portas seriais")
-            color: Theme.textSecondary
-            font.pixelSize: 11
-            font.bold: true
+        Row {
+            width: parent.width
+            spacing: Theme.spacingSmall
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Portas seriais")
+                color: Theme.textSecondary
+                font.pixelSize: 11
+                font.bold: true
+            }
+
+            // E2: o que falta em cada canal (grupo/ACL, ModemManager, regra
+            // das sondas) e o passo oficial — medido, nunca suposto; nada
+            // roda sem o clique no passo.
+            KvButton {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.controller && root.controller.access.busy ? qsTr("medindo…") : qsTr("Permissões")
+                compact: true
+                enabled: root.controller !== null && !root.controller.access.busy
+                onClicked: root.controller.access.diagnose("")
+            }
         }
 
         Repeater {

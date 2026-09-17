@@ -227,3 +227,73 @@ pub struct SerialIdentifiedEvent {
     /// when the parser understood nothing.
     pub raw: String,
 }
+
+/// Parameters for `serial.access` (`0.114.0`, E2 of `integracoes/38` §6):
+/// permission diagnosis per channel, with the official fix.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SerialAccessParams {
+    /// One port to diagnose; absent = every port `serial.list` sees (plus the
+    /// machine-wide probe channel either way).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device: Option<String>,
+}
+
+/// Which channel a diagnosis is about.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AccessChannelKind {
+    /// Read/write on a tty node: group membership or a udev `uaccess` ACL.
+    Serial,
+    /// A udev rule for debug probes (probe-rs, `OpenOCD`, ST-Link).
+    Probe,
+    /// `ModemManager` probing the tty right after plug.
+    ModemManager,
+}
+
+/// One step of an official fix, as `setup.*` presents it: the IDE writes the
+/// command into its own terminal; the user presses Enter. Never `sudo` run
+/// by the IDE.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessFix {
+    /// Steps in order.
+    pub steps: Vec<crate::SetupStep>,
+    /// The official page (or the shipped file) the steps were taken from.
+    pub source_url: String,
+    /// When that source was checked (ISO date).
+    pub checked_on: String,
+}
+
+/// The diagnosis of one channel.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AccessChannel {
+    /// What this is about.
+    pub kind: AccessChannelKind,
+    /// The port, for per-port channels; absent for the machine-wide probe rule.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device: Option<String>,
+    /// Nothing to do.
+    pub ok: bool,
+    /// What was measured, in one sentence — present whether `ok` or not.
+    pub detail: String,
+    /// What is wrong, when not `ok`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub problem: Option<String>,
+    /// The official fix, when not `ok` and one is known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fix: Option<AccessFix>,
+    /// What the distro/udev already did that makes this `ok` (a shipped rule,
+    /// an ACL), when that is the reason.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distro_did_it: Option<String>,
+}
+
+/// Result of `serial.access`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SerialAccessResult {
+    /// Per-port serial and `ModemManager` channels, then the probe channel.
+    pub channels: Vec<AccessChannel>,
+}

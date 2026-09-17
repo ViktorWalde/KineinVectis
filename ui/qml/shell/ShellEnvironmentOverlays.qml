@@ -75,6 +75,16 @@ Item {
         onDismissRequested: root.embeddedController.close()
     }
 
+    // O passo de permissao (E2) vai para o TERMINAL DA IDE, visivel, pelo
+    // mesmo caminho do painel de instalacao. Nada roda escondido.
+    Connections {
+        target: root.embeddedController ? root.embeddedController.access : null
+
+        function onCommandRequested(comando) {
+            root.runtimeController.submitShellInput(comando);
+        }
+    }
+
     ContainerPanelHost {
         anchors.fill: parent
         visible: root.containerController.panelVisible

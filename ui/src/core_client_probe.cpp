@@ -41,6 +41,16 @@ void CoreClient::serialIdentify(const QString& device)
     sendRequest(QStringLiteral("serial.identify"), QJsonObject{{QStringLiteral("device"), device}});
 }
 
+void CoreClient::serialAccess(const QString& device)
+{
+    QJsonObject params;
+    // Campo ausente = todas as portas (mais o canal das sondas).
+    if (!device.isEmpty()) {
+        params.insert(QStringLiteral("device"), device);
+    }
+    sendRequest(QStringLiteral("serial.access"), params);
+}
+
 void CoreClient::projectModel()
 {
     sendRequest(QStringLiteral("project.model"), QJsonObject{});
@@ -104,6 +114,13 @@ bool CoreClient::dispatchSerialResult(const QString& method, const QJsonObject& 
         setTerminalActive(!m_terminalIds.isEmpty());
         emit serialMonitorOpened(id, command, result.value(QStringLiteral("tool")).toString());
         appendLog(QStringLiteral("monitor serial aberto (%1): %2").arg(id, command));
+        return true;
+    }
+    if (method == QStringLiteral("serial.access")) {
+        // Cada canal traz o veredito MEDIDO, o problema e os passos oficiais
+        // (com fonte e data); a tela escreve o passo no terminal da IDE.
+        emit serialAccessResolved(
+            result.value(QStringLiteral("channels")).toArray().toVariantList());
         return true;
     }
     if (method == QStringLiteral("serial.identify")) {

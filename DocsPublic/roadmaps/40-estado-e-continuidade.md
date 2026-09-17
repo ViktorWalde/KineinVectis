@@ -40,7 +40,8 @@
 > Fim de tarde: **E5 identidade Espressif** — FEITO e provado com esptool
 > falso (§7.41, 0.112.0). Noite: **E4 gravar como configuração de execução**
 > — FEITO e provado pelo ciclo real proposta → save → run.start (§7.42,
-> 0.113.0). Próximo: E2 permissão por canal.
+> 0.113.0). **E2 permissão por canal** — FEITO e MEDIDO no ESP32 real desta
+> máquina (§7.43, 0.114.0). Próximo: A5 ferramentas de embarcado no setup.
 > **2026-09-16:** compatibilidade dos verificadores Ubuntu/Qt 6.4 avançou
 > (§7.37). Lógica QML verde; gate completo ainda tem impedimentos explícitos.
 
@@ -71,10 +72,11 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.113.0
-testes      752 Rust aprovados; 38 harnesses QML (medicao de 2026-09-17, §7.42)
-metodos     142 IPC roteados, 50 eventos (serial.identify, runConfig.flashProposal,
-            event.lsp.log e event.serial.identified entraram em 2026-09-17)
+protocolo   0.114.0
+testes      755 Rust aprovados; 39 harnesses QML (medicao de 2026-09-17, §7.43)
+metodos     143 IPC roteados, 50 eventos (serial.identify, runConfig.flashProposal,
+            serial.access, event.lsp.log e event.serial.identified entraram em
+            2026-09-17)
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -576,8 +578,9 @@ serviços, contratos e testes existentes.
 desenvolvimento; as correções Qt/QML e de instrumentação (§7.37) são manutenção.
 Elas não concluem os itens de toolchains nem alteram a sequência abaixo.
 O attach do debugpy foi validado na §7.38, a porta do MicroPython na §7.39 e
-o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41 e o E4 na §7.42; o
-próximo item é o E2 (permissão por canal). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41, o E4 na §7.42 e o E2
+na §7.43; o próximo item é o A5 (ferramentas de embarcado no painel de
+instalação). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -587,7 +590,7 @@ ainda não está verde.
 | Frente | Trabalho restante e estado |
 | --- | --- |
 | Polimento Python | **CONCLUÍDO em 2026-09-17:** Ruff (§7.36), debugpy attach (§7.38), a porta escolhida no Executar de MicroPython (§7.39, 0.110.0) e o stderr dos filhos DAP/LSP (§7.40, 0.111.0). O que resta de Python é o bloco P4 (MicroPython) e o P6 (remoto). |
-| Embarcados, bloco A | **E5 identidade Espressif (§7.41, 0.112.0) e E4 gravar como configuração de execução (§7.42, 0.113.0: `runConfig.flashProposal` puro + `run.start`/`runConfig.save`; esptool/probe-rs/picotool/dfu-util) FEITOS em 2026-09-17 — sem placa para exercitar.** Próximo: E2 permissão por canal (`dialout`, `uaccess`, ModemManager, comando impresso); A5 ferramentas de embarcado no painel de instalação. |
+| Embarcados, bloco A | **E5 (§7.41, 0.112.0), E4 (§7.42, 0.113.0) e E2 permissão por canal (§7.43, 0.114.0: `serial.access` medido no ESP32 real — `uaccess` sem grupo, ModemManager candidato, regras de sonda da distro) FEITOS em 2026-09-17.** Próximo: A5 ferramentas de embarcado no painel de instalação; depois a exercitação com a placa (E5 `flash-id` real, E4 gravação real, E2 o passo do ModemManager). |
 | Toolchains | Seletor de pasta nativo; SDK do Zephyr no `importKit`; medir `importKit` com Yocto/Buildroot reais, ainda sem exemplares locais validados. |
 | P0 — modelo do projeto | Preset no configure automático; Bear para Makefile puro; alvo do kit para o rust-analyzer. |
 | P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
@@ -3031,5 +3034,56 @@ shell; qmllint estrito limpo; Clang-Tidy dos dois .cpp alterados limpo;
 **Não provado, dito:** nenhuma placa — nenhum firmware foi escrito; o que
 está provado é a LINHA que o motor recebe. `esptool` real só pelo `--help`;
 `probe-rs`/`picotool` não estão nesta máquina (o `dfu-util 0.11` está).
-**Próximo:** E2 permissão por canal — detalhe técnico em
-`DocsPrivate/Codex/PROMPT-proxima-sessao.md`.
+**Próximo (na época):** E2 — feito na §7.43.
+
+### 7.43 E2 — permissão por canal — 2026-09-17, protocolo 0.114.0
+
+O A4 do bloco A, a fatia 4.3 redesenhada em `integracoes/38` §6: para CADA
+canal, o que falta — MEDIDO — e o passo OFICIAL, datado. `serial/access.rs`:
+**`serial.access { device? }`** → um canal `serial` por porta (o `access(2)`
+do `serial.list`; o grupo dono × os grupos do processo, lidos de
+`/proc/self/status`; a tag `uaccess` nas propriedades udev credita a ACL
+quando o acesso vem sem grupo), um `modemManager` por porta quando o
+`udevadm` respondeu (rodando ∧ candidata ∧ sem `ID_MM_DEVICE_IGNORE` = passo),
+e um `probe` da máquina (regras `*probe-rs|openocd|stlink|jlink|cmsis*.rules`
+em `/etc`, `/usr/lib` e `/lib`, pastas canônicas iguais uma vez; fora de
+`/etc` é "a distro já instalou"). Passos: `sudo usermod -a -G <grupo> $USER` +
+re-login (ESP-IDF *Establish Serial Connection*, conferida em 2026-09-17;
+o Arch Wiki não respondeu ao fetch), regra `TAG+="uaccess"` quando o grupo
+não é de usuários, `77-mm-kinein-<vid>-<pid>.rules` com a forma das regras
+que o próprio ModemManager instala (numerada antes do `80-mm-candidate.rules`;
+a página do freedesktop devolveu 403, a fonte é o pacote), e os três passos
+do probe.rs *Probe Setup* (baixar `69-probe-rs.rules`, `udevadm control
+--reload`, `udevadm trigger`, citados). Cada `fix` leva `sourceUrl` e
+`checkedOn`. Na tela: botão **Permissões** no cabeçalho das portas,
+`EmbeddedAccessController` filho (`embeddedController.access`),
+`EmbeddedAccessView` com ✓/✗ por canal, o problema, cada passo com
+**Escrever no terminal** — o comando vai para o terminal da IDE pelo mesmo
+`submitShellInput` do painel de instalação (fiação no
+`ShellEnvironmentOverlays`); a IDE nunca roda `sudo`.
+
+**MEDIDO NO HARDWARE REAL (manhã de 2026-09-17, ESP32 com CP2102 em
+`/dev/ttyUSB0`, antes de o autor desplugar):** `serial` **ok** — o usuário
+NÃO está em `dialout`, e o acesso existe pela ACL `user:hugh:rw-` que o udev
+pôs pela tag `uaccess` (o `stat` sozinho diria "sem acesso"; o `access(2)`
+diz a verdade); `modemManager` **não ok** — ModemManager 1.25.95 rodando,
+`ID_MM_CANDIDATE=1`, sem regra: o passo gerado é a regra para `10c4:ea60`;
+`probe` **ok** — a distro já instalou `49-stlinkv*.rules` e
+`60-openocd.rules` (a primeira rodada listou `/lib` em dobro por usrmerge;
+corrigido). Log em `DocsPrivate/Codex/evidencias-2026-09-17-e2-permissao/`.
+
+**Medido no gate:** 755 testes Rust (+3, `tests/serial.rs`: grupo/ACL/
+usermod, a regra do ModemManager com o VID:PID e o canal ausente sem udevadm,
+as regras de sonda em qualquer pasta com crédito à distro e o link `/lib`
+uma vez); **39 harnesses QML** (`tst_embedded_access` novo, com o caso real
+como fixture); clippy, fmt, `diff --check`, fiação, propriedades (234),
+alcance (233), duplicação, arquitetura, docs, links, shell; qmllint estrito
+limpo; Clang-Tidy do `.cpp` alterado limpo; `debug-strict` compila e abre
+(831 ms); 143 métodos, 50 eventos.
+
+**Não provado, dito:** o passo do ModemManager não foi executado (é do
+autor, com sudo) — a validação "escrever a regra e o `ID_MM_DEVICE_IGNORE`
+aparecer no `udevadm info`" fica para a noite, com a placa; o canal `probe`
+com uma sonda real (ST-Link/USB-JTAG) idem. QEMU não substitui: o que se
+mede é o nó do host. **Próximo:** A5 ferramentas de embarcado no painel de
+instalação — detalhe técnico em `DocsPrivate/Codex/PROMPT-proxima-sessao.md`.

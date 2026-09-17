@@ -74,6 +74,8 @@ Item {
     readonly property alias identity: identityController
     // Gravar como configuracao de execucao (E4): idem, filho.
     readonly property alias flash: flashController
+    // Permissao por canal (E2): idem, filho.
+    readonly property alias access: accessController
 
     EmbeddedIdentityController {
         id: identityController
@@ -81,6 +83,10 @@ Item {
 
     EmbeddedFlashController {
         id: flashController
+    }
+
+    EmbeddedAccessController {
+        id: accessController
     }
 
     signal listRequested()
@@ -110,6 +116,7 @@ Item {
         selectedPort = "";
         identityController.clear();
         flashController.clear();
+        accessController.clear();
         project = ({});
         projectBusy = false;
         panelVisible = false;
