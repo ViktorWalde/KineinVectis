@@ -600,6 +600,19 @@ pelo canal       do outro lado (chip, flash, MAC) — ABRE a porta e a placa
                  mostra o que leu e o kit que isso sugere; "Usar chip no kit"
                  grava so' o chip. Sem esptool, a linha diz `pipx install
                  esptool`; sem acesso a porta, o passo oficial do grupo
+gravar           e' uma CONFIGURACAO DE EXECUCAO, nao um botao magico: escolha
+                 a porta, (opcional) o motor — solto, o modelo do projeto decide
+                 — e peca a Previa. A IDE monta a linha do esptool a partir da
+                 receita que o build do ESP-IDF escreveu (flasher_args.json),
+                 do probe-rs com o chip do kit e o ELF, do picotool com o UF2,
+                 do dfu-util (so' STM32) — e mostra de onde veio cada pedaco e
+                 o que voce deve saber antes (imagem cifrada, flash menor que
+                 a receita). "Gravar agora" roda a linha na aba de execucao;
+                 "Salvar" a guarda como configuracao ativa: dai' em diante o
+                 botao Executar grava, e a linha e' editavel como qualquer
+                 configuracao (e' assim que um esptool antigo troca
+                 write-flash por write_flash). Sem build, a IDE diz "compile";
+                 sem porta, "escolha a porta"; sem a ferramenta, o passo
 porta do         o chip "Executar" ao lado de cada porta a ESCOLHE para o
 Executar         Executar de um projeto MicroPython (`mpremote connect
                  <porta> run`); clicar de novo desfaz. Sem escolha, o

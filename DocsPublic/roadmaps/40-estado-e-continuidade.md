@@ -38,7 +38,9 @@
 > medido (§7.39, 0.110.0). À tarde, o stderr dos filhos DAP/LSP — FEITO e
 > medido (§7.40, 0.111.0); os presets clang voltaram a compilar nesta máquina.
 > Fim de tarde: **E5 identidade Espressif** — FEITO e provado com esptool
-> falso (§7.41, 0.112.0). Próximo: E4 gravar como configuração de execução.
+> falso (§7.41, 0.112.0). Noite: **E4 gravar como configuração de execução**
+> — FEITO e provado pelo ciclo real proposta → save → run.start (§7.42,
+> 0.113.0). Próximo: E2 permissão por canal.
 > **2026-09-16:** compatibilidade dos verificadores Ubuntu/Qt 6.4 avançou
 > (§7.37). Lógica QML verde; gate completo ainda tem impedimentos explícitos.
 
@@ -69,10 +71,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.112.0
-testes      745 Rust aprovados; 37 harnesses QML (medicao de 2026-09-17, §7.41)
-metodos     141 IPC roteados, 50 eventos (serial.identify, event.lsp.log e
-            event.serial.identified entraram em 2026-09-17)
+protocolo   0.113.0
+testes      752 Rust aprovados; 38 harnesses QML (medicao de 2026-09-17, §7.42)
+metodos     142 IPC roteados, 50 eventos (serial.identify, runConfig.flashProposal,
+            event.lsp.log e event.serial.identified entraram em 2026-09-17)
 dominios    34, e os 34 documentados no arquitetura/03
 catraca     1 arquivo em debito
 gate        23 verificacoes
@@ -574,8 +576,8 @@ serviços, contratos e testes existentes.
 desenvolvimento; as correções Qt/QML e de instrumentação (§7.37) são manutenção.
 Elas não concluem os itens de toolchains nem alteram a sequência abaixo.
 O attach do debugpy foi validado na §7.38, a porta do MicroPython na §7.39 e
-o stderr dos filhos DAP/LSP na §7.40 e o E5 na §7.41; o próximo item é o E4
-(gravar como configuração de execução). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+o stderr dos filhos DAP/LSP na §7.40, o E5 na §7.41 e o E4 na §7.42; o
+próximo item é o E2 (permissão por canal). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -585,7 +587,7 @@ ainda não está verde.
 | Frente | Trabalho restante e estado |
 | --- | --- |
 | Polimento Python | **CONCLUÍDO em 2026-09-17:** Ruff (§7.36), debugpy attach (§7.38), a porta escolhida no Executar de MicroPython (§7.39, 0.110.0) e o stderr dos filhos DAP/LSP (§7.40, 0.111.0). O que resta de Python é o bloco P4 (MicroPython) e o P6 (remoto). |
-| Embarcados, bloco A | **E5 identidade Espressif FEITO em 2026-09-17 (§7.41, 0.112.0: `serial.identify` como job, esptool falso; sem placa para exercitar).** Próximo: E4 gravar como configuração de execução (`esptool`, `probe-rs`, `picotool`, `dfu-util`); E2 permissão por canal (`dialout`, `uaccess`, ModemManager, comando impresso); A5 ferramentas de embarcado no painel de instalação. |
+| Embarcados, bloco A | **E5 identidade Espressif (§7.41, 0.112.0) e E4 gravar como configuração de execução (§7.42, 0.113.0: `runConfig.flashProposal` puro + `run.start`/`runConfig.save`; esptool/probe-rs/picotool/dfu-util) FEITOS em 2026-09-17 — sem placa para exercitar.** Próximo: E2 permissão por canal (`dialout`, `uaccess`, ModemManager, comando impresso); A5 ferramentas de embarcado no painel de instalação. |
 | Toolchains | Seletor de pasta nativo; SDK do Zephyr no `importKit`; medir `importKit` com Yocto/Buildroot reais, ainda sem exemplares locais validados. |
 | P0 — modelo do projeto | Preset no configure automático; Bear para Makefile puro; alvo do kit para o rust-analyzer. |
 | P4 — MicroPython | Firmware oficial gravado pela IDE (C5); arquivos no dispositivo (`mpremote fs`, C2); stubs por placa (C4); CircuitPython (C6). |
@@ -2989,5 +2991,45 @@ código do esptool, não uma saída real; a primeira placa deve substituí-la e
 registrar a diferença. `esptool v5.4.0` do PATH funciona (`pipx
 reinstall-all` do autor) mas só foi visto pelo `--help`. `chip-id` não é
 usado: o `flash-id` já imprime tudo o que o `chip-id` imprime mais a flash.
-**Próximo:** E4 gravar como configuração de execução — detalhe técnico em
+**Próximo (na época):** E4 — feito na §7.42.
+
+### 7.42 E4 — gravar como CONFIGURAÇÃO DE EXECUÇÃO — 2026-09-17 (noite), protocolo 0.113.0
+
+O A3 do bloco A, na forma que o autor decidiu em 2026-09-11 (`integracoes/38`
+§6): **não é domínio novo.** `flash.rs` é um compositor PURO —
+`runConfig.flashProposal { device?, engine?, flashSizeBytes? }` devolve
+`{ name, command, engine, source, warnings }` a partir do que o
+`project.model` já leu: a receita `flasher_args.json` (offsets, imagens,
+mode/size/freq, before/after, stub, chip), o ELF/UF2/BIN mais novo, o
+`target` — e da porta escolhida no painel (0.110.0). Motores: `esptool
+write-flash` (a receita inteira; porta obrigatória; `--no-stub` quando a
+receita diz; v5 — a linha salva é editável para a v4), `probe-rs download
+--chip`, `picotool load -f -x`, `dfu-util -a 0 -s 0x08000000:leave -D` só
+para STM32 (outra família: sem tabela, sem comando). Sem motor no modelo,
+uma receita do IDF no build basta para sugerir o esptool. Cada peça tem uma
+linha de evidência; os avisos são as imagens marcadas como cifradas e a
+flash lida pelo E5 menor que a da receita. Rodar e salvar são os donos que
+já existem: **Gravar agora** = `run.start { command }`; **Salvar como
+"Gravar (esptool)"** = `runConfig.save` (vira a ativa, o botão Executar
+grava). Na tela, `EmbeddedFlashController` FILHO do `EmbeddedController`
+(`embeddedController.flash`, como o `identity`) e `EmbeddedFlashView`:
+chips de motor (solto = o modelo decide), **Prévia**, a linha em mono, as
+evidências, os avisos, os dois botões; a fiação até `RuntimeController.startRun`
+e `RunConfigController.saveRunConfigRequested` mora no `AppDomains`.
+
+**Medido em 2026-09-17:** 752 testes Rust (+7: 4 do compositor — as quatro
+linhas, recusas e variantes, aspas em caminho com espaço; 3 pelo despacho
+real com um workspace ESP-IDF, a receita na forma do template do IDF e um
+esptool FALSO: proposta → `runConfig.save` → `run.start {}` entrega ao
+"esptool" EXATAMENTE os argv da receita, `hello world.bin` inteiro; recusas
+com o código certo e nada salvo; a flash menor vira aviso); **38 harnesses
+QML** (`tst_embedded_flash` novo); clippy, fmt, `diff --check`, fiação,
+propriedades (232), alcance (231), duplicação, arquitetura, docs, links,
+shell; qmllint estrito limpo; Clang-Tidy dos dois .cpp alterados limpo;
+`debug-strict` compila e abre (767 ms); 142 métodos, 50 eventos.
+
+**Não provado, dito:** nenhuma placa — nenhum firmware foi escrito; o que
+está provado é a LINHA que o motor recebe. `esptool` real só pelo `--help`;
+`probe-rs`/`picotool` não estão nesta máquina (o `dfu-util 0.11` está).
+**Próximo:** E2 permissão por canal — detalhe técnico em
 `DocsPrivate/Codex/PROMPT-proxima-sessao.md`.

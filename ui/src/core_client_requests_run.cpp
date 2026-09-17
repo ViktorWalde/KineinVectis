@@ -36,6 +36,24 @@ void CoreClient::runConfigSetActive(const QString& id)
     sendRequest(QStringLiteral("runConfig.setActive"), params);
 }
 
+void CoreClient::runConfigFlashProposal(const QString& device, const QString& engine,
+                                        double flashSizeBytes)
+{
+    QJsonObject params;
+    // Campo ausente != vazio: sem porta o core diz "escolha a porta"; sem
+    // motor ele usa o que o modelo sugere; sem tamanho, nao compara.
+    if (!device.isEmpty()) {
+        params.insert(QStringLiteral("device"), device);
+    }
+    if (!engine.isEmpty()) {
+        params.insert(QStringLiteral("engine"), engine);
+    }
+    if (flashSizeBytes > 0) {
+        params.insert(QStringLiteral("flashSizeBytes"), flashSizeBytes);
+    }
+    sendRequest(QStringLiteral("runConfig.flashProposal"), params);
+}
+
 void CoreClient::runBuild(const QString& buildSystem)
 {
     if (m_building || m_process.state() != QProcess::Running) {

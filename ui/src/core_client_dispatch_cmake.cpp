@@ -23,6 +23,12 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
                                 result.value(QStringLiteral("activeId")).toString());
         return true;
     }
+    if (method == QStringLiteral("runConfig.flashProposal")) {
+        // Mapa inteiro: nome, comando, motor, evidencias e avisos viajam
+        // juntos e a tela os mostra como PREVIA — nada foi salvo nem rodou.
+        emit flashProposalResolved(result.toVariantMap());
+        return true;
+    }
     if (method == QStringLiteral("cargo.metadata")) {
         emit cargoMetadataResolved(
             static_cast<int>(result.value(QStringLiteral("packages")).toArray().size()));

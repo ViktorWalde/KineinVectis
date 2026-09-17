@@ -352,8 +352,12 @@ BLOCO A — fechar o canal serial e o ciclo Espressif (ja' decidido, 38 §6)
                                             SUGERE o kit (tabelas do project.model);
                                             "Usar chip no kit" e' clique. Provado com
                                             esptool falso — sem placa nesta maquina
- A3  E4 gravar como CONFIGURACAO DE         motores esptool/espflash/probe-rs/picotool/
-     EXECUCAO                               dfu-util; le flasher_args.json; JOB com evento
+ A3  E4 gravar como CONFIGURACAO DE         FEITO 2026-09-17 (40 §7.42, 0.113.0):
+     EXECUCAO                               runConfig.flashProposal (puro) monta a linha
+                                            esptool/probe-rs/picotool/dfu-util da receita
+                                            e da porta; "Gravar agora" = run.start,
+                                            "Salvar" = runConfig.save. Provado com esptool
+                                            falso pelo ciclo real; sem placa
  A4  E2 permissao por canal                 dialout / uaccess+plugdev / ID_MM_DEVICE_IGNORE;
                                             o passo oficial datado, nunca sudo
  A5  setup: ferramentas de embarcado        o catalogo do `setup` ganha tio, esptool,

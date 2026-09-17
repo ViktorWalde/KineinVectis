@@ -91,3 +91,50 @@ mod tests {
         assert!(rejected.is_err());
     }
 }
+
+/// Parameters for `runConfig.flashProposal` (`0.113.0`, E4 of
+/// `integracoes/38` §6): the "Gravar" line as a run configuration PROPOSAL.
+///
+/// Pure: nothing runs. The core composes the engine's command line from
+/// what the project model already read (flash recipe, ELF/UF2/BIN, target)
+/// and the UI shows it as a preview; saving it is `runConfig.save`, running
+/// it is `run.start` — flashing is a run configuration, not a new domain.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FlashProposalParams {
+    /// Serial port for engines that need one (`esptool`): the port chosen in
+    /// the Embedded panel. Absent = the engine's own detection, when it has
+    /// one; `esptool` refuses without it (flashing the wrong board is worse
+    /// than one click).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device: Option<String>,
+    /// Engine to use (`esptool`, `probe-rs`, `picotool`, `dfu-util`); absent
+    /// = the one the project model suggests (`target.flashEngine`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine: Option<String>,
+    /// Flash capacity the board reported (`serial.identify`,
+    /// `identity.flashSizeBytes`), for the "image larger than the flash"
+    /// warning. Absent = no such check.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub flash_size_bytes: Option<u64>,
+}
+
+/// Result of `runConfig.flashProposal`: a run configuration to save.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FlashProposalResult {
+    /// Suggested configuration name (`Gravar (esptool)`).
+    pub name: String,
+    /// The shell line, absolute paths single-quoted; editable by the user
+    /// once saved, like any run configuration.
+    pub command: String,
+    /// The engine the line uses.
+    pub engine: String,
+    /// Where each piece came from, one line each (engine, recipe, images,
+    /// port) — the evidence the preview shows.
+    pub source: Vec<String>,
+    /// What the user should know before running (encrypted images, image
+    /// larger than the reported flash, tool version caveats).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
+}

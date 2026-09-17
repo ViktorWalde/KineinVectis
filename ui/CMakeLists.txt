@@ -73,6 +73,8 @@ set_source_files_properties(qml/embedded/EmbeddedSizeView.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/embedded/EmbeddedSerialView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSerialView.qml)
 set_source_files_properties(qml/embedded/EmbeddedIdentityController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedIdentityController.qml)
 set_source_files_properties(qml/embedded/EmbeddedIdentityView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedIdentityView.qml)
+set_source_files_properties(qml/embedded/EmbeddedFlashController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedFlashController.qml)
+set_source_files_properties(qml/embedded/EmbeddedFlashView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedFlashView.qml)
 set_source_files_properties(qml/embedded/EmbeddedProjectView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedProjectView.qml)
 set_source_files_properties(qml/embedded/EmbeddedAdapterView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedAdapterView.qml)
 set_source_files_properties(qml/embedded/EmbeddedInstallView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedInstallView.qml)
@@ -314,6 +316,8 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedSerialView.qml
         qml/embedded/EmbeddedIdentityController.qml
         qml/embedded/EmbeddedIdentityView.qml
+        qml/embedded/EmbeddedFlashController.qml
+        qml/embedded/EmbeddedFlashView.qml
         qml/embedded/EmbeddedProjectView.qml
         qml/embedded/EmbeddedAdapterView.qml
         qml/embedded/EmbeddedInstallView.qml

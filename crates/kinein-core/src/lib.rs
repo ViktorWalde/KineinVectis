@@ -16,6 +16,7 @@ pub mod container;
 pub mod dap;
 pub mod datasource;
 pub mod db;
+pub mod flash;
 pub mod format;
 pub mod fsops;
 pub mod fswatch;

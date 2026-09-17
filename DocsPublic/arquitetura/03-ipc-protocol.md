@@ -1,5 +1,15 @@
 # 03 — Protocolo IPC
 
+> **0.113.0 (2026-09-17, noite) — E4, gravar como CONFIGURAÇÃO DE EXECUÇÃO:**
+> `runConfig.flashProposal { device?, engine?, flashSizeBytes? }` → `{ name,
+> command, engine, source[], warnings[] }` é PURO — compõe a linha do motor
+> (`esptool write-flash` da receita `flasher_args.json`; `probe-rs download
+> --chip`; `picotool load -f -x`; `dfu-util` só STM32) a partir do que o
+> `project.model` já leu e da porta escolhida, sem rodar nem salvar nada. A
+> tela mostra a prévia; **Gravar agora** é `run.start { command }` e **Salvar**
+> é `runConfig.save` (vira a ativa: o botão Executar grava). Não há domínio
+> `flash`. Método 142.
+>
 > **0.112.0 (2026-09-17, fim de tarde) — E5, a identidade Espressif PELO
 > CANAL:** `serial.identify { device, tool? }` → `{ jobId, command }` roda
 > `esptool --port <device> … flash-id` como JOB (reseta a placa: gesto
@@ -1567,7 +1577,7 @@ workspace aberto com kind `rustCargo` (`INVALID_PARAMS` para outros kinds).
   Aliasing consciente até o Problems 2.0 ter facetas por origem; o título
   do job ("Cargo Check") o distingue do clippy na aba Jobs.
 
-### Run configurations (`runConfig.list` / `runConfig.save` / `runConfig.delete` / `runConfig.setActive`)
+### Run configurations (`runConfig.list` / `runConfig.save` / `runConfig.delete` / `runConfig.setActive` / `runConfig.flashProposal`)
 
 Implementado no protocolo `0.27.0` (fatia M2.4 de `DocsPrivate/diario/18`). Todos exigem
 workspace aberto (qualquer kind). Persistência em `.kinein/runconfigs.json`
@@ -1588,6 +1598,32 @@ na raiz pelo `run.start`.
   heurística (`cargo run` / executável único do CMake / o ponto de entrada
   Python — na placa, com o `device?` escolhido, quando o projeto é
   MicroPython). Só a heurística recebe `device`.
+- **`runConfig.flashProposal { device?, engine?, flashSizeBytes? }` →
+  `{ name, command, engine, source, warnings }` (`0.113.0`, E4 do
+  `integracoes/38` §6).** "Gravar" como configuração de execução, na forma
+  decidida pelo autor em 2026-09-11 (o Upload do PlatformIO, o Download &
+  Run do CLion): **puro** — nada roda, nada é salvo; a resposta é uma
+  proposta que a UI mostra como prévia e que vira `runConfig.save` (nome
+  `Gravar (<motor>)`) ou `run.start { command }`. `engine` ausente = o
+  `target.flashEngine` do modelo; sem ele, uma receita `flasher_args.json`
+  no build sugere `esptool` sozinha; sem nada, `INVALID_REQUEST`. As linhas,
+  cada uma com a evidência em `source`: **esptool** `--chip <receita|kit>
+  --port <device> --baud 460800 --before/--after <receita> [--no-stub]
+  write-flash --flash-mode/size/freq <receita> <offset> '<imagem>'…` — tudo
+  do `flasher_args.json` que o ESP-IDF escreve (nada adivinhado; `device`
+  obrigatório: gravar na placa errada é pior que um clique; sem receita,
+  "compile o projeto"); **probe-rs** `download --chip <chip> '<ELF mais
+  novo>'` (chip do kit/modelo obrigatório); **picotool** `load -f -x
+  '<UF2>'`; **dfu-util** `-a 0 -s 0x08000000:leave -D '<BIN>'` **só para
+  STM32** — outra família não tem tabela, e sem tabela não há comando.
+  Caminhos entre aspas simples POSIX (a linha roda por `sh -c`).
+  `warnings`: imagens marcadas como cifradas (`write-flash` grava em claro;
+  acrescente `--encrypt`), e `flashSizeBytes` (a flash que `serial.identify`
+  leu) menor que a da receita. Erros: ferramenta ausente → `TOOL_NOT_FOUND`
+  com o passo; motor desconhecido → `INVALID_PARAMS`; o resto (sem build,
+  sem porta, sem chip, família sem tabela) → `INVALID_REQUEST`. A linha
+  salva é editável como qualquer configuração — é assim que um `esptool` v4
+  troca `write-flash` por `write_flash`.
 
 ### Configuration Actions (`configAction.list` / `configAction.preview` / `configAction.apply`)
 
@@ -2315,9 +2351,10 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 141 métodos roteados — a lista inteira
+## Os 142 métodos roteados — a lista inteira
 
-> **2026-09-17:** `serial.identify` entrou (0.112.0); eram 140.
+> **2026-09-17:** `serial.identify` (0.112.0) e `runConfig.flashProposal`
+> (0.113.0) entraram; eram 140.
 
 > **Era "Métodos principais implementados", e listava 66 dos 128** — sem dizer
 > que era parcial, o que fazia um domínio inteiro parecer inexistente.
@@ -2451,6 +2488,7 @@ run.stdin
 run.stop
 
 runConfig.delete
+runConfig.flashProposal
 runConfig.list
 runConfig.save
 runConfig.setActive

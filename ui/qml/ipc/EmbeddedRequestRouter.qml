@@ -36,4 +36,14 @@ Item {
             root.coreClient.serialIdentify(device);
         }
     }
+
+    // Gravar (E4): a previa e' um pedido puro ao core; rodar e salvar vao
+    // pelos donos de execucao (AppDomains), nao por aqui.
+    Connections {
+        target: root.embeddedController ? root.embeddedController.flash : null
+
+        function onProposalRequested(device, engine, flashSizeBytes) {
+            root.coreClient.runConfigFlashProposal(device, engine, flashSizeBytes);
+        }
+    }
 }

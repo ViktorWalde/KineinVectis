@@ -104,6 +104,10 @@ public:
     Q_INVOKABLE void runConfigSave(const QString& id, const QString& name, const QString& command);
     Q_INVOKABLE void runConfigDelete(const QString& id);
     Q_INVOKABLE void runConfigSetActive(const QString& id);
+    // "Gravar" como configuracao de execucao (runConfig.flashProposal, 0.113.0): a linha do
+    // motor, sem rodar; flashSizeBytes <= 0 = sem a checagem.
+    Q_INVOKABLE void runConfigFlashProposal(const QString& device, const QString& engine,
+                                            double flashSizeBytes = 0);
     Q_INVOKABLE void debugStart(const QString& program = QString(),
                                 const QVariantMap& connect = QVariantMap());
     // `breakpoints` e uma lista de mapas { line, condition?, hitCondition? }.
@@ -372,6 +376,7 @@ signals:
     void configActionApplied(const QString& id, const QString& message, const QStringList& files,
                              const QString& jobId);
     void runConfigsResolved(const QVariantList& configs, const QString& activeId);
+    void flashProposalResolved(const QVariantMap& proposal);
     void scanningEnvironmentChanged();
     void recoveringChanged();
     // Emitido quando a recuperacao de crash reconecta: a UI re-sincroniza

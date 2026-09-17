@@ -72,9 +72,15 @@ Item {
     // A identidade pelo canal (E5) e' dono proprio, filho deste: quem tem o
     // EmbeddedController alcanca `identity` sem propriedade de repasse.
     readonly property alias identity: identityController
+    // Gravar como configuracao de execucao (E4): idem, filho.
+    readonly property alias flash: flashController
 
     EmbeddedIdentityController {
         id: identityController
+    }
+
+    EmbeddedFlashController {
+        id: flashController
     }
 
     signal listRequested()
@@ -103,6 +109,7 @@ Item {
         portsBusy = false;
         selectedPort = "";
         identityController.clear();
+        flashController.clear();
         project = ({});
         projectBusy = false;
         panelVisible = false;

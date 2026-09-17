@@ -158,6 +158,11 @@ Item {
             controller: root.controller
         }
 
+        EmbeddedFlashView {
+            width: parent.width
+            controller: root.controller
+        }
+
         // --- Alvo do kit ---------------------------------------------------
         Text {
             text: qsTr("Alvo do kit %1").arg(root.preset)

@@ -13,6 +13,7 @@ mod datasource;
 mod debug;
 mod debug_attach;
 mod dispatch;
+mod flash_proposal;
 mod format;
 mod fs;
 mod git;

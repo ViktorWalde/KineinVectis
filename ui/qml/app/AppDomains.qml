@@ -211,6 +211,21 @@ Item {
         onClearRunInputRequested: root.workspaceHost.clearRunInput()
     }
 
+    // Gravar (E4) e' configuracao de execucao: rodar agora e' o run.start de
+    // um comando explicito; salvar vira a configuracao ativa. Fiacao entre o
+    // painel de Embarcados e os donos de execucao — composicao, nao IPC.
+    Connections {
+        target: environment.embeddedController.flash
+
+        function onRunRequested(command) {
+            runtimeController.startRun(command);
+        }
+
+        function onSaveRequested(name, command) {
+            runConfigController.saveRunConfigRequested("", name, command);
+        }
+    }
+
     DebugController {
         id: debugController
 
