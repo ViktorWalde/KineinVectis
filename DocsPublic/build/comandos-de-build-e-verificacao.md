@@ -101,6 +101,9 @@ scripts/verificar-links-docs.sh              # link de documentacao morto
 scripts/verificar-arquitetura.sh             # catraca da regra de split
 scripts/verificar-transicao-workspace.sh     # estado por-workspace com um dono
 scripts/verificar-qml-logica.sh              # controllers QML headless
+scripts/verificar-fiacao-ipc.sh              # metodo sem cliente, evento sem tratador, sinal sem
+                                             # ouvinte, sinal QML sem onX, elo do despacho C++ sem
+                                             # chamador (2026-09-18)
 cmake --build --preset dev-local             # UI debug (KINEIN_PRESET_DEBUG)
 scripts/verificar-binario-abre.sh --preset dev-local          # o binario que saiu do build ABRE
 cargo build --release -p kinein-core

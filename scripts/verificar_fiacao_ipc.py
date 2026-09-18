@@ -12,6 +12,8 @@ Quatro perguntas, cada uma com a lista de excecoes DITAS (com o motivo):
   2. evento `event.*` que o core emite e o C++ nao trata (ou trata e descarta)
   3. sinal do CoreClient (fora NOTIFY de Q_PROPERTY) que nenhum QML/C++ escuta
   4. sinal QML declarado que ninguem trata (`onX`)
+  5. elo da cadeia de despacho do C++ (`dispatch*Result`/`handle*Notification`)
+     que ninguem chama — a resposta chega e morre antes do sinal
 
 Nao e' catraca: nao ha baseline. O que sobra fora das excecoes reprova, e a
 excecao so entra com motivo escrito aqui.
@@ -43,6 +45,13 @@ SINAIS_SEM_OUVINTE_ACEITOS = {
 }
 # 4. Sinais QML sem tratador, com o motivo.
 SINAIS_QML_SEM_TRATADOR_ACEITOS: dict[str, str] = {}
+# 5. Elos do despacho C++ que so' o `dispatchResult`/`handleNotification` raiz
+#    chama — nao ha excecao: um elo sem chamador e' resposta perdida. POR QUE
+#    (2026-09-18, F8): quando a simulacao saiu (2026-09-12) o fim de
+#    `dispatchGrafanaResult` virou `return false` e a cadeia probe -> serial ->
+#    container -> index -> python -> coverage -> remote ficou SOLTA por seis
+#    dias — os paineis diziam "procurando..." para sempre, com 24 gates verdes.
+ELOS_DESPACHO_SEM_CHAMADOR_ACEITOS: dict[str, str] = {}
 
 
 def ler(caminho: Path) -> str:
@@ -137,6 +146,18 @@ def sinais_do_coreclient() -> tuple[set[str], set[str]]:
     return sinais, notify
 
 
+def elos_de_despacho_sem_chamador() -> list[str]:
+    """`bool CoreClient::dispatchXResult(` / `handleXNotification(` definidos e nunca chamados."""
+    cpp = "\n".join(ler(p) for p in arquivos("ui/src", ".cpp"))
+    definidos = re.findall(r"CoreClient::((?:dispatch\w+Result|handle\w+Notification))\(", cpp)
+    soltos = []
+    for nome in sorted(set(definidos)):
+        chamadas = re.findall(rf"(?<!::){nome}\(", cpp)
+        if not chamadas and nome not in ELOS_DESPACHO_SEM_CHAMADOR_ACEITOS:
+            soltos.append(nome)
+    return soltos
+
+
 def texto_qml_e_cpp() -> str:
     partes = [ler(p) for p in arquivos("ui/qml", ".qml") + arquivos("ui/src", ".cpp", ".h")]
     return "\n".join(partes)
@@ -186,6 +207,10 @@ def main() -> int:
         if not re.search(rf"\bon{cap}\b", qml) and chave not in SINAIS_QML_SEM_TRATADOR_ACEITOS:
             falhas.append(f"sinal QML sem tratador: {chave}")
 
+    # 5
+    for elo in elos_de_despacho_sem_chamador():
+        falhas.append(f"elo do despacho C++ sem chamador (resposta morre antes do sinal): {elo}")
+
     if falhas:
         print("fiacao IPC FALHOU:")
         for f in falhas:
@@ -194,7 +219,7 @@ def main() -> int:
         return 1
     print(
         f"fiacao IPC: {len(metodos_do_core())} metodos, {len(eventos_do_core())} eventos, "
-        f"{len(sinais)} sinais C++ e {len(sinais_qml())} sinais QML — todos com dono "
+        f"{len(sinais)} sinais C++, {len(sinais_qml())} sinais QML e a cadeia de despacho inteira — todos com dono "
         f"({len(METODOS_SEM_CLIENTE_ACEITOS) + len(SINAIS_SEM_OUVINTE_ACEITOS)} excecoes ditas)."
     )
     return 0

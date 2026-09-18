@@ -747,6 +747,8 @@ O que so' o autor mede (precisa de uma pessoa na frente da IDE):
 de valor para o uso diário, juízo do agente):
 
 ```text
+Containers   container.status leva 2,4 s SINCRONO no laco (podman info +
+             version): adiar por defer_work como o tools.detect (F6-b)  §7.64
 Banco        abas/historico de consulta; exportar CSV/JSON; cancelar consulta
              longa (o job ja' e' cancelavel — falta o cancel chegar ao motor);
              escrever documento no Mongo (hoje so' leitura)           §7.52
@@ -3901,7 +3903,9 @@ cliente, evento do core que o C++ não trata ou trata e descarta, sinal do
 `CoreClient` sem ouvinte, sinal QML sem tratador — com a lista de exceções
 DITAS (cada uma com motivo) dentro do script. Ele mede 160 métodos e 57
 eventos, os mesmos números que o 03 afirma — pela primeira vez o número
-documentado sai de um comando do gate.
+documentado sai de um comando do gate. (Desde a noite do mesmo dia, §7.64,
+a quinta pergunta: nenhum elo `dispatch*Result`/`handle*Notification` da
+ponte C++ sem chamador.)
 
 **Medido em 2026-09-18:** 827 testes Rust (+2: o `e_machine` nas duas
 ordens de byte; a troca do gdb nu por um GDB de alvo, só detectado, e a
@@ -4208,3 +4212,59 @@ IPC, arquitetura, binário-abre (sem aviso) verdes. **Não feito, dito:**
 Enter/↑/↓ conferidos pela regra pura, não por tecla real (offscreen não
 digita na janela); a identidade Espressif não foi reexercitada na placa
 (a regra do autor: nunca gravar; identificar é leitura, fica para ele).
+
+### 7.64 Oito domínios sem resposta na tela por seis dias — o elo solto do despacho C++ — 2026-09-18
+
+Achado ao fotografar os quatro painéis de ambiente para o desenho da F8
+(`KINEIN_STARTUP_COMMANDS=container.list`, `probe.list`…): Containers dizia
+"procurando o motor…" e Embarcados "lendo o projeto… / procurando…" aos
+15 s, enquanto o core respondia `container.status` em 2,4 s e `container.
+list` em 10 ms (medido com o core na mão e com um `kinein-core` envolvido
+por um script que registra o IPC nos dois sentidos — `KINEIN_CORE_BIN`;
+o registro está em `DocsPrivate/Codex/evidencias-2026-09-18-etapa2-f8/
+ipc-container-sem-resposta-na-tela.log`: as três respostas chegam aos
+4,2 s e a tela não muda).
+
+**A causa.** A ponte C++ despacha respostas por uma CADEIA de funções
+(`dispatchResult` → workspace → cmake → configAction → toolchain → library
+→ dataSource → grafana → **probe → buildSize → serial → container → index →
+python → coverage → remote**). Quando a simulação saiu do produto
+(2026-09-12, commit 6733c20), o fim de `dispatchGrafanaResult` — que
+chamava `dispatchSimResult`, que chamava `dispatchProbeResult` — virou
+`return false;`. A partir dali, toda resposta dos oito domínios em negrito
+chegava ao `CoreClient`, era registrada no log da IDE, e **morria antes do
+sinal**: nenhum `*Resolved` era emitido, nenhum controller mudava de
+estado. Seis dias, doze fatias e 24 gates verdes depois.
+
+**Por que nenhum gate viu.** O gate de fiação IPC (§7.54) confere que cada
+método tem cliente, cada evento tem tratador, cada sinal C++ tem ouvinte e
+cada sinal QML tem `onX` — e tudo isso continuava verdade: o sinal
+`containersResolved` existia e era ouvido; só que ninguém o emitia mais. Os
+testes de despacho do core provam o core; os harnesses provam os
+controllers com dados injetados; o binário-abre prova o primeiro frame,
+antes de qualquer painel. A classe "a resposta chega e o elo do meio não a
+passa adiante" não tinha pergunta.
+
+**O que entrou.** `dispatchGrafanaResult` volta a terminar em
+`dispatchProbeResult` (uma linha, com o comentário do porquê); e o gate de
+fiação ganhou a **quinta pergunta**: todo `bool CoreClient::dispatch*Result(`
+e `handle*Notification(` definido tem de ser chamado em algum lugar de
+`ui/src` — sem lista de exceções, porque um elo sem chamador é resposta
+perdida por definição. Provado por mutação: o `return false` de volta
+reprova com `elo do despacho C++ sem chamador: dispatchProbeResult`.
+
+**O que isto muda no que foi dito antes.** As fatias que passaram por esses
+domínios desde 2026-09-12 — E1/E3/E5 serial, P4 arquivos na placa, P6
+remoto (fatias 1 e 2), P5 cobertura, o índice, a cadeia Python — foram
+provadas **no core e nos controllers** (gates e harnesses), e os registros
+dizem isso; mas a afirmação implícita "e a tela mostra" era falsa desde
+então para respostas diretas (os EVENTOS `event.*` seguiam outro caminho,
+`handleNotification`, e continuavam chegando — por isso a status bar
+mostrava o índice e o Jobs mostrava os jobs). O C2 "lido e reescrito no
+ESP32 real" da §7.47 foi pelo core e pelo gate, não pelo painel. A
+§4.2.3(c) — "só o autor, com a placa na mão" — ganha peso: a exercitação
+dos painéis na IDE aberta é o que teria pego isto no dia.
+
+**Medido:** fiação IPC verde com a quinta pergunta; foto dos quatro painéis
+com as respostas chegando (a F8 parte delas); Clang-Tidy limpo
+(`cpp-fio-despacho.log`).

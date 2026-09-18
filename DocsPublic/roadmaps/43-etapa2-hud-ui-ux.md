@@ -294,3 +294,134 @@ ditas em cada "não feito" (Ln:Col na status bar; contagem na aba Testes;
 foto a 1024 px; trilho expandido; o foco da tela inicial contra o
 terminal). E o que só o autor mede: a sensação de resposta com mouse e
 teclado reais.
+
+## 8. F8 — o desenho medido (2026-09-18, noite; escrito ANTES do código)
+
+### 8.1 O que os quatro painéis mostram hoje — fotos 12a–12d
+
+Tiradas com `KINEIN_STARTUP_COMMANDS=datasource.list | remote.list |
+probe.list | container.list`, este repositório aberto, `XDG_CONFIG_HOME`
+isolado (nenhum perfil salvo), 8 s. **A primeira rodada de fotos achou um
+defeito antes de mostrar qualquer desenho:** Containers e Embarcados
+ficavam em "procurando…" para sempre (foto 12e, aos 15 s) porque a cadeia
+de despacho da ponte C++ estava solta desde 2026-09-12 — oito domínios sem
+resposta na tela (`40` §7.64; corrigido, e o gate de fiação ganhou a
+quinta pergunta). As fotos 12a–12d são DEPOIS do conserto: o estado real
+dos painéis.
+
+**12a Banco de dados** (720×560). Título + uma linha de subtítulo; à
+esquerda a lista de perfis ("Nenhuma fonte salva. Preencha ao lado e
+salve." + botão "Nova fonte" no pé); à direita o formulário (motor em três
+chips, nome, host, porta, banco, usuário, origem da senha em três chips,
+TLS em dois chips, a consulta); rodapé com cinco botões (Remover · Salvar ·
+Testar · Ler estrutura · Fechar) — todos cinza, **nenhum primário**. O
+formulário **corta embaixo** (o campo "Consulta" e o botão "Executar" ficam
+meio fora da moldura a 560 px). O veredito do teste (verde/vermelho) só
+aparece depois de testar.
+
+**12b Alvo remoto** (680×520). Mesma forma do banco (lista à esquerda,
+formulário à direita) — é o painel mais recente e copiou o do banco.
+Rodapé com Remover · Salvar · Sondar · Fechar, mais **cinco botões de ação**
+no corpo (Enviar, Rodar em…, gdbserver → kit, debugpy → config, Shell no
+terminal), todos desabilitados sem alvo. Nenhum primário.
+
+**12c Embarcados** (560×até 780). Um painel de UMA coluna com **nove
+seções empilhadas** (Projeto, Sonda com a saída crua do probe-rs em caixa,
+Portas seriais + Permissões, Gravar com quatro chips + Prévia, Alvo do kit
+com os presets, Chip/Alvo/Sysroot/SVD, Tamanho do binário, Depurador do
+kit, Toolchains instaláveis, Sysroot e SDK). **O conteúdo vaza da moldura**:
+a 800 px de altura, "Depurador do kit", "Toolchains instaláveis" e "Sysroot
+e SDK" desenham por cima do editor e da barra de status, e "Medir tamanho"
+sobrepõe "Procurar sonda e portas" (o `EmbeddedPanelHost` calcula a altura
+por fórmula — 480 + 20 por sonda — e o `EmbeddedPanel` não tem `clip` nem
+rolagem). É o painel com mais informação e o único que hoje não cabe.
+
+**12d Containers** (680×400). Título, subtítulo, a linha do motor com
+bolinha verde ("Motor: Podman 5.7.0" + "responde · rootless · socket · sem
+compose"), "Containers" com a dica do core e o `[]` cru, "Imagens" com três
+linhas "· repo:tag · tamanho". Rodapé: chip "parados também" + compose up /
+compose down / Atualizar / Fechar. É o único que já tem o veredito na
+primeira dobra — e o único sem formulário.
+
+**O que se mede, em números:** quatro molduras com quatro tamanhos (720×560,
+680×520, 560×~780, 680×400); quatro rodapés com 4–5 botões e **zero ações
+primárias**; três subtítulos de uma linha e um de duas; dois painéis com
+lista+formulário, um com seções empilhadas, um com listas. O veredito
+(verde/vermelho) existe em dois (`DataSourceVerdict`, `RemoteVerdict`, 77 e
+106 linhas, o mesmo retângulo escrito duas vezes), é uma linha de texto no
+terceiro e não existe no quarto. A grade de resultados existe só no banco
+(`DataSourceQuery`, Flickable + Repeater, colunas de 120 px fixos).
+
+### 8.2 A referência, lida para isto
+
+A referência (JetBrains, *Database tool window* e *Services*) faz três
+coisas que os quatro painéis não fazem igual: (1) **cabeçalho constante** —
+nome do que se olha, um subtítulo de estado, a ação primária no canto
+direito; (2) **veredito antes do detalhe** — a conexão testada aparece como
+faixa antes do formulário, não depois dele; (3) **uma grade** para tudo
+que é tabela (resultado, colunas, containers), com cabeçalho fixo e colunas
+que cabem no que há. A progressive disclosure de Nielsen entra no
+Embarcados: nove seções não cabem numa dobra — cabem em seções com o
+resumo na linha do título (fechadas por padrão as que não têm nada: "Sonda
+— nenhuma", "Portas — nenhuma").
+
+### 8.3 O desenho: três componentes comuns, quatro painéis que os usam
+
+```text
+KvPanelFrame (chrome)          ui/qml/components/KvPanelFrame.qml
+  Substitui o Rectangle+MouseArea repetido nos quatro *PanelHost. Recebe
+  `panelWidth/panelHeight` desejados e os `maxAvailable*`; centraliza;
+  dispensa por clique fora; e — o que falta hoje — o CONTEUDO ROLA quando
+  nao cabe (Flickable com clip): o Embarcados deixa de vazar.
+
+KvPanelHeader (cabecalho)      ui/qml/components/KvPanelHeader.qml
+  `title`, `subtitle` (UMA linha, elide), `primaryLabel`/`primaryEnabled`
+  -> `primaryRequested`, e o x -> `closeRequested`. Os quatro paineis passam
+  a ter a mesma primeira linha; a acao primaria e' a que cada painel
+  promete: Banco "Testar" (ou "Executar" quando ha' consulta), Remoto
+  "Sondar", Embarcados "Procurar sonda e portas", Containers "Atualizar".
+
+KvVerdict (veredito)           ui/qml/components/KvVerdict.qml
+  `busy` + `busyText`, `ok`, `message`, `detail` (linhas opcionais) — a faixa
+  verde/vermelha que DataSourceVerdict e RemoteVerdict desenham cada um por
+  si. O Containers usa para o motor; o Embarcados para a sonda.
+
+KvDataGrid (grade)             ui/qml/components/KvDataGrid.qml + GridRules.qml
+  `columns: [{key,label,width?}]`, `rows: [ {...} ]` (ou arrays), `emptyText`,
+  `mono`, `maxHeight`; cabecalho fixo, largura das colunas pela regra pura
+  `GridRules.columnWidths(columns, rows, available)` (mede o texto por
+  contagem de caracteres, teto e piso) — testavel no harness sem tela;
+  `null` em italico. Usa: Banco (resultado e estrutura), Containers
+  (containers, imagens), Embarcados (portas seriais, sondas), Remoto (o
+  que a sonda achou no alvo).
+```
+
+**O que sai:** `DataSourceVerdict` e `RemoteVerdict` viram usos do
+`KvVerdict` (o campo de senha do banco fica no painel, ao lado do
+veredito); a grade caseira do `DataSourceQuery` vira `KvDataGrid`; os
+quatro `*PanelHost` viram `KvPanelFrame { ...Panel {} }`. **O que não
+muda:** os controllers (nenhuma regra de negócio move), o protocolo, os
+formulários (campos e chips seguem como estão — a F8 é forma, não campos).
+
+### 8.4 A medida
+
+- Um componente de grade com harness (`tst_grid_rules`: larguras com
+  piso/teto, distribuição do que sobra, `null`, colunas a mais que a
+  largura → rolagem horizontal).
+- Fotos 13a–13d dos quatro painéis DEPOIS, nas mesmas condições das
+  12a–12d: as quatro molduras com a mesma primeira linha e a mesma faixa
+  de veredito; o Embarcados cabendo (rolando) a 800 px; o Banco sem cortar
+  o campo de consulta.
+- Contagem: linhas duplicadas de veredito 77+106 → 0 (`verificar-qml-
+  duplicacao` verde); `*PanelHost` de 64–80 linhas → ≤ 40 cada.
+- Catracas: view 300, host/controller 400 — o `EmbeddedPanel` (275) e o
+  `RemotePanel` (234) só perdem linhas.
+
+### 8.5 O que a F8 NÃO faz (dito)
+
+Não mexe nos campos nem nas ações de cada domínio; não junta os quatro
+painéis numa "janela de serviços" (é a forma da referência, mas é outra
+etapa); não prova PostgreSQL/Mongo/Pi/sonda reais (§4.2.3-b do 40); não
+mede o clique (só o autor). O Grafana (`GrafanaPanelHost`, 5º painel de
+ambiente) recebe o `KvPanelFrame` e o cabeçalho pelo mesmo caminho se
+couber na sessão; senão fica dito.

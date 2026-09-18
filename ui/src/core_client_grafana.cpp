@@ -58,7 +58,13 @@ bool CoreClient::dispatchGrafanaResult(const QString& method, const QJsonObject&
         emit grafanaProbeAccepted(result.value(QStringLiteral("jobId")).toString());
         return true;
     }
-    return false;
+    // A cadeia CONTINUA: probe -> buildSize -> serial -> container -> index ->
+    // python -> coverage -> remote. Quando a simulacao saiu (2026-09-12) este
+    // `return` virou `false` e oito dominios ficaram sem resposta na tela —
+    // "procurando..." para sempre — por seis dias, com todos os gates verdes
+    // (achado em 2026-09-18 pela foto da F8). O gate de fiacao IPC agora
+    // reprova um `dispatch*Result` que ninguem chama.
+    return dispatchProbeResult(method, result);
 }
 
 } // namespace kinein
