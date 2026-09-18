@@ -3808,3 +3808,30 @@ duplicação, arquitetura, atalhos (52 itens de menu tratados), fiação IPC;
 o binário abre; foto antes/depois no mesmo tamanho.
 **Não feito, dito:** o modo compacto do trilho (F1 o cita; fica para quando
 a largura pedir); o teste prático do autor na tela.
+
+### 7.57 Etapa 2, F2 — a barra de status diz o que está acontecendo — 2026-09-18
+
+`ActiveJobController` (jobs/, NOVO) deriva do `jobsModel` do JobsController
+o job vivo mais recente — título, progresso, última linha, cancelável — e a
+contagem; `StatusBarJobWidget` (shell/, NOVO) o desenha no centro da barra:
+título (clique → aba Jobs), barra de progresso determinada ou o traço que
+anda, a última linha em mono, ✕ cancelar (`job.cancel` pelo id — a ponte
+expôs `cancelJob`). Sem job, os resumos do projeto voltam. **Os servidores
+de linguagem ganharam tela**: `event.lsp.status` só ia para o log (o
+pente-fino não pegou porque o C++ o tratava); agora `lspStatusChanged` →
+`LspStatusController` (workspace/, NOVO: mapa linguagem → estado) → o chip
+`LSP ● 2` / `LSP … cpp` / `LSP ✗ python` (vermelho, o motivo ao pairar). O
+git saiu da status bar (mora no widget da barra principal, F1); os quatro
+"compilando…/testando…" separados viraram o job único. Foto 05: "Indexar
+/home/hugh/KineinVectis" com a barra andando e o ✕, aos 4,5 s da abertura.
+No caminho: `AppDomains` bateu em 400 e os tratadores de uma linha viraram
+setas; a catraca de duplicação pegou `status === "running"` em dois
+controllers (são fatos diferentes — job vivo, servidor rodando — e cada um
+ganhou a sua lista de estados em vez do literal).
+
+**Medida da F2:** durante build/teste/índice/configure/deploy a barra mostra
+o job e o progresso; nada colide (a faixa esquerda para antes da direita).
+**Medido:** 47 harnesses (`tst_status_bar_state` novo); todos os gates QML,
+fiação IPC (164 sinais, todos com dono), arquitetura, qmllint; o binário
+abre. **Não feito, dito:** a foto a 1024 px; Ln/Col do cursor (entra na F3
+com o editor).

@@ -5,6 +5,7 @@ Item {
 
     property var coreClient: null
     property var editorController: null
+    property var lspStatusController: null
 
     visible: false
 
@@ -25,6 +26,10 @@ Item {
         // M4.3b: um servidor LSP reiniciou (auto por timeouts ou comando) —
         // o servidor novo não conhece o arquivo aberto; re-sincroniza (mesmo
         // caminho do recovered): semantic_tokens faz didOpen de novo.
+        function onLspStatusChanged(language, status, message) {
+            root.lspStatusController.handleStatus(language, status, message);
+        }
+
         function onLspRestarted(language) {
             root.editorController.refreshSemanticTokens();
         }

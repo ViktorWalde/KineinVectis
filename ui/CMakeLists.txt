@@ -26,6 +26,9 @@ set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_R
 set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOURCE_ALIAS KvIconButton.qml)
 set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_ALIAS KvButton.qml)
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
+set_source_files_properties(qml/workspace/LspStatusController.qml PROPERTIES QT_RESOURCE_ALIAS LspStatusController.qml)
+set_source_files_properties(qml/jobs/ActiveJobController.qml PROPERTIES QT_RESOURCE_ALIAS ActiveJobController.qml)
+set_source_files_properties(qml/shell/StatusBarJobWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarJobWidget.qml)
 set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
 set_source_files_properties(qml/shell/HeaderGitWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderGitWidget.qml)
 set_source_files_properties(qml/shell/HeaderProjectWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderProjectWidget.qml)
@@ -292,6 +295,9 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvIconButton.qml
         qml/components/KvButton.qml
         qml/shell/TopHeaderBar.qml
+        qml/workspace/LspStatusController.qml
+        qml/jobs/ActiveJobController.qml
+        qml/shell/StatusBarJobWidget.qml
         qml/shell/HeaderRunWidget.qml
         qml/shell/HeaderGitWidget.qml
         qml/shell/HeaderProjectWidget.qml

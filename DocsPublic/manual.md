@@ -81,7 +81,7 @@ atalho de área de trabalho ou um `alias`.
 │                  Terminal | Debug | Git | Busca | IDE |      │
 │                  Ferramentas                                 │
 ├──────────────────────────────────────────────────────────────┤
-│ Barra de status: progresso de build/testes/análise + cancelar│
+│ Status: projeto · toolchain │ job em curso ▬▬ ✕ │ LSP · IDE · core│
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -94,6 +94,15 @@ atalho de área de trabalho ou um `alias`.
   sistema que o projeto tem, com rótulo (antes eram dois pares de botões
   iguais sem rótulo). Um ponto pulsa no ⋯ enquanto um build, teste ou
   análise roda.
+- **Barra de status** (desde 2026-09-18, Etapa 2 F2): diz **o que está
+  acontecendo**. À esquerda o projeto e a toolchain; no centro o **job em
+  curso** — build, testes, índice, configure, deploy — com o título, uma
+  barra de progresso (que anda sozinha quando o job não mede), a última
+  linha da saída e o ✕ para cancelar (clicar no título abre a aba Jobs);
+  sem job, os resumos do projeto. À direita, os **servidores de linguagem**
+  (`LSP ● 2` todos rodando, `LSP … cpp` subindo, `LSP ✗ python` caiu — o
+  motivo ao pairar; antes isso só existia no log da aba IDE), o botão IDE e
+  o core.
 - **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
   Build, Debug e, embaixo, os painéis de ambiente na ordem Banco de dados,
   Containers, Observabilidade e Ferramentas (por último).

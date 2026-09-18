@@ -36,6 +36,9 @@ bool CoreClient::handleLspNotification(const QString& method, const QJsonObject&
         else {
             appendLog(QStringLiteral("lsp %1: %2").arg(language, status));
         }
+        // E a tela (F2 da Etapa 2, 2026-09-18): ate' aqui o estado do servidor
+        // so' existia no log — um clangd morto ficava invisivel.
+        emit lspStatusChanged(language, status, message);
         return true;
     }
     if (method == QStringLiteral("event.lsp.log")) {

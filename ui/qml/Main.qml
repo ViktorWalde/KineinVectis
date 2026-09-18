@@ -287,10 +287,11 @@ Window {
         anchors.right: parent.right
         coreClient: coreClient
         shellController: domains.shellController
-        gitController: domains.gitController
         toolchainController: domains.toolchainController
         indexController: domains.indexController
         pythonController: domains.pythonController
+        activeJobController: domains.activeJobController
+        lspStatusController: domains.lspStatusController
         onToolchainMenuRequested: function(menuX, menuY) {
             const pos = statusBar.mapToItem(shellOverlays, menuX, menuY);
             domains.toolchainController.openMenu(pos.x, pos.y);

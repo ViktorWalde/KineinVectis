@@ -258,6 +258,8 @@ public:
     Q_INVOKABLE void discoverTests(const QString& buildSystem = QString());
     Q_INVOKABLE void runQuality(const QString& buildSystem = QString());
     Q_INVOKABLE void cancelBuild();
+    // Cancela um job pelo id (F2 da Etapa 2: o cancelar da barra de status).
+    Q_INVOKABLE void cancelJob(const QString& jobId);
     Q_INVOKABLE void cancelTests();
     Q_INVOKABLE void cancelQuality();
     Q_INVOKABLE void cancelEnvironmentScan();
@@ -496,6 +498,8 @@ signals:
     void lspSwitchSourceHeaderResolved(const QString& path);
     // M4.3b: um servidor LSP reiniciou — a UI re-sincroniza o arquivo ativo.
     void lspRestarted(const QString& language);
+    // running | starting | failed | exited | stopped | restarting, com o motivo quando ha'.
+    void lspStatusChanged(const QString& language, const QString& status, const QString& message);
     void lspDocumentsClosed(const QString& language, int count);
     void fileSearchResults(const QVariantList& matches, bool truncated);
     void searchResults(const QVariantList& matches, bool truncated);
@@ -585,7 +589,6 @@ private:
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);
     void handleWorkspaceOpened(const QJsonObject& result);
     void storeJobId(const QString& method, const QString& jobId);
-    void cancelJob(const QString& jobId);
     void setBuilding(bool building);
     void setTesting(bool testing);
     void setAnalyzing(bool analyzing);

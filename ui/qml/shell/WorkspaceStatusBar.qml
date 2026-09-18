@@ -1,53 +1,49 @@
 import QtQuick
 import KineinVectis
 
+// A barra de status (Etapa 2, F2 do roadmaps/43, 2026-09-18): ela diz O QUE
+// ESTA' ACONTECENDO. Esquerda: o workspace e a toolchain. Centro: o job em
+// curso com progresso e cancelar (build, testes, indice, rsync — o
+// JobsController ja' sabia, a barra nao dizia); sem job, os resumos do
+// projeto. Direita: o contexto do arquivo ativo, o Python, os servidores de
+// linguagem (que antes so' o log via), o botao IDE e o core. O git saiu
+// daqui: mora no widget da barra principal (F1). A esquerda para antes da
+// direita — a colisao a 1280 px que a foto 02 mostrou.
 Rectangle {
     id: bar
 
     property string workspaceRoot: ""
     property string workspaceKindLabel: ""
     property bool logsActive: false
-    property bool building: false
-    property bool testing: false
-    property bool analyzing: false
-    property bool scanningEnvironment: false
     property bool running: false
     property bool coreConnected: false
     property string coreProtocolVersion: ""
     property string coreStatus: ""
-    property string gitBranchLabel: ""
-    property int gitAheadCount: 0
-    property int gitBehindCount: 0
-    property int gitChangeCount: 0
-    // Toolchain (roadmap 30, etapa 5). Vazio esconde o chip: projeto sem
-    // build system nao tem o que escolher.
     property string toolchainSummary: ""
     property bool toolchainVisible: false
-    // O indice do projeto inteiro: "N arquivos · N linhas · N simbolos", ou
-    // o progresso enquanto constroi. Vazio = nada a mostrar.
     property string indexSummary: ""
-    // O contexto de compilador do arquivo ATIVO: "c++ · gnu++23 · 12 -I · 9 -D",
-    // "cargo · kinein-core (lib, 2024)", "python · .venv · 3.12.3". Vazio =
-    // sem arquivo ou sem o que dizer; o detalhe aparece ao pairar.
     property string contextSummary: ""
     property string contextDetail: ""
-    // O Python do projeto (PythonController.summary()); vazio fora de Python.
     property string pythonSummary: ""
+    // O job em curso (ActiveJobController).
+    property string jobTitle: ""
+    property real jobProgress: -1
+    property string jobMessage: ""
+    property bool jobCanCancel: false
+    property int jobCount: 0
+    // Os servidores de linguagem (LspStatusController).
+    property string lspSummary: ""
+    property string lspDetail: ""
+    property bool lspFailed: false
 
     signal logsRequested()
+    signal jobsRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
-    signal cancelBuildRequested()
-    signal cancelTestsRequested()
-    signal cancelQualityRequested()
-    signal cancelEnvironmentScanRequested()
+    signal cancelJobRequested()
 
     height: 28
     color: Theme.background1
 
-    // A faixa da esquerda para ANTES da direita: com o workspace, a
-    // toolchain, o indice e o git, a 1280 px ela invadia o botao "IDE"
-    // (medido na foto de 2026-09-18, pente-fino/Etapa 2). O caminho do
-    // workspace e' o que cede: elide no meio.
     Row {
         id: faixaEsquerda
 
@@ -105,33 +101,29 @@ Rectangle {
             }
         }
 
-        // O git antes dos resumos do indice: quando falta espaco, o que cede
-        // e' a contagem de simbolos, nao a branch.
+        // O job em curso ocupa o centro; sem job, os resumos do projeto.
+        StatusBarJobWidget {
+            anchors.verticalCenter: parent.verticalCenter
+            title: bar.jobTitle
+            progress: bar.jobProgress
+            message: bar.jobMessage
+            canCancel: bar.jobCanCancel
+            runningCount: bar.jobCount
+            onCancelRequested: bar.cancelJobRequested()
+            onJobsRequested: bar.jobsRequested()
+        }
+
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            visible: bar.gitBranchLabel !== ""
-            text: {
-                let label = "⎇ " + bar.gitBranchLabel;
-                if (bar.gitAheadCount > 0) {
-                    label += " ↑" + bar.gitAheadCount;
-                }
-                if (bar.gitBehindCount > 0) {
-                    label += " ↓" + bar.gitBehindCount;
-                }
-                if (bar.gitChangeCount === 1) {
-                    label += qsTr("  ·  1 alteração");
-                } else if (bar.gitChangeCount > 1) {
-                    label += qsTr("  ·  %1 alterações").arg(bar.gitChangeCount);
-                }
-                return label;
-            }
-            color: bar.gitChangeCount > 0 ? Theme.textSecondary : Theme.textMuted
+            visible: bar.running && bar.jobTitle === ""
+            text: qsTr("executando…")
+            color: Theme.accent
             font.pixelSize: Theme.fontSizeStatus
-            font.family: Theme.monoFont
         }
-        // Os resumos do projeto (indice, contexto, python): dono proprio.
+
         StatusBarProjectSummaries {
             anchors.verticalCenter: parent.verticalCenter
+            visible: bar.jobTitle === ""
             indexSummary: bar.indexSummary
             contextSummary: bar.contextSummary
             contextDetail: bar.contextDetail
@@ -146,6 +138,32 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingMedium
         spacing: Theme.spacingMedium
+
+        // Os servidores de linguagem: ● todos rodando, … subindo, ✗ caiu.
+        Text {
+            id: lspTexto
+
+            anchors.verticalCenter: parent.verticalCenter
+            visible: bar.lspSummary !== ""
+            text: bar.lspSummary
+            color: bar.lspFailed ? Theme.errorSoft : Theme.textMuted
+            font.pixelSize: Theme.fontSizeStatus
+
+            MouseArea {
+                id: lspArea
+
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
+                onContainsMouseChanged: {
+                    if (containsMouse && bar.lspDetail !== "") {
+                        TooltipController.showFor(lspTexto, bar.lspDetail, "top");
+                    } else {
+                        TooltipController.hideFor(lspTexto);
+                    }
+                }
+            }
+        }
 
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
@@ -177,102 +195,6 @@ Rectangle {
             }
         }
 
-        Row {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.building
-            spacing: Theme.spacingSmall
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("compilando...")
-                color: Theme.accent
-                font.pixelSize: Theme.fontSizeStatus
-            }
-
-            KvIconButton {
-                anchors.verticalCenter: parent.verticalCenter
-                compact: true
-                iconName: "close"
-                danger: true
-                tooltip: qsTr("Cancelar build")
-                onClicked: bar.cancelBuildRequested()
-            }
-        }
-
-        Row {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.testing
-            spacing: Theme.spacingSmall
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("testando...")
-                color: Theme.accent
-                font.pixelSize: Theme.fontSizeStatus
-            }
-
-            KvIconButton {
-                anchors.verticalCenter: parent.verticalCenter
-                compact: true
-                iconName: "close"
-                danger: true
-                tooltip: qsTr("Cancelar testes")
-                onClicked: bar.cancelTestsRequested()
-            }
-        }
-
-        Row {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.analyzing
-            spacing: Theme.spacingSmall
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("analisando...")
-                color: Theme.accent
-                font.pixelSize: Theme.fontSizeStatus
-            }
-
-            KvIconButton {
-                anchors.verticalCenter: parent.verticalCenter
-                compact: true
-                iconName: "close"
-                danger: true
-                tooltip: qsTr("Cancelar análise")
-                onClicked: bar.cancelQualityRequested()
-            }
-        }
-
-        Row {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.scanningEnvironment
-            spacing: Theme.spacingSmall
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("scan de ambiente...")
-                color: Theme.accent
-                font.pixelSize: Theme.fontSizeStatus
-            }
-
-            KvIconButton {
-                anchors.verticalCenter: parent.verticalCenter
-                compact: true
-                iconName: "close"
-                danger: true
-                tooltip: qsTr("Cancelar scan")
-                onClicked: bar.cancelEnvironmentScanRequested()
-            }
-        }
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.running
-            text: qsTr("executando...")
-            color: Theme.accent
-            font.pixelSize: Theme.fontSizeStatus
-        }
-
         Rectangle {
             width: 7
             height: 7
@@ -284,7 +206,7 @@ Rectangle {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: bar.coreConnected
-                  ? qsTr("core conectado · IPC %1").arg(bar.coreProtocolVersion)
+                  ? qsTr("core · IPC %1").arg(bar.coreProtocolVersion)
                   : qsTr("core %1").arg(bar.coreStatus)
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus

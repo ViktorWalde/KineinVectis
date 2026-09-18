@@ -37,6 +37,7 @@ Item {
     EditorEventRouter {
         coreClient: root.domains.coreClient
         editorController: root.domains.editorController
+        lspStatusController: root.domains.lspStatusController
     }
 
     EditorRequestRouter {

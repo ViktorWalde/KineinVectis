@@ -44,6 +44,8 @@ Item {
     readonly property alias debugController: debugController
     readonly property alias gitController: gitController
     readonly property alias coverageController: coverageController
+    readonly property alias activeJobController: activeJobController
+    readonly property alias lspStatusController: lspStatusController
     readonly property alias searchController: searchController
     readonly property alias searchEverywhereController: searchEverywhereController
     readonly property alias indexController: indexController
@@ -65,15 +67,9 @@ Item {
         id: recentWorkspacesController
 
         onListRequested: root.coreClient.listRecentWorkspaces()
-        onOpenRequested: function(rootPath) {
-            root.coreClient.openWorkspace(rootPath);
-        }
-        onPinRequested: function(rootPath, pinned) {
-            root.coreClient.pinRecentWorkspace(rootPath, pinned);
-        }
-        onRemoveRequested: function(rootPath) {
-            root.coreClient.removeRecentWorkspace(rootPath);
-        }
+        onOpenRequested: rootPath => root.coreClient.openWorkspace(rootPath)
+        onPinRequested: (rootPath, pinned) => root.coreClient.pinRecentWorkspace(rootPath, pinned)
+        onRemoveRequested: rootPath => root.coreClient.removeRecentWorkspace(rootPath)
         onClearRequested: root.coreClient.clearRecentWorkspaces()
     }
 
@@ -103,13 +99,9 @@ Item {
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         homeDir: root.coreClient.homeDir
         toolsCount: workspaceController.toolsList.length
-        onFolderOpenRequested: function(path) {
-            root.folderPicker.open(path);
-        }
+        onFolderOpenRequested: path => root.folderPicker.open(path)
         onToolsDetectionRequested: root.coreClient.detectTools()
-        onLayoutSaveRequested: function(values) {
-            settingsController.setGlobal(values);
-        }
+        onLayoutSaveRequested: values => settingsController.setGlobal(values)
     }
 
     JobsController {
@@ -125,9 +117,7 @@ Item {
         onDiscoverTestsRequested: buildSystem => root.coreClient.discoverTests(buildSystem)
         onRunQualityRequested: root.coreClient.runQuality()
         onRunCoverageRequested: root.coreClient.coverageRun()
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
+        onShowTabRequested: tab => shellController.showTab(tab)
     }
 
     DiagnosticsController {
@@ -210,9 +200,7 @@ Item {
         serialDevice: environment.embeddedController.selectedPort
         // Pedido ao core mora no RuntimeRequestRouter. Aqui fica so fiacao de
         // controller para HOST/shell, que nao e IPC.
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
+        onShowTabRequested: tab => shellController.showTab(tab)
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()
         onClearRunInputRequested: root.workspaceHost.clearRunInput()
@@ -255,15 +243,27 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
     }
 
+    // F2 da Etapa 2: o job em curso e os servidores de linguagem (status bar).
+    ActiveJobController {
+        id: activeJobController
+
+        jobsModel: jobsController.jobsModel
+        onCancelRequested: jobId => root.coreClient.cancelJob(jobId)
+    }
+
+    LspStatusController {
+        id: lspStatusController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+    }
+
     DebugController {
         id: debugController
 
         workspaceRoot: root.coreClient.workspaceRoot
         // Pedido ao core mora no DebugRequestRouter. Aqui fica so fiacao de
         // controller para HOST/editor, que nao e IPC.
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
+        onShowTabRequested: tab => shellController.showTab(tab)
         onOpenAtRequested: function(file, line) {
             editorController.openDiagnostic(file, line, 1);
         }
@@ -285,9 +285,7 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
         // Pedido ao core (inclusive a guarda de replace) mora no
         // SearchRequestRouter.
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
+        onShowTabRequested: tab => shellController.showTab(tab)
         onFocusSearchInputRequested: root.workspaceHost.focusSearchInput()
         onFocusReplaceInputRequested: root.workspaceHost.focusSearchReplaceInput()
     }

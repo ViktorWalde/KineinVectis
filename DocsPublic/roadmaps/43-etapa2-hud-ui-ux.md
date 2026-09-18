@@ -164,7 +164,9 @@ F8  paineis de ambiente (banco, remoto, embarcados, containers): mesma forma
 **autosave sim** (a decisão entra na F3/F6, com o rascunho de
 `seguranca/23` como rede); **um widget Executar com menu** (não dois grupos
 rotulados). **F1 FEITA no mesmo dia** (`40` §7.56): a barra passou de doze
-controles a três widgets — foto 04.
+controles a três widgets — foto 04. **F2 FEITA** (`40` §7.57): o job em
+curso com progresso e cancelar no centro da status bar, os servidores de
+linguagem à direita — foto 05.
 
 
 
