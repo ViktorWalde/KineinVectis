@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.122.0
-testes      827 Rust aprovados; 45 harnesses QML (medicao de 2026-09-18, §7.54)
+testes      827 Rust aprovados; 47 harnesses QML (medicao de 2026-09-18, §7.57)
 metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
