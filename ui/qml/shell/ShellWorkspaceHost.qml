@@ -194,25 +194,15 @@ Item {
                           ? bottomPanel.height + Theme.panelGap : 0) : 0
                 visible: !root.workspaceOpen
                 tools: root.toolsList
-                recentWorkspaces: root.recentWorkspacesController.workspaces
-                recentWorkspacesError: root.recentWorkspacesController.errorText
+                recentWorkspacesController: root.recentWorkspacesController
                 scanning: root.scanningEnvironment
                 onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
-                onRecentWorkspaceOpenRequested: function(rootPath) {
-                    root.recentWorkspacesController.openWorkspace(rootPath);
-                }
-                onRecentWorkspacePinRequested: function(rootPath) {
-                    root.recentWorkspacesController.togglePinned(rootPath);
-                }
-                onRecentWorkspaceRemoveRequested: function(rootPath) {
-                    root.recentWorkspacesController.removeWorkspace(rootPath);
-                }
-                onRecentWorkspacesClearRequested: root.recentWorkspacesController.clearAll()
                 onNewProjectRequested: function(templateId) {
                     root.createProjectRequested(templateId);
                 }
                 onSettingsRequested: root.settingsRequested()
                 onDetectToolsRequested: root.toolsDetectionRequested()
+                onToolsPanelRequested: root.shellController.showTab("tools")
             }
 
             ShellEditorHost {

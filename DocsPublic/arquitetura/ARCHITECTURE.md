@@ -590,7 +590,12 @@ Regras que mantêm isso saudável:
                                             sessao inteira foi gasta na hipotese
                                             errada porque o stderr era mudo — o
                                             Qt do Fedora manda o assert para o
-                                            journal.
+                                            journal. Desde 2026-09-18 tambem le
+                                            esse stderr: aviso do motor QML de
+                                            fiacao quebrada ("no signal of the
+                                            target matches", "Binding loop")
+                                            reprova — o qmllint nao ve o tipo
+                                            REAL do target de uma Connections.
     ```
 
     **Um gate que nunca reprovou não está provado — está sem evidência.** Ao

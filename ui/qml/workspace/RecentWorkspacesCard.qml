@@ -2,21 +2,19 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
+// Os recentes da tela inicial (Etapa 2 F7): o ultimo aberto em destaque
+// (Enter abre), os de caminho ausente ocultos com desfazer. A logica e'
+// do RecentWorkspacesController; aqui so' a forma.
 Rectangle {
     id: root
 
-    property var workspaces: []
-    property string errorText: ""
+    required property var controller
 
-    signal openRequested(string rootPath)
-    signal pinRequested(string rootPath)
-    signal removeRequested(string rootPath)
-    signal clearRequested()
+    readonly property var shown: controller.visibleWorkspaces.slice(0, 4)
 
-    readonly property int visibleCount: Math.min(workspaces.length, 4)
-
-    height: (workspaces.length === 0 ? 86 : 54 + visibleCount * 36)
-            + (errorText === "" ? 0 : 18)
+    height: (shown.length === 0 ? 86 : 54 + shown.length * 36)
+            + (controller.hiddenMissingCount > 0 ? 32 : 0)
+            + (controller.errorText === "" ? 0 : 18)
     radius: Theme.radiusLarge
     color: Theme.background1
     border.color: Theme.borderSoft
@@ -48,14 +46,14 @@ Rectangle {
                 id: clearButton
 
                 compact: true
-                visible: root.workspaces.length > 0
+                visible: root.controller.workspaces.length > 0
                 text: qsTr("Limpar")
-                onClicked: root.clearRequested()
+                onClicked: root.controller.clearAll()
             }
         }
 
         Text {
-            visible: root.workspaces.length === 0
+            visible: root.shown.length === 0
             width: parent.width
             text: qsTr("Os projetos abertos com sucesso aparecerão aqui.")
             color: Theme.textMuted
@@ -64,18 +62,24 @@ Rectangle {
         }
 
         Repeater {
-            model: root.workspaces.slice(0, 4)
+            model: root.shown
 
             delegate: Rectangle {
                 id: workspaceRow
 
                 required property var modelData
+                required property int index
+
+                readonly property bool highlighted: index === root.controller.highlightedIndex
 
                 width: parent.width
                 height: 34
                 radius: Theme.radius
-                color: openArea.containsMouse && workspaceRow.modelData.available
+                color: highlighted ? Theme.surfaceSelected
+                       : openArea.containsMouse && workspaceRow.modelData.available
                        ? Theme.surface2 : "transparent"
+                border.width: highlighted ? 1 : 0
+                border.color: Theme.borderStrong
                 opacity: workspaceRow.modelData.available ? 1.0 : 0.72
 
                 KvIcon {
@@ -95,6 +99,7 @@ Rectangle {
                     anchors.leftMargin: Theme.spacingSmall
                     anchors.right: pinButton.left
                     anchors.rightMargin: Theme.spacingSmall
+                                         + (enterHint.visible ? enterHint.width + Theme.spacingSmall : 0)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 0
 
@@ -119,6 +124,18 @@ Rectangle {
                     }
                 }
 
+                Text {
+                    id: enterHint
+
+                    anchors.right: pinButton.left
+                    anchors.rightMargin: Theme.spacingSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: workspaceRow.highlighted && workspaceRow.modelData.available
+                    text: qsTr("Enter abre")
+                    color: Theme.textMuted
+                    font.pixelSize: 10
+                }
+
                 KvButton {
                     id: pinButton
 
@@ -128,7 +145,7 @@ Rectangle {
                     compact: true
                     text: workspaceRow.modelData.pinned ? qsTr("Soltar") : qsTr("Fixar")
                     selected: workspaceRow.modelData.pinned
-                    onClicked: root.pinRequested(workspaceRow.modelData.root)
+                    onClicked: root.controller.togglePinned(workspaceRow.modelData.root)
                 }
 
                 KvIconButton {
@@ -140,7 +157,7 @@ Rectangle {
                     compact: true
                     iconName: "close"
                     tooltip: qsTr("Remover dos workspaces recentes")
-                    onClicked: root.removeRequested(workspaceRow.modelData.root)
+                    onClicked: root.controller.removeWorkspace(workspaceRow.modelData.root)
                 }
 
                 MouseArea {
@@ -153,15 +170,39 @@ Rectangle {
                     enabled: workspaceRow.modelData.available
                     hoverEnabled: true
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: root.openRequested(workspaceRow.modelData.root)
+                    onClicked: root.controller.openWorkspace(workspaceRow.modelData.root)
                 }
             }
         }
 
-        Text {
-            visible: root.errorText !== ""
+        Row {
+            visible: root.controller.hiddenMissingCount > 0
             width: parent.width
-            text: root.errorText
+            height: 28
+            spacing: Theme.spacingSmall
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.controller.hiddenMissingCount === 1
+                      ? qsTr("1 recente sem caminho foi ocultado")
+                      : qsTr("%1 recentes sem caminho foram ocultados")
+                        .arg(root.controller.hiddenMissingCount)
+                color: Theme.textMuted
+                font.pixelSize: 10
+            }
+
+            KvButton {
+                anchors.verticalCenter: parent.verticalCenter
+                compact: true
+                text: qsTr("Desfazer")
+                onClicked: root.controller.restoreMissing()
+            }
+        }
+
+        Text {
+            visible: root.controller.errorText !== ""
+            width: parent.width
+            text: root.controller.errorText
             color: Theme.errorSoft
             font.pixelSize: 10
             elide: Text.ElideRight

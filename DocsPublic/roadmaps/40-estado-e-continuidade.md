@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.123.0
-testes      829 Rust aprovados; 50 harnesses QML (medicao de 2026-09-18, §7.61)
+testes      829 Rust aprovados; 50 harnesses QML (medicao de 2026-09-18, §7.63)
 metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
@@ -982,6 +982,12 @@ verificar-binario-abre.sh   depois de CADA `cmake --build` do verificar.sh:
                                AppImage (KINEIN_PERF_MARKER + KINEIN_PERF_EXIT),
                                que existia desde o M4.2 e nunca foi apontado
                                para o binario do checkout
+                            3. (2026-09-18, §7.63) o stderr ate' o primeiro
+                               frame nao tem aviso do motor QML de fiacao
+                               quebrada ("no signal of the target matches",
+                               "Binding loop", ReferenceError/TypeError) —
+                               o qmllint nao ve, porque depende do tipo REAL
+                               do target de uma Connections
 ```
 
 O ctime é a hora em que o inode entrou **neste** disco; nenhum gerenciador de
@@ -4002,3 +4008,48 @@ os papéis dos sistemas que o projeto TEM ("Cargo · automática"; num híbrido,
 `tst_toolchain` estendidos); gates QML, arquitetura, fiação IPC verdes.
 **Não feito, dito:** medir clique → feedback com um usuário real (offscreen
 não clica); o release-hardened não foi remedido nesta fatia.
+
+### 7.63 Etapa 2, F7 — a tela inicial: começar em 1 clique, ambiente em 1 linha — 2026-09-18
+
+Foto 11a (antes) e 11 (depois), com uma lista de recentes montada para a
+foto (`XDG_CONFIG_HOME` isolado: dois projetos reais, um fixado, um
+caminho ausente). O que mudou:
+
+- **O último aberto em destaque, Enter abre.** `RecentWorkspacesController`
+  ganhou `visibleWorkspaces`, `highlightedIndex` (o de maior `lastOpenedAt`
+  entre os visíveis — não o primeiro da lista, porque os fixados vêm
+  antes), `moveHighlight(±1)`, `openHighlighted()`. A `StartScreen` toma o
+  foco quando não há workspace e trata ↑ ↓ Enter; a linha em destaque diz
+  "Enter abre".
+- **"Caminho ausente" some da lista, com desfazer.** Os recentes cujo
+  caminho não existe ficam ocultos (não são apagados do disco — um disco
+  externo pode voltar); um rodapé "1 recente sem caminho foi ocultado ·
+  Desfazer" (`restoreMissing`) os traz de volta, com o × de sempre para
+  remover de vez.
+- **O ambiente numa linha.** "Ambiente: 37 de 62 ferramentas detectadas ·
+  Ver · Redetectar" — a grade de dez ferramentas saiu da primeira dobra;
+  "Ver" abre a aba Ferramentas, que já é a lista inteira. Na foto 11a o
+  cartão de ambiente cortava abaixo da dobra a 1280×800; na 11 a tela
+  inteira cabe com folga.
+- **A `StartScreen` fala com o controller**, como os hosts fazem: a
+  `RecentWorkspacesCard` recebe `controller` em vez de cinco sinais
+  reencaminhados (o `ShellWorkspaceHost` perdeu dez linhas; 384/400).
+
+**Defeito achado pela foto, fora do desenho:** o stderr da IDE avisava
+`Connections: Detected function "onIdentifyRequested" … no signal of the
+target matches`. O sinal `identifyRequested` é do controller filho
+`EmbeddedController.identity` (desde a divisão da E5), e o
+`EmbeddedRequestRouter` o escutava no pai — o `serial.identify` nunca saía
+pelo botão "Identificar" da aba Serial. Corrigido (uma `Connections` no
+filho) e **o gate `verificar-binario-abre.sh` ganhou a terceira pergunta**:
+o stderr até o primeiro frame não pode ter aviso do motor QML de fiação
+quebrada. Provado por mutação (a `Connections` errada de volta reprova e
+cita `EmbeddedRequestRouter.qml:40`). O gate de fiação IPC não vê essa
+classe: ele confere que `onX` existe em algum lugar, não em QUE target.
+
+**Medido:** 50 harnesses (`tst_recent_workspaces` estendido: oculto,
+destaque, Enter, desfazer, lista vazia); gates QML, lógica QML, fiação
+IPC, arquitetura, binário-abre (sem aviso) verdes. **Não feito, dito:**
+Enter/↑/↓ conferidos pela regra pura, não por tecla real (offscreen não
+digita na janela); a identidade Espressif não foi reexercitada na placa
+(a regra do autor: nunca gravar; identificar é leitura, fica para ele).

@@ -175,6 +175,26 @@ def abre(build_dir: Path, timeout: float) -> tuple[int | None, str, int | None]:
     return proc.returncode, texto, ms
 
 
+# Avisos do motor QML que significam fiacao ou binding QUEBRADOS — o qmllint
+# nao os ve, porque dependem do tipo real do `target` em tempo de execucao.
+# Achado em 2026-09-18 (F7): `onIdentifyRequested` numa Connections cujo
+# target nao tinha o sinal — o serial.identify nunca saia, e nenhum gate
+# reprovava; a IDE so' avisava no stderr, que ninguem lia.
+AVISOS_QML = (
+    "no signal of the target matches",
+    "Binding loop detected",
+    "ReferenceError",
+    "TypeError",
+    "is not a function",
+    "Cannot assign",
+    "Unable to assign",
+)
+
+
+def avisos_qml(texto: str) -> list[str]:
+    return [l for l in texto.splitlines() if any(a in l for a in AVISOS_QML)]
+
+
 def _texto(saida: bytes | str | None) -> str:
     if isinstance(saida, bytes):
         return saida.decode(errors="replace")
@@ -239,7 +259,12 @@ def main() -> int:
     codigo, texto, ms = abre(build_dir, args.timeout)
     duracao = time.monotonic() - inicio
     if codigo == 0 and ms is not None:
-        print(f"{binario.relative_to(RAIZ)}: abre, primeiro frame em {ms} ms")
+        ruido = avisos_qml(texto)
+        if ruido:
+            print(f"✗ {binario.relative_to(RAIZ)} abre, mas o QML avisou em tempo de execucao:", file=sys.stderr)
+            print("\n".join("    " + l for l in ruido), file=sys.stderr)
+            return 1
+        print(f"{binario.relative_to(RAIZ)}: abre, primeiro frame em {ms} ms, sem aviso do QML")
         return 0
 
     cauda = texto.strip().splitlines()[-40:]

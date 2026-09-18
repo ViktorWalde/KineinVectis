@@ -54,7 +54,36 @@ Item {
         controller.clearAll();
         if (!root.cleared) failures += 32;
 
+        // F7: o de caminho ausente some da lista (com desfazer); o ultimo
+        // aberto vem em destaque, mesmo com um fixado na frente; Enter abre.
+        controller.handleResolved([
+            { name: "fixado", root: "/tmp/fixado", lastOpenedAt: 5, pinned: true, available: true },
+            { name: "ultimo", root: "/tmp/ultimo", lastOpenedAt: 30, pinned: false, available: true },
+            { name: "sumiu", root: "/tmp/sumiu", lastOpenedAt: 20, pinned: false, available: false },
+            { name: "antigo", root: "/tmp/antigo", lastOpenedAt: 10, pinned: false, available: true }
+        ]);
+        if (controller.visibleWorkspaces.length !== 3 || controller.hiddenMissingCount !== 1) failures += 256;
+        if (controller.highlightedIndex !== 1) failures += 512;
+        root.opened = "";
+        controller.openHighlighted();
+        if (root.opened !== "/tmp/ultimo") failures += 1024;
+        controller.moveHighlight(-1);
+        controller.moveHighlight(-1);
+        if (controller.highlightedIndex !== 0) failures += 2048;
+        controller.moveHighlight(1);
+        controller.moveHighlight(1);
+        controller.moveHighlight(1);
+        if (controller.highlightedIndex !== 2 || controller.visibleWorkspaces[2].root !== "/tmp/antigo") failures += 4096;
+        controller.restoreMissing();
+        if (controller.visibleWorkspaces.length !== 4 || controller.hiddenMissingCount !== 0
+            || controller.visibleWorkspaces[controller.highlightedIndex].root !== "/tmp/ultimo") failures += 8192;
         controller.handleResolved([]);
+        if (controller.highlightedIndex !== -1) failures += 16384;
+        controller.moveHighlight(1);
+        root.opened = "";
+        controller.openHighlighted();
+        if (controller.highlightedIndex !== -1 || root.opened !== "") failures += 32768;
+
         controller.handleRequestFailed("fs.read", "ignorar");
         if (controller.errorText !== "") failures += 64;
         controller.handleRequestFailed("workspace.recent.pin", "falhou");

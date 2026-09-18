@@ -1,22 +1,30 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 
+// A tela inicial (Etapa 2 F7, 2026-09-18): comecar em 1 clique — ou em
+// Enter, no ultimo recente em destaque — e o ambiente numa linha ("37 de
+// 62 ferramentas · Ver"); a lista inteira fica no painel Ferramentas.
 Rectangle {
     id: root
 
     property var tools: []
-    property var recentWorkspaces: []
-    property string recentWorkspacesError: ""
+    required property var recentWorkspacesController
     property bool scanning: false
 
     signal openWorkspaceRequested()
-    signal recentWorkspaceOpenRequested(string rootPath)
-    signal recentWorkspacePinRequested(string rootPath)
-    signal recentWorkspaceRemoveRequested(string rootPath)
-    signal recentWorkspacesClearRequested()
     signal newProjectRequested(string templateId)
     signal settingsRequested()
     signal detectToolsRequested()
+    signal toolsPanelRequested()
+
+    focus: visible
+    // Sem workspace, o teclado e' desta tela: Enter abre o recente em destaque.
+    onVisibleChanged: if (visible) forceActiveFocus()
+    Component.onCompleted: if (visible) forceActiveFocus()
+    Keys.onUpPressed: recentWorkspacesController.moveHighlight(-1)
+    Keys.onDownPressed: recentWorkspacesController.moveHighlight(1)
+    Keys.onReturnPressed: recentWorkspacesController.openHighlighted()
+    Keys.onEnterPressed: recentWorkspacesController.openHighlighted()
 
     color: Theme.backgroundEditor
     radius: Theme.radiusLarge
@@ -138,132 +146,67 @@ Rectangle {
 
             RecentWorkspacesCard {
                 width: parent.width
-                workspaces: root.recentWorkspaces
-                errorText: root.recentWorkspacesError
-                onOpenRequested: function(rootPath) {
-                    root.recentWorkspaceOpenRequested(rootPath);
-                }
-                onPinRequested: function(rootPath) {
-                    root.recentWorkspacePinRequested(rootPath);
-                }
-                onRemoveRequested: function(rootPath) {
-                    root.recentWorkspaceRemoveRequested(rootPath);
-                }
-                onClearRequested: root.recentWorkspacesClearRequested()
+                controller: root.recentWorkspacesController
             }
 
             Rectangle {
-            width: parent.width
-            height: 220
-            radius: Theme.radiusLarge
-            color: Theme.background1
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Column {
-                anchors.fill: parent
-                anchors.margins: Theme.spacingLarge
-                spacing: Theme.spacingSmall
+                width: parent.width
+                height: 64
+                radius: Theme.radiusLarge
+                color: Theme.background1
+                border.color: Theme.borderSoft
+                border.width: 1
 
                 Row {
-                    width: parent.width
-                    height: 28
+                    anchors.fill: parent
+                    anchors.margins: Theme.spacingLarge
+                    spacing: Theme.spacingMedium
+
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: root.tools.length === 0 ? Theme.textMuted
+                               : root.detectedCount() === root.tools.length
+                                 ? Theme.successSoft : Theme.warningSoft
+                    }
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: qsTr("Estado do ambiente")
-                        color: Theme.textPrimary
-                        font.pixelSize: Theme.fontSizePanelTitle
-                        font.bold: true
+                        text: root.tools.length === 0
+                              ? qsTr("Ambiente: compiladores, CMake, depuradores e ferramentas ainda não detectados — a IDE só inspeciona, nunca instala sem confirmação.")
+                              : qsTr("Ambiente: %1 de %2 ferramentas detectadas")
+                                .arg(root.detectedCount()).arg(root.tools.length)
+                        color: Theme.textSecondary
+                        font.pixelSize: 12
+                        width: parent.width - x - environmentActions.width - parent.spacing
+                        elide: Text.ElideRight
                     }
 
-                    Item {
-                        width: parent.width - x - detectButton.width
-                        height: 1
-                    }
+                    Row {
+                        id: environmentActions
 
-                    KvButton {
-                        id: detectButton
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: Theme.spacingSmall
 
-                        compact: true
-                        enabled: !root.scanning
-                        text: root.scanning ? qsTr("Detectando...") : qsTr("Redetectar")
-                        iconName: "refresh"
-                        onClicked: root.detectToolsRequested()
-                    }
-                }
+                        KvButton {
+                            compact: true
+                            visible: root.tools.length > 0
+                            text: qsTr("Ver")
+                            iconName: "tools"
+                            onClicked: root.toolsPanelRequested()
+                        }
 
-                Text {
-                    visible: root.tools.length === 0
-                    text: qsTr("Detecte compiladores, CMake, Ninja, Git, depuradores e ferramentas Rust. A IDE apenas inspeciona; nunca instala sem confirmação.")
-                    color: Theme.textSecondary
-                    font.pixelSize: 12
-                    width: parent.width
-                    wrapMode: Text.WordWrap
-                }
-
-                Text {
-                    visible: root.tools.length > 0
-                    text: qsTr("%1 de %2 ferramentas detectadas")
-                          .arg(root.detectedCount()).arg(root.tools.length)
-                    color: Theme.textSecondary
-                    font.pixelSize: 11
-                }
-
-                Grid {
-                    id: environmentGrid
-
-                    width: parent.width
-                    columns: 2
-                    columnSpacing: Theme.spacingMedium
-                    rowSpacing: Theme.spacingXSmall
-
-                    Repeater {
-                        // Mantém o cartão estável em telas compactas; o painel
-                        // Ferramentas continua sendo a lista completa.
-                        model: root.tools.slice(0, 10)
-
-                        delegate: Row {
-                            id: toolRow
-
-                            required property var modelData
-
-                            width: (environmentGrid.width - environmentGrid.columnSpacing) / 2
-                            height: 22
-                            spacing: Theme.spacingSmall
-
-                            Rectangle {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 7
-                                height: 7
-                                radius: 3.5
-                                color: toolRow.modelData.status === "detected"
-                                       || toolRow.modelData.status === "ready"
-                                       ? Theme.successSoft : Theme.warningSoft
-                            }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 15
-                                text: toolRow.modelData.displayName
-                                      + (toolRow.modelData.version !== undefined
-                                         ? "  " + toolRow.modelData.version : "")
-                                color: Theme.textSecondary
-                                font.pixelSize: 11
-                                elide: Text.ElideRight
-                            }
+                        KvButton {
+                            compact: true
+                            enabled: !root.scanning
+                            text: root.scanning ? qsTr("Detectando...") : qsTr("Redetectar")
+                            iconName: "refresh"
+                            onClicked: root.detectToolsRequested()
                         }
                     }
                 }
-
-                Text {
-                    visible: root.tools.length > 10
-                    text: qsTr("Mais %1 ferramentas no painel Ferramentas")
-                          .arg(root.tools.length - 10)
-                    color: Theme.textMuted
-                    font.pixelSize: 10
-                }
-            }
             }
         }
     }

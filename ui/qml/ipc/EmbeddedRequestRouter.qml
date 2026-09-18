@@ -31,6 +31,14 @@ Item {
         function onMonitorRequested(device, baud) {
             root.coreClient.serialMonitor(device, baud);
         }
+    }
+
+    // Identidade pelo canal (E5): o sinal e' do controller FILHO `identity`,
+    // nao do EmbeddedController — ligado ao pai, o Qt avisava "no signal of
+    // the target matches" e o serial.identify nunca saia (achado em
+    // 2026-09-18, na foto da F7).
+    Connections {
+        target: root.embeddedController ? root.embeddedController.identity : null
 
         function onIdentifyRequested(device) {
             root.coreClient.serialIdentify(device);

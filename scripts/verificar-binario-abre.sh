@@ -39,7 +39,12 @@
 #      esta' dentro da arvore e' do ninja (restat), e conferi-lo deu falso
 #      positivo num gerado na primeira rodada;
 #   2. o binario chega ao primeiro frame offscreen (KINEIN_PERF_MARKER, o
-#      mesmo mecanismo do smoke do AppImage) e sai com 0.
+#      mesmo mecanismo do smoke do AppImage) e sai com 0;
+#   3. (2026-09-18, F7) o stderr ate' o primeiro frame NAO tem aviso do motor
+#      QML que signifique fiacao quebrada ("no signal of the target matches",
+#      "Binding loop", ReferenceError/TypeError...). O qmllint nao ve isso:
+#      depende do tipo REAL do target. Provado por mutacao: a Connections do
+#      serial.identify apontada ao controller errado reprova e cita a linha.
 #
 # Provado por mutacao nas duas metades: `touch -d` num objeto para antes da
 # instalacao do Qt reprova em (1) e nomeia o header; o binario de 2026-09-10 no

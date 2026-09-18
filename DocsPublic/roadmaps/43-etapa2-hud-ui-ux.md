@@ -180,7 +180,10 @@ assíncrona do LSP), não por medir cliques. **F5 FEITA** (`40` §7.61): o próx
 Configurar CMake / Ferramentas), regra pura `ProblemNextStep`; foto 09 com
 um build que falha. **F6-b FEITA** (`40` §7.62): `tools.detect` adiado e o `workspace.open`
 de 1,4 s → 25 ms; a tabela de tempos; Problems sem repetição build/LSP; a
-toolchain da status bar segue o projeto — foto 10. **F6-a FEITA** (`40` §7.60): as
+toolchain da status bar segue o projeto — foto 10. **F7 FEITA** (`40` §7.63): o último
+recente em destaque com Enter, os de caminho ausente ocultos com desfazer, o
+ambiente numa linha com "Ver" — fotos 11a/11; de quebra, o `serial.identify`
+que não saía e o gate que passa a ler o stderr do QML. **F6-a FEITA** (`40` §7.60): as
 consultas LSP respondem fora do laço, o handshake corre numa thread, e o
 `syntaxTree.update` caiu de ~0,9 s para 0,05 s (o `utf16_position` varria o
 arquivo inteiro a cada realce). A cadeia do explorer que levava 30 s
