@@ -154,6 +154,48 @@ def checar(caminho: Path, tipos: dict[str, set[str]]) -> list[str]:
     return erros
 
 
+# Uma margem de ancora SEM a ancora e' um no-op silencioso: `anchors.rightMargin`
+# sem `anchors.right` deixa o item em x=0, e tudo que se ancora nele vai
+# junto. POR QUE (2026-09-18, teste do autor): o painel Git mostrava
+# checkboxes sem nome de arquivo e o historico com o hash por cima da data —
+# o refactor dbdafa0 (2026-09-03) apagou seis `anchors.left/right:
+# parent.*` e deixou as margens; qmllint nao ve, o binario abre, e ficou
+# assim por quinze dias.
+LADOS_DA_ANCORA = {
+    "leftMargin": ("left", "horizontalCenter", "fill", "centerIn"),
+    "rightMargin": ("right", "horizontalCenter", "fill", "centerIn"),
+    "topMargin": ("top", "verticalCenter", "fill", "centerIn"),
+    "bottomMargin": ("bottom", "verticalCenter", "fill", "centerIn"),
+}
+
+
+def margens_sem_ancora(caminho: Path) -> list[str]:
+    """`anchors.<lado>Margin:` num bloco que nao tem `anchors.<lado>:` (nem fill/centerIn)."""
+    achados: list[str] = []
+    pilha: list[dict[str, int]] = []
+    for numero, linha in enumerate(caminho.read_text(encoding="utf-8").splitlines(), 1):
+        s = linha.strip()
+        if s.startswith("//"):
+            continue
+        m = re.match(r"anchors\.(\w+):", s)
+        if m and pilha:
+            pilha[-1][m.group(1)] = numero
+        delta = linha.count("{") - linha.count("}")
+        for _ in range(max(delta, 0)):
+            pilha.append({})
+        for _ in range(max(-delta, 0)):
+            if not pilha:
+                break
+            props = pilha.pop()
+            for margem, ancoras in LADOS_DA_ANCORA.items():
+                if margem in props and "margins" not in props and not any(a in props for a in ancoras):
+                    achados.append(
+                        f"{caminho.relative_to(RAIZ)}:{props[margem]}: anchors.{margem} sem "
+                        f"anchors.{margem.removesuffix('Margin')} no mesmo bloco (a margem e' um no-op)"
+                    )
+    return achados
+
+
 def main() -> int:
     mapa = componentes()
     textos = {n: p.read_text(encoding="utf-8") for n, p in mapa.items()}
@@ -177,6 +219,7 @@ def main() -> int:
     erros: list[str] = []
     for p in sorted(QML.rglob("*.qml")):
         erros += checar(p, tipos)
+        erros += margens_sem_ancora(p)
 
     if erros:
         print("propriedades QML: binding para nome INEXISTENTE:", file=sys.stderr)

@@ -46,7 +46,8 @@ Rectangle {
 
             Row {
                 anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: Theme.spacingSmall
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacingSmall
                 spacing: Theme.spacingXSmall
 
                 KvIcon {

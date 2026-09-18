@@ -68,7 +68,8 @@ ListView {
             id: commitShaText
 
             anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: Theme.spacingSmall
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingSmall
             text: commitRowItem.shortSha
             color: Theme.accent
             font.pixelSize: 11
@@ -91,7 +92,8 @@ ListView {
             id: commitMetaText
 
             anchors.verticalCenter: parent.verticalCenter
-                    anchors.rightMargin: Theme.spacingSmall
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingSmall
             text: commitRowItem.author + ", " + commitRowItem.age
             color: Theme.textMuted
             font.pixelSize: 10

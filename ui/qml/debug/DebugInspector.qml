@@ -168,7 +168,8 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: variableArrow.right
-                                anchors.rightMargin: Theme.spacingSmall
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spacingSmall
                     text: variableRowDelegate.typeName !== ""
                           ? qsTr("%1 = %2  (%3)")
                                 .arg(variableRowDelegate.name)

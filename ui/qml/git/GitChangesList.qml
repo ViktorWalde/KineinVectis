@@ -72,7 +72,8 @@ ListView {
             id: stageBox
 
             anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: Theme.spacingSmall
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingSmall
             width: 14
             height: 14
             radius: Theme.radiusXSmall
@@ -157,7 +158,8 @@ ListView {
             id: discardChip
 
             anchors.verticalCenter: parent.verticalCenter
-                    anchors.rightMargin: Theme.spacingSmall
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingSmall
             width: 18
             height: 18
             radius: Theme.radiusXSmall

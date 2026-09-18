@@ -4418,3 +4418,26 @@ arquivo"; `defaultPort` por mapa). **Não feito, dito:** PostgreSQL/Mongo
 reais não subiram no gate (o `run` é o falso — o real é um clique do autor
 com Podman, e baixa ~150 MB); abas/histórico/exportar da consulta seguem
 como resto; `container.status` de 2,4 s idem.
+
+### 7.67 O painel Git sem nomes de arquivo por quinze dias — seis âncoras perdidas, e a regra — 2026-09-18 (noite)
+
+O autor pediu uma HUD de Git "à JetBrains". Antes de desenhar, a foto do
+painel de hoje (15a/15b): em **Mudanças**, três checkboxes **sem nome de
+arquivo**; em **Histórico**, o hash desenhado **por cima** de "há 56 min".
+Não era desenho — era defeito: o refactor `dbdafa0` (2026-09-03, "painel e
+controller cortados por responsabilidade") apagou seis linhas
+`anchors.left/right: parent.*` e deixou as `anchors.*Margin` órfãs. Uma
+margem sem a âncora é um no-op silencioso: o item fica em x=0, e o que se
+ancora nele (o texto do caminho entre o checkbox e o chip "diff") ganha
+largura negativa e some. `qmllint` não vê; o binário abre; nenhum harness
+instancia o delegate. Quinze dias.
+
+Consertadas as seis (`GitChangesList` ×2, `GitHistoryList` ×2,
+`GitBranchMenu`, `DebugInspector`), e **o gate `verificar-qml-propriedades`
+ganhou a regra**: `anchors.<lado>Margin` num bloco sem `anchors.<lado>`
+(nem `fill`/`centerIn`/`*Center`) reprova — provado por mutação
+(`GitHistoryList.qml:95`). Foto 15d: os caminhos de volta.
+
+Lição para a lista da §4.2.4: "o que os gates não cobrem" tinha "telas
+que carregam depois do primeiro frame" — este é o caso concreto; a regra
+estática fecha ESTA forma (margem órfã), não todas.
