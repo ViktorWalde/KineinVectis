@@ -85,6 +85,7 @@ Column {
         case "test.run.cmake": root.jobsController.startTests("cmake"); break;
         case "test.run.python": root.jobsController.startTests("python"); break;
         case "quality.run": root.jobsController.startQuality(); break;
+        case "coverage.run": root.jobsController.startCoverage(); break;
         case "run.start": root.runtimeController.startRun(""); break;
         case "run.stop": root.runtimeController.stopRun(); break;
         case "debug.start": root.debugController.startDebug(); break;

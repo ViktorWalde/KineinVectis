@@ -84,6 +84,11 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit pythonEnvironmentFinished(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.coverage.finished")) {
+        // success, tool, path, files (resumo por arquivo) e error viajam juntos.
+        emit coverageFinished(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.python.stubs")) {
         // jobId, success, package, command e target: a tela diz e pede o status.
         emit pythonStubsFinished(params.toVariantMap());

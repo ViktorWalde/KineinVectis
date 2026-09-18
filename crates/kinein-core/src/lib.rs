@@ -13,6 +13,7 @@ pub mod cmake;
 pub mod commands;
 pub mod configaction;
 pub mod container;
+pub mod coverage;
 pub mod dap;
 pub mod datasource;
 pub mod db;
@@ -272,6 +273,7 @@ impl Core {
             .or_else(|| self.index_request_response(method, request_id.clone(), params))
             .or_else(|| self.python_request_response(method, request_id.clone(), params))
             .or_else(|| self.serial_request_response(method, request_id.clone(), params))
+            .or_else(|| self.coverage_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))
             .unwrap_or_else(|| {

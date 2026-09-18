@@ -48,6 +48,7 @@ Window {
             domains.gitController.requestBlameFor(domains.editorController.currentFilePath());
             domains.diagnosticsController.setActivePath(domains.editorController.currentFilePath());
             domains.indexController.setActivePath(domains.editorController.currentFilePath());
+            domains.coverageController.setActivePath(domains.editorController.currentFilePath());
         }
     }
 
@@ -225,6 +226,7 @@ Window {
         runtimeController: domains.runtimeController
         debugController: domains.debugController
         gitController: domains.gitController
+        coverageController: domains.coverageController
         diagnosticsController: domains.diagnosticsController
         searchController: domains.searchController
         recentWorkspacesController: domains.recentWorkspacesController

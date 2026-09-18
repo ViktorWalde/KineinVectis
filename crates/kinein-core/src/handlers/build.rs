@@ -135,9 +135,12 @@ impl Core {
                 Ok(context) => context,
                 Err(response) => return *response,
             };
-        // Rust/Cargo (cargo clippy) e Python (ruff check) tem linter; os demais
-        // ainda nao.
-        if !matches!(kind, ProjectKind::RustCargo | ProjectKind::Python) {
+        // Rust/Cargo (cargo clippy), Python (ruff check) e C/C++ (clang-tidy
+        // pela CDB, D6) tem linter; os demais ainda nao.
+        if !matches!(
+            kind,
+            ProjectKind::RustCargo | ProjectKind::Python | ProjectKind::Cmake | ProjectKind::Make
+        ) {
             return unsupported_kind_response(request_id, "quality", kind);
         }
         let Some(jobs) = self.jobs.as_ref() else {
@@ -148,19 +151,15 @@ impl Core {
         let toolchain = crate::toolchain::Toolchain::resolve(&root, &self.detected_tools());
         // O ruff DETECTADO (pipx/uv em ~/.local/bin entram pelo detector; o
         // PATH do processo da IDE pode nao os ter).
-        let ruff = self.detector.find_in_path("ruff");
+        let tools = build::QualityTools {
+            ruff: self.detector.find_in_path("ruff"),
+            run_clang_tidy: self.detector.find_in_path("run-clang-tidy"),
+            clang_tidy: self.detector.find_in_path("clang-tidy"),
+        };
         let job_id = jobs.spawn("quality", "Quality", JobRisk::Medium, true, move |ctx| {
             let cancel = ctx.cancellation();
             let mut sink = |event: build::BuildEvent| emit_build_event(ctx, "quality", &event);
-            match build::run_quality(
-                &root,
-                kind,
-                profile,
-                &toolchain,
-                ruff.as_deref(),
-                &cancel,
-                &mut sink,
-            ) {
+            match build::run_quality(&root, kind, profile, &toolchain, &tools, &cancel, &mut sink) {
                 Ok(outcome) => {
                     ctx.emit_event(
                         "event.quality.finished",

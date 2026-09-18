@@ -16,6 +16,7 @@ Item {
     property var shellController
     property var debugController
     property var gitController
+    property var coverageController
     property var diagnosticsController
     property var projectTree
 
@@ -82,6 +83,10 @@ Item {
             root.editorController.currentTab,
             root.debugController.currentFile,
             root.debugController.currentLine)
+        // A lampada da calha e' o Alt+Enter na linha do cursor.
+        onCodeActionsRequested: function(line) {
+            root.editorController.requestCodeActions();
+        }
         onGutterLineClicked: function(line) {
             root.debugController.toggleBreakpoint(
                 root.editorController.currentFilePath(), line);
@@ -90,6 +95,8 @@ Item {
             root.editorController.currentTab)
         diffLineKinds: root.gitController.diffLineKinds
         diffRevision: root.gitController.diffRevision
+        coverageLineKinds: root.coverageController.lineKinds
+        coverageRevision: root.coverageController.revision
         blameActive: root.gitController.blameVisible
         blameLineAnnotations: root.gitController.blameLineAnnotations
         blameRevision: root.gitController.blameRevision

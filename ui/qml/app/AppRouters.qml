@@ -44,6 +44,16 @@ Item {
         editorController: root.domains.editorController
     }
 
+    CoverageEventRouter {
+        coreClient: root.domains.coreClient
+        coverageController: root.domains.coverageController
+    }
+
+    CoverageRequestRouter {
+        coreClient: root.domains.coreClient
+        coverageController: root.domains.coverageController
+    }
+
     JobsEventRouter {
         coreClient: root.domains.coreClient
         jobsController: root.domains.jobsController

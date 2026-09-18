@@ -432,7 +432,10 @@ mod tests {
         let root = temp_root("clangd-nativo");
         let tc = Toolchain::resolve(&root, &maquina());
         let args = tc.clangd_args();
-        assert_eq!(args, vec!["--background-index".to_owned()]);
+        assert_eq!(
+            args,
+            vec!["--background-index".to_owned(), "--clang-tidy".to_owned()]
+        );
     }
 
     /// Com o compilador C++ fixado no cross, o clangd ganha `--query-driver`

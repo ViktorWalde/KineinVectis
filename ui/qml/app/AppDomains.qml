@@ -42,6 +42,7 @@ Item {
     readonly property alias runConfigController: runConfigController
     readonly property alias debugController: debugController
     readonly property alias gitController: gitController
+    readonly property alias coverageController: coverageController
     readonly property alias searchController: searchController
     readonly property alias searchEverywhereController: searchEverywhereController
     readonly property alias indexController: indexController
@@ -122,6 +123,7 @@ Item {
         onRunOneTestRequested: (testId, buildSystem) => root.coreClient.runTests("", buildSystem, testId)
         onDiscoverTestsRequested: buildSystem => root.coreClient.discoverTests(buildSystem)
         onRunQualityRequested: root.coreClient.runQuality()
+        onRunCoverageRequested: root.coreClient.coverageRun()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);
         }
@@ -242,6 +244,14 @@ Item {
         function onOpenLocalRequested(local) {
             editorController.openDiagnostic(local, 1, 1);
         }
+    }
+
+    // A cobertura dos testes (D8, 2026-09-17): o resumo e as linhas do
+    // arquivo ativo para a calha do editor.
+    CoverageController {
+        id: coverageController
+
+        workspaceRoot: root.coreClient.workspaceRoot
     }
 
     DebugController {

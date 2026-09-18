@@ -95,7 +95,7 @@ build         cmake (configure/build/targets/presets/kits com sysroot, triple,
               hex/bin, alvo embarcado do cargo, FetchContent pinado...)
 teste         cargo test e ctest (test.rs) — a SAIDA ainda nao chega a tela
               (event.test.output sem ouvinte, roadmaps/40 §8)
-qualidade     cargo clippy (quality.run). clang-tidy: NAO; cppcheck: NAO
+qualidade     cargo clippy, ruff, clang-tidy pela CDB (quality.run, 2026-09-17). cppcheck: NAO
 formato       clang-format, rustfmt
 sintaxe       Tree-sitter C, C++, Rust. Python: NAO. Desde 2026-09-12 as
               MESMAS gramaticas indexam o projeto INTEIRO (dominio `index`)
@@ -127,9 +127,9 @@ Coluna **hoje**: ✓ existe · ◐ parcial · ✗ não existe.
 | configure/build/CTest/presets/kits | CMake Tools (MIT) | cmake, ninja, ctest | BSD-3 / Apache-2.0 | processo | ✓ (ctest sem saída na tela) |
 | depurar | CodeLLDB (MIT), cpptools (`vsdbg` proprietário) | lldb-dap, gdb `-i dap` | Apache-2.0 / GPL-3 | DAP | ✓ |
 | formatar | clang-format via clangd/cpptools | clang-format | Apache-2.0 | processo | ✓ |
-| análise estática | clang-tidy (cpptools/clangd), cppcheck ext | **clang-tidy**; **cppcheck** | Apache-2.0; **GPL-3** | processo | ✗ (só clippy) |
+| análise estática | clang-tidy (cpptools/clangd), cppcheck ext | **clang-tidy**; **cppcheck** | Apache-2.0; **GPL-3** | processo | ◐ 2026-09-17 — clang-tidy no clangd e no quality.run (40 §7.50); cppcheck ✗ |
 | sanitizers | tarefas do CMake | `-fsanitize` | — | ação de config | ✓ |
-| cobertura | Coverage Gutters (MIT) lê lcov/cobertura | gcov + lcov / llvm-cov | GPL (gcc) / Apache | processo | ✗ |
+| cobertura | Coverage Gutters (MIT) lê lcov/cobertura | gcov + lcov / llvm-cov | GPL (gcc) / Apache | processo | ◐ 2026-09-17 — a calha lê LCOV (coverage.*); gcov/lcov do C/C++ ✗ (exige --coverage no build) |
 | test explorer C++ | C++ TestMate (MIT): GoogleTest, Catch2, doctest | gtest/catch2/doctest **por descoberta** (`--gtest_list_tests`) | BSD-3 / BSL-1.0 / MIT | processo | ✗ (só ctest) |
 | Makefile | Makefile Tools (MIT) | make | GPL-3 | processo | ✗ |
 | pacotes | Conan (MIT), vcpkg (MIT) | conan / vcpkg | MIT | processo | ✗ — a Kinein tem o catálogo `FetchContent` pinado (35 §4) |
@@ -147,7 +147,7 @@ Coluna **hoje**: ✓ existe · ◐ parcial · ✗ não existe.
 | testes | rust-analyzer runnables | cargo test; **cargo-nextest** (MIT OR Apache-2.0) | — | processo | ✓ / ✗ |
 | `Cargo.toml` | Even Better TOML (MIT) | **taplo** LSP | MIT | LSP | ✗ |
 | versões de crates | Dependi | — | **sem arquivo de licença** publicado (medido 2026-09-11) | — | não entra |
-| cobertura | — | cargo-llvm-cov (MIT OR Apache-2.0) | — | processo | ✗ |
+| cobertura | — | cargo-llvm-cov (MIT OR Apache-2.0) | — | processo | ✓ 2026-09-17 — coverage.run (40 §7.50) |
 | auditoria | — | cargo-deny (já no gate), cargo-audit | MIT OR Apache-2.0 | processo | ◐ (gate, não IDE) |
 | embarcado Rust | probe-rs ext | cargo-embed/flash, defmt (MIT/Apache), embassy (MIT/Apache), esp-hal 1.2.1 (MIT/Apache), rp-hal, svd2rust, flip-link, cargo-binutils | MIT OR Apache-2.0 | processo / templates | ◐ (probe-rs sim; templates decididos no 35 §5.7) |
 
@@ -486,9 +486,19 @@ BLOCO D — embarcado em profundidade: o que o Cortex-Debug/probe-rs MOSTRAM
  D4  registradores do core                  FEITO 2026-09-17 (40 §7.49): debug.scopes lista
                                             os escopos inteiros; Registers sob pedido
  D5  RTOS threads                           OpenOCD `rtos` pelo gdb -i dap (FreeRTOS, Zephyr)
- D6  clang-tidy e cppcheck no quality.run   C/C++ deixa de ter so' clippy
- D7  test explorer C/C++                    gtest/catch2/doctest por descoberta
- D8  cobertura                              gcov/lcov e llvm-cov -> gutters no editor
+ D6  clang-tidy e cppcheck no quality.run   FEITO 2026-09-17 (40 §7.50, 0.119.0): clang-tidy
+                                            pela CDB (run-clang-tidy/clang-tidy -p) no
+                                            quality.run de CMake/Makefile, e --clang-tidy
+                                            no clangd. cppcheck NAO (GPL-3; processo,
+                                            entraria como segundo motor)
+ D7  test explorer C/C++                    FEITO 2026-09-17 (40 §7.50): gtest e Catch2 por
+                                            descoberta nos binarios do ctest json-v1
+                                            (`teste::caso`), rodar um pelo filtro do
+                                            framework. doctest NAO
+ D8  cobertura                              FEITO 2026-09-17 (40 §7.50): dominio coverage.*
+                                            — cargo-llvm-cov (Rust) e coverage.py (Python)
+                                            em LCOV, calha do editor. gcov/lcov (C/C++)
+                                            NAO: exige --coverage no build do usuario
  D9  uso de pilha e "o que cresceu"         -fstack-usage + puncover; bloaty
  D10 Renode como debugServer                a 2a maquina sem placa, com placas reais
                                             (nRF52840, STM32F4) que o QEMU nao tem

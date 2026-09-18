@@ -97,6 +97,9 @@ Item {
         buildItems.push({ label: cargoAvailable ? qsTr("Análise Cargo") : qsTr("Análise (ruff)"),
                           action: "quality.run",
                           enabled: workspaceOpen && (cargoAvailable || pythonAvailable) && coreConnected });
+        // A cobertura dos testes (D8): Rust pelo cargo-llvm-cov, Python pelo coverage.py.
+        buildItems.push({ label: qsTr("Cobertura dos testes"), action: "coverage.run",
+                          enabled: workspaceOpen && (cargoAvailable || pythonAvailable) && coreConnected });
         const menus = {
             file: fileItems,
             edit: [

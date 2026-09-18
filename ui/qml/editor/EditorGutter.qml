@@ -13,6 +13,9 @@ Item {
     property int executionLine: 0
     property var diffLineKinds: ({})
     property int diffRevision: 0
+    // A cobertura (D8): linha -> "covered"|"missed", ao lado do diff.
+    property var coverageLineKinds: ({})
+    property int coverageRevision: 0
     property bool blameActive: false
     property var blameLineAnnotations: ({})
     property int blameRevision: 0
@@ -24,6 +27,12 @@ Item {
 
     property int hoveredDiagnosticLine: 0
     property string hoveredDiagnosticText: ""
+    // O y do cursor (-1 = sem arquivo): a linha dele, pelo indice visivel
+    // (folding), e' onde a lampada do Alt+Enter aparece sem esperar o atalho
+    // quando ha' diagnostico (P5, 2026-09-17) — o clique pede as acoes.
+    property real cursorY: -1
+    readonly property int cursorLine: root.cursorY < 0 || root.lineHeight <= 0 ? 0
+        : Number(root.visibleLineNumbers[Math.floor(root.cursorY / root.lineHeight)] || 0)
 
     readonly property int digitCount: Math.max(2, String(root.lineCount).length)
     readonly property int markerLaneWidth: 28
@@ -55,6 +64,7 @@ Item {
 
     signal lineClicked(int line)
     signal foldToggleRequested(int line)
+    signal actionsRequested(int line)
 
     clip: true
     width: root.markerLaneWidth
@@ -71,6 +81,11 @@ Item {
 
     function diffKindFor(line, revision) {
         const kind = root.diffLineKinds[line];
+        return kind === undefined ? "" : kind;
+    }
+
+    function coverageKindFor(line, revision) {
+        const kind = root.coverageLineKinds[line];
         return kind === undefined ? "" : kind;
     }
 
@@ -119,54 +134,20 @@ Item {
             width: root.width
             height: root.lineHeight
 
-            Rectangle {
-                readonly property string diffKind:
-                    root.diffKindFor(gutterLine.lineNumber,
-                                     root.diffRevision)
-
-                anchors.left: parent.left
-                anchors.top: parent.top
-                width: 3
-                height: diffKind === "removed" ? 3 : parent.height
-                visible: diffKind !== ""
-                color: diffKind === "added" ? Theme.successSoft
-                       : (diffKind === "modified" ? Theme.infoSoft
-                                                  : Theme.errorSoft)
-            }
-
-            Text {
-                anchors.left: parent.left
-                anchors.leftMargin: 5
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root.isFoldableLine(gutterLine.lineNumber,
-                                             root.foldingRevision)
-                text: root.isFoldedLine(gutterLine.lineNumber,
-                                        root.foldingRevision) ? "▸" : "▾"
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontSizeEditor - 3
-
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -4
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: function(mouse) {
-                        root.foldToggleRequested(gutterLine.lineNumber);
-                        mouse.accepted = true;
-                    }
-                }
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: root.breakpointLeft
-                width: root.breakpointSize
-                height: root.breakpointSize
-                radius: root.breakpointSize / 2
-                visible: gutterLine.hasBreakpoint
-                color: Theme.errorSoft
-                border.width: 1
-                border.color: Theme.background0
+            // As marcas da faixa esquerda (diff, cobertura, dobra, breakpoint):
+            // dono proprio (a calha bateu em 300 no P5, 2026-09-17).
+            EditorGutterLineMarks {
+                width: root.markerLaneWidth
+                height: parent.height
+                diffKind: root.diffKindFor(gutterLine.lineNumber, root.diffRevision)
+                coverageKind: root.coverageKindFor(gutterLine.lineNumber,
+                                                   root.coverageRevision)
+                foldable: root.isFoldableLine(gutterLine.lineNumber, root.foldingRevision)
+                folded: root.isFoldedLine(gutterLine.lineNumber, root.foldingRevision)
+                hasBreakpoint: gutterLine.hasBreakpoint
+                breakpointLeft: root.breakpointLeft
+                breakpointSize: root.breakpointSize
+                onFoldToggleRequested: root.foldToggleRequested(gutterLine.lineNumber)
             }
 
             Text {
@@ -237,6 +218,30 @@ Item {
                     onExited: {
                         root.hoveredDiagnosticLine = 0;
                         root.hoveredDiagnosticText = "";
+                    }
+                }
+            }
+
+            // A lampada PROATIVA: na linha do cursor com diagnostico, antes
+            // do Alt+Enter — e' onde os quick fixes do clangd/rust-analyzer/
+            // basedpyright/ruff moram. O clique e' o Alt+Enter.
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: root.breakpointLeft - 10
+                visible: gutterLine.lineNumber === root.cursorLine
+                         && root.diagnosticSeverityFor(gutterLine.lineNumber,
+                                                       root.diagnosticRevision) !== ""
+                text: "💡"
+                font.pixelSize: Theme.fontSizeEditor - 3
+
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -3
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: function(mouse) {
+                        root.actionsRequested(gutterLine.lineNumber);
+                        mouse.accepted = true;
                     }
                 }
             }

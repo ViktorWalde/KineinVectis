@@ -1,5 +1,29 @@
 # 03 — Protocolo IPC
 
+> **0.119.0 (2026-09-17, noite) — P5, qualidade: clang-tidy, gtest/Catch2,
+> cobertura, a lâmpada proativa (D6–D8 do `roadmaps/41`).** (1) **clang-tidy
+> em dois lugares**: o clangd sobe com `--clang-tidy` (o clangd 21 desta
+> máquina lista a flag; ele lê o `.clang-tidy` do projeto sozinho — os
+> avisos entram no canal dos diagnósticos, arquivo aberto a arquivo aberto) e
+> o `quality.run` de um `CMake`/`Makefile` roda o projeto inteiro pela CDB:
+> `run-clang-tidy -p <cdb> -quiet` (o script do LLVM) ou `clang-tidy -p <cdb>
+> <arquivos da CDB>`; sem CDB, "configure" — sem `clang-tidy`, a ferramenta.
+> (2) **gtest/Catch2 na árvore**: o `test.discover` de um `CMake` pergunta a
+> cada binário do `ctest --show-only=json-v1` os casos de dentro
+> (`--gtest_list_tests`; `--list-tests --verbosity quiet`) e os lista com o
+> id `<teste do ctest>::<caso>`; `test.run { testId }` com esse id roda o
+> binário com `--gtest_filter=` (ou o nome, no Catch2). (3) **Domínio novo
+> `coverage.*`** (o 35º): `coverage.run {}` → job (`cargo llvm-cov --lcov
+> --output-path .kinein/coverage.lcov`; `coverage.py run -m pytest` +
+> `coverage lcov` pelo interpretador do projeto; C/C++ recusado com o motivo)
+> → `event.coverage.finished { jobId, success, tool, path?, files: [{ file,
+> linesFound, linesHit }], error? }`; `coverage.lines { file }` → `{ file,
+> known, covered[], missed[] }` do último LCOV — a calha do editor pinta
+> (barra verde/vermelha ao lado do diff). Comando `coverage.run` na paleta e
+> no menu Build. (4) A **lâmpada**: na linha do cursor com diagnóstico a
+> calha mostra 💡 antes do Alt+Enter; o clique é o Alt+Enter. Métodos 150,
+> eventos 53, domínios 35.
+>
 > **0.118.0 (2026-09-17, noite) — P3, o que o depurador de embarcado MOSTRA
 > (D1–D4 do `roadmaps/41` bloco D), como passagem do DAP padrão — a
 > "solução pronta" não é uma extensão do VS Code, é o protocolo que
@@ -1271,7 +1295,22 @@ não é Rust/Cargo **nem Python** retorna `INVALID_REQUEST` (CMake via clang-tid
 é o próximo passo). Falhas (`cargo` ausente etc.) chegam por
 `event.quality.finished`. O parâmetro opcional `buildSystem` de `0.55.0` é
 tipado pelo mesmo enum; as capacidades executáveis por `quality.run` são
-`cargo` e `python`.
+`cargo`, `python` e, desde `0.119.0`, `cmake`/`make`.
+
+**C/C++ (`0.119.0`, D6 do `roadmaps/41`, 2026-09-17).** Num `CMake` ou num
+`Makefile` puro o `quality.run` roda o **clang-tidy do projeto inteiro pela
+CDB** (`build/tidy.rs`): `run-clang-tidy -p <pasta da CDB> -quiet` quando o
+script do LLVM está detectado (paraleliza e lê a `compile_commands.json`),
+senão `clang-tidy -p <pasta> <arquivos>` com os arquivos vindos da própria
+CDB (`file` de cada entrada, sem repetir, só os que existem — nunca um
+glob). O `.clang-tidy` do projeto é lido pela ferramenta; a IDE não escolhe
+checks. Cada `arquivo:linha:coluna: warning: mensagem [check]` vira
+`event.quality.diagnostic` pelo parser gcc-like, com o nome do check na
+mensagem. Sem CDB (`cdb::status`) o job falha dizendo "configure o CMake ou
+compile o Makefile com o bear"; sem `clang-tidy`, nomeia a ferramenta. O
+mesmo `.clang-tidy` vale no editor: o clangd sobe com `--clang-tidy`
+(`toolchain/arguments.rs`), e os avisos entram nos diagnósticos do arquivo
+aberto. O botão de análise da barra aparece também em C/C++ e Python.
 
 **Python (`0.99.0`, 2026-09-13 — fatia 2 da cadeia do `roadmaps/41` bloco
 B).** Workspace Python (`buildSystem: "python"`, ou o detectado): roda o
@@ -1295,6 +1334,22 @@ instalação) — não o "tipo de projeto não suportado" de antes. `success` é
 ruff real (`F401` do `tools/gera.py` do projeto de exercitação).
 
 ### Testes (`test.run` / `test.discover` — jobs assíncronos)
+
+**gtest e Catch2 dentro dos binários do ctest (`0.119.0`, D7 do
+`roadmaps/41`, 2026-09-17).** Um `add_test` do `CMake` é UM binário com N
+casos; o `ctest -N` lista o binário. O `test.discover` de um `CMake` pergunta
+ao próprio binário: `ctest --test-dir <build> --show-only=json-v1` (ctest
+4.2.3, medido: `tests[].name`, `tests[].command[]`, `WORKING_DIRECTORY`),
+depois `<exe> --gtest_list_tests` (gtest: `Suite.` na coluna 0, `  Caso`
+indentado; parametrizados `Suite/Inst.Caso/0`) ou `<exe> --list-tests
+--verbosity quiet` (Catch2 v3: um nome por linha). Cada caso entra como
+`TestCaseInfo { id: "<teste do ctest>::<caso>", name: "<caso>" }` depois das
+linhas do ctest; um binário que não responde a nenhuma listagem continua
+sendo só a linha do ctest. `test.run { testId: "unit_tests::Math.Adds" }`
+roda o binário direto — `--gtest_filter=Math.Adds --gtest_color=no` (cada
+`[       OK ]`/`[  FAILED  ]` vira `event.test.case`) ou `"<caso>" -r
+compact` no Catch2 (o desfecho do caso é o exit code). Um `testId` sem `::`
+é o ctest de sempre (`-R ^nome$`).
 
 Implementado no protocolo `0.17.0`; migrado para **job assíncrono/cancelável**.
 Requer workspace aberto. Responde na hora com `{ "jobId" }`; roda o runner do
@@ -3549,6 +3604,38 @@ ide.rs      24    editor.rs   19    build.rs    16    git.rs       9    run.rs  
 paleta **anuncia** tem de ser o que a IDE **obedece**, e isso é gate desde
 2026-09-03 (`scripts/verificar-atalhos.sh`). Com a lista no core, o gate compara
 uma fonte com o host; com a lista na UI, ele compararia a UI consigo mesma.
+
+## `coverage.*` — a cobertura dos testes
+
+Domínio novo no protocolo `0.119.0` (D8 do `roadmaps/41`, P5 do `40` §4.1,
+2026-09-17). O LCOV é a língua comum: é o que `cargo llvm-cov` e o
+`coverage.py` escrevem, e o que a calha do editor lê.
+
+```text
+coverage.run   {}          -> { jobId }   (job; event.coverage.finished no fim)
+coverage.lines { file }    -> { file, known, covered: [linha], missed: [linha] }
+
+event.coverage.finished { jobId, success, tool, path?, files: [{ file, linesFound,
+                          linesHit }], error? }
+```
+
+**Por tipo de projeto:** Rust → `cargo llvm-cov --lcov --output-path
+.kinein/coverage.lcov` (o `cargo` do kit; `cargo-llvm-cov` 0.9.1 desta
+máquina: `--lcov` + `--output-path`; exige `rustup component add
+llvm-tools-preview`, e sem o `cargo-llvm-cov` o job falha dizendo os dois
+passos); Python → `<python> -m coverage run -m pytest -q` e `<python> -m
+coverage lcov -o .kinein/coverage.lcov` pelo interpretador do projeto (sem o
+módulo, o passo `uv add --dev coverage pytest`); C/C++ → `INVALID_REQUEST`
+antes do job: exige compilar com `--coverage` (gcov/lcov), o que é decisão
+do usuário no build — não entra sem ela. O arquivo fica em
+`<root>/.kinein/coverage.lcov` e é relido: `files` é um resumo por arquivo
+(`SF:`, os `DA:` somados por linha — blocos repetem linhas), e
+`coverage.lines` dá as linhas de UM arquivo (caminho exato ou canônico
+igual), `known: false` quando o relatório não o tem. Na UI: comando
+**Cobertura dos testes** (paleta e menu Build) → job; o `CoverageController`
+guarda o resumo e, a cada troca de aba, pede as linhas do arquivo ativo — a
+calha pinta uma barra de 3 px ao lado da do diff: verde coberta, vermelha
+instrumentada e nunca executada.
 
 ## `setup.*` — o passo a passo oficial de instalação, por distro
 

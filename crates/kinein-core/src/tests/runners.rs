@@ -8,8 +8,9 @@ use serde_json::json;
 use super::core_with_empty_search_path;
 use kinein_protocol::JsonRpcRequest;
 
-/// So' Rust/Cargo (clippy) e Python (ruff) tem linter no `quality.run`; um
-/// workspace `CMake` continua recusado com "tipo nao suportado".
+/// Rust/Cargo (clippy), Python (ruff) e C/C++ (clang-tidy pela CDB, D6)
+/// tem linter no `quality.run`; um workspace Maven continua recusado com
+/// "tipo nao suportado".
 #[test]
 fn quality_run_rejects_kinds_without_a_linter() {
     let dir = std::env::temp_dir()
@@ -17,7 +18,9 @@ fn quality_run_rejects_kinds_without_a_linter() {
         .join(format!("{}-quality-unsupported", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
-    std::fs::write(dir.join("CMakeLists.txt"), "project(x)\n").unwrap();
+    // Maven: sem linter. (Um CMake tem o clang-tidy pela CDB desde o D6,
+    // 2026-09-17 — ver `tests/quality_tidy.rs`.)
+    std::fs::write(dir.join("pom.xml"), "<project/>\n").unwrap();
     let mut core = core_with_empty_search_path("quality-unsupported");
 
     let opened = core.handle_request(&JsonRpcRequest::new(
@@ -33,7 +36,7 @@ fn quality_run_rejects_kinds_without_a_linter() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert!(error.message.contains("cmake"));
+    assert!(error.message.contains("maven"), "{}", error.message);
 }
 
 /// Rust, `CMake` e (desde a fatia 3 da cadeia Python) Python tem runner de
@@ -627,4 +630,183 @@ fn tests_are_discovered_and_one_runs_by_its_exact_id() {
         "sem -k"
     );
     assert_eq!(finished["passed"], 1);
+}
+
+/// Workspace `CMake` com a CDB em `build/` e um core cuja busca de
+/// ferramentas e' so' a pasta `bin` do workspace (D6, clang-tidy).
+fn cpp_quality_fixture(
+    name: &str,
+    com_cdb: bool,
+) -> (
+    std::path::PathBuf,
+    crate::Core,
+    std::sync::mpsc::Receiver<JsonRpcRequest>,
+) {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-quality-cpp-{name}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    std::fs::write(dir.join("CMakeLists.txt"), "project(x CXX)\n").unwrap();
+    std::fs::write(dir.join("a.cpp"), "int main() { int x; return x; }\n").unwrap();
+    let dir = dir.canonicalize().unwrap();
+    if com_cdb {
+        std::fs::create_dir_all(dir.join("build")).unwrap();
+        std::fs::write(
+            dir.join("build/compile_commands.json"),
+            format!(
+                r#"[{{"directory":"{d}","file":"{d}/a.cpp","command":"c++ -c a.cpp"}}]"#,
+                d = dir.display()
+            ),
+        )
+        .unwrap();
+    }
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        90_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    (dir, core, receiver)
+}
+
+/// C/C++ (D6 do roadmaps/41, 2026-09-17): o `quality.run` num `CMake` roda o
+/// clang-tidy pela CDB — `run-clang-tidy -p build -quiet` quando o script
+/// existe, senao `clang-tidy -p build <arquivos da CDB>`; os avisos
+/// `arquivo:linha:coluna: warning: … [check]` viram diagnosticos. Sem CDB,
+/// a falha diz "configure"; sem clang-tidy, nomeia a ferramenta.
+#[test]
+#[cfg(unix)]
+fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
+    use std::os::unix::fs::PermissionsExt;
+
+    // Sem CDB: o motor existe, mas diz o que falta.
+    let (_dir, mut core, receiver) = cpp_quality_fixture("sem-cdb", false);
+    let (_, finished) = run_quality_and_collect(&mut core, &receiver);
+    assert_eq!(finished["success"], false);
+    assert!(
+        finished["error"]
+            .as_str()
+            .unwrap()
+            .contains("compilation database"),
+        "{finished}"
+    );
+
+    // Com CDB e sem clang-tidy: a ferramenta, nomeada.
+    let (dir, mut core, receiver) = cpp_quality_fixture("sem-tidy", true);
+    let (_, finished) = run_quality_and_collect(&mut core, &receiver);
+    assert!(
+        finished["error"].as_str().unwrap().contains("clang-tidy"),
+        "{finished}"
+    );
+
+    // clang-tidy falso (sem o script): recebe -p build e os arquivos da CDB
+    // e avisa como o real.
+    let executavel = |nome: &str, corpo: &str| {
+        let p = dir.join("bin").join(nome);
+        std::fs::write(&p, corpo).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+    };
+    executavel(
+        "clang-tidy",
+        &format!(
+            "#!/bin/sh\necho \"tidy-falso $*\"\necho \"{d}/a.cpp:1:18: warning: variable 'x' is uninitialized [cppcoreguidelines-init-variables]\"\nexit 0\n",
+            d = dir.display()
+        ),
+    );
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    assert!(
+        core.handle_request(&JsonRpcRequest::new(
+            91_i64,
+            "workspace.open",
+            Some(json!({ "path": dir.to_str().unwrap() }))
+        ))
+        .response()
+        .error
+        .is_none()
+    );
+    let (diagnosticos, finished) = run_quality_and_collect(&mut core, &receiver);
+    assert_eq!(finished["success"], true, "{finished}");
+    assert_eq!(diagnosticos.len(), 1, "{diagnosticos:?}");
+    assert_eq!(diagnosticos[0]["severity"], "warning");
+    assert_eq!(diagnosticos[0]["line"], 1);
+    assert!(
+        diagnosticos[0]["message"]
+            .as_str()
+            .unwrap()
+            .contains("[cppcoreguidelines-init-variables]"),
+        "{}",
+        diagnosticos[0]
+    );
+}
+
+/// Com o script `run-clang-tidy` (o do LLVM), ele vence: `-p build -quiet`,
+/// sem lista de arquivos.
+#[test]
+#[cfg(unix)]
+fn quality_run_on_cpp_prefers_run_clang_tidy() {
+    use std::os::unix::fs::PermissionsExt;
+
+    let (dir, _core, _receiver) = cpp_quality_fixture("run-tidy", true);
+    let executavel = |nome: &str, corpo: &str| {
+        let p = dir.join("bin").join(nome);
+        std::fs::write(&p, corpo).unwrap();
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+    };
+    executavel("clang-tidy", "#!/bin/sh\nexit 0\n");
+    executavel(
+        "run-clang-tidy",
+        "#!/bin/sh\necho \"run-tidy-falso $*\"\nexit 0\n",
+    );
+    let (sender, receiver) = std::sync::mpsc::channel();
+    let mut core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        dir.join("bin"),
+    ));
+    core.enable_lsp(sender);
+    assert!(
+        core.handle_request(&JsonRpcRequest::new(
+            92_i64,
+            "workspace.open",
+            Some(json!({ "path": dir.to_str().unwrap() }))
+        ))
+        .response()
+        .error
+        .is_none()
+    );
+    let started = core.handle_request(&JsonRpcRequest::new(93_i64, "quality.run", Some(json!({}))));
+    let job_id = started.response().result.clone().unwrap()["jobId"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let mut linhas = Vec::new();
+    let limite = std::time::Instant::now() + std::time::Duration::from_secs(20);
+    loop {
+        let e = receiver
+            .recv_timeout(limite.saturating_duration_since(std::time::Instant::now()))
+            .expect("evento");
+        let p = e.params.clone().unwrap_or_default();
+        if p["jobId"] != job_id.as_str() {
+            continue;
+        }
+        match e.method.as_str() {
+            "event.quality.output" => linhas.push(p["line"].as_str().unwrap().to_owned()),
+            "event.quality.finished" => break,
+            _ => {}
+        }
+    }
+    assert!(
+        linhas
+            .iter()
+            .any(|l| l == &format!("run-tidy-falso -p {} -quiet", dir.join("build").display())),
+        "{linhas:?}"
+    );
 }

@@ -212,6 +212,26 @@ pub fn discover_tests(
             "`{display}` saiu com {status}"
         ))));
     }
+    // CMake (D7 do roadmaps/41, 2026-09-17): os casos de DENTRO de cada
+    // binario gtest/Catch2, perguntados ao proprio binario, entram depois
+    // das linhas do ctest — com o id `teste::caso`.
+    if kind == ProjectKind::Cmake {
+        let internos = super::frameworks::discover_inner_cases(
+            Path::new("ctest"),
+            &root.join(".kinein").join("build"),
+            cancel,
+        );
+        if !internos.is_empty() {
+            sink(TestEvent::Output {
+                stream: "stdout",
+                line: format!(
+                    "{} caso(s) de gtest/Catch2 dentro dos binarios do ctest",
+                    internos.len()
+                ),
+            });
+            casos.extend(internos);
+        }
+    }
     Ok(casos)
 }
 

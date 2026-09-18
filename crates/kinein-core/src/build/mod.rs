@@ -9,10 +9,12 @@ pub mod engine;
 mod frameworks;
 mod make;
 mod parse;
+pub mod tidy;
 
 pub use engine::{Engine, EngineError};
 pub use frameworks::zephyr_board;
 pub use make::MakeTools;
+pub use tidy::QualityTools;
 
 use std::{
     error::Error,
@@ -300,11 +302,15 @@ pub fn run_quality(
     kind: ProjectKind,
     profile: RigorProfile,
     toolchain: &Toolchain,
-    ruff: Option<&Path>,
+    tools: &QualityTools,
     cancel: &Arc<AtomicBool>,
     sink: &mut dyn FnMut(BuildEvent),
 ) -> Result<BuildOutcome, BuildError> {
+    let ruff = tools.ruff.as_deref();
     match kind {
+        // C/C++ (D6 do roadmaps/41, 2026-09-17): o clang-tidy do projeto
+        // inteiro pela CDB — CMake ou Makefile com bear.
+        ProjectKind::Cmake | ProjectKind::Make => tidy::run_clang_tidy(root, tools, cancel, sink),
         // Python (cadeia do roadmaps/41 bloco B, fatia 2, 2026-09-12): o ruff
         // DETECTADO, `check` no root com a configuracao do projeto
         // (ruff.toml / pyproject [tool.ruff]); o perfil de rigor escolhe as
@@ -579,22 +585,39 @@ mod tests {
     fn run_quality_rejects_kinds_without_linter() {
         use kinein_protocol::{ProjectKind, RigorProfile};
 
-        // Cmake tem build integrado mas ainda nao tem analise de qualidade.
-        let root = std::env::temp_dir();
+        // Maven nao tem analise de qualidade; um CMake SEM CDB tem o motor
+        // (clang-tidy, D6) mas diz o que falta — ferramenta/arquivo ausente.
+        let root = std::env::temp_dir().join(format!("kinein-quality-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
         let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let error = super::run_quality(
+            &root,
+            ProjectKind::Maven,
+            RigorProfile::Strict,
+            &crate::toolchain::Toolchain::resolve(&root, &[]),
+            &super::QualityTools::default(),
+            &cancel,
+            &mut |_event| {},
+        )
+        .unwrap_err();
+        assert!(matches!(error, super::BuildError::Unsupported { .. }));
+        assert!(!error.is_missing_tool());
+
         let error = super::run_quality(
             &root,
             ProjectKind::Cmake,
             RigorProfile::Strict,
             &crate::toolchain::Toolchain::resolve(&root, &[]),
-            None,
+            &super::QualityTools::default(),
             &cancel,
             &mut |_event| {},
         )
         .unwrap_err();
-
-        assert!(matches!(error, super::BuildError::Unsupported { .. }));
-        assert!(!error.is_missing_tool());
+        assert!(error.is_missing_tool(), "{error}");
+        assert!(
+            error.to_string().contains("compilation database"),
+            "{error}"
+        );
     }
 
     #[test]

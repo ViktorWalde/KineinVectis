@@ -51,7 +51,7 @@ bool CoreClient::dispatchPythonResult(const QString& method, const QJsonObject& 
                                  result.value(QStringLiteral("package")).toString());
         return true;
     }
-    return false;
+    return dispatchCoverageResult(method, result);
 }
 
 } // namespace kinein

@@ -9,6 +9,7 @@ mod cmake;
 mod cmake_model;
 mod configaction;
 mod container;
+mod coverage;
 mod datasource;
 mod debug;
 mod debug_attach;

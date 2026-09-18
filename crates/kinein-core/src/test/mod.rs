@@ -16,6 +16,7 @@ use std::{
 };
 
 pub mod discover;
+pub mod frameworks;
 mod parse;
 mod runners;
 
@@ -169,7 +170,22 @@ pub fn run_tests(
 ) -> Result<TestOutcome, TestError> {
     match kind {
         ProjectKind::RustCargo => runners::run_cargo_test(root, selection, cancel, sink),
-        ProjectKind::Cmake => runners::run_ctest(root, selection, cancel, sink),
+        // Um caso de DENTRO de um binario gtest/Catch2 (`teste::caso`, D7)
+        // roda pelo proprio binario; o resto e' o ctest de sempre.
+        ProjectKind::Cmake => {
+            if let Selection::Exact(id) = selection
+                && let Some(resultado) = frameworks::run_inner_case(
+                    Path::new("ctest"),
+                    &root.join(".kinein/build"),
+                    id,
+                    cancel,
+                    sink,
+                )
+            {
+                return resultado;
+            }
+            runners::run_ctest(root, selection, cancel, sink)
+        }
         ProjectKind::Python => runners::run_pytest(root, selection, python, cancel, sink),
         other => Err(TestError::Unsupported {
             kind: project_kind_name(other),

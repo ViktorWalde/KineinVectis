@@ -276,6 +276,32 @@ própria linha com o resultado; a saída bruta do runner fica logo abaixo — e
 se o runner nem chegou a correr (sem `pytest` no ambiente, por exemplo), a aba
 mostra **o motivo e o passo para instalar**, em vez de "0 testes".
 
+**gtest e Catch2 dentro dos binários.** Num projeto CMake, **Listar testes**
+pergunta a cada executável do `ctest` quais casos ele tem (`--gtest_list_tests`
+ou `--list-tests` do Catch2) e os lista abaixo da linha do `ctest`, como
+`unit_tests::Math.Adds`; **Rodar só este teste** roda o binário com o filtro
+do framework, e cada `[ OK ]`/`[ FAILED ]` pinta a linha do caso.
+
+**Análise em C/C++.** O clangd sobe com `--clang-tidy` e lê o `.clang-tidy`
+do projeto: os avisos aparecem no arquivo aberto como qualquer diagnóstico.
+A **Análise de qualidade** (`Ctrl+Shift+L`) num CMake ou Makefile roda o
+clang-tidy do projeto inteiro pela `compile_commands.json` (`run-clang-tidy`
+quando existe) e lista os avisos em Problemas — sem CDB, ela diz "configure";
+sem `clang-tidy`, diz o pacote.
+
+**A lâmpada.** Na linha do cursor com um diagnóstico, a calha mostra 💡 antes
+de você apertar `Alt+Enter`: é onde os quick fixes do clangd, rust-analyzer,
+basedpyright e ruff moram. Clicar nela é o mesmo que `Alt+Enter`.
+
+**Cobertura dos testes** (menu Build → **Cobertura dos testes**, ou a
+paleta): Rust pelo `cargo llvm-cov` (`cargo install cargo-llvm-cov` e
+`rustup component add llvm-tools-preview`), Python pelo `coverage.py` do
+ambiente do projeto (`uv add --dev coverage pytest`). O job escreve
+`.kinein/coverage.lcov`, o resumo sai na aba Jobs e a **calha do editor**
+ganha uma barra ao lado da do git: verde, linha executada pelos testes;
+vermelha, instrumentada e nunca executada. C/C++ ainda não: exige compilar
+com `--coverage`, e a IDE não muda o seu build por conta própria.
+
 **Scripts do projeto:** arquivos `.sh`, `.bash`, `.zsh` e `.py` mostram um
 botão de executar ao passar o mouse na árvore. A mesma ação fica no clique
 direito como **Executar script** (e **Depurar**, num `.py`). A saída abre na

@@ -20,6 +20,8 @@ Rectangle {
     property string breadcrumbPath: ""
     property var diffLineKinds: ({})
     property int diffRevision: 0
+    property var coverageLineKinds: ({})
+    property int coverageRevision: 0
     property bool blameActive: false
     property var blameLineAnnotations: ({})
     property int blameRevision: 0
@@ -41,6 +43,7 @@ Rectangle {
                                              && width >= outlineWidth + 480
 
     signal gutterLineClicked(int line)
+    signal codeActionsRequested(int line)
     signal tabSelected(int index)
     signal tabCloseRequested(int index)
     signal saveRequested()
@@ -140,6 +143,8 @@ Rectangle {
         executionLine: root.executionLine
         diffLineKinds: root.diffLineKinds
         diffRevision: root.diffRevision
+        coverageLineKinds: root.coverageLineKinds
+        coverageRevision: root.coverageRevision
         blameActive: root.blameActive
         blameLineAnnotations: root.blameLineAnnotations
         blameRevision: root.blameRevision
@@ -149,6 +154,9 @@ Rectangle {
         autoCloseEnabled: root.autoCloseEnabled
         onGutterLineClicked: function(line) {
             root.gutterLineClicked(line);
+        }
+        onCodeActionsRequested: function(line) {
+            root.codeActionsRequested(line);
         }
         emptyMessage: root.workspaceOpen
                       ? qsTr("Clique em um arquivo no explorer para abrir.")

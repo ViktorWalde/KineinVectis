@@ -26,8 +26,20 @@ pub(super) fn build_command_descriptors() -> Vec<CommandDescriptor> {
             id: "quality.run".to_owned(),
             title: "Analyze (Lint)".to_owned(),
             category: "Build".to_owned(),
-            description: "Roda a analise de qualidade (cargo clippy) e lista os avisos".to_owned(),
+            description:
+                "Roda a analise de qualidade (cargo clippy / ruff / clang-tidy) e lista os avisos"
+                    .to_owned(),
             default_shortcut: Some("Ctrl+Shift+L".to_owned()),
+            requires_workspace: true,
+        },
+        CommandDescriptor {
+            id: "coverage.run".to_owned(),
+            title: "Cobertura dos testes".to_owned(),
+            category: "Build".to_owned(),
+            description: "Roda os testes com cobertura (cargo llvm-cov / coverage.py) e pinta a \
+                          calha do editor"
+                .to_owned(),
+            default_shortcut: None,
             requires_workspace: true,
         },
     ]

@@ -22,16 +22,17 @@ Rectangle {
     // pausada do debugger (0 = nenhuma). Estado vive no DebugController.
     property var breakpointLines: []
     property int executionLine: 0
-    // M3.2: linha→kind do diff git (added|modified|removed) do arquivo
-    // atual; a revisão força o rebind das marcas.
+    // M3.2: linha→kind do diff git (added|modified|removed); a revisão força
+    // o rebind. A cobertura (P5) segue a mesma forma.
     property var diffLineKinds: ({})
     property int diffRevision: 0
+    property var coverageLineKinds: ({})
+    property int coverageRevision: 0
     // M3.4: blame por linha ("autor, idade") como coluna extra da gutter,
     // ligado/desligado pelo comando "Git: Blame do arquivo".
     property bool blameActive: false
     property var blameLineAnnotations: ({})
     property int blameRevision: 0
-    readonly property int blameColumnWidth: 130
     // T6: diagnósticos do arquivo ativo. Os spans (0-based UTF-16) vão
     // para o highlighter (sublinhado ondulado); o mapa linha→{severity,
     // message} desenha a marca e o tooltip da gutter.
@@ -44,12 +45,11 @@ Rectangle {
     property int foldingRevision: 0
 
     onDiagnosticSpansChanged: {
-        if (editorHighlighter !== null) {
-            editorHighlighter.setDiagnostics(diagnosticSpans);
-        }
+        if (editorHighlighter !== null) editorHighlighter.setDiagnostics(diagnosticSpans);
     }
 
     signal gutterLineClicked(int line)
+    signal codeActionsRequested(int line)
     signal textEdited(string text)
     signal completionMoveRequested(int delta)
     signal completionAcceptRequested()
@@ -177,15 +177,18 @@ Rectangle {
         executionLine: root.executionLine
         diffLineKinds: root.diffLineKinds
         diffRevision: root.diffRevision
+        coverageLineKinds: root.coverageLineKinds
+        coverageRevision: root.coverageRevision
         blameActive: root.blameActive
         blameLineAnnotations: root.blameLineAnnotations
         blameRevision: root.blameRevision
-        blameColumnWidth: root.blameColumnWidth
         diagnosticByLine: root.diagnosticByLine
         diagnosticRevision: root.diagnosticRevision
         foldingRevision: root.foldingRevision
         highlighter: editorHighlighter
+        cursorY: root.hasOpenFile ? textEditor.cursorRectangle.y : -1
         onLineClicked: line => root.gutterLineClicked(line)
+        onActionsRequested: line => root.codeActionsRequested(line)
         onFoldToggleRequested: line => editorHighlighter.toggleFoldAtLine(line)
     }
 

@@ -58,7 +58,9 @@ impl Default for ServerRegistry {
                     key: "cpp",
                     language: "cpp",
                     command: "clangd".to_owned(),
-                    args: vec!["--background-index".to_owned()],
+                    // `--clang-tidy` (P5): os avisos do tidy no canal dos
+                    // diagnosticos; o kit reescreve isto pelo `clangd_args`.
+                    args: vec!["--background-index".to_owned(), "--clang-tidy".to_owned()],
                     language_id: "cpp",
                     settings: Value::Null,
                 },

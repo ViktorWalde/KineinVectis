@@ -60,7 +60,11 @@ distribuída como AppImage para Linux x86_64.
   IDE com SHA-256 conferido antes de desempacotar, leitura de sysroot e
   importação de kit de SDK (Yocto, Buildroot);
 - **o projeto inteiro lido**: índice próprio de pastas, arquivos e declarações
-  de C/C++/Rust/Python, com o contexto de compilador de cada arquivo.
+  de C/C++/Rust/Python, com o contexto de compilador de cada arquivo;
+- **qualidade**: clippy, `ruff` e o clang-tidy do projeto (no clangd e pela
+  `compile_commands.json`), gtest/Catch2 dentro dos binários na árvore de
+  testes, cobertura em LCOV (`cargo llvm-cov`, `coverage.py`) pintada na calha
+  do editor, e a lâmpada do Alt+Enter na linha com diagnóstico.
 
 Não há IA embutida, chat nem painel de assistente: agentes de linha de comando
 (Claude Code, Codex, …) rodam no terminal da IDE como qualquer outro programa.

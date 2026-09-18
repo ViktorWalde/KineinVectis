@@ -376,7 +376,7 @@ ui/qml/editor/
 ├── EditorFindController.qml          busca e substituicao NO ARQUIVO
 │
 │   ── o que DESENHA
-├── EditorPane.qml                    compoe o painel (226 linhas)
+├── EditorPane.qml                    compoe o painel (234 linhas em 2026-09-17)
 ├── EditorTextSurface.qml             sarjeta + rolagem + TextEdit
 ├── EditorLineHighlights.qml          faixas de linha do cursor/execucao   [novo]
 ├── EditorDiagnosticTooltip.qml       o balao da sarjeta                   [novo]

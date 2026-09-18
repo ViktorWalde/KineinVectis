@@ -24,6 +24,7 @@ Item {
     signal runOneTestRequested(string testId, string buildSystem)
     signal discoverTestsRequested(string buildSystem)
     signal runQualityRequested()
+    signal runCoverageRequested()
     signal showTabRequested(string tab)
 
     visible: false
@@ -153,6 +154,16 @@ Item {
         removeProblemsBySource("quality");
         showTabRequested("problems");
         runQualityRequested();
+    }
+
+    // A cobertura dos testes (D8): um job como os outros; o desfecho vai
+    // ao CoverageController pelo roteador, e a calha do editor o pinta.
+    function startCoverage() {
+        if (workspaceRoot === "") {
+            return;
+        }
+        showTabRequested("jobs");
+        runCoverageRequested();
     }
 
     function removeProblemsBySource(source) {

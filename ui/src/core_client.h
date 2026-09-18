@@ -214,6 +214,10 @@ public:
     // Os stubs da placa MicroPython em typings/ (python.stubs, 0.116.0): job; vazio = o
     // modelo do projeto decide o pacote.
     Q_INVOKABLE void pythonStubs(const QString& port = QString(), const QString& board = QString());
+    // Cobertura dos testes (coverage.*, 0.119.0): o job que escreve o LCOV e as linhas de
+    // um arquivo do ultimo relatorio, para a calha do editor.
+    Q_INVOKABLE void coverageRun();
+    Q_INVOKABLE void coverageLines(const QString& file);
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -389,6 +393,9 @@ signals:
     void pythonEnvironmentFinished(const QVariantMap& outcome);
     void pythonStubsAccepted(const QString& jobId, const QString& package);
     void pythonStubsFinished(const QVariantMap& outcome);
+    void coverageFinished(const QVariantMap& outcome);
+    void coverageLinesResolved(const QString& file, bool known, const QVariantList& covered,
+                               const QVariantList& missed);
     void indexProgressed(int files, int symbols);
     void indexFinished(const QVariantMap& stats);
     void containerStatusResolved(const QVariantMap& status);
@@ -536,6 +543,7 @@ private:
     bool dispatchContainerResult(const QString& method, const QJsonObject& result);
     bool dispatchIndexResult(const QString& method, const QJsonObject& result);
     bool dispatchPythonResult(const QString& method, const QJsonObject& result);
+    bool dispatchCoverageResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

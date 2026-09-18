@@ -13,6 +13,7 @@ Item {
     property var runtimeController
     property var debugController
     property var gitController
+    property var coverageController
     property var diagnosticsController
     property var searchController
     property var recentWorkspacesController
@@ -232,6 +233,7 @@ Item {
                 shellController: root.shellController
                 debugController: root.debugController
                 gitController: root.gitController
+                coverageController: root.coverageController
                 diagnosticsController: root.diagnosticsController
                 projectTree: root.projectTree
             }

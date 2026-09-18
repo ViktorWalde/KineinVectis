@@ -44,12 +44,18 @@ impl Toolchain {
     /// seus `-isystem` e os 4 somem. O clangd EXIGE a allowlist explicita por
     /// seguranca — rodar um driver arbitrario e' risco —, entao so' se passa o
     /// compilador que o proprio usuario escolheu, nunca um glob aberto.
+    ///
+    /// E `--clang-tidy` (P5 do 40 §4.1, 2026-09-17): o clangd 21 desta
+    /// maquina lista a flag ("Enable clang-tidy diagnostics") e le o
+    /// `.clang-tidy` do projeto sozinho — os avisos do tidy entram no mesmo
+    /// canal dos diagnosticos, arquivo aberto a arquivo aberto, sem job. O
+    /// projeto inteiro e' o `quality.run` (`build/tidy.rs`).
     #[must_use]
     pub fn clangd_args(&self) -> Vec<String> {
         // Ids nativos: o clangd ja' os entende sem ajuda. Qualquer outro e'
         // cross — a regra e' por EXCLUSAO para nao envelhecer a cada alvo novo.
         const NATIVOS: [&str; 4] = ["clang", "gcc", "clangxx", "gxx"];
-        let mut args = vec!["--background-index".to_owned()];
+        let mut args = vec!["--background-index".to_owned(), "--clang-tidy".to_owned()];
         let mut drivers: Vec<String> = Vec::new();
         for role in [ToolchainRole::CCompiler, ToolchainRole::CxxCompiler] {
             if let Some((id, path)) = self.effective_program(role) {

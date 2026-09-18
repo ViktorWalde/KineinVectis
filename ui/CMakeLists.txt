@@ -151,6 +151,9 @@ set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALI
 set_source_files_properties(qml/git/GitDiscardDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiscardDialog.qml)
 set_source_files_properties(qml/panels/bottom/GitPanel.qml PROPERTIES QT_RESOURCE_ALIAS GitPanel.qml)
 set_source_files_properties(qml/ipc/GitEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitEventRouter.qml)
+set_source_files_properties(qml/ipc/CoverageEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS CoverageEventRouter.qml)
+set_source_files_properties(qml/ipc/CoverageRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS CoverageRequestRouter.qml)
+set_source_files_properties(qml/coverage/CoverageController.qml PROPERTIES QT_RESOURCE_ALIAS CoverageController.qml)
 set_source_files_properties(qml/ipc/GitRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitRequestRouter.qml)
 set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
 set_source_files_properties(qml/ipc/DebugRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugRequestRouter.qml)
@@ -230,6 +233,7 @@ set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALI
 set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
 set_source_files_properties(qml/editor/EditorGutter.qml PROPERTIES QT_RESOURCE_ALIAS EditorGutter.qml)
+set_source_files_properties(qml/editor/EditorGutterLineMarks.qml PROPERTIES QT_RESOURCE_ALIAS EditorGutterLineMarks.qml)
 set_source_files_properties(qml/editor/TextRules.qml PROPERTIES QT_RESOURCE_ALIAS TextRules.qml)
 set_source_files_properties(qml/editor/EditorBreadcrumbs.qml PROPERTIES QT_RESOURCE_ALIAS EditorBreadcrumbs.qml)
 set_source_files_properties(qml/editor/EditorOutlineHandle.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineHandle.qml)
@@ -400,6 +404,9 @@ qt_add_qml_module(kinein-vectis
         qml/git/GitDiscardDialog.qml
         qml/panels/bottom/GitPanel.qml
         qml/ipc/GitEventRouter.qml
+        qml/ipc/CoverageEventRouter.qml
+        qml/ipc/CoverageRequestRouter.qml
+        qml/coverage/CoverageController.qml
         qml/ipc/GitRequestRouter.qml
         qml/ipc/DebugEventRouter.qml
         qml/ipc/DebugRequestRouter.qml
@@ -479,6 +486,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorTabsBar.qml
         qml/editor/EditorTextSurface.qml
         qml/editor/EditorGutter.qml
+        qml/editor/EditorGutterLineMarks.qml
         qml/editor/TextRules.qml
         qml/editor/EditorBreadcrumbs.qml
         qml/editor/EditorOutlineHandle.qml
@@ -527,6 +535,7 @@ qt_add_qml_module(kinein-vectis
     src/core_client_container.cpp
     src/core_client_index.cpp
     src/core_client_python.cpp
+    src/core_client_coverage.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp

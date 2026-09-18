@@ -104,8 +104,19 @@ impl Cenario {
 fn stderr_lines_become_lsp_log_events_and_the_server_still_runs() {
     let mut c = cenario("log", &["--stderr", "3"]);
     assert!(c.abrir().error.is_none());
+    // O stderr e' lido por OUTRA thread: a terceira linha pode chegar depois
+    // do `running` (medido em 2026-09-17: falhava 1 em ~3 rodadas). Espera
+    // as duas coisas — o servidor de pe' E as tres linhas.
+    let logs_vistos = std::cell::Cell::new(0_u32);
+    let running_visto = std::cell::Cell::new(false);
     let vistos = c.eventos_ate(|e| {
-        e.method == "event.lsp.status" && e.params.as_ref().unwrap()["status"] == "running"
+        if e.method == "event.lsp.log" {
+            logs_vistos.set(logs_vistos.get() + 1);
+        }
+        if e.method == "event.lsp.status" && e.params.as_ref().unwrap()["status"] == "running" {
+            running_visto.set(true);
+        }
+        running_visto.get() && logs_vistos.get() >= 3
     });
     let logs: Vec<String> = vistos
         .iter()

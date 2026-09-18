@@ -79,14 +79,15 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.118.0
-testes      794 Rust aprovados; 42 harnesses QML (medicao de 2026-09-17, §7.49)
-metodos     148 IPC roteados, 52 eventos (serial.identify, runConfig.flashProposal,
+protocolo   0.119.0
+testes      803 Rust aprovados; 43 harnesses QML (medicao de 2026-09-17, §7.50)
+metodos     150 IPC roteados, 53 eventos (serial.identify, runConfig.flashProposal,
             serial.access, serial.files, python.stubs, debug.scopes,
-            debug.readMemory, debug.disassemble, event.lsp.log,
+            debug.readMemory, debug.disassemble, coverage.run, coverage.lines,
+            event.lsp.log, event.coverage.finished,
             event.serial.identified, event.serial.files e event.python.stubs
             entraram em 2026-09-17)
-dominios    34, e os 34 documentados no arquitetura/03
+dominios    35, e os 35 documentados no arquitetura/03 (coverage.* entrou em 2026-09-17)
 catraca     1 arquivo em debito
 gate        23 verificacoes
 ```
@@ -595,8 +596,11 @@ na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; Toolchains
 placa — provado no ESP32 real) na §7.47, e o bloco E (ESP-IDF, Zephyr,
 pico-sdk e PlatformIO como motores de build/gravar/monitorar) na §7.48, e a
 primeira fatia do P3 (o launch certo do probe-rs, SVD no kit, RTT, escopos,
-memória e disassembly pelo DAP padrão) na §7.49. O próximo item é o P5
-(qualidade) — o D5 (threads de RTOS) do P3 espera uma sonda. Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+memória e disassembly pelo DAP padrão) na §7.49, e o P5 (clang-tidy no
+clangd e no `quality.run`, gtest/Catch2 na árvore, cobertura em LCOV na
+calha, a lâmpada proativa) na §7.50. O próximo item é o P6 (Linux embarcado,
+que precisa de desenho antes de código) — ou o banco, se o autor preferir.
+Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -611,7 +615,7 @@ ainda não está verde.
 | P0 — modelo do projeto | **FEITO em 2026-09-17 (§7.46, 0.115.0):** preset no configure automático (kit > CMakeUserPresets > CMakePresets, dito e anotado); `kind: make` com `bear -- make`; `rust-analyzer.cargo.target` do kit. |
 | P4 — MicroPython | **FEITO em 2026-09-17 (§7.47, 0.116.0):** arquivos na placa (`serial.files`, C2 — lido e reescrito no ESP32 do autor), firmware oficial no catálogo de instalação e gravado pela proposta do E4 (C5), stubs por placa no basedpyright (C4). Resta o C6 (CircuitPython: drive `CIRCUITPY` + `circup`), baixa prioridade. |
 | P3 — depuração profunda | **Fatia 1 FEITA em 2026-09-17 (§7.49, 0.118.0):** o `launch` do probe-rs consertado (`coreConfigs`), `svdFile` no kit → escopo `Peripherals`, RTT/defmt como saída de debug (`rtt`), `debug.scopes`/`readMemory`/`disassemble` como passagem do DAP padrão, a vista de inspeção na aba Debug. Provado com adaptador falso — nenhuma sonda nesta máquina. **Resta:** D5 threads de RTOS (`rtos` do OpenOCD via `debugServer`), SVD com ESCRITA (`setVariable`/`writeMemory`, que os dois adaptadores anunciam), `rttChannelFormats` (defmt declarado), o caminho `cmsis-svd` pelo GDB. |
-| P5 — qualidade | clang-tidy dentro do clangd; lâmpada proativa do Alt+Enter; gtest/catch2; cobertura. |
+| P5 — qualidade | **FEITO em 2026-09-17 (§7.50, 0.119.0):** `--clang-tidy` no clangd e o clang-tidy do projeto pela CDB no `quality.run` (D6); gtest/Catch2 dentro dos binários do ctest na árvore, rodar um pelo filtro (D7); domínio `coverage.*` — cargo-llvm-cov e coverage.py em LCOV, a calha pinta (D8); a lâmpada 💡 na linha do cursor com diagnóstico. **Resta:** cppcheck como segundo motor; gcov/lcov para C/C++ (exige `--coverage` no build do usuário); doctest. |
 | P6 — Linux embarcado | SSH remoto, decidido e ainda não arquitetado: deploy, gdbserver e debugpy attach. |
 | Frameworks, bloco E | **FEITO em 2026-09-17 (§7.48, 0.117.0):** `build.run` compila pelo wrapper de cada um (`pio run`; `idf.py build` no ambiente ativado — export.sh ou EIM; `west build -d build -b <placa>`; CMake com `-DPICO_SDK_PATH`), Gravar ganhou `idf.py`/`west`/`platformio`, o monitor ganhou o IDF Monitor e o `pio device monitor`, `platformio.ini` é tipo de projeto. Provado com wrappers falsos — nenhum SDK real nesta máquina. Resta: E5 templates curados, E6 Unity/Ceedling. |
 | Banco | Executar consultas e escrever; TLS do PostgreSQL. |
@@ -3434,3 +3438,64 @@ sonda). D5 (threads de RTOS) não entrou; `setVariable`/`writeMemory` (SVD com
 escrita) e `rttChannelFormats` (defmt declarado por canal) ficam para a fatia
 2, quando houver placa. **Próximo:** P5 — qualidade (clang-tidy no clangd,
 lâmpada proativa, gtest/catch2, cobertura).
+
+### 7.50 P5 — qualidade: clang-tidy, gtest/Catch2, cobertura e a lâmpada — 2026-09-17 (noite), protocolo 0.119.0
+
+Quatro peças, todas provadas com ferramentas falsas onde a real não cabe num
+teste. **(1) clang-tidy em dois lugares.** O clangd sobe com `--clang-tidy`
+(o clangd 21 desta máquina lista a flag "Enable clang-tidy diagnostics"; ele
+lê o `.clang-tidy` do projeto sozinho) — os avisos do tidy entram no canal
+dos diagnósticos do arquivo aberto, sem job. E o `quality.run` de um
+`CMake`/`Makefile` roda o projeto inteiro pela CDB (`build/tidy.rs`):
+`run-clang-tidy -p <cdb> -quiet` quando o script do LLVM existe, senão
+`clang-tidy -p <cdb> <arquivos da CDB>` — os arquivos vêm da própria
+`compile_commands.json`, nunca de um glob; o parser gcc-like casa e o nome
+do check fica na mensagem. Sem CDB, "configure/compile com o bear"; sem
+`clang-tidy`, a ferramenta. O botão de análise da barra aparece em C/C++ e
+Python (antes só Cargo). **(2) gtest e Catch2 na árvore** (`test/frameworks.rs`):
+o `ctest --show-only=json-v1` (ctest 4.2.3, medido) dá o comando de cada
+teste; cada binário é perguntado (`--gtest_list_tests`, depois `--list-tests
+--verbosity quiet`) e os casos entram como `teste::caso` depois das linhas do
+ctest; `test.run { testId }` com esse id roda o binário direto
+(`--gtest_filter=`, ou o nome no Catch2, com `-r compact` e o exit code como
+desfecho). Um binário mudo continua sendo só a linha do ctest. **(3)
+Cobertura** — domínio `coverage.*`, o 35º: `coverage.run` (job) → Rust pelo
+`cargo llvm-cov --lcov --output-path .kinein/coverage.lcov` (o `cargo` do
+kit; cargo-llvm-cov 0.9.1 aqui), Python pelo `coverage run -m pytest` +
+`coverage lcov` do interpretador do projeto; C/C++ recusado antes do job
+(exige `--coverage` no build — decisão do usuário). O LCOV é relido:
+resumo por arquivo no `event.coverage.finished`, e `coverage.lines { file }`
+dá as linhas de um arquivo. Na UI: `CoverageController` (resumo + o mapa
+linha→covered|missed do arquivo ativo, pedido a cada troca de aba),
+comando **Cobertura dos testes** (paleta e menu Build, pelo `JobsController`
+como a análise), e a calha do editor com uma barra verde/vermelha ao lado da
+do diff. **(4) A lâmpada proativa:** na linha do cursor com diagnóstico a
+calha mostra 💡 antes do Alt+Enter — o clique pede as ações (o mesmo
+`lsp.codeActions`). A linha do cursor vem do `cursorRectangle` pelo índice
+visível (folding). No caminho, `EditorGutter` e `EditorTextSurface` bateram
+em 300: as marcas da faixa esquerda (diff, cobertura, dobra, breakpoint)
+saíram para `EditorGutterLineMarks.qml`, e o `blameColumnWidth` duplicado
+do surface caiu.
+
+**Medido em 2026-09-17:** 803 testes Rust (+9: os arquivos da CDB; o
+`quality.run` C/C++ sem CDB, sem tidy, com tidy falso avisando e com o
+`run-clang-tidy` falso vencendo; o `json-v1`, as listagens gtest/Catch2 e o
+`[ OK ]` por caso; os binários falsos perguntados e um caso rodado por
+cada framework; o LCOV lido e resumido; a cobertura Rust por despacho com o
+cargo falso fixado no kit e o `coverage.lines`; a Python pelo interpretador
+falso e a recusa do C/C++); 43 harnesses QML (`tst_coverage` novo); 150
+métodos, 53 eventos, 35 domínios; clippy, fmt, clang-format, Clang-Tidy do
+.cpp novo, fiação, propriedades, alcance, duplicação, arquitetura (o split
+da calha), docs, links, atalhos (o comando `coverage.run` tratado no host),
+qmllint; `debug-strict` compila e abre.
+
+**Não provado, dito:** o clang-tidy real do projeto inteiro não rodou aqui
+(a IDE não tem projeto C/C++ com CDB aberto no gate — o `verificar-cpp.sh`
+roda o tidy da própria IDE, o que prova a ferramenta, não o caminho pelo
+`quality.run`); nenhum gtest/Catch2 real (só binários falsos que respondem
+como eles); a cobertura Rust real deste repositório pelo `cargo llvm-cov`
+não foi executada no gate (leva minutos; o cargo-llvm-cov está instalado e o
+autor pode rodar pelo menu). cppcheck, doctest e gcov/lcov não entraram.
+**Próximo:** P6 — Linux embarcado (SSH remoto: deploy, `gdbserver`, debugpy
+attach remoto), que precisa de um desenho antes de código; ou o banco
+(consultas/escrita/TLS).

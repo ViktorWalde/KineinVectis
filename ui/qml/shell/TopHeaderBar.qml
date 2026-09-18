@@ -179,8 +179,13 @@ Rectangle {
             onClicked: root.testsRequested("cmake")
         }
 
+        // A analise: clippy (Cargo), ruff (Python), clang-tidy pela CDB
+        // (CMake e Makefile, D6 de 2026-09-17). O que nao tem linter nao
+        // ganha botao — a paleta continua dizendo o motivo.
         KvIconButton {
-            visible: root.workspaceOpen && root.cargoAvailable
+            visible: root.workspaceOpen
+                     && (root.cargoAvailable || root.cmakeAvailable
+                         || root.hasBuildSystem("python") || root.hasBuildSystem("make"))
             enabled: !root.analyzing && root.coreConnected
             iconName: "problems"
             tooltip: root.analyzing ? qsTr("Análise em andamento") : qsTr("Executar análise")
