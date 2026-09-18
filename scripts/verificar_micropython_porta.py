@@ -54,6 +54,8 @@ def prova(core_bin: pathlib.Path, raiz: pathlib.Path) -> int:
     }
     # So' o mpremote falso: o resto do PATH nao pode oferecer outro.
     ambiente["PATH"] = f"{bin_dir}:/usr/bin:/bin"
+    # Recentes isolados: o gate nao polui a tela inicial do autor.
+    ambiente["XDG_CONFIG_HOME"] = str(raiz / "config")
     core = Core(core_bin, ambiente, raiz / "core.log")
     falhas = 0
 

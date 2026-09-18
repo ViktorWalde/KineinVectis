@@ -2,11 +2,16 @@
 
 **Comece pelo [`40-estado-e-continuidade.md`](40-estado-e-continuidade.md)**:
 é a fila viva (§4), as decisões que não se reabrem (§5) e o registro de cada
-fatia entregue (§7). A ordem da fila é a do
-[`42-trilha-profunda-embarcados.md`](42-trilha-profunda-embarcados.md).
+fatia entregue (§7). A Etapa 1 seguiu a ordem do
+[`42-trilha-profunda-embarcados.md`](42-trilha-profunda-embarcados.md); a
+Etapa 2 (desde 2026-09-18) segue o
+[`43-etapa2-hud-ui-ux.md`](43-etapa2-hud-ui-ux.md).
 
 ```text
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
+43-etapa2-hud-ui-ux.md             a Etapa 2 (HUD/UI/UX): o desenho MEDIDO na IDE
+                                   abrindo, a referência JetBrains lida nas fontes,
+                                   as fatias F1–F8 com a medida de cada uma
 42-trilha-profunda-embarcados.md   a trilha em oito pilares; §8 o "efeito
                                    JetBrains" como critério de pronto; §9 a
                                    trilha Python completa

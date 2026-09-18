@@ -16,6 +16,7 @@ O que se prova, na ordem:
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import queue
 import shutil
@@ -38,12 +39,18 @@ class Core:
     primeira versao deste script (2026-09-11)."""
 
     def __init__(self, binario: pathlib.Path) -> None:
+        # O config global (workspaces recentes) e' ISOLADO: um gate que abre
+        # pastas temporarias nao pode enche-las na tela inicial do autor
+        # (pente-fino 2026-09-18: tres "caminho ausente" nos recentes).
+        ambiente = dict(os.environ)
+        ambiente["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="kinein-gate-config-")
         self.proc = subprocess.Popen(
             [str(binario)],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
+            env=ambiente,
         )
         self.seq = 0
         self.respostas: dict[int, dict] = {}

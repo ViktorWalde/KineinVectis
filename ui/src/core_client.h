@@ -615,6 +615,8 @@ private:
     // crash (o que a recuperacao reabre); m_recovering suprime o session
     // restore e sinaliza a UI; a janela+contador cortam loop de fork.
     QString m_lastWorkspaceRoot;
+    // A pasta passada na linha de comando, aberta assim que o core responder.
+    QString m_startupWorkspace;
     bool m_recovering = false;
     QElapsedTimer m_recoveryWindow;
     int m_recoveryAttempts = 0;

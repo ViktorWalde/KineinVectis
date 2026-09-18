@@ -23,6 +23,17 @@ void CoreClient::start()
         return;
     }
 
+    // `kinein-vectis <pasta>` abre o projeto direto (Etapa 2, 2026-09-18): e'
+    // o que um lancador, um `xdg-open` de pasta e o gate headless precisam.
+    // So' o primeiro argumento que e' uma pasta existente; o resto e' do Qt.
+    const QStringList argumentos = QCoreApplication::arguments();
+    for (qsizetype i = 1; i < argumentos.size(); ++i) {
+        const QString& candidato = argumentos.at(i);
+        if (!candidato.startsWith(QLatin1Char('-')) && QDir(candidato).exists()) {
+            m_startupWorkspace = QDir(candidato).absolutePath();
+            break;
+        }
+    }
     setStatus(QStringLiteral("iniciando..."), false);
     appendLog(QStringLiteral("iniciando core: %1").arg(binary));
     m_process.setProgram(binary);
@@ -40,6 +51,11 @@ void CoreClient::handleStarted()
     if (m_recovering && !m_lastWorkspaceRoot.isEmpty()) {
         appendLog(QStringLiteral("recuperando workspace: %1").arg(m_lastWorkspaceRoot));
         openWorkspace(m_lastWorkspaceRoot);
+    }
+    else if (!m_startupWorkspace.isEmpty()) {
+        appendLog(QStringLiteral("abrindo workspace do argumento: %1").arg(m_startupWorkspace));
+        openWorkspace(m_startupWorkspace);
+        m_startupWorkspace.clear();
     }
 }
 

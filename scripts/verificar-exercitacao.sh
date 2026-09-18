@@ -144,7 +144,7 @@ resposta="$(
         # uma pasta que existe e nao tem usr/include — o veredito diz isso.
         printf '{"jsonrpc":"2.0","id":25,"method":"toolchain.inspectSysroot","params":{"path":"%s"}}\n' "$raiz"
         sleep 1
-    } | "$binario" 2>/dev/null
+    } | XDG_CONFIG_HOME="$raiz/config" "$binario" 2>/dev/null
 )"
 
 falhou=0

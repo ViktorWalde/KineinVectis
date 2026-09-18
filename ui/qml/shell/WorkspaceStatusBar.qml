@@ -44,15 +44,26 @@ Rectangle {
     height: 28
     color: Theme.background1
 
+    // A faixa da esquerda para ANTES da direita: com o workspace, a
+    // toolchain, o indice e o git, a 1280 px ela invadia o botao "IDE"
+    // (medido na foto de 2026-09-18, pente-fino/Etapa 2). O caminho do
+    // workspace e' o que cede: elide no meio.
     Row {
+        id: faixaEsquerda
+
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingMedium
+        anchors.right: faixaDireita.left
+        anchors.rightMargin: Theme.spacingMedium
         spacing: Theme.spacingMedium
+        clip: true
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
             visible: bar.workspaceRoot !== ""
+            width: Math.min(implicitWidth, Math.max(120, faixaEsquerda.width * 0.32))
+            elide: Text.ElideMiddle
             text: bar.workspaceKindLabel + "  ·  " + bar.workspaceRoot
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus
@@ -94,15 +105,8 @@ Rectangle {
             }
         }
 
-        // Os resumos do projeto (indice, contexto, python): dono proprio.
-        StatusBarProjectSummaries {
-            anchors.verticalCenter: parent.verticalCenter
-            indexSummary: bar.indexSummary
-            contextSummary: bar.contextSummary
-            contextDetail: bar.contextDetail
-            pythonSummary: bar.pythonSummary
-        }
-
+        // O git antes dos resumos do indice: quando falta espaco, o que cede
+        // e' a contagem de simbolos, nao a branch.
         Text {
             anchors.verticalCenter: parent.verticalCenter
             visible: bar.gitBranchLabel !== ""
@@ -125,9 +129,19 @@ Rectangle {
             font.pixelSize: Theme.fontSizeStatus
             font.family: Theme.monoFont
         }
+        // Os resumos do projeto (indice, contexto, python): dono proprio.
+        StatusBarProjectSummaries {
+            anchors.verticalCenter: parent.verticalCenter
+            indexSummary: bar.indexSummary
+            contextSummary: bar.contextSummary
+            contextDetail: bar.contextDetail
+            pythonSummary: bar.pythonSummary
+        }
     }
 
     Row {
+        id: faixaDireita
+
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingMedium

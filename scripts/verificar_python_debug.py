@@ -138,6 +138,8 @@ def main() -> int:
         # escreve. Um interpretador fora de venv entra como "sistema" pelo PATH.
         ambiente = dict(os.environ)
         ambiente.pop("VIRTUAL_ENV", None)
+        # Recentes isolados: o gate nao polui a tela inicial do autor.
+        ambiente["XDG_CONFIG_HOME"] = tempfile.mkdtemp(prefix="kinein-gate-config-")
         venv = interpretador.parent.parent
         if (venv / "pyvenv.cfg").is_file():
             ambiente["VIRTUAL_ENV"] = str(venv)

@@ -661,7 +661,11 @@ a IDE já tem (`arquitetura/32`, `iconografia/`). O que se estuda é o
 comportamento observável; nenhum tema, ícone ou código da JetBrains entra
 (licença e identidade). A etapa começa com um DESENHO (medido na IDE
 abrindo: o que cada tela mostra hoje, contra o que a referência mostra), e
-só depois código.
+só depois código. **O desenho está no [`43`](43-etapa2-hud-ui-ux.md)
+(2026-09-18):** a referência lida nas fontes, três fotos da IDE de hoje, e
+as fatias F1–F8 com a medida de cada uma; a F0 (infra: `kinein-vectis
+<pasta>`, `KINEIN_SCREENSHOT`, a status bar sem colisão, os gates sem
+poluir os recentes) foi feita no mesmo dia (§7.55).
 
 ## 5. As decisões registradas que NÃO se reabrem
 
@@ -3750,3 +3754,32 @@ registros diários.
 a tela ligada mostra a coisa certa nem se é legível — isso é a Etapa 2 com
 a IDE aberta, e é onde os testes práticos do autor entram. Sem GUI não se
 prova o clique; os harnesses provam o controller.
+
+### 7.55 Etapa 2, F0 — o desenho medido e a infra de medição — 2026-09-18
+
+O autor abriu a Etapa 2 pedindo pesquisa de métodos de UI/UX/HUD e o
+"visual JetBrains-like adaptado". O que se fez: (1) a referência lida nas
+FONTES (New UI e Islands da JetBrains, o critério dos widgets da status
+bar no SDK, Doherty/Nielsen para o tempo de resposta, progressive
+disclosure/Sweller, o orçamento de frame do Zed) — está na §1 do `43`;
+(2) **a IDE fotografada de verdade**: `kinein-vectis <pasta>` abre o
+projeto direto (o argumento que faltava para o gate e para um lançador),
+`KINEIN_SCREENSHOT=<png>` + `KINEIN_SCREENSHOT_DELAY_MS` grava a janela
+headless — três fotos em `imagens/prints/2026-09-18-etapa2/` e a leitura
+delas na §2 do `43` (12 controles na barra superior; 10 ícones sem rótulo;
+"Salvar" amarelo permanente; aba ativa pouco distinta; `.git`/`build`/
+`target` no mesmo peso que `crates`); (3) dois defeitos que a foto mostrou,
+corrigidos: **a barra de status colidia** ("3 alterações" por cima de
+"IDE" a 1280 px — a faixa esquerda agora para antes da direita, o caminho
+do workspace elide no meio e o git vem antes dos números do índice, que
+cedem) e **três `/tmp/…` "caminho ausente" nos recentes do autor** — os
+gates abriam pastas temporárias no config real; `verificar_embarcado`,
+`verificar_python_debug`, `verificar_micropython_porta` e
+`verificar-exercitacao` isolam `XDG_CONFIG_HOME`, e as entradas de `/tmp`
+foram tiradas do arquivo do autor. (4) As fatias F1–F8 do `43` §4, cada
+uma com a sua medida, esperando a aprovação do autor (§5) — duas decisões
+são dele: autosave e o destino do botão duplo Cargo/CMake.
+
+**Medido:** 827 testes, 45 harnesses, 24 gates verdes; as três fotos.
+**Não feito:** nenhuma fatia de UI além da status bar — por regra, o
+desenho vem antes.

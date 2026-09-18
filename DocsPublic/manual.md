@@ -61,6 +61,10 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
 
 ---
 
+**Abrir direto num projeto** (desde 2026-09-18): `kinein-vectis /caminho/do/projeto`
+abre a pasta sem passar pela tela inicial — serve para um lançador, um
+atalho de área de trabalho ou um `alias`.
+
 ## 2. O layout
 
 ```text
