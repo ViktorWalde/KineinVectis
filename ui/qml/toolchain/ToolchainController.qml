@@ -37,7 +37,7 @@ Item {
     signal getRequested(string preset)
     signal setRequested(string role, string id, string preset)
     signal setKitRequested(string preset, string sysroot, string targetTriple, string chip,
-                           string toolchainFile)
+                           string toolchainFile, string svdFile)
     signal inspectSysrootRequested(string path)
     signal importKitRequested(string path)
     // O seletor de pasta NATIVO da IDE (o FolderPicker da Start Screen) para
@@ -49,6 +49,9 @@ Item {
     // de toolchain do kit; o relatorio do sysroot; a proposta de kit lida de
     // um SDK — nada disso grava ate' `applyProposal`.
     property string toolchainFile: ""
+    // O CMSIS-SVD do kit (P3, 0.118.0): os registradores de periferico no
+    // depurador (probe-rs). Como o toolchainFile: sinal proprio, campo do kit.
+    property string svdFile: ""
     property var sysrootReport: ({})
     property var kitProposal: ({})
     property string importError: ""
@@ -82,6 +85,7 @@ Item {
         installing = "";
         lastInstallOutcome = "";
         toolchainFile = "";
+        svdFile = "";
         sysrootReport = ({});
         kitProposal = ({});
         importError = "";
@@ -180,14 +184,19 @@ Item {
     // `undefined` PRESERVA o campo; string vazia LIMPA. O core trata igual, e
     // e por isso que mexer no sysroot nao apaga o alvo. O arquivo de toolchain
     // ausente na chamada preserva o atual (um sinal nao carrega `undefined`).
-    function applyKit(newSysroot, newTargetTriple, newChip, newToolchainFile) {
+    function applyKit(newSysroot, newTargetTriple, newChip, newToolchainFile, newSvdFile) {
         setKitRequested(preset, newSysroot, newTargetTriple, newChip,
-                        newToolchainFile === undefined ? toolchainFile : newToolchainFile);
+                        newToolchainFile === undefined ? toolchainFile : newToolchainFile,
+                        newSvdFile === undefined ? svdFile : newSvdFile);
     }
 
     function handleKitFile(newToolchainFile) {
         toolchainFile = newToolchainFile === undefined || newToolchainFile === null
                 ? "" : newToolchainFile;
+    }
+
+    function handleKitSvd(newSvdFile) {
+        svdFile = newSvdFile === undefined || newSvdFile === null ? "" : newSvdFile;
     }
 
     // O caminho do campo "Pasta/SDK": a tela o le daqui, para o seletor de
@@ -260,7 +269,8 @@ Item {
                         p.sysroot === undefined ? "" : p.sysroot,
                         p.targetTriple === undefined ? "" : p.targetTriple,
                         chip,
-                        p.toolchainFile === undefined ? "" : p.toolchainFile);
+                        p.toolchainFile === undefined ? "" : p.toolchainFile,
+                        svdFile);
     }
 
     function handleFailed(method, message) {

@@ -61,4 +61,27 @@ Item {
             root.coreClient.debugVariablesForRef(ref);
         }
     }
+
+    // O que o depurador mostra (P3): escopos, memoria e disassembly — filho
+    // do DebugController; as variaveis de um escopo vao pelo mesmo
+    // debug.variables { ref } do pai.
+    Connections {
+        target: root.debugController ? root.debugController.inspect : null
+
+        function onScopesRequested(frameId) {
+            root.coreClient.debugScopes(frameId);
+        }
+
+        function onScopeVariablesRequested(ref) {
+            root.coreClient.debugVariablesForRef(ref);
+        }
+
+        function onReadMemoryRequested(memoryReference, count, offset) {
+            root.coreClient.debugReadMemory(memoryReference, count, offset);
+        }
+
+        function onDisassembleRequested(memoryReference, instructionCount, instructionOffset) {
+            root.coreClient.debugDisassemble(memoryReference, instructionCount, instructionOffset);
+        }
+    }
 }

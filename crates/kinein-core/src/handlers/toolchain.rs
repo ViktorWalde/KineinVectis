@@ -105,7 +105,7 @@ impl Core {
         let parsed = match parse_params::<ToolchainSetKitParams>(
             request_id.as_ref(),
             params,
-            "toolchain.setKit aceita preset, sysroot, targetTriple, chip, remoteTarget e debugServer",
+            "toolchain.setKit aceita preset, sysroot, targetTriple, chip, remoteTarget, debugServer, toolchainFile e svdFile",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -121,6 +121,7 @@ impl Core {
                 remote_target: parsed.remote_target.as_deref(),
                 debug_server: parsed.debug_server.as_deref(),
                 toolchain_file: parsed.toolchain_file.as_deref(),
+                svd_file: parsed.svd_file.as_deref(),
             },
         ) {
             Ok(resolvida) => {

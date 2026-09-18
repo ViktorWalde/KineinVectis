@@ -116,6 +116,75 @@ fn handle_adapter_event(
             }
         }
         "terminated" => finish_once(alive, events, exit_code),
+        // O probe-rs (P3, lido no dap_server 0.32.0, `debug_adapter/dap/
+        // adapter.rs`): um canal RTT anunciado e' `probe-rs-rtt-channel-config`
+        // e os dados chegam por `probe-rs-rtt-data`; ele so' COMECA a ler o
+        // canal depois do request `rttWindowOpened { channelNumber,
+        // windowIsOpen: true }` do cliente ("will delay polling RTT channels
+        // until the data window has opened"). A IDE nao tem janela por canal:
+        // abre todos, e cada linha vai para a saida de debug com
+        // `category: "rtt"` e o numero do canal — o defmt ja' chega decodificado
+        // pelo probe-rs quando o canal foi declarado assim.
+        "probe-rs-rtt-channel-config" => {
+            let channel = body
+                .get("channelNumber")
+                .and_then(Value::as_u64)
+                .unwrap_or(0);
+            let name = body
+                .get("channelName")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            let format = body
+                .get("dataFormat")
+                .and_then(Value::as_str)
+                .unwrap_or("String");
+            send_event(
+                events,
+                "event.debug.output",
+                json!({
+                    "category": "rtt",
+                    "channel": channel,
+                    "channelName": name,
+                    "line": format!("canal RTT {channel} `{name}` ({format}) aberto"),
+                }),
+            );
+            // Fire-and-forget: a resposta vazia e' entregue ao receiver que
+            // ninguem espera — o `pending` a remove ao chegar.
+            drop(wire.send_request(
+                "rttWindowOpened",
+                &json!({ "channelNumber": channel, "windowIsOpen": true }),
+            ));
+        }
+        "probe-rs-rtt-data" => {
+            let channel = body
+                .get("channelNumber")
+                .and_then(Value::as_u64)
+                .unwrap_or(0);
+            if let Some(data) = body.get("data").and_then(Value::as_str) {
+                for line in data.lines() {
+                    send_event(
+                        events,
+                        "event.debug.output",
+                        json!({ "category": "rtt", "channel": channel, "line": line }),
+                    );
+                }
+            }
+        }
+        // O que o probe-rs mostraria numa caixa de dialogo vira uma linha do
+        // console — a IDE nao abre dialogos por conta do adaptador.
+        "probe-rs-show-message" => {
+            if let Some(message) = body.get("message").and_then(Value::as_str) {
+                let severity = body
+                    .get("severity")
+                    .and_then(Value::as_str)
+                    .unwrap_or("information");
+                send_event(
+                    events,
+                    "event.debug.output",
+                    json!({ "category": "console", "line": format!("probe-rs [{severity}]: {message}") }),
+                );
+            }
+        }
         _ => {}
     }
 }

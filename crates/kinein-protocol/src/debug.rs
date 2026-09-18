@@ -259,3 +259,116 @@ pub struct DebugEvaluateResult {
     /// `> 0` when the value has children; feed it to `debug.variables`.
     pub reference: i64,
 }
+
+/// Parameters for `debug.scopes` (`0.118.0`, P3).
+///
+/// The scopes of a frame — `Locals`, `Registers`, and, with an SVD in the
+/// kit, the peripherals the probe-rs exposes. `debug.variables { ref }`
+/// expands each one.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DebugScopesParams {
+    /// Frame whose scopes are asked.
+    pub frame_id: i64,
+}
+
+/// One scope, as the adapter names it.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DebugScopeInfo {
+    /// `Locals`, `Registers`, `Peripherals`… (the adapter's word).
+    pub name: String,
+    /// Expansion handle for `debug.variables { ref }`.
+    #[serde(rename = "ref")]
+    pub reference: i64,
+    /// The adapter says fetching it is costly (registers of every peripheral).
+    #[serde(default)]
+    pub expensive: bool,
+}
+
+/// Result of `debug.scopes`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DebugScopesResult {
+    /// The frame asked.
+    pub frame_id: i64,
+    /// Scopes in the adapter's order.
+    pub scopes: Vec<DebugScopeInfo>,
+}
+
+/// Parameters for `debug.readMemory` (`0.118.0`, P3).
+///
+/// The DAP `readMemory` request, verbatim — `memoryReference` is an address
+/// (`0x3ff00000`) or the reference a variable carries.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DebugReadMemoryParams {
+    /// Address or memory reference.
+    pub memory_reference: String,
+    /// Bytes to skip from the reference.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub offset: Option<i64>,
+    /// Bytes to read.
+    pub count: u64,
+}
+
+/// Result of `debug.readMemory`: the DAP body, verbatim.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DebugReadMemoryResult {
+    /// The address the data starts at (hex).
+    pub address: String,
+    /// Bytes the target could not read at the end.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unreadable_bytes: Option<u64>,
+    /// The bytes, base64 as the DAP sends them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub data: Option<String>,
+}
+
+/// Parameters for `debug.disassemble` (`0.118.0`, P3): the DAP `disassemble`
+/// request, verbatim.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DebugDisassembleParams {
+    /// Address or memory reference (a frame's `instructionPointerReference`).
+    pub memory_reference: String,
+    /// Bytes to skip from the reference.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub offset: Option<i64>,
+    /// Instructions to skip (negative = before the reference).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub instruction_offset: Option<i64>,
+    /// Instructions to return.
+    pub instruction_count: u64,
+}
+
+/// One disassembled instruction.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DebugInstruction {
+    /// Address (hex).
+    pub address: String,
+    /// The instruction text.
+    pub instruction: String,
+    /// Raw bytes (hex), when the adapter gives them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub instruction_bytes: Option<String>,
+    /// Symbol the address belongs to, when known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub symbol: Option<String>,
+    /// Source file, when the adapter maps it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<String>,
+    /// Source line, when mapped.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub line: Option<i64>,
+}
+
+/// Result of `debug.disassemble`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DebugDisassembleResult {
+    /// Instructions in address order.
+    pub instructions: Vec<DebugInstruction>,
+}

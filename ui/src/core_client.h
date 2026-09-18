@@ -144,6 +144,13 @@ public:
     Q_INVOKABLE void debugStackTrace();
     Q_INVOKABLE void debugVariablesForFrame(double frameId);
     Q_INVOKABLE void debugVariablesForRef(double ref);
+    // O que o depurador de embarcado MOSTRA (P3, 0.118.0): os escopos de um frame
+    // (Registers, os perifericos do SVD), a memoria e o disassembly — o DAP padrao.
+    Q_INVOKABLE void debugScopes(double frameId);
+    Q_INVOKABLE void debugReadMemory(const QString& memoryReference, double count,
+                                     double offset = 0);
+    Q_INVOKABLE void debugDisassemble(const QString& memoryReference, double instructionCount,
+                                      double instructionOffset = 0);
     Q_INVOKABLE void cargoCheck();
     Q_INVOKABLE void cargoMetadata();
     // O configure leva o preset do KIT ativo (o ultimo `toolchain.get` pedido pela
@@ -177,7 +184,8 @@ public:
     Q_INVOKABLE void toolchainSet(const QString& role, const QString& id, const QString& preset);
     Q_INVOKABLE void toolchainSetKit(const QString& preset, const QString& sysroot,
                                      const QString& targetTriple, const QString& chip,
-                                     const QString& toolchainFile = QString());
+                                     const QString& toolchainFile = QString(),
+                                     const QString& svdFile = QString());
     // Embarcados (roadmaps/35 §5.7): a sonda que esta' no USB agora.
     Q_INVOKABLE void probeList();
     // Tamanho do ELF do kit (build.size): flash/RAM usados.
@@ -346,6 +354,8 @@ signals:
     /// O arquivo de toolchain do KIT (0.104.0), ao lado do toolchainResolved —
     /// sinal proprio para o de cima nao crescer em argumento posicional.
     void toolchainKitFileResolved(const QString& toolchainFile);
+    /// O SVD do KIT (0.118.0, P3): os registradores de periferico no depurador.
+    void toolchainKitSvdResolved(const QString& svdFile);
     /// `toolchain.inspectSysroot`: o que a pasta contem (SysrootReport).
     void sysrootInspected(const QVariantMap& report);
     /// `toolchain.importKit`: a proposta de kit lida do SDK (KitImport).
@@ -460,6 +470,9 @@ signals:
     void debugFinished(int exitCode);
     void debugStackTraceResolved(const QVariantList& frames);
     void debugVariablesResolved(double frameId, double ref, const QVariantList& variables);
+    void debugScopesResolved(double frameId, const QVariantList& scopes);
+    void debugMemoryResolved(const QVariantMap& memory);
+    void debugDisassemblyResolved(const QVariantList& instructions);
     void debugEvaluateResolved(const QString& expression, const QString& value,
                                const QString& typeName, double ref);
     void debugEvaluateFailed(const QString& expression, const QString& message);

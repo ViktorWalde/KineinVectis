@@ -5,7 +5,8 @@
 //! sao a razao de ele existir separado do transporte e da sessao.
 
 use kinein_protocol::{
-    BreakpointInfo, DebugEvaluateResult, SourceBreakpointParams, StackFrameInfo, VariableInfo,
+    BreakpointInfo, DebugEvaluateResult, DebugInstruction, DebugReadMemoryResult, DebugScopeInfo,
+    SourceBreakpointParams, StackFrameInfo, VariableInfo,
 };
 use serde_json::{Value, json};
 
@@ -162,6 +163,68 @@ pub(super) fn parse_variables(body: &Value) -> Vec<VariableInfo> {
                 .get("variablesReference")
                 .and_then(Value::as_i64)
                 .unwrap_or(0),
+        })
+        .collect()
+}
+
+/// Os escopos de `scopes`, inteiros (P3): nome, handle e `expensive`.
+pub(super) fn parse_scopes(body: &Value) -> Vec<DebugScopeInfo> {
+    body.get("scopes")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|scope| {
+            Some(DebugScopeInfo {
+                name: scope.get("name")?.as_str()?.to_owned(),
+                reference: scope.get("variablesReference")?.as_i64()?,
+                expensive: scope
+                    .get("expensive")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false),
+            })
+        })
+        .collect()
+}
+
+/// O corpo de `readMemory`, verbatim (P3).
+pub(super) fn parse_read_memory(body: &Value) -> DebugReadMemoryResult {
+    DebugReadMemoryResult {
+        address: body
+            .get("address")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_owned(),
+        unreadable_bytes: body.get("unreadableBytes").and_then(Value::as_u64),
+        data: body.get("data").and_then(Value::as_str).map(str::to_owned),
+    }
+}
+
+/// As instrucoes de `disassemble` (P3); `location.path` vira `file`.
+pub(super) fn parse_instructions(body: &Value) -> Vec<DebugInstruction> {
+    body.get("instructions")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|i| {
+            Some(DebugInstruction {
+                address: i.get("address")?.as_str()?.to_owned(),
+                instruction: i
+                    .get("instruction")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_owned(),
+                instruction_bytes: i
+                    .get("instructionBytes")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned),
+                symbol: i.get("symbol").and_then(Value::as_str).map(str::to_owned),
+                file: i
+                    .get("location")
+                    .and_then(|l| l.get("path"))
+                    .and_then(Value::as_str)
+                    .map(str::to_owned),
+                line: i.get("line").and_then(Value::as_i64),
+            })
         })
         .collect()
 }

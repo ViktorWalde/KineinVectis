@@ -22,8 +22,8 @@ Item {
     ToolchainController {
         id: tc
 
-        onSetKitRequested: function(preset, sysroot, targetTriple, chip, toolchainFile) {
-            root.kits.push({ preset, sysroot, targetTriple, chip, toolchainFile });
+        onSetKitRequested: function(preset, sysroot, targetTriple, chip, toolchainFile, svdFile) {
+            root.kits.push({ preset, sysroot, targetTriple, chip, toolchainFile, svdFile });
         }
         onInspectSysrootRequested: function(path) { root.inspecoes.push(path); }
         onImportKitRequested: function(path) { root.importacoes.push(path); }
@@ -45,6 +45,18 @@ Item {
         if (root.kits[1].toolchainFile !== "") failures += 4;
         tc.handleKitFile(undefined);
         if (tc.toolchainFile !== "") failures += 8;
+        // O SVD do kit (P3): sinal proprio, preservado quando o painel nao o
+        // manda, limpo com "", e vai no pedido quando o painel o digita.
+        tc.handleKitSvd("/svd/esp32c3.svd");
+        if (tc.svdFile !== "/svd/esp32c3.svd") failures += 1048576;
+        tc.applyKit("/sr", "aarch64-linux-gnu", "esp32c3");
+        if (root.kits[2].svdFile !== "/svd/esp32c3.svd") failures += 2097152;
+        tc.applyKit("/sr", "aarch64-linux-gnu", "esp32c3", undefined, "/svd/outro.svd");
+        if (root.kits[3].svdFile !== "/svd/outro.svd" || root.kits[3].toolchainFile !== "") failures += 4194304;
+        tc.applyKit("/sr", "aarch64-linux-gnu", "esp32c3", undefined, "");
+        if (root.kits[4].svdFile !== "") failures += 8388608;
+        tc.handleKitSvd(null);
+        if (tc.svdFile !== "") failures += 16777216;
 
         // Ler sysroot / importar: aparado, vazio nao pede.
         tc.inspectSysroot("  /sysroots/pi  ");
@@ -69,7 +81,7 @@ Item {
         tc.handleResolved([], [], "", "", "", "STM32F401CC", "");
         tc.applyProposal();
         const k = root.kits[root.kits.length - 1];
-        if (root.kits.length !== 3 || k.sysroot !== "/opt/br/output/host/aarch64-buildroot-linux-gnu/sysroot"
+        if (root.kits.length !== 6 || k.sysroot !== "/opt/br/output/host/aarch64-buildroot-linux-gnu/sysroot"
                 || k.targetTriple !== "aarch64-buildroot-linux-gnu"
                 || k.toolchainFile !== "/opt/br/output/host/share/buildroot/toolchainfile.cmake"
                 || k.chip !== "STM32F401CC") failures += 512;
@@ -82,7 +94,7 @@ Item {
 
         // Sem proposta, aplicar nao pede nada.
         tc.applyProposal();
-        if (root.kits.length !== 3) failures += 4096;
+        if (root.kits.length !== 6) failures += 4096;
 
         // Trocar de workspace esquece tudo.
         tc.handleKitProposal({ kind: "yocto", path: "/opt/poky/environment-setup-x" });

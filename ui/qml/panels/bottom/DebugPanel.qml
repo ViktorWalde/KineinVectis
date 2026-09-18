@@ -26,6 +26,8 @@ Item {
     property var variablesModel: emptyInspectionModel
     property int currentFrameIndex: -1
     property var watchesModel
+    // O que o depurador mostra (P3): o filho `inspect` do DebugController.
+    property var inspect: null
 
     signal frameActivated(int index)
     signal variableToggled(int index)
@@ -214,7 +216,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.left: debugOutputView.right
         anchors.leftMargin: Theme.spacingSmall
-        anchors.right: watches.left
+        anchors.right: inspectView.left
         anchors.rightMargin: Theme.spacingSmall
 
         paused: panel.paused
@@ -224,6 +226,22 @@ Item {
 
         onFrameActivated: function(index) { panel.frameActivated(index); }
         onVariableToggled: function(index) { panel.variableToggled(index); }
+    }
+
+    // Escopos, memoria e disassembly (P3): entre as variaveis e os watches.
+    DebugInspectView {
+        id: inspectView
+
+        anchors.top: debugControlsRow.bottom
+        anchors.topMargin: Theme.spacingSmall
+        anchors.bottom: parent.bottom
+        anchors.right: watches.left
+        anchors.rightMargin: Theme.spacingSmall
+        width: panel.sessionActive ? 300 : 0
+        visible: panel.sessionActive
+
+        inspect: panel.inspect
+        paused: panel.paused
     }
 
     DebugWatches {

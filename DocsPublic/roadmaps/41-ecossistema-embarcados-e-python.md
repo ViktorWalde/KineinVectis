@@ -469,12 +469,22 @@ BLOCO C — MicroPython / CircuitPython (Python + serial: precisa de A e B)
  C6  CircuitPython                          drive CIRCUITPY (copia) + circup
 
 BLOCO D — embarcado em profundidade: o que o Cortex-Debug/probe-rs MOSTRAM
- D1  console RTT/defmt                      probe-rs: canais no launch, saida em evento
-                                            no painel (o C3/C6 da mesa prova)
- D2  registradores de periferico (SVD)      probe-rs svdFile; cmsis-svd para o caminho gdb;
-                                            cada SVD auditado por licenca (35 §5.7)
- D3  memoria e disassembly                  DAP readMemory/disassemble -> duas vistas
- D4  registradores do core                  mostrar o escopo que hoje se esconde, sob pedido
+ D1  console RTT/defmt                      FEITO 2026-09-17 (40 §7.49, 0.118.0): rttEnabled
+                                            no launch do probe-rs, os eventos rtt-channel-
+                                            config/rtt-data viram event.debug.output
+                                            {category: rtt, channel}, o core responde o
+                                            rttWindowOpened. Provado com adaptador falso;
+                                            a placa real (C3/C6 USB-JTAG) ainda nao
+ D2  registradores de periferico (SVD)      FEITO 2026-09-17 (40 §7.49): svdFile no kit ->
+                                            coreConfigs[0].svdFile do probe-rs -> escopo
+                                            Peripherals em debug.scopes. O caminho gdb
+                                            (cmsis-svd) nao entrou; licenca por SVD e' do
+                                            usuario que aponta o arquivo
+ D3  memoria e disassembly                  FEITO 2026-09-17 (40 §7.49): debug.readMemory e
+                                            debug.disassemble (DAP verbatim), a vista de
+                                            inspecao na aba Debug (hex+ascii; instrucoes)
+ D4  registradores do core                  FEITO 2026-09-17 (40 §7.49): debug.scopes lista
+                                            os escopos inteiros; Registers sob pedido
  D5  RTOS threads                           OpenOCD `rtos` pelo gdb -i dap (FreeRTOS, Zephyr)
  D6  clang-tidy e cppcheck no quality.run   C/C++ deixa de ter so' clippy
  D7  test explorer C/C++                    gtest/catch2/doctest por descoberta

@@ -69,6 +69,7 @@ set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RE
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanelHost.qml)
 set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
+set_source_files_properties(qml/embedded/EmbeddedKitView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitView.qml)
 set_source_files_properties(qml/embedded/EmbeddedSizeView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSizeView.qml)
 set_source_files_properties(qml/embedded/EmbeddedSerialView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedSerialView.qml)
 set_source_files_properties(qml/embedded/EmbeddedIdentityController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedIdentityController.qml)
@@ -121,6 +122,8 @@ set_source_files_properties(qml/ipc/SetupEventRouter.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/ipc/SetupRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS SetupRequestRouter.qml)
 set_source_files_properties(qml/debug/DebugWatches.qml PROPERTIES QT_RESOURCE_ALIAS DebugWatches.qml)
 set_source_files_properties(qml/debug/DebugInspector.qml PROPERTIES QT_RESOURCE_ALIAS DebugInspector.qml)
+set_source_files_properties(qml/debug/DebugInspectController.qml PROPERTIES QT_RESOURCE_ALIAS DebugInspectController.qml)
+set_source_files_properties(qml/debug/DebugInspectView.qml PROPERTIES QT_RESOURCE_ALIAS DebugInspectView.qml)
 set_source_files_properties(qml/diagnostics/DiagnosticsController.qml PROPERTIES QT_RESOURCE_ALIAS DiagnosticsController.qml)
 set_source_files_properties(qml/settings/SettingsController.qml PROPERTIES QT_RESOURCE_ALIAS SettingsController.qml)
 set_source_files_properties(qml/settings/SettingsDialog.qml PROPERTIES QT_RESOURCE_ALIAS SettingsDialog.qml)
@@ -316,6 +319,7 @@ qt_add_qml_module(kinein-vectis
         qml/embedded/EmbeddedPanel.qml
         qml/embedded/EmbeddedPanelHost.qml
         qml/embedded/EmbeddedKitField.qml
+        qml/embedded/EmbeddedKitView.qml
         qml/embedded/EmbeddedSizeView.qml
         qml/embedded/EmbeddedSerialView.qml
         qml/embedded/EmbeddedIdentityController.qml
@@ -367,6 +371,8 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/SetupRequestRouter.qml
         qml/debug/DebugWatches.qml
         qml/debug/DebugInspector.qml
+        qml/debug/DebugInspectController.qml
+        qml/debug/DebugInspectView.qml
         qml/diagnostics/DiagnosticsController.qml
         qml/settings/SettingsController.qml
         qml/settings/SettingsDialog.qml

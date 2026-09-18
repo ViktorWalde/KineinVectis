@@ -20,8 +20,8 @@ Item {
             root.coreClient.toolchainSet(role, id, preset);
         }
 
-        function onSetKitRequested(preset, sysroot, targetTriple, chip, toolchainFile) {
-            root.coreClient.toolchainSetKit(preset, sysroot, targetTriple, chip, toolchainFile);
+        function onSetKitRequested(preset, sysroot, targetTriple, chip, toolchainFile, svdFile) {
+            root.coreClient.toolchainSetKit(preset, sysroot, targetTriple, chip, toolchainFile, svdFile);
         }
 
         function onInspectSysrootRequested(path) {

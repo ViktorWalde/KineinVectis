@@ -28,15 +28,17 @@ use std::{
 };
 
 use kinein_protocol::{
-    BreakpointInfo, DebugEvaluateResult, DebugStartResult, SourceBreakpointParams, StackFrameInfo,
-    VariableInfo,
+    BreakpointInfo, DebugDisassembleParams, DebugEvaluateResult, DebugInstruction,
+    DebugReadMemoryResult, DebugScopeInfo, DebugStartResult, SourceBreakpointParams,
+    StackFrameInfo, VariableInfo,
 };
 use serde_json::{Value, json};
 
 use super::DebugError;
 use super::adapter::Adapter;
 use super::parse::{
-    breakpoints_arguments, parse_breakpoints, parse_evaluate, parse_stack_frames, parse_variables,
+    breakpoints_arguments, parse_breakpoints, parse_evaluate, parse_instructions,
+    parse_read_memory, parse_scopes, parse_stack_frames, parse_variables,
     preferred_scope_reference,
 };
 use super::reader::{note_continued, send_event, spawn_reader};
@@ -306,6 +308,54 @@ impl DapSession {
             REQUEST_TIMEOUT,
         )?;
         Ok(parse_variables(&body))
+    }
+
+    /// Os escopos de um frame, como o adaptador os nomeia (P3): `Locals`,
+    /// `Registers`, e os perifericos do SVD no probe-rs. O que
+    /// `frame_variables` esconde ao escolher um, aqui se lista inteiro.
+    pub(super) fn scopes(&self, frame_id: i64) -> Result<Vec<DebugScopeInfo>, DebugError> {
+        let _ = self.stopped_thread_id()?;
+        let body = self
+            .wire
+            .request("scopes", &json!({ "frameId": frame_id }), REQUEST_TIMEOUT)?;
+        Ok(parse_scopes(&body))
+    }
+
+    /// `readMemory` do DAP, verbatim (P3): probe-rs 0.32 e GDB 17 anunciam
+    /// `supportsReadMemoryRequest`; o lldb-dap tambem. A resposta e' a deles.
+    pub(super) fn read_memory(
+        &self,
+        memory_reference: &str,
+        offset: Option<i64>,
+        count: u64,
+    ) -> Result<DebugReadMemoryResult, DebugError> {
+        let _ = self.stopped_thread_id()?;
+        let mut args = json!({ "memoryReference": memory_reference, "count": count });
+        if let Some(offset) = offset {
+            args["offset"] = json!(offset);
+        }
+        let body = self.wire.request("readMemory", &args, REQUEST_TIMEOUT)?;
+        Ok(parse_read_memory(&body))
+    }
+
+    /// `disassemble` do DAP, verbatim (P3).
+    pub(super) fn disassemble(
+        &self,
+        params: &DebugDisassembleParams,
+    ) -> Result<Vec<DebugInstruction>, DebugError> {
+        let _ = self.stopped_thread_id()?;
+        let mut args = json!({
+            "memoryReference": params.memory_reference,
+            "instructionCount": params.instruction_count,
+        });
+        if let Some(offset) = params.offset {
+            args["offset"] = json!(offset);
+        }
+        if let Some(offset) = params.instruction_offset {
+            args["instructionOffset"] = json!(offset);
+        }
+        let body = self.wire.request("disassemble", &args, REQUEST_TIMEOUT)?;
+        Ok(parse_instructions(&body))
     }
 
     /// Pede o encerramento educado; `terminated`/EOF emitem o `finished`.

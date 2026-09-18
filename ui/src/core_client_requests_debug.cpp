@@ -90,4 +90,32 @@ void CoreClient::debugVariablesForRef(double ref)
                 QJsonObject{{QStringLiteral("ref"), static_cast<qint64>(ref)}});
 }
 
+void CoreClient::debugScopes(double frameId)
+{
+    sendRequest(QStringLiteral("debug.scopes"),
+                QJsonObject{{QStringLiteral("frameId"), static_cast<qint64>(frameId)}});
+}
+
+void CoreClient::debugReadMemory(const QString& memoryReference, double count, double offset)
+{
+    QJsonObject params{{QStringLiteral("memoryReference"), memoryReference},
+                       {QStringLiteral("count"), static_cast<qint64>(count)}};
+    // Campo ausente = zero para o DAP; so' vai quando ha' deslocamento.
+    if (static_cast<qint64>(offset) != 0) {
+        params.insert(QStringLiteral("offset"), static_cast<qint64>(offset));
+    }
+    sendRequest(QStringLiteral("debug.readMemory"), params);
+}
+
+void CoreClient::debugDisassemble(const QString& memoryReference, double instructionCount,
+                                  double instructionOffset)
+{
+    QJsonObject params{{QStringLiteral("memoryReference"), memoryReference},
+                       {QStringLiteral("instructionCount"), static_cast<qint64>(instructionCount)}};
+    if (static_cast<qint64>(instructionOffset) != 0) {
+        params.insert(QStringLiteral("instructionOffset"), static_cast<qint64>(instructionOffset));
+    }
+    sendRequest(QStringLiteral("debug.disassemble"), params);
+}
+
 } // namespace kinein

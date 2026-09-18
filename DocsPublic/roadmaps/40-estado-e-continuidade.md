@@ -79,10 +79,11 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.117.0
-testes      791 Rust aprovados; 41 harnesses QML (medicao de 2026-09-17, §7.48)
-metodos     145 IPC roteados, 52 eventos (serial.identify, runConfig.flashProposal,
-            serial.access, serial.files, python.stubs, event.lsp.log,
+protocolo   0.118.0
+testes      794 Rust aprovados; 42 harnesses QML (medicao de 2026-09-17, §7.49)
+metodos     148 IPC roteados, 52 eventos (serial.identify, runConfig.flashProposal,
+            serial.access, serial.files, python.stubs, debug.scopes,
+            debug.readMemory, debug.disassemble, event.lsp.log,
             event.serial.identified, event.serial.files e event.python.stubs
             entraram em 2026-09-17)
 dominios    34, e os 34 documentados no arquitetura/03
@@ -592,8 +593,10 @@ na §7.43 e o A5 na §7.44 — o bloco A do roadmap 41 fechou; Toolchains
 (preset no configure automático; Bear; alvo do kit para o rust-analyzer) na
 §7.46, o P4 MicroPython (arquivos na placa, firmware oficial, stubs por
 placa — provado no ESP32 real) na §7.47, e o bloco E (ESP-IDF, Zephyr,
-pico-sdk e PlatformIO como motores de build/gravar/monitorar) na §7.48. O
-próximo item é o P3 (depuração profunda). Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
+pico-sdk e PlatformIO como motores de build/gravar/monitorar) na §7.48, e a
+primeira fatia do P3 (o launch certo do probe-rs, SVD no kit, RTT, escopos,
+memória e disassembly pelo DAP padrão) na §7.49. O próximo item é o P5
+(qualidade) — o D5 (threads de RTOS) do P3 espera uma sonda. Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
 ainda não está verde.
@@ -607,7 +610,7 @@ ainda não está verde.
 | Toolchains | **Seletor de pasta nativo e SDK do Zephyr no `importKit` FEITOS em 2026-09-17 (§7.45).** Resta medir `importKit` com Yocto/Buildroot/Zephyr SDK reais — ainda sem exemplares locais. |
 | P0 — modelo do projeto | **FEITO em 2026-09-17 (§7.46, 0.115.0):** preset no configure automático (kit > CMakeUserPresets > CMakePresets, dito e anotado); `kind: make` com `bear -- make`; `rust-analyzer.cargo.target` do kit. |
 | P4 — MicroPython | **FEITO em 2026-09-17 (§7.47, 0.116.0):** arquivos na placa (`serial.files`, C2 — lido e reescrito no ESP32 do autor), firmware oficial no catálogo de instalação e gravado pela proposta do E4 (C5), stubs por placa no basedpyright (C4). Resta o C6 (CircuitPython: drive `CIRCUITPY` + `circup`), baixa prioridade. |
-| P3 — depuração profunda | SVD com escrita pelo `gdb -i dap`; RTT/defmt; memória/disassembly; RTOS threads. |
+| P3 — depuração profunda | **Fatia 1 FEITA em 2026-09-17 (§7.49, 0.118.0):** o `launch` do probe-rs consertado (`coreConfigs`), `svdFile` no kit → escopo `Peripherals`, RTT/defmt como saída de debug (`rtt`), `debug.scopes`/`readMemory`/`disassemble` como passagem do DAP padrão, a vista de inspeção na aba Debug. Provado com adaptador falso — nenhuma sonda nesta máquina. **Resta:** D5 threads de RTOS (`rtos` do OpenOCD via `debugServer`), SVD com ESCRITA (`setVariable`/`writeMemory`, que os dois adaptadores anunciam), `rttChannelFormats` (defmt declarado), o caminho `cmsis-svd` pelo GDB. |
 | P5 — qualidade | clang-tidy dentro do clangd; lâmpada proativa do Alt+Enter; gtest/catch2; cobertura. |
 | P6 — Linux embarcado | SSH remoto, decidido e ainda não arquitetado: deploy, gdbserver e debugpy attach. |
 | Frameworks, bloco E | **FEITO em 2026-09-17 (§7.48, 0.117.0):** `build.run` compila pelo wrapper de cada um (`pio run`; `idf.py build` no ambiente ativado — export.sh ou EIM; `west build -d build -b <placa>`; CMake com `-DPICO_SDK_PATH`), Gravar ganhou `idf.py`/`west`/`platformio`, o monitor ganhou o IDF Monitor e o `pio device monitor`, `platformio.ini` é tipo de projeto. Provado com wrappers falsos — nenhum SDK real nesta máquina. Resta: E5 templates curados, E6 Unity/Ceedling. |
@@ -3376,3 +3379,58 @@ deles) — os wrappers foram exercitados por falsos que ecoam argv; o
 `export.sh` real do IDF nunca foi sourced por `bash -c` aqui. E5 (templates
 curados) e E6 (Unity/Ceedling) não entraram. **Próximo:** P3 — depuração
 profunda (SVD, RTT/defmt, memória/disassembly, threads de RTOS).
+
+### 7.49 P3, fatia 1 — o que o depurador de embarcado MOSTRA, pelo DAP padrão — 2026-09-17 (noite), protocolo 0.118.0
+
+A pergunta do autor foi se dava para "pegar uma solução pronta do VS Code"
+para JTAG. A resposta que virou código: a extensão (Cortex-Debug, a do
+probe-rs) não se embute num Qt, mas o que ela consome — o **protocolo** — já
+é o nosso. Medido no `initialize` desta máquina em 2026-09-17: o `probe-rs
+dap-server` 0.32.0 e o `gdb -i dap` 17.1 anunciam `supportsReadMemoryRequest`,
+`supportsDisassembleRequest`, `supportsSetVariable`,
+`supportsWriteMemoryRequest`. Então o P3 é **consumir**, não reimplementar.
+
+**O que a medição consertou primeiro.** O `launch` que a IDE mandava ao
+probe-rs (`program` + `chip` no topo, desde 0.70.0) **falha**: `Serialization
+error "missing field coreConfigs"` (medido com o dap-server real, sem sonda —
+o erro vem antes de procurar a sonda). A forma certa, lida em
+`server/configuration.rs` do 0.32.0, é `{ cwd, chip?, coreConfigs: [{
+coreIndex: 0, programBinary, svdFile?, rttEnabled }] }`. Ou seja: o
+adaptador `probe-rs` nunca teria depurado nada até aqui — e nenhum gate pegou,
+porque a prova do ciclo de embarcado é o `gdb -i dap` com QEMU. Corrigido, com
+teste da forma. **Depois, as quatro peças de D1–D4:** `svdFile` no kit
+(`toolchain.setKit`, `ToolchainResult`, campo **SVD** no painel — o painel
+bateu em 300 e os campos do kit saíram para `EmbeddedKitView`), que vai em
+`coreConfigs[0].svdFile`; **RTT/defmt**: `rttEnabled: true` no launch, os
+eventos `probe-rs-rtt-channel-config`/`probe-rs-rtt-data` (nomes lidos em
+`debug_adapter/dap/adapter.rs`) viram `event.debug.output { category: "rtt",
+channel, channelName? }`, e o core responde o request `rttWindowOpened` que o
+probe-rs exige para começar a ler ("will delay polling RTT channels until the
+data window has opened"); `probe-rs-show-message` vira console.
+**`debug.scopes { frameId }`** devolve os escopos inteiros (Locals, Registers,
+Peripherals com `expensive`) — o D4 era "mostrar o escopo que hoje se
+esconde", e o `debug.variables { frameId }` escondia ao escolher o primeiro;
+**`debug.readMemory`** e **`debug.disassemble`** são o DAP verbatim. Na UI:
+`DebugInspectController` (filho `inspect` do `DebugController`, que estava
+em 398/400 — os quatro `ListModel` viraram uma linha cada) e
+`DebugInspectView` entre as variáveis e os watches: Listar escopos → chips →
+variáveis do escopo; endereço → Memória (hex + ASCII, 16 por linha, bytes
+ilegíveis ditos) / Desmontar (endereço, bytes, instrução, símbolo).
+
+**Medido em 2026-09-17:** 794 testes Rust (+3: a forma do launch do probe-rs
+com e sem SVD; por despacho, contra um adaptador falso em TCP que fala como o
+probe-rs — o canal RTT anunciado e os dados viram `rtt`, o aviso vira
+`console`, a parada enriquecida, os três métodos verbatim com os argumentos
+conferidos no que o adaptador recebeu, e o `rttWindowOpened` mandado; as
+recusas sem sessão e de parâmetro); 42 harnesses QML (`tst_debug_inspect`
+novo; `tst_toolchain_import` com o `svdFile`); 148 métodos; clippy, fmt,
+clang-format, Clang-Tidy dos 3 .cpp tocados, fiação, propriedades, alcance,
+duplicação, arquitetura, docs, links, qmllint; `debug-strict` compila.
+
+**Não provado, dito:** nenhuma sonda nem chip com USB-JTAG nesta máquina — o
+ESP32 clássico do autor não tem JTAG embutido; o probe-rs real só foi levado
+até o `launch` (onde a forma velha falhava e a nova passa a procurar a
+sonda). D5 (threads de RTOS) não entrou; `setVariable`/`writeMemory` (SVD com
+escrita) e `rttChannelFormats` (defmt declarado por canal) ficam para a fatia
+2, quando houver placa. **Próximo:** P5 — qualidade (clang-tidy no clangd,
+lâmpada proativa, gtest/catch2, cobertura).

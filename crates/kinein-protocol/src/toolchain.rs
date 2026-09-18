@@ -177,6 +177,10 @@ pub struct ToolchainResult {
     /// nao declara um (o do preset vence).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub toolchain_file: Option<String>,
+    /// The chip's CMSIS-SVD file (`0.118.0`, P3): peripheral registers in
+    /// the debugger (`svdFile` of the probe-rs launch).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub svd_file: Option<String>,
     /// Escolha atual de cada papel, na ordem de [`ToolchainRole::all`].
     pub selections: Vec<ToolchainSelection>,
     /// O que existe nesta maquina para cada papel.
@@ -246,6 +250,9 @@ pub struct ToolchainSetKitParams {
     /// (`0.104.0`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub toolchain_file: Option<String>,
+    /// CMSIS-SVD file for the chip (`0.118.0`); empty clears.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub svd_file: Option<String>,
 }
 
 /// Parameters for `toolchain.inspectSysroot`.
@@ -478,6 +485,7 @@ mod tests {
             debug_server: None,
             preset_toolchain_file: None,
             toolchain_file: None,
+            svd_file: None,
             selections: vec![ToolchainSelection {
                 role: ToolchainRole::Cmake,
                 id: None,

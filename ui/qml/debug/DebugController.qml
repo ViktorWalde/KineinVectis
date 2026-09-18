@@ -39,26 +39,25 @@ Item {
     signal showTabRequested(string tab)
     signal openAtRequested(string file, int line)
 
+    // P3: escopos/memoria/disassembly — filho, sem propriedade de repasse.
+    readonly property alias inspect: inspectController
+
     visible: false
 
-    ListModel {
-        id: debugOutputModel
+    DebugInspectController {
+        id: inspectController
+
+        frameId: root.currentFrameId
     }
 
-    ListModel {
-        id: debugFramesModel
-    }
-
-    ListModel {
-        id: debugVariablesModel
-    }
+    ListModel { id: debugOutputModel }
+    ListModel { id: debugFramesModel }
+    ListModel { id: debugVariablesModel }
 
     // Watches: { expression, value, failed }. Sobrevivem ao `continue` de
     // proposito — a expressao e' do usuario, nao da parada. O que morre e' o
     // VALOR, reavaliado na parada seguinte.
-    ListModel {
-        id: debugWatchesModel
-    }
+    ListModel { id: debugWatchesModel }
 
     function clearInspection() {
         debugFramesModel.clear();
@@ -122,6 +121,7 @@ Item {
 
     function clear() {
         clearInspection();
+        inspectController.clear();
         debugOutputModel.clear();
         starting = false;
         attached = false;
@@ -374,6 +374,7 @@ Item {
         currentFile = "";
         currentLine = 0;
         clearInspection();
+        inspectController.clear();
         appendLine(qsTr("== debug finalizado (codigo %1) ==").arg(exitCode),
                    exitCode === 0 ? "info" : "stderr");
     }

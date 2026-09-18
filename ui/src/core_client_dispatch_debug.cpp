@@ -84,6 +84,22 @@ bool CoreClient::dispatchDebugResult(const QString& method, const QJsonObject& r
             result.value(QStringLiteral("variables")).toArray().toVariantList());
         return true;
     }
+    if (method == QStringLiteral("debug.scopes")) {
+        emit debugScopesResolved(result.value(QStringLiteral("frameId")).toDouble(-1),
+                                 result.value(QStringLiteral("scopes")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("debug.readMemory")) {
+        // address, data (base64) e unreadableBytes viajam juntos: a tela
+        // decodifica e mostra em hexadecimal.
+        emit debugMemoryResolved(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("debug.disassemble")) {
+        emit debugDisassemblyResolved(
+            result.value(QStringLiteral("instructions")).toArray().toVariantList());
+        return true;
+    }
     if (method == QStringLiteral("debug.evaluate")) {
         emit debugEvaluateResolved(result.value(QStringLiteral("expression")).toString(),
                                    result.value(QStringLiteral("result")).toString(),

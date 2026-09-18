@@ -174,36 +174,14 @@ Item {
             controller: root.controller
         }
 
-        // --- Alvo do kit ---------------------------------------------------
-        Text {
-            text: qsTr("Alvo do kit %1").arg(root.preset)
-            color: Theme.textSecondary
-            font.pixelSize: 11
-            font.bold: true
-        }
+        // --- Alvo do kit: dono proprio (saiu daqui em 2026-09-17, P3, quando
+        // o SVD entrou e o painel bateu em 300) --------------------------------
+        EmbeddedKitView {
+            id: kit
 
-        EmbeddedKitField {
-            id: campoChip
-
-            labelText: qsTr("Chip")
-            placeholder: qsTr("como no `probe-rs chip list`, ex.: STM32F401CC")
-            value: root.toolchainController ? root.toolchainController.chip : ""
-        }
-
-        EmbeddedKitField {
-            id: campoAlvo
-
-            labelText: qsTr("Alvo")
-            placeholder: qsTr("triple, ex.: thumbv7em-none-eabihf")
-            value: root.toolchainController ? root.toolchainController.targetTriple : ""
-        }
-
-        EmbeddedKitField {
-            id: campoSysroot
-
-            labelText: qsTr("Sysroot")
-            placeholder: qsTr("raiz do sistema alvo (CMAKE_SYSROOT)")
-            value: root.toolchainController ? root.toolchainController.sysroot : ""
+            width: parent.width
+            preset: root.preset
+            toolchainController: root.toolchainController
         }
 
         Text {
@@ -281,10 +259,10 @@ Item {
             primary: true
             compact: true
             enabled: root.toolchainController !== null
-            // Os tres campos viajam juntos: string vazia LIMPA no core, e e'
-            // isso que a tela mostra — campo vazio e' kit sem aquele valor.
-            onClicked: root.toolchainController.applyKit(campoSysroot.text, campoAlvo.text,
-                                                         campoChip.text)
+            // Os campos viajam juntos: string vazia LIMPA no core, e e' isso
+            // que a tela mostra — campo vazio e' kit sem aquele valor.
+            onClicked: root.toolchainController.applyKit(kit.sysroot, kit.targetTriple,
+                                                         kit.chip, undefined, kit.svdFile)
         }
 
         KvButton {

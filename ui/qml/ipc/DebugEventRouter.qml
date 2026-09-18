@@ -46,10 +46,24 @@ Item {
 
         function onDebugVariablesResolved(frameId, ref, variables) {
             root.debugController.handleVariables(frameId, ref, variables);
+            root.debugController.inspect.handleVariables(ref, variables);
+        }
+
+        function onDebugScopesResolved(frameId, scopes) {
+            root.debugController.inspect.handleScopes(frameId, scopes);
+        }
+
+        function onDebugMemoryResolved(memory) {
+            root.debugController.inspect.handleMemory(memory);
+        }
+
+        function onDebugDisassemblyResolved(instructions) {
+            root.debugController.inspect.handleDisassembly(instructions);
         }
 
         function onRequestFailed(method, message) {
             root.debugController.handleRequestFailed(method, message);
+            root.debugController.inspect.handleFailed(method, message);
         }
     }
 }

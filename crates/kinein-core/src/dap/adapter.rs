@@ -37,6 +37,8 @@ pub struct AdapterChoice<'a> {
     pub remote_target: Option<&'a str>,
     /// Comando do servidor que a IDE sobe antes de conectar.
     pub debug_server: Option<&'a str>,
+    /// O CMSIS-SVD do chip (P3): `svdFile` no `launch` do probe-rs.
+    pub svd_file: Option<&'a str>,
 }
 
 /// Como cada adaptador conhecido e' invocado.
@@ -105,6 +107,8 @@ pub(super) struct Adapter {
     pub(super) remote_target: Option<String>,
     /// Comando do servidor que a sessao sobe antes do adaptador.
     pub(super) debug_server: Option<String>,
+    /// O CMSIS-SVD do chip, para o `coreConfigs` do probe-rs.
+    pub(super) svd_file: Option<String>,
 }
 
 impl Adapter {
@@ -120,7 +124,13 @@ impl Adapter {
             chip: choice.chip.map(str::to_owned),
             remote_target: choice.remote_target.map(str::to_owned),
             debug_server: choice.debug_server.map(str::to_owned),
+            svd_file: choice.svd_file.map(str::to_owned),
         }
+    }
+
+    /// `true` para o probe-rs, cujo `launch` tem forma propria.
+    fn is_probe_rs(&self) -> bool {
+        self.id == "probe-rs"
     }
 
     /// O pedido que inicia a sessao, e seus argumentos.
@@ -140,6 +150,34 @@ impl Adapter {
                     "program": target.display(),
                 }),
             );
+        }
+        // O probe-rs (P3, 2026-09-17) tem a SUA forma de launch, medida no
+        // dap-server 0.32.0 desta maquina e lida em `server/configuration.rs`:
+        // `program`+`chip` no topo falha com "missing field `coreConfigs`".
+        // O ELF vai em `coreConfigs[0].programBinary`; o SVD do kit em
+        // `svdFile` (os registradores de periferico viram um escopo); o RTT
+        // fica LIGADO (`rttEnabled`) — sem bloco de controle no firmware o
+        // probe-rs so' avisa, e com ele os canais chegam por
+        // `probe-rs-rtt-channel-config`/`probe-rs-rtt-data` (reader.rs).
+        if self.is_probe_rs()
+            && let DebugTarget::Program(elf) = target
+        {
+            let mut core = json!({
+                "coreIndex": 0,
+                "programBinary": elf.display().to_string(),
+                "rttEnabled": true,
+            });
+            if let Some(svd) = &self.svd_file {
+                core["svdFile"] = json!(svd);
+            }
+            let mut arguments = json!({
+                "cwd": root.display().to_string(),
+                "coreConfigs": [core],
+            });
+            if let Some(chip) = &self.chip {
+                arguments["chip"] = json!(chip);
+            }
+            return ("launch", arguments);
         }
         // Um executavel vai em `program`; um pacote Python vai em `module` (o
         // `-m` do debugpy — medido no 1.8.21: e' o campo que ele aceita).
@@ -247,6 +285,48 @@ mod tests {
         });
         assert_eq!(escolhido.program, PathBuf::from("probe-rs"));
         assert_eq!(escolhido.arguments, &["dap-server"]);
+    }
+
+    /// O `launch` do probe-rs e' o do `SessionConfig` dele (medido no
+    /// dap-server 0.32.0: `program` no topo e' "missing field coreConfigs"):
+    /// o ELF em `coreConfigs[0].programBinary`, o chip no topo, o SVD do kit
+    /// em `svdFile`, RTT ligado; sem SVD o campo NAO vai (nulo seria valor).
+    #[test]
+    fn probe_rs_launch_uses_core_configs_with_svd_and_rtt() {
+        let com_svd = adapter(AdapterChoice {
+            id: Some("probe-rs"),
+            chip: Some("esp32c3"),
+            svd_file: Some("/w/esp32c3.svd"),
+            ..AdapterChoice::default()
+        });
+        let (pedido, argumentos) = com_svd.start_request(
+            Path::new("/w"),
+            &DebugTarget::Program(PathBuf::from("/w/build/app.elf")),
+        );
+        assert_eq!(pedido, "launch");
+        assert_eq!(argumentos["chip"], "esp32c3");
+        assert_eq!(argumentos["cwd"], "/w");
+        assert!(argumentos.get("program").is_none(), "{argumentos}");
+        let core = &argumentos["coreConfigs"][0];
+        assert_eq!(core["coreIndex"], 0);
+        assert_eq!(core["programBinary"], "/w/build/app.elf");
+        assert_eq!(core["svdFile"], "/w/esp32c3.svd");
+        assert_eq!(core["rttEnabled"], true);
+        assert!(argumentos["coreConfigs"].as_array().unwrap().len() == 1);
+
+        let sem = adapter(AdapterChoice {
+            id: Some("probe-rs"),
+            ..AdapterChoice::default()
+        });
+        let (_, argumentos) = sem.start_request(
+            Path::new("/w"),
+            &DebugTarget::Program(PathBuf::from("/w/a")),
+        );
+        assert!(argumentos.get("chip").is_none());
+        assert!(
+            argumentos["coreConfigs"][0].get("svdFile").is_none(),
+            "{argumentos}"
+        );
     }
 
     /// Todo GDB e' o mesmo programa com outro alvo: `gdb-multiarch` e os

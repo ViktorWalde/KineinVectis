@@ -259,6 +259,7 @@ Rectangle {
         framesModel: root.debugController.framesModel
         variablesModel: root.debugController.variablesModel
         watchesModel: root.debugController.watchesModel
+        inspect: root.debugController.inspect
         currentFrameIndex: root.debugController.currentFrameIndex
 
         onFrameActivated: function(index) { root.debugController.selectFrame(index, true); }

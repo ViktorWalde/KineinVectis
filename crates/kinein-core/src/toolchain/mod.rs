@@ -54,6 +54,7 @@ pub struct Toolchain {
     debug_server: Option<String>,
     preset_toolchain_file: Option<String>,
     kit_toolchain_file: Option<String>,
+    svd_file: Option<String>,
 }
 
 impl Toolchain {
@@ -127,6 +128,7 @@ impl Toolchain {
             debug_server: kit.debug_server,
             preset_toolchain_file: preset_toolchain_file(root, preset),
             kit_toolchain_file: kit.toolchain_file,
+            svd_file: kit.svd_file,
             selections,
             candidates,
         }
@@ -144,6 +146,7 @@ impl Toolchain {
             debug_server: self.debug_server.clone(),
             preset_toolchain_file: self.preset_toolchain_file.clone(),
             toolchain_file: self.kit_toolchain_file.clone(),
+            svd_file: self.svd_file.clone(),
             selections: self.selections.clone(),
             candidates: self.candidates.clone(),
             rust_targets: None,
@@ -227,6 +230,12 @@ impl Toolchain {
     pub fn debug_server(&self) -> Option<&str> {
         self.debug_server.as_deref()
     }
+
+    /// O CMSIS-SVD do chip (P3): vai no `launch` do probe-rs como `svdFile`.
+    #[must_use]
+    pub fn svd_file(&self) -> Option<&str> {
+        self.svd_file.as_deref()
+    }
 }
 
 /// Fixa (ou libera) a escolha de um papel e devolve a toolchain resultante.
@@ -282,6 +291,8 @@ pub struct KitUpdate<'a> {
     pub debug_server: Option<&'a str>,
     /// Arquivo de toolchain do kit (`CMAKE_TOOLCHAIN_FILE`).
     pub toolchain_file: Option<&'a str>,
+    /// O CMSIS-SVD do chip (P3).
+    pub svd_file: Option<&'a str>,
 }
 
 /// Fixa os campos do kit que vieram em `update`.
@@ -306,6 +317,7 @@ pub fn set_kit(
     aplica(&mut kit.remote_target, update.remote_target);
     aplica(&mut kit.debug_server, update.debug_server);
     aplica(&mut kit.toolchain_file, update.toolchain_file);
+    aplica(&mut kit.svd_file, update.svd_file);
     store::save(root, &kits)?;
     Ok(Toolchain::resolve_kit(root, tools, preset))
 }

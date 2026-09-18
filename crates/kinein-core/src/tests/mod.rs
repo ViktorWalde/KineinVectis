@@ -12,6 +12,7 @@ mod container;
 mod datasource;
 mod debug;
 mod debug_attach;
+mod debug_inspect;
 mod dispatch;
 mod flash_proposal;
 mod format;

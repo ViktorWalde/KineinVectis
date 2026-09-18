@@ -718,6 +718,19 @@ servidor (OpenOCD, QEMU ou `probe-rs`) e a IDE o sobe e conecta o `gdb -i dap`.
 Nada aqui roda como root; permissão de porta e de sonda é mostrada, com o
 passo oficial da distro, nunca executada.
 
+**O que o depurador de embarcado mostra** (na aba Debug, a coluna entre as
+variáveis e os watches, com a sessão parada): **Escopos** → *Listar* traz os
+escopos do frame como o adaptador os nomeia — `Locals`, `Registers` e, com o
+**SVD** do chip no kit (campo no painel de Embarcados) e o `probe-rs` como
+adaptador, `Peripherals` (os registradores de periférico; o chip ⏱ marca o
+escopo caro) — e o clique num escopo mostra as variáveis dele. **Memória**
+→ digite um endereço (`0x3ff00000`) e leia 64 bytes em hexadecimal + ASCII;
+**Desmontar** → as instruções a partir do endereço, com bytes e símbolo. Os
+dois são o `readMemory`/`disassemble` do próprio DAP, que o `probe-rs` e o
+GDB respondem. **RTT/defmt**: com o `probe-rs`, o console da placa pelos
+canais RTT aparece na saída de debug (`canal RTT 0 \`Terminal\` aberto`, e as
+linhas do canal) — o defmt já chega decodificado.
+
 ### Containers (`Ctrl+Alt+W`)
 
 Docker **ou** Podman — o que responder nesta máquina (no Fedora, `docker`

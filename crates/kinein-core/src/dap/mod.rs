@@ -22,7 +22,8 @@ mod wire;
 use std::{collections::BTreeMap, error::Error, fmt, path::Path};
 
 use kinein_protocol::{
-    BreakpointInfo, DebugEvaluateResult, SourceBreakpointParams, StackFrameInfo, VariableInfo,
+    BreakpointInfo, DebugDisassembleParams, DebugEvaluateResult, DebugInstruction,
+    DebugReadMemoryResult, DebugScopeInfo, SourceBreakpointParams, StackFrameInfo, VariableInfo,
 };
 
 use crate::lsp::EventSender;
@@ -234,6 +235,35 @@ impl DebugManager {
         self.live_session()
             .ok_or(DebugError::NotRunning)?
             .reference_variables(reference)
+    }
+
+    /// Every scope of a frame (P3).
+    pub fn scopes(&self, frame_id: i64) -> Result<Vec<DebugScopeInfo>, DebugError> {
+        self.live_session()
+            .ok_or(DebugError::NotRunning)?
+            .scopes(frame_id)
+    }
+
+    /// `readMemory`, verbatim (P3).
+    pub fn read_memory(
+        &self,
+        memory_reference: &str,
+        offset: Option<i64>,
+        count: u64,
+    ) -> Result<DebugReadMemoryResult, DebugError> {
+        self.live_session()
+            .ok_or(DebugError::NotRunning)?
+            .read_memory(memory_reference, offset, count)
+    }
+
+    /// `disassemble`, verbatim (P3).
+    pub fn disassemble(
+        &self,
+        params: &DebugDisassembleParams,
+    ) -> Result<Vec<DebugInstruction>, DebugError> {
+        self.live_session()
+            .ok_or(DebugError::NotRunning)?
+            .disassemble(params)
     }
 
     /// Pauses the running debuggee.

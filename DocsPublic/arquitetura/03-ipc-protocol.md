@@ -1,5 +1,30 @@
 # 03 — Protocolo IPC
 
+> **0.118.0 (2026-09-17, noite) — P3, o que o depurador de embarcado MOSTRA
+> (D1–D4 do `roadmaps/41` bloco D), como passagem do DAP padrão — a
+> "solução pronta" não é uma extensão do VS Code, é o protocolo que
+> `probe-rs dap-server` 0.32 e `gdb -i dap` 17 anunciam (medido nesta
+> máquina: `supportsReadMemoryRequest`, `supportsDisassembleRequest`,
+> `supportsSetVariable`, `supportsWriteMemoryRequest`).** (1) **O `launch`
+> do probe-rs estava errado**: `program`+`chip` no topo falha com `missing
+> field coreConfigs` (medido); agora é `{ cwd, chip?, coreConfigs: [{
+> coreIndex: 0, programBinary, svdFile?, rttEnabled: true }] }` (lido em
+> `server/configuration.rs` do 0.32.0). (2) **`svdFile` no kit**
+> (`toolchain.setKit { svdFile? }`, `ToolchainResult.svdFile?`): o CMSIS-SVD
+> do chip, que o probe-rs transforma no escopo `Peripherals`. (3) **RTT/
+> defmt**: os eventos `probe-rs-rtt-channel-config`/`probe-rs-rtt-data` viram
+> `event.debug.output { category: "rtt", channel, channelName?, line }`, e o
+> core responde o `rttWindowOpened` que o probe-rs exige para começar a ler;
+> `probe-rs-show-message` vira `console`. (4) **`debug.scopes { frameId }`**
+> → `{ frameId, scopes: [{ name, ref, expensive }] }` (os escopos inteiros —
+> `Locals`, `Registers`, `Peripherals` — que o `debug.variables { frameId }`
+> esconde ao escolher um); **`debug.readMemory { memoryReference, offset?,
+> count }`** → `{ address, unreadableBytes?, data (base64) }` e
+> **`debug.disassemble { memoryReference, offset?, instructionOffset?,
+> instructionCount }`** → `{ instructions: [{ address, instruction,
+> instructionBytes?, symbol?, file?, line? }] }`, verbatim. Na UI, o filho
+> `inspect` do `DebugController`. Métodos 148, eventos 52.
+>
 > **0.117.0 (2026-09-17, noite) — bloco E, os frameworks como MOTORES de
 > build/gravar/monitorar (E1–E4 do `roadmaps/41`).** O `project.model` já
 > reconhecia ESP-IDF, Zephyr, pico-sdk e PlatformIO; agora o `build.run` os
@@ -1886,7 +1911,7 @@ papel, o `sysroot` e o triple do alvo.
 toolchain.get  { preset? }                         -> ToolchainResult
 toolchain.set  { role, id?, preset? }              -> ToolchainResult
 toolchain.setKit { preset?, sysroot?, targetTriple?, chip?,               NOVO
-                   remoteTarget?, debugServer? } -> ToolchainResult
+                   remoteTarget?, debugServer?, toolchainFile?, svdFile? } -> ToolchainResult
 ```
 
 **Desde o `0.97.0` (2026-09-12, [`integracoes/39`](../integracoes/39-toolchains-por-alvo.md))
@@ -1956,6 +1981,18 @@ flag do `dap-server`. Supor o contrário daria um processo que sobe e falha no
 primeiro request, com a causa longe do sintoma. **Campo ausente não é campo
 nulo** — sem chip escolhido, o `launch` não carrega a chave, mesma regra da
 condição de breakpoint (`0.66.0`).
+
+**O `launch` do probe-rs tem a forma DELE (`0.118.0`, P3; medido no
+`dap-server` 0.32.0 desta máquina e lido em `server/configuration.rs`):**
+`program`+`chip` no topo — a forma que a IDE mandava até aqui — falha com
+`Serialization error "missing field coreConfigs"`. A forma certa é `{ cwd,
+chip?, coreConfigs: [{ coreIndex: 0, programBinary: <ELF>, svdFile?,
+rttEnabled: true }] }`; os outros adaptadores continuam com `program`/`cwd`.
+**O kit ganhou `svdFile` (`0.118.0`)** — o CMSIS-SVD do chip (do pack do
+fabricante ou do `cmsis-svd`, cada um com a sua licença, `35` §5.7), que o
+probe-rs transforma no escopo `Peripherals` (`debug.scopes`). Como o
+`toolchainFile`: `toolchain.setKit { svdFile? }` ("" limpa, ausente
+preserva), `ToolchainResult.svdFile?`, campo **SVD** no painel de Embarcados.
 
 **O kit ganhou `remoteTarget` e `debugServer` no `0.89.0`** — o caminho para
 depurar o que não está na máquina. Quando o kit escolhe o adaptador `gdb` (que
@@ -2368,6 +2405,26 @@ Inspeção (protocolo `0.29.0`, fatia M2.5c), sempre da thread pausada
   > 0 = expansível). Exatamente um de `frameId`/`ref` → senão
   `INVALID_PARAMS`. A resposta ECOA a chave pedida para a UI correlacionar
   (mesmo padrão do `format.text`).
+- `debug.scopes { frameId }` → `{ frameId, scopes: [{ name, ref, expensive }] }`
+  (`0.118.0`, P3) — os escopos INTEIROS do frame, na ordem do adaptador:
+  `Locals`, `Registers` (probe-rs e GDB), e `Peripherals` quando o kit tem
+  `svdFile` e o adaptador é o probe-rs. `expensive` é o que o adaptador diz
+  (ler todos os registradores de periférico custa); cada `ref` alimenta o
+  MESMO `debug.variables { ref }`. É o D2+D4 do `roadmaps/41`: o que o
+  `debug.variables { frameId }` esconde ao escolher o primeiro escopo.
+- `debug.readMemory { memoryReference, offset?, count }` → `{ address,
+  unreadableBytes?, data? }` (`0.118.0`) — o `readMemory` do DAP, verbatim:
+  `memoryReference` é um endereço (`0x3ff00000`) ou a referência que uma
+  variável/frame carrega; `data` é base64, como o DAP a manda (a UI mostra
+  hexadecimal). `count` 0 ou referência vazia → `INVALID_PARAMS`; sem
+  sessão parada → `INVALID_REQUEST`.
+- `debug.disassemble { memoryReference, offset?, instructionOffset?,
+  instructionCount }` → `{ instructions: [{ address, instruction,
+  instructionBytes?, symbol?, file?, line? }] }` (`0.118.0`) — o
+  `disassemble` do DAP, verbatim (`location.path` vira `file`). Os dois são
+  anunciados pelo `probe-rs dap-server` 0.32 e pelo `gdb -i dap` 17 desta
+  máquina (`supportsReadMemoryRequest`/`supportsDisassembleRequest`,
+  medidos no `initialize` em 2026-09-17).
 - `debug.evaluate { expression, frameId? }` → `{ expression, result, typeName?,
   reference }` (protocolo `0.66.0`) — avalia uma expressão (watch) no frame
   pedido. **Sem `frameId`, o core usa o frame do TOPO** da thread parada: é o
@@ -2400,12 +2457,27 @@ propósito — é a forma de linha e condição saírem de sincronia em silênci
 
 ```text
 event.debug.started   { program, attached }
-event.debug.output    { category, line }   (stdout|stderr|console|adapter)
+event.debug.output    { category, line, channel?, channelName? }
+                                           (stdout|stderr|console|adapter|rtt)
 event.debug.stopped   { reason, file?, line?, threadId }  (file/line podem
                         vir null; o core ja enriquece com o frame do topo)
 event.debug.continued {}                   (um por retomada, deduplicado)
 event.debug.finished  { exitCode? }        (exatamente um por sessao)
 ```
+
+**`category: "rtt"` (`0.118.0`, D1 do `roadmaps/41`)** é o console da placa
+pelo RTT/defmt do probe-rs: cada canal que o adaptador anuncia
+(`probe-rs-rtt-channel-config { channelNumber, channelName, dataFormat }`)
+vira uma linha `canal RTT <n> \`<nome>\` (<formato>) aberto` com `channel` e
+`channelName`, e o core responde na hora o request `rttWindowOpened
+{ channelNumber, windowIsOpen: true }` — sem ele o probe-rs NÃO lê o canal
+("will delay polling RTT channels until the data window has opened",
+`dap_types.rs` do 0.32.0). Os dados (`probe-rs-rtt-data { channelNumber,
+data }`) saem linha a linha com `channel`; o defmt já chega decodificado
+pelo adaptador quando o canal foi declarado assim (`rttChannelFormats` — hoje
+o `launch` só liga `rttEnabled` e deixa o probe-rs detectar os canais). O
+`probe-rs-show-message` (o que o adaptador mostraria numa caixa de diálogo)
+vira uma linha `console` `probe-rs [<severidade>]: <mensagem>`.
 
 **`category: "adapter"` (`0.111.0`)** é o stderr do PRÓPRIO adaptador que a
 IDE criou (`lldb-dap`, `probe-rs dap-server`, `gdb -i dap`, `python -m

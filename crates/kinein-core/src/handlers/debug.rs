@@ -8,9 +8,10 @@
 use std::path::{Path, PathBuf};
 
 use kinein_protocol::{
-    DebugBreakpointsResult, DebugEvaluateParams, DebugSetBreakpointsParams, DebugStackTraceResult,
-    DebugStartParams, DebugStartResult, DebugVariablesParams, DebugVariablesResult, JsonRpcError,
-    JsonRpcErrorCode, JsonRpcResponse,
+    DebugBreakpointsResult, DebugDisassembleParams, DebugDisassembleResult, DebugEvaluateParams,
+    DebugReadMemoryParams, DebugScopesParams, DebugScopesResult, DebugSetBreakpointsParams,
+    DebugStackTraceResult, DebugStartParams, DebugStartResult, DebugVariablesParams,
+    DebugVariablesResult, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
@@ -33,6 +34,9 @@ impl Core {
             "debug.stackTrace" => Some(self.debug_stack_trace_response(request_id)),
             "debug.variables" => Some(self.debug_variables_response(request_id, params)),
             "debug.evaluate" => Some(self.debug_evaluate_response(request_id, params)),
+            "debug.scopes" => Some(self.debug_scopes_response(request_id, params)),
+            "debug.readMemory" => Some(self.debug_read_memory_response(request_id, params)),
+            "debug.disassemble" => Some(self.debug_disassemble_response(request_id, params)),
             "debug.continue" | "debug.next" | "debug.stepIn" | "debug.stepOut" | "debug.pause"
             | "debug.stop" => Some(self.debug_session_op_response(request_id, method)),
             _ => None,
@@ -127,6 +131,7 @@ impl Core {
                 chip: toolchain.chip(),
                 remote_target: toolchain.remote_target(),
                 debug_server: toolchain.debug_server(),
+                svd_file: toolchain.svd_file(),
             }
         };
         let Some(manager) = self.debug.as_mut() else {
@@ -247,6 +252,96 @@ impl Core {
                 }
                 response
             }
+        }
+    }
+
+    /// `debug.scopes` (P3): os escopos de um frame, inteiros — o que o
+    /// `debug.variables { frameId }` esconde ao escolher um.
+    fn debug_scopes_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<DebugScopesParams>(
+            request_id.as_ref(),
+            params,
+            "debug.scopes requer frameId",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let Some(manager) = self.debug.as_ref() else {
+            return debug_unavailable_response(request_id, "debug.scopes");
+        };
+        match manager.scopes(parsed.frame_id) {
+            Ok(scopes) => JsonRpcResponse::success(
+                request_id,
+                json!(DebugScopesResult {
+                    frame_id: parsed.frame_id,
+                    scopes,
+                }),
+            ),
+            Err(error) => debug_error_response(request_id, &error),
+        }
+    }
+
+    /// `debug.readMemory` (P3): o `readMemory` do DAP, verbatim.
+    fn debug_read_memory_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<DebugReadMemoryParams>(
+            request_id.as_ref(),
+            params,
+            "debug.readMemory requer memoryReference e count; aceita offset",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        if parsed.memory_reference.trim().is_empty() || parsed.count == 0 {
+            return invalid_debug_params(
+                request_id,
+                "debug.readMemory requer memoryReference nao vazio e count > 0",
+            );
+        }
+        let Some(manager) = self.debug.as_ref() else {
+            return debug_unavailable_response(request_id, "debug.readMemory");
+        };
+        match manager.read_memory(&parsed.memory_reference, parsed.offset, parsed.count) {
+            Ok(result) => JsonRpcResponse::success(request_id, json!(result)),
+            Err(error) => debug_error_response(request_id, &error),
+        }
+    }
+
+    /// `debug.disassemble` (P3): o `disassemble` do DAP, verbatim.
+    fn debug_disassemble_response(
+        &self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<DebugDisassembleParams>(
+            request_id.as_ref(),
+            params,
+            "debug.disassemble requer memoryReference e instructionCount; aceita offset e instructionOffset",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        if parsed.memory_reference.trim().is_empty() || parsed.instruction_count == 0 {
+            return invalid_debug_params(
+                request_id,
+                "debug.disassemble requer memoryReference nao vazio e instructionCount > 0",
+            );
+        }
+        let Some(manager) = self.debug.as_ref() else {
+            return debug_unavailable_response(request_id, "debug.disassemble");
+        };
+        match manager.disassemble(&parsed) {
+            Ok(instructions) => {
+                JsonRpcResponse::success(request_id, json!(DebugDisassembleResult { instructions }))
+            }
+            Err(error) => debug_error_response(request_id, &error),
         }
     }
 

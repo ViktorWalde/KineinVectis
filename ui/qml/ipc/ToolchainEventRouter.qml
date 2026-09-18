@@ -30,6 +30,10 @@ Item {
             root.toolchainController.handleKitFile(toolchainFile);
         }
 
+        function onToolchainKitSvdResolved(svdFile) {
+            root.toolchainController.handleKitSvd(svdFile);
+        }
+
         function onSysrootInspected(report) {
             root.toolchainController.handleSysrootReport(report);
         }

@@ -48,7 +48,7 @@ void CoreClient::toolchainImportKit(const QString& path)
 
 void CoreClient::toolchainSetKit(const QString& preset, const QString& sysroot,
                                  const QString& targetTriple, const QString& chip,
-                                 const QString& toolchainFile)
+                                 const QString& toolchainFile, const QString& svdFile)
 {
     QJsonObject params{};
     if (!preset.isEmpty()) {
@@ -71,6 +71,10 @@ void CoreClient::toolchainSetKit(const QString& preset, const QString& sysroot,
     // vazio limpa.
     if (!toolchainFile.isNull()) {
         params.insert(QStringLiteral("toolchainFile"), toolchainFile);
+    }
+    // O SVD do chip (0.118.0): idem.
+    if (!svdFile.isNull()) {
+        params.insert(QStringLiteral("svdFile"), svdFile);
     }
     sendRequest(QStringLiteral("toolchain.setKit"), params);
 }
@@ -126,6 +130,7 @@ bool CoreClient::dispatchToolchainResult(const QString& method, const QJsonObjec
                            result.value(QStringLiteral("chip")).toString(),
                            result.value(QStringLiteral("presetToolchainFile")).toString());
     emit toolchainKitFileResolved(result.value(QStringLiteral("toolchainFile")).toString());
+    emit toolchainKitSvdResolved(result.value(QStringLiteral("svdFile")).toString());
     // O que so' um processo responde (integracoes/39, 0.97.0): os alvos Rust
     // instalados (ausente = sem rustup) e a dica de sysroot. Sinal proprio para
     // o de cima nao crescer em argumento posicional.
