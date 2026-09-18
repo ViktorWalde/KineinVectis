@@ -189,6 +189,7 @@ Window {
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
         recentWorkspacesController: domains.recentWorkspacesController
+        gitController: domains.gitController
         windowMaximized: windowChromeController.maximized
         onConfigMenuRequested: function(menuX, menuY) {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);

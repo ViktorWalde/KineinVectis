@@ -96,8 +96,14 @@ Item {
         showBottomPanel = true;
     }
 
+    // A aba de baixo `tab` esta' VISIVEL agora: um dono para a derivacao
+    // que a barra principal (F1) e o trilho perguntam.
+    function tabActive(tab) {
+        return showBottomPanel && bottomTab === tab;
+    }
+
     function toggleBottomTab(tab) {
-        if (showBottomPanel && bottomTab === tab) {
+        if (tabActive(tab)) {
             showBottomPanel = false;
             return;
         }

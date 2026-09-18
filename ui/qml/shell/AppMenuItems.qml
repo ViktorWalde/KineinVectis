@@ -36,28 +36,41 @@ Item {
         return workspaceBuildSystems.indexOf(buildSystem) >= 0;
     }
 
-    function menuItems(key) {
-        const fileItems = [
+    // Abrir + recentes: o comeco do menu Arquivo e o menu inteiro do widget
+    // de projeto da barra (F1 do roadmaps/43). Um dono para a lista.
+    function openItems() {
+        const items = [
             { label: qsTr("Abrir workspace..."), action: "workspace.open", enabled: true }
         ];
         if (recentWorkspaces.length > 0) {
-            fileItems.push({ label: qsTr("Abrir recente"), action: "", enabled: false });
+            items.push({ label: qsTr("Abrir recente"), action: "", enabled: false });
             for (let index = 0; index < Math.min(recentWorkspaces.length, 8); index++) {
                 const recent = recentWorkspaces[index];
                 const prefix = recent.pinned ? qsTr("Fixado — ") : "";
                 const suffix = recent.available ? "" : qsTr(" — caminho ausente");
-                fileItems.push({
+                items.push({
                     label: "  " + prefix + recent.name + suffix,
                     action: "workspace.recent.open:" + index,
                     enabled: recent.available
                 });
             }
-            fileItems.push({
+            items.push({
                 label: qsTr("Limpar workspaces recentes"),
                 action: "workspace.recent.clear",
                 enabled: true
             });
         }
+        return items;
+    }
+
+    function projectMenuItems() {
+        const items = openItems();
+        items.push({ label: qsTr("Fechar workspace"), action: "workspace.close", enabled: workspaceOpen });
+        return items;
+    }
+
+    function menuItems(key) {
+        const fileItems = openItems();
         fileItems.push(
             { label: qsTr("Novo arquivo..."), action: "project.createFile", enabled: workspaceOpen },
             { label: qsTr("Nova pasta..."), action: "project.createDirectory", enabled: workspaceOpen },

@@ -63,6 +63,10 @@ Rectangle {
         return itens.menuItems(key);
     }
 
+    function projectMenuItems() {
+        return itens.projectMenuItems();
+    }
+
     // O QUE cada menu oferece tem dono proprio; ver AppMenuItems.qml.
     AppMenuItems {
         id: itens

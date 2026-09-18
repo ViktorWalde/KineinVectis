@@ -158,7 +158,15 @@ F8  paineis de ambiente (banco, remoto, embarcados, containers): mesma forma
     Medida: um componente de grade; harness; fotos dos quatro paineis.
 ```
 
-## 5. O que se pede ao autor aprovar
+## 5. O que se pede ao autor aprovar — e o que ele decidiu
+
+**Decidido em 2026-09-18 ("prossiga"):** a ordem F1 → F8 como está;
+**autosave sim** (a decisão entra na F3/F6, com o rascunho de
+`seguranca/23` como rede); **um widget Executar com menu** (não dois grupos
+rotulados). **F1 FEITA no mesmo dia** (`40` §7.56): a barra passou de doze
+controles a três widgets — foto 04.
+
+
 
 A ordem F1 → F8 (F0 feita). Cada fatia: desenho de uma página no registro
 Codex do dia, foto antes/depois, harness quando há lógica, catraca (view

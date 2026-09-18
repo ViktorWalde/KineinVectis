@@ -3783,3 +3783,28 @@ são dele: autosave e o destino do botão duplo Cargo/CMake.
 **Medido:** 827 testes, 45 harnesses, 24 gates verdes; as três fotos.
 **Não feito:** nenhuma fatia de UI além da status bar — por regra, o
 desenho vem antes.
+
+### 7.56 Etapa 2, F1 — a barra principal vira três widgets — 2026-09-18
+
+Decisões do autor ("prossiga"): ordem F1–F8 como no `43`; autosave sim
+(entra na F3/F6); um widget Executar com menu. **A barra** (foto 04 do
+`43`): `HeaderProjectWidget` (nome + "Cargo + CMake" em cinza + o ponto do
+core; o clique abre o menu de projeto — abrir, recentes, fechar — pela
+MESMA lista que começa o menu Arquivo: `AppMenuItems.openItems()`, um dono),
+`HeaderGitWidget` (branch, ↑↓, o contador de alterações com fundo; o clique
+abre o painel Git; some fora de repositório), `HeaderRunWidget` (a
+configuração ativa ▾, ▶ Rodar/■, 🐞 Depurar/■, e o **⋯** com o menu Build
+inteiro — Configurar CMake, Compilar/Testar por sistema com rótulo,
+Análise, Cobertura; um ponto pulsa enquanto build/teste/análise roda, com
+o nome no tooltip). Saíram: "Target: host local", os dois pares de botões
+Cargo/CMake sem rótulo, o triângulo/✓/⚠ soltos e o "● Cargo + CMake" da
+direita — **12 controles → 3 widgets (7 controles)**, a medida da F1.
+`ShellController.tabActive(tab)` nasceu como dono da derivação "aba de
+baixo visível" (a catraca de duplicação pegou a segunda cópia na hora).
+
+**Medido:** 46 harnesses (`tst_app_menu_items` novo: o menu de projeto e o
+de build, por sistema presente); qmllint, fiação, propriedades, alcance,
+duplicação, arquitetura, atalhos (52 itens de menu tratados), fiação IPC;
+o binário abre; foto antes/depois no mesmo tamanho.
+**Não feito, dito:** o modo compacto do trilho (F1 o cita; fica para quando
+a largura pedir); o teste prático do autor na tela.

@@ -26,6 +26,9 @@ set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_R
 set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOURCE_ALIAS KvIconButton.qml)
 set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_ALIAS KvButton.qml)
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
+set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
+set_source_files_properties(qml/shell/HeaderGitWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderGitWidget.qml)
+set_source_files_properties(qml/shell/HeaderProjectWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderProjectWidget.qml)
 set_source_files_properties(qml/shell/AppMenuBar.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuBar.qml)
 set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuPopup.qml)
 set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
@@ -289,6 +292,9 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvIconButton.qml
         qml/components/KvButton.qml
         qml/shell/TopHeaderBar.qml
+        qml/shell/HeaderRunWidget.qml
+        qml/shell/HeaderGitWidget.qml
+        qml/shell/HeaderProjectWidget.qml
         qml/shell/AppMenuBar.qml
         qml/shell/AppMenuPopup.qml
         qml/shell/SideRail.qml

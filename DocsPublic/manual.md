@@ -70,7 +70,7 @@ atalho de área de trabalho ou um `alias`.
 ```text
 ┌──────────────────────────────────────────────────────────────┐
 │ App Bar: Arquivo · Editar · Exibir · Navegar · Código ...    │
-│ Toolbar: target · perfil · Configurar · Build · Run · Debug  │
+│ Barra: [Projeto ▾] [⎇ git]           [config ▾] ▶ 🐞 [⋯]   │
 ├───┬───────────────┬─────────────────────────────┬────────────┤
 │ R │ Projeto       │ Editor (abas + código)      │ Estrutura  │
 │ a │ (árvore de    │                             │ (símbolos  │
@@ -85,6 +85,15 @@ atalho de área de trabalho ou um `alias`.
 └──────────────────────────────────────────────────────────────┘
 ```
 
+- **Barra principal** (desde 2026-09-18, Etapa 2 F1): **três widgets**, como
+  nas IDEs JetBrains. *Projeto* — o nome do workspace, o que ele é (Cargo +
+  CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —
+  a branch, ↑↓ e o contador de alterações; o clique abre o painel Git.
+  *Executar* — a configuração ativa (▾ troca), **▶ Rodar**, **🐞 Depurar** e
+  o menu **⋯** com Compilar/Testar/Análise/Cobertura/Configurar de cada
+  sistema que o projeto tem, com rótulo (antes eram dois pares de botões
+  iguais sem rótulo). Um ponto pulsa no ⋯ enquanto um build, teste ou
+  análise roda.
 - **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
   Build, Debug e, embaixo, os painéis de ambiente na ordem Banco de dados,
   Containers, Observabilidade e Ferramentas (por último).

@@ -25,7 +25,11 @@ Column {
     property var configActionController: null
     property var toolchainController: null
     property var recentWorkspacesController: null
+    property var gitController: null
     property bool windowMaximized: false
+    // Qual menu da barra principal esta' aberto (project | build | ""): o
+    // widget correspondente fica marcado enquanto o popup esta' na tela.
+    property string headerMenu: ""
 
     signal configMenuRequested(real menuX, real menuY)
     signal appMenuRequested(string key, real menuX, real menuY, var items)
@@ -139,36 +143,54 @@ Column {
 
     function closeAppMenu() {
         appMenuBar.closeMenu();
+        headerMenu = "";
     }
 
     TopHeaderBar {
+        id: barra
+
         width: parent.width
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         coreConnected: root.coreClient.connected
+        workspaceName: root.coreClient.workspaceName
         workspaceKind: root.coreClient.workspaceKind
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         activeConfigId: root.runConfigController.activeConfigId
         activeConfigName: root.runConfigController.activeConfigName
         configMenuOpen: root.runConfigController.configMenuVisible
+        projectMenuOpen: root.headerMenu === "project"
+        actionsMenuOpen: root.headerMenu === "build"
         building: root.coreClient.building
         testing: root.coreClient.testing
         analyzing: root.coreClient.analyzing
         running: root.coreClient.running
         debugging: root.coreClient.debugging
+        gitBranchLabel: root.gitController ? root.gitController.branchLabel : ""
+        gitAheadCount: root.gitController ? root.gitController.aheadCount : 0
+        gitBehindCount: root.gitController ? root.gitController.behindCount : 0
+        gitChangeCount: root.gitController ? root.gitController.changeCount : 0
+        gitPanelActive: root.shellController.tabActive("git")
         onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
-        onBuildRequested: buildSystem => root.jobsController.startBuild(buildSystem)
-        onTestsRequested: buildSystem => root.jobsController.startTests(buildSystem)
-        onQualityRequested: root.jobsController.startQuality()
+        onGitPanelRequested: root.shellController.toggleBottomTab("git")
         onRunRequested: root.runtimeController.startRun("")
         onStopRunRequested: root.runtimeController.stopRun()
         onDebugRequested: root.debugController.startDebug()
         onStopDebugRequested: root.debugController.stopDebug()
-        onConfigureRequested: {
-            root.shellController.showTab("jobs");
-            root.coreClient.cmakeConfigure();
-        }
         onConfigMenuRequested: function(menuX, menuY) {
-            root.configMenuRequested(menuX, menuY + 40);
+            root.configMenuRequested(menuX, menuY + appMenuBar.height);
+        }
+        // Os dois menus da barra usam o MESMO popup dos menus de aplicacao
+        // (e as mesmas listas: o de projeto e' o comeco de "Arquivo", o de
+        // acoes e' "Build" inteiro) — um dono para o que cada um oferece.
+        onProjectMenuRequested: function(menuX, menuY) {
+            root.headerMenu = "project";
+            root.appMenuRequested("project", menuX, menuY + appMenuBar.height,
+                                  appMenuBar.projectMenuItems());
+        }
+        onActionsMenuRequested: function(menuX, menuY) {
+            root.headerMenu = "build";
+            root.appMenuRequested("build", menuX, menuY + appMenuBar.height,
+                                  appMenuBar.menuItems("build"));
         }
     }
 }
