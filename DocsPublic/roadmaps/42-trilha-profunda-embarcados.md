@@ -435,6 +435,46 @@ container      o "dentro" do dominio container: workspace dentro do container,
 máquina de desenvolvimento) faz o papel do alvo — o mesmo truque do QEMU;
 exercitação na Raspberry Pi do autor.
 
+**Desenho da fatia 1 (2026-09-17, escrito antes do código — o que o 40 §4.1
+pedia).** O que entra é o **alvo SSH como recurso do projeto**, no molde do
+`datasource.*`: um perfil sem segredo em disco, um "testar" que MEDE o alvo,
+e o ciclo deploy → rodar → depurar como CONFIGURAÇÃO DE EXECUÇÃO (a decisão
+do E4). Nada de workspace remoto, LSP do outro lado ou mapeamento de caminhos
+nesta fatia — é o que fica dito como não feito.
+
+```text
+remote.list    {}                          -> { targets: [RemoteTarget] }
+remote.save    { target }                  -> { targets }        (cria/substitui pelo nome)
+remote.remove  { name }                    -> { targets }
+remote.probe   { name }                    -> { jobId }          (job; event.remote.probed)
+remote.deploy  { name, source?, dest? }    -> { jobId }          (job; event.remote.deployed)
+remote.command { name, kind: run|debugServer|shell, dest? } -> { command, remoteTarget? }
+
+RemoteTarget   name, host, user?, port? (22), identityFile?, deployDir? (~/kinein/<projeto>)
+               — SEM senha: SSH e' por chave (o `ssh` do sistema pergunta o que faltar
+               no terminal da IDE; a IDE nunca guarda nem passa senha)
+event.remote.probed   { jobId, name, success, arch?, kernel?, tools: [{ id, found, path? }],
+                        error?, raw }        (uname -m; uname -sr; command -v gdbserver
+                                              python3 rsync — o que o alvo TEM)
+event.remote.deployed { jobId, name, success, source, dest, command, error? }
+```
+
+Transporte: o `ssh`/`rsync`/`scp` do sistema como PROCESSO (OpenSSH BSD,
+rsync GPL-3 — nunca crate), `-o BatchMode=yes -o ConnectTimeout=5` no
+probe (falha rápida e dita: "sem chave para <user@host>: `ssh-copy-id`").
+Deploy: `rsync -az --delete <artefato> <alvo>:<deployDir>/` (ou `scp -r`
+quando o `rsync` falta de um dos lados — o probe diz). Rodar:
+`ssh <alvo> '<deployDir>/<binario>'` como configuração de execução ("Rodar
+em <nome>"); depurar: o kit ganha `debugServer = ssh <alvo> gdbserver :2345
+<binario>` e `remoteTarget = <host>:2345` (`remote.command { kind:
+debugServer }` compõe, `toolchain.setKit` grava — o attach pelo `gdb -i
+dap` existe desde 0.89.0); Python: `debugpy --listen 0.0.0.0:5678 --wait-
+for-client` do outro lado e o attach TCP de 0.109.0. O binário vem do
+modelo (`artifacts.elf` mais novo, ou o `program` do debug.start). Provas:
+`ssh`/`rsync` falsos ecoando argv (linha certa, probe lido, recusas: alvo
+sem nome, deploy sem artefato); exercitação real na Pi do autor — não há
+Pi nesta máquina, e um `sshd` local fica para o gate quando houver chave.
+
 ### P7 — Rust embarcado profundo (o que é só dele)
 
 ```text
