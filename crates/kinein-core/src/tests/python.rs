@@ -13,7 +13,6 @@
 
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
@@ -24,7 +23,7 @@ use crate::tools::ToolDetector;
 
 /// Os testes que escrevem scripts e os executam ficam serializados (ETXTBSY
 /// entre threads — a mesma razao do `tests/index_context.rs`).
-static EXECUTAVEIS: Mutex<()> = Mutex::new(());
+use super::EXECUTAVEIS;
 
 fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir()

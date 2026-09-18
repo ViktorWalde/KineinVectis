@@ -17,7 +17,6 @@
 
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 use std::time::{Duration, SystemTime};
 
 use kinein_protocol::JsonRpcRequest;
@@ -54,7 +53,7 @@ fn script(caminho: &Path, saida: &str) -> PathBuf {
 /// enquanto outra ainda tem um script aberto para escrita da' `ETXTBSY` (o
 /// filho herda o descritor entre o fork e o exec), e o teste falharia ao
 /// acaso quando os dois correm juntos.
-static EXECUTAVEIS: Mutex<()> = Mutex::new(());
+use super::EXECUTAVEIS;
 
 fn sem_ferramentas() -> Ferramentas {
     Ferramentas::default()

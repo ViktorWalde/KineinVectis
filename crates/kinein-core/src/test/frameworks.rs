@@ -356,6 +356,10 @@ mod tests {
         use super::{Framework, SEP, discover_inner_cases, list_cases, run_inner_case};
         use crate::test::TestEvent;
 
+        let _serial = crate::EXECUTAVEIS
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+
         let raiz = std::env::temp_dir().join(format!("kinein-frameworks-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&raiz);
         std::fs::create_dir_all(&raiz).unwrap();

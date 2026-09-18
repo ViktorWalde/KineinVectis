@@ -685,6 +685,10 @@ fn cpp_quality_fixture(
 fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
     use std::os::unix::fs::PermissionsExt;
 
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+
     // Sem CDB: o motor existe, mas diz o que falta.
     let (_dir, mut core, receiver) = cpp_quality_fixture("sem-cdb", false);
     let (_, finished) = run_quality_and_collect(&mut core, &receiver);
@@ -755,6 +759,10 @@ fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
 #[cfg(unix)]
 fn quality_run_on_cpp_prefers_run_clang_tidy() {
     use std::os::unix::fs::PermissionsExt;
+
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
 
     let (dir, _core, _receiver) = cpp_quality_fixture("run-tidy", true);
     let executavel = |nome: &str, corpo: &str| {

@@ -485,3 +485,11 @@ impl Error for CoreError {
 
 #[cfg(test)]
 mod tests;
+
+/// Os testes que ESCREVEM um script e o executam ficam serializados entre
+/// si: um `fork` enquanto outra thread ainda tem um executavel aberto para
+/// escrita da' `ETXTBSY` no `exec` do filho (o descritor e' herdado). Um
+/// lock so' para o crate — os modulos antigos (`tests/python.rs`,
+/// `tests/index_context.rs`) tinham cada um o seu; os novos usam este.
+#[cfg(test)]
+pub(crate) static EXECUTAVEIS: std::sync::Mutex<()> = std::sync::Mutex::new(());

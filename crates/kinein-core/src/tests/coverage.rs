@@ -92,6 +92,9 @@ fn lcov(arquivo: &Path) -> String {
 #[test]
 #[cfg(unix)]
 fn rust_coverage_runs_cargo_llvm_cov_and_the_lines_reach_the_editor() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut c = cenario("rust");
     std::fs::write(
         c.root.join("Cargo.toml"),
@@ -189,6 +192,9 @@ fn rust_coverage_runs_cargo_llvm_cov_and_the_lines_reach_the_editor() {
 #[test]
 #[cfg(unix)]
 fn python_coverage_uses_the_project_interpreter_and_cpp_is_refused() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut c = cenario("python");
     std::fs::write(
         c.root.join("pyproject.toml"),

@@ -151,6 +151,9 @@ impl Cenario {
 #[test]
 #[cfg(unix)]
 fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut c = cenario("idf", "esp-idf");
     c.abrir();
     // Sem export.sh nem EIM: framework reconhecido, ferramenta ausente.
@@ -246,6 +249,9 @@ fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
 #[test]
 #[cfg(unix)]
 fn zephyr_builds_with_west_and_the_board_from_west_config() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut c = cenario("zephyr", "zephyr");
     c.abrir();
     let erro = c.rpc("build.run", json!({})).error.expect("sem west");
@@ -295,6 +301,9 @@ fn zephyr_builds_with_west_and_the_board_from_west_config() {
 #[test]
 #[cfg(unix)]
 fn platformio_is_a_project_kind_built_and_uploaded_by_pio() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut c = cenario("pio", "platformio");
     let info = c.abrir();
     assert_eq!(info["kind"], "platformIo", "{info}");
@@ -350,6 +359,9 @@ fn platformio_is_a_project_kind_built_and_uploaded_by_pio() {
 #[test]
 #[cfg(unix)]
 fn pico_sdk_adds_the_sdk_path_to_the_cmake_configure() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut c = cenario("pico", "pico-sdk");
     c.falso(
         "cmake",
