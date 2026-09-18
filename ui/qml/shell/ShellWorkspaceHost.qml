@@ -137,9 +137,6 @@ Item {
             visible: root.workspaceOpen
                      && root.shellController.effectiveShowExplorer
             workspaceName: root.workspaceName
-            workspaceKindLabel: root.shellController.kindLabel(
-                                    root.workspaceKind,
-                                    root.workspaceBuildSystems)
             selectedPath: root.projectTree.selectedPath
             entriesModel: root.projectTree.entriesModel
             runnableExtensions: root.projectTree.runnableExtensions

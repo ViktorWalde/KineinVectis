@@ -113,6 +113,11 @@ atalho de área de trabalho ou um `alias`.
   fora nunca é sobrescrito (a IDE compara antes de salvar e avisa); o
   rascunho de segurança continua gravando entre um salvar e outro. Desliga
   em Configurações → "Salvar automaticamente".
+- **Explorer** (desde 2026-09-18, Etapa 2 F4): as pastas do projeto vêm
+  primeiro; as da máquina (`.git`, `.idea`, `.kinein`, `build`, `target`,
+  `dist`, `.venv`, `node_modules`…) ficam em cinza e depois delas; os
+  arquivos por último. O que o projeto é (Cargo + CMake) está no widget de
+  projeto da barra principal, não mais num chip no explorer.
 - **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
   Build, Debug e, embaixo, os painéis de ambiente na ordem Banco de dados,
   Containers, Observabilidade e Ferramentas (por último).

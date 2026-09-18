@@ -229,6 +229,7 @@ set_source_files_properties(qml/ipc/RuntimeRequestRouter.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
 set_source_files_properties(qml/project/ProjectTreeRevealController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRevealController.qml)
+set_source_files_properties(qml/project/ProjectTreeRules.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRules.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
 set_source_files_properties(qml/project/ProjectEntryContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryContextMenu.qml)
 set_source_files_properties(qml/project/ProjectEntryRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryRenameDialog.qml)
@@ -499,6 +500,7 @@ qt_add_qml_module(kinein-vectis
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
         qml/project/ProjectTreeRevealController.qml
+        qml/project/ProjectTreeRules.qml
         qml/project/ProjectExplorer.qml
         qml/project/ProjectEntryContextMenu.qml
         qml/project/ProjectEntryRenameDialog.qml

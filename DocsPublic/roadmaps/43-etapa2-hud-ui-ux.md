@@ -168,7 +168,11 @@ controles a três widgets — foto 04. **F2 FEITA** (`40` §7.57): o job em
 curso com progresso e cancelar no centro da status bar, os servidores de
 linguagem à direita — foto 05. **F3 FEITA** (`40` §7.58): aba ativa,
 linha atual, explorer segue o arquivo, ● no lugar do Salvar, autosave —
-foto 06. **A F3 mediu o defeito que manda na F6:** o core BLOQUEIA o laço
+foto 06. **F4 FEITA** (`40` §7.59, pedido direto do autor): o chip "Cargo + CMake"
+saiu do explorer (já mora no widget de projeto da barra), linhas mais
+densas (22 px, ícone 16, recuo 12), as pastas da máquina (`.git`, `build`,
+`target`, `.idea`, `.kinein`…) em cinza e depois das do autor — foto 07.
+**A F3 mediu o defeito que manda na F6:** o core BLOQUEIA o laço
 inteiro até 4 s por pedido LSP (15 s no `initialize`) — com o
 rust-analyzer indexando este repositório, nenhum `fs.list` foi respondido
 por ~20 s e a IDE inteira ficou parada; a F6 começa por isso (resposta

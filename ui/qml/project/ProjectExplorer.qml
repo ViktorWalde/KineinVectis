@@ -5,7 +5,6 @@ Rectangle {
     id: root
 
     property string workspaceName: ""
-    property string workspaceKindLabel: ""
     property string selectedPath: ""
     property var entriesModel
     // path absoluto -> kind do git (fatia M3.1); a revisão força rebind.
@@ -84,37 +83,19 @@ Rectangle {
             width: parent.width
             spacing: Theme.spacingSmall
 
+            // So' o nome: o que o projeto e' (Cargo + CMake) mora no widget
+            // de projeto da barra principal desde a F1 — o chip amarelo aqui
+            // era o segundo lugar a dizer o mesmo (pedido do autor, 2026-09-18).
             Text {
                 anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(40, parent.width - refreshChip.width - newFileChip.width
+                                    - newFolderChip.width - closeProjectChip.width
+                                    - 5 * Theme.spacingSmall)
+                elide: Text.ElideRight
                 text: root.workspaceName
                 color: Theme.textPrimary
-                font.pixelSize: 13
-                font.bold: true
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: kindText.width + 10
-                height: 16
-                radius: 8
-                color: Theme.accentDim
-
-                Text {
-                    id: kindText
-
-                    anchors.centerIn: parent
-                    text: root.workspaceKindLabel
-                    color: Theme.accent
-                    font.pixelSize: 9
-                    font.bold: true
-                }
-            }
-
-            Item {
-                width: parent.width - x - refreshChip.width
-                       - newFileChip.width - newFolderChip.width
-                       - closeProjectChip.width - 3 * Theme.spacingSmall
-                height: 1
+                font.pixelSize: 12
+                font.weight: Font.DemiBold
             }
 
             KvIconButton {
@@ -184,9 +165,10 @@ Rectangle {
                 required property string kind
                 required property int depth
                 required property bool expanded
+                required property bool machine
 
                 width: explorerView.width
-                height: 24
+                height: 22
                 radius: Theme.radius
                 color: treeRow.path === root.selectedPath
                        ? Theme.surfaceSelected
@@ -195,22 +177,23 @@ Rectangle {
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall + treeRow.depth * 14
-                    spacing: Theme.spacingSmall
+                    anchors.leftMargin: Theme.spacingSmall + treeRow.depth * 12
+                    spacing: Theme.spacingXSmall
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 12
                         text: treeRow.kind === "directory"
                               ? (treeRow.expanded ? "▾" : "▸") : ""
-                        color: treeRow.kind === "directory"
+                        color: treeRow.kind === "directory" && !treeRow.machine
                                ? Theme.accent : Theme.textMuted
                         font.pixelSize: Theme.fontSizeTree
                     }
 
                     KvIcon {
                         anchors.verticalCenter: parent.verticalCenter
-                        size: 20
+                        size: 16
+                        opacity: treeRow.machine ? 0.55 : 1
                         name: root.treeIconName(treeRow.name, treeRow.kind,
                                                 treeRow.expanded)
                     }
@@ -219,10 +202,11 @@ Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
                         width: Math.max(0, treeRow.width - parent.x - x - 30)
                         text: treeRow.name
-                        color: treeRow.kind === "directory"
-                               ? Theme.textPrimary
-                               : root.gitFileColor(treeRow.path,
-                                                   root.gitRevision)
+                        color: treeRow.machine ? Theme.textMuted
+                               : (treeRow.kind === "directory"
+                                  ? Theme.textPrimary
+                                  : root.gitFileColor(treeRow.path,
+                                                      root.gitRevision))
                         font.pixelSize: Theme.fontSizeTree
                         elide: Text.ElideRight
                     }

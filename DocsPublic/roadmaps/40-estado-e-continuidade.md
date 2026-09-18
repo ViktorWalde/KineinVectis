@@ -3874,3 +3874,18 @@ tinha entrado no commit 2a3b168; saiu, e o falso traduz as duas formas.
 `tst_project_tree_reveal` novos); gates QML, fiação IPC, arquitetura,
 atalhos verdes; `debug-strict` abre. **Não feito, dito:** Ln/Col na status
 bar; a foto sem o freeze do LSP.
+
+### 7.59 Etapa 2, F4 — o explorer com o peso certo — 2026-09-18
+
+Pedido direto do autor ("otimiza essa árvore de projeto, o dimensionamento
+e etc.; esse ícone de Cargo + CMake reposicionado para um lugar melhor").
+O chip amarelo "Cargo + CMake" do cabeçalho do explorer saiu — o widget de
+projeto da barra principal (F1) já diz isso, e o chip era o segundo lugar a
+dizer o mesmo; o cabeçalho ficou nome + quatro ações. Linhas de 24 → 22 px,
+ícone 20 → 16, recuo 14 → 12 por nível. `ProjectTreeRules` (NOVO, puro):
+a lista do que é da máquina (`.git .idea .kinein .vscode .cargo
+.ruff_cache .mypy_cache .pytest_cache .venv __pycache__ node_modules build
+target dist`) e a ordem — pastas do autor, pastas da máquina, arquivos —
+que o `ProjectTreeController` aplica ao inserir (`machine` na linha) e o
+explorer pinta em cinza (seta, ícone e nome). Foto 07. Harness
+`tst_project_tree_reveal` cobre a ordem e o `machine`.

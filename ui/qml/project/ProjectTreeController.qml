@@ -129,14 +129,21 @@ Item {
         treeModel.setProperty(index, "expanded", false);
     }
 
+    // Regras puras da arvore (o que e' da maquina; a ordem): ProjectTreeRules.
+    ProjectTreeRules {
+        id: rules
+    }
+
     function insertEntries(startIndex, entries, depth, parentPath) {
-        for (let i = 0; i < entries.length; i++) {
+        const ordered = rules.orderEntries(entries);
+        for (let i = 0; i < ordered.length; i++) {
             treeModel.insert(startIndex + i, {
-                path: parentPath + "/" + entries[i].name,
-                name: entries[i].name,
-                kind: entries[i].kind,
+                path: parentPath + "/" + ordered[i].name,
+                name: ordered[i].name,
+                kind: ordered[i].kind,
                 depth: depth,
-                expanded: false
+                expanded: false,
+                machine: depth === 0 && rules.isMachineEntry(ordered[i].name)
             });
         }
     }

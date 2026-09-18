@@ -19,7 +19,14 @@ Item {
 
     Component.onCompleted: {
         let failures = 0;
-        tree.setDirectoryListing("/w", [{ name: "src", kind: "directory" }, { name: "docs", kind: "directory" }, { name: "Cargo.toml", kind: "file" }]);
+        // F4: pastas do autor, pastas da maquina (cinza, `machine`), arquivos.
+        tree.setDirectoryListing("/w", [{ name: ".git", kind: "directory" }, { name: "Cargo.toml", kind: "file" },
+                                        { name: "src", kind: "directory" }, { name: "target", kind: "directory" },
+                                        { name: "docs", kind: "directory" }]);
+        const nomes = [];
+        for (let i = 0; i < tree.entriesModel.count; i++) nomes.push(tree.entriesModel.get(i).name);
+        if (nomes.join(",") !== "src,docs,.git,target,Cargo.toml") failures += 512;
+        if (!tree.entriesModel.get(2).machine || tree.entriesModel.get(0).machine) failures += 1024;
 
         // Fora do workspace: nada.
         tree.revealPath("/outro/x.rs");
