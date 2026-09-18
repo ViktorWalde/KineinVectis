@@ -214,3 +214,83 @@ menu, ou dois grupos com rótulo).
   Sweller; os perigos (esconder demais).
 - Zed (site e cobertura): o orçamento de 8 ms por frame e "toda interação
   produz feedback visual instantâneo" como identidade de produto.
+
+## 7. Estado ao fim de 2026-09-18 — F0 a F7 feitas, F8 aberta
+
+Escrito antes da F8, a pedido do autor. Uma linha por fatia: o que entrou,
+como foi medido, a foto, e onde está o registro (o `40` §7.N tem o
+detalhe; o `DocsPrivate/Codex/2026-09-18-etapa2-*.md` tem as provas).
+
+```text
+fatia  o que entrou                                        medida / foto            40 §
+F0     kinein-vectis <pasta>; KINEIN_SCREENSHOT(+_DELAY_MS); fotos 01-03            7.55
+       status bar sem colisao; gates com XDG_CONFIG_HOME
+       isolado (nao poluem mais os recentes do autor)
+F1     barra principal: 12 controles -> 3 widgets            foto 04; harnesses      7.56
+       (HeaderProjectWidget · HeaderGitWidget · HeaderRun-   dos menus (AppMenuItems)
+       Widget com UMA config ativa e menu "…"); rotulo ao
+       pairar no trilho (KvTooltip)
+F2     status bar: esquerda workspace·branch; centro o job    foto 05;                7.57
+       em curso com progresso e cancelar (StatusBarJob-      tst_status_bar_state
+       Widget/ActiveJobController); direita LSP (LspStatus-
+       Controller) e core
+F3     aba ativa com acento; linha atual (EditorGutter);     foto 06/06b;            7.58
+       explorer segue o arquivo (ProjectTreeReveal-          tst_editor_autosave,
+       Controller); "Salvar" vira ● + Ctrl+S; AUTOSAVE       tst_project_tree_reveal
+       (settings.autoSave, 2 s, flush ao trocar aba/foco)   0.123.0
+F4     explorer: pastas da maquina em cinza e no fim         foto 07;                7.59
+       (ProjectTreeRules); linhas 22 px; o chip "Cargo +    tst_project_tree_rules
+       CMake" saiu (ja' mora no widget de projeto)
+F6-a   o core NAO para mais pelo LSP: respostas adiadas      foto 08 (explorer aos   7.60
+       (RequestOutcome::Deferred, defer_lsp), handshake em   6 s, antes 30 s);
+       thread (HANDSHAKE_GRACE 300 ms), LineIndex            tests/lsp_deferred.rs;
+       (syntaxTree.update 0,9 s -> 0,05 s)                   <= 300 ms por pedido
+F5     Problems com o proximo passo (ProblemRules.stepFor:   foto 09;                7.61
+       Acoes / Configurar CMake / Ferramentas);              tst_problem_rules;
+       KINEIN_STARTUP_COMMANDS (ids da paleta ao abrir)     StartupCommands.qml
+F6-b   workspace.open 1,4 s -> 25 ms (presenca sem           foto 10; tabela de      7.62
+       --version); tools.detect adiado (defer_work);         tempos antes/depois
+       Problems sem repeticao build/LSP (isDuplicate);
+       toolchain da status bar pelo kind do projeto
+F7     tela inicial: ultimo recente em destaque, Enter       fotos 11a/11;           7.63
+       abre; ausentes ocultos com Desfazer; ambiente em      tst_recent_workspaces;
+       1 linha com "Ver". De quebra: o serial.identify que   verificar-binario-abre
+       nao saia (Connections no target errado) e o gate     le o stderr do QML
+       binario-abre lendo o stderr do QML
+F8     paineis de ambiente com a mesma forma                 ABERTA (desenho em §4)   —
+```
+
+**Os juízos da §2, um a um.** Foto 01 (tela inicial): "a lista de 62
+ferramentas é carga extrínseca" → F7. Foto 02 (workspace): "12 controles,
+dois sistemas de build com ícones iguais" → F1; "10 ícones sem rótulo" →
+rótulo ao pairar (F1), o modo expandido NÃO; "pastas da máquina no mesmo
+peso" → F4; "status bar colidindo" → F0; "Project Health configurando…"
+ficou como está (é a faixa de saúde, base declarada em §3). Foto 03
+(editor): "Salvar amarelo permanente" → F3 (● + autosave); "sem realce da
+linha atual" → F3; "explorer não destaca o arquivo" → F3; "aba ativa
+distingue-se pouco" → F3. **O que NÃO se mediu** (§2, último parágrafo):
+os painéis de baixo durante um build real → F5 mediu Problems com um build
+que falha (foto 09); os diálogos de ambiente → F8; o tempo do clique →
+F6-b mediu pelo core e pelo primeiro frame — o clique real fica com o
+autor.
+
+**Os números da etapa (debug, esta máquina, 2026-09-18):**
+
+```text
+                                        manha (F0)      noite (F7)
+controles sempre visiveis na barra      12              3 widgets (<= 6 pedidos por F1)
+lsp.* com o rust-analyzer subindo       ate' 20 s mudo  <= 300 ms
+explorer segue o arquivo (cadeia)       30 s            6 s
+syntaxTree.update (470 linhas)          0,9 s           0,05 s
+workspace.open                          1,4 s           25 ms
+primeiro frame offscreen                nao medido      718-840 ms (debug; o hardened deu 318 ms no §7.54)
+harnesses QML                           45              50
+testes Rust                             827             829
+```
+
+**O que fecha a etapa** está no `40` §4.2.2: a F8, a sincronização final
+com fotos lado a lado, o release-hardened remedido, e as dívidas pequenas
+ditas em cada "não feito" (Ln:Col na status bar; contagem na aba Testes;
+foto a 1024 px; trilho expandido; o foco da tela inicial contra o
+terminal). E o que só o autor mede: a sensação de resposta com mouse e
+teclado reais.

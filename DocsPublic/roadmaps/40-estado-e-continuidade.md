@@ -665,7 +665,162 @@ só depois código. **O desenho está no [`43`](43-etapa2-hud-ui-ux.md)
 (2026-09-18):** a referência lida nas fontes, três fotos da IDE de hoje, e
 as fatias F1–F8 com a medida de cada uma; a F0 (infra: `kinein-vectis
 <pasta>`, `KINEIN_SCREENSHOT`, a status bar sem colisão, os gates sem
-poluir os recentes) foi feita no mesmo dia (§7.55).
+poluir os recentes) foi feita no mesmo dia (§7.55). **F1 a F7 foram feitas
+no mesmo dia** (§7.56–7.63, uma fatia por commit); resta a F8 e o
+fechamento da etapa — o panorama consolidado está na §4.2.
+
+### 4.2 Panorama consolidado — 2026-09-18 (noite), depois da F7: o que falta, e o que cada resto precisa
+
+Escrito a pedido do autor antes da F8 ("documente tudo… qual a visão geral
+do que ainda precisa ser feito?"). Cada linha diz **o que é**, **onde está
+registrado**, e **o que precisa** para ser feito — porque a resposta
+honesta à pergunta "o que falta" tem três classes distintas: o que é uma
+fatia de código que qualquer sessão faz; o que é código mas só se PROVA
+com hardware ou servidor que não há nesta máquina; e o que é só
+exercitação do autor com a coisa real na mão. Misturá-las é o que faz uma
+lista de pendências parecer maior ou menor do que é.
+
+#### 4.2.1 O que está pronto (medido em 2026-09-18, noite)
+
+```text
+protocolo    0.123.0 · 160 metodos IPC · 57 eventos · 36 dominios (todos no arquitetura/03)
+testes       829 Rust · 50 harnesses QML · 24 verificacoes no gate, todas verdes
+binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
+             release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
+catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
+commits hoje 4182769 F0 · 84b1e80 F1 · cf0de24 F2 · 5517538 F3 · 9d97bd1 F4 ·
+             271d9c7 F6-a · 225564c F5 · 409f375 F6-b · 36f90fd F7
+             (antes deles, no mesmo dia: aa7b891 banco · 2a3b168 P6 fatia 2 ·
+             6edc340 pente-fino)
+```
+
+Etapa 1 (backend e toolchains), frente a frente: Polimento Python
+(§7.36–7.40), bloco A de embarcados (§7.41–7.44), Toolchains (§7.45), P0
+modelo do projeto (§7.46), P4 MicroPython (§7.47), bloco E frameworks
+(§7.48), P3 fatia 1 (§7.49), P5 qualidade (§7.50), P6 fatias 1 e 2 (§7.51,
+§7.53), Banco (§7.52), pente-fino com a varredura §8 fechada (§7.54) —
+**todos feitos**. Etapa 2: F0–F7 (§7.55–7.63) **feitas**.
+
+#### 4.2.2 Etapa 2 — o que resta para fechar
+
+```text
+F8  paineis de ambiente com a MESMA forma (43 §4)        fatia de codigo, sem hardware
+    banco, remoto, embarcados, containers: cabecalho igual (titulo, subtitulo de
+    uma linha, acao primaria a direita), veredito igual (a faixa verde/vermelha),
+    grade igual — a grade do banco (ui/qml/datasource/DataSourceQuery.qml) vira
+    componente comum em ui/qml/components/. E' a "experiencia a DataGrip
+    adaptada" que o autor pediu. Medida: um componente de grade + harness; fotos
+    dos quatro paineis (KINEIN_STARTUP_COMMANDS abre cada um headless).
+    Catracas: view 300, controller/host 400 — os hosts de ambiente estao perto
+    (ShellWorkspaceHost 384).
+
+Fechamento da etapa                                       meia sessao
+    43 §5 e §7 sincronizados; foto final das tres telas de 43 §2 (inicial,
+    workspace, editor) lado a lado com as de manha; release-hardened REMEDIDO
+    (primeiro frame e os tempos da tabela §7.62 — hoje so' o debug foi medido
+    depois da F6); leitura-tecnica e README do DocsPublic com o estado; e a
+    proposta da Etapa 3 ao autor (abaixo, §4.2.5).
+
+Dividas de UX ditas em "nao feito" das fatias (pequenas, cabem no fechamento):
+    - Ln:Col do cursor na status bar (F2/F3 disseram; ainda nao ha)
+    - contagem na aba Testes ("12/14") como a de Problems (F5 disse)
+    - a foto do gate a 1024 px alem de 1280 (F2 disse; a status bar tem
+      regra de ceder, mas so' foi vista a 1280)
+    - o trilho lateral em modo compacto/expandido (F1 fez o rotulo ao pairar,
+      nao o modo expandido)
+    - foco da StartScreen contra o TerminalPanel (`focus: true`) quando o
+      painel de baixo esta' aberto sem workspace — caso raro (F7)
+    - rename / codeActions / workspaceEdit ainda SINCRONOS no core (F6-a);
+      raros, mas sao a ultima classe de pedido que pode segurar o laco
+
+O que so' o autor mede (precisa de uma pessoa na frente da IDE):
+    - clique -> primeiro feedback por acao, com mouse e teclado reais (a
+      tabela §7.62 e' do core e do primeiro frame; offscreen nao clica)
+    - Enter / setas na tela inicial; Ctrl+P; a sensacao de densidade das
+      linhas do explorer (22 px) e das abas — o "efeito psicologico" que a
+      etapa persegue so' se confirma com uso
+```
+
+#### 4.2.3 Etapa 1 — os restos, classificados pelo que precisam
+
+**(a) Fatia de código que qualquer sessão faz, sem hardware** (em ordem
+de valor para o uso diário, juízo do agente):
+
+```text
+Banco        abas/historico de consulta; exportar CSV/JSON; cancelar consulta
+             longa (o job ja' e' cancelavel — falta o cancel chegar ao motor);
+             escrever documento no Mongo (hoje so' leitura)           §7.52
+P6 remoto    renomear/apagar propagados ao alvo (hoje so' fs.write empurra);
+             watcher do lado remoto (inotifywait pelo ssh) para "mudou la'";
+             journalctl/dmesg do alvo como aba; Yocto/Buildroot reconhecidos
+             pelo P0 (kind do workspace)                            §7.53, 42 §P6
+P5 qualidade cppcheck como segundo motor do quality.run; doctest na arvore;
+             gcov/lcov para C/C++ (so' se o build do usuario tiver --coverage);
+             a lampada por consulta previa de acoes                  §7.50
+P3 debug     rttChannelFormats (defmt declarado por canal); SVD com ESCRITA
+             (setVariable/writeMemory — provavel com adaptador falso); o
+             caminho cmsis-svd pelo GDB                              §7.49
+Bloco E      menuconfig/set-target do IDF no terminal; pio test/check; os
+             runners de debug do west; E5 templates curados; E6 Unity/Ceedling
+             (provaveis com wrappers falsos, como o resto do bloco)  §7.48
+P4           C6 CircuitPython (drive CIRCUITPY + circup) — baixa prioridade §7.47
+Gate         a classe "Connections no target errado" so' e' vista em runtime
+             ate' o primeiro frame (§7.63); as telas que carregam depois
+             (paineis de ambiente, dialogos) ficam fora — um harness que
+             instancie cada painel e leia o stderr fecharia isso
+```
+
+**(b) Código pronto, prova pendente de hardware ou servidor** — nada a
+escrever antes de ter a coisa; o que há de fazer é a exercitação com
+registro datado:
+
+```text
+Pi / Linux embarcado   P6 fatias 1 e 2 inteiras (perfil, sonda, deploy,
+                       espelho, Puxar/Empurrar) — provadas com ssh/rsync
+                       FALSOS; falta uma Pi (ou qualquer Linux com sshd)
+PostgreSQL / Mongo     datasource.query e o TLS verify-full — provados so'
+                       com SQLite; precisa de um servidor (um container
+                       local basta: o dominio container.* ja' sobe um)
+Sonda JTAG             P3 fatia 2 (threads de RTOS, RTT real) — o ESP32
+                       classico do autor NAO tem JTAG; precisa de ESP-Prog,
+                       ou de um C3/C6 (USB-JTAG embutido), ou de uma Pico
+                       com debugprobe
+SDKs reais             ESP-IDF (export.sh), Zephyr (west), pico-sdk,
+                       PlatformIO — os wrappers falsos provaram a forma; o
+                       SDK real prova o conteudo (o importKit com Yocto/
+                       Buildroot/Zephyr SDK idem)
+Placa de teste         gravar firmware (E4/C5) — NUNCA na placa do autor
+                       (apagaria o main.py dele); qualquer ESP32 vazio serve
+```
+
+**(c) Só o autor, com a placa na mão** (roteiro em
+`DocsPrivate/Codex/2026-09-17-e2-permissao-por-canal.md`): o passo do
+ModemManager (`ID_MM_DEVICE_IGNORE=1`, pede sudo — a IDE só mostra); o
+botão "Identificar" da aba Serial — que até hoje NÃO chegava ao core (§7.63
+consertou o fio); o painel de Embarcados inteiro clicado na IDE aberta.
+
+#### 4.2.4 O que os gates NÃO cobrem, dito de uma vez
+
+O gate prova core + ponte + controllers + a IDE abrindo sem aviso. Não
+prova: o clique real (nenhum harness clica na janela); as telas que carregam
+depois do primeiro frame (o stderr só é lido até ele); PostgreSQL/Mongo/TLS,
+Pi, sonda, SDKs (item b); o release-hardened a cada commit (só o debug
+abre no gate — o hardened é medido por sessão, §7.54). Quem lê "24
+verificações verdes" deve ler junto esta lista.
+
+#### 4.2.5 A ordem proposta a partir daqui (para o autor decidir)
+
+1. **F8** e o **fechamento da Etapa 2** (§4.2.2) — uma sessão.
+2. **Uma sessão do autor na IDE aberta**, com o roteiro de §4.2.2/§4.2.3(c):
+   o que a Etapa 2 prometeu só se confirma com uso; os achados viram
+   fatias pequenas.
+3. **Etapa 3, candidatas** (não decidido): (i) os restos (a) de §4.2.3 em
+   ordem de valor — banco e remoto primeiro, porque são os que o autor
+   disse que usará; (ii) o **bloco F** (Jupyter; dev containers com contexto
+   remoto; polimento Rust com nextest/llvm-cov); (iii) a **validação com
+   hardware** (b), à medida que a coisa chegar à mesa; (iv) **release**:
+   AppImage regenerado e testado (`testar-appimage.sh`) — só quando o autor
+   pedir, como a regra diz.
 
 ## 5. As decisões registradas que NÃO se reabrem
 

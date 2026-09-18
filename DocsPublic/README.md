@@ -129,7 +129,11 @@ mudar X → olhe aqui", ritual de uma mudança e o gate.
 
 Para localizar os arquivos de cada domínio, use [contribuindo.md](contribuindo.md)
 §3. Para a ordem de execução, use o [roadmap 40](roadmaps/40-estado-e-continuidade.md)
-§4.1: Etapa 1 de backend/toolchains e Etapa 2 de UX/UI/HUD. O antigo
+§4.1: Etapa 1 de backend/toolchains (fechada em 2026-09-18) e Etapa 2 de
+UX/UI/HUD (F0–F7 feitas em 2026-09-18; F8 aberta). **O que ainda falta, por
+classe — fatia de código / prova com hardware / só o autor — está no §4.2
+do mesmo roadmap**, e o estado da Etapa 2 fatia a fatia no
+[roadmap 43](roadmaps/43-etapa2-hud-ui-ux.md) §7. O antigo
 `GUIAIA.md` não está neste checkout (conferido em 2026-09-15).
 
 ## Estrutura
