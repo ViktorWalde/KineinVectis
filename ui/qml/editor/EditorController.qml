@@ -155,15 +155,12 @@ Item {
         surfaceBridge: surfaceBridge
         documentController: documents
         filesModel: documents.filesModel
-        onReadFileRequested: function(path) {
-            root.readFileRequested(path);
-        }
-        onDraftSaveRequested: function(path, content) {
-            root.draftSaveRequested(path, content);
-        }
-        onSaveSessionRequested: function(files, activeFile) {
-            root.saveSessionRequested(files, activeFile);
-        }
+        autoSaveEnabled: root.settingsController === null ? true : root.settingsController.autoSave
+        onReadFileRequested: path => root.readFileRequested(path)
+        onDraftSaveRequested: (path, content) => root.draftSaveRequested(path, content)
+        onSaveSessionRequested: (files, activeFile) => root.saveSessionRequested(files, activeFile)
+        // Autosave (F3): o mesmo caminho do Ctrl+S, so' com buffer sujo.
+        onAutoSaveRequested: if (documents.currentIsModified()) root.saveCurrentFile()
     }
 
     EditorFormatController {
@@ -311,6 +308,7 @@ Item {
 
     function selectTab(index) {
         completionController.dismiss();
+        persistence.flushAutoSave(); // F3: a aba que sai vai ao disco antes.
         documents.selectTab(index);
         // D1b: o buffer trocou — os offsets dos matches eram do texto ANTIGO.
         // Revarre no arquivo novo (mantendo o termo, como VS Code faz).

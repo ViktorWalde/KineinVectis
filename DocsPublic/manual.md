@@ -103,6 +103,16 @@ atalho de área de trabalho ou um `alias`.
   (`LSP ● 2` todos rodando, `LSP … cpp` subindo, `LSP ✗ python` caiu — o
   motivo ao pairar; antes isso só existia no log da aba IDE), o botão IDE e
   o core.
+- **Editor e explorer** (desde 2026-09-18, Etapa 2 F3): a **aba ativa** tem
+  o fundo do editor e uma borda de acento em cima; o arquivo modificado
+  mostra **●** no lugar do ✕ (o ✕ volta ao pairar); o número da **linha
+  atual** fica em destaque na calha; o **explorer segue o arquivo ativo**
+  (abre as pastas até ele e o seleciona). O botão "Salvar" saiu: **Ctrl+S**
+  ou o **salvar automático** — ligado por padrão: 2 s depois de você parar
+  de digitar, ao trocar de aba e ao sair do editor; um arquivo mudado por
+  fora nunca é sobrescrito (a IDE compara antes de salvar e avisa); o
+  rascunho de segurança continua gravando entre um salvar e outro. Desliga
+  em Configurações → "Salvar automaticamente".
 - **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
   Build, Debug e, embaixo, os painéis de ambiente na ordem Banco de dados,
   Containers, Observabilidade e Ferramentas (por último).

@@ -166,7 +166,13 @@ F8  paineis de ambiente (banco, remoto, embarcados, containers): mesma forma
 rotulados). **F1 FEITA no mesmo dia** (`40` §7.56): a barra passou de doze
 controles a três widgets — foto 04. **F2 FEITA** (`40` §7.57): o job em
 curso com progresso e cancelar no centro da status bar, os servidores de
-linguagem à direita — foto 05.
+linguagem à direita — foto 05. **F3 FEITA** (`40` §7.58): aba ativa,
+linha atual, explorer segue o arquivo, ● no lugar do Salvar, autosave —
+foto 06. **A F3 mediu o defeito que manda na F6:** o core BLOQUEIA o laço
+inteiro até 4 s por pedido LSP (15 s no `initialize`) — com o
+rust-analyzer indexando este repositório, nenhum `fs.list` foi respondido
+por ~20 s e a IDE inteira ficou parada; a F6 começa por isso (resposta
+assíncrona do LSP), não por medir cliques.
 
 
 

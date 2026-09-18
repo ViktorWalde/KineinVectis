@@ -128,6 +128,10 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
             .auto_close_pairs
             .or(global.auto_close_pairs)
             .unwrap_or(true),
+        // Ligado por padrao: decisao do autor (Etapa 2, 2026-09-18); o
+        // rascunho do seguranca/23 continua sendo a rede entre um salvar e
+        // outro.
+        auto_save: workspace.auto_save.or(global.auto_save).unwrap_or(true),
         rigor_profile: workspace
             .rigor_profile
             .or(global.rigor_profile)
@@ -172,6 +176,7 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         format_on_save: incoming.format_on_save.or(base.format_on_save),
         editor_font_size: incoming.editor_font_size.or(base.editor_font_size),
         auto_close_pairs: incoming.auto_close_pairs.or(base.auto_close_pairs),
+        auto_save: incoming.auto_save.or(base.auto_save),
         rigor_profile: incoming.rigor_profile.or(base.rigor_profile),
         explorer_width: incoming.explorer_width.or(base.explorer_width),
         context_width: incoming.context_width.or(base.context_width),
@@ -246,6 +251,7 @@ mod tests {
             editor_font_size: Some(16),
             format_on_save: Some(true),
             auto_close_pairs: Some(true),
+            auto_save: None,
             ..SettingsValues::default()
         };
         let incoming = SettingsValues {

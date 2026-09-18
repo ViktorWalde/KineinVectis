@@ -48,6 +48,10 @@ pub struct SettingsValues {
     /// Auto-close bracket/quote pairs while typing.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub auto_close_pairs: Option<bool>,
+    /// Save the buffer by itself (`0.123.0`, Etapa 2 F3): after a typing
+    /// pause, on tab switch and when the editor loses focus. Absent = on.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub auto_save: Option<bool>,
     /// Rigor profile for the user's build/quality runs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rigor_profile: Option<RigorProfile>,
@@ -81,6 +85,8 @@ pub struct EffectiveSettings {
     pub editor_font_size: u32,
     /// Effective auto-close flag.
     pub auto_close_pairs: bool,
+    /// Effective autosave flag.
+    pub auto_save: bool,
     /// Effective rigor profile.
     pub rigor_profile: RigorProfile,
     /// Effective Project explorer width.
@@ -144,6 +150,7 @@ mod tests {
             format_on_save: Some(true),
             editor_font_size: None,
             auto_close_pairs: Some(false),
+            auto_save: None,
             rigor_profile: Some(super::RigorProfile::Relaxed),
             ..SettingsValues::default()
         })

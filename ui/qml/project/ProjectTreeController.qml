@@ -145,6 +145,7 @@ Item {
         if (path === workspaceRoot) {
             treeModel.clear();
             insertEntries(0, entries, 0, path);
+            advanceReveal();
             return;
         }
         const index = rowIndexForPath(path);
@@ -156,6 +157,27 @@ Item {
         }
         treeModel.setProperty(index, "expanded", true);
         insertEntries(index + 1, entries, treeModel.get(index).depth + 1, path);
+        listingArrived(path);
+        advanceReveal();
+    }
+
+    // O explorer segue o arquivo ativo (F3): dono proprio, abaixo.
+    function revealPath(path) {
+        reveal.revealPath(path);
+    }
+
+    function advanceReveal() {
+        reveal.advance();
+    }
+
+    function listingArrived(path) {
+        reveal.listed(path);
+    }
+
+    ProjectTreeRevealController {
+        id: reveal
+
+        tree: root
     }
 
     function toggleDirectory(path, index, expanded) {

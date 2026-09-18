@@ -47,9 +47,17 @@ Item {
     // Os caminhos das abas abertas, para o snapshot da sessão.
     property var filesModel: null
 
+    // AUTOSAVE (Etapa 2, F3, decisao do autor em 2026-09-18): o buffer sujo vai
+    // para o DISCO sozinho — apos 2 s de pausa (aqui), ao trocar de aba e
+    // quando o editor perde o foco (o EditorController pede). O rascunho
+    // continua: ele grava aos 1,5 s e e' a rede ate' o disco receber; salvar
+    // o limpa (a regra de sempre). Desligavel em Configuracoes.
+    property bool autoSaveEnabled: true
+
     signal readFileRequested(string path)
     signal draftSaveRequested(string path, string content)
     signal saveSessionRequested(var files, string activeFile)
+    signal autoSaveRequested()
 
     visible: false
 
@@ -87,11 +95,37 @@ Item {
 
     function scheduleDraftSave() {
         autosaveDebounce.restart();
+        if (autoSaveEnabled) {
+            diskSaveDebounce.restart();
+        }
     }
 
     function cancelPendingSaves() {
         autosaveDebounce.stop();
+        diskSaveDebounce.stop();
         sessionSaveDebounce.stop();
+    }
+
+    // O gesto que nao espera a pausa: trocar de aba, perder o foco.
+    function flushAutoSave() {
+        if (!autoSaveEnabled) {
+            return;
+        }
+        diskSaveDebounce.stop();
+        autoSaveRequested();
+    }
+
+    Timer {
+        id: diskSaveDebounce
+
+        interval: 2000
+        repeat: false
+        onTriggered: {
+            if (root.autoSaveEnabled && root.currentPath() !== "" && root.ready()
+                    && root.documentController.currentIsModified()) {
+                root.autoSaveRequested();
+            }
+        }
     }
 
     Timer {
@@ -124,6 +158,19 @@ Item {
                 files.push(root.filesModel.get(index).path);
             }
             root.saveSessionRequested(files, root.currentPath());
+        }
+    }
+
+    // Sair do editor (clicar no terminal, no explorer, noutra janela) salva.
+    Connections {
+        target: root.surfaceBridge !== null && root.surfaceBridge.ready()
+                ? root.surfaceBridge.editorSurface : null
+
+        function onEditorActiveFocusChanged() {
+            if (!root.surfaceBridge.editorSurface.editorActiveFocus && root.ready()
+                    && root.documentController.currentIsModified()) {
+                root.flushAutoSave();
+            }
         }
     }
 

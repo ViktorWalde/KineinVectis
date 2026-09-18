@@ -49,6 +49,8 @@ Window {
             domains.diagnosticsController.setActivePath(domains.editorController.currentFilePath());
             domains.indexController.setActivePath(domains.editorController.currentFilePath());
             domains.coverageController.setActivePath(domains.editorController.currentFilePath());
+            // F3: o explorer segue o arquivo ativo.
+            domains.projectTree.revealPath(domains.editorController.currentFilePath());
         }
     }
 

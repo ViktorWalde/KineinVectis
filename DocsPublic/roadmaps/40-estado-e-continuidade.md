@@ -79,8 +79,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.122.0
-testes      827 Rust aprovados; 47 harnesses QML (medicao de 2026-09-18, §7.57)
+protocolo   0.123.0
+testes      827 Rust aprovados; 49 harnesses QML (medicao de 2026-09-18, §7.58)
 metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
@@ -3835,3 +3835,42 @@ o job e o progresso; nada colide (a faixa esquerda para antes da direita).
 fiação IPC (164 sinais, todos com dono), arquitetura, qmllint; o binário
 abre. **Não feito, dito:** a foto a 1024 px; Ln/Col do cursor (entra na F3
 com o editor).
+
+### 7.58 Etapa 2, F3 — aba ativa, linha atual, explorer que segue, autosave — 2026-09-18, protocolo 0.123.0
+
+**Aba ativa óbvia** (`EditorTabsBar` reescrita): fundo do editor + borda de
+acento em cima + texto primário; a inativa no fundo do painel; o arquivo
+modificado mostra ● no lugar do ✕ até o mouse chegar. **O botão "Salvar"
+amarelo permanente saiu** (foto 03 do `43` o mediu como o controle mais
+chamativo da tela) — Ctrl+S continua, e o **autosave** entrou: decisão do
+autor, `SettingsValues.autoSave` (0.123.0, ausente = ligado, toggle em
+Configurações), no `EditorPersistenceController`: 2 s de pausa depois da
+edição, `flushAutoSave()` ao trocar de aba (antes do `selectTab`, com o
+buffer ainda na superfície) e quando o editor perde o foco; só com buffer
+sujo; pelo MESMO caminho do Ctrl+S (`fs.write` com `expectedContent` — o
+disco mudado por fora é recusado como sempre); o rascunho do
+`seguranca/23` continua aos 1,5 s. **A linha atual** no número da calha em
+texto primário. **O explorer segue o arquivo ativo**
+(`ProjectTreeRevealController`, filho do `ProjectTreeController` que bateu
+em 400): abre uma pasta por vez até o arquivo (`fs.list` por pasta, sem
+pedir duas vezes a mesma — duas listagens recolheriam o que a primeira
+abriu) e o seleciona quando aparece; fora do workspace, nada.
+
+**O que a foto mediu além da F3 — o defeito que manda na F6.** Ao
+fotografar, o explorer parava em `crates/kinein-core` sem abrir mais nada.
+Instrumentado: a UI PEDIU `fs.list` (id 33) e o core não respondeu por
+~20 s; a resposta anterior tinha sido `lsp.semanticTokens`, e o core
+**bloqueia o laço inteiro** em cada pedido LSP (`REQUEST_TIMEOUT` 4 s;
+`INITIALIZE_TIMEOUT` 15 s) — com o rust-analyzer indexando este
+repositório, nada responde enquanto ele sobe: explorer, salvar, git, tudo.
+Aos 30 s o explorer completou a cadeia (foto 06b). Não é da F3; é o
+primeiro item da F6 (resposta assíncrona do LSP), e passa na frente de
+medir cliques.
+
+**Também no caminho:** a pasta `crates/kinein-core/192.168.0.42:` — lixo do
+`rsync` falso do teste do espelho (o alvo sem usuário não era traduzido) —
+tinha entrado no commit 2a3b168; saiu, e o falso traduz as duas formas.
+**Medido:** 827 testes Rust; 49 harnesses (`tst_editor_autosave`,
+`tst_project_tree_reveal` novos); gates QML, fiação IPC, arquitetura,
+atalhos verdes; `debug-strict` abre. **Não feito, dito:** Ln/Col na status
+bar; a foto sem o freeze do LSP.

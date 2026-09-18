@@ -104,8 +104,8 @@ impl Cenario {
             &format!(
                 "#!/bin/sh\nprintf '%s\\n' \"$@\" >> '{registro}'\n\
                  eval src=\\${{$(($# - 1))}}; eval dst=\\${{$#}}\n\
-                 src=$(printf '%s' \"$src\" | sed 's#^pi@192.168.0.42:/home/pi#{pi}#')\n\
-                 dst=$(printf '%s' \"$dst\" | sed 's#^pi@192.168.0.42:/home/pi#{pi}#')\n\
+                 src=$(printf '%s' \"$src\" | sed 's#^\\(pi@\\)\\?192.168.0.42:/home/pi#{pi}#')\n\
+                 dst=$(printf '%s' \"$dst\" | sed 's#^\\(pi@\\)\\?192.168.0.42:/home/pi#{pi}#')\n\
                  case \"$src\" in */) mkdir -p \"$dst\"; cp -r \"$src\". \"$dst\"; (cd \"$src\" && find . -type f | sed 's#^\\./#<f+++++++++ #');;\n\
                  *) mkdir -p \"$(dirname \"$dst\")\"; cp \"$src\" \"$dst\"; echo \"<f+++++++++ $(basename \"$src\")\";; esac\n"
             ),

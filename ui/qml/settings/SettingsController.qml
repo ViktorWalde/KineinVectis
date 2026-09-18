@@ -14,6 +14,8 @@ Item {
     property bool formatOnSave: false
     property int editorFontSize: 14
     property bool autoClosePairs: true
+    // Salvar sozinho (Etapa 2 F3, decisao do autor): ausente = ligado.
+    property bool autoSave: true
     property int explorerWidth: 280
     property int contextWidth: 360
     property int bottomPanelHeight: 260
@@ -48,6 +50,7 @@ Item {
         editorFontSize = effective.editorFontSize !== undefined
                 ? effective.editorFontSize : 14;
         autoClosePairs = effective.autoClosePairs !== false;
+        autoSave = effective.autoSave !== false;
         rigorProfile = effective.rigorProfile !== undefined
                 ? effective.rigorProfile : "strict";
         explorerWidth = effective.explorerWidth !== undefined

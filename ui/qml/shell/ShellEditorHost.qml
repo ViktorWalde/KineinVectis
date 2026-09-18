@@ -117,7 +117,6 @@ Item {
         onTabCloseRequested: function(index) {
             root.editorController.closeTab(index);
         }
-        onSaveRequested: root.editorController.saveCurrentFile()
         onTextEdited: function(text) {
             root.editorController.handleTextEdited(text);
         }

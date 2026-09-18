@@ -145,6 +145,7 @@ Item {
         visible: root.settingsController.dialogVisible
         z: 97
         formatOnSave: root.settingsController.formatOnSave
+        autoSave: root.settingsController.autoSave
         editorFontSize: root.settingsController.editorFontSize
         autoClosePairs: root.settingsController.autoClosePairs
         rigorProfile: root.settingsController.rigorProfile

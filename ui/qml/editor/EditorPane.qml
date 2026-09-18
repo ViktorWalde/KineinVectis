@@ -46,7 +46,6 @@ Rectangle {
     signal codeActionsRequested(int line)
     signal tabSelected(int index)
     signal tabCloseRequested(int index)
-    signal saveRequested()
     signal textEdited(string text)
     signal completionMoveRequested(int delta)
     signal completionAcceptRequested()
@@ -94,7 +93,6 @@ Rectangle {
         onTabCloseRequested: function(index) {
             root.tabCloseRequested(index);
         }
-        onSaveRequested: root.saveRequested()
     }
 
     EditorBreadcrumbs {

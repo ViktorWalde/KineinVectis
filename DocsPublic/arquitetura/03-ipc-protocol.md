@@ -1,5 +1,10 @@
 # 03 — Protocolo IPC
 
+> **0.123.0 (2026-09-18) — Etapa 2, F3: `SettingsValues.autoSave`** (ausente
+> = ligado; decisão do autor). O editor salva o buffer sujo sozinho — 2 s
+> de pausa, troca de aba, perda de foco — pelo caminho do Ctrl+S; o rascunho
+> de `seguranca/23` continua como rede. Sem método novo.
+>
 > **0.122.0 (2026-09-18) — P6 fatia 2, o workspace ESPELHADO (`roadmaps/42`
 > §P6, desenho escrito antes do código).** A pasta de um alvo SSH vira um
 > espelho local por `rsync`, e a IDE abre o espelho como workspace comum —
@@ -2371,7 +2376,7 @@ settings.get {} → SettingsResult
 settings.set { scope: "global"|"workspace", values: SettingsValues }
              → SettingsResult
 SettingsValues { formatOnSave?: bool, editorFontSize?: u32,
-                 autoClosePairs?: bool,
+                 autoClosePairs?: bool, autoSave?: bool (0.123.0),
                  rigorProfile?: "strict"|"balanced"|"relaxed",
                  explorerWidth?: u32, contextWidth?: u32,
                  assistantTerminalWidth?: u32,
@@ -2379,7 +2384,7 @@ SettingsValues { formatOnSave?: bool, editorFontSize?: u32,
                  outlineCollapsed?: bool,
                  outlineCollapsed?: bool }
                                           (campos ausentes = não setados)
-EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs,
+EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs, autoSave,
                     rigorProfile, explorerWidth, contextWidth,
                     assistantTerminalWidth,
                     bottomPanelHeight, outlineWidth, outlineCollapsed,
@@ -2394,7 +2399,7 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
 - `settings.set` faz MERGE parcial de `values` no escopo (campo ausente
   mantém o valor gravado; reverter/limpar override é pós-v1). Defaults:
   `formatOnSave=false`, `editorFontSize=14`, `autoClosePairs=true`,
-  `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
+  `autoSave=true` (0.123.0, decisão do autor na Etapa 2), `rigorProfile="strict"`, larguras `280/360/640/220` (Project, seletor KV,
   terminal KV ativo e Estrutura), painel inferior `260` e Estrutura expandida.
 - Erros: `NO_WORKSPACE` (set `scope=workspace` sem workspace);
   `INVALID_PARAMS` (`editorFontSize` fora de 8..=40, ou `rigorProfile`
@@ -2403,7 +2408,11 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
   (falha de escrita).
 - Consumidores atuais: `editorFontSize` → `Theme.fontSizeEditor`;
   `autoClosePairs` → auto-close da E1; `formatOnSave` → Ctrl+S formata e
-  então salva; `rigorProfile` (M4.5) → flags de `quality.run`/`build.run`
+  então salva; `autoSave` → o `EditorPersistenceController` salva o buffer
+  sujo sozinho (2 s de pausa; ao trocar de aba; ao perder o foco) pelo
+  MESMO caminho do Ctrl+S (`fs.write` com `expectedContent` — o disco
+  mudado por fora continua recusado); o rascunho do `seguranca/23` segue
+  gravando aos 1,5 s como rede entre um salvar e outro; `rigorProfile` (M4.5) → flags de `quality.run`/`build.run`
   NO PROJETO DO USUÁRIO (clippy pedantic/nursery + `-D warnings` no
   strict; clippy default no balanced; só `clippy::correctness` +
   build sem `RUSTFLAGS` no relaxed). NUNCA regula o gate do repo Kinein.

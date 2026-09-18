@@ -175,11 +175,14 @@ Item {
                 anchors.rightMargin: root.numberRightPadding
                 anchors.verticalCenter: parent.verticalCenter
                 text: gutterLine.lineNumber
+                // A linha do cursor em texto primario (F3 da Etapa 2): o
+                // numero acompanha a faixa da linha atual.
                 color: root.executionLine === gutterLine.lineNumber
                        ? Theme.accent
                        : (diagnosticSeverity !== ""
                           ? StatusColors.severity(diagnosticSeverity)
-                          : Theme.textMuted)
+                          : (gutterLine.lineNumber === root.cursorLine
+                             ? Theme.textPrimary : Theme.textMuted))
                 font.family: Theme.monoFont
                 font.pixelSize: Theme.fontSizeEditor - 2
                 font.bold: diagnosticSeverity === "error"

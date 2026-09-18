@@ -11,6 +11,7 @@ Item {
     id: root
 
     property bool formatOnSave: false
+    property bool autoSave: true
     property int editorFontSize: 14
     property bool autoClosePairs: true
     property string rigorProfile: "strict"
@@ -186,6 +187,16 @@ Item {
                         }
                     }
                 }
+            }
+
+            // --- Salvar automaticamente (Etapa 2 F3) ---
+            SettingsToggleRow {
+                width: parent.width
+                label: qsTr("Salvar automaticamente")
+                hint: qsTr("Após uma pausa na digitação, ao trocar de aba e ao sair do editor; "
+                           + "Ctrl+S continua valendo. O rascunho de segurança fica ligado.")
+                checked: root.autoSave
+                onToggled: root.settingChanged("autoSave", !root.autoSave)
             }
 
             // --- Formatar ao salvar ---
