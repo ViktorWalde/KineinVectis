@@ -201,6 +201,9 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     listDir(m_workspaceRoot);
     if (m_workspaceBuildSystems.contains(QStringLiteral("cmake"))) {
         cmakeStatus();
+        // Os presets do projeto, para o seletor do kit (pente-fino 2026-09-18:
+        // o metodo existia desde 0.25.0 e nenhuma tela o pedia).
+        cmakePresetsList();
     }
     if (m_workspaceBuildSystems.contains(QStringLiteral("cargo"))) {
         cargoMetadata();

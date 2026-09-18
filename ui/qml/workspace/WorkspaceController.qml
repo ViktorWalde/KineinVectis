@@ -7,6 +7,17 @@ Item {
     property string activeWorkspaceRoot: ""
     property var toolsList: []
 
+    // Uma ferramenta detectada durante a varredura substitui a de mesmo id
+    // (ou entra): a lista cresce enquanto o scan roda.
+    function handleToolDetected(tool) {
+        if (!tool || !tool.id) {
+            return;
+        }
+        const lista = (toolsList || []).filter(function(t) { return t.id !== tool.id; });
+        lista.push(tool);
+        toolsList = lista;
+    }
+
     signal clearWorkspaceUiRequested()
 
     visible: false

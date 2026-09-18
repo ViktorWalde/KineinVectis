@@ -94,6 +94,13 @@ Item {
             root.workspaceController.toolsList = tools;
         }
 
+        // Cada ferramenta detectada entra na lista NA HORA (pente-fino
+        // 2026-09-18: o sinal existia e ninguem o ouvia; a tela so' via a
+        // lista pronta no fim da varredura).
+        function onEnvironmentTool(tool) {
+            root.workspaceController.handleToolDetected(tool);
+        }
+
         function onRequestFailed(method, message) {
             root.recentWorkspacesController.handleRequestFailed(method, message);
             if (method === "workspace.open" || method === "workspace.browse"

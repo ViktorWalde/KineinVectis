@@ -7,21 +7,21 @@ Item {
     height: 100
 
     property int requestedOffset: -1
-    property int sessionChanges: 0
 
     TerminalScrollController {
         id: scroll
         onScrollRequested: function(offset) {
             root.requestedOffset = offset;
         }
-        onSessionChanged: root.sessionChanges += 1
     }
 
     Component.onCompleted: {
         let failures = 0;
 
         scroll.handleRender({ id: "t1", scrollback: 0, scrollbackMax: 100 });
-        if (root.sessionChanges !== 1 || scroll.scrollbackMax !== 100) failures += 1;
+        // A troca de sessao aparece no `renderedSessionId` (o sinal que so' o
+        // harness ouvia saiu no pente-fino de 2026-09-18).
+        if (scroll.renderedSessionId !== "t1" || scroll.scrollbackMax !== 100) failures += 1;
 
         scroll.queueScroll(30);
         scroll.flushPending();
@@ -46,7 +46,7 @@ Item {
         if (scroll.awaitingScrollOffset !== -1) failures += 64;
 
         scroll.handleRender({ id: "t2", scrollback: 0, scrollbackMax: 0 });
-        if (root.sessionChanges !== 2 || scroll.renderedSessionId !== "t2"
+        if (scroll.renderedSessionId !== "t2"
                 || scroll.scrollOffset !== 0) failures += 128;
 
         // A roda so CONVERTE unidade de dispositivo em linhas; nao rola nada e

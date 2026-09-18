@@ -70,25 +70,25 @@ Item {
 
     visible: false
 
+    // Os configure presets do projeto (cmake.presets.list, pedido pela ponte
+    // ao abrir um CMake): o seletor de KIT — escolher um preset e' tornar o
+    // kit dele o ativo (toolchain.get { preset }); vazio = o kit padrao.
+    property var presets: []
+
+    function handlePresets(list) {
+        presets = list === undefined || list === null ? [] : list;
+    }
+
+    function selectPreset(name) {
+        getRequested(name === undefined || name === null ? "" : name);
+    }
+
     onWorkspaceRootChanged: {
-        selections = [];
-        candidates = [];
-        errorText = "";
-        menuVisible = false;
-        preset = "";
-        sysroot = "";
-        targetTriple = "";
-        chip = "";
-        presetToolchainFile = "";
-        installable = [];
-        projectFamily = "";
-        installing = "";
-        lastInstallOutcome = "";
-        toolchainFile = "";
-        svdFile = "";
-        sysrootReport = ({});
-        kitProposal = ({});
-        importError = "";
+        selections = []; candidates = []; errorText = ""; menuVisible = false;
+        preset = ""; sysroot = ""; targetTriple = ""; chip = ""; presetToolchainFile = "";
+        installable = []; projectFamily = ""; installing = ""; lastInstallOutcome = "";
+        toolchainFile = ""; svdFile = ""; sysrootReport = ({}); kitProposal = ({});
+        importError = ""; presets = [];
         if (workspaceRoot !== "") {
             getRequested("");
             installableRequested();

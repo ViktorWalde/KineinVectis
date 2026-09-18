@@ -55,7 +55,7 @@
 ## 1. O estado, em números
 
 ```bash
-bash scripts/verificar.sh                 # 23 verificacoes
+bash scripts/verificar.sh                 # 24 verificacoes
 cat scripts/arquitetura-baseline.txt      # a catraca
 cargo test -q --workspace
 
@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.122.0
-testes      825 Rust aprovados; 45 harnesses QML (medicao de 2026-09-18, §7.53)
+testes      827 Rust aprovados; 45 harnesses QML (medicao de 2026-09-18, §7.54)
 metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
@@ -93,7 +93,7 @@ metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote
             entraram em 2026-09-17)
 dominios    36, e os 36 documentados no arquitetura/03 (coverage.* e remote.* entraram em 2026-09-17)
 catraca     1 arquivo em debito
-gate        23 verificacoes
+gate        24 verificacoes (a 24a, 2026-09-18: fiacao IPC de ponta a ponta)
 ```
 
 > **O par `metodos`/`eventos` foi CORRIGIDO DE NOVO em 2026-09-06, e desta vez
@@ -611,8 +611,20 @@ fatia 1 pede uma Pi real, que não há nesta máquina. Em 2026-09-18 o banco
 fechou a sua fatia (§7.52: `datasource.query` com leitura imposta pelo
 motor, escrita confirmada, TLS verify-full no PostgreSQL), e o P6 ganhou a
 fatia 2 (§7.53: o workspace ESPELHADO por rsync — a pasta do alvo aberta
-como workspace comum, salvar empurra, Puxar/Empurrar). Seguem, na ordem do
-§4.1: a varredura §8 e o bloco F.
+como workspace comum, salvar empurra, Puxar/Empurrar).
+
+**Decisão do autor em 2026-09-18, ao fim da fila linear da Etapa 1:** a
+fila fechou o que tinha de fechar (os restos de cada item estão na tabela
+abaixo, e cada um diz o que precisa — hardware, servidor, ou uma fatia
+pequena). O que vem agora é, nesta ordem: **(1) o PENTE-FINO da
+arquitetura** — a varredura §8 remedida e ampliada (o "andar de cima" que
+a §8.4 disse que faltava: evento que o core emite e nenhuma tela consome
+vira gate), busca de qualquer defeito/falha no projeto (fiação, superfície
+morta, testes intermitentes, `unwrap` fora de teste, avisos, o
+`release-hardened`), com registro datado e correção do que for defeito; e
+**(2) a Etapa 2 — HUD/UI/UX** (§4 abaixo), com o visual e o efeito
+psicológico das IDEs JetBrains como referência de FLUXO, adaptados ao
+contexto deste projeto — não uma cópia de tema.
 Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
@@ -635,10 +647,21 @@ ainda não está verde.
 | Varredura 40 §8 | `quality.output` descartado no C++; `environmentScan` sem ouvinte; presets sem tela. Os demais achados permanecem detalhados no §8. |
 | Frentes grandes, bloco F | Jupyter; dev containers com contexto remoto; polimento Rust com nextest e llvm-cov. |
 
-**Etapa 2 — UX/UI/HUD (o autor abre).** Banco com experiência à DataGrip
-adaptada ao Kinein Vectis; Python como cidadão da tela; apresentação da IDE
-com frase e forma próprias no lugar da enumeração. A reformulação começa
-depois da Etapa 1 e da sincronização da documentação, por abertura do autor.
+**Etapa 2 — UX/UI/HUD (o autor ABRIU em 2026-09-18, para depois do
+pente-fino).** Banco com experiência à DataGrip adaptada ao Kinein Vectis;
+Python como cidadão da tela; apresentação da IDE com frase e forma próprias
+no lugar da enumeração. A referência declarada pelo autor é o **sucesso das
+IDEs JetBrains** — o que nelas produz o efeito psicológico positivo (a
+janela que parece "saber" do projeto: a barra de status que diz o que está
+acontecendo, o painel de problemas que dá o próximo passo, a hierarquia
+visual que não briga com o código, a densidade certa, a resposta imediata a
+cada gesto) — **adaptado ao contexto deste projeto**: embarcados, Rust/C++/
+Python, banco e remoto como cidadãos de primeira, e o desenho documental que
+a IDE já tem (`arquitetura/32`, `iconografia/`). O que se estuda é o
+comportamento observável; nenhum tema, ícone ou código da JetBrains entra
+(licença e identidade). A etapa começa com um DESENHO (medido na IDE
+abrindo: o que cada tela mostra hoje, contra o que a referência mostra), e
+só depois código.
 
 ## 5. As decisões registradas que NÃO se reabrem
 
@@ -2727,6 +2750,19 @@ sem porta, e foi assim que a coluna `exato` respondeu por outra equação.
 > QML do §8.3. O texto abaixo é o achado de 2026-09-10, mantido como
 > registro.
 
+> **Remedido e FECHADO em 2026-09-18 (pente-fino, §7.54).** As quatro
+> medições viraram gate — `scripts/verificar-fiacao-ipc.sh`, a 24ª
+> verificação, o "andar de cima" que a §8.4 pedia — e o que sobrava ganhou
+> dono: `event.quality.output` e `qualityStarted` vão para o painel de Build
+> (a análise escreve onde o build escreve); `environmentTool` faz a lista de
+> ferramentas crescer enquanto o scan roda; `cmake.presets.list` alimenta o
+> **seletor de preset** no kit (chips no painel de Embarcados — escolher um
+> preset é ativar o kit dele); os dois sinais QML da §8.3 saíram; os cinco
+> `*Accepted` e os dois `environmentScan*` ficam como exceções DITAS no gate
+> (o desfecho chega por evento; a tela usa a Q_PROPERTY). `job.list` fica
+> para a CLI/recuperação. O texto abaixo é o achado de 2026-09-10, mantido
+> como registro.
+
 ### 8.1 O que é calculado e nunca aparece — prioridade real
 
 ```text
@@ -3654,3 +3690,63 @@ watcher remoto (o que muda no alvo só aparece ao Puxar); renomear/apagar
 propagados (`--delete` explícito); LSP/interpretador do alvo;
 journalctl/dmesg; Yocto/Buildroot no P0; `sshd` local no gate.
 **Próximo:** varredura 40 §8, bloco F.
+
+### 7.54 Pente-fino da arquitetura — 2026-09-18 (a Etapa 1 fechou; antes da Etapa 2)
+
+Pedido do autor: "buscar qualquer tipo de problema/falha no projeto" antes de
+abrir a Etapa 2. O que se mediu e o que se achou:
+
+```text
+fiacao IPC (§8, as 4 medicoes + evento descartado)   6 achados -> gate novo + 5 fixos + 1 aceito
+cargo test x5 seguidas                                 827/827 nas cinco: nenhum intermitente
+unwrap/expect fora de teste                            0 (medido por script sobre o codigo antes do cfg(test))
+TODO/FIXME/HACK                                        1 (o "TODO GDB" do adapter.rs — virou o gdb_pick)
+verificar-embarcado (QEMU, gdb -i dap)                 FALHAVA nesta maquina: attach mudo 30 s
+verificar-appimage                                     FALHAVA no artefato: MANUAL.md ausente
+release-hardened                                       compila e abre (318 ms)
+binario debug (ASan/UBSan) sem workspace               0 avisos QML/sanitizer no stderr
+clippy pedantic, fmt, deny, shellcheck, qmllint, 24 gates   verdes
+docs: afirmacao morta                                  1 ("credencial nao tem onde morar", de 2026-09-03)
+```
+
+**Defeitos corrigidos.** (1) **O `gdb` nativo não fala ARM e a IDE
+esperava para sempre**: com o kit em "gdb" e um ELF Cortex-M, o `attach`
+ficava mudo (o gate do QEMU parava em "event.debug.stopped não chegou em
+30 s"; registrado como "falhou" desde 2026-09-15 e nunca atacado). Agora
+`dap/gdb_pick.rs` lê o `e_machine` do ELF antes de subir o adaptador: ELF
+de outra máquina com o `gdb` nu → o GDB de alvo detectado entra
+(`arm-none-eabi-gdb`, `gdb-multiarch`, `xtensa-esp-elf-gdb`,
+`riscv32-esp-elf-gdb`, na ordem do catálogo) e o console de debug diz;
+sem nenhum, a recusa diz o pacote. O gate do QEMU voltou a passar aqui (22
+ms do continue ao stop). (2) **O AppImage instalava `manual.md` e o smoke
+exigia `MANUAL.md`** — `install(FILES … RENAME MANUAL.md)`; conferido com
+`cmake --install` local (o artefato em `dist/` é de 2026-09-16 e fica
+antigo até o autor pedir um novo). (3) `event.quality.output` **descartado
+no C++** desde a varredura: a saída da análise (o clang-tidy dizendo que
+não achou a CDB) não chegava a tela nenhuma — vai para o painel de Build,
+com o `$ comando`. (4) `cmake.presets.list` sem cliente desde 0.25.0 →
+seletor de preset no kit. (5) `environmentTool` sem ouvinte → as
+ferramentas aparecem uma a uma durante o scan. (6) Dois sinais QML mortos
+(`GitPanel.branchMenuDismissRequested`, `TerminalScrollController.
+sessionChanged` — este só o harness ouvia) saíram. (7) A afirmação morta
+da leitura-técnica.
+
+**O gate novo.** `verificar-fiacao-ipc.sh` (24ª): método roteado sem
+cliente, evento do core que o C++ não trata ou trata e descarta, sinal do
+`CoreClient` sem ouvinte, sinal QML sem tratador — com a lista de exceções
+DITAS (cada uma com motivo) dentro do script. Ele mede 160 métodos e 57
+eventos, os mesmos números que o 03 afirma — pela primeira vez o número
+documentado sai de um comando do gate.
+
+**Medido em 2026-09-18:** 827 testes Rust (+2: o `e_machine` nas duas
+ordens de byte; a troca do gdb nu por um GDB de alvo, só detectado, e a
+recusa com o pacote), 5 rodadas seguidas sem intermitente; 45 harnesses
+(`tst_toolchain` com o seletor de preset; `tst_terminal_scroll` lê o
+`renderedSessionId`); as 24 verificações passam nesta máquina — inclusive
+QEMU, debugpy real, clangd cross e exercitação, que não entravam nos
+registros diários.
+
+**O que o pente-fino NÃO cobre, dito:** ele mede o que está ligado, não se
+a tela ligada mostra a coisa certa nem se é legível — isso é a Etapa 2 com
+a IDE aberta, e é onde os testes práticos do autor entram. Sem GUI não se
+prova o clique; os harnesses provam o controller.

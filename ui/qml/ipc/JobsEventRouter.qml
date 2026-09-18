@@ -53,6 +53,14 @@ Item {
             root.jobsController.handleTestsDiscovered(outcome);
         }
 
+        function onQualityStarted(command) {
+            root.jobsController.handleQualityStarted(command);
+        }
+
+        function onQualityOutput(line, stream) {
+            root.jobsController.handleQualityOutput(line);
+        }
+
         function onQualityDiagnostic(diagnostic) {
             root.jobsController.handleQualityDiagnostic(diagnostic);
         }

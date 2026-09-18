@@ -67,9 +67,9 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **160 métodos IPC** roteados e **57 eventos**, em **36 domínios de protocolo**;
-**825 testes Rust e 45 harnesses QML aprovados em 2026-09-18**.
+**827 testes Rust e 45 harnesses QML aprovados em 2026-09-18**.
 O resultado desta retomada está no roadmap 40 §7.50
-(em 2026-09-12 à noite a simulação saiu: −11 métodos, −85 testes, −7 harnesses). Protocolo `0.122.0`. O gate tem **23 verificações** — a vigésima (2026-09-11)
+(em 2026-09-12 à noite a simulação saiu: −11 métodos, −85 testes, −7 harnesses). Protocolo `0.122.0`. O gate tem **24 verificações** (a vigésima quarta, 2026-09-18, é a fiação IPC de ponta a ponta) — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do
@@ -380,11 +380,12 @@ isso é demorado. O que isso significa em concreto:
 - **não há atalho de ecossistema.** Sem host de extensões, cada vertical é
   código Rust deste repositório, com testes deste repositório e passando pelos
   mesmos gates. Uma IDE com host de plugins terceiriza esse custo; esta o paga.
-- **credencial de banco ainda não tem onde morar.** O `.kinein/` guarda
-  rascunho e toolchain em TEXTO PURO; senha ali seria regressão de segurança,
-  não feature. O projeto tem rede contra perda de dado (`seguranca/23`) e
-  **não tem cofre**. Registrado em `roadmaps/35` §7.3: nenhuma conexão a banco
-  entra antes dessa pergunta ter dono.
+- **credencial de banco: a pergunta ganhou dono em 2026-09-04** (escrito
+  antes disso: "ainda não tem onde morar"). A resposta é `seguranca/40`: a
+  IDE guarda o PERFIL e **nunca a senha** — ela vem do ambiente, é pedida na
+  sessão, ou o servidor não a exige; o `.kinein/` continua texto puro e o
+  projeto continua sem cofre, de propósito. O mesmo vale para o token do
+  Grafana e para o alvo SSH (por chave). Registrado em `roadmaps/35` §7.3.
 - **a referência funcional de banco não é o IntelliJ Community** — ele não tem
   Database Tools (é Ultimate). Verificado em 2026-07-17. O idioma visual do
   Community continua sendo a referência; o cliente de banco a auditar é o DBeaver.

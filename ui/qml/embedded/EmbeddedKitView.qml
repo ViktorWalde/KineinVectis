@@ -27,6 +27,34 @@ Column {
         font.bold: true
     }
 
+    // O seletor de preset (pente-fino 2026-09-18): os configure presets do
+    // CMakePresets/CMakeUserPresets do projeto; escolher um torna o kit
+    // dele o ativo, e o configure automatico passa a usa-lo. So' aparece
+    // quando o projeto tem presets.
+    Flow {
+        width: parent.width
+        spacing: Theme.spacingXSmall
+        visible: root.toolchainController && root.toolchainController.presets.length > 0
+
+        KvToggleChip {
+            labelText: qsTr("padrão")
+            active: root.toolchainController ? root.toolchainController.preset === "" : true
+            onToggled: root.toolchainController.selectPreset("")
+        }
+
+        Repeater {
+            model: root.toolchainController ? root.toolchainController.presets : []
+
+            delegate: KvToggleChip {
+                required property var modelData
+
+                labelText: modelData.displayName ? modelData.displayName : modelData.name
+                active: root.toolchainController ? root.toolchainController.preset === modelData.name : false
+                onToggled: root.toolchainController.selectPreset(modelData.name)
+            }
+        }
+    }
+
     EmbeddedKitField {
         id: campoChip
 

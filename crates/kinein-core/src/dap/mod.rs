@@ -11,6 +11,7 @@
 //! - [`target`]: resolucao do binario "Automatico" (espelho do run).
 
 mod adapter;
+pub mod gdb_pick;
 mod parse;
 mod reader;
 mod server;
@@ -30,6 +31,12 @@ use crate::lsp::EventSender;
 
 pub use adapter::{AdapterChoice, DEBUGPY};
 pub use target::{DebugTarget, resolve_program};
+
+/// O adaptador padrao quando o kit nao escolheu nenhum.
+#[must_use]
+pub(crate) const fn default_adapter() -> &'static str {
+    adapter::DEFAULT_ADAPTER
+}
 
 /// Error produced by the debug manager.
 #[derive(Debug)]

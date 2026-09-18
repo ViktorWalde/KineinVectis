@@ -50,6 +50,11 @@ bool CoreClient::dispatchCmakeResult(const QString& method, const QJsonObject& r
                                  result.value(QStringLiteral("preset")).toString());
         return true;
     }
+    if (method == QStringLiteral("cmake.presets.list")) {
+        emit cmakePresetsResolved(
+            result.value(QStringLiteral("presets")).toArray().toVariantList());
+        return true;
+    }
     if (method == QStringLiteral("cmake.configure")) {
         appendLog(QStringLiteral("job aceito (cmake.configure): %1")
                       .arg(result.value(QStringLiteral("jobId")).toString()));

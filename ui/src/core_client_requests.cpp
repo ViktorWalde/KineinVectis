@@ -355,6 +355,11 @@ void CoreClient::cmakeStatus()
     sendRequest(QStringLiteral("cmake.status"), QJsonObject{});
 }
 
+void CoreClient::cmakePresetsList()
+{
+    sendRequest(QStringLiteral("cmake.presets.list"), QJsonObject{});
+}
+
 void CoreClient::cancelBuild()
 {
     cancelJob(m_buildJobId);

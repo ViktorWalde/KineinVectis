@@ -22,6 +22,10 @@ Item {
                                                     targetTriple, chip, presetToolchainFile);
         }
 
+        function onCmakePresetsResolved(presets) {
+            root.toolchainController.handlePresets(presets);
+        }
+
         function onToolchainAdvice(sysrootHint, rustTargets, rustTargetsKnown) {
             root.toolchainController.handleAdvice(sysrootHint, rustTargets, rustTargetsKnown);
         }

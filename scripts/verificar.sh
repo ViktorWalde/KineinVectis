@@ -82,6 +82,9 @@ bash scripts/verificar-qml-duplicacao.sh
 passo "scripts/verificar-qml-alcance.sh (componente entregue que nenhuma tela abre)"
 bash scripts/verificar-qml-alcance.sh
 
+passo "scripts/verificar-fiacao-ipc.sh (metodo/evento/sinal que ninguem consome)"
+bash scripts/verificar-fiacao-ipc.sh
+
 passo "scripts/verificar-exercitacao.sh (o core contra ferramenta real)"
 bash scripts/verificar-exercitacao.sh
 

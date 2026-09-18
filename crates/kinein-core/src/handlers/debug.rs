@@ -118,6 +118,13 @@ impl Core {
         // Python never inherits a native kit's remoteTarget/debugServer/chip.
         // TCP attach uses the adapter that debugpy.listen already started.
         let native_path = toolchain.program_for(kinein_protocol::ToolchainRole::DebugAdapter);
+        // O GDB certo para o ELF (pente-fino 2026-09-18): o `gdb` nativo nao
+        // fala ARM/Xtensa/RISC-V e o attach ficaria mudo; um GDB de alvo
+        // detectado entra no lugar, ou a recusa diz o pacote.
+        let (gdb_id, gdb_path) = match self.gdb_for_target(&toolchain, &target) {
+            Ok(picked) => picked,
+            Err(error) => return debug_error_response(request_id, &error),
+        };
         let choice = if python {
             dap::AdapterChoice {
                 id: Some(dap::DEBUGPY),
@@ -125,14 +132,12 @@ impl Core {
                 ..dap::AdapterChoice::default()
             }
         } else {
-            dap::AdapterChoice {
-                id: toolchain.chosen(kinein_protocol::ToolchainRole::DebugAdapter),
-                path: native_path.as_deref(),
-                chip: toolchain.chip(),
-                remote_target: toolchain.remote_target(),
-                debug_server: toolchain.debug_server(),
-                svd_file: toolchain.svd_file(),
-            }
+            native_choice(
+                &toolchain,
+                gdb_id.as_deref(),
+                gdb_path.as_deref(),
+                native_path.as_deref(),
+            )
         };
         let Some(manager) = self.debug.as_mut() else {
             return debug_unavailable_response(request_id, "debug.start");
@@ -146,6 +151,43 @@ impl Core {
                 }),
             ),
             Err(error) => debug_error_response(request_id, &error),
+        }
+    }
+
+    /// `Some((id, path))` quando o `gdb` nu deve dar lugar a um GDB de alvo
+    /// (o ELF e' de outra maquina); `None` = a escolha do kit fica. A troca e'
+    /// dita no console de debug; a falta e' erro com o pacote.
+    fn gdb_for_target(
+        &self,
+        toolchain: &crate::toolchain::Toolchain,
+        target: &dap::DebugTarget,
+    ) -> Result<(Option<String>, Option<String>), dap::DebugError> {
+        let Some(program) = target.program_path() else {
+            return Ok((None, None));
+        };
+        let efetivo = toolchain
+            .effective_program(kinein_protocol::ToolchainRole::DebugAdapter)
+            .map(|(id, _)| id.to_owned())
+            .or_else(|| {
+                toolchain
+                    .chosen(kinein_protocol::ToolchainRole::DebugAdapter)
+                    .map(str::to_owned)
+            })
+            .unwrap_or_else(|| dap::default_adapter().to_owned());
+        match dap::gdb_pick::pick_gdb(&efetivo, program, &self.detected_tools()) {
+            dap::gdb_pick::GdbPick::Keep => Ok((None, None)),
+            dap::gdb_pick::GdbPick::Replace { id, path, reason } => {
+                if let Some(events) = self.events.as_ref() {
+                    drop(events.send(kinein_protocol::JsonRpcRequest::notification(
+                        "event.debug.output",
+                        Some(json!({ "category": "console", "line": reason })),
+                    )));
+                }
+                Ok((Some(id), Some(path)))
+            }
+            dap::gdb_pick::GdbPick::Unavailable { message } => {
+                Err(dap::DebugError::NoTarget { message })
+            }
         }
     }
 
@@ -434,6 +476,23 @@ fn e_um_alvo_python(target: &dap::DebugTarget) -> bool {
             .extension()
             .and_then(std::ffi::OsStr::to_str)
             .is_some_and(|ext| ext.eq_ignore_ascii_case("py")),
+    }
+}
+
+/// A escolha nativa: o GDB de alvo (quando o ELF pediu) vence o do kit.
+fn native_choice<'a>(
+    toolchain: &'a crate::toolchain::Toolchain,
+    gdb_id: Option<&'a str>,
+    gdb_path: Option<&'a str>,
+    native_path: Option<&'a Path>,
+) -> dap::AdapterChoice<'a> {
+    dap::AdapterChoice {
+        id: gdb_id.or_else(|| toolchain.chosen(kinein_protocol::ToolchainRole::DebugAdapter)),
+        path: gdb_path.map(Path::new).or(native_path),
+        chip: toolchain.chip(),
+        remote_target: toolchain.remote_target(),
+        debug_server: toolchain.debug_server(),
+        svd_file: toolchain.svd_file(),
     }
 }
 

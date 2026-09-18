@@ -205,6 +205,12 @@ bool CoreClient::handleRunnerNotification(const QString& method, const QJsonObje
         return true;
     }
     if (method == QStringLiteral("event.quality.output")) {
+        // Ate' 2026-09-18 era DESCARTADO aqui (40 §8.1): a saida bruta da
+        // analise — o clang-tidy dizendo que nao achou a CDB, o ruff sem
+        // config — nao chegava a tela nenhuma. Vai para o painel de Build,
+        // como a do build.
+        emit qualityOutput(params.value(QStringLiteral("line")).toString(),
+                           params.value(QStringLiteral("stream")).toString());
         return true;
     }
     if (method == QStringLiteral("event.quality.finished")) {

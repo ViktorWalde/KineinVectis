@@ -623,9 +623,13 @@ install(
     FILES "${CMAKE_SOURCE_DIR}/packaging/appimage/io.github.viktorwalde.KineinVectis.appdata.xml"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/metainfo"
 )
+# RENAME: a fonte e' `DocsPublic/manual.md` e o pacote promete `MANUAL.md`
+# (o smoke `testar-appimage.sh` exige esse nome). Sem o RENAME o AppImage
+# entregava `manual.md` e o gate reprovava o artefato — pente-fino 2026-09-18.
 install(
     FILES "${KINEIN_MANUAL_FILE}"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/kinein-vectis"
+    RENAME MANUAL.md
 )
 install(
     FILES

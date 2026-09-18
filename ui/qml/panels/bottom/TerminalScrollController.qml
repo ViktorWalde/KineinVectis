@@ -22,7 +22,6 @@ Item {
     property string renderedSessionId: ""
 
     signal scrollRequested(int offset)
-    signal sessionChanged(string id)
 
     visible: false
 
@@ -41,7 +40,6 @@ Item {
         pendingScrollOffset = -1;
         awaitingScrollOffset = -1;
         renderedSessionId = id;
-        sessionChanged(id);
     }
 
     function handleRender(render) {

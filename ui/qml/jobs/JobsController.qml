@@ -266,6 +266,11 @@ Item {
                 + qsTr("  falhou: %1  ignorado: %2").arg(failed).arg(ignored);
     }
 
+    // A analise escreve no MESMO painel do build: e' o mesmo tipo de saida
+    // (o comando e as linhas da ferramenta) — pente-fino 2026-09-18.
+    function handleQualityStarted(command) { appendBuildLine("$ " + command); }
+    function handleQualityOutput(line) { appendBuildLine(line); }
+
     function handleQualityDiagnostic(diagnostic) {
         appendDiagnostic(diagnostic, "warning", "quality");
     }

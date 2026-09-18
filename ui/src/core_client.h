@@ -221,6 +221,8 @@ public:
     // Cobertura dos testes (coverage.*, 0.119.0): o job que escreve o LCOV e as linhas de
     // um arquivo do ultimo relatorio, para a calha do editor.
     Q_INVOKABLE void coverageRun();
+    // Os configure presets do projeto (cmake.presets.list): o seletor de preset do kit.
+    Q_INVOKABLE void cmakePresetsList();
     Q_INVOKABLE void coverageLines(const QString& file);
     // O alvo Linux por SSH (remote.*, 0.120.0): catalogo sem segredo, sonda e deploy como
     // jobs, e a linha `ssh …` para configuracao de execucao/kit. Nunca senha.
@@ -335,6 +337,7 @@ signals:
     void toolsListed(const QVariantList& tools);
     void formatCapabilitiesListed(const QVariantList& formatters);
     void runCapabilitiesListed(const QVariantList& runnable, const QVariantList& debuggable);
+    void cmakePresetsResolved(const QVariantList& presets);
     void cmakeStatusResolved(bool configured, bool hasCompileCommands, bool cdbStale,
                              const QString& cdbStaleBecause, const QString& preset);
     void cmakeConfigureFinished(bool success);
@@ -471,6 +474,7 @@ signals:
     void testsDiscovered(const QVariantMap& outcome);
     void analyzingChanged();
     void qualityStarted(const QString& command);
+    void qualityOutput(const QString& line, const QString& stream);
     void qualityDiagnostic(const QVariantMap& diagnostic);
     void qualityFinished(bool success, int exitCode, int diagnostics);
     void lspDiagnostics(const QString& path, const QVariantList& diagnostics);

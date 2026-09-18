@@ -682,7 +682,10 @@ preset padrão do projeto — o primeiro do seu `CMakeUserPresets.json`, senão
 do `CMakePresets.json` — e a aba IDE diz qual (`preset de: kit |
 CMakeUserPresets.json | CMakePresets.json`). O `targetTriple` do kit vai ao
 `cargo build` e ao rust-analyzer (que reinicia ao trocar de kit); o
-compilador cross vai ao clangd.
+compilador cross vai ao clangd. **Escolher o preset** (desde 2026-09-18):
+num projeto com `CMakePresets.json`, o painel de Embarcados → Alvo do kit
+mostra os presets como chips (`padrão`, `dev`, `release`…); clicar num
+torna o kit dele o ativo, e o próximo configure usa esse preset.
 
 **Projeto só com Makefile.** É reconhecido como "Make": Build roda `bear --
 make` quando o `bear` está instalado — é ele que escreve o
@@ -800,6 +803,14 @@ sysroot e SDK    "Ler sysroot" diz o que uma pasta contem (headers,
                  "Importar kit" le um SDK Yocto, uma arvore Buildroot ou uma
                  pasta de toolchain e PROPOE o kit — voce aplica
 ```
+
+**O GDB certo para o ELF** (desde 2026-09-18): o `gdb` do Ubuntu não fala
+ARM, Xtensa nem RISC-V — com ele escolhido e um ELF de placa, o attach
+ficava mudo. Agora a IDE lê a arquitetura do ELF antes de subir o
+depurador: se é de outra máquina, entra o GDB de alvo instalado
+(`arm-none-eabi-gdb`, `gdb-multiarch`, `xtensa-esp-elf-gdb`,
+`riscv32-esp-elf-gdb`) e o console de debug diz qual; sem nenhum, a
+recusa diz o pacote (`apt install gdb-multiarch`).
 
 Depurar um alvo embarcado é o mesmo `[Debug]` de sempre: o kit diz o
 servidor (OpenOCD, QEMU ou `probe-rs`) e a IDE o sobe e conecta o `gdb -i dap`.

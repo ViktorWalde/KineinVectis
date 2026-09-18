@@ -39,7 +39,6 @@ Item {
     signal historyRefreshRequested()
     signal commitActivated(string sha, string shortSha, string summary)
     signal branchMenuRequested()
-    signal branchMenuDismissRequested()
     signal branchCheckoutRequested(string branch)
     signal branchCreateRequested(string name)
     signal remoteRequested(string operation)

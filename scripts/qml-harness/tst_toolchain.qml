@@ -142,6 +142,18 @@ Item {
         if (controller.summary() !== "nenhuma detectada") failures += 32768;
         if (root.consultas !== 2) failures += 65536;
 
+        // O seletor de preset (pente-fino 2026-09-18): a lista chega do
+        // cmake.presets.list; escolher um pede o kit dele (toolchain.get);
+        // trocar de workspace esquece a lista.
+        controller.handlePresets([{ name: "dev", displayName: "Dev Local" }, { name: "release" }]);
+        if (controller.presets.length !== 2) failures += 131072;
+        controller.selectPreset("dev");
+        if (root.consultas !== 3) failures += 262144;
+        controller.selectPreset("");
+        if (root.consultas !== 4) failures += 524288;
+        controller.workspaceRoot = "/tmp/terceiro";
+        if (controller.presets.length !== 0) failures += 1048576;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }
