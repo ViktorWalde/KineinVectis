@@ -34,8 +34,24 @@ Item {
     property var queryColumns: []
     property var queryRows: []
     property string queryStatus: ""
+    // A descoberta e a criacao (0.124.0).
+    property var candidates: []
+    property bool discovering: false
+    property string discoverHint: ""
+    property bool canServe: false
+    property string containerEngine: ""
+    property bool creating: false
+    property string createCommand: ""
+    property string createMessage: ""
+    property bool createOk: false
+    property bool createVisible: false
 
     signal profileSelected(string name)
+    signal candidateSelected(int index)
+    signal discoverRequested()
+    signal createSqliteRequested(string name, string path)
+    signal createServerRequested(string engine, string name, int port)
+    signal createDatabaseRequested(string name)
     signal newRequested()
     signal fieldEdited(string field, var value)
     signal passwordEdited(string text)
@@ -78,9 +94,15 @@ Item {
 
         profiles: root.profiles
         selectedName: root.selectedName
+        candidates: root.candidates
+        discovering: root.discovering
+        discoverHint: root.discoverHint
 
         onProfileSelected: name => root.profileSelected(name)
+        onCandidateSelected: index => root.candidateSelected(index)
+        onDiscoverRequested: root.discoverRequested()
         onNewRequested: root.newRequested()
+        onCreateRequested: root.createVisible = !root.createVisible
     }
 
     Flickable {
@@ -101,6 +123,23 @@ Item {
 
             width: rolagem.width
             spacing: Theme.spacingSmall
+
+            DataSourceCreateBox {
+                width: parent.width
+                visible: root.createVisible
+                canServe: root.canServe
+                containerEngine: root.containerEngine
+                creating: root.creating
+                command: root.createCommand
+                message: root.createMessage
+                ok: root.createOk
+                serverProfileNamed: root.selectedName !== "" && root.draft !== null && root.draft.engine === "postgres"
+                serverProfileName: root.selectedName
+                onCreateSqliteRequested: (name, path) => root.createSqliteRequested(name, path)
+                onCreateServerRequested: (engine, name, port) => root.createServerRequested(engine, name, port)
+                onCreateDatabaseRequested: name => root.createDatabaseRequested(name)
+                onCloseRequested: root.createVisible = false
+            }
 
             DataSourceVerdict {
                 width: parent.width

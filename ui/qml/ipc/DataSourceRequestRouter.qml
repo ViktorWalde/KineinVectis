@@ -38,4 +38,23 @@ Item {
             root.coreClient.dataSourceQuery(name, password, sql, 0, confirmWrite);
         }
     }
+
+    // A descoberta e a criacao (0.124.0) sao do controller FILHO `discovery`
+    // — ligar ao pai seria a Connections sem sinal que o gate binario-abre
+    // passou a reprovar (40 §7.63).
+    Connections {
+        target: root.dataSourceController ? root.dataSourceController.discovery : null
+
+        function onDiscoverRequested() {
+            root.coreClient.dataSourceDiscover();
+        }
+
+        function onCreateSqliteRequested(name, path) {
+            root.coreClient.dataSourceCreateSqlite(name, path);
+        }
+
+        function onCreateServerRequested(engine, name, port) {
+            root.coreClient.dataSourceCreateServer(engine, name, port);
+        }
+    }
 }

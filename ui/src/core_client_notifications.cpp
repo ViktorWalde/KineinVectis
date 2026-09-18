@@ -44,6 +44,12 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
                               params.value(QStringLiteral("secretRequired")).toBool(false));
         return;
     }
+    if (method == QStringLiteral("event.datasource.created")) {
+        emit dataSourceCreated(params.value(QStringLiteral("success")).toBool(false),
+                               params.value(QStringLiteral("profile")).toObject().toVariantMap(),
+                               params.value(QStringLiteral("message")).toString());
+        return;
+    }
     if (method == QStringLiteral("event.grafana.probed")) {
         // Um mapa inteiro em vez de oito parametros: o resultado da sonda e'
         // composto, e desmontar aqui so' obrigaria a UI a remontar.

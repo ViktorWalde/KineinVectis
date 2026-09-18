@@ -30,6 +30,7 @@ impl Core {
             "datasource.remove" => Some(self.datasource_remove_response(request_id, params)),
             "datasource.test" => Some(self.datasource_test_response(request_id, params)),
             "datasource.query" => Some(self.datasource_query_response(request_id, params)),
+            "datasource.create" => Some(self.datasource_create_response(request_id, params)),
             "datasource.introspect" => {
                 Some(self.datasource_introspect_response(request_id, params))
             }

@@ -27,6 +27,8 @@
 //! - [`store`]: `.kinein/datasources.json`, com `schemaVersion`.
 //! - [`secret`]: o tipo que nao se imprime, e a politica de onde buscar.
 //! - [`connection`]: o unico lugar que fala com um servidor de banco.
+//! - [`discover`]: o que responde nesta maquina (`0.124.0`).
+//! - [`create`]: um banco onde nao havia (`0.124.0`).
 //! - [`introspect`]: o que existe DENTRO do banco.
 //! - [`mongo`]: o unico lugar que fala com um `MongoDB`.
 //! - [`mongo_infer`]: dobrar documentos num mapa de campos, sem rede.
@@ -38,6 +40,8 @@
 //! dois dizem "banco" e nao tem nada a ver um com o outro.
 
 pub mod connection;
+pub mod create;
+pub mod discover;
 pub mod introspect;
 pub mod mongo;
 pub mod mongo_infer;

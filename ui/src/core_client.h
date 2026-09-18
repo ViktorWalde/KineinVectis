@@ -170,6 +170,13 @@ public:
     Q_INVOKABLE void dataSourceRemove(const QString& name);
     Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password);
     Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password);
+    /// O que responde nesta maquina (0.124.0): servidores no loopback,
+    /// containers de banco, arquivos SQLite do projeto.
+    Q_INVOKABLE void dataSourceDiscover();
+    /// Cria um SQLite vazio no projeto (`path` vazio = data/<name>.sqlite).
+    Q_INVOKABLE void dataSourceCreateSqlite(const QString& name, const QString& path);
+    /// Sobe um PostgreSQL/MongoDB em container no loopback (job; baixa imagem).
+    Q_INVOKABLE void dataSourceCreateServer(const QString& engine, const QString& name, int port);
     // Executar o que o autor escreveu (datasource.query, 0.121.0): job; `confirmWrite`
     // e' o reconhecimento de que a instrucao escreve (o core recusa sem ele).
     Q_INVOKABLE void dataSourceQuery(const QString& name, const QString& password,
@@ -355,6 +362,15 @@ signals:
                            const QVariantList& tools);
     void dataSourceListResolved(const QVariantList& profiles);
     void dataSourceTestAccepted(const QString& jobId);
+    /// `candidates` com o perfil pronto de cada um; `hint` quando vazio.
+    void dataSourceDiscovered(const QVariantList& candidates, const QString& containerEngine,
+                              const QString& hint);
+    /// `profile` preenchido = criado na hora (SQLite); `jobId` = servidor
+    /// subindo, com o `command` exato para a tela mostrar.
+    void dataSourceCreateResolved(const QVariantMap& profile, const QString& jobId,
+                                  const QString& command);
+    /// Desfecho do servidor em container: perfil salvo ou o motivo.
+    void dataSourceCreated(bool success, const QVariantMap& profile, const QString& message);
     void dataSourceQueried(const QVariantMap& outcome);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.

@@ -38,8 +38,21 @@ Item {
             root.dataSourceController.handleQueried(outcome);
         }
 
+        function onDataSourceDiscovered(candidates, containerEngine, hint) {
+            root.dataSourceController.discovery.handleDiscovered(candidates, containerEngine, hint);
+        }
+
+        function onDataSourceCreateResolved(profile, jobId, command) {
+            root.dataSourceController.discovery.handleCreateResolved(profile, jobId, command);
+        }
+
+        function onDataSourceCreated(success, profile, message) {
+            root.dataSourceController.discovery.handleCreated(success, profile, message);
+        }
+
         function onRequestFailed(method, message, code) {
             root.dataSourceController.handleFailed(method, message, code);
+            root.dataSourceController.discovery.handleFailed(method, message);
         }
     }
 }

@@ -79,9 +79,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.123.0
-testes      829 Rust aprovados; 51 harnesses QML (medicao de 2026-09-18, §7.65)
-metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
+protocolo   0.124.0
+testes      840 Rust aprovados; 52 harnesses QML (medicao de 2026-09-18, §7.66)
+metodos     162 IPC roteados, 58 eventos (datasource.discover/create e event.datasource.created
+            em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
             serial.access, serial.files, python.stubs, debug.scopes,
@@ -683,8 +684,8 @@ lista de pendências parecer maior ou menor do que é.
 #### 4.2.1 O que está pronto (medido em 2026-09-18, noite)
 
 ```text
-protocolo    0.123.0 · 160 metodos IPC · 57 eventos · 36 dominios (todos no arquitetura/03)
-testes       829 Rust · 51 harnesses QML · 24 verificacoes no gate, todas verdes
+protocolo    0.124.0 · 162 metodos IPC · 58 eventos · 36 dominios (todos no arquitetura/03)
+testes       840 Rust · 52 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -4367,3 +4368,53 @@ mudança em Rust; o C++ mudou só na §7.64 (Clang-Tidy limpo lá).
 **Com a F8, a Etapa 2 fecha o que o 43 §4 desenhou (F0–F8).** O que
 resta dela é o fechamento da §4.2.2 (dívidas pequenas + o que só o autor
 mede), e a Etapa 3 é decisão do autor (§4.2.5).
+
+### 7.66 Banco — descobrir e criar; o chip que acendia dois — 2026-09-18 (noite), protocolo 0.124.0
+
+**O teste do autor** (primeiro uso real da IDE depois da Etapa 2) disse
+três coisas do banco: clicar em MongoDB acendia também PostgreSQL; não dá
+para criar um banco nem descobrir um; "a maior parte aparentou ser apenas
+visual". A primeira era uma linha (`active: !arquivo` é verdadeiro para o
+Mongo — um motor, um chip). As outras duas são esta fatia.
+
+**Contrato (0.124.0, `arquitetura/03`).** `datasource.discover` — o que
+responde NESTA máquina, medido e nunca deduzido: o socket do PostgreSQL
+de distro (`/var/run/postgresql/.s.PGSQL.5432`) ou a porta 5432/27017 no
+loopback (200 ms), os containers com imagem de banco pelo motor que o
+painel de Containers já usa (parados também, ditos como parados; a porta
+publicada vira a do perfil), os `.sqlite/.db` do workspace com o cabeçalho
+real (`.kinein/kinein.db`, que é da IDE, fica de fora). Cada achado traz o
+perfil pronto. Roda adiado (`defer_work`): bater em porta não segura o
+laço. `datasource.create`: `sqliteFile` cria `data/<nome>.sqlite` com
+cabeçalho (recusa se existe) e salva o perfil; `containerServer` sobe
+`postgres:16`/`mongo:7` em `127.0.0.1:<porta>` como job `High` — o comando
+volta na resposta e aparece na tela antes e depois; `trust` só no loopback,
+porque a IDE não guarda senha. Banco DENTRO de um PostgreSQL: `CREATE
+DATABASE` pelo `datasource.query` confirmado; ao responder, o perfil clonado
+com o banco novo é salvo (`<perfil>-<banco>`). MongoDB cria na primeira
+escrita — a tela diz, não finge.
+
+**Tela.** A coluna da esquerda virou "Nesta máquina" (descobertos, com ↻)
++ "Salvos"; abrir o painel descobre, como Containers. Clicar num descoberto
+põe o perfil no formulário (salvar é do autor). **Novo banco** abre a caixa
+(`DataSourceCreateBox`): SQLite (arquivo) · PostgreSQL em container ·
+MongoDB em container · Banco no servidor, com o comando exato em mono
+antes do clique. `DataSourceDiscoveryController` é filho do
+`DataSourceController` (dono próprio; a `Connections` do roteador aponta
+para o filho — a lição da §7.63).
+
+**Provado:** 4 testes de despacho (`tests/datasource_discover.rs`: um
+`podman` falso que lista um container de PostgreSQL parado com porta
+publicada e registra o `run`; SQLite real no workspace e lixo em `target/`;
+criar/recusar/rever no discover; o comando pinado e o perfil salvo no
+evento; sem motor → `TOOL_NOT_FOUND`) + 8 unitários; harness
+`tst_datasource_discovery` (adotar sem salvar, SQLite pronto, job com
+comando, `CREATE DATABASE` → clone salvo, falhas no dono certo). Foto 14:
+o painel num workspace com `data/app.sqlite` — descoberto com 8 KB.
+
+**Medido:** 840 testes Rust (+11); 52 harnesses (+1); 162 métodos, 58
+eventos; gates verdes (duplicação: `engine===sqlite` virou "sem host é
+arquivo"; `defaultPort` por mapa). **Não feito, dito:** PostgreSQL/Mongo
+reais não subiram no gate (o `run` é o falso — o real é um clique do autor
+com Podman, e baixa ~150 MB); abas/histórico/exportar da consulta seguem
+como resto; `container.status` de 2,4 s idem.

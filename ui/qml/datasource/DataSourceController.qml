@@ -68,6 +68,16 @@ Item {
     signal introspectRequested(string name, string password)
     signal queryRequested(string name, string password, string sql, bool confirmWrite)
 
+    // O que responde nesta maquina e a criacao (0.124.0): dono proprio,
+    // filho deste. Os pedidos saem dele; a adocao/criacao volta para ca'.
+    readonly property alias discovery: discoveryController
+
+    DataSourceDiscoveryController {
+        id: discoveryController
+
+        onProfileReady: function(profile, saved) { root.adoptProfile(profile, saved); }
+    }
+
     visible: false
 
     onWorkspaceRootChanged: {
@@ -105,6 +115,38 @@ Item {
         if (profiles.length === 0) {
             listRequested();
         }
+        // Toda abertura PERGUNTA de novo, como o painel de containers: um
+        // servidor sobe e cai fora da IDE.
+        discoveryController.discover();
+    }
+
+    // Um perfil vindo da descoberta (nao salvo: vai ao formulario para o
+    // autor confirmar) ou da criacao (ja' salvo: a lista e' relida e ele
+    // fica selecionado).
+    function adoptProfile(profile, saved) {
+        draft = cloneProfile(profile);
+        selectedName = saved ? profile.name : "";
+        clearSecret();
+        clearVerdict();
+        if (saved) {
+            listRequested();
+        }
+    }
+
+    // Um banco DENTRO do PostgreSQL do perfil em edicao: `CREATE DATABASE`
+    // pelo caminho de escrita confirmada que ja' existe; quando o core
+    // responder, o perfil clonado com o banco novo e' salvo (handleQueried).
+    property string pendingDatabase: ""
+
+    function createDatabaseOnServer(name) {
+        const limpo = name.trim();
+        if (draft.name === "" || draft.engine !== "postgres" || !/^[A-Za-z0-9_]+$/.test(limpo)) {
+            errorText = qsTr("um banco novo pede um perfil PostgreSQL salvo e um nome só de letras, dígitos e _");
+            return;
+        }
+        pendingDatabase = limpo;
+        sql = "CREATE DATABASE \"" + limpo + "\"";
+        runQuery(true);
     }
 
     function close() {
@@ -271,6 +313,17 @@ Item {
 
     function handleQueried(outcome) {
         querying = false;
+        if (outcome.success === true && pendingDatabase !== "") {
+            const novo = cloneProfile(draft);
+            novo.name = draft.name + "-" + pendingDatabase;
+            novo.database = pendingDatabase;
+            pendingDatabase = "";
+            draft = novo;
+            selectedName = "";
+            saveRequested(novo);
+        } else if (outcome.success !== true) {
+            pendingDatabase = "";
+        }
         if (outcome.success === true) {
             queryColumns = outcome.columns || [];
             queryRows = outcome.rows || [];
@@ -290,6 +343,10 @@ Item {
     }
 
     function handleFailed(method, message, code) {
+        // Descoberta e criacao tem dono proprio (discovery.handleFailed).
+        if (method === "datasource.discover" || method === "datasource.create") {
+            return;
+        }
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;

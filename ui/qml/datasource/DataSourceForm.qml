@@ -60,7 +60,9 @@ Item {
 
             KvToggleChip {
                 labelText: qsTr("PostgreSQL / TimescaleDB")
-                active: !root.arquivo
+                // Era `!arquivo`: com o Mongo escolhido acendiam DOIS chips
+                // (visto pelo autor em 2026-09-18). Um motor, um chip.
+                active: !root.arquivo && !root.mongo
                 onToggled: root.fieldEdited("engine", "postgres")
             }
 

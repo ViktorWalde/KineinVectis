@@ -202,6 +202,9 @@ impl Core {
                 json!({ "commands": commands::command_descriptors() }),
             )),
             "tools.detect" => outcome_for(self.tools_detect_response(request_id)),
+            "datasource.discover" => {
+                outcome_for(self.datasource_discover_response(request_id, params))
+            }
             "tools.status" => RequestOutcome::Continue(self.tools_status_response(request_id)),
             "environment.scan" => {
                 RequestOutcome::Continue(self.environment_scan_response(request_id))

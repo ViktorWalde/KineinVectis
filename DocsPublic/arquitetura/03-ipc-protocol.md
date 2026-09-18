@@ -1,5 +1,24 @@
 # 03 — Protocolo IPC
 
+> **0.124.0 (2026-09-18, noite) — o banco descobre e cria (pedido do autor no
+> teste da Etapa 2: "a maior parte aparentou ser só visual").**
+> `datasource.discover {}` → `{ candidates: [{ kind: localServer | container
+> | file, label, detail, running, profile }], containerEngine?, hint? }` —
+> o que responde NESTA máquina, medido: o socket do PostgreSQL de distro
+> ou a porta 5432/27017 no loopback (200 ms), os containers com imagem de
+> banco (parados também, ditos como parados; a porta publicada é a do
+> perfil), os `.db/.sqlite/.sqlite3` do workspace com o cabeçalho `SQLite
+> format 3` (até 4 níveis, sem `.git/.kinein/target/build/…`). Roda adiado
+> (`defer_work`). `datasource.create { kind: sqliteFile, name, path? }` →
+> `{ profile }` (arquivo criado e perfil salvo; recusa se existe) e
+> `{ kind: containerServer, engine: postgres | mongo, name, port }` →
+> `{ jobId, command }` (job `JobRisk::High`: `podman|docker run -d --name
+> kinein-<name> -p 127.0.0.1:<port>:<interna> [-e POSTGRES_HOST_AUTH_METHOD=
+> trust] <imagem pinada>`; ao subir, o perfil é salvo e vem em
+> `event.datasource.created { jobId, success, profile?, message }`). Sem
+> motor: `TOOL_NOT_FOUND`. Criar um banco DENTRO de um PostgreSQL é
+> `CREATE DATABASE` pelo `datasource.query` confirmado — a tela compõe.
+>
 > **0.123.0 (2026-09-18) — Etapa 2, F3: `SettingsValues.autoSave`** (ausente
 > = ligado; decisão do autor). O editor salva o buffer sujo sozinho — 2 s
 > de pausa, troca de aba, perda de foco — pelo caminho do Ctrl+S; o rascunho
@@ -2797,8 +2816,11 @@ container.status
 core.ping
 core.shutdown
 
+datasource.create
+datasource.discover
 datasource.introspect
 datasource.list
+datasource.query
 datasource.remove
 datasource.save
 datasource.test
@@ -2967,7 +2989,9 @@ event.build.started                 <- so por format!
 event.cmake.finished
 event.cmake.started
 
+event.datasource.created
 event.datasource.introspected
+event.datasource.queried
 event.datasource.tested
 
 event.debug.continued
@@ -3844,9 +3868,12 @@ que fazer com a detecção fica na UI (`27-modulos-por-dominio.md` §6).
 
 ## `datasource.*` — os perfis de banco, e a senha que não mora em disco
 
-Domínio da etapa 26/27 (`../roadmaps/35` §9). Cinco métodos, dois eventos.
+Domínio da etapa 26/27 (`../roadmaps/35` §9). Oito métodos, quatro eventos.
 
 ```text
+datasource.discover   {}                      -> { candidates: [DataSourceCandidate], containerEngine?, hint? }  (0.124.0, adiado)
+datasource.create     { kind: sqliteFile, name, path? } -> { profile }                                       (0.124.0)
+                      { kind: containerServer, engine, name, port } -> { jobId, command }  + event.datasource.created
 datasource.list       {}                      -> { profiles: [DataSourceProfile] }
 datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult
@@ -3862,7 +3889,16 @@ event.datasource.tested        { jobId, ok, message, ... }
 event.datasource.introspected  { jobId, schemas | collections, ... }
 event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
                                  rowCount, affected?, truncated, elapsedMs, message?, secretRequired }
+event.datasource.created       { jobId, success, profile?, message }                          (0.124.0)
 ```
+
+**Descobrir e criar (`0.124.0`).** `DataSourceCandidate { kind: localServer
+| container | file, label, detail, running, profile }` — cada achado traz o
+perfil que o alcança, pronto para o formulário (adotar não salva; salvar é
+do autor). O `create` em container usa autenticação `trust` **só no
+loopback** (`-p 127.0.0.1:…`): a IDE não guarda senha, e a porta não sai da
+máquina; imagens pinadas (`postgres:16`, `mongo:7`). O MongoDB cria banco na
+primeira escrita — não há `create` para ele além do servidor.
 
 **Executar o que o autor escreveu (`0.121.0`, `../roadmaps/35` §7.4).** A
 primeira palavra da instrução (comentários iniciais pulados) diz se é

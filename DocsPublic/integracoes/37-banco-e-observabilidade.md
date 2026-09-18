@@ -184,3 +184,25 @@ mas **o código deste repositório continua síncrono**, que é o desenho do cor
 (Escrito em 2026-09-04, quando a árvore não tinha `rustls` nem `openssl`; o
 `mongodb` trouxe o `rustls` no mesmo dia, e o `postgres` o usa desde 0.121.0
 — ver acima.)
+
+## 6. Descobrir e criar (2026-09-18, `0.124.0`)
+
+O primeiro teste do autor na IDE polida disse que o painel de banco "parecia
+só visual": perfil, testar, consultar — e nada para achar um banco nem para
+criar um. O que entrou (`roadmaps/40` §7.66; contrato em `arquitetura/03`):
+
+- **Descobrir** (`datasource.discover`, ao abrir o painel e no ↻): o socket
+  do PostgreSQL de distro, as portas 5432/27017 no loopback, os containers
+  com imagem `postgres`/`timescale`/`mongo` (pelo mesmo motor do painel de
+  Containers; parados aparecem como parados), os `.sqlite/.db` do projeto
+  com o cabeçalho `SQLite format 3`. Cada achado traz o perfil pronto;
+  clicar põe no formulário — salvar continua sendo do autor.
+- **Novo banco** (`datasource.create`): um arquivo SQLite em
+  `data/<nome>.sqlite`; um PostgreSQL ou MongoDB **em container no
+  loopback** (o comando `podman|docker run …` exato aparece antes do clique
+  e na saída do job; imagens pinadas `postgres:16`/`mongo:7`; autenticação
+  `trust` só em `127.0.0.1`, porque a IDE não guarda senha); um banco
+  dentro do PostgreSQL do perfil em edição (`CREATE DATABASE`, pela escrita
+  confirmada — o perfil clonado com o banco novo é salvo).
+- **O que se prova sem servidor:** SQLite real e um `podman` falso no gate.
+  O `run` real baixa ~150 MB e é um clique do autor.

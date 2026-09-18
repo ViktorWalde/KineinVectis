@@ -35,8 +35,22 @@ KvPanelFrame {
         queryColumns: root.controller ? root.controller.queryColumns : []
         queryRows: root.controller ? root.controller.queryRows : []
         queryStatus: root.controller ? root.controller.queryStatus : ""
+        candidates: root.controller ? root.controller.discovery.candidates : []
+        discovering: root.controller ? root.controller.discovery.discovering : false
+        discoverHint: root.controller ? root.controller.discovery.hint : ""
+        canServe: root.controller ? root.controller.discovery.canServe : false
+        containerEngine: root.controller ? root.controller.discovery.containerEngine : ""
+        creating: root.controller ? root.controller.discovery.creating : false
+        createCommand: root.controller ? root.controller.discovery.createCommand : ""
+        createMessage: root.controller ? root.controller.discovery.createMessage : ""
+        createOk: root.controller ? root.controller.discovery.createOk : false
 
         onProfileSelected: name => root.controller.select(name)
+        onCandidateSelected: index => root.controller.discovery.adopt(index)
+        onDiscoverRequested: root.controller.discovery.discover()
+        onCreateSqliteRequested: (name, path) => root.controller.discovery.createSqlite(name, path)
+        onCreateServerRequested: (engine, name, port) => root.controller.discovery.createServer(engine, name, port)
+        onCreateDatabaseRequested: name => root.controller.createDatabaseOnServer(name)
         onNewRequested: root.controller.startNew()
         onFieldEdited: (field, value) => root.controller.editDraft(field, value)
         onPasswordEdited: text => root.controller.sessionPassword = text
