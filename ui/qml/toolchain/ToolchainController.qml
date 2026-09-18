@@ -75,13 +75,8 @@ Item {
     // kit dele o ativo (toolchain.get { preset }); vazio = o kit padrao.
     property var presets: []
 
-    function handlePresets(list) {
-        presets = list === undefined || list === null ? [] : list;
-    }
-
-    function selectPreset(name) {
-        getRequested(name === undefined || name === null ? "" : name);
-    }
+    function handlePresets(list) { presets = list === undefined || list === null ? [] : list; }
+    function selectPreset(name) { getRequested(name === undefined || name === null ? "" : name); }
 
     onWorkspaceRootChanged: {
         selections = []; candidates = []; errorText = ""; menuVisible = false;
@@ -347,9 +342,21 @@ Item {
     // Antes mostrava SO' o que o autor tinha fixado, e num projeto novo dizia
     // apenas "automática" — verdadeiro e inutil. Agora diz o que vai ser
     // USADO, marcando quando a escolha nao foi dele.
-    function summary() {
+    // Os papeis que a barra de status resume seguem os SISTEMAS do projeto
+    // (F6-b, 2026-09-18): um projeto so' de Cargo dizia "Clang++ · Ninja".
+    function summaryRoles(buildSystems) {
+        const systems = buildSystems === undefined || buildSystems === null ? [] : buildSystems;
+        const roles = [];
+        if (systems.indexOf("cargo") >= 0) roles.push("cargo");
+        if (systems.indexOf("cmake") >= 0 || systems.indexOf("make") >= 0 || systems.length === 0) {
+            roles.push("cxxCompiler", "generator");
+        }
+        return roles;
+    }
+
+    function summary(buildSystems) {
         const partes = [];
-        const papeis = ["cxxCompiler", "generator"];
+        const papeis = summaryRoles(buildSystems);
         let algumAutomatico = false;
         for (let index = 0; index < papeis.length; ++index) {
             const selection = selectionFor(papeis[index]);

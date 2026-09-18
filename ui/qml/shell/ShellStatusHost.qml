@@ -23,7 +23,7 @@ WorkspaceStatusBar {
     coreStatus: coreClient.status
     toolchainVisible: coreClient.workspaceRoot !== ""
                       && coreClient.workspaceBuildSystems.length > 0
-    toolchainSummary: toolchainController.summary()
+    toolchainSummary: toolchainController.summary(coreClient.workspaceBuildSystems)
     indexSummary: indexController !== null ? indexController.summary() : ""
     contextSummary: indexController !== null ? indexController.contextSummary() : ""
     contextDetail: indexController !== null ? indexController.contextDetail() : ""

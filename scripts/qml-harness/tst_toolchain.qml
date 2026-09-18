@@ -46,7 +46,7 @@ Item {
             { role: "generator", id: "Ninja", effectiveId: "Ninja",
               resolvedPath: "/usr/bin/ninja", automatic: false },
             { role: "cmake", automatic: true },
-            { role: "cargo", automatic: true }
+            { role: "cargo", effectiveId: "cargo", resolvedPath: "/usr/bin/cargo", automatic: true }
         ];
     }
 
@@ -55,7 +55,8 @@ Item {
             { role: "cxxCompiler", id: "clangxx", label: "Clang++", path: "/usr/bin/clang++" },
             { role: "cxxCompiler", id: "gxx", label: "G++", path: "/usr/bin/g++" },
             { role: "cCompiler", id: "clang", label: "Clang", path: "/usr/bin/clang" },
-            { role: "generator", id: "Ninja", label: "Ninja", path: "/usr/bin/ninja" }
+            { role: "generator", id: "Ninja", label: "Ninja", path: "/usr/bin/ninja" },
+            { role: "cargo", id: "cargo", label: "Cargo", path: "/usr/bin/cargo" }
         ];
     }
 
@@ -69,8 +70,11 @@ Item {
 
         controller.handleResolved(root.selecoes(), root.candidatos());
 
-        // O resumo mostra o que vai ser USADO — C++ e gerador.
+        // O resumo mostra o que vai ser USADO — C++ e gerador; e segue os
+        // sistemas do projeto (F6-b): so' Cargo nao fala de C++.
         if (controller.summary() !== "G++ · Ninja") failures += 4;
+        if (controller.summary(["cargo"]) !== "Cargo · automática") failures += 4;
+        if (controller.summary(["cargo", "cmake"]) !== "Cargo · G++ · Ninja · automática") failures += 4;
         if (controller.labelFor("cxxCompiler") !== "G++") failures += 8;
         // ESCOLHA AUTOMATICA NAO E' MAIS "nao sei": ela diz QUAL, e diz que
         // foi o core que escolheu. Sem isso o autor nao tem como discordar de

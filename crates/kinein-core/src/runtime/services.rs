@@ -29,6 +29,27 @@ impl Core {
         self.deferred = Some(responses);
     }
 
+    /// Responde um pedido cujo trabalho e' LONGO e nao precisa do `Core`
+    /// (F6-b): com o canal ligado, `work` roda numa thread e a resposta vai
+    /// por ele; sem o canal, inline. `work` recebe o id de volta.
+    pub(crate) fn defer_work<F>(
+        &self,
+        request_id: Option<serde_json::Value>,
+        work: F,
+    ) -> kinein_protocol::JsonRpcResponse
+    where
+        F: FnOnce(Option<serde_json::Value>) -> kinein_protocol::JsonRpcResponse + Send + 'static,
+    {
+        match self.deferred.as_ref() {
+            Some(sender) => {
+                let sender = sender.clone();
+                std::thread::spawn(move || drop(sender.send(work(request_id))));
+                crate::rpc::deferred_marker()
+            }
+            None => work(request_id),
+        }
+    }
+
     /// Responde uma consulta LSP: pronta na hora, adiada numa thread (com o
     /// canal ligado) ou esperada inline (sem ele — testes). A thread faz o
     /// que o laco fazia: espera ate' o timeout, traduz erro/resultado.

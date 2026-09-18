@@ -201,7 +201,7 @@ impl Core {
                 request_id,
                 json!({ "commands": commands::command_descriptors() }),
             )),
-            "tools.detect" => RequestOutcome::Continue(self.tools_detect_response(request_id)),
+            "tools.detect" => outcome_for(self.tools_detect_response(request_id)),
             "tools.status" => RequestOutcome::Continue(self.tools_status_response(request_id)),
             "environment.scan" => {
                 RequestOutcome::Continue(self.environment_scan_response(request_id))
@@ -239,14 +239,7 @@ impl Core {
             "test.discover" => {
                 RequestOutcome::Continue(self.test_discover_response(request_id, params))
             }
-            method => {
-                let response = self.service_request_response(method, request_id, params);
-                if rpc::is_deferred(&response) {
-                    RequestOutcome::Deferred(response)
-                } else {
-                    RequestOutcome::Continue(response)
-                }
-            }
+            method => outcome_for(self.service_request_response(method, request_id, params)),
         }
     }
 
@@ -441,6 +434,16 @@ impl Core {
 }
 
 pub use outcome::{CoreError, RequestOutcome};
+
+/// `Continue`, ou `Deferred` quando o handler devolveu o marcador de
+/// resposta adiada (Etapa 2 F6).
+fn outcome_for(response: JsonRpcResponse) -> RequestOutcome {
+    if rpc::is_deferred(&response) {
+        RequestOutcome::Deferred(response)
+    } else {
+        RequestOutcome::Continue(response)
+    }
+}
 
 #[cfg(test)]
 mod tests;

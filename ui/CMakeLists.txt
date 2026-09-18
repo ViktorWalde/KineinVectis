@@ -28,7 +28,7 @@ set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
 set_source_files_properties(qml/workspace/LspStatusController.qml PROPERTIES QT_RESOURCE_ALIAS LspStatusController.qml)
 set_source_files_properties(qml/jobs/ActiveJobController.qml PROPERTIES QT_RESOURCE_ALIAS ActiveJobController.qml)
-set_source_files_properties(qml/jobs/ProblemNextStep.qml PROPERTIES QT_RESOURCE_ALIAS ProblemNextStep.qml)
+set_source_files_properties(qml/jobs/ProblemRules.qml PROPERTIES QT_RESOURCE_ALIAS ProblemRules.qml)
 set_source_files_properties(qml/shell/StatusBarJobWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarJobWidget.qml)
 set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
 set_source_files_properties(qml/shell/HeaderGitWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderGitWidget.qml)
@@ -301,7 +301,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/TopHeaderBar.qml
         qml/workspace/LspStatusController.qml
         qml/jobs/ActiveJobController.qml
-        qml/jobs/ProblemNextStep.qml
+        qml/jobs/ProblemRules.qml
         qml/shell/StatusBarJobWidget.qml
         qml/shell/HeaderRunWidget.qml
         qml/shell/HeaderGitWidget.qml

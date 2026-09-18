@@ -35,8 +35,8 @@ ListView {
     // F5: o proximo passo do problema (codeActions | health, com o alvo).
     signal nextStepRequested(string kind, string target, string file, int line, int column)
 
-    // A regra do proximo passo mora fora da tela (ProblemNextStep).
-    ProblemNextStep {
+    // A regra do proximo passo mora fora da tela (ProblemRules).
+    ProblemRules {
         id: nextStep
     }
 

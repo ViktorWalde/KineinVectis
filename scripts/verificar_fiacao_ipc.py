@@ -67,7 +67,7 @@ def metodos_do_core() -> set[str]:
         RAIZ / "crates/kinein-core/src/handlers.rs",
     ]
     braco = re.compile(
-        r'((?:"[a-zA-Z.]+"\s*\|\s*)*"[a-zA-Z.]+")\s*=>\s*(?:Some\(|\{|RequestOutcome|self\.|Self::)'
+        r'((?:"[a-zA-Z.]+"\s*\|\s*)*"[a-zA-Z.]+")\s*=>\s*(?:Some\(|\{|RequestOutcome|outcome_for\(|self\.|Self::)'
     )
     for p in fontes:
         # Um braco pode quebrar linha entre os `|` (debug.continue | … | debug.stop).

@@ -148,6 +148,41 @@ impl ToolDetector {
         KNOWN_TOOLS.iter().map(|spec| self.detect(spec)).collect()
     }
 
+    /// Só a PRESENÇA de cada ferramenta (o caminho), sem o probe de versão
+    /// (Etapa 2 F6-b, 2026-09-18). Medido: `detect_all` custa ~1,4 s (62
+    /// processos `--version`) e era chamado SINCRONO no `workspace.open` de
+    /// um registro vazio — o laço parado antes de a primeira tela aparecer.
+    /// Este e' o que a toolchain precisa para escolher; a versão vem do scan
+    /// de ambiente, que roda como job e substitui o registro.
+    #[must_use]
+    pub fn detect_all_presence(&self) -> Vec<ToolInfo> {
+        KNOWN_TOOLS
+            .iter()
+            .map(|spec| {
+                self.find_tool_binary(spec).map_or_else(
+                    || ToolInfo {
+                        id: spec.id.to_owned(),
+                        display_name: spec.display_name.to_owned(),
+                        status: ToolStatus::Missing,
+                        path: None,
+                        version: None,
+                        suggested_install: Self::suggested_install_for(spec),
+                        message: Some(format!("{} nao foi encontrado no PATH.", spec.display_name)),
+                    },
+                    |path| ToolInfo {
+                        id: spec.id.to_owned(),
+                        display_name: spec.display_name.to_owned(),
+                        status: ToolStatus::Detected,
+                        path: Some(path.display().to_string()),
+                        version: None,
+                        suggested_install: None,
+                        message: None,
+                    },
+                )
+            })
+            .collect()
+    }
+
     /// Detects a single tool and reports its structured status.
     ///
     /// A suggestion only appears for tools whose install command is canonical

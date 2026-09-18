@@ -26,11 +26,18 @@ use crate::tools::KNOWN_TOOLS;
 use crate::{Core, jobs};
 
 impl Core {
-    /// `tools.detect`: varre o PATH agora e publica o resultado no registro.
+    /// `tools.detect`: varre o PATH (com o probe de versão) e publica o
+    /// resultado no registro. ADIADO (Etapa 2 F6-b): sao 62 processos e ~1,4 s
+    /// — a UI o pede na abertura, e o laco ficava parado esse tempo antes de
+    /// qualquer outra resposta. Sem o canal (testes), inline como antes.
     pub(crate) fn tools_detect_response(&self, request_id: Option<Value>) -> JsonRpcResponse {
-        let tools = self.detector.detect_all();
-        set_tool_registry(&self.tool_registry, tools.clone());
-        JsonRpcResponse::success(request_id, json!(ToolsDetectResult { tools }))
+        let detector = self.detector.clone();
+        let registry = Arc::clone(&self.tool_registry);
+        self.defer_work(request_id, move |request_id| {
+            let tools = detector.detect_all();
+            set_tool_registry(&registry, tools.clone());
+            JsonRpcResponse::success(request_id, json!(ToolsDetectResult { tools }))
+        })
     }
 
     /// `tools.status`: devolve o último resultado conhecido, varrendo só se
@@ -57,7 +64,9 @@ impl Core {
     /// do usuario com o que existe na maquina.
     pub(crate) fn detected_tools(&self) -> Vec<ToolInfo> {
         self.tool_registry_snapshot().unwrap_or_else(|| {
-            let tools = self.detector.detect_all();
+            // Registro vazio: so' a presenca, sem os 62 `--version` (F6-b);
+            // o scan/detect substitui pelo resultado completo quando chegar.
+            let tools = self.detector.detect_all_presence();
             set_tool_registry(&self.tool_registry, tools.clone());
             tools
         })

@@ -188,7 +188,13 @@ Item {
         }
     }
 
+    // As regras puras dos problemas (proximo passo; repeticao build/LSP).
+    ProblemRules { id: problemRules }
+
     function appendDiagnostic(diagnostic, defaultSeverity, source) {
+        if (problemRules.isDuplicate(problemItemsModel, diagnostic)) {
+            return;
+        }
         problemItemsModel.append({
             severity: diagnostic.severity !== undefined
                       ? diagnostic.severity : defaultSeverity,
@@ -201,13 +207,8 @@ Item {
         });
     }
 
-    function handleBuildStarted(command) {
-        appendBuildLine("$ " + command);
-    }
-
-    function handleBuildOutput(line) {
-        appendBuildLine(line);
-    }
+    function handleBuildStarted(command) { appendBuildLine("$ " + command); }
+    function handleBuildOutput(line) { appendBuildLine(line); }
 
     function handleBuildDiagnostic(diagnostic) {
         appendDiagnostic(diagnostic, "error", "build");
@@ -229,13 +230,8 @@ Item {
         }
     }
 
-    function handleTestStarted(command) {
-        appendTestLine("$ " + command);
-    }
-
-    function handleTestOutput(line) {
-        appendTestLine(line);
-    }
+    function handleTestStarted(command) { appendTestLine("$ " + command); }
+    function handleTestOutput(line) { appendTestLine(line); }
 
     // O caso que rodou e' o mesmo id que a arvore listou (pytest: o node id;
     // cargo/ctest: o nome): o status vai para a linha da arvore; o que a

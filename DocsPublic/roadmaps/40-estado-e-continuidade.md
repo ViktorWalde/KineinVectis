@@ -3963,3 +3963,42 @@ Clang++ · Ninja" num projeto Rust.
 (as derivações `kind === "directory"` e `source === "lsp"` ganharam dono),
 arquitetura, fiação IPC verdes. **Não feito, dito:** a contagem de testes
 na aba (Testes 12/14) e a deduplicação build/LSP.
+
+### 7.62 Etapa 2, F6-b — a resposta ao gesto, medida — 2026-09-18
+
+A tabela que a F6 pedia, medida pelo core (build debug, esta máquina) e
+pela IDE headless (`KINEIN_PERF`, `KINEIN_STARTUP_COMMANDS`):
+
+```text
+gesto / pedido                              antes            depois         como
+workspace.open (qualquer projeto)           1,4 s            25 ms          detected_tools() de registro vazio
+                                                                            fazia 62 `--version` SINCRONOS;
+                                                                            agora so' presenca (path), e o
+                                                                            scan/detect traz a versao
+tools.detect (a UI pede na abertura)        1,4 s PARANDO    adiado, 1,6 s  defer_work: thread + canal;
+                                            tudo atras dele  sem parar nada os pedidos seguintes nao esperam
+syntaxTree.update (470 linhas, a cada       0,9 s            0,05 s         LineIndex (F6-a)
+  pausa de digitacao)
+lsp.* durante o rust-analyzer subir         ate' 20 s mudo   <= 300 ms      respostas adiadas + handshake
+                                                                            em thread (F6-a)
+explorer segue o arquivo (cadeia fs.list)   30 s             6 s            consequencia dos dois acima
+primeiro frame com workspace por argumento  —                718-817 ms     3 amostras, offscreen, debug
+```
+
+O que passa de 100 ms ainda: o primeiro frame (build debug; o release abre
+em ~300 ms) e a primeira sincronia com o servidor de linguagem — que agora
+acontece sem parar o resto.
+
+**Também na fatia, vindos da foto 09:** o mesmo erro aparecia duas vezes
+em Problems (o do `cargo build` e o do rust-analyzer) — `ProblemRules.
+isDuplicate` (mesmo arquivo e linha, uma mensagem começando com a outra)
+descarta o segundo; e a barra de status dizia "toolchain: Clang++ · Ninja"
+num projeto só de Cargo — `ToolchainController.summary(buildSystems)` resume
+os papéis dos sistemas que o projeto TEM ("Cargo · automática"; num híbrido,
+"Cargo · G++ · Ninja"). Foto 10. `ProblemNextStep` virou `ProblemRules`
+(as duas regras puras dos problemas).
+
+**Medido:** 829 testes Rust; 50 harnesses (`tst_problem_rules`,
+`tst_toolchain` estendidos); gates QML, arquitetura, fiação IPC verdes.
+**Não feito, dito:** medir clique → feedback com um usuário real (offscreen
+não clica); o release-hardened não foi remedido nesta fatia.

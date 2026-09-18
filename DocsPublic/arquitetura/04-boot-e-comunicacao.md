@@ -221,7 +221,11 @@ também corre numa thread: o loop espera no máximo 300 ms por ele (um servidor
 rápido fica pronto na mesma chamada); depois, pedidos ao servidor que ainda
 sobe voltam na hora com "ainda está subindo" e a UI reenvia o buffer ao ver
 `event.lsp.status { running }`. Rename, code actions e `workspaceEdit`
-continuam síncronos (precisam do resultado no loop; são raros).
+continuam síncronos (precisam do resultado no loop; são raros). O mesmo
+mecanismo (`Core::defer_work`) responde `tools.detect` fora do loop: os 62
+`--version` custam ~1,4 s e a UI o pede na abertura — antes, tudo esperava
+atrás dele; e o `workspace.open` de um registro vazio usa só a presença das
+ferramentas (25 ms), a versão vem do scan.
 
 **O que NÃO é garantido:** a ordem entre uma resposta e os eventos que a
 operação dispara. Um `terminal.input` responde imediatamente e os `render`
