@@ -67,7 +67,7 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **160 métodos IPC** roteados e **57 eventos**, em **36 domínios de protocolo**;
-**827 testes Rust e 49 harnesses QML aprovados em 2026-09-18**.
+**829 testes Rust e 49 harnesses QML aprovados em 2026-09-18**.
 O resultado desta retomada está no roadmap 40 §7.50
 (em 2026-09-12 à noite a simulação saiu: −11 métodos, −85 testes, −7 harnesses). Protocolo `0.123.0`. O gate tem **24 verificações** (a vigésima quarta, 2026-09-18, é a fiação IPC de ponta a ponta) — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são

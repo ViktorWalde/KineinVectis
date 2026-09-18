@@ -216,3 +216,24 @@ pub(crate) fn parse_lsp_position_params(
         .map_err(|error| Box::new(fs_error_response(request_id.cloned(), &error)))?;
     Ok((path, parsed))
 }
+
+/// O MARCADOR de resposta adiada (Etapa 2 F6): o handler ja' despachou a
+/// espera para uma thread e a resposta real vai pelo canal de
+/// [`crate::Core::enable_deferred_responses`]. `id` nulo e este `result`
+/// nunca chegam ao stdout — o laco reconhece e nao escreve.
+#[must_use]
+pub(crate) fn deferred_marker() -> JsonRpcResponse {
+    JsonRpcResponse::success(None, json!({ "kineinDeferred": true }))
+}
+
+/// `true` para o marcador de [`deferred_marker`].
+#[must_use]
+pub(crate) fn is_deferred(response: &JsonRpcResponse) -> bool {
+    response.id.is_none()
+        && response
+            .result
+            .as_ref()
+            .and_then(|r| r.get("kineinDeferred"))
+            .and_then(Value::as_bool)
+            .unwrap_or(false)
+}

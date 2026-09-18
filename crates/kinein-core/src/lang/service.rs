@@ -13,7 +13,7 @@ use tree_sitter::{InputEdit, Parser, Query, QueryCursor, StreamingIterator, Tree
 use super::{
     folding::folding_ranges,
     outline::outline,
-    positions::{byte_point, utf16_position},
+    positions::{LineIndex, byte_point},
     registry::{LanguageId, LanguageRegistry, RegistryError},
 };
 
@@ -113,10 +113,11 @@ impl SyntaxTreeService {
         let tree = parse_incremental(&language, language_id, content, previous.as_ref())?;
 
         let runtime = self.registry.runtime(language_id)?;
-        let highlights = highlights(&tree, runtime.highlights(), content);
+        let lines = LineIndex::new(content);
+        let highlights = highlights(&tree, runtime.highlights(), content, &lines);
         let folding_ranges = folding_ranges(&tree);
-        let outline = outline(&tree, runtime.tags(), content);
-        let locals = locals(&tree, runtime.locals(), content);
+        let outline = outline(&tree, runtime.tags(), content, &lines);
+        let locals = locals(&tree, runtime.locals(), content, &lines);
         let has_errors = tree.root_node().has_error();
 
         self.clock = self.clock.saturating_add(1);
@@ -228,7 +229,7 @@ fn contiguous_edit(old: &str, new: &str) -> InputEdit {
     }
 }
 
-fn highlights(tree: &Tree, query: &Query, source: &str) -> Vec<SyntaxHighlight> {
+fn highlights(tree: &Tree, query: &Query, source: &str, lines: &LineIndex) -> Vec<SyntaxHighlight> {
     let mut result = Vec::new();
     let mut cursor = QueryCursor::new();
     let mut captures = cursor.captures(query, tree.root_node(), source.as_bytes());
@@ -244,7 +245,7 @@ fn highlights(tree: &Tree, query: &Query, source: &str) -> Vec<SyntaxHighlight> 
         let Some(scope) = names.get(capture.index as usize) else {
             continue;
         };
-        push_highlight_segments(&mut result, source, capture.node.byte_range(), scope);
+        push_highlight_segments(&mut result, source, lines, capture.node.byte_range(), scope);
     }
     result
 }
@@ -252,6 +253,7 @@ fn highlights(tree: &Tree, query: &Query, source: &str) -> Vec<SyntaxHighlight> 
 fn push_highlight_segments(
     target: &mut Vec<SyntaxHighlight>,
     source: &str,
+    lines: &LineIndex,
     range: std::ops::Range<usize>,
     scope: &str,
 ) {
@@ -260,8 +262,8 @@ fn push_highlight_segments(
         let segment_end = source[start..range.end]
             .find('\n')
             .map_or(range.end, |offset| start + offset);
-        let (line, column) = utf16_position(source, start);
-        let (_, end_column) = utf16_position(source, segment_end);
+        let (line, column) = lines.utf16_position(source, start);
+        let (_, end_column) = lines.utf16_position(source, segment_end);
         if end_column > column {
             target.push(SyntaxHighlight {
                 line,
@@ -274,7 +276,7 @@ fn push_highlight_segments(
     }
 }
 
-fn locals(tree: &Tree, query: &Query, source: &str) -> Vec<SyntaxLocal> {
+fn locals(tree: &Tree, query: &Query, source: &str, lines: &LineIndex) -> Vec<SyntaxLocal> {
     let mut result = Vec::new();
     let mut seen = std::collections::BTreeSet::new();
     let mut cursor = QueryCursor::new();
@@ -300,8 +302,8 @@ fn locals(tree: &Tree, query: &Query, source: &str) -> Vec<SyntaxLocal> {
         if !seen.insert((capture_name.to_string(), range.start, range.end)) {
             continue;
         }
-        let (line, column) = utf16_position(source, range.start);
-        let (end_line, end_column) = utf16_position(source, range.end);
+        let (line, column) = lines.utf16_position(source, range.start);
+        let (end_line, end_column) = lines.utf16_position(source, range.end);
         let name = if kind == SyntaxLocalKind::Scope {
             None
         } else {

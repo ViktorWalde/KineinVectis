@@ -29,6 +29,7 @@ mod index_context;
 mod jobs;
 mod lsp;
 mod lsp_companion;
+mod lsp_deferred;
 mod lsp_server;
 mod lsp_stderr;
 mod project;

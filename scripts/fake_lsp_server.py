@@ -58,7 +58,9 @@ Uso (sempre indireto, pelo `Core::use_language_server_command` e pelo
                                        [--stderr N] [--morre]
 """
 import json
+import os
 import sys
+import time
 
 LOG = sys.argv[1] if len(sys.argv) > 1 else None
 ARGS = sys.argv[2:]
@@ -137,6 +139,11 @@ def resultado(metodo, params):
             },
         }
     if metodo == "textDocument/hover":
+        # FAKE_LSP_HOVER_DELAY_MS (Etapa 2 F6): um hover LENTO, para provar
+        # que o laco do core nao para esperando por ele.
+        atraso = os.environ.get("FAKE_LSP_HOVER_DELAY_MS", "")
+        if atraso:
+            time.sleep(int(atraso) / 1000.0)
         return {"contents": {"kind": "markdown", "value": "fake hover"}}
     if metodo == "textDocument/codeAction" and PUBLICA:
         uri = params.get("textDocument", {}).get("uri", "")

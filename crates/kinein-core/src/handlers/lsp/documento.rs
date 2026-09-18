@@ -3,13 +3,12 @@
 
 use std::path::Path;
 
-use kinein_protocol::{
-    FsWriteParams, JsonRpcResponse, LspSemanticTokensParams, LspSemanticTokensResult,
-};
+use kinein_protocol::{FsWriteParams, JsonRpcResponse, LspSemanticTokensParams};
 use serde_json::{Value, json};
 
 use crate::Core;
 use crate::fsops;
+use crate::lsp::LspQuery;
 use crate::rpc::{
     fs_error_response, lsp_error_response, lsp_unavailable_response, no_workspace_response,
     parse_params,
@@ -65,15 +64,12 @@ impl Core {
                 let Some(lsp) = self.lsp.as_mut() else {
                     return lsp_unavailable_response(request_id, "lsp.semanticTokens");
                 };
-                match lsp.semantic_tokens(&path, &parsed.content) {
-                    Ok(tokens) => JsonRpcResponse::success(
-                        request_id,
-                        json!(LspSemanticTokensResult {
-                            path: path.to_string_lossy().into_owned(),
-                            version: parsed.version,
-                            tokens,
-                        }),
-                    ),
+                // Adiada (Etapa 2 F6): era o pedido que mais parava o laco.
+                let query = LspQuery::SemanticTokens {
+                    version: parsed.version,
+                };
+                match lsp.begin_query(query, &path, &parsed.content) {
+                    Ok(begun) => self.defer_lsp(request_id, begun),
                     Err(error) => lsp_error_response(request_id, &error),
                 }
             }

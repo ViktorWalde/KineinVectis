@@ -5,7 +5,7 @@ use std::{cmp::Reverse, collections::BTreeSet};
 use kinein_protocol::SyntaxOutlineItem;
 use tree_sitter::{Query, QueryCursor, StreamingIterator, Tree};
 
-use super::positions::utf16_position;
+use super::positions::LineIndex;
 
 #[derive(Debug)]
 struct RawOutline {
@@ -23,7 +23,12 @@ struct ArenaOutline {
 }
 
 /// Executes a grammar's official tags query and nests declarations by range.
-pub(super) fn outline(tree: &Tree, query: &Query, source: &str) -> Vec<SyntaxOutlineItem> {
+pub(super) fn outline(
+    tree: &Tree,
+    query: &Query,
+    source: &str,
+    lines: &LineIndex,
+) -> Vec<SyntaxOutlineItem> {
     let mut cursor = QueryCursor::new();
     let mut matches = cursor.matches(query, tree.root_node(), source.as_bytes());
     let capture_names = query.capture_names();
@@ -61,7 +66,7 @@ pub(super) fn outline(tree: &Tree, query: &Query, source: &str) -> Vec<SyntaxOut
         if !seen.insert(key) {
             continue;
         }
-        let (line, column) = utf16_position(source, name_node.start_byte());
+        let (line, column) = lines.utf16_position(source, name_node.start_byte());
         raw.push(RawOutline {
             item: SyntaxOutlineItem {
                 name: display_name.to_owned(),
@@ -149,7 +154,8 @@ mod tests {
             return;
         };
 
-        let items = outline(&tree, &query, source);
+        let lines = crate::lang::positions::LineIndex::new(source);
+        let items = outline(&tree, &query, source, &lines);
         assert!(
             items
                 .iter()

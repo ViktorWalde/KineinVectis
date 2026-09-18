@@ -60,7 +60,7 @@ pub struct LspManager {
     pub(super) active_code_actions: Option<ActiveCodeActions>,
     /// Timeouts consecutivos por servidor; zera em qualquer resposta. A
     /// politica que o consome vive em [`super::session`].
-    pub(super) timeout_streak: HashMap<&'static str, u32>,
+    pub(super) timeout_streak: Arc<Mutex<HashMap<&'static str, u32>>>,
     /// Qual executavel roda cada linguagem. Ver [`ServerRegistry`].
     pub(super) registry: ServerRegistry,
     /// Os diagnosticos de cada servidor por arquivo, fundidos num evento so'
@@ -79,7 +79,7 @@ impl LspManager {
             root: None,
             next_request_id: 2,
             active_code_actions: None,
-            timeout_streak: HashMap::new(),
+            timeout_streak: Arc::new(Mutex::new(HashMap::new())),
             registry: ServerRegistry::default(),
             merged_diagnostics: Arc::new(Mutex::new(HashMap::new())),
         }
@@ -341,7 +341,7 @@ impl LspManager {
         let legend = self
             .servers
             .get(language)
-            .map(|handle| handle.semantic_token_types.clone())
+            .map(super::server::ServerHandle::legend)
             .unwrap_or_default();
         if legend.is_empty() {
             return Ok(Vec::new());

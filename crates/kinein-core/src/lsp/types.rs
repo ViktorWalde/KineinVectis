@@ -83,6 +83,12 @@ pub enum LspError {
         /// Mensagem tecnica.
         message: String,
     },
+    /// O servidor ainda esta' no handshake (Etapa 2 F6): o pedido nao foi
+    /// enviado; a UI re-sincroniza quando o `status` virar `running`.
+    Starting {
+        /// Chave do servidor.
+        key: &'static str,
+    },
     /// O servidor nao respondeu a tempo.
     Timeout {
         /// Metodo LSP solicitado.
@@ -127,6 +133,12 @@ impl fmt::Display for LspError {
             }
             Self::ServerFailed { command, message } => {
                 write!(formatter, "falha ao iniciar {command}: {message}")
+            }
+            Self::Starting { key } => {
+                write!(
+                    formatter,
+                    "o servidor {key} ainda esta subindo — tente em instantes"
+                )
             }
             Self::Timeout { method } => {
                 write!(formatter, "{method} nao respondeu a tempo")

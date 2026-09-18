@@ -8,7 +8,7 @@ mod services;
 
 use std::io::{self, BufRead, Write};
 
-use kinein_protocol::JsonRpcRequest;
+use kinein_protocol::{JsonRpcRequest, JsonRpcResponse};
 
 use crate::{Core, CoreError};
 
@@ -63,6 +63,8 @@ pub(crate) enum LoopEvent {
     Line(String),
     /// An async notification (LSP diagnostics, server status) must be sent.
     Notification(Box<JsonRpcRequest>),
+    /// Uma resposta ADIADA chegou (consulta LSP esperada fora do laco).
+    Response(Box<JsonRpcResponse>),
     /// Stdin closed; the core should stop.
     Eof,
 }
@@ -92,7 +94,7 @@ pub fn run_stdio() -> Result<(), CoreError> {
     });
 
     let (lsp_events, lsp_inbox) = std::sync::mpsc::channel::<JsonRpcRequest>();
-    let notification_events = events;
+    let notification_events = events.clone();
     std::thread::spawn(move || {
         for notification in lsp_inbox {
             if notification_events
@@ -104,8 +106,24 @@ pub fn run_stdio() -> Result<(), CoreError> {
         }
     });
 
+    // As respostas adiadas (Etapa 2 F6) entram no MESMO laco, pela mesma
+    // ponte: serializadas no stdout junto com as outras linhas.
+    let (response_events, response_inbox) = std::sync::mpsc::channel::<JsonRpcResponse>();
+    let response_loop = events;
+    std::thread::spawn(move || {
+        for response in response_inbox {
+            if response_loop
+                .send(LoopEvent::Response(Box::new(response)))
+                .is_err()
+            {
+                return;
+            }
+        }
+    });
+
     let mut core = Core::new();
     core.enable_lsp(lsp_events);
+    core.enable_deferred_responses(response_events);
     // Persistencia local (rascunhos + historico global) so no processo real: o
     // caminho do estado global entra por aqui e nunca e' deduzido la dentro.
     core.enable_persistence(crate::settings::global_dir());
@@ -139,7 +157,9 @@ where
                 }
 
                 let outcome = core.handle_json_line(&line);
-                write_json_line(writer, outcome.response())?;
+                if !outcome.is_deferred() {
+                    write_json_line(writer, outcome.response())?;
+                }
 
                 if outcome.should_shutdown() {
                     break;
@@ -148,6 +168,9 @@ where
             LoopEvent::Notification(notification) => {
                 core.observe_notification(notification.as_ref());
                 write_json_line(writer, notification.as_ref())?;
+            }
+            LoopEvent::Response(response) => {
+                write_json_line(writer, response.as_ref())?;
             }
             LoopEvent::Eof => break,
         }

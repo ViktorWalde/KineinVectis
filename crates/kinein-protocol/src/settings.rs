@@ -76,6 +76,10 @@ pub struct SettingsValues {
 }
 
 /// Settings after merging defaults, global and workspace scopes.
+// Sao FLAGS de preferencia, nao um estado com combinacoes proibidas: o
+// `autoSave` (0.123.0) foi o quarto, e um enum para "quatro botoes" seria
+// cerimonia.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EffectiveSettings {

@@ -176,7 +176,12 @@ densas (22 px, ícone 16, recuo 12), as pastas da máquina (`.git`, `build`,
 inteiro até 4 s por pedido LSP (15 s no `initialize`) — com o
 rust-analyzer indexando este repositório, nenhum `fs.list` foi respondido
 por ~20 s e a IDE inteira ficou parada; a F6 começa por isso (resposta
-assíncrona do LSP), não por medir cliques.
+assíncrona do LSP), não por medir cliques. **F6-a FEITA** (`40` §7.60): as
+consultas LSP respondem fora do laço, o handshake corre numa thread, e o
+`syntaxTree.update` caiu de ~0,9 s para 0,05 s (o `utf16_position` varria o
+arquivo inteiro a cada realce). A cadeia do explorer que levava 30 s
+completa em 6 s; nada fica mais de ~300 ms sem resposta durante a
+abertura de um arquivo Rust neste repositório.
 
 
 

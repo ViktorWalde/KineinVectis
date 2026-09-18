@@ -10,9 +10,12 @@ use std::{
     io::{self, BufReader},
     path::Path,
     process::{Child, ChildStdin, ChildStdout, Command, Stdio},
-    sync::{Arc, Mutex},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
+    },
     thread,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use serde_json::{Value, json};
@@ -23,16 +26,21 @@ use super::framing::{read_message, write_locked_message};
 use super::parse::published_diagnostics;
 use super::registry::ServerSpec;
 use super::types::LspError;
-use super::uri::uri_for_path;
 use crate::stderr_tail::{CAPACIDADE_PADRAO, StderrTail};
 use kinein_protocol::JsonRpcRequest;
 
-/// Tempo maximo aguardando a resposta de `initialize` de um servidor.
-const INITIALIZE_TIMEOUT: Duration = Duration::from_secs(15);
-
 /// Estado de um servidor em execucao.
 pub(super) struct ServerHandle {
-    pub(super) child: Child,
+    /// O processo. Num `Mutex` porque a thread do handshake o mata quando o
+    /// `initialize` falha, e o manager o mata no `kill_server`.
+    pub(super) child: Arc<Mutex<Child>>,
+    /// `true` depois do `initialized` (Etapa 2 F6, 2026-09-18): ate' la' o
+    /// handshake corre NUMA THREAD e o laco nao espera os 15 s do
+    /// rust-analyzer — pedidos e sincronizacao antes disso voltam
+    /// `LspError::Starting`, e a UI re-sincroniza ao ver `status: running`.
+    pub(super) ready: Arc<AtomicBool>,
+    /// O motivo, quando o handshake falhou (o manager remove o servidor).
+    pub(super) failed: Arc<Mutex<Option<String>>>,
     pub(super) stdin: Arc<Mutex<ChildStdin>>,
     pub(super) versions: HashMap<String, i64>,
     /// Hash do ultimo conteudo sincronizado por URI. Evita `didChange`
@@ -40,8 +48,9 @@ pub(super) struct ServerHandle {
     /// re-sincroniza) — sem isso o clangd invalida seus fix-its a cada
     /// consulta, e todo hover/completion reenviava o documento inteiro.
     pub(super) content_hashes: HashMap<String, u64>,
-    /// Legend de semantic tokens anunciada pelo servidor no `initialize`.
-    pub(super) semantic_token_types: Vec<String>,
+    /// Legend de semantic tokens anunciada pelo servidor no `initialize`
+    /// (chega pela thread do handshake).
+    pub(super) semantic_token_types: Arc<Mutex<Vec<String>>>,
     /// Ultimo array cru de diagnostics publicado por URI, para compor o
     /// `context` de `textDocument/codeAction` sem depender da UI.
     pub(super) diagnostics_by_uri: Arc<Mutex<HashMap<String, Value>>>,
@@ -140,29 +149,64 @@ pub(super) fn spawn_server(
         Some(log_collector(spec.key, &events)),
     );
 
-    // Um handshake que falha MATA o filho (antes ele ficava orfao, vivo e
-    // mudo) e leva na mensagem o que o servidor escreveu no stderr.
-    match handshake(spec, root, stdin, stdout, &stderr, events, pending, merged) {
-        Ok(parts) => Ok(ServerHandle {
-            child,
-            stdin: parts.0,
-            versions: HashMap::new(),
-            content_hashes: HashMap::new(),
-            semantic_token_types: parts.1,
-            diagnostics_by_uri: parts.2,
-        }),
-        Err(error) => {
-            drop(child.kill());
-            drop(child.wait());
-            thread::sleep(Duration::from_millis(50));
-            Err(match error {
-                LspError::ServerFailed { command, message } => LspError::ServerFailed {
-                    command,
-                    message: stderr.anexar(&message, "stderr do servidor"),
-                },
-                other => other,
-            })
-        }
+    // O handshake corre numa THREAD (Etapa 2 F6): o `initialize` do
+    // rust-analyzer leva segundos num projeto grande, e ate' 2026-09-18 o
+    // laco do core esperava por ele — a IDE inteira muda. O handle volta ja',
+    // marcado `starting`; a thread marca `ready` e emite `running`, ou emite
+    // `failed` com o stderr e mata o filho.
+    let stdin = Arc::new(Mutex::new(stdin));
+    let initialize = super::handshake::initialize_request(root);
+    if let Err(error) = write_locked_message(&stdin, &initialize) {
+        drop(child.kill());
+        drop(child.wait());
+        return Err(LspError::ServerFailed {
+            command: spec.command.clone(),
+            message: format!("falha no initialize: {error}"),
+        });
+    }
+    let child = Arc::new(Mutex::new(child));
+    let ready = Arc::new(AtomicBool::new(false));
+    let failed = Arc::new(Mutex::new(None));
+    let semantic_token_types = Arc::new(Mutex::new(Vec::new()));
+    let diagnostics_by_uri = Arc::new(Mutex::new(HashMap::new()));
+    super::handshake::spawn_handshake_thread(super::handshake::HandshakeParts {
+        spec: spec.clone(),
+        stdout,
+        stdin: Arc::clone(&stdin),
+        child: Arc::clone(&child),
+        ready: Arc::clone(&ready),
+        failed: Arc::clone(&failed),
+        legend: Arc::clone(&semantic_token_types),
+        diagnostics: Arc::clone(&diagnostics_by_uri),
+        events,
+        pending,
+        merged,
+        stderr,
+    });
+    Ok(ServerHandle {
+        child,
+        ready,
+        failed,
+        stdin,
+        versions: HashMap::new(),
+        content_hashes: HashMap::new(),
+        semantic_token_types,
+        diagnostics_by_uri,
+    })
+}
+
+impl ServerHandle {
+    /// O handshake terminou e o servidor aceita pedidos.
+    pub(super) fn is_ready(&self) -> bool {
+        self.ready.load(Ordering::SeqCst)
+    }
+
+    /// A legend de semantic tokens, vazia ate' o handshake terminar.
+    pub(super) fn legend(&self) -> Vec<String> {
+        self.semantic_token_types
+            .lock()
+            .map(|l| l.clone())
+            .unwrap_or_default()
     }
 }
 
@@ -178,177 +222,8 @@ fn log_collector(key: &'static str, events: &super::EventSender) -> crate::stder
     })
 }
 
-type Handshaken = (
-    Arc<Mutex<ChildStdin>>,
-    Vec<String>,
-    Arc<Mutex<HashMap<String, Value>>>,
-);
-
-/// `initialize` -> `initialized` -> configuracao -> thread leitora.
 #[allow(clippy::too_many_arguments)]
-fn handshake(
-    spec: &ServerSpec,
-    root: &Path,
-    stdin: ChildStdin,
-    stdout: ChildStdout,
-    stderr: &StderrTail,
-    events: super::EventSender,
-    pending: PendingResponses,
-    merged: MergedDiagnostics,
-) -> Result<Handshaken, LspError> {
-    let stdin = Arc::new(Mutex::new(stdin));
-    let mut reader = BufReader::new(stdout);
-
-    let initialize = initialize_request(root);
-    write_locked_message(&stdin, &initialize).map_err(|error| LspError::ServerFailed {
-        command: spec.command.clone(),
-        message: format!("falha no initialize: {error}"),
-    })?;
-
-    let semantic_token_types = wait_for_initialize(&mut reader, &stdin, &spec.command)?;
-
-    let initialized = json!({ "jsonrpc": "2.0", "method": "initialized", "params": {} });
-    write_locked_message(&stdin, &initialized).map_err(|error| LspError::ServerFailed {
-        command: spec.command.clone(),
-        message: format!("falha no initialized: {error}"),
-    })?;
-    // A configuracao vai EMPURRADA logo depois do initialized (e' como o
-    // pyright a le: `workspace/didChangeConfiguration` com `settings`), e
-    // fica com a thread leitora para responder os `workspace/configuration`.
-    let settings = Arc::new(spec.settings.clone());
-    if !settings.is_null() {
-        let configuration = json!({
-            "jsonrpc": "2.0",
-            "method": "workspace/didChangeConfiguration",
-            "params": { "settings": *settings },
-        });
-        write_locked_message(&stdin, &configuration).map_err(|error| LspError::ServerFailed {
-            command: spec.command.clone(),
-            message: format!("falha no didChangeConfiguration: {error}"),
-        })?;
-    }
-
-    let diagnostics_by_uri = Arc::new(Mutex::new(HashMap::new()));
-    spawn_reader_thread(
-        spec.key,
-        reader,
-        Arc::clone(&stdin),
-        events,
-        pending,
-        Arc::clone(&diagnostics_by_uri),
-        settings,
-        merged,
-        stderr.clone(),
-    );
-
-    Ok((stdin, semantic_token_types, diagnostics_by_uri))
-}
-
-/// Monta o request `initialize` com as capabilities do cliente Kinein.
-fn initialize_request(root: &Path) -> Value {
-    json!({
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "initialize",
-        "params": {
-            "processId": Value::Null,
-            "clientInfo": { "name": "kinein-vectis", "version": "0.1.0" },
-            "rootUri": uri_for_path(root),
-            "capabilities": {
-                "textDocument": {
-                    "publishDiagnostics": {},
-                    "synchronization": { "didSave": true },
-                    "completion": { "completionItem": { "snippetSupport": false } },
-                    "definition": {},
-                    "hover": {},
-                    "references": {},
-                    "rename": {},
-                    "documentSymbol": { "hierarchicalDocumentSymbolSupport": true },
-                    "codeAction": {
-                        "codeActionLiteralSupport": {
-                            "codeActionKind": {
-                                "valueSet": [
-                                    "", "quickfix", "refactor",
-                                    "refactor.extract", "refactor.inline",
-                                    "refactor.rewrite", "source",
-                                    "source.organizeImports", "source.fixAll",
-                                ],
-                            },
-                        },
-                    },
-                    "semanticTokens": {
-                        "requests": { "full": true },
-                        "tokenTypes": [
-                            "namespace", "type", "class", "enum", "interface",
-                            "struct", "typeParameter", "parameter", "variable",
-                            "property", "enumMember", "event", "function",
-                            "method", "macro", "keyword", "modifier", "comment",
-                            "string", "number", "regexp", "operator", "decorator",
-                        ],
-                        "tokenModifiers": [],
-                        "formats": ["relative"],
-                    },
-                },
-                "workspace": { "symbol": {} },
-            },
-            "workspaceFolders": [{
-                "uri": uri_for_path(root),
-                "name": root.file_name().map_or_else(
-                    || "workspace".to_owned(),
-                    |name| name.to_string_lossy().into_owned(),
-                ),
-            }],
-        }
-    })
-}
-
-/// Aguarda a resposta do `initialize` e extrai a legend de semantic tokens.
-fn wait_for_initialize(
-    reader: &mut BufReader<ChildStdout>,
-    stdin: &Arc<Mutex<ChildStdin>>,
-    command: &str,
-) -> Result<Vec<String>, LspError> {
-    let deadline = Instant::now() + INITIALIZE_TIMEOUT;
-    while Instant::now() < deadline {
-        let message = read_message(reader).map_err(|error| LspError::ServerFailed {
-            command: command.to_owned(),
-            message: format!("erro lendo resposta de {command}: {error}"),
-        })?;
-        let Some(message) = message else {
-            return Err(LspError::ServerFailed {
-                command: command.to_owned(),
-                message: format!("{command} encerrou durante o initialize"),
-            });
-        };
-        if message.get("id").and_then(Value::as_i64) == Some(1) {
-            if let Some(result) = message.get("result") {
-                return Ok(semantic_token_legend(result));
-            }
-        }
-        answer_server_request(&message, stdin, &Value::Null);
-    }
-    Err(LspError::ServerFailed {
-        command: command.to_owned(),
-        message: format!("{command} nao respondeu ao initialize a tempo"),
-    })
-}
-
-/// Extrai `capabilities.semanticTokensProvider.legend.tokenTypes`.
-fn semantic_token_legend(initialize_result: &Value) -> Vec<String> {
-    initialize_result
-        .pointer("/capabilities/semanticTokensProvider/legend/tokenTypes")
-        .and_then(Value::as_array)
-        .map_or_else(Vec::new, |types| {
-            types
-                .iter()
-                .filter_map(Value::as_str)
-                .map(str::to_owned)
-                .collect()
-        })
-}
-
-#[allow(clippy::too_many_arguments)]
-fn spawn_reader_thread(
+pub(super) fn spawn_reader_thread(
     key: &'static str,
     mut reader: BufReader<ChildStdout>,
     stdin: Arc<Mutex<ChildStdin>>,
@@ -435,7 +310,11 @@ fn cache_diagnostics(cache: &Arc<Mutex<HashMap<String, Value>>>, params: &Value)
 /// Responde os requests servidor->cliente: `workspace/configuration` com as
 /// secoes pedidas de `settings` (e' como o pyright pergunta `python` e
 /// `basedpyright`); os demais, `null` — ainda nao suportados.
-fn answer_server_request(message: &Value, stdin: &Arc<Mutex<ChildStdin>>, settings: &Value) {
+pub(super) fn answer_server_request(
+    message: &Value,
+    stdin: &Arc<Mutex<ChildStdin>>,
+    settings: &Value,
+) {
     let Some(id) = message.get("id") else {
         return;
     };
@@ -473,25 +352,4 @@ fn configuration_answer(params: Option<&Value>, settings: &Value) -> Value {
             })
             .collect(),
     )
-}
-
-#[cfg(test)]
-mod tests {
-    use serde_json::json;
-
-    use super::semantic_token_legend;
-
-    #[test]
-    fn semantic_token_legend_reads_token_types() {
-        let result = json!({
-            "capabilities": {
-                "semanticTokensProvider": {
-                    "legend": { "tokenTypes": ["variable", "function"] }
-                }
-            }
-        });
-
-        assert_eq!(semantic_token_legend(&result), ["variable", "function"]);
-        assert!(semantic_token_legend(&json!({ "capabilities": {} })).is_empty());
-    }
 }

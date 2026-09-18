@@ -5,14 +5,14 @@
 use std::path::Path;
 
 use kinein_protocol::{
-    FsWriteParams, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, LspCompletionResult,
-    LspDefinitionResult, LspHoverResult, LspReferenceItem, LspReferencesResult,
-    LspSwitchSourceHeaderResult, LspSymbolsResult, LspWorkspaceSymbolsParams,
+    FsWriteParams, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, LspSwitchSourceHeaderResult,
+    LspWorkspaceSymbolsParams,
 };
 use serde_json::{Value, json};
 
 use crate::Core;
 use crate::fsops;
+use crate::lsp::LspQuery;
 use crate::rpc::{
     fs_error_response, lsp_error_response, lsp_unavailable_response, no_workspace_response,
     parse_lsp_position_params, parse_params,
@@ -39,15 +39,16 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return lsp_unavailable_response(request_id, "lsp.definition");
         };
-        match lsp.definition(&path, &parsed.content, parsed.line, parsed.column) {
-            Ok(location) => JsonRpcResponse::success(
-                request_id,
-                json!(LspDefinitionResult {
-                    path: location.as_ref().map(|target| target.path.clone()),
-                    line: location.as_ref().map(|target| target.line),
-                    column: location.as_ref().map(|target| target.column),
-                }),
-            ),
+        // Adiada (Etapa 2 F6): o laco nao espera o servidor.
+        match lsp.begin_query(
+            LspQuery::Definition {
+                line: parsed.line,
+                column: parsed.column,
+            },
+            &path,
+            &parsed.content,
+        ) {
+            Ok(begun) => self.defer_lsp(request_id, begun),
             Err(error) => lsp_error_response(request_id, &error),
         }
     }
@@ -72,8 +73,16 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return lsp_unavailable_response(request_id, "lsp.hover");
         };
-        match lsp.hover(&path, &parsed.content, parsed.line, parsed.column) {
-            Ok(content) => JsonRpcResponse::success(request_id, json!(LspHoverResult { content })),
+        // Adiada (Etapa 2 F6): o laco nao espera o servidor.
+        match lsp.begin_query(
+            LspQuery::Hover {
+                line: parsed.line,
+                column: parsed.column,
+            },
+            &path,
+            &parsed.content,
+        ) {
+            Ok(begun) => self.defer_lsp(request_id, begun),
             Err(error) => lsp_error_response(request_id, &error),
         }
     }
@@ -98,14 +107,16 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return lsp_unavailable_response(request_id, "lsp.completion");
         };
-        match lsp.completion(&path, &parsed.content, parsed.line, parsed.column) {
-            Ok((items, is_incomplete)) => JsonRpcResponse::success(
-                request_id,
-                json!(LspCompletionResult {
-                    items,
-                    is_incomplete,
-                }),
-            ),
+        // Adiada (Etapa 2 F6): o laco nao espera o servidor.
+        match lsp.begin_query(
+            LspQuery::Completion {
+                line: parsed.line,
+                column: parsed.column,
+            },
+            &path,
+            &parsed.content,
+        ) {
+            Ok(begun) => self.defer_lsp(request_id, begun),
             Err(error) => lsp_error_response(request_id, &error),
         }
     }
@@ -130,18 +141,16 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return lsp_unavailable_response(request_id, "lsp.references");
         };
-        match lsp.references(&path, &parsed.content, parsed.line, parsed.column) {
-            Ok(locations) => {
-                let references = locations
-                    .into_iter()
-                    .map(|location| LspReferenceItem {
-                        path: location.path,
-                        line: location.line,
-                        column: location.column,
-                    })
-                    .collect();
-                JsonRpcResponse::success(request_id, json!(LspReferencesResult { references }))
-            }
+        // Adiada (Etapa 2 F6): o laco nao espera o servidor.
+        match lsp.begin_query(
+            LspQuery::References {
+                line: parsed.line,
+                column: parsed.column,
+            },
+            &path,
+            &parsed.content,
+        ) {
+            Ok(begun) => self.defer_lsp(request_id, begun),
             Err(error) => lsp_error_response(request_id, &error),
         }
     }
@@ -168,10 +177,8 @@ impl Core {
                 let Some(lsp) = self.lsp.as_mut() else {
                     return lsp_unavailable_response(request_id, "lsp.documentSymbols");
                 };
-                match lsp.document_symbols(&path, &parsed.content) {
-                    Ok(symbols) => {
-                        JsonRpcResponse::success(request_id, json!(LspSymbolsResult { symbols }))
-                    }
+                match lsp.begin_query(LspQuery::DocumentSymbols, &path, &parsed.content) {
+                    Ok(begun) => self.defer_lsp(request_id, begun),
                     Err(error) => lsp_error_response(request_id, &error),
                 }
             }
@@ -213,10 +220,11 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return lsp_unavailable_response(request_id, "lsp.workspaceSymbols");
         };
-        match lsp.workspace_symbols(&path, &parsed.content, parsed.query.trim()) {
-            Ok(symbols) => {
-                JsonRpcResponse::success(request_id, json!(LspSymbolsResult { symbols }))
-            }
+        let query = LspQuery::WorkspaceSymbols {
+            query: parsed.query.trim().to_owned(),
+        };
+        match lsp.begin_query(query, &path, &parsed.content) {
+            Ok(begun) => self.defer_lsp(request_id, begun),
             Err(error) => lsp_error_response(request_id, &error),
         }
     }

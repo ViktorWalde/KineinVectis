@@ -204,6 +204,25 @@ consumindo um canal. Isso é garantia de verdade e dá para contar com ela: mand
 `A` e depois `B` significa que o efeito de `A` no `Core` já ocorreu quando `B`
 roda.
 
+**Respostas ADIADAS (2026-09-18, Etapa 2 F6).** Uma classe de pedido — as
+consultas interativas ao servidor de linguagem (`lsp.hover`, `definition`,
+`completion`, `references`, `documentSymbols`, `workspaceSymbols`,
+`semanticTokens`) — é PROCESSADA na ordem, mas RESPONDIDA fora dela: o handler
+sincroniza o documento e escreve o pedido ao servidor, devolve
+`RequestOutcome::Deferred` (o loop não escreve nada) e uma thread espera a
+resposta (até 4 s) e a manda pelo canal de respostas adiadas —
+`LoopEvent::Response`, escrita no stdout como um evento seria. Medido antes
+disso: um `lsp.semanticTokens` segurava o loop até 4 s (15 s no
+`initialize` do rust-analyzer) e o `fs.list` seguinte só saía depois — a IDE
+inteira muda enquanto o servidor subia. O `id` continua casando a resposta
+com o pedido na ponte; o que muda é que **a resposta de um pedido LSP pode
+chegar depois da resposta de um pedido posterior**. O handshake do servidor
+também corre numa thread: o loop espera no máximo 300 ms por ele (um servidor
+rápido fica pronto na mesma chamada); depois, pedidos ao servidor que ainda
+sobe voltam na hora com "ainda está subindo" e a UI reenvia o buffer ao ver
+`event.lsp.status { running }`. Rename, code actions e `workspaceEdit`
+continuam síncronos (precisam do resultado no loop; são raros).
+
 **O que NÃO é garantido:** a ordem entre uma resposta e os eventos que a
 operação dispara. Um `terminal.input` responde imediatamente e os `render`
 chegam depois, quantos o emulador achar necessário. Código que espera "a

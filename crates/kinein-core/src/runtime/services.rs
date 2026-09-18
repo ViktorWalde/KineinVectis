@@ -19,6 +19,45 @@ impl Core {
         self.events = Some(events);
     }
 
+    /// Liga as respostas ADIADAS (Etapa 2 F6): as consultas LSP passam a
+    /// esperar numa thread e a resposta vai por `responses` — o laco a
+    /// escreve na ordem em que chega. Sem esta chamada, esperam inline.
+    pub fn enable_deferred_responses(
+        &mut self,
+        responses: std::sync::mpsc::Sender<kinein_protocol::JsonRpcResponse>,
+    ) {
+        self.deferred = Some(responses);
+    }
+
+    /// Responde uma consulta LSP: pronta na hora, adiada numa thread (com o
+    /// canal ligado) ou esperada inline (sem ele — testes). A thread faz o
+    /// que o laco fazia: espera ate' o timeout, traduz erro/resultado.
+    pub(crate) fn defer_lsp(
+        &self,
+        request_id: Option<serde_json::Value>,
+        begun: lsp::LspBegun,
+    ) -> kinein_protocol::JsonRpcResponse {
+        use kinein_protocol::JsonRpcResponse;
+        let pending = match begun {
+            lsp::LspBegun::Ready(value) => return JsonRpcResponse::success(request_id, value),
+            lsp::LspBegun::Pending(pending) => pending,
+        };
+        let responder = move || -> JsonRpcResponse {
+            match pending.reply.wait() {
+                Ok(value) => JsonRpcResponse::success(request_id.clone(), (pending.finish)(&value)),
+                Err(error) => crate::rpc::lsp_error_response(request_id, &error),
+            }
+        };
+        match self.deferred.as_ref() {
+            Some(sender) => {
+                let sender = sender.clone();
+                std::thread::spawn(move || drop(sender.send(responder())));
+                crate::rpc::deferred_marker()
+            }
+            None => responder(),
+        }
+    }
+
     /// Aponta uma linguagem para outro executavel de language server.
     ///
     /// Devolve `false` quando o LSP nao esta habilitado neste loop ou quando a

@@ -50,9 +50,9 @@ pub mod tools;
 pub mod workspace;
 pub use runtime::{run_json_lines, run_stdio};
 
+mod outcome;
+
 use std::{
-    error::Error,
-    fmt, io,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
@@ -95,6 +95,11 @@ pub struct Core {
     /// Raiz do estado GLOBAL quando a persistência está ligada; `None` — o
     /// padrão — é persistência DESLIGADA (ver [`Core::enable_persistence`]).
     global_storage: Option<PathBuf>,
+    /// Respostas ADIADAS (Etapa 2 F6, 2026-09-18): um handler que espera um
+    /// servidor de linguagem devolve o marcador e manda a resposta por
+    /// aqui quando ela chegar; o laco (`runtime`) a escreve como escreve os
+    /// eventos. `None` (testes, `run_json_lines`) = o handler espera inline.
+    deferred: Option<std::sync::mpsc::Sender<JsonRpcResponse>>,
 }
 
 impl Core {
@@ -124,6 +129,7 @@ impl Core {
             jobs: None,
             drafts: None,
             global_storage: None,
+            deferred: None,
             home_override: None,
         }
     }
@@ -234,7 +240,12 @@ impl Core {
                 RequestOutcome::Continue(self.test_discover_response(request_id, params))
             }
             method => {
-                RequestOutcome::Continue(self.service_request_response(method, request_id, params))
+                let response = self.service_request_response(method, request_id, params);
+                if rpc::is_deferred(&response) {
+                    RequestOutcome::Deferred(response)
+                } else {
+                    RequestOutcome::Continue(response)
+                }
             }
         }
     }
@@ -429,62 +440,7 @@ impl Core {
     }
 }
 
-/// Result of handling a request.
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum RequestOutcome {
-    /// The core should continue reading requests.
-    Continue(JsonRpcResponse),
-    /// The core should return this response and stop the loop.
-    Shutdown(JsonRpcResponse),
-}
-
-impl RequestOutcome {
-    /// Returns the JSON-RPC response.
-    #[must_use]
-    pub const fn response(&self) -> &JsonRpcResponse {
-        match self {
-            Self::Continue(response) | Self::Shutdown(response) => response,
-        }
-    }
-
-    /// Returns `true` when the core should stop after writing the response.
-    #[must_use]
-    pub const fn should_shutdown(&self) -> bool {
-        matches!(self, Self::Shutdown(_))
-    }
-}
-
-/// Error returned by core IO loops.
-#[derive(Debug)]
-pub enum CoreError {
-    /// Failed while reading a request.
-    Read(io::Error),
-    /// Failed while writing a response.
-    Write(io::Error),
-    /// Failed while serializing a response.
-    Serialize(serde_json::Error),
-}
-
-impl fmt::Display for CoreError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Read(error) => write!(formatter, "failed to read IPC request: {error}"),
-            Self::Write(error) => write!(formatter, "failed to write IPC response: {error}"),
-            Self::Serialize(error) => {
-                write!(formatter, "failed to serialize IPC response: {error}")
-            }
-        }
-    }
-}
-
-impl Error for CoreError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            Self::Read(error) | Self::Write(error) => Some(error),
-            Self::Serialize(error) => Some(error),
-        }
-    }
-}
+pub use outcome::{CoreError, RequestOutcome};
 
 #[cfg(test)]
 mod tests;

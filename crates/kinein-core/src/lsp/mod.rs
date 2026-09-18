@@ -23,9 +23,11 @@
 mod diagnostics_merge;
 mod edit;
 pub mod framing;
+mod handshake;
 mod manager;
 mod parse;
 mod parse_symbols;
+mod query;
 mod registry;
 mod server;
 mod session;
@@ -44,6 +46,8 @@ use serde_json::Value;
 
 pub use edit::apply_text_edits;
 pub use manager::LspManager;
+pub use query::{LspBegun, LspPending, LspQuery};
+pub use session::LspReply;
 pub use transaction::{
     WorkspaceEditApplied, WorkspaceEditTransactionError, WorkspaceEditTransactions,
 };

@@ -16,11 +16,17 @@
 //! que precisa desses tres. O que ficou la: as operacoes interativas que a UI
 //! pede (definition, hover, completion, ...).
 
-use std::{path::PathBuf, sync::Arc, sync::mpsc, time::Duration};
+use std::{
+    collections::HashMap,
+    path::PathBuf,
+    sync::{Arc, Mutex, mpsc},
+    time::Duration,
+};
 
 use kinein_protocol::JsonRpcRequest;
 use serde_json::{Value, json};
 
+use super::PendingResponses;
 use super::framing::write_locked_message;
 use super::manager::LspManager;
 use super::parse::response_result;
@@ -34,6 +40,11 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(4);
 /// Timeouts CONSECUTIVOS de um servidor antes do auto-restart (M4.3b). Com
 /// `REQUEST_TIMEOUT` de 4s, sao ~12s preso antes de ressuscitar o servidor.
 const MAX_TIMEOUT_STREAK: u32 = 3;
+
+/// Quanto o laco espera pelo handshake de um servidor RECEM-subido (Etapa 2
+/// F6): o bastante para um servidor rapido ficar pronto na mesma chamada, e
+/// pouco o bastante para nao ser sentido — o resto do handshake e' da thread.
+const HANDSHAKE_GRACE: Duration = Duration::from_millis(300);
 
 impl LspManager {
     /// Reinicia os servidores de UMA linguagem — o principal e os
@@ -68,11 +79,10 @@ impl LspManager {
     /// Mata UM servidor pela chave e esquece o que ele publicou (a tela
     /// perde os diagnosticos dele na hora, nao no proximo evento).
     fn kill_server(&mut self, key: &'static str) {
-        if let Some(mut handle) = self.servers.remove(key) {
-            drop(handle.child.kill());
-            drop(handle.child.wait());
+        if let Some(handle) = self.servers.remove(key) {
+            kill_child(&handle);
         }
-        self.timeout_streak.remove(key);
+        self.reset_timeout_streak(key);
         for event in super::diagnostics_merge::forget(&self.merged_diagnostics, key) {
             drop(self.events.send(event));
         }
@@ -96,22 +106,6 @@ impl LspManager {
         restarted
     }
 
-    /// Registra um timeout de um servidor; ao acumular `MAX_TIMEOUT_STREAK`
-    /// seguidos, auto-reinicia so' ELE (M4.3b) — um companheiro travado nao
-    /// derruba o principal.
-    fn note_timeout(&mut self, key: &'static str) {
-        let streak = {
-            let entry = self.timeout_streak.entry(key).or_insert(0);
-            *entry += 1;
-            *entry
-        };
-        if streak >= MAX_TIMEOUT_STREAK {
-            self.kill_server(key);
-            self.emit_status(key, "restarting");
-            self.emit_restarted(key);
-        }
-    }
-
     /// Define a raiz do workspace, derrubando servidores da raiz anterior.
     pub fn set_root(&mut self, root: Option<PathBuf>) {
         if self.root == root {
@@ -126,11 +120,10 @@ impl LspManager {
         self.active_code_actions = None;
         super::diagnostics_merge::clear(&self.merged_diagnostics);
         let drained: Vec<(&'static str, ServerHandle)> = self.servers.drain().collect();
-        for (key, mut handle) in drained {
+        for (key, handle) in drained {
             // Melhor esforco: mata o processo; shutdown educado fica para
             // quando houver cancelamento generico no core.
-            drop(handle.child.kill());
-            drop(handle.child.wait());
+            kill_child(&handle);
             self.emit_status(key, "stopped");
         }
     }
@@ -188,6 +181,19 @@ impl LspManager {
     }
 
     pub(super) fn ensure_server(&mut self, spec: &ServerSpec) -> Result<(), LspError> {
+        // Um handshake que falhou na thread: o servidor sai da tabela agora,
+        // com o motivo, e o proximo pedido sobe outro.
+        let falhou = self
+            .servers
+            .get(spec.key)
+            .and_then(|h| h.failed.lock().ok().and_then(|f| f.clone()));
+        if let Some(message) = falhou {
+            self.servers.remove(spec.key);
+            return Err(LspError::ServerFailed {
+                command: spec.command.clone(),
+                message,
+            });
+        }
         if self.servers.contains_key(spec.key) {
             return Ok(());
         }
@@ -205,8 +211,25 @@ impl LspManager {
             Arc::clone(&self.merged_diagnostics),
         ) {
             Ok(handle) => {
+                // Um servidor rapido (clangd num projeto pequeno, o falso
+                // dos testes) responde ao initialize em milissegundos: o
+                // laco espera ate' HANDSHAKE_GRACE por ele, e nao mais — o
+                // rust-analyzer que leva segundos sobe por conta da thread,
+                // e a UI re-sincroniza ao ver `running`.
+                let deadline = std::time::Instant::now() + HANDSHAKE_GRACE;
+                while !handle.is_ready() && std::time::Instant::now() < deadline {
+                    let falhou = handle.failed.lock().map_or(true, |f| f.is_some());
+                    if falhou {
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(5));
+                }
+                let pronto = handle.is_ready();
                 self.servers.insert(spec.key, handle);
-                self.emit_status(spec.key, "running");
+                if !pronto {
+                    // `running` vem da thread do handshake (Etapa 2 F6).
+                    self.emit_status(spec.key, "starting");
+                }
                 Ok(())
             }
             Err(error) => {
@@ -232,19 +255,40 @@ impl LspManager {
         vivos
     }
 
-    pub(super) fn send_request(
+    /// Escreve o request e devolve a ESPERA — quem chama decide se bloqueia
+    /// ([`LspReply::wait`]) ou espera noutra thread (F6 da Etapa 2,
+    /// 2026-09-18: o laco do core nao pode parar 4 s por um hover).
+    ///
+    /// # Errors
+    /// Servidor ausente ou falha ao escrever no stdin dele.
+    pub(super) fn begin_request(
         &mut self,
         key: &'static str,
         method: &'static str,
         params: &Value,
-    ) -> Result<Value, LspError> {
-        let id = self.next_request_id;
-        self.next_request_id += 1;
+    ) -> Result<LspReply, LspError> {
+        // Tres timeouts seguidos derrubam o servidor (M4.3b). Com a espera
+        // fora do laco, a contagem e' compartilhada e a decisao e' tomada
+        // AQUI, no proximo pedido — nunca na thread que esperou.
+        if self.timeout_streak_of(key) >= MAX_TIMEOUT_STREAK {
+            self.reset_timeout_streak(key);
+            self.kill_server(key);
+            self.emit_status(key, "restarting");
+            self.emit_restarted(key);
+            return Err(LspError::Transport {
+                message: format!("servidor {key} reiniciado apos {MAX_TIMEOUT_STREAK} timeouts"),
+            });
+        }
         let Some(handle) = self.servers.get(key) else {
             return Err(LspError::Transport {
                 message: format!("servidor {key} nao esta em execucao"),
             });
         };
+        if !handle.is_ready() {
+            return Err(LspError::Starting { key });
+        }
+        let id = self.next_request_id;
+        self.next_request_id += 1;
         let (response_tx, response_rx) = mpsc::channel::<Value>();
         {
             let Ok(mut pending) = self.pending.lock() else {
@@ -262,22 +306,36 @@ impl LspManager {
                 message: format!("falha ao enviar {method}: {error}"),
             });
         }
+        Ok(LspReply {
+            key,
+            method,
+            id,
+            rx: response_rx,
+            pending: Arc::clone(&self.pending),
+            streak: Arc::clone(&self.timeout_streak),
+        })
+    }
 
-        match response_rx.recv_timeout(REQUEST_TIMEOUT) {
-            Ok(response) => {
-                // Qualquer resposta (mesmo erro do LSP) prova que o servidor
-                // está vivo: zera a contagem de timeouts (M4.3b).
-                self.timeout_streak.remove(key);
-                response_result(method, &response)
-            }
-            Err(mpsc::RecvTimeoutError::Timeout) => {
-                self.remove_pending(id);
-                self.note_timeout(key);
-                Err(LspError::Timeout { method })
-            }
-            Err(mpsc::RecvTimeoutError::Disconnected) => Err(LspError::Transport {
-                message: format!("canal de resposta de {method} foi fechado"),
-            }),
+    /// [`Self::begin_request`] + espera SINCRONA: o caminho dos pedidos que
+    /// precisam do resultado no laco (rename, workspaceEdit) e dos testes.
+    pub(super) fn send_request(
+        &mut self,
+        key: &'static str,
+        method: &'static str,
+        params: &Value,
+    ) -> Result<Value, LspError> {
+        self.begin_request(key, method, params)?.wait()
+    }
+
+    fn timeout_streak_of(&self, key: &str) -> u32 {
+        self.timeout_streak
+            .lock()
+            .map_or(0, |m| m.get(key).copied().unwrap_or(0))
+    }
+
+    fn reset_timeout_streak(&self, key: &str) {
+        if let Ok(mut m) = self.timeout_streak.lock() {
+            m.remove(key);
         }
     }
 
@@ -331,5 +389,67 @@ mod tests {
         // Sem servidor vivo, reiniciar uma linguagem é no-op; todos = vazio.
         assert!(!manager.restart_language("rust"));
         assert!(manager.restart_all().is_empty());
+    }
+}
+
+/// Mata o processo de um handle (o `Child` vive num `Mutex` porque a thread
+/// do handshake tambem pode mata-lo).
+fn kill_child(handle: &super::server::ServerHandle) {
+    if let Ok(mut child) = handle.child.lock() {
+        drop(child.kill());
+        drop(child.wait());
+    }
+}
+
+/// A resposta de um request LSP que ainda nao chegou.
+///
+/// `wait` bloqueia ate' `REQUEST_TIMEOUT`; e' o que o laco fazia inline ate'
+/// 2026-09-18 e o que agora acontece numa thread (`Core::defer_lsp`). O
+/// timeout entra na contagem compartilhada; a resposta zera a contagem.
+#[derive(Debug)]
+pub struct LspReply {
+    key: &'static str,
+    method: &'static str,
+    id: i64,
+    rx: mpsc::Receiver<Value>,
+    pending: PendingResponses,
+    streak: Arc<Mutex<HashMap<&'static str, u32>>>,
+}
+
+impl LspReply {
+    /// O metodo LSP pedido (para a mensagem de erro).
+    #[must_use]
+    pub const fn method(&self) -> &'static str {
+        self.method
+    }
+
+    /// Espera a resposta (ate' `REQUEST_TIMEOUT`).
+    ///
+    /// # Errors
+    /// `Timeout` (contado para o auto-restart), transporte fechado, ou o
+    /// erro que o servidor devolveu.
+    pub fn wait(self) -> Result<Value, LspError> {
+        match self.rx.recv_timeout(REQUEST_TIMEOUT) {
+            Ok(response) => {
+                if let Ok(mut m) = self.streak.lock() {
+                    m.remove(self.key);
+                }
+                response_result(self.method, &response)
+            }
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                if let Ok(mut pending) = self.pending.lock() {
+                    pending.remove(&self.id);
+                }
+                if let Ok(mut m) = self.streak.lock() {
+                    *m.entry(self.key).or_insert(0) += 1;
+                }
+                Err(LspError::Timeout {
+                    method: self.method,
+                })
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => Err(LspError::Transport {
+                message: format!("canal de resposta de {} foi fechado", self.method),
+            }),
+        }
     }
 }

@@ -28,6 +28,11 @@ Item {
         // caminho do recovered): semantic_tokens faz didOpen de novo.
         function onLspStatusChanged(language, status, message) {
             root.lspStatusController.handleStatus(language, status, message);
+            // O handshake corre fora do laco (F6): o buffer que a IDE tentou
+            // sincronizar enquanto o servidor subia e' reenviado agora.
+            if (status === "running") {
+                root.editorController.refreshSemanticTokens();
+            }
         }
 
         function onLspRestarted(language) {

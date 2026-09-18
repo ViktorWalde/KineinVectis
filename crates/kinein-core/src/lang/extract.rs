@@ -39,6 +39,7 @@ impl SymbolExtractor {
         let mut parser = Parser::new();
         parser.set_language(runtime.language()).ok()?;
         let tree = parser.parse(content, None)?;
-        Some(outline(&tree, runtime.tags(), content))
+        let lines = super::positions::LineIndex::new(content);
+        Some(outline(&tree, runtime.tags(), content, &lines))
     }
 }

@@ -233,6 +233,12 @@ impl LspManager {
                 message: format!("servidor {} nao esta registrado", spec.key),
             });
         };
+        // Antes do `initialized` o servidor nao pode receber o documento
+        // (LSP: nada alem do initialize ate' ele responder). A UI reenvia o
+        // buffer ao ver `status: running`.
+        if !handle.is_ready() {
+            return Err(LspError::Starting { key: spec.key });
+        }
         open_or_change(handle, &uri, spec.language_id, content, hash, false);
         for companion in self.ensure_companions(path) {
             if let Some(handle) = self.servers.get_mut(companion.key) {
@@ -254,6 +260,11 @@ fn open_or_change(
     hash: u64,
     skip_if_same: bool,
 ) -> bool {
+    // Companheiro ainda no handshake: nao recebe nada agora (o principal ja'
+    // foi barrado antes, no sync_document).
+    if !handle.is_ready() {
+        return false;
+    }
     if let Some(version) = handle.versions.get_mut(uri) {
         if skip_if_same && handle.content_hashes.get(uri) == Some(&hash) {
             return false;

@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.123.0
-testes      827 Rust aprovados; 49 harnesses QML (medicao de 2026-09-18, §7.58)
+testes      829 Rust aprovados; 49 harnesses QML (medicao de 2026-09-18, §7.60)
 metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
@@ -3889,3 +3889,52 @@ target dist`) e a ordem — pastas do autor, pastas da máquina, arquivos —
 que o `ProjectTreeController` aplica ao inserir (`machine` na linha) e o
 explorer pinta em cinza (seta, ícone e nome). Foto 07. Harness
 `tst_project_tree_reveal` cobre a ordem e o `machine`.
+
+### 7.60 Etapa 2, F6-a — o core não para mais pelo servidor de linguagem — 2026-09-18
+
+O defeito que a F3 mediu (§7.58): o laço do core bloqueava até 4 s por
+pedido LSP e 15 s no `initialize` — a IDE inteira muda enquanto o
+rust-analyzer sobe. Três correções, todas medidas:
+
+**(1) Respostas ADIADAS.** `RequestOutcome::Deferred` + `Core::
+enable_deferred_responses(tx)` + `LoopEvent::Response`: o handler de
+`lsp.hover/definition/completion/references/documentSymbols/
+workspaceSymbols/semanticTokens` sincroniza o documento e escreve o pedido
+(`LspManager::begin_query` → `LspBegun::Pending { reply, finish }`), devolve
+o marcador, e uma thread (`Core::defer_lsp`) espera (`LspReply::wait`, 4 s)
+e manda a resposta pelo canal — o laço escreve como escreve um evento. Sem
+o canal (testes, `run_json_lines`) a espera é inline como sempre: os 74
+testes de LSP passaram sem mudar. A contagem de timeouts para o
+auto-restart virou compartilhada (`Arc<Mutex>`), e a decisão de reiniciar
+fica no laço, no pedido seguinte. **Prova:** `tests/lsp_deferred.rs` — o
+servidor falso demora 3 s no hover (`FAKE_LSP_HOVER_DELAY_MS`), o
+`lsp.hover` volta `Deferred` na hora, um `fs.list` pedido logo depois
+responde em < 100 ms, e a resposta real chega pelo canal com o `id` certo.
+**(2) Handshake fora do laço.** `spawn_server` escreve o `initialize` e
+volta com o handle `starting`; `lsp/handshake.rs` (NOVO) espera a resposta
+numa thread, manda `initialized` + configuração, sobe a thread leitora,
+marca `ready` e emite `running` — ou `failed` com o stderr e mata o filho.
+O laço espera no máximo 300 ms (`HANDSHAKE_GRACE`) por um servidor recém-
+subido; pedidos e `didOpen` antes do `ready` voltam `LspError::Starting`
+sem bloquear, e a UI reenvia o buffer ao ver `status: running`
+(`EditorEventRouter`). **(3) `syntaxTree.update` de ~0,9 s para 0,05 s.**
+No caminho, a instrumentação SEND/RESP mostrou cada `syntaxTree.update`
+segurando o laço ~1 s: `utf16_position` varria o prefixo inteiro do arquivo
+a cada realce (milhares por atualização). `lang/positions.rs::LineIndex`
+(início das linhas, uma vez por atualização; linha por busca binária,
+coluna só na própria linha), com o teste que o compara à varredura em todo
+offset. Medido pelo core: 0,9 s → 0,175 s (primeiro parse) / 0,05 s
+(incremental). **Também:** `RequestOutcome`/`CoreError` saíram para
+`outcome.rs` (o `lib.rs` bateu em 500).
+
+**Medido na IDE (mod.rs aberto pela sessão, rust-analyzer real):** antes,
+o `fs.list` id 33 esperou ~20 s e a cadeia do explorer completou aos 30 s;
+depois, todos os pedidos respondem em ≤ 300 ms durante a abertura e a
+cadeia completa aos 6 s (foto 08). 829 testes Rust (+2), 49 harnesses, os
+24 gates verdes (QEMU, debugpy, exercitação, clangd cross incluídos).
+
+**Não feito, dito:** rename/codeActions/workspaceEdit continuam síncronos
+(raros; precisam do resultado no laço); o `workspace.open` leva ~1,4 s
+(medido; a investigar na F6-b junto com os tempos de clique → feedback);
+`didOpen` enfileirado durante o handshake não existe — a UI reenvia ao
+`running`.
