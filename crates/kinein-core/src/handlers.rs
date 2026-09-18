@@ -26,6 +26,7 @@ pub mod probe;
 pub mod project;
 pub mod python;
 pub mod python_stubs;
+pub mod remote;
 pub mod run;
 pub mod runconfig;
 pub mod serial;

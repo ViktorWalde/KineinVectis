@@ -16,6 +16,7 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var remoteController: null
     property var grafanaController: null
     property var embeddedController: null
     property var setupController: null
@@ -105,6 +106,8 @@ Item {
             libraryController.open();
         } else if (commandId === "datasource.list") {
             dataSourceController.open();
+        } else if (commandId === "remote.list") {
+            remoteController.open();
         } else if (commandId === "grafana.get") {
             grafanaController.open();
         } else if (commandId === "probe.list") {

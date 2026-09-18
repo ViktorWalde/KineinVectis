@@ -154,6 +154,14 @@ set_source_files_properties(qml/ipc/GitEventRouter.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/ipc/CoverageEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS CoverageEventRouter.qml)
 set_source_files_properties(qml/ipc/CoverageRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS CoverageRequestRouter.qml)
 set_source_files_properties(qml/coverage/CoverageController.qml PROPERTIES QT_RESOURCE_ALIAS CoverageController.qml)
+set_source_files_properties(qml/ipc/RemoteEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS RemoteEventRouter.qml)
+set_source_files_properties(qml/ipc/RemoteRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS RemoteRequestRouter.qml)
+set_source_files_properties(qml/remote/RemoteController.qml PROPERTIES QT_RESOURCE_ALIAS RemoteController.qml)
+set_source_files_properties(qml/remote/RemoteList.qml PROPERTIES QT_RESOURCE_ALIAS RemoteList.qml)
+set_source_files_properties(qml/remote/RemoteForm.qml PROPERTIES QT_RESOURCE_ALIAS RemoteForm.qml)
+set_source_files_properties(qml/remote/RemoteVerdict.qml PROPERTIES QT_RESOURCE_ALIAS RemoteVerdict.qml)
+set_source_files_properties(qml/remote/RemotePanel.qml PROPERTIES QT_RESOURCE_ALIAS RemotePanel.qml)
+set_source_files_properties(qml/remote/RemotePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS RemotePanelHost.qml)
 set_source_files_properties(qml/ipc/GitRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitRequestRouter.qml)
 set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
 set_source_files_properties(qml/ipc/DebugRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugRequestRouter.qml)
@@ -407,6 +415,14 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/CoverageEventRouter.qml
         qml/ipc/CoverageRequestRouter.qml
         qml/coverage/CoverageController.qml
+        qml/ipc/RemoteEventRouter.qml
+        qml/ipc/RemoteRequestRouter.qml
+        qml/remote/RemoteController.qml
+        qml/remote/RemoteList.qml
+        qml/remote/RemoteForm.qml
+        qml/remote/RemoteVerdict.qml
+        qml/remote/RemotePanel.qml
+        qml/remote/RemotePanelHost.qml
         qml/ipc/GitRequestRouter.qml
         qml/ipc/DebugEventRouter.qml
         qml/ipc/DebugRequestRouter.qml
@@ -536,6 +552,7 @@ qt_add_qml_module(kinein-vectis
     src/core_client_index.cpp
     src/core_client_python.cpp
     src/core_client_coverage.cpp
+    src/core_client_remote.cpp
         src/core_client_log.cpp
         src/core_client_process.cpp
         src/core_client_requests.cpp

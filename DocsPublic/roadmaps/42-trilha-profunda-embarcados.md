@@ -475,6 +475,24 @@ modelo (`artifacts.elf` mais novo, ou o `program` do debug.start). Provas:
 sem nome, deploy sem artefato); exercitação real na Pi do autor — não há
 Pi nesta máquina, e um `sshd` local fica para o gate quando houver chave.
 
+**Fatia 1 FEITA (2026-09-17, noite, 0.120.0 — `40` §7.51).** O código seguiu
+o desenho acima com três ajustes medidos no caminho: `remote.command` ganhou
+o tipo `debugpy` (a linha `python3 -m debugpy --listen 0.0.0.0:5678
+--wait-for-client <script>`, attach TCP em `host:5678`) e os campos
+`program?`/`port?` no lugar de `dest?`; a resposta dele traz `name` (o nome
+sugerido da configuração) e `source[]` (de onde veio cada pedaço); e a linha
+de comando usa `ssh -tt` — o `debugServer` do kit roda por `sh -c` sem
+terminal, e sem pty forçado matar o `ssh` local deixaria o `gdbserver` órfão
+na placa. O `toolchain.setKit` já aceitava `remoteTarget`/`debugServer`, mas
+a ponte C++ não os mandava — ganhou `toolchainSetKitRemote`. Painel **Alvo
+remoto (SSH)** no menu Ambiente; `remote.list` na paleta.
+
+**O que falta do P6 (a fatia 2 em diante):** o `RemoteContext` de verdade —
+abrir a pasta REMOTA como workspace (árvore por `sftp`, editor, busca com
+`rg` do outro lado, watcher), LSP do outro lado com mapeamento de caminhos,
+`journalctl`/`dmesg`/`systemctl` num painel, Yocto/Buildroot reconhecidos
+pelo P0, o `sshd` local no gate e a exercitação na Pi do autor.
+
 ### P7 — Rust embarcado profundo (o que é só dele)
 
 ```text

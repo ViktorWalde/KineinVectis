@@ -529,7 +529,7 @@ pode ser disparado pelo banner de Project Health.
 ## 9. Menu **Ambiente** — preparar o projeto antes de compilar
 
 Este menu existe porque configurar o ambiente **não é "ferramenta"**: é o que se
-faz antes de compilar. São oito painéis, e todos seguem a mesma regra — a IDE
+faz antes de compilar. São nove painéis, e todos seguem a mesma regra — a IDE
 **mostra o que vai fazer e espera você aceitar**; nenhum deles escreve no seu
 projeto sozinho. Os quatro que se usam todo dia também estão na **barra lateral
 esquerda**, nesta ordem: Banco de dados, Containers, Observabilidade e, por
@@ -578,6 +578,38 @@ coisas falsas.
 Além de testar a conexão, o painel **lê o banco**: esquemas, tabelas e colunas —
 ou coleções e a forma dos documentos. Escrever e executar consulta ainda não
 existem.
+
+### Alvo remoto (SSH)
+
+Uma Raspberry Pi, uma placa com imagem própria (Yocto, Buildroot) — um Linux
+que você alcança por SSH — vira **recurso do projeto**: menu Ambiente →
+**Alvo remoto (SSH)...** (ou `remote.list` na paleta). A IDE guarda o
+**perfil** (nome, host, usuário, porta, chave privada, pasta de deploy) em
+`.kinein/remotes.json`. **Não há campo de senha, por desenho**: SSH aqui é
+por chave — copie a sua com `ssh-copy-id usuario@host` uma vez; o que o
+`ssh` do sistema precisar perguntar (o host key novo, a senha da chave),
+pergunta no terminal da IDE. A IDE nunca digita nem guarda senha.
+
+```text
+Sondar          ssh -o BatchMode=yes -o ConnectTimeout=5 … 'uname -m; uname -sr; command -v …'
+                -> arquitetura (aarch64), kernel e o que o alvo TEM: gdbserver, python3, rsync
+                   sem chave: falha em segundos e diz o `ssh-copy-id`
+Enviar (deploy) rsync -az --delete <origem> alvo:<pasta>/   (ou scp -r sem rsync)
+                origem padrao build/, pasta padrao ~/kinein/<projeto>
+Rodar em…       configuracao de execucao "Rodar em <nome>": ssh -tt alvo '<programa>'
+gdbserver → kit o kit ganha debugServer = ssh -tt alvo 'gdbserver :2345 <programa>' e
+                remoteTarget = host:2345 — o [Debug] de sempre sobe o servidor e conecta
+debugpy → config "debugpy em <nome>": python3 -m debugpy --listen 0.0.0.0:5678 --wait-for-client
+                <script>; depois, o attach TCP da aba Debug em host:5678
+Shell no terminal ssh alvo, no terminal da IDE
+```
+
+O campo **Programa no alvo** é o caminho DO OUTRO LADO: relativo entra na
+pasta de deploy (`app` → `~/kinein/<projeto>/app`), absoluto vai como está.
+Sondar e enviar só valem para um alvo **salvo** — o core só conhece o que
+está no arquivo. Cada botão mostra a linha que compôs (`$ …`), e o que ela
+virou (a configuração salva, o kit gravado). Ainda **não** existe abrir a
+pasta remota como workspace, nem LSP do outro lado: é a próxima fatia.
 
 ### Observabilidade (Grafana)
 

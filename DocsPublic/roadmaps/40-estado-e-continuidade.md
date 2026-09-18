@@ -79,15 +79,17 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.119.0
-testes      803 Rust aprovados; 43 harnesses QML (medicao de 2026-09-17, §7.50)
-metodos     150 IPC roteados, 53 eventos (serial.identify, runConfig.flashProposal,
+protocolo   0.120.0
+testes      813 Rust aprovados; 44 harnesses QML (medicao de 2026-09-17, §7.51)
+metodos     156 IPC roteados, 55 eventos (serial.identify, runConfig.flashProposal,
             serial.access, serial.files, python.stubs, debug.scopes,
             debug.readMemory, debug.disassemble, coverage.run, coverage.lines,
-            event.lsp.log, event.coverage.finished,
+            remote.list/save/remove/probe/deploy/command,
+            event.lsp.log, event.coverage.finished, event.remote.probed,
+            event.remote.deployed,
             event.serial.identified, event.serial.files e event.python.stubs
             entraram em 2026-09-17)
-dominios    35, e os 35 documentados no arquitetura/03 (coverage.* entrou em 2026-09-17)
+dominios    36, e os 36 documentados no arquitetura/03 (coverage.* e remote.* entraram em 2026-09-17)
 catraca     1 arquivo em debito
 gate        23 verificacoes
 ```
@@ -598,8 +600,12 @@ pico-sdk e PlatformIO como motores de build/gravar/monitorar) na §7.48, e a
 primeira fatia do P3 (o launch certo do probe-rs, SVD no kit, RTT, escopos,
 memória e disassembly pelo DAP padrão) na §7.49, e o P5 (clang-tidy no
 clangd e no `quality.run`, gtest/Catch2 na árvore, cobertura em LCOV na
-calha, a lâmpada proativa) na §7.50. O próximo item é o P6 (Linux embarcado,
-que precisa de desenho antes de código) — ou o banco, se o autor preferir.
+calha, a lâmpada proativa) na §7.50, e a primeira fatia do P6 (o alvo Linux
+por SSH como recurso do projeto: perfil sem senha, sonda, deploy, e
+rodar/gdbserver/debugpy como configuração de execução e kit) na §7.51. O
+próximo item é a segunda fatia do P6 (workspace remoto, LSP do outro lado)
+ou o banco (consultas/escrita/TLS), à escolha do autor; a exercitação da
+fatia 1 pede uma Pi real, que não há nesta máquina.
 Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
@@ -616,7 +622,7 @@ ainda não está verde.
 | P4 — MicroPython | **FEITO em 2026-09-17 (§7.47, 0.116.0):** arquivos na placa (`serial.files`, C2 — lido e reescrito no ESP32 do autor), firmware oficial no catálogo de instalação e gravado pela proposta do E4 (C5), stubs por placa no basedpyright (C4). Resta o C6 (CircuitPython: drive `CIRCUITPY` + `circup`), baixa prioridade. |
 | P3 — depuração profunda | **Fatia 1 FEITA em 2026-09-17 (§7.49, 0.118.0):** o `launch` do probe-rs consertado (`coreConfigs`), `svdFile` no kit → escopo `Peripherals`, RTT/defmt como saída de debug (`rtt`), `debug.scopes`/`readMemory`/`disassemble` como passagem do DAP padrão, a vista de inspeção na aba Debug. Provado com adaptador falso — nenhuma sonda nesta máquina. **Resta:** D5 threads de RTOS (`rtos` do OpenOCD via `debugServer`), SVD com ESCRITA (`setVariable`/`writeMemory`, que os dois adaptadores anunciam), `rttChannelFormats` (defmt declarado), o caminho `cmsis-svd` pelo GDB. |
 | P5 — qualidade | **FEITO em 2026-09-17 (§7.50, 0.119.0):** `--clang-tidy` no clangd e o clang-tidy do projeto pela CDB no `quality.run` (D6); gtest/Catch2 dentro dos binários do ctest na árvore, rodar um pelo filtro (D7); domínio `coverage.*` — cargo-llvm-cov e coverage.py em LCOV, a calha pinta (D8); a lâmpada 💡 na linha do cursor com diagnóstico. **Resta:** cppcheck como segundo motor; gcov/lcov para C/C++ (exige `--coverage` no build do usuário); doctest. |
-| P6 — Linux embarcado | SSH remoto, decidido e ainda não arquitetado: deploy, gdbserver e debugpy attach. |
+| P6 — Linux embarcado | **Fatia 1 FEITA em 2026-09-17 (§7.51, 0.120.0):** domínio `remote.*` — perfil SSH sem senha em `.kinein/remotes.json`, `remote.probe` (uname + `command -v` pelo `ssh` em BatchMode), `remote.deploy` (rsync/scp), `remote.command` (run / gdbserver → kit / debugpy / shell); painel **Alvo remoto (SSH)**. **Resta (42 §P6):** workspace remoto (árvore, editor, busca, watcher), LSP do outro lado, mapeamento de caminhos, journalctl/dmesg, Yocto/Buildroot reconhecidos, `sshd` local no gate, exercitação numa Pi real. |
 | Frameworks, bloco E | **FEITO em 2026-09-17 (§7.48, 0.117.0):** `build.run` compila pelo wrapper de cada um (`pio run`; `idf.py build` no ambiente ativado — export.sh ou EIM; `west build -d build -b <placa>`; CMake com `-DPICO_SDK_PATH`), Gravar ganhou `idf.py`/`west`/`platformio`, o monitor ganhou o IDF Monitor e o `pio device monitor`, `platformio.ini` é tipo de projeto. Provado com wrappers falsos — nenhum SDK real nesta máquina. Resta: E5 templates curados, E6 Unity/Ceedling. |
 | Banco | Executar consultas e escrever; TLS do PostgreSQL. |
 | Varredura 40 §8 | `quality.output` descartado no C++; `environmentScan` sem ouvinte; presets sem tela. Os demais achados permanecem detalhados no §8. |
@@ -3499,3 +3505,51 @@ autor pode rodar pelo menu). cppcheck, doctest e gcov/lcov não entraram.
 **Próximo:** P6 — Linux embarcado (SSH remoto: deploy, `gdbserver`, debugpy
 attach remoto), que precisa de um desenho antes de código; ou o banco
 (consultas/escrita/TLS).
+
+### 7.51 P6 fatia 1 — o alvo Linux por SSH como recurso do projeto — 2026-09-17 (noite), protocolo 0.120.0
+
+O desenho foi escrito antes do código (`roadmaps/42` §P6, "Desenho da fatia
+1") e o código o segue. **O que é:** a Raspberry Pi, a placa com imagem
+própria — um Linux alcançável por SSH — no molde do `datasource.*`: um
+perfil **sem senha em disco** (`RemoteTarget { name, host, user?, port?,
+identityFile?, deployDir? }`, `deny_unknown_fields`; um teste reprova
+qualquer chave que pareça segredo no `.kinein/remotes.json`), um **probe** que
+MEDE o alvo (`ssh -o BatchMode=yes -o ConnectTimeout=5 [-p] [-i] [user@]host
+'uname -m; uname -sr; command -v gdbserver python3 rsync'` — uma linha por
+fato; a chave recusada vira "copie a sua com `ssh-copy-id user@host`", o
+host não resolvido e o sem rota em 5 s têm cada um a sua frase), um
+**deploy** como job (`rsync -az --delete -e 'ssh …' <origem>
+[user@]host:<dest>/`, ou `scp -r` sem `rsync`; origem padrão `build/`,
+destino `deployDir` ou `~/kinein/<projeto>`; origem inexistente é recusa
+síncrona) e o `remote.command` **puro** que compõe a linha `ssh -tt …
+'<comando>'` para `run` (configuração "Rodar em pi"), `debugServer` (o kit
+ganha `debugServer` + `remoteTarget = host:2345` — a ponte tinha o
+`toolchain.setKit` sem esses dois campos; ganhou `toolchainSetKitRemote`),
+`debugpy` (`--listen 0.0.0.0:5678 --wait-for-client`, attach em host:5678) e
+`shell` (para o terminal da IDE). O `-tt` é decisão medida no desenho: o
+`debugServer` do kit roda por `sh -c` sem terminal, e sem pty forçado matar
+o `ssh` local deixaria o `gdbserver` órfão na placa. Transporte é o
+`ssh`/`rsync`/`scp` do sistema como processo (OpenSSH BSD, rsync GPL-3 —
+nunca crate). UI: painel **Alvo remoto (SSH)** no menu Ambiente (`remote.list`
+na paleta, sem atalho): lista, formulário sem campo de senha (a nota diz o
+`ssh-copy-id`), Sondar primário, Enviar, e os quatro botões que levam o
+resultado ao dono certo (run configs, kit, terminal) — `RemoteController` +
+`Remote{Event,Request}Router`, `core_client_remote.cpp`.
+
+**Medido em 2026-09-17:** 813 testes Rust (+10: o store ida e volta, lixo e
+schema desconhecido, o arquivo sem chave de segredo; as linhas de ssh/rsync/
+scp, o script do probe, o parser linha a linha e as três frases de falha; os
+comandos e a validação; por despacho — o catálogo sem segredo e ordenado, o
+`password` recusado pelo contrato, o probe com `ssh` falso respondendo como
+uma Pi e outro recusando a chave, o deploy por `rsync` falso e a queda para
+`scp`, o `remote.command` nos quatro tipos); 44 harnesses QML (`tst_remote`
+novo); 156 métodos, 55 eventos, 36 domínios (150/53/35 + os desta fatia);
+clippy, fmt, clang-format, Clang-Tidy do .cpp novo, fiação, propriedades,
+alcance, duplicação, arquitetura, docs, links, shell, atalhos (o comando
+`remote.list` tratado no host e no menu), qmllint; `debug-strict` compila.
+
+**Não provado, dito:** nenhum alvo real — não há Pi nesta máquina; o `ssh`
+real não foi exercitado (só os falsos ecoando argv) e o `sshd` local no gate
+fica para quando houver chave de teste. Workspace remoto, LSP do outro lado,
+mapeamento de caminhos, journalctl/dmesg, Yocto/Buildroot: fatia 2 (42 §P6).
+**Próximo:** fatia 2 do P6, ou o banco (consultas/escrita/TLS).

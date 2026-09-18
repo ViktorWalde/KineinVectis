@@ -218,6 +218,17 @@ public:
     // um arquivo do ultimo relatorio, para a calha do editor.
     Q_INVOKABLE void coverageRun();
     Q_INVOKABLE void coverageLines(const QString& file);
+    // O alvo Linux por SSH (remote.*, 0.120.0): catalogo sem segredo, sonda e deploy como
+    // jobs, e a linha `ssh …` para configuracao de execucao/kit. Nunca senha.
+    Q_INVOKABLE void remoteList();
+    Q_INVOKABLE void remoteSave(const QVariantMap& target);
+    Q_INVOKABLE void remoteRemove(const QString& name);
+    Q_INVOKABLE void remoteProbe(const QString& name);
+    Q_INVOKABLE void remoteDeploy(const QString& name, const QString& source = QString(),
+                                  const QString& dest = QString());
+    Q_INVOKABLE void remoteCommand(const QString& name, const QString& kind,
+                                   const QString& program = QString(), int port = 0);
+    Q_INVOKABLE void toolchainSetKitRemote(const QString& remoteTarget, const QString& debugServer);
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -396,6 +407,11 @@ signals:
     void coverageFinished(const QVariantMap& outcome);
     void coverageLinesResolved(const QString& file, bool known, const QVariantList& covered,
                                const QVariantList& missed);
+    void remoteTargetsResolved(const QVariantList& targets);
+    void remoteJobAccepted(const QString& method, const QString& jobId, const QString& command);
+    void remoteCommandResolved(const QVariantMap& result);
+    void remoteProbed(const QVariantMap& outcome);
+    void remoteDeployed(const QVariantMap& outcome);
     void indexProgressed(int files, int symbols);
     void indexFinished(const QVariantMap& stats);
     void containerStatusResolved(const QVariantMap& status);
@@ -544,6 +560,7 @@ private:
     bool dispatchIndexResult(const QString& method, const QJsonObject& result);
     bool dispatchPythonResult(const QString& method, const QJsonObject& result);
     bool dispatchCoverageResult(const QString& method, const QJsonObject& result);
+    bool dispatchRemoteResult(const QString& method, const QJsonObject& result);
     bool dispatchLibraryResult(const QString& method, const QJsonObject& result);
     bool dispatchDebugResult(const QString& method, const QJsonObject& result);
     bool dispatchWorkspaceResult(const QString& method, const QJsonObject& result);

@@ -181,6 +181,7 @@ Window {
         settingsController: domains.settingsController
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
+        remoteController: domains.remoteController
         grafanaController: domains.grafanaController
         embeddedController: domains.embeddedController
         setupController: domains.setupController
@@ -313,6 +314,7 @@ Window {
         settingsController: domains.settingsController
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
+        remoteController: domains.remoteController
         grafanaController: domains.grafanaController
         embeddedController: domains.embeddedController
         setupController: domains.setupController

@@ -21,6 +21,7 @@ Item {
     readonly property alias embeddedController: embeddedController
     readonly property alias setupController: setupController
     readonly property alias containerController: containerController
+    readonly property alias remoteController: remoteController
 
     visible: false
 
@@ -97,6 +98,14 @@ Item {
     // projeto — por isso o controller conhece o workspaceRoot.
     ContainerController {
         id: containerController
+
+        workspaceRoot: root.coreClient.workspaceRoot
+    }
+
+    // O alvo Linux por SSH (P6 fatia 1 do roadmaps/42, 2026-09-17): a Pi como
+    // recurso do projeto. Guarda o PERFIL, nunca senha — SSH e' por chave.
+    RemoteController {
+        id: remoteController
 
         workspaceRoot: root.coreClient.workspaceRoot
     }

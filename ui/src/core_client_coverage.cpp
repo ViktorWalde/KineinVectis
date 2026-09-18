@@ -29,7 +29,7 @@ bool CoreClient::dispatchCoverageResult(const QString& method, const QJsonObject
         return true;
     }
     // coverage.run: so' o jobId; o desfecho chega por event.coverage.finished.
-    return false;
+    return dispatchRemoteResult(method, result);
 }
 
 } // namespace kinein

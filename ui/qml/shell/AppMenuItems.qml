@@ -143,6 +143,8 @@ Item {
                   enabled: workspaceOpen },
                 { label: qsTr("Banco de dados..."), action: "datasource.list",
                   enabled: workspaceOpen },
+                { label: qsTr("Alvo remoto (SSH)..."), action: "remote.list",
+                  enabled: workspaceOpen },
                 { label: qsTr("Observabilidade..."), action: "grafana.get",
                   enabled: workspaceOpen },
                 { label: qsTr("Embarcados..."), action: "probe.list",

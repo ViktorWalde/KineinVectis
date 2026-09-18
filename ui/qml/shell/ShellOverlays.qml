@@ -17,6 +17,7 @@ Item {
     property var configActionController: null
     property var libraryController: null
     property var dataSourceController: null
+    property var remoteController: null
     property var grafanaController: null
     property var embeddedController: null
     property var setupController: null
@@ -196,6 +197,7 @@ Item {
         hostHeight: root.hostHeight
         libraryController: root.libraryController
         dataSourceController: root.dataSourceController
+        remoteController: root.remoteController
         grafanaController: root.grafanaController
         embeddedController: root.embeddedController
         toolchainController: root.toolchainController

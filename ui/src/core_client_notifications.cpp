@@ -89,6 +89,16 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit coverageFinished(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.remote.probed")) {
+        // name, success, arch, kernel, tools[{id,found,path}], error e raw.
+        emit remoteProbed(params.toVariantMap());
+        return;
+    }
+    if (method == QStringLiteral("event.remote.deployed")) {
+        // name, success, source, dest, command e error.
+        emit remoteDeployed(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.python.stubs")) {
         // jobId, success, package, command e target: a tela diz e pede o status.
         emit pythonStubsFinished(params.toVariantMap());

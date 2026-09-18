@@ -54,6 +54,17 @@ Item {
         coverageController: root.domains.coverageController
     }
 
+    RemoteEventRouter {
+        coreClient: root.domains.coreClient
+        remoteController: root.domains.remoteController
+    }
+
+    RemoteRequestRouter {
+        coreClient: root.domains.coreClient
+        remoteController: root.domains.remoteController
+        runtimeController: root.domains.runtimeController
+    }
+
     JobsEventRouter {
         coreClient: root.domains.coreClient
         jobsController: root.domains.jobsController

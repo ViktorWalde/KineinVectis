@@ -37,6 +37,7 @@ Item {
     readonly property alias embeddedController: environment.embeddedController
     readonly property alias setupController: environment.setupController
     readonly property alias containerController: environment.containerController
+    readonly property alias remoteController: environment.remoteController
     readonly property alias libraryController: environment.libraryController
     readonly property alias runtimeController: runtimeController
     readonly property alias runConfigController: runConfigController
@@ -329,6 +330,7 @@ Item {
         embeddedController: environment.embeddedController
         setupController: environment.setupController
         containerController: environment.containerController
+        remoteController: environment.remoteController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
         onShowTabRequested: function(tab) {
             shellController.showTab(tab);

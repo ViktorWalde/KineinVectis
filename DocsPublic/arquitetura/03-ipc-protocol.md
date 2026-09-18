@@ -1,5 +1,28 @@
 # 03 — Protocolo IPC
 
+> **0.120.0 (2026-09-17, noite) — P6 fatia 1, o alvo Linux por SSH como
+> recurso do projeto (`roadmaps/42` §P6, desenho escrito antes do código).**
+> **Domínio novo `remote.*`** (o 36º), no molde do `datasource.*`: um perfil
+> **sem senha em disco** (`RemoteTarget { name, host, user?, port?,
+> identityFile?, deployDir? }` com `deny_unknown_fields` — um campo `password`
+> é recusado pelo contrato, e um teste reprova qualquer chave que pareça
+> segredo no `.kinein/remotes.json`); `remote.list/save/remove` síncronos;
+> `remote.probe { name }` → job (`ssh -o BatchMode=yes -o ConnectTimeout=5
+> [-p] [-i] [user@]host 'uname -m; uname -sr; command -v gdbserver python3
+> rsync'`) → `event.remote.probed { jobId, name, success, arch?, kernel?,
+> tools[{ id, found, path? }], error?, raw }` — a chave recusada vira "copie
+> a sua com `ssh-copy-id user@host`"; `remote.deploy { name, source?, dest? }`
+> → job (`rsync -az --delete -e 'ssh …' <origem> [user@]host:<dest>/`, ou
+> `scp -r` sem `rsync`) → `event.remote.deployed { jobId, name, success,
+> source, dest, command, error? }`; `remote.command { name, kind: run |
+> debugServer | debugpy | shell, program?, port? }` PURO → `{ command,
+> remoteTarget?, name, source[] }` — a linha `ssh -tt … '<comando>'` que a UI
+> grava como configuração de execução ("Rodar em pi"), como `debugServer` +
+> `remoteTarget = host:2345` do kit (`toolchain.setKit` só com os dois
+> campos — a ponte ganhou `toolchainSetKitRemote`) ou manda ao terminal.
+> Painel **Alvo remoto (SSH)** no menu Ambiente e comando `remote.list` na
+> paleta. Métodos 156, eventos 55, domínios 36.
+>
 > **0.119.0 (2026-09-17, noite) — P5, qualidade: clang-tidy, gtest/Catch2,
 > cobertura, a lâmpada proativa (D6–D8 do `roadmaps/41`).** (1) **clang-tidy
 > em dois lugares**: o clangd sobe com `--clang-tidy` (o clangd 21 desta
@@ -3636,6 +3659,63 @@ igual), `known: false` quando o relatório não o tem. Na UI: comando
 guarda o resumo e, a cada troca de aba, pede as linhas do arquivo ativo — a
 calha pinta uma barra de 3 px ao lado da do diff: verde coberta, vermelha
 instrumentada e nunca executada.
+
+## `remote.*` — o alvo Linux por SSH
+
+Domínio novo no protocolo `0.120.0` (P6 fatia 1 do `roadmaps/42`, P6 do `40`
+§4.1, 2026-09-17): a Raspberry Pi, a placa com imagem própria, como recurso
+do projeto — no molde do `datasource.*`. Transporte é o `ssh`/`rsync`/`scp`
+do sistema como **processo** (OpenSSH BSD, rsync GPL-3 — nunca crate).
+
+```text
+remote.list    {}                                -> { targets: [RemoteTarget] }
+remote.save    { target }                        -> { targets }   (cria/substitui pelo nome)
+remote.remove  { name }                          -> { targets }
+remote.probe   { name }                          -> { jobId, command }   (job)
+remote.deploy  { name, source?, dest? }          -> { jobId, command }   (job)
+remote.command { name, kind, program?, port? }   -> { command, remoteTarget?, name, source[] }
+               kind: run | debugServer | debugpy | shell        (PURO: nada roda)
+
+RemoteTarget   name · host · user? · port? (22) · identityFile? · deployDir? (~/kinein/<projeto>)
+               — SEM senha, estruturalmente: `deny_unknown_fields`, e um teste reprova
+               qualquer chave que pareça segredo no arquivo gravado
+
+event.remote.probed   { jobId, name, success, arch?, kernel?, tools: [{ id, found, path? }],
+                        error?, raw }
+event.remote.deployed { jobId, name, success, source, dest, command, error? }
+```
+
+**Persistência:** `.kinein/remotes.json` (`schemaVersion: 1`, ordenado pelo
+nome; arquivo inválido = nenhum alvo; porta 22 e campos vazios ficam
+ausentes). **Probe:** `ssh -o BatchMode=yes -o ConnectTimeout=5 [-p P] [-i K]
+[user@]host 'uname -m; uname -sr; for t in gdbserver python3 rsync; do
+printf "%s=" $t; command -v $t || echo; done'` — uma linha por fato, lida
+sem adivinhar; `BatchMode` faz a falta de chave falhar em segundos, e o
+`error` diz o passo (`ssh-copy-id user@host`; host não resolvido; sem
+rota em 5 s). **Deploy:** `rsync -az --delete -e 'ssh [-p P] [-i K]'
+<origem> [user@]host:<dest>/` quando há `rsync` nesta máquina, senão `scp
+[-P P] [-i K] -r`; a origem padrão é `<root>/build`, o destino o `deployDir`
+do alvo ou `~/kinein/<projeto>` (o `~` fica sem aspas para o shell REMOTO
+expandir); origem inexistente é recusa síncrona ("compile antes").
+**Comandos:** `run` → `ssh -tt … '<programa>'`; `debugServer` → `ssh -tt …
+'gdbserver :2345 <programa>'` com `remoteTarget = host:2345` (o `gdb -i
+dap` faz `attach` a servidor desde 0.89.0); `debugpy` → `ssh -tt … 'python3
+-m debugpy --listen 0.0.0.0:5678 --wait-for-client <script>'` com
+`remoteTarget = host:5678` (o attach TCP de 0.109.0); `shell` → `ssh …
+[user@]host` sem `BatchMode`, para o terminal da IDE. `program` relativo
+entra no `deployDir`; absoluto ou `~` vai como dado; ausente vira
+`<binario>` com a fonte dizendo "edite". O `-tt` força pty mesmo sem
+terminal local (o `debugServer` do kit roda por `sh -c` com stdio fechado):
+matar o `ssh` local derruba o processo remoto por SIGHUP — sem isso o
+`gdbserver` ficaria órfão na placa. Na UI: painel **Alvo remoto (SSH)** (menu
+Ambiente; comando `remote.list`): lista, formulário sem campo de senha,
+**Sondar** (primário), **Enviar**, e os quatro botões que levam o resultado
+do `remote.command` ao dono certo — `runConfig.save` ("Rodar em pi",
+"debugpy em pi"), `toolchain.setKit { remoteTarget, debugServer }` (só os dois
+campos; a ponte ganhou `toolchainSetKitRemote`) ou
+`runtimeController.submitShellInput`. **Não entra nesta fatia (dito):**
+workspace remoto, LSP do outro lado, mapeamento de caminhos, `sshd` local
+no gate — o `RemoteContext` inteiro do 28 §4 segue no `42` §P6.
 
 ## `setup.*` — o passo a passo oficial de instalação, por distro
 

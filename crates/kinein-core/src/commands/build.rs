@@ -181,6 +181,25 @@ pub(super) fn datasource_command_descriptors() -> Vec<CommandDescriptor> {
     }]
 }
 
+/// O alvo Linux por SSH (P6 fatia 1 do roadmaps/42, 2026-09-17): a Pi, a
+/// placa com imagem propria.
+///
+/// UM descriptor, como o `datasource`: a paleta anuncia a ENTRADA do painel;
+/// sondar, enviar e compor comandos sao gestos DENTRO dele. POR PROJETO
+/// (`.kinein/remotes.json`), logo `requires_workspace`. Sem atalho: os
+/// Ctrl+Alt+<letra> livres ja' sao poucos, e o painel nasce sem uso medido.
+pub(super) fn remote_command_descriptors() -> Vec<CommandDescriptor> {
+    vec![CommandDescriptor {
+        id: "remote.list".to_owned(),
+        title: "Alvo remoto (SSH)...".to_owned(),
+        category: "Projeto".to_owned(),
+        description: "Linux embarcado por SSH: sondar, enviar, rodar e depurar; sem senha em disco"
+            .to_owned(),
+        default_shortcut: None,
+        requires_workspace: true,
+    }]
+}
+
 /// Observabilidade (roadmaps/35, etapa 27): o Grafana deste projeto.
 ///
 /// UM descriptor, e o id e' `grafana.get` porque e' o metodo que a acao chama:

@@ -1,9 +1,9 @@
 import QtQuick
 import KineinVectis
 
-// Os seis paineis de AMBIENTE DO PROJETO: bibliotecas, banco, observabilidade,
-// embarcados, containers e instalacao de ferramentas (a simulacao saiu do
-// produto em 2026-09-12).
+// Os sete paineis de AMBIENTE DO PROJETO: bibliotecas, banco, alvo remoto
+// (SSH, 2026-09-17), observabilidade, embarcados, containers e instalacao de
+// ferramentas (a simulacao saiu do produto em 2026-09-12).
 //
 // Nasceu em 2026-09-05, quando a catraca reprovou o `ShellOverlays` ao ganhar
 // mais um painel. O corte e' por RESPONSABILIDADE: todos tem a mesma
@@ -18,6 +18,7 @@ Item {
     property real hostHeight: 0
     property var libraryController: null
     property var dataSourceController: null
+    property var remoteController: null
     property var grafanaController: null
     property var embeddedController: null
     // O painel de embarcados edita o KIT (chip, alvo, depurador), que mora aqui.
@@ -52,6 +53,16 @@ Item {
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
         maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
         onDismissRequested: root.dataSourceController.close()
+    }
+
+    RemotePanelHost {
+        anchors.fill: parent
+        visible: root.remoteController.panelVisible
+        z: 99
+        controller: root.remoteController
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
+        onDismissRequested: root.remoteController.close()
     }
 
     GrafanaPanelHost {

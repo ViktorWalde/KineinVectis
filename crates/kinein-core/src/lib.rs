@@ -33,6 +33,7 @@ pub mod probe;
 pub mod process;
 pub mod project;
 pub mod python;
+pub mod remote;
 pub mod rpc;
 pub mod run;
 pub mod runconfig;
@@ -274,6 +275,7 @@ impl Core {
             .or_else(|| self.python_request_response(method, request_id.clone(), params))
             .or_else(|| self.serial_request_response(method, request_id.clone(), params))
             .or_else(|| self.coverage_request_response(method, request_id.clone(), params))
+            .or_else(|| self.remote_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))
             .unwrap_or_else(|| {
