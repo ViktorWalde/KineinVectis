@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.123.0
-testes      829 Rust aprovados; 50 harnesses QML (medicao de 2026-09-18, §7.63)
+testes      829 Rust aprovados; 51 harnesses QML (medicao de 2026-09-18, §7.65)
 metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
@@ -665,9 +665,9 @@ só depois código. **O desenho está no [`43`](43-etapa2-hud-ui-ux.md)
 (2026-09-18):** a referência lida nas fontes, três fotos da IDE de hoje, e
 as fatias F1–F8 com a medida de cada uma; a F0 (infra: `kinein-vectis
 <pasta>`, `KINEIN_SCREENSHOT`, a status bar sem colisão, os gates sem
-poluir os recentes) foi feita no mesmo dia (§7.55). **F1 a F7 foram feitas
-no mesmo dia** (§7.56–7.63, uma fatia por commit); resta a F8 e o
-fechamento da etapa — o panorama consolidado está na §4.2.
+poluir os recentes) foi feita no mesmo dia (§7.55). **F1 a F8 foram feitas
+no mesmo dia** (§7.56–7.65, uma fatia por commit); resta o fechamento da
+etapa (§4.2.2) — o panorama consolidado está na §4.2.
 
 ### 4.2 Panorama consolidado — 2026-09-18 (noite), depois da F7: o que falta, e o que cada resto precisa
 
@@ -684,7 +684,7 @@ lista de pendências parecer maior ou menor do que é.
 
 ```text
 protocolo    0.123.0 · 160 metodos IPC · 57 eventos · 36 dominios (todos no arquitetura/03)
-testes       829 Rust · 50 harnesses QML · 24 verificacoes no gate, todas verdes
+testes       829 Rust · 51 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -704,15 +704,10 @@ modelo do projeto (§7.46), P4 MicroPython (§7.47), bloco E frameworks
 #### 4.2.2 Etapa 2 — o que resta para fechar
 
 ```text
-F8  paineis de ambiente com a MESMA forma (43 §4)        fatia de codigo, sem hardware
-    banco, remoto, embarcados, containers: cabecalho igual (titulo, subtitulo de
-    uma linha, acao primaria a direita), veredito igual (a faixa verde/vermelha),
-    grade igual — a grade do banco (ui/qml/datasource/DataSourceQuery.qml) vira
-    componente comum em ui/qml/components/. E' a "experiencia a DataGrip
-    adaptada" que o autor pediu. Medida: um componente de grade + harness; fotos
-    dos quatro paineis (KINEIN_STARTUP_COMMANDS abre cada um headless).
-    Catracas: view 300, controller/host 400 — os hosts de ambiente estao perto
-    (ShellWorkspaceHost 384).
+F8  paineis de ambiente com a MESMA forma                 FEITA (§7.65, 2026-09-18)
+    KvPanelFrame/KvPanelHeader/KvVerdict/KvDataGrid; os quatro paineis com a
+    mesma primeira linha; o Embarcados cabe. Restos ditos: containers e portas
+    como grade com acoes; Grafana/Setup/Biblioteca na moldura comum.
 
 Fechamento da etapa                                       meia sessao
     43 §5 e §7 sincronizados; foto final das tres telas de 43 §2 (inicial,
@@ -823,6 +818,59 @@ verificações verdes" deve ler junto esta lista.
    hardware** (b), à medida que a coisa chegar à mesa; (iv) **release**:
    AppImage regenerado e testado (`testar-appimage.sh`) — só quando o autor
    pedir, como a regra diz.
+
+#### 4.2.6 Como o autor roda a IDE e o que testar (pedido em 2026-09-18, ao fim da F8)
+
+**Rodar** (da raiz do repositório — é de lá que a UI acha o core em
+`target/debug/kinein-core`; `KINEIN_CORE_BIN=<caminho>` força outro):
+
+```bash
+cd /home/hugh/KineinVectis
+cargo build -p kinein-core                                        # o core (debug)
+cmake --build build/linux-clang-debug-strict --target kinein-vectis   # a UI que o gate usa
+./build/linux-clang-debug-strict/ui/kinein-vectis /home/hugh/KineinVectis
+```
+
+Para sentir o tempo real (o debug abre em ~730 ms; o hardened em ~318 ms):
+
+```bash
+cargo build --release -p kinein-core
+cmake --build --preset linux-clang-release-hardened
+KINEIN_CORE_BIN=$PWD/target/release/kinein-core \
+  ./build/linux-clang-release-hardened/ui/kinein-vectis /home/hugh/KineinVectis
+```
+
+Sem a pasta por argumento, a IDE abre na tela inicial (F7). `KINEIN_STARTUP_COMMANDS=
+datasource.list` (ou `remote.list`, `probe.list`, `container.list`, `view.problems`,
+`build.run`) abre um painel logo depois do workspace, como o gate faz.
+
+**O roteiro do teste — o que só uma pessoa na frente da IDE mede** (cada
+item vira uma fatia pequena se falhar; anote o que viu e em quanto tempo):
+
+```text
+tela inicial (F7)    Enter abre o recente em destaque; ↑↓ movem; "1 recente sem
+                     caminho ocultado · Desfazer" traz de volta; "Ver" abre a
+                     aba Ferramentas
+barra (F1)           Projeto · Git · Executar: UMA configuracao, ▶ roda, o menu
+                     "…" tem Build/Testes/Analise dos sistemas presentes
+status bar (F2)      durante um build: o job com progresso e Cancelar no centro;
+                     o LSP a direita muda de "subindo" para o nome
+editor (F3/F6)       abrir mod.rs de kinein-core: nada trava enquanto o
+                     rust-analyzer sobe; a aba ativa e a linha atual se veem;
+                     digitar 2 s e parar: o ● some (autosave)
+explorer (F4)        .git/target/build em cinza e no fim; o arquivo aberto
+                     aparece selecionado ao trocar de aba
+Problems (F5/F6-b)   um build que falha: cada linha com o proximo passo; o
+                     mesmo erro NAO aparece duas vezes (build + LSP)
+paineis (F8)         Ambiente > Banco / Alvo remoto / Embarcados / Containers:
+                     a mesma primeira linha, a acao primaria a direita, o
+                     veredito antes do formulario; Embarcados ROLA e nao vaza
+resposta ao gesto    para cada clique acima: houve feedback em < 400 ms? Onde
+                     nao houve, qual gesto e quanto demorou
+placa (E2/E5)        com o ESP32 no USB: Embarcados > Portas seriais mostra
+                     /dev/ttyUSB0 e o veredito de permissao; "Identificar" le
+                     o flash-id (so' leitura — nunca gravar nesta placa)
+```
 
 ## 5. As decisões registradas que NÃO se reabrem
 
@@ -4268,3 +4316,54 @@ dos painéis na IDE aberta é o que teria pego isto no dia.
 **Medido:** fiação IPC verde com a quinta pergunta; foto dos quatro painéis
 com as respostas chegando (a F8 parte delas); Clang-Tidy limpo
 (`cpp-fio-despacho.log`).
+
+### 7.65 Etapa 2, F8 — os painéis de ambiente com a mesma forma — 2026-09-18
+
+Fotos 13a–13d (depois) contra 12a–12d (antes), nas mesmas condições
+(`KINEIN_STARTUP_COMMANDS`, este repositório, config isolada, 8 s). O
+desenho é o do 43 §8; o que entrou:
+
+- **Três componentes comuns** em `ui/qml/components/`: `KvPanelFrame`
+  (a moldura: centralizada, dispensa por clique fora, e o conteúdo ROLA
+  quando não cabe — dois modos: o painel preenche e rola por dentro, ou
+  pede a altura e a moldura rola), `KvPanelHeader` (título, subtítulo de
+  UMA linha com elide, a ação primária à direita, o ×), `KvVerdict` (a
+  faixa "medindo…" / verde / vermelha / cinza-neutra com o que o core
+  mediu, em mono). Mais `KvDataGrid` + `GridRules` (a grade: cabeçalho
+  fixo, largura por conteúdo com piso 56 / teto 320, a sobra distribuída
+  quando cabe, as largas encolhem até 120 antes de rolar, `null` em
+  itálico; a regra é pura e tem harness, `tst_grid_rules`).
+- **Os quatro painéis** (banco, remoto, embarcados, containers) começam
+  com a mesma primeira linha e a ação primária de cada um no mesmo lugar:
+  Testar · Sondar · Procurar sonda e portas · Atualizar. Fechar saiu dos
+  rodapés (é o ×). O veredito vem ANTES do formulário no banco e no
+  remoto (`DataSourceVerdict` 77 → 56 linhas e `RemoteVerdict` 106 → 85,
+  os dois sobre o `KvVerdict`); o motor dos containers e a busca de sonda
+  dos embarcados viraram a mesma faixa.
+- **O Embarcados cabe:** o painel declara `implicitHeight` e a moldura
+  rola — na foto 12c ele vazava por cima do editor e da barra de status;
+  na 13c, a 800 px, a moldura vai de 28 a 760 e o resto rola.
+- **A grade** substitui a caseira do `DataSourceQuery` (212 → 138
+  linhas) e lista as imagens de container (repositório · tag · tamanho ·
+  criada; o tag de 64 hex encolhe até 120 px e as quatro colunas cabem —
+  foto 13d). Os hosts: `DataSourcePanelHost` 78 → 51, `RemotePanelHost`
+  80 → 56, `EmbeddedPanelHost` 64 → 27, `ContainerPanelHost` 51 → 25.
+
+**Não feito, dito:** a lista de containers (cinco ações por linha) e as
+portas seriais (monitor/identificar por porta) NÃO viraram grade — a
+grade comum não tem coluna de ações, e "selecionar a linha e agir na
+barra" é outra interação, a decidir com o autor; o Grafana
+(`GrafanaPanelHost`) e o Setup/Biblioteca ficaram na moldura antiga (cabem
+na mesma forma numa fatia de meia hora); o `container.status` de 2,4 s
+síncrono (§7.64) fica como resto; nenhum painel foi exercitado com
+servidor/placa reais (§4.2.3-b).
+
+**Medido:** 51 harnesses (+`tst_grid_rules`; `tst_container` passa a
+provar `imageRows`); gates QML (lint, fiação, propriedades, duplicação,
+alcance, lógica), fiação IPC (com a quinta pergunta), arquitetura,
+atalhos, docs, links, binário-abre (732 ms, sem aviso) verdes; sem
+mudança em Rust; o C++ mudou só na §7.64 (Clang-Tidy limpo lá).
+
+**Com a F8, a Etapa 2 fecha o que o 43 §4 desenhou (F0–F8).** O que
+resta dela é o fechamento da §4.2.2 (dívidas pequenas + o que só o autor
+mede), e a Etapa 3 é decisão do autor (§4.2.5).

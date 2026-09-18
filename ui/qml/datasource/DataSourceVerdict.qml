@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O que aconteceu no ultimo teste de conexao — e, quando for o caso, o campo
-// de senha.
+// O que aconteceu no ultimo teste de conexao — a faixa comum (KvVerdict,
+// F8) — e, quando for o caso, o campo de senha.
 //
 // O CAMPO DE SENHA APARECE POR `secretRequired`, NUNCA POR TEXTO. O core decide
 // isso pelo `SQLSTATE`, que nao muda de idioma; a mensagem do servidor vem
@@ -34,33 +34,12 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingXSmall
 
-        Text {
+        KvVerdict {
             width: parent.width
-            visible: root.testing
-            text: qsTr("Conectando...")
-            color: Theme.textMuted
-            font.pixelSize: 10
-        }
-
-        Rectangle {
-            width: parent.width
-            visible: !root.testing && (root.ok || root.message !== "")
-            height: veredito.implicitHeight + 2 * Theme.spacingSmall
-            radius: Theme.radius
-            color: root.ok ? Theme.successSoft : Theme.errorSoft
-            opacity: 0.18
-        }
-
-        Text {
-            id: veredito
-
-            width: parent.width
-            visible: !root.testing && (root.ok || root.message !== "")
-            wrapMode: Text.WordWrap
-            text: root.ok ? root.serverVersion : root.message
-            color: root.ok ? Theme.textPrimary : Theme.textSecondary
-            font.family: Theme.monoFont
-            font.pixelSize: 10
+            busy: root.testing
+            busyText: qsTr("Conectando...")
+            ok: root.ok
+            message: root.ok ? root.serverVersion : root.message
         }
 
         DataSourceField {

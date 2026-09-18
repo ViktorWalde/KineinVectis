@@ -70,7 +70,11 @@ Item {
         // Bytes viram GB/MB; texto pronto (Docker) passa direto.
         if (controller.formatSize(3035568151) !== "3.04 GB") failures += 8192;
         if (controller.formatSize("431MB") !== "431MB") failures += 16384;
-        if (controller.imageSummary({ repository: "postgres", tag: "16", size: 452984832 }) !== "postgres:16 · 453.0 MB") failures += 32768;
+        // F8: a grade comum recebe linhas com o tamanho ja' formatado.
+        controller.handleImages([{ repository: "postgres", tag: "16", size: 452984832, created: "2026-09-01" }], "");
+        const linhaImagem = controller.imageRows()[0];
+        if (linhaImagem.repository !== "postgres" || linhaImagem.tag !== "16"
+            || linhaImagem.size !== "453.0 MB" || linhaImagem.created !== "2026-09-01") failures += 32768;
 
         // Agir e' PEDIR: o controller nao roda nada. Logs/shell sao abas de
         // terminal, e a aba e' do projeto: sem workspace o pedido nao sai e o

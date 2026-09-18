@@ -19,6 +19,11 @@ set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_Q
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
 set_source_files_properties(qml/components/KvIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvIconGlyphs.js)
 set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
+set_source_files_properties(qml/components/KvPanelFrame.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelFrame.qml)
+set_source_files_properties(qml/components/KvPanelHeader.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelHeader.qml)
+set_source_files_properties(qml/components/KvVerdict.qml PROPERTIES QT_RESOURCE_ALIAS KvVerdict.qml)
+set_source_files_properties(qml/components/KvDataGrid.qml PROPERTIES QT_RESOURCE_ALIAS KvDataGrid.qml)
+set_source_files_properties(qml/components/GridRules.qml PROPERTIES QT_RESOURCE_ALIAS GridRules.qml)
 set_source_files_properties(qml/components/KvBarButton.qml PROPERTIES QT_RESOURCE_ALIAS KvBarButton.qml)
 set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltip.qml)
 set_source_files_properties(qml/components/KvTooltipHost.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltipHost.qml)
@@ -292,6 +297,11 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvIcon.qml
         qml/components/KvIconGlyphs.js
         qml/components/KvToggleChip.qml
+        qml/components/KvPanelFrame.qml
+        qml/components/KvPanelHeader.qml
+        qml/components/KvVerdict.qml
+        qml/components/KvDataGrid.qml
+        qml/components/GridRules.qml
         qml/components/KvBarButton.qml
         qml/components/KvTooltip.qml
         qml/components/KvTooltipHost.qml

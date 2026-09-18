@@ -35,35 +35,14 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingXSmall
 
-        Text {
+        KvVerdict {
             width: parent.width
-            visible: root.probing
-            text: qsTr("Sondando o alvo (ssh, até 5 s)...")
-            color: Theme.textMuted
-            font.pixelSize: 10
-        }
-
-        Rectangle {
-            width: parent.width
-            visible: !root.probing && (root.probeOk || root.probeMessage !== "")
-            height: veredito.implicitHeight + 2 * Theme.spacingSmall
-            radius: Theme.radius
-            color: root.probeOk ? Theme.successSoft : Theme.errorSoft
-            opacity: 0.18
-        }
-
-        Text {
-            id: veredito
-
-            width: parent.width
-            visible: !root.probing && (root.probeOk || root.probeMessage !== "")
-            wrapMode: Text.WordWrap
-            text: root.probeOk
-                  ? root.probeArch + " · " + root.probeKernel + "\n" + root.toolsLine()
-                  : root.probeMessage
-            color: root.probeOk ? Theme.textPrimary : Theme.textSecondary
-            font.family: Theme.monoFont
-            font.pixelSize: 10
+            busy: root.probing
+            busyText: qsTr("Sondando o alvo (ssh, até 5 s)...")
+            ok: root.probeOk
+            message: root.probeOk
+                     ? root.probeArch + " · " + root.probeKernel + "\n" + root.toolsLine()
+                     : root.probeMessage
         }
 
         Text {

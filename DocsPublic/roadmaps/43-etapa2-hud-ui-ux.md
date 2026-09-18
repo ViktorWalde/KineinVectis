@@ -183,7 +183,10 @@ de 1,4 s → 25 ms; a tabela de tempos; Problems sem repetição build/LSP; a
 toolchain da status bar segue o projeto — foto 10. **F7 FEITA** (`40` §7.63): o último
 recente em destaque com Enter, os de caminho ausente ocultos com desfazer, o
 ambiente numa linha com "Ver" — fotos 11a/11; de quebra, o `serial.identify`
-que não saía e o gate que passa a ler o stderr do QML. **F6-a FEITA** (`40` §7.60): as
+que não saía e o gate que passa a ler o stderr do QML. **F8 FEITA** (`40` §7.65): os quatro painéis de ambiente com a mesma
+moldura, a mesma primeira linha, o mesmo veredito e a grade comum — fotos
+13a–13d; o Embarcados deixou de vazar. **A Etapa 2 fechou o desenho da
+§4 (F0–F8) em 2026-09-18.** **F6-a FEITA** (`40` §7.60): as
 consultas LSP respondem fora do laço, o handshake corre numa thread, e o
 `syntaxTree.update` caiu de ~0,9 s para 0,05 s (o `utf16_position` varria o
 arquivo inteiro a cada realce). A cadeia do explorer que levava 30 s
@@ -257,7 +260,10 @@ F7     tela inicial: ultimo recente em destaque, Enter       fotos 11a/11;      
        1 linha com "Ver". De quebra: o serial.identify que   verificar-binario-abre
        nao saia (Connections no target errado) e o gate     le o stderr do QML
        binario-abre lendo o stderr do QML
-F8     paineis de ambiente com a mesma forma                 ABERTA (desenho em §4)   —
+F8     paineis de ambiente com a mesma forma: KvPanelFrame  fotos 12a-d -> 13a-d;    7.65
+       (rola), KvPanelHeader (acao primaria), KvVerdict,    tst_grid_rules; os
+       KvDataGrid+GridRules; o Embarcados cabe; de quebra,  hosts 60-80 -> 25-56
+       o elo solto do despacho C++ (7.64)                   linhas
 ```
 
 **Os juízos da §2, um a um.** Foto 01 (tela inicial): "a lista de 62
@@ -284,7 +290,7 @@ explorer segue o arquivo (cadeia)       30 s            6 s
 syntaxTree.update (470 linhas)          0,9 s           0,05 s
 workspace.open                          1,4 s           25 ms
 primeiro frame offscreen                nao medido      718-840 ms (debug; o hardened deu 318 ms no §7.54)
-harnesses QML                           45              50
+harnesses QML                           45              51
 testes Rust                             827             829
 ```
 
@@ -413,7 +419,7 @@ formulários (campos e chips seguem como estão — a F8 é forma, não campos).
   de veredito; o Embarcados cabendo (rolando) a 800 px; o Banco sem cortar
   o campo de consulta.
 - Contagem: linhas duplicadas de veredito 77+106 → 0 (`verificar-qml-
-  duplicacao` verde); `*PanelHost` de 64–80 linhas → ≤ 40 cada.
+  duplicacao` verde); `*PanelHost` de 51–80 linhas → ≤ 40 cada.
 - Catracas: view 300, host/controller 400 — o `EmbeddedPanel` (275) e o
   `RemotePanel` (234) só perdem linhas.
 
@@ -425,3 +431,19 @@ etapa); não prova PostgreSQL/Mongo/Pi/sonda reais (§4.2.3-b do 40); não
 mede o clique (só o autor). O Grafana (`GrafanaPanelHost`, 5º painel de
 ambiente) recebe o `KvPanelFrame` e o cabeçalho pelo mesmo caminho se
 couber na sessão; senão fica dito.
+
+### 8.6 O que a F8 entregou contra a medida (2026-09-18, noite)
+
+- Componente de grade com harness: `KvDataGrid` + `GridRules`
+  (`tst_grid_rules`, 10 asserções: célula, `null`, objeto/array, piso,
+  teto, sobra, encolher, rolar, vazio). ✓
+- Fotos 13a–13d nas mesmas condições das 12a–12d: as quatro molduras com
+  a mesma primeira linha e a faixa de veredito; o Embarcados rolando a
+  800 px; o Banco com o campo de consulta visível. ✓
+- Veredito escrito duas vezes → uma (`KvVerdict`); `*PanelHost` 60–80 →
+  25–56 linhas (o do banco fica em 51 porque repassa 20 propriedades — é
+  fiação, não chrome). ✓ (a meta dizia ≤ 40; dois de quatro passam)
+- Catracas: `EmbeddedPanel` 275 → 262, `RemotePanel` 234 → 213,
+  `DataSourcePanel` 220 → 199, `ContainerPanel` 167 → 128. ✓
+- Não feito (§8.5 e `40` §7.65): containers/portas como grade com ações;
+  Grafana/Setup/Biblioteca na moldura comum.

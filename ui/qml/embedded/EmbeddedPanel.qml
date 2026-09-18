@@ -19,32 +19,32 @@ Item {
                                     ? root.toolchainController.preset : qsTr("padrão")
     signal closeRequested()
 
+    // A altura e' a do conteudo: a moldura comum (KvPanelFrame) ROLA o que
+    // nao couber — antes o painel vazava da moldura a 800 px (foto 12c).
+    implicitHeight: coluna.implicitHeight + Theme.spacingSmall + rodape.implicitHeight
+
     Column {
         id: coluna
 
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: rodape.top
-        anchors.bottomMargin: Theme.spacingSmall
         spacing: Theme.spacingSmall
 
-        Text {
+        // A primeira linha comum dos paineis de ambiente (F8): titulo, uma
+        // linha, a acao primaria — "Procurar sonda e portas" — e o x.
+        KvPanelHeader {
             width: parent.width
-            text: qsTr("Embarcados")
-            color: Theme.textPrimary
-            font.pixelSize: 13
-            font.bold: true
-        }
-
-        Text {
-            width: parent.width
-            wrapMode: Text.WordWrap
+            title: qsTr("Embarcados")
             // O QUE A TELA PROMETE E' O QUE ELA FAZ: detectar pelo probe-rs,
             // guardar o kit, subir o depurador escolhido. Nada roda como root.
-            text: qsTr("O projeto é lido pelos seus marcadores, a sonda pelo probe-rs e as portas pelo sysfs, sem abrir nenhuma; o chip, o alvo e o depurador ficam no kit. Nada roda como root.")
-            color: Theme.textMuted
-            font.pixelSize: 10
+            subtitle: qsTr("O projeto é lido pelos seus marcadores, a sonda pelo probe-rs e as portas pelo sysfs, sem abrir nenhuma; o chip, o alvo e o depurador ficam no kit. Nada roda como root.")
+            primaryLabel: qsTr("Procurar sonda e portas")
+            primaryIcon: "refresh"
+            primaryEnabled: root.controller !== null
+            primaryBusy: root.controller !== null && root.controller.busy
+            onPrimaryRequested: root.controller.refresh()
+            onCloseRequested: root.closeRequested()
         }
 
         Text {
@@ -87,21 +87,22 @@ Item {
             }
         }
 
-        Text {
-            id: semSonda
+        // O veredito comum (F8): a busca em andamento, ou o que ela achou.
+        // A ferramenta ausente e' outro estado: a dica do core ja' diz como
+        // instalar, e a tela nao repete.
+        KvVerdict {
+            id: vereditoSonda
 
             width: parent.width
-            wrapMode: Text.WordWrap
             visible: root.controller && !root.controller.probeFound
-            // A ferramenta ausente e' outro estado: a dica do core ja' diz como
-            // instalar, e a tela nao repete.
-            text: root.controller
-                  ? (root.controller.busy ? qsTr("procurando…")
-                     : (root.controller.toolAvailable ? qsTr("nenhuma sonda reconhecida")
-                                                      : qsTr("probe-rs não encontrado nesta máquina")))
-                  : ""
-            color: Theme.textSecondary
-            font.pixelSize: 11
+                     && (vereditoSonda.busy || vereditoSonda.showsBand)
+            busy: root.controller !== null && root.controller.busy
+            busyText: qsTr("procurando…")
+            neutral: root.controller !== null && root.controller.toolAvailable
+            message: root.controller
+                     ? (root.controller.toolAvailable ? qsTr("nenhuma sonda reconhecida")
+                                                      : qsTr("probe-rs não encontrado nesta máquina"))
+                     : ""
         }
 
         Text {
@@ -242,17 +243,12 @@ Item {
     Row {
         id: rodape
 
-        anchors.bottom: parent.bottom
+        anchors.top: coluna.bottom
+        anchors.topMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.right: parent.right
         spacing: Theme.spacingSmall
         layoutDirection: Qt.RightToLeft
-
-        KvButton {
-            text: qsTr("Fechar")
-            compact: true
-            onClicked: root.closeRequested()
-        }
 
         KvButton {
             text: qsTr("Aplicar ao kit")
@@ -265,11 +261,5 @@ Item {
                                                          kit.chip, undefined, kit.svdFile)
         }
 
-        KvButton {
-            text: qsTr("Procurar sonda e portas")
-            compact: true
-            enabled: root.controller !== null && !root.controller.busy
-            onClicked: root.controller.refresh()
-        }
     }
 }

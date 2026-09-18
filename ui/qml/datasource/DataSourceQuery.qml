@@ -124,89 +124,15 @@ Item {
             font.pixelSize: 10
         }
 
-        // A grade: cabecalho + linhas, celulas em texto, `null` em italico.
-        Flickable {
-            id: grade
-
+        // A grade comum (F8): cabecalho fixo, largura por conteudo, `null`
+        // em italico, rolagem quando nao cabe. As colunas vem do core como
+        // nomes; as linhas como arrays na ordem delas.
+        KvDataGrid {
             width: parent.width
-            height: Math.min(220, conteudo.implicitHeight)
             visible: root.columns.length > 0
-            clip: true
-            contentWidth: Math.max(width, conteudo.implicitWidth)
-            contentHeight: conteudo.implicitHeight
-            boundsBehavior: Flickable.StopAtBounds
-
-            Column {
-                id: conteudo
-
-                spacing: 1
-
-                Row {
-                    spacing: 1
-
-                    Repeater {
-                        model: root.columns
-
-                        delegate: Rectangle {
-                            required property var modelData
-
-                            width: 120
-                            height: 20
-                            color: Theme.surface2
-
-                            Text {
-                                anchors.fill: parent
-                                anchors.leftMargin: 4
-                                verticalAlignment: Text.AlignVCenter
-                                text: parent.modelData
-                                color: Theme.textPrimary
-                                font.family: Theme.monoFont
-                                font.pixelSize: 10
-                                font.weight: Font.DemiBold
-                                elide: Text.ElideRight
-                            }
-                        }
-                    }
-                }
-
-                Repeater {
-                    model: root.rows
-
-                    delegate: Row {
-                        id: linha
-
-                        required property var modelData
-
-                        spacing: 1
-
-                        Repeater {
-                            model: linha.modelData
-
-                            delegate: Rectangle {
-                                required property var modelData
-
-                                width: 120
-                                height: 18
-                                color: Theme.background1
-
-                                Text {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 4
-                                    verticalAlignment: Text.AlignVCenter
-                                    text: parent.modelData === null || parent.modelData === undefined
-                                          ? "null" : String(parent.modelData)
-                                    font.italic: parent.modelData === null || parent.modelData === undefined
-                                    color: parent.modelData === null || parent.modelData === undefined
-                                           ? Theme.textMuted : Theme.textSecondary
-                                    font.family: Theme.monoFont
-                                    font.pixelSize: 10
-                                    elide: Text.ElideRight
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            columns: root.columns.map(name => ({ key: name, label: name }))
+            rows: root.rows
+            maxHeight: 220
         }
     }
 }

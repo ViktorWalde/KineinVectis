@@ -25,21 +25,19 @@ Item {
         anchors.bottomMargin: Theme.spacingSmall
         spacing: Theme.spacingSmall
 
-        Text {
+        // A primeira linha comum dos paineis de ambiente (F8): titulo, uma
+        // linha, a acao primaria — "Atualizar" — e o x.
+        KvPanelHeader {
             width: parent.width
-            text: qsTr("Containers")
-            color: Theme.textPrimary
-            font.pixelSize: 13
-            font.bold: true
-        }
-
-        Text {
-            width: parent.width
-            wrapMode: Text.WordWrap
+            title: qsTr("Containers")
             // O QUE A TELA PROMETE E' O QUE ELA FAZ.
-            text: qsTr("Docker ou Podman, o que responder nesta máquina. Parar, iniciar e remover são jobs canceláveis; logs e shell abrem numa aba do terminal. Nada roda como root.")
-            color: Theme.textMuted
-            font.pixelSize: 10
+            subtitle: qsTr("Docker ou Podman, o que responder nesta máquina. Parar, iniciar e remover são jobs canceláveis; logs e shell abrem numa aba do terminal. Nada roda como root.")
+            primaryLabel: qsTr("Atualizar")
+            primaryIcon: "refresh"
+            primaryEnabled: root.controller !== null
+            primaryBusy: root.controller !== null && root.controller.listBusy
+            onPrimaryRequested: root.controller.refresh()
+            onCloseRequested: root.closeRequested()
         }
 
         Text {
@@ -51,38 +49,17 @@ Item {
             font.pixelSize: 10
         }
 
-        // --- Motor: a tela de ATIVAR ------------------------------------
-        Row {
-            spacing: Theme.spacingSmall
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 8
-                height: 8
-                radius: 4
-                color: !root.controller || !root.controller.engineFound ? Theme.textDisabled
-                       : (root.controller.reachable ? Theme.successSoft : Theme.errorSoft)
-            }
-
-            Text {
-                text: root.controller && root.controller.engineFound
-                      ? qsTr("Motor: %1").arg(root.controller.engineLabel)
-                      : (root.controller && root.controller.statusBusy ? qsTr("procurando o motor…")
-                                                                        : qsTr("nenhum motor de container"))
-                color: Theme.textSecondary
-                font.pixelSize: 11
-                font.bold: true
-            }
-        }
-
-        Text {
+        // --- Motor: o veredito comum (F8) ---------------------------------
+        KvVerdict {
             width: parent.width
-            wrapMode: Text.WordWrap
-            visible: root.controller && root.controller.engineFound
-            text: {
-                if (!root.controller || !root.controller.engineFound) return "";
+            busy: root.controller !== null && root.controller.statusBusy
+            busyText: qsTr("procurando o motor…")
+            ok: root.controller !== null && root.controller.engineFound && root.controller.reachable
+            message: {
+                if (!root.controller) return "";
+                if (!root.controller.engineFound) return qsTr("nenhum motor de container");
                 const s = root.controller.status;
-                const partes = [];
+                const partes = [qsTr("Motor: %1").arg(root.controller.engineLabel)];
                 partes.push(s.reachable ? qsTr("responde") : qsTr("NÃO responde"));
                 if (s.rootless === true) partes.push("rootless");
                 if (s.rootless === false) partes.push(qsTr("com daemon/root"));
@@ -90,9 +67,6 @@ Item {
                 partes.push(root.controller.composeSummary);
                 return partes.join(" · ");
             }
-            color: Theme.textMuted
-            font.family: Theme.monoFont
-            font.pixelSize: 10
         }
 
         // O passo oficial quando falta algo: instalar, entrar no grupo, subir o
@@ -124,19 +98,6 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingSmall
         layoutDirection: Qt.RightToLeft
-
-        KvButton {
-            text: qsTr("Fechar")
-            compact: true
-            onClicked: root.closeRequested()
-        }
-
-        KvButton {
-            text: qsTr("Atualizar")
-            compact: true
-            enabled: root.controller !== null && !root.controller.listBusy
-            onClicked: root.controller.refresh()
-        }
 
         // Compose do PROJETO: o arquivo padrao na raiz do workspace (o core
         // diz qual). `up` e' -d; a saida viva mora na aba de logs de cada

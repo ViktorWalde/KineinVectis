@@ -166,21 +166,18 @@ Item {
                 font.bold: true
             }
 
-            Repeater {
-                model: root.controller ? root.controller.images : []
-
-                Text {
-                    id: linhaImagem
-
-                    required property var modelData
-
-                    width: conteudo.width
-                    text: "· " + root.controller.imageSummary(linhaImagem.modelData)
-                    color: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: 11
-                    elide: Text.ElideMiddle
-                }
+            // As imagens na GRADE comum (F8): repositorio, tag, tamanho, criada.
+            KvDataGrid {
+                width: parent.width
+                visible: root.controller && root.controller.images.length > 0
+                columns: [
+                    { key: "repository", label: qsTr("repositório") },
+                    { key: "tag", label: qsTr("tag") },
+                    { key: "size", label: qsTr("tamanho") },
+                    { key: "created", label: qsTr("criada") }
+                ]
+                rows: root.controller ? root.controller.imageRows() : []
+                maxHeight: 140
             }
 
             Text {

@@ -7,8 +7,9 @@ import KineinVectis
 // Componente burro: recebe por property, pede por signal. Compoe as quatro
 // areas — lista, formulario, veredito e acoes —, cada uma com dono proprio.
 //
-// "Testar" e' a acao central, e por isso e' a primaria: sem ela o autor
-// descobre que o perfil esta errado so' quando for usar o banco, longe daqui.
+// "Testar" e' a acao central, e por isso e' a primaria — no cabecalho comum
+// (F8): sem ela o autor descobre que o perfil esta errado so' quando for
+// usar o banco, longe daqui. O veredito vem ANTES do formulario.
 Item {
     id: root
 
@@ -48,35 +49,27 @@ Item {
 
     readonly property bool draftNamed: root.draft !== null && root.draft.name !== ""
 
-    Text {
-        id: titulo
+    // A primeira linha comum dos paineis de ambiente (F8): titulo, uma
+    // linha, a acao primaria — "Testar" — e o x.
+    KvPanelHeader {
+        id: cabecalho
 
         anchors.top: parent.top
         anchors.left: parent.left
-        text: qsTr("Banco de dados")
-        color: Theme.textPrimary
-        font.pixelSize: 12
-        font.weight: Font.DemiBold
-    }
-
-    Text {
-        id: subtitulo
-
-        anchors.top: titulo.bottom
-        anchors.topMargin: 2
-        anchors.left: parent.left
         anchors.right: parent.right
-        wrapMode: Text.WordWrap
-        text: qsTr("A IDE guarda o perfil, nunca a senha. Um PostgreSQL local "
-                   + "por socket conecta sem senha nenhuma.")
-        color: Theme.textMuted
-        font.pixelSize: 10
+        title: qsTr("Banco de dados")
+        subtitle: qsTr("A IDE guarda o perfil, nunca a senha. Um PostgreSQL local por socket conecta sem senha nenhuma.")
+        primaryLabel: qsTr("Testar")
+        primaryEnabled: root.draftNamed
+        primaryBusy: root.testing
+        onPrimaryRequested: root.testRequested()
+        onCloseRequested: root.closeRequested()
     }
 
     DataSourceList {
         id: lista
 
-        anchors.top: subtitulo.bottom
+        anchors.top: cabecalho.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.left: parent.left
         anchors.bottom: acoes.top
@@ -109,13 +102,6 @@ Item {
             width: rolagem.width
             spacing: Theme.spacingSmall
 
-            DataSourceForm {
-                width: parent.width
-                draft: root.draft
-                mongo: root.documentEngine
-                onFieldEdited: (field, value) => root.fieldEdited(field, value)
-            }
-
             DataSourceVerdict {
                 width: parent.width
                 testing: root.testing
@@ -127,6 +113,13 @@ Item {
 
                 onPasswordEdited: text => root.passwordEdited(text)
                 onRetryRequested: root.testRequested()
+            }
+
+            DataSourceForm {
+                width: parent.width
+                draft: root.draft
+                mongo: root.documentEngine
+                onFieldEdited: (field, value) => root.fieldEdited(field, value)
             }
 
             // A consulta (0.121.0) fica ENTRE o veredito e a estrutura: a
@@ -183,24 +176,10 @@ Item {
         layoutDirection: Qt.RightToLeft
 
         KvButton {
-            text: qsTr("Fechar")
-            compact: true
-            onClicked: root.closeRequested()
-        }
-
-        KvButton {
             text: qsTr("Ler estrutura")
             compact: true
             enabled: root.draftNamed && !root.reading
             onClicked: root.introspectRequested()
-        }
-
-        KvButton {
-            text: qsTr("Testar")
-            primary: true
-            compact: true
-            enabled: root.draftNamed && !root.testing
-            onClicked: root.testRequested()
         }
 
         KvButton {

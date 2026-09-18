@@ -216,10 +216,12 @@ Item {
         return partes.join(" · ");
     }
 
-    function imageSummary(image) {
-        const nome = (image.repository !== undefined ? image.repository : "") + ":"
-                     + (image.tag !== undefined ? image.tag : "");
-        return nome + " · " + formatSize(image.size);
+    // As linhas da grade comum (F8): o tamanho ja' formatado, o resto como veio.
+    function imageRows() {
+        return images.map(image => ({
+            repository: image.repository, tag: image.tag,
+            size: formatSize(image.size), created: image.created
+        }));
     }
 
     // Bytes (Podman) viram MB/GB; texto pronto (Docker: "431MB") passa direto.

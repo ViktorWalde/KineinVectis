@@ -172,7 +172,7 @@ def sinais_qml() -> list[tuple[str, str, Path]]:
 
 
 def main() -> int:
-    print("== fiacao IPC de ponta a ponta (metodo, evento, sinal C++, sinal QML) ==")
+    print("== fiacao IPC de ponta a ponta (metodo, evento, sinal C++, sinal QML, cadeia de despacho) ==")
     falhas: list[str] = []
 
     # 1
