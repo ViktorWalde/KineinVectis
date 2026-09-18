@@ -33,6 +33,9 @@ class CoreClient : public QObject
     Q_PROPERTY(QString workspaceKind READ workspaceKind NOTIFY workspaceChanged)
     Q_PROPERTY(QStringList workspaceBuildSystems READ workspaceBuildSystems NOTIFY workspaceChanged)
     Q_PROPERTY(QString homeDir READ homeDir CONSTANT)
+    // KINEIN_STARTUP_COMMANDS (Etapa 2, medicao): ids da paleta, separados por virgula,
+    // executados depois de o workspace abrir. Vazio sem a env.
+    Q_PROPERTY(QStringList startupCommands READ startupCommands CONSTANT)
     Q_PROPERTY(QString errorLogFile READ errorLogFile CONSTANT)
     Q_PROPERTY(bool building READ isBuilding NOTIFY buildingChanged)
     Q_PROPERTY(bool testing READ isTesting NOTIFY testingChanged)
@@ -57,6 +60,7 @@ public:
     [[nodiscard]] QString workspaceKind() const;
     [[nodiscard]] QStringList workspaceBuildSystems() const;
     [[nodiscard]] static QString homeDir();
+    [[nodiscard]] static QStringList startupCommands();
     [[nodiscard]] static QString errorLogFile();
     [[nodiscard]] bool isBuilding() const;
     [[nodiscard]] bool isTesting() const;

@@ -41,6 +41,7 @@ Item {
     // (Main.qml): "scan", "cmakeConfigure", "cargoMetadata",
     // "pythonEnvironment", ou o nome de uma aba.
     signal healthActionRequested(string target)
+    signal problemNextStepRequested(string kind, string target, string file, int line, int column)
     signal createProjectRequested(string templateId)
     signal settingsRequested()
 
@@ -289,6 +290,8 @@ Item {
                 onProblemOpenRequested: function(file, line, column) {
                     root.editorController.openDiagnostic(file, line, column);
                 }
+                onProblemNextStepRequested: (kind, target, file, line, column) =>
+                    root.problemNextStepRequested(kind, target, file, line, column)
                 onTerminalOpenRequested: root.runtimeController.openTerminalPanel()
                 onTerminalKeyPressed: function(data) {
                     root.runtimeController.sendTerminalKey(data);

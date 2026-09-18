@@ -373,7 +373,7 @@ Item {
                 continue;
             }
             const index = rowIndexForPath(directory);
-            if (index >= 0 && treeModel.get(index).kind === "directory"
+            if (index >= 0 && rules.isDirectory(treeModel.get(index).kind)
                     && treeModel.get(index).expanded) {
                 directories[directory] = true;
             }

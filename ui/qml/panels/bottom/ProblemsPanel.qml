@@ -32,6 +32,13 @@ ListView {
     property var diagnosticsModel: emptyDiagnosticsModel
 
     signal openRequested(string file, int line, int column)
+    // F5: o proximo passo do problema (codeActions | health, com o alvo).
+    signal nextStepRequested(string kind, string target, string file, int line, int column)
+
+    // A regra do proximo passo mora fora da tela (ProblemNextStep).
+    ProblemNextStep {
+        id: nextStep
+    }
 
 
     clip: true
@@ -56,6 +63,9 @@ ListView {
         required property string file
         required property int line
         required property int column
+        required property string source
+
+        readonly property var step: nextStep.stepFor({ source: source, message: message })
 
         width: panel.width
         height: problemRow.height + Theme.spacingSmall
@@ -101,12 +111,29 @@ ListView {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - x
+                width: parent.width - x - (passo.visible ? passo.width + Theme.spacingSmall : 0)
                 text: problemDelegate.message
                 color: Theme.textPrimary
                 font.pixelSize: 11
                 elide: Text.ElideRight
             }
+        }
+
+        // O proximo passo, a direita: sempre visivel quando existe — e' o
+        // que a referencia faz; esconder ate' o hover e' esconder a ajuda.
+        KvButton {
+            id: passo
+
+            anchors.right: parent.right
+            anchors.rightMargin: Theme.spacingSmall
+            anchors.verticalCenter: parent.verticalCenter
+            z: 2
+            visible: problemDelegate.step.label !== ""
+            compact: true
+            text: problemDelegate.step.label
+            onClicked: panel.nextStepRequested(problemDelegate.step.kind, problemDelegate.step.target,
+                                               problemDelegate.file, problemDelegate.line,
+                                               problemDelegate.column)
         }
 
         MouseArea {

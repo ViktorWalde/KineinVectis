@@ -279,6 +279,17 @@ Window {
             folderPicker.openCreateProject(coreClient.homeDir, templateId);
         }
         onSettingsRequested: domains.settingsController.openDialog()
+        // F5: o proximo passo de um problema. "Acoes" abre o arquivo na
+        // linha e pede as code actions (o Alt+Enter); o resto e' a mesma
+        // acao da faixa de saude (configurar, ferramentas).
+        onProblemNextStepRequested: function(kind, target, file, line, column) {
+            if (kind === "codeActions") {
+                domains.editorController.openDiagnostic(file, line, column);
+                domains.editorController.requestCodeActions();
+            } else if (kind === "health") {
+                workspaceHost.healthActionRequested(target);
+            }
+        }
     }
 
     ShellStatusHost {

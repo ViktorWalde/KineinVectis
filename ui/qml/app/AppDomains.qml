@@ -308,6 +308,12 @@ Item {
         onFocusEditorRequested: editorController.focusEditor()
     }
 
+    // A medicao headless (KINEIN_STARTUP_COMMANDS) passa pelo mesmo dispatcher.
+    StartupCommands {
+        coreClient: root.coreClient
+        commandDispatcher: commandDispatcher
+    }
+
     CommandDispatcher {
         id: commandDispatcher
 

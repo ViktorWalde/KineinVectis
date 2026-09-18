@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.123.0
-testes      829 Rust aprovados; 49 harnesses QML (medicao de 2026-09-18, §7.60)
+testes      829 Rust aprovados; 50 harnesses QML (medicao de 2026-09-18, §7.61)
 metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
@@ -3938,3 +3938,28 @@ cadeia completa aos 6 s (foto 08). 829 testes Rust (+2), 49 harnesses, os
 (medido; a investigar na F6-b junto com os tempos de clique → feedback);
 `didOpen` enfileirado durante o handshake não existe — a UI reenvia ao
 `running`.
+
+### 7.61 Etapa 2, F5 — Problems com o próximo passo — 2026-09-18
+
+`ProblemNextStep` (jobs/, regra PURA, com harness): dado o problema, o
+rótulo e o destino do botão — fonte `lsp` → **Ações** (abre o arquivo na
+linha e pede as code actions, o Alt+Enter); mensagem que fala de
+`compile_commands`/CDB/configurar → **Configurar CMake** (a mesma ação da
+faixa de saúde); "não encontrado"/"not found"/"instale"/"ausente" →
+**Ferramentas**; o resto não ganha botão (inventar um passo é pior que não
+ter). `ProblemsPanel` desenha o botão à direita, sempre visível quando
+existe; o caminho é `nextStepRequested` → `BottomPanelHost` →
+`ShellWorkspaceHost` → `Main` (code actions pelo editor; o resto pelo
+`healthActionRequested` que a faixa já usa). **Infra de medição:**
+`KINEIN_STARTUP_COMMANDS=build.run` (ids da paleta) executa comandos depois
+de o workspace abrir — foi assim que a foto 09 saiu: um projeto Rust com
+`let x: i32 = "texto"`, `kinein-vectis <pasta>` + build automático →
+Problemas (3) com dois **Ações** (os do rust-analyzer) e o erro do cargo
+sem botão. A foto também mostrou o que fica para depois: o mesmo erro
+aparece duas vezes (build + LSP) e a barra de status diz "toolchain:
+Clang++ · Ninja" num projeto Rust.
+
+**Medido:** 50 harnesses (`tst_problem_next_step`); gates QML, duplicação
+(as derivações `kind === "directory"` e `source === "lsp"` ganharam dono),
+arquitetura, fiação IPC verdes. **Não feito, dito:** a contagem de testes
+na aba (Testes 12/14) e a deduplicação build/LSP.

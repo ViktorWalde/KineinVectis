@@ -81,6 +81,16 @@ QString CoreClient::homeDir()
     return QDir::homePath();
 }
 
+QStringList CoreClient::startupCommands()
+{
+    const QString raw = QString::fromUtf8(qgetenv("KINEIN_STARTUP_COMMANDS"));
+    QStringList commands;
+    for (const QString& part : raw.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        commands.append(part.trimmed());
+    }
+    return commands;
+}
+
 QString CoreClient::errorLogFile()
 {
     return QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) +

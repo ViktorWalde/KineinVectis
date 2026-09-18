@@ -18,11 +18,16 @@ QtObject {
         return machineNames.indexOf(name) >= 0;
     }
 
+    // A pergunta "e' pasta?" sobre uma entrada/linha da arvore, num lugar so'.
+    function isDirectory(kind) {
+        return kind === "directory";
+    }
+
     // Pastas do autor, pastas da maquina, arquivos — cada grupo na ordem em
     // que o core mandou.
     function orderEntries(entries) {
-        return entries.filter(function(e) { return e.kind === "directory" && !root.isMachineEntry(e.name); })
-            .concat(entries.filter(function(e) { return e.kind === "directory" && root.isMachineEntry(e.name); }))
-            .concat(entries.filter(function(e) { return e.kind !== "directory"; }));
+        return entries.filter(function(e) { return root.isDirectory(e.kind) && !root.isMachineEntry(e.name); })
+            .concat(entries.filter(function(e) { return root.isDirectory(e.kind) && root.isMachineEntry(e.name); }))
+            .concat(entries.filter(function(e) { return !root.isDirectory(e.kind); }));
     }
 }

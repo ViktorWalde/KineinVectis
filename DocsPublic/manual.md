@@ -63,7 +63,9 @@ os flags reais. Projetos Rust não têm esse passo (o cargo se vira).
 
 **Abrir direto num projeto** (desde 2026-09-18): `kinein-vectis /caminho/do/projeto`
 abre a pasta sem passar pela tela inicial — serve para um lançador, um
-atalho de área de trabalho ou um `alias`.
+atalho de área de trabalho ou um `alias`. Com `KINEIN_STARTUP_COMMANDS=build.run`
+(ids da paleta, separados por vírgula) a IDE executa os comandos logo depois
+de abrir — é o que os testes headless usam para fotografar um estado.
 
 ## 2. O layout
 
@@ -118,6 +120,12 @@ atalho de área de trabalho ou um `alias`.
   `dist`, `.venv`, `node_modules`…) ficam em cinza e depois delas; os
   arquivos por último. O que o projeto é (Cargo + CMake) está no widget de
   projeto da barra principal, não mais num chip no explorer.
+- **Problemas com o próximo passo** (desde 2026-09-18, Etapa 2 F5): cada
+  problema mostra, à direita, o que fazer com ele — **Ações** (o Alt+Enter,
+  quando o servidor de linguagem oferece correção), **Configurar CMake**
+  (quando a mensagem diz que falta a `compile_commands.json`) ou
+  **Ferramentas** (quando falta um programa). O que não tem passo conhecido
+  fica só com o clique que abre a linha. A aba mostra a contagem.
 - **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
   Build, Debug e, embaixo, os painéis de ambiente na ordem Banco de dados,
   Containers, Observabilidade e Ferramentas (por último).

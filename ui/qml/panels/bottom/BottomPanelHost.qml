@@ -57,6 +57,7 @@ Rectangle {
     signal clearSessionRequested()
     signal refreshToolsRequested()
     signal problemOpenRequested(string file, int line, int column)
+    signal problemNextStepRequested(string kind, string target, string file, int line, int column)
     signal terminalOpenRequested()
     signal terminalKeyPressed(string data)
     signal terminalResizeRequested(int cols, int rows)
@@ -176,6 +177,8 @@ Rectangle {
         onOpenRequested: function(file, line, column) {
             root.problemOpenRequested(file, line, column);
         }
+        onNextStepRequested: (kind, target, file, line, column) =>
+            root.problemNextStepRequested(kind, target, file, line, column)
     }
 
     TerminalSessionTabs {

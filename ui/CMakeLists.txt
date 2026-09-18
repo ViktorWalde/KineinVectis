@@ -28,6 +28,7 @@ set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_A
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
 set_source_files_properties(qml/workspace/LspStatusController.qml PROPERTIES QT_RESOURCE_ALIAS LspStatusController.qml)
 set_source_files_properties(qml/jobs/ActiveJobController.qml PROPERTIES QT_RESOURCE_ALIAS ActiveJobController.qml)
+set_source_files_properties(qml/jobs/ProblemNextStep.qml PROPERTIES QT_RESOURCE_ALIAS ProblemNextStep.qml)
 set_source_files_properties(qml/shell/StatusBarJobWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarJobWidget.qml)
 set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
 set_source_files_properties(qml/shell/HeaderGitWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderGitWidget.qml)
@@ -37,6 +38,7 @@ set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
 set_source_files_properties(qml/shell/ShellLayout.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayout.qml)
 set_source_files_properties(qml/app/AppDomains.qml PROPERTIES QT_RESOURCE_ALIAS AppDomains.qml)
+set_source_files_properties(qml/app/StartupCommands.qml PROPERTIES QT_RESOURCE_ALIAS StartupCommands.qml)
 set_source_files_properties(qml/app/AppRouters.qml PROPERTIES QT_RESOURCE_ALIAS AppRouters.qml)
 set_source_files_properties(qml/shell/ShellController.qml PROPERTIES QT_RESOURCE_ALIAS ShellController.qml)
 set_source_files_properties(qml/shell/GlobalShortcuts.qml PROPERTIES QT_RESOURCE_ALIAS GlobalShortcuts.qml)
@@ -299,6 +301,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/TopHeaderBar.qml
         qml/workspace/LspStatusController.qml
         qml/jobs/ActiveJobController.qml
+        qml/jobs/ProblemNextStep.qml
         qml/shell/StatusBarJobWidget.qml
         qml/shell/HeaderRunWidget.qml
         qml/shell/HeaderGitWidget.qml
@@ -308,6 +311,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/SideRail.qml
         qml/shell/ShellLayout.qml
         qml/app/AppDomains.qml
+        qml/app/StartupCommands.qml
         qml/app/AppRouters.qml
         qml/shell/ShellController.qml
         qml/shell/GlobalShortcuts.qml
