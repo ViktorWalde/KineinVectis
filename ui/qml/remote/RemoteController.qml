@@ -41,6 +41,16 @@ Item {
     property string lastCommand: ""
     property string lastOutcome: ""
 
+    // O workspace ESPELHADO (fatia 2): a pasta no alvo que se abre como
+    // espelho local, o espelho que o workspace aberto e' (null = comum), e
+    // a ultima sincronia. A UI abre o espelho pelo openWorkspace de sempre
+    // quando o pull do `remote.open` termina.
+    property string openPath: ""
+    property var mirror: null
+    property string pendingMirror: ""
+    property bool syncing: false
+    property string syncMessage: ""
+
     signal listRequested()
     signal saveRequested(var target)
     signal removeRequested(string name)
@@ -52,6 +62,9 @@ Item {
     signal runConfigRequested(string name, string command)
     signal kitRemoteRequested(string remoteTarget, string debugServer)
     signal shellRequested(string command)
+    signal openRequested(string name, string path)
+    signal syncRequested(string direction, var paths)
+    signal workspaceOpenRequested(string path)
 
     visible: false
 
@@ -63,8 +76,63 @@ Item {
         errorText = "";
         lastCommand = "";
         lastOutcome = "";
+        syncing = false;
+        syncMessage = "";
         if (workspaceRoot !== "") {
             listRequested();
+        }
+    }
+
+    readonly property bool isMirror: mirror !== null && mirror !== undefined && mirror.name !== undefined
+
+    // O espelho que o workspace aberto e' (vem do workspace.open / status).
+    // Vazio = comum. Num espelho, o alvo dele fica selecionado assim que a
+    // lista chegar — e' o alvo com que Puxar/Empurrar falam.
+    function handleMirror(map) {
+        mirror = (map && map.name) ? map : null;
+        if (mirror !== null && targetByName(mirror.name) !== null) {
+            select(mirror.name);
+        }
+    }
+
+    function openFolder() {
+        if (!selectedSaved || openPath.trim() === "") {
+            return;
+        }
+        syncing = true;
+        syncMessage = "";
+        openRequested(selectedName, openPath.trim());
+    }
+
+    function handleOpenAccepted(jobId, command, mirrorPath) {
+        pendingMirror = mirrorPath;
+        lastCommand = command;
+    }
+
+    function sync(direction) {
+        if (!isMirror) {
+            return;
+        }
+        syncing = true;
+        syncMessage = "";
+        syncRequested(direction, []);
+    }
+
+    // O pull do `remote.open` abre o espelho; os demais so' contam.
+    function handleSynced(outcome) {
+        syncing = false;
+        const n = (outcome.changed || []).length;
+        if (outcome.success === true) {
+            syncMessage = outcome.direction === "pull"
+                ? qsTr("puxado de %1: %2 caminho(s)").arg(outcome.name).arg(n)
+                : qsTr("empurrado para %1: %2 caminho(s)").arg(outcome.name).arg(n);
+            if (pendingMirror !== "" && outcome.mirror === pendingMirror && outcome.direction === "pull") {
+                pendingMirror = "";
+                workspaceOpenRequested(outcome.mirror);
+            }
+        } else {
+            syncMessage = qsTr("sincronia falhou: %1").arg(outcome.error || "");
+            pendingMirror = "";
         }
     }
 
@@ -230,7 +298,9 @@ Item {
         if (method.indexOf("remote.") === 0) {
             probing = false;
             deploying = false;
+            syncing = false;
             pendingKind = "";
+            pendingMirror = "";
             errorText = message;
         }
     }

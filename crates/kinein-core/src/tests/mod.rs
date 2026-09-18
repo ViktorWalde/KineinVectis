@@ -34,6 +34,7 @@ mod lsp_stderr;
 mod project;
 mod python;
 mod remote;
+mod remote_mirror;
 mod run;
 mod runconfig;
 mod runners;

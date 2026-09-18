@@ -195,6 +195,8 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     // M4.3: lembra o root para recuperar de um crash futuro.
     m_lastWorkspaceRoot = m_workspaceRoot;
     emit workspaceChanged();
+    // Um espelho remoto (0.122.0) diz de quem e'; vazio = workspace comum.
+    emit remoteMirrorChanged(result.value(QStringLiteral("remote")).toObject().toVariantMap());
     listRecentWorkspaces();
     listDir(m_workspaceRoot);
     if (m_workspaceBuildSystems.contains(QStringLiteral("cmake"))) {

@@ -32,6 +32,18 @@ Item {
             root.remoteController.handleDeployed(outcome);
         }
 
+        function onRemoteOpenAccepted(jobId, command, mirror) {
+            root.remoteController.handleOpenAccepted(jobId, command, mirror);
+        }
+
+        function onRemoteSynced(outcome) {
+            root.remoteController.handleSynced(outcome);
+        }
+
+        function onRemoteMirrorChanged(mirror) {
+            root.remoteController.handleMirror(mirror);
+        }
+
         function onRequestFailed(method, message, code) {
             root.remoteController.handleFailed(method, message);
         }

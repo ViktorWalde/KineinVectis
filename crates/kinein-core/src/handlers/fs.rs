@@ -313,6 +313,9 @@ impl Core {
                         }
                         // M-S1: arquivo salvo em disco → rascunho é obsoleto.
                         super::draft::clear_draft_after_save(self, &path);
+                        // Num espelho remoto (P6 fatia 2), salvar EMPURRA o
+                        // arquivo para o alvo — como job, visivel.
+                        self.mirror_push_after_write(&path);
                         JsonRpcResponse::success(
                             request_id,
                             json!(FsWriteResult {

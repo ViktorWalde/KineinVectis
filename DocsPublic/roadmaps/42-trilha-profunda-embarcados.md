@@ -493,6 +493,61 @@ abrir a pasta REMOTA como workspace (árvore por `sftp`, editor, busca com
 `journalctl`/`dmesg`/`systemctl` num painel, Yocto/Buildroot reconhecidos
 pelo P0, o `sshd` local no gate e a exercitação na Pi do autor.
 
+**Desenho da fatia 2 (2026-09-18, escrito antes do código): o workspace
+ESPELHADO.** A pergunta era como "abrir a pasta da Pi". O VS Code
+(Remote-SSH, proprietário) responde subindo um servidor Node no alvo e
+falando com ele — pesado numa Pi e inviável para nós sem reescrever
+`fs.*`, o índice, o git e o LSP para um segundo filesystem, exatamente o que
+o 28 §4 chama de duplicar o `RemoteContext`. A resposta desta fatia é a
+outra escola (o "deployment" do PyCharm, o fluxo Zephyr/Yocto de todo
+mundo): **a pasta remota vira um espelho local por `rsync`, e a IDE abre o
+espelho como workspace comum**. Zero mudança em `fs.*`, índice, busca, git
+e LSP — todos trabalham no espelho; o que muda é a SINCRONIA, que é o
+`rsync` do sistema nos dois sentidos.
+
+```text
+remote.open   { name, path }               -> { jobId, mirror }   (job: rsync pull)
+              -> event.remote.synced { jobId, name, direction: "pull", success,
+                                       command, changed: [caminho], error?, mirror }
+              a UI abre o espelho com o workspace.open de sempre
+remote.sync   { direction: pull | push, paths? } -> { jobId, command }   (job)
+              -> event.remote.synced (o mesmo); `paths` relativos ao espelho,
+              ausente = a árvore inteira; nunca --delete (apagar e' gesto explicito,
+              fica fora desta fatia)
+remote.status {}                            -> { mirror?: RemoteMirror }
+RemoteMirror  name · host · path (no alvo) · mirrorRoot (local)
+
+espelho       ~/.cache/kinein-vectis/remote/<alvo>/<hash do path>/<basename>
+marcador      <espelho>/.kinein/remote-mirror.json { schemaVersion, name, host, path }
+              — `.kinein/` NUNCA sincroniza (e' estado da IDE, dos dois lados)
+salvar        o fs.write num espelho EMPURRA o arquivo sozinho (job `Empurrar
+              <arquivo>`), com ControlMaster do ssh para nao reabrir a conexao a
+              cada gravacao (-o ControlMaster=auto -o ControlPath=<cache>/ssh-%C
+              -o ControlPersist=60)
+workspace.open do espelho responde `remote: RemoteMirror` — a UI sabe que e'
+              espelho e o painel Remoto seleciona o alvo e mostra Puxar/Empurrar
+deployDir     de um espelho e' o `path` remoto: "Rodar em pi" roda o que acabou de
+              ser empurrado
+```
+
+**O que fica dito como não feito nesta fatia:** watcher do lado remoto (o
+que muda na Pi só aparece ao Puxar); apagar/renomear não propaga (Empurrar
+não usa `--delete`); LSP resolve contra ESTA máquina — para C/C++ cross o
+sysroot do kit já cobre; Python/Rust do alvo não; conflito de edição dos
+dois lados = o `rsync` mais recente vence (dito ao autor no painel).
+**Prova:** `rsync`/`ssh` falsos ecoando argv (a linha do pull com os
+excludes, o marcador escrito, o `workspace.open` do espelho devolvendo
+`remote`, o push automático ao salvar, `remote.sync` com e sem `paths`,
+`remote.status` fora de um espelho); exercitação real numa Pi quando houver.
+
+**Fatia 2 FEITA (2026-09-18, 0.122.0 — `40` §7.53).** Como desenhado, com um
+acréscimo que o teste pediu antes da Pi: o espelho aberto precisava do alvo
+(usuário, porta, chave), que só existia no catálogo do workspace de origem —
+o `remote.open` copia o alvo para o `.kinein/remotes.json` do espelho, e ele
+fica autossuficiente. **Resta do P6:** watcher remoto, renomear/apagar
+propagados, LSP/interpretador do alvo, journalctl/dmesg, Yocto/Buildroot,
+`sshd` local no gate, exercitação numa Pi.
+
 ### P7 — Rust embarcado profundo (o que é só dele)
 
 ```text

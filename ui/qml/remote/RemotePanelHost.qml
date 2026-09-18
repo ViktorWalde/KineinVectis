@@ -55,6 +55,11 @@ Item {
             deployMessage: root.controller ? root.controller.deployMessage : ""
             lastCommand: root.controller ? root.controller.lastCommand : ""
             lastOutcome: root.controller ? root.controller.lastOutcome : ""
+            openPath: root.controller ? root.controller.openPath : ""
+            mirror: root.controller ? root.controller.mirror : null
+            isMirror: root.controller ? root.controller.isMirror : false
+            syncing: root.controller ? root.controller.syncing : false
+            syncMessage: root.controller ? root.controller.syncMessage : ""
 
             onTargetSelected: name => root.controller.select(name)
             onNewRequested: root.controller.startNew()
@@ -66,6 +71,9 @@ Item {
             onProbeRequested: root.controller.probe()
             onDeployRequested: root.controller.deploy()
             onCommandRequested: kind => root.controller.requestCommand(kind)
+            onOpenPathEdited: text => root.controller.openPath = text
+            onOpenFolderRequested: root.controller.openFolder()
+            onSyncRequested: direction => root.controller.sync(direction)
             onCloseRequested: root.dismissRequested()
         }
     }

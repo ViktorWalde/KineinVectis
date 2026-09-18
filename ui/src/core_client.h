@@ -233,6 +233,11 @@ public:
     Q_INVOKABLE void remoteCommand(const QString& name, const QString& kind,
                                    const QString& program = QString(), int port = 0);
     Q_INVOKABLE void toolchainSetKitRemote(const QString& remoteTarget, const QString& debugServer);
+    // O workspace espelhado (remote.open/sync/status, 0.122.0): a pasta do alvo vira
+    // espelho local por rsync; a UI abre o espelho com o openWorkspace de sempre.
+    Q_INVOKABLE void remoteOpen(const QString& name, const QString& path);
+    Q_INVOKABLE void remoteSync(const QString& direction, const QStringList& paths = {});
+    Q_INVOKABLE void remoteStatus();
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
     Q_INVOKABLE void containerStatus();
     Q_INVOKABLE void containerList(bool all = true);
@@ -417,6 +422,11 @@ signals:
     void remoteCommandResolved(const QVariantMap& result);
     void remoteProbed(const QVariantMap& outcome);
     void remoteDeployed(const QVariantMap& outcome);
+    void remoteOpenAccepted(const QString& jobId, const QString& command, const QString& mirror);
+    void remoteSynced(const QVariantMap& outcome);
+    // O espelho que o workspace aberto e' (vazio = nao e' espelho); sai do
+    // workspace.open e do remote.status.
+    void remoteMirrorChanged(const QVariantMap& mirror);
     void indexProgressed(int files, int symbols);
     void indexFinished(const QVariantMap& stats);
     void containerStatusResolved(const QVariantMap& status);

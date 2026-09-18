@@ -50,5 +50,18 @@ Item {
         function onShellRequested(command) {
             root.runtimeController.submitShellInput(command);
         }
+
+        function onOpenRequested(name, path) {
+            root.coreClient.remoteOpen(name, path);
+        }
+
+        function onSyncRequested(direction, paths) {
+            root.coreClient.remoteSync(direction, paths);
+        }
+
+        // O espelho abre pelo caminho de sempre: e' um workspace local.
+        function onWorkspaceOpenRequested(path) {
+            root.coreClient.openWorkspace(path);
+        }
     }
 }

@@ -451,6 +451,10 @@ impl Core {
                         if !recovered.is_empty() {
                             map.insert("drafts".to_owned(), json!(recovered));
                         }
+                        // Um espelho remoto (P6 fatia 2) diz de quem e'.
+                        if let Some(mirror) = self.current_mirror() {
+                            map.insert("remote".to_owned(), json!(mirror));
+                        }
                     }
                     JsonRpcResponse::success(request_id, result)
                 }

@@ -625,8 +625,21 @@ O campo **Programa no alvo** é o caminho DO OUTRO LADO: relativo entra na
 pasta de deploy (`app` → `~/kinein/<projeto>/app`), absoluto vai como está.
 Sondar e enviar só valem para um alvo **salvo** — o core só conhece o que
 está no arquivo. Cada botão mostra a linha que compôs (`$ …`), e o que ela
-virou (a configuração salva, o kit gravado). Ainda **não** existe abrir a
-pasta remota como workspace, nem LSP do outro lado: é a próxima fatia.
+virou (a configuração salva, o kit gravado).
+
+**Abrir a pasta do alvo como espelho** (desde 0.122.0): digite a pasta
+(`/home/pi/projeto`) e clique **Abrir espelho**. A IDE puxa a árvore por
+`rsync` para `~/.cache/kinein-vectis/remote/…` e abre esse espelho como um
+workspace comum — editor, busca, git, LSP, tudo funciona nele. A partir daí
+**salvar um arquivo empurra só ele para o alvo** (um job "Empurrar
+main.c para pi", visível na aba Jobs). O painel Remoto mostra "este
+workspace é um espelho de pi:/home/pi/projeto" com **Puxar do alvo** (o que
+mudou lá) e **Empurrar tudo**. Nada apaga do outro lado: renomear ou apagar
+no espelho não propaga — é gesto seu, pelo shell. O que muda no alvo só
+aparece ao Puxar; se os dois lados editarem o mesmo arquivo, o rsync mais
+recente vence. O LSP resolve contra a sua máquina: para C/C++ cross, o
+sysroot do kit; um interpretador Python do alvo ainda não. Dica: com o
+espelho aberto, "Rodar em pi" roda o que você acabou de salvar.
 
 ### Observabilidade (Grafana)
 

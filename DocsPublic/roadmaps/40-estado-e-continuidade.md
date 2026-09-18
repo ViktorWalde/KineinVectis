@@ -79,9 +79,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.121.0
-testes      819 Rust aprovados; 45 harnesses QML (medicao de 2026-09-18, §7.52)
-metodos     157 IPC roteados, 56 eventos (datasource.query e event.datasource.queried
+protocolo   0.122.0
+testes      825 Rust aprovados; 45 harnesses QML (medicao de 2026-09-18, §7.53)
+metodos     160 IPC roteados, 57 eventos (remote.open/sync/status e event.remote.synced,
+            datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
             serial.access, serial.files, python.stubs, debug.scopes,
             debug.readMemory, debug.disassemble, coverage.run, coverage.lines,
@@ -608,8 +609,10 @@ próximo item é a segunda fatia do P6 (workspace remoto, LSP do outro lado)
 ou o banco (consultas/escrita/TLS), à escolha do autor; a exercitação da
 fatia 1 pede uma Pi real, que não há nesta máquina. Em 2026-09-18 o banco
 fechou a sua fatia (§7.52: `datasource.query` com leitura imposta pelo
-motor, escrita confirmada, TLS verify-full no PostgreSQL). Seguem, na ordem
-do §4.1: a varredura §8 e o bloco F — ou a fatia 2 do P6.
+motor, escrita confirmada, TLS verify-full no PostgreSQL), e o P6 ganhou a
+fatia 2 (§7.53: o workspace ESPELHADO por rsync — a pasta do alvo aberta
+como workspace comum, salvar empurra, Puxar/Empurrar). Seguem, na ordem do
+§4.1: a varredura §8 e o bloco F.
 Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
@@ -626,7 +629,7 @@ ainda não está verde.
 | P4 — MicroPython | **FEITO em 2026-09-17 (§7.47, 0.116.0):** arquivos na placa (`serial.files`, C2 — lido e reescrito no ESP32 do autor), firmware oficial no catálogo de instalação e gravado pela proposta do E4 (C5), stubs por placa no basedpyright (C4). Resta o C6 (CircuitPython: drive `CIRCUITPY` + `circup`), baixa prioridade. |
 | P3 — depuração profunda | **Fatia 1 FEITA em 2026-09-17 (§7.49, 0.118.0):** o `launch` do probe-rs consertado (`coreConfigs`), `svdFile` no kit → escopo `Peripherals`, RTT/defmt como saída de debug (`rtt`), `debug.scopes`/`readMemory`/`disassemble` como passagem do DAP padrão, a vista de inspeção na aba Debug. Provado com adaptador falso — nenhuma sonda nesta máquina. **Resta:** D5 threads de RTOS (`rtos` do OpenOCD via `debugServer`), SVD com ESCRITA (`setVariable`/`writeMemory`, que os dois adaptadores anunciam), `rttChannelFormats` (defmt declarado), o caminho `cmsis-svd` pelo GDB. |
 | P5 — qualidade | **FEITO em 2026-09-17 (§7.50, 0.119.0):** `--clang-tidy` no clangd e o clang-tidy do projeto pela CDB no `quality.run` (D6); gtest/Catch2 dentro dos binários do ctest na árvore, rodar um pelo filtro (D7); domínio `coverage.*` — cargo-llvm-cov e coverage.py em LCOV, a calha pinta (D8); a lâmpada 💡 na linha do cursor com diagnóstico. **Resta:** cppcheck como segundo motor; gcov/lcov para C/C++ (exige `--coverage` no build do usuário); doctest. |
-| P6 — Linux embarcado | **Fatia 1 FEITA em 2026-09-17 (§7.51, 0.120.0):** domínio `remote.*` — perfil SSH sem senha em `.kinein/remotes.json`, `remote.probe` (uname + `command -v` pelo `ssh` em BatchMode), `remote.deploy` (rsync/scp), `remote.command` (run / gdbserver → kit / debugpy / shell); painel **Alvo remoto (SSH)**. **Resta (42 §P6):** workspace remoto (árvore, editor, busca, watcher), LSP do outro lado, mapeamento de caminhos, journalctl/dmesg, Yocto/Buildroot reconhecidos, `sshd` local no gate, exercitação numa Pi real. |
+| P6 — Linux embarcado | **Fatia 1 FEITA em 2026-09-17 (§7.51, 0.120.0):** domínio `remote.*` — perfil SSH sem senha, `remote.probe`, `remote.deploy`, `remote.command`; painel **Alvo remoto (SSH)**. **Fatia 2 FEITA em 2026-09-18 (§7.53, 0.122.0):** o workspace ESPELHADO — `remote.open` puxa a pasta do alvo por rsync para o cache e a IDE a abre como workspace comum (`workspace.open` responde `remote`), salvar empurra o arquivo, `remote.sync` pull/push sem `--delete`, `remote.status`. **Resta (42 §P6):** watcher do lado remoto, renomear/apagar propagados, LSP/interpretador do alvo, journalctl/dmesg, Yocto/Buildroot reconhecidos, `sshd` local no gate, exercitação numa Pi real. |
 | Frameworks, bloco E | **FEITO em 2026-09-17 (§7.48, 0.117.0):** `build.run` compila pelo wrapper de cada um (`pio run`; `idf.py build` no ambiente ativado — export.sh ou EIM; `west build -d build -b <placa>`; CMake com `-DPICO_SDK_PATH`), Gravar ganhou `idf.py`/`west`/`platformio`, o monitor ganhou o IDF Monitor e o `pio device monitor`, `platformio.ini` é tipo de projeto. Provado com wrappers falsos — nenhum SDK real nesta máquina. Resta: E5 templates curados, E6 Unity/Ceedling. |
 | Banco | **FEITO em 2026-09-18 (§7.52, 0.121.0):** `datasource.query` — leitura com teto imposto por fora e `READ ONLY` no motor, escrita só com `confirmWrite` (código `WRITE_CONFIRMATION_REQUIRED`), células em texto, Mongo `<coleção> <filtro>` só leitura; TLS `verify-full` no PostgreSQL (`tokio-postgres-rustls`, +11 crates, deny verde). **Resta:** escrever documento no Mongo; abas/histórico de consulta; exportar; cancelar consulta longa; PostgreSQL/Mongo reais e o TLS de ponta a ponta não provados no gate (só SQLite). |
 | Varredura 40 §8 | `quality.output` descartado no C++; `environmentScan` sem ouvinte; presets sem tela. Os demais achados permanecem detalhados no §8. |
@@ -3604,3 +3607,50 @@ ONLY` recusa `INSERT`/`UPDATE`/`DELETE`/DDL — documentado, não exercitado).
 **Falta:** escrever documento no Mongo; abas e histórico de consulta;
 exportar; cancelar consulta longa (driver síncrono — o job não é
 cancelável). **Próximo:** varredura 40 §8 ou P6 fatia 2.
+
+### 7.53 P6 fatia 2 — o workspace ESPELHADO — 2026-09-18, protocolo 0.122.0
+
+O desenho foi escrito antes do código (`roadmaps/42` §P6, "Desenho da fatia
+2"). A pergunta era como abrir a pasta da Pi. O VS Code (Remote-SSH,
+proprietário) sobe um servidor Node no alvo — pesado numa Pi e, para nós,
+reescrever `fs.*`, índice, git e LSP para um segundo filesystem. A resposta
+é a outra escola (o "deployment" do PyCharm, o fluxo Zephyr/Yocto): **a
+pasta remota vira um espelho local por `rsync`, e a IDE abre o espelho como
+workspace comum**. `remote.open { name, path }` → job `rsync -az -i
+--exclude .kinein -e 'ssh … -o ControlMaster=auto -o ControlPath=<cache>/
+ssh-%C -o ControlPersist=60' [user@]host:<path>/ <espelho>/` para
+`~/.cache/kinein-vectis/remote/<alvo>/<hash>/<basename>`, grava o marcador
+`.kinein/remote-mirror.json` e copia o alvo para o catálogo do espelho
+(autossuficiente; o `.kinein` nunca sincroniza) → `event.remote.synced {
+direction: pull, changed[] }` → a UI abre o espelho pelo `workspace.open`
+de sempre, que responde `remote: RemoteMirror`. **Salvar empurra**: o
+`fs.write` num espelho dispara o job `Empurrar <arquivo> para <alvo>` só com
+aquele caminho. `remote.sync { pull | push, paths? }` move a árvore ou
+caminhos relativos (sem `..`, nunca `.kinein`), **nunca `--delete`**;
+`remote.status` diz se o workspace é espelho. `changed` é a saída `-i` do
+rsync, lida linha a linha. UI: `RemoteMirrorView` no painel Remoto ("Abrir
+espelho"; a faixa "este workspace é um espelho de pi:/…" com Puxar /
+Empurrar tudo); o espelho aberto seleciona o alvo dele. No caminho, um
+defeito que o teste revelou antes da Pi: o espelho aberto não tinha o alvo
+(usuário/porta/chave ficavam no workspace de origem) — por isso o `remote.
+open` copia o alvo para o catálogo do espelho.
+
+**Medido em 2026-09-18:** 825 testes Rust (+6: o espelho nomeado pelo
+basename sob o cache; o marcador ida-e-volta e o schema estranho; as linhas
+rsync com excludes/transporte/sentido; a saída itemizada; `safe_relative`;
+por despacho com um `rsync` FALSO que copia entre o espelho e uma "Pi"
+local — open sem rsync/alvo/pasta recusados, o pull com a linha certa e o
+marcador, o `workspace.open` com `remote`, `remote.status`, o push
+automático de um `fs.write` só com aquele arquivo, `remote.sync` com paths
+inválidos recusados, pull/push, a falha do rsync no evento); 45 harnesses
+(`tst_remote` estendido); 160 métodos, 57 eventos, 36 domínios; clippy,
+fmt, clang-format, Clang-Tidy, fiação, propriedades, alcance, duplicação,
+arquitetura, docs, links, shell, atalhos, qmllint; `debug-strict` compila e
+abre.
+
+**Não provado, dito:** nenhum alvo real (sem Pi; o `rsync` real e o
+`ControlMaster` não exercitados — só o falso ecoando argv). **Falta:**
+watcher remoto (o que muda no alvo só aparece ao Puxar); renomear/apagar
+propagados (`--delete` explícito); LSP/interpretador do alvo;
+journalctl/dmesg; Yocto/Buildroot no P0; `sshd` local no gate.
+**Próximo:** varredura 40 §8, bloco F.

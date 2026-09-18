@@ -163,6 +163,7 @@ set_source_files_properties(qml/remote/RemoteForm.qml PROPERTIES QT_RESOURCE_ALI
 set_source_files_properties(qml/remote/RemoteVerdict.qml PROPERTIES QT_RESOURCE_ALIAS RemoteVerdict.qml)
 set_source_files_properties(qml/remote/RemotePanel.qml PROPERTIES QT_RESOURCE_ALIAS RemotePanel.qml)
 set_source_files_properties(qml/remote/RemotePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS RemotePanelHost.qml)
+set_source_files_properties(qml/remote/RemoteMirrorView.qml PROPERTIES QT_RESOURCE_ALIAS RemoteMirrorView.qml)
 set_source_files_properties(qml/ipc/GitRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitRequestRouter.qml)
 set_source_files_properties(qml/ipc/DebugEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugEventRouter.qml)
 set_source_files_properties(qml/ipc/DebugRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS DebugRequestRouter.qml)
@@ -425,6 +426,7 @@ qt_add_qml_module(kinein-vectis
         qml/remote/RemoteVerdict.qml
         qml/remote/RemotePanel.qml
         qml/remote/RemotePanelHost.qml
+        qml/remote/RemoteMirrorView.qml
         qml/ipc/GitRequestRouter.qml
         qml/ipc/DebugEventRouter.qml
         qml/ipc/DebugRequestRouter.qml

@@ -189,3 +189,100 @@ pub struct RemoteCommandResult {
     /// Where each piece came from.
     pub source: Vec<String>,
 }
+
+/// A workspace that is a local MIRROR of a folder on a target (`0.122.0`,
+/// P6 slice 2): the IDE works on the mirror; `rsync` moves the bytes.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteMirror {
+    /// The target's name in the catalogue.
+    pub name: String,
+    /// The target's host, for the UI to show without a second lookup.
+    pub host: String,
+    /// The folder on the target.
+    pub path: String,
+    /// The local mirror root (the workspace root).
+    pub mirror_root: String,
+}
+
+/// Parameters for `remote.open`: mirror `path` of target `name` locally.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RemoteOpenParams {
+    /// Target name.
+    pub name: String,
+    /// Folder on the target (absolute, or `~`-relative for the remote shell).
+    pub path: String,
+}
+
+/// Result of `remote.open`: the job, and where the mirror will be.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteOpenResult {
+    /// Job to follow; `event.remote.synced` with `direction: pull` ends it.
+    pub job_id: String,
+    /// The command line, for the job output.
+    pub command: String,
+    /// The local mirror root the UI opens once the pull succeeds.
+    pub mirror: String,
+}
+
+/// Which way `remote.sync` moves the bytes.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum RemoteSyncDirection {
+    /// Target -> mirror.
+    Pull,
+    /// Mirror -> target.
+    Push,
+}
+
+/// Parameters for `remote.sync` (the open workspace must be a mirror).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RemoteSyncParams {
+    /// Pull or push.
+    pub direction: RemoteSyncDirection,
+    /// Paths relative to the mirror root; absent = the whole tree. Never
+    /// deletes on the other side.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub paths: Option<Vec<String>>,
+}
+
+/// Payload of `event.remote.synced` (from `remote.open`, `remote.sync` and
+/// the automatic push after a write in a mirror).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteSyncedEvent {
+    /// The job that ran it.
+    pub job_id: String,
+    /// Target name.
+    pub name: String,
+    /// Pull or push.
+    pub direction: RemoteSyncDirection,
+    /// Whether every `rsync` succeeded.
+    pub success: bool,
+    /// The command line(s) that ran.
+    pub command: String,
+    /// Paths `rsync` reported as transferred (its itemized output), relative.
+    pub changed: Vec<String>,
+    /// Why not, on failure.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    /// The mirror root.
+    pub mirror: String,
+}
+
+/// Parameters for `remote.status`: none.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RemoteStatusParams {}
+
+/// Result of `remote.status`: the mirror the open workspace is, if any.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteStatusResult {
+    /// Present when the open workspace is a mirror.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mirror: Option<RemoteMirror>,
+}

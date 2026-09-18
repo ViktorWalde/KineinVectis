@@ -80,6 +80,27 @@ void CoreClient::toolchainSetKitRemote(const QString& remoteTarget, const QStrin
                             {QStringLiteral("debugServer"), debugServer}});
 }
 
+void CoreClient::remoteOpen(const QString& name, const QString& path)
+{
+    sendRequest(
+        QStringLiteral("remote.open"),
+        QJsonObject{{QStringLiteral("name"), name}, {QStringLiteral("path"), path.trimmed()}});
+}
+
+void CoreClient::remoteSync(const QString& direction, const QStringList& paths)
+{
+    QJsonObject params{{QStringLiteral("direction"), direction}};
+    if (!paths.isEmpty()) {
+        params.insert(QStringLiteral("paths"), QJsonArray::fromStringList(paths));
+    }
+    sendRequest(QStringLiteral("remote.sync"), params);
+}
+
+void CoreClient::remoteStatus()
+{
+    sendRequest(QStringLiteral("remote.status"), QJsonObject{});
+}
+
 bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("remote.list") || method == QStringLiteral("remote.save") ||
@@ -97,6 +118,21 @@ bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& 
     }
     if (method == QStringLiteral("remote.command")) {
         emit remoteCommandResolved(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("remote.open")) {
+        emit remoteOpenAccepted(result.value(QStringLiteral("jobId")).toString(),
+                                result.value(QStringLiteral("command")).toString(),
+                                result.value(QStringLiteral("mirror")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("remote.sync")) {
+        emit remoteJobAccepted(method, result.value(QStringLiteral("jobId")).toString(),
+                               result.value(QStringLiteral("command")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("remote.status")) {
+        emit remoteMirrorChanged(result.value(QStringLiteral("mirror")).toObject().toVariantMap());
         return true;
     }
     return false;

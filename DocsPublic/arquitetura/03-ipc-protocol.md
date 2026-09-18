@@ -1,5 +1,23 @@
 # 03 — Protocolo IPC
 
+> **0.122.0 (2026-09-18) — P6 fatia 2, o workspace ESPELHADO (`roadmaps/42`
+> §P6, desenho escrito antes do código).** A pasta de um alvo SSH vira um
+> espelho local por `rsync`, e a IDE abre o espelho como workspace comum —
+> `fs.*`, índice, busca, git e LSP não mudam; o que muda é a sincronia.
+> `remote.open { name, path }` → job (`rsync -az -i --exclude .kinein -e 'ssh
+> [-p] [-i] -o ControlMaster=auto -o ControlPath=<cache>/ssh-%C -o
+> ControlPersist=60' [user@]host:<path>/ <espelho>/`) → `event.remote.synced
+> { jobId, name, direction, success, command, changed[], error?, mirror }`;
+> o espelho fica em `~/.cache/kinein-vectis/remote/<alvo>/<hash>/<basename>`
+> com o marcador `.kinein/remote-mirror.json` e o alvo copiado para o
+> catálogo DELE (o `.kinein` nunca sincroniza). `workspace.open` de um
+> espelho responde `remote: RemoteMirror { name, host, path, mirrorRoot }`;
+> `remote.status {}` → `{ mirror? }`; `remote.sync { direction: pull | push,
+> paths? }` → job, nunca `--delete`; **um `fs.write` num espelho empurra o
+> arquivo sozinho** (job `Empurrar <arquivo> para <alvo>`). Painel Remoto:
+> "Abrir espelho", a faixa "este workspace é um espelho de…" com Puxar /
+> Empurrar tudo. Métodos 160, eventos 57, domínios 36.
+>
 > **0.121.0 (2026-09-18) — banco: consultas, escrita e TLS (`roadmaps/35`
 > §7.4, desenho escrito antes do código).** `datasource.query { name,
 > password?, sql, maxRows? (500), confirmWrite? }` → job →
@@ -3731,9 +3749,47 @@ Ambiente; comando `remote.list`): lista, formulário sem campo de senha,
 do `remote.command` ao dono certo — `runConfig.save` ("Rodar em pi",
 "debugpy em pi"), `toolchain.setKit { remoteTarget, debugServer }` (só os dois
 campos; a ponte ganhou `toolchainSetKitRemote`) ou
-`runtimeController.submitShellInput`. **Não entra nesta fatia (dito):**
+`runtimeController.submitShellInput`. **Não entrou na fatia 1 (dito):**
 workspace remoto, LSP do outro lado, mapeamento de caminhos, `sshd` local
 no gate — o `RemoteContext` inteiro do 28 §4 segue no `42` §P6.
+
+### O workspace espelhado (`0.122.0`, P6 fatia 2)
+
+```text
+remote.open   { name, path }                       -> { jobId, command, mirror }   (job: pull)
+remote.sync   { direction: pull | push, paths? }   -> { jobId, command }           (job)
+remote.status {}                                   -> { mirror?: RemoteMirror }
+RemoteMirror  name · host · path (no alvo) · mirrorRoot (local)
+
+event.remote.synced { jobId, name, direction, success, command, changed: [caminho],
+                      error?, mirror }
+workspace.open de um espelho  -> … , remote: RemoteMirror
+```
+
+A pergunta era "como abrir a pasta da Pi". O VS Code (Remote-SSH,
+proprietário) sobe um servidor no alvo; aqui a resposta é a outra escola
+(o "deployment" do PyCharm, o fluxo Zephyr/Yocto): **a pasta remota vira
+um espelho local por `rsync`, e a IDE abre o espelho como workspace
+comum** — zero mudança em `fs.*`, índice, busca, git e LSP. `remote.open`
+puxa a árvore (`rsync -az -i --exclude .kinein -e 'ssh [-p] [-i] -o
+ControlMaster=auto -o ControlPath=<cache>/ssh-%C -o ControlPersist=60'
+[user@]host:<path>/ <espelho>/`) para `~/.cache/kinein-vectis/remote/
+<alvo>/<hash do path>/<basename>` — o basename vira o nome do workspace —,
+grava `.kinein/remote-mirror.json` (`schemaVersion`, `name`, `host`,
+`path`) e copia o alvo para o `.kinein/remotes.json` **do espelho**, que é
+autossuficiente (usuário, porta, chave); o `.kinein` nunca sincroniza,
+então nada disso chega ao alvo. Quando o `event.remote.synced { direction:
+pull }` chega, a UI abre o espelho pelo `workspace.open` de sempre, cuja
+resposta traz `remote`. **Salvar empurra:** um `fs.write` num espelho
+dispara o job `Empurrar <arquivo> para <alvo>` só com aquele caminho (o
+`ControlMaster` do ssh mantém uma conexão só entre gravações). `remote.sync`
+move a árvore inteira ou `paths` relativos (sem `..`, nunca `.kinein`),
+**nunca com `--delete`** — apagar do outro lado é gesto explícito, fora
+desta fatia. `changed` é a saída `-i` (itemize) do `rsync`, lida linha a
+linha. **Dito como não feito:** watcher do lado remoto (o que muda no alvo
+só aparece ao Puxar); renomear/apagar não propaga; o LSP resolve contra
+ESTA máquina (C/C++ cross usa o sysroot do kit; Python/Rust do alvo não);
+edição dos dois lados = o `rsync` mais recente vence.
 
 ## `setup.*` — o passo a passo oficial de instalação, por distro
 

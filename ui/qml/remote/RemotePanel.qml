@@ -26,6 +26,11 @@ Item {
     property string deployMessage: ""
     property string lastCommand: ""
     property string lastOutcome: ""
+    property string openPath: ""
+    property var mirror: null
+    property bool isMirror: false
+    property bool syncing: false
+    property string syncMessage: ""
 
     signal targetSelected(string name)
     signal newRequested()
@@ -37,6 +42,9 @@ Item {
     signal probeRequested()
     signal deployRequested()
     signal commandRequested(string kind)
+    signal openPathEdited(string text)
+    signal openFolderRequested()
+    signal syncRequested(string direction)
     signal closeRequested()
 
     readonly property bool draftNamed: root.draft !== null && root.draft.name.trim() !== ""
@@ -125,6 +133,21 @@ Item {
                 lastCommand: root.lastCommand
                 lastOutcome: root.lastOutcome
                 errorText: root.errorText
+            }
+
+            // O workspace ESPELHADO (fatia 2): a pasta do alvo vira espelho
+            // local por rsync; salvar empurra; Puxar/Empurrar sincronizam.
+            RemoteMirrorView {
+                width: parent.width
+                openPath: root.openPath
+                mirror: root.mirror
+                isMirror: root.isMirror
+                canOpen: root.selectedSaved && !root.syncing
+                syncing: root.syncing
+                syncMessage: root.syncMessage
+                onOpenPathEdited: text => root.openPathEdited(text)
+                onOpenFolderRequested: root.openFolderRequested()
+                onSyncRequested: direction => root.syncRequested(direction)
             }
 
             // O ciclo depois de salvo: deploy -> rodar -> depurar. Cada botao

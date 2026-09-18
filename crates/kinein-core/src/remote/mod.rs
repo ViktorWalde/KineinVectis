@@ -22,6 +22,7 @@
 //! O que NAO entra nesta fatia (dito): workspace remoto, LSP do outro lado,
 //! mapeamento de caminhos — o `RemoteContext` inteiro do 28 §4.
 
+pub mod mirror;
 mod store;
 
 use std::path::Path;
