@@ -145,6 +145,10 @@ pub enum JsonRpcErrorCode {
     /// force the UI to match on message text to tell "prompt for a password"
     /// apart from "this profile is broken".
     SecretRequired,
+    /// `datasource.query` (0.121.0): the statement is not a read and the
+    /// request did not carry `confirmWrite: true`. The UI asks and resends —
+    /// its own code so no message text is matched.
+    WriteConfirmationRequired,
 }
 
 #[cfg(test)]

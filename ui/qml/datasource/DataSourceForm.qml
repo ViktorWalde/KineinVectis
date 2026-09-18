@@ -35,6 +35,8 @@ Item {
     // estrutura, e duas copias da mesma derivacao divergem em silencio — o
     // gate de duplicacao pegou a segunda no mesmo dia em que ela nasceu.
     property bool mongo: false
+    readonly property bool postgres: !root.arquivo && !root.mongo
+    readonly property string tls: root.draft ? (root.draft.tls || "disable") : "disable"
 
     implicitHeight: coluna.implicitHeight
 
@@ -214,6 +216,36 @@ Item {
             placeholder: "PGPASSWORD"
             value: root.draft ? (root.draft.secretVariable || "") : ""
             onEdited: text => root.fieldEdited("secretVariable", text)
+        }
+
+        // TLS (0.121.0): so' o PostgreSQL. `require` e' o verify-full do
+        // libpq — cadeia E nome do host conferidos; nao existe "cifra sem
+        // conferir" aqui.
+        Row {
+            width: parent.width
+            visible: root.postgres
+            spacing: Theme.spacingXSmall
+
+            KvToggleChip {
+                labelText: qsTr("Sem TLS")
+                active: root.tls !== "require"
+                onToggled: root.fieldEdited("tls", "disable")
+            }
+
+            KvToggleChip {
+                labelText: qsTr("TLS verificado (verify-full)")
+                active: root.tls === "require"
+                onToggled: root.fieldEdited("tls", "require")
+            }
+        }
+
+        DataSourceField {
+            width: parent.width
+            visible: root.postgres && root.tls === "require"
+            label: qsTr("Certificado (PEM) em que confiar — vazio = raízes públicas")
+            placeholder: "/etc/ssl/certs/meu-postgres.pem"
+            value: root.draft ? (root.draft.caFile || "") : ""
+            onEdited: text => root.fieldEdited("caFile", text)
         }
     }
 }

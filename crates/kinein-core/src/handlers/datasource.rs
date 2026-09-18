@@ -29,6 +29,7 @@ impl Core {
             "datasource.save" => Some(self.datasource_save_response(request_id, params)),
             "datasource.remove" => Some(self.datasource_remove_response(request_id, params)),
             "datasource.test" => Some(self.datasource_test_response(request_id, params)),
+            "datasource.query" => Some(self.datasource_query_response(request_id, params)),
             "datasource.introspect" => {
                 Some(self.datasource_introspect_response(request_id, params))
             }
@@ -211,7 +212,7 @@ impl Core {
     /// MESMA pergunta: "tenho a senha para abrir esta conexao?". Duas copias
     /// divergiriam exatamente como as duas copias de `isWordChar` divergiram
     /// (`DocsPublic/roadmaps/39` §5).
-    fn resolve_secret(
+    pub(super) fn resolve_secret(
         profile: &DataSourceProfile,
         password: Option<String>,
     ) -> Result<Option<Secret>, Box<JsonRpcResponse>> {
@@ -242,7 +243,7 @@ impl Core {
     }
 
     /// Acha o perfil salvo, ou a resposta que explica que ele nao existe.
-    fn find_profile(
+    pub(super) fn find_profile(
         root: &std::path::Path,
         name: &str,
     ) -> Result<DataSourceProfile, Box<JsonRpcResponse>> {
@@ -387,7 +388,7 @@ fn resultado_do_teste(
 ///
 /// As recusas nascem em funcoes que nao conhecem o `request_id` (elas servem
 /// a dois metodos); o `id` e' colado aqui, no unico lugar que o tem.
-fn com_id(mut resposta: JsonRpcResponse, request_id: Option<Value>) -> JsonRpcResponse {
+pub(super) fn com_id(mut resposta: JsonRpcResponse, request_id: Option<Value>) -> JsonRpcResponse {
     resposta.id = request_id;
     resposta
 }

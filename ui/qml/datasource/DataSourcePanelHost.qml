@@ -26,8 +26,8 @@ Item {
         id: moldura
 
         anchors.centerIn: parent
-        width: Math.min(620, root.maxAvailableWidth)
-        height: Math.min(480, root.maxAvailableHeight)
+        width: Math.min(720, root.maxAvailableWidth)
+        height: Math.min(560, root.maxAvailableHeight)
         radius: Theme.radius
         color: Theme.background1
         border.width: 1
@@ -55,6 +55,12 @@ Item {
             documentEngine: root.controller ? root.controller.documentEngine : false
             reading: root.controller ? root.controller.reading : false
             sessionPassword: root.controller ? root.controller.sessionPassword : ""
+            sql: root.controller ? root.controller.sql : ""
+            querying: root.controller ? root.controller.querying : false
+            writeConfirmationRequired: root.controller ? root.controller.writeConfirmationRequired : false
+            queryColumns: root.controller ? root.controller.queryColumns : []
+            queryRows: root.controller ? root.controller.queryRows : []
+            queryStatus: root.controller ? root.controller.queryStatus : ""
 
             onProfileSelected: name => root.controller.select(name)
             onNewRequested: root.controller.startNew()
@@ -64,6 +70,8 @@ Item {
             onRemoveRequested: root.controller.remove()
             onTestRequested: root.controller.test()
             onIntrospectRequested: root.controller.introspect()
+            onSqlEdited: text => root.controller.sql = text
+            onQueryRequested: confirmWrite => root.controller.runQuery(confirmWrite)
             onCloseRequested: root.dismissRequested()
         }
     }

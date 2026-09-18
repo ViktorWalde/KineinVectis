@@ -117,7 +117,16 @@ fn colunas_de(
 }
 
 /// Abre o arquivo do perfil, recusando cedo o que nao existe.
-fn abrir(profile: &DataSourceProfile) -> Result<Connection, ConnectionFailure> {
+pub(super) fn abrir(profile: &DataSourceProfile) -> Result<Connection, ConnectionFailure> {
+    abrir_com(profile, rusqlite::OpenFlags::default())
+}
+
+/// [`abrir`] com as flags do chamador — a consulta de LEITURA abre com
+/// `SQLITE_OPEN_READ_ONLY`, e o motor impoe o que a classificacao prometeu.
+pub(super) fn abrir_com(
+    profile: &DataSourceProfile,
+    flags: rusqlite::OpenFlags,
+) -> Result<Connection, ConnectionFailure> {
     let caminho = profile.database.trim();
     if caminho.is_empty() {
         return Err(ConnectionFailure {
@@ -136,14 +145,14 @@ fn abrir(profile: &DataSourceProfile) -> Result<Connection, ConnectionFailure> {
             secret_required: false,
         });
     }
-    Connection::open(caminho).map_err(|erro| falha(&erro))
+    Connection::open_with_flags(caminho, flags).map_err(|erro| falha(&erro))
 }
 
 /// Erro do `rusqlite` na forma que a UI ja' entende.
 ///
 /// `secret_required` e' SEMPRE `false`, e a constante diz algo: `SQLite` nao
 /// tem autenticacao. Pedir senha aqui seria um dialogo que nao resolve nada.
-fn falha(erro: &rusqlite::Error) -> ConnectionFailure {
+pub(super) fn falha(erro: &rusqlite::Error) -> ConnectionFailure {
     ConnectionFailure {
         message: super::connection::describe(erro),
         sql_state: None,
@@ -168,6 +177,8 @@ mod tests {
             secret_source: SecretSource::Automatic,
             secret_variable: None,
             sample_size: None,
+            tls: None,
+            ca_file: None,
         }
     }
 

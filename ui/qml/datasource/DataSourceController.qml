@@ -51,11 +51,22 @@ Item {
     // Senha da sessao. Nunca persistida, nunca enviada ao `save`.
     property string sessionPassword: ""
 
+    // A consulta (0.121.0): o texto, o resultado como tabela de texto, e o
+    // pedido de confirmacao quando a instrucao escreve — pelo CODIGO
+    // `WRITE_CONFIRMATION_REQUIRED`, nunca lendo a mensagem.
+    property string sql: ""
+    property bool querying: false
+    property bool writeConfirmationRequired: false
+    property var queryColumns: []
+    property var queryRows: []
+    property string queryStatus: ""
+
     signal listRequested()
     signal saveRequested(var profile)
     signal removeRequested(string name)
     signal testRequested(string name, string password)
     signal introspectRequested(string name, string password)
+    signal queryRequested(string name, string password, string sql, bool confirmWrite)
 
     visible: false
 
@@ -83,7 +94,9 @@ Item {
             database: "postgres",
             user: "",
             secretSource: "automatic",
-            secretVariable: ""
+            secretVariable: "",
+            tls: "disable",
+            caFile: ""
         };
     }
 
@@ -104,6 +117,7 @@ Item {
     }
 
     function clearVerdict() {
+        clearQuery();
         schemas = [];
         reading = false;
         testing = false;
@@ -146,7 +160,9 @@ Item {
             database: source.database,
             user: source.user,
             secretSource: source.secretSource || "automatic",
-            secretVariable: source.secretVariable || ""
+            secretVariable: source.secretVariable || "",
+            tls: source.tls || "disable",
+            caFile: source.caFile || ""
         };
     }
 
@@ -233,11 +249,60 @@ Item {
         secretRequired = needsSecret;
     }
 
-    function handleFailed(method, message) {
+    function clearQuery() {
+        querying = false;
+        writeConfirmationRequired = false;
+        queryColumns = [];
+        queryRows = [];
+        queryStatus = "";
+    }
+
+    // Executar o que esta' no editor. `confirmWrite` so' vai `true` quando o
+    // autor respondeu ao pedido de confirmacao — o core recusa o resto.
+    function runQuery(confirmWrite) {
+        if (draft.name === "" || sql.trim() === "") {
+            return;
+        }
+        querying = true;
+        writeConfirmationRequired = false;
+        queryStatus = "";
+        queryRequested(draft.name, sessionPassword, sql, confirmWrite === true);
+    }
+
+    function handleQueried(outcome) {
+        querying = false;
+        if (outcome.success === true) {
+            queryColumns = outcome.columns || [];
+            queryRows = outcome.rows || [];
+            secretRequired = false;
+            if (outcome.affected !== undefined && outcome.affected !== null) {
+                queryStatus = qsTr("%1 linha(s) afetada(s) em %2 ms").arg(outcome.affected).arg(outcome.elapsedMs);
+            } else {
+                queryStatus = qsTr("%1 linha(s)%2 em %3 ms").arg(outcome.rowCount)
+                    .arg(outcome.truncated ? qsTr(" — teto atingido") : "").arg(outcome.elapsedMs);
+            }
+        } else {
+            queryColumns = [];
+            queryRows = [];
+            queryStatus = outcome.message || qsTr("a consulta falhou");
+            secretRequired = outcome.secretRequired === true;
+        }
+    }
+
+    function handleFailed(method, message, code) {
         if (method.indexOf("datasource.") === 0) {
             testing = false;
             reading = false;
-            errorText = message;
+            querying = false;
+            if (code === "WRITE_CONFIRMATION_REQUIRED") {
+                writeConfirmationRequired = true;
+                queryStatus = message;
+            } else if (code === "SECRET_REQUIRED" && method === "datasource.query") {
+                secretRequired = true;
+                queryStatus = message;
+            } else {
+                errorText = message;
+            }
         }
     }
 }

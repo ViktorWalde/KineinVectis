@@ -244,6 +244,8 @@ mod tests {
             secret_source: SecretSource::Automatic,
             secret_variable: None,
             sample_size: None,
+            tls: None,
+            ca_file: None,
         }
     }
 

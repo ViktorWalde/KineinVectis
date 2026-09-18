@@ -166,6 +166,10 @@ public:
     Q_INVOKABLE void dataSourceRemove(const QString& name);
     Q_INVOKABLE void dataSourceTest(const QString& name, const QString& password);
     Q_INVOKABLE void dataSourceIntrospect(const QString& name, const QString& password);
+    // Executar o que o autor escreveu (datasource.query, 0.121.0): job; `confirmWrite`
+    // e' o reconhecimento de que a instrucao escreve (o core recusa sem ele).
+    Q_INVOKABLE void dataSourceQuery(const QString& name, const QString& password,
+                                     const QString& sql, int maxRows, bool confirmWrite);
 
     // Observabilidade: o Grafana que observa este projeto. A licenca dele
     // (AGPL-3.0) decide a FORMA — a IDE CONVERSA, nunca embute.
@@ -337,6 +341,7 @@ signals:
                            const QVariantList& tools);
     void dataSourceListResolved(const QVariantList& profiles);
     void dataSourceTestAccepted(const QString& jobId);
+    void dataSourceQueried(const QVariantMap& outcome);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.
     void dataSourceTested(const QString& name, bool ok, const QString& serverVersion,

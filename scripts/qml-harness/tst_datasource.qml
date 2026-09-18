@@ -81,7 +81,8 @@ Item {
         } else {
             if (enviado.password !== undefined) f += 128;
             if (enviado.extra !== undefined) f += 256;
-            if (Object.keys(enviado).length !== 8) f += 512;
+            // 10 campos desde 0.121.0 (tls e caFile); senha continua fora.
+            if (Object.keys(enviado).length !== 10) f += 512;
         }
 
         // 6) O veredito vem por CAMPO. A mensagem do servidor e' localizada, e

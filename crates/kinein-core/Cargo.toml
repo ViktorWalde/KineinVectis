@@ -41,6 +41,10 @@ mongodb.workspace = true
 # conceito precisa e um compilador nao daria. ADR-0006.
 # Portas seriais USB (DocsPublic/integracoes/38 §6, E1): `access(2)` sem abrir a porta.
 rustix.workspace = true
+tokio-postgres-rustls = { version = "0.14", default-features = false, features = ["webpki-roots", "ring"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+webpki-roots = "1"
+rustls-pki-types = { version = "1", features = ["std"] }
 
 [lints]
 workspace = true

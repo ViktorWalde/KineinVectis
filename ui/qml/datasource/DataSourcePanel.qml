@@ -27,6 +27,12 @@ Item {
     property bool documentEngine: false
     property bool reading: false
     property string sessionPassword: ""
+    property string sql: ""
+    property bool querying: false
+    property bool writeConfirmationRequired: false
+    property var queryColumns: []
+    property var queryRows: []
+    property string queryStatus: ""
 
     signal profileSelected(string name)
     signal newRequested()
@@ -36,6 +42,8 @@ Item {
     signal removeRequested()
     signal testRequested()
     signal introspectRequested()
+    signal sqlEdited(string text)
+    signal queryRequested(bool confirmWrite)
     signal closeRequested()
 
     readonly property bool draftNamed: root.draft !== null && root.draft.name !== ""
@@ -119,6 +127,22 @@ Item {
 
                 onPasswordEdited: text => root.passwordEdited(text)
                 onRetryRequested: root.testRequested()
+            }
+
+            // A consulta (0.121.0) fica ENTRE o veredito e a estrutura: a
+            // estrutura e' o que se le para escrever a consulta.
+            DataSourceQuery {
+                width: parent.width
+                sql: root.sql
+                documentEngine: root.documentEngine
+                querying: root.querying
+                writeConfirmationRequired: root.writeConfirmationRequired
+                columns: root.queryColumns
+                rows: root.queryRows
+                status: root.queryStatus
+                canRun: root.draftNamed
+                onSqlEdited: text => root.sqlEdited(text)
+                onRunRequested: confirmWrite => root.queryRequested(confirmWrite)
             }
 
             // DUAS FORMAS, NUNCA AS DUAS AO MESMO TEMPO. A visao e' escolhida

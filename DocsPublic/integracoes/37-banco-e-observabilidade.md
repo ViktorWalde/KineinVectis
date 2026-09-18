@@ -9,8 +9,9 @@
 > item 27, fechado): PostgreSQL/TimescaleDB, SQLite e MongoDB no domínio
 > `datasource` (perfil sem senha em disco, teste de conexão, leitura de
 > esquemas/tabelas/colunas ou coleções), o Grafana pela HTTP API no domínio
-> `grafana`. Falta, como fatia própria: executar consulta e escrever, e o TLS
-> do `postgres`. A experiência de banco "à JetBrains (DataGrip), adaptada" é
+> `grafana`. **Em 2026-09-18 (0.121.0, `roadmaps/35` §7.4):** executar
+> consulta e escrever (`datasource.query`) e o TLS do `postgres`
+> (`tokio-postgres-rustls`) entraram. A experiência de banco "à JetBrains (DataGrip), adaptada" é
 > a etapa de UX/UI/HUD que o autor separou em 2026-09-13 (`40` §5) — depois do
 > backend impecável.
 
@@ -131,8 +132,15 @@ licenças entraram no `deny.toml` com justificativa datada:
 | CDLA-Permissive-2.0 | `webpki-roots` | **não é código**: é a lista de certificados raiz da Mozilla, empacotada como crate |
 
 Com elas, o `ureq` ligou o `rustls` e o `mongodb` entrou com as features
-padrão. **O `postgres` continua sem TLS** — a licença está resolvida, mas o
-conector muda a chamada de conexão, e isso é fatia própria.
+padrão. O `postgres` ficou sem TLS até 0.120.0 — a licença estava
+resolvida, mas o conector muda a chamada de conexão. **Em 2026-09-18
+(0.121.0) entrou o `tokio-postgres-rustls` 0.14** (MIT): usa o mesmo `rustls`
+0.23 e o `webpki-roots` que já estavam na árvore; +11 crates medidos
+(`x509-cert`, `der`, `spki`, `tls_codec`, `const-oid`, `base64ct`, `flagset`,
+`der_derive`, `tls_codec_derive`, `zeroize_derive` e ele próprio — todos
+MIT/Apache), `cargo deny` verde sem nova licença. Política do perfil:
+`tls: require` = `verify-full` (cadeia e host), com `caFile` para o
+autoassinado; sem "cifra sem conferir".
 
 Custo de dependência medido em 2026-09-04, para comparação futura:
 
@@ -173,5 +181,6 @@ embute um `tokio` 1.53.1 como detalhe de implementação — a árvore tem tokio
 mas **o código deste repositório continua síncrono**, que é o desenho do core
 (`Core::new()` puro roda sem GUI e sem runtime).
 
-Nenhum backend de TLS entra por padrão: a árvore medida não tem `rustls` nem
-`openssl`. Conexão cifrada é decisão própria, de outra fatia.
+(Escrito em 2026-09-04, quando a árvore não tinha `rustls` nem `openssl`; o
+`mongodb` trouxe o `rustls` no mesmo dia, e o `postgres` o usa desde 0.121.0
+— ver acima.)

@@ -25,11 +25,9 @@
 //! por CONSULTA e o resultado diz quando truncou — "mostrei parte" e' honesto,
 //! "mostrei tudo" quando nao mostrou nao e'.
 
-use kinein_protocol::{DataSourceColumn, DataSourceProfile, DataSourceSchema, DataSourceTable};
-use postgres::NoTls;
-
-use super::connection::{ConnectionFailure, config_for, describe, failure_from};
+use super::connection::{ConnectionFailure, connect, describe, failure_from};
 use super::secret::Secret;
+use kinein_protocol::{DataSourceColumn, DataSourceProfile, DataSourceSchema, DataSourceTable};
 
 /// Teto de linhas por consulta de catalogo.
 const MAX_ROWS: i64 = 5_000;
@@ -66,9 +64,7 @@ pub fn read_structure(
     profile: &DataSourceProfile,
     secret: Option<&Secret>,
 ) -> Result<Vec<DataSourceSchema>, ConnectionFailure> {
-    let mut client = config_for(profile, secret)
-        .connect(NoTls)
-        .map_err(|erro| failure_from(&erro))?;
+    let mut client = connect(profile, secret)?;
 
     let mut schemas: Vec<DataSourceSchema> = client
         .query(SQL_SCHEMAS, &[&MAX_ROWS])

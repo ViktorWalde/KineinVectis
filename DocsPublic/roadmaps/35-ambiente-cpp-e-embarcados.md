@@ -586,6 +586,71 @@ puro. Senha de banco ali seria **regressão de segurança**, não feature — e 
 projeto tem `DocsPublic/seguranca/23` (rede contra perda de dado) mas **não tem
 cofre**. Nenhuma linha de conexão a banco entra antes dessa pergunta ter dono.
 
+### 7.4 Desenho da fatia "consultas, escrita e TLS" (2026-09-18, escrito antes do código)
+
+O `datasource.*` de hoje testa a conexão e lê a estrutura. O que falta para
+ser um cliente: **executar** o que o autor escreve, **escrever** com
+confirmação, e **cifrar** o caminho até o PostgreSQL.
+
+```text
+DataSourceProfile += tls?: disable | require   (ausente = disable, o de hoje)
+                     caFile?: caminho PEM     (o certificado do servidor
+                                               autoassinado, para confiar nele)
+datasource.query { name, password?, sql, maxRows? (500), confirmWrite? } -> { jobId }
+event.datasource.queried { jobId, name, success, columns: [string],
+                           rows: [[string | null]], rowCount, affected?, truncated,
+                           elapsedMs, message?, secretRequired }
+erro sincrono WRITE_CONFIRMATION_REQUIRED: a instrucao NAO e' de leitura
+                           (SELECT | WITH | VALUES | TABLE | SHOW | EXPLAIN) e
+                           `confirmWrite` nao veio — a UI pergunta e reenvia
+```
+
+**Leitura é leitura de verdade, não só classificação.** A primeira palavra
+decide o caminho, e o motor **impõe**: no PostgreSQL a leitura roda em
+`BEGIN READ ONLY` (um `WITH … INSERT` disfarçado é recusado pelo servidor);
+no SQLite o arquivo abre com `SQLITE_OPEN_READ_ONLY`. O teto de linhas vem
+de fora do texto do autor — `SELECT * FROM (<sql>) AS kinein_q LIMIT n+1` no
+PostgreSQL (uma instrução só; `SHOW`/`EXPLAIN` sem teto), o `step` até n+1 no
+SQLite — e `truncated` diz quando parou. Escrita: `simple_query`/
+`execute_batch` com o total de linhas afetadas; nada de transação implícita
+além da do próprio motor — o que o autor escreveu é o que roda.
+
+**Células como texto.** O protocolo simples do PostgreSQL (`simple_query`)
+devolve toda coluna em texto — sem mapa de tipos, sem "esse tipo eu não
+sei mostrar"; `NULL` é `null`. No SQLite o `ValueRef` vira texto (`BLOB` vira
+`<N bytes>`). Mongo nesta fatia: só leitura — `<coleção> <filtro JSON>` →
+`find` com `limit`, colunas = união das chaves de primeiro nível, células =
+o JSON do valor; escrever documento fica para depois, dito.
+
+**TLS pelo `rustls` que já está na árvore** (o `mongodb` trouxe; `subtle` e
+`webpki-roots` entraram no `deny.toml` por decisão do autor em 2026-09-04).
+Crate `tokio-postgres-rustls` 0.14 (MIT): medido em 2026-09-18, +11 crates
+(`x509-cert`, `der`, `spki`, `tls_codec`, … — todos MIT/Apache), `cargo
+deny` verde. `require` aqui é o `verify-full` do libpq — verifica a cadeia
+(raízes públicas ou o `caFile`) E o nome do host; não existe "cifra sem
+conferir", que é o `sslmode=require` do libpq e é o que a IDE não vai
+oferecer. Sem TLS (`disable`) tudo fica como hoje.
+
+**Prova:** SQLite real em arquivo temporário (é o único motor que roda no
+gate sem servidor): leitura com teto, `truncated`, `NULL`, escrita com
+`affected`, a recusa `WRITE_CONFIRMATION_REQUIRED`, a leitura que tenta
+escrever recusada pelo `READ_ONLY`; a classificação de instruções e o
+wrapper do LIMIT como funções puras; TLS só como configuração (não há
+servidor PostgreSQL com certificado nesta máquina — dito).
+
+**FEITO em 2026-09-18 (0.121.0, `40` §7.52).** O código seguiu o desenho;
+no caminho: o `SQLite` conta só a última instrução em `changes()` (dito no
+código e no 03); o `affected` do PostgreSQL soma os `CommandComplete`; a
+recusa de escrita não vale para o Mongo (que só lê nesta fatia). A UI ganhou
+o editor de consulta no painel (Ctrl+Enter executa), o botão "ESCREVE —
+executar mesmo assim" que só aparece pelo código, a grade de texto com
+`null` em itálico, e os chips "Sem TLS / TLS verificado" + o campo do PEM no
+formulário do PostgreSQL. **Não provado:** PostgreSQL e Mongo reais (o gate
+tem só o SQLite) e o TLS de ponta a ponta — nenhum servidor com certificado
+nesta máquina. **Falta:** escrever documento no Mongo; várias abas de
+consulta e histórico; exportar resultado; cancelar uma consulta longa (o
+job não é cancelável: o driver é síncrono).
+
 ## 8. A fase de POLIMENTO, e por que ela é etapa e não sentimento
 
 Decisão do autor em 2026-09-03: **quando as funcionalidades estiverem completas

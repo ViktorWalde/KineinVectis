@@ -100,6 +100,7 @@ set_source_files_properties(qml/app/AppEnvironmentDomains.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/ipc/EmbeddedEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedEventRouter.qml)
 set_source_files_properties(qml/ipc/EmbeddedRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedRequestRouter.qml)
 set_source_files_properties(qml/datasource/DataSourcePanel.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanel.qml)
+set_source_files_properties(qml/datasource/DataSourceQuery.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceQuery.qml)
 set_source_files_properties(qml/datasource/DataSourcePanelHost.qml PROPERTIES QT_RESOURCE_ALIAS DataSourcePanelHost.qml)
 set_source_files_properties(qml/datasource/DataSourceForm.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceForm.qml)
 set_source_files_properties(qml/datasource/DataSourceList.qml PROPERTIES QT_RESOURCE_ALIAS DataSourceList.qml)
@@ -362,6 +363,7 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/EmbeddedEventRouter.qml
         qml/ipc/EmbeddedRequestRouter.qml
         qml/datasource/DataSourcePanel.qml
+        qml/datasource/DataSourceQuery.qml
         qml/datasource/DataSourcePanelHost.qml
         qml/datasource/DataSourceForm.qml
         qml/datasource/DataSourceList.qml

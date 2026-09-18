@@ -143,6 +143,80 @@ pub struct DataSourceProfile {
     /// documentos.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sample_size: Option<u32>,
+    /// Whether the connection to `PostgreSQL` is encrypted (`0.121.0`).
+    ///
+    /// Absent means `disable` — what every profile did before. `require` is
+    /// libpq's `verify-full`: the chain AND the host name are checked; the
+    /// IDE offers no "encrypt without checking".
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tls: Option<DataSourceTls>,
+    /// PEM file with the certificate (or CA) to trust, for a self-signed
+    /// server; absent = the public roots.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ca_file: Option<String>,
+}
+
+/// TLS policy of a `PostgreSQL` profile.
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum DataSourceTls {
+    /// Plain connection (the default).
+    #[default]
+    Disable,
+    /// TLS with the chain and the host name verified (libpq `verify-full`).
+    Require,
+}
+
+/// Parameters for `datasource.query` — run what the author wrote (`0.121.0`).
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataSourceQueryParams {
+    /// Which saved profile to run against.
+    pub name: String,
+    /// The session password, when the profile's policy is `Prompt`. Redacted
+    /// from the client log exactly like `datasource.test`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
+    /// The statement: SQL, or `<collection> <JSON filter>` for `MongoDB`.
+    pub sql: String,
+    /// Row ceiling for a read; absent = 500. The result says when it hit it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub max_rows: Option<u32>,
+    /// `true` acknowledges that the statement writes. Without it a statement
+    /// that is not a read is refused with `WRITE_CONFIRMATION_REQUIRED`.
+    #[serde(default)]
+    pub confirm_write: bool,
+}
+
+/// Payload of `event.datasource.queried`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceQueriedEvent {
+    /// The job that ran it.
+    pub job_id: String,
+    /// The profile.
+    pub name: String,
+    /// Whether the engine accepted and ran the statement.
+    pub success: bool,
+    /// Column names of the result set (empty for a write).
+    pub columns: Vec<String>,
+    /// Rows as text cells; `null` is SQL `NULL` (or an absent key in Mongo).
+    pub rows: Vec<Vec<Option<String>>>,
+    /// Rows returned (after the ceiling).
+    pub row_count: usize,
+    /// Rows a write touched, when the engine reports it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub affected: Option<u64>,
+    /// `true` when the ceiling cut the result.
+    pub truncated: bool,
+    /// Wall time of the statement, in milliseconds.
+    pub elapsed_ms: u64,
+    /// The engine's error, in its own words, on failure.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    /// `true` when asking for the password and retrying is the next step.
+    #[serde(default)]
+    pub secret_required: bool,
 }
 
 /// Result payload for `datasource.list`.

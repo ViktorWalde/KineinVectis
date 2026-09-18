@@ -12,6 +12,7 @@ pub mod configaction;
 pub mod container;
 pub mod coverage;
 pub mod datasource;
+pub mod datasource_query;
 pub mod debug;
 pub mod draft;
 pub mod format;

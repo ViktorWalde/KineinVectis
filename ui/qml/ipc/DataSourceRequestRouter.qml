@@ -33,5 +33,9 @@ Item {
         function onIntrospectRequested(name, password) {
             root.coreClient.dataSourceIntrospect(name, password);
         }
+
+        function onQueryRequested(name, password, sql, confirmWrite) {
+            root.coreClient.dataSourceQuery(name, password, sql, 0, confirmWrite);
+        }
     }
 }

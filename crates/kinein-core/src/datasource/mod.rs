@@ -41,6 +41,7 @@ pub mod connection;
 pub mod introspect;
 pub mod mongo;
 pub mod mongo_infer;
+pub mod query;
 pub mod secret;
 pub mod sqlite;
 mod store;
@@ -176,6 +177,17 @@ fn normalize(profile: &DataSourceProfile) -> DataSourceProfile {
         sample_size: profile
             .sample_size
             .map(|valor| valor.clamp(1, mongo::MAX_SAMPLE)),
+        // TLS so' vale para o PostgreSQL; `disable` e' o mesmo que ausente.
+        tls: profile.tls.filter(|t| {
+            *t != kinein_protocol::DataSourceTls::Disable
+                && profile.engine == DataSourceEngine::Postgres
+        }),
+        ca_file: profile
+            .ca_file
+            .as_deref()
+            .map(str::trim)
+            .filter(|valor| !valor.is_empty())
+            .map(str::to_owned),
     }
 }
 
@@ -208,6 +220,8 @@ mod tests {
             secret_source: SecretSource::Automatic,
             secret_variable: None,
             sample_size: None,
+            tls: None,
+            ca_file: None,
         }
     }
 

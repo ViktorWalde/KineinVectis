@@ -1,5 +1,23 @@
 # 03 — Protocolo IPC
 
+> **0.121.0 (2026-09-18) — banco: consultas, escrita e TLS (`roadmaps/35`
+> §7.4, desenho escrito antes do código).** `datasource.query { name,
+> password?, sql, maxRows? (500), confirmWrite? }` → job →
+> `event.datasource.queried { jobId, name, success, columns[], rows[[texto |
+> null]], rowCount, affected?, truncated, elapsedMs, message?, secretRequired
+> }`. A primeira palavra classifica (SELECT/WITH/VALUES/TABLE/SHOW/EXPLAIN =
+> leitura) e o **motor impõe**: `BEGIN READ ONLY` no PostgreSQL,
+> `SQLITE_OPEN_READ_ONLY` no SQLite; o teto vem de fora do texto (`SELECT *
+> FROM (<sql>) AS kinein_q LIMIT n+1`, ou o `step` até n+1). Uma instrução
+> que não é leitura sem `confirmWrite: true` é recusada **antes do job** com
+> o código novo `WRITE_CONFIRMATION_REQUIRED` — a UI pergunta e reenvia.
+> Células em texto (protocolo simples do PostgreSQL; `ValueRef` do SQLite;
+> Mongo `<coleção> <filtro JSON>` → `find` só leitura, colunas = chaves de
+> primeiro nível). **TLS no PostgreSQL:** `DataSourceProfile.tls: disable |
+> require` (+ `caFile` PEM) — `require` é o `verify-full` do libpq pelo
+> `rustls` que o `mongodb` já trazia (`tokio-postgres-rustls` 0.14, MIT, +11
+> crates, `cargo deny` verde). Métodos 157, eventos 56, domínios 36.
+>
 > **0.120.0 (2026-09-17, noite) — P6 fatia 1, o alvo Linux por SSH como
 > recurso do projeto (`roadmaps/42` §P6, desenho escrito antes do código).**
 > **Domínio novo `remote.*`** (o 36º), no molde do `datasource.*`: um perfil
@@ -3769,14 +3787,50 @@ datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult
 datasource.test       { name, password? }     -> DataSourceTestAccepted   (job)
 datasource.introspect { name, password? }     -> aceite + job
+datasource.query      { name, password?, sql, maxRows?, confirmWrite? } -> aceite + job  (0.121.0)
 ```
 
-**Os quatro últimos exigem workspace aberto**; o perfil mora no projeto.
+**Os cinco últimos exigem workspace aberto**; o perfil mora no projeto.
 
 ```text
 event.datasource.tested        { jobId, ok, message, ... }
 event.datasource.introspected  { jobId, schemas | collections, ... }
+event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
+                                 rowCount, affected?, truncated, elapsedMs, message?, secretRequired }
 ```
+
+**Executar o que o autor escreveu (`0.121.0`, `../roadmaps/35` §7.4).** A
+primeira palavra da instrução (comentários iniciais pulados) diz se é
+leitura — `SELECT`, `WITH`, `VALUES`, `TABLE`, `SHOW`, `EXPLAIN` — e o **motor
+impõe** o que a classificação prometeu: no PostgreSQL a leitura roda em
+`BEGIN READ ONLY` (um `WITH … INSERT` disfarçado é recusado pelo servidor),
+no SQLite o arquivo abre com `SQLITE_OPEN_READ_ONLY`. O teto (`maxRows`,
+padrão 500, máximo 10.000) vem de fora do texto: `SELECT * FROM (<sql>) AS
+kinein_q LIMIT n+1` quando é uma instrução só de `SELECT`/`WITH`/`VALUES`/
+`TABLE`, o `step` até n+1 no SQLite; `truncated` diz quando cortou. Uma
+instrução que **não** é leitura sem `confirmWrite: true` é recusada antes do
+job com `WRITE_CONFIRMATION_REQUIRED` (código próprio, `details.name`) — a
+UI mostra "esta instrução ESCREVE" e reenvia com o campo; confirmada, roda
+como o autor escreveu (`simple_query`/`execute_batch`) e `affected` é o que
+o motor contou (o SQLite conta a última instrução). Células são texto: o
+protocolo simples do PostgreSQL devolve toda coluna assim, sem mapa de
+tipos; `NULL` é `null`; `BLOB` do SQLite vira `<N bytes>`; várias
+instruções → o último conjunto de resultados. MongoDB nesta fatia: só
+leitura — `<coleção> <filtro JSON>` (filtro ausente = `{}`) → `find` com
+`limit`, colunas = união das chaves de primeiro nível (`_id` primeiro),
+células = o JSON relaxado do valor; escrever documento fica dito como não
+feito. Vazio é `INVALID_PARAMS`; a senha segue a política do perfil
+(`SECRET_REQUIRED` síncrono, `secretRequired` no evento).
+
+**TLS no PostgreSQL (`0.121.0`).** `DataSourceProfile.tls: disable |
+require` (ausente = `disable`, o de sempre) e `caFile` (PEM em que confiar,
+para o servidor autoassinado; ausente = raízes públicas do `webpki-roots`).
+`require` é o `verify-full` do libpq — cadeia **e** nome do host conferidos
+—; não existe "cifra sem conferir" (o `sslmode=require` do libpq). Só vale
+para o motor `postgres`: noutro motor o `save` descarta. Implementação:
+`tokio-postgres-rustls` 0.14 (MIT) sobre o `rustls` que o `mongodb` já
+trazia — +11 crates medidos em 2026-09-18, `cargo deny` verde
+(`../integracoes/37`).
 
 **A senha nunca entra no perfil.** O `DataSourceProfile` guarda motor, host,
 porta, banco, usuário e um `SecretSource` — *de onde* o segredo vem —, e o

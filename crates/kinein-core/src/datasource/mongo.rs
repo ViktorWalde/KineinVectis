@@ -68,7 +68,7 @@ fn is_internal(name: &str) -> bool {
 /// memoria com a senha em texto, pronta para cair num `Debug`, num log de erro
 /// ou numa mensagem de falha de conexao. O `Credential` recebe o valor no ponto
 /// de uso e o `Secret` continua sendo o unico dono ate' la'.
-fn options_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> ClientOptions {
+pub(super) fn options_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> ClientOptions {
     let porta = if profile.port == 0 {
         DEFAULT_PORT
     } else {
@@ -105,7 +105,7 @@ pub struct MongoFailure {
 ///
 /// AUTENTICACAO E' UM CASO PROPRIO, como o `28P01` e' no `PostgreSQL`: a UI abre
 /// o dialogo de senha por este booleano, nunca lendo o texto.
-fn describe(error: &mongodb::error::Error, host: &str) -> MongoFailure {
+pub(super) fn describe(error: &mongodb::error::Error, host: &str) -> MongoFailure {
     let bruto = error.to_string();
     let baixo = bruto.to_lowercase();
     if baixo.contains("authentication failed") || baixo.contains("auth failed") {
@@ -186,7 +186,7 @@ pub fn probe_server(
 }
 
 /// O banco do perfil, com o padrao do servidor quando vazio.
-fn banco_de(profile: &DataSourceProfile) -> &str {
+pub(super) fn banco_de(profile: &DataSourceProfile) -> &str {
     let nome = profile.database.trim();
     if nome.is_empty() { "admin" } else { nome }
 }
@@ -445,6 +445,8 @@ mod tests {
             secret_source: kinein_protocol::SecretSource::Prompt,
             secret_variable: None,
             sample_size: None,
+            tls: None,
+            ca_file: None,
         };
         let opcoes = options_for(&perfil, Some(&Secret::new("segredo")));
         // Porta zero vira o padrao do motor, e nao uma conexao na porta 0.
@@ -475,6 +477,8 @@ mod tests {
             secret_source: kinein_protocol::SecretSource::Automatic,
             secret_variable: None,
             sample_size: None,
+            tls: None,
+            ca_file: None,
         };
         assert!(options_for(&perfil, None).credential.is_none());
     }

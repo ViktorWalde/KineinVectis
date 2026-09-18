@@ -34,8 +34,12 @@ Item {
                                                          secretRequired);
         }
 
-        function onRequestFailed(method, message) {
-            root.dataSourceController.handleFailed(method, message);
+        function onDataSourceQueried(outcome) {
+            root.dataSourceController.handleQueried(outcome);
+        }
+
+        function onRequestFailed(method, message, code) {
+            root.dataSourceController.handleFailed(method, message, code);
         }
     }
 }

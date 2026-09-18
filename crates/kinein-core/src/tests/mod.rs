@@ -13,6 +13,7 @@ mod configaction;
 mod container;
 mod coverage;
 mod datasource;
+mod datasource_query;
 mod debug;
 mod debug_attach;
 mod debug_inspect;

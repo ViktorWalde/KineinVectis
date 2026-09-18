@@ -11,20 +11,27 @@
 //! `tokio-postgres` NUNCA e' formatada: um `{:?}` nela seria a maneira mais
 //! curta de mandar a senha para o painel de saida.
 //!
-//! # Sem TLS, de proposito
+//! # TLS (0.121.0, 2026-09-18)
 //!
-//! A arvore auditada em 2026-09-04 (`DocsPublic/integracoes/37` §5.1) nao tem
-//! `rustls` nem `openssl`, e a conexao usa [`postgres::NoTls`]. Ligar TLS traz
-//! backend, cadeia de certificados e politica de verificacao — decisao propria,
-//! de outra fatia. Enquanto isso, o alvo suportado e' banco local ou rede
-//! confiavel, e este comentario existe para que ninguem descubra isso em
-//! producao.
+//! Ate' 0.120.0 nao havia TLS, de proposito (a arvore auditada em 2026-09-04
+//! nao tinha `rustls`; `DocsPublic/integracoes/37` §5.1). O `mongodb` trouxe o
+//! `rustls` e as duas licencas que faltavam entraram no `deny.toml` por
+//! decisao do autor; o `tokio-postgres-rustls` (MIT, +11 crates medidos em
+//! 2026-09-18) liga o mesmo `rustls` ao `postgres`. A politica e' a do
+//! perfil: `disable` (ausente) = [`postgres::NoTls`], como sempre; `require`
+//! = cadeia E nome do host verificados (o `verify-full` do libpq) contra as
+//! raizes publicas do `webpki-roots` ou o `caFile` do perfil. Nao existe
+//! "cifra sem conferir" — o `sslmode=require` do libpq — porque ele da' a
+//! sensacao de seguranca sem a garantia.
 
 use std::error::Error;
 use std::time::Duration;
 
-use kinein_protocol::DataSourceProfile;
-use postgres::{Config, NoTls};
+use kinein_protocol::{DataSourceProfile, DataSourceTls};
+use postgres::{Client, Config, NoTls};
+use rustls::RootCertStore;
+use rustls_pki_types::{CertificateDer, pem::PemObject};
+use tokio_postgres_rustls::MakeRustlsConnect;
 
 use super::secret::Secret;
 
@@ -68,6 +75,52 @@ pub fn config_for(profile: &DataSourceProfile, secret: Option<&Secret>) -> Confi
     config
 }
 
+/// Abre a conexao pela politica de TLS do perfil.
+///
+/// # Errors
+/// A [`ConnectionFailure`] do driver; um `caFile` ilegivel e' falha do lado
+/// do cliente (sem `SQLSTATE`), com o caminho na mensagem.
+pub fn connect(
+    profile: &DataSourceProfile,
+    secret: Option<&Secret>,
+) -> Result<Client, ConnectionFailure> {
+    let config = config_for(profile, secret);
+    match profile.tls.unwrap_or_default() {
+        DataSourceTls::Disable => config.connect(NoTls).map_err(|error| failure_from(&error)),
+        DataSourceTls::Require => {
+            let tls = MakeRustlsConnect::new(tls_config(profile.ca_file.as_deref())?);
+            config.connect(tls).map_err(|error| failure_from(&error))
+        }
+    }
+}
+
+/// As raizes em que confiar: as publicas do `webpki-roots`, mais o `caFile`.
+fn tls_config(ca_file: Option<&str>) -> Result<rustls::ClientConfig, ConnectionFailure> {
+    let mut roots = RootCertStore {
+        roots: webpki_roots::TLS_SERVER_ROOTS.to_vec(),
+    };
+    if let Some(caminho) = ca_file {
+        let certificados = CertificateDer::pem_file_iter(caminho)
+            .and_then(std::iter::Iterator::collect::<Result<Vec<_>, _>>)
+            .map_err(|erro| ConnectionFailure {
+                message: format!("nao li o certificado `{caminho}`: {erro}"),
+                sql_state: None,
+                secret_required: false,
+            })?;
+        let (adicionados, _) = roots.add_parsable_certificates(certificados);
+        if adicionados == 0 {
+            return Err(ConnectionFailure {
+                message: format!("`{caminho}` nao tem nenhum certificado PEM utilizavel"),
+                sql_state: None,
+                secret_required: false,
+            });
+        }
+    }
+    Ok(rustls::ClientConfig::builder()
+        .with_root_certificates(roots)
+        .with_no_client_auth())
+}
+
 /// Conecta, pergunta a versao do servidor e desconecta.
 ///
 /// E' a primeira acao util de um cliente de banco, e a unica que prova o
@@ -103,9 +156,7 @@ pub fn probe_server(
     profile: &DataSourceProfile,
     secret: Option<&Secret>,
 ) -> Result<String, ConnectionFailure> {
-    let mut client = config_for(profile, secret)
-        .connect(NoTls)
-        .map_err(|error| failure_from(&error))?;
+    let mut client = connect(profile, secret)?;
     let linha = client
         .query_one("SELECT version()", &[])
         .map_err(|error| failure_from(&error))?;
@@ -289,6 +340,8 @@ mod tests {
             secret_source: SecretSource::Automatic,
             secret_variable: None,
             sample_size: None,
+            tls: None,
+            ca_file: None,
         }
     }
 

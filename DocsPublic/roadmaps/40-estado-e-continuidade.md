@@ -79,9 +79,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.120.0
-testes      813 Rust aprovados; 44 harnesses QML (medicao de 2026-09-17, §7.51)
-metodos     156 IPC roteados, 55 eventos (serial.identify, runConfig.flashProposal,
+protocolo   0.121.0
+testes      819 Rust aprovados; 45 harnesses QML (medicao de 2026-09-18, §7.52)
+metodos     157 IPC roteados, 56 eventos (datasource.query e event.datasource.queried
+            em 2026-09-18; serial.identify, runConfig.flashProposal,
             serial.access, serial.files, python.stubs, debug.scopes,
             debug.readMemory, debug.disassemble, coverage.run, coverage.lines,
             remote.list/save/remove/probe/deploy/command,
@@ -605,7 +606,10 @@ por SSH como recurso do projeto: perfil sem senha, sonda, deploy, e
 rodar/gdbserver/debugpy como configuração de execução e kit) na §7.51. O
 próximo item é a segunda fatia do P6 (workspace remoto, LSP do outro lado)
 ou o banco (consultas/escrita/TLS), à escolha do autor; a exercitação da
-fatia 1 pede uma Pi real, que não há nesta máquina.
+fatia 1 pede uma Pi real, que não há nesta máquina. Em 2026-09-18 o banco
+fechou a sua fatia (§7.52: `datasource.query` com leitura imposta pelo
+motor, escrita confirmada, TLS verify-full no PostgreSQL). Seguem, na ordem
+do §4.1: a varredura §8 e o bloco F — ou a fatia 2 do P6.
 Pendências independentes do gate ficam registradas; antecipar correções quando bloquearem comprovadamente
 o item em curso ou repararem regressões da própria mudança. Continuar executando
 as verificações exigidas e distinguindo falhas preexistentes; o gate completo
@@ -624,7 +628,7 @@ ainda não está verde.
 | P5 — qualidade | **FEITO em 2026-09-17 (§7.50, 0.119.0):** `--clang-tidy` no clangd e o clang-tidy do projeto pela CDB no `quality.run` (D6); gtest/Catch2 dentro dos binários do ctest na árvore, rodar um pelo filtro (D7); domínio `coverage.*` — cargo-llvm-cov e coverage.py em LCOV, a calha pinta (D8); a lâmpada 💡 na linha do cursor com diagnóstico. **Resta:** cppcheck como segundo motor; gcov/lcov para C/C++ (exige `--coverage` no build do usuário); doctest. |
 | P6 — Linux embarcado | **Fatia 1 FEITA em 2026-09-17 (§7.51, 0.120.0):** domínio `remote.*` — perfil SSH sem senha em `.kinein/remotes.json`, `remote.probe` (uname + `command -v` pelo `ssh` em BatchMode), `remote.deploy` (rsync/scp), `remote.command` (run / gdbserver → kit / debugpy / shell); painel **Alvo remoto (SSH)**. **Resta (42 §P6):** workspace remoto (árvore, editor, busca, watcher), LSP do outro lado, mapeamento de caminhos, journalctl/dmesg, Yocto/Buildroot reconhecidos, `sshd` local no gate, exercitação numa Pi real. |
 | Frameworks, bloco E | **FEITO em 2026-09-17 (§7.48, 0.117.0):** `build.run` compila pelo wrapper de cada um (`pio run`; `idf.py build` no ambiente ativado — export.sh ou EIM; `west build -d build -b <placa>`; CMake com `-DPICO_SDK_PATH`), Gravar ganhou `idf.py`/`west`/`platformio`, o monitor ganhou o IDF Monitor e o `pio device monitor`, `platformio.ini` é tipo de projeto. Provado com wrappers falsos — nenhum SDK real nesta máquina. Resta: E5 templates curados, E6 Unity/Ceedling. |
-| Banco | Executar consultas e escrever; TLS do PostgreSQL. |
+| Banco | **FEITO em 2026-09-18 (§7.52, 0.121.0):** `datasource.query` — leitura com teto imposto por fora e `READ ONLY` no motor, escrita só com `confirmWrite` (código `WRITE_CONFIRMATION_REQUIRED`), células em texto, Mongo `<coleção> <filtro>` só leitura; TLS `verify-full` no PostgreSQL (`tokio-postgres-rustls`, +11 crates, deny verde). **Resta:** escrever documento no Mongo; abas/histórico de consulta; exportar; cancelar consulta longa; PostgreSQL/Mongo reais e o TLS de ponta a ponta não provados no gate (só SQLite). |
 | Varredura 40 §8 | `quality.output` descartado no C++; `environmentScan` sem ouvinte; presets sem tela. Os demais achados permanecem detalhados no §8. |
 | Frentes grandes, bloco F | Jupyter; dev containers com contexto remoto; polimento Rust com nextest e llvm-cov. |
 
@@ -3553,3 +3557,50 @@ real não foi exercitado (só os falsos ecoando argv) e o `sshd` local no gate
 fica para quando houver chave de teste. Workspace remoto, LSP do outro lado,
 mapeamento de caminhos, journalctl/dmesg, Yocto/Buildroot: fatia 2 (42 §P6).
 **Próximo:** fatia 2 do P6, ou o banco (consultas/escrita/TLS).
+
+### 7.52 Banco — consultas, escrita e TLS — 2026-09-18, protocolo 0.121.0
+
+O desenho foi escrito antes do código (`roadmaps/35` §7.4) e o código o
+segue. **`datasource.query { name, password?, sql, maxRows?, confirmWrite? }`**
+como job → `event.datasource.queried { columns[], rows[[texto | null]],
+rowCount, affected?, truncated, elapsedMs, message?, secretRequired }`. A
+primeira palavra classifica a instrução (`SELECT`/`WITH`/`VALUES`/`TABLE`/
+`SHOW`/`EXPLAIN` = leitura) e o **motor impõe**: `BEGIN READ ONLY` no
+PostgreSQL, `SQLITE_OPEN_READ_ONLY` no SQLite — o teste mostra um `WITH …
+INSERT` recusado pelo próprio SQLite ("attempt to write a readonly
+database"). O teto vem de fora do texto (`SELECT * FROM (<sql>) AS kinein_q
+LIMIT n+1`; o `step` até n+1 no SQLite) e `truncated` diz quando cortou.
+Uma instrução que não é leitura sem `confirmWrite: true` é recusada **antes
+do job** com o código novo `WRITE_CONFIRMATION_REQUIRED`; a UI mostra o
+botão "ESCREVE — executar mesmo assim" por esse código, nunca lendo texto, e
+reenvia. Células em texto: o protocolo simples do PostgreSQL devolve toda
+coluna assim (sem mapa de tipos); `ValueRef` do SQLite; no Mongo a consulta
+é `<coleção> <filtro JSON>` → `find` com `limit`, só leitura, colunas = chaves
+de primeiro nível. **TLS:** `DataSourceProfile.tls: disable | require` +
+`caFile` — `require` é o `verify-full` do libpq (cadeia e host) pelo
+`tokio-postgres-rustls` 0.14 sobre o `rustls` que o `mongodb` já trazia; +11
+crates medidos, `cargo deny` verde, nenhuma licença nova; não existe "cifra
+sem conferir". UI: `DataSourceQuery.qml` (editor com Ctrl+Enter, confirmação,
+grade de texto com `null` em itálico) dentro do painel, chips de TLS e o
+campo do PEM no formulário; a ponte ganhou `dataSourceQuery` e o evento.
+
+**Medido em 2026-09-18:** 819 testes Rust (+6: classificação e wrapper puros;
+SQLite real — leitura com teto/`truncated`/`NULL`/`BLOB`, a leitura que
+escreve recusada pelo motor, escrita com `affected`, erro do motor; tabela
+de documentos do Mongo e as duas recusas de texto; por despacho — vazio,
+perfil desconhecido, leitura, `WRITE_CONFIRMATION_REQUIRED`, escrita
+confirmada, erro; TLS salvo/normalizado/só PostgreSQL/valor inválido); 45
+harnesses (`tst_datasource_query` novo; `tst_datasource` ajustado para os 10
+campos do perfil); 157 métodos, 56 eventos, 36 domínios; clippy, fmt,
+clang-format, `cargo deny`, fiação, propriedades, alcance, duplicação (a
+derivação `engine === "mongo"` que nasceu duplicada foi devolvida ao
+controller), arquitetura, docs, links, shell, atalhos, qmllint;
+`debug-strict` compila.
+
+**Não provado, dito:** PostgreSQL e MongoDB reais (o gate só tem o SQLite);
+o TLS de ponta a ponta — nenhum servidor com certificado nesta máquina;
+o `READ ONLY` do PostgreSQL só por leitura do manual (`SET TRANSACTION READ
+ONLY` recusa `INSERT`/`UPDATE`/`DELETE`/DDL — documentado, não exercitado).
+**Falta:** escrever documento no Mongo; abas e histórico de consulta;
+exportar; cancelar consulta longa (driver síncrono — o job não é
+cancelável). **Próximo:** varredura 40 §8 ou P6 fatia 2.

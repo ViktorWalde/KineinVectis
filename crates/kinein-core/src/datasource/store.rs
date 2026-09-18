@@ -98,6 +98,8 @@ mod tests {
             secret_source: SecretSource::Environment,
             secret_variable: Some("PGPASSWORD".to_owned()),
             sample_size: None,
+            tls: None,
+            ca_file: None,
         }
     }
 

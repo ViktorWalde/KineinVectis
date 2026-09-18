@@ -576,8 +576,25 @@ vale para um documento**. Desenhar documento como linha faria a tela afirmar tr�
 coisas falsas.
 
 Além de testar a conexão, o painel **lê o banco**: esquemas, tabelas e colunas —
-ou coleções e a forma dos documentos. Escrever e executar consulta ainda não
-existem.
+ou coleções e a forma dos documentos.
+
+**Executar** (desde 0.121.0): o campo **Consulta** aceita o que você escrever
+— `Ctrl+Enter` ou **Executar**. Uma leitura (`SELECT`, `WITH`, `VALUES`,
+`SHOW`, `EXPLAIN`) roda com teto de 500 linhas (a IDE põe o `LIMIT` por
+fora; "teto atingido" avisa) e **de verdade só lê**: no PostgreSQL vai numa
+transação `READ ONLY`, no SQLite o arquivo abre só para leitura — um `WITH …
+INSERT` disfarçado é recusado pelo próprio motor. Uma instrução que
+**escreve** (`INSERT`, `UPDATE`, `DELETE`, DDL) não roda de primeira: aparece
+o botão *"Esta instrução ESCREVE — executar mesmo assim"*, e só o clique nele
+executa; o resultado diz quantas linhas foram afetadas. A grade mostra
+toda célula como texto e `NULL` como *null* em itálico. No MongoDB a
+consulta é `<coleção> <filtro JSON>` (ex.: `sensores {"placa": "esp32"}`), só
+leitura, e cada chave de primeiro nível vira coluna.
+
+**TLS** (PostgreSQL): o chip **TLS verificado (verify-full)** cifra a conexão
+e confere a cadeia **e** o nome do host — para um servidor com certificado
+próprio, aponte o PEM no campo que aparece. Não existe "cifra sem conferir":
+é a opção que dá sensação de segurança sem a garantia.
 
 ### Alvo remoto (SSH)
 
