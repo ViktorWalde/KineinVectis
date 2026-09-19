@@ -215,7 +215,9 @@ ListView {
             anchors.verticalCenter: parent.verticalCenter
             anchors.right: parent.right
             anchors.rightMargin: Theme.spacingSmall
-            text: commitRowItem.author + ", " + commitRowItem.age
+            // Em pe' (a janela estreita da E3-3) o autor cede a vez ao
+            // resumo: so' a idade; o autor esta' no visualizador do commit.
+            text: root.width < 420 ? commitRowItem.age : commitRowItem.author + ", " + commitRowItem.age
             color: Theme.textMuted
             font.pixelSize: 10
         }

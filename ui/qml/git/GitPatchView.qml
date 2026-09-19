@@ -3,7 +3,7 @@ import QtQuick
 import KineinVectis
 
 // Um patch unificado, linha a linha, com a classe de cada uma pela regra
-// pura (GitRules.lineKind). Saiu do GitDiffDialog para servir tambem ao
+// pura (GitRules.lineKind). Saiu do antigo GitDiffDialog para servir ao
 // painel da direita da HUD do Git (2026-09-18).
 ListView {
     id: view

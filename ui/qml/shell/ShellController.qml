@@ -24,7 +24,11 @@ Item {
     property bool outlineCollapsed: false
     // O trilho lateral com rotulos (F1 modo expandido); persistido no layout.
     property bool railExpanded: false
-    readonly property bool effectiveShowExplorer: showExplorer
+    // O slot a esquerda do trilho e' UM (E3-3, roadmaps/44 §4.1): o
+    // explorer OU a janela do Git, como a referencia alterna Project/Commit.
+    property string leftWindow: "explorer"
+    readonly property bool effectiveShowExplorer: showExplorer && leftWindow === "explorer"
+    readonly property bool gitWindowVisible: showExplorer && leftWindow === "git"
 
     signal folderOpenRequested(string path)
     signal toolsDetectionRequested()
@@ -99,7 +103,14 @@ Item {
         return path;
     }
 
+    // "git" NAO e' mais aba de baixo: e' a janela a esquerda (E3-3). Quem
+    // pedia a aba (paleta, menu Exibir, cabecalho, trilho) continua
+    // chamando showTab/toggleBottomTab/tabActive — este e' o ponto de corte.
     function showTab(tab) {
+        if (tab === "git") {
+            showGitWindow();
+            return;
+        }
         bottomTab = tab;
         showBottomPanel = true;
     }
@@ -107,10 +118,17 @@ Item {
     // A aba de baixo `tab` esta' VISIVEL agora: um dono para a derivacao
     // que a barra principal (F1) e o trilho perguntam.
     function tabActive(tab) {
+        if (tab === "git") {
+            return gitWindowVisible;
+        }
         return showBottomPanel && bottomTab === tab;
     }
 
     function toggleBottomTab(tab) {
+        if (tab === "git") {
+            toggleGitWindow();
+            return;
+        }
         if (tabActive(tab)) {
             showBottomPanel = false;
             return;
@@ -166,8 +184,27 @@ Item {
         symbolsFocusRequested(query === undefined ? "" : query);
     }
 
+    // O icone do que esta' aberto fecha o slot; o do outro traz o outro.
     function toggleExplorer() {
+        if (leftWindow !== "explorer") {
+            leftWindow = "explorer";
+            showExplorer = true;
+            return;
+        }
         showExplorer = !showExplorer;
+    }
+
+    function toggleGitWindow() {
+        if (leftWindow !== "git") {
+            showGitWindow();
+            return;
+        }
+        showExplorer = !showExplorer;
+    }
+
+    function showGitWindow() {
+        leftWindow = "git";
+        showExplorer = true;
     }
 
     function requestOpenFolder() {

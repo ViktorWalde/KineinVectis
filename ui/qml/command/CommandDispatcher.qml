@@ -69,7 +69,7 @@ Item {
         } else if (commandId === "git.status") {
             gitController.refresh();
         } else if (commandId === "git.fileDiff") {
-            gitController.openDiffDialog(editorController.currentFilePath());
+            gitController.showDiffOf(editorController.currentFilePath());
         } else if (commandId === "git.commit") {
             showTabRequested("git");
             gitController.showChanges();

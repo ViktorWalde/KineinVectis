@@ -19,11 +19,6 @@ Item {
     property string activeDiffPath: ""
     property var diffLineKinds: ({})
     property int diffRevision: 0
-    property bool diffDialogVisible: false
-    property string diffDialogPath: ""
-    property string diffDialogText: ""
-    property bool diffDialogTracked: true
-    property bool diffDialogLoading: false
     property alias changesModel: gitChangesModel
     property int stagedCount: 0
     property string lastMutationError: ""
@@ -133,31 +128,19 @@ Item {
         fileDiffRequested(path);
     }
 
-    function openDiffDialog(path) {
-        if (path === "") {
+    // O diff de um arquivo abre no VISUALIZADOR do editor (E3-3): o dialogo
+    // flutuante saiu — era o terceiro lugar a desenhar um patch.
+    function showDiffOf(absPath) {
+        if (absPath === "") {
             return;
         }
-        diffDialogPath = path;
-        diffDialogText = "";
-        diffDialogTracked = true;
-        diffDialogLoading = true;
-        diffDialogVisible = true;
-        fileDiffRequested(path);
-    }
-
-    function closeDiffDialog() {
-        // Só esconde o diálogo: a lista de mudanças/staged pertence ao
-        // workspace e é limpa no clear() (bug corrigido na M3.4).
-        diffDialogVisible = false;
+        const rel = workspaceRoot !== "" && absPath.indexOf(workspaceRoot + "/") === 0
+                    ? absPath.substring(workspaceRoot.length + 1) : absPath;
+        inspectorController.showChange(absPath, rel);
     }
 
     function handleFileDiff(path, isRepo, tracked, hunks, text) {
         inspectorController.handleFileDiff(path, tracked, text);
-        if (diffDialogVisible && path === diffDialogPath) {
-            diffDialogText = text;
-            diffDialogTracked = tracked;
-            diffDialogLoading = false;
-        }
         if (path !== activeDiffPath) {
             return;
         }
@@ -192,7 +175,7 @@ Item {
         activeDiffPath = "";
         diffLineKinds = {};
         diffRevision++;
-        diffDialogVisible = false;
+        inspectorController.clear();
         gitChangesModel.clear();
         stagedCount = 0;
         lastMutationError = "";
@@ -224,6 +207,7 @@ Item {
         const kinds = {};
         gitChangesModel.clear();
         let staged = 0;
+        entries = gitRules.byFolder(entries);
         for (let i = 0; i < entries.length; i++) {
             const absPath = workspaceRoot + "/" + entries[i].path;
             kinds[absPath] = entries[i].kind;

@@ -173,14 +173,57 @@ E3-7  Grafana: polimento                                                  sem co
       Medida: foto; o autor testa num Grafana real (ele tem um projeto).
 ```
 
+### 4.1 E3-3 — o desenho fino (escrito antes do código, 2026-09-19)
+
+O que muda, arquivo a arquivo, para o contexto sobreviver a um corte:
+
+- **`ShellController`** ganha `leftWindow: "explorer" | "git"`. O slot à
+  esquerda do trilho é UM: `effectiveShowExplorer = showExplorer &&
+  leftWindow === "explorer"`; `gitWindowVisible = showExplorer &&
+  leftWindow === "git"`. `toggleExplorer()`/`toggleGitWindow()` alternam
+  (o ícone do outro traz o outro; o ícone do que está aberto fecha o slot).
+  **`showTab("git")`, `toggleBottomTab("git")` e `tabActive("git")`
+  passam a falar da janela** — um ponto de corte só: o despacho da paleta
+  (`git.commit`/`git.log`/`git.branches`/`git.stash`), o menu Exibir → Git,
+  o widget do cabeçalho e o trilho continuam chamando o que chamavam. A
+  escolha do slot **não é persistida** nesta fatia (seria `SettingsValues`
+  novo — contrato; entra se o autor sentir falta).
+- **`ShellLeftWindowHost`** (host novo, `ui/qml/shell/`): o slot. Dentro,
+  o `ProjectExplorer` (sai do `ShellWorkspaceHost` como está) e a
+  **`GitWindow`**; a largura é a `explorerWidth` e o splitter é o mesmo.
+- **`GitWindow`** (view, `ui/qml/git/`, ≤300): em pé. Cabeçalho "Git" com
+  as abas **Commit | Log** (KvToggleChip) e o atualizar; a linha do branch
+  em `Flow` (branch · pull · push · stash · pop — quebra a 220 px); o
+  `GitBranchMenu` sob ela. Commit: `GitChangesList` preenchendo e
+  `GitCommitBox` no pé. Log: `GitHistoryFilter` + `GitHistoryList`. É o
+  `GitPanel` sem a coluna da direita — as peças já são componentes.
+- **O diff/o commit abre no editor**: `GitViewerPane` (view nova) dentro
+  do `ShellEditorHost`, sobre o `EditorPane`, visível enquanto
+  `gitController.inspector.kind !== ""`; um cabeçalho que parece aba
+  ("diff: caminho" / "commit abc1234 — resumo") com × (`inspector.clear()`)
+  e, embaixo, o `GitInspectorPane` de hoje. Abrir um arquivo pela lista
+  fecha o visualizador. **Não é uma aba do modelo do editor** — o
+  `EditorController` está em 790 (o arquivo em débito da catraca) e não
+  ganha um tipo de aba nesta etapa; a doc diz isso.
+- **Sai**: o `GitPanel` do painel de baixo (arquivo, CMake, a aba na
+  `BottomTabBar`, a regra dos 340 px no `ShellWorkspaceHost`, o
+  `gitOpenRequested` do `BottomPanelHost`).
+- **`GitWindowController`**: o 44 previa um; com o `showTab("git")`
+  virando a janela e a aba Commit/Log já sendo `historyVisible` do
+  `GitController`, **não há estado novo** — não se cria controller sem
+  estado. O `AppDomains` está em 399/400: nada entra ali.
+- **Medida**: fotos a 1280×800 e 1024×700 (Commit e Log, `KINEIN_STARTUP_
+  COMMANDS=git.commit` / `git.log`); `tst_shell_layout` (ou novo
+  `tst_left_window`): alternância explorer↔git, `tabActive("git")`,
+  o slot fechado; gates de atalhos/fiação/alcance; nenhum sinal órfão.
+
 ## 5. As restrições que valem
 
 Contrato primeiro (só a E3-1 tem); catracas (view 300 / controller-host
-400 / Rust 500 / ui/src 500) — o `GitController` está em 398: a janela
-lateral do Git ganha um controller próprio (`GitWindowController`), e o
-que hoje é o `GitPanel` do painel de baixo vira a janela; `ShellWorkspaceHost`
-em 343 e `BottomPanelHost` em 298 têm folga para perder o Git e ganhar a
-janela. Medir antes de afirmar; registro datado + evidências por fatia; um
+400 / Rust 500 / ui/src 500) — o `GitController` está em 398 e o
+`AppDomains` em 399: a janela do Git não põe estado em nenhum dos dois
+(§4.1: não precisa); o `GitPanel` de baixo vira a `GitWindow`;
+`ShellWorkspaceHost` (354) perde o explorer para o `ShellLeftWindowHost`. Medir antes de afirmar; registro datado + evidências por fatia; um
 commit por fatia; nunca `git checkout <arquivo>`; nada de push/release sem
 o autor.
 
@@ -207,6 +250,11 @@ esta página ganha o "feito" de cada uma no §7.1.
   `IndexController`. O LSP como segunda fonte **ficou de fora** (a resposta
   `lspSymbolsResolved` é uma só para dois métodos; o índice cobre o projeto
   inteiro na hora) — `40` §7.81. O ícone "Busca" sai do trilho na E3-4.
+- **E3-3** (2026-09-19): a janela do Git em pé, no slot do explorer
+  (`leftWindow`; `showTab("git")` é o ponto de corte); `GitWindow` +
+  `ShellLeftWindowHost`; o diff/commit abre no editor (`GitViewerPane`);
+  saíram o `GitPanel` de baixo e o `GitDiffDialog`; a lista por pasta
+  ordenada (`GitRules.byFolder`) — `40` §7.82.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

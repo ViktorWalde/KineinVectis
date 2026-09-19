@@ -58,7 +58,6 @@ Rectangle {
     signal terminalSelectRequested(string id)
     signal terminalNewRequested()
     signal terminalCloseTabRequested(string id)
-    signal gitOpenRequested(string absPath)
     signal searchRequested(string query)
     signal searchCaseSensitivityToggleRequested(string query)
     signal searchResultOpenRequested(string path, int line, int column)
@@ -232,17 +231,6 @@ Rectangle {
         onStepIntoRequested: root.debugController.stepInto()
         onStepOutRequested: root.debugController.stepOutOf()
         onStopRequested: root.debugController.stopDebug()
-    }
-
-    GitPanel {
-        anchors.top: bottomTabs.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
-        visible: root.activeTab === "git"
-        gitController: root.gitController
-        onOpenRequested: function(absPath) { root.gitOpenRequested(absPath); }
     }
 
     SearchPanel {

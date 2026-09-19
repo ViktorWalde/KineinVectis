@@ -65,6 +65,22 @@ Item {
         shell.toggleOutline();
         if (shell.outlineCollapsed === collapsed) failures += 1;
         if (!shell.effectiveShowExplorer) failures += 1;
+
+        // O slot a esquerda e' UM (E3-3): "git" pela paleta/menu/trilho
+        // abre a janela do Git no lugar do explorer, nao uma aba de baixo;
+        // o icone do outro traz o outro; o do que esta' aberto fecha o slot.
+        const painelAntes = shell.showBottomPanel;
+        shell.showTab("git");
+        if (!shell.gitWindowVisible || shell.effectiveShowExplorer || !shell.tabActive("git")) failures += 1;
+        if (shell.showBottomPanel !== painelAntes || shell.bottomTab === "git") failures += 1;
+        shell.toggleExplorer();
+        if (shell.gitWindowVisible || !shell.effectiveShowExplorer || shell.tabActive("git")) failures += 1;
+        shell.toggleBottomTab("git");
+        if (!shell.gitWindowVisible) failures += 1;
+        shell.toggleBottomTab("git");
+        if (shell.gitWindowVisible || shell.effectiveShowExplorer) failures += 1;
+        shell.toggleExplorer();
+        if (!shell.effectiveShowExplorer) failures += 1;
         shell.workspaceBuildSystems = ["cargo", "cmake"];
         if (shell.kindLabel("rustCargo") !== "Cargo + CMake") failures += 1;
 

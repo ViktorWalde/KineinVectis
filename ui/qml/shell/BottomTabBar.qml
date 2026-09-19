@@ -67,7 +67,6 @@ Item {
                 { key: "tests", label: qsTr("Testes"), icon: "test" },
                 { key: "jobs", label: qsTr("Jobs"), icon: "run" },
                 { key: "debug", label: qsTr("Debug"), icon: "debug" },
-                { key: "git", label: qsTr("Git"), icon: "git" },
                 { key: "search", label: qsTr("Busca"), icon: "search" },
                 { key: "tools", label: qsTr("Ferramentas"), icon: "tools" },
                 { key: "logs", label: qsTr("IDE"), icon: "file" }

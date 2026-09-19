@@ -51,6 +51,11 @@ Item {
             || rules.lineKind(" ctx") !== "ctx" || rules.lineKind("index 1..2") !== "meta") failures += 128;
 
         if (rules.folderOf("ui/qml/git/GitPanel.qml") !== "ui/qml/git" || rules.folderOf("Cargo.toml") !== "(raiz)") failures += 256;
+        // A mesma pasta nao aparece duas vezes: modificados e novos da
+        // mesma pasta ficam vizinhos; o original nao e' tocado.
+        const status = [{ path: "ui/qml/git/A.qml" }, { path: "ui/CMakeLists.txt" }, { path: "ui/qml/git/B.qml" }, { path: "Cargo.toml" }];
+        const ordenado = rules.byFolder(status).map(e => e.path).join(",");
+        if (ordenado !== "Cargo.toml,ui/CMakeLists.txt,ui/qml/git/A.qml,ui/qml/git/B.qml" || status[0].path !== "ui/qml/git/A.qml") failures += 4096;
 
         const head = rules.refChip("HEAD -> main");
         const tag = rules.refChip("tag: v1.2");

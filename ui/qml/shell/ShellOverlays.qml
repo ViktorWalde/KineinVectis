@@ -121,19 +121,6 @@ Item {
         }
     }
 
-    GitDiffDialog {
-        anchors.fill: parent
-        visible: root.gitController.diffDialogVisible
-        z: 93
-        title: root.shellController.relativeToRoot(root.gitController.diffDialogPath)
-        diffText: root.gitController.diffDialogText
-        tracked: root.gitController.diffDialogTracked
-        loading: root.gitController.diffDialogLoading
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.gitController.closeDiffDialog()
-    }
-
     SettingsDialog {
         anchors.fill: parent
         visible: root.settingsController.dialogVisible

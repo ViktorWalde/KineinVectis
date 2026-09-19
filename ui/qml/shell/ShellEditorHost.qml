@@ -172,4 +172,14 @@ Item {
         shellController: root.shellController
         editorSurface: editorPane.editorSurface
     }
+
+    // O diff/o commit escolhido na janela do Git abre AQUI, sobre o editor,
+    // como uma aba de visualizacao (E3-3); o x devolve o editor intacto.
+    GitViewerPane {
+        anchors.fill: editorPane
+        z: 20
+        inspector: root.gitController ? root.gitController.inspector : null
+        workspaceRoot: root.editorController.workspaceRoot
+        onActiveChanged: if (active) forceActiveFocus()
+    }
 }

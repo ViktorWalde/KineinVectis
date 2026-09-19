@@ -21,6 +21,9 @@ Item {
     property bool tracked: true
     property string patch: ""
     readonly property var files: rules.patchFiles(patch)
+    // As duas derivacoes que as telas perguntam — um dono so'.
+    readonly property bool active: kind !== ""
+    readonly property bool isCommit: kind === "commit"
 
     signal fileDiffWanted(string path)
     signal commitDiffWanted(string sha)

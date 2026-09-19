@@ -109,8 +109,7 @@ Item {
             explorerActive: root.shellController.effectiveShowExplorer
             searchActive: root.shellController.showBottomPanel
                           && root.shellController.bottomTab === "search"
-            gitActive: root.shellController.showBottomPanel
-                       && root.shellController.bottomTab === "git"
+            gitActive: root.shellController.gitWindowVisible
             buildActive: root.shellController.showBottomPanel
                          && (root.shellController.bottomTab === "build"
                              || root.shellController.bottomTab === "jobs")
@@ -135,38 +134,23 @@ Item {
             onObservabilityRequested: root.grafanaController.open()
         }
 
-        ProjectExplorer {
+        // O slot a esquerda: o explorer OU a janela do Git (E3-3).
+        ShellLeftWindowHost {
             id: explorerPanel
 
             width: visible ? root.shellController.explorerWidth : 0
             height: parent.height
             visible: root.workspaceOpen
-                     && root.shellController.effectiveShowExplorer
+                     && (root.shellController.effectiveShowExplorer
+                         || root.shellController.gitWindowVisible)
+            shellController: root.shellController
+            projectTree: root.projectTree
+            gitController: root.gitController
             workspaceName: root.workspaceName
-            selectedPath: root.projectTree.selectedPath
-            entriesModel: root.projectTree.entriesModel
-            runnableExtensions: root.projectTree.runnableExtensions
-            gitKinds: root.gitController.gitKinds
-            gitRevision: root.gitController.revision
-            onCreateFileRequested: root.projectTree.openCreateDialog("file")
-            onCreateDirectoryRequested: root.projectTree.openCreateDialog("directory")
-            onRefreshRequested: root.listDirRequested(root.workspaceRoot)
-            onCloseRequested: root.closeWorkspaceRequested()
-            onEntrySelected: function(path, kind) {
-                root.projectTree.selectEntry(path, kind);
-            }
-            onDirectoryToggleRequested: function(path, index, expanded) {
-                root.projectTree.toggleDirectory(path, index, expanded);
-            }
-            onFileOpenRequested: function(path) {
-                root.readFileRequested(path);
-            }
-            onScriptRunRequested: function(path) {
-                root.projectTree.runScript(path);
-            }
-            onContextMenuRequested: function(path, kind, name, sceneX, sceneY) {
-                root.projectTree.openEntryMenu(path, kind, name, sceneX, sceneY);
-            }
+            workspaceRoot: root.workspaceRoot
+            onListDirRequested: function(path) { root.listDirRequested(path); }
+            onReadFileRequested: function(path) { root.readFileRequested(path); }
+            onCloseWorkspaceRequested: root.closeWorkspaceRequested()
         }
 
         Column {
@@ -236,10 +220,7 @@ Item {
                 id: bottomPanel
 
                 width: parent.width
-                // A HUD do Git (2026-09-18) pede altura: duas colunas e o
-                // commit embaixo nao cabem nos 220 px de um painel de log.
-                height: Math.max(root.shellController.bottomPanelHeight,
-                                 root.shellController.tabActive("git") ? 340 : 0)
+                height: root.shellController.bottomPanelHeight
                 open: root.shellController.showBottomPanel
                 activeTab: root.shellController.bottomTab
                 problemCount: root.jobsController.problemsModel.count
@@ -306,9 +287,6 @@ Item {
                 onTerminalNewRequested: root.runtimeController.newTerminal()
                 onTerminalCloseTabRequested: function(id) {
                     root.runtimeController.closeTerminal(id);
-                }
-                onGitOpenRequested: function(absPath) {
-                    root.readFileRequested(absPath);
                 }
                 onSearchRequested: function(query) {
                     root.searchController.runSearch(query);

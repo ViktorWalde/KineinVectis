@@ -13,7 +13,7 @@ Item {
 
     Text {
         anchors.centerIn: parent
-        visible: !root.inspector || root.inspector.kind === ""
+        visible: !root.inspector || !root.inspector.active
         width: parent.width - 2 * Theme.spacingLarge
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.WordWrap
@@ -28,7 +28,7 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        visible: root.inspector && root.inspector.kind !== ""
+        visible: root.inspector && root.inspector.active
         spacing: Theme.spacingXSmall
 
         Row {
@@ -37,7 +37,7 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.inspector && root.inspector.kind === "commit"
+                visible: root.inspector && root.inspector.isCommit
                 text: root.inspector ? root.inspector.shortSha : ""
                 color: Theme.accent
                 font.family: Theme.monoFont
@@ -57,7 +57,7 @@ Item {
 
         Text {
             width: parent.width
-            visible: root.inspector && root.inspector.kind === "commit"
+            visible: root.inspector && root.inspector.isCommit
             text: root.inspector ? root.inspector.author + " · " + root.inspector.age : ""
             color: Theme.textMuted
             font.pixelSize: 10
@@ -66,7 +66,7 @@ Item {
         Flow {
             width: parent.width
             spacing: Theme.spacingXSmall
-            visible: root.inspector && root.inspector.kind === "commit" && root.inspector.refs.length > 0
+            visible: root.inspector && root.inspector.isCommit && root.inspector.refs.length > 0
 
             Repeater {
                 model: root.inspector ? root.inspector.refs : []
@@ -100,7 +100,7 @@ Item {
         // Os arquivos do commit, com +/-: a grade comum (F8).
         KvDataGrid {
             width: parent.width
-            visible: root.inspector && root.inspector.kind === "commit" && root.inspector.files.length > 0
+            visible: root.inspector && root.inspector.isCommit && root.inspector.files.length > 0
             columns: [
                 { key: "path", label: qsTr("arquivo") },
                 { key: "added", label: "+" },
@@ -117,7 +117,7 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        visible: root.inspector && root.inspector.kind !== ""
+        visible: root.inspector && root.inspector.active
         patch: root.inspector ? root.inspector.patch : ""
         loading: root.inspector ? root.inspector.loading : false
         emptyText: root.inspector && !root.inspector.tracked

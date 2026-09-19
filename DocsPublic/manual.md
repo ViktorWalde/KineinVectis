@@ -74,13 +74,13 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 │ App Bar: Arquivo · Editar · Exibir · Navegar · Código ...    │
 │ Barra: [Projeto ▾] [⎇ git]           [config ▾] ▶ 🐞 [⋯]   │
 ├───┬───────────────┬─────────────────────────────┬────────────┤
-│ R │ Projeto       │ Editor (abas + código)      │ Símbolos   │
-│ a │ (árvore de    │                             │ (símbolos  │
-│ i │  arquivos)    │                             │  do arquivo)│
+│ R │ Projeto OU    │ Editor (abas + código;      │ Símbolos   │
+│ a │ Git (Commit/  │  o diff/commit do Git abre  │ (estrutura │
+│ i │ Log, em pé)   │  aqui como visualização)    │  + busca)  │
 │ l │               │                             │            │
 ├───┴───────────────┴─────────────────────────────┴────────────┤
 │ Painel inferior: Build | Jobs | Problemas | Testes |         │
-│                  Terminal | Debug | Git | Busca | IDE |      │
+│                  Terminal | Debug | Busca | IDE |            │
 │                  Ferramentas                                 │
 ├──────────────────────────────────────────────────────────────┤
 │ Status: projeto · toolchain │ job em curso ▬▬ ✕ │ LSP · IDE · core│
@@ -90,7 +90,7 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 - **Barra principal** (desde 2026-09-18, Etapa 2 F1): **três widgets**, como
   nas IDEs JetBrains. *Projeto* — o nome do workspace, o que ele é (Cargo +
   CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —
-  a branch, ↑↓ e o contador de alterações; o clique abre o painel Git.
+  a branch, ↑↓ e o contador de alterações; o clique abre a janela do Git.
   *Executar* — a configuração ativa (▾ troca), **▶ Rodar**, **🐞 Depurar** e
   o menu **⋯** com Compilar/Testar/Análise/Cobertura/Configurar de cada
   sistema que o projeto tem, com rótulo (antes eram dois pares de botões
@@ -437,19 +437,28 @@ Se o projeto for um repositório git, a IDE mostra sem você pedir:
   não aparece).
 - **Diff do arquivo**: rode **"Git: Diff do arquivo"** no Search
   Everywhere (`Ctrl+Shift+A`) para ver o diff completo do arquivo atual
-  contra o HEAD, com + e − coloridos. `Esc` fecha.
+  contra o HEAD, **no lugar do editor**, como uma aba de visualização
+  ("diff: caminho"); o × (ou `Esc`) devolve o editor como estava.
 
-- **Aba Git** (painel inferior): tem duas vistas, alternáveis pelos
-  chips no topo dela:
-  - **Mudanças**: a lista de tudo que mudou. Clique no **quadradinho**
-    para marcar/desmarcar o arquivo para commit (stage); clique no nome
-    abre o arquivo; passando o mouse aparecem **diff** e **↩**
-    (descartar — pede confirmação, porque não tem desfazer). Digite a
-    mensagem embaixo e clique **Commit (N)** — commita só o que está
-    marcado. "Git: Commit..." no Search Everywhere abre essa vista.
-  - **Histórico**: a lista de commits (hash curto, resumo, autor e
-    idade). Clique num commit para ver o diff dele. "Git: Historico" no
-    Search Everywhere abre direto aqui; **atualizar** recarrega a lista.
+- **Janela do Git** (à esquerda, **no lugar do explorer** — o ícone Git do
+  trilho, o widget da barra, **Exibir → Git** ou "Git: Commit..." abrem;
+  o ícone Projeto traz o explorer de volta; o ícone do que está aberto
+  fecha o slot — como Project/Commit nas IDEs JetBrains). Em pé, com
+  duas abas no topo:
+  - **Commit**: a linha do branch (branch · pull · push · stash · pop) e a
+    lista de tudo que mudou, **agrupada por pasta** (o quadradinho da
+    pasta marca/desmarca todos). Clique no **quadradinho** de um arquivo
+    para marcar/desmarcar para commit (stage); clique no nome mostra o
+    **diff** no editor; duplo clique/“abrir” abre o arquivo; passando o
+    mouse aparece **↩** (descartar — pede confirmação, porque não tem
+    desfazer). Digite a mensagem embaixo e clique **Commit (N)** — commita
+    só o que está marcado; **Commit e Push** pede um segundo clique;
+    **Amend** reescreve o último commit.
+  - **Log**: o filtro (texto; o branch de onde partir) e a lista de
+    commits com o grafo, os refs (chips) e a idade. Clique num commit
+    para ver, no editor, o que ele mudou (autor, arquivos, patch).
+    "Git: Historico" no Search Everywhere abre direto aqui; **atualizar**
+    recarrega a lista.
 
 - **Blame** (autoria por linha): rode **"Git: Blame do arquivo"** no
   Search Everywhere para ligar/desligar uma coluna ao lado dos números
@@ -462,7 +471,7 @@ IDE **e também** quando o watcher detecta mudanças externas (por exemplo, um
 `git pull` no terminal). **"Git: Atualizar status"** no Search Everywhere
 continua disponível para atualização manual.
 
-Na aba Git também é possível listar/trocar/criar branches, fazer **Pull** e
+Na janela do Git também é possível listar/trocar/criar branches, fazer **Pull** e
 **Push** como jobs (saída e cancelamento na aba Jobs) e guardar/restaurar o
 trabalho com **Stash push/pop**. Checkout, criação de branch e stash são
 recusados enquanto houver buffers sujos, evitando misturar estado do editor

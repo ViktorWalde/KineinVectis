@@ -13,6 +13,17 @@ QtObject {
         return i < 0 ? qsTr("(raiz)") : path.substring(0, i);
     }
 
+    // As entradas do status POR PASTA, e por caminho dentro dela: a secao
+    // do ListView so' agrupa vizinhos, e o git lista modificados e novos
+    // separados — a mesma pasta aparecia duas vezes (foto de 2026-09-19).
+    function byFolder(entries) {
+        return entries.slice().sort(function(a, b) {
+            const fa = folderOf(a.path), fb = folderOf(b.path);
+            if (fa !== fb) return fa < fb ? -1 : 1;
+            return a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
+        });
+    }
+
     // O estado de uma pasta na lista de mudancas (um ListModel com `folder`,
     // `absPath`, `staged`): os caminhos dela, quantos estao staged, e se
     // todos estao. O checkbox da secao le daqui; o clique manda os caminhos.

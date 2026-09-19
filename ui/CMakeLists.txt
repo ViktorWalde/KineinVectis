@@ -57,6 +57,7 @@ set_source_files_properties(qml/shell/WindowResizeHandles.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/shell/ShellStatusHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellStatusHost.qml)
 set_source_files_properties(qml/shell/ShellWorkspaceHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellWorkspaceHost.qml)
 set_source_files_properties(qml/shell/ShellEditorHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorHost.qml)
+set_source_files_properties(qml/shell/ShellLeftWindowHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellLeftWindowHost.qml)
 set_source_files_properties(qml/shell/ShellEditorOverlayHost.qml PROPERTIES QT_RESOURCE_ALIAS ShellEditorOverlayHost.qml)
 set_source_files_properties(qml/shell/ShellProjectOverlays.qml PROPERTIES QT_RESOURCE_ALIAS ShellProjectOverlays.qml)
 set_source_files_properties(qml/shell/AppMenuItems.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuItems.qml)
@@ -165,13 +166,13 @@ set_source_files_properties(qml/git/GitHistoryList.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/git/GitRules.qml PROPERTIES QT_RESOURCE_ALIAS GitRules.qml)
 set_source_files_properties(qml/git/GitInspectorController.qml PROPERTIES QT_RESOURCE_ALIAS GitInspectorController.qml)
 set_source_files_properties(qml/git/GitPatchView.qml PROPERTIES QT_RESOURCE_ALIAS GitPatchView.qml)
+set_source_files_properties(qml/git/GitWindow.qml PROPERTIES QT_RESOURCE_ALIAS GitWindow.qml)
+set_source_files_properties(qml/git/GitViewerPane.qml PROPERTIES QT_RESOURCE_ALIAS GitViewerPane.qml)
 set_source_files_properties(qml/git/GitInspectorPane.qml PROPERTIES QT_RESOURCE_ALIAS GitInspectorPane.qml)
 set_source_files_properties(qml/git/GitHistoryFilter.qml PROPERTIES QT_RESOURCE_ALIAS GitHistoryFilter.qml)
 set_source_files_properties(qml/git/GitBranchMenu.qml PROPERTIES QT_RESOURCE_ALIAS GitBranchMenu.qml)
 set_source_files_properties(qml/git/GitCommitBox.qml PROPERTIES QT_RESOURCE_ALIAS GitCommitBox.qml)
-set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiffDialog.qml)
 set_source_files_properties(qml/git/GitDiscardDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiscardDialog.qml)
-set_source_files_properties(qml/panels/bottom/GitPanel.qml PROPERTIES QT_RESOURCE_ALIAS GitPanel.qml)
 set_source_files_properties(qml/ipc/GitEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GitEventRouter.qml)
 set_source_files_properties(qml/ipc/CoverageEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS CoverageEventRouter.qml)
 set_source_files_properties(qml/ipc/CoverageRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS CoverageRequestRouter.qml)
@@ -345,6 +346,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/ShellStatusHost.qml
         qml/shell/ShellWorkspaceHost.qml
         qml/shell/ShellEditorHost.qml
+        qml/shell/ShellLeftWindowHost.qml
         qml/shell/ShellEditorOverlayHost.qml
         qml/shell/ShellProjectOverlays.qml
         qml/shell/AppMenuItems.qml
@@ -452,13 +454,13 @@ qt_add_qml_module(kinein-vectis
         qml/git/GitRules.qml
         qml/git/GitInspectorController.qml
         qml/git/GitPatchView.qml
+        qml/git/GitWindow.qml
+        qml/git/GitViewerPane.qml
         qml/git/GitInspectorPane.qml
         qml/git/GitHistoryFilter.qml
         qml/git/GitBranchMenu.qml
         qml/git/GitCommitBox.qml
-        qml/git/GitDiffDialog.qml
         qml/git/GitDiscardDialog.qml
-        qml/panels/bottom/GitPanel.qml
         qml/ipc/GitEventRouter.qml
         qml/ipc/CoverageEventRouter.qml
         qml/ipc/CoverageRequestRouter.qml

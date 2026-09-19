@@ -4809,3 +4809,55 @@ ignorada; recorte por pasta; abrir; limpar); gates QML; `verificar-atalhos`
 índice pronto refaz a busca, sem texto não pede). **Fotos:** a alça
 recolhida (padrão) e `index.symbols=parse_` a 1280×800 com "no projeto
 (50)" — `DocsPrivate/Codex/evidencias-2026-09-19-etapa3/fotos/`.
+
+### 7.82 Etapa 3, E3-3 — O Git em pé, à esquerda; o diff abre no editor — 2026-09-19
+
+O pedido do autor: "a HUD do Git está ótima, mas o posicionamento não tá
+memória muscular JetBrains — o atalho do rodapé à esquerda, a HUD em pé
+à esquerda". Feito como o `44` §4.1 desenhou (escrito antes do código):
+
+- **O slot à esquerda do trilho é um**: `ShellController.leftWindow`
+  (`explorer` | `git`); `effectiveShowExplorer` e `gitWindowVisible`
+  derivam dele. **`showTab("git")`, `toggleBottomTab("git")` e
+  `tabActive("git")` viraram a janela** — o único ponto de corte: a
+  paleta (`git.commit`/`git.log`/`git.branches`/`git.stash`), Exibir →
+  Git, o widget do cabeçalho e o trilho continuam chamando o que
+  chamavam e caem no lugar novo. O ícone do outro traz o outro; o do
+  que está aberto fecha o slot. A escolha **não é persistida** (seria
+  `SettingsValues` novo — contrato; entra se o autor sentir falta).
+- **`ShellLeftWindowHost`** (host novo, 65 linhas): o explorer (saiu do
+  `ShellWorkspaceHost` como estava — 354 → 332) e a **`GitWindow`**
+  (view, 272): cabeçalho com **Commit (n) | Log**, atualizar e ×; a linha
+  do branch em `Flow`; Commit = `GitChangesList` + `GitCommitBox` no pé;
+  Log = `GitHistoryFilter` + `GitHistoryList`. A 220 px o título "Git"
+  cede a vez às abas (a foto a 1024 mostrou o × fora), e a lista do Log
+  mostra só a idade (o autor está no visualizador).
+- **O diff/o commit abre no editor**: `GitViewerPane` (view, 108) sobre o
+  `EditorPane` no `ShellEditorHost`, visível enquanto `inspector.active`;
+  a "aba" ("diff: caminho" / "commit abc1234 — resumo") com × e `Esc`;
+  embaixo, o `GitInspectorPane`. Abrir um arquivo pela lista fecha o
+  visualizador. **Não é aba do modelo do editor** (`EditorController`
+  em 790, o arquivo em débito). Com isso o **`GitDiffDialog` saiu** —
+  era o terceiro lugar a desenhar um patch; `git.fileDiff` e o "diff" da
+  lista chamam `GitController.showDiffOf` → o visualizador. O
+  `GitController` foi de 398 a **382**.
+- **Saiu**: o `GitPanel` de baixo, a aba "Git" da `BottomTabBar`, a
+  regra dos 340 px, o `gitOpenRequested`.
+- **De quebra, um defeito antigo**: a lista por pasta mostrava a mesma
+  pasta **duas vezes** (o `git status` lista modificados e novos
+  separados; a seção do `ListView` só agrupa vizinhos) — `GitRules.
+  byFolder` ordena por pasta e caminho antes de preencher o modelo.
+- **`GitWindowController`**: o `44` previa um; não há estado novo (a aba
+  é `historyVisible`, o slot é do shell) — não se cria controller sem
+  estado. `AppDomains` continua em 399.
+
+**Provado:** `tst_shell_functional` (+6: `showTab("git")` abre a janela
+sem mexer no painel de baixo, alternância, fechar o slot),
+`tst_git_rules` (+1, `byFolder`); qmllint, propriedades, alcance,
+duplicação (a derivação `kind === "commit"` ganhou um dono:
+`inspector.isCommit`/`active`), fiação (610 sinais QML, todos com dono),
+atalhos, catraca, binário-abre (807 ms, sem aviso). **Fotos** (`DocsPrivate/
+Codex/evidencias-2026-09-19-etapa3/fotos/`): Commit e Log a 1280×800, o
+visualizador com o diff de `GitRules.qml`, Log a 1024×700. **Não medido:**
+o clique real (o autor); o `Esc` do visualizador depende do foco — a
+prova é dele.
