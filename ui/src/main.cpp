@@ -60,6 +60,20 @@ void installScreenshotHook(QGuiApplication& app, QQmlApplicationEngine& engine)
     if (!ok || atraso < 0) {
         atraso = 4000;
     }
+    // KINEIN_SCREENSHOT_SIZE=<largura>x<altura> (fechamento da Etapa 2,
+    // 2026-09-19): a foto num tamanho que nao e' o padrao — a status bar a
+    // 1024 px foi a divida dita na F2. Sem a env, a janela fica como esta'.
+    const QByteArray tamanho = qgetenv("KINEIN_SCREENSHOT_SIZE");
+    if (!tamanho.isEmpty()) {
+        const QList<QByteArray> partes = tamanho.split('x');
+        if (partes.size() == 2) {
+            const int largura = partes[0].toInt();
+            const int altura = partes[1].toInt();
+            if (largura >= 640 && altura >= 400) {
+                window->resize(largura, altura);
+            }
+        }
+    }
     const bool exitAfter = qEnvironmentVariableIsSet("KINEIN_PERF_EXIT");
     const QString caminho = QString::fromUtf8(destino);
     QObject::connect(

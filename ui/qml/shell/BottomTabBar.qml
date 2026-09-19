@@ -37,10 +37,25 @@ Item {
         return Theme.accent;
     }
 
+    // As abas param antes das acoes da direita: a 1024 px "IDE" batia no x.
+    Flickable {
+        id: faixa
+
+        anchors.left: parent.left
+        anchors.right: acoesDireita.left
+        anchors.rightMargin: Theme.spacingSmall
+        anchors.verticalCenter: parent.verticalCenter
+        height: 24
+        clip: true
+        contentWidth: tabs.width
+        contentHeight: height
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
+        interactive: tabs.width > width
+
     Row {
         id: tabs
 
-        anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
 
@@ -137,7 +152,11 @@ Item {
         }
     }
 
+    }
+
     Row {
+        id: acoesDireita
+
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.spacingSmall

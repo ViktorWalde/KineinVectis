@@ -4691,3 +4691,15 @@ persiste em `SettingsValues.railExpanded` (0.128.0), lida pelo
 (o `hasPersistedLayout` não a gaba); `toggleRail` persiste pelo mesmo
 `layoutSaveRequested`. Harness `tst_shell_functional` estendido. Foto 17
 (`imagens/prints/2026-09-19-fechamento/`): o trilho aberto com dez rótulos.
+
+### 7.78 Fechamento da Etapa 2, item 6 — a foto a 1024 px — 2026-09-19
+
+`KINEIN_SCREENSHOT_SIZE=<largura>x<altura>` redimensiona a janela antes da
+foto (mínimo 640×400; sem a env, nada muda). A 1024×700 durante um `cargo
+build` (foto 18): a status bar cede como a F2 desenhou — o caminho do
+workspace elide, o job "Cargo Build" com a barra fica no centro, `1:1`,
+IDE e core à direita; a faixa de abas do painel de baixo **batia no ×**
+("IDE" por cima do botão) — agora a faixa pára antes das ações da direita
+e rola se não couber (a última aba, IDE, fica sob rolagem a 1024). O que
+ainda cede feio: a mensagem do job ("Compil…") — o `StatusBarJobWidget`
+prefere a barra ao texto; fica dito.
