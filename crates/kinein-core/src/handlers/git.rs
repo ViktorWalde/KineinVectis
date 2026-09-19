@@ -238,7 +238,7 @@ impl Core {
         let parsed = match parse_params::<GitLogParams>(
             request_id.as_ref(),
             params,
-            "git.log aceita apenas o campo opcional maxCount",
+            "git.log aceita apenas os campos opcionais maxCount e ref",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,
@@ -247,7 +247,19 @@ impl Core {
         if !(1..=500).contains(&max_count) {
             return invalid_git_params(request_id, "maxCount deve estar entre 1 e 500");
         }
-        match git::log(&root, max_count) {
+        // Um ref e' um nome de branch/tag: nada que o git leia como opcao
+        // ou como intervalo (0.127.0).
+        let r#ref = parsed
+            .r#ref
+            .as_deref()
+            .map(str::trim)
+            .filter(|r| !r.is_empty());
+        if let Some(r) = r#ref
+            && (r.starts_with('-') || r.contains("..") || r.chars().any(char::is_whitespace))
+        {
+            return invalid_git_params(request_id, "ref deve ser um nome de branch ou tag");
+        }
+        match git::log(&root, max_count, r#ref) {
             Ok(log) => JsonRpcResponse::success(request_id, json!(log)),
             Err(error) => git_error_response(request_id, &error),
         }

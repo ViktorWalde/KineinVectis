@@ -1,5 +1,11 @@
 # 03 — Protocolo IPC
 
+> **0.127.0 (2026-09-18, noite) — o Histórico por branch.** `git.log {
+> maxCount?, ref? }`: `ref` é um branch ou tag de onde o log parte em vez
+> do HEAD (validado como nome — sem espaço, sem `..`, sem `-` inicial;
+> inexistente é erro do git). O filtro por texto (mensagem, autor, sha) é
+> local à UI. Sem método novo.
+>
 > **0.126.0 (2026-09-18, noite) — a HUD do Git.** `git.log` ganha
 > `parents` (`%P`) e `refs` (`%D`, já separados) por commit: o grafo e os
 > chips do Histórico; `git.commit { message, amend? }` reescreve o último
@@ -2720,7 +2726,7 @@ localizada:
 git.blame { path } → { path (ecoado), repo, tracked, groups: [
     { startLine, lineCount, sha, author, authorTime (epoch),
       summary, committed }] }
-git.log { maxCount? } → { repo, entries: [
+git.log { maxCount?, ref? } → { repo, entries: [       (ref: branch/tag, 0.127.0)
     { sha, shortSha, author, authorTime (epoch), summary,
       parents: [sha] (0.126.0; dois num merge), refs: ["HEAD -> main", "origin/main", "tag: v1"] }] }
 git.commitDiff { sha } → { sha (ecoado), text (patch unificado) }

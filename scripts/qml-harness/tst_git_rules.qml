@@ -29,6 +29,11 @@ Item {
         if (merge[1].lane !== 0 || merge[2].lane !== 1) failures += 4;
         // depois de x, as duas colunas esperam "a": viram uma.
         if (merge[3].lane !== 0 || merge[3].laneCount !== 1) failures += 8;
+        // As arestas (fatia 2c): m liga a b (0->0) e a x (0->1); b segue reto
+        // (0->0) enquanto x passa (1->1); x liga a a (1->0); a nao tem saida.
+        const arestas = r => r.edges.map(e => e.from + ">" + e.to).join(",");
+        if (arestas(merge[0]) !== "0>0,0>1" || arestas(merge[1]) !== "0>0,1>1"
+            || arestas(merge[2]) !== "0>0,1>0" || arestas(merge[3]) !== "") failures += 8192;
 
         // Sem pais informados (core antigo): linha reta, sem quebrar.
         const semPais = rules.lanes([{ sha: "z" }, { sha: "y" }]);

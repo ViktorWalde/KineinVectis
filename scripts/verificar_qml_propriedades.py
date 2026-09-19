@@ -196,6 +196,39 @@ def margens_sem_ancora(caminho: Path) -> list[str]:
     return achados
 
 
+# Um binding mais recuado que o irmao de cima e' a IMPRESSAO DIGITAL de um
+# refactor que apagou linhas e deixou a seguinte torta — foi assim que
+# `anchors.right/bottom` sumiram de listas do Git e do depurador em
+# 2026-09-03 (40 §7.67/§7.72). A largura virou zero e nada avisou.
+TERMINA_ABERTO = ("{", "(", "[", ",", "?", ":", "+", "-", "*", "/", "&&", "||", "=", "=>")
+
+
+def bindings_tortos(caminho: Path) -> list[str]:
+    achados: list[str] = []
+    linhas = caminho.read_text(encoding="utf-8").splitlines()
+    anterior: tuple[int, str] | None = None  # (indent, texto) do binding anterior no bloco
+    for numero, linha in enumerate(linhas, 1):
+        s = linha.strip()
+        if not s or s.startswith("//") or s.startswith("*") or s.startswith("/*"):
+            continue
+        indent = len(linha) - len(linha.lstrip())
+        if s.endswith("{") or s == "}" or s.startswith("}"):
+            anterior = None
+            continue
+        e_binding = re.match(r"[A-Za-z_][\w.]*\s*:\s*\S", s) is not None and not s.startswith("case ")
+        if e_binding and anterior is not None:
+            ind_ant, txt_ant = anterior
+            completo = not txt_ant.rstrip().endswith(TERMINA_ABERTO)
+            if completo and indent > ind_ant:
+                achados.append(
+                    f"{caminho.relative_to(RAIZ)}:{numero}: binding mais recuado que o irmao "
+                    f"de cima (`{s[:40]}`) — linha torta de um refactor; conferir o que sumiu"
+                )
+        if e_binding:
+            anterior = (indent, s)
+    return achados
+
+
 def main() -> int:
     mapa = componentes()
     textos = {n: p.read_text(encoding="utf-8") for n, p in mapa.items()}
@@ -220,6 +253,7 @@ def main() -> int:
     for p in sorted(QML.rglob("*.qml")):
         erros += checar(p, tipos)
         erros += margens_sem_ancora(p)
+        erros += bindings_tortos(p)
 
     if erros:
         print("propriedades QML: binding para nome INEXISTENTE:", file=sys.stderr)

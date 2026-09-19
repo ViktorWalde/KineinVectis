@@ -89,9 +89,14 @@ void CoreClient::gitBlame(const QString& path)
     sendRequest(QStringLiteral("git.blame"), QJsonObject{{QStringLiteral("path"), path}});
 }
 
-void CoreClient::gitLog()
+void CoreClient::gitLog(const QString& ref)
 {
-    sendRequest(QStringLiteral("git.log"), QJsonObject{});
+    QJsonObject params;
+    // O historico de OUTRO branch/tag (0.127.0): so' vai quando escolhido.
+    if (!ref.trimmed().isEmpty()) {
+        params.insert(QStringLiteral("ref"), ref.trimmed());
+    }
+    sendRequest(QStringLiteral("git.log"), params);
 }
 
 void CoreClient::gitCommitDiff(const QString& sha)

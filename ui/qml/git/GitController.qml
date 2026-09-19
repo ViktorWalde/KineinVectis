@@ -12,12 +12,10 @@ Item {
     property int aheadCount: 0
     property int behindCount: 0
     property int changeCount: 0
-    // path ABSOLUTO -> kind (modified|added|deleted|renamed|untracked|
-    // conflicted); a revisão força os bindings da árvore a reavaliarem.
+    // path ABSOLUTO -> kind; a revisão força os bindings da árvore a reavaliarem.
     property var gitKinds: ({})
     property int revision: 0
-    // Diff do arquivo ativo no editor: hunks expandidos em linha→kind
-    // (added|modified|removed) para as marcas da gutter.
+    // Diff do arquivo ativo no editor: linha→kind para as marcas da gutter.
     property string activeDiffPath: ""
     property var diffLineKinds: ({})
     property int diffRevision: 0
@@ -32,11 +30,8 @@ Item {
     property bool discardDialogVisible: false
     property string discardDialogPath: ""
     property string discardDialogAbsPath: ""
-    // M3.4: blame do arquivo ativo (toggle por comando; segue a aba) —
-    // linha → rótulo "autor, idade"; a revisão força o rebind da gutter.
-    // Blame e log moram no GitHistoryController (o PASSADO). Estes alias
-    // existem para os 10 pontos de leitura ja' escritos fora daqui — sao 7,
-    // nao os 50 que fizeram do EditorController uma fachada de 791 linhas.
+    // Blame e log moram no GitHistoryController (o PASSADO); estes alias
+    // existem para os pontos de leitura ja' escritos fora daqui.
     property alias blameVisible: historyController.blameVisible
     property alias blamePath: historyController.blamePath
     property alias blameLineAnnotations: historyController.blameLineAnnotations
@@ -46,6 +41,8 @@ Item {
     property alias historyVisible: historyController.historyVisible
     property alias historyLoading: historyController.historyLoading
     property alias historyLaneCount: historyController.laneCount
+    property alias historyFilterText: historyController.filterText
+    property alias historyLogRef: historyController.logRef
     property alias branchesModel: gitBranchesModel
     property bool branchMenuVisible: false
     property bool remoteOperationRunning: false
@@ -61,7 +58,7 @@ Item {
     signal discardRequested(var paths)
     signal commitRequested(string message, bool amend)
     signal blameRequested(string path)
-    signal logRequested()
+    signal logRequested(string ref)
     signal commitDiffRequested(string sha)
     signal branchesRequested()
     signal checkoutRequested(string branch)
@@ -95,7 +92,7 @@ Item {
         // Reemite para NAO mudar o contrato: o GitRequestRouter continua com um
         // `Connections { target: gitController }` so', sem conhecer internals.
         onBlameRequested: function(path) { root.blameRequested(path); }
-        onLogRequested: root.logRequested()
+        onLogRequested: function(ref) { root.logRequested(ref); }
     }
 
     // Delegacoes para o GitHistoryController (deliberadas: 11 pontos de
@@ -112,6 +109,8 @@ Item {
     function refreshHistory() { historyController.refreshHistory(); }
     function handleLog(isRepo, entries) { historyController.handleLog(isRepo, entries); }
     function historyEntry(sha) { return historyController.entry(sha); }
+    function setHistoryFilter(text) { historyController.setFilterText(text); }
+    function setHistoryRef(ref) { historyController.setLogRef(ref); }
 
     function refresh() {
         if (workspaceRoot === "") {

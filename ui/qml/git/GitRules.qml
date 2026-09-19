@@ -29,9 +29,12 @@ QtObject {
     }
 
     // As raias do grafo: a atribuicao classica em linha reta. Cada linha e'
-    // { lane, merge, laneCount }: `lane` e' a coluna do commit; um commit com
-    // dois pais e' `merge`; `laneCount` e' quantas colunas estao vivas ali.
-    // Entradas: [{ sha, parents: [sha] }], do mais novo ao mais velho.
+    // { lane, merge, laneCount, edges }: `lane` e' a coluna do commit; um
+    // commit com dois pais e' `merge`; `laneCount` e' quantas colunas estao
+    // vivas ali; `edges` sao as ligacoes que SAEM desta linha para a de
+    // baixo — [{ from, to }] em colunas: as raias que passam direto
+    // (from === to) e as que este commit liga aos pais (curvas quando
+    // mudam de coluna). Entradas: [{ sha, parents }], do mais novo ao mais velho.
     function lanes(entries) {
         const active = [];   // sha esperado em cada coluna viva
         const out = [];
@@ -43,6 +46,7 @@ QtObject {
                 active.push(e.sha);
             }
             const parents = e.parents === undefined ? [] : e.parents;
+            const before = active.slice();
             // Este commit sai; o primeiro pai herda a coluna; os outros pais
             // ganham colunas novas (ou ja' tem a sua).
             if (parents.length === 0) {
@@ -59,9 +63,34 @@ QtObject {
                     if (active[b] === active[a]) active.splice(b, 1);
                 }
             }
-            out.push({ lane: lane, merge: parents.length > 1, laneCount: Math.max(1, active.length, lane + 1) });
+            // As arestas: cada coluna viva ANTES vai para onde o seu sha esta'
+            // DEPOIS (o commit desta linha vai para onde cada pai ficou).
+            const edges = [];
+            for (let c = 0; c < before.length; c++) {
+                if (c === lane) {
+                    for (let p = 0; p < parents.length; p++) {
+                        const to = active.indexOf(parents[p]);
+                        if (to >= 0) edges.push({ from: lane, to: to });
+                    }
+                } else {
+                    const to = active.indexOf(before[c]);
+                    if (to >= 0) edges.push({ from: c, to: to });
+                }
+            }
+            out.push({ lane: lane, merge: parents.length > 1,
+                       laneCount: Math.max(1, before.length, active.length, lane + 1), edges: edges });
         }
         return out;
+    }
+
+    // O filtro do historico: texto vazio aceita tudo; senao, resumo, autor
+    // ou sha (prefixo) contem o texto, sem diferenciar caixa.
+    function matchesFilter(entry, text) {
+        const q = (text || "").trim().toLowerCase();
+        if (q === "") return true;
+        return (entry.summary || "").toLowerCase().indexOf(q) >= 0
+            || (entry.author || "").toLowerCase().indexOf(q) >= 0
+            || (entry.sha || "").toLowerCase().indexOf(q) === 0;
     }
 
     // Os arquivos de um patch unificado, na ordem: [{ path, added, removed }].

@@ -79,8 +79,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.126.0
-testes      838 Rust aprovados; 53 harnesses QML (medicao de 2026-09-18, §7.70)
+protocolo   0.127.0
+testes      839 Rust aprovados; 54 harnesses QML (medicao de 2026-09-18, §7.71)
 metodos     161 IPC roteados, 55 eventos (run.stdin e event.run.* sairam em 0.125.0;
             datasource.discover/create e event.datasource.created
             em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
@@ -685,8 +685,8 @@ lista de pendências parecer maior ou menor do que é.
 #### 4.2.1 O que está pronto (medido em 2026-09-18, noite)
 
 ```text
-protocolo    0.126.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
-testes       838 Rust · 53 harnesses QML · 24 verificacoes no gate, todas verdes
+protocolo    0.127.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
+testes       839 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -4558,3 +4558,57 @@ merge/ramo; o branch no widget da barra (F1) segue abrindo o menu antigo;
 "Commit e Push" faz o push quando o status do commit volta — sem
 confirmação extra; cherry-pick/revert/reset não existem; nada disto foi
 clicado por uma pessoa (offscreen). O `GitController` está em 398/400.
+
+### 7.71 HUD do Git, fatia 2 (a), (b) e (c) — stage por pasta; filtro por texto e por branch; as curvas do grafo — 2026-09-18 (noite), protocolo 0.127.0
+
+Os dois primeiros itens do desenho do `43` §9.4, um commit cada:
+
+- **(a) Stage por pasta** (`0dfe956`): a seção de cada pasta na lista de
+  mudanças ganhou o checkbox — cheio quando todas as mudanças da pasta
+  estão staged, meio quando algumas, vazio quando nenhuma; o clique faz
+  stage (ou unstage) de todos os caminhos da pasta pelo `git.stage`/
+  `git.unstage` que já aceitavam vários. `GitRules.folderState(model,
+  folder)` é a regra (harness); `GitController.stageFolder` são três
+  linhas. Sem contrato.
+- **(b) Filtro do Histórico** (este commit): um campo acima da lista
+  filtra **localmente** por mensagem, autor ou prefixo de sha
+  (`GitRules.matchesFilter`; o grafo é calculado sobre todos e só a
+  exibição filtra); o chip **HEAD** abre a lista de branches e pede ao
+  core `git.log { ref }` (0.127.0) — o histórico de outro branch sem
+  trocar de branch. O handler valida o `ref` (nome de branch/tag; `--all`,
+  `a..b`, espaço → `INVALID_PARAMS`); inexistente é erro do git. Teste de
+  despacho com dois branches; `tst_git_history` (raias, refs, filtro
+  local sem pedido, troca de ref com pedido, clear). `GitHistoryController`
+  guarda `allEntries/logRef/filterText` e refaz o modelo.
+
+- **(c) As curvas do grafo** (mesmo commit): `GitRules.lanes` devolve
+  também as **arestas** de cada linha para a de baixo (`edges: [{from,
+  to}]` — as raias que passam direto e as que o commit liga aos pais); a
+  vista desenha num `Canvas` por linha: reta quando a coluna é a mesma,
+  Bézier quando muda; a raia que sai do commit em âmbar, as que só passam
+  em cinza. O `git log` passou a `--topo-order` (filhos sempre antes dos
+  pais — a ordem por data intercalava commits do mesmo segundo e punha um
+  pai acima do filho). Foto 16c: um repositório temporário com um merge —
+  a curva do `feature`, o anel do merge, os chips `main`/`feature`/`v0.1`.
+
+**Medido:** 839 testes; 54 harnesses; gates verdes; fotos 16c/16d.
+**Não feito:** (d) o branch pela barra, (e) as confirmações — `43` §9.4.
+
+### 7.72 Mais âncoras perdidas — a lista de variáveis do depurador sem largura nem altura; e a regra que pega a impressão digital — 2026-09-18 (noite)
+
+Ao mexer no `GitBranchMenu` para a HUD do Git, a mesma marca da §7.67:
+linhas de `anchors` **mais recuadas que as irmãs** — o rastro de um
+refactor que apagou a linha de cima e deixou a seguinte torta. Uma
+varredura por essa marca achou: no `GitBranchMenu`, a `ListView` de
+branches e a linha de criar branch **sem `anchors.left`** (largura zero —
+o menu abria vazio); no `DebugInspector` (split de 2026-09-03, `527a728`),
+a lista de **frames sem `anchors.bottom`** e a de **variáveis sem
+`anchors.right` nem `anchors.bottom`** — o painel de variáveis do
+depurador nunca teve tamanho desde então. Nenhuma das quatro dispara a
+regra da §7.67 (não são margens órfãs). Consertadas, e o gate
+`verificar-qml-propriedades` ganhou a segunda regra: **um binding mais
+recuado que o irmão completo de cima reprova** (provado por mutação no
+`GitBranchMenu`); varredura da árvore inteira: zero achados depois dos
+consertos. A lição fica dita: um refactor que "só move código" pode
+apagar âncoras sem que nada reclame — a foto e a marca de indentação são
+as duas redes que existem.

@@ -126,10 +126,29 @@ Item {
 
     // ---- a esquerda: a lista (mudancas ou historico) e o commit ----------
 
+    // O filtro do historico (fatia 2b): texto local + branch pelo core.
+    GitHistoryFilter {
+        id: historyFilter
+
+        anchors.top: gitActions.bottom
+        anchors.topMargin: Theme.spacingSmall
+        anchors.left: parent.left
+        width: panel.leftWidth
+        height: visible ? implicitHeight : 0
+        visible: panel.historyVisible
+        z: 4
+        filterText: panel.gitController ? panel.gitController.historyFilterText : ""
+        logRef: panel.gitController ? panel.gitController.historyLogRef : ""
+        branchesModel: panel.gitController ? panel.gitController.branchesModel : null
+        onFilterTextEdited: function(text) { panel.gitController.setHistoryFilter(text); }
+        onLogRefChosen: function(ref) { panel.gitController.setHistoryRef(ref); }
+        onRefsOpenChanged: if (refsOpen && panel.gitController) panel.gitController.branchesRequested()
+    }
+
     GitHistoryList {
         id: historyView
 
-        anchors.top: gitActions.bottom
+        anchors.top: historyFilter.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom
         anchors.left: parent.left

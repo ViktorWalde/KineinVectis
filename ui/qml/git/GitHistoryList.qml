@@ -60,6 +60,7 @@ ListView {
     delegate: Rectangle {
         id: commitRowItem
 
+        required property int index
         required property string sha
         required property string shortSha
         required property string author
@@ -70,6 +71,10 @@ ListView {
         readonly property var refs: refsText === "" ? [] : refsText.split("\u001f")
         required property int lane
         required property bool merge
+        required property string edgesText
+
+        readonly property var edges: edgesText === "" ? []
+            : edgesText.split(",").map(e => ({ from: Number(e.split(">")[0]), to: Number(e.split(">")[1]) }))
 
         readonly property bool selected: root.selectedSha === sha
 
@@ -79,7 +84,8 @@ ListView {
         color: selected ? Theme.surfaceSelected
                : (commitRowArea.containsMouse ? Theme.surface2 : "transparent")
 
-        // O grafo: a linha vertical de cada raia viva e o ponto do commit.
+        // O grafo: as arestas para a linha de baixo (retas quando a raia e' a
+        // mesma, curvas quando muda — fatia 2c) e o ponto do commit.
         Item {
             id: grafo
 
@@ -89,18 +95,46 @@ ListView {
             anchors.bottom: parent.bottom
             width: root.graphWidth
 
-            Repeater {
-                model: root.laneCount
+            Canvas {
+                id: tela
 
-                delegate: Rectangle {
-                    required property int index
-
-                    x: index * root.laneWidth + root.laneWidth / 2 - 1
-                    width: 1
-                    height: parent.height
-                    color: Theme.borderStrong
-                    opacity: 0.8
+                anchors.fill: parent
+                onPaint: {
+                    const ctx = getContext("2d");
+                    ctx.reset();
+                    ctx.lineWidth = 1.5;
+                    const meio = height / 2;
+                    const cx = lane => lane * root.laneWidth + root.laneWidth / 2;
+                    for (let i = 0; i < commitRowItem.edges.length; i++) {
+                        const e = commitRowItem.edges[i];
+                        const x0 = cx(e.from), x1 = cx(e.to);
+                        // A raia que so' passa e' cinza; a que sai do commit e' ambar.
+                        ctx.strokeStyle = e.from === commitRowItem.lane ? Theme.accentDim : Theme.borderStrong;
+                        ctx.beginPath();
+                        if (e.from === commitRowItem.lane) {
+                            ctx.moveTo(x0, meio);
+                        } else {
+                            ctx.moveTo(x0, 0);
+                            ctx.lineTo(x0, meio);
+                        }
+                        if (x0 === x1) {
+                            ctx.lineTo(x1, height);
+                        } else {
+                            ctx.bezierCurveTo(x0, height, x1, meio, x1, height);
+                        }
+                        ctx.stroke();
+                    }
+                    // A metade de cima da raia do proprio commit (vem de cima).
+                    if (commitRowItem.index > 0) {
+                        ctx.strokeStyle = Theme.accentDim;
+                        ctx.beginPath();
+                        ctx.moveTo(cx(commitRowItem.lane), 0);
+                        ctx.lineTo(cx(commitRowItem.lane), meio);
+                        ctx.stroke();
+                    }
                 }
+                Component.onCompleted: requestPaint()
+                onWidthChanged: requestPaint()
             }
 
             Rectangle {

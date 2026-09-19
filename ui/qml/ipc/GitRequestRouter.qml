@@ -94,8 +94,8 @@ Item {
             root.coreClient.gitBlame(path);
         }
 
-        function onLogRequested() {
-            root.coreClient.gitLog();
+        function onLogRequested(ref) {
+            root.coreClient.gitLog(ref);
         }
 
         function onCommitDiffRequested(sha) {

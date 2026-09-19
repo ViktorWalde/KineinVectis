@@ -514,6 +514,69 @@ fn git_commit_amend_rewrites_the_last_commit() {
     );
 }
 
+/// `git.log { ref }` (0.127.0): o historico de OUTRO branch, sem trocar de
+/// branch; um ref que parece opcao ou intervalo e' recusado antes do git;
+/// um ref inexistente e' erro do git (nao um log vazio).
+#[test]
+fn git_log_walks_from_a_named_ref_and_rejects_unsafe_refs() {
+    let repo = git_repo("log-ref");
+    std::fs::write(repo.join("a.txt"), "um\n").unwrap();
+    run_git(&repo, &["add", "a.txt"]);
+    run_git(&repo, &["commit", "-qm", "base"]);
+    let principal = run_git(&repo, &["branch", "--show-current"])
+        .trim()
+        .to_owned();
+    run_git(&repo, &["checkout", "-qb", "feature"]);
+    std::fs::write(repo.join("b.txt"), "dois\n").unwrap();
+    run_git(&repo, &["add", "b.txt"]);
+    run_git(&repo, &["commit", "-qm", "so' na feature"]);
+    run_git(&repo, &["checkout", "-q", &principal]);
+
+    let mut core = core_with_empty_search_path("git-log-ref");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        80_i64,
+        "workspace.open",
+        Some(json!({ "path": repo.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let atual = core.handle_request(&JsonRpcRequest::new(81_i64, "git.log", None));
+    assert_eq!(
+        atual.response().result.as_ref().unwrap()["entries"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+    let feature = core.handle_request(&JsonRpcRequest::new(
+        82_i64,
+        "git.log",
+        Some(json!({ "ref": "feature" })),
+    ));
+    let entries = feature.response().result.as_ref().unwrap()["entries"].clone();
+    assert_eq!(entries.as_array().unwrap().len(), 2, "{entries}");
+    assert_eq!(entries[0]["summary"], "so' na feature");
+
+    for ruim in ["--all", "main..feature", "a b"] {
+        let r = core.handle_request(&JsonRpcRequest::new(
+            83_i64,
+            "git.log",
+            Some(json!({ "ref": ruim })),
+        ));
+        assert_eq!(
+            r.response().error.as_ref().unwrap().code,
+            JsonRpcErrorCode::InvalidParams,
+            "{ruim}"
+        );
+    }
+    let inexistente = core.handle_request(&JsonRpcRequest::new(
+        84_i64,
+        "git.log",
+        Some(json!({ "ref": "nao-existe" })),
+    ));
+    assert!(inexistente.response().error.is_some());
+}
+
 #[test]
 fn git_log_answers_empty_on_repo_without_commits() {
     let repo = git_repo("log-empty");

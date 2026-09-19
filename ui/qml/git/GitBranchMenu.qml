@@ -27,7 +27,8 @@ Rectangle {
         id: branchesView
 
         anchors.top: parent.top
-            anchors.right: parent.right
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.bottom: newBranchRow.top
         anchors.margins: Theme.spacingSmall
         clip: true
@@ -85,7 +86,8 @@ Rectangle {
     Row {
         id: newBranchRow
 
-            anchors.right: parent.right
+        anchors.left: parent.left
+        anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: Theme.spacingSmall
         height: 28

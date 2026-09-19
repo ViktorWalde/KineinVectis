@@ -21,13 +21,17 @@ Item {
     property var blameLineAnnotations: ({})
     property int blameRevision: 0
 
-    // Log: os commits do repositorio.
+    // Log: os commits do repositorio. `logRef` e' o branch/tag escolhido
+    // ("" = HEAD); `filterText` filtra localmente por resumo/autor/sha.
     property alias historyModel: gitHistoryModel
     property bool historyVisible: false
     property bool historyLoading: false
+    property string logRef: ""
+    property string filterText: ""
+    property var allEntries: []
 
     signal blameRequested(string path)
-    signal logRequested()
+    signal logRequested(string ref)
 
     visible: false
 
@@ -40,6 +44,9 @@ Item {
     function clear() {
         hideBlame();
         gitHistoryModel.clear();
+        allEntries = [];
+        logRef = "";
+        filterText = "";
         historyVisible = false;
         historyLoading = false;
     }
@@ -133,7 +140,19 @@ Item {
 
     function refreshHistory() {
         historyLoading = true;
-        logRequested();
+        logRequested(logRef);
+    }
+
+    // Trocar o branch do historico (o chip do filtro): pede de novo ao core.
+    function setLogRef(ref) {
+        logRef = ref === undefined ? "" : ref;
+        refreshHistory();
+    }
+
+    // O filtro de texto e' local: refaz o modelo a partir do que o core mandou.
+    function setFilterText(text) {
+        filterText = text === undefined ? "" : text;
+        rebuildModel();
     }
 
     GitRules { id: gitRules }
@@ -153,15 +172,21 @@ Item {
 
     function handleLog(isRepo, entries) {
         historyLoading = false;
+        allEntries = isRepo ? entries : [];
+        rebuildModel();
+    }
+
+    function rebuildModel() {
         gitHistoryModel.clear();
         laneCount = 1;
-        if (!isRepo) {
-            return;
-        }
+        const entries = allEntries;
         // 0.126.0: os pais viram raias (GitRules.lanes) e os refs viram chips.
+        // As raias sao calculadas sobre TODOS (o grafo nao muda com o filtro);
+        // o filtro so' decide quem aparece.
         const raias = gitRules.lanes(entries);
         let maximo = 1;
         for (let i = 0; i < entries.length; i++) {
+            if (!gitRules.matchesFilter(entries[i], filterText)) continue;
             maximo = Math.max(maximo, raias[i].laneCount);
             gitHistoryModel.append({
                 sha: entries[i].sha,
@@ -173,7 +198,10 @@ Item {
                 // viajam juntos por US (0x1f) e a vista separa.
                 refsText: entries[i].refs === undefined ? "" : entries[i].refs.join("\u001f"),
                 lane: raias[i].lane,
-                merge: raias[i].merge
+                merge: raias[i].merge,
+                // As arestas para a linha de baixo, como texto ("0>0,0>1"):
+                // um ListModel nao guarda array de objetos como tal.
+                edgesText: raias[i].edges.map(e => e.from + ">" + e.to).join(",")
             });
         }
         laneCount = maximo;

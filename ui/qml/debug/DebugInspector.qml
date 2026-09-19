@@ -51,7 +51,8 @@ Item {
         ListView {
             anchors.top: framesTitle.bottom
             anchors.topMargin: Theme.spacingXSmall
-                anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
             anchors.right: parent.right
             anchors.margins: Theme.spacingSmall
             clip: true
@@ -77,7 +78,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.right: parent.right
-                                anchors.rightMargin: Theme.spacingSmall
+                    anchors.rightMargin: Theme.spacingSmall
                     text: frameRow.line > 0
                           ? qsTr("%1  ·  :%2").arg(frameRow.name).arg(frameRow.line)
                           : frameRow.name
@@ -128,8 +129,10 @@ Item {
         ListView {
             anchors.top: variablesTitle.bottom
             anchors.topMargin: Theme.spacingXSmall
-                anchors.left: parent.left
-                anchors.margins: Theme.spacingSmall
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: Theme.spacingSmall
             clip: true
             model: root.variablesModel
 

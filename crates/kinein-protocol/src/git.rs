@@ -240,13 +240,18 @@ pub struct GitBlameResult {
 }
 
 /// Parameters for `git.log`.
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GitLogParams {
     /// Maximum commits to list (default 100; the handler rejects values
     /// outside 1..=500).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub max_count: Option<u32>,
+    /// A branch or tag to walk from instead of HEAD (`0.127.0`, the
+    /// Histórico filter). Validated as a ref name (no spaces, no `..`, no
+    /// leading `-`); unknown refs come back as `INVALID_PARAMS`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub r#ref: Option<String>,
 }
 
 /// One commit of `git.log`, newest first.

@@ -141,7 +141,7 @@ public:
     Q_INVOKABLE void gitDiscard(const QStringList& paths);
     Q_INVOKABLE void gitCommit(const QString& message, bool amend = false);
     Q_INVOKABLE void gitBlame(const QString& path);
-    Q_INVOKABLE void gitLog();
+    Q_INVOKABLE void gitLog(const QString& ref = QString());
     Q_INVOKABLE void gitCommitDiff(const QString& sha);
     Q_INVOKABLE void settingsGet();
     Q_INVOKABLE void settingsSet(const QString& scope, const QVariantMap& values);

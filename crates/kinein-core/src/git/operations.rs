@@ -240,7 +240,7 @@ pub fn blame(root: &Path, path: &Path) -> Result<GitBlameResult, GitError> {
 
 /// Lists up to `max_count` commits, newest first (stable `%x1f`/NUL
 /// format). A repo without commits answers an empty list.
-pub fn log(root: &Path, max_count: u32) -> Result<GitLogResult, GitError> {
+pub fn log(root: &Path, max_count: u32, r#ref: Option<&str>) -> Result<GitLogResult, GitError> {
     if !is_inside_work_tree(root)? {
         return Ok(GitLogResult {
             repo: false,
@@ -254,15 +254,23 @@ pub fn log(root: &Path, max_count: u32) -> Result<GitLogResult, GitError> {
         });
     }
     let count_argument = format!("--max-count={max_count}");
-    let body = run_git(
-        root,
-        &[
-            "log",
-            &count_argument,
-            "-z",
-            "--pretty=format:%H\u{1f}%h\u{1f}%an\u{1f}%at\u{1f}%s\u{1f}%P\u{1f}%D",
-        ],
-    )?;
+    // `--topo-order`: filhos sempre antes dos pais — e' o que a atribuicao
+    // de raias do grafo (UI, GitRules.lanes) assume; a ordem por data
+    // intercala commits do mesmo segundo e desenha um pai acima do filho.
+    let mut args = vec![
+        "log",
+        &count_argument,
+        "--topo-order",
+        "-z",
+        "--pretty=format:%H\u{1f}%h\u{1f}%an\u{1f}%at\u{1f}%s\u{1f}%P\u{1f}%D",
+    ];
+    // O filtro por branch/tag (0.127.0): o ref vai DEPOIS de `--` nao ser
+    // possivel aqui (git log trata `--` como separador de caminhos), entao
+    // ele e' validado antes pelo handler e vai como revisao.
+    if let Some(r) = r#ref {
+        args.push(r);
+    }
+    let body = run_git(root, &args)?;
     Ok(GitLogResult {
         repo: true,
         entries: parse_log(&body),
