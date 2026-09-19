@@ -1,4 +1,4 @@
-# Kinein Vectis
+[# Kinein Vectis
 
 Kinein Vectis é uma IDE open source, Linux-first, para **C, C++, Rust e
 Python** — no desktop e em sistemas embarcados. A interface nativa em Qt/QML
@@ -136,3 +136,4 @@ histórico Git privado, com o código do projeto e a documentação pública
 
 Kinein Vectis é disponibilizado sob licença dupla MIT ou Apache-2.0. Consulte
 `LICENSE-MIT.txt` e `LICENSE-APACHE-2.0.txt`.
+](https://github.com/ViktorWalde/KineinVectis)
