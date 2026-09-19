@@ -255,6 +255,9 @@ esta página ganha o "feito" de cada uma no §7.1.
   `ShellLeftWindowHost`; o diff/commit abre no editor (`GitViewerPane`);
   saíram o `GitPanel` de baixo e o `GitDiffDialog`; a lista por pasta
   ordenada (`GitRules.byFolder`) — `40` §7.82.
+- **E3-4** (2026-09-19): o trilho Projeto · Git · Embarcados · Banco ·
+  Containers · Grafana · Ferramentas; Busca/Build/Debug saíram; ícone
+  `embedded` (o chip); rótulos no modo expandido — `40` §7.83.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

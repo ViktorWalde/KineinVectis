@@ -22,6 +22,7 @@ Item {
     property var containerController
     property var grafanaController
     property var dataSourceController
+    property var embeddedController: null
     property alias editorSurface: editorPaneHost.editorSurface
     property bool workspaceOpen: false
     property string workspaceRoot: ""
@@ -107,21 +108,14 @@ Item {
             onExpandedToggled: root.shellController.toggleRail()
             workspaceOpen: root.workspaceOpen
             explorerActive: root.shellController.effectiveShowExplorer
-            searchActive: root.shellController.showBottomPanel
-                          && root.shellController.bottomTab === "search"
             gitActive: root.shellController.gitWindowVisible
-            buildActive: root.shellController.showBottomPanel
-                         && (root.shellController.bottomTab === "build"
-                             || root.shellController.bottomTab === "jobs")
-            debugActive: root.shellController.showBottomPanel
-                         && root.shellController.bottomTab === "debug"
+            embeddedActive: root.embeddedController !== undefined && root.embeddedController !== null
+                            && root.embeddedController.panelVisible
             toolsActive: root.shellController.showBottomPanel
                          && root.shellController.bottomTab === "tools"
             onExplorerToggled: root.shellController.toggleExplorer()
-            onSearchRequested: root.searchController.openSearchPanel()
             onGitRequested: root.shellController.toggleBottomTab("git")
-            onBuildRequested: root.shellController.toggleBottomTab("build")
-            onDebugRequested: root.shellController.toggleBottomTab("debug")
+            onEmbeddedRequested: root.embeddedController.open()
             onToolsRequested: root.shellController.toggleBottomTab("tools")
             containersActive: root.containerController !== undefined && root.containerController !== null
                               && root.containerController.panelVisible

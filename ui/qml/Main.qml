@@ -239,6 +239,7 @@ Window {
         containerController: domains.containerController
         grafanaController: domains.grafanaController
         dataSourceController: domains.dataSourceController
+        embeddedController: domains.embeddedController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName

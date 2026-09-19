@@ -4861,3 +4861,25 @@ Codex/evidencias-2026-09-19-etapa3/fotos/`): Commit e Log a 1280×800, o
 visualizador com o diff de `GitRules.qml`, Log a 1024×700. **Não medido:**
 o clique real (o autor); o `Esc` do visualizador depende do foco — a
 prova é dele.
+
+### 7.83 Etapa 3, E3-4 — O trilho: Projeto · Git · Embarcados · Banco · Containers · Grafana · Ferramentas — 2026-09-19
+
+O pedido do autor: "Debug e Build têm muito atalho; melhor deixar os do
+canto superior direito e remover os repetidos; PlatformIO/embarcados no
+trilho". **Saíram** do `SideRail` Busca (a aba Símbolos faz a busca por
+nome desde a E3-2; a busca por texto segue em `Ctrl+Shift+F` e na aba de
+baixo), Build e Debug (o widget Executar do cabeçalho, o menu e o painel
+de baixo já os têm — três lugares bastam). **Entrou** Embarcados (por
+projeto, como o Git: o kit mora no `.kinein`), com o ícone `embedded` —
+o chip com o die e três pinos por lado, em `KvIconGlyphs.js`, o mesmo
+lugar dos outros nativos. Os rótulos do modo expandido ficaram curtos
+(Git, Embarcados, Banco, Grafana) e os tooltips carregam o atalho da
+paleta (`Ctrl+Alt+M`, `Ctrl+Alt+J`, `Ctrl+Alt+W`, `Ctrl+Alt+O`). O
+`ShellWorkspaceHost` passa o `embeddedController` (`Main.qml` desce).
+Nenhum sinal órfão: `searchRequested/buildRequested/debugRequested` e as
+três propriedades `*Active` saíram com os botões.
+
+**Provado:** qmllint, propriedades, alcance, fiação (608 sinais QML),
+atalhos, catraca, lógica verdes. **Foto:** `e3-4-trilho-expandido.png`
+(o trilho expandido com Embarcados aberto — que também é o ANTES da
+E3-5: o painel de Embarcados passa da janela a 800 px de altura).

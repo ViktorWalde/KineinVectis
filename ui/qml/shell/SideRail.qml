@@ -4,22 +4,24 @@ import QtQuick
 Rectangle {
     id: root
 
+    // O trilho da Etapa 3 (E3-4, roadmaps/44 §4): Projeto · Git ·
+    // Embarcados · Banco · Containers · Grafana · Ferramentas. Busca,
+    // Build e Debug SAIRAM daqui (pedido do autor: "tem muito atalho
+    // repetido; melhor deixar os do canto superior direito") — a busca no
+    // projeto e' Ctrl+Shift+F e a aba de baixo; Build/Debug sao o widget
+    // Executar do cabecalho, o menu e o painel de baixo.
     property bool workspaceOpen: false
     property bool explorerActive: false
-    property bool searchActive: false
     property bool gitActive: false
-    property bool buildActive: false
-    property bool debugActive: false
+    property bool embeddedActive: false
     property bool toolsActive: false
     property bool databaseActive: false
     property bool containersActive: false
     property bool observabilityActive: false
 
     signal explorerToggled()
-    signal searchRequested()
     signal gitRequested()
-    signal buildRequested()
-    signal debugRequested()
+    signal embeddedRequested()
     signal toolsRequested()
     signal databaseRequested()
     signal containersRequested()
@@ -59,7 +61,7 @@ Rectangle {
 
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: parent.left
-            anchors.leftMargin: root.expanded ? 5 : 5
+            anchors.leftMargin: 5
             name: railButton.iconName
             size: 22
             active: railButton.active
@@ -119,35 +121,22 @@ Rectangle {
         }
 
         RailButton {
-            iconName: "search"
-            tooltip: qsTr("Busca no projeto")
-            active: root.searchActive
-            enabled: root.workspaceOpen
-            onActivated: root.searchRequested()
-        }
-
-        RailButton {
             iconName: "git"
-            tooltip: qsTr("Git")
+            tooltip: qsTr("Git — Commit e Log")
+            label: qsTr("Git")
             active: root.gitActive
             enabled: root.workspaceOpen
             onActivated: root.gitRequested()
         }
 
+        // Embarcados e' por projeto (o kit mora no .kinein), como o Git.
         RailButton {
-            iconName: "build"
-            tooltip: qsTr("Build e jobs")
-            active: root.buildActive
+            iconName: "embedded"
+            tooltip: qsTr("Embarcados — placa, projeto, gravar, kit (Ctrl+Alt+M)")
+            label: qsTr("Embarcados")
+            active: root.embeddedActive
             enabled: root.workspaceOpen
-            onActivated: root.buildRequested()
-        }
-
-        RailButton {
-            iconName: "debug"
-            tooltip: qsTr("Debug")
-            active: root.debugActive
-            enabled: root.workspaceOpen
-            onActivated: root.debugRequested()
+            onActivated: root.embeddedRequested()
         }
 
         // Ferramentas NATIVAS com atalho visual (decisao do autor,
@@ -158,6 +147,7 @@ Rectangle {
         RailButton {
             iconName: "database"
             tooltip: qsTr("Banco de dados (Ctrl+Alt+J)")
+            label: qsTr("Banco")
             active: root.databaseActive
             onActivated: root.databaseRequested()
         }

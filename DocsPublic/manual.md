@@ -126,9 +126,13 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   (quando a mensagem diz que falta a `compile_commands.json`) ou
   **Ferramentas** (quando falta um programa). O que não tem passo conhecido
   fica só com o clique que abre a linha. A aba mostra a contagem.
-- **Rail** (coluna fininha à esquerda): liga/desliga Projeto, Busca, Git,
-  Build, Debug e, embaixo, os painéis de ambiente na ordem Banco de dados,
-  Containers, Observabilidade e Ferramentas (por último).
+- **Rail** (coluna fininha à esquerda; o `›` do pé expande com os
+  rótulos): **Projeto · Git · Embarcados · Banco · Containers · Grafana ·
+  Ferramentas**. Projeto e Git alternam no mesmo slot à esquerda; os
+  outros abrem o painel de cada um. Busca, Build e Debug **não estão** no
+  rail (desde a Etapa 3): a busca no projeto é `Ctrl+Shift+F` / a aba
+  Busca; Build e Debug são o widget Executar do cabeçalho (▶ 🐞 ⋯), o
+  menu Build e o painel inferior.
 - Clicar numa aba do painel inferior que já está aberta **recolhe** o
   painel.
 - Os painéis laterais e o painel inferior são **redimensionáveis**: arraste

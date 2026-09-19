@@ -50,6 +50,26 @@ function draw(name, context, line, node) {
         context.lineTo(15, 13);
         context.lineTo(19, 13);
         return true;
+    case "embedded":
+        // o chip: o encapsulado, o die ao centro e tres pinos por lado
+        context.moveTo(7, 7);
+        context.lineTo(17, 7);
+        context.lineTo(17, 17);
+        context.lineTo(7, 17);
+        context.closePath();
+        context.moveTo(10, 10);
+        context.lineTo(14, 10);
+        context.lineTo(14, 14);
+        context.lineTo(10, 14);
+        context.closePath();
+        for (let i = 0; i < 3; i++) {
+            const p = 9 + i * 3;
+            line(context, p, 3, p, 7);
+            line(context, p, 17, p, 21);
+            line(context, 3, p, 7, p);
+            line(context, 17, p, 21, p);
+        }
+        return true;
     default:
         return false;
     }
