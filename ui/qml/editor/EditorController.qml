@@ -21,6 +21,7 @@ Item {
     property alias externalMessage: documents.currentExternalMessage
     property string watchError: ""
     property alias loadingEditorText: surfaceBridge.loadingText
+    property alias cursorSummary: surfaceBridge.cursorSummary
     // D1 (DocsPublic/roadmaps/24): alias para a property PRÓPRIA do controller, nunca para o
     // `visible` do Item — este EditorController é invisível (é controller), e
     // `Item.visible` de um filho lê a visibilidade EFETIVA, que fica presa em

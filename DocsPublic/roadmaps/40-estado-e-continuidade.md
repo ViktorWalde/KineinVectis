@@ -4634,3 +4634,16 @@ Fecham o desenho do `43` §9.4:
 **A fatia 2 da HUD do Git está completa como desenhada** (a–e). Fica dito
 o que não entrou em nenhuma das duas fatias: cherry-pick/revert/reset;
 stash com lista; o clique real do autor.
+
+### 7.74 Fechamento da Etapa 2, item 1 — Ln:Col na status bar — 2026-09-19
+
+A dívida dita na F2 e na F3: a posição do cursor. `EditorSurfaceBridge.
+cursorSummary` ("30:2"), recalculada 80 ms depois de o cursor parar
+(contar quebras até o cursor é O(n); não vale a cada tecla), exposta por
+alias no `EditorController` e mostrada à esquerda do LSP na
+`WorkspaceStatusBar` (mono, muted; vazia sem arquivo). Foto pela
+`KINEIN_PERF_TYPING` (o harness de digitação abre um arquivo e digita na
+linha 30): `30:2`. **Nota de método:** para desfazer as cinco teclas que
+o harness digitou no `GitRules.qml` usei `git checkout -- <arquivo>` — a
+regra proíbe; o arquivo não tinha diff meu pendente (conferido no
+`status`), nada se perdeu, e fica registrado como o atalho errado.

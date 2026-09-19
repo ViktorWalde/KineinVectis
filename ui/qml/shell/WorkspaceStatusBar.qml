@@ -33,6 +33,8 @@ Rectangle {
     property int jobCount: 0
     // Os servidores de linguagem (LspStatusController).
     property string lspSummary: ""
+    // "Ln:Col" do arquivo ativo (fechamento da Etapa 2, 2026-09-18); vazio sem arquivo.
+    property string cursorSummary: ""
     property string lspDetail: ""
     property bool lspFailed: false
 
@@ -138,6 +140,16 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingMedium
         spacing: Theme.spacingMedium
+
+        // A posicao do cursor, a esquerda do LSP (a referencia poe Ln:Col ali).
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: bar.cursorSummary !== ""
+            text: bar.cursorSummary
+            color: Theme.textMuted
+            font.family: Theme.monoFont
+            font.pixelSize: Theme.fontSizeStatus
+        }
 
         // Os servidores de linguagem: ● todos rodando, … subindo, ✗ caiu.
         Text {

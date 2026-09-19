@@ -11,6 +11,7 @@ WorkspaceStatusBar {
     property var pythonController: null
     property var activeJobController: null
     property var lspStatusController: null
+    property var editorController: null
 
     workspaceRoot: coreClient.workspaceRoot
     workspaceKindLabel: shellController.kindLabel(
@@ -33,6 +34,7 @@ WorkspaceStatusBar {
     jobMessage: activeJobController !== null ? activeJobController.message : ""
     jobCanCancel: activeJobController !== null ? activeJobController.canCancel : false
     jobCount: activeJobController !== null ? activeJobController.runningCount : 0
+    cursorSummary: editorController !== null ? editorController.cursorSummary : ""
     lspSummary: lspStatusController !== null ? lspStatusController.summary() : ""
     lspDetail: lspStatusController !== null ? lspStatusController.detail() : ""
     lspFailed: lspStatusController !== null ? lspStatusController.hasFailure() : false

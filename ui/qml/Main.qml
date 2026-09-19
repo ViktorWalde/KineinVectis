@@ -306,6 +306,7 @@ Window {
         pythonController: domains.pythonController
         activeJobController: domains.activeJobController
         lspStatusController: domains.lspStatusController
+        editorController: domains.editorController
         onToolchainMenuRequested: function(menuX, menuY) {
             const pos = statusBar.mapToItem(shellOverlays, menuX, menuY);
             domains.toolchainController.openMenu(pos.x, pos.y);
