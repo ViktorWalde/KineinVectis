@@ -294,12 +294,12 @@ harnesses QML                           45              51
 testes Rust                             827             829
 ```
 
-**O que fecha a etapa** está no `40` §4.2.2: a F8, a sincronização final
-com fotos lado a lado, o release-hardened remedido, e as dívidas pequenas
-ditas em cada "não feito" (Ln:Col na status bar; contagem na aba Testes;
-foto a 1024 px; trilho expandido; o foco da tela inicial contra o
-terminal). E o que só o autor mede: a sensação de resposta com mouse e
-teclado reais.
+**O que fechava a etapa** (`40` §4.2.2) foi feito em 2026-09-18/19: a F8
+(§7.65), as dívidas pequenas — Ln:Col (§7.74), contagem na aba Testes
+(§7.69), foto a 1024 px (§7.78), trilho expandido (§7.77) —, o
+release-hardened remedido e as três telas fotografadas de novo (§7.79). O
+que só o autor mede continua dele: a sensação de resposta com mouse e
+teclado reais (`40` §4.2.6).
 
 ## 8. F8 — o desenho medido (2026-09-18, noite; escrito ANTES do código)
 
@@ -608,6 +608,10 @@ mudar (o (b) muda `gitLog(ref)` na ponte).
 **Restrições que valem:** `GitController` 398/400 — (a) e (e) cabem num
 filho `GitStagingController` ou dentro do `GitInspectorController`; view
 300; controller 400; contrato primeiro (03 + bump + tests) quando (b).
+
+**Estado em 2026-09-19:** o fechamento da Etapa 2 (§9.5 item 1) foi
+FEITO item a item — `40` §7.74–7.79. **A Etapa 2 está fechada.** O que
+vem é a sessão do autor na IDE (`40` §4.2.6) e a Etapa 3 (`40` §4.2.5).
 
 **Estado em 2026-09-18, fim da noite:** a fatia 2 foi FEITA como
 desenhada — (a) `0dfe956`, (b)+(c) `b5c68d6` (mais quatro âncoras

@@ -688,7 +688,7 @@ lista de pendências parecer maior ou menor do que é.
 protocolo    0.128.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
 testes       840 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
-             release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
+             release-hardened 386-479 ms em 2026-09-19 (§7.79; 318 ms na §7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
 commits hoje 4182769 F0 · 84b1e80 F1 · cf0de24 F2 · 5517538 F3 · 9d97bd1 F4 ·
              271d9c7 F6-a · 225564c F5 · 409f375 F6-b · 36f90fd F7
@@ -711,24 +711,15 @@ F8  paineis de ambiente com a MESMA forma                 FEITA (§7.65, 2026-09
     mesma primeira linha; o Embarcados cabe. Restos ditos: containers e portas
     como grade com acoes; Grafana/Setup/Biblioteca na moldura comum.
 
-Fechamento da etapa                                       meia sessao
-    43 §5 e §7 sincronizados; foto final das tres telas de 43 §2 (inicial,
-    workspace, editor) lado a lado com as de manha; release-hardened REMEDIDO
-    (primeiro frame e os tempos da tabela §7.62 — hoje so' o debug foi medido
-    depois da F6); leitura-tecnica e README do DocsPublic com o estado; e a
-    proposta da Etapa 3 ao autor (abaixo, §4.2.5).
-
-Dividas de UX ditas em "nao feito" das fatias (pequenas, cabem no fechamento):
-    - Ln:Col do cursor na status bar (F2/F3 disseram; ainda nao ha)
-    - contagem na aba Testes ("12/14") como a de Problems (F5 disse)
-    - a foto do gate a 1024 px alem de 1280 (F2 disse; a status bar tem
-      regra de ceder, mas so' foi vista a 1280)
-    - o trilho lateral em modo compacto/expandido (F1 fez o rotulo ao pairar,
-      nao o modo expandido)
-    - foco da StartScreen contra o TerminalPanel (`focus: true`) quando o
-      painel de baixo esta' aberto sem workspace — caso raro (F7)
-    - rename / codeActions / workspaceEdit ainda SINCRONOS no core (F6-a);
-      raros, mas sao a ultima classe de pedido que pode segurar o laco
+Fechamento da etapa                                       FEITO em 2026-09-19 (§7.74-7.79)
+    Ln:Col na status bar (§7.74); rename/codeActions fora do laco e
+    container.status adiado (§7.75); Grafana/Setup/Biblioteca na moldura comum
+    (§7.76); o trilho compacto/expandido (§7.77); a foto a 1024 px e a faixa de
+    abas que nao bate no x (§7.78); as tres telas fotografadas de novo e o
+    release-hardened remedido (§7.79). Ficou dito: o foco da StartScreen contra
+    o TerminalPanel (caso raro), a mensagem do job que cede antes da barra, a
+    primeira linha (KvPanelHeader) nos paineis de baixo e nos tres de ambiente
+    que so' ganharam a moldura.
 
 O que so' o autor mede (precisa de uma pessoa na frente da IDE):
     - clique -> primeiro feedback por acao, com mouse e teclado reais (a
@@ -4703,3 +4694,26 @@ IDE e core à direita; a faixa de abas do painel de baixo **batia no ×**
 e rola se não couber (a última aba, IDE, fica sob rolagem a 1024). O que
 ainda cede feio: a mensagem do job ("Compil…") — o `StatusBarJobWidget`
 prefere a barra ao texto; fica dito.
+
+### 7.79 Fechamento da Etapa 2, item 7 — as três telas de novo, o release-hardened remedido; a Etapa 2 está fechada — 2026-09-19
+
+**As três telas do `43` §2, fotografadas de novo** (`imagens/prints/2026-
+09-19-fechamento/19a–19c`): a tela inicial com o último recente em destaque
+e o ambiente numa linha; o workspace com a barra de três widgets, o
+explorer com o peso certo, a faixa de abas nova; o editor com aba ativa,
+linha atual e `30:2` na status bar. Ao lado das fotos 01–03 da manhã de
+2026-09-18 (`imagens/prints/2026-09-18-etapa2/`), é o antes/depois da
+etapa inteira.
+
+**release-hardened remedido** (esta máquina, 2026-09-19 de manhã, três
+amostras, `KINEIN_CORE_BIN=target/release/kinein-core`): primeiro frame
+**386 / 407 / 479 ms** (a §7.54 mediu 318 ms em 2026-09-18 — máquina com
+outra carga; a ordem de grandeza é a mesma, ~0,4 s contra ~0,75 s do
+debug); `workspace.open` no core release: **4 ms** (25 ms no debug depois
+da F6-b; 1,4 s antes dela).
+
+**A Etapa 2 está fechada.** F0–F8 (§7.55–7.65), a fila do teste do autor
+(§7.66–7.73) e o fechamento (§7.74–7.79). O que fica dito está em cada
+"não feito" e resumido no §4.2.2; o que só o autor mede está no §4.2.6.
+**Próximo passo:** a sessão do autor na IDE aberta, e a decisão dele sobre
+a Etapa 3 (§4.2.5) — o `43` §9.5 tem a ordem proposta.
