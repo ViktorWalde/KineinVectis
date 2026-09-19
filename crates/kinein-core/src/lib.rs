@@ -83,6 +83,9 @@ pub struct Core {
     /// A sessao de terminal da ultima execucao (`run.start`/`run.script`),
     /// para o `run.stop` fechar.
     run_terminal: Option<String>,
+    /// O canal das continuacoes (F6 fechamento): um pedido adiado que
+    /// precisa do `Core` para terminar volta ao laco por aqui.
+    continuations: Option<std::sync::mpsc::Sender<Continuation>>,
     debug: Option<dap::DebugManager>,
     terminal: Option<terminal::TerminalManager>,
     jobs: Option<jobs::JobManager>,
@@ -126,6 +129,7 @@ impl Core {
             lsp: None,
             workspace_edits: lsp::WorkspaceEditTransactions::default(),
             run_terminal: None,
+            continuations: None,
             debug: None,
             terminal: None,
             jobs: None,
@@ -439,6 +443,10 @@ impl Core {
 }
 
 pub use outcome::{CoreError, RequestOutcome};
+
+/// O que fecha um pedido adiado que precisa do `Core`: roda NO LACO, com
+/// `&mut Core`, depois de a espera ter acontecido fora dele.
+pub type Continuation = Box<dyn FnOnce(&mut Core) -> JsonRpcResponse + Send>;
 
 /// `Continue`, ou `Deferred` quando o handler devolveu o marcador de
 /// resposta adiada (Etapa 2 F6).

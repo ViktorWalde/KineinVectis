@@ -31,7 +31,7 @@ use super::registry::ServerRegistry;
 use super::server::ServerHandle;
 use super::types::{LspError, LspLocation, WorkspaceEditPlan};
 use super::uri::{path_for_uri, uri_for_path};
-use super::{EventSender, PendingResponses};
+use super::{EventSender, LspReply, PendingResponses};
 
 /// Ultima consulta de code actions respondida, com as ações cruas do servidor.
 ///
@@ -180,27 +180,25 @@ impl LspManager {
         Ok(result.as_str().and_then(path_for_uri))
     }
 
-    /// Solicita `textDocument/rename` e devolve o plano de edits por arquivo.
-    ///
-    /// O manager NAO escreve arquivos; quem aplica o plano (confinado ao
-    /// workspace) e o chamador.
-    pub fn rename(
+    /// ESCREVE o `textDocument/rename` e devolve a resposta pendente; a espera
+    /// e' de quem chamou (fora do laco, F6 fechamento) e o plano nasce em
+    /// [`Self::rename_plan`]. O manager NAO escreve arquivos.
+    pub fn begin_rename(
         &mut self,
         path: &Path,
         content: &str,
         line: u64,
         column: u64,
         new_name: &str,
-    ) -> Result<WorkspaceEditPlan, LspError> {
-        let result = self.position_request_with(
-            "textDocument/rename",
-            path,
-            content,
-            line,
-            column,
-            &json!({ "newName": new_name }),
-        )?;
-        workspace_edit_plan(&result)
+    ) -> Result<LspReply, LspError> {
+        let language = self.sync_document(path, content)?;
+        let params = position_params(path, line, column, &json!({ "newName": new_name }));
+        self.begin_request(language, "textDocument/rename", &params)
+    }
+
+    /// O plano de edits por arquivo a partir da resposta do rename.
+    pub fn rename_plan(result: &Value) -> Result<WorkspaceEditPlan, LspError> {
+        workspace_edit_plan(result)
     }
 
     /// Resolve `textDocument/codeAction` no ponto do cursor — no servidor
@@ -212,26 +210,46 @@ impl LspManager {
     /// `lsp.applyCodeAction` seguinte, cada uma com o servidor de origem. Um
     /// companheiro que falha ou demora nao derruba a consulta: as acoes dele
     /// so' nao aparecem.
-    pub fn code_actions(
+    pub fn begin_code_actions(
         &mut self,
         path: &Path,
         content: &str,
         line: u64,
         column: u64,
-    ) -> Result<Vec<LspCodeActionInfo>, LspError> {
+    ) -> Result<Vec<(&'static str, LspReply)>, LspError> {
         let language = self.sync_document(path, content)?;
+        let mut pending = vec![(
+            language,
+            self.code_actions_from(language, path, line, column)?,
+        )];
+        for key in self.running_companion_keys(language) {
+            if let Ok(reply) = self.code_actions_from(key, path, line, column) {
+                pending.push((key, reply));
+            }
+        }
+        Ok(pending)
+    }
+
+    /// Fecha a consulta com as respostas ja' esperadas (fora do laco): junta as
+    /// acoes de todos os servidores e guarda as cruas para o
+    /// `lsp.applyCodeAction` seguinte. A do principal e' obrigatoria; a de um
+    /// companheiro que falhou so' nao aparece.
+    pub fn finish_code_actions(
+        &mut self,
+        path: &Path,
+        replies: Vec<(&'static str, Result<Value, LspError>)>,
+    ) -> Result<Vec<LspCodeActionInfo>, LspError> {
         let mut infos = Vec::new();
         let mut raw = Vec::new();
-        let result = self.code_actions_from(language, path, line, column)?;
-        let (principal_infos, principal_raw) = code_action_infos(&result);
-        infos.extend(principal_infos);
-        raw.extend(principal_raw.into_iter().map(|action| (language, action)));
-        for key in self.running_companion_keys(language) {
-            if let Ok(result) = self.code_actions_from(key, path, line, column) {
-                let (mais_infos, mais_raw) = code_action_infos(&result);
-                infos.extend(mais_infos);
-                raw.extend(mais_raw.into_iter().map(|action| (key, action)));
-            }
+        for (index, (key, result)) in replies.into_iter().enumerate() {
+            let result = match result {
+                Ok(value) => value,
+                Err(error) if index == 0 => return Err(error),
+                Err(_) => continue,
+            };
+            let (mais_infos, mais_raw) = code_action_infos(&result);
+            infos.extend(mais_infos);
+            raw.extend(mais_raw.into_iter().map(|action| (key, action)));
         }
         self.active_code_actions = Some(ActiveCodeActions {
             path: path.to_path_buf(),
@@ -240,14 +258,14 @@ impl LspManager {
         Ok(infos)
     }
 
-    /// O `textDocument/codeAction` de UM servidor, com o contexto dele.
+    /// ESCREVE o `textDocument/codeAction` de UM servidor, com o contexto dele.
     fn code_actions_from(
         &mut self,
         key: &'static str,
         path: &Path,
         line: u64,
         column: u64,
-    ) -> Result<Value, LspError> {
+    ) -> Result<LspReply, LspError> {
         let uri = uri_for_path(path);
         let context_diagnostics = self
             .servers
@@ -263,7 +281,7 @@ impl LspManager {
             "range": { "start": position, "end": position },
             "context": { "diagnostics": context_diagnostics },
         });
-        self.send_request(key, "textDocument/codeAction", &params)
+        self.begin_request(key, "textDocument/codeAction", &params)
     }
 
     /// Os companheiros de `language` que estao VIVOS agora.
@@ -372,20 +390,27 @@ impl LspManager {
         extra: &Value,
     ) -> Result<Value, LspError> {
         let language = self.sync_document(path, content)?;
-        let mut params = json!({
-            "textDocument": { "uri": uri_for_path(path) },
-            "position": {
-                "line": line.saturating_sub(1),
-                "character": column.saturating_sub(1),
-            },
-        });
-        if let (Some(target), Some(fields)) = (params.as_object_mut(), extra.as_object()) {
-            for (key, value) in fields {
-                target.insert(key.clone(), value.clone());
-            }
-        }
+        let params = position_params(path, line, column, extra);
         self.send_request(language, method, &params)
     }
+}
+
+/// `textDocument` + `position` (1-based Kinein -> 0-based LSP) + os campos
+/// extras do metodo.
+fn position_params(path: &Path, line: u64, column: u64, extra: &Value) -> Value {
+    let mut params = json!({
+        "textDocument": { "uri": uri_for_path(path) },
+        "position": {
+            "line": line.saturating_sub(1),
+            "character": column.saturating_sub(1),
+        },
+    });
+    if let (Some(target), Some(fields)) = (params.as_object_mut(), extra.as_object()) {
+        for (key, value) in fields {
+            target.insert(key.clone(), value.clone());
+        }
+    }
+    params
 }
 
 /// Filtra os diagnostics cacheados de `uri` que intersectam a linha do cursor.

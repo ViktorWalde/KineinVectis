@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.127.0
-testes      839 Rust aprovados; 54 harnesses QML (medicao de 2026-09-18, §7.71)
+testes      840 Rust aprovados; 54 harnesses QML (medicao de 2026-09-19, §7.75)
 metodos     161 IPC roteados, 55 eventos (run.stdin e event.run.* sairam em 0.125.0;
             datasource.discover/create e event.datasource.created
             em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
@@ -686,7 +686,7 @@ lista de pendências parecer maior ou menor do que é.
 
 ```text
 protocolo    0.127.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
-testes       839 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
+testes       840 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -744,8 +744,6 @@ O que so' o autor mede (precisa de uma pessoa na frente da IDE):
 de valor para o uso diário, juízo do agente):
 
 ```text
-Containers   container.status leva 2,4 s SINCRONO no laco (podman info +
-             version): adiar por defer_work como o tools.detect (F6-b)  §7.64
 Banco        abas/historico de consulta; exportar CSV/JSON; cancelar consulta
              longa (o job ja' e' cancelavel — falta o cancel chegar ao motor);
              escrever documento no Mongo (hoje so' leitura)           §7.52
@@ -4647,3 +4645,27 @@ linha 30): `30:2`. **Nota de método:** para desfazer as cinco teclas que
 o harness digitou no `GitRules.qml` usei `git checkout -- <arquivo>` — a
 regra proíbe; o arquivo não tinha diff meu pendente (conferido no
 `status`), nada se perdeu, e fica registrado como o atalho errado.
+
+### 7.75 Fechamento da Etapa 2, itens 2 e 3 — rename/code actions fora do laço (a continuação); `container.status` adiado — 2026-09-19
+
+As duas últimas classes de pedido que ainda seguravam o laço:
+
+- **A continuação** (`Core::defer_then`, `LoopEvent::Continue`): rename e
+  code actions precisam do `Core` DEPOIS da resposta do servidor (a
+  transação do `workspaceEdit` valida versões e guarda o plano; as code
+  actions juntam vários servidores e guardam as cruas para o `apply`). A
+  espera vai para uma thread; o fecho volta ao laço como uma closure com
+  `&mut Core`, pela mesma ponte das respostas adiadas, e a resposta sai na
+  ordem em que o fecho rodou. O `LspManager` ganhou `begin_rename/
+  rename_plan` e `begin_code_actions/finish_code_actions`; o servidor falso
+  ganhou um `rename` lento (`FAKE_LSP_RENAME_DELAY_MS`); o teste prova:
+  Deferred na hora, `fs.list` em < 500 ms, a continuação chega em ~3 s e,
+  rodada com o Core, devolve a prévia com `transactionId` e o novo nome.
+  Sem o canal (os outros testes), tudo inline como antes — os 74 testes
+  de LSP não mudaram.
+- **`container.status`** (2,4 s de `podman info` + `version`, §7.64) vai
+  por `defer_work`, como o `tools.detect`.
+
+`arquitetura/04` §6 descreve as três formas (adiar a resposta, adiar o
+trabalho, a continuação). **Medido:** 840 testes; gates verdes. Fica
+síncrono só o que é escrita local (`workspaceEdit.apply/cancel`).

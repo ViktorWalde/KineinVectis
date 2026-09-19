@@ -34,6 +34,7 @@ Responde:
     shutdown / exit                encerra
     textDocument/definition        um Location fixo no proprio arquivo
     textDocument/hover             um markdown fixo
+    textDocument/rename            um WorkspaceEdit com uma troca na linha 1
     qualquer outro request         `result: null` (nao trava o cliente)
 
 Notificacoes nao geram resposta — so entram no log, que e o ponto.
@@ -145,6 +146,19 @@ def resultado(metodo, params):
         if atraso:
             time.sleep(int(atraso) / 1000.0)
         return {"contents": {"kind": "markdown", "value": "fake hover"}}
+    if metodo == "textDocument/rename":
+        # FAKE_LSP_RENAME_DELAY_MS (F6 fechamento, 2026-09-19): um rename
+        # LENTO, para provar que a espera e' fora do laco e a transacao
+        # nasce na continuacao. Um WorkspaceEdit com UMA troca na linha 1.
+        atraso = os.environ.get("FAKE_LSP_RENAME_DELAY_MS", "")
+        if atraso:
+            time.sleep(int(atraso) / 1000.0)
+        uri = params.get("textDocument", {}).get("uri", "")
+        novo = params.get("newName", "novo")
+        return {"changes": {uri: [{
+            "range": {"start": {"line": 0, "character": 3}, "end": {"line": 0, "character": 7}},
+            "newText": novo,
+        }]}}
     if metodo == "textDocument/codeAction" and PUBLICA:
         uri = params.get("textDocument", {}).get("uri", "")
         linha = {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}}

@@ -81,25 +81,36 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return lsp_unavailable_response(request_id, "lsp.rename");
         };
-        let plan = match lsp.rename(
+        // A espera pelo servidor e' FORA do laco (F6, fechamento); o plano e
+        // a transacao (que precisam do Core) nascem na continuacao.
+        let reply = match lsp.begin_rename(
             &active_path,
             &parsed.content,
             parsed.line,
             parsed.column,
             parsed.new_name.trim(),
         ) {
-            Ok(plan) => plan,
+            Ok(reply) => reply,
             Err(error) => return lsp_error_response(request_id, &error),
         };
-
         let title = format!("Renomear para {}", parsed.new_name.trim());
-        self.workspace_edit_preview_response(
+        let content = parsed.content;
+        self.defer_then(
             request_id,
-            &root,
-            &active_path,
-            &parsed.content,
-            &plan,
-            title,
+            move || reply.wait(),
+            move |core, request_id, waited| match waited
+                .and_then(|value| lsp::LspManager::rename_plan(&value))
+            {
+                Ok(plan) => core.workspace_edit_preview_response(
+                    request_id,
+                    &root,
+                    &active_path,
+                    &content,
+                    &plan,
+                    title,
+                ),
+                Err(error) => lsp_error_response(request_id, &error),
+            },
         )
     }
 
@@ -124,12 +135,34 @@ impl Core {
         let Some(lsp) = self.lsp.as_mut() else {
             return lsp_unavailable_response(request_id, "lsp.codeActions");
         };
-        match lsp.code_actions(&path, &parsed.content, parsed.line, parsed.column) {
-            Ok(actions) => {
-                JsonRpcResponse::success(request_id, json!(LspCodeActionsResult { actions }))
-            }
-            Err(error) => lsp_error_response(request_id, &error),
-        }
+        // Todos os servidores sao PERGUNTADOS agora; a espera e' fora do laco
+        // e a lista (mais as acoes cruas para o apply) fecha na continuacao.
+        let pending =
+            match lsp.begin_code_actions(&path, &parsed.content, parsed.line, parsed.column) {
+                Ok(pending) => pending,
+                Err(error) => return lsp_error_response(request_id, &error),
+            };
+        self.defer_then(
+            request_id,
+            move || {
+                pending
+                    .into_iter()
+                    .map(|(key, reply)| (key, reply.wait()))
+                    .collect::<Vec<_>>()
+            },
+            move |core, request_id, replies| {
+                let Some(lsp) = core.lsp.as_mut() else {
+                    return lsp_unavailable_response(request_id, "lsp.codeActions");
+                };
+                match lsp.finish_code_actions(&path, replies) {
+                    Ok(actions) => JsonRpcResponse::success(
+                        request_id,
+                        json!(LspCodeActionsResult { actions }),
+                    ),
+                    Err(error) => lsp_error_response(request_id, &error),
+                }
+            },
+        )
     }
 
     /// Converte uma acao da ultima consulta em previa confirmavel. Nenhuma

@@ -61,12 +61,16 @@ impl Core {
         ) {
             return *response;
         }
+        // `podman info` + `version` levam ~2,4 s nesta maquina (40 §7.64):
+        // fora do laco, como o tools.detect (F6-b).
         let engine = container::detect();
         let root = self.workspace_root();
-        JsonRpcResponse::success(
-            request_id,
-            json!(container::status(engine.as_ref(), root.as_deref())),
-        )
+        self.defer_work(request_id, move |request_id| {
+            JsonRpcResponse::success(
+                request_id,
+                json!(container::status(engine.as_ref(), root.as_deref())),
+            )
+        })
     }
 
     /// `container.list` — os containers, parados inclusive por padrao.

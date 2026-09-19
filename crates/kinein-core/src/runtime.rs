@@ -65,6 +65,10 @@ pub(crate) enum LoopEvent {
     Notification(Box<JsonRpcRequest>),
     /// Uma resposta ADIADA chegou (consulta LSP esperada fora do laco).
     Response(Box<JsonRpcResponse>),
+    /// A CONTINUACAO de um pedido adiado que precisa do `Core` para fechar
+    /// (rename, code actions: a espera foi fora do laco; o plano e a
+    /// transacao nascem aqui, com `&mut Core`).
+    Continue(crate::Continuation),
     /// Stdin closed; the core should stop.
     Eof,
 }
@@ -109,6 +113,7 @@ pub fn run_stdio() -> Result<(), CoreError> {
     // As respostas adiadas (Etapa 2 F6) entram no MESMO laco, pela mesma
     // ponte: serializadas no stdout junto com as outras linhas.
     let (response_events, response_inbox) = std::sync::mpsc::channel::<JsonRpcResponse>();
+    let response_loop_for_continuations = events.clone();
     let response_loop = events;
     std::thread::spawn(move || {
         for response in response_inbox {
@@ -121,9 +126,26 @@ pub fn run_stdio() -> Result<(), CoreError> {
         }
     });
 
+    // As continuacoes (rename/code actions adiados) voltam ao laco pela
+    // mesma ponte: rodam com `&mut Core` e a resposta sai em ordem.
+    let (continuation_events, continuation_inbox) =
+        std::sync::mpsc::channel::<crate::Continuation>();
+    let continuation_loop = response_loop_for_continuations;
+    std::thread::spawn(move || {
+        for continuation in continuation_inbox {
+            if continuation_loop
+                .send(LoopEvent::Continue(continuation))
+                .is_err()
+            {
+                return;
+            }
+        }
+    });
+
     let mut core = Core::new();
     core.enable_lsp(lsp_events);
     core.enable_deferred_responses(response_events);
+    core.enable_continuations(continuation_events);
     // Persistencia local (rascunhos + historico global) so no processo real: o
     // caminho do estado global entra por aqui e nunca e' deduzido la dentro.
     core.enable_persistence(crate::settings::global_dir());
@@ -171,6 +193,10 @@ where
             }
             LoopEvent::Response(response) => {
                 write_json_line(writer, response.as_ref())?;
+            }
+            LoopEvent::Continue(finish) => {
+                let response = finish(core);
+                write_json_line(writer, &response)?;
             }
             LoopEvent::Eof => break,
         }

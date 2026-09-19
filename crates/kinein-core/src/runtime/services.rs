@@ -28,6 +28,45 @@ impl Core {
         self.deferred = Some(responses);
     }
 
+    /// Liga as continuacoes: um pedido adiado que precisa do `Core` para
+    /// fechar (rename, code actions) espera fora do laco e volta por aqui.
+    pub fn enable_continuations(
+        &mut self,
+        continuations: std::sync::mpsc::Sender<crate::Continuation>,
+    ) {
+        self.continuations = Some(continuations);
+    }
+
+    /// Adia um pedido em DUAS partes: `wait` roda fora do laco (a espera
+    /// pelo servidor) e `finish` roda no laco com `&mut Core` (o que precisa
+    /// do estado). Sem o canal (testes), tudo inline, na ordem.
+    pub(crate) fn defer_then<T, W, F>(
+        &mut self,
+        request_id: Option<serde_json::Value>,
+        wait: W,
+        finish: F,
+    ) -> kinein_protocol::JsonRpcResponse
+    where
+        T: Send + 'static,
+        W: FnOnce() -> T + Send + 'static,
+        F: FnOnce(&mut Self, Option<serde_json::Value>, T) -> kinein_protocol::JsonRpcResponse
+            + Send
+            + 'static,
+    {
+        let Some(sender) = self.continuations.as_ref() else {
+            let waited = wait();
+            return finish(self, request_id, waited);
+        };
+        let sender = sender.clone();
+        std::thread::spawn(move || {
+            let waited = wait();
+            let continuation: crate::Continuation =
+                Box::new(move |core: &mut Self| finish(core, request_id, waited));
+            drop(sender.send(continuation));
+        });
+        crate::rpc::deferred_marker()
+    }
+
     /// Responde um pedido cujo trabalho e' LONGO e nao precisa do `Core`
     /// (F6-b): com o canal ligado, `work` roda numa thread e a resposta vai
     /// por ele; sem o canal, inline. `work` recebe o id de volta.
