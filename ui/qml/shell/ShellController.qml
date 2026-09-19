@@ -81,7 +81,10 @@ Item {
         contextWidth = clamp(viewportWidth * 0.28, 300, 380);
         bottomPanelHeight = clamp(viewportHeight * 0.32, 180, 300);
         outlineWidth = clamp(viewportWidth * 0.18, 180, 260);
-        outlineCollapsed = viewportWidth < 1180;
+        // A aba Simbolos nasce RECOLHIDA (a alca fica; Alt+7 ou clique
+        // abre) e nao muda sozinha por largura — o autor perdeu a aba
+        // assim (E3-2, roadmaps/44).
+        outlineCollapsed = true;
     }
 
     function persistLayoutSoon() {
@@ -151,6 +154,16 @@ Item {
     function toggleOutline() {
         outlineCollapsed = !outlineCollapsed;
         persistLayoutSoon();
+    }
+
+    // Alt+7 / paleta `index.symbols`: a aba Simbolos abre e o campo ganha
+    // o foco (E3-2). O foco e' do host; daqui sai o pedido.
+    signal symbolsFocusRequested(string query)
+
+    function openSymbols(query) {
+        outlineCollapsed = false;
+        persistLayoutSoon();
+        symbolsFocusRequested(query === undefined ? "" : query);
     }
 
     function toggleExplorer() {

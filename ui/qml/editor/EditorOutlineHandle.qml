@@ -1,15 +1,15 @@
 import QtQuick
 import KineinVectis
 
-// A alca vertical que reabre o painel Estrutura depois de recolhido.
+// A alca vertical que reabre a aba Simbolos (estrutura + busca) recolhida.
 //
 // POR QUE ESTE ARQUIVO EXISTE (2026-09-03). Sao 50 linhas de widget — retangulo
 // com hover, icone, rotulo girado 90 graus, area de mouse e tooltip — que
 // moravam soltas no fim do EditorPane. Nada disso e' composicao: e' desenho, e
 // desenho tem dono proprio.
 //
-// A alca so' aparece quando HA estrutura para mostrar e o painel esta
-// recolhido; quem decide isso e' o pai, por `visible`.
+// A alca aparece sempre que ha' projeto e o painel esta' recolhido (E3-2:
+// a busca no projeto nao depende de arquivo aberto); quem decide e' o pai.
 Rectangle {
     id: root
 
@@ -34,7 +34,7 @@ Rectangle {
     Text {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: 12
-        text: qsTr("Estrutura")
+        text: qsTr("Símbolos")
         rotation: -90
         color: Theme.textSecondary
         font.pixelSize: 10
@@ -50,7 +50,7 @@ Rectangle {
         onClicked: root.expandRequested()
         onContainsMouseChanged: {
             if (containsMouse) {
-                TooltipController.showFor(root, qsTr("Expandir Estrutura"),
+                TooltipController.showFor(root, qsTr("Abrir Símbolos (Alt+7)"),
                                           "bottom");
             } else {
                 TooltipController.hideFor(root);

@@ -218,5 +218,14 @@ pub(super) fn file_command_descriptors() -> Vec<CommandDescriptor> {
             default_shortcut: Some("Ctrl+Shift+N".to_owned()),
             requires_workspace: true,
         },
+        CommandDescriptor {
+            id: "index.symbols".to_owned(),
+            title: "Symbols".to_owned(),
+            category: "Files".to_owned(),
+            description: "Abre a aba Simbolos (a direita) e busca declaracoes por nome no indice do projeto"
+                .to_owned(),
+            default_shortcut: Some("Alt+7".to_owned()),
+            requires_workspace: true,
+        },
     ]
 }

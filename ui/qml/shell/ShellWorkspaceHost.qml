@@ -9,6 +9,7 @@ Item {
     property var projectHealthController
     property var projectTree
     property var editorController
+    property var indexController: null
     property var jobsController
     property var activeJobController: null
     property var runtimeController
@@ -89,6 +90,10 @@ Item {
 
     function focusFindBar() {
         editorPaneHost.focusFindBar();
+    }
+
+    function focusSymbols(query) {
+        editorPaneHost.focusSymbols(query);
     }
 
     ShellLayout {
@@ -218,6 +223,7 @@ Item {
 
                 workspaceOpen: root.workspaceOpen
                 editorController: root.editorController
+                indexController: root.indexController
                 shellController: root.shellController
                 debugController: root.debugController
                 gitController: root.gitController

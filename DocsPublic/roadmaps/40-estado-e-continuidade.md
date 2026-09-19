@@ -80,7 +80,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.129.0
-testes      843 Rust aprovados; 54 harnesses QML (medicao de 2026-09-19, §7.80)
+testes      843 Rust aprovados; 55 harnesses QML (medicao de 2026-09-19, §7.81)
 metodos     162 IPC roteados, 56 eventos (datasource.destroy e event.datasource.destroyed em 0.129.0;
             run.stdin e event.run.* sairam em 0.125.0;
             datasource.discover/create e event.datasource.created
@@ -687,7 +687,7 @@ lista de pendências parecer maior ou menor do que é.
 
 ```text
 protocolo    0.129.0 · 162 metodos IPC · 56 eventos · 36 dominios (todos no arquitetura/03)
-testes       843 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
+testes       843 Rust · 55 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened 386-479 ms em 2026-09-19 (§7.79; 318 ms na §7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -848,7 +848,8 @@ KINEIN_CORE_BIN=$PWD/target/release/kinein-core \
 
 Sem a pasta por argumento, a IDE abre na tela inicial (F7). `KINEIN_STARTUP_COMMANDS=
 datasource.list` (ou `remote.list`, `probe.list`, `container.list`, `view.problems`,
-`build.run`) abre um painel logo depois do workspace, como o gate faz.
+`build.run`) abre um painel logo depois do workspace, como o gate faz;
+`index.symbols=parse_` abre a aba Símbolos já buscando (E3-2).
 
 **O roteiro do teste — o que só uma pessoa na frente da IDE mede** (cada
 item vira uma fatia pequena se falhar; anote o que viu e em quanto tempo):
@@ -4754,3 +4755,57 @@ todo objeto QML** — virou `destroyProfile`. **Medido:** 843 testes; 162
 métodos, 56 eventos; gates verdes. **Não feito:** o `DROP DATABASE` real e
 o `rm` real (o autor, com Podman); a foto da caixa (offscreen não seleciona
 perfil).
+
+### 7.81 Etapa 3, E3-2 — Símbolos à direita: a aba escondida volta e busca no projeto — 2026-09-19
+
+O que o autor lembrava ("uma aba escondida no canto direito; clicando,
+aparecia a lista de funções do arquivo e dava para pesquisar pelo nome") —
+ela existia como **Estrutura** e sumia sozinha: `applyAutomaticLayout`
+punha `outlineCollapsed = viewportWidth < 1180`, e o painel só existia com
+arquivo aberto e com símbolos. Agora a aba é **Símbolos**: a alça fica
+**sempre que há projeto** (a busca no projeto não depende de arquivo
+aberto), nasce recolhida (como a referência), abre por clique ou `Alt+7`
+(comando `index.symbols`, na paleta e no gate de atalhos — 31 → 32) e a
+escolha não muda mais por largura. Sem texto no campo, a estrutura do
+arquivo como antes; com texto, `index.symbols` (o índice do projeto, sem
+LSP, 150 ms de debounce) e a lista mostra **nesta pasta** (o prefixo da
+pasta do arquivo ativo) antes de **no projeto**, cada linha com
+`tipo · caminho:linha`; `Enter` abre o primeiro, clique abre o escolhido
+(`editorController.openDiagnostic` com o caminho absoluto).
+
+**Onde mora:** `SymbolsController` (`ui/qml/editor/`) é **filho do
+`IndexController`** — o índice é o mesmo e o arquivo ativo já chega por
+`setActivePath`; o `IndexController` traduz o caminho relativo↔absoluto e
+re-emite `openSymbolRequested`. Os roteadores `Index{Request,Event}Router`
+levam/trazem o `index.symbols` também para o filho (o Search Everywhere
+continua pedindo o mesmo método; cada dono só aceita a resposta que pediu,
+`waiting`). O foco do campo desce `ShellController.openSymbols → workspaceHost.
+focusSymbols → ShellEditorHost → EditorPane → EditorOutlinePanel.focusSearch`.
+`AppDomains` ficou em **399/400** (duas linhas do despacho viraram uma) —
+a E3-3 não cabe ali: o `GitWindowController` vai num `AppGitDomains`. A
+lista dos resultados é uma view própria, `SymbolResultsList` (o painel
+passou de 300 com ela dentro). Uma busca feita com o índice **ainda lendo**
+volta incompleta: `IndexController.handleFinished` refaz a busca ativa
+quando o índice fica pronto. Para a medição, `KINEIN_STARTUP_COMMANDS=
+index.symbols=<texto>` abre a aba já buscando (só este comando aceita
+`=arg`).
+
+**Duas falhas silenciosas no caminho, pegas pela foto:** o
+`indexController` não descia do `Main.qml` ao `ShellWorkspaceHost` — o
+campo aceitava texto e nada acontecia (binding para `null`, que nenhum
+gate vê); e a busca com o índice `building` ficava assim (a regra acima).
+E o clippy pedante do `--all-targets` reprovou um doc-comment da E3-1
+(`SQLite` sem crase) — a E3-1 rodou só o clippy da lib; corrigido aqui.
+
+**Não feito, e por quê:** o LSP (`workspaceSymbols`) como segunda fonte,
+que o roadmap 44 previa — a resposta `lspSymbolsResolved` é **uma só** para
+`documentSymbols` e `workspaceSymbols` e já tem dono (o Search Everywhere);
+ligar um segundo consumidor sem saber quem pediu é a mesma falha silenciosa
+da §7.64. Entra quando o C++ separar os dois sinais (uma fatia própria, com
+contrato). **Provado:** harness `tst_symbols` (resposta sem pedido é
+ignorada; recorte por pasta; abrir; limpar); gates QML; `verificar-atalhos`
+(32 comandos com atalho); testes do core (o comando novo no `command.list`);
+`tst_index` (+4: caminho relativo do filho, abrir devolve o absoluto, o
+índice pronto refaz a busca, sem texto não pede). **Fotos:** a alça
+recolhida (padrão) e `index.symbols=parse_` a 1280×800 com "no projeto
+(50)" — `DocsPrivate/Codex/evidencias-2026-09-19-etapa3/fotos/`.

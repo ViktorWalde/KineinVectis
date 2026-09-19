@@ -288,6 +288,8 @@ set_source_files_properties(qml/editor/EditorFindBar.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/editor/EditorExternalChangeBanner.qml PROPERTIES QT_RESOURCE_ALIAS EditorExternalChangeBanner.qml)
 set_source_files_properties(qml/editor/EditorOutlineController.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineController.qml)
 set_source_files_properties(qml/editor/EditorOutlinePanel.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlinePanel.qml)
+set_source_files_properties(qml/editor/SymbolResultsList.qml PROPERTIES QT_RESOURCE_ALIAS SymbolResultsList.qml)
+set_source_files_properties(qml/editor/SymbolsController.qml PROPERTIES QT_RESOURCE_ALIAS SymbolsController.qml)
 
 set(KINEIN_MANUAL_FILE "${CMAKE_SOURCE_DIR}/DocsPublic/manual.md")
 set_source_files_properties("${KINEIN_MANUAL_FILE}" PROPERTIES QT_RESOURCE_ALIAS MANUAL.md)
@@ -573,6 +575,8 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorExternalChangeBanner.qml
         qml/editor/EditorOutlineController.qml
         qml/editor/EditorOutlinePanel.qml
+        qml/editor/SymbolResultsList.qml
+        qml/editor/SymbolsController.qml
     SOURCES
         src/clipboard.cpp
         src/clipboard.h

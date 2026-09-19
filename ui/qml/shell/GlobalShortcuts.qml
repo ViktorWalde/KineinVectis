@@ -234,6 +234,12 @@ Item {
     }
 
     Shortcut {
+        // comando: index.symbols
+        sequence: "Alt+7"
+        onActivated: root.shellController.openSymbols("")
+    }
+
+    Shortcut {
         // comando: command.list
         sequence: "Ctrl+Shift+A"
         onActivated: root.searchEverywhereController.openSearchEverywhere()

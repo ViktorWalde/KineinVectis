@@ -102,6 +102,7 @@ Item {
         onFolderOpenRequested: path => root.folderPicker.open(path)
         onToolsDetectionRequested: root.coreClient.detectTools()
         onLayoutSaveRequested: values => settingsController.setGlobal(values)
+        onSymbolsFocusRequested: query => root.workspaceHost.focusSymbols(query)
     }
 
     JobsController {
@@ -153,6 +154,7 @@ Item {
         id: indexController
 
         workspaceRoot: root.coreClient.workspaceRoot
+        onOpenSymbolRequested: (file, line, column) => editorController.openDiagnostic(file, line, column)
     }
 
     // O ambiente Python do projeto (bloco B do roadmaps/41): o interpretador
@@ -334,9 +336,8 @@ Item {
         containerController: environment.containerController
         remoteController: environment.remoteController
         onOpenWorkspaceRequested: shellController.requestOpenFolder()
-        onShowTabRequested: function(tab) {
-            shellController.showTab(tab);
-        }
+        onShowTabRequested: tab => shellController.showTab(tab)
+        onSymbolsRequested: query => shellController.openSymbols(query)
     }
 
     EditorController {

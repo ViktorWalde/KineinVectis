@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 // Estado do indice do projeto INTEIRO (pilar 0 do roadmaps/42, decisao do
 // autor em 2026-09-12: a IDE le todas as pastas, arquivos e declaracoes).
@@ -28,8 +29,25 @@ Item {
 
     signal statusRequested()
     signal contextRequested(string path)
+    // Um simbolo escolhido na aba Simbolos: o caminho ja' ABSOLUTO.
+    signal openSymbolRequested(string file, int line, int column)
+
+    // A busca por nome da aba Simbolos (E3-2) mora aqui como filho: o
+    // indice e' o mesmo e o arquivo ativo ja' chega por setActivePath.
+    readonly property alias symbols: symbols
 
     visible: false
+
+    SymbolsController {
+        id: symbols
+
+        activeRelativePath: root.workspaceRoot !== ""
+                            && root.contextPath.indexOf(root.workspaceRoot + "/") === 0
+                            ? root.contextPath.substring(root.workspaceRoot.length + 1) : ""
+        onOpenRequested: function(path, line, column) {
+            root.openSymbolRequested(root.workspaceRoot + "/" + path, line, column);
+        }
+    }
 
     onWorkspaceRootChanged: {
         // O indice e' do projeto: trocar de workspace zera a tela ate' o core
@@ -39,6 +57,7 @@ Item {
         progressSymbols = 0;
         contextPath = "";
         fileContext = ({});
+        symbols.clear();
         if (workspaceRoot !== "") {
             stats = ({ state: "building" });
             statusRequested();
@@ -63,6 +82,11 @@ Item {
         // salvo): a resposta do arquivo ativo e' pedida de novo.
         if (contextPath !== "" && ready) {
             contextRequested(contextPath);
+        }
+        // Uma busca feita com o indice ainda lendo volta incompleta: com o
+        // indice pronto, a mesma pergunta e' refeita sozinha.
+        if (ready && symbols.active) {
+            symbols.requestNow();
         }
     }
 

@@ -200,6 +200,13 @@ esta página ganha o "feito" de cada uma no §7.1.
 
 - **E3-1** (2026-09-19): chips em `Flow`; `datasource.destroy` (0.129.0)
   com o plano por motor; a caixa "Remover…" — `40` §7.80.
+- **E3-2** (2026-09-19): a aba direita virou **Símbolos** — estrutura do
+  arquivo + campo que busca declarações por nome no índice (`index.symbols`),
+  "nesta pasta" antes de "no projeto"; nasce recolhida e não some por
+  largura; `Alt+7` / paleta `index.symbols`; `SymbolsController` filho do
+  `IndexController`. O LSP como segunda fonte **ficou de fora** (a resposta
+  `lspSymbolsResolved` é uma só para dois métodos; o índice cobre o projeto
+  inteiro na hora) — `40` §7.81. O ícone "Busca" sai do trilho na E3-4.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

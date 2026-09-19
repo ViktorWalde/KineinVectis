@@ -15,12 +15,16 @@ Item {
     property var pedidosContexto: []
     property var pedidosIndice: []
     property var pedidosLsp: []
+    property var pedidosSimbolos: []
+    property var aberto: null
 
     IndexController {
         id: indice
 
         onStatusRequested: root.pedidosStatus += 1
         onContextRequested: function(p) { root.pedidosContexto.push(p); }
+        symbols.onIndexSymbolsRequested: function(q) { root.pedidosSimbolos.push(q); }
+        onOpenSymbolRequested: function(file, line, column) { root.aberto = { file: file, line: line, column: column }; }
     }
 
     SearchEverywhereController {
@@ -147,6 +151,26 @@ Item {
         indice.workspaceRoot = "";
         indice.setActivePath("/tmp/proj/src/a.c");
         if (root.pedidosContexto.length !== antes) failures += 17179869184;
+
+        // A aba Simbolos (E3-2) e' filha: o caminho relativo vem do arquivo
+        // ativo; abrir devolve o ABSOLUTO; o indice pronto refaz a busca
+        // que foi feita com ele ainda lendo.
+        indice.workspaceRoot = "/tmp/proj";
+        indice.setActivePath("/tmp/proj/crates/x/src/lib.rs");
+        if (indice.symbols.activeRelativePath !== "crates/x/src/lib.rs" || indice.symbols.activeFolder !== "crates/x/src") failures += 137438953472;
+        indice.symbols.setQuery("abrir");
+        indice.symbols.requestNow();
+        const pedidosAntes = root.pedidosSimbolos.length;
+        indice.symbols.handleIndexSymbols([], 0, "building");
+        indice.handleFinished({ state: "ready", files: 3, lines: 3, symbols: 3 });
+        if (root.pedidosSimbolos.length !== pedidosAntes + 1 || root.pedidosSimbolos[pedidosAntes] !== "abrir") failures += 274877906944;
+        indice.symbols.handleIndexSymbols([{ name: "abrir", kind: "function", path: "crates/x/src/lib.rs", line: 9 }], 1, "ready");
+        indice.symbols.open(indice.symbols.results[0]);
+        if (!root.aberto || root.aberto.file !== "/tmp/proj/crates/x/src/lib.rs" || root.aberto.line !== 9) failures += 549755813888;
+        // Sem texto, o indice pronto nao pede nada.
+        indice.symbols.setQuery("");
+        indice.handleFinished({ state: "ready", files: 3, lines: 3, symbols: 3 });
+        if (root.pedidosSimbolos.length !== pedidosAntes + 1) failures += 1099511627776;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

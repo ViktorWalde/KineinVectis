@@ -24,6 +24,9 @@ Item {
 
     signal openWorkspaceRequested()
     signal showTabRequested(string tab)
+    // `index.symbols`: a aba Simbolos a direita (E3-2) — do shell, nao do
+    // core. `index.symbols=<texto>` (a medicao headless) ja' chega buscando.
+    signal symbolsRequested(string query)
 
     visible: false
 
@@ -49,6 +52,8 @@ Item {
             editorController.openFindReplace();
         } else if (commandId === "fs.findFiles" || commandId === "command.list") {
             searchEverywhereController.openSearchEverywhere();
+        } else if (commandId.indexOf("index.symbols") === 0) {
+            symbolsRequested(commandId.indexOf("=") > 0 ? commandId.substring(commandId.indexOf("=") + 1) : "");
         } else if (commandId === "cargo.check") {
             showTabRequested("problems");
             coreClient.cargoCheck();

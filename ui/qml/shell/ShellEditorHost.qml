@@ -21,6 +21,7 @@ Item {
     property var projectTree
 
     property bool workspaceOpen: false
+    property var indexController: null
 
     property alias editorSurface: editorPane.editorSurface
 
@@ -38,6 +39,10 @@ Item {
 
     function focusFindBar() {
         overlayHost.focusFindBar();
+    }
+
+    function focusSymbols(query) {
+        editorPane.focusSymbols(query);
     }
 
     // Os args de tab/revisao existem so para os bindings reavaliarem
@@ -109,6 +114,7 @@ Item {
         externalMessage: root.editorController.externalMessage
         watchError: root.editorController.watchError
         outlineItems: root.editorController.syntaxOutline
+        symbols: root.indexController ? root.indexController.symbols : null
         outlineWidth: root.shellController.outlineWidth
         outlineCollapsed: root.shellController.outlineCollapsed
         onTabSelected: function(index) {

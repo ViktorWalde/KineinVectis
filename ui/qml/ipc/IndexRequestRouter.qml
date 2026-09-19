@@ -29,4 +29,13 @@ Item {
             root.coreClient.indexSymbols(query, 200);
         }
     }
+
+    // A aba Simbolos (E3-2) pede o mesmo metodo; cada dono guarda o seu.
+    Connections {
+        target: root.indexController ? root.indexController.symbols : null
+
+        function onIndexSymbolsRequested(query) {
+            root.coreClient.indexSymbols(query, 200);
+        }
+    }
 }

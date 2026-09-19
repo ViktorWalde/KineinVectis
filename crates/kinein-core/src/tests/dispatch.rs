@@ -54,6 +54,7 @@ fn command_list_includes_lsp_navigation_commands() {
     assert!(ids.contains(&"fs.rename"));
     assert!(ids.contains(&"fs.delete"));
     assert!(ids.contains(&"fs.findFiles"));
+    assert!(ids.contains(&"index.symbols"));
     assert!(ids.contains(&"lsp.didChange"));
     assert!(ids.contains(&"lsp.definition"));
     assert!(ids.contains(&"lsp.hover"));

@@ -74,7 +74,7 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 │ App Bar: Arquivo · Editar · Exibir · Navegar · Código ...    │
 │ Barra: [Projeto ▾] [⎇ git]           [config ▾] ▶ 🐞 [⋯]   │
 ├───┬───────────────┬─────────────────────────────┬────────────┤
-│ R │ Projeto       │ Editor (abas + código)      │ Estrutura  │
+│ R │ Projeto       │ Editor (abas + código)      │ Símbolos   │
 │ a │ (árvore de    │                             │ (símbolos  │
 │ i │  arquivos)    │                             │  do arquivo)│
 │ l │               │                             │            │
@@ -133,10 +133,14 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   painel.
 - Os painéis laterais e o painel inferior são **redimensionáveis**: arraste
   a borda entre eles e o editor.
-- A aba **Estrutura** mostra os símbolos do arquivo, pode ser redimensionada e
-  recolhida pelo botão próprio. Recolhida, vira uma aba estreita no centro da
-  borda direita do editor; clicar nela restaura o painel. O primeiro layout é
-  calculado pelo tamanho da janela e os ajustes posteriores ficam salvos.
+- A aba **Símbolos** (borda direita do editor; `Alt+7`) nasce **recolhida**:
+  uma aba estreita no centro da borda direita; clicar nela (ou `Alt+7`) abre
+  o painel. Sem texto no campo, ele mostra a **estrutura do arquivo** aberto;
+  com texto, busca **declarações por nome no projeto inteiro** (o índice da
+  IDE, sem esperar language server) — primeiro as da **pasta do arquivo
+  aberto**, depois as do projeto — e `Enter`/clique abre `arquivo:linha`.
+  O painel pode ser redimensionado e recolhido pelo botão próprio; a escolha
+  fica salva e **não muda sozinha** com a largura da janela.
 - **Ajuda → Manual da IDE** abre este mesmo `DocsPublic/manual.md` numa visualização
   Markdown renderizada dentro da Kinein; não abre editor externo nem mantém
   uma segunda documentação divergente.
@@ -264,6 +268,7 @@ alterado.
 | --- | --- |
 | `Ctrl+Shift+N` ou `Ctrl+Shift+A` | **Search Everywhere**: arquivos por nome e comandos da IDE |
 | `Ctrl+E` | Arquivos recentes, no mesmo Search Everywhere |
+| `Alt+7` | Aba **Símbolos**: estrutura do arquivo e busca de declarações por nome no projeto |
 | — digite `@` | ...símbolos do arquivo atual (estrutura); `@nome` filtra |
 | — digite `#nome` | ...símbolos do workspace inteiro (structs, funções...) |
 | `Ctrl+Shift+F` | Buscar texto em todos os arquivos (aba Busca) |
@@ -1036,6 +1041,7 @@ IDE, e quem aperta Enter é você.
 | IDE | `Ctrl+Alt+S` | Abrir configurações |
 | Busca | `Ctrl+Shift+N` / `Ctrl+Shift+A` | Search Everywhere (`@` símbolos do arquivo, `#` do workspace) |
 | Busca | `Ctrl+E` | Arquivos recentes |
+| Busca | `Alt+7` | Aba Símbolos (estrutura do arquivo; declarações do projeto por nome) |
 | Busca | `Ctrl+Shift+F` | Buscar nos arquivos |
 | Busca | `Ctrl+Shift+H` | Substituir no projeto |
 | Build | `Ctrl+F9` ou `Ctrl+Alt+B` | Build |

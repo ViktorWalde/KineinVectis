@@ -225,7 +225,7 @@ fn create_container_server_without_an_engine_is_tool_not_found() {
 }
 
 /// `datasource.destroy` (0.129.0): sem `data`, so' o perfil; com `data`, o
-/// arquivo SQLite do workspace some (fora dele fica, com a nota), o
+/// arquivo `SQLite` do workspace some (fora dele fica, com a nota), o
 /// container `kinein-<nome>` leva `rm -f` (job + evento) e o perfil sai; um
 /// Mongo de servidor so' perde o perfil, com a nota.
 #[test]

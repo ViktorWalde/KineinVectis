@@ -38,9 +38,17 @@ Rectangle {
     property var outlineItems: []
     property real outlineWidth: 220
     property bool outlineCollapsed: false
-    readonly property bool outlineExpanded: outlineItems.length > 0
+    // A aba Simbolos (E3-2): a busca no projeto vale sem arquivo aberto,
+    // entao a aba existe sempre que ha' projeto; a estrutura, quando ha'.
+    property var symbols: null
+    readonly property bool outlineAvailable: outlineItems.length > 0 || workspaceOpen
+    readonly property bool outlineExpanded: outlineAvailable
                                              && !outlineCollapsed
                                              && width >= outlineWidth + 480
+
+    function focusSymbols(query) {
+        outlinePanel.focusSearch(query);
+    }
 
     signal gutterLineClicked(int line)
     signal codeActionsRequested(int line)
@@ -200,6 +208,7 @@ Rectangle {
         width: visible ? root.outlineWidth : 0
         visible: root.outlineExpanded
         items: root.outlineItems
+        symbols: root.symbols
         onCollapseRequested: root.outlineToggleRequested()
         onOpenRequested: function(line, column) {
             root.outlineOpenRequested(line, column);
@@ -221,7 +230,7 @@ Rectangle {
     }
 
     EditorOutlineHandle {
-        visible: root.outlineItems.length > 0 && !outlinePanel.visible
+        visible: root.outlineAvailable && !outlinePanel.visible
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter

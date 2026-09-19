@@ -222,6 +222,7 @@ Window {
         anchors.right: parent.right
         anchors.margins: Theme.panelGap
         shellController: domains.shellController
+        indexController: domains.indexController
         workspaceController: domains.workspaceController
         projectHealthController: domains.projectHealthController
         projectTree: domains.projectTree

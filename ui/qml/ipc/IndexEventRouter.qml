@@ -32,6 +32,7 @@ Item {
 
         function onIndexSymbolsResolved(symbols, total, state) {
             root.searchEverywhereController.handleIndexSymbols(symbols, total, state);
+            root.indexController.symbols.handleIndexSymbols(symbols, total, state);
         }
     }
 }

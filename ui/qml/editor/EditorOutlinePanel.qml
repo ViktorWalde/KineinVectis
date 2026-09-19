@@ -7,9 +7,22 @@ Rectangle {
     property var items: []
     property alias collapsed: outlineController.collapsed
     readonly property int visibleCount: outlineController.count
+    // A busca de simbolos no projeto (E3-2): com texto, a lista vira os
+    // resultados — "nesta pasta" e "no projeto"; sem texto, a estrutura.
+    property var symbols: null
 
     signal openRequested(int line, int column)
     signal collapseRequested()
+
+    // Com `query`, o campo ja' chega preenchido e buscando (Alt+7 passa "").
+    function focusSearch(query) {
+        if (query !== undefined && query !== "") {
+            campoBusca.text = query;
+            if (root.symbols) root.symbols.setQuery(query);
+        }
+        campoBusca.forceActiveFocus();
+        campoBusca.selectAll();
+    }
 
     color: Theme.background1
     border.color: Theme.borderSoft
@@ -48,7 +61,7 @@ Rectangle {
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.spacingSmall
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Estrutura")
+                text: qsTr("Símbolos")
                 color: Theme.textPrimary
                 font.pixelSize: Theme.fontSizeTree
                 font.bold: true
@@ -67,11 +80,56 @@ Rectangle {
             }
         }
 
+        // O campo: por nome, no projeto inteiro (o indice) e na pasta do arquivo.
+        Rectangle {
+            width: parent.width
+            height: 30
+            color: Theme.background0
+
+            TextInput {
+                id: campoBusca
+
+                anchors.fill: parent
+                anchors.leftMargin: Theme.spacingSmall
+                anchors.rightMargin: Theme.spacingSmall
+                verticalAlignment: TextInput.AlignVCenter
+                color: Theme.textPrimary
+                font.pixelSize: 11
+                clip: true
+                selectByMouse: true
+                onTextEdited: if (root.symbols) root.symbols.setQuery(text)
+                onAccepted: {
+                    if (root.symbols && root.symbols.folderResults.length > 0) root.symbols.open(root.symbols.folderResults[0]);
+                    else if (root.symbols && root.symbols.results.length > 0) root.symbols.open(root.symbols.results[0]);
+                }
+                Keys.onEscapePressed: { text = ""; if (root.symbols) root.symbols.setQuery(""); }
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: campoBusca.text === ""
+                    text: qsTr("Buscar função, tipo… no projeto")
+                    color: Theme.textMuted
+                    font.pixelSize: 11
+                }
+            }
+        }
+
+        // Os resultados da busca (E3-2): a pasta do arquivo, depois o projeto.
+        SymbolResultsList {
+            id: symbolList
+
+            width: parent.width
+            height: visible ? parent.height - 60 : 0
+            visible: root.symbols && root.symbols.active
+            symbols: root.symbols
+        }
+
         ListView {
             id: outlineList
 
             width: parent.width
-            height: parent.height - 30
+            height: visible ? parent.height - 60 : 0
+            visible: !(root.symbols && root.symbols.active)
             clip: true
             model: outlineController.model
 
