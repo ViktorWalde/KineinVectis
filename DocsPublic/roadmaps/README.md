@@ -5,12 +5,19 @@
 fatia entregue (§7). A Etapa 1 seguiu a ordem do
 [`42-trilha-profunda-embarcados.md`](42-trilha-profunda-embarcados.md); a
 Etapa 2 (2026-09-18/19, fechada) seguiu o
-[`43-etapa2-hud-ui-ux.md`](43-etapa2-hud-ui-ux.md); a Etapa 3 (desde
-2026-09-19) segue o
-[`44-etapa3-arquitetura-do-frontend.md`](44-etapa3-arquitetura-do-frontend.md).
+[`43-etapa2-hud-ui-ux.md`](43-etapa2-hud-ui-ux.md); a Etapa 3 (2026-09-19,
+E3-1…E3-6 feitas, E3-7 pendente) segue o
+[`44-etapa3-arquitetura-do-frontend.md`](44-etapa3-arquitetura-do-frontend.md);
+a **Etapa 4** (o backend de novo: LSP profundo, edição inteligente, a
+biblioteca dos compiladores) abre com o
+[`45-etapa4-backend-lsp-edicao-compiladores.md`](45-etapa4-backend-lsp-edicao-compiladores.md).
 
 ```text
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
+45-etapa4-backend-lsp-edicao-compiladores.md  a Etapa 4 (brief, 2026-09-19): o que o LSP,
+                                   o editor e o modelo de compiladores já fazem
+                                   (medido no código), o que falta, as fatias L/E/C
+                                   e a ordem; a régua é a latência da tecla
 44-etapa3-arquitetura-do-frontend.md  a Etapa 3: tool windows à JetBrains (adaptadas),
                                    sete fatias com medida; §8 a etapa seguinte
                                    (compiladores); §9 "posso divulgar?"

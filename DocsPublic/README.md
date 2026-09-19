@@ -13,7 +13,8 @@ DocsPublic/      TODA a documentacao do projeto, versionada. Uma sessao de
                  trabalho le esta pasta e mais nada: ela e' auto-suficiente.
   README.md                 este indice: o mapa, a precedencia, as classes
   leitura-tecnica.md        primeira leitura de quem e' novo: o que existe, medido
-  contribuindo.md           como contribuir
+  contribuindo.md           como contribuir (versão curta)
+  contribuindo/             o guia completo de quem chega, com ou sem IA (2026-09-19)
   arquitetura/              contrato de engenharia (ARCHITECTURE.md), estrutura do
                             repositorio, protocolo IPC, boot, rigor, modulos
   roadmaps/                 planos e o ESTADO vivo (40 = a fila; 42 = a trilha)
@@ -175,6 +176,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | --- | --- |
 | [leitura-tecnica.md](leitura-tecnica.md) | **Comece por aqui se você é novo no projeto** (remedida em 2026-09-10): o que a IDE é e não é, o peso medido de cada camada, o que existe de verdade por domínio, onde a arquitetura está sob tensão e o que a direção escolhida custa |
 | [contribuindo.md](contribuindo.md) | **Onde olhar para alterar/implementar**: arquitetura, mapa por área, ambiente, ritual da mudança, gate e convenções |
+| [contribuindo/](contribuindo/README.md) | **O guia completo de quem chega** (2026-09-19): a ideia e o que o projeto recusa ser, o ambiente e os presets, o ritual de uma fatia, cada gate e o porquê, trabalhar com um agente de IA (e sem), o mapa por área |
 | [integracoes/README.md](integracoes/README.md) | **Entrada obrigatória para adotar qualquer ferramenta**: modos A–D, gate de auditoria, níveis L0–L10, checklist de 10 passos e o índice do que já está adotado |
 | [integracoes/36-ferramentas-de-embarcados.md](integracoes/36-ferramentas-de-embarcados.md) | **Levantamento de embarcados** (2026-09-03): probe-rs, OpenOCD, pyOCD e QEMU com licença verificada na fonte e — o que decide o desenho — qual protocolo cada uma fala. Candidatas, **não** adotadas |
 | [integracoes/37-banco-e-observabilidade.md](integracoes/37-banco-e-observabilidade.md) | **Levantamento de banco e observabilidade** (2026-09-03): Grafana (AGPL-3.0) e TimescaleDB (Apache-2.0 + Timescale License). A licença do Grafana decide a **forma** da integração; a do TimescaleDB tem parte não-OSI, e isso está dito |

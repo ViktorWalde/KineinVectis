@@ -268,6 +268,24 @@ esta página ganha o "feito" de cada uma no §7.1.
   `KvButton.tooltip` vivo com o botão desligado; logs/shell seguem
   pedindo projeto (o core exige workspace em `container.open`; medido) —
   `40` §7.85.
+- **E3-7 — NÃO FEITA** (2026-09-19, o limite semanal do autor chegou): o
+  Grafana continua como estava (título próprio, `GrafanaVerdict`, os
+  achados em listas). O desenho fino já está lido e cabe numa sessão
+  curta: `KvPanelHeader` (título "Grafana", "Sondar" primária, o ×
+  ligado ao `dismissRequested` do host — hoje o painel não tem
+  `closeRequested`), `DataSourceField` para Endereço e Variável, o bloco
+  "De onde vem o token" com os três chips e a frase explicativa igual ao
+  do banco (`DataSourceForm` §"De onde vem a senha"), o veredito dentro
+  do `KvVerdict` (busy "sondando…" / ok autenticado / neutro alcançou sem
+  token / erro), fontes de dados e dashboards no `KvDataGrid` com
+  `selectable` e o clique na linha do dashboard abrindo
+  `dashboardUrl(url)` no navegador; os "casamentos" seguem como lista (é
+  o achado principal). `GrafanaController` tem `dataSources[]`
+  (`uid,name,type_id,type_name`), `dashboards[]` (`uid,title,url,folder`).
+  Medida: foto com `KINEIN_STARTUP_COMMANDS=grafana.get`; harness
+  `tst_grafana` já cobre o controller; o autor testa num Grafana real.
+  **A Etapa 3 fecha quando a E3-7 entrar** — ou o autor decide que o
+  Grafana atual basta para o teste fechado.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

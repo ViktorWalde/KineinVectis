@@ -4938,3 +4938,22 @@ uma fatia com contrato (um `cwd` opcional), se o autor sentir falta.
 **Provado:** `tst_container` (+7: filtro por nome e por id, seleção por
 id sobrevive ao refresh e cai fora do filtro, as linhas da grade); gates
 QML/fiação/catraca verdes. **Foto:** `e3-6-containers.png`.
+
+### 7.86 Etapa 3 — onde parou (E3-7 pendente) e a virada para o backend — 2026-09-19
+
+O autor parou a sessão aqui ("vai acabar o limite"). **Feitas e
+commitadas**: E3-1 (`4a79c28`), E3-2 (`ebd67c0`), E3-3 (`d099e3d`), E3-4
+(`9c9b8c4`), E3-5 (`1924aa0`), E3-6 (`71133c3`). **Não feita**: E3-7
+(Grafana) — o desenho fino está no `44` §7.1, pronto para uma sessão
+curta. A árvore está limpa; nenhuma foto do Grafana foi tirada.
+
+**A decisão do autor para a próxima etapa** (2026-09-19): o foco volta ao
+**backend** — integração mais profunda e responsiva com os LSPs, edição
+inteligente (indentação automática e as conveniências que VS Code e
+JetBrains têm), e polir a biblioteca de funcionalidades dos compiladores
+(o `44` §8 já anotava a integração profunda com compiladores). O
+`roadmaps/45` abre essa etapa com o que já se sabe e o que medir antes de
+desenhar. Também decidido: o `README.md` descreve a IDE e a ideia do
+projeto sem vender rigidez — a IDE **anuncia a liberdade de escolha**
+(toolchain, ferramentas, kits, presets; nada instalado em silêncio) — e
+`DocsPublic/contribuindo/` orienta quem chega, com ou sem IA.

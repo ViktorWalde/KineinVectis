@@ -3,6 +3,12 @@
 Guia para quem vai **alterar ou implementar** algo no projeto. Ele responde a
 uma pergunta só: *onde olhar para fazer a mudança certa no lugar certo.*
 
+> **O guia completo de quem chega** — a ideia do projeto, o ambiente, o
+> ritual de uma fatia passo a passo, cada gate e o porquê dele, e como
+> colaborar **com ou sem um agente de IA** — está em
+> [`contribuindo/`](contribuindo/README.md) (2026-09-19). Este arquivo
+> continua sendo a versão curta.
+
 > **Antes de propor arquitetura, split ou reorganização: leia
 > [`arquitetura/ARCHITECTURE.md`](arquitetura/ARCHITECTURE.md) inteiro, e meça.**
 > É contrato, não consulta, e é verificado por catraca. O padrão observado neste
