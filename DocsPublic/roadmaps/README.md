@@ -4,11 +4,16 @@
 é a fila viva (§4), as decisões que não se reabrem (§5) e o registro de cada
 fatia entregue (§7). A Etapa 1 seguiu a ordem do
 [`42-trilha-profunda-embarcados.md`](42-trilha-profunda-embarcados.md); a
-Etapa 2 (desde 2026-09-18) segue o
-[`43-etapa2-hud-ui-ux.md`](43-etapa2-hud-ui-ux.md).
+Etapa 2 (2026-09-18/19, fechada) seguiu o
+[`43-etapa2-hud-ui-ux.md`](43-etapa2-hud-ui-ux.md); a Etapa 3 (desde
+2026-09-19) segue o
+[`44-etapa3-arquitetura-do-frontend.md`](44-etapa3-arquitetura-do-frontend.md).
 
 ```text
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
+44-etapa3-arquitetura-do-frontend.md  a Etapa 3: tool windows à JetBrains (adaptadas),
+                                   sete fatias com medida; §8 a etapa seguinte
+                                   (compiladores); §9 "posso divulgar?"
 43-etapa2-hud-ui-ux.md             a Etapa 2 (HUD/UI/UX): o desenho MEDIDO na IDE
                                    abrindo, a referência JetBrains lida nas fontes,
                                    as fatias F1–F8 com a medida de cada uma
