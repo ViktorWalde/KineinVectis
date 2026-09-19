@@ -447,3 +447,194 @@ couber na sessão; senão fica dito.
   `DataSourcePanel` 220 → 199, `ContainerPanel` 167 → 128. ✓
 - Não feito (§8.5 e `40` §7.65): containers/portas como grade com ações;
   Grafana/Setup/Biblioteca na moldura comum.
+
+## 9. A fila do TESTE DO AUTOR (noite de 2026-09-18) — o que entrou, e o desenho do que falta, linear
+
+Escrito a pedido do autor antes de qualquer código novo ("pode ser que o
+limite acabe no meio do desenvolvimento; todo o contexto deve ficar salvo
+na documentação"). Quem retoma lê ESTA seção de cima a baixo e sabe onde
+cada coisa está e o que fazer a seguir, sem depender da conversa.
+
+### 9.1 O que o autor disse depois de testar a IDE (2026-09-18, ~19h30)
+
+1. Banco: clicar em MongoDB acendia também PostgreSQL; não dava para criar
+   nem descobrir um banco; "a maior parte aparentou ser apenas visual".
+2. O painel de baixo (as dez abas, o terminal com "Execução" e "limpar")
+   precisa da HUD reformulada no nível de polimento das F1–F8.
+3. "Execução" dentro de Terminal não faz sentido — já há o terminal
+   integrado e os botões de atalho no canto superior direito.
+4. Git: "melhorar a parte visual do versionamento, histórico e afins; bem
+   provável de ser necessário criar uma HUD única para o Git com base nas
+   IDEs JetBrains".
+5. "Ainda há muito a ser polido/otimizado."
+
+Decisões dadas como padrão e aceitas ("prossiga"): ▶ roda numa aba de
+terminal PTY (não numa saída própria reformada); criar servidor de banco em
+container ENTRA (com o comando visível e confirmação por clique).
+
+### 9.2 O que entrou, commit a commit (todos em `main`, nada enviado)
+
+```text
+commit   protocolo  o que                                              registro        fotos
+cb46660  0.124.0    Banco: datasource.discover (socket/porta local,   40 §7.66        14
+                    containers de banco, .sqlite do projeto) e         37 §6
+                    datasource.create (SQLite em data/; PostgreSQL ou  DocsPrivate/Codex/
+                    Mongo em container no loopback, comando visivel;   2026-09-18-banco-
+                    CREATE DATABASE pelo query confirmado); a coluna   descoberta-criacao.md
+                    "Nesta maquina" + "Salvos"; caixa "Novo banco";
+                    o chip do Mongo (`!arquivo && !mongo`)
+f35cac4  —          Seis ancoras perdidas desde 2026-09-03 (refactor   40 §7.67        15a-15d
+                    dbdafa0): o painel Git sem nomes de arquivo, o
+                    historico com o hash por cima da data. Gate:
+                    verificar-qml-propriedades reprova margem de
+                    ancora sem a ancora (provado por mutacao)
+62d1168  0.125.0    A execucao e' uma aba de terminal: run.start/       40 §7.68-7.69   15e, 15f
+                    run.script abrem PTY (terminalId na resposta;      manual §5
+                    event.terminal.render/closed); RunManager,         2026-09-18-execucao-
+                    run.stdin e event.run.* sairam; RunPanel, o chip    no-terminal.md
+                    "Execucao" e o "limpar" sairam; a aba fica com
+                    ✓/✗ N; um dono para abrir o shell (eram dois);
+                    a faixa de abas do painel de baixo (sem borda,
+                    pilula, contagens Problemas/Testes/Jobs, ordem do
+                    uso, x que esconde)
+686b68f  0.126.0    HUD do Git, fatia 1 (SAVE POINT): git.log com       40 §7.70        16a, 16b
+                    parents/refs; git.commit { amend }; GitPanel em     2026-09-18-git-hud-
+                    duas colunas (Mudancas por pasta | Historico com    fatia1.md
+                    raias, pontos, anel de merge, chips de refs;
+                    commit com Amend e Commit e Push; a direita o
+                    inspetor: diff da mudanca ou o commit com sha,
+                    autor, refs, arquivos +/- na grade, patch)
+```
+
+Antes desses, no mesmo dia: 4182769 F0 · 84b1e80 F1 · cf0de24 F2 ·
+5517538 F3 · 9d97bd1 F4 · 271d9c7 F6-a · 225564c F5 · 409f375 F6-b ·
+36f90fd F7 · 2985206 docs (40 §4.2) · 2f3aa34 o elo solto do despacho C++
+(40 §7.64) · abb8cc8 F8.
+
+**Estado medido ao fim:** protocolo 0.126.0 · 161 métodos · 55 eventos ·
+838 testes Rust · 53 harnesses · 24 gates verdes · Clang-Tidy limpo ·
+binário debug abre em ~750 ms sem aviso do QML.
+
+### 9.3 O mapa dos arquivos que a fila tocou (para não procurar)
+
+```text
+Banco     crates/kinein-protocol/src/datasource_discover.rs   (tipos discover/create)
+          crates/kinein-core/src/datasource/{discover,create}.rs
+          crates/kinein-core/src/handlers/datasource_discover.rs (discover adiado por defer_work;
+                                                                 create sincrono ou job)
+          crates/kinein-core/src/tests/datasource_discover.rs   (podman falso; 4 testes)
+          ui/src/core_client_datasource.cpp  ui/src/core_client_notifications.cpp
+          ui/qml/datasource/{DataSourceDiscoveryController,DataSourceCreateBox,DataSourceList}.qml
+          ui/qml/ipc/DataSource{Request,Event}Router.qml (Connections no FILHO `discovery`)
+          scripts/qml-harness/tst_datasource_discovery.qml
+Execucao  crates/kinein-core/src/run.rs (so' erro/catalogo/comando padrao)
+          crates/kinein-core/src/handlers/run.rs::start_in_terminal   Core.run_terminal
+          crates/kinein-core/src/tests/mod.rs::terminal_run_until_closed + render_lines
+          scripts/verificar_python_debug.py::Core.texto_da_execucao   scripts/verificar-exercitacao.sh
+          ui/src/core_client_requests_run.cpp::dispatchRunResult      m_runTerminalId
+          ui/qml/runtime/RuntimeController.qml (runTerminalId, finishedRuns, runTabTitle)
+          ui/qml/panels/bottom/{TerminalSessionTabs,TerminalPanel,BottomPanelHost}.qml
+          ui/qml/shell/BottomTabBar.qml (badgeFor)  ui/qml/jobs/JobsController.qml (testsBadge)
+Git       crates/kinein-protocol/src/git.rs (parents, refs, amend)
+          crates/kinein-core/src/git/{operations,parse}.rs  crates/kinein-core/src/tests/git.rs
+          ui/qml/git/GitRules.qml            regras puras: lanes, patchFiles, lineKind, folderOf, refChip
+          ui/qml/git/GitInspectorController  o que esta' selecionado (filho do GitController)
+          ui/qml/git/GitInspectorPane.qml    a coluna da direita
+          ui/qml/git/GitPatchView.qml        o patch linha a linha (saiu do GitDiffDialog)
+          ui/qml/git/GitCommitBox.qml        mensagem, Amend, Commit e Push, Commit
+          ui/qml/git/GitChangesList.qml      secoes por pasta (role `folder`), selecao
+          ui/qml/git/GitHistoryList.qml      raias (laneWidth 12), pontos, anel, chips de refs
+          ui/qml/git/GitHistoryController    laneCount, entry(sha), refsText (US-separado)
+          ui/qml/git/GitController.qml       398/400 — coisa nova vai para um FILHO
+          ui/qml/panels/bottom/GitPanel.qml  duas colunas; fala com o controller
+          scripts/qml-harness/tst_git_rules.qml
+Gates     scripts/verificar_fiacao_ipc.py (pergunta 5: elo de despacho sem chamador)
+          scripts/verificar_qml_propriedades.py (margem de ancora sem ancora)
+          scripts/verificar_binario_abre.py (aviso do QML no stderr ate' o 1o frame)
+```
+
+### 9.4 O desenho da PRÓXIMA fatia — HUD do Git, fatia 2 (escrito antes do código)
+
+Ordem dentro da fatia, cada item com o que muda e como se prova:
+
+**(a) Stage por pasta.** No `GitChangesList`, o cabeçalho da seção
+(`section.delegate`) ganha um checkbox: marcado quando TODAS as mudanças
+da pasta estão staged, meio quando algumas. Clique → novo sinal
+`folderStageToggleRequested(folder, stageAll)` → `GitController.
+toggleFolderStaged(folder, stageAll)` → emite `stageRequested(paths)` /
+`unstageRequested(paths)` com todos os caminhos da pasta (o core já aceita
+vários `paths` em `git.stage`/`git.unstage`; nada de contrato). Harness:
+`tst_git_staging` (existe? conferir `scripts/qml-harness/`; senão criar)
+com três mudanças em duas pastas.
+
+**(b) Filtro no Histórico.** Um campo de texto acima da lista
+(`GitHistoryFilter.qml`, view) filtra por resumo/autor/sha localmente
+(`GitRules.matchesFilter(entry, text)` — puro, no harness). Filtrar por
+branch pede contrato: `git.log { maxCount?, ref? }` (0.127.0) → `git log
+<ref>`; o handler valida `ref` (`git check-ref-format --branch`, ou a
+regra: sem espaço, sem `..`, sem `-` inicial); `GitHistoryController.
+refreshHistory(ref)`; o chip do branch atual no cabeçalho do histórico.
+Teste de despacho em `tests/git.rs` (dois branches, o log de cada um).
+
+**(c) As curvas do grafo.** Hoje `GitRules.lanes` devolve `{lane, merge,
+laneCount}` por linha. Para desenhar as ligações, a regra devolve também
+`edges: [{fromLane, toLane}]` por linha — de onde este commit sai (a raia
+dele) para onde cada pai está na linha seguinte (o pai herda a raia; o
+segundo pai está noutra raia). A vista (`GitHistoryList`, o `Item grafo`)
+desenha, por aresta, uma linha da metade inferior desta linha à metade
+superior da próxima: reta quando `fromLane === toLane`, diagonal (ou
+`Canvas` com curva de Bézier, 2 pontos de controle) quando muda de raia.
+Harness: o caso do merge da `tst_git_rules` ganha a asserção das arestas
+(m: 0→0 e 0→1; x: 1→0). Foto 16c.
+
+**(d) O branch na barra.** `HeaderGitWidget` (F1) tem `panelRequested()`;
+o clique no nome do branch passa a abrir o `GitBranchMenu` (checkout,
+criar) como popup ancorado ao widget — `ShellHeaderHost` já roteia
+`git.branches` para `gitController.openBranchMenu()`; falta o menu nascer
+ali e não só dentro do painel (mover o `GitBranchMenu` para
+`ShellOverlays`, posicionado pelo widget, como o `RunConfigMenu` faz).
+
+**(e) Confirmações.** "Commit e Push": um `KvVerdict` neutro na caixa de
+commit dizendo "vai enviar para `origin/<branch>`" e o botão pede o
+segundo clique (o mesmo padrão do `WRITE_CONFIRMATION_REQUIRED` do banco).
+Amend quando `aheadCount === 0` (o HEAD já foi enviado): o aviso vira
+vermelho ("reescreve um commit já enviado — vai exigir push forçado") e o
+Commit pede confirmação. Sem contrato.
+
+**Medida da fatia:** fotos 16c (grafo com curvas e filtro) e 16d (branch
+pela barra); `tst_git_rules` estendido; gates; Clang-Tidy só se o C++
+mudar (o (b) muda `gitLog(ref)` na ponte).
+
+**Restrições que valem:** `GitController` 398/400 — (a) e (e) cabem num
+filho `GitStagingController` ou dentro do `GitInspectorController`; view
+300; controller 400; contrato primeiro (03 + bump + tests) quando (b).
+
+### 9.5 Depois da HUD do Git — a ordem
+
+1. **Fechamento da Etapa 2** (`40` §4.2.2): Ln:Col na status bar; a foto do
+   gate a 1024 px; o trilho lateral compacto/expandido; o foco da tela
+   inicial × terminal; rename/codeActions/workspaceEdit adiados
+   (`defer_lsp`); `container.status` adiado (`defer_work`); Grafana/Setup/
+   Biblioteca na moldura comum (`KvPanelFrame`); a primeira linha
+   (`KvPanelHeader`) nos painéis de baixo se o autor achar que cabe; fotos
+   das três telas lado a lado com as de manhã; release-hardened remedido;
+   43 §5/§7 e leitura-técnica sincronizados.
+2. **Uma sessão do autor na IDE aberta** com o roteiro do `40` §4.2.6 (o
+   banco real por container é um clique dele; o "Identificar" do ESP32).
+3. **Etapa 3, candidatas** (`40` §4.2.5): restos de banco e remoto; bloco
+   F; validação com hardware conforme chegar; release/AppImage só quando
+   ele pedir.
+
+### 9.6 Como retomar do zero (se o contexto acabar)
+
+Ler, nesta ordem: `DocsPrivate/Codex/README.md` → `HANDOFF-panorama.md` →
+`PROMPT-proxima-sessao.md` (aponta para 9.4) → esta seção → `40` §7.66–
+7.70 → os registros privados de 2026-09-18 da noite. Conferir `git
+status`/`git log --oneline -12`. Rodar `cargo build -p kinein-core &&
+cmake --build build/linux-clang-debug-strict --target kinein-vectis` e as
+fotos headless (`KINEIN_STARTUP_COMMANDS=git.log`, `git.commit`,
+`datasource.list`, `terminal.open,run.start`) para ver o estado com os
+próprios olhos antes de mexer. As regras do projeto continuam: contrato
+primeiro, catracas, medir antes de afirmar, registro datado + evidências,
+nunca `git checkout <arquivo>`, nunca gravar a placa do autor, nada de
+push/release sem ele pedir.

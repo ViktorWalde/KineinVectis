@@ -821,6 +821,12 @@ verificações verdes" deve ler junto esta lista.
    AppImage regenerado e testado (`testar-appimage.sh`) — só quando o autor
    pedir, como a regra diz.
 
+**Depois da F8 (noite de 2026-09-18), a fila do teste do autor:** banco
+descobre/cria (§7.66), âncoras do Git (§7.67), execução em aba de terminal
++ faixa de abas (§7.68–7.69), HUD do Git fatia 1 (§7.70). O contexto
+linear dessa fila — commits, mapa de arquivos, o desenho da fatia 2 da HUD
+do Git e a ordem depois dela — está no [`43`](43-etapa2-hud-ui-ux.md) §9.
+
 #### 4.2.6 Como o autor roda a IDE e o que testar (pedido em 2026-09-18, ao fim da F8)
 
 **Rodar** (da raiz do repositório — é de lá que a UI acha o core em
