@@ -233,24 +233,6 @@ bool CoreClient::handleRunnerNotification(const QString& method, const QJsonObje
     if (handleDebugNotification(method, params)) {
         return true;
     }
-    if (method == QStringLiteral("event.run.started")) {
-        const QString command = params.value(QStringLiteral("command")).toString();
-        appendLog(QStringLiteral("execucao iniciada: %1").arg(command));
-        setRunning(true);
-        emit runStarted(command);
-        return true;
-    }
-    if (method == QStringLiteral("event.run.output")) {
-        emit runOutput(params.value(QStringLiteral("line")).toString(),
-                       params.value(QStringLiteral("stream")).toString());
-        return true;
-    }
-    if (method == QStringLiteral("event.run.finished")) {
-        setRunning(false);
-        emit runFinished(params.value(QStringLiteral("success")).toBool(),
-                         params.value(QStringLiteral("exitCode")).toInt(-1));
-        return true;
-    }
     if (handleTerminalNotification(method, params)) {
         return true;
     }
@@ -292,9 +274,16 @@ bool CoreClient::handleTerminalNotification(const QString& method, const QJsonOb
         // D2.3: eventos atrasados de workspaces anteriores não podem alterar o
         // estado das sessões atuais; por isso removemos o ID exato.
         const QString id = params.value(QStringLiteral("id")).toString();
+        const int exitCode = params.value(QStringLiteral("exitCode")).toInt(-1);
         m_terminalIds.remove(id);
         setTerminalActive(!m_terminalIds.isEmpty());
-        emit terminalClosed(id, params.value(QStringLiteral("exitCode")).toInt(-1));
+        // A sessao da execucao fechou: `running` cai e o desfecho e' dito.
+        if (!m_runTerminalId.isEmpty() && id == m_runTerminalId) {
+            m_runTerminalId.clear();
+            setRunning(false);
+            emit runFinished(exitCode == 0, exitCode);
+        }
+        emit terminalClosed(id, exitCode);
         return true;
     }
     return false;

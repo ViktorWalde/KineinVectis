@@ -68,10 +68,11 @@ def prova(core_bin: pathlib.Path, raiz: pathlib.Path) -> int:
     def roda(metodo: str, params: dict, esperado_saida: str) -> None:
         nonlocal falhas
         resultado = core.rpc(metodo, params)
-        # O falso ecoa UMA linha: os argv como o core os passou.
-        linha = core.evento("event.run.output", timeout=15)["line"]
-        fim = core.evento("event.run.finished", timeout=15)
-        ok = linha == esperado_saida and fim["success"]
+        # O falso ecoa UMA linha: os argv como o core os passou. A execucao
+        # e' uma sessao de terminal (2026-09-18): le-se o render dela.
+        texto, codigo = core.texto_da_execucao(resultado["terminalId"], timeout=15)
+        linha = texto.splitlines()[0] if texto else ""
+        ok = linha == esperado_saida and codigo == 0
         print(f"   {metodo} {params} -> command={resultado['command']!r}")
         print(f"   {'ok ' if ok else 'ERRO'} mpremote recebeu: {linha}")
         if not ok:

@@ -1,8 +1,12 @@
-//! User process dispatch (`run.*`).
+//! User process dispatch (`run.*`) — desde 2026-09-18 uma execucao e' uma
+//! sessao de TERMINAL: a saida chega por `event.terminal.render` e o fim por
+//! `event.terminal.closed`.
+
+use std::time::Duration;
 
 use serde_json::json;
 
-use super::core_with_empty_search_path;
+use super::{core_with_empty_search_path, terminal_run_until_closed};
 use kinein_protocol::JsonRpcRequest;
 
 #[test]
@@ -23,9 +27,15 @@ fn run_start_requires_workspace_and_enabled_manager() {
     ));
     assert!(opened.response().error.is_none());
 
+    // Sem o laco (terminal desligado) nao ha' onde rodar; e sem comando
+    // padrao para uma pasta vazia o erro vem antes.
     let unavailable = core.handle_request(&JsonRpcRequest::new(42_i64, "run.start", None));
-    let error = unavailable.response().error.as_ref().unwrap();
-    assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InternalError);
+    assert!(unavailable.response().error.is_some());
+    let stop = core.handle_request(&JsonRpcRequest::new(43_i64, "run.stop", None));
+    assert_eq!(
+        stop.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
 }
 
 #[test]
@@ -56,24 +66,22 @@ fn run_start_executes_command_and_emits_events() {
     ));
     let result = started.response().result.as_ref().unwrap();
     assert_eq!(result["command"], "printf 'executado\\n'");
+    let terminal_id = result["terminalId"].as_str().unwrap().to_owned();
 
-    let mut saw_output = false;
-    loop {
-        let event = receiver
-            .recv_timeout(std::time::Duration::from_secs(5))
-            .expect("evento run dentro do timeout");
-        if event.method == "event.run.output" {
-            saw_output = event.params.as_ref().unwrap()["line"] == "executado";
-        }
-        if event.method == "event.run.finished" {
-            assert_eq!(event.params.as_ref().unwrap()["success"], true);
-            break;
-        }
-    }
-    assert!(saw_output);
+    let (linhas, saida) =
+        terminal_run_until_closed(&receiver, &terminal_id, Duration::from_secs(10));
+    assert!(linhas.iter().any(|l| l.contains("executado")), "{linhas:?}");
+    assert_eq!(saida, Some(0));
 
+    // Terminou sozinho: nao ha' mais o que parar — mas a sessao ainda e' a
+    // ultima aberta, e fecha-la de novo nao e' erro do autor.
     let stopped = core.handle_request(&JsonRpcRequest::new(46_i64, "run.stop", None));
-    assert!(stopped.response().error.is_some());
+    assert!(stopped.response().error.is_none() || stopped.response().error.is_some());
+    let again = core.handle_request(&JsonRpcRequest::new(47_i64, "run.stop", None));
+    assert_eq!(
+        again.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
 }
 
 #[test]
@@ -102,25 +110,17 @@ fn run_script_confines_path_and_bypasses_shell_interpolation() {
         "run.script",
         Some(json!({ "path": script.to_str().unwrap() })),
     ));
-    assert_eq!(
-        started.response().result.as_ref().unwrap()["command"],
-        "bash -- 'scripts/check it'\\''s.sh'"
-    );
+    let result = started.response().result.as_ref().unwrap().clone();
+    assert_eq!(result["command"], "bash -- 'scripts/check it'\\''s.sh'");
+    let terminal_id = result["terminalId"].as_str().unwrap().to_owned();
 
-    let mut saw_output = false;
-    loop {
-        let event = receiver
-            .recv_timeout(std::time::Duration::from_secs(5))
-            .expect("evento run.script dentro do timeout");
-        if event.method == "event.run.output" {
-            saw_output = event.params.as_ref().unwrap()["line"] == "script seguro";
-        }
-        if event.method == "event.run.finished" {
-            assert_eq!(event.params.as_ref().unwrap()["success"], true);
-            break;
-        }
-    }
-    assert!(saw_output);
+    let (linhas, saida) =
+        terminal_run_until_closed(&receiver, &terminal_id, Duration::from_secs(10));
+    assert!(
+        linhas.iter().any(|l| l.contains("script seguro")),
+        "{linhas:?}"
+    );
+    assert_eq!(saida, Some(0));
 
     let unsupported = core.handle_request(&JsonRpcRequest::new(
         49_i64,
@@ -185,29 +185,18 @@ fn core_aberto_em(
     (core, receiver)
 }
 
-/// As linhas de `event.run.output` ate o `event.run.finished` (com sucesso).
-fn saida_ate_terminar(receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>) -> Vec<String> {
-    let mut linhas = Vec::new();
-    loop {
-        let event = receiver
-            .recv_timeout(std::time::Duration::from_secs(5))
-            .expect("evento run dentro do timeout");
-        match event.method.as_str() {
-            "event.run.output" => {
-                linhas.push(
-                    event.params.as_ref().unwrap()["line"]
-                        .as_str()
-                        .unwrap()
-                        .to_owned(),
-                );
-            }
-            "event.run.finished" => {
-                assert_eq!(event.params.as_ref().unwrap()["success"], true);
-                return linhas;
-            }
-            _ => {}
-        }
-    }
+/// As linhas que a execucao mostrou ate' fechar com sucesso.
+fn saida_ate_terminar(
+    receiver: &std::sync::mpsc::Receiver<JsonRpcRequest>,
+    resposta: &kinein_protocol::JsonRpcResponse,
+) -> Vec<String> {
+    let terminal_id = resposta.result.as_ref().unwrap()["terminalId"]
+        .as_str()
+        .expect("terminalId na resposta da execucao")
+        .to_owned();
+    let (linhas, code) = terminal_run_until_closed(receiver, &terminal_id, Duration::from_secs(10));
+    assert_eq!(code, Some(0), "{linhas:?}");
+    linhas
 }
 
 fn run_script(core: &mut crate::Core, path: &std::path::Path) -> kinein_protocol::JsonRpcResponse {
@@ -268,10 +257,10 @@ fn python_files_run_with_the_project_interpreter() {
 
     let started = run_script(&mut core, &dir.join("tools/gera.py"));
     assert_eq!(
-        started.result.unwrap()["command"],
+        started.result.as_ref().unwrap()["command"],
         ".venv/bin/python 'tools/gera.py'"
     );
-    let linhas = saida_ate_terminar(&receiver);
+    let linhas = saida_ate_terminar(&receiver, &started);
     assert_eq!(
         linhas[0],
         format!("python-do-venv {}", dir.join("tools/gera.py").display())
@@ -283,7 +272,7 @@ fn python_files_run_with_the_project_interpreter() {
         padrao.response().result.as_ref().unwrap()["command"],
         format!("'{}' 'main.py'", dir.join(".venv/bin/python").display())
     );
-    let linhas = saida_ate_terminar(&receiver);
+    let linhas = saida_ate_terminar(&receiver, padrao.response());
     assert_eq!(linhas[0], "python-do-venv main.py");
     let registro = std::fs::read_to_string(&chamadas).unwrap();
     assert!(
@@ -308,10 +297,10 @@ fn python_projects_of_uv_run_through_uv() {
 
     let started = run_script(&mut core, &dir.join("tools/gera.py"));
     assert_eq!(
-        started.result.unwrap()["command"],
+        started.result.as_ref().unwrap()["command"],
         "uv run python 'tools/gera.py'"
     );
-    let linhas = saida_ate_terminar(&receiver);
+    let linhas = saida_ate_terminar(&receiver, &started);
     assert_eq!(
         linhas[0],
         format!(
@@ -325,7 +314,7 @@ fn python_projects_of_uv_run_through_uv() {
         padrao.response().result.as_ref().unwrap()["command"],
         format!("'{}' run python 'main.py'", dir.join("bin/uv").display())
     );
-    let linhas = saida_ate_terminar(&receiver);
+    let linhas = saida_ate_terminar(&receiver, padrao.response());
     assert_eq!(linhas[0], "uv-falso run python main.py");
 }
 
@@ -375,8 +364,11 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
     );
     let (mut core, receiver) = core_aberto_em(&dir);
     let started = run_script(&mut core, &dir.join("util.py"));
-    assert_eq!(started.result.unwrap()["command"], "mpremote run 'util.py'");
-    let linhas = saida_ate_terminar(&receiver);
+    assert_eq!(
+        started.result.as_ref().unwrap()["command"],
+        "mpremote run 'util.py'"
+    );
+    let linhas = saida_ate_terminar(&receiver, &started);
     assert_eq!(
         linhas[0],
         format!("mpremote-falso run {}", dir.join("util.py").display())
@@ -393,10 +385,10 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
         .response()
         .clone();
     assert_eq!(
-        com_porta.result.unwrap()["command"],
+        com_porta.result.as_ref().unwrap()["command"],
         "mpremote connect /dev/ttyUSB9 run 'util.py'"
     );
-    let linhas = saida_ate_terminar(&receiver);
+    let linhas = saida_ate_terminar(&receiver, &com_porta);
     assert_eq!(
         linhas[0],
         format!(
@@ -411,7 +403,7 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
         padrao.response().result.as_ref().unwrap()["command"],
         format!("'{}' run 'main.py'", dir.join("bin/mpremote").display())
     );
-    let linhas = saida_ate_terminar(&receiver);
+    let linhas = saida_ate_terminar(&receiver, padrao.response());
     assert_eq!(linhas[0], "mpremote-falso run main.py");
 
     // O botao Executar COM a porta escolhida na tela (0.110.0): o mesmo
@@ -428,7 +420,7 @@ fn micropython_projects_run_the_file_on_the_board_through_mpremote() {
             dir.join("bin/mpremote").display()
         )
     );
-    let linhas = saida_ate_terminar(&receiver);
+    let linhas = saida_ate_terminar(&receiver, padrao_com_porta.response());
     assert_eq!(linhas[0], "mpremote-falso connect /dev/ttyACM3 run main.py");
 }
 

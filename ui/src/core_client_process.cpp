@@ -98,6 +98,7 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
     setTesting(false);
     setAnalyzing(false);
     setRunning(false);
+    m_runTerminalId.clear();
     m_terminalIds.clear();
     setTerminalActive(false);
     setScanningEnvironment(false);

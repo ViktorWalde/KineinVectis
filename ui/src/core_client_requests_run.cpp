@@ -139,14 +139,30 @@ void CoreClient::runScript(const QString& path, const QString& device)
     sendRequest(QStringLiteral("run.script"), params);
 }
 
-void CoreClient::runStdin(const QString& data)
-{
-    sendRequest(QStringLiteral("run.stdin"), QJsonObject{{QStringLiteral("data"), data}});
-}
-
 void CoreClient::runStop()
 {
     sendRequest(QStringLiteral("run.stop"), QJsonObject{});
+}
+
+bool CoreClient::dispatchRunResult(const QString& method, const QJsonObject& result)
+{
+    if (method != QStringLiteral("run.start") && method != QStringLiteral("run.script")) {
+        return false;
+    }
+    // A execucao e' uma sessao de terminal (0.125.0): entra na mesma
+    // contabilidade do `terminal.open`, senao input/resize/close nao a
+    // reconhecem; `running` acompanha a sessao ate' o `event.terminal.closed`.
+    const QString command = result.value(QStringLiteral("command")).toString();
+    const QString terminalId = result.value(QStringLiteral("terminalId")).toString();
+    if (!terminalId.isEmpty()) {
+        m_terminalIds.insert(terminalId);
+        setTerminalActive(true);
+        m_runTerminalId = terminalId;
+        setRunning(true);
+    }
+    appendLog(QStringLiteral("execucao iniciada (%1): %2").arg(terminalId, command));
+    emit runStarted(command, terminalId);
+    return true;
 }
 
 } // namespace kinein

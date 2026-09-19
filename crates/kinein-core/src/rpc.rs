@@ -85,26 +85,15 @@ pub(crate) fn terminal_error_response(
     JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
 }
 
-pub(crate) fn run_unavailable_response(request_id: Option<Value>, method: &str) -> JsonRpcResponse {
-    JsonRpcResponse::failure(
-        request_id,
-        JsonRpcError::new(
-            JsonRpcErrorCode::InternalError,
-            "execucao de processos nao esta habilitada neste loop do core",
-            Some(json!({ "method": method })),
-        ),
-    )
-}
-
 pub(crate) fn run_error_response(
     request_id: Option<Value>,
     error: &run::RunError,
 ) -> JsonRpcResponse {
     let code = match error {
         run::RunError::Process { .. } => JsonRpcErrorCode::InternalError,
-        run::RunError::AlreadyRunning
-        | run::RunError::NotRunning
-        | run::RunError::NoDefaultCommand { .. } => JsonRpcErrorCode::InvalidRequest,
+        run::RunError::NotRunning | run::RunError::NoDefaultCommand { .. } => {
+            JsonRpcErrorCode::InvalidRequest
+        }
     };
     JsonRpcResponse::failure(request_id, JsonRpcError::new(code, error.to_string(), None))
 }

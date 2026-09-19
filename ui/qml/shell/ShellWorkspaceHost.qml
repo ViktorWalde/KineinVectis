@@ -10,6 +10,7 @@ Item {
     property var projectTree
     property var editorController
     property var jobsController
+    property var activeJobController: null
     property var runtimeController
     property var debugController
     property var gitController
@@ -73,9 +74,6 @@ Item {
         bottomPanel.clearTerminalInput();
     }
 
-    function clearRunInput() {
-        bottomPanel.clearRunInput();
-    }
 
     function focusCreateDialog() {
         editorPaneHost.focusCreateDialog();
@@ -234,6 +232,9 @@ Item {
                 open: root.shellController.showBottomPanel
                 activeTab: root.shellController.bottomTab
                 problemCount: root.jobsController.problemsModel.count
+                testsBadge: root.jobsController.testsBadge
+                testsOk: root.jobsController.testsFailed === 0
+                jobsRunning: root.activeJobController ? root.activeJobController.runningCount : 0
                 buildOutputModel: root.jobsController.buildOutputModel
                 jobsModel: root.jobsController.jobsModel
                 jobsController: root.jobsController
@@ -242,7 +243,6 @@ Item {
                 terminalRender: root.runtimeController.terminalRender
                 terminalActive: root.terminalActive
                 workspaceAvailable: root.workspaceOpen
-                runModel: root.runtimeController.runModel
                 debugController: root.debugController
                 gitChangesModel: root.gitController.changesModel
                 gitRepo: root.gitController.repo
@@ -256,9 +256,9 @@ Item {
                 gitBranchMenuVisible: root.gitController.branchMenuVisible
                 gitRemoteOperationRunning: root.gitController.remoteOperationRunning
                 running: root.running
-                terminalSession: root.runtimeController.terminalSession
                 terminalsModel: root.runtimeController.terminalsModel
                 activeTerminalId: root.runtimeController.activeTerminalId
+                runTerminalId: root.runtimeController.runTerminalId
                 searchModel: root.searchController.searchModel
                 searchCaseSensitive: root.searchController.caseSensitive
                 searching: root.searchController.searching
@@ -269,13 +269,16 @@ Item {
                 searchReplaceSummary: root.searchController.replaceSummary
                 logLinesModel: root.logLinesModel
                 toolsList: root.workspaceController.toolsList
+                onHideRequested: root.shellController.showBottomPanel = false
                 onTabRequested: function(tab) {
+                    // A aba Terminal abre uma sessao se nao ha' nenhuma: o
+                    // dono disso e' o RuntimeController.
+                    if (tab === "terminal" && !root.shellController.tabActive("terminal")) {
+                        root.runtimeController.openTerminalPanel();
+                        return;
+                    }
                     root.shellController.toggleBottomTab(tab);
                 }
-                onTerminalSessionRequested: function(session) {
-                    root.runtimeController.setTerminalSession(session);
-                }
-                onClearSessionRequested: root.runtimeController.clearActiveSession()
                 onRefreshToolsRequested: root.toolsDetectionRequested()
                 onProblemOpenRequested: function(file, line, column) {
                     root.editorController.openDiagnostic(file, line, column);
@@ -302,9 +305,6 @@ Item {
                 onTerminalNewRequested: root.runtimeController.newTerminal()
                 onTerminalCloseTabRequested: function(id) {
                     root.runtimeController.closeTerminal(id);
-                }
-                onRunInputSubmitted: function(text) {
-                    root.runtimeController.submitRunInput(text);
                 }
                 onGitStageToggleRequested: function(index) {
                     root.gitController.toggleStaged(index);

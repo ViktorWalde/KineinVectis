@@ -156,6 +156,8 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
         m_workspaceKind.clear();
         m_workspaceBuildSystems.clear();
         m_terminalIds.clear();
+        m_runTerminalId.clear();
+        setRunning(false);
         setTerminalActive(false);
         emit workspaceChanged();
         return true;
@@ -283,7 +285,7 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
         return;
     }
     if (dispatchFileResult(method, result) || dispatchSyntaxResult(method, result) ||
-        dispatchLspResult(method, result))
+        dispatchLspResult(method, result) || dispatchRunResult(method, result))
     {
         return;
     }

@@ -102,24 +102,16 @@ impl Cenario {
         self.rpc(2, "runConfig.flashProposal", params)
     }
 
-    /// As linhas de `event.run.output` ate' o `event.run.finished`.
-    fn saida(&self) -> (Vec<String>, bool) {
-        let mut linhas = Vec::new();
-        let prazo = std::time::Instant::now() + Duration::from_secs(10);
-        while std::time::Instant::now() < prazo {
-            if let Ok(event) = self.events.recv_timeout(Duration::from_millis(50)) {
-                match event.method.as_str() {
-                    "event.run.output" => {
-                        linhas.push(event.params.unwrap()["line"].as_str().unwrap().to_owned());
-                    }
-                    "event.run.finished" => {
-                        return (linhas, event.params.unwrap()["success"] == true);
-                    }
-                    _ => {}
-                }
-            }
-        }
-        panic!("o run.start nao terminou; visto: {linhas:?}");
+    /// O que a execucao (uma sessao de terminal) mostrou ate' fechar, e se
+    /// saiu com 0.
+    fn saida(&self, iniciado: &Value) -> (Vec<String>, bool) {
+        let terminal_id = iniciado["terminalId"]
+            .as_str()
+            .expect("terminalId")
+            .to_owned();
+        let (linhas, code) =
+            super::terminal_run_until_closed(&self.events, &terminal_id, Duration::from_secs(15));
+        (linhas, code == Some(0))
     }
 }
 
@@ -173,7 +165,7 @@ fn the_proposal_becomes_a_run_configuration_that_run_start_executes() {
 
     let iniciado = c.rpc(4, "run.start", json!({})).result.unwrap();
     assert_eq!(iniciado["command"], comando);
-    let (linhas, sucesso) = c.saida();
+    let (linhas, sucesso) = c.saida(&iniciado);
     assert!(sucesso);
     assert_eq!(
         linhas,
@@ -363,7 +355,7 @@ fn a_downloaded_firmware_is_flashed_by_the_page_line_and_runs() {
     // E roda de verdade: o esptool falso ecoa os argv.
     let started = c.rpc(4, "run.start", json!({ "command": r["command"] }));
     assert!(started.error.is_none(), "{:?}", started.error);
-    let (linhas, sucesso) = c.saida();
+    let (linhas, sucesso) = c.saida(started.result.as_ref().unwrap());
     assert!(sucesso);
     assert!(
         linhas.iter().any(

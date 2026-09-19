@@ -227,6 +227,7 @@ Window {
         projectTree: domains.projectTree
         editorController: domains.editorController
         jobsController: domains.jobsController
+        activeJobController: domains.activeJobController
         runtimeController: domains.runtimeController
         debugController: domains.debugController
         gitController: domains.gitController

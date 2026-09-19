@@ -219,21 +219,18 @@ fn esp_idf_builds_through_the_activated_environment_or_says_how_to_get_it() {
     // E roda de verdade: o idf.py falso recebe `-p /dev/ttyUSB0 flash`.
     let started = c.rpc("run.start", json!({ "command": comando }));
     assert!(started.error.is_none(), "{:?}", started.error);
-    let prazo = std::time::Instant::now() + Duration::from_secs(15);
-    let mut viu = false;
-    while std::time::Instant::now() < prazo {
-        if let Ok(e) = c.events.recv_timeout(Duration::from_millis(50)) {
-            if e.method == "event.run.output"
-                && e.params.as_ref().unwrap()["line"] == "idf.py-falso -p /dev/ttyUSB0 flash"
-            {
-                viu = true;
-            }
-            if e.method == "event.run.finished" {
-                break;
-            }
-        }
-    }
-    assert!(viu, "o idf.py falso nao recebeu o flash");
+    let terminal_id = started.result.as_ref().unwrap()["terminalId"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let (linhas, _) =
+        super::terminal_run_until_closed(&c.events, &terminal_id, Duration::from_secs(15));
+    assert!(
+        linhas
+            .iter()
+            .any(|l| l.contains("idf.py-falso -p /dev/ttyUSB0 flash")),
+        "o idf.py falso nao recebeu o flash: {linhas:?}"
+    );
     // Sem -p: o esptool do E4 continua sendo o padrao (a receita do build).
     let erro = c
         .rpc("runConfig.flashProposal", json!({ "engine": "idf.py" }))

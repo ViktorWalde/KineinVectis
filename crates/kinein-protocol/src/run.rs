@@ -52,14 +52,10 @@ pub struct RunCapabilitiesResult {
 pub struct RunStartResult {
     /// Command that is now running.
     pub command: String,
-}
-
-/// Parameters for `run.stdin`.
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct RunStdinParams {
-    /// Raw bytes forwarded to the child stdin. The UI appends the newline.
-    pub data: String,
+    /// The terminal session it runs in (`0.125.0`): the output arrives as
+    /// `event.terminal.render` for this id, the end as `event.terminal.closed`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub terminal_id: Option<String>,
 }
 
 #[cfg(test)]

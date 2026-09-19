@@ -61,6 +61,8 @@ Item {
         jobs.handleTestFinished(false, 1, 1, 0, "");
         if (jobs.testModel.count !== 1) failures += 64;
         if (jobs.testSummary.indexOf("FALHOU") < 0 || jobs.testSummary.indexOf("falhou: 1") < 0) failures += 128;
+        // O placar da aba (HUD do painel de baixo, 2026-09-18): passou/total.
+        if (jobs.testsBadge !== "1/2" || jobs.testsFailed !== 1) failures += 4096;
 
         // Um runner que nem correu: o `error` do core E' o resumo, e vai para a saida.
         jobs.handleTestFinished(false, 0, 0, 0, "pytest ausente: instale-o NO ambiente do projeto");
@@ -73,7 +75,7 @@ Item {
 
         // clear() esquece a saida junto com o resto.
         jobs.clear();
-        if (jobs.testOutputModel.count !== 0 || jobs.testSummary !== "") failures += 2048;
+        if (jobs.testOutputModel.count !== 0 || jobs.testSummary !== "" || jobs.testsBadge !== "") failures += 2048;
 
         // A ARVORE (test.discover, 2026-09-13): listar pede UMA vez; o resultado
         // vira linhas com status vazio; um caso que roda com o MESMO id pinta a

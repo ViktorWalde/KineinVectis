@@ -2,8 +2,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// A barra de sessoes da aba Terminal: um chip por PTY aberto, mais "Execucao",
-// "+" e "limpar".
+// A barra de sessoes da aba Terminal: um chip por PTY aberto e o "+".
+//
+// A "Execucao" saiu em 2026-09-18 (pedido do autor): o ▶ roda numa aba de
+// terminal como as outras — o chip dela tem o nome do comando e a bolinha
+// enquanto roda. O "limpar" saiu com ela: era da saida por pipes.
 //
 // Saiu do BottomPanelHost em 2026-07-17. Nao foi por tamanho: aquele host compoe
 // PAINEIS, e cada painel dele ja e um componente proprio (GitPanel, SearchPanel,
@@ -16,20 +19,17 @@ Row {
     // D2.3: uma linha por terminal aberto — { termId, title }.
     property var sessionsModel: null
     property string activeTerminalId: ""
-    property string terminalSession: "shell"
+    // A sessao da execucao em curso: o chip dela ganha a bolinha.
+    property string runTerminalId: ""
     property bool running: false
 
     signal selectRequested(string id)
     signal closeRequested(string id)
     signal newRequested()
-    signal sessionRequested(string session)
-    signal clearRequested()
 
     spacing: Theme.spacingSmall
 
-    // D2.3 (DocsPublic/roadmaps/24): uma aba por terminal aberto. A "Execução" continua
-    // sendo uma sessão à parte — ela NÃO é um PTY (é o backend run.*),
-    // por isso não entra no mesmo modelo.
+    // D2.3 (DocsPublic/roadmaps/24): uma aba por terminal aberto.
     Repeater {
         model: root.sessionsModel
 
@@ -39,8 +39,8 @@ Row {
             required property string termId
             required property string title
 
-            readonly property bool current: root.terminalSession === "shell"
-                                            && root.activeTerminalId === termChip.termId
+            readonly property bool current: root.activeTerminalId === termChip.termId
+            readonly property bool executing: root.running && root.runTerminalId === termChip.termId
 
             width: termChipRow.width + 2 * Theme.spacingSmall
             height: 20
@@ -70,6 +70,16 @@ Row {
                     color: termChip.current ? Theme.accent : Theme.textSecondary
                     font.pixelSize: 10
                     font.bold: true
+                }
+
+                // A execucao em curso: a bolinha que a "Execucao" tinha.
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: termChip.executing
+                    width: 6
+                    height: 6
+                    radius: 3
+                    color: Theme.successSoft
                 }
 
                 KvIcon {
@@ -119,77 +129,6 @@ Row {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: root.newRequested()
-        }
-    }
-
-    Rectangle {
-        id: runSessionChip
-
-        readonly property bool current: root.terminalSession === "run"
-
-        width: runSessionRow.width + 2 * Theme.spacingSmall
-        height: 20
-        radius: Theme.radiusXSmall
-        color: runSessionChip.current ? Theme.surfaceSelected : "transparent"
-        border.color: Theme.borderSoft
-        border.width: 1
-
-        Row {
-            id: runSessionRow
-            anchors.centerIn: parent
-            spacing: Theme.spacingXSmall
-
-            Text {
-                id: runSessionLabel
-
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Execução")
-                color: runSessionChip.current ? Theme.accent : Theme.textSecondary
-                font.pixelSize: 10
-                font.bold: true
-            }
-
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root.running
-                width: 6
-                height: 6
-                radius: 3
-                color: Theme.successSoft
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.sessionRequested("run")
-        }
-    }
-
-    Rectangle {
-        width: clearSessionLabel.width + 2 * Theme.spacingSmall
-        height: 20
-        radius: Theme.radiusXSmall
-        color: clearSessionArea.containsMouse ? Theme.surface2 : "transparent"
-        border.color: Theme.borderSoft
-        border.width: 1
-
-        Text {
-            id: clearSessionLabel
-
-            anchors.centerIn: parent
-            text: qsTr("limpar")
-            color: Theme.textMuted
-            font.pixelSize: 10
-        }
-
-        MouseArea {
-            id: clearSessionArea
-
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.clearRequested()
         }
     }
 }

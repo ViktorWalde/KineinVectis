@@ -1,58 +1,30 @@
-//! Non-blocking execution of user commands inside the workspace.
+//! O que "Executar" roda, e como se mostra.
 //!
-//! `run.start` spawns one child process per workspace via `sh -c`; typed
-//! launchers such as `run.script` bypass the shell and pass argv directly. All
-//! variants stream
-//! `event.run.output` lines through the same async notification channel used
-//! by the LSP manager, and reports `event.run.finished` when the process
-//! exits. The core stays responsive during the whole run; `run.stdin` and
-//! `run.stop` talk to the live process.
-//!
-//! This is NOT a full terminal: there is no TTY, so full-screen interactive
-//! programs will not behave. Line-based programs (test runners, servers,
-//! simple prompts) work.
+//! A EXECUCAO em si e' uma sessao de terminal (PTY) desde 2026-09-18, a
+//! pedido do autor: "ja' temos o terminal integrado, nao precisamos de mais
+//! nada para executar". O `run.start`/`run.script` resolvem o comando
+//! (configuracao ativa, lancador padrao do tipo de projeto, lancador
+//! Python/MicroPython) e o abrem numa aba de terminal real — stdin, cores e
+//! programas de tela cheia funcionam de graca, e a saida chega por
+//! `event.terminal.render` como qualquer outra. O que ficou aqui e' o que
+//! NAO e' execucao: o erro, o catalogo de extensoes, o comando padrao por
+//! tipo e a linha que a tela mostra.
 
-use std::{
-    error::Error,
-    ffi::OsStr,
-    fmt,
-    io::{BufRead, BufReader, Write},
-    path::Path,
-    process::{Child, ChildStdin, Command, Stdio},
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicUsize, Ordering},
-    },
-    thread,
-    time::{Duration, Instant},
-};
+use std::{error::Error, ffi::OsStr, fmt, path::Path};
 
-use kinein_protocol::{JsonRpcRequest, ProjectKind};
-use serde_json::json;
+use kinein_protocol::ProjectKind;
 
-use crate::lsp::EventSender;
-
-/// Interval between `try_wait` polls while the process is alive.
-const WAIT_POLL_INTERVAL: Duration = Duration::from_millis(50);
-
-/// After the process exits, how long to wait for the output readers to
-/// drain before emitting `finished`. Grandchildren keeping the pipes open
-/// (e.g. a killed shell whose child survives) must not delay the event.
-const READER_DRAIN_DEADLINE: Duration = Duration::from_secs(2);
-
-/// Error produced by the run manager.
+/// Error produced while resolving or starting a run.
 #[derive(Debug)]
 pub enum RunError {
-    /// A process is already running in this workspace.
-    AlreadyRunning,
-    /// No process is currently running.
+    /// No run is currently open.
     NotRunning,
     /// The project kind has no default run command.
     NoDefaultCommand {
         /// Human explanation of what to do instead.
         message: String,
     },
-    /// The child process could not be spawned or reached.
+    /// The terminal session could not be opened.
     Process {
         /// Underlying failure description.
         message: String,
@@ -62,13 +34,7 @@ pub enum RunError {
 impl fmt::Display for RunError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::AlreadyRunning => {
-                write!(
-                    formatter,
-                    "ja existe um processo em execucao; pare-o antes (run.stop)"
-                )
-            }
-            Self::NotRunning => write!(formatter, "nenhum processo em execucao"),
+            Self::NotRunning => write!(formatter, "nenhuma execucao aberta"),
             Self::NoDefaultCommand { message } | Self::Process { message } => {
                 write!(formatter, "{message}")
             }
@@ -77,170 +43,6 @@ impl fmt::Display for RunError {
 }
 
 impl Error for RunError {}
-
-/// Owns the single child process a workspace may run at a time.
-#[derive(Debug)]
-pub struct RunManager {
-    events: EventSender,
-    child: Arc<Mutex<Option<Child>>>,
-    stdin: Option<ChildStdin>,
-}
-
-impl RunManager {
-    /// Creates a manager that pushes `event.run.*` through `events`.
-    #[must_use]
-    pub fn new(events: EventSender) -> Self {
-        Self {
-            events,
-            child: Arc::new(Mutex::new(None)),
-            stdin: None,
-        }
-    }
-
-    /// Returns `true` while a child process is alive.
-    #[must_use]
-    pub fn is_running(&self) -> bool {
-        self.child.lock().is_ok_and(|guard| guard.is_some())
-    }
-
-    /// Spawns `command` via `sh -c` in `root` and streams its output.
-    pub fn start(&mut self, root: &Path, command: &str) -> Result<(), RunError> {
-        let mut process = Command::new("sh");
-        process.arg("-c").arg(command);
-        self.start_process(root, command, process)
-    }
-
-    /// Spawns an explicit program and argv without shell interpolation.
-    pub fn start_program(
-        &mut self,
-        root: &Path,
-        program: &str,
-        args: &[&OsStr],
-        display_command: &str,
-    ) -> Result<(), RunError> {
-        let mut process = Command::new(program);
-        process.args(args);
-        self.start_process(root, display_command, process)
-    }
-
-    fn start_process(
-        &mut self,
-        root: &Path,
-        display_command: &str,
-        mut process: Command,
-    ) -> Result<(), RunError> {
-        if self.is_running() {
-            return Err(RunError::AlreadyRunning);
-        }
-
-        let mut child = process
-            .current_dir(root)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|source| RunError::Process {
-                message: format!("falha ao iniciar `{display_command}`: {source}"),
-            })?;
-
-        self.stdin = child.stdin.take();
-        let stdout = child.stdout.take();
-        let stderr = child.stderr.take();
-
-        send_event(
-            &self.events,
-            "event.run.started",
-            json!({ "command": display_command }),
-        );
-
-        let pending_readers = Arc::new(AtomicUsize::new(0));
-        if let Some(stdout) = stdout {
-            let events = self.events.clone();
-            let pending = Arc::clone(&pending_readers);
-            pending.fetch_add(1, Ordering::SeqCst);
-            thread::spawn(move || {
-                for line in BufReader::new(stdout).lines().map_while(Result::ok) {
-                    send_event(
-                        &events,
-                        "event.run.output",
-                        json!({ "stream": "stdout", "line": line }),
-                    );
-                }
-                pending.fetch_sub(1, Ordering::SeqCst);
-            });
-        }
-        if let Some(stderr) = stderr {
-            let events = self.events.clone();
-            let pending = Arc::clone(&pending_readers);
-            pending.fetch_add(1, Ordering::SeqCst);
-            thread::spawn(move || {
-                for line in BufReader::new(stderr).lines().map_while(Result::ok) {
-                    send_event(
-                        &events,
-                        "event.run.output",
-                        json!({ "stream": "stderr", "line": line }),
-                    );
-                }
-                pending.fetch_sub(1, Ordering::SeqCst);
-            });
-        }
-
-        if let Ok(mut guard) = self.child.lock() {
-            *guard = Some(child);
-        }
-
-        let slot = Arc::clone(&self.child);
-        let events = self.events.clone();
-        thread::spawn(move || {
-            let status = wait_for_exit(&slot);
-            drain_readers(&pending_readers);
-            if let Ok(mut guard) = slot.lock() {
-                *guard = None;
-            }
-            send_event(
-                &events,
-                "event.run.finished",
-                json!({
-                    "success": status.as_ref().is_some_and(std::process::ExitStatus::success),
-                    "exitCode": status.and_then(|status| status.code()),
-                }),
-            );
-        });
-
-        Ok(())
-    }
-
-    /// Forwards raw `data` to the child stdin.
-    pub fn write_stdin(&mut self, data: &str) -> Result<(), RunError> {
-        if !self.is_running() {
-            return Err(RunError::NotRunning);
-        }
-        let Some(stdin) = self.stdin.as_mut() else {
-            return Err(RunError::Process {
-                message: "stdin do processo nao esta disponivel".to_owned(),
-            });
-        };
-        stdin
-            .write_all(data.as_bytes())
-            .and_then(|()| stdin.flush())
-            .map_err(|source| RunError::Process {
-                message: format!("falha ao escrever no stdin: {source}"),
-            })
-    }
-
-    /// Kills the running child. The waiter thread reports `event.run.finished`.
-    pub fn stop(&mut self) -> Result<(), RunError> {
-        let Ok(mut guard) = self.child.lock() else {
-            return Err(RunError::NotRunning);
-        };
-        let Some(child) = guard.as_mut() else {
-            return Err(RunError::NotRunning);
-        };
-        child.kill().map_err(|source| RunError::Process {
-            message: format!("falha ao encerrar o processo: {source}"),
-        })
-    }
-}
 
 /// Extensoes de shell que `run.script` aceita, e o interpretador de cada uma.
 /// **Fonte unica** com `script_interpreter` e com `run.capabilities`: a UI
@@ -282,39 +84,6 @@ pub fn script_display_command(root: &Path, interpreter: &str, script: &Path) -> 
         .display()
         .to_string();
     format!("{interpreter} -- '{}'", display_path.replace('\'', "'\\''"))
-}
-
-/// Serializes one `event.run.*` notification into the async channel.
-fn send_event(events: &EventSender, method: &str, params: serde_json::Value) {
-    drop(events.send(JsonRpcRequest::notification(method, Some(params))));
-}
-
-/// Polls the shared child slot until the process exits.
-///
-/// Returns `None` only when the slot or the wait syscall is unusable; the
-/// caller then reports a failed run instead of hanging.
-pub(crate) fn wait_for_exit(slot: &Arc<Mutex<Option<Child>>>) -> Option<std::process::ExitStatus> {
-    loop {
-        let poll = match slot.lock() {
-            Ok(mut guard) => guard
-                .as_mut()
-                .map_or(Err(()), |child| child.try_wait().map_err(|_error| ())),
-            Err(_poisoned) => Err(()),
-        };
-        match poll {
-            Ok(Some(status)) => return Some(status),
-            Ok(None) => thread::sleep(WAIT_POLL_INTERVAL),
-            Err(()) => return None,
-        }
-    }
-}
-
-/// Waits until every output reader finished or the drain deadline passes.
-pub(crate) fn drain_readers(pending: &Arc<AtomicUsize>) {
-    let deadline = Instant::now() + READER_DRAIN_DEADLINE;
-    while pending.load(Ordering::SeqCst) > 0 && Instant::now() < deadline {
-        thread::sleep(Duration::from_millis(20));
-    }
 }
 
 /// Derives the default run command for the magic Run button.
@@ -396,17 +165,13 @@ pub(crate) fn is_executable(_path: &Path) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use std::{
-        path::{Path, PathBuf},
-        sync::mpsc,
-        time::Duration,
-    };
+    use std::path::{Path, PathBuf};
 
-    use kinein_protocol::{JsonRpcRequest, ProjectKind};
+    use kinein_protocol::ProjectKind;
 
     use super::{
-        PYTHON_SCRIPTS, RunError, RunManager, capabilities, default_command,
-        script_display_command, script_interpreter,
+        PYTHON_SCRIPTS, RunError, capabilities, default_command, script_display_command,
+        script_interpreter,
     };
 
     fn temp_root(test_name: &str) -> PathBuf {
@@ -416,42 +181,6 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir.canonicalize().unwrap()
-    }
-
-    fn drain_until_finished(receiver: &mpsc::Receiver<JsonRpcRequest>) -> Vec<JsonRpcRequest> {
-        let mut events = Vec::new();
-        loop {
-            let event = receiver
-                .recv_timeout(Duration::from_secs(5))
-                .expect("evento run dentro do timeout");
-            let done = event.method == "event.run.finished";
-            events.push(event);
-            if done {
-                return events;
-            }
-        }
-    }
-
-    #[test]
-    fn start_streams_output_and_finishes_with_success() {
-        let (sender, receiver) = mpsc::channel();
-        let mut manager = RunManager::new(sender);
-        let root = temp_root("echo");
-
-        manager.start(&root, "printf 'ola\\n'").unwrap();
-        let events = drain_until_finished(&receiver);
-
-        assert_eq!(events[0].method, "event.run.started");
-        let output = events
-            .iter()
-            .find(|event| event.method == "event.run.output")
-            .expect("evento de output");
-        let params = output.params.as_ref().unwrap();
-        assert_eq!(params["line"], "ola");
-        let finished = events.last().unwrap().params.as_ref().unwrap();
-        assert_eq!(finished["success"], true);
-        assert_eq!(finished["exitCode"], 0);
-        assert!(!manager.is_running());
     }
 
     /// O catalogo que a UI recebe e' a decisao do `run.script`: toda extensao
@@ -484,49 +213,6 @@ mod tests {
             "bash -- 'scripts/check it'\\''s.sh'"
         );
         assert_eq!(script_interpreter(&root.join("script.py")), None);
-    }
-
-    #[test]
-    fn stdin_reaches_the_child_process() {
-        let (sender, receiver) = mpsc::channel();
-        let mut manager = RunManager::new(sender);
-        let root = temp_root("stdin");
-
-        manager
-            .start(&root, "read nome && printf 'oi %s\\n' \"$nome\"")
-            .unwrap();
-        manager.write_stdin("kinein\n").unwrap();
-        let events = drain_until_finished(&receiver);
-
-        let output = events
-            .iter()
-            .find(|event| event.method == "event.run.output")
-            .expect("evento de output");
-        assert_eq!(output.params.as_ref().unwrap()["line"], "oi kinein");
-    }
-
-    #[test]
-    fn second_start_is_rejected_and_stop_kills_the_child() {
-        let (sender, receiver) = mpsc::channel();
-        let mut manager = RunManager::new(sender);
-        let root = temp_root("stop");
-
-        manager.start(&root, "sleep 30").unwrap();
-        assert!(matches!(
-            manager.start(&root, "true"),
-            Err(RunError::AlreadyRunning)
-        ));
-
-        manager.stop().unwrap();
-        let events = drain_until_finished(&receiver);
-        let finished = events.last().unwrap().params.as_ref().unwrap();
-        assert_eq!(finished["success"], false);
-        assert!(!manager.is_running());
-        assert!(matches!(manager.stop(), Err(RunError::NotRunning)));
-        assert!(matches!(
-            manager.write_stdin("x\n"),
-            Err(RunError::NotRunning)
-        ));
     }
 
     #[test]

@@ -8,6 +8,9 @@ Rectangle {
     property bool open: false
     property string activeTab: "logs"
     property int problemCount: 0
+    property string testsBadge: ""
+    property bool testsOk: true
+    property int jobsRunning: 0
     property var buildOutputModel
     property var jobsModel
     // O painel de testes recebe o DONO (JobsController), nao copias: a arvore,
@@ -19,7 +22,6 @@ Rectangle {
     property var terminalRender: ({})
     property bool terminalActive: false
     property bool workspaceAvailable: false
-    property var runModel
     property bool running: false
     // O dominio de debug entra como CONTROLLER, nao como 7 escalares e 10
     // sinais de passagem. Mesmo padrao do ShellHeaderHost e do ShellEditorHost:
@@ -37,10 +39,10 @@ Rectangle {
     property var gitBranchesModel
     property bool gitBranchMenuVisible: false
     property bool gitRemoteOperationRunning: false
-    property string terminalSession: "shell"
     // D2.3: abas de terminal.
     property var terminalsModel: null
     property string activeTerminalId: ""
+    property string runTerminalId: ""
     property var searchModel
     property bool searchCaseSensitive: false
     property bool searching: false
@@ -53,8 +55,7 @@ Rectangle {
     property var toolsList
 
     signal tabRequested(string tab)
-    signal terminalSessionRequested(string session)
-    signal clearSessionRequested()
+    signal hideRequested()
     signal refreshToolsRequested()
     signal problemOpenRequested(string file, int line, int column)
     signal problemNextStepRequested(string kind, string target, string file, int line, int column)
@@ -66,7 +67,6 @@ Rectangle {
     signal terminalSelectRequested(string id)
     signal terminalNewRequested()
     signal terminalCloseTabRequested(string id)
-    signal runInputSubmitted(string text)
     signal gitStageToggleRequested(int index)
     signal gitDiffRequested(string absPath)
     signal gitDiscardRequested(int index)
@@ -105,19 +105,11 @@ Rectangle {
     }
 
     function focusTerminalInput() {
-        if (root.terminalSession === "run") {
-            runView.focusInput();
-        } else {
-            terminalView.focusInput();
-        }
+        terminalView.focusInput();
     }
 
     function clearTerminalInput() {
         terminalView.clearInput();
-    }
-
-    function clearRunInput() {
-        runView.clearInput();
     }
 
     BottomTabBar {
@@ -125,13 +117,18 @@ Rectangle {
 
         anchors.top: parent.top
         anchors.left: parent.left
+        anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
         activeTab: root.activeTab
         problemCount: root.problemCount
+        testsBadge: root.testsBadge
+        testsOk: root.testsOk
+        jobsRunning: root.jobsRunning
         processRunning: root.running
         onTabRequested: function(tab) {
             root.tabRequested(tab);
         }
+        onHideRequested: root.hideRequested()
         onRefreshToolsRequested: root.refreshToolsRequested()
     }
 
@@ -192,13 +189,11 @@ Rectangle {
         visible: root.activeTab === "terminal"
         sessionsModel: root.terminalsModel
         activeTerminalId: root.activeTerminalId
-        terminalSession: root.terminalSession
+        runTerminalId: root.runTerminalId
         running: root.running
         onSelectRequested: function(id) { root.terminalSelectRequested(id); }
         onCloseRequested: function(id) { root.terminalCloseTabRequested(id); }
         onNewRequested: root.terminalNewRequested()
-        onSessionRequested: function(s) { root.terminalSessionRequested(s); }
-        onClearRequested: root.clearSessionRequested()
     }
 
     TerminalPanel {
@@ -209,7 +204,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
-        visible: root.activeTab === "terminal" && root.terminalSession === "shell"
+        visible: root.activeTab === "terminal"
         render: root.terminalRender
         terminalActive: root.terminalActive
         workspaceAvailable: root.workspaceAvailable
@@ -225,22 +220,6 @@ Rectangle {
         }
         onWheelRequested: function(col, row, lines, modifiers) {
             root.terminalWheelRequested(col, row, lines, modifiers);
-        }
-    }
-
-    RunPanel {
-        id: runView
-
-        anchors.top: sessionRow.bottom
-        anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: Theme.spacingSmall
-        visible: root.activeTab === "terminal" && root.terminalSession === "run"
-        outputModel: root.runModel
-        running: root.running
-        onInputSubmitted: function(text) {
-            root.runInputSubmitted(text);
         }
     }
 

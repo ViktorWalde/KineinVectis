@@ -124,7 +124,7 @@ resposta="$(
         printf '{"jsonrpc":"2.0","id":21,"method":"quality.run","params":{"buildSystem":"python"}}\n'
         sleep 3
         # Fatia 3: "Executar" num .py roda com o interpretador DO PROJETO (o
-        # .venv que nasceu acima) e a saida do programa chega por event.run.output;
+        # .venv que nasceu acima) e a saida do programa chega no terminal da execucao;
         # test.run de Python roda o pytest no mesmo interpretador.
         printf '{"jsonrpc":"2.0","id":22,"method":"run.script","params":{"path":"%s/tools/gera.py"}}\n' "$raiz"
         sleep 2
@@ -255,10 +255,12 @@ fi
 # python3 do sistema).
 if command -v python3 >/dev/null 2>&1; then
     verifica 22 "run.script de um .py (o interpretador do projeto, o arquivo relativo)" "'tools/gera.py'"
-    if printf '%s\n' "$resposta" | grep -q '"event.run.output".*gera_tabela \[0, 1, 2\]'; then
-        echo "  ok run.script de um .py (a saida do programa chegou por event.run.output)"
+    # A execucao e' uma sessao de terminal (2026-09-18): a saida do programa
+    # chega no render dela, como spans de texto.
+    if printf '%s\n' "$resposta" | grep -q '"event.terminal.render".*gera_tabela \[0, 1, 2\]'; then
+        echo "  ok run.script de um .py (a saida do programa chegou no terminal da execucao)"
     else
-        echo "  ✗ run.script de um .py: a saida do gera.py nao chegou como event.run.output" >&2
+        echo "  ✗ run.script de um .py: a saida do gera.py nao chegou no event.terminal.render" >&2
         falhou=1
     fi
     verifica 23 "test.run de Python (aceito como job)" '"jobId"'

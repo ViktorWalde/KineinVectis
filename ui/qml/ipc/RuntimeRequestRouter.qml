@@ -57,10 +57,6 @@ Item {
             root.coreClient.runStop();
         }
 
-        function onRunStdinRequested(data) {
-            root.coreClient.runStdin(data);
-        }
-
     }
 
     // Os sinais de configuracao salva vivem no RunConfigController desde que

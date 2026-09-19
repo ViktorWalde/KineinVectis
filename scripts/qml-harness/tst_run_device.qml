@@ -50,7 +50,7 @@ Item {
         // (o core recusa command + device).
         root.pedidos = [];
         runtime.startRun("python tools/gera.py");
-        runtime.submitRunInput("echo oi");
+        runtime.startRun("echo oi");
         if (root.pedidos.join(",") !== "start:python tools/gera.py:,start:echo oi:") failures += 4;
 
         // A escolha e' de quem a fez: trocar/desfazer no painel chega aqui
@@ -74,14 +74,33 @@ Item {
         runtime.startRun("");
         if (root.pedidos.length !== 0) failures += 16;
 
-        // A recusa do core ao run.script aparece na sessao de execucao, como
-        // a do run.start — e' a aba que o gesto acabou de abrir.
+        // A recusa do core ao run.script vira a mensagem da ultima execucao
+        // (a aba Terminal abre para mostra-la); outro dominio nao mexe nela.
         runtime.workspaceRoot = "/tmp/workspace";
         runtime.handleRequestFailed("run.script", "projeto MicroPython: o mpremote nao esta' nesta maquina");
-        if (runtime.runModel.count !== 1
-                || runtime.runModel.get(0).kind !== "stderr") failures += 32;
+        if (runtime.lastRunMessage.indexOf("mpremote") < 0) failures += 32;
         runtime.handleRequestFailed("git.status", "outro dominio");
-        if (runtime.runModel.count !== 1) failures += 64;
+        if (runtime.lastRunMessage.indexOf("mpremote") < 0) failures += 64;
+
+        // A execucao e' uma ABA DE TERMINAL (2026-09-18): o core devolve o id
+        // e a aba nasce com o nome do comando; ao fechar, o desfecho fica dito.
+        runtime.handleRunStarted("cargo run --release", "t7");
+        if (runtime.runTerminalId !== "t7" || runtime.activeTerminalId !== "t7"
+                || runtime.terminalsModel.count !== 1
+                || runtime.terminalsModel.get(0).title !== "▶ cargo run --release") failures += 128;
+        if (runtime.runTabTitle("/home/x/.venv/bin/python 'tools/gera.py'") !== "▶ python 'tools/gera.py'") failures += 256;
+        runtime.handleRunFinished(false, 101);
+        if (runtime.lastRunMessage.indexOf("101") < 0) failures += 512;
+        // A sessao fechou: a aba FICA (o autor le a saida), com o desfecho
+        // no nome; fechar a aba depois e' local (o core nao tem mais a sessao).
+        runtime.handleTerminalClosed("t7", 101);
+        if (runtime.terminalsModel.count !== 1
+                || runtime.terminalsModel.get(0).title !== "▶ cargo run --release ✗ 101"
+                || !runtime.isFinishedRun("t7")) failures += 1024;
+        runtime.closeTerminal("t7");
+        if (runtime.terminalsModel.count !== 0 || runtime.isFinishedRun("t7")) failures += 2048;
+        runtime.handleRunStarted("cargo run", "");
+        if (runtime.terminalsModel.count !== 0) failures += 4096;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

@@ -43,7 +43,6 @@ Item {
         gitController.clear();
         diagnosticsController.clear();
         bottomPanelHost.clearSearchInput();
-        bottomPanelHost.clearRunInput();
         bottomPanelHost.clearTerminalInput();
     }
 }

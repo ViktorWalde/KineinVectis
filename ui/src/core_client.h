@@ -308,7 +308,6 @@ public:
                                     bool caseSensitive);
     Q_INVOKABLE void runStart(const QString& command, const QString& device = QString());
     Q_INVOKABLE void runScript(const QString& path, const QString& device = QString());
-    Q_INVOKABLE void runStdin(const QString& data);
     Q_INVOKABLE void runStop();
     // D2.3 (DocsPublic/roadmaps/24): multi-terminal — todo comando leva o id da sessão.
     Q_INVOKABLE void terminalOpen();
@@ -525,8 +524,10 @@ signals:
     void searchResults(const QVariantList& matches, bool truncated);
     void filesReplaced(const QStringList& files, int replacements);
     void runningChanged();
-    void runStarted(const QString& command);
-    void runOutput(const QString& line, const QString& stream);
+    /// A execucao abriu numa ABA DE TERMINAL (0.125.0): `terminalId` e' a
+    /// sessao — a saida chega por `terminalRendered`, como as outras.
+    void runStarted(const QString& command, const QString& terminalId);
+    /// A sessao da execucao fechou (`event.terminal.closed` com o id dela).
     void runFinished(bool success, int exitCode);
     void debuggingChanged();
     void debugStarted(const QString& program, bool attached);
@@ -597,6 +598,7 @@ private:
     bool dispatchDataSourceResult(const QString& method, const QJsonObject& result);
     bool dispatchGrafanaResult(const QString& method, const QJsonObject& result);
     bool dispatchProbeResult(const QString& method, const QJsonObject& result);
+    bool dispatchRunResult(const QString& method, const QJsonObject& result);
     bool dispatchBuildSizeResult(const QString& method, const QJsonObject& result);
     bool dispatchSerialResult(const QString& method, const QJsonObject& result);
     bool dispatchContainerResult(const QString& method, const QJsonObject& result);
@@ -655,6 +657,8 @@ private:
     // D2.3: terminalActive vira "existe ALGUMA sessão viva" — com várias abas
     // um `closed` não pode mais zerar o estado global.
     QSet<QString> m_terminalIds;
+    /// A sessao de terminal da execucao em curso (`run.start`/`run.script`).
+    QString m_runTerminalId;
     bool m_scanningEnvironment = false;
     QString m_buildJobId;
     QString m_testJobId;

@@ -95,6 +95,55 @@ class Core:
             raise RuntimeError(f"{metodo}: {msg['error']}")
         return msg.get("result") or {}
 
+    @staticmethod
+    def _texto_do_render(params: dict) -> str:
+        """O texto de um `event.terminal.render`, linhas desenroladas (uma
+        linha logica mais larga que o grid continua na seguinte)."""
+        cols = int(params.get("cols") or 80)
+        linhas: list[str] = []
+        continua = False
+        for row in params.get("lines") or []:
+            bruto = "".join(s.get("text", "") for s in row)
+            if continua and linhas:
+                linhas[-1] += bruto.rstrip()
+            else:
+                linhas.append(bruto.rstrip())
+            continua = len(bruto) >= cols and not bruto.endswith(" ")
+        return "\n".join(linhas).rstrip()
+
+    def texto_da_execucao(self, terminal_id: str, timeout: float = 15.0) -> tuple[str, int | None]:
+        """O que uma execucao (uma sessao de terminal desde 2026-09-18) mostrou
+        ate' fechar: o texto do ULTIMO render da sessao e o `exitCode`."""
+        fim = time.monotonic() + timeout
+        texto = ""
+        while time.monotonic() < fim:
+            fechado = None
+            restantes = []
+            for msg in self.eventos:
+                params = msg.get("params") or {}
+                if params.get("id") == terminal_id and msg["method"] == "event.terminal.render":
+                    texto = self._texto_do_render(params)
+                elif params.get("id") == terminal_id and msg["method"] == "event.terminal.closed":
+                    fechado = params
+                else:
+                    restantes.append(msg)
+            self.eventos = restantes
+            if fechado is not None:
+                prazo = time.monotonic() + 0.4
+                while time.monotonic() < prazo:
+                    self._bombear(0.05)
+                restantes = []
+                for msg in self.eventos:
+                    params = msg.get("params") or {}
+                    if params.get("id") == terminal_id and msg["method"] == "event.terminal.render":
+                        texto = self._texto_do_render(params)
+                    else:
+                        restantes.append(msg)
+                self.eventos = restantes
+                return texto, fechado.get("exitCode")
+            self._bombear(0.1)
+        raise RuntimeError(f"a execucao {terminal_id} nao fechou em {timeout}s; visto: {texto!r}")
+
     def evento(self, nome: str, timeout: float = 30.0, onde=None) -> dict:
         fim = time.monotonic() + timeout
         while True:

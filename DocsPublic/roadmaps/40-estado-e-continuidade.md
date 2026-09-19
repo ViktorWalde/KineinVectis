@@ -79,9 +79,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.124.0
-testes      840 Rust aprovados; 52 harnesses QML (medicao de 2026-09-18, §7.66)
-metodos     162 IPC roteados, 58 eventos (datasource.discover/create e event.datasource.created
+protocolo   0.125.0
+testes      837 Rust aprovados; 52 harnesses QML (medicao de 2026-09-18, §7.68)
+metodos     161 IPC roteados, 55 eventos (run.stdin e event.run.* sairam em 0.125.0;
+            datasource.discover/create e event.datasource.created
             em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
             em 2026-09-18; serial.identify, runConfig.flashProposal,
@@ -684,8 +685,8 @@ lista de pendências parecer maior ou menor do que é.
 #### 4.2.1 O que está pronto (medido em 2026-09-18, noite)
 
 ```text
-protocolo    0.124.0 · 162 metodos IPC · 58 eventos · 36 dominios (todos no arquitetura/03)
-testes       840 Rust · 52 harnesses QML · 24 verificacoes no gate, todas verdes
+protocolo    0.125.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
+testes       837 Rust · 52 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -4441,3 +4442,67 @@ ganhou a regra**: `anchors.<lado>Margin` num bloco sem `anchors.<lado>`
 Lição para a lista da §4.2.4: "o que os gates não cobrem" tinha "telas
 que carregam depois do primeiro frame" — este é o caso concreto; a regra
 estática fecha ESTA forma (margem órfã), não todas.
+
+### 7.68 A execução é uma aba de terminal; a "Execução" saiu — 2026-09-18 (noite), protocolo 0.125.0
+
+**O autor, no teste:** "a aba 'Execução' dentro de 'Terminal' não faz
+sentido: já temos o terminal integrado, não precisamos de mais nada para
+executar, e já temos os botões de atalho no canto superior direito."
+Estava certo pelos dois lados: a "Execução" era um executor por pipes,
+sem TTY (o próprio `run.rs` dizia "this is NOT a full terminal"), com um
+campo de stdin próprio e um "limpar" próprio — um segundo terminal pior,
+ao lado do bom.
+
+**Core (0.125.0).** `run.start`/`run.script` seguem resolvendo O QUE rodar
+(configuração ativa, lançador padrão por tipo, Python/MicroPython com a
+porta) e abrem o comando numa sessão de terminal (`sh -lc`, ou argv
+direto), como `container.open`/`serial.monitor` já faziam; a resposta traz
+`terminalId`. A saída é `event.terminal.render`; o fim,
+`event.terminal.closed { exitCode }`. `run.stop` fecha a última execução.
+Saíram `RunManager`, `run.stdin`, `event.run.*` (−1 método, −3 eventos).
+Fechar o workspace fecha tudo. Os testes que liam `event.run.output` (run,
+flash, frameworks, MicroPython) passaram a ler o render da sessão por um
+helper comum (`tests/mod.rs::terminal_run_until_closed`, que desenrola
+linhas mais largas que as 80 colunas); os gates `verificar-exercitacao` e
+`verificar_micropython_porta` idem.
+
+**UI.** O ▶ abre uma aba `▶ cargo run` (o nome é o comando; bolinha verde
+enquanto roda); ao terminar **a aba fica**, com `✓` ou `✗ 101` no nome,
+para o autor ler — fechá-la depois é local. Saíram `RunPanel`, o chip
+"Execução", o "limpar", `run.stdin` da ponte e do menu. De quebra, dois
+defeitos vistos na foto: um gesto abria **dois** terminais (o painel e o
+controller pediam cada um o seu — agora o dono é só o `RuntimeController`,
+e clicar na aba Terminal passa por ele); e a limpeza de abas por
+`terminalActive=false` (feita para o crash do core) apagava a aba da
+execução recém-terminada — agora só as sessões vivas saem.
+
+**Medido:** 837 testes Rust (−3: os do `RunManager`); 52 harnesses
+(`tst_run_device` reescrito: aba, título, desfecho, fechar local); 161
+métodos, 55 eventos; gates QML/fiação/arquitetura/atalhos/docs verdes;
+python-debug e exercitação verdes com o contrato novo; foto 15e (a aba
+`▶ cargo run ✗ 101` com o erro real do cargo em vermelho). Manual §5
+reescrito. **Não feito, dito:** a HUD do painel de baixo (abas com
+contagem, densidade) é a fatia seguinte; o Run widget da barra continua
+igual.
+
+### 7.69 O painel de baixo: a faixa de abas na linguagem das F1–F8 — 2026-09-18 (noite)
+
+Na mesma passada da §7.68 (o autor: "essa parte da IDE deve ter a UI/HUD
+reformulada"). Antes (foto 15c): dez chips iguais, cada um com borda,
+texto 10 px em negrito, só Problemas com contagem, "Execução" e "limpar"
+soltos abaixo. Depois (foto 15f): chips **sem borda**, a ativa como
+pílula (`surfaceSelected`, texto primário DemiBold), as outras em texto
+secundário; a **contagem de cada painel** ao lado do nome, só quando há o
+que contar — Problemas `N` (vermelho), Testes `passou/total` (verde ou
+vermelho; `JobsController.testsPassed/testsFailed/testsBadge`, provado no
+`tst_tests_output`), Jobs `n` em curso (`ActiveJobController.
+runningCount`), a bolinha do Terminal enquanto roda; a **ordem do uso
+diário** (Terminal · Build · Problemas · Testes · Jobs · Debug · Git ·
+Busca · Ferramentas · IDE); o **×** à direita esconde o painel
+(`hideRequested` → `showBottomPanel=false`). A regra do que cada aba
+mostra mora numa função só (`BottomTabBar.badgeFor`). 24 px de altura.
+
+**Não feito, dito:** a primeira linha de cada painel (o `KvPanelHeader`
+dos painéis de ambiente) não entrou nos painéis de baixo — são densos e
+a linha custaria altura; fica para quando o autor vir a faixa nova. O Git
+é a fatia seguinte (HUD própria).

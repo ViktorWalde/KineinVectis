@@ -1,6 +1,6 @@
 //! Habilitacao dos servicos externos e configuracao dos servidores LSP do Core.
 
-use crate::{Core, dap, jobs, lsp, run, terminal};
+use crate::{Core, dap, jobs, lsp, terminal};
 
 impl Core {
     /// Enables LSP, process execution and the terminal session, pushing
@@ -12,7 +12,6 @@ impl Core {
     /// unavailable.
     pub fn enable_lsp(&mut self, events: lsp::EventSender) {
         self.lsp = Some(lsp::LspManager::new(events.clone()));
-        self.run = Some(run::RunManager::new(events.clone()));
         self.debug = Some(dap::DebugManager::new(events.clone()));
         self.jobs = Some(jobs::JobManager::new(events.clone()));
         self.terminal = Some(terminal::TerminalManager::new(events.clone()));

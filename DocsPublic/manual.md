@@ -349,9 +349,9 @@ com `--coverage`, e a IDE não muda o seu build por conta própria.
 
 **Scripts do projeto:** arquivos `.sh`, `.bash`, `.zsh` e `.py` mostram um
 botão de executar ao passar o mouse na árvore. A mesma ação fica no clique
-direito como **Executar script** (e **Depurar**, num `.py`). A saída abre na
-sessão **Execução** do Terminal e pode ser interrompida pelo controle normal de
-Run. Só arquivos dentro do workspace são aceitos; não é necessário abrir um
+direito como **Executar script** (e **Depurar**, num `.py`). A saída abre
+numa **aba do Terminal** com o nome do comando (`▶ bash -- 'x.sh'`) e pode
+ser interrompida pelo controle normal de Run (ou pelo × da aba). Só arquivos dentro do workspace são aceitos; não é necessário abrir um
 terminal e digitar o caminho. O que a árvore aceita como executável é o core
 quem diz — a lista não mora na tela.
 
@@ -467,8 +467,8 @@ com mudanças do worktree. Metadados `.kinein` nunca entram no stash.
 
 ## 5. Terminal (shell e execução)
 
-A aba **Terminal** tem várias sessões de shell, alternáveis pelos chips no
-topo, além da sessão separada **Execução**:
+A aba **Terminal** tem várias sessões, alternáveis pelos chips no topo —
+shells e execuções, todas terminais de verdade:
 
 - **Terminal 1, Terminal 2, …**: shells completos e independentes em
   **terminais de verdade** (PTY real, `TERM=xterm-256color`), abertos na raiz
@@ -486,9 +486,13 @@ topo, além da sessão separada **Execução**:
   vivo e coalesce movimentos rápidos. Ao digitar, o terminal retorna
   imediatamente ao prompt atual; rolar manualmente para cima preserva a leitura
   do histórico até o usuário voltar ao fundo ou começar um novo comando.
-- **Execução**: o processo do seu projeto (`cargo run` ou o executável do
-  CMake), com saída ao vivo e envio de entrada (stdin) pelo campo de baixo —
-  digitar um comando ali com nada rodando executa esse comando.
+- **▶ `<comando>`**: a execução do seu projeto (`cargo run`, o executável do
+  CMake, o `main.py` do interpretador do projeto) abre numa aba própria, um
+  PTY como os shells — stdin, cores e programas de tela cheia funcionam;
+  a bolinha verde acompanha enquanto roda. Quando termina, **a aba fica**,
+  com o desfecho no nome (`✓` ou `✗ 101`), para você ler a saída; o × a
+  fecha. (Até 2026-09-18 havia uma sessão "Execução" separada, por pipes,
+  sem TTY — saiu: o terminal integrado já faz tudo o que ela fazia.)
 
 **Configurações de execução:** na barra superior há um seletor (começa em
 "Automático" — o menu abre por cima de tudo e fecha clicando fora). "Nova configuração..." salva um comando com nome (ex.:
@@ -498,12 +502,13 @@ projeto.
 
 | Atalho | Ação |
 | --- | --- |
-| `Shift+F10` ou `Ctrl+Alt+R` | Executa o projeto — abre a aba Terminal já na sessão **Execução** |
-| `Ctrl+F2` ou `Ctrl+Alt+X` | Para o processo em execução |
+| `Shift+F10` ou `Ctrl+Alt+R` | Executa o projeto — abre uma aba **▶ comando** no Terminal |
+| `Ctrl+F2` ou `Ctrl+Alt+X` | Fecha a aba da execução em curso (mata o processo) |
 | `Alt+F12` ou ``Ctrl+` `` | Abre a aba Terminal; cria o primeiro shell se necessário |
 
-Enquanto um processo estiver rodando, a aba mostra **Terminal ●**. O botão
-**limpar** zera a saída da sessão ativa (só dela).
+Enquanto um processo estiver rodando, a aba mostra **Terminal ●** e o chip
+da execução, a bolinha. (O botão **limpar** saiu junto com a sessão
+"Execução": num terminal de verdade, `clear` ou `Ctrl+L`.)
 
 ## 6. Usar uma CLI de IA (Claude, Codex...)
 
@@ -1041,7 +1046,7 @@ IDE, e quem aperta Enter é você.
 | Debug | `F8` ou `Ctrl+Alt+N` | Step over |
 | Debug | `F7` ou `Ctrl+Alt+I` | Step into |
 | Debug | `Shift+F8` ou `Ctrl+Alt+U` | Step out |
-| Terminal | `Shift+F10` ou `Ctrl+Alt+R` | Executar projeto (sessão Execução) |
+| Terminal | `Shift+F10` ou `Ctrl+Alt+R` | Executar projeto (aba ▶ no Terminal) |
 | Terminal | `Ctrl+F2` ou `Ctrl+Alt+X` | Parar execução |
 | Terminal | `Alt+F12` ou ``Ctrl+` `` | Terminal integrado (sessão Shell) |
 | Ambiente | `Ctrl+Alt+K` | Bibliotecas |

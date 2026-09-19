@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **0.125.0 (2026-09-18, noite) — a execução é uma aba de terminal.**
+> `run.start`/`run.script` → `{ command, terminalId }`: o comando abre num
+> PTY (`sh -lc`, ou argv direto) e a saída chega por `event.terminal.render`
+> dessa sessão, o fim por `event.terminal.closed { exitCode }`. Saíram
+> `run.stdin` e `event.run.started/output/finished`; `run.stop` fecha a
+> última execução. Decisão do autor no primeiro teste da Etapa 2: "já
+> temos o terminal integrado". Ver "Execução".
+>
 > **0.124.0 (2026-09-18, noite) — o banco descobre e cria (pedido do autor no
 > teste da Etapa 2: "a maior parte aparentou ser só visual").**
 > `datasource.discover {}` → `{ candidates: [{ kind: localServer | container
@@ -1060,12 +1068,20 @@ projeto, com a mesma política de confinamento/ignores e limites da busca:
   — só a raiz ilegível é erro. Travado pelo teste
   `replace_touches_exactly_the_files_search_reports`.
 
-### Execução (`run.start` / `run.script` / `run.stdin` / `run.stop`)
+### Execução (`run.start` / `run.script` / `run.stop`)
 
-Implementado no protocolo `0.12.0`. Requer workspace aberto. O core executa
-um comando via `sh -c` na raiz do workspace SEM bloquear o loop de IPC: a
-saída chega como notificações assíncronas (mesmo canal dos eventos LSP) e o
-processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
+Implementado no protocolo `0.12.0`; **desde `0.125.0` (2026-09-18) a
+execução é uma SESSÃO DE TERMINAL** — decisão do autor no primeiro teste
+da IDE polida: "já temos o terminal integrado, não precisamos de mais nada
+para executar". `run.start`/`run.script` continuam a resolver O QUE rodar
+(a lógica abaixo é a mesma) e abrem o comando num PTY na raiz do
+workspace (`sh -lc <command>` para o `start`; argv direto para o
+`script`), como o `container.open` e o `serial.monitor` já faziam. A
+resposta ganha `terminalId`; a saída chega por `event.terminal.render`
+dessa sessão e o fim por `event.terminal.closed { id, exitCode }` — stdin
+é `terminal.input`, cores e programas de tela cheia funcionam. Saíram
+`run.stdin` e os três `event.run.*` (não há mais processo por pipes).
+Requer workspace aberto.
 
 - `run.capabilities {}` → `{ runnable: [ext], debuggable: [ext] }`
   (`0.107.0`). **Não** requer workspace: é o mapa estático do que
@@ -1076,7 +1092,7 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   uma lista escrita à mão em QML divergiu da do core por construção (o
   defeito que o `format.capabilities` corrigiu em 0.61.0 voltou a aparecer
   em dois arquivos da árvore, e este método o fecha).
-- `run.start { command?, device? }` → `{ command }`. Sem `command`, o core deriva o
+- `run.start { command?, device? }` → `{ command, terminalId }`. Sem `command`, o core deriva o
   padrão do tipo de projeto: `cargo run` para Rust/Cargo; para CMake, o
   único executável em `.kinein/build` (erro claro se não houver ou houver
   mais de um); **para Python (`0.100.0`, 2026-09-13)**, o ponto de entrada
@@ -1099,7 +1115,7 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   pelo autor: vence o lançador padrão e tampouco recebe a porta; o `command`
   ecoado diz o que rodou. Fora de MicroPython o campo não tem efeito. Vazio
   ou só espaço é `INVALID_PARAMS` (ver `run.script`).
-- `run.script { path, device? }` → `{ command }` (protocolo `0.55.0`).
+- `run.script { path, device? }` → `{ command, terminalId }` (protocolo `0.55.0`).
   Aceita arquivo regular `.sh`, `.bash`, `.zsh` ou (`0.100.0`) `.py` dentro
   do workspace. O core canonicaliza/confina o caminho e chama `bash`/`zsh` com
   argv explícito (`--`, caminho), sem interpolação por `sh -c`; nomes com
@@ -1121,22 +1137,15 @@ processo aceita stdin e cancelamento enquanto roda. Um processo por vez.
   nunca o Python do desktop, que não tem os pinos de `import machine`. O
   mesmo vale para o `run.start` sem comando (`main.py` na placa, mesmo num
   workspace sem `pyproject.toml`); um pacote com `__main__.py` não roda com
-  `-m` na placa e o erro o diz. Reutiliza os mesmos eventos e a mesma sessão
-  única de `run.start`; extensão inválida é `INVALID_PARAMS`.
-- `run.stdin { data }` → `{ status: "ok" }`. Encaminha `data` cru ao stdin
-  do processo (a UI acrescenta o `\n`).
-- `run.stop {}` → `{ status: "ok" }`. Mata o processo; o término é
-  reportado pelo evento `finished`.
-- Fechar o workspace mata o processo em execução automaticamente.
+  `-m` na placa e o erro o diz. Extensão inválida é `INVALID_PARAMS`.
+- `run.stop {}` → `{ status: "ok" }`. Fecha a sessão da ÚLTIMA execução
+  aberta; sem uma, `INVALID_REQUEST`. (Fechar a aba pela UI é
+  `terminal.close`, como qualquer outra.)
+- Fechar o workspace fecha todas as sessões, a da execução inclusa.
 
-```text
-event.run.started   { "command": "cargo run" }
-event.run.output    { "stream": "stdout|stderr", "line": "..." }
-event.run.finished  { "success": bool, "exitCode": int|null }
-```
-
-OBS: `run.*` não tem TTY (pipes simples) — é o executor do botão Run. Para
-shell interativo com PTY, ver `terminal.*` abaixo.
+A UI (`RuntimeController`) dá à aba o nome do comando (`▶ cargo run`) e,
+quando a sessão fecha, **mantém a aba** com o desfecho no nome (`✓` ou
+`✗ <código>`) para o autor ler a saída; fechá-la depois é só local.
 
 ### Terminal (`terminal.open` / `terminal.input` / `terminal.resize` / `terminal.scroll` / `terminal.mouse` / `terminal.close`)
 
@@ -2914,7 +2923,6 @@ quality.run
 run.capabilities
 run.script
 run.start
-run.stdin
 run.stop
 
 runConfig.delete
@@ -3033,10 +3041,6 @@ event.quality.diagnostic
 event.quality.finished
 event.quality.output                <- so por format!
 event.quality.started               <- so por format!
-
-event.run.finished
-event.run.output
-event.run.started
 
 event.serial.identified
 

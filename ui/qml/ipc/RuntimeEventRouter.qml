@@ -21,19 +21,15 @@ Item {
         }
 
         function onTerminalClosed(id, exitCode) {
-            root.runtimeController.handleTerminalClosed(id);
+            root.runtimeController.handleTerminalClosed(id, exitCode);
         }
 
         function onRunConfigsResolved(configs, activeId) {
             root.runConfigController.handleRunConfigs(configs, activeId);
         }
 
-        function onRunStarted(command) {
-            root.runtimeController.handleRunStarted(command);
-        }
-
-        function onRunOutput(line, stream) {
-            root.runtimeController.handleRunOutput(line, stream);
+        function onRunStarted(command, terminalId) {
+            root.runtimeController.handleRunStarted(command, terminalId);
         }
 
         function onRunFinished(success, exitCode) {
@@ -44,8 +40,7 @@ Item {
         // esta' nesta maquina", porta invalida) ia so' para o log da IDE, e a
         // aba que o Executar acabou de abrir ficava muda.
         function onRequestFailed(method, message) {
-            if (method === "run.start" || method === "run.script"
-                    || method === "run.stdin" || method === "run.stop") {
+            if (method === "run.start" || method === "run.script" || method === "run.stop") {
                 root.runtimeController.handleRequestFailed(method, message);
             }
         }

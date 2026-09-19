@@ -18,6 +18,10 @@ Item {
     property bool discovering: false
     property alias jobsModel: jobItemsModel
     property string testSummary: ""
+    // O placar da ultima rodada de testes, para a aba (HUD 2026-09-18); -1 = nao rodou.
+    property int testsPassed: -1
+    property int testsFailed: 0
+    readonly property string testsBadge: testsPassed < 0 ? "" : testsPassed + "/" + (testsPassed + testsFailed)
 
     signal runBuildRequested(string buildSystem)
     signal runTestsRequested(string buildSystem)
@@ -33,13 +37,8 @@ Item {
         id: buildOutputItemsModel
     }
 
-    ListModel {
-        id: problemItemsModel
-    }
-
-    ListModel {
-        id: testItemsModel
-    }
+    ListModel { id: problemItemsModel }
+    ListModel { id: testItemsModel }
 
     // A saida BRUTA do runner (event.test.output): e' onde o pytest explica a
     // falha e onde "No module named pytest" aparece. Ate 2026-09-13 o sinal
@@ -48,13 +47,8 @@ Item {
         id: testOutputItemsModel
     }
 
-    ListModel {
-        id: discoveredItemsModel
-    }
-
-    ListModel {
-        id: jobItemsModel
-    }
+    ListModel { id: discoveredItemsModel }
+    ListModel { id: jobItemsModel }
 
     function clear() {
         buildOutputItemsModel.clear();
@@ -68,6 +62,8 @@ Item {
         discovering = false;
         jobItemsModel.clear();
         testSummary = "";
+        testsPassed = -1;
+        testsFailed = 0;
     }
 
     function startBuild(buildSystem) {
@@ -260,6 +256,8 @@ Item {
                        ? qsTr("passou: %1")
                        : qsTr("FALHOU — passou: %1")).arg(passed)
                 + qsTr("  falhou: %1  ignorado: %2").arg(failed).arg(ignored);
+        testsPassed = passed;
+        testsFailed = failed;
     }
 
     // A analise escreve no MESMO painel do build: e' o mesmo tipo de saida

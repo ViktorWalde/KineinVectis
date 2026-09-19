@@ -133,12 +133,11 @@ Item {
     function clearInput() {
     }
 
+    // Abrir a sessao e' do RuntimeController (openTerminalPanel): quando este
+    // painel tambem abria ao aparecer, um gesto criava dois terminais.
     onVisibleChanged: {
         if (!visible) {
             return;
-        }
-        if (!terminalActive && workspaceAvailable) {
-            openRequested();
         }
         panel.forceActiveFocus();
         recomputeSize();

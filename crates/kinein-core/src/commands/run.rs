@@ -8,24 +8,16 @@ pub(super) fn run_command_descriptors() -> Vec<CommandDescriptor> {
             id: "run.start".to_owned(),
             title: "Run".to_owned(),
             category: "Run".to_owned(),
-            description: "Executa o projeto ou um comando no workspace, com saida ao vivo"
+            description: "Executa o projeto ou um comando numa aba do terminal integrado"
                 .to_owned(),
             default_shortcut: Some("Shift+F10".to_owned()),
-            requires_workspace: true,
-        },
-        CommandDescriptor {
-            id: "run.stdin".to_owned(),
-            title: "Send Input".to_owned(),
-            category: "Run".to_owned(),
-            description: "Envia texto para o stdin do processo em execucao".to_owned(),
-            default_shortcut: None,
             requires_workspace: true,
         },
         CommandDescriptor {
             id: "run.stop".to_owned(),
             title: "Stop".to_owned(),
             category: "Run".to_owned(),
-            description: "Encerra o processo em execucao".to_owned(),
+            description: "Fecha a aba do terminal da execucao".to_owned(),
             default_shortcut: Some("Ctrl+F2".to_owned()),
             requires_workspace: true,
         },

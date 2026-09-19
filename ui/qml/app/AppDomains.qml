@@ -193,8 +193,7 @@ Item {
         workspaceRoot: root.coreClient.workspaceRoot
         running: root.coreClient.running
         terminalActive: root.coreClient.terminalActive
-        terminalPanelVisible: shellController.showBottomPanel
-                              && shellController.bottomTab === "terminal"
+        terminalPanelVisible: shellController.tabActive("terminal")
         // A porta escolhida no painel de Embarcados e' o `device` do Executar
         // (MicroPython na placa). Composicao, nao IPC: o controller so' le.
         serialDevice: environment.embeddedController.selectedPort
@@ -203,7 +202,6 @@ Item {
         onShowTabRequested: tab => shellController.showTab(tab)
         onFocusTerminalInputRequested: root.workspaceHost.focusTerminalInput()
         onClearTerminalInputRequested: root.workspaceHost.clearTerminalInput()
-        onClearRunInputRequested: root.workspaceHost.clearRunInput()
     }
 
     // Gravar (E4) e' configuracao de execucao: rodar agora e' o run.start de

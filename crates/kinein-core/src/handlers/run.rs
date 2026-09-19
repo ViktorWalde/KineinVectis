@@ -1,19 +1,20 @@
 //! Handlers for `run.*` requests (`impl Core`).
 //!
-//! The `run.*` router plus start/stdin/stop, driving the user process managed
-//! by `crate::run`.
+//! `run.start`/`run.script` resolvem O QUE rodar (`crate::run`) e abrem numa
+//! sessao de TERMINAL (PTY) — desde 2026-09-18 a execucao e' uma aba do
+//! terminal, nao um painel proprio; `run.stop` fecha a ultima aberta.
 
 use std::{ffi::OsStr, path::Path};
 
 use kinein_protocol::{
     JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, RunScriptParams, RunStartParams,
-    RunStartResult, RunStdinParams,
+    RunStartResult,
 };
 use serde_json::{Value, json};
 
 use crate::rpc::{
     fs_error_response, no_workspace_response, parse_params, run_error_response,
-    run_unavailable_response,
+    terminal_error_response, terminal_unavailable_response,
 };
 use crate::{Core, run};
 
@@ -29,7 +30,6 @@ impl Core {
             "run.capabilities" => Some(Self::run_capabilities_response(request_id)),
             "run.start" => Some(self.run_start_response(request_id, params)),
             "run.script" => Some(self.run_script_response(request_id, params)),
-            "run.stdin" => Some(self.run_stdin_response(request_id, params)),
             "run.stop" => Some(self.run_stop_response(request_id)),
             _ => None,
         }
@@ -96,15 +96,9 @@ impl Core {
                 ),
             );
         };
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.script");
-        };
         let command = run::script_display_command(&root, interpreter, &script);
-        let args = [OsStr::new("--"), script.as_os_str()];
-        match runner.start_program(&root, interpreter, &args, &command) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!(RunStartResult { command })),
-            Err(error) => run_error_response(request_id, &error),
-        }
+        let args = vec!["--".to_owned(), script.display().to_string()];
+        self.start_in_terminal(request_id, &root, interpreter, &args, command)
     }
 
     /// O lancador do HOST: `uv run` se o projeto e' do uv e o uv existe;
@@ -163,17 +157,20 @@ impl Core {
             Ok(launcher) => launcher,
             Err(error) => return run_error_response(request_id, &error),
         };
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.script");
-        };
         let (program, prefix) = launcher.program();
-        let mut args: Vec<&OsStr> = prefix.iter().map(std::ffi::OsString::as_os_str).collect();
-        args.push(script.as_os_str());
+        let mut args: Vec<String> = prefix
+            .iter()
+            .map(|p| p.to_string_lossy().into_owned())
+            .collect();
+        args.push(script.display().to_string());
         let command = launcher.script_display(root, script);
-        match runner.start_program(root, &program.display().to_string(), &args, &command) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!(RunStartResult { command })),
-            Err(error) => run_error_response(request_id, &error),
-        }
+        self.start_in_terminal(
+            request_id,
+            root,
+            &program.display().to_string(),
+            &args,
+            command,
+        )
     }
 
     fn run_start_response(
@@ -195,10 +192,6 @@ impl Core {
         if let Some(response) = porta_invalida(request_id.as_ref(), parsed.device.as_deref()) {
             return response;
         }
-        if self.run.is_none() {
-            return run_unavailable_response(request_id, "run.start");
-        }
-
         let root = Path::new(&workspace.root);
         let explicito = parsed.command.filter(|command| !command.trim().is_empty());
         // A porta e' parametro do LANCADOR PADRAO (mpremote); um comando
@@ -242,44 +235,51 @@ impl Core {
             }
         };
 
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.start");
-        };
-        match runner.start(root, &command) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!(RunStartResult { command })),
-            Err(error) => run_error_response(request_id, &error),
-        }
+        // Como o autor digitaria: pelo shell, com o ambiente de login.
+        let args = vec!["-lc".to_owned(), command.clone()];
+        self.start_in_terminal(request_id, root, "sh", &args, command)
     }
 
-    fn run_stdin_response(
+    /// Abre `program args` numa sessao de terminal (PTY) na raiz do workspace
+    /// e a guarda como A execucao — `run.stop` fecha esta. A saida chega por
+    /// `event.terminal.render`; o fim por `event.terminal.closed { exitCode }`.
+    fn start_in_terminal(
         &mut self,
         request_id: Option<Value>,
-        params: Option<&Value>,
+        root: &Path,
+        program: &str,
+        args: &[String],
+        command: String,
     ) -> JsonRpcResponse {
-        let parsed = match parse_params::<RunStdinParams>(
-            request_id.as_ref(),
-            params,
-            "run.stdin requer o campo data",
-        ) {
-            Ok(parsed) => parsed,
-            Err(response) => return *response,
+        let Some(session) = self.terminal.as_mut() else {
+            return terminal_unavailable_response(request_id, "run.start");
         };
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.stdin");
-        };
-        match runner.write_stdin(&parsed.data) {
-            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
-            Err(error) => run_error_response(request_id, &error),
+        match session.open_command(root, program, args) {
+            Ok(terminal_id) => {
+                self.run_terminal = Some(terminal_id.clone());
+                JsonRpcResponse::success(
+                    request_id,
+                    json!(RunStartResult {
+                        command,
+                        terminal_id: Some(terminal_id)
+                    }),
+                )
+            }
+            Err(error) => terminal_error_response(request_id, &error),
         }
     }
 
+    /// Fecha a sessao da ultima execucao. Sem uma aberta, `InvalidRequest`.
     fn run_stop_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
-        let Some(runner) = self.run.as_mut() else {
-            return run_unavailable_response(request_id, "run.stop");
+        let Some(terminal_id) = self.run_terminal.take() else {
+            return run_error_response(request_id, &run::RunError::NotRunning);
         };
-        match runner.stop() {
+        let Some(session) = self.terminal.as_mut() else {
+            return terminal_unavailable_response(request_id, "run.stop");
+        };
+        match session.close(&terminal_id) {
             Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
-            Err(error) => run_error_response(request_id, &error),
+            Err(error) => terminal_error_response(request_id, &error),
         }
     }
 }

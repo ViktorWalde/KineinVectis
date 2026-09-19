@@ -321,9 +321,8 @@ impl Core {
         request_id: Option<Value>,
     ) -> JsonRpcResponse {
         let closed = self.deactivate_workspace();
-        if let Some(runner) = self.run.as_mut() {
-            drop(runner.stop());
-        }
+        // A execucao e' uma sessao de terminal como as outras: fecha junto.
+        self.run_terminal = None;
         if let Some(session) = self.terminal.as_mut() {
             session.close_all();
         }

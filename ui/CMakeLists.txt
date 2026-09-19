@@ -193,7 +193,6 @@ set_source_files_properties(qml/panels/bottom/BuildPanel.qml PROPERTIES QT_RESOU
 set_source_files_properties(qml/panels/bottom/IdeLogPanel.qml PROPERTIES QT_RESOURCE_ALIAS IdeLogPanel.qml)
 set_source_files_properties(qml/panels/bottom/JobsPanel.qml PROPERTIES QT_RESOURCE_ALIAS JobsPanel.qml)
 set_source_files_properties(qml/panels/bottom/ProblemsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ProblemsPanel.qml)
-set_source_files_properties(qml/panels/bottom/RunPanel.qml PROPERTIES QT_RESOURCE_ALIAS RunPanel.qml)
 set_source_files_properties(qml/panels/bottom/SearchPanel.qml PROPERTIES QT_RESOURCE_ALIAS SearchPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalPanel.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalViewport.qml PROPERTIES QT_RESOURCE_ALIAS TerminalViewport.qml)
@@ -473,7 +472,6 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/IdeLogPanel.qml
         qml/panels/bottom/JobsPanel.qml
         qml/panels/bottom/ProblemsPanel.qml
-        qml/panels/bottom/RunPanel.qml
         qml/panels/bottom/SearchPanel.qml
         qml/panels/bottom/TerminalPanel.qml
         qml/panels/bottom/TerminalViewport.qml
