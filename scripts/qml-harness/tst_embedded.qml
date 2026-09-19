@@ -192,6 +192,17 @@ Item {
         if (controller.projectEmbedded) failures += 1099511627776;
         if (controller.selectedPort !== "") failures += 2251799813685248;
 
+        // E3-5: o painel em abas nasce na Placa; o veredito do cabecalho diz
+        // a placa identificada, senao o que ha' no USB, senao "nenhuma".
+        if (controller.tab !== "board") failures += 4503599627370496;
+        if (controller.boardVerdict !== "nenhuma placa") failures += 9007199254740992;
+        controller.handleSerialPorts([cp2102], "");
+        if (controller.boardVerdict.indexOf("1 porta") !== 0) failures += 18014398509481984;
+        controller.identity.identify("/dev/ttyUSB0");
+        controller.identity.handleIdentified({ device: "/dev/ttyUSB0", success: true,
+                                               identity: { chip: "ESP32-D0WD-V3" }, target: {} });
+        if (controller.boardVerdict !== "ESP32-D0WD-V3 em /dev/ttyUSB0") failures += 36028797018963968;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }

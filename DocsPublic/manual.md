@@ -771,9 +771,17 @@ que o `setup.sh` instalou — a IDE propõe a `arm-zephyr-eabi` quando há
 várias e lista as outras) ou uma pasta de toolchain, e mostra a proposta
 antes de "Aplicar proposta ao kit". Nada é gravado sem o segundo clique.
 
-### Embarcados (`Ctrl+Alt+M`)
+### Embarcados (`Ctrl+Alt+M`, ou o chip no rail)
 
-O painel de quem escreve firmware. Ele **lê**, e diz o que leu:
+O painel de quem escreve firmware, em **quatro abas** (desde a Etapa 3)
+com o veredito da placa no cabeçalho ("ESP32-D0WD-V3 em /dev/ttyUSB0",
+ou "1 porta(s) serial(is); nenhuma placa identificada ainda", ou
+"nenhuma placa"): **Placa** (portas seriais, identificar, permissões,
+sonda, arquivos na placa) · **Projeto** (o framework e o modelo, o tamanho
+do binário) · **Gravar** (o motor, a prévia, o firmware) · **Kit** (chip,
+alvo, sysroot, SVD, o depurador, instalar toolchain, importar de SDK —
+**Aplicar ao kit** no pé). Cada aba cabe sem rolar numa janela de 800 px.
+Ele **lê**, e diz o que leu:
 
 ```text
 o projeto        o framework pelos marcadores dele (ESP-IDF, Zephyr, pico-sdk,

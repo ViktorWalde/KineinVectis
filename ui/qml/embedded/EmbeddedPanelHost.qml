@@ -2,18 +2,18 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O painel de embarcados na moldura comum (KvPanelFrame, F8). E' o painel
-// com mais informacao (nove secoes): a moldura fica entre o piso e o teto
-// (decisao do autor, 2026-09-04: a altura segue o que ha' para mostrar) e
-// o que passar ROLA — antes vazava por cima do editor (foto 12c).
+// O painel de embarcados na moldura comum (KvPanelFrame, F8). Em ABAS
+// desde a E3-5 (roadmaps/44): a moldura e' fixa em 640x560 — cada aba
+// cabe sem rolar a 800 px de janela; o que passar ROLA. Antes a coluna
+// de nove secoes ia ate' 780 e passava da janela (foto de 2026-09-19).
 KvPanelFrame {
     id: root
 
     property var controller: null
     property var toolchainController: null
 
-    panelWidth: 560
-    panelHeight: Math.min(780, Math.max(560, painel.implicitHeight + 2 * Theme.spacingMedium))
+    panelWidth: 640
+    panelHeight: 560
     contentHeight: painel.implicitHeight
 
     EmbeddedPanel {

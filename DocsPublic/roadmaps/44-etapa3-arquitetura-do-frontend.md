@@ -258,6 +258,11 @@ esta página ganha o "feito" de cada uma no §7.1.
 - **E3-4** (2026-09-19): o trilho Projeto · Git · Embarcados · Banco ·
   Containers · Grafana · Ferramentas; Busca/Build/Debug saíram; ícone
   `embedded` (o chip); rótulos no modo expandido — `40` §7.83.
+- **E3-5** (2026-09-19): Embarcados em quatro abas (Placa · Projeto ·
+  Gravar · Kit) na moldura fixa 640×560, com o veredito da placa no
+  cabeçalho (`EmbeddedController.tab`/`boardVerdict`; `EmbeddedProbeView`
+  extraído) — `40` §7.84. PlatformIO já era cidadão (o `pio` em Gravar e
+  no Compilar); a aba Projeto diz o framework como antes.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

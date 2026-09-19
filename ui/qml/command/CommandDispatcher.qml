@@ -25,12 +25,16 @@ Item {
     signal openWorkspaceRequested()
     signal showTabRequested(string tab)
     // `index.symbols`: a aba Simbolos a direita (E3-2) — do shell, nao do
-    // core. `index.symbols=<texto>` (a medicao headless) ja' chega buscando.
+    // core. `<id>=<arg>` (so' a medicao headless usa): o texto da busca, a
+    // aba de um painel — a paleta nunca manda `=`.
     signal symbolsRequested(string query)
 
     visible: false
 
-    function execute(commandId) {
+    function execute(rawId) {
+        const eq = rawId.indexOf("=");
+        const arg = eq > 0 ? rawId.substring(eq + 1) : "";
+        const commandId = eq > 0 ? rawId.substring(0, eq) : rawId;
         if (commandId === "workspace.open") {
             openWorkspaceRequested();
         } else if (commandId === "workspace.close") {
@@ -52,8 +56,8 @@ Item {
             editorController.openFindReplace();
         } else if (commandId === "fs.findFiles" || commandId === "command.list") {
             searchEverywhereController.openSearchEverywhere();
-        } else if (commandId.indexOf("index.symbols") === 0) {
-            symbolsRequested(commandId.indexOf("=") > 0 ? commandId.substring(commandId.indexOf("=") + 1) : "");
+        } else if (commandId === "index.symbols") {
+            symbolsRequested(arg);
         } else if (commandId === "cargo.check") {
             showTabRequested("problems");
             coreClient.cargoCheck();
@@ -117,6 +121,7 @@ Item {
             grafanaController.open();
         } else if (commandId === "probe.list") {
             embeddedController.open();
+            if (arg !== "") embeddedController.tab = arg;
         } else if (commandId === "setup.list") {
             setupController.open();
         } else if (commandId === "container.list") {

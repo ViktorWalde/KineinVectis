@@ -4883,3 +4883,31 @@ três propriedades `*Active` saíram com os botões.
 atalhos, catraca, lógica verdes. **Foto:** `e3-4-trilho-expandido.png`
 (o trilho expandido com Embarcados aberto — que também é o ANTES da
 E3-5: o painel de Embarcados passa da janela a 800 px de altura).
+
+### 7.84 Etapa 3, E3-5 — Embarcados em abas: Placa · Projeto · Gravar · Kit — 2026-09-19
+
+O ANTES (foto `e3-4-trilho-expandido.png`): nove seções numa coluna, a
+moldura ia até 780 px e **passava da janela** a 800 px — o "Depurador do
+kit" ficava fora, o cabeçalho colava no menu. O DEPOIS, como o `44` §4
+desenhou: a moldura **fixa em 640×560**; o `KvPanelHeader` com o
+**veredito da placa** no subtítulo (`EmbeddedController.boardVerdict`: a
+placa identificada "ESP32-D0WD-V3 em /dev/ttyUSB0", senão "N porta(s)
+serial(is); nenhuma placa identificada ainda", senão a sonda, senão
+"nenhuma placa"); quatro `KvToggleChip` (`EmbeddedController.tab`:
+`board` | `project` | `flash` | `kit`) e uma coluna por aba, todas
+instanciadas (eram antes; só a visível mede). **Placa**: portas,
+identidade, permissões, a sonda (a seção saiu para `EmbeddedProbeView`,
+98 linhas — o painel ficou em 220), arquivos na placa. **Projeto**: o
+modelo e o tamanho. **Gravar**: o motor, a prévia, o firmware. **Kit**: o
+alvo, os avisos de sysroot/alvo Rust, o depurador, instalar, importar, e
+o rodapé "Aplicar ao kit" só nela. Nada de comportamento mudou: os
+mesmos componentes, os mesmos sinais — é arrumação.
+
+Para a medição, o `CommandDispatcher.execute` passou a separar
+`<id>=<arg>` para todos os comandos (antes só o `index.symbols`):
+`probe.list=kit` abre o painel naquela aba. A paleta nunca manda `=`.
+
+**Provado:** `tst_embedded` (+4: a aba nasce em `board`; o veredito nos
+três estados); gates QML/fiação/catraca verdes. **Fotos:** as quatro
+abas a 1280×800 — a Kit, a mais cheia, cabe nos 560. **Não medido:** com
+a placa do autor plugada (só ele; a IDE nunca grava nela sem pedido).

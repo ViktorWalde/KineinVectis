@@ -68,6 +68,13 @@ Item {
 
     readonly property bool probeFound: probes.length > 0
     readonly property bool portFound: ports.length > 0
+    // A aba do painel (E3-5): "board" | "project" | "flash" | "kit".
+    property string tab: "board"
+    // O veredito do cabecalho: a placa identificada, senao o que ha' no USB.
+    readonly property string boardVerdict: identityController.found
+        ? qsTr("%1 em %2").arg(identityController.identity.chip).arg(identityController.device)
+        : portFound ? qsTr("%1 porta(s) serial(is); nenhuma placa identificada ainda").arg(ports.length)
+        : probeFound ? qsTr("sonda %1, sem porta serial").arg(probes[0].name) : qsTr("nenhuma placa")
 
     // A identidade pelo canal (E5) e' dono proprio, filho deste: quem tem o
     // EmbeddedController alcanca `identity` sem propriedade de repasse.

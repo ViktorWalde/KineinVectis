@@ -81,6 +81,7 @@ set_source_files_properties(qml/ipc/GrafanaEventRouter.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/ipc/GrafanaRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaRequestRouter.qml)
 set_source_files_properties(qml/embedded/EmbeddedController.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedController.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanel.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanel.qml)
+set_source_files_properties(qml/embedded/EmbeddedProbeView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedProbeView.qml)
 set_source_files_properties(qml/embedded/EmbeddedPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedPanelHost.qml)
 set_source_files_properties(qml/embedded/EmbeddedKitField.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitField.qml)
 set_source_files_properties(qml/embedded/EmbeddedKitView.qml PROPERTIES QT_RESOURCE_ALIAS EmbeddedKitView.qml)
@@ -370,6 +371,7 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/GrafanaRequestRouter.qml
         qml/embedded/EmbeddedController.qml
         qml/embedded/EmbeddedPanel.qml
+        qml/embedded/EmbeddedProbeView.qml
         qml/embedded/EmbeddedPanelHost.qml
         qml/embedded/EmbeddedKitField.qml
         qml/embedded/EmbeddedKitView.qml
