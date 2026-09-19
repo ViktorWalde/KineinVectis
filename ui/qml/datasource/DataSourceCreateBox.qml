@@ -81,7 +81,9 @@ Item {
             }
         }
 
-        Row {
+        // Flow, nao Row: com ~400 px a coluna nao cabia os quatro chips e o
+        // "MongoDB em container" ficava cortado (o autor viu, 2026-09-19).
+        Flow {
             width: parent.width
             spacing: Theme.spacingXSmall
 

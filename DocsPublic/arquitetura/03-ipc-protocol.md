@@ -1,5 +1,15 @@
 # 03 — Protocolo IPC
 
+> **0.129.0 (2026-09-19) — remover o que o banco criou.** `datasource.
+> destroy { name, data? }`: sem `data`, só o perfil (o que `remove` faz);
+> com `data`, por motor — o arquivo SQLite (só dentro do workspace; fora,
+> fica, com `note`), o container `kinein-<name>` (`rm -f`, job High, com o
+> comando), o banco dentro de um PostgreSQL (`DROP DATABASE` pelo banco
+> `postgres` do mesmo servidor, job); MongoDB e o banco de manutenção nunca
+> — só o perfil, com `note`. Resposta `{ profiles }` na hora ou `{ jobId,
+> command }` + `event.datasource.destroyed { jobId, success, message,
+> profiles? }`. Ver `datasource.*`.
+>
 > **0.128.0 (2026-09-19) — `SettingsValues.railExpanded`** (ausente =
 > compacto): o trilho lateral com os rótulos ao lado dos ícones (o "modo
 > expandido" que a F1 prometeu); o chevron do pé alterna e a escolha vale
@@ -2844,6 +2854,7 @@ core.ping
 core.shutdown
 
 datasource.create
+datasource.destroy
 datasource.discover
 datasource.introspect
 datasource.list
@@ -3016,6 +3027,7 @@ event.cmake.finished
 event.cmake.started
 
 event.datasource.created
+event.datasource.destroyed
 event.datasource.introspected
 event.datasource.queried
 event.datasource.tested
@@ -3896,6 +3908,7 @@ Domínio da etapa 26/27 (`../roadmaps/35` §9). Oito métodos, quatro eventos.
 datasource.discover   {}                      -> { candidates: [DataSourceCandidate], containerEngine?, hint? }  (0.124.0, adiado)
 datasource.create     { kind: sqliteFile, name, path? } -> { profile }                                       (0.124.0)
                       { kind: containerServer, engine, name, port } -> { jobId, command }  + event.datasource.created
+datasource.destroy    { name, data? }         -> { profiles, note? } | { jobId, command } + event.datasource.destroyed  (0.129.0)
 datasource.list       {}                      -> { profiles: [DataSourceProfile] }
 datasource.save       { profile }             -> DataSourceWriteResult
 datasource.remove     { name }                -> DataSourceWriteResult
@@ -3912,6 +3925,7 @@ event.datasource.introspected  { jobId, schemas | collections, ... }
 event.datasource.queried       { jobId, name, success, columns: [string], rows: [[string | null]],
                                  rowCount, affected?, truncated, elapsedMs, message?, secretRequired }
 event.datasource.created       { jobId, success, profile?, message }                          (0.124.0)
+event.datasource.destroyed     { jobId, success, message, profiles? }                          (0.129.0)
 ```
 
 **Descobrir e criar (`0.124.0`).** `DataSourceCandidate { kind: localServer

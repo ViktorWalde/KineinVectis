@@ -50,6 +50,14 @@ Item {
             root.dataSourceController.discovery.handleCreated(success, profile, message);
         }
 
+        function onDataSourceDestroyResolved(profiles, immediate, jobId, command, note) {
+            root.dataSourceController.discovery.handleDestroyResolved(profiles, immediate, jobId, command, note);
+        }
+
+        function onDataSourceDestroyed(success, message, profiles) {
+            root.dataSourceController.discovery.handleDestroyed(success, message, profiles);
+        }
+
         function onRequestFailed(method, message, code) {
             root.dataSourceController.handleFailed(method, message, code);
             root.dataSourceController.discovery.handleFailed(method, message);

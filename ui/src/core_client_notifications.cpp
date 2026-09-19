@@ -44,6 +44,13 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
                               params.value(QStringLiteral("secretRequired")).toBool(false));
         return;
     }
+    if (method == QStringLiteral("event.datasource.destroyed")) {
+        emit dataSourceDestroyed(
+            params.value(QStringLiteral("success")).toBool(false),
+            params.value(QStringLiteral("message")).toString(),
+            params.value(QStringLiteral("profiles")).toArray().toVariantList());
+        return;
+    }
     if (method == QStringLiteral("event.datasource.created")) {
         emit dataSourceCreated(params.value(QStringLiteral("success")).toBool(false),
                                params.value(QStringLiteral("profile")).toObject().toVariantMap(),

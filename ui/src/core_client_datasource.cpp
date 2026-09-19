@@ -80,6 +80,15 @@ void CoreClient::dataSourceCreateServer(const QString& engine, const QString& na
                             {QStringLiteral("port"), port}});
 }
 
+void CoreClient::dataSourceDestroy(const QString& name, bool data)
+{
+    QJsonObject params{{QStringLiteral("name"), name}};
+    if (data) {
+        params.insert(QStringLiteral("data"), true);
+    }
+    sendRequest(QStringLiteral("datasource.destroy"), params);
+}
+
 void CoreClient::dataSourceQuery(const QString& name, const QString& password, const QString& sql,
                                  int maxRows, bool confirmWrite)
 {
@@ -117,6 +126,15 @@ bool CoreClient::dispatchDataSourceResult(const QString& method, const QJsonObje
             result.value(QStringLiteral("candidates")).toArray().toVariantList(),
             result.value(QStringLiteral("containerEngine")).toString(),
             result.value(QStringLiteral("hint")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("datasource.destroy")) {
+        const bool immediate = result.contains(QStringLiteral("profiles"));
+        emit dataSourceDestroyResolved(
+            result.value(QStringLiteral("profiles")).toArray().toVariantList(), immediate,
+            result.value(QStringLiteral("jobId")).toString(),
+            result.value(QStringLiteral("command")).toString(),
+            result.value(QStringLiteral("note")).toString());
         return true;
     }
     if (method == QStringLiteral("datasource.create")) {

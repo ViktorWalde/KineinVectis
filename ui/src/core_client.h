@@ -177,6 +177,8 @@ public:
     Q_INVOKABLE void dataSourceCreateSqlite(const QString& name, const QString& path);
     /// Sobe um PostgreSQL/MongoDB em container no loopback (job; baixa imagem).
     Q_INVOKABLE void dataSourceCreateServer(const QString& engine, const QString& name, int port);
+    /// Remove o perfil e, com `data`, o que ele aponta (0.129.0).
+    Q_INVOKABLE void dataSourceDestroy(const QString& name, bool data);
     // Executar o que o autor escreveu (datasource.query, 0.121.0): job; `confirmWrite`
     // e' o reconhecimento de que a instrucao escreve (o core recusa sem ele).
     Q_INVOKABLE void dataSourceQuery(const QString& name, const QString& password,
@@ -370,6 +372,11 @@ signals:
                                   const QString& command);
     /// Desfecho do servidor em container: perfil salvo ou o motivo.
     void dataSourceCreated(bool success, const QVariantMap& profile, const QString& message);
+    /// `profiles` quando foi na hora; `jobId`/`command` quando e' job; `note` o que ficou.
+    void dataSourceDestroyResolved(const QVariantList& profiles, bool immediate,
+                                   const QString& jobId, const QString& command,
+                                   const QString& note);
+    void dataSourceDestroyed(bool success, const QString& message, const QVariantList& profiles);
     void dataSourceQueried(const QVariantMap& outcome);
     /// Veredito do teste de conexao. `secretRequired` diz para PEDIR A SENHA;
     /// a UI nunca decide isso lendo `message`, que vem localizada do servidor.

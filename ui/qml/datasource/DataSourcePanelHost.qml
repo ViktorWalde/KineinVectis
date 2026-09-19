@@ -44,6 +44,10 @@ KvPanelFrame {
         createCommand: root.controller ? root.controller.discovery.createCommand : ""
         createMessage: root.controller ? root.controller.discovery.createMessage : ""
         createOk: root.controller ? root.controller.discovery.createOk : false
+        destroying: root.controller ? root.controller.discovery.destroying : false
+        destroyMessage: root.controller ? root.controller.discovery.destroyMessage : ""
+        destroyOk: root.controller ? root.controller.discovery.destroyOk : false
+        destroyNote: root.controller ? root.controller.discovery.destroyNote : ""
 
         onProfileSelected: name => root.controller.select(name)
         onCandidateSelected: index => root.controller.discovery.adopt(index)
@@ -51,11 +55,11 @@ KvPanelFrame {
         onCreateSqliteRequested: (name, path) => root.controller.discovery.createSqlite(name, path)
         onCreateServerRequested: (engine, name, port) => root.controller.discovery.createServer(engine, name, port)
         onCreateDatabaseRequested: name => root.controller.createDatabaseOnServer(name)
+        onDestroyRequested: (name, data) => root.controller.discovery.destroyProfile(name, data)
         onNewRequested: root.controller.startNew()
         onFieldEdited: (field, value) => root.controller.editDraft(field, value)
         onPasswordEdited: text => root.controller.sessionPassword = text
         onSaveRequested: root.controller.save()
-        onRemoveRequested: root.controller.remove()
         onTestRequested: root.controller.test()
         onIntrospectRequested: root.controller.introspect()
         onSqlEdited: text => root.controller.sql = text

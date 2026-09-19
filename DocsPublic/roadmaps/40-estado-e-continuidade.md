@@ -79,9 +79,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.128.0
-testes      840 Rust aprovados; 54 harnesses QML (medicao de 2026-09-19, §7.77)
-metodos     161 IPC roteados, 55 eventos (run.stdin e event.run.* sairam em 0.125.0;
+protocolo   0.129.0
+testes      843 Rust aprovados; 54 harnesses QML (medicao de 2026-09-19, §7.80)
+metodos     162 IPC roteados, 56 eventos (datasource.destroy e event.datasource.destroyed em 0.129.0;
+            run.stdin e event.run.* sairam em 0.125.0;
             datasource.discover/create e event.datasource.created
             em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
             datasource.query e event.datasource.queried
@@ -685,8 +686,8 @@ lista de pendências parecer maior ou menor do que é.
 #### 4.2.1 O que está pronto (medido em 2026-09-18, noite)
 
 ```text
-protocolo    0.128.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
-testes       840 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
+protocolo    0.129.0 · 162 metodos IPC · 56 eventos · 36 dominios (todos no arquitetura/03)
+testes       843 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened 386-479 ms em 2026-09-19 (§7.79; 318 ms na §7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -4725,3 +4726,31 @@ da F6-b; 1,4 s antes dela).
 "não feito" e resumido no §4.2.2; o que só o autor mede está no §4.2.6.
 **Próximo passo:** a sessão do autor na IDE aberta, e a decisão dele sobre
 a Etapa 3 (§4.2.5) — o `43` §9.5 tem a ordem proposta.
+
+### 7.80 Etapa 3, E3-1 — Banco: os chips cabem; remover o que foi criado — 2026-09-19, protocolo 0.129.0
+
+Os dois defeitos do teste do autor no banco. **Os chips:** a caixa "Novo
+banco" punha quatro `KvToggleChip` numa `Row` — na coluna de ~400 px o
+"MongoDB em container" ficava fora; virou `Flow` (quebram linha).
+**Remover:** `datasource.destroy { name, data }` (`arquitetura/03`): sem
+`data`, só o perfil; com `data`, o plano puro (`datasource/destroy.rs`)
+decide por motor — o arquivo SQLite some **só se estiver dentro do
+workspace** (fora, fica e a `note` diz), o container `kinein-<nome>` leva
+`rm -f` como job (o comando visível; o perfil sai quando o job termina;
+`event.datasource.destroyed`), o banco dentro de um PostgreSQL leva `DROP
+DATABASE "<banco>"` pelo banco `postgres` do mesmo servidor (não se dropa
+o banco em que se está); MongoDB e o banco de manutenção nunca — só o
+perfil, com a nota. Na tela, "Remover…" abre a caixa `DataSourceDestroyBox`
+no lugar do botão: "só o perfil" / "com os dados", com o texto do que vai
+sumir antes do clique, e o veredito depois. O `remove` antigo fica no
+protocolo (o `destroy` sem `data` é ele).
+
+**Provado:** teste de despacho (SQLite real criado e apagado; fora do
+workspace fica; o podman falso recebe `rm -f kinein-pg` e o evento traz o
+catálogo; Mongo e inexistente); 2 unitários do plano; harness
+`tst_datasource_discovery` (imediato, job, nota, falha). Um achado no
+caminho: uma função QML chamada `destroy` **é engolida pelo `destroy()` de
+todo objeto QML** — virou `destroyProfile`. **Medido:** 843 testes; 162
+métodos, 56 eventos; gates verdes. **Não feito:** o `DROP DATABASE` real e
+o `rm` real (o autor, com Podman); a foto da caixa (offscreen não seleciona
+perfil).

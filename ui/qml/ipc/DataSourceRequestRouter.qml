@@ -56,5 +56,9 @@ Item {
         function onCreateServerRequested(engine, name, port) {
             root.coreClient.dataSourceCreateServer(engine, name, port);
         }
+
+        function onDestroyRequested(name, data) {
+            root.coreClient.dataSourceDestroy(name, data);
+        }
     }
 }

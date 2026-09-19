@@ -76,6 +76,7 @@ Item {
         id: discoveryController
 
         onProfileReady: function(profile, saved) { root.adoptProfile(profile, saved); }
+        onProfilesChanged: function(profiles) { root.handleList(profiles); root.startNew(); }
     }
 
     visible: false
@@ -343,8 +344,9 @@ Item {
     }
 
     function handleFailed(method, message, code) {
-        // Descoberta e criacao tem dono proprio (discovery.handleFailed).
-        if (method === "datasource.discover" || method === "datasource.create") {
+        // Descoberta, criacao e remocao tem dono proprio (discovery.handleFailed).
+        if (method === "datasource.discover" || method === "datasource.create"
+                || method === "datasource.destroy") {
             return;
         }
         if (method.indexOf("datasource.") === 0) {

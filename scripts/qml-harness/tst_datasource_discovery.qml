@@ -29,6 +29,7 @@ Item {
             discovery.onCreateSqliteRequested: (name, path) => root.pedidos.push("sqlite:" + name)
             discovery.onCreateServerRequested: (engine, name, port) =>
                 root.pedidos.push("server:" + engine + ":" + name + ":" + port)
+            discovery.onDestroyRequested: (name, data) => root.pedidos.push("destroy:" + name + ":" + data)
         }
     }
 
@@ -90,6 +91,27 @@ Item {
         if (d.creating || d.createOk || d.createMessage !== "ja' existe" || fontes.errorText !== "") failures += 2048;
         d.handleFailed("datasource.discover", "sem workspace");
         if (d.discovering || d.hint !== "sem workspace") failures += 4096;
+
+        // Remover (0.129.0): imediato relista e volta ao formulario vazio; o
+        // job espera o evento; a nota fica visivel; a falha no dono certo.
+        fontes.handleList([{ name: "a", engine: "sqlite", host: "", port: 0, database: "/w/a.sqlite", user: "" },
+                           { name: "b", engine: "postgres", host: "h", port: 5432, database: "postgres", user: "u" }]);
+        fontes.select("a");
+        d.destroyProfile("a", true);
+        if (root.pedidos[root.pedidos.length - 1] !== "destroy:a:true" || !d.destroying) failures += 8192;
+        d.handleDestroyResolved([{ name: "b", engine: "postgres", host: "h", port: 5432, database: "postgres", user: "u" }], true, "", "", "");
+        if (d.destroying || !d.destroyOk || fontes.profiles.length !== 1 || fontes.selectedName !== "") failures += 16384;
+        d.destroyProfile("b", true);
+        d.handleDestroyResolved([], false, "job_3", "podman rm -f kinein-b", "");
+        if (!d.destroying || d.destroyMessage.indexOf("podman rm") < 0) failures += 32768;
+        d.handleDestroyed(true, "b removido", []);
+        if (d.destroying || !d.destroyOk || fontes.profiles.length !== 0) failures += 65536;
+        d.destroyProfile("x", false);
+        d.handleDestroyResolved([], true, "", "", "o servidor fica");
+        if (d.destroyNote !== "o servidor fica") failures += 131072;
+        d.destroyProfile("y", true);
+        d.handleFailed("datasource.destroy", "nao ha perfil");
+        if (d.destroying || d.destroyOk || d.destroyMessage !== "nao ha perfil") failures += 262144;
 
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

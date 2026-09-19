@@ -198,7 +198,8 @@ esta página ganha o "feito" de cada uma no §7.1.
 
 ### 7.1 Feito
 
-(vazio em 2026-09-19 de manhã)
+- **E3-1** (2026-09-19): chips em `Flow`; `datasource.destroy` (0.129.0)
+  com o plano por motor; a caixa "Remover…" — `40` §7.80.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

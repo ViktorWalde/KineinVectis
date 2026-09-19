@@ -41,6 +41,7 @@
 
 pub mod connection;
 pub mod create;
+pub mod destroy;
 pub mod discover;
 pub mod introspect;
 pub mod mongo;

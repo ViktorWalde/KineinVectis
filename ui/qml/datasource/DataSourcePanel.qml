@@ -45,6 +45,12 @@ Item {
     property string createMessage: ""
     property bool createOk: false
     property bool createVisible: false
+    // A remocao (0.129.0): a caixa abre no lugar do botao "Remover".
+    property bool destroyVisible: false
+    property bool destroying: false
+    property string destroyMessage: ""
+    property bool destroyOk: false
+    property string destroyNote: ""
 
     signal profileSelected(string name)
     signal candidateSelected(int index)
@@ -52,11 +58,11 @@ Item {
     signal createSqliteRequested(string name, string path)
     signal createServerRequested(string engine, string name, int port)
     signal createDatabaseRequested(string name)
+    signal destroyRequested(string name, bool data)
     signal newRequested()
     signal fieldEdited(string field, var value)
     signal passwordEdited(string text)
     signal saveRequested()
-    signal removeRequested()
     signal testRequested()
     signal introspectRequested()
     signal sqlEdited(string text)
@@ -139,6 +145,21 @@ Item {
                 onCreateServerRequested: (engine, name, port) => root.createServerRequested(engine, name, port)
                 onCreateDatabaseRequested: name => root.createDatabaseRequested(name)
                 onCloseRequested: root.createVisible = false
+            }
+
+            DataSourceDestroyBox {
+                width: parent.width
+                visible: root.destroyVisible && root.selectedName !== ""
+                profileName: root.selectedName
+                database: root.draft ? root.draft.database : ""
+                fileEngine: root.draft ? root.draft.host === "" : false
+                documentEngine: root.documentEngine
+                destroying: root.destroying
+                message: root.destroyMessage
+                ok: root.destroyOk
+                note: root.destroyNote
+                onDestroyRequested: (name, data) => root.destroyRequested(name, data)
+                onCloseRequested: root.destroyVisible = false
             }
 
             DataSourceVerdict {
@@ -229,10 +250,10 @@ Item {
         }
 
         KvButton {
-            text: qsTr("Remover")
+            text: qsTr("Remover…")
             compact: true
             enabled: root.selectedName !== ""
-            onClicked: root.removeRequested()
+            onClicked: root.destroyVisible = !root.destroyVisible
         }
     }
 }

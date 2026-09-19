@@ -24,6 +24,10 @@ Item {
     signal discoverRequested()
     signal createSqliteRequested(string name, string path)
     signal createServerRequested(string engine, string name, int port)
+    // Remover o perfil e, com `data`, o que ele aponta (0.129.0).
+    signal destroyRequested(string name, bool data)
+    // O catalogo depois de uma remocao imediata ou do job — o pai relista.
+    signal profilesChanged(var profiles)
     // Um perfil pronto (adotado de um candidato ou recem-criado) para o pai
     // por no formulario e/ou selecionar.
     signal profileReady(var profile, bool saved)
@@ -110,6 +114,46 @@ Item {
         }
     }
 
+    // A remocao em curso: o comando do job e o desfecho.
+    property bool destroying: false
+    property string destroyMessage: ""
+    property bool destroyOk: false
+    property string destroyNote: ""
+
+    // `destroyProfile`, nao `destroy`: todo objeto QML ja' tem um `destroy()`.
+    function destroyProfile(name, data) {
+        destroying = true;
+        destroyOk = false;
+        destroyMessage = "";
+        destroyNote = "";
+        destroyRequested(name, data === true);
+    }
+
+    function handleDestroyResolved(profiles, immediate, jobId, command, note) {
+        destroyNote = note === undefined ? "" : note;
+        if (immediate) {
+            destroying = false;
+            destroyOk = true;
+            destroyMessage = qsTr("removido");
+            profilesChanged(profiles);
+            discover();
+        } else if (jobId === "") {
+            destroying = false;
+        } else {
+            destroyMessage = qsTr("rodando: %1").arg(command);
+        }
+    }
+
+    function handleDestroyed(success, message, profiles) {
+        destroying = false;
+        destroyOk = success;
+        destroyMessage = message;
+        if (success) {
+            profilesChanged(profiles);
+            discover();
+        }
+    }
+
     function handleFailed(method, message) {
         if (method === "datasource.discover") {
             discovering = false;
@@ -118,6 +162,10 @@ Item {
             creating = false;
             createOk = false;
             createMessage = message;
+        } else if (method === "datasource.destroy") {
+            destroying = false;
+            destroyOk = false;
+            destroyMessage = message;
         }
     }
 }

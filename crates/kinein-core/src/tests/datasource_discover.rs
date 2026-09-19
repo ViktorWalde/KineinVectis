@@ -26,6 +26,7 @@ case "$1" in
 JSON
   ;;
   run) echo "$@" > "$(dirname "$0")/run.argv"; echo "deadbeef" ;;
+  rm) echo "$@" > "$(dirname "$0")/rm.argv"; echo "abc123" ;;
   *) echo "podman falso: $*" >&2; exit 1 ;;
 esac
 "#;
@@ -221,4 +222,60 @@ fn create_container_server_without_an_engine_is_tool_not_found() {
             .unwrap()
             .contains("sem Podman/Docker")
     );
+}
+
+/// `datasource.destroy` (0.129.0): sem `data`, so' o perfil; com `data`, o
+/// arquivo SQLite do workspace some (fora dele fica, com a nota), o
+/// container `kinein-<nome>` leva `rm -f` (job + evento) e o perfil sai; um
+/// Mongo de servidor so' perde o perfil, com a nota.
+#[test]
+fn destroy_removes_the_profile_and_optionally_the_data() {
+    let mut c = cenario("destroy", true);
+    // SQLite criado pela IDE: com data, o arquivo some.
+    let criado = c.rpc("datasource.create", json!({ "kind": "sqliteFile", "name": "notas" }));
+    let caminho = criado.result.unwrap()["profile"]["database"].as_str().unwrap().to_owned();
+    assert!(std::path::Path::new(&caminho).exists());
+    let r = c.rpc("datasource.destroy", json!({ "name": "notas", "data": true }));
+    assert!(r.error.is_none(), "{:?}", r.error);
+    let resultado = r.result.unwrap();
+    assert!(!std::path::Path::new(&caminho).exists(), "o arquivo devia ter sumido");
+    assert!(resultado["profiles"].as_array().unwrap().is_empty());
+    assert!(resultado.get("note").is_none());
+
+    // SQLite fora do workspace: fica, com a nota; o perfil sai.
+    let fora = std::env::temp_dir().join(format!("kinein-fora-{}.sqlite", std::process::id()));
+    std::fs::write(&fora, b"SQLite format 3\0").unwrap();
+    c.rpc("datasource.save", json!({ "profile": { "name": "fora", "engine": "sqlite", "host": "", "port": 0,
+        "database": fora.to_str().unwrap(), "user": "" } }));
+    let r = c.rpc("datasource.destroy", json!({ "name": "fora", "data": true }));
+    let resultado = r.result.unwrap();
+    assert!(fora.exists(), "fora do workspace a IDE nao apaga");
+    assert!(resultado["note"].as_str().unwrap().contains("fora do workspace"));
+    let _ = std::fs::remove_file(&fora);
+
+    // Servidor em container (o podman falso lista `kinein-pg`): rm -f + perfil fora.
+    c.rpc("datasource.save", json!({ "profile": { "name": "pg", "engine": "postgres", "host": "127.0.0.1",
+        "port": 5433, "database": "postgres", "user": "postgres" } }));
+    let r = c.rpc("datasource.destroy", json!({ "name": "pg", "data": true }));
+    assert!(r.error.is_none(), "{:?}", r.error);
+    let resultado = r.result.unwrap();
+    assert_eq!(resultado["command"], "podman rm -f kinein-pg");
+    let evento = c.evento("event.datasource.destroyed");
+    assert_eq!(evento["success"], true, "{evento}");
+    assert!(std::fs::read_to_string(c.dir.join("bin/rm.argv")).unwrap().contains("-f kinein-pg"));
+    assert!(evento["profiles"].as_array().unwrap().iter().all(|p| p["name"] != "pg"));
+
+    // Sem data: so' o perfil, seja o que for.
+    c.rpc("datasource.save", json!({ "profile": { "name": "docs", "engine": "mongo", "host": "127.0.0.1",
+        "port": 27017, "database": "test", "user": "" } }));
+    let r = c.rpc("datasource.destroy", json!({ "name": "docs" }));
+    assert!(r.result.unwrap()["profiles"].as_array().unwrap().iter().all(|p| p["name"] != "docs"));
+    // Mongo com data: o servidor fica, a nota diz.
+    c.rpc("datasource.save", json!({ "profile": { "name": "docs2", "engine": "mongo", "host": "127.0.0.1",
+        "port": 27017, "database": "test", "user": "" } }));
+    let r = c.rpc("datasource.destroy", json!({ "name": "docs2", "data": true }));
+    assert!(r.result.unwrap()["note"].as_str().unwrap().contains("MongoDB"));
+
+    let inexistente = c.rpc("datasource.destroy", json!({ "name": "nada" }));
+    assert_eq!(inexistente.error.unwrap().code, JsonRpcErrorCode::InvalidParams);
 }

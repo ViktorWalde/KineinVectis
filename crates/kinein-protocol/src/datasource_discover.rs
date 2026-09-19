@@ -129,3 +129,54 @@ pub struct DataSourceCreatedEvent {
     /// What happened, in one line (the last lines of the engine on failure).
     pub message: String,
 }
+
+/// Parameters for `datasource.destroy` (`0.129.0`): remove the profile and,
+/// with `data`, what it points at.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DataSourceDestroyParams {
+    /// The saved profile.
+    pub name: String,
+    /// `true` also destroys the data: the `SQLite` file (inside the
+    /// workspace only), the `kinein-<name>` container, or the database
+    /// inside a `PostgreSQL` server (`DROP DATABASE` via the maintenance
+    /// database). `MongoDB` data is never dropped from here.
+    #[serde(default)]
+    pub data: bool,
+}
+
+/// Result payload for `datasource.destroy`: the catalogue when it was
+/// immediate, or the job to follow (container / server) — the catalogue
+/// then arrives in `event.datasource.destroyed`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceDestroyResult {
+    /// The catalogue after the removal, when nothing had to run.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profiles: Option<Vec<DataSourceProfile>>,
+    /// The job, when a process runs (container `rm`, `DROP DATABASE`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub job_id: Option<String>,
+    /// The exact command or statement, for the screen.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub command: Option<String>,
+    /// What was NOT touched and why (`data` asked on a server profile
+    /// without a container, a `MongoDB` database...).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
+}
+
+/// `event.datasource.destroyed` — the outcome of a destroy job.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataSourceDestroyedEvent {
+    /// The job that ran.
+    pub job_id: String,
+    /// Whether the data went away and the profile was removed.
+    pub success: bool,
+    /// One line about what happened.
+    pub message: String,
+    /// The catalogue after the removal (on success).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profiles: Option<Vec<DataSourceProfile>>,
+}
