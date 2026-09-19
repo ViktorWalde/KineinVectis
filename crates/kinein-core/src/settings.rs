@@ -160,6 +160,10 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
             .outline_collapsed
             .or(global.outline_collapsed)
             .unwrap_or(false),
+        rail_expanded: workspace
+            .rail_expanded
+            .or(global.rail_expanded)
+            .unwrap_or(false),
     }
 }
 
@@ -186,6 +190,7 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         bottom_panel_height: incoming.bottom_panel_height.or(base.bottom_panel_height),
         outline_width: incoming.outline_width.or(base.outline_width),
         outline_collapsed: incoming.outline_collapsed.or(base.outline_collapsed),
+        rail_expanded: incoming.rail_expanded.or(base.rail_expanded),
     }
 }
 

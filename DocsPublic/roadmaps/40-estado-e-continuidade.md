@@ -79,8 +79,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.127.0
-testes      840 Rust aprovados; 54 harnesses QML (medicao de 2026-09-19, §7.75)
+protocolo   0.128.0
+testes      840 Rust aprovados; 54 harnesses QML (medicao de 2026-09-19, §7.77)
 metodos     161 IPC roteados, 55 eventos (run.stdin e event.run.* sairam em 0.125.0;
             datasource.discover/create e event.datasource.created
             em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
@@ -685,7 +685,7 @@ lista de pendências parecer maior ou menor do que é.
 #### 4.2.1 O que está pronto (medido em 2026-09-18, noite)
 
 ```text
-protocolo    0.127.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
+protocolo    0.128.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
 testes       840 Rust · 54 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
@@ -4679,3 +4679,15 @@ altura pelo que há para mostrar). Sem mudança nos painéis em si; fotos
 headless dos três com o mesmo chrome dos quatro da F8. Fica dito: o
 `KvPanelHeader` (a primeira linha comum) não entrou nestes três — cada um
 tem o próprio cabeçalho; unificar é meia hora quando o autor os vir.
+
+### 7.77 Fechamento da Etapa 2, item 5 — o trilho lateral compacto/expandido — 2026-09-19, protocolo 0.128.0
+
+O que a F1 prometeu e não fez: o trilho com os **rótulos ao lado dos
+ícones**. `SideRail.expanded` (52 → 168 px; o rótulo é o tooltip até o
+primeiro parêntese, ou um `label` próprio — "Grafana"); o chevron do pé
+alterna ("›" / "‹ recolher"); no modo expandido o tooltip cala. A escolha
+persiste em `SettingsValues.railExpanded` (0.128.0), lida pelo
+`ShellController.applySettings` **independente** do resto do layout salvo
+(o `hasPersistedLayout` não a gaba); `toggleRail` persiste pelo mesmo
+`layoutSaveRequested`. Harness `tst_shell_functional` estendido. Foto 17
+(`imagens/prints/2026-09-19-fechamento/`): o trilho aberto com dez rótulos.

@@ -22,6 +22,8 @@ Item {
     property real bottomPanelHeight: 260
     property real outlineWidth: 220
     property bool outlineCollapsed: false
+    // O trilho lateral com rotulos (F1 modo expandido); persistido no layout.
+    property bool railExpanded: false
     readonly property bool effectiveShowExplorer: showExplorer
 
     signal folderOpenRequested(string path)
@@ -40,7 +42,8 @@ Item {
             contextWidth: Math.round(root.contextWidth),
             bottomPanelHeight: Math.round(root.bottomPanelHeight),
             outlineWidth: Math.round(root.outlineWidth),
-            outlineCollapsed: root.outlineCollapsed
+            outlineCollapsed: root.outlineCollapsed,
+            railExpanded: root.railExpanded
         })
     }
 
@@ -49,6 +52,8 @@ Item {
     }
 
     function applySettings(settingsController) {
+        // O modo do trilho e' preferencia por si: vale mesmo sem o resto do layout salvo.
+        railExpanded = settingsController.railExpanded === true;
         persistedLayout = settingsController.hasPersistedLayout();
         if (persistedLayout) {
             explorerWidth = clamp(settingsController.explorerWidth, 220, 420);
@@ -111,6 +116,11 @@ Item {
         if (tab === "tools" && toolsCount === 0) {
             toolsDetectionRequested();
         }
+    }
+
+    function toggleRail() {
+        railExpanded = !railExpanded;
+        persistLayoutSoon();
     }
 
     function resizeExplorer(delta) {

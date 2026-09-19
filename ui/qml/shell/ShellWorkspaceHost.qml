@@ -98,6 +98,8 @@ Item {
             id: sideBar
 
             height: parent.height
+            expanded: root.shellController.railExpanded
+            onExpandedToggled: root.shellController.toggleRail()
             workspaceOpen: root.workspaceOpen
             explorerActive: root.shellController.effectiveShowExplorer
             searchActive: root.shellController.showBottomPanel

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 
 Rectangle {
@@ -23,8 +24,13 @@ Rectangle {
     signal databaseRequested()
     signal containersRequested()
     signal observabilityRequested()
+    // O modo EXPANDIDO (F1, fechamento da Etapa 2): o rotulo ao lado do
+    // icone, como a referencia; o chevron do pe' alterna e a escolha e'
+    // persistida pelo ShellController.
+    property bool expanded: false
+    signal expandedToggled()
 
-    width: 52
+    width: expanded ? 168 : 52
     radius: Theme.radiusLarge
     color: Theme.background1
     border.color: Theme.borderSoft
@@ -35,11 +41,13 @@ Rectangle {
 
         property string iconName: "file"
         property string tooltip: ""
+        // O rotulo do modo expandido; sem ele, o tooltip ate' o primeiro parentese.
+        property string label: ""
         property bool active: false
 
         signal activated()
 
-        width: 32
+        width: root.expanded ? root.width - 2 * Theme.spacingSmall : 32
         height: 32
         radius: Theme.radius
         opacity: enabled ? 1.0 : 0.72
@@ -47,7 +55,11 @@ Rectangle {
                       : (railButtonArea.containsMouse ? Theme.surface2 : "transparent")
 
         KvIcon {
-            anchors.centerIn: parent
+            id: railIcon
+
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: root.expanded ? 5 : 5
             name: railButton.iconName
             size: 22
             active: railButton.active
@@ -58,6 +70,18 @@ Rectangle {
                                             : Theme.textSecondary)
         }
 
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: railIcon.right
+            anchors.leftMargin: Theme.spacingSmall
+            anchors.right: parent.right
+            visible: root.expanded
+            text: railButton.label !== "" ? railButton.label : railButton.tooltip.split(" (")[0]
+            color: railButton.active ? Theme.accent : Theme.textSecondary
+            font.pixelSize: 12
+            elide: Text.ElideRight
+        }
+
         MouseArea {
             id: railButtonArea
 
@@ -66,7 +90,7 @@ Rectangle {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onContainsMouseChanged: {
-                if (containsMouse) {
+                if (containsMouse && !root.expanded) {
                     TooltipController.showFor(railButton, railButton.tooltip,
                                               "right");
                 } else {
@@ -148,6 +172,7 @@ Rectangle {
         RailButton {
             iconName: "observability"
             tooltip: qsTr("Observabilidade — Grafana (Ctrl+Alt+O)")
+            label: qsTr("Grafana")
             active: root.observabilityActive
             onActivated: root.observabilityRequested()
         }
@@ -157,6 +182,33 @@ Rectangle {
             tooltip: qsTr("Ferramentas")
             active: root.toolsActive
             onActivated: root.toolsRequested()
+        }
+    }
+
+    // O chevron do pe': compacto <-> expandido.
+    Rectangle {
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.spacingSmall
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: root.expanded ? root.width - 2 * Theme.spacingSmall : 32
+        height: 24
+        radius: Theme.radius
+        color: chevronArea.containsMouse ? Theme.surface2 : "transparent"
+
+        Text {
+            anchors.centerIn: parent
+            text: root.expanded ? qsTr("‹ recolher") : "›"
+            color: Theme.textMuted
+            font.pixelSize: 12
+        }
+
+        MouseArea {
+            id: chevronArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.expandedToggled()
         }
     }
 }

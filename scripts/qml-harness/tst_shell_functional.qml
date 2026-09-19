@@ -20,6 +20,7 @@ Item {
         property real bottomPanelHeight: 260
         property real outlineWidth: 220
         property bool outlineCollapsed: false
+        property bool railExpanded: true
 
         function hasPersistedLayout() {
             return false;
@@ -46,6 +47,10 @@ Item {
 
         shell.updateViewport(width, height);
         shell.applySettings(automaticSettings);
+        // O modo do trilho (0.128.0) vale mesmo sem layout salvo; toggleRail alterna e persiste.
+        if (!shell.railExpanded) failures += 4096;
+        shell.toggleRail();
+        if (shell.railExpanded) failures += 8192;
         if (shell.explorerWidth !== 220) failures += 1;
         if (shell.contextWidth !== 300) failures += 1;
         if (!shell.outlineCollapsed) failures += 1;

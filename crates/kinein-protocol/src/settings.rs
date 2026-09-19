@@ -73,6 +73,10 @@ pub struct SettingsValues {
     /// Whether the editor Structure tool window is explicitly collapsed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub outline_collapsed: Option<bool>,
+    /// Whether the side rail shows its labels (expanded) instead of icons
+    /// only (`0.128.0`, Etapa 2 F1 "modo compacto/expandido").
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rail_expanded: Option<bool>,
 }
 
 /// Settings after merging defaults, global and workspace scopes.
@@ -105,6 +109,8 @@ pub struct EffectiveSettings {
     pub outline_width: u32,
     /// Effective explicit Structure collapsed state.
     pub outline_collapsed: bool,
+    /// Effective side-rail mode: labels visible (`true`) or icons only.
+    pub rail_expanded: bool,
 }
 
 /// Result payload for `settings.get` / `settings.set`.

@@ -1,5 +1,10 @@
 # 03 — Protocolo IPC
 
+> **0.128.0 (2026-09-19) — `SettingsValues.railExpanded`** (ausente =
+> compacto): o trilho lateral com os rótulos ao lado dos ícones (o "modo
+> expandido" que a F1 prometeu); o chevron do pé alterna e a escolha vale
+> mesmo sem o resto do layout salvo. Sem método novo.
+>
 > **0.127.0 (2026-09-18, noite) — o Histórico por branch.** `git.log {
 > maxCount?, ref? }`: `ref` é um branch ou tag de onde o log parte em vez
 > do HEAD (validado como nome — sem espaço, sem `..`, sem `-` inicial;
@@ -2421,8 +2426,7 @@ SettingsValues { formatOnSave?: bool, editorFontSize?: u32,
                  explorerWidth?: u32, contextWidth?: u32,
                  assistantTerminalWidth?: u32,
                  bottomPanelHeight?: u32, outlineWidth?: u32,
-                 outlineCollapsed?: bool,
-                 outlineCollapsed?: bool }
+                 outlineCollapsed?: bool, railExpanded?: bool (0.128.0) }
                                           (campos ausentes = não setados)
 EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs, autoSave,
                     rigorProfile, explorerWidth, contextWidth,

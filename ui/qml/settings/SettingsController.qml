@@ -21,6 +21,7 @@ Item {
     property int bottomPanelHeight: 260
     property int outlineWidth: 220
     property bool outlineCollapsed: false
+    property bool railExpanded: false
     // Perfil de rigor do build/quality do usuario (M4.5): strict|balanced|relaxed.
     property string rigorProfile: "strict"
     // O que esta explicitamente setado no global (para a UI mostrar).
@@ -62,6 +63,7 @@ Item {
         outlineWidth = effective.outlineWidth !== undefined
                 ? effective.outlineWidth : 220;
         outlineCollapsed = effective.outlineCollapsed === true;
+        railExpanded = effective.railExpanded === true;
         globalValues = global;
         workspaceValues = workspace;
         loaded = true;
