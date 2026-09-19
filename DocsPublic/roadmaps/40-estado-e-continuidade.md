@@ -4669,3 +4669,13 @@ As duas últimas classes de pedido que ainda seguravam o laço:
 `arquitetura/04` §6 descreve as três formas (adiar a resposta, adiar o
 trabalho, a continuação). **Medido:** 840 testes; gates verdes. Fica
 síncrono só o que é escrita local (`workspaceEdit.apply/cancel`).
+
+### 7.76 Fechamento da Etapa 2, item 4 — Grafana, Instalar ferramentas e Bibliotecas na moldura comum — 2026-09-19
+
+Os três painéis que a F8 deixou de fora entram no `KvPanelFrame`: os hosts
+perderam a moldura escrita à mão (`LibraryPanelHost` 61 → 34 linhas,
+`SetupPanelHost` 48 → 27, `GrafanaPanelHost` 61 → 27; o Grafana mantém a
+altura pelo que há para mostrar). Sem mudança nos painéis em si; fotos
+headless dos três com o mesmo chrome dos quatro da F8. Fica dito: o
+`KvPanelHeader` (a primeira linha comum) não entrou nestes três — cada um
+tem o próprio cabeçalho; unificar é meia hora quando o autor os vir.

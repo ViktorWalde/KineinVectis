@@ -2,60 +2,32 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O painel de bibliotecas dentro de um dialogo, como os outros overlays.
-//
-// Separa o CONTEUDO (LibraryPanel, burro) do CHROME (fundo, moldura, dispensar
-// por clique fora). Mesmo desenho do ConfigActionsDialog.
-Item {
+// O painel de bibliotecas na moldura comum (KvPanelFrame, fechamento da
+// Etapa 2): o CONTEUDO (LibraryPanel, burro) separado do CHROME.
+KvPanelFrame {
     id: root
 
     property var controller: null
-    property real maxAvailableWidth: 720
-    property real maxAvailableHeight: 520
 
-    signal dismissRequested()
     signal applyStepRequested(string actionId, var params)
 
-    // Clique fora dispensa. Dentro, nao — senao escolher uma biblioteca
-    // fecharia o painel.
-    MouseArea {
+    panelWidth: 560
+    panelHeight: 460
+
+    LibraryPanel {
         anchors.fill: parent
-        onClicked: root.dismissRequested()
-    }
-
-    Rectangle {
-        id: moldura
-
-        anchors.centerIn: parent
-        width: Math.min(560, root.maxAvailableWidth)
-        height: Math.min(460, root.maxAvailableHeight)
-        radius: Theme.radius
-        color: Theme.background1
-        border.width: 1
-        border.color: Theme.borderStrong
-
-        MouseArea {
-            anchors.fill: parent
-        }
-
-        LibraryPanel {
-            anchors.fill: parent
-            anchors.margins: Theme.spacingMedium
-
-            libraries: root.controller ? root.controller.libraries : []
-            selectedId: root.controller ? root.controller.selectedId : ""
-            target: root.controller ? root.controller.target : ""
-            targets: root.controller ? root.controller.targets : []
-            targetsOrigin: root.controller ? root.controller.targetsOrigin : ""
-            plan: root.controller ? root.controller.plan : null
-            errorText: root.controller ? root.controller.errorText : ""
-
-            onLibrarySelected: function(id) { root.controller.select(id); }
-            onTargetEdited: function(name) { root.controller.setTarget(name); }
-            onCloseRequested: root.dismissRequested()
-            onApplyStepRequested: function(actionId, params) {
-                root.applyStepRequested(actionId, params);
-            }
+        libraries: root.controller ? root.controller.libraries : []
+        selectedId: root.controller ? root.controller.selectedId : ""
+        target: root.controller ? root.controller.target : ""
+        targets: root.controller ? root.controller.targets : []
+        targetsOrigin: root.controller ? root.controller.targetsOrigin : ""
+        plan: root.controller ? root.controller.plan : null
+        errorText: root.controller ? root.controller.errorText : ""
+        onLibrarySelected: function(id) { root.controller.select(id); }
+        onTargetEdited: function(name) { root.controller.setTarget(name); }
+        onCloseRequested: root.dismissRequested()
+        onApplyStepRequested: function(actionId, params) {
+            root.applyStepRequested(actionId, params);
         }
     }
 }
