@@ -609,6 +609,12 @@ mudar (o (b) muda `gitLog(ref)` na ponte).
 filho `GitStagingController` ou dentro do `GitInspectorController`; view
 300; controller 400; contrato primeiro (03 + bump + tests) quando (b).
 
+**Estado em 2026-09-18, fim da noite:** a fatia 2 foi FEITA como
+desenhada — (a) `0dfe956`, (b)+(c) `b5c68d6` (mais quatro âncoras
+perdidas, `40` §7.72), (d)+(e) no commit seguinte (`40` §7.73). Fotos
+16c–16e. O que resta do Git: cherry-pick/revert/reset, stash com lista,
+o clique real.
+
 ### 9.5 Depois da HUD do Git — a ordem
 
 1. **Fechamento da Etapa 2** (`40` §4.2.2): Ln:Col na status bar; a foto do

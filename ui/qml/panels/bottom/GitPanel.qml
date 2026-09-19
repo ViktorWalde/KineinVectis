@@ -198,6 +198,8 @@ Item {
         stagedCount: panel.gitController ? panel.gitController.stagedCount : 0
         amend: panel.gitController ? panel.gitController.amend : false
         remoteRunning: panel.gitController ? panel.gitController.remoteOperationRunning : false
+        headPushed: panel.gitController ? panel.gitController.aheadCount === 0 : false
+        branchLabel: panel.gitController ? panel.gitController.branchLabel : ""
         onCommitRequested: function(message) { panel.gitController.commit(message); }
         onCommitAndPushRequested: function(message) { panel.gitController.commitAndPush(message); }
         onAmendToggled: panel.gitController.amend = !panel.gitController.amend

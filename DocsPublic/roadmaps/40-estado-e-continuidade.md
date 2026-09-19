@@ -4612,3 +4612,25 @@ recuado que o irmão completo de cima reprova** (provado por mutação no
 consertos. A lição fica dita: um refactor que "só move código" pode
 apagar âncoras sem que nada reclame — a foto e a marca de indentação são
 as duas redes que existem.
+
+### 7.73 HUD do Git, fatia 2 (d) e (e) — o branch pela barra; as confirmações — 2026-09-18 (noite)
+
+Fecham o desenho do `43` §9.4:
+
+- **(d)** No widget de Git da barra (F1), o **nome do branch** virou um
+  alvo próprio (sublinha ao pairar): o clique abre a aba Git com o menu
+  de branches (trocar, criar) — `HeaderGitWidget.branchMenuRequested` →
+  `TopHeaderBar` → `ShellHeaderHost` (`showTab("git")` +
+  `gitController.openBranchMenu()`). O resto do widget segue abrindo/
+  fechando a aba. Foto 16e: o menu, que até a §7.72 abria sem largura.
+- **(e)** "Commit e Push" pede o **segundo clique**: o primeiro arma
+  ("vai enviar para origin/<branch> — clique de novo", o botão vira
+  primário "Confirmar Commit e Push"); editar a mensagem ou mexer no
+  Amend desarma. Amend com o HEAD já enviado (`aheadCount === 0`) troca o
+  aviso para vermelho: "reescreve um commit JÁ ENVIADO — vai exigir push
+  forçado". Sem contrato; só a `GitCommitBox` e duas propriedades no
+  `GitPanel`.
+
+**A fatia 2 da HUD do Git está completa como desenhada** (a–e). Fica dito
+o que não entrou em nenhuma das duas fatias: cherry-pick/revert/reset;
+stash com lista; o clique real do autor.

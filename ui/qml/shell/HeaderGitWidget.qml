@@ -14,6 +14,8 @@ Rectangle {
     property bool panelActive: false
 
     signal panelRequested()
+    // O clique no NOME do branch abre a troca de branch (HUD do Git, 2d).
+    signal branchMenuRequested()
 
     visible: root.branchLabel !== ""
     height: 32
@@ -38,11 +40,24 @@ Rectangle {
         }
 
         Text {
+            id: branchText
+
             anchors.verticalCenter: parent.verticalCenter
             text: root.branchLabel
-            color: Theme.textPrimary
+            color: branchArea.containsMouse ? Theme.accent : Theme.textPrimary
             font.pixelSize: 12
             font.family: Theme.monoFont
+            font.underline: branchArea.containsMouse
+
+            MouseArea {
+                id: branchArea
+
+                anchors.fill: parent
+                anchors.margins: -2
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.branchMenuRequested()
+            }
         }
 
         Text {

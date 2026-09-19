@@ -14,6 +14,11 @@ Item {
     property int stagedCount: 0
     property bool amend: false
     property bool remoteRunning: false
+    // O HEAD ja' foi enviado (ahead 0): um amend reescreve historia publica.
+    property bool headPushed: false
+    property string branchLabel: ""
+    // "Commit e Push" pede o segundo clique: o primeiro so' arma.
+    property bool pushArmed: false
 
     signal commitRequested(string message)
     signal commitAndPushRequested(string message)
@@ -26,7 +31,11 @@ Item {
 
     function clearMessage() {
         commitInput.text = "";
+        pushArmed = false;
     }
+
+    // Mexer na mensagem desarma o push: o que se confirma e' o texto atual.
+    onAmendChanged: pushArmed = false
 
     Column {
         id: coluna
@@ -64,6 +73,7 @@ Item {
                 font.pixelSize: 12
                 clip: true
                 selectByMouse: true
+                onTextEdited: root.pushArmed = false
                 onAccepted: {
                     if (root.canCommit) {
                         root.commitRequested(commitInput.text);
@@ -95,7 +105,17 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.amend
-                text: qsTr("reescreve o último commit")
+                text: root.headPushed
+                      ? qsTr("reescreve um commit JÁ ENVIADO — vai exigir push forçado")
+                      : qsTr("reescreve o último commit")
+                color: root.headPushed ? Theme.errorSoft : Theme.warningSoft
+                font.pixelSize: 10
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.pushArmed && !root.amend
+                text: qsTr("vai enviar para origin/%1 — clique de novo").arg(root.branchLabel)
                 color: Theme.warningSoft
                 font.pixelSize: 10
             }
@@ -109,9 +129,15 @@ Item {
 
                 KvButton {
                     compact: true
-                    text: qsTr("Commit e Push")
+                    primary: root.pushArmed
+                    text: root.pushArmed ? qsTr("Confirmar Commit e Push") : qsTr("Commit e Push")
                     enabled: root.canCommit && !root.remoteRunning
                     onClicked: {
+                        if (!root.pushArmed) {
+                            root.pushArmed = true;
+                            return;
+                        }
+                        root.pushArmed = false;
                         root.commitAndPushRequested(commitInput.text);
                         commitInput.text = "";
                     }

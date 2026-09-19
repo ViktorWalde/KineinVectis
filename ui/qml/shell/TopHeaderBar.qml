@@ -36,6 +36,7 @@ Rectangle {
     signal actionsMenuRequested(real menuX, real menuY)
     signal configMenuRequested(real menuX, real menuY)
     signal gitPanelRequested()
+    signal gitBranchMenuRequested()
     signal runRequested()
     signal stopRunRequested()
     signal debugRequested()
@@ -94,6 +95,7 @@ Rectangle {
             changeCount: root.gitChangeCount
             panelActive: root.gitPanelActive
             onPanelRequested: root.gitPanelRequested()
+            onBranchMenuRequested: root.gitBranchMenuRequested()
         }
     }
 

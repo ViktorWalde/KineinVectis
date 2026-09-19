@@ -172,6 +172,11 @@ Column {
         gitPanelActive: root.shellController.tabActive("git")
         onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
         onGitPanelRequested: root.shellController.toggleBottomTab("git")
+        // O branch da barra: a aba Git com o menu de branches aberto.
+        onGitBranchMenuRequested: {
+            root.shellController.showTab("git");
+            root.gitController.openBranchMenu();
+        }
         onRunRequested: root.runtimeController.startRun("")
         onStopRunRequested: root.runtimeController.stopRun()
         onDebugRequested: root.debugController.startDebug()
