@@ -13,6 +13,21 @@ QtObject {
         return i < 0 ? qsTr("(raiz)") : path.substring(0, i);
     }
 
+    // O estado de uma pasta na lista de mudancas (um ListModel com `folder`,
+    // `absPath`, `staged`): os caminhos dela, quantos estao staged, e se
+    // todos estao. O checkbox da secao le daqui; o clique manda os caminhos.
+    function folderState(model, folder) {
+        const paths = [];
+        let staged = 0;
+        for (let i = 0; i < model.count; i++) {
+            const row = model.get(i);
+            if (row.folder !== folder) continue;
+            paths.push(row.absPath);
+            if (row.staged) staged++;
+        }
+        return { paths: paths, staged: staged, all: paths.length > 0 && staged === paths.length };
+    }
+
     // As raias do grafo: a atribuicao classica em linha reta. Cada linha e'
     // { lane, merge, laneCount }: `lane` e' a coluna do commit; um commit com
     // dois pais e' `merge`; `laneCount` e' quantas colunas estao vivas ali.

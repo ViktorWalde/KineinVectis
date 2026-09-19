@@ -157,8 +157,10 @@ Item {
         visible: !panel.historyVisible
         changesModel: panel.gitController ? panel.gitController.changesModel : null
         repo: panel.gitController ? panel.gitController.repo : false
+        revision: panel.gitController ? panel.gitController.revision : 0
         selectedAbsPath: panel.gitController ? panel.gitController.inspector.path : ""
         onStageToggleRequested: function(index) { panel.gitController.toggleStaged(index); }
+        onFolderStageRequested: function(absPaths, stageAll) { panel.gitController.stageFolder(absPaths, stageAll); }
         onSelectRequested: function(absPath, path) { panel.gitController.inspector.showChange(absPath, path); }
         onDiffRequested: function(absPath) { panel.gitController.openDiffDialog(absPath); }
         onDiscardRequested: function(index) { panel.gitController.openDiscardDialog(index); }

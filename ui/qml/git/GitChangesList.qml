@@ -14,10 +14,16 @@ ListView {
 
     property var changesModel
     property bool repo: false
+    // Sobe a cada status novo (GitController.revision): a secao reavalia.
+    property int revision: 0
+
+    GitRules { id: rules }
     // O caminho selecionado (o painel da direita mostra o diff dele).
     property string selectedAbsPath: ""
 
     signal stageToggleRequested(int index)
+    // Stage/unstage de TODOS os caminhos de uma pasta (a secao).
+    signal folderStageRequested(var absPaths, bool stageAll)
     signal selectRequested(string absPath, string path)
     signal diffRequested(string absPath)
     signal discardRequested(int index)
@@ -51,18 +57,67 @@ ListView {
     // 2026-09-18): o cabecalho da secao e' a pasta.
     section.property: "folder"
     section.criteria: ViewSection.FullString
-    section.delegate: Text {
+    section.delegate: Item {
+        id: secao
+
         required property string section
 
+        // Reavalia quando a lista muda (o ListModel nao notifica funcoes).
+        readonly property var estado: root.revision >= 0 ? rules.folderState(root.changesModel, section) : null
+
         width: root.width
-        height: 18
-        leftPadding: Theme.spacingSmall
-        verticalAlignment: Text.AlignVCenter
-        text: section
-        color: Theme.textMuted
-        font.pixelSize: 10
-        font.weight: Font.DemiBold
-        elide: Text.ElideMiddle
+        height: 20
+
+        // O checkbox da PASTA: cheio quando todas as mudancas dela estao
+        // staged, meio quando algumas; o clique faz stage de todas (ou
+        // unstage de todas, quando ja' estao).
+        Rectangle {
+            id: caixaPasta
+
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingSmall
+            width: 14
+            height: 14
+            radius: Theme.radiusXSmall
+            color: secao.estado && secao.estado.all ? Theme.accentDim : "transparent"
+            border.color: secao.estado && secao.estado.staged > 0 ? Theme.accent : Theme.borderStrong
+            border.width: 1
+
+            KvIcon {
+                anchors.centerIn: parent
+                visible: secao.estado && secao.estado.all
+                name: "check"
+                size: 11
+                active: true
+            }
+
+            Rectangle {
+                anchors.centerIn: parent
+                visible: secao.estado && !secao.estado.all && secao.estado.staged > 0
+                width: 6
+                height: 2
+                color: Theme.accent
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.folderStageRequested(secao.estado.paths, !secao.estado.all)
+            }
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: caixaPasta.right
+            anchors.leftMargin: Theme.spacingSmall
+            anchors.right: parent.right
+            text: secao.section
+            color: Theme.textMuted
+            font.pixelSize: 10
+            font.weight: Font.DemiBold
+            elide: Text.ElideMiddle
+        }
     }
 
     Text {

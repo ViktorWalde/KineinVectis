@@ -98,13 +98,9 @@ Item {
         onLogRequested: root.logRequested()
     }
 
-    // Delegacoes para o GitHistoryController. Sao 8 linhas de encaminhamento,
-    // e a escolha e' deliberada: mudar os 11 pontos de chamada espalhados em 5
-    // arquivos custaria mais e mudaria o contrato publico do controller. O
-    // limite disto e' conhecido — foi assim que o EditorController virou uma
-    // fachada de 791 linhas —, entao a regra aqui e' NAO crescer esta lista:
-    // dono novo no historico entra por `historyController`, nao por mais um
-    // encaminhamento.
+    // Delegacoes para o GitHistoryController (deliberadas: 11 pontos de
+    // chamada em 5 arquivos). A regra e' NAO crescer esta lista — dono novo
+    // no historico entra por `historyController`, nao por mais um repasse.
     function toggleBlame(path) { historyController.toggleBlame(path); }
     function hideBlame() { historyController.hideBlame(); }
     function requestBlameFor(path) { historyController.requestBlameFor(path); }
@@ -268,6 +264,11 @@ Item {
         } else {
             stageRequested([entry.absPath]);
         }
+    }
+
+    // Toda uma pasta de uma vez (o checkbox da secao, HUD fatia 2).
+    function stageFolder(absPaths, stageAll) {
+        if (absPaths.length > 0) { stageAll ? stageRequested(absPaths) : unstageRequested(absPaths); }
     }
 
     function openDiscardDialog(index) {

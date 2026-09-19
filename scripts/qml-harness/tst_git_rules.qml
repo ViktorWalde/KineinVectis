@@ -54,6 +54,16 @@ Item {
         // Um delegate nasce antes do modelData: a regra nao pode explodir.
         if (rules.refChip(undefined).name !== "" || rules.refChip(undefined).head) failures += 1024;
 
+        // Stage por pasta: o estado da secao a partir do modelo de mudancas.
+        const modelo = Qt.createQmlObject("import QtQuick; ListModel {}", root);
+        modelo.append({ folder: "src", absPath: "/w/src/a.rs", staged: true });
+        modelo.append({ folder: "src", absPath: "/w/src/b.rs", staged: false });
+        modelo.append({ folder: "(raiz)", absPath: "/w/README.md", staged: true });
+        const src = rules.folderState(modelo, "src");
+        const raiz = rules.folderState(modelo, "(raiz)");
+        if (src.paths.length !== 2 || src.staged !== 1 || src.all || !raiz.all || raiz.paths[0] !== "/w/README.md"
+            || rules.folderState(modelo, "nada").paths.length !== 0 || rules.folderState(modelo, "nada").all) failures += 2048;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }
