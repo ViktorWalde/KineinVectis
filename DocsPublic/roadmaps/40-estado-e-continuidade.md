@@ -4911,3 +4911,30 @@ Para a medição, o `CommandDispatcher.execute` passou a separar
 três estados); gates QML/fiação/catraca verdes. **Fotos:** as quatro
 abas a 1280×800 — a Kit, a mais cheia, cabe nos 560. **Não medido:** com
 a placa do autor plugada (só ele; a IDE nunca grava nela sem pedido).
+
+### 7.85 Etapa 3, E3-6 — Containers: filtro, grade e uma barra de ações — 2026-09-19
+
+O autor achou Containers "bom, seria polimento de UX apenas". O polimento
+do `44` §4: os containers saíram da lista de linhas com **cinco ícones
+cada** para a **grade comum** (`KvDataGrid`, agora com `selectable` /
+`selectedIndex` / `rowClicked` — a seleção é genérica, serve ao banco e ao
+Grafana depois): estado · nome · imagem · portas · status; um **filtro**
+por nome/imagem/id ao lado do título ("Containers (1 de 3)"); e **uma
+barra de ações** para a linha escolhida — Iniciar/Parar · Reiniciar ·
+Logs · Shell · Remover — habilitada pelo estado dela. A escolha é **por
+id** (`ContainerController.selectedId`), não por índice: a lista muda a
+cada refresh e o filtro reordena; a escolhida que sai do filtro deixa de
+ser alvo (nada de agir no container errado — `tst_container` prova).
+`KvButton` ganhou `danger` (o Remover) e `tooltip` que **vive com o botão
+desligado** — é aí que ele explica ("abra um projeto — a aba de terminal
+é do projeto").
+
+**Logs/shell sem projeto**: medido de novo — `container.open` exige
+workspace no core (`no_workspace_response`) porque a sessão de terminal
+nasce no `root` do projeto, e o painel de baixo mora no host do
+workspace; fica como está, com o porquê no tooltip. Abrir sem projeto é
+uma fatia com contrato (um `cwd` opcional), se o autor sentir falta.
+
+**Provado:** `tst_container` (+7: filtro por nome e por id, seleção por
+id sobrevive ao refresh e cai fora do filtro, as linhas da grade); gates
+QML/fiação/catraca verdes. **Foto:** `e3-6-containers.png`.

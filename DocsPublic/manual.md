@@ -914,11 +914,14 @@ costuma ser o `podman-docker`, e o painel diz isso). A primeira linha é o
 `compose` existe. Se algo falta, o painel imprime o passo oficial (grupo
 `docker`, `systemctl`, `podman.socket`) — **e não o executa**.
 
-Abaixo, os containers (os parados também, pelo chip **parados também**) com o
-que cada estado permite: **iniciar** o que parou, **parar/reiniciar** o que
-roda, **remover** só o parado (remover o que roda é dois gestos, de
-propósito). **Logs** e **Shell** abrem numa aba de terminal — por isso pedem um
-projeto aberto: a aba é do projeto. As imagens locais fecham a lista.
+Abaixo, os containers numa **grade** (estado · nome · imagem · portas ·
+status; os parados também, pelo chip **parados também**), com um **filtro**
+por nome, imagem ou id. Clique numa linha para escolhê-la: a **barra de
+ações** logo abaixo oferece o que o estado dela permite — **Iniciar** o que
+parou, **Parar/Reiniciar** o que roda, **Remover** só o parado (remover o
+que roda é dois gestos, de propósito). **Logs** e **Shell** abrem numa aba
+de terminal — por isso pedem um projeto aberto: a aba é do projeto (o
+botão desligado diz isso ao pairar). As imagens locais fecham a lista.
 
 **compose up / compose down** são do **projeto**: só acendem quando há motor
 respondendo, uma ferramenta de compose **e um arquivo de compose na raiz do

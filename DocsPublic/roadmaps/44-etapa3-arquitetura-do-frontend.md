@@ -263,6 +263,11 @@ esta página ganha o "feito" de cada uma no §7.1.
   cabeçalho (`EmbeddedController.tab`/`boardVerdict`; `EmbeddedProbeView`
   extraído) — `40` §7.84. PlatformIO já era cidadão (o `pio` em Gravar e
   no Compilar); a aba Projeto diz o framework como antes.
+- **E3-6** (2026-09-19): Containers — filtro, a grade comum com seleção
+  (`KvDataGrid.selectable`), a barra de ações da linha escolhida (por id);
+  `KvButton.tooltip` vivo com o botão desligado; logs/shell seguem
+  pedindo projeto (o core exige workspace em `container.open`; medido) —
+  `40` §7.85.
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

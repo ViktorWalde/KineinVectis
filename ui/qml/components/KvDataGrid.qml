@@ -17,6 +17,12 @@ Item {
     property bool mono: true
     property int maxHeight: 220
     property int rowHeight: 20
+    // Selecao por linha (E3-6): -1 = nenhuma; quem escuta `rowClicked`
+    // decide o que a linha escolhida permite (a barra de acoes).
+    property int selectedIndex: -1
+    property bool selectable: false
+
+    signal rowClicked(int index)
 
     readonly property var widths: rules.columnWidths(columns, rows, width)
     readonly property int contentWidth: widths.reduce((sum, w) => sum + w + 1, 0)
@@ -101,6 +107,9 @@ Item {
                     id: linha
 
                     required property var modelData
+                    required property int index
+
+                    readonly property bool selected: root.selectable && root.selectedIndex === index
 
                     spacing: 1
 
@@ -117,7 +126,8 @@ Item {
 
                             width: root.widths[index]
                             height: root.rowHeight
-                            color: area.containsMouse ? Theme.surface2 : Theme.background1
+                            color: linha.selected ? Theme.surfaceSelected
+                                   : (area.containsMouse ? Theme.surface2 : Theme.background1)
 
                             Text {
                                 anchors.fill: parent
@@ -125,19 +135,23 @@ Item {
                                 verticalAlignment: Text.AlignVCenter
                                 text: rules.cellText(celula.value)
                                 font.italic: rules.isNull(celula.value)
-                                color: rules.isNull(celula.value) ? Theme.textMuted : Theme.textSecondary
+                                color: rules.isNull(celula.value) ? Theme.textMuted
+                                       : (linha.selected ? Theme.textPrimary : Theme.textSecondary)
                                 font.family: root.mono ? Theme.monoFont : ""
                                 font.pixelSize: 10
                                 elide: Text.ElideRight
                             }
 
-                            // So' o realce ao pairar: a linha inteira acende.
+                            // O realce ao pairar (a linha inteira acende) e, se a
+                            // grade e' selecionavel, o clique escolhe a linha.
                             MouseArea {
                                 id: area
 
                                 anchors.fill: parent
                                 hoverEnabled: true
-                                acceptedButtons: Qt.NoButton
+                                acceptedButtons: root.selectable ? Qt.LeftButton : Qt.NoButton
+                                cursorShape: root.selectable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: root.rowClicked(linha.index)
                             }
                         }
                     }

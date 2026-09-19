@@ -2,195 +2,218 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// A lista de containers com as acoes de ciclo de vida, e as imagens. Dono
-// proprio pela mesma regra do EmbeddedSizeView: o painel cuida do motor e do
-// compose; listar e agir por container e' outra responsabilidade.
+// A lista de containers e as imagens (E3-6, roadmaps/44): o filtro por
+// nome/imagem/id, os containers na GRADE comum (estado · nome · imagem ·
+// portas · status), a linha escolhida e UMA barra de acoes para ela — em
+// vez de cinco icones por linha. Dono proprio pela mesma regra do
+// EmbeddedSizeView: o painel cuida do motor e do compose.
 //
-// Burro: le do controller e pede por funcao dele. O que se oferece depende do
-// ESTADO que o motor declarou: parar so' ao que roda, iniciar so' ao que parou,
-// remover so' ao que parou (remover o que roda e' dois gestos, de proposito).
+// Burro: le do controller e pede por funcao dele. O que se oferece depende
+// do ESTADO que o motor declarou: parar so' ao que roda, iniciar so' ao que
+// parou, remover so' ao que parou (remover o que roda e' dois gestos).
 Item {
     id: root
 
     property var controller: null
 
-    Flickable {
+    readonly property bool hasSelection: controller !== null && controller.selected !== null
+    readonly property bool running: controller !== null && controller.selectedRunning
+
+    Column {
+        id: conteudo
+
         anchors.fill: parent
-        contentHeight: conteudo.implicitHeight
-        clip: true
+        spacing: Theme.spacingSmall
 
-        Column {
-            id: conteudo
-
+        // O filtro e o titulo na mesma linha.
+        Row {
             width: parent.width
             spacing: Theme.spacingSmall
 
             Text {
-                text: qsTr("Containers")
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.controller && root.controller.filter.trim() !== ""
+                      ? qsTr("Containers (%1 de %2)").arg(root.controller.visibleContainers.length).arg(root.controller.containers.length)
+                      : qsTr("Containers")
                 color: Theme.textSecondary
                 font.pixelSize: 11
                 font.bold: true
             }
 
-            Repeater {
-                model: root.controller ? root.controller.containers : []
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 200
+                height: 22
+                radius: Theme.radiusXSmall
+                color: Theme.background0
+                border.width: 1
+                border.color: filtro.activeFocus ? Theme.accent : Theme.borderSoft
 
-                Row {
-                    id: linha
+                TextInput {
+                    id: filtro
 
-                    required property var modelData
+                    anchors.fill: parent
+                    anchors.leftMargin: Theme.spacingSmall
+                    anchors.rightMargin: Theme.spacingSmall
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: Theme.textPrimary
+                    font.pixelSize: 11
+                    clip: true
+                    selectByMouse: true
+                    onTextEdited: root.controller.setFilter(text)
+                    Keys.onEscapePressed: { text = ""; root.controller.setFilter(""); }
 
-                    width: conteudo.width
-                    spacing: Theme.spacingSmall
-
-                    readonly property bool rodando: root.controller.isRunning(linha.modelData)
-                    readonly property string alvo: linha.modelData.names !== undefined
-                                                   && linha.modelData.names.length > 0
-                                                   ? linha.modelData.names[0] : linha.modelData.id
-
-                    Rectangle {
+                    Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 8
-                        height: 8
-                        radius: 4
-                        color: linha.rodando ? Theme.successSoft : Theme.textDisabled
-                    }
-
-                    Column {
-                        width: parent.width - 8 - 5 * 26 - 6 * Theme.spacingSmall
-                        anchors.verticalCenter: parent.verticalCenter
-
-                        Text {
-                            width: parent.width
-                            text: root.controller.containerSummary(linha.modelData)
-                            color: Theme.textPrimary
-                            font.family: Theme.monoFont
-                            font.pixelSize: 11
-                            elide: Text.ElideMiddle
-                        }
-
-                        Text {
-                            width: parent.width
-                            text: linha.modelData.status !== undefined ? linha.modelData.status : ""
-                            color: Theme.textMuted
-                            font.pixelSize: 10
-                            elide: Text.ElideRight
-                        }
-                    }
-
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: linha.rodando ? "stop" : "run"
-                        tooltip: linha.rodando ? qsTr("Parar") : qsTr("Iniciar")
-                        compact: true
-                        onClicked: root.controller.act(linha.alvo, linha.rodando ? "stop" : "start")
-                    }
-
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "refresh"
-                        tooltip: qsTr("Reiniciar")
-                        compact: true
-                        enabled: linha.rodando
-                        onClicked: root.controller.act(linha.alvo, "restart")
-                    }
-
-                    // Logs e shell nascem numa ABA DE TERMINAL, e a aba e' do
-                    // projeto aberto: sem workspace o core recusava com
-                    // "nenhum workspace aberto" DEPOIS do clique (medido em
-                    // 2026-09-13). Agora o botao diz antes.
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "file"
-                        tooltip: root.controller.canOpenTerminals
-                                 ? qsTr("Logs (aba de terminal)")
-                                 : qsTr("Logs: abra um projeto — a aba de terminal é do projeto")
-                        compact: true
-                        enabled: root.controller.canOpenTerminals
-                        onClicked: root.controller.openLogs(linha.alvo)
-                    }
-
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "terminal"
-                        tooltip: root.controller.canOpenTerminals
-                                 ? qsTr("Shell dentro do container (só rodando)")
-                                 : qsTr("Shell: abra um projeto — a aba de terminal é do projeto")
-                        compact: true
-                        enabled: linha.rodando && root.controller.canOpenTerminals
-                        onClicked: root.controller.openShell(linha.alvo)
-                    }
-
-                    KvIconButton {
-                        anchors.verticalCenter: parent.verticalCenter
-                        iconName: "close"
-                        tooltip: qsTr("Remover (só parado)")
-                        compact: true
-                        danger: true
-                        enabled: !linha.rodando
-                        onClicked: root.controller.act(linha.alvo, "remove")
+                        visible: filtro.text === ""
+                        text: qsTr("filtrar por nome, imagem ou id")
+                        color: Theme.textMuted
+                        font.pixelSize: 11
                     }
                 }
             }
+        }
+
+        KvDataGrid {
+            id: grade
+
+            width: parent.width
+            visible: root.controller && root.controller.containerFound
+            selectable: true
+            selectedIndex: root.controller ? root.controller.selectedIndex : -1
+            columns: [
+                { key: "state", label: " " },
+                { key: "name", label: qsTr("nome") },
+                { key: "image", label: qsTr("imagem") },
+                { key: "ports", label: qsTr("portas") },
+                { key: "status", label: qsTr("status") }
+            ]
+            rows: root.controller ? root.controller.containerRows() : []
+            maxHeight: 200
+            onRowClicked: function(index) { root.controller.selectRow(index); }
+        }
+
+        // A barra da linha escolhida: o que o estado dela permite.
+        Row {
+            width: parent.width
+            height: 26
+            visible: root.controller && root.controller.containerFound
+            spacing: Theme.spacingSmall
 
             Text {
-                width: parent.width
-                wrapMode: Text.WordWrap
-                visible: root.controller && !root.controller.containerFound
-                text: root.controller
-                      ? (root.controller.listBusy ? qsTr("procurando…")
-                         : (root.controller.containersHint !== "" ? root.controller.containersHint
-                                                                  : qsTr("nenhum container")))
-                      : ""
-                color: Theme.textSecondary
-                font.pixelSize: 11
-            }
-
-            // A saida CRUA aparece quando nada foi reconhecido: e' o que deixa
-            // o usuario ver se ha' um container ali e o formato mudou.
-            Text {
-                width: parent.width
-                wrapMode: Text.WrapAnywhere
-                visible: root.controller && !root.controller.containerFound
-                         && root.controller.containersRaw.trim() !== "" && !root.controller.listBusy
-                text: root.controller ? root.controller.containersRaw.trim() : ""
-                color: Theme.textMuted
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.hasSelection ? root.controller.selectedTarget : qsTr("escolha um container")
+                color: root.hasSelection ? Theme.textPrimary : Theme.textMuted
                 font.family: Theme.monoFont
-                font.pixelSize: 10
-            }
-
-            Text {
-                text: qsTr("Imagens")
-                color: Theme.textSecondary
                 font.pixelSize: 11
-                font.bold: true
+                elide: Text.ElideMiddle
+                width: Math.min(implicitWidth, parent.width * 0.4)
             }
 
-            // As imagens na GRADE comum (F8): repositorio, tag, tamanho, criada.
-            KvDataGrid {
-                width: parent.width
-                visible: root.controller && root.controller.images.length > 0
-                columns: [
-                    { key: "repository", label: qsTr("repositório") },
-                    { key: "tag", label: qsTr("tag") },
-                    { key: "size", label: qsTr("tamanho") },
-                    { key: "created", label: qsTr("criada") }
-                ]
-                rows: root.controller ? root.controller.imageRows() : []
-                maxHeight: 140
+            KvButton {
+                text: root.running ? qsTr("Parar") : qsTr("Iniciar")
+                compact: true
+                enabled: root.hasSelection
+                onClicked: root.controller.act(root.controller.selectedTarget, root.running ? "stop" : "start")
             }
 
-            Text {
-                width: parent.width
-                visible: root.controller && root.controller.images.length === 0
-                text: root.controller
-                      ? (root.controller.imagesBusy ? qsTr("procurando…")
-                         : (root.controller.imagesHint !== "" ? root.controller.imagesHint
-                                                              : qsTr("nenhuma imagem")))
-                      : ""
-                color: Theme.textSecondary
-                font.pixelSize: 11
+            KvButton {
+                text: qsTr("Reiniciar")
+                compact: true
+                enabled: root.hasSelection && root.running
+                onClicked: root.controller.act(root.controller.selectedTarget, "restart")
             }
+
+            // Logs e shell nascem numa ABA DE TERMINAL, e a aba e' do projeto
+            // aberto (o core exige workspace em container.open; medido de
+            // novo em 2026-09-19). Sem projeto o botao diz o porque.
+            KvButton {
+                text: qsTr("Logs")
+                compact: true
+                enabled: root.hasSelection && root.controller.canOpenTerminals
+                tooltip: root.controller && root.controller.canOpenTerminals
+                         ? qsTr("Os logs numa aba do terminal")
+                         : qsTr("Abra um projeto — a aba de terminal é do projeto")
+                onClicked: root.controller.openLogs(root.controller.selectedTarget)
+            }
+
+            KvButton {
+                text: qsTr("Shell")
+                compact: true
+                enabled: root.hasSelection && root.running && root.controller.canOpenTerminals
+                tooltip: root.controller && root.controller.canOpenTerminals
+                         ? qsTr("Um shell dentro do container (só rodando)")
+                         : qsTr("Abra um projeto — a aba de terminal é do projeto")
+                onClicked: root.controller.openShell(root.controller.selectedTarget)
+            }
+
+            KvButton {
+                text: qsTr("Remover")
+                compact: true
+                danger: true
+                enabled: root.hasSelection && !root.running
+                tooltip: qsTr("Só parado: remover o que roda é dois gestos, de propósito")
+                onClicked: root.controller.act(root.controller.selectedTarget, "remove")
+            }
+        }
+
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            visible: root.controller && !root.controller.containerFound
+            text: root.controller
+                  ? (root.controller.listBusy ? qsTr("procurando…")
+                     : (root.controller.containersHint !== "" ? root.controller.containersHint
+                                                              : qsTr("nenhum container")))
+                  : ""
+            color: Theme.textSecondary
+            font.pixelSize: 11
+        }
+
+        // A saida CRUA aparece quando nada foi reconhecido: e' o que deixa
+        // o usuario ver se ha' um container ali e o formato mudou.
+        Text {
+            width: parent.width
+            wrapMode: Text.WrapAnywhere
+            visible: root.controller && !root.controller.containerFound
+                     && root.controller.containersRaw.trim() !== "" && !root.controller.listBusy
+            text: root.controller ? root.controller.containersRaw.trim() : ""
+            color: Theme.textMuted
+            font.family: Theme.monoFont
+            font.pixelSize: 10
+        }
+
+        Text {
+            text: qsTr("Imagens")
+            color: Theme.textSecondary
+            font.pixelSize: 11
+            font.bold: true
+        }
+
+        // As imagens na GRADE comum (F8): repositorio, tag, tamanho, criada.
+        KvDataGrid {
+            width: parent.width
+            visible: root.controller && root.controller.images.length > 0
+            columns: [
+                { key: "repository", label: qsTr("repositório") },
+                { key: "tag", label: qsTr("tag") },
+                { key: "size", label: qsTr("tamanho") },
+                { key: "created", label: qsTr("criada") }
+            ]
+            rows: root.controller ? root.controller.imageRows() : []
+            maxHeight: 140
+        }
+
+        Text {
+            width: parent.width
+            visible: root.controller && root.controller.images.length === 0
+            text: root.controller
+                  ? (root.controller.imagesBusy ? qsTr("procurando…")
+                     : (root.controller.imagesHint !== "" ? root.controller.imagesHint
+                                                          : qsTr("nenhuma imagem")))
+                  : ""
+            color: Theme.textSecondary
+            font.pixelSize: 11
         }
     }
 }

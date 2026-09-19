@@ -63,6 +63,22 @@ Item {
     property string errorText: ""
 
     readonly property bool containerFound: containers.length > 0
+    // E3-6: o filtro por nome/imagem/id e a linha escolhida (por id — a
+    // lista muda a cada refresh e o indice nao vale nada sozinho).
+    property string filter: ""
+    property string selectedId: ""
+    readonly property var visibleContainers: {
+        const q = filter.trim().toLowerCase();
+        if (q === "") return containers;
+        return containers.filter(c => containerSummary(c).toLowerCase().indexOf(q) >= 0
+                                      || String(c.id).toLowerCase().indexOf(q) === 0);
+    }
+    readonly property int selectedIndex: visibleContainers.findIndex(c => c.id === selectedId)
+    readonly property var selected: selectedIndex >= 0 ? visibleContainers[selectedIndex] : null
+    readonly property bool selectedRunning: selected !== null && isRunning(selected)
+    // O alvo das acoes: o primeiro nome, senao o id.
+    readonly property string selectedTarget: selected === null ? ""
+        : (selected.names !== undefined && selected.names.length > 0 ? selected.names[0] : selected.id)
     // Logs e shell sao abas de terminal, e a aba pertence ao projeto aberto:
     // sem workspace o core recusa (`container.open` exige root para o cwd).
     // O painel abre sem projeto (o motor e' da maquina) — os botoes nao.
@@ -196,6 +212,25 @@ Item {
     // declarou — nunca se oferece "parar" ao que ja' parou.
     function isRunning(container) {
         return container.state === "running";
+    }
+
+    function setFilter(text) {
+        filter = text === undefined ? "" : text;
+    }
+
+    function selectRow(index) {
+        selectedId = index >= 0 && index < visibleContainers.length ? visibleContainers[index].id : "";
+    }
+
+    // As linhas da grade comum: estado, nome, imagem, portas, status.
+    function containerRows() {
+        return visibleContainers.map(c => ({
+            state: isRunning(c) ? "●" : "○",
+            name: c.names !== undefined && c.names.length > 0 ? c.names.join(", ") : String(c.id).substring(0, 12),
+            image: c.image !== undefined ? c.image : "",
+            ports: c.ports !== undefined ? c.ports.join(" ") : "",
+            status: c.status !== undefined ? c.status : ""
+        }));
     }
 
     // Uma linha por container: nome, imagem, portas e o status humano do

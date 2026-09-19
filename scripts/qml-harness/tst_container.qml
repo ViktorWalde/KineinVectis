@@ -141,6 +141,27 @@ Item {
         if (controller.panelVisible) failures += 67108864;
         if (!controller.engineFound) failures += 134217728;
 
+        // E3-6: o filtro por nome/imagem/id, a linha escolhida POR ID (o
+        // indice muda a cada refresh) e o alvo das acoes.
+        controller.handleContainers([rodando, parado], "podman", "", "");
+        if (controller.visibleContainers.length !== 2 || controller.selected !== null) failures += 536870912;
+        controller.selectRow(1);
+        if (controller.selectedId !== "fdd8de359c22" || controller.selectedTarget !== "timescaledb"
+                || controller.selectedRunning) failures += 1073741824;
+        controller.setFilter("POSTGRES");
+        if (controller.visibleContainers.length !== 1 || controller.visibleContainers[0].id !== "27b17e15d40c") failures += 2147483648;
+        // A escolhida saiu do filtro: sem selecao, sem alvo — nada de agir no errado.
+        if (controller.selectedIndex !== -1 || controller.selected !== null || controller.selectedTarget !== "") failures += 4294967296;
+        controller.setFilter("");
+        // A lista volta e a escolha (por id) volta com ela, no indice novo.
+        controller.handleContainers([parado, rodando], "podman", "", "");
+        if (controller.selectedIndex !== 0 || controller.selectedTarget !== "timescaledb") failures += 8589934592;
+        const linhas = controller.containerRows();
+        if (linhas.length !== 2 || linhas[1].state !== "●" || linhas[0].state !== "○"
+                || linhas[1].name !== "postgres-dev, pg" || linhas[1].ports !== "0.0.0.0:5433->5432/tcp") failures += 17179869184;
+        controller.setFilter("fdd8");
+        if (controller.visibleContainers.length !== 1) failures += 34359738368;
+
         if (failures !== 0) console.error("FALHAS bitmask=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);
     }
