@@ -14,8 +14,8 @@ depois que ela estiver aberta, está no [manual](manual.md) — dentro da IDE, e
 Na pasta `dist/`, envie estes quatro arquivos juntos:
 
 ```text
-Kinein-Vectis-0.1.0-x86_64.AppImage
-Kinein-Vectis-0.1.0-x86_64.AppImage.sha256
+Kinein-Vectis-0.2.0-x86_64.AppImage
+Kinein-Vectis-0.2.0-x86_64.AppImage.sha256
 instalar-kinein-vectis.sh
 Tutorial.md
 ```
@@ -32,7 +32,7 @@ Antes de enviar, confira o par na sua máquina:
 
 ```bash
 cd dist
-sha256sum -c Kinein-Vectis-0.1.0-x86_64.AppImage.sha256
+sha256sum -c Kinein-Vectis-0.2.0-x86_64.AppImage.sha256
 ```
 
 O resultado esperado termina em `OK`. Se quiser confirmar a origem além da
@@ -64,13 +64,13 @@ Coloque os dois arquivos recebidos na mesma pasta, abra um terminal nela e
 rode:
 
 ```bash
-sha256sum -c Kinein-Vectis-0.1.0-x86_64.AppImage.sha256
+sha256sum -c Kinein-Vectis-0.2.0-x86_64.AppImage.sha256
 ```
 
 Só prossiga se aparecer:
 
 ```text
-Kinein-Vectis-0.1.0-x86_64.AppImage: OK
+Kinein-Vectis-0.2.0-x86_64.AppImage: OK
 ```
 
 Se aparecer `FAILED`, não execute o arquivo. Apague o AppImage e o checksum,
@@ -108,8 +108,8 @@ Depois, procure por **Kinein Vectis** no menu de aplicativos e abra normalmente.
 ### Alternativa: executar sem instalar o ícone
 
 ```bash
-chmod +x Kinein-Vectis-0.1.0-x86_64.AppImage
-./Kinein-Vectis-0.1.0-x86_64.AppImage
+chmod +x Kinein-Vectis-0.2.0-x86_64.AppImage
+./Kinein-Vectis-0.2.0-x86_64.AppImage
 ```
 
 Não use `sudo`. Se mover o AppImage depois de criar o ícone, execute novamente
@@ -123,7 +123,7 @@ O modo portátil prioriza compatibilidade. Para testar aceleração gráfica no
 desktop atual, sem mudar permanentemente o atalho, execute:
 
 ```bash
-KINEIN_GRAPHICS_BACKEND=hardware ./Kinein-Vectis-0.1.0-x86_64.AppImage
+KINEIN_GRAPHICS_BACKEND=hardware ./Kinein-Vectis-0.2.0-x86_64.AppImage
 ```
 
 Se houver qualquer erro de EGL, OpenGL, Vulkan ou RHI, volte a abrir pelo menu
@@ -188,7 +188,7 @@ tente novamente.
 Use o modo de extração temporária, que dispensa a montagem FUSE:
 
 ```bash
-APPIMAGE_EXTRACT_AND_RUN=1 ./Kinein-Vectis-0.1.0-x86_64.AppImage
+APPIMAGE_EXTRACT_AND_RUN=1 ./Kinein-Vectis-0.2.0-x86_64.AppImage
 ```
 
 Esse modo pode abrir um pouco mais devagar, mas não instala nada no sistema.
@@ -198,7 +198,7 @@ Esse modo pode abrir um pouco mais devagar, mas não instala nada no sistema.
 Execute pelo terminal, copie toda a saída e envie junto do relato:
 
 ```bash
-./Kinein-Vectis-0.1.0-x86_64.AppImage
+./Kinein-Vectis-0.2.0-x86_64.AppImage
 ```
 
 Se o aplicativo chegou a abrir, inclua também o log
