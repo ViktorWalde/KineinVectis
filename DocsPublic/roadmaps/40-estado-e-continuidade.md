@@ -79,8 +79,8 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.125.0
-testes      837 Rust aprovados; 52 harnesses QML (medicao de 2026-09-18, §7.68)
+protocolo   0.126.0
+testes      838 Rust aprovados; 53 harnesses QML (medicao de 2026-09-18, §7.70)
 metodos     161 IPC roteados, 55 eventos (run.stdin e event.run.* sairam em 0.125.0;
             datasource.discover/create e event.datasource.created
             em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
@@ -685,8 +685,8 @@ lista de pendências parecer maior ou menor do que é.
 #### 4.2.1 O que está pronto (medido em 2026-09-18, noite)
 
 ```text
-protocolo    0.125.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
-testes       837 Rust · 52 harnesses QML · 24 verificacoes no gate, todas verdes
+protocolo    0.126.0 · 161 metodos IPC · 55 eventos · 36 dominios (todos no arquitetura/03)
+testes       838 Rust · 53 harnesses QML · 24 verificacoes no gate, todas verdes
 binario      linux-clang-debug-strict abre em ~720-840 ms offscreen (debug);
              release-hardened abriu em 318 ms na medicao do pente-fino (§7.54)
 catraca      1 arquivo em debito (core_client.h, decisao do autor §7.5); nenhum novo
@@ -4506,3 +4506,49 @@ mostra mora numa função só (`BottomTabBar.badgeFor`). 24 px de altura.
 dos painéis de ambiente) não entrou nos painéis de baixo — são densos e
 a linha custaria altura; fica para quando o autor vir a faixa nova. O Git
 é a fatia seguinte (HUD própria).
+
+### 7.70 A HUD do Git — primeira fatia (save point) — 2026-09-18 (noite), protocolo 0.126.0
+
+**O autor:** "melhorar essa parte visual do git de versionamento,
+histórico e afins; bem provável de ser necessário criar uma HUD única para
+o Git com base no funcionamento visual das IDEs JetBrains." E, com a
+sessão longa: "faz um save point — finaliza a parte atual e faz um
+commit/documentação antes de prosseguir". Este é o save point: a HUD
+funciona de ponta a ponta; o que falta está dito abaixo.
+
+**Antes (fotos 15a/15b/15d):** uma lista de mudanças plana, o diff num
+diálogo, o histórico como lista de linhas, o commit numa linha, nada de
+refs nem de grafo, o painel de 220 px.
+
+**Contrato (0.126.0).** `git.log` traz `parents` e `refs` por commit;
+`git.commit { amend? }`. Testes: `parse_log` com merge e refs; amend de
+mensagem sem nada staged (legítimo) e commit novo sem staged (recusado).
+
+**Tela (fotos 16a/16b).** O painel Git é DUAS colunas: à esquerda a lista
+(Mudanças **agrupadas por pasta**, com o nome do arquivo; ou o Histórico
+com o **grafo** — raias pela regra pura `GitRules.lanes`, merge como anel
+— e os **refs como chips**: `main` no HEAD em âmbar, `origin/*` em cinza,
+tags em roxo) e o commit embaixo (mensagem, **Amend** com o aviso
+"reescreve o último commit", **Commit e Push**, Commit); à direita o
+**inspetor** (`GitInspectorController`, filho do `GitController`): um
+clique numa mudança mostra o diff dela (`GitPatchView`, linhas coloridas
+com fundo) — dois cliques abrem o arquivo; um clique num commit mostra
+sha, autor · idade, os refs, os **arquivos com +/−** na grade comum
+(`KvDataGrid`) e o patch. O diálogo de diff ficou só para o pedido do
+editor. O painel de baixo sobe para 340 px quando a aba Git está ativa.
+`GitPanel` fala com o controller (o `BottomPanelHost` perdeu 11
+propriedades e 13 sinais de passagem; o `ShellWorkspaceHost` 41 linhas).
+
+**Provado:** `tst_git_rules` (raias em linha reta, merge que abre e fecha,
+sem pais, arquivos do patch com +/−, classe da linha, pasta, refs, o
+delegate antes do modelData); gates QML/fiação/arquitetura/atalhos verdes;
+fotos headless com este repositório (24 mudanças em 4 pastas; 11 commits
+com `main`, `origin/main`, `origin/HEAD`).
+
+**Não feito, dito (a fatia seguinte da HUD):** stage por pasta (o
+checkbox da seção); busca/filtro no histórico (por branch, autor, texto);
+o grafo desenha as raias e os pontos, mas ainda **não as curvas** de
+merge/ramo; o branch no widget da barra (F1) segue abrindo o menu antigo;
+"Commit e Push" faz o push quando o status do commit volta — sem
+confirmação extra; cherry-pick/revert/reset não existem; nada disto foi
+clicado por uma pessoa (offscreen). O `GitController` está em 398/400.

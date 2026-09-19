@@ -336,7 +336,7 @@ impl Core {
         if parsed.message.trim().is_empty() {
             return invalid_git_params(request_id, "a mensagem do commit nao pode ser vazia");
         }
-        match git::commit(&root, &parsed.message) {
+        match git::commit(&root, &parsed.message, parsed.amend) {
             Ok(status) => JsonRpcResponse::success(request_id, json!(status)),
             Err(error) => git_error_response(request_id, &error),
         }

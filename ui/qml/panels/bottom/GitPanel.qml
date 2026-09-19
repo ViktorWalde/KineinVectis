@@ -2,47 +2,21 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Aba Git do painel inferior (fatia M3.3): lista de mudanças com stage
-// por clique, diff/descartar por linha e commit do que está staged.
-// M3.4 soma a vista Histórico (commits; diff por clique) na mesma aba.
-// Componente burro: estado entra por property, intenção sai por signal.
+// A HUD do Git (2026-09-18, pedido do autor: "uma HUD única para o Git,
+// como as IDEs JetBrains"): a linha do branch com pull/push/stash; duas
+// vistas — Mudanças (a lista agrupada por pasta, o commit embaixo) e
+// Histórico (o grafo, os refs) — e, à direita, o que está selecionado:
+// o diff da mudança ou o commit inteiro (autor, refs, arquivos, patch).
+// Fala com o GitController (dono do estado); só abrir arquivo sai por sinal.
 Item {
     id: panel
 
-    ListModel {
-        id: emptyChangesModel
-    }
+    property var gitController: null
 
-    ListModel {
-        id: emptyHistoryModel
-    }
-
-    property var changesModel: emptyChangesModel
-    property bool repo: false
-    property int stagedCount: 0
-    property string errorText: ""
-    property var historyModel: emptyHistoryModel
-    property bool historyVisible: false
-    property bool historyLoading: false
-    property string branchLabel: ""
-    property var branchesModel
-    property bool branchMenuVisible: false
-    property bool remoteOperationRunning: false
-
-    signal stageToggleRequested(int index)
-    signal diffRequested(string absPath)
-    signal discardRequested(int index)
     signal openRequested(string absPath)
-    signal commitRequested(string message)
-    signal changesViewRequested()
-    signal historyViewRequested()
-    signal historyRefreshRequested()
-    signal commitActivated(string sha, string shortSha, string summary)
-    signal branchMenuRequested()
-    signal branchCheckoutRequested(string branch)
-    signal branchCreateRequested(string name)
-    signal remoteRequested(string operation)
-    signal stashRequested(string action)
+
+    readonly property bool historyVisible: gitController ? gitController.historyVisible : false
+    readonly property real leftWidth: Math.round(width * 0.44)
 
     function clearMessage() {
         commitRow.clearMessage();
@@ -59,8 +33,8 @@ Item {
 
         Repeater {
             model: [
-                { label: panel.branchLabel === "" ? qsTr("branch") : panel.branchLabel,
-                  action: "branch" },
+                { label: panel.gitController && panel.gitController.branchLabel !== ""
+                         ? panel.gitController.branchLabel : qsTr("branch"), action: "branch" },
                 { label: qsTr("pull"), action: "pull" },
                 { label: qsTr("push"), action: "push" },
                 { label: qsTr("stash"), action: "stash" },
@@ -72,12 +46,14 @@ Item {
 
                 required property var modelData
 
+                readonly property bool remoteBusy: panel.gitController
+                    && panel.gitController.remoteOperationRunning
+                    && (modelData.action === "pull" || modelData.action === "push")
+
                 width: actionLabel.width + 2 * Theme.spacingSmall
                 height: 22
                 radius: Theme.radiusXSmall
-                opacity: panel.remoteOperationRunning
-                         && (modelData.action === "pull" || modelData.action === "push")
-                         ? 0.5 : 1.0
+                opacity: remoteBusy ? 0.5 : 1.0
                 color: actionArea.containsMouse ? Theme.surface2 : Theme.surface1
                 border.color: modelData.action === "branch" ? Theme.accent : Theme.borderSoft
                 border.width: 1
@@ -87,11 +63,9 @@ Item {
 
                     anchors.centerIn: parent
                     text: gitActionChip.modelData.label
-                    color: gitActionChip.modelData.action === "branch"
-                           ? Theme.accent : Theme.textSecondary
+                    color: gitActionChip.modelData.action === "branch" ? Theme.accent : Theme.textSecondary
                     font.pixelSize: 10
-                    font.family: gitActionChip.modelData.action === "branch"
-                                 ? Theme.monoFont : Theme.uiFont
+                    font.family: gitActionChip.modelData.action === "branch" ? Theme.monoFont : Theme.uiFont
                 }
 
                 MouseArea {
@@ -102,16 +76,38 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         const action = gitActionChip.modelData.action;
-                        if (action === "branch") {
-                            panel.branchMenuRequested();
-                        } else if (action === "pull" || action === "push") {
-                            panel.remoteRequested(action);
-                        } else {
-                            panel.stashRequested(action === "pop" ? "pop" : "push");
-                        }
+                        if (action === "branch") panel.gitController.openBranchMenu();
+                        else if (action === "pull" || action === "push") panel.gitController.startRemote(action);
+                        else panel.gitController.stashRequested(action === "pop" ? "pop" : "push", "");
                     }
                 }
             }
+        }
+
+        Item { width: Theme.spacingSmall; height: 1 }
+
+        KvToggleChip {
+            anchors.verticalCenter: parent.verticalCenter
+            labelText: panel.gitController && panel.gitController.changeCount > 0
+                       ? qsTr("Mudanças (%1)").arg(panel.gitController.changeCount) : qsTr("Mudanças")
+            active: !panel.historyVisible
+            onToggled: panel.gitController.showChanges()
+        }
+
+        KvToggleChip {
+            anchors.verticalCenter: parent.verticalCenter
+            labelText: qsTr("Histórico")
+            active: panel.historyVisible
+            onToggled: panel.gitController.openHistory()
+        }
+
+        KvIconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: panel.historyVisible
+            compact: true
+            iconName: "refresh"
+            tooltip: qsTr("Atualizar o histórico")
+            onClicked: panel.gitController.refreshHistory()
         }
     }
 
@@ -121,167 +117,89 @@ Item {
         anchors.top: gitActions.bottom
         anchors.left: parent.left
         anchors.topMargin: Theme.spacingXSmall
-        visible: panel.branchMenuVisible
-
-        branchesModel: panel.branchesModel
-
-        onBranchCheckoutRequested: function(branch) { panel.branchCheckoutRequested(branch); }
-        onBranchCreateRequested: function(name) { panel.branchCreateRequested(name); }
+        z: 5
+        visible: panel.gitController ? panel.gitController.branchMenuVisible : false
+        branchesModel: panel.gitController ? panel.gitController.branchesModel : null
+        onBranchCheckoutRequested: function(branch) { panel.gitController.checkoutBranch(branch); }
+        onBranchCreateRequested: function(name) { panel.gitController.createBranch(name); }
     }
-    Row {
-        id: viewsHeader
 
-        anchors.top: gitActions.bottom
-        anchors.topMargin: Theme.spacingSmall
-        anchors.left: parent.left
-        height: 20
-        spacing: Theme.spacingSmall
-
-        Rectangle {
-            id: changesChip
-
-            width: changesChipLabel.width + 2 * Theme.spacingSmall
-            height: 20
-            radius: Theme.radiusXSmall
-            color: !panel.historyVisible ? Theme.surfaceSelected
-                                         : (changesChipArea.containsMouse
-                                            ? Theme.surface2 : Theme.surface1)
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: changesChipLabel
-
-                anchors.centerIn: parent
-                text: qsTr("Mudanças")
-                color: !panel.historyVisible ? Theme.textPrimary
-                                             : Theme.textSecondary
-                font.pixelSize: 10
-            }
-
-            MouseArea {
-                id: changesChipArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: panel.changesViewRequested()
-            }
-        }
-
-        Rectangle {
-            id: historyChip
-
-            width: historyChipLabel.width + 2 * Theme.spacingSmall
-            height: 20
-            radius: Theme.radiusXSmall
-            color: panel.historyVisible ? Theme.surfaceSelected
-                                        : (historyChipArea.containsMouse
-                                           ? Theme.surface2 : Theme.surface1)
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: historyChipLabel
-
-                anchors.centerIn: parent
-                text: qsTr("Histórico")
-                color: panel.historyVisible ? Theme.textPrimary
-                                            : Theme.textSecondary
-                font.pixelSize: 10
-            }
-
-            MouseArea {
-                id: historyChipArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: panel.historyViewRequested()
-            }
-        }
-
-        Rectangle {
-            id: historyRefreshChip
-
-            width: historyRefreshLabel.width + 2 * Theme.spacingSmall
-            height: 20
-            radius: Theme.radiusXSmall
-            visible: panel.historyVisible
-            color: historyRefreshArea.containsMouse ? Theme.surface2
-                                                    : "transparent"
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: historyRefreshLabel
-
-                anchors.centerIn: parent
-                text: qsTr("atualizar")
-                color: Theme.textSecondary
-                font.pixelSize: 10
-            }
-
-            MouseArea {
-                id: historyRefreshArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: panel.historyRefreshRequested()
-            }
-        }
-    }
+    // ---- a esquerda: a lista (mudancas ou historico) e o commit ----------
 
     GitHistoryList {
         id: historyView
 
-        anchors.top: viewsHeader.bottom
+        anchors.top: gitActions.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        anchors.right: parent.right
+        width: panel.leftWidth
         visible: panel.historyVisible
-
-        historyModel: panel.historyModel
-        historyLoading: panel.historyLoading
-        repo: panel.repo
-
+        historyModel: panel.gitController ? panel.gitController.historyModel : null
+        historyLoading: panel.gitController ? panel.gitController.historyLoading : false
+        repo: panel.gitController ? panel.gitController.repo : false
+        laneCount: panel.gitController ? panel.gitController.historyLaneCount : 1
+        selectedSha: panel.gitController ? panel.gitController.inspector.sha : ""
         onCommitActivated: function(sha, shortSha, summary) {
-            panel.commitActivated(sha, shortSha, summary);
+            panel.gitController.inspector.showCommit(panel.gitController.historyEntry(sha));
         }
     }
+
     GitChangesList {
         id: changesView
 
-        anchors.top: viewsHeader.bottom
+        anchors.top: gitActions.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.bottom: commitRow.top
         anchors.bottomMargin: Theme.spacingSmall
         anchors.left: parent.left
-        anchors.right: parent.right
+        width: panel.leftWidth
         visible: !panel.historyVisible
-
-        changesModel: panel.changesModel
-        repo: panel.repo
-
-        onStageToggleRequested: function(index) { panel.stageToggleRequested(index); }
-        onDiffRequested: function(absPath) { panel.diffRequested(absPath); }
-        onDiscardRequested: function(index) { panel.discardRequested(index); }
+        changesModel: panel.gitController ? panel.gitController.changesModel : null
+        repo: panel.gitController ? panel.gitController.repo : false
+        selectedAbsPath: panel.gitController ? panel.gitController.inspector.path : ""
+        onStageToggleRequested: function(index) { panel.gitController.toggleStaged(index); }
+        onSelectRequested: function(absPath, path) { panel.gitController.inspector.showChange(absPath, path); }
+        onDiffRequested: function(absPath) { panel.gitController.openDiffDialog(absPath); }
+        onDiscardRequested: function(index) { panel.gitController.openDiscardDialog(index); }
         onOpenRequested: function(absPath) { panel.openRequested(absPath); }
     }
+
     GitCommitBox {
         id: commitRow
 
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        anchors.right: parent.right
-        height: 30
-
+        width: panel.leftWidth
+        height: implicitHeight
         historyVisible: panel.historyVisible
-        errorText: panel.errorText
-        stagedCount: panel.stagedCount
+        errorText: panel.gitController ? panel.gitController.lastMutationError : ""
+        stagedCount: panel.gitController ? panel.gitController.stagedCount : 0
+        amend: panel.gitController ? panel.gitController.amend : false
+        remoteRunning: panel.gitController ? panel.gitController.remoteOperationRunning : false
+        onCommitRequested: function(message) { panel.gitController.commit(message); }
+        onCommitAndPushRequested: function(message) { panel.gitController.commitAndPush(message); }
+        onAmendToggled: panel.gitController.amend = !panel.gitController.amend
+    }
 
-        onCommitRequested: function(message) { panel.commitRequested(message); }
+    // ---- a direita: o que esta' selecionado -------------------------------
+
+    Rectangle {
+        anchors.top: gitActions.bottom
+        anchors.topMargin: Theme.spacingSmall
+        anchors.bottom: parent.bottom
+        anchors.left: changesView.right
+        anchors.leftMargin: Theme.spacingMedium
+        anchors.right: parent.right
+        radius: Theme.radius
+        color: Theme.background0
+        border.width: 1
+        border.color: Theme.borderSoft
+
+        GitInspectorPane {
+            anchors.fill: parent
+            anchors.margins: Theme.spacingSmall
+            inspector: panel.gitController ? panel.gitController.inspector : null
+        }
     }
 }

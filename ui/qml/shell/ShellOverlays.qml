@@ -125,13 +125,7 @@ Item {
         anchors.fill: parent
         visible: root.gitController.diffDialogVisible
         z: 93
-        title: root.gitController.diffDialogCommitLabel !== ""
-               ? root.gitController.diffDialogCommitLabel
-               : root.shellController.relativeToRoot(
-                     root.gitController.diffDialogPath)
-        emptyText: root.gitController.diffDialogCommitLabel !== ""
-                   ? qsTr("Commit sem diff textual (merge?).")
-                   : ""
+        title: root.shellController.relativeToRoot(root.gitController.diffDialogPath)
         diffText: root.gitController.diffDialogText
         tracked: root.gitController.diffDialogTracked
         loading: root.gitController.diffDialogLoading

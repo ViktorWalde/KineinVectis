@@ -228,10 +228,14 @@ Item {
                 id: bottomPanel
 
                 width: parent.width
-                height: root.shellController.bottomPanelHeight
+                // A HUD do Git (2026-09-18) pede altura: duas colunas e o
+                // commit embaixo nao cabem nos 220 px de um painel de log.
+                height: Math.max(root.shellController.bottomPanelHeight,
+                                 root.shellController.tabActive("git") ? 340 : 0)
                 open: root.shellController.showBottomPanel
                 activeTab: root.shellController.bottomTab
                 problemCount: root.jobsController.problemsModel.count
+                gitController: root.gitController
                 testsBadge: root.jobsController.testsBadge
                 testsOk: root.jobsController.testsFailed === 0
                 jobsRunning: root.activeJobController ? root.activeJobController.runningCount : 0
@@ -244,17 +248,6 @@ Item {
                 terminalActive: root.terminalActive
                 workspaceAvailable: root.workspaceOpen
                 debugController: root.debugController
-                gitChangesModel: root.gitController.changesModel
-                gitRepo: root.gitController.repo
-                gitStagedCount: root.gitController.stagedCount
-                gitErrorText: root.gitController.lastMutationError
-                gitHistoryModel: root.gitController.historyModel
-                gitHistoryVisible: root.gitController.historyVisible
-                gitHistoryLoading: root.gitController.historyLoading
-                gitBranchLabel: root.gitController.branchLabel
-                gitBranchesModel: root.gitController.branchesModel
-                gitBranchMenuVisible: root.gitController.branchMenuVisible
-                gitRemoteOperationRunning: root.gitController.remoteOperationRunning
                 running: root.running
                 terminalsModel: root.runtimeController.terminalsModel
                 activeTerminalId: root.runtimeController.activeTerminalId
@@ -306,39 +299,8 @@ Item {
                 onTerminalCloseTabRequested: function(id) {
                     root.runtimeController.closeTerminal(id);
                 }
-                onGitStageToggleRequested: function(index) {
-                    root.gitController.toggleStaged(index);
-                }
-                onGitChangesViewRequested: root.gitController.showChanges()
-                onGitHistoryViewRequested: root.gitController.openHistory()
-                onGitHistoryRefreshRequested: root.gitController.refreshHistory()
-                onGitCommitActivated: function(sha, shortSha, summary) {
-                    root.gitController.openCommitDiff(sha, shortSha, summary);
-                }
-                onGitBranchMenuRequested: root.gitController.openBranchMenu()
-                onGitBranchCheckoutRequested: function(branch) {
-                    root.gitController.checkoutBranch(branch);
-                }
-                onGitBranchCreateRequested: function(name) {
-                    root.gitController.createBranch(name);
-                }
-                onGitRemoteRequested: function(operation) {
-                    root.gitController.startRemote(operation);
-                }
-                onGitStashRequested: function(action) {
-                    root.gitController.stashRequested(action, "");
-                }
-                onGitDiffRequested: function(absPath) {
-                    root.gitController.openDiffDialog(absPath);
-                }
-                onGitDiscardRequested: function(index) {
-                    root.gitController.openDiscardDialog(index);
-                }
                 onGitOpenRequested: function(absPath) {
                     root.readFileRequested(absPath);
-                }
-                onGitCommitRequested: function(message) {
-                    root.gitController.commit(message);
                 }
                 onSearchRequested: function(query) {
                     root.searchController.runSearch(query);

@@ -1,5 +1,11 @@
 # 03 — Protocolo IPC
 
+> **0.126.0 (2026-09-18, noite) — a HUD do Git.** `git.log` ganha
+> `parents` (`%P`) e `refs` (`%D`, já separados) por commit: o grafo e os
+> chips do Histórico; `git.commit { message, amend? }` reescreve o último
+> commit (`--amend`; um amend só de mensagem, sem nada staged, é
+> legítimo). Sem método novo.
+>
 > **0.125.0 (2026-09-18, noite) — a execução é uma aba de terminal.**
 > `run.start`/`run.script` → `{ command, terminalId }`: o comando abre num
 > PTY (`sh -lc`, ou argv direto) e a saída chega por `event.terminal.render`
@@ -2695,7 +2701,8 @@ git.unstage  { paths: [abs] } → GitStatusResult   (git restore --staged)
 git.discard  { paths: [abs] } → GitStatusResult   (DESTRUTIVO: restore
                                  p/ tracked, clean -f p/ untracked; a
                                  confirmação é responsabilidade da UI)
-git.commit   { message }      → GitStatusResult   (commita SÓ o staged)
+git.commit   { message, amend? } → GitStatusResult (commita SÓ o staged; `amend`
+                                  reescreve o último commit — 0.126.0)
 ```
 
 - Guarda do commit por exit code estável (`git diff --cached --quiet`):
@@ -2714,7 +2721,8 @@ git.blame { path } → { path (ecoado), repo, tracked, groups: [
     { startLine, lineCount, sha, author, authorTime (epoch),
       summary, committed }] }
 git.log { maxCount? } → { repo, entries: [
-    { sha, shortSha, author, authorTime (epoch), summary }] }
+    { sha, shortSha, author, authorTime (epoch), summary,
+      parents: [sha] (0.126.0; dois num merge), refs: ["HEAD -> main", "origin/main", "tag: v1"] }] }
 git.commitDiff { sha } → { sha (ecoado), text (patch unificado) }
 ```
 

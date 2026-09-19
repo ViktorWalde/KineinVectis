@@ -41,23 +41,25 @@ Item {
     property alias blamePath: historyController.blamePath
     property alias blameLineAnnotations: historyController.blameLineAnnotations
     property alias blameRevision: historyController.blameRevision
-    // M3.4: histórico de commits (vista da aba Git) e diff de commit no
-    // GitDiffDialog reusado (título via diffDialogCommitLabel).
+    // O historico (vista da aba Git): o modelo, a vista, o carregando, as raias.
     property alias historyModel: historyController.historyModel
     property alias historyVisible: historyController.historyVisible
     property alias historyLoading: historyController.historyLoading
-    property string diffDialogCommitLabel: ""
-    property string diffDialogSha: ""
+    property alias historyLaneCount: historyController.laneCount
     property alias branchesModel: gitBranchesModel
     property bool branchMenuVisible: false
     property bool remoteOperationRunning: false
+    // O painel da direita da HUD (2026-09-18): dono proprio, filho deste.
+    readonly property alias inspector: inspectorController
+    // Reescrever o ultimo commit (git commit --amend) no proximo Commit.
+    property bool amend: false
 
     signal statusRequested()
     signal fileDiffRequested(string path)
     signal stageRequested(var paths)
     signal unstageRequested(var paths)
     signal discardRequested(var paths)
-    signal commitRequested(string message)
+    signal commitRequested(string message, bool amend)
     signal blameRequested(string path)
     signal logRequested()
     signal commitDiffRequested(string sha)
@@ -76,6 +78,15 @@ Item {
 
     ListModel {
         id: gitBranchesModel
+    }
+
+    GitRules { id: gitRules }
+
+    GitInspectorController {
+        id: inspectorController
+
+        onFileDiffWanted: function(path) { root.fileDiffRequested(path); }
+        onCommitDiffWanted: function(sha) { root.commitDiffRequested(sha); }
     }
 
     GitHistoryController {
@@ -104,6 +115,7 @@ Item {
     function showChanges() { historyController.showChanges(); }
     function refreshHistory() { historyController.refreshHistory(); }
     function handleLog(isRepo, entries) { historyController.handleLog(isRepo, entries); }
+    function historyEntry(sha) { return historyController.entry(sha); }
 
     function refresh() {
         if (workspaceRoot === "") {
@@ -131,8 +143,6 @@ Item {
             return;
         }
         diffDialogPath = path;
-        diffDialogCommitLabel = "";
-        diffDialogSha = "";
         diffDialogText = "";
         diffDialogTracked = true;
         diffDialogLoading = true;
@@ -147,6 +157,7 @@ Item {
     }
 
     function handleFileDiff(path, isRepo, tracked, hunks, text) {
+        inspectorController.handleFileDiff(path, tracked, text);
         if (diffDialogVisible && path === diffDialogPath) {
             diffDialogText = text;
             diffDialogTracked = tracked;
@@ -174,6 +185,8 @@ Item {
     }
 
     function clear() {
+        inspectorController.clear();
+        amend = false;
         repo = false;
         branchLabel = "";
         aheadCount = 0;
@@ -222,6 +235,7 @@ Item {
             gitChangesModel.append({
                 path: entries[i].path,
                 absPath: absPath,
+                folder: gitRules.folderOf(entries[i].path),
                 kind: entries[i].kind,
                 staged: entries[i].staged
             });
@@ -232,6 +246,11 @@ Item {
         stagedCount = staged;
         gitKinds = kinds;
         revision++;
+        inspectorController.dropChangeIfGone(Object.keys(kinds));
+        if (pushAfterCommit) {
+            pushAfterCommit = false;
+            startRemote("push");
+        }
         // Mutações (stage/discard/commit) também mexem no diff do arquivo
         // ativo: re-aponta a gutter junto.
         if (activeDiffPath !== "") {
@@ -272,14 +291,30 @@ Item {
         discardDialogVisible = false;
     }
 
+    // Um commit novo pede algo staged; um amend so' de mensagem nao.
     function commit(message) {
-        if (message.trim() === "" || stagedCount === 0) {
+        if (message.trim() === "" || (stagedCount === 0 && !amend)) {
             return;
         }
-        commitRequested(message);
+        commitRequested(message, amend);
+        amend = false;
+    }
+
+    // Commit e Push: o push sai quando o status do commit voltar.
+    property bool pushAfterCommit: false
+
+    function commitAndPush(message) {
+        if (message.trim() === "" || (stagedCount === 0 && !amend)) {
+            return;
+        }
+        pushAfterCommit = true;
+        commit(message);
     }
 
     function handleRequestFailed(method, message) {
+        if (method === "git.commit") {
+            pushAfterCommit = false;
+        }
         if (method.startsWith("git.")) {
             lastMutationError = message;
         }
@@ -345,7 +380,7 @@ Item {
             lastMutationError = message;
         }
         refresh();
-        if (historyVisible) {
+        if (root.historyVisible) {
             refreshHistory();
         }
     }
@@ -355,24 +390,9 @@ Item {
         lastMutationError = qsTr("Salve todas as abas modificadas antes desta operacao Git.");
     }
 
-    // ---- M3.4: blame ----
-
-    function openCommitDiff(sha, shortSha, summary) {
-        diffDialogSha = sha;
-        diffDialogCommitLabel = qsTr("commit %1 — %2").arg(shortSha).arg(summary);
-        diffDialogPath = "";
-        diffDialogText = "";
-        diffDialogTracked = true;
-        diffDialogLoading = true;
-        diffDialogVisible = true;
-        commitDiffRequested(sha);
-    }
-
+    // O diff de um commit vai para o painel da direita da HUD (2026-09-18);
+    // o dialogo ficou so' para o diff de ARQUIVO pedido do editor.
     function handleCommitDiff(sha, text) {
-        if (!diffDialogVisible || sha !== diffDialogSha) {
-            return;
-        }
-        diffDialogText = text;
-        diffDialogLoading = false;
+        inspectorController.handleCommitDiff(sha, text);
     }
 }

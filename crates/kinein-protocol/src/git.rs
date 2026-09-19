@@ -189,6 +189,12 @@ pub struct GitPathsParams {
 pub struct GitCommitParams {
     /// Non-empty commit message (single line in v1).
     pub message: String,
+    /// `true` rewrites the last commit with the staged changes and this
+    /// message (`git commit --amend`, `0.126.0`). The UI asks before, because
+    /// it rewrites history; the core refuses when HEAD was already pushed
+    /// is NOT checked here — that is the author's call.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub amend: bool,
 }
 
 /// Parameters for `git.blame`.
@@ -257,6 +263,14 @@ pub struct GitLogEntryInfo {
     pub author_time: i64,
     /// First line of the commit message.
     pub summary: String,
+    /// Parent shas, oldest first (`%P`; two on a merge) — what the graph
+    /// of the Log view is drawn from (`0.126.0`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub parents: Vec<String>,
+    /// Ref names pointing at this commit (`%D`: `HEAD -> main`, `origin/main`,
+    /// `tag: v1`), already split (`0.126.0`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub refs: Vec<String>,
 }
 
 /// Result payload for `git.log`.

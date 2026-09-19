@@ -12,6 +12,13 @@ ListView {
     property var historyModel
     property bool historyLoading: false
     property bool repo: false
+    // O grafo (HUD do Git, 2026-09-18): quantas raias, e o commit selecionado.
+    property int laneCount: 1
+    property string selectedSha: ""
+    readonly property int laneWidth: 12
+    readonly property int graphWidth: Math.max(1, laneCount) * laneWidth + Theme.spacingXSmall
+
+    GitRules { id: rules }
 
     signal commitActivated(string sha, string shortSha, string summary)
 
@@ -58,17 +65,61 @@ ListView {
         required property string author
         required property string age
         required property string summary
+        required property string refsText
+
+        readonly property var refs: refsText === "" ? [] : refsText.split("\u001f")
+        required property int lane
+        required property bool merge
+
+        readonly property bool selected: root.selectedSha === sha
 
         width: root.width
         height: 24
         radius: Theme.radiusXSmall
-        color: commitRowArea.containsMouse ? Theme.surface2 : "transparent"
+        color: selected ? Theme.surfaceSelected
+               : (commitRowArea.containsMouse ? Theme.surface2 : "transparent")
+
+        // O grafo: a linha vertical de cada raia viva e o ponto do commit.
+        Item {
+            id: grafo
+
+            anchors.left: parent.left
+            anchors.leftMargin: Theme.spacingXSmall
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: root.graphWidth
+
+            Repeater {
+                model: root.laneCount
+
+                delegate: Rectangle {
+                    required property int index
+
+                    x: index * root.laneWidth + root.laneWidth / 2 - 1
+                    width: 1
+                    height: parent.height
+                    color: Theme.borderStrong
+                    opacity: 0.8
+                }
+            }
+
+            Rectangle {
+                x: commitRowItem.lane * root.laneWidth + root.laneWidth / 2 - 4
+                anchors.verticalCenter: parent.verticalCenter
+                width: 8
+                height: 8
+                radius: 4
+                color: commitRowItem.merge ? Theme.background1 : Theme.accent
+                border.width: commitRowItem.merge ? 2 : 0
+                border.color: Theme.accent
+            }
+        }
 
         Text {
             id: commitShaText
 
             anchors.verticalCenter: parent.verticalCenter
-            anchors.left: parent.left
+            anchors.left: grafo.right
             anchors.leftMargin: Theme.spacingSmall
             text: commitRowItem.shortSha
             color: Theme.accent
@@ -76,10 +127,46 @@ ListView {
             font.family: Theme.monoFont
         }
 
-        Text {
+        Row {
+            id: refsRow
+
             anchors.verticalCenter: parent.verticalCenter
             anchors.left: commitShaText.right
             anchors.leftMargin: Theme.spacingSmall
+            spacing: Theme.spacingXSmall
+
+            Repeater {
+                model: commitRowItem.refs
+
+                delegate: Rectangle {
+                    id: refChip
+
+                    required property var modelData
+
+                    readonly property var ref: rules.refChip(modelData)
+
+                    width: refLabel.implicitWidth + 2 * Theme.spacingXSmall + 2
+                    height: 14
+                    radius: 7
+                    color: ref.head ? Theme.accentDim : (ref.tag ? Theme.purpleOrbital : Theme.surface2)
+
+                    Text {
+                        id: refLabel
+
+                        anchors.centerIn: parent
+                        text: refChip.ref.name
+                        color: refChip.ref.head || refChip.ref.tag ? Theme.background0 : Theme.textSecondary
+                        font.pixelSize: 9
+                        font.bold: refChip.ref.head
+                    }
+                }
+            }
+        }
+
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: refsRow.right
+            anchors.leftMargin: commitRowItem.refs.length > 0 ? Theme.spacingSmall : 0
             anchors.right: commitMetaText.left
             anchors.rightMargin: Theme.spacingSmall
             text: commitRowItem.summary

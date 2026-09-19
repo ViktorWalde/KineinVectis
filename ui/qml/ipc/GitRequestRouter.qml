@@ -86,8 +86,8 @@ Item {
             root.coreClient.gitDiscard(paths);
         }
 
-        function onCommitRequested(message) {
-            root.coreClient.gitCommit(message);
+        function onCommitRequested(message, amend) {
+            root.coreClient.gitCommit(message, amend);
         }
 
         function onBlameRequested(path) {

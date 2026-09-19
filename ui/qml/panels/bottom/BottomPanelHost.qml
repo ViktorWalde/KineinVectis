@@ -28,17 +28,8 @@ Rectangle {
     // host recebe dono, nao copia de estado. Foi o que fez o ShellWorkspaceHost
     // caber de novo quando os watches entraram (etapa 15).
     property var debugController
-    property var gitChangesModel
-    property bool gitRepo: false
-    property int gitStagedCount: 0
-    property string gitErrorText: ""
-    property var gitHistoryModel
-    property bool gitHistoryVisible: false
-    property bool gitHistoryLoading: false
-    property string gitBranchLabel: ""
-    property var gitBranchesModel
-    property bool gitBranchMenuVisible: false
-    property bool gitRemoteOperationRunning: false
+    // O Git entra como CONTROLLER (a HUD de 2026-09-18 le e pede direto).
+    property var gitController: null
     // D2.3: abas de terminal.
     property var terminalsModel: null
     property string activeTerminalId: ""
@@ -67,20 +58,7 @@ Rectangle {
     signal terminalSelectRequested(string id)
     signal terminalNewRequested()
     signal terminalCloseTabRequested(string id)
-    signal gitStageToggleRequested(int index)
-    signal gitDiffRequested(string absPath)
-    signal gitDiscardRequested(int index)
     signal gitOpenRequested(string absPath)
-    signal gitCommitRequested(string message)
-    signal gitChangesViewRequested()
-    signal gitHistoryViewRequested()
-    signal gitHistoryRefreshRequested()
-    signal gitCommitActivated(string sha, string shortSha, string summary)
-    signal gitBranchMenuRequested()
-    signal gitBranchCheckoutRequested(string branch)
-    signal gitBranchCreateRequested(string name)
-    signal gitRemoteRequested(string operation)
-    signal gitStashRequested(string action)
     signal searchRequested(string query)
     signal searchCaseSensitivityToggleRequested(string query)
     signal searchResultOpenRequested(string path, int line, int column)
@@ -263,51 +241,8 @@ Rectangle {
         anchors.right: parent.right
         anchors.margins: Theme.spacingSmall
         visible: root.activeTab === "git"
-        changesModel: root.gitChangesModel
-        repo: root.gitRepo
-        stagedCount: root.gitStagedCount
-        errorText: root.gitErrorText
-        historyModel: root.gitHistoryModel
-        historyVisible: root.gitHistoryVisible
-        historyLoading: root.gitHistoryLoading
-        branchLabel: root.gitBranchLabel
-        branchesModel: root.gitBranchesModel
-        branchMenuVisible: root.gitBranchMenuVisible
-        remoteOperationRunning: root.gitRemoteOperationRunning
-        onStageToggleRequested: function(index) {
-            root.gitStageToggleRequested(index);
-        }
-        onDiffRequested: function(absPath) {
-            root.gitDiffRequested(absPath);
-        }
-        onDiscardRequested: function(index) {
-            root.gitDiscardRequested(index);
-        }
-        onOpenRequested: function(absPath) {
-            root.gitOpenRequested(absPath);
-        }
-        onCommitRequested: function(message) {
-            root.gitCommitRequested(message);
-        }
-        onChangesViewRequested: root.gitChangesViewRequested()
-        onHistoryViewRequested: root.gitHistoryViewRequested()
-        onHistoryRefreshRequested: root.gitHistoryRefreshRequested()
-        onCommitActivated: function(sha, shortSha, summary) {
-            root.gitCommitActivated(sha, shortSha, summary);
-        }
-        onBranchMenuRequested: root.gitBranchMenuRequested()
-        onBranchCheckoutRequested: function(branch) {
-            root.gitBranchCheckoutRequested(branch);
-        }
-        onBranchCreateRequested: function(name) {
-            root.gitBranchCreateRequested(name);
-        }
-        onRemoteRequested: function(operation) {
-            root.gitRemoteRequested(operation);
-        }
-        onStashRequested: function(action) {
-            root.gitStashRequested(action);
-        }
+        gitController: root.gitController
+        onOpenRequested: function(absPath) { root.gitOpenRequested(absPath); }
     }
 
     SearchPanel {

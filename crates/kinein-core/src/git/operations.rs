@@ -260,7 +260,7 @@ pub fn log(root: &Path, max_count: u32) -> Result<GitLogResult, GitError> {
             "log",
             &count_argument,
             "-z",
-            "--pretty=format:%H\u{1f}%h\u{1f}%an\u{1f}%at\u{1f}%s",
+            "--pretty=format:%H\u{1f}%h\u{1f}%an\u{1f}%at\u{1f}%s\u{1f}%P\u{1f}%D",
         ],
     )?;
     Ok(GitLogResult {
@@ -332,10 +332,11 @@ pub fn discard(root: &Path, paths: &[String]) -> Result<GitStatusResult, GitErro
 /// worktree contents and would violate staged-only semantics. Instead, every
 /// staged path must be visible in the opened workspace before the unchanged
 /// index is committed.
-pub fn commit(root: &Path, message: &str) -> Result<GitStatusResult, GitError> {
+pub fn commit(root: &Path, message: &str, amend: bool) -> Result<GitStatusResult, GitError> {
     ensure_repo(root)?;
     let staged = staged_paths(root)?;
-    if staged.is_empty() {
+    // Um amend so' de mensagem (nada staged) e' legitimo; um commit novo nao.
+    if staged.is_empty() && !amend {
         return Err(GitError::NothingStaged);
     }
 
@@ -348,7 +349,11 @@ pub fn commit(root: &Path, message: &str) -> Result<GitStatusResult, GitError> {
         return Err(GitError::InvisibleStagedPaths { paths: invisible });
     }
 
-    run_git(root, &["commit", "-m", message])?;
+    if amend {
+        run_git(root, &["commit", "--amend", "-m", message])?;
+    } else {
+        run_git(root, &["commit", "-m", message])?;
+    }
     status(root)
 }
 

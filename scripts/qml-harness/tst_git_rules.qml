@@ -1,0 +1,60 @@
+import QtQuick
+import "../../ui/qml/git"
+
+// As regras puras da HUD do Git: raias do grafo (linha reta, merge, ramo
+// que fecha), arquivos de um patch com +/-, classe da linha, pasta, refs.
+Item {
+    id: root
+
+    GitRules { id: rules }
+
+    Component.onCompleted: {
+        let failures = 0;
+
+        // Uma linha reta: tudo na raia 0, uma coluna viva.
+        const reta = rules.lanes([
+            { sha: "c", parents: ["b"] }, { sha: "b", parents: ["a"] }, { sha: "a", parents: [] }
+        ]);
+        if (reta.length !== 3 || reta.some(r => r.lane !== 0 || r.merge || r.laneCount !== 1)) failures += 1;
+
+        // Um merge: m tem dois pais; o segundo pai abre a raia 1 ate' fechar em a.
+        //   m (b, x) -> b (a) -> x (a) -> a
+        const merge = rules.lanes([
+            { sha: "m", parents: ["b", "x"] },
+            { sha: "b", parents: ["a"] },
+            { sha: "x", parents: ["a"] },
+            { sha: "a", parents: [] }
+        ]);
+        if (!merge[0].merge || merge[0].lane !== 0 || merge[0].laneCount !== 2) failures += 2;
+        if (merge[1].lane !== 0 || merge[2].lane !== 1) failures += 4;
+        // depois de x, as duas colunas esperam "a": viram uma.
+        if (merge[3].lane !== 0 || merge[3].laneCount !== 1) failures += 8;
+
+        // Sem pais informados (core antigo): linha reta, sem quebrar.
+        const semPais = rules.lanes([{ sha: "z" }, { sha: "y" }]);
+        if (semPais.length !== 2 || semPais[1].lane !== 0) failures += 16;
+
+        // Arquivos de um patch com contagem de + e -.
+        const patch = "diff --git a/src/a.rs b/src/a.rs\nindex 1..2 100644\n--- a/src/a.rs\n+++ b/src/a.rs\n@@ -1,2 +1,2 @@\n-x\n+y\n+z\ndiff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -1 +1 @@\n-a\n+b\n";
+        const files = rules.patchFiles(patch);
+        if (files.length !== 2 || files[0].path !== "src/a.rs" || files[0].added !== 2 || files[0].removed !== 1
+            || files[1].path !== "README.md" || files[1].added !== 1) failures += 32;
+        if (rules.patchFiles("").length !== 0) failures += 64;
+
+        if (rules.lineKind("+++ b/x") !== "meta" || rules.lineKind("+novo") !== "add"
+            || rules.lineKind("-velho") !== "del" || rules.lineKind("@@ -1 +1 @@") !== "hunk"
+            || rules.lineKind(" ctx") !== "ctx" || rules.lineKind("index 1..2") !== "meta") failures += 128;
+
+        if (rules.folderOf("ui/qml/git/GitPanel.qml") !== "ui/qml/git" || rules.folderOf("Cargo.toml") !== "(raiz)") failures += 256;
+
+        const head = rules.refChip("HEAD -> main");
+        const tag = rules.refChip("tag: v1.2");
+        const remoto = rules.refChip("origin/main");
+        if (head.name !== "main" || !head.head || tag.name !== "v1.2" || !tag.tag || remoto.name !== "origin/main" || remoto.head) failures += 512;
+        // Um delegate nasce antes do modelData: a regra nao pode explodir.
+        if (rules.refChip(undefined).name !== "" || rules.refChip(undefined).head) failures += 1024;
+
+        if (failures !== 0) console.error("FALHAS bitmask=" + failures);
+        Qt.exit(failures === 0 ? 0 : 1);
+    }
+}

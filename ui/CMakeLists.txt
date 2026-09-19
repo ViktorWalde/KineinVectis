@@ -161,6 +161,10 @@ set_source_files_properties(qml/git/GitController.qml PROPERTIES QT_RESOURCE_ALI
 set_source_files_properties(qml/git/GitHistoryController.qml PROPERTIES QT_RESOURCE_ALIAS GitHistoryController.qml)
 set_source_files_properties(qml/git/GitChangesList.qml PROPERTIES QT_RESOURCE_ALIAS GitChangesList.qml)
 set_source_files_properties(qml/git/GitHistoryList.qml PROPERTIES QT_RESOURCE_ALIAS GitHistoryList.qml)
+set_source_files_properties(qml/git/GitRules.qml PROPERTIES QT_RESOURCE_ALIAS GitRules.qml)
+set_source_files_properties(qml/git/GitInspectorController.qml PROPERTIES QT_RESOURCE_ALIAS GitInspectorController.qml)
+set_source_files_properties(qml/git/GitPatchView.qml PROPERTIES QT_RESOURCE_ALIAS GitPatchView.qml)
+set_source_files_properties(qml/git/GitInspectorPane.qml PROPERTIES QT_RESOURCE_ALIAS GitInspectorPane.qml)
 set_source_files_properties(qml/git/GitBranchMenu.qml PROPERTIES QT_RESOURCE_ALIAS GitBranchMenu.qml)
 set_source_files_properties(qml/git/GitCommitBox.qml PROPERTIES QT_RESOURCE_ALIAS GitCommitBox.qml)
 set_source_files_properties(qml/git/GitDiffDialog.qml PROPERTIES QT_RESOURCE_ALIAS GitDiffDialog.qml)
@@ -440,6 +444,10 @@ qt_add_qml_module(kinein-vectis
         qml/git/GitHistoryController.qml
         qml/git/GitChangesList.qml
         qml/git/GitHistoryList.qml
+        qml/git/GitRules.qml
+        qml/git/GitInspectorController.qml
+        qml/git/GitPatchView.qml
+        qml/git/GitInspectorPane.qml
         qml/git/GitBranchMenu.qml
         qml/git/GitCommitBox.qml
         qml/git/GitDiffDialog.qml

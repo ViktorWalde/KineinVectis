@@ -2,49 +2,51 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// A caixa de COMMIT: a mensagem de erro do git e a linha de commit.
-//
-// Saiu do GitPanel.qml em 2026-09-03 (etapa 17 do roadmaps/34). As duas ficam
-// juntas porque sao a mesma responsabilidade — o que o usuario ESCREVE e o que
-// o git respondeu sobre isso —, e porque a mensagem de erro se ancora na linha
-// de commit: separa-las criaria dependencia entre dois arquivos para nada.
+// A caixa de COMMIT da HUD do Git (2026-09-18): a mensagem, o chip Amend
+// (reescreve o ultimo commit — pedido explicito, nunca padrao), Commit e
+// Commit e Push, e o que o git respondeu sobre isso. Burro: estado por
+// property, intencao por signal.
 Item {
     id: root
 
     property bool historyVisible: false
     property string errorText: ""
     property int stagedCount: 0
+    property bool amend: false
+    property bool remoteRunning: false
 
     signal commitRequested(string message)
+    signal commitAndPushRequested(string message)
+    signal amendToggled()
+
+    readonly property bool canCommit: commitInput.text.trim() !== "" && (stagedCount > 0 || amend)
+
+    implicitHeight: historyVisible ? 0 : coluna.implicitHeight
+    visible: !historyVisible
 
     function clearMessage() {
         commitInput.text = "";
     }
 
-    Text {
-        anchors.bottom: commitBar.top
-        anchors.bottomMargin: 2 * Theme.spacingSmall + 2
+    Column {
+        id: coluna
+
         anchors.left: parent.left
         anchors.right: parent.right
-        visible: root.errorText !== "" && !root.historyVisible
-        text: root.errorText
-        color: Theme.errorSoft
-        font.pixelSize: 10
-        elide: Text.ElideRight
-    }
-
-    Row {
-        id: commitBar
-
         anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: 30
-        spacing: Theme.spacingSmall
-        visible: !root.historyVisible
+        spacing: Theme.spacingXSmall
+
+        Text {
+            width: parent.width
+            visible: root.errorText !== ""
+            text: root.errorText
+            color: Theme.errorSoft
+            font.pixelSize: 10
+            wrapMode: Text.WordWrap
+        }
 
         Rectangle {
-            width: parent.width - commitButton.width - Theme.spacingSmall
+            width: parent.width
             height: 30
             radius: Theme.radius
             color: Theme.background0
@@ -63,58 +65,65 @@ Item {
                 clip: true
                 selectByMouse: true
                 onAccepted: {
-                    root.commitRequested(commitInput.text);
-                    commitInput.text = "";
+                    if (root.canCommit) {
+                        root.commitRequested(commitInput.text);
+                        commitInput.text = "";
+                    }
                 }
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: commitInput.text === ""
-                    text: qsTr("Mensagem do commit...")
+                    text: root.amend ? qsTr("Nova mensagem do último commit…") : qsTr("Mensagem do commit…")
                     color: Theme.textMuted
                     font.pixelSize: 12
                 }
             }
         }
 
-        Rectangle {
-            id: commitButton
+        Row {
+            width: parent.width
+            spacing: Theme.spacingSmall
 
-            readonly property bool commitEnabled: root.stagedCount > 0
-                && commitInput.text.trim() !== ""
-
-            anchors.verticalCenter: parent.verticalCenter
-            width: commitLabel.width + 2 * Theme.spacingMedium
-            height: 30
-            radius: Theme.radius
-            opacity: commitEnabled ? 1.0 : 0.5
-            color: commitEnabled
-                   ? (commitButtonArea.pressed ? Theme.accentDim : Theme.accent)
-                   : Theme.surface1
-            border.color: commitEnabled ? "transparent" : Theme.borderSoft
-            border.width: commitEnabled ? 0 : 1
-
-            Text {
-                id: commitLabel
-
-                anchors.centerIn: parent
-                text: root.stagedCount > 0
-                      ? qsTr("Commit (%1)").arg(root.stagedCount)
-                      : qsTr("Commit")
-                color: commitButton.commitEnabled
-                       ? Theme.background0 : Theme.textMuted
-                font.pixelSize: 12
-                font.bold: true
+            KvToggleChip {
+                anchors.verticalCenter: parent.verticalCenter
+                labelText: qsTr("Amend")
+                active: root.amend
+                onToggled: root.amendToggled()
             }
 
-            MouseArea {
-                id: commitButtonArea
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.amend
+                text: qsTr("reescreve o último commit")
+                color: Theme.warningSoft
+                font.pixelSize: 10
+            }
 
-                anchors.fill: parent
-                cursorShape: commitButton.commitEnabled
-                             ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: {
-                    if (commitButton.commitEnabled) {
+            Item { width: parent.width - x - botoes.width; height: 1 }
+
+            Row {
+                id: botoes
+
+                spacing: Theme.spacingSmall
+
+                KvButton {
+                    compact: true
+                    text: qsTr("Commit e Push")
+                    enabled: root.canCommit && !root.remoteRunning
+                    onClicked: {
+                        root.commitAndPushRequested(commitInput.text);
+                        commitInput.text = "";
+                    }
+                }
+
+                KvButton {
+                    compact: true
+                    primary: true
+                    text: root.stagedCount > 0 && !root.amend
+                          ? qsTr("Commit (%1)").arg(root.stagedCount) : qsTr("Commit")
+                    enabled: root.canCommit
+                    onClicked: {
                         root.commitRequested(commitInput.text);
                         commitInput.text = "";
                     }

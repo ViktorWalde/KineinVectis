@@ -14,8 +14,11 @@ ListView {
 
     property var changesModel
     property bool repo: false
+    // O caminho selecionado (o painel da direita mostra o diff dele).
+    property string selectedAbsPath: ""
 
     signal stageToggleRequested(int index)
+    signal selectRequested(string absPath, string path)
     signal diffRequested(string absPath)
     signal discardRequested(int index)
     signal openRequested(string absPath)
@@ -44,6 +47,24 @@ ListView {
     clip: true
     model: root.changesModel
 
+    // As mudancas agrupadas pela pasta de primeiro nivel (HUD do Git,
+    // 2026-09-18): o cabecalho da secao e' a pasta.
+    section.property: "folder"
+    section.criteria: ViewSection.FullString
+    section.delegate: Text {
+        required property string section
+
+        width: root.width
+        height: 18
+        leftPadding: Theme.spacingSmall
+        verticalAlignment: Text.AlignVCenter
+        text: section
+        color: Theme.textMuted
+        font.pixelSize: 10
+        font.weight: Font.DemiBold
+        elide: Text.ElideMiddle
+    }
+
     Text {
         anchors.centerIn: parent
         visible: root.changesModel.count === 0
@@ -63,10 +84,13 @@ ListView {
         required property string kind
         required property bool staged
 
+        readonly property bool selected: root.selectedAbsPath === absPath
+
         width: root.width
         height: 24
         radius: Theme.radiusXSmall
-        color: changeRowArea.containsMouse ? Theme.surface2 : "transparent"
+        color: selected ? Theme.surfaceSelected
+               : (changeRowArea.containsMouse ? Theme.surface2 : "transparent")
 
         Rectangle {
             id: stageBox
@@ -104,7 +128,7 @@ ListView {
             anchors.leftMargin: Theme.spacingSmall
             anchors.right: diffChip.left
             anchors.rightMargin: Theme.spacingSmall
-            text: changeRow.path
+            text: changeRow.path.substring(changeRow.path.lastIndexOf("/") + 1)
             color: StatusColors.gitKind(changeRow.kind)
             font.pixelSize: 11
             font.family: Theme.monoFont
@@ -117,7 +141,9 @@ ListView {
             anchors.fill: parent
             hoverEnabled: true
             z: -1
-            onClicked: root.openRequested(changeRow.absPath)
+            // Um clique mostra o diff a direita; dois abrem o arquivo.
+            onClicked: root.selectRequested(changeRow.absPath, changeRow.path)
+            onDoubleClicked: root.openRequested(changeRow.absPath)
         }
 
         Rectangle {

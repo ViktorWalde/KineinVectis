@@ -139,7 +139,7 @@ public:
     Q_INVOKABLE void gitStage(const QStringList& paths);
     Q_INVOKABLE void gitUnstage(const QStringList& paths);
     Q_INVOKABLE void gitDiscard(const QStringList& paths);
-    Q_INVOKABLE void gitCommit(const QString& message);
+    Q_INVOKABLE void gitCommit(const QString& message, bool amend = false);
     Q_INVOKABLE void gitBlame(const QString& path);
     Q_INVOKABLE void gitLog();
     Q_INVOKABLE void gitCommitDiff(const QString& sha);

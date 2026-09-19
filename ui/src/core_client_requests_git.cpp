@@ -74,9 +74,14 @@ void CoreClient::gitDiscard(const QStringList& paths)
                 QJsonObject{{QStringLiteral("paths"), QJsonArray::fromStringList(paths)}});
 }
 
-void CoreClient::gitCommit(const QString& message)
+void CoreClient::gitCommit(const QString& message, bool amend)
 {
-    sendRequest(QStringLiteral("git.commit"), QJsonObject{{QStringLiteral("message"), message}});
+    QJsonObject params{{QStringLiteral("message"), message}};
+    // Reescrever o ultimo commit (0.126.0): so' vai quando a tela pediu.
+    if (amend) {
+        params.insert(QStringLiteral("amend"), true);
+    }
+    sendRequest(QStringLiteral("git.commit"), params);
 }
 
 void CoreClient::gitBlame(const QString& path)

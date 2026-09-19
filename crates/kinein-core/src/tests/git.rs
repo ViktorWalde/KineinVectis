@@ -440,6 +440,18 @@ fn git_blame_log_and_commit_diff_follow_real_history() {
     assert_eq!(entries[0]["summary"], "segundo");
     assert_eq!(entries[0]["author"], "Outra Autora");
     assert_eq!(entries[1]["summary"], "primeiro");
+    // 0.126.0 (HUD do Git): os pais desenham o grafo, os refs viram chips.
+    assert_eq!(entries[0]["parents"][0], entries[1]["sha"]);
+    assert!(
+        entries[1].get("parents").is_none(),
+        "o primeiro commit nao tem pai"
+    );
+    let refs = entries[0]["refs"].as_array().unwrap();
+    assert!(
+        refs.iter()
+            .any(|r| r.as_str().unwrap().starts_with("HEAD -> ")),
+        "{refs:?}"
+    );
 
     // commitDiff do commit mais novo contem a mudanca da linha 2.
     let sha = entries[0]["sha"].as_str().unwrap().to_owned();
@@ -453,6 +465,53 @@ fn git_blame_log_and_commit_diff_follow_real_history() {
     let text = show_result["text"].as_str().unwrap();
     assert!(text.contains("+linha dois v2"));
     assert!(text.contains("-linha dois"));
+}
+
+/// Amend (0.126.0): reescreve o ultimo commit com a mensagem nova; sem nada
+/// staged e' legitimo (so' a mensagem muda) e o log continua com o mesmo
+/// numero de commits; um commit NOVO sem nada staged segue recusado.
+#[test]
+fn git_commit_amend_rewrites_the_last_commit() {
+    let repo = git_repo("amend");
+    std::fs::write(repo.join("a.txt"), "um\n").unwrap();
+    run_git(&repo, &["add", "a.txt"]);
+    run_git(&repo, &["commit", "-qm", "primeiro"]);
+    std::fs::write(repo.join("a.txt"), "dois\n").unwrap();
+    run_git(&repo, &["add", "a.txt"]);
+    run_git(&repo, &["commit", "-qm", "segundo"]);
+    let mut core = core_with_empty_search_path("git-amend");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        70_i64,
+        "workspace.open",
+        Some(json!({ "path": repo.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    // Amend (0.126.0): reescreve o ultimo commit com a mensagem nova; sem
+    // nada staged e' legitimo (so' a mensagem muda), e o log continua com 2.
+    let amended = core.handle_request(&JsonRpcRequest::new(
+        75_i64,
+        "git.commit",
+        Some(json!({ "message": "segundo, emendado", "amend": true })),
+    ));
+    assert!(
+        amended.response().error.is_none(),
+        "{:?}",
+        amended.response().error
+    );
+    let log = core.handle_request(&JsonRpcRequest::new(76_i64, "git.log", None));
+    let log_result = log.response().result.as_ref().unwrap().clone();
+    let entries = log_result["entries"].as_array().unwrap();
+    assert_eq!(entries.len(), 2);
+    assert_eq!(entries[0]["summary"], "segundo, emendado");
+    let sem_amend = core.handle_request(&JsonRpcRequest::new(
+        77_i64,
+        "git.commit",
+        Some(json!({ "message": "nada staged" })),
+    ));
+    assert!(
+        sem_amend.response().error.is_some(),
+        "commit novo sem nada staged e' recusado"
+    );
 }
 
 #[test]

@@ -300,8 +300,10 @@ fn parse_blame_header(line: &str) -> Option<(&str, Option<u32>, Option<u32>)> {
     Some((sha, final_line, line_count))
 }
 
-/// Parses `git log -z --pretty=format:%H%x1f%h%x1f%an%x1f%at%x1f%s`
-/// output (NUL between records, US 0x1f between fields).
+/// Parses the `git log -z` records (NUL between records, US 0x1f between fields).
+///
+/// Format: `%H%x1f%h%x1f%an%x1f%at%x1f%s%x1f%P%x1f%D`. `%P` and `%D`
+/// (0.126.0) may be absent in older captures: both default to empty.
 #[must_use]
 pub fn parse_log(body: &str) -> Vec<GitLogEntryInfo> {
     body.split('\0')
@@ -317,6 +319,20 @@ pub fn parse_log(body: &str) -> Vec<GitLogEntryInfo> {
                 author: fields.next()?.to_owned(),
                 author_time: fields.next()?.parse().unwrap_or_default(),
                 summary: fields.next().unwrap_or_default().to_owned(),
+                parents: fields
+                    .next()
+                    .unwrap_or_default()
+                    .split_whitespace()
+                    .map(str::to_owned)
+                    .collect(),
+                refs: fields
+                    .next()
+                    .unwrap_or_default()
+                    .split(", ")
+                    .map(str::trim)
+                    .filter(|r| !r.is_empty())
+                    .map(str::to_owned)
+                    .collect(),
             })
         })
         .collect()
@@ -373,14 +389,19 @@ mod tests {
     #[test]
     fn parses_log_records_with_stable_separators() {
         let body = format!(
-            "{sha1}\u{1f}abc1234\u{1f}Alice\u{1f}1700000000\u{1f}feat: algo\0\
+            "{sha1}\u{1f}abc1234\u{1f}Alice\u{1f}1700000000\u{1f}feat: algo\u{1f}{sha2} {sha3}\u{1f}HEAD -> main, origin/main, tag: v1\0\
              {sha2}\u{1f}def5678\u{1f}Bob B.\u{1f}1690000000\u{1f}fix: virgula, aspas \"x\"",
             sha1 = "1".repeat(40),
             sha2 = "2".repeat(40),
+            sha3 = "3".repeat(40),
         );
         let entries = parse_log(&body);
 
         assert_eq!(entries.len(), 2);
+        // 0.126.0: pais (um merge tem dois) e refs, ja' separados.
+        assert_eq!(entries[0].parents, ["2".repeat(40), "3".repeat(40)]);
+        assert_eq!(entries[0].refs, ["HEAD -> main", "origin/main", "tag: v1"]);
+        assert!(entries[1].parents.is_empty() && entries[1].refs.is_empty());
         assert_eq!(entries[0].short_sha, "abc1234");
         assert_eq!(entries[0].author, "Alice");
         assert_eq!(entries[0].author_time, 1_700_000_000);

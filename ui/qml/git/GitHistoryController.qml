@@ -136,21 +136,47 @@ Item {
         logRequested();
     }
 
+    GitRules { id: gitRules }
+
+    // Quantas raias o grafo tem, para a largura da coluna.
+    property int laneCount: 1
+
+    // A linha do historico com esse sha (para o painel da direita).
+    function entry(sha) {
+        for (let i = 0; i < gitHistoryModel.count; i++) {
+            if (gitHistoryModel.get(i).sha === sha) {
+                return gitHistoryModel.get(i);
+            }
+        }
+        return null;
+    }
+
     function handleLog(isRepo, entries) {
         historyLoading = false;
         gitHistoryModel.clear();
+        laneCount = 1;
         if (!isRepo) {
             return;
         }
+        // 0.126.0: os pais viram raias (GitRules.lanes) e os refs viram chips.
+        const raias = gitRules.lanes(entries);
+        let maximo = 1;
         for (let i = 0; i < entries.length; i++) {
+            maximo = Math.max(maximo, raias[i].laneCount);
             gitHistoryModel.append({
                 sha: entries[i].sha,
                 shortSha: entries[i].shortSha,
                 author: entries[i].author,
                 age: ageLabel(entries[i].authorTime),
-                summary: entries[i].summary
+                summary: entries[i].summary,
+                // Um ListModel nao guarda array de string como tal: os refs
+                // viajam juntos por US (0x1f) e a vista separa.
+                refsText: entries[i].refs === undefined ? "" : entries[i].refs.join("\u001f"),
+                lane: raias[i].lane,
+                merge: raias[i].merge
             });
         }
+        laneCount = maximo;
     }
 
 }
