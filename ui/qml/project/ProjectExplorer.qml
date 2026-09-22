@@ -145,7 +145,14 @@ Rectangle {
                 radius: Theme.radius
                 color: treeRow.path === root.selectedPath
                        ? Theme.surfaceSelected
-                       : (entryArea.containsMouse ? Theme.surface2 : "transparent")
+                       : (rowHover.hovered ? Theme.surface2 : "transparent")
+
+                // Observa o delegate inteiro sem tomar eventos dos filhos. Ao
+                // passar sobre o botao de executar, o hover continua ativo e
+                // evita o ciclo aparece/some que fazia o atalho piscar.
+                HoverHandler {
+                    id: rowHover
+                }
 
                 Row {
                     anchors.verticalCenter: parent.verticalCenter
@@ -218,7 +225,7 @@ Rectangle {
                     height: 22
                     z: 2
                     visible: root.isRunnableScript(treeRow.name, treeRow.kind)
-                             && (entryArea.containsMouse
+                             && (rowHover.hovered
                                  || treeRow.path === root.selectedPath)
                     enabled: visible
                     iconName: "run"

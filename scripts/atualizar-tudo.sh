@@ -129,8 +129,14 @@ for command in bash cargo cmake flock git ninja sha256sum timeout; do
     require_command "$command"
 done
 
-if ! cmake --help | grep -q -- '--fresh'; then
-    echo "erro: este fluxo exige CMake com suporte a --fresh" >&2
+cmake_version="$(cmake --version | awk 'NR == 1 { print $3; exit }')"
+cmake_major="${cmake_version%%.*}"
+cmake_minor_patch="${cmake_version#*.}"
+cmake_minor="${cmake_minor_patch%%.*}"
+if [[ ! "$cmake_major" =~ ^[0-9]+$ || ! "$cmake_minor" =~ ^[0-9]+$ ]] \
+        || (( cmake_major < 3 || (cmake_major == 3 && cmake_minor < 25) )); then
+    echo "erro: este fluxo exige CMake >= 3.25 com suporte a --fresh" >&2
+    echo "      encontrado: ${cmake_version:-desconhecido} em $(command -v cmake)" >&2
     exit 1
 fi
 

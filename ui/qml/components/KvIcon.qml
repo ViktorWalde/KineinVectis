@@ -1,5 +1,6 @@
 import QtQuick
 import "KvIconGlyphs.js" as Glyphs
+import "KvFileIconGlyphs.js" as FileGlyphs
 
 // Iconografia vetorial central da Kinein. Os desenhos usam o grid 24x24,
 // stroke 1.75px e cores de estado definidos pela spec visual. Canvas evita
@@ -26,9 +27,7 @@ Item {
         if (root.name === "tree-folder-open") {
             return "qrc:/KineinVectis/assets/icons/tree/folder-open.svg";
         }
-        return root.name.startsWith("tree-file-")
-                ? "qrc:/KineinVectis/assets/icons/tree/" + root.name.substring(5) + ".png"
-                : "";
+        return "";
     }
 
     implicitWidth: size
@@ -256,6 +255,11 @@ Item {
                 break;
             case "file":
             default:
+                // Tipos de arquivo usam geometria optica propria para 16/20
+                // px; nao reduzem ilustracoes grandes com microdetalhes.
+                if (FileGlyphs.draw(root.name, context)) {
+                    break;
+                }
                 // Ferramentas nativas (containers, observabilidade) moram no
                 // KvIconGlyphs.js; quem nao esta' la' e' o "file" de sempre.
                 if (Glyphs.draw(root.name, context, line, node)) {

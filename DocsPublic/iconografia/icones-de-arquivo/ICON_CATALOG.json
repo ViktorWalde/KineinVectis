@@ -22,7 +22,7 @@
         "CMakeLists.txt"
       ],
       "assets": {
-        "production": "file-cmakelists.png"
+        "production": "qml:tree-file-cmakelists"
       }
     },
     "kv.tree.file.project-config": {
@@ -37,19 +37,19 @@
         ".sql"
       ],
       "assets": {
-        "production": "file-sql.png"
+        "production": "qml:tree-file-sql"
       }
     },
     "kv.tree.file.docker": {
       "name": "Docker",
       "assets": {
-        "production": "file-docker.png"
+        "production": "qml:tree-file-docker"
       }
     },
     "kv.tree.file.c": {
       "name": "C source",
       "assets": {
-        "production": "file-c.png"
+        "production": "qml:tree-file-c"
       }
     },
     "kv.tree.file.cpp": {
@@ -61,7 +61,7 @@
         ".c++"
       ],
       "assets": {
-        "production": "file-cpp.png"
+        "production": "qml:tree-file-cpp"
       }
     },
     "kv.tree.file.header-c": {
@@ -70,7 +70,7 @@
         ".h"
       ],
       "assets": {
-        "production": "file-h.png"
+        "production": "qml:tree-file-h"
       }
     },
     "kv.tree.file.header-cpp": {
@@ -83,31 +83,31 @@
         ".ipp"
       ],
       "assets": {
-        "production": "file-hpp.png"
+        "production": "qml:tree-file-hpp"
       }
     },
     "kv.tree.file.rust": {
       "name": "Rust",
       "assets": {
-        "production": "file-rust.png"
+        "production": "qml:tree-file-rust"
       }
     },
     "kv.tree.file.python": {
       "name": "Python",
       "assets": {
-        "production": "file-python.png"
+        "production": "qml:tree-file-python"
       }
     },
     "kv.tree.file.yaml": {
       "name": "YAML",
       "assets": {
-        "production": "file-yaml.png"
+        "production": "qml:tree-file-yaml"
       }
     },
     "kv.tree.file.markdown": {
       "name": "Markdown",
       "assets": {
-        "production": "file-markdown.png"
+        "production": "qml:tree-file-markdown"
       }
     },
     "kv.tree.file.cargo": {
@@ -117,7 +117,7 @@
         "Cargo.lock"
       ],
       "assets": {
-        "production": "file-cargo.png"
+        "production": "qml:tree-file-cargo"
       }
     },
     "kv.tree.file.makefile": {
@@ -130,7 +130,7 @@
         ".mk"
       ],
       "assets": {
-        "production": "file-makefile.png"
+        "production": "qml:tree-file-makefile"
       }
     },
     "kv.tree.file.pyproject": {
@@ -139,7 +139,7 @@
         "pyproject.toml"
       ],
       "assets": {
-        "production": "file-pyproject.png"
+        "production": "qml:tree-file-pyproject"
       }
     },
     "kv.tree.file.ros": {
@@ -151,7 +151,7 @@
         "*.launch.xml"
       ],
       "assets": {
-        "production": "file-ros.png"
+        "production": "qml:tree-file-ros"
       }
     }
   }

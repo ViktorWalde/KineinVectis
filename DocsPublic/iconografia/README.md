@@ -34,9 +34,9 @@ MANIFEST.md · FILE_LIST.txt · SHA256SUMS.json
 
 ## icones-de-arquivo/
 
-Ícones especiais e de linguagem da árvore de projetos. A UI usa masters PNG de
-64 px para os tipos de arquivo e os exibe em 16 ou 20 px. Os SVGs do pacote de
-estudo não são compilados pela aplicação.
+Ícones especiais e de linguagem da árvore de projetos. A UI desenha glifos
+vetoriais em uma grade lógica 24x24, ajustados para leitura em 16, 20 ou 24 px.
+Os PNGs autorais grandes do pacote são referências e não são compilados.
 
 O contrato de resolução vive em `FILE_ICON_MAPPINGS.json`, com precedência:
 
@@ -62,6 +62,7 @@ integrados sem alterar seus bytes — conferir antes de reprocessar.
 
 ## Onde os ícones em uso realmente vivem
 
-Estes pacotes são **design e origem**. Os assets que a aplicação compila estão
-em `ui/assets/icons`, e o consumo no QML segue o contrato da parte 08. Mover ou
-renomear um pacote aqui não afeta o build; alterar `ui/assets` afeta.
+Estes pacotes são **design e origem**. Os assets estáticos compilados ficam em
+`ui/assets/icons`; os tipos de arquivo são desenhados por
+`ui/qml/components/KvFileIconGlyphs.js`. O consumo segue o contrato da parte
+08. Mover ou renomear um pacote de estudo aqui não afeta o build.

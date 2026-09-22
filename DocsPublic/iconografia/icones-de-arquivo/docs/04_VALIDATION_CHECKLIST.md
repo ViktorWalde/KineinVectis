@@ -3,9 +3,9 @@
 ## Assets
 
 ```text
-[ ] PNG RGBA válido em canvas 64×64.
-[ ] fundo transparente.
-[ ] arte ocupa aproximadamente 82–90% do canvas.
+[ ] geometria válida em grade lógica 24×24.
+[ ] fundo transparente e documento de alto contraste.
+[ ] arte ocupa aproximadamente 82–90% do canvas lógico.
 [ ] leitura verificada a 16 e 20 px.
 [ ] nenhum filtro, blur ou sombra pesada.
 ```
@@ -54,9 +54,9 @@
 ## Desempenho
 
 ```text
-[ ] cache habilitado.
-[ ] ausência de reload durante scroll.
-[ ] sourceSize não é animado.
+[ ] ausência de reload de assets durante scroll.
+[ ] Canvas repinta somente ao mudar nome, cor ou tamanho.
+[ ] tamanho não é animado.
 [ ] 5.000 linhas testadas.
 [ ] abertura de pasta medida.
 [ ] frame time monitorado.

@@ -2,27 +2,16 @@
 
 ## 1. Recursos
 
-Adicionar os masters PNG de produção ao resource system:
+Adicionar o módulo de glifos à unidade QML. As referências PNG grandes não são
+compiladas:
 
 ```cmake
 qt_add_qml_module(kinein-vectis
     # ...
-    RESOURCES
-        assets/icons/tree/file-c.png
-        assets/icons/tree/file-cpp.png
-        assets/icons/tree/file-h.png
-        assets/icons/tree/file-hpp.png
-        assets/icons/tree/file-cmakelists.png
-        assets/icons/tree/file-cargo.png
-        assets/icons/tree/file-makefile.png
-        assets/icons/tree/file-pyproject.png
-        assets/icons/tree/file-ros.png
-        assets/icons/tree/file-rust.png
-        assets/icons/tree/file-python.png
-        assets/icons/tree/file-yaml.png
-        assets/icons/tree/file-sql.png
-        assets/icons/tree/file-markdown.png
-        assets/icons/tree/file-docker.png
+    QML_FILES
+        qml/components/KvIcon.qml
+        qml/components/KvFileIcon.qml
+        qml/components/KvFileIconGlyphs.js
 )
 ```
 
@@ -47,8 +36,10 @@ QtObject {
 
 ```qml
 import QtQuick
-Item {
-    id: root
+import "KvFileIconGlyphs.js" as FileGlyphs
+
+Canvas {
+    id: iconCanvas
 
     required property string iconName
     property int iconSize: 20
@@ -56,17 +47,11 @@ Item {
     width: iconSize
     height: iconSize
 
-    Image {
-        anchors.fill: parent
-
-        source: "qrc:/KineinVectis/assets/icons/tree/"
-                + root.iconName + ".png"
-
-        fillMode: Image.PreserveAspectFit
-        cache: true
-        asynchronous: false
-
-        smooth: true
+    onPaint: {
+        const context = getContext("2d");
+        context.reset();
+        context.scale(width / 24, height / 24);
+        FileGlyphs.draw(iconName, context);
     }
 }
 ```
@@ -110,17 +95,18 @@ Item {
 
 - manter `x`, `y`, `width` e `height` em valores inteiros;
 - não aplicar `scale: 0.8` ou transformações fracionárias;
-- exibir o master PNG de 64 px em 16 ou 20 px inteiros;
-- manter `fillMode: PreserveAspectFit`;
-- manter cache habilitado;
-- não carregar os PNGs originais de mais de 1200 px na árvore.
+- usar a grade lógica 24x24 em 16, 20 ou 24 px inteiros;
+- preservar traços fortes e uma única metáfora principal;
+- solicitar nova pintura apenas quando nome, cor ou tamanho mudar;
+- não carregar os PNGs originais de mais de 1200 px na árvore;
+- não incluir microtexto, blur, brilho ou sombras.
 
 ## 6. Estratégia de desempenho
 
 Para a primeira implementação:
 
 ```text
-PNG de produção de 64 px + `Image` + cache.
+Canvas compartilhado + módulo JavaScript de geometria vetorial.
 ```
 
 Quando a árvore tiver milhares de nós, medir:
@@ -133,6 +119,6 @@ memória da cache;
 jank de frame.
 ```
 
-Se o redimensionamento aparecer no perfil, gerar variantes dedicadas de 20,
-40 e 60 px para os fatores de escala 1x, 2x e 3x. Os originais grandes ficam
-como entrada de design e não entram no recurso Qt.
+Se a pintura aparecer no perfil, medir primeiro o cache de cena e então avaliar
+SVGs dedicados por família. Os originais grandes ficam como entrada de design e
+não entram no recurso Qt.

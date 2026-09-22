@@ -6,8 +6,8 @@ Vectis.
 ## Conteúdo
 
 ```text
-ui/assets/icons/tree/*.png      masters de produção de 64 px
-files/*.png                     entradas autorais em alta resolução
+ui/qml/components/KvFileIconGlyphs.js  glifos vetoriais de produção 24x24
+files/*.png                           referências autorais em alta resolução
 FILE_ICON_MAPPINGS.json         precedência por nome e extensão
 ICON_CATALOG.json               catálogo semântico
 docs/                           dimensionamento, integração e validação
@@ -15,33 +15,28 @@ docs/                           dimensionamento, integração e validação
 
 ## Ícones de produção
 
-- `file-cmakelists.png`: `CMakeLists.txt`;
-- `file-c.png`: fontes C;
-- `file-cpp.png`: fontes C++;
-- `file-h.png`: headers `.h`;
-- `file-hpp.png`: headers C++ (`.hpp`, `.hh`, `.hxx`, `.h++`, `.ipp`);
-- `file-cargo.png`: `Cargo.toml` e `Cargo.lock`;
-- `file-makefile.png`: `Makefile`, `GNUmakefile` e `*.mk`;
-- `file-pyproject.png`: `pyproject.toml`;
-- `file-ros.png`: `package.xml` e arquivos `*.launch.xml` do ROS 2;
-- `file-rust.png`: Rust;
-- `file-python.png`: Python;
-- `file-yaml.png`: YAML genérico;
-- `file-sql.png`: SQL;
-- `file-markdown.png`: Markdown;
-- `file-docker.png`: Dockerfile e Docker Compose.
+- `tree-file-cmakelists`: `CMakeLists.txt`;
+- `tree-file-c` e `tree-file-cpp`: fontes C e C++;
+- `tree-file-h` e `tree-file-hpp`: headers C e C++;
+- `tree-file-cargo`: `Cargo.toml` e `Cargo.lock`;
+- `tree-file-makefile`: `Makefile`, `GNUmakefile` e `*.mk`;
+- `tree-file-pyproject`: `pyproject.toml`;
+- `tree-file-ros`: `package.xml` e arquivos `*.launch.xml` do ROS 2;
+- `tree-file-rust`, `tree-file-python`, `tree-file-yaml`, `tree-file-sql` e
+  `tree-file-markdown`: linguagens e formatos;
+- `tree-file-docker`: Dockerfile e Docker Compose.
 
-Os PNGs de produção vivem em `ui/assets/icons/tree`. O arquivo de entrada
-`file-aql.png` foi interpretado como SQL porque sua metáfora é um banco de
-dados e o conjunto solicitado associa esse asset a `.sql`.
+Os glifos de produção vivem em `KvFileIconGlyphs.js`, são renderizados pelo
+`Canvas` de `KvIcon.qml` e usam uma grade vetorial 24x24. O arquivo de entrada
+`file-aql.png` foi interpretado como referência de SQL porque sua metáfora é um
+banco de dados e o conjunto solicitado associa esse asset a `.sql`.
 
-Os tipos de arquivo compilados pela UI usam apenas PNG. Os SVGs legados de C,
-C++, Rust e Python foram removidos de `ui/assets/icons/tree`; os dois SVGs que
-permanecem nesse diretório são os assets ativos de pasta aberta e fechada.
-
-Os PNGs compilados foram reduzidos para masters de 64 px, adequados à exibição
-em 16–20 px e a telas HiDPI sem carregar os originais de mais de 1200 px na
-memória da interface.
+As ilustrações PNG de alta resolução em `files/` ficam como referência visual e
+não entram no recurso Qt. A redução direta dessas ilustrações criava microtexto,
+sombras e detalhes abaixo de um pixel. A versão de produção limita cada ícone a
+uma metáfora principal, traço mínimo de 1,35 unidades e contraste próprio para
+16–24 px. Os dois SVGs em `ui/assets/icons/tree` continuam sendo os assets de
+pasta aberta e fechada.
 
 ## Modos recomendados
 

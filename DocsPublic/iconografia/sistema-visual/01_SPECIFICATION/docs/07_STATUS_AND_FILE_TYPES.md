@@ -192,8 +192,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** PNG 64 px, exibido em 16/20 px
-**Implementação:** `file-cpp.png`.
+**Master:** Canvas vetorial em grade 24x24, exibido em 16/20 px.
+**Implementação:** `tree-file-cpp` em `KvFileIconGlyphs.js`.
 
 ### Função
 Identificar source C++.
@@ -229,8 +229,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** PNG 64 px, exibido em 16/20 px
-**Implementação:** `file-c.png`.
+**Master:** Canvas vetorial em grade 24x24, exibido em 16/20 px.
+**Implementação:** `tree-file-c` em `KvFileIconGlyphs.js`.
 
 ### Função
 Identificar source C.
@@ -266,8 +266,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** PNG 64 px, exibido em 16/20 px
-**Implementação:** `file-h.png`.
+**Master:** Canvas vetorial em grade 24x24, exibido em 16/20 px.
+**Implementação:** `tree-file-h` em `KvFileIconGlyphs.js`.
 
 ### Função
 Identificar `.h`.
@@ -303,8 +303,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0
 **Superfícies:** Project Explorer; tabs
-**Master:** PNG 64 px, exibido em 16/20 px
-**Implementação:** `file-hpp.png`.
+**Master:** Canvas vetorial em grade 24x24, exibido em 16/20 px.
+**Implementação:** `tree-file-hpp` em `KvFileIconGlyphs.js`.
 
 ### Função
 Identificar `.hpp`, `.hh`, `.hxx`, `.h++` e `.ipp`.
@@ -363,8 +363,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** PNG 64 px, exibido em 16/20 px
-**Implementação:** `file-cmakelists.png` para `CMakeLists.txt`.
+**Master:** Canvas vetorial em grade 24x24, exibido em 16/20 px.
+**Implementação:** `tree-file-cmakelists` para `CMakeLists.txt`.
 
 ### Função
 Identificar CMakeLists/preset/toolchain.

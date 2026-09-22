@@ -37,7 +37,8 @@ meio de IDs semânticos e `FILE_ICON_MAPPINGS.json`.
 
 A orientação de iconografia da Microsoft informa que fornecer vários tamanhos
 reduz o escalonamento e aumenta a chance de uma correspondência pixel-perfect.
-O pacote possui masters independentes em 16, 20 e 24 px.
+O pacote de estudo mantém amostras nesses tamanhos; a produção usa geometria
+vetorial em grade lógica 24x24, conferida nos alvos de 16, 20 e 24 px.
 
 ### Qt e renderização vetorial
 
@@ -135,7 +136,7 @@ dinâmica é mais apropriada para product icons monocromáticos.
 16 px continua disponível para densidade compacta, mas os ícones aprovados têm
 mais personalidade visual do que glifos monocromáticos simples.
 
-O master de 20 px oferece:
+A exibição em 20 px oferece:
 
 - silhueta maior;
 - cores reconhecíveis;
