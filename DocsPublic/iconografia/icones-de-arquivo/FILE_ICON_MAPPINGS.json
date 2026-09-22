@@ -10,10 +10,11 @@
   ],
   "exactNames": {
     "CMakeLists.txt": "kv.tree.file.cmake-lists",
-    "compose.yaml": "kv.tree.file.docker-yaml",
-    "compose.yml": "kv.tree.file.docker-yaml",
-    "docker-compose.yaml": "kv.tree.file.docker-yaml",
-    "docker-compose.yml": "kv.tree.file.docker-yaml",
+    "Dockerfile": "kv.tree.file.docker",
+    "compose.yaml": "kv.tree.file.docker",
+    "compose.yml": "kv.tree.file.docker",
+    "docker-compose.yaml": "kv.tree.file.docker",
+    "docker-compose.yml": "kv.tree.file.docker",
     ".env": "kv.tree.file.project-config",
     ".clangd": "kv.tree.file.project-config",
     ".clang-format": "kv.tree.file.project-config",
@@ -35,19 +36,23 @@
     },
     {
       "glob": "compose.*.yaml",
-      "icon": "kv.tree.file.docker-yaml"
+      "icon": "kv.tree.file.docker"
     },
     {
       "glob": "compose.*.yml",
-      "icon": "kv.tree.file.docker-yaml"
+      "icon": "kv.tree.file.docker"
     },
     {
       "glob": "docker-compose.*.yaml",
-      "icon": "kv.tree.file.docker-yaml"
+      "icon": "kv.tree.file.docker"
     },
     {
       "glob": "docker-compose.*.yml",
-      "icon": "kv.tree.file.docker-yaml"
+      "icon": "kv.tree.file.docker"
+    },
+    {
+      "glob": "Dockerfile.*",
+      "icon": "kv.tree.file.docker"
     },
     {
       "glob": ".cargo/config.toml",
@@ -59,10 +64,31 @@
     }
   ],
   "extensions": {
-    ".sql": "kv.tree.file.sql"
+    ".c": "kv.tree.file.c",
+    ".h": "kv.tree.file.header-c",
+    ".cc": "kv.tree.file.c",
+    ".cpp": "kv.tree.file.c",
+    ".cxx": "kv.tree.file.c",
+    ".c++": "kv.tree.file.c",
+    ".hh": "kv.tree.file.header-cpp",
+    ".hpp": "kv.tree.file.header-cpp",
+    ".hxx": "kv.tree.file.header-cpp",
+    ".h++": "kv.tree.file.header-cpp",
+    ".ipp": "kv.tree.file.header-cpp",
+    ".rs": "kv.tree.file.rust",
+    ".py": "kv.tree.file.python",
+    ".pyi": "kv.tree.file.python",
+    ".pyw": "kv.tree.file.python",
+    ".yaml": "kv.tree.file.yaml",
+    ".yml": "kv.tree.file.yaml",
+    ".sql": "kv.tree.file.sql",
+    ".md": "kv.tree.file.markdown",
+    ".markdown": "kv.tree.file.markdown",
+    ".mdown": "kv.tree.file.markdown",
+    ".mkdn": "kv.tree.file.markdown"
   },
   "notes": [
-    "Generic .yaml and .yml files must not receive the Docker icon.",
+    "Generic .yaml and .yml files receive the YAML icon, never the Docker icon.",
     "Docker YAML requires an exact Compose filename, a configured path, or validated Compose schema.",
     "Future specialized CMake, Cargo and Clang icons should override project-config."
   ]

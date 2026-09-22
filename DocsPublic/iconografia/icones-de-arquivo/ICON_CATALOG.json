@@ -22,7 +22,7 @@
         "CMakeLists.txt"
       ],
       "assets": {
-        "base": "cmakelists.svg"
+        "production": "file-cmakelists.png"
       }
     },
     "kv.tree.file.project-config": {
@@ -37,13 +37,65 @@
         ".sql"
       ],
       "assets": {
-        "base": "sql.svg"
+        "production": "file-sql.png"
       }
     },
-    "kv.tree.file.docker-yaml": {
-      "name": "Docker Compose YAML",
+    "kv.tree.file.docker": {
+      "name": "Docker",
       "assets": {
-        "base": "docker-yaml.svg"
+        "production": "file-docker.png"
+      }
+    },
+    "kv.tree.file.c": {
+      "name": "C and C++ sources",
+      "assets": {
+        "production": "file-c.png"
+      }
+    },
+    "kv.tree.file.header-c": {
+      "name": "C header",
+      "extensions": [
+        ".h"
+      ],
+      "assets": {
+        "production": "file-h.png"
+      }
+    },
+    "kv.tree.file.header-cpp": {
+      "name": "C++ header",
+      "extensions": [
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".h++",
+        ".ipp"
+      ],
+      "assets": {
+        "production": "file-hpp.png"
+      }
+    },
+    "kv.tree.file.rust": {
+      "name": "Rust",
+      "assets": {
+        "production": "file-rust.png"
+      }
+    },
+    "kv.tree.file.python": {
+      "name": "Python",
+      "assets": {
+        "production": "file-python.png"
+      }
+    },
+    "kv.tree.file.yaml": {
+      "name": "YAML",
+      "assets": {
+        "production": "file-yaml.png"
+      }
+    },
+    "kv.tree.file.markdown": {
+      "name": "Markdown",
+      "assets": {
+        "production": "file-markdown.png"
       }
     }
   }

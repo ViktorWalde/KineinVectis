@@ -140,7 +140,26 @@ west manifest;
 configuração genérica.
 ```
 
-## 5. Precedência do resolver
+## 5. Ícones gerais de linguagem e documentação
+
+Mapeamentos de produção:
+
+```text
+*.c, *.cc, *.cpp, *.cxx, *.c++       → C/C++
+*.h                                   → header C (H)
+*.hh, *.hpp, *.hxx, *.h++, *.ipp      → header C++ (H++)
+*.rs                                  → Rust
+*.py, *.pyi, *.pyw                    → Python
+*.yaml, *.yml                          → YAML genérico
+*.md, *.markdown, *.mdown, *.mkdn      → Markdown
+CMakeLists.txt                         → CMakeLists
+```
+
+`CMakeLists.txt` é resolvido por nome exato antes da extensão `.txt`. Headers
+C e C++ têm assets distintos para que `.h` e `.hpp` sejam reconhecidos sem
+depender apenas do nome exibido.
+
+## 6. Precedência do resolver
 
 ```text
 1. nome completo exato;
@@ -158,6 +177,8 @@ CMakeLists.txt     → cmake-lists
 compose.yaml       → docker-yaml
 config.yaml        → YAML genérico, não Docker
 query.sql          → SQL
+api.h              → header C
+api.hpp            → header C++
 CMakePresets.json  → project-config
 README.txt         → texto genérico
 ```

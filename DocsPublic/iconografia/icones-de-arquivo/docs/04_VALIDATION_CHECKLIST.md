@@ -3,13 +3,10 @@
 ## Assets
 
 ```text
-[ ] SVG XML válido.
-[ ] viewBox corresponde ao tamanho.
+[ ] PNG RGBA válido em canvas 64×64.
 [ ] fundo transparente.
-[ ] variante clara presente.
-[ ] variante escura presente.
-[ ] masters 16, 20 e 24 presentes.
-[ ] nenhum texto dentro do ícone.
+[ ] arte ocupa aproximadamente 82–90% do canvas.
+[ ] leitura verificada a 16 e 20 px.
 [ ] nenhum filtro, blur ou sombra pesada.
 ```
 
@@ -29,6 +26,9 @@
 
 ```text
 [ ] CMakeLists.txt vence a regra de .txt.
+[ ] .h recebe o ícone H.
+[ ] .hpp recebe o ícone H++.
+[ ] .cpp continua recebendo o ícone C/C++.
 [ ] compose.yaml recebe Docker YAML.
 [ ] config.yaml não recebe Docker YAML.
 [ ] .sql recebe SQL.

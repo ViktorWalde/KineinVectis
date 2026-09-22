@@ -38,7 +38,8 @@ Item {
 
                 readonly property bool active: index === root.currentIndex
 
-                width: tabLabel.width + closeButton.width + 3 * Theme.spacingSmall
+                width: tabFileIcon.width + tabLabel.width + closeButton.width
+                       + 3 * Theme.spacingSmall
                 height: 32
                 radius: Theme.radius
                 color: active ? Theme.background0 : (tabArea.containsMouse ? Theme.surface2 : Theme.surface1)
@@ -56,12 +57,22 @@ Item {
                     color: Theme.accent
                 }
 
+                KvFileIcon {
+                    id: tabFileIcon
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingSmall
+                    anchors.verticalCenter: parent.verticalCenter
+                    size: 16
+                    fileName: tabDelegate.name
+                }
+
                 Text {
                     id: tabLabel
 
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
+                    anchors.left: tabFileIcon.right
+                    anchors.leftMargin: Theme.spacingXSmall
                     text: tabDelegate.name
                     color: tabDelegate.active ? Theme.textPrimary : Theme.textSecondary
                     font.pixelSize: 12

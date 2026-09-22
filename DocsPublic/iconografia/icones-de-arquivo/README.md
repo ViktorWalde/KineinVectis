@@ -6,37 +6,37 @@ Vectis.
 ## Conteúdo
 
 ```text
-icons/
-├── light/
-│   ├── 16/
-│   ├── 20/
-│   └── 24/
-├── dark/
-│   ├── 16/
-│   ├── 20/
-│   └── 24/
-└── source/64/
-
-DocsPublic/
-├── 01_FILE_SEMANTICS.md
-├── 02_ICON_VISIBILITY_AND_OPTICAL_SIZING.md
-├── 03_QT_QML_IMPLEMENTATION.md
-└── 04_VALIDATION_CHECKLIST.md
-
-ICON_CATALOG.json
-FILE_ICON_MAPPINGS.json
+ui/assets/icons/tree/*.png      masters de produção de 64 px
+files/*.png                     entradas autorais em alta resolução
+FILE_ICON_MAPPINGS.json         precedência por nome e extensão
+ICON_CATALOG.json               catálogo semântico
+docs/                           dimensionamento, integração e validação
 ```
 
-## Ícones
+## Ícones de produção
 
-- `cmakelists.svg`: `CMakeLists.txt`;
-- `project-config.svg`: configurações de ambiente e ferramentas;
-- `sql.svg`: arquivos SQL;
-- `docker-yaml.svg`: Docker Compose em YAML.
+- `file-cmakelists.png`: `CMakeLists.txt`;
+- `file-c.png`: fontes C e C++;
+- `file-h.png`: headers `.h`;
+- `file-hpp.png`: headers C++ (`.hpp`, `.hh`, `.hxx`, `.h++`, `.ipp`);
+- `file-rust.png`: Rust;
+- `file-python.png`: Python;
+- `file-yaml.png`: YAML genérico;
+- `file-sql.png`: SQL;
+- `file-markdown.png`: Markdown;
+- `file-docker.png`: Dockerfile e Docker Compose.
 
-Os SVGs de produção são interpretações vetoriais simplificadas dos conceitos
-visuais aprovados. Eles não são miniaturas reduzidas das ilustrações grandes:
-cada tamanho foi condicionado para permanecer legível na árvore.
+Os PNGs de produção vivem em `ui/assets/icons/tree`. O arquivo de entrada
+`file-aql.png` foi interpretado como SQL porque sua metáfora é um banco de
+dados e o conjunto solicitado associa esse asset a `.sql`.
+
+Os tipos de arquivo compilados pela UI usam apenas PNG. Os SVGs legados de C,
+C++, Rust e Python foram removidos de `ui/assets/icons/tree`; os dois SVGs que
+permanecem nesse diretório são os assets ativos de pasta aberta e fechada.
+
+Os PNGs compilados foram reduzidos para masters de 64 px, adequados à exibição
+em 16–20 px e a telas HiDPI sem carregar os originais de mais de 1200 px na
+memória da interface.
 
 ## Modos recomendados
 

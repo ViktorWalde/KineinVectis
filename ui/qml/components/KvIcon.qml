@@ -20,22 +20,15 @@ Item {
                               : success ? Theme.successSoft
                               : active ? Theme.accent : Theme.textSecondary
     readonly property url assetSource: {
-        switch (root.name) {
-        case "tree-folder-closed":
+        if (root.name === "tree-folder-closed") {
             return "qrc:/KineinVectis/assets/icons/tree/folder-closed.svg";
-        case "tree-folder-open":
-            return "qrc:/KineinVectis/assets/icons/tree/folder-open.svg";
-        case "tree-file-c":
-            return "qrc:/KineinVectis/assets/icons/tree/file-c.svg";
-        case "tree-file-cpp":
-            return "qrc:/KineinVectis/assets/icons/tree/file-cpp.svg";
-        case "tree-file-rust":
-            return "qrc:/KineinVectis/assets/icons/tree/file-rust.svg";
-        case "tree-file-python":
-            return "qrc:/KineinVectis/assets/icons/tree/file-python.svg";
-        default:
-            return "";
         }
+        if (root.name === "tree-folder-open") {
+            return "qrc:/KineinVectis/assets/icons/tree/folder-open.svg";
+        }
+        return root.name.startsWith("tree-file-")
+                ? "qrc:/KineinVectis/assets/icons/tree/" + root.name.substring(5) + ".png"
+                : "";
     }
 
     implicitWidth: size
@@ -283,8 +276,8 @@ Item {
         }
     }
 
-    // Os cinco masters da arvore sao recursos vetoriais autorais e nao sao
-    // recoloridos nem redesenhados pelo contrato simbolico do Canvas.
+    // Os assets da arvore preservam sua paleta e nao recebem a tintura dos
+    // icones simbolicos do Canvas.
     Image {
         anchors.fill: parent
         visible: String(root.assetSource) !== ""

@@ -129,7 +129,7 @@ kinein-vectis/
 │   │                            o modulo ENTREGA (ver verificar-qml-alcance.sh)
 │   ├── src/                     ponte C++: CoreClient (um .cpp por dominio),
 │   │                            realce do editor, clipboard, chrome de janela
-│   ├── assets/icons/tree/       SVGs autorais de pasta/C/C++/Rust
+│   ├── assets/icons/tree/       SVGs de pasta + PNGs 64 px por linguagem/arquivo
 │   └── qml/
 │       ├── Main.qml  Theme.qml  StatusColors.qml
 │       ├── app/                 composition: AppDomains, AppRouters

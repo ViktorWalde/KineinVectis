@@ -30,33 +30,6 @@ Rectangle {
         return kind === undefined ? Theme.textSecondary : StatusColors.gitKind(kind);
     }
 
-    function treeIconName(name, kind, expanded) {
-        if (kind === "directory") {
-            return expanded ? "tree-folder-open" : "tree-folder-closed";
-        }
-        const lowerName = name.toLowerCase();
-        if (lowerName.endsWith(".c") || lowerName.endsWith(".h")) {
-            return "tree-file-c";
-        }
-        if (lowerName.endsWith(".cc") || lowerName.endsWith(".cpp")
-                || lowerName.endsWith(".cxx") || lowerName.endsWith(".c++")
-                || lowerName.endsWith(".hh") || lowerName.endsWith(".hpp")
-                || lowerName.endsWith(".hxx") || lowerName.endsWith(".h++")
-                || lowerName.endsWith(".ipp")) {
-            return "tree-file-cpp";
-        }
-        if (lowerName.endsWith(".rs")) {
-            return "tree-file-rust";
-        }
-        // Python entrou na fundacao em 2026-09-12 e na arvore em 2026-09-13:
-        // o icone e' o `>>>` do REPL, nao o logotipo (marca da PSF).
-        if (lowerName.endsWith(".py") || lowerName.endsWith(".pyi")
-                || lowerName.endsWith(".pyw")) {
-            return "tree-file-python";
-        }
-        return "file";
-    }
-
     // As extensoes executaveis vem do core pelo ProjectTreeController
     // (run.capabilities): aqui so' o icone da linha, sem lista propria.
     property var runnableExtensions: []
@@ -168,7 +141,7 @@ Rectangle {
                 required property bool machine
 
                 width: explorerView.width
-                height: 22
+                height: 24
                 radius: Theme.radius
                 color: treeRow.path === root.selectedPath
                        ? Theme.surfaceSelected
@@ -190,12 +163,13 @@ Rectangle {
                         font.pixelSize: Theme.fontSizeTree
                     }
 
-                    KvIcon {
+                    KvFileIcon {
                         anchors.verticalCenter: parent.verticalCenter
-                        size: 16
+                        size: 20
                         opacity: treeRow.machine ? 0.55 : 1
-                        name: root.treeIconName(treeRow.name, treeRow.kind,
-                                                treeRow.expanded)
+                        fileName: treeRow.name
+                        directory: treeRow.kind === "directory"
+                        expanded: treeRow.expanded
                     }
 
                     Text {

@@ -2,19 +2,22 @@
 
 ## 1. Recursos
 
-Adicionar os diretórios ao resource system:
+Adicionar os masters PNG de produção ao resource system:
 
 ```cmake
-qt_add_resources(kinein-vectis "kinein_file_icons"
-    PREFIX "/kinein/icons"
-    FILES
-        icons/light/16/cmakelists.svg
-        icons/light/20/cmakelists.svg
-        icons/light/24/cmakelists.svg
-        icons/dark/16/cmakelists.svg
-        icons/dark/20/cmakelists.svg
-        icons/dark/24/cmakelists.svg
-        # repetir para project-config, sql e docker-yaml
+qt_add_qml_module(kinein-vectis
+    # ...
+    RESOURCES
+        assets/icons/tree/file-c.png
+        assets/icons/tree/file-h.png
+        assets/icons/tree/file-hpp.png
+        assets/icons/tree/file-cmakelists.png
+        assets/icons/tree/file-rust.png
+        assets/icons/tree/file-python.png
+        assets/icons/tree/file-yaml.png
+        assets/icons/tree/file-sql.png
+        assets/icons/tree/file-markdown.png
+        assets/icons/tree/file-docker.png
 )
 ```
 
@@ -39,13 +42,10 @@ QtObject {
 
 ```qml
 import QtQuick
-import QtQuick.Window
-
 Item {
     id: root
 
     required property string iconName
-    property string themeName: "dark"
     property int iconSize: 20
 
     width: iconSize
@@ -54,18 +54,14 @@ Item {
     Image {
         anchors.fill: parent
 
-        source: "qrc:/kinein/icons/"
-                + root.themeName + "/"
-                + root.iconSize + "/"
-                + root.iconName + ".svg"
+        source: "qrc:/KineinVectis/assets/icons/tree/"
+                + root.iconName + ".png"
 
         fillMode: Image.PreserveAspectFit
         cache: true
         asynchronous: false
 
-        // Rasteriza o SVG no tamanho físico do monitor.
-        sourceSize.width: Math.ceil(width * Screen.devicePixelRatio)
-        sourceSize.height: Math.ceil(height * Screen.devicePixelRatio)
+        smooth: true
     }
 }
 ```
@@ -91,7 +87,6 @@ Item {
 
         iconSize: row.iconSize
         iconName: model.iconAssetName
-        themeName: Theme.isDark ? "dark" : "light"
     }
 
     Text {
@@ -110,18 +105,17 @@ Item {
 
 - manter `x`, `y`, `width` e `height` em valores inteiros;
 - não aplicar `scale: 0.8` ou transformações fracionárias;
-- selecionar diretamente o master 16, 20 ou 24;
+- exibir o master PNG de 64 px em 16 ou 20 px inteiros;
 - manter `fillMode: PreserveAspectFit`;
-- evitar mudar `sourceSize` repetidamente durante animações;
 - manter cache habilitado;
-- não carregar o SVG original de 64 px na árvore.
+- não carregar os PNGs originais de mais de 1200 px na árvore.
 
 ## 6. Estratégia de desempenho
 
 Para a primeira implementação:
 
 ```text
-SVG de produção + Image + cache.
+PNG de produção de 64 px + `Image` + cache.
 ```
 
 Quando a árvore tiver milhares de nós, medir:
@@ -134,13 +128,6 @@ memória da cache;
 jank de frame.
 ```
 
-Se a rasterização inicial aparecer no perfil:
-
-1. gerar PNGs 16/20/24 durante o build;
-2. fornecer variantes `@2x`;
-3. manter SVG como fonte;
-4. carregar os bitmaps por tamanho/DPI.
-
-`VectorImage` ou `svgtoqml` são mais adequados quando o mesmo asset precisa ser
-transformado ou ampliado continuamente. Para ícones estáticos de árvore, uma
-rasterização exata e reutilizada tende a ser mais simples.
+Se o redimensionamento aparecer no perfil, gerar variantes dedicadas de 20,
+40 e 60 px para os fatores de escala 1x, 2x e 3x. Os originais grandes ficam
+como entrada de design e não entram no recurso Qt.

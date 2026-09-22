@@ -34,8 +34,9 @@ MANIFEST.md · FILE_LIST.txt · SHA256SUMS.json
 
 ## icones-de-arquivo/
 
-Ícones de tipos de arquivo especiais da árvore de projetos (`cmake-lists`,
-`project-config`, `sql`, `docker-yaml`) em light/dark 16/20/24 px.
+Ícones especiais e de linguagem da árvore de projetos. A UI usa masters PNG de
+64 px para os tipos de arquivo e os exibe em 16 ou 20 px. Os SVGs do pacote de
+estudo não são compilados pela aplicação.
 
 O contrato de resolução vive em `FILE_ICON_MAPPINGS.json`, com precedência:
 

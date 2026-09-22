@@ -262,21 +262,21 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 ---
 
-## 8. `kv.file.header` — Header
+## 8.1. `kv.file.header-c` — Header C
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** 16 px  
-**Implementação:** SVG simbólico próprio.
+**Master:** PNG 64 px, exibido em 16/20 px
+**Implementação:** `file-h.png`.
 
 ### Função
-Identificar .h/.hpp.
+Identificar `.h`.
 
 ### Metáfora
-Folha com H e colchetes.
+Folha com H.
 
 ### Construção geométrica
-Documento com H vetorial; pequenos colchetes laterais opcionais.
+Documento escuro com H azul/ciano de alto contraste.
 
 ### Estados
 default, hover, active, selected, focused e disabled.
@@ -286,7 +286,7 @@ Nenhum por padrão.
 
 ### Tooltip
 ```text
-Header C/C++
+Header C
 ```
 
 ### Atalho
@@ -296,6 +296,29 @@ Nenhum atalho fixo.
 
 ### Evitar
 Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
+
+---
+
+## 8.2. `kv.file.header-cpp` — Header C++
+
+**Prioridade:** P0
+**Superfícies:** Project Explorer; tabs
+**Master:** PNG 64 px, exibido em 16/20 px
+**Implementação:** `file-hpp.png`.
+
+### Função
+Identificar `.hpp`, `.hh`, `.hxx`, `.h++` e `.ipp`.
+
+### Metáfora
+Folha com H++.
+
+### Construção geométrica
+Documento escuro com H azul/ciano e dois sinais de adição legíveis.
+
+### Tooltip
+```text
+Header C++
+```
 
 ---
 
@@ -340,8 +363,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** 16 px  
-**Implementação:** SVG simbólico próprio.
+**Master:** PNG 64 px, exibido em 16/20 px
+**Implementação:** `file-cmakelists.png` para `CMakeLists.txt`.
 
 ### Função
 Identificar CMakeLists/preset/toolchain.

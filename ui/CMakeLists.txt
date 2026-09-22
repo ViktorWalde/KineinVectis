@@ -17,6 +17,7 @@ set_source_files_properties(qml/Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/StatusColors.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/components/KvIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvIcon.qml)
+set_source_files_properties(qml/components/KvFileIcon.qml PROPERTIES QT_RESOURCE_ALIAS KvFileIcon.qml)
 set_source_files_properties(qml/components/KvIconGlyphs.js PROPERTIES QT_RESOURCE_ALIAS KvIconGlyphs.js)
 set_source_files_properties(qml/components/KvToggleChip.qml PROPERTIES QT_RESOURCE_ALIAS KvToggleChip.qml)
 set_source_files_properties(qml/components/KvPanelFrame.qml PROPERTIES QT_RESOURCE_ALIAS KvPanelFrame.qml)
@@ -306,6 +307,7 @@ qt_add_qml_module(kinein-vectis
         qml/Theme.qml
         qml/StatusColors.qml
         qml/components/KvIcon.qml
+        qml/components/KvFileIcon.qml
         qml/components/KvIconGlyphs.js
         qml/components/KvToggleChip.qml
         qml/components/KvPanelFrame.qml
@@ -627,10 +629,16 @@ qt_add_qml_module(kinein-vectis
     RESOURCES
         assets/icons/tree/folder-closed.svg
         assets/icons/tree/folder-open.svg
-        assets/icons/tree/file-c.svg
-        assets/icons/tree/file-cpp.svg
-        assets/icons/tree/file-rust.svg
-        assets/icons/tree/file-python.svg
+        assets/icons/tree/file-c.png
+        assets/icons/tree/file-h.png
+        assets/icons/tree/file-hpp.png
+        assets/icons/tree/file-cmakelists.png
+        assets/icons/tree/file-rust.png
+        assets/icons/tree/file-python.png
+        assets/icons/tree/file-yaml.png
+        assets/icons/tree/file-sql.png
+        assets/icons/tree/file-markdown.png
+        assets/icons/tree/file-docker.png
         "${KINEIN_MANUAL_FILE}"
 )
 
