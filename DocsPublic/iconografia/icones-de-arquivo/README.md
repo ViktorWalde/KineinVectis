@@ -16,9 +16,14 @@ docs/                           dimensionamento, integração e validação
 ## Ícones de produção
 
 - `file-cmakelists.png`: `CMakeLists.txt`;
-- `file-c.png`: fontes C e C++;
+- `file-c.png`: fontes C;
+- `file-cpp.png`: fontes C++;
 - `file-h.png`: headers `.h`;
 - `file-hpp.png`: headers C++ (`.hpp`, `.hh`, `.hxx`, `.h++`, `.ipp`);
+- `file-cargo.png`: `Cargo.toml` e `Cargo.lock`;
+- `file-makefile.png`: `Makefile`, `GNUmakefile` e `*.mk`;
+- `file-pyproject.png`: `pyproject.toml`;
+- `file-ros.png`: `package.xml` e arquivos `*.launch.xml` do ROS 2;
 - `file-rust.png`: Rust;
 - `file-python.png`: Python;
 - `file-yaml.png`: YAML genérico;

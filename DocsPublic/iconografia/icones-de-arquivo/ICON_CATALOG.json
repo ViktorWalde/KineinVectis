@@ -47,9 +47,21 @@
       }
     },
     "kv.tree.file.c": {
-      "name": "C and C++ sources",
+      "name": "C source",
       "assets": {
         "production": "file-c.png"
+      }
+    },
+    "kv.tree.file.cpp": {
+      "name": "C++ source",
+      "extensions": [
+        ".cc",
+        ".cpp",
+        ".cxx",
+        ".c++"
+      ],
+      "assets": {
+        "production": "file-cpp.png"
       }
     },
     "kv.tree.file.header-c": {
@@ -96,6 +108,50 @@
       "name": "Markdown",
       "assets": {
         "production": "file-markdown.png"
+      }
+    },
+    "kv.tree.file.cargo": {
+      "name": "Cargo manifest and lockfile",
+      "files": [
+        "Cargo.toml",
+        "Cargo.lock"
+      ],
+      "assets": {
+        "production": "file-cargo.png"
+      }
+    },
+    "kv.tree.file.makefile": {
+      "name": "Make build file",
+      "files": [
+        "Makefile",
+        "GNUmakefile"
+      ],
+      "extensions": [
+        ".mk"
+      ],
+      "assets": {
+        "production": "file-makefile.png"
+      }
+    },
+    "kv.tree.file.pyproject": {
+      "name": "Python project configuration",
+      "files": [
+        "pyproject.toml"
+      ],
+      "assets": {
+        "production": "file-pyproject.png"
+      }
+    },
+    "kv.tree.file.ros": {
+      "name": "ROS 2 XML",
+      "files": [
+        "package.xml"
+      ],
+      "patterns": [
+        "*.launch.xml"
+      ],
+      "assets": {
+        "production": "file-ros.png"
       }
     }
   }

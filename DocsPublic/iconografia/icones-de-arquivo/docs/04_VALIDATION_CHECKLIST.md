@@ -28,7 +28,11 @@
 [ ] CMakeLists.txt vence a regra de .txt.
 [ ] .h recebe o ícone H.
 [ ] .hpp recebe o ícone H++.
-[ ] .cpp continua recebendo o ícone C/C++.
+[ ] .c recebe C e .cpp recebe C++.
+[ ] Cargo.toml e Cargo.lock recebem Cargo.
+[ ] Makefile, GNUmakefile e *.mk recebem Make.
+[ ] pyproject.toml recebe projeto Python.
+[ ] package.xml e *.launch.xml recebem ROS 2 XML.
 [ ] compose.yaml recebe Docker YAML.
 [ ] config.yaml não recebe Docker YAML.
 [ ] .sql recebe SQL.

@@ -192,8 +192,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** 16 px  
-**Implementação:** SVG simbólico próprio.
+**Master:** PNG 64 px, exibido em 16/20 px
+**Implementação:** `file-cpp.png`.
 
 ### Função
 Identificar source C++.
@@ -229,8 +229,8 @@ Evitar detalhes decorativos, sombras e dependência exclusiva de cor.
 
 **Prioridade:** P0  
 **Superfícies:** Project Explorer; tabs  
-**Master:** 16 px  
-**Implementação:** SVG simbólico próprio.
+**Master:** PNG 64 px, exibido em 16/20 px
+**Implementação:** `file-c.png`.
 
 ### Função
 Identificar source C.

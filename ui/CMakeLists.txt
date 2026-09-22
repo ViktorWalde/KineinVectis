@@ -630,9 +630,14 @@ qt_add_qml_module(kinein-vectis
         assets/icons/tree/folder-closed.svg
         assets/icons/tree/folder-open.svg
         assets/icons/tree/file-c.png
+        assets/icons/tree/file-cpp.png
         assets/icons/tree/file-h.png
         assets/icons/tree/file-hpp.png
         assets/icons/tree/file-cmakelists.png
+        assets/icons/tree/file-cargo.png
+        assets/icons/tree/file-makefile.png
+        assets/icons/tree/file-pyproject.png
+        assets/icons/tree/file-ros.png
         assets/icons/tree/file-rust.png
         assets/icons/tree/file-python.png
         assets/icons/tree/file-yaml.png

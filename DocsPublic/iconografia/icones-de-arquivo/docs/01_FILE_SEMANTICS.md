@@ -45,8 +45,6 @@ Mapeamentos iniciais:
 CMakePresets.json
 CMakeUserPresets.json
 compile_commands.json
-Cargo.toml
-Cargo.lock
 rust-toolchain.toml
 rustfmt.toml
 clippy.toml
@@ -104,7 +102,7 @@ seed.sql
 migrations/V001__create_table.sql
 ```
 
-## 4. `kv.tree.file.docker-yaml`
+## 4. `kv.tree.file.docker`
 
 Mapeamentos seguros:
 
@@ -145,7 +143,8 @@ configuração genérica.
 Mapeamentos de produção:
 
 ```text
-*.c, *.cc, *.cpp, *.cxx, *.c++       → C/C++
+*.c                                   → C
+*.cc, *.cpp, *.cxx, *.c++             → C++
 *.h                                   → header C (H)
 *.hh, *.hpp, *.hxx, *.h++, *.ipp      → header C++ (H++)
 *.rs                                  → Rust
@@ -153,6 +152,10 @@ Mapeamentos de produção:
 *.yaml, *.yml                          → YAML genérico
 *.md, *.markdown, *.mdown, *.mkdn      → Markdown
 CMakeLists.txt                         → CMakeLists
+Cargo.toml, Cargo.lock                 → Cargo
+Makefile, GNUmakefile, *.mk            → Make
+pyproject.toml                         → projeto Python
+package.xml, *.launch.xml              → ROS 2 XML
 ```
 
 `CMakeLists.txt` é resolvido por nome exato antes da extensão `.txt`. Headers
@@ -179,6 +182,11 @@ config.yaml        → YAML genérico, não Docker
 query.sql          → SQL
 api.h              → header C
 api.hpp            → header C++
+main.cpp           → C++
+Cargo.toml         → Cargo
+Makefile           → Make
+pyproject.toml     → projeto Python
+package.xml        → ROS 2 XML
 CMakePresets.json  → project-config
 README.txt         → texto genérico
 ```

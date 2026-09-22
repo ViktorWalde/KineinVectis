@@ -10,6 +10,12 @@
   ],
   "exactNames": {
     "CMakeLists.txt": "kv.tree.file.cmake-lists",
+    "Cargo.toml": "kv.tree.file.cargo",
+    "Cargo.lock": "kv.tree.file.cargo",
+    "Makefile": "kv.tree.file.makefile",
+    "GNUmakefile": "kv.tree.file.makefile",
+    "pyproject.toml": "kv.tree.file.pyproject",
+    "package.xml": "kv.tree.file.ros",
     "Dockerfile": "kv.tree.file.docker",
     "compose.yaml": "kv.tree.file.docker",
     "compose.yml": "kv.tree.file.docker",
@@ -22,8 +28,6 @@
     "CMakePresets.json": "kv.tree.file.project-config",
     "CMakeUserPresets.json": "kv.tree.file.project-config",
     "compile_commands.json": "kv.tree.file.project-config",
-    "Cargo.toml": "kv.tree.file.project-config",
-    "Cargo.lock": "kv.tree.file.project-config",
     "rust-toolchain.toml": "kv.tree.file.project-config",
     "rustfmt.toml": "kv.tree.file.project-config",
     "clippy.toml": "kv.tree.file.project-config",
@@ -55,6 +59,10 @@
       "icon": "kv.tree.file.docker"
     },
     {
+      "glob": "*.launch.xml",
+      "icon": "kv.tree.file.ros"
+    },
+    {
       "glob": ".cargo/config.toml",
       "icon": "kv.tree.file.project-config"
     },
@@ -66,10 +74,10 @@
   "extensions": {
     ".c": "kv.tree.file.c",
     ".h": "kv.tree.file.header-c",
-    ".cc": "kv.tree.file.c",
-    ".cpp": "kv.tree.file.c",
-    ".cxx": "kv.tree.file.c",
-    ".c++": "kv.tree.file.c",
+    ".cc": "kv.tree.file.cpp",
+    ".cpp": "kv.tree.file.cpp",
+    ".cxx": "kv.tree.file.cpp",
+    ".c++": "kv.tree.file.cpp",
     ".hh": "kv.tree.file.header-cpp",
     ".hpp": "kv.tree.file.header-cpp",
     ".hxx": "kv.tree.file.header-cpp",
@@ -85,11 +93,12 @@
     ".md": "kv.tree.file.markdown",
     ".markdown": "kv.tree.file.markdown",
     ".mdown": "kv.tree.file.markdown",
-    ".mkdn": "kv.tree.file.markdown"
+    ".mkdn": "kv.tree.file.markdown",
+    ".mk": "kv.tree.file.makefile"
   },
   "notes": [
     "Generic .yaml and .yml files receive the YAML icon, never the Docker icon.",
     "Docker YAML requires an exact Compose filename, a configured path, or validated Compose schema.",
-    "Future specialized CMake, Cargo and Clang icons should override project-config."
+    "Specialized CMake and Cargo icons override project-config."
   ]
 }

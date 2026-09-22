@@ -28,6 +28,19 @@ KvIcon {
         if (lowerName === "cmakelists.txt") {
             return "tree-file-cmakelists";
         }
+        if (lowerName === "cargo.toml" || lowerName === "cargo.lock") {
+            return "tree-file-cargo";
+        }
+        if (lowerName === "makefile" || lowerName === "gnumakefile"
+                || lowerName.endsWith(".mk")) {
+            return "tree-file-makefile";
+        }
+        if (lowerName === "pyproject.toml") {
+            return "tree-file-pyproject";
+        }
+        if (lowerName === "package.xml" || lowerName.endsWith(".launch.xml")) {
+            return "tree-file-ros";
+        }
         if (lowerName === "dockerfile" || lowerName.startsWith("dockerfile.")
                 || lowerName.endsWith(".dockerfile")
                 || lowerName === "compose.yaml" || lowerName === "compose.yml"
@@ -45,8 +58,11 @@ KvIcon {
         if (root.hasExtension(lowerName, [".hh", ".hpp", ".hxx", ".h++", ".ipp"])) {
             return "tree-file-hpp";
         }
-        if (root.hasExtension(lowerName, [".c", ".cc", ".cpp", ".cxx", ".c++"])) {
+        if (lowerName.endsWith(".c")) {
             return "tree-file-c";
+        }
+        if (root.hasExtension(lowerName, [".cc", ".cpp", ".cxx", ".c++"])) {
+            return "tree-file-cpp";
         }
         if (lowerName.endsWith(".rs")) {
             return "tree-file-rust";
