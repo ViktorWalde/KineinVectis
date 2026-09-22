@@ -1082,6 +1082,11 @@ Regra:
 - Não usar bordas pesadas.
 - Aba ativa deve ser clara.
 - Fechar aba deve aparecer no hover ou quando ativa.
+- Cada aba usa sua largura natural até um máximo de 220px.
+- Se o conjunto ultrapassar a largura disponível, as abas dividem o espaço
+  uniformemente e o nome usa reticências, sem empurrar a barra além do editor.
+- A compressão para em 84px; quantidades maiores usam rolagem horizontal e a
+  seleção traz automaticamente a aba ativa para a área visível.
 
 ---
 

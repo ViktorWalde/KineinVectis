@@ -664,6 +664,11 @@ Regras:
 - arquivo modificado com ponto discreto;
 - fechar aba no hover;
 - ícone de linguagem pequeno;
+- largura natural limitada e nomes longos truncados com reticências;
+- quando as abas excederem a área do editor, comprimi-las uniformemente até
+  uma largura mínima utilizável;
+- depois da largura mínima, usar rolagem horizontal e manter a aba ativa
+  sempre visível;
 - evitar abas muito altas.
 
 ### 14.3 Breadcrumbs
