@@ -4,6 +4,29 @@
 > **Função:** organizar todas as partes, corrigir contradições, definir fonte de verdade, separar MVP/Pós-MVP/Futuro e preparar a fase de implementação.  
 > **Estado:** fase macro de definição concluída. Próxima fase: polimento, corte de escopo e implementação incremental.
 
+> **Revisão vinculante de 2026-09-22:** a arquitetura de frontend consolidada
+> está em `arquitetura-de-frontend-0.3-em-diante.md` e tem precedência sobre
+> este inventário quando houver conflito. A IDE não terá Assistente/Chat de IA
+> embutido nem telemetria de produto/usuário. Referências antigas a esses itens
+> são material superado, não backlog. Wizards determinísticos de projeto/setup,
+> logs locais, métricas locais e dados do alvo não dependem de IA nem implicam
+> coleta pela Kinein.
+>
+> **Complemento de 2026-09-22:** Remote SSH precisa ser mais prático que o
+> terminal tanto com SSH existente quanto na configuração inicial; o desenho
+> está em `remote-ssh-ui-hud.md`. Grafana é obrigatório na 0.3.5 com UI/UX de
+> uso diário, conforme `grafana-ui-ux-0.3.5.md`. Esses dois documentos vencem
+> descrições antigas das respectivas interfaces.
+> A ergonomia da série também inclui preview renderizado de Markdown, definido
+> em `markdown-preview-0.3.md`.
+>
+> **Complemento de 2026-09-23:** Selecionar Tudo completo e rótulos de sessão
+> reutilizáveis são básicos do terminal, ainda pendentes. Launcher e interação
+> completa de pastas entram antes de Grafana, conforme
+> [projetos, arquivos e desktop](projetos-arquivos-e-integracao-desktop-0.3.md).
+> O refinamento de bordas/cabeçalho entra na 0.3.x, definido no
+> [layout §6.5](sistema-de-layout.md#65-bordas-e-cabeçalho-mais-naturais--compromisso-da-03x).
+
 ---
 
 ## 1. Identidade do projeto
@@ -50,9 +73,10 @@ IPC: JSON-RPC local
 Modelo: UI separada do Core
 Jobs: operações longas sempre assíncronas
 Events: UI atualizada por eventos
-IA: externa via AI CLI Bridge
 Sem IA embutida
 Sem chat lateral interno
+IA externa: apenas ferramentas que o usuário execute por conta própria no terminal
+Telemetria de produto/usuário: inexistente
 Tree-sitter: estrutura local rápida
 clangd/rust-analyzer: inteligência semântica sob demanda
 Configuration Actions: camada visual para CMake/Cargo
@@ -256,7 +280,7 @@ definia Assistente como painel de assistência/IA.
 Status:
 
 ```text
-substituído conceitualmente pela Parte 7.1
+cancelado; não é backlog
 ```
 
 Correção:
@@ -270,7 +294,7 @@ preview, evidência e sanitização.
 
 ---
 
-### 3.9 Parte 7.1 — AI CLI Bridge e Terminal IA Externo
+### 3.9 Parte 7.1 — AI CLI Bridge e Terminal IA Externo (cancelada)
 
 Arquivo:
 
@@ -288,15 +312,12 @@ com AI Terminal separado, Context Builder, sanitização e perfis de CLI.
 Status:
 
 ```text
-fonte de verdade para IA
+cancelado; não implementar bridge, context builder, perfis ou terminal de IA
 ```
 
-Regra:
-
-```text
-Kinein não conversa por você.
-Ela organiza o contexto e abre a ferramenta que você escolheu.
-```
+Ferramentas externas que o usuário decidir executar continuam sendo apenas
+processos comuns no terminal, sem integração especial, promessa de produto ou
+acesso privilegiado ao contexto da IDE.
 
 ---
 
@@ -484,14 +505,8 @@ Assistente poderia ser interpretado como painel de IA dentro da IDE.
 Agora:
 
 ```text
-Não existe IA embutida.
-Existe AI CLI Bridge externo.
-```
-
-Decisão final:
-
-```text
-IA = atalho para terminal externo configurado pelo usuário.
+Não existe IA embutida nem AI CLI Bridge como recurso do produto.
+Ferramentas externas continuam sendo responsabilidade do usuário no terminal.
 ```
 
 ---
@@ -912,7 +927,7 @@ Quando entrar na fase de polimento, revisar nesta ordem:
 [ ] Build/Run/Debug definidos.
 [ ] Onboarding definido.
 [ ] Setup Intelligence definido.
-[ ] AI CLI Bridge corrigido.
+[ ] Partes 7 e 7.1 marcadas como canceladas.
 [ ] Arquitetura interna definida.
 [ ] Configuration Actions definidas.
 [ ] Escopo CMake/Cargo/Mixed definido.

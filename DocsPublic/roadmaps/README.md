@@ -11,9 +11,26 @@ E3-1…E3-6 feitas, E3-7 pendente) segue o
 a **Etapa 4** (o backend de novo: LSP profundo, edição inteligente, a
 biblioteca dos compiladores) abre com o
 [`45-etapa4-backend-lsp-edicao-compiladores.md`](45-etapa4-backend-lsp-edicao-compiladores.md).
+O [`46-frontend-0.3-em-diante.md`](46-frontend-0.3-em-diante.md) é a frente
+horizontal de frontend reconciliada em 2026-09-22: orienta a 0.3 e as versões
+seguintes sem suspender a Etapa 4 para um rewrite.
+O [`47-estrutura-da-v0.3.md`](47-estrutura-da-v0.3.md) cruza as duas frentes em
+uma série fechável até a 0.3.5. O
+[`48-arquitetura-executavel-da-serie-0.3.md`](48-arquitetura-executavel-da-serie-0.3.md)
+aprofunda contratos, estados, migração e prova. Grafana na 0.3.5 e
+launcher/interação completa de pastas antes dele estão decididos; bordas mais
+naturais entram na 0.3.x. A distribuição exata dos marcos anteriores ainda é
+proposta. Selecionar Tudo completo e nomes reutilizáveis são básicos pendentes
+do terminal, não extras que possam ser substituídos por seleção visível.
 
 ```text
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
+48-arquitetura-executavel-da-serie-0.3.md  contratos, donos, marcos, migração,
+                                   rollback e prova até a 0.3.5
+47-estrutura-da-v0.3.md            escopo de produto: shell, Remote, terminal,
+                                   editor, Grafana e release até a 0.3.5
+46-frontend-0.3-em-diante.md       frontend 0.3+: Remote SSH diário, commands,
+                                   tool windows, tabs estáveis e área direita
 45-etapa4-backend-lsp-edicao-compiladores.md  a Etapa 4 (brief, 2026-09-19): o que o LSP,
                                    o editor e o modelo de compiladores já fazem
                                    (medido no código), o que falta, as fatias L/E/C

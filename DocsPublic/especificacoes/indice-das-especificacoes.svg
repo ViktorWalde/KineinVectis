@@ -155,8 +155,8 @@
 <text x="810" y="783" class="small">substituído</text>
 <rect x="1298" y="725" width="530" height="74" rx="18" fill="#0D1014" stroke="#7CCF6A" stroke-width="2"/>
 <text x="1318" y="756" class="small" fill="#7CCF6A">07.1</text>
-<text x="1380" y="756" class="h2">AI CLI Bridge</text>
-<text x="1380" y="783" class="small">fonte de verdade</text>
+<text x="1380" y="756" class="h2">IA / CLI Bridge</text>
+<text x="1380" y="783" class="small">cancelado</text>
 <rect x="158" y="825" width="530" height="74" rx="18" fill="#0D1014" stroke="#FFB000" stroke-width="2"/>
 <text x="178" y="856" class="small" fill="#FFB000">08</text>
 <text x="240" y="856" class="h2">Onboarding</text>
@@ -194,7 +194,7 @@
 <text x="2167" y="610" class="body">JSON-RPC local</text>
 <rect x="2862" y="580" width="800" height="66" rx="16" fill="#0D1014" stroke="#2A2F37"/>
 <text x="2886" y="610" class="label">IA</text>
-<text x="3027" y="610" class="body">externa via AI CLI Bridge</text>
+<text x="3027" y="610" class="body">fora do produto</text>
 <rect x="2002" y="672" width="800" height="66" rx="16" fill="#0D1014" stroke="#2A2F37"/>
 <text x="2026" y="702" class="label">EDITOR</text>
 <text x="2167" y="702" class="body">Tree-sitter + LSP sob demanda</text>

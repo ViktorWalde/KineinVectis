@@ -219,6 +219,9 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 
 | Documento | Assunto |
 | --- | --- |
+| [roadmaps/48-arquitetura-executavel-da-serie-0.3.md](roadmaps/48-arquitetura-executavel-da-serie-0.3.md) | **Arquitetura executável da série 0.3 até a 0.3.5:** contratos, donos de estado, trem proposto, migração, rollback e provas; Grafana está confirmado na 0.3.5 |
+| [roadmaps/47-estrutura-da-v0.3.md](roadmaps/47-estrutura-da-v0.3.md) | **Estrutura de produto da série v0.3:** cruza frontend, Remote SSH, terminal, Grafana e o mínimo da Etapa 4 até o fechamento 0.3.5 |
+| [roadmaps/46-frontend-0.3-em-diante.md](roadmaps/46-frontend-0.3-em-diante.md) | **Frontend da 0.3 em diante:** extração operacional de `arquiKinein`, reconciliada com a `main`; Remote SSH utilizável, commands, tool windows mínimas, abas com identidade e área direita, sem big-bang |
 | [roadmaps/backend-para-ui-ux.md](roadmaps/backend-para-ui-ux.md) | Ponte operacional backend → UI/UX |
 | [roadmaps/20-ui-spec-convergence-plan.md](roadmaps/20-ui-spec-convergence-plan.md) | Convergência vinculante da UI atual para as specs (fatias C0–C6) |
 | [roadmaps/21-long-horizon-roadmap.md](roadmaps/21-long-horizon-roadmap.md) | M4–M7, KSWE, distribuição e continuidade longa |
@@ -248,6 +251,11 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 
 | Área | Spec |
 | --- | --- |
+| Arquitetura de frontend 0.3+ | [especificacoes/arquitetura-de-frontend-0.3-em-diante.md](especificacoes/arquitetura-de-frontend-0.3-em-diante.md) |
+| Remote SSH — UI/HUD diário | [especificacoes/remote-ssh-ui-hud.md](especificacoes/remote-ssh-ui-hud.md) |
+| Terminal — ergonomia da 0.3 | [especificacoes/terminal-ergonomia-0.3.md](especificacoes/terminal-ergonomia-0.3.md) |
+| Grafana — uso prático na 0.3.5 | [especificacoes/grafana-ui-ux-0.3.5.md](especificacoes/grafana-ui-ux-0.3.5.md) |
+| Markdown — preview da série 0.3 | [especificacoes/markdown-preview-0.3.md](especificacoes/markdown-preview-0.3.md) |
 | Arquitetura interna (Core/IPC/Jobs) | [especificacoes/arquitetura-interna-core-ipc-jobs.md](especificacoes/arquitetura-interna-core-ipc-jobs.md) |
 | Layout principal | [especificacoes/sistema-de-layout.md](especificacoes/sistema-de-layout.md) |
 | Componentes UI | [especificacoes/sistema-de-componentes-de-ui.md](especificacoes/sistema-de-componentes-de-ui.md) |
