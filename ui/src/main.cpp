@@ -1,6 +1,9 @@
 // Entry point of the Kinein Vectis UI process.
 
+#include "cli_args.h"
 #include "typing_perf_harness.h"
+#include <QTextStream>
+#include <span>
 
 #include <QDir>
 #include <QElapsedTimer>
@@ -97,13 +100,59 @@ void installScreenshotHook(QGuiApplication& app, QQmlApplicationEngine& engine)
 
 int main(int argc, char* argv[])
 {
+    // O CONTRATO DA LINHA DE COMANDO vem ANTES de qualquer Qt: a §3 da
+    // `especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md` exige que
+    // `--help` e `--version` respondam "sem iniciar UI/core nem fazer rede".
+    // Criar o QGuiApplication ja' seria iniciar a UI.
+    // `std::span` em vez de indexar `argv` na mao: o clang-tidy recusa
+    // aritmetica de ponteiro, e com razao — e' o lugar classico de ler um a mais.
+    const std::span<char*> argumentos{argv, static_cast<std::size_t>(argc)};
+    QStringList brutos;
+    brutos.reserve(static_cast<qsizetype>(argumentos.size()) - 1);
+    for (char* const bruto : argumentos.subspan(1)) {
+        brutos.append(QString::fromLocal8Bit(bruto));
+    }
+    const kinein::cli::Argumentos pedido = kinein::cli::interpretar(brutos, QDir::currentPath());
+    switch (pedido.acao) {
+    case kinein::cli::Acao::Ajuda: {
+        QTextStream saida{stdout};
+        saida << pedido.mensagem;
+        return 0;
+    }
+    case kinein::cli::Acao::Versao: {
+        QTextStream saida{stdout};
+        saida << QStringLiteral("kinein-vectis %1\n").arg(QLatin1String(KINEIN_VERSAO));
+        return 0;
+    }
+    case kinein::cli::Acao::Recusa: {
+        QTextStream erro{stderr};
+        erro << pedido.mensagem << '\n';
+        return 2;
+    }
+    case kinein::cli::Acao::Abrir: {
+        // Caminho ruim e' recusa COM MOTIVO, e nao uma IDE que abre sem projeto
+        // deixando a pessoa adivinhar. Nada e' criado.
+        const QString motivo = kinein::cli::validarPasta(pedido.pasta);
+        if (!motivo.isEmpty()) {
+            QTextStream erro{stderr};
+            erro << motivo << '\n';
+            return 2;
+        }
+        break;
+    }
+    case kinein::cli::Acao::SemPasta:
+        break;
+    }
+
     QElapsedTimer perfTimer;
     perfTimer.start();
 
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("Kinein Vectis"));
     QGuiApplication::setOrganizationName(QStringLiteral("Kinein Vectis"));
-    QGuiApplication::setApplicationVersion(QStringLiteral("0.1.0"));
+    // Vem do CMake: escrita a mao, ela ficou em `0.1.0` enquanto o projeto
+    // estava em 0.2.0 — e nada reprovava, porque ninguem a lia.
+    QGuiApplication::setApplicationVersion(QLatin1String(KINEIN_VERSAO));
 
     QQmlApplicationEngine engine;
     // Qt 6.4: qt_add_qml_module places the module under qrc:/ (no /qt/qml prefix).

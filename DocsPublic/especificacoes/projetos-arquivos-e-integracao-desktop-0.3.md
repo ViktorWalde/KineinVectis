@@ -47,6 +47,18 @@ existente já move dentro do workspace; não criar um segundo motor de rename.
 
 ## 3. P0 — abrir pelo terminal e pelo desktop
 
+> **Parcialmente implementado em 2026-09-24.** O contrato de argumentos passou a
+> ter dono (`ui/src/cli_args`), teste (o primeiro teste C++ do projeto) e
+> diagnóstico. `--help` e `--version` respondem sem subir UI, core ou rede;
+> caminho inválido é recusado com o motivo e sem criar nada. **Falta o comando
+> curto instalado.** Registro em
+> [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.97.
+>
+> Decisão respeitada: o binário sem argumento **não** trata o CWD como projeto —
+> é o que esta seção manda, porque o atalho do desktop roda sem argumento de um
+> diretório qualquer. O default de CWD é do comando curto, e a §7 o registra como
+> sugestão a confirmar.
+
 Contrato de produto a implementar:
 
 | Entrada | Resultado esperado |

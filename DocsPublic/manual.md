@@ -683,6 +683,24 @@ e confere a cadeia **e** o nome do host — para um servidor com certificado
 próprio, aponte o PEM no campo que aparece. Não existe "cifra sem conferir":
 é a opção que dá sensação de segurança sem a garantia.
 
+### Abrir um projeto pelo terminal
+
+```text
+scripts/kinein-vectis                      abre a IDE sem projeto
+scripts/kinein-vectis .                    abre a pasta atual
+scripts/kinein-vectis ~/meu-projeto        abre essa pasta
+scripts/kinein-vectis --help               explica e sai, sem subir a IDE
+scripts/kinein-vectis --version            diz a versão e sai
+```
+
+Caminho relativo vale, e espaço e acento também. **Pasta vazia abre
+normalmente**: a IDE não exige manifesto e não cria nada por conta própria.
+
+Caminho que não existe, arquivo no lugar de pasta, opção desconhecida ou dois
+caminhos de uma vez são **recusados com o motivo**, e a IDE não abre. Antes de
+2026-09-24 ela abria sem projeto e sem dizer nada, o que deixava um erro de
+digitação parecendo um defeito da IDE.
+
 ### Alvo remoto (SSH)
 
 Uma Raspberry Pi, uma placa com imagem própria (Yocto, Buildroot) — um Linux

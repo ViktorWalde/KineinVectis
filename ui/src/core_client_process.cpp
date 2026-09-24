@@ -1,5 +1,7 @@
 #include "core_client.h"
 
+#include "cli_args.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -25,14 +27,17 @@ void CoreClient::start()
 
     // `kinein-vectis <pasta>` abre o projeto direto (Etapa 2, 2026-09-18): e'
     // o que um lancador, um `xdg-open` de pasta e o gate headless precisam.
-    // So' o primeiro argumento que e' uma pasta existente; o resto e' do Qt.
-    const QStringList argumentos = QCoreApplication::arguments();
-    for (qsizetype i = 1; i < argumentos.size(); ++i) {
-        const QString& candidato = argumentos.at(i);
-        if (!candidato.startsWith(QLatin1Char('-')) && QDir(candidato).exists()) {
-            m_startupWorkspace = QDir(candidato).absolutePath();
-            break;
-        }
+    //
+    // Ate' 2026-09-24 isto varria o argv aqui mesmo, pegando o primeiro
+    // argumento que fosse pasta existente e IGNORANDO EM SILENCIO o resto: um
+    // caminho com erro de digitacao abria a IDE sem projeto e sem dizer por
+    // que. Agora quem decide e' o `cli_args`, que tem teste; o `main` ja'
+    // recusou o que nao presta antes de a UI subir, entao aqui so' chega
+    // caminho bom.
+    const kinein::cli::Argumentos pedido =
+        kinein::cli::interpretar(QCoreApplication::arguments().mid(1), QDir::currentPath());
+    if (pedido.acao == kinein::cli::Acao::Abrir) {
+        m_startupWorkspace = pedido.pasta;
     }
     setStatus(QStringLiteral("iniciando..."), false);
     appendLog(QStringLiteral("iniciando core: %1").arg(binary));
