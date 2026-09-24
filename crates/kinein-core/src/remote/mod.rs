@@ -276,6 +276,28 @@ pub fn deploy_dir(target: &RemoteTarget, project: &str) -> String {
         .unwrap_or_else(|| format!("~/kinein/{project}"))
 }
 
+/// A linha que GARANTE a pasta de destino no alvo, antes de copiar.
+///
+/// Medido em 2026-09-24 contra um sshd de verdade: `rsync` nao cria diretorio
+/// intermediario, entao o PRIMEIRO deploy para qualquer alvo novo falhava com
+/// `mkdir "..." failed: No such file or directory` — o padrao e'
+/// `~/kinein/<projeto>`, e `~/kinein` nao existe numa placa recem-instalada.
+/// O `scp -r` tem o mesmo buraco.
+///
+/// `mkdir -p` e nao `rsync --mkpath` porque o `--mkpath` exige rsync 3.2.3+ nos
+/// dois lados, e este projeto usa o que o SISTEMA tem — uma placa com imagem
+/// antiga ficaria de fora. `BatchMode` pelo mesmo motivo do probe: sem chave,
+/// falha em segundos em vez de pendurar pedindo senha.
+///
+/// O destino vai SEM aspas, como no `rsync`: quem expande o `~` e' o shell
+/// REMOTO, e aspas o entregariam literal.
+#[must_use]
+pub fn ensure_dest_command(target: &RemoteTarget, dest: &str) -> Vec<String> {
+    let mut args = ssh_args(target, true);
+    args.push(format!("mkdir -p {dest}"));
+    args
+}
+
 /// A linha do deploy: `rsync -az --delete -e 'ssh …' <origem> <destino>:<dest>/`
 /// ou `scp [-P] [-i] -r <origem> <destino>:<dest>/`.
 #[must_use]
@@ -369,8 +391,9 @@ mod tests {
     use kinein_protocol::{RemoteCommandKind, RemoteTarget};
 
     use super::{
-        classify_ssh_failure, deploy_command, deploy_dir, describe_ssh_failure, parse_probe,
-        probe_script, remote_command, ssh_args, ssh_copy_id_line, ssh_shell_line, validate,
+        classify_ssh_failure, deploy_command, deploy_dir, describe_ssh_failure,
+        ensure_dest_command, parse_probe, probe_script, remote_command, ssh_args, ssh_copy_id_line,
+        ssh_shell_line, validate,
     };
 
     fn pi() -> RemoteTarget {
@@ -581,5 +604,32 @@ mod tests {
         assert_eq!(ssh_copy_id_line(&simples), "ssh-copy-id bancada");
         // Nao ha' rota para senha nesta linha, por construcao.
         assert!(!ssh_copy_id_line(&pi()).to_lowercase().contains("password"));
+    }
+
+    #[test]
+    fn the_destination_folder_is_created_before_any_copy() {
+        // Achado contra um sshd REAL em 2026-09-24: nem `rsync` nem `scp -r`
+        // criam diretorio intermediario, e o padrao `~/kinein/<projeto>` nao
+        // existe numa placa nova — o PRIMEIRO deploy de qualquer alvo falhava.
+        let args = ensure_dest_command(&pi(), "~/kinein/proj");
+        assert_eq!(
+            args,
+            [
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                "ConnectTimeout=5",
+                "-p",
+                "2222",
+                "-i",
+                "/home/u/.ssh/pi",
+                "pi@192.168.0.42",
+                "mkdir -p ~/kinein/proj",
+            ]
+        );
+        // O `~` NAO pode ir entre aspas: quem o expande e' o shell REMOTO.
+        assert!(args.last().unwrap().contains("~/"));
+        // BatchMode: sem chave, falha em segundos em vez de pedir senha.
+        assert!(args.contains(&"BatchMode=yes".to_owned()));
     }
 }

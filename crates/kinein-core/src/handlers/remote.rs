@@ -296,6 +296,11 @@ impl Core {
             return jobs_unavailable_response(request_id, "remote.deploy");
         };
         let (_, args) = remote::deploy_command(&target, &source, &dest, use_rsync);
+        // A pasta do alvo tem de existir ANTES: nem `rsync` nem `scp -r` criam
+        // diretorio intermediario, e o padrao `~/kinein/<projeto>` nao existe
+        // numa placa nova. Sem isto, o primeiro deploy de qualquer alvo falha.
+        let prepara = remote::ensure_dest_command(&target, &dest);
+        let ssh_bin = self.detector.find_in_path("ssh");
         let command_line = format!("{} {}", programa.display(), args.join(" "));
         let name = target.name.clone();
         let titulo = format!("Deploy em {name}");
@@ -308,6 +313,19 @@ impl Core {
             JobRisk::Medium,
             true,
             move |ctx| {
+                // A pasta primeiro. Falha aqui nao interrompe: se ela for real,
+                // a copia falha em seguida com a mensagem dela, que e' melhor.
+                if let Some(ssh) = &ssh_bin {
+                    ctx.emit_output(&format!("$ {} {}", ssh.display(), prepara.join(" ")));
+                    let mut mkdir = Command::new(ssh);
+                    mkdir.args(&prepara);
+                    let mut eco = |_: &'static str, line: String| ctx.emit_output(&line);
+                    drop(stream_command_lines_cancelable(
+                        mkdir,
+                        &ctx.cancellation(),
+                        &mut eco,
+                    ));
+                }
                 ctx.emit_output(&format!("$ {linha}"));
                 let mut command = Command::new(&programa);
                 command.args(&args);
