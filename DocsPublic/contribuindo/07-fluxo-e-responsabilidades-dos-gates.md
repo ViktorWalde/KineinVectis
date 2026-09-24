@@ -115,6 +115,12 @@ Algumas etapas consomem artefatos reais do build, mas isso é uma pré-condiçã
 declarada, não comunicação entre gates:
 
 - `verificar-cpp.sh` lê `compile_commands.json` do build debug estrito;
+- `scripts/testar-remote-ssh.sh` **não** é gate: é a prova pesada do Remote
+  contra um sshd de verdade (podman; na primeira vez, rede). Rode-a de propósito
+  ao mexer em `remote.*` — foi ela que achou o primeiro deploy quebrado em alvo
+  novo e a divergência de config entre descoberta e resolução, duas coisas que o
+  `ssh` falso do gate não tinha como mostrar. Mesma separação do AppImage:
+  `verificar-*` é a catraca hermética, `testar-*` é a prova cara.
 - `verificar-fiacao-ipc.sh` acha método roteado pelo formato do braço de
   `match` (`"dominio.metodo" => ...`) nos roteadores do core. Um roteador escrito
   de outro jeito continua funcionando e **some** da contagem e da lista canônica

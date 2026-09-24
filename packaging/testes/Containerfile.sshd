@@ -1,0 +1,29 @@
+# Um alvo SSH DE VERDADE para provar o fluxo Remote (2026-09-24).
+#
+# Por que existe: ate' aqui todo o dominio `remote.*` era provado contra um
+# `ssh` FALSO — um script de shell que imprimia o que o teste queria ler. Isso
+# prova o despacho e o parser, e nao prova nada sobre OpenSSH real: host key,
+# BatchMode, `ssh -G`, `ssh-copy-id`, rsync do outro lado.
+#
+# O alvo e' deliberadamente POBRE e explicito:
+#  - senha habilitada, porque e' assim que o `ssh-copy-id` instala a chave na
+#    primeira vez. Sem isso o fluxo "recusou a chave -> copie a sua" nao teria
+#    como ser exercitado de ponta a ponta;
+#  - `gdbserver` AUSENTE de proposito: o veredito da sonda tem de mostrar uma
+#    ferramenta faltando, senao so' provariamos o caminho feliz;
+#  - `rsync` e `python3` presentes, para deploy e o attach de Python.
+#
+# NAO e' imagem de producao e nao vai para distribuicao: `kinein-teste` e' uma
+# senha publica, escrita aqui de proposito para ninguem a confundir com segredo.
+FROM alpine:3.22
+
+RUN apk add --no-cache openssh-server rsync python3 \
+    && ssh-keygen -A \
+    && adduser -D -s /bin/sh kinein \
+    && echo 'kinein:kinein-teste' | chpasswd \
+    && install -d -m 700 -o kinein -g kinein /home/kinein/.ssh \
+    && printf 'PasswordAuthentication yes\nPubkeyAuthentication yes\nPermitRootLogin no\n' \
+       >> /etc/ssh/sshd_config
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D", "-e"]
