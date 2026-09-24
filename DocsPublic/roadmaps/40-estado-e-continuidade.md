@@ -136,7 +136,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.133.0
-testes      867 Rust aprovados; 64 harnesses QML (medicao de 2026-09-24, §7.94)
+testes      869 Rust aprovados; 64 harnesses QML (medicao de 2026-09-24, §7.95)
 metodos     167 IPC roteados, 56 eventos (remote.command kind copyId em 0.133.0;
             remote.discover/resolve em 0.132.0;
             terminal.selectAll/copySelection em 0.131.0;
@@ -5423,3 +5423,58 @@ Reescrita agora, dizendo item a item o que entrou em `0.132.0`, o que entrou em
 `remote.directories` que ela exigiria. **Continua sem prova com SSH real:** o
 `ssh-copy-id` desta fatia nunca copiou uma chave para uma maquina de verdade —
 os testes usam um `ssh` falso. Esse dogfooding e' do autor.
+
+### 7.95 Remote contra um SSH de verdade — 2026-09-24, sem mudanca de protocolo
+
+O autor pediu: "cria algo simples dentro de um docker e tenta se comunicar com
+ele. Deve ser feito um fluxo real de remote ssh". Ate' aqui TODO o dominio
+`remote.*` era provado contra um `ssh` FALSO — um script de shell que imprimia o
+que o teste queria ler. Isso prova despacho e parser, e nao prova nada sobre
+OpenSSH real.
+
+`packaging/testes/Containerfile.sshd` sobe um Alpine com `openssh-server`,
+`rsync` e `python3`, e **sem `gdbserver` de proposito**, para o veredito da sonda
+ter de mostrar ferramenta faltando. `scripts/testar-remote-ssh.sh` escolhe porta
+efemera, monta uma HOME temporaria com par de chaves e `~/.ssh/config` proprios
+— a `~/.ssh` do autor nao e' lida nem escrita — e roda o fluxo inteiro:
+descobrir o alias, explicar com `ssh -G`, sondar (recusa sem chave), compor o
+`ssh-copy-id`, RODAR a linha respondendo a senha num pty, sondar de novo
+(passa), deploy por `rsync` e a linha do shell.
+
+Fica FORA do `verificar.sh`: exige podman e, na primeira vez, rede. O gate e'
+offline por principio. E' a mesma separacao que o AppImage ja' usa —
+`verificar-*` e' a catraca barata e hermetica, `testar-*` e' a prova pesada.
+
+**Dois defeitos que so' o alvo real revelou, os dois corrigidos:**
+
+1. **O primeiro deploy para qualquer alvo novo falhava.** Nem `rsync` nem
+   `scp -r` criam diretorio intermediario, e o destino padrao e'
+   `~/kinein/<projeto>` — numa placa recem-instalada, `~/kinein` nao existe. O
+   usuario via `rsync: mkdir "..." failed: No such file or directory`, que nao
+   diz o que fazer. O job agora roda `ssh -o BatchMode=yes … 'mkdir -p <dest>'`
+   antes de copiar. `mkdir -p` e nao `rsync --mkpath` porque o `--mkpath` exige
+   rsync 3.2.3+ dos dois lados, e uma placa com imagem antiga ficaria de fora.
+2. **`remote.discover` e `remote.resolve` podiam explicar arquivos diferentes.**
+   O OpenSSH nao honra `$HOME` para achar o `~/.ssh/config`: usa a base de
+   senhas. A descoberta lia `$HOME/.ssh/config` e o `ssh -G` lia outro — a IDE
+   afirmaria sobre um config que o `ssh` nao usaria. O `resolve` passou a levar
+   `-F` apontando o MESMO arquivo que a descoberta leu.
+
+Nenhuma das duas mexe em contrato: o protocolo continua `0.133.0`.
+
+**Limite dito.** A conexao por ALIAS nao da' para isolar no teste, pelo mesmo
+motivo do item 2: `ssh`/`ssh-copy-id`/`rsync` compostos pelo core nao levam
+`-F`, e nao vao levar so' para agradar um teste. Por isso as operacoes que
+CONECTAM usam um perfil com host/porta/usuario explicitos — igualmente reais. Um
+shim de `ssh` no PATH do teste acrescenta apenas onde guardar o host key, para a
+prova nao escrever no `known_hosts` do autor; ele executa o `ssh` de verdade.
+
+**Referencia de UX registrada.** A pedido do autor, o Remote-SSH do VS Code foi
+consultado (2026-09-24) e comparado na §3.1 da especificacao, separando o que
+vale trazer do que nao. A melhor ideia de la': **"Add New SSH Host" aceita um
+comando `ssh` inteiro colado**, em vez de formulario — e' exatamente o caminho
+"configurar servidor" que falta na R0.5. O que NAO se traz: o VS Code instala um
+servidor no alvo, e a §1 da especificacao decidiu o contrario.
+
+**Provas:** 869 testes Rust e 64 harnesses QML; o fluxo real verde em duas
+corridas independentes, com portas e containers diferentes.

@@ -34,8 +34,15 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
   a IDE oferece **Copiar minha chave (ssh-copy-id)** ali mesmo, junto da
   explicação. Ela mostra a linha antes de rodar e só executa com a sua
   confirmação; nunca gera chave nem digita senha.
-- Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI, um SSH
-  real e a auditoria de acessibilidade. A série 0.3 completa não está entregue;
+- **Remote provado contra um SSH de verdade** (`scripts/testar-remote-ssh.sh`,
+  um sshd em container): descobrir o alias, explicar com `ssh -G`, a sonda
+  recusando sem chave, o `ssh-copy-id` instalando a chave, a sonda medindo o
+  alvo e o deploy por `rsync`. Dois defeitos que só o alvo real revelou foram
+  corrigidos: o **primeiro deploy para um alvo novo** falhava porque ninguém
+  criava `~/kinein/<projeto>`, e a descoberta e a resolução podiam ler arquivos
+  de configuração diferentes.
+- Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI e a
+  auditoria de acessibilidade. A série 0.3 completa não está entregue;
   planos de CLI/pastas/bordas não são features já implementadas.
 
 ## 0.2.0 — 2026-09-19

@@ -67,7 +67,7 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **167 métodos IPC** roteados e **56 eventos**, em **36 domínios de protocolo**;
-**867 testes Rust e 64 harnesses QML aprovados em 2026-09-24**. A Etapa 1
+**869 testes Rust e 64 harnesses QML aprovados em 2026-09-24**. A Etapa 1
 (backend e toolchains) fechou em 2026-09-18 e a Etapa 2 (HUD/UI/UX) fechou o
 desenho F0–F8 no mesmo dia; o que falta, classificado pelo que cada resto precisa,
 está no roadmap 40 §4.2.

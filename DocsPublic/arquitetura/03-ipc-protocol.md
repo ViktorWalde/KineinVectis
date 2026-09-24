@@ -3887,7 +3887,14 @@ rota em 5 s). **Deploy:** `rsync -az --delete -e 'ssh [-p P] [-i K]'
 <origem> [user@]host:<dest>/` quando há `rsync` nesta máquina, senão `scp
 [-P P] [-i K] -r`; a origem padrão é `<root>/build`, o destino o `deployDir`
 do alvo ou `~/kinein/<projeto>` (o `~` fica sem aspas para o shell REMOTO
-expandir); origem inexistente é recusa síncrona ("compile antes").
+expandir); origem inexistente é recusa síncrona ("compile antes"). **Antes de copiar**, o
+job roda `ssh -o BatchMode=yes … 'mkdir -p <dest>'`: medido em 2026-09-24 contra
+um alvo real, nem `rsync` nem `scp -r` criam diretório intermediário, e o padrão
+`~/kinein/<projeto>` não existe numa placa recém-instalada — o **primeiro deploy
+de qualquer alvo novo** falhava com um erro de `rsync` que não dizia o que fazer.
+É `mkdir -p` e não `rsync --mkpath` porque o `--mkpath` exige rsync 3.2.3+ dos
+dois lados, e o projeto usa o que o sistema tem. Falha no `mkdir` não
+interrompe: se for real, a cópia falha em seguida com a mensagem dela.
 **Comandos:** `run` → `ssh -tt … '<programa>'`; `debugServer` → `ssh -tt …
 'gdbserver :2345 <programa>'` com `remoteTarget = host:2345` (o `gdb -i
 dap` faz `attach` a servidor desde 0.89.0); `debugpy` → `ssh -tt … 'python3
@@ -3944,6 +3951,14 @@ que o `ssh` **tentaria** — não prova que alguma exista. Medido nesta máquina
 que o OpenSSH diz" por "o que nós achamos que vai funcionar". A UI não persiste um
 override que só repete o que o OpenSSH já faria: escolher um alias grava
 `{ name, host }` e nada mais.
+
+`ssh -G` roda com `-F` apontando **o mesmo arquivo** que a descoberta leu.
+Medido em 2026-09-24 contra um alvo real: o OpenSSH **não honra `$HOME`** para
+achar o `~/.ssh/config` — usa a base de senhas do sistema. Sem o `-F`, a
+descoberta podia listar aliases de um arquivo enquanto a resolução explicava
+outro, e a IDE afirmaria sobre um config que o `ssh` não usaria. Sem arquivo
+nenhum vai só `-G`: `ssh -F <inexistente>` é erro, e "não há config" é estado
+normal.
 
 **Ressalva dita:** `ssh -G` avalia `Match exec` do config do próprio usuário,
 o que executa um comando local. Rodar síncrono (como git, probe e size já

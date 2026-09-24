@@ -106,6 +106,28 @@ Os problemas de uso diário são estruturais:
 14. a mensagem “use `ssh-copy-id`” transfere o problema ao terminal sem guiar
     quando a autenticação por chave ainda não está pronta.
 
+## 3.1 Referência verificada: o Remote-SSH do VS Code
+
+Consultado em 2026-09-24 em
+[code.visualstudio.com/docs/remote/ssh](https://code.visualstudio.com/docs/remote/ssh),
+a pedido do autor. O que se aproveita é **comportamento**, não arquitetura: a
+Vectis não instala servidor no alvo, e é justamente aí que os dois desenhos
+divergem de propósito.
+
+| O que o VS Code faz | O que vale trazer, e o que não |
+| --- | --- |
+| `Remote-SSH: Connect to Host…` abre um quick pick com os hosts lembrados, ou aceita `user@hostname` digitado | **Trazer.** É a mesma ideia do `RemoteDiscovery` (`0.132.0`), que já lista os aliases concretos. O que falta é o mesmo gesto pela paleta — alvo da fatia V3 |
+| `Remote-SSH: Add New SSH Host…` aceita **um comando `ssh` inteiro** (`ssh -i ~/.ssh/id_rsa user@host`), não um formulário; depois pergunta qual arquivo de config atualizar e escreve a entrada | **Trazer, e é a melhor ideia da lista.** Resolve "configurar servidor" sem formulário: a pessoa cola a linha que já usa e o core a interpreta. Coerente com a regra "a UI não monta linha de `ssh`" — aqui quem a fornece é o usuário, e quem a lê é o core |
+| A status bar mostra o host conectado; clicar abre a lista de comandos remotos | **Trazer.** Já é o HUD da §5.2. A diferença: a Vectis não pode dizer "conectado" sem sessão viva — nossa palavra é a última sonda, com horário |
+| Canal de saída "Remote - SSH" com o log real do `ssh` | **Já temos**, por Jobs: deploy e sonda transmitem a saída linha a linha |
+| Remote Explorer lista pastas abertas antes, com ícone **Open Folder**; abrir pasta remota navega o sistema de arquivos do alvo | **Trazer.** É o item pendente da R0.5 ("iniciar seleção da pasta na home remota") e o que justificaria o `remote.directories` da §8.1 do roadmap 48 |
+| Detecta a plataforma do alvo e instala o **VS Code Server** lá; guarda a escolha em `remote.SSH.remotePlatform` | **Não trazer.** A §1 decidiu o contrário: nada é instalado no alvo. A sonda mede o que o alvo TEM (`gdbserver`, `python3`, `rsync`) e diz quando falta — não resolve por conta própria |
+
+A régua da §1 fica mais concreta com essa comparação: o VS Code consegue que o
+segundo uso não peça nada porque guarda alias e pasta. A Vectis precisa do mesmo
+resultado **sem** instalar agente, o que torna a sonda e o veredito mais
+importantes aqui do que lá.
+
 ## 4. Princípios da reformulação
 
 - separar **usar** de **configurar**;
