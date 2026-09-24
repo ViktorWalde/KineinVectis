@@ -262,9 +262,32 @@ pub fn validate_host(host: &str) -> Result<(), String> {
 }
 
 /// Os argumentos de `ssh` que EXPLICAM um host sem conectar nele.
+///
+/// `-F` aponta o MESMO arquivo que a descoberta leu, e isso nao e' detalhe:
+/// medido em 2026-09-24, o OpenSSH **nao honra `$HOME`** para achar o
+/// `~/.ssh/config` — ele usa a base de senhas do sistema. Sem o `-F`, a
+/// descoberta podia listar os aliases de um arquivo enquanto a resolucao
+/// explicava outro, e a IDE afirmaria sobre um config que o `ssh` nao usaria.
+/// Os dois contratos passam a falar do mesmo arquivo por construcao.
+///
+/// Sem arquivo nenhum, vai so' `-G`: `ssh -F <inexistente>` e' erro, e "nao ha'
+/// config" e' um estado normal, nao uma falha.
 #[must_use]
-pub fn resolve_args(host: &str) -> Vec<String> {
-    vec!["-G".to_owned(), host.trim().to_owned()]
+pub fn resolve_args(host: &str, config: &Path) -> Vec<String> {
+    let mut args = Vec::new();
+    if config.is_file() {
+        args.push("-F".to_owned());
+        args.push(config.to_string_lossy().into_owned());
+    }
+    args.push("-G".to_owned());
+    args.push(host.trim().to_owned());
+    args
+}
+
+/// O `~/.ssh/config` sob a home que a descoberta usa.
+#[must_use]
+pub fn config_path(home: &Path) -> PathBuf {
+    home.join(".ssh/config")
 }
 
 /// A allowlist da saida de `ssh -G`.
@@ -407,6 +430,20 @@ Include config.d/*
             );
         }
         assert!(validate_host(&"x".repeat(256)).is_err());
+    }
+
+    #[test]
+    fn resolve_points_ssh_at_the_same_file_discovery_read() {
+        let base = home("resolve-args");
+        let config = super::config_path(&base);
+        // Sem arquivo, so' `-G`: `ssh -F <inexistente>` seria erro, e maquina
+        // sem config e' estado normal.
+        assert_eq!(super::resolve_args("pi", &config), ["-G", "pi"]);
+        std::fs::write(&config, "Host pi\n").unwrap();
+        assert_eq!(
+            super::resolve_args("  pi  ", &config),
+            ["-F", config.to_str().unwrap(), "-G", "pi"]
+        );
     }
 
     #[test]

@@ -104,8 +104,15 @@ impl Core {
                 "nao achei `ssh` no PATH — instale o openssh-client",
             );
         };
+        // O mesmo arquivo que a descoberta leu: o OpenSSH nao honra `$HOME`
+        // para achar o config, entao sem `-F` os dois contratos podiam falar de
+        // arquivos diferentes.
+        let config = self
+            .sdk_home()
+            .map(|home| remote::discover::config_path(&home))
+            .unwrap_or_default();
         match Command::new(&ssh)
-            .args(remote::discover::resolve_args(&parsed.host))
+            .args(remote::discover::resolve_args(&parsed.host, &config))
             .output()
         {
             Ok(fim) if fim.status.success() => JsonRpcResponse::success(
