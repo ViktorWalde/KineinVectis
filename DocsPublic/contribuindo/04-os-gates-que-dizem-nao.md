@@ -26,7 +26,7 @@ está em
 | `verificar-qml-propriedades.sh` | binding para propriedade inexistente; **margem de âncora sem a âncora**; **binding torto** (mais indentado que a propriedade) | os dois últimos são bindings que o Qt aceita e a tela mostra em branco |
 | `verificar-qml-duplicacao.sh` | a mesma derivação (`kind === "commit"`) em dois arquivos | dê um dono (`inspector.isCommit`); a baseline só se atualiza para fatos diferentes que compartilham a string |
 | `verificar-qml-alcance.sh` | componente registrado que nenhuma tela abre | ou ligue, ou remova do CMake e do disco |
-| `verificar-fiacao-ipc.sh` | método sem handler, evento sem emissor, sinal C++ sem consumidor QML, sinal QML sem tratador, `dispatch*` fora da cadeia | 8 exceções ditas no script, com motivo; a sua precisa de um |
+| `verificar-fiacao-ipc.sh` | método roteado que nenhum cliente pede; **cliente que pede método que o core não roteia** (desde 2026-09-24); evento do core que o C++ não trata; sinal sem ouvinte; elo de despacho sem chamador | a direção inversa é a perigosa: é um botão que não faz nada em tempo de execução, e nada compila errado |
 | `verificar-exercitacao.sh` | o core contra ferramentas reais (git, cmake, cargo…) | pula com motivo o que a máquina não tem |
 | `verificar-embarcado.sh` | o ciclo de embarcado no QEMU, sem placa | |
 | `verificar-python-debug.sh` | depurar Python com o debugpy real | |

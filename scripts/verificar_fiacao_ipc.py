@@ -89,10 +89,18 @@ def metodos_do_core() -> set[str]:
 
 
 def metodos_dos_clientes() -> set[str]:
+    """O que a ponte C++ e a CLI PEDEM, por nome, no codigo.
+
+    `#include "x.h"` casa com o mesmo padrao e nao e' pedido de IPC: a linha
+    do include e' descartada, senao o cabecalho viraria um "metodo" fantasma.
+    """
     achados: set[str] = set()
     padrao = re.compile(r'"([a-z][A-Za-z]*(?:\.[a-zA-Z]+)+)"')
     for p in arquivos("ui/src", ".cpp", ".h") + arquivos("crates/kinein-cli/src", ".rs"):
-        achados.update(m.group(1) for m in padrao.finditer(ler(p)))
+        for linha in ler(p).splitlines():
+            if linha.lstrip().startswith("#include"):
+                continue
+            achados.update(m.group(1) for m in padrao.finditer(linha))
     return achados
 
 
@@ -181,6 +189,20 @@ def main() -> int:
         if m in METODOS_SEM_CLIENTE_ACEITOS:
             continue
         falhas.append(f"metodo roteado no core sem cliente: {m}")
+
+    # 1b — A DIRECAO INVERSA, e a mais perigosa (2026-09-24). Um metodo que o
+    # cliente pede e o core NAO roteia e' um botao que nao faz nada em tempo de
+    # execucao: nada compila errado, nenhum teste quebra, e o gate ainda dizia
+    # verde. O gatilho foi concreto: ao extrair o `remote.command` para arquivo
+    # proprio, o roteador saiu do formato `"dominio.metodo" => ...`; o metodo
+    # continuava funcionando, mas sumiu desta contagem (167 -> 166) e teria
+    # sumido da lista canonica do `03-ipc-protocol`. So' percebemos porque
+    # alguem olhou o numero.
+    pedidos_sem_rota = sorted(
+        metodos_dos_clientes() - metodos_do_core() - eventos_do_core()
+    )
+    for m in pedidos_sem_rota:
+        falhas.append(f"o cliente pede um metodo que o core NAO roteia: {m}")
 
     # 2
     tratados, descartados = eventos_tratados_no_cpp()

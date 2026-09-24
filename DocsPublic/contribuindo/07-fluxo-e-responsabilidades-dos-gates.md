@@ -115,6 +115,14 @@ Algumas etapas consomem artefatos reais do build, mas isso é uma pré-condiçã
 declarada, não comunicação entre gates:
 
 - `verificar-cpp.sh` lê `compile_commands.json` do build debug estrito;
+- `verificar-fiacao-ipc.sh` acha método roteado pelo formato do braço de
+  `match` (`"dominio.metodo" => ...`) nos roteadores do core. Um roteador escrito
+  de outro jeito continua funcionando e **some** da contagem e da lista canônica
+  do `03-ipc-protocol` sem nada reprovar — foi o que aconteceu em 2026-09-24 ao
+  extrair o `remote.command` para arquivo próprio (167 → 166, percebido só porque
+  alguém olhou o número). Desde então ele confere também a direção inversa: o
+  cliente pedir um método que o core não roteia, que é um botão que não faz nada
+  em tempo de execução. Ao mover um roteador, mantenha o braço de `match`.
 - `verificar-qml.sh` lê as **cópias** do QML no diretório de build, não a
   árvore. Como o `verificar.sh` o roda antes do build que atualiza essas cópias,
   até 2026-09-24 ele podia reprovar à toa numa propriedade nova — e, pior,
