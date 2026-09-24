@@ -2857,8 +2857,15 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 143 métodos roteados — a lista inteira
+## Os 167 métodos roteados — a lista inteira
 
+> **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
+> dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
+> lista dizia "inteira" e tinha 149 de 167: faltavam o domínio `remote.*`
+> completo, `coverage.lines/run`, `debug.disassemble/readMemory/scopes`,
+> `python.stubs` e `serial.files`. Lista escrita à mão divergindo em silêncio é
+> o que este documento existe para impedir — daí a regeneração.
+>
 > **2026-09-17:** `serial.identify` (0.112.0), `runConfig.flashProposal`
 > (0.113.0) e `serial.access` (0.114.0) entraram; eram 140.
 
@@ -2895,6 +2902,9 @@ container.status
 core.ping
 core.shutdown
 
+coverage.lines
+coverage.run
+
 datasource.create
 datasource.destroy
 datasource.discover
@@ -2906,9 +2916,12 @@ datasource.save
 datasource.test
 
 debug.continue
+debug.disassemble
 debug.evaluate
 debug.next
 debug.pause
+debug.readMemory
+debug.scopes
 debug.setBreakpoints
 debug.stackTrace
 debug.start
@@ -2955,11 +2968,11 @@ git.unstage
 grafana.forget
 grafana.get
 grafana.probe
+grafana.save
 
 index.context
 index.status
 index.symbols
-grafana.save
 
 job.cancel
 job.list
@@ -2986,10 +2999,24 @@ lsp.workspaceSymbols
 probe.list
 
 project.model
+
 python.createEnvironment
 python.status
+python.stubs
 
 quality.run
+
+remote.command
+remote.deploy
+remote.discover
+remote.list
+remote.open
+remote.probe
+remote.remove
+remote.resolve
+remote.save
+remote.status
+remote.sync
 
 run.capabilities
 run.script
@@ -3003,6 +3030,7 @@ runConfig.save
 runConfig.setActive
 
 serial.access
+serial.files
 serial.identify
 serial.list
 serial.monitor
@@ -3012,18 +3040,17 @@ settings.set
 
 setup.list
 
-
 syntaxTree.update
 
 terminal.clearScrollback
-terminal.copySelection
-terminal.selectAll
 terminal.close
+terminal.copySelection
 terminal.input
 terminal.mouse
 terminal.open
 terminal.resize
 terminal.scroll
+terminal.selectAll
 
 test.discover
 test.run
