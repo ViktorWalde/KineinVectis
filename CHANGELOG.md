@@ -3,6 +3,32 @@
 Versões de teste fechado. O detalhe de cada mudança, com data, medida e
 prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
 
+## 0.3.0 — em desenvolvimento
+
+- Terminal com menu contextual para copiar, colar, selecionar tudo ou a área visível,
+  limpar tela/histórico e gerenciar sessões.
+- `Ctrl+C` sempre envia interrupção, `Ctrl+Shift+C` copia e `Ctrl+V` cola,
+  aliases tradicionais preservados e `Ctrl+Alt+V` para `^V`.
+- Protocolo `0.130.0`: `terminal.clearScrollback` apaga apenas o histórico da
+  sessão indicada, inclusive se estiver rolada para o histórico.
+- Colagem arriscada com preview/confirmar/cancelar, opção explícita de uma
+  linha e proteção contra ESC rompendo bracketed paste.
+- Menu com teclado e altura limitada; seleção obsoleta invalidada, sem copiar
+  texto alterado pela saída. Pesquisa e diferenças frente a VS Code/JetBrains
+  registradas na especificação do terminal.
+- Protocolo `0.131.0`: Selecionar Tudo alcança todo o buffer retido da sessão
+  ativa, com cópia sob demanda, Unicode/wrap nativos e rejeição de seleção
+  obsoleta. Selecionar não altera o clipboard.
+- Nomes `terminal`, `terminal1` etc. reutilizam a primeira posição livre,
+  mantendo IDs e buffers independentes. `Shift+F10` abre o menu com foco no
+  terminal; fora dele continua Executar.
+- Provado em automação com Bash e Vim reais: Selecionar Tudo copia o histórico
+  fora da tela, a rolagem preserva a seleção, a TUI copia só a tela alternativa
+  e `Ctrl+C` interrompe de imediato mesmo com seleção ativa.
+- Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI, um SSH
+  real e a auditoria de acessibilidade. A série 0.3 completa não está entregue;
+  planos de CLI/pastas/bordas não são features já implementadas.
+
 ## 0.2.0 — 2026-09-19
 
 Entre a 0.1.0 (2026-07-14; o AppImage de 2026-09-16) e esta versão

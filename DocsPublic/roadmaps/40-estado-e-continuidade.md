@@ -32,6 +32,62 @@
 > **Regra zero vale aqui como em tudo:** antes de aceitar qualquer item como
 > pendente, MEÇA. Cada seção carrega o comando.
 >
+> **Decisão de 2026-09-22 — frontend 0.3+ e Remote SSH.** O material privado
+> `DocsPrivate/arquiKinein/` foi reconciliado com a `main`, sem promovê-lo em
+> bloco a fonte da verdade. O alvo consolidado está em
+> `especificacoes/arquitetura-de-frontend-0.3-em-diante.md` e a execução em
+> `roadmaps/46-frontend-0.3-em-diante.md`. Assistente/Chat de IA e telemetria
+> de produto/usuário estão fora. A UI/HUD de Remote SSH é uma frente
+> prioritária porque o backend já existe, mas o painel atual mistura setup e
+> operação diária; o desenho está em `especificacoes/remote-ssh-ui-hud.md`.
+> Isso é frente horizontal e não cancela a Etapa 4 do roadmap 45. Decisões
+> ambíguas foram preservadas para pergunta ao autor, não descartadas.
+>
+> **Estruturação da v0.3 em 2026-09-22:** o cruzamento entre as Etapas 4 e 46,
+> Remote SSH, ergonomia do terminal e fechamento de release está proposto no
+> `roadmaps/47-estrutura-da-v0.3.md`. Ainda é plano em estruturação: a §13
+> preserva as decisões do autor. A lacuna do terminal está detalhada em
+> `especificacoes/terminal-ergonomia-0.3.md`. Naquele baseline ainda faltavam
+> menu contextual, `Ctrl+V` desktop e limpeza explícita; esse recorte foi
+> implementado em 2026-09-23 (§7.87–§7.89). Selecionar todo o scrollback e nomes
+> reutilizáveis foram implementados na retomada de 2026-09-24 (§7.91) e o gate
+> integrado fechou verde no mesmo dia (§7.92); a fila da série está na §4.2.7.
+>
+> **Decisão de 2026-09-24:** o autor pausou o avanço da série e substituiu a
+> política híbrida. `Ctrl+C` somente interrompe, mesmo com seleção;
+> `Ctrl+Shift+C` copia. Código, menu e testes já refletem essa decisão (§7.91).
+> O autor autorizou continuar; a validação integrada foi concluída com essa
+> política vigente (§7.92).
+>
+> **Decisão de 2026-09-22 — série 0.3 até 0.3.5 e Grafana:** Grafana entra no
+> fechamento **0.3.5** e precisa ser prático no uso diário, não apenas receber
+> o acabamento visual da E3-7. O produto e a arquitetura estão nos roadmaps
+> `47`/`48`; o fluxo em `especificacoes/grafana-ui-ux-0.3.5.md`. A mesma régua
+> vale para Remote: a IDE deve descobrir/reutilizar um SSH existente e guiar a
+> configuração do zero, sem guardar senha; detalhes em
+> `especificacoes/remote-ssh-ui-hud.md`. A distribuição das outras fatias entre
+> 0.3.0–0.3.4 continua proposta, não decisão congelada.
+>
+> **Complemento de ergonomia da série 0.3:** arquivos Markdown ganham modos
+> Editar, Preview e Lado a lado. A versão mínima Qt 6.4 já possui renderer
+> Markdown, portanto o alvo não adiciona WebEngine. HTML executável e imagens
+> remotas ficam bloqueados por padrão; o plano está em
+> `especificacoes/markdown-preview-0.3.md` e foi encaixado nos roadmaps 47/48.
+>
+> **Decisão de 2026-09-22 — token Grafana na sessão:** fechar a tool window
+> mantém o token digitado somente em memória para evitar novo login; trocar ou
+> fechar workspace, confirmar outra URL, esquecer credencial/instância,
+> receber rejeição de autenticação ou encerrar a aplicação o invalida. Ele é
+> vinculado a workspace + URL, não inicia requisição sozinho e continua fora de
+> perfil/log/view. Proteções e limite de apagamento da string QML estão em
+> `especificacoes/grafana-ui-ux-0.3.5.md` §7.
+>
+> **Complemento de 2026-09-23:** terminal básico significa Selecionar Tudo
+> da sessão atual e rótulos `terminal`, `terminal1` com primeira posição
+> livre. CLI/abertura e interação completa com arquivos/pastas entram antes de
+> Grafana 0.3.5. Bordas/cabeçalho mais naturais entram na 0.3.x. O planejamento
+> e as dúvidas preservadas estão na §7.90 e nos roadmaps 47/48; não são entregas.
+>
 > **Retomada de 2026-09-15:** a ordem vigente está na **§4.1**: backend e
 > toolchains primeiro; UX/UI/HUD em etapa própria, aberta pelo autor.
 > Ruff como segundo LSP já existe e foi validado nesta retomada (§7.36).
@@ -79,9 +135,11 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.129.0
-testes      843 Rust aprovados; 55 harnesses QML (medicao de 2026-09-19, §7.81)
-metodos     162 IPC roteados, 56 eventos (datasource.destroy e event.datasource.destroyed em 0.129.0;
+protocolo   0.131.0
+testes      853 Rust aprovados; 62 harnesses QML (medicao de 2026-09-24, §7.91)
+metodos     165 IPC roteados, 56 eventos (terminal.selectAll/copySelection em 0.131.0;
+            terminal.clearScrollback em 0.130.0;
+            datasource.destroy e event.datasource.destroyed em 0.129.0;
             run.stdin e event.run.* sairam em 0.125.0;
             datasource.discover/create e event.datasource.created
             em 2026-09-18 a noite; remote.open/sync/status e event.remote.synced,
@@ -878,6 +936,27 @@ placa (E2/E5)        com o ESP32 no USB: Embarcados > Portas seriais mostra
                      /dev/ttyUSB0 e o veredito de permissao; "Identificar" le
                      o flash-id (so' leitura — nunca gravar nesta placa)
 ```
+
+#### 4.2.7 Fila da série 0.3 — retomada autorizada em 2026-09-24
+
+A §7.89 registra a revisão do primeiro recorte, não o fechamento da versão.
+**Selecionar Tudo real** e nomes `terminal`, `terminal1` etc. estão no checkout,
+sem reutilizar identidade/conteúdo, e o gate integrado fechou verde em
+2026-09-24 (§7.92). O que ainda bloqueia a 0.3.0 **não é automação**: falta o
+dogfooding do autor em shell/TUI, um SSH real e a auditoria de acessibilidade.
+Gate verde e harness verde não substituem esse roteiro.
+Política vigente: `Ctrl+C` só interrompe; `Ctrl+Shift+C` copia.
+
+O [roadmap 48 §3](48-arquitetura-executavel-da-serie-0.3.md#3-trem-de-versões-proposto)
+organiza as demais frentes. Launcher e interação completa de arquivos/pastas
+ficam em 0.3.0–0.3.4; Grafana permanece na 0.3.5. Refinamento de bordas/header
+é compromisso da 0.3.x, proposto na 0.3.4. A matriz de projeto cobre teclado,
+seleção, menus, clipboard e arrasto, além de proteção de dados — não só drop.
+
+Launcher/pastas/bordas ainda são planejamento (§7.90), não comportamento entregue.
+Reaproveitar os donos medidos na especificação antes de acrescentar
+código; perguntar ao autor quando defaults ou limites de contrato estiverem
+em aberto. Detalhes e fontes na §7.90.
 
 ## 5. As decisões registradas que NÃO se reabrem
 
@@ -4957,3 +5036,252 @@ desenhar. Também decidido: o `README.md` descreve a IDE e a ideia do
 projeto sem vender rigidez — a IDE **anuncia a liberdade de escolha**
 (toolchain, ferramentas, kits, presets; nada instalado em silêncio) — e
 `DocsPublic/contribuindo/` orienta quem chega, com ou sem IA.
+
+### 7.87 Série v0.3 iniciada — terminal cotidiano, sem quebrar o PTY — 2026-09-23, protocolo 0.130.0
+
+A primeira fatia executável da v0.3 aplica a política aprovada no terminal
+existente: `Ctrl+C` copia com seleção e envia `0x03` sem ela; `Ctrl+V`,
+`Ctrl+Shift+V` e `Shift+Insert` colam; `Ctrl+Alt+V` preserva o `^V`; `Escape`
+limpa a seleção. O clique direito abre ações locais com IDs estáveis: Copiar,
+Colar, **Selecionar área visível**, Limpar tela (`Ctrl+L` no PTY), Limpar
+histórico, Novo e Fechar. O nome “área visível” é deliberado: o QML ainda não
+possui coordenadas do scrollback inteiro e a IDE não afirma que seleciona o que
+não alcança.
+
+`terminal.clearScrollback { id } -> { status: "ok" }` entrou no protocolo
+`0.130.0`: chama `alacritty_terminal::Grid::clear_history`, volta o display ao
+fundo e emite render imediato. O teste abre duas sessões com histórico, limpa
+uma e prova que a outra continua rolável. Copy/paste continuam locais; não
+viraram RPC. O menu usa a superfície comum `AppMenuPopup`, agora capaz de
+mostrar atalhos sem criar outro sistema de menu.
+
+**Provado:** 844 testes Rust enumerados; 27 testes do recorte terminal verdes;
+58 harnesses QML verdes, incluindo `tst_terminal_context_menu`; qmllint com
+zero warnings; catraca arquitetural verde (um débito preexistente); 286 links
+relativos válidos; build `linux-clang-debug-strict` completo. **Ainda não
+provado:** interação manual, Bash/Zsh + Vim/htop, SSH real, acessibilidade e
+paste multilinha seguro. Por isso a 0.3.0 e T0–T3 não estão marcadas como
+concluídas.
+
+Ao rodar o gate completo da base, apareceu um defeito preexistente no fixture
+`quality_run_lints_python_with_the_detected_ruff`: ele escrevia settings sem o
+`schemaVersion: 1` obrigatório e esperava que o core aplicasse `strict`, embora
+o leitor corretamente descarte schema ausente/desconhecido. Só o fixture foi
+corrigido; a política de settings e o código de produção não mudaram. O
+`cargo fmt --all --check` também exigiu normalização mecânica em três arquivos
+Rust já presentes, sem alteração lógica.
+
+Revisão aberto/fechado pedida pelo autor: o recorte do terminal reutiliza os
+donos atuais. `TerminalContextMenu` é só o adaptador de ações sobre
+`AppMenuPopup`; input, seleção, sessão, scrollback, bridge e roteamento foram
+estendidos nos componentes existentes. A regra foi formalizada em
+`especificacoes/arquitetura-de-frontend-0.3-em-diante.md` §5.1 para as próximas
+fatias: componente novo precisa representar responsabilidade distinta, não uma
+cópia conveniente de comportamento já presente.
+
+O binário debug produzido abriu em modo offscreen, chegou ao primeiro frame em
+690 ms e não emitiu aviso QML. A execução precisa ocorrer fora de ambiente sob
+`ptrace`, porque LeakSanitizer não funciona nesse modo; repetida no ambiente
+adequado, passou.
+
+### 7.88 Gates autodescritivos e responsabilidades explícitas — 2026-09-23
+
+O gate rápido integrado terminou verde: todas as 23 etapas do modo rápido
+passaram, incluindo os 844 testes Rust e os 58 harnesses QML. Para tornar esse
+fluxo legível sem abrir os scripts, cada etapa do `scripts/verificar.sh` agora
+imprime uma linha `funcao:`; nome e descrição são argumentos obrigatórios de
+`passo`. O documento
+[`contribuindo/07-fluxo-e-responsabilidades-dos-gates.md`](../contribuindo/07-fluxo-e-responsabilidades-dos-gates.md)
+registra o contrato de comunicação, os artefatos declarados e o dono do código
+de cada gate. Não nasceu outro orquestrador: gates-folha devolvem apenas exit
+code e diagnóstico, e continuam sem chamar seus irmãos.
+
+**Validação da mudança do gate:** as 28 chamadas de `passo` têm descrição
+obrigatória (23 rápidas + 5 exclusivas do modo completo); `bash -n`, ShellCheck
+nos 34 scripts, veracidade dos `.md`, 290 links relativos, catraca arquitetural
+e `git diff --check` passaram.
+
+### 7.89 Revisão criteriosa e referência de terminal existente — 2026-09-23
+
+O autor pediu pente-fino antes de testar visualmente e comportamento guiado
+por VS Code/JetBrains, não por uma UX inventada. A pesquisa oficial, revisão
+Code OSS consultada, licença MIT e diferenças deliberadas estão em
+[`terminal-ergonomia-0.3.md` §3/§7](../especificacoes/terminal-ergonomia-0.3.md).
+Não houve transposição de código: emulador, clipboard, seleção, input,
+dispatcher e renderer existentes continuam com os mesmos donos.
+
+**Defeitos corrigidos na revisão:**
+
+- `Ctrl+C` copiava mas não consumia a seleção. Agora o próximo `Ctrl+C` pode
+  interromper; `Ctrl+Shift+C` mantém o comportamento tradicional de cópia.
+- O menu não tinha navegação/isolamento de teclado e podia ultrapassar um
+  terminal baixo. `AppMenuPopup` foi estendido com foco, lista rolável,
+  navegação e consumo de teclas/botões. O adaptador do terminal monta o menu
+  na camada da janela e converte coordenadas; não o confina ao painel baixo.
+  Fechar por perda de foco não rouba
+  foco da superfície escolhida; menus existentes usam a mesma implementação.
+- “Novo terminal” anunciava `Alt+F12`, que apenas abre/foca o terminal.
+  Atalho incorreto removido, sem inventar nova colisão.
+- Coordenadas antigas da seleção podiam copiar texto mudado por output ou
+  scroll. O controller compara o trecho marcado, preserva frames idênticos
+  (inclusive durante arrasto) e invalida quando esse texto muda.
+- Limpar scrollback enquanto há rolagem pendente podia deixar espera/offset
+  presos. Reset do controller e teste com sessão rolada corrigem o caminho.
+  Mutex inválido agora retorna erro em vez de sucesso aparente.
+- Multilinha/CR final não tinham confirmação, CRLF podia virar dois Enters e
+  ESC colado podia terminar bracketed paste. A política vive no input
+  existente; `TerminalPasteDialog` só compõe `KvPanelFrame` e `KvButton`.
+  Preview é texto simples limitado, Cancelar é inicial, uma linha exige
+  escolha explícita e ESC é neutralizado. Pedidos repetidos não contornam a
+  confirmação; troca/fechamento de sessão ou painel a cancela.
+- O gate de links ignorava novos documentos fora do índice Git. Agora cobre
+  Markdown versionado e novo não ignorado; uma mutação com link inválido em
+  arquivo novo reprovou, e a remoção apenas desse fixture restaurou o verde.
+- Documentação tratava retorno `0` como prova universal, catraca de tamanho
+  como revisão semântica e gate de docs como verificador de todo número.
+  Limites reais, skips e artefatos foram explicitados no documento de gates.
+  A afirmação de mouse completo em TUI também foi corrigida: hoje há roda,
+  não encaminhamento completo de cliques/arrasto.
+
+**Estado do produto:** a v0.3 **não está concluída**. O protocolo é `0.130.0`,
+o aplicativo ainda anuncia `0.2.0` e o changelog registra `0.3.0` em
+desenvolvimento. Este é o primeiro recorte do terminal, não a execução de
+todo o plano. Remote SSH, preview Markdown, convergência de commands/tool
+windows e Grafana 0.3.5 continuam planejados. Busca e seleção de todo o
+histórico, PRIMARY, validação real Bash/Zsh/Vim/htop/SSH e acessibilidade
+também não foram declarados entregues. O roteiro visual está na especificação
+§12; não há evidência de uma sessão SSH real nesta revisão.
+
+**Provas automatizadas do recorte:** 844 testes Rust completos aprovados e
+61 harnesses QML aprovados. Os três harnesses acrescentados durante o
+pente-fino cobrem o menu comum, política de paste e composição real do
+diálogo; o harness do menu contextual já fazia parte da primeira fatia.
+Remover temporariamente a guarda contra paste repetido e trocar a escolha
+inicial do diálogo para colar fizeram os testes respectivos reprovar; as
+proteções foram restauradas e o conjunto voltou a passar. Foco anterior,
+geometria reduzida, controles/CRLF e invalidar/preservar seleção também têm
+asserções, sem equivaler a um teste humano de uso diário.
+
+Na primeira tentativa do gate integrado, 13 testes falharam por `Operation
+not permitted` ao abrir sockets/processos no sandbox. Repetidos no ambiente
+autorizado, os 844 passaram sem mudar código nem afrouxar asserções.
+
+### 7.90 Requisitos básicos e interação completa da 0.3.x — 2026-09-23
+
+**Registro de planejamento; nenhuma dessas adições foi implementada nesta
+atualização documental.** O autor esclareceu que Selecionar Tudo é básico:
+todo o texto retido da sessão ativa, não somente viewport nem conteúdo de
+outras sessões. Nova sessão só contém sua própria saída, mesmo reutilizando
+o rótulo. Os nomes devem ser `terminal`, `terminal1` etc., escolhendo a primeira
+posição livre. A especificação do terminal §5.1/§5.2 registra contratos e
+testes; o roadmap deixou de tratar a seleção parcial como fechamento possível.
+
+A pesquisa no IntelliJ Community confirmou seleção sobre o documento inteiro
+do terminal reworked e geração de título considerando nomes existentes.
+Revisão, caminhos e limites da comparação estão na especificação do terminal
+§3; a grafia/sufixo pedido é adaptação da Kinein, não cópia literal atribuída
+à referência.
+
+Launcher e integração de pastas foram antecipados pelo autor: não aguardam
+Grafana 0.3.5. O novo alvo
+[`projetos-arquivos-e-integracao-desktop-0.3.md`](../especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md)
+registra a base já existente e a matriz completa de interação. O launcher
+atual encaminha argumentos, a bridge abre pasta existente e `fsops` já possui
+operações básicas; portanto o trabalho é extensão, não outro workspace/explorer.
+A proposta reparte P0–P3 por 0.3.1–0.3.4, antecipável onde seguro. CLI instalada,
+clipboard de arquivos e drag-and-drop completo continuam pendentes.
+
+O pedido de bordas mais naturais como no IntelliJ ficou registrado no
+[layout §6.5](../especificacoes/sistema-de-layout.md#65-bordas-e-cabeçalho-mais-naturais--compromisso-da-03x),
+com proposta na 0.3.4, estados de janela/escala, hit targets, resize e aceite
+visual. “Rodapé superior” foi interpretado provisoriamente como cabeçalho e
+cantos superiores; confirmar a região antes de fechar geometria.
+
+Defaults de CLI/janela, arquivos avulsos/multi-root, preview/pin e recuperação
+não foram descartados nem silenciosamente prometidos: estão como decisões
+na especificação de projeto §7. Sem mudança de versão comercial/protocolo,
+instalação de comando no sistema, alteração de arquivos do projeto via UI ou
+declaração de paridade concluída nesta atualização. **A v0.3 permanece aberta.**
+
+**Validação desta atualização documental:** `verificar-docs.sh` aprovado,
+`verificar-links-docs.sh` aprovado (325 links relativos em 2026-09-23) e
+`git diff --check` sem erro. Não foram refeitos builds, testes de runtime ou
+validação visual para esta mudança exclusiva de planejamento; as provas da
+§7.89 pertencem ao recorte de código daquela revisão.
+
+### 7.91 Retomada do terminal e revisão de Ctrl+C — 2026-09-24, protocolo 0.131.0
+
+A árvore interrompida já continha seleção completa e nomes reutilizáveis.
+Foram revisados os contratos, a ponte e os controllers; documentação e testes
+adicionais cobrem isolamento entre duas sessões com o mesmo token, resize,
+respostas de gestos anteriores e colisão de títulos. O texto completo só sai
+do emulador no gesto de copiar; Unicode, wrap e tela alternativa usam a seleção
+nativa. Nova saída, resize e limpeza invalidam; rolagem conserva. Títulos
+`terminal`, `terminal1` etc. reutilizam posições, não IDs nem conteúdo.
+
+Uma prova de composição com eventos Qt reais revelou que o atalho global
+Executar interceptava `Shift+F10` no terminal. Corrigido com
+`Keys.onShortcutOverride`: com foco no terminal abre o menu, fora dele continua
+Executar. A prova passou após falhar antes da correção; o menu permite chegar
+a Selecionar Tudo por setas/Enter e `Ctrl+A` continua no shell.
+
+**Decisão explícita do autor durante a retomada:** pausar o avanço da série e
+eliminar a alternância copiar/interromper. `Ctrl+C` agora sempre envia `0x03`
+ao PTY, com ou sem seleção. `Ctrl+Shift+C` e o menu Copiar copiam sem consumir
+a seleção. A opção interna de consumir depois da cópia foi removida. Essa
+decisão substitui a política histórica das §7.87/§7.89.
+
+**Provas até o ponto de pausa:** 853 testes Rust passaram fora do sandbox
+(dentro, sockets/processos causaram 14 falhas); 62 harnesses QML passaram após
+a mudança de Ctrl+C. A prova com eventos Qt reais confirma interrupção com
+seleção sem tocar clipboard, cópia com `Ctrl+Shift+C`, preservação da seleção,
+`Ctrl+A` e precedência do menu. Esse fixture usa transporte/clipboard falsos;
+não equivale a SSH real. Scripts e captura em
+`DocsPrivate/Codex/provar_terminal_031.{py,qml}` e
+`DocsPrivate/Codex/evidencias-2026-09-24-terminal/`.
+
+**Gate completo ainda não aprovado:** parou no Clippy porque
+`select_all_and_copy_are_typed_session_scoped_and_invalidated_by_clear` tem
+101/100 linhas. Corrigir por responsabilidade ao retomar, sem afrouxar o lint.
+Não foram executados os passos posteriores daquele gate. Nenhum commit,
+release, tag ou publicação foi feito. A versão comercial permanece `0.2.0`,
+com `0.3.0` em desenvolvimento; dogfooding shell/TUI/SSH e acessibilidade
+continuam pendentes. O avanço para Remote fica pausado a pedido do autor.
+
+### 7.92 Retomada autorizada e prova no Bash real — 2026-09-24
+
+O autor pediu prosseguir, mantendo `Ctrl+C` só para interrupção e
+`Ctrl+Shift+C` para cópia. O preparo de processo/saída conhecido dos testes
+foi extraído para `terminal_com_saida`, eliminando duplicação e a reprovação
+101/100 do Clippy. Os 853 testes Rust e o Clippy passaram novamente.
+
+A prova `DocsPrivate/Codex/provar_terminal_031_core.py` usa o core release por
+stdio, um workspace temporário e Bash sem startup pessoal: gera 70 linhas,
+reduz a tela a quatro, seleciona/copia primeira e última linhas e compara a
+cópia após rolar. Depois inicia `sleep 30`, seleciona o buffer, envia `0x03`
+e observa o retorno do shell em até **0,76 s**, com seleção ativa; saída nova
+invalida o token anterior. Essa duração inclui esperas de coleta da sonda, não
+é benchmark de latência de tecla. A mesma prova abre `vim.tiny` real, copia
+apenas o conteúdo da tela alternativa (sem o histórico oculto do Bash) e
+confirma a invalidação ao sair. SSH e uso humano/acessibilidade continuam
+pendentes. A mutação que limitava a seleção à tela fez o teste de histórico
+reprovar, e o fonte foi restaurado antes do gate integrado.
+
+A primeira checagem do release detectou objetos anteriores à atualização de
+headers do sistema de 2026-09-24. Foram removidos apenas os artefatos gerados
+obsoletos apontados pelo gate (324 debug, 10 release) para recompilação; nenhum
+fonte ou limite de verificação mudou. Nenhum limite de verificação foi relaxado.
+
+**Gate integrado fechado verde em 2026-09-24**, no modo completo com
+`debug-strict` e `release-hardened`: 853 testes Rust, Clippy pedantic/nursery,
+cargo-deny, shellcheck, clang-format/clang-tidy, qmllint estrito, as cinco
+catracas QML, fiação IPC (165 métodos, 56 eventos), exercitação do core,
+embarcado no QEMU, MicroPython, clangd cross, atalhos, veracidade e links das
+docs, catraca de arquitetura, transição de workspace e os 62 harnesses QML.
+Os dois binários recém-compilados **abrem**: debug em 738 ms e release em
+315 ms, sem aviso do QML. Log: `/tmp/kinein-031-gate-final.log`.
+
+Gate verde **não é prova humana**. Continuam pendentes para fechar a 0.3.0:
+dogfooding do autor em shell/TUI, um SSH real e a auditoria de acessibilidade.
+Nada foi commitado, marcado com tag, empacotado em AppImage nem publicado; a
+versão comercial permanece `0.2.0`.
