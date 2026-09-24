@@ -61,6 +61,172 @@ fn core_com_terminal(
     (core, receptor, raiz)
 }
 
+#[test]
+fn select_all_and_copy_are_typed_session_scoped_and_invalidated_by_clear() {
+    let (mut core, receptor, raiz) = core_com_terminal("selection-rpc");
+    let id = terminal_com_saida(&mut core, &raiz, "inicio\nmeio\nfim");
+    render_com(&receptor, "fim").expect("saida inicial");
+    let resize = core.handle_request(&JsonRpcRequest::new(
+        950_i64,
+        "terminal.resize",
+        Some(json!({ "id": id, "cols": 20, "rows": 2 })),
+    ));
+    assert!(resize.response().error.is_none());
+
+    let select = core.handle_request(&JsonRpcRequest::new(
+        951_i64,
+        "terminal.selectAll",
+        Some(json!({ "id": id, "selectionId": "gesture" })),
+    ));
+    assert!(select.response().error.is_none());
+    assert_eq!(
+        select.response().result.as_ref().unwrap()["selectionId"],
+        "gesture"
+    );
+    let copy = core.handle_request(&JsonRpcRequest::new(
+        952_i64,
+        "terminal.copySelection",
+        Some(json!({ "id": id, "selectionId": "gesture" })),
+    ));
+    assert_eq!(
+        copy.response().result.as_ref().unwrap()["text"],
+        "inicio\nmeio\nfim"
+    );
+
+    let clear = core.handle_request(&JsonRpcRequest::new(
+        953_i64,
+        "terminal.clearScrollback",
+        Some(json!({ "id": id })),
+    ));
+    assert!(clear.response().error.is_none());
+    let stale = core.handle_request(&JsonRpcRequest::new(
+        954_i64,
+        "terminal.copySelection",
+        Some(json!({ "id": id, "selectionId": "gesture" })),
+    ));
+    assert!(stale.response().result.as_ref().unwrap()["text"].is_null());
+
+    let closed = core.handle_request(&JsonRpcRequest::new(
+        955_i64,
+        "terminal.close",
+        Some(json!({ "id": id })),
+    ));
+    assert!(closed.response().error.is_none());
+    let next = terminal_com_saida(&mut core, &raiz, "novo");
+    assert_ne!(id, next);
+    // O closed anterior pode estar na fila; este helper filtra ate a sessao nova.
+    loop {
+        let event = receptor.recv_timeout(Duration::from_secs(10)).unwrap();
+        if event.method == "event.terminal.render"
+            && event.params.as_ref().unwrap()["id"] == next
+            && event.params.as_ref().unwrap()["lines"]
+                .to_string()
+                .contains("novo")
+        {
+            break;
+        }
+    }
+    let select_next = core.handle_request(&JsonRpcRequest::new(
+        956_i64,
+        "terminal.selectAll",
+        Some(json!({ "id": next, "selectionId": "fresh" })),
+    ));
+    assert!(select_next.response().error.is_none());
+    let fresh = core.handle_request(&JsonRpcRequest::new(
+        957_i64,
+        "terminal.copySelection",
+        Some(json!({ "id": next, "selectionId": "fresh" })),
+    ));
+    assert_eq!(fresh.response().result.as_ref().unwrap()["text"], "novo");
+    let gone = core.handle_request(&JsonRpcRequest::new(
+        958_i64,
+        "terminal.copySelection",
+        Some(json!({ "id": id, "selectionId": "gesture" })),
+    ));
+    assert_eq!(
+        gone.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidRequest
+    );
+}
+
+#[test]
+fn selection_isolated_between_live_sessions_and_invalidated_by_resize() {
+    let (mut core, receiver, root) = core_com_terminal("selection-isolation");
+    let mut ids = Vec::new();
+    for text in ["primeira", "segunda"] {
+        let id = terminal_com_saida(&mut core, &root, text);
+        render_com(&receiver, text).expect("output inicial da sessao");
+        let selected = core.handle_request(&JsonRpcRequest::new(
+            961_i64,
+            "terminal.selectAll",
+            Some(json!({ "id": id, "selectionId": "same-token" })),
+        ));
+        assert!(selected.response().error.is_none());
+        ids.push(id);
+    }
+    let resized = core.handle_request(&JsonRpcRequest::new(
+        962_i64,
+        "terminal.resize",
+        Some(json!({ "id": ids[0], "cols": 40, "rows": 3 })),
+    ));
+    assert!(resized.response().error.is_none());
+    for (id, expected) in ids.iter().zip([json!(null), json!("segunda")]) {
+        let copied = core.handle_request(&JsonRpcRequest::new(
+            963_i64,
+            "terminal.copySelection",
+            Some(json!({ "id": id, "selectionId": "same-token" })),
+        ));
+        assert_eq!(copied.response().result.as_ref().unwrap()["text"], expected);
+    }
+}
+
+/// Saída conhecida e processo vivo, sem startup/prompt do shell do usuário.
+fn terminal_com_saida(core: &mut crate::Core, raiz: &std::path::Path, texto: &str) -> String {
+    core.terminal
+        .as_mut()
+        .unwrap()
+        .open_command(
+            raiz,
+            "/bin/sh",
+            &[
+                "-c".to_owned(),
+                "printf '%s' \"$1\"; exec sleep 30".to_owned(),
+                "fixture-terminal".to_owned(),
+                texto.to_owned(),
+            ],
+        )
+        .unwrap()
+}
+
+#[test]
+fn selection_requests_reject_malformed_params_and_empty_identity() {
+    let (mut core, _receptor, _raiz) = core_com_terminal("selection-params");
+    for params in [
+        json!({}),
+        json!({"id": "t1"}),
+        json!({"id": "t1", "selectionId": 1}),
+        json!({"id": "t1", "selectionId": "g", "text": "not allowed"}),
+    ] {
+        for method in ["terminal.selectAll", "terminal.copySelection"] {
+            let response =
+                core.handle_request(&JsonRpcRequest::new(959_i64, method, Some(params.clone())));
+            assert_eq!(
+                response.response().error.as_ref().unwrap().code,
+                JsonRpcErrorCode::InvalidParams
+            );
+        }
+    }
+    let empty = core.handle_request(&JsonRpcRequest::new(
+        960_i64,
+        "terminal.selectAll",
+        Some(json!({"id": "t1", "selectionId": ""})),
+    ));
+    assert_eq!(
+        empty.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidRequest
+    );
+}
+
 /// Espera o primeiro `event.terminal.render` cujo texto contenha `agulha`.
 fn render_com(receptor: &mpsc::Receiver<JsonRpcRequest>, agulha: &str) -> Option<JsonRpcRequest> {
     while let Ok(evento) = receptor.recv_timeout(Duration::from_secs(10)) {
@@ -84,6 +250,29 @@ fn render_com(receptor: &mpsc::Receiver<JsonRpcRequest>, agulha: &str) -> Option
             })
             .unwrap_or_default();
         if texto.contains(agulha) {
+            return Some(evento);
+        }
+    }
+    None
+}
+
+/// Espera um render da sessão com capacidade de histórico que satisfaça a
+/// condição. Filtra renders atrasados de outras sessões sem assumir ordem
+/// entre as threads de PTY.
+fn render_scrollback(
+    receptor: &mpsc::Receiver<JsonRpcRequest>,
+    id: &str,
+    condition: impl Fn(u64) -> bool,
+) -> Option<JsonRpcRequest> {
+    while let Ok(evento) = receptor.recv_timeout(Duration::from_secs(10)) {
+        if evento.method != "event.terminal.render" {
+            continue;
+        }
+        let Some(params) = evento.params.as_ref() else {
+            continue;
+        };
+        let max = params["scrollbackMax"].as_u64().unwrap_or(0);
+        if params["id"].as_str() == Some(id) && condition(max) {
             return Some(evento);
         }
     }
@@ -115,6 +304,7 @@ fn terminal_methods_report_an_unavailable_manager_instead_of_pretending() {
             json!({ "id": "t1", "cols": 80, "rows": 24 }),
         ),
         ("terminal.scroll", json!({ "id": "t1", "offset": 3 })),
+        ("terminal.clearScrollback", json!({ "id": "t1" })),
         ("terminal.close", json!({ "id": "t1" })),
     ] {
         let saida = core.handle_request(&JsonRpcRequest::new(902_i64, metodo, Some(params)));
@@ -134,6 +324,7 @@ fn terminal_methods_validate_their_params_before_touching_the_session() {
         ("terminal.input", json!({ "id": "t1" })),
         ("terminal.resize", json!({ "id": "t1", "cols": 80 })),
         ("terminal.scroll", json!({ "id": "t1" })),
+        ("terminal.clearScrollback", json!({})),
         ("terminal.close", json!({})),
         ("terminal.mouse", json!({ "id": "t1", "col": 1 })),
     ] {
@@ -158,6 +349,7 @@ fn operations_on_an_unknown_session_id_fail_cleanly() {
             json!({ "id": "fantasma", "cols": 80, "rows": 24 }),
         ),
         ("terminal.scroll", json!({ "id": "fantasma", "offset": 1 })),
+        ("terminal.clearScrollback", json!({ "id": "fantasma" })),
         ("terminal.close", json!({ "id": "fantasma" })),
     ] {
         let saida = core.handle_request(&JsonRpcRequest::new(904_i64, metodo, Some(params)));
@@ -243,6 +435,7 @@ fn render_event_keeps_every_field_the_ui_reads() {
     assert!(params["rows"].is_u64(), "rows");
     assert!(params["scrollback"].is_u64(), "scrollback");
     assert!(params["scrollbackMax"].is_u64(), "scrollbackMax");
+    assert!(params["selectionId"].is_string(), "selectionId");
     assert!(params["alternateScreen"].is_boolean(), "alternateScreen");
     assert!(
         params["applicationCursor"].is_boolean(),
@@ -369,4 +562,117 @@ fn resize_reaches_the_live_session_and_shows_up_in_the_next_render() {
         Some(json!({ "id": id, "offset": 5 })),
     ));
     assert!(rolado.response().error.is_none());
+}
+
+/// Limpar histórico é estado do emulador, não um comando escrito no shell.
+/// O método novo precisa zerar o buffer e publicar imediatamente a nova
+/// verdade, preservando o conteúdo que ainda está no grid visível.
+#[test]
+fn clear_scrollback_reaches_only_the_requested_live_session() {
+    let (mut core, receptor, _raiz) = core_com_terminal("clear-scrollback");
+    let aberto = core.handle_request(&JsonRpcRequest::new(919_i64, "terminal.open", None));
+    let id = aberto.response().result.as_ref().unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+
+    let resize = core.handle_request(&JsonRpcRequest::new(
+        920_i64,
+        "terminal.resize",
+        Some(json!({ "id": id, "cols": 40, "rows": 3 })),
+    ));
+    assert!(resize.response().error.is_none());
+    let escrito = core.handle_request(&JsonRpcRequest::new(
+        921_i64,
+        "terminal.input",
+        Some(json!({
+            "id": id,
+            "data": "printf 'linha-01\\nlinha-02\\nlinha-03\\nlinha-04\\nlinha-%s\\n' final\n"
+        })),
+    ));
+    assert!(escrito.response().error.is_none());
+
+    let historico = render_com(&receptor, "linha-final").expect("render com historico");
+    if historico.params.as_ref().unwrap()["scrollbackMax"]
+        .as_u64()
+        .is_none_or(|max| max == 0)
+    {
+        assert!(
+            render_scrollback(&receptor, &id, |max| max > 0).is_some(),
+            "a pre-condicao do teste exige historico real"
+        );
+    }
+
+    let segundo = core.handle_request(&JsonRpcRequest::new(922_i64, "terminal.open", None));
+    let segundo_id = segundo.response().result.as_ref().unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let resize_segundo = core.handle_request(&JsonRpcRequest::new(
+        923_i64,
+        "terminal.resize",
+        Some(json!({ "id": segundo_id, "cols": 40, "rows": 3 })),
+    ));
+    assert!(resize_segundo.response().error.is_none());
+    let escrito_segundo = core.handle_request(&JsonRpcRequest::new(
+        924_i64,
+        "terminal.input",
+        Some(json!({
+            "id": segundo_id,
+            "data": "printf 'outra-01\\noutra-02\\noutra-03\\noutra-04\\noutra-%s\\n' final\n"
+        })),
+    ));
+    assert!(escrito_segundo.response().error.is_none());
+    let outro_historico =
+        render_com(&receptor, "outra-final").expect("segunda sessao com historico");
+    if outro_historico.params.as_ref().unwrap()["scrollbackMax"]
+        .as_u64()
+        .is_none_or(|max| max == 0)
+    {
+        assert!(render_scrollback(&receptor, &segundo_id, |max| max > 0).is_some());
+    }
+    while receptor.try_recv().is_ok() {}
+
+    let scroll = core.handle_request(&JsonRpcRequest::new(
+        927_i64,
+        "terminal.scroll",
+        Some(json!({ "id": id, "offset": 2 })),
+    ));
+    assert!(scroll.response().error.is_none());
+
+    let limpo = core.handle_request(&JsonRpcRequest::new(
+        925_i64,
+        "terminal.clearScrollback",
+        Some(json!({ "id": id })),
+    ));
+    assert!(limpo.response().error.is_none());
+
+    let evento = render_scrollback(&receptor, &id, |max| max == 0)
+        .expect("clearScrollback deve emitir render com historico zerado");
+    let params = evento.params.as_ref().unwrap();
+    assert_eq!(params["scrollback"].as_u64(), Some(0));
+    assert_eq!(params["scrollbackMax"].as_u64(), Some(0));
+    let texto_visivel = params["lines"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|linha| linha.as_array())
+        .flatten()
+        .filter_map(|span| span["text"].as_str())
+        .collect::<String>();
+    assert!(
+        texto_visivel.contains("linha-final"),
+        "limpar historico nao pode apagar o grid visivel: {texto_visivel:?}"
+    );
+
+    let rolado = core.handle_request(&JsonRpcRequest::new(
+        926_i64,
+        "terminal.scroll",
+        Some(json!({ "id": segundo_id, "offset": 1 })),
+    ));
+    assert!(rolado.response().error.is_none());
+    assert!(
+        render_scrollback(&receptor, &segundo_id, |max| max > 0).is_some(),
+        "limpar a primeira sessao nao pode apagar o historico da segunda"
+    );
 }

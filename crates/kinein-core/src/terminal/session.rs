@@ -30,6 +30,8 @@ use super::render::emit_render;
 use super::state::{GridSize, TerminalState};
 use super::{EventSender, MAX_SESSIONS};
 
+mod selection;
+
 /// Linhas de histórico (scrollback) mantidas pelo emulador.
 const SCROLLBACK: usize = 5000;
 /// Tamanho inicial do grid até a UI mandar o primeiro `resize`.
@@ -419,6 +421,7 @@ impl TerminalManager {
                 message: format!("falha ao redimensionar o terminal: {error}"),
             })?;
         if let Ok(mut state) = session.state.lock() {
+            state.clear_selection();
             state.term.resize(GridSize::new(rows, cols));
         }
         emit_render(&self.events, id, &session.state);
@@ -437,6 +440,20 @@ impl TerminalManager {
             if delta != 0 {
                 state.term.scroll_display(Scroll::Delta(delta));
             }
+        }
+        emit_render(&self.events, id, &session.state);
+        Ok(())
+    }
+
+    /// Descarta o histórico real da sessão sem escrever nada no PTY.
+    pub fn clear_scrollback(&mut self, id: &str) -> Result<(), TerminalError> {
+        let session = self.live(id)?;
+        {
+            let mut state = session.state.lock().map_err(|_| TerminalError::Process {
+                message: "estado do terminal indisponivel para limpar historico".to_owned(),
+            })?;
+            state.clear_selection();
+            state.term.grid_mut().clear_history();
         }
         emit_render(&self.events, id, &session.state);
         Ok(())

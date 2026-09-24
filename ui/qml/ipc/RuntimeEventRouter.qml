@@ -20,6 +20,10 @@ Item {
             root.runtimeController.handleTerminalRender(render);
         }
 
+        function onTerminalSelectionCopied(id, selectionId, text, valid) {
+            root.runtimeController.terminalSelectionCopied(id, selectionId, text, valid);
+        }
+
         function onTerminalClosed(id, exitCode) {
             root.runtimeController.handleTerminalClosed(id, exitCode);
         }
@@ -40,6 +44,9 @@ Item {
         // esta' nesta maquina", porta invalida) ia so' para o log da IDE, e a
         // aba que o Executar acabou de abrir ficava muda.
         function onRequestFailed(method, message) {
+            if (method === "terminal.selectAll" || method === "terminal.copySelection") {
+                root.runtimeController.terminalSelectionFailed();
+            }
             if (method === "run.start" || method === "run.script" || method === "run.stop") {
                 root.runtimeController.handleRequestFailed(method, message);
             }

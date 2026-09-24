@@ -62,26 +62,29 @@ Item {
         appMenuVisible = items.length > 0;
     }
 
-    function closeAppMenu() {
+    function closeAppMenu(restoreFocus) {
         if (!appMenuVisible) {
             return;
         }
         appMenuVisible = false;
         appMenuItems = [];
+        if (restoreFocus !== false) appMenuPopup.restorePreviousFocus();
         appMenuDismissed();
     }
 
     AppMenuPopup {
+        id: appMenuPopup
         anchors.fill: parent
         visible: root.appMenuVisible
         z: 103
         menuX: root.appMenuX
         menuY: root.appMenuY
         items: root.appMenuItems
-        onDismissRequested: root.closeAppMenu()
+        onDismissRequested: function(restoreFocus) { root.closeAppMenu(restoreFocus); }
         onActionRequested: function(action) {
             root.appMenuVisible = false;
             root.appMenuItems = [];
+            appMenuPopup.restorePreviousFocus();
             root.appMenuActionRequested(action);
             root.appMenuDismissed();
         }

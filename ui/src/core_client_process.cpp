@@ -223,7 +223,9 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
         {QStringLiteral("params"), params},
     };
     const QByteArray payload = QJsonDocument(request).toJson(QJsonDocument::Compact) + '\n';
-    if (method != QStringLiteral("lsp.didChange") && method != QStringLiteral("syntaxTree.update"))
+    // Teclas/paste podem conter senhas sem um campo chamado "password".
+    if (method != QStringLiteral("lsp.didChange") &&
+        method != QStringLiteral("syntaxTree.update") && method != QStringLiteral("terminal.input"))
     {
         const QByteArray registrado =
             QJsonDocument(redactSecrets(request)).toJson(QJsonDocument::Compact);

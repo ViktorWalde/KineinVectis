@@ -36,6 +36,18 @@ Item {
             root.coreClient.terminalScroll(id, offset);
         }
 
+        function onTerminalClearScrollbackRequested(id) {
+            root.coreClient.terminalClearScrollback(id);
+        }
+
+        function onTerminalSelectAllRequested(id, selectionId) {
+            root.coreClient.terminalSelectAll(id, selectionId);
+        }
+
+        function onTerminalCopySelectionRequested(id, selectionId) {
+            root.coreClient.terminalCopySelection(id, selectionId);
+        }
+
         function onTerminalWheelRequested(id, col, row, lines, modifiers) {
             root.coreClient.terminalWheel(id, col, row, lines, modifiers);
         }

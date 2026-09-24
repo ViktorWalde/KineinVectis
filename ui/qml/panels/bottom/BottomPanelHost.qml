@@ -20,6 +20,7 @@ Rectangle {
     property bool testing: false
     property var problemsModel
     property var terminalRender: ({})
+    property var runtimeController: null
     property bool terminalActive: false
     property bool workspaceAvailable: false
     property bool running: false
@@ -54,6 +55,7 @@ Rectangle {
     signal terminalKeyPressed(string data)
     signal terminalResizeRequested(int cols, int rows)
     signal terminalScrollRequested(int offset)
+    signal terminalClearScrollbackRequested()
     signal terminalWheelRequested(int col, int row, int lines, int modifiers)
     signal terminalSelectRequested(string id)
     signal terminalNewRequested()
@@ -183,8 +185,11 @@ Rectangle {
         anchors.margins: Theme.spacingSmall
         visible: root.activeTab === "terminal"
         render: root.terminalRender
+        runtimeController: root.runtimeController
         terminalActive: root.terminalActive
         workspaceAvailable: root.workspaceAvailable
+        sessionAvailable: root.activeTerminalId !== ""
+        sessionId: root.activeTerminalId
         onOpenRequested: root.terminalOpenRequested()
         onKeyPressed: function(data) {
             root.terminalKeyPressed(data);
@@ -195,8 +200,23 @@ Rectangle {
         onScrollRequested: function(offset) {
             root.terminalScrollRequested(offset);
         }
+        onClearScrollbackRequested: root.terminalClearScrollbackRequested()
+        onNewRequested: root.terminalNewRequested()
+        onCloseRequested: root.terminalCloseTabRequested(root.activeTerminalId)
         onWheelRequested: function(col, row, lines, modifiers) {
             root.terminalWheelRequested(col, row, lines, modifiers);
+        }
+    }
+
+    TerminalPasteDialog {
+        parent: root.Window.window ? root.Window.window.contentItem : root
+        anchors.fill: parent
+        z: 1100
+        visible: root.visible && root.activeTab === "terminal" && terminalView.input.pastePending
+        text: terminalView.input.pendingPaste
+        onCancelRequested: { terminalView.input.cancelPaste(); terminalView.focusInput(); }
+        onPasteRequested: function(singleLine) {
+            terminalView.input.confirmPaste(singleLine); terminalView.focusInput();
         }
     }
 

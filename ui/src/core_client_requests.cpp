@@ -412,6 +412,26 @@ void CoreClient::terminalScroll(const QString& id, int offset)
                 QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("offset"), offset}});
 }
 
+void CoreClient::terminalClearScrollback(const QString& id)
+{
+    sendRequest(QStringLiteral("terminal.clearScrollback"),
+                QJsonObject{{QStringLiteral("id"), id}});
+}
+
+void CoreClient::terminalSelectAll(const QString& id, const QString& selectionId)
+{
+    sendRequest(
+        QStringLiteral("terminal.selectAll"),
+        QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("selectionId"), selectionId}});
+}
+
+void CoreClient::terminalCopySelection(const QString& id, const QString& selectionId)
+{
+    sendRequest(
+        QStringLiteral("terminal.copySelection"),
+        QJsonObject{{QStringLiteral("id"), id}, {QStringLiteral("selectionId"), selectionId}});
+}
+
 void CoreClient::terminalWheel(const QString& id, int col, int row, int lines, int modifiers)
 {
     // Fronteira UI→contrato: os modificadores do Qt param aqui. O core recebe o

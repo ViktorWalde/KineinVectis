@@ -4,8 +4,9 @@
 //! managed by `crate::terminal`.
 
 use kinein_protocol::{
-    JsonRpcResponse, TerminalCloseParams, TerminalInputParams, TerminalMouseParams,
-    TerminalOpenResult, TerminalResizeParams, TerminalScrollParams,
+    JsonRpcResponse, TerminalClearScrollbackParams, TerminalCloseParams,
+    TerminalCopySelectionResult, TerminalInputParams, TerminalMouseParams, TerminalOpenResult,
+    TerminalResizeParams, TerminalScrollParams, TerminalSelectionParams,
 };
 use serde_json::{Value, json};
 
@@ -28,8 +29,50 @@ impl Core {
             "terminal.resize" => Some(self.terminal_resize_response(request_id, params)),
             "terminal.scroll" => Some(self.terminal_scroll_response(request_id, params)),
             "terminal.mouse" => Some(self.terminal_mouse_response(request_id, params)),
+            "terminal.clearScrollback" => {
+                Some(self.terminal_clear_scrollback_response(request_id, params))
+            }
             "terminal.close" => Some(self.terminal_close_response(request_id, params)),
+            "terminal.selectAll" | "terminal.copySelection" => {
+                Some(self.terminal_selection_response(method, request_id, params))
+            }
             _ => None,
+        }
+    }
+
+    fn terminal_selection_response(
+        &self,
+        method: &str,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<TerminalSelectionParams>(
+            request_id.as_ref(),
+            params,
+            "selecao requer id e selectionId",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let Some(session) = self.terminal.as_ref() else {
+            return terminal_unavailable_response(request_id, method);
+        };
+        if method == "terminal.selectAll" {
+            return match session.select_all(&parsed.id, &parsed.selection_id) {
+                Ok(()) => JsonRpcResponse::success(request_id, json!(parsed)),
+                Err(error) => terminal_error_response(request_id, &error),
+            };
+        }
+        match session.copy_selection(&parsed.id, &parsed.selection_id) {
+            Ok(text) => JsonRpcResponse::success(
+                request_id,
+                json!(TerminalCopySelectionResult {
+                    id: parsed.id,
+                    selection_id: parsed.selection_id,
+                    text,
+                }),
+            ),
+            Err(error) => terminal_error_response(request_id, &error),
         }
     }
 
@@ -161,6 +204,28 @@ impl Core {
             return terminal_unavailable_response(request_id, "terminal.close");
         };
         match session.close(&parsed.id) {
+            Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
+            Err(error) => terminal_error_response(request_id, &error),
+        }
+    }
+
+    fn terminal_clear_scrollback_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let parsed = match parse_params::<TerminalClearScrollbackParams>(
+            request_id.as_ref(),
+            params,
+            "terminal.clearScrollback requer o campo id",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let Some(session) = self.terminal.as_mut() else {
+            return terminal_unavailable_response(request_id, "terminal.clearScrollback");
+        };
+        match session.clear_scrollback(&parsed.id) {
             Ok(()) => JsonRpcResponse::success(request_id, json!({ "status": "ok" })),
             Err(error) => terminal_error_response(request_id, &error),
         }

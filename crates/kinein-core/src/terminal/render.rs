@@ -38,6 +38,11 @@ pub(super) fn emit_render(events: &EventSender, id: &str, state: &Arc<Mutex<Term
     let Ok(state) = state.lock() else {
         return;
     };
+    emit_locked_render(events, id, &state);
+}
+
+/// Selecao e seu primeiro frame sao publicados sob o mesmo lock do buffer.
+pub(super) fn emit_locked_render(events: &EventSender, id: &str, state: &TerminalState) {
     let cursor_style = state.term.cursor_style();
     let mode = *state.term.mode();
     let grid = state.term.grid();
@@ -62,6 +67,7 @@ pub(super) fn emit_render(events: &EventSender, id: &str, state: &Arc<Mutex<Term
         "event.terminal.render",
         Some(json!({
             "id": id,
+            "selectionId": state.selection_id,
             "cols": cols,
             "rows": rows,
             "cursor": {

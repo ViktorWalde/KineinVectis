@@ -78,6 +78,7 @@ pub(crate) fn terminal_error_response(
         terminal::TerminalError::Process { .. } => JsonRpcErrorCode::InternalError,
         terminal::TerminalError::TooMany
         | terminal::TerminalError::NotOpen
+        | terminal::TerminalError::InvalidSelection
         // Gesto válido no contrato, sem comportamento ainda (R5): é um pedido
         // que o core recusa, não uma falha interna.
         | terminal::TerminalError::MouseUnimplemented => JsonRpcErrorCode::InvalidRequest,

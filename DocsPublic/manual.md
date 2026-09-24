@@ -488,18 +488,21 @@ com mudanças do worktree. Metadados `.kinein` nunca entram no stash.
 A aba **Terminal** tem várias sessões, alternáveis pelos chips no topo —
 shells e execuções, todas terminais de verdade:
 
-- **Terminal 1, Terminal 2, …**: shells completos e independentes em
+- **terminal, terminal1, terminal2, …**: shells completos e independentes em
   **terminais de verdade** (PTY real, `TERM=xterm-256color`), abertos na raiz
   do projeto. Têm **cores**, cursor, refluem ao redimensionar e rodam programas
   interativos/full-screen (vim,
   htop, o progresso do `cargo`). A digitação é **caractere a caractere**
-  (como no VS Code/JetBrains): `Ctrl+C` interrompe, setas navegam o
+  (como no VS Code/JetBrains): `Ctrl+C` interrompe mesmo com seleção,
+  `Ctrl+Shift+C` copia; setas navegam o
   histórico, `Tab` completa — não é mais "escreva a linha e aperte Enter".
   O cursor vertical acompanha a próxima célula de digitação. As cores ANSI
   seguem a paleta visual da Kinein; prompts que marcam usuário, máquina e
   pasta continuam sendo produzidos pelo shell, com peso moderado pela IDE.
   Clique em **+** para abrir outro terminal e em **×** no chip para fechar só
   aquela sessão; programas e histórico das outras abas continuam vivos.
+  O próximo shell usa o primeiro nome livre; reutilizar o nome não restaura
+  o conteúdo da sessão encerrada. O primeiro shell abre sob demanda.
   A barra de rolagem permanece visível desde o início, acompanha a saída ao
   vivo e coalesce movimentos rápidos. Ao digitar, o terminal retorna
   imediatamente ao prompt atual; rolar manualmente para cima preserva a leitura
@@ -512,6 +515,22 @@ shells e execuções, todas terminais de verdade:
   fecha. (Até 2026-09-18 havia uma sessão "Execução" separada, por pipes,
   sem TTY — saiu: o terminal integrado já faz tudo o que ela fazia.)
 
+Clique direito (ou `Shift+F10`/tecla Menu com foco no terminal) abre Copiar,
+Colar, **Selecionar Tudo**, Selecionar área visível, Limpar tela, Limpar
+histórico, Novo e Fechar. Navegue com setas e confirme com Enter. Selecionar
+Tudo marca o buffer retido inteiro da sessão viva, incluindo até 5.000 linhas
+de histórico; só Copiar altera o clipboard. Na tela alternativa de uma TUI,
+a seleção alcança apenas esse buffer ativo. Saída nova, resize ou limpeza
+invalidam a seleção completa; rolar não a desfaz. Uma execução já encerrada
+permite copiar a área visível conservada na aba.
+
+`Ctrl+V`, `Ctrl+Shift+V` e `Shift+Insert` colam; `Ctrl+Shift+C` copia sem
+consumir a seleção; Escape a desfaz. `Ctrl+A` continua sendo enviado ao shell.
+`Ctrl+Alt+V` envia o `^V` tradicional. Colagens arriscadas pedem confirmação,
+com preview e opção explícita de uma linha. Limpar tela envia `Ctrl+L` ao
+programa; Limpar histórico remove só o scrollback dessa sessão, sem apagar
+arquivos nem histórico de comandos do shell.
+
 **Configurações de execução:** na barra superior há um seletor (começa em
 "Automático" — o menu abre por cima de tudo e fecha clicando fora). "Nova configuração..." salva um comando com nome (ex.:
 `cargo run --bin servidor`); a configuração ativa é o que o ▶ executa. Dá
@@ -520,7 +539,7 @@ projeto.
 
 | Atalho | Ação |
 | --- | --- |
-| `Shift+F10` ou `Ctrl+Alt+R` | Executa o projeto — abre uma aba **▶ comando** no Terminal |
+| `Shift+F10` (fora do terminal) ou `Ctrl+Alt+R` | Executa o projeto — abre uma aba **▶ comando** no Terminal |
 | `Ctrl+F2` ou `Ctrl+Alt+X` | Fecha a aba da execução em curso (mata o processo) |
 | `Alt+F12` ou ``Ctrl+` `` | Abre a aba Terminal; cria o primeiro shell se necessário |
 

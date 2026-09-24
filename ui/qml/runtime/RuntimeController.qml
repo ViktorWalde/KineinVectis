@@ -16,9 +16,6 @@ Item {
     property alias terminalsModel: terminalsListModel
     property string activeTerminalId: ""
     property var terminalRenders: ({})
-    // Numeração das abas: NUNCA decrementa. Se decrementasse, fechar a 2 de 3
-    // faria a próxima nascer "Terminal 3" de novo — dois com o mesmo nome.
-    property int terminalSeq: 0
     // ListModel nao notifica mudanca de conteudo para funcoes; este contador
     // e o gatilho de reavaliacao dos bindings que dependem da lista.
     property int terminalsRevision: 0
@@ -42,6 +39,11 @@ Item {
     signal terminalInputRequested(string id, string data)
     signal terminalResizeRequested(string id, int cols, int rows)
     signal terminalScrollRequested(string id, int offset)
+    signal terminalClearScrollbackRequested(string id)
+    signal terminalSelectAllRequested(string id, string selectionId)
+    signal terminalCopySelectionRequested(string id, string selectionId)
+    signal terminalSelectionCopied(string id, string selectionId, string text, bool valid)
+    signal terminalSelectionFailed()
     signal terminalWheelRequested(string id, int col, int row, int lines,
                                   int modifiers)
     signal terminalCloseRequested(string id)
@@ -64,7 +66,6 @@ Item {
         root.activeTerminalId = "";
         root.terminalRender = ({});
         root.terminalRenders = ({});
-        root.terminalSeq = 0;
         root.runTerminalId = "";
         root.finishedRuns = ({});
     }
@@ -107,14 +108,23 @@ Item {
     /// decisão da UI e por isso não é parâmetro do protocolo.
     /// `title` e' opcional: quem abre um PROCESSO numa aba (logs de um
     /// container, um monitor serial) nomeia a aba pelo que roda nela; o shell
-    /// continua "Terminal N".
+    /// usa o primeiro rotulo livre; identidade continua sendo o id do core.
+    function nextTerminalTitle() {
+        const used = ({});
+        for (let i = 0; i < terminalsListModel.count; i++) {
+            used[terminalsListModel.get(i).title] = true;
+        }
+        let number = 0;
+        while (used[number === 0 ? "terminal" : "terminal" + number] === true) number++;
+        return number === 0 ? "terminal" : "terminal" + number;
+    }
+
     function handleTerminalOpened(id, shell, title) {
         root.terminalRenders[id] = ({});
-        root.terminalSeq += 1;
         terminalsListModel.append({
             "termId": id,
             "title": title !== undefined && title !== "" ? title
-                                                        : qsTr("Terminal %1").arg(root.terminalSeq)
+                                                        : nextTerminalTitle()
         });
         root.terminalsRevision += 1;
         selectTerminal(id);
@@ -248,6 +258,12 @@ Item {
     function scrollTerminal(offset) {
         if (root.activeTerminalId !== "") {
             terminalScrollRequested(root.activeTerminalId, offset);
+        }
+    }
+
+    function clearTerminalScrollback() {
+        if (root.activeTerminalId !== "" && !isFinishedRun(root.activeTerminalId)) {
+            terminalClearScrollbackRequested(root.activeTerminalId);
         }
     }
 

@@ -316,6 +316,9 @@ public:
     Q_INVOKABLE void terminalInput(const QString& id, const QString& data);
     Q_INVOKABLE void terminalResize(const QString& id, int cols, int rows);
     Q_INVOKABLE void terminalScroll(const QString& id, int offset);
+    Q_INVOKABLE void terminalClearScrollback(const QString& id);
+    Q_INVOKABLE void terminalSelectAll(const QString& id, const QString& selectionId);
+    Q_INVOKABLE void terminalCopySelection(const QString& id, const QString& selectionId);
     /// Reporta um gesto de roda ao core (`terminal.mouse`, protocolo 0.60.0).
     ///
     /// `col`/`row` sao a celula sob o ponteiro (0-based, como no render);
@@ -567,6 +570,8 @@ signals:
     // D2 (DocsPublic/roadmaps/24): grid renderizável do terminal (cols/rows/cursor/lines).
     // Desde a D2.3 o mapa carrega `id`: a UI roteia pro terminal certo.
     void terminalRender(const QVariantMap& render);
+    void terminalSelectionCopied(const QString& id, const QString& selectionId, const QString& text,
+                                 bool valid);
     void terminalClosed(const QString& id, int exitCode);
     /// Recusa do core. `code` e' o `JsonRpcErrorCode` estavel — `SECRET_REQUIRED`,
     /// `INVALID_PARAMS`, ... — e existe para a UI decidir por ELE, nunca pelo

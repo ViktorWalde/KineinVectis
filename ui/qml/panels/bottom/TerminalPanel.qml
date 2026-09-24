@@ -13,6 +13,10 @@ Item {
     property var render: ({})
     property bool terminalActive: false
     property bool workspaceAvailable: false
+    property bool sessionAvailable: false
+    property string sessionId: ""
+    property var runtimeController: null
+    property bool clipboardHasText: false
     property string emptyText: qsTr("Seu shell ($SHELL) abre aqui na raiz do workspace (Alt+F12).")
     signal openRequested()
     signal keyPressed(string data)
@@ -22,6 +26,9 @@ Item {
     // Gesto de roda cru; `modifiers` são os do Qt e só o CoreClient os traduz
     // para o contrato. Quem decide o destino é o core (protocolo 0.60.0).
     signal wheelRequested(int col, int row, int lines, int modifiers)
+    signal clearScrollbackRequested()
+    signal newRequested()
+    signal closeRequested()
 
     // D2.2 (DocsPublic/roadmaps/24): scrollback sintetico; estado/coalescencia vivem no
     // controller dedicado para serem testados fora da superficie visual.
@@ -34,6 +41,7 @@ Item {
         scrollController.renderedSessionId
 
     focus: true
+    readonly property TerminalInputController input: actions.input
 
     readonly property var lines: (render && render.lines) ? render.lines : []
     readonly property var cursor: (render && render.cursor)
@@ -68,6 +76,7 @@ Item {
             Qt.callLater(panel.recomputeSize);
         }
         scrollController.handleRender(render);
+        selectionController.handleCoreSelection(render && render.selectionId ? String(render.selectionId) : "");
     }
 
     function queueScroll(next) {
@@ -101,6 +110,10 @@ Item {
 
         lines: panel.lines
         metrics: cellMetrics
+        sessionId: panel.sessionId
+        runtimeController: panel.runtimeController
+        available: panel.visible && panel.sessionAvailable
+        onTextReady: function(text) { Clipboard.setText(text); }
     }
 
     TerminalScrollController {
@@ -111,32 +124,14 @@ Item {
         }
     }
 
-    TerminalInputController {
-        id: inputController
+    function focusInput() { panel.forceActiveFocus(); }
 
-        terminalActive: panel.terminalActive
-        applicationCursor: panel.applicationCursor
-        onOpenRequested: panel.openRequested()
-        onCopyRequested: panel.copySelection()
-        onPasteRequested: panel.paste()
-        onDataRequested: function(data) {
-            panel.snapToBottom();
-            panel.keyPressed(data);
-        }
-    }
-
-    function focusInput() {
-        panel.forceActiveFocus();
-    }
-
-    // Sem campo de linha no modo grid; mantido pela API do host (no-op).
-    function clearInput() {
-    }
-
+    function clearInput() {}
     // Abrir a sessao e' do RuntimeController (openTerminalPanel): quando este
     // painel tambem abria ao aparecer, um gesto criava dois terminais.
     onVisibleChanged: {
         if (!visible) {
+            input.cancelPaste();
             return;
         }
         panel.forceActiveFocus();
@@ -186,18 +181,9 @@ Item {
         }
     }
 
-    function copySelection() {
-        terminalViewport.copySelection();
-    }
-
-    function paste() {
-        const text = Clipboard.text();
-        if (text !== "") {
-            snapToBottom();
-            const data = panel.bracketedPaste
-                    ? "\x1b[200~" + text + "\x1b[201~" : text;
-            panel.keyPressed(data);
-        }
+    function openContextMenu(x, y) {
+        panel.clipboardHasText = Clipboard.text() !== "";
+        terminalMenu.showForItem(panel, x, y);
     }
 
     function snapToBottom() {
@@ -206,8 +192,34 @@ Item {
         scrollController.snapToBottom();
     }
 
+    function performTerminalAction(action) {
+        actions.perform(action);
+    }
+
+    TerminalActionsController {
+        id: actions
+        sessionId: panel.sessionId
+        applicationCursor: panel.applicationCursor
+        bracketedPaste: panel.bracketedPaste
+        selectionController: selectionController
+        scrollController: scrollController
+        terminalActive: panel.terminalActive
+        canSelectAll: panel.sessionAvailable && panel.runtimeController
+                      && !panel.runtimeController.isFinishedRun(panel.sessionId)
+        workspaceAvailable: panel.workspaceAvailable
+        sessionAvailable: panel.sessionAvailable
+        onKeyPressed: function(data) { panel.keyPressed(data); }
+        onClearScrollbackRequested: panel.clearScrollbackRequested()
+        onNewRequested: panel.newRequested()
+        onCloseRequested: panel.closeRequested()
+        onFocusRequested: panel.forceActiveFocus()
+        onOpenRequested: panel.openRequested()
+        onContextMenuRequested: panel.openContextMenu(Theme.spacingSmall, Theme.spacingSmall)
+    }
+
+    Keys.onShortcutOverride: function(event) { input.overrideShortcut(event); }
     Keys.onPressed: function(event) {
-        inputController.handleKey(event);
+        input.handleKey(event);
     }
 
     TerminalViewport {
@@ -227,10 +239,30 @@ Item {
         onContentWidthChanged: panel.recomputeSize()
         onContentHeightChanged: panel.recomputeSize()
         onFocusRequested: panel.forceActiveFocus()
-        onPasteRequested: panel.paste()
+        onPasteRequested: panel.performTerminalAction("terminal.paste")
+        onContextMenuRequested: function(x, y) { panel.openContextMenu(x, y); }
         onScrollPositionRequested: function(offset) {
             if (offset !== panel.scrollOffset) panel.queueScroll(offset);
         }
+    }
+
+    TerminalContextMenu {
+        id: terminalMenu
+
+        parent: panel.Window.window ? panel.Window.window.contentItem : panel
+        z: 1100
+        available: panel.visible && !panel.input.pastePending
+        sessionId: panel.sessionId
+        canCopy: selectionController.hasSelection
+        canPaste: panel.terminalActive && panel.clipboardHasText
+        canSelectVisible: selectionController.hasSelectableContent
+        canSelectAll: actions.canSelectAll
+        canUseSession: panel.terminalActive
+        canClearScrollback: panel.terminalActive && panel.scrollbackMax > 0
+        canCreateSession: panel.workspaceAvailable
+        canCloseSession: panel.sessionAvailable
+        onActionRequested: function(action) { panel.performTerminalAction(action); }
+        onDismissed: panel.forceActiveFocus()
     }
 
     // A roda fica na composicao do terminal, como na implementacao D2
@@ -243,6 +275,7 @@ Item {
     // — o modo VT é estado do terminal.
     WheelHandler {
         target: null
+        enabled: !terminalMenu.open && !panel.input.pastePending
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         onWheel: function(event) {
             const lines = scrollController.linesFromWheel(

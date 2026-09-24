@@ -29,6 +29,7 @@ void CoreClient::handleResponseLine(const QByteArray& line)
 
     if (method != QStringLiteral("lsp.didChange") &&
         method != QStringLiteral("lsp.semanticTokens") &&
+        method != QStringLiteral("terminal.copySelection") &&
         method != QStringLiteral("syntaxTree.update"))
     {
         appendLog(QStringLiteral("<- %1").arg(QString::fromUtf8(line.left(200))));
@@ -287,6 +288,13 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
     if (dispatchFileResult(method, result) || dispatchSyntaxResult(method, result) ||
         dispatchLspResult(method, result) || dispatchRunResult(method, result))
     {
+        return;
+    }
+    if (method == QStringLiteral("terminal.copySelection")) {
+        const QJsonValue text = result.value(QStringLiteral("text"));
+        emit terminalSelectionCopied(result.value(QStringLiteral("id")).toString(),
+                                     result.value(QStringLiteral("selectionId")).toString(),
+                                     text.toString(), text.isString());
         return;
     }
     if (method == QStringLiteral("terminal.open")) {

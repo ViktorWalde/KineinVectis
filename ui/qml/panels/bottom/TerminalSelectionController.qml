@@ -1,6 +1,7 @@
 import QtQuick
 
-// Estado local de seleção da grade VT. Não conhece IPC nem clipboard.
+// Selecao visivel local e identidade da selecao completa mantida no core.
+// O texto completo so atravessa este controller no gesto de copiar.
 //
 // R1.4 (DocsPublic/roadmaps/26): a conversão pixel→célula NÃO mora aqui. Ela é uma
 // só, no TerminalMetrics, e texto, cursor, seleção, mouse e resize consomem a
@@ -22,8 +23,78 @@ Item {
     property int anchorCol: 0
     property int headRow: 0
     property int headCol: 0
+    readonly property bool hasSelectableContent: lastContentRow() >= 0
+    property string selectedSnapshot: ""
+    property var runtimeController: null
+    property string sessionId: ""
+    property bool available: true
+    property string allToken: ""
+    property bool allConfirmed: false
+    property int gestureSequence: 0
+    property bool copyPending: false
+    signal textReady(string text)
+
+    onSessionIdChanged: clear()
+    onAvailableChanged: if (!available) clear()
 
     visible: false
+    // Coordenadas de viewport nao sao identidade do buffer. Invalidar evita
+    // copiar texto diferente quando output/scroll/reflow muda a selecao.
+    onLinesChanged: {
+        if (allToken === "" && hasSelection && selectedText() !== selectedSnapshot) clear();
+    }
+
+    Connections {
+        target: root.runtimeController
+        function onTerminalSelectionCopied(id, selectionId, text, valid) {
+            root.receiveCopy(id, selectionId, text, valid);
+        }
+        function onTerminalSelectionFailed() { root.clear(); }
+    }
+
+    function selectAll() {
+        clear();
+        if (!available || sessionId === "" || !runtimeController) return;
+        gestureSequence += 1;
+        allToken = String(gestureSequence);
+        hasSelection = true;
+        runtimeController.terminalSelectAllRequested(sessionId, allToken);
+        selectionTimeout.restart();
+    }
+
+    function handleCoreSelection(token) {
+        if (allToken === "") return;
+        if (token === allToken) {
+            allConfirmed = true;
+            if (!copyPending) selectionTimeout.stop();
+        } else if (allConfirmed) clear();
+    }
+
+    function copySelection() {
+        if (!hasSelection || copyPending) return;
+        if (allToken !== "") {
+            copyPending = true;
+            runtimeController.terminalCopySelectionRequested(sessionId, allToken);
+            selectionTimeout.restart();
+            return;
+        }
+        const text = selectedText();
+        if (text !== "") textReady(text);
+    }
+
+    function receiveCopy(id, token, text, valid) {
+        if (!available || id !== sessionId || token !== allToken || !copyPending) return;
+        copyPending = false;
+        selectionTimeout.stop();
+        if (valid && text !== "") textReady(text);
+        if (!valid) clear();
+    }
+
+    Timer {
+        id: selectionTimeout
+        interval: 3000
+        onTriggered: root.clear()
+    }
 
     function cellAt(x, y) {
         if (!metrics || metrics.cellWidth <= 0 || metrics.cellHeight <= 0) {
@@ -53,6 +124,13 @@ Item {
             cells += spanRules.cells(spans[index]);
         }
         return cells;
+    }
+
+    function lastContentRow() {
+        for (let row = lines.length - 1; row >= 0; row--) {
+            if (lineCells(row) > 0) return row;
+        }
+        return -1;
     }
 
     function lineTextBetween(row, startCol, endCol) {
@@ -87,6 +165,10 @@ Item {
     }
 
     function range() {
+        if (allToken !== "") {
+            const last = Math.max(0, lastContentRow());
+            return { "r1": 0, "c1": 0, "r2": last, "c2": lineCells(last) };
+        }
         let r1 = anchorRow;
         let c1 = anchorCol;
         let r2 = headRow;
@@ -101,7 +183,7 @@ Item {
     }
 
     function selectedText() {
-        if (!hasSelection) return "";
+        if (!hasSelection || allToken !== "") return "";
         const selected = range();
         if (selected.r1 === selected.r2) {
             return lineTextBetween(selected.r1, selected.c1, selected.c2);
@@ -115,6 +197,7 @@ Item {
     }
 
     function begin(x, y) {
+        clear();
         const cell = cellAt(x, y);
         anchorRow = cell.row;
         anchorCol = cell.col;
@@ -122,6 +205,7 @@ Item {
         headCol = cell.col;
         selecting = true;
         hasSelection = false;
+        selectedSnapshot = "";
     }
 
     function update(x, y) {
@@ -130,14 +214,37 @@ Item {
         headRow = cell.row;
         headCol = cell.col;
         hasSelection = headRow !== anchorRow || headCol !== anchorCol;
+        selectedSnapshot = selectedText();
     }
 
     function finish() {
         selecting = false;
+        selectedSnapshot = selectedText();
+    }
+
+    function selectVisible() {
+        clear();
+        const lastRow = lastContentRow();
+        if (lastRow < 0) {
+            clear();
+            return;
+        }
+        anchorRow = 0;
+        anchorCol = 0;
+        headRow = lastRow;
+        headCol = lineCells(headRow);
+        selecting = false;
+        hasSelection = true;
+        selectedSnapshot = selectedText();
     }
 
     function clear() {
+        selectionTimeout.stop();
+        allToken = "";
+        allConfirmed = false;
+        copyPending = false;
         selecting = false;
         hasSelection = false;
+        selectedSnapshot = "";
     }
 }

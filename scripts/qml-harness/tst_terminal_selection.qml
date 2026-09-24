@@ -74,6 +74,32 @@ Item {
         selection.update(b.x, b.y);
         selection.finish();
         if (selection.selectedText() !== "界") failures += 32;
+
+        selection.selectVisible();
+        if (!selection.hasSelection) failures += 64;
+        if (selection.selectedText()
+                !== "primeira\nsegunda\nterceira\nA界B") failures += 128;
+        // Output alterado nao pode reutilizar coordenadas para copiar outro texto.
+        selection.lines = [[{ "text": "substituto" }]];
+        if (selection.hasSelection) failures += 512;
+        selection.selectVisible();
+        selection.lines = [[{ "text": "substituto" }]];
+        if (!selection.hasSelection || selection.selectedText() !== "substituto") failures += 1024;
+        selection.lines = [[{ "text": "A", "cells": 1 }], [], []];
+        selection.selectVisible();
+        if (selection.selectedText() !== "A") failures += 2048;
+        // Um frame identico durante o arrasto (cursor piscando, por exemplo)
+        // nao cancela a selecao ainda em andamento.
+        a = root.pt(0, 0); b = root.pt(1, 0);
+        selection.begin(a.x, a.y);
+        selection.update(b.x, b.y);
+        selection.lines = [[{ "text": "A", "cells": 1 }], [], []];
+        if (!selection.selecting || selection.selectedText() !== "A") failures += 4096;
+        selection.finish();
+        selection.lines = [[], []];
+        selection.selectVisible();
+        if (selection.hasSelection || selection.hasSelectableContent)
+            failures += 256;
         // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
         // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256
         // era letra morta: passava verde mesmo quebrado, que e exatamente a

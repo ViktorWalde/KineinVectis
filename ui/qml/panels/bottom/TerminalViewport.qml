@@ -22,6 +22,7 @@ Item {
     property string emptyText: ""
     signal focusRequested()
     signal pasteRequested()
+    signal contextMenuRequested(real x, real y)
     signal scrollPositionRequested(int offset)
 
     readonly property bool scrollIndicatorVisible: terminalScrollBar.visible
@@ -33,11 +34,6 @@ Item {
     // Regras puras de trecho; ver TerminalSpanRules.qml.
     TerminalSpanRules {
         id: spanRules
-    }
-
-    function copySelection() {
-        const text = selectionController.selectedText();
-        if (text !== "") Clipboard.setText(text);
     }
 
     // Célula da grade sob um ponto DESTE item. A grade tem margem própria, então
@@ -255,13 +251,16 @@ Item {
         MouseArea {
             anchors.fill: parent
             anchors.rightMargin: terminalScrollBar.width + Theme.spacingXSmall
-            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
             cursorShape: Qt.IBeamCursor
 
             onPressed: function(mouse) {
                 root.focusRequested();
                 if (mouse.button === Qt.MiddleButton) {
                     root.pasteRequested();
+                } else if (mouse.button === Qt.RightButton) {
+                    const point = mapToItem(root, mouse.x, mouse.y);
+                    root.contextMenuRequested(point.x, point.y);
                 } else {
                     root.selectionController.begin(mouse.x, mouse.y);
                 }

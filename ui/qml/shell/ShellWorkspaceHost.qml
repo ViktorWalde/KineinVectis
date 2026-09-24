@@ -228,6 +228,7 @@ Item {
                 testing: root.testing
                 problemsModel: root.jobsController.problemsModel
                 terminalRender: root.runtimeController.terminalRender
+                runtimeController: root.runtimeController
                 terminalActive: root.terminalActive
                 workspaceAvailable: root.workspaceOpen
                 debugController: root.debugController
@@ -271,6 +272,8 @@ Item {
                 onTerminalScrollRequested: function(offset) {
                     root.runtimeController.scrollTerminal(offset);
                 }
+                onTerminalClearScrollbackRequested:
+                    root.runtimeController.clearTerminalScrollback()
                 onTerminalWheelRequested: function(col, row, lines, modifiers) {
                     root.runtimeController.wheelTerminal(col, row, lines,
                                                          modifiers);

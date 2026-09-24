@@ -16,6 +16,8 @@ pub enum TerminalError {
     TooMany,
     /// No session with the given id (or it already died).
     NotOpen,
+    /// Missing or oversized opaque selection identity.
+    InvalidSelection,
     /// Gesto de mouse cujo contrato existe mas ainda não tem comportamento
     /// (clique/arrasto/movimento, fatia R5 de `DocsPublic/roadmaps/26`).
     MouseUnimplemented,
@@ -34,6 +36,7 @@ impl fmt::Display for TerminalError {
                 "limite de {MAX_SESSIONS} terminais abertos atingido"
             ),
             Self::NotOpen => write!(formatter, "sessao de terminal inexistente ou encerrada"),
+            Self::InvalidSelection => write!(formatter, "identidade de selecao invalida"),
             Self::MouseUnimplemented => write!(
                 formatter,
                 "gesto de mouse ainda nao implementado: so a roda esta ativa"

@@ -50,6 +50,10 @@ Item {
         }
         if (render && render.scrollbackMax !== undefined) {
             scrollbackMax = Math.max(0, Number(render.scrollbackMax));
+            if (scrollbackMax === 0) {
+                resetSession(nextSessionId);
+                return;
+            }
         }
         if (!render || render.scrollback === undefined) {
             return;

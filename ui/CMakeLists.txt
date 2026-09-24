@@ -205,6 +205,8 @@ set_source_files_properties(qml/panels/bottom/JobsPanel.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/panels/bottom/ProblemsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ProblemsPanel.qml)
 set_source_files_properties(qml/panels/bottom/SearchPanel.qml PROPERTIES QT_RESOURCE_ALIAS SearchPanel.qml)
 set_source_files_properties(qml/panels/bottom/TerminalPanel.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPanel.qml)
+set_source_files_properties(qml/panels/bottom/TerminalContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS TerminalContextMenu.qml)
+set_source_files_properties(qml/panels/bottom/TerminalPasteDialog.qml PROPERTIES QT_RESOURCE_ALIAS TerminalPasteDialog.qml)
 set_source_files_properties(qml/panels/bottom/TerminalViewport.qml PROPERTIES QT_RESOURCE_ALIAS TerminalViewport.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSpanRules.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSpanRules.qml)
 set_source_files_properties(qml/panels/bottom/SearchReplaceBar.qml PROPERTIES QT_RESOURCE_ALIAS SearchReplaceBar.qml)
@@ -213,6 +215,7 @@ set_source_files_properties(qml/panels/bottom/TerminalMetrics.qml PROPERTIES QT_
 set_source_files_properties(qml/panels/bottom/TerminalScrollController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalScrollController.qml)
 set_source_files_properties(qml/panels/bottom/TerminalSelectionController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalSelectionController.qml)
 set_source_files_properties(qml/panels/bottom/TerminalInputController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalInputController.qml)
+set_source_files_properties(qml/panels/bottom/TerminalActionsController.qml PROPERTIES QT_RESOURCE_ALIAS TerminalActionsController.qml)
 set_source_files_properties(qml/panels/bottom/TestsPanel.qml PROPERTIES QT_RESOURCE_ALIAS TestsPanel.qml)
 set_source_files_properties(qml/panels/bottom/ToolsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ToolsPanel.qml)
 set_source_files_properties(qml/workspace/FolderPickerDialog.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerDialog.qml)
@@ -496,6 +499,8 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/ProblemsPanel.qml
         qml/panels/bottom/SearchPanel.qml
         qml/panels/bottom/TerminalPanel.qml
+        qml/panels/bottom/TerminalContextMenu.qml
+        qml/panels/bottom/TerminalPasteDialog.qml
         qml/panels/bottom/TerminalViewport.qml
         qml/panels/bottom/TerminalSpanRules.qml
         qml/panels/bottom/SearchReplaceBar.qml
@@ -504,6 +509,7 @@ qt_add_qml_module(kinein-vectis
         qml/panels/bottom/TerminalScrollController.qml
         qml/panels/bottom/TerminalSelectionController.qml
         qml/panels/bottom/TerminalInputController.qml
+        qml/panels/bottom/TerminalActionsController.qml
         qml/panels/bottom/TestsPanel.qml
         qml/panels/bottom/ToolsPanel.qml
         qml/workspace/FolderPickerDialog.qml

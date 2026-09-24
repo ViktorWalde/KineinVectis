@@ -20,6 +20,36 @@ pub struct TerminalCloseParams {
     pub id: String,
 }
 
+/// Parameters for `terminal.clearScrollback` (`0.130.0`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TerminalClearScrollbackParams {
+    /// Id da sessão cujo histórico deve ser descartado.
+    pub id: String,
+}
+
+/// Session and opaque selection identity for `terminal.selectAll` / `terminal.copySelection`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TerminalSelectionParams {
+    /// Session whose active buffer is selected.
+    pub id: String,
+    /// UI gesture identity, echoed in render/copy; never a tab title.
+    pub selection_id: String,
+}
+
+/// Copy result. A stale selection returns `text: null`, never different text.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerminalCopySelectionResult {
+    /// Session which owns the selection.
+    pub id: String,
+    /// Identity of the requested selection.
+    pub selection_id: String,
+    /// Text only on an explicit copy gesture; not included in render/logs.
+    pub text: Option<String>,
+}
+
 /// Parameters for `terminal.input`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

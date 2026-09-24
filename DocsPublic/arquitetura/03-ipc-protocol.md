@@ -1,5 +1,18 @@
 # 03 — Protocolo IPC
 
+> **0.131.0 (2026-09-24) — seleção do buffer completo do terminal.**
+> `terminal.selectAll { id, selectionId }` marca todo o buffer ativo retido;
+> `terminal.copySelection { id, selectionId }` lê essa seleção sob demanda.
+> O render inclui `selectionId` (vazio quando invalidada). Saída nova,
+> resize e limpeza invalidam; rolar preserva. Clipboard continua na UI.
+>
+> **0.130.0 (2026-09-22) — terminal ergonômico sem mentir sobre o PTY.**
+> `terminal.clearScrollback { id }` descarta o histórico real da sessão no
+> emulador e força um novo `event.terminal.render`; limpar a tela continua
+> sendo o byte `Ctrl+L` (`\x0c`) enviado por `terminal.input`. A UI acrescenta
+> atalhos de copiar/colar compatíveis com IDEs, menu contextual e seleção da
+> área visível sem mudar a semântica de TUIs. Ver `terminal.*`.
+>
 > **0.129.0 (2026-09-19) — remover o que o banco criou.** `datasource.
 > destroy { name, data? }`: sem `data`, só o perfil (o que `remove` faz);
 > com `data`, por motor — o arquivo SQLite (só dentro do workspace; fora,
@@ -1174,7 +1187,7 @@ A UI (`RuntimeController`) dá à aba o nome do comando (`▶ cargo run`) e,
 quando a sessão fecha, **mantém a aba** com o desfecho no nome (`✓` ou
 `✗ <código>`) para o autor ler a saída; fechá-la depois é só local.
 
-### Terminal (`terminal.open` / `terminal.input` / `terminal.resize` / `terminal.scroll` / `terminal.mouse` / `terminal.close`)
+### Terminal (`terminal.open` / `terminal.input` / `terminal.resize` / `terminal.scroll` / `terminal.mouse` / `terminal.clearScrollback` / `terminal.selectAll` / `terminal.copySelection` / `terminal.close`)
 
 Terminal profissional (reescrito no protocolo `0.41.0`, fatia D2 de
 `DocsPublic/roadmaps/24`). Requer workspace aberto. **PTY real** via `portable-pty` (do
@@ -1206,12 +1219,32 @@ mesmo tratamento de um `ls`.
   vivo; o core **clampa** ao tamanho real do scrollback). É o que a barra de
   rolagem pede, e o snap-to-bottom ao digitar. **Um gesto de roda não é isto** —
   vai por `terminal.mouse`, porque só o core sabe se a aplicação capturou o
-  mouse. Copiar/colar são 100% UI (singleton `Clipboard`), sem RPC.
+  mouse. O clipboard pertence à UI (singleton `Clipboard`); desde `0.131.0`,
+  a cópia da seleção completa lê o texto do emulador por RPC sob demanda.
   **Nunca confie no offset da UI:** até `0.43.0` um offset maior que o
   histórico **derrubava o core** (bug de overflow do `vt100` 0.15 —
   corrigido no 0.16, que satura a subtração; o `alacritty_terminal` clampa por
   conta própria). A verdade do offset volta no render (`scrollback`), não na
   resposta.
+- `terminal.clearScrollback { id }` → `{ status: "ok" }` (`0.130.0`). Apaga
+  o histórico mantido pelo emulador **só da sessão indicada**, retorna a tela
+  ao fundo e emite um render novo (`scrollback = 0`, `scrollbackMax = 0`). Não
+  injeta comandos no shell e não apaga as linhas que ainda estão no grid
+  visível. “Limpar tela” é outra ação: a UI envia `Ctrl+L` (`\x0c`) por
+  `terminal.input`, preservando a semântica do programa em primeiro plano.
+- `terminal.selectAll { id, selectionId }` → `{ id, selectionId }`
+  (`0.131.0`). Seleciona o buffer ativo retido, incluindo histórico e linhas
+  utilizadas da tela, independente da rolagem. Não inclui tela inativa,
+  outras sessões, texto descartado nem linhas não utilizadas abaixo do prompt.
+  `selectionId` é uma identidade opaca do gesto, não vazia, até 128 bytes.
+  Publica a identidade no render sob o lock do buffer; não lê clipboard.
+- `terminal.copySelection { id, selectionId }` → `{ id, selectionId, text }`
+  (`0.131.0`). Extrai a seleção nativa, preservando Unicode e distinguindo
+  wrap visual de quebra real. `text: null` significa identidade obsoleta;
+  string vazia significa seleção válida sem texto. Nova saída, resize,
+  limpeza e troca de tela invalidam; scroll preserva. Sessão inexistente
+  devolve `INVALID_REQUEST`. A UI descarta respostas de outro gesto/sessão
+  e não registra o texto copiado no log.
 - `terminal.mouse { id, col, row, event, modifiers? }` → `{ status: "ok" }`
   (R4, `0.60.0`). Um gesto de mouse na grade. `col`/`row` são a célula sob o
   ponteiro, **0-based** (mesma origem do cursor no render); o core converte para
@@ -1257,6 +1290,7 @@ mesmo tratamento de um `ls`.
 ```text
 event.terminal.render {           (throttle ~30fps; substitui event.terminal.data)
   "id": string,                  (0.44.0 — sessão dona deste grid)
+  "selectionId": string,         (0.131.0 — vazio se não há seleção completa válida)
   "cols": u16, "rows": u16,
   "cursor": { "row": u16, "col": u16, "visible": bool,
               "shape": "block"|"underline"|"bar",
@@ -2973,6 +3007,9 @@ setup.list
 
 syntaxTree.update
 
+terminal.clearScrollback
+terminal.copySelection
+terminal.selectAll
 terminal.close
 terminal.input
 terminal.mouse
