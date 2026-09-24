@@ -1,7 +1,12 @@
 # Kinein Vectis — Parte 8: Settings, Onboarding, Project Wizard e Setup Visual de CMake/Toolchain
 
+> **Revisão vinculante de 2026-09-22:** “assistente” neste documento significa
+> apenas wizard determinístico de projeto/setup e Project Health. Qualquer
+> trecho que proponha chat, IA, explicação gerada por modelo ou painel de
+> Assistente está cancelado. Ver `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Status:** especificação de produto, UX e arquitetura.  
-> **Escopo:** primeira experiência do usuário, abertura/criação de projetos, configuração visual de CMake, compiladores, toolchains, targets, settings, presets e assistente de reparo.  
+> **Escopo:** primeira experiência do usuário, abertura/criação de projetos, configuração visual de CMake, compiladores, toolchains, targets, settings, presets e reparo determinístico.
 > **Prioridade:** altíssima. Esta parte define uma das promessas centrais da Kinein: **fazer o programador focar no código, não na luta contra ambiente, CMake, compilador e configuração.**
 
 ---
@@ -1017,12 +1022,11 @@ Settings
 │   ├── Rust
 │   ├── Tree-sitter
 │   └── LSP
-├── Assistente
-│   ├── Mode
-│   ├── Local Provider
-│   ├── External Provider
-│   ├── Privacy
-│   └── Prompt Transparency
+├── Project Health
+│   ├── Environment checks
+│   ├── Project checks
+│   ├── Repair previews
+│   └── Documentation
 └── Advanced
     ├── Logs
     ├── JSON-RPC
@@ -1195,7 +1199,7 @@ cria preset local se usuário aceitar
   ↓
 roda configure
   ↓
-se falhar, Assistente explica
+se falhar, mostra diagnóstico, evidência e próximo passo conhecido
 ```
 
 ### 22.3 Regra
@@ -1414,18 +1418,11 @@ Não gastar muitas telas com aparência.
 
 ---
 
-## 30. Assistente no onboarding
+## 30. Ajuda no onboarding
 
-O Assistente deve aparecer como recurso, mas não como centro da experiência.
-
-Mensagem discreta:
-
-```text
-Assistente can explain build errors, CMake issues and toolchain problems.
-It works locally when configured and can be disabled.
-```
-
-Não forçar login ou API key.
+O onboarding usa Project Health, verificações determinísticas, documentação e
+ações de configuração com preview. Não há chat, login, API key ou Assistente de
+IA. Cada falha informa a evidência medida e o próximo passo conhecido.
 
 ---
 
@@ -1689,23 +1686,11 @@ avisos
 
 ---
 
-## 37. Integração com Assistente
+## 37. Integração com Project Health e documentação
 
-O Assistente deve atuar como explicador e reparador do onboarding/setup.
-
-Exemplos:
-
-```text
-Por que meu CMake configure falhou?
-Qual compilador devo escolher?
-O que é compile_commands.json?
-Por que clangd precisa disso?
-Qual a diferença entre preset Debug e Release?
-Por que Ninja é recomendado?
-O que significa target local?
-```
-
-Em caso de falha, o Setup Assistant chama o Assistente com evidências.
+O wizard de setup publica fatos em Project Health e oferece links para a
+documentação relevante. Falhas carregam evidências do detector, comando visível
+e ação explícita de reparo quando existir. Nenhuma explicação é gerada por IA.
 
 ---
 
@@ -1814,7 +1799,7 @@ Prioridade inicial:
 [ ] Project Health Dashboard básico.
 [ ] Settings > Toolchains.
 [ ] Settings > Build > CMake.
-[ ] Integração com Assistente para falhas.
+[ ] Integração com Problems e Project Health para falhas.
 ```
 
 ---

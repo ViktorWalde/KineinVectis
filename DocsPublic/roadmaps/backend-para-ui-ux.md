@@ -1,5 +1,9 @@
 # Backend to UI/UX Roadmap
 
+> **Revisão de 2026-09-22:** este mapa é histórico onde divergir dos roadmaps
+> 40, 45 e 46. O bloco AI CLI Bridge está cancelado e não é backlog. Não existe
+> telemetria de produto/usuário como feature-alvo.
+
 > **Status:** active
 > **Prioridade:** P0
 > **Fonte de verdade:** nao; ponte operacional entre backend real e specs UI/UX
@@ -797,9 +801,10 @@ sistema-de-componentes-de-ui.md
 arquitetura-interna-core-ipc-jobs.md
 ```
 
-### P2. AI CLI Bridge backend
+### P2. AI CLI Bridge backend — cancelado
 
-**Status:** futuro; nao implementar provider/chat embutido.
+**Status:** cancelado em 2026-09-22; não implementar bridge, provider, context
+builder, terminal especial ou chat.
 
 Backend desejado:
 

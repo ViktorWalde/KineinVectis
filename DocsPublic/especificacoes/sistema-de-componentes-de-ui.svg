@@ -421,7 +421,7 @@
 <text x="3086" y="1299" fill="#737A84" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="20" font-weight="500" text-anchor="start" opacity="1" letter-spacing="0">Pergunte ao KV...</text>
 <path d="M 3672 1280 L 3684.1 1291.0 L 3672 1302" fill="none" stroke="#FFB000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <circle cx="3050" cy="1288" r="5" fill="#FFB000" opacity="0.9"/>
-<text x="3070" y="1296" fill="#AAA39A" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="400" text-anchor="start" opacity="1" letter-spacing="0">O assistente ajuda, mas não domina a IDE.</text>
+<text x="3070" y="1296" fill="#AAA39A" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="400" text-anchor="start" opacity="1" letter-spacing="0">O contexto ajuda, mas não domina a IDE.</text>
 <circle cx="3050" cy="1320" r="5" fill="#FFB000" opacity="0.9"/>
 <text x="3070" y="1328" fill="#AAA39A" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="22" font-weight="400" text-anchor="start" opacity="1" letter-spacing="0">Ações devem ser claras, reversíveis e contextuais.</text>
 <rect x="64" y="1364" width="1240" height="480" rx="24" fill="#111418" stroke="#343A44" stroke-width="2" opacity="1" />

@@ -268,10 +268,10 @@ esta página ganha o "feito" de cada uma no §7.1.
   `KvButton.tooltip` vivo com o botão desligado; logs/shell seguem
   pedindo projeto (o core exige workspace em `container.open`; medido) —
   `40` §7.85.
-- **E3-7 — NÃO FEITA** (2026-09-19, o limite semanal do autor chegou): o
+- **E3-7 — NÃO FEITA; AGENDADA PARA 0.3.5** (decisão de 2026-09-22): o
   Grafana continua como estava (título próprio, `GrafanaVerdict`, os
-  achados em listas). O desenho fino já está lido e cabe numa sessão
-  curta: `KvPanelHeader` (título "Grafana", "Sondar" primária, o ×
+  achados em listas). O desenho visual original era: `KvPanelHeader` (título
+  "Grafana", "Sondar" primária, o ×
   ligado ao `dismissRequested` do host — hoje o painel não tem
   `closeRequested`), `DataSourceField` para Endereço e Variável, o bloco
   "De onde vem o token" com os três chips e a frase explicativa igual ao
@@ -282,10 +282,14 @@ esta página ganha o "feito" de cada uma no §7.1.
   `dashboardUrl(url)` no navegador; os "casamentos" seguem como lista (é
   o achado principal). `GrafanaController` tem `dataSources[]`
   (`uid,name,type_id,type_name`), `dashboards[]` (`uid,title,url,folder`).
-  Medida: foto com `KINEIN_STARTUP_COMMANDS=grafana.get`; harness
-  `tst_grafana` já cobre o controller; o autor testa num Grafana real.
-  **A Etapa 3 fecha quando a E3-7 entrar** — ou o autor decide que o
-  Grafana atual basta para o teste fechado.
+  Medida: foto com `KINEIN_STARTUP_COMMANDS=grafana.get`; o autor testa num
+  Grafana real. **Correção medida em 2026-09-22:** não existe
+  `scripts/qml-harness/tst_grafana.qml` na árvore nem no histórico consultado;
+  ele é entrega obrigatória da fatia 0.3.5, não cobertura existente.
+  O autor ampliou a régua: trocar componentes não basta; conexão e uso diário
+  precisam ser mais práticos que a API pelo terminal. O desenho vinculante
+  agora está em `../especificacoes/grafana-ui-ux-0.3.5.md`, e a arquitetura de
+  execução no roadmap 48. **A Etapa 3 fecha com essa entrega na 0.3.5.**
 
 ## 8. A etapa seguinte, anotada: integração profunda com os compiladores
 

@@ -1,5 +1,11 @@
 # Kinein Vectis — Parte 9: Arquitetura Interna da IDE
 
+> **Revisão vinculante de 2026-09-22:** nenhuma camada, serviço, job ou boundary
+> de Assistente/IA integra o produto. Não há telemetria de produto/usuário.
+> Ferramentas externas escolhidas pelo usuário podem rodar no terminal sem
+> participar da arquitetura da IDE. Ver
+> `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Escopo:** Rust Core, Qt/QML Frontend, IPC, Jobs, Events, Storage, Services e Plugin Boundaries.  
 > **Decisão de produto:** a Kinein deve **facilitar sem ser intrusiva/invasiva**.  
 > **Decisão arquitetural:** a interface deve ser calma e responsiva; o core deve ser determinístico, auditável e comandado pelo usuário.
@@ -19,8 +25,8 @@ Parte 3  — Componentes UI
 Parte 4  — Fluxos Build/Run/Debug
 Parte 5  — Editor, LSP, Tree-sitter e diagnósticos
 Parte 6  — Embedded, Targets, Flash, Serial, Remote SSH e QEMU
-Parte 7  — Assistente original
-Parte 7.1 — AI CLI Bridge externo
+Parte 7  — Assistente original (cancelado)
+Parte 7.1 — AI CLI Bridge externo (cancelado)
 Parte 8  — Onboarding, Settings e Project Wizard
 Parte 8.1 — Setup Intelligence Optimization Layer
 ```
@@ -531,7 +537,6 @@ Responsável por:
 
 ```text
 terminal comum
-AI Terminal
 processos PTY
 shell profiles
 session ids
@@ -544,7 +549,6 @@ Tipos:
 
 ```text
 terminal_kind: normal
-terminal_kind: ai
 terminal_kind: build
 terminal_kind: debug
 terminal_kind: serial
@@ -562,39 +566,12 @@ terminal.list
 
 ---
 
-### 8.12 AI CLI Bridge Service
+### 8.12 Reserva removida
 
-Responsável apenas pela Parte 7.1:
-
-```text
-perfis de IA CLI
-context builder
-sanitização
-preview
-substituição de variáveis
-abrir AI Terminal
-copiar contexto
-```
-
-Não deve:
-
-```text
-interpretar resposta da IA
-aplicar patch da IA
-ter chat embutido
-guardar histórico de conversa
-gerenciar API key de provider
-```
-
-Métodos:
-
-```text
-aiBridge.profiles.list
-aiBridge.context.create
-aiBridge.context.preview
-aiBridge.terminal.open
-aiBridge.context.copyToClipboard
-```
+O antigo `AI CLI Bridge Service` foi cancelado. Não reservar serviço, comandos
+IPC, tipo de terminal, configuração ou estado persistido para essa finalidade.
+Ferramentas que o usuário execute no terminal comum não recebem integração
+privilegiada com o contexto da IDE.
 
 ---
 

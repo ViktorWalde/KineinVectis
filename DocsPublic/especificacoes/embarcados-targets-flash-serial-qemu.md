@@ -2,6 +2,12 @@
 
 # Sistemas Embarcados, Targets, Flash, Serial, Remote SSH e QEMU
 
+> **Revisão vinculante de 2026-09-22:** não haverá Assistente/Chat de IA nem
+> telemetria de produto/usuário. “Telemetria” do hardware permanece somente
+> como dados locais do alvo, sob nomes de domínio como Saída do alvo,
+> Observabilidade, Serial ou RTT. A UX diária de SSH está em
+> `remote-ssh-ui-hud.md`.
+
 > **Nome oficial:** Kinein Vectis  
 > **Nome curto:** Kinein  
 > **Sigla visual:** KV  
@@ -148,7 +154,7 @@ A Kinein deve permitir que um programador de C, C++ ou Rust trabalhe com:
 - toolchain file;
 - build profiles;
 - deploy remoto;
-- logs e telemetria básica.
+- logs e observabilidade básica do alvo.
 
 A frase-guia desta etapa é:
 
@@ -766,7 +772,7 @@ Serial Monitor
 
 ```text
 plot a partir de valores seriais
-telemetria key=value
+dados do alvo em pares key=value
 regex filters
 binary mode
 protocol decoder
@@ -1059,11 +1065,12 @@ não matar processo sem log
 
 ---
 
-## 14. Assistente para embarcados
+## 14. Diagnóstico e recuperação em embarcados
 
-Assistente deve ajudar especialmente em erros difíceis de ambiente.
+Erros difíceis de ambiente devem chegar estruturados à UI e apontar evidência,
+verificação e próximo passo conhecido.
 
-### 14.1 O que ele deve explicar
+### 14.1 O que deve ser diagnosticado
 
 ```text
 erro de compilador cruzado
@@ -1077,7 +1084,7 @@ erro de porta serial
 erro de permissão Linux
 ```
 
-### 14.2 Formato de resposta recomendado
+### 14.2 Formato de diagnóstico recomendado
 
 ```text
 Problema detectado
@@ -1105,7 +1112,7 @@ Open Target Settings
 Open Toolchain Settings
 Re-run Detection
 Copy Command
-Explain Error
+Show Error Details
 Create Issue Note
 Open Docs
 ```
@@ -1367,7 +1374,7 @@ Ao implementar esta parte, a IA CLI deve seguir esta ordem:
 9. Implementar QEMU profile básico.
 10. Implementar Flash profile configurável.
 11. Integrar logs com Jobs.
-12. Integrar erros com Assistente.
+12. Integrar erros com Problems e Project Health.
 13. Adicionar testes unitários para modelos e validação.
 14. Adicionar testes de integração para comandos simulados.
 

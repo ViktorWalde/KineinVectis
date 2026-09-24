@@ -1,5 +1,10 @@
 # Kinein Vectis — Parte 8.1: Optimization Layer para Onboarding, Setup Visual e Project Wizard
 
+> **Revisão vinculante de 2026-09-22:** esta camada é determinística. Não existe
+> Assistente/Chat de IA nem telemetria de produto/usuário. Histórico e métricas
+> locais de setup, quando necessários, são diagnóstico local e não saem da
+> máquina. Ver `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Tipo:** complemento/otimização da Parte 8.  
 > **Objetivo:** transformar o onboarding e o setup visual em uma experiência ainda mais inteligente, robusta e profissional.  
 > **Nome conceitual:** **Kinein Setup Intelligence Layer**.  
@@ -291,7 +296,6 @@ Esse fingerprint alimenta:
 ```text
 Project Health
 Setup Assistant
-Assistente
 CMake Setup
 Run Config Wizard
 Toolchain recommendation
@@ -362,7 +366,7 @@ Run Configuration
 Debug Configuration
 LSP Context
 Documentation Index
-Assistente
+Project Health
 ```
 
 ### 8.2 Relações
@@ -376,7 +380,7 @@ Configure Preset produces compile_commands.json
 clangd consumes compile_commands.json
 Run Config uses Target
 Debug Config uses Debugger
-Assistente consumes Diagnostics, Logs and Docs
+Project Health consumes Diagnostics, Logs and Docs
 ```
 
 ### 8.3 Por que isso importa
@@ -503,7 +507,7 @@ Clear CMake cache
 Select different generator
 Select different compiler
 Create local preset
-Open error in Assistente
+Open error details
 Show exact command
 ```
 
@@ -849,9 +853,10 @@ Open run-configs.json
 
 ---
 
-## 21. Telemetria local de setup
+## 21. Histórico e métricas locais de setup
 
-Não é telemetria remota. É histórico local para melhorar UX.
+É histórico local explícito para melhorar UX. Não há coleta ou envio de
+telemetria de produto/usuário.
 
 Guardar:
 

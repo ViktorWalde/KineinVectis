@@ -1,5 +1,10 @@
 # Kinein Vectis — Parte 10: Resource-on-Demand Performance Strategy
 
+> **Revisão vinculante de 2026-09-22:** métricas de desempenho são locais e
+> explícitas; não há telemetria de produto/usuário nem envio à Kinein. Não há
+> Assistente/Chat de IA embutido. Ver
+> `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Tipo:** versão corrigida e definitiva da Parte 10 de performance.  
 > **Escopo:** arquitetura orientada à demanda, performance, memória, UI responsiva, LSP sob demanda, serviços ociosos, logs, painéis, Configuration Actions, Project Health e modos de performance.  
 > **Correção importante:** não existe fronteira rígida de RAM como “2 GB”. Memória é observada, explicada e otimizada, mas não usada como bloqueio artificial.
@@ -45,7 +50,7 @@ Isso não deve existir.
 O que deve existir:
 
 ```text
-telemetria local;
+métricas locais de desempenho;
 observabilidade;
 background services visíveis;
 estratégias de suspensão;

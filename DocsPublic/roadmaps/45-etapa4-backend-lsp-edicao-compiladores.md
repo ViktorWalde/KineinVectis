@@ -1,7 +1,8 @@
 # 45 — Etapa 4: o backend de novo — LSP profundo, edição inteligente e a biblioteca dos compiladores
 
 > Aberto em 2026-09-19, ao fim da Etapa 3 (roadmap 44; a E3-7 ficou
-> pendente). Este documento é o **brief** da etapa: o que o autor pediu, o
+> pendente e em 2026-09-22 foi agendada para a 0.3.5). Este documento é o
+> **brief** da etapa: o que o autor pediu, o
 > que a IDE já faz (medido no código, não de memória), o que falta em
 > relação ao VS Code e às IDEs JetBrains, e a ordem proposta. **A
 > arquitetura fina de cada fatia é escrita na sessão que a implementa,
@@ -214,7 +215,9 @@ gravada sem pedido; nada de push/release/AppImage sem o autor. E a
 
 ## 6. Pendências herdadas que esta etapa deve olhar
 
-- **E3-7** (Grafana) — o desenho fino está no `44` §7.1; uma sessão curta.
+- **E3-7** (Grafana) — obrigatória na 0.3.5; deixou de ser apenas uma sessão
+  curta de polimento. O fluxo está em
+  `../especificacoes/grafana-ui-ux-0.3.5.md` e a execução no roadmap 48.
 - A escolha do slot esquerdo (explorer/Git) **não é persistida** —
   `SettingsValues` novo, se o autor sentir falta.
 - Logs/shell de container sem projeto — um `cwd` opcional no

@@ -1,5 +1,10 @@
 # Kinein Vectis — Parte 10: Fechamento Geral, Performance, MVP, Roadmap e Checklist de Polimento
 
+> **Revisão vinculante de 2026-09-22:** não existe Assistente/Chat de IA, AI CLI
+> Bridge nem telemetria de produto/usuário no escopo. Ferramentas que o usuário
+> execute no terminal comum não são uma integração da IDE. Ver
+> `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Tipo:** etapa final de consolidação.  
 > **Objetivo:** fechar a visão macro do projeto antes de entrar em polimento fino.  
 > **Decisão central:** a Kinein deve ser uma IDE determinística, confortável, local-first e não invasiva para C/C++/Rust, com setup visual, Configuration Actions e fluxo expert opcional.
@@ -48,7 +53,7 @@ Cargo.toml editing
 Environment Fingerprint
 Project Health básico
 Build/Run/Debug configs
-AI CLI Bridge
+Project Health básico
 Project Settings
 Target Manager
 ```
@@ -383,7 +388,7 @@ componentes
 build/run/debug
 editor/LSP/Tree-sitter
 embedded/targets
-AI CLI Bridge externo
+diagnóstico e recuperação determinísticos
 onboarding
 setup intelligence
 arquitetura interna
@@ -408,7 +413,7 @@ O ideal é **revisar, cortar, organizar e transformar em plano implementável**.
 04 — Build, Run, Debug
 05 — Editor, LSP, Tree-sitter
 06 — Embedded Targets, Flash, Serial, QEMU
-07.1 — AI CLI Bridge externo
+07.1 — material de IA cancelado; não implementar
 08 — Onboarding, Project Wizard, Settings
 08.1 — Setup Intelligence
 09 — Arquitetura Interna
@@ -417,7 +422,8 @@ O ideal é **revisar, cortar, organizar e transformar em plano implementável**.
 10 — Fechamento, Performance, MVP e Polimento
 ```
 
-A Parte 7 original deve ser tratada como substituída pela Parte 7.1 ou revisada com essa nova decisão.
+As Partes 7 e 7.1 são material cancelado. Apenas princípios independentes de IA,
+como evidência, preview e consentimento explícito, continuam válidos.
 
 ---
 
@@ -569,8 +575,7 @@ Sigla: KV
 Stack visual: Qt/QML
 Core: Rust
 IPC: JSON-RPC local
-IA: externa via AI CLI Bridge
-Sem IA embutida
+IA/Chat/AI CLI Bridge: fora do produto
 Configuration Actions como camada visual
 Guided/Balanced/Expert Modes
 CMake e Cargo filtrados por Build System ativo

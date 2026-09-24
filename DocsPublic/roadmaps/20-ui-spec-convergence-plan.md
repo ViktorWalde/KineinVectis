@@ -1,5 +1,10 @@
 # 20 — Convergência da UI atual para as specs (plano vinculante)
 
+> **Revisão de 2026-09-22:** este plano continua histórico para as fatias já
+> executadas, mas a direção futura de frontend está no
+> [`roadmap 46`](46-frontend-0.3-em-diante.md). Assistente/AI CLI Bridge e
+> telemetria de produto/usuário não são mais features-alvo.
+
 > **Status:** ativo e vinculante
 > **Prioridade:** P0 para qualquer trabalho de UI
 > **Fonte de verdade:** ESTE doc define COMO e QUANDO a UI converge;
@@ -128,7 +133,7 @@ referência exata (arquivo§seção). `LAYOUT` =
 | 3 Tool Rail | 42px | 52px (48–56) | **diverge** (abaixo do mínimo) |
 | 4 Left Tool Window | Project, 280px automático (220–420), redimensionável/persistido | 280px (220–420) redimensionável; Project/Structure/CMake/Toolchains/Targets | **parcial** (dimensionamento conforme; outras tool views futuras) |
 | 5 Editor Area | tabs+texto+popups | + breadcrumbs (COMP §13.3), gutter (COMP §13.4), linha atual | **parcial** |
-| 6 Assistente | seletor 360px; sessão terminal ajustável/persistida 300–720px + maximização; Project independente; Claude/Codex sobre PTY existente | AI CLI Bridge externo, terminal-first e separável do Terminal comum | **correções 0.51/0.52 em código; validação funcional/visual pendente** |
+| 6 Assistente (legado) | seletor 360px; sessão terminal ajustável/persistida 300–720px + maximização; Project independente; Claude/Codex sobre PTY existente | implementação histórica, agora fora do produto; terminal comum permanece | **não validar como feature-alvo; remoção exige migração própria** |
 | 7 Bottom Tool Window | 260px automático (160–480), redimensionável/persistido | 260px (160–480) redimensionável | **conforme em código; validação visual pendente** |
 | 8 Status Bar | 26px; indicadores de jobs | 28px; branch, erros/avisos, profile, compiler, target, Ln/Col, encoding, linguagem (LAYOUT §17.2–17.3) | **parcial** |
 

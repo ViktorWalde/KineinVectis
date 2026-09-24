@@ -1,5 +1,9 @@
 # Kinein Vectis — Parte 3: Sistema de Componentes da Interface
 
+> **Revisado em 2026-09-22.** A arquitetura consolidada está em
+> `arquitetura-de-frontend-0.3-em-diante.md` e tem precedência. A Vectis não
+> terá Assistente/Chat de IA embutido nem telemetria de produto/usuário.
+
 > Documento de especificação visual e funcional para os componentes principais da interface da IDE **Kinein Vectis**.
 >
 > Nome oficial: **Kinein Vectis**  
@@ -37,7 +41,7 @@ Este documento deve ser usado para orientar:
 - diálogos;
 - menus;
 - notificações;
-- Assistente;
+- tool windows de inspeção e contexto;
 - integração visual com CMake, toolchains, targets e debug.
 
 ---
@@ -103,7 +107,7 @@ A interface deve ser pensada em cinco camadas:
    Botão, input, select, tab, tree item, list item, badge, chip.
 
 4. Componentes compostos
-   Toolbar, sidebar, editor tab bar, status bar, tool window, Assistente card.
+   Toolbar, sidebar, editor tab bar, status bar e tool window.
 
 5. Fluxos
    Coding, build, debug, configure, embedded target, onboarding.
@@ -216,7 +220,7 @@ Editor tabs:      0px entre abas, bordas sutis
 Cards:            12px interno
 Dialogs:          20px a 24px interno
 Status bar:       6px horizontal
-Assistente:       12px entre cards
+Tool windows:     8px a 12px entre grupos
 ```
 
 A interface deve ser compacta, mas não sufocante.
@@ -375,7 +379,7 @@ Usar loading discreto:
 
 - spinner pequeno;
 - barra de progresso fina;
-- skeleton apenas em Assistente ou listas longas;
+- skeleton apenas em listas longas quando preserva a geometria;
 - nunca bloquear editor por operações de fundo.
 
 ### 10.7 Error
@@ -631,7 +635,7 @@ Exemplos:
 
 - Auto configure CMake
 - Auto detect toolchain
-- Use Assistente
+- Mostrar detalhes/contexto
 - Format on save
 - Show minimap
 
@@ -746,7 +750,7 @@ Run CMake/Ninja build for the selected profile.
 Shortcut: Ctrl+B
 ```
 
-Não usar tooltip para explicar conceitos longos. Para isso, usar Assistente ou docs.
+Não usar tooltip para explicar conceitos longos. Para isso, usar texto inline ou documentação.
 
 ---
 
@@ -885,7 +889,7 @@ Run
 Debug
 Flash
 Search
-Assistente toggle
+Right Tool Window toggle
 Settings
 Overflow
 ```
@@ -946,7 +950,7 @@ Exemplos:
 - Debug;
 - Serial;
 - Git;
-- Assistente.
+- Símbolos/Structure.
 
 Estrutura:
 
@@ -1176,7 +1180,7 @@ Regras:
 
 - Mensagem completa não deve aparecer inline por padrão se ocupar muito espaço.
 - Hover mostra detalhes.
-- Assistente pode explicar erro complexo.
+- Problems/Project Health pode mostrar causa e próximo passo conhecido.
 
 ---
 
@@ -1702,45 +1706,40 @@ Open terminal
 
 ---
 
-# 18. Assistente
+# 18. Tool Window de inspeção
 
 ---
 
 ## 18.1 Propósito
 
-Assistente é o painel lateral inteligente da Kinein.
+A Tool Window de inspeção apresenta fatos e navegação do contexto ativo. Ela
+não é chat e não produz explicações por IA.
 
-Ele não deve parecer chatbot genérico.  
-Ele deve parecer um **painel contextual de engenharia**.
+Primeiros consumidores:
 
-Funções:
-
-- explicar arquivo atual;
-- explicar erro de compilação;
-- sugerir correções CMake;
-- sugerir configuração de compiler/toolchain;
-- explicar linker errors;
-- sugerir target/debug config;
-- apontar documentação local/projeto;
-- gerar comandos, mas não executar sem confirmação.
+- Símbolos/Structure;
+- busca de símbolos do projeto;
+- Environment/Toolchain efetivos;
+- registradores/periféricos durante Debug;
+- Remote SSH e observabilidade quando o fluxo pedir inspeção à direita.
 
 ---
 
-## 18.2 Estrutura do painel
+## 18.2 Estrutura
 
 ```text
-Header: Assistente
-Tabs: Context | Explain | Fix | Toolchain | Docs
-Content cards
-Prompt input
-Action footer opcional
+Header: título + ação contextual + fechar
+Tabs ou filtro quando houver mais de um modo real
+Conteúdo model-driven
+Empty/loading/error states
+Links para docs e próximo passo determinístico
 ```
 
 ---
 
 ## 18.3 KVContextCard
 
-Card padrão do Assistente.
+Card compacto para contexto técnico, quando lista/grade não for suficiente.
 
 Visual:
 
@@ -1754,66 +1753,25 @@ Description: secondary
 Actions: right/bottom
 ```
 
-Tipos:
+Tipos válidos:
 
 ```text
 Summary
-Suggestion
 Warning
-Fix
 Doc link
 Toolchain issue
-Build explanation
-Symbol explanation
-```
-
----
-
-## 18.4 KVSuggestionCard
-
-Sugestão aplicável.
-
-Exemplo:
-
-```text
-Verificação de dt
-Considere validar dt para evitar valores não positivos.
-[Ver diff] [Aplicar sugestão]
+Build explanation estruturada
+Symbol detail
+Remote state
 ```
 
 Regras:
 
-- Toda sugestão que altera arquivo deve mostrar diff antes.
-- Nunca aplicar automaticamente.
-- Deve indicar escopo: arquivo atual, CMake, workspace, toolchain.
-- Deve indicar confiança se necessário.
-
----
-
-## 18.5 KVContextInput
-
-Input inferior do painel.
-
-Placeholder:
-
-```text
-Pergunte ao KV sobre este arquivo, build ou toolchain...
-```
-
-Visual:
-
-```text
-Height: 36px a 42px
-Background: #0F1216
-Border: #343A44
-Send icon: amber
-```
-
-Regras:
-
-- Enter envia.
-- Shift+Enter quebra linha.
-- Deve haver modo de contexto visível: arquivo, seleção, build log, workspace.
+- fato mostra sua origem;
+- ação que altera arquivo usa preview/consentimento existente;
+- nenhuma sugestão é aplicada automaticamente;
+- texto longo aponta para documentação;
+- não usar cards quando lista, grid ou texto inline forem mais diretos.
 
 ---
 
@@ -1865,7 +1823,8 @@ Switch Target
 Switch Build Profile
 Detect Toolchains
 Open Settings
-Toggle Assistente
+Toggle Symbols/Structure
+Focus Remote
 Focus Editor
 ```
 
@@ -1903,7 +1862,7 @@ Build & Run
 Debug
 Embedded Targets
 Terminal
-Assistente
+Remote
 Plugins/Extensions
 ```
 
@@ -2159,8 +2118,8 @@ Rename
 Refactor
 Format Selection
 Run Tests
-Explain with Assistente
-Fix with Assistente
+Show Diagnostic Details
+Show Available Code Actions
 ```
 
 ### Project tree context menu
@@ -2232,7 +2191,7 @@ Todos os componentes críticos devem ser navegáveis por teclado:
 - settings;
 - abas;
 - project tree;
-- Assistente actions;
+- tool window actions;
 - dialogs.
 
 ## 26.3 Foco
@@ -2442,7 +2401,7 @@ Terminal com fonte ruim
 Settings sem busca
 Dialogs gigantes
 Painéis que abrem sozinhos
-Assistente interrompendo fluxo
+Tool windows interrompendo o fluxo
 Animações decorativas
 Ícones inconsistentes
 Layout que parece landing page
@@ -2509,4 +2468,4 @@ Esse documento deve detalhar:
 - run configurations;
 - debug local;
 - erros e recuperação;
-- como Assistente deve ajudar sem atrapalhar.
+- como Problems, Project Health e documentação oferecem próximo passo sem interromper.

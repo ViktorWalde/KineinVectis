@@ -1,5 +1,10 @@
 # Roadmap de paridade do terminal e das TUIs
 
+> **Revisão de produto de 2026-09-22:** permanece válida a investigação de
+> paridade do terminal comum e das TUIs. A composição “Assistente”, o AI CLI
+> Bridge e integrações especiais com ferramentas de IA estão cancelados. Uma
+> CLI que o usuário execute é apenas mais um processo no terminal comum.
+
 > **Status:** aberto, explicitamente adiado pelo usuário em 2026-07-15.
 > **Próxima retomada:** começar por R0 (reprodução instrumentada), sem novo
 > ajuste manual de `y`, sem AppImage e sem afirmar causa-raiz antes das provas.

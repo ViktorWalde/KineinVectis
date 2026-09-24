@@ -1,5 +1,10 @@
 # Kinein Vectis — Parte 4: Fluxos de Produto para Toolchain, CMake, Build, Run e Debug
 
+> **Revisão vinculante de 2026-09-22:** Assistente/Chat de IA e telemetria de
+> produto/usuário estão fora. Explicações vêm de erros estruturados, Problems,
+> Project Health e documentação; dados de build/debug/alvo são saídas locais do
+> domínio. Ver `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Nome oficial:** Kinein Vectis  
 > **Nome de uso diário:** Kinein  
 > **Sigla visual:** KV  
@@ -303,7 +308,7 @@ Inclui futuramente:
 ```text
 - QEMU targets;
 - viewer de logs;
-- painéis de telemetria;
+- painéis de observabilidade do alvo;
 - plots.
 ```
 
@@ -982,7 +987,7 @@ Botão sugerido:
 [Corrigir debugger]
 ```
 
-O Assistente deve explicar:
+O Project Health deve informar, a partir das capacidades detectadas:
 
 ```text
 "Sua toolchain compila C/C++, mas ainda não possui debugger configurado. Você poderá buildar e rodar, mas o botão Debug ficará indisponível até configurar GDB ou LLDB."
@@ -1288,18 +1293,16 @@ Quando build falhar:
 - mostrar erro principal no Build Summary;
 - marcar arquivos no Project;
 - mostrar badge na status bar;
-- Assistente oferece resumo.
+- Build Summary oferece resumo baseado nos diagnósticos reais.
 ```
 
-Exemplo Assistente:
+Exemplo de Build Summary:
 
 ```text
 O build falhou por erro de compilação em motor_control.cpp:42.
 O símbolo pidController não foi declarado no escopo atual.
 Possíveis causas:
-1. include ausente;
-2. nome incorreto;
-3. variável movida para outro namespace.
+Consulte os diagnósticos do compilador e as code actions disponíveis.
 ```
 
 ---
@@ -1540,83 +1543,23 @@ Ele será ativado quando o módulo correspondente for carregado.
 
 ---
 
-## 15. Integração com Assistente
+## 15. Contexto e recuperação determinísticos
 
-O Assistente não deve ser um chat genérico nesta etapa. Ele deve ser um painel contextual para reduzir ansiedade.
+Toolchain Setup, CMake, Build, Run e Debug mostram os fatos que seus serviços
+produzem: configuração efetiva e origem, comando visível, etapa, erro
+estruturado, arquivo/linha, processo, cwd, exit code, estado do debugger e
+próximo passo conhecido. Problems, Project Health, Output, documentação e ações
+de configuração com preview são as superfícies de recuperação.
 
-### 15.1. Durante Toolchain Setup
-
-Mostrar:
-
-```text
-- resumo da toolchain;
-- ferramenta ausente;
-- por que isso importa;
-- ação recomendada;
-- comando testado.
-```
-
-### 15.2. Durante CMake Configure
-
-Mostrar:
-
-```text
-- profile ativo;
-- comando configurado;
-- variáveis relevantes;
-- erro principal;
-- onde clicar;
-- sugestões seguras.
-```
-
-### 15.3. Durante Build
-
-Mostrar:
-
-```text
-- erro principal;
-- arquivo/linha;
-- se parece erro de sintaxe, include, linker ou CMake;
-- sugestão de investigação;
-- links para Problems e Output.
-```
-
-### 15.4. Durante Run
-
-Mostrar:
-
-```text
-- processo em execução;
-- argumentos;
-- cwd;
-- exit code;
-- stdout/stderr relevante.
-```
-
-### 15.5. Durante Debug
-
-Mostrar:
-
-```text
-- estado atual: running/paused;
-- função atual;
-- motivo da pausa;
-- breakpoint atingido;
-- variável suspeita;
-- sugestão de próximo passo.
-```
-
-Regra crítica:
-
-```text
-Assistente sugere. Não altera código automaticamente sem ação explícita do usuário.
-```
+Não há Assistente/Chat de IA. A UI não inventa causa provável nem correção sem
+evidência do core/ferramenta. Nenhuma alteração é aplicada sem gesto explícito.
 
 ---
 
 ## 16. Comandos internos JSON-RPC sugeridos
 
-A lista abaixo não é uma API final. É um contrato inicial para orientar a IA CLI.
+A lista abaixo não é uma API final. É um inventário histórico; o protocolo
+implementado em `arquitetura/03-ipc-protocol.md` vence.
 
 ### 16.1. Workspace
 
@@ -2176,7 +2119,7 @@ A Kinein deve ser familiar, mas não clone.
 
 ```text
 - âmbar industrial;
-- Assistente;
+- diagnóstico e recuperação determinísticos;
 - foco em toolchain visível;
 - CMake como cidadão de primeira classe;
 - Rust como cidadão de primeira classe;
@@ -2336,7 +2279,7 @@ A ordem mais segura:
 8. Implementar Cargo metadata/build.
 9. Implementar Run Configuration local.
 10. Implementar Debug Configuration MVP.
-11. Integrar Assistente com mensagens estruturadas.
+11. Integrar Problems e Project Health com mensagens estruturadas.
 12. Refinar UI/UX, atalhos e estados.
 ```
 
@@ -2375,7 +2318,7 @@ Run
 Debug
 Problems
 Jobs
-Assistente
+Project Health
 ```
 
 O usuário pode começar com C/C++ local, migrar para Rust ou Python, e avançar para Linux embarcado e bare metal sem que a IDE precise mudar de filosofia.

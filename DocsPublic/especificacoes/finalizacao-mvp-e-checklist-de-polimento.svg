@@ -217,7 +217,7 @@
 <circle cx="2036" cy="1627" r="7" fill="#7CCF6A"/>
 <text x="2058" y="1635" class="body">IPC: JSON-RPC local</text>
 <circle cx="2036" cy="1672" r="7" fill="#7CCF6A"/>
-<text x="2058" y="1680" class="body">IA: externa via AI CLI Bridge</text>
+<text x="2058" y="1680" class="body">IA/Chat: fora do produto</text>
 <circle cx="2036" cy="1717" r="7" fill="#7CCF6A"/>
 <text x="2058" y="1725" class="body">Configuration Actions por Build System ativo</text>
 <circle cx="2036" cy="1762" r="7" fill="#7CCF6A"/>

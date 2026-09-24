@@ -1,5 +1,10 @@
 # Kinein Vectis — Sistema Visual da IDE
 
+> **Revisado em 2026-09-22.** A arquitetura consolidada está em
+> `arquitetura-de-frontend-0.3-em-diante.md` e tem precedência. A Vectis não
+> terá Assistente/Chat de IA embutido nem telemetria de produto/usuário. A área
+> direita é uma Tool Window genérica; seu primeiro uso é Símbolos/Structure.
+
 **Parte 2 — Layout principal da IDE**  
 **Escopo:** arquitetura visual, organização de painéis, estados de interface, padrões de layout real e separação explícita do layout de divulgação/marketing.  
 **Produto:** Kinein Vectis  
@@ -119,7 +124,8 @@ Não misturar os dois dentro da interface real.
 
 ## 4. Arquitetura visual geral
 
-A janela principal da Kinein é dividida em oito regiões.
+A janela principal da Kinein é dividida em regiões funcionais. Tool windows
+laterais e inferior são opcionais; o editor permanece dominante.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
@@ -127,8 +133,8 @@ A janela principal da Kinein é dividida em oito regiões.
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ 2. Main Toolbar                                                              │
 ├────┬─────────────────────┬──────────────────────────────────┬───────────────┤
-│ 3  │ 4. Left Tool Window │ 5. Editor Area                   │ 6. Assistente │
-│Rail│                     │                                  │               │
+│ 3  │ 4. Left Tool Window │ 5. Editor Area                   │ 6. Right Tool │
+│Rail│                     │                                  │ Window opc.  │
 ├────┴─────────────────────┴──────────────────────────────────┴───────────────┤
 │ 7. Bottom Tool Window                                                        │
 ├──────────────────────────────────────────────────────────────────────────────┤
@@ -141,12 +147,12 @@ A janela principal da Kinein é dividida em oito regiões.
 | Região | Nome | Função |
 |---|---|---|
 | 1 | Title/App Bar | Identidade, menus, ações globais, janela |
-| 2 | Main Toolbar | Target, perfil, build, run, debug, flash |
+| 2 | Main Toolbar | Projeto, Git e contexto de execução; ações essenciais |
 | 3 | Tool Rail | Ícones verticais de janelas/ferramentas |
-| 4 | Left Tool Window | Project, Structure, CMake, Toolchains, Targets |
+| 4 | Left Tool Window | Navegação e contexto: Project, Git, Embedded, Remote |
 | 5 | Editor Area | Código, tabs, breadcrumbs, gutter, diagnósticos |
-| 6 | Assistente | Assistente contextual, explicação, correções e toolchain |
-| 7 | Bottom Tool Window | Terminal, Problems, Build, CMake, Debug, Serial, Git |
+| 6 | Right Tool Window | Inspeção opcional: Símbolos/Structure, ambiente, registradores |
+| 7 | Bottom Tool Window | Terminal, Problems, Jobs, Build, Debug, Testes, Search |
 | 8 | Status Bar | Estado do projeto, branch, target, warnings, encoding, posição |
 
 ---
@@ -160,7 +166,7 @@ A área central deve ser sempre dominante.
 Regras:
 
 - nenhum painel deve roubar atenção do editor sem ação explícita do usuário;
-- Assistente deve ajudar, não interromper;
+- tool windows não devem abrir sozinhas sem causa e gesto claros;
 - notificações devem ser discretas;
 - erros críticos aparecem primeiro no editor e no Problems, não como popups agressivos;
 - builds longos devem aparecer na barra inferior, não bloquear a tela.
@@ -187,7 +193,7 @@ Padrões familiares:
 - projeto à esquerda;
 - editor no centro;
 - terminal/build/debug embaixo;
-- contexto/assistente à direita;
+- inspeção contextual opcional à direita;
 - status bar no rodapé;
 - toolbar superior com target e botões de execução.
 
@@ -272,9 +278,42 @@ Usar escala de 4px.
 | Tool Rail esquerdo | 52px | 48px | 56px |
 | Left Tool Window | 280px | 220px | 420px |
 | Editor Area | flexível | 600px | ilimitado |
-| Assistente | 360px | 300px | 480px |
+| Right Tool Window | 320px | 240px | 480px |
 | Rail direito opcional | 44px | 40px | 52px |
 | Bottom Tool Window | 260px altura | 160px | 480px |
+
+### 6.5 Bordas e cabeçalho mais naturais — compromisso da 0.3.x
+
+**Pedido do autor em 2026-09-23; planejado, não implementado nesta revisão.**
+Refinar o arredondamento da IDE, especialmente a região superior, tomando o
+IntelliJ Community como referência de conforto. A expressão “rodapé superior”
+foi interpretada provisoriamente como cabeçalho/cantos superiores; confirmar
+essa região com o autor antes de fechar a geometria visual. Não substituir
+essa intenção por um ajuste da status bar inferior.
+
+Referência de organização:
+[IntelliJ — New UI / Window header](https://www.jetbrains.com/help/idea/new-ui.html).
+A documentação sustenta o objetivo de reduzir complexidade e integrar o
+cabeçalho; não especifica um raio universal a copiar em Qt/Linux. Comparar
+capturas no mesmo estado de janela/escala antes de escolher valores.
+
+- Integrar contorno externo, header, fundos e separadores, sem recortes
+  contrastantes ou várias bordas arredondadas sobrepostas na junção.
+- Reutilizar `Theme.qml`, o header e o chrome existentes. Não espalhar raios
+  novos por componente nem criar outra implementação de janela.
+- Distinguir janela restaurada de maximizada, fullscreen e encaixada: cantos
+  decorativos não devem abrir frestas na borda da tela ou cortar conteúdo.
+- Preservar áreas clicáveis de minimizar/maximizar/fechar, arrasto da janela,
+  duplo clique no header, resize nas bordas e foco de teclado.
+- Verificar clipping, antialiasing, sombra e custo de composição em X11 e
+  Wayland suportados, com escalas 100%, 125%, 150% e 200%; não exigir máscara
+  ou transparência antes de medir sua necessidade e impacto.
+
+**Aceite:** comparação visual antes/depois em 1024×700 e 1280×800, inclusive
+restaurar/maximizar e mudar de escala, sem regressão de hit targets, resize,
+primeiro frame ou legibilidade. A aprovação visual do autor continua necessária.
+Proposta de encaixe: **0.3.4**, antecipável dentro da 0.3.x; não depende do
+Grafana e não se declara entregue por apenas trocar um token de raio.
 
 ---
 
@@ -367,7 +406,7 @@ A Kinein pode usar JetBrains Mono como sugestão opcional se a licença e a dist
 | Editor | 14–15px |
 | Terminal | 13px |
 | Status bar | 12px |
-| Assistente body | 13px |
+| Tool Window body | 13px |
 | Título de painel | 13px semibold |
 
 ---
@@ -384,10 +423,10 @@ Este é o layout inicial após abrir um projeto.
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ [Target: x86_64-linux ▼] [CMake: Debug ▼] [Configure] [Build] [Run] [Debug] │
 ├────┬──────────────────────┬─────────────────────────────────┬──────────────┤
-│Rail│ Project              │ Editor                          │ Assistente   │
-│    │ Structure            │ Tabs + Breadcrumbs              │ Context      │
-│    │                      │ Code                            │ Explain      │
-│    │                      │ Gutter + Diagnostics            │ Fix          │
+│Rail│ Project              │ Editor                          │ Símbolos     │
+│    │ Git                  │ Tabs + Breadcrumbs              │ Structure    │
+│    │                      │ Code                            │ Busca        │
+│    │                      │ Gutter + Diagnostics            │ contextual   │
 ├────┴──────────────────────┴─────────────────────────────────┴──────────────┤
 │ Terminal | Problems | Build | CMake | Debug | Serial | Git                  │
 ├──────────────────────────────────────────────────────────────────────────────┤
@@ -401,13 +440,13 @@ Para o primeiro uso:
 
 - Project aberto à esquerda;
 - Editor no centro;
-- Assistente aberto à direita, mas colapsável;
+- Right Tool Window recolhida por padrão e aberta por gesto/contexto;
 - Terminal/Build inferior aberto apenas se houver processo ativo ou se o usuário abrir.
 
 Sugestão de default:
 
 ```text
-Primeiro projeto aberto: Project + Editor + Assistente.
+Primeiro projeto aberto: Project + Editor; Símbolos disponível à direita.
 Sessões seguintes: restaurar layout salvo pelo usuário.
 ```
 
@@ -728,91 +767,44 @@ Evitar:
 
 ---
 
-## 15. Assistente — painel direito
+## 15. Right Tool Window — inspeção contextual
 
 ### 15.1 Função
 
-Assistente é o painel de assistência contextual.
+A área direita mostra informação auxiliar sobre o contexto ativo sem competir
+com o editor. Não é painel de chat nem superfície permanente obrigatória.
 
-Ele deve ajudar com:
+Primeiro uso:
 
-- resumo do arquivo;
-- explicação de símbolos;
-- sugestões de correção;
-- erros de compilação;
-- linker errors;
-- problemas de CMake;
-- toolchain;
-- documentação relacionada;
-- sugestões de refatoração;
-- perguntas do usuário.
+- Símbolos/Structure do arquivo;
+- busca de símbolos do projeto;
+- navegação para a declaração escolhida.
 
-### 15.2 Nome
+Usos posteriores, quando houver fluxo medido:
 
-Usar:
+- ambiente/toolchain efetivos;
+- registradores e periféricos durante debug;
+- inspeção de banco, containers ou observabilidade.
 
-```text
-Assistente
-```
+### 15.2 Regras de comportamento
 
-Evitar nomes genéricos como:
+- nasce recolhida;
+- abre por comando, atalho ou gesto explícito;
+- preserva foco e largura quando o layout for restaurado;
+- reutiliza models/controllers existentes;
+- não interpreta logs nem duplica fatos do core;
+- erro mostra causa e próximo passo determinístico quando conhecidos;
+- documentação é link/contexto, não resposta gerada por IA.
 
-```text
-AI Assistant
-Copilot
-Chatbot
-```
-
-### 15.3 Abas
-
-```text
-Context
-Explain
-Fix
-Toolchain
-Docs
-```
-
-Versão PT-BR, se desejado:
-
-```text
-Contexto
-Explicar
-Corrigir
-Toolchain
-Docs
-```
-
-### 15.4 Conteúdo padrão
-
-Para arquivo aberto:
-
-- card de resumo;
-- símbolos principais;
-- sugestões de melhoria;
-- problemas detectados;
-- input “Pergunte ao KV...”.
-
-### 15.5 Regras de comportamento
-
-- não abrir sozinho em toda ação;
-- não sobrepor editor;
-- sugestões devem ser aplicáveis com revisão;
-- nenhuma alteração automática sem confirmação;
-- cartões devem ser curtos;
-- ações primárias em âmbar;
-- erros críticos com vermelho discreto.
-
-### 15.6 Estados
+### 15.3 Estados
 
 | Estado | Conteúdo |
 |---|---|
-| Sem arquivo | dicas de projeto e configuração |
-| Arquivo aberto | resumo e símbolos |
-| Build falhou | explicar erro e sugerir correção |
-| Toolchain ausente | guia de instalação/configuração |
-| Debug ativo | variáveis, stack, breakpoints, explicações |
-| CMake erro | cache, presets, generator e toolchain file |
+| Sem workspace | alça indisponível ou empty state curto |
+| Workspace sem arquivo | busca de símbolos do projeto |
+| Arquivo aberto | Structure e busca de símbolos |
+| Sem resultados | termo e escopo pesquisados, limpar busca |
+| Backend indisponível | estado local disponível e limitação explícita |
 
 ---
 
@@ -823,12 +815,12 @@ Para arquivo aberto:
 ```text
 Terminal
 Problems
+Jobs
 Build
 CMake
 Debug
 Serial
-Telemetry
-Git
+Search
 ```
 
 ### 16.2 Terminal
@@ -945,12 +937,12 @@ Uso:
 
 - escrever código;
 - navegar projeto;
-- Assistente disponível.
+- Símbolos/Structure disponível à direita.
 
 Painéis:
 
 - Project aberto;
-- Assistente aberto;
+- Right Tool Window recolhida por padrão;
 - Bottom oculto ou terminal pequeno.
 
 ### 18.2 Focus Editor
@@ -965,7 +957,7 @@ Painéis:
 
 - Tool Rail visível;
 - Left Tool Window colapsado;
-- Assistente colapsado;
+- Right Tool Window colapsada;
 - Bottom oculto.
 
 Atalho sugerido:
@@ -986,7 +978,7 @@ Painéis:
 
 - Project ou CMake à esquerda;
 - Editor no centro;
-- Assistente em Toolchain/Fix;
+- Toolchain/Environment aberto quando necessário;
 - Bottom em CMake/Build.
 
 ### 18.4 Debug Active
@@ -999,7 +991,7 @@ Painéis:
 
 - Debug tool window à esquerda ou inferior;
 - Editor no centro;
-- Assistente opcional;
+- inspeção de Debug opcional à direita;
 - Bottom com Debug, Variables, Stack.
 
 ### 18.5 Embedded Target
@@ -1015,7 +1007,7 @@ Painéis:
 
 - Targets à esquerda;
 - Editor no centro;
-- Assistente em Toolchain;
+- Toolchain/Environment ou registradores à direita;
 - Bottom com Serial/Debug/Build.
 
 
@@ -1057,7 +1049,7 @@ Open layout default
 
 ### 19.3 Novo projeto CMake
 
-Assistente visual:
+Wizard determinístico de projeto:
 
 ```text
 Project name
@@ -1094,8 +1086,8 @@ Build fails
 Problems recebe erro
 Linha do editor marca erro
 Build panel mostra etapa que falhou
-Assistente oferece explicação
-Usuário aplica correção ou abre docs
+Project Health/Problems mostra causa e próximo passo quando o core conhece
+Usuário aplica ação explícita ou abre a documentação
 ```
 
 ---
@@ -1109,7 +1101,7 @@ Evitar:
 - animações constantes;
 - notificações grandes;
 - tooltips longos demais;
-- cards enormes no Assistente;
+- cards enormes em tool windows;
 - ícones coloridos demais;
 - fundo com texturas dentro da IDE real;
 - decoração matemática no layout real.
@@ -1191,7 +1183,7 @@ Tipos:
 
 - editor tabs;
 - panel tabs;
-- Assistente tabs;
+- tool window tabs;
 - bottom tabs.
 
 Regras:
@@ -1206,10 +1198,9 @@ Regras:
 
 Usados apenas em:
 
-- Assistente;
 - tela de boas-vindas;
 - toolchain diagnostics;
-- sugestões aplicáveis.
+- Project Health e ações de configuração com preview.
 
 Evitar cards no editor principal.
 
@@ -1243,7 +1234,7 @@ Tempo:
 Visual:
 
 - Target selector com warning;
-- Assistente abre aba Toolchain;
+- Toolchain/Environment abre no ponto relevante;
 - card “Configure Toolchain”;
 - Problems mostra “compiler not configured”;
 - Run/Debug desabilitados.
@@ -1314,7 +1305,7 @@ Visual:
 - Tool Windows
 - Focus Editor
 - Split Editor
-- Toggle Assistente
+- Toggle Right Tool Window
 - Toggle Terminal
 
 ### 24.4 Navigate
@@ -1389,7 +1380,8 @@ Comandos:
 - Debug Project
 - Flash Target
 - Open Serial Monitor
-- Toggle Assistente
+- Toggle Symbols/Structure
+- Focus Remote
 - Open Settings
 
 A Command Palette deve mostrar atalhos e contexto.
@@ -1468,8 +1460,8 @@ Callouts possíveis:
 - CMake sem fricção;
 - Linux-first;
 - toolchains visuais;
-- Assistente;
 - embedded targets;
+- Remote SSH;
 - debug e serial.
 
 Mas esses elementos não devem aparecer dentro da UI real.
@@ -1547,9 +1539,9 @@ Ou configuração global:
 
 ---
 
-## 30. Instruções para IA CLI
+## 30. Instruções de implementação do shell
 
-Ao usar este documento com IA CLI, priorizar:
+Ao implementar este documento, com ou sem ferramenta de apoio, priorizar:
 
 1. Implementar layout real, não marketing.
 2. Criar componentes reutilizáveis antes de telas grandes.
@@ -1558,7 +1550,7 @@ Ao usar este documento com IA CLI, priorizar:
 5. Criar Tool Rail.
 6. Criar Left Tool Window com Project placeholder.
 7. Criar Editor Area placeholder.
-8. Criar Assistente placeholder.
+8. Criar Right Tool Window opcional com Símbolos/Structure.
 9. Criar Bottom Tool Window.
 10. Criar Status Bar.
 11. Só depois integrar dados reais.
@@ -1570,14 +1562,14 @@ MVP UI Layout 0.1: tokens + janela + regiões vazias
 MVP UI Layout 0.2: toolbar + rail + status bar
 MVP UI Layout 0.3: project tree fake + editor fake
 MVP UI Layout 0.4: bottom tool window fake
-MVP UI Layout 0.5: Assistente fake
+MVP UI Layout 0.5: Right Tool Window com modelo de símbolos existente
 MVP UI Layout 0.6: conectar ao core real
 ```
 
-### 30.1 Prompt para IA CLI implementar layout shell
+### 30.1 Brief de implementação do layout shell
 
 ```text
-Implemente o shell visual principal da IDE Kinein Vectis em Qt/QML seguindo o documento sistema-de-layout.md. Não implemente lógica real ainda. Crie componentes reutilizáveis para App Bar, Main Toolbar, Tool Rail, Left Tool Window, Editor Area, Assistente, Bottom Tool Window e Status Bar. Use tokens de tema centralizados. O layout deve ser real de IDE, não marketing: sem callouts, sem slogans, sem textos promocionais ao redor. Priorize visual limpo, escuro, JetBrains-like na sensação, Kinein-like na identidade.
+Implementar o shell visual principal da IDE Kinein Vectis em Qt/QML seguindo sistema-de-layout.md e arquitetura-de-frontend-0.3-em-diante.md. Reutilizar os componentes atuais para App Bar, Main Toolbar, Tool Rail, Left/Right/Bottom Tool Windows, Editor Area e Status Bar. Usar tokens de tema centralizados. O layout deve ser real de IDE, não marketing: sem callouts, slogans ou textos promocionais na área de trabalho. Priorizar visual limpo, escuro, denso e confortável, com referência de comportamento profissional e identidade própria.
 ```
 
 ### 30.2 Prompt para IA CLI criar tokens
@@ -1599,7 +1591,7 @@ Implemente estados de layout para Default Coding, Focus Editor, Build & CMake, D
 Para gerar imagem de referência, usar prompt:
 
 ```text
-Criar mockup de alta resolução de uma IDE profissional chamada Kinein Vectis, nome curto Kinein, sigla KV. A imagem deve mostrar apenas a interface real da IDE, sem callouts de marketing, sem textos promocionais externos e sem elementos fora da janela. Tema escuro grafite confortável, estilo visual polido e profissional, inspirado na sensação de IDEs modernas como JetBrains, mas com identidade própria. Layout: app bar superior com KV | Kinein, menu File/Edit/View/Navigate/Code/Build/Run/Tools/Help; toolbar com Target selector, CMake profile, Configure, Build, Run, Debug, Flash; tool rail esquerdo com Project, Search, Git, Build, Debug, Targets, Tools; painel esquerdo com Project e Structure; editor central com tabs, breadcrumbs, código C++ legível, gutter e diagnostics; painel direito Assistente com abas Context, Explain, Fix, Toolchain, Docs; painel inferior com Terminal, Problems, Build, CMake, Debug, Serial, Git; status bar inferior com branch, errors, warnings, compiler, target, line/column, encoding. Usar acento âmbar industrial com moderação, azul/roxo apenas como acentos técnicos. Interface limpa, densa mas confortável, sem excesso de brilho, sem decoração matemática no layout real.
+Criar mockup de alta resolução de uma IDE profissional chamada Kinein Vectis, nome curto Kinein, sigla KV. Mostrar apenas a interface real da IDE, sem callouts de marketing ou elementos fora da janela. Tema escuro grafite confortável e identidade própria. Layout: header enxuto com Projeto, Git e Execução; tool rail esquerdo; Project/Git à esquerda; editor central com tabs, breadcrumbs, código, gutter e diagnostics; Tool Window direita opcional com Símbolos/Structure; painel inferior com Terminal, Problems, Jobs, Build, Debug e Search; status bar com workspace, job, toolchain, contexto remoto quando houver, line/column e LSP. Usar acento âmbar com moderação. Interface limpa, densa e confortável, sem chat, Assistente de IA ou Telemetry.
 ```
 
 ---
@@ -1612,7 +1604,7 @@ Antes de aceitar um layout, verificar:
 - [ ] O editor é a área dominante?
 - [ ] Target e build profile estão claros?
 - [ ] CMake/Build/Debug/Serial têm locais óbvios?
-- [ ] Assistente ajuda sem dominar?
+- [ ] A Tool Window direita ajuda sem disputar espaço com o editor?
 - [ ] O âmbar está usado com moderação?
 - [ ] O layout não tem callouts de marketing?
 - [ ] O visual é confortável para 6+ horas de uso?
@@ -1633,9 +1625,9 @@ A interface principal deve seguir esta fórmula:
 ```text
 Project/Tools à esquerda
 Editor no centro
-Assistente à direita
+Inspeção opcional à direita
 Terminal/Build/Debug embaixo
-Target/CMake/Run no topo
+Projeto/Git/Execução no topo
 Estado do sistema no rodapé
 ```
 

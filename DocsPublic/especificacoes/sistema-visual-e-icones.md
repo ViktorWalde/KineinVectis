@@ -1,5 +1,11 @@
 # Kinein Vectis — Sistema Visual da IDE
 
+> **Revisão vinculante de 2026-09-22:** não existe Assistente/Chat de IA nem
+> telemetria de produto/usuário no alvo. Ícones antigos desses conceitos não
+> entram na implementação. “Telemetria” de dispositivo deve ser nomeada como
+> Saída do alvo ou Observabilidade. Ver
+> `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Parte 1 — Iconografia da IDE**  
 > Documento de direção visual para os ícones internos, identidade KV e linguagem de interface da IDE **Kinein Vectis**.
 
@@ -13,7 +19,7 @@ Ele não define ainda, em profundidade:
 
 - layout completo da tela principal;
 - viewport OpenGL;
-- dashboards de telemetria;
+- dashboards de observabilidade do alvo;
 - painéis avançados de target embarcado;
 - telas de onboarding;
 - documentação visual do site/landing page.
@@ -28,7 +34,7 @@ O foco aqui é construir uma linguagem visual consistente para:
 - ícones da barra superior;
 - ícones de ações comuns da IDE;
 - ícones de build, CMake, toolchain e compilador;
-- ícones de status, problemas, Git, terminal e assistente contextual;
+- ícones de status, problemas, Git, terminal, contexto e inspeção;
 - regras de exportação, estados visuais e uso em Qt/QML.
 
 ---
@@ -1327,69 +1333,23 @@ traço vermelho discreto
 
 ---
 
-## 14. Ícones do Assistente
+## 14. Ícones de contexto e inspeção
 
-O painel de assistência contextual não deve parecer chatbot genérico.
-
-Nome recomendado:
-
-```text
-Assistente
-```
-
-### 14.1 Context
+Não existe família de ícones para Assistente/IA. Os significados úteis ficam
+nos próprios domínios:
 
 ```text
-nó central com três linhas ao redor
+Símbolos/Structure  árvore/nós de código
+Diagnóstico          severidade + localização
+Code Action          lâmpada/ação disponível pelo LSP
+Toolchain            três nós conectados
+Documentação         folha dupla angular
+Remote SSH           host/conexão por SSH
+Observabilidade      gráfico/dado do alvo, sem coleta da IDE
 ```
 
-Representa contexto do arquivo atual.
-
-### 14.2 Explain
-
-```text
-linhas de texto + pequeno vetor
-```
-
-Representa explicação direcionada.
-
-### 14.3 Fix
-
-```text
-vetor corrigindo linha quebrada
-```
-
-Representa correção técnica.
-
-### 14.4 Toolchain
-
-```text
-três nós conectados
-```
-
-Representa análise de ambiente.
-
-### 14.5 Docs
-
-```text
-folha dupla angular
-```
-
-Representa documentação.
-
-### 14.6 Suggestion card
-
-Ícone pequeno recomendado:
-
-```text
-quadrado com canto cortado + vetor interno
-```
-
-### 14.7 Apply suggestion
-
-```text
-check vetorial âmbar
-```
+Ícone nunca promete explicação ou correção que o serviço determinístico não
+consegue fornecer.
 
 ---
 
@@ -1959,7 +1919,7 @@ Depois desta parte de iconografia, criar documentos separados:
 03_EDITOR_EXPERIENCE.md                editor, tabs, breadcrumbs, gutter, diagnóstico
 04_CMAKE_TOOLCHAIN_UX.md               fluxo visual para CMake/toolchain/compilador
 05_EMBEDDED_TARGETS_UX.md              targets, flash, serial, remote debug
-07_KV_CONTEXT_ASSISTANT_UX.md          painel contextual/assistente
+07_KV_CONTEXT_INSPECTION_UX.md         contexto determinístico e inspeção
 08_THEME_TOKENS_QML.md                 tokens, componentes e implementação Qt/QML
 09_BRANDING_APP_ICON_SPLASH.md         marca, splash, about, README, site
 ```
@@ -1989,4 +1949,3 @@ técnica,
 visualmenta polida,
 e voltada para engenheiros que querem focar no código, não no caos do ambiente.
 ```
-

@@ -2,6 +2,12 @@
 
 # Editor, Language Intelligence, Indexação, Navegação, Diagnósticos e Refatoração
 
+> **Revisão vinculante de 2026-09-22:** referências abaixo a Assistente/IA estão
+> canceladas. Diagnósticos, code actions, Project Health, documentação e
+> Problems continuam determinísticos e acionados pelos serviços existentes.
+> Não criar chat, painel de IA ou ações geradas por modelo. Ver
+> `arquitetura-de-frontend-0.3-em-diante.md`.
+
 > **Nome oficial:** Kinein Vectis  
 > **Nome curto:** Kinein  
 > **Sigla visual:** KV  
@@ -67,13 +73,13 @@ A experiência do editor deve seguir cinco princípios.
 
 ### 3.1 O editor é a área principal da IDE
 
-Todo o layout deve proteger o editor. Painéis, assistente, terminal e tool windows existem para apoiar o código, não para disputar atenção.
+Todo o layout deve proteger o editor. Painéis, terminal e tool windows existem para apoiar o código, não para disputar atenção.
 
 Regras:
 
 - o editor deve ocupar a maior área útil da tela;
 - painéis laterais devem ser recolhíveis;
-- o Assistente não deve abrir sozinho de forma agressiva;
+- painéis contextuais não devem abrir sozinhos de forma agressiva;
 - mensagens e diagnósticos devem ser úteis, não invasivos;
 - a linha atual deve ser visível sem ser gritante;
 - tooltips devem ajudar sem cobrir o código excessivamente.
@@ -99,7 +105,7 @@ Um erro não deve ser apenas uma linha vermelha. Sempre que possível, a IDE dev
 - instalar servidor de linguagem;
 - abrir erro no terminal;
 - aplicar fix-it;
-- explicar erro no Assistente;
+- abrir o diagnóstico detalhado e sua evidência;
 - abrir documentação local ou externa;
 - gerar configuração sugerida.
 
@@ -534,7 +540,7 @@ Campos relevantes:
 
 ### 9.5 Diagnóstico de include
 
-Quando um header não for encontrado, o Assistente deve sugerir:
+Quando um header não for encontrado, o diagnóstico estruturado deve oferecer:
 
 - verificar `target_include_directories`;
 - verificar `compile_commands.json`;
@@ -663,7 +669,7 @@ A indexação torna a IDE rápida para:
 - montar outline;
 - navegar por referências;
 - gerar breadcrumbs;
-- alimentar Assistente;
+- alimentar navegação e contexto determinístico;
 - acelerar command palette.
 
 ### 12.2 Tipos de índice
@@ -792,7 +798,7 @@ Ordem de prioridade:
 2. Snippets da linguagem.
 3. Palavras do buffer.
 4. Símbolos do workspace.
-5. Sugestões do Assistente somente quando explicitamente solicitadas.
+5. Code actions fornecidas pelo servidor de linguagem, quando disponíveis.
 
 ### 14.2 UX do popup
 
@@ -862,7 +868,7 @@ Deve mostrar:
 - origem: clangd/build/rust-analyzer/cargo;
 - severidade;
 - sugestões;
-- botão “Explain in Assistente”.
+- ação para abrir o diagnóstico em Problems com evidência e próximos passos conhecidos.
 
 ### 15.3 Não cobrir código demais
 
@@ -880,7 +886,7 @@ Build diagnostics
 CMake diagnostics
 Cargo diagnostics
 Static analysis future
-Assistente explanations
+Project Health e documentação vinculada
 ```
 
 ### 16.2 Normalização
@@ -999,7 +1005,7 @@ Popup:
 Quick Fixes
   Add #include "control/pid.hpp"
   Create local variable 'pid'
-  Explain error in Assistente
+  Open diagnostic details
   Ignore diagnostic
 ```
 
@@ -1125,54 +1131,21 @@ clang-format not found
 
 ---
 
-## 20. Assistente integrado ao editor
+## 20. Contexto técnico integrado ao editor
 
-O Assistente não deve ser um chatbot solto. Ele deve entender o contexto técnico da IDE.
+O editor combina fatos determinísticos já existentes:
 
-### 20.1 Fontes de contexto permitidas
-
-- arquivo atual;
-- seleção atual;
-- diagnósticos atuais;
-- build log recente;
-- CMake configure log;
-- Cargo metadata;
-- toolchain selecionada;
-- target selecionado;
-- symbols do arquivo;
+- diagnósticos e code actions do LSP;
+- símbolos, folding e estrutura local;
+- build log e Problems;
+- contexto de compilação por arquivo;
+- toolchain/target efetivos;
 - documentação configurada.
 
-### 20.2 Ações do editor
-
-Ações contextuais:
-
-```text
-Explain this function
-Explain diagnostic
-Suggest fix
-Explain build error
-Summarize file
-Generate tests future
-Explain CMake target
-Explain Rust feature issue
-```
-
-### 20.3 Não atrapalhar
-
-Assistente deve ser acionável, não invasivo.
-
-Permitido:
-
-- botão discreto no hover de erro;
-- botão no Problems panel;
-- menu contextual;
-- shortcut.
-
-Evitar:
-
-- popups automáticos de IA;
-- sugestões longas dentro do editor sem pedido;
-- modificar código sem confirmação.
+Ações contextuais válidas são **Ir para**, **Mostrar detalhes**, **Abrir
+Problems**, **Code Actions**, **Project Health**, **Abrir documentação** e
+previews transacionais existentes. Não há chat, resumo gerado ou explicação por
+IA. Nenhuma alteração em múltiplos arquivos ocorre sem preview/consentimento.
 
 ---
 
@@ -1286,15 +1259,16 @@ Busca textual.
 
 Pode ser integrado ao Search ou Command Palette.
 
-### 22.5 Assistente
+### 22.5 Contexto e inspeção
 
-Painel direito contextual.
+Tool window direita opcional para Symbols/Structure e detalhes determinísticos do
+item selecionado. Não é chat e não gera explicações por modelo.
 
 ---
 
-## 23. Contratos internos para IA CLI
+## 23. Contratos internos de editor e linguagem
 
-A IA CLI deve implementar por serviços, não por telas soltas.
+A implementação deve ser organizada por serviços, não por telas soltas.
 
 ### 23.1 Serviços sugeridos
 
@@ -1447,12 +1421,12 @@ A IDE pode manter cache interno, mas não deve exigir que o usuário edite manua
 - format document;
 - preview de alterações multi-file.
 
-### Fase 6 — Inteligência assistida
+### Fase 6 — Recuperação determinística
 
-- Assistente explica diagnóstico;
-- Assistente explica build error;
-- Assistente sugere ajustes de CMake/toolchain;
-- ações sempre confirmadas.
+- Problems abre diagnóstico e evidência de origem;
+- erros de build apontam para arquivo, linha e comando real;
+- Project Health oferece ajustes conhecidos de CMake/toolchain;
+- ações modificadoras sempre exigem confirmação e preview adequado.
 
 ---
 
@@ -1485,15 +1459,15 @@ A Parte 5 pode ser considerada bem implementada quando:
 - erros de build forem navegáveis;
 - arquivos modificados forem claros;
 - a IDE não travar durante indexação;
-- Assistente conseguir explicar um erro selecionado sem atrapalhar;
+- um erro selecionado expor origem, evidência e próximo passo conhecido sem atrapalhar;
 - Rename Symbol funcionar com preview quando alterar múltiplos arquivos;
 - o usuário sempre souber se a análise está pronta, parcial ou falhou.
 
 ---
 
-## 28. Checklist para IA CLI
+## 28. Checklist de implementação
 
-A IA CLI deve seguir esta ordem:
+A implementação deve seguir esta ordem:
 
 ```text
 1. Criar modelos de Document, Buffer e EditorTab.
@@ -1510,7 +1484,7 @@ A IA CLI deve seguir esta ordem:
 12. Implementar symbol search.
 13. Implementar code actions básicas.
 14. Implementar rename com preview.
-15. Integrar Assistente com seleção/diagnóstico.
+15. Integrar seleção, Problems, Project Health e documentação contextual.
 ```
 
 Regra final:
@@ -1521,7 +1495,7 @@ Não avançar para recursos chamativos antes do editor ficar confiável.
 
 ---
 
-## 29. Prompt de implementação para IA CLI
+## 29. Brief de implementação
 
 ```text
 Implemente a Parte 5 da Kinein Vectis: Editor, Language Intelligence, Indexação, Diagnósticos e Refatoração.
@@ -1532,7 +1506,7 @@ Priorize C/C++ com clangd e Rust com rust-analyzer. Para C/C++, use compile_comm
 
 Construa a experiência do editor com abas, gutter, line numbers, syntax highlighting, diagnostics inline, hover, completion, go to definition, find references, structure panel e Problems panel. O visual deve seguir o sistema Kinein: dark confortável, acento âmbar com moderação, tipografia legível e foco absoluto no editor.
 
-Não implemente refatorações complexas próprias. Use LSP para rename/code actions e sempre mostre preview quando múltiplos arquivos forem alterados. Assistente deve explicar erros e contexto apenas quando acionado pelo usuário, sem popups invasivos.
+Não implemente refatorações complexas próprias. Use LSP para rename/code actions e sempre mostre preview quando múltiplos arquivos forem alterados. Erros e contexto devem vir de diagnósticos estruturados, Project Health e documentação, sem chat ou popups invasivos.
 
 Implemente em fases, com testes e critérios de aceite claros. Não avance para superfícies novas antes do editor e da inteligência de linguagem estarem confiáveis.
 ```

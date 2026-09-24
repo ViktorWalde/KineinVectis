@@ -1,5 +1,10 @@
 # Kinein Vectis — Icons Only
 
+> **Revisão de 2026-09-22:** os três IDs `ai_*` ainda presentes no catálogo são
+> artefatos legados, não features-alvo. Não devem aparecer na IDE nem orientar
+> implementação nova; serão removidos quando a compatibilidade do catálogo
+> puder ser quebrada com segurança.
+
 Este pacote contém **somente iconografia e infraestrutura para renderizá-la**.
 
 Não contém:
@@ -34,7 +39,8 @@ main.cpp
 kv.view.ai_terminal
 ```
 
-representa o **AI CLI Bridge externo**. Não há ícone nem implementação de chat de IA embutido.
+é um ID legado do antigo **AI CLI Bridge**, agora cancelado. Não há ícone ou
+integração de IA a implementar no produto.
 
 Também foram adicionados:
 
