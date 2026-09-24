@@ -581,6 +581,11 @@ fn the_python_server_receives_the_project_interpreter() {
 /// e do `pyproject` de exemplo dos micropython-stubs (2026-09-17).
 #[test]
 fn the_python_server_receives_the_board_stubs_path_after_they_are_installed() {
+    // Escreve um executavel e o roda: sem este lock corre com os
+    // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
+    let _serial = crate::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut h = harness("python-stubs");
     let path = h.root.join("app.py");
     h.ok("fs.read", json!({ "path": path.to_str().unwrap() }));

@@ -7,6 +7,11 @@ use kinein_protocol::{JsonRpcErrorCode, JsonRpcRequest};
 
 #[test]
 fn debug_methods_require_workspace_or_manager() {
+    // Escreve um executavel e o roda: sem este lock corre com os
+    // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
+    let _serial = crate::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut core = core_with_empty_search_path("debug-guards");
 
     let start = core.handle_request(&JsonRpcRequest::new(1_i64, "debug.start", None));

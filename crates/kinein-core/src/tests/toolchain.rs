@@ -136,6 +136,11 @@ fn a_fresh_workspace_is_fully_automatic() {
 /// So se oferece o que existe NESTA maquina.
 #[test]
 fn only_detected_candidates_are_offered() {
+    // Escreve um executavel e o roda: sem este lock corre com os
+    // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
+    let _serial = crate::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let (root, bin) = workspace_with_tools("so-clang", &["clang", "clang++", "cmake", "ninja"]);
     let mut core = core_with_path(&bin);
     open(&mut core, &root);
@@ -323,6 +328,11 @@ fn rust_targets_come_from_the_detected_rustup_or_are_absent() {
 /// sysroot no kit, nao; e bare metal (`arm-none-eabi-gcc`) nunca entra.
 #[test]
 fn a_linux_cross_compiler_without_a_sysroot_gets_the_hint() {
+    // Escreve um executavel e o roda: sem este lock corre com os
+    // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
+    let _serial = crate::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let (root, bin) = workspace_with_tools("sysroot-hint", &["cmake", "arm-none-eabi-gcc"]);
     let sysroot = root.join("sysroot-vazio");
     std::fs::create_dir_all(&sysroot).unwrap();

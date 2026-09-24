@@ -713,6 +713,12 @@ mod tests {
     #[cfg(unix)]
     fn the_install_root_is_read_on_every_lookup() {
         use std::os::unix::fs::PermissionsExt;
+
+        // Escreve um executavel e o roda: sem este lock corre com os
+        // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
+        let _serial = crate::EXECUTAVEIS
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let base = temp_bin_dir("install-root");
         let path_dir = base.join("path");
         let raiz = base.join("toolchains");

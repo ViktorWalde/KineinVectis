@@ -368,6 +368,15 @@ mod tests {
     #[cfg(unix)]
     fn pytest_discovery_reads_stdout_only_and_treats_exit_5_as_empty() {
         use std::os::unix::fs::PermissionsExt;
+
+        // Este teste ESCREVE um executavel e o roda; sem o lock do crate ele
+        // corre com os outros que fazem o mesmo e o `exec` do filho volta
+        // `ETXTBSY` ("Text file busy"), porque outra thread ainda tem o
+        // arquivo aberto para escrita no momento do `fork`. Visto acontecer no
+        // gate em 2026-09-24. O motivo do lock esta' no `lib.rs`.
+        let _serial = crate::EXECUTAVEIS
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         let dir = std::env::temp_dir()
             .join("kinein-core-tests")
             .join(format!("{}-pytest-discover", std::process::id()));
