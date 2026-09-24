@@ -35,7 +35,6 @@ pub fn confine_file(root: &Path, path: &Path) -> Result<PathBuf, FsError> {
     Ok(file)
 }
 
-
 /// Resolves the parent of a would-be new child and joins its file name.
 ///
 /// The parent must already exist and stay inside `root`; the child itself is
