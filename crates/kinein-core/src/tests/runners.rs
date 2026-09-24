@@ -250,7 +250,7 @@ fn quality_run_lints_python_with_the_detected_ruff() {
     std::fs::create_dir_all(dir.join(".kinein")).unwrap();
     std::fs::write(
         dir.join(".kinein/settings.json"),
-        r#"{"rigorProfile":"strict"}"#,
+        r#"{"schemaVersion":1,"rigorProfile":"strict"}"#,
     )
     .unwrap();
     let registro = dir.join("pedido.txt");
