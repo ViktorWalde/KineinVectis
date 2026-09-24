@@ -41,6 +41,10 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
   corrigidos: o **primeiro deploy para um alvo novo** falhava porque ninguém
   criava `~/kinein/<projeto>`, e a descoberta e a resolução podiam ler arquivos
   de configuração diferentes.
+- Protocolo `0.134.0` — Remote: **configurar um servidor novo sem formulário**.
+  Cole a linha `ssh` que você já usa e a IDE a lê (nunca executa), preenchendo o
+  perfil e dizendo de onde tirou cada campo. O que um perfil não reproduz é
+  recusado com o nome da opção, em vez de descartado em silêncio.
 - Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI e a
   auditoria de acessibilidade. A série 0.3 completa não está entregue;
   planos de CLI/pastas/bordas não são features já implementadas.

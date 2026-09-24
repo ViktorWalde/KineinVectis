@@ -715,6 +715,15 @@ você confirmar em **Rodar no terminal**. A IDE nunca gera chave nem digita senh
 — quem pergunta é o `ssh`, no terminal, e o host key você aceita uma vez.
 Trocar de alvo cancela a linha, porque ela carrega um host.
 
+**Para um servidor que ainda não está no seu `~/.ssh/config`**, não preencha o
+formulário: em **Configurar um servidor novo**, cole a linha que você já usaria
+no terminal — `ssh -p 2222 pi@192.168.0.42`, ou só `pi@192.168.0.42` — e clique
+em **Interpretar**. A IDE **lê** a linha (nunca a executa) e preenche o
+formulário abaixo, dizendo de onde tirou cada campo, para você conferir antes de
+salvar. Se a linha trouxer algo que um perfil não reproduz, como `-J bastion`,
+ela diz qual é e pede que você deixe isso no `~/.ssh/config` — assim o alvo não
+fica prometendo uma conexão que não faria.
+
 ```text
 Sondar          ssh -o BatchMode=yes -o ConnectTimeout=5 … 'uname -m; uname -sr; command -v …'
                 -> arquitetura (aarch64), kernel e o que o alvo TEM: gdbserver, python3, rsync

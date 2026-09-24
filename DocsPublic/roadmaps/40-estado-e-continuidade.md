@@ -136,8 +136,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.133.0
-testes      869 Rust aprovados; 64 harnesses QML (medicao de 2026-09-24, §7.95)
-metodos     167 IPC roteados, 56 eventos (remote.command kind copyId em 0.133.0;
+testes      874 Rust aprovados; 64 harnesses QML (medicao de 2026-09-24, §7.96)
+metodos     168 IPC roteados, 56 eventos (remote.parseCommand em 0.134.0;
+            remote.command kind copyId em 0.133.0;
             remote.discover/resolve em 0.132.0;
             terminal.selectAll/copySelection em 0.131.0;
             terminal.clearScrollback em 0.130.0;
@@ -5478,3 +5479,68 @@ servidor no alvo, e a §1 da especificacao decidiu o contrario.
 
 **Provas:** 869 testes Rust e 64 harnesses QML; o fluxo real verde em duas
 corridas independentes, com portas e containers diferentes.
+
+### 7.96 Remote: a linha `ssh` colada vira um perfil — 2026-09-24, protocolo 0.134.0
+
+Quarto dos seis itens da R0.5: **"configurar servidor"**, e ele nao e' um
+formulario. A ideia veio da comparacao com o VS Code registrada na §3.1 da
+especificacao — o `Remote-SSH: Add New SSH Host…` aceita um comando `ssh`
+inteiro. Ela cabe sem quebrar a regra "a UI nao monta linha de `ssh`": quem
+FORNECE a linha e' o usuario, quem a INTERPRETA e' o core.
+
+`remote.parseCommand { command } -> { target, source[] }`. Le' e nunca executa:
+texto entrando, perfil saindo. Nao exige workspace e nao salva — o resultado vai
+para o rascunho, com a procedencia de cada campo na tela, e quem grava e' a
+pessoa pelo `remote.save`. Ler nao e' gravar, e o teste de despacho prova que o
+catalogo continua vazio depois de interpretar.
+
+**O que ele RECUSA em vez de limpar** e' onde estava o risco. Metacaractere de
+shell (`;`, `|`, `&`, crase, `$(`, `>`, `<`) e' recusado — limpar em silencio
+prometeria um alvo que nao se comporta como a linha colada, e o que vem depois
+do `;` nao e' assunto de um perfil. Opcao que o perfil nao modela (`-J`,
+`-o ProxyCommand=`) e' recusada DIZENDO QUAL, com o proximo passo: deixe-a no
+`~/.ssh/config` e escolha o alias aqui. Comando remoto depois do destino e'
+recusado porque seria um comando, nao um perfil.
+
+**Uma feiura que o proprio teste mostrou:** o nome proposto saia do primeiro
+rotulo do host, o que dava `192` para `192.168.0.42`. Um endereco inteiramente
+numerico passou a ir inteiro.
+
+**A catraca pediu o segundo filho, e o roadmap ja' o nomeava.** O
+`RemoteController` passou de 400 linhas. A pergunta do gate — "o que esta'
+misturado aqui?" — tinha resposta clara: seis assuntos. Saiu o
+`RemoteWorkspaceController` (espelho e sync), o segundo dos quatro filhos que a
+§8.3 do roadmap 48 lista, pela regra dela: nao nascem preventivamente. Antes
+disso, `useAlias` e `useProposal` foram unificadas — eram a MESMA operacao (a
+proposta do setup virando rascunho), e duas funcoes quase iguais eram o comeco
+de duas verdades sobre o que um alvo novo e'.
+
+**Um teste instavel que o gate pegou, e o que ele destapou.** O gate reprovou em
+`pytest_discovery_reads_stdout_only_and_treats_exit_5_as_empty` com
+`Text file busy (os error 26)` — a corrida ETXTBSY que o `lib.rs` descreve e
+para a qual existe o mutex `EXECUTAVEIS`: um `fork` enquanto outra thread ainda
+tem um executavel aberto para escrita. Aquele teste escrevia um script e o
+rodava SEM tomar o lock. Corrigido.
+
+Uma varredura mostrou **outros 11 pontos do crate que escreviam executavel sem o
+lock**. A primeira decisao foi anotar como divida e nao mexer; ela mudou quando
+uma corrida seguinte reprovou de novo, sem log, entre tres limpas — o sintoma e'
+um gate que reprova de vez em quando sem ninguem ter mudado nada, que e' pior
+que um gate vermelho, e ele custa ~20 min por reprovacao.
+
+Foram travadas as **9 que sao funcoes de teste**, onde o lock e' seguro:
+`frameworks.rs` (Zephyr), `runners.rs` (2), `toolchain.rs` (2), `debug.rs`,
+`run.rs`, `tools/mod.rs` e `lsp_server.rs`. Ficaram de fora os pontos dentro de
+HELPERS: travar de dentro de um helper arriscaria deadlock se um teste chamar
+dois, e o `Mutex` nao e' reentrante. Esses continuam como divida dita.
+
+Depois da correcao, tres corridas consecutivas do `cargo test --workspace
+--all-features` terminaram limpas.
+
+**Provas:** 874 testes Rust (5 novos) e 64 harnesses QML; fiacao IPC com 168
+metodos nas duas direcoes; a lista canonica do `03-ipc-protocol` regenerada por
+medicao.
+
+**Falta da R0.5:** iniciar a selecao da pasta na home remota — e so' entao
+avaliar se o `remote.directories` se justifica. **A tela desta fatia nao foi
+vista por pessoa**: o autor avisou que faria os testes visuais depois.
