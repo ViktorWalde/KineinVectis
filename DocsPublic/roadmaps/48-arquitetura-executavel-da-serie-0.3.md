@@ -292,6 +292,23 @@ remote.directories { name, path? }
   → { path, parent?, entries [{ name, path }] }
 ```
 
+> **Validado em 2026-09-24 (protocolo `0.132.0`).** Os dois primeiros entraram,
+> com tres diferencas que a fatia mediu, todas registradas no
+> [`03-ipc-protocol`](../arquitetura/03-ipc-protocol.md):
+>
+> - `remote.discover` devolve tambem `sources[]` — os arquivos lidos — para a
+>   UI poder dizer de onde cada alias veio;
+> - `remote.resolve` ecoa `host`, para a UI descartar resposta atrasada de
+>   outro alvo;
+> - o `proxy?` generico virou `proxyJump?` + `proxyCommand: bool`. Um campo so'
+>   obrigaria a devolver o texto do `ProxyCommand`, que e' linha de comando
+>   arbitraria e pode conter segredo — contra a secao 10 da especificacao.
+>
+> `remote.directories` **nao** entrou: a regra desta secao e' "novo contrato so'
+> entra apos teste provar que a alternativa nao atende", e o teste desta fatia
+> parou antes da escolha de pasta. Os dois novos metodos sao os unicos de
+> `remote.*` que nao exigem workspace aberto — a pergunta e' sobre a maquina.
+
 - descoberta lê apenas config local autorizada e não varre rede;
 - somente `Host` concreto aparece; padrões continuam aplicados pelo OpenSSH;
 - resolução deve preferir `ssh -G` e retornar allowlist segura, nunca o dump

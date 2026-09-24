@@ -247,6 +247,11 @@ public:
                                   const QString& dest = QString());
     Q_INVOKABLE void remoteCommand(const QString& name, const QString& kind,
                                    const QString& program = QString(), int port = 0);
+    // Descoberta e explicacao do SSH que a maquina JA' tem (remote.discover/
+    // resolve, 0.132.0, fatia R0.5): aliases concretos do ~/.ssh/config e o
+    // resumo seguro que o OpenSSH aplicaria. Nao conecta e nao varre rede.
+    Q_INVOKABLE void remoteDiscover();
+    Q_INVOKABLE void remoteResolve(const QString& host);
     Q_INVOKABLE void toolchainSetKitRemote(const QString& remoteTarget, const QString& debugServer);
     // O workspace espelhado (remote.open/sync/status, 0.122.0): a pasta do alvo vira
     // espelho local por rsync; a UI abre o espelho com o openWorkspace de sempre.
@@ -454,6 +459,8 @@ signals:
     void remoteTargetsResolved(const QVariantList& targets);
     void remoteJobAccepted(const QString& method, const QString& jobId, const QString& command);
     void remoteCommandResolved(const QVariantMap& result);
+    void remoteAliasesDiscovered(const QVariantList& aliases, const QVariantList& sources);
+    void remoteHostResolved(const QVariantMap& summary);
     void remoteProbed(const QVariantMap& outcome);
     void remoteDeployed(const QVariantMap& outcome);
     void remoteOpenAccepted(const QString& jobId, const QString& command, const QString& mirror);

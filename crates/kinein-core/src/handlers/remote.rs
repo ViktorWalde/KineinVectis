@@ -32,7 +32,7 @@ fn descrever_processo(erro: &crate::process::ProcessError) -> String {
     }
 }
 
-fn falha(request_id: Option<Value>, mensagem: impl Into<String>) -> JsonRpcResponse {
+pub(super) fn falha(request_id: Option<Value>, mensagem: impl Into<String>) -> JsonRpcResponse {
     JsonRpcResponse::failure(
         request_id,
         JsonRpcError::new(JsonRpcErrorCode::InvalidRequest, mensagem, None),

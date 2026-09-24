@@ -51,6 +51,21 @@ Item {
     property bool syncing: false
     property string syncMessage: ""
 
+    // Descoberta e explicacao do SSH que a maquina JA' tem (0.132.0, fatia
+    // R0.5). `discovery` e' estado de APRESENTACAO derivado do que o core
+    // respondeu NESTA sessao — nao um fato inventado sobre a maquina.
+    property string discovery: "idle"  // idle | loading | ready | failed
+    property var aliases: []
+    property var aliasSources: []
+    // Qual host esta' sendo explicado, para descartar resposta atrasada.
+    property string resolving: ""
+    property var resolved: null
+    // DONO UNICO de "esta' carregando": o guard daqui e o botao da view leem
+    // o mesmo fato. Duas comparacoes com a string divergiriam em silencio.
+    readonly property bool discovering: root.discovery === "loading"
+
+    signal discoverRequested()
+    signal resolveRequested(string host)
     signal listRequested()
     signal saveRequested(var target)
     signal removeRequested(string name)
@@ -140,10 +155,64 @@ Item {
         return { name: "", host: "", user: "", port: 22, identityFile: "", deployDir: "" };
     }
 
+    // "Usar o SSH que ja' funciona": o alias vira alvo SEM copiar usuario,
+    // porta nem chave. port 0 e' descartado pela ponte, entao o perfil fica
+    // so' com name/host e o OpenSSH continua decidindo o resto — este e' o
+    // criterio de aceite da R0.5, nao um atalho de digitacao.
+    function useAlias(alias) {
+        const nome = (alias || "").trim();
+        if (nome === "") {
+            return;
+        }
+        draft = { name: nome, host: nome, user: "", port: 0, identityFile: "", deployDir: "" };
+    }
+
+    function discover() {
+        if (discovering) {
+            return;
+        }
+        discovery = "loading";
+        errorText = "";
+        discoverRequested();
+    }
+
+    function resolve(host) {
+        const alvo = (host || "").trim();
+        if (alvo === "" || resolving === alvo) {
+            return;
+        }
+        resolving = alvo;
+        resolved = null;
+        errorText = "";
+        resolveRequested(alvo);
+    }
+
+    function handleAliases(list, sources) {
+        aliases = list || [];
+        aliasSources = sources || [];
+        discovery = "ready";
+    }
+
+    function handleResolved(summary) {
+        // Resposta de outro host (ou de um gesto ja' abandonado) nao pode
+        // trocar o resumo em tela pelo de um alvo que ninguem pediu.
+        if (!summary || summary.host !== resolving) {
+            return;
+        }
+        resolved = summary;
+        resolving = "";
+    }
+
     function open() {
         panelVisible = true;
         if (targets.length === 0) {
             listRequested();
+        }
+        // Ler o `~/.ssh/config` e' local e barato; deixar o autor pedir
+        // "Procurar" para so' depois descobrir que ja' havia alias e' o
+        // atrito que esta fatia existe para remover.
+        if (discovery === "idle") {
+            discover();
         }
     }
 
@@ -295,6 +364,16 @@ Item {
     }
 
     function handleFailed(method, message) {
+        if (method === "remote.discover") {
+            discovery = "failed";
+            errorText = message;
+            return;
+        }
+        if (method === "remote.resolve") {
+            resolving = "";
+            errorText = message;
+            return;
+        }
         if (method.indexOf("remote.") === 0) {
             probing = false;
             deploying = false;

@@ -360,3 +360,168 @@ fn remote_command_composes_the_ssh_line_and_the_kit_target() {
             .any(|s| s.as_str().unwrap().contains("edite"))
     );
 }
+
+/// Descoberta e explicacao (`0.132.0`, fatia R0.5): um `~/.ssh/config` falso e
+/// um `ssh` falso que responde como `ssh -G`. Sem rede e sem alvo salvo.
+fn cenario_descoberta(nome: &str) -> (crate::Core, PathBuf) {
+    let base = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-remote-{nome}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    std::fs::create_dir_all(base.join("bin")).unwrap();
+    std::fs::create_dir_all(base.join("home/.ssh")).unwrap();
+    let base = base.canonicalize().unwrap();
+    let core = crate::Core::with_detector(crate::tools::ToolDetector::with_search_path(
+        base.join("bin"),
+    ))
+    .with_home(base.join("home"));
+    (core, base)
+}
+
+#[test]
+fn discover_lists_the_machines_aliases_without_a_workspace_open() {
+    let (mut core, base) = cenario_descoberta("discover");
+    std::fs::write(
+        base.join("home/.ssh/config"),
+        "Host *\n  ServerAliveInterval 30\nHost pi\n  HostName 192.168.0.42\nHost bancada\n",
+    )
+    .unwrap();
+    // De proposito SEM workspace.open: a pergunta e' sobre a maquina, e o
+    // primeiro uso precisa dela antes de existir alvo salvo.
+    let r = core
+        .handle_request(&JsonRpcRequest::new(
+            7_i64,
+            "remote.discover",
+            Some(json!({})),
+        ))
+        .response()
+        .clone();
+    assert!(r.error.is_none(), "{:?}", r.error);
+    let fora = r.result.unwrap();
+    let nomes: Vec<&str> = fora["aliases"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|a| a["name"].as_str().unwrap())
+        .collect();
+    assert_eq!(nomes, ["bancada", "pi"]);
+    assert_eq!(fora["aliases"][0]["source"], "~/.ssh/config");
+    assert_eq!(fora["sources"][0], "~/.ssh/config");
+
+    let com_params = core
+        .handle_request(&JsonRpcRequest::new(
+            8_i64,
+            "remote.discover",
+            Some(json!({ "host": "pi" })),
+        ))
+        .response()
+        .clone();
+    assert_eq!(
+        com_params.error.unwrap().code,
+        JsonRpcErrorCode::InvalidParams
+    );
+}
+
+#[test]
+#[cfg(unix)]
+fn resolve_asks_openssh_for_the_effective_summary_and_hides_the_proxy_command() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let (mut core, base) = cenario_descoberta("resolve");
+    let registro = base.join("ssh.argv");
+    executavel(
+        &base.join("bin/ssh"),
+        &format!(
+            "#!/bin/sh\nprintf '%s\\n' \"$*\" > {}\n\
+             echo 'user pi'\necho 'hostname 192.168.0.42'\necho 'port 2222'\n\
+             echo 'identityfile ~/.ssh/pi'\n\
+             echo 'proxycommand /usr/bin/secreto --token ABC %h'\n\
+             echo 'sendenv LANG'\n",
+            registro.display()
+        ),
+    );
+    let r = core
+        .handle_request(&JsonRpcRequest::new(
+            9_i64,
+            "remote.resolve",
+            Some(json!({ "host": "pi" })),
+        ))
+        .response()
+        .clone();
+    assert!(r.error.is_none(), "{:?}", r.error);
+    let fora = r.result.unwrap();
+    // `ssh -G` EXPLICA sem conectar: nenhum outro argumento entra na linha.
+    assert_eq!(
+        std::fs::read_to_string(&registro).unwrap().trim(),
+        "-G pi",
+        "a linha do ssh mudou"
+    );
+    assert_eq!(fora["host"], "pi");
+    assert_eq!(fora["user"], "pi");
+    assert_eq!(fora["hostName"], "192.168.0.42");
+    assert_eq!(fora["port"], 2222);
+    assert_eq!(fora["identities"][0], "~/.ssh/pi");
+    assert_eq!(fora["proxyCommand"], true);
+    let texto = serde_json::to_string(&fora).unwrap();
+    assert!(
+        !texto.contains("ABC") && !texto.contains("secreto") && !texto.contains("sendenv"),
+        "{texto}"
+    );
+}
+
+#[test]
+#[cfg(unix)]
+fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anything() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let (mut core, base) = cenario_descoberta("resolve-opcao");
+    let registro = base.join("ssh.argv");
+    executavel(
+        &base.join("bin/ssh"),
+        &format!("#!/bin/sh\nprintf 'rodou' > {}\n", registro.display()),
+    );
+    let r = core
+        .handle_request(&JsonRpcRequest::new(
+            10_i64,
+            "remote.resolve",
+            Some(json!({ "host": "-oProxyCommand=id" })),
+        ))
+        .response()
+        .clone();
+    let erro = r.error.unwrap();
+    assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
+    assert!(erro.message.contains("opcao"), "{}", erro.message);
+    assert!(
+        !registro.exists(),
+        "recusa tem de vir ANTES de rodar processo"
+    );
+}
+
+#[test]
+#[cfg(unix)]
+fn resolve_repeats_what_ssh_complained_instead_of_inventing_a_summary() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let (mut core, base) = cenario_descoberta("resolve-recusa");
+    executavel(
+        &base.join("bin/ssh"),
+        "#!/bin/sh\necho 'Bad configuration option: naoexiste' >&2\nexit 255\n",
+    );
+    let r = core
+        .handle_request(&JsonRpcRequest::new(
+            11_i64,
+            "remote.resolve",
+            Some(json!({ "host": "pi" })),
+        ))
+        .response()
+        .clone();
+    let erro = r.error.unwrap();
+    assert!(
+        erro.message.contains("Bad configuration option"),
+        "{}",
+        erro.message
+    );
+}

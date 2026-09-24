@@ -101,6 +101,20 @@ void CoreClient::remoteStatus()
     sendRequest(QStringLiteral("remote.status"), QJsonObject{});
 }
 
+void CoreClient::remoteDiscover()
+{
+    // Descoberta LOCAL (0.132.0): le' ~/.ssh/config, nao varre rede. Nao exige
+    // workspace — o primeiro uso precisa dela antes de existir alvo salvo.
+    sendRequest(QStringLiteral("remote.discover"), QJsonObject{});
+}
+
+void CoreClient::remoteResolve(const QString& host)
+{
+    // `ssh -G` EXPLICA sem conectar. O core valida o host e devolve allowlist;
+    // a UI nunca monta linha de ssh a partir daqui.
+    sendRequest(QStringLiteral("remote.resolve"), QJsonObject{{QStringLiteral("host"), host}});
+}
+
 bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("remote.list") || method == QStringLiteral("remote.save") ||
@@ -114,6 +128,16 @@ bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& 
         // O job foi aceito; o desfecho chega por event.remote.probed/deployed.
         emit remoteJobAccepted(method, result.value(QStringLiteral("jobId")).toString(),
                                result.value(QStringLiteral("command")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("remote.discover")) {
+        emit remoteAliasesDiscovered(
+            result.value(QStringLiteral("aliases")).toArray().toVariantList(),
+            result.value(QStringLiteral("sources")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("remote.resolve")) {
+        emit remoteHostResolved(result.toVariantMap());
         return true;
     }
     if (method == QStringLiteral("remote.command")) {

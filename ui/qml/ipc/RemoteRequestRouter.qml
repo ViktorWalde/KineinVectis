@@ -15,6 +15,14 @@ Item {
     Connections {
         target: root.remoteController
 
+        function onDiscoverRequested() {
+            root.coreClient.remoteDiscover();
+        }
+
+        function onResolveRequested(host) {
+            root.coreClient.remoteResolve(host);
+        }
+
         function onListRequested() {
             root.coreClient.remoteList();
         }

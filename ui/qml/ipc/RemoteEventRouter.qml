@@ -12,6 +12,14 @@ Item {
     Connections {
         target: root.coreClient
 
+        function onRemoteAliasesDiscovered(aliases, sources) {
+            root.remoteController.handleAliases(aliases, sources);
+        }
+
+        function onRemoteHostResolved(summary) {
+            root.remoteController.handleResolved(summary);
+        }
+
         function onRemoteTargetsResolved(targets) {
             root.remoteController.handleTargets(targets);
         }

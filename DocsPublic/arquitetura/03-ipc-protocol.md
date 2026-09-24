@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **0.132.0 (2026-09-24) — descobrir e explicar o SSH que a máquina já tem.**
+> `remote.discover {}` → `{ aliases: [{ name, source }], sources[] }` lê o
+> `~/.ssh/config` e os `Include` dele; só `Host` concreto entra. `remote.resolve
+> { host }` → o subconjunto SEGURO de `ssh -G` (`hostName?`, `user?`, `port?`,
+> `identities[]`, `proxyJump?`, `proxyCommand: bool`). Nenhuma das duas conecta
+> nem varre rede, e o texto de um `ProxyCommand` nunca sai do core. Os dois são
+> os únicos métodos de `remote.*` que **não** exigem workspace aberto.
+>
 > **0.131.0 (2026-09-24) — seleção do buffer completo do terminal.**
 > `terminal.selectAll { id, selectionId }` marca todo o buffer ativo retido;
 > `terminal.copySelection { id, selectionId }` lê essa seleção sob demanda.
@@ -3815,6 +3823,11 @@ remote.probe   { name }                          -> { jobId, command }   (job)
 remote.deploy  { name, source?, dest? }          -> { jobId, command }   (job)
 remote.command { name, kind, program?, port? }   -> { command, remoteTarget?, name, source[] }
                kind: run | debugServer | debugpy | shell        (PURO: nada roda)
+remote.discover {}                               -> { aliases: [{ name, source }], sources[] }
+               (0.132.0; SEM workspace; lê arquivo local, não conecta)
+remote.resolve  { host }                         -> { host, hostName?, user?, port?,
+                                                     identities[], proxyJump?, proxyCommand }
+               (0.132.0; SEM workspace; `ssh -G`, que não conecta)
 
 RemoteTarget   name · host · user? · port? (22) · identityFile? · deployDir? (~/kinein/<projeto>)
                — SEM senha, estruturalmente: `deny_unknown_fields`, e um teste reprova
@@ -3856,6 +3869,58 @@ campos; a ponte ganhou `toolchainSetKitRemote`) ou
 `runtimeController.submitShellInput`. **Não entrou na fatia 1 (dito):**
 workspace remoto, LSP do outro lado, mapeamento de caminhos, `sshd` local
 no gate — o `RemoteContext` inteiro do 28 §4 segue no `42` §P6.
+
+### Descobrir e explicar (`0.132.0`, fatia R0.5)
+
+Fonte: [`remote-ssh-ui-hud.md`](../especificacoes/remote-ssh-ui-hud.md) §6.1 e
+[`roadmap 48`](../roadmaps/48-arquitetura-executavel-da-serie-0.3.md) §8.1. A
+lacuna não era guardar o alias — `RemoteTarget.host` sempre aceitou um alias com
+user/port/identity ausentes. Era **descoberta e explicação**.
+
+**`remote.discover {}`** lê `~/.ssh/config` e, no ponto em que aparecem, os
+`Include` dele. Só um `Host` **concreto** vira alias selecionável: padrão com
+`*`, `?` ou `!` continua valendo na resolução do OpenSSH, mas não é algo que o
+usuário possa escolher. `Host "um dois"` é **um** padrão com espaço, recusado —
+não dois aliases inventados. Cada alias diz o arquivo que o declarou
+(`source`, com `~` no lugar da home), porque um alias de `config.d/` não é a
+mesma coisa que um do arquivo principal quando algo destoa. Limites explícitos,
+para um `Include` mal escrito não virar varredura de disco: 16 arquivos, 8
+níveis, 256 KiB por arquivo, 512 aliases, e `*` casa dentro de **uma** pasta.
+Máquina sem `~/.ssh/config` devolve lista vazia — "não há SSH configurado" é
+estado do produto, não erro do protocolo.
+
+**`remote.resolve { host }`** roda `ssh -G <host>`, que imprime a configuração
+**efetiva** sem abrir sessão, e devolve uma **allowlist**. O dump inteiro não
+sai: `localforward`, `sendenv` e o resto são descartados. `proxyJump` é uma
+especificação de host, segura de mostrar; de um `ProxyCommand` sai apenas
+`proxyCommand: true` — o texto é uma linha de comando arbitrária, que pode
+conter segredo, e por isso **nunca** é devolvido. `host` volta ecoado para a UI
+descartar resposta atrasada de outro alvo. O core recusa antes de rodar
+processo um host vazio, com espaço, com `@`, com controle, longo demais ou
+começando por `-` (o `ssh` leria como opção). Como `ssh -G` imprime valores
+efetivos, `port` vem resolvido (22 quando ninguém mudou) e `identities` são as
+que o `ssh` **tentaria** — não prova que alguma exista. Medido nesta máquina em
+2026-09-24: sem `~/.ssh/config`, `ssh -G localhost` imprime 90 linhas e lista
+**cinco** `identityfile` padrão, nenhuma presente no disco. Por isso a UI diz
+"que o ssh tentaria", e o core não filtra por existência: filtrar trocaria "o
+que o OpenSSH diz" por "o que nós achamos que vai funcionar". A UI não persiste um
+override que só repete o que o OpenSSH já faria: escolher um alias grava
+`{ name, host }` e nada mais.
+
+**Ressalva dita:** `ssh -G` avalia `Match exec` do config do próprio usuário,
+o que executa um comando local. Rodar síncrono (como git, probe e size já
+fazem) é aceito porque `ssh -G` é local e instantâneo; um `Match exec` lento
+atrasaria o `ssh` do usuário do mesmo jeito.
+
+**Não entrou nesta fatia (dito):** `remote.directories` — a navegação tipada da
+pasta remota. A §8.1 do 48 a propôs "se confirmado necessário no teste", e o
+teste desta fatia não chegou à escolha de pasta. O campo de caminho continua
+sendo o caminho.
+
+**Diferenças frente à proposta da §8.1**, registradas: `discover` devolve também
+`sources` (os arquivos lidos, para a UI dizer de onde veio); `resolve` ecoa
+`host` e troca o `proxy?` genérico por `proxyJump?` + `proxyCommand: bool`,
+porque juntar os dois num campo exigiria devolver o texto do comando.
 
 ### O workspace espelhado (`0.122.0`, P6 fatia 2)
 

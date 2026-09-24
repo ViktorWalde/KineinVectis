@@ -32,7 +32,16 @@ Item {
     property bool isMirror: false
     property bool syncing: false
     property string syncMessage: ""
+    // "Usar o SSH que ja' funciona" (R0.5): vem do core, nao de palpite.
+    property string discovery: "idle"
+    property bool discovering: false
+    property var aliases: []
+    property var aliasSources: []
+    property string resolving: ""
+    property var resolved: null
 
+    signal discoverRequested()
+    signal aliasChosen(string name)
     signal targetSelected(string name)
     signal newRequested()
     signal fieldEdited(string field, var value)
@@ -116,6 +125,20 @@ Item {
                 lastCommand: root.lastCommand
                 lastOutcome: root.lastOutcome
                 errorText: root.errorText
+            }
+
+            // ANTES do formulario, de proposito: se o `ssh <alias>` ja'
+            // funciona, o primeiro uso nao deve comecar por campo em branco.
+            RemoteDiscovery {
+                width: parent.width
+                discovery: root.discovery
+                discovering: root.discovering
+                aliases: root.aliases
+                aliasSources: root.aliasSources
+                resolving: root.resolving
+                resolved: root.resolved
+                onRefreshRequested: root.discoverRequested()
+                onAliasChosen: name => root.aliasChosen(name)
             }
 
             RemoteForm {

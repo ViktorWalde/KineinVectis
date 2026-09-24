@@ -286,3 +286,75 @@ pub struct RemoteStatusResult {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mirror: Option<RemoteMirror>,
 }
+
+/// One concrete `Host` alias found in the user's OpenSSH configuration
+/// (`0.132.0`, slice R0.5 of `especificacoes/remote-ssh-ui-hud.md`).
+///
+/// Discovery reads authorized LOCAL configuration only — it never scans the
+/// network and never runs `ssh` against a target.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteAlias {
+    /// The alias exactly as `ssh <name>` would take it (`pi`, `bancada`).
+    pub name: String,
+    /// Which file declared it, with `~` standing for the home (`~/.ssh/config`).
+    pub source: String,
+}
+
+/// Parameters for `remote.discover`.
+#[derive(Debug, Clone, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RemoteDiscoverParams {}
+
+/// Result of `remote.discover`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteDiscoverResult {
+    /// Concrete aliases, sorted and deduplicated by name. A pattern with `*`,
+    /// `?` or a negation never appears here: OpenSSH still applies it, but it
+    /// is not a target the user can pick.
+    pub aliases: Vec<RemoteAlias>,
+    /// The files that were read, in the order OpenSSH would read them.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sources: Vec<String>,
+}
+
+/// Parameters for `remote.resolve`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RemoteResolveParams {
+    /// The alias or hostname to ask OpenSSH about.
+    pub host: String,
+}
+
+/// Result of `remote.resolve`: the SAFE subset of `ssh -G <host>`.
+///
+/// Never the whole dump. `ssh -G` prints EFFECTIVE values, so defaults show up
+/// resolved (`port 22`); the UI must not persist an override that only repeats
+/// what OpenSSH would do anyway.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteResolveResult {
+    /// What was asked, echoed so a late answer can be matched to its request.
+    pub host: String,
+    /// Effective `HostName` — where the connection really goes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub host_name: Option<String>,
+    /// Effective `User`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    /// Effective `Port`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
+    /// Effective `IdentityFile` entries, in order. These are CANDIDATES that
+    /// OpenSSH will try; their presence is not proof that a key exists.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub identities: Vec<String>,
+    /// Effective `ProxyJump` — a host spec, safe to show.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proxy_jump: Option<String>,
+    /// There is a `ProxyCommand`. Its text is an arbitrary command line and is
+    /// deliberately NOT returned; the UI says a proxy exists and stops there.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub proxy_command: bool,
+}

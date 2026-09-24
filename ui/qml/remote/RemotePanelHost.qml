@@ -37,7 +37,17 @@ KvPanelFrame {
         isMirror: root.controller ? root.controller.isMirror : false
         syncing: root.controller ? root.controller.syncing : false
         syncMessage: root.controller ? root.controller.syncMessage : ""
+        discovery: root.controller ? root.controller.discovery : "idle"
+        discovering: root.controller ? root.controller.discovering : false
+        aliases: root.controller ? root.controller.aliases : []
+        aliasSources: root.controller ? root.controller.aliasSources : []
+        resolving: root.controller ? root.controller.resolving : ""
+        resolved: root.controller ? root.controller.resolved : null
 
+        onDiscoverRequested: root.controller.discover()
+        // Escolher um alias faz as DUAS coisas que a fatia promete: cria o
+        // alvo sem redigitar nada e pergunta ao ssh o que ele faria.
+        onAliasChosen: name => { root.controller.useAlias(name); root.controller.resolve(name); }
         onTargetSelected: name => root.controller.select(name)
         onNewRequested: root.controller.startNew()
         onFieldEdited: (field, value) => root.controller.editDraft(field, value)
