@@ -85,6 +85,7 @@ muda. O código do produto que um gate inspeciona continua em seu domínio norma
 | `verificar-shell.sh` | `scripts/verificar-shell.sh` | Portabilidade e defeitos estáticos dos scripts shell, inclusive dos gates. |
 | `verificar-appimage.sh` | `scripts/verificar-appimage.sh` | Invariantes baratas da distribuição; não gera o AppImage. |
 | `verificar-cpp.sh` | `scripts/verificar-cpp.sh` + `.clang-tidy`/formatação | Formatação e análise estática da ponte C++/Qt. |
+| `verificar-cpp-testes.sh` | `scripts/verificar-cpp-testes.sh`, `ui/tests/` e a biblioteca `kinein-ui-puro` | Testes C++ (Qt Test + CTest) das unidades que nao dependem de janela. |
 | `verificar-qml.sh` | `scripts/verificar-qml.sh` e `scripts/verificar_qml.py` | `qmllint` estrito no contexto tipado produzido pelo build; atualiza a cópia do QML antes de lintar e recusa `.qml` fora do módulo. |
 | `verificar-qml-fiacao.sh` | `scripts/verificar-qml-fiacao.sh` | Binding QML auto-referente. |
 | `verificar-qml-propriedades.sh` | wrapper `.sh` + `scripts/verificar_qml_propriedades.py` | Propriedade/sinal inexistente e bindings estruturalmente tortos. |
@@ -121,6 +122,15 @@ declarada, não comunicação entre gates:
   novo e a divergência de config entre descoberta e resolução, duas coisas que o
   `ssh` falso do gate não tinha como mostrar. Mesma separação do AppImage:
   `verificar-*` é a catraca hermética, `testar-*` é a prova cara.
+- `verificar-cpp-testes.sh` é o **primeiro** gate que mede o que o C++ decide.
+  Até 2026-09-24 o projeto media Rust e QML e não media C++ — sem decisão
+  registrada justificando, e com o `verificar-exercitacao.sh` anotando "zero
+  testes declarados" ao rodar o `ctest` real contra este próprio repositório. Ele
+  recusa se nenhum teste for declarado, porque `ctest` com zero testes sai 0 e o
+  gate passaria vazio. Só entra na biblioteca `kinein-ui-puro` o que é testável
+  sem janela: as 34 fontes do módulo QML ficam de fora porque seis cabeçalhos
+  registram tipo QML (`QML_ELEMENT`, inclusive o `CoreClient`), e tirá-los do
+  `qt_add_qml_module` quebraria o registro. A fronteira cresce por unidade.
 - `verificar-fiacao-ipc.sh` acha método roteado pelo formato do braço de
   `match` (`"dominio.metodo" => ...`) nos roteadores do core. Um roteador escrito
   de outro jeito continua funcionando e **some** da contagem e da lista canônica

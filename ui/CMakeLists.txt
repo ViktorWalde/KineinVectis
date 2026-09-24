@@ -9,6 +9,33 @@ if(DEFINED QT_KNOWN_POLICY_QTP0004)
     qt_policy(SET QTP0004 NEW)
 endif()
 
+# As unidades PURAS da ponte: sem GUI, sem QML, sem processo. Elas moram numa
+# biblioteca para que o executavel E os testes C++ usem o mesmo codigo — e' o
+# que torna o C++ deste projeto mensuravel (ver ui/tests/).
+#
+# O resto continua no `qt_add_qml_module` abaixo: seis cabecalhos registram tipo
+# QML (`QML_ELEMENT`, inclusive o `CoreClient`), e tira-los de la' quebraria o
+# registro. A fronteira cresce por unidade, nao por decreto.
+# OBJECT e nao STATIC, e isto foi MEDIDO em 2026-09-24: com `STATIC` o preset
+# `release-hardened` quebrava ao arquivar —
+#
+#   llvm-ar-18: error: 'cli_args.cpp.o': Unknown attribute kind (102)
+#               (Producer: 'LLVM21.1.8' Reader: 'LLVM 18.1.8')
+#
+# porque o release liga LTO (INTERPROCEDURAL_OPTIMIZATION), os objetos saem como
+# bitcode do Clang 21, e o `llvm-ar` que o CMake acha no sistema e' o 18. O
+# executavel nunca sofreu disso porque nada o arquiva.
+#
+# Biblioteca de OBJETOS nao passa por `ar` nem `ranlib`: os objetos vao direto
+# para quem consome. Resolve na raiz, em vez de fixar o caminho de um `llvm-ar`
+# especifico — que seria uma correcao que so' funciona nesta maquina.
+add_library(kinein-ui-puro OBJECT
+    src/cli_args.cpp
+)
+kinein_enable_strict_compiler_options(kinein-ui-puro)
+target_link_libraries(kinein-ui-puro PUBLIC Qt6::Core)
+target_include_directories(kinein-ui-puro PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
 qt_add_executable(kinein-vectis
     src/main.cpp
 )
@@ -671,7 +698,10 @@ set_source_files_properties(
 # The generated qmltyperegistrations.cpp includes headers by base name.
 target_include_directories(kinein-vectis PRIVATE src)
 
-target_link_libraries(kinein-vectis PRIVATE Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+target_link_libraries(kinein-vectis PRIVATE kinein-ui-puro Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
+# A versao vem do `project(... VERSION ...)`: escrita a mao no main.cpp, ela
+# ficou em 0.1.0 enquanto o projeto estava em 0.2.0, e nada reprovava.
+target_compile_definitions(kinein-vectis PRIVATE KINEIN_VERSAO="${PROJECT_VERSION}")
 
 # Keep the install tree AppDir/FHS-compatible. The Rust core is built and
 # installed by the AppImage recipe because it is not a CMake target.
@@ -704,3 +734,7 @@ install(
         "${CMAKE_SOURCE_DIR}/packaging/appimage/KINEIN_LICENSE_NOTICE.txt"
     DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/kinein-vectis"
 )
+
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

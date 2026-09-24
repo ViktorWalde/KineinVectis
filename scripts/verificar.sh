@@ -77,6 +77,10 @@ passo "scripts/verificar-cpp.sh" \
     "Valida formatacao e analise estatica do C++ da ponte/UI."
 scripts/verificar-cpp.sh
 
+passo "scripts/verificar-cpp-testes.sh" \
+    "Roda os testes C++ da UI pelo CTest; reprova se nenhum for declarado."
+bash scripts/verificar-cpp-testes.sh --preset "$preset_debug"
+
 passo "scripts/verificar-qml.sh" \
     "Executa o qmllint estrito no modulo QML usando os metadados do build."
 scripts/verificar-qml.sh
