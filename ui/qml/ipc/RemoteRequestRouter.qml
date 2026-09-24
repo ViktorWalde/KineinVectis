@@ -23,6 +23,28 @@ Item {
         function onResolveRequested(host) {
             root.coreClient.remoteResolve(host);
         }
+
+        function onParseRequested(command) {
+            root.coreClient.remoteParseCommand(command);
+        }
+    }
+
+    // O espelho e o sync (roadmap 48 §8.3), tambem filho do controller.
+    Connections {
+        target: root.remoteController ? root.remoteController.workspace : null
+
+        function onOpenRequested(name, path) {
+            root.coreClient.remoteOpen(name, path);
+        }
+
+        function onSyncRequested(direction, paths) {
+            root.coreClient.remoteSync(direction, paths);
+        }
+
+        // O espelho abre pelo caminho de sempre: e' um workspace local.
+        function onWorkspaceOpenRequested(path) {
+            root.coreClient.openWorkspace(path);
+        }
     }
 
     Connections {
@@ -64,17 +86,5 @@ Item {
             root.runtimeController.submitShellInput(command);
         }
 
-        function onOpenRequested(name, path) {
-            root.coreClient.remoteOpen(name, path);
-        }
-
-        function onSyncRequested(direction, paths) {
-            root.coreClient.remoteSync(direction, paths);
-        }
-
-        // O espelho abre pelo caminho de sempre: e' um workspace local.
-        function onWorkspaceOpenRequested(path) {
-            root.coreClient.openWorkspace(path);
-        }
     }
 }

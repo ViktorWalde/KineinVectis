@@ -43,9 +43,15 @@ Item {
     property bool canCopyId: false
     property string armedCommand: ""
     property string armedName: ""
+    // "Configurar servidor": a linha `ssh` colada e o que o core leu dela.
+    property string pasted: ""
+    property bool canParse: false
+    property var proposalSource: []
 
     signal discoverRequested()
     signal aliasChosen(string name)
+    signal pastedEdited(string text)
+    signal parseRequested()
     signal copyIdRequested()
     signal runArmedRequested()
     signal disarmRequested()
@@ -152,6 +158,18 @@ Item {
                 resolved: root.resolved
                 onRefreshRequested: root.discoverRequested()
                 onAliasChosen: name => root.aliasChosen(name)
+            }
+
+            // O segundo caminho da R0.5, depois de "usar o SSH que ja'
+            // funciona" e antes do formulario avancado.
+            RemoteNewHost {
+                width: parent.width
+                pasted: root.pasted
+                canParse: root.canParse
+                proposalSource: root.proposalSource
+                errorText: root.errorText
+                onPastedEdited: text => root.pastedEdited(text)
+                onParseRequested: root.parseRequested()
             }
 
             RemoteForm {

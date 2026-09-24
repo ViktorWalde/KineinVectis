@@ -1,5 +1,12 @@
 # 03 — Protocolo IPC
 
+> **0.134.0 (2026-09-24) — a linha `ssh` colada vira um perfil.**
+> `remote.parseCommand { command }` → `{ target, source[] }`. A pessoa cola a
+> linha que já usa (`ssh -p 2222 pi@10.0.0.7`, ou só `pi@host`) e o core a **lê**
+> — nunca a executa — devolvendo um perfil **proposto** com a procedência de
+> cada campo. Nada é salvo: quem grava é o `remote.save`, depois da conferência.
+> Não exige workspace.
+>
 > **0.133.0 (2026-09-24) — a falha do `ssh` vira um gesto.**
 > `event.remote.probed` ganha `failure: authentication | host | network | other`
 > — a MESMA causa que já escolhia a frase, agora tipada, para a UI oferecer um
@@ -2865,7 +2872,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 167 métodos roteados — a lista inteira
+## Os 168 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3019,6 +3026,7 @@ remote.deploy
 remote.discover
 remote.list
 remote.open
+remote.parseCommand
 remote.probe
 remote.remove
 remote.resolve
@@ -3859,6 +3867,8 @@ remote.deploy  { name, source?, dest? }          -> { jobId, command }   (job)
 remote.command { name, kind, program?, port? }   -> { command, remoteTarget?, name, source[] }
                kind: run | debugServer | debugpy | shell | copyId   (PURO: nada roda)
                copyId (0.133.0) -> `ssh-copy-id [-p P] [-i K] [user@]host`
+remote.parseCommand { command }                  -> { target: RemoteTarget, source[] }
+               (0.134.0; SEM workspace; LE' a linha, nunca a executa; nada e' salvo)
 remote.discover {}                               -> { aliases: [{ name, source }], sources[] }
                (0.132.0; SEM workspace; lê arquivo local, não conecta)
 remote.resolve  { host }                         -> { host, hostName?, user?, port?,
@@ -3974,6 +3984,34 @@ sendo o caminho.
 `sources` (os arquivos lidos, para a UI dizer de onde veio); `resolve` ecoa
 `host` e troca o `proxy?` genérico por `proxyJump?` + `proxyCommand: bool`,
 porque juntar os dois num campo exigiria devolver o texto do comando.
+
+### A linha colada vira um perfil (`0.134.0`, fatia R0.5)
+
+O segundo caminho da §6.1 da especificação — **configurar servidor** —, e ele
+não é um formulário. A ideia vem do `Remote-SSH: Add New SSH Host…` do VS Code
+(comparação na §3.1 daquele documento): a pessoa cola o comando que já usa.
+
+Cabe aqui sem quebrar a regra "a UI não monta linha de `ssh`": quem **fornece** a
+linha é o usuário, e quem a **interpreta** é o core. E ela é lida, nunca
+executada — texto entrando, perfil saindo.
+
+Entende `ssh [-p N] [-i chave] [-l usuário] [-o Port=/User=/IdentityFile=]
+[usuário@]host`, aceita só o destino, tolera um `$ ` colado junto do prompt e
+respeita aspas. O `name` é **proposto** a partir do host (o primeiro rótulo de um
+nome; um IPv4 inteiro vai inteiro, porque `192` não é nome de nada) e a UI deixa
+editar.
+
+**O que ele RECUSA, em vez de limpar em silêncio:**
+
+- qualquer `;`, `|`, `&`, crase, `$(`, `>` ou `<` — só fazem sentido para um
+  shell, e o que vem depois deles não é assunto de um perfil;
+- opção que o perfil não modela (`-J bastion`, `-o ProxyCommand=…`), **dizendo
+  qual** e mandando deixá-la no `~/.ssh/config` para escolher o alias aqui;
+- um comando remoto depois do destino, porque isso seria um comando, não um
+  perfil.
+
+Aceitar e ignorar prometeria um alvo que não se comporta como a linha colada —
+e a pessoa não saberia por quê.
 
 ### A falha vira um gesto (`0.133.0`, fatia R0.5)
 

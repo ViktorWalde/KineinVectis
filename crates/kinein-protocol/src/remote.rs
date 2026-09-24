@@ -345,6 +345,27 @@ pub struct RemoteDiscoverResult {
     pub sources: Vec<String>,
 }
 
+/// Parameters for `remote.parseCommand` (`0.134.0`).
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RemoteParseParams {
+    /// The `ssh` line the USER pasted. It is read, never executed.
+    pub command: String,
+}
+
+/// Result of `remote.parseCommand`: a PROPOSED profile.
+///
+/// Nothing is saved by parsing. The UI shows what was understood, lets the
+/// person correct it, and only then calls `remote.save`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteParseResult {
+    /// The profile the line describes.
+    pub target: RemoteTarget,
+    /// Where each field came from, so the person can check the reading.
+    pub source: Vec<String>,
+}
+
 /// Parameters for `remote.resolve`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

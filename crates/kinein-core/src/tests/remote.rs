@@ -575,3 +575,43 @@ fn resolve_repeats_what_ssh_complained_instead_of_inventing_a_summary() {
         erro.message
     );
 }
+
+/// `remote.parseCommand` (`0.134.0`): a linha colada vira proposta, e NADA e'
+/// executado nem salvo. O "configurar servidor" sem formulario da R0.5.
+#[test]
+fn parse_command_proposes_a_profile_without_running_or_saving_anything() {
+    let mut c = cenario("parse");
+    let fora = c.ok(
+        "remote.parseCommand",
+        json!({ "command": "ssh -p 2222 -i ~/.ssh/pi pi@192.168.0.42" }),
+    );
+    assert_eq!(fora["target"]["host"], "192.168.0.42");
+    assert_eq!(fora["target"]["user"], "pi");
+    assert_eq!(fora["target"]["port"], 2222);
+    assert_eq!(fora["target"]["identityFile"], "~/.ssh/pi");
+    assert!(
+        fora["source"].as_array().unwrap().len() >= 3,
+        "a procedencia de cada campo tem de ser dita: {fora}"
+    );
+    // Propor NAO e' salvar: o catalogo continua vazio ate' o `remote.save`.
+    let lista = c.ok("remote.list", json!({}));
+    assert!(lista["targets"].as_array().unwrap().is_empty(), "{lista}");
+
+    // O que um shell interpretaria e' recusado, nao limpo.
+    let r = c.rpc(
+        "remote.parseCommand",
+        json!({ "command": "ssh pi@h; rm -rf /" }),
+    );
+    assert_eq!(
+        r.error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidRequest
+    );
+    assert!(r.error.unwrap().message.contains("shell"));
+
+    // O que o perfil nao reproduz e' DITO, nao descartado em silencio.
+    let r = c.rpc(
+        "remote.parseCommand",
+        json!({ "command": "ssh -J bastion pi@h" }),
+    );
+    assert!(r.error.unwrap().message.contains("~/.ssh/config"));
+}

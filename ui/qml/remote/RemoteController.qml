@@ -50,15 +50,6 @@ Item {
     property string armedCommand: ""
     property string armedName: ""
 
-    // O workspace ESPELHADO (fatia 2): a pasta no alvo que se abre como
-    // espelho local, o espelho que o workspace aberto e' (null = comum), e
-    // a ultima sincronia. A UI abre o espelho pelo openWorkspace de sempre
-    // quando o pull do `remote.open` termina.
-    property string openPath: ""
-    property var mirror: null
-    property string pendingMirror: ""
-    property bool syncing: false
-    property string syncMessage: ""
 
     signal listRequested()
     signal saveRequested(var target)
@@ -71,9 +62,6 @@ Item {
     signal runConfigRequested(string name, string command)
     signal kitRemoteRequested(string remoteTarget, string debugServer)
     signal shellRequested(string command)
-    signal openRequested(string name, string path)
-    signal syncRequested(string direction, var paths)
-    signal workspaceOpenRequested(string path)
 
     visible: false
 
@@ -85,6 +73,25 @@ Item {
 
     RemoteSetupController {
         id: setupController
+
+        onProposalReady: function(target) { root.useProposal(target); }
+    }
+
+    // O espelho e o sync (roadmap 48 §8.3). Ele nao conhece o catalogo: o alvo
+    // chega por property e a selecao volta por sinal.
+    readonly property alias workspace: workspaceController
+
+    RemoteWorkspaceController {
+        id: workspaceController
+
+        targetName: root.selectedName
+        targetReady: root.selectedSaved
+        onSelectRequested: function(name) {
+            if (root.targetByName(name) !== null) {
+                root.select(name);
+            }
+        }
+        onCommandComposed: function(command) { root.lastCommand = command; }
     }
 
     onWorkspaceRootChanged: {
@@ -95,63 +102,9 @@ Item {
         errorText = "";
         lastCommand = "";
         lastOutcome = "";
-        syncing = false;
-        syncMessage = "";
+        workspace.reset();
         if (workspaceRoot !== "") {
             listRequested();
-        }
-    }
-
-    readonly property bool isMirror: mirror !== null && mirror !== undefined && mirror.name !== undefined
-
-    // O espelho que o workspace aberto e' (vem do workspace.open / status).
-    // Vazio = comum. Num espelho, o alvo dele fica selecionado assim que a
-    // lista chegar — e' o alvo com que Puxar/Empurrar falam.
-    function handleMirror(map) {
-        mirror = (map && map.name) ? map : null;
-        if (mirror !== null && targetByName(mirror.name) !== null) {
-            select(mirror.name);
-        }
-    }
-
-    function openFolder() {
-        if (!selectedSaved || openPath.trim() === "") {
-            return;
-        }
-        syncing = true;
-        syncMessage = "";
-        openRequested(selectedName, openPath.trim());
-    }
-
-    function handleOpenAccepted(jobId, command, mirrorPath) {
-        pendingMirror = mirrorPath;
-        lastCommand = command;
-    }
-
-    function sync(direction) {
-        if (!isMirror) {
-            return;
-        }
-        syncing = true;
-        syncMessage = "";
-        syncRequested(direction, []);
-    }
-
-    // O pull do `remote.open` abre o espelho; os demais so' contam.
-    function handleSynced(outcome) {
-        syncing = false;
-        const n = (outcome.changed || []).length;
-        if (outcome.success === true) {
-            syncMessage = outcome.direction === "pull"
-                ? qsTr("puxado de %1: %2 caminho(s)").arg(outcome.name).arg(n)
-                : qsTr("empurrado para %1: %2 caminho(s)").arg(outcome.name).arg(n);
-            if (pendingMirror !== "" && outcome.mirror === pendingMirror && outcome.direction === "pull") {
-                pendingMirror = "";
-                workspaceOpenRequested(outcome.mirror);
-            }
-        } else {
-            syncMessage = qsTr("sincronia falhou: %1").arg(outcome.error || "");
-            pendingMirror = "";
         }
     }
 
@@ -159,16 +112,32 @@ Item {
         return { name: "", host: "", user: "", port: 22, identityFile: "", deployDir: "" };
     }
 
-    // "Usar o SSH que ja' funciona": o alias vira alvo SEM copiar usuario,
-    // porta nem chave. port 0 e' descartado pela ponte, entao o perfil fica
-    // so' com name/host e o OpenSSH continua decidindo o resto — este e' o
-    // criterio de aceite da R0.5, nao um atalho de digitacao.
-    function useAlias(alias) {
-        const nome = (alias || "").trim();
-        if (nome === "") {
+
+    // TUDO que o setup propoe vira rascunho por aqui — o alias escolhido e a
+    // linha `ssh` colada sao a mesma operacao, e ter duas funcoes quase iguais
+    // era o comeco de duas verdades sobre o que um alvo novo e'.
+    //
+    // Campo ausente vira vazio, e porta ausente vira 0: a ponte descarta os
+    // dois, entao o perfil fica so' com o que a pessoa realmente disse e o
+    // OpenSSH continua decidindo o resto. Esse e' o criterio de aceite da R0.5.
+    //
+    // Salvar continua sendo gesto dela: ler nao e' gravar.
+    function useProposal(target) {
+        if (!target || !target.host) {
             return;
         }
-        draft = { name: nome, host: nome, user: "", port: 0, identityFile: "", deployDir: "" };
+        draft = { name: target.name || "", host: target.host,
+                  user: target.user || "", port: target.port || 0,
+                  identityFile: target.identityFile || "",
+                  deployDir: target.deployDir || "" };
+    }
+
+    // "Usar o SSH que ja' funciona": o alias e' nome e host, e nada mais.
+    function useAlias(alias) {
+        const nome = (alias || "").trim();
+        if (nome !== "") {
+            useProposal({ name: nome, host: nome });
+        }
     }
 
     function open() {
@@ -382,9 +351,8 @@ Item {
         if (method.indexOf("remote.") === 0) {
             probing = false;
             deploying = false;
-            syncing = false;
             pendingKind = "";
-            pendingMirror = "";
+            workspace.handleFailed();
             errorText = message;
         }
     }

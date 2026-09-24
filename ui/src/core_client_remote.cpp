@@ -115,6 +115,14 @@ void CoreClient::remoteResolve(const QString& host)
     sendRequest(QStringLiteral("remote.resolve"), QJsonObject{{QStringLiteral("host"), host}});
 }
 
+void CoreClient::remoteParseCommand(const QString& command)
+{
+    // A linha que a PESSOA colou. O core a LE' — nunca a executa — e devolve um
+    // perfil proposto; quem grava e' o remote.save, depois da conferencia.
+    sendRequest(QStringLiteral("remote.parseCommand"),
+                QJsonObject{{QStringLiteral("command"), command}});
+}
+
 bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& result)
 {
     if (method == QStringLiteral("remote.list") || method == QStringLiteral("remote.save") ||
@@ -134,6 +142,10 @@ bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& 
         emit remoteAliasesDiscovered(
             result.value(QStringLiteral("aliases")).toArray().toVariantList(),
             result.value(QStringLiteral("sources")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("remote.parseCommand")) {
+        emit remoteCommandParsed(result.toVariantMap());
         return true;
     }
     if (method == QStringLiteral("remote.resolve")) {

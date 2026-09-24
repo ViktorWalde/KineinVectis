@@ -32,11 +32,11 @@ KvPanelFrame {
         deployMessage: root.controller ? root.controller.deployMessage : ""
         lastCommand: root.controller ? root.controller.lastCommand : ""
         lastOutcome: root.controller ? root.controller.lastOutcome : ""
-        openPath: root.controller ? root.controller.openPath : ""
-        mirror: root.controller ? root.controller.mirror : null
-        isMirror: root.controller ? root.controller.isMirror : false
-        syncing: root.controller ? root.controller.syncing : false
-        syncMessage: root.controller ? root.controller.syncMessage : ""
+        openPath: root.controller ? root.controller.workspace.openPath : ""
+        mirror: root.controller ? root.controller.workspace.mirror : null
+        isMirror: root.controller ? root.controller.workspace.isMirror : false
+        syncing: root.controller ? root.controller.workspace.syncing : false
+        syncMessage: root.controller ? root.controller.workspace.syncMessage : ""
         discovery: root.controller ? root.controller.setup.discovery : "idle"
         discovering: root.controller ? root.controller.setup.discovering : false
         aliases: root.controller ? root.controller.setup.aliases : []
@@ -47,11 +47,16 @@ KvPanelFrame {
         canCopyId: root.controller ? root.controller.canCopyId : false
         armedCommand: root.controller ? root.controller.armedCommand : ""
         armedName: root.controller ? root.controller.armedName : ""
+        pasted: root.controller ? root.controller.setup.pasted : ""
+        canParse: root.controller ? root.controller.setup.canParse : false
+        proposalSource: root.controller ? root.controller.setup.proposalSource : []
 
         onDiscoverRequested: root.controller.setup.discover()
         // Escolher um alias faz as DUAS coisas que a fatia promete: cria o
         // alvo sem redigitar nada e pergunta ao ssh o que ele faria.
         onAliasChosen: name => { root.controller.useAlias(name); root.controller.setup.resolve(name); }
+        onPastedEdited: text => root.controller.setup.pasted = text
+        onParseRequested: root.controller.setup.parse()
         onCopyIdRequested: root.controller.copyId()
         onRunArmedRequested: root.controller.runArmed()
         onDisarmRequested: root.controller.disarm()
@@ -65,9 +70,9 @@ KvPanelFrame {
         onProbeRequested: root.controller.probe()
         onDeployRequested: root.controller.deploy()
         onCommandRequested: kind => root.controller.requestCommand(kind)
-        onOpenPathEdited: text => root.controller.openPath = text
-        onOpenFolderRequested: root.controller.openFolder()
-        onSyncRequested: direction => root.controller.sync(direction)
+        onOpenPathEdited: text => root.controller.workspace.openPath = text
+        onOpenFolderRequested: root.controller.workspace.openFolder()
+        onSyncRequested: direction => root.controller.workspace.sync(direction)
         onCloseRequested: root.dismissRequested()
     }
 }

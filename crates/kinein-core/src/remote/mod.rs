@@ -24,6 +24,7 @@
 
 pub mod discover;
 pub mod mirror;
+pub mod parse;
 mod store;
 
 use std::path::Path;

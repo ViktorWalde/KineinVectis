@@ -26,9 +26,17 @@ Item {
         onRunConfigRequested: function(name, command) { root.pedidos.push("runconfig:" + name + "=" + command); }
         onKitRemoteRequested: function(remoteTarget, debugServer) { root.pedidos.push("kit:" + remoteTarget + "=" + debugServer); }
         onShellRequested: function(command) { root.pedidos.push("shell:" + command); }
-        onOpenRequested: function(name, path) { root.pedidos.push("open:" + name + ":" + path); }
-        onSyncRequested: function(direction, paths) { root.pedidos.push("sync:" + direction + ":" + paths.length); }
-        onWorkspaceOpenRequested: function(path) { root.pedidos.push("workspace:" + path); }
+    }
+
+    // O espelho e o sync moraram no controller ate' 2026-09-24; agora sao do
+    // RemoteWorkspaceController, filho dele. O harness fala com a composicao
+    // REAL, nao com uma copia solta.
+    Connections {
+        target: c.workspace
+
+        function onOpenRequested(name, path) { root.pedidos.push("open:" + name + ":" + path); }
+        function onSyncRequested(direction, paths) { root.pedidos.push("sync:" + direction + ":" + paths.length); }
+        function onWorkspaceOpenRequested(path) { root.pedidos.push("workspace:" + path); }
     }
 
     Component.onCompleted: {
@@ -94,26 +102,26 @@ Item {
         // remote.open abre o espelho pelo workspace; o espelho seleciona o alvo;
         // Puxar/Empurrar so' num espelho; a falha vira texto.
         const antes = root.pedidos.length;
-        c.openFolder();
-        c.openPath = " /home/pi/sensor ";
-        c.sync("pull");
-        if (root.pedidos.length !== antes || c.syncing) failures += 262144;
-        c.openFolder();
-        if (root.pedidos[antes] !== "open:pi:/home/pi/sensor" || !c.syncing) failures += 524288;
-        c.handleOpenAccepted("j9", "rsync -az …", "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor");
-        c.handleSynced({ name: "pi", direction: "pull", success: true, changed: ["a", "b"], mirror: "/outro/lugar" });
-        if (root.pedidos.length !== antes + 1 || c.syncMessage.indexOf("2 caminho") < 0) failures += 1048576;
-        c.syncing = true;
-        c.handleSynced({ name: "pi", direction: "pull", success: true, changed: [], mirror: "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor" });
-        if (root.pedidos[antes + 1] !== "workspace:/home/u/.cache/kinein-vectis/remote/pi/abc/sensor" || c.pendingMirror !== "" || c.syncing) failures += 2097152;
-        c.handleMirror({ name: "pi", host: "192.168.0.42", path: "/home/pi/sensor", mirrorRoot: "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor" });
-        if (!c.isMirror || c.selectedName !== "pi") failures += 4194304;
-        c.sync("push");
-        if (root.pedidos[antes + 2] !== "sync:push:0" || !c.syncing) failures += 8388608;
-        c.handleSynced({ name: "pi", direction: "push", success: false, error: "connection closed", mirror: "x" });
-        if (c.syncing || c.syncMessage.indexOf("connection closed") < 0) failures += 16777216;
-        c.handleMirror({});
-        if (c.isMirror) failures += 33554432;
+        c.workspace.openFolder();
+        c.workspace.openPath = " /home/pi/sensor ";
+        c.workspace.sync("pull");
+        if (root.pedidos.length !== antes || c.workspace.syncing) failures += 262144;
+        c.workspace.openFolder();
+        if (root.pedidos[antes] !== "open:pi:/home/pi/sensor" || !c.workspace.syncing) failures += 524288;
+        c.workspace.handleOpenAccepted("j9", "rsync -az …", "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor");
+        c.workspace.handleSynced({ name: "pi", direction: "pull", success: true, changed: ["a", "b"], mirror: "/outro/lugar" });
+        if (root.pedidos.length !== antes + 1 || c.workspace.syncMessage.indexOf("2 caminho") < 0) failures += 1048576;
+        c.workspace.syncing = true;
+        c.workspace.handleSynced({ name: "pi", direction: "pull", success: true, changed: [], mirror: "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor" });
+        if (root.pedidos[antes + 1] !== "workspace:/home/u/.cache/kinein-vectis/remote/pi/abc/sensor" || c.workspace.pendingMirror !== "" || c.workspace.syncing) failures += 2097152;
+        c.workspace.handleMirror({ name: "pi", host: "192.168.0.42", path: "/home/pi/sensor", mirrorRoot: "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor" });
+        if (!c.workspace.isMirror || c.selectedName !== "pi") failures += 4194304;
+        c.workspace.sync("push");
+        if (root.pedidos[antes + 2] !== "sync:push:0" || !c.workspace.syncing) failures += 8388608;
+        c.workspace.handleSynced({ name: "pi", direction: "push", success: false, error: "connection closed", mirror: "x" });
+        if (c.workspace.syncing || c.workspace.syncMessage.indexOf("connection closed") < 0) failures += 16777216;
+        c.workspace.handleMirror({});
+        if (c.workspace.isMirror) failures += 33554432;
 
         // Remover; trocar de workspace esquece tudo.
         c.remove();

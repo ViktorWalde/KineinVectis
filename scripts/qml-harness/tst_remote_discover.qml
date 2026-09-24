@@ -33,6 +33,7 @@ Item {
 
         function onDiscoverRequested() { root.pedidos.push("discover"); }
         function onResolveRequested(host) { root.pedidos.push("resolve:" + host); }
+        function onParseRequested(command) { root.pedidos.push("parse:" + command); }
     }
 
     Component.onCompleted: {
@@ -93,6 +94,39 @@ Item {
 
         c.handleFailed("remote.probe", "sem chave");
         check(c.probing === false, "falha da sonda continua zerando a sonda");
+
+        // "Configurar servidor": a linha colada vira RASCUNHO, nunca alvo salvo.
+        const antesDoParse = pedidos.length;
+        check(!c.setup.canParse, "sem texto, nao ha' o que interpretar");
+        c.setup.pasted = "   ";
+        check(!c.setup.canParse, "so' espaco nao e' comando");
+        c.setup.parse();
+        check(pedidos.length === antesDoParse, "espaco em branco nao vira pedido");
+
+        c.setup.pasted = "  ssh -p 2222 pi@192.168.0.42  ";
+        check(c.setup.canParse, "com texto, da' para interpretar");
+        c.setup.parse();
+        check(pedidos[antesDoParse] === "parse:ssh -p 2222 pi@192.168.0.42",
+              "a linha vai aparada, sem o que a pessoa colou por acidente");
+
+        // Quem le' e' o core; o que volta e' proposta.
+        c.setup.handleParsed({
+            target: { name: "192.168.0.42", host: "192.168.0.42", user: "pi", port: 2222 },
+            source: ["porta do `-p` da linha colada", "host `192.168.0.42` da linha colada"]
+        });
+        check(c.draft.host === "192.168.0.42" && c.draft.user === "pi" && c.draft.port === 2222,
+              "a proposta preenche o rascunho");
+        check(c.setup.proposalSource.length === 2, "a procedencia fica na tela");
+        check(c.targets.length === 0, "LER NAO E' GRAVAR: nada foi salvo");
+
+        // Proposta sem host nao pode apagar o que a pessoa ja' tinha digitado.
+        c.setup.handleParsed({ target: { name: "x" }, source: [] });
+        check(c.draft.host === "192.168.0.42", "proposta incompleta nao destroi o rascunho");
+
+        // A recusa do core limpa a procedencia: ela era de outra leitura.
+        c.handleFailed("remote.parseCommand", "a linha tem `;`");
+        check(c.setup.proposalSource.length === 0 && c.errorText === "a linha tem `;`",
+              "a recusa aparece e a procedencia antiga sai");
 
         // A lista e' da MAQUINA, nao do projeto: trocar de workspace nao a perde.
         c.workspaceRoot = "/tmp/outro";

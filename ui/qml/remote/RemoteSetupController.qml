@@ -30,8 +30,17 @@ Item {
     // o mesmo fato. Duas comparacoes com a string divergiriam em silencio.
     readonly property bool discovering: root.discovery === "loading"
 
+    // "Configurar servidor" sem formulario (0.134.0): a pessoa cola a linha
+    // `ssh` que ja' usa e o core a interpreta. Ideia do Remote-SSH do VS Code,
+    // registrada na secao 3.1 da especificacao.
+    property string pasted: ""
+    property var proposalSource: []
+    readonly property bool canParse: root.pasted.trim() !== ""
+
     signal discoverRequested()
     signal resolveRequested(string host)
+    signal parseRequested(string command)
+    signal proposalReady(var target)
 
     visible: false
 
@@ -69,12 +78,32 @@ Item {
         resolving = "";
     }
 
+    function parse() {
+        if (!canParse) {
+            return;
+        }
+        proposalSource = [];
+        parseRequested(pasted.trim());
+    }
+
+    // O core devolveu a leitura. NADA foi salvo: a proposta vai para o
+    // rascunho, a procedencia fica na tela, e quem grava e' a pessoa.
+    function handleParsed(result) {
+        if (!result || !result.target) {
+            return;
+        }
+        proposalSource = result.source || [];
+        proposalReady(result.target);
+    }
+
     // Cada falha no seu estado: descobrir falhar nao diz nada sobre resolver.
     function handleFailed(method) {
         if (method === "remote.discover") {
             discovery = "failed";
         } else if (method === "remote.resolve") {
             resolving = "";
+        } else if (method === "remote.parseCommand") {
+            proposalSource = [];
         }
     }
 }

@@ -20,6 +20,10 @@ Item {
             root.remoteController.setup.handleResolved(summary);
         }
 
+        function onRemoteCommandParsed(proposal) {
+            root.remoteController.setup.handleParsed(proposal);
+        }
+
         function onRemoteTargetsResolved(targets) {
             root.remoteController.handleTargets(targets);
         }
@@ -41,15 +45,15 @@ Item {
         }
 
         function onRemoteOpenAccepted(jobId, command, mirror) {
-            root.remoteController.handleOpenAccepted(jobId, command, mirror);
+            root.remoteController.workspace.handleOpenAccepted(jobId, command, mirror);
         }
 
         function onRemoteSynced(outcome) {
-            root.remoteController.handleSynced(outcome);
+            root.remoteController.workspace.handleSynced(outcome);
         }
 
         function onRemoteMirrorChanged(mirror) {
-            root.remoteController.handleMirror(mirror);
+            root.remoteController.workspace.handleMirror(mirror);
         }
 
         function onRequestFailed(method, message, code) {

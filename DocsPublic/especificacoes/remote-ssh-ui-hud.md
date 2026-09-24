@@ -446,8 +446,8 @@ entrar depois de medir colisões e frequência.
 
 ### R0.5 — entrada simples e descoberta
 
-> **Parcialmente implementada em 2026-09-24.** Três dos seis itens entraram, nos
-> protocolos `0.132.0` e `0.133.0`. Registro em
+> **Parcialmente implementada em 2026-09-24.** Quatro dos seis itens entraram,
+> nos protocolos `0.132.0`, `0.133.0` e `0.134.0`. Registro em
 > [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.93–§7.94; contratos
 > em [`03-ipc-protocol`](../arquitetura/03-ipc-protocol.md).
 
@@ -464,6 +464,10 @@ entrar depois de medir colisões e frequência.
   `remote.command { kind: copyId }` compõe o `ssh-copy-id` com o `-p`/`-i` do
   perfil. O botão aparece no veredito, onde a causa foi explicada; compor **não**
   roda, e a linha fica visível até um segundo gesto. Fecha o defeito nº 14 da §3;
+- **feito (`0.134.0`):** "configurar servidor" sem formulário — `RemoteNewHost`
+  aceita a linha `ssh` colada e `remote.parseCommand` a lê, devolvendo um perfil
+  proposto com a procedência de cada campo. Ler não é gravar: o resultado vai
+  para o rascunho e quem salva é a pessoa. É a ideia da §3.1 vinda do VS Code;
 - **pendente:** iniciar seleção da pasta na home remota;
 - **pendente:** contrato tipado para listar diretórios. A §8.1 do roadmap 48 o
   condicionou a "teste provar que a alternativa não atende", e o teste desta

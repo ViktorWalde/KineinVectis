@@ -13,7 +13,10 @@
 
 use std::process::Command;
 
-use kinein_protocol::{JsonRpcResponse, RemoteDiscoverParams, RemoteResolveParams};
+use kinein_protocol::{
+    JsonRpcResponse, RemoteDiscoverParams, RemoteParseParams, RemoteParseResult,
+    RemoteResolveParams,
+};
 use serde_json::{Value, json};
 
 use crate::Core;
@@ -44,6 +47,7 @@ impl Core {
         match method {
             "remote.discover" => Some(self.remote_discover_response(request_id, params)),
             "remote.resolve" => Some(self.remote_resolve_response(request_id, params)),
+            "remote.parseCommand" => Some(Self::remote_parse_response(request_id, params)),
             _ => None,
         }
     }
@@ -74,6 +78,29 @@ impl Core {
             );
         };
         JsonRpcResponse::success(request_id, json!(remote::discover::aliases(&home)))
+    }
+
+    /// `remote.parseCommand` (`0.134.0`): a linha `ssh` colada vira um perfil
+    /// PROPOSTO.
+    ///
+    /// NAO exige workspace e NAO salva nada: e' texto entrando, proposta
+    /// saindo. Quem grava e' o `remote.save`, depois de a pessoa conferir. E
+    /// nao executa a linha — ela e' lida, nunca rodada.
+    fn remote_parse_response(request_id: Option<Value>, params: Option<&Value>) -> JsonRpcResponse {
+        let parsed = match parse_params::<RemoteParseParams>(
+            request_id.as_ref(),
+            params,
+            "remote.parseCommand requer command",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        match remote::parse::parse_ssh_command(&parsed.command) {
+            Ok((target, source)) => {
+                JsonRpcResponse::success(request_id, json!(RemoteParseResult { target, source }))
+            }
+            Err(motivo) => falha(request_id, motivo),
+        }
     }
 
     /// `remote.resolve` (`0.132.0`): o que o OpenSSH FARIA com este host.
