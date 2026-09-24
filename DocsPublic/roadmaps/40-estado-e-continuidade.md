@@ -135,9 +135,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.131.0
-testes      853 Rust aprovados; 62 harnesses QML (medicao de 2026-09-24, §7.91)
-metodos     165 IPC roteados, 56 eventos (terminal.selectAll/copySelection em 0.131.0;
+protocolo   0.132.0
+testes      864 Rust aprovados; 63 harnesses QML (medicao de 2026-09-24, §7.93)
+metodos     167 IPC roteados, 56 eventos (remote.discover/resolve em 0.132.0;
+            terminal.selectAll/copySelection em 0.131.0;
             terminal.clearScrollback em 0.130.0;
             datasource.destroy e event.datasource.destroyed em 0.129.0;
             run.stdin e event.run.* sairam em 0.125.0;
@@ -5285,3 +5286,82 @@ Gate verde **não é prova humana**. Continuam pendentes para fechar a 0.3.0:
 dogfooding do autor em shell/TUI, um SSH real e a auditoria de acessibilidade.
 Nada foi commitado, marcado com tag, empacotado em AppImage nem publicado; a
 versão comercial permanece `0.2.0`.
+
+### 7.93 Remote: descobrir e explicar o SSH que a maquina ja' tem — 2026-09-24, protocolo 0.132.0
+
+Primeira fatia da frente Remote depois do terminal: a **R0.5** da
+`especificacoes/remote-ssh-ui-hud.md`, na parte que o roadmap 48 §8.1 chamou de
+"a lacuna e' descoberta e explicacao". O catalogo sempre soube guardar um alias
+em `RemoteTarget.host` com user/port/identity ausentes; ninguem descobria os
+aliases nem dizia o que o OpenSSH faria com eles, e por isso "usar o SSH que ja'
+funciona" comecava com um formulario em branco.
+
+**Contratos.** `remote.discover {}` le' `~/.ssh/config` e os `Include` dele, no
+ponto em que aparecem, e devolve `{ aliases: [{ name, source }], sources[] }`.
+So' `Host` concreto e' alias selecionavel; curinga continua valendo na resolucao
+do OpenSSH. Limites explicitos (16 arquivos, 8 niveis, 256 KiB, 512 aliases,
+`*` dentro de uma pasta) para um `Include` mal escrito nao virar varredura.
+`remote.resolve { host }` roda `ssh -G`, que imprime a configuracao efetiva sem
+conectar, e devolve a allowlist. Os dois sao os unicos metodos de `remote.*`
+que **nao** exigem workspace: a pergunta e' sobre a maquina, e o primeiro uso
+precisa dela antes de existir alvo salvo.
+
+**Seguranca, medida em teste.** O texto de um `ProxyCommand` nunca sai do core —
+so' `proxyCommand: true`; um teste serializa a resposta e reprova se o segredo
+ou o nome do programa aparecerem. Host comecando por `-` e' recusado ANTES de
+rodar processo (o `ssh` leria como opcao), e o teste prova que nenhum processo
+rodou. O que nao esta' na allowlist (`localforward`, `sendenv`) e' descartado.
+
+**Dois achados da propria fatia.** (1) `Host "um dois"` era quebrado em dois
+aliases que nao existem, porque a divisao por espaco vinha antes de tirar as
+aspas; agora e' UM padrao, recusado por ter espaco — melhor nao oferecer do que
+oferecer invencao. (2) Em 2026-09-24, com a descoberta ainda
+dentro dele, o `handlers/remote.rs` chegou a 561 linhas e a catraca de
+arquitetura reprovou; a de duplicacao QML pegou
+`discovery === "loading"` em dois donos. As duas estavam certas: a descoberta
+virou `handlers/remote_discover.rs` (mesmo corte que separou o
+`remote_mirror.rs`, por responsabilidade e nao por tamanho) e o
+`RemoteController` passou a ser o dono unico de `discovering`.
+
+**Na tela.** `RemoteDiscovery` fica ANTES do formulario: os aliases com a origem
+de cada um, e o resumo `o ssh vai em user@host:porta` medido por `ssh -G`.
+Escolher um alias grava `{ name, host }` e nada mais — porta 0 e campos vazios
+sao descartados pela ponte, entao o perfil nao repete o que o `~/.ssh/config`
+ja' diz. Esse e' o criterio de aceite da R0.5.
+
+**Correcao de documentacao encontrada no caminho.** A secao "Os N metodos
+roteados — a lista inteira" do `03-ipc-protocol` dizia 143 e listava 149 de 167:
+faltavam o dominio `remote.*` inteiro, `coverage.lines/run`,
+`debug.disassemble/readMemory/scopes`, `python.stubs` e `serial.files`. Foi
+regenerada por medicao, com o mesmo codigo do `verificar-fiacao-ipc.sh`, e agora
+bate exatamente com o core.
+
+**Terceiro achado, e o mais grave — no proprio gate.** O `verificar-qml.sh`
+reprovou com "Could not find property" em propriedades que EXISTIAM na arvore.
+Causa: o `qmllint` le' as COPIAS do QML no diretorio de build, e o `verificar.sh`
+o roda ANTES do build que atualiza essas copias. O comentario no script apenas
+pedia que quem rodasse se lembrasse de reconfigurar. O lado visivel e' reprovar
+a toa; o lado perigoso e' o oposto — **passar lintando QML velho**, ou seja, o
+gate afirmando verde sobre codigo que nao e' o do commit. Corrigido: o script
+refaz a copia, DIZ que refez, e compara conteudo (nao mtime, porque o CMake
+copia so' o que difere) para provar que leu a arvore de agora. Copia e' cache,
+entao refazer e' preparo; o que ele passou a RECUSAR e' o defeito de verdade —
+um `.qml` na arvore fora do `ui/CMakeLists.txt`. Isso revelou o
+`EditorUnsavedChangesDialog.qml`: 6 KB versionados desde `b506d87`, fora do
+modulo, nunca compilados nem lintados, e sem uma referencia em todo o repo.
+Nao foi removido: entrar no modulo ou sair da arvore e' decisao do autor, e por
+isso esta' como debito DECLARADO no script. Provas negativas rodadas: mutar o
+conteudo de um `.qml` e criar um `.qml` fora do modulo — a primeira e' absorvida
+pelo refresh, a segunda reprova com exit 1.
+
+**Provas:** 864 testes Rust (11 novos: 7 puros de parser/validacao e 4 de
+despacho com `ssh` falso) e 63 harnesses QML. Fiacao IPC de ponta a ponta com
+167 metodos, todos com dono. Gate completo verde.
+
+**Nao entrou, e esta' dito:** `remote.directories` — a navegacao tipada da pasta
+remota. A §8.1 do 48 a condicionou a "teste provar que a alternativa nao
+atende", e o teste desta fatia parou antes da escolha de pasta. Tambem
+pendentes da R0.5: o terminal guiado para primeiro acesso/`ssh-copy-id` e comecar
+a selecao na home remota. **Nao ha' prova com SSH real**: os testes usam um
+`ssh` falso e um `~/.ssh/config` de mentira. O dogfooding com uma maquina de
+verdade continua pendente, aqui e na fatia do terminal.

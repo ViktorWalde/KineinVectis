@@ -25,6 +25,11 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
 - Provado em automação com Bash e Vim reais: Selecionar Tudo copia o histórico
   fora da tela, a rolagem preserva a seleção, a TUI copia só a tela alternativa
   e `Ctrl+C` interrompe de imediato mesmo com seleção ativa.
+- Protocolo `0.132.0` — Remote: o painel encontra os aliases do seu
+  `~/.ssh/config` (inclusive os de `Include`), diz de qual arquivo cada um veio
+  e mostra o que o `ssh` faria com ele (`o ssh vai em user@host:porta`, medido
+  por `ssh -G`, sem conectar). Escolher um alias cria o alvo sem repetir
+  usuário, porta nem chave. O texto de um `ProxyCommand` não sai do core.
 - Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI, um SSH
   real e a auditoria de acessibilidade. A série 0.3 completa não está entregue;
   planos de CLI/pastas/bordas não são features já implementadas.

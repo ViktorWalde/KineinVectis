@@ -694,6 +694,20 @@ por chave — copie a sua com `ssh-copy-id usuario@host` uma vez; o que o
 `ssh` do sistema precisar perguntar (o host key novo, a senha da chave),
 pergunta no terminal da IDE. A IDE nunca digita nem guarda senha.
 
+**Se `ssh <alias>` já funciona na sua máquina, não preencha nada.** No topo do
+painel, **Usar o SSH que já funciona** lista os aliases concretos do seu
+`~/.ssh/config` — e os dos arquivos que ele inclui —, dizendo de qual arquivo
+cada um veio. Clique num deles: a IDE cria o alvo com o nome e o host do alias,
+**sem** copiar usuário, porta nem caminho de chave, e mostra o que o `ssh`
+realmente faria (`o ssh vai em pi@192.168.0.42:2222`, mais quantas chaves ele
+tentaria e se há salto/proxy). Quem decide continua sendo o seu
+`~/.ssh/config` — a IDE só repete o que perguntou ao `ssh`. Nada disso conecta:
+é leitura do arquivo local mais um `ssh -G`, que imprime a configuração efetiva
+sem abrir sessão. Um `Host *` ou com curinga não aparece como alvo escolhível,
+porque não é um destino — mas continua valendo na resolução do OpenSSH. O
+formulário abaixo continua inteiro para **configurar um servidor** que ainda não
+está no seu `~/.ssh/config`.
+
 ```text
 Sondar          ssh -o BatchMode=yes -o ConnectTimeout=5 … 'uname -m; uname -sr; command -v …'
                 -> arquitetura (aarch64), kernel e o que o alvo TEM: gdbserver, python3, rsync
