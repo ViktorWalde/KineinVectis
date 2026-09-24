@@ -183,6 +183,7 @@ set_source_files_properties(qml/coverage/CoverageController.qml PROPERTIES QT_RE
 set_source_files_properties(qml/ipc/RemoteEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS RemoteEventRouter.qml)
 set_source_files_properties(qml/ipc/RemoteRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS RemoteRequestRouter.qml)
 set_source_files_properties(qml/remote/RemoteController.qml PROPERTIES QT_RESOURCE_ALIAS RemoteController.qml)
+set_source_files_properties(qml/remote/RemoteSetupController.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSetupController.qml)
 set_source_files_properties(qml/remote/RemoteList.qml PROPERTIES QT_RESOURCE_ALIAS RemoteList.qml)
 set_source_files_properties(qml/remote/RemoteDiscovery.qml PROPERTIES QT_RESOURCE_ALIAS RemoteDiscovery.qml)
 set_source_files_properties(qml/remote/RemoteForm.qml PROPERTIES QT_RESOURCE_ALIAS RemoteForm.qml)
@@ -478,6 +479,7 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/RemoteEventRouter.qml
         qml/ipc/RemoteRequestRouter.qml
         qml/remote/RemoteController.qml
+        qml/remote/RemoteSetupController.qml
         qml/remote/RemoteList.qml
         qml/remote/RemoteDiscovery.qml
         qml/remote/RemoteForm.qml

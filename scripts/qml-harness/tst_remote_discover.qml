@@ -24,29 +24,35 @@ Item {
 
     RemoteController {
         id: c
+    }
 
-        onDiscoverRequested: root.pedidos.push("discover")
-        onResolveRequested: function(host) { root.pedidos.push("resolve:" + host); }
+    // O setup e' filho da fachada (roadmap 48 §8.3): o harness fala com ele
+    // ATRAVES da composicao real, nao com uma copia solta.
+    Connections {
+        target: c.setup
+
+        function onDiscoverRequested() { root.pedidos.push("discover"); }
+        function onResolveRequested(host) { root.pedidos.push("resolve:" + host); }
     }
 
     Component.onCompleted: {
-        check(c.discovery === "idle" && c.aliases.length === 0,
+        check(c.setup.discovery === "idle" && c.setup.aliases.length === 0,
               "sem pedir nada, a IDE nao pode afirmar nada sobre a maquina");
 
-        c.discover();
-        check(c.discovery === "loading" && c.discovering && pedidos.length === 1,
+        c.setup.discover();
+        check(c.setup.discovery === "loading" && c.setup.discovering && pedidos.length === 1,
               "descobrir pede uma vez e anuncia que esta' carregando");
-        c.discover();
+        c.setup.discover();
         check(pedidos.length === 1, "pedido em curso nao duplica");
 
-        c.handleAliases([{ name: "pi", source: "~/.ssh/config" },
+        c.setup.handleAliases([{ name: "pi", source: "~/.ssh/config" },
                          { name: "bancada", source: "~/.ssh/config.d/10-lab.conf" }],
                         ["~/.ssh/config", "~/.ssh/config.d/10-lab.conf"]);
-        check(c.discovery === "ready" && !c.discovering && c.aliases.length === 2,
+        check(c.setup.discovery === "ready" && !c.setup.discovering && c.setup.aliases.length === 2,
               "a lista vem do core e o carregamento termina");
-        check(c.aliases[1].source === "~/.ssh/config.d/10-lab.conf",
+        check(c.setup.aliases[1].source === "~/.ssh/config.d/10-lab.conf",
               "a origem de cada alias tem de ser visivel");
-        check(c.aliasSources.length === 2, "os arquivos lidos sao ditos");
+        check(c.setup.aliasSources.length === 2, "os arquivos lidos sao ditos");
 
         // O CRITERIO DE ACEITE: se `ssh pi` ja' funciona, o alvo nasce sem
         // usuario, porta nem chave — quem decide continua sendo o OpenSSH.
@@ -58,39 +64,39 @@ Item {
         c.useAlias("   ");
         check(c.draft.name === "pi", "alias vazio nao apaga o rascunho");
 
-        c.resolve("pi");
-        check(c.resolving === "pi" && pedidos[1] === "resolve:pi", "resolver pede pelo host");
-        c.resolve("pi");
+        c.setup.resolve("pi");
+        check(c.setup.resolving === "pi" && pedidos[1] === "resolve:pi", "resolver pede pelo host");
+        c.setup.resolve("pi");
         check(pedidos.length === 2, "o mesmo host em curso nao duplica");
-        c.resolve("");
+        c.setup.resolve("");
         check(pedidos.length === 2, "host vazio nao vira pedido");
 
         // Resposta de outro host nao pode virar o resumo deste.
-        c.handleResolved({ host: "bancada", user: "outro", port: 22 });
-        check(c.resolved === null && c.resolving === "pi", "resumo de outro host foi aceito");
-        c.handleResolved({ host: "pi", user: "pi", hostName: "192.168.0.42",
+        c.setup.handleResolved({ host: "bancada", user: "outro", port: 22 });
+        check(c.setup.resolved === null && c.setup.resolving === "pi", "resumo de outro host foi aceito");
+        c.setup.handleResolved({ host: "pi", user: "pi", hostName: "192.168.0.42",
                            port: 2222, identities: ["~/.ssh/pi"], proxyCommand: true });
-        check(c.resolving === "" && c.resolved.hostName === "192.168.0.42", "o resumo chega");
-        check(c.resolved.proxyCommand === true && c.resolved.proxyJump === undefined,
+        check(c.setup.resolving === "" && c.setup.resolved.hostName === "192.168.0.42", "o resumo chega");
+        check(c.setup.resolved.proxyCommand === true && c.setup.resolved.proxyJump === undefined,
               "existe proxy, e o texto do comando nao vem do core");
 
         // Cada falha no seu estado: descobrir falhar nao pode dizer que a
         // sonda parou, nem o contrario.
         c.probing = true;
         c.handleFailed("remote.discover", "sem HOME");
-        check(c.discovery === "failed" && c.errorText === "sem HOME", "falha da descoberta");
+        check(c.setup.discovery === "failed" && c.errorText === "sem HOME", "falha da descoberta");
         check(c.probing === true, "falha da descoberta nao mexe na sonda");
 
-        c.resolve("bancada");
+        c.setup.resolve("bancada");
         c.handleFailed("remote.resolve", "o `ssh` nao aceitou `bancada`");
-        check(c.resolving === "" && c.discovery === "failed", "falha ao resolver libera o gesto");
+        check(c.setup.resolving === "" && c.setup.discovery === "failed", "falha ao resolver libera o gesto");
 
         c.handleFailed("remote.probe", "sem chave");
         check(c.probing === false, "falha da sonda continua zerando a sonda");
 
         // A lista e' da MAQUINA, nao do projeto: trocar de workspace nao a perde.
         c.workspaceRoot = "/tmp/outro";
-        check(c.aliases.length === 2, "trocar de projeto nao apaga o que a maquina tem");
+        check(c.setup.aliases.length === 2, "trocar de projeto nao apaga o que a maquina tem");
 
         Qt.exit(failures === 0 ? 0 : 1);
     }

@@ -13,11 +13,11 @@ Item {
         target: root.coreClient
 
         function onRemoteAliasesDiscovered(aliases, sources) {
-            root.remoteController.handleAliases(aliases, sources);
+            root.remoteController.setup.handleAliases(aliases, sources);
         }
 
         function onRemoteHostResolved(summary) {
-            root.remoteController.handleResolved(summary);
+            root.remoteController.setup.handleResolved(summary);
         }
 
         function onRemoteTargetsResolved(targets) {

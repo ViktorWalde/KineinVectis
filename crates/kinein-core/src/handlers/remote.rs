@@ -12,10 +12,9 @@ use std::{
 };
 
 use kinein_protocol::{
-    JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, RemoteCommandKind,
-    RemoteCommandParams, RemoteCommandResult, RemoteDeployParams, RemoteDeployedEvent,
-    RemoteJobResult, RemoteListParams, RemoteListResult, RemoteNameParams, RemoteProbedEvent,
-    RemoteSaveParams, RemoteTarget,
+    JobRisk, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse, RemoteDeployParams,
+    RemoteDeployedEvent, RemoteJobResult, RemoteListParams, RemoteListResult, RemoteNameParams,
+    RemoteProbedEvent, RemoteSaveParams, RemoteTarget,
 };
 use serde_json::{Value, json};
 
@@ -39,7 +38,7 @@ pub(super) fn falha(request_id: Option<Value>, mensagem: impl Into<String>) -> J
     )
 }
 
-fn alvo_ou_falha(
+pub(super) fn alvo_ou_falha(
     root: &Path,
     request_id: Option<&Value>,
     name: &str,
@@ -82,7 +81,6 @@ impl Core {
             "remote.remove" => Some(self.remote_remove_response(request_id, params)),
             "remote.probe" => Some(self.remote_probe_response(request_id, params)),
             "remote.deploy" => Some(self.remote_deploy_response(request_id, params)),
-            "remote.command" => Some(self.remote_command_response(request_id, params)),
             _ => None,
         }
     }
@@ -227,6 +225,9 @@ impl Core {
                     Ok(_) => remote::describe_ssh_failure(&target, &stderr),
                 })
             };
+            // Mesma causa que escolheu a frase, agora tipada: a UI oferece o
+            // gesto certo sem ler a sentenca.
+            let failure = (!sucesso).then(|| remote::classify_ssh_failure(&stderr));
             if let Some(erro) = &error {
                 ctx.emit_output(erro);
             }
@@ -236,6 +237,7 @@ impl Core {
                     job_id: ctx.id().to_owned(),
                     name,
                     success: sucesso,
+                    failure,
                     arch,
                     kernel,
                     tools,
@@ -393,87 +395,5 @@ impl Core {
             program,
             use_rsync,
         })
-    }
-
-    /// `remote.command { name, kind, program?, port? }` -> a linha `ssh …`
-    /// pronta para `run.start` (`sh -c`) e o `host:porta` do kit. PURO.
-    fn remote_command_response(
-        &self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let parsed = match parse_params::<RemoteCommandParams>(
-            request_id.as_ref(),
-            params,
-            "remote.command requer name e kind (run | debugServer | debugpy | shell)",
-        ) {
-            Ok(parsed) => parsed,
-            Err(response) => return *response,
-        };
-        let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "remote.command");
-        };
-        let target = match alvo_ou_falha(&root, request_id.as_ref(), &parsed.name) {
-            Ok(target) => target,
-            Err(response) => return *response,
-        };
-        let projeto = root.file_name().map_or_else(
-            || "projeto".to_owned(),
-            |n| n.to_string_lossy().into_owned(),
-        );
-        let mut source = vec![format!("alvo `{}` de .kinein/remotes.json", target.name)];
-        let program = match (
-            &parsed.kind,
-            parsed.program.as_deref().filter(|p| !p.trim().is_empty()),
-        ) {
-            (RemoteCommandKind::Shell, _) => String::new(),
-            (_, Some(p)) if p.starts_with('/') || p.starts_with('~') => {
-                source.push("programa: caminho no alvo, como dado".to_owned());
-                p.to_owned()
-            }
-            (_, Some(p)) => {
-                source.push(format!("programa: {p} dentro de deployDir"));
-                format!("{}/{p}", remote::deploy_dir(&target, &projeto))
-            }
-            (_, None) => {
-                source.push("programa: <binario> dentro de deployDir — edite".to_owned());
-                format!("{}/<binario>", remote::deploy_dir(&target, &projeto))
-            }
-        };
-        let port = parsed.port.unwrap_or(match parsed.kind {
-            RemoteCommandKind::Debugpy => remote::DEBUGPY_PORT,
-            _ => remote::GDBSERVER_PORT,
-        });
-        let remoto = remote::remote_command(parsed.kind, &program, port);
-        let command = remote::ssh_shell_line(&target, remoto.as_deref());
-        let (name, remote_target) = match parsed.kind {
-            RemoteCommandKind::Run => (format!("Rodar em {}", target.name), None),
-            RemoteCommandKind::DebugServer => {
-                source.push(format!(
-                    "gdbserver na porta {port}; o kit recebe remoteTarget"
-                ));
-                (
-                    format!("gdbserver em {}", target.name),
-                    Some(format!("{}:{port}", target.host)),
-                )
-            }
-            RemoteCommandKind::Debugpy => {
-                source.push(format!("debugpy na porta {port}; attach por host:porta"));
-                (
-                    format!("debugpy em {}", target.name),
-                    Some(format!("{}:{port}", target.host)),
-                )
-            }
-            RemoteCommandKind::Shell => (format!("Shell em {}", target.name), None),
-        };
-        JsonRpcResponse::success(
-            request_id,
-            json!(RemoteCommandResult {
-                command,
-                remote_target,
-                name,
-                source
-            }),
-        )
     }
 }

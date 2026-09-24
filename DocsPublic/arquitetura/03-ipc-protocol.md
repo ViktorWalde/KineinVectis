@@ -1,5 +1,13 @@
 # 03 — Protocolo IPC
 
+> **0.133.0 (2026-09-24) — a falha do `ssh` vira um gesto.**
+> `event.remote.probed` ganha `failure: authentication | host | network | other`
+> — a MESMA causa que já escolhia a frase, agora tipada, para a UI oferecer um
+> gesto sem ler a sentença. `remote.command` ganha `kind: copyId`, que **compõe**
+> `ssh-copy-id [-p P] [-i K] [user@]host` com o `-p`/`-i` do perfil. Puro como
+> os outros: nada roda. A UI mostra a linha e só a executa com um gesto
+> explícito — copiar chave nunca acontece em silêncio.
+>
 > **0.132.0 (2026-09-24) — descobrir e explicar o SSH que a máquina já tem.**
 > `remote.discover {}` → `{ aliases: [{ name, source }], sources[] }` lê o
 > `~/.ssh/config` e os `Include` dele; só `Host` concreto entra. `remote.resolve
@@ -3849,7 +3857,8 @@ remote.remove  { name }                          -> { targets }
 remote.probe   { name }                          -> { jobId, command }   (job)
 remote.deploy  { name, source?, dest? }          -> { jobId, command }   (job)
 remote.command { name, kind, program?, port? }   -> { command, remoteTarget?, name, source[] }
-               kind: run | debugServer | debugpy | shell        (PURO: nada roda)
+               kind: run | debugServer | debugpy | shell | copyId   (PURO: nada roda)
+               copyId (0.133.0) -> `ssh-copy-id [-p P] [-i K] [user@]host`
 remote.discover {}                               -> { aliases: [{ name, source }], sources[] }
                (0.132.0; SEM workspace; lê arquivo local, não conecta)
 remote.resolve  { host }                         -> { host, hostName?, user?, port?,
@@ -3861,7 +3870,9 @@ RemoteTarget   name · host · user? · port? (22) · identityFile? · deployDir
                qualquer chave que pareça segredo no arquivo gravado
 
 event.remote.probed   { jobId, name, success, arch?, kernel?, tools: [{ id, found, path? }],
-                        error?, raw }
+                        error?, failure?, raw }
+                        failure (0.133.0, ausente quando success): authentication |
+                        host | network | other — a causa TIPADA, nao a frase
 event.remote.deployed { jobId, name, success, source, dest, command, error? }
 ```
 
@@ -3948,6 +3959,26 @@ sendo o caminho.
 `sources` (os arquivos lidos, para a UI dizer de onde veio); `resolve` ecoa
 `host` e troca o `proxy?` genérico por `proxyJump?` + `proxyCommand: bool`,
 porque juntar os dois num campo exigiria devolver o texto do comando.
+
+### A falha vira um gesto (`0.133.0`, fatia R0.5)
+
+A §3 da [`remote-ssh-ui-hud.md`](../especificacoes/remote-ssh-ui-hud.md) lista
+como defeito nº 14: *"a mensagem 'use `ssh-copy-id`' transfere o problema ao
+terminal sem guiar"*. O core já separava as causas para escolher a frase — dizê-la
+em **tipo** expõe uma decisão que ele já tomava, não inventa dado. A UI escolhe o
+gesto por `failure`, nunca casando texto: frase muda de idioma, tipo não.
+
+Só `authentication` tem um gesto que a resolve, e é `ssh-copy-id`. O botão aparece
+**onde a causa foi explicada**, no veredito da sonda. Clicar **compõe** a linha e
+a mostra; rodar exige um segundo gesto. Isso é a §10 da especificação: *"geração/
+cópia de chave nunca ocorre silenciosamente"* e *"o comando é visível antes de
+executar"*. A IDE não gera chave, não digita senha — o `ssh` pede no terminal, e
+o host key é aceito ali, uma vez.
+
+`copyId` reusa o `-p`/`-i` do perfil: copiar a chave por outra porta que não a do
+alvo copiaria para a máquina errada. Com `-i <privada>` o `ssh-copy-id` procura a
+`.pub` correspondente. Uma linha armada **não sobrevive à troca de alvo**, porque
+ela carrega um host.
 
 ### O workspace espelhado (`0.122.0`, P6 fatia 2)
 

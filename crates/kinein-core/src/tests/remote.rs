@@ -214,6 +214,56 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
         "{ev}"
     );
     assert!(ev["raw"].as_str().unwrap().contains("Permission denied"));
+    // A MESMA causa, tipada: e' disso que a UI decide qual gesto oferecer.
+    assert_eq!(ev["failure"], "authentication", "{ev}");
+
+    // Sonda que passa nao pode carregar falha nenhuma.
+    executavel(
+        &c.bin().join("ssh"),
+        "#!/bin/sh\nprintf 'aarch64\\nLinux 6.6\\ngdbserver=\\npython3=\\nrsync=\\n'\n",
+    );
+    c.ok("remote.probe", json!({ "name": "pi" }));
+    let ok = c.evento("event.remote.probed");
+    assert_eq!(ok["success"], true);
+    assert!(ok.get("failure").is_none(), "{ok}");
+}
+
+/// `remote.command { kind: copyId }` (`0.133.0`): a linha do `ssh-copy-id`
+/// composta pelo core, com o `-p`/`-i` do perfil. PURA — nada roda aqui, e a
+/// UI so' executa depois de mostrar a linha e receber um gesto explicito.
+#[test]
+#[cfg(unix)]
+fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
+    let _serial = super::EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut c = cenario("copy-id");
+    c.salvar_pi();
+    let registro = c.bin().parent().unwrap().join("copyid.argv");
+    // Se alguem rodar `ssh` ou `ssh-copy-id` por engano, este arquivo aparece.
+    for nome in ["ssh", "ssh-copy-id"] {
+        executavel(
+            &c.bin().join(nome),
+            &format!("#!/bin/sh\nprintf 'rodou' >> {}\n", registro.display()),
+        );
+    }
+    let fora = c.ok("remote.command", json!({ "name": "pi", "kind": "copyId" }));
+    assert_eq!(
+        fora["command"],
+        "ssh-copy-id -p 2222 -i /home/u/.ssh/pi pi@192.168.0.42"
+    );
+    assert_eq!(fora["name"], "Copiar chave para pi");
+    assert!(fora["remoteTarget"].is_null(), "{fora}");
+    // A procedencia tem de dizer de quem e' a chave.
+    let origem = fora["source"].as_array().unwrap();
+    assert!(
+        origem.iter().any(|s| s.as_str().unwrap().contains("SUA")),
+        "{fora}"
+    );
+    assert!(
+        !registro.exists(),
+        "compor a linha NAO pode executar processo nenhum"
+    );
 }
 
 /// O deploy: `rsync -az --delete -e 'ssh -p 2222 -i <chave>' <root>/build

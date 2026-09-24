@@ -104,6 +104,10 @@ pub struct RemoteProbedEvent {
     /// Why not, with the next step (no key → `ssh-copy-id`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    /// The same reason, typed (`0.133.0`), so the UI offers a gesture
+    /// instead of reading the sentence. Absent when the probe succeeded.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub failure: Option<RemoteFailure>,
     /// Everything ssh printed.
     pub raw: String,
 }
@@ -143,6 +147,24 @@ pub struct RemoteDeployedEvent {
     pub error: Option<String>,
 }
 
+/// Why an `ssh` attempt failed (`0.133.0`), typed so the UI can offer the ONE
+/// concrete gesture that fixes it instead of matching on message text.
+///
+/// The core already told these apart to word the message; saying it out loud
+/// is exposing a decision it had already made, not inventing data.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum RemoteFailure {
+    /// Key refused or host key not accepted: `ssh-copy-id` is the gesture.
+    Authentication,
+    /// The name or IP does not resolve.
+    Host,
+    /// Did not reach the target: timeout, refused, no route.
+    Network,
+    /// Anything else; the UI shows what `ssh` printed.
+    Other,
+}
+
 /// What `remote.command` composes.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -155,6 +177,10 @@ pub enum RemoteCommandKind {
     Debugpy,
     /// An interactive shell on the target — a terminal tab.
     Shell,
+    /// Copy the USER's public key to the target (`ssh-copy-id`, `0.133.0`).
+    /// Composed here and shown before running; the IDE never generates a key,
+    /// never types a password and never runs this on its own.
+    CopyId,
 }
 
 /// Parameters for `remote.command`.

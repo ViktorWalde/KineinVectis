@@ -39,9 +39,16 @@ Item {
     property var aliasSources: []
     property string resolving: ""
     property var resolved: null
+    property string probeFailure: ""
+    property bool canCopyId: false
+    property string armedCommand: ""
+    property string armedName: ""
 
     signal discoverRequested()
     signal aliasChosen(string name)
+    signal copyIdRequested()
+    signal runArmedRequested()
+    signal disarmRequested()
     signal targetSelected(string name)
     signal newRequested()
     signal fieldEdited(string field, var value)
@@ -125,6 +132,12 @@ Item {
                 lastCommand: root.lastCommand
                 lastOutcome: root.lastOutcome
                 errorText: root.errorText
+                canCopyId: root.canCopyId
+                armedCommand: root.armedCommand
+                armedName: root.armedName
+                onCopyIdRequested: root.copyIdRequested()
+                onRunArmedRequested: root.runArmedRequested()
+                onDisarmRequested: root.disarmRequested()
             }
 
             // ANTES do formulario, de proposito: se o `ssh <alias>` ja'

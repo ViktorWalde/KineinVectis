@@ -424,12 +424,28 @@ entrar depois de medir colisões e frequência.
 
 ### R0.5 — entrada simples e descoberta
 
-- separar “usar SSH existente” de “configurar servidor”;
-- descobrir aliases concretos de `~/.ssh/config` com origem explícita;
-- resolver detalhes efetivos pelo OpenSSH, retornando apenas campos seguros;
-- guiar primeiro acesso/chave pelo terminal, sem persistir segredo;
-- iniciar seleção da pasta na home remota;
-- contrato tipado para listar diretórios, se confirmado necessário no teste.
+> **Parcialmente implementada em 2026-09-24.** Três dos seis itens entraram, nos
+> protocolos `0.132.0` e `0.133.0`. Registro em
+> [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.93–§7.94; contratos
+> em [`03-ipc-protocol`](../arquitetura/03-ipc-protocol.md).
+
+- **feito (`0.132.0`):** separar "usar SSH existente" de "configurar servidor" —
+  o `RemoteDiscovery` fica **antes** do formulário, e o formulário continua
+  inteiro para quem precisa configurar um servidor novo;
+- **feito (`0.132.0`):** descobrir aliases concretos de `~/.ssh/config` com
+  origem explícita, inclusive os de `Include`, sem curinga;
+- **feito (`0.132.0`):** resolver detalhes efetivos pelo OpenSSH devolvendo
+  apenas campos seguros (`ssh -G`; o texto de `ProxyCommand` não sai do core).
+  Escolher um alias grava `{ name, host }` e nada mais;
+- **feito (`0.133.0`):** guiar primeiro acesso/chave pelo terminal, sem
+  persistir segredo. A sonda passou a dizer a causa **tipada** (`failure`), e
+  `remote.command { kind: copyId }` compõe o `ssh-copy-id` com o `-p`/`-i` do
+  perfil. O botão aparece no veredito, onde a causa foi explicada; compor **não**
+  roda, e a linha fica visível até um segundo gesto. Fecha o defeito nº 14 da §3;
+- **pendente:** iniciar seleção da pasta na home remota;
+- **pendente:** contrato tipado para listar diretórios. A §8.1 do roadmap 48 o
+  condicionou a "teste provar que a alternativa não atende", e o teste desta
+  fatia parou antes da escolha de pasta — então ele não foi inventado.
 
 Aceite: se `ssh <alias>` já funciona, criar e testar o alvo não exige redigitar
 usuário, porta nem caminho da chave; se não funciona, o erro leva a um gesto

@@ -28,7 +28,7 @@ mod store;
 
 use std::path::Path;
 
-use kinein_protocol::{RemoteCommandKind, RemoteTarget, RemoteTool};
+use kinein_protocol::{RemoteCommandKind, RemoteFailure, RemoteTarget, RemoteTool};
 
 /// Porta padrao do `gdbserver`.
 pub const GDBSERVER_PORT: u16 = 2345;
@@ -189,28 +189,72 @@ pub fn parse_probe(raw: &str) -> (Option<String>, Option<String>, Vec<RemoteTool
     (arch, kernel, tools)
 }
 
-/// A falha do `ssh` em palavras que dizem o proximo passo.
+/// Por que o `ssh` falhou, TIPADO (`0.133.0`).
+///
+/// O core ja' separava estes casos para escolher a frase; dize-lo em tipo e'
+/// expor uma decisao que ele ja' tomava, nao inventar dado. A UI usa isso para
+/// oferecer UM gesto concreto em vez de casar texto de mensagem — casar texto
+/// quebraria em qualquer traducao ou reformulacao.
 #[must_use]
-pub fn describe_ssh_failure(target: &RemoteTarget, raw: &str) -> String {
+pub fn classify_ssh_failure(raw: &str) -> RemoteFailure {
     let baixo = raw.to_lowercase();
-    let destino = destination(target);
     if baixo.contains("permission denied") || baixo.contains("host key verification failed") {
-        return format!(
-            "o alvo recusou a chave (BatchMode): copie a sua com `ssh-copy-id {destino}` e aceite \
-             o host key uma vez no terminal — a IDE nunca digita senha"
-        );
+        return RemoteFailure::Authentication;
     }
     if baixo.contains("could not resolve") || baixo.contains("name or service not known") {
-        return format!(
-            "nao resolvi o host `{}` — IP ou nome errado, ou sem rede",
-            target.host
-        );
+        return RemoteFailure::Host;
     }
     if baixo.contains("connection timed out")
         || baixo.contains("connection refused")
         || baixo.contains("no route")
     {
-        return format!("nao alcancei {destino} em 5 s: a placa esta' ligada e o sshd ativo?");
+        return RemoteFailure::Network;
+    }
+    RemoteFailure::Other
+}
+
+/// A linha que copia a chave publica DO USUARIO para o alvo.
+///
+/// O `ssh-copy-id` usa o mesmo `-p`/`-i` do perfil; com `-i <privada>` ele
+/// procura a `.pub` correspondente. A IDE NAO gera chave, nao digita senha e
+/// nao roda isto sozinha: compoe, mostra, e so' executa a pedido explicito.
+#[must_use]
+pub fn ssh_copy_id_line(target: &RemoteTarget) -> String {
+    let mut partes = vec!["ssh-copy-id".to_owned()];
+    if let Some(port) = target.port {
+        partes.push("-p".to_owned());
+        partes.push(port.to_string());
+    }
+    if let Some(key) = &target.identity_file {
+        partes.push("-i".to_owned());
+        partes.push(key.clone());
+    }
+    partes.push(destination(target));
+    partes.join(" ")
+}
+
+/// A falha do `ssh` em palavras que dizem o proximo passo.
+#[must_use]
+pub fn describe_ssh_failure(target: &RemoteTarget, raw: &str) -> String {
+    let destino = destination(target);
+    match classify_ssh_failure(raw) {
+        RemoteFailure::Authentication => {
+            return format!(
+                "o alvo recusou a chave (BatchMode): copie a sua com \
+                 `ssh-copy-id {destino}` e aceite o host key uma vez no \
+                 terminal — a IDE nunca digita senha"
+            );
+        }
+        RemoteFailure::Host => {
+            return format!(
+                "nao resolvi o host `{}` — IP ou nome errado, ou sem rede",
+                target.host
+            );
+        }
+        RemoteFailure::Network => {
+            return format!("nao alcancei {destino} em 5 s: a placa esta' ligada e o sshd ativo?");
+        }
+        RemoteFailure::Other => {}
     }
     let cauda: Vec<&str> = raw.lines().filter(|l| !l.trim().is_empty()).collect();
     let inicio = cauda.len().saturating_sub(3);
@@ -312,7 +356,9 @@ pub fn remote_command(kind: RemoteCommandKind, program: &str, port: u16) -> Opti
         RemoteCommandKind::Debugpy => Some(format!(
             "python3 -m debugpy --listen 0.0.0.0:{port} --wait-for-client {program}"
         )),
-        RemoteCommandKind::Shell => None,
+        // Shell nao leva comando remoto; CopyId nem roda `ssh` — a linha
+        // dele e' composta por `ssh_copy_id_line`.
+        RemoteCommandKind::Shell | RemoteCommandKind::CopyId => None,
     }
 }
 
@@ -323,8 +369,8 @@ mod tests {
     use kinein_protocol::{RemoteCommandKind, RemoteTarget};
 
     use super::{
-        deploy_command, deploy_dir, describe_ssh_failure, parse_probe, probe_script,
-        remote_command, ssh_args, ssh_shell_line, validate,
+        classify_ssh_failure, deploy_command, deploy_dir, describe_ssh_failure, parse_probe,
+        probe_script, remote_command, ssh_args, ssh_copy_id_line, ssh_shell_line, validate,
     };
 
     fn pi() -> RemoteTarget {
@@ -474,5 +520,66 @@ mod tests {
         t.host = "h".to_owned();
         t.port = Some(0);
         assert!(validate(&t).is_err());
+    }
+
+    #[test]
+    fn ssh_failure_is_classified_so_the_ui_never_matches_message_text() {
+        use kinein_protocol::RemoteFailure;
+        for (saida, esperado) in [
+            (
+                "pi@192.168.0.42: Permission denied (publickey).",
+                RemoteFailure::Authentication,
+            ),
+            (
+                "Host key verification failed.",
+                RemoteFailure::Authentication,
+            ),
+            (
+                "ssh: Could not resolve hostname pi: Name or service not known",
+                RemoteFailure::Host,
+            ),
+            (
+                "ssh: connect to host pi port 22: Connection timed out",
+                RemoteFailure::Network,
+            ),
+            (
+                "ssh: connect to host pi port 22: Connection refused",
+                RemoteFailure::Network,
+            ),
+            (
+                "ssh: connect to host pi port 22: No route to host",
+                RemoteFailure::Network,
+            ),
+            ("", RemoteFailure::Other),
+            ("alguma coisa que ninguem previu", RemoteFailure::Other),
+        ] {
+            assert_eq!(classify_ssh_failure(saida), esperado, "{saida}");
+        }
+        // O tipo e a frase tem de contar a MESMA historia: sao a mesma decisao.
+        assert!(
+            describe_ssh_failure(&pi(), "Permission denied (publickey).").contains("ssh-copy-id"),
+            "a frase da autenticacao deixou de dizer o gesto"
+        );
+    }
+
+    #[test]
+    fn copy_id_line_reuses_the_profile_and_never_mentions_a_password() {
+        // Mesmo `-p`/`-i` do perfil: copiar a chave nao pode ir por outra porta
+        // que nao a que o alvo usa.
+        assert_eq!(
+            ssh_copy_id_line(&pi()),
+            "ssh-copy-id -p 2222 -i /home/u/.ssh/pi pi@192.168.0.42"
+        );
+        let simples = RemoteTarget {
+            name: "b".to_owned(),
+            host: "bancada".to_owned(),
+            user: None,
+            port: None,
+            identity_file: None,
+            deploy_dir: None,
+        };
+        assert_eq!(ssh_copy_id_line(&simples), "ssh-copy-id bancada");
+        // Nao ha' rota para senha nesta linha, por construcao.
+        assert!(!ssh_copy_id_line(&pi()).to_lowercase().contains("password"));
     }
 }

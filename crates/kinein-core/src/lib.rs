@@ -289,6 +289,7 @@ impl Core {
             .or_else(|| self.serial_request_response(method, request_id.clone(), params))
             .or_else(|| self.coverage_request_response(method, request_id.clone(), params))
             .or_else(|| self.remote_request_response(method, request_id.clone(), params))
+            .or_else(|| self.remote_command_request_response(method, request_id.clone(), params))
             .or_else(|| self.remote_discover_request_response(method, request_id.clone(), params))
             .or_else(|| self.remote_mirror_request_response(method, request_id.clone(), params))
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))

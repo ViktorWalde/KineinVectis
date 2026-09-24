@@ -30,6 +30,7 @@ pub mod project;
 pub mod python;
 pub mod python_stubs;
 pub mod remote;
+pub mod remote_command;
 pub mod remote_discover;
 pub mod remote_mirror;
 pub mod run;

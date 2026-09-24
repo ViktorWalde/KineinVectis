@@ -37,17 +37,24 @@ KvPanelFrame {
         isMirror: root.controller ? root.controller.isMirror : false
         syncing: root.controller ? root.controller.syncing : false
         syncMessage: root.controller ? root.controller.syncMessage : ""
-        discovery: root.controller ? root.controller.discovery : "idle"
-        discovering: root.controller ? root.controller.discovering : false
-        aliases: root.controller ? root.controller.aliases : []
-        aliasSources: root.controller ? root.controller.aliasSources : []
-        resolving: root.controller ? root.controller.resolving : ""
-        resolved: root.controller ? root.controller.resolved : null
+        discovery: root.controller ? root.controller.setup.discovery : "idle"
+        discovering: root.controller ? root.controller.setup.discovering : false
+        aliases: root.controller ? root.controller.setup.aliases : []
+        aliasSources: root.controller ? root.controller.setup.aliasSources : []
+        resolving: root.controller ? root.controller.setup.resolving : ""
+        resolved: root.controller ? root.controller.setup.resolved : null
+        probeFailure: root.controller ? root.controller.probeFailure : ""
+        canCopyId: root.controller ? root.controller.canCopyId : false
+        armedCommand: root.controller ? root.controller.armedCommand : ""
+        armedName: root.controller ? root.controller.armedName : ""
 
-        onDiscoverRequested: root.controller.discover()
+        onDiscoverRequested: root.controller.setup.discover()
         // Escolher um alias faz as DUAS coisas que a fatia promete: cria o
         // alvo sem redigitar nada e pergunta ao ssh o que ele faria.
-        onAliasChosen: name => { root.controller.useAlias(name); root.controller.resolve(name); }
+        onAliasChosen: name => { root.controller.useAlias(name); root.controller.setup.resolve(name); }
+        onCopyIdRequested: root.controller.copyId()
+        onRunArmedRequested: root.controller.runArmed()
+        onDisarmRequested: root.controller.disarm()
         onTargetSelected: name => root.controller.select(name)
         onNewRequested: root.controller.startNew()
         onFieldEdited: (field, value) => root.controller.editDraft(field, value)

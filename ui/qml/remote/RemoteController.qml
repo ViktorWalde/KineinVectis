@@ -41,6 +41,15 @@ Item {
     property string lastCommand: ""
     property string lastOutcome: ""
 
+    // Por que a sonda falhou, TIPADO pelo core (0.133.0): authentication |
+    // host | network | other. A UI escolhe o gesto por isto, nunca lendo a
+    // frase — frase muda de idioma, tipo nao.
+    property string probeFailure: ""
+    // Uma linha ARMADA: composta pelo core e mostrada, esperando um gesto
+    // explicito. Copiar chave nao pode acontecer porque alguem sondou.
+    property string armedCommand: ""
+    property string armedName: ""
+
     // O workspace ESPELHADO (fatia 2): a pasta no alvo que se abre como
     // espelho local, o espelho que o workspace aberto e' (null = comum), e
     // a ultima sincronia. A UI abre o espelho pelo openWorkspace de sempre
@@ -51,21 +60,6 @@ Item {
     property bool syncing: false
     property string syncMessage: ""
 
-    // Descoberta e explicacao do SSH que a maquina JA' tem (0.132.0, fatia
-    // R0.5). `discovery` e' estado de APRESENTACAO derivado do que o core
-    // respondeu NESTA sessao — nao um fato inventado sobre a maquina.
-    property string discovery: "idle"  // idle | loading | ready | failed
-    property var aliases: []
-    property var aliasSources: []
-    // Qual host esta' sendo explicado, para descartar resposta atrasada.
-    property string resolving: ""
-    property var resolved: null
-    // DONO UNICO de "esta' carregando": o guard daqui e o botao da view leem
-    // o mesmo fato. Duas comparacoes com a string divergiriam em silencio.
-    readonly property bool discovering: root.discovery === "loading"
-
-    signal discoverRequested()
-    signal resolveRequested(string host)
     signal listRequested()
     signal saveRequested(var target)
     signal removeRequested(string name)
@@ -82,6 +76,16 @@ Item {
     signal workspaceOpenRequested(string path)
 
     visible: false
+
+    // O SETUP como filho (roadmap 48 §8.3 nomeia os filhos possiveis e diz que
+    // eles nao nascem preventivamente — este nasceu quando a catraca mandou).
+    // Ele guarda o que a MAQUINA tem; a fachada guarda o alvo DESTE projeto.
+    // Trocar de workspace nao o reinicia: o `~/.ssh/config` nao mudou.
+    readonly property alias setup: setupController
+
+    RemoteSetupController {
+        id: setupController
+    }
 
     onWorkspaceRootChanged: {
         targets = [];
@@ -167,42 +171,6 @@ Item {
         draft = { name: nome, host: nome, user: "", port: 0, identityFile: "", deployDir: "" };
     }
 
-    function discover() {
-        if (discovering) {
-            return;
-        }
-        discovery = "loading";
-        errorText = "";
-        discoverRequested();
-    }
-
-    function resolve(host) {
-        const alvo = (host || "").trim();
-        if (alvo === "" || resolving === alvo) {
-            return;
-        }
-        resolving = alvo;
-        resolved = null;
-        errorText = "";
-        resolveRequested(alvo);
-    }
-
-    function handleAliases(list, sources) {
-        aliases = list || [];
-        aliasSources = sources || [];
-        discovery = "ready";
-    }
-
-    function handleResolved(summary) {
-        // Resposta de outro host (ou de um gesto ja' abandonado) nao pode
-        // trocar o resumo em tela pelo de um alvo que ninguem pediu.
-        if (!summary || summary.host !== resolving) {
-            return;
-        }
-        resolved = summary;
-        resolving = "";
-    }
-
     function open() {
         panelVisible = true;
         if (targets.length === 0) {
@@ -211,8 +179,8 @@ Item {
         // Ler o `~/.ssh/config` e' local e barato; deixar o autor pedir
         // "Procurar" para so' depois descobrir que ja' havia alias e' o
         // atrito que esta fatia existe para remover.
-        if (discovery === "idle") {
-            discover();
+        if (setup.discovery === "idle") {
+            setup.discover();
         }
     }
 
@@ -228,8 +196,10 @@ Item {
         probeKernel = "";
         probeTools = [];
         probeMessage = "";
+        probeFailure = "";
         deploying = false;
         deployMessage = "";
+        disarm();
     }
 
     function targetByName(name) {
@@ -334,6 +304,41 @@ Item {
         probeKernel = outcome.kernel || "";
         probeTools = outcome.tools || [];
         probeMessage = probeOk ? "" : (outcome.error || qsTr("a sonda falhou"));
+        probeFailure = probeOk ? "" : (outcome.failure || "other");
+    }
+
+    // O alvo recusou a chave: o unico gesto que resolve isso e' copiar a sua.
+    // DONO UNICO de "oferecer o gesto da chave". Com uma linha ja' armada o
+    // botao sai de cena — deixar a view decidir isso partiria a derivacao em
+    // dois lugares que divergem calados.
+    readonly property bool canCopyId: !probeOk && probeFailure === "authentication"
+                                      && probedName !== "" && selectedSaved
+                                      && armedCommand === ""
+
+    function copyId() {
+        if (!canCopyId) {
+            return;
+        }
+        pendingKind = "copyId";
+        lastOutcome = "";
+        commandRequested(selectedName, "copyId", "", 0);
+    }
+
+    function disarm() {
+        armedCommand = "";
+        armedName = "";
+    }
+
+    // So' aqui algo sai para o terminal, e so' depois de a linha ter estado
+    // na tela. A IDE nao gera chave, nao digita senha e nao roda sozinha.
+    function runArmed() {
+        if (armedCommand === "") {
+            return;
+        }
+        const linha = armedCommand;
+        disarm();
+        shellRequested(linha);
+        lastOutcome = qsTr("rodando no terminal: aceite o host key e digite a senha lá, uma vez");
     }
 
     function handleDeployed(outcome) {
@@ -360,17 +365,17 @@ Item {
         } else if (kind === "shell") {
             shellRequested(result.command);
             lastOutcome = qsTr("shell aberto no terminal");
+        } else if (kind === "copyId") {
+            // ARMA, nao roda: a linha aparece e espera confirmacao.
+            armedCommand = result.command || "";
+            armedName = result.name || "";
+            lastOutcome = qsTr("confira a linha e confirme para rodar no terminal");
         }
     }
 
     function handleFailed(method, message) {
-        if (method === "remote.discover") {
-            discovery = "failed";
-            errorText = message;
-            return;
-        }
-        if (method === "remote.resolve") {
-            resolving = "";
+        if (method === "remote.discover" || method === "remote.resolve") {
+            setup.handleFailed(method);
             errorText = message;
             return;
         }

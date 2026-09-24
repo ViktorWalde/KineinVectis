@@ -12,8 +12,9 @@ Item {
 
     visible: false
 
+    // O setup e' filho do controller (roadmap 48 §8.3): pede por conta propria.
     Connections {
-        target: root.remoteController
+        target: root.remoteController ? root.remoteController.setup : null
 
         function onDiscoverRequested() {
             root.coreClient.remoteDiscover();
@@ -22,6 +23,10 @@ Item {
         function onResolveRequested(host) {
             root.coreClient.remoteResolve(host);
         }
+    }
+
+    Connections {
+        target: root.remoteController
 
         function onListRequested() {
             root.coreClient.remoteList();
