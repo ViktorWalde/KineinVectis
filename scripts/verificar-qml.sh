@@ -5,7 +5,21 @@
 # carrega import paths, qmldir e resources do modulo KineinVectis — o mesmo
 # contexto do alvo `all_qmllint` do CMake. Qt recente usa .rsp e -W 0;
 # Qt 6.4 usa o alvo JSON gerado e reprova qualquer warning do relatorio.
-# Se um .qml novo nao aparecer no lint, reconfigure o build debug.
+#
+# POR QUE ELE CONFERE A COPIA ANTES DE LINTAR (2026-09-24). O qmllint le' as
+# copias do QML no diretorio de BUILD, nao a arvore. O `verificar.sh` roda este
+# gate ANTES do build que atualiza essas copias, e o comentario que estava aqui
+# apenas PEDIA que voce se lembrasse de reconfigurar. Isso reprova a toa quando
+# uma propriedade nova ainda nao foi copiada — e, muito pior, PASSA lintando QML
+# velho, que e' o gate mentindo que esta' verde. Medido nesta data: a fatia
+# `remote.discover` reprovou com "Could not find property" em propriedades que
+# existiam na arvore. Agora o gate RECUSA copia ausente ou mais velha que a
+# fonte.
+#
+# A copia e' CACHE da fonte, nao artefato sob teste: atualiza-la e' preparo, e
+# por isso este gate a refaz sozinho e DIZ que refez. O que ele recusa e' o
+# defeito de verdade — um .qml na arvore que nao esta' no modulo QML, logo nao
+# e' compilado nem lintado por ninguem.
 
 set -eu
 
@@ -74,6 +88,68 @@ if [ -z "$QMLLINT" ]; then
         exit 1
     fi
 fi
+
+# A copia que o lint vai ler tem de ser a arvore de agora. Arquivo com
+# QT_RESOURCE_ALIAS e' achatado em KineinVectis/<nome>; sem alias, mantem o
+# caminho relativo a ui/. Conferir os dois evita falso negativo E falso
+# positivo.
+#
+# Compara CONTEUDO, nao mtime: o CMake copia so' o que difere, entao uma copia
+# com bytes iguais e mtime mais velho e' correta — reprovar nela seria ruido.
+# O .rsp vive em <raiz do build>/ui/.rcc/qmllint/: tres dirname dao a pasta
+# `ui` (onde mora o modulo KineinVectis) e o quarto da' a raiz do build, que e'
+# o que o `cmake --build` quer.
+BUILD_DIR="$(dirname -- "$(dirname -- "$(dirname -- "$RSP")")")"
+BUILD_ROOT="$(dirname -- "$BUILD_DIR")"
+if command -v cmake >/dev/null 2>&1; then
+    cmake --build "$BUILD_ROOT" --target kinein-vectis_copy_qml >/dev/null 2>&1 \
+        || echo "aviso: nao pude atualizar a copia do QML; a conferencia abaixo decide." >&2
+fi
+REPO_ROOT="$REPO_ROOT" BUILD_DIR="$BUILD_DIR" python3 <<'PYCHECK'
+import os
+import pathlib
+import sys
+
+# DEBITO DECLARADO (medido em 2026-09-24). Este .qml esta' na arvore e no git,
+# NAO esta' no ui/CMakeLists.txt, logo nao e' compilado nem lintado, e NINGUEM
+# o referencia — conferido com grep no repo inteiro. Ou ele entra no modulo, ou
+# sai da arvore: as duas coisas sao decisao do autor, nao deste gate. Enquanto
+# isso, fica DITO aqui. Arquivo NOVO sem copia reprova.
+SEM_COPIA_DECLARADO = {"ui/qml/editor/EditorUnsavedChangesDialog.qml"}
+
+repo = pathlib.Path(os.environ["REPO_ROOT"])
+modulo = pathlib.Path(os.environ["BUILD_DIR"]) / "KineinVectis"
+ausentes, diferentes, declarados = [], [], []
+for fonte in sorted((repo / "ui/qml").rglob("*.qml")):
+    relativo = str(fonte.relative_to(repo))
+    candidatos = [modulo / fonte.name, modulo / fonte.relative_to(repo / "ui")]
+    copia = next((c for c in candidatos if c.is_file()), None)
+    if copia is None:
+        (declarados if relativo in SEM_COPIA_DECLARADO else ausentes).append(relativo)
+    elif copia.read_bytes() != fonte.read_bytes():
+        diferentes.append(relativo)
+
+if ausentes or diferentes:
+    print("erro: o qmllint leria QML DESATUALIZADO do diretorio de build.",
+          file=sys.stderr)
+    for f in diferentes:
+        # Chegar aqui significa que o refresh automatico acima nao rodou ou
+        # falhou: lintar assim passaria por engano sobre QML velho.
+        print(f"  copia diverge da fonte: {f}", file=sys.stderr)
+        print("      Atualize e repita:", file=sys.stderr)
+        print("        cmake --build --preset debug-strict"
+              " --target kinein-vectis_copy_qml", file=sys.stderr)
+    for f in ausentes:
+        print(f"  NAO esta' no modulo QML, logo nunca e' lintado: {f}",
+              file=sys.stderr)
+        print("      Registre em ui/CMakeLists.txt (qt_add_qml_module + alias)"
+              " ou remova o arquivo.", file=sys.stderr)
+    raise SystemExit(1)
+
+if declarados:
+    print(f"copia do QML: {len(declarados)} arquivo(s) fora do modulo, dito(s):"
+          f" {', '.join(declarados)}")
+PYCHECK
 
 echo "== qmllint (estrito: zero warnings) =="
 "$QMLLINT" -W 0 @"$RSP"

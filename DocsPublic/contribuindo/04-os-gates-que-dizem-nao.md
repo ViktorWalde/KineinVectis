@@ -21,7 +21,7 @@ está em
 | `verificar-shell.sh` | shellcheck nos scripts | |
 | `verificar-appimage.sh` | invariantes do pacote | |
 | `verificar-cpp.sh` | clang-format + clang-tidy (~1 h) | rode em segundo plano; não compile a UI enquanto roda |
-| `verificar-qml.sh` | qmllint estrito, zero warnings, sobre o módulo do build `debug-strict` | "was not found" para um tipo novo = o build não foi refeito; `cmake --build --preset debug-strict` primeiro |
+| `verificar-qml.sh` | qmllint estrito, zero warnings, sobre o módulo do build `debug-strict`; **`.qml` na árvore que não está no módulo** | desde 2026-09-24 ele atualiza sozinho a cópia do QML no build antes de lintar — antes disso podia **passar lintando QML velho**. O que ele recusa é arquivo que ninguém compila: registre em `ui/CMakeLists.txt` ou remova |
 | `verificar-qml-fiacao.sh` | binding auto-referente | |
 | `verificar-qml-propriedades.sh` | binding para propriedade inexistente; **margem de âncora sem a âncora**; **binding torto** (mais indentado que a propriedade) | os dois últimos são bindings que o Qt aceita e a tela mostra em branco |
 | `verificar-qml-duplicacao.sh` | a mesma derivação (`kind === "commit"`) em dois arquivos | dê um dono (`inspector.isCommit`); a baseline só se atualiza para fatos diferentes que compartilham a string |

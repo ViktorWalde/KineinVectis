@@ -85,7 +85,7 @@ muda. O código do produto que um gate inspeciona continua em seu domínio norma
 | `verificar-shell.sh` | `scripts/verificar-shell.sh` | Portabilidade e defeitos estáticos dos scripts shell, inclusive dos gates. |
 | `verificar-appimage.sh` | `scripts/verificar-appimage.sh` | Invariantes baratas da distribuição; não gera o AppImage. |
 | `verificar-cpp.sh` | `scripts/verificar-cpp.sh` + `.clang-tidy`/formatação | Formatação e análise estática da ponte C++/Qt. |
-| `verificar-qml.sh` | `scripts/verificar-qml.sh` e `scripts/verificar_qml.py` | `qmllint` estrito no contexto tipado produzido pelo build. |
+| `verificar-qml.sh` | `scripts/verificar-qml.sh` e `scripts/verificar_qml.py` | `qmllint` estrito no contexto tipado produzido pelo build; atualiza a cópia do QML antes de lintar e recusa `.qml` fora do módulo. |
 | `verificar-qml-fiacao.sh` | `scripts/verificar-qml-fiacao.sh` | Binding QML auto-referente. |
 | `verificar-qml-propriedades.sh` | wrapper `.sh` + `scripts/verificar_qml_propriedades.py` | Propriedade/sinal inexistente e bindings estruturalmente tortos. |
 | `verificar-qml-duplicacao.sh` | wrapper `.sh` + `scripts/verificar_qml_duplicacao.py` | Catraca de regra derivada duplicada entre arquivos QML. |
@@ -115,6 +115,17 @@ Algumas etapas consomem artefatos reais do build, mas isso é uma pré-condiçã
 declarada, não comunicação entre gates:
 
 - `verificar-cpp.sh` lê `compile_commands.json` do build debug estrito;
+- `verificar-qml.sh` lê as **cópias** do QML no diretório de build, não a
+  árvore. Como o `verificar.sh` o roda antes do build que atualiza essas cópias,
+  até 2026-09-24 ele podia reprovar à toa numa propriedade nova — e, pior,
+  **passar lintando QML velho**, que é o gate afirmando verde sobre código que
+  não é o do commit. Agora ele refaz a cópia (`kinein-vectis_copy_qml`), diz que
+  refez, e compara conteúdo para provar que leu a árvore de agora. Cópia é
+  cache, então refazê-la é preparo; o que ele **recusa** é o defeito de verdade:
+  um `.qml` na árvore fora do `ui/CMakeLists.txt`, que ninguém compila nem linta.
+  Há **um débito declarado** no script (`EditorUnsavedChangesDialog.qml`, sem
+  referência em todo o repo): entrar no módulo ou sair da árvore é decisão do
+  autor, não do gate — arquivo novo nessa situação reprova.
 - `verificar-qml.sh` lê `.qmltypes`, `qmldir` e a configuração de imports do
   módulo compilado;
 - no modo completo, o build debug é seguido pelo smoke do **mesmo** preset;
