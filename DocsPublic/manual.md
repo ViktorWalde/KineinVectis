@@ -708,6 +708,13 @@ porque não é um destino — mas continua valendo na resolução do OpenSSH. O
 formulário abaixo continua inteiro para **configurar um servidor** que ainda não
 está no seu `~/.ssh/config`.
 
+**Se a sonda disser que o alvo recusou a chave**, o botão **Copiar minha chave
+(ssh-copy-id)** aparece ali mesmo, junto da explicação. Ele **não** executa nada:
+mostra a linha exata que rodaria, com a porta e a chave do seu perfil, e espera
+você confirmar em **Rodar no terminal**. A IDE nunca gera chave nem digita senha
+— quem pergunta é o `ssh`, no terminal, e o host key você aceita uma vez.
+Trocar de alvo cancela a linha, porque ela carrega um host.
+
 ```text
 Sondar          ssh -o BatchMode=yes -o ConnectTimeout=5 … 'uname -m; uname -sr; command -v …'
                 -> arquitetura (aarch64), kernel e o que o alvo TEM: gdbserver, python3, rsync

@@ -30,6 +30,10 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
   e mostra o que o `ssh` faria com ele (`o ssh vai em user@host:porta`, medido
   por `ssh -G`, sem conectar). Escolher um alias cria o alvo sem repetir
   usuário, porta nem chave. O texto de um `ProxyCommand` não sai do core.
+- Protocolo `0.133.0` — Remote: quando a sonda diz que o alvo recusou a chave,
+  a IDE oferece **Copiar minha chave (ssh-copy-id)** ali mesmo, junto da
+  explicação. Ela mostra a linha antes de rodar e só executa com a sua
+  confirmação; nunca gera chave nem digita senha.
 - Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI, um SSH
   real e a auditoria de acessibilidade. A série 0.3 completa não está entregue;
   planos de CLI/pastas/bordas não são features já implementadas.

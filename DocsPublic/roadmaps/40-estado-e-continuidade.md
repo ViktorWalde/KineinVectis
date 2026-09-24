@@ -135,9 +135,10 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.132.0
-testes      864 Rust aprovados; 63 harnesses QML (medicao de 2026-09-24, §7.93)
-metodos     167 IPC roteados, 56 eventos (remote.discover/resolve em 0.132.0;
+protocolo   0.133.0
+testes      867 Rust aprovados; 64 harnesses QML (medicao de 2026-09-24, §7.94)
+metodos     167 IPC roteados, 56 eventos (remote.command kind copyId em 0.133.0;
+            remote.discover/resolve em 0.132.0;
             terminal.selectAll/copySelection em 0.131.0;
             terminal.clearScrollback em 0.130.0;
             datasource.destroy e event.datasource.destroyed em 0.129.0;
@@ -5365,3 +5366,60 @@ pendentes da R0.5: o terminal guiado para primeiro acesso/`ssh-copy-id` e comeca
 a selecao na home remota. **Nao ha' prova com SSH real**: os testes usam um
 `ssh` falso e um `~/.ssh/config` de mentira. O dogfooding com uma maquina de
 verdade continua pendente, aqui e na fatia do terminal.
+
+### 7.94 Remote: a falha do `ssh` vira um gesto — 2026-09-24, protocolo 0.133.0
+
+Continuacao da R0.5. A §3 da especificacao do Remote lista como defeito **14**:
+"a mensagem 'use `ssh-copy-id`' transfere o problema ao terminal sem guiar". O
+core ja' separava as causas do `ssh` para escolher a frase; agora diz a causa em
+TIPO (`failure: authentication | host | network | other` no
+`event.remote.probed`). Isso nao inventa dado — expoe uma decisao que ele ja'
+tomava — e livra a UI de casar texto de mensagem, que quebraria em qualquer
+traducao ou reformulacao.
+
+So' `authentication` tem um gesto que a resolve, e ele e' `ssh-copy-id`. O botao
+aparece **onde a causa foi explicada**, no veredito da sonda.
+`remote.command { kind: copyId }` compoe `ssh-copy-id [-p P] [-i K] [user@]host`
+com o `-p`/`-i` do proprio perfil: copiar a chave por outra porta copiaria para a
+maquina errada.
+
+**A propriedade que esta fatia trava:** copiar chave nunca acontece em silencio.
+Compor NAO roda; a linha fica visivel; so' um segundo gesto a manda ao terminal;
+e uma linha armada nao sobrevive a troca de alvo, porque ela carrega um host. O
+harness `tst_remote_copy_id.qml` prova os cinco casos. Isso e' a §10 da
+especificacao ("geracao/copia de chave nunca ocorre silenciosamente" e "o comando
+e' visivel antes de executar"), agora medido e nao so' escrito.
+
+**Duas catracas, de novo com razao.** O `handlers/remote.rs` passou o limite Rust
+e o `remote.command` — que e' PURO, compoe e nao roda — virou
+`handlers/remote_command.rs`; o `handlers/remote.rs` ficou com o catalogo e os
+jobs que movem bytes. O `RemoteController` passou o limite de Controller e nasceu
+o `RemoteSetupController`, exatamente o filho que o roadmap 48 §8.3 nomeia e cuja
+regra e' "nao nascem preventivamente": ele guarda o que a MAQUINA tem, e por isso
+trocar de workspace nao o reinicia.
+
+**Um defeito que EU causei e o gate nao pegava.** Ao extrair o
+`remote.command`, escrevi o roteador como `(method == "...").then(...)` em vez de
+um braco de `match`. O metodo continuava funcionando, mas o
+`verificar-fiacao-ipc.sh` e a lista canonica do `03-ipc-protocol` acham metodo
+roteado POR ESSE FORMATO: o total caiu de 167 para 166 e nada reprovou. So'
+percebi porque olhei o numero. O gate conferia uma direcao — "metodo roteado que
+nenhum cliente pede" — e nao a inversa, que e' a perigosa: **o cliente pede um
+metodo que o core nao roteia** e' um botao que nao faz nada em tempo de execucao.
+A direcao inversa entrou no gate (dois falsos positivos, ambos `#include`,
+resolvidos descartando a linha do include) e a prova negativa confirma que ela
+pega exatamente essa regressao.
+
+**Um erro meu na documentacao, corrigido.** A §11 R0.5 da especificacao do Remote
+continuou dizendo que a fatia inteira estava pendente depois da 0.132.0: a edicao
+se perdeu e o commit `2c92a5c` nao a levou, porque o arquivo nao tinha diff.
+Reescrita agora, dizendo item a item o que entrou em `0.132.0`, o que entrou em
+`0.133.0` e o que continua pendente.
+
+**Provas:** 867 testes Rust (3 novos) e 64 harnesses QML (1 novo). Fiacao IPC com
+167 metodos, todos com dono, agora nas duas direcoes.
+
+**Nao entrou, e esta' dito:** iniciar a selecao da pasta na home remota, e o
+`remote.directories` que ela exigiria. **Continua sem prova com SSH real:** o
+`ssh-copy-id` desta fatia nunca copiou uma chave para uma maquina de verdade —
+os testes usam um `ssh` falso. Esse dogfooding e' do autor.
