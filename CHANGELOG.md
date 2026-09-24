@@ -45,6 +45,14 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
   Cole a linha `ssh` que você já usa e a IDE a lê (nunca executa), preenchendo o
   perfil e dizendo de onde tirou cada campo. O que um perfil não reproduz é
   recusado com o nome da opção, em vez de descartado em silêncio.
+- **Abrir pelo terminal** com contrato de verdade: `--help` e `--version`
+  respondem sem subir a IDE; caminho inexistente, arquivo no lugar de pasta,
+  opção desconhecida e dois caminhos de uma vez são recusados **com o motivo**,
+  em vez de a IDE abrir sem projeto calada. `--version` passou a dizer a versão
+  do projeto — estava escrita à mão em `0.1.0`.
+- **O C++ do projeto passou a ter teste.** Rust e QML eram medidos; o C++ da
+  ponte tinha só lint e o smoke de "abre". O gate ganhou uma etapa (Qt Test +
+  CTest) e reprova também se nenhum teste for declarado.
 - Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI e a
   auditoria de acessibilidade. A série 0.3 completa não está entregue;
   planos de CLI/pastas/bordas não são features já implementadas.

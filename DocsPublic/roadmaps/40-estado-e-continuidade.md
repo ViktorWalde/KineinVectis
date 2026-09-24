@@ -111,7 +111,7 @@
 ## 1. O estado, em números
 
 ```bash
-bash scripts/verificar.sh                 # 24 verificacoes
+bash scripts/verificar.sh                 # 24 etapas (medidas em 2026-09-24)
 cat scripts/arquitetura-baseline.txt      # a catraca
 cargo test -q --workspace
 
@@ -157,7 +157,8 @@ metodos     168 IPC roteados, 56 eventos (remote.parseCommand em 0.134.0;
             entraram em 2026-09-17)
 dominios    36, e os 36 documentados no arquitetura/03 (coverage.* e remote.* entraram em 2026-09-17)
 catraca     1 arquivo em debito
-gate        24 verificacoes (a 24a, 2026-09-18: fiacao IPC de ponta a ponta)
+gate        24 etapas (contagem de 2026-09-24; a mais nova sao os testes C++
+            da UI, §7.97; a fiacao IPC de ponta a ponta entrou em 2026-09-18)
 ```
 
 > **O par `metodos`/`eventos` foi CORRIGIDO DE NOVO em 2026-09-06, e desta vez
@@ -5544,3 +5545,69 @@ medicao.
 **Falta da R0.5:** iniciar a selecao da pasta na home remota — e so' entao
 avaliar se o `remote.directories` se justifica. **A tela desta fatia nao foi
 vista por pessoa**: o autor avisou que faria os testes visuais depois.
+
+### 7.97 O C++ passou a ter teste, e o terminal a ter contrato — 2026-09-24
+
+Duas coisas nesta fatia, e a primeira nasceu de uma pergunta do autor. Eu havia
+constatado, de passagem, que "nao existe infraestrutura de teste C++ no projeto"
+e ia contornar a ausencia. Ele reprovou a constatacao: **isso deve ser criado**.
+Ele estava certo, e a verificacao que eu devia ter feito antes mostrou mais: nao
+havia decisao registrada justificando a ausencia — era OMISSAO —, e o
+`verificar-exercitacao.sh` chegava a anotar "zero testes declarados, sem erro" ao
+rodar o `ctest` REAL contra este proprio repositorio, para exercitar o
+`test.discover` da IDE.
+
+**A infraestrutura.** `include(CTest)` na raiz, biblioteca `kinein-ui-puro` com
+as unidades que nao dependem de janela, `ui/tests/` com Qt Test, e o gate
+`verificar-cpp-testes.sh` — que tambem RECUSA quando nenhum teste e' declarado,
+porque `ctest` com zero testes sai 0 e o gate passaria vazio. O gate foi de 23
+para 24 etapas.
+
+So' entra na biblioteca o que e' testavel sem janela. As 34 fontes do modulo QML
+ficam de fora por ora: seis cabecalhos registram tipo QML (`QML_ELEMENT`,
+inclusive o `CoreClient`), e tira-las do `qt_add_qml_module` quebraria o
+registro. A fronteira cresce por unidade, nao por decreto.
+
+Uma armadilha que quase me levou a relaxar rigor: o `.moc` gerado pelo Qt 6.10
+monta os `QtMocHelpers` por CTAD, que o `-Wctad-maybe-unsupported` do Clang 21
+reprova sob `-Werror`. Eu ia desligar o aviso no alvo de teste. Antes disso fui
+comparar com o app e descobri que **o projeto ja' tinha resolvido isso** no
+`typing_perf_harness.cpp`, com a isencao presa ao `#include` gerado e o resto do
+arquivo sob os avisos rigorosos. Usei o mesmo padrao. A licao: quando um rigor
+"nao da' para manter", primeiro procurar se alguem aqui ja' manteve.
+
+**O contrato do terminal (P0).** Ate' aqui o argumento de pasta era varrido
+dentro do `CoreClient::start()`: pegava o primeiro argumento que fosse pasta
+existente e IGNORAVA EM SILENCIO o resto. Um caminho com erro de digitacao abria
+a IDE sem projeto e sem dizer por que — um erro da pessoa parecendo defeito da
+IDE. Agora quem decide e' o `ui/src/cli_args`, com teste:
+
+- `--help` e `--version` respondem ANTES de qualquer Qt, como a §3 da
+  especificacao exige ("sem iniciar UI/core nem fazer rede");
+- caminho inexistente, arquivo no lugar de pasta e sem permissao sao recusados
+  dizendo qual e' o problema, com codigo 2 e **sem criar nada**;
+- opcao desconhecida e' recusada NOMEANDO-A, em vez de ignorada;
+- dois caminhos de uma vez sao recusados nomeando os dois: varias raizes e'
+  decisao aberta na §7, e escolher uma calado seria pior que recusar;
+- `--` entrega o resto ao Qt.
+
+**O que a especificacao me impediu de fazer.** Eu ia fazer o binario sem
+argumento abrir o CWD. A §3 avisa: "abertura do desktop sem path nao deve tratar
+um CWD arbitrario como projeto" — o atalho do menu roda sem argumento, de um
+diretorio qualquer. O contrato ganhou um estado proprio (`SemPasta`), e o default
+de CWD fica para o comando curto, onde a §7 o registra como sugestao a confirmar.
+
+**Um defeito de versao, achado de passagem.** O `main.cpp` chamava
+`setApplicationVersion("0.1.0")`, escrito a mao, enquanto o projeto esta' em
+0.2.0. Nada reprovava porque ninguem lia. Agora vem do `project(... VERSION ...)`
+por definicao de compilacao, e `--version` diz `0.2.0`.
+
+**Provas:** o teste C++ passa sob ASan/UBSan, e a prova negativa foi feita —
+devolver o comportamento antigo (ignorar opcao desconhecida calado) faz o teste
+reprovar nomeando o caso. O contrato foi exercitado contra o BINARIO real:
+`--version`, `--help`, caminho inexistente, arquivo, opcao desconhecida e dois
+caminhos, conferindo tambem que nada foi criado em disco.
+
+**Falta do P0:** o comando curto `kinein` instalado (com o default de CWD), a
+politica de janela nova/reutilizada e a integracao com o menu do desktop. Nada
+disso foi anunciado como pronto.
