@@ -14,6 +14,7 @@
 04-os-gates-que-dizem-nao.md   o verificar.sh e cada gate: o que mede, por que existe, como ler o "não"
 05-com-um-agente-de-ia.md      como colaborar com Claude Code/Codex/outros sem que quebrem as regras
 06-onde-mexer.md               o mapa por área (código, contrato, docs, testes)
+07-fluxo-e-responsabilidades-dos-gates.md  orquestração, comunicação e dono do código de cada gate
 ```
 
 ## Em uma tela
@@ -41,6 +42,7 @@ A regra que resume o método de trabalho, e que os gates cobram:
 | Implementar uma funcionalidade | [03](03-o-ritual-de-uma-fatia.md) inteiro | o roadmap da etapa (`../roadmaps/README.md`) |
 | Trabalhar com um agente de IA | [05](05-com-um-agente-de-ia.md) | [03](03-o-ritual-de-uma-fatia.md) |
 | Só documentação | [03](03-o-ritual-de-uma-fatia.md) §"documentação" | [`../README.md`](../README.md) (o índice) |
+| Entender ou alterar os gates | [04](04-os-gates-que-dizem-nao.md) | [07](07-fluxo-e-responsabilidades-dos-gates.md) |
 
 ## O estado do projeto (para não começar do lugar errado)
 

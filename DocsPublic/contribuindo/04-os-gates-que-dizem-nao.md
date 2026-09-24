@@ -1,15 +1,21 @@
 # 04 — Os gates que dizem "não"
 
 `bash scripts/verificar.sh` roda tudo em sequência e **para no primeiro
-erro**. `--rapido` pula os builds e o "binário abre". Cada gate existe por
+erro**. `--rapido` pula os builds finais e o "binário abre", não toda
+compilação que os testes precisem. Cada gate existe por
 uma falha real, datada no `40`; quando um deles reprova, a resposta certa é
 quase sempre corrigir o código — a exceção com motivo é o último recurso,
 e fica escrita no próprio script.
 
+Este arquivo é o catálogo de diagnóstico. O fluxo entre orquestrador,
+gates-folha, auxiliares e artefatos, além do dono de cada responsabilidade,
+está em
+[`07-fluxo-e-responsabilidades-dos-gates.md`](07-fluxo-e-responsabilidades-dos-gates.md).
+
 | Gate | O que mede | Como ler o "não" |
 | --- | --- | --- |
 | `cargo fmt --all --check` | formatação | rode `cargo fmt --all` |
-| `cargo test --workspace --all-features` | os testes Rust (843 em 2026-09-19) | um teste do LSP (`the_rust_server_receives_the_kit_target…`) é sensível a carga da máquina: se falhou sozinho durante um clang-tidy, rode-o isolado antes de investigar |
+| `cargo test --workspace --all-features` | os testes Rust (844 em 2026-09-23) | um teste do LSP (`the_rust_server_receives_the_kit_target…`) é sensível a carga da máquina: se falhou sozinho durante um clang-tidy, rode-o isolado antes de investigar |
 | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | pedante, incluindo testes e doc-comments | nomes em doc-comments pedem crase (`` `SQLite` ``); `similar_names`, `too_many_lines` pedem split — não `#[allow]` |
 | `verificar-deny.sh` | licenças e advisories das dependências | uma dependência nova precisa de licença compatível (MIT/Apache) |
 | `verificar-shell.sh` | shellcheck nos scripts | |
@@ -26,11 +32,11 @@ e fica escrita no próprio script.
 | `verificar-python-debug.sh` | depurar Python com o debugpy real | |
 | `verificar-clangd-cross.sh` | o clangd enxerga o cross do kit | |
 | `verificar-atalhos.sh` | dois comandos não declaram o mesmo atalho; todo `default_shortcut` tem `Shortcut` anotado `// comando: <id>` com a mesma sequência; todo item de menu tem `case` no host | `Alt+Return` ≠ `Alt+Enter` no Qt |
-| `verificar-docs.sh` | número sem data nos `.md` que diverge do disco | ponha a data, ou corrija o número |
-| `verificar-links-docs.sh` | link relativo morto | |
+| `verificar-docs.sh` | contagem de linhas sem data reconhecida nos `.md` que diverge do disco; não prova toda afirmação numérica/semântica | ponha a data, ou corrija o número |
+| `verificar-links-docs.sh` | alvo relativo inexistente em Markdown versionado ou novo não ignorado; não verifica âncoras/URLs externas | |
 | `verificar-arquitetura.sh` | a catraca: Rust 500 (sem testes), view 300, controller/host 400, ui/src 500; 1 arquivo em débito (`EditorController.qml`, 790) que não pode crescer | split por responsabilidade; nunca "Part2" |
 | `verificar-transicao-workspace.sh` | estado por-workspace com um dono | |
-| `verificar-qml-logica.sh` | os harnesses (`tst_*.qml`, 55 em 2026-09-19) num espelho do módulo | o bitmask está no `console.error`; a asserção correspondente está no arquivo |
+| `verificar-qml-logica.sh` | os harnesses (`tst_*.qml`, 61 em 2026-09-23) num espelho do módulo | o bitmask está no `console.error`; a asserção correspondente está no arquivo |
 | `verificar-binario-abre.sh --preset <p>` | o binário abre, primeiro frame medido, **nenhum aviso QML no stderr** até o frame | um `Connections` no alvo errado só aparece aqui |
 
 ## O que fazer quando um gate parece "errado"

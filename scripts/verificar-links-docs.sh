@@ -12,7 +12,7 @@
 # que trata documento como contrato precisa que o contrato seja alcancavel.
 #
 # O que e' verificado: todo link Markdown `[...](alvo)` relativo, em todo `.md`
-# rastreado pelo git, cujo alvo nao existe. Ancoras (`#secao`) sao cortadas
+# rastreado ou novo nao ignorado pelo git, cujo alvo nao existe. Ancoras (`#secao`) sao cortadas
 # antes de resolver; links externos (http, https, mailto) sao ignorados — este
 # gate e' offline por principio e nao faz rede.
 set -euo pipefail
@@ -28,9 +28,10 @@ from urllib.parse import unquote
 LINK = re.compile(r'\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
 EXTERNO = ("http://", "https://", "mailto:", "#")
 
-arquivos = subprocess.run(
-    ["git", "ls-files", "*.md"], capture_output=True, text=True, check=True
-).stdout.split()
+arquivos = sorted(set(subprocess.run(
+    ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
+    capture_output=True, text=True, check=True
+).stdout.rstrip("\0").split("\0")))
 
 quebrados = []
 verificados = 0
