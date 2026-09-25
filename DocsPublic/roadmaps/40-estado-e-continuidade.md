@@ -5872,3 +5872,127 @@ tamanho real, ao lado dos vizinhos) e `trilho-V4-com-remoto.png` (a IDE aberta,
 sete icones, o Remoto na quinta posicao). Mais o harness do `RemoteHudRules` e o
 do `ToolWindows` ampliado, mais o `tst_shell_pendente` (69 harnesses no
 total).
+
+### 7.101 A aba e' um documento, nao uma posicao — 2026-09-25 (V5, primeira metade)
+
+O aceite da V5 no roadmap 47 e' uma frase so': **nenhuma operacao de dominio
+depende da posicao visual da aba**. A API era `selectTab(index)` e
+`closeTab(index)`, e posicao muda sozinha — fechar uma aba desloca todas as
+seguintes.
+
+**Tres defeitos, medidos no codigo antes de escrever qualquer coisa:**
+
+1. **Fechar uma aba DE FUNDO trocava o documento na tela.** O proximo
+   selecionado era `Math.min(index, count - 1)` — a posicao de quem saiu. Quem
+   estava editando o quarto arquivo e fechava o primeiro era jogado noutro
+   documento.
+2. **O texto da tela era descartado nesse mesmo gesto.** `closeTab` fazia
+   `currentTab = -1` e chamava `selectTab`, cujo `storeCurrentEditor` entao nao
+   tinha indice valido para gravar o buffer. O autosave e o rascunho seguravam
+   a queda, mas o caminho estava errado.
+3. **`closeTabsUnderPath` fechava a aba errada** quando duas abas vizinhas caiam
+   sob o mesmo prefixo: o laco andava por indice enquanto as remocoes
+   deslocavam a lista sob ele.
+
+**O id e' SINTETICO, e nao o caminho.** Renomear um arquivo — ou uma pasta acima
+dele — reescreve o `path` da aba pelo `applyPathRenameToTabs`. O documento
+continua o mesmo; o nome dele e' que mudou. Um id que nunca se repete na sessao
+tambem diz a verdade sobre reabrir: fechar e abrir de novo o mesmo arquivo da'
+um documento novo, e nada guardado sobre o antigo o alcanca.
+
+**O que a fatia mudou de forma:** o `ListModel` e a identidade passaram para o
+`EditorOpenDocuments.qml`; `currentDocId` e' o que a IDE guarda e `currentTab`
+virou **derivado** dele — existe so' para o `ListView` saber qual linha pintar.
+A barra de abas emite `docId`, nao `index`, entao a posicao nao atravessa mais
+a fronteira do dominio.
+
+**A catraca cobrou, e estava certa.** Com a identidade dentro, o
+`EditorDocumentController` foi a 420 linhas contra um limite de 400. Saiu o
+grupo de SALVAR (arquivo atual, todos os modificados e a regra do snapshot que
+impede um salvar-tudo assincrono de sobrescrever digitacao nova) para o
+`EditorSaveController.qml` — uma responsabilidade inteira, nao um pedaco
+cortado no tamanho.
+
+**E o harness achou um quarto defeito, que era meu, da propria fatia:**
+`selectDocument` com um id que ninguem reconhece ZERAVA o documento atual. Um id
+velho — de uma aba ja' fechada, guardado em qualquer lugar — esvaziaria a tela
+de quem estava editando. Agora id sem documento nao mexe em nada e devolve
+`false`; esvaziar tem dono proprio (`clearCurrentDocument`).
+
+**O gate pegou um laco de binding que nenhum harness pegaria.** Com o indice
+derivado por expressao (`readonly property int currentTab: <...>`), o binario
+subiu com "Binding loop detected for property `breakpointLines`" no
+`ShellEditorHost`. A cadeia: os breakpoints da calha dependem do caminho do
+arquivo atual, que sai de `openFilesModel.get(currentTab)`. Com `currentTab`
+sendo binding, a leitura do `ListModel` entra no grafo de dependencias de QUEM
+chamou — e ler uma linha do modelo a materializa, o que notifica o modelo e
+reavalia o binding, em laco.
+
+Medido nos dois sentidos antes de consertar: trocando so' o `currentTab` por
+propriedade comum, o laco some; devolvendo o binding, ele volta. A solucao tem
+duas metades, e as duas dizem a mesma coisa — **nenhum binding atravessa o
+`ListModel`**: o mapa `indicePorId` e' reconstruido nas mutacoes, onde ler o
+modelo e' seguro, e o `currentTab` e' recalculado por SINAL. O passo do gate que
+pegou isso e' o "o binario ABRE", que exige primeiro frame sem aviso do QML.
+
+**A catraca cobrou de novo, e de novo estava certa.** Com o indice por sinal, o
+controller voltou a 427 linhas. Saiu a VOLTA DO DISCO (`handleFileSaved`,
+`handleFileSaveFailed`) para o `EditorSaveController`, junto do resto do
+salvamento: escrever e' metade, e a pendencia registrada na ida e' o que a
+resposta consome. Estavam separadas so' por acidente. O controller fechou em
+391.
+
+**Provas:** `tst_editor_document_identity.qml` (70 harnesses no total) cobre
+identidade, fechar de fundo, sobrevivencia do buffer, renomear sem trocar de
+documento, fechar por caminho, id inexistente e id nao reaproveitado. Conferido
+por MUTACAO: com o `Math.min(index, count - 1)` de volta, ele reprova apontando
+que "fechar aba de fundo trocou o documento" e que a superficie trocou de
+arquivo.
+
+**A lingua do codigo passou a ser o ingles, por decisao do autor.** Ele notou,
+nesta fatia, identificadores em portugues — `abertos`, `indicePorId`,
+`salvamento`, `aguardar` — e a convencao escrita em
+`contribuindo/08-convencoes-codigo-testes-commits.md` dizia, ate' hoje, que
+"portugues e' aceito em variaveis locais e funcoes internas quando o dominio e'
+em portugues". O resultado era um repositorio em duas linguas dentro do mesmo
+arquivo: `openFilesModel.get(indice)`. Agora a regra e' uma so': **identificador
+em ingles, comentario em portugues**, e a convencao foi corrigida.
+
+Os nomes desta fatia entraram renomeados: `openDocuments`, `indexByDocId`,
+`reindex`, `indexOf`, `docIdAt`, `docIdForPath`, `successorOf`, `docIdsUnder`,
+`saving`, `notePendingSave`, `takePendingSave`, `refreshCurrentTab`,
+`hold`/`take`/`giveUp` no `PendingShellInput`, `freshnessMs`/`age` no
+`RemoteHudRules`.
+
+**A renomeacao mecanica me pegou uma vez, e vale dizer:** substituir por palavra
+inteira trocou tambem a PROSA dos comentarios — "id sem dono" virou "id sem
+owner", "a idade em palavras" virou "a age em palavras". Foram restaurados, e
+uma varredura confirmou que nao sobrou nenhum. Um `sed` nao sabe a diferenca
+entre o nome de uma variavel e a palavra que a descreve.
+
+**Cerca de 70 identificadores anteriores a esta fatia continuam em portugues** —
+QML, Rust e C++ internos. Eles saem numa FATIA PROPRIA, e nao de passagem: um
+diff mecanico grande escondido dentro de um diff de produto e' impossivel de
+revisar. O `configaction` fica de fora ate' dos dois: o nome esta' no protocolo
+(`configAction.list`), no core, na ponte C++ e em dez arquivos QML — renomear e'
+mudanca de contrato, com bump de versao, nao `sed`.
+
+**Falta da V5** a previa de Markdown, que tem especificacao propria
+(`especificacoes/markdown-preview-0.3.md`) e entra em seguida.
+
+### 7.102 O dialogo de "alteracoes nao salvas" foi descartado — 2026-09-25
+
+`ui/qml/editor/EditorUnsavedChangesDialog.qml` estava na arvore e no git desde a
+fundacao (`b506d87`), FORA do `ui/CMakeLists.txt` e sem uma unica referencia no
+repositorio. Era o unico morador da lista de debito declarado do
+`verificar-qml.sh`, e a lista agora esta' vazia.
+
+A decisao foi do autor, e a razao nao e' "ninguem usava": **a pergunta que ele
+fazia o produto respondeu de outro jeito**. Salvar-ao-pausar grava em disco em
+2 s e no gesto de trocar de aba; com o autosave desligado, o rascunho de sessao
+grava do mesmo jeito. Nao ha' o momento em que a IDE precisa parar e perguntar
+"salvar, descartar ou cancelar?".
+
+Um `.qml` fora do modulo e' invisivel para o qmllint e para o compilador: nao e'
+codigo, e' arquivo. Por isso arquivo novo nessa situacao reprova, e entrar na
+lista de debito exige decisao registrada — nao e' escape.

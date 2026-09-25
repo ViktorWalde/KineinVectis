@@ -231,9 +231,21 @@ Fonte: [`terminal-ergonomia-0.3.md`](../especificacoes/terminal-ergonomia-0.3.md
 Aceite: uma pessoa encontra Copy/Paste/Clear sem consultar manual e não perde
 `SIGINT`, bracketed paste ou AltGr.
 
-Estado em 2026-09-24: seleção completa e nomes reutilizáveis implementados em
-`0.131.0`; Bash e Vim reais têm prova automatizada. Faltam dogfooding com pessoa,
-SSH real e itens de T3. Ações
+Estado em 2026-09-25: seleção completa e nomes reutilizáveis implementados em
+`0.131.0`; Bash e Vim reais têm prova automatizada; **o dogfooting do autor e o
+SSH real foram feitos** (2026-09-24), e foi isso que fechou a fatia.
+
+O que **continua aberto** são as extensões da §8 da especificação, e elas não
+bloqueiam a 0.3.5: busca no scrollback, `Ctrl+PageUp/PageDown` para trocar de
+sessão (hoje as teclas são repassadas ao shell, como devem ser quando o foco é
+dele), renomear sessão, abrir shell na pasta do arquivo selecionado,
+`Ctrl+clique` em paths e URLs, zoom de fonte próprio, copiar-ao-selecionar,
+confirmação ao fechar sessão com processo vivo e a indicação **visual** de tela
+alternativa (o dado já chega do core; nada o mostra). Dos três alvos que a §8
+nomeia para a 0.3 — busca, troca de sessão por teclado e confirmação de paste —
+só o terceiro está feito.
+
+Decisão do autor em 2026-09-25: **essas extensões entram depois da V5.** Ações
 entram na paleta somente junto da convergência V3, sem dispatcher paralelo.
 
 ### V2 — Remote sem formulário monolítico
@@ -295,6 +307,10 @@ montar manualmente `ssh`/`rsync`; fora desse fluxo a limitação aparece antes d
 gesto arriscado.
 
 ### V5 — identidade das abas
+
+> **Parcial em 2026-09-25 (roadmap 40 §7.101).** A identidade por documento
+> entrou inteira: `docId` sintético, `currentTab` derivado, barra de abas
+> falando em documento. Falta a prévia de Markdown, abaixo.
 
 - path/ID estável identifica documento;
 - índice fica como detalhe do `ListView`;

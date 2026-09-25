@@ -10,11 +10,21 @@ capítulo é o que o gate **não** cobra e o revisor cobra.
   repositório usa ASCII na maior parte (`nao`, `e'`, `ja'`) por hábito
   histórico; siga o arquivo em que está — não "corrija" um arquivo
   inteiro para o outro estilo numa fatia que não é sobre isso.
-- **Identificadores**: inglês nos tipos do protocolo e nas APIs
-  (`DataSourceDestroyParams`, `handleDestroyed`); português é aceito em
-  variáveis locais e funções internas quando o domínio é em português
-  (`fn cenario`, `let pedido`, `PODMAN_FALSO`). O arquivo em que você está
-  manda.
+- **Identificadores**: **inglês, sempre** — tipos, APIs, funções internas,
+  variáveis locais e nomes de teste (`DataSourceDestroyParams`,
+  `handleDestroyed`, `indexByDocId`, `takePendingSave`). Até 2026-09-25 esta
+  regra aceitava português em nome local "quando o domínio é em português", e o
+  resultado foi um repositório em duas línguas dentro do mesmo arquivo:
+  `openFilesModel.get(indice)`. A decisão do autor é que a língua do código é o
+  inglês, e a do comentário é o português.
+  - **A varredura do que ficou para trás é fatia própria**, e não conserto de
+    passagem: cerca de 70 identificadores internos em QML, Rust e C++ ainda
+    estão em português. Trocá-los dentro de uma fatia de produto esconderia o
+    diff mecânico no meio do diff que importa.
+  - **`configaction` fica de fora dela.** O nome está no protocolo
+    (`configAction.list`), em `kinein-protocol`, no core, na ponte C++ e em dez
+    arquivos QML: renomear é mudança de CONTRATO, com bump de versão e a
+    catraca de fiação IPC junto — não é `sed`.
 - **Doc-comments do protocolo** (`kinein-protocol`): inglês, porque são a
   documentação do fio para qualquer cliente.
 - **Textos da tela**: português, sempre em `qsTr("…")`, com acentos.

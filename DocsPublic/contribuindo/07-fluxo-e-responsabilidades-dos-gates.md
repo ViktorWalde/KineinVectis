@@ -147,9 +147,16 @@ declarada, não comunicação entre gates:
   refez, e compara conteúdo para provar que leu a árvore de agora. Cópia é
   cache, então refazê-la é preparo; o que ele **recusa** é o defeito de verdade:
   um `.qml` na árvore fora do `ui/CMakeLists.txt`, que ninguém compila nem linta.
-  Há **um débito declarado** no script (`EditorUnsavedChangesDialog.qml`, sem
-  referência em todo o repo): entrar no módulo ou sair da árvore é decisão do
-  autor, não do gate — arquivo novo nessa situação reprova.
+  A lista de débito declarado está **vazia** desde 2026-09-25: o único morador
+  (`EditorUnsavedChangesDialog.qml`, na árvore desde a fundação e sem uma única
+  referência) foi descartado pelo autor. Entrar no módulo ou sair da árvore é
+  decisão dele, não do gate — arquivo novo nessa situação reprova.
+- o **primeiro** passo confere que `build/<preset-debug>` e
+  `build/<preset-release>` existem. Custa milissegundos e existe porque em
+  2026-09-25 o gate reprovou com "build/dev-local-release is not a directory"
+  **depois de 25 minutos** de clang-tidy, testes e harnesses: o preset estava no
+  `CMakeUserPresets.json`, o diretório é que nunca tinha sido configurado
+  naquela máquina. A mensagem diz o `cmake --preset` que resolve;
 - `verificar-qml.sh` lê `.qmltypes`, `qmldir` e a configuração de imports do
   módulo compilado;
 - no modo completo, o build debug é seguido pelo smoke do **mesmo** preset;
