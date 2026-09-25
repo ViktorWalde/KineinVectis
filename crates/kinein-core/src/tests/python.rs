@@ -21,10 +21,6 @@ use serde_json::{Value, json};
 use crate::Core;
 use crate::tools::ToolDetector;
 
-/// Os testes que escrevem scripts e os executam ficam serializados (ETXTBSY
-/// entre threads — a mesma razao do `tests/index_context.rs`).
-use super::EXECUTAVEIS;
-
 fn temp_dir(name: &str) -> PathBuf {
     let dir = std::env::temp_dir()
         .join("kinein-python-tests")
@@ -69,7 +65,7 @@ fn status(core: &mut Core) -> Value {
 
 #[test]
 fn status_tells_the_truth_in_the_three_states() {
-    let _serial = EXECUTAVEIS.lock().unwrap();
+    let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("status");
     escrever(&raiz.join("pyproject.toml"), "[project]\nname = \"demo\"\n");
     escrever(&raiz.join("requirements.txt"), "");
@@ -188,7 +184,7 @@ fn create_environment_refuses_with_a_reason_what_the_machine_lacks() {
 /// interpretador, produz `success: false` mesmo saindo com 0.
 #[test]
 fn the_job_runs_the_detected_uv_and_the_context_follows_the_new_environment() {
-    let _serial = EXECUTAVEIS.lock().unwrap();
+    let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("job");
     escrever(&raiz.join("pyproject.toml"), "[project]\nname = \"demo\"\n");
     escrever(&raiz.join("app.py"), "def main():\n    pass\n");
@@ -304,7 +300,7 @@ fn the_job_runs_the_detected_uv_and_the_context_follows_the_new_environment() {
 /// dizendo o que fixar.
 #[test]
 fn the_board_stubs_are_suggested_installed_into_typings_and_reported() {
-    let _serial = EXECUTAVEIS.lock().unwrap();
+    let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("stubs");
     escrever(
         &raiz.join("main.py"),

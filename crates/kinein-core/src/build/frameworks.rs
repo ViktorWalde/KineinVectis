@@ -112,9 +112,7 @@ mod tests {
     fn the_zephyr_board_comes_from_the_cache_then_from_west_config() {
         // Escreve um executavel e o roda: sem este lock corre com os
         // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
-        let _serial = crate::EXECUTAVEIS
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _serial = crate::serializar_executaveis();
         let raiz = std::env::temp_dir().join(format!("kinein-zephyr-board-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&raiz);
         std::fs::create_dir_all(raiz.join("build")).unwrap();

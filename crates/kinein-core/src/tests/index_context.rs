@@ -49,12 +49,6 @@ fn script(caminho: &Path, saida: &str) -> PathBuf {
     caminho.to_path_buf()
 }
 
-/// Quem escreve um script e o executa segura isto: um `exec` numa thread
-/// enquanto outra ainda tem um script aberto para escrita da' `ETXTBSY` (o
-/// filho herda o descritor entre o fork e o exec), e o teste falharia ao
-/// acaso quando os dois correm juntos.
-use super::EXECUTAVEIS;
-
 fn sem_ferramentas() -> Ferramentas {
     Ferramentas::default()
 }
@@ -272,7 +266,7 @@ fn metadata_de_dois_pacotes(raiz: &Path) -> String {
 
 #[test]
 fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
-    let _serial = EXECUTAVEIS.lock().unwrap();
+    let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("cargo");
     escrever(
         &raiz.join("Cargo.toml"),
@@ -380,7 +374,7 @@ fn rust_files_belong_to_the_cargo_target_exact_then_longest_dir_then_lib() {
 
 #[test]
 fn the_python_interpreter_follows_virtual_env_then_venv_then_poetry_then_system() {
-    let _serial = EXECUTAVEIS.lock().unwrap();
+    let _serial = crate::serializar_executaveis();
     let raiz = temp_dir("python");
     escrever(&raiz.join("tools/gera.py"), "def gera():\n    pass\n");
     let sistema = script(&raiz.join("bin/python3"), "Python 9.9.9");

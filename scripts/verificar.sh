@@ -53,9 +53,24 @@ passo "cargo fmt --all --check" \
     "Confere a formatacao Rust sem modificar os arquivos."
 cargo fmt --all --check
 
-passo "cargo test --workspace --all-features" \
-    "Executa os testes Rust de todo o workspace com todos os recursos."
-cargo test --workspace --all-features
+passo "cargo test --workspace --all-features -- --test-threads=1" \
+    "Executa os testes Rust em UMA thread: a paralela tem corrida de ETXTBSY."
+# UMA THREAD, e isto foi MEDIDO em 2026-09-24.
+#
+# Varios testes escrevem um executavel e o rodam. Em paralelo, basta outra
+# thread dar `fork` na janela entre escrever e executar: o filho HERDA o
+# descritor aberto para escrita (o `CLOEXEC` do Rust so' fecha no `exec`, nao no
+# `fork`), e o `exec` do primeiro volta `ETXTBSY` — "Text file busy". Como o
+# teste estoura segurando o mutex `EXECUTAVEIS`, os chamadores que usam
+# `.lock().unwrap()` envenenam em seguida, e uma corrida vira cinco falhas.
+#
+# O mutex do `lib.rs` nao resolve a classe: ele serializa quem ESCREVE, e o
+# problema e' qualquer `fork` concorrente. Serializar os testes resolve.
+#
+# CUSTO MEDIDO: 11,5 s em paralelo contra 40,7 s em serie. Vinte e nove segundos
+# num gate de ~20 minutos, contra reprovacoes aleatorias que custam o gate
+# inteiro — e que ensinam a ignorar vermelho, que e' o dano de verdade.
+cargo test --workspace --all-features -- --test-threads=1
 
 passo "cargo clippy --workspace --all-targets --all-features -- -D warnings" \
     "Reprova qualquer diagnostico do Clippy em codigo, testes e alvos Rust."

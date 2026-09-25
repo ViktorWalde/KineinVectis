@@ -15,7 +15,7 @@ está em
 | Gate | O que mede | Como ler o "não" |
 | --- | --- | --- |
 | `cargo fmt --all --check` | formatação | rode `cargo fmt --all` |
-| `cargo test --workspace --all-features` | os testes Rust (844 em 2026-09-23) | um teste do LSP (`the_rust_server_receives_the_kit_target…`) é sensível a carga da máquina: se falhou sozinho durante um clang-tidy, rode-o isolado antes de investigar |
+| `cargo test --workspace --all-features` | os testes Rust (844 em 2026-09-23) | um teste do LSP (`the_rust_server_receives_the_kit_target…`) é sensível a carga da máquina: se falhou sozinho durante um clang-tidy, rode-o isolado antes de investigar Desde 2026-09-24 roda em **uma thread**: em paralelo ha' corrida de `ETXTBSY` entre escrever um executavel e o `fork` de outro teste. Custo medido: 11,5 s -> 40,7 s. |
 | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | pedante, incluindo testes e doc-comments | nomes em doc-comments pedem crase (`` `SQLite` ``); `similar_names`, `too_many_lines` pedem split — não `#[allow]` |
 | `verificar-deny.sh` | licenças e advisories das dependências | uma dependência nova precisa de licença compatível (MIT/Apache) |
 | `verificar-shell.sh` | shellcheck nos scripts | |

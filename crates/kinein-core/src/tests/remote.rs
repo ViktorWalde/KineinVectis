@@ -143,9 +143,7 @@ fn the_catalogue_saves_without_secrets_sorted_by_name() {
 #[test]
 #[cfg(unix)]
 fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("probe");
     c.salvar_pi();
     let sem_ssh = c.rpc("remote.probe", json!({ "name": "pi" }));
@@ -234,9 +232,7 @@ fn the_probe_reads_the_target_through_a_batch_mode_ssh() {
 #[test]
 #[cfg(unix)]
 fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("copy-id");
     c.salvar_pi();
     let registro = c.bin().parent().unwrap().join("copyid.argv");
@@ -272,9 +268,7 @@ fn copy_id_composes_the_line_from_the_profile_and_runs_nothing() {
 #[test]
 #[cfg(unix)]
 fn deploy_prefers_rsync_and_falls_back_to_scp() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("deploy");
     c.salvar_pi();
     let sem_nada = c.rpc("remote.deploy", json!({ "name": "pi" }));
@@ -475,9 +469,7 @@ fn discover_lists_the_machines_aliases_without_a_workspace_open() {
 #[test]
 #[cfg(unix)]
 fn resolve_asks_openssh_for_the_effective_summary_and_hides_the_proxy_command() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let (mut core, base) = cenario_descoberta("resolve");
     let registro = base.join("ssh.argv");
     executavel(
@@ -523,9 +515,7 @@ fn resolve_asks_openssh_for_the_effective_summary_and_hides_the_proxy_command() 
 #[test]
 #[cfg(unix)]
 fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anything() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let (mut core, base) = cenario_descoberta("resolve-opcao");
     let registro = base.join("ssh.argv");
     executavel(
@@ -552,9 +542,7 @@ fn resolve_refuses_a_host_that_ssh_would_read_as_an_option_before_spawning_anyth
 #[test]
 #[cfg(unix)]
 fn resolve_repeats_what_ssh_complained_instead_of_inventing_a_summary() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let (mut core, base) = cenario_descoberta("resolve-recusa");
     executavel(
         &base.join("bin/ssh"),

@@ -121,9 +121,7 @@ impl Cenario {
 #[test]
 #[cfg(unix)]
 fn listing_reads_the_real_output_and_is_a_medium_risk_job() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("ls");
     c.mpremote_falso(&format!("printf '%s' '{LS_REAL}'\n"));
     let porta = c.porta.display().to_string();
@@ -172,9 +170,7 @@ fn listing_reads_the_real_output_and_is_a_medium_risk_job() {
 #[test]
 #[cfg(unix)]
 fn get_put_rm_and_mkdir_build_their_lines_and_writes_are_high_risk() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("cp");
     c.abrir_workspace();
     c.mpremote_falso("exit 0\n");
@@ -235,9 +231,7 @@ fn get_put_rm_and_mkdir_build_their_lines_and_writes_are_high_risk() {
 #[test]
 #[cfg(unix)]
 fn a_raw_repl_failure_is_retried_once() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("retry");
     let marca = c.dir.join("primeira");
     c.mpremote_falso(&format!(
@@ -278,9 +272,7 @@ fn a_raw_repl_failure_is_retried_once() {
 #[test]
 #[cfg(unix)]
 fn the_error_is_the_mpremote_line() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("erro");
     c.mpremote_falso(
         "echo 'cp :nao.py ./nao.py'\necho 'mpremote: cp: nao.py: No such file or directory.' >&2\nexit 1\n",
@@ -300,9 +292,7 @@ fn the_error_is_the_mpremote_line() {
 #[test]
 #[cfg(unix)]
 fn refusals_happen_before_the_port_is_touched() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("recusas");
     c.mpremote_falso("exit 0\n");
     let porta = c.porta.display().to_string();
@@ -373,9 +363,7 @@ fn refusals_happen_before_the_port_is_touched() {
 #[test]
 #[cfg(unix)]
 fn cancelling_the_job_kills_mpremote() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("cancela");
     c.mpremote_falso("echo 'ls :'\nexec sleep 30\n");
     let job_id = c.files(json!({ "action": "list" })).result.unwrap()["jobId"]

@@ -87,9 +87,7 @@ impl Cenario {
 #[test]
 #[cfg(unix)]
 fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("v5");
     c.esptool_falso(&format!(
         "#!/bin/sh\necho \"argv: $*\"\nprintf '%s' '{}'\n",
@@ -143,9 +141,7 @@ fn a_v5_esptool_yields_the_identity_and_a_kit_suggestion() {
 #[test]
 #[cfg(unix)]
 fn a_v4_esptool_gets_the_underscore_command_on_retry() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("v4");
     c.esptool_falso(
         "#!/bin/sh\ncase \"$*\" in\n  *flash-id) echo \"esptool.py: error: argument operation: \
@@ -175,9 +171,7 @@ fn a_v4_esptool_gets_the_underscore_command_on_retry() {
 #[test]
 #[cfg(unix)]
 fn refusals_happen_before_the_port_is_opened() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("recusas");
     let porta = c.porta.display().to_string();
 
@@ -227,9 +221,7 @@ fn refusals_happen_before_the_port_is_opened() {
 #[test]
 #[cfg(unix)]
 fn a_failing_esptool_reports_its_last_lines() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("falha");
     c.esptool_falso(
         "#!/bin/sh\necho 'Connecting......'\necho 'A fatal error occurred: Failed to connect \
@@ -255,9 +247,7 @@ fn a_failing_esptool_reports_its_last_lines() {
 #[test]
 #[cfg(unix)]
 fn cancelling_the_job_kills_esptool() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("cancela");
     c.esptool_falso("#!/bin/sh\necho 'Connecting......'\nexec sleep 30\n");
     let porta = c.porta.display().to_string();

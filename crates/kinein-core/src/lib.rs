@@ -465,8 +465,24 @@ mod tests;
 
 /// Os testes que ESCREVEM um script e o executam ficam serializados entre
 /// si: um `fork` enquanto outra thread ainda tem um executavel aberto para
-/// escrita da' `ETXTBSY` no `exec` do filho (o descritor e' herdado). Um
-/// lock so' para o crate — os modulos antigos (`tests/python.rs`,
-/// `tests/index_context.rs`) tinham cada um o seu; os novos usam este.
+/// escrita da' `ETXTBSY` no `exec` do filho (o descritor e' herdado).
+///
+/// MEDIDO em 2026-09-24: este lock NAO resolve a classe. Ele serializa quem
+/// ESCREVE, e a corrida e' entre escrever e QUALQUER `fork` concorrente. Por
+/// isso o gate passou a rodar `cargo test -- --test-threads=1` (11,5 s ->
+/// 40,7 s, medido). O lock fica porque documenta a intencao e protege quem
+/// rodar em paralelo na mao.
 #[cfg(test)]
 pub(crate) static EXECUTAVEIS: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// Toma o lock dos executaveis TOLERANDO veneno.
+///
+/// Sem isto, um teste que estoura segurando o lock derruba todos os seguintes
+/// com `PoisonError` — uma corrida virava cinco falhas, e a primeira ficava
+/// escondida no meio delas. Visto no gate em 2026-09-24.
+#[cfg(test)]
+pub(crate) fn serializar_executaveis() -> std::sync::MutexGuard<'static, ()> {
+    EXECUTAVEIS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}

@@ -716,9 +716,7 @@ mod tests {
 
         // Escreve um executavel e o roda: sem este lock corre com os
         // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
-        let _serial = crate::EXECUTAVEIS
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let _serial = crate::serializar_executaveis();
         let base = temp_bin_dir("install-root");
         let path_dir = base.join("path");
         let raiz = base.join("toolchains");

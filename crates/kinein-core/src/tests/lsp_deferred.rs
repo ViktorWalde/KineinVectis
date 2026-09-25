@@ -51,9 +51,7 @@ fn slow_server(root: &std::path::Path, delay_ms: u32) -> PathBuf {
 #[test]
 #[cfg(unix)]
 fn a_slow_hover_does_not_block_the_loop_and_answers_later_through_the_channel() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let root = workspace("lento");
     let log = root.join("wire.jsonl");
     let (events, _inbox) = mpsc::channel::<JsonRpcRequest>();
@@ -126,9 +124,7 @@ fn a_slow_hover_does_not_block_the_loop_and_answers_later_through_the_channel() 
 #[test]
 #[cfg(unix)]
 fn without_the_channel_the_hover_is_answered_inline() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let root = workspace("inline");
     let log = root.join("wire.jsonl");
     let (events, _inbox) = mpsc::channel::<JsonRpcRequest>();
@@ -167,9 +163,7 @@ fn without_the_channel_the_hover_is_answered_inline() {
 #[test]
 #[cfg(unix)]
 fn a_slow_rename_waits_off_the_loop_and_finishes_in_a_continuation() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let root = workspace("rename-lento");
     let log = root.join("wire.jsonl");
     let (events, _inbox) = mpsc::channel::<JsonRpcRequest>();

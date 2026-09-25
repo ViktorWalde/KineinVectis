@@ -134,9 +134,7 @@ fn abrir_espelho(c: &mut Cenario) -> PathBuf {
 #[test]
 #[cfg(unix)]
 fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("abrir");
 
     // Fora de um espelho: status vazio; sync recusado; sem rsync, open recusado.
@@ -234,9 +232,7 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
 #[test]
 #[cfg(unix)]
 fn saving_in_a_mirror_pushes_and_sync_moves_both_ways() {
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let mut c = cenario("sync");
     let espelho = abrir_espelho(&mut c);
 

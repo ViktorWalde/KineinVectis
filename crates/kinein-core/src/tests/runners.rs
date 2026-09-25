@@ -227,9 +227,7 @@ fn run_quality_and_collect(
 fn quality_run_without_ruff_names_the_tool() {
     // Escreve um executavel e o roda: sem este lock corre com os
     // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
-    let _serial = crate::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let (_dir, mut core, receiver) = python_quality_fixture("sem-ruff");
     let (diagnosticos, finished) = run_quality_and_collect(&mut core, &receiver);
     assert!(diagnosticos.is_empty());
@@ -386,9 +384,7 @@ fn run_tests_and_collect(
 fn test_run_without_python_or_pytest_says_how_to_install() {
     // Escreve um executavel e o roda: sem este lock corre com os
     // outros iguais e o `exec` volta ETXTBSY (ver lib.rs).
-    let _serial = crate::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
     let dir = pytest_workspace("sem-python", None);
     let (_eventos, finished) = run_tests_and_collect(&dir, None);
     assert_eq!(finished["success"], false);
@@ -695,9 +691,7 @@ fn cpp_quality_fixture(
 fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
     use std::os::unix::fs::PermissionsExt;
 
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
 
     // Sem CDB: o motor existe, mas diz o que falta.
     let (_dir, mut core, receiver) = cpp_quality_fixture("sem-cdb", false);
@@ -770,9 +764,7 @@ fn quality_run_on_cpp_runs_clang_tidy_over_the_cdb() {
 fn quality_run_on_cpp_prefers_run_clang_tidy() {
     use std::os::unix::fs::PermissionsExt;
 
-    let _serial = super::EXECUTAVEIS
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _serial = crate::serializar_executaveis();
 
     let (dir, _core, _receiver) = cpp_quality_fixture("run-tidy", true);
     let executavel = |nome: &str, corpo: &str| {
