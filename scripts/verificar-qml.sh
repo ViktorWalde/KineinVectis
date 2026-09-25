@@ -31,22 +31,62 @@ REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 RSP="${KINEIN_QML_RSP:-}"
 configurado_sem_build=""
 native_build=""
+escolhido=""
 if [ -z "$RSP" ]; then
+    # O BUILD MAIS NOVO GANHA (2026-09-25).
+    #
+    # Ate' aqui a ordem era fixa e o primeiro configurado vencia. Quem compila
+    # `dev-local` no dia a dia ficava com o lint lendo o `.qmltypes` do
+    # `linux-clang-debug-strict` de dias antes — e um tipo C++ novo (uma
+    # propriedade nova num `QML_ELEMENT`) era conferido contra a versao ANTIGA
+    # do tipo. O sintoma foi ruidoso desta vez ("Could not find property"), mas
+    # o caso perigoso e' o silencioso: propriedade REMOVIDA que o lint ainda
+    # acha que existe.
+    #
+    # E' o mesmo defeito que este script ja' consertou para a copia do QML, uma
+    # camada adiante: lintar a arvore de agora contra o build de ontem.
+    mais_novo=0
     for base in \
         "$REPO_ROOT/build/linux-clang-debug-strict" \
         "$REPO_ROOT/build/dev-local"; do
-        candidato="$base/ui/.rcc/qmllint/kinein-vectis.rsp"
         [ -f "$base/CMakeCache.txt" ] || continue
-        if [ ! -f "$base/ui/KineinVectis/kinein-vectis.qmltypes" ]; then
+        tipos="$base/ui/KineinVectis/kinein-vectis.qmltypes"
+        if [ ! -f "$tipos" ]; then
             configurado_sem_build="$base"
             continue
         fi
+        idade="$(stat -c %Y "$tipos")"
+        if [ "$idade" -gt "$mais_novo" ]; then
+            mais_novo="$idade"
+            escolhido="$base"
+        fi
+    done
+    if [ -n "$escolhido" ]; then
+        configurado_sem_build=""
+        candidato="$escolhido/ui/.rcc/qmllint/kinein-vectis.rsp"
         if [ -f "$candidato" ]; then
             RSP="$candidato"
         else
-            native_build="$base"
+            native_build="$escolhido"
         fi
-        break
+    fi
+fi
+
+# E O MAIS NOVO AINDA PODE SER VELHO. Os tipos C++ registrados no QML
+# (`QML_ELEMENT`) so' entram no `.qmltypes` quando o C++ compila: se a fonte e'
+# mais nova que os tipos, o lint estaria conferindo um contrato que nao existe
+# mais. Aqui e' recusa, com o comando que resolve.
+if [ -n "$escolhido" ]; then
+    tipos="$escolhido/ui/KineinVectis/kinein-vectis.qmltypes"
+    for fonte in "$REPO_ROOT"/ui/src/*.h; do
+        grep -q 'QML_ELEMENT' "$fonte" || continue
+        if [ "$fonte" -nt "$tipos" ]; then
+            echo "erro: $(basename "$fonte") registra tipo QML e e' mais novo que o" >&2
+            echo "      kinein-vectis.qmltypes de $escolhido." >&2
+            echo "      O lint conferiria o QML de agora contra o tipo de antes." >&2
+            echo "      Rode:  cmake --build $escolhido" >&2
+            exit 1
+        fi
     done
 fi
 if [ -n "$native_build" ]; then
