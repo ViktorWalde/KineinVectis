@@ -49,6 +49,23 @@ passo() {
     echo "funcao: ${2:?cada etapa precisa de uma descricao nao vazia}"
 }
 
+# OS BUILDS SAO OS ULTIMOS PASSOS, E ERA TARDE DEMAIS PARA DESCOBRIR (2026-09-25).
+#
+# O gate reprovou com "build/dev-local-release is not a directory" depois de 25
+# minutos de clang-tidy, testes e harnesses: o preset existia no
+# `CMakeUserPresets.json`, mas o diretorio nunca tinha sido configurado nesta
+# maquina. Nada disso era sobre o codigo — e o tempo ja' tinha sido gasto.
+# Conferir os dois diretorios custa milissegundos e diz o comando que resolve.
+passo "os diretorios de build existem" \
+    "Falha em milissegundos, e nao depois de 25 minutos, quando falta configurar um preset."
+for preset in "$preset_debug" "$preset_release"; do
+    if [ ! -d "build/$preset" ]; then
+        echo "erro: build/$preset nao existe — configure com 'cmake --preset $preset'." >&2
+        exit 1
+    fi
+done
+echo "build/$preset_debug e build/$preset_release: configurados."
+
 passo "cargo fmt --all --check" \
     "Confere a formatacao Rust sem modificar os arquivos."
 cargo fmt --all --check
