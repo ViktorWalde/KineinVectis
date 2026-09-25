@@ -109,11 +109,11 @@ Item {
     // Um dono AUSENTE e' o mesmo caso de um id sem dono: resultado observavel,
     // nao excecao. O trilho existe antes dos controllers em teste e na abertura
     // da janela, e chamar `open()` de um `null` derrubava a funcao inteira.
-    function abrir(dono) {
-        if (dono === null || dono === undefined) {
+    function openOwner(owner) {
+        if (owner === null || owner === undefined) {
             return false;
         }
-        dono.open();
+        owner.open();
         return true;
     }
 
@@ -128,15 +128,15 @@ Item {
             shellController.toggleExplorer();
             return true;
         case "embedded":
-            return abrir(embeddedController);
+            return openOwner(embeddedController);
         case "database":
-            return abrir(dataSourceController);
+            return openOwner(dataSourceController);
         case "containers":
-            return abrir(containerController);
+            return openOwner(containerController);
         case "observability":
-            return abrir(grafanaController);
+            return openOwner(grafanaController);
         case "remote":
-            return abrir(remoteController);
+            return openOwner(remoteController);
         case "tools":
             if (shellController === null || shellController === undefined) {
                 return false;

@@ -21,35 +21,35 @@ QtObject {
     // guardada. Um `ssh` antigo aparecendo num terminal que o autor abriu
     // depois, para outra coisa, seria pior que nao ter enviado. O harness
     // encurta o prazo — e' o mesmo caminho, so' que mais cedo.
-    property int esperaMs: 15000
+    property int timeoutMs: 15000
 
     // Ninguem descobre sozinho que a linha nao foi: quem pediu precisa ouvir.
     signal dropped(string command)
 
-    readonly property Timer prazo: Timer {
-        interval: root.esperaMs
+    readonly property Timer deadline: Timer {
+        interval: root.timeoutMs
         repeat: false
-        onTriggered: root.desistir()
+        onTriggered: root.giveUp()
     }
 
     // Guarda a linha e comeca a contar.
-    function aguardar(texto) {
-        root.command = texto;
-        root.prazo.restart();
+    function hold(text) {
+        root.command = text;
+        root.deadline.restart();
     }
 
     // Entrega a linha a quem tem terminal, uma vez so'.
-    function retirar() {
-        const guardada = root.command;
+    function take() {
+        const held = root.command;
         root.command = "";
-        root.prazo.stop();
-        return guardada;
+        root.deadline.stop();
+        return held;
     }
 
-    function desistir() {
+    function giveUp() {
         if (root.command === "") {
             return;
         }
-        root.dropped(root.retirar());
+        root.dropped(root.take());
     }
 }

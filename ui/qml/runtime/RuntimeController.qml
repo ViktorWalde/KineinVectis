@@ -131,8 +131,8 @@ Item {
 
         // A linha que esperava este terminal nascer. So' a PRIMEIRA sessao a
         // abrir depois do pedido a recebe: a espera e' zerada aqui.
-        if (shellPendente.command !== "") {
-            terminalInputRequested(id, shellPendente.retirar() + "\n");
+        if (pendingShell.command !== "") {
+            terminalInputRequested(id, pendingShell.take() + "\n");
             clearTerminalInputRequested();
         }
     }
@@ -184,13 +184,13 @@ Item {
 
     // A linha do "Shell no terminal" quando nao ha' sessao viva: ela ESPERA o
     // terminal nascer, em vez de sumir. O porque esta' no PendingShellInput.
-    property alias pendingShellInput: shellPendente.command
-    property alias esperaDoShellMs: shellPendente.esperaMs
+    property alias pendingShellInput: pendingShell.command
+    property alias shellTimeoutMs: pendingShell.timeoutMs
 
     signal shellInputDropped(string command)
 
     PendingShellInput {
-        id: shellPendente
+        id: pendingShell
 
         onDropped: function(command) {
             root.shellInputDropped(command);
@@ -199,7 +199,7 @@ Item {
 
     function submitShellInput(text) {
         if (root.activeTerminalId === "") {
-            shellPendente.aguardar(text);
+            pendingShell.hold(text);
             showTabRequested("terminal");
             terminalOpenRequested();
             return;

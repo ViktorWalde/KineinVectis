@@ -31,9 +31,9 @@ Row {
 
     // Reavaliado a cada tique: a idade envelhece sozinha, e a frase depende
     // dela. Sem isto, "verificado há 1 min" ficaria na tela por horas.
-    property double agora: Date.now()
+    property double now: Date.now()
 
-    readonly property var hud: regras.hudFor({
+    readonly property var hud: rules.hudFor({
         "isMirror": root.isMirror,
         "targetName": root.targetName,
         "syncing": root.syncing,
@@ -43,13 +43,13 @@ Row {
         "deploying": root.deploying,
         "probed": root.probed,
         "probeOk": root.probeOk,
-        "probeAgeMs": root.probedAt > 0 ? root.agora - root.probedAt : -1
+        "probeAgeMs": root.probedAt > 0 ? root.now - root.probedAt : -1
     })
 
     signal panelRequested()
 
     RemoteHudRules {
-        id: regras
+        id: rules
     }
 
     spacing: Theme.spacingSmall
@@ -61,7 +61,7 @@ Row {
         interval: 30000
         running: root.visible
         repeat: true
-        onTriggered: root.agora = Date.now()
+        onTriggered: root.now = Date.now()
     }
 
     Rectangle {

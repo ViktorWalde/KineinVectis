@@ -21,10 +21,10 @@ QtObject {
     id: root
 
     // Quanto tempo uma medida continua sendo "agora" na frase curta.
-    readonly property int frescorMs: 60000
+    readonly property int freshnessMs: 60000
 
     // "ha' 3 min", "ha' 2 h". Curto de proposito: e' barra de status.
-    function idade(ms) {
+    function age(ms) {
         if (ms === undefined || ms === null || ms < 0) {
             return "";
         }
@@ -52,36 +52,36 @@ QtObject {
         if (!e.isMirror) {
             return { "visible": false, "label": "", "tone": "neutro", "detail": "" };
         }
-        const alvo = e.targetName || qsTr("alvo");
-        const prefixo = "SSH · " + alvo + " · ";
+        const target = e.targetName || qsTr("alvo");
+        const prefix = "SSH · " + target + " · ";
 
         if (e.syncing) {
-            const verbo = e.syncDirection === "push" ? qsTr("enviando") : qsTr("puxando");
-            return { "visible": true, "label": prefixo + verbo + "…", "tone": "ocupado",
+            const verb = e.syncDirection === "push" ? qsTr("enviando") : qsTr("puxando");
+            return { "visible": true, "label": prefix + verb + "…", "tone": "ocupado",
                      "detail": qsTr("rsync em curso; acompanhe em Jobs") };
         }
         if (e.deploying) {
-            return { "visible": true, "label": prefixo + qsTr("enviando (deploy)…"),
+            return { "visible": true, "label": prefix + qsTr("enviando (deploy)…"),
                      "tone": "ocupado", "detail": qsTr("rsync em curso; acompanhe em Jobs") };
         }
         // FALHA DE SINCRONIA VENCE tudo o que viria depois. Este e' o caso que
         // a V4 nomeia: o arquivo local foi salvo, o envio nao foi, e a barra
         // NAO pode dizer "sincronizado".
         if (e.syncFailed) {
-            return { "visible": true, "label": prefixo + qsTr("envio falhou"), "tone": "atencao",
+            return { "visible": true, "label": prefix + qsTr("envio falhou"), "tone": "atencao",
                      "detail": qsTr("o arquivo local está salvo e intacto; o que falhou foi "
                                     + "levá-lo ao alvo. %1").arg(e.syncMessage || "") };
         }
         if (e.probed && !e.probeOk) {
-            return { "visible": true, "label": prefixo + qsTr("última sonda falhou"),
+            return { "visible": true, "label": prefix + qsTr("última sonda falhou"),
                      "tone": "atencao",
                      "detail": qsTr("medido %1 pelo ssh; o alvo pode ter voltado desde então")
-                               .arg(root.idade(e.probeAgeMs)) };
+                               .arg(root.age(e.probeAgeMs)) };
         }
         // NUNCA sondado nesta sessao: o estado inicial exigido pela V4. Dizer
         // "ok" aqui seria afirmar saude que ninguem mediu.
         if (!e.probed) {
-            return { "visible": true, "label": prefixo + qsTr("não verificado nesta sessão"),
+            return { "visible": true, "label": prefix + qsTr("não verificado nesta sessão"),
                      "tone": "neutro",
                      "detail": qsTr("nenhuma sonda desde que a IDE abriu; Sondar mede o alvo") };
         }
@@ -91,11 +91,11 @@ QtObject {
         // mostrar as duas frases lado a lado: sincronia e' sobre ARQUIVOS, a
         // sonda mede ALCANCE. O verbo e' o mesmo nos dois casos — so' muda a
         // idade — para a frase nao trocar de assunto quando a medida esfria.
-        const velha = e.probeAgeMs !== undefined && e.probeAgeMs >= root.frescorMs;
-        const sufixo = velha ? qsTr("verificado %1").arg(root.idade(e.probeAgeMs))
+        const stale = e.probeAgeMs !== undefined && e.probeAgeMs >= root.freshnessMs;
+        const suffix = stale ? qsTr("verificado %1").arg(root.age(e.probeAgeMs))
                              : qsTr("verificado agora");
-        return { "visible": true, "label": prefixo + sufixo, "tone": velha ? "neutro" : "ok",
+        return { "visible": true, "label": prefix + suffix, "tone": stale ? "neutro" : "ok",
                  "detail": qsTr("última sonda %1, pelo ssh do sistema; não há conexão aberta")
-                           .arg(root.idade(e.probeAgeMs)) };
+                           .arg(root.age(e.probeAgeMs)) };
     }
 }
