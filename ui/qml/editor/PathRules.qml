@@ -22,6 +22,16 @@ import QtQuick
 // Consolidar as copias de jobs/shell/search/project depende de resolver essa
 // diferenca primeiro — esta registrado em DocsPublic/roadmaps/39 §4.
 QtObject {
+    // §3.1 da especificacao do preview: `.md` e `.markdown`, e nada alem. A
+    // comparacao ignora caixa porque `README.MD` existe no mundo real.
+    function isMarkdown(path) {
+        if (path === undefined || path === null) {
+            return false;
+        }
+        const minusculo = String(path).toLowerCase();
+        return minusculo.endsWith(".md") || minusculo.endsWith(".markdown");
+    }
+
     function baseName(path) {
         return path.substring(path.lastIndexOf("/") + 1);
     }

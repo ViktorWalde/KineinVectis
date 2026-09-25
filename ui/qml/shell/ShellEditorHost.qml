@@ -68,6 +68,16 @@ Item {
         return stoppedLine;
     }
 
+    // A §6 da especificacao do preview diz que o HOST compoe a previa, e nao o
+    // EditorController: o estado de modo e' apresentacao, e o documento so'
+    // fornece identidade e conteudo. E' por isso que ele nasce aqui, ao lado do
+    // painel, e nao na lista de dominios do AppDomains.
+    MarkdownPreviewController {
+        id: markdownPreview
+
+        editorController: root.editorController
+    }
+
     EditorPane {
         id: editorPane
 
@@ -117,6 +127,22 @@ Item {
         symbols: root.indexController ? root.indexController.symbols : null
         outlineWidth: root.shellController.outlineWidth
         outlineCollapsed: root.shellController.outlineCollapsed
+        markdownAvailable: markdownPreview.available
+        previewMode: markdownPreview.mode
+        currentFilePath: root.editorController.currentFilePath()
+        workspaceRoot: root.shellController.workspaceRoot
+        onPreviewModeSelected: function(mode) {
+            markdownPreview.setMode(mode);
+        }
+        onPreviewLocalFileRequested: function(path) {
+            // O caminho ja' passou pela politica (dentro do projeto, sem
+            // esquema estranho). Abrir e' o mesmo gesto de sempre; a linha 1
+            // existe porque este caminho pede posicao.
+            root.editorController.openDiagnostic(path, 1, 1);
+        }
+        onPreviewWebUrlRequested: function(url) {
+            Qt.openUrlExternally(url);
+        }
         onTabSelected: function(docId) {
             root.editorController.selectDocument(docId);
         }

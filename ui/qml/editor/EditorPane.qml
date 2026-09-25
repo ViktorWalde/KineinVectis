@@ -50,6 +50,19 @@ Rectangle {
         outlinePanel.focusSearch(query);
     }
 
+    // A PREVIA DE MARKDOWN (V5/M1). O modo e' do documento; esta tela so'
+    // desenha o que ele diz. `markdownAvailable` liga a barra de modo — um
+    // `.py` nao ganha um botao "Preview" que nao faz nada.
+    property bool markdownAvailable: false
+    property string previewMode: "edit"
+    property string currentFilePath: ""
+    property string workspaceRoot: ""
+    readonly property bool previewing: markdownAvailable && previewMode === "preview"
+
+    signal previewModeSelected(string mode)
+    signal previewLocalFileRequested(string path)
+    signal previewWebUrlRequested(string url)
+
     signal gutterLineClicked(int line)
     signal codeActionsRequested(int line)
     signal tabSelected(int docId)
@@ -135,10 +148,48 @@ Rectangle {
         onDismissRequested: root.watchErrorDismissRequested()
     }
 
+    MarkdownModeBar {
+        id: modeBar
+
+        anchors.top: externalBanner.bottom
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spacingSmall
+        anchors.topMargin: visible ? Theme.spacingXSmall : 0
+        visible: root.markdownAvailable
+        mode: root.previewMode
+        onModeSelected: function(mode) {
+            root.previewModeSelected(mode);
+        }
+    }
+
+    MarkdownPreviewPane {
+        id: preview
+
+        anchors.top: modeBar.visible ? modeBar.bottom : externalBanner.bottom
+        anchors.bottom: parent.bottom
+        anchors.left: parent.left
+        anchors.right: outlineSplitter.visible ? outlineSplitter.left : parent.right
+        anchors.margins: Theme.spacingSmall
+        visible: root.previewing
+        // O BUFFER, e nao o disco: a previa acompanha o que ainda nao foi
+        // salvo (§3.3). Sem previa aberta o conteudo fica vazio, porque
+        // renderizar o que ninguem esta' vendo e' trabalho jogado fora (§7).
+        content: root.previewing ? editor.text : ""
+        documentPath: root.currentFilePath
+        workspaceRoot: root.workspaceRoot
+        onLocalFileRequested: function(path) {
+            root.previewLocalFileRequested(path);
+        }
+        onWebUrlRequested: function(url) {
+            root.previewWebUrlRequested(url);
+        }
+    }
+
     EditorTextSurface {
         id: editor
 
-        anchors.top: externalBanner.bottom
+        visible: !root.previewing
+        anchors.top: modeBar.visible ? modeBar.bottom : externalBanner.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: outlineSplitter.visible ? outlineSplitter.left : parent.right

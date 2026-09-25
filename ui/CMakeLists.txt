@@ -31,6 +31,7 @@ endif()
 # especifico — que seria uma correcao que so' funciona nesta maquina.
 add_library(kinein-ui-puro OBJECT
     src/cli_args.cpp
+    src/markdown_policy.cpp
 )
 kinein_enable_strict_compiler_options(kinein-ui-puro)
 target_link_libraries(kinein-ui-puro PUBLIC Qt6::Core)
@@ -302,6 +303,9 @@ set_source_files_properties(qml/editor/EditorController.qml PROPERTIES QT_RESOUR
 set_source_files_properties(qml/editor/EditorSurfaceBridge.qml PROPERTIES QT_RESOURCE_ALIAS EditorSurfaceBridge.qml)
 set_source_files_properties(qml/editor/EditorDocumentController.qml PROPERTIES QT_RESOURCE_ALIAS EditorDocumentController.qml)
 set_source_files_properties(qml/editor/EditorOpenDocuments.qml PROPERTIES QT_RESOURCE_ALIAS EditorOpenDocuments.qml)
+set_source_files_properties(qml/editor/MarkdownPreviewPane.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownPreviewPane.qml)
+set_source_files_properties(qml/editor/MarkdownModeBar.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownModeBar.qml)
+set_source_files_properties(qml/editor/MarkdownPreviewController.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownPreviewController.qml)
 set_source_files_properties(qml/editor/EditorSaveController.qml PROPERTIES QT_RESOURCE_ALIAS EditorSaveController.qml)
 set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextController.qml)
 set_source_files_properties(qml/editor/EditorLanguageController.qml PROPERTIES QT_RESOURCE_ALIAS EditorLanguageController.qml)
@@ -610,6 +614,9 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorSurfaceBridge.qml
         qml/editor/EditorDocumentController.qml
         qml/editor/EditorOpenDocuments.qml
+        qml/editor/MarkdownPreviewPane.qml
+        qml/editor/MarkdownModeBar.qml
+        qml/editor/MarkdownPreviewController.qml
         qml/editor/EditorSaveController.qml
         qml/editor/EditorTextController.qml
         qml/editor/EditorLanguageController.qml
@@ -680,6 +687,8 @@ qt_add_qml_module(kinein-vectis
         src/core_client_state.cpp
         src/editor_highlighter.cpp
         src/editor_highlighter.h
+        src/markdown_document.cpp
+        src/markdown_document.h
         src/editor_highlighter_palette.h
         src/editor_highlighter_rules.cpp
         src/editor_highlighter_tokens.cpp

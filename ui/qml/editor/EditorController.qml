@@ -16,6 +16,7 @@ Item {
     property alias completionModel: completionController.completionModel
     property alias usagesModel: language.usagesModel
     property alias currentTab: documents.currentTab
+    property alias currentDocId: documents.currentDocId
     property alias externalConflict: documents.currentExternalConflict
     property alias externalDeleted: documents.currentExternalDeleted
     property alias externalMessage: documents.currentExternalMessage
