@@ -110,12 +110,18 @@ import os
 import pathlib
 import sys
 
-# DEBITO DECLARADO (medido em 2026-09-24). Este .qml esta' na arvore e no git,
-# NAO esta' no ui/CMakeLists.txt, logo nao e' compilado nem lintado, e NINGUEM
-# o referencia — conferido com grep no repo inteiro. Ou ele entra no modulo, ou
-# sai da arvore: as duas coisas sao decisao do autor, nao deste gate. Enquanto
-# isso, fica DITO aqui. Arquivo NOVO sem copia reprova.
-SEM_COPIA_DECLARADO = {"ui/qml/editor/EditorUnsavedChangesDialog.qml"}
+# DEBITO DECLARADO: vazio desde 2026-09-25, e o certo e' que continue.
+#
+# O unico morador era o `EditorUnsavedChangesDialog.qml`, na arvore e no git
+# desde a fundacao, fora do `ui/CMakeLists.txt` e sem UM referenciador. O autor
+# decidiu descarta-lo: a pergunta que ele fazia ("salvar, descartar, cancelar?")
+# o produto respondeu de outro jeito — autosave em disco mais rascunho de
+# sessao, que grava mesmo com o autosave desligado.
+#
+# Um .qml fora do modulo e' invisivel para o qmllint e para o compilador: nao e'
+# codigo, e' arquivo. Por isso arquivo NOVO sem copia reprova, e entrar nesta
+# lista exige decisao registrada — nao e' escape.
+SEM_COPIA_DECLARADO: set[str] = set()
 
 repo = pathlib.Path(os.environ["REPO_ROOT"])
 modulo = pathlib.Path(os.environ["BUILD_DIR"]) / "KineinVectis"
