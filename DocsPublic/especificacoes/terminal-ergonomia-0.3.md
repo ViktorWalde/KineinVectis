@@ -367,7 +367,10 @@ Catálogo/paleta global permanece na V3 para não criar um segundo dispatcher.
 ### T2 — buffer completo
 
 **Implementação básica em `0.131.0`:** limpar scrollback, seleção completa e
-nomes reutilizáveis; busca é alvo separado. Prova humana continua pendente.
+nomes reutilizáveis; busca é alvo separado. **Prova humana feita: o autor rodou
+o roteiro real em 2026-09-24 e deu a fatia por concluída.** O que automação
+nunca cobriu aqui — teclas num shell de verdade, TUI, sensação de uso — passou
+a ter dono e data.
 
 - contrato mínimo para limpar scrollback;
 - seleção de todo o buffer, sem aceitar seleção visível como conclusão;

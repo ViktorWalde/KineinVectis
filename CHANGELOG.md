@@ -53,8 +53,18 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
 - **O C++ do projeto passou a ter teste.** Rust e QML eram medidos; o C++ da
   ponte tinha só lint e o smoke de "abre". O gate ganhou uma etapa (Qt Test +
   CTest) e reprova também se nenhum teste for declarado.
-- Ainda pendentes antes do fechamento: dogfooding do autor em shell/TUI e a
-  auditoria de acessibilidade. A série 0.3 completa não está entregue;
+- **Painel Remoto reorganizado** em cinco seções — Visão geral · Workspace ·
+  Executar · Sistema · Configurar — com **uma ação primária por estado** no topo
+  e o motivo dela ao lado. Antes, tudo ficava numa coluna só e as ações do dia a
+  dia caíam para fora da tela. Sem alvo, o painel abre onde há o que fazer;
+  com alvos, ele já entra num alvo selecionado.
+- Um comando desconhecido — na paleta, num menu ou no atalho — deixou de
+  **não fazer nada em silêncio**: agora o dispatcher diz que ninguém o tratou.
+- O ícone **Git** saiu do trilho da esquerda: o widget do cabeçalho abre o mesmo
+  painel e mostra o que o ícone não mostrava — branch, ahead/behind e quantas
+  mudanças há. Eram dois caminhos para o mesmo gesto, um deles cego.
+- **Terminal validado pelo autor em 2026-09-24**: o roteiro real de shell/TUI
+  passou. Continua pendente a auditoria de acessibilidade. A série 0.3 completa não está entregue;
   planos de CLI/pastas/bordas não são features já implementadas.
 
 ## 0.2.0 — 2026-09-19

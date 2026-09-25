@@ -59,6 +59,11 @@
 > O autor autorizou continuar; a validação integrada foi concluída com essa
 > política vigente (§7.92).
 >
+> **Decisão de 2026-09-24 — o que fica para a 0.4:** os atalhos do trilho da
+> esquerda pedem análise de uso e de implementação, e o **ecossistema de
+> embarcados ganha uma versão inteira só para ele** (layout, atalhos, fluxo).
+> Nenhuma das duas bloqueia a 0.3.5; ver roadmap 47 §10.1.
+>
 > **Decisão de 2026-09-22 — série 0.3 até 0.3.5 e Grafana:** Grafana entra no
 > fechamento **0.3.5** e precisa ser prático no uso diário, não apenas receber
 > o acabamento visual da E3-7. O produto e a arquitetura estão nos roadmaps
@@ -136,7 +141,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 
 ```text
 protocolo   0.133.0
-testes      874 Rust aprovados; 64 harnesses QML (medicao de 2026-09-24, §7.96)
+testes      874 Rust aprovados; 1 C++; 67 harnesses QML (medicao de 2026-09-24, §7.99)
 metodos     168 IPC roteados, 56 eventos (remote.parseCommand em 0.134.0;
             remote.command kind copyId em 0.133.0;
             remote.discover/resolve em 0.132.0;
@@ -950,6 +955,10 @@ sem reutilizar identidade/conteúdo, e o gate integrado fechou verde em
 dogfooding do autor em shell/TUI, um SSH real e a auditoria de acessibilidade.
 Gate verde e harness verde não substituem esse roteiro.
 Política vigente: `Ctrl+C` só interrompe; `Ctrl+Shift+C` copia.
+
+**V1 fechada em 2026-09-24:** o autor rodou o roteiro real de shell/TUI e deu a
+fatia do terminal por validada. Era o único obrigatório da §4 do roadmap 47 cujo
+bloqueio não era código. Continua pendente a auditoria de acessibilidade.
 
 O [roadmap 48 §3](48-arquitetura-executavel-da-serie-0.3.md#3-trem-de-versões-proposto)
 organiza as demais frentes. Launcher e interação completa de arquivos/pastas
@@ -5523,6 +5532,15 @@ para a qual existe o mutex `EXECUTAVEIS`: um `fork` enquanto outra thread ainda
 tem um executavel aberto para escrita. Aquele teste escrevia um script e o
 rodava SEM tomar o lock. Corrigido.
 
+**Correcao de verdade, em 2026-09-24 (§7.98):** o mutex NAO resolve a classe. A
+corrida nao e' entre quem escreve — e' entre escrever e QUALQUER `fork`
+concorrente, porque o filho herda o descritor aberto para escrita (o `CLOEXEC`
+do Rust fecha no `exec`, nao no `fork`). O gate passou a rodar os testes Rust em
+UMA thread: 11,5 s contra 40,7 s medidos, 29 segundos num gate de ~20 minutos,
+contra reprovacoes aleatorias que custam o gate inteiro. Os chamadores antigos,
+que usavam `.lock().unwrap()`, passaram a tolerar veneno — sem isso, uma corrida
+virava cinco falhas em cascata.
+
 Uma varredura mostrou **outros 11 pontos do crate que escreviam executavel sem o
 lock**. A primeira decisao foi anotar como divida e nao mexer; ela mudou quando
 uma corrida seguinte reprovou de novo, sem log, entre tres limpas — o sintoma e'
@@ -5611,3 +5629,137 @@ caminhos, conferindo tambem que nada foi criado em disco.
 **Falta do P0:** o comando curto `kinein` instalado (com o default de CWD), a
 politica de janela nova/reutilizada e a integracao com o menu do desktop. Nada
 disso foi anunciado como pronto.
+
+### 7.98 O painel Remoto em secoes, com UMA acao por estado — 2026-09-24 (R1/V2)
+
+Esta fatia comecou por uma OBSERVACAO DO AUTOR, nao por plano: depois de
+compilar, ele disse que "a HUD/UI se manteve a mesma coisa". Eu ia responder que
+as secoes novas da R0.5 estavam la'. Em vez disso capturei o painel headless e
+olhei — e ele tinha razao no que importa.
+
+A foto (`DocsPrivate/Codex/evidencias-2026-09-24-remote/painel-antes-da-R1.png`)
+mostrou tudo empilhado numa coluna so', com as acoes do dia a dia — Enviar,
+Rodar, gdbserver, o espelho — EMPURRADAS PARA FORA DA TELA pelas duas entradas
+que a R0.5 acrescentara no topo. Isso e' literalmente o defeito 1 da §3 da
+especificacao ("configuracao rara e operacao frequente disputam a mesma coluna")
+e o 2 ("todas as acoes aparecem com peso parecido"), piorados por mim.
+
+**O que entrou.** Cinco seccoes, uma por vez, como a §5.1 pede ("nao devem ser
+cinco cards longos na mesma rolagem"): Visao geral · Workspace · Executar ·
+Sistema · Configurar. E UMA acao primaria por estado no cabecalho, derivada por
+regra PURA no `RemoteActionRules` — o idioma `Rules` que o projeto ja' usa em
+`ProblemRules`/`GitRules`, e por isso testavel em harness:
+
+```text
+sem alvo nem rascunho     -> Configurar alvo   (leva a' seccao Configurar)
+com rascunho nomeado      -> Salvar alvo
+chave recusada            -> Copiar minha chave   (nao "sondar de novo")
+nao sondado / falhou      -> Sondar
+sondado, sem espelho      -> Abrir pasta no alvo
+e' espelho                -> Puxar do alvo
+sondando / sincronizando  -> ocupado, sem gesto
+```
+
+Cada uma carrega o MOTIVO, que vira o subtitulo do painel: acao primaria sem
+motivo e' adivinhacao. Quando o gesto vive noutra seccao, a acao LEVA a pessoa
+ate' la' em vez de habilitar um botao que ela nao acha.
+
+**Tres defeitos que so' apareceram porque eu olhei as fotos seguintes:**
+
+1. "Visao geral" abria COMPLETAMENTE EM BRANCO para quem nao tem alvo — uma
+   area vazia com um botao desabilitado. A primeira correcao foi abrir em
+   Configurar nesse caso; o AUTOR decidiu depois que "Visao geral" e' o padrao,
+   sempre. Ela so' funciona assim porque a seccao ganhou estado vazio explicito
+   E porque, sem alvo, a acao primaria virou "Configurar alvo" — habilitada, que
+   leva ate' la' num clique. Padrao fixo com botao cinza seria um beco.
+2. Com dois alvos salvos e nenhum selecionado, o painel oferecia "Salvar alvo" e
+   dizia "nenhum alvo ainda" — as duas coisas FALSAS. A lista passou a
+   selecionar o primeiro alvo quando chega. Isso e' o proprio aceite da V2:
+   "no segundo uso do mesmo alvo, o usuario nao toca nos campos de perfil".
+3. A lista dizia "Preencha ao lado e salve", e o formulario nao esta' mais ao
+   lado — esta' em Configurar.
+
+**Campos que mudaram de dono.** "Origem do deploy" e "Programa no alvo" saíram
+do formulario de PERFIL para a seccao Executar. Perfil e' como CHEGAR no alvo;
+aquilo e' o que RODAR la'. E o que a sonda mediu agora muda o que os botoes
+DIZEM: sem `gdbserver` no alvo, o botao diz "(falta no alvo)" em vez de deixar a
+pessoa descobrir depois.
+
+**Aceite de 1024x700 medido**, nao afirmado: a captura nessa resolucao mostra a
+seccao mais densa (Configurar) inteira, sem rolagem de descoberta.
+
+**Provas:** 65 harnesses QML (um novo, so' para as regras: ordem do fluxo, o
+motivo presente em toda acao, e que so' `authentication` vira "copiar chave").
+Quatro capturas guardadas em DocsPrivate.
+
+**Nao entrou, e nao foi anunciado:** a tool window LATERAL (hoje ainda e' uma
+moldura no menu Ambiente) e o HUD da status bar — os dois sao da V4. E a §6
+pede "detalhes de comando recolhidos": as seccoes ja' sao a divulgacao
+progressiva, mas a linha `$ comando` do veredito continua sempre visivel.
+
+**A tela foi vista por mim, nao pelo autor.** Capturar headless e olhar mostrou
+tres defeitos que os harnesses nao pegariam — mas isso mede composicao, nao uso.
+O julgamento dele continua pendente.
+
+### 7.99 A espinha do shell: id sem dono deixa de ser silencio — 2026-09-24 (V3)
+
+Duas metades da V3 do roadmap 47, e as duas sao sobre a mesma coisa: **um id que
+ninguem trata nao pode terminar em silencio**.
+
+**O dispatcher.** O `execute` do `CommandDispatcher` era uma cadeia de 46
+`else if` terminando sem `else`. Um id errado na paleta, num menu ou no
+`KINEIN_STARTUP_COMMANDS` simplesmente NAO ACONTECIA — o pior tipo de falha, a
+que parece funcionamento. Virou `switch` com retorno: `true` quando alguem
+tratou, `false` quando ninguem tratou, mais o sinal `unknownCommand(id)`. E' o
+item 1 da V3 ("resultado observavel para ID desconhecido"), agora com harness.
+
+**O trilho.** Cada tool window custava CINCO lugares: propriedade `xActive`,
+sinal `xRequested` e bloco de botao no `SideRail`, mais o binding do `active` e
+o `onXRequested` no `ShellWorkspaceHost`. Sete entradas, duas fontes de verdade
+para a mesma lista. O aceite da V3 e' exatamente esse: acrescentar o Remote nao
+pode exigir branching nominal em varios arquivos ao mesmo tempo.
+
+Agora as entradas sao DADO, num dono so' (`ui/qml/shell/ToolWindows.qml`), com o
+`ToolWindowEntry` minimo que a V3 lista: id, titulo, icone, area, ordem,
+disponibilidade e ativo. O `SideRail` so' desenha, por `Repeater`, e devolve
+`activated(id)`. Acrescentar uma janela passou a custar UMA entrada.
+
+**Medicao que corrige o enunciado:** o aceite fala em branching simultaneo em
+`SideRail.qml`, `ShellWorkspaceHost.qml` e `Main.qml`. Medido, o `Main.qml` NAO
+participava — o trilho e' consumido pelo host. Eram dois arquivos, nao tres.
+
+**O `componente` da V3 ficou de fora, e esta' dito.** O slot esquerdo ainda e'
+montado pelo `ShellLeftWindowHost`; trocar isso e' trabalho da V4, onde o Remote
+de fato vira janela lateral. Campo sem consumidor seria dado morto fingindo
+desenho.
+
+**Sem mudanca visual**, como o item 4 exige, e provado por captura: mesmos sete
+icones, mesma ordem, Projeto aceso
+(`evidencias-2026-09-24-remote/trilho-V3-sem-mudanca-visual.png`).
+
+**Nao foi criado registry global nem API de plugin** — a V3 proibe os dois. E'
+uma lista interna, estatica, com donos conhecidos em tempo de compilacao.
+
+**A catraca me pegou na propria licao.** O gate reprovou com "sinal QML sem
+tratador: CommandDispatcher.unknownCommand": eu tinha criado o sinal que anuncia
+id sem dono e NAO tinha dado dono a ele — o mesmo silencio que a fatia existe
+para consertar, uma camada acima. O ouvinte foi para o `StartupCommands`, que e'
+onde isso mais doi: um erro de digitacao no `KINEIN_STARTUP_COMMANDS` fazia a
+foto headless e o gate medirem uma IDE em estado diferente do pedido, sem nada
+dizer. Agora vai para stderr.
+
+**O primeiro uso do dado, no mesmo dia.** O autor observou que o icone
+"Git — Commit e Log" do trilho nao fazia muito sentido: o widget do cabecalho
+abre o MESMO painel e mostra o que o icone nao mostrava — branch, ahead/behind e
+quantas mudancas ha'. Conferido no codigo: os dois chamam
+`toggleBottomTab("git")`. Medido antes de tirar: `branchLabel` so' fica vazio
+quando NAO ha' repositorio (cai para "HEAD" ou "<sha> (solto)" em qualquer repo
+real), e sem repositorio o painel Git nao teria o que mostrar; a paleta continua
+alcancando `git.status`, `git.commit` e `git.log`. A remocao custou UMA entrada
+— antes da V3, cinco lugares em dois arquivos. O trilho tem seis icones agora.
+
+**Provas:** dois harnesses novos (67 no total). O do `ToolWindows` trava a ORDEM
+decidida pelo autor, a disponibilidade (Projeto e Embarcados exigem projeto;
+banco, containers e Grafana sao da maquina), que `activate` de id sem dono
+devolve `false` sem tocar em nada, e que o Git NAO volta ao trilho por
+distracao.
