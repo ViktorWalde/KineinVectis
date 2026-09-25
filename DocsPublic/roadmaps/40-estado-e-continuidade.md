@@ -5996,3 +5996,91 @@ grava do mesmo jeito. Nao ha' o momento em que a IDE precisa parar e perguntar
 Um `.qml` fora do modulo e' invisivel para o qmllint e para o compilador: nao e'
 codigo, e' arquivo. Por isso arquivo novo nessa situacao reprova, e entrar na
 lista de debito exige decisao registrada — nao e' escape.
+
+### 7.103 Markdown vira documento, e nao imagem — 2026-09-25 (V5/M1)
+
+A §1 da `especificacoes/markdown-preview-0.3.md` e' explicita sobre o que isto
+NAO e': "nao e' uma imagem estatica". O texto continua selecionavel e copiavel,
+o conteudo vem do BUFFER (inclusive o que ainda nao foi salvo) e os links tem
+politica. Se fosse figura, um `README.md` viraria imagem de onde nao se copia um
+comando.
+
+**Sem Chromium, sem WebEngine, sem processo Node.** A §2 ja' tinha medido que o
+Qt 6.4 renderiza Markdown dialeto GitHub por `QTextDocument::setMarkdown`. O
+AppImage nao ganhou dependencia nenhuma.
+
+**A SEGURANCA ENTROU PRIMEIRO, e com teste.** Um `.md` e' conteudo de terceiros:
+chega num clone, num anexo, numa dependencia. A politica e' pura
+(`ui/src/markdown_policy`), tem o terceiro teste C++ do projeto e cobre:
+`javascript:`/`data:`/`ftp:`/`smb:` recusados **pelo nome** (lista de
+permitidos, nunca de proibidos); `../../etc/passwd` e `file:///etc/shadow`
+bloqueados; `/casa/projeto` nao autorizando `/casa/projeto-de-outro`; imagem
+remota bloqueada por padrao, porque abrir documentacao nao pode virar acesso a'
+rede sem ninguem pedir; e, sem projeto aberto, nada local abre — ancora e web
+seguem, porque nenhuma das duas toca no disco.
+
+**Dois testes meus estavam errados, e o codigo certo.** Eu afirmei que
+`docs/../../fora.md` escapava do projeto. Nao escapa: o documento esta' em
+`/casa/projeto/docs`, entao os `..` contam DALI, e aquilo resolve para
+`/casa/projeto/fora.md`. O mesmo com `../projeto-de-outro/a.md`, que sobe um
+nivel so'. As expectativas foram corrigidas com o porque escrito no teste, e o
+par que faltava entrou: `../../projeto-de-outro/a.md` recusado contra
+`../outra/a.md` permitido. Sem esse par, o teste do "prefixo parecido" so'
+exercitava a funcao auxiliar, e nao o caminho real.
+
+**O gate dos testes C++ tinha um buraco.** Ele compilava `tst_cli_args` PELO
+NOME, entao o segundo teste do projeto nao era construido e o CTest o reportava
+como "Not Run" — o gate acusou, mas acusou a coisa errada. Agora ha' o alvo
+agregado `kinein-cpp-tests`, e cada teste entra nele ao nascer.
+
+**O qmllint estava lintando o QML de agora contra os tipos de ontem.** Ele
+preferia o build `linux-clang-debug-strict` por ordem fixa; quem compila
+`dev-local` no dia a dia ficava com o `.qmltypes` de dias antes. O sintoma foi
+ruidoso ("Could not find property" para propriedade que existia), mas o caso
+perigoso e' o silencioso: propriedade REMOVIDA que o lint ainda acha que existe.
+Agora o build MAIS NOVO ganha, e o script recusa quando um `.h` com
+`QML_ELEMENT` e' mais novo que os tipos — com o comando que resolve.
+
+**A foto matou duas mentiras, as duas minhas.** A primeira: a tarja de recurso
+bloqueado dizia "o caminho real sai do projeto" para uma imagem que estava
+DENTRO do projeto e apenas nao existia — `canonicalFilePath()` volta vazio para
+caminho inexistente, e eu tratei os dois casos como um. Motivo errado e' pior
+que motivo nenhum: manda procurar o problema no lugar errado. A segunda: o tema
+descia como folha de estilo (`setDefaultStyleSheet`) e nao fazia NADA — o
+`setMarkdown` monta blocos com propriedades proprias (`BlockQuoteLevel`,
+`BlockCodeLanguage`), que nao sao elementos HTML e nenhum seletor CSS alcanca.
+Uma propriedade que parece funcionar e nao funciona e' pior que a ausencia dela.
+O tema passou a entrar como FORMATO, percorrendo os blocos depois do render.
+
+**O que a foto prova, e nenhum harness provaria:** `<b>HTML embutido</b>`
+aparece como TEXTO na tela, e nao em negrito — a trava `MarkdownNoHTML` da §5
+funcionando, visivel.
+
+**Duas ferramentas do gate pedem coisas opostas, e a licao fica escrita.** O
+`verificar-cpp.sh` reprovou com 13 avisos de `modernize-use-designated-initializers`
+("use designated initializer list"); ao atender, o GCC reprovou com
+`-Wmissing-field-initializers`, porque um designador que OMITE campo e' campo
+esquecido do ponto de vista dele. Nenhuma das duas esta' errada: uma quer que se
+leia o que cada valor significa, a outra quer que ninguem esqueca um campo por
+acidente. **A intersecao e' nomear todos, sempre** —
+`{.allowed = false, .path = {}, .reason = ...}`. Vale para qualquer struct nova
+no projeto, e por isso esta' aqui: sem o registro, custa meia hora de novo a
+cada vez.
+
+**O modo e' do DOCUMENTO**, e isso so' e' dizivel sem ambiguidade por causa da
+identidade da V5 (§7.101). Mora no `MarkdownPreviewController`, que a §6 da
+especificacao poe do lado da APRESENTACAO, junto de scroll e splitter — e por
+isso o host compoe, e nao o `EditorController`. O padrao e' Editar (§11): a IDE
+e' um editor, e abrir um `.md` nao pode esconder o texto de quem veio edita-lo.
+
+**Fora deste corte, e dito:** o lado a lado e' a M2, e por isso a barra tem DOIS
+botoes e nao tres — anunciar um terceiro que nao faz nada seria a mentira que
+este projeto persegue. Imagem remota continua bloqueada mesmo com a preferencia
+futura ligada, porque rede tem dono proprio no core e este provider e' sincrono,
+no thread da UI.
+
+**Provas:** `DocsPrivate/Codex/evidencias-2026-09-25-markdown/` — `corpus.md`
+(titulos, listas, tarefas, tabela, citacao, codigo, links e imagem ausente),
+`modo-editar.png`, `modo-preview.png` e `preview-antes-do-tema.png`, que e' a
+foto que reprovou a folha de estilo. Mais `tst_markdown_policy` (10 casos) e
+`tst_markdown_preview_mode` (71 harnesses no total).

@@ -308,9 +308,11 @@ gesto arriscado.
 
 ### V5 — identidade das abas
 
-> **Parcial em 2026-09-25 (roadmap 40 §7.101).** A identidade por documento
-> entrou inteira: `docId` sintético, `currentTab` derivado, barra de abas
-> falando em documento. Falta a prévia de Markdown, abaixo.
+> **Parcial em 2026-09-25 (roadmap 40 §7.101 e §7.103).** A identidade por
+> documento entrou inteira: `docId` sintético, `currentTab` derivado, barra de
+> abas falando em documento. A prévia de Markdown entrou no corte M1 — modos
+> Editar/Preview, buffer não salvo, política de links e HTML desligado. Falta a
+> M2: lado a lado e imagens locais exercitadas.
 
 - path/ID estável identifica documento;
 - índice fica como detalhe do `ListView`;
