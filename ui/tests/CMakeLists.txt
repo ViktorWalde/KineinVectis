@@ -12,14 +12,23 @@
 # nao por decreto de uma vez.
 find_package(Qt6 6.4 REQUIRED COMPONENTS Test)
 
+# O ALVO AGREGADO existe porque o `verificar-cpp-testes.sh` compilava um alvo
+# pelo NOME (`tst_cli_args`). O segundo teste do projeto, em 2026-09-25, nao foi
+# compilado por isso e o CTest o reportou como "Not Run" — o gate acusou, mas
+# acusou a coisa errada. Agora cada teste entra aqui ao nascer, e o script
+# compila UM alvo que os contem todos.
+add_custom_target(kinein-cpp-tests)
+
 function(kinein_add_cpp_test nome)
     add_executable("${nome}" "${nome}.cpp")
     kinein_enable_strict_compiler_options("${nome}")
     target_link_libraries("${nome}" PRIVATE kinein-ui-puro Qt6::Core Qt6::Test)
     target_include_directories("${nome}" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../src")
     add_test(NAME "${nome}" COMMAND "${nome}")
+    add_dependencies(kinein-cpp-tests "${nome}")
     # Sem display: o teste mede decisao, nao pixel.
     set_tests_properties("${nome}" PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endfunction()
 
 kinein_add_cpp_test(tst_cli_args)
+kinein_add_cpp_test(tst_markdown_policy)

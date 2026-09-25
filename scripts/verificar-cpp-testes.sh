@@ -65,7 +65,12 @@ fi
 echo "== testes C++ da UI (ctest em $BUILD_DIR) =="
 
 # Um alvo de teste que nao compila e' reprovacao, nao "nenhum teste".
-if ! cmake --build "$BUILD_DIR" --target tst_cli_args >/dev/null; then
+#
+# O alvo e' o AGREGADO `kinein-cpp-tests`, e nao um nome de teste: ate'
+# 2026-09-25 este script compilava `tst_cli_args` pelo nome, entao o segundo
+# teste do projeto simplesmente nao era construido — o CTest o reportava como
+# "Not Run", acusando um binario ausente em vez do gate incompleto.
+if ! cmake --build "$BUILD_DIR" --target kinein-cpp-tests >/dev/null; then
     echo "erro: os testes C++ nao compilaram." >&2
     exit 1
 fi
