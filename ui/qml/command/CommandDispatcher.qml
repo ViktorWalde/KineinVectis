@@ -31,107 +31,166 @@ Item {
 
     visible: false
 
+    // Diz que o id nao tem dono aqui. Ate' 2026-09-24 o `execute` terminava a
+    // cadeia em silencio: comando errado na paleta, no menu ou no
+    // `KINEIN_STARTUP_COMMANDS` simplesmente NAO ACONTECIA, e nada dizia por
+    // que. A §6 da V3 pede "resultado observavel para ID desconhecido".
+    signal unknownCommand(string id)
+
+    // `true` quando alguem tratou; `false` quando ninguem tratou.
     function execute(rawId) {
         const eq = rawId.indexOf("=");
         const arg = eq > 0 ? rawId.substring(eq + 1) : "";
         const commandId = eq > 0 ? rawId.substring(0, eq) : rawId;
-        if (commandId === "workspace.open") {
+        switch (commandId) {
+        case "workspace.open":
             openWorkspaceRequested();
-        } else if (commandId === "workspace.close") {
+            return true;
+        case "workspace.close":
             coreClient.closeWorkspace();
-        } else if (commandId === "tools.detect" || commandId === "tools.status") {
+            return true;
+        case "tools.detect":
+        case "tools.status":
             showTabRequested("tools");
             coreClient.detectTools();
-        } else if (commandId === "build.run") {
+            return true;
+        case "build.run":
             jobsController.startBuild();
-        } else if (commandId === "fs.search") {
+            return true;
+        case "fs.search":
             searchController.openSearchPanel();
-        } else if (commandId === "fs.replace") {
+            return true;
+        case "fs.replace":
             searchController.openReplacePanel();
-        } else if (commandId === "editor.find") {
-            // D1b: busca NO ARQUIVO (UI pura, sem RPC) — o fs.search acima
-            // é a busca no PROJETO, que roda ripgrep no core.
+            return true;
+        // D1b: busca NO ARQUIVO (UI pura, sem RPC) — o fs.search acima e' a
+        // busca no PROJETO, que roda ripgrep no core.
+        case "editor.find":
             editorController.openFind();
-        } else if (commandId === "editor.replace") {
+            return true;
+        case "editor.replace":
             editorController.openFindReplace();
-        } else if (commandId === "fs.findFiles" || commandId === "command.list") {
+            return true;
+        case "fs.findFiles":
+        case "command.list":
             searchEverywhereController.openSearchEverywhere();
-        } else if (commandId === "index.symbols") {
+            return true;
+        case "index.symbols":
             symbolsRequested(arg);
-        } else if (commandId === "cargo.check") {
+            return true;
+        case "cargo.check":
             showTabRequested("problems");
             coreClient.cargoCheck();
-        } else if (commandId === "cargo.metadata") {
+            return true;
+        case "cargo.metadata":
             coreClient.cargoMetadata();
-        } else if (commandId === "cmake.configure") {
+            return true;
+        case "cmake.configure":
             showTabRequested("jobs");
             coreClient.cmakeConfigure();
-        } else if (commandId === "run.start") {
+            return true;
+        case "run.start":
             runtimeController.startRun("");
-        } else if (commandId === "debug.start") {
+            return true;
+        case "debug.start":
             debugController.startDebug();
-        } else if (commandId === "git.status") {
+            return true;
+        case "git.status":
             gitController.refresh();
-        } else if (commandId === "git.fileDiff") {
+            return true;
+        case "git.fileDiff":
             gitController.showDiffOf(editorController.currentFilePath());
-        } else if (commandId === "git.commit") {
+            return true;
+        case "git.commit":
             showTabRequested("git");
             gitController.showChanges();
-        } else if (commandId === "git.blame") {
+            return true;
+        case "git.blame":
             gitController.toggleBlame(editorController.currentFilePath());
-        } else if (commandId === "git.log") {
+            return true;
+        case "git.log":
             showTabRequested("git");
             gitController.openHistory();
-        } else if (commandId === "git.branches") {
+            return true;
+        case "git.branches":
             showTabRequested("git");
             gitController.openBranchMenu();
-        } else if (commandId === "git.pull") {
+            return true;
+        case "git.pull":
             gitController.startRemote("pull");
-        } else if (commandId === "git.push") {
+            return true;
+        case "git.push":
             gitController.startRemote("push");
-        } else if (commandId === "git.stash") {
+            return true;
+        case "git.stash":
             showTabRequested("git");
-        } else if (commandId === "run.stop") {
+            return true;
+        case "run.stop":
             runtimeController.stopRun();
-        } else if (commandId === "terminal.open") {
+            return true;
+        case "terminal.open":
             runtimeController.openTerminalPanel();
-        } else if (commandId === "lsp.definition") {
+            return true;
+        case "lsp.definition":
             editorController.requestDefinition();
-        } else if (commandId === "lsp.hover") {
+            return true;
+        case "lsp.hover":
             editorController.requestHover();
-        } else if (commandId === "lsp.completion") {
+            return true;
+        case "lsp.completion":
             editorController.requestCompletion();
-        } else if (commandId === "lsp.references") {
+            return true;
+        case "lsp.references":
             editorController.requestUsages();
-        } else if (commandId === "lsp.rename") {
+            return true;
+        case "lsp.rename":
             editorController.openRenameDialog();
-        } else if (commandId === "lsp.switchSourceHeader") {
+            return true;
+        case "lsp.switchSourceHeader":
             editorController.requestSwitchSourceHeader();
-        } else if (commandId === "lsp.restart") {
+            return true;
+        case "lsp.restart":
             coreClient.lspRestart("");
-        } else if (commandId === "configAction.list") {
+            return true;
+        case "configAction.list":
             configActionController.openDialog();
-        } else if (commandId === "library.list") {
+            return true;
+        case "library.list":
             libraryController.open();
-        } else if (commandId === "datasource.list") {
+            return true;
+        case "datasource.list":
             dataSourceController.open();
-        } else if (commandId === "remote.list") {
+            return true;
+        case "remote.list":
             remoteController.open();
-        } else if (commandId === "grafana.get") {
+            return true;
+        case "grafana.get":
             grafanaController.open();
-        } else if (commandId === "probe.list") {
+            return true;
+        case "probe.list":
             embeddedController.open();
-            if (arg !== "") embeddedController.tab = arg;
-        } else if (commandId === "setup.list") {
+            if (arg !== "") {
+                embeddedController.tab = arg;
+            }
+            return true;
+        case "setup.list":
             setupController.open();
-        } else if (commandId === "container.list") {
+            return true;
+        case "container.list":
             containerController.open();
-        } else if (commandId === "settings.get") {
+            return true;
+        case "settings.get":
             settingsController.openDialog();
-        } else if (commandId === "fs.createFile") {
+            return true;
+        case "fs.createFile":
             projectTree.openCreateDialog("file");
-        } else if (commandId === "fs.createDirectory") {
+            return true;
+        case "fs.createDirectory":
             projectTree.openCreateDialog("directory");
+            return true;
+        default:
+            unknownCommand(commandId);
+            return false;
         }
     }
 }

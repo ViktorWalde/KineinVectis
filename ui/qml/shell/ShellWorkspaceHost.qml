@@ -100,32 +100,28 @@ Item {
     ShellLayout {
         anchors.fill: parent
 
+        // As entradas do trilho sao DADO desde a V3 (2026-09-24): este host
+        // nao conhece mais cada uma pelo nome. Acrescentar uma custa UMA
+        // entrada no `ToolWindows`.
+        ToolWindows {
+            id: janelas
+
+            shellController: root.shellController
+            embeddedController: root.embeddedController
+            dataSourceController: root.dataSourceController
+            containerController: root.containerController
+            grafanaController: root.grafanaController
+            workspaceOpen: root.workspaceOpen
+        }
+
         SideRail {
             id: sideBar
 
             height: parent.height
             expanded: root.shellController.railExpanded
             onExpandedToggled: root.shellController.toggleRail()
-            workspaceOpen: root.workspaceOpen
-            explorerActive: root.shellController.effectiveShowExplorer
-            gitActive: root.shellController.gitWindowVisible
-            embeddedActive: root.embeddedController !== undefined && root.embeddedController !== null
-                            && root.embeddedController.panelVisible
-            toolsActive: root.shellController.showBottomPanel
-                         && root.shellController.bottomTab === "tools"
-            onExplorerToggled: root.shellController.toggleExplorer()
-            onGitRequested: root.shellController.toggleBottomTab("git")
-            onEmbeddedRequested: root.embeddedController.open()
-            onToolsRequested: root.shellController.toggleBottomTab("tools")
-            containersActive: root.containerController !== undefined && root.containerController !== null
-                              && root.containerController.panelVisible
-            observabilityActive: root.grafanaController !== undefined && root.grafanaController !== null
-                                 && root.grafanaController.panelVisible
-            databaseActive: root.dataSourceController !== undefined && root.dataSourceController !== null
-                            && root.dataSourceController.panelVisible
-            onDatabaseRequested: root.dataSourceController.open()
-            onContainersRequested: root.containerController.open()
-            onObservabilityRequested: root.grafanaController.open()
+            entries: janelas.entries
+            onActivated: id => janelas.activate(id)
         }
 
         // O slot a esquerda: o explorer OU a janela do Git (E3-3).

@@ -213,6 +213,9 @@ Aceite: não há “próxima etapa” divergente entre 40, 45, 46 e 47.
 
 ### V1 — terminal ergonômico
 
+> **Concluída em 2026-09-24.** O autor rodou o roteiro real e deu a fatia por
+> validada. Era o único item obrigatório da §4 cujo bloqueio não era código.
+
 Fonte: [`terminal-ergonomia-0.3.md`](../especificacoes/terminal-ergonomia-0.3.md).
 
 - menu contextual e ações visíveis;
@@ -235,6 +238,10 @@ entram na paleta somente junto da convergência V3, sem dispatcher paralelo.
 
 ### V2 — Remote sem formulário monolítico
 
+> **2026-09-24:** as seções, a ação primária por estado e o aceite de 1024×700
+> entraram (roadmap 40 §7.98). Continuam pendentes: a escolha da pasta começando
+> na home remota, e a tool window lateral/HUD (que são da V4).
+
 - oferecer **usar SSH existente** e listar aliases concretos da configuração
   OpenSSH, sem pedir novamente usuário/porta/chave;
 - oferecer **configurar servidor** com teste e terminal guiado para
@@ -252,6 +259,11 @@ segundo uso do mesmo alvo, o usuário não toca nos campos de perfil para
 editar/salvar/rodar/abrir shell.
 
 ### V3 — espinha do shell
+
+> **Parcial em 2026-09-24 (roadmap 40 §7.99).** Entraram o resultado observavel
+> do dispatcher e o `ToolWindowEntry` minimo com o trilho orientado a dado, sem
+> mudanca visual. Falta o `componente` da entrada e o slot esquerdo montado a
+> partir dela — que so' tem consumidor na V4.
 
 - dispatcher atual recebe resultado observável para ID desconhecido;
 - paleta, atalhos, menus e tool windows convergem onde já há command ID;
@@ -427,6 +439,21 @@ Ordem recomendada guiada por dogfooding, sem bloquear o compromisso mínimo:
 O trem proposto no roadmap 48 distribui o obrigatório entre 0.3.0 e 0.3.5.
 Itens desta lista só entram no meio se a prova do marco anterior estiver verde;
 do contrário seguem para 0.4 sem serem anunciados como prontos.
+
+### 10.1 Decisão do autor para a 0.4 (registrada em 2026-09-24)
+
+Duas frentes ficam **fora da 0.3** por decisão dele, e não por corte de escopo:
+
+- **os atalhos do trilho da esquerda** precisam de análise de uso e de
+  implementação — quais merecem ícone, quais viram só paleta, e o que o ícone
+  deve dizer. A remoção do Git do trilho em 2026-09-24 (roadmap 40 §7.99) é o
+  primeiro caso dessa conversa, não o fim dela;
+- **o ecossistema de embarcados** ganha uma **versão inteira só para ele**:
+  layout, atalhos e fluxo. Hoje ele é uma entrada do trilho como as outras, e a
+  decisão é que isso não corresponde ao peso que ele tem no produto.
+
+Nada disso bloqueia a 0.3.5. Está aqui para não virar decisão implícita no meio
+de outra fatia.
 
 ## 11. Métricas que valem
 

@@ -10,22 +10,13 @@ Rectangle {
     // repetido; melhor deixar os do canto superior direito") — a busca no
     // projeto e' Ctrl+Shift+F e a aba de baixo; Build/Debug sao o widget
     // Executar do cabecalho, o menu e o painel de baixo.
-    property bool workspaceOpen: false
-    property bool explorerActive: false
-    property bool gitActive: false
-    property bool embeddedActive: false
-    property bool toolsActive: false
-    property bool databaseActive: false
-    property bool containersActive: false
-    property bool observabilityActive: false
+    // As entradas sao DADO (V3, 2026-09-24): antes cada uma custava uma
+    // propriedade `xActive`, um sinal `xRequested` e um bloco de botao aqui,
+    // mais o binding e o handler do outro lado. Quem declara e' o
+    // `ToolWindows`; este arquivo so' desenha.
+    property var entries: []
 
-    signal explorerToggled()
-    signal gitRequested()
-    signal embeddedRequested()
-    signal toolsRequested()
-    signal databaseRequested()
-    signal containersRequested()
-    signal observabilityRequested()
+    signal activated(string id)
     // O modo EXPANDIDO (F1, fechamento da Etapa 2): o rotulo ao lado do
     // icone, como a referencia; o chevron do pe' alterna e a escolha e'
     // persistida pelo ShellController.
@@ -112,66 +103,19 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.spacingSmall
 
-        RailButton {
-            iconName: "project"
-            tooltip: qsTr("Projeto")
-            active: root.explorerActive && root.workspaceOpen
-            enabled: root.workspaceOpen
-            onActivated: root.explorerToggled()
-        }
+        Repeater {
+            model: root.entries
 
-        RailButton {
-            iconName: "git"
-            tooltip: qsTr("Git — Commit e Log")
-            label: qsTr("Git")
-            active: root.gitActive
-            enabled: root.workspaceOpen
-            onActivated: root.gitRequested()
-        }
+            delegate: RailButton {
+                required property var modelData
 
-        // Embarcados e' por projeto (o kit mora no .kinein), como o Git.
-        RailButton {
-            iconName: "embedded"
-            tooltip: qsTr("Embarcados — placa, projeto, gravar, kit (Ctrl+Alt+M)")
-            label: qsTr("Embarcados")
-            active: root.embeddedActive
-            enabled: root.workspaceOpen
-            onActivated: root.embeddedRequested()
-        }
-
-        // Ferramentas NATIVAS com atalho visual (decisao do autor,
-        // 2026-09-12; a ordem e o banco em 2026-09-13): banco de dados,
-        // containers e observabilidade abrem daqui, sem projeto aberto — os
-        // perfis, o motor e o Grafana sao da maquina, nao do workspace.
-        // "Ferramentas" fecha a lista, por decisao do autor.
-        RailButton {
-            iconName: "database"
-            tooltip: qsTr("Banco de dados (Ctrl+Alt+J)")
-            label: qsTr("Banco")
-            active: root.databaseActive
-            onActivated: root.databaseRequested()
-        }
-
-        RailButton {
-            iconName: "container"
-            tooltip: qsTr("Containers (Ctrl+Alt+W)")
-            active: root.containersActive
-            onActivated: root.containersRequested()
-        }
-
-        RailButton {
-            iconName: "observability"
-            tooltip: qsTr("Observabilidade — Grafana (Ctrl+Alt+O)")
-            label: qsTr("Grafana")
-            active: root.observabilityActive
-            onActivated: root.observabilityRequested()
-        }
-
-        RailButton {
-            iconName: "tools"
-            tooltip: qsTr("Ferramentas")
-            active: root.toolsActive
-            onActivated: root.toolsRequested()
+                iconName: modelData.icon
+                tooltip: modelData.tooltip
+                label: modelData.label
+                active: modelData.active
+                enabled: modelData.available
+                onActivated: root.activated(modelData.id)
+            }
         }
     }
 

@@ -24,6 +24,20 @@ Item {
                 root.commandDispatcher.execute(commands[i]);
             }
         }
+
+    }
+
+    // Um id que ninguem trata NAO pode terminar em silencio (V3). Aqui e' onde
+    // isso mais dói: um erro de digitacao no `KINEIN_STARTUP_COMMANDS` fazia a
+    // foto headless e o gate medirem uma IDE em estado diferente do pedido, sem
+    // nada dizer. Vai para stderr, que e' onde quem roda headless olha.
+    Connections {
+        target: root.commandDispatcher
+
+        function onUnknownCommand(id) {
+            console.warn("KINEIN_STARTUP_COMMANDS: ninguem trata o comando `"
+                         + id + "` — confira o id na paleta.");
+        }
     }
 
     Connections {
