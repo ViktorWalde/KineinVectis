@@ -277,6 +277,11 @@ Aceite: adicionar Remote ao slot não exige novo branching nominal em
 
 ### V4 — Remote diário e HUD
 
+> **Parcial em 2026-09-25 (roadmap 40 §7.100).** Entraram a janela no trilho, o
+> HUD honesto da barra de status e o caminho para shell, que antes descartava a
+> linha quando nao havia sessao aberta. Falta o `componente` da entrada de tool
+> window (que segue sem consumidor).
+
 - Remote entra pelo modelo mínimo de tool window;
 - workspace espelhado mostra `SSH · alvo · estado de sync` na status bar;
 - estado inicial é “não verificado nesta sessão”;

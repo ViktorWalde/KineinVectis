@@ -5763,3 +5763,112 @@ decidida pelo autor, a disponibilidade (Projeto e Embarcados exigem projeto;
 banco, containers e Grafana sao da maquina), que `activate` de id sem dono
 devolve `false` sem tocar em nada, e que o Git NAO volta ao trilho por
 distracao.
+
+### 7.100 O Remoto virou janela do trilho, e o HUD so' diz o que mediu — 2026-09-25 (V4)
+
+A V4 do roadmap 47 pede duas coisas: o Remote entrando **pelo modelo minimo de
+tool window** (e nao por mais um caminho proprio), e o workspace espelhado
+mostrando estado na barra de status **sem mentir**. As duas entraram.
+
+**O Remote como entrada do trilho.** Foi o primeiro uso real do dado da V3, e
+serviu de medida: acrescentar a janela custou UMA entrada em
+`ui/qml/shell/ToolWindows.qml`, mais a propriedade do controller no host. Nenhum
+`xActive`, nenhum `xRequested`, nenhum bloco de botao. O aceite da V3 — "nao
+exige novo branching nominal em varios arquivos ao mesmo tempo" — deixou de ser
+promessa e virou coisa exercitada.
+
+**O `componente` da entrada continua de fora, e continua dito.** O painel do
+Remoto e' instanciado onde sempre esteve; a entrada diz `active` a partir do
+`panelVisible` do controller e `activate` chama o `open()` dele. Trocar o slot
+esquerdo por montagem a partir da entrada ainda e' trabalho futuro — campo sem
+consumidor seria dado morto fingindo desenho, como ja' estava escrito na §7.99.
+
+**O harness achou um defeito meu na hora.** Ao travar `activate("remote")` sem
+controller, o teste nao falhou: ele ESTOUROU — `TypeError: Cannot read property
+'open' of null`. Todas as sete entradas tinham o mesmo buraco, herdado do codigo
+anterior: `dono.open()` direto, sem perguntar se ha' dono. Um `null` ali derruba
+a funcao inteira, e o trilho existe antes dos controllers tanto em teste quanto
+na abertura da janela. Agora **dono ausente e' o mesmo caso de id sem dono**:
+`false`, observavel, sem excecao. E' a regra da V3 levada ate' o fim.
+
+**O HUD.** `ui/qml/remote/RemoteHudRules.qml` e' regra pura no idioma de
+`ProblemRules`/`GitRules`: entra fato, sai frase. Ele existe para travar as
+frases que a V4 proibe, e elas estao escritas no cabecalho do arquivo:
+
+- estado inicial NAO e' "ok" — e' "nao verificado nesta sessao";
+- sonda velha nao vira saude atual: a idade vai na frase, sempre;
+- save local que deu certo com push que falhou NAO e' "sincronizado" — a falha
+  de sincronia vence qualquer sonda verde que viesse depois.
+
+`StatusBarRemoteWidget.qml` so' desenha, e carrega um `Timer` de 30 s por
+honestidade: a frase leva a IDADE da medida, e idade envelhece sozinha. Sem o
+tique, "verificado ha' 1 min" ficaria na tela por horas.
+
+**A foto matou uma quarta mentira, que o harness nao pegaria.** Renderizei os
+oito estados do HUD lado a lado numa cena de inspecao
+(`cena-de-inspecao.qml.txt`). Com sonda fresca a barra dizia
+`SSH · pi-lab · sincronizado`; com sonda de 40 min, `verificado ha' 40 min`. Os
+harnesses passavam — mas as duas frases juntas mostram o problema: **o assunto
+trocava com a idade**. "Sincronizado" fala de ARQUIVOS; a sonda mede ALCANCE, e
+nenhuma das duas frases vinha de sincronia nenhuma. Agora o verbo e' o mesmo nos
+dois casos ("verificado agora" / "verificado ha' X") e so' a idade muda. O
+harness passou a varrer os dez estados e reprova se a palavra "sincroniz"
+voltar a aparecer em qualquer label.
+
+**O Remoto entrou SEM atalho de teclado, e isso e' decisao.** Banco, containers
+e Grafana anunciam `Ctrl+Alt+J/W/O` no tooltip; o Remoto nao anuncia nenhum. A
+§10.1 do roadmap 47 diz, por escrito, que os atalhos do trilho pedem analise de
+uso e de implementacao na 0.4 — quais merecem icone, quais viram so' paleta.
+Inventar mais uma combinacao agora seria abrir essa conversa "de passagem", que
+e' exatamente o que o autor pediu para nao acontecer.
+
+**O icone.** Nao havia glifo `remote`, e a entrada nova teria ido para a tela
+sem desenho. Entrou no `KvIconGlyphs.js` (o `KvIcon.qml` esta' em 294 das 300
+linhas da catraca): duas maquinas ligadas, com VAO entre os tracos da ligacao —
+o salto SSH, porque a maquina do outro lado nao esta' aqui. A primeira versao
+tinha caixas 7x7 e, fotografada ao lado dos vizinhos em 22 px, aparecia leve
+demais: ocupava 7 das 24 unidades verticais contra as 14 do chip e do cilindro.
+Refeito com a altura do grid (`trilho-icone-remote-22px.png`).
+
+**O caminho para shell, que a V4 tambem pede, estava quebrado — e mentia.** O
+painel tem "Shell no terminal": o core devolve a linha `ssh ...` e o
+`RuntimeController` a leva ao terminal da IDE. Com NENHUMA sessao aberta — o
+estado normal de quem acabou de abrir a IDE — o `submitShellInput` pedia um
+terminal e devolvia **sem enviar nada**. O autor via um terminal vazio; o painel
+dizia "shell aberto no terminal". A linha ia para o lixo, em silencio.
+
+Agora ela espera a sessao nascer, e o prazo dessa espera e' de quinze segundos:
+passou disso, a linha NAO fica guardada. Um `ssh` antigo caindo num terminal que
+o autor abriu depois, para outra coisa, seria pior que nao ter enviado. E a
+desistencia tem voz — `shellInputDropped` volta pelo router ate' o painel, que
+troca a propria frase por "o terminal nao abriu; a linha NAO foi enviada".
+
+Isso mora num objeto proprio (`ui/qml/runtime/PendingShellInput.qml`) porque o
+`RuntimeController` tinha chegado a 399 das 400 linhas da catraca com a logica
+dentro. Extrair era o que a catraca existe para forcar; o controller voltou a
+377. O harness `tst_shell_pendente.qml` foi conferido por MUTACAO: com o
+descarte de volta no codigo, ele reprova (exit 1).
+
+**O gate passou a reprovar em milissegundos o que reprovava em 25 minutos.** A
+rodada desta fatia caiu no ultimo passo com "build/dev-local-release is not a
+directory": o preset existia no `CMakeUserPresets.json`, o diretorio nunca tinha
+sido configurado nesta maquina, e a descoberta veio depois de clang-tidy, testes
+e 68 harnesses. Nada disso era sobre o codigo. O gate agora confere os dois
+diretorios de build no comeco e diz o comando que resolve.
+
+**E o preset release do GCC nunca tinha sido compilado nesta maquina.** Com o
+diretorio configurado, ele reprovou — em codigo antigo, nao no da fatia:
+`editor_highlighter_tokens.cpp`, `-Werror=strict-overflow` no nivel 5. A queixa
+nao era ruido: a linha vinha 1-based do core e virava 0-based ANTES de ser
+validada (`toInt() - 1`), o que no papel e' `INT_MIN - 1` — comportamento
+indefinido — e por isso o GCC avisava que reescreveria `x - 1 < 0` como `x < 1`
+assumindo que o overflow nao ocorre. A correcao e' a ordem certa das duas
+operacoes: validar, e so' entao subtrair. Nos dois lugares (`setSemanticTokens`
+e `setSyntaxTokens`), e era o unico caso no projeto inteiro.
+
+**Provas:** `DocsPrivate/Codex/evidencias-2026-09-25-remote-hud/` —
+`hud-estados.png` (os oito estados), `trilho-icone-remote-22px.png` (o glifo no
+tamanho real, ao lado dos vizinhos) e `trilho-V4-com-remoto.png` (a IDE aberta,
+sete icones, o Remoto na quinta posicao). Mais o harness do `RemoteHudRules` e o
+do `ToolWindows` ampliado, mais o `tst_shell_pendente` (69 harnesses no
+total).
