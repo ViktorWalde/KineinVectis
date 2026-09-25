@@ -301,6 +301,8 @@ set_source_files_properties(qml/editor/EditorWorkspaceEditPreviewDialog.qml PROP
 set_source_files_properties(qml/editor/EditorController.qml PROPERTIES QT_RESOURCE_ALIAS EditorController.qml)
 set_source_files_properties(qml/editor/EditorSurfaceBridge.qml PROPERTIES QT_RESOURCE_ALIAS EditorSurfaceBridge.qml)
 set_source_files_properties(qml/editor/EditorDocumentController.qml PROPERTIES QT_RESOURCE_ALIAS EditorDocumentController.qml)
+set_source_files_properties(qml/editor/EditorOpenDocuments.qml PROPERTIES QT_RESOURCE_ALIAS EditorOpenDocuments.qml)
+set_source_files_properties(qml/editor/EditorSaveController.qml PROPERTIES QT_RESOURCE_ALIAS EditorSaveController.qml)
 set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextController.qml)
 set_source_files_properties(qml/editor/EditorLanguageController.qml PROPERTIES QT_RESOURCE_ALIAS EditorLanguageController.qml)
 set_source_files_properties(qml/editor/EditorHighlightController.qml PROPERTIES QT_RESOURCE_ALIAS EditorHighlightController.qml)
@@ -607,6 +609,8 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorController.qml
         qml/editor/EditorSurfaceBridge.qml
         qml/editor/EditorDocumentController.qml
+        qml/editor/EditorOpenDocuments.qml
+        qml/editor/EditorSaveController.qml
         qml/editor/EditorTextController.qml
         qml/editor/EditorLanguageController.qml
         qml/editor/EditorHighlightController.qml

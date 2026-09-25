@@ -5,8 +5,33 @@ Item {
 
     property string workspaceRoot: ""
     property var surfaceBridge: null
-    property alias filesModel: openFilesModel
+    property alias filesModel: openDocuments.model
+    // A ABA E' UM DOCUMENTO, NAO UMA POSICAO (V5, 2026-09-25). O que a IDE
+    // guarda e' QUAL documento esta' na tela; o indice e' derivado dele, e
+    // existe so' para o `ListView` saber qual linha pintar.
+    property int currentDocId: 0
+    // O indice e' DERIVADO do documento, e recalculado por SINAL — nunca por
+    // binding, sob pena de laco. O porque esta' no EditorOpenDocuments.qml.
     property int currentTab: -1
+
+    function refreshCurrentTab() {
+        const index = openDocuments.indexOf(root.currentDocId);
+        if (root.currentTab !== index) {
+            root.currentTab = index;
+        }
+    }
+
+    onCurrentDocIdChanged: root.refreshCurrentTab()
+
+    Connections {
+        target: openDocuments
+
+        // Fechar uma aba de fundo nao troca o documento, mas muda a POSICAO
+        // dele — e e' isso que o `ListView` precisa saber.
+        function onIndexByDocIdChanged() {
+            root.refreshCurrentTab();
+        }
+    }
     property var pendingReloads: ({})
     property var pendingSaves: ({})
     property alias recentFiles: recent.paths
@@ -21,9 +46,24 @@ Item {
 
     visible: false
 
-    ListModel {
-        id: openFilesModel
+    EditorOpenDocuments {
+        id: openDocuments
     }
+
+    EditorSaveController {
+        id: saving
+
+        documentController: root
+        externalController: external
+
+        onWriteFileRequested: function(path, content, expectedContent) {
+            root.writeFileRequested(path, content, expectedContent);
+        }
+    }
+
+    // Atalho de leitura: o modelo continua sendo lido por indice em dezenas de
+    // lugares deste arquivo, e isso e' detalhe de armazenamento, nao de dominio.
+    readonly property var openFilesModel: openDocuments.model
 
     // Regras puras (sem estado, sem UI); ver PathRules.qml.
     PathRules {
@@ -39,18 +79,18 @@ Item {
     EditorJumpController {
         id: jump
 
-        filesModel: openFilesModel
+        filesModel: root.openFilesModel
         surfaceBridge: root.surfaceBridge
         workspaceRoot: root.workspaceRoot
 
-        onTabSelectionRequested: index => root.selectTab(index)
+        onTabSelectionRequested: index => root.selectDocument(openDocuments.docIdAt(index))
         onReadFileRequested: path => root.readFileRequested(path)
     }
 
     EditorExternalChangeController {
         id: external
 
-        filesModel: openFilesModel
+        filesModel: root.openFilesModel
         currentTab: root.currentTab
         surfaceBridge: root.surfaceBridge
         pendingSaves: root.pendingSaves
@@ -72,12 +112,12 @@ Item {
     }
 
     function clear() {
-        openFilesModel.clear();
+        openDocuments.clear();
         jump.reset();
         pendingReloads = {};
         pendingSaves = {};
         recent.reset();
-        currentTab = -1;
+        currentDocId = 0;
         external.reset();
         if (surfaceBridge !== null) {
             surfaceBridge.setText("");
@@ -122,107 +162,90 @@ Item {
         }
     }
 
-    function selectTab(index) {
-        if (index === currentTab) {
-            if (index >= 0 && index < openFilesModel.count) {
-                recent.touch(openFilesModel.get(index).path);
-            }
-            return;
+    // O DOMINIO FALA EM DOCUMENTO. Quem tem um indice na mao (o delegate do
+    // `ListView`) traduz na fronteira, com `openDocuments.docIdAt`.
+    function selectDocument(docId) {
+        const index = openDocuments.indexOf(docId);
+        if (index < 0) {
+            // ID SEM DOCUMENTO NAO MEXE EM NADA. O harness pegou isto: a
+            // primeira versao zerava o documento atual — ou seja, um id velho,
+            // de uma aba ja' fechada, ESVAZIAVA a tela de quem estava
+            // editando. Esvaziar tem dono proprio, o `clearCurrentDocument`.
+            return false;
+        }
+        const path = openFilesModel.get(index).path;
+        if (docId === currentDocId) {
+            recent.touch(path);
+            return true;
         }
         storeCurrentEditor();
-        currentTab = index;
-        if (index >= 0 && index < openFilesModel.count) {
-            recent.touch(openFilesModel.get(index).path);
-        }
+        currentDocId = docId;
+        recent.touch(path);
         external.syncCurrent();
         if (surfaceBridge !== null) {
-            surfaceBridge.setText(index >= 0 ? openFilesModel.get(index).content : "");
-            surfaceBridge.setPath(index >= 0 ? openFilesModel.get(index).path : "");
+            surfaceBridge.setText(openFilesModel.get(index).content);
+            surfaceBridge.setPath(path);
+        }
+        currentDocumentChanged();
+        return true;
+    }
+
+    // Nenhum documento na tela. O unico caminho para isso e' fechar o ultimo
+    // ou limpar o workspace — nunca um id que ninguem reconhece.
+    function clearCurrentDocument() {
+        currentDocId = 0;
+        external.syncCurrent();
+        if (surfaceBridge !== null) {
+            surfaceBridge.setText("");
+            surfaceBridge.setPath("");
         }
         currentDocumentChanged();
     }
 
-    function closeTab(index) {
-        openFilesModel.remove(index);
-        if (openFilesModel.count === 0) {
-            currentTab = -1;
-            external.syncCurrent();
-            if (surfaceBridge !== null) {
-                surfaceBridge.setText("");
-                surfaceBridge.setPath("");
-            }
-            currentDocumentChanged();
-            return;
-        }
-        const next = Math.min(index, openFilesModel.count - 1);
-        currentTab = -1;
-        selectTab(next);
+    function pathOfDocument(docId) {
+        const index = openDocuments.indexOf(docId);
+        return index >= 0 ? openFilesModel.get(index).path : "";
     }
 
-    function saveCurrentFile() {
-        if (!surfaceReady() || currentTab < 0) {
+    function closeDocument(docId) {
+        if (openDocuments.indexOf(docId) < 0) {
             return;
         }
+        // O buffer do documento ATUAL vai para o modelo ANTES de qualquer
+        // remocao. Sem isto, fechar uma aba de fundo passava por `selectTab`
+        // com `currentTab` ja' invalidado e o texto da tela era descartado.
         storeCurrentEditor();
-        const document = openFilesModel.get(currentTab);
-        const saves = pendingSaves;
-        saves[document.path] = surfaceBridge.text();
-        pendingSaves = saves;
-        writeFileRequested(document.path, surfaceBridge.text(), document.savedContent);
+        const closingCurrent = docId === currentDocId;
+        const successor = closingCurrent ? openDocuments.successorOf(docId) : currentDocId;
+        openDocuments.remove(docId);
+        if (!closingCurrent) {
+            // Fechar OUTRA aba nao troca o documento na tela: so' a posicao
+            // dele mudou, e posicao e' detalhe do `ListView`.
+            return;
+        }
+        currentDocId = 0;
+        if (successor === 0) {
+            clearCurrentDocument();
+            return;
+        }
+        selectDocument(successor);
+    }
+
+    // Salvar tem dono proprio; ver EditorSaveController.qml.
+    function saveCurrentFile() {
+        saving.saveCurrentFile();
     }
 
     function modifiedDocuments() {
-        storeCurrentEditor();
-        const result = [];
-        for (let i = 0; i < openFilesModel.count; i++) {
-            const document = openFilesModel.get(i);
-            if (document.modified === true && document.externalDeleted !== true) {
-                result.push({
-                    path: document.path,
-                    content: document.content,
-                    savedContent: document.savedContent
-                });
-            }
-        }
-        return result;
+        return saving.modifiedDocuments();
     }
 
-    // Salva somente se o buffer ainda for o snapshot que iniciou a operacao.
-    // Isso impede um format/save-all assincrono de sobrescrever digitacao nova.
     function saveDocumentSnapshot(path, localSnapshot, contentToSave) {
-        storeCurrentEditor();
-        for (let i = 0; i < openFilesModel.count; i++) {
-            const document = openFilesModel.get(i);
-            if (document.path !== path || document.externalDeleted === true) {
-                continue;
-            }
-            if (document.content !== localSnapshot) {
-                return false;
-            }
-            openFilesModel.setProperty(i, "content", contentToSave);
-            openFilesModel.setProperty(i, "modified",
-                                       contentToSave !== document.savedContent);
-            if (i === currentTab && surfaceReady()) {
-                const cursor = Math.min(surfaceBridge.editorSurface.cursorPosition,
-                                        contentToSave.length);
-                surfaceBridge.setText(contentToSave);
-                surfaceBridge.editorSurface.cursorPosition = cursor;
-            }
-            const saves = pendingSaves;
-            saves[path] = contentToSave;
-            pendingSaves = saves;
-            writeFileRequested(path, contentToSave, document.savedContent);
-            return true;
-        }
-        return false;
+        return saving.saveDocumentSnapshot(path, localSnapshot, contentToSave);
     }
 
     function saveAllFiles() {
-        const modified = modifiedDocuments();
-        for (let i = 0; i < modified.length; i++) {
-            saveDocumentSnapshot(modified[i].path, modified[i].content,
-                                 modified[i].content);
-        }
+        saving.saveAllFiles();
     }
 
     function handleExternalChanges(changes) {
@@ -247,10 +270,12 @@ Item {
     }
 
     function closeTabsUnderPath(path) {
-        for (let i = openFilesModel.count - 1; i >= 0; i--) {
-            if (pathRules.isUnder(openFilesModel.get(i).path, path)) {
-                closeTab(i);
-            }
+        // Os IDS sao colhidos ANTES de fechar qualquer um: cada remocao
+        // desloca os indices seguintes, e o laco por indice fechava a aba
+        // errada quando duas abas vizinhas estavam sob o mesmo caminho.
+        const ids = openDocuments.docIdsUnder(path, pathRules);
+        for (let i = 0; i < ids.length; i++) {
+            closeDocument(ids[i]);
         }
     }
 
@@ -269,24 +294,33 @@ Item {
         return openFilesModel.get(currentTab).path;
     }
 
+    // O disco chegou: o buffer e o snapshot salvo passam a ser este conteudo.
+    // Devolve o id do documento, ou zero se ele ja' nao estiver aberto.
+    function applyDiskContent(path, content) {
+        const docId = openDocuments.docIdForPath(path);
+        const index = openDocuments.indexOf(docId);
+        if (index < 0) {
+            return 0;
+        }
+        openFilesModel.setProperty(index, "content", content);
+        openFilesModel.setProperty(index, "savedContent", content);
+        openFilesModel.setProperty(index, "modified", false);
+        return docId;
+    }
+
     function handleFileLoaded(path, content) {
         if (pendingReloads[path] === true) {
             const reloads = pendingReloads;
             delete reloads[path];
             pendingReloads = reloads;
-            for (let i = 0; i < openFilesModel.count; i++) {
-                if (openFilesModel.get(i).path === path) {
-                    openFilesModel.setProperty(i, "content", content);
-                    openFilesModel.setProperty(i, "savedContent", content);
-                    openFilesModel.setProperty(i, "modified", false);
-                    if (i === currentTab && surfaceReady()) {
-                        const cursor = Math.min(surfaceBridge.editorSurface.cursorPosition,
-                                                content.length);
-                        surfaceBridge.setText(content);
-                        surfaceBridge.editorSurface.cursorPosition = cursor;
-                    }
-                    return;
-                }
+            const reloaded = applyDiskContent(path, content);
+            // O CURSOR e' preservado: recarregar nao e' abrir, e o autor
+            // continua onde estava.
+            if (reloaded === currentDocId && reloaded !== 0 && surfaceReady()) {
+                const cursor = Math.min(surfaceBridge.editorSurface.cursorPosition,
+                                        content.length);
+                surfaceBridge.setText(content);
+                surfaceBridge.editorSurface.cursorPosition = cursor;
             }
             return;
         }
@@ -294,24 +328,20 @@ Item {
             external.applyExternalRead(path, content);
             return;
         }
-        for (let i = 0; i < openFilesModel.count; i++) {
-            if (openFilesModel.get(i).path === path) {
-                openFilesModel.setProperty(i, "content", content);
-                openFilesModel.setProperty(i, "savedContent", content);
-                openFilesModel.setProperty(i, "modified", false);
-                selectTab(i);
-                if (surfaceBridge !== null) {
-                    surfaceBridge.setText(content);
-                    surfaceBridge.setPath(path);
-                }
-                if (jump.hasPendingFor(path)) {
-                    jump.applyPending();
-                }
-                currentDocumentChanged();
-                return;
+        const alreadyOpen = applyDiskContent(path, content);
+        if (alreadyOpen !== 0) {
+            selectDocument(alreadyOpen);
+            if (surfaceBridge !== null) {
+                surfaceBridge.setText(content);
+                surfaceBridge.setPath(path);
             }
+            if (jump.hasPendingFor(path)) {
+                jump.applyPending();
+            }
+            currentDocumentChanged();
+            return;
         }
-        openFilesModel.append({
+        const newDocId = openDocuments.add({
             path: path,
             name: pathRules.baseName(path),
             content: content,
@@ -322,7 +352,7 @@ Item {
             externalDeleted: false,
             externalMessage: ""
         });
-        selectTab(openFilesModel.count - 1);
+        selectDocument(newDocId);
         if (jump.hasPendingFor(path)) {
             jump.applyPending();
         }
@@ -330,35 +360,11 @@ Item {
     }
 
     function handleFileSaved(path) {
-        const saves = pendingSaves;
-        const savedContent = saves[path];
-        delete saves[path];
-        pendingSaves = saves;
-        for (let i = 0; i < openFilesModel.count; i++) {
-            if (openFilesModel.get(i).path === path) {
-                const localContent = i === currentTab && surfaceReady()
-                        ? surfaceBridge.text() : openFilesModel.get(i).content;
-                const snapshot = savedContent !== undefined
-                        ? savedContent : openFilesModel.get(i).content;
-                openFilesModel.setProperty(i, "savedContent", snapshot);
-                openFilesModel.setProperty(i, "content", localContent);
-                openFilesModel.setProperty(i, "modified", localContent !== snapshot);
-                external.clearAt(i);
-            }
-        }
+        saving.handleFileSaved(path);
     }
 
     function handleFileSaveFailed(path, message) {
-        const saves = pendingSaves;
-        delete saves[path];
-        pendingSaves = saves;
-        for (let i = 0; i < openFilesModel.count; i++) {
-            if (openFilesModel.get(i).path === path) {
-                external.markConflictAt(i, message);
-                external.queueRead(path, message);
-                return;
-            }
-        }
+        saving.handleFileSaveFailed(path, message);
     }
 
     function reloadExternalCurrent() {

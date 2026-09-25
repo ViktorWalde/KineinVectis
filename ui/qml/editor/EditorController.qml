@@ -307,10 +307,10 @@ Item {
         documents.storeCurrentEditor();
     }
 
-    function selectTab(index) {
+    function selectDocument(docId) {
         completionController.dismiss();
         persistence.flushAutoSave(); // F3: a aba que sai vai ao disco antes.
-        documents.selectTab(index);
+        documents.selectDocument(docId);
         // D1b: o buffer trocou — os offsets dos matches eram do texto ANTIGO.
         // Revarre no arquivo novo (mantendo o termo, como VS Code faz).
         if (findController.barVisible) {
@@ -318,15 +318,15 @@ Item {
         }
     }
 
-    function closeTab(index) {
+    function closeDocument(docId) {
         // M-S1: fechar a aba é uma decisão explícita → o rascunho não é mais
-        // necessário (só sobrevive a CRASH). Limpa antes de fechar.
-        const path = index >= 0 && index < filesModel.count
-                ? filesModel.get(index).path : "";
+        // necessário (só sobrevive a CRASH). Limpa antes de fechar. O caminho
+        // vem do DOCUMENTO (V5), e não de uma posição que já pode ter mudado.
+        const path = documents.pathOfDocument(docId);
         if (path !== "") {
             draftClearRequested(path);
         }
-        documents.closeTab(index);
+        documents.closeDocument(docId);
     }
 
     // --- Formatação e format-on-save -----------------------------------

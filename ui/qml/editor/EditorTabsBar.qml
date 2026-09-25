@@ -23,8 +23,11 @@ Item {
     readonly property bool tabsCompressed: naturalTabsWidth > width
     readonly property real compactTabWidth: compactWidthFor(width, fileCount)
 
-    signal tabSelected(int index)
-    signal tabCloseRequested(int index)
+    // O DOCUMENTO, nao a posicao (V5): o delegate tem o `docId` do modelo, e e'
+    // ele que atravessa. Assim nenhuma operacao de dominio depende de onde a
+    // aba esta' na fila.
+    signal tabSelected(int docId)
+    signal tabCloseRequested(int docId)
 
     height: fileCount > 0 ? 36 : 0
     visible: fileCount > 0
@@ -101,6 +104,7 @@ Item {
             id: tabDelegate
 
             required property int index
+            required property int docId
             required property string name
             required property bool modified
 
@@ -171,7 +175,7 @@ Item {
                 iconSize: 13
                 danger: true
                 tooltip: tabDelegate.modified ? qsTr("Fechar aba (não salvo)") : qsTr("Fechar aba")
-                onClicked: root.tabCloseRequested(tabDelegate.index)
+                onClicked: root.tabCloseRequested(tabDelegate.docId)
 
                 MouseArea {
                     id: closeArea
@@ -198,7 +202,7 @@ Item {
                         TooltipController.hideFor(tabDelegate);
                     }
                 }
-                onClicked: root.tabSelected(tabDelegate.index)
+                onClicked: root.tabSelected(tabDelegate.docId)
             }
         }
     }

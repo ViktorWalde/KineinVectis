@@ -117,11 +117,11 @@ Item {
         symbols: root.indexController ? root.indexController.symbols : null
         outlineWidth: root.shellController.outlineWidth
         outlineCollapsed: root.shellController.outlineCollapsed
-        onTabSelected: function(index) {
-            root.editorController.selectTab(index);
+        onTabSelected: function(docId) {
+            root.editorController.selectDocument(docId);
         }
-        onTabCloseRequested: function(index) {
-            root.editorController.closeTab(index);
+        onTabCloseRequested: function(docId) {
+            root.editorController.closeDocument(docId);
         }
         onTextEdited: function(text) {
             root.editorController.handleTextEdited(text);

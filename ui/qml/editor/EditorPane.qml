@@ -52,8 +52,8 @@ Rectangle {
 
     signal gutterLineClicked(int line)
     signal codeActionsRequested(int line)
-    signal tabSelected(int index)
-    signal tabCloseRequested(int index)
+    signal tabSelected(int docId)
+    signal tabCloseRequested(int docId)
     signal textEdited(string text)
     signal completionMoveRequested(int delta)
     signal completionAcceptRequested()
@@ -95,11 +95,11 @@ Rectangle {
         filesModel: root.filesModel
         fileCount: root.fileCount
         currentIndex: root.currentTab
-        onTabSelected: function(index) {
-            root.tabSelected(index);
+        onTabSelected: function(docId) {
+            root.tabSelected(docId);
         }
-        onTabCloseRequested: function(index) {
-            root.tabCloseRequested(index);
+        onTabCloseRequested: function(docId) {
+            root.tabCloseRequested(docId);
         }
     }
 

@@ -12,9 +12,10 @@ Item {
     ListModel {
         id: files
 
-        ListElement { name: "main.cpp"; modified: false }
-        ListElement { name: "motor_control.cpp"; modified: false }
-        ListElement { name: "CMakeLists.txt"; modified: true }
+        // O `docId` entrou na V5: a barra fala em documento, nao em posicao.
+        ListElement { docId: 1; name: "main.cpp"; modified: false }
+        ListElement { docId: 2; name: "motor_control.cpp"; modified: false }
+        ListElement { docId: 3; name: "CMakeLists.txt"; modified: true }
     }
 
     EditorTabsBar {
