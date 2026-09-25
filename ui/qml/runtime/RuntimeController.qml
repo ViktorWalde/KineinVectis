@@ -128,6 +128,13 @@ Item {
         });
         root.terminalsRevision += 1;
         selectTerminal(id);
+
+        // A linha que esperava este terminal nascer. So' a PRIMEIRA sessao a
+        // abrir depois do pedido a recebe: a espera e' zerada aqui.
+        if (shellPendente.command !== "") {
+            terminalInputRequested(id, shellPendente.retirar() + "\n");
+            clearTerminalInputRequested();
+        }
     }
 
     /// Troca a aba ativa. O grid da sessão volta INTACTO (o core mantém o
@@ -175,8 +182,25 @@ Item {
         focusTerminalInputRequested();
     }
 
+    // A linha do "Shell no terminal" quando nao ha' sessao viva: ela ESPERA o
+    // terminal nascer, em vez de sumir. O porque esta' no PendingShellInput.
+    property alias pendingShellInput: shellPendente.command
+    property alias esperaDoShellMs: shellPendente.esperaMs
+
+    signal shellInputDropped(string command)
+
+    PendingShellInput {
+        id: shellPendente
+
+        onDropped: function(command) {
+            root.shellInputDropped(command);
+        }
+    }
+
     function submitShellInput(text) {
         if (root.activeTerminalId === "") {
+            shellPendente.aguardar(text);
+            showTabRequested("terminal");
             terminalOpenRequested();
             return;
         }

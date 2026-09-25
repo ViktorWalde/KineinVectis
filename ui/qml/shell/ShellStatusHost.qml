@@ -12,6 +12,7 @@ WorkspaceStatusBar {
     property var activeJobController: null
     property var lspStatusController: null
     property var editorController: null
+    property var remoteController: null
 
     workspaceRoot: coreClient.workspaceRoot
     workspaceKindLabel: shellController.kindLabel(
@@ -38,6 +39,18 @@ WorkspaceStatusBar {
     lspSummary: lspStatusController !== null ? lspStatusController.summary() : ""
     lspDetail: lspStatusController !== null ? lspStatusController.detail() : ""
     lspFailed: lspStatusController !== null ? lspStatusController.hasFailure() : false
+    remoteIsMirror: remoteController !== null && remoteController.workspace.isMirror
+    remoteTarget: remoteController !== null && remoteController.workspace.mirror
+                  ? remoteController.workspace.mirror.name : ""
+    remoteSyncing: remoteController !== null && remoteController.workspace.syncing
+    remoteSyncDirection: remoteController !== null ? remoteController.workspace.syncDirection : ""
+    remoteSyncFailed: remoteController !== null && remoteController.workspace.syncFailed
+    remoteSyncMessage: remoteController !== null ? remoteController.workspace.syncMessage : ""
+    remoteDeploying: remoteController !== null && remoteController.deploying
+    remoteProbed: remoteController !== null && remoteController.probedAt > 0
+    remoteProbeOk: remoteController !== null && remoteController.probeOk
+    remoteProbedAt: remoteController !== null ? remoteController.probedAt : 0
+    onRemotePanelRequested: remoteController.open()
     onLogsRequested: shellController.toggleBottomTab("logs")
     onJobsRequested: shellController.showTab("jobs")
     onCancelJobRequested: activeJobController.cancel()

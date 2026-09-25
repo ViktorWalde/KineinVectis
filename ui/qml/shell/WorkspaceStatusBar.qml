@@ -38,6 +38,20 @@ Rectangle {
     property string lspDetail: ""
     property bool lspFailed: false
 
+    // O Remote so' aparece quando o workspace E' espelhado (§5.2 da
+    // especificacao): um perfil apenas selecionado nao ocupa a barra.
+    property bool remoteIsMirror: false
+    property string remoteTarget: ""
+    property bool remoteSyncing: false
+    property string remoteSyncDirection: ""
+    property bool remoteSyncFailed: false
+    property string remoteSyncMessage: ""
+    property bool remoteDeploying: false
+    property bool remoteProbed: false
+    property bool remoteProbeOk: false
+    property double remoteProbedAt: 0
+
+    signal remotePanelRequested()
     signal logsRequested()
     signal jobsRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
@@ -101,6 +115,21 @@ Rectangle {
                     bar.toolchainMenuRequested(pos.x, pos.y);
                 }
             }
+        }
+
+        StatusBarRemoteWidget {
+            anchors.verticalCenter: parent.verticalCenter
+            isMirror: bar.remoteIsMirror
+            targetName: bar.remoteTarget
+            syncing: bar.remoteSyncing
+            syncDirection: bar.remoteSyncDirection
+            syncFailed: bar.remoteSyncFailed
+            syncMessage: bar.remoteSyncMessage
+            deploying: bar.remoteDeploying
+            probed: bar.remoteProbed
+            probeOk: bar.remoteProbeOk
+            probedAt: bar.remoteProbedAt
+            onPanelRequested: bar.remotePanelRequested()
         }
 
         // O job em curso ocupa o centro; sem job, os resumos do projeto.

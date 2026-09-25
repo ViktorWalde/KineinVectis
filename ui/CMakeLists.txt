@@ -63,6 +63,7 @@ set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/workspace/LspStatusController.qml PROPERTIES QT_RESOURCE_ALIAS LspStatusController.qml)
 set_source_files_properties(qml/jobs/ActiveJobController.qml PROPERTIES QT_RESOURCE_ALIAS ActiveJobController.qml)
 set_source_files_properties(qml/jobs/ProblemRules.qml PROPERTIES QT_RESOURCE_ALIAS ProblemRules.qml)
+set_source_files_properties(qml/shell/StatusBarRemoteWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarRemoteWidget.qml)
 set_source_files_properties(qml/shell/StatusBarJobWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarJobWidget.qml)
 set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
 set_source_files_properties(qml/shell/HeaderGitWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderGitWidget.qml)
@@ -216,6 +217,7 @@ set_source_files_properties(qml/remote/RemoteWorkspaceController.qml PROPERTIES 
 set_source_files_properties(qml/remote/RemoteList.qml PROPERTIES QT_RESOURCE_ALIAS RemoteList.qml)
 set_source_files_properties(qml/remote/RemoteDiscovery.qml PROPERTIES QT_RESOURCE_ALIAS RemoteDiscovery.qml)
 set_source_files_properties(qml/remote/RemoteNewHost.qml PROPERTIES QT_RESOURCE_ALIAS RemoteNewHost.qml)
+set_source_files_properties(qml/remote/RemoteHudRules.qml PROPERTIES QT_RESOURCE_ALIAS RemoteHudRules.qml)
 set_source_files_properties(qml/remote/RemoteActionRules.qml PROPERTIES QT_RESOURCE_ALIAS RemoteActionRules.qml)
 set_source_files_properties(qml/remote/RemoteSections.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSections.qml)
 set_source_files_properties(qml/remote/RemoteSystemView.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSystemView.qml)
@@ -271,6 +273,7 @@ set_source_files_properties(qml/workspace/ProjectHealthController.qml PROPERTIES
 set_source_files_properties(qml/workspace/WorkspaceUiResetter.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceUiResetter.qml)
 set_source_files_properties(qml/jobs/JobsController.qml PROPERTIES QT_RESOURCE_ALIAS JobsController.qml)
 set_source_files_properties(qml/runtime/RuntimeController.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeController.qml)
+set_source_files_properties(qml/runtime/PendingShellInput.qml PROPERTIES QT_RESOURCE_ALIAS PendingShellInput.qml)
 set_source_files_properties(qml/runtime/RunConfigController.qml PROPERTIES QT_RESOURCE_ALIAS RunConfigController.qml)
 set_source_files_properties(qml/search/SearchController.qml PROPERTIES QT_RESOURCE_ALIAS SearchController.qml)
 set_source_files_properties(qml/search/SearchEverywhereController.qml PROPERTIES QT_RESOURCE_ALIAS SearchEverywhereController.qml)
@@ -366,6 +369,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/LspStatusController.qml
         qml/jobs/ActiveJobController.qml
         qml/jobs/ProblemRules.qml
+        qml/shell/StatusBarRemoteWidget.qml
         qml/shell/StatusBarJobWidget.qml
         qml/shell/HeaderRunWidget.qml
         qml/shell/HeaderGitWidget.qml
@@ -519,6 +523,7 @@ qt_add_qml_module(kinein-vectis
         qml/remote/RemoteList.qml
         qml/remote/RemoteDiscovery.qml
         qml/remote/RemoteNewHost.qml
+        qml/remote/RemoteHudRules.qml
         qml/remote/RemoteActionRules.qml
         qml/remote/RemoteSections.qml
         qml/remote/RemoteSystemView.qml
@@ -574,6 +579,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/WorkspaceUiResetter.qml
         qml/jobs/JobsController.qml
         qml/runtime/RuntimeController.qml
+        qml/runtime/PendingShellInput.qml
         qml/runtime/RunConfigController.qml
         qml/search/SearchController.qml
         qml/search/SearchEverywhereController.qml

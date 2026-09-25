@@ -50,6 +50,10 @@ Item {
     // host | network | other. A UI escolhe o gesto por isto, nunca lendo a
     // frase — frase muda de idioma, tipo nao.
     property string probeFailure: ""
+    // QUANDO a sonda mediu. O HUD da V4 precisa da idade: "sondado uma vez"
+    // nao pode parecer "conectado agora" (defeito 5 da §3). 0 = nunca nesta
+    // sessao, que e' o estado inicial que a V4 exige.
+    property double probedAt: 0
     // Uma linha ARMADA: composta pelo core e mostrada, esperando um gesto
     // explicito. Copiar chave nao pode acontecer porque alguem sondou.
     property string armedCommand: ""
@@ -174,6 +178,7 @@ Item {
 
     function clearVerdict() {
         probing = false;
+        probedAt = 0;
         probedName = "";
         probeOk = false;
         probeArch = "";
@@ -297,6 +302,7 @@ Item {
         probeTools = outcome.tools || [];
         probeMessage = probeOk ? "" : (outcome.error || qsTr("a sonda falhou"));
         probeFailure = probeOk ? "" : (outcome.failure || "other");
+        probedAt = Date.now();
     }
 
     // O alvo recusou a chave: o unico gesto que resolve isso e' copiar a sua.
@@ -319,6 +325,12 @@ Item {
     function disarm() {
         armedCommand = "";
         armedName = "";
+    }
+
+    // O painel PROMETEU "shell no terminal". Se a sessao nao nasceu e a linha
+    // foi descartada, a promessa se desmente no mesmo lugar onde apareceu.
+    function reportShellDropped(command) {
+        lastOutcome = qsTr("o terminal não abriu; a linha NÃO foi enviada: %1").arg(command);
     }
 
     // So' aqui algo sai para o terminal, e so' depois de a linha ter estado
@@ -356,7 +368,7 @@ Item {
             lastOutcome = qsTr("kit: remoteTarget %1 e debugServer gravados").arg(result.remoteTarget || "");
         } else if (kind === "shell") {
             shellRequested(result.command);
-            lastOutcome = qsTr("shell aberto no terminal");
+            lastOutcome = qsTr("shell no terminal: %1").arg(result.command);
         } else if (kind === "copyId") {
             // ARMA, nao roda: a linha aparece e espera confirmacao.
             armedCommand = result.command || "";

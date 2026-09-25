@@ -28,6 +28,7 @@ Item {
     property var dataSourceController: null
     property var containerController: null
     property var grafanaController: null
+    property var remoteController: null
     property bool workspaceOpen: false
 
     visible: false
@@ -78,6 +79,17 @@ Item {
             "active": root.containerController !== null && root.containerController !== undefined
                       && root.containerController.panelVisible
         },
+        // O REMOTE entrou no trilho na V4 (2026-09-25), e custou esta entrada —
+        // era o aceite da V3, exercitado. Ele abre SEM projeto aberto pelo mesmo
+        // motivo que o banco e os containers: o alvo e' da maquina, e o
+        // workspace espelhado ate' nasce de escolher um.
+        {
+            "id": "remote", "label": qsTr("Remoto"), "icon": "remote",
+            "tooltip": qsTr("Alvo remoto — Linux por SSH"), "area": "left", "order": 55,
+            "available": true,
+            "active": root.remoteController !== null && root.remoteController !== undefined
+                      && root.remoteController.panelVisible
+        },
         {
             "id": "observability", "label": qsTr("Grafana"), "icon": "observability",
             "tooltip": qsTr("Observabilidade — Grafana (Ctrl+Alt+O)"), "area": "left",
@@ -94,26 +106,41 @@ Item {
         }
     ]
 
+    // Um dono AUSENTE e' o mesmo caso de um id sem dono: resultado observavel,
+    // nao excecao. O trilho existe antes dos controllers em teste e na abertura
+    // da janela, e chamar `open()` de um `null` derrubava a funcao inteira.
+    function abrir(dono) {
+        if (dono === null || dono === undefined) {
+            return false;
+        }
+        dono.open();
+        return true;
+    }
+
     // O UNICO lugar que sabe o que cada id faz. Antes eram sete
     // `onXRequested` espalhados pelo host.
     function activate(id) {
         switch (id) {
         case "explorer":
+            if (shellController === null || shellController === undefined) {
+                return false;
+            }
             shellController.toggleExplorer();
             return true;
         case "embedded":
-            embeddedController.open();
-            return true;
+            return abrir(embeddedController);
         case "database":
-            dataSourceController.open();
-            return true;
+            return abrir(dataSourceController);
         case "containers":
-            containerController.open();
-            return true;
+            return abrir(containerController);
         case "observability":
-            grafanaController.open();
-            return true;
+            return abrir(grafanaController);
+        case "remote":
+            return abrir(remoteController);
         case "tools":
+            if (shellController === null || shellController === undefined) {
+                return false;
+            }
             shellController.toggleBottomTab("tools");
             return true;
         default:

@@ -1,4 +1,4 @@
-// Glifos das FERRAMENTAS NATIVAS (banco de dados, containers, observabilidade) — o mesmo grid
+// Glifos das FERRAMENTAS NATIVAS (banco, containers, observabilidade, remoto) — o mesmo grid
 // 24x24 e o mesmo tracado do KvIcon, num modulo proprio para o KvIcon nao
 // cruzar o limite de 300 linhas por causa de dois desenhos. O KvIcon chama
 // `draw` no `default` do switch; quem nao esta' aqui volta `false` e o KvIcon
@@ -69,6 +69,26 @@ function draw(name, context, line, node) {
             line(context, 3, p, 7, p);
             line(context, 17, p, 21, p);
         }
+        return true;
+    case "remote":
+        // duas maquinas ligadas: a daqui, o salto e a de la'. As caixas tem a
+        // ALTURA do grid (como o cilindro e o chip) — na primeira versao eram
+        // 7x7 e o icone aparecia leve demais ao lado dos vizinhos no trilho.
+        // O vao entre os tracos da ligacao e' o salto SSH: nao e' linha
+        // continua porque a maquina do outro lado nao esta' aqui.
+        context.moveTo(2, 5);
+        context.lineTo(9, 5);
+        context.lineTo(9, 19);
+        context.lineTo(2, 19);
+        context.closePath();
+        context.moveTo(15, 5);
+        context.lineTo(22, 5);
+        context.lineTo(22, 19);
+        context.lineTo(15, 19);
+        context.closePath();
+        line(context, 9, 12, 11, 12);
+        line(context, 13, 12, 15, 12);
+        node(context, 12, 12, 1);
         return true;
     default:
         return false;

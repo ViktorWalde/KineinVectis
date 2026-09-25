@@ -23,6 +23,7 @@ Item {
     property var grafanaController
     property var dataSourceController
     property var embeddedController: null
+    property var remoteController: null
     property alias editorSurface: editorPaneHost.editorSurface
     property bool workspaceOpen: false
     property string workspaceRoot: ""
@@ -111,6 +112,7 @@ Item {
             dataSourceController: root.dataSourceController
             containerController: root.containerController
             grafanaController: root.grafanaController
+            remoteController: root.remoteController
             workspaceOpen: root.workspaceOpen
         }
 

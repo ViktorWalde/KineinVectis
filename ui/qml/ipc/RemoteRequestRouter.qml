@@ -87,4 +87,18 @@ Item {
         }
 
     }
+
+    // O painel Remoto PROMETEU "shell aberto no terminal". Se a sessao nao
+    // nasceu e a linha foi descartada, quem prometeu desmente — no mesmo lugar
+    // onde a promessa aparece.
+    Connections {
+        target: root.runtimeController
+
+        function onShellInputDropped(command) {
+            if (root.remoteController === null) {
+                return;
+            }
+            root.remoteController.reportShellDropped(command);
+        }
+    }
 }

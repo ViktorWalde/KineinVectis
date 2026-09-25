@@ -48,7 +48,7 @@ Item {
 
     Component.onCompleted: {
         // O CONTRATO de uma entrada: todo campo que o trilho desenha.
-        check(janelas.entries.length === 6, "seis entradas, deu " + janelas.entries.length);
+        check(janelas.entries.length === 7, "sete entradas, deu " + janelas.entries.length);
         for (const e of janelas.entries) {
             check(e.id !== undefined && e.id !== "", "entrada sem id");
             check(e.icon !== undefined && e.icon !== "", e.id + " sem icone");
@@ -61,7 +61,7 @@ Item {
 
         // A ordem e' a decidida pelo autor, e nao pode mudar por acidente.
         const ids = janelas.entries.map(function(e) { return e.id; });
-        check(ids.join(",") === "explorer,embedded,database,containers,observability,tools",
+        check(ids.join(",") === "explorer,embedded,database,containers,remote,observability,tools",
               "ordem do trilho mudou: " + ids.join(","));
         let anterior = -1;
         for (const e of janelas.entries) {
@@ -77,7 +77,8 @@ Item {
         check(!porId("explorer").available && !porId("embedded").available,
               "sem projeto, Projeto e Embarcados ficam indisponiveis");
         check(porId("database").available && porId("containers").available
-              && porId("observability").available && porId("tools").available,
+              && porId("observability").available && porId("tools").available
+              && porId("remote").available,
               "os da maquina abrem sem projeto");
         janelas.workspaceOpen = true;
         check(porId("explorer").available && porId("embedded").available,
@@ -101,9 +102,24 @@ Item {
         check(janelas.activate("explorer") === true && chamadas[0] === "explorer", "explorer");
         check(janelas.activate("tools") === true && chamadas[1] === "tab:tools", "tools");
 
+        // O REMOTO (V4): activate abre o painel do controller, e "active" segue o
+        // painel — nao a existencia do controller. Sem controller, nao acende e
+        // nao estoura.
+        check(!porId("remote").active, "sem controller, o remoto nao acende");
+        check(janelas.activate("remote") === false, "sem controller, nada a ativar");
+        const remotoFalso = painel("remote");
+        janelas.remoteController = remotoFalso;
+        check(!porId("remote").active, "controller com painel fechado nao acende");
+        check(janelas.activate("remote") === true
+              && chamadasDoTeste[chamadasDoTeste.length - 1] === "remote",
+              "activate('remote') chama o open do dono");
+        remotoFalso.panelVisible = true;
+        check(porId("remote").active, "painel aberto acende o remoto");
+
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
         check(janelas.activate("nao.existe") === false, "id sem dono devolve false");
-        check(chamadas.length === 2, "id sem dono nao pode tocar em nada");
+        check(chamadas.length === 2 && chamadasDoTeste.length === 1,
+              "id sem dono nao pode tocar em nada");
 
         Qt.exit(failures === 0 ? 0 : 1);
     }

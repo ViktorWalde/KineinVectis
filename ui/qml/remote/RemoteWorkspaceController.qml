@@ -28,6 +28,11 @@ Item {
     property string pendingMirror: ""
     property bool syncing: false
     property string syncMessage: ""
+    // O HUD da V4 precisa distinguir "nao sincronizou ainda" de "tentou e
+    // falhou": a §4 proibe confundir save local que deu certo com push remoto
+    // que falhou. Texto nao serve para isso — booleano serve.
+    property bool syncFailed: false
+    property string syncDirection: ""
 
     readonly property bool isMirror: mirror !== null && mirror !== undefined
                                      && mirror.name !== undefined
@@ -70,6 +75,8 @@ Item {
             return;
         }
         syncing = true;
+        syncDirection = direction;
+        syncFailed = false;
         syncMessage = "";
         syncRequested(direction, []);
     }
@@ -77,6 +84,8 @@ Item {
     // O pull do `remote.open` abre o espelho; os demais so' contam.
     function handleSynced(outcome) {
         syncing = false;
+        syncDirection = outcome.direction || "";
+        syncFailed = outcome.success !== true;
         const n = (outcome.changed || []).length;
         if (outcome.success === true) {
             syncMessage = outcome.direction === "pull"
@@ -102,5 +111,7 @@ Item {
     function reset() {
         syncing = false;
         syncMessage = "";
+        syncFailed = false;
+        syncDirection = "";
     }
 }

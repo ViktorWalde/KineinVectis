@@ -240,6 +240,7 @@ Window {
         grafanaController: domains.grafanaController
         dataSourceController: domains.dataSourceController
         embeddedController: domains.embeddedController
+        remoteController: domains.remoteController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName
@@ -309,6 +310,7 @@ Window {
         activeJobController: domains.activeJobController
         lspStatusController: domains.lspStatusController
         editorController: domains.editorController
+        remoteController: domains.remoteController
         onToolchainMenuRequested: function(menuX, menuY) {
             const pos = statusBar.mapToItem(shellOverlays, menuX, menuY);
             domains.toolchainController.openMenu(pos.x, pos.y);
