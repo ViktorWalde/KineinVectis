@@ -19,16 +19,23 @@ void EditorHighlighter::setSemanticTokens(const QVariantList& tokens)
     m_semanticSpansByLine.clear();
     for (const QVariant& entry : tokens) {
         const QVariantMap map = entry.toMap();
-        const int line = map.value(QStringLiteral("line")).toInt() - 1;
+        // A linha vem 1-based do core, e ate' 2026-09-25 virava 0-based ANTES
+        // de ser validada. No papel isso e' `INT_MIN - 1`, e e' o que o
+        // `-Wstrict-overflow=5` do GCC acusa no preset release: ele reescreve
+        // `x - 1 < 0` como `x < 1` assumindo que o overflow nao acontece.
+        // Validar antes de subtrair tira a suposicao — a conta so' existe
+        // depois de se saber que ela cabe.
+        const int linhaBase1 = map.value(QStringLiteral("line")).toInt();
         SemanticSpan span;
         span.start = map.value(QStringLiteral("start")).toInt();
         span.length = map.value(QStringLiteral("length")).toInt();
         span.format = formatForSemanticKind(map.value(QStringLiteral("kind")).toString());
-        if (line < 0 || span.start < 0 || span.length <= 0 ||
+        if (linhaBase1 < 1 || span.start < 0 || span.length <= 0 ||
             span.format.foreground().style() == Qt::NoBrush)
         {
             continue;
         }
+        const int line = linhaBase1 - 1;
         auto spans = m_semanticSpansByLine.find(line);
         if (spans == m_semanticSpansByLine.end()) {
             spans = m_semanticSpansByLine.insert(line, QList<SemanticSpan>{});
@@ -52,16 +59,23 @@ void EditorHighlighter::setSyntaxTokens(const QVariantList& tokens)
     m_syntaxSpansByLine.clear();
     for (const QVariant& entry : tokens) {
         const QVariantMap map = entry.toMap();
-        const int line = map.value(QStringLiteral("line")).toInt() - 1;
+        // A linha vem 1-based do core, e ate' 2026-09-25 virava 0-based ANTES
+        // de ser validada. No papel isso e' `INT_MIN - 1`, e e' o que o
+        // `-Wstrict-overflow=5` do GCC acusa no preset release: ele reescreve
+        // `x - 1 < 0` como `x < 1` assumindo que o overflow nao acontece.
+        // Validar antes de subtrair tira a suposicao — a conta so' existe
+        // depois de se saber que ela cabe.
+        const int linhaBase1 = map.value(QStringLiteral("line")).toInt();
         SemanticSpan span;
         span.start = map.value(QStringLiteral("start")).toInt();
         span.length = map.value(QStringLiteral("length")).toInt();
         span.format = formatForSyntaxScope(map.value(QStringLiteral("scope")).toString());
-        if (line < 0 || span.start < 0 || span.length <= 0 ||
+        if (linhaBase1 < 1 || span.start < 0 || span.length <= 0 ||
             span.format.foreground().style() == Qt::NoBrush)
         {
             continue;
         }
+        const int line = linhaBase1 - 1;
         auto spans = m_syntaxSpansByLine.find(line);
         if (spans == m_syntaxSpansByLine.end()) {
             spans = m_syntaxSpansByLine.insert(line, QList<SemanticSpan>{});
