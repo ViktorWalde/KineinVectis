@@ -26,7 +26,7 @@ ui/
 │   ├── editor/           # superfície, controladores e popups do editor
 │   └── panels/           # janelas de ferramentas inferiores
 └── assets/
-    └── app-icon.png      # ícone KW (copiado de imagens/app-icon.png)
+    └── icon-amber.png    # ícone oficial (copiado de imagens/icon-amber.png)
 ```
 
 ## Build

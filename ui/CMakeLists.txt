@@ -727,7 +727,7 @@ target_compile_definitions(kinein-vectis PRIVATE KINEIN_VERSAO="${PROJECT_VERSIO
 # installed by the AppImage recipe because it is not a CMake target.
 install(TARGETS kinein-vectis RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 install(
-    FILES assets/app-icon.png
+    FILES assets/icon-amber.png
     DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps"
     RENAME kinein-vectis.png
 )

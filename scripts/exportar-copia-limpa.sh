@@ -60,7 +60,7 @@ deny.toml
 .editorconfig
 .gitattributes
 .gitignore
-imagens/app-icon.png
+imagens/icon-amber.png
 "
 
 # Markdown permitido na copia. Qualquer outro .md e um erro, nao um aviso.

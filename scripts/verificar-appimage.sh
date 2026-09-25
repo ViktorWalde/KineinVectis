@@ -65,7 +65,7 @@ entradas=(
     packaging/appimage/KINEIN_LICENSE_NOTICE.txt
     packaging/appimage/Containerfile
     packaging/appimage/Containerfile.smoke
-    ui/assets/app-icon.png
+    ui/assets/icon-amber.png
     LICENSE-MIT.txt
     LICENSE-APACHE-2.0.txt
     DocsPublic/manual.md
