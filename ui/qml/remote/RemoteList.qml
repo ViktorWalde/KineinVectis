@@ -93,7 +93,7 @@ Item {
         width: lista.width
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.WordWrap
-        text: qsTr("Nenhum alvo salvo.\nPreencha ao lado e salve.")
+        text: qsTr("Nenhum alvo salvo.\nComece em Configurar.")
         color: Theme.textMuted
         font.pixelSize: 10
     }

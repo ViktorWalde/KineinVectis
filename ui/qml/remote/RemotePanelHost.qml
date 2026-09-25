@@ -12,6 +12,42 @@ KvPanelFrame {
     panelWidth: 680
     panelHeight: 520
 
+    // A acao primaria do cabecalho: o painel manda o `kind` que a regra pura
+    // decidiu, e aqui ele vira gesto. Mora no HOST porque e' justamente isto
+    // que um host faz — traduzir intencao de view em chamada de controller. Na
+    // fachada, era mais um assunto num arquivo que ja' carrega seis.
+    //
+    // Quando o gesto vive noutra seccao, LEVA a pessoa ate' la' em vez de
+    // deixar um botao que ela nao acha.
+    function runPrimary(kind) {
+        const c = root.controller;
+        switch (kind) {
+        case "configurar":
+            c.selectSection("configurar");
+            break;
+        case "salvar":
+            c.selectSection("configurar");
+            c.save();
+            break;
+        case "sondar":
+            c.probe();
+            break;
+        case "copiarChave":
+            c.copyId();
+            break;
+        case "abrirPasta":
+            c.selectSection("workspace");
+            c.workspace.openFolder();
+            break;
+        case "puxar":
+            c.selectSection("workspace");
+            c.workspace.sync("pull");
+            break;
+        default:
+            break;
+        }
+    }
+
     RemotePanel {
         anchors.fill: parent
 
@@ -47,6 +83,8 @@ KvPanelFrame {
         canCopyId: root.controller ? root.controller.canCopyId : false
         armedCommand: root.controller ? root.controller.armedCommand : ""
         armedName: root.controller ? root.controller.armedName : ""
+        section: root.controller ? root.controller.section : "visao"
+        probedName: root.controller ? root.controller.probedName : ""
         pasted: root.controller ? root.controller.setup.pasted : ""
         canParse: root.controller ? root.controller.setup.canParse : false
         proposalSource: root.controller ? root.controller.setup.proposalSource : []
@@ -55,6 +93,8 @@ KvPanelFrame {
         // Escolher um alias faz as DUAS coisas que a fatia promete: cria o
         // alvo sem redigitar nada e pergunta ao ssh o que ele faria.
         onAliasChosen: name => { root.controller.useAlias(name); root.controller.setup.resolve(name); }
+        onSectionSelected: id => root.controller.selectSection(id)
+        onPrimaryRequested: kind => root.runPrimary(kind)
         onPastedEdited: text => root.controller.setup.pasted = text
         onParseRequested: root.controller.setup.parse()
         onCopyIdRequested: root.controller.copyId()
@@ -67,7 +107,6 @@ KvPanelFrame {
         onDeploySourceEdited: text => root.controller.deploySource = text
         onSaveRequested: root.controller.save()
         onRemoveRequested: root.controller.remove()
-        onProbeRequested: root.controller.probe()
         onDeployRequested: root.controller.deploy()
         onCommandRequested: kind => root.controller.requestCommand(kind)
         onOpenPathEdited: text => root.controller.workspace.openPath = text

@@ -2,11 +2,19 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O alvo Linux por SSH na tela: escolher, editar, salvar, SONDAR, enviar e
-// virar configuracao de execucao/kit. Componente burro: recebe por property,
-// pede por signal. "Sondar" e' a acao primaria — no cabecalho comum (F8):
-// e' o que prova a chave, a rede e o que a placa tem antes de qualquer
-// deploy. O veredito vem ANTES do formulario.
+// O alvo Linux por SSH na tela, em SECOES (fatia R1/V2, 2026-09-24).
+//
+// Ate' aqui era uma coluna so', rolando: veredito, descoberta, servidor novo,
+// seis campos de perfil, espelho e cinco botoes de execucao. A §3 da
+// especificacao ja' diagnosticava — "configuracao rara e operacao frequente
+// disputam a mesma coluna", "todas as acoes aparecem com peso parecido" — e a
+// foto de 2026-09-24 mostrou isso piorando: as duas entradas novas da R0.5
+// empurraram Enviar/Rodar/depurar para FORA da tela.
+//
+// Agora: uma seccao por vez (§5.1 — "nao devem ser cinco cards longos na mesma
+// rolagem") e UMA acao primaria por estado no cabecalho, derivada por regra
+// pura no `RemoteActionRules`. Componente burro: recebe por property, pede por
+// signal.
 Item {
     id: root
 
@@ -19,6 +27,7 @@ Item {
     property string errorText: ""
     property bool probing: false
     property bool probeOk: false
+    property string probedName: ""
     property string probeArch: ""
     property string probeKernel: ""
     property var probeTools: []
@@ -32,7 +41,6 @@ Item {
     property bool isMirror: false
     property bool syncing: false
     property string syncMessage: ""
-    // "Usar o SSH que ja' funciona" (R0.5): vem do core, nao de palpite.
     property string discovery: "idle"
     property bool discovering: false
     property var aliases: []
@@ -43,15 +51,18 @@ Item {
     property bool canCopyId: false
     property string armedCommand: ""
     property string armedName: ""
-    // "Configurar servidor": a linha `ssh` colada e o que o core leu dela.
     property string pasted: ""
     property bool canParse: false
     property var proposalSource: []
+    // Qual seccao esta' aberta; o dono e' o controller.
+    property string section: "visao"
 
-    signal discoverRequested()
-    signal aliasChosen(string name)
+    signal sectionSelected(string id)
+    signal primaryRequested(string kind)
     signal pastedEdited(string text)
     signal parseRequested()
+    signal discoverRequested()
+    signal aliasChosen(string name)
     signal copyIdRequested()
     signal runArmedRequested()
     signal disarmRequested()
@@ -62,7 +73,6 @@ Item {
     signal deploySourceEdited(string text)
     signal saveRequested()
     signal removeRequested()
-    signal probeRequested()
     signal deployRequested()
     signal commandRequested(string kind)
     signal openPathEdited(string text)
@@ -71,9 +81,25 @@ Item {
     signal closeRequested()
 
     readonly property bool draftNamed: root.draft !== null && root.draft.name.trim() !== ""
+    readonly property bool probed: root.probedName !== ""
 
-    // A primeira linha comum dos paineis de ambiente (F8): titulo, uma
-    // linha, a acao primaria — "Sondar" — e o x.
+    RemoteActionRules {
+        id: regras
+    }
+
+    // O proximo gesto, um so', derivado do estado medido.
+    readonly property var acao: regras.primaryFor({
+        "temAlvoSalvo": root.selectedSaved,
+        "rascunhoNomeado": root.draftNamed,
+        "sondando": root.probing,
+        "sondou": root.probed,
+        "sondaOk": root.probeOk,
+        "falha": root.probeFailure,
+        "eEspelho": root.isMirror,
+        "sincronizando": root.syncing,
+        "temPastaRemota": root.openPath.trim() !== ""
+    })
+
     KvPanelHeader {
         id: cabecalho
 
@@ -81,11 +107,13 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         title: qsTr("Alvo remoto (Linux por SSH)")
-        subtitle: qsTr("Raspberry Pi ou placa com imagem própria: sondar, enviar (rsync), rodar e depurar (gdbserver/debugpy) pelo ssh do sistema.")
-        primaryLabel: qsTr("Sondar")
-        primaryEnabled: root.selectedSaved
-        primaryBusy: root.probing
-        onPrimaryRequested: root.probeRequested()
+        // O subtitulo diz POR QUE este e' o proximo passo. Acao primaria sem
+        // motivo vira adivinhacao.
+        subtitle: root.acao.hint
+        primaryLabel: root.acao.label
+        primaryEnabled: root.acao.enabled
+        primaryBusy: root.acao.busy
+        onPrimaryRequested: root.primaryRequested(root.acao.kind)
         onCloseRequested: root.closeRequested()
     }
 
@@ -97,7 +125,7 @@ Item {
         anchors.left: parent.left
         anchors.bottom: acoes.top
         anchors.bottomMargin: Theme.spacingSmall
-        width: Math.round(parent.width * 0.32)
+        width: Math.round(parent.width * 0.28)
 
         targets: root.targets
         selectedName: root.selectedName
@@ -106,12 +134,31 @@ Item {
         onNewRequested: root.newRequested()
     }
 
-    Flickable {
-        id: rolagem
+    RemoteSections {
+        id: faixa
 
         anchors.top: lista.top
         anchors.left: lista.right
         anchors.leftMargin: Theme.spacingMedium
+        anchors.right: parent.right
+
+        current: root.section
+        sections: [
+            { "id": "visao", "label": qsTr("Visão geral") },
+            { "id": "workspace", "label": qsTr("Workspace") },
+            { "id": "executar", "label": qsTr("Executar") },
+            { "id": "sistema", "label": qsTr("Sistema") },
+            { "id": "configurar", "label": qsTr("Configurar") }
+        ]
+        onSelected: id => root.sectionSelected(id)
+    }
+
+    Flickable {
+        id: rolagem
+
+        anchors.top: faixa.bottom
+        anchors.topMargin: Theme.spacingSmall
+        anchors.left: faixa.left
         anchors.right: parent.right
         anchors.bottom: lista.bottom
         clip: true
@@ -127,11 +174,13 @@ Item {
 
             RemoteVerdict {
                 width: parent.width
+                visible: root.section === "visao"
+                hasTarget: root.selectedSaved
+                probed: root.probed
                 probing: root.probing
                 probeOk: root.probeOk
                 probeArch: root.probeArch
                 probeKernel: root.probeKernel
-                probeTools: root.probeTools
                 probeMessage: root.probeMessage
                 deploying: root.deploying
                 deployMessage: root.deployMessage
@@ -146,46 +195,9 @@ Item {
                 onDisarmRequested: root.disarmRequested()
             }
 
-            // ANTES do formulario, de proposito: se o `ssh <alias>` ja'
-            // funciona, o primeiro uso nao deve comecar por campo em branco.
-            RemoteDiscovery {
-                width: parent.width
-                discovery: root.discovery
-                discovering: root.discovering
-                aliases: root.aliases
-                aliasSources: root.aliasSources
-                resolving: root.resolving
-                resolved: root.resolved
-                onRefreshRequested: root.discoverRequested()
-                onAliasChosen: name => root.aliasChosen(name)
-            }
-
-            // O segundo caminho da R0.5, depois de "usar o SSH que ja'
-            // funciona" e antes do formulario avancado.
-            RemoteNewHost {
-                width: parent.width
-                pasted: root.pasted
-                canParse: root.canParse
-                proposalSource: root.proposalSource
-                errorText: root.errorText
-                onPastedEdited: text => root.pastedEdited(text)
-                onParseRequested: root.parseRequested()
-            }
-
-            RemoteForm {
-                width: parent.width
-                draft: root.draft
-                program: root.program
-                deploySource: root.deploySource
-                onFieldEdited: (field, value) => root.fieldEdited(field, value)
-                onProgramEdited: text => root.programEdited(text)
-                onDeploySourceEdited: text => root.deploySourceEdited(text)
-            }
-
-            // O workspace ESPELHADO (fatia 2): a pasta do alvo vira espelho
-            // local por rsync; salvar empurra; Puxar/Empurrar sincronizam.
             RemoteMirrorView {
                 width: parent.width
+                visible: root.section === "workspace"
                 openPath: root.openPath
                 mirror: root.mirror
                 isMirror: root.isMirror
@@ -197,46 +209,62 @@ Item {
                 onSyncRequested: direction => root.syncRequested(direction)
             }
 
-            // O ciclo depois de salvo: deploy -> rodar -> depurar. Cada botao
-            // pede ao core a linha; o controller a leva ao dono certo.
-            Flow {
+            RemoteRunActions {
                 width: parent.width
-                spacing: Theme.spacingSmall
+                visible: root.section === "executar"
+                ready: root.selectedSaved
+                deploying: root.deploying
+                program: root.program
+                deploySource: root.deploySource
+                probeTools: root.probeTools
+                probed: root.probed
+                onProgramEdited: text => root.programEdited(text)
+                onDeploySourceEdited: text => root.deploySourceEdited(text)
+                onDeployRequested: root.deployRequested()
+                onCommandRequested: kind => root.commandRequested(kind)
+            }
 
-                KvButton {
-                    text: qsTr("Enviar (deploy)")
-                    compact: true
-                    enabled: root.selectedSaved && !root.deploying
-                    onClicked: root.deployRequested()
-                }
+            RemoteSystemView {
+                width: parent.width
+                visible: root.section === "sistema"
+                probed: root.probed && root.probeOk
+                probeArch: root.probeArch
+                probeKernel: root.probeKernel
+                probeTools: root.probeTools
+            }
 
-                KvButton {
-                    text: qsTr("Rodar em… → config")
-                    compact: true
-                    enabled: root.selectedSaved
-                    onClicked: root.commandRequested("run")
-                }
+            // Em Configurar, os dois caminhos da R0.5 vem ANTES do formulario:
+            // se o `ssh <alias>` ja' funciona, o primeiro uso nao deve comecar
+            // por campo em branco.
+            RemoteDiscovery {
+                width: parent.width
+                visible: root.section === "configurar"
+                discovery: root.discovery
+                discovering: root.discovering
+                aliases: root.aliases
+                aliasSources: root.aliasSources
+                resolving: root.resolving
+                resolved: root.resolved
+                onRefreshRequested: root.discoverRequested()
+                onAliasChosen: name => root.aliasChosen(name)
+            }
 
-                KvButton {
-                    text: qsTr("gdbserver → kit")
-                    compact: true
-                    enabled: root.selectedSaved
-                    onClicked: root.commandRequested("debugServer")
-                }
+            RemoteNewHost {
+                width: parent.width
+                visible: root.section === "configurar"
+                pasted: root.pasted
+                canParse: root.canParse
+                proposalSource: root.proposalSource
+                errorText: root.errorText
+                onPastedEdited: text => root.pastedEdited(text)
+                onParseRequested: root.parseRequested()
+            }
 
-                KvButton {
-                    text: qsTr("debugpy → config")
-                    compact: true
-                    enabled: root.selectedSaved
-                    onClicked: root.commandRequested("debugpy")
-                }
-
-                KvButton {
-                    text: qsTr("Shell no terminal")
-                    compact: true
-                    enabled: root.selectedSaved
-                    onClicked: root.commandRequested("shell")
-                }
+            RemoteForm {
+                width: parent.width
+                visible: root.section === "configurar"
+                draft: root.draft
+                onFieldEdited: (field, value) => root.fieldEdited(field, value)
             }
         }
     }

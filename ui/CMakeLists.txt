@@ -215,6 +215,10 @@ set_source_files_properties(qml/remote/RemoteWorkspaceController.qml PROPERTIES 
 set_source_files_properties(qml/remote/RemoteList.qml PROPERTIES QT_RESOURCE_ALIAS RemoteList.qml)
 set_source_files_properties(qml/remote/RemoteDiscovery.qml PROPERTIES QT_RESOURCE_ALIAS RemoteDiscovery.qml)
 set_source_files_properties(qml/remote/RemoteNewHost.qml PROPERTIES QT_RESOURCE_ALIAS RemoteNewHost.qml)
+set_source_files_properties(qml/remote/RemoteActionRules.qml PROPERTIES QT_RESOURCE_ALIAS RemoteActionRules.qml)
+set_source_files_properties(qml/remote/RemoteSections.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSections.qml)
+set_source_files_properties(qml/remote/RemoteSystemView.qml PROPERTIES QT_RESOURCE_ALIAS RemoteSystemView.qml)
+set_source_files_properties(qml/remote/RemoteRunActions.qml PROPERTIES QT_RESOURCE_ALIAS RemoteRunActions.qml)
 set_source_files_properties(qml/remote/RemoteForm.qml PROPERTIES QT_RESOURCE_ALIAS RemoteForm.qml)
 set_source_files_properties(qml/remote/RemoteVerdict.qml PROPERTIES QT_RESOURCE_ALIAS RemoteVerdict.qml)
 set_source_files_properties(qml/remote/RemotePanel.qml PROPERTIES QT_RESOURCE_ALIAS RemotePanel.qml)
@@ -513,6 +517,10 @@ qt_add_qml_module(kinein-vectis
         qml/remote/RemoteList.qml
         qml/remote/RemoteDiscovery.qml
         qml/remote/RemoteNewHost.qml
+        qml/remote/RemoteActionRules.qml
+        qml/remote/RemoteSections.qml
+        qml/remote/RemoteSystemView.qml
+        qml/remote/RemoteRunActions.qml
         qml/remote/RemoteForm.qml
         qml/remote/RemoteVerdict.qml
         qml/remote/RemotePanel.qml

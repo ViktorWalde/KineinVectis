@@ -12,7 +12,6 @@ Item {
     property bool probeOk: false
     property string probeArch: ""
     property string probeKernel: ""
-    property var probeTools: []
     property string probeMessage: ""
     property bool deploying: false
     property string deployMessage: ""
@@ -24,6 +23,8 @@ Item {
     // Uma linha composta pelo core e ARMADA: visivel antes de rodar.
     property string armedCommand: ""
     property string armedName: ""
+    property bool hasTarget: false
+    property bool probed: false
 
     signal copyIdRequested()
     signal runArmedRequested()
@@ -31,11 +32,6 @@ Item {
 
     implicitHeight: coluna.implicitHeight
 
-    function toolsLine() {
-        return root.probeTools.map(function(t) {
-            return t.id + (t.found ? " ✓" : " ✗");
-        }).join("   ");
-    }
 
     Column {
         id: coluna
@@ -44,13 +40,31 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingXSmall
 
+        // Uma seccao em branco nao diz nada — e "Visao geral" e' a primeira
+        // coisa que se ve. Estado vazio explicito, sempre.
+        Text {
+            width: parent.width
+            visible: !root.probing && !root.probed
+            wrapMode: Text.WordWrap
+            text: root.hasTarget
+                  ? qsTr("Alvo salvo, ainda não medido. A ação no topo sonda ele: arquitetura, "
+                         + "kernel e quais ferramentas ele tem. Nada é instalado no alvo.")
+                  : qsTr("Nenhum alvo ainda. Em Configurar, escolha um alias do seu ~/.ssh/config "
+                         + "ou cole a linha ssh que você já usa.")
+            color: Theme.textMuted
+            font.pixelSize: 10
+        }
+
         KvVerdict {
+            visible: root.probing || root.probed
             width: parent.width
             busy: root.probing
             busyText: qsTr("Sondando o alvo (ssh, até 5 s)...")
             ok: root.probeOk
+            // O que o alvo TEM mora em Sistema desde a R1: aqui fica a saude,
+            // numa linha. Antes uma fileira de ✓/✗ disputava espaco com o erro.
             message: root.probeOk
-                     ? root.probeArch + " · " + root.probeKernel + "\n" + root.toolsLine()
+                     ? root.probeArch + " · " + root.probeKernel
                      : root.probeMessage
         }
 

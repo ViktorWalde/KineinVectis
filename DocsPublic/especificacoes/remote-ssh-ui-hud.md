@@ -145,6 +145,17 @@ importantes aqui do que lá.
 
 ### 5.1 Tool window Remote
 
+> **Implementada em 2026-09-24 (fatia R1/V2).** O painel passou a ter as cinco
+> seções, uma por vez, e **uma ação primária por estado** no cabeçalho, derivada
+> por regra pura (`RemoteActionRules`) e testada em harness. O subtítulo diz
+> *por que* aquele é o próximo passo. Quando o gesto vive noutra seção, a ação
+> leva até ela. Capturas em `DocsPrivate/Codex/evidencias-2026-09-24-remote/`;
+> registro em [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.98.
+>
+> Ainda **não** feito desta seção: a tool window propriamente dita (hoje ainda é
+> uma moldura no menu Ambiente, não um painel lateral ao lado de Projeto/Git) e
+> o HUD da §5.2.
+
 Remote ganha uma tool window diária. Posição inicial proposta: **esquerda**, ao
 lado de Projeto/Git/Embarcados, porque troca o contexto de onde o projeto é
 operado. Essa posição é alvo inicial, não decisão irreversível; mover para a

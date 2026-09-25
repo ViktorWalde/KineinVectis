@@ -41,6 +41,11 @@ Item {
     property string lastCommand: ""
     property string lastOutcome: ""
 
+    // Qual seccao do painel esta' aberta (R1/V2). Dono aqui porque ela
+    // sobrevive a fechar e reabrir o painel, e porque a acao primaria pode
+    // LEVAR a pessoa ate' a seccao onde o gesto vive.
+    property string section: "visao"
+
     // Por que a sonda falhou, TIPADO pelo core (0.133.0): authentication |
     // host | network | other. A UI escolhe o gesto por isto, nunca lendo a
     // frase — frase muda de idioma, tipo nao.
@@ -140,8 +145,18 @@ Item {
         }
     }
 
+    function selectSection(id) {
+        if (id !== "") {
+            section = id;
+        }
+    }
+
     function open() {
         panelVisible = true;
+        // "Visao geral como padrao" — decisao do autor em 2026-09-24. Ela so'
+        // funciona porque a seccao deixou de abrir em branco: sem alvo, ela diz
+        // o que falta, e a ACAO PRIMARIA leva a Configurar num clique.
+        section = "visao";
         if (targets.length === 0) {
             listRequested();
         }
@@ -258,6 +273,14 @@ Item {
         }
         if (selectedName !== "" && targetByName(selectedName) === null) {
             startNew();
+        }
+        // Chegou lista e nada esta' selecionado: cair no primeiro. Medido na
+        // foto de 2026-09-24 — com dois alvos salvos e nenhum selecionado, o
+        // painel oferecia "Salvar alvo" e dizia "nenhum alvo ainda", as duas
+        // coisas falsas. E o aceite da V2 e' o contrario disso: "no segundo uso
+        // do mesmo alvo, o usuario nao toca nos campos de perfil".
+        if (selectedName === "" && targets.length > 0) {
+            select(targets[0].name);
         }
     }
 

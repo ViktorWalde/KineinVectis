@@ -9,12 +9,8 @@ Item {
     id: root
 
     property var draft: null
-    property string program: ""
-    property string deploySource: ""
 
     signal fieldEdited(string field, var value)
-    signal programEdited(string text)
-    signal deploySourceEdited(string text)
 
     implicitHeight: coluna.implicitHeight
 
@@ -87,27 +83,6 @@ Item {
                        + "o que o ssh perguntar, pergunta no terminal da IDE.")
             color: Theme.textMuted
             font.pixelSize: 10
-        }
-
-        Row {
-            width: parent.width
-            spacing: Theme.spacingSmall
-
-            DataSourceField {
-                width: Math.round((parent.width - parent.spacing) / 2)
-                label: qsTr("Origem do deploy (vazio = build/)")
-                placeholder: "build/app"
-                value: root.deploySource
-                onEdited: text => root.deploySourceEdited(text)
-            }
-
-            DataSourceField {
-                width: Math.round((parent.width - parent.spacing) / 2)
-                label: qsTr("Programa no alvo (relativo = na pasta de deploy)")
-                placeholder: "app, main.py, /opt/app/bin"
-                value: root.program
-                onEdited: text => root.programEdited(text)
-            }
         }
     }
 }
