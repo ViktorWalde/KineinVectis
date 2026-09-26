@@ -487,6 +487,29 @@ Duas frentes ficam **fora da 0.3** por decisão dele, e não por corte de escopo
   layout, atalhos e fluxo. Hoje ele é uma entrada do trilho como as outras, e a
   decisão é que isso não corresponde ao peso que ele tem no produto.
 
+### 10.2 Decisões do autor em 2026-09-25 (0.4 em diante)
+
+Fechadas, e detalhadas em
+[`modelo-semantico-do-projeto-0.4.md`](../especificacoes/modelo-semantico-do-projeto-0.4.md):
+
+- **não haverá customização por Lua**, nem antes nem depois da 1.0, salvo
+  decisão nova e explícita com modelo de permissão junto. Ela é API pública de
+  plugins com outro nome — que a §4 já põe fora —, vira ABI que não se quebra
+  mais, e é execução de código arbitrário no clone, logo depois de uma fatia
+  inteira gasta impedindo que um `.md` lesse arquivo arbitrário (§7.104). A
+  alternativa, se a necessidade voltar, é customização **declarativa**: tema,
+  atalhos e layout em dados, sem execução;
+- **o alvo é Linux nativo.** Não é pendência de portabilidade, é o escopo —
+  handles do Windows e ferramentas equivalentes ficam fora por plataforma, e o
+  equivalente nativo (`/proc/<pid>/fd`) já existe;
+- **o modelo semântico profundo detecta DERIVA, e não resolve versão.** Quem
+  resolve é o `cargo`, o `uv`, o `conan`, o `west`; a IDE roda a ferramenta do
+  ecossistema e mostra o que ela decidiu. Em C++ o que quebra é ABI, e isso é
+  indecidível sem compilar;
+- **monitoramento de processo entra na 0.5**, separado por alvo: `/proc` e
+  `perf` para Linux, e a superfície de bare metal (RTT/SWO/semihosting) fica na
+  versão dedicada a embarcados.
+
 Nada disso bloqueia a 0.3.5. Está aqui para não virar decisão implícita no meio
 de outra fatia.
 
