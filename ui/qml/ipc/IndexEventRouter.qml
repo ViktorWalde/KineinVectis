@@ -34,5 +34,12 @@ Item {
             root.searchEverywhereController.handleIndexSymbols(symbols, total, state);
             root.indexController.symbols.handleIndexSymbols(symbols, total, state);
         }
+
+        // A mesma resposta serve aos dois donos, e cada um decide se e' dele:
+        // a caixa compara com o pedido que fez, a aba compara o caminho com o
+        // arquivo ativo. Pedir duas vezes o mesmo seria desperdicio.
+        function onLspDocumentSymbolsResolved(path, symbols) {
+            root.indexController.symbols.handleDocumentSymbols(path, symbols);
+        }
     }
 }

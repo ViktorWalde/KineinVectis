@@ -72,8 +72,14 @@ ListView {
             x: Theme.spacingSmall
             y: 19
             width: parent.width - 2 * Theme.spacingSmall
+            // A FONTE so' aparece quando as DUAS estao na lista (§11.1 do
+            // roadmap 48: "mantem a fonte visivel quando isso ajudar a explicar
+            // divergencia"). Com uma fonte so', dizer de onde veio nao explica
+            // nada e rouba espaco do caminho.
             text: symbolRow.modelData.symbol.kind + " · " + symbolRow.modelData.symbol.path
                   + ":" + symbolRow.modelData.symbol.line
+                  + (symbolList.symbols && symbolList.symbols.showSource
+                     ? " · " + symbolRow.modelData.symbol.source : "")
             color: Theme.textMuted
             font.family: Theme.monoFont
             font.pixelSize: 9

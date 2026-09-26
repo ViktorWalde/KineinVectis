@@ -178,6 +178,7 @@ Item {
         coreClient: root.domains.coreClient
         indexController: root.domains.indexController
         searchEverywhereController: root.domains.searchEverywhereController
+        editorController: root.domains.editorController
     }
 
     PythonEventRouter {

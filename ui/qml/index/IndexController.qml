@@ -41,6 +41,7 @@ Item {
     SymbolsController {
         id: symbols
 
+        activeAbsolutePath: root.contextPath
         activeRelativePath: root.workspaceRoot !== ""
                             && root.contextPath.indexOf(root.workspaceRoot + "/") === 0
                             ? root.contextPath.substring(root.workspaceRoot.length + 1) : ""
