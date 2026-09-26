@@ -6404,3 +6404,56 @@ tres travas, inclusive "resposta sem pedido nao inventa correcao"; oito testes
 Rust em `lang::indent` cobrem bloco aninhado, arvore com erro, `}` e Python; e
 tres testes novos em `lang::positions` travam a conversao inversa
 linha/coluna → byte, que e' onde acento vira coluna errada.
+
+### 7.108 O `dead_code` que o QML nao tinha — 2026-09-26
+
+Este gate existe por causa de uma pergunta do autor: *"as funcionalidades foram
+mantidas sem codigo duplicado ou morto, certo?"*. A resposta honesta era **nao**,
+e so' se soube porque ele perguntou.
+
+**Tres coisas mortas tinham atravessado a V6 inteira sem nenhum gate reclamar:**
+
+- **`dedentTo`** ia do Rust ao QML — protocolo, sinal C++, parametro do
+  handler — e NINGUEM consumia. Pior: para `closeDelimiter` ele carregava
+  exatamente o mesmo numero que o `level`. Informacao zero, custo de contrato;
+- **`levelsOf`** nao era usado pelo produto, so' pelo harness — o que a fazia
+  parecer viva, e o verde do gate virava falsa garantia;
+- **`pending`** nao era usado em lugar nenhum.
+
+As tres sairam. O `dedentTo` saiu ate' da documentacao do protocolo, e a §
+`syntaxTree.indent` agora explica que **qual linha corrigir vem do `trigger`**,
+e nao de um segundo campo.
+
+**O Rust recusa `dead_code` e o clang-tidy olha o C++; o QML nao tinha nada
+equivalente.** Agora tem, com baseline, e ele separa duas categorias porque a
+diferenca muda o conserto:
+
+```text
+MORTA           ninguem menciona, em lugar nenhum
+SO' NO HARNESS  o produto nao usa; o teste usa — pior, porque parece viva
+```
+
+E uma terceira leitura que o gate NAO decide, e que foi o autor quem nomeou:
+**funcao que devia estar sendo usada**. Medido, ha' dois exemplos claros entre
+as quinze congeladas: `setBreakpointCondition` existe porque o core aceita
+condicao em breakpoint e a UI nunca chamou; e `sectionFor`, do
+`RemoteActionRules`, e' regra que EU escrevi na R1/V2 para "levar a pessoa ate' a
+secao" e nunca liguei. Apagar qualquer uma seria jogar fora a metade feita.
+Entre LIGAR e APAGAR quem decide e' o autor; o gate so' recusa que a duvida fique
+invisivel.
+
+**A DETECCAO E' POR MENCAO, e nao por chamada, e isso foi medido.** A primeira
+versao procurava `nome(` e acusou `takeFocus` de morta — ela e' usada em
+`Qt.callLater(takeFocus)`, sem parenteses. Dois falsos positivos em seis
+conferidos a mao. A regra ficou LARGA de proposito: ela erra para o silencio,
+porque gate que acusa o que nao existe custa mais confianca que gate nenhum.
+
+Conferido por MUTACAO nas duas categorias: funcao nova sem consumidor reprova;
+funcao nova usada so' pelo harness reprova dizendo qual das duas e'.
+
+**E eu violei uma regra minha no meio disso.** Para restaurar um arquivo depois
+da mutacao usei `git checkout` num arquivo com edicao NAO commitada, e perdi a
+remocao do `levelsOf` do harness. A regra ja' estava escrita — "nunca `git
+checkout` de arquivo com diff pendente" — e mesmo assim foi usada. O conserto foi
+refazer a edicao; o registro fica porque regra que so' existe na memoria nao
+segura a mao de ninguem.
