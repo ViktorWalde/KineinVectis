@@ -103,10 +103,21 @@ bool CoreClient::dispatchLspResult(const QString& method, const QJsonObject& res
             result.value(QStringLiteral("tokens")).toArray().toVariantList());
         return true;
     }
-    if (method == QStringLiteral("lsp.documentSymbols") ||
-        method == QStringLiteral("lsp.workspaceSymbols"))
-    {
-        emit lspSymbolsResolved(result.value(QStringLiteral("symbols")).toArray().toVariantList());
+    // UM SINAL POR ORIGEM (L1, 0.135.0). Ate' aqui as duas respostas caiam no
+    // mesmo `lspSymbolsResolved`, sem nada que dissesse qual pedido estava
+    // respondendo — e uma resposta atrasada de `@nome` pintava a lista de
+    // `#nome`. O caminho de FALHA, no mesmo fluxo, sempre preservou o metodo:
+    // era o sucesso que perdia a informacao que o fracasso mantinha.
+    if (method == QStringLiteral("lsp.documentSymbols")) {
+        emit lspDocumentSymbolsResolved(
+            result.value(QStringLiteral("path")).toString(),
+            result.value(QStringLiteral("symbols")).toArray().toVariantList());
+        return true;
+    }
+    if (method == QStringLiteral("lsp.workspaceSymbols")) {
+        emit lspWorkspaceSymbolsResolved(
+            result.value(QStringLiteral("query")).toString(),
+            result.value(QStringLiteral("symbols")).toArray().toVariantList());
         return true;
     }
     if (method == QStringLiteral("lsp.switchSourceHeader")) {

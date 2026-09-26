@@ -5,8 +5,11 @@
 // Por que existe: a traducao "construindo -> pronto -> resumo" e a regra
 // "indice preenche, LSP substitui" quebram sem compilador que reclame.
 import QtQuick
-import "../../ui/qml/index"
-import "../../ui/qml/search"
+// Pelo MODULO, e nao pela pasta: o SearchEverywhereController passou a usar o
+// `PathRules` (que mora em `editor/`) e o `EverywhereSymbolOrigin`, e um import
+// de diretorio nao alcanca as duas pastas de uma vez. O espelho plano do
+// harness tem todos.
+import KineinVectis
 
 Item {
     id: root
@@ -81,9 +84,16 @@ Item {
         // Caminho relativo virou absoluto (o clique abre o arquivo).
         if (busca.everywhereModel.get(0).path !== "/tmp/proj/src/main.rs") failures += 2048;
         if (busca.everywhereLoading) failures += 4096;
-        busca.handleSymbolsResolved([{ name: "ligar", kind: "Method", path: "/tmp/proj/src/main.rs", line: 3 },
-                                     { name: "ligar_tudo", kind: "Function", path: "/tmp/proj/src/main.rs", line: 6 }]);
+        // A resposta do WORKSPACE agora se identifica pela query (L1, 0.135.0):
+        // uma resposta de outra pergunta nao entra mais nesta lista.
+        busca.handleWorkspaceSymbols("ligar",
+                                     [{ name: "ligar", kind: "Method", path: "/tmp/proj/src/main.rs", line: 3 },
+                                      { name: "ligar_tudo", kind: "Function", path: "/tmp/proj/src/main.rs", line: 6 }]);
         if (busca.everywhereModel.count !== 2) failures += 8192;
+        // E a resposta de uma query ANTIGA e' descartada.
+        busca.handleWorkspaceSymbols("outra", [{ name: "z", kind: "Function", path: "/tmp/proj/z.rs", line: 1 }]);
+        if (busca.everywhereModel.count !== 2) failures += 262144;
+
         // Depois do LSP, o indice NAO volta por cima.
         busca.handleIndexSymbols([{ name: "x", kind: "function", path: "a.rs", line: 1 }], 1, "ready");
         if (busca.everywhereModel.count !== 2) failures += 16384;

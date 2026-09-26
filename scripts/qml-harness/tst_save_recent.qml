@@ -1,6 +1,9 @@
 import QtQuick
-import "../../ui/qml/editor"
-import "../../ui/qml/search"
+// Pelo MODULO, e nao pela pasta: o SearchEverywhereController passou a usar o
+// `PathRules` (que mora em `editor/`) e o `EverywhereSymbolOrigin`, e um import
+// de diretorio nao alcanca as duas pastas de uma vez. O espelho plano do
+// harness tem todos.
+import KineinVectis
 
 Item {
     id: root

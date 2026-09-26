@@ -228,19 +228,29 @@ fn query_plan(query: LspQuery, path: &Path, path_text: String) -> Plan {
             json!({ "textDocument": { "uri": uri_for_path(path) } }),
             Box::new(move |v: &Value| {
                 json!(LspSymbolsResult {
-                    symbols: document_symbols(v, &path_text)
+                    symbols: document_symbols(v, &path_text),
+                    path: path_text.clone(),
+                    query: None,
                 })
             }),
         ),
-        LspQuery::WorkspaceSymbols { query } => (
-            "workspace/symbol",
-            json!({ "query": query }),
-            Box::new(|v: &Value| {
-                json!(LspSymbolsResult {
-                    symbols: workspace_symbols(v)
-                })
-            }),
-        ),
+        LspQuery::WorkspaceSymbols { query } => {
+            let asked = query.clone();
+            let anchor = path.display().to_string();
+            (
+                "workspace/symbol",
+                json!({ "query": query }),
+                // `FnOnce`: o fecho roda uma vez so', entao os valores saem
+                // dele por movimento e nao ha' clone a pagar.
+                Box::new(move |v: &Value| {
+                    json!(LspSymbolsResult {
+                        symbols: workspace_symbols(v),
+                        path: anchor,
+                        query: Some(asked),
+                    })
+                }),
+            )
+        }
         // Tratado antes, com a legend do servidor.
         LspQuery::SemanticTokens { .. } => (
             "textDocument/semanticTokens/full",

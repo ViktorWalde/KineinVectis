@@ -69,6 +69,12 @@ Item {
     // milissegundos e sem LSP; o LSP, quando responder, substitui.
     signal indexSymbolsRequested(string query)
     property bool lspSymbolsAnswered: false
+
+    // De QUAL pedido a proxima resposta pode ser; ver EverywhereSymbolOrigin.
+    EverywhereSymbolOrigin {
+        id: origin
+    }
+
     signal listCommandsRequested()
     signal readFileRequested(string path)
     signal openAtRequested(string path, int line, int column)
@@ -79,6 +85,22 @@ Item {
 
     ListModel {
         id: everywhereItemsModel
+    }
+
+    // A LINHA DA LISTA tem o mesmo formato para as quatro fontes — recente,
+    // comando, arquivo e simbolo —, e ele estava escrito quatro vezes, com os
+    // mesmos zeros de `line`/`column` em cada uma. Um campo novo exigiria
+    // lembrar dos quatro.
+    function appendItem(kind, title, path, subtitle, commandId, line, column) {
+        everywhereItemsModel.append({
+            kind: kind,
+            title: title,
+            path: path,
+            subtitle: subtitle,
+            commandId: commandId,
+            line: line,
+            column: column
+        });
     }
 
     function clear() {
@@ -93,15 +115,19 @@ Item {
         everywhereTitle = qsTr("Search Everywhere");
     }
 
+    // As duas eram COPIA do `PathRules` (2026-09-26): mesmo `baseName`, mesmo
+    // recorte pela raiz. Reusar o que ja' existe tira a chance de as duas
+    // versoes divergirem sem ninguem notar.
+    PathRules {
+        id: pathRules
+    }
+
     function baseName(path) {
-        return path.substring(path.lastIndexOf("/") + 1);
+        return pathRules.baseName(path);
     }
 
     function relativeToRoot(path) {
-        if (workspaceRoot !== "" && path.indexOf(workspaceRoot + "/") === 0) {
-            return path.substring(workspaceRoot.length + 1);
-        }
-        return path;
+        return pathRules.relativeTo(workspaceRoot, path);
     }
 
     function openSearchEverywhere() {
@@ -173,52 +199,32 @@ Item {
             if (needle !== "" && relative.toLowerCase().indexOf(needle) < 0) {
                 continue;
             }
-            everywhereItemsModel.append({
-                kind: "recent",
-                title: baseName(path),
-                path: path,
-                subtitle: relative,
-                commandId: "",
-                line: 0,
-                column: 0
-            });
+            root.appendItem("recent", baseName(path), path, relative, "", 0, 0);
         }
         everywhereIndex = everywhereItemsModel.count > 0 ? 0 : -1;
     }
 
     function runSymbolSearch(query) {
-        const isDocument = query.charAt(0) === "@";
-        const needle = query.substring(1).trim();
-        symbolFilter = isDocument ? needle.toLowerCase() : "";
-        if (workspaceRoot === "") {
+        const plano = origin.planFor(query, workspaceRoot, hasActiveEditorFile);
+        symbolFilter = query.charAt(0) === "@" ? plano.needle.toLowerCase() : "";
+        if (plano.error !== "") {
             everywhereLoading = false;
-            everywhereError = qsTr("Abra um workspace para buscar símbolos.");
+            everywhereError = plano.error;
             return;
         }
-        if (!isDocument && needle === "") {
-            everywhereLoading = false;
-            everywhereError = qsTr("Digite o nome do símbolo após #.");
-            return;
-        }
-        if (isDocument) {
-            // Os simbolos DO DOCUMENTO continuam sendo do LSP do arquivo aberto.
-            if (!hasActiveEditorFile) {
-                everywhereLoading = false;
-                everywhereError = qsTr("Abra um arquivo com LSP para buscar símbolos do documento.");
-                return;
-            }
-            everywhereLoading = true;
+        everywhereLoading = true;
+        if (origin.ask(plano)) {
+            // Os simbolos DO DOCUMENTO sao do LSP do arquivo aberto.
             documentSymbolsRequested();
             return;
         }
         // `#nome` no PROJETO: o indice proprio responde desde o primeiro
         // segundo e sem arquivo aberto (pilar 0 do roadmaps/42); o LSP, quando
         // ha' um arquivo aberto para ancora-lo, responde depois e substitui.
-        everywhereLoading = true;
         lspSymbolsAnswered = false;
-        indexSymbolsRequested(needle);
+        indexSymbolsRequested(plano.needle);
         if (hasActiveEditorFile) {
-            workspaceSymbolsRequested(needle);
+            workspaceSymbolsRequested(plano.needle);
         }
     }
 
@@ -263,15 +269,8 @@ Item {
             if (needle !== "" && haystack.indexOf(needle) < 0) {
                 continue;
             }
-            everywhereItemsModel.append({
-                kind: "command",
-                title: title,
-                path: id,
-                subtitle: shortcut !== "" ? category + " · " + shortcut : category,
-                commandId: id,
-                line: 0,
-                column: 0
-            });
+            root.appendItem("command", title, id,
+                            shortcut !== "" ? category + " · " + shortcut : category, id, 0, 0);
         }
     }
 
@@ -316,26 +315,34 @@ Item {
         }
         for (let i = 0; i < matches.length; i++) {
             const match = matches[i];
-            everywhereItemsModel.append({
-                kind: "file",
-                title: match.name !== undefined ? match.name : baseName(match.path),
-                path: match.path !== undefined ? match.path : "",
-                subtitle: match.path !== undefined ? match.path : "",
-                commandId: "",
-                line: 0,
-                column: 0
-            });
+            const caminho = match.path !== undefined ? match.path : "";
+            root.appendItem("file", match.name !== undefined ? match.name : baseName(caminho),
+                            caminho, caminho, "", 0, 0);
         }
         everywhereIndex = everywhereItemsModel.count > 0 ? 0 : -1;
     }
 
-    function handleSymbolsResolved(symbols) {
+    // De qual pedido e' cada resposta: ver EverywhereSymbolOrigin.qml.
+    function noteDocumentAnchor(path) {
+        origin.noteAnchor(path);
+    }
+
+    function handleDocumentSymbols(path, symbols) {
+        return origin.acceptsDocument(path) && root.acceptSymbols(symbols);
+    }
+
+    function handleWorkspaceSymbols(query, symbols) {
+        return origin.acceptsWorkspace(query) && root.acceptSymbols(symbols);
+    }
+
+    function acceptSymbols(symbols) {
         lspSymbolsAnswered = true;
         everywhereLoading = false;
         if (!everywhereVisible) {
-            return;
+            return false;
         }
         applySymbols(symbols);
+        return true;
     }
 
     function applySymbols(symbols) {
@@ -350,16 +357,11 @@ Item {
             const container = symbol.container !== undefined
                     ? symbol.container + " · " : "";
             const line = symbol.line !== undefined ? Number(symbol.line) : 1;
-            everywhereItemsModel.append({
-                kind: "symbol",
-                title: name,
-                path: symbol.path !== undefined ? symbol.path : "",
-                subtitle: (symbol.kind !== undefined ? symbol.kind + " · " : "")
-                          + container + relativeToRoot(symbol.path) + ":" + line,
-                commandId: "",
-                line: line,
-                column: symbol.column !== undefined ? Number(symbol.column) : 1
-            });
+            root.appendItem("symbol", name, symbol.path !== undefined ? symbol.path : "",
+                            (symbol.kind !== undefined ? symbol.kind + " · " : "")
+                            + container + relativeToRoot(symbol.path) + ":" + line,
+                            "", line,
+                            symbol.column !== undefined ? Number(symbol.column) : 1);
         }
         everywhereIndex = everywhereItemsModel.count > 0 ? 0 : -1;
     }

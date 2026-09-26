@@ -216,6 +216,16 @@ pub struct LspSymbolInfo {
 pub struct LspSymbolsResult {
     /// Symbols in document order (file) or server order (workspace), capped.
     pub symbols: Vec<LspSymbolInfo>,
+    /// The file the request was anchored to.
+    ///
+    /// Carried since `0.135.0` because the answer has to say what it is about.
+    /// Two symbol requests differ only by method and argument, and a client
+    /// that has to remember what it asked paints a late `documentSymbol`
+    /// answer into a `workspace/symbol` list.
+    pub path: String,
+    /// The query, for `workspace/symbol` only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub query: Option<String>,
 }
 
 /// One code location returned by `lsp.references`.
@@ -515,12 +525,19 @@ mod tests {
                     container: None,
                 },
             ],
+            path: "/w/src/main.rs".to_owned(),
+            query: None,
         })
         .unwrap();
 
         assert_eq!(value["symbols"][0]["container"], "Ponto");
         assert!(value["symbols"][1].get("container").is_none());
         assert_eq!(value["symbols"][1]["kind"], "function");
+        // A RESPOSTA DIZ SOBRE O QUE ELA E' (0.135.0). Sem isto, duas
+        // perguntas de simbolo diferem so' pelo metodo, e uma resposta atrasada
+        // de `documentSymbol` pinta a lista de `workspace/symbol`.
+        assert_eq!(value["path"], "/w/src/main.rs");
+        assert!(value.get("query").is_none(), "documentSymbol nao tem query");
     }
 
     #[test]

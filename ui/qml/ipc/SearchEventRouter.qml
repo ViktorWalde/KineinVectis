@@ -33,8 +33,12 @@ Item {
             root.searchEverywhereController.handleCommandsListed(commands);
         }
 
-        function onLspSymbolsResolved(symbols) {
-            root.searchEverywhereController.handleSymbolsResolved(symbols);
+        function onLspDocumentSymbolsResolved(path, symbols) {
+            root.searchEverywhereController.handleDocumentSymbols(path, symbols);
+        }
+
+        function onLspWorkspaceSymbolsResolved(query, symbols) {
+            root.searchEverywhereController.handleWorkspaceSymbols(query, symbols);
         }
 
         // A recusa vai ao dono do metodo: `fs.search`/`fs.replace` sao do

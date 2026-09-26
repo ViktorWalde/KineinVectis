@@ -50,9 +50,11 @@ Item {
         }
 
         function onDocumentSymbolsRequested() {
-            root.coreClient.requestDocumentSymbols(
-                        root.editorController.currentFilePath(),
-                        root.editorController.editorText());
+            // O carimbo e o envio no MESMO gesto: a ancora e' o caminho que
+            // esta' indo, e nao o que um binding acha que esta' ativo.
+            const caminho = root.editorController.currentFilePath();
+            root.searchEverywhereController.noteDocumentAnchor(caminho);
+            root.coreClient.requestDocumentSymbols(caminho, root.editorController.editorText());
         }
 
         function onWorkspaceSymbolsRequested(query) {
