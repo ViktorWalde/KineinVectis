@@ -65,6 +65,39 @@ Item {
     // Mesmo idioma do `tst_grafana_state`: acumula e sai uma vez so'.
     property int falhas: 0
 
+    function acharCampoDeTexto(item) {
+        if (item.echoMode !== undefined) {
+            return item;
+        }
+        for (let indice = 0; indice < item.children.length; ++indice) {
+            const achado = root.acharCampoDeTexto(item.children[indice]);
+            if (achado !== null) {
+                return achado;
+            }
+        }
+        return null;
+    }
+
+    // Varre TODO texto desenhado: `text` de Text e de TextInput, mais
+    // `labelText` dos botoes. Se a credencial estiver em qualquer um deles,
+    // ela esta' num screenshot.
+    function algumTextoContem(item, agulha) {
+        const campos = ["text", "labelText", "title", "subtitle", "reasonText",
+                        "message", "emptyText"];
+        for (let campo = 0; campo < campos.length; ++campo) {
+            const valor = item[campos[campo]];
+            if (valor !== undefined && String(valor).indexOf(agulha) >= 0) {
+                return true;
+            }
+        }
+        for (let indice = 0; indice < item.children.length; ++indice) {
+            if (root.algumTextoContem(item.children[indice], agulha)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function conferir(condicao, mensagem) {
         if (!condicao) {
             console.error("FALHOU: " + mensagem);
@@ -112,6 +145,17 @@ Item {
                       "token recusado: de novo dois gestos na tela");
         root.conferir(pedido.labelText !== antes,
                       "recusado e pedido diziam a mesma coisa");
+
+        // 3.5 · O TOKEN NAO APARECE EM LUGAR NENHUM DA TELA (§7.2 regras 5 e
+        // 8): o campo tem eco de senha, e nenhum texto do painel — nenhum —
+        // contem a credencial. Um print de tela num chamado e' o caminho mais
+        // banal de vazamento que existe.
+        const campo = root.acharCampoDeTexto(pedido);
+        root.conferir(campo !== null && campo.echoMode === TextInput.Password,
+                      "o campo do token nao esconde o que e' digitado");
+        controlador.probeWithToken("glsa_segredo_do_autor");
+        root.conferir(!root.algumTextoContem(painel, "glsa_segredo_do_autor"),
+                      "a credencial apareceu num texto do painel");
 
         // 4 · medido com sucesso: volta o botao, some o campo, e os ACHADOS
         // cabem na tela. A lista tinha altura ZERO desde sempre, porque a

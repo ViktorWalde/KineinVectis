@@ -782,6 +782,35 @@ A IDE conversa com o Grafana pela **HTTP API** e nunca o embute — a licença d
 (AGPL-3.0) decide essa forma. Ela guarda o endereço e a política; **o token não
 tem onde ser gravado**, e isso é garantia estrutural, não disciplina.
 
+**A integração é somente de leitura.** A IDE pergunta a versão, a saúde, as
+fontes de dados e os dashboards. Ela não cria, não edita e não apaga nada no seu
+Grafana, e não o instala nem o configura. Os painéis abrem **no seu navegador**.
+
+**Primeiro uso.** Só o endereço, e `Conectar` — que grava e mede no mesmo gesto.
+A política de token (variável de ambiente ou digitar na sessão) **só aparece se
+o servidor pedir**: sem token dá para ver a versão e a saúde, e é comum não
+precisar de mais nada.
+
+**Uso diário.** O cabeçalho diz onde e quando — *autenticado em grafana.lab:3000
+· medido há 12 min* — e oferece um gesto só: **Atualizar**. A configuração fica
+recolhida em `configurar…` e volta sozinha quando o endereço é o problema.
+
+**O que a IDE tem e o navegador não:** o cruzamento. Quais **bancos deste
+projeto** o seu Grafana já observa, com a justificativa do casamento ao lado —
+mesmo host, mesma base. Ele aparece antes das listas, porque é a resposta; as
+listas são inventário.
+
+**Teclado.** `Ctrl+Alt+O` abre e o cursor já cai onde se digita: no endereço no
+primeiro uso, no filtro depois. O filtro atua sobre o que já chegou — não faz
+chamada nova a cada tecla — e `Esc` limpa. Nas listas, as setas andam, `Home` e
+`End` vão às pontas, `Enter` abre no navegador. `Esc` fecha o painel.
+
+**O token.** Fica **só em memória**, some com a aplicação e nunca entra em
+perfil, workspace, log ou screenshot — o campo tem eco de senha. Ele está preso
+ao par *projeto + endereço confirmado*: mudar de projeto, confirmar outra URL,
+`Esquecer credencial` ou ter o token recusado apagam. Fechar e reabrir o painel
+**não** apaga, para que abrir uma janela não vire um login novo.
+
 ### Instalar ferramentas
 
 Falta o `cmake`, o `clangd` ou o `gdb`? Este painel mostra o passo a passo

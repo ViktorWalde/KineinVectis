@@ -6679,3 +6679,45 @@ apontavam para a **mesma** instância do controller desde a V3, e o shell não
 guarda estado do domínio. Não entra indicador compacto: a especificação permite,
 mas ele viraria uma segunda HUD, e não há fato medido que ele mostre melhor que
 o próprio painel.
+
+### 7.113 V7/G4: o que ficou provado, e o que depende de um Grafana seu — 2026-09-26
+
+**Provado por harness, com mutação para cada gate:**
+
+| o quê | onde |
+| --- | --- |
+| máquina de estados (quatro eixos) | `tst_grafana_state.qml` |
+| um gesto primário por estado, altura útil dos achados, token fora da tela | `tst_grafana_panel.qml` |
+| ciclo de vida e custódia do token (§7 inteira, linha por linha) | `tst_grafana_token.qml` |
+| filtro local e o índice pertencer à lista **visível** | `tst_grafana_filtro.qml` |
+| foco ao abrir, dispensa por teclado, redimensionamento | `tst_grafana_teclado.qml` |
+| setas, `Home`, `End`, `Enter` e o binding do dono da seleção | `tst_kv_data_grid_teclado.qml` |
+| token ausente de log e de perfil | `tst_log_redaction.cpp` (C++) |
+
+**Nenhum token em perfil, log ou screenshot** está medido nos três níveis: o
+perfil enviado ao core não o contém (harness), o log o redige por nome de campo
+(C++), e nenhum texto do painel — varrendo `text`, `labelText`, `subtitle`,
+`message` e companhia — contém a credencial, com eco de senha no campo.
+
+**Fotos e roteiro:** `DocsPrivate/Codex/provas-v7-grafana/`, com as duas cenas,
+os PNGs e o `COMO-REFAZER.md`. Oito estados: primeira abertura, medido sem
+token, pedido de token, medido há doze minutos com o cruzamento; consultando,
+vazio autenticado, vazio sem token, e atualização falhada mantendo o resultado
+anterior marcado como velho.
+
+**Documentação pública** (`manual.md`) passou a descrever a integração: somente
+leitura, as duas superfícies, o cruzamento, o teclado e a vida do token.
+
+**O QUE NÃO ESTÁ PROVADO, e não será declarado pronto sem estar:**
+
+1. **Teste contra um Grafana real** — URL inválida, sem token, token inválido e
+   token válido. Depende de uma instância do autor. Tudo acima é decidível sem
+   ela; isto não é.
+2. **A entrega da tecla `Esc`** à moldura. O harness roda com o `qml` puro, que
+   não entrega evento de teclado; a decisão tem nome e teste, a linha que a liga
+   à tecla foi conferida à mão (§7.112).
+3. **Tab order.** As setas, `Enter`, `Esc` e o foco inicial estão medidos; a
+   ordem do `Tab` entre campos, não — pelo mesmo motivo da linha acima.
+
+O que a §11 pede como aceite e ainda depende de decisão do autor: nada nesta
+fatia. O que depende de máquina dele: o item 1.
