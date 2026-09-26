@@ -94,6 +94,36 @@ impl LineIndex {
         let column = text[line_start..byte].encode_utf16().count();
         (usize_to_u64(line_index + 1), usize_to_u64(column))
     }
+
+    /// O caminho INVERSO: one-based line e zero-based UTF-16 column viram o
+    /// offset em bytes.
+    ///
+    /// Existe porque a UI fala em linha/coluna UTF-16 (o contrato do Qt em todo
+    /// o protocolo) e a arvore fala em bytes. Converter no meio do caminho,
+    /// caractere a caractere, e' onde acento vira coluna errada.
+    ///
+    /// Coluna alem do fim da linha para NO fim da linha, e linha alem do fim do
+    /// texto para no fim do texto: pedir uma posicao que nao existe mais e' o
+    /// caso normal de uma resposta atrasada, nao um erro.
+    pub(super) fn byte_at(&self, text: &str, line: u64, column: u64) -> usize {
+        let index = usize::try_from(line.saturating_sub(1)).unwrap_or(usize::MAX);
+        let Some(&line_start) = self.starts.get(index) else {
+            return text.len();
+        };
+        let line_end = self
+            .starts
+            .get(index + 1)
+            .map_or(text.len(), |&next| next.saturating_sub(1));
+        let wanted = usize::try_from(column).unwrap_or(usize::MAX);
+        let mut units = 0_usize;
+        for (offset, character) in text[line_start..line_end].char_indices() {
+            if units >= wanted {
+                return line_start + offset;
+            }
+            units += character.len_utf16();
+        }
+        line_end
+    }
 }
 
 /// Tree-sitter byte-based point for an input edit boundary.
@@ -121,6 +151,46 @@ pub(super) fn usize_to_u64(value: usize) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::{LineIndex, byte_point, utf16_position};
+
+    /// A volta do `utf16_position`: linha/coluna viram o MESMO byte de onde
+    /// sairam. E' a propriedade que importa — se as duas conversoes nao forem
+    /// inversas, acento vira coluna errada no meio do caminho.
+    #[test]
+    fn byte_at_e_a_inversa_de_utf16_position() {
+        let text = "fn main() {\n    let cafe\u{301} = 1;\n    let x = 2;\n}\n";
+        let index = LineIndex::new(text);
+        for (byte, _) in text.char_indices() {
+            let (linha, coluna) = index.utf16_position(text, byte);
+            assert_eq!(index.byte_at(text, linha, coluna), byte, "byte {byte}");
+        }
+    }
+
+    /// Pedir posicao que nao existe mais e' o caso NORMAL de uma resposta
+    /// atrasada — o autor apagou linhas enquanto ela vinha. Recuar para o fim
+    /// e' a resposta certa; estourar seria transformar corrida em defeito.
+    #[test]
+    fn posicao_alem_do_fim_recua_em_vez_de_estourar() {
+        let text = "ab\ncd\n";
+        let index = LineIndex::new(text);
+        assert_eq!(index.byte_at(text, 1, 99), 2, "coluna alem do fim da linha");
+        assert_eq!(index.byte_at(text, 99, 0), text.len(), "linha alem do fim");
+        assert_eq!(index.byte_at(text, 0, 0), 0, "linha zero nao e' valida");
+    }
+
+    /// O acento combinante ocupa DOIS bytes e UMA unidade UTF-16; o emoji
+    /// ocupa quatro bytes e DUAS. Contar byte por coluna erraria os dois.
+    #[test]
+    fn coluna_utf16_nao_e_byte() {
+        let text = "let a\u{301} = \u{1F980};\n";
+        let index = LineIndex::new(text);
+        let bytes_do_acento = index.byte_at(text, 1, 5);
+        assert_eq!(&text[bytes_do_acento..bytes_do_acento + 2], "\u{301}");
+        let (_, coluna_do_emoji) = index.utf16_position(text, text.find('\u{1F980}').unwrap());
+        assert_eq!(
+            index.byte_at(text, 1, coluna_do_emoji),
+            text.find('\u{1F980}').unwrap()
+        );
+    }
 
     /// A invariante do modulo, exercitada: offset em fronteira funciona, e o
     /// `debug_assert` reprova quem passar um offset torto.

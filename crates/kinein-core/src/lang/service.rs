@@ -10,6 +10,7 @@ use std::{
 use kinein_protocol::{SyntaxHighlight, SyntaxLocal, SyntaxLocalKind, SyntaxTreeSnapshotResult};
 use tree_sitter::{InputEdit, Parser, Query, QueryCursor, StreamingIterator, Tree};
 
+use super::indent::{self, IndentTrigger};
 use super::{
     folding::folding_ranges,
     outline::outline,
@@ -28,6 +29,27 @@ struct ParsedDocument {
     content: String,
     tree: Tree,
     touched: u64,
+    /// Buffer version this tree was parsed from.
+    ///
+    /// Kept because a later query (indentation, for one) must be able to say
+    /// *which* version it answered about. Without it the UI would have to trust
+    /// that the tree matches what it asked for, and it does not: the author
+    /// keeps typing while the request is in flight.
+    version: u64,
+}
+
+/// What the service knows about indentation at one position.
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[allow(clippy::redundant_pub_crate)]
+pub(crate) struct IndentAnswer {
+    /// Version of the tree that answered — not the one that was asked about.
+    pub(crate) version: u64,
+    /// Language that produced it, so the UI can say where the answer came from.
+    pub(crate) language: String,
+    /// Indent levels for the line being opened.
+    pub(crate) level: u32,
+    /// When present, the CURRENT line should move to this level instead.
+    pub(crate) dedent_to: Option<u32>,
 }
 
 /// Failure while producing a local syntax snapshot.
@@ -128,6 +150,7 @@ impl SyntaxTreeService {
                 content: content.to_owned(),
                 tree,
                 touched: self.clock,
+                version,
             },
         );
         self.evict_if_needed();
@@ -141,6 +164,39 @@ impl SyntaxTreeService {
             folding_ranges,
             outline,
             locals,
+        })
+    }
+
+    /// Answers an indentation question about the tree it already has.
+    ///
+    /// Returns `None` when there is no tree for that path — the caller decides
+    /// what to do, and the honest answer is "keep the local fallback".
+    ///
+    /// The returned version is the version of the TREE, not the one asked for.
+    /// They differ whenever the author kept typing while the request was in
+    /// flight, and telling them apart is the whole point of storing it: the UI
+    /// discards an answer that is about a buffer it no longer has.
+    pub(crate) fn indent(
+        &self,
+        path: &Path,
+        line: u64,
+        column: u64,
+        trigger: IndentTrigger,
+    ) -> Option<IndentAnswer> {
+        let document = self.documents.get(path)?;
+        let offset = LineIndex::new(&document.content).byte_at(&document.content, line, column);
+        let decision = indent::decide(
+            document.language,
+            &document.tree,
+            &document.content,
+            offset,
+            trigger,
+        )?;
+        Some(IndentAnswer {
+            version: document.version,
+            language: document.language.as_str().to_owned(),
+            level: decision.level,
+            dedent_to: decision.dedent_to,
         })
     }
 

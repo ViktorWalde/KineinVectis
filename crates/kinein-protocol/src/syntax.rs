@@ -14,6 +14,47 @@ pub struct SyntaxTreeUpdateParams {
     pub version: u64,
 }
 
+/// Parameters for `syntaxTree.indent`.
+///
+/// The position is one-based line and zero-based UTF-16 column, the same
+/// contract every other Qt-facing payload uses.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SyntaxTreeIndentParams {
+    /// Absolute path of an existing file inside the workspace root.
+    pub path: String,
+    /// Document version the editor is asking about.
+    ///
+    /// The answer carries the version of the tree that produced it, which may
+    /// be older: the author keeps typing while the request is in flight.
+    pub version: u64,
+    /// One-based line of the cursor.
+    pub line: u64,
+    /// Zero-based UTF-16 column of the cursor.
+    pub column: u64,
+    /// `newline` when Enter was pressed, `closeDelimiter` when a closing
+    /// delimiter was typed.
+    pub trigger: String,
+}
+
+/// Result of `syntaxTree.indent`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyntaxTreeIndentResult {
+    /// Absolute path the answer is about.
+    pub path: String,
+    /// Version of the TREE that answered — compare it with what was asked.
+    pub version: u64,
+    /// Language that produced the answer, so the editor can say where it came
+    /// from.
+    pub language: String,
+    /// Indent levels for the line being opened.
+    pub level: u32,
+    /// When present, the current line moves to this level instead.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dedent_to: Option<u32>,
+}
+
 /// One Tree-sitter highlight capture, adapted to Qt UTF-16 positions.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

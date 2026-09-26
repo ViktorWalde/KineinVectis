@@ -5,9 +5,11 @@
 
 pub mod extract;
 mod folding;
+mod indent;
 mod outline;
 mod positions;
 pub(crate) mod registry;
 pub(crate) mod service;
 
+pub(crate) use indent::IndentTrigger;
 pub(crate) use service::{SyntaxTreeError, SyntaxTreeService};
