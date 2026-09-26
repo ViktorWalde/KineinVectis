@@ -25,6 +25,7 @@ python3 - <<'PY'
 import pathlib, re, subprocess, sys
 from urllib.parse import unquote
 
+CODIGO_EM_LINHA = re.compile(r"`[^`]*`")
 LINK = re.compile(r'\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)')
 EXTERNO = ("http://", "https://", "mailto:", "#")
 
@@ -41,14 +42,17 @@ for nome in arquivos:
         texto = caminho.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
         continue
-    # Um link dentro de bloco de codigo e' EXEMPLO, nao referencia.
+    # Um link dentro de bloco de codigo e' EXEMPLO, nao referencia. O mesmo
+    # vale para CODIGO EM LINHA (2026-09-25): um registro que explica a sintaxe
+    # de imagem do Markdown escreve `![alt](alvo)` entre crases, e "alvo" nao e'
+    # um arquivo que deva existir. Sem isto, documentar Markdown reprova o gate.
     fora_de_codigo, dentro = [], False
     for linha in texto.split("\n"):
         if linha.lstrip().startswith("```"):
             dentro = not dentro
             continue
         if not dentro:
-            fora_de_codigo.append(linha)
+            fora_de_codigo.append(CODIGO_EM_LINHA.sub("", linha))
     for numero, linha in enumerate(fora_de_codigo, start=1):
         for alvo in LINK.findall(linha):
             if alvo.startswith(EXTERNO):

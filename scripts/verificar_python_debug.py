@@ -247,8 +247,15 @@ def main() -> int:
             fid = core.rpc("debug.stackTrace")["frames"][0]["id"]
             assert core.rpc("debug.evaluate", {"expression": "x", "frameId": fid})["result"] == "21"
             core.rpc("debug.continue")
-            saida = core.evento("event.debug.output", onde=lambda p: "dobro" in p.get("line", ""))
-            assert saida.get("line") == "dobro 42", saida
+            # O `print("dobro", dobro(21))` escreve em PARTES — "dobro", " ",
+            # "42", "\n" — e o adaptador pode emitir UM EVENTO POR ESCRITA.
+            # Esperar um evento com a linha inteira e' supor que elas coalescem,
+            # e em 2026-09-25 o gate reprovou com "dobro " sozinho: a corrida
+            # existia desde sempre e so' apareceu agora.
+            saida = ""
+            while "42" not in saida:
+                saida += str(core.evento("event.debug.output").get("line", ""))
+            assert "dobro 42" in saida, saida
             assert core.evento("event.debug.finished").get("exitCode") == 0
             verify_attach(core, raiz, interpretador)
         except Exception:
