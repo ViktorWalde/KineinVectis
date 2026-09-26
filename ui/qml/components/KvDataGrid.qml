@@ -23,6 +23,70 @@ Item {
     property bool selectable: false
 
     signal rowClicked(int index)
+    // ABRIR o que a linha representa — Enter no teclado, e o que cada painel
+    // entender por "abrir". Separado de escolher: escolher e' de graca,
+    // abrir pode lancar um navegador.
+    signal rowActivated(int index)
+
+    // TECLADO (§5.2 da especificacao do Grafana: "selecao e teclado").
+    //
+    // A grade NAO escreve em `selectedIndex`. Ela emite `rowClicked`, igual ao
+    // mouse, e quem e' dono da selecao continua sendo quem sempre foi — no
+    // `ContainerListView` ela e' um binding para o controller, e escrever aqui
+    // quebraria esse binding em silencio, que e' a forma de estrago que o QML
+    // nao acusa.
+    activeFocusOnTab: root.selectable && root.rows.length > 0
+
+    function stepSelection(passo) {
+        if (!root.selectable || root.rows.length === 0) {
+            return;
+        }
+        // Sem selecao ainda: a primeira tecla escolhe a ponta de onde ela vem.
+        const atual = root.selectedIndex;
+        const bruto = atual < 0 ? (passo > 0 ? 0 : root.rows.length - 1) : atual + passo;
+        const alvo = Math.max(0, Math.min(root.rows.length - 1, bruto));
+        if (alvo !== atual) {
+            root.rowClicked(alvo);
+        }
+    }
+
+    // A LINHA ESCOLHIDA PRECISA ESTAR A' VISTA: navegar por teclado ate' uma
+    // linha fora da area rolada e' o mesmo que nao navegar.
+    function ensureVisible(indice) {
+        if (indice < 0 || root.rows.length === 0) {
+            return;
+        }
+        const passo = root.rowHeight + 1;
+        const topo = indice * passo;
+        const fundo = topo + passo;
+        if (topo < corpo.contentY) {
+            corpo.contentY = topo;
+        } else if (fundo > corpo.contentY + corpo.height) {
+            corpo.contentY = fundo - corpo.height;
+        }
+    }
+
+    onSelectedIndexChanged: root.ensureVisible(root.selectedIndex)
+
+    Keys.onUpPressed: root.stepSelection(-1)
+    Keys.onDownPressed: root.stepSelection(1)
+    Keys.onPressed: evento => {
+        if (!root.selectable || root.rows.length === 0) {
+            return;
+        }
+        if (evento.key === Qt.Key_Home) {
+            root.stepSelection(-root.rows.length);
+            evento.accepted = true;
+        } else if (evento.key === Qt.Key_End) {
+            root.stepSelection(root.rows.length);
+            evento.accepted = true;
+        } else if (evento.key === Qt.Key_Return || evento.key === Qt.Key_Enter) {
+            if (root.selectedIndex >= 0) {
+                root.rowActivated(root.selectedIndex);
+                evento.accepted = true;
+            }
+        }
+    }
 
     readonly property var widths: rules.columnWidths(columns, rows, width)
     readonly property int contentWidth: widths.reduce((sum, w) => sum + w + 1, 0)
@@ -79,6 +143,18 @@ Item {
                 }
             }
         }
+    }
+
+    // ONDE O TECLADO ESTA' FALANDO. Sem isto, a grade responde a setas sem
+    // dizer que e' ela quem responde.
+    Rectangle {
+        anchors.fill: corpo
+        anchors.margins: -1
+        visible: root.activeFocus
+        color: "transparent"
+        radius: Theme.radiusXSmall
+        border.width: 1
+        border.color: Theme.accent
     }
 
     Flickable {
