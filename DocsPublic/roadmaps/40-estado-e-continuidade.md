@@ -6457,3 +6457,68 @@ remocao do `levelsOf` do harness. A regra ja' estava escrita — "nunca `git
 checkout` de arquivo com diff pendente" — e mesmo assim foi usada. O conserto foi
 refazer a edicao; o registro fica porque regra que so' existe na memoria nao
 segura a mao de ninguem.
+
+### 7.109 V7/G1: uma acao primaria, e tres defeitos que so' o olho pegou — 2026-09-26
+
+A fatia G1 da V7 (Grafana) fez o que a §5.1 da especificacao pede: **um gesto
+primario por estado**, autenticacao **somente quando o servidor pede**, e idade
+da medida na tela. O caminho ate' la' e' que interessa registrar, porque tres
+defeitos passaram por vinte e cinco gates e cairam numa imagem.
+
+**O desenho.** Duas regras puras, no idioma de sempre (`QtObject`, sem widget,
+com harness): `GrafanaStateRules` deriva o estado em quatro eixos — `setup`,
+`probe`, `auth`, `content` — e `GrafanaActionRules` responde **qual e' o proximo
+gesto**, com `kind`, `label`, `hint` e `section`. O painel so' desenha. O que a
+tela mostrava antes era `Salvar · Sondar · Esquecer`, tres botoes de mesmo peso,
+mais as tres politicas de token visiveis desde a primeira abertura — antes de a
+API dizer se alguma era necessaria.
+
+**A cena de inspecao.** Os quatro estados lado a lado, em PNG, com o painel
+REAL, o controller REAL e as regras REAIS, dirigidos por `handleProfile` /
+`handleProbed` / `handleFailed`. Nao e' teste: e' o jeito de olhar. E foi ela
+que mostrou o que nenhum gate viu:
+
+1. **Dois gestos para a mesma intencao.** No estado "o servidor pediu token", o
+   painel desenhava o botao primario `Fornecer token` E o campo de token logo
+   abaixo, com o seu proprio `Sondar`. A REGRA estava certa e tinha harness; a
+   FIACAO e' que desenhava as duas coisas. Agora o campo E' a acao primaria: ele
+   recebe `label` e `hint` da regra, e a Row do botao sai da tela.
+2. **`banco ` sem banco.** O veredito montava `"Grafana %1 · banco %2"` com
+   `.arg()`, e `database` e' opcional na resposta. Com ele vazio a tela dizia
+   `Grafana 11.2.0 · banco` — anunciando um dado que ela nao tem. Cada pedaco
+   so' entra com conteudo; a versao ganhou a mesma regra.
+3. **A lista de achados tinha altura ZERO — sempre.** A Column do formulario
+   usava `anchors.fill: parent`, entao `coluna.bottom` era o fundo do painel, e
+   a `Flickable` ancorada nela nascia com altura negativa. O cruzamento entre os
+   bancos DESTE projeto e as fontes de dados do Grafana — que e' o ponto do
+   painel inteiro, o que o separa de um link favorito — **nunca pode ter
+   aparecido**. Sem erro, sem warning, com qmllint limpo.
+
+O terceiro e' a mesma forma de falha da caixa de previa do Configuration Actions
+(§4, regra 11): geometria que da' errado em silencio. Por isso virou gate.
+
+**`tst_grafana_panel.qml`**, teste de LAYOUT e nao de regra: monta o painel de
+verdade, atravessa os quatro estados e cobra o invariante "um gesto primario" —
+`grafanaPrimaria` e `grafanaTokenPrompt` nunca visiveis juntos — mais altura
+util na area dos achados. Conferido por mutacao: `visible: true` na Row derruba
+duas assercoes; `anchors.fill: parent` na coluna derruba a terceira, imprimindo
+`altura=-8`.
+
+**E o teste quase mentiu.** A primeira versao chamava `Qt.exit(1)` dentro da
+assercao — e `Qt.exit` NAO interrompe a funcao. As falhas eram impressas, a
+execucao seguia, e o `Qt.exit(0)` do fim apagava o codigo de erro: o runner, que
+julga por codigo de saida, diria `ok`. Um gate que imprime FALHOU e devolve
+sucesso e' pior que gate nenhum. Passou a acumular em `falhas` e sair uma vez
+so', no idioma do `tst_grafana_state`. Varri os outros testes do harness atras
+do mesmo furo: nenhum tinha.
+
+**Catraca.** O `GrafanaPanel` bateu 310 linhas (limite 300) e foi QUEBRADO em vez
+de crescer: a secao de token virou `GrafanaAuthSection`, com uma condicao de
+visibilidade so' — antes `authVisible` estava repetido em tres filhos. E, ja' que
+a secao so' aparece depois que o servidor EXIGIU credencial, a politica `Sem
+token` saiu da lista: oferecer ali o caminho que acabou de falhar seria convidar
+ao erro. Ela continua sendo o padrao do perfil, que e' onde ela faz sentido.
+
+**Pendente de prova real (G4):** token ausente, invalido e valido contra um
+Grafana de verdade. Isso depende de uma instancia do autor, e nao sera' declarado
+pronto com mock.
