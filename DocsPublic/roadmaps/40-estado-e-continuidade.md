@@ -6933,3 +6933,57 @@ escolher uma ferramenta de build, e ficou registrada como pendente do autor.
 
 O autor está preparando documentação técnica mais detalhada sobre o assunto; o
 que está escrito agora é o esqueleto medido, e cede lugar a ela onde divergirem.
+
+
+### 7.118 P1 começa: a árvore ganha teclado — 2026-09-26
+
+**Medido antes de escrever:** zero `Keys.` no `ProjectExplorer` e no
+`ProjectTreeController`. A árvore do projeto não tinha teclado nenhum — nem
+setas, nem Home/End, nem expandir/recolher, nem busca pelo nome digitado. Quem
+não usa mouse não navegava no projeto, e a matriz da §4 da
+`especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md` **abre** por
+essa linha.
+
+**O modelo já era plano**, com `depth` em cada linha: a árvore chega resolvida
+ao painel. Então navegar é aritmética de índice — e aritmética de índice tem
+harness. `ProjectTreeKeyRules` traduz tecla em **intenção** (mover, expandir,
+recolher, ativar) e não toca em nada; quem muda a árvore continua sendo o
+controller, **pelos mesmos sinais que o mouse usa**. É isso que faz *"mouse e
+teclado alcançam os mesmos itens"* ser verdade, em vez de dois caminhos que
+divergem no primeiro conserto que só um receber.
+
+Decisões que o teste guarda:
+
+- **as setas não dão a volta.** Quem segura a seta no fim de uma pasta longa
+  acabaria no topo sem perceber que passou;
+- **a busca por nome dá.** Digitar procura em todo lugar, ao contrário da
+  seta, que anda numa direção — e começa na linha **seguinte**, para que
+  apertar a mesma letra passeie pelos nomes que começam com ela;
+- **direita abre o fechado e entra no aberto; esquerda fecha o aberto e sobe ao
+  pai.** O pai é a primeira linha acima com profundidade menor — não há
+  ponteiro de pai no modelo plano, e não precisa haver;
+- **tecla com modificador não é busca.** Engolir `Ctrl+C` aqui mataria a cópia
+  na árvore sem ninguém entender por quê;
+- **não achar é diferente de não fazer nada**: a tecla foi para a busca, e
+  deixá-la seguir dispararia um atalho no meio de uma palavra.
+
+Quatro mutações provam os gates. **Uma delas não foi pega de primeira**: nenhum
+nome do retrato de teste começava com a mesma letra, então "procura a partir da
+próxima" e "a partir da atual" davam a mesma resposta. O caso faltava, não a
+regra.
+
+**A catraca de duplicação pegou uma terceira cópia de `kind === "directory"`**
+— eu escrevi `ehPasta` sem olhar que `ProjectTreeRules.isDirectory` já era o
+dono da pergunta. Corrigido, e de quebra as duas cópias que já existiam no
+`ProjectExplorer` passaram a usar o dono: a baseline caiu de 11 para 10
+derivações congeladas.
+
+**O que o teclado ainda não faz, e é a próxima fatia:** seleção múltipla
+(`Ctrl`, `Shift`, `Ctrl+A` restrito à árvore focada) e o menu de contexto por
+`Menu`/`Shift+F10`. O cursor e a seleção já são coisas separadas na tela — o
+anel marca onde o teclado está, o preenchimento marca o que está escolhido —, e
+é sobre essa separação que a seleção múltipla se apoia.
+
+**Limite da foto:** o anel de foco não sai em captura offscreen, porque janela
+offscreen nunca fica ativa e `activeFocus` é falso em tudo. A cena de inspeção
+o desenha **forçado**, e isso está dito nela.

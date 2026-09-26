@@ -121,6 +121,35 @@ Rectangle {
             }
         }
 
+        // "E' pasta?" tem um dono so' no projeto, e e' este.
+        ProjectTreeRules {
+            id: regrasDaArvore
+        }
+
+        // O TECLADO DA ARVORE (P1). Medido em 2026-09-26: nao havia nenhum —
+        // quem nao usa mouse nao navegava no projeto. Ele emite os MESMOS
+        // sinais que o clique, para que "mouse e teclado alcancam os mesmos
+        // itens" seja verdade e nao dois caminhos que divergem.
+        ProjectTreeKeyboard {
+            id: teclado
+
+            model: root.entriesModel
+            currentIndex: explorerView.currentIndex
+
+            onMoveRequested: function (indice) {
+                explorerView.currentIndex = indice;
+                const linha = root.entriesModel.get(indice);
+                root.entrySelected(linha.path, linha.kind);
+            }
+            onToggleRequested: function (indice) {
+                const linha = root.entriesModel.get(indice);
+                root.directoryToggleRequested(linha.path, indice, linha.expanded);
+            }
+            onActivateRequested: function (indice) {
+                root.fileOpenRequested(root.entriesModel.get(indice).path);
+            }
+        }
+
         ListView {
             id: explorerView
 
@@ -128,6 +157,20 @@ Rectangle {
             height: parent.height - y
             clip: true
             model: root.entriesModel
+            // A ARVORE PRECISA PODER RECEBER O FOCO para ouvir tecla, e
+            // precisa estar no caminho do Tab para ser alcancavel sem mouse.
+            focus: true
+            activeFocusOnTab: true
+            keyNavigationEnabled: false
+            highlightFollowsCurrentItem: true
+            onActiveFocusChanged: {
+                if (!explorerView.activeFocus) {
+                    teclado.esquecerDigitacao();
+                }
+            }
+            Keys.onPressed: function (evento) {
+                evento.accepted = teclado.handleKey(evento);
+            }
 
             delegate: Rectangle {
                 id: treeRow
@@ -146,6 +189,12 @@ Rectangle {
                 color: treeRow.path === root.selectedPath
                        ? Theme.surfaceSelected
                        : (rowHover.hovered ? Theme.surface2 : "transparent")
+                // ONDE O TECLADO ESTA' FALANDO. Sem isto a arvore responde a
+                // setas sem dizer que e' ela quem responde — e, com o painel
+                // sem foco, um realce de selecao pareceria foco.
+                border.width: explorerView.activeFocus
+                              && explorerView.currentIndex === treeRow.index ? 1 : 0
+                border.color: Theme.accent
 
                 // Observa o delegate inteiro sem tomar eventos dos filhos. Ao
                 // passar sobre o botao de executar, o hover continua ativo e
@@ -163,9 +212,9 @@ Rectangle {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         width: 12
-                        text: treeRow.kind === "directory"
+                        text: regrasDaArvore.isDirectory(treeRow.kind)
                               ? (treeRow.expanded ? "▾" : "▸") : ""
-                        color: treeRow.kind === "directory" && !treeRow.machine
+                        color: regrasDaArvore.isDirectory(treeRow.kind) && !treeRow.machine
                                ? Theme.accent : Theme.textMuted
                         font.pixelSize: Theme.fontSizeTree
                     }
@@ -175,7 +224,7 @@ Rectangle {
                         size: 20
                         opacity: treeRow.machine ? 0.55 : 1
                         fileName: treeRow.name
-                        directory: treeRow.kind === "directory"
+                        directory: regrasDaArvore.isDirectory(treeRow.kind)
                         expanded: treeRow.expanded
                     }
 
@@ -184,7 +233,7 @@ Rectangle {
                         width: Math.max(0, treeRow.width - parent.x - x - 30)
                         text: treeRow.name
                         color: treeRow.machine ? Theme.textMuted
-                               : (treeRow.kind === "directory"
+                               : (regrasDaArvore.isDirectory(treeRow.kind)
                                   ? Theme.textPrimary
                                   : root.gitFileColor(treeRow.path,
                                                       root.gitRevision))
@@ -201,6 +250,12 @@ Rectangle {
                     acceptedButtons: Qt.LeftButton | Qt.RightButton
                     cursorShape: Qt.PointingHandCursor
                     onClicked: function(mouse) {
+                        // O CLIQUE MOVE O CURSOR DO TECLADO, e traz o foco
+                        // para a arvore: sem isto, clicar numa linha e depois
+                        // apertar a seta recomecaria de onde o teclado estava
+                        // antes — um salto que ninguem pediu.
+                        explorerView.currentIndex = treeRow.index;
+                        explorerView.forceActiveFocus();
                         root.entrySelected(treeRow.path, treeRow.kind);
                         if (mouse.button === Qt.RightButton) {
                             const pt = entryArea.mapToItem(null, mouse.x, mouse.y);
@@ -208,7 +263,7 @@ Rectangle {
                                                       treeRow.name, pt.x, pt.y);
                             return;
                         }
-                        if (treeRow.kind === "directory") {
+                        if (regrasDaArvore.isDirectory(treeRow.kind)) {
                             root.directoryToggleRequested(treeRow.path, treeRow.index,
                                                           treeRow.expanded);
                         } else if (treeRow.kind === "file") {
