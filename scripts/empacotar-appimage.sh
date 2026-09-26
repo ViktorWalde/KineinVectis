@@ -468,6 +468,14 @@ install \
     "$REPO_ROOT/scripts/instalar-appimage.sh" \
     "$DELIVERY_STAGING_DIR/instalar-kinein-vectis.sh"
 
+# O MODELO DO COMANDO CURTO VIAJA DENTRO DO INSTALADOR. Quem baixa recebe dois
+# arquivos — o AppImage e o instalador —, e o instalador precisa bastar. O
+# modelo continua tendo um dono so' (`scripts/kinein.in`); aqui ele e' copiado
+# para dentro, no lugar do marcador, sem ninguem reescrever o corpo.
+"$REPO_ROOT/scripts/embutir_comando_kinein.py" \
+    "$REPO_ROOT/scripts/kinein.in" \
+    "$DELIVERY_STAGING_DIR/instalar-kinein-vectis.sh"
+
 install \
     -m 0644 \
     "$REPO_ROOT/DocsPublic/tutorial.md" \

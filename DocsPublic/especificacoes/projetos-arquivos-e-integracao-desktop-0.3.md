@@ -47,11 +47,25 @@ existente já move dentro do workspace; não criar um segundo motor de rename.
 
 ## 3. P0 — abrir pelo terminal e pelo desktop
 
-> **Parcialmente implementado em 2026-09-24.** O contrato de argumentos passou a
+> **Concluído em 2026-09-26** — o comando curto `kinein` passou a ser instalado
+> pelos dois caminhos: `scripts/instalar-atalho.sh` (checkout) e o instalador
+> que viaja com o AppImage. Ele acrescenta **uma** coisa ao binário: sem
+> argumento nenhum, abre a pasta corrente. Todo o resto passa intacto, porque o
+> dono do contrato de argumentos é `ui/src/cli_args`, com teste C++. O modelo
+> tem um dono só (`scripts/kinein.in`) e o empacotador o embute no instalador
+> entregue, para que um download de dois arquivos baste; o gate de distribuição
+> cobra essa etapa.
+>
+> **Aberto, e é decisão do autor:** política de janela nova × reutilizada.
+> Hoje cada `kinein` sobe um processo novo — que é o comportamento que já
+> existia, não uma escolha nova. Reutilizar exigiria instância única com
+> handshake, e isso não se inventa por conta própria.
+>
+> **Como era em 2026-09-24.** O contrato de argumentos passou a
 > ter dono (`ui/src/cli_args`), teste (o primeiro teste C++ do projeto) e
 > diagnóstico. `--help` e `--version` respondem sem subir UI, core ou rede;
-> caminho inválido é recusado com o motivo e sem criar nada. **Falta o comando
-> curto instalado.** Registro em
+> caminho inválido é recusado com o motivo e sem criar nada. Faltava o comando
+> curto instalado, que é o que a nota acima fecha. Registro em
 > [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.97.
 >
 > Decisão respeitada: o binário sem argumento **não** trata o CWD como projeto —

@@ -82,9 +82,54 @@ EOF
 chmod 0644 "$DESKTOP_FILE"
 update-desktop-database "$APPLICATIONS_DIR" >/dev/null 2>&1 || true
 
+# O COMANDO CURTO `kinein` (P0, §3 da especificacao de projetos).
+#
+# UM DONO SO' PARA O MOLDE: no checkout ele esta' em `scripts/kinein.in`, ao
+# lado deste arquivo. No artefato entregue, o empacotador o EMBUTE entre os
+# marcadores abaixo, para que um instalador baixado sozinho continue completo.
+# Escrever o corpo do comando duas vezes seria a mesma derivacao em dois
+# lugares, divergindo em silencio na primeira correcao que so' uma receba.
+modelo_do_comando() {
+    if [[ -f "$SCRIPT_DIR/kinein.in" ]]; then
+        cat "$SCRIPT_DIR/kinein.in"
+        return
+    fi
+    cat <<'FIM_DO_MODELO'
+@MODELO_EMBUTIDO@
+FIM_DO_MODELO
+}
+
+BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
+COMANDO="$BIN_DIR/kinein"
+mkdir -p "$BIN_DIR"
+# O TESTE NAO PODE CITAR O MARCADOR: ele apareceria duas vezes no arquivo, e o
+# empacotador — que exige UMA ocorrencia — recusaria embutir. Modelo de
+# verdade comeca por shebang; marcador nao substituido, nao.
+if ! modelo_do_comando | head -n 1 | grep -q '^#!'; then
+    echo "AVISO: sem o modelo do comando curto; o comando kinein nao foi instalado." >&2
+else
+    modelo_do_comando | sed "s|@ALVO@|$LATEST|" > "$COMANDO"
+    chmod 0755 "$COMANDO"
+fi
+
 echo "==> atalho instalado/atualizado"
 echo "$DESKTOP_FILE"
 echo "O menu agora abre: $(basename "$LATEST")"
+if [[ -x "$COMANDO" ]]; then
+    echo "==> comando curto: $COMANDO"
+    echo "    kinein          abre a pasta atual"
+    echo "    kinein <pasta>  abre outra pasta"
+    # PATH NAO E' GARANTIA: em varias distros `~/.local/bin` so' entra no PATH
+    # se ja' existir na hora do login.
+    case ":$PATH:" in
+        *":$BIN_DIR:"*) ;;
+        *)
+            echo "    AVISO: $BIN_DIR nao esta' no seu PATH. Abra um terminal novo;" >&2
+            # shellcheck disable=SC2016  # e' a linha que a pessoa vai copiar.
+            echo '           se continuar fora, acrescente: export PATH="$HOME/.local/bin:$PATH"' >&2
+            ;;
+    esac
+fi
 
 if (( ${#APPIMAGES[@]} > 1 )); then
     printf 'Apagar as %d versão(ões) anterior(es) desta pasta? [s/N] ' "$(( ${#APPIMAGES[@]} - 1 ))"

@@ -1,0 +1,39 @@
+#!/bin/sh
+# kinein — abre uma pasta no Kinein Vectis a partir do terminal.
+#
+# ESTE COMANDO ACRESCENTA UMA COISA SO' ao binario: sem argumento nenhum, ele
+# abre A PASTA CORRENTE. E' deliberado que o binario NAO faca isso — o atalho
+# do menu o roda sem argumento, de um diretorio qualquer, e tratar aquele CWD
+# como projeto abriria o que estivesse por perto. A §3 da
+# `especificacoes/projetos-arquivos-e-integracao-desktop-0.3.md` manda separar
+# os dois casos, e a §7 registra o default de CWD como decisao DO COMANDO
+# CURTO.
+#
+# Todo o resto — `--help`, `--version`, caminho relativo, com espaco, com
+# Unicode, inexistente ou sem permissao — passa INTACTO para o binario, que
+# ja' e' o dono desse contrato (`ui/src/cli_args`, com teste C++). Duplicar
+# aqui a validacao de caminho criaria duas respostas para a mesma pergunta,
+# que e' como uma diverge da outra em silencio.
+#
+# Gerado de `scripts/kinein.in` por `instalar-atalho.sh` (checkout) e por
+# `instalar-appimage.sh` (artefato). O @ALVO@ e' o unico que difere.
+
+set -eu
+
+ALVO='@ALVO@'
+
+if [ ! -x "$ALVO" ]; then
+    echo "kinein: nao encontrei o Kinein Vectis em:" >&2
+    echo "  $ALVO" >&2
+    echo "Reinstale com o script que criou este comando." >&2
+    exit 127
+fi
+
+# SEM ARGUMENTO NENHUM: a pasta corrente. Com qualquer argumento, nada e'
+# inventado — nem quando o argumento e' `--help`, que nao pode virar
+# "abrir a pasta `--help`".
+if [ "$#" -eq 0 ]; then
+    exec "$ALVO" .
+fi
+
+exec "$ALVO" "$@"

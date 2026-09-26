@@ -37,6 +37,27 @@ EOF
 chmod 644 "$DESKTOP_FILE"
 update-desktop-database "$APPS_DIR" 2>/dev/null || true
 
+# O COMANDO CURTO `kinein`, que a P0 pede (§3 da especificacao de projetos).
+# Mesmo molde do artefato: so' muda para onde ele aponta.
+BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
+COMANDO="$BIN_DIR/kinein"
+mkdir -p "$BIN_DIR"
+sed "s|@ALVO@|$LAUNCHER|" "$REPO_ROOT/scripts/kinein.in" > "$COMANDO"
+chmod 755 "$COMANDO"
+
 echo "atalho instalado em: $DESKTOP_FILE"
+echo "comando curto instalado em: $COMANDO"
+# PATH NAO E' GARANTIA: em varias distros `~/.local/bin` so' entra no PATH se
+# ja' existir na hora do login. Dizer isso e' mais util que supor.
+case ":$PATH:" in
+    *":$BIN_DIR:"*) ;;
+    *)
+        echo "AVISO: $BIN_DIR nao esta' no seu PATH." >&2
+        echo "       Abra um terminal novo; se continuar fora, acrescente:" >&2
+        # shellcheck disable=SC2016  # e' a LINHA que a pessoa vai copiar: as
+        # variaveis tem de chegar ao .bashrc dela sem expandir aqui.
+        echo '       export PATH="$HOME/.local/bin:$PATH"' >&2
+        ;;
+esac
 echo "procure por 'Kinein Vectis (Desenvolvimento)' no menu de aplicativos."
 echo "o atalho 'Kinein Vectis' do AppImage, se existir, foi preservado."

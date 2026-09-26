@@ -6721,3 +6721,43 @@ leitura, as duas superfícies, o cruzamento, o teclado e a vida do token.
 
 O que a §11 pede como aceite e ainda depende de decisão do autor: nada nesta
 fatia. O que depende de máquina dele: o item 1.
+
+### 7.114 P0 fecha: o comando `kinein` existe de verdade — 2026-09-26
+
+O contrato de argumentos tinha dono e teste desde 2026-09-24 (§7.97), e a ajuda
+do binário já ensinava `kinein <pasta>`. **O comando não existia.** A ajuda
+descrevia uma coisa que ninguém tinha instalado.
+
+Ele acrescenta **uma** coisa ao binário: sem argumento nenhum, abre a pasta
+corrente. É deliberado que o binário não faça isso — o atalho do menu o roda
+sem argumento, de um diretório qualquer, e tratar aquele CWD como projeto
+abriria o que estivesse por perto. Todo o resto passa **intacto**: `--help`,
+`--version`, caminho relativo, com espaço, com Unicode, inexistente, sem
+permissão, dois caminhos, opção desconhecida, `--`. Duplicar a validação no
+shell criaria duas respostas para a mesma pergunta.
+
+Medido com um binário falso que só imprime o que recebe: sem argumento vira
+`[.]`; `--help` continua `[--help]` e não vira "abrir a pasta `--help`";
+`pasta com espaço` e `projétò/ção` chegam inteiros; `-- -arquivo-esquisito`
+chega como dois argumentos.
+
+**Um dono para o modelo, e a entrega continua bastando sozinha.** O comando
+nasce de `scripts/kinein.in`; o instalador do checkout o lê do repositório, e o
+empacotador o **embute** no instalador que viaja com o AppImage — quem baixa
+recebe dois arquivos e o instalador precisa bastar. O gate de distribuição
+passou a cobrar as duas pontas: o modelo existir, o empacotador embuti-lo e o
+instalador ter exatamente um marcador. Conferido por mutação.
+
+Dois defeitos meus no caminho, os dois pegos pelo `shellcheck`: crases dentro
+de aspas duplas numa mensagem de aviso — que **executariam** `kinein` em vez de
+escrevê-lo —, e um teste que citava o próprio marcador, fazendo-o aparecer duas
+vezes e impedindo o empacotador de embutir.
+
+**`~/.local/bin` não é garantia.** Em várias distros ele só entra no `PATH` se
+já existir no login. Os dois instaladores conferem e dizem, com a linha pronta
+para copiar, em vez de supor.
+
+**Aberto, e é do autor:** janela nova × reutilizada. Hoje cada `kinein` sobe um
+processo novo — o comportamento que já existia. Reutilizar exige instância
+única com handshake, e a §7 da especificação lista isso como decisão a
+confirmar, não como detalhe de implementação.

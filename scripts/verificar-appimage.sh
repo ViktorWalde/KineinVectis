@@ -118,6 +118,23 @@ if ! grep -Fq 'KINEIN_PERF first_frame_ms=' scripts/testar-appimage.sh; then
     reprovar "testar-appimage.sh parou de exigir o primeiro frame"
 fi
 
+# 5b. O INSTALADOR ENTREGUE PRECISA BASTAR SOZINHO. Quem baixa recebe dois
+#     arquivos, e o comando curto `kinein` nasce de um modelo com dono unico
+#     (`scripts/kinein.in`) que o empacotador EMBUTE no instalador. Se alguem
+#     tirar essa etapa, a entrega continua saindo e o comando curto simplesmente
+#     nao se instala — com um aviso em tempo de execucao, tarde demais. Duas
+#     comparacoes baratas fecham o caminho.
+if [[ ! -f scripts/kinein.in ]]; then
+    reprovar "sumiu o modelo do comando curto: scripts/kinein.in"
+fi
+if ! grep -Fq 'embutir_comando_kinein.py' scripts/empacotar-appimage.sh; then
+    reprovar "empacotar-appimage.sh parou de embutir o modelo do comando curto"
+fi
+marcadores="$(grep -cF 'MODELO_EMBUTIDO' scripts/instalar-appimage.sh || true)"
+if [[ "$marcadores" -ne 1 ]]; then
+    reprovar "instalar-appimage.sh precisa de UM marcador do modelo, tem $marcadores"
+fi
+
 if [[ "$falhou" -ne 0 ]]; then
     echo >&2
     echo "✗ distribuicao AppImage FALHOU" >&2
