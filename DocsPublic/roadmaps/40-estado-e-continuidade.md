@@ -6084,3 +6084,167 @@ no thread da UI.
 `modo-editar.png`, `modo-preview.png` e `preview-antes-do-tema.png`, que e' a
 foto que reprovou a folha de estilo. Mais `tst_markdown_policy` (10 casos) e
 `tst_markdown_preview_mode` (71 harnesses no total).
+
+### 7.104 O provider do QTextDocument e' fallback, nao portao — 2026-09-25 (V5/M2)
+
+Este registro existe por causa de uma foto. A §10 da especificacao do preview
+exige que "imagem local fora do escopo permitido nao e' lida", e a M1 tinha
+entregue um `setResourceProvider` que parecia cumprir isso: toda leitura de
+recurso passaria por ele, e o que a politica recusasse voltaria vazio.
+
+**Nao passa.** Ao exercitar imagens de verdade — uma dentro do projeto, uma
+ausente e uma FORA —, a de fora **apareceu na tela**
+(`imagem-fora-do-projeto-APARECIA.png`). Medido com um `qWarning` no provider:
+ele foi chamado TRES vezes, todas para a AUSENTE. O `TextEdit` do Qt Quick usa
+um documento proprio (`QQuickTextDocumentWithImageResources`) que carrega a
+imagem sozinho quando consegue, e so' cai no `loadResource` — e portanto no
+provider — quando o carregamento DELE falha. O provider e' fallback, nao portao.
+
+Sem a foto, o teste da politica continuaria verde e a conclusao seria falsa: as
+decisoes estavam certas, e ninguem as consultava no caminho que importa.
+
+**O portao passou a ser o TEXTO.** Antes do `setMarkdown`, a sintaxe
+`![alt](alvo)` cujo alvo a politica recusa vira texto com o motivo — o renderer
+nunca ve' um caminho que nao pode abrir. A prova de que o arquivo nao e' mais
+sequer aberto e' direta: os avisos `QML TextEdit: Cannot open: ...` sumiram do
+log. A costura no texto mora no `markdown_policy`, que e' puro e tem teste
+(cerca de codigo NAO e' reescrita, porque um exemplo dentro de ``` e' conteudo;
+e uma linha pode ter varias imagens, cada uma decidida por si).
+
+**Dois portoes, e esta' dito por que.** O segundo, depois do render, troca o
+fragmento de imagem por texto: ele pega a forma por REFERENCIA (`![alt][ref]`),
+que o primeiro nao reescreve. Nesse caso o arquivo ja' foi lido; o que se
+garante e' que nao aparece, e o motivo e' dito.
+
+**O DEBOUNCE, e um buraco que ele abriu.** Ligar o buffer direto no renderer
+remontava o documento INTEIRO a cada caractere — a §7 poe a latencia da tecla
+como regua. Entrou o `MarkdownRenderGate`, com 150 ms. Ele mora separado do
+painel por dois motivos: e' regra, e — isto vale registrar — **o harness QML
+carrega os componentes de um espelho plano das FONTES, onde os tipos registrados
+em C++ nao existem**, entao qualquer componente que toque num deles fica sem
+teste. Separar a regra do widget a devolveu para o harness.
+
+Trocar de aba ZERA a previa em vez de deixar o documento anterior na tela: o
+texto de um arquivo sob o nome de outro e' exatamente o que a §10 proibe, e em
+branco e' honesto. Mas isso abriu o caso dos **dois documentos com texto
+identico**: `onContentChanged` nunca dispara, e a previa ficaria em branco para
+sempre. Fechado com um prazo curto de 50 ms — a cadeia que troca de documento e'
+sincrona, entao passado esse tempo sem mudanca o conteudo ja' e' o do documento
+novo. As duas protecoes foram conferidas por MUTACAO, e cada uma reprova o
+harness ao ser removida.
+
+**Uma protecao que EU escrevi e que era codigo morto.** A primeira versao
+carregava um `pendingDocId` comparado no disparo do prazo. O teste de mutacao
+mostrou que aquele ramo era inalcancavel — o `renderNow` ja' cancelava o prazo
+antes. Saiu: codigo morto com cara de protecao e' pior que nada, porque quem le'
+acha que esta' protegido.
+
+**O gate escondeu um erro meu, e isso fecha o circulo da §7.103.** Uma edicao
+por script apagou a declaracao de `blockedResources` do painel, e o qmllint
+disse "tudo limpo" — porque naquele momento ele lia os tipos de um build
+desatualizado. Com a correcao da §7.103 no lugar, o mesmo arquivo passou a
+reprovar com "Member blockedResources not found". Conferido nos dois sentidos.
+
+**E a propria correcao da §7.103 tinha um falso-positivo.** Ela comparava MTIME
+do `.h` com o do `.qmltypes`; um `cp` que nao muda uma linha deixava a fonte
+"mais nova" para sempre e o gate reprovava sem haver nada errado. Comparar
+relogio e' adivinhar. Agora os tipos sao CONSTRUIDOS antes de lintar —
+deterministico, barato quando ja' estao em dia, e e' o que o script ja' fazia
+com a copia do QML.
+
+**Provas:** `imagem-fora-do-projeto-APARECIA.png` e
+`imagem-fora-do-projeto-bloqueada.png`, lado a lado, em
+`DocsPrivate/Codex/evidencias-2026-09-25-markdown/`. Mais
+`tst_markdown_debounce` (72 harnesses) e o `tst_markdown_policy` com 15 casos.
+
+### 7.105 O lado a lado, e a ancora que nao desancora — 2026-09-25 (V5/M2)
+
+O terceiro modo entrou, e com ele o terceiro botao na barra — ate' aqui eram
+dois de proposito, porque anunciar um que nao faz nada seria a mentira que este
+projeto persegue.
+
+**A catraca forcou a extracao certa.** O `EditorPane` chegou ao limite de 300
+linhas. Saiu o `EditorOutlineSide.qml`: a coluna de simbolos e o splitter dela
+sao UMA coisa — ele nao existe sem ela, mede exatamente a largura dela e some
+junto. E a alca de reabrir foi junto, o que obrigou a coluna a nunca ficar
+invisivel: ela encolhe para largura ZERO. O ganho passou a ser de desenho
+tambem, e nao so' de linhas: com largura zero, a borda esquerda da coluna E' a
+borda direita do painel, entao os condicionais
+`outlineSplitter.visible ? outlineSplitter.left : parent.right` sumiram de quem
+se ancora nela.
+
+**A foto pegou um erro de QML que compila, linta e nao funciona.** A primeira
+versao do lado a lado fazia
+`anchors.left: sideBySide ? undefined : parent.left` com `width` no mesmo
+ternario. Desancorar por ternario NAO desancora: a ancora fica onde estava, e a
+previa cobriu o editor inteiro (`lado-a-lado-QUEBRADO.png`). O qmllint nao tem
+como ver isso — e' geometria, nao tipo. A correcao e' largura EXPLICITA, sem
+ancora a' esquerda.
+
+**O modo e' do documento; a largura, da janela.** Os dois sao apresentacao pela
+§6, mas se comportam diferente de proposito: cada `.md` lembra em que modo
+estava, enquanto a divisao da tela se ajusta uma vez. Abaixo de 280 px nenhum
+dos dois lados vira tira ilegivel, e delta zero (duplo clique no splitter)
+devolve o padrao.
+
+**Um tropeco meu que vale anotar como metodo:** para fotografar cada modo sem
+clique, eu invertia o padrao do controller, compilava, fotografava e restaurava
+de um backup. Num dos ciclos restaurei um backup ANTIGO e apaguei com ele o
+`splitWidth` que tinha acabado de escrever — o sintoma foi um
+`TypeError: Type error` no host, que so' apareceu porque eu confiro os avisos de
+execucao da captura. Backup por copia e' mais perigoso que parece quando o
+arquivo muda entre a copia e a restauracao.
+
+**Provas:** `lado-a-lado.png` e `lado-a-lado-QUEBRADO.png`, lado a lado, em
+`DocsPrivate/Codex/evidencias-2026-09-25-markdown/`.
+
+### 7.106 O `componente` da entrada, quando finalmente teve consumidor — 2026-09-25 (V3/V4)
+
+A V3 lista `componente` entre os campos do `ToolWindowEntry`, e ele ficou de
+fora em 2026-09-24 com uma frase que continua valendo: "campo sem consumidor
+seria dado morto fingindo desenho" (§7.99). O consumidor apareceu agora.
+
+**O que havia.** O `ShellEnvironmentOverlays` tinha cinco blocos de nove linhas
+quase identicos — banco, containers, Grafana, embarcados e remoto —, diferindo
+so' no tipo do painel e no controller. O proprio cabecalho do arquivo ja' dizia
+que eram a mesma coisa: "todos tem a mesma forma: moldura de dialogo sobre um
+controller com `panelVisible`, mesmo ciclo abrir/fechar, mesma folga de janela".
+
+**O que ha' agora.** A entrada carrega o `Component` do painel, com a fiacao
+que e' so' dela; o host virou um `Repeater` que cuida do que e' igual (ancora,
+`z`, folga). Acrescentar uma tool window passou a custar UMA entrada, painel
+incluido — que e' o aceite da V3 levado ate' o fim. O
+`ShellEnvironmentOverlays` caiu de 120 para 94 linhas e deixou de conhecer
+cinco controllers.
+
+**Duas fronteiras, e as duas sao deliberadas:**
+
+- **Biblioteca e Instalacao NAO ganharam `componente`.** Sao overlays de
+  ambiente, mas nao sao entradas do trilho. Forcar a abstracao sobre quem nao
+  e' tool window seria cerimonia, e a ARCHITECTURE §4 regra 9 chama isso pelo
+  nome: "split que nao deixa mais claro nao e' split".
+- **O slot ESQUERDO continua montado a' mao.** Explorer e Git tem fiacao
+  inteiramente propria — trinta propriedades e tratadores so' o primeiro — e um
+  `Loader` generico nao a supre sem um saco de propriedades. Quando houver a
+  terceira janela la', a conversa muda.
+
+**O que NAO entrou de contrabando:** o `Loader` usa `visible`, e nao `active`.
+Carregar o painel so' ao abrir seria ganho real de memoria, mas muda o ciclo de
+vida de cinco paineis — decisao de outra fatia.
+
+**O harness mudou de import, e o motivo e' o proprio desenho.** O
+`tst_tool_windows` importava a PASTA `ui/qml/shell`; com a entrada carregando
+`GrafanaPanelHost` e `RemotePanelHost`, tipos de outras pastas, o import de
+diretorio deixou de resolver. Passou a importar o MODULO, que e' o que o
+espelho plano do harness monta. Ele trava a lista de entradas com painel, a
+ordem delas, e que explorer e Ferramentas NAO tem painel de ambiente.
+
+**Um defeito do gate, pre-existente, apareceu nesta rodada.** O
+`verificar-python-debug.sh` reprovou com `"dobro "` onde esperava `"dobro 42"`.
+Nao era regressao: `print("dobro", dobro(21))` escreve em PARTES — "dobro",
+" ", "42", "\n" — e o adaptador pode emitir um evento por escrita. O teste
+esperava UM evento com a linha inteira, o que supoe que elas coalescem. Agora
+ele acumula ate' a linha fechar; tres rodadas seguidas verdes.
+
+**Provas:** `evidencias-2026-09-25-remote-hud/painel-pelo-componente-da-entrada.png`
+— o painel Remoto aberto pelo caminho novo, sem aviso de QML em execucao.

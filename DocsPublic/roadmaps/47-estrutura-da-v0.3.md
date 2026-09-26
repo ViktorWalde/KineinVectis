@@ -272,10 +272,13 @@ editar/salvar/rodar/abrir shell.
 
 ### V3 — espinha do shell
 
-> **Parcial em 2026-09-24 (roadmap 40 §7.99).** Entraram o resultado observavel
-> do dispatcher e o `ToolWindowEntry` minimo com o trilho orientado a dado, sem
-> mudanca visual. Falta o `componente` da entrada e o slot esquerdo montado a
-> partir dela — que so' tem consumidor na V4.
+> **Concluída em 2026-09-25 (roadmap 40 §7.99 e §7.106).** Entraram o resultado
+> observável do dispatcher, o `ToolWindowEntry` orientado a dado e, por último,
+> o campo `componente`: a entrada carrega o painel dela, e os cinco blocos
+> repetidos do `ShellEnvironmentOverlays` viraram um `Repeater`. O slot
+> **esquerdo** (explorer e Git) segue montado à mão, e está dito por quê: são
+> duas janelas de fiação inteiramente própria, e um `Loader` genérico não a
+> supre sem um saco de propriedades.
 
 - dispatcher atual recebe resultado observável para ID desconhecido;
 - paleta, atalhos, menus e tool windows convergem onde já há command ID;
@@ -289,10 +292,11 @@ Aceite: adicionar Remote ao slot não exige novo branching nominal em
 
 ### V4 — Remote diário e HUD
 
-> **Parcial em 2026-09-25 (roadmap 40 §7.100).** Entraram a janela no trilho, o
-> HUD honesto da barra de status e o caminho para shell, que antes descartava a
-> linha quando nao havia sessao aberta. Falta o `componente` da entrada de tool
-> window (que segue sem consumidor).
+> **Concluída em 2026-09-25 (roadmap 40 §7.100 e §7.106), exceto validação do
+> autor.** Entraram a janela no trilho, o HUD honesto da barra de status, o
+> caminho para shell — que antes descartava a linha quando não havia sessão
+> aberta — e o painel vindo do `componente` da entrada. **Estas telas ainda não
+> foram usadas por pessoa.**
 
 - Remote entra pelo modelo mínimo de tool window;
 - workspace espelhado mostra `SSH · alvo · estado de sync` na status bar;
@@ -308,11 +312,14 @@ gesto arriscado.
 
 ### V5 — identidade das abas
 
-> **Parcial em 2026-09-25 (roadmap 40 §7.101 e §7.103).** A identidade por
-> documento entrou inteira: `docId` sintético, `currentTab` derivado, barra de
-> abas falando em documento. A prévia de Markdown entrou no corte M1 — modos
-> Editar/Preview, buffer não salvo, política de links e HTML desligado. Falta a
-> M2: lado a lado e imagens locais exercitadas.
+> **Concluída em 2026-09-25 (roadmap 40 §7.101, §7.103, §7.104 e §7.105),
+> exceto validação do autor.** A identidade por documento entrou inteira:
+> `docId` sintético, `currentTab` derivado, barra de abas falando em documento.
+> A prévia de Markdown fechou M1 e M2 — três modos, buffer não salvo com
+> debounce e guarda por documento, política de links, HTML desligado e imagens
+> locais com dois portões. Fora do corte, por decisão da §8 da especificação:
+> Mermaid, LaTeX, exportar PDF/HTML e paridade de fidelidade com GitHub.
+> **Nenhuma destas telas foi usada por pessoa ainda.**
 
 - path/ID estável identifica documento;
 - índice fica como detalhe do `ListView`;
@@ -337,6 +344,11 @@ Aceite adicional: Markdown fica legível sem aplicativo externo, e abrir um
 documento não executa HTML nem busca recurso remoto silenciosamente.
 
 ### V6 — mínimo da Etapa 4 dentro da 0.3
+
+Fonte:
+[`simbolos-e-indentacao-0.3.md`](../especificacoes/simbolos-e-indentacao-0.3.md)
+(arquitetura escrita em 2026-09-25, a partir de medição do código existente;
+ela inverte a ordem L1/E1 e nomeia o método `syntaxTree.indent`, com motivo).
 
 - L1 separa `workspace/symbol` de `documentSymbol` no C++ e liga a segunda
   fonte da aba Símbolos;
