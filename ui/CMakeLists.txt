@@ -32,6 +32,7 @@ endif()
 add_library(kinein-ui-puro OBJECT
     src/cli_args.cpp
     src/markdown_policy.cpp
+    src/log_redaction.cpp
 )
 kinein_enable_strict_compiler_options(kinein-ui-puro)
 target_link_libraries(kinein-ui-puro PUBLIC Qt6::Core)
@@ -106,10 +107,14 @@ set_source_files_properties(qml/datasource/DataSourceController.qml PROPERTIES Q
 set_source_files_properties(qml/grafana/GrafanaController.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaController.qml)
 set_source_files_properties(qml/grafana/GrafanaStateRules.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaStateRules.qml)
 set_source_files_properties(qml/grafana/GrafanaActionRules.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaActionRules.qml)
+set_source_files_properties(qml/grafana/GrafanaFilterRules.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaFilterRules.qml)
 set_source_files_properties(qml/grafana/GrafanaPanel.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaPanel.qml)
 set_source_files_properties(qml/grafana/GrafanaAuthSection.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaAuthSection.qml)
+set_source_files_properties(qml/grafana/GrafanaSetupSection.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaSetupSection.qml)
+set_source_files_properties(qml/grafana/GrafanaOverviewHeader.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaOverviewHeader.qml)
 set_source_files_properties(qml/grafana/GrafanaPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaPanelHost.qml)
 set_source_files_properties(qml/grafana/GrafanaFindings.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaFindings.qml)
+set_source_files_properties(qml/grafana/GrafanaMatches.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaMatches.qml)
 set_source_files_properties(qml/grafana/GrafanaVerdict.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaVerdict.qml)
 set_source_files_properties(qml/grafana/GrafanaTokenPrompt.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaTokenPrompt.qml)
 set_source_files_properties(qml/ipc/GrafanaEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaEventRouter.qml)
@@ -430,10 +435,14 @@ qt_add_qml_module(kinein-vectis
         qml/grafana/GrafanaController.qml
         qml/grafana/GrafanaStateRules.qml
         qml/grafana/GrafanaActionRules.qml
+        qml/grafana/GrafanaFilterRules.qml
         qml/grafana/GrafanaPanel.qml
         qml/grafana/GrafanaAuthSection.qml
+        qml/grafana/GrafanaSetupSection.qml
+        qml/grafana/GrafanaOverviewHeader.qml
         qml/grafana/GrafanaPanelHost.qml
         qml/grafana/GrafanaFindings.qml
+        qml/grafana/GrafanaMatches.qml
         qml/grafana/GrafanaVerdict.qml
         qml/grafana/GrafanaTokenPrompt.qml
         qml/ipc/GrafanaEventRouter.qml

@@ -99,7 +99,9 @@ Item {
     readonly property var primaryAction: acoes.primaryFor(root.state, root.facts)
     readonly property bool setupExpanded: acoes.setupExpanded(root.state)
     readonly property bool authVisible: acoes.authVisible(root.state)
-    readonly property string freshness: regras.frescorFrase(root.facts)
+    readonly property string contentPhrase: acoes.contentPhrase(root.state, root.facts)
+    readonly property string statusPhrase:
+        acoes.statusPhrase(root.state, root.facts, root.primaryAction.hint, regras)
 
     Timer {
         // Meio minuto: a frase mais curta fala em minutos, entao nunca se
@@ -111,6 +113,24 @@ Item {
     }
     // Token da sessao. Nunca persistido, nunca enviado ao `save`.
     property string sessionToken: ""
+    // A QUEM ELE PERTENCE (§7.1): workspace + URL CONFIRMADA. Guardar o token
+    // sem o dono e' o que permite manda-lo para a instancia errada depois de
+    // uma edicao — uma requisicao que "funciona" e vaza.
+    property string sessionTokenContext: ""
+    // A VIEW SABE QUE HA' UM TOKEN, NUNCA QUAL (§7.2 regra 8). E' o que basta
+    // para oferecer "Esquecer credencial" sem passar a credencial adiante.
+    readonly property bool hasSessionToken: root.sessionToken !== ""
+
+    readonly property string credentialContext:
+        regras.credentialContext(root.workspaceRoot, root.profile.url)
+
+    // O QUE FOI PEDIDO, para carimbar o que voltar. Sem isto a resposta era
+    // carimbada com o rascunho de AGORA: editar a URL durante a sonda fazia o
+    // resultado antigo passar por medida do endereco novo.
+    property string pendingContext: ""
+    // SALVAR E MEDIR SAO UM GESTO SO' (§5.1). O `Conectar` prometia testar o
+    // endereco e so' gravava; a medida vem quando o perfil volta do core.
+    property bool probeAfterProfile: false
 
     signal getRequested()
     signal saveRequested(var profile)
@@ -144,7 +164,9 @@ Item {
 
     function clearToken() {
         sessionToken = "";
+        sessionTokenContext = "";
         tokenRequired = false;
+        authFailed = false;
     }
 
     function clearProbe() {
@@ -171,10 +193,20 @@ Item {
 
     function close() {
         panelVisible = false;
-        // O TOKEN MORRE COM O PAINEL. Deixa-lo vivo seria guardar credencial
-        // por conveniencia, que e' exatamente o habito que a decisao de
-        // 2026-09-04 fechou.
+        // O TOKEN SOBREVIVE A FECHAR O PAINEL — decisao de 2026-09-22 (§7),
+        // que mudou a fronteira de proposito: abrir e fechar uma tool window
+        // virava um login novo a cada vez. Ele continua morrendo em tudo que
+        // significa "outra instancia ou outro projeto": trocar de workspace,
+        // confirmar outra URL, esquecer, ser recusado, ou o processo acabar.
+    }
+
+    // §7.2 regra 4: apagar a credencial e' gesto EXPLICITO e disponivel mesmo
+    // autenticado — nao um efeito colateral de fechar uma janela.
+    function forgetCredential() {
         clearToken();
+        // O que esta' na tela foi obtido COM o token; sem ele deixa de ser
+        // prova do que a IDE pode ver agora.
+        clearProbe();
     }
 
     function setDraftField(campo, valor) {
@@ -191,7 +223,21 @@ Item {
         draft = copia;
     }
 
+    // O gesto de `Conectar`: grava e mede. A sonda sai quando o core devolver
+    // o perfil, e nao antes — medir o que ainda nao foi confirmado mediria o
+    // endereco velho.
+    function connect() {
+        probeAfterProfile = true;
+        save();
+    }
+
     function save() {
+        if (draft.url !== profile.url) {
+            // CONFIRMAR OUTRA URL APAGA O TOKEN ANTES de qualquer conversa com
+            // ela (§7). A credencial foi dada para a instancia anterior.
+            clearToken();
+            clearProbe();
+        }
         const enviar = {
             url: draft.url,
             tokenSource: draft.tokenSource
@@ -214,16 +260,28 @@ Item {
 
     function probe() {
         errorText = "";
+        // O RESULTADO ANTERIOR NAO E' APAGADO AQUI. A §6 e' explicita: "falha
+        // de atualizacao pode manter o ultimo resultado como DESATUALIZADO,
+        // nunca como resultado novo". Limpar antes de perguntar tornava essa
+        // frase impossivel de cumprir — uma sonda que falhasse deixava a tela
+        // vazia, e o autor perdia o que ja' sabia por ter tentado saber mais.
+        // Quem apaga e' `clearProbe`, nas trocas que invalidam de verdade.
         probing = true;
-        clearProbe();
-        probing = true;
-        probeRequested(sessionToken);
+        pendingContext = root.credentialContext;
+        // SO' O DONO VIAJA: token de outro par workspace+URL nao vai junto,
+        // mesmo estando em memoria. Ele nao e' apagado aqui — o par antigo
+        // pode voltar — mas tambem nao e' oferecido a quem nao o pediu.
+        const credencial = regras.sameContext(root.pendingContext, root.sessionTokenContext)
+                         ? root.sessionToken : "";
+        probeRequested(credencial);
     }
 
     // O autor respondeu ao pedido de token: guarda na sessao e tenta de novo.
     function probeWithToken(token) {
         sessionToken = token;
+        sessionTokenContext = root.credentialContext;
         tokenRequired = false;
+        authFailed = false;
         probe();
     }
 
@@ -237,16 +295,30 @@ Item {
         if (!existe) {
             clearProbe();
         }
+        if (probeAfterProfile) {
+            probeAfterProfile = false;
+            if (existe) {
+                probe();
+            }
+        }
     }
 
     function handleProbed(resultado) {
+        // RESPOSTA ATRASADA DA URL ANTIGA E' DESCARTADA (§7.1). Entre pedir e
+        // responder, o autor pode ter confirmado outra instancia; aceitar isto
+        // aqui mostraria o Grafana de ontem como medida de agora.
+        if (!regras.sameContext(root.pendingContext, root.credentialContext)) {
+            probing = false;
+            return;
+        }
         probing = false;
         // A MEDIDA TEM HORA E DONO: sem isto, "medido agora" seria afirmacao
         // sem prova, e trocar de endereco deixaria o resultado velho passando
-        // por novo.
+        // por novo. O carimbo e' o que foi PEDIDO, nao o que esta' no rascunho
+        // agora — o rascunho pode ter mudado no meio.
         probedAt = Date.now();
         agora = probedAt;
-        resultUrl = root.draft.url;
+        resultUrl = root.profile.url;
         authFailed = false;
         reachable = resultado.reachable === true;
         authenticated = resultado.authenticated === true;
@@ -266,14 +338,34 @@ Item {
         if (code === "SECRET_REQUIRED") {
             // Pedir um token e' diferente de ter o token recusado: se ja'
             // havia um nesta sessao, o servidor o rejeitou.
-            authFailed = root.sessionToken !== "";
+            const recusado = root.sessionToken !== "";
+            if (recusado) {
+                // TOKEN REJEITADO E' APAGADO ANTES DE PEDIR OUTRO (§7): manter
+                // em memoria o que o servidor ja' negou so' arrisca reenvia-lo.
+                clearToken();
+            }
+            authFailed = recusado;
             tokenRequired = true;
-            probedAt = Date.now();
-            agora = probedAt;
-            resultUrl = root.draft.url;
+            // NADA FOI MEDIDO, e por isso nada e' carimbado. O core recusa
+            // `SECRET_REQUIRED` na RESOLUCAO DA POLITICA — politica `prompt`
+            // sem token, ou variavel de ambiente ausente —, antes de qualquer
+            // chamada ao Grafana (`handlers/grafana.rs`,
+            // `resolve_grafana_token`). Eu carimbava hora e endereco aqui, e a
+            // tela dizia "medido agora" sobre uma instancia com a qual ninguem
+            // falou; o eixo `probe` ainda virava "failed", abrindo a
+            // configuracao como se o ENDERECO tivesse problema. A medida
+            // anterior, se houver, continua sendo a ultima verdadeira.
             errorText = "";
             return;
         }
+        // O `Conectar` que falhou ao GRAVAR nao vira sonda: a promessa era
+        // testar o endereco confirmado, e nao ha' endereco confirmado.
+        probeAfterProfile = false;
+        // A INSTANCIA NAO RESPONDEU — mas o que ela respondeu ANTES continua
+        // na tela, marcado como velho pelo eixo `content`. Apagar seria punir
+        // quem tentou atualizar.
+        reachable = false;
+        authenticated = false;
         errorText = message;
     }
 

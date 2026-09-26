@@ -25,6 +25,9 @@ Item {
     GrafanaController {
         id: controlador
 
+        // Workspace de verdade: a custodia do token (§7.1) e' workspace + URL
+        // confirmada, e sem workspace nenhuma resposta pertence a lugar algum.
+        workspaceRoot: "/tmp/projeto"
         panelVisible: true
     }
 
@@ -87,6 +90,7 @@ Item {
 
         // 2 · o servidor pediu token: o campo E' a acao, e o botao sai.
         controlador.handleProfile({ url: "http://grafana.lab:3000", tokenSource: "none" }, true);
+        controlador.probe();
         controlador.handleFailed("grafana.probe", "token exigido", "SECRET_REQUIRED");
         root.conferir(root.mostrado(pedido),
                       "o servidor pediu token e o campo nao apareceu");
@@ -101,6 +105,8 @@ Item {
         const antes = pedido.labelText;
         controlador.probeWithToken("errado");
         controlador.handleFailed("grafana.probe", "token exigido", "SECRET_REQUIRED");
+        root.conferir(!controlador.hasSessionToken,
+                      "o token recusado ficou em memoria depois da recusa");
         root.conferir(root.mostrado(pedido) && !root.mostrado(primaria),
                       "token recusado: de novo dois gestos na tela");
         root.conferir(pedido.labelText !== antes,
@@ -110,6 +116,7 @@ Item {
         // cabem na tela. A lista tinha altura ZERO desde sempre, porque a
         // coluna do formulario preenchia o pai inteiro — sem erro e sem
         // warning, so' um espaco preto no lugar do que a IDE foi buscar.
+        controlador.probe();
         controlador.handleProbed({
             reachable: true, authenticated: true, version: "11.2.0",
             dataSources: [{ name: "postgres-kinein", typeName: "PostgreSQL",

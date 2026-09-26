@@ -19,6 +19,14 @@ Item {
     // dimensionamento que o autor pediu em 2026-09-04.
     readonly property int alturaCampo: 26
 
+    // O autor abriu `configurar…` com tudo em ordem. E' escolha dele, e por
+    // isso mora na tela e nao na regra.
+    property bool setupPinned: false
+
+    readonly property bool temAchados: root.controller !== null
+            && (root.controller.dashboards.length > 0
+                || root.controller.dataSources.length > 0)
+
     readonly property var acao: root.controller
             ? root.controller.primaryAction
             : ({ "kind": "", "label": "", "hint": "", "section": "" })
@@ -31,15 +39,18 @@ Item {
         switch (root.acao.kind) {
         case "connect":
             // CONECTAR e' salvar e medir no mesmo gesto (§5.1). Salvar deixou
-            // de ser pre-condicao visual para sondar.
-            root.controller.save();
+            // de ser pre-condicao visual para sondar — e o botao que promete
+            // "testa o endereco" passa a testar mesmo.
+            root.controller.connect();
             break;
         case "refresh":
             root.controller.probe();
             break;
         case "fixUrl":
-            campoUrl.forceActiveFocus();
-            campoUrl.selectAll();
+            // LEVAR ATE' O CAMPO, e nao so' acender um botao: e' para isso que
+            // a acao carrega `section`.
+            root.setupPinned = true;
+            ajustes.focusUrl();
             break;
         case "provideToken":
             root.controller.setDraftField("tokenSource", "prompt");
@@ -63,63 +74,27 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingSmall
 
-        Text {
+        GrafanaOverviewHeader {
             width: parent.width
-            text: qsTr("Observabilidade")
-            color: Theme.textPrimary
-            font.pixelSize: 13
-            font.bold: true
+            controller: root.controller
+            acao: root.acao
+            setupPinned: root.setupPinned
+            onPrimaryActivated: root.executarPrimaria()
+            onSetupToggled: root.setupPinned = !root.setupPinned
         }
 
-        Text {
+        GrafanaSetupSection {
+            id: ajustes
+
             width: parent.width
-            wrapMode: Text.WordWrap
-            // O QUE A TELA PROMETE E' O QUE ELA FAZ. A IDE conversa com um
-            // Grafana que e' processo do usuario; ela nao o instala, nao o
-            // embute e nao o desenha aqui dentro.
-            text: qsTr("A IDE conversa com o seu Grafana pela API dele. Os painéis abrem no navegador.")
-            color: Theme.textMuted
-            font.pixelSize: 10
-        }
-
-        Row {
-            width: parent.width
-            spacing: Theme.spacingSmall
-
-            Text {
-                width: 78
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Endereço")
-                color: Theme.textSecondary
-                font.pixelSize: 11
-            }
-
-            Rectangle {
-                width: parent.width - 78 - Theme.spacingSmall
-                height: root.alturaCampo
-                radius: Theme.radius
-                color: Theme.background0
-                border.width: 1
-                border.color: campoUrl.activeFocus ? Theme.accent : Theme.borderSoft
-
-                TextInput {
-                    id: campoUrl
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.textPrimary
-                    selectionColor: Theme.accentDim
-                    selectedTextColor: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: 12
-                    clip: true
-                    selectByMouse: true
-                    text: root.draft.url
-                    onTextEdited: root.controller.setDraftField("url", text)
-                }
-            }
+            // A REGRA DECIDE, O AUTOR TEM A ULTIMA PALAVRA: a configuracao se
+            // abre sozinha quando o proximo gesto mora nela, e o `configurar…`
+            // a mantem aberta quando ele quer mexer com tudo em ordem.
+            visible: (root.controller ? root.controller.setupExpanded : true)
+                     || root.setupPinned
+            controller: root.controller
+            draft: root.draft
+            alturaCampo: root.alturaCampo
         }
 
         GrafanaAuthSection {
@@ -141,71 +116,76 @@ Item {
 
             width: parent.width
             visible: root.acao.kind === "provideToken"
-            height: visible ? implicitHeight : 0
             reasonText: root.acao.hint
             labelText: root.acao.label
             onAccepted: token => root.controller.probeWithToken(token)
         }
 
-        // UMA ACAO PRIMARIA, decidida pelo estado (GrafanaActionRules). Antes
-        // eram tres com o mesmo peso — `Salvar · Sondar · Esquecer` —, e a §3
-        // nomeia o atrito: salvar antes de sondar era exigencia do DESENHO, e
-        // nao intencao de quem usa.
-        Row {
-            objectName: "grafanaPrimaria"
-
-            width: parent.width
-            spacing: Theme.spacingSmall
-            // Quando o gesto primario E' o campo do token, quem o desenha e' o
-            // `GrafanaTokenPrompt` acima: um botao aqui seria o segundo.
-            visible: root.acao.kind !== "provideToken"
-            height: visible ? implicitHeight : 0
-
-            KvBarButton {
-                labelText: root.acao.label
-                enabled: root.acao.kind !== "waiting"
-                onActivated: root.executarPrimaria()
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                width: parent.width - 140
-                wrapMode: Text.WordWrap
-                text: root.acao.hint
-                color: Theme.textMuted
-                font.pixelSize: 9
-            }
-        }
-
-        // Os gestos raros continuam alcancaveis, e param de disputar a atencao
-        // de quem so' quer ver um dashboard.
-        Row {
-            width: parent.width
-            spacing: Theme.spacingSmall
-            visible: root.controller ? root.controller.hasInstance : false
-
-            KvBarButton {
-                labelText: qsTr("Salvar endereço")
-                enabled: root.controller ? root.controller.editing : false
-                onActivated: root.controller.save()
-            }
-
-            KvBarButton {
-                labelText: qsTr("Esquecer")
-                onActivated: root.controller.forget()
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.controller ? root.controller.freshness : ""
-                color: Theme.textMuted
-                font.pixelSize: 9
-            }
-        }
-
         GrafanaVerdict {
             width: parent.width
             controller: root.controller
+        }
+
+        GrafanaMatches {
+            width: parent.width
+            matches: root.controller ? root.controller.matches : []
+            dataSources: root.controller ? root.controller.dataSources : []
+            authenticated: root.controller ? root.controller.authenticated : false
+        }
+
+        // AREA VAZIA NAO PODE SER AREA MUDA: carregando, nada recebido,
+        // desatualizado e "sem token a API nao lista" sao respostas
+        // diferentes, e cada uma tem a sua frase.
+        Text {
+            width: parent.width
+            wrapMode: Text.WordWrap
+            // Column NAO reserva espaco para filho invisivel, entao nao ha'
+            // altura para zerar — e zera-la fazia `height` e `implicitHeight`
+            // se perseguirem num laco de binding.
+            visible: text !== ""
+            text: root.controller ? root.controller.contentPhrase : ""
+            color: Theme.textMuted
+            font.pixelSize: 10
+        }
+
+        // O FILTRO SO' EXISTE QUANDO HA' O QUE FILTRAR. Uma caixa de busca
+        // sobre lista vazia e' convite a procurar o que nao chegou.
+        Rectangle {
+            width: parent.width
+            height: root.alturaCampo
+            visible: root.temAchados
+            radius: Theme.radius
+            color: Theme.background0
+            border.width: 1
+            border.color: campoFiltro.activeFocus ? Theme.accent : Theme.borderSoft
+
+            TextInput {
+                id: campoFiltro
+
+                anchors.fill: parent
+                anchors.leftMargin: Theme.spacingSmall
+                anchors.rightMargin: Theme.spacingSmall
+                verticalAlignment: TextInput.AlignVCenter
+                color: Theme.textPrimary
+                selectionColor: Theme.accentDim
+                selectedTextColor: Theme.textPrimary
+                font.pixelSize: 11
+                clip: true
+                selectByMouse: true
+                // ESC LIMPA, e nao fecha nada: e' o gesto que devolve a lista
+                // inteira sem tirar a mao do teclado.
+                Keys.onEscapePressed: campoFiltro.text = ""
+            }
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacingSmall
+                anchors.verticalCenter: parent.verticalCenter
+                visible: campoFiltro.text === ""
+                text: qsTr("filtrar dashboards, pasta ou fonte…")
+                color: Theme.textMuted
+                font.pixelSize: 11
+            }
         }
     }
 
@@ -228,10 +208,9 @@ Item {
             id: achados
 
             width: parent.width
-            matches: root.controller ? root.controller.matches : []
             dataSources: root.controller ? root.controller.dataSources : []
             dashboards: root.controller ? root.controller.dashboards : []
-            authenticated: root.controller ? root.controller.authenticated : false
+            filtro: campoFiltro.text
 
             onDashboardActivated: caminho =>
                 Qt.openUrlExternally(root.controller.dashboardUrl(caminho))

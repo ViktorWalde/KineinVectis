@@ -87,6 +87,37 @@ QtObject {
     }
 
     // Os quatro de uma vez, que e' como a tela os consome.
+    // O ENDERECO COMO SE FALA DELE: `http://grafana.lab:3000` vira
+    // `grafana.lab:3000`. O esquema importa para a requisicao e nao para a
+    // frase; mantido quando NAO e' http/https, porque ai' ele e' informacao.
+    function hostOf(url) {
+        if (url === undefined || url === "") {
+            return "";
+        }
+        const semEsquema = url.replace(/^https?:\/\//, "");
+        return semEsquema.replace(/\/+$/, "");
+    }
+
+    // CUSTODIA DO TOKEN (§7.1): o token da sessao pertence a UM par
+    // workspace + URL CONFIRMADA. Sem esse vinculo, editar o rascunho e
+    // mandar sondar enviaria a credencial de uma instancia para outra — e o
+    // erro seria invisivel, porque a requisicao "funciona".
+    //
+    // A URL aqui e' a do PERFIL, nunca a do rascunho: rascunho e' intencao,
+    // perfil e' o que foi confirmado.
+    function credentialContext(workspaceRoot, profileUrl) {
+        if (workspaceRoot === "" || profileUrl === "") {
+            return "";
+        }
+        return workspaceRoot + "|" + profileUrl;
+    }
+
+    // Contexto vazio nunca casa com contexto vazio: "nao sei de onde veio"
+    // nao e' prova de pertencer a lugar nenhum.
+    function sameContext(um, outro) {
+        return um !== "" && um === outro;
+    }
+
     function stateFor(e) {
         return {
             "setup": root.setupFor(e),

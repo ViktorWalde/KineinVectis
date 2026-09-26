@@ -18,6 +18,80 @@ import QtQuick
 QtObject {
     id: root
 
+    // A SEGUNDA LINHA DO CABECALHO (§5.2): "autenticado em X · medido agora".
+    //
+    // `tempo` e' o `GrafanaStateRules`, passado pelo controller: quem SABE a
+    // idade e o host e' quem deriva os fatos; quem decide o que dizer com eles
+    // e' este arquivo. A separacao nao e' cerimonia — a catraca de duplicacao
+    // acusou `auth === "required"` nos dois lugares, e ela esta' certa: um
+    // arquivo PRODUZ o estado, o outro o LE, e misturar os dois papeis e' como
+    // `severity` ficou azul num painel e vermelha no outro.
+    //
+    // Uma frase so', com dono unico, porque a alternativa e' o que o painel
+    // fazia: cada pedaco de informacao aparecendo num canto diferente, e o
+    // autor somando de cabeca. Quando o proximo gesto ainda e' configurar, ela
+    // cede o lugar para a dica da acao — dizer "nao consultado" ao lado de um
+    // botao `Conectar` seria repetir a mesma coisa com outras palavras.
+    function statusPhrase(state, e, actionHint, tempo) {
+        if (state.setup !== "saved") {
+            return actionHint !== undefined ? actionHint : "";
+        }
+        if (state.probe === "probing") {
+            return qsTr("consultando %1…").arg(tempo.hostOf(e.url));
+        }
+        if (state.probe === "failed") {
+            return actionHint !== undefined ? actionHint : "";
+        }
+        const onde = tempo.hostOf(e.resultUrl !== "" ? e.resultUrl : e.url);
+        const quando = tempo.frescorFrase(e);
+        // PEDIDO DE TOKEN NAO ENTRA AQUI: quem explica o pedido e' o proprio
+        // campo, logo abaixo, e a frase repetida em dois lugares foi o que a
+        // cena de inspecao mostrou. O cabecalho volta a falar do que ele sabe:
+        // onde, e ha' quanto tempo.
+        if (state.probe === "unknown") {
+            return qsTr("%1 · %2").arg(onde).arg(quando);
+        }
+        // SEM AUTENTICACAO NAO E' FALHA, e a frase nao pode soar como uma:
+        // e' o que se ve de fora, e o que se ve de fora tem valor.
+        return state.auth === "authenticated"
+             ? qsTr("autenticado em %1 · %2").arg(onde).arg(quando)
+             : qsTr("sem autenticação em %1 · %2").arg(onde).arg(quando);
+    }
+
+    // O QUE DIZER NA AREA DO CONTEUDO quando nao ha' conteudo (§5.2: "estados
+    // vazio, carregando, erro e sem autenticacao possuem texto e acao
+    // proprios"). A ACAO e' sempre a primaria — a §5.2 tambem diz que ela e' a
+    // unica —, entao aqui so' entra o TEXTO, e ele existe para que area vazia
+    // nunca seja area muda.
+    // CADA ESTADO FALA UMA VEZ SO'. Carregando ja' tem dono — a frase do
+    // cabecalho diz "consultando X…", com o endereco —, o pedido de token e'
+    // explicado pelo proprio campo, e o endereco que nao respondeu, pelo
+    // veredito. Uma segunda frase aqui seria a terceira copia da mesma coisa,
+    // que foi o que a cena de inspecao pegou duas vezes nesta fatia.
+    function contentPhrase(state, e) {
+        // O VELHO SE ANUNCIA ANTES DE TUDO, inclusive antes do erro: e' o caso
+        // em que a tela mostra conteudo E deu errado, e sem esta frase o
+        // conteudo passaria por atual.
+        if (state.content === "stale") {
+            return qsTr("o que está aqui é da medição anterior, e pode não valer mais.");
+        }
+        if (state.auth === "required" || state.auth === "failed"
+            || state.probe === "failed" || state.setup !== "saved") {
+            return "";
+        }
+        if (state.content === "unknown") {
+            return qsTr("ainda não consultado nesta sessão.");
+        }
+        if (state.content === "empty") {
+            // SEM TOKEN A API NAO LISTA: dizer "nao ha' dashboards" seria
+            // afirmar sobre o que a IDE nao pode ver.
+            return state.auth === "authenticated"
+                 ? qsTr("este Grafana não tem fontes de dados nem dashboards.")
+                 : qsTr("sem token, a API não lista fontes nem dashboards — a versão e a saúde já são visíveis.");
+        }
+        return "";
+    }
+
     // { kind, label, hint, section }
     //
     // `section` diz ONDE o gesto vive, para o painel LEVAR a pessoa ate' la' em
