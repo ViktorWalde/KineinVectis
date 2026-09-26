@@ -6248,3 +6248,159 @@ ele acumula ate' a linha fechar; tres rodadas seguidas verdes.
 
 **Provas:** `evidencias-2026-09-25-remote-hud/painel-pelo-componente-da-entrada.png`
 — o painel Remoto aberto pelo caminho novo, sem aviso de QML em execucao.
+
+### 7.107 A indentacao pela gramatica, a fonte do simbolo, e um estrago meu no meio — 2026-09-26 (V6)
+
+A forma e' a que a especificacao fixou, e ela e' a mesma da V5 uma camada
+adiante: **a tecla nunca espera**.
+
+```text
+Enter ou }
+ → o fallback LOCAL aplica na hora
+ → pede syntaxTree.indent { path, version, line, column, trigger }
+ → a resposta chega
+ → corrige SOMENTE se documento, versao e texto ainda coincidem
+```
+
+**O core ja' tinha a arvore; faltava a versao.** O `SyntaxTreeService` mantem um
+`ParsedDocument` por arquivo, reparseado a cada `syntaxTree.update` — a
+indentacao por gramatica nao precisou de parser novo, so' de uma consulta sobre
+a arvore que ja' estava la'. Mas o `ParsedDocument` recebia `version` e NAO a
+guardava, e sem isso o core nao tem como dizer "respondi sobre a versao N". A
+resposta carrega a versao da ARVORE, nao a que foi pedida; comparar as duas e' a
+segunda trava.
+
+**A regra e' uma caminhada pela arvore, e nao uma query `indents.scm`.** Editores
+com conjunto ABERTO de linguagens precisam da maquinaria de capturas
+(`@indent`, `@outdent`, `@align`, `@branch`); aqui o conjunto e' fechado — C,
+C++, Rust e Python — e contar ancestrais que abrem bloco e' menor, explicavel em
+um paragrafo e testavel sem carregar arquivo de query.
+
+**A arvore quebrada nao inventa resposta, e isso foi medido.** Com uma chave sem
+fechamento (`fn main() {\n    if x {`), a arvore do Rust vira `{ < ERROR`: nao ha'
+bloco nenhum para contar. Responder ZERO ali nao seria "sem opiniao" — a UI
+aplicaria e puxaria a linha para a coluna um. Entao ancestral `ERROR` devolve
+**sem resposta**, e o fallback local continua valendo. Na IDE esse caso e' raro
+porque o auto-close ja' inseriu o fechamento; ele aparece ao colar e com o
+auto-close desligado.
+
+---
+
+**E AGORA A PARTE QUE PRECISA FICAR ESCRITA.**
+
+No meio desta fatia eu **apaguei oito funcoes do `EditorTextController`** —
+`duplicateLineOrSelection`, `moveLines`, `toggleLineComment`,
+`deleteCurrentLine`, `goToLine`, `expandSelection`, `shrinkSelection` e
+`insertCloserBrace` — com uma edicao por script que localizava o fim da funcao
+`insertNewline` procurando `"\n}\n"`. Esse padrao nao acha o fim da FUNCAO: acha
+o fim do **arquivo**. A substituicao levou tudo o que havia entre os dois pontos.
+
+Pior que o estrago foi a leitura dele. Quando o `qmllint` acusou sete membros
+inexistentes, eu tratei o resultado como **defeito pre-existente**, fui ao `git
+log -S`, vi apenas o commit `b506d87` e concluí que as funcoes "existiam na
+fundacao e se perderam num refactor". A evidencia dizia o CONTRARIO: com `-S`,
+uma remocao tambem apareceria na lista. Um commit so' significa "foi adicionada
+e nunca removida" — ou seja, ela ainda estava la' ate' eu apagar.
+
+Cheguei a escrever no codigo um comentario afirmando o defeito antigo. Ele saiu
+junto com a restauracao; se tivesse sobrevivido, seria uma mentira assinada no
+fonte, do tipo que este registro existe para evitar.
+
+**O que salvou:** o `qmllint`, assim que os componentes novos entraram no modulo.
+Sete `Member ... not found` de uma vez em funcoes basicas — duplicar linha,
+comentar, ir para linha — e' grande demais para ser verdade num editor em uso.
+Foi a implausibilidade que mandou conferir, e a conferencia (comparar o estado
+commitado com o de agora) mostrou a origem em dois minutos.
+
+**As duas licoes, para nao virarem folclore:**
+
+1. **Edicao por script nao procura fim de bloco por delimitador.** A ancora tem
+   de ser o texto exato do fim daquela funcao, e a substituicao tem de conferir
+   quantas `function ` ela engoliu antes de gravar. Foi assim que a segunda
+   tentativa foi feita.
+2. **Achado grande demais merece desconfianca antes de teoria.** "Sete funcoes
+   basicas quebradas e ninguem notou" e' uma hipotese cara; "eu quebrei agora" e'
+   barata. A barata se testa em dois minutos.
+
+---
+
+**A catraca cobrou tres vezes, e das tres a extracao melhorou o desenho:**
+
+- o `EditorController` esta' em debito declarado e nao pode crescer. Saiu a
+  navegacao entre diagnosticos (`EditorDiagnosticNavigation`), saiu a tabela de
+  tokens de comentario (`LanguageCommentRules` — uma TABELA que cresce a cada
+  linguagem nova, dentro de um arquivo de 790 linhas, e' uma tabela que ninguem
+  acha), e os cinco repasses de uma linha sem guarda viraram um alias. Ele
+  **encolheu** de 791 para 786;
+- o `EditorTextController` foi a 434 com a fiacao da correcao; saiu o
+  `EditorIndentCorrection`, dono das tres travas;
+- e depois a 419; sairam as operacoes sobre LINHAS INTEIRAS
+  (`EditorLineOperations`: duplicar, mover, comentar, apagar), que operam sobre
+  a linha como unidade e nenhuma delas olha o caractere sob o cursor. Ficou em
+  299.
+
+**A FONTE DO SIMBOLO DEIXOU DE SER ANONIMA (L1, primeira metade).** A ponte
+C++ fundia `lsp.documentSymbols` e `lsp.workspaceSymbols` no mesmo sinal
+`lspSymbolsResolved(symbols)`, sem nada que dissesse qual pedido voltava. O
+caminho de FALHA, no mesmo fluxo, sempre preservou o metodo
+(`handleRequestFailed(method, message)`) — a assimetria e' que denuncia: era o
+SUCESSO que perdia a informacao que o fracasso mantinha.
+
+O efeito: digitar `@nome` e depois `#nome` deixava a resposta do primeiro pintar
+a lista do segundo, e o `lspSymbolsAnswered` suprimia o indice sem motivo. O
+filtro por texto mascarava parte disso, mas a FONTE continuava errada.
+
+A resposta passou a DIZER sobre o que ela e' (`path` e `query`, protocolo
+`0.135.0`), em vez de o cliente ter de lembrar o que perguntou. E' o mesmo
+principio do `syntaxTree.indent` devolvendo a versao da arvore: **quem responde
+se identifica**. Correlacionar por tabela paralela no cliente funciona ate' o dia
+em que dois pedidos compartilham o mesmo caminho.
+
+Quatro guardas, conferidas por MUTACAO — removidas, o harness reprova nas
+quatro: resposta de outro arquivo, resposta de query antiga, workspace
+respondendo a pedido de documento e o inverso.
+
+**A SEGUNDA FONTE DA ABA SIMBOLOS.** Medido antes: ela NAO consumia LSP nenhum
+— so' `index.symbols`. Entao "ligar a segunda fonte" era trabalho novo, e nao
+religar um fio. As duas nao se substituem, e a regra de empate sai disso:
+
+```text
+INDICE  responde desde o primeiro segundo e SEM arquivo aberto, no projeto
+        inteiro. Sabe nome e posicao.
+LSP     responde depois, so' para o arquivo aberto, e sabe mais: tipo, escopo,
+        container.
+```
+
+Na MESMA posicao o LSP vence, porque diz mais sobre o mesmo simbolo; e o indice
+aparece sozinho porque sem ele a aba ficaria vazia ate' o servidor subir (pilar
+0 do roadmap 42). A mesclagem e' pura (`SymbolMergeRules`, com harness) e a
+FONTE so' aparece na tela quando as duas estao na lista — com uma fonte so',
+dizer de onde veio nao explica nada e rouba espaco do caminho.
+
+Uma armadilha que o harness trava: **deduplicar por nome estaria errado.** Dois
+simbolos com o mesmo nome em arquivos diferentes nao sao o mesmo simbolo. A
+chave e' arquivo + linha.
+
+**O BURACO DO FERRAMENTAL FOI FECHADO NA MESMA FATIA.** Nenhum gate cruzava a
+lista canonica do `03-ipc-protocol.md` com os metodos roteados: eu acrescentei
+`syntaxTree.indent` e nada cobrou documentacao nem bump — os dois sairam porque
+EU LEMBREI, e "porque alguem lembrou" e' exatamente o que este projeto substitui
+por gate.
+
+Agora a `verificar-fiacao-ipc` confere os dois sentidos da lista e tambem o
+NUMERO que o titulo afirma. Ela achou deriva no primeiro disparo: o titulo dizia
+168 sobre 169 metodos. Conferido por mutacao — tirando `syntaxTree.indent` da
+lista, ela reprova nomeando o metodo.
+
+**E a primeira versao do regex dela era um falso positivo de cinco metodos:**
+`lsp.workspaceEdit.cancel` e os `workspace.recent.*` tem TRES partes, e o padrao
+so' aceitava duas. Gate que acusa o que nao existe custa mais confianca que gate
+nenhum — e' o criterio que a especificacao da 0.4 ja' tinha escrito, exercitado
+aqui.
+
+**Provas:** `tst_editor_indent`, `tst_symbol_origin` e `tst_symbol_merge`
+(75 harnesses) cobre o fallback local e as
+tres travas, inclusive "resposta sem pedido nao inventa correcao"; oito testes
+Rust em `lang::indent` cobrem bloco aninhado, arvore com erro, `}` e Python; e
+tres testes novos em `lang::positions` travam a conversao inversa
+linha/coluna → byte, que e' onde acento vira coluna errada.

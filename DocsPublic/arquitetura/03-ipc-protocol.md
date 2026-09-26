@@ -1,5 +1,17 @@
 # 03 — Protocolo IPC
 
+> **0.135.0 (2026-09-26) — a resposta diz sobre o que ela é.**
+> Duas mudanças com o mesmo motivo. `syntaxTree.indent { path, version, line,
+> column, trigger }` → `{ path, version, language, level, dedentTo? }`, em que a
+> `version` devolvida é a da **árvore que respondeu**, e não a que foi
+> perguntada: o autor continua digitando enquanto o pedido viaja, e comparar as
+> duas é o que impede a correção de cair no buffer errado. Resultado `null` é
+> resposta legítima — "a gramática não sabe aqui" —, e o editor fica com o
+> fallback local que já aplicou.
+> E `lsp.documentSymbols`/`lsp.workspaceSymbols` passam a devolver `path` e
+> `query`: até aqui as duas respostas eram indistinguíveis, e uma resposta
+> atrasada de `@nome` podia pintar a lista de `#nome`.
+>
 > **0.134.0 (2026-09-24) — a linha `ssh` colada vira um perfil.**
 > `remote.parseCommand { command }` → `{ target, source[] }`. A pessoa cola a
 > linha que já usa (`ssh -p 2222 pi@10.0.0.7`, ou só `pi@host`) e o core a **lê**
@@ -1776,6 +1788,29 @@ loop principal antes de ser repassado — o job roda em thread própria e não
 alcança o `Core`, mas o evento dele volta ao dono do estado
 (`DocsPublic/arquitetura/04-boot-e-comunicacao.md` §3).
 
+### Indentação pela gramática (`syntaxTree.indent`, `0.135.0`)
+
+Recebe `{ path, version, line, column, trigger }` — `line` 1-based, `column`
+0-based em unidades UTF-16, `trigger` em `newline` ou `closeDelimiter` — e
+responde `{ path, version, language, level, dedentTo? }` ou **`null`**.
+
+Três coisas que o formato diz de propósito:
+
+- **`version` é a da ÁRVORE**, não a que foi pedida. O core responde a partir da
+  árvore que tem, que pode ser anterior ao que já foi digitado; a UI descarta a
+  resposta quando as duas não batem. É por isso que o `ParsedDocument` guarda
+  versão;
+- **`level` é um número de níveis**, e o texto de um nível é decisão do editor
+  (espaço ou tabulação). Devolver texto obrigaria os dois lados a concordar
+  sobre a configuração;
+- **`null` não é erro.** Significa "a gramática não sabe aqui" — árvore com
+  `ERROR` em volta do cursor, ou arquivo sem gramática. O editor já aplicou o
+  fallback local antes de perguntar, e ele continua valendo. Transformar isso em
+  falha encheria o log de algo que está funcionando como desenhado.
+
+Nada disso está no caminho síncrono da tecla: o fallback local decide na hora, e
+esta resposta só corrige quando diverge.
+
 ### Sintaxe incremental (`syntaxTree.update`)
 
 Implementado no protocolo `0.46.0` para C, C++ e Rust. Recebe
@@ -2872,7 +2907,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 168 métodos roteados — a lista inteira
+## Os 169 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3056,6 +3091,7 @@ settings.set
 
 setup.list
 
+syntaxTree.indent
 syntaxTree.update
 
 terminal.clearScrollback

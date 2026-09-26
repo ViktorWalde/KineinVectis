@@ -5,6 +5,18 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
 
 ## 0.3.0 — em desenvolvimento
 
+- Protocolo `0.135.0` — **a resposta diz sobre o que ela é.** A indentação
+  pergunta à gramática (`syntaxTree.indent`) sem nunca fazer a tecla esperar: o
+  fallback local aplica na hora, e a correção só entra se documento, versão e
+  texto ainda coincidirem. A versão que volta é a da **árvore que respondeu**,
+  não a que foi perguntada. E as duas buscas de símbolo passam a devolver `path`
+  e `query`, porque até aqui eram indistinguíveis e uma resposta atrasada de
+  `@nome` podia pintar a lista de `#nome`.
+- `}` digitado alinha com a linha que abriu o bloco, e Enter indenta pela
+  estrutura do código em C, C++, Rust e Python. Onde a gramática não sabe
+  responder — árvore com erro em volta do cursor —, ela diz que não sabe, e vale
+  o que o editor já aplicou.
+
 - Terminal com menu contextual para copiar, colar, selecionar tudo ou a área visível,
   limpar tela/histórico e gerenciar sessões.
 - `Ctrl+C` sempre envia interrupção, `Ctrl+Shift+C` copia e `Ctrl+V` cola,
