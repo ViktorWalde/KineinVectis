@@ -21,6 +21,28 @@ Window {
         window: root
     }
 
+    // UMA JANELA POR PASTA. Enquanto este workspace esta' aberto, esta janela
+    // responde por ele: quem digitar `kinein <a mesma pasta>` no terminal
+    // desiste de abrir a segunda e pede que esta suba.
+    //
+    // POR QUE NAO E' SO' CONFORTO: nao ha' lock de workspace, e duas janelas
+    // na mesma pasta sao duas donas do `.kinein/` — a ultima a fechar apaga o
+    // que a outra gravou, sem erro e sem aviso.
+    SingleInstanceGuard {
+        workspacePath: coreClient.workspaceRoot
+
+        onActivationRequested: function (token) {
+            // MELHOR ESFORCO, E DITO COMO TAL. No Wayland quem decide e' o
+            // compositor: sem um token de ativacao valido o pedido vira
+            // "janela pronta" na barra de tarefas, e nao foco. O que a IDE
+            // garante em qualquer ambiente e' o que importa — a segunda
+            // janela nao abriu, e o terminal disse por que.
+            root.show();
+            root.raise();
+            root.requestActivate();
+        }
+    }
+
     CoreClient {
         id: coreClient
     }

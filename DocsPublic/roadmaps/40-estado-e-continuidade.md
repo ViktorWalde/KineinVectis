@@ -6807,3 +6807,85 @@ autenticada de verdade.
 Com isto a **V7 fecha**. O que continua pendente e é do autor: se quer o painel
 também contra um Grafana com dashboards de verdade (o teste cria a instância
 limpa, então lista zero dashboards — o cruzamento, que é o ponto, está provado).
+
+
+### 7.116 Uma janela por pasta — 2026-09-26
+
+O autor decidiu: **mesma pasta foca a janela aberta; outra pasta abre nova.**
+Implementado no mesmo dia.
+
+**O que isso protege não é conforto.** Medido antes de escrever qualquer
+código: **não existe lock de workspace**. Duas janelas na mesma pasta são duas
+donas do `.kinein/`, escrevendo o mesmo `session.json` e o mesmo índice — a
+última a fechar apaga o que a outra gravou, sem erro e sem aviso. O único
+`Mutex` do core é de teste, e diz isso no próprio comentário.
+
+**Como funciona.** Cada janela com um workspace aberto escuta num socket de
+domínio Unix no `XDG_RUNTIME_DIR`, nomeado por um digest do caminho canônico.
+Quem chega depois conecta, manda o caminho e espera. O digest só escolhe o
+**nome do arquivo**: o caminho inteiro viaja na mensagem e é conferido do outro
+lado, então colisão não faz uma pasta se passar por outra — no máximo faz duas
+disputarem um nome, e a segunda descobre que a casa não é dela.
+
+Sem `Qt6::Network`: `QSocketNotifier` é do QtCore, e o AppImage não ganhou
+biblioteca nenhuma por causa disto.
+
+**As decisões saíram do sistema operacional.** Nome do socket, forma da
+mensagem, conferência do caminho e leitura da resposta vivem em
+`ui/src/single_instance.{h,cpp}`, sem Qt GUI, com o quinto teste C++ do projeto
+— doze asserções, incluindo **socket de verdade com dois lados e prazo**:
+
+- nome curto por mais fundo que seja o projeto (`sun_path` tem 108 bytes);
+- pastas diferentes nunca compartilham nome, e a mesma pasta dá sempre o mesmo;
+- sem `XDG_RUNTIME_DIR` não há socket, e a IDE segue sem coordenação em vez de
+  inventar um diretório;
+- linha de outro protocolo é **recusada** — um socket no `XDG_RUNTIME_DIR` é
+  alcançável por qualquer processo do mesmo usuário;
+- quebra de linha no caminho não contrabandeia uma segunda mensagem;
+- dono vivo responde e o recém-chegado desiste;
+- dono de **outra** pasta diz não, e diz rápido (medido: menos de 300 ms);
+- socket órfão de um crash é assumido, não respeitado.
+
+**Erra para o lado de abrir.** Qualquer dúvida — sem resposta a tempo, dono
+travado, socket estranho — abre a janela. Uma janela a mais é um incômodo; uma
+janela a menos, com o autor achando que a IDE ignorou o comando, é um defeito.
+
+**Medido no binário, não só em teste:** com o projeto aberto, a segunda
+invocação imprimiu *"este projeto já está aberto"* e saiu — um processo de UI,
+não dois. Outra pasta subiu janela nova, com o seu próprio socket. E um socket
+órfão (deixado por `SIGTERM`, que não roda destrutor) foi assumido pela
+instância seguinte.
+
+**O limite, dito e medido.** A IDE é cliente **Wayland nativo**, e trazer para
+a frente a janela de outro processo é privilégio do compositor. O pedido chega
+(a sonda confirmou o caminho inteiro), mas no GNOME sem token de ativação ele
+vira destaque na barra, e não foco. O token do XDG viaja na mensagem quando o
+terminal fornece um — o que o meu shell de teste **não** faz. **Falta confirmar
+na tela do autor, de um terminal de verdade, com a janela atrás de outra.** O
+que está garantido em qualquer ambiente é o que importa: a segunda janela não
+abre, e o terminal diz por quê.
+
+**E eu repeti o meu próprio erro.** Crases dentro de aspas duplas num comando
+de shell — exatamente o que o `shellcheck` tinha pegado no instalador poucas
+horas antes — **executaram** o `kinein` em vez de escrevê-lo, e subiram uma IDE
+inteira no meio de um `grep`. O acaso foi útil: o binário velho (2026-09-25)
+ainda tinha o laço de binding do `breakpointLines`, e deu para confirmar que o
+código atual não tem mais. A lição não é sobre o acaso.
+
+**Dois acertos depois do clang-tidy**, que achou oito coisas no código novo e
+estava certo em todas: multiplicação em `int` atribuída a `long`, aritmética de
+ponteiro na escrita (virou `std::span`, o mesmo remédio que o `main` usa com o
+`argv`), array decaindo em ponteiro no `unlink` (o caminho já estava ali como
+texto), `const` impedindo o *move* de um `optional` no retorno, e um
+`QSocketNotifier` cru — que virou `unique_ptr`, porque ele tem de morrer
+**antes** do descritor que observa, e amarrá-lo ao pai Qt deixaria um
+notificador apontando para um fd já fechado. Sobrou **um** `NOLINT`, explicado
+e num lugar só: o `sockaddr*` que `connect` e `bind` exigem não tem como ser
+escrito em C++ sem o cast que o checker recusa — com razão, porque em código
+comum ele quase sempre é engano.
+
+**E um teste meu piscou.** A asserção "a recusa veio em menos de 300 ms" falhou
+uma vez, com o clang-tidy ocupando a máquina ao lado. O que ela quer medir é
+*"respondeu antes do prazo"*, e não um número de milissegundos: passou a usar um
+prazo folgado e a cobrar metade dele. Teste que falha ao acaso ensina a ignorar
+teste.

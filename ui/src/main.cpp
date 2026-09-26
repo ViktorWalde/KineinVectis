@@ -1,12 +1,14 @@
 // Entry point of the Kinein Vectis UI process.
 
 #include "cli_args.h"
+#include "single_instance.h"
 #include "typing_perf_harness.h"
 #include <QTextStream>
 #include <span>
 
 #include <QDir>
 #include <QElapsedTimer>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>
 #include <QQmlApplicationEngine>
@@ -137,6 +139,28 @@ int main(int argc, char* argv[])
             QTextStream erro{stderr};
             erro << motivo << '\n';
             return 2;
+        }
+        // UMA JANELA POR PASTA (decisao do autor, 2026-09-26). Se ja' ha' uma
+        // janela com ESTE projeto, ela e' avisada e este processo sai sem
+        // abrir a segunda.
+        //
+        // NAO E' CONFORTO: nao ha' lock de workspace, e duas janelas na mesma
+        // pasta sao duas donas do `.kinein/` — a ultima a fechar apaga o que a
+        // outra gravou, sem erro e sem aviso. Medido em 2026-09-26.
+        //
+        // Antes do QGuiApplication de proposito: se alguem ja' responde por
+        // esta pasta, nem a UI nem o core chegam a subir.
+        const QString canonica = QFileInfo{pedido.pasta}.canonicalFilePath();
+        const QString socket =
+            kinein::socketPathFor(qEnvironmentVariable("XDG_RUNTIME_DIR"), canonica);
+        // O TOKEN DO XDG E' A UNICA AUTORIZACAO que o compositor Wayland
+        // aceita para uma janela subir por pedido de outro processo. O
+        // terminal o poe no ambiente quando sabe fazer isso; quando nao poe,
+        // o pedido segue sem ele e a janela pode apenas piscar na barra.
+        if (kinein::handOff(socket, canonica, qEnvironmentVariable("XDG_ACTIVATION_TOKEN"))) {
+            QTextStream saida{stdout};
+            saida << QStringLiteral("este projeto já está aberto: %1\n").arg(canonica);
+            return 0;
         }
         break;
     }

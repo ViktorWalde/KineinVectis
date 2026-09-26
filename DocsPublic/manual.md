@@ -685,12 +685,24 @@ próprio, aponte o PEM no campo que aparece. Não existe "cifra sem conferir":
 
 ### Abrir um projeto pelo terminal
 
+Depois de instalar (o script do AppImage, ou `scripts/instalar-atalho.sh` num
+checkout), o comando curto é `kinein`:
+
+```text
+kinein                  abre a pasta atual
+kinein ~/meu-projeto    abre essa pasta
+kinein --help           explica e sai, sem subir a IDE
+kinein --version        diz a versão e sai
+```
+
+O binário direto não assume a pasta atual, e isso é deliberado: o atalho do
+menu o executa sem argumento, de um diretório qualquer, e abrir o que estiver
+por perto seria pior que não abrir nada.
+
 ```text
 scripts/kinein-vectis                      abre a IDE sem projeto
 scripts/kinein-vectis .                    abre a pasta atual
 scripts/kinein-vectis ~/meu-projeto        abre essa pasta
-scripts/kinein-vectis --help               explica e sai, sem subir a IDE
-scripts/kinein-vectis --version            diz a versão e sai
 ```
 
 Caminho relativo vale, e espaço e acento também. **Pasta vazia abre
@@ -700,6 +712,21 @@ Caminho que não existe, arquivo no lugar de pasta, opção desconhecida ou dois
 caminhos de uma vez são **recusados com o motivo**, e a IDE não abre. Antes de
 2026-09-24 ela abria sem projeto e sem dizer nada, o que deixava um erro de
 digitação parecendo um defeito da IDE.
+
+**Uma janela por pasta.** Se o projeto que você pediu já está aberto, a IDE não
+abre uma segunda janela: o terminal diz *"este projeto já está aberto"* e a
+janela existente é chamada para a frente. Outra pasta abre janela nova,
+normalmente.
+
+Isso não é conforto. A IDE guarda o estado do projeto em `.kinein/` — quais
+arquivos estavam abertos, o índice — e duas janelas na mesma pasta seriam duas
+donas do mesmo arquivo: a última a fechar apagaria o que a outra gravou, sem
+avisar ninguém.
+
+**No Wayland, trazer a janela para a frente é o compositor quem decide.** Se o
+seu terminal fornece um token de ativação, ela sobe; se não, o GNOME pode
+apenas destacá-la na barra de tarefas. O que a IDE garante em qualquer caso é o
+que importa: a segunda janela não abre, e o terminal diz por quê.
 
 ### Alvo remoto (SSH)
 

@@ -33,6 +33,7 @@ add_library(kinein-ui-puro OBJECT
     src/cli_args.cpp
     src/markdown_policy.cpp
     src/log_redaction.cpp
+    src/single_instance.cpp
 )
 kinein_enable_strict_compiler_options(kinein-ui-puro)
 target_link_libraries(kinein-ui-puro PUBLIC Qt6::Core)
@@ -729,6 +730,8 @@ qt_add_qml_module(kinein-vectis
         src/typing_perf_harness.h
         src/window_chrome_controller.cpp
         src/window_chrome_controller.h
+        src/single_instance_guard.cpp
+        src/single_instance_guard.h
     RESOURCES
         assets/icons/tree/folder-closed.svg
         assets/icons/tree/folder-open.svg

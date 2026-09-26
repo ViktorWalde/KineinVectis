@@ -56,10 +56,17 @@ existente já move dentro do workspace; não criar um segundo motor de rename.
 > entregue, para que um download de dois arquivos baste; o gate de distribuição
 > cobra essa etapa.
 >
-> **Aberto, e é decisão do autor:** política de janela nova × reutilizada.
-> Hoje cada `kinein` sobe um processo novo — que é o comportamento que já
-> existia, não uma escolha nova. Reutilizar exigiria instância única com
-> handshake, e isso não se inventa por conta própria.
+> **Decidido pelo autor em 2026-09-26:** *mesma pasta foca a janela aberta;
+> outra pasta abre janela nova.* Implementado no mesmo dia. Cada janela que tem
+> um workspace aberto escuta num socket de domínio Unix dentro do
+> `XDG_RUNTIME_DIR`, nomeado por um digest do caminho canônico; quem chega
+> depois pergunta, e **o caminho inteiro viaja na mensagem e é conferido** —
+> colisão de nome não faz uma pasta se passar por outra.
+>
+> O que isso protege não é conforto: **não há lock de workspace**, e duas
+> janelas na mesma pasta são duas donas do `.kinein/`, escrevendo o mesmo
+> `session.json` e o mesmo índice. A última a fechar apaga o que a outra
+> gravou, sem erro e sem aviso.
 >
 > **Como era em 2026-09-24.** O contrato de argumentos passou a
 > ter dono (`ui/src/cli_args`), teste (o primeiro teste C++ do projeto) e
@@ -186,8 +193,10 @@ confundir teste de lógica com integração nativa certificada.
 
 ## 7. Decisões a confirmar antes de ampliar contratos
 
-- Default de `kinein` sem argumentos e política de nova/reutilizada janela;
-  sugestão: CWD no comando curto, sem mudar o launcher de desktop por acidente.
+- ~~Default de `kinein` sem argumentos e política de nova/reutilizada janela.~~
+  **Decidido em 2026-09-26:** sem argumentos abre o CWD (e o launcher de desktop
+  continua sem esse default); mesma pasta foca a janela aberta, outra pasta abre
+  nova. Implementado e medido no mesmo dia; ver §3 e o roadmap 40 §7.116.
 - Arquivos avulsos fora da raiz, múltiplas pastas/multi-root e drop de vários
   projetos: são casos registrados, não descartados; não cabem silenciosamente
   no contrato atual de uma raiz. Pedir decisão antes de implementar restrição.
