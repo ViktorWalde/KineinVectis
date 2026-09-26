@@ -32,3 +32,4 @@ endfunction()
 
 kinein_add_cpp_test(tst_cli_args)
 kinein_add_cpp_test(tst_markdown_policy)
+kinein_add_cpp_test(tst_log_redaction)
