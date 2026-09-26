@@ -1,5 +1,9 @@
 import QtQuick
-import "../../ui/qml/shell"
+// Pelo MODULO, e nao pela pasta: desde que a entrada carrega o painel dela
+// (V3, campo `componente`), o `ToolWindows` referencia tipos de outras pastas —
+// `GrafanaPanelHost`, `RemotePanelHost` — que um import de diretorio nao
+// resolve. O espelho plano do harness tem todos.
+import KineinVectis
 
 // As tool windows como DADO (fatia V3, 2026-09-24).
 //
@@ -115,6 +119,21 @@ Item {
               "activate('remote') chama o open do dono");
         remotoFalso.panelVisible = true;
         check(porId("remote").active, "painel aberto acende o remoto");
+
+        // O CAMPO `componente` DA V3, que so' entrou quando ganhou consumidor:
+        // a entrada carrega o painel dela. Quem monta os overlays le' esta
+        // lista em vez de conhecer cada painel pelo nome.
+        const comPainel = janelas.overlayEntries.map(function(e) { return e.id; });
+        check(comPainel.join(",") === "embedded,database,containers,remote,observability",
+              "os paineis de ambiente, na ordem do trilho: " + comPainel.join(","));
+        for (const e of janelas.overlayEntries) {
+            check(e.panel !== undefined && e.panel !== null, e.id + " sem componente");
+        }
+        // Explorer e Ferramentas NAO tem painel de ambiente: o primeiro e' o
+        // slot esquerdo, o segundo e' aba do rodape. Dar-lhes `componente`
+        // seria forcar a abstracao sobre quem nao e'.
+        check(porId("explorer").panel === undefined, "explorer nao e' overlay");
+        check(porId("tools").panel === undefined, "tools nao e' overlay");
 
         // Id sem dono e' resultado OBSERVAVEL, como no CommandDispatcher.
         check(janelas.activate("nao.existe") === false, "id sem dono devolve false");

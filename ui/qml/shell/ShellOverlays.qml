@@ -15,6 +15,8 @@ Item {
     property var gitController: null
     property var settingsController: null
     property var configActionController: null
+    // As tool windows do trilho trazem o proprio painel (V3).
+    property var toolWindows: null
     property var libraryController: null
     property var dataSourceController: null
     property var remoteController: null
@@ -180,14 +182,10 @@ Item {
         anchors.fill: parent
         hostWidth: root.hostWidth
         hostHeight: root.hostHeight
+        toolWindows: root.toolWindows
         libraryController: root.libraryController
-        dataSourceController: root.dataSourceController
-        remoteController: root.remoteController
-        grafanaController: root.grafanaController
         embeddedController: root.embeddedController
-        toolchainController: root.toolchainController
         setupController: root.setupController
-        containerController: root.containerController
         configActionController: root.configActionController
         runtimeController: root.runtimeController
     }

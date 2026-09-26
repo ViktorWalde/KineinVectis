@@ -24,6 +24,7 @@ Item {
     property var dataSourceController
     property var embeddedController: null
     property var remoteController: null
+    property var toolchainController: null
     property alias editorSurface: editorPaneHost.editorSurface
     property bool workspaceOpen: false
     property string workspaceRoot: ""
@@ -98,6 +99,10 @@ Item {
         editorPaneHost.focusSymbols(query);
     }
 
+    // O trilho e' dado, e os paineis das entradas moram nele: quem monta os
+    // overlays de ambiente le' esta lista em vez de conhecer cada painel.
+    readonly property alias toolWindows: janelas
+
     ShellLayout {
         anchors.fill: parent
 
@@ -113,6 +118,7 @@ Item {
             containerController: root.containerController
             grafanaController: root.grafanaController
             remoteController: root.remoteController
+            toolchainController: root.toolchainController
             workspaceOpen: root.workspaceOpen
         }
 

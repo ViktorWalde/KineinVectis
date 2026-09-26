@@ -241,6 +241,7 @@ Window {
         dataSourceController: domains.dataSourceController
         embeddedController: domains.embeddedController
         remoteController: domains.remoteController
+        toolchainController: domains.toolchainController
         workspaceOpen: coreClient.workspaceRoot !== ""
         workspaceRoot: coreClient.workspaceRoot
         workspaceName: coreClient.workspaceName
@@ -333,6 +334,7 @@ Window {
         runConfigController: domains.runConfigController
         gitController: domains.gitController
         settingsController: domains.settingsController
+        toolWindows: workspaceHost.toolWindows
         libraryController: domains.libraryController
         dataSourceController: domains.dataSourceController
         remoteController: domains.remoteController

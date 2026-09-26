@@ -16,20 +16,34 @@ Item {
 
     property real hostWidth: 0
     property real hostHeight: 0
+    // As tool windows do trilho trazem o proprio painel (fatia V3, campo
+    // `componente`): aqui fica so' o que e' igual em todos — ancora, z e a
+    // folga da janela. Acrescentar uma janela nao toca mais neste arquivo.
+    property var toolWindows: null
     property var libraryController: null
-    property var dataSourceController: null
-    property var remoteController: null
-    property var grafanaController: null
     property var embeddedController: null
-    // O painel de embarcados edita o KIT (chip, alvo, depurador), que mora aqui.
-    property var toolchainController: null
     property var setupController: null
-    property var containerController: null
     // Nao e' painel de ambiente: e' quem recebe o plano que a biblioteca produz.
     property var configActionController: null
     // Nao e' painel de ambiente: e' o terminal onde o comando de instalacao
     // aparece. Nada roda escondido.
     property var runtimeController: null
+
+    Repeater {
+        model: root.toolWindows === null ? [] : root.toolWindows.overlayEntries
+
+        Loader {
+            required property var modelData
+
+            anchors.fill: parent
+            z: 99
+            sourceComponent: modelData.panel
+            // `visible`, e nao `active`: carregar o painel so' ao abrir seria
+            // ganho de memoria, mas muda o ciclo de vida de cinco paineis —
+            // decisao de outra fatia, nao contrabando desta.
+            visible: modelData.active === true
+        }
+    }
 
     LibraryPanelHost {
         anchors.fill: parent
@@ -45,46 +59,9 @@ Item {
         }
     }
 
-    DataSourcePanelHost {
-        anchors.fill: parent
-        visible: root.dataSourceController.panelVisible
-        z: 99
-        controller: root.dataSourceController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.dataSourceController.close()
-    }
 
-    RemotePanelHost {
-        anchors.fill: parent
-        visible: root.remoteController.panelVisible
-        z: 99
-        controller: root.remoteController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.remoteController.close()
-    }
 
-    GrafanaPanelHost {
-        anchors.fill: parent
-        visible: root.grafanaController.panelVisible
-        z: 99
-        controller: root.grafanaController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.grafanaController.close()
-    }
 
-    EmbeddedPanelHost {
-        anchors.fill: parent
-        visible: root.embeddedController.panelVisible
-        z: 99
-        controller: root.embeddedController
-        toolchainController: root.toolchainController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.embeddedController.close()
-    }
 
     // O passo de permissao (E2) vai para o TERMINAL DA IDE, visivel, pelo
     // mesmo caminho do painel de instalacao. Nada roda escondido.
@@ -96,15 +73,6 @@ Item {
         }
     }
 
-    ContainerPanelHost {
-        anchors.fill: parent
-        visible: root.containerController.panelVisible
-        z: 99
-        controller: root.containerController
-        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        maxAvailableHeight: root.hostHeight - 4 * Theme.spacingMedium
-        onDismissRequested: root.containerController.close()
-    }
 
     SetupPanelHost {
         anchors.fill: parent
