@@ -18,7 +18,7 @@ A Vectis não tenta substituir CMake, Cargo, clangd, GDB ou os SDKs dos fabrican
 
 > **Versão pública atual: [`0.2.0 — Public Beta`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.2.0) · Linux x86_64**
 
-**[Download 0.2.0](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.2.0) · [Discord / Comunidade](https://discord.gg/cWRkUGUmQU)**
+**[Site oficial](https://viktorwalde.github.io/KineinSite/) · [Download 0.2.0](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.2.0) · [Documentação](https://viktorwalde.github.io/KineinSite/documentacao/) · [Discord / Comunidade](https://discord.gg/cWRkUGUmQU)**
 
 ---
 
