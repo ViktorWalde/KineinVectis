@@ -45,9 +45,17 @@ Item {
             if (!root.alcancou) {
                 return root.recado;
             }
-            const cabeca = qsTr("Grafana %1 · banco %2")
-                             .arg(root.controller.version)
-                             .arg(root.controller.database);
+            // NOME SEM VALOR E' RUIDO: o `database` e' opcional na resposta
+            // do Grafana, e a frase fixa imprimia "banco " sozinho, anunciando
+            // um dado que a tela nao tem. Cada pedaco so' entra com conteudo.
+            // Mesma regra para a versao: alcancar sem saber a versao e'
+            // possivel, e "Grafana " sozinho nao diz nada.
+            let cabeca = root.controller.version !== ""
+                       ? qsTr("Grafana %1").arg(root.controller.version)
+                       : qsTr("Grafana respondeu");
+            if (root.controller.database !== "") {
+                cabeca += qsTr(" · banco %1").arg(root.controller.database);
+            }
             return root.recado !== "" ? cabeca + " — " + root.recado : cabeca;
         }
     }

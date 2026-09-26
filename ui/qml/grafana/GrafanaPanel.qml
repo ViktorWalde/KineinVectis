@@ -19,10 +19,48 @@ Item {
     // dimensionamento que o autor pediu em 2026-09-04.
     readonly property int alturaCampo: 26
 
+    readonly property var acao: root.controller
+            ? root.controller.primaryAction
+            : ({ "kind": "", "label": "", "hint": "", "section": "" })
+
+    // O gesto primario NAO decide nada: ele leva ao dono do que o estado pede.
+    function executarPrimaria() {
+        if (root.controller === null) {
+            return;
+        }
+        switch (root.acao.kind) {
+        case "connect":
+            // CONECTAR e' salvar e medir no mesmo gesto (§5.1). Salvar deixou
+            // de ser pre-condicao visual para sondar.
+            root.controller.save();
+            break;
+        case "refresh":
+            root.controller.probe();
+            break;
+        case "fixUrl":
+            campoUrl.forceActiveFocus();
+            campoUrl.selectAll();
+            break;
+        case "provideToken":
+            root.controller.setDraftField("tokenSource", "prompt");
+            break;
+        default:
+            break;
+        }
+    }
+
+    // O FORMULARIO MEDE O QUE PEDE, e so'. Com `anchors.fill: parent` ele
+    // ocupava a altura inteira, e a Flickable abaixo — ancorada em
+    // `coluna.bottom` — nascia com ZERO de altura: a lista de achados, que e' o
+    // ponto do painel, nao tinha como aparecer nunca. Sem erro, sem warning;
+    // so' um espaco preto onde deviam estar as fontes de dados. Achado na cena
+    // de inspecao da V7, em 2026-09-26.
     Column {
         id: coluna
 
-        anchors.fill: parent
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
         spacing: Theme.spacingSmall
 
         Text {
@@ -84,130 +122,84 @@ Item {
             }
         }
 
-        Row {
+        GrafanaAuthSection {
             width: parent.width
-            spacing: Theme.spacingSmall
-
-            Text {
-                width: 78
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Token")
-                color: Theme.textSecondary
-                font.pixelSize: 11
-            }
-
-            Repeater {
-                // A politica diz ONDE procurar o token, nunca qual ele e'.
-                model: [
-                    { valor: "none", rotulo: qsTr("Sem token") },
-                    { valor: "environment", rotulo: qsTr("Variável de ambiente") },
-                    { valor: "prompt", rotulo: qsTr("Pedir na sessão") }
-                ]
-
-                delegate: KvToggleChip {
-                    id: chipPolitica
-
-                    required property var modelData
-
-                    height: 22
-                    labelText: chipPolitica.modelData.rotulo
-                    active: root.draft.tokenSource === chipPolitica.modelData.valor
-                    onToggled: root.controller.setDraftField("tokenSource",
-                                                             chipPolitica.modelData.valor)
-                }
-            }
+            controller: root.controller
+            draft: root.draft
+            alturaCampo: root.alturaCampo
         }
 
-        // SEM TOKEN NAO E' ERRO: e' um estado com resposta propria, e dize-lo
-        // evita o autor procurar uma credencial que nao precisa ter.
-        Text {
-            width: parent.width
-            wrapMode: Text.WordWrap
-            visible: root.draft.tokenSource === "none"
-            text: qsTr("Sem token dá para ver a versão e a saúde. O que há dentro exige uma conta de serviço.")
-            color: Theme.textMuted
-            font.pixelSize: 9
-        }
-
-        Row {
-            width: parent.width
-            spacing: Theme.spacingSmall
-            visible: root.controller ? root.controller.draftUsesVariable : false
-
-            Text {
-                width: 78
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Variável")
-                color: Theme.textSecondary
-                font.pixelSize: 11
-            }
-
-            Rectangle {
-                width: parent.width - 78 - Theme.spacingSmall
-                height: root.alturaCampo
-                radius: Theme.radius
-                color: Theme.background0
-                border.width: 1
-                border.color: campoVariavel.activeFocus ? Theme.accent : Theme.borderSoft
-
-                TextInput {
-                    id: campoVariavel
-
-                    anchors.fill: parent
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.rightMargin: Theme.spacingSmall
-                    verticalAlignment: TextInput.AlignVCenter
-                    color: Theme.textPrimary
-                    font.family: Theme.monoFont
-                    font.pixelSize: 12
-                    clip: true
-                    selectByMouse: true
-                    text: root.draft.tokenVariable !== undefined ? root.draft.tokenVariable : ""
-                    onTextEdited: root.controller.setDraftField("tokenVariable", text)
-                }
-
-                Text {
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: campoVariavel.text === ""
-                    text: "GRAFANA_TOKEN"
-                    color: Theme.textMuted
-                    font.family: Theme.monoFont
-                    font.pixelSize: 12
-                }
-            }
-        }
-
-        // O PEDIDO DE TOKEN aparece por decisao do CORE, nunca por leitura de
-        // mensagem: o campo `SECRET_REQUIRED` e' quem manda.
+        // O PEDIDO DE TOKEN aparece por decisao do CORE (`SECRET_REQUIRED`,
+        // nunca por leitura de mensagem) — e, quando aparece, ELE E' A ACAO
+        // PRIMARIA. Ate' 2026-09-26 o painel desenhava as duas coisas: este
+        // campo com o seu proprio `Sondar` E um botao `Fornecer token` logo
+        // acima, que so' trocava a politica. Dois gestos para a mesma
+        // intencao e' exatamente o atrito que a §3 mede; a cena de inspecao
+        // da V7 mostrou os dois lado a lado.
         GrafanaTokenPrompt {
+            objectName: "grafanaTokenPrompt"
+
             width: parent.width
-            visible: root.controller ? root.controller.tokenRequired : false
+            visible: root.acao.kind === "provideToken"
+            height: visible ? implicitHeight : 0
+            reasonText: root.acao.hint
+            labelText: root.acao.label
             onAccepted: token => root.controller.probeWithToken(token)
         }
 
+        // UMA ACAO PRIMARIA, decidida pelo estado (GrafanaActionRules). Antes
+        // eram tres com o mesmo peso — `Salvar · Sondar · Esquecer` —, e a §3
+        // nomeia o atrito: salvar antes de sondar era exigencia do DESENHO, e
+        // nao intencao de quem usa.
+        Row {
+            objectName: "grafanaPrimaria"
+
+            width: parent.width
+            spacing: Theme.spacingSmall
+            // Quando o gesto primario E' o campo do token, quem o desenha e' o
+            // `GrafanaTokenPrompt` acima: um botao aqui seria o segundo.
+            visible: root.acao.kind !== "provideToken"
+            height: visible ? implicitHeight : 0
+
+            KvBarButton {
+                labelText: root.acao.label
+                enabled: root.acao.kind !== "waiting"
+                onActivated: root.executarPrimaria()
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - 140
+                wrapMode: Text.WordWrap
+                text: root.acao.hint
+                color: Theme.textMuted
+                font.pixelSize: 9
+            }
+        }
+
+        // Os gestos raros continuam alcancaveis, e param de disputar a atencao
+        // de quem so' quer ver um dashboard.
         Row {
             width: parent.width
             spacing: Theme.spacingSmall
+            visible: root.controller ? root.controller.hasInstance : false
 
             KvBarButton {
-                labelText: qsTr("Salvar")
+                labelText: qsTr("Salvar endereço")
+                enabled: root.controller ? root.controller.editing : false
                 onActivated: root.controller.save()
             }
 
             KvBarButton {
-                labelText: root.controller && root.controller.probing
-                           ? qsTr("Sondando…") : qsTr("Sondar")
-                enabled: root.controller ? root.controller.hasInstance
-                                           && !root.controller.probing : false
-                onActivated: root.controller.probe()
+                labelText: qsTr("Esquecer")
+                onActivated: root.controller.forget()
             }
 
-            KvBarButton {
-                labelText: qsTr("Esquecer")
-                enabled: root.controller ? root.controller.hasInstance : false
-                onActivated: root.controller.forget()
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.controller ? root.controller.freshness : ""
+                color: Theme.textMuted
+                font.pixelSize: 9
             }
         }
 
@@ -220,6 +212,8 @@ Item {
     // A LISTA ROLA, o formulario nao. Um Grafana com quarenta dashboards nao
     // pode empurrar os botoes para fora da tela.
     Flickable {
+        objectName: "grafanaAchados"
+
         anchors.top: coluna.bottom
         anchors.topMargin: Theme.spacingSmall
         anchors.left: parent.left

@@ -12,15 +12,37 @@ Item {
 
     signal accepted(string token)
 
+    // POR QUE o campo esta' na tela — vem da acao primaria, que e' quem sabe
+    // distinguir "o servidor pediu" de "o servidor recusou o que voce deu".
+    property string reasonText: ""
+    // O rotulo do botao tambem vem de la': quando ele e' O gesto primario, ele
+    // fala a lingua do estado ("Tentar outro token"), nao "Sondar".
+    property string labelText: qsTr("Sondar")
+
     // Piso mais o que o conteudo pedir — o dimensionamento decidido pelo autor
     // em 2026-09-04.
-    implicitHeight: Math.max(52, linha.implicitHeight + aviso.implicitHeight + 8)
+    implicitHeight: Math.max(52, linha.implicitHeight + aviso.implicitHeight
+                                 + motivo.implicitHeight + 8)
     height: implicitHeight
+
+    Text {
+        id: motivo
+
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        wrapMode: Text.WordWrap
+        visible: root.reasonText !== ""
+        height: visible ? implicitHeight : 0
+        text: root.reasonText
+        color: Theme.textMuted
+        font.pixelSize: 9
+    }
 
     Text {
         id: aviso
 
-        anchors.top: parent.top
+        anchors.top: motivo.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         wrapMode: Text.WordWrap
@@ -70,7 +92,7 @@ Item {
         KvBarButton {
             id: confirmar
 
-            labelText: qsTr("Sondar")
+            labelText: root.labelText
             onActivated: {
                 root.accepted(entrada.text);
                 entrada.text = "";
