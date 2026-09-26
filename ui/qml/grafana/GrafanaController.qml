@@ -319,9 +319,26 @@ Item {
         probedAt = Date.now();
         agora = probedAt;
         resultUrl = root.profile.url;
-        authFailed = false;
         reachable = resultado.reachable === true;
         authenticated = resultado.authenticated === true;
+        // RECUSA E' DIFERENTE DE AUSENCIA, e desde o protocolo 0.136.0 o core
+        // diz qual das duas foi. Antes a UI so' via `authenticated: false` —
+        // que e' TAMBEM o que ela ve quando ninguem ofereceu token — e quem
+        // colava uma credencial errada lia "sem autenticacao", sem caminho de
+        // volta para tentar outra. Achado contra um Grafana de verdade, em
+        // 2026-09-26; nenhum harness veria, porque o mock nunca recusou.
+        if (resultado.authRefused === true) {
+            // O core so' marca recusa quando ELE enviou uma credencial e levou
+            // 401/403 — nao ha' o que deduzir aqui. Mesma regra do
+            // `SECRET_REQUIRED` (§7): o que o servidor negou nao fica em
+            // memoria esperando ser reenviado. `clearToken` zera as duas
+            // bandeiras, por isso elas voltam depois dele.
+            clearToken();
+            authFailed = true;
+            tokenRequired = true;
+        } else {
+            authFailed = false;
+        }
         version = resultado.version !== undefined ? resultado.version : "";
         database = resultado.database !== undefined ? resultado.database : "";
         message = resultado.message !== undefined ? resultado.message : "";

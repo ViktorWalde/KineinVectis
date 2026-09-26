@@ -166,6 +166,34 @@ Item {
                       "o resultado da instancia anterior nao foi marcado como velho: "
                       + controlador.state.content);
 
+        // TOKEN RECUSADO PELA SONDA (protocolo 0.136.0). Este caminho nao e'
+        // o do `SECRET_REQUIRED`: o servidor RESPONDEU, e disse que a
+        // credencial nao serve. Achado contra um Grafana real em 2026-09-26 —
+        // antes disso a tela lia "sem autenticacao" e nao oferecia saida.
+        controlador.workspaceRoot = "/tmp/quarto-projeto";
+        controlador.handleProfile({ url: "http://f.lab:3000", tokenSource: "prompt" }, true);
+        controlador.probeWithToken("token-que-o-servidor-nega");
+        controlador.handleProbed({
+            reachable: true, authenticated: false, authRefused: true,
+            version: "11.2.0", message: "recusou o token"
+        });
+        root.conferir(!controlador.hasSessionToken,
+                      "o token recusado pela sonda ficou em memoria");
+        root.conferir(controlador.state.auth === "failed",
+                      "recusa na sonda nao virou estado de falha: "
+                      + controlador.state.auth);
+        root.conferir(controlador.primaryAction.kind === "provideToken",
+                      "sem caminho de volta depois da recusa: "
+                      + controlador.primaryAction.kind);
+
+        // ALCANCAR SEM OFERECER NADA nao e' recusa, e nao pode pedir token.
+        controlador.workspaceRoot = "/tmp/quinto-projeto";
+        controlador.handleProfile({ url: "http://g.lab:3000", tokenSource: "none" }, true);
+        controlador.probe();
+        controlador.handleProbed({ reachable: true, authenticated: false, version: "11.2.0" });
+        root.conferir(controlador.state.auth === "not_required",
+                      "sem token virou recusa: " + controlador.state.auth);
+
         // PEDIR TOKEN NAO E' TER MEDIDO. O core recusa `SECRET_REQUIRED` ao
         // resolver a POLITICA, antes de falar com o Grafana: carimbar hora
         // aqui faria a tela dizer "medido agora" sobre uma instancia com a

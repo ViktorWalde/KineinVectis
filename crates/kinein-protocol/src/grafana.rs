@@ -225,6 +225,19 @@ pub struct GrafanaProbeResult {
     pub database: String,
     /// Whether the token was accepted for the authenticated endpoints.
     pub authenticated: bool,
+    /// The server answered and REFUSED the credential (401/403).
+    ///
+    /// `authenticated == false` alone cannot tell "nobody offered a token"
+    /// apart from "the token was rejected", and the difference decides what
+    /// the UI offers next: an invitation, or a way to try another token.
+    ///
+    /// The client cannot derive it: with `GrafanaTokenSource::Environment` the
+    /// core reads the variable and the UI never learns a credential was sent.
+    /// That is the gap the architecture rule asks for before a contract grows
+    /// (`especificacoes/grafana-ui-ux-0.3.5.md` §9) — measured in 2026-09-26,
+    /// against a real Grafana, by `scripts/testar-grafana-real.sh`.
+    #[serde(default)]
+    pub auth_refused: bool,
     /// What went wrong, in a sentence the author can act on.
     #[serde(default)]
     pub message: String,

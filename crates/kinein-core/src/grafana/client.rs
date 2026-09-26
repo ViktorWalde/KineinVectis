@@ -196,6 +196,12 @@ pub fn probe(url: &str, token: Option<&Secret>) -> GrafanaProbeResult {
 
     match get(&agent, &format!("{url}/api/datasources"), Some(secret)) {
         Ok((401 | 403, _)) => {
+            // RECUSA TEM NOME PROPRIO. Sem este campo a UI so' via
+            // `authenticated: false`, que e' tambem o que ela ve quando
+            // ninguem ofereceu token — e mostrava "sem autenticacao" a quem
+            // tinha acabado de colar uma credencial errada, sem caminho de
+            // volta. Medido contra um Grafana real em 2026-09-26.
+            resultado.auth_refused = true;
             "o Grafana respondeu, mas recusou o token — confira a conta de serviço \
              e a permissão `datasources:read`"
                 .clone_into(&mut resultado.message);
@@ -270,6 +276,91 @@ fn parse_dashboards(body: &str) -> Vec<GrafanaDashboard> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Um Grafana MINIMO numa porta livre: responde `/api/health` com 200 e
+    /// `/api/datasources` com o status pedido. Real o bastante para o `ureq`
+    /// de verdade falar com ele, e suficiente para separar os dois estados que
+    /// `authenticated: false` confundia.
+    fn grafana_de_mentira(status_datasources: u16) -> String {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let porta = listener.local_addr().unwrap().port();
+        std::thread::spawn(move || {
+            // Duas conexoes: a saude e as fontes. `ureq` fecha entre elas.
+            for _ in 0..2 {
+                let Ok((mut conexao, _)) = listener.accept() else {
+                    return;
+                };
+                let mut pedido = [0u8; 2048];
+                let lidos = conexao.read(&mut pedido).unwrap_or(0);
+                let texto = String::from_utf8_lossy(&pedido[..lidos]).to_string();
+                let (status, corpo) = if texto.contains("/api/health") {
+                    (200, r#"{"database":"ok","version":"11.2.0"}"#.to_owned())
+                } else {
+                    (status_datasources, "[]".to_owned())
+                };
+                let cabecalho = format!(
+                    "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\n\
+                     Content-Length: {}\r\nConnection: close\r\n\r\n",
+                    corpo.len()
+                );
+                let _ = conexao.write_all(cabecalho.as_bytes());
+                let _ = conexao.write_all(corpo.as_bytes());
+                let _ = conexao.flush();
+            }
+        });
+        format!("http://127.0.0.1:{porta}")
+    }
+
+    /// RECUSAR TEM NOME PROPRIO (protocolo 0.136.0).
+    ///
+    /// Achado em 2026-09-26 contra um Grafana REAL
+    /// (`scripts/testar-grafana-real.sh`): token invalido NAO vira
+    /// `SECRET_REQUIRED`. Ele chega como sonda bem-sucedida com
+    /// `authenticated: false` — que e' tambem o que se ve quando ninguem
+    /// ofereceu token. A UI mostrava "sem autenticacao" a quem acabara de
+    /// colar a credencial errada, e nao oferecia caminho de volta.
+    #[test]
+    fn a_refused_token_is_told_apart_from_no_token_at_all() {
+        let recusa = probe(
+            &grafana_de_mentira(401),
+            Some(&Secret::new("glsa_token_errado".to_owned())),
+        );
+        assert!(recusa.reachable, "o servidor respondeu a saude");
+        assert!(!recusa.authenticated);
+        assert!(recusa.auth_refused, "401 em /api/datasources e' RECUSA");
+
+        // Sem token nao ha' o que recusar: ninguem ofereceu nada.
+        let ausencia = probe(&grafana_de_mentira(200), None);
+        assert!(ausencia.reachable);
+        assert!(!ausencia.authenticated);
+        assert!(
+            !ausencia.auth_refused,
+            "ausencia de credencial nao e' recusa dela"
+        );
+
+        // E o caminho feliz nao marca recusa nenhuma.
+        let aceito = probe(
+            &grafana_de_mentira(200),
+            Some(&Secret::new("glsa_token_bom".to_owned())),
+        );
+        assert!(aceito.authenticated);
+        assert!(!aceito.auth_refused);
+    }
+
+    /// 403 e' recusa do mesmo jeito: a conta existe e nao tem
+    /// `datasources:read`. Para quem usa, a acao seguinte e' a mesma.
+    #[test]
+    fn a_forbidden_answer_is_a_refusal_too() {
+        let resultado = probe(
+            &grafana_de_mentira(403),
+            Some(&Secret::new("glsa_sem_permissao".to_owned())),
+        );
+        assert!(!resultado.authenticated);
+        assert!(resultado.auth_refused);
+    }
 
     #[test]
     fn url_perde_a_barra_final() {
