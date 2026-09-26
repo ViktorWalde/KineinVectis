@@ -4,7 +4,10 @@
 > existe, nada está decidido, e o autor está preparando documentação técnica
 > mais detalhada sobre o assunto.
 >
-> **Origem:** relatório de pesquisa do autor, 2026-09-26. A parte
+> **Origem:** relatórios de pesquisa do autor, 2026-09-26 — o completo está em
+> `DocsPrivate/Codex/2026-09-26-relatorio-pesquisa-cache-completo.md`, e chama
+> esta linha de **Semantic Incremental Compilation / Semantic Dependency
+> Fingerprints**, marcando-a como P&D experimental. A parte
 > implementável dele foi extraída para
 > [`../especificacoes/cache-de-compilacao.md`](../especificacoes/cache-de-compilacao.md);
 > o que sobrou é isto.

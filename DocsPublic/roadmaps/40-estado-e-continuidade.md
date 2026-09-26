@@ -6987,3 +6987,37 @@ anel marca onde o teclado está, o preenchimento marca o que está escolhido —
 **Limite da foto:** o anel de foco não sai em captura offscreen, porque janela
 offscreen nunca fica ativa e `activeFocus` é falso em tudo. A cena de inspeção
 o desenha **forçado**, e isso está dito nela.
+
+
+### 7.119 O relatório completo entrou no radar — 2026-09-26
+
+O autor entregou a versão completa do relatório de cache (1580 linhas, em
+`DocsPrivate/Codex/2026-09-26-relatorio-pesquisa-cache-completo.md`). **É
+anotação de radar para as próximas versões, não trabalho agora** — o roadmap
+corrente segue sendo a 0.3.
+
+Três coisas dele entraram nos documentos, porque mudam o desenho e não só o
+texto:
+
+1. **`Compiler != Compiler Launcher != Build Cache`.** É a frase que evita o
+   erro mais caro desta frente: escrever `ccache` no campo do compilador faz o
+   build passar e então o `clangd` recebe um "compilador" que não responde
+   sobre linguagem nem sysroot, o catálogo de toolchain passa a mentir, e
+   trocar de kit deixa de ser reversível.
+2. **A política inicial não tem provider global**: `ccache` para C/C++ e
+   embarcado, `sccache` para Rust (é `RUSTC_WRAPPER` nativo) e para CI, os dois
+   convivendo num workspace misto.
+3. **"Build Intelligence"** é nome melhor do que o meu "impacto de build", e
+   vem com as quatro fontes certas: File API do CMake, `compile_commands.json`,
+   `.ninja_deps` (as dependências que o **compilador** descobriu) e
+   `clang -ftime-trace`. Nada de parser de `#include` escrito por nós.
+
+**E o relatório estava certo sobre uma coisa que eu não tinha conferido:** a
+fatia já existia. O [`45`](45-etapa4-backend-lsp-edicao-compiladores.md) §C5 diz
+*"ccache/sccache detectados e oferecidos como ação de configuração"* desde a
+abertura da Etapa 4. A especificação agora **dá corpo à C5** em vez de flutuar
+como frente nova.
+
+A linha de pesquisa ganhou o nome que o relatório usa — *Semantic Incremental
+Compilation / Semantic Dependency Fingerprints* — e continua na pasta
+`pesquisa/`, que não autoriza implementação.

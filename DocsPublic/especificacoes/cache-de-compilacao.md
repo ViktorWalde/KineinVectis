@@ -3,10 +3,16 @@
 > **Classe: PLANO** (`../README.md`). Descreve o alvo, não o estado. Nada
 > disto existe no código em 2026-09-26.
 >
-> **Origem:** relatório de pesquisa do autor (`deep-research-report.md`,
-> entregue em 2026-09-26), quebrado em partes nesta data. O autor está
-> preparando uma documentação técnica mais detalhada; este documento é o
-> esqueleto **medido**, e cede lugar a ela onde as duas divergirem.
+> **Origem:** dois relatórios de pesquisa do autor, ambos de 2026-09-26. O
+> segundo é o completo (1580 linhas) e está em
+> `DocsPrivate/Codex/2026-09-26-relatorio-pesquisa-cache-completo.md`. Este
+> documento é o esqueleto **medido** — o que foi conferido nesta máquina — e
+> cede lugar ao relatório onde as duas fontes divergirem.
+>
+> **Esta especificação não é fatia nova: ela dá corpo à `C5` do
+> [`../roadmaps/45`](../roadmaps/45-etapa4-backend-lsp-edicao-compiladores.md)**,
+> que desde a abertura da Etapa 4 já dizia *"ccache/sccache detectados e
+> oferecidos como ação de configuração"*.
 >
 > **Fase: 0.4, junto dos embarcados — decisão do autor em 2026-09-26.**
 > Nada disto entra na 0.3, pela mesma regra que mantém o trilho e os
@@ -44,6 +50,53 @@ Apagado o objeto e reconstruído: `direct_cache_hit 1`, com o *miss* parado em
 remoto"; essa separação não corresponde ao que está instalado aqui. A escolha
 entre os dois passa a ser sobre **Rust** e sobre distribuir *compilação*
 (sccache faz; ccache não), e não sobre guardar em rede.
+
+## 1.1 A distinção que o desenho inteiro depende
+
+Do relatório completo, e é a frase que evita o erro mais caro desta frente:
+
+```text
+Compiler != Compiler Launcher != Build Cache
+```
+
+O que a IDE guarda por kit é isto — cada campo com o seu dono:
+
+```text
+Language:         C++
+Target:           arm-none-eabi
+Compiler:         /opt/gcc-arm/bin/arm-none-eabi-g++
+Compiler family:  GCC
+Sysroot:          /opt/gcc-arm/arm-none-eabi
+Launcher:         /usr/bin/ccache
+Build system:     CMake + Ninja
+```
+
+**E nunca** `Compiler: /usr/bin/ccache`. Escrever o cache no campo do
+compilador é o atalho que parece funcionar: o build passa, e então o `clangd`
+recebe um "compilador" que não sabe responder sobre linguagem nem sysroot, o
+catálogo de toolchain passa a mentir sobre o que está instalado, e a troca de
+kit deixa de ser reversível. O `CMAKE_<LANG>_COMPILER_LAUNCHER` existe
+exatamente para não precisar disso — sem `PATH` remendado e sem symlink falso
+de `gcc`, que a própria documentação do ccache avisa poder conflitar com
+outras ferramentas.
+
+## 1.2 Qual provider, em qual contexto
+
+Do relatório completo. A política inicial **não é um provider global**:
+
+| Contexto | Provider | Motivo |
+| --- | --- | --- |
+| C/C++ local | `ccache` | diagnóstico e modos de cache maduros |
+| Embarcado C/C++ | `ccache` | encaixa com cross-GCC/Clang e CMake |
+| ROS 2 C++ | `ccache` | integração direta por CMake/colcon |
+| Rust | `sccache` | é `RUSTC_WRAPPER` nativo |
+| Workspace C++ **e** Rust | os dois, cada um no seu | não exige provider único |
+| CI / cache de equipe | `sccache` | S3/Redis documentados |
+| Investigar *miss* em C/C++ | `ccache` | tem debug de entradas e estatística detalhada |
+
+As duas ferramentas expõem número legível por máquina — `ccache
+--print-stats`, `sccache --show-stats --stats-format=json` —, e é de lá que a
+IDE lê. Nenhum número é estimado por ela.
 
 ## 2. A forma: processo orquestrado, nunca biblioteca
 
@@ -101,14 +154,26 @@ placa.
 
 **Aceite:** o teste de veneno existe e reprova quando se remove o que o evita.
 
-### C3 — impacto de build
+### C3 — Build Intelligence
 
-Responder *"o que eu mudei, e o que isso obriga a recompilar"* — antes de
-compilar.
+O relatório completo dá nome a esta fatia, e o nome é melhor que o meu: o
+passo seguinte ao cache não é *"cache mais inteligente"*, é **responder
+perguntas sobre o build** com as fontes de verdade que já existem.
 
-- A fonte é determinística e já existe: a **File API do CMake** e os
-  `depfiles` que o Ninja consome.
-- Sem heurística e sem adivinhação: é leitura de grafo.
+```text
+CMake File API      fontes, compile groups, linguagem, includes por target
+compile_commands    o comando real de cada unidade
+.ninja_deps         as dependências que o COMPILADOR descobriu
+ccache/sccache      quanto veio do cache
+clang -ftime-trace  onde o tempo foi gasto dentro da compilação
+        ↓
+"por que recompilou?"  "quem este header afeta?"
+"quanto foi realmente compilado?"  "quanto veio do cache?"
+```
+
+**Nada disso é parser de `#include` escrito por nós.** É leitura de grafo
+sobre dados que o CMake e o Ninja já produzem — e essa é a diferença entre
+esta fatia e a pesquisa da pasta `pesquisa/`.
 
 **Aceite:** a lista prevista bate com a lista que o Ninja de fato recompilou,
 num projeto real, medido.
