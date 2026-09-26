@@ -1,5 +1,16 @@
 # 03 — Protocolo IPC
 
+> **0.136.0 (2026-09-26) — recusar tem nome próprio.**
+> `event.grafana.probed` ganha `authRefused`. Até aqui a UI só via
+> `authenticated: false`, que é **também** o que ela vê quando ninguém ofereceu
+> token — e mostrava "sem autenticação" a quem tinha acabado de colar uma
+> credencial errada, sem caminho de volta para tentar outra. O cliente não tem
+> como derivar isso: com a política `environment` quem lê a variável é o core, e
+> a UI nunca fica sabendo que uma credencial foi enviada. É a lacuna que a §9 da
+> `../especificacoes/grafana-ui-ux-0.3.5.md` exige antes de um contrato crescer,
+> e foi **medida contra um Grafana real** (`scripts/testar-grafana-real.sh`), não
+> deduzida.
+>
 > **0.135.0 (2026-09-26) — a resposta diz sobre o que ela é.**
 > Duas mudanças com o mesmo motivo. `syntaxTree.indent { path, version, line,
 > column, trigger }` → `{ path, version, language, level }`, em que a
@@ -4256,10 +4267,17 @@ grafana.probe  { token? }  -> GrafanaProbeAccepted   (job)
 ```
 
 ```text
-event.grafana.probed  { jobId, datasources, dashboards, matches, ... }
+event.grafana.probed  { jobId, reachable, authenticated, authRefused,
+                        version, database, message,
+                        dataSources[], dashboards[], matches[] }
 ```
 
 **Os quatro exigem workspace aberto.**
+
+**`authenticated: false` sozinho não distingue dois estados opostos:** ninguém
+ofereceu token, e o servidor recusou o que foi oferecido. O primeiro é um
+convite; o segundo pede outra credencial. Por isso `authRefused` existe desde a
+`0.136.0` — e a UI deriva o que mostra dele, nunca do texto de `message`.
 
 **O Grafana nunca é embutido** — licença AGPL, decisão registrada em
 `../roadmaps/40` §5. A integração é HTTP, o cliente é o `ureq`, e os dashboards

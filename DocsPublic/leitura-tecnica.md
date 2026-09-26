@@ -67,12 +67,12 @@ core para o meio.
 ## 3. O que existe de verdade
 
 **168 métodos IPC** roteados e **56 eventos**, em **36 domínios de protocolo**;
-**874 testes Rust e 64 harnesses QML aprovados em 2026-09-24**. A Etapa 1
+**887 testes Rust e 81 harnesses QML aprovados em 2026-09-26**. A Etapa 1
 (backend e toolchains) fechou em 2026-09-18 e a Etapa 2 (HUD/UI/UX) fechou o
 desenho F0–F8 no mesmo dia; o que falta, classificado pelo que cada resto precisa,
 está no roadmap 40 §4.2.
 O resultado desta retomada está no roadmap 40 §7.50
-(em 2026-09-12 à noite a simulação saiu: −11 métodos, −85 testes, −7 harnesses). Protocolo `0.135.0`. O gate tem **24 etapas** (contadas em 2026-09-24; a mais nova são os testes C++ da UI, o primeiro código C++ medido do projeto; a fiação IPC de ponta a ponta entrou em 2026-09-18) — a vigésima (2026-09-11)
+(em 2026-09-12 à noite a simulação saiu: −11 métodos, −85 testes, −7 harnesses). Protocolo `0.136.0`. O gate tem **26 etapas** (contadas em 2026-09-26; as mais novas são o gate de funções QML mortas — 2026-09-26, que recusa função sem consumidor e função que só o harness usa — e os testes C++ da UI, o primeiro código C++ medido do projeto; a fiação IPC de ponta a ponta entrou em 2026-09-18) — a vigésima (2026-09-11)
 executa o binário que ele acabou de compilar, porque "compila" e "abre" são
 afirmações diferentes; a vigésima primeira roda o ciclo de embarcado no QEMU,
 sem placa; a vigésima segunda confere que o clangd enxerga os cabeçalhos do

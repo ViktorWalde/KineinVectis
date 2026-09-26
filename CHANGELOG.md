@@ -5,6 +5,27 @@ prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
 
 ## 0.3.0 — em desenvolvimento
 
+- Protocolo `0.136.0` — **recusar tem nome próprio.** A sonda do Grafana passa a
+  dizer `authRefused` quando o servidor **negou** a credencial. Até aqui a tela
+  só via `authenticated: false`, que é também o que ela vê quando ninguém
+  ofereceu token: quem colava uma credencial errada lia "sem autenticação" e
+  ficava sem caminho de volta. Achado contra um Grafana de verdade, não num
+  mock — nenhum teste local recusava nada.
+- **Observabilidade (Grafana) refeita.** Um gesto por estado em vez de
+  `Salvar · Sondar · Esquecer` com o mesmo peso; a política de token só aparece
+  quando o servidor pede; a configuração recolhe depois de pronta; filtro local,
+  teclado nas listas e `Enter` que abre no navegador. O cruzamento com os bancos
+  do projeto — o que separa isto de um link favorito — **aparece pela primeira
+  vez**: a área que o desenhava tinha altura zero desde que nasceu.
+- **O token do Grafana sobrevive a fechar o painel**, e só a isso: trocar de
+  projeto, confirmar outra instância, esquecer ou ser recusado o apagam. Ele
+  está preso ao par projeto + endereço confirmado, conferido na hora de ir para
+  o fio.
+- **`Esc` fecha os cinco painéis de ambiente** — a moldura comum nunca tinha
+  ouvido o teclado.
+- **O comando `kinein`** passou a ser instalado de verdade: sem argumento abre a
+  pasta atual, e todo o resto vai intacto para o binário, que já era o dono do
+  contrato de argumentos.
 - Protocolo `0.135.0` — **a resposta diz sobre o que ela é.** A indentação
   pergunta à gramática (`syntaxTree.indent`) sem nunca fazer a tecla esperar: o
   fallback local aplica na hora, e a correção só entra se documento, versão e

@@ -6761,3 +6761,49 @@ para copiar, em vez de supor.
 processo novo — o comportamento que já existia. Reutilizar exige instância
 única com handshake, e a §7 da especificação lista isso como decisão a
 confirmar, não como detalhe de implementação.
+
+### 7.115 A prova contra um Grafana real, e o que só ela viu — 2026-09-26
+
+A G4 exigia **teste real com URL inválida, sem token, token inválido e válido**.
+Ele existe agora: `scripts/testar-grafana-real.sh` sobe um Grafana 11.2.0 e um
+Postgres em containers efêmeros, cria conta de serviço e token **pela API**,
+cadastra a fonte de dados dos dois lados e conduz os quatro casos contra o core
+de verdade. Fora do `verificar.sh` de propósito, como o AppImage e o Remote
+SSH: o gate é offline por princípio, e isto pede rede.
+
+**Rede do host, e a razão importa.** Numa rede própria do podman o Grafana
+chamaria o Postgres de `kinein-pg-prova` e o projeto o chamaria de `localhost`
+— não casariam, e o teste estaria medindo a rede em vez da regra.
+
+**O cruzamento aconteceu de verdade:** `banco-do-projeto → banco-do-projeto
+(banco kinein_prova em localhost:5432)`. É a resposta que nenhuma das duas
+ferramentas dá sozinha, e agora ela está provada contra as duas.
+
+**O defeito que só a instância real revelou.** Token inválido **não** vira
+`SECRET_REQUIRED`. O core responde uma sonda **bem-sucedida** com
+`authenticated: false` e uma mensagem — e `authenticated: false` é *também* o
+que a tela vê quando ninguém ofereceu token. Resultado: quem colava uma
+credencial errada lia "sem autenticação", com a política de token escondida e o
+gesto primário em "Atualizar". **Sem caminho de volta.** Nenhum harness veria
+isso: o mock nunca recusou nada.
+
+**Por que virou protocolo, e não remendo na UI.** A tela poderia lembrar que
+mandou um token — mas só na política `prompt`. Com `environment`, quem lê a
+variável é o core, e a UI nunca fica sabendo que uma credencial foi enviada.
+É exatamente a lacuna que a §9 exige antes de um contrato crescer: *"método novo
+só entra depois de provar uma lacuna que sinais atuais não conseguem representar
+honestamente"*. Daí o `authRefused` no `event.grafana.probed`, protocolo
+**0.136.0**.
+
+Medido nos três níveis: teste Rust com um servidor HTTP mínimo separando 401,
+403, 200-com-token e 200-sem-token; harness QML provando que a recusa vira
+`auth === "failed"` e gesto `provideToken`; e a prova real, que é onde o defeito
+apareceu. Mutação em cada um.
+
+**Prova de segurança junto:** o token não aparece no stdout do core, nem no
+stderr, nem em arquivo nenhum sob `.kinein/` — varrido depois de uma sonda
+autenticada de verdade.
+
+Com isto a **V7 fecha**. O que continua pendente e é do autor: se quer o painel
+também contra um Grafana com dashboards de verdade (o teste cria a instância
+limpa, então lista zero dashboards — o cruzamento, que é o ponto, está provado).
