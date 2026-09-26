@@ -6889,3 +6889,47 @@ uma vez, com o clang-tidy ocupando a máquina ao lado. O que ela quer medir é
 *"respondeu antes do prazo"*, e não um número de milissegundos: passou a usar um
 prazo folgado e a cobrar metade dele. Teste que falha ao acaso ensina a ignorar
 teste.
+
+
+### 7.117 O relatório de cache, quebrado em duas classes — 2026-09-26
+
+O autor trouxe um relatório de pesquisa sobre evitar recompilação e pediu:
+quebrar em partes, implementar primeiro **o que já está pronto no mercado**, e
+separar a documentação da pesquisa de longo prazo. Fase: **junto dos
+embarcados, antes da 1.0** — não na 0.3.
+
+**A separação foi por classe, e ela é o ponto.** Um relatório assim mistura
+duas coisas com riscos opostos: `ccache`/`sccache` são ferramentas maduras que
+a IDE só precisa invocar; diff de AST e *fingerprints* semânticas são uma
+aposta que pode não dar em nada. Guardar as duas no mesmo lugar faria a
+segunda ser lida como alvo — que é exatamente o que criou o
+`DocsPrivate/legado/`.
+
+- [`especificacoes/cache-de-compilacao.md`](../especificacoes/cache-de-compilacao.md)
+  — **alvo**, quatro fatias: o pronto do mercado, cross/embarcado,
+  impacto de build, armazenamento compartilhado.
+- [`pesquisa/`](../pesquisa/README.md) — **classe nova**, criada nesta data.
+  Hipótese que ninguém decidiu fazer, que começa dizendo o que a falsearia, e
+  que **não autoriza implementar nada**. O índice de documentação ganhou a
+  classe e a linha de precedência.
+
+**Medir mudou duas afirmações do relatório**, antes de qualquer código:
+
+1. **A compile database não carrega o launcher.** Com
+   `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache`, a entrada do `compile_commands.json`
+   começa em `/usr/bin/c++`. Isso importa mais aqui do que na média: o `clangd`
+   da IDE lê aquele arquivo, e um launcher vazando nele seria defeito de
+   navegação. O cache serviu o objeto de verdade — `direct_cache_hit 1`, com o
+   *miss* parado, depois de apagar o `.o`.
+2. **O `ccache` 4.12 já guarda em rede** (`http-storage`, `redis-storage`,
+   medido na versão instalada). O relatório separava "ccache local / sccache
+   remoto"; a separação real é outra — **Rust** e **distribuir compilação**,
+   que o `sccache` faz e o `ccache` não.
+
+**A licença não obriga nada.** O `ccache` é GPL-3+, e a IDE o **invoca** como
+processo, como já invoca `cmake`, `ninja` e `gdb`. O relatório recomenda trocar
+a licença do projeto para MPL-2.0; isso é decisão de dono, não consequência de
+escolher uma ferramenta de build, e ficou registrada como pendente do autor.
+
+O autor está preparando documentação técnica mais detalhada sobre o assunto; o
+que está escrito agora é o esqueleto medido, e cede lugar a ela onde divergirem.

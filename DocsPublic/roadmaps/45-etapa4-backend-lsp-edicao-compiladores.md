@@ -8,6 +8,22 @@
 > arquitetura fina de cada fatia é escrita na sessão que a implementa,
 > antes do código** — a regra desde a Etapa 2.
 
+## 0. Cache de compilação — entra aqui, na fase dos embarcados (2026-09-26)
+
+O autor trouxe um relatório de pesquisa sobre **evitar recompilação**. Ele foi
+quebrado em duas metades, por classe:
+
+- o que **já existe pronto no mercado** — `ccache`, `sccache`, orquestrados
+  como processo, do jeito que a IDE já faz com `cmake`, `ninja` e `gdb` —
+  virou alvo em
+  [`../especificacoes/cache-de-compilacao.md`](../especificacoes/cache-de-compilacao.md);
+- a **hipótese de longo prazo** — diff de AST, *fingerprints*, modo sombra —
+  foi para a pasta nova [`../pesquisa/`](../pesquisa/README.md), que **não
+  autoriza implementação**.
+
+**Fase:** 0.4, junto dos embarcados, antes da 1.0. Nada disto entra na 0.3 —
+mesma regra que mantém o trilho e os embarcados fora dela.
+
 ## 1. O pedido do autor (2026-09-19, literal e interpretado)
 
 > "A próxima sessão vai focar no aprofundamento do backend, adicionar

@@ -20,6 +20,8 @@ DocsPublic/      TODA a documentacao do projeto, versionada. Uma sessao de
   roadmaps/                 planos e o ESTADO vivo (40 = a fila; 42 = a trilha)
   especificacoes/           a visao-alvo do produto (layout, editor, fluxos,
                             embarcados, onboarding) — alvo, nao estado
+  pesquisa/                 HIPOTESE: linhas que o autor quer perseguir e que
+                            ninguem decidiu fazer (2026-09-26). Nao e' alvo.
   integracoes/              as ferramentas abertas que a IDE orquestra: licenca,
                             versao, forma (crate ou processo); o registro JSON
   build/                    ambiente de desenvolvimento, compilacao, comandos
@@ -59,6 +61,7 @@ o conteúdo é extraído para o documento vivo relevante.
                             o código vence e o documento se corrige no mesmo gesto.
 3. PLANO / ALVO           → aspiracional. Diverge por natureza; reconciliar.
 4. LOG                    → registro datado. Nunca reescrever. NÃO é estado.
+5. PESQUISA               → hipótese. NÃO autoriza implementar nada (2026-09-26).
 ```
 
 **Em conflito, o código vence sempre. Nenhum documento derruba uma medição.**
@@ -75,6 +78,7 @@ envelhecer, o que acontece?"*
 | **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `roadmaps/40` (a fila), `leitura-tecnica.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
 | **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `DocsPublic/especificacoes/`, `DocsPublic/roadmaps/` |
 | **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `DocsPrivate/ContextoIA.md`, `diario/`, `adr/` |
+| **PESQUISA** | Hipótese que **ninguém decidiu fazer**. Começa dizendo o que a falsearia. Sair de lá exige decisão datada. | Nada — desde que ninguém a leia como alvo, que é o risco inteiro. | `DocsPublic/pesquisa/` |
 
 ### Por que o `DocsPrivate/historico/PONTO_ATUAL.md` saiu de "fila viva" (2026-09-10)
 
