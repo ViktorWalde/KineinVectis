@@ -30,7 +30,8 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     if (method != QStringLiteral("lsp.didChange") &&
         method != QStringLiteral("lsp.semanticTokens") &&
         method != QStringLiteral("terminal.copySelection") &&
-        method != QStringLiteral("syntaxTree.update"))
+        method != QStringLiteral("syntaxTree.update") &&
+        method != QStringLiteral("syntaxTree.indent"))
     {
         appendLog(QStringLiteral("<- %1").arg(QString::fromUtf8(line.left(200))));
     }
@@ -329,6 +330,21 @@ void CoreClient::dispatchResult(const QString& method, const QJsonObject& result
 
 bool CoreClient::dispatchSyntaxResult(const QString& method, const QJsonObject& result)
 {
+    if (method == QStringLiteral("syntaxTree.indent")) {
+        // Resultado nulo = a gramatica nao soube responder (arvore com erro em
+        // volta do cursor, ou arquivo sem arvore). NAO e' falha: o editor ja'
+        // aplicou o fallback dele antes de perguntar.
+        if (result.isEmpty()) {
+            emit syntaxIndentResolved(QString(), 0, QString(), -1, -1);
+            return true;
+        }
+        emit syntaxIndentResolved(result.value(QStringLiteral("path")).toString(),
+                                  result.value(QStringLiteral("version")).toInt(),
+                                  result.value(QStringLiteral("language")).toString(),
+                                  result.value(QStringLiteral("level")).toInt(-1),
+                                  result.value(QStringLiteral("dedentTo")).toInt(-1));
+        return true;
+    }
     if (method != QStringLiteral("syntaxTree.update")) {
         return false;
     }

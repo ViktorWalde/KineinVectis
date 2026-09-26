@@ -97,6 +97,12 @@ Item {
                 foldingRanges, outline, locals);
         }
 
+        // E1: a gramatica respondeu. As tres travas estao no controller —
+        // aqui e' so' a entrega.
+        function onSyntaxIndentResolved(path, version, language, level, dedentTo) {
+            root.editorController.handleIndentResolved(path, version, level);
+        }
+
         function onLspSwitchSourceHeaderResolved(path) {
             root.editorController.handleSwitchSourceHeader(path);
         }

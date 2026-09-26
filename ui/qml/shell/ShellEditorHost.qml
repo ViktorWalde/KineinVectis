@@ -169,12 +169,12 @@ Item {
         onActionsDismissRequested: root.editorController.dismissActions()
         onUsagesDismissRequested: root.editorController.usagesVisible = false
         onHoverDismissRequested: root.editorController.hoverVisible = false
-        onIndentRequested: root.editorController.indentEditorSelection()
-        onUnindentRequested: root.editorController.unindentEditorSelection()
-        onNewlineRequested: root.editorController.insertEditorNewline()
-        onCloserBraceRequested: root.editorController.insertEditorCloserBrace()
+        onIndentRequested: root.editorController.textEditing.indentSelection()
+        onUnindentRequested: root.editorController.textEditing.unindentSelection()
+        onNewlineRequested: root.editorController.textEditing.insertNewline()
+        onCloserBraceRequested: root.editorController.textEditing.insertCloserBrace()
         onSmartHomeRequested: function(extendSelection) {
-            root.editorController.editorSmartHome(extendSelection);
+            root.editorController.textEditing.smartHome(extendSelection);
         }
         onExternalReloadRequested: root.editorController.reloadExternalFile()
         onExternalKeepLocalRequested: root.editorController.keepLocalFile()

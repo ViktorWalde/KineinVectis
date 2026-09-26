@@ -307,6 +307,13 @@ set_source_files_properties(qml/editor/MarkdownPreviewPane.qml PROPERTIES QT_RES
 set_source_files_properties(qml/editor/MarkdownModeBar.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownModeBar.qml)
 set_source_files_properties(qml/editor/MarkdownPreviewController.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownPreviewController.qml)
 set_source_files_properties(qml/editor/MarkdownRenderGate.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownRenderGate.qml)
+set_source_files_properties(qml/editor/EditorIndentRules.qml PROPERTIES QT_RESOURCE_ALIAS EditorIndentRules.qml)
+set_source_files_properties(qml/editor/EditorIndentCorrection.qml PROPERTIES QT_RESOURCE_ALIAS EditorIndentCorrection.qml)
+set_source_files_properties(qml/editor/EditorLineOperations.qml PROPERTIES QT_RESOURCE_ALIAS EditorLineOperations.qml)
+set_source_files_properties(qml/editor/SymbolMergeRules.qml PROPERTIES QT_RESOURCE_ALIAS SymbolMergeRules.qml)
+set_source_files_properties(qml/search/EverywhereSymbolOrigin.qml PROPERTIES QT_RESOURCE_ALIAS EverywhereSymbolOrigin.qml)
+set_source_files_properties(qml/editor/EditorDiagnosticNavigation.qml PROPERTIES QT_RESOURCE_ALIAS EditorDiagnosticNavigation.qml)
+set_source_files_properties(qml/editor/LanguageCommentRules.qml PROPERTIES QT_RESOURCE_ALIAS LanguageCommentRules.qml)
 set_source_files_properties(qml/editor/EditorOutlineSide.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineSide.qml)
 set_source_files_properties(qml/editor/EditorSaveController.qml PROPERTIES QT_RESOURCE_ALIAS EditorSaveController.qml)
 set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextController.qml)
@@ -620,6 +627,13 @@ qt_add_qml_module(kinein-vectis
         qml/editor/MarkdownModeBar.qml
         qml/editor/MarkdownPreviewController.qml
         qml/editor/MarkdownRenderGate.qml
+        qml/editor/EditorIndentRules.qml
+        qml/editor/EditorIndentCorrection.qml
+        qml/editor/EditorLineOperations.qml
+        qml/editor/SymbolMergeRules.qml
+        qml/search/EverywhereSymbolOrigin.qml
+        qml/editor/EditorDiagnosticNavigation.qml
+        qml/editor/LanguageCommentRules.qml
         qml/editor/EditorOutlineSide.qml
         qml/editor/EditorSaveController.qml
         qml/editor/EditorTextController.qml

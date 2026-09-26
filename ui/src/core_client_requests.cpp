@@ -264,6 +264,17 @@ void CoreClient::requestSyntaxTree(const QString& path, const QString& content, 
                             {QStringLiteral("version"), version}});
 }
 
+void CoreClient::requestSyntaxIndent(const QString& path, int version, int line, int column,
+                                     const QString& trigger)
+{
+    sendRequest(QStringLiteral("syntaxTree.indent"),
+                QJsonObject{{QStringLiteral("path"), path},
+                            {QStringLiteral("version"), version},
+                            {QStringLiteral("line"), line},
+                            {QStringLiteral("column"), column},
+                            {QStringLiteral("trigger"), trigger}});
+}
+
 void CoreClient::requestSwitchSourceHeader(const QString& path, const QString& content)
 {
     sendRequest(QStringLiteral("lsp.switchSourceHeader"),

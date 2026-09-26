@@ -6,7 +6,37 @@ Item {
     property var surfaceBridge: null
     readonly property string editorIndent: "    "
 
+    // E1: o fallback local ja' esta' na tela quando isto dispara; o sinal
+    // PERGUNTA a' gramatica se ela discorda. Nada sincrono no caminho da tecla.
+    signal indentRequested(int line, int column, string trigger)
+
+
     visible: false
+
+    EditorLineOperations {
+        id: lineOps
+
+        surfaceBridge: root.surfaceBridge
+        geometry: geo
+        editorIndent: root.editorIndent
+    }
+
+    // As TRES TRAVAS da resposta da gramatica; ver EditorIndentCorrection.qml.
+    EditorIndentCorrection {
+        id: correction
+
+        onApproved: function(lineStart, appliedIndent, level) {
+            root.applyIndentCorrection(lineStart, appliedIndent, level);
+        }
+    }
+
+    // A REGRA da indentacao local; ver EditorIndentRules.qml. Ela e' o caminho
+    // NORMAL, e nao o plano B: roda sempre, na hora da tecla.
+    EditorIndentRules {
+        id: indentRules
+
+        unit: root.editorIndent
+    }
 
     // As PERGUNTAS sobre o texto; ver EditorTextGeometry.qml.
     EditorTextGeometry {
@@ -112,51 +142,19 @@ Item {
         }
     }
 
+    // A REGRA saiu para o EditorIndentRules (2026-09-26); aqui ficou o GESTO.
+    // A correcao por gramatica vem depois, pelo `syntaxTree.indent`.
     function insertNewline() {
         if (!ready()) {
             return;
         }
         const surface = surfaceBridge.editorSurface;
         const cursor = surface.cursorPosition;
-        const lineStart = geo.lineStartAt(cursor);
-        const beforeCursor = surface.text.substring(lineStart, cursor);
-        const baseIndent = geo.lineIndentAt(lineStart);
-        const trimmed = beforeCursor.replace(/[ \t]+$/, "");
-
-        const lineContent = beforeCursor.substring(baseIndent.length);
-        if (lineContent.indexOf("//") === 0) {
-            const continuation = baseIndent + "// ";
-            surface.insert(cursor, "\n" + continuation);
-            surface.cursorPosition = cursor + 1 + continuation.length;
-            return;
-        }
-
-        const searchFrom = Math.max(0, cursor - 1);
-        const blockStart = surface.text.lastIndexOf("/*", searchFrom);
-        const blockEnd = surface.text.lastIndexOf("*/", searchFrom);
-        if (blockStart >= 0 && blockStart > blockEnd) {
-            const blockContent = lineContent.replace(/^[ \t]+/, "");
-            const continuation = baseIndent
-                    + (blockContent.indexOf("*") === 0 ? "* " : " * ");
-            surface.insert(cursor, "\n" + continuation);
-            surface.cursorPosition = cursor + 1 + continuation.length;
-            return;
-        }
-
-        if (trimmed.endsWith("{") && surface.text.charAt(cursor) === "}") {
-            const innerIndent = baseIndent + editorIndent;
-            surface.insert(cursor, "\n" + innerIndent + "\n" + baseIndent);
-            surface.cursorPosition = cursor + 1 + innerIndent.length;
-            return;
-        }
-
-        let indent = baseIndent;
-        if (trimmed.endsWith("{") || trimmed.endsWith("(")
-                || trimmed.endsWith("[") || trimmed.endsWith(":")) {
-            indent += editorIndent;
-        }
-        surface.insert(cursor, "\n" + indent);
-        surface.cursorPosition = cursor + 1 + indent.length;
+        const plan = indentRules.forNewline(surface.text, cursor);
+        const closer = plan.closerIndent === "" ? "" : "\n" + plan.closerIndent;
+        surface.insert(cursor, "\n" + plan.insert + closer);
+        surface.cursorPosition = cursor + 1 + plan.insert.length;
+        root.askGrammarForLine(cursor + 1, plan.insert, "newline");
     }
 
     // E3: "}" digitado com só whitespace antes do cursor desce para a
@@ -193,12 +191,56 @@ Item {
                     surface.remove(lineStart, cursor);
                     surface.insert(lineStart, openIndent + "}");
                     surface.cursorPosition = lineStart + openIndent.length + 1;
+                    root.askGrammarForLine(lineStart, openIndent, "closeDelimiter");
                     return;
                 }
             }
+            root.askGrammarForLine(lineStart, beforeCursor, "closeDelimiter");
         }
         surface.insert(cursor, "}");
         surface.cursorPosition = cursor + 1;
+    }
+
+    // O PEDIDO a' gramatica, guardando o que o fallback aplicou. Quem sabe o
+    // caminho e a versao e' o EditorController, que carimba com
+    // `noteIndentRequest` no mesmo gesto.
+    function askGrammarForLine(lineStart, appliedIndent, trigger) {
+        correction.remember(lineStart, appliedIndent);
+        // A coluna do protocolo e' ZERO-based em unidades UTF-16; a geometria
+        // devolve 1-based.
+        const position = geo.cursorLineColumn();
+        root.indentRequested(position.line, position.column - 1, trigger);
+    }
+
+    function noteIndentRequest(path, version) {
+        correction.stamp(path, version);
+    }
+
+    function handleIndentAnswer(path, version, level) {
+        return correction.accept(path, version, level);
+    }
+
+    // A TERCEIRA TRAVA: o texto entre o inicio da linha e o cursor ainda tem de
+    // ser EXATAMENTE o que o fallback pos. Se o autor digitou no meio, a
+    // resposta chegou tarde e nao vale mais.
+    function applyIndentCorrection(lineStart, appliedIndent, level) {
+        if (!ready() || level < 0) {
+            return false;
+        }
+        const surface = surfaceBridge.editorSurface;
+        const wanted = indentRules.indentFor(level);
+        if (wanted === appliedIndent) {
+            return false;
+        }
+        const atual = surface.text.substring(lineStart, lineStart + appliedIndent.length);
+        if (atual !== appliedIndent) {
+            return false;
+        }
+        const cursor = surface.cursorPosition;
+        surface.remove(lineStart, lineStart + appliedIndent.length);
+        surface.insert(lineStart, wanted);
+        surface.cursorPosition = cursor - appliedIndent.length + wanted.length;
+        return true;
     }
 
     // E3: Home alterna primeiro caractere de texto ↔ coluna 0;
@@ -231,137 +273,9 @@ Item {
         ladder.shrink();
     }
 
-    function duplicateLineOrSelection() {
-        if (!ready()) {
-            return;
-        }
-        const surface = surfaceBridge.editorSurface;
-        const selectionStart = Math.min(surface.selectionStart, surface.selectionEnd);
-        const selectionEnd = Math.max(surface.selectionStart, surface.selectionEnd);
-        if (selectionEnd > selectionStart) {
-            const selected = surface.text.substring(selectionStart, selectionEnd);
-            surface.insert(selectionEnd, selected);
-            surface.select(selectionEnd, selectionEnd + selected.length);
-            return;
-        }
-        const cursor = surface.cursorPosition;
-        const start = geo.lineStartAt(cursor);
-        const end = geo.lineEndAt(cursor);
-        const line = surface.text.substring(start, end);
-        surface.insert(end, "\n" + line);
-        surface.cursorPosition = cursor + line.length + 1;
-    }
-
-    function moveLines(delta) {
-        if (!ready()) {
-            return;
-        }
-        const surface = surfaceBridge.editorSurface;
-        const text = surface.text;
-        const selectionStart = Math.min(surface.selectionStart, surface.selectionEnd);
-        const selectionEnd = Math.max(surface.selectionStart, surface.selectionEnd);
-        const hadSelection = selectionEnd > selectionStart;
-        const cursor = surface.cursorPosition;
-        const anchor = hadSelection ? Math.max(selectionStart, selectionEnd - 1) : cursor;
-        const blockStart = geo.lineStartAt(hadSelection ? selectionStart : cursor);
-        const blockEnd = geo.lineEndAt(anchor);
-        const block = text.substring(blockStart, blockEnd);
-
-        let shift = 0;
-        if (delta < 0) {
-            if (blockStart === 0) {
-                return;
-            }
-            const previousStart = geo.lineStartAt(blockStart - 1);
-            const previousLine = text.substring(previousStart, blockStart - 1);
-            surface.remove(previousStart, blockEnd);
-            surface.insert(previousStart, block + "\n" + previousLine);
-            shift = -(previousLine.length + 1);
-        } else {
-            if (blockEnd >= text.length) {
-                return;
-            }
-            const nextStart = blockEnd + 1;
-            const nextEnd = geo.lineEndAt(nextStart);
-            const nextLine = text.substring(nextStart, nextEnd);
-            surface.remove(blockStart, nextEnd);
-            surface.insert(blockStart, nextLine + "\n" + block);
-            shift = nextLine.length + 1;
-        }
-        if (hadSelection) {
-            surface.select(selectionStart + shift, selectionEnd + shift);
-        } else {
-            surface.cursorPosition = cursor + shift;
-        }
-    }
-
-    function toggleLineComment(token) {
-        if (!ready() || token === "") {
-            return;
-        }
-        const surface = surfaceBridge.editorSurface;
-        const starts = geo.selectedLineStarts();
-        if (starts.length === 0) {
-            return;
-        }
-
-        const text = surface.text;
-        let allCommented = true;
-        let hasContent = false;
-        for (let i = 0; i < starts.length; i++) {
-            const line = text.substring(starts[i], geo.lineEndAt(starts[i]));
-            const content = line.replace(/^[ \t]+/, "");
-            if (content === "") {
-                continue;
-            }
-            hasContent = true;
-            if (content.indexOf(token) !== 0) {
-                allCommented = false;
-                break;
-            }
-        }
-        if (!hasContent) {
-            return;
-        }
-
-        for (let i = starts.length - 1; i >= 0; i--) {
-            const start = starts[i];
-            const line = text.substring(start, geo.lineEndAt(start));
-            const indentLength = line.length - line.replace(/^[ \t]+/, "").length;
-            const contentStart = start + indentLength;
-            const content = line.substring(indentLength);
-            if (content === "") {
-                continue;
-            }
-            if (allCommented) {
-                let removeLength = token.length;
-                if (content.charAt(token.length) === " ") {
-                    removeLength++;
-                }
-                surface.remove(contentStart, contentStart + removeLength);
-            } else {
-                surface.insert(contentStart, token + " ");
-            }
-        }
-    }
-
-    function deleteCurrentLine() {
-        if (!ready()) {
-            return;
-        }
-        const surface = surfaceBridge.editorSurface;
-        const cursor = surface.cursorPosition;
-        const start = geo.lineStartAt(cursor);
-        const end = geo.lineEndAt(cursor);
-        const text = surface.text;
-        if (end < text.length) {
-            surface.remove(start, end + 1);
-        } else if (start > 0) {
-            surface.remove(start - 1, end);
-        } else if (end > start) {
-            surface.remove(start, end);
-        }
-    }
+    // As operacoes sobre LINHAS INTEIRAS tem dono proprio; ver
+    // EditorLineOperations.qml.
+    readonly property alias lines: lineOps
 
     function goToLine(line, column) {
         if (!ready()) {

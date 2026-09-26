@@ -75,6 +75,9 @@ Item {
     signal draftClearRequested(string path)
     signal formatRequested(string path, string content)
     signal fileChangedNotificationRequested(string path, string content)
+    // E1: o fallback ja' esta' na tela; isto pergunta a' gramatica.
+    signal indentRequested(string path, int version, int line, int column, string trigger)
+
     signal completionRequested(string path, string content, int line, int column)
     signal saveSessionRequested(var files, string activeFile)
     signal goToLineDialogOpenRequested(string prefill)
@@ -110,6 +113,23 @@ Item {
         id: textController
 
         surfaceBridge: surfaceBridge
+        onIndentRequested: function(line, column, trigger) {
+            textController.noteIndentRequest(root.currentFilePath(), root.syntaxVersion);
+            root.indentRequested(root.currentFilePath(), root.syntaxVersion, line, column,
+                                 trigger);
+        }
+    }
+
+    LanguageCommentRules {
+        id: commentRules
+    }
+
+    EditorDiagnosticNavigation {
+        id: diagnosticNavigation
+
+        diagnosticsController: root.diagnosticsController
+        textController: textController
+        onFocusRequested: root.focusEditor()
     }
 
     EditorCompletionController {
@@ -541,44 +561,35 @@ Item {
 
     function duplicateLine() {
         if (editableFileOpen()) {
-            textController.duplicateLineOrSelection();
+            textController.lines.duplicateLineOrSelection();
         }
     }
 
     function moveLineUp() {
         if (editableFileOpen()) {
-            textController.moveLines(-1);
+            textController.lines.moveLines(-1);
         }
     }
 
     function moveLineDown() {
         if (editableFileOpen()) {
-            textController.moveLines(1);
+            textController.lines.moveLines(1);
         }
     }
 
     function deleteLine() {
         if (editableFileOpen()) {
-            textController.deleteCurrentLine();
+            textController.lines.deleteCurrentLine();
         }
     }
 
-    function commentTokenFor(language) {
-        if (language === "rust" || language === "cpp" || language === "js") {
-            return "//";
-        }
-        if (language === "python" || language === "shell" || language === "cmake"
-                || language === "toml") {
-            return "#";
-        }
-        return "";
-    }
-
+    // A tabela de tokens por linguagem tem dono proprio; ver
+    // LanguageCommentRules.qml.
     function toggleComment() {
         if (!editableFileOpen()) {
             return;
         }
-        textController.toggleLineComment(commentTokenFor(editorSurface.language));
+        textController.lines.toggleLineComment(commentRules.tokenFor(editorSurface.language));
     }
 
     function openGoToLine() {
@@ -607,25 +618,15 @@ Item {
         focusEditor();
     }
 
-    function indentEditorSelection() {
-        textController.indentSelection();
-    }
-
-    function unindentEditorSelection() {
-        textController.unindentSelection();
-    }
-
-    function insertEditorNewline() {
-        textController.insertNewline();
-    }
-
-    function insertEditorCloserBrace() {
-        textController.insertCloserBrace();
-    }
-
-    function editorSmartHome(extendSelection) {
-        textController.smartHome(extendSelection);
-    }
+    // OS GESTOS DE TEXTO SEM GUARDA eram cinco repasses de uma linha
+    // (`indentEditorSelection`, `insertEditorNewline`, `editorSmartHome`...) que
+    // nao decidiam nada. Viraram este alias em 2026-09-25, e a troca pagou a
+    // entrada da correcao estrutural neste arquivo, que esta' em debito
+    // declarado e nao pode crescer.
+    //
+    // Os gestos COM guarda (duplicar, mover, apagar linha) ficaram: eles
+    // decidem se o arquivo esta' editavel antes de agir, e isso e' decisao.
+    readonly property alias textEditing: textController
 
     function expandSelection() {
         if (editableFileOpen()) {
@@ -636,26 +637,20 @@ Item {
     // T6: salta o cursor para o próximo/anterior diagnóstico do arquivo
     // (com wrap). A busca vem do DiagnosticsController; o salto reusa o
     // goToLine do textController.
+    // E1: a correcao estrutural da indentacao. As travas moram no
+    // EditorTextController, que e' quem sabe o que o fallback aplicou.
+    function handleIndentResolved(path, version, level) {
+        return textController.handleIndentAnswer(path, version, level);
+    }
+
+    // Navegar entre diagnosticos tem dono proprio; ver
+    // EditorDiagnosticNavigation.qml.
     function goToNextDiagnostic() {
-        jumpToDiagnostic(true);
+        if (editableFileOpen()) diagnosticNavigation.goToNext();
     }
 
     function goToPrevDiagnostic() {
-        jumpToDiagnostic(false);
-    }
-
-    function jumpToDiagnostic(forward) {
-        if (!editableFileOpen() || diagnosticsController === null) {
-            return;
-        }
-        const position = textController.cursorLineColumn();
-        const target = forward
-                ? diagnosticsController.nextDiagnostic(position.line, position.column)
-                : diagnosticsController.prevDiagnostic(position.line, position.column);
-        if (target !== null) {
-            textController.goToLine(target.line, target.column);
-            focusEditor();
-        }
+        if (editableFileOpen()) diagnosticNavigation.goToPrevious();
     }
 
     function shrinkSelection() {

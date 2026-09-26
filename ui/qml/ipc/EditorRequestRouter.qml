@@ -35,6 +35,13 @@ Item {
             root.coreClient.draftClear(path);
         }
 
+        // E1: o fallback local ja' esta' na tela; isto pergunta a' gramatica.
+        // `version` e' a mesma do `syntaxTree.update`, para o core poder dizer
+        // se respondeu sobre a arvore certa.
+        function onIndentRequested(path, version, line, column, trigger) {
+            root.coreClient.requestSyntaxIndent(path, version, line, column, trigger);
+        }
+
         function onFormatRequested(path, content) {
             root.coreClient.formatFile(path, content);
         }

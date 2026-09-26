@@ -306,6 +306,11 @@ public:
     Q_INVOKABLE void requestSemanticTokens(const QString& path, const QString& content,
                                            int version);
     Q_INVOKABLE void requestSyntaxTree(const QString& path, const QString& content, int version);
+    // E1: o que a GRAMATICA diz sobre a indentacao numa posicao. A resposta
+    // pode chegar depois de o autor ter digitado mais, e por isso ela carrega a
+    // versao da ARVORE que respondeu — nao a que foi pedida.
+    Q_INVOKABLE void requestSyntaxIndent(const QString& path, int version, int line, int column,
+                                         const QString& trigger);
     Q_INVOKABLE void requestSwitchSourceHeader(const QString& path, const QString& content);
     // M4.3b: reinicia servidor(es) LSP; language vazio = todos.
     Q_INVOKABLE void lspRestart(const QString& language);
@@ -529,12 +534,19 @@ signals:
                                          const QVariantList& files, int edits);
     void lspWorkspaceEditApplied(const QStringList& files, const QString& title, int edits);
     void lspWorkspaceEditCancelled(const QString& transactionId);
-    void lspSymbolsResolved(const QVariantList& symbols);
+    // Um sinal por ORIGEM: o `path` e a `query` nao sao enfeite, sao a
+    // identidade do pedido que voltou.
+    void lspDocumentSymbolsResolved(const QString& path, const QVariantList& symbols);
+    void lspWorkspaceSymbolsResolved(const QString& query, const QVariantList& symbols);
     void lspSemanticTokensResolved(const QString& path, int version, const QVariantList& tokens);
     void syntaxTreeResolved(const QString& path, int version, const QString& language,
                             bool hasErrors, const QVariantList& highlights,
                             const QVariantList& foldingRanges, const QVariantList& outline,
                             const QVariantList& locals);
+    // `version` e' a da ARVORE que respondeu. `level` negativo = a gramatica
+    // nao soube responder, e o fallback local do editor fica valendo.
+    void syntaxIndentResolved(const QString& path, int version, const QString& language, int level,
+                              int dedentTo);
     void lspSwitchSourceHeaderResolved(const QString& path);
     // M4.3b: um servidor LSP reiniciou — a UI re-sincroniza o arquivo ativo.
     void lspRestarted(const QString& language);
