@@ -6522,3 +6522,122 @@ ao erro. Ela continua sendo o padrao do perfil, que e' onde ela faz sentido.
 **Pendente de prova real (G4):** token ausente, invalido e valido contra um
 Grafana de verdade. Isso depende de uma instancia do autor, e nao sera' declarado
 pronto com mock.
+
+### 7.110 O token do Grafana ganha dono, e o log ganha prova — 2026-09-26
+
+Fecha o resto da G1: o ciclo de vida do token de sessao, como a §7 da
+`especificacoes/grafana-ui-ux-0.3.5.md` o decidiu em 2026-09-22.
+
+**A fronteira mudou de proposito.** Fechar a tool window DEIXA de apagar a
+credencial. A implementacao antiga protegia mais do que precisava e cobrava
+caro por isso: abrir e fechar um painel virava um login novo a cada vez. Em
+troca, tudo que significa *outra instancia ou outro projeto* apaga — trocar de
+workspace, confirmar outra URL, esquecer a instancia, esquecer a credencial,
+ter o token recusado, encerrar o processo.
+
+**O token ganhou dono.** `credentialContext = workspaceRoot + "|" + URL do
+PERFIL` — a confirmada, nunca a do rascunho, porque rascunho e' intencao e
+perfil e' o que foi decidido. A conferencia acontece na hora de por a
+credencial no fio, que e' o unico ponto onde errar custa vazamento. Editar o
+rascunho nao move o dono; confirmar outra URL apaga o token ANTES de falar com
+a instancia nova.
+
+**E a resposta passou a ser carimbada pelo que foi PEDIDO.** O codigo que eu
+escrevi na fatia anterior fazia `resultUrl = draft.url` na hora da RESPOSTA:
+quem editasse o endereco durante a sonda veria a medida da instancia velha
+carimbada com o endereco novo. Agora o pedido guarda o seu contexto, e resposta
+que nao pertence ao par atual e' descartada em vez de exibida.
+
+**`Conectar` passou a conectar.** O botao prometia "testa o endereco" e so'
+gravava o perfil; a sonda vinha depois, por outro gesto. Agora salvar e medir
+sao um gesto so' (§5.1), com a sonda saindo quando o core confirma o perfil — e
+nao antes, que mediria o endereco anterior. Falha ao gravar nao vira sonda.
+
+**`tst_grafana_token.qml`** cobra a tabela inteira, linha por linha, mais o
+vinculo de custodia e o descarte de resposta atrasada. Quatro mutacoes: devolver
+`clearToken()` ao `close()`, tirar a limpeza do `save()` com URL diferente,
+aceitar resposta de qualquer dono, e mandar o token sem conferir o par. **A
+quarta nao foi pega na primeira tentativa** — e isso importa: significava que a
+conferencia no `probe()` era codigo defensivo sem caminho que a exercitasse,
+que e' a definicao de codigo morto disfarcado de cuidado. O caminho existe (o
+core responde `get` quando quer, e pode devolver perfil gravado por outra
+janela ou URL normalizada); o teste passou a percorre-lo, e a mutacao cai.
+
+**A redacao do log saiu do anonimato para poder ser medida.** A §7.2 faz do
+teste de ausencia em log e persistencia um BLOQUEADOR de entrega. A protecao
+existia desde 2026-09-04 — redigir por nome de campo, com `token` na lista —
+mas morava num namespace anonimo dentro do `core_client_process.cpp`, onde
+nenhum teste alcanca. Virou `ui/src/log_redaction.{h,cpp}` e ganhou o quarto
+teste C++ do projeto: token do Grafana, senha de banco, nome de campo sem
+distinguir maiuscula, objeto dentro de array, e os dois casos que a redacao NAO
+pode estragar — `tokenSource` e `tokenVariable` precisam sobreviver, porque sao
+a politica e o NOME da variavel, nao o segredo; e campo ausente nao pode virar
+`"token":"***"`, que diria ter havido credencial onde nao houve. Conferido por
+mutacao: tirar `token` da lista reprova.
+
+**Pendente:** a §7.3 declara o limite tecnico — `sessionToken` e' string QML e
+pode sobreviver no heap ate' a coleta; nao e' apagamento criptografico. A
+migracao para custodia C++ so' se justifica se a prova ficar fragil, e nao foi
+o caso ate' aqui. Segue valendo a G4: token ausente, invalido e valido contra um
+Grafana real.
+
+### 7.111 V7/G2: a superfície do dia a dia, e o teclado que faltava — 2026-09-26
+
+A §5.2 da especificação separa duas superfícies: o **assistente curto** do
+primeiro uso e o **overview** de todo dia. O painel só tinha a primeira, e ela
+ficava na tela para sempre.
+
+**O cabeçalho.** Nome, uma frase de estado e os gestos: `[ Atualizar ]
+[ configurar… ]`. A frase é derivação pura — `autenticado em grafana.lab:3000 ·
+medido há 12 min` — e tem dono único, porque a alternativa era o que o painel
+fazia: cada pedaço num canto, e o autor somando de cabeça. A configuração
+**recolhe** quando há instância que responde, e volta sozinha quando o próximo
+gesto mora nela; `configurar…` a mantém aberta quando o autor quer mexer com
+tudo em ordem.
+
+**Teclado na `KvDataGrid`** — que serve banco, containers e git, e só respondia
+ao mouse. Setas, `Home`, `End`, `Enter` para abrir, anel de foco e rolagem que
+mantém a linha escolhida à vista. **O cuidado que o teste guarda:** a grade NÃO
+escreve em `selectedIndex`; ela emite `rowClicked`, igual ao clique, porque no
+`ContainerListView` essa propriedade é um *binding* para o controller —
+escrever nela de dentro quebraria o binding em silêncio.
+
+**Filtro local** (`GrafanaFilterRules`), sobre o resultado já recebido: filtrar
+no servidor faria cada tecla virar uma chamada HTTP a um Grafana que pode estar
+atrás de uma VPN. Texto é texto — sem regex, sem curinga —, e “nada casa com
+X” é uma frase diferente de “não há nada”. O erro clássico ficou medido: a
+grade devolve o índice da lista **visível**, e abrir `dashboards[i]` em vez de
+`visiveis[i]` abre o dashboard errado assim que alguém digita. Mutação prova.
+
+**Estados sem conteúdo ganharam frase própria**: vazio autenticado (“este
+Grafana não tem fontes nem dashboards”), vazio sem token (“sem token, a API não
+lista” — dizer “não há dashboards” seria afirmar sobre o que a IDE não pode
+ver), nunca consultado, e desatualizado.
+
+**Dois defeitos meus, achados pela cena de inspeção:**
+
+1. **A mesma frase em dois lugares**, duas vezes. Primeiro o motivo do pedido
+   de token, no cabeçalho e no campo; depois “consultando”, no cabeçalho e na
+   área de conteúdo. A regra virou explícita: cada estado fala uma vez só, e
+   quem fala é quem tem mais informação.
+2. **`SECRET_REQUIRED` era carimbado como medição.** O core recusa esse código
+   ao resolver a **política** — `prompt` sem token, ou variável de ambiente
+   ausente —, antes de qualquer chamada ao Grafana (`handlers/grafana.rs`,
+   `resolve_grafana_token`). Eu gravava hora e endereço ali, e a tela dizia
+   “medido agora” sobre uma instância com a qual ninguém falou; pior, o eixo
+   `probe` virava `failed` e a configuração se abria como se o **endereço**
+   tivesse problema. Nada foi medido, nada é carimbado.
+
+**E um caso da §6 que era inalcançável.** “Falha de atualização pode manter o
+último resultado como desatualizado, nunca como resultado novo” — mas o meu
+`probe()` apagava tudo **antes** de perguntar. Uma sonda que falhasse deixava a
+tela vazia, e o autor perdia o que já sabia por ter tentado saber mais. Agora
+quem apaga é `clearProbe`, nas trocas que invalidam de verdade; a falha só
+marca `reachable = false`, e o eixo `content` chama o que ficou de velho.
+
+**A catraca de duplicação acusou, e estava certa.** `auth === "required"` e mais
+seis comparações apareciam em `GrafanaStateRules` e `GrafanaActionRules`: um
+arquivo PRODUZ o estado, o outro o LÊ, e eu tinha posto leitura nos dois. As
+frases de apresentação mudaram de casa; o arquivo de estado ficou com os fatos.
+No caminho, `freshness` ficou sem consumidor — a frase do rodapé virou a do
+cabeçalho — e foi removida em vez de ficar esperando por uma tela que não vem.
