@@ -6641,3 +6641,41 @@ arquivo PRODUZ o estado, o outro o LÊ, e eu tinha posto leitura nos dois. As
 frases de apresentação mudaram de casa; o arquivo de estado ficou com os fatos.
 No caminho, `freshness` ficou sem consumidor — a frase do rodapé virou a do
 cabeçalho — e foi removida em vez de ficar esperando por uma tela que não vem.
+
+### 7.112 V7/G3: o painel volta a parecer irmão dos outros quatro — 2026-09-26
+
+A §9 da especificação pede coerência com os componentes comuns, e a G2 nomeia
+dois: `KvPanelHeader` e `KvVerdict`. **Eu tinha escrito os dois de novo.**
+
+O `GrafanaOverviewHeader` que fiz nesta mesma sessão — título, subtítulo, botão
+à direita — é literalmente o que o `KvPanelHeader` já fazia para banco, remoto,
+embarcados e containers. E o `GrafanaVerdict` tinha a sua própria tabela de
+cores, que é como `severity` ficou azul num painel e vermelha no outro. Os dois
+foram substituídos: o cabeçalho sumiu, e o veredito passou a compor **a frase**
+(que é o que ele tem de próprio) e a desenhar na faixa comum. O `KvPanelHeader`
+ganhou uma ação secundária opcional — `configurar…` —, vazia nos outros quatro.
+
+O painel do Grafana era o único dos cinco que começava diferente. Painel que
+começa diferente dos irmãos custa uma leitura a mais a cada abertura.
+
+**Esc fecha — nos cinco de uma vez.** A `KvPanelFrame` sempre soube dispensar
+por clique fora e **nunca ouviu o teclado**: quem abria por `Ctrl+Alt+O` tinha
+de ir ao mouse para sair. Faltava `focus: visible`, sem o qual a tecla não
+chega. Os diálogos do projeto já faziam isso; os painéis, não.
+
+**O foco cai onde serve ao abrir:** no endereço no primeiro uso, no filtro no
+uso diário. Antes, abrir por atalho ainda exigia o mouse para digitar a
+primeira letra.
+
+**O que ficou sem prova automática, dito aqui e no código:** a entrega da tecla
+`Esc` em si. O harness do projeto roda com o `qml` puro, que não entrega evento
+de teclado a ninguém — isso é do `qmltestrunner`, que o projeto não usa. A
+decisão ganhou nome (`dismissFromKeyboard`) e tem teste; a linha que liga a
+tecla a ela foi conferida à mão no binário. Trocar o harness inteiro por causa
+de uma linha seria a troca errada.
+
+Sobre o resto da G3: comando de menu, atalho `Ctrl+Alt+O` e entrada do trilho já
+apontavam para a **mesma** instância do controller desde a V3, e o shell não
+guarda estado do domínio. Não entra indicador compacto: a especificação permite,
+mas ele viraria uma segunda HUD, e não há fato medido que ele mostre melhor que
+o próprio painel.

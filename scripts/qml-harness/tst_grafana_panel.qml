@@ -10,9 +10,10 @@
 // Foi a cena de inspecao (os quatro estados lado a lado, em PNG) que mostrou.
 // Este teste e' essa cena virada assercao, para nao depender de eu olhar.
 //
-// MUTACOES QUE PROVAM O GATE: tire o `visible: root.acao.kind !== "provideToken"`
-// da Row `grafanaPrimaria` no GrafanaPanel.qml e a terceira assercao cai; troque
-// as ancoras da Column `coluna` por `anchors.fill: parent` e a dos achados cai.
+// MUTACOES QUE PROVAM O GATE: faca o `primaryLabel` do `KvPanelHeader` no
+// GrafanaPanel.qml ser sempre `root.acao.label` e a terceira assercao cai;
+// troque as ancoras da Column `coluna` por `anchors.fill: parent` e a dos
+// achados cai.
 import QtQuick
 import KineinVectis
 
@@ -72,12 +73,12 @@ Item {
     }
 
     Component.onCompleted: {
-        const primaria = root.achar(painel, "grafanaPrimaria");
+        const primaria = root.achar(painel, "kvPanelPrimary");
         const pedido = root.achar(painel, "grafanaTokenPrompt");
         if (primaria === null || pedido === null) {
             // Sem os dois nao ha' o que comparar: as assercoes seguintes
             // estourariam em `null.visible` e esconderiam esta causa.
-            console.error("FALHOU: o painel nao tem mais grafanaPrimaria/grafanaTokenPrompt");
+            console.error("FALHOU: o painel nao tem mais kvPanelPrimary/grafanaTokenPrompt");
             Qt.exit(1);
             return;
         }

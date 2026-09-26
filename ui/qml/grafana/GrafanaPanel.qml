@@ -12,6 +12,29 @@ Item {
 
     property var controller: null
 
+    signal closeRequested()
+
+    // ONDE O CURSOR CAI AO ABRIR. Primeiro uso: o campo do endereco, que e' o
+    // unico que importa. Uso diario: o filtro, que e' por onde se acha o
+    // dashboard. Sem isto, abrir por atalho ainda exigia pegar o mouse para
+    // digitar a primeira letra.
+    onVisibleChanged: {
+        if (root.visible) {
+            Qt.callLater(root.takeFocus);
+        }
+    }
+
+    function takeFocus() {
+        if (!root.visible) {
+            return;
+        }
+        if (ajustes.visible) {
+            ajustes.focusUrl();
+        } else if (root.temAchados) {
+            campoFiltro.forceActiveFocus();
+        }
+    }
+
     readonly property var draft: root.controller ? root.controller.draft
                                                  : ({ url: "", tokenSource: "none" })
 
@@ -74,13 +97,25 @@ Item {
         anchors.right: parent.right
         spacing: Theme.spacingSmall
 
-        GrafanaOverviewHeader {
+        // A MESMA PRIMEIRA LINHA DOS OUTROS QUATRO PAINEIS de ambiente. Eu
+        // tinha escrito um cabecalho proprio para o Grafana — titulo,
+        // subtitulo e botoes —, que e' exatamente o que o `KvPanelHeader` ja'
+        // fazia para banco, remoto, embarcados e containers. Painel que comeca
+        // diferente dos irmaos custa uma leitura a mais a cada abertura, e a
+        // §9 da especificacao pede coerencia com estes componentes.
+        KvPanelHeader {
             width: parent.width
-            controller: root.controller
-            acao: root.acao
-            setupPinned: root.setupPinned
-            onPrimaryActivated: root.executarPrimaria()
-            onSetupToggled: root.setupPinned = !root.setupPinned
+            title: qsTr("Observabilidade")
+            subtitle: root.controller ? root.controller.statusPhrase : ""
+            // Rotulo vazio esconde o botao: quando o gesto primario E' o campo
+            // do token, quem o desenha e' o `GrafanaTokenPrompt`.
+            primaryLabel: root.acao.kind === "provideToken" ? "" : root.acao.label
+            primaryBusy: root.acao.kind === "waiting"
+            secondaryLabel: root.setupPinned ? qsTr("ocultar ajustes")
+                                             : qsTr("configurar…")
+            onPrimaryRequested: root.executarPrimaria()
+            onSecondaryRequested: root.setupPinned = !root.setupPinned
+            onCloseRequested: root.closeRequested()
         }
 
         GrafanaSetupSection {

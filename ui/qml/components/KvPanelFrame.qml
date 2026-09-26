@@ -20,6 +20,30 @@ Item {
 
     signal dismissRequested()
 
+    // ESC FECHA — nos cinco paineis de ambiente de uma vez. A moldura sempre
+    // soube dispensar por clique fora, e nunca ouviu o teclado: quem abriu o
+    // painel por `Ctrl+Alt+O` tinha de ir ao mouse para sair dele. Os dialogos
+    // do projeto ja' faziam isto (`SettingsDialog`, `GitDiscardDialog`); os
+    // paineis, nao.
+    //
+    // `focus: true` e' o que faz a tecla chegar aqui: sem ele o item existe,
+    // aparece e nao ouve nada.
+    focus: visible
+    Keys.onEscapePressed: evento => {
+        root.dismissFromKeyboard();
+        evento.accepted = true;
+    }
+
+    // A DECISAO TEM NOME para poder ser medida: o harness do projeto roda com
+    // o `qml` puro e nao entrega tecla a ninguem (isso e' do `qmltestrunner`,
+    // que o projeto nao usa). O que fica sem prova automatica e' a LINHA de
+    // cima — o `Keys.onEscapePressed` chegar aqui —, e ela foi conferida a
+    // mao no binario. O que este nome protege e' o resto: que Esc dispensa, e
+    // que dispensar e' o mesmo caminho do clique fora.
+    function dismissFromKeyboard() {
+        root.dismissRequested();
+    }
+
     readonly property real frameWidth: Math.min(panelWidth, maxAvailableWidth)
     readonly property real frameHeight: Math.min(panelHeight, maxAvailableHeight)
 

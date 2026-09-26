@@ -22,5 +22,8 @@ KvPanelFrame {
     GrafanaPanel {
         anchors.fill: parent
         controller: root.controller
+        // O x do cabecalho fecha pelo mesmo caminho do clique fora: quem
+        // decide o que "fechar" significa e' o dono do overlay.
+        onCloseRequested: root.dismissRequested()
     }
 }

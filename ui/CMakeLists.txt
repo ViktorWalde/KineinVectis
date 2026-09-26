@@ -111,7 +111,6 @@ set_source_files_properties(qml/grafana/GrafanaFilterRules.qml PROPERTIES QT_RES
 set_source_files_properties(qml/grafana/GrafanaPanel.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaPanel.qml)
 set_source_files_properties(qml/grafana/GrafanaAuthSection.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaAuthSection.qml)
 set_source_files_properties(qml/grafana/GrafanaSetupSection.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaSetupSection.qml)
-set_source_files_properties(qml/grafana/GrafanaOverviewHeader.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaOverviewHeader.qml)
 set_source_files_properties(qml/grafana/GrafanaPanelHost.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaPanelHost.qml)
 set_source_files_properties(qml/grafana/GrafanaFindings.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaFindings.qml)
 set_source_files_properties(qml/grafana/GrafanaMatches.qml PROPERTIES QT_RESOURCE_ALIAS GrafanaMatches.qml)
@@ -439,7 +438,6 @@ qt_add_qml_module(kinein-vectis
         qml/grafana/GrafanaPanel.qml
         qml/grafana/GrafanaAuthSection.qml
         qml/grafana/GrafanaSetupSection.qml
-        qml/grafana/GrafanaOverviewHeader.qml
         qml/grafana/GrafanaPanelHost.qml
         qml/grafana/GrafanaFindings.qml
         qml/grafana/GrafanaMatches.qml
