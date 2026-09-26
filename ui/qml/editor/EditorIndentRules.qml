@@ -86,21 +86,6 @@ QtObject {
         return next === "}" || next === ")" || next === "]";
     }
 
-    // Quantos niveis de `unit` cabem numa indentacao existente. Serve para
-    // comparar o que o fallback fez com o que a gramatica respondeu.
-    function levelsOf(indentText) {
-        if (root.unit === "" || indentText === "") {
-            return 0;
-        }
-        let levels = 0;
-        let rest = indentText;
-        while (rest.startsWith(root.unit)) {
-            levels += 1;
-            rest = rest.substring(root.unit.length);
-        }
-        return levels;
-    }
-
     // O texto de `levels` niveis.
     function indentFor(levels) {
         let text = "";

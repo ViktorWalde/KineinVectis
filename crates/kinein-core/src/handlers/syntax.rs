@@ -107,7 +107,6 @@ impl Core {
                     version: answer.version,
                     language: answer.language,
                     level: answer.level,
-                    dedent_to: answer.dedent_to,
                 }),
             ),
             // Sem arvore para este arquivo: o editor fica com o fallback dele.

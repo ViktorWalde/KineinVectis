@@ -48,11 +48,13 @@ pub struct SyntaxTreeIndentResult {
     /// Language that produced the answer, so the editor can say where it came
     /// from.
     pub language: String,
-    /// Indent levels for the line being opened.
+    /// Indent levels for the line the editor is about to fix.
+    ///
+    /// WHICH line comes from the trigger the editor sent, and not from a second
+    /// field: `newline` fixes the line being opened, `closeDelimiter` fixes the
+    /// one just typed into. A `dedentTo` existed here briefly and was removed
+    /// once measured — it repeated `level` and nothing read it.
     pub level: u32,
-    /// When present, the current line moves to this level instead.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub dedent_to: Option<u32>,
 }
 
 /// One Tree-sitter highlight capture, adapted to Qt UTF-16 positions.

@@ -46,10 +46,8 @@ pub(crate) struct IndentAnswer {
     pub(crate) version: u64,
     /// Language that produced it, so the UI can say where the answer came from.
     pub(crate) language: String,
-    /// Indent levels for the line being opened.
+    /// Indent levels for the line the editor is about to fix.
     pub(crate) level: u32,
-    /// When present, the CURRENT line should move to this level instead.
-    pub(crate) dedent_to: Option<u32>,
 }
 
 /// Failure while producing a local syntax snapshot.
@@ -196,7 +194,6 @@ impl SyntaxTreeService {
             version: document.version,
             language: document.language.as_str().to_owned(),
             level: decision.level,
-            dedent_to: decision.dedent_to,
         })
     }
 

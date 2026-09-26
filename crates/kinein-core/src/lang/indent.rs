@@ -28,12 +28,14 @@ use super::registry::LanguageId;
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[allow(clippy::redundant_pub_crate)]
 pub(crate) struct IndentDecision {
-    /// Indent levels for the new line, counted from column zero.
+    /// Indent levels for the line the editor is about to fix.
+    ///
+    /// Which line that is comes from the trigger the editor sent: `Newline`
+    /// means the line being opened, `CloseDelimiter` means the one the author
+    /// just typed into. An earlier version also carried a `dedent_to`, and it
+    /// was removed once measured: for `CloseDelimiter` it held exactly the same
+    /// number as `level`, and nothing ever read it.
     pub(crate) level: u32,
-    /// When present, the *current* line should be re-indented to this level
-    /// instead — the `}` case, where the correction lands on text the author
-    /// just typed rather than on a new line.
-    pub(crate) dedent_to: Option<u32>,
 }
 
 /// What made the editor ask.
@@ -177,10 +179,7 @@ pub(crate) fn decide(
             // inside it — which is why `cursor_line` is compared against the
             // node that starts before the *new* line, not before this one.
             let inside = open_levels(language, node, cursor_line.saturating_add(1))?;
-            Some(IndentDecision {
-                level: inside,
-                dedent_to: None,
-            })
+            Some(IndentDecision { level: inside })
         }
         IndentTrigger::CloseDelimiter => {
             // The delimiter just typed closes the innermost block, so the line
@@ -188,7 +187,6 @@ pub(crate) fn decide(
             let inside = open_levels(language, node, cursor_line)?;
             Some(IndentDecision {
                 level: inside.saturating_sub(1),
-                dedent_to: Some(inside.saturating_sub(1)),
             })
         }
     }
@@ -317,7 +315,7 @@ mod tests {
             IndentTrigger::CloseDelimiter,
         )
         .expect("texto fechado, a gramatica responde");
-        assert_eq!(decisao.dedent_to, Some(1), "a linha do `}}` interno");
+        assert_eq!(decisao.level, 1, "a linha do `}}` interno");
     }
 
     /// Python nao tem chave: o bloco vem do `:`, e o `block` da gramatica e'

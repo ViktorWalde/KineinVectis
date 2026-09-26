@@ -545,8 +545,7 @@ signals:
                             const QVariantList& locals);
     // `version` e' a da ARVORE que respondeu. `level` negativo = a gramatica
     // nao soube responder, e o fallback local do editor fica valendo.
-    void syntaxIndentResolved(const QString& path, int version, const QString& language, int level,
-                              int dedentTo);
+    void syntaxIndentResolved(const QString& path, int version, const QString& language, int level);
     void lspSwitchSourceHeaderResolved(const QString& path);
     // M4.3b: um servidor LSP reiniciou — a UI re-sincroniza o arquivo ativo.
     void lspRestarted(const QString& language);

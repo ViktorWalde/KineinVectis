@@ -2,7 +2,7 @@
 
 > **0.135.0 (2026-09-26) — a resposta diz sobre o que ela é.**
 > Duas mudanças com o mesmo motivo. `syntaxTree.indent { path, version, line,
-> column, trigger }` → `{ path, version, language, level, dedentTo? }`, em que a
+> column, trigger }` → `{ path, version, language, level }`, em que a
 > `version` devolvida é a da **árvore que respondeu**, e não a que foi
 > perguntada: o autor continua digitando enquanto o pedido viaja, e comparar as
 > duas é o que impede a correção de cair no buffer errado. Resultado `null` é
@@ -1792,7 +1792,7 @@ alcança o `Core`, mas o evento dele volta ao dono do estado
 
 Recebe `{ path, version, line, column, trigger }` — `line` 1-based, `column`
 0-based em unidades UTF-16, `trigger` em `newline` ou `closeDelimiter` — e
-responde `{ path, version, language, level, dedentTo? }` ou **`null`**.
+responde `{ path, version, language, level }` ou **`null`**.
 
 Três coisas que o formato diz de propósito:
 
@@ -1802,7 +1802,11 @@ Três coisas que o formato diz de propósito:
   versão;
 - **`level` é um número de níveis**, e o texto de um nível é decisão do editor
   (espaço ou tabulação). Devolver texto obrigaria os dois lados a concordar
-  sobre a configuração;
+  sobre a configuração. **Qual linha** recebe esse nível vem do `trigger` que
+  foi enviado, e não de um segundo campo: `newline` corrige a linha que está
+  sendo aberta, `closeDelimiter` corrige aquela em que se acabou de digitar. Um
+  `dedentTo` existiu aqui por algumas horas e saiu assim que foi medido — ele
+  repetia o `level` e ninguém o lia;
 - **`null` não é erro.** Significa "a gramática não sabe aqui" — árvore com
   `ERROR` em volta do cursor, ou arquivo sem gramática. O editor já aplicou o
   fallback local antes de perguntar, e ele continua valendo. Transformar isso em

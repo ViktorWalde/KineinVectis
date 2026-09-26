@@ -335,14 +335,13 @@ bool CoreClient::dispatchSyntaxResult(const QString& method, const QJsonObject& 
         // volta do cursor, ou arquivo sem arvore). NAO e' falha: o editor ja'
         // aplicou o fallback dele antes de perguntar.
         if (result.isEmpty()) {
-            emit syntaxIndentResolved(QString(), 0, QString(), -1, -1);
+            emit syntaxIndentResolved(QString(), 0, QString(), -1);
             return true;
         }
         emit syntaxIndentResolved(result.value(QStringLiteral("path")).toString(),
                                   result.value(QStringLiteral("version")).toInt(),
                                   result.value(QStringLiteral("language")).toString(),
-                                  result.value(QStringLiteral("level")).toInt(-1),
-                                  result.value(QStringLiteral("dedentTo")).toInt(-1));
+                                  result.value(QStringLiteral("level")).toInt(-1));
         return true;
     }
     if (method != QStringLiteral("syntaxTree.update")) {

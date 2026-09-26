@@ -99,7 +99,7 @@ Item {
 
         // E1: a gramatica respondeu. As tres travas estao no controller —
         // aqui e' so' a entrega.
-        function onSyntaxIndentResolved(path, version, language, level, dedentTo) {
+        function onSyntaxIndentResolved(path, version, language, level) {
             root.editorController.handleIndentResolved(path, version, level);
         }
 

@@ -30,8 +30,6 @@ QtObject {
     // A resposta passou nas travas: quem tem o texto aplica.
     signal approved(int lineStart, string appliedIndent, int level)
 
-    readonly property bool pending: root.lineStart >= 0
-
     // Guarda o que o fallback aplicou, antes de o pedido sair.
     function remember(lineStart, appliedIndent) {
         root.lineStart = lineStart;

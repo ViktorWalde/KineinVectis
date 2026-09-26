@@ -71,10 +71,9 @@ Item {
         const python = rules.forNewline("def f():", 8);
         check(python.insert === "    ", 64, "o `:` abre: [" + python.insert + "]");
 
-        // Contar e produzir niveis sao inversas.
-        check(rules.levelsOf("        ") === 2, 128, "dois niveis");
+        // O texto de N niveis, que e' o que a correcao estrutural aplica.
         check(rules.indentFor(3) === "            ", 256, "tres niveis");
-        check(rules.levelsOf("") === 0, 512, "sem indentacao, zero niveis");
+        check(rules.indentFor(0) === "", 512, "zero niveis e' vazio");
 
         // --- AS TRES TRAVAS -------------------------------------------------
 
