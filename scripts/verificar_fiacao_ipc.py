@@ -179,6 +179,35 @@ def sinais_qml() -> list[tuple[str, str, Path]]:
     return achados
 
 
+DOC_PROTOCOLO = "DocsPublic/arquitetura/03-ipc-protocol.md"
+
+
+def metodos_documentados() -> tuple[set[str], int | None]:
+    """A lista canonica do `03-ipc-protocol.md`, e o numero que o titulo afirma.
+
+    A lista e' o bloco ```text que vem logo depois do titulo "Os N metodos
+    roteados"; o numero sai do proprio titulo.
+    """
+    texto = ler(RAIZ / DOC_PROTOCOLO)
+    titulo = re.search(r"^## Os (\d+) m[eé]todos roteados", texto, re.M)
+    if titulo is None:
+        return set(), None
+    resto = texto[titulo.end():]
+    bloco = re.search(r"```text\n(.*?)```", resto, re.S)
+    if bloco is None:
+        return set(), int(titulo.group(1))
+    metodos = {
+        linha.strip()
+        for linha in bloco.group(1).splitlines()
+        # TRES partes existem (`lsp.workspaceEdit.cancel`,
+        # `workspace.recent.list`), e a primeira versao deste regex as recusava
+        # — cinco falsos positivos de uma vez. Gate que acusa o que nao existe
+        # custa mais confianca que gate nenhum.
+        if re.fullmatch(r"[a-zA-Z]+(?:\.[a-zA-Z]+)+", linha.strip())
+    }
+    return metodos, int(titulo.group(1))
+
+
 def main() -> int:
     print("== fiacao IPC de ponta a ponta (metodo, evento, sinal C++, sinal QML, cadeia de despacho) ==")
     falhas: list[str] = []
@@ -203,6 +232,28 @@ def main() -> int:
     )
     for m in pedidos_sem_rota:
         falhas.append(f"o cliente pede um metodo que o core NAO roteia: {m}")
+
+    # 1c — A LISTA CANONICA DA DOCUMENTACAO (2026-09-26).
+    #
+    # O `03-ipc-protocol.md` tem a lista inteira dos metodos roteados, e ela e'
+    # o que alguem le' para saber o que existe no fio. Nada a cruzava com o
+    # codigo: em 2026-09-26 o `syntaxTree.indent` entrou roteado, documentado e
+    # com bump de versao — mas os tres porque EU LEMBREI, e "porque alguem
+    # lembrou" e' exatamente o que este projeto substitui por gate.
+    #
+    # O titulo carrega o numero, e ele tambem e' conferido: um titulo que diz
+    # 168 sobre uma lista de 169 e' uma afirmacao falsa na documentacao, do tipo
+    # que o `verificar-docs.sh` ja' recusa nos outros .md.
+    documentados, titulo = metodos_documentados()
+    roteados = metodos_do_core()
+    for m in sorted(roteados - documentados):
+        falhas.append(f"metodo roteado que NAO esta na lista de {DOC_PROTOCOLO}: {m}")
+    for m in sorted(documentados - roteados):
+        falhas.append(f"metodo na lista de {DOC_PROTOCOLO} que o core NAO roteia: {m}")
+    if titulo is not None and titulo != len(roteados):
+        falhas.append(
+            f"o titulo da lista em {DOC_PROTOCOLO} diz {titulo} metodos; sao {len(roteados)}"
+        )
 
     # 2
     tratados, descartados = eventos_tratados_no_cpp()
