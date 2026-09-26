@@ -4,9 +4,9 @@ import KineinVectis
 
 // A BARRA DE MODO DO MARKDOWN (fatia V5/M1, 2026-09-25).
 //
-// §3.1: ao abrir `.md`/`.markdown`, a barra do editor oferece os modos. O
-// "Lado a lado" e' da M2 e ainda NAO aparece — anunciar um botao que nao faz
-// nada seria a mentira que este projeto persegue.
+// §3.1: ao abrir `.md`/`.markdown`, a barra do editor oferece os tres modos.
+// O "Lado a lado" entrou na M2; ate' entao a barra tinha DOIS botoes, porque
+// anunciar um que nao faz nada seria a mentira que este projeto persegue.
 Row {
     id: root
 
@@ -19,7 +19,8 @@ Row {
     Repeater {
         model: [
             { "id": "edit", "label": qsTr("Editar") },
-            { "id": "preview", "label": qsTr("Preview") }
+            { "id": "preview", "label": qsTr("Preview") },
+            { "id": "side", "label": qsTr("Lado a lado") }
         ]
 
         Rectangle {

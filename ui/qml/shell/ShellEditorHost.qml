@@ -129,10 +129,15 @@ Item {
         outlineCollapsed: root.shellController.outlineCollapsed
         markdownAvailable: markdownPreview.available
         previewMode: markdownPreview.mode
+        previewWidth: markdownPreview.splitWidth
         currentFilePath: root.editorController.currentFilePath()
+        currentDocId: root.editorController.currentDocId
         workspaceRoot: root.shellController.workspaceRoot
         onPreviewModeSelected: function(mode) {
             markdownPreview.setMode(mode);
+        }
+        onPreviewResizeRequested: function(delta) {
+            markdownPreview.resizeSplit(delta);
         }
         onPreviewLocalFileRequested: function(path) {
             // O caminho ja' passou pela politica (dentro do projeto, sem

@@ -36,6 +36,23 @@ QtObject {
         return guardado === undefined ? "edit" : guardado;
     }
 
+    // A LARGURA do lado a lado tambem e' apresentacao (§6) — mas, ao contrario
+    // do modo, e' UMA SO' para a janela: o autor ajusta a divisao uma vez, e
+    // nao por arquivo.
+    readonly property real defaultSplitWidth: 420
+    readonly property real minSplitWidth: 280
+
+    property real splitWidth: defaultSplitWidth
+
+    // Delta zero e' o gesto de RESETAR do splitter (duplo clique).
+    function resizeSplit(delta) {
+        if (delta === 0) {
+            root.splitWidth = root.defaultSplitWidth;
+            return;
+        }
+        root.splitWidth = Math.max(root.minSplitWidth, root.splitWidth + delta);
+    }
+
     function setMode(mode) {
         if (root.currentDocId <= 0) {
             return false;

@@ -47,19 +47,25 @@ Rectangle {
                                              && width >= outlineWidth + 480
 
     function focusSymbols(query) {
-        outlinePanel.focusSearch(query);
+        outlineSide.focusSearch(query);
     }
 
     // A PREVIA DE MARKDOWN (V5/M1). O modo e' do documento; esta tela so'
     // desenha o que ele diz. `markdownAvailable` liga a barra de modo — um
     // `.py` nao ganha um botao "Preview" que nao faz nada.
     property bool markdownAvailable: false
+    // "edit" | "preview" | "side" — quem decide e' o MarkdownPreviewController.
     property string previewMode: "edit"
+    property real previewWidth: 420
     property string currentFilePath: ""
+    property int currentDocId: 0
     property string workspaceRoot: ""
-    readonly property bool previewing: markdownAvailable && previewMode === "preview"
+    readonly property bool sideBySide: markdownAvailable && previewMode === "side"
+    readonly property bool previewOnly: markdownAvailable && previewMode === "preview"
+    readonly property bool previewing: sideBySide || previewOnly
 
     signal previewModeSelected(string mode)
+    signal previewResizeRequested(real delta)
     signal previewLocalFileRequested(string path)
     signal previewWebUrlRequested(string url)
 
@@ -167,9 +173,17 @@ Rectangle {
 
         anchors.top: modeBar.visible ? modeBar.bottom : externalBanner.bottom
         anchors.bottom: parent.bottom
-        anchors.left: parent.left
-        anchors.right: outlineSplitter.visible ? outlineSplitter.left : parent.right
-        anchors.margins: Theme.spacingSmall
+        // SEM ancora a' esquerda, e com LARGURA explicita. A primeira versao
+        // tentava `anchors.left: sideBySide ? undefined : parent.left`, e a foto
+        // mostrou a previa cobrindo o editor: desancorar por ternario nao
+        // funciona: a ancora fica onde estava.
+        anchors.right: outlineSide.left
+        anchors.rightMargin: Theme.spacingSmall
+        anchors.topMargin: Theme.spacingSmall
+        anchors.bottomMargin: Theme.spacingSmall
+        width: root.sideBySide
+               ? root.previewWidth
+               : Math.max(0, outlineSide.x - 2 * Theme.spacingSmall)
         visible: root.previewing
         // O BUFFER, e nao o disco: a previa acompanha o que ainda nao foi
         // salvo (§3.3). Sem previa aberta o conteudo fica vazio, porque
@@ -177,6 +191,7 @@ Rectangle {
         content: root.previewing ? editor.text : ""
         documentPath: root.currentFilePath
         workspaceRoot: root.workspaceRoot
+        docId: root.currentDocId
         onLocalFileRequested: function(path) {
             root.previewLocalFileRequested(path);
         }
@@ -185,14 +200,28 @@ Rectangle {
         }
     }
 
+    PanelSplitter {
+        id: previewSplitter
+
+        visible: root.sideBySide
+        x: preview.x - Theme.panelGap
+        width: Theme.panelGap
+        anchors.top: preview.top
+        anchors.bottom: preview.bottom
+        onDragged: function(delta) {
+            root.previewResizeRequested(-delta);
+        }
+        onResetRequested: root.previewResizeRequested(0)
+    }
+
     EditorTextSurface {
         id: editor
 
-        visible: !root.previewing
+        visible: !root.previewOnly
         anchors.top: modeBar.visible ? modeBar.bottom : externalBanner.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        anchors.right: outlineSplitter.visible ? outlineSplitter.left : parent.right
+        anchors.right: root.sideBySide ? previewSplitter.left : outlineSide.left
         anchors.rightMargin: Theme.spacingSmall
         anchors.margins: Theme.spacingSmall
         hasOpenFile: root.currentTab >= 0
@@ -247,46 +276,25 @@ Rectangle {
         }
     }
 
-    EditorOutlinePanel {
-        id: outlinePanel
+    EditorOutlineSide {
+        id: outlineSide
 
         anchors.top: externalBanner.bottom
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.topMargin: Theme.spacingSmall
-        anchors.rightMargin: Theme.spacingSmall
-        anchors.bottomMargin: Theme.spacingSmall
-        width: visible ? root.outlineWidth : 0
-        visible: root.outlineExpanded
+        panelWidth: root.outlineWidth
+        expanded: root.outlineExpanded
+        available: root.outlineAvailable
         items: root.outlineItems
         symbols: root.symbols
         onCollapseRequested: root.outlineToggleRequested()
         onOpenRequested: function(line, column) {
             root.outlineOpenRequested(line, column);
         }
-    }
-
-    PanelSplitter {
-        id: outlineSplitter
-
-        visible: outlinePanel.visible
-        x: outlinePanel.x - Theme.panelGap
-        width: Theme.panelGap
-        anchors.top: outlinePanel.top
-        anchors.bottom: outlinePanel.bottom
-        onDragged: function(delta) {
-            root.outlineResizeRequested(-delta);
+        onResizeRequested: function(delta) {
+            root.outlineResizeRequested(delta);
         }
         onResetRequested: root.outlineResetRequested()
-    }
-
-    EditorOutlineHandle {
-        visible: root.outlineAvailable && !outlinePanel.visible
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.spacingSmall
-        anchors.verticalCenter: parent.verticalCenter
-        z: 18
-        onExpandRequested: root.outlineToggleRequested()
     }
 
 }

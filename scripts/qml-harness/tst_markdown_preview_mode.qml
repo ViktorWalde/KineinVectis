@@ -70,6 +70,37 @@ Item {
         root.path = "/p/docs/guia.md";
         check(preview.mode === "preview", 256, "documento 1 perdeu o modo");
 
+        // O LADO A LADO e' um modo como os outros, e tambem e' do documento.
+        root.docId = 2;
+        root.path = "/p/docs/outro.md";
+        check(preview.setMode("side"), 16384, "trocar para lado a lado");
+        check(preview.mode === "side", 32768, "documento 2 em lado a lado");
+        root.docId = 1;
+        root.path = "/p/docs/guia.md";
+        check(preview.mode === "preview", 65536, "o documento 1 nao virou lado a lado");
+
+        // A LARGURA, ao contrario do modo, e' UMA SO' para a janela: o autor
+        // ajusta a divisao uma vez, e nao por arquivo.
+        const larguraInicial = preview.splitWidth;
+        preview.resizeSplit(60);
+        check(preview.splitWidth === larguraInicial + 60, 131072,
+              "arrastar deveria alargar: " + preview.splitWidth);
+        root.docId = 2;
+        root.path = "/p/docs/outro.md";
+        check(preview.splitWidth === larguraInicial + 60, 262144,
+              "a largura nao e' por documento");
+
+        // E NAO ENCOLHE ATE' SUMIR: abaixo do minimo a previa viraria uma tira
+        // ilegivel, e o editor tambem.
+        preview.resizeSplit(-10000);
+        check(preview.splitWidth === preview.minSplitWidth, 524288,
+              "a largura passou do minimo: " + preview.splitWidth);
+
+        // Duplo clique no splitter devolve o padrao.
+        preview.resizeSplit(0);
+        check(preview.splitWidth === larguraInicial, 1048576,
+              "resetar deveria voltar ao padrao: " + preview.splitWidth);
+
         // SEM DOCUMENTO nao ha' modo para guardar, e pedir nao estoura.
         root.docId = 0;
         root.path = "";
