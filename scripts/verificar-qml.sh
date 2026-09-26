@@ -73,21 +73,23 @@ if [ -z "$RSP" ]; then
 fi
 
 # E O MAIS NOVO AINDA PODE SER VELHO. Os tipos C++ registrados no QML
-# (`QML_ELEMENT`) so' entram no `.qmltypes` quando o C++ compila: se a fonte e'
-# mais nova que os tipos, o lint estaria conferindo um contrato que nao existe
-# mais. Aqui e' recusa, com o comando que resolve.
+# (`QML_ELEMENT`) so' entram no `.qmltypes` quando o C++ compila.
+#
+# A primeira versao disto COMPARAVA MTIME do `.h` com o do `.qmltypes`, e tinha
+# falso-positivo obvio em retrospecto: um `cp` ou um `touch` que nao muda uma
+# linha deixava a fonte "mais nova" para sempre, e o gate reprovava sem que
+# houvesse nada errado. Comparar relogio e' adivinhar.
+#
+# Agora os tipos sao CONSTRUIDOS antes de lintar — deterministico, e barato
+# quando ja' estao em dia. E' o mesmo que este script ja' faz com a copia do
+# QML, uma linha adiante.
 if [ -n "$escolhido" ]; then
-    tipos="$escolhido/ui/KineinVectis/kinein-vectis.qmltypes"
-    for fonte in "$REPO_ROOT"/ui/src/*.h; do
-        grep -q 'QML_ELEMENT' "$fonte" || continue
-        if [ "$fonte" -nt "$tipos" ]; then
-            echo "erro: $(basename "$fonte") registra tipo QML e e' mais novo que o" >&2
-            echo "      kinein-vectis.qmltypes de $escolhido." >&2
-            echo "      O lint conferiria o QML de agora contra o tipo de antes." >&2
-            echo "      Rode:  cmake --build $escolhido" >&2
-            exit 1
-        fi
-    done
+    if ! cmake --build "$escolhido" --target kinein-vectis_qmltyperegistration >/dev/null 2>&1; then
+        echo "erro: nao foi possivel atualizar os tipos QML de $escolhido." >&2
+        echo "      O lint conferiria o QML de agora contra o tipo de antes." >&2
+        echo "      Rode:  cmake --build $escolhido" >&2
+        exit 1
+    fi
 fi
 if [ -n "$native_build" ]; then
     if [ -n "${KINEIN_QMLLINT:-}" ]; then
