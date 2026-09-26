@@ -125,6 +125,10 @@ passo "scripts/verificar-qml-propriedades.sh" \
     "Detecta propriedades, sinais, ancoras e indentacoes de binding QML invalidos."
 bash scripts/verificar-qml-propriedades.sh
 
+passo "scripts/verificar-qml-mortas.sh" \
+    "Recusa funcao QML nova que ninguem menciona — o dead_code que o QML nao tem."
+bash scripts/verificar-qml-mortas.sh
+
 passo "scripts/verificar-qml-duplicacao.sh" \
     "Impede que a mesma regra derivada seja copiada e possa divergir entre QMLs."
 bash scripts/verificar-qml-duplicacao.sh
