@@ -2,6 +2,8 @@
 
 #include <QString>
 
+#include <functional>
+
 // A POLITICA DO PREVIEW DE MARKDOWN: o que um documento pode alcancar.
 //
 // A §5 da `especificacoes/markdown-preview-0.3.md` e' explicita: o preview NAO
@@ -52,6 +54,20 @@ struct ResourceDecision
 // apenas abrir um arquivo.
 [[nodiscard]] ResourceDecision decideResource(const QString& href, const QString& documentPath,
                                               const QString& workspaceRoot, bool remoteAllowed);
+
+// REESCREVE as imagens que a politica recusa, no TEXTO, antes de renderizar.
+//
+// Existe porque tirar a imagem da tela depois do render e' tarde demais para a
+// seguranca: quando o documento ja' foi montado, o carregador do Qt Quick ja'
+// abriu o arquivo. A §10 pede que "imagem local fora do escopo permitido nao e'
+// lida" — nao apenas que nao apareca.
+//
+// `refusal` recebe o alvo da imagem e devolve o texto que a substitui, ou vazio
+// para deixa-la passar. A decisao (e o acesso ao disco que ela precise) fica com
+// quem chama; aqui e' so' a costura no texto, que e' a parte cheia de detalhe:
+// cerca de codigo nao e' reescrita, e uma linha pode ter varias imagens.
+[[nodiscard]] QString rewriteRefusedImages(const QString& markdown,
+                                           const std::function<QString(const QString&)>& refusal);
 
 // `true` quando o caminho normalizado esta' dentro da raiz — a mesma regra que
 // o link e o recurso usam, exposta porque quem le' o arquivo a repete sobre o

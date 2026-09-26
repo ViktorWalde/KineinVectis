@@ -14,6 +14,7 @@ using kinein::markdown::decideLink;
 using kinein::markdown::decideResource;
 using kinein::markdown::insideRoot;
 using kinein::markdown::LinkKind;
+using kinein::markdown::rewriteRefusedImages;
 
 namespace {
 const QString kRoot = QStringLiteral("/casa/projeto");
@@ -35,6 +36,9 @@ private slots:
     void a_remote_image_is_blocked_by_default();
     void a_local_image_outside_the_project_is_not_read();
     void an_anchor_in_a_file_link_is_not_part_of_the_path();
+    void a_refused_image_never_reaches_the_renderer();
+    void a_code_fence_is_content_and_is_not_rewritten();
+    void several_images_on_one_line_are_each_decided();
 };
 
 void TestMarkdownPolicy::anchor_navigates_inside_the_preview()
@@ -151,6 +155,43 @@ void TestMarkdownPolicy::an_anchor_in_a_file_link_is_not_part_of_the_path()
     const auto decision = decideLink(QStringLiteral("outro.md#secao"), kDoc, kRoot);
     QCOMPARE(decision.kind, LinkKind::LocalFile);
     QCOMPARE(decision.target, QStringLiteral("/casa/projeto/docs/outro.md"));
+}
+
+void TestMarkdownPolicy::a_refused_image_never_reaches_the_renderer()
+{
+    // Tirar a imagem da TELA depois do render e' tarde demais: quando o
+    // documento ja' foi montado, o carregador do Qt Quick ja' ABRIU o arquivo.
+    // A §10 pede que a imagem fora do escopo nao seja LIDA.
+    const auto refuse = [](const QString& target) {
+        return target.startsWith(QStringLiteral("..")) ? QStringLiteral("[fora]") : QString();
+    };
+    QCOMPARE(rewriteRefusedImages(QStringLiteral("antes ![x](../fuga.png) depois"), refuse),
+             QStringLiteral("antes [fora] depois"));
+    // A permitida fica INTACTA, com titulo e tudo.
+    const QString kept = QStringLiteral(R"(![ok](img/a.png "titulo"))");
+    QCOMPARE(rewriteRefusedImages(kept, refuse), kept);
+}
+
+void TestMarkdownPolicy::a_code_fence_is_content_and_is_not_rewritten()
+{
+    // Um exemplo de Markdown dentro de ``` e' o codigo que o autor quis
+    // mostrar. Reescreve-lo mudaria o documento dele.
+    const auto refuseAll = [](const QString&) { return QStringLiteral("[bloqueada]"); };
+    const QString source = QStringLiteral("um ![a](x.png)\n```\n![b](y.png)\n```\n![c](z.png)");
+    const QString expected = QStringLiteral("um [bloqueada]\n```\n![b](y.png)\n```\n[bloqueada]");
+    QCOMPARE(rewriteRefusedImages(source, refuseAll), expected);
+}
+
+void TestMarkdownPolicy::several_images_on_one_line_are_each_decided()
+{
+    // Uma linha pode ter varias, e so' as recusadas mudam — as posicoes das
+    // seguintes andam a cada substituicao.
+    const auto refuseSecond = [](const QString& target) {
+        return target == QStringLiteral("b.png") ? QStringLiteral("[nao]") : QString();
+    };
+    QCOMPARE(rewriteRefusedImages(QStringLiteral("![1](a.png) e ![2](b.png) e ![3](c.png)"),
+                                  refuseSecond),
+             QStringLiteral("![1](a.png) e [nao] e ![3](c.png)"));
 }
 
 QTEST_GUILESS_MAIN(TestMarkdownPolicy)

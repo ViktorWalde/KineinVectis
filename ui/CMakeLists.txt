@@ -306,6 +306,8 @@ set_source_files_properties(qml/editor/EditorOpenDocuments.qml PROPERTIES QT_RES
 set_source_files_properties(qml/editor/MarkdownPreviewPane.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownPreviewPane.qml)
 set_source_files_properties(qml/editor/MarkdownModeBar.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownModeBar.qml)
 set_source_files_properties(qml/editor/MarkdownPreviewController.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownPreviewController.qml)
+set_source_files_properties(qml/editor/MarkdownRenderGate.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownRenderGate.qml)
+set_source_files_properties(qml/editor/EditorOutlineSide.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineSide.qml)
 set_source_files_properties(qml/editor/EditorSaveController.qml PROPERTIES QT_RESOURCE_ALIAS EditorSaveController.qml)
 set_source_files_properties(qml/editor/EditorTextController.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextController.qml)
 set_source_files_properties(qml/editor/EditorLanguageController.qml PROPERTIES QT_RESOURCE_ALIAS EditorLanguageController.qml)
@@ -617,6 +619,8 @@ qt_add_qml_module(kinein-vectis
         qml/editor/MarkdownPreviewPane.qml
         qml/editor/MarkdownModeBar.qml
         qml/editor/MarkdownPreviewController.qml
+        qml/editor/MarkdownRenderGate.qml
+        qml/editor/EditorOutlineSide.qml
         qml/editor/EditorSaveController.qml
         qml/editor/EditorTextController.qml
         qml/editor/EditorLanguageController.qml

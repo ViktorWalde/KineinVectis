@@ -94,6 +94,9 @@ signals:
 private:
     void applyToDocument();
     void applyPalette(QTextDocument* document);
+    [[nodiscard]] QString sanitizeSource(const QString& markdown);
+    void sanitizeImages(QTextDocument* document);
+    [[nodiscard]] QString imageRefusal(const QString& name);
     void installProvider();
     [[nodiscard]] QVariant provideResource(const QUrl& url);
     [[nodiscard]] QString shortName(const QString& path) const;

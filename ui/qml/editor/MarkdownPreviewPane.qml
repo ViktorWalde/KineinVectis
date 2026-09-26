@@ -14,14 +14,33 @@ import KineinVectis
 Item {
     id: root
 
+    // O BUFFER como ele esta' agora. NAO vai direto para o renderer: ver o
+    // debounce abaixo.
     property string content: ""
     property string documentPath: ""
     property string workspaceRoot: ""
-    // O documento da aba. Uma resposta atrasada de OUTRA aba nao pode pintar
-    // aqui — §10, "resposta atrasada nunca aparece na aba errada".
+    // O documento da aba. Uma renderizacao atrasada de OUTRA aba nao pode
+    // pintar aqui — §10, "resposta atrasada nunca aparece na aba errada".
     property int docId: 0
 
+    // O que o portao das imagens RECUSOU, para a tela poder dizer em vez de
+    // deixar um buraco silencioso (§4.2).
     readonly property var blockedResources: ponte.blockedResources
+
+    // Quando o texto chega ao renderer e' regra, e mora no
+    // MarkdownRenderGate — que por isso tem harness.
+    readonly property alias rendered: gate.rendered
+    readonly property alias renderedDocId: gate.renderedDocId
+
+    // Trocar de conteudo apaga a recusa: ela era sobre o documento de antes.
+    onContentChanged: root.refusedMessage = ""
+
+    MarkdownRenderGate {
+        id: gate
+
+        content: root.content
+        docId: root.docId
+    }
 
     // A RECUSA DE UM LINK aparece AQUI, e nao num log distante: quem clicou
     // esta' olhando para esta tela. Silencio seria o mesmo defeito do id sem
@@ -31,13 +50,11 @@ Item {
     signal localFileRequested(string path)
     signal webUrlRequested(string url)
 
-    onContentChanged: root.refusedMessage = ""
-
     MarkdownDocument {
         id: ponte
 
         target: texto.textDocument
-        markdown: root.content
+        markdown: root.rendered
         documentPath: root.documentPath
         workspaceRoot: root.workspaceRoot
         // O tema entra como FORMATO, nao como CSS: o `setMarkdown` do Qt monta
@@ -118,7 +135,13 @@ Item {
         Text {
             id: avisoTexto
 
-            anchors.fill: parent
+            // NAO e' `anchors.fill`: a altura do retangulo sai do
+            // `implicitHeight` deste texto, e preencher o pai faria a medida
+            // depender do que ela mesma determina. O gate pegou como
+            // "Binding loop detected for property height".
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Theme.spacingSmall
             wrapMode: Text.WordWrap
             color: Theme.textSecondary
@@ -136,7 +159,7 @@ Item {
 
     Text {
         anchors.centerIn: parent
-        visible: root.content === ""
+        visible: root.rendered === ""
         text: qsTr("Nada para mostrar.")
         color: Theme.textMuted
         font.pixelSize: Theme.fontSizeEditor

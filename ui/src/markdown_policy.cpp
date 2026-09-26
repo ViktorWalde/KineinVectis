@@ -2,6 +2,8 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QRegularExpression>
+#include <QStringList>
 #include <QUrl>
 
 namespace kinein::markdown {
@@ -22,6 +24,50 @@ QString normalize(const QString& path)
 }
 
 } // namespace
+
+QString rewriteRefusedImages(const QString& markdown,
+                             const std::function<QString(const QString&)>& refusal)
+{
+    // `![alt](alvo "titulo")` — a forma inline, que e' a que o texto carrega.
+    // A forma por REFERENCIA (`![alt][ref]`) nao passa por aqui, e por isso
+    // quem chama mantem um segundo portao depois do render.
+    static const QRegularExpression image(
+        QStringLiteral(R"(!\[([^\]]*)\]\(\s*([^)\s]+)(?:\s+"[^"]*")?\s*\))"));
+    // Cerca de codigo: um exemplo de Markdown dentro de ``` e' CONTEUDO, e
+    // reescreve-lo mudaria o codigo que o autor quis mostrar.
+    static const QRegularExpression fence(QStringLiteral("^\\s*(```|~~~)"));
+
+    const QStringList lines = markdown.split(QLatin1Char('\n'));
+    QStringList out;
+    out.reserve(lines.size());
+    bool insideFence = false;
+    for (const QString& line : lines) {
+        if (fence.match(line).hasMatch()) {
+            insideFence = !insideFence;
+            out.append(line);
+            continue;
+        }
+        if (insideFence) {
+            out.append(line);
+            continue;
+        }
+        QString rewritten;
+        qsizetype last = 0;
+        QRegularExpressionMatchIterator it = image.globalMatch(line);
+        while (it.hasNext()) {
+            const QRegularExpressionMatch match = it.next();
+            const QString replacement = refusal(match.captured(2));
+            if (replacement.isEmpty()) {
+                continue;
+            }
+            rewritten += line.mid(last, match.capturedStart() - last);
+            rewritten += replacement;
+            last = match.capturedEnd();
+        }
+        out.append(last == 0 ? line : rewritten + line.mid(last));
+    }
+    return out.join(QLatin1Char('\n'));
+}
 
 bool insideRoot(const QString& absolutePath, const QString& root)
 {
