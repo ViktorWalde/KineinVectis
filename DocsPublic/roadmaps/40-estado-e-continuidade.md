@@ -7021,3 +7021,40 @@ como frente nova.
 A linha de pesquisa ganhou o nome que o relatório usa — *Semantic Incremental
 Compilation / Semantic Dependency Fingerprints* — e continua na pasta
 `pesquisa/`, que não autoriza implementação.
+
+
+### 7.120 P1 continua: seleção e menu da árvore por teclado — 2026-09-29
+
+A continuação partiu do checkout limpo em `fed395d`; o teclado da §7.118 já
+estava commitado. A seleção simples morava no `ProjectTreeController`, que
+estava em 400 linhas. Seu estado foi extraído para `ProjectTreeSelection`:
+paths são a identidade, índices calculam somente o intervalo visível. Ctrl
+alterna itens, Shift substitui pelo intervalo, Ctrl+Shift soma o intervalo,
+Ctrl+A seleciona a árvore focada, e Ctrl+seta move só o cursor. Refresh e
+recolhimento reconciliam a seleção com as linhas visíveis, inclusive uma
+mudança de tipo no mesmo path.
+
+`ProjectTreeRow` agora desenha a linha; `ProjectExplorer` liga o mouse e o
+teclado ao mesmo `selectEntry` do controller. O ícone de execução usa
+`ProjectTreeController.isRunnableScript`, removendo a segunda regra de
+extensão que o painel mantinha. `ProjectTreeResults` recebeu as respostas de
+`fs.*` e do watcher que antes faziam o controller ultrapassar o limite de
+arquitetura. Nenhum motor de arquivo foi copiado.
+
+`Menu`/`Shift+F10` abrem o menu já usado pelo clique direito. O menu aceita
+setas, Enter e Escape; Escape e os cancelamentos devolvem foco à árvore.
+Quando há vários itens selecionados, renomear/excluir e criar pela toolbar
+ficam indisponíveis com motivo. O menu em um item mantém a seleção de grupo,
+mas não finge que `fs.rename` ou `fs.delete` já são operações de lote.
+
+**Prova desta fatia:** harnesses QML de seleção, teclado, menu e respostas do
+core; qmllint estrito, catracas de fiação/propriedades/alcance/duplicação e
+arquitetura verdes. O binário `dev-local` recompilou e abriu em offscreen sem
+aviso QML; com uma pasta temporária contendo `src/` e `README.md`, ficou
+aberto por três segundos sem erro de binding. A integração de mouse e foco
+num compositor real ainda não foi medida nesta retomada.
+
+**Próxima parte:** operações de arquivos da P2/P3 sobre os donos existentes,
+começando pela cópia e pelo clipboard com validação de colisão no core. A
+pesquisa de compiladores da §7.119 continua agendada com os embarcados, antes
+da 1.0, conforme a decisão do autor.

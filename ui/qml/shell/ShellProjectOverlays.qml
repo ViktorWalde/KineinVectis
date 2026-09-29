@@ -27,9 +27,7 @@ Item {
     property var projectTree: null
     // Para mostrar o caminho relativo a raiz do projeto no dialogo de renomear.
     property var shellController: null
-    // Cancelar um dialogo devolve o foco ao editor; sem isso o teclado fica
-    // num overlay que nao existe mais.
-    property var editorController: null
+    // Cancelar um dialogo do explorer devolve o foco a arvore.
 
     // O nome pre-preenchido vem de fora (a paleta abre o renomear com o nome
     // atual), entao a entrada e' funcao, nao propriedade.
@@ -45,7 +43,8 @@ Item {
         menuY: root.projectTree.entryMenuY
         runnableScript: root.projectTree.entryMenuRunnable
         debuggableScript: root.projectTree.entryMenuDebuggable
-        onDismissRequested: root.projectTree.entryMenuVisible = false
+        selectionCount: root.projectTree.selectedPaths.length
+        onDismissRequested: root.projectTree.dismissEntryMenu()
         onCreateFileRequested: root.projectTree.openEntryCreate("file")
         onCreateDirectoryRequested: root.projectTree.openEntryCreate("directory")
         onRunScriptRequested: root.projectTree.runEntryScript()
@@ -69,7 +68,7 @@ Item {
                                 entryRenameDialog.currentName())
         onCancelRequested: {
             root.projectTree.entryRenameVisible = false;
-            root.editorController.focusEditor();
+            root.projectTree.focusTreeRequested();
         }
     }
 
@@ -84,7 +83,7 @@ Item {
         onConfirmRequested: root.projectTree.confirmEntryDelete()
         onCancelRequested: {
             root.projectTree.entryDeleteVisible = false;
-            root.editorController.focusEditor();
+            root.projectTree.focusTreeRequested();
         }
     }
 }

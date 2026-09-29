@@ -18,6 +18,9 @@ Item {
     property var movidos: []
     property var alternados: []
     property var ativados: []
+    property var modificadores: []
+    property int todos: 0
+    property var menus: []
 
     ListModel {
         id: modelo
@@ -33,9 +36,14 @@ Item {
         model: modelo
         currentIndex: 0
 
-        onMoveRequested: indice => root.movidos.push(indice)
+        onMoveRequested: function(indice, modifiers) {
+            root.movidos.push(indice);
+            root.modificadores.push(modifiers);
+        }
         onToggleRequested: indice => root.alternados.push(indice)
         onActivateRequested: indice => root.ativados.push(indice)
+        onSelectAllRequested: root.todos += 1
+        onMenuRequested: indice => root.menus.push(indice)
     }
 
     function conferir(condicao, mensagem) {
@@ -98,6 +106,20 @@ Item {
         root.conferir(!consumiu, "o teclado da arvore engoliu um Ctrl+C");
         root.conferir(teclado.prefixo === "", "o Ctrl+C entrou na busca por nome");
         root.conferir(root.movidos.length === antes, "o Ctrl+C moveu o cursor");
+
+        // Ctrl+seta move so o cursor; o modificador viaja ate o dono da selecao.
+        teclado.currentIndex = 0;
+        teclado.handleKey(root.tecla(Qt.Key_Down, "", Qt.ControlModifier));
+        root.conferir(root.movidos[root.movidos.length - 1] === 1
+                      && root.modificadores[root.modificadores.length - 1] === Qt.ControlModifier,
+                      "Ctrl+seta perdeu o modificador");
+        teclado.handleKey(root.tecla(Qt.Key_A, "a", Qt.ControlModifier));
+        root.conferir(root.todos === 1, "Ctrl+A nao escolheu a arvore focada");
+        root.conferir(teclado.prefixo === "", "Ctrl+A entrou na busca");
+        teclado.handleKey(root.tecla(Qt.Key_Menu));
+        teclado.handleKey(root.tecla(Qt.Key_F10, "", Qt.ShiftModifier));
+        root.conferir(root.menus.length === 2 && root.menus[0] === 0
+                      && root.menus[1] === 0, "Menu/Shift+F10 nao abriram item atual");
 
         // TECLA SEM TEXTO (um Shift sozinho) tambem nao e' busca.
         root.conferir(!teclado.handleKey(root.tecla(Qt.Key_Shift)),

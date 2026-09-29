@@ -22,9 +22,11 @@ Item {
     // Onde o cursor esta'. -1 e' "em lugar nenhum ainda".
     property int currentIndex: -1
 
-    signal moveRequested(int index)
+    signal moveRequested(int index, int modifiers)
     signal toggleRequested(int index)
     signal activateRequested(int index)
+    signal selectAllRequested()
+    signal menuRequested(int index)
 
     visible: false
 
@@ -59,10 +61,10 @@ Item {
         return saida;
     }
 
-    function aplicar(intencao) {
+    function aplicar(intencao, modifiers = Qt.NoModifier) {
         switch (intencao.kind) {
         case "move":
-            root.moveRequested(intencao.index);
+            root.moveRequested(intencao.index, modifiers);
             return true;
         case "expand":
         case "collapse":
@@ -83,19 +85,31 @@ Item {
     function handleKey(evento) {
         const linhas = root.linhas();
         const indice = root.currentIndex;
+        const modifiers = evento.modifiers;
+        if (evento.key === Qt.Key_A && modifiers === Qt.ControlModifier) {
+            if (linhas.length === 0) return false;
+            root.selectAllRequested();
+            return true;
+        }
+        if (evento.key === Qt.Key_Menu
+                || (evento.key === Qt.Key_F10 && modifiers === Qt.ShiftModifier)) {
+            if (indice < 0 || indice >= linhas.length) return false;
+            root.menuRequested(indice);
+            return true;
+        }
         switch (evento.key) {
         case Qt.Key_Down:
-            return root.aplicar(regras.aoDescer(linhas, indice));
+            return root.aplicar(regras.aoDescer(linhas, indice), modifiers);
         case Qt.Key_Up:
-            return root.aplicar(regras.aoSubir(linhas, indice));
+            return root.aplicar(regras.aoSubir(linhas, indice), modifiers);
         case Qt.Key_Right:
             return root.aplicar(regras.aoAvancar(linhas, indice));
         case Qt.Key_Left:
             return root.aplicar(regras.aoRecuar(linhas, indice));
         case Qt.Key_Home:
-            return root.aplicar(regras.aoIrParaOTopo(linhas));
+            return root.aplicar(regras.aoIrParaOTopo(linhas), modifiers);
         case Qt.Key_End:
-            return root.aplicar(regras.aoIrParaOFim(linhas));
+            return root.aplicar(regras.aoIrParaOFim(linhas), modifiers);
         case Qt.Key_Return:
         case Qt.Key_Enter:
             return root.aplicar(regras.aoAtivar(linhas, indice));

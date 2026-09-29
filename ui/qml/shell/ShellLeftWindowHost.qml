@@ -25,18 +25,19 @@ Item {
         anchors.fill: parent
         visible: root.shellController.effectiveShowExplorer
         workspaceName: root.workspaceName
-        selectedPath: root.projectTree.selectedPath
+        selectedPaths: root.projectTree.selectedPaths
         entriesModel: root.projectTree.entriesModel
-        runnableExtensions: root.projectTree.runnableExtensions
+        projectTree: root.projectTree
         gitKinds: root.gitController.gitKinds
         gitRevision: root.gitController.revision
         onCreateFileRequested: root.projectTree.openCreateDialog("file")
         onCreateDirectoryRequested: root.projectTree.openCreateDialog("directory")
         onRefreshRequested: root.listDirRequested(root.workspaceRoot)
         onCloseRequested: root.closeWorkspaceRequested()
-        onEntrySelected: function(path, kind) {
-            root.projectTree.selectEntry(path, kind);
+        onEntrySelected: function(path, kind, modifiers) {
+            root.projectTree.selectEntry(path, kind, modifiers);
         }
+        onSelectAllRequested: root.projectTree.selectAllEntries()
         onDirectoryToggleRequested: function(path, index, expanded) {
             root.projectTree.toggleDirectory(path, index, expanded);
         }
@@ -49,6 +50,11 @@ Item {
         onContextMenuRequested: function(path, kind, name, sceneX, sceneY) {
             root.projectTree.openEntryMenu(path, kind, name, sceneX, sceneY);
         }
+    }
+
+    Connections {
+        target: root.projectTree
+        function onFocusTreeRequested() { explorerPanel.focusTree(); }
     }
 
     GitWindow {

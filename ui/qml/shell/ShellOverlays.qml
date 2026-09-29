@@ -256,6 +256,5 @@ Item {
         hostWidth: root.hostWidth
         projectTree: root.projectTree
         shellController: root.shellController
-        editorController: root.editorController
     }
 }

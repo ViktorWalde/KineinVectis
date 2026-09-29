@@ -7,8 +7,9 @@ Item {
     property real hostWidth: 0
     property real hostHeight: 0
     property alias entriesModel: treeModel
-    property string selectedPath: ""
-    property string selectedKind: ""
+    property alias selectedPath: selection.selectedPath
+    property alias selectedKind: selection.selectedKind
+    property alias selectedPaths: selection.selectedPaths
     property bool createDialogVisible: false
     property string createDialogKind: "file"
     property string createDialogParentPath: ""
@@ -43,12 +44,17 @@ Item {
     signal tabsCloseRequested(string path)
     signal createDialogFocusRequested()
     signal entryRenameDialogOpenRequested(string name)
-    signal focusEditorRequested()
+    signal focusTreeRequested()
 
     visible: false
 
     ListModel {
         id: treeModel
+    }
+
+    ProjectTreeSelection {
+        id: selection
+        model: treeModel
     }
 
     function baseName(path) {
@@ -92,8 +98,7 @@ Item {
 
     function clear() {
         treeModel.clear();
-        selectedPath = "";
-        selectedKind = "";
+        selection.clear();
         createDialogVisible = false;
         createDialogError = "";
         createDialogParentPath = "";
@@ -106,18 +111,16 @@ Item {
         entryDeleteError = "";
     }
 
-    function selectEntry(path, kind) {
-        selectedPath = path;
-        selectedKind = kind;
+    function selectEntry(path, kind, modifiers = Qt.NoModifier) {
+        selection.select(path, kind, modifiers);
+    }
+
+    function selectAllEntries() {
+        selection.selectAll();
     }
 
     function rowIndexForPath(path) {
-        for (let i = 0; i < treeModel.count; i++) {
-            if (treeModel.get(i).path === path) {
-                return i;
-            }
-        }
-        return -1;
+        return selection.indexOf(path);
     }
 
     function collapseRow(index) {
@@ -152,6 +155,7 @@ Item {
         if (path === workspaceRoot) {
             treeModel.clear();
             insertEntries(0, entries, 0, path);
+            selection.reconcile();
             advanceReveal();
             return;
         }
@@ -164,6 +168,7 @@ Item {
         }
         treeModel.setProperty(index, "expanded", true);
         insertEntries(index + 1, entries, treeModel.get(index).depth + 1, path);
+        selection.reconcile();
         listingArrived(path);
         advanceReveal();
     }
@@ -190,6 +195,7 @@ Item {
     function toggleDirectory(path, index, expanded) {
         if (expanded) {
             collapseRow(index);
+            selection.reconcile();
         } else {
             root.listDirRequested(path);
         }
@@ -203,7 +209,7 @@ Item {
     }
 
     function openCreateDialog(kind) {
-        if (workspaceRoot === "") {
+        if (workspaceRoot === "" || selectedPaths.length > 1) {
             return;
         }
         openCreateDialogAt(kind, selectedCreateParent());
@@ -251,9 +257,15 @@ Item {
         entryMenuName = name;
         entryMenuRunnable = isRunnableScript(path, kind);
         entryMenuDebuggable = isDebuggableScript(path, kind);
-        entryMenuX = Math.max(0, Math.min(sceneX, hostWidth - 172));
+        const menuWidth = selectedPaths.length > 1 ? 234 : 172;
+        entryMenuX = Math.max(0, Math.min(sceneX, hostWidth - menuWidth));
         entryMenuY = Math.max(0, Math.min(sceneY, hostHeight - 190));
         entryMenuVisible = true;
+    }
+
+    function dismissEntryMenu() {
+        entryMenuVisible = false;
+        focusTreeRequested();
     }
 
     function runScript(path) {
@@ -262,6 +274,7 @@ Item {
         }
         entryMenuVisible = false;
         runScriptRequested(path);
+        focusTreeRequested();
     }
 
     function runEntryScript() {
@@ -277,6 +290,7 @@ Item {
         }
         entryMenuVisible = false;
         debugScriptRequested(entryMenuPath);
+        focusTreeRequested();
     }
 
     function openEntryRename() {
@@ -303,7 +317,7 @@ Item {
         }
         if (trimmed === baseName(entryRenamePath)) {
             entryRenameVisible = false;
-            focusEditorRequested();
+            focusTreeRequested();
             return;
         }
         renamePathRequested(entryRenamePath, parentDir(entryRenamePath) + "/" + trimmed);
@@ -326,75 +340,16 @@ Item {
         deletePathRequested(entryDeletePath);
     }
 
-    function handleFileCreated(path) {
-        createDialogVisible = false;
-        createDialogError = "";
-        selectedPath = path;
-        selectedKind = "file";
-        listDirRequested(parentDir(path));
-        readFileRequested(path);
-    }
+    function clearSelection() { selection.clear(); }
+    function handleFileCreated(path) { results.fileCreated(path); }
+    function handleDirectoryCreated(path) { results.directoryCreated(path); }
+    function handlePathRenamed(from, to) { results.pathRenamed(from, to); }
+    function handlePathDeleted(path) { results.pathDeleted(path); }
+    function handleExternalChanges(changes) { results.externalChanges(changes); }
+    function handleRequestFailed(method, message) { results.requestFailed(method, message); }
 
-    function handleDirectoryCreated(path) {
-        createDialogVisible = false;
-        createDialogError = "";
-        selectedPath = path;
-        selectedKind = "directory";
-        listDirRequested(parentDir(path));
-    }
-
-    function handlePathRenamed(from, to) {
-        entryRenameVisible = false;
-        entryRenameError = "";
-        tabsRenameRequested(from, to);
-        selectedPath = to;
-        listDirRequested(parentDir(to));
-        focusEditorRequested();
-    }
-
-    function handlePathDeleted(path) {
-        entryDeleteVisible = false;
-        entryDeleteError = "";
-        tabsCloseRequested(path);
-        if (selectedPath === path || selectedPath.indexOf(path + "/") === 0) {
-            selectedPath = "";
-            selectedKind = "";
-        }
-        listDirRequested(parentDir(path));
-        focusEditorRequested();
-    }
-
-    function handleExternalChanges(changes) {
-        const directories = {};
-        for (let i = 0; i < changes.length; i++) {
-            const directory = parentDir(changes[i].path);
-            if (directory === workspaceRoot) {
-                directories[directory] = true;
-                continue;
-            }
-            const index = rowIndexForPath(directory);
-            if (index >= 0 && rules.isDirectory(treeModel.get(index).kind)
-                    && treeModel.get(index).expanded) {
-                directories[directory] = true;
-            }
-        }
-        for (const directory in directories) {
-            listDirRequested(directory);
-        }
-    }
-
-    function handleRequestFailed(method, message) {
-        if (method === "fs.createFile" || method === "fs.createDirectory") {
-            createDialogError = message;
-            createDialogVisible = true;
-        }
-        if (method === "fs.rename") {
-            entryRenameError = message;
-            entryRenameVisible = true;
-        }
-        if (method === "fs.delete") {
-            entryDeleteError = message;
-            entryDeleteVisible = true;
-        }
+    ProjectTreeResults {
+        id: results
+        tree: root
     }
 }

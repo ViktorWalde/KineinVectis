@@ -390,7 +390,6 @@ Item {
         onEntryRenameDialogOpenRequested: function(name) {
             root.shellOverlays.openEntryRenameWithName(name);
         }
-        onFocusEditorRequested: editorController.focusEditor()
     }
 
     AppRouters {

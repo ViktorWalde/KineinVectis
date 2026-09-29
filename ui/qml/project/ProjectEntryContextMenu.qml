@@ -7,6 +7,7 @@ Item {
     property real menuY: 0
     property bool runnableScript: false
     property bool debuggableScript: false
+    property int selectionCount: 1
 
     signal dismissRequested()
     signal createFileRequested()
@@ -15,6 +16,33 @@ Item {
     signal debugScriptRequested()
     signal renameRequested()
     signal deleteRequested()
+
+    focus: visible
+    onVisibleChanged: {
+        if (visible) {
+            menuKeys.currentAction = 0;
+            forceActiveFocus();
+        }
+    }
+    Keys.onPressed: function(event) { event.accepted = menuKeys.handleKey(event); }
+
+    ProjectEntryMenuKeyboard {
+        id: menuKeys
+        runnableScript: root.runnableScript
+        debuggableScript: root.debuggableScript
+        singleSelection: root.selectionCount <= 1
+        onDismissRequested: root.dismissRequested()
+        onActionRequested: function(index) {
+            switch (index) {
+            case 0: root.createFileRequested(); break;
+            case 1: root.createDirectoryRequested(); break;
+            case 2: root.runScriptRequested(); break;
+            case 3: root.debugScriptRequested(); break;
+            case 4: root.renameRequested(); break;
+            case 5: root.deleteRequested(); break;
+            }
+        }
+    }
 
     MouseArea {
         anchors.fill: parent
@@ -25,7 +53,7 @@ Item {
     Rectangle {
         x: root.menuX
         y: root.menuY
-        width: 168
+        width: root.selectionCount > 1 ? 230 : 168
         height: entryMenuColumn.height + 2 * Theme.spacingSmall
         radius: Theme.radius
         color: Theme.background2
@@ -46,6 +74,7 @@ Item {
                 height: 26
                 radius: Theme.radius
                 color: entryCreateFileHover.containsMouse
+                       || (root.activeFocus && menuKeys.currentAction === 0)
                        ? Theme.surface2 : "transparent"
 
                 Text {
@@ -72,6 +101,7 @@ Item {
                 height: 26
                 radius: Theme.radius
                 color: entryCreateDirectoryHover.containsMouse
+                       || (root.activeFocus && menuKeys.currentAction === 1)
                        ? Theme.surface2 : "transparent"
 
                 Text {
@@ -105,6 +135,7 @@ Item {
                 visible: root.runnableScript
                 radius: Theme.radius
                 color: entryRunHover.containsMouse
+                       || (root.activeFocus && menuKeys.currentAction === 2)
                        ? Theme.surface2 : "transparent"
 
                 Row {
@@ -143,6 +174,7 @@ Item {
                 visible: root.debuggableScript
                 radius: Theme.radius
                 color: entryDebugHover.containsMouse
+                       || (root.activeFocus && menuKeys.currentAction === 3)
                        ? Theme.surface2 : "transparent"
 
                 Row {
@@ -187,14 +219,16 @@ Item {
                 height: 26
                 radius: Theme.radius
                 color: entryRenameHover.containsMouse
+                       || (root.activeFocus && menuKeys.currentAction === 4)
                        ? Theme.surface2 : "transparent"
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: Theme.spacingSmall
-                    text: qsTr("Renomear")
-                    color: Theme.textPrimary
+                    text: root.selectionCount <= 1 ? qsTr("Renomear")
+                                                     : qsTr("Renomear: selecione 1 item")
+                    color: root.selectionCount <= 1 ? Theme.textPrimary : Theme.textMuted
                     font.pixelSize: 12
                 }
 
@@ -203,7 +237,8 @@ Item {
 
                     anchors.fill: parent
                     hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                    enabled: root.selectionCount <= 1
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: root.renameRequested()
                 }
             }
@@ -213,14 +248,16 @@ Item {
                 height: 26
                 radius: Theme.radius
                 color: entryDeleteHover.containsMouse
+                       || (root.activeFocus && menuKeys.currentAction === 5)
                        ? Theme.surface2 : "transparent"
 
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: Theme.spacingSmall
-                    text: qsTr("Excluir")
-                    color: Theme.errorSoft
+                    text: root.selectionCount <= 1 ? qsTr("Excluir")
+                                                     : qsTr("Excluir: selecione 1 item")
+                    color: root.selectionCount <= 1 ? Theme.errorSoft : Theme.textMuted
                     font.pixelSize: 12
                 }
 
@@ -229,7 +266,8 @@ Item {
 
                     anchors.fill: parent
                     hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                    enabled: root.selectionCount <= 1
+                    cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: root.deleteRequested()
                 }
             }

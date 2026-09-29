@@ -194,7 +194,7 @@ Item {
                                 createDialog.currentName())
         onCancelRequested: {
             root.projectTree.createDialogVisible = false;
-            root.editorController.focusEditor();
+            root.projectTree.focusTreeRequested();
         }
     }
 

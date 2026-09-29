@@ -301,6 +301,10 @@ set_source_files_properties(qml/project/ProjectTreeRevealController.qml PROPERTI
 set_source_files_properties(qml/project/ProjectTreeRules.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRules.qml)
 set_source_files_properties(qml/project/ProjectTreeKeyRules.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeKeyRules.qml)
 set_source_files_properties(qml/project/ProjectTreeKeyboard.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeKeyboard.qml)
+set_source_files_properties(qml/project/ProjectTreeSelection.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeSelection.qml)
+set_source_files_properties(qml/project/ProjectTreeRow.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRow.qml)
+set_source_files_properties(qml/project/ProjectEntryMenuKeyboard.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryMenuKeyboard.qml)
+set_source_files_properties(qml/project/ProjectTreeResults.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeResults.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
 set_source_files_properties(qml/project/ProjectEntryContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryContextMenu.qml)
 set_source_files_properties(qml/project/ProjectEntryRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryRenameDialog.qml)
@@ -629,6 +633,10 @@ qt_add_qml_module(kinein-vectis
         qml/project/ProjectTreeRules.qml
         qml/project/ProjectTreeKeyRules.qml
         qml/project/ProjectTreeKeyboard.qml
+        qml/project/ProjectTreeSelection.qml
+        qml/project/ProjectTreeRow.qml
+        qml/project/ProjectEntryMenuKeyboard.qml
+        qml/project/ProjectTreeResults.qml
         qml/project/ProjectExplorer.qml
         qml/project/ProjectEntryContextMenu.qml
         qml/project/ProjectEntryRenameDialog.qml

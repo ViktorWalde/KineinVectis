@@ -136,6 +136,17 @@ decisão explícita do autor que a reprograme.
 | Mudança interna/externa | árvore, abas, Git e índice refletem o resultado real; alterações externas não substituem buffer sujo sem resolver conflito |
 | Erro/cancelamento/lote grande | feedback e progresso observáveis; discriminar o que concluiu/falhou; não congelar UI nem anunciar atomicidade de um lote parcial |
 
+**Estado medido em 2026-09-29:** a árvore tem seleção por path com Ctrl,
+Shift, Ctrl+Shift e Ctrl+A quando está focada. O cursor pode andar com
+Ctrl+seta sem alterar a seleção; refresh preserva paths existentes e remove
+os que saíram da árvore visível. `Menu` e `Shift+F10` abrem o mesmo menu do
+clique direito; setas, Enter e Escape funcionam nele, e Escape devolve o foco
+à árvore. Em seleção múltipla, renomear/excluir e os botões globais de criar
+ficam indisponíveis com motivo visível: essas operações ainda não têm contrato
+de lote. Criar pelo menu usa o item sob contexto como destino. Clipboard de
+arquivos, drag-and-drop, lixeira e colisões de lote seguem como alvo, sem
+serem inferidos dessa fatia.
+
 Antes da implementação de abertura por clique, confrontar o uso atual com o
 modo preview de abas das referências. A decisão de preview/pin não pode ser
 substituída por “duplo clique faz o mesmo” sem discussão (§7).

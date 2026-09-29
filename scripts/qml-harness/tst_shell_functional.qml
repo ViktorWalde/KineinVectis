@@ -11,6 +11,7 @@ Item {
     property string createdFile: ""
     property string createdDirectory: ""
     property string executedScript: ""
+    property int focusTreeCount: 0
 
     QtObject {
         id: automaticSettings
@@ -40,6 +41,7 @@ Item {
         onCreateFileRequested: path => root.createdFile = path
         onCreateDirectoryRequested: path => root.createdDirectory = path
         onRunScriptRequested: path => root.executedScript = path
+        onFocusTreeRequested: root.focusTreeCount += 1
     }
 
     Component.onCompleted: {
@@ -113,9 +115,12 @@ Item {
         projectTree.runEntryScript();
         if (executedScript !== "/work/scripts/check.sh"
                 || projectTree.entryMenuVisible) failures += 1;
+        if (focusTreeCount !== 1) failures += 1;
         projectTree.openEntryMenu("/work/src/main.cpp", "file",
                                   "main.cpp", 10, 10);
         if (projectTree.entryMenuRunnable) failures += 1;
+        projectTree.dismissEntryMenu();
+        if (focusTreeCount !== 2 || projectTree.entryMenuVisible) failures += 1;
         // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
         // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256
         // era letra morta: passava verde mesmo quebrado, que e exatamente a

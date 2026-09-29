@@ -5,8 +5,9 @@ Rectangle {
     id: root
 
     property string workspaceName: ""
-    property string selectedPath: ""
+    property var selectedPaths: []
     property var entriesModel
+    property var projectTree: null
     // path absoluto -> kind do git (fatia M3.1); a revisão força rebind.
     property var gitKinds: ({})
     property int gitRevision: 0
@@ -15,12 +16,17 @@ Rectangle {
     signal createDirectoryRequested()
     signal refreshRequested()
     signal closeRequested()
-    signal entrySelected(string path, string kind)
+    signal entrySelected(string path, string kind, int modifiers)
+    signal selectAllRequested()
     signal directoryToggleRequested(string path, int index, bool expanded)
     signal fileOpenRequested(string path)
     signal scriptRunRequested(string path)
     signal contextMenuRequested(string path, string kind, string name,
                                 real sceneX, real sceneY)
+
+    function focusTree() {
+        explorerView.forceActiveFocus();
+    }
 
     // `revision` existe so' para o binding reavaliar quando o git muda.
     // Arquivo SEM estado de git nao e' um estado de git: cai na cor normal da
@@ -28,17 +34,6 @@ Rectangle {
     function gitFileColor(path, revision) {
         const kind = gitKinds[path];
         return kind === undefined ? Theme.textSecondary : StatusColors.gitKind(kind);
-    }
-
-    // As extensoes executaveis vem do core pelo ProjectTreeController
-    // (run.capabilities): aqui so' o icone da linha, sem lista propria.
-    property var runnableExtensions: []
-
-    function isRunnableScript(name, kind) {
-        if (kind !== "file") return false;
-        const ponto = name.lastIndexOf(".");
-        const ext = ponto < 0 ? "" : name.substring(ponto + 1).toLowerCase();
-        return runnableExtensions.indexOf(ext) >= 0;
     }
 
     implicitWidth: 260
@@ -79,7 +74,9 @@ Rectangle {
                 height: 22
                 iconName: "file"
                 iconSize: 15
-                tooltip: qsTr("Novo arquivo")
+                enabled: root.selectedPaths.length <= 1
+                tooltip: enabled ? qsTr("Novo arquivo")
+                                 : qsTr("Selecione um item para criar arquivo")
                 onClicked: root.createFileRequested()
             }
 
@@ -91,7 +88,9 @@ Rectangle {
                 height: 22
                 iconName: "folder"
                 iconSize: 15
-                tooltip: qsTr("Nova pasta")
+                enabled: root.selectedPaths.length <= 1
+                tooltip: enabled ? qsTr("Nova pasta")
+                                 : qsTr("Selecione um item para criar pasta")
                 onClicked: root.createDirectoryRequested()
             }
 
@@ -123,7 +122,7 @@ Rectangle {
 
         // "E' pasta?" tem um dono so' no projeto, e e' este.
         ProjectTreeRules {
-            id: regrasDaArvore
+            id: treeRules
         }
 
         // O TECLADO DA ARVORE (P1). Medido em 2026-09-26: nao havia nenhum —
@@ -136,10 +135,12 @@ Rectangle {
             model: root.entriesModel
             currentIndex: explorerView.currentIndex
 
-            onMoveRequested: function (indice) {
+            onMoveRequested: function (indice, modifiers) {
                 explorerView.currentIndex = indice;
+                explorerView.positionViewAtIndex(indice, ListView.Contain);
+                if ((modifiers & Qt.ControlModifier) && !(modifiers & Qt.ShiftModifier)) return;
                 const linha = root.entriesModel.get(indice);
-                root.entrySelected(linha.path, linha.kind);
+                root.entrySelected(linha.path, linha.kind, modifiers);
             }
             onToggleRequested: function (indice) {
                 const linha = root.entriesModel.get(indice);
@@ -147,6 +148,19 @@ Rectangle {
             }
             onActivateRequested: function (indice) {
                 root.fileOpenRequested(root.entriesModel.get(indice).path);
+            }
+            onSelectAllRequested: root.selectAllRequested()
+            onMenuRequested: function (indice) {
+                const linha = root.entriesModel.get(indice);
+                if (root.selectedPaths.indexOf(linha.path) < 0) {
+                    root.entrySelected(linha.path, linha.kind, Qt.NoModifier);
+                }
+                const item = explorerView.currentItem;
+                const point = item === null
+                              ? explorerView.mapToItem(null, 24, 24)
+                              : item.mapToItem(null, 24, item.height / 2);
+                root.contextMenuRequested(linha.path, linha.kind, linha.name,
+                                          point.x, point.y);
             }
         }
 
@@ -172,98 +186,29 @@ Rectangle {
                 evento.accepted = teclado.handleKey(evento);
             }
 
-            delegate: Rectangle {
+            delegate: ProjectTreeRow {
                 id: treeRow
 
-                required property int index
-                required property string path
-                required property string name
-                required property string kind
-                required property int depth
-                required property bool expanded
-                required property bool machine
-
                 width: explorerView.width
-                height: 24
-                radius: Theme.radius
-                color: treeRow.path === root.selectedPath
-                       ? Theme.surfaceSelected
-                       : (rowHover.hovered ? Theme.surface2 : "transparent")
-                // ONDE O TECLADO ESTA' FALANDO. Sem isto a arvore responde a
-                // setas sem dizer que e' ela quem responde — e, com o painel
-                // sem foco, um realce de selecao pareceria foco.
-                border.width: explorerView.activeFocus
-                              && explorerView.currentIndex === treeRow.index ? 1 : 0
-                border.color: Theme.accent
+                selected: root.selectedPaths.indexOf(treeRow.path) >= 0
+                cursorFocused: explorerView.activeFocus
+                               && explorerView.currentIndex === treeRow.index
+                gitColor: root.gitFileColor(treeRow.path, root.gitRevision)
+                runnable: root.projectTree !== null
+                          && root.projectTree.isRunnableScript(treeRow.path, treeRow.kind)
 
-                // Observa o delegate inteiro sem tomar eventos dos filhos. Ao
-                // passar sobre o botao de executar, o hover continua ativo e
-                // evita o ciclo aparece/some que fazia o atalho piscar.
-                HoverHandler {
-                    id: rowHover
-                }
-
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.spacingSmall + treeRow.depth * 12
-                    spacing: Theme.spacingXSmall
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 12
-                        text: regrasDaArvore.isDirectory(treeRow.kind)
-                              ? (treeRow.expanded ? "▾" : "▸") : ""
-                        color: regrasDaArvore.isDirectory(treeRow.kind) && !treeRow.machine
-                               ? Theme.accent : Theme.textMuted
-                        font.pixelSize: Theme.fontSizeTree
+                onClicked: function(modifiers, button, sceneX, sceneY) {
+                    explorerView.currentIndex = treeRow.index;
+                    explorerView.forceActiveFocus();
+                    const alreadySelected = root.selectedPaths.indexOf(treeRow.path) >= 0;
+                    if (button !== Qt.RightButton || !alreadySelected) {
+                        root.entrySelected(treeRow.path, treeRow.kind, modifiers);
                     }
-
-                    KvFileIcon {
-                        anchors.verticalCenter: parent.verticalCenter
-                        size: 20
-                        opacity: treeRow.machine ? 0.55 : 1
-                        fileName: treeRow.name
-                        directory: regrasDaArvore.isDirectory(treeRow.kind)
-                        expanded: treeRow.expanded
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(0, treeRow.width - parent.x - x - 30)
-                        text: treeRow.name
-                        color: treeRow.machine ? Theme.textMuted
-                               : (regrasDaArvore.isDirectory(treeRow.kind)
-                                  ? Theme.textPrimary
-                                  : root.gitFileColor(treeRow.path,
-                                                      root.gitRevision))
-                        font.pixelSize: Theme.fontSizeTree
-                        elide: Text.ElideRight
-                    }
-                }
-
-                MouseArea {
-                    id: entryArea
-
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: function(mouse) {
-                        // O CLIQUE MOVE O CURSOR DO TECLADO, e traz o foco
-                        // para a arvore: sem isto, clicar numa linha e depois
-                        // apertar a seta recomecaria de onde o teclado estava
-                        // antes — um salto que ninguem pediu.
-                        explorerView.currentIndex = treeRow.index;
-                        explorerView.forceActiveFocus();
-                        root.entrySelected(treeRow.path, treeRow.kind);
-                        if (mouse.button === Qt.RightButton) {
-                            const pt = entryArea.mapToItem(null, mouse.x, mouse.y);
-                            root.contextMenuRequested(treeRow.path, treeRow.kind,
-                                                      treeRow.name, pt.x, pt.y);
-                            return;
-                        }
-                        if (regrasDaArvore.isDirectory(treeRow.kind)) {
+                    if (button === Qt.RightButton) {
+                        root.contextMenuRequested(treeRow.path, treeRow.kind,
+                                                  treeRow.name, sceneX, sceneY);
+                    } else if (!(modifiers & (Qt.ControlModifier | Qt.ShiftModifier))) {
+                        if (treeRules.isDirectory(treeRow.kind)) {
                             root.directoryToggleRequested(treeRow.path, treeRow.index,
                                                           treeRow.expanded);
                         } else if (treeRow.kind === "file") {
@@ -271,24 +216,7 @@ Rectangle {
                         }
                     }
                 }
-
-                KvIconButton {
-                    anchors.right: parent.right
-                    anchors.rightMargin: Theme.spacingXSmall
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 22
-                    height: 22
-                    z: 2
-                    visible: root.isRunnableScript(treeRow.name, treeRow.kind)
-                             && (rowHover.hovered
-                                 || treeRow.path === root.selectedPath)
-                    enabled: visible
-                    iconName: "run"
-                    iconSize: 13
-                    primary: true
-                    tooltip: qsTr("Executar script")
-                    onClicked: root.scriptRunRequested(treeRow.path)
-                }
+                onScriptRunRequested: root.scriptRunRequested(treeRow.path)
             }
         }
     }
