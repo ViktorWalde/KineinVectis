@@ -38,6 +38,9 @@ Item {
                    "criar arquivo perdeu selecao");
         root.check(root.read[0] === "/w/new.rs" && root.listed[0] === "/w",
                    "criar arquivo perdeu abertura/refresh");
+        tree.handleDirectoryCreated("/w/new-folder");
+        root.check(tree.selectedPath === "/w/new-folder" && focusTreeCount === 1,
+                   "criar pasta nao devolveu foco a arvore");
 
         tree.entryRenameKind = "file";
         tree.handlePathRenamed("/w/old.rs", "/w/new-name.rs");
@@ -45,12 +48,12 @@ Item {
                    "renomear nao atualizou abas");
         root.check(tree.selectedPath === "/w/new-name.rs" && tree.selectedKind === "file",
                    "renomear nao atualizou selecao");
-        root.check(focusTreeCount === 1, "renomear nao devolveu foco a arvore");
+        root.check(focusTreeCount === 2, "renomear nao devolveu foco a arvore");
 
         tree.handlePathDeleted("/w/new-name.rs");
         root.check(root.closed[0] === "/w/new-name.rs" && tree.selectedPaths.length === 0,
                    "excluir nao limpou selecao/abas");
-        root.check(focusTreeCount === 2, "excluir nao devolveu foco a arvore");
+        root.check(focusTreeCount === 3, "excluir nao devolveu foco a arvore");
 
         tree.handleRequestFailed("fs.delete", "permissao negada");
         root.check(tree.entryDeleteVisible && tree.entryDeleteError === "permissao negada",

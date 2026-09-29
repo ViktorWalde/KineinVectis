@@ -21,6 +21,7 @@ Item {
         tree.createDialogError = "";
         tree.selectEntry(path, "directory");
         tree.listDirRequested(tree.parentDir(path));
+        tree.focusTreeRequested();
     }
 
     function pathRenamed(from, to) {
