@@ -42,12 +42,15 @@ Rectangle {
         spacing: Theme.spacingSmall
 
         // O titulo cede a vez as abas a 220 px (a foto a 1024: o x sumia).
+        // Sem `width` explicito: a Row ja' pula filho invisivel (posicao E
+        // espacamento). O antigo `visible ? implicitWidth : -parent.spacing`
+        // amarrava a largura do Text ao proprio implicitWidth e dava "Binding
+        // loop detected for property width" ao abrir o Log (0.3.6, 53 §5.2).
         Text {
-            id: titulo
+            id: titleLabel
 
             anchors.verticalCenter: parent.verticalCenter
             visible: root.width >= 260
-            width: visible ? implicitWidth : -parent.spacing
             text: qsTr("Git")
             color: Theme.textPrimary
             font.pixelSize: 12
@@ -74,8 +77,11 @@ Rectangle {
         }
 
         Item {
-            width: Math.max(0, parent.width - titulo.width - abaCommit.width - abaLog.width
-                            - atualizar.width - fechar.width - 5 * parent.spacing)
+            // O titulo so' ocupa largura e um espacamento quando visivel.
+            width: Math.max(0, parent.width
+                            - (titleLabel.visible ? titleLabel.implicitWidth + parent.spacing : 0)
+                            - abaCommit.width - abaLog.width
+                            - atualizar.width - fechar.width - 4 * parent.spacing)
             height: 1
         }
 

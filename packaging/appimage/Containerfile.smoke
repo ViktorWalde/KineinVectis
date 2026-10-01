@@ -13,6 +13,8 @@ RUN apt-get update \
         libharfbuzz0b \
         libopengl0 \
         libx11-6 \
+        libxkbcommon0 \
+        libxkbcommon-x11-0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

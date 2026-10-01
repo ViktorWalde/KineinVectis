@@ -147,6 +147,29 @@ if [[ "$PING_RESPONSE" != *'"status":"ok"'* ]]; then
     exit 1
 fi
 
+# Plugin sem rpath so' carrega quando alguem define LD_LIBRARY_PATH — e o AppImage
+# nao define. Foi assim que o `wayland-egl` falhava em uso (53 §5.2.1).
+if command -v readelf >/dev/null 2>&1; then
+    missing_rpath=""
+    while IFS= read -r -d '' plugin_file; do
+        # shellcheck disable=SC2016  # $ORIGIN e' literal do carregador dinamico
+        if ! readelf -d "$plugin_file" 2>/dev/null | grep -Eq 'R(UN)?PATH.*\$ORIGIN'; then
+            missing_rpath+="  ${plugin_file#"$APPDIR"/}"$'\n'
+        fi
+    done < <(find "$APPDIR/usr/plugins" -type f -name '*.so' -print0)
+    if [[ -n "$missing_rpath" ]]; then
+        # shellcheck disable=SC2016  # $ORIGIN e' literal do carregador dinamico
+        printf 'erro: plugin sem rpath $ORIGIN (nao carrega em execucao):\n%s' "$missing_rpath" >&2
+        exit 1
+    fi
+fi
+
+# A libxkbcommon vem do sistema, junto com os dados de teclado que ela le.
+if find "$APPDIR/usr/lib" -maxdepth 1 -name 'libxkbcommon*.so*' -print -quit | grep -q .; then
+    echo "erro: libxkbcommon empacotada (le os dados de teclado do sistema; 53 §5.2.1)." >&2
+    exit 1
+fi
+
 echo "==> smoke offscreen da aplicação"
 SMOKE_LOG="$TEMP_DIR/smoke.log"
 if ! timeout 30 env \

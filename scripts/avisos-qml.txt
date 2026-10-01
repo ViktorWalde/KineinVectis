@@ -7,3 +7,6 @@ Cannot assign
 Unable to assign
 Cannot instantiate bound component
 Unsupported image format
+Component is not ready
+Failed to load client buffer integration
+xkbcommon: ERROR

@@ -17,10 +17,22 @@ capítulo é o que o gate **não** cobra e o revisor cobra.
   resultado foi um repositório em duas línguas dentro do mesmo arquivo:
   `openFilesModel.get(indice)`. A decisão do autor é que a língua do código é o
   inglês, e a do comentário é o português.
-  - **A varredura do que ficou para trás é fatia própria**, e não conserto de
-    passagem: cerca de 70 identificadores internos em QML, Rust e C++ ainda
-    estão em português. Trocá-los dentro de uma fatia de produto esconderia o
-    diff mecânico no meio do diff que importa.
+  - **Desde 2026-10-01 a regra tem gate**: `scripts/check_identifier_language.py`
+    (no `verificar.sh`) quebra cada identificador de Rust, C++, QML/JS, Python e
+    shell em palavras e exige que cada uma (de 4 letras ou mais) esteja no
+    dicionário de inglês do sistema ou em `scripts/identifier-language-allowlist.txt`
+    (siglas e nomes de ferramenta, nunca palavra portuguesa). Comentários e
+    strings ficam de fora. O Python embutido em heredoc de script também é lido.
+  - **O legado é catraca**, em `scripts/identifier-language-baseline.txt`
+    (arquivo, palavra, contagem): só desce. A estimativa anterior, de "cerca
+    de 70 identificadores", estava errada. Medido em 2026-10-01: **17.862
+    ocorrências** em 4.054 pares arquivo/palavra (Rust ~10 mil, QML ~4,6 mil,
+    Python ~2,3 mil, C++ ~880, shell ~150). Só `automatico` aparece no protocolo.
+  - **A varredura é fatia própria**, e não conserto de passagem: o diff
+    mecânico não se mistura ao diff de produto. Ela segue o
+    [glossário](09-glossario-de-identificadores.md) e usa
+    `scripts/rename_identifiers.py`, que troca só em código. O plano está no
+    roadmap [53 §G0](../roadmaps/53-arquitetura-executavel-da-0.3.6.md).
   - **`configaction` fica de fora dela.** O nome está no protocolo
     (`configAction.list`), em `kinein-protocol`, no core, na ponte C++ e em dez
     arquivos QML: renomear é mudança de CONTRATO, com bump de versão e a

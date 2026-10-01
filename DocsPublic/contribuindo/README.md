@@ -15,6 +15,8 @@
 05-com-um-agente-de-ia.md      como colaborar com Claude Code/Codex/outros sem que quebrem as regras
 06-onde-mexer.md               o mapa por área (código, contrato, docs, testes)
 07-fluxo-e-responsabilidades-dos-gates.md  orquestração, comunicação e dono do código de cada gate
+08-convencoes-codigo-testes-commits.md   idioma (nomes em inglês, com gate), comentários, testes, commits
+09-glossario-de-identificadores.md       a tradução de cada palavra para os nomes em inglês
 ```
 
 ## Em uma tela

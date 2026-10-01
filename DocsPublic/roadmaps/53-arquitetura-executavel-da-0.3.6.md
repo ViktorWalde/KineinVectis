@@ -41,6 +41,43 @@ Consequências, que valem para toda a série 0.3.6–0.3.9:
 4. **O gate garante:** qualquer linha da lista `scripts/avisos-qml.txt` em
    qualquer superfície, no checkout ou no AppImage, reprova.
 
+## 0.2 G0 — gates antes de qualquer código de produto (decisão do autor, 2026-10-01)
+
+> *"Vamos precisar, pelo visto, criar gates rigorosos antes de qualquer linha de
+> código."* — depois de achar identificadores em português num código novo,
+> contra a regra de [contribuindo/08](../contribuindo/08-convencoes-codigo-testes-commits.md)
+> que não tinha gate.
+
+Nenhuma fatia de produto da 0.3.6 (§5.3 em diante) começa antes destes gates
+existirem e passarem. Cada gate é provado por mutação (o defeito que ele
+promete pegar é introduzido de propósito e ele reprova).
+
+| Gate | O que reprova | Estado |
+| --- | --- | --- |
+| G0.1 `scripts/check_identifier_language.py` | identificador novo em português em Rust, C++, QML/JS, Python, shell e Python em heredoc; legado em catraca | **feito** 2026-10-01; mutação (`contadorDePassos` reprovou `contador` e `passos` na linha) |
+| G0.2 `scripts/verificar-qml-qt64.sh` | parte que o Qt 6.4 do AppImage nunca cria num arquivo com `pragma Bound` | **feito** 2026-10-01; mutação contra o HEAD (as quatro ocorrências) |
+| G0.3 harnesses QML no Qt 6.4 | qualquer harness que passa no Qt do checkout e falha no do pacote | a fazer: rodar `verificar-qml-logica.sh` com o `qml` do Qt 6.4 no builder (`qml-qt6`) |
+| G0.4 passeio por superfícies | aviso da lista `scripts/avisos-qml.txt` em qualquer área, aba ou overlay, no checkout e no AppImage | a fazer: `@passo` já existe (§5.2); falta o roteiro versionado e o uso no `verificar-binario-abre` e no `testar-appimage` |
+| G0.5 terminal mudo | `kinein <pasta>` num pty que não volte em < 300 ms ou que imprima algo | a fazer: teste num pseudo-terminal (`script`) contra o binário do checkout |
+
+### Varredura de idioma, em fatias próprias (logo depois do G0)
+
+Medido em 2026-10-01: **17.862 ocorrências** em 4.054 pares arquivo/palavra (o
+"cerca de 70" do 08 estava errado). Cada fatia segue o
+[glossário](../contribuindo/09-glossario-de-identificadores.md), usa
+`scripts/rename_identifiers.py` (troca só em código, nunca em comentário ou
+string), passa build, testes e gate, encolhe a linha de base e é um commit:
+
+```text
+V-1  C++ de ui/src e ui/tests                 (~880)   a unidade cli_args já foi
+V-2  scripts Python e shell dos gates         (~2.400)
+V-3  QML de ui/qml e scripts/qml-harness      (~4.600)
+V-4  Rust kinein-core, um domínio por commit  (~10.000)
+V-5  protocolo: `automatico` (campo serializado: mudança de contrato, com versão)
+```
+
+Ao fim, a linha de base fica vazia e a catraca vira proibição pura.
+
 ## 0. Como ler
 
 - §1 resultado; §2 invariantes; §3 mapa de donos e regra anti-duplicação.
@@ -306,6 +343,26 @@ dono     a lista scripts/avisos-qml.txt (já usada pelo verificar_binario_abre.p
             sem largura negativa (a fatia mostra o antes/depois nas duas)
 prova    mutação: um Loader com componente quebrado no roteiro reprova
 ```
+
+#### 5.2.1 Causas encontradas em 2026-10-01 (antes de qualquer correção)
+
+O passeio (`@passo=<ms>` no `KINEIN_STARTUP_COMMANDS`, cada passo marcado no
+stderr) rodou no checkout (Qt 6.10) e no AppImage (Qt 6.4), em X11 e Wayland.
+O fluxo do autor (editar e **salvar** o `.gitignore` do site) foi refeito com
+mouse e teclado reais. A pilha de cada mensagem (`QT_MESSAGE_PATTERN` com
+`%{backtrace}`) e casos mínimos rodados no Qt 6.4 do builder deram as causas:
+
+| Mensagem | Causa provada | Correção (na causa) |
+| --- | --- | --- |
+| `QQmlComponent: Component is not ready` (centenas) | No Qt 6.4, um `section.delegate` declarado num arquivo com `pragma ComponentBehavior: Bound` **nunca é criado**; cada cabeçalho de seção vira essa mensagem. Na prática, os cabeçalhos de pasta da lista do Git não apareciam no AppImage. Caso mínimo: com o pragma falha (com ou sem `required property section`, e também como tipo de arquivo próprio); sem o pragma, funciona. O mesmo vale, também provado, para `header`, `footer` e `highlight` do `ListView` e para `Loader.sourceComponent` (inline ou por id do próprio arquivo); só `delegate:` funciona. Ocorrências no código: as seções de `git/GitChangesList.qml` e `editor/SymbolResultsList.qml`, o `header` desta e o `Loader` de depuração de `panels/bottom/TerminalViewport.qml` | O `Component` da seção nasce num arquivo **sem** o pragma (um `QtObject` com `property Component`), e o delegate é um tipo próprio que acha a lista por `ListView.view`, tipado como `var` (tipar com a própria lista cria ciclo de tipos que trava o carregador do 6.4). Provado no 6.4 (seções criadas, sem aviso) e no `qmllint -W 0` das duas versões. Gate `scripts/verificar-qml-qt64.sh`: num arquivo com o pragma, essas chaves só aceitam caminho de membro (`root.parts.section`); provado por mutação contra o HEAD, que reprova nas quatro ocorrências |
+| `GitWindow.qml:50:13: Binding loop ... "width"` | `width: visible ? implicitWidth : -parent.spacing` num `Text` dentro de `Row`: largura amarrada ao próprio `implicitWidth` (aparece também no Qt 6.10, no passo `git.log`) | Sem largura explícita (a `Row` já pula filho invisível) e o espaçador conta o título só quando visível. Passeio do checkout: 24 passos, zero aviso |
+| `qt.qpa.wayland: Failed to load client buffer integration: "wayland-egl"` | Os grupos de plugins Wayland são copiados à mão pelo empacotador **sem `rpath`**; `libqt-plugin-wayland-egl.so` não acha `libQt6WaylandEglClientHwIntegration.so.6`, que está em `usr/lib` do pacote. A checagem de dependências rodava o `ldd` com `LD_LIBRARY_PATH` apontando para `usr/lib`, um ambiente que o AppImage não tem em execução, e escondeu o defeito | Gravar `rpath $ORIGIN/../../lib` nos plugins copiados (o mesmo que o linuxdeploy grava nos dele) e validar **sem** `LD_LIBRARY_PATH`, como o carregador vê |
+| `xkbcommon: ERROR: .../Compose: unrecognized keysym "dead_hamza"` | O pacote leva a `libxkbcommon` do Debian 12, que lê os arquivos `Compose` **mais novos** do sistema e não conhece símbolos recentes | A medir na fatia: dados de compose coerentes com a biblioteca empacotada (ex.: `XLOCALEDIR` para a cópia do Debian 12 no pacote), ou usar a biblioteca do sistema; o critério é a mensagem deixar de ser produzida sem perder composição de acentos |
+
+**Prevenção, para não depender de achar no uso:** o Qt do AppImage passa a
+rodar os harnesses QML e o passeio no gate (o builder ganha o executor `qml`
+do Qt 6.4), e a lista `scripts/avisos-qml.txt` ganha `Component is not ready`,
+`xkbcommon: ERROR` e `Failed to load client buffer integration`.
 
 ### 5.3 F0 — inventário e linha de base
 

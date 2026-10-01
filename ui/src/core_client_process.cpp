@@ -35,10 +35,10 @@ void CoreClient::start()
     // que. Agora quem decide e' o `cli_args`, que tem teste; o `main` ja'
     // recusou o que nao presta antes de a UI subir, entao aqui so' chega
     // caminho bom.
-    const kinein::cli::Argumentos pedido =
-        kinein::cli::interpretar(QCoreApplication::arguments().mid(1), QDir::currentPath());
-    if (pedido.acao == kinein::cli::Acao::Abrir) {
-        m_startupWorkspace = pedido.pasta;
+    const kinein::cli::Arguments request =
+        kinein::cli::parse(QCoreApplication::arguments().mid(1), QDir::currentPath());
+    if (request.action == kinein::cli::Action::Open) {
+        m_startupWorkspace = request.folder;
     }
     setStatus(QStringLiteral("iniciando..."), false);
     appendLog(QStringLiteral("iniciando core: %1").arg(binary));

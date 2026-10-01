@@ -25,29 +25,11 @@ ListView {
 
     section.property: "group"
     section.criteria: ViewSection.FullString
-    section.delegate: Text {
-        required property string section
-
-        width: symbolList.width
-        height: 22
-        leftPadding: Theme.spacingSmall
-        verticalAlignment: Text.AlignVCenter
-        text: section
-        color: Theme.textMuted
-        font.pixelSize: 10
-        font.bold: true
-    }
-
-    header: Text {
-        width: symbolList.width
-        height: symbolList.symbols && symbolList.symbols.searching ? 22 : 0
-        visible: height > 0
-        leftPadding: Theme.spacingSmall
-        verticalAlignment: Text.AlignVCenter
-        text: qsTr("procurando…")
-        color: Theme.textMuted
-        font.pixelSize: 10
-    }
+    // Secao e cabecalho vem das PARTES (arquivo sem pragma Bound): ver
+    // SymbolResultsListParts.qml para o porque (Qt 6.4).
+    readonly property SymbolResultsListParts parts: SymbolResultsListParts {}
+    section.delegate: symbolList.parts.section
+    header: symbolList.parts.header
 
     delegate: Rectangle {
         id: symbolRow

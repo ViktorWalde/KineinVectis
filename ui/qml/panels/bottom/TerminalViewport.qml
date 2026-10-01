@@ -226,26 +226,28 @@ Item {
         }
 
         // R0 item 5: overlay de geometria, so com
-        // KINEIN_TERMINAL_DEBUG_GEOMETRY=1. Sem a env o Loader nao instancia
-        // nada e o uso normal nao paga. Fica DENTRO de `grid` e depois da
+        // KINEIN_TERMINAL_DEBUG_GEOMETRY=1. Fica DENTRO de `grid` e depois da
         // Column, entao desenha sobre a mesma origem que o texto e o cursor.
-        Loader {
+        // Instancia direta, e NAO Loader: no Qt 6.4 do AppImage um
+        // `sourceComponent` num arquivo com pragma Bound nunca e' criado
+        // (roadmap 53 §5.2.1). Desligado, `metrics: null` faz o overlay nao
+        // criar nenhuma celula e nao registrar nada (o `registrar()` volta
+        // cedo), entao o uso normal continua sem pagar.
+        TerminalGeometryOverlay {
             id: geometryOverlay
 
             anchors.fill: parent
             z: 2
-            active: DebugFlags.terminalGeometry
-            sourceComponent: TerminalGeometryOverlay {
-                metrics: root.metrics
-                cursor: root.cursor
-                gridCols: root.gridCols
-                gridRows: root.lines.length
-                // Medido do item real: se o overlay recalculasse, ele
-                // concordaria consigo mesmo e nao provaria nada.
-                cursorRect: Qt.rect(cursorBar.x, cursorBar.y,
-                                    cursorBar.visible ? cursorBar.width : 0,
-                                    cursorBar.visible ? cursorBar.height : 0)
-            }
+            visible: DebugFlags.terminalGeometry
+            metrics: visible ? root.metrics : null
+            cursor: root.cursor
+            gridCols: root.gridCols
+            gridRows: root.lines.length
+            // Medido do item real: se o overlay recalculasse, ele
+            // concordaria consigo mesmo e nao provaria nada.
+            cursorRect: Qt.rect(cursorBar.x, cursorBar.y,
+                                cursorBar.visible ? cursorBar.width : 0,
+                                cursorBar.visible ? cursorBar.height : 0)
         }
 
         MouseArea {

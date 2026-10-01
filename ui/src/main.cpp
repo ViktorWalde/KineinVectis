@@ -1,10 +1,14 @@
 // Entry point of the Kinein Vectis UI process.
 
 #include "cli_args.h"
+#include "qt_message_log.h"
+
 #include "single_instance.h"
 #include "typing_perf_harness.h"
 #include <QTextStream>
+#include <fcntl.h>
 #include <span>
+#include <unistd.h>
 
 #include <QDir>
 #include <QElapsedTimer>
@@ -108,33 +112,33 @@ int main(int argc, char* argv[])
     // Criar o QGuiApplication ja' seria iniciar a UI.
     // `std::span` em vez de indexar `argv` na mao: o clang-tidy recusa
     // aritmetica de ponteiro, e com razao — e' o lugar classico de ler um a mais.
-    const std::span<char*> argumentos{argv, static_cast<std::size_t>(argc)};
+    const std::span<char*> arguments{argv, static_cast<std::size_t>(argc)};
     QStringList brutos;
-    brutos.reserve(static_cast<qsizetype>(argumentos.size()) - 1);
-    for (char* const bruto : argumentos.subspan(1)) {
-        brutos.append(QString::fromLocal8Bit(bruto));
+    brutos.reserve(static_cast<qsizetype>(arguments.size()) - 1);
+    for (char* const raw : arguments.subspan(1)) {
+        brutos.append(QString::fromLocal8Bit(raw));
     }
-    const kinein::cli::Argumentos pedido = kinein::cli::interpretar(brutos, QDir::currentPath());
-    switch (pedido.acao) {
-    case kinein::cli::Acao::Ajuda: {
+    const kinein::cli::Arguments request = kinein::cli::parse(brutos, QDir::currentPath());
+    switch (request.action) {
+    case kinein::cli::Action::Help: {
         QTextStream saida{stdout};
-        saida << pedido.mensagem;
+        saida << request.message;
         return 0;
     }
-    case kinein::cli::Acao::Versao: {
+    case kinein::cli::Action::Version: {
         QTextStream saida{stdout};
         saida << QStringLiteral("kinein-vectis %1\n").arg(QLatin1String(KINEIN_VERSAO));
         return 0;
     }
-    case kinein::cli::Acao::Recusa: {
+    case kinein::cli::Action::Refusal: {
         QTextStream erro{stderr};
-        erro << pedido.mensagem << '\n';
+        erro << request.message << '\n';
         return 2;
     }
-    case kinein::cli::Acao::Abrir: {
+    case kinein::cli::Action::Open: {
         // Caminho ruim e' recusa COM MOTIVO, e nao uma IDE que abre sem projeto
         // deixando a pessoa adivinhar. Nada e' criado.
-        const QString motivo = kinein::cli::validarPasta(pedido.pasta);
+        const QString motivo = kinein::cli::validateFolder(request.folder);
         if (!motivo.isEmpty()) {
             QTextStream erro{stderr};
             erro << motivo << '\n';
@@ -150,7 +154,7 @@ int main(int argc, char* argv[])
         //
         // Antes do QGuiApplication de proposito: se alguem ja' responde por
         // esta pasta, nem a UI nem o core chegam a subir.
-        const QString canonica = QFileInfo{pedido.pasta}.canonicalFilePath();
+        const QString canonica = QFileInfo{request.folder}.canonicalFilePath();
         const QString socket =
             kinein::socketPathFor(qEnvironmentVariable("XDG_RUNTIME_DIR"), canonica);
         // O TOKEN DO XDG E' A UNICA AUTORIZACAO que o compositor Wayland
@@ -164,9 +168,42 @@ int main(int argc, char* argv[])
         }
         break;
     }
-    case kinein::cli::Acao::SemPasta:
+    case kinein::cli::Action::NoFolder:
         break;
     }
+
+    // COMO `code .` (roadmap 53 §5.1): chamado de um terminal, o processo do
+    // terminal solta a IDE e devolve o prompt na hora. Fica DEPOIS da
+    // validacao e do encaminhamento, que sao as unicas respostas que pertencem
+    // ao terminal (erro de caminho, "ja' aberto"). Antes do QGuiApplication de
+    // proposito: nenhuma thread do Qt existe ainda, e o fork e' seguro.
+    const bool alreadyDetached = qEnvironmentVariable("KINEIN_DETACHED") == QLatin1String("1");
+    if (kinein::cli::shouldDetach(request, isatty(STDERR_FILENO) == 1, alreadyDetached)) {
+        const pid_t child = fork();
+        if (child > 0) {
+            return 0;
+        }
+        if (child == 0) {
+            setsid();
+            qputenv("KINEIN_DETACHED", "1");
+            // O filho nao tem mais terminal: entrada e saidas vao para
+            // /dev/null. O que ainda escapar do Qt vai para o log de
+            // diagnostico (installQtMessageLog, abaixo).
+            // `open` e' variadica: e' a unica forma de obter o descritor
+            // para o `dup2` antes de existir qualquer Qt.
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+            const int devNull = open("/dev/null", O_RDWR | O_CLOEXEC);
+            if (devNull >= 0) {
+                dup2(devNull, STDIN_FILENO);
+                dup2(devNull, STDOUT_FILENO);
+                dup2(devNull, STDERR_FILENO);
+                close(devNull);
+            }
+        }
+        // fork falhou (filho < 0): segue ligado ao terminal, como antes.
+    }
+
+    kinein::installQtMessageLog();
 
     QElapsedTimer perfTimer;
     perfTimer.start();

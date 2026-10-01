@@ -1,0 +1,66 @@
+# Palavras de identificador que NAO estao no dicionario de ingles do sistema e
+# sao ingles/tecnico legitimo. Lido por scripts/check_identifier_language.py.
+# Uma palavra por linha; `#` comenta. Acrescentar so' com motivo: sigla, nome
+# de ferramenta/biblioteca/API, abreviacao inglesa consagrada. NUNCA uma palavra
+# portuguesa: identificadores sao sempre em ingles (contribuindo/08).
+
+# --- nomes do projeto
+kinein vectis
+
+# --- linguagens, formatos e protocolos
+json jsonrpc toml yaml bson regex utf html href uart jtag riscv risc xtensa
+sram musl glibc libc sysv sysfs udev udevadm uaccess wayland loopback cryptographic
+extjson rgba cyan bezier radix hexdigit endiannesses
+
+# --- Rust, C++, Qt, QML, JS e Python (palavras de API e da linguagem)
+const bool struct impl enum usize isize deref nodiscard constexpr nullptr nullopt
+sizeof typeof instanceof readonly pragma namespace mutex mpsc deque tuple dict
+serde deserialize lossy recv eprintln writeln rsplit rsplitn splitn rfind rstrip
+lstrip substr subspan concat findall finditer splitlines startswith endswith
+isinstance isdigit isascii isalpha isalnum isupper isfile setdefault defaultdict
+frozenset staticmethod nonlocal elif environ shutil pathlib urllib urlopen
+tokenize argparse tempfile mkdtemp makedirs listdir rmtree getmtime fromtimestamp
+strftime fullmatch removesuffix datetime returncode popen subprocess stdlib
+qverify qcompare qtest guiless qint qsizetype qobject qgetenv qputenv qqmlregistration
+qtquick qmllint qmake invokable rehighlight tooltip popup viewport rect scrollbar
+spacer frameless antialiasing demi btoa atob stringify
+canonicalize fileno unlink mkdir mkpath chmod geteuid setsid isatty fcntl rdwr
+cloexec nonblock rdonly nofollow noreplace openat renameat errno sockaddr
+setsockopt pollin pollfd revents timeval usec suseconds rcvtimeo sndtimeo
+waitpid waitstatus exitcode execvpe sigkill ppid pids gids nsecs nanos millis
+openpty decscusr crbegin crend cstring memcpy unistd ssize ceil freq
+tokio rustls webpki ureq rusqlite rustix nodelay
+
+# --- abreviacoes inglesas consagradas
+args argc argv param params config configs dirs dest addr addrs init repl
+interp iface diag reqs rels func envs prev cond stmt dprs plat mult comp proto
+smax ident lineno attrs subtype multiline whitespace substring bufsize
+dedup recompute reindex redact redaction resized refilter rescan resync
+debounce debounced memoized backoff fallback preflight roundtrip roundtrips
+lifecycle breakpoint breadcrumb breadcrumbs autosave scrollback scrollbacks
+unsaved untracked unstage unstarted unindent symlink symlinked runnable
+debuggable debuggee formattable introspect introspected disassembly
+misclassified deduplicates bottommost extensionless visibilities summarised
+behaviour recognised subcommand subtable subfolder subfolders subworkspace
+workspaces pathspecs sysroots runtimes formatters sanitizer sanitizers
+stepper splitter notifier resetter emitter releaser allowlist heredoc
+traversal zerowidth permille smax localhost prefill noquote nospace
+vref rposition backtab multiarch compat bools clis tmpdir destdir builddir
+appdir cargotoml cmakelists makefile readme dist micro pico pong mtime ctime
+vmrss sqlstate dbname cert getmtime
+
+# --- ferramentas, sistemas e bibliotecas externas
+cmake ctest clangd clippy rustfmt rustc rustup rustflags cargo pytest gtest
+podman rsync openssh openocd qemu gdbserver picotool picocom esptool espflash
+espressif mpremote micropython debugpy pyright basedpyright maturin pipx pacman
+redhat yocto buildroot bootlin xpacks linuxdeploy appimage binutils lcov llvm
+openmp alacritty grafana mongo postgres pgport gradle platformio idfbin
+pkgconfig pyproject fdfind binstale fswatch fsops runconfig datasource
+datasources configaction coreclient codemodel distro venv ldai perf auth
+debounce iface backend stdin stdout stderr timeout runtime metadata toolchain
+toolchains sysroot workspace repo proc
+
+# --- termos ingleses que o dicionario do sistema nao traz
+formatter resize endpoint sdks ctrl dirname basename abspath ifdef endif rglob
+devnull worktree checksum readline symlinks rpath werror objcopy noop
+unrecognised setuptools lockfile xffd observability reget reemits

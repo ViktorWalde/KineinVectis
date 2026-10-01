@@ -34,6 +34,7 @@ kinein_add_cpp_test(tst_cli_args)
 kinein_add_cpp_test(tst_markdown_policy)
 kinein_add_cpp_test(tst_log_redaction)
 kinein_add_cpp_test(tst_single_instance)
+kinein_add_cpp_test(tst_qt_message_log)
 
 # O clipboard é um singleton de UI com MIME do sistema. Compila a MESMA fonte
 # que o aplicativo e cria QGuiApplication no teste, sem mockar QClipboard.

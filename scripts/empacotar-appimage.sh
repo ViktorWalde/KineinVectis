@@ -132,6 +132,17 @@ copy_wayland_plugin_group() {
     install -d "$destination_dir"
     cp -a "$source_dir/." "$destination_dir/"
 
+    # O linuxdeploy grava `$ORIGIN/../../lib` nos plugins que ELE empacota; estes
+    # grupos sao copiados aqui e ficavam SEM rpath. Em execucao (sem
+    # LD_LIBRARY_PATH) o `libqt-plugin-wayland-egl.so` nao achava
+    # `libQt6WaylandEglClientHwIntegration.so.6`, que esta' em usr/lib, e o Qt
+    # imprimia "Failed to load client buffer integration" (53 §5.2.1).
+    local plugin_file
+    while IFS= read -r -d '' plugin_file; do
+        # shellcheck disable=SC2016  # $ORIGIN e' literal do carregador dinamico
+        patchelf --set-rpath '$ORIGIN/../../lib' "$plugin_file"
+    done < <(find "$destination_dir" -type f -name '*.so' -print0)
+
     echo "  incluído: $plugin_group"
 }
 
@@ -149,9 +160,12 @@ check_dynamic_dependencies() {
     local plugin_file="$1"
     local missing
 
+    # SEM LD_LIBRARY_PATH: o AppImage nao o define em execucao, entao o que
+    # vale e' o rpath gravado no plugin. A versao anterior apontava
+    # LD_LIBRARY_PATH para usr/lib e por isso aprovava plugin que, em uso,
+    # nao carregava (53 §5.2.1).
     missing="$(
-        LD_LIBRARY_PATH="$APPDIR/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-            ldd "$plugin_file" 2>/dev/null |
+        env -u LD_LIBRARY_PATH ldd "$plugin_file" 2>/dev/null |
             grep 'not found' ||
             true
     )"
@@ -351,11 +365,27 @@ export EXTRA_PLATFORM_PLUGINS
 # so' avisa "Unsupported image format" no stderr (AppImage de 2026-10-01).
 export EXTRA_QT_MODULES="svg"
 
+# A libxkbcommon e' do SISTEMA, nao do pacote: ela le os dados de teclado do
+# sistema (/usr/share/X11/locale/*/Compose), e a do Debian 12 empacotada nao
+# conhece simbolos que dados mais novos ja' usam ("xkbcommon: ERROR ...
+# unrecognized keysym dead_hamza", 53 §5.2.1). Biblioteca e dados da mesma
+# fonte; o soname .0 e' ABI estavel, e toda sessao grafica a tem.
+LINUXDEPLOY_EXCLUDES=(--exclude-library 'libxkbcommon.so*' --exclude-library 'libxkbcommon-x11.so*')
+# O plugin Qt do linuxdeploy (quem copia as dependencias dos plugins de
+# plataforma) IGNORA o --exclude-library e a LINUXDEPLOY_EXCLUDED_LIBRARIES —
+# medido nos logs de 2026-10-01. As copias dele sao removidas logo depois da
+# etapa do plugin (abaixo); as passadas seguintes do linuxdeploy principal
+# respeitam a exclusao e nao as trazem de volta.
+
 echo "==> primeira etapa: empacotando Qt, QML e plugins de plataforma"
 
 "$LINUXDEPLOY" \
     --appdir "$APPDIR" \
+    "${LINUXDEPLOY_EXCLUDES[@]}" \
     --plugin qt
+
+rm -f "$APPDIR"/usr/lib/libxkbcommon.so* "$APPDIR"/usr/lib/libxkbcommon-x11.so*
+rm -rf "$APPDIR"/usr/share/doc/libxkbcommon0 "$APPDIR"/usr/share/doc/libxkbcommon-x11-0
 
 REQUIRED_QT_PLUGINS=(
     imageformats/libqsvg.so
@@ -385,7 +415,8 @@ done
 echo "==> segunda etapa: empacotando dependências dos plugins Wayland"
 
 "$LINUXDEPLOY" \
-    --appdir "$APPDIR"
+    --appdir "$APPDIR" \
+    "${LINUXDEPLOY_EXCLUDES[@]}"
 
 REQUIRED_WAYLAND_FILES=(
     "$APPDIR/usr/plugins/platforms/libqwayland-egl.so"
@@ -461,6 +492,7 @@ echo "==> gerando AppImage"
 
 "$LINUXDEPLOY" \
     --appdir "$APPDIR" \
+    "${LINUXDEPLOY_EXCLUDES[@]}" \
     --output appimage
 
 if [[ ! -x "$OUTPUT_FILE" ]]; then

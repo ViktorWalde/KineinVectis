@@ -31,6 +31,7 @@ endif()
 # especifico — que seria uma correcao que so' funciona nesta maquina.
 add_library(kinein-ui-puro OBJECT
     src/cli_args.cpp
+    src/qt_message_log.cpp
     src/markdown_policy.cpp
     src/log_redaction.cpp
     src/single_instance.cpp
@@ -203,6 +204,8 @@ set_source_files_properties(qml/ipc/ToolchainRequestRouter.qml PROPERTIES QT_RES
 set_source_files_properties(qml/git/GitController.qml PROPERTIES QT_RESOURCE_ALIAS GitController.qml)
 set_source_files_properties(qml/git/GitHistoryController.qml PROPERTIES QT_RESOURCE_ALIAS GitHistoryController.qml)
 set_source_files_properties(qml/git/GitChangesList.qml PROPERTIES QT_RESOURCE_ALIAS GitChangesList.qml)
+set_source_files_properties(qml/git/GitChangesListParts.qml PROPERTIES QT_RESOURCE_ALIAS GitChangesListParts.qml)
+set_source_files_properties(qml/git/GitChangesSection.qml PROPERTIES QT_RESOURCE_ALIAS GitChangesSection.qml)
 set_source_files_properties(qml/git/GitHistoryList.qml PROPERTIES QT_RESOURCE_ALIAS GitHistoryList.qml)
 set_source_files_properties(qml/git/GitRules.qml PROPERTIES QT_RESOURCE_ALIAS GitRules.qml)
 set_source_files_properties(qml/git/GitInspectorController.qml PROPERTIES QT_RESOURCE_ALIAS GitInspectorController.qml)
@@ -372,6 +375,9 @@ set_source_files_properties(qml/editor/EditorExternalChangeBanner.qml PROPERTIES
 set_source_files_properties(qml/editor/EditorOutlineController.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlineController.qml)
 set_source_files_properties(qml/editor/EditorOutlinePanel.qml PROPERTIES QT_RESOURCE_ALIAS EditorOutlinePanel.qml)
 set_source_files_properties(qml/editor/SymbolResultsList.qml PROPERTIES QT_RESOURCE_ALIAS SymbolResultsList.qml)
+set_source_files_properties(qml/editor/SymbolResultsListParts.qml PROPERTIES QT_RESOURCE_ALIAS SymbolResultsListParts.qml)
+set_source_files_properties(qml/editor/SymbolResultsSection.qml PROPERTIES QT_RESOURCE_ALIAS SymbolResultsSection.qml)
+set_source_files_properties(qml/editor/SymbolResultsSearching.qml PROPERTIES QT_RESOURCE_ALIAS SymbolResultsSearching.qml)
 set_source_files_properties(qml/editor/SymbolsController.qml PROPERTIES QT_RESOURCE_ALIAS SymbolsController.qml)
 
 set(KINEIN_MANUAL_FILE "${CMAKE_SOURCE_DIR}/DocsPublic/manual.md")
@@ -543,6 +549,8 @@ qt_add_qml_module(kinein-vectis
         qml/git/GitController.qml
         qml/git/GitHistoryController.qml
         qml/git/GitChangesList.qml
+        qml/git/GitChangesListParts.qml
+        qml/git/GitChangesSection.qml
         qml/git/GitHistoryList.qml
         qml/git/GitRules.qml
         qml/git/GitInspectorController.qml
@@ -711,6 +719,9 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorOutlineController.qml
         qml/editor/EditorOutlinePanel.qml
         qml/editor/SymbolResultsList.qml
+        qml/editor/SymbolResultsListParts.qml
+        qml/editor/SymbolResultsSection.qml
+        qml/editor/SymbolResultsSearching.qml
         qml/editor/SymbolsController.qml
     SOURCES
         src/clipboard.cpp

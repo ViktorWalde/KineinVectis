@@ -185,9 +185,9 @@ def abre(build_dir: Path, timeout: float) -> tuple[int | None, str, int | None]:
 # 2026-10-01: "Cannot instantiate bound component" e "Unsupported image format"
 # so' apareciam no Qt 6.4 do AppImage — painel que nao abria, icone que sumia.
 AVISOS_QML = tuple(
-    linha.strip()
-    for linha in (Path(__file__).with_name("avisos-qml.txt")).read_text().splitlines()
-    if linha.strip()
+    line.strip()
+    for line in (Path(__file__).with_name("avisos-qml.txt")).read_text().splitlines()
+    if line.strip()
 )
 
 

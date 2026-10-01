@@ -1,7 +1,8 @@
 #include "core_client.h"
 
+#include "qt_message_log.h"
+
 #include <QDir>
-#include <QStandardPaths>
 
 namespace kinein {
 
@@ -93,8 +94,8 @@ QStringList CoreClient::startupCommands()
 
 QString CoreClient::errorLogFile()
 {
-    return QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) +
-           QStringLiteral("/kinein-vectis/logs/kinein-ui-erros.txt");
+    // Um dono so' para o caminho: o handler das mensagens do Qt grava no mesmo.
+    return diagnosticLogPath();
 }
 
 } // namespace kinein

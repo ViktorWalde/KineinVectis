@@ -15,9 +15,11 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
-using kinein::cli::Acao;
-using kinein::cli::interpretar;
-using kinein::cli::validarPasta;
+using kinein::cli::Action;
+using kinein::cli::Arguments;
+using kinein::cli::parse;
+using kinein::cli::shouldDetach;
+using kinein::cli::validateFolder;
 
 class TestCliArgs : public QObject
 {
@@ -32,6 +34,8 @@ private slots:
     void dois_caminhos_sao_recusados_com_os_dois_nomes();
     void o_separador_entrega_o_resto_ao_qt();
     void o_disco_diz_o_que_esta_errado();
+    void wait_and_verbose_are_parsed();
+    void detaches_only_when_a_terminal_calls();
 };
 
 void TestCliArgs::sem_argumento_nao_inventa_projeto()
@@ -40,76 +44,75 @@ void TestCliArgs::sem_argumento_nao_inventa_projeto()
     // tratar um CWD arbitrario como projeto". O atalho do menu roda o binario
     // sem argumento, de um diretorio qualquer. Virar CWD e' decisao do COMANDO
     // CURTO (sugestao da §7), nao do binario.
-    const auto r = interpretar({}, QStringLiteral("/home/u/proj"));
-    QCOMPARE(r.acao, Acao::SemPasta);
-    QVERIFY(r.pasta.isEmpty());
+    const auto r = parse({}, QStringLiteral("/home/u/proj"));
+    QCOMPARE(r.action, Action::NoFolder);
+    QVERIFY(r.folder.isEmpty());
 }
 
 void TestCliArgs::caminho_relativo_resolve_contra_o_terminal_de_origem()
 {
     const QString cwd = QStringLiteral("/home/u/proj");
-    QCOMPARE(interpretar({QStringLiteral(".")}, cwd).pasta, cwd);
-    QCOMPARE(interpretar({QStringLiteral("sub")}, cwd).pasta, QStringLiteral("/home/u/proj/sub"));
-    QCOMPARE(interpretar({QStringLiteral("../outro")}, cwd).pasta, QStringLiteral("/home/u/outro"));
+    QCOMPARE(parse({QStringLiteral(".")}, cwd).folder, cwd);
+    QCOMPARE(parse({QStringLiteral("sub")}, cwd).folder, QStringLiteral("/home/u/proj/sub"));
+    QCOMPARE(parse({QStringLiteral("../outro")}, cwd).folder, QStringLiteral("/home/u/outro"));
     // Absoluto nao e' reinterpretado, so' normalizado.
-    QCOMPARE(interpretar({QStringLiteral("/tmp/./x/")}, cwd).pasta, QStringLiteral("/tmp/x"));
+    QCOMPARE(parse({QStringLiteral("/tmp/./x/")}, cwd).folder, QStringLiteral("/tmp/x"));
 }
 
 void TestCliArgs::espacos_e_unicode_sobrevivem()
 {
     // A §3 da especificacao exige os dois, por escrito.
     const QString cwd = QStringLiteral("/home/u");
-    QCOMPARE(interpretar({QStringLiteral("meu projeto")}, cwd).pasta,
+    QCOMPARE(parse({QStringLiteral("meu projeto")}, cwd).folder,
              QStringLiteral("/home/u/meu projeto"));
-    QCOMPARE(interpretar({QString::fromUtf8("projeto-ação")}, cwd).pasta,
+    QCOMPARE(parse({QString::fromUtf8("projeto-ação")}, cwd).folder,
              QString::fromUtf8("/home/u/projeto-ação"));
 }
 
 void TestCliArgs::ajuda_e_versao_nao_sobem_nada()
 {
     for (const auto& forma : {QStringLiteral("--help"), QStringLiteral("-h")}) {
-        const auto r = interpretar({forma}, QStringLiteral("/x"));
-        QCOMPARE(r.acao, Acao::Ajuda);
-        QVERIFY(r.mensagem.contains(QStringLiteral("uso:")));
-        QVERIFY(r.pasta.isEmpty());
+        const auto r = parse({forma}, QStringLiteral("/x"));
+        QCOMPARE(r.action, Action::Help);
+        QVERIFY(r.message.contains(QStringLiteral("uso:")));
+        QVERIFY(r.folder.isEmpty());
     }
     for (const auto& forma : {QStringLiteral("--version"), QStringLiteral("-V")}) {
-        QCOMPARE(interpretar({forma}, QStringLiteral("/x")).acao, Acao::Versao);
+        QCOMPARE(parse({forma}, QStringLiteral("/x")).action, Action::Version);
     }
     // Ajuda vence um caminho na mesma linha: quem pede ajuda nao quer abrir.
-    QCOMPARE(
-        interpretar({QStringLiteral("/tmp"), QStringLiteral("--help")}, QStringLiteral("/x")).acao,
-        Acao::Ajuda);
+    QCOMPARE(parse({QStringLiteral("/tmp"), QStringLiteral("--help")}, QStringLiteral("/x")).action,
+             Action::Help);
 }
 
 void TestCliArgs::opcao_desconhecida_e_recusada_em_vez_de_ignorada()
 {
-    const auto r = interpretar({QStringLiteral("--reuse-window")}, QStringLiteral("/x"));
-    QCOMPARE(r.acao, Acao::Recusa);
+    const auto r = parse({QStringLiteral("--reuse-window")}, QStringLiteral("/x"));
+    QCOMPARE(r.action, Action::Refusal);
     // A mensagem tem de NOMEAR o que nao entendeu, senao nao ajuda ninguem.
-    QVERIFY(r.mensagem.contains(QStringLiteral("--reuse-window")));
-    QVERIFY(r.mensagem.contains(QStringLiteral("--help")));
+    QVERIFY(r.message.contains(QStringLiteral("--reuse-window")));
+    QVERIFY(r.message.contains(QStringLiteral("--help")));
 }
 
 void TestCliArgs::dois_caminhos_sao_recusados_com_os_dois_nomes()
 {
     // Varias raizes e' decisao ABERTA na §7; recusar dizendo por que e' honesto,
     // escolher uma calado nao e'.
-    const auto r = interpretar({QStringLiteral("/a"), QStringLiteral("/b")}, QStringLiteral("/x"));
-    QCOMPARE(r.acao, Acao::Recusa);
-    QVERIFY(r.mensagem.contains(QStringLiteral("/a")));
-    QVERIFY(r.mensagem.contains(QStringLiteral("/b")));
+    const auto r = parse({QStringLiteral("/a"), QStringLiteral("/b")}, QStringLiteral("/x"));
+    QCOMPARE(r.action, Action::Refusal);
+    QVERIFY(r.message.contains(QStringLiteral("/a")));
+    QVERIFY(r.message.contains(QStringLiteral("/b")));
 }
 
 void TestCliArgs::o_separador_entrega_o_resto_ao_qt()
 {
     // Depois de `--` vem argumento do Qt (`-platform offscreen`, por exemplo):
     // nada dali e' pasta, e nada dali pode virar recusa nossa.
-    const auto r = interpretar({QStringLiteral("/tmp"), QStringLiteral("--"),
-                                QStringLiteral("-platform"), QStringLiteral("offscreen")},
-                               QStringLiteral("/x"));
-    QCOMPARE(r.acao, Acao::Abrir);
-    QCOMPARE(r.pasta, QStringLiteral("/tmp"));
+    const auto r = parse({QStringLiteral("/tmp"), QStringLiteral("--"), QStringLiteral("-platform"),
+                          QStringLiteral("offscreen")},
+                         QStringLiteral("/x"));
+    QCOMPARE(r.action, Action::Open);
+    QCOMPARE(r.folder, QStringLiteral("/tmp"));
 }
 
 void TestCliArgs::o_disco_diz_o_que_esta_errado()
@@ -120,11 +123,11 @@ void TestCliArgs::o_disco_diz_o_que_esta_errado()
 
     // Pasta vazia ABRE: a especificacao diz que nao se exige manifesto.
     QVERIFY(raiz.mkdir(QStringLiteral("vazia")));
-    QVERIFY(validarPasta(raiz.filePath(QStringLiteral("vazia"))).isEmpty());
+    QVERIFY(validateFolder(raiz.filePath(QStringLiteral("vazia"))).isEmpty());
 
     // Inexistente: recusa NOMEANDO o caminho, e sem criar nada.
     const QString fantasma = raiz.filePath(QStringLiteral("nao-existe"));
-    const QString erro = validarPasta(fantasma);
+    const QString erro = validateFolder(fantasma);
     QVERIFY(erro.contains(QStringLiteral("nao existe")));
     QVERIFY(erro.contains(fantasma));
     QVERIFY2(!QFileInfo::exists(fantasma), "validar NAO pode criar a pasta que faltava");
@@ -134,7 +137,38 @@ void TestCliArgs::o_disco_diz_o_que_esta_errado()
     QFile f{arquivo};
     QVERIFY(f.open(QIODevice::WriteOnly));
     f.close();
-    QVERIFY(validarPasta(arquivo).contains(QStringLiteral("arquivo")));
+    QVERIFY(validateFolder(arquivo).contains(QStringLiteral("arquivo")));
+}
+
+void TestCliArgs::wait_and_verbose_are_parsed()
+{
+    const QString cwd = QStringLiteral("/home/u/proj");
+    const Arguments w = parse({QStringLiteral("-w"), QStringLiteral(".")}, cwd);
+    QCOMPARE(w.action, Action::Open);
+    QVERIFY(w.waitForClose);
+    QVERIFY(!w.verbose);
+    QCOMPARE(w.folder, cwd);
+    const Arguments v = parse({QStringLiteral("--verbose")}, cwd);
+    QCOMPARE(v.action, Action::NoFolder);
+    QVERIFY(v.verbose);
+    QVERIFY(parse({QStringLiteral("--wait"), QStringLiteral("x")}, cwd).waitForClose);
+}
+
+void TestCliArgs::detaches_only_when_a_terminal_calls()
+{
+    const QString cwd = QStringLiteral("/home/u/proj");
+    const Arguments openRequest = parse({QStringLiteral(".")}, cwd);
+    QVERIFY(shouldDetach(openRequest, true, false));
+    // Menu, script e gate (stderr nao e' terminal) continuam como sempre.
+    QVERIFY(!shouldDetach(openRequest, false, false));
+    // O filho nao desacopla de novo.
+    QVERIFY(!shouldDetach(openRequest, true, true));
+    QVERIFY(!shouldDetach(parse({QStringLiteral("-w"), QStringLiteral(".")}, cwd), true, false));
+    QVERIFY(!shouldDetach(parse({QStringLiteral("--verbose")}, cwd), true, false));
+    // Ajuda, versao e recusa respondem no proprio terminal.
+    QVERIFY(!shouldDetach(parse({QStringLiteral("--help")}, cwd), true, false));
+    QVERIFY(!shouldDetach(parse({QStringLiteral("--version")}, cwd), true, false));
+    QVERIFY(!shouldDetach(parse({QStringLiteral("--nao-existe")}, cwd), true, false));
 }
 
 QTEST_GUILESS_MAIN(TestCliArgs)

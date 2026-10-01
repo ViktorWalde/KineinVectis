@@ -117,6 +117,14 @@ passo "scripts/verificar-qml.sh" \
     "Executa o qmllint estrito no modulo QML usando os metadados do build."
 scripts/verificar-qml.sh
 
+passo "scripts/check_identifier_language.py" \
+    "Reprova identificador novo em portugues (Rust, C++, QML, Python, shell); legado so' desce."
+python3 scripts/check_identifier_language.py
+
+passo "scripts/verificar-qml-qt64.sh" \
+    "Recusa parte que o Qt 6.4 do AppImage nunca cria num arquivo com pragma Bound."
+bash scripts/verificar-qml-qt64.sh
+
 passo "scripts/verificar-qml-fiacao.sh" \
     "Detecta bindings QML auto-referentes que entregariam valores nulos ou errados."
 bash scripts/verificar-qml-fiacao.sh
