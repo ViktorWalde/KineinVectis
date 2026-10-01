@@ -154,9 +154,11 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.133.0
+protocolo   0.145.0 (2026-10-01; o historico das versoes e' o arquitetura/03)
+metodos     174 IPC roteados, 57 eventos (scripts/verificar-fiacao-ipc.sh,
+            2026-10-01); 90 harnesses QML em scripts/qml-harness
 testes      874 Rust aprovados; 1 C++; 67 harnesses QML (medicao de 2026-09-24, §7.99)
-metodos     168 IPC roteados, 56 eventos (remote.parseCommand em 0.134.0;
+historico   168 IPC roteados, 56 eventos em 2026-09-24 (remote.parseCommand em 0.134.0;
             remote.command kind copyId em 0.133.0;
             remote.discover/resolve em 0.132.0;
             terminal.selectAll/copySelection em 0.131.0;
@@ -1032,6 +1034,22 @@ simulacao: FORA DO PRODUTO   DECISAO DO AUTOR em 2026-09-12, em dois tempos.
                              sao DOIS contextos: software (Python, C/C++, Rust,
                              banco) e sistemas embarcados. "Futuramente vejo
                              algo sobre simulacao" — reabrir e' do autor
+emulador de alvo: NA 0.4     DECISAO DO AUTOR em 2026-10-01, e NAO reabre a
+                             linha acima: QEMU, Renode e QEMU da Espressif
+                             entram como ALVO onde o firmware roda (o
+                             debugServer do kit, como o QEMU ja' entra no
+                             gate). A IDE nao modela nada; sobe o emulador
+                             que o usuario escolheu e o depura (52 §10.1)
+PlatformIO: TIER 1 NA 0.4    DECISAO DO AUTOR em 2026-10-01: as cinco
+                             jornadas da 0.4, nao so' o compiledb (52 §5.10;
+                             o que falta por arquivo: 58 §4.4)
+versoes 0.6-1.0: PLANEJADAS  DECISAO DO AUTOR em 2026-10-01: o agrupamento
+                             proposto foi aceito (57 §2); o criterio da 1.0
+                             continua PROPOSTA (57 §4)
+gdb >= 16; qmllint >= 6.5    DECISAO DO AUTOR em 2026-10-01: abaixo do gdb 16
+                             a falta de globais no DAP e' degradacao
+                             EXPLICADA (protocolo 0.145.0); abaixo do qmllint
+                             6.5 o lint e' NAO PROVADO (contribuindo/04)
 documentacao: DUAS ARVORES   DECISAO DO AUTOR em 2026-09-12: `DocsPublic/` (toda a
                              documentacao do projeto, versionada; pastas com
                              nome explicito; documento = numero + nome

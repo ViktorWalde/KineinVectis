@@ -147,16 +147,45 @@ for name in tracked:
 for name, number, line in private_mentions:
     print(f"✗ mencao a documento interno em {name}:{number}: {line}", file=sys.stderr)
 
+# CAMINHO DE CODIGO EM DOCUMENTO ANCORADO (2026-10-01). Um documento que diz
+# "a fatia comeca em ui/qml/shell/ToolWindows.qml" so' vale enquanto o arquivo
+# existe; quem renomeia o arquivo nao sabe que o documento o cita, e a proxima
+# pessoa (ou IA) gera codigo no lugar que nao existe mais. Medido nesta data:
+# 20 caminhos de codigo mortos em 10 documentos, quase todos em LOG e plano
+# antigo, onde o caminho e' registro do que era. Por isso a regra e' OPT-IN:
+# vale para o documento que se declara ancorado com o marcador abaixo, e vale
+# para todo caminho entre crases dele. Crescer e' acrescentar o marcador.
+ANCHORED_MARKER = "<!-- caminhos-conferidos -->"
+CODE_PATH = re.compile(r"`((?:ui|crates|scripts|schemas|packaging)/[A-Za-z0-9_./-]+)`")
+anchored_docs = 0
+dead_code_paths = []
+for document in sorted(pathlib.Path("DocsPublic").rglob("*.md")):
+    text = document.read_text(encoding="utf-8")
+    # O marcador vale SOZINHO na linha: citado entre crases (como no
+    # catalogo dos gates) e' texto, nao declaracao.
+    if not any(line.strip() == ANCHORED_MARKER for line in text.split("\n")):
+        continue
+    anchored_docs += 1
+    for number, line in enumerate(text.split("\n"), start=1):
+        for target in CODE_PATH.findall(line):
+            if not pathlib.Path(target.rstrip(".")).exists():
+                dead_code_paths.append((str(document), number, target))
+
+for name, number, target in dead_code_paths:
+    print(f"✗ caminho de codigo morto em {name}:{number}: {target}", file=sys.stderr)
+
 for name, number, target in dead_citations:
     print(f"✗ citacao morta em {name}:{number}: {target}", file=sys.stderr)
 
-if quebrados or dead_citations or missing_from_index or private_mentions:
+if quebrados or dead_citations or missing_from_index or private_mentions or dead_code_paths:
     print(f"\n✗ links de documentacao FALHOU ({len(quebrados)} links,"
           f" {len(dead_citations)} citacoes, {len(missing_from_index)} fora do indice,"
-          f" {len(private_mentions)} mencoes a documento interno)", file=sys.stderr)
+          f" {len(private_mentions)} mencoes a documento interno,"
+          f" {len(dead_code_paths)} caminhos de codigo)", file=sys.stderr)
     sys.exit(1)
 
 print(f"links de documentacao: {verificados} links relativos e {citations} citacoes"
       " de caminho, nenhum morto; todo documento no indice da sua pasta;"
-      " nenhuma mencao a documento interno.")
+      " nenhuma mencao a documento interno;"
+      f" {anchored_docs} documento(s) ancorado(s) sem caminho de codigo morto.")
 PY

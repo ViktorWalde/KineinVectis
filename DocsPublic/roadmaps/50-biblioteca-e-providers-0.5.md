@@ -110,6 +110,13 @@ core; a Library e Settings/Environment não mantêm cópias do mesmo valor.
 
 ### 0.5-B — provar dois tipos de provider
 
+> **Nota datada (2026-10-01):** o autor decidiu levar os emuladores para a
+> 0.4, como alvo de gravar e depurar (52 §10.1). O Renode chega aqui **já
+> integrado**: na 0.5-B ele é exposição do existente, não prova de provider
+> novo, e o segundo provider de prova precisa ser de outro tipo (processo
+> externo que não seja o `debugServer`). A escolha é desta fatia, com a medida
+> que o parágrafo abaixo já exige.
+
 O par de prova proposto é **Cppcheck** (CLI que pode produzir diagnóstico) e
 **Renode** (processo externo ligado ao fluxo embarcado). Antes de escolhê-los
 definitivamente, medir disponibilidade, formato de saída, licença e aderência

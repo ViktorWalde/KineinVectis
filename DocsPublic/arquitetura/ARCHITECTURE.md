@@ -1,5 +1,7 @@
 # Arquitetura de Software e Convenções de Crescimento
 
+<!-- caminhos-conferidos -->
+
 > **Classe: CONTRATO** (`DocsPublic/README.md`). Só muda por decisão explícita e
 > registrada. As §2/§4/§5 são a lei; os inventários e números medidos são a parte
 > perecível — e a §1.1 documenta o que aconteceu quando ninguém percebeu a
@@ -628,6 +630,41 @@ Ao adicionar um comando/feature, siga sempre esta ordem:
 
 Se o domínio ainda não existe, crie o par `handlers/<dominio>.rs` +
 `<dominio>.rs`. Não pendure método novo num domínio que não é o dele.
+
+**A metade da UI** (escrita em 2026-10-01; até então esta seção parava no
+core, e a fiação da UI só se aprendia lendo código). Um resultado ou evento
+novo chega à tela por esta ordem, e cada passo tem dono e gate:
+
+```text
+7.  Pedido          → ui/src/core_client_requests_<dominio>.cpp (a função que o QML chama)
+8.  Despacho        → ui/src/core_client_dispatch_<dominio>.cpp (resultado → sinal tipado)
+                      + o sinal em ui/src/core_client.h
+9.  Roteadores      → ui/qml/ipc/<Dominio>RequestRouter.qml (controller → CoreClient)
+                      e <Dominio>EventRouter.qml (sinal → controller); o QML de
+                      área NUNCA fala com o CoreClient direto
+10. Estado          → o Controller da área (ui/qml/<area>/); a View só desenha
+11. Prova sem janela → scripts/qml-harness/tst_<area>.qml, com o controller REAL
+12. Versão e mapa   → PROTOCOL_VERSION em crates/kinein-protocol/src/lib.rs (sobe a
+                      minor), arquitetura/03 (contrato) e `python3 scripts/module_map.py`
+                      (o mapa de módulos se regenera; o `--check` reprova o mapa velho)
+```
+
+Gates que pegam o passo esquecido: `scripts/verificar-fiacao-ipc.sh` (método
+sem cliente, cliente sem método, sinal sem ouvinte), `scripts/verificar-qml-propriedades.sh`
+(binding para propriedade inexistente) e o `scripts/verificar-arquitetura.sh`
+(arquivo acima do limite: divida antes de crescer).
+
+**Exemplo real, ponta a ponta** — o `notice` do `debug.variables`
+(protocolo 0.145.0): o tipo em `crates/kinein-protocol/src/debug.rs`
+(`DebugVariablesResult.notice`); a lógica em `crates/kinein-core/src/dap/parse.rs`
+(`preferred_scope`) e `crates/kinein-core/src/dap/session.rs`; o handler em
+`crates/kinein-core/src/handlers/debug.rs`; o despacho em
+`ui/src/core_client_dispatch_debug.cpp`; o roteador em
+`ui/qml/ipc/DebugEventRouter.qml`; o estado em
+`ui/qml/debug/DebugInspectController.qml` (e não no `DebugController.qml`,
+que estava em 399/400); a View em `ui/qml/debug/DebugInspector.qml`; a prova
+em `scripts/qml-harness/tst_debug_inspect.qml` e, com o gdb real, em
+`scripts/verificar_embarcado.py`.
 
 ## 6. Caminho de crescimento até a arquitetura-alvo (sem big-bang)
 

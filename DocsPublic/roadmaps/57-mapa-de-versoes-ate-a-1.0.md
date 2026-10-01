@@ -6,7 +6,9 @@
 > O escopo detalhado de cada versão tem **um dono** — o documento citado na
 > coluna "Dono do detalhe" —, e aqui só mora o resumo, a ordem, o critério de
 > pronto e o que ainda não foi decidido. Se este mapa e o dono divergirem, o
-> dono vence e este mapa se corrige no mesmo gesto.
+> dono vence e este mapa se corrige no mesmo gesto. **Onde cada versão começa
+> no código** (arquivos, mecanismo a estender, primeira fatia) está no
+> [`58`](58-onde-cada-versao-comeca-no-codigo.md).
 
 ## 0. Como ler: as quatro situações
 
@@ -28,18 +30,19 @@ flowchart LR
   v03 --> v036["0.3.6–0.3.9<br/>casca e base visual"]:::now
   v036 --> v04["0.4.x<br/>embarcados"]:::planned
   v04 --> v05["0.5.x<br/>ambiente e capacidades"]:::planned
-  v05 --> v06["0.6<br/>motor do editor"]:::proposed
-  v06 --> v07["0.7<br/>paridade diária"]:::proposed
-  v07 --> v08["0.8<br/>extensão declarativa"]:::proposed
-  v08 --> v09["0.9<br/>distribuição e comunidade"]:::proposed
-  v09 --> v10["1.0<br/>contratos congelados"]:::proposed
+  v05 --> v06["0.6<br/>motor do editor"]:::planned
+  v06 --> v07["0.7<br/>paridade diária"]:::planned
+  v07 --> v08["0.8<br/>extensão declarativa"]:::planned
+  v08 --> v09["0.9<br/>distribuição e comunidade"]:::planned
+  v09 --> v10["1.0<br/>contratos congelados"]:::planned
   classDef done fill:#d9d9d9,stroke:#555
   classDef now fill:#ffe08a,stroke:#b38600,stroke-width:2px
   classDef planned fill:#bfe3ff,stroke:#2a6fa8
   classDef proposed fill:#ffffff,stroke:#888,stroke-dasharray:5 4
 ```
 
-Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta.
+Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
+(nenhuma versão desde 2026-10-01; o que resta proposto é o critério da 1.0, §4).
 
 ## 2. Versão a versão
 
@@ -51,13 +54,13 @@ Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta.
 | 0.3.7 | PLANEJADA | navegação | trilho por áreas, painel de baixo contextual | 53 §5.4–§5.5 | idem |
 | 0.3.8 | PLANEJADA | centro e contexto | host de superfície central, header e status com contexto efetivo | 53 §5.6–§5.7 | idem |
 | 0.3.9 | PLANEJADA | teclado, fluidez e prova | foco, teclado, densidade, modo Foco, carga sob demanda; prova antes/depois | 53 §5.8–§5.9 | idem + medida antes/depois |
-| 0.4.0–0.4.4 | PLANEJADA | embarcados | contexto efetivo, diagnóstico ao salvar, cross ponta a ponta, tamanho por símbolo, cache, gravar e depurar com SVD | [`52`](52-arquitetura-executavel-da-0.4.md) §11 | as cinco jornadas J1–J5 provadas (52 §1, §10) |
+| 0.4.0–0.4.4 | PLANEJADA | embarcados | contexto efetivo, diagnóstico ao salvar, cross ponta a ponta, tamanho por símbolo, cache, gravar e depurar com SVD; **PlatformIO como cidadão de tier 1** nas cinco jornadas e **emuladores como alvo** (QEMU, Renode, QEMU da Espressif) — decisões de 2026-10-01 | [`52`](52-arquitetura-executavel-da-0.4.md) §11 | as cinco jornadas J1–J5 provadas (52 §1, §10) |
 | 0.5.x | PLANEJADA | ambiente e capacidades | Environment Center, Library por capacidades/providers, resultados normalizados, monitoramento de processo | [`49`](49-frontend-0.3.6-e-sequencia-0.5.md) §6, [`50`](50-biblioteca-e-providers-0.5.md) | por fatia; corte de release pela evidência (49 §6) |
-| 0.6 | PROPOSTA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
-| 0.7 | PROPOSTA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
-| 0.8 | PROPOSTA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
-| 0.9 | PROPOSTA | distribuição e comunidade | CI pública, documentação pública, diagnóstico de falha sem telemetria, processo de release | 21 §M7 | "outra pessoa instala e contribui sem mim" (21 §M7) |
-| 1.0 | PROPOSTA | contratos congelados | protocolo IPC e formatos persistidos versionados com migração; nada quebra sem versão major | este documento §4 | §4 |
+| 0.6 | PLANEJADA | motor do editor | a decisão M5.4 (o `TextEdit` do QtQuick bloqueia split, minimap, multi-cursor) e a migração | [`21`](21-roadmap-de-longo-prazo.md) §M5.4 | ADR da decisão + editor novo sem regressão de latência (régua do 45) |
+| 0.7 | PLANEJADA | paridade diária | o restante de M5: navegação pesada, git avançado (conflitos, histórico), multi-cursor sobre o motor novo | 21 §M5.1–§M5.3 | o autor usa a IDE o dia inteiro sem sair para outra (régua do 34, TR1) |
+| 0.8 | PLANEJADA | extensão declarativa | LS e adaptadores DAP configuráveis, task runner, tema/atalhos/layout **em dados** | 21 §M6.1–§M6.3, [`47`](47-estrutura-da-v0.3.md) §10.2 | um servidor/adaptador novo entra por configuração, sem código no core |
+| 0.9 | PLANEJADA | distribuição e comunidade | CI pública, documentação pública, diagnóstico de falha sem telemetria, processo de release | 21 §M7 | "outra pessoa instala e contribui sem mim" (21 §M7) |
+| 1.0 | PLANEJADA | contratos congelados | protocolo IPC e formatos persistidos versionados com migração; nada quebra sem versão major | este documento §4 | §4 — **ainda PROPOSTA** |
 
 ### 2.1 O que o código já entrega dos marcos M5–M7 (medido em 2026-10-01)
 
@@ -78,28 +81,27 @@ M7.1 empacotamento           EXISTE   AppImage portavel com smokes (packaging/ap
 M7.2 CI publica              AUSENTE  nao ha .github/ no repositorio
 ```
 
-## 3. Pedidos do autor ainda não distribuídos nas versões
+## 3. Pedidos do autor e para onde foram
 
-Registrados aqui para **não se perderem**; cada um precisa entrar no dono da
-versão certa por decisão explícita:
+Os três pedidos de 2026-10-01 já têm dono:
 
-1. **PlatformIO como cidadão de tier 1** (2026-10-01). Hoje: detecção, build,
-   upload e monitor (bloco E4 do [`41`](41-ecossistema-embarcados-e-python.md));
-   `test` e `check` ausentes. Proposta: entra na 0.4 — o [`52`](52-arquitetura-executavel-da-0.4.md)
-   o trata só como Configuration Action (`pio run -t compiledb`, §5.10).
-2. **Simuladores na IDE** (2026-10-01): QEMU (já no gate), Renode, QEMU da
-   Espressif, Spike + OpenOCD, gadget USB virtual — usados no que for possível
-   e oferecidos ao usuário. Proposta: matriz "jornada × emulador × o que fica NÃO
-   PROVADO" no 52, fechando a decisão aberta 52 §13.4.
-3. **Direção visual da 0.3.6–0.3.9** (2026-10-01): já registrada no 53 §13.1;
-   a task dedicada de UX/HUD a detalha.
+1. **PlatformIO como cidadão de tier 1** → **0.4** (decisão do autor,
+   2026-10-01). O que existe e o que falta por jornada, medido no código, está
+   no [`58`](58-onde-cada-versao-comeca-no-codigo.md) §4.4; o requisito está no
+   [`52`](52-arquitetura-executavel-da-0.4.md) §5.10.
+2. **Emuladores na IDE** → **0.4** (decisão do autor, 2026-10-01): QEMU (já no
+   gate), Renode, QEMU da Espressif — como **alvo** onde o firmware roda,
+   pelo `debugServer` do kit. **Não é a simulação física/matemática que saiu do
+   produto** (40 §5); a matriz "jornada × emulador × NÃO PROVADO" é o 52 §10.1.
+3. **Direção visual da 0.3.6–0.3.9** → 53 §13.1, com a linha de base medida
+   no 58 §4.3; a task dedicada de UX/HUD a detalha.
 
 ## 4. Proposta de critério para a 1.0
 
 **PROPOSTA, sem decisão do autor.** A 1.0 é a promessa de que um contrato não
 quebra sem aviso:
 
-- o protocolo IPC tem versão (já tem, `0.144.0` em 2026-10-01) e a 1.0 congela a
+- o protocolo IPC tem versão (já tem, `0.145.0` em 2026-10-01) e a 1.0 congela a
   major: método removido ou mudado só numa 2.0;
 - todo arquivo que o usuário guarda (`schemas/`) tem versão e migração provada;
 - a 0.9 entregou CI pública rodando `scripts/verificar.sh --estrito` num
@@ -116,12 +118,12 @@ Não está copiado aqui — está no dono, e é lá que se lê:
 - 0.4 em diante: sem Lua antes nem depois da 1.0, alvo Linux nativo, o modelo
   semântico detecta deriva e não resolve versão: [`47`](47-estrutura-da-v0.3.md) §10.2.
 
-## 6. Decisões abertas que este mapa precisa do autor
+## 6. Decisões deste mapa
 
-| # | Decisão | Onde está |
-| --- | --- | --- |
-| 1 | aceitar, mudar ou recusar o agrupamento PROPOSTO da 0.6 à 1.0 (§2) | este documento |
-| 2 | o critério da 1.0 (§4) | este documento |
-| 3 | PlatformIO tier 1 e simuladores na 0.4 (§3) | 52 §13 |
-| 4 | versão mínima do gdb (o gdb 15 não tem escopo de globais no DAP) | [`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md) |
-| 5 | qual qmllint vale (o 6.4 tem 6 falsos positivos) | `contribuindo/04` |
+| # | Decisão | Situação | Onde está |
+| --- | --- | --- | --- |
+| 1 | o agrupamento da 0.6 à 1.0 (§2) | **decidida (2026-10-01):** aceito como proposto; as cinco versões passam a PLANEJADA | este documento |
+| 2 | o critério da 1.0 (§4) | **aberta** | este documento |
+| 3 | PlatformIO tier 1 e emuladores | **decidida (2026-10-01):** os dois na 0.4 | 52 §5.10, §10.1; 58 §4.4 |
+| 4 | versão mínima do gdb | **decidida (2026-10-01):** vale o ≥ 16; abaixo, degradação explicada (protocolo 0.145.0) | [`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md) |
+| 5 | qual qmllint vale | **decidida (2026-10-01):** vale o ≥ 6.5; no 6.4, NÃO PROVADO | `contribuindo/04` |

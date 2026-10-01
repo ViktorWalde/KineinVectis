@@ -75,6 +75,8 @@ flowchart TD
   codigo -->|"conferido por gate"| protocolo["arquitetura/03<br/>protocolo IPC"]
   contrato["arquitetura/ARCHITECTURE.md<br/>CONTRATO"] -.->|"regras que o código segue"| codigo
   versoes["roadmaps/57<br/>versões até a 1.0"] -->|"dono do detalhe"| plano["roadmap da versão<br/>(53, 52, 49/50…)"]
+  versoes -->|"onde começa no código"| inicio["roadmaps/58<br/>arquivos e 1ª fatia"]
+  inicio -->|"caminhos conferidos por gate"| codigo
   plano -->|"alvo de cada área"| specs["especificacoes/<br/>PLANO"]
   estado["roadmaps/40<br/>ESTADO: a fila"] -->|"a fatia feita vira"| registro["roadmaps/40.7<br/>LOG: o registro"]
   plano -->|"a fatia em curso entra na"| estado
@@ -98,6 +100,7 @@ documentação pública** (§6).
 | O que está aberto agora, e as decisões que não se reabrem? | [`roadmaps/40-estado-e-continuidade.md`](roadmaps/40-estado-e-continuidade.md) |
 | O que foi feito, quando, e com que prova? | [`roadmaps/40.7-registro-das-entregas.md`](roadmaps/40.7-registro-das-entregas.md) |
 | **Quais versões existem até a 1.0, e o que é decidido ou proposta?** | [`roadmaps/57-mapa-de-versoes-ate-a-1.0.md`](roadmaps/57-mapa-de-versoes-ate-a-1.0.md) |
+| **Onde, no código, cada versão começa — arquivos, mecanismo a estender, primeira fatia?** | [`roadmaps/58-onde-cada-versao-comeca-no-codigo.md`](roadmaps/58-onde-cada-versao-comeca-no-codigo.md) — caminhos conferidos por gate |
 | O plano da versão em curso? | [`roadmaps/53-arquitetura-executavel-da-0.3.6.md`](roadmaps/53-arquitetura-executavel-da-0.3.6.md) |
 | A visão-alvo de cada área do produto? | [`especificacoes/README.md`](especificacoes/README.md) — alvo, não estado |
 | Por que uma decisão de arquitetura foi tomada? | [`decisoes-adr/`](decisoes-adr/README.md) |

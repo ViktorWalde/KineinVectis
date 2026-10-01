@@ -20,6 +20,14 @@
 > [modelo semântico](../especificacoes/modelo-semantico-do-projeto-0.4.md), do
 > [cache de compilação](../especificacoes/cache-de-compilacao.md) e de
 > [embarcados](../especificacoes/embarcados-targets-flash-serial-qemu.md).
+>
+> **Onde cada fatia começa no código** (arquivos reais, o mecanismo a
+> estender, arquivos no limite que precisam ser divididos antes):
+> [`58`](58-onde-cada-versao-comeca-no-codigo.md) §4.4.
+>
+> **Decisões do autor de 2026-10-01 que ampliam a 0.4:** o **PlatformIO é
+> cidadão de tier 1** — as cinco jornadas abaixo valem para ele, não só o
+> compiledb (§5.10) — e os **emuladores entram como alvo** (§10.1).
 
 ## 0. Como ler e como usar
 
@@ -39,7 +47,7 @@ autor (sem gravar sem pedido):
 
 ```text
 J1 ABRIR      abrir um projeto de firmware (CMake cross, ESP-IDF, Zephyr,
-              pico-sdk, Cargo embarcado ou Makefile de fabricante) e ver, sem
+              pico-sdk, PlatformIO, Cargo embarcado ou Makefile de fabricante) e ver, sem
               editar JSON: framework, alvo, kit, toolchain efetiva, o que falta
               e o passo oficial para resolver
 J2 ENTENDER   salvar um .c/.cpp/.rs e ver o erro do compilador do ALVO na linha
@@ -51,8 +59,9 @@ J3 CONSTRUIR  build cross repetível e rápido (cache quando houver), com o
               anterior
 J4 GRAVAR     escolher a sonda pela lista, gravar e abrir o monitor, pelo
               mesmo caminho de "Executar" (configuração de execução)
-J5 DEPURAR    depurar no alvo (sonda, OpenOCD, QEMU ou gdbserver remoto), ver
-              e ESCREVER registradores de periférico pelo SVD
+J5 DEPURAR    depurar no alvo (sonda, OpenOCD, emulador — QEMU, Renode — ou
+              gdbserver remoto), ver e ESCREVER registradores de periférico
+              pelo SVD
 ```
 
 O editor acompanha: signature help, destaque de ocorrências, formatação pelo
@@ -385,7 +394,13 @@ Zephyr           west como ferramenta detectada; build pelo build/frameworks.rs
                  (dono existente); SDK por importKit (42 §8.5 "falta")
 ESP-IDF          idf.py e a receita flasher_args.json (já lidos em project/esp.rs)
 pico-sdk         CMake por baixo; nada próprio além da detecção que já existe
-PlatformIO       `pio run -t compiledb` como Configuration Action (C4)
+PlatformIO       TIER 1 (decisão do autor, 2026-10-01): as cinco jornadas.
+                 J2: `pio run -t compiledb` como Configuration Action (C4);
+                 J3: `pio run` (existe), `pio test` como runner e `pio check`
+                 como provider de qualidade; J4: `pio run -t upload` (existe);
+                 J5: o `.elf` do env como alvo de debug e o servidor do
+                 `debug_tool` do `platformio.ini`. O que existe e o que falta,
+                 por arquivo: 58 §4.4
 MicroPython      mpremote (já usado em run.script/serial.files)
 ```
 
@@ -485,6 +500,40 @@ artefato       AppImage com avisos-qml.txt + Debian mínimo
 hardware       placa do autor: só leitura/monitor sem pedido; gravar com pedido
 ```
 
+### 10.1 Emuladores: o que cada um prova e o que fica NÃO PROVADO
+
+Decisão do autor (2026-10-01): os emuladores entram na 0.4 como **alvo** onde
+o firmware roda, pelo `debugServer` do kit — o mesmo caminho que o QEMU já usa
+no `scripts/verificar_embarcado.py`. **Não é simulação física/matemática**, que
+continua fora do produto (40 §5): a IDE não modela o mundo, ela sobe o emulador
+que o usuário escolheu e o depura. Também é a resposta para quem não tem placa:
+é o que dá para provar sem hardware.
+
+```text
+                 QEMU (arm)         Renode              QEMU Espressif
+estado hoje      MEDIDO no gate     sem código          sem código
+                 (lm3s6965evb,
+                 gdb -i dap)
+J1–J3            não dependem de emulador (build e contexto são do host)
+J4 gravar        carrega o ELF      carrega o ELF       carrega a imagem
+                 (-kernel); gravar  (hipótese)          (hipótese)
+                 em placa real fica
+                 NÃO PROVADO
+J4 monitor       serial do emulador por pty/tcp (hipótese, a medir)
+J5 depurar       ciclo DAP inteiro  ciclo DAP inteiro   ciclo DAP inteiro
+                 (provado)          (hipótese)          (hipótese)
+J5 periféricos   pobre no           modela periféricos  periféricos do ESP32
+pelo SVD         lm3s6965 (medir)   (hipótese: o forte  (hipótese)
+                                    dele)
+sempre NÃO       sonda física, OpenOCD com placa, tempo real, consumo, rádio
+PROVADO sem placa
+```
+
+"Hipótese" quer dizer não medido nesta máquina: cada célula vira medida na
+fatia que a implementa, ou continua dita como hipótese. O emulador entra na
+matriz quando um ciclo do `scripts/verificar_embarcado.py` passar com ele;
+ferramenta ausente é NÃO PROVADO, nunca verde calado.
+
 ## 11. Ordem e marcos
 
 Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
@@ -492,12 +541,15 @@ Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
 ```text
 0.4.0  fundação: §4 contexto efetivo + origem (index.context), preset no
        configure automático (§5.1.5), DiagnosticSource::Compiler e C1 ao
-       salvar (§5.2), L6/L7 (§5.11)
+       salvar (§5.2), L6/L7 (§5.11); PlatformIO compiledb (§5.10, é o
+       contexto); a matriz de emuladores (§10.1) escrita com o que já mede
 0.4.1  cross: toolchain file gerado (§5.4), C2 inspector (§5.3), deriva (§5.9),
        toolchain.json schema 3
-0.4.2  construir: C7 símbolo/delta (§5.5), C5 cache (§5.6), C4 Bear (§5.7)
+0.4.2  construir: C7 símbolo/delta (§5.5), C5 cache (§5.6), C4 Bear (§5.7);
+       PlatformIO `pio test` e `pio check`
 0.4.3  gravar/depurar: sonda no kit, OpenOCD por VID:PID, SVD leitura e
-       debug.writeMemory (§5.8)
+       debug.writeMemory (§5.8); PlatformIO depurar; Renode como
+       debugServer (§10.1)
 0.4.4  editor: L2, L3, L5 (§5.11) e o fechamento da versão
 ```
 
@@ -520,4 +572,7 @@ Dependências primeiro; cada marco é publicável sozinho se as provas passarem.
    janela à direita ao lado de Símbolos?
 3. Delta de tamanho guardado só do último build (proposta) ou histórico curto?
 4. Quais placas definem "pronto" para a 0.4 (o 42 §0 lista famílias; confirmar
-   com o que o autor tem na mesa)?
+   com o que o autor tem na mesa)? **Em parte respondida (2026-10-01):** o que
+   um emulador cobre prova-se nele (§10.1); a placa real confirma o que o
+   emulador não cobre (sonda, gravação física). Quais placas físicas continua
+   aberto.
