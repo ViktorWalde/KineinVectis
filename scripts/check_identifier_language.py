@@ -20,6 +20,7 @@ Usage:
 """
 from __future__ import annotations
 
+import ast
 import io
 import re
 import subprocess
@@ -108,8 +109,74 @@ def strip_c_like(text: str) -> str:
     return "".join(out)
 
 
-def python_names(text: str) -> list[tuple[int, str]]:
-    """NAME tokens only: docstrings, comments and strings never reach the check."""
+def python_names(text: str, *, embedded: bool = False) -> list[tuple[int, str]]:
+    """Every name the program binds or reads, from the AST: docstrings, comments
+    and string literals never reach the check; f-string expressions do.
+
+    AST, NOT tokenize (2026-10-01). Before 3.12 (PEP 701) `tokenize` returns an
+    f-string as ONE string token, so `f"{nome}"` hid `nome`: the same commit
+    counted 17,591 legacy words on 3.11 and 17,810 on 3.12/3.13, and on 3.11 the
+    ratchet had slack in 146 file/word pairs. The AST has held f-string
+    expressions as Name nodes since 3.8; measured on this tree, it matches the
+    3.12 tokenize pair for pair, on 3.11, 3.12 and 3.13 alike.
+
+    A file the parser rejects raises SyntaxError: the gate cannot approve what it
+    cannot read (tokenize used to stop silently and check half a file). Only an
+    `embedded` heredoc body falls back to tokenize, because an unquoted heredoc
+    with `$VAR` is valid shell and not valid Python.
+    """
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        if not embedded:
+            raise
+        return _token_names(text)
+    names: list[tuple[int, str]] = []
+
+    def add(line: int, name: str | None) -> None:
+        if name:
+            names.append((line, name))
+
+    for node in ast.walk(tree):
+        line = getattr(node, "lineno", 0)
+        if isinstance(node, ast.Name):
+            add(line, node.id)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            add(line, node.name)
+        elif isinstance(node, ast.arg):
+            add(line, node.arg)
+        elif isinstance(node, ast.Attribute):
+            # The attribute is the LAST token of the expression.
+            add(node.end_lineno or line, node.attr)
+        elif isinstance(node, ast.keyword):
+            add(line, node.arg)
+        elif isinstance(node, ast.alias):
+            for part in node.name.split("."):
+                add(line, part)
+            add(line, node.asname)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            for part in node.module.split("."):
+                add(line, part)
+        elif isinstance(node, (ast.Global, ast.Nonlocal)):
+            for name in node.names:
+                add(line, name)
+        elif isinstance(node, ast.ExceptHandler):
+            add(line, node.name)
+        elif isinstance(node, (ast.MatchAs, ast.MatchStar)):
+            add(line, node.name)
+        elif isinstance(node, ast.MatchMapping):
+            add(line, node.rest)
+        elif isinstance(node, ast.MatchClass):
+            for name in node.kwd_attrs:
+                add(line, name)
+        elif type(node).__name__ in ("TypeVar", "ParamSpec", "TypeVarTuple", "TypeAlias"):
+            # 3.12+ only (PEP 695); `name` is a str, or a Name for TypeAlias.
+            add(line, getattr(node, "name", None) if isinstance(getattr(node, "name", None), str) else None)
+    return names
+
+
+def _token_names(text: str) -> list[tuple[int, str]]:
+    """NAME tokens: the fallback for a heredoc body that is not valid Python."""
     names = []
     try:
         for tok in tokenize.generate_tokens(io.StringIO(text).readline):
@@ -138,7 +205,7 @@ def shell_names(text: str) -> list[tuple[int, str]]:
             if line.strip() == end_marker:
                 if body_is_python:
                     names.extend((body_start + n - 1, name)
-                                 for n, name in python_names("\n".join(body)))
+                                 for n, name in python_names("\n".join(body), embedded=True))
                 end_marker, body = None, []
             else:
                 body.append(line)
@@ -227,11 +294,16 @@ def main() -> int:
     unknown: Counter[str] = Counter()
     per_file: Counter[tuple[str, str]] = Counter()
     where: dict[str, set[str]] = defaultdict(set)
+    unreadable: list[str] = []
     for path in tracked_files():
         text = path.read_text(encoding="utf-8", errors="ignore")
         kind = SUFFIXES[path.suffix]
         if kind == "python":
-            pairs = python_names(text)
+            try:
+                pairs = python_names(text)
+            except SyntaxError as error:
+                unreadable.append(f"{path.relative_to(ROOT)}:{error.lineno}: {error.msg}")
+                continue
         elif kind == "shell":
             pairs = shell_names(text)
         else:
@@ -250,6 +322,12 @@ def main() -> int:
                     unknown[word] += 1
                     where[word].add(f"{rel}:{lineno}")
                     per_file[(rel, word)] += 1
+    if unreadable:
+        print(f"erro: o gate nao aprova o que nao consegue ler (Python {sys.version.split()[0]}):",
+              file=sys.stderr)
+        for entry in unreadable:
+            print(f"  {entry}", file=sys.stderr)
+        return 1
     if report:
         for word, count in unknown.most_common():
             sample = sorted(where[word])[:2]

@@ -21,6 +21,8 @@ isinstance isdigit isascii isalpha isalnum isupper isfile setdefault defaultdict
 frozenset staticmethod nonlocal elif environ shutil pathlib urllib urlopen
 tokenize argparse tempfile mkdtemp makedirs listdir rmtree getmtime fromtimestamp
 strftime fullmatch removesuffix datetime returncode popen subprocess stdlib
+# a AST do Python (G0.1 le' nomes por ela desde 2026-10-01): campos e builtins
+asname attr getattr async
 qverify qcompare qtest guiless qint qsizetype qobject qgetenv qputenv qqmlregistration
 qtquick qmllint qmake invokable rehighlight tooltip popup viewport rect scrollbar
 spacer frameless antialiasing demi btoa atob stringify
