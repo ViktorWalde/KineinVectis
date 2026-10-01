@@ -29,6 +29,7 @@ QtObject {
     // `.md`/`.markdown` e mais nada (§3.1). Um `.py` nao ganha um botao
     // "Preview" que nao faz nada.
     readonly property bool available: editorController !== null
+                                      && !editorController.currentReadOnly
                                       && rules.isMarkdown(editorController.currentFilePath())
 
     readonly property string mode: {

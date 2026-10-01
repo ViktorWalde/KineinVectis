@@ -345,8 +345,16 @@ pub fn deploy_command(
     }
 }
 
+/// Pasta no alvo aceita pelo espelho e pelo navegador: absoluta e sem
+/// caracteres de controle. Espaco e' permitido (o `rsync` do espelho roda com
+/// `-s`); quebra de linha nao, porque a saida itemizada e' lida por linha.
+/// Absoluta porque, com `-s`, o shell remoto nao expande `~`.
+pub(crate) fn valid_remote_dir(path: &str) -> bool {
+    path.starts_with('/') && !path.contains(char::is_control)
+}
+
 /// Aspas simples POSIX para o comando REMOTO (roda no shell do alvo).
-fn quote(texto: &str) -> String {
+pub(crate) fn quote(texto: &str) -> String {
     format!("'{}'", texto.replace('\'', "'\\''"))
 }
 

@@ -60,11 +60,12 @@ QtObject {
             return { label: qsTr("Puxar do alvo"), kind: "puxar", enabled: true, busy: false,
                      hint: qsTr("traz o que mudou no alvo para o espelho local") };
         }
-        return { label: qsTr("Abrir pasta no alvo"), kind: "abrirPasta",
-                 enabled: e.temPastaRemota === true, busy: false,
+        return { label: e.temPastaRemota ? qsTr("Abrir pasta no alvo")
+                                         : qsTr("Escolher pasta no alvo"), kind: "abrirPasta",
+                 enabled: true, busy: false,
                  hint: e.temPastaRemota
                      ? qsTr("abre a pasta do alvo como espelho local")
-                     : qsTr("informe a pasta do alvo em Workspace") };
+                     : qsTr("começa pela home do alvo em Workspace") };
     }
 
     // Qual seccao o proximo gesto vive, para o painel LEVAR a pessoa ate' ela

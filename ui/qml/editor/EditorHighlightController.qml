@@ -66,7 +66,8 @@ Item {
     }
 
     function currentPath() {
-        return documentController === null ? "" : documentController.currentFilePath();
+        return documentController === null || documentController.currentReadOnly
+               ? "" : documentController.currentFilePath();
     }
 
     function refreshSemanticTokens() {

@@ -3,9 +3,9 @@ createMode===project 2
 entryKind===directory 2
 kind===command 2
 kind===deleted 2
-kind===directory 2
 kind===file 2
 source===lsp 2
 status===detected 4
 status===failed 3
+status===success 2
 status===warning 2

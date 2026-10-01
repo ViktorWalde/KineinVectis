@@ -16,6 +16,7 @@ Item {
     id: root
 
     property var documentController: null
+    property var rules: null
     // O conflito externo tem dono proprio; o salvamento so' o avisa do que
     // aconteceu com o arquivo que ele mesmo escreveu.
     property var externalController: null
@@ -41,6 +42,7 @@ Item {
         documentController.storeCurrentEditor();
         const model = documentController.filesModel;
         const document = model.get(documentController.currentTab);
+        if (document.readOnly === true) return;
         const text = documentController.surfaceBridge.text();
         notePendingSave(document.path, text);
         root.writeFileRequested(document.path, text, document.savedContent);
@@ -55,7 +57,8 @@ Item {
         const result = [];
         for (let i = 0; i < model.count; i++) {
             const document = model.get(i);
-            if (document.modified === true && document.externalDeleted !== true) {
+            if (document.modified === true && document.externalDeleted !== true
+                    && document.readOnly !== true) {
                 result.push({
                     path: document.path,
                     content: document.content,
@@ -64,6 +67,21 @@ Item {
             }
         }
         return result;
+    }
+
+    function hasUnsavedUnderPath(path) {
+        if (documentController === null || rules === null) return false;
+        documentController.storeCurrentEditor();
+        const model = documentController.filesModel;
+        const pending = documentController.pendingSaves;
+        for (let i = 0; i < model.count; i++) {
+            const document = model.get(i);
+            if (rules.isUnder(document.path, path)
+                    && (document.modified === true
+                        || document.content !== document.savedContent
+                        || pending[document.path] !== undefined)) return true;
+        }
+        return false;
     }
 
     // Salva somente se o buffer ainda for o snapshot que iniciou a operacao.
@@ -76,7 +94,8 @@ Item {
         const model = documentController.filesModel;
         for (let i = 0; i < model.count; i++) {
             const document = model.get(i);
-            if (document.path !== path || document.externalDeleted === true) {
+            if (document.path !== path || document.externalDeleted === true
+                    || document.readOnly === true) {
                 continue;
             }
             if (document.content !== localSnapshot) {

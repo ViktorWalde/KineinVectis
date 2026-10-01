@@ -87,6 +87,11 @@ void CoreClient::readFile(const QString& path)
     sendRequest(QStringLiteral("fs.read"), QJsonObject{{QStringLiteral("path"), path}});
 }
 
+void CoreClient::readExternalFile(const QString& path)
+{
+    sendRequest(QStringLiteral("fs.readExternal"), QJsonObject{{QStringLiteral("path"), path}});
+}
+
 void CoreClient::createFile(const QString& path, const QString& content)
 {
     sendRequest(QStringLiteral("fs.createFile"),
@@ -129,9 +134,27 @@ void CoreClient::renamePath(const QString& from, const QString& to)
                 QJsonObject{{QStringLiteral("from"), from}, {QStringLiteral("to"), to}});
 }
 
+void CoreClient::copyPath(const QString& from, const QString& to)
+{
+    sendRequest(QStringLiteral("fs.copy"),
+                QJsonObject{{QStringLiteral("from"), from}, {QStringLiteral("to"), to}});
+}
+
+void CoreClient::transferPaths(const QString& operation, const QVariantList& items)
+{
+    sendRequest(QStringLiteral("fs.transferBatch"),
+                QJsonObject{{QStringLiteral("operation"), operation},
+                            {QStringLiteral("items"), QJsonArray::fromVariantList(items)}});
+}
+
 void CoreClient::deletePath(const QString& path)
 {
     sendRequest(QStringLiteral("fs.delete"), QJsonObject{{QStringLiteral("path"), path}});
+}
+
+void CoreClient::trashPath(const QString& path)
+{
+    sendRequest(QStringLiteral("fs.trash"), QJsonObject{{QStringLiteral("path"), path}});
 }
 
 void CoreClient::listCommands()
@@ -399,9 +422,13 @@ void CoreClient::cancelJob(const QString& jobId)
     sendRequest(QStringLiteral("job.cancel"), QJsonObject{{QStringLiteral("jobId"), jobId}});
 }
 
-void CoreClient::terminalOpen()
+void CoreClient::terminalOpen(const QString& cwd)
 {
-    sendRequest(QStringLiteral("terminal.open"), QJsonObject{});
+    QJsonObject params;
+    if (!cwd.isEmpty()) {
+        params.insert(QStringLiteral("cwd"), cwd);
+    }
+    sendRequest(QStringLiteral("terminal.open"), params);
 }
 
 void CoreClient::terminalInput(const QString& id, const QString& data)

@@ -40,6 +40,7 @@ Item {
 
     signal listDirRequested(string path)
     signal readFileRequested(string path)
+    signal openWorkspacePathRequested(string path)
     signal closeWorkspaceRequested()
     signal toolsDetectionRequested()
     // A acao da faixa de saude vai INTEIRA para quem tem os controllers
@@ -182,8 +183,10 @@ Item {
                 visible: !root.workspaceOpen
                 tools: root.toolsList
                 recentWorkspacesController: root.recentWorkspacesController
+                urlDecoder: Clipboard
                 scanning: root.scanningEnvironment
                 onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
+                onWorkspacePathDropped: path => root.openWorkspacePathRequested(path)
                 onNewProjectRequested: function(templateId) {
                     root.createProjectRequested(templateId);
                 }

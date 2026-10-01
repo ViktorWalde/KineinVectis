@@ -5,11 +5,18 @@ Item {
 
     property string entryKind: "file"
     property string entryDisplayPath: ""
+    property string sourceDisplayPath: ""
     property string errorText: ""
+    property string titleText: ""
+    property string confirmText: ""
+    property bool operationPending: false
+    property string pendingMessage: ""
+    property string pendingDismissText: ""
     property real maxAvailableWidth: 360
 
     signal confirmRequested()
     signal cancelRequested()
+    signal pendingDismissRequested()
 
     function openWithName(name) {
         entryRenameInput.text = name;
@@ -44,8 +51,9 @@ Item {
             spacing: Theme.spacingSmall
 
             Text {
-                text: root.entryKind === "directory"
-                      ? qsTr("Renomear pasta") : qsTr("Renomear arquivo")
+                text: root.titleText !== "" ? root.titleText
+                      : root.entryKind === "directory"
+                        ? qsTr("Renomear pasta") : qsTr("Renomear arquivo")
                 color: Theme.textPrimary
                 font.pixelSize: 12
                 font.bold: true
@@ -53,7 +61,17 @@ Item {
 
             Text {
                 width: parent.width
-                text: root.entryDisplayPath
+                visible: root.sourceDisplayPath !== ""
+                text: qsTr("Origem: ") + root.sourceDisplayPath
+                color: Theme.textMuted
+                font.pixelSize: 10
+                elide: Text.ElideMiddle
+            }
+
+            Text {
+                width: parent.width
+                text: root.sourceDisplayPath !== ""
+                      ? qsTr("Destino: ") + root.entryDisplayPath : root.entryDisplayPath
                 color: Theme.textMuted
                 font.pixelSize: 10
                 elide: Text.ElideMiddle
@@ -81,9 +99,20 @@ Item {
                     font.pixelSize: 12
                     clip: true
                     selectByMouse: true
-                    onAccepted: root.confirmRequested()
-                    Keys.onEscapePressed: root.cancelRequested()
+                    onAccepted: { if (!root.operationPending) root.confirmRequested(); }
+                    Keys.onEscapePressed: {
+                        if (!root.operationPending) root.cancelRequested();
+                        else if (root.pendingDismissText !== "") root.pendingDismissRequested();
+                    }
                 }
+            }
+
+            Text {
+                width: parent.width
+                visible: root.operationPending
+                text: root.pendingMessage
+                color: Theme.textSecondary
+                font.pixelSize: 10
             }
 
             Text {
@@ -112,8 +141,10 @@ Item {
                         id: entryRenameCancelText
 
                         anchors.centerIn: parent
-                        text: qsTr("Cancelar")
-                        color: Theme.textSecondary
+                        text: root.operationPending && root.pendingDismissText !== ""
+                              ? root.pendingDismissText : qsTr("Cancelar")
+                        color: root.operationPending && root.pendingDismissText === ""
+                               ? Theme.textMuted : Theme.textSecondary
                         font.pixelSize: 11
                     }
 
@@ -121,9 +152,13 @@ Item {
                         id: entryRenameCancelArea
 
                         anchors.fill: parent
+                        enabled: !root.operationPending || root.pendingDismissText !== ""
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.cancelRequested()
+                        onClicked: {
+                            if (root.operationPending) root.pendingDismissRequested();
+                            else root.cancelRequested();
+                        }
                     }
                 }
 
@@ -131,15 +166,15 @@ Item {
                     width: entryRenameConfirmText.width + 2 * Theme.spacingMedium
                     height: 24
                     radius: Theme.radius
-                    color: entryRenameConfirmArea.pressed
-                           ? Theme.accentDim : Theme.accent
+                    color: root.operationPending ? Theme.surface1
+                           : entryRenameConfirmArea.pressed ? Theme.accentDim : Theme.accent
 
                     Text {
                         id: entryRenameConfirmText
 
                         anchors.centerIn: parent
-                        text: qsTr("Renomear")
-                        color: Theme.background0
+                        text: root.confirmText !== "" ? root.confirmText : qsTr("Renomear")
+                        color: root.operationPending ? Theme.textMuted : Theme.background0
                         font.pixelSize: 11
                     }
 
@@ -147,6 +182,7 @@ Item {
                         id: entryRenameConfirmArea
 
                         anchors.fill: parent
+                        enabled: !root.operationPending
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.confirmRequested()

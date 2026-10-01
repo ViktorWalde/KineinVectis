@@ -284,7 +284,8 @@ Usar escala de 4px.
 
 ### 6.5 Bordas e cabeçalho mais naturais — compromisso da 0.3.x
 
-**Pedido do autor em 2026-09-23; planejado, não implementado nesta revisão.**
+**Pedido do autor em 2026-09-23; proposta visual implementada em 2026-09-30,
+aceite ainda pendente.**
 Refinar o arredondamento da IDE, especialmente a região superior, tomando o
 IntelliJ Community como referência de conforto. A expressão “rodapé superior”
 foi interpretada provisoriamente como cabeçalho/cantos superiores; confirmar
@@ -314,6 +315,15 @@ restaurar/maximizar e mudar de escala, sem regressão de hit targets, resize,
 primeiro frame ou legibilidade. A aprovação visual do autor continua necessária.
 Proposta de encaixe: **0.3.4**, antecipável dentro da 0.3.x; não depende do
 Grafana e não se declara entregue por apenas trocar um token de raio.
+
+**Proposta medida em 2026-09-30:** `ShellHeaderHost` passou a desenhar um único
+contorno arredondado para as duas faixas do cabeçalho, com um separador só na
+base. `AppMenuBar` e `TopHeaderBar` ficaram transparentes dentro dele, sem
+duas bordas completas sobrepostas. Em maximizado/fullscreen o raio cai a zero.
+Capturas offscreen antes/depois em 1280×800 e depois em 1024×700 estão em
+`DocsPrivate/Codex/evidencias-2026-09-30-h0/`. Lint QML, build e primeiro
+frame passaram. Falta aprovação visual e a prova de hits, resize e escala em
+X11/Wayland; H0 ainda não está fechado.
 
 ---
 

@@ -5,15 +5,17 @@
 
 use kinein_protocol::{
     JsonRpcResponse, TerminalClearScrollbackParams, TerminalCloseParams,
-    TerminalCopySelectionResult, TerminalInputParams, TerminalMouseParams, TerminalOpenResult,
-    TerminalResizeParams, TerminalScrollParams, TerminalSelectionParams,
+    TerminalCopySelectionResult, TerminalInputParams, TerminalMouseParams, TerminalOpenParams,
+    TerminalOpenResult, TerminalResizeParams, TerminalScrollParams, TerminalSelectionParams,
 };
 use serde_json::{Value, json};
+use std::path::Path;
 
-use crate::Core;
 use crate::rpc::{
-    no_workspace_response, parse_params, terminal_error_response, terminal_unavailable_response,
+    fs_error_response, no_workspace_response, parse_params, terminal_error_response,
+    terminal_unavailable_response,
 };
+use crate::{Core, fsops};
 
 impl Core {
     /// Roteia os metodos `terminal.*`; `None` quando o metodo nao e terminal.
@@ -24,7 +26,7 @@ impl Core {
         params: Option<&Value>,
     ) -> Option<JsonRpcResponse> {
         match method {
-            "terminal.open" => Some(self.terminal_open_response(request_id)),
+            "terminal.open" => Some(self.terminal_open_response(request_id, params)),
             "terminal.input" => Some(self.terminal_input_response(request_id, params)),
             "terminal.resize" => Some(self.terminal_resize_response(request_id, params)),
             "terminal.scroll" => Some(self.terminal_scroll_response(request_id, params)),
@@ -150,14 +152,33 @@ impl Core {
         }
     }
 
-    fn terminal_open_response(&mut self, request_id: Option<Value>) -> JsonRpcResponse {
+    fn terminal_open_response(
+        &mut self,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
         let Some(root) = self.workspace_root() else {
             return no_workspace_response(request_id, "terminal.open");
+        };
+        let parsed = match parse_params::<TerminalOpenParams>(
+            request_id.as_ref(),
+            params,
+            "terminal.open aceita cwd absoluto dentro do workspace",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        let directory = match parsed.cwd {
+            Some(cwd) => match fsops::confine_directory(&root, Path::new(&cwd)) {
+                Ok(directory) => directory,
+                Err(error) => return fs_error_response(request_id, &error),
+            },
+            None => root,
         };
         let Some(session) = self.terminal.as_mut() else {
             return terminal_unavailable_response(request_id, "terminal.open");
         };
-        match session.open(&root) {
+        match session.open(&directory) {
             Ok((id, shell)) => {
                 JsonRpcResponse::success(request_id, json!(TerminalOpenResult { id, shell }))
             }

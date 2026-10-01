@@ -8,6 +8,8 @@ QtObject {
     property bool runnableScript: false
     property bool debuggableScript: false
     property bool singleSelection: true
+    property bool fileSelectionAvailable: true
+    property bool pasteAvailable: false
     property int currentAction: 0
 
     signal actionRequested(int index)
@@ -16,13 +18,16 @@ QtObject {
     function available(index) {
         if (index === 2) return runnableScript;
         if (index === 3) return debuggableScript;
+        if (index === 8) return pasteAvailable;
+        if (index === 6 || index === 7 || index === 9 || index === 10)
+            return fileSelectionAvailable;
         if (index >= 4) return singleSelection;
-        return index >= 0 && index <= 5;
+        return index >= 0 && index <= 12;
     }
 
     function move(direction) {
-        for (let step = 1; step <= 6; ++step) {
-            const index = (currentAction + direction * step + 36) % 6;
+        for (let step = 1; step <= 13; ++step) {
+            const index = (currentAction + direction * step + 52) % 13;
             if (available(index)) {
                 currentAction = index;
                 return;

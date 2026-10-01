@@ -22,9 +22,27 @@ launcher/interação completa de pastas antes dele estão decididos; bordas mais
 naturais entram na 0.3.x. A distribuição exata dos marcos anteriores ainda é
 proposta. Selecionar Tudo completo e nomes reutilizáveis são básicos pendentes
 do terminal, não extras que possam ser substituídos por seleção visível.
+Depois da série 0.3, o
+[`49-frontend-0.3.6-e-sequencia-0.5.md`](49-frontend-0.3.6-e-sequencia-0.5.md)
+coloca a reorganização aprovada da casca da IDE na 0.3.6, antes da versão 0.4
+dedicada a embarcados. O
+[`50-biblioteca-e-providers-0.5.md`](50-biblioteca-e-providers-0.5.md)
+estrutura a Library por capacidades e providers em fatias verificáveis da 0.5.
+O [`51-plano-fechamento-0.3.5.md`](51-plano-fechamento-0.3.5.md) registra,
+antes da execução, a ordem de implementação, provas, empacotamento em `KV0.3`,
+commit/push, release e atualização do site autorizados pelo autor.
+O [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
+é a arquitetura da 0.4 (embarcados com compiladores e ecossistemas por baixo):
+mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 
 ```text
+52-arquitetura-executavel-da-0.4.md arquitetura da 0.4: donos, fluxos, contratos
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
+51-plano-fechamento-0.3.5.md       plano operacional prévio: Remote, provas,
+                                   KV0.3, push, release e site
+50-biblioteca-e-providers-0.5.md   Library por capacidades, providers, Jobs e
+                                   resultados normalizados na 0.5
+49-frontend-0.3.6-e-sequencia-0.5.md  casca da IDE na 0.3.6 e sequência 0.4/0.5
 48-arquitetura-executavel-da-serie-0.3.md  contratos, donos, marcos, migração,
                                    rollback e prova até a 0.3.5
 47-estrutura-da-v0.3.md            escopo de produto: shell, Remote, terminal,

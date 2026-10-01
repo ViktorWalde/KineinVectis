@@ -170,7 +170,6 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
             .error
             .is_some()
     );
-
     // Abrir: o job puxa a arvore para o cache e grava o marcador.
     let aceito = c.ok(
         "remote.open",
@@ -184,12 +183,14 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
     );
     assert_eq!(espelho.file_name().unwrap(), "sensor");
     let comando = aceito["command"].as_str().unwrap();
+    // A HOME deste teste fica sob /tmp/kinein-core-tests/<pid>-..., longa
+    // demais para o socket de ControlPath: o transporte cai para ssh comum.
+    // Os dois ramos de `ssh_transport` tem teste unitario em remote/mirror.rs.
     assert!(
-        comando.contains(
-            "-az -i --exclude .kinein -e ssh -p 2222 -o ControlMaster=auto -o ControlPath="
-        ),
+        comando.contains("-az -s -i --exclude .kinein -e ssh -p 2222 pi@"),
         "{comando}"
     );
+    assert!(!comando.contains("ControlPath="), "{comando}");
     assert!(
         comando.contains("pi@192.168.0.42:/home/pi/sensor/ "),
         "{comando}"
@@ -227,6 +228,42 @@ fn a_remote_folder_becomes_a_local_mirror_with_a_marker() {
     );
     // O alvo foi copiado para o catalogo do espelho (usuario/porta/chave).
     assert_eq!(c.ok("remote.list", json!({}))["targets"][0]["port"], 2222);
+}
+
+#[test]
+#[cfg(unix)]
+fn a_remote_folder_with_spaces_is_accepted_and_relative_paths_are_not() {
+    let _serial = crate::serializar_executaveis();
+    let mut c = cenario("espaco");
+    c.rsync_falso();
+    // Relativa, `~` (o `-s` nao deixa o shell remoto expandir) e quebra de
+    // linha sao recusadas; espaco no nome e' aceito.
+    for ruim in ["pi/sensor", "~/sensor", "/home/pi/a\nb"] {
+        assert!(
+            c.rpc("remote.open", json!({ "name": "pi", "path": ruim }))
+                .error
+                .is_some(),
+            "{ruim}"
+        );
+    }
+    let com_espaco = c.ok(
+        "remote.open",
+        json!({ "name": "pi", "path": "/home/pi/meu sensor" }),
+    );
+    assert_eq!(
+        PathBuf::from(com_espaco["mirror"].as_str().unwrap())
+            .file_name()
+            .unwrap(),
+        "meu sensor"
+    );
+    // O rsync falso nao tem essa pasta e falha, mas o erro prova que o caminho
+    // com espaco chegou a ele como UM argumento so'.
+    let ev = c.synced();
+    assert_eq!(ev["success"], false, "{ev}");
+    assert!(
+        ev["error"].as_str().unwrap().contains("pi/meu sensor/"),
+        "{ev}"
+    );
 }
 
 #[test]

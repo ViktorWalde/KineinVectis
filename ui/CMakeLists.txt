@@ -297,6 +297,9 @@ set_source_files_properties(qml/ipc/RuntimeEventRouter.qml PROPERTIES QT_RESOURC
 set_source_files_properties(qml/ipc/RuntimeRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeRequestRouter.qml)
 set_source_files_properties(qml/project/ProjectCreateDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectCreateDialog.qml)
 set_source_files_properties(qml/project/ProjectTreeController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeController.qml)
+set_source_files_properties(qml/project/ProjectFileClipboard.qml PROPERTIES QT_RESOURCE_ALIAS ProjectFileClipboard.qml)
+set_source_files_properties(qml/project/ProjectTransferBatchDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTransferBatchDialog.qml)
+set_source_files_properties(qml/project/ProjectTreeDropArea.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeDropArea.qml)
 set_source_files_properties(qml/project/ProjectTreeRevealController.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRevealController.qml)
 set_source_files_properties(qml/project/ProjectTreeRules.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRules.qml)
 set_source_files_properties(qml/project/ProjectTreeKeyRules.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeKeyRules.qml)
@@ -307,6 +310,9 @@ set_source_files_properties(qml/project/ProjectEntryMenuKeyboard.qml PROPERTIES 
 set_source_files_properties(qml/project/ProjectTreeResults.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeResults.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
 set_source_files_properties(qml/project/ProjectEntryContextMenu.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryContextMenu.qml)
+set_source_files_properties(qml/project/ProjectEntryQuickActions.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryQuickActions.qml)
+set_source_files_properties(qml/project/ProjectDragRules.qml PROPERTIES
+    QT_RESOURCE_ALIAS ProjectDragRules.qml QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/project/ProjectEntryRenameDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryRenameDialog.qml)
 set_source_files_properties(qml/project/ProjectEntryDeleteDialog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryDeleteDialog.qml)
 set_source_files_properties(qml/command/SearchEverywhereDialog.qml PROPERTIES QT_RESOURCE_ALIAS SearchEverywhereDialog.qml)
@@ -316,6 +322,7 @@ set_source_files_properties(qml/editor/EditorWorkspaceEditPreviewDialog.qml PROP
 set_source_files_properties(qml/editor/EditorController.qml PROPERTIES QT_RESOURCE_ALIAS EditorController.qml)
 set_source_files_properties(qml/editor/EditorSurfaceBridge.qml PROPERTIES QT_RESOURCE_ALIAS EditorSurfaceBridge.qml)
 set_source_files_properties(qml/editor/EditorDocumentController.qml PROPERTIES QT_RESOURCE_ALIAS EditorDocumentController.qml)
+set_source_files_properties(qml/editor/EditorExternalPreviewController.qml PROPERTIES QT_RESOURCE_ALIAS EditorExternalPreviewController.qml)
 set_source_files_properties(qml/editor/EditorOpenDocuments.qml PROPERTIES QT_RESOURCE_ALIAS EditorOpenDocuments.qml)
 set_source_files_properties(qml/editor/MarkdownPreviewPane.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownPreviewPane.qml)
 set_source_files_properties(qml/editor/MarkdownModeBar.qml PROPERTIES QT_RESOURCE_ALIAS MarkdownModeBar.qml)
@@ -337,6 +344,7 @@ set_source_files_properties(qml/editor/EditorFormatController.qml PROPERTIES QT_
 set_source_files_properties(qml/editor/EditorPersistenceController.qml PROPERTIES QT_RESOURCE_ALIAS EditorPersistenceController.qml)
 set_source_files_properties(qml/editor/EditorCompletionController.qml PROPERTIES QT_RESOURCE_ALIAS EditorCompletionController.qml)
 set_source_files_properties(qml/editor/EditorPane.qml PROPERTIES QT_RESOURCE_ALIAS EditorPane.qml)
+set_source_files_properties(qml/editor/EditorStatusBanners.qml PROPERTIES QT_RESOURCE_ALIAS EditorStatusBanners.qml)
 set_source_files_properties(qml/editor/EditorTabsBar.qml PROPERTIES QT_RESOURCE_ALIAS EditorTabsBar.qml)
 set_source_files_properties(qml/editor/EditorTextSurface.qml PROPERTIES QT_RESOURCE_ALIAS EditorTextSurface.qml)
 set_source_files_properties(qml/editor/EditorGutter.qml PROPERTIES QT_RESOURCE_ALIAS EditorGutter.qml)
@@ -629,6 +637,9 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/RuntimeRequestRouter.qml
         qml/project/ProjectCreateDialog.qml
         qml/project/ProjectTreeController.qml
+        qml/project/ProjectFileClipboard.qml
+        qml/project/ProjectTransferBatchDialog.qml
+        qml/project/ProjectTreeDropArea.qml
         qml/project/ProjectTreeRevealController.qml
         qml/project/ProjectTreeRules.qml
         qml/project/ProjectTreeKeyRules.qml
@@ -639,6 +650,8 @@ qt_add_qml_module(kinein-vectis
         qml/project/ProjectTreeResults.qml
         qml/project/ProjectExplorer.qml
         qml/project/ProjectEntryContextMenu.qml
+        qml/project/ProjectEntryQuickActions.qml
+        qml/project/ProjectDragRules.qml
         qml/project/ProjectEntryRenameDialog.qml
         qml/project/ProjectEntryDeleteDialog.qml
         qml/command/SearchEverywhereDialog.qml
@@ -648,6 +661,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorController.qml
         qml/editor/EditorSurfaceBridge.qml
         qml/editor/EditorDocumentController.qml
+        qml/editor/EditorExternalPreviewController.qml
         qml/editor/EditorOpenDocuments.qml
         qml/editor/MarkdownPreviewPane.qml
         qml/editor/MarkdownModeBar.qml
@@ -669,6 +683,7 @@ qt_add_qml_module(kinein-vectis
         qml/editor/EditorPersistenceController.qml
         qml/editor/EditorCompletionController.qml
         qml/editor/EditorPane.qml
+        qml/editor/EditorStatusBanners.qml
         qml/editor/EditorTabsBar.qml
         qml/editor/EditorTextSurface.qml
         qml/editor/EditorGutter.qml

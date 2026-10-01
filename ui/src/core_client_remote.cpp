@@ -87,6 +87,15 @@ void CoreClient::remoteOpen(const QString& name, const QString& path)
         QJsonObject{{QStringLiteral("name"), name}, {QStringLiteral("path"), path.trimmed()}});
 }
 
+void CoreClient::remoteDirectories(const QString& name, const QString& path)
+{
+    QJsonObject params{{QStringLiteral("name"), name}};
+    if (!path.isEmpty()) {
+        params.insert(QStringLiteral("path"), path);
+    }
+    sendRequest(QStringLiteral("remote.directories"), params);
+}
+
 void CoreClient::remoteSync(const QString& direction, const QStringList& paths)
 {
     QJsonObject params{{QStringLiteral("direction"), direction}};
@@ -160,6 +169,11 @@ bool CoreClient::dispatchRemoteResult(const QString& method, const QJsonObject& 
         emit remoteOpenAccepted(result.value(QStringLiteral("jobId")).toString(),
                                 result.value(QStringLiteral("command")).toString(),
                                 result.value(QStringLiteral("mirror")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("remote.directories")) {
+        emit remoteJobAccepted(method, result.value(QStringLiteral("jobId")).toString(),
+                               result.value(QStringLiteral("command")).toString());
         return true;
     }
     if (method == QStringLiteral("remote.sync")) {

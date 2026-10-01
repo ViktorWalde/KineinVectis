@@ -105,7 +105,8 @@ Item {
     }
 
     function currentPath() {
-        return documentController === null ? "" : documentController.currentFilePath();
+        return documentController === null || documentController.currentReadOnly
+               ? "" : documentController.currentFilePath();
     }
 
     // Um pedido posicional só faz sentido com arquivo aberto e editor vivo;

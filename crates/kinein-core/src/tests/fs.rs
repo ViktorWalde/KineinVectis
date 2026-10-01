@@ -20,6 +20,85 @@ fn fs_methods_require_open_workspace() {
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
     assert_eq!(error.message, "nenhum workspace aberto");
+    let trash = core.handle_request(&JsonRpcRequest::new(
+        21_i64,
+        "fs.trash",
+        Some(json!({ "path": "/tmp" })),
+    ));
+    assert_eq!(
+        trash.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+    let external = core.handle_request(&JsonRpcRequest::new(
+        22_i64,
+        "fs.readExternal",
+        Some(json!({ "path": "/tmp/nao-importar.txt" })),
+    ));
+    assert_eq!(
+        external.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+}
+
+#[test]
+fn fs_external_preview_reads_only_selected_text_without_importing() {
+    let base =
+        std::env::temp_dir().join(format!("kinein-fs-external-preview-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&base);
+    let workspace = base.join("workspace");
+    let external = base.join("external");
+    std::fs::create_dir_all(&workspace).unwrap();
+    std::fs::create_dir_all(&external).unwrap();
+    let file = external.join("arquivo.txt");
+    std::fs::write(&file, "texto externo\n").unwrap();
+    let link = external.join("link.txt");
+    std::os::unix::fs::symlink(&file, &link).unwrap();
+    let binary = external.join("binary.bin");
+    std::fs::write(&binary, [0xff, 0x00]).unwrap();
+    let large = external.join("large.txt");
+    std::fs::write(&large, vec![b'a'; 1024 * 1024 + 1]).unwrap();
+
+    let mut core = core_with_empty_search_path("fs-external-preview");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        30_i64,
+        "workspace.open",
+        Some(json!({ "path": workspace })),
+    ));
+    assert!(opened.response().error.is_none());
+
+    let preview = core.handle_request(&JsonRpcRequest::new(
+        31_i64,
+        "fs.readExternal",
+        Some(json!({ "path": file })),
+    ));
+    let result = preview.response().result.as_ref().unwrap();
+    assert_eq!(result["path"], file.to_str().unwrap());
+    assert_eq!(result["content"], "texto externo\n");
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), "texto externo\n");
+    assert!(!workspace.join("arquivo.txt").exists());
+
+    for (id, path) in [(32, &link), (33, &binary), (34, &large), (35, &external)] {
+        let rejected = core.handle_request(&JsonRpcRequest::new(
+            id,
+            "fs.readExternal",
+            Some(json!({ "path": path })),
+        ));
+        assert!(
+            rejected.response().error.is_some(),
+            "path={}",
+            path.display()
+        );
+    }
+    for method in ["fs.read", "fs.write"] {
+        let rejected = core.handle_request(&JsonRpcRequest::new(
+            36_i64,
+            method,
+            Some(json!({ "path": file, "content": "alterado" })),
+        ));
+        assert!(rejected.response().error.is_some(), "method={method}");
+    }
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), "texto externo\n");
+    let _ = std::fs::remove_dir_all(&base);
 }
 
 #[test]
@@ -351,6 +430,181 @@ fn fs_rename_and_delete_stay_inside_workspace() {
         escape_delete.response().error.as_ref().unwrap().code,
         kinein_protocol::JsonRpcErrorCode::InvalidParams
     );
+
+    let escape_trash = core.handle_request(&JsonRpcRequest::new(
+        45_i64,
+        "fs.trash",
+        Some(json!({ "path": "/etc/hostname" })),
+    ));
+    assert_eq!(
+        escape_trash.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidParams
+    );
+}
+
+#[test]
+fn fs_copy_uses_workspace_and_keeps_source() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-fs-copy", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("original.txt"), "conteudo\n").unwrap();
+    let mut core = core_with_empty_search_path("fs-copy");
+    let denied = core.handle_request(&JsonRpcRequest::new(
+        400_i64,
+        "fs.copy",
+        Some(json!({ "from": "/tmp/a", "to": "/tmp/b" })),
+    ));
+    assert_eq!(
+        denied.response().error.as_ref().unwrap().code,
+        kinein_protocol::JsonRpcErrorCode::InvalidRequest
+    );
+
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        401_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let root = opened.response().result.as_ref().unwrap()["root"]
+        .as_str()
+        .unwrap();
+    let source = format!("{root}/original.txt");
+    let target = format!("{root}/copia.txt");
+    let copied = core.handle_request(&JsonRpcRequest::new(
+        402_i64,
+        "fs.copy",
+        Some(json!({ "from": source, "to": target })),
+    ));
+    assert!(copied.response().error.is_none());
+    assert_eq!(copied.response().result.as_ref().unwrap()["to"], target);
+    assert_eq!(std::fs::read_to_string(&source).unwrap(), "conteudo\n");
+    assert_eq!(std::fs::read_to_string(&target).unwrap(), "conteudo\n");
+}
+
+#[test]
+fn fs_copy_batch_and_import_use_existing_job_manager_when_services_are_enabled() {
+    use std::{sync::mpsc, time::Duration};
+
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-fs-copy-job", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("origem.bin"), vec![7_u8; 2 * 1024 * 1024]).unwrap();
+    let (events_tx, events_rx) = mpsc::channel();
+    let (responses_tx, responses_rx) = mpsc::channel();
+    let mut core = core_with_empty_search_path("fs-copy-job");
+    core.enable_lsp(events_tx);
+    core.enable_deferred_responses(responses_tx);
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        410_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let root = opened.response().result.as_ref().unwrap()["root"]
+        .as_str()
+        .unwrap();
+    let source = format!("{root}/origem.bin");
+    let target = format!("{root}/copia.bin");
+    let deferred = core.handle_request(&JsonRpcRequest::new(
+        411_i64,
+        "fs.copy",
+        Some(json!({ "from": source, "to": target })),
+    ));
+    assert_eq!(
+        deferred.response().result.as_ref().unwrap()["kineinDeferred"],
+        true
+    );
+
+    let response = responses_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert!(response.error.is_none(), "{:?}", response.error);
+    assert_eq!(response.result.as_ref().unwrap()["to"], target);
+    assert_cancelable_job_lifecycle(&events_rx, "fs.copy");
+    assert_eq!(std::fs::metadata(&target).unwrap().len(), 2 * 1024 * 1024);
+    assert_eq!(std::fs::metadata(&source).unwrap().len(), 2 * 1024 * 1024);
+
+    std::fs::write(dir.join("outro.txt"), "segundo").unwrap();
+    let batch_target = format!("{root}/lote.bin");
+    let second_target = format!("{root}/lote.txt");
+    let deferred = core.handle_request(&JsonRpcRequest::new(
+        412_i64,
+        "fs.transferBatch",
+        Some(json!({
+            "operation": "copy",
+            "items": [
+                { "from": source, "to": batch_target },
+                { "from": format!("{root}/outro.txt"), "to": second_target }
+            ]
+        })),
+    ));
+    assert_eq!(
+        deferred.response().result.as_ref().unwrap()["kineinDeferred"],
+        true
+    );
+    let response = responses_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert!(response.error.is_none(), "{:?}", response.error);
+    let result = response.result.as_ref().unwrap();
+    assert_eq!(result["items"][0]["status"], "success");
+    assert_eq!(result["items"][1]["status"], "success");
+    assert_eq!(std::fs::read_to_string(&second_target).unwrap(), "segundo");
+
+    assert_cancelable_job_lifecycle(&events_rx, "fs.transferBatch");
+
+    let external = dir.with_extension("external-source");
+    let _ = std::fs::remove_dir_all(&external);
+    std::fs::create_dir(&external).unwrap();
+    let external_source = external.join("arquivo externo.txt");
+    std::fs::write(&external_source, "externo").unwrap();
+    let import_target = format!("{root}/importado.txt");
+    let deferred = core.handle_request(&JsonRpcRequest::new(
+        413_i64,
+        "fs.transferBatch",
+        Some(json!({
+            "operation": "import",
+            "items": [{ "from": external_source, "to": import_target }]
+        })),
+    ));
+    assert_eq!(
+        deferred.response().result.as_ref().unwrap()["kineinDeferred"],
+        true
+    );
+    let response = responses_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    assert!(response.error.is_none(), "{:?}", response.error);
+    let result = response.result.as_ref().unwrap();
+    assert_eq!(result["operation"], "import");
+    assert_eq!(result["items"][0]["status"], "success");
+    assert_eq!(std::fs::read_to_string(&import_target).unwrap(), "externo");
+    assert_eq!(
+        std::fs::read_to_string(&external_source).unwrap(),
+        "externo"
+    );
+    assert_cancelable_job_lifecycle(&events_rx, "fs.transferBatch");
+}
+
+fn assert_cancelable_job_lifecycle(events: &std::sync::mpsc::Receiver<JsonRpcRequest>, kind: &str) {
+    let mut job_id = String::new();
+    let mut progress = false;
+    loop {
+        let event = events
+            .recv_timeout(std::time::Duration::from_secs(5))
+            .unwrap();
+        let params = event.params.as_ref().unwrap();
+        match event.method.as_str() {
+            "event.job.created" if params["kind"] == kind => {
+                job_id = params["id"].as_str().unwrap().to_owned();
+                assert_eq!(params["canCancel"], true);
+            }
+            "event.job.progress" if params["jobId"] == job_id => progress = true,
+            "event.job.finished" if !job_id.is_empty() && params["jobId"] == job_id => {
+                assert_eq!(params["status"], "success");
+                assert!(progress);
+                return;
+            }
+            _ => {}
+        }
+    }
 }
 
 #[test]

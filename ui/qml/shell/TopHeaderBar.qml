@@ -60,9 +60,8 @@ Rectangle {
     }
 
     height: 44
-    color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
+    color: "transparent"
+    border.width: 0
 
     Row {
         anchors.verticalCenter: parent.verticalCenter

@@ -19,9 +19,15 @@ import "../../ui/qml/editor"
 Item {
     id: root
 
-    property int failures: 0
+    // `real`, nao `int`: os bits passam de 2^31 e um int os perdia em silencio.
+    property real failures: 0
     property string textOnScreen: ""
     property string pathOnScreen: ""
+    property int writes: 0
+    property var externalReads: []
+    // Imita a superficie real: trocar de aba re-realca, e o realce emite
+    // `textChanged` com o texto que AINDA esta' na tela (ver o caso no fim).
+    property bool echoOnSwitch: false
 
     QtObject {
         id: fakeSurface
@@ -33,6 +39,7 @@ Item {
         id: bridge
 
         property var editorSurface: fakeSurface
+        property bool loadingText: false
         function ready() { return true; }
         function text() { return root.textOnScreen; }
         function setText(value) { root.textOnScreen = value; }
@@ -44,6 +51,25 @@ Item {
 
         workspaceRoot: "/tmp/p"
         surfaceBridge: bridge
+        onWriteFileRequested: root.writes++
+    }
+
+    Connections {
+        target: documents
+
+        function onCurrentTabChanged() {
+            if (root.echoOnSwitch && !bridge.loadingText) {
+                documents.markCurrentModified(root.textOnScreen);
+            }
+        }
+    }
+
+    EditorExternalPreviewController {
+        id: externalPreview
+
+        workspaceRoot: "/tmp/p"
+        documentController: documents
+        onReadFileRequested: path => root.externalReads.push(path)
     }
 
     function openFile(caminho, conteudo) {
@@ -72,6 +98,10 @@ Item {
         // FECHAR UMA ABA DE FUNDO NAO TROCA O DOCUMENTO DA TELA. Este era o
         // defeito 1: fechava-se a primeira aba e a tela pulava para outra.
         root.textOnScreen = "conteudo C editado";
+        check(documents.hasUnsavedUnderPath("/tmp/p/sub"), 2097152,
+              "pasta com buffer alterado pode ser excluida");
+        check(!documents.hasUnsavedUnderPath("/tmp/p/submarine"), 4194304,
+              "prefixo parecido foi tratado como ancestral");
         documents.closeDocument(a);
         check(documents.currentDocId === c, 16,
               "fechar aba de fundo trocou o documento: " + documents.currentDocId);
@@ -100,6 +130,11 @@ Item {
         const d = openFile("/tmp/p/outro/d.rs", "conteudo D");
         documents.selectDocument(b);
         documents.closeTabsUnderPath("/tmp/p/outro");
+        check(documents.pathOfDocument(c) !== "" && documents.pathOfDocument(d) !== "",
+              8388608, "resposta tardia de exclusao fechou buffer alterado");
+        documents.filesModel.setProperty(1, "content", "conteudo C");
+        documents.filesModel.setProperty(1, "modified", false);
+        documents.closeTabsUnderPath("/tmp/p/outro");
         check(documents.currentDocId === b, 2048,
               "fechar por caminho levou junto o documento atual");
         check(documents.filesModel.count === 1, 4096,
@@ -126,6 +161,57 @@ Item {
         // ID NUNCA E' REAPROVEITADO: reabrir o mesmo caminho da' documento novo.
         const bDeNovo = openFile("/tmp/p/b.rs", "conteudo B");
         check(bDeNovo !== b, 1048576, "o id do documento fechado voltou");
+
+        // A aba externa compartilha a identidade do editor, mas nunca entra
+        // no fluxo de edição nem pode emitir fs.write.
+        const externo = "/tmp/fora/arquivo.txt";
+        check(externalPreview.open(externo) && root.externalReads[0] === externo,
+              1073741824, "drop externo nao pediu leitura explicita");
+        externalPreview.handleLoaded(externo, "externo original");
+        const externoId = documents.currentDocId;
+        check(documents.currentReadOnly && root.textOnScreen === "externo original",
+              16777216, "aba externa nao abriu em somente leitura");
+        check(!documents.markCurrentModified("alteracao"), 33554432,
+              "aba externa aceitou marcar edicao");
+        root.textOnScreen = "tentativa de alterar";
+        documents.saveCurrentFile();
+        documents.selectDocument(bDeNovo);
+        documents.selectDocument(externoId);
+        check(root.writes === 0 && root.textOnScreen === "externo original",
+              67108864, "aba externa escreveu ou guardou alteracao");
+        check(documents.modifiedDocuments().length === 0, 134217728,
+              "aba externa entrou no salvar tudo");
+        externalPreview.open(externo);
+        externalPreview.handleLoaded(externo, "externo atualizado");
+        check(documents.currentDocId === externoId
+              && root.textOnScreen === "externo atualizado", 268435456,
+              "novo drop duplicou aba ou nao atualizou a previa");
+        documents.selectDocument(bDeNovo);
+        check(!documents.currentReadOnly, 536870912,
+              "aba interna herdou o bloqueio de escrita");
+        externalPreview.open("/tmp/fora/falha.txt");
+        externalPreview.handleFailed("/tmp/fora/falha.txt", "negado");
+        check(externalPreview.errorMessage.indexOf("negado") >= 0,
+              2147483648, "falha da leitura externa ficou invisivel");
+        externalPreview.open("/tmp/fora/atrasado.txt");
+        externalPreview.workspaceRoot = "/tmp/outro";
+        externalPreview.handleLoaded("/tmp/fora/atrasado.txt", "stale");
+        check(documents.filesModel.count === 2, 4294967296,
+              "resposta atrasada criou aba depois de trocar workspace");
+
+        // TROCAR DE DOCUMENTO NAO E' EDITAR (2026-10-01). No drop real de um
+        // arquivo externo, mudar `currentDocId` disparava diagnosticos ->
+        // realce -> `textChanged` com o texto do documento ANTERIOR, antes de
+        // `currentReadOnly` e do texto novo: a aba nascia com o ponto de
+        // "modificado". O mesmo valia para ir de uma aba a outra.
+        root.echoOnSwitch = true;
+        documents.selectDocument(externoId);
+        check(documents.filesModel.get(documents.currentTab).modified !== true,
+              8589934592, "trocar para a aba externa a marcou como modificada");
+        documents.selectDocument(bDeNovo);
+        check(documents.modifiedDocuments().length === 0, 17179869184,
+              "trocar de aba marcou o documento novo como modificado");
+        root.echoOnSwitch = false;
 
         if (root.failures !== 0) console.error("FALHAS bitmask=" + root.failures);
         Qt.exit(root.failures === 0 ? 0 : 1);

@@ -13,6 +13,7 @@ Item {
     // O indice e' DERIVADO do documento, e recalculado por SINAL — nunca por
     // binding, sob pena de laco. O porque esta' no EditorOpenDocuments.qml.
     property int currentTab: -1
+    property bool currentReadOnly: false
 
     function refreshCurrentTab() {
         const index = openDocuments.indexOf(root.currentDocId);
@@ -55,6 +56,7 @@ Item {
 
         documentController: root
         externalController: external
+        rules: pathRules
 
         onWriteFileRequested: function(path, content, expectedContent) {
             root.writeFileRequested(path, content, expectedContent);
@@ -118,6 +120,7 @@ Item {
         pendingSaves = {};
         recent.reset();
         currentDocId = 0;
+        currentReadOnly = false;
         external.reset();
         if (surfaceBridge !== null) {
             surfaceBridge.setText("");
@@ -126,13 +129,14 @@ Item {
     }
 
     function storeCurrentEditor() {
-        if (surfaceReady() && currentTab >= 0 && currentTab < openFilesModel.count) {
+        if (surfaceReady() && currentTab >= 0 && currentTab < openFilesModel.count
+                && !currentReadOnly) {
             openFilesModel.setProperty(currentTab, "content", surfaceBridge.text());
         }
     }
 
     function markCurrentModified(text) {
-        if (currentTab < 0 || currentTab >= openFilesModel.count) {
+        if (currentReadOnly || currentTab < 0 || currentTab >= openFilesModel.count) {
             return false;
         }
         const saved = openFilesModel.get(currentTab).savedContent;
@@ -151,6 +155,7 @@ Item {
     function applyDraftOverlay(path, draftContent) {
         for (let i = 0; i < openFilesModel.count; i++) {
             if (openFilesModel.get(i).path === path) {
+                if (openFilesModel.get(i).readOnly === true) return;
                 openFilesModel.setProperty(i, "content", draftContent);
                 openFilesModel.setProperty(i, "modified",
                         draftContent !== openFilesModel.get(i).savedContent);
@@ -175,15 +180,19 @@ Item {
         }
         const path = openFilesModel.get(index).path;
         if (docId === currentDocId) {
-            recent.touch(path);
+            if (!currentReadOnly) recent.touch(path);
             return true;
         }
         storeCurrentEditor();
+        // Troca nao e' edicao: o realce re-emite o texto ANTERIOR (40 §7.144).
+        if (surfaceBridge !== null) surfaceBridge.loadingText = true;
+        currentReadOnly = openFilesModel.get(index).readOnly === true;
         currentDocId = docId;
-        recent.touch(path);
+        if (!currentReadOnly) recent.touch(path);
         external.syncCurrent();
         if (surfaceBridge !== null) {
             surfaceBridge.setText(openFilesModel.get(index).content);
+            surfaceBridge.loadingText = false;
             surfaceBridge.setPath(path);
         }
         currentDocumentChanged();
@@ -194,6 +203,7 @@ Item {
     // ou limpar o workspace — nunca um id que ninguem reconhece.
     function clearCurrentDocument() {
         currentDocId = 0;
+        currentReadOnly = false;
         external.syncCurrent();
         if (surfaceBridge !== null) {
             surfaceBridge.setText("");
@@ -203,8 +213,12 @@ Item {
     }
 
     function pathOfDocument(docId) {
+        return openDocuments.pathOfDocument(docId);
+    }
+
+    function isReadOnlyDocument(docId) {
         const index = openDocuments.indexOf(docId);
-        return index >= 0 ? openFilesModel.get(index).path : "";
+        return index >= 0 && openFilesModel.get(index).readOnly === true;
     }
 
     function closeDocument(docId) {
@@ -270,6 +284,8 @@ Item {
     }
 
     function closeTabsUnderPath(path) {
+        // Uma edição pode ocorrer enquanto a resposta de fs.delete está em trânsito.
+        if (hasUnsavedUnderPath(path)) return;
         // Os IDS sao colhidos ANTES de fechar qualquer um: cada remocao
         // desloca os indices seguintes, e o laco por indice fechava a aba
         // errada quando duas abas vizinhas estavam sob o mesmo caminho.
@@ -277,6 +293,10 @@ Item {
         for (let i = 0; i < ids.length; i++) {
             closeDocument(ids[i]);
         }
+    }
+
+    function hasUnsavedUnderPath(path) {
+        return saving.hasUnsavedUnderPath(path);
     }
 
     function openDiagnostic(file, line, column) {
@@ -288,24 +308,7 @@ Item {
     }
 
     function currentFilePath() {
-        if (currentTab < 0 || currentTab >= openFilesModel.count) {
-            return "";
-        }
-        return openFilesModel.get(currentTab).path;
-    }
-
-    // O disco chegou: o buffer e o snapshot salvo passam a ser este conteudo.
-    // Devolve o id do documento, ou zero se ele ja' nao estiver aberto.
-    function applyDiskContent(path, content) {
-        const docId = openDocuments.docIdForPath(path);
-        const index = openDocuments.indexOf(docId);
-        if (index < 0) {
-            return 0;
-        }
-        openFilesModel.setProperty(index, "content", content);
-        openFilesModel.setProperty(index, "savedContent", content);
-        openFilesModel.setProperty(index, "modified", false);
-        return docId;
+        return openDocuments.pathOfDocument(currentDocId);
     }
 
     function handleFileLoaded(path, content) {
@@ -313,7 +316,7 @@ Item {
             const reloads = pendingReloads;
             delete reloads[path];
             pendingReloads = reloads;
-            const reloaded = applyDiskContent(path, content);
+            const reloaded = openDocuments.applyDiskContent(path, content, false);
             // O CURSOR e' preservado: recarregar nao e' abrir, e o autor
             // continua onde estava.
             if (reloaded === currentDocId && reloaded !== 0 && surfaceReady()) {
@@ -328,7 +331,7 @@ Item {
             external.applyExternalRead(path, content);
             return;
         }
-        const alreadyOpen = applyDiskContent(path, content);
+        const alreadyOpen = openDocuments.applyDiskContent(path, content, false);
         if (alreadyOpen !== 0) {
             selectDocument(alreadyOpen);
             if (surfaceBridge !== null) {
@@ -341,22 +344,28 @@ Item {
             currentDocumentChanged();
             return;
         }
-        const newDocId = openDocuments.add({
-            path: path,
-            name: pathRules.baseName(path),
-            content: content,
-            savedContent: content,
-            modified: false,
-            externalContent: "",
-            externalConflict: false,
-            externalDeleted: false,
-            externalMessage: ""
-        });
+        const newDocId = openDocuments.addLoadedFile(
+            path, pathRules.baseName(path), content, false);
         selectDocument(newDocId);
         if (jump.hasPendingFor(path)) {
             jump.applyPending();
         }
         currentDocumentChanged();
+    }
+
+    function handleExternalFileLoaded(path, content) {
+        const docId = openDocuments.applyDiskContent(path, content, true);
+        if (docId !== 0) {
+            selectDocument(docId);
+            if (surfaceBridge !== null) {
+                surfaceBridge.setText(content);
+                currentDocumentChanged();
+            }
+            return;
+        }
+        if (openDocuments.docIdForPath(path) !== 0) return;
+        selectDocument(openDocuments.addLoadedFile(
+            path, pathRules.baseName(path), content, true));
     }
 
     function handleFileSaved(path) {

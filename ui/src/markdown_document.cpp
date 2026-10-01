@@ -11,8 +11,6 @@
 #include <QTextCursor>
 #include <QTextDocument>
 
-#include <ranges>
-
 namespace kinein {
 
 namespace {
@@ -275,8 +273,12 @@ void MarkdownDocument::sanitizeImages(QTextDocument* document)
     }
 
     // DE TRAS PARA A FRENTE: cada substituicao muda o tamanho do documento, e
-    // as posicoes colhidas antes valeriam para o texto de antes.
-    for (const Refusal& refusal : std::views::reverse(refusals)) {
+    // as posicoes colhidas antes valeriam para o texto de antes. Iterador
+    // reverso do proprio QList: `std::views::reverse(refusals)` nao compila no
+    // Clang 14 do build portatil (Debian 12), que e' o que o AppImage usa.
+    // NOLINTNEXTLINE(modernize-loop-convert)
+    for (auto it = refusals.crbegin(); it != refusals.crend(); ++it) {
+        const Refusal& refusal = *it;
         QTextCursor cursor(document);
         cursor.setPosition(refusal.position);
         cursor.setPosition(refusal.position + refusal.length, QTextCursor::KeepAnchor);

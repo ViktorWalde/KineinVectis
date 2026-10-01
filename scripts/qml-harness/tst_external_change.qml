@@ -22,6 +22,8 @@ Item {
         property var editorSurface: fakeEditor
         property string currentText: ""
         property string currentPath: ""
+        // A ponte real (EditorSurfaceBridge) expoe isto; a troca de documento o usa.
+        property bool loadingText: false
         function ready() { return true; }
         function text() { return currentText; }
         function setText(text) { currentText = text; }

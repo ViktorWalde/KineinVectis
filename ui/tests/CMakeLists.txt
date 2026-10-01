@@ -34,3 +34,17 @@ kinein_add_cpp_test(tst_cli_args)
 kinein_add_cpp_test(tst_markdown_policy)
 kinein_add_cpp_test(tst_log_redaction)
 kinein_add_cpp_test(tst_single_instance)
+
+# O clipboard é um singleton de UI com MIME do sistema. Compila a MESMA fonte
+# que o aplicativo e cria QGuiApplication no teste, sem mockar QClipboard.
+kinein_add_cpp_test(tst_clipboard_files)
+target_sources(tst_clipboard_files PRIVATE ../src/clipboard.cpp ../src/clipboard.h)
+target_link_libraries(tst_clipboard_files PRIVATE Qt6::Gui Qt6::Qml)
+set_target_properties(tst_clipboard_files PROPERTIES AUTOMOC ON)
+# O MOC do Qt 6.10 usa CTAD em codigo gerado e o Clang recente o diagnostica
+# sob -Werror. A excecao vale so para as duas unidades que incluem esse MOC.
+set_source_files_properties(
+    tst_clipboard_files.cpp
+    "${CMAKE_CURRENT_BINARY_DIR}/tst_clipboard_files_autogen/mocs_compilation.cpp"
+    PROPERTIES COMPILE_OPTIONS -Wno-ctad-maybe-unsupported
+)

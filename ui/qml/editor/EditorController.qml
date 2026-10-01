@@ -12,15 +12,18 @@ Item {
     readonly property bool autoCloseEnabled:
         settingsController === null ? true : settingsController.autoClosePairs
     property alias filesModel: documents.filesModel
+    property alias documentController: documents
     property alias recentFiles: documents.recentFiles
     property alias completionModel: completionController.completionModel
     property alias usagesModel: language.usagesModel
     property alias currentTab: documents.currentTab
     property alias currentDocId: documents.currentDocId
+    property alias currentReadOnly: documents.currentReadOnly
     property alias externalConflict: documents.currentExternalConflict
     property alias externalDeleted: documents.currentExternalDeleted
     property alias externalMessage: documents.currentExternalMessage
     property string watchError: ""
+    readonly property alias externalPreview: externalPreview
     property alias loadingEditorText: surfaceBridge.loadingText
     property alias cursorSummary: surfaceBridge.cursorSummary
     // D1 (DocsPublic/roadmaps/24): alias para a property PRÓPRIA do controller, nunca para o
@@ -107,6 +110,13 @@ Item {
             root.refreshSyntaxTree();
             root.refreshSemanticTokens();
         }
+    }
+
+    EditorExternalPreviewController {
+        id: externalPreview
+
+        workspaceRoot: root.workspaceRoot
+        documentController: documents
     }
 
     EditorTextController {
@@ -207,6 +217,7 @@ Item {
 
         surfaceBridge: surfaceBridge
         textController: textController
+        readOnly: documents.currentReadOnly
         // Os matches viram spans de realce no editor (todas as ocorrências,
         // a atual mais forte) — o highlighter é quem pinta.
         onSearchStateChanged: root.refreshSearchHighlight()
@@ -223,22 +234,18 @@ Item {
 
     // D1b: Ctrl+F / Ctrl+H. Sem arquivo aberto não há o que buscar.
     function openFind() {
-        if (!editableFileOpen()) {
-            return;
-        }
-        completionController.dismiss();
-        hoverVisible = false;
-        findController.open(false);
-        findBarOpenRequested();
+        openFindMode(false);
     }
 
     function openFindReplace() {
-        if (!editableFileOpen()) {
-            return;
-        }
+        openFindMode(true);
+    }
+
+    function openFindMode(replace) {
+        if (replace ? !editableFileOpen() : currentFilePath() === "" || !editorReady()) return;
         completionController.dismiss();
         hoverVisible = false;
-        findController.open(true);
+        findController.open(replace);
         findBarOpenRequested();
     }
 
@@ -257,18 +264,14 @@ Item {
     // F3 / Shift+F3 funcionam mesmo com a barra fechada: reusam o último
     // termo (igual VS Code). Sem termo, o F3 abre a barra.
     function findNext() {
-        if (findController.query === "") {
-            openFind();
-            return;
-        }
-        if (!findController.barVisible) {
-            findController.barVisible = true;
-            findController.recompute(findController.cursorOffset());
-        }
-        findController.findNext();
+        findInDirection(true);
     }
 
     function findPrevious() {
+        findInDirection(false);
+    }
+
+    function findInDirection(forward) {
         if (findController.query === "") {
             openFind();
             return;
@@ -277,7 +280,8 @@ Item {
             findController.barVisible = true;
             findController.recompute(findController.cursorOffset());
         }
-        findController.findPrevious();
+        if (forward) findController.findNext();
+        else findController.findPrevious();
     }
 
     function toggleFindCase() {
@@ -322,6 +326,7 @@ Item {
         highlight.clear();
         format.clear();
         watchError = "";
+        externalPreview.reset();
     }
 
     function storeCurrentEditor() {
@@ -344,7 +349,7 @@ Item {
         // necessário (só sobrevive a CRASH). Limpa antes de fechar. O caminho
         // vem do DOCUMENTO (V5), e não de uma posição que já pode ter mudado.
         const path = documents.pathOfDocument(docId);
-        if (path !== "") {
+        if (path !== "" && !documents.isReadOnlyDocument(docId)) {
             draftClearRequested(path);
         }
         documents.closeDocument(docId);
@@ -556,7 +561,7 @@ Item {
     onCurrentTabChanged: persistence.scheduleSessionSave()
 
     function editableFileOpen() {
-        return currentFilePath() !== "" && editorReady();
+        return currentFilePath() !== "" && !currentReadOnly && editorReady();
     }
 
     function duplicateLine() {
@@ -763,7 +768,7 @@ Item {
         repeat: false
         onTriggered: {
             const path = root.currentFilePath();
-            if (path !== "" && root.editorReady()) {
+            if (path !== "" && !root.currentReadOnly && root.editorReady()) {
                 root.fileChangedNotificationRequested(path, surfaceBridge.text());
                 root.refreshSemanticTokens();
             }

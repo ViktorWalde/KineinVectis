@@ -27,6 +27,9 @@ Item {
     signal activateRequested(int index)
     signal selectAllRequested()
     signal menuRequested(int index)
+    signal copyRequested()
+    signal cutRequested()
+    signal pasteRequested()
 
     visible: false
 
@@ -90,6 +93,11 @@ Item {
             if (linhas.length === 0) return false;
             root.selectAllRequested();
             return true;
+        }
+        if (modifiers === Qt.ControlModifier) {
+            if (evento.key === Qt.Key_C) { root.copyRequested(); return true; }
+            if (evento.key === Qt.Key_X) { root.cutRequested(); return true; }
+            if (evento.key === Qt.Key_V) { root.pasteRequested(); return true; }
         }
         if (evento.key === Qt.Key_Menu
                 || (evento.key === Qt.Key_F10 && modifiers === Qt.ShiftModifier)) {

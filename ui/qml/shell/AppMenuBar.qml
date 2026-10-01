@@ -28,9 +28,8 @@ Rectangle {
     signal moveWindowRequested()
 
     height: 40
-    color: Theme.background0
-    border.color: Theme.borderSoft
-    border.width: 1
+    color: "transparent"
+    border.width: 0
     z: 100
 
     function trigger(action) {

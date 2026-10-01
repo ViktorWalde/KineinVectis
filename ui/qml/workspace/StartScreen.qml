@@ -9,9 +9,12 @@ Rectangle {
 
     property var tools: []
     required property var recentWorkspacesController
+    property var urlDecoder: null
     property bool scanning: false
+    property bool folderDropReady: false
 
     signal openWorkspaceRequested()
+    signal workspacePathDropped(string path)
     signal newProjectRequested(string templateId)
     signal settingsRequested()
     signal detectToolsRequested()
@@ -28,8 +31,32 @@ Rectangle {
 
     color: Theme.backgroundEditor
     radius: Theme.radiusLarge
-    border.color: Theme.borderSoft
-    border.width: 1
+    border.color: folderDropReady ? Theme.accent : Theme.borderSoft
+    border.width: folderDropReady ? 2 : 1
+
+    function localDropPath(event) {
+        if (!event.hasUrls || event.urls.length !== 1 || urlDecoder === null) return "";
+        return urlDecoder.localDirectoryPathFromUrls(event.urls);
+    }
+
+    function acceptFolderDrop(drop) {
+        folderDropReady = false;
+        const path = localDropPath(drop);
+        if (path === "") { drop.accepted = false; return; }
+        drop.accept(Qt.CopyAction);
+        workspacePathDropped(path);
+    }
+
+    DropArea {
+        anchors.fill: parent
+        z: 2
+        onEntered: function(drag) {
+            root.folderDropReady = root.localDropPath(drag) !== "";
+            drag.accepted = root.folderDropReady;
+        }
+        onExited: root.folderDropReady = false
+        onDropped: function(drop) { root.acceptFolderDrop(drop); }
+    }
 
     function detectedCount() {
         let count = 0;

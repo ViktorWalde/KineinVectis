@@ -346,11 +346,29 @@ EXTRA_PLATFORM_PLUGINS="$(
 
 export EXTRA_PLATFORM_PLUGINS
 
+# Os icones da UI sao SVG (`assets/icons/**.svg`) e nenhum binario linka QtSvg:
+# sem pedir o modulo, o linuxdeploy nao leva `imageformats/libqsvg.so` e o Qt
+# so' avisa "Unsupported image format" no stderr (AppImage de 2026-10-01).
+export EXTRA_QT_MODULES="svg"
+
 echo "==> primeira etapa: empacotando Qt, QML e plugins de plataforma"
 
 "$LINUXDEPLOY" \
     --appdir "$APPDIR" \
     --plugin qt
+
+REQUIRED_QT_PLUGINS=(
+    imageformats/libqsvg.so
+)
+
+for required_plugin in "${REQUIRED_QT_PLUGINS[@]}"; do
+    if [[ ! -f "$APPDIR/usr/plugins/$required_plugin" ]]; then
+        echo "erro: plugin Qt obrigatório ausente do AppDir: $required_plugin" >&2
+        echo "confirme libqt6svg6 no Containerfile e EXTRA_QT_MODULES=svg." >&2
+        exit 1
+    fi
+    echo "  incluído: $required_plugin"
+done
 
 WAYLAND_PLUGIN_GROUPS=(
     wayland-graphics-integration-client

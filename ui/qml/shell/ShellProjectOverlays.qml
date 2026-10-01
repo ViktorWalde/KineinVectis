@@ -2,7 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// O que o CLIQUE DIREITO no explorer abre: menu de contexto, renomear, apagar.
+// O que o CLIQUE DIREITO no explorer abre: menu de contexto, renomear, colar, apagar.
 //
 // POR QUE ESTE ARQUIVO EXISTE (2026-09-04). O `ShellOverlays` passou de 300
 // linhas ao ganhar o painel de fontes de dados, e a catraca disparou. Os tres
@@ -27,6 +27,7 @@ Item {
     property var projectTree: null
     // Para mostrar o caminho relativo a raiz do projeto no dialogo de renomear.
     property var shellController: null
+    property var runtimeController: null
     // Cancelar um dialogo do explorer devolve o foco a arvore.
 
     // O nome pre-preenchido vem de fora (a paleta abre o renomear com o nome
@@ -44,6 +45,7 @@ Item {
         runnableScript: root.projectTree.entryMenuRunnable
         debuggableScript: root.projectTree.entryMenuDebuggable
         selectionCount: root.projectTree.selectedPaths.length
+        pasteAvailable: root.projectTree.fileClipboard.pasteAvailable
         onDismissRequested: root.projectTree.dismissEntryMenu()
         onCreateFileRequested: root.projectTree.openEntryCreate("file")
         onCreateDirectoryRequested: root.projectTree.openEntryCreate("directory")
@@ -51,6 +53,19 @@ Item {
         onDebugScriptRequested: root.projectTree.debugEntryScript()
         onRenameRequested: root.projectTree.openEntryRename()
         onDeleteRequested: root.projectTree.openEntryDelete()
+        onCopyRequested: root.projectTree.fileClipboard.copySelection(false)
+        onCutRequested: root.projectTree.fileClipboard.copySelection(true)
+        onPasteRequested: root.projectTree.fileClipboard.openPaste()
+        onCopyAbsolutePathRequested: root.projectTree.fileClipboard.copySelectedPaths(false)
+        onCopyRelativePathRequested: root.projectTree.fileClipboard.copySelectedPaths(true)
+        onOpenFolderRequested: {
+            Qt.openUrlExternally(Clipboard.localFileUrl(root.projectTree.entryMenuDirectory()));
+            root.projectTree.dismissEntryMenu();
+        }
+        onOpenTerminalRequested: {
+            root.runtimeController.newTerminalAt(root.projectTree.entryMenuDirectory());
+            root.projectTree.dismissEntryMenu();
+        }
     }
 
     ProjectEntryRenameDialog {
@@ -72,6 +87,68 @@ Item {
         }
     }
 
+    ProjectEntryRenameDialog {
+        id: pasteDialog
+
+        anchors.fill: parent
+        visible: root.projectTree.fileClipboard.dialogVisible
+        z: 103
+        titleText: root.projectTree.fileClipboard.cut ? qsTr("Mover para") : qsTr("Copiar para")
+        confirmText: root.projectTree.fileClipboard.cut ? qsTr("Mover") : qsTr("Copiar")
+        operationPending: root.projectTree.fileClipboard.pending
+        pendingDismissText: root.projectTree.fileClipboard.cut
+                            ? "" : qsTr("Ver em Jobs")
+        pendingMessage: root.projectTree.fileClipboard.cut
+                        ? qsTr("Movendo arquivo...") : qsTr("Copiando arquivo...")
+        sourceDisplayPath: root.shellController.relativeToRoot(
+                               root.projectTree.fileClipboard.source)
+        entryDisplayPath: root.shellController.relativeToRoot(
+                              root.projectTree.fileClipboard.destinationDirectory)
+        errorText: root.projectTree.fileClipboard.errorText
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        onConfirmRequested: root.projectTree.fileClipboard.confirm(pasteDialog.currentName())
+        onCancelRequested: {
+            if (root.projectTree.fileClipboard.pending) return;
+            root.projectTree.fileClipboard.clear();
+            root.projectTree.focusTreeRequested();
+        }
+        onPendingDismissRequested: {
+            root.projectTree.fileClipboard.dialogVisible = false;
+            root.shellController.showTab("jobs");
+        }
+    }
+
+    Connections {
+        target: root.projectTree.fileClipboard
+        function onPasteOpened(name) { pasteDialog.openWithName(name); }
+    }
+
+    ProjectTransferBatchDialog {
+        anchors.fill: parent
+        visible: root.projectTree.fileClipboard.batchDialogVisible
+        z: 104
+        entries: root.projectTree.fileClipboard.batchEntries
+        transferController: root.projectTree.fileClipboard
+        cut: root.projectTree.fileClipboard.batchCut
+        importing: root.projectTree.fileClipboard.batchImport
+        pending: root.projectTree.fileClipboard.batchPending
+        destinationDisplayPath: root.shellController.relativeToRoot(
+                                    root.projectTree.fileClipboard.batchDestinationDirectory)
+        errorText: root.projectTree.fileClipboard.batchErrorText
+        maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
+        onConfirmRequested: function(entries) {
+            root.projectTree.fileClipboard.confirmBatch(entries);
+        }
+        onCancelRequested: {
+            root.projectTree.fileClipboard.clear();
+            root.projectTree.focusTreeRequested();
+        }
+        onPendingDismissRequested: {
+            root.projectTree.fileClipboard.batchDialogVisible = false;
+            root.shellController.showTab("jobs");
+        }
+    }
+
     ProjectEntryDeleteDialog {
         anchors.fill: parent
         visible: root.projectTree.entryDeleteVisible
@@ -79,9 +156,12 @@ Item {
         entryKind: root.projectTree.entryDeleteKind
         entryName: root.projectTree.entryDeleteName
         errorText: root.projectTree.entryDeleteError
+        pending: root.projectTree.entryDeletePending
         maxAvailableWidth: root.hostWidth - 4 * Theme.spacingMedium
-        onConfirmRequested: root.projectTree.confirmEntryDelete()
+        onConfirmRequested: root.projectTree.confirmEntryTrash()
+        onPermanentRequested: root.projectTree.confirmEntryDelete()
         onCancelRequested: {
+            if (root.projectTree.entryDeletePending) return;
             root.projectTree.entryDeleteVisible = false;
             root.projectTree.focusTreeRequested();
         }

@@ -37,7 +37,11 @@ KvPanelFrame {
             break;
         case "abrirPasta":
             c.selectSection("workspace");
-            c.workspace.openFolder();
+            if (c.workspace.openPath.trim() === "") {
+                c.workspace.startBrowse();
+            } else {
+                c.workspace.openFolder();
+            }
             break;
         case "puxar":
             c.selectSection("workspace");
@@ -73,6 +77,7 @@ KvPanelFrame {
         isMirror: root.controller ? root.controller.workspace.isMirror : false
         syncing: root.controller ? root.controller.workspace.syncing : false
         syncMessage: root.controller ? root.controller.workspace.syncMessage : ""
+        browseState: root.controller ? root.controller.workspace : null
         discovery: root.controller ? root.controller.setup.discovery : "idle"
         discovering: root.controller ? root.controller.setup.discovering : false
         aliases: root.controller ? root.controller.setup.aliases : []
@@ -111,6 +116,13 @@ KvPanelFrame {
         onCommandRequested: kind => root.controller.requestCommand(kind)
         onOpenPathEdited: text => root.controller.workspace.openPath = text
         onOpenFolderRequested: root.controller.workspace.openFolder()
+        onBrowseAction: (kind, path) => {
+            switch (kind) {
+            case "start": root.controller.workspace.startBrowse(); break;
+            case "navigate": root.controller.workspace.browseTo(path); break;
+            case "open": root.controller.workspace.openBrowsedFolder(); break;
+            }
+        }
         onSyncRequested: direction => root.controller.workspace.sync(direction)
         onCloseRequested: root.dismissRequested()
     }

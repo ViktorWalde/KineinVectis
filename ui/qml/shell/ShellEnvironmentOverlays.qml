@@ -32,16 +32,28 @@ Item {
     Repeater {
         model: root.toolWindows === null ? [] : root.toolWindows.overlayEntries
 
-        Loader {
+        // `createObject`, e NAO `Loader`: os paineis sao componentes "bound"
+        // do `ToolWindows`, e o Loader do Qt 6.4 (o do AppImage, Debian 12) os
+        // instancia no contexto DELE e recusa ("Cannot instantiate bound
+        // component outside its creation context") — os cinco paineis de
+        // ambiente nao abriam no pacote, so' no checkout com Qt mais novo.
+        // `createObject` usa o contexto de criacao do componente nas duas.
+        // Ciclo de vida igual ao do Loader de antes: criado uma vez, alternando
+        // so' `visible` (carregar ao abrir e' decisao de outra fatia).
+        Item {
+            id: panelSlot
+
             required property var modelData
 
             anchors.fill: parent
             z: 99
-            sourceComponent: modelData.panel
-            // `visible`, e nao `active`: carregar o painel so' ao abrir seria
-            // ganho de memoria, mas muda o ciclo de vida de cinco paineis —
-            // decisao de outra fatia, nao contrabando desta.
             visible: modelData.active === true
+
+            Component.onCompleted: {
+                const panel = modelData.panel.createObject(panelSlot);
+                panel.width = Qt.binding(() => panelSlot.width);
+                panel.height = Qt.binding(() => panelSlot.height);
+            }
         }
     }
 

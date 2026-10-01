@@ -16,30 +16,30 @@ A Vectis não tenta substituir CMake, Cargo, clangd, GDB ou os SDKs dos fabrican
 
 **Ela integra e orquestra essas ferramentas.**
 
-> **Versão pública atual: [`0.2.0 — Public Beta`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.2.0) · Linux x86_64**
+> **Versão pública atual: [`0.3.5 — Public Beta`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5) · Linux x86_64**
 
-**[Download 0.2.0](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.2.0) · [Discord / Comunidade](https://discord.gg/cWRkUGUmQU)**
+**[Download 0.3.5](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5) · [Discord / Comunidade](https://discord.gg/cWRkUGUmQU)**
 
 ---
 
 ## Download
 
-A **Kinein Vectis 0.2.0** está disponível publicamente pelo GitHub Releases:
+A **Kinein Vectis 0.3.5** está disponível publicamente pelo GitHub Releases:
 
-### [Download Kinein Vectis 0.2.0](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.2.0)
+### [Download Kinein Vectis 0.3.5](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5)
 
 Pacote de distribuição:
 
 ```text
-Kinein_0.2.zip
+KV0.3.zip
 ```
 
-A distribuição contém o AppImage e os arquivos necessários para instalação e execução.
+O zip contém a pasta `KV0.3/` com o AppImage, o checksum, o instalador e o tutorial. O AppImage e seu `.sha256` também estão anexados à release.
 
 Depois de extrair o pacote, confira o SHA-256 do AppImage:
 
 ```bash
-sha256sum -c Kinein-Vectis-0.2.0-x86_64.AppImage.sha256
+sha256sum -c Kinein-Vectis-0.3.5-x86_64.AppImage.sha256
 ```
 
 O resultado deve terminar em:
@@ -51,14 +51,14 @@ OK
 Execute:
 
 ```bash
-chmod +x Kinein-Vectis-0.2.0-x86_64.AppImage
-./Kinein-Vectis-0.2.0-x86_64.AppImage
+chmod +x Kinein-Vectis-0.3.5-x86_64.AppImage
+./Kinein-Vectis-0.3.5-x86_64.AppImage
 ```
 
 Se houver problema com FUSE:
 
 ```bash
-APPIMAGE_EXTRACT_AND_RUN=1 ./Kinein-Vectis-0.2.0-x86_64.AppImage
+APPIMAGE_EXTRACT_AND_RUN=1 ./Kinein-Vectis-0.3.5-x86_64.AppImage
 ```
 
 A série `0.x` está em **beta público**.
@@ -779,7 +779,7 @@ O uso de agentes de IA é opcional e não faz parte da arquitetura da IDE.
 
 # Plataforma
 
-A versão `0.2.0` suporta atualmente:
+A versão `0.3.5` suporta atualmente:
 
 ```text
 Linux x86_64

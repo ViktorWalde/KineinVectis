@@ -27,11 +27,12 @@ pub struct FsEntry {
     pub size: Option<u64>,
 }
 
-/// Parameters for `fs.list` and `fs.read`.
+/// Parameters for `fs.list`, `fs.read`, and the explicit `fs.readExternal`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FsPathParams {
-    /// Absolute path inside the open workspace root.
+    /// Absolute path; `fs.list`/`fs.read` require the workspace root, while
+    /// `fs.readExternal` accepts one local file chosen for read-only preview.
     pub path: String,
 }
 
@@ -128,6 +129,79 @@ pub struct FsRenameParams {
     pub to: String,
 }
 
+/// Parameters for `fs.copy` inside one workspace.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FsCopyParams {
+    /// Existing file or directory inside the open workspace.
+    pub from: String,
+    /// New path whose parent exists inside the same workspace.
+    pub to: String,
+}
+
+/// One transfer action shared by copy, move and external import batches.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum FsTransferOperation {
+    /// Keep each source and create a destination.
+    Copy,
+    /// Move each source to a destination.
+    Move,
+    /// Copy selected local sources into the workspace without moving them.
+    Import,
+}
+
+/// Parameters for `fs.transferBatch`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FsTransferBatchParams {
+    /// One operation applied to every item.
+    pub operation: FsTransferOperation,
+    /// Explicit source and destination pairs, with a maximum of 128.
+    pub items: Vec<FsCopyParams>,
+}
+
+/// Outcome of one transfer in a batch.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum FsTransferStatus {
+    /// The destination was published.
+    Success,
+    /// This item failed after preflight; later items may still run.
+    Failed,
+    /// Cancellation interrupted this item before publication.
+    Cancelled,
+    /// Cancellation stopped the batch before this item started.
+    NotStarted,
+}
+
+/// Result of one source/destination pair in `fs.transferBatch`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FsTransferItemResult {
+    /// Source path from the request.
+    pub from: String,
+    /// Destination path from the request.
+    pub to: String,
+    /// Per-item outcome.
+    pub status: FsTransferStatus,
+    /// Human-readable failure reason, only for failed or cancelled items.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Final result of `fs.transferBatch`; preflight failures remain RPC errors.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FsTransferBatchResult {
+    /// The operation requested for the whole batch.
+    pub operation: FsTransferOperation,
+    /// One outcome for every requested item, in request order.
+    pub items: Vec<FsTransferItemResult>,
+    /// Whether cancellation left any item unstarted or interrupted.
+    pub cancelled: bool,
+}
+
 /// Result payload for `fs.list`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -138,11 +212,11 @@ pub struct FsListResult {
     pub entries: Vec<FsEntry>,
 }
 
-/// Result payload for `fs.read`.
+/// Result payload for `fs.read` and `fs.readExternal`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FsReadResult {
-    /// Canonical path of the file.
+    /// Absolute path of the file.
     pub path: String,
     /// UTF-8 file content.
     pub content: String,
@@ -186,7 +260,17 @@ pub struct FsRenameResult {
     pub to: String,
 }
 
-/// Result payload for `fs.delete`.
+/// Result payload for `fs.copy`.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FsCopyResult {
+    /// Canonical source path.
+    pub from: String,
+    /// Newly created destination path.
+    pub to: String,
+}
+
+/// Result payload for `fs.delete` and `fs.trash`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FsDeleteResult {

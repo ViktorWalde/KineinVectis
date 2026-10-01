@@ -308,6 +308,13 @@ remote.directories { name, path? }
 > entra apos teste provar que a alternativa nao atende", e o teste desta fatia
 > parou antes da escolha de pasta. Os dois novos metodos sao os unicos de
 > `remote.*` que nao exigem workspace aberto — a pergunta e' sobre a maquina.
+>
+> **Retomada em 2026-10-01:** a escolha pela home mostrou que campo manual e
+> shell não oferecem seleção na interface. O contrato `remote.directories`
+> entrou em 0.143.0 como Job, com resultado em `event.remote.directories` e
+> `requestedPath` para descartar resposta atrasada. O teste com `sshd` real
+> navegou e abriu o espelho; ver roadmap 40 §7.143. Ele exige workspace
+> aberto e alvo salvo, diferentemente de `remote.discover/resolve`.
 
 - descoberta lê apenas config local autorizada e não varre rede;
 - somente `Host` concreto aparece; padrões continuam aplicados pelo OpenSSH;

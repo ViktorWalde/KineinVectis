@@ -149,6 +149,46 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   Markdown renderizada dentro da Kinein; não abre editor externo nem mantém
   uma segunda documentação divergente.
 
+### Arquivos e pastas do projeto (checkout da série 0.3, em 2026-09-30)
+
+Com foco na árvore, use setas, Home/End, Enter e digitação do nome para
+navegar. Ctrl seleciona itens separados; Shift seleciona um intervalo;
+`Ctrl+A` seleciona os itens visíveis. Clique direito, tecla Menu ou
+`Shift+F10` abrem o mesmo menu contextual. Nele você pode criar, renomear,
+copiar caminho absoluto ou relativo, abrir a pasta no gerenciador de arquivos
+ou abrir um terminal nela.
+
+`Ctrl+C`, `Ctrl+X` e `Ctrl+V` na árvore copiam, recortam e colam **arquivos**.
+Antes de escrever, a IDE mostra origem e destino; em seleção múltipla, cada
+item pode receber outro nome ou ser pulado. Uma colisão não sobrescreve o
+destino. O recorte só deixa de apontar para a origem depois de um movimento
+bem-sucedido. Transferências demoradas aparecem em Jobs, onde podem ser
+canceladas; um lote interrompido pode ter itens já concluídos, indicados no
+diálogo.
+
+Arrastar dentro da árvore move por padrão; manter Ctrl durante o gesto copia.
+Arrastar arquivos do gerenciador para a árvore **importa por cópia**, sem
+apagar a origem. Soltar uma pasta na tela inicial abre um workspace; soltar um
+arquivo da árvore no editor abre sua aba, sem mover o arquivo. Essas rotas
+foram conferidas com o mouse real em X11; em Wayland, a do gerenciador para o
+editor. Arrastar da árvore para o gerenciador de arquivos
+**copia** o item para a pasta de destino, e a origem continua no projeto.
+Soltar **um arquivo local externo** diretamente no
+editor abre uma aba **somente leitura**, com o caminho externo indicado. O
+arquivo não é importado nem entra na sessão restaurada; digitar, substituir,
+formatar, salvar e salvar tudo não escrevem na origem. A leitura aceita texto
+UTF-8 de até 1 MiB; link simbólico, diretório, binário, URL remota e seleção
+de vários arquivos são recusados. Soltar o mesmo arquivo novamente atualiza
+a mesma aba com o conteúdo atual do disco. Para editar, importe o arquivo
+pela árvore e abra a cópia no projeto.
+
+**Remover** oferece primeiro **Mover para a lixeira**, a mesma Lixeira do
+desktop: no GNOME, abra **Lixeira** no Arquivos (Nautilus) e use **Restaurar**.
+Um projeto em outro volume (outro disco, ou `/tmp`) usa a lixeira daquele
+volume, e o gerenciador pode não exibi-la. **Excluir
+permanentemente** é uma ação separada e explícita. A IDE não apresenta um
+desfazer de arquivo que ainda não implementou.
+
 ---
 
 ## 3. Editor
@@ -789,8 +829,13 @@ Sondar e enviar só valem para um alvo **salvo** — o core só conhece o que
 está no arquivo. Cada botão mostra a linha que compôs (`$ …`), e o que ela
 virou (a configuração salva, o kit gravado).
 
-**Abrir a pasta do alvo como espelho** (desde 0.122.0): digite a pasta
-(`/home/pi/projeto`) e clique **Abrir espelho**. A IDE puxa a árvore por
+**Abrir a pasta do alvo como espelho** (desde 0.122.0; navegador na candidata
+0.3.5): com um alvo salvo, clique **Escolher…** para listar a home do usuário
+no alvo. Entre numa subpasta, use **Subir** para voltar e clique **Abrir esta
+pasta**. O campo de caminho continua disponível para quem já conhece o path
+(`/home/pi/projeto`); nesse caso, clique **Abrir espelho**. A listagem é
+feita por SSH em Job e exige autenticação por chave. Pastas e arquivos com
+espaço no nome funcionam; o caminho digitado precisa ser absoluto (sem `~`). A IDE puxa a árvore por
 `rsync` para `~/.cache/kinein-vectis/remote/…` e abre esse espelho como um
 workspace comum — editor, busca, git, LSP, tudo funciona nele. A partir daí
 **salvar um arquivo empurra só ele para o alvo** (um job "Empurrar

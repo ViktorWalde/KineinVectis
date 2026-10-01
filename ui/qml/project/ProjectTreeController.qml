@@ -4,12 +4,14 @@ Item {
     id: root
 
     property string workspaceRoot: ""
+    property var clipboard: null
     property real hostWidth: 0
     property real hostHeight: 0
     property alias entriesModel: treeModel
     property alias selectedPath: selection.selectedPath
     property alias selectedKind: selection.selectedKind
     property alias selectedPaths: selection.selectedPaths
+    property alias fileClipboard: fileClipboard
     property bool createDialogVisible: false
     property string createDialogKind: "file"
     property string createDialogParentPath: ""
@@ -31,13 +33,18 @@ Item {
     property string entryDeleteKind: ""
     property string entryDeleteName: ""
     property string entryDeleteError: ""
+    property string entryDeleteMethod: ""
+    readonly property bool entryDeletePending: entryDeleteMethod !== ""
 
     signal listDirRequested(string path)
     signal createFileRequested(string path)
     signal createDirectoryRequested(string path)
     signal readFileRequested(string path)
     signal renamePathRequested(string from, string to)
+    signal copyPathRequested(string from, string to)
+    signal transferBatchRequested(string operation, var items)
     signal deletePathRequested(string path)
+    signal trashPathRequested(string path)
     signal runScriptRequested(string path)
     signal debugScriptRequested(string path)
     signal tabsRenameRequested(string from, string to)
@@ -57,6 +64,17 @@ Item {
         model: treeModel
     }
 
+    ProjectFileClipboard {
+        id: fileClipboard
+        tree: root
+        clipboard: root.clipboard
+        onCopyPathRequested: function(from, to) { root.copyPathRequested(from, to); }
+        onMovePathRequested: function(from, to) { root.renamePathRequested(from, to); }
+        onTransferBatchRequested: function(operation, items) {
+            root.transferBatchRequested(operation, items);
+        }
+    }
+
     function baseName(path) {
         return path.substring(path.lastIndexOf("/") + 1);
     }
@@ -64,6 +82,10 @@ Item {
     function parentDir(path) {
         const slash = path.lastIndexOf("/");
         return slash > 0 ? path.substring(0, slash) : path;
+    }
+
+    function entryMenuDirectory() {
+        return entryMenuKind === "directory" ? entryMenuPath : parentDir(entryMenuPath);
     }
 
     // O que "Executar" e "Depurar" aceitam vem do CORE (`run.capabilities`,
@@ -109,6 +131,8 @@ Item {
         entryRenameError = "";
         entryDeleteVisible = false;
         entryDeleteError = "";
+        entryDeleteMethod = "";
+        fileClipboard.clear();
     }
 
     function selectEntry(path, kind, modifiers = Qt.NoModifier) {
@@ -257,9 +281,9 @@ Item {
         entryMenuName = name;
         entryMenuRunnable = isRunnableScript(path, kind);
         entryMenuDebuggable = isDebuggableScript(path, kind);
-        const menuWidth = selectedPaths.length > 1 ? 234 : 172;
+        const menuWidth = 244;
         entryMenuX = Math.max(0, Math.min(sceneX, hostWidth - menuWidth));
-        entryMenuY = Math.max(0, Math.min(sceneY, hostHeight - 190));
+        entryMenuY = sceneY;
         entryMenuVisible = true;
     }
 
@@ -324,7 +348,7 @@ Item {
     }
 
     function openEntryDelete() {
-        if (entryMenuPath === "" || workspaceRoot === "") {
+        if (entryMenuPath === "" || workspaceRoot === "" || entryDeletePending) {
             return;
         }
         entryMenuVisible = false;
@@ -336,17 +360,38 @@ Item {
     }
 
     function confirmEntryDelete() {
+        if (entryDeletePending) return;
         entryDeleteError = "";
         deletePathRequested(entryDeletePath);
+    }
+    function confirmEntryTrash() {
+        if (entryDeletePending) return;
+        entryDeleteError = "";
+        trashPathRequested(entryDeletePath);
     }
 
     function clearSelection() { selection.clear(); }
     function handleFileCreated(path) { results.fileCreated(path); }
     function handleDirectoryCreated(path) { results.directoryCreated(path); }
-    function handlePathRenamed(from, to) { results.pathRenamed(from, to); }
+    function handlePathRenamed(from, to) {
+        if (fileClipboard.pending && fileClipboard.cut
+                && from === fileClipboard.source && to === fileClipboard.destination) {
+            const kind = fileClipboard.sourceKind;
+            fileClipboard.moved(from, to);
+            results.pathRenamed(from, to, kind);
+        } else {
+            results.pathRenamed(from, to, entryRenameKind);
+        }
+    }
+    function handlePathCopied(from, to) { fileClipboard.copied(from, to); }
+    function handleCopyFailed(to, message) {
+        fileClipboard.requestFailed("fs.copy", message, to);
+    }
     function handlePathDeleted(path) { results.pathDeleted(path); }
     function handleExternalChanges(changes) { results.externalChanges(changes); }
-    function handleRequestFailed(method, message) { results.requestFailed(method, message); }
+    function handleRequestFailed(method, message) {
+        if (!fileClipboard.requestFailed(method, message)) results.requestFailed(method, message);
+    }
 
     ProjectTreeResults {
         id: results

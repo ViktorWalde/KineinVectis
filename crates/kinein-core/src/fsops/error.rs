@@ -29,9 +29,24 @@ pub enum FsError {
         /// Path as requested by the client.
         path: String,
     },
+    /// A transfer batch has duplicate, nested, or excessive entries.
+    InvalidBatch {
+        /// Reason the batch cannot start safely.
+        message: String,
+    },
     /// The operation would overwrite an existing file.
     AlreadyExists {
         /// Path that was rejected.
+        path: String,
+    },
+    /// A copy encountered a symlink or non-file/directory entry.
+    UnsupportedEntry {
+        /// Path of the unsupported entry.
+        path: String,
+    },
+    /// A copy was cancelled before its destination was published.
+    Cancelled {
+        /// Source path that was being copied.
         path: String,
     },
     /// Expected a regular file but found something else.
@@ -99,6 +114,7 @@ impl FsError {
         !matches!(
             self,
             Self::Io { .. }
+                | Self::Cancelled { .. }
                 | Self::RollbackFailed { .. }
                 | Self::MissingTool { .. }
                 | Self::ToolFailed { .. }
@@ -136,16 +152,24 @@ impl fmt::Display for FsError {
             Self::InvalidFileName { path } => {
                 write!(formatter, "o caminho {path} nao tem nome de arquivo valido")
             }
+            Self::InvalidBatch { message } => formatter.write_str(message),
             Self::AlreadyExists { path } => {
                 write!(formatter, "o arquivo {path} ja existe")
             }
+            Self::UnsupportedEntry { path } => {
+                write!(
+                    formatter,
+                    "nao e seguro copiar {path}: entrada nao e arquivo regular nem pasta"
+                )
+            }
+            Self::Cancelled { path } => write!(formatter, "copia cancelada: {path}"),
             Self::NotAFile { path } => {
                 write!(formatter, "o caminho {path} nao e um arquivo regular")
             }
             Self::WorkspaceRoot { path } => {
                 write!(
                     formatter,
-                    "o caminho {path} e a raiz do workspace e nao pode ser renomeado ou removido"
+                    "o caminho {path} e a raiz do workspace e nao pode ser renomeado, copiado ou removido"
                 )
             }
             Self::TooLarge { path, size } => {
@@ -186,7 +210,10 @@ impl Error for FsError {
             Self::OutsideRoot { .. }
             | Self::NotADirectory { .. }
             | Self::InvalidFileName { .. }
+            | Self::InvalidBatch { .. }
             | Self::AlreadyExists { .. }
+            | Self::UnsupportedEntry { .. }
+            | Self::Cancelled { .. }
             | Self::NotAFile { .. }
             | Self::WorkspaceRoot { .. }
             | Self::TooLarge { .. }

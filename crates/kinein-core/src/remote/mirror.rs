@@ -113,9 +113,16 @@ pub fn ssh_transport(target: &RemoteTarget, control_dir: &Path) -> String {
     if let Some(key) = &target.identity_file {
         e.push(format!("-i {key}"));
     }
-    e.push("-o ControlMaster=auto".to_owned());
-    e.push(format!("-o ControlPath={}/ssh-%C", control_dir.display()));
-    e.push("-o ControlPersist=60".to_owned());
+    // OpenSSH expands `%C` to 40 hex chars and appends a temporary suffix
+    // while creating the control socket. A long XDG/HOME path can exceed
+    // Linux's AF_UNIX path limit and make an otherwise valid rsync fail.
+    // Keep a margin; the plain SSH transport remains fully functional.
+    let socket_len = control_dir.as_os_str().as_encoded_bytes().len() + 5 + 40 + 18;
+    if socket_len <= 100 {
+        e.push("-o ControlMaster=auto".to_owned());
+        e.push(format!("-o ControlPath={}/ssh-%C", control_dir.display()));
+        e.push("-o ControlPersist=60".to_owned());
+    }
     e.join(" ")
 }
 
@@ -148,7 +155,10 @@ pub fn rsync_args(
     } else {
         mirror.join(rel).display().to_string()
     };
-    let mut args = vec!["-az".to_owned(), "-i".to_owned()];
+    // `-s`: o caminho remoto vai protegido ao `rsync` do alvo, sem passar pelo
+    // shell de la' — espaco no nome da pasta ou do arquivo nao o parte em dois,
+    // inclusive com `rsync` < 3.2.4 no alvo (que nao protege por padrao).
+    let mut args = vec!["-az".to_owned(), "-s".to_owned(), "-i".to_owned()];
     for exclude in EXCLUDES {
         args.push("--exclude".to_owned());
         args.push(exclude.to_owned());
@@ -252,6 +262,8 @@ mod tests {
             transport,
             "ssh -p 2222 -o ControlMaster=auto -o ControlPath=/home/u/.cache/kinein-vectis/remote/ssh-%C -o ControlPersist=60"
         );
+        let long_home = Path::new("/tmp/a-long-isolated-home/.cache/kinein-vectis/remote");
+        assert_eq!(ssh_transport(&pi(), long_home), "ssh -p 2222");
         let m = Path::new("/home/u/.cache/kinein-vectis/remote/pi/abc/sensor");
         let pull = rsync_args(
             &pi(),
@@ -261,10 +273,13 @@ mod tests {
             RemoteSyncDirection::Pull,
             &transport,
         );
-        assert_eq!(&pull[..5], ["-az", "-i", "--exclude", ".kinein", "-e"]);
-        assert_eq!(pull[6], "pi@192.168.0.42:/home/pi/sensor/");
         assert_eq!(
-            pull[7],
+            &pull[..6],
+            ["-az", "-s", "-i", "--exclude", ".kinein", "-e"]
+        );
+        assert_eq!(pull[7], "pi@192.168.0.42:/home/pi/sensor/");
+        assert_eq!(
+            pull[8],
             "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor/"
         );
         let push = rsync_args(
@@ -276,10 +291,10 @@ mod tests {
             &transport,
         );
         assert_eq!(
-            push[6],
+            push[7],
             "/home/u/.cache/kinein-vectis/remote/pi/abc/sensor/src/main.c"
         );
-        assert_eq!(push[7], "pi@192.168.0.42:/home/pi/sensor/src/main.c");
+        assert_eq!(push[8], "pi@192.168.0.42:/home/pi/sensor/src/main.c");
     }
 
     #[test]

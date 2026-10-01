@@ -223,6 +223,9 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 
 | Documento | Assunto |
 | --- | --- |
+| [roadmaps/50-biblioteca-e-providers-0.5.md](roadmaps/50-biblioteca-e-providers-0.5.md) | **Biblioteca 0.5:** capacidades antes de ferramentas, providers de prova, Jobs e resultados normalizados, com expansão guiada por evidência |
+| [roadmaps/51-plano-fechamento-0.3.5.md](roadmaps/51-plano-fechamento-0.3.5.md) | **Fechamento 0.3.5:** plano escrito antes da execução para Remote, provas, AppImage `KV0.3`, commit/push, release e site |
+| [roadmaps/49-frontend-0.3.6-e-sequencia-0.5.md](roadmaps/49-frontend-0.3.6-e-sequencia-0.5.md) | **Frontend 0.3.6:** reorganização aprovada da casca da IDE depois do fechamento 0.3; relação com a 0.4 embarcada e a 0.5 |
 | [roadmaps/48-arquitetura-executavel-da-serie-0.3.md](roadmaps/48-arquitetura-executavel-da-serie-0.3.md) | **Arquitetura executável da série 0.3 até a 0.3.5:** contratos, donos de estado, trem proposto, migração, rollback e provas; Grafana está confirmado na 0.3.5 |
 | [roadmaps/47-estrutura-da-v0.3.md](roadmaps/47-estrutura-da-v0.3.md) | **Estrutura de produto da série v0.3:** cruza frontend, Remote SSH, terminal, Grafana e o mínimo da Etapa 4 até o fechamento 0.3.5 |
 | [roadmaps/46-frontend-0.3-em-diante.md](roadmaps/46-frontend-0.3-em-diante.md) | **Frontend da 0.3 em diante:** extração operacional de `arquiKinein`, reconciliada com a `main`; Remote SSH utilizável, commands, tool windows mínimas, abas com identidade e área direita, sem big-bang |

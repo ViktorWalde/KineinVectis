@@ -285,6 +285,13 @@ permite navegar e selecionar, com campo de caminho ainda disponível para uso
 avançado. Isso exige contrato remoto tipado; não se interpreta a saída de `ls`
 no QML e não se concatena texto não escapado a shell.
 
+**Aplicado na candidata 0.3.5 em 2026-10-01:** `remote.directories` (0.143.0)
+inicia a listagem por Job, sem `path` para a home; o painel permite entrar,
+subir e abrir pelo `remote.open` atual. O evento ecoa alvo e pedido para
+descartar resposta atrasada. O roteiro com `sshd` real passou (roadmap 40
+§7.143). Na 0.144.0, pastas com espaço passaram a ser oferecidas e abertas
+(`rsync -s`), com prova contra `sshd` real (roadmap 40 §7.145).
+
 ### 6.2 Reabrir um workspace espelhado
 
 ```text

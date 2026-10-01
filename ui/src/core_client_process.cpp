@@ -100,6 +100,7 @@ void CoreClient::handleFinished(int exitCode, QProcess::ExitStatus exitStatus)
     // handleFinished aqui e uma saida INESPERADA com a IDE viva.
     m_pendingMethods.clear();
     m_pendingPaths.clear();
+    m_pendingRemoteDirectoryNames.clear();
     setBuilding(false);
     setTesting(false);
     setAnalyzing(false);
@@ -158,9 +159,14 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
 
     const qint64 id = m_nextRequestId++;
     m_pendingMethods.insert(id, method);
-    const QJsonValue path = params.value(QStringLiteral("path"));
+    const QJsonValue path = method == QStringLiteral("fs.copy")
+                                ? params.value(QStringLiteral("to"))
+                                : params.value(QStringLiteral("path"));
     if (path.isString()) {
         m_pendingPaths.insert(id, path.toString());
+    }
+    if (method == QStringLiteral("remote.directories")) {
+        m_pendingRemoteDirectoryNames.insert(id, params.value(QStringLiteral("name")).toString());
     }
 
     const QJsonObject request{

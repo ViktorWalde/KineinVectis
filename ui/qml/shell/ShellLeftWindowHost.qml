@@ -38,6 +38,14 @@ Item {
             root.projectTree.selectEntry(path, kind, modifiers);
         }
         onSelectAllRequested: root.projectTree.selectAllEntries()
+        onCopyRequested: root.projectTree.fileClipboard.copySelection(false)
+        onCutRequested: root.projectTree.fileClipboard.copySelection(true)
+        onPasteRequested: root.projectTree.fileClipboard.openPaste()
+        onFilesDropped: function(paths, destination, copy, external) {
+            if (external) root.projectTree.fileClipboard.openImport(paths, destination);
+            else root.projectTree.fileClipboard.openTransfer(paths, !copy,
+                                                             destination, false);
+        }
         onDirectoryToggleRequested: function(path, index, expanded) {
             root.projectTree.toggleDirectory(path, index, expanded);
         }

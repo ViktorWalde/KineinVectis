@@ -1,7 +1,7 @@
 import QtQuick
 import KineinVectis
 
-Column {
+Rectangle {
     id: root
 
     property var coreClient: null
@@ -27,6 +27,7 @@ Column {
     property var recentWorkspacesController: null
     property var gitController: null
     property bool windowMaximized: false
+    property bool windowEdgesFlush: false
     // Qual menu da barra principal esta' aberto (project | build | ""): o
     // widget correspondente fica marcado enquanto o popup esta' na tela.
     property string headerMenu: ""
@@ -42,6 +43,17 @@ Column {
 
     height: 84
     z: 100
+    radius: root.windowEdgesFlush ? 0 : Theme.radiusLarge
+    color: Theme.background1
+    clip: true
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 1
+        color: Theme.borderSoft
+    }
 
     function executeMenuAction(action) {
         const recentPrefix = "workspace.recent.open:";
@@ -118,6 +130,7 @@ Column {
     AppMenuBar {
         id: appMenuBar
 
+        y: 0
         width: parent.width
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         hasActiveFile: root.editorController.currentTab >= 0
@@ -149,6 +162,7 @@ Column {
     TopHeaderBar {
         id: barra
 
+        y: appMenuBar.height
         width: parent.width
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         coreConnected: root.coreClient.connected

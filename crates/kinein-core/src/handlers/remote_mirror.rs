@@ -160,10 +160,10 @@ impl Core {
             );
         };
         let remote_path = parsed.path.trim().trim_end_matches('/').to_owned();
-        if remote_path.is_empty() || remote_path.contains(char::is_whitespace) {
+        if !remote::valid_remote_dir(&remote_path) {
             return falha(
                 request_id,
-                "informe a pasta no alvo (ex.: /home/pi/projeto), sem espacos",
+                "informe a pasta absoluta no alvo (ex.: /home/pi/projeto)",
             );
         }
         let (rsync, transport) = match self.rsync_and_transport(&target) {

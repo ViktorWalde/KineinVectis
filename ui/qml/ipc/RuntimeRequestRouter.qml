@@ -20,8 +20,8 @@ Item {
     Connections {
         target: root.runtimeController
 
-        function onTerminalOpenRequested() {
-            root.coreClient.terminalOpen();
+        function onTerminalOpenRequested(cwd) {
+            root.coreClient.terminalOpen(cwd);
         }
 
         function onTerminalInputRequested(id, data) {

@@ -63,10 +63,11 @@ Item {
         check(a.kind === "sondar" && a.enabled, "alvo novo -> sondar");
         check(a.hint.indexOf("mede") >= 0, "diz o que a sonda faz");
 
-        // Sondado e sem espelho: abrir a pasta, mas so' se ela foi informada.
+        // Sondado e sem espelho: sem path, o gesto começa na home do alvo.
         a = regras.primaryFor(estado({}));
-        check(a.kind === "abrirPasta" && !a.enabled, "sem pasta remota, desabilitado");
-        check(a.hint.indexOf("Workspace") >= 0, "diz em que seccao informar: " + a.hint);
+        check(a.kind === "abrirPasta" && a.enabled && a.label.indexOf("Escolher") >= 0,
+              "sem pasta remota, oferece escolha desde a home");
+        check(a.hint.indexOf("home") >= 0, "diz por onde começa: " + a.hint);
         a = regras.primaryFor(estado({ "temPastaRemota": true }));
         check(a.kind === "abrirPasta" && a.enabled, "com pasta, abre");
 

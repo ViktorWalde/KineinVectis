@@ -2,12 +2,10 @@
 //
 // As regras puras tem o `tst_project_tree_keys`. Aqui se mede a FIACAO: que
 // a tecla vira o mesmo pedido que o clique faria, que a busca por nome
-// acumula o prefixo, e — o mais importante — que uma tecla com modificador
-// NAO e' engolida pela busca. Engolir `Ctrl+C` aqui faria a copia parar de
-// funcionar na arvore sem ninguem entender por que.
+// acumula o prefixo, e que Ctrl+C/X/V chegam ao clipboard do explorer sem
+// entrar na busca por nome.
 //
-// MUTACAO QUE PROVA O GATE: tire o teste de modificador do `procurarPeloNome`
-// e a assercao do `Ctrl+C` cai.
+// MUTACAO QUE PROVA O GATE: remova um dos sinais de clipboard e a assercao cai.
 import QtQuick
 import KineinVectis
 
@@ -21,6 +19,9 @@ Item {
     property var modificadores: []
     property int todos: 0
     property var menus: []
+    property int copias: 0
+    property int recortes: 0
+    property int colagens: 0
 
     ListModel {
         id: modelo
@@ -44,6 +45,9 @@ Item {
         onActivateRequested: indice => root.ativados.push(indice)
         onSelectAllRequested: root.todos += 1
         onMenuRequested: indice => root.menus.push(indice)
+        onCopyRequested: root.copias += 1
+        onCutRequested: root.recortes += 1
+        onPasteRequested: root.colagens += 1
     }
 
     function conferir(condicao, mensagem) {
@@ -99,11 +103,13 @@ Item {
         teclado.esquecerDigitacao();
         root.conferir(teclado.prefixo === "", "a digitacao sobreviveu ao esquecimento");
 
-        // TECLA COM MODIFICADOR NAO E' BUSCA. `Ctrl+C` pertence a outro dono,
-        // e engoli-lo aqui mataria a copia sem aviso.
+        // Ctrl+C/X/V sao intencoes de arquivo; nenhuma entra na busca.
         const antes = root.movidos.length;
         const consumiu = teclado.handleKey(root.tecla(Qt.Key_C, "c", Qt.ControlModifier));
-        root.conferir(!consumiu, "o teclado da arvore engoliu um Ctrl+C");
+        teclado.handleKey(root.tecla(Qt.Key_X, "x", Qt.ControlModifier));
+        teclado.handleKey(root.tecla(Qt.Key_V, "v", Qt.ControlModifier));
+        root.conferir(consumiu && root.copias === 1 && root.recortes === 1
+                      && root.colagens === 1, "atalhos nao chegaram ao clipboard");
         root.conferir(teclado.prefixo === "", "o Ctrl+C entrou na busca por nome");
         root.conferir(root.movidos.length === antes, "o Ctrl+C moveu o cursor");
 

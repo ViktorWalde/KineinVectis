@@ -253,6 +253,53 @@ pub struct RemoteOpenResult {
     pub mirror: String,
 }
 
+/// Browse one level of directories on a saved SSH target. Absent path starts
+/// at the target user's home; the response is asynchronous so SSH cannot
+/// stall the core request loop.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RemoteDirectoriesParams {
+    /// Saved target name.
+    pub name: String,
+    /// Absolute directory already returned by a prior browse; absent = home.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+}
+
+/// One selectable directory on the target.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteDirectoryEntry {
+    /// Basename shown to the user.
+    pub name: String,
+    /// Absolute path passed back to `remote.directories` or `remote.open`.
+    pub path: String,
+}
+
+/// Completion of the browse job.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteDirectoriesEvent {
+    /// Job that produced this result.
+    pub job_id: String,
+    /// Target whose folder was listed, to reject stale target responses.
+    pub name: String,
+    /// Exact requested path (empty means start at home), for stale-response checks.
+    pub requested_path: String,
+    /// Whether SSH and the remote listing completed.
+    pub success: bool,
+    /// Absolute directory on the target; empty on failure before resolution.
+    pub path: String,
+    /// Parent directory, absent for `/` or on failure.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
+    /// Direct child directories, sorted by name.
+    pub entries: Vec<RemoteDirectoryEntry>,
+    /// What failed, when unsuccessful.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
 /// Which way `remote.sync` moves the bytes.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

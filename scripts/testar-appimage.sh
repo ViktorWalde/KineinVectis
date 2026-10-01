@@ -78,6 +78,8 @@ required_paths=(
     "$APPDIR/usr/plugins/platforms/libqxcb.so"
     "$APPDIR/usr/plugins/platforms/libqoffscreen.so"
     "$APPDIR/usr/plugins/platforms/libqminimal.so"
+    # Os icones da arvore sao SVG; sem o plugin o Qt so' avisa no stderr.
+    "$APPDIR/usr/plugins/imageformats/libqsvg.so"
     "$APPDIR/usr/plugins/platforms/libqwayland-egl.so"
     "$APPDIR/usr/plugins/platforms/libqwayland-generic.so"
     "$APPDIR/usr/plugins/wayland-graphics-integration-client/libqt-plugin-wayland-egl.so"
@@ -171,6 +173,16 @@ fi
 if ! grep -q 'KINEIN_PERF first_frame_ms=' "$SMOKE_LOG"; then
     sed -n '1,240p' "$SMOKE_LOG" >&2
     echo "erro: a UI não confirmou o primeiro frame." >&2
+    exit 1
+fi
+
+# O primeiro frame pode sair com a fiacao QML quebrada: a mesma lista de avisos
+# que `verificar-binario-abre.sh` aplica ao binario do checkout reprova aqui o
+# Qt do ARTEFATO (2026-10-01: o Qt 6.4 do pacote recusava os paineis de
+# ambiente e o checkout, com Qt mais novo, nao via).
+if grep -F -f "$REPO_ROOT/scripts/avisos-qml.txt" "$SMOKE_LOG" >"$TEMP_DIR/avisos.log"; then
+    sed -n '1,40p' "$TEMP_DIR/avisos.log" >&2
+    echo "erro: o AppImage abriu com aviso do motor QML (lista em scripts/avisos-qml.txt)." >&2
     exit 1
 fi
 

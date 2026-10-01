@@ -67,6 +67,38 @@ Item {
         return docId;
     }
 
+    // Uma linha de documento serve para arquivos do projeto e prévias externas.
+    // A diferença de permissão fica no dado, não em dois modelos de abas.
+    function addLoadedFile(path, name, content, readOnly) {
+        return add({
+            path: path,
+            name: name,
+            content: content,
+            savedContent: content,
+            modified: false,
+            readOnly: readOnly,
+            externalContent: "",
+            externalConflict: false,
+            externalDeleted: false,
+            externalMessage: ""
+        });
+    }
+
+    function applyDiskContent(path, content, readOnly) {
+        const docId = docIdForPath(path);
+        const index = indexOf(docId);
+        if (index < 0 || documents.get(index).readOnly !== readOnly) return 0;
+        documents.setProperty(index, "content", content);
+        documents.setProperty(index, "savedContent", content);
+        documents.setProperty(index, "modified", false);
+        return docId;
+    }
+
+    function pathOfDocument(docId) {
+        const index = indexOf(docId);
+        return index >= 0 ? documents.get(index).path : "";
+    }
+
     function remove(docId) {
         const index = root.indexOf(docId);
         if (index < 0) {

@@ -86,6 +86,7 @@ public:
     Q_INVOKABLE void saveSession(const QStringList& openFiles, const QString& activeFile);
     Q_INVOKABLE void listDir(const QString& path);
     Q_INVOKABLE void readFile(const QString& path);
+    Q_INVOKABLE void readExternalFile(const QString& path);
     Q_INVOKABLE void createFile(const QString& path, const QString& content = QString());
     Q_INVOKABLE void createDirectory(const QString& path);
     Q_INVOKABLE void writeFile(const QString& path, const QString& content,
@@ -100,7 +101,10 @@ public:
     /// Pede o catalogo do que "Executar"/"Depurar" aceitam (`run.capabilities`).
     Q_INVOKABLE void runCapabilities();
     Q_INVOKABLE void renamePath(const QString& from, const QString& to);
+    Q_INVOKABLE void copyPath(const QString& from, const QString& to);
+    Q_INVOKABLE void transferPaths(const QString& operation, const QVariantList& items);
     Q_INVOKABLE void deletePath(const QString& path);
+    Q_INVOKABLE void trashPath(const QString& path);
     Q_INVOKABLE void listCommands();
     Q_INVOKABLE void detectTools();
     Q_INVOKABLE void scanEnvironment();
@@ -259,6 +263,7 @@ public:
     // O workspace espelhado (remote.open/sync/status, 0.122.0): a pasta do alvo vira
     // espelho local por rsync; a UI abre o espelho com o openWorkspace de sempre.
     Q_INVOKABLE void remoteOpen(const QString& name, const QString& path);
+    Q_INVOKABLE void remoteDirectories(const QString& name, const QString& path = QString());
     Q_INVOKABLE void remoteSync(const QString& direction, const QStringList& paths = {});
     Q_INVOKABLE void remoteStatus();
     // Containers (roadmaps/28 §0, dominio NATIVO): Docker ou Podman, o que responder.
@@ -325,7 +330,7 @@ public:
     Q_INVOKABLE void runScript(const QString& path, const QString& device = QString());
     Q_INVOKABLE void runStop();
     // D2.3 (DocsPublic/roadmaps/24): multi-terminal — todo comando leva o id da sessão.
-    Q_INVOKABLE void terminalOpen();
+    Q_INVOKABLE void terminalOpen(const QString& cwd = QString());
     Q_INVOKABLE void terminalInput(const QString& id, const QString& data);
     Q_INVOKABLE void terminalResize(const QString& id, int cols, int rows);
     Q_INVOKABLE void terminalScroll(const QString& id, int offset);
@@ -354,6 +359,8 @@ signals:
     void draftsRecovered(const QVariantList& drafts);
     void dirListed(const QString& path, const QVariantList& entries);
     void fileLoaded(const QString& path, const QString& content);
+    void externalFileLoaded(const QString& path, const QString& content);
+    void externalFileLoadFailed(const QString& path, const QString& message);
     void fileCreated(const QString& path);
     void directoryCreated(const QString& path);
     void fileSaved(const QString& path);
@@ -362,6 +369,9 @@ signals:
     void fileWatchFailed(const QString& message);
     void fileFormatted(const QString& path, const QString& text, bool changed);
     void pathRenamed(const QString& from, const QString& to);
+    void pathCopied(const QString& from, const QString& to);
+    void pathBatchTransferred(const QVariantMap& result);
+    void pathCopyFailed(const QString& to, const QString& message);
     void pathDeleted(const QString& path);
     void commandsListed(const QVariantList& commands);
     void toolsListed(const QVariantList& tools);
@@ -473,6 +483,8 @@ signals:
     void remoteProbed(const QVariantMap& outcome);
     void remoteDeployed(const QVariantMap& outcome);
     void remoteOpenAccepted(const QString& jobId, const QString& command, const QString& mirror);
+    void remoteDirectoriesResolved(const QVariantMap& outcome);
+    void remoteDirectoriesFailed(const QString& name, const QString& path, const QString& message);
     void remoteSynced(const QVariantMap& outcome);
     // O espelho que o workspace aberto e' (vazio = nao e' espelho); sai do
     // workspace.open e do remote.status.
@@ -681,6 +693,7 @@ private:
     int m_recoveryAttempts = 0;
     QHash<qint64, QString> m_pendingMethods;
     QHash<qint64, QString> m_pendingPaths;
+    QHash<qint64, QString> m_pendingRemoteDirectoryNames;
     bool m_connected = false;
     bool m_building = false;
     bool m_testing = false;

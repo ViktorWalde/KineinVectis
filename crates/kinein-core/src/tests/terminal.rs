@@ -62,6 +62,43 @@ fn core_com_terminal(
 }
 
 #[test]
+fn terminal_open_accepts_only_workspace_directory_as_cwd() {
+    let (mut core, events, root) = core_com_terminal("cwd-guard");
+    let directory = root.join("sub pasta");
+    std::fs::create_dir(&directory).unwrap();
+    for cwd in [
+        root.parent().unwrap().to_path_buf(),
+        root.join("Cargo.toml"),
+    ] {
+        let refused = core.handle_request(&JsonRpcRequest::new(
+            970_i64,
+            "terminal.open",
+            Some(json!({ "cwd": cwd })),
+        ));
+        assert_eq!(
+            refused.response().error.as_ref().unwrap().code,
+            JsonRpcErrorCode::InvalidParams
+        );
+    }
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        971_i64,
+        "terminal.open",
+        Some(json!({ "cwd": directory })),
+    ));
+    assert!(opened.response().error.is_none());
+    let id = opened.response().result.as_ref().unwrap()["id"]
+        .as_str()
+        .unwrap();
+    let input = core.handle_request(&JsonRpcRequest::new(
+        972_i64,
+        "terminal.input",
+        Some(json!({ "id": id, "data": "pwd\n" })),
+    ));
+    assert!(input.response().error.is_none());
+    assert!(render_com(&events, &directory.display().to_string()).is_some());
+}
+
+#[test]
 fn select_all_and_copy_are_typed_session_scoped_and_invalidated_by_clear() {
     let (mut core, receptor, raiz) = core_com_terminal("selection-rpc");
     let id = terminal_com_saida(&mut core, &raiz, "inicio\nmeio\nfim");

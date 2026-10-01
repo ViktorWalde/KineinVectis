@@ -18,16 +18,67 @@ Rectangle {
     property bool cursorFocused: false
     property color gitColor: Theme.textSecondary
     property bool runnable: false
+    property var dragPaths: []
+    readonly property bool dropHighlighted: rowDrop.validDrag
+    readonly property bool dropCopy: rowDrop.copy
+    readonly property string dragUrls: dragPaths.map(path =>
+        "file://" + path.split("/").map(encodeURIComponent).join("/")
+    ).join("\r\n") + "\r\n"
 
     signal clicked(int modifiers, int button, real sceneX, real sceneY)
     signal scriptRunRequested()
+    signal filesDropped(var paths, bool copy, bool external)
+    signal directoryHoverRequested()
+    signal dragPosition(real sceneY)
+    signal dragEnded()
 
     height: 24
     radius: Theme.radius
-    color: selected ? Theme.surfaceSelected
+    color: dropHighlighted ? Theme.surface2
+          : selected ? Theme.surfaceSelected
           : (rowHover.hovered ? Theme.surface2 : "transparent")
-    border.width: cursorFocused ? 1 : 0
+    border.width: dropHighlighted ? 2 : cursorFocused ? 1 : 0
     border.color: Theme.accent
+
+    Drag.dragType: Drag.Automatic
+    Drag.active: false
+    Drag.supportedActions: Qt.CopyAction | Qt.MoveAction
+    Drag.proposedAction: Qt.MoveAction
+    Drag.mimeData: ({"text/uri-list": root.dragUrls,
+                     "application/x-kinein-project-paths": JSON.stringify(root.dragPaths)})
+    Drag.onDragFinished: root.dragEnded()
+
+    DragHandler {
+        id: dragHandler
+        enabled: root.dragPaths.length > 0
+        acceptedButtons: Qt.LeftButton
+        target: null
+        onActiveChanged: root.Drag.active = active && root.dragPaths.length > 0
+    }
+
+    ProjectTreeDropArea {
+        id: rowDrop
+        anchors.fill: parent
+        destination: root.path
+        urlDecoder: Clipboard
+        onValidDragChanged: {
+            if (validDrag && rules.isDirectory(root.kind) && !root.expanded)
+                hoverExpand.restart();
+            else hoverExpand.stop();
+        }
+        onDragPosition: function(y) {
+            root.dragPosition(root.mapToItem(null, 0, y).y);
+        }
+        onFilesDropped: function(paths, destination, copy, external) {
+            root.filesDropped(paths, copy, external);
+        }
+    }
+
+    Timer {
+        id: hoverExpand
+        interval: 650
+        onTriggered: root.directoryHoverRequested()
+    }
 
     ProjectTreeRules {
         id: rules
@@ -70,6 +121,17 @@ Rectangle {
             font.pixelSize: Theme.fontSizeTree
             elide: Text.ElideRight
         }
+    }
+
+    Text {
+        anchors.right: parent.right
+        anchors.rightMargin: Theme.spacingSmall
+        anchors.verticalCenter: parent.verticalCenter
+        visible: root.dropHighlighted
+        text: rowDrop.externalDrag ? qsTr("Importar aqui")
+              : root.dropCopy ? qsTr("Copiar aqui") : qsTr("Mover aqui")
+        color: Theme.accent
+        font.pixelSize: 10
     }
 
     MouseArea {

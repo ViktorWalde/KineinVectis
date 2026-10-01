@@ -23,6 +23,15 @@ QtObject {
         return kind === "directory";
     }
 
+    function isFile(kind) {
+        return kind === "file";
+    }
+
+    function validPaths(paths) {
+        return Array.isArray(paths) && paths.length > 0 && paths.length <= 128
+               && paths.every(path => typeof path === "string");
+    }
+
     // Pastas do autor, pastas da maquina, arquivos — cada grupo na ordem em
     // que o core mandou.
     function orderEntries(entries) {

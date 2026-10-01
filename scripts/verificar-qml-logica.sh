@@ -13,6 +13,7 @@
 # laco infinito no Find/Replace.
 #
 # Uso: bash scripts/verificar-qml-logica.sh
+# Um único fixture: KINEIN_QML_TEST=tst_project_tree_drop bash scripts/verificar-qml-logica.sh
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
@@ -68,6 +69,9 @@ falhou=0
 
 for teste in scripts/qml-harness/tst_*.qml; do
     nome="$(basename "$teste" .qml)"
+    if [ -n "${KINEIN_QML_TEST:-}" ] && [ "$nome" != "$KINEIN_QML_TEST" ]; then
+        continue
+    fi
     printf '== %s ==\n' "$nome"
     # QT_ASSUME_STDERR_HAS_CONSOLE: sem isso o qml6 ENGOLE console.log/warn.
     timeout 60 env QT_QPA_PLATFORM=offscreen QT_ASSUME_STDERR_HAS_CONSOLE=1 \

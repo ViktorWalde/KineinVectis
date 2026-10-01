@@ -29,6 +29,9 @@ Item {
         }
 
         function onRemoteJobAccepted(method, jobId, command) {
+            if (method === "remote.directories") {
+                return;
+            }
             root.remoteController.handleJobAccepted(method, jobId, command);
         }
 
@@ -48,6 +51,14 @@ Item {
             root.remoteController.workspace.handleOpenAccepted(jobId, command, mirror);
         }
 
+        function onRemoteDirectoriesResolved(outcome) {
+            root.remoteController.workspace.handleDirectories(outcome);
+        }
+
+        function onRemoteDirectoriesFailed(name, path, message) {
+            root.remoteController.workspace.handleBrowseFailed(name, path, message);
+        }
+
         function onRemoteSynced(outcome) {
             root.remoteController.workspace.handleSynced(outcome);
         }
@@ -57,6 +68,9 @@ Item {
         }
 
         function onRequestFailed(method, message, code) {
+            if (method === "remote.directories") {
+                return;
+            }
             root.remoteController.handleFailed(method, message);
         }
     }

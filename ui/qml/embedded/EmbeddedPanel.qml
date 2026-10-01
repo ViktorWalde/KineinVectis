@@ -66,7 +66,9 @@ Item {
 
                 required property var modelData
 
-                anchors.verticalCenter: parent.verticalCenter
+                // O delegate nasce sem `parent` por um instante (painel criado por
+                // `createObject`, ver ShellEnvironmentOverlays): sem a guarda, TypeError.
+                anchors.verticalCenter: parent ? parent.verticalCenter : undefined
                 labelText: aba.modelData.label
                 active: root.tab === aba.modelData.key
                 onToggled: root.controller.tab = aba.modelData.key

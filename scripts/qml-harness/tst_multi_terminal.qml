@@ -8,6 +8,7 @@ Item {
     height: 100
 
     property int openedRequests: 0
+    property string lastCwd: ""
     property string inputId: ""
     property string inputData: ""
     property string closeId: ""
@@ -17,7 +18,10 @@ Item {
 
         workspaceRoot: "/tmp/workspace"
         terminalActive: true
-        onTerminalOpenRequested: root.openedRequests += 1
+        onTerminalOpenRequested: function(cwd) {
+            root.openedRequests += 1;
+            root.lastCwd = cwd;
+        }
         onTerminalInputRequested: function(id, data) {
             root.inputId = id;
             root.inputData = data;
@@ -86,7 +90,10 @@ Item {
 
         // Sem sessao, abrir o painel pede um shell novo.
         runtime.openTerminalPanel();
-        if (root.openedRequests !== 1) failures += 8192;
+        if (root.openedRequests !== 1 || root.lastCwd !== "") failures += 8192;
+        runtime.newTerminalAt("/tmp/workspace/sub pasta");
+        if (root.openedRequests !== 2 || root.lastCwd !== "/tmp/workspace/sub pasta")
+            failures += 2097152;
 
         // O codigo de saida de um processo tem 8 BITS: Qt.exit(256) sai como 0.
         // Enquanto o bitmask ia direto para o exit, todo check com bit >= 256

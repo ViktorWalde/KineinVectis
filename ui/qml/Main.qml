@@ -215,6 +215,8 @@ Window {
         recentWorkspacesController: domains.recentWorkspacesController
         gitController: domains.gitController
         windowMaximized: windowChromeController.maximized
+        windowEdgesFlush: windowChromeController.maximized
+                          || root.visibility === Window.FullScreen
         onConfigMenuRequested: function(menuX, menuY) {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);
             domains.runConfigController.openConfigMenu(pos.x, pos.y);
@@ -281,6 +283,7 @@ Window {
         onReadFileRequested: function(path) {
             coreClient.readFile(path);
         }
+        onOpenWorkspacePathRequested: path => coreClient.openWorkspace(path)
         onCloseWorkspaceRequested: coreClient.closeWorkspace()
         onToolsDetectionRequested: coreClient.detectTools()
         // A faixa de saude do projeto: cada alvo e' um gesto de um clique.

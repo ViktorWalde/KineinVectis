@@ -128,7 +128,7 @@ decisão explícita do autor que a reprograme.
 | Arrastar arquivos/pastas de fora para árvore com workspace | importar/copiar no destino escolhido, com colisões tratadas; não mover a origem externa nem trocar o projeto |
 | Arrastar pasta para acolhimento/área de abertura de projeto | abrir como workspace pelo mesmo fluxo de proteção; não confundir com importar para a árvore |
 | Arrastar arquivo da árvore para o editor | abrir/ativar documento; não mover o arquivo no disco |
-| Arrastar arquivo externo para o editor | intenção de abrir, não importar; resolver explicitamente o caso fora da raiz (§7), sem relaxar confinamento |
+| Arrastar arquivo externo para o editor | uma URL local única abre aba somente leitura, sem importar nem escrever na origem; ver decisão da §7 |
 | Arrastar para aplicativo externo | oferecer URLs de arquivos locais, sem texto sensível nem exclusão inferida da origem; validar integração nativa |
 | Colisões | informar origens/destinos, permitir cancelar, pular ou escolher novo nome; nunca sobrescrever por padrão nem mesclar pastas às cegas |
 | Excluir/recuperar | preferir lixeira recuperável quando suportada; exclusão permanente é explícita e confirmada; desfazer nunca promete recuperação inexistente |
@@ -146,6 +146,134 @@ ficam indisponíveis com motivo visível: essas operações ainda não têm cont
 de lote. Criar pelo menu usa o item sob contexto como destino. Clipboard de
 arquivos, drag-and-drop, lixeira e colisões de lote seguem como alvo, sem
 serem inferidos dessa fatia.
+
+**Primeira fatia de P2 em 2026-09-29:** o explorador usa o `Clipboard` já
+exposto ao QML para colocar uma URL local no clipboard do sistema, com marca
+de recorte quando couber. Menu e Ctrl+C/Ctrl+X/Ctrl+V chegam ao mesmo
+`ProjectFileClipboard`; a colagem abre o diálogo de nome já usado para
+renomear, mostra origem e destino e permite escolher outro nome antes de
+escrever. Enquanto o pedido está pendente, o diálogo indica a operação.
+Copiar chama `fs.copy`; recortar usa o `fs.rename` existente e só limpa a
+marca depois do sucesso. Colisão volta ao diálogo sem apagar a origem. A
+primeira fatia aceita **um item do workspace corrente**; a indisponibilidade
+de seleção múltipla ou fonte externa aparece no menu. A cópia usa o JobManager
+existente para progresso por bytes e cancelamento entre blocos; ao cancelar,
+remove o staging e preserva a origem. Durante a cópia, **Ver em Jobs** fecha o
+diálogo e abre o painel onde o job pode ser cancelado; o resultado ainda volta
+à mesma intenção de colagem. Drag-and-drop, importação externa,
+lote, decisões de colisão em lote e prova nativa do clipboard seguem
+pendentes. P2 e P3 não estão fechadas.
+
+**Lote de clipboard em 2026-09-30:** `fs.transferBatch` aceita pares explícitos
+de cópia ou movimento dentro do workspace. Valida o conjunto antes da primeira
+mutação, usa os motores `fs.copy`/`fs.rename`, publica progresso pelo JobManager
+e devolve resultado por item quando uma falha de execução torna o lote parcial.
+Seleção múltipla em Ctrl+C/Ctrl+X e no menu chega ao diálogo de revisão: cada
+item pode ter nome editado ou ser pulado, sucessos não são reenviados após
+falha parcial e o recorte preserva no clipboard apenas as fontes ainda não
+movidas. O diálogo abre Jobs para acompanhar ou cancelar. Colisão detectada
+no preflight volta como erro do lote; uma colisão tardia aparece no item
+afetado. Arrastar e soltar, importação externa e prova nativa continuam
+pendentes.
+
+**Encaminhamento do arrasto interno em 2026-09-30:** a árvore agora anuncia
+URLs locais e paths internos; linha e espaço vazio compartilham o mesmo
+destino de drop. O destino aparece antes da soltura, com expansão da pasta por
+hover e rolagem nas bordas. O drop usa a intenção de cópia/movimento e o
+diálogo de transferência acima, sem alterar o clipboard. O parser de MIME
+foi exercitado em QML; os demais destinos e a fonte externa ainda precisam
+de prova nativa.
+
+Em X11, o arrasto interno real foi provado em 2026-09-30: mover A→B e
+Ctrl+arrastar B→A abriram os diálogos corretos e produziram os arquivos
+esperados. O Qt entrega o MIME do gesto nativo em `formats`, não em `keys`; o
+parser agora valida o formato, o Item de origem e seus paths. Wayland e
+AppImage ainda precisam de prova.
+
+**Importação para a árvore em 2026-09-30:** o mesmo destino de drop recebe
+URLs `file:` locais de fora do aplicativo e força cópia, inclusive quando a
+fonte propõe mover. A revisão por item do lote é usada também para um único
+arquivo externo; renomear, pular, colisão, progresso e cancelamento seguem o
+mesmo fluxo. `fs.transferBatch(operation: "import")` mantém a origem externa,
+conserva o destino dentro do workspace e abre a árvore de origem por
+descritores com `O_NOFOLLOW`; symlinks e entradas especiais são recusados no
+preflight. URLs remotas ou com host são rejeitadas pela ponte Qt. Testes Rust,
+C++ Qt e harness QML passaram. O gesto real X11 com Nautilus foi provado em
+2026-09-30: a origem permaneceu e o destino recebeu uma cópia. A ponte Qt
+retorna `QStringList`; o drop o converte a `Array` antes de chamar a validação
+compartilhada em QML. Falta provar o gesto em Wayland e no AppImage; a
+abertura de projeto e o drop no editor são fluxos distintos, provados em X11
+logo depois.
+O MIME interno só autoriza movimento quando o evento traz o Item de origem
+da própria árvore e os paths coincidem com os anunciados por ele; uma aplicação
+externa que forje a chave interna entra no fluxo de importação por URL local,
+que sempre copia.
+
+**Ações de caminho em 2026-09-30:** o menu de contexto agora copia paths
+absolutos ou relativos à raiz para o clipboard de texto, inclusive seleção
+múltipla em linhas separadas. A mesma lista de ações atende clique e teclado;
+o menu ajusta sua posição à altura real para manter os novos itens na tela.
+Abrir a pasta no gerenciador e abrir terminal nela usam o item sob contexto:
+arquivo aponta para o pai, pasta aponta para si. O primeiro chama o serviço
+de URL local do Qt; o segundo estende `terminal.open` com `cwd` opcional,
+confinado pelo core à raiz. Caminho inválido não inicia um PTY. A integração
+no checkout X11 foi exercitada com um arquivo de `/tmp`: a chamada D-Bus
+`org.freedesktop.Application.Open` ao Nautilus recebeu a URL da pasta pai,
+e o terminal abriu com o mesmo diretório no prompt. Falta a prova no AppImage.
+
+**Destinos adicionais em 2026-09-30:** uma URL local única solta na tela
+inicial só é aceita após a ponte Qt verificar que aponta para uma pasta; então
+segue para `workspace.open`, cuja validação no core permanece. Soltar um arquivo
+da árvore sobre o editor força ação de cópia
+do drag e usa `EditorController.openDiagnostic` para abrir ou ativar a aba,
+sem alterar o disco. O payload interno tem parser único para árvore/editor.
+**Decisão do autor em 2026-09-30:** soltar uma URL local única fora da raiz no
+editor abre uma aba somente leitura, sem importar. O fluxo usa
+`fs.readExternal` (`0.142.0`) e o mesmo modelo de documentos, mas o marcador
+de somente leitura bloqueia edição, salvamento, formatação, rascunhos, LSP e
+persistência na sessão. Repetir o drop relê o disco na mesma aba. O core só
+lê arquivo regular UTF-8 até 1 MiB e recusa symlink nos componentes; URL
+remota e seleção múltipla não entram no pedido. `fs.read` e `fs.write` seguem
+confinados à raiz. Os destinos internos e a tela inicial foram provados por
+gesto real em X11 em 2026-09-30. Em 2026-10-01, a rota externa no editor foi
+provada com o mouse real em X11 e em Wayland nativo, a partir do Nautilus da
+sessão (roadmap 40 §7.144). O AppImage ainda exige prova.
+
+**Saída para outro aplicativo em X11:** um receptor Qt separado recebeu a URL
+local em `text/uri-list`, interpretou-a como `QUrl` e aceitou cópia. O Nautilus
+isolado aceitou a ação, mas não criou a cópia. Em 2026-10-01, em Wayland
+nativo, um receptor GTK4 recebeu `GdkFileList` com a URL correta, inclusive
+lido 500 ms depois do drop. Com o mouse sintético, o Nautilus 50.2.2 realçava
+o destino e não copiava. Com o gesto feito pelo autor, a cópia funcionou em
+Wayland (roadmap 40 §7.147), e a falha era do método de teste. A origem
+permaneceu intacta.
+
+**Proteção de buffer em exclusão, 2026-09-30:** o roteador de remoção
+consulta os documentos abertos antes de enviar o pedido e mantém o diálogo
+com motivo quando houver conteúdo diferente do salvo ou salvamento pendente
+sob o caminho. Se uma edição acontecer enquanto a resposta do core está em
+trânsito, o editor conserva a aba alterada em vez de fechá-la e limpar seu
+rascunho. Esta proteção não substitui a decisão de lixeira/recuperação nem a
+prova de conflito externo do P3.
+
+**Lixeira recuperável em 2026-09-30:** a ação principal do diálogo envia
+`fs.trash` ao core, que aplica o mesmo confinamento de `fs.delete` e usa a
+lixeira FreeDesktop do sistema. A falha não apaga o item e volta ao diálogo;
+"Excluir permanentemente" permanece uma escolha separada, explicitamente
+rotulada. O mesmo bloqueio de documentos sujos protege as duas ações. Um teste
+moveu arquivo Unicode para uma lixeira isolada em `/tmp` e conferiu conteúdo e
+metadados de recuperação. A IDE ainda não oferece um comando de desfazer;
+recuperação deve ser feita pelo gerenciador de arquivos do desktop. Integração
+nativa do envio pelo diálogo passou em X11 com arquivo sob `/tmp`; a recuperação
+visual no gerenciador segue pendente, pois o `gio` desta sessão não listou a
+lixeira específica desse volume. Outro teste isolado tornou a lixeira
+indisponível e verificou que a origem permanece intacta; o harness QML cobriu
+o erro que volta ao diálogo. O caminho de remoção compartilhado canoniza só a
+pasta pai: apagar ou mover um link simbólico remove o link selecionado, sem
+seguir o alvo, inclusive quando ele fica fora do workspace.
+O diálogo mantém a remoção pendente até resposta: cliques repetidos e
+cancelamento durante o pedido não disparam outra mutação; falha reabre a escolha.
+Respostas tardias de outro caminho ou após trocar de workspace não fecham abas.
 
 Antes da implementação de abertura por clique, confrontar o uso atual com o
 modo preview de abas das referências. A decisão de preview/pin não pode ser
@@ -208,9 +336,10 @@ confundir teste de lógica com integração nativa certificada.
   **Decidido em 2026-09-26:** sem argumentos abre o CWD (e o launcher de desktop
   continua sem esse default); mesma pasta foca a janela aberta, outra pasta abre
   nova. Implementado e medido no mesmo dia; ver §3 e o roadmap 40 §7.116.
-- Arquivos avulsos fora da raiz, múltiplas pastas/multi-root e drop de vários
-  projetos: são casos registrados, não descartados; não cabem silenciosamente
-  no contrato atual de uma raiz. Pedir decisão antes de implementar restrição.
+- ~~Arquivo avulso fora da raiz solto no editor.~~ **Decidido em 2026-09-30:**
+  aba somente leitura, sem importação; ver §4 e IPC `0.142.0`.
+- Múltiplas pastas/multi-root e drop de vários projetos: são casos registrados,
+  não descartados; não cabem silenciosamente no contrato atual de uma raiz.
 - Preview/pin de abas e gestos de abertura: o plano anterior os colocava após
   identidade estável. Confirmar se o pedido de interação completa os antecipa;
   separar de docking/split arbitrário, que não é consequência de mover arquivo.

@@ -28,6 +28,14 @@ Item {
         onShellRequested: function(command) { root.pedidos.push("shell:" + command); }
     }
 
+    // Instanciar a view visual também: binding quebrado em painel fechado
+    // passaria despercebido no primeiro frame da IDE.
+    RemoteMirrorView {
+        width: 420
+        browseState: c.workspace
+        canOpen: c.selectedSaved
+    }
+
     // O espelho e o sync moraram no controller ate' 2026-09-24; agora sao do
     // RemoteWorkspaceController, filho dele. O harness fala com a composicao
     // REAL, nao com uma copia solta.
@@ -35,6 +43,7 @@ Item {
         target: c.workspace
 
         function onOpenRequested(name, path) { root.pedidos.push("open:" + name + ":" + path); }
+        function onDirectoriesRequested(name, path) { root.pedidos.push("directories:" + name + ":" + path); }
         function onSyncRequested(direction, paths) { root.pedidos.push("sync:" + direction + ":" + paths.length); }
         function onWorkspaceOpenRequested(path) { root.pedidos.push("workspace:" + path); }
     }
@@ -122,6 +131,30 @@ Item {
         if (c.workspace.syncing || c.workspace.syncMessage.indexOf("connection closed") < 0) failures += 16777216;
         c.workspace.handleMirror({});
         if (c.workspace.isMirror) failures += 33554432;
+
+        // A escolha começa na home, descarta evento de outro alvo e evento
+        // atrasado da pasta anterior; selecionar reusa remote.open.
+        c.workspace.startBrowse();
+        if (root.pedidos[antes + 3] !== "directories:pi:" || !c.workspace.browseLoading) failures += 1;
+        c.workspace.handleDirectories({ name: "outro", requestedPath: "", success: true,
+            path: "/home/outro", entries: [] });
+        if (!c.workspace.browseLoading) failures += 1;
+        c.workspace.handleDirectories({ name: "pi", requestedPath: "", success: true,
+            path: "/home/pi", parent: "/home", entries: [{ name: "sensor", path: "/home/pi/sensor" }] });
+        if (c.workspace.browseLoading || c.workspace.browsePath !== "/home/pi"
+                || c.workspace.browseEntries.length !== 1) failures += 1;
+        c.workspace.browseTo("/home/pi/sensor");
+        if (root.pedidos[antes + 4] !== "directories:pi:/home/pi/sensor") failures += 1;
+        c.workspace.handleDirectories({ name: "pi", requestedPath: "", success: true,
+            path: "/home/pi", entries: [] });
+        if (!c.workspace.browseLoading) failures += 1;
+        c.workspace.handleBrowseFailed("pi", "", "falha antiga");
+        if (!c.workspace.browseLoading || c.workspace.browseError !== "") failures += 1;
+        c.workspace.handleDirectories({ name: "pi", requestedPath: "/home/pi/sensor",
+            success: true, path: "/home/pi/sensor", parent: "/home/pi", entries: [] });
+        c.workspace.openBrowsedFolder();
+        if (root.pedidos[antes + 5] !== "open:pi:/home/pi/sensor"
+                || c.workspace.browseVisible || c.workspace.openPath !== "/home/pi/sensor") failures += 1;
 
         // Remover; trocar de workspace esquece tudo.
         c.remove();

@@ -17,6 +17,8 @@ O que roda de verdade, nesta ordem:
   (a linha roda)    com a senha respondida num pty, como a IDE promete
   remote.probe      PASSA: arquitetura, kernel e ferramentas medidas no alvo
   remote.deploy     rsync de verdade para dentro do container
+  remote.directories lista a home e navega até a pasta enviada
+  remote.open       abre o caminho escolhido como espelho local real
   remote.command    kind=shell compoe a linha do shell
 
 LIMITE DITO. A conexao por ALIAS nao da' para isolar aqui: medido nesta data, o
@@ -207,10 +209,62 @@ def main():
         os.makedirs(os.path.join(projeto, "build"), exist_ok=True)
         with open(os.path.join(projeto, "build", "app"), "w") as f:
             f.write("#!/bin/sh\necho kinein\n")
+        # Pasta e arquivo com espaco: o navegador os oferece e o espelho
+        # (rsync -s) os traz inteiros.
+        # (o deploy envia build/, entao ela mora la' dentro)
+        os.makedirs(os.path.join(projeto, "build", "pasta com espaço"), exist_ok=True)
+        with open(os.path.join(projeto, "build", "pasta com espaço", "arquivo com espaço.txt"), "w") as f:
+            f.write("ok\n")
         core.rpc("remote.deploy", {"name": alias})
         ev = core.evento("event.remote.deployed")
         check("o deploy chegou ao alvo", ev.get("success") is True, str(ev.get("error"))[:70])
         check("usou rsync", "rsync" in (ev.get("command") or ""), (ev.get("command") or "")[:70])
+
+        passo("navegacao remota real desde a home")
+        core.rpc("remote.directories", {"name": alias})
+        dirs = core.evento("event.remote.directories")
+        home_path = dirs.get("path", "")
+        check("SSH resolve a home do usuario no alvo", dirs.get("success") is True
+              and home_path.startswith("/home/"), home_path)
+        children = {entry["name"]: entry["path"] for entry in dirs.get("entries", [])}
+        check("a pasta do deploy aparece como escolha", "kinein" in children, str(children))
+        if "kinein" in children:
+            core.rpc("remote.directories", {"name": alias, "path": children["kinein"]})
+            inside = core.evento("event.remote.directories")
+            check("a navegacao entra na pasta e devolve parent", inside.get("success") is True
+                  and inside.get("path") == children["kinein"]
+                  and inside.get("parent") == home_path,
+                  str({k: inside.get(k) for k in ("path", "parent", "error")}))
+            check("o projeto enviado aparece como pasta filha",
+                  any(entry.get("name") == os.path.basename(projeto)
+                      for entry in inside.get("entries", [])),
+                  str(inside.get("entries", [])))
+            selected = next((entry.get("path") for entry in inside.get("entries", [])
+                             if entry.get("name") == os.path.basename(projeto)), None)
+            if selected:
+                core.rpc("remote.open", {"name": alias, "path": selected})
+                mirrored = core.evento("event.remote.synced")
+                local_mirror = mirrored.get("mirror", "")
+                check("a pasta escolhida abre como espelho por rsync",
+                      mirrored.get("success") is True and os.path.isfile(
+                          os.path.join(local_mirror, "build", "app")),
+                      str({k: mirrored.get(k) for k in ("success", "error", "mirror")}))
+
+                passo("pasta com espaco no nome")
+                core.rpc("remote.directories", {"name": alias, "path": selected + "/build"})
+                dentro = core.evento("event.remote.directories")
+                com_espaco = next((entry.get("path") for entry in dentro.get("entries", [])
+                                   if entry.get("name") == "pasta com espaço"), None)
+                check("o navegador oferece a pasta com espaco", com_espaco is not None,
+                      str({k: dentro.get(k) for k in ("success", "path", "entries", "error")}))
+                if com_espaco:
+                    core.rpc("remote.open", {"name": alias, "path": com_espaco})
+                    ev = core.evento("event.remote.synced")
+                    espelho = ev.get("mirror", "")
+                    check("ela abre como espelho com o arquivo inteiro",
+                          ev.get("success") is True and os.path.isfile(
+                              os.path.join(espelho, "arquivo com espaço.txt")),
+                          str({k: ev.get(k) for k in ("success", "error", "mirror")}))
 
         passo("a linha do shell")
         shell = core.rpc("remote.command", {"name": alias, "kind": "shell"})

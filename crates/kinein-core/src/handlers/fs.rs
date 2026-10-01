@@ -1,17 +1,20 @@
-//! Handlers for `fs.*` requests (`impl Core`): the `fs.*` router plus the leaf
-//! read/write/create/rename/delete/search handlers, all confined to the
-//! workspace via `crate::fsops`.
+//! Filesystem request router and mutation handlers.
+//!
+//! Read-only paths live in `fs_read`; transfer orchestration lives in
+//! `fs_transfer`.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use kinein_protocol::{
-    FsCreateDirectoryParams, FsCreateDirectoryResult, FsCreateFileParams, FsCreateFileResult,
-    FsDeleteResult, FsFindFilesParams, FsFindFilesResult, FsListResult, FsPathParams, FsReadResult,
-    FsRenameParams, FsRenameResult, FsReplaceParams, FsReplaceResult, FsSaveParams, FsSearchParams,
-    FsSearchResult, FsWriteResult, JsonRpcError, JsonRpcErrorCode, JsonRpcResponse,
+    FsCopyParams, FsCopyResult, FsCreateDirectoryParams, FsCreateDirectoryResult,
+    FsCreateFileParams, FsCreateFileResult, FsDeleteResult, FsFindFilesParams, FsFindFilesResult,
+    FsPathParams, FsRenameParams, FsRenameResult, FsReplaceParams, FsReplaceResult, FsSaveParams,
+    FsSearchParams, FsSearchResult, FsWriteResult, JobRisk, JsonRpcError, JsonRpcErrorCode,
+    JsonRpcResponse,
 };
 use serde_json::{Value, json};
 
+use crate::jobs::JobOutcome;
 use crate::rpc::{fs_error_response, no_workspace_response, parse_params};
 use crate::{Core, fsops};
 
@@ -26,11 +29,14 @@ impl Core {
         match method {
             "fs.list" => Some(self.fs_list_response(request_id, params)),
             "fs.read" => Some(self.fs_read_response(request_id, params)),
+            "fs.readExternal" => Some(self.fs_read_external_response(request_id, params)),
             "fs.createFile" => Some(self.fs_create_file_response(request_id, params)),
             "fs.createDirectory" => Some(self.fs_create_directory_response(request_id, params)),
             "fs.write" => Some(self.fs_write_response(request_id, params)),
             "fs.rename" => Some(self.fs_rename_response(request_id, params)),
-            "fs.delete" => Some(self.fs_delete_response(request_id, params)),
+            "fs.copy" => Some(self.fs_copy_response(request_id, params)),
+            "fs.transferBatch" => Some(self.fs_transfer_batch_response(request_id, params)),
+            "fs.delete" | "fs.trash" => Some(self.fs_remove_response(method, request_id, params)),
             "fs.findFiles" => Some(self.fs_find_files_response(request_id, params)),
             "fs.search" => Some(self.fs_search_response(request_id, params)),
             "fs.replace" => Some(self.fs_replace_response(request_id, params)),
@@ -92,71 +98,6 @@ impl Core {
                 )
             }
             Err(error) => fs_error_response(request_id, &error),
-        }
-    }
-
-    fn fs_list_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "fs.list");
-        };
-        match parse_params::<FsPathParams>(
-            request_id.as_ref(),
-            params,
-            "fs.list requer o campo path",
-        ) {
-            Ok(parsed) => match fsops::list_dir(&root, Path::new(&parsed.path)) {
-                Ok((path, entries)) => {
-                    self.watch_workspace_directory(&path);
-                    JsonRpcResponse::success(
-                        request_id,
-                        json!(FsListResult {
-                            path: path.display().to_string(),
-                            entries,
-                        }),
-                    )
-                }
-                Err(error) => fs_error_response(request_id, &error),
-            },
-            Err(response) => *response,
-        }
-    }
-
-    fn fs_read_response(
-        &mut self,
-        request_id: Option<Value>,
-        params: Option<&Value>,
-    ) -> JsonRpcResponse {
-        let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "fs.read");
-        };
-        match parse_params::<FsPathParams>(
-            request_id.as_ref(),
-            params,
-            "fs.read requer o campo path",
-        ) {
-            Ok(parsed) => match fsops::read_file(&root, Path::new(&parsed.path)) {
-                Ok((path, content)) => {
-                    if let Some(parent) = path.parent() {
-                        self.watch_workspace_directory(parent);
-                    }
-                    if let Some(lsp) = self.lsp.as_mut() {
-                        lsp.did_open(&path, &content);
-                    }
-                    JsonRpcResponse::success(
-                        request_id,
-                        json!(FsReadResult {
-                            path: path.display().to_string(),
-                            content,
-                        }),
-                    )
-                }
-                Err(error) => fs_error_response(request_id, &error),
-            },
-            Err(response) => *response,
         }
     }
 
@@ -365,20 +306,92 @@ impl Core {
         }
     }
 
-    fn fs_delete_response(
-        &mut self,
+    fn fs_copy_response(
+        &self,
         request_id: Option<Value>,
         params: Option<&Value>,
     ) -> JsonRpcResponse {
         let Some(root) = self.workspace_root() else {
-            return no_workspace_response(request_id, "fs.delete");
+            return no_workspace_response(request_id, "fs.copy");
+        };
+        let parsed = match parse_params::<FsCopyParams>(
+            request_id.as_ref(),
+            params,
+            "fs.copy requer os campos from e to",
+        ) {
+            Ok(parsed) => parsed,
+            Err(response) => return *response,
+        };
+        if let (Some(jobs), Some(responses)) = (self.jobs.as_ref(), self.deferred.as_ref()) {
+            let responses = responses.clone();
+            let title = format!(
+                "Copiar {}",
+                Path::new(&parsed.from)
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+            );
+            jobs.spawn("fs.copy", title, JobRisk::Medium, true, move |ctx| {
+                ctx.report_progress(0.0, Some("Conferindo origem"));
+                let mut last_reported = 0_u64;
+                let outcome = fsops::copy_with_progress(
+                    &root,
+                    Path::new(&parsed.from),
+                    Path::new(&parsed.to),
+                    || ctx.is_cancelled(),
+                    |completed, total| {
+                        if completed.saturating_sub(last_reported) >= 1 << 20 || completed == total
+                        {
+                            last_reported = completed;
+                            let fraction = if total == 0 {
+                                0.0
+                            } else {
+                                let permille =
+                                    (u128::from(completed) * 1000 / u128::from(total)).min(990);
+                                f64::from(u16::try_from(permille).unwrap_or(990)) / 1000.0
+                            };
+                            ctx.report_progress(fraction, Some("Copiando"));
+                        }
+                    },
+                );
+                let status = if outcome.is_ok() {
+                    ctx.report_progress(1.0, Some("Cópia concluída"));
+                    JobOutcome::Success
+                } else {
+                    JobOutcome::Failed
+                };
+                drop(responses.send(copy_result_response(request_id, outcome)));
+                status
+            });
+            return crate::rpc::deferred_marker();
+        }
+        self.defer_work(request_id, move |request_id| {
+            copy_result_response(
+                request_id,
+                fsops::copy(&root, Path::new(&parsed.from), Path::new(&parsed.to)),
+            )
+        })
+    }
+
+    fn fs_remove_response(
+        &mut self,
+        method: &str,
+        request_id: Option<Value>,
+        params: Option<&Value>,
+    ) -> JsonRpcResponse {
+        let Some(root) = self.workspace_root() else {
+            return no_workspace_response(request_id, method);
         };
         match parse_params::<FsPathParams>(
             request_id.as_ref(),
             params,
-            "fs.delete requer o campo path",
+            &format!("{method} requer o campo path"),
         ) {
-            Ok(parsed) => match fsops::delete(&root, Path::new(&parsed.path)) {
+            Ok(parsed) => match if method == "fs.trash" {
+                fsops::move_to_trash(&root, Path::new(&parsed.path))
+            } else {
+                fsops::delete(&root, Path::new(&parsed.path))
+            } {
                 Ok(path) => {
                     // Documento apagado que continua aberto no servidor deixa
                     // diagnostico de um arquivo que nao existe mais na aba
@@ -398,5 +411,21 @@ impl Core {
             },
             Err(response) => *response,
         }
+    }
+}
+
+fn copy_result_response(
+    request_id: Option<Value>,
+    outcome: Result<(PathBuf, PathBuf), fsops::FsError>,
+) -> JsonRpcResponse {
+    match outcome {
+        Ok((from, to)) => JsonRpcResponse::success(
+            request_id,
+            json!(FsCopyResult {
+                from: from.display().to_string(),
+                to: to.display().to_string(),
+            }),
+        ),
+        Err(error) => fs_error_response(request_id, &error),
     }
 }

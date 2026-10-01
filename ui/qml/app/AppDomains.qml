@@ -1,4 +1,5 @@
 import QtQuick
+import KineinVectis
 
 // Dono dos controllers de dominio e do IPC dos dois sentidos (EventRouter +
 // RequestRouter). Existe porque o composition root cresce LINEARMENTE com o
@@ -369,6 +370,7 @@ Item {
     ProjectTreeController {
         id: projectTree
 
+        clipboard: Clipboard
         workspaceRoot: root.coreClient.workspaceRoot
         hostWidth: root.hostWidth
         hostHeight: root.hostHeight

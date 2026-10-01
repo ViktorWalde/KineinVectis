@@ -34,6 +34,8 @@ Rectangle {
     property bool externalConflict: false
     property bool externalDeleted: false
     property string externalMessage: ""
+    property bool readOnlyExternal: false
+    property string externalPreviewError: ""
     property string watchError: ""
     property var outlineItems: []
     property real outlineWidth: 220
@@ -97,7 +99,7 @@ Rectangle {
 
     // Onde acaba o cabecalho (abas + trilha + faixa de conflito). O host de
     // overlay ancora nisso o que flutua no topo; ver ShellEditorOverlayHost.
-    readonly property real overlayTop: externalBanner.y + externalBanner.height
+    readonly property real overlayTop: statusBanners.y + statusBanners.height
 
     radius: Theme.radiusLarge
     color: Theme.background1
@@ -114,12 +116,8 @@ Rectangle {
         filesModel: root.filesModel
         fileCount: root.fileCount
         currentIndex: root.currentTab
-        onTabSelected: function(docId) {
-            root.tabSelected(docId);
-        }
-        onTabCloseRequested: function(docId) {
-            root.tabCloseRequested(docId);
-        }
+        onTabSelected: docId => root.tabSelected(docId)
+        onTabCloseRequested: docId => root.tabCloseRequested(docId)
     }
 
     EditorBreadcrumbs {
@@ -134,30 +132,30 @@ Rectangle {
         path: root.breadcrumbPath
     }
 
-    EditorExternalChangeBanner {
-        id: externalBanner
+    EditorStatusBanners {
+        id: statusBanners
 
         anchors.top: breadcrumbsBar.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: Theme.spacingSmall
         anchors.rightMargin: Theme.spacingSmall
-        anchors.topMargin: visible ? Theme.spacingXSmall : 0
-        active: root.externalConflict || root.watchError !== ""
-        deleted: root.externalDeleted
-        watcherFailure: !root.externalConflict && root.watchError !== ""
-        message: root.externalConflict ? root.externalMessage
-                 : qsTr("O monitor de arquivos falhou: %1. Saves continuam protegidos contra conflito.")
-                   .arg(root.watchError)
+        externalConflict: root.externalConflict
+        externalDeleted: root.externalDeleted
+        externalMessage: root.externalMessage
+        watchError: root.watchError
+        readOnlyExternal: root.readOnlyExternal
+        externalPreviewError: root.externalPreviewError
+        currentFilePath: root.currentFilePath
         onReloadRequested: root.externalReloadRequested()
         onKeepLocalRequested: root.externalKeepLocalRequested()
-        onDismissRequested: root.watchErrorDismissRequested()
+        onWatchErrorDismissRequested: root.watchErrorDismissRequested()
     }
 
     MarkdownModeBar {
         id: modeBar
 
-        anchors.top: externalBanner.bottom
+        anchors.top: statusBanners.bottom
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingSmall
         anchors.topMargin: visible ? Theme.spacingXSmall : 0
@@ -171,7 +169,7 @@ Rectangle {
     MarkdownPreviewPane {
         id: preview
 
-        anchors.top: modeBar.visible ? modeBar.bottom : externalBanner.bottom
+        anchors.top: modeBar.visible ? modeBar.bottom : statusBanners.bottom
         anchors.bottom: parent.bottom
         // SEM ancora a' esquerda, e com LARGURA explicita. A primeira versao
         // tentava `anchors.left: sideBySide ? undefined : parent.left`, e a foto
@@ -218,13 +216,14 @@ Rectangle {
         id: editor
 
         visible: !root.previewOnly
-        anchors.top: modeBar.visible ? modeBar.bottom : externalBanner.bottom
+        anchors.top: modeBar.visible ? modeBar.bottom : statusBanners.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: root.sideBySide ? previewSplitter.left : outlineSide.left
         anchors.rightMargin: Theme.spacingSmall
         anchors.margins: Theme.spacingSmall
         hasOpenFile: root.currentTab >= 0
+        readOnly: root.readOnlyExternal
         breakpointLines: root.breakpointLines
         executionLine: root.executionLine
         diffLineKinds: root.diffLineKinds
@@ -279,7 +278,7 @@ Rectangle {
     EditorOutlineSide {
         id: outlineSide
 
-        anchors.top: externalBanner.bottom
+        anchors.top: statusBanners.bottom
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         panelWidth: root.outlineWidth

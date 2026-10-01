@@ -3,7 +3,46 @@
 Versões de teste fechado. O detalhe de cada mudança, com data, medida e
 prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
 
-## 0.3.0 — em desenvolvimento
+## Série 0.3 — checkout em desenvolvimento, fechamento previsto na 0.3.5
+
+Cargo/CMake já identificam a candidata local como `0.3.5`. Um AppImage
+candidato foi gerado e passou nos smokes local e Debian mínimo, mas ainda não
+foi lançado. O fechamento depende da matriz P3, da escolha da pasta remota
+desde a home e do gate V8 completo. H0 foi aprovado pelo autor em 2026-09-30.
+O roteiro e as evidências estão nos roadmaps 40 e 47 e no checkpoint
+`DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`.
+
+- **Projeto e arquivos (P0–P3, em andamento):** comando curto `kinein`, uma
+  janela por workspace, navegação e seleção múltipla na árvore, ações por
+  menu e teclado, clipboard de arquivos, transferências por lote com Jobs,
+  colisões sem sobrescrita e importação externa por cópia. O arrasto interno,
+  a importação do Nautilus, a abertura no editor e na tela inicial foram
+  exercitados em X11 com arquivos temporários. O botão de remoção usa a
+  lixeira do sistema; a exclusão permanente exige escolha separada.
+- **Arquivo externo no editor:** uma URL local única abre aba somente leitura,
+  sem importação, escrita, rascunho ou restauração na sessão. O protocolo
+  `0.142.0` lê texto UTF-8 de até 1 MiB pela rotina segura já usada na
+  importação. Provado com o mouse real a partir do Nautilus, em X11 e Wayland.
+  A prova revelou e corrigiu um defeito: trocar de aba podia marcar a aba de
+  destino como modificada com o texto da anterior.
+- **Remote SSH 0.143.0:** a escolha de pasta começa na home do alvo; navega
+  filhas e pai por Job SSH e abre o espelho pelo `remote.open` existente.
+  A prova com `sshd` e `rsync` reais passou. Caminho longo da HOME agora
+  desliga multiplexação quando excederia o limite do socket Unix.
+- **AppImage com Qt 6.4 corrigido:** os cinco painéis de ambiente voltaram a
+  abrir no pacote (o Loader do Qt 6.4 recusava os componentes) e os ícones SVG
+  da árvore voltaram a aparecer (plugin `libqsvg` incluído). O smoke do
+  AppImage agora reprova aviso do motor QML e a falta do plugin.
+- Protocolo `0.144.0` — **pasta com espaço no espelho SSH.** O navegador
+  oferece e o espelho abre pastas e arquivos com espaço no nome (`rsync -s`),
+  provado contra `sshd` real. O caminho digitado precisa ser absoluto.
+- **Compatibilidade:** um workspace com metadata, sessão e configurações da
+  0.2 reabriu no core sem perder código, abas ou preferências. O binário do
+  checkout abriu nativamente em Wayland. Arrastar da árvore para o Nautilus
+  copia o item, provado pelo autor em Wayland. A recuperação pela Lixeira do
+  GNOME foi provada na HOME.
+- **Janela (H0):** gestos de menu, maximizar, restaurar, redimensionar e mover
+  foram exercitados em X11; a captura a 125% foi aprovada pelo autor.
 
 - Protocolo `0.136.0` — **recusar tem nome próprio.** A sonda do Grafana passa a
   dizer `authRefused` quando o servidor **negou** a credencial. Até aqui a tela

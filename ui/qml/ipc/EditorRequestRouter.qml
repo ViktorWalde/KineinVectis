@@ -23,6 +23,7 @@ Item {
             root.coreClient.readFile(path);
         }
 
+
         function onWriteFileRequested(path, content, expectedContent) {
             root.coreClient.writeFile(path, content, expectedContent);
         }
@@ -58,6 +59,14 @@ Item {
             root.coreClient.requestCompletion(path, content, line, column);
         }
 
+    }
+
+    Connections {
+        target: root.editorController.externalPreview
+
+        function onReadFileRequested(path) {
+            root.coreClient.readExternalFile(path);
+        }
     }
 
     // Segundo bloco, e a fronteira e' de DONO, nao de conveniencia: desde

@@ -25,6 +25,7 @@ RUN apt-get update \
         qt6-declarative-dev \
         qt6-tools-dev-tools \
         qt6-wayland \
+        libqt6svg6 \
         qml6-module-qtqml \
         qml6-module-qtqml-models \
         qml6-module-qtqml-workerscript \

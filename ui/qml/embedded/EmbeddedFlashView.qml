@@ -53,7 +53,9 @@ Item {
                 KvToggleChip {
                     required property string modelData
 
-                    anchors.verticalCenter: parent.verticalCenter
+                    // O delegate nasce sem `parent` por um instante (painel criado por
+                    // `createObject`, ver ShellEnvironmentOverlays): sem a guarda, TypeError.
+                    anchors.verticalCenter: parent ? parent.verticalCenter : undefined
                     labelText: modelData
                     active: root.flash && root.flash.engine === modelData
                     tooltip: qsTr("Usar %1 como motor; solto, o modelo do projeto decide").arg(modelData)

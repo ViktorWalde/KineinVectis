@@ -67,7 +67,8 @@ Item {
     }
 
     function currentPath() {
-        return documentController === null ? "" : documentController.currentFilePath();
+        return documentController === null || documentController.currentReadOnly
+               ? "" : documentController.currentFilePath();
     }
 
     function restoreSession(files, activeFile) {
@@ -155,7 +156,8 @@ Item {
             }
             const files = [];
             for (let index = 0; index < root.filesModel.count; index++) {
-                files.push(root.filesModel.get(index).path);
+                const document = root.filesModel.get(index);
+                if (document.readOnly !== true) files.push(document.path);
             }
             root.saveSessionRequested(files, root.currentPath());
         }

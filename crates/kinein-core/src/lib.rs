@@ -292,6 +292,9 @@ impl Core {
             .or_else(|| self.remote_command_request_response(method, request_id.clone(), params))
             .or_else(|| self.remote_discover_request_response(method, request_id.clone(), params))
             .or_else(|| self.remote_mirror_request_response(method, request_id.clone(), params))
+            .or_else(|| {
+                self.remote_directories_request_response(method, request_id.clone(), params)
+            })
             .or_else(|| self.jobs_request_response(method, request_id.clone(), params))
             .or_else(|| self.draft_request_response(method, request_id.clone(), params))
             .unwrap_or_else(|| {

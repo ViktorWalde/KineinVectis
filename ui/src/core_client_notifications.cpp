@@ -123,6 +123,10 @@ void CoreClient::handleNotification(const QString& method, const QJsonObject& pa
         emit remoteSynced(params.toVariantMap());
         return;
     }
+    if (method == QStringLiteral("event.remote.directories")) {
+        emit remoteDirectoriesResolved(params.toVariantMap());
+        return;
+    }
     if (method == QStringLiteral("event.python.stubs")) {
         // jobId, success, package, command e target: a tela diz e pede o status.
         emit pythonStubsFinished(params.toVariantMap());

@@ -1,4 +1,5 @@
 import QtQuick
+import KineinVectis
 
 Item {
     id: root
@@ -6,9 +7,11 @@ Item {
     property string entryKind: "file"
     property string entryName: ""
     property string errorText: ""
+    property bool pending: false
     property real maxAvailableWidth: 380
 
     signal confirmRequested()
+    signal permanentRequested()
     signal cancelRequested()
 
     MouseArea {
@@ -21,7 +24,7 @@ Item {
         height: entryDeleteColumn.height + 2 * Theme.spacingMedium
         radius: Theme.radius
         color: Theme.background2
-        border.color: Theme.errorSoft
+        border.color: Theme.borderSoft
         border.width: 1
 
         Column {
@@ -35,7 +38,7 @@ Item {
 
             Text {
                 text: root.entryKind === "directory"
-                      ? qsTr("Excluir pasta") : qsTr("Excluir arquivo")
+                      ? qsTr("Remover pasta") : qsTr("Remover arquivo")
                 color: Theme.textPrimary
                 font.pixelSize: 12
                 font.bold: true
@@ -43,13 +46,8 @@ Item {
 
             Text {
                 width: parent.width
-                text: root.entryKind === "directory"
-                      ? qsTr("A pasta \"%1\" e todo o seu conteudo serao removidos "
-                             + "do disco. Esta acao nao pode ser desfeita.")
-                        .arg(root.entryName)
-                      : qsTr("O arquivo \"%1\" sera removido do disco. "
-                             + "Esta acao nao pode ser desfeita.")
-                        .arg(root.entryName)
+                text: qsTr("Mover \"%1\" para a lixeira? Você poderá recuperar "
+                           + "o item pelo gerenciador de arquivos.").arg(root.entryName)
                 color: Theme.textSecondary
                 font.pixelSize: 11
                 wrapMode: Text.WordWrap
@@ -64,63 +62,42 @@ Item {
                 wrapMode: Text.WordWrap
             }
 
+            Text {
+                width: parent.width
+                visible: root.pending
+                text: qsTr("Removendo…")
+                color: Theme.textSecondary
+                font.pixelSize: 10
+            }
+
             Row {
                 anchors.right: parent.right
                 spacing: Theme.spacingSmall
 
-                Rectangle {
-                    width: entryDeleteCancelText.width + 2 * Theme.spacingMedium
-                    height: 24
-                    radius: Theme.radius
-                    color: entryDeleteCancelArea.containsMouse
-                           ? Theme.surface2 : Theme.surface1
-                    border.color: Theme.borderSoft
-                    border.width: 1
-
-                    Text {
-                        id: entryDeleteCancelText
-
-                        anchors.centerIn: parent
-                        text: qsTr("Cancelar")
-                        color: Theme.textSecondary
-                        font.pixelSize: 11
-                    }
-
-                    MouseArea {
-                        id: entryDeleteCancelArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.cancelRequested()
-                    }
+                KvButton {
+                    text: qsTr("Cancelar")
+                    compact: true
+                    enabled: !root.pending
+                    onClicked: root.cancelRequested()
                 }
 
-                Rectangle {
-                    width: entryDeleteConfirmText.width + 2 * Theme.spacingMedium
-                    height: 24
-                    radius: Theme.radius
-                    color: entryDeleteConfirmArea.pressed
-                           ? Qt.darker(Theme.errorSoft, 1.4) : Theme.errorSoft
-
-                    Text {
-                        id: entryDeleteConfirmText
-
-                        anchors.centerIn: parent
-                        text: qsTr("Excluir")
-                        color: Theme.background0
-                        font.pixelSize: 11
-                    }
-
-                    MouseArea {
-                        id: entryDeleteConfirmArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.confirmRequested()
-                    }
+                KvButton {
+                    text: qsTr("Mover para a lixeira")
+                    primary: true
+                    compact: true
+                    enabled: !root.pending
+                    onClicked: root.confirmRequested()
                 }
+            }
+
+            KvButton {
+                anchors.right: parent.right
+                text: qsTr("Excluir permanentemente")
+                compact: true
+                danger: true
+                tooltip: qsTr("Apaga do disco sem possibilidade de recuperar pela lixeira")
+                enabled: !root.pending
+                onClicked: root.permanentRequested()
             }
         }
     }

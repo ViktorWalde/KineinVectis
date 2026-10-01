@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import KineinVectis
 
 Rectangle {
     id: root
@@ -11,6 +12,8 @@ Rectangle {
     // path absoluto -> kind do git (fatia M3.1); a revisão força rebind.
     property var gitKinds: ({})
     property int gitRevision: 0
+    property real dragEdgeY: -1
+    readonly property bool dropToRoot: rootDrop.validDrag
 
     signal createFileRequested()
     signal createDirectoryRequested()
@@ -23,9 +26,25 @@ Rectangle {
     signal scriptRunRequested(string path)
     signal contextMenuRequested(string path, string kind, string name,
                                 real sceneX, real sceneY)
+    signal copyRequested()
+    signal cutRequested()
+    signal pasteRequested()
+    signal filesDropped(var paths, string destination, bool copy, bool external)
 
     function focusTree() {
         explorerView.forceActiveFocus();
+    }
+
+    function dragSources(path) {
+        const selected = root.selectedPaths.indexOf(path) >= 0
+                         ? root.selectedPaths : [path];
+        const paths = selected.filter(candidate => !selected.some(other =>
+            other !== candidate && candidate.startsWith(other + "/")));
+        return paths.length <= 128 ? paths : [];
+    }
+
+    function trackDrag(sceneY) {
+        dragEdgeY = explorerView.mapFromItem(null, 0, sceneY).y;
     }
 
     // `revision` existe so' para o binding reavaliar quando o git muda.
@@ -39,8 +58,22 @@ Rectangle {
     implicitWidth: 260
     radius: Theme.radiusLarge
     color: Theme.background1
-    border.color: Theme.borderSoft
-    border.width: 1
+    border.color: dropToRoot ? Theme.accent : Theme.borderSoft
+    border.width: dropToRoot ? 2 : 1
+
+    Timer {
+        interval: 35
+        repeat: true
+        running: root.dragEdgeY >= 0
+        onTriggered: {
+            if (root.dragEdgeY < 24)
+                explorerView.contentY = Math.max(0, explorerView.contentY - 8);
+            else if (root.dragEdgeY > explorerView.height - 24)
+                explorerView.contentY = Math.min(
+                    Math.max(0, explorerView.contentHeight - explorerView.height),
+                    explorerView.contentY + 8);
+        }
+    }
 
     Column {
         anchors.fill: parent
@@ -150,6 +183,9 @@ Rectangle {
                 root.fileOpenRequested(root.entriesModel.get(indice).path);
             }
             onSelectAllRequested: root.selectAllRequested()
+            onCopyRequested: root.copyRequested()
+            onCutRequested: root.cutRequested()
+            onPasteRequested: root.pasteRequested()
             onMenuRequested: function (indice) {
                 const linha = root.entriesModel.get(indice);
                 if (root.selectedPaths.indexOf(linha.path) < 0) {
@@ -186,6 +222,19 @@ Rectangle {
                 evento.accepted = teclado.handleKey(evento);
             }
 
+            ProjectTreeDropArea {
+                id: rootDrop
+                anchors.fill: parent
+                z: -1
+                destination: root.projectTree.workspaceRoot
+                urlDecoder: Clipboard
+                onDragPosition: function(y) { root.dragEdgeY = y; }
+                onDragEnded: { root.dragEdgeY = -1; }
+                onFilesDropped: function(paths, destination, copy, external) {
+                    root.filesDropped(paths, destination, copy, external);
+                }
+            }
+
             delegate: ProjectTreeRow {
                 id: treeRow
 
@@ -196,6 +245,21 @@ Rectangle {
                 gitColor: root.gitFileColor(treeRow.path, root.gitRevision)
                 runnable: root.projectTree !== null
                           && root.projectTree.isRunnableScript(treeRow.path, treeRow.kind)
+                dragPaths: root.dragSources(treeRow.path)
+
+                onFilesDropped: function(paths, copy, external) {
+                    root.dragEdgeY = -1;
+                    const directory = treeRules.isDirectory(treeRow.kind)
+                                      ? treeRow.path : root.projectTree.parentDir(treeRow.path);
+                    root.filesDropped(paths, directory, copy, external);
+                }
+                onDragPosition: function(sceneY) { root.trackDrag(sceneY); }
+                onDragEnded: { root.dragEdgeY = -1; }
+                onDirectoryHoverRequested: {
+                    if (treeRules.isDirectory(treeRow.kind) && !treeRow.expanded)
+                        root.directoryToggleRequested(treeRow.path,
+                                                      treeRow.index, false);
+                }
 
                 onClicked: function(modifiers, button, sceneX, sceneY) {
                     explorerView.currentIndex = treeRow.index;
@@ -211,7 +275,7 @@ Rectangle {
                         if (treeRules.isDirectory(treeRow.kind)) {
                             root.directoryToggleRequested(treeRow.path, treeRow.index,
                                                           treeRow.expanded);
-                        } else if (treeRow.kind === "file") {
+                        } else if (treeRules.isFile(treeRow.kind)) {
                             root.fileOpenRequested(treeRow.path);
                         }
                     }

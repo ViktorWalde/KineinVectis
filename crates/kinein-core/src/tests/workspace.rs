@@ -289,6 +289,68 @@ fn workspace_session_roundtrips_through_open() {
     );
 }
 
+#[test]
+fn workspace_from_0_2_keeps_session_settings_and_project_files() {
+    let dir = std::env::temp_dir()
+        .join("kinein-core-tests")
+        .join(format!("{}-workspace-0-2-compat", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join(".kinein")).unwrap();
+    std::fs::create_dir_all(dir.join("src")).unwrap();
+    let source = "fn main() { println!(\"0.2\"); }\n";
+    std::fs::write(dir.join("Cargo.toml"), "[package]\nname = \"legacy\"\n").unwrap();
+    std::fs::write(dir.join("src/main.rs"), source).unwrap();
+
+    // Formatos persistidos pela 0.2: metadata do workspace em 0.2.0,
+    // sessao e settings em schema 1. A abertura pode atualizar metadata
+    // derivada, mas nao deve perder abas, preferencias ou codigo do projeto.
+    std::fs::write(
+        dir.join(".kinein/workspace.json"),
+        format!(
+            "{{\"schemaVersion\":\"0.2.0\",\"name\":\"legacy\",\"root\":\"{}\",\"kind\":\"rustCargo\",\"markers\":[\"Cargo.toml\"],\"capabilities\":{{\"buildSystems\":[\"cargo\"]}}}}",
+            dir.display()
+        ),
+    )
+    .unwrap();
+    let session = r#"{"schemaVersion":1,"openFiles":["src/main.rs"],"activeFile":"src/main.rs"}"#;
+    let settings = r#"{"schemaVersion":1,"editorFontSize":21,"formatOnSave":true}"#;
+    std::fs::write(dir.join(".kinein/session.json"), session).unwrap();
+    std::fs::write(dir.join(".kinein/settings.json"), settings).unwrap();
+
+    let mut core = core_with_empty_search_path("workspace-0-2-compat");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        75_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let result = opened.response().result.as_ref().unwrap();
+    let main = dir.join("src/main.rs").display().to_string();
+    assert_eq!(result["kind"], "rustCargo");
+    assert_eq!(result["session"]["openFiles"], json!([main]));
+    assert_eq!(result["session"]["activeFile"], main);
+
+    let effective = core.handle_request(&JsonRpcRequest::new(76_i64, "settings.get", None));
+    let values = effective.response().result.as_ref().unwrap();
+    assert_eq!(values["settings"]["editorFontSize"], 21);
+    assert_eq!(values["settings"]["formatOnSave"], true);
+    assert_eq!(
+        std::fs::read_to_string(dir.join("src/main.rs")).unwrap(),
+        source
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.join(".kinein/session.json")).unwrap(),
+        session
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.join(".kinein/settings.json")).unwrap(),
+        settings
+    );
+    let metadata: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(dir.join(".kinein/workspace.json")).unwrap())
+            .unwrap();
+    assert_eq!(metadata["schemaVersion"], "0.2.0");
+}
+
 /// A suite NAO pode escrever no estado global real do usuario.
 ///
 /// Achado em 2026-08-29: `enable_lsp` ligava a persistencia por tabela, entao

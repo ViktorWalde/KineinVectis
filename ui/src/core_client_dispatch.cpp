@@ -26,6 +26,7 @@ void CoreClient::handleResponseLine(const QByteArray& line)
     const qint64 id = response.value(QStringLiteral("id")).toInteger(-1);
     const QString method = m_pendingMethods.take(id);
     const QString requestPath = m_pendingPaths.take(id);
+    const QString requestRemoteName = m_pendingRemoteDirectoryNames.take(id);
 
     if (method != QStringLiteral("lsp.didChange") &&
         method != QStringLiteral("lsp.semanticTokens") &&
@@ -59,6 +60,15 @@ void CoreClient::handleResponseLine(const QByteArray& line)
         if (method == QStringLiteral("fs.write")) {
             emit fileSaveFailed(requestPath, message);
         }
+        if (method == QStringLiteral("fs.readExternal")) {
+            emit externalFileLoadFailed(requestPath, message);
+        }
+        if (method == QStringLiteral("remote.directories")) {
+            emit remoteDirectoriesFailed(requestRemoteName, requestPath, message);
+        }
+        if (method == QStringLiteral("fs.copy")) {
+            emit pathCopyFailed(requestPath, message);
+        }
         if (method == QStringLiteral("debug.evaluate")) {
             // O core devolve a expressao nos `details`; sem ela a falha de um
             // watch marcaria todos os outros.
@@ -85,6 +95,11 @@ bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& re
     if (method == QStringLiteral("fs.read")) {
         emit fileLoaded(result.value(QStringLiteral("path")).toString(),
                         result.value(QStringLiteral("content")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("fs.readExternal")) {
+        emit externalFileLoaded(result.value(QStringLiteral("path")).toString(),
+                                result.value(QStringLiteral("content")).toString());
         return true;
     }
     if (method == QStringLiteral("fs.createFile")) {
@@ -121,7 +136,16 @@ bool CoreClient::dispatchFileResult(const QString& method, const QJsonObject& re
                          result.value(QStringLiteral("to")).toString());
         return true;
     }
-    if (method == QStringLiteral("fs.delete")) {
+    if (method == QStringLiteral("fs.copy")) {
+        emit pathCopied(result.value(QStringLiteral("from")).toString(),
+                        result.value(QStringLiteral("to")).toString());
+        return true;
+    }
+    if (method == QStringLiteral("fs.transferBatch")) {
+        emit pathBatchTransferred(result.toVariantMap());
+        return true;
+    }
+    if (method == QStringLiteral("fs.delete") || method == QStringLiteral("fs.trash")) {
         emit pathDeleted(result.value(QStringLiteral("path")).toString());
         return true;
     }

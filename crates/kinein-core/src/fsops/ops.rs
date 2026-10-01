@@ -2,14 +2,15 @@
 
 use std::{
     fs,
-    io::{self, Write},
+    io::{self, Read, Write},
     path::{Path, PathBuf},
-    sync::atomic::{AtomicU64, Ordering},
 };
 
 use kinein_protocol::{FsEntry, FsEntryKind};
 
-use super::confine::{confine, confine_file, new_child_path};
+use super::confine::{TransferKind, confine, confine_file, new_child_path, transfer_paths};
+use super::copy_ops::open_source;
+use super::publish::{publish_noreplace, temp_sibling};
 use super::{FsError, MAX_READ_BYTES};
 
 /// Lists a directory inside the workspace root.
@@ -68,27 +69,55 @@ pub fn list_dir(root: &Path, path: &Path) -> Result<(PathBuf, Vec<FsEntry>), FsE
 /// Reads a UTF-8 text file inside the workspace root.
 pub fn read_file(root: &Path, path: &Path) -> Result<(PathBuf, String), FsError> {
     let file = confine_file(root, path)?;
+    let content = read_utf8_regular(&file)?;
+    Ok((file, content))
+}
 
-    let metadata = fs::metadata(&file).map_err(|source| FsError::Io {
-        path: file.display().to_string(),
+/// Reads one explicitly selected local file for an external, read-only tab.
+/// No workspace mutation, watcher, or LSP state is created by this operation.
+pub fn read_external_file(path: &Path) -> Result<(PathBuf, String), FsError> {
+    let content = read_utf8_regular(path)?;
+    Ok((path.to_path_buf(), content))
+}
+
+fn read_utf8_regular(path: &Path) -> Result<String, FsError> {
+    // Shared with import: descriptor-relative traversal rejects symlinked
+    // components, and NONBLOCK prevents a replaced FIFO from hanging the UI.
+    let handle = open_source(path)?;
+    let metadata = handle.metadata().map_err(|source| FsError::Io {
+        path: path.display().to_string(),
         source,
     })?;
+    if !metadata.is_file() {
+        return Err(FsError::NotAFile {
+            path: path.display().to_string(),
+        });
+    }
     if metadata.len() > MAX_READ_BYTES {
         return Err(FsError::TooLarge {
-            path: file.display().to_string(),
+            path: path.display().to_string(),
             size: metadata.len(),
         });
     }
 
-    let bytes = fs::read(&file).map_err(|source| FsError::Io {
-        path: file.display().to_string(),
-        source,
-    })?;
+    let mut bytes = Vec::new();
+    handle
+        .take(MAX_READ_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|source| FsError::Io {
+            path: path.display().to_string(),
+            source,
+        })?;
+    if bytes.len() as u64 > MAX_READ_BYTES {
+        return Err(FsError::TooLarge {
+            path: path.display().to_string(),
+            size: bytes.len() as u64,
+        });
+    }
     let content = String::from_utf8(bytes).map_err(|_utf8_error| FsError::NotText {
-        path: file.display().to_string(),
+        path: path.display().to_string(),
     })?;
-
-    Ok((file, content))
+    Ok(content)
 }
 
 /// Creates a new UTF-8 text file inside the workspace root.
@@ -219,18 +248,6 @@ fn atomic_write(target: &Path, bytes: &[u8]) -> Result<(), FsError> {
     })
 }
 
-/// Caminho de um temp irmão único e oculto, no mesmo diretório do alvo (para
-/// o `rename` ser atômico — mesmo filesystem).
-fn temp_sibling(target: &Path) -> PathBuf {
-    static COUNTER: AtomicU64 = AtomicU64::new(0);
-    let seq = COUNTER.fetch_add(1, Ordering::Relaxed);
-    let name = target
-        .file_name()
-        .and_then(|value| value.to_str())
-        .unwrap_or("file");
-    target.with_file_name(format!(".{name}.kinein-tmp-{}-{seq}", std::process::id()))
-}
-
 /// Renames or moves a file or directory inside the workspace root.
 ///
 /// `from` must exist and stay inside the workspace. `to` must resolve to a new
@@ -238,61 +255,146 @@ fn temp_sibling(target: &Path) -> PathBuf {
 /// already exist. The workspace root itself cannot be renamed. Returns the
 /// canonical source and destination paths.
 pub fn rename(root: &Path, from: &Path, to: &Path) -> Result<(PathBuf, PathBuf), FsError> {
-    let source = confine(root, from)?;
-    if source == root {
-        return Err(FsError::WorkspaceRoot {
-            path: source.display().to_string(),
-        });
-    }
-
-    let target = new_child_path(root, to)?;
-    if target.exists() {
-        return Err(FsError::AlreadyExists {
-            path: target.display().to_string(),
-        });
-    }
-
-    fs::rename(&source, &target).map_err(|io_error| FsError::Io {
-        path: source.display().to_string(),
-        source: io_error,
-    })?;
+    let (source, target) = transfer_paths(root, from, to, TransferKind::Move)?;
+    publish_noreplace(&source, &target)?;
 
     Ok((source, target))
 }
 
-/// Deletes a file or directory inside the workspace root.
-///
-/// Directories are removed recursively. The path must stay inside the workspace
-/// and cannot be the workspace root itself. Returns the canonical deleted path.
-pub fn delete(root: &Path, path: &Path) -> Result<PathBuf, FsError> {
-    let target = confine(root, path)?;
-    if target == root {
-        return Err(FsError::WorkspaceRoot {
-            path: target.display().to_string(),
-        });
-    }
-
-    if target.is_dir() {
-        fs::remove_dir_all(&target)
-    } else {
-        fs::remove_file(&target)
-    }
-    .map_err(|io_error| FsError::Io {
-        path: target.display().to_string(),
-        source: io_error,
-    })?;
-
-    Ok(target)
-}
-
 #[cfg(test)]
 mod tests {
-    use std::{fs, path::PathBuf};
+    use std::{
+        fs,
+        path::PathBuf,
+        sync::atomic::{AtomicBool, Ordering},
+    };
 
     use kinein_protocol::FsEntryKind;
 
-    use super::super::{FsError, MAX_READ_BYTES};
-    use super::{delete, list_dir, read_file, rename, write_file, write_file_if_unchanged};
+    use super::super::{FsError, MAX_READ_BYTES, copy, copy_with_progress, delete};
+    use super::{list_dir, read_file, rename, write_file, write_file_if_unchanged};
+
+    #[test]
+    fn copy_preserves_binary_file_and_refuses_collision() {
+        let root = temp_root("copy-binary");
+        let source = root.join("imagem.bin");
+        let target = root.join("imagem-copia.bin");
+        fs::write(&source, [0, 255, 31, 128]).unwrap();
+
+        assert_eq!(
+            copy(&root, &source, &target).unwrap(),
+            (source.clone(), target.clone())
+        );
+        assert_eq!(fs::read(&target).unwrap(), [0, 255, 31, 128]);
+        assert_eq!(fs::read(&source).unwrap(), [0, 255, 31, 128]);
+
+        let error = copy(&root, &source, &target).unwrap_err();
+        assert!(matches!(error, FsError::AlreadyExists { .. }));
+        assert_eq!(fs::read(&target).unwrap(), [0, 255, 31, 128]);
+    }
+
+    #[test]
+    fn copy_directory_refuses_descendant_and_nested_symlink() {
+        let root = temp_root("copy-directory");
+        let source = root.join("src");
+        fs::create_dir_all(source.join("sub")).unwrap();
+        fs::write(source.join("sub/main.rs"), b"fn main() {}\n").unwrap();
+
+        let target = root.join("src-copia");
+        copy(&root, &source, &target).unwrap();
+        assert_eq!(
+            fs::read(target.join("sub/main.rs")).unwrap(),
+            b"fn main() {}\n"
+        );
+
+        let error = copy(&root, &source, &source.join("sub/loop")).unwrap_err();
+        assert!(matches!(error, FsError::InvalidFileName { .. }));
+        assert!(!source.join("sub/loop").exists());
+
+        std::os::unix::fs::symlink(root.join("outside"), source.join("sub/link")).unwrap();
+        let blocked = root.join("bloqueada");
+        let error = copy(&root, &source, &blocked).unwrap_err();
+        assert!(matches!(error, FsError::UnsupportedEntry { .. }));
+        assert!(!blocked.exists(), "nao publicar pasta parcialmente copiada");
+        assert!(
+            fs::read_dir(&root).unwrap().all(|entry| !entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .contains("kinein-tmp")),
+            "nao deixar staging depois da falha"
+        );
+    }
+
+    #[test]
+    fn copy_cancelled_mid_file_removes_staging_and_keeps_source() {
+        let root = temp_root("copy-cancelled");
+        let source = root.join("grande.bin");
+        let target = root.join("cancelada.bin");
+        fs::write(&source, vec![42_u8; 2 * 1024 * 1024]).unwrap();
+        let cancelled = AtomicBool::new(false);
+        let mut progress = 0;
+
+        let error = copy_with_progress(
+            &root,
+            &source,
+            &target,
+            || cancelled.load(Ordering::SeqCst),
+            |done, total| {
+                assert_eq!(total, 2 * 1024 * 1024);
+                progress = done;
+                cancelled.store(true, Ordering::SeqCst);
+            },
+        )
+        .unwrap_err();
+        assert!(matches!(error, FsError::Cancelled { .. }));
+        assert!(progress > 0);
+        assert_eq!(fs::metadata(&source).unwrap().len(), 2 * 1024 * 1024);
+        assert!(!target.exists());
+        assert!(fs::read_dir(&root).unwrap().all(|entry| {
+            !entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .contains("kinein-tmp")
+        }));
+    }
+
+    #[test]
+    fn rename_does_not_replace_dangling_symlink() {
+        let root = temp_root("rename-symlink-collision");
+        let source = root.join("origem.txt");
+        let target = root.join("destino.txt");
+        fs::write(&source, "preservar origem").unwrap();
+        std::os::unix::fs::symlink(root.join("ausente.txt"), &target).unwrap();
+
+        let error = rename(&root, &source, &target).unwrap_err();
+        assert!(matches!(error, FsError::AlreadyExists { .. }));
+        assert_eq!(fs::read_to_string(&source).unwrap(), "preservar origem");
+        assert!(
+            fs::symlink_metadata(&target)
+                .unwrap()
+                .file_type()
+                .is_symlink()
+        );
+    }
+
+    #[test]
+    fn rename_directory_into_its_descendant_is_rejected_before_mutation() {
+        let root = temp_root("rename-descendant");
+        let source = root.join("src");
+        let child = source.join("child");
+        fs::create_dir_all(&child).unwrap();
+        fs::write(child.join("keep.txt"), "preservar").unwrap();
+
+        let error = rename(&root, &source, &child.join("moved")).unwrap_err();
+        assert!(matches!(error, FsError::InvalidFileName { .. }));
+        assert_eq!(
+            fs::read_to_string(child.join("keep.txt")).unwrap(),
+            "preservar"
+        );
+        assert!(!child.join("moved").exists());
+    }
 
     fn temp_root(test_name: &str) -> PathBuf {
         let dir = std::env::temp_dir()

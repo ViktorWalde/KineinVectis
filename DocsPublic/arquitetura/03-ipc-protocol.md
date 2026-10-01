@@ -1,5 +1,75 @@
 # 03 — Protocolo IPC
 
+> **0.144.0 (2026-10-01) — pasta com espaço no espelho SSH.** `remote.open`
+> e `remote.directories` passam a usar a mesma regra
+> (`remote::valid_remote_dir`): caminho **absoluto** e sem caracteres de
+> controle. Espaço é aceito e as pastas com espaço voltam a ser oferecidas pela
+> listagem. Caminho relativo ou com `~` passa a ser recusado com mensagem. O
+> `rsync` do espelho ganha `-s` (`--protect-args`): o caminho chega ao `rsync`
+> do alvo sem passar pelo shell remoto, inclusive em alvos com rsync < 3.2.4.
+> Prova: teste integrado (argv único com espaço; recusa de relativo, `~` e
+> quebra de linha) e `scripts/testar-remote-ssh.sh` contra `sshd` real
+> (navegar até `pasta com espaço` e espelhar `arquivo com espaço.txt`).
+
+> **0.143.0 (2026-10-01) — escolha da pasta no alvo SSH a partir da home.**
+> `remote.directories { name, path? }` inicia um Job de consulta SSH: sem
+> `path`, usa `$HOME` do usuário no alvo; com `path`, exige caminho absoluto.
+> A resposta imediata é `{ jobId, command }`; o resultado vem em
+> `event.remote.directories { jobId, name, requestedPath, success, path,
+> parent?, entries: [{name,path}], error? }`. `requestedPath` é vazio na
+> consulta inicial e permite descartar resposta atrasada. O core usa a mesma
+> configuração `ssh` do alvo, BatchMode e escaping POSIX; diretórios são
+> delimitados por NUL e a listagem tem teto de 64 KiB. Pastas com espaços
+> passaram a ser oferecidas na 0.144.0. O método exige
+> workspace aberto e alvo salvo. A prova com SSH real desta fatia ainda deve
+> ser registrada no roadmap 40.
+>
+> **0.142.0 (2026-09-30) — leitura de arquivo externo em aba somente leitura.**
+> `fs.readExternal { path }` → `{ path, content }` exige workspace aberto e um
+> caminho local absoluto escolhido pelo usuário para o editor. Reutiliza a
+> leitura UTF-8 de arquivo regular com limite de 1 MiB e percurso por
+> descritores sem seguir symlinks. Ao contrário de `fs.read`, aceita caminho
+> fora da raiz e não registra watcher nem `didOpen` no LSP. Não cria cópia,
+> rascunho ou item de sessão; a UI bloqueia edição, formatação e salvamento
+> dessa aba. `fs.write` continua confinado ao workspace.
+>
+> **0.141.0 (2026-09-30) — lixeira recuperável explícita.**
+> `fs.trash { path }` → `{ path }` confina o item à raiz aberta, recusa a
+> própria raiz e o envia à lixeira FreeDesktop pelo core. Falha da lixeira
+> retorna erro, preservando a origem; `fs.delete` permanece disponível como
+> exclusão permanente explicitamente escolhida. As duas respostas usam o
+> mesmo resultado e a mesma atualização de árvore/abas/LSP.
+>
+> **0.140.0 (2026-09-30) — terminal em pasta selecionada.**
+> `terminal.open` aceita `cwd` absoluto opcional; ausente continua abrindo na
+> raiz do workspace. O core confina o diretório antes de entregar o path ao
+> gerenciador de PTY existente. Arquivo, caminho relativo e pasta fora da
+> raiz são recusados.
+>
+> **0.139.0 (2026-09-30) — importação local explícita no lote.**
+> `fs.transferBatch` aceita `operation: "import"`, com `from` absoluto fora
+> ou dentro do workspace e `to` dentro da raiz aberta. A origem permanece
+> intacta. O mesmo motor de cópia, staging, publicação sem sobrescrita,
+> resultado por item e Job é reutilizado. A UI só envia paths de URLs `file:`
+> locais soltas na árvore; URLs remotas são recusadas. A leitura da origem
+> percorre descritores com `O_NOFOLLOW`, rejeitando symlinks e entradas
+> especiais, inclusive em componentes intermediários.
+>
+> **0.138.0 (2026-09-30) — transferência em lote com resultado por item.**
+> `fs.transferBatch { operation: "copy"|"move", items: [{ from, to }] }`
+> valida todo o conjunto antes de alterar o disco. Depois executa em ordem;
+> falhas de execução são reportadas por item, sem prometer rollback do lote.
+> Com Jobs habilitados, há progresso e cancelamento cooperativo.
+>
+> **0.137.0 (2026-09-29) — cópia confinada de um item.**
+> `fs.copy { from, to }` → `{ from, to }` copia arquivo binário ou pasta
+> dentro do mesmo workspace. Recusa raiz, descendente da origem, links
+> simbólicos e entradas especiais; destino existente nunca é substituído.
+> A cópia é preparada em um irmão temporário e publicada sem substituir o
+> destino. O pedido pode responder de modo assíncrono. Com Jobs habilitados,
+> publica `event.job.*` com progresso por bytes e aceita `job.cancel`; a
+> resposta de `fs.copy` continua sendo `{ from, to }` ou erro. Não há lote.
+>
 > **0.136.0 (2026-09-26) — recusar tem nome próprio.**
 > `event.grafana.probed` ganha `authRefused`. Até aqui a UI só via
 > `authenticated: false`, que é **também** o que ela vê quando ninguém ofereceu
@@ -122,7 +192,7 @@
 > §P6, desenho escrito antes do código).** A pasta de um alvo SSH vira um
 > espelho local por `rsync`, e a IDE abre o espelho como workspace comum —
 > `fs.*`, índice, busca, git e LSP não mudam; o que muda é a sincronia.
-> `remote.open { name, path }` → job (`rsync -az -i --exclude .kinein -e 'ssh
+> `remote.open { name, path }` → job (`rsync -az -s -i --exclude .kinein -e 'ssh
 > [-p] [-i] -o ControlMaster=auto -o ControlPath=<cache>/ssh-%C -o
 > ControlPersist=60' [user@]host:<path>/ <espelho>/`) → `event.remote.synced
 > { jobId, name, direction, success, command, changed[], error?, mirror }`;
@@ -969,7 +1039,7 @@ RecentWorkspace {
 - o arquivo guarda apenas nome, raiz, último acesso e fixação: nunca conteúdo,
   credenciais ou contexto de IA.
 
-### Arquivos (`fs.list` / `fs.read` / `fs.createFile` / `fs.createDirectory` / `fs.write` / `fs.rename` / `fs.delete` / `fs.replace`)
+### Arquivos (`fs.list` / `fs.read` / `fs.readExternal` / `fs.createFile` / `fs.createDirectory` / `fs.write` / `fs.rename` / `fs.copy` / `fs.transferBatch` / `fs.trash` / `fs.delete` / `fs.replace`)
 
 Implementado no protocolo `0.4.0`. Todos exigem workspace aberto
 (`INVALID_REQUEST` caso contrário) e todo caminho é canonicalizado e
@@ -979,6 +1049,12 @@ confinado à raiz do workspace (`INVALID_PARAMS` se escapar).
   ordenado diretórios primeiro, depois nome case-insensitive.
 - `fs.read { path }` → `{ path, content }`. Limites: arquivo regular, até
   1 MiB, UTF-8 válido (senão `INVALID_PARAMS` com mensagem humana).
+- `fs.readExternal { path }` → `{ path, content }`. Criado em `0.142.0` para
+  uma URL local única solta no editor. Exige workspace aberto, mas aceita path
+  absoluto fora da raiz; lê arquivo regular UTF-8 até 1 MiB sem seguir
+  symlinks nos componentes do caminho. Não registra watcher/LSP e não tem
+  operação de escrita correspondente para arquivos externos. A UI mantém a
+  aba somente leitura e fora da sessão/rascunhos.
 - `fs.createFile { path, content? }` → `{ path, bytesWritten }`. Criado no
   protocolo `0.15.0`; o diretório pai precisa existir dentro do workspace e a
   operação falha se o arquivo já existir.
@@ -995,6 +1071,37 @@ confinado à raiz do workspace (`INVALID_PARAMS` se escapar).
   renomeia ou move um arquivo ou diretório dentro do workspace. `from` precisa
   existir; `to` não pode já existir e seu diretório pai precisa existir dentro
   do workspace. A raiz do workspace não pode ser renomeada (`INVALID_PARAMS`).
+  Desde `0.137.0`, a publicação usa `RENAME_NOREPLACE` também para impedir
+  sobrescrita se surgir uma colisão entre a validação e a operação.
+- `fs.copy { from, to }` → `{ from, to }`. Criado em `0.137.0`; copia um
+  arquivo regular ou diretório, inclusive conteúdo binário, no mesmo
+  workspace. O pai de `to` precisa existir; `to` não pode existir. Recusa
+  links simbólicos, arquivos especiais, a raiz e cópia de pasta para si ou
+  descendente. A publicação do destino é atômica e não substitui colisões.
+  No aplicativo, usa um Job cancelável `fs.copy`: `event.job.*` informa o
+  progresso por bytes; `job.cancel` interrompe a cópia entre blocos e remove
+  o staging, preservando a origem. O resultado final continua na resposta
+  original de `fs.copy`; não há lote neste método.
+- `fs.transferBatch { operation: "copy"|"move"|"import", items: [{ from, to }] }` →
+  `{ operation, items: [{ from, to, status, error? }], cancelled }`. Criado em
+  `0.138.0`; `import` desde `0.139.0`. Aceita de 1 a 128 pares. Cópia e
+  movimento requerem origens no workspace; importação aceita origem local
+  absoluta explicitamente selecionada e mantém seu conteúdo original. O
+  destino de todas as operações fica no workspace aberto. Valida antes de
+  escrever: confinamento, origem existente, destino novo, raiz protegida,
+  fontes iguais/ancestrais conflitantes, destinos duplicados, destino dentro
+  de outra fonte selecionada e, para cópia, symlinks/entradas especiais em
+  toda a árvore. Para importação, também recusa symlink nos componentes do
+  caminho da origem e entradas especiais; URLs remotas são rejeitadas na UI.
+  Falha dessa etapa é um erro RPC sem mutação. Na execução,
+  reutiliza `fs.copy`/`fs.rename` em ordem; `status` é
+  `success|failed|cancelled|notStarted`. Cada item conserva o destino do
+  pedido para atribuir falhas corretamente. Uma falha de execução não desfaz
+  itens anteriores nem impede os posteriores. Cancelar interrompe a cópia
+  corrente entre blocos e marca os restantes como `notStarted`; em movimento,
+  só interrompe entre itens, pois um rename individual é atômico. No
+  aplicativo, o lote é um Job cancelável com progresso; a resposta final traz
+  todos os resultados. A interface de seleção múltipla ainda está em ligação.
 - `fs.delete { path }` → `{ path }`. Criado no protocolo `0.19.0`; remove um
   arquivo ou diretório (recursivo para diretórios) dentro do workspace. A raiz
   do workspace não pode ser removida (`INVALID_PARAMS`). **Desde 2026-09-02**,
@@ -1002,6 +1109,12 @@ confinado à raiz do workspace (`INVALID_PARAMS` se escapar).
   `textDocument/didClose`: documento apagado que continua aberto deixa
   diagnóstico de um arquivo que não existe mais na aba Problemas. A forma da
   mensagem IPC não mudou.
+- `fs.trash { path }` → `{ path }`. Criado em `0.141.0`; move um arquivo ou
+  diretório do workspace para a lixeira recuperável do sistema, seguindo a
+  especificação FreeDesktop no Linux. Recusa a raiz e paths fora do workspace.
+  Se não houver lixeira utilizável, retorna erro e conserva a origem; não cai
+  silenciosamente em exclusão permanente. Após sucesso, a UI atualiza árvore
+  e abas pelo mesmo evento de remoção já usado por `fs.delete`.
 
 **Mudanças externas (protocolo `0.45.0`, T2):** ao abrir o workspace, o core
 inicia `notify` com backend nativo (`inotify` no Linux) e fallback por polling.
@@ -1252,8 +1365,10 @@ o que um gesto significa, porque isso depende do modo VT que só o emulador
 conhece. Nenhuma política por programa existe no core: uma CLI de IA recebe o
 mesmo tratamento de um `ls`.
 
-- `terminal.open {}` → `{ id, shell }`. Cada chamada cria uma sessão nova;
-  erro `INVALID_REQUEST` ao atingir o limite de 12 sessões.
+- `terminal.open { cwd? }` → `{ id, shell }`. Cada chamada cria uma sessão
+  nova; sem `cwd` começa na raiz. Desde `0.140.0`, `cwd` precisa ser diretório
+  absoluto existente dentro do workspace. Erro `INVALID_REQUEST` ao atingir
+  o limite de 12 sessões.
 - `terminal.input { id, data }` → `{ status: "ok" }`. Encaminha `data` **cru**
   ao PTY. A UI manda CADA tecla (char-a-char), incl. control chars
   (Enter=`\r`, Backspace=`\x7f`, setas=`\x1b[A..D`, Ctrl+letra, …) — não
@@ -2922,7 +3037,7 @@ event.job.finished  { "jobId", "status": "success|warning|failed|cancelled" }
 Regra de UX (specs): `event.job.*` atualizam status bar / tool window; não abrem
 pop-up automático. Job `high`/`dangerous` exige confirmação antes de iniciar.
 
-## Os 169 métodos roteados — a lista inteira
+## Os 174 métodos roteados — a lista inteira
 
 > **Refeita por medição em 2026-09-24**, contando os braços `"dominio.metodo"`
 > dos roteadores do core com o mesmo código do `verificar-fiacao-ipc.sh`. A
@@ -3005,13 +3120,17 @@ format.text
 
 fs.createDirectory
 fs.createFile
+fs.copy
 fs.delete
 fs.findFiles
 fs.list
 fs.read
+fs.readExternal
 fs.rename
 fs.replace
 fs.search
+fs.trash
+fs.transferBatch
 fs.write
 
 git.blame
@@ -3073,6 +3192,7 @@ quality.run
 
 remote.command
 remote.deploy
+remote.directories
 remote.discover
 remote.list
 remote.open
@@ -3935,6 +4055,8 @@ event.remote.probed   { jobId, name, success, arch?, kernel?, tools: [{ id, foun
                         failure (0.133.0, ausente quando success): authentication |
                         host | network | other — a causa TIPADA, nao a frase
 event.remote.deployed { jobId, name, success, source, dest, command, error? }
+event.remote.directories { jobId, name, requestedPath, success, path, parent?,
+                           entries: [{ name, path }], error? }
 ```
 
 **Persistência:** `.kinein/remotes.json` (`schemaVersion: 1`, ordenado pelo
@@ -4088,6 +4210,7 @@ ela carrega um host.
 
 ```text
 remote.open   { name, path }                       -> { jobId, command, mirror }   (job: pull)
+remote.directories { name, path? }                 -> { jobId, command }           (job: SSH)
 remote.sync   { direction: pull | push, paths? }   -> { jobId, command }           (job)
 remote.status {}                                   -> { mirror?: RemoteMirror }
 RemoteMirror  name · host · path (no alvo) · mirrorRoot (local)

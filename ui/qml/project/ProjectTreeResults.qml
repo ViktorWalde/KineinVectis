@@ -24,16 +24,21 @@ Item {
         tree.focusTreeRequested();
     }
 
-    function pathRenamed(from, to) {
+    function pathRenamed(from, to, kind) {
         tree.entryRenameVisible = false;
         tree.entryRenameError = "";
         tree.tabsRenameRequested(from, to);
-        tree.selectEntry(to, tree.entryRenameKind);
+        if (kind !== "") tree.selectEntry(to, kind);
         tree.listDirRequested(tree.parentDir(to));
+        if (tree.parentDir(from) !== tree.parentDir(to)) {
+            tree.listDirRequested(tree.parentDir(from));
+        }
         tree.focusTreeRequested();
     }
 
     function pathDeleted(path) {
+        if (!tree.entryDeletePending || path !== tree.entryDeletePath) return;
+        tree.entryDeleteMethod = "";
         tree.entryDeleteVisible = false;
         tree.entryDeleteError = "";
         tree.tabsCloseRequested(path);
@@ -66,11 +71,13 @@ Item {
             tree.createDialogError = message;
             tree.createDialogVisible = true;
         }
-        if (method === "fs.rename") {
+        if (method === "fs.rename" && tree.entryRenameVisible) {
             tree.entryRenameError = message;
             tree.entryRenameVisible = true;
         }
-        if (method === "fs.delete") {
+        if (method === "fs.delete" || method === "fs.trash") {
+            if (!tree.entryDeletePending || method !== tree.entryDeleteMethod) return;
+            tree.entryDeleteMethod = "";
             tree.entryDeleteError = message;
             tree.entryDeleteVisible = true;
         }

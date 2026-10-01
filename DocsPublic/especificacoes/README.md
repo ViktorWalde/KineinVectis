@@ -8,6 +8,10 @@
 [`arquitetura-de-frontend-0.3-em-diante.md`](arquitetura-de-frontend-0.3-em-diante.md)
 consolida e corrige as specs antigas de UI. Em conflito, ela vence. A Vectis
 não terá Assistente/Chat de IA embutido nem telemetria de produto/usuário.
+Após fechar a série 0.3, a reorganização da casca aprovada pelo autor entra na
+0.3.6 segundo o [roadmap 49](../roadmaps/49-frontend-0.3.6-e-sequencia-0.5.md);
+a expansão da Biblioteca por capacidades/providers fica na 0.5 segundo o
+[roadmap 50](../roadmaps/50-biblioteca-e-providers-0.5.md).
 “Assistente de projeto/setup” significa wizard determinístico, não IA; logs,
 métricas locais e dados do alvo devem usar nomes do domínio. O desenho diário
 de Remote SSH está em [`remote-ssh-ui-hud.md`](remote-ssh-ui-hud.md).

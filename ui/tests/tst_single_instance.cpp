@@ -17,6 +17,7 @@
 
 #include <thread>
 
+#include <poll.h>
 #include <unistd.h>
 
 using kinein::answerIsMine;
@@ -26,6 +27,22 @@ using kinein::notMineAnswer;
 using kinein::parseRequest;
 using kinein::sameWorkspace;
 using kinein::socketPathFor;
+
+namespace {
+
+// O listener de produção é não bloqueante e o QSocketNotifier só chama
+// acceptOne quando há conexão pronta. O teste em thread precisa da mesma
+// condição; chamá-lo antes do connect devolve EAGAIN e mede só o scheduler.
+std::optional<kinein::Request> acceptAfterReadable(int fd, const QString& workspace)
+{
+    pollfd event{.fd = fd, .events = POLLIN, .revents = 0};
+    if (::poll(&event, 1, 1000) <= 0 || (event.revents & POLLIN) == 0) {
+        return std::nullopt;
+    }
+    return kinein::acceptOne(fd, workspace);
+}
+
+} // namespace
 
 class TestSingleInstance : public QObject
 {
@@ -157,7 +174,7 @@ void TestSingleInstance::a_live_owner_answers_and_the_newcomer_steps_aside()
     QVERIFY2(dono >= 0, "nao consegui escutar no socket");
 
     std::optional<kinein::Request> recebido;
-    std::thread atendente([&] { recebido = kinein::acceptOne(dono, projeto); });
+    std::thread atendente([&] { recebido = acceptAfterReadable(dono, projeto); });
 
     const bool saiu = kinein::handOff(socket, projeto, QStringLiteral("token-do-terminal"));
     atendente.join();
@@ -181,7 +198,7 @@ void TestSingleInstance::an_owner_of_another_folder_says_no_right_away()
 
     std::optional<kinein::Request> recebido;
     std::thread atendente(
-        [&] { recebido = kinein::acceptOne(dono, QStringLiteral("/home/alguem/OUTRA")); });
+        [&] { recebido = acceptAfterReadable(dono, QStringLiteral("/home/alguem/OUTRA")); });
 
     // O QUE SE MEDE e' "respondeu ANTES do prazo", e nao um numero de
     // milissegundos. Por isso o prazo aqui e' folgado de proposito: com o

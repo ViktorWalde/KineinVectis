@@ -19,11 +19,32 @@ Item {
     property var coverageController
     property var diagnosticsController
     property var projectTree
+    property var urlDecoder: Clipboard
 
     property bool workspaceOpen: false
     property var indexController: null
 
     property alias editorSurface: editorPane.editorSurface
+
+    ProjectTreeRules {
+        id: treeRules
+    }
+
+    function internalDroppedFile(event) {
+        if (!workspaceOpen || projectTree === null) return "";
+        const paths = ProjectDragRules.internalPaths(event);
+        if (paths.length !== 1 || !paths[0].startsWith(shellController.workspaceRoot + "/"))
+            return "";
+        const row = projectTree.rowIndexForPath(paths[0]);
+        return row >= 0 && treeRules.isFile(projectTree.entriesModel.get(row).kind)
+               ? paths[0] : "";
+    }
+
+    function localDroppedFile(event) {
+        if (!workspaceOpen || !event.hasUrls || urlDecoder === null) return "";
+        const paths = urlDecoder.localFilePathsFromUrls(event.urls);
+        return paths.length === 1 ? paths[0] : "";
+    }
 
     function focusCreateDialog() {
         overlayHost.focusCreateDialog();
@@ -53,7 +74,7 @@ Item {
     }
 
     function currentFileBreadcrumb(currentTab) {
-        if (currentTab < 0) {
+        if (currentTab < 0 || root.editorController.currentReadOnly) {
             return "";
         }
         return root.shellController.relativeToRoot(
@@ -100,11 +121,13 @@ Item {
             root.debugController.currentLine)
         // A lampada da calha e' o Alt+Enter na linha do cursor.
         onCodeActionsRequested: function(line) {
-            root.editorController.requestCodeActions();
+            if (!root.editorController.currentReadOnly)
+                root.editorController.requestCodeActions();
         }
         onGutterLineClicked: function(line) {
-            root.debugController.toggleBreakpoint(
-                root.editorController.currentFilePath(), line);
+            if (!root.editorController.currentReadOnly)
+                root.debugController.toggleBreakpoint(
+                    root.editorController.currentFilePath(), line);
         }
         breadcrumbPath: root.currentFileBreadcrumb(
             root.editorController.currentTab)
@@ -122,6 +145,8 @@ Item {
         externalConflict: root.editorController.externalConflict
         externalDeleted: root.editorController.externalDeleted
         externalMessage: root.editorController.externalMessage
+        readOnlyExternal: root.editorController.currentReadOnly
+        externalPreviewError: root.editorController.externalPreview.errorMessage
         watchError: root.editorController.watchError
         outlineItems: root.editorController.syntaxOutline
         symbols: root.indexController ? root.indexController.symbols : null
@@ -187,6 +212,25 @@ Item {
         }
         onOutlineResetRequested: root.shellController.resetOutlineWidth()
         onOutlineToggleRequested: root.shellController.toggleOutline()
+    }
+
+    DropArea {
+        id: editorFileDrop
+        anchors.fill: editorPane
+        z: 2
+        onEntered: function(drag) {
+            drag.accepted = root.internalDroppedFile(drag) !== ""
+                            || root.localDroppedFile(drag) !== "";
+        }
+        onDropped: function(drop) {
+            const path = root.internalDroppedFile(drop) || root.localDroppedFile(drop);
+            if (path === "") { drop.accepted = false; return; }
+            drop.accept(Qt.CopyAction);
+            if (path.startsWith(root.shellController.workspaceRoot + "/"))
+                root.editorController.openDiagnostic(path, 1, 1);
+            else
+                root.editorController.externalPreview.open(path);
+        }
     }
 
     // O que FLUTUA sobre o editor tem host proprio, e le' os controllers

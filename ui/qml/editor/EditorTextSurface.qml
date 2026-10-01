@@ -13,6 +13,7 @@ Rectangle {
     readonly property var cursorRectangle: textEditor.cursorRectangle
     readonly property bool editorActiveFocus: textEditor.activeFocus
     property bool hasOpenFile: false
+    property bool readOnly: false
     property string emptyMessage: ""
     property bool completionVisible: false
     property bool usagesVisible: false
@@ -69,10 +70,12 @@ Rectangle {
     color: Theme.background0
 
     function remove(start, end) {
+        if (readOnly) return;
         textEditor.remove(start, end);
     }
 
     function insert(position, text) {
+        if (readOnly) return;
         textEditor.insert(position, text);
     }
 
@@ -256,19 +259,17 @@ Rectangle {
             font.pixelSize: Theme.fontSizeEditor
             wrapMode: TextEdit.NoWrap
             selectByMouse: true
+            readOnly: root.readOnly
             tabStopDistance: 4 * 8
             onCursorRectangleChanged: editorFlick.ensureVisible(cursorRectangle)
             onTextChanged: root.textEdited(text)
             Keys.onPressed: function(event) {
+                if (root.readOnly) { event.accepted = false; return; }
                 event.accepted = typingController.route(event);
             }
         }
     }
 
-    // B2 (DocsPublic/roadmaps/24): barra de rolagem do editor. Até 2026-07-12 o editor era um
-    // Flickable SEM indicador nenhum — não dava pra saber o tamanho do arquivo
-    // nem onde se estava nele. O Flickable segue sendo a fonte da verdade: a
-    // barra só reflete `contentY` e PEDE mudança por `moveRequested`.
     VerticalScrollBar {
         id: editorScrollBar
 

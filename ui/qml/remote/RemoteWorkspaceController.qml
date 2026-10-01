@@ -22,6 +22,13 @@ Item {
     property bool targetReady: false
 
     property string openPath: ""
+    property bool browseVisible: false
+    property bool browseLoading: false
+    property string browseRequestedPath: ""
+    property string browsePath: ""
+    property string browseParent: ""
+    property var browseEntries: []
+    property string browseError: ""
     property var mirror: null
     // O espelho cujo pull ainda esta' em curso: quando ele terminar, a IDE abre
     // a pasta. Guardar o caminho e' o que distingue "este pull" de outro.
@@ -38,6 +45,7 @@ Item {
                                      && mirror.name !== undefined
 
     signal openRequested(string name, string path)
+    signal directoriesRequested(string name, string path)
     signal syncRequested(string direction, var paths)
     signal workspaceOpenRequested(string path)
     // O espelho diz de qual alvo ele e'; quem seleciona e' a fachada.
@@ -45,6 +53,63 @@ Item {
     signal commandComposed(string command)
 
     visible: false
+
+    onTargetNameChanged: {
+        browseVisible = false;
+        browseLoading = false;
+        browseEntries = [];
+    }
+
+    function startBrowse() {
+        if (!targetReady) {
+            return;
+        }
+        browseVisible = true;
+        browseTo("");
+    }
+
+    function browseTo(path) {
+        if (!targetReady || !browseVisible || browseLoading) {
+            return;
+        }
+        browseRequestedPath = path;
+        browseLoading = true;
+        browseError = "";
+        directoriesRequested(targetName, path);
+    }
+
+    function handleDirectories(outcome) {
+        if (!browseVisible || outcome.name !== targetName
+                || outcome.requestedPath !== browseRequestedPath) {
+            return;
+        }
+        browseLoading = false;
+        if (outcome.success !== true) {
+            browseError = outcome.error || qsTr("Não foi possível listar as pastas do alvo.");
+            return;
+        }
+        browsePath = outcome.path || "";
+        browseParent = outcome.parent || "";
+        browseEntries = outcome.entries || [];
+        browseError = "";
+    }
+
+    function handleBrowseFailed(name, path, message) {
+        if (!browseVisible || name !== targetName || path !== browseRequestedPath) {
+            return;
+        }
+        browseLoading = false;
+        browseError = message;
+    }
+
+    function openBrowsedFolder() {
+        if (browsePath === "" || browseLoading) {
+            return;
+        }
+        openPath = browsePath;
+        browseVisible = false;
+        openFolder();
+    }
 
     // O espelho que o workspace aberto e' (vem do workspace.open / status).
     // Vazio = comum. Num espelho, o alvo dele fica selecionado assim que a
@@ -113,5 +178,12 @@ Item {
         syncMessage = "";
         syncFailed = false;
         syncDirection = "";
+        browseVisible = false;
+        browseLoading = false;
+        browseRequestedPath = "";
+        browsePath = "";
+        browseParent = "";
+        browseEntries = [];
+        browseError = "";
     }
 }

@@ -37,6 +37,10 @@ Item {
             root.coreClient.remoteOpen(name, path);
         }
 
+        function onDirectoriesRequested(name, path) {
+            root.coreClient.remoteDirectories(name, path);
+        }
+
         function onSyncRequested(direction, paths) {
             root.coreClient.remoteSync(direction, paths);
         }

@@ -12,6 +12,9 @@
 >
 > A arquitetura executável, os contratos e o trem de versões proposto estão no
 > [`48-arquitetura-executavel-da-serie-0.3.md`](48-arquitetura-executavel-da-serie-0.3.md).
+> O checkpoint operacional mais recente está em
+> `DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`: H0 aprovada, AppImage
+> candidato testado, e as provas que faltam antes do fechamento.
 >
 > **Início em 2026-09-23:** a primeira fatia do terminal está implementada e
 > provada em automação: atalhos híbridos, menu contextual, seleção visível
@@ -253,6 +256,11 @@ entram na paleta somente junto da convergência V3, sem dispatcher paralelo.
 > **2026-09-24:** as seções, a ação primária por estado e o aceite de 1024×700
 > entraram (roadmap 40 §7.98). Continuam pendentes: a escolha da pasta começando
 > na home remota, e a tool window lateral/HUD (que são da V4).
+>
+> **2026-10-01:** `remote.directories` (0.143.0) e o navegador da home
+> entraram na candidata 0.3.5; o roteiro com `sshd`/`rsync` reais percorreu
+> home → filha → espelho. Resultado e limite de pastas com espaços: roadmap
+> 40 §7.143. A tool window lateral/HUD continua no escopo V4.
 
 - oferecer **usar SSH existente** e listar aliases concretos da configuração
   OpenSSH, sem pedir novamente usuário/porta/chave;
@@ -476,6 +484,13 @@ Itens desta lista só entram no meio se a prova do marco anterior estiver verde;
 do contrário seguem para 0.4 sem serem anunciados como prontos.
 
 ### 10.1 Decisão do autor para a 0.4 (registrada em 2026-09-24)
+
+> **Decisão posterior, 2026-09-29:** o autor aprovou a reorganização da casca
+> do frontend como prioridade da **0.3.6**, depois de fechar a 0.3.5. A
+> auditoria e a evolução dos atalhos do trilho passam para essa versão, conforme
+> o [roadmap 49](49-frontend-0.3.6-e-sequencia-0.5.md). A versão dedicada ao
+> ecossistema embarcado continua sendo a 0.4. O texto abaixo registra a decisão
+> original e seu motivo.
 
 Duas frentes ficam **fora da 0.3** por decisão dele, e não por corte de escopo:
 

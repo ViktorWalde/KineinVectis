@@ -93,6 +93,7 @@ Item {
     ProjectTreeRequestRouter {
         coreClient: root.domains.coreClient
         projectTree: root.domains.projectTree
+        documentController: root.domains.editorController.documentController
     }
 
     RuntimeEventRouter {

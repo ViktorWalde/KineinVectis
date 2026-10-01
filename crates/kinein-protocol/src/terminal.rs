@@ -2,6 +2,15 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Optional workspace directory for `terminal.open`; omitted uses the root.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TerminalOpenParams {
+    /// Absolute directory inside the open workspace.
+    #[serde(default)]
+    pub cwd: Option<String>,
+}
+
 /// Result payload for `terminal.open`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

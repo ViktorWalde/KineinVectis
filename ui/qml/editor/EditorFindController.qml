@@ -8,6 +8,8 @@ Item {
 
     property var surfaceBridge: null
     property var textController: null
+    property bool readOnly: false
+    onReadOnlyChanged: if (readOnly && replaceMode) close()
 
     // D1 (DocsPublic/roadmaps/24): estado da barra em property PRÓPRIA. NUNCA usar o
     // `visible` do Item como estado — este controller vive dentro do
@@ -220,7 +222,7 @@ Item {
     // Substitui o match atual e avança. Em regex, `$1` e afins são
     // resolvidos pelo replace do JS sobre o TRECHO casado.
     function replaceCurrent() {
-        if (!ready() || current < 0 || current >= matches.length) {
+        if (readOnly || !ready() || current < 0 || current >= matches.length) {
             return;
         }
         const surface = surfaceBridge.editorSurface;
@@ -245,7 +247,7 @@ Item {
     // Substitui TUDO numa passada. DE TRÁS PRA FRENTE: mexer no fim não
     // invalida os offsets do começo (o contrário invalidaria todos).
     function replaceAll() {
-        if (!ready() || matches.length === 0) {
+        if (readOnly || !ready() || matches.length === 0) {
             return;
         }
         const surface = surfaceBridge.editorSurface;

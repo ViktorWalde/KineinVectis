@@ -10,7 +10,8 @@ import "../../ui/qml/grafana"
 Item {
     id: root
 
-    property int failures: 0
+    // `real`, nao `int`: o bit 2^31 estoura um int.
+    property real failures: 0
 
     GrafanaStateRules {
         id: rules

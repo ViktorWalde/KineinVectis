@@ -2,13 +2,12 @@ import QtQuick
 
 Item {
     id: root
-
     property real menuX: 0
     property real menuY: 0
     property bool runnableScript: false
     property bool debuggableScript: false
     property int selectionCount: 1
-
+    property bool pasteAvailable: false
     signal dismissRequested()
     signal createFileRequested()
     signal createDirectoryRequested()
@@ -16,7 +15,13 @@ Item {
     signal debugScriptRequested()
     signal renameRequested()
     signal deleteRequested()
-
+    signal copyRequested()
+    signal cutRequested()
+    signal pasteRequested()
+    signal copyAbsolutePathRequested()
+    signal copyRelativePathRequested()
+    signal openFolderRequested()
+    signal openTerminalRequested()
     focus: visible
     onVisibleChanged: {
         if (visible) {
@@ -31,6 +36,8 @@ Item {
         runnableScript: root.runnableScript
         debuggableScript: root.debuggableScript
         singleSelection: root.selectionCount <= 1
+        fileSelectionAvailable: root.selectionCount >= 1 && root.selectionCount <= 128
+        pasteAvailable: root.pasteAvailable
         onDismissRequested: root.dismissRequested()
         onActionRequested: function(index) {
             switch (index) {
@@ -40,6 +47,13 @@ Item {
             case 3: root.debugScriptRequested(); break;
             case 4: root.renameRequested(); break;
             case 5: root.deleteRequested(); break;
+            case 6: root.copyRequested(); break;
+            case 7: root.cutRequested(); break;
+            case 8: root.pasteRequested(); break;
+            case 9: root.copyAbsolutePathRequested(); break;
+            case 10: root.copyRelativePathRequested(); break;
+            case 11: root.openFolderRequested(); break;
+            case 12: root.openTerminalRequested(); break;
             }
         }
     }
@@ -52,8 +66,8 @@ Item {
 
     Rectangle {
         x: root.menuX
-        y: root.menuY
-        width: root.selectionCount > 1 ? 230 : 168
+        y: Math.max(0, Math.min(root.menuY, root.height - height))
+        width: 240
         height: entryMenuColumn.height + 2 * Theme.spacingSmall
         radius: Theme.radius
         color: Theme.background2
@@ -270,6 +284,15 @@ Item {
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: root.deleteRequested()
                 }
+            }
+            Rectangle { width: parent.width; height: 1; color: Theme.borderSoft }
+            ProjectEntryQuickActions {
+                width: parent.width
+                selectionCount: root.selectionCount
+                pasteAvailable: root.pasteAvailable
+                menuFocused: root.activeFocus
+                currentAction: menuKeys.currentAction
+                onActionRequested: index => menuKeys.actionRequested(index)
             }
         }
     }

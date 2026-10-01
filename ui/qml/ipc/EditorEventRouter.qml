@@ -16,6 +16,14 @@ Item {
             root.editorController.handleFileLoaded(path, content);
         }
 
+        function onExternalFileLoaded(path, content) {
+            root.editorController.externalPreview.handleLoaded(path, content);
+        }
+
+        function onExternalFileLoadFailed(path, message) {
+            root.editorController.externalPreview.handleFailed(path, message);
+        }
+
         // M4.3: o core foi recuperado de um crash — o LSP subiu do zero.
         // Re-sincroniza o arquivo ativo (didOpen + semantic tokens), então
         // highlighting e diagnósticos do arquivo atual voltam sozinhos.

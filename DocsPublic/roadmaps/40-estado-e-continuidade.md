@@ -23,8 +23,13 @@
 > Qt é reconfigurar **e** recompilar o que ficou velho — o 20º gate agora diz
 > quais objetos são, e imprime o comando.
 >
-> **COMECE POR AQUI ao retomar.** (E, para o panorama do que falta em uma
-> página, `DocsPrivate/Codex/HANDOFF-panorama.md`, escrito em 2026-09-17.)
+> **COMECE POR AQUI ao retomar.** Para a candidata 0.3.5, leia também
+> `DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`: estado atual, arquivos,
+> provas, lacunas e sequência operacional. O panorama mais antigo está em
+> `DocsPrivate/Codex/HANDOFF-panorama.md`, escrito em 2026-09-17.
+> O plano escrito **antes** das próximas etapas, com estado parcial de Remote,
+> gates, pasta `KV0.3`, commit/push, release e site, está em
+> [`51-plano-fechamento-0.3.5.md`](51-plano-fechamento-0.3.5.md).
 > Ele substitui o
 > [`38`](38-divida-restante-e-continuidade.md) nesse papel; o 38 vira registro
 > de como a fila estava quando a dívida foi paga.
@@ -63,6 +68,15 @@
 > esquerda pedem análise de uso e de implementação, e o **ecossistema de
 > embarcados ganha uma versão inteira só para ele** (layout, atalhos, fluxo).
 > Nenhuma das duas bloqueia a 0.3.5; ver roadmap 47 §10.1.
+>
+> **Decisão posterior, 2026-09-29 — após fechar a série 0.3:** o autor colocou
+> a reorganização e otimização da casca do frontend na **0.3.6**, antes da 0.4,
+> e aprovou a direção visual/estrutural dos dois estudos locais de
+> `DocsPrivate/documentacoes/`. A auditoria do trilho migra da 0.4 para a
+> 0.3.6; a versão dedicada aos embarcados permanece 0.4. A Library por
+> capacidades e providers segue na 0.5. Escopo e provas: roadmaps
+> [49](49-frontend-0.3.6-e-sequencia-0.5.md) e
+> [50](50-biblioteca-e-providers-0.5.md). São planos, não entregas já medidas.
 >
 > **Decisão de 2026-09-22 — série 0.3 até 0.3.5 e Grafana:** Grafana entra no
 > fechamento **0.3.5** e precisa ser prático no uso diário, não apenas receber
@@ -7058,3 +7072,531 @@ num compositor real ainda não foi medida nesta retomada.
 começando pela cópia e pelo clipboard com validação de colisão no core. A
 pesquisa de compiladores da §7.119 continua agendada com os embarcados, antes
 da 1.0, conforme a decisão do autor.
+
+### 7.121 P2 começou pelo clipboard e pela cópia confinada — 2026-09-29
+
+A V7 já estava fechada no checkout. Antes de criar código, foram conferidos
+`Clipboard`, `ProjectTreeController`/`ProjectTreeResults`, os routers,
+`CoreClient` e `fsops`: já havia transporte, seleção, diálogo de nome e
+`fs.rename` para mover, mas **não havia cópia de arquivo**. A fatia acrescenta
+somente `fs.copy` ao core e usa esses donos para ligar copiar, recortar e
+colar um item do projeto por menu e Ctrl+C/Ctrl+X/Ctrl+V.
+
+O core copia arquivo binário ou pasta em staging, publica sem sobrescrever,
+recusa symlinks, raiz e cópia de pasta para descendente. `fs.rename` passou a
+publicar com a mesma proteção de colisão. O diálogo existente permite mudar
+o nome no destino; erro conserva a origem e a tentativa pode ser corrigida.
+O clipboard recebe URLs locais e a marca de recorte só é limpa após mover.
+`fs.copy` usa o `JobManager` existente quando o aplicativo habilita os serviços:
+progresso por bytes aparece nos Jobs, e `job.cancel` interrompe a cópia entre
+blocos, remove o staging e preserva a origem. O resultado ainda chega pela
+resposta original de `fs.copy`, mantendo o diálogo e o roteamento existentes.
+O diálogo pendente oferece **Ver em Jobs**, pois sua camada modal cobria o
+controle de cancelamento na barra de status.
+
+**Prova desta fatia:** testes de `fs.copy` no IPC e em `fsops`, binário/pasta,
+colisão, symlink, eventos de Job e cancelamento no meio de um arquivo; harness
+QML de cópia/erro/recorte e atalhos; Clippy,
+qmllint estrito, catraca de arquitetura, build `dev-local` e smoke do primeiro
+frame sem aviso QML. A integração do clipboard com um gerenciador de arquivos
+real em X11/Wayland ainda não foi medida.
+
+**Ainda aberto:** seleção múltipla de arquivos no clipboard, importação e
+drag-and-drop interno/externo, colisões de lote, progresso/cancelamento de
+lotes e das demais operações longas, prova de integração nativa e os demais
+itens da matriz P2/P3. A 0.3.6 especial de frontend segue depois do
+fechamento da 0.3.
+
+### 7.122 P2: validação de lote e acesso ao cancelamento — 2026-09-30
+
+O diálogo de colagem pendente cobria a barra de status: o Job era cancelável
+no core, mas o usuário não alcançava o controle. **Ver em Jobs** agora fecha a
+camada e abre o painel sem perder o pedido; erro/sucesso continuam ligados ao
+mesmo destino. O harness QML, qmllint estrito, build `dev-local` e primeiro
+frame offscreen passaram após essa ligação.
+
+Para a seleção múltipla, o protocolo `0.138.0` acrescenta
+`fs.transferBatch` com pares explícitos e operação `copy|move`. O core valida
+todos os paths, fontes ancestrais, destinos duplicados e árvores de cópia antes
+da primeira mutação. A execução reutiliza `fs.copy`/`fs.rename` e o
+`JobManager`; cada item retorna `success|failed|cancelled|notStarted`. Falhas
+que surgem depois do preflight não apagam itens já concluídos. A interface
+encaminha Ctrl+C/Ctrl+X e menu de seleção múltipla ao mesmo clipboard. O
+diálogo de lote permite renomear ou pular cada item antes do envio; quando há
+falha parcial, preserva os resultados e não repete sucessos. O recorte só
+remove do clipboard as fontes efetivamente movidas. Jobs fica acessível
+durante a operação. O harness QML de recorte parcial e o lint estrito passaram.
+Arrasto, importação externa e prova nativa seguem abertos.
+
+O teste C++ `tst_clipboard_files` verificou o `QClipboard` real no plugin Qt
+offscreen: URLs locais com espaço/Unicode, marca de recorte e atualização
+parcial após mover. O gate C++ passou com 5/5; o teste de socket existente
+precisou aguardar legibilidade antes de chamar seu listener não bloqueante,
+tal como faz o `QSocketNotifier` do aplicativo.
+
+### 7.123 P2: arrasto interno encaminhado à transferência existente — 2026-09-30
+
+A árvore ganhou fonte de arrasto com URLs locais e um payload interno de paths.
+Linhas e espaço vazio usam o mesmo `ProjectTreeDropArea` para indicar o
+destino; pastas se expandem após hover e a lista rola ao alcançar suas bordas.
+O gesto interno propõe mover e aceita cópia quando o sistema propõe
+`Qt.CopyAction` (Ctrl no Linux). O drop chama o mesmo diálogo de revisão e os
+mesmos métodos `fs.copy`/`fs.rename`/`fs.transferBatch` usados pelo clipboard,
+sem substituir seu conteúdo. A interpretação de MIME e a rejeição de payload
+inválido foram exercitadas no harness QML; qmllint e catraca passaram.
+
+**Estado nessa fatia:** o código do gesto ainda precisava de prova nativa X11/Wayland e do
+artefato distribuído. A entrada de arquivos externos, o drop sobre editor ou
+abertura de projeto, e o arrasto para outro aplicativo continuam pendentes.
+Não contar P2/P3 como concluídas por este harness. A prova X11 interna veio na
+§7.131.
+
+### 7.124 H0: proposta do contorno superior — 2026-09-30
+
+A comparação em 1280×800 mostrou duas bordas completas sobrepostas nas faixas
+do menu e da barra de projeto. `ShellHeaderHost` agora reúne as duas no mesmo
+fundo com um contorno arredondado; a linha inferior é desenhada uma vez só.
+O raio é removido em janela maximizada ou fullscreen. As capturas de antes e
+depois em 1280×800 e depois em 1024×700 estão em
+`DocsPrivate/Codex/evidencias-2026-09-30-h0/`. Build e qmllint passaram.
+**Pendente:** confirmação visual do autor e prova nativa de áreas clicáveis,
+resize e escalas. Não fechar H0 ainda.
+
+### 7.125 P2: importação de arquivos externos na árvore — 2026-09-30
+
+`ProjectTreeDropArea` aceita URLs locais e encaminha a lista explícita ao
+mesmo `ProjectFileClipboard` usado por clipboard e arrasto interno. A operação
+`import` de `fs.transferBatch` força cópia para o destino destacado, inclusive
+se o aplicativo externo propõe mover. O diálogo de lote revisa nomes e
+colisões mesmo para um item; Jobs mantém progresso e cancelamento. O clipboard
+não é alterado e a origem externa não é removida.
+
+No core, a importação reutiliza o motor de cópia com staging e publicação sem
+sobrescrever. A abertura da origem passou a percorrer componentes por
+descritores com `O_NOFOLLOW`, o que também endurece a cópia interna contra
+troca de symlink em pasta ancestral. O preflight rejeita links e entradas
+especiais antes de copiar qualquer item. A ponte Qt aceita só `file:` local
+sem host, query ou fragmento. Testes de importação externa, Unicode, symlink
+ancestral, URL remota e fluxo QML passaram; o gesto nativo e o artefato
+distribuído ainda precisam de prova. A P2/P3 continua aberta.
+
+### 7.126 P3: copiar caminhos pelo menu — 2026-09-30
+
+O menu existente ganhou **Copiar caminho absoluto/relativo**, inclusive para
+seleção múltipla. O `ProjectFileClipboard` usa `Clipboard.setText` já existente;
+nenhum novo clipboard ou motor de arquivo foi criado. A navegação por teclado
+inclui as duas ações e o menu limita `y` pela sua altura real, substituindo
+o valor fixo de 280 pixels que deixaria as novas linhas fora da tela. Harness
+QML de menu e clipboard e qmllint passaram.
+
+### 7.127 P3: abrir pasta no gerenciador e no terminal — 2026-09-30
+
+O menu de contexto envia arquivo à pasta pai e pasta a si própria. O
+gerenciador recebe uma URL `file:` feita com `QUrl::fromLocalFile`, pelo
+serviço externo do Qt. Para o terminal, `terminal.open` recebeu `cwd`
+opcional no protocolo `0.140.0`: sem campo mantém a raiz, com campo o core
+valida diretório absoluto dentro do workspace antes de usar o `TerminalManager`
+existente. A interface abre uma nova sessão e mostra a aba Terminal. Teste de
+RPC comprovou diretório válido e rejeição de arquivo e pasta externa; harness
+QML cobriu a intenção e a navegação. Falta a prova com o gerenciador real do
+desktop e o pacote distribuído.
+
+### 7.128 P3: destinos de abertura para drag — 2026-09-30
+
+A tela inicial recebe uma URL local única e encaminha o path ao `workspace.open`
+existente; o core decide se é uma pasta válida. O editor recebe um arquivo da
+árvore e usa `EditorController.openDiagnostic` para abrir/ativar a aba, sem
+executar `fs.rename` ou importar. `ProjectDragRules` concentra a leitura e a
+validação do MIME interno antes compartilhadas só pela árvore. O harness da
+tela inicial passou para path com espaço e recusa de URL remota; qmllint e
+arquitetura passaram. A integração nativa e o tratamento de arquivo externo
+no editor continuam pendentes; a decisão deste último foi solicitada ao autor.
+
+### 7.129 P3: exclusão respeita buffer sujo e abertura por drop exige pasta — 2026-09-30
+
+O roteador de `fs.delete` usa o estado do editor para impedir a exclusão de
+arquivo ou pasta com documento alterado ou salvamento pendente, mostrando o
+motivo no diálogo existente. A resposta de exclusão também verifica o estado
+antes de fechar abas: uma edição feita durante o pedido não perde o buffer.
+A tela inicial passou a verificar na ponte Qt que a URL local única é uma
+pasta antes de acionar `workspace.open`; o parser de URL é o mesmo usado na
+importação. Lixeira/recuperação, prova de drag nativo e V8 seguem abertos.
+O parser de drop interno exige o Item de origem da árvore, pois um aplicativo
+externo pode forjar as chaves MIME; nessa situação a URL local usa importação
+por cópia.
+
+### 7.130 P3: lixeira recuperável pelo core — 2026-09-30, protocolo 0.141.0
+
+`fs.trash` move arquivo ou pasta confinados à lixeira do sistema usando a
+implementação FreeDesktop da dependência Rust `trash`, auditada pelo
+`cargo-deny`. `fs.delete` conserva a semântica permanente, acessível apenas
+por botão separado e explícito no mesmo diálogo. As duas ações compartilham
+a proteção de buffer sujo e a atualização das abas, árvore e LSP; falha ao
+mover para a lixeira não se converte em exclusão permanente. O teste de
+operação usou `XDG_DATA_HOME` isolado em `/tmp` e verificou payload e
+`.trashinfo`, sem tocar na lixeira do autor. Ainda falta prova nativa do
+diálogo/recuperação no gerenciador de arquivos e o restante de P3/V8. Uma
+lixeira isolada deliberadamente indisponível também foi testada: o core
+retorna erro e mantém o arquivo original; o diálogo libera o estado pendente
+para nova escolha. Cliques repetidos não geram segunda remoção. O confinamento
+compartilhado foi ajustado para não seguir o link simbólico final; os testes
+confirmam que ambas as remoções preservam o alvo fora do workspace.
+
+### 7.131 P3: arrasto real da árvore em X11 — 2026-09-30
+
+Um gesto real na janela de teste da IDE, em X11, revelou que `Drag.Automatic`
+entrega o MIME interno em `DragEvent.formats`, mas não entrega o marcador em
+`DragEvent.keys`. O parser existente passou a exigir o formato MIME e continua
+conferindo o Item de origem e os paths anunciados por ele. A ativação do drag
+passou a seguir `DragHandler.active` pelo seu sinal, evitando o ciclo de binding
+que o Qt avisava ao soltar. Nenhum motor de transferência foi duplicado.
+
+No workspace isolado em `/tmp/kinein-p3-native/workspace`, o gesto moveu
+`pasta_a/origem.txt` para `pasta_b`: o diálogo mostrou o destino, Enter
+confirmou e o arquivo apareceu apenas na pasta B. Ctrl+arrastar o mesmo
+arquivo de B para A mostrou **Copiar para**; após Enter, o arquivo existia nas
+duas pastas. A expansão por hover da pasta B também foi observada. O harness
+`tst_project_tree_drop` e o gate de lógica QML passaram após a correção, sem
+aviso de binding no teste nativo. Esta é prova X11 do arrasto **interno**; não
+fecha importação de outro aplicativo, Wayland, AppImage ou P3/V8 inteiras.
+
+### 7.132 P3: importação nativa do Nautilus em X11 — 2026-09-30
+
+Uma instância X11 isolada do Nautilus, aberta apenas na pasta de teste em
+`/tmp`, arrastou `arquivo-externo.txt` para `pasta_a` da IDE. O evento trouxe
+`text/uri-list` e a URL local; a ponte `Clipboard.localFilePathsFromUrls`
+validou e decodificou o caminho. O primeiro gesto expôs uma incompatibilidade
+na borda C++/QML: o `QStringList` retornado pela ponte não satisfazia
+`Array.isArray` no `ProjectFileClipboard`, então o diálogo não abria. O destino
+agora converte essa sequência com `Array.from` antes de encaminhá-la à
+intenção de importação existente.
+
+Após a correção, o mesmo gesto abriu **Importar itens** com origem e destino
+corretos. Confirmado o diálogo, o arquivo apareceu em
+`workspace/pasta_a/arquivo-externo.txt` e continuou em
+`external/arquivo-externo.txt`. Os dois caminhos ficam sob
+`/tmp/kinein-p3-native/`. O fluxo nativo X11 de importação por cópia está
+provado; Wayland, pacote distribuído e demais linhas da matriz P3 continuam
+abertos.
+
+### 7.133 P3: drop nativo no editor e na tela inicial — 2026-09-30
+
+Na mesma janela X11 de teste, arrastar `pasta_b/destino.txt` da árvore para a
+área do editor abriu uma aba `destino.txt`; os arquivos de origem e destino no
+disco permaneceram. Após fechar o workspace de teste sem buffer sujo, arrastar
+do Nautilus a pasta vazia `external/projeto-arrastado` para a tela inicial a
+abriu como workspace, em vez de importá-la na árvore anterior. O core criou
+apenas seus dados `.kinein` usuais dentro dessa pasta temporária. Isso prova os
+dois destinos em X11; Wayland e AppImage continuam pendentes.
+
+O botão **Mover para a lixeira** também foi acionado na IDE com
+`XDG_DATA_HOME=/tmp/kinein-p3-native/xdg-data`: o arquivo selecionado saiu da
+árvore e apareceu em `Trash/files`, com `.trashinfo` apontando para a origem.
+A instância isolada do Nautilus não conseguiu navegar para `Trash` nesse
+ambiente de teste, então a recuperação pelo gerenciador ainda não tem prova
+visual. Nenhum arquivo pessoal foi removido.
+
+### 7.134 P3: URL oferecida a outro aplicativo — 2026-09-30
+
+O arrasto de `pasta_b/destino.txt` da IDE para um receptor Qt independente em
+X11 expôs `text/uri-list` com `file:///tmp/kinein-p3-native/workspace/pasta_b/destino.txt`.
+O receptor leu a URL em `QMimeData::urls()` e aceitou `Qt.CopyAction`; o arquivo
+de origem permaneceu. O teste confirma que a IDE oferece uma URL local
+decodificável por outro processo. O Nautilus X11 rodando em barramento D-Bus
+isolado aceitou a ação de cópia, mas não produziu o arquivo no destino;
+portanto a integração específica com esse gerenciador não está certificada.
+Não inferir sucesso de cópia só pela ação aceita no protocolo de drag.
+
+### 7.135 P3: limite da prova de recuperação em `/tmp` — 2026-09-30
+
+`/tmp` é um filesystem distinto de `/home` nesta máquina. Sem
+`XDG_DATA_HOME` isolado, o `fs.trash` da IDE colocou outro arquivo de teste em
+`/tmp/.Trash-1000/files` com `.trashinfo` correspondente, como exige a
+especificação FreeDesktop para volumes separados. O `gio trash --list` desta
+sessão não mostrou essa lixeira de `/tmp` e `gio trash --restore` não encontrou
+o item. Ele foi recolocado manualmente em sua origem temporária e apenas seu
+metadado de teste foi removido. Assim, o core e a UI estão provados para
+**enviar** à lixeira; a recuperação visual no gerenciador não está provada
+neste volume e não deve ser anunciada como concluída.
+
+### 7.136 H0: gestos nativos da janela em 1024×700 — 2026-09-30
+
+Com a IDE real em X11 a 1024×700, o menu Arquivo abriu pelo clique no
+cabeçalho. O botão de maximizar aplicou `_NET_WM_STATE_MAXIMIZED_HORZ` e
+`_NET_WM_STATE_MAXIMIZED_VERT`, e o segundo clique restaurou a janela. Um
+arrasto na borda direita ampliou a largura de 1024 para 1112 pixels; um
+arrasto na região livre do cabeçalho deslocou a origem de `(260,184)` para
+`(302,244)` sem mudar o tamanho. A prova em outra escala está registrada abaixo.
+
+Com `QT_SCALE_FACTOR=1.25`, a IDE também abriu em janela X11 de 1280×800
+pixels físicos, equivalente a 1024×640 lógicos. A captura
+`DocsPrivate/Codex/evidencias-2026-09-30-h0/depois-125porcento-1280x800.png`
+mostra menus, controles da janela, trilho, árvore e editor visíveis; o path
+longo na barra de estado usa a elipse existente. **O autor aprovou H0 em
+2026-09-30.** Os gestos nativos, a escala adicional e essa aprovação fecham H0.
+
+### 7.137 V8: reabertura de dados persistidos pela 0.2 — 2026-09-30
+
+Um teste integrado novo no módulo de testes de `workspace` cria em `/tmp` um
+projeto com `.kinein/workspace.json` no schema `0.2.0`, sessão e configurações
+no schema `1`. `workspace.open` recuperou a aba ativa; `settings.get` devolveu
+as preferências do projeto. O arquivo-fonte, `session.json` e `settings.json`
+permaneceram idênticos em disco, e o schema do metadata derivado continuou
+`0.2.0`. O teste dirigido passou. Isso cobre a compatibilidade desses três
+formatos por meio do core; ainda faltam o dogfooding da UI, a distribuição
+0.3.5 e a prova em uma instalação limpa para fechar V8.
+
+### 7.138 V8: abertura nativa do checkout no Wayland — 2026-09-30
+
+O binário debug do checkout abriu com `QT_QPA_PLATFORM=wayland`, renderer
+software, core debug e workspace apenas em `/tmp`. O marcador do primeiro
+frame registrou `439 ms` e o processo saiu com código zero, sem aviso QML no
+stderr. Isto prova inicialização pelo backend Wayland nesta máquina, não
+arrasto entre processos nem o AppImage distribuído.
+
+### 7.139 V8: roteiro Remote contra OpenSSH real — 2026-09-30
+
+`scripts/testar-remote-ssh.sh` passou novamente com um `sshd` temporário em
+container e `HOME` de teste isolada: descobriu e explicou alias OpenSSH,
+observou a recusa inicial da chave, executou `ssh-copy-id` confirmado, sondou
+arquitetura/ferramentas, enviou por `rsync` e compôs a linha do shell. O
+container e a chave temporária foram removidos pelo script. É prova do fluxo
+Remote contra serviços reais em Linux, ainda sem substituir o dogfooding da
+interface nem o smoke do AppImage da versão.
+
+### 7.140 P3: ações de pasta com serviços nativos — 2026-09-30
+
+No menu contextual real de `pasta_a/origem.txt`, **Abrir pasta no gerenciador**
+enviou a `org.gnome.Nautilus` a URL
+`file:///tmp/kinein-p3-native/workspace/pasta_a`, observada na chamada D-Bus
+`org.freedesktop.Application.Open`. O menu fechou sem modificar o projeto.
+**Abrir terminal nesta pasta** abriu a aba Terminal com o prompt em
+`/tmp/kinein-p3-native/workspace/pasta_a`. A prova cobre a integração dessas
+ações no checkout X11 e a escolha correta da pasta pai do arquivo; não é
+prova do AppImage distribuído.
+
+### 7.141 P3: aba externa somente leitura — 2026-09-30, protocolo 0.142.0
+
+O drop de uma URL local sobre o editor agora usa o leitor do core para abrir
+uma aba externa. A aba participa do mesmo modelo de documentos e reutiliza o
+mesmo caminho de atualização de conteúdo de disco; não existe segunda
+implementação de editor. O core exige workspace aberto, arquivo regular UTF-8
+de até 1 MiB e caminho absoluto; recusa symlink, diretório e arquivo binário.
+O editor mantém o arquivo externo somente leitura e o exclui de salvar,
+rascunho, sessão, recentes, LSP, formatação e preview Markdown. Soltar de novo
+atualiza a mesma aba, sem criar uma cópia no projeto. Uma troca de workspace
+invalida respostas pendentes.
+
+O teste integrado verificou a leitura de um arquivo em `/tmp`, origem intacta,
+ausência de importação e recusa de escrita fora do workspace. O harness QML
+verificou identidade da aba, bloqueio de edição/salvamento, falha de leitura e
+resposta obsoleta após troca de workspace. Build debug, primeiro frame, Clippy,
+fiação IPC (173 métodos), arquitetura e verificações QML passaram. Ainda falta
+prova do arrasto real entre aplicativos para esta rota específica; não
+confundir os testes de protocolo e harness com esse gesto nativo.
+
+### 7.142 V8: AppImage candidato 0.3.5 e smoke portátil — 2026-09-30
+
+O primeiro build portátil no Debian 12/Clang 14 revelou que
+`std::views::reverse(QList<Refusal>)` em `ui/src/markdown_document.cpp` não
+compilava com esse Qt/libstdc++. O laço agora usa `QList::crbegin/crend`,
+sem criar outra coleção. O build seguinte gerou
+`dist/Kinein-Vectis-0.3.5-x86_64.AppImage` com SHA-256
+`2511d6974b86b01c331d80f3dac1f27463d82755f08790b00c80c6c784ee6dfd`.
+`bash scripts/testar-appimage.sh` passou: checksum, estrutura, instalação
+em HOME de teste, core e primeiro frame offscreen. O mesmo smoke passou em
+`bash scripts/testar-appimage-portatil.sh`, num Debian 12 mínimo sem rede,
+SDKs Qt/Rust ou compiladores. O tutorial ao lado do artefato corresponde ao
+da árvore atual. Este é **artefato candidato local**, sem anúncio/publicação.
+
+Ainda não há gate `bash scripts/verificar.sh` completo após esse pacote, nem
+prova da escolha de pasta a partir da home remota ou do novo gesto nativo de
+drop externo no editor. Se o código mudar, reconstruir o AppImage e repetir
+os smokes; não reutilizar o hash acima. O handoff privado atualizado lista a
+sequência completa de fechamento.
+
+### 7.143 V2/R0.5: navegar desde a home SSH e abrir o espelho — 2026-10-01, protocolo 0.143.0
+
+O campo de caminho não permitia escolher uma pasta desconhecida. A consulta
+`remote.directories { name, path? }`, prevista condicionalmente no roadmap 48
+§8.1, ficou justificada por essa falha do fluxo. Ela reaproveita o perfil
+salvo, `remote::ssh_args`, o Job cancelável, `CoreClient` e
+`RemoteWorkspaceController`; não há cliente SSH ou formulário paralelo.
+Sem `path`, o script remoto resolve `$HOME`, lista apenas subpastas com
+`find -print0`, retorna `parent` e limita a resposta a 64 KiB. O script e o
+path são escapados pelo mesmo `remote::quote` usado nos comandos existentes.
+Nome do alvo e caminho pedido viajam no evento/resposta de erro para a UI
+descartar resultados atrasados. A ação primária do painel agora abre o
+navegador quando ainda não há caminho; com path selecionado, usa o
+`remote.open` já existente. Pastas com espaços permanecem fora da lista
+porque `remote.open` ainda as recusa.
+
+O roteiro `scripts/testar-remote-ssh.sh` passou contra `sshd` e `rsync`
+reais em container: home `/home/kinein`, entrada em `kinein/`, escolha da
+pasta do projeto enviado e pull do espelho com arquivo real. O teste achou
+um defeito anterior: numa HOME de teste longa, o `ControlPath` de
+multiplexação excedia o limite de socket Unix e `remote.open` falhava.
+`remote::mirror::ssh_transport` agora usa SSH comum quando o path previsto
+ultrapassa uma margem conservadora; o teste unitário e o roteiro real
+passaram depois da correção. Os harnesses `tst_remote` e
+`tst_remote_action_rules`, Clippy, a catraca de arquitetura e a fiação IPC
+(174 métodos) passaram. O build UI final e o gate completo ainda serão
+registrados depois; o AppImage da §7.142 é anterior a esta fatia e está
+obsoleto para publicação.
+
+**Fechamento da Etapa 1 em 2026-10-01:** o gate completo encontrou e levou a
+corrigir três itens antes de chegar ao fim. (1) O teste integrado
+`a_remote_folder_becomes_a_local_mirror_with_a_marker` ainda esperava
+`ControlMaster`, mas a HOME de teste excede a margem do socket, e o core cai
+corretamente para SSH comum. O teste passou a afirmar esse ramo. (2)
+`clang-format` em `core_client.h`/`markdown_document.cpp`. (3) O
+`clang-tidy` (`modernize-loop-convert`) reprovou o iterador reverso que
+mantém o build portátil em Clang 14. Ele ficou com `NOLINTNEXTLINE` e a
+justificativa no próprio código.
+
+### 7.144 P3: arrasto nativo entre aplicativos com o mouse real — 2026-10-01
+
+O XTest pelo Xwayland não entrega eventos nesta sessão GNOME Wayland
+(`-enable-ei-portal`), e foi isso que travou a prova anterior. O input passou a
+sair por `ydotool` (dispositivo uinput), que o compositor trata como mouse e
+teclado reais. O ponteiro é posicionado em malha fechada sobre janelas X11
+(`xdotool getmouselocation`) e, sobre janelas Wayland, por passos fixos a
+partir do canto inferior esquerdo da eDP-1, com ganho medido de 1,0 e erro de
+2–3 px. A tela Wayland é lida pelo portal `Screenshot`, recortada à eDP-1 e o
+original é apagado. Todos os arquivos ficaram em `/tmp/kinein-p3-native/`.
+
+| Gesto | X11 (Xwayland) | Wayland nativo |
+| --- | --- | --- |
+| Nautilus → editor (arquivo fora da raiz) | aba somente leitura com aviso; digitar e `Ctrl+S` não alteram nada; SHA-256 da origem igual; nada importado | mesmo resultado, com o Nautilus da sessão |
+| IDE → receptor GTK4 de diagnóstico | — | `drag-enter` com `GdkFileList GFile application/x-kinein-project-paths text/uri-list`; `GdkFileList` = `file:///…/main.py`, inclusive lido 500 ms depois do drop; origem intacta |
+| IDE → Nautilus | aceita a ação, sem cópia (§7.134) | realça a pasta sob o ponteiro e não copia: área vazia, pasta não vazia, sobre `subpasta` e com `Ctrl` |
+
+**Defeito real achado pelo gesto:** a aba externa nascia com o ponto de
+"modificado". O rastreamento da pilha mostrou a cadeia: mudar `currentDocId`
+→ `refreshCurrentTab` → `Main.qml` `onCurrentTabChanged` →
+`DiagnosticsController.setActivePath` → realce → `textChanged` com o texto do
+documento **anterior**, antes de `currentReadOnly` e do texto novo. A mesma
+cadeia podia marcar como modificada qualquer aba de destino numa troca. O
+`selectDocument` agora trata a troca inteira como carregamento
+(`loadingText`) e atualiza `currentReadOnly` antes do id. O harness
+`tst_editor_document_identity` ganhou o eco da superfície em cada troca e
+reprova sem a correção (bitmask `8589934592`). O mesmo teste revelou que
+`failures` era `int`: os bits acima de 2³¹ (já usados pela aba externa)
+nunca reprovavam. Este harness e o `tst_grafana_state` passaram a usar `real`.
+
+**Limites honestos:** a IDE oferece corretamente a URL ao desktop (Qt em X11,
+GTK4 em Wayland), mas o **Nautilus 50.2.2 não completa a cópia** de um drag
+vindo da IDE, nem em X11 nem em Wayland. Não anunciar arrastar para o
+gerenciador de arquivos como suportado. O caminho suportado para levar um
+arquivo ao gerenciador é *Abrir pasta no gerenciador* (§7.140). Um candidato
+para investigar depois é a oferta via portal (`application/vnd.portal.filetransfer`).
+A recuperação visual da lixeira do volume `/tmp` continua sem prova (§7.135):
+é limite do `trash:///` do GIO para esse volume, e a regra de testar só em
+`/tmp` impede usar a lixeira da HOME.
+
+### 7.145 Remote: pasta com espaço no espelho — 2026-10-01, protocolo 0.144.0
+
+Era limite declarado da §7.143 e saiu da lista a pedido do autor, antes da
+release. `remote.open` e `remote.directories` agora usam a mesma regra,
+`remote::valid_remote_dir`: caminho absoluto e sem caracteres de controle.
+Espaço é aceito; caminho relativo, `~` e quebra de linha são recusados. O
+`rsync` do espelho passou a receber `-s`, então o caminho chega inteiro ao
+`rsync` do alvo sem passar pelo shell remoto. Isso vale também para arquivos
+com espaço dentro do projeto e para alvos com rsync < 3.2.4, que não protegem
+por padrão. Com `-s` o shell remoto não expande `~`, e por isso o caminho
+precisa ser absoluto. O navegador já devolve caminho absoluto, e o campo
+digitado mostra a regra na mensagem de erro.
+
+Prova: os testes de unidade de listagem e de `rsync_args`, e o teste
+integrado, que confere o argv único com espaço contra um `rsync` falso e as
+recusas. O roteiro `scripts/testar-remote-ssh.sh` contra `sshd`/`rsync` reais
+navegou até `build/pasta com espaço` e espelhou `arquivo com espaço.txt`
+inteiro. O aviso "pastas com espaços ainda não podem ser abertas" saiu do
+painel Remote e do manual.
+
+### 7.146 P3: recuperação pela lixeira do desktop — 2026-10-01
+
+Com autorização pontual do autor para usar a HOME, já que a regra é testar só
+em `/tmp`, o core real (`target/release/kinein-core`, com o mesmo `fs.trash`
+do botão **Mover para a lixeira**) abriu `~/kinein-teste-lixeira` e enviou
+`teste-lixeira.txt` à lixeira. `gio trash --list`, a mesma fonte da Lixeira do
+Nautilus, listou `trash:///teste-lixeira.txt` com a origem
+`~/kinein-teste-lixeira/teste-lixeira.txt`. `gio trash --restore`
+devolveu o arquivo com o mesmo SHA-256, e a lixeira ficou sem o item. A pasta
+de teste foi removida em seguida.
+
+Isso fecha a linha "Excluir/recuperar" da matriz P3 para o volume da HOME.
+Itens de outro volume vão, pela especificação FreeDesktop, para a lixeira
+daquele volume (`/tmp/.Trash-1000`). O GNOME não exibe a de `/tmp` (§7.135):
+é comportamento do desktop com esse volume, não do fluxo da IDE, e o manual
+explica isso.
+
+### 7.147 P3: arrastar para o Nautilus funciona; a falha era do mouse sintético — 2026-10-01
+
+O limite da §7.144 não se sustentou. Uma fonte Qt Quick mínima com a mesma
+oferta da IDE (`text/uri-list` mais o MIME interno, Copiar|Mover e Mover
+proposto) e duas variantes (só `uri-list`, só Copiar) foram arrastadas
+**pelo autor**, com o mouse físico, até o Nautilus em Wayland: as três
+copiaram (`qml: fim A 1`, ou seja, `CopyAction`). Em seguida o autor arrastou
+`pasta_a` da árvore da IDE (Wayland nativo, binário do checkout) para o
+Nautilus duas vezes: a pasta apareceu na raiz de `destino-wl` e em
+`destino-wl/subpasta`, e a origem ficou intacta. O que o Nautilus recusava era
+o gesto injetado pelo `ydotool` em passos fixos, embora um receptor GTK4
+aceitasse esse mesmo gesto. Para provas de drag-and-drop **com o Nautilus**,
+o gesto precisa ser humano; o `ydotool` continua servindo para clique,
+teclado e drops em outros receptores. O manual, a especificação, o changelog
+e as notas da release deixaram de listar esse limite.
+
+### 7.148 V8: o AppImage tinha Qt 6.4 e mostrou dois defeitos que o checkout escondia — 2026-10-01
+
+O autor abriu o AppImage instalado pelo terminal (`kinein`) e o stderr
+mostrou dois avisos que nunca apareciam no checkout, que usa Qt 6.10:
+
+1. **`Cannot instantiate bound component outside its creation context`**,
+   repetido dez vezes. Os cinco painéis de ambiente (Embarcados, Banco,
+   Containers, Remote, Observabilidade) são `Component` com `pragma
+   ComponentBehavior: Bound` em `ToolWindows.qml`, instanciados pelo `Loader`
+   do `ShellEnvironmentOverlays`. O Loader do Qt 6.4 (Debian 12, o builder do
+   AppImage) cria no contexto **dele** e recusa. Na prática, **esses painéis
+   não abriam no pacote**. Tirar o pragma esbarra no `qmllint` estrito
+   (`unqualified`); a correção mantém o pragma e instancia por
+   `component.createObject(slot)`, que usa o contexto de criação do componente
+   nas duas versões. O ciclo de vida não mudou: criado uma vez, alternando
+   `visible`. Dois delegates de `Repeater` (`EmbeddedPanel`,
+   `EmbeddedFlashView`) que liam `parent.verticalCenter` antes de ter `parent`
+   ganharam a guarda. O painel de Containers abriu centralizado no binário do
+   checkout, sem aviso.
+2. **`Unsupported image format`** para `folder-closed.svg`: o pacote não
+   levava `imageformats/libqsvg.so`. Nenhum binário linka QtSvg, então o
+   `linuxdeploy` não o incluía, e os ícones SVG da árvore sumiam. O builder
+   instala `libqt6svg6`, o empacotador exporta `EXTRA_QT_MODULES=svg` e
+   reprova se o plugin faltar no AppDir.
+
+**Por que o gate não pegou:** os avisos QML eram conferidos só no binário do
+checkout. A lista agora mora em `scripts/avisos-qml.txt`, lida pelo
+`verificar_binario_abre.py` e pelo `testar-appimage.sh`, que roda sem Python no
+Debian mínimo. Com ela, o smoke do **artefato** reprova aviso do motor QML no
+primeiro frame e exige `libqsvg.so`. Prova por mutação: o AppImage defeituoso
+reprovou no plugin ausente, e a lista casou 12 linhas do log do autor. O
+terceiro aviso (`wayland-egl`) é esperado no modo gráfico portátil, e o
+tutorial o explica.
+
+### 7.149 V8: artefato final da 0.3.5 e gate verde — 2026-10-01
+
+Depois da última mudança de código (§7.148), o AppImage foi gerado de novo
+pelo build portátil (Debian 12, Qt 6.4.2). Resultados:
+
+- `Kinein-Vectis-0.3.5-x86_64.AppImage`, SHA-256 `c2710023928767f39b583c1e56fc946ee46f977985fbd08930229d991a33ecf7`.
+- `KV0.3.zip`, que é a pasta `KV0.3/` com AppImage, `.sha256`,
+  `SHA256SUMS`, instalador, tutorial e notas, SHA-256 `d6f6a84bfdac6ca03c1317a93c3a875ef8d3088178ce41ddc0d2855fab0c2675`.
+- `scripts/testar-appimage.sh` passou, já com `avisos-qml.txt` e o plugin
+  SVG exigido. `scripts/testar-appimage-portatil.sh` passou no Debian 12
+  mínimo, sem rede, SDK ou compiladores.
+- O AppImage abriu nativamente (X11 e Wayland) com `core · IPC 0.144.0`; o
+  painel de Containers abriu, os ícones SVG da árvore apareceram e o log teve
+  zero avisos da lista.
+- `scripts/verificar.sh` completo: **tudo verde**, com builds debug e release
+  e abertura dos dois presets (primeiro frame release em 350 ms, sem aviso QML).
+- O AppImage final foi instalado no menu do autor
+  (`~/Applications/KineinVectis`, item **Kinein Vectis** e comando `kinein`);
+  o item de desenvolvimento continua apontando para o checkout.

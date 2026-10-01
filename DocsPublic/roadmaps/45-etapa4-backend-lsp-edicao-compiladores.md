@@ -240,3 +240,44 @@ gravada sem pedido; nada de push/release/AppImage sem o autor. E a
   `container.open`, se o autor sentir falta.
 - O `EditorController` (790) — a divisão é pré-requisito de E6 e alivia
   todas as fatias E*.
+
+## 7. Adendo de 2026-10-01 — a Etapa 4 como motor da 0.4 dos embarcados
+
+> **Decisão do autor em 2026-10-01.** A 0.4 continua sendo a versão dedicada
+> aos embarcados ([roadmap 49 §5](49-frontend-0.3.6-e-sequencia-0.5.md)) e
+> leva junto a integração mais profunda com compiladores e ecossistemas
+> desta etapa. O embarcado é o **tema**; as famílias L/E/C deste documento
+> são o **motor**. Cada fluxo embarcado puxa as fatias de que precisa, em vez
+> de a etapa correr em paralelo como uma segunda versão dentro da 0.4.
+
+Já entregues na série 0.3: **L1** (símbolos do workspace com sinal próprio) e
+**E1** (indentação pela gramática no core), ambos na V6 do
+[roadmap 47](47-estrutura-da-v0.3.md).
+
+| Fluxo embarcado da 0.4 | Fatias que ele puxa |
+| --- | --- |
+| Criar ou abrir um projeto para um chip (kit) | **C3**: toolchain cross provada ponta a ponta (ex.: `arm-none-eabi`, sysroot, flags do alvo), pelo kit |
+| Entender por que não compila | **C1**: diagnósticos ao salvar, sem build completo, com as flags reais da CDB; **C2**: "por que este arquivo compila assim" (compilador, padrão, defines, sysroot, target do file-api) |
+| Build rápido e repetido | **C5**: `ccache`/`sccache` detectados e oferecidos (decisão da §0) |
+| Caber na flash e na RAM | **C7**, extensão de `build.size`: o `size.rs` já mede por seção e pelas regiões `MEMORY` do linker script; falta **por símbolo** (map file / `nm`) e o delta contra o build anterior |
+| Projeto sem CMake/Cargo (Makefile de fabricante) | **C4**: `bear` gerando a CDB, oferecido e nunca silencioso |
+| Editor que entende o alvo | **L2** signature help, **L3** document highlight, **L5** formatação pelo servidor, **L6** progresso de indexação, **L7** arquivos observados (CMakeLists, `compile_commands.json`) |
+| Rust embarcado, Zephyr, ESP-IDF | O **ecossistema decide** (`cargo`, `west`, `idf.py`) e a IDE mostra o que ele decidiu, pelo [modelo semântico](../especificacoes/modelo-semantico-do-projeto-0.4.md) |
+
+Regras que continuam valendo, sem reabrir:
+
+- **A IDE detecta deriva, não resolve versão.** Quem resolve dependência é a
+  ferramenta do ecossistema; a IDE a executa por Job e explica o resultado.
+- Nada roda `sudo` nem instala em silêncio; a placa do autor nunca é gravada
+  sem pedido.
+- A régua da §5 vale: latência da tecla e primeiro frame não pioram.
+
+**Fora da 0.4**, por não servirem ao fluxo embarcado e por mexerem pesado no
+desenho do editor: **L4** (inlay hints) e **E6** (multi-cursor), além de
+**L8/L9** e **E4/E5**, que ficam conforme o uso real pedir. Eles seguem nesta
+lista como candidatos de versões seguintes. A ordem da §4 passa a ser lida
+**dentro** dessa seleção.
+
+A arquitetura executável desta seleção, com o mapa de donos contra código
+duplicado, os fluxos passo a passo, os contratos e as provas, está no
+[roadmap 52](52-arquitetura-executavel-da-0.4.md).

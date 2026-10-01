@@ -64,6 +64,18 @@ Item {
             root.projectTree.handlePathRenamed(from, to);
         }
 
+        function onPathCopied(from, to) {
+            root.projectTree.handlePathCopied(from, to);
+        }
+
+        function onPathBatchTransferred(result) {
+            root.projectTree.fileClipboard.batchTransferred(result);
+        }
+
+        function onPathCopyFailed(to, message) {
+            root.projectTree.handleCopyFailed(to, message);
+        }
+
         function onPathDeleted(path) {
             root.projectTree.handlePathDeleted(path);
         }
@@ -109,7 +121,8 @@ Item {
                 root.folderPicker.showError(message);
             }
             if (method === "fs.createFile" || method === "fs.createDirectory"
-                    || method === "fs.rename" || method === "fs.delete") {
+                    || method === "fs.rename"
+                    || method === "fs.delete" || method === "fs.trash") {
                 root.projectTree.handleRequestFailed(method, message);
             }
             if (method === "cargo.metadata") {

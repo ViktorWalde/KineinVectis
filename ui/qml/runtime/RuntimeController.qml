@@ -35,7 +35,7 @@ Item {
     property string serialDevice: ""
 
     signal showTabRequested(string tab)
-    signal terminalOpenRequested()
+    signal terminalOpenRequested(string cwd)
     signal terminalInputRequested(string id, string data)
     signal terminalResizeRequested(string id, int cols, int rows)
     signal terminalScrollRequested(string id, int offset)
@@ -147,7 +147,14 @@ Item {
     }
 
     function newTerminal() {
-        terminalOpenRequested();
+        terminalOpenRequested("");
+    }
+
+    function newTerminalAt(directory) {
+        if (workspaceRoot === "") return;
+        showTabRequested("terminal");
+        terminalOpenRequested(directory);
+        focusTerminalInputRequested();
     }
 
     function closeTerminal(id) {
@@ -177,7 +184,7 @@ Item {
         // "Terminal 1" e "Terminal 2").
         showTabRequested("terminal");
         if (root.activeTerminalId === "") {
-            terminalOpenRequested();
+            terminalOpenRequested("");
         }
         focusTerminalInputRequested();
     }
@@ -201,7 +208,7 @@ Item {
         if (root.activeTerminalId === "") {
             pendingShell.hold(text);
             showTabRequested("terminal");
-            terminalOpenRequested();
+            terminalOpenRequested("");
             return;
         }
         terminalInputRequested(root.activeTerminalId, text + "\n");
@@ -267,7 +274,7 @@ Item {
     // não está ativa, uma tecla reabre o terminal.
     function sendTerminalKey(data) {
         if (root.activeTerminalId === "") {
-            terminalOpenRequested();
+            terminalOpenRequested("");
             return;
         }
         terminalInputRequested(root.activeTerminalId, data);

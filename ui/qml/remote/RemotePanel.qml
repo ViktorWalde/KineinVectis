@@ -41,6 +41,7 @@ Item {
     property bool isMirror: false
     property bool syncing: false
     property string syncMessage: ""
+    property var browseState: null
     property string discovery: "idle"
     property bool discovering: false
     property var aliases: []
@@ -77,6 +78,7 @@ Item {
     signal commandRequested(string kind)
     signal openPathEdited(string text)
     signal openFolderRequested()
+    signal browseAction(string kind, string path)
     signal syncRequested(string direction)
     signal closeRequested()
 
@@ -204,8 +206,10 @@ Item {
                 canOpen: root.selectedSaved && !root.syncing
                 syncing: root.syncing
                 syncMessage: root.syncMessage
+                browseState: root.browseState
                 onOpenPathEdited: text => root.openPathEdited(text)
                 onOpenFolderRequested: root.openFolderRequested()
+                onBrowseAction: (kind, path) => root.browseAction(kind, path)
                 onSyncRequested: direction => root.syncRequested(direction)
             }
 
