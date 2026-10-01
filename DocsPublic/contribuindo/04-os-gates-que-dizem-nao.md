@@ -56,7 +56,8 @@ ferramenta de gate do **repositório** ausente reprova; ferramenta de
 | `verificar-clangd-cross.sh` | o clangd enxerga o cross do kit | sem `clangd`/`arm-none-eabi-g++`: NÃO PROVADO |
 | `verificar-atalhos.sh` | dois comandos não declaram o mesmo atalho; todo `default_shortcut` tem `Shortcut` anotado `// comando: <id>` | `Alt+Return` ≠ `Alt+Enter` no Qt |
 | `verificar-docs.sh` | contagem de linhas sem data reconhecida nos `.md` que diverge do disco | ponha a data, ou corrija o número |
-| `verificar-links-docs.sh` | alvo relativo inexistente em Markdown versionado; não verifica âncoras/URLs externas | |
+| `module_map.py --check` | o `arquitetura/01-mapa-de-modulos.md` diverge do código; **ciclo novo** entre módulos do core; aresta Cargo não declarada; evidência de aresta que sumiu; método IPC sem lugar | rode `python3 scripts/module_map.py` e confira o diff. Ciclo novo: desfaça a dependência (ela é o defeito); só um ciclo com motivo entra em `KNOWN_CYCLES`. Contexto novo da IDE é uma entrada em `CONTEXTS`, sem mexer no gerador |
+| `verificar-links-docs.sh` | alvo relativo inexistente em Markdown versionado; **citação `DocsPublic/…` inexistente em qualquer arquivo** (código e comentários inclusive, desde 2026-10-01); não verifica âncoras/URLs externas | para renomear documento use `scripts/rename_doc.py`, que reescreve link, citação e nome |
 | `verificar-arquitetura.sh` | a catraca: Rust 500 (sem testes), view 300, controller/host 400, ui/src 500 | split por responsabilidade; nunca "Part2" |
 | `verificar-transicao-workspace.sh` | estado por-workspace com um dono | |
 | `verificar-qml-logica.sh` | os harnesses (`tst_*.qml`) num espelho do módulo; **harness verde que imprime aviso de `avisos-qml.txt`** | o bitmask está no `console.error`; aviso na saída quase sempre é um falso incompleto no harness |

@@ -205,6 +205,10 @@ passo "scripts/verificar-docs.sh" \
     "Compara contagens de linhas sem data nos documentos com os arquivos citados."
 bash scripts/verificar-docs.sh
 
+passo "scripts/module_map.py --check" \
+    "Reprova o mapa de modulos que divergiu do codigo e ciclo novo entre modulos do core."
+python3 scripts/module_map.py --check
+
 passo "scripts/verificar-links-docs.sh" \
     "Reprova links Markdown relativos cujo alvo nao existe no repositorio."
 bash scripts/verificar-links-docs.sh

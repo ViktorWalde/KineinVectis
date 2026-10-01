@@ -3179,10 +3179,9 @@ scripts/verificar_embarcado.py	regioes	9
 scripts/verificar_embarcado.py	respostas	4
 scripts/verificar_embarcado.py	vivos	4
 scripts/verificar_fiacao_ipc.py	aceitos	12
-scripts/verificar_fiacao_ipc.py	achados	13
+scripts/verificar_fiacao_ipc.py	achados	10
 scripts/verificar_fiacao_ipc.py	arquivos	11
 scripts/verificar_fiacao_ipc.py	bloco	3
-scripts/verificar_fiacao_ipc.py	braco	2
 scripts/verificar_fiacao_ipc.py	caminho	2
 scripts/verificar_fiacao_ipc.py	chamadas	2
 scripts/verificar_fiacao_ipc.py	chamador	4
@@ -3203,7 +3202,7 @@ scripts/verificar_fiacao_ipc.py	metodos	15
 scripts/verificar_fiacao_ipc.py	orfaos	2
 scripts/verificar_fiacao_ipc.py	ouvido	2
 scripts/verificar_fiacao_ipc.py	ouvinte	3
-scripts/verificar_fiacao_ipc.py	padrao	6
+scripts/verificar_fiacao_ipc.py	padrao	4
 scripts/verificar_fiacao_ipc.py	pedidos	2
 scripts/verificar_fiacao_ipc.py	protocolo	5
 scripts/verificar_fiacao_ipc.py	raiz	6
@@ -3213,7 +3212,7 @@ scripts/verificar_fiacao_ipc.py	roteados	5
 scripts/verificar_fiacao_ipc.py	soltos	3
 scripts/verificar_fiacao_ipc.py	sufixo	2
 scripts/verificar_fiacao_ipc.py	sufixos	2
-scripts/verificar_fiacao_ipc.py	texto	17
+scripts/verificar_fiacao_ipc.py	texto	15
 scripts/verificar_fiacao_ipc.py	titulo	9
 scripts/verificar_fiacao_ipc.py	tratador	2
 scripts/verificar_fiacao_ipc.py	tratados	7

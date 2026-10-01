@@ -5,6 +5,7 @@ Comece por [`ARCHITECTURE.md`](ARCHITECTURE.md): é contrato, e o gate o cobra.
 ```text
 ARCHITECTURE.md                  as regras: camadas, corte por responsabilidade,
                                  catraca, gates nascidos de falha silenciosa
+01-mapa-de-modulos.md                quem fala com quem, por quê e como (GERADO, com gate)
 02-estrutura-do-repositorio.md       o que mora em cada pasta do repositório
 03-protocolo-ipc.md               o contrato JSON-RPC entre UI e core: todos os
                                  métodos, eventos e tipos, por domínio, com a

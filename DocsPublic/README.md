@@ -192,6 +192,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | Documento | Assunto |
 | --- | --- |
 | [arquitetura/ARCHITECTURE.md](arquitetura/ARCHITECTURE.md) | **LEITURA OBRIGATÓRIA — contrato de arquitetura (camadas, regra de split, crescimento). Verificado por catraca. Antes de propor arquitetura nova: MEDIR — o problema costuma ser regra não cumprida, não regra ausente (§1.1)** |
+| [arquitetura/01-mapa-de-modulos.md](arquitetura/01-mapa-de-modulos.md) | **Quem fala com quem, por quê e como** — GERADO do código por `scripts/module_map.py` e conferido por gate: as pastas do repositório, o caminho de um pedido, o grafo dos domínios do core com os ciclos, e um diagrama por contexto (git, editor, embarcados, Remote…) com os arquivos reais de cada etapa |
 | [arquitetura/02-estrutura-do-repositorio.md](arquitetura/02-estrutura-do-repositorio.md) | **Estrutura real do repositório e crates** (remedida em 2026-09-10): a árvore como ela é, os comandos que a conferem, e o registro de quando ela mentiu — listava uma pasta `templates/` que nunca existiu |
 | [arquitetura/03-protocolo-ipc.md](arquitetura/03-protocolo-ipc.md) | Protocolo IPC JSON-RPC implementado — a **forma** de cada mensagem, por domínio |
 | [arquitetura/04-boot-e-comunicacao.md](arquitetura/04-boot-e-comunicacao.md) | **Boot e comunicação, fim a fim**: quem sobe quem, as threads do core e o que fala com quais, o caminho de uma requisição e de um evento, o que é e o que NÃO é garantido em ordem, crash e recuperação, e como falar com o core na mão |

@@ -23,7 +23,7 @@ tokenize argparse tempfile mkdtemp makedirs listdir rmtree getmtime fromtimestam
 strftime fullmatch removesuffix datetime returncode popen subprocess stdlib
 # a AST do Python (G0.1 le' nomes por ela desde 2026-10-01): campos e builtins
 asname attr getattr async
-dotall isspace removeprefix relpath
+dotall isspace removeprefix relpath dataclass dataclasses iterdir maxsplit importlib
 # "instantiate" do Qt (QQmlComponent instancia partes; o dicionario nao tem o verbo)
 instantiate instantiated
 qverify qcompare qtest guiless qint qsizetype qobject qgetenv qputenv qqmlregistration

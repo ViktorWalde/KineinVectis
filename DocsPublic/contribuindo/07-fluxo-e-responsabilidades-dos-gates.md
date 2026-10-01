@@ -136,6 +136,7 @@ muda. O código do produto que um gate inspeciona continua em seu domínio norma
 | `verificar-clangd-cross.sh` | wrapper `.sh` + `scripts/verificar_clangd_cross.py` | Resolução dos cabeçalhos C++ do compilador cross pelo `clangd`. |
 | `verificar-atalhos.sh` | wrapper `.sh` + `scripts/verificar_atalhos.py` | Coerência entre atalhos declarados, paleta, menus e tratamento no host. |
 | `verificar-docs.sh` | `scripts/verificar-docs.sh` | Confere contagens de linhas reconhecidas por padrões textuais; não prova todos os números nem a semântica dos documentos. |
+| `module_map.py --check` | `scripts/module_map.py` (`EDGES`, `CONTEXTS`, `KNOWN_CYCLES`) | O mapa de módulos gerado confere com o código; nenhum ciclo novo no core; todo método IPC classificado. Reusa o extrator do `verificar_fiacao_ipc.py` (dono único). |
 | `verificar-links-docs.sh` | `scripts/verificar-links-docs.sh` | Existência dos alvos relativos reconhecidos em Markdown versionado e novo não ignorado; não verifica URLs externas nem âncoras. |
 | `verificar-arquitetura.sh` | `scripts/verificar-arquitetura.sh` + `arquitetura-baseline.txt` | Catraca de tamanho por categoria de arquivo; responsabilidade semântica ainda exige revisão. |
 | `verificar-transicao-workspace.sh` | `scripts/verificar-transicao-workspace.sh` | Dono único da mutação de estado por workspace no core. |

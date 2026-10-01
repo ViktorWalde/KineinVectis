@@ -62,30 +62,36 @@ def arquivos(pasta: str, *sufixos: str) -> list[Path]:
     return [p for p in (RAIZ / pasta).rglob("*") if p.suffix in sufixos]
 
 
-def metodos_do_core() -> set[str]:
-    """Os bracos `"dominio.metodo" => ...` dos roteadores (`handlers/`, `lib.rs`).
+def core_methods_by_file() -> dict[Path, set[str]]:
+    """Os bracos `"dominio.metodo" => ...` dos roteadores (`handlers/`, `lib.rs`),
+    por arquivo que os roteia. Dono UNICO desta extracao: o mapa de modulos
+    (scripts/module_map.py) a reusa para ligar metodo IPC ao handler.
 
     So' linhas que chamam um `*_response(`/`Continue(`: o mesmo padrao de
     string aparece em ids de configAction e em nomes de arquivo (`boot.py`),
     que nao sao metodos.
     """
-    padrao = re.compile(r'"([a-z][A-Za-z]*(?:\.[a-zA-Z]+)+)"')
-    achados: set[str] = set()
-    fontes = arquivos("crates/kinein-core/src/handlers", ".rs") + [
+    name = re.compile(r'"([a-z][A-Za-z]*(?:\.[a-zA-Z]+)+)"')
+    sources = arquivos("crates/kinein-core/src/handlers", ".rs") + [
         RAIZ / "crates/kinein-core/src/lib.rs",
         RAIZ / "crates/kinein-core/src/handlers.rs",
     ]
-    braco = re.compile(
+    arm = re.compile(
         r'((?:"[a-zA-Z.]+"\s*\|\s*)*"[a-zA-Z.]+")\s*=>\s*(?:Some\(|\{|RequestOutcome|outcome_for\(|self\.|Self::)'
     )
-    for p in fontes:
+    found: dict[Path, set[str]] = {}
+    for path in sources:
         # Um braco pode quebrar linha entre os `|` (debug.continue | … | debug.stop).
-        texto = re.sub(r"\s*\n\s*\|", " |", ler(p))
-        for m in braco.finditer(texto):
-            for nome in padrao.findall(m.group(1)):
-                if not nome.startswith("event."):
-                    achados.add(nome)
-    return achados
+        text = re.sub(r"\s*\n\s*\|", " |", ler(path))
+        for match in arm.finditer(text):
+            for method in name.findall(match.group(1)):
+                if not method.startswith("event."):
+                    found.setdefault(path, set()).add(method)
+    return found
+
+
+def metodos_do_core() -> set[str]:
+    return set().union(*core_methods_by_file().values())
 
 
 def metodos_dos_clientes() -> set[str]:
