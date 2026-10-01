@@ -3136,10 +3136,8 @@ scripts/verificar_binario_abre.py	achados	3
 scripts/verificar_binario_abre.py	alvo	3
 scripts/verificar_binario_abre.py	ambiente	3
 scripts/verificar_binario_abre.py	armadilha	7
-scripts/verificar_binario_abre.py	arquivo	3
-scripts/verificar_binario_abre.py	atual	6
 scripts/verificar_binario_abre.py	avisos	4
-scripts/verificar_binario_abre.py	binario	13
+scripts/verificar_binario_abre.py	binario	10
 scripts/verificar_binario_abre.py	caminho	6
 scripts/verificar_binario_abre.py	candidato	3
 scripts/verificar_binario_abre.py	cauda	3
@@ -3147,7 +3145,6 @@ scripts/verificar_binario_abre.py	codigo	7
 scripts/verificar_binario_abre.py	completo	3
 scripts/verificar_binario_abre.py	duracao	3
 scripts/verificar_binario_abre.py	fecha	3
-scripts/verificar_binario_abre.py	herda	5
 scripts/verificar_binario_abre.py	inicio	2
 scripts/verificar_binario_abre.py	linha	8
 scripts/verificar_binario_abre.py	listar	1
@@ -3157,12 +3154,11 @@ scripts/verificar_binario_abre.py	objetos	2
 scripts/verificar_binario_abre.py	obsoletos	8
 scripts/verificar_binario_abre.py	pior	9
 scripts/verificar_binario_abre.py	quando	3
-scripts/verificar_binario_abre.py	raiz	12
+scripts/verificar_binario_abre.py	raiz	9
 scripts/verificar_binario_abre.py	rotulo	2
 scripts/verificar_binario_abre.py	ruido	3
 scripts/verificar_binario_abre.py	saida	6
 scripts/verificar_binario_abre.py	texto	11
-scripts/verificar_binario_abre.py	visto	3
 scripts/verificar_binario_abre.py	vistos	3
 scripts/verificar_clangd_cross.py	arquivo	2
 scripts/verificar_clangd_cross.py	erros	3

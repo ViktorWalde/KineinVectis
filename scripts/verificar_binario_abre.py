@@ -16,7 +16,6 @@ Duas perguntas, nesta ordem, porque a primeira EXPLICA a segunda:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import subprocess
 import sys
@@ -24,44 +23,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from cmake_presets import UI_BINARY, preset_binary_dir
+
 RAIZ = Path(__file__).resolve().parent.parent
-PRESETS = [RAIZ / "CMakePresets.json", RAIZ / "CMakeUserPresets.json"]
-BINARIO = Path("ui") / "kinein-vectis"
 MARCADOR = "KINEIN_PERF first_frame_ms="
-
-
-def _presets() -> tuple[dict[str, dict], dict[str, dict]]:
-    """Presets de configure e de build, dos dois arquivos (o do usuario e'
-    opcional e vence pelo nome, como no proprio cmake)."""
-    configure: dict[str, dict] = {}
-    build: dict[str, dict] = {}
-    for arquivo in PRESETS:
-        if not arquivo.is_file():
-            continue
-        dados = json.loads(arquivo.read_text(encoding="utf-8"))
-        for p in dados.get("configurePresets", []):
-            configure[p["name"]] = p
-        for p in dados.get("buildPresets", []):
-            build[p["name"]] = p
-    return configure, build
-
-
-def binary_dir_do_preset(nome: str) -> Path:
-    """`cmake --build --preset NOME` escreve em qual pasta? O build preset
-    aponta o configure preset; o `binaryDir` pode vir por `inherits`."""
-    configure, build = _presets()
-    if nome in build:
-        nome = build[nome]["configurePreset"]
-    visto: set[str] = set()
-    atual = nome
-    while atual in configure and atual not in visto:
-        visto.add(atual)
-        p = configure[atual]
-        if "binaryDir" in p:
-            return Path(p["binaryDir"].replace("${sourceDir}", str(RAIZ)))
-        herda = p.get("inherits", [])
-        atual = herda[0] if isinstance(herda, list) and herda else str(herda)
-    raise SystemExit(f"erro: preset '{nome}' sem binaryDir nos CMake*Presets.json")
 
 
 def objetos_obsoletos(build_dir: Path) -> list[tuple[Path, Path, int, int]]:
@@ -156,7 +121,7 @@ def abre(build_dir: Path, timeout: float) -> tuple[int | None, str, int | None]:
     )
     try:
         proc = subprocess.run(
-            [str(build_dir / BINARIO)],
+            [str(build_dir / UI_BINARY)],
             cwd=RAIZ,
             env=ambiente,
             capture_output=True,
@@ -218,7 +183,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=30.0)
     args = parser.parse_args()
 
-    build_dir = args.build_dir.resolve() if args.build_dir else binary_dir_do_preset(args.preset)
+    build_dir = args.build_dir.resolve() if args.build_dir else preset_binary_dir(args.preset)
     if not (build_dir / "build.ninja").is_file():
         print(f"erro: {build_dir} nao e' uma arvore de build do ninja.", file=sys.stderr)
         return 2
@@ -250,7 +215,7 @@ def main() -> int:
         )
         return 1
 
-    binario = build_dir / BINARIO
+    binario = build_dir / UI_BINARY
     if not os.access(binario, os.X_OK):
         print(f"erro: {binario} nao existe ou nao e' executavel.", file=sys.stderr)
         return 2

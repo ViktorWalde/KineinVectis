@@ -103,6 +103,7 @@ muda. O código do produto que um gate inspeciona continua em seu domínio norma
 | `verificar-transicao-workspace.sh` | `scripts/verificar-transicao-workspace.sh` | Dono único da mutação de estado por workspace no core. |
 | `verificar-qml-logica.sh` | script `.sh` + `scripts/qml-harness/tst_*.qml` | Lógica QML real em espelho temporário do módulo e modo headless; reprova também harness verde cuja saída tem aviso de `avisos-qml.txt`. |
 | `verificar-qml-logica-qt64.sh` | script `.sh` + `packaging/appimage/Containerfile.qml64` | Os mesmos harnesses com o runner do Qt 6.4.2 do AppImage. |
+| `check_terminal_quiet.py` | script `.py` (pty, XDG isolados) | `kinein <pasta>` desacopla como `code .`: < 300 ms, mudo, IDE abre sozinha. |
 | builds debug/release | chamadas `cmake`/`cargo` no orquestrador e presets do projeto | Produzir os binários dos presets selecionados; confirmar separadamente que o launcher usa esses caminhos. |
 | `verificar-binario-abre.sh` | wrapper `.sh` + `scripts/verificar_binario_abre.py` | Abrir o binário recém-produzido, atingir o primeiro frame e rejeitar avisos QML. |
 

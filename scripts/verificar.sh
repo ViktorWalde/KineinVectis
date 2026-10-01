@@ -205,6 +205,10 @@ if [ "$modo" = "completo" ]; then
         "Abre o binario debug recem-compilado e exige primeiro frame sem aviso QML."
     bash scripts/verificar-binario-abre.sh --preset "$preset_debug"
 
+    passo "scripts/check_terminal_quiet.py --preset $preset_debug" \
+        "Abre pela linha de comando num pty: volta em < 300 ms e nao imprime nada (como code .)."
+    python3 scripts/check_terminal_quiet.py --preset "$preset_debug"
+
     passo "cargo build --release -p kinein-core" \
         "Compila o core Rust em release, como sera consumido pela distribuicao."
     cargo build --release -p kinein-core

@@ -27,7 +27,7 @@ spacer frameless antialiasing demi btoa atob stringify
 canonicalize fileno unlink mkdir mkpath chmod geteuid setsid isatty fcntl rdwr
 cloexec nonblock rdonly nofollow noreplace openat renameat errno sockaddr
 setsockopt pollin pollfd revents timeval usec suseconds rcvtimeo sndtimeo
-waitpid waitstatus exitcode execvpe sigkill ppid pids gids nsecs nanos millis
+waitpid waitstatus exitcode execvpe sigkill ppid pids gids nsecs nanos millis killpg sigterm
 openpty decscusr crbegin crend cstring memcpy unistd ssize ceil freq
 tokio rustls webpki ureq rusqlite rustix nodelay
 
