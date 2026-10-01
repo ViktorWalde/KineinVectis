@@ -15,7 +15,7 @@
 # POR QUE ELE SE CONFIGURA SOZINHO. Ate' esta data o gate exigia
 # `build/linux-clang-debug-strict` ja' configurado. O instalar-ambiente.sh o
 # configura, mas a documentacao manual (comandos-de-build-e-verificacao.md,
-# 14-development-environment.md, como-executar.md) manda configurar so' os
+# 14-ambiente-de-desenvolvimento.md, como-executar.md) manda configurar so' os
 # `dev-local*`, e a mensagem de erro daqui mandava configurar o `dev-local` —
 # que nao cria esse diretorio. Quem seguia a documentacao reprovava sem defeito
 # nenhum; numa maquina antiga o gate lia um banco de dias atras (arquivo .cpp

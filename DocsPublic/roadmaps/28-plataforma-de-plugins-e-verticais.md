@@ -276,7 +276,7 @@ disponível para estudo, e a densidade/organização dele é o alvo estético qu
 autor escolheu (registro de 2026-07-16: "o visual limpo da IDE aberta do
 JetBrains — inspiração, não cópia; referência de print em `imagens/prints`").
 
-**Onde a dívida de UI/UX já é conhecida:** `DocsPublic/roadmaps/20-ui-spec-convergence-plan.md`
+**Onde a dívida de UI/UX já é conhecida:** `DocsPublic/roadmaps/20-convergencia-com-a-especificacao-de-ui.md`
 (fatias C0–C6) e `DocsPublic/especificacoes/sistema-de-componentes-de-ui.md`. Este
 documento não os substitui — aponta para eles e registra que a barra subiu.
 

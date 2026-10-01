@@ -22,7 +22,7 @@ O recorte recomendado é:
 | micro-ROS em MCU | Ponte futura com a frente Embarcados | Firmware, transporte, Agent e mensagens precisam de validação conjunta, incluindo placa real |
 | Visualização e simulação | Integração de ferramentas como processos | Identificar versões, configuração, responsabilidade pelo processo e resultado observável |
 
-São preservadas as decisões de [integrações nativas](README.md), os [modos de adaptação de componentes abertos](../roadmaps/adaptacao-de-plugins-abertos.md) e os levantamentos de [ferramentas de embarcados](36-ferramentas-de-embarcados.md) e [toolchains por alvo](39-toolchains-por-alvo.md). ROS 2 não substitui o painel Embarcados nem desfaz a decisão de dedicar uma versão ao seu layout, atalhos e fluxo.
+São preservadas as decisões de [integrações nativas](README.md), os [modos de adaptação de componentes abertos](../roadmaps/54-adaptacao-de-plugins-abertos.md) e os levantamentos de [ferramentas de embarcados](36-ferramentas-de-embarcados.md) e [toolchains por alvo](39-toolchains-por-alvo.md). ROS 2 não substitui o painel Embarcados nem desfaz a decisão de dedicar uma versão ao seu layout, atalhos e fluxo.
 
 ### 1.1 O que foi efetivamente verificado
 

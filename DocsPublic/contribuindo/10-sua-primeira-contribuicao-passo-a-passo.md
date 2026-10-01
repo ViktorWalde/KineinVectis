@@ -54,7 +54,7 @@ pub struct DataSourceDestroyParams {
 
 Mais o `DataSourceDestroyResult` e o `DataSourceDestroyedEvent`,
 reexportados em `lib.rs`; `PROTOCOL_VERSION` de `0.128.0` para `0.129.0`;
-a entrada no changelog do topo de `arquitetura/03-ipc-protocol.md` **e** a
+a entrada no changelog do topo de `arquitetura/03-protocolo-ipc.md` **e** a
 seção `datasource.*` com a assinatura. Regra de ouro dos tipos: doc-comment
 em inglês (é a linguagem dos tipos), `camelCase` no fio, `deny_unknown_fields`
 quando não há `#[serde(flatten)]` (os dois não convivem — `40` §7.66).

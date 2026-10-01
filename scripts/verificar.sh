@@ -3,7 +3,7 @@
 #
 # Roda toda a validacao em sequencia e PARA no primeiro erro (set -e), para
 # evitar o caso em que um passo falha mas os seguintes continuam e dao falsa
-# sensacao de "tudo passou". Ver DocsPublic/arquitetura/15-engineering-debt-and-refactor.md.
+# sensacao de "tudo passou". Ver DocsPublic/arquitetura/15-divida-de-engenharia-e-refatoracao.md.
 #
 # Uso:
 #   scripts/verificar.sh            # completo: lint + testes + C++ + builds debug/release + o binario ABRE

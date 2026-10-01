@@ -52,7 +52,7 @@ Se a fatia toca o IPC:
    `deny_unknown_fields` quando não há `flatten`), reexportado em
    `lib.rs`;
 2. `PROTOCOL_VERSION` sobe (`0.129.0` → `0.130.0` para método/evento novo);
-3. `DocsPublic/arquitetura/03-ipc-protocol.md`: a entrada no changelog do
+3. `DocsPublic/arquitetura/03-protocolo-ipc.md`: a entrada no changelog do
    topo **e** a seção do domínio (a assinatura na lista de métodos e o
    texto);
 4. o gate de fiação vai exigir que o método tenha handler no core, que a

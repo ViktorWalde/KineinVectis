@@ -163,4 +163,4 @@ próprio Kinein:
 | **Equilibrado** | clippy default (sem flags extras) | sem `RUSTFLAGS` |
 | **Relaxado** | `-- -A clippy::all -W clippy::correctness` | sem `RUSTFLAGS` |
 
-Detalhe do contrato IPC de cada um: `DocsPublic/arquitetura/03-ipc-protocol.md`.
+Detalhe do contrato IPC de cada um: `DocsPublic/arquitetura/03-protocolo-ipc.md`.

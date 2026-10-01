@@ -126,7 +126,7 @@ e a versão**. Se a fonte não foi consultada, a frase correta é "não sei aind
 e a próxima ação é consultar ou medir, não supor.
 
 A política de referência é obrigatória e tem modos definidos em
-`DocsPublic/roadmaps/adaptacao-de-plugins-abertos.md` §2 — **MODE-A**
+`DocsPublic/roadmaps/54-adaptacao-de-plugins-abertos.md` §2 — **MODE-A**
 (integrar a ferramenta original, preferido) a **MODE-D** (referência apenas).
 Arquitetura entra como MODE-D/MODE-B: **aprende-se a regra, não se copia a
 máquina**, e a revisão consultada fica registrada. Ver
@@ -167,7 +167,7 @@ Proibições que sustentam a arquitetura (não negociáveis):
 
 Funcionalidades de IDE devem estudar implementações profissionais atuais
 conforme a seção 2.1 de
-`DocsPublic/roadmaps/adaptacao-de-plugins-abertos.md`. Esse estudo importa
+`DocsPublic/roadmaps/54-adaptacao-de-plugins-abertos.md`. Esse estudo importa
 invariantes, decisões, modos de falha e estratégias de teste; não importa
 código nem a arquitetura do host.
 
@@ -623,7 +623,7 @@ Ao adicionar um comando/feature, siga sempre esta ordem:
 3. Lógica              → kinein-core/src/<dominio>.rs  (ou .../<dominio>/ se já for grande)
 4. Testes              → unit no módulo + integração em tests/<dominio>.rs
 5. Se for operação longa → vira JOB (ver Seção 7), não handler síncrono
-6. Doc                 → atualizar DocsPublic/arquitetura/03-ipc-protocol.md (contrato) e DocsPrivate/ContextoIA.md (estado)
+6. Doc                 → atualizar DocsPublic/arquitetura/03-protocolo-ipc.md (contrato) e DocsPrivate/ContextoIA.md (estado)
 ```
 
 Se o domínio ainda não existe, crie o par `handlers/<dominio>.rs` +

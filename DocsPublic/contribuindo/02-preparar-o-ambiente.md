@@ -1,6 +1,6 @@
 # 02 — Preparar o ambiente
 
-A referência completa é [`../build/14-development-environment.md`](../build/14-development-environment.md)
+A referência completa é [`../build/14-ambiente-de-desenvolvimento.md`](../build/14-ambiente-de-desenvolvimento.md)
 e [`../build/como-executar.md`](../build/como-executar.md); os comandos
 oficiais, [`../build/comandos-de-build-e-verificacao.md`](../build/comandos-de-build-e-verificacao.md).
 Este capítulo é o caminho mais curto até "a IDE abre pelo meu checkout e o

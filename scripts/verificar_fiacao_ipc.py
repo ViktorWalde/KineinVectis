@@ -179,11 +179,11 @@ def sinais_qml() -> list[tuple[str, str, Path]]:
     return achados
 
 
-DOC_PROTOCOLO = "DocsPublic/arquitetura/03-ipc-protocol.md"
+DOC_PROTOCOLO = "DocsPublic/arquitetura/03-protocolo-ipc.md"
 
 
 def metodos_documentados() -> tuple[set[str], int | None]:
-    """A lista canonica do `03-ipc-protocol.md`, e o numero que o titulo afirma.
+    """A lista canonica do `03-protocolo-ipc.md`, e o numero que o titulo afirma.
 
     A lista e' o bloco ```text que vem logo depois do titulo "Os N metodos
     roteados"; o numero sai do proprio titulo.
@@ -225,7 +225,7 @@ def main() -> int:
     # verde. O gatilho foi concreto: ao extrair o `remote.command` para arquivo
     # proprio, o roteador saiu do formato `"dominio.metodo" => ...`; o metodo
     # continuava funcionando, mas sumiu desta contagem (167 -> 166) e teria
-    # sumido da lista canonica do `03-ipc-protocol`. So' percebemos porque
+    # sumido da lista canonica do `03-protocolo-ipc`. So' percebemos porque
     # alguem olhou o numero.
     pedidos_sem_rota = sorted(
         metodos_dos_clientes() - metodos_do_core() - eventos_do_core()
@@ -235,7 +235,7 @@ def main() -> int:
 
     # 1c — A LISTA CANONICA DA DOCUMENTACAO (2026-09-26).
     #
-    # O `03-ipc-protocol.md` tem a lista inteira dos metodos roteados, e ela e'
+    # O `03-protocolo-ipc.md` tem a lista inteira dos metodos roteados, e ela e'
     # o que alguem le' para saber o que existe no fio. Nada a cruzava com o
     # codigo: em 2026-09-26 o `syntaxTree.indent` entrou roteado, documentado e
     # com bump de versao — mas os tres porque EU LEMBREI, e "porque alguem

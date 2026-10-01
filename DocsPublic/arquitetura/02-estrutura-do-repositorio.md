@@ -215,7 +215,7 @@ e os lints estritos em `[workspace.lints]`, herdados por todos os crates.
 configuração num documento é exatamente o que envelhece calado: a versão
 anterior desta seção dizia `missing_docs = "warn"` quando o arquivo já dizia
 `deny`, e listava três lints a menos do que existem. O que os lints exigem, e
-por quê, está em [`06-strict-mode.md`](06-strict-mode.md); o que eles **são**
+por quê, está em [`06-modo-estrito.md`](06-modo-estrito.md); o que eles **são**
 está em `Cargo.toml`, que é o único lugar onde a resposta não pode envelhecer.
 
 ```bash

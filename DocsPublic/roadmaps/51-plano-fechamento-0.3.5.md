@@ -20,7 +20,7 @@ Data: 2026-10-01, America/Sao_Paulo. **Classe: PLANO OPERACIONAL.** Este plano f
 1. Revisar o handler parcial: evento inclui `requestedPath` para rejeitar resposta atrasada; manter o SSH num Job, quoting POSIX compartilhado, resultado delimitado por NUL e teto de saída. Corrigir erros de compilação e falha. Pastas com espaços ainda não podem ser abertas por `remote.open`; ocultá-las na lista e explicar o limite, sem prometer suporte.
 2. Completar `RemoteMirrorView` com gesto **Escolher pasta**: primeira consulta sem `path` resolve `$HOME` no alvo, exibe a pasta e filhas, permite subir para `parent`, entrar numa filha e abrir a pasta atual como espelho. Encaminhar propriedades/sinais por `RemotePanel` e `RemotePanelHost`; não duplicar o campo/fluxo `openPath/openFolder` atual.
 3. Provar core com um SSH simulado para casos de home, filho, nome inválido, autenticação/falha, e com `scripts/testar-remote-ssh.sh` contra `sshd` real. Provar QML: resposta atrasada de outro alvo/workspace, erro e escolha que chama o `remote.open` existente. Rodar arquitetura, fiação IPC, duplicação QML, lint/build e smoke do primeiro frame.
-4. Atualizar `DocsPublic/arquitetura/03-ipc-protocol.md`, manual, especificação Remote, roadmaps 40/47/48 e changelog com contrato, prova e limites reais. Só então marcar V2/R0.5 fechado.
+4. Atualizar `DocsPublic/arquitetura/03-protocolo-ipc.md`, manual, especificação Remote, roadmaps 40/47/48 e changelog com contrato, prova e limites reais. Só então marcar V2/R0.5 fechado.
 
 **Aceite:** uma pessoa com alvo salvo clica em Escolher pasta, vê a home remota, navega para uma filha e abre o espelho sem decorar caminho; resposta atrasada não troca seleção; falha SSH é exibida; o mesmo fluxo passa em Linux com `sshd` real.
 

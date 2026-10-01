@@ -78,7 +78,7 @@ Entregue nas quatro camadas no protocolo `0.63.0`: `configaction.rs` no
 protocolo, a pasta `configaction/` no core (catálogo, disponibilidade, plano e
 um planejador por arquivo editado), `handlers/configaction.rs`, e na UI o
 `ConfigActionController` + o diálogo de três painéis, acessível pela paleta
-(`Ctrl+Alt+P`). Contrato em `DocsPublic/arquitetura/03-ipc-protocol.md`.
+(`Ctrl+Alt+P`). Contrato em `DocsPublic/arquitetura/03-protocolo-ipc.md`.
 
 *Aceite cumprido:* `src/tests/configaction.rs` verifica **cada uma das 16
 ações contra arquivo real** — abre um workspace de verdade, manda a requisição

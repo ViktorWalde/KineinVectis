@@ -82,7 +82,7 @@ domínios de 2026-09-12 — `serial`, `container`, `project`, `index` — estão
 abaixo.)
 
 **Os comandos que provam os dois primeiros estão no
-[`arquitetura/03`](arquitetura/03-ipc-protocol.md)**, com o motivo de cada
+[`arquitetura/03`](arquitetura/03-protocolo-ipc.md)**, com o motivo de cada
 filtro: sem eles, um grep ingênuo devolve 132 métodos (conta dois nomes de
 evento que aparecem num `match` de teste) e 36 eventos (não vê cinco montados
 com `format!`).

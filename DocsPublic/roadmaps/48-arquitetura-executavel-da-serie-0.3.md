@@ -294,7 +294,7 @@ remote.directories { name, path? }
 
 > **Validado em 2026-09-24 (protocolo `0.132.0`).** Os dois primeiros entraram,
 > com tres diferencas que a fatia mediu, todas registradas no
-> [`03-ipc-protocol`](../arquitetura/03-ipc-protocol.md):
+> [`03-protocolo-ipc`](../arquitetura/03-protocolo-ipc.md):
 >
 > - `remote.discover` devolve tambem `sources[]` — os arquivos lidos — para a
 >   UI poder dizer de onde cada alias veio;

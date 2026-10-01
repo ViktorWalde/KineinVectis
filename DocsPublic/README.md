@@ -192,13 +192,13 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | Documento | Assunto |
 | --- | --- |
 | [arquitetura/ARCHITECTURE.md](arquitetura/ARCHITECTURE.md) | **LEITURA OBRIGATÓRIA — contrato de arquitetura (camadas, regra de split, crescimento). Verificado por catraca. Antes de propor arquitetura nova: MEDIR — o problema costuma ser regra não cumprida, não regra ausente (§1.1)** |
-| [arquitetura/02-repository-structure.md](arquitetura/02-repository-structure.md) | **Estrutura real do repositório e crates** (remedida em 2026-09-10): a árvore como ela é, os comandos que a conferem, e o registro de quando ela mentiu — listava uma pasta `templates/` que nunca existiu |
-| [arquitetura/03-ipc-protocol.md](arquitetura/03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado — a **forma** de cada mensagem, por domínio |
+| [arquitetura/02-estrutura-do-repositorio.md](arquitetura/02-estrutura-do-repositorio.md) | **Estrutura real do repositório e crates** (remedida em 2026-09-10): a árvore como ela é, os comandos que a conferem, e o registro de quando ela mentiu — listava uma pasta `templates/` que nunca existiu |
+| [arquitetura/03-protocolo-ipc.md](arquitetura/03-protocolo-ipc.md) | Protocolo IPC JSON-RPC implementado — a **forma** de cada mensagem, por domínio |
 | [arquitetura/04-boot-e-comunicacao.md](arquitetura/04-boot-e-comunicacao.md) | **Boot e comunicação, fim a fim**: quem sobe quem, as threads do core e o que fala com quais, o caminho de uma requisição e de um evento, o que é e o que NÃO é garantido em ordem, crash e recuperação, e como falar com o core na mão |
-| [arquitetura/06-strict-mode.md](arquitetura/06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
-| [arquitetura/15-engineering-debt-and-refactor.md](arquitetura/15-engineering-debt-and-refactor.md) | Dívida técnica e modularização |
-| [arquitetura/16-hidden-risks-checklist.md](arquitetura/16-hidden-risks-checklist.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
-| [arquitetura/19-architecture-tradeoffs.md](arquitetura/19-architecture-tradeoffs.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
+| [arquitetura/06-modo-estrito.md](arquitetura/06-modo-estrito.md) | Strict mode (Rust e C++/Qt) |
+| [arquitetura/15-divida-de-engenharia-e-refatoracao.md](arquitetura/15-divida-de-engenharia-e-refatoracao.md) | Dívida técnica e modularização |
+| [arquitetura/16-checklist-de-riscos-ocultos.md](arquitetura/16-checklist-de-riscos-ocultos.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
+| [arquitetura/19-compromissos-de-arquitetura.md](arquitetura/19-compromissos-de-arquitetura.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
 | [arquitetura/27-modulos-por-dominio.md](arquitetura/27-modulos-por-dominio.md) | Módulos por domínio. **Parcialmente entregue** (a catraca do core saiu daqui); resta a Frente 1 — `<X>Domain` na UI, o caminho para o `Main.qml` sair do débito |
 | [arquitetura/32-editor-por-responsabilidade.md](arquitetura/32-editor-por-responsabilidade.md) | **O editor cortado por responsabilidade** (2026-09-02): o pagamento do maior débito do repositório, os quatro donos que nasceram, as invariantes que cada um guarda — e a decisão que ficou EM ABERTO, com o custo medido das duas saídas |
 | [arquitetura/33-busca-no-projeto.md](arquitetura/33-busca-no-projeto.md) | **Os TRÊS buscadores e o casamento multi-linha** (2026-09-02): qual é qual e por que confundi-los é o defeito clássico, como a busca passou a casar no conteúdo, a invariante "preview conta o que a escrita faz", e por que a sintaxe `\n` mora na UI e não pode descer para o core |
@@ -208,7 +208,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 
 | Documento | Assunto |
 | --- | --- |
-| [build/14-development-environment.md](build/14-development-environment.md) | Ambiente de desenvolvimento |
+| [build/14-ambiente-de-desenvolvimento.md](build/14-ambiente-de-desenvolvimento.md) | Ambiente de desenvolvimento |
 | [build/22-compilacao-c-cpp-rust.md](build/22-compilacao-c-cpp-rust.md) | Referência prática de comandos de compilação C/C++ e Rust mapeados para a IDE |
 | [build/comandos-de-build-e-verificacao.md](build/comandos-de-build-e-verificacao.md) | Gate único de build e verificação |
 
@@ -229,11 +229,11 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [roadmaps/48-arquitetura-executavel-da-serie-0.3.md](roadmaps/48-arquitetura-executavel-da-serie-0.3.md) | **Arquitetura executável da série 0.3 até a 0.3.5:** contratos, donos de estado, trem proposto, migração, rollback e provas; Grafana está confirmado na 0.3.5 |
 | [roadmaps/47-estrutura-da-v0.3.md](roadmaps/47-estrutura-da-v0.3.md) | **Estrutura de produto da série v0.3:** cruza frontend, Remote SSH, terminal, Grafana e o mínimo da Etapa 4 até o fechamento 0.3.5 |
 | [roadmaps/46-frontend-0.3-em-diante.md](roadmaps/46-frontend-0.3-em-diante.md) | **Frontend da 0.3 em diante:** extração operacional de `arquiKinein`, reconciliada com a `main`; Remote SSH utilizável, commands, tool windows mínimas, abas com identidade e área direita, sem big-bang |
-| [roadmaps/backend-para-ui-ux.md](roadmaps/backend-para-ui-ux.md) | Ponte operacional backend → UI/UX |
-| [roadmaps/20-ui-spec-convergence-plan.md](roadmaps/20-ui-spec-convergence-plan.md) | Convergência vinculante da UI atual para as specs (fatias C0–C6) |
-| [roadmaps/21-long-horizon-roadmap.md](roadmaps/21-long-horizon-roadmap.md) | M4–M7, KSWE, distribuição e continuidade longa |
+| [roadmaps/55-backend-para-ui-ux.md](roadmaps/55-backend-para-ui-ux.md) | Ponte operacional backend → UI/UX |
+| [roadmaps/20-convergencia-com-a-especificacao-de-ui.md](roadmaps/20-convergencia-com-a-especificacao-de-ui.md) | Convergência vinculante da UI atual para as specs (fatias C0–C6) |
+| [roadmaps/21-roadmap-de-longo-prazo.md](roadmaps/21-roadmap-de-longo-prazo.md) | M4–M7, KSWE, distribuição e continuidade longa |
 | [roadmaps/24-paridade-e-fundacao.md](roadmaps/24-paridade-e-fundacao.md) | Fases D1–D4: completion, terminal, Tree-sitter e remake |
-| [roadmaps/25-syntax-tree-semantic-foundation.md](roadmaps/25-syntax-tree-semantic-foundation.md) | Contrato da camada sintática (Tree-sitter incremental, composição com LSP) |
+| [roadmaps/25-fundacao-semantica-pela-arvore-sintatica.md](roadmaps/25-fundacao-semantica-pela-arvore-sintatica.md) | Contrato da camada sintática (Tree-sitter incremental, composição com LSP) |
 | [roadmaps/29-verticais-de-linguagem.md](roadmaps/29-verticais-de-linguagem.md) | **Verticais C/C++, Rust e Python medidas**: o que existe hoje por linguagem, por que Python é reconhecido e ignorado, o que falta para C/C++ sem atrito, e onde está o risco proprietário real (Pylance) |
 | [roadmaps/30-caminho-para-o-mvp.md](roadmaps/30-caminho-para-o-mvp.md) | **As etapas para o MVP, em ordem linear** (decidida em 2026-08-30): o que falta medido item por item contra a spec de MVP, e a ordem por dependência |
 | [roadmaps/34-depois-do-mvp.md](roadmaps/34-depois-do-mvp.md) | **Sucessor do 30, o pós-MVP** (2026-09-02): as quatro frentes — dívida que cobra pedágio, atrito diário medido, profundidade (TR2) e a simulação —, o estado medido item a item, a ordem linear recomendada e o comando que decide se cada item ainda existe |
@@ -245,9 +245,9 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [roadmaps/38-divida-restante-e-continuidade.md](roadmaps/38-divida-restante-e-continuidade.md) | **Superado pelo 39** na parte de dívida (2026-09-03): registro de como a fila estava quando o contexto acabou. A §4 (o que está aberto e NÃO é dívida) continua valendo |
 | [roadmaps/29-verticais-de-linguagem.md](roadmaps/29-verticais-de-linguagem.md) | **Verticais C/C++, Rust e Python, medidas**: por que Python é reconhecido e ignorado, o que falta para C/C++ sem atrito, e onde está o risco proprietário real (Pylance) — com fontes citadas |
 | [roadmaps/28-plataforma-de-plugins-e-verticais.md](roadmaps/28-plataforma-de-plugins-e-verticais.md) | **Plataforma de plugins (`integration` v1) e as verticais**: C/C++/Rust sólidos, Docker e banco como domínios NATIVOS, embarcados — e a dívida contínua de UI/UX com o IntelliJ Community como referência adaptada |
-| [roadmaps/26-terminal-rendering-parity-roadmap.md](roadmaps/26-terminal-rendering-parity-roadmap.md) | Paridade de renderização/scroll do terminal: reprodução instrumentada, métricas de célula/DPR e gates (R0–R7) |
-| [roadmaps/adaptacao-de-plugins-abertos.md](roadmaps/adaptacao-de-plugins-abertos.md) | **Norte de adoção e referência open-source**: modos A–D, gate/licenças e política de estudo de Code OSS, IntelliJ, Zed, Lapce e NetBeans |
-| [roadmaps/motor-semantico-profundo-cpp-rust.md](roadmaps/motor-semantico-profundo-cpp-rust.md) | Desenho profundo do KSWE (C++/Rust, scheduler, brokers e contextos) |
+| [roadmaps/26-paridade-de-renderizacao-do-terminal.md](roadmaps/26-paridade-de-renderizacao-do-terminal.md) | Paridade de renderização/scroll do terminal: reprodução instrumentada, métricas de célula/DPR e gates (R0–R7) |
+| [roadmaps/54-adaptacao-de-plugins-abertos.md](roadmaps/54-adaptacao-de-plugins-abertos.md) | **Norte de adoção e referência open-source**: modos A–D, gate/licenças e política de estudo de Code OSS, IntelliJ, Zed, Lapce e NetBeans |
+| [roadmaps/56-motor-semantico-profundo-cpp-rust.md](roadmaps/56-motor-semantico-profundo-cpp-rust.md) | Desenho profundo do KSWE (C++/Rust, scheduler, brokers e contextos) |
 
 ## specs/ — especificação canônica (visão-alvo)
 

@@ -86,7 +86,7 @@ exigem JSON manual e restauração de workspace. Fotografar a IDE em 1024×700,
 1366×768 e uma janela ampla. Medir na mesma máquina e binário: primeiro frame,
 RSS inicial, tecla→frame (mediana, p95 e pior caso), abertura de painel e custo
 de voltar ao editor. O [script existente](../../scripts/medir-performance.sh) e
-os [orçamentos existentes](21-long-horizon-roadmap.md) são a referência.
+os [orçamentos existentes](21-roadmap-de-longo-prazo.md) são a referência.
 
 **Saída:** inventário com dono, medida inicial e decisões propostas. Nenhuma
 mudança visual é considerada otimização sem antes mostrar o custo afetado.

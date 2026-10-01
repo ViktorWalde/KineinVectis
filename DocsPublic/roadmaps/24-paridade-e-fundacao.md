@@ -731,7 +731,7 @@ seguintes invariantes:
 Na Kinein esses invariantes serão adaptados para `portable-pty` + Rust Core +
 IPC tipado + renderer Qt. Não incorporar Electron, Node, WebView, Extension
 Host ou runtime xterm.js. O roadmap executável, hipóteses, fixture e gates
-R0–R7 estão em `DocsPublic/roadmaps/26-terminal-rendering-parity-roadmap.md`.
+R0–R7 estão em `DocsPublic/roadmaps/26-paridade-de-renderizacao-do-terminal.md`.
 
 **Arquivos (D2.1):** Cargo (portable-pty, vt100 — já adicionados);
 `terminal.rs` (reescrever: PTY + vt100 grid + emitir render + resize +
@@ -743,7 +743,7 @@ de grade + captura de teclado → bytes); router; MANUAL.
 
 ## T2 — Mudanças externas sem perda de dados (feito em 2026-07-14)
 
-O complemento semântico (`DocsPublic/roadmaps/motor-semantico-profundo-cpp-rust.md`)
+O complemento semântico (`DocsPublic/roadmaps/56-motor-semantico-profundo-cpp-rust.md`)
 confirma que versões de documento e workspace edits conservadores são parte da
 fundação, não um detalhe visual. A primeira fatia entrou no protocolo `0.45.0`:
 
@@ -788,7 +788,7 @@ Modo B: orquestrar o binário). Escopo de linguagem: **C/C++/Rust**.
 
 ### ✅ D3 implementada (2026-07-14, protocolo 0.46.0)
 
-O design vinculante está em `DocsPublic/roadmaps/25-syntax-tree-semantic-foundation.md` e a
+O design vinculante está em `DocsPublic/roadmaps/25-fundacao-semantica-pela-arvore-sintatica.md` e a
 implementação segue o Modo A do roadmap de componentes abertos:
 
 - `tree-sitter`, `tree-sitter-c`, `tree-sitter-cpp` e `tree-sitter-rust`

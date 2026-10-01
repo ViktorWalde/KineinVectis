@@ -74,9 +74,9 @@ mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 28, 29                             plataforma/verticais e as verticais de
                                    linguagem (C/C++, Rust, Python)
 20, 21, 24, 25, 26                 planos antigos, mantidos como registro
-backend-para-ui-ux.md              do backend à UI/UX (2026-07)
-motor-semantico-profundo-cpp-rust.md   a especificação do motor semântico (KSWE)
-adaptacao-de-plugins-abertos.md    o que adaptar de plugins abertos
+55-backend-para-ui-ux.md              do backend à UI/UX (2026-07)
+56-motor-semantico-profundo-cpp-rust.md   a especificação do motor semântico (KSWE)
+54-adaptacao-de-plugins-abertos.md    o que adaptar de plugins abertos
 ```
 
 Regra zero para qualquer item daqui: **medir antes de aceitar como pendente.**

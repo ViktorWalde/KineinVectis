@@ -467,7 +467,7 @@ entrar depois de medir colisões e frequência.
 > **Parcialmente implementada em 2026-09-24.** Quatro dos seis itens entraram,
 > nos protocolos `0.132.0`, `0.133.0` e `0.134.0`. Registro em
 > [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.93–§7.94; contratos
-> em [`03-ipc-protocol`](../arquitetura/03-ipc-protocol.md).
+> em [`03-protocolo-ipc`](../arquitetura/03-protocolo-ipc.md).
 
 - **feito (`0.132.0`):** separar "usar SSH existente" de "configurar servidor" —
   o `RemoteDiscovery` fica **antes** do formulário, e o formulário continua

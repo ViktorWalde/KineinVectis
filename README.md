@@ -660,7 +660,7 @@ Operações longas são jobs canceláveis.
 O protocolo entre frontend e core está documentado em:
 
 ```text
-DocsPublic/arquitetura/03-ipc-protocol.md
+DocsPublic/arquitetura/03-protocolo-ipc.md
 ```
 
 As decisões e regras arquiteturais estão em:

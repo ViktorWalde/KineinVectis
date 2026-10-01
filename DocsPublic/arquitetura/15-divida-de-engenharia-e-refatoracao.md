@@ -213,10 +213,10 @@ Direção desejada para pós-V1:
 > revisada: a taxonomia de pastas `active/implemented/obsolete/future` que ela
 > propunha não foi adotada (redundante com a precedência de 3 níveis que
 > `DocsPublic/README.md` já usa), mas os riscos genuinamente úteis que ela listava
-> foram extraídos para `DocsPublic/arquitetura/16-hidden-risks-checklist.md`. `DocsPrivate/ContextoIA.md`
+> foram extraídos para `DocsPublic/arquitetura/16-checklist-de-riscos-ocultos.md`. `DocsPrivate/ContextoIA.md`
 > foi cortado de ~450 para a faixa de 150–200 linhas, removendo narrativa de
 > implementação que já vive no código, no histórico do git e em
-> `DocsPublic/arquitetura/03-ipc-protocol.md`/`DocsPublic/roadmaps/backend-para-ui-ux.md`.
+> `DocsPublic/arquitetura/03-protocolo-ipc.md`/`DocsPublic/roadmaps/55-backend-para-ui-ux.md`.
 
 ## Critérios para a refatoração pós-V1
 

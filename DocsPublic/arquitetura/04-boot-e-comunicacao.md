@@ -6,7 +6,7 @@
 > código, não a intenção. Se divergir do código, o código vence e este documento se
 > corrige no mesmo gesto.
 >
-> **Para que serve:** o `03-ipc-protocol.md` responde *"qual é a forma da
+> **Para que serve:** o `03-protocolo-ipc.md` responde *"qual é a forma da
 > mensagem X?"*. Este responde a pergunta anterior, que não estava escrita em
 > lugar nenhum: **quem sobe quem, por onde a mensagem anda, em qual thread ela
 > é processada, e o que acontece quando um dos lados morre.** É a leitura que

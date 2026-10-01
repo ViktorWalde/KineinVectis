@@ -1559,7 +1559,7 @@ evidência do core/ferramenta. Nenhuma alteração é aplicada sem gesto explíc
 ## 16. Comandos internos JSON-RPC sugeridos
 
 A lista abaixo não é uma API final. É um inventário histórico; o protocolo
-implementado em `arquitetura/03-ipc-protocol.md` vence.
+implementado em `arquitetura/03-protocolo-ipc.md` vence.
 
 ### 16.1. Workspace
 

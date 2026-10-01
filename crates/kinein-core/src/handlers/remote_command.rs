@@ -50,12 +50,12 @@ impl Core {
         params: Option<&Value>,
     ) -> Option<JsonRpcResponse> {
         // Braco de `match` e nao `then(...)`: o `verificar-fiacao-ipc.sh` e a
-        // lista canonica do `03-ipc-protocol` acham metodo roteado por este
+        // lista canonica do `03-protocolo-ipc` acham metodo roteado por este
         // formato. Escrever diferente some com o metodo das duas contagens
         // sem que nada reprove — medido em 2026-09-24, quando o total caiu de
         // 167 para 166.
         // Braco de `match` e nao `then(...)`: o `verificar-fiacao-ipc.sh` e a
-        // lista canonica do `03-ipc-protocol` acham metodo roteado por este
+        // lista canonica do `03-protocolo-ipc` acham metodo roteado por este
         // formato. Escrever diferente some com o metodo das duas contagens —
         // medido em 2026-09-24, quando o total caiu de 167 para 166. Hoje a
         // checagem inversa do gate reprova isso.

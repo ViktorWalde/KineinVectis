@@ -25,7 +25,7 @@ nenhum momento "de entendimento vago".
 **Convergência gradual (strangler fig), NÃO remake big-bang.** Cada fatia
 substitui uma área da UI pela versão conforme spec, com a IDE utilizável o
 tempo inteiro. Registrada como decisão D12 em
-`DocsPublic/arquitetura/19-architecture-tradeoffs.md`, com gatilho objetivo de reavaliação
+`DocsPublic/arquitetura/19-compromissos-de-arquitetura.md`, com gatilho objetivo de reavaliação
 (seção "Gatilho de remake" abaixo).
 
 **Por quê gradual e não remake total:**

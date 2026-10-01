@@ -120,7 +120,7 @@ O CLion também orquestra compiladores, CMake, Ninja, GDB/LLDB e analisadores;
 logo, a Kinein pode alcançar profundidade profissional sem possuir compilador
 próprio. A diferença será a qualidade do modelo de projeto, do agendamento, da
 correlação de contexto e das interações. O desenho detalhado é o
-`DocsPublic/roadmaps/motor-semantico-profundo-cpp-rust.md`; implementar sempre
+`DocsPublic/roadmaps/56-motor-semantico-profundo-cpp-rust.md`; implementar sempre
 por fatias, reaproveitando CMake/Cargo/LSP/DAP/Jobs existentes.
 
 ---

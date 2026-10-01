@@ -24,7 +24,7 @@
 >
 > Referências de arquitetura: VS Code, Zed e IntelliJ IDEA Community, em
 > **MODE-D** (referência apenas) — o padrão é aprendido, o código não entra.
-> Ver `DocsPublic/roadmaps/adaptacao-de-plugins-abertos.md` §2.
+> Ver `DocsPublic/roadmaps/54-adaptacao-de-plugins-abertos.md` §2.
 
 ## 1. A conclusão primeiro
 

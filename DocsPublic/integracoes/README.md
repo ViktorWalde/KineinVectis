@@ -36,7 +36,7 @@ eventos tipados → Problems / Tests / Profiler / Trace / Simulation
 
 | Fonte | Papel |
 | --- | --- |
-| [`../roadmaps/adaptacao-de-plugins-abertos.md`](../roadmaps/adaptacao-de-plugins-abertos.md) | **Norte**: modos A–D, gate de auditoria, preferência de licença, política de referência profissional |
+| [`../roadmaps/54-adaptacao-de-plugins-abertos.md`](../roadmaps/54-adaptacao-de-plugins-abertos.md) | **Norte**: modos A–D, gate de auditoria, preferência de licença, política de referência profissional |
 | [`../integracoes/registro-de-componentes-abertos.json`](../integracoes/registro-de-componentes-abertos.json) | **Registro auditável**: pin, licença, telemetria/rede, escopo, verificação |
 | [`../decisoes-adr/`](../decisoes-adr/) | **Decisão**: por que este componente, alternativas, riscos, rollback |
 | `DocsPrivate/historico/PONTO_ATUAL.md` (A5.1–A5.3) | **Ordem**: arquitetura do registry e a sequência de níveis L0–L10 |

@@ -184,7 +184,7 @@ declarada, não comunicação entre gates:
 - `verificar-fiacao-ipc.sh` acha método roteado pelo formato do braço de
   `match` (`"dominio.metodo" => ...`) nos roteadores do core. Um roteador escrito
   de outro jeito continua funcionando e **some** da contagem e da lista canônica
-  do `03-ipc-protocol` sem nada reprovar — foi o que aconteceu em 2026-09-24 ao
+  do `03-protocolo-ipc` sem nada reprovar — foi o que aconteceu em 2026-09-24 ao
   extrair o `remote.command` para arquivo próprio (167 → 166, percebido só porque
   alguém olhou o número). Desde então ele confere também a direção inversa: o
   cliente pedir um método que o core não roteia, que é um botão que não faz nada

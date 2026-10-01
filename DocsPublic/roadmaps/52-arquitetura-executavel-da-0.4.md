@@ -90,7 +90,7 @@ Herdadas do [48 §2](48-arquitetura-executavel-da-serie-0.3.md) e do
 10. **Régua de desempenho:** latência da tecla (`KINEIN_PERF_TYPING*`) e
     primeiro frame não pioram; toda fatia mede antes e depois.
 11. **Protocolo versionado:** cada mudança de contrato sobe `PROTOCOL_VERSION`
-    e é registrada em `arquitetura/03-ipc-protocol.md`.
+    e é registrada em `arquitetura/03-protocolo-ipc.md`.
 12. **O artefato distribuído é a prova final:** `testar-appimage.sh` e
     `testar-appimage-portatil.sh` passam com a lista `scripts/avisos-qml.txt`
     (lição de 2026-10-01, 40 §7.148: o Qt do pacote não é o do checkout).
@@ -155,7 +155,7 @@ a 0.4 inteira.
 [ ] harness QML para estado/intenção; teste integrado para IO
 [ ] medida de tecla/primeiro frame antes e depois
 [ ] AppImage: smoke com avisos-qml.txt
-[ ] registro em 40 §7 e, se mudou contrato, 03-ipc-protocol.md
+[ ] registro em 40 §7 e, se mudou contrato, 03-protocolo-ipc.md
 ```
 
 ### 3.5 Sinais de alerta na revisão

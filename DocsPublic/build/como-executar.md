@@ -167,7 +167,7 @@ chmod u+x ./*.AppImage
 ```
 
 Para o estado das ferramentas no notebook e os gates ainda pendentes, ler
-[ambiente de desenvolvimento](14-development-environment.md).
+[ambiente de desenvolvimento](14-ambiente-de-desenvolvimento.md).
 
 ## Logs de erro da IDE
 

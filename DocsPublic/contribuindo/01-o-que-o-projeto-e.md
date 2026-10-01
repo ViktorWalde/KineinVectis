@@ -23,7 +23,7 @@ Três consequências que explicam a maior parte do código:
    é instalado sem o usuário mandar.
 3. **Tudo entre as duas metades é contrato.** Cada método e evento do
    JSON-RPC é um tipo Rust em `kinein-protocol`, documentado em
-   `arquitetura/03-ipc-protocol.md`, com `PROTOCOL_VERSION` que sobe a
+   `arquitetura/03-protocolo-ipc.md`, com `PROTOCOL_VERSION` que sobe a
    cada mudança. A ponte C++ (`ui/src/core_client*.cpp`) é a única que
    fala com o core; os roteadores QML (`ui/qml/ipc/*Router.qml`) levam a
    resposta ao controller dono.
@@ -32,7 +32,7 @@ Três consequências que explicam a maior parte do código:
 
 - **Não é um editor com plugins.** A integração de uma ferramenta é código
   do core com contrato, teste e documentação — não um pacote de terceiros
-  carregado em runtime. (`roadmaps/adaptacao-de-plugins-abertos.md`
+  carregado em runtime. (`roadmaps/54-adaptacao-de-plugins-abertos.md`
   discute o que se aproveita das ferramentas abertas: o *conhecimento*,
   não o *runtime*.)
 - **Não é uma IDE com IA dentro.** Agentes rodam no terminal integrado,

@@ -4,7 +4,7 @@
 > **Prioridade:** referência permanente (ler antes de decisão estrutural)
 > **Fonte de verdade:** o *porquê* das decisões. O *como* está em
 > `DocsPublic/arquitetura/ARCHITECTURE.md`; o *o quê/quando* em `DocsPrivate/diario/18-daily-driver-plan.md`
-> e `DocsPublic/roadmaps/backend-para-ui-ux.md`; o visual-alvo em `DocsPublic/especificacoes/`
+> e `DocsPublic/roadmaps/55-backend-para-ui-ux.md`; o visual-alvo em `DocsPublic/especificacoes/`
 > **Ultima revisao:** 2026-07-09
 
 ## Por que este documento existe
@@ -192,7 +192,7 @@ seleção de formatter por extensão no core.
 
 Decisão de 2026-07-09, confirmada com o usuário. Plano vinculante completo
 (regras, inventário de divergências, ordem C0–C6 e definition of done):
-`DocsPublic/roadmaps/20-ui-spec-convergence-plan.md`.
+`DocsPublic/roadmaps/20-convergencia-com-a-especificacao-de-ui.md`.
 
 - **Ganho:** IDE utilizável durante toda a transição (dogfooding contínuo,
   que é o critério dos marcos); risco de regressão proporcional ao tamanho

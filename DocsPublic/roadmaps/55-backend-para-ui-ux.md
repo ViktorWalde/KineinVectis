@@ -46,7 +46,7 @@ Antes de implementar uma etapa de backend:
 3. implementar handler fino + servico de dominio;
 4. transformar operacao longa em job;
 5. escrever testes de comportamento;
-6. atualizar DocsPublic/arquitetura/03-ipc-protocol.md se IPC mudar;
+6. atualizar DocsPublic/arquitetura/03-protocolo-ipc.md se IPC mudar;
 7. atualizar DocsPrivate/ContextoIA.md com estado real;
 8. atualizar este roadmap com impacto UI futuro.
 ```
@@ -918,7 +918,7 @@ Antes de quebrar `Main.qml` em componentes grandes, idealmente:
 ```text
 - DocsPublic/archive/ nao existe mais (removido de proposito em 2026-07-05); nao
   recriar uma pasta de arquivo morto.
-- DocsPublic/arquitetura/ARCHITECTURE.md e DocsPublic/arquitetura/03-ipc-protocol.md sao
+- DocsPublic/arquitetura/ARCHITECTURE.md e DocsPublic/arquitetura/03-protocolo-ipc.md sao
   leitura previa obrigatoria para qualquer mudanca de backend.
 - Este arquivo mantem a ponte entre a capacidade de backend e a UI futura.
 - Backend novo nasce no dominio certo e com testes.

@@ -68,7 +68,7 @@ fi
 echo "distro detectada: $DISTRO"
 
 # ---------------------------------------------------------------------------
-# Pacotes por distro. Conjunto base = o que DocsPublic/build/14-development-environment.md
+# Pacotes por distro. Conjunto base = o que DocsPublic/build/14-ambiente-de-desenvolvimento.md
 # e o ToolDetector do core esperam: cmake, ninja, clang (format/tidy/clangd),
 # gcc, gdb, lldb, Qt6 (base/declarative/tools), git, ripgrep, fd e rustup.
 # Desde 2026-10-01 tambem o plugin SVG do Qt (sem ele os icones da arvore

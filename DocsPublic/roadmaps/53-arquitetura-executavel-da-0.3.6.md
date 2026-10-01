@@ -173,7 +173,7 @@ R7 PREPARO     a casca já comporta a área de superfície completa (Library da
 [ ] passeio por superfícies sem aviso (§5.2) no checkout e no AppImage
 [ ] screenshots 1024×700, 1366×768 e largo (§10)
 [ ] medida antes/depois (§8)
-[ ] registro em 40 §7; contrato em 03-ipc-protocol.md quando settings mudar
+[ ] registro em 40 §7; contrato em 03-protocolo-ipc.md quando settings mudar
 ```
 
 ### 3.4 Sinais de alerta na revisão
@@ -523,7 +523,7 @@ overlays de ambiente: sobre o centro (como hoje), até a 0.4/0.5 decidir
 
 ## 8. Desempenho
 
-- Linha de base na F0 e régua do [21](21-long-horizon-roadmap.md):
+- Linha de base na F0 e régua do [21](21-roadmap-de-longo-prazo.md):
   primeiro frame, RSS, tecla→frame, abrir painel, voltar ao editor.
 - Projeção do trilho e da barra de baixo: funções puras sobre listas curtas,
   sem binding que leia `ListModel` (regra do `EditorOpenDocuments`).
