@@ -83,12 +83,23 @@ for preset in "$preset_debug" "$preset_release"; do
 done
 echo "build/$preset_debug e build/$preset_release: configurados."
 
+# O BUILD DE DEBUG VEM ANTES DE QUEM LE' O BUILD (2026-10-01). O qmllint le' o
+# `.qmltypes` e as copias do QML no diretorio de build; o clang-tidy e os
+# harnesses tambem dependem do que sai dele. Com o build so' no fim, o lint
+# corria contra o build de ONTEM (ou reprovava num clone novo, "configurado mas
+# NAO compilado"). Incremental, custa segundos quando nada mudou — e no modo
+# rapido tambem, porque um lint contra artefato velho e' um gate que mente.
+passo "cmake --build --preset $preset_debug" \
+    "Compila a UI de debug ANTES dos gates que leem o build (qmllint, harnesses)."
+cmake --build --preset "$preset_debug"
+export KINEIN_QML_BUILD_DIR="$raiz/build/$preset_debug"
+
 passo "cargo fmt --all --check" \
     "Confere a formatacao Rust sem modificar os arquivos."
 cargo fmt --all --check
 
-passo "cargo test --workspace --all-features -- --test-threads=1" \
-    "Executa os testes Rust em UMA thread: a paralela tem corrida de ETXTBSY."
+passo "cargo test --workspace --all-features --no-fail-fast -- --test-threads=1" \
+    "Executa os testes Rust em UMA thread (a paralela tem corrida de ETXTBSY), todos os crates."
 # UMA THREAD, e isto foi MEDIDO em 2026-09-24.
 #
 # Varios testes escrevem um executavel e o rodam. Em paralelo, basta outra
@@ -104,7 +115,11 @@ passo "cargo test --workspace --all-features -- --test-threads=1" \
 # CUSTO MEDIDO: 11,5 s em paralelo contra 40,7 s em serie. Vinte e nove segundos
 # num gate de ~20 minutos, contra reprovacoes aleatorias que custam o gate
 # inteiro — e que ensinam a ignorar vermelho, que e' o dano de verdade.
-cargo test --workspace --all-features -- --test-threads=1
+# --no-fail-fast: sem ele o cargo para no PRIMEIRO crate que falha e os
+# outros nem rodam — medido em 2026-10-01, duas falhas do kinein-core
+# esconderam o resultado de kinein-protocol e kinein-config. O gate reprova
+# do mesmo jeito; so' passa a mostrar TUDO o que esta' vermelho de uma vez.
+cargo test --workspace --all-features --no-fail-fast -- --test-threads=1
 
 passo "cargo clippy --workspace --all-targets --all-features -- -D warnings" \
     "Reprova qualquer diagnostico do Clippy em codigo, testes e alvos Rust."
@@ -211,10 +226,6 @@ passo "scripts/verificar-qml-logica-qt64.sh" \
 bash scripts/verificar-qml-logica-qt64.sh
 
 if [ "$modo" = "completo" ]; then
-    passo "cmake --build --preset $preset_debug" \
-        "Compila a UI de desenvolvimento com as protecoes do preset selecionado."
-    cmake --build --preset "$preset_debug"
-
     # "Compila" e "abre" sao afirmacoes diferentes (2026-09-10: dois builds
     # verdes que abortavam ao abrir). Roda DEPOIS do build, e para cada preset:
     # o objeto obsoleto vive na arvore, nao no fonte.

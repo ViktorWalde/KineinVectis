@@ -29,9 +29,9 @@ REPO_ROOT="$(unset CDPATH; cd -- "$(dirname -- "$0")/.." && pwd)"
 # falta de build, nao por defeito no QML. Qt recente tambem gera .rsp na
 # configuracao; Qt 6.4 usa o alvo CMake/JSON, com o mesmo contexto de imports.
 RSP="${KINEIN_QML_RSP:-}"
-configurado_sem_build=""
+configured_not_built=""
 native_build=""
-escolhido=""
+chosen=""
 if [ -z "$RSP" ]; then
     # O BUILD MAIS NOVO GANHA (2026-09-25).
     #
@@ -45,29 +45,44 @@ if [ -z "$RSP" ]; then
     #
     # E' o mesmo defeito que este script ja' consertou para a copia do QML, uma
     # camada adiante: lintar a arvore de agora contra o build de ontem.
-    mais_novo=0
-    for base in \
-        "$REPO_ROOT/build/linux-clang-debug-strict" \
-        "$REPO_ROOT/build/dev-local"; do
+    #
+    # O ORQUESTRADOR ESCOLHE QUANDO SABE (2026-10-01). O verificar.sh compila
+    # o preset de debug ANTES deste gate e exporta KINEIN_QML_BUILD_DIR com ele:
+    # o lint le' o build que acabou de compilar, sem adivinhar pelo relogio.
+    # Rodado a mao, sem a variavel, vale a regra do mais novo acima.
+    newest=0
+    candidates="$REPO_ROOT/build/linux-clang-debug-strict $REPO_ROOT/build/dev-local"
+    if [ -n "${KINEIN_QML_BUILD_DIR:-}" ]; then
+        candidates="$KINEIN_QML_BUILD_DIR"
+    fi
+    for base in $candidates; do
         [ -f "$base/CMakeCache.txt" ] || continue
-        tipos="$base/ui/KineinVectis/kinein-vectis.qmltypes"
-        if [ ! -f "$tipos" ]; then
-            configurado_sem_build="$base"
+        types_file="$base/ui/KineinVectis/kinein-vectis.qmltypes"
+        if [ ! -f "$types_file" ]; then
+            configured_not_built="$base"
             continue
         fi
-        idade="$(stat -c %Y "$tipos")"
-        if [ "$idade" -gt "$mais_novo" ]; then
-            mais_novo="$idade"
-            escolhido="$base"
+        age="$(stat -c %Y "$types_file")"
+        if [ "$age" -gt "$newest" ]; then
+            newest="$age"
+            chosen="$base"
         fi
     done
-    if [ -n "$escolhido" ]; then
-        configurado_sem_build=""
-        candidato="$escolhido/ui/.rcc/qmllint/kinein-vectis.rsp"
-        if [ -f "$candidato" ]; then
-            RSP="$candidato"
+    # CONFIGURADO E NUNCA COMPILADO (o clone novo que seguiu a documentacao)
+    # nao e' defeito do QML: os tipos sao gerados abaixo, como ja' sao quando
+    # estao velhos. Ate' 2026-10-01 isto reprovava com "configurado mas NAO
+    # compilado", porque o verificar.sh so' compilava no fim.
+    if [ -z "$chosen" ] && [ -n "$configured_not_built" ]; then
+        echo "preparo: $configured_not_built nunca compilou; gerando os tipos QML antes do lint"
+        chosen="$configured_not_built"
+    fi
+    if [ -n "$chosen" ]; then
+        configured_not_built=""
+        candidate="$chosen/ui/.rcc/qmllint/kinein-vectis.rsp"
+        if [ -f "$candidate" ]; then
+            RSP="$candidate"
         else
-            native_build="$escolhido"
+            native_build="$chosen"
         fi
     fi
 fi
@@ -83,11 +98,11 @@ fi
 # Agora os tipos sao CONSTRUIDOS antes de lintar — deterministico, e barato
 # quando ja' estao em dia. E' o mesmo que este script ja' faz com a copia do
 # QML, uma linha adiante.
-if [ -n "$escolhido" ]; then
-    if ! cmake --build "$escolhido" --target kinein-vectis_qmltyperegistration >/dev/null 2>&1; then
-        echo "erro: nao foi possivel atualizar os tipos QML de $escolhido." >&2
+if [ -n "$chosen" ]; then
+    if ! cmake --build "$chosen" --target kinein-vectis_qmltyperegistration >/dev/null 2>&1; then
+        echo "erro: nao foi possivel atualizar os tipos QML de $chosen." >&2
         echo "      O lint conferiria o QML de agora contra o tipo de antes." >&2
-        echo "      Rode:  cmake --build $escolhido" >&2
+        echo "      Rode:  cmake --build $chosen" >&2
         exit 1
     fi
 fi
@@ -100,10 +115,10 @@ if [ -n "$native_build" ]; then
     exec python3 "$REPO_ROOT/scripts/verificar_qml.py" "$native_build"
 fi
 if [ -z "$RSP" ] || [ ! -f "$RSP" ]; then
-    if [ -n "$configurado_sem_build" ]; then
-        echo "erro: $configurado_sem_build esta configurado mas NAO compilado." >&2
+    if [ -n "$configured_not_built" ]; then
+        echo "erro: $configured_not_built esta configurado mas NAO compilado." >&2
         echo "      O qmllint precisa do kinein-vectis.qmltypes, que sai da" >&2
-        echo "      compilacao. Rode:  cmake --build $configurado_sem_build" >&2
+        echo "      compilacao. Rode:  cmake --build $configured_not_built" >&2
     else
         echo "erro: response file do qmllint nao encontrado." >&2
         echo "      Configure com: cmake --preset dev-local" >&2
@@ -119,9 +134,9 @@ fi
 # ferramenta funcional (medido em 2026-09-17).
 QMLLINT="${KINEIN_QMLLINT:-}"
 if [ -z "$QMLLINT" ]; then
-    for candidato in /usr/lib/qt6/bin/qmllint qmllint-qt6 qmllint; do
-        if "$candidato" --version >/dev/null 2>&1; then
-            QMLLINT="$candidato"
+    for candidate in /usr/lib/qt6/bin/qmllint qmllint-qt6 qmllint; do
+        if "$candidate" --version >/dev/null 2>&1; then
+            QMLLINT="$candidate"
             break
         fi
     done
