@@ -77,7 +77,7 @@ envelhecer, o que acontece?"*
 | **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `AGENTS.md`, `arquitetura/ARCHITECTURE.md` §2/§4/§5, `adr/` |
 | **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `roadmaps/40` (a fila), `leitura-tecnica.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
 | **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `DocsPublic/especificacoes/`, `DocsPublic/roadmaps/` |
-| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `DocsPrivate/ContextoIA.md`, `diario/`, `adr/` |
+| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `roadmaps/40.7` (o registro das entregas, separado do `40` em 2026-10-01), `DocsPrivate/ContextoIA.md`, `diario/`, `adr/` |
 | **PESQUISA** | Hipótese que **ninguém decidiu fazer**. Começa dizendo o que a falsearia. Sair de lá exige decisão datada. | Nada — desde que ninguém a leia como alvo, que é o risco inteiro. | `DocsPublic/pesquisa/` |
 
 ### Por que o `DocsPrivate/historico/PONTO_ATUAL.md` saiu de "fila viva" (2026-09-10)
