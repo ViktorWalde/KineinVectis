@@ -8,6 +8,15 @@
 # Uso:
 #   scripts/verificar.sh            # completo: lint + testes + C++ + builds debug/release + o binario ABRE
 #   scripts/verificar.sh --rapido   # rapido: lint + testes + C++ (sem builds finais/smokes)
+#   scripts/verificar.sh --estrito  # combina com os dois: NAO PROVADO reprova
+#
+# NAO PROVADO (2026-10-01, scripts/unproven.py). Gate que verifica a integracao
+# com o AMBIENTE (QEMU, debugpy, kit cross, Qt 6.4 em container) e nao tem a
+# ferramenta nesta maquina registra o que nao provou, em vez de reprovar (seria
+# falso positivo para quem acabou de clonar) ou de sair 0 calado (era o que
+# acontecia: o resumo dizia "TUDO VERDE" com tres ciclos que nao rodaram). O
+# fim deste script lista tudo, e so' diz "TUDO VERDE" com a lista vazia. Antes
+# de release e em CI, rode com --estrito: ai' a lista nao vazia reprova.
 #
 # Antes de rodar, formate o codigo:  cargo fmt --all
 # O gate apenas CHECA a formatacao (cargo fmt --check); ele nao altera arquivos.
@@ -20,14 +29,18 @@
 set -euo pipefail
 
 modo="completo"
-case "${1:-}" in
-    --rapido | --rapida | -r) modo="rapido" ;;
-    --completo | -c | "") modo="completo" ;;
-    *)
-        echo "uso: $0 [--rapido|--completo]" >&2
-        exit 2
-        ;;
-esac
+strict=0
+for arg in "$@"; do
+    case "$arg" in
+        --rapido | --rapida | -r) modo="rapido" ;;
+        --completo | -c) modo="completo" ;;
+        --estrito | -e) strict=1 ;;
+        *)
+            echo "uso: $0 [--rapido|--completo] [--estrito]" >&2
+            exit 2
+            ;;
+    esac
+done
 
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$raiz"
@@ -35,15 +48,19 @@ cd "$raiz"
 preset_debug="${KINEIN_PRESET_DEBUG:-dev-local}"
 preset_release="${KINEIN_PRESET_RELEASE:-dev-local-release}"
 
-etapa=""
+# Cada gate de ambiente acrescenta aqui o que nao provou (gate<TAB>o que<TAB>por que).
+unproven_file="$(mktemp "${TMPDIR:-/tmp}/kinein-nao-provado.XXXXXX")"
+export KINEIN_UNPROVEN_FILE="$unproven_file"
+
+current_step=""
 # shellcheck disable=SC2154  # `estado` e' atribuido na 1a instrucao do trap.
-trap 'estado=$?; if [ "$estado" -ne 0 ]; then
+trap 'estado=$?; rm -f "$unproven_file"; if [ "$estado" -ne 0 ]; then
     echo ""
-    echo "✗ FALHOU em: ${etapa:-inicializacao} (exit $estado)"
+    echo "✗ FALHOU em: ${current_step:-inicializacao} (exit $estado)"
 fi' EXIT
 
 passo() {
-    etapa="$1"
+    current_step="$1"
     echo ""
     echo "== $1 =="
     echo "funcao: ${2:?cada etapa precisa de uma descricao nao vazia}"
@@ -222,10 +239,32 @@ if [ "$modo" = "completo" ]; then
     bash scripts/verificar-binario-abre.sh --preset "$preset_release"
 fi
 
-etapa=""
+# O que esta maquina NAO provou vem antes do veredito, e muda o veredito.
+unproven_count=0
+if [ -s "$unproven_file" ]; then
+    unproven_count="$(wc -l <"$unproven_file")"
+    echo ""
+    echo "== NAO PROVADO nesta maquina ($unproven_count) =="
+    while IFS=$'\t' read -r gate what why; do
+        echo "  - [$gate] $what: $why"
+    done <"$unproven_file"
+    if [ "$strict" -eq 1 ]; then
+        current_step="--estrito: $unproven_count item(ns) NAO PROVADO(S) acima"
+        exit 1
+    fi
+fi
+
+current_step=""
 echo ""
 if [ "$modo" = "completo" ]; then
-    echo "✓ TUDO VERDE (completo — builds e abertura dos presets selecionados validados)"
+    scope="completo — builds e abertura dos presets selecionados validados"
 else
-    echo "✓ TUDO VERDE (rapido — sem builds finais/smokes; rode --completo antes de release)"
+    scope="rapido — sem builds finais/smokes; rode --completo antes de release"
+fi
+if [ "$unproven_count" -eq 0 ]; then
+    echo "✓ TUDO VERDE ($scope)"
+else
+    echo "✓ VERDE no que esta maquina prova ($scope)"
+    echo "  $unproven_count item(ns) NAO PROVADO(S) acima: instale a ferramenta ou rode onde ela existe;"
+    echo "  --estrito os reprova (antes de release e em CI)."
 fi

@@ -3095,7 +3095,6 @@ scripts/verificar-transicao-workspace.sh	padrao	2
 scripts/verificar-transicao-workspace.sh	recuo	2
 scripts/verificar-transicao-workspace.sh	teste	3
 scripts/verificar-transicao-workspace.sh	texto	6
-scripts/verificar.sh	etapa	3
 scripts/verificar.sh	modo	3
 scripts/verificar.sh	passo	1
 scripts/verificar.sh	raiz	1

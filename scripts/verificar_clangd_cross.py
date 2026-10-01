@@ -20,6 +20,8 @@ import subprocess
 import sys
 import tempfile
 
+from unproven import record
+
 FW = """#include <cstdint>
 #include <array>
 std::array<std::uint32_t, 4> buf{};
@@ -43,7 +45,10 @@ def main() -> int:
     clangd = shutil.which("clangd") or shutil.which("clangd-qt6")
     cross = shutil.which("arm-none-eabi-g++")
     if clangd is None or cross is None:
-        print("  - clangd/arm-none-eabi-g++ ausente nesta maquina (nao reprova)")
+        missing = " e ".join(name for name, path in (("clangd", clangd), ("arm-none-eabi-g++", cross))
+                             if path is None)
+        record("clangd-cross", "clangd no kit cross (cabecalhos de libstdc++ ARM)",
+               f"{missing} ausente nesta maquina")
         return 0
 
     with tempfile.TemporaryDirectory(prefix="kinein-clangd-") as tmp:

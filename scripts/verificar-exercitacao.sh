@@ -28,6 +28,8 @@
 set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 1
+# shellcheck disable=SC1091  # unproven.sh e' lido por si (shellcheck roda arquivo a arquivo)
+. scripts/unproven.sh
 
 echo "== exercitacao (o core contra as ferramentas reais) =="
 
@@ -159,7 +161,7 @@ verifica() {
     fi
     case "$linha" in
         *'"TOOL_NOT_FOUND"'*)
-            echo "  - $nome: ferramenta ausente nesta maquina (nao reprova)"
+            record_unproven "exercitacao" "$nome" "ferramenta ausente nesta maquina"
             return
             ;;
         *'"error"'*)
@@ -222,7 +224,7 @@ if [ "$configurado" -eq 1 ]; then
     verifica 16 "cmake.targets.list (artefato absoluto do file-api)" 'alvo_da_exercitacao"]'
 else
     verifica 13 "index.context (a unidade do src/main.cpp, CDB a mao)" '"standard":"c++20"'
-    echo "  - cmake.targets.list / arquivo->target: cmake ausente nesta maquina (nao exercitado)"
+    record_unproven "exercitacao" "cmake.targets.list / arquivo->target" "cmake ausente nesta maquina"
 fi
 verifica 14 "index.symbols (Python pela gramatica)" '"language":"python"'
 verifica 15 "index.symbols (arquivo nascido depois, em pasta nova, pelo watcher)" '"name":"chegou_tarde"'
@@ -233,7 +235,7 @@ verifica 17 "python.status (o interpretador desta maquina)" '"hasEnvironment"'
 if printf '%s\n' "$resposta" | grep -q '"id":18,.*"jobId"'; then
     verifica 19 "python.status depois de python.createEnvironment (o .venv nasceu)" '"origin":".venv"'
 else
-    echo "  - python.createEnvironment: sem python3 nem uv nesta maquina (nao exercitado)"
+    record_unproven "exercitacao" "python.createEnvironment" "sem python3 nem uv nesta maquina"
 fi
 
 # Python, fatia 2: so' com o ruff nesta maquina (o detector procura no PATH e
@@ -249,7 +251,7 @@ if command -v ruff >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ruff" ]; then
         falhou=1
     fi
 else
-    echo "  - format.text/quality.run de Python: sem ruff nesta maquina (nao exercitado)"
+    record_unproven "exercitacao" "format.text/quality.run de Python" "sem ruff nesta maquina"
 fi
 # Python, fatia 3: precisa de um interpretador (o .venv criado acima, ou o
 # python3 do sistema).
@@ -280,7 +282,7 @@ if command -v python3 >/dev/null 2>&1; then
         falhou=1
     fi
 else
-    echo "  - run.script/test.run de Python: sem python3 nesta maquina (nao exercitado)"
+    record_unproven "exercitacao" "run.script/test.run de Python" "sem python3 nesta maquina"
 fi
 
 if command -v ctest >/dev/null 2>&1 && command -v cmake >/dev/null 2>&1; then

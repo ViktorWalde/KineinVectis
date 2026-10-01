@@ -26,6 +26,8 @@ import tempfile
 import threading
 import time
 
+from unproven import record
+
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 FIXTURE = RAIZ / "scripts" / "fixtures" / "embarcado"
 PORTA = 3389  # fora do 3333 (OpenOCD) e do 1234 (QEMU), para nao brigar com um aberto
@@ -115,7 +117,8 @@ def compilar(destino: pathlib.Path) -> pathlib.Path:
 def main() -> int:
     for ferramenta in ("arm-none-eabi-gcc", "qemu-system-arm", "gdb"):
         if shutil.which(ferramenta) is None:
-            print(f"  - {ferramenta}: ausente nesta maquina (nao reprova; o ciclo fica NAO PROVADO aqui)")
+            record("embarcado", "ciclo de embarcado no QEMU (gdb -i dap)",
+                   f"{ferramenta} ausente nesta maquina")
             return 0
     core_bin = RAIZ / "target" / "debug" / "kinein-core"
     if not core_bin.exists():
