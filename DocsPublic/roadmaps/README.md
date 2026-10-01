@@ -73,11 +73,18 @@ mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
                                    licença lida e o que NÃO entra
 35-ambiente-cpp-e-embarcados.md    ambiente C/C++ (catálogo de bibliotecas), a
                                    frente de embarcados e a de banco
-39-divida-tecnica-paga.md, 38-...  a dívida paga e a que restou (registro)
-34-depois-do-mvp.md, 30-...        o pós-MVP e o caminho até o MVP (fechados)
-28, 29                             plataforma/verticais e as verticais de
-                                   linguagem (C/C++, Rust, Python)
-20, 21, 24, 25, 26                 planos antigos, mantidos como registro
+39-divida-tecnica-paga.md          a divida paga (registro)
+38-divida-restante-e-continuidade.md  a divida que restou em 2026-09 (registro)
+34-depois-do-mvp.md                as quatro frentes do pos-MVP (fechado)
+30-caminho-para-o-mvp.md           o caminho ate o MVP (fechado)
+29-verticais-de-linguagem.md       as verticais C/C++, Rust e Python
+28-plataforma-de-plugins-e-verticais.md  plataforma e verticais (sem runtime de plugin)
+26-paridade-de-renderizacao-do-terminal.md  paridade de renderizacao do terminal (registro)
+25-fundacao-semantica-pela-arvore-sintatica.md  fundacao semantica Tree-sitter (registro)
+24-paridade-e-fundacao.md          paridade e fundacao (registro)
+21-roadmap-de-longo-prazo.md       os marcos M4-M7 e o playbook; base das versoes
+                                   PROPOSTAS 0.6-1.0 do 57
+20-convergencia-com-a-especificacao-de-ui.md  convergencia da UI com as specs (registro)
 55-backend-para-ui-ux.md              do backend à UI/UX (2026-07)
 56-motor-semantico-profundo-cpp-rust.md   a especificação do motor semântico (KSWE)
 54-adaptacao-de-plugins-abertos.md    o que adaptar de plugins abertos

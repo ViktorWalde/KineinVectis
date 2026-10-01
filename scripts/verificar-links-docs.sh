@@ -103,14 +103,30 @@ for name in tracked:
             if not pathlib.Path(target).exists():
                 dead_citations.append((name, number, target))
 
+# INDICE DA PASTA (2026-10-01). Cada pasta do DocsPublic tem um README que e' o
+# indice dela; um documento que nao aparece nele, PELO NOME, e' invisivel para
+# quem chega (o indice das especificacoes listava `onboarding-*.md` e omitia
+# tres arquivos). A iconografia e' um pacote importado, com indices proprios.
+missing_from_index = []
+for readme in sorted(pathlib.Path("DocsPublic").rglob("README.md")):
+    if "iconografia" in readme.parts:
+        continue
+    index_text = readme.read_text(encoding="utf-8")
+    for document in sorted(readme.parent.glob("*.md")):
+        if document.name != "README.md" and document.name not in index_text:
+            missing_from_index.append((str(readme), document.name))
+
+for readme, document in missing_from_index:
+    print(f"✗ fora do indice {readme}: {document}", file=sys.stderr)
+
 for name, number, target in dead_citations:
     print(f"✗ citacao morta em {name}:{number}: {target}", file=sys.stderr)
 
-if quebrados or dead_citations:
+if quebrados or dead_citations or missing_from_index:
     print(f"\n✗ links de documentacao FALHOU ({len(quebrados)} links,"
-          f" {len(dead_citations)} citacoes)", file=sys.stderr)
+          f" {len(dead_citations)} citacoes, {len(missing_from_index)} fora do indice)", file=sys.stderr)
     sys.exit(1)
 
 print(f"links de documentacao: {verificados} links relativos e {citations} citacoes"
-      " de caminho, nenhum morto.")
+      " de caminho, nenhum morto; todo documento no indice da sua pasta.")
 PY
