@@ -11,9 +11,22 @@ acontece quando o stderr e' um terminal) e com XDG_* isolados num diretorio
 temporario: nada do perfil real do usuario e' lido ou escrito.
 
   1. `kinein-vectis <pasta>`   volta em < 300 ms, codigo 0, saida vazia; o filho
-                               desacoplado esta' vivo, sai sozinho depois do
-                               primeiro frame (KINEIN_PERF_EXIT) e o log de
+                               desacoplado esta' vivo, CHEGA ao primeiro frame
+                               (o arquivo de KINEIN_PERF_MARKER_FILE existe),
+                               sai sozinho (KINEIN_PERF_EXIT) e o log de
                                diagnostico nao recebeu NADA.
+
+POR QUE O ARQUIVO (2026-10-01). O filho desacoplado tem stdout/stderr em
+/dev/null; ate' esta data o teste so' via o PID sumir e concluia "chegou ao
+primeiro frame". Sumir tambem e' crash. Provado por mutacao: um `std::abort()`
+depois do `engine.load`, so' no processo desacoplado, passava aqui com "a IDE
+abre sozinha" — e o verificar-binario-abre nao pega, porque roda sem terminal e
+nunca desacopla. Agora o filho grava a linha do marcador num arquivo, e a
+ausencia dele reprova.
+
+O XDG_RUNTIME_DIR tambem e' isolado (0700, como o logind cria): sem ele o Qt
+avisa "XDG_RUNTIME_DIR not set" no log, e o teste reprovava em container, ssh
+sem sessao e CI — maquinas onde a IDE nao tem defeito nenhum.
   2. `--verbose <pasta>`       fica preso ao terminal (e' o modo diagnostico).
   3. `--wait <pasta>`          fica preso ao terminal (como `code -w`).
   4. `<caminho inexistente>`   imprime o motivo e sai com codigo != 0.
@@ -42,6 +55,8 @@ RETURN_BUDGET_SECONDS = 0.3
 ATTACHED_PROBE_SECONDS = 1.5
 CHILD_EXIT_TIMEOUT_SECONDS = 30.0
 LOG_RELATIVE_PATH = Path("kinein-vectis/logs/kinein-ui-erros.txt")
+FIRST_FRAME_FILE = "first-frame.txt"
+FIRST_FRAME_PREFIX = "KINEIN_PERF first_frame_ms="
 
 
 class PtyRun:
@@ -122,14 +137,16 @@ def pid_alive(pid: int) -> bool:
 
 def isolated_env(sandbox: Path) -> dict[str, str]:
     env = dict(os.environ)
-    for name in ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"):
+    xdg_names = ("XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME", "XDG_RUNTIME_DIR")
+    for name in xdg_names:
         path = sandbox / name.lower()
-        path.mkdir()
+        path.mkdir(mode=0o700)
         env[name] = str(path)
     env.update(
         {
             "QT_QPA_PLATFORM": "offscreen",
             "KINEIN_PERF_MARKER": "1",
+            "KINEIN_PERF_MARKER_FILE": str(sandbox / FIRST_FRAME_FILE),
             "KINEIN_PERF_EXIT": "1",
         }
     )
@@ -172,6 +189,16 @@ def check_quiet_open(binary: Path, env: dict[str, str], sandbox: Path) -> tuple[
             )
             for pid in leftover:
                 os.killpg(pid, signal.SIGKILL)
+        elif children:
+            # O PID sumiu: so' o arquivo distingue "saiu depois do primeiro
+            # frame" de "morreu antes" (crash, abort, exit precoce).
+            first_frame = Path(env["KINEIN_PERF_MARKER_FILE"])
+            content = first_frame.read_text(errors="replace") if first_frame.exists() else ""
+            if not content.startswith(FIRST_FRAME_PREFIX):
+                failures.append(
+                    "a IDE desacoplada saiu SEM primeiro frame (crash ou saida precoce):"
+                    f" {first_frame.name} {'vazio' if first_frame.exists() else 'ausente'}"
+                )
         if run.text().strip():
             failures.append(f"o terminal recebeu saida (do pai ou da IDE desacoplada):\n{run.text()}")
     finally:

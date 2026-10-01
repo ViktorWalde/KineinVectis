@@ -12,6 +12,7 @@
 
 #include <QDir>
 #include <QElapsedTimer>
+#include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>
@@ -27,10 +28,18 @@ namespace {
 // processo até o PRIMEIRO frame renderizado; com KINEIN_PERF_EXIT, sai em
 // seguida (para o scripts/medir-performance.sh coletar e encerrar). Sem a
 // env, zero efeito no uso normal.
+//
+// KINEIN_PERF_MARKER_FILE=<arquivo> grava a MESMA linha num arquivo (G0.5,
+// 2026-10-01). O processo desacoplado do terminal tem stdout/stderr em
+// /dev/null, e quem o testava so' via o PID sumir — e sumir tambem e' crash:
+// com um abort() depois do engine.load o G0.5 imprimia "a IDE abre sozinha".
+// O arquivo e' a unica prova de primeiro frame que atravessa o desacoplamento.
 void installStartupPerfMarker(QGuiApplication& app, QQmlApplicationEngine& engine,
                               const QElapsedTimer& perfTimer)
 {
-    if (!qEnvironmentVariableIsSet("KINEIN_PERF_MARKER") || engine.rootObjects().isEmpty()) {
+    const bool printMarker = qEnvironmentVariableIsSet("KINEIN_PERF_MARKER");
+    const QString markerFile = qEnvironmentVariable("KINEIN_PERF_MARKER_FILE");
+    if ((!printMarker && markerFile.isEmpty()) || engine.rootObjects().isEmpty()) {
         return;
     }
     auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().constFirst());
@@ -40,8 +49,18 @@ void installStartupPerfMarker(QGuiApplication& app, QQmlApplicationEngine& engin
     const bool exitAfter = qEnvironmentVariableIsSet("KINEIN_PERF_EXIT");
     QObject::connect(
         window, &QQuickWindow::frameSwapped, &app,
-        [&perfTimer, exitAfter]() {
-            qInfo().noquote().nospace() << "KINEIN_PERF first_frame_ms=" << perfTimer.elapsed();
+        [&perfTimer, exitAfter, printMarker, markerFile]() {
+            const QString line =
+                QStringLiteral("KINEIN_PERF first_frame_ms=%1").arg(perfTimer.elapsed());
+            if (printMarker) {
+                qInfo().noquote() << line;
+            }
+            if (!markerFile.isEmpty()) {
+                QFile file(markerFile);
+                if (file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+                    file.write(line.toUtf8() + '\n');
+                }
+            }
             if (exitAfter) {
                 QCoreApplication::quit();
             }
