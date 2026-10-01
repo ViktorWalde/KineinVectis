@@ -18,6 +18,9 @@ Item {
     property bool paused: false
     property var framesModel
     property var variablesModel
+    // A degradacao explicada (gdb < 16): dita ao lado das variaveis, nunca
+    // registradores no lugar delas sem motivo.
+    property string notice: ""
     property int currentFrameIndex: -1
 
     signal frameActivated(int index)
@@ -126,8 +129,23 @@ Item {
             font.bold: true
         }
 
-        ListView {
+        Text {
+            id: variablesNotice
+
             anchors.top: variablesTitle.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: Theme.spacingSmall
+            visible: root.notice !== ""
+            height: visible ? implicitHeight : 0
+            text: root.notice
+            wrapMode: Text.WordWrap
+            color: Theme.textMuted
+            font.pixelSize: 10
+        }
+
+        ListView {
+            anchors.top: variablesNotice.bottom
             anchors.topMargin: Theme.spacingXSmall
             anchors.bottom: parent.bottom
             anchors.left: parent.left

@@ -63,6 +63,24 @@ if [ -n "$reason" ]; then
     fi
 fi
 
+# O QUE O MOC GERA TAMBEM E' FONTE (2026-10-01). Um `.cpp` com
+# `#include "x.moc"` (o typing_perf_harness.cpp) so' compila depois do AUTOMOC,
+# e o clang-tidy le' o mesmo banco que o compilador: numa arvore configurada e
+# nunca compilada — exatamente a que o preparo acima acabou de criar — ele
+# reprovava com "'typing_perf_harness.moc' file not found", sem defeito nenhum
+# no codigo. Medido nesta data. Os alvos `*_autogen` geram so' isso, e nao
+# fazem nada quando ja' estao em dia.
+autogen_targets="$(cmake --build "$BUILD_DIR" --target help 2>/dev/null \
+    | grep -oE '[A-Za-z0-9_.+-]+_autogen' | sort -u | tr '\n' ' ')"
+if [ -n "$autogen_targets" ]; then
+    # shellcheck disable=SC2086 # lista de alvos, separada por espaco de proposito
+    if ! cmake --build "$BUILD_DIR" --target $autogen_targets >"$BUILD_DIR.autogen.log" 2>&1; then
+        tail -n 30 "$BUILD_DIR.autogen.log" >&2
+        echo "erro: o AUTOMOC de $PRESET falhou (log: $BUILD_DIR.autogen.log)" >&2
+        exit 1
+    fi
+fi
+
 echo "== clang-format =="
 clang-format --dry-run --Werror "$REPO_ROOT"/ui/src/*.cpp "$REPO_ROOT"/ui/src/*.h
 

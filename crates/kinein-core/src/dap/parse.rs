@@ -112,8 +112,18 @@ pub(super) fn parse_stack_frames(body: &Value) -> Vec<StackFrameInfo> {
         .collect()
 }
 
-/// Acha o `variablesReference` do primeiro escopo nao-caro (Locals).
-pub(super) fn preferred_scope_reference(body: &Value) -> Option<i64> {
+/// O escopo que `debug.variables { frameId }` mostra.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub(super) struct PreferredScope {
+    pub reference: i64,
+    /// So' havia registradores para mostrar: a UI precisa dizer por que a
+    /// variavel do usuario nao esta' ali (gdb < 16, decisao de 2026-10-01).
+    pub registers_only: bool,
+}
+
+/// Acha o primeiro escopo nao-caro que nao seja de registradores (Locals,
+/// Globals); registradores so' quando nao ha' mais nada.
+pub(super) fn preferred_scope(body: &Value) -> Option<PreferredScope> {
     let scopes: Vec<&Value> = body
         .get("scopes")
         .and_then(Value::as_array)?
@@ -124,18 +134,33 @@ pub(super) fn preferred_scope_reference(body: &Value) -> Option<i64> {
     // `Globals` depois (medido em 2026-09-11 contra o gdb 17.2 num alvo
     // bare-metal). "O primeiro escopo barato" mostrava r0..r15 onde o usuario
     // esperava a variavel dele. Registradores so' quando nao ha' mais nada.
+    //
+    // E "nada mais" e' o caso do gdb 15 num alvo bare-metal: o DAP dele so'
+    // devolve Arguments, Locals e Registers (medido em 2026-10-01 no
+    // `gdb/dap/scopes.py` do 15.1), e uma funcao sem locais deixa so' os
+    // registradores. O escopo de globais chegou no gdb 16 (anuncio do 16.2).
     let is_registers = |scope: &&Value| {
         scope.get("presentationHint").and_then(Value::as_str) == Some("registers")
             || scope.get("name").and_then(Value::as_str) == Some("Registers")
     };
-    scopes
-        .iter()
-        .find(|scope| !is_registers(scope))
-        .or_else(|| scopes.first())
-        .and_then(|scope| scope.get("variablesReference"))
+    let (scope, registers_only) = match scopes.iter().find(|scope| !is_registers(scope)) {
+        Some(scope) => (scope, false),
+        None => (scopes.first()?, true),
+    };
+    scope
+        .get("variablesReference")
         .and_then(Value::as_i64)
         .filter(|&reference| reference > 0)
+        .map(|reference| PreferredScope {
+            reference,
+            registers_only,
+        })
 }
+
+/// O aviso que acompanha um frame em que so' havia registradores.
+pub(super) const REGISTERS_ONLY_NOTICE: &str = "Este depurador só ofereceu registradores neste frame. O gdb anterior ao 16 \
+     não expõe as variáveis globais pelo DAP: leia-as pelo nome em Watches, ou \
+     use o gdb 16 ou mais novo.";
 
 /// Converte o `body` de `variables` nas variaveis do protocolo.
 pub(super) fn parse_variables(body: &Value) -> Vec<VariableInfo> {
@@ -236,8 +261,8 @@ mod tests {
     use kinein_protocol::SourceBreakpointParams;
 
     use super::{
-        breakpoints_arguments, parse_evaluate, parse_stack_frames, parse_variables,
-        preferred_scope_reference,
+        PreferredScope, breakpoints_arguments, parse_evaluate, parse_stack_frames, parse_variables,
+        preferred_scope,
     };
 
     #[test]
@@ -259,15 +284,21 @@ mod tests {
 
     #[test]
     fn scope_selection_skips_expensive_and_requires_reference() {
-        let reference = preferred_scope_reference(&json!({
+        let reference = preferred_scope(&json!({
             "scopes": [
                 { "name": "Registers", "expensive": true,
                   "variablesReference": 9 },
                 { "name": "Locals", "variablesReference": 3 },
             ]
         }));
-        assert_eq!(reference, Some(3));
-        assert_eq!(preferred_scope_reference(&json!({ "scopes": [] })), None);
+        assert_eq!(
+            reference,
+            Some(PreferredScope {
+                reference: 3,
+                registers_only: false
+            })
+        );
+        assert_eq!(preferred_scope(&json!({ "scopes": [] })), None);
     }
 
     /// O GDB lista `Registers` PRIMEIRO e barato (medido em 2026-09-11 num
@@ -282,13 +313,26 @@ mod tests {
                 { "name": "Globals", "expensive": false, "variablesReference": 2 },
             ]
         });
-        assert_eq!(preferred_scope_reference(&gdb), Some(2));
-        // So' registradores: melhor eles do que nada.
+        assert_eq!(
+            preferred_scope(&gdb),
+            Some(PreferredScope {
+                reference: 2,
+                registers_only: false
+            })
+        );
+        // So' registradores (o gdb 15): melhor eles do que nada, MAS marcados,
+        // para a UI explicar a ausencia da variavel.
         let so_registradores = json!({
             "scopes": [{ "name": "Registers", "presentationHint": "registers",
                          "variablesReference": 1 }]
         });
-        assert_eq!(preferred_scope_reference(&so_registradores), Some(1));
+        assert_eq!(
+            preferred_scope(&so_registradores),
+            Some(PreferredScope {
+                reference: 1,
+                registers_only: true
+            })
+        );
     }
 
     #[test]

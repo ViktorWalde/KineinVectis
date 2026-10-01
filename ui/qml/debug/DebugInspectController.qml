@@ -23,6 +23,9 @@ Item {
     property bool scopesBusy: false
     property bool variablesBusy: false
     property string errorText: ""
+    // Por que as variaveis do frame nao sao as do usuario, quando o core diz
+    // (debug.variables { frameId } -> notice; hoje: gdb < 16, so' registradores).
+    property string frameNotice: ""
 
     // Memoria: o endereco digitado, o que voltou (hex por linha de 16 bytes).
     property string memoryReference: ""
@@ -49,6 +52,12 @@ Item {
         scopesBusy = false;
         variablesBusy = false;
         errorText = "";
+        frameNotice = "";
+    }
+
+    function handleFrameNotice(forFrame, notice) {
+        if (forFrame < 0 || forFrame !== frameId) return;
+        frameNotice = notice === undefined || notice === null ? "" : notice;
     }
 
     function clear() {

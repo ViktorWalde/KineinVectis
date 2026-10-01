@@ -1,5 +1,18 @@
 # 03 — Protocolo IPC
 
+> **0.145.0 (2026-10-01) — degradação explicada do depurador sem globais.**
+> `debug.variables { frameId }` ganha `notice?` (string). O core o preenche
+> quando o adaptador só ofereceu **registradores** para o frame — o caso do
+> gdb < 16, cujo DAP não tem escopo de globais (medido no `gdb/dap/scopes.py`
+> do 15.1; o 17.2 tem `Globals`). As variáveis continuam sendo os
+> registradores (melhor que nada), mas a UI diz por que a variável do usuário
+> não está ali e como lê-la (Watches, pelo nome). Ausente quando nada falta.
+> `debug.variables { ref }` nunca o traz. Decisão do autor da mesma data: o
+> gdb que vale é o ≥ 16. Prova: teste de `preferred_scope` (registradores
+> sozinhos ⇒ marcado), harness `tst_debug_inspect.qml` (aviso de outro frame
+> ignorado, troca de frame o esquece) e `verificar-embarcado.sh` contra o gdb
+> 15 real (o aviso chega; tirá-lo do core reprova o gate).
+
 > **0.144.0 (2026-10-01) — pasta com espaço no espelho SSH.** `remote.open`
 > e `remote.directories` passam a usar a mesma regra
 > (`remote::valid_remote_dir`): caminho **absoluto** e sem caracteres de
@@ -2795,9 +2808,11 @@ Inspeção (protocolo `0.29.0`, fatia M2.5c), sempre da thread pausada
 
 - `debug.stackTrace {}` → `{ frames: [{ id, name, file?, line? }] }` —
   topo primeiro, até 20 frames.
-- `debug.variables { frameId }` → `{ frameId, variables }` — o core
+- `debug.variables { frameId }` → `{ frameId, variables, notice? }` — o core
   resolve os scopes DAP internamente e devolve as variáveis do primeiro
-  escopo não-caro (Locals); Globals/Registers ficam pós-M2.
+  escopo não-caro que não seja de registradores (Locals, Globals);
+  registradores só quando não há mais nada, e então com `notice` dizendo
+  por quê (0.145.0).
 - `debug.variables { ref }` → `{ ref, variables }` — expande uma variável
   estruturada. Variável: `{ name, value, type?, ref }` (`ref` 0 = folha,
   > 0 = expansível). Exatamente um de `frameId`/`ref` → senão

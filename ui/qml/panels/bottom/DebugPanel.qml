@@ -222,6 +222,7 @@ Item {
         paused: panel.paused
         framesModel: panel.framesModel
         variablesModel: panel.variablesModel
+        notice: panel.inspect !== null ? panel.inspect.frameNotice : ""
         currentFrameIndex: panel.currentFrameIndex
 
         onFrameActivated: function(index) { panel.frameActivated(index); }

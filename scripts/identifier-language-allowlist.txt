@@ -26,6 +26,8 @@ asname attr getattr async
 dotall isspace removeprefix relpath dataclass dataclasses iterdir maxsplit importlib
 # "instantiate" do Qt (QQmlComponent instancia partes; o dicionario nao tem o verbo)
 instantiate instantiated
+# AUTOGEN/AUTOMOC do CMake (alvos `<alvo>_autogen` que o moc gera)
+autogen
 qverify qcompare qtest guiless qint qsizetype qobject qgetenv qputenv qqmlregistration
 qtquick qmllint qmake invokable rehighlight tooltip popup viewport rect scrollbar
 spacer frameless antialiasing demi btoa atob stringify

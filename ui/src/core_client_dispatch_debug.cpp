@@ -81,7 +81,8 @@ bool CoreClient::dispatchDebugResult(const QString& method, const QJsonObject& r
         emit debugVariablesResolved(
             result.value(QStringLiteral("frameId")).toDouble(-1),
             result.value(QStringLiteral("ref")).toDouble(-1),
-            result.value(QStringLiteral("variables")).toArray().toVariantList());
+            result.value(QStringLiteral("variables")).toArray().toVariantList(),
+            result.value(QStringLiteral("notice")).toString());
         return true;
     }
     if (method == QStringLiteral("debug.scopes")) {

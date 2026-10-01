@@ -32,6 +32,11 @@ O roteiro e as evidências estão nos roadmaps 40, 40.7 e 47.
   abrir no pacote (o Loader do Qt 6.4 recusava os componentes) e os ícones SVG
   da árvore voltaram a aparecer (plugin `libqsvg` incluído). O smoke do
   AppImage agora reprova aviso do motor QML e a falta do plugin.
+- Protocolo `0.145.0` — **depurador sem globais, explicado.** Com o gdb < 16
+  (o 15 do Ubuntu 24.04), o painel de variáveis de um alvo bare-metal mostrava
+  só registradores, sem dizer por quê. Agora diz: o gdb anterior ao 16 não
+  expõe globais pelo DAP; a variável se lê pelo nome em Watches. O gdb que
+  vale é o ≥ 16 (decisão do autor, 2026-10-01).
 - Protocolo `0.144.0` — **pasta com espaço no espelho SSH.** O navegador
   oferece e o espelho abre pastas e arquivos com espaço no nome (`rsync -s`),
   provado contra `sshd` real. O caminho digitado precisa ser absoluto.

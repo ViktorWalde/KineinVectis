@@ -101,6 +101,16 @@ impl fmt::Display for DebugError {
 
 impl Error for DebugError {}
 
+/// What `debug.variables { frameId }` answers.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct FrameVariables {
+    /// Variables of the scope the core chose for the frame.
+    pub variables: Vec<VariableInfo>,
+    /// Why the user's variables are missing when only registers were
+    /// offered (gdb < 16 has no globals scope over DAP).
+    pub notice: Option<String>,
+}
+
 /// Owns the breakpoint store and the single debug session of a workspace.
 #[derive(Debug)]
 pub struct DebugManager {
@@ -230,8 +240,9 @@ impl DebugManager {
             .stack_trace()
     }
 
-    /// Variables of a frame's locals scope.
-    pub fn frame_variables(&self, frame_id: i64) -> Result<Vec<VariableInfo>, DebugError> {
+    /// Variables of a frame's preferred scope, with the notice that explains
+    /// a registers-only answer.
+    pub fn frame_variables(&self, frame_id: i64) -> Result<FrameVariables, DebugError> {
         self.live_session()
             .ok_or(DebugError::NotRunning)?
             .frame_variables(frame_id)
