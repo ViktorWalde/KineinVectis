@@ -7600,3 +7600,41 @@ pelo build portátil (Debian 12, Qt 6.4.2). Resultados:
 - O AppImage final foi instalado no menu do autor
   (`~/Applications/KineinVectis`, item **Kinein Vectis** e comando `kinein`);
   o item de desenvolvimento continua apontando para o checkout.
+
+### 7.150 G0: o gate verde da §7.149 era verde só na máquina do autor — 2026-10-01
+
+O `verificar.sh` foi rodado etapa por etapa (sem parar na primeira falha) num
+**Ubuntu 24.04 limpo**: Qt 6.4.2 (a linha do AppImage), Python 3.11, gdb 15,
+root, sem sessão de login, perfil de shell que imprime. Das 34 etapas, as que
+reprovaram ou passaram sem provar se dividiram em três grupos:
+
+1. **Furos nos gates, provados por mutação.**
+   - **G0.5** aprovava uma IDE que cai: com `std::abort()` depois do
+     `engine.load`, só no processo desacoplado, imprimia "a IDE abre sozinha".
+     Agora o filho grava o marcador de primeiro frame em
+     `KINEIN_PERF_MARKER_FILE`, e a ausência reprova.
+   - **G0.2** não via a sintaxe agrupada `section { delegate: … }`. Virou o
+     scanner de blocos `scripts/check_qml_qt64.py`, com 12 casos de mutação
+     que rodam a cada execução.
+   - **G0.1** dependia da versão do Python: o `tokenize` do 3.11 não vê nome
+     dentro de f-string (PEP 701); 17.591 no 3.11 contra 17.810 no 3.12.
+     Agora lê pela AST: 17.810 no 3.11, 3.12 e 3.13.
+2. **Falsos positivos de ambiente**, corrigidos no gate:
+   o perfil de login que imprime (`nvm`) contaminava 4 testes de `run` e a
+   porta MicroPython; root invalidava 2 testes de serial; a falta de
+   `XDG_RUNTIME_DIR` reprovava o G0.5; o `verificar-cpp` exigia um preset que a
+   documentação manual não configura; o `verificar-qml` reprovava um build
+   configurado e nunca compilado; o `instalar-ambiente.sh` não instalava o
+   plugin SVG nem o runtime dos sanitizers.
+3. **Verde falso**: embarcado, depuração Python e clangd-cross passavam em 0 s
+   sem ferramenta, e o resumo dizia "TUDO VERDE". Nasceu o protocolo NÃO
+   PROVADO (`scripts/unproven.py`, contribuindo/07 §1.1): o gate de ambiente
+   registra o que não provou, o resumo lista, e `--estrito` reprova.
+
+**Pendências abertas (decisão do autor):** o qmllint do Qt 6.4 acusa 6 falsos
+positivos em código correto; o ciclo de embarcado reprova com o gdb 15, que
+não tem escopo de globais no DAP; o clang-tidy 18 com os headers do Qt 6.4.2
+acusa um `NewDelete` na atribuição de `QPointer`, provável falso positivo ainda
+sem prova. O repositório não tem CI: o verde continua dependendo de alguém
+rodar o gate. O catálogo atualizado, com a tabela "o que o gate assume da
+máquina", está em `DocsPublic/contribuindo/04-os-gates-que-dizem-nao.md`.
