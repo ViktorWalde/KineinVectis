@@ -83,7 +83,7 @@ se ela ainda é uma pendência aberta.
 | ferramenta de ambiente ausente (QEMU, debugpy, Podman…) | verde calado, ou reprovação | **NÃO PROVADO** listado; `--estrito` reprova |
 | versão do qmllint (6.4 vs 6.10) | 6 falsos positivos reprovavam no 6.4 | **decidido (2026-10-01)**: vale o ≥ 6.5; no 6.4, NÃO PROVADO com os achados à vista |
 | versão do gdb (15 vs 17) | `verificar-embarcado` reprovava no 15 | **decidido (2026-10-01)**: vale o ≥ 16; no 15, a degradação explicada é provada e a variável global fica NÃO PROVADA |
-| headers do Qt 6.4.2 + clang-tidy 18 | — | **pendente**: um `clang-analyzer-cplusplus.NewDelete` na atribuição de `QPointer` (`window_chrome_controller.cpp`), provável falso positivo do analisador, ainda sem prova |
+| headers do Qt 6.4.2 + clang-tidy 18 | um `clang-analyzer-cplusplus.NewDelete` na atribuição de `QPointer` (`window_chrome_controller.cpp`) reprovava o `verificar-cpp` | **provado falso positivo (2026-10-01)**: reproduz só com Qt, some trocando `-isystem` por `-I`, e o padrão roda limpo sob ASan. Exceção estreita no `verificar-cpp.sh` (só esse check, arquivo e ponto do header; qualquer outro achado reprova) que **expira**: quando o clang parar de acusá-lo, o gate pede para apagá-la (40.7 §7.152) |
 
 ## O que fazer quando um gate parece "errado"
 

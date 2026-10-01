@@ -601,6 +601,24 @@ AppImage e as telas nas três larguras.
 5. Atalho para percorrer o foco entre regiões (proposta: Ctrl+F6, como em
    IDEs JetBrains) — confirmar no gate de atalhos.
 
+### 13.0 Decisões do autor sobre o começo da 0.3.6 (2026-10-01)
+
+1. **Ordem das primeiras fatias: F0 → layout → V-1.** Primeiro medir (§5.3:
+   telas nas três larguras, linha de base de desempenho, inventário e os
+   números visuais do 58 §4.3), depois o layout versionado (§4.4), que destrava
+   a 0.3.7, e então a varredura do C++ (V-1).
+2. **O aviso `wayland-egl` do AppImage é investigado na 0.3.6.** Até aqui ele
+   era aceito como "esperado no modo gráfico portátil" e explicado no
+   tutorial, o que contraria a §0.1 (zero mensagem *produzida*). A fatia acha
+   a causa; elimina se der; se for inevitável, prova e registra o porquê.
+3. **A varredura de idioma grande (V-3 QML, V-4 Rust) roda entre fatias de
+   produto**, um domínio por commit e só quando nenhuma fatia de produto
+   estiver aberta — para não gerar conflito em centenas de arquivos.
+4. **O `NewDelete` do clang-tidy no `QPointer` foi provado falso positivo** e
+   tem exceção estreita e com prazo no `verificar-cpp.sh` (40.7 §7.152). Com
+   isso o gate completo deixa de ter vermelho conhecido antes da primeira
+   fatia.
+
 ### 13.1 Direção visual do trem 0.3.6–0.3.9 (decisão do autor, 2026-10-01)
 
 Registrada **antes** da task dedicada de UX/HUD, que a detalha e mede; aqui

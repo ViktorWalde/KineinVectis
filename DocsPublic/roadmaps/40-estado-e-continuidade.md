@@ -1046,6 +1046,9 @@ PlatformIO: TIER 1 NA 0.4    DECISAO DO AUTOR em 2026-10-01: as cinco
 versoes 0.6-1.0: PLANEJADAS  DECISAO DO AUTOR em 2026-10-01: o agrupamento
                              proposto foi aceito (57 §2); o criterio da 1.0
                              continua PROPOSTA (57 §4)
+inicio da 0.3.6              DECISAO DO AUTOR em 2026-10-01: F0 -> layout
+                             -> V-1; wayland-egl investigado na 0.3.6;
+                             varredura grande entre fatias (53 §13.0)
 gdb >= 16; qmllint >= 6.5    DECISAO DO AUTOR em 2026-10-01: abaixo do gdb 16
                              a falta de globais no DAP e' degradacao
                              EXPLICADA (protocolo 0.145.0); abaixo do qmllint

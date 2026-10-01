@@ -85,6 +85,53 @@ echo "== clang-format =="
 clang-format --dry-run --Werror "$REPO_ROOT"/ui/src/*.cpp "$REPO_ROOT"/ui/src/*.h
 
 echo "== clang-tidy =="
-clang-tidy -p "$BUILD_DIR" "$REPO_ROOT"/ui/src/*.cpp
+# UM FALSO POSITIVO CONHECIDO, PROVADO, E COM PRAZO (2026-10-01, decisao do
+# autor: provar e decidir). O clang-analyzer 18 acusa
+# `cplusplus.NewDelete` ("Use of memory after it is freed") DENTRO do
+# `QWeakPointer` do Qt 6.4 (qsharedpointer_impl.h), a partir da atribuicao de
+# um `QPointer` no window_chrome_controller.cpp. Provas, registradas no
+# roadmaps/40.7 §7.152:
+#   - reproduz num arquivo SO' com Qt (`QPointer<QObject> p; p = &obj;`), com
+#     as flags do projeto: nao e' logica nossa;
+#   - o caminho do analisador "assume" que a contagem atomica chegou a zero;
+#   - o achado depende SO' de os headers do Qt serem de sistema: o mesmo
+#     arquivo e o mesmo clang dao 1 achado com `-isystem` e 0 com `-I`. Essa
+#     flag nao muda o que o programa faz com a memoria, so' como o analisador
+#     trata o header; um use-after-free real apareceria nos dois;
+#   - o mesmo padrao, 10.000 rodadas sob ASan/UBSan (trocar de alvo, destruir
+#     o alvo, soltar), sem erro; e o mesmo ASan pega um use-after-free real.
+# Supressao na NOSSA linha nao existe para isso: o NOLINT e o
+# [[clang::suppress]] foram medidos e nao calam, porque o clang-tidy situa o
+# diagnostico no header do Qt. Entao a excecao mora aqui, o mais estreita
+# possivel: so' este arquivo, so' este check, so' este ponto do header, e o
+# caminho tem de passar pela atribuicao do QPointer. Qualquer OUTRO achado no
+# arquivo reprova. E ela EXPIRA: no dia em que o clang parar de acusar, o gate
+# reprova pedindo para apagar esta excecao — a excecao nao sobrevive ao bug.
+KNOWN_FALSE_POSITIVE_FILE="$REPO_ROOT/ui/src/window_chrome_controller.cpp"
+regular_files=""
+for source in "$REPO_ROOT"/ui/src/*.cpp; do
+    [ "$source" = "$KNOWN_FALSE_POSITIVE_FILE" ] && continue
+    regular_files="$regular_files $source"
+done
+# shellcheck disable=SC2086 # lista de arquivos, separada por espaco de proposito
+clang-tidy -p "$BUILD_DIR" $regular_files
+
+known_output="$(clang-tidy -p "$BUILD_DIR" "$KNOWN_FALSE_POSITIVE_FILE" 2>&1)" && known_status=0 || known_status=$?
+findings="$(printf '%s\n' "$known_output" | grep -E ': (error|warning): ' || true)"
+known_pattern='/QtCore/qsharedpointer_impl\.h:[0-9]+:[0-9]+: error: Use of memory after it is freed \[clang-analyzer-cplusplus\.NewDelete'
+if [ "$known_status" -eq 0 ] && [ -z "$findings" ]; then
+    echo "erro: o falso positivo conhecido do QPointer (NewDelete no QWeakPointer) SUMIU." >&2
+    echo "      Bom sinal: apague a excecao deste script (bloco KNOWN_FALSE_POSITIVE_FILE)" >&2
+    echo "      e o registro no roadmaps/40.7 §7.152 passa a ser historico." >&2
+    exit 1
+fi
+if [ "$(printf '%s\n' "$findings" | grep -c .)" -ne 1 ] \
+    || ! printf '%s\n' "$findings" | grep -Eq "$known_pattern" \
+    || ! printf '%s\n' "$known_output" | grep -Eq "window_chrome_controller\.cpp:[0-9]+:[0-9]+: note: Calling 'QPointer::operator='"; then
+    printf '%s\n' "$known_output" >&2
+    echo "erro: achado do clang-tidy em window_chrome_controller.cpp alem do falso positivo conhecido." >&2
+    exit 1
+fi
+echo "clang-tidy: 1 falso positivo conhecido e provado (NewDelete no QWeakPointer do Qt, via QPointer; roadmaps/40.7 §7.152)"
 
 echo "C++ verificado: tudo limpo."
