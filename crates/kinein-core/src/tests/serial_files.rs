@@ -333,9 +333,16 @@ fn refusals_happen_before_the_port_is_touched() {
         .error
         .unwrap();
     assert_eq!(erro.code, JsonRpcErrorCode::InvalidParams);
+    // Root ignora o modo 0444: o pedido passaria e o teste nao provaria nada
+    // (e criaria o job que a assercao final proibe). Mesma guarda do
+    // serial_identify.rs.
     std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o444)).unwrap();
-    let erro = c.files(json!({ "action": "list" })).error.unwrap();
-    assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
+    if rustix::process::geteuid().is_root() {
+        eprintln!("rodando como root: a prova de permissao nao vale");
+    } else {
+        let erro = c.files(json!({ "action": "list" })).error.unwrap();
+        assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
+    }
     std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o644)).unwrap();
 
     // Sem mpremote.

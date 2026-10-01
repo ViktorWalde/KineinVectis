@@ -71,12 +71,15 @@ echo "distro detectada: $DISTRO"
 # Pacotes por distro. Conjunto base = o que DocsPublic/build/14-development-environment.md
 # e o ToolDetector do core esperam: cmake, ninja, clang (format/tidy/clangd),
 # gcc, gdb, lldb, Qt6 (base/declarative/tools), git, ripgrep, fd e rustup.
+# Desde 2026-10-01 tambem o plugin SVG do Qt (sem ele os icones da arvore
+# saem "Unsupported image format" — o G0.4 pegou num Ubuntu limpo) e o
+# runtime dos sanitizers do clang (compiler-rt), que o preset estrito linka.
 # ---------------------------------------------------------------------------
 instalar_arch() {
     executar sudo pacman -S --needed --noconfirm \
         base-devel git cmake ninja \
-        clang lldb gdb \
-        qt6-base qt6-declarative qt6-tools \
+        clang compiler-rt lldb gdb \
+        qt6-base qt6-declarative qt6-tools qt6-svg \
         rustup \
         ripgrep fd
     if [ "$EXTRAS" -eq 1 ]; then
@@ -93,8 +96,17 @@ instalar_debian() {
         qml6-module-qtqml qml6-module-qtqml-workerscript \
         qml6-module-qtqml-models qml6-module-qtquick \
         qml6-module-qtquick-controls qml6-module-qtquick-layouts \
-        qml6-module-qtquick-window \
+        qml6-module-qtquick-window libqt6svg6 \
         ripgrep fd-find
+    # O runtime dos sanitizers (ASan/UBSan do clang) que o preset
+    # linux-clang-debug-strict linka. Sem ele: "cannot find
+    # libclang_rt.asan-x86_64.a" (medido no Ubuntu 24.04, 2026-10-01). Chamada
+    # PROPRIA porque o nome do metapacote varia entre versoes da distro, e um
+    # nome desconhecido derrubaria a lista inteira acima.
+    if ! executar sudo apt-get install -y libclang-rt-dev; then
+        echo "aviso: libclang-rt-dev indisponivel nesta versao; instale o libclang-rt-<N>-dev"
+        echo "       da versao do seu clang (clang --version) para o preset com sanitizers"
+    fi
     if [ "$EXTRAS" -eq 1 ]; then
         executar sudo apt-get install -y shellcheck
         echo "aviso: cargo-deny no Debian/Ubuntu vem via 'cargo install cargo-deny'"
@@ -120,8 +132,8 @@ instalar_fedora() {
     # shellcheck disable=SC2086
     executar sudo dnf install -y \
         @development-tools git cmake ninja-build \
-        clang clang-tools-extra lldb gdb \
-        qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel \
+        clang clang-tools-extra compiler-rt lldb gdb \
+        qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qttools-devel qt6-qtsvg \
         $pacotes_rust \
         ripgrep fd-find
     if [ "$EXTRAS" -eq 1 ]; then

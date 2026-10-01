@@ -3244,7 +3244,7 @@ scripts/verificar_micropython_porta.py	titulo	2
 scripts/verificar_micropython_porta.py	trecho	2
 scripts/verificar_micropython_porta.py	verificar	1
 scripts/verificar_python_attach.py	evento	3
-scripts/verificar_python_debug.py	ambiente	9
+scripts/verificar_python_debug.py	ambiente	7
 scripts/verificar_python_debug.py	binario	2
 scripts/verificar_python_debug.py	bombear	5
 scripts/verificar_python_debug.py	bruto	5

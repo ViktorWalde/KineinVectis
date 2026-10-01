@@ -45,9 +45,14 @@ if command -v git >/dev/null 2>&1; then
     printf 'build/\ndist/\n' > "$project/.gitignore"
 fi
 
-for name in config data cache state; do
+# XDG_RUNTIME_DIR tambem (0700, como o logind cria): sem ele o Qt avisa
+# "XDG_RUNTIME_DIR not set" — num container, ssh sem sessao ou CI, onde a IDE
+# nao tem defeito. O aviso nao esta' em avisos-qml.txt hoje, mas o passeio nao
+# pode depender da sessao de quem o roda (mesma correcao do G0.5, 2026-10-01).
+for name in config data cache state runtime; do
     mkdir -p "$work_dir/xdg-$name"
 done
+chmod 700 "$work_dir/xdg-runtime"
 
 echo "== passeio por superficies: $step_count passos de ${step_ms} ms ($(basename "$launcher")) =="
 status=0
@@ -58,6 +63,7 @@ timeout "$deadline_seconds" env \
     XDG_DATA_HOME="$work_dir/xdg-data" \
     XDG_CACHE_HOME="$work_dir/xdg-cache" \
     XDG_STATE_HOME="$work_dir/xdg-state" \
+    XDG_RUNTIME_DIR="$work_dir/xdg-runtime" \
     KINEIN_STARTUP_COMMANDS="$startup_commands" \
     "$launcher" "$project" >"$log_file" 2>&1 || status=$?
 
