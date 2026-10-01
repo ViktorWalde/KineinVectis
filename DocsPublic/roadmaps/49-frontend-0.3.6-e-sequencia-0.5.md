@@ -64,6 +64,10 @@ O [roadmap 50](50-biblioteca-e-providers-0.5.md) detalha a segunda frente.
 
 ## 4. 0.3.6 — cortes de implementação
 
+> A arquitetura executável destes cortes (donos, fluxos, contratos, provas e
+> ordem), incluindo abrir pelo terminal sem ruído e zero aviso em execução,
+> está no [roadmap 53](53-arquitetura-executavel-da-0.3.6.md).
+
 ### F0 — foto, inventário e orçamento
 
 Antes de mudar layout, registrar uma matriz por elemento visível:

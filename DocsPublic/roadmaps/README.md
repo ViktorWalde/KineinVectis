@@ -31,11 +31,14 @@ estrutura a Library por capacidades e providers em fatias verificáveis da 0.5.
 O [`51-plano-fechamento-0.3.5.md`](51-plano-fechamento-0.3.5.md) registra,
 antes da execução, a ordem de implementação, provas, empacotamento em `KV0.3`,
 commit/push, release e atualização do site autorizados pelo autor.
-O [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
+O [`53-arquitetura-executavel-da-0.3.6.md`](53-arquitetura-executavel-da-0.3.6.md)
+é a arquitetura da 0.3.6 (a casca em torno do editor, terminal sem ruído e zero
+aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-executavel-da-0.4.md)
 é a arquitetura da 0.4 (embarcados com compiladores e ecossistemas por baixo):
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 
 ```text
+53-arquitetura-executavel-da-0.3.6.md arquitetura da 0.3.6: casca, terminal mudo, zero aviso
 52-arquitetura-executavel-da-0.4.md arquitetura da 0.4: donos, fluxos, contratos
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
 51-plano-fechamento-0.3.5.md       plano operacional prévio: Remote, provas,
