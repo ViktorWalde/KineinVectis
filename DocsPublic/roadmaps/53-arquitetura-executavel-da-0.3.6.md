@@ -602,6 +602,26 @@ AppImage e as telas nas três larguras.
 5. Atalho para percorrer o foco entre regiões (proposta: Ctrl+F6, como em
    IDEs JetBrains) — confirmar no gate de atalhos.
 
+### 13.1 Direção visual do trem 0.3.6–0.3.9 (decisão do autor, 2026-10-01)
+
+Registrada **antes** da task dedicada de UX/HUD, que a detalha e mede; aqui
+é a intenção, não o desenho:
+
+- a 0.3.6–0.3.9 é a **base visual** de todas as versões seguintes: o que se
+  decide aqui vira contrato de componente, não ajuste de tela;
+- **mais visível**: hierarquia clara do que é ação, estado e conteúdo;
+- **carregamento fluido**: nenhuma animação de carga que trave ou engasgue —
+  o trabalho pesado não pode disputar a thread de UI com a animação
+  (hipótese a medir na task: hoje há carga síncrona no caminho do frame);
+- **componentes com bordas arredondadas** e aparência moderna, como regra do
+  sistema de componentes, não caso a caso;
+- **inspiração no layout e no UX das IDEs JetBrains**, adaptada ao contexto
+  do projeto (embarcados, Remote, ambiente) e com identidade própria — não
+  uma cópia.
+
+A task dedicada parte de capturas reais (hook `KINEIN_SCREENSHOT`) e propõe
+com mockups lado a lado; problemas de UX e de HUD/UI entram medidos.
+
 ## F0 — inventário (a preencher na fatia 3)
 
 | Elemento | Host/dono | Frequência/propósito | Duplicação | Decisão | Alcance |
