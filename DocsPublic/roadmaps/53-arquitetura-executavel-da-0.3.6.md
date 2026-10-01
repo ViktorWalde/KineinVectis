@@ -18,6 +18,29 @@
 > vai pôr na casca), os estudos privados em `DocsPrivate/documentacoes/`, o
 > diário `DocsPrivate/uso-diario.md` e a [especificação de frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md).
 
+## 0.1 Princípio do autor (2026-10-01): ruído não se esconde, se elimina
+
+> *"Essa parte não deve ser exibida de forma alguma para o usuário final [...]
+> ou essa parte poluída desta forma não deveria de fato existir, e vai ter que
+> ser feita uma otimização para resolver esse problema de fato e não apenas
+> mascarar."*
+
+Consequências, que valem para toda a série 0.3.6–0.3.9:
+
+1. **A meta é zero mensagem produzida**, não zero mensagem exibida. Cada aviso
+   do Qt/QML (`Component is not ready`, binding loop, `wayland-egl`, o que mais
+   o passeio da §5.2 achar) é rastreado até a causa e corrigido na causa.
+2. **Redirecionar não é correção.** O *message handler* da §5.1 existe só como
+   rede de segurança para o que ainda escapar: grava no arquivo de log de
+   diagnóstico e **nunca** aparece na interface. Silenciar uma categoria do Qt
+   para esconder um aviso é proibido; se uma mensagem é inevitável e inofensiva,
+   a fatia prova isso e documenta por quê.
+3. **O usuário final não vê internos.** A aba IDE do painel inferior mostra só
+   o que é dele (falha de operação que ele pediu, com ação), nunca o stderr do
+   Qt. O arquivo `~/.cache/kinein-vectis/logs/` é para relatório de defeito.
+4. **O gate garante:** qualquer linha da lista `scripts/avisos-qml.txt` em
+   qualquer superfície, no checkout ou no AppImage, reprova.
+
 ## 0. Como ler
 
 - §1 resultado; §2 invariantes; §3 mapa de donos e regra anti-duplicação.
@@ -32,8 +55,8 @@
 ## 1. Resultado ao fim da 0.3.6
 
 ```text
-R1 SILÊNCIO    `kinein .` devolve o prompt na hora, como `code .`; nada do Qt
-               aparece no terminal; o que importa vai para o log e para a aba IDE
+R1 SILÊNCIO    `kinein .` devolve o prompt na hora, como `code .`, e a IDE não
+               produz mensagem do Qt/QML (a causa de cada uma foi corrigida, §0.1)
 R2 LIMPEZA     zero aviso do motor QML em qualquer superfície, no checkout E no
                AppImage (Qt 6.4), provado por um passeio automático por todas
 R3 ORIENTAÇÃO  trilho curto (áreas, não ferramentas), painel inferior que mostra
@@ -224,13 +247,20 @@ dono     cli_args (contrato) · single_instance (encaminhar) ·
               filho foi criado
             — alternativa medida na fatia: fork + setsid no próprio processo;
               escolher a que não duplica o parse de argumentos
-4  binário  no processo da janela, ANTES do QGuiApplication:
-            qInstallMessageHandler (proposto) → toda mensagem Qt/QML vai para
-            o log do cliente (mesma redação do log_redaction) e para a aba IDE;
-            nada vai para stderr, salvo com --verbose ou KINEIN_LOG=stderr
-5  binário  níveis: QtDebug/QtInfo descartados por padrão (KINEIN_LOG=debug
-            liga); QtWarning e QtCritical no log; categoria qt.qpa.wayland do
-            modo portátil vira debug (o aviso de EGL é esperado, tutorial §4)
+4  binário  rede de segurança (§0.1), não correção: qInstallMessageHandler
+            (proposto) grava o que escapar no log de diagnóstico (mesma redação
+            do log_redaction); nunca na interface; nunca em stderr, salvo com
+            --verbose ou KINEIN_LOG=stderr. O gate (§5.2) garante que, em uso
+            normal, ele não recebe nada
+5  binário  `wayland-egl` no modo portátil é CAUSA a corrigir, não aviso
+            esperado: o AppImage pede software (QT_QUICK_BACKEND=software) mas
+            o plugin Wayland ainda tenta a integração EGL. A fatia mede e
+            escolhe a forma correta de não carregá-la quando o renderer é
+            software (ex.: QT_WAYLAND_CLIENT_BUFFER_INTEGRATION no hook
+            portátil, ou não empacotar a integração quando ela não é usada),
+            provando que a IDE desenha igual e o aviso deixa de ser produzido;
+            o trecho do tutorial (entregue com a 0.3.5) que o chama de esperado é
+            reescrito junto com a correção
 6  script   kinein.in continua só resolvendo o binário e repassando argumentos
 flags    --wait     (proposto) fica preso até a janela fechar, como `code -w`
          --verbose  (proposto) mantém stderr no terminal para diagnóstico
@@ -268,8 +298,9 @@ dono     a lista scripts/avisos-qml.txt (já usada pelo verificar_binario_abre.p
             roteiro em que apareceu (o handler da §5.1 carimba o id do comando
             corrente no log)
 5  achar    "Component is not ready": com o carimbo do item 4, o primeiro
-            comando que o produz é o dono; a correção segue a regra da §3
-            (provável Loader/Repeater cujo delegate não compila no Qt 6.4)
+            comando que o produz é o dono; a correção vai à CAUSA (§0.1),
+            seguindo a regra da §3 (provável Loader/Repeater cujo delegate não
+            compila no Qt 6.4). Esconder a mensagem não fecha a fatia
 6  GitWindow `width: visible ? implicitWidth : -parent.spacing` numa Row
             realimenta a largura no Qt 6.4: medir e trocar por um desenho
             sem largura negativa (a fatia mostra o antes/depois nas duas)
@@ -470,19 +501,29 @@ medida     medir-performance.sh antes/depois, mesma máquina
 mutação    cada guarda nova provada removendo-a
 ```
 
-## 11. Ordem
+## 11. Ordem e trem de versões (decisão do autor, 2026-10-01)
+
+A série 0.3.0–0.3.5 está encerrada e divulgada. A reorganização da casca vai
+da **0.3.6 à 0.3.9**; cada versão é publicável sozinha, com notas de
+atualização no site, e só fecha com o gate completo, o passeio sem aviso no
+AppImage e as telas nas três larguras.
 
 ```text
-1  §5.1 terminal mudo + message handler          (base de tudo que segue:
-2  §5.2 passeio por superfícies e zero aviso       sem isso não se mede nada)
-3  §5.3 F0 inventário, telas e linha de base
-4  §4.4 layout versionado no settings (contrato)
-5  §5.4 F1 trilho (projeção, Mais, pin/ocultar)
-6  §5.5 F2 painel de baixo contextual, Tools, presets
-7  §5.6 host de superfície central
-8  §5.7 F3 header/status
-9  §5.8 F4 foco, teclado, densidade, modo Foco, carga sob demanda medida
-10 §5.9 F5 prova e fechamento (AppImage, notas de atualização no site)
+0.3.6  LIMPEZA E BASE
+       §5.1 terminal mudo (desacoplar como `code .`, --wait/--verbose)
+       §5.2 passeio por superfícies + causa de cada aviso corrigida
+            (Component is not ready, GitWindow, wayland-egl)
+       §5.3 F0: inventário, telas em Xvfb, linha de base medida
+       §4.4 layout versionado no settings (contrato, migração)
+0.3.7  NAVEGAÇÃO
+       §5.4 F1 trilho por áreas (projeção, Mais, fixar/ocultar)
+       §5.5 F2 painel de baixo contextual, Tools migrado, presets
+0.3.8  CENTRO E CONTEXTO
+       §5.6 host de superfície central (com volta ao editor)
+       §5.7 F3 header e status com contexto efetivo
+0.3.9  TECLADO, FLUIDEZ E PROVA
+       §5.8 F4 foco, teclado, densidade, modo Foco, carga sob demanda medida
+       §5.9 F5 prova antes/depois e fechamento da série
 ```
 
 ## 12. Rollback

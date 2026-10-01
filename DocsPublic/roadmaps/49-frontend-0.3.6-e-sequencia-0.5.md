@@ -16,7 +16,8 @@
 ```text
 0.3.5  fechar, provar e distribuir a série 0.3, incluindo Grafana
    ↓
-0.3.6  reorganizar e otimizar a casca da IDE, com o editor no centro
+0.3.6–0.3.9  reorganizar e otimizar a casca da IDE, com o editor no centro
+             (trem de versões no roadmap 53 §11)
    ↓
 0.4.x  versão dedicada ao ecossistema embarcado; continuar LSP, edição,
        contexto semântico e cache conforme os planos existentes
