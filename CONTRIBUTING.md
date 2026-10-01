@@ -1,5 +1,10 @@
 # Contribuir
 
+**Primeira vez aqui, pessoa ou IA?** Comece por
+[`DocsPublic/00-comece-aqui.md`](DocsPublic/00-comece-aqui.md): as regras que
+valem antes de qualquer outra, onde mora cada fato do projeto e por onde
+começar conforme o que você veio fazer.
+
 O guia completo de quem chega — a ideia do projeto e o que ele recusa ser,
 como preparar o ambiente, o ritual de uma mudança passo a passo, cada gate
 e o porquê dele, como trabalhar **com ou sem um agente de IA**, e o mapa

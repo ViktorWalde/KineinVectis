@@ -3,6 +3,10 @@
 Este índice organiza a documentação técnica do projeto por assunto e define a
 ordem de precedência quando houver conflito entre documentos.
 
+> **Chegou agora?** Leia antes [`00-comece-aqui.md`](00-comece-aqui.md): as
+> regras, a tabela "pergunta → documento dono" e por onde começar. Este
+> índice é o catálogo completo; aquele é a porta.
+
 ## Como a documentação está organizada (2026-09-12)
 
 Duas árvores, por decisão do autor em 2026-09-12 (sucede a decisão das três

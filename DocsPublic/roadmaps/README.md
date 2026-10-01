@@ -1,8 +1,10 @@
 # roadmaps/ — planos, trilhas e o ESTADO vivo
 
 **Comece pelo [`40-estado-e-continuidade.md`](40-estado-e-continuidade.md)**:
-é a fila viva (§4), as decisões que não se reabrem (§5) e o registro de cada
-fatia entregue (§7). A Etapa 1 seguiu a ordem do
+é a fila viva (§4) e as decisões que não se reabrem (§5); o registro de cada
+fatia entregue mora no [`40.7-registro-das-entregas.md`](40.7-registro-das-entregas.md).
+A ordem das versões até a 1.0, separando decidido de proposto, está no
+[`57-mapa-de-versoes-ate-a-1.0.md`](57-mapa-de-versoes-ate-a-1.0.md). A Etapa 1 seguiu a ordem do
 [`42-trilha-profunda-embarcados.md`](42-trilha-profunda-embarcados.md); a
 Etapa 2 (2026-09-18/19, fechada) seguiu o
 [`43-etapa2-hud-ui-ux.md`](43-etapa2-hud-ui-ux.md); a Etapa 3 (2026-09-19,
@@ -38,6 +40,8 @@ aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-e
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 
 ```text
+57-mapa-de-versoes-ate-a-1.0.md     as versoes ate a 1.0: encerrada, em curso, planejada, proposta
+40.7-registro-das-entregas.md       LOG: cada fatia entregue, datada, com prova
 53-arquitetura-executavel-da-0.3.6.md arquitetura da 0.3.6: casca, terminal mudo, zero aviso
 52-arquitetura-executavel-da-0.4.md arquitetura da 0.4: donos, fluxos, contratos
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas

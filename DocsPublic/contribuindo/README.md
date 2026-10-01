@@ -1,5 +1,8 @@
 # Contribuir com a Kinein Vectis — o guia de quem chega
 
+> **Antes deste guia:** [`../00-comece-aqui.md`](../00-comece-aqui.md) (as
+> regras e onde mora cada fato).
+>
 > Escrito em 2026-09-19. Este é o ponto de entrada para quem vai **mexer
 > no código ou na documentação**, seja uma linha ou uma etapa inteira, seja
 > com as próprias mãos ou com um agente de IA ao lado. A versão curta

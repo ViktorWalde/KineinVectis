@@ -13,8 +13,11 @@ vai revisar o que um agente entregou.
    deste prompt é `DocsPrivate/Codex/PROMPT-proxima-sessao.md`; para quem
    não tem acesso ao privado, o conteúdo público equivalente é o
    [03](03-o-ritual-de-uma-fatia.md) + o roadmap da etapa + o `40`.
-2. **A ordem de leitura**: `40` §cabeçalho e §7 recentes → roadmap da
-   etapa → `arquitetura/ARCHITECTURE.md` → os arquivos da área. Um agente
+2. **A ordem de leitura** (desde 2026-10-01): [`00-comece-aqui.md`](../00-comece-aqui.md)
+   → `40` cabeçalho e §4 → as entregas recentes no `40.7` → o roadmap da
+   versão (o [mapa de versões](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md)
+   diz qual) → `arquitetura/01-mapa-de-modulos.md` (o contexto da mudança)
+   → `arquitetura/ARCHITECTURE.md` → os arquivos da área. Um agente
    que começa pelo código repete o que já foi descartado.
 3. **As regras que ele não pode "otimizar"** (todas nasceram de incidente):
 
