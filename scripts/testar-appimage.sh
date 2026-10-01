@@ -209,4 +209,10 @@ if grep -F -f "$REPO_ROOT/scripts/avisos-qml.txt" "$SMOKE_LOG" >"$TEMP_DIR/aviso
     exit 1
 fi
 
+# G0.4: o passeio por superficies no Qt 6.4 do pacote. A primeira tela nao
+# mostra a lista do Git com secoes, os paineis de ambiente nem os overlays.
+echo "==> passeio por superfícies no AppImage"
+env -u KINEIN_CORE_BIN -u QT_QUICK_BACKEND -u QSG_RHI_BACKEND APPIMAGE_EXTRACT_AND_RUN=1 \
+    bash "$REPO_ROOT/scripts/run-surface-tour.sh" "$APPIMAGE"
+
 echo "AppImage validado: $APPIMAGE"

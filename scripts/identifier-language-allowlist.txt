@@ -16,7 +16,7 @@ extjson rgba cyan bezier radix hexdigit endiannesses
 const bool struct impl enum usize isize deref nodiscard constexpr nullptr nullopt
 sizeof typeof instanceof readonly pragma namespace mutex mpsc deque tuple dict
 serde deserialize lossy recv eprintln writeln rsplit rsplitn splitn rfind rstrip
-lstrip substr subspan concat findall finditer splitlines startswith endswith
+lstrip substr subspan concat findall finditer splitlines startswith endswith keepends
 isinstance isdigit isascii isalpha isalnum isupper isfile setdefault defaultdict
 frozenset staticmethod nonlocal elif environ shutil pathlib urllib urlopen
 tokenize argparse tempfile mkdtemp makedirs listdir rmtree getmtime fromtimestamp

@@ -118,6 +118,9 @@ fi
 if ! grep -Fq 'KINEIN_PERF first_frame_ms=' scripts/testar-appimage.sh; then
     reprovar "testar-appimage.sh parou de exigir o primeiro frame"
 fi
+if ! grep -Fq 'run-surface-tour.sh' scripts/testar-appimage.sh; then
+    reprovar "testar-appimage.sh parou de rodar o passeio por superficies (G0.4)"
+fi
 
 # 5b. O INSTALADOR ENTREGUE PRECISA BASTAR SOZINHO. Quem baixa recebe dois
 #     arquivos, e o comando curto `kinein` nasce de um modelo com dono unico

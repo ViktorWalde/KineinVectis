@@ -23,9 +23,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from cmake_presets import UI_BINARY, preset_binary_dir
+from cmake_presets import REPO_ROOT, UI_BINARY, preset_binary_dir
 
-RAIZ = Path(__file__).resolve().parent.parent
 MARCADOR = "KINEIN_PERF first_frame_ms="
 
 
@@ -122,7 +121,7 @@ def abre(build_dir: Path, timeout: float) -> tuple[int | None, str, int | None]:
     try:
         proc = subprocess.run(
             [str(build_dir / UI_BINARY)],
-            cwd=RAIZ,
+            cwd=REPO_ROOT,
             env=ambiente,
             capture_output=True,
             text=True,
@@ -215,9 +214,9 @@ def main() -> int:
         )
         return 1
 
-    binario = build_dir / UI_BINARY
-    if not os.access(binario, os.X_OK):
-        print(f"erro: {binario} nao existe ou nao e' executavel.", file=sys.stderr)
+    binary = build_dir / UI_BINARY
+    if not os.access(binary, os.X_OK):
+        print(f"erro: {binary} nao existe ou nao e' executavel.", file=sys.stderr)
         return 2
 
     inicio = time.monotonic()
@@ -226,30 +225,37 @@ def main() -> int:
     if codigo == 0 and ms is not None:
         ruido = avisos_qml(texto)
         if ruido:
-            print(f"✗ {binario.relative_to(RAIZ)} abre, mas o QML avisou em tempo de execucao:", file=sys.stderr)
+            print(f"✗ {binary.relative_to(REPO_ROOT)} abre, mas o QML avisou em tempo de execucao:", file=sys.stderr)
             print("\n".join("    " + l for l in ruido), file=sys.stderr)
             return 1
-        print(f"{binario.relative_to(RAIZ)}: abre, primeiro frame em {ms} ms, sem aviso do QML")
-        return 0
+        print(f"{binary.relative_to(REPO_ROOT)}: abre, primeiro frame em {ms} ms, sem aviso do QML", flush=True)
+        # G0.4: abrir e' a primeira tela; o passeio percorre as outras, num
+        # projeto com mudancas git, e nomeia o passo de cada aviso.
+        tour = subprocess.run(
+            ["bash", str(REPO_ROOT / "scripts" / "run-surface-tour.sh"), str(binary)],
+            cwd=REPO_ROOT,
+            check=False,
+        )
+        return 0 if tour.returncode == 0 else 1
 
     cauda = texto.strip().splitlines()[-40:]
     if cauda:
         print("\n".join("    " + l for l in cauda), file=sys.stderr)
     if codigo is None:
-        print(f"✗ {binario.relative_to(RAIZ)} nao confirmou o primeiro frame em {args.timeout:.0f} s.", file=sys.stderr)
+        print(f"✗ {binary.relative_to(REPO_ROOT)} nao confirmou o primeiro frame em {args.timeout:.0f} s.", file=sys.stderr)
     elif codigo < 0:
         print(
-            f"✗ {binario.relative_to(RAIZ)} morreu com o sinal {-codigo} apos {duracao:.1f} s.",
+            f"✗ {binary.relative_to(REPO_ROOT)} morreu com o sinal {-codigo} apos {duracao:.1f} s.",
             file=sys.stderr,
         )
     elif codigo != 0:
-        print(f"✗ {binario.relative_to(RAIZ)} saiu com {codigo} apos {duracao:.1f} s.", file=sys.stderr)
+        print(f"✗ {binary.relative_to(REPO_ROOT)} saiu com {codigo} apos {duracao:.1f} s.", file=sys.stderr)
     else:
-        print(f"✗ {binario.relative_to(RAIZ)} saiu com 0 sem imprimir '{MARCADOR}'.", file=sys.stderr)
+        print(f"✗ {binary.relative_to(REPO_ROOT)} saiu com 0 sem imprimir '{MARCADOR}'.", file=sys.stderr)
     print("  Reproduzir na mao (o stderr precisa do QT_FORCE_STDERR_LOGGING, senao o assert vai para o journal):", file=sys.stderr)
     print(
         f"    QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 KINEIN_PERF_MARKER=1 KINEIN_PERF_EXIT=1"
-        f" {binario.relative_to(RAIZ)}",
+        f" {binary.relative_to(REPO_ROOT)}",
         file=sys.stderr,
     )
     return 1

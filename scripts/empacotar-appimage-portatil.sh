@@ -52,6 +52,17 @@ RUN_ARGS=(
     --workdir /workspace
 )
 
+# Saida fora do dist/ (build de desenvolvimento que nao deve sobrescrever o
+# artefato publicado): a pasta precisa estar dentro do repositorio montado.
+if [[ -n "${KINEIN_APPIMAGE_DIST_DIR:-}" ]]; then
+    dist_dir="$(realpath -m "$KINEIN_APPIMAGE_DIST_DIR")"
+    if [[ "$dist_dir" != "$REPO_ROOT"/* ]]; then
+        echo "erro: KINEIN_APPIMAGE_DIST_DIR precisa estar dentro de $REPO_ROOT" >&2
+        exit 1
+    fi
+    RUN_ARGS+=(--env "KINEIN_APPIMAGE_DIST_DIR=/workspace/${dist_dir#"$REPO_ROOT"/}")
+fi
+
 if [[ "$CONTAINER_ENGINE" == "podman" ]]; then
     RUN_ARGS+=(--userns=keep-id)
 else
@@ -66,4 +77,4 @@ echo "==> gerando AppImage no baseline portátil"
     bash scripts/empacotar-appimage.sh --baseline-worker
 
 echo "==> build portátil concluído"
-echo "==> artefatos disponíveis em: $REPO_ROOT/dist"
+echo "==> artefatos disponíveis em: ${KINEIN_APPIMAGE_DIST_DIR:-$REPO_ROOT/dist}"

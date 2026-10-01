@@ -9,7 +9,8 @@ import QtQuick
 // comandos rodam UM POR VEZ, com esse intervalo, e cada passo deixa
 // `KINEIN_PASSEIO passo=<id>` no stderr. Um aviso do motor QML que aparece
 // depois dessa linha e antes da proxima pertence a esse comando — e' assim que
-// o gate acha o DONO de cada aviso, em vez de so' saber que ele existe.
+// o gate acha o DONO de cada aviso, em vez de so' saber que ele existe. O
+// roteiro do gate e' scripts/surface-tour.txt (G0.4).
 Item {
     id: root
 
@@ -38,6 +39,13 @@ Item {
             const next = root.pending[0];
             root.pending = root.pending.slice(1);
             console.info("KINEIN_PASSEIO passo=" + next);
+            // `@quit` fecha a IDE pelo caminho normal: o aviso que so' nasce
+            // ao destruir a tela (TypeError num handler de saida) tambem e'
+            // do passeio.
+            if (next === "@quit") {
+                Qt.quit();
+                return;
+            }
             root.commandDispatcher.execute(next);
         }
     }

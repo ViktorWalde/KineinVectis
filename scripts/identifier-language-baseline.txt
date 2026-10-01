@@ -3137,7 +3137,6 @@ scripts/verificar_binario_abre.py	alvo	3
 scripts/verificar_binario_abre.py	ambiente	3
 scripts/verificar_binario_abre.py	armadilha	7
 scripts/verificar_binario_abre.py	avisos	4
-scripts/verificar_binario_abre.py	binario	10
 scripts/verificar_binario_abre.py	caminho	6
 scripts/verificar_binario_abre.py	candidato	3
 scripts/verificar_binario_abre.py	cauda	3
@@ -3154,7 +3153,6 @@ scripts/verificar_binario_abre.py	objetos	2
 scripts/verificar_binario_abre.py	obsoletos	8
 scripts/verificar_binario_abre.py	pior	9
 scripts/verificar_binario_abre.py	quando	3
-scripts/verificar_binario_abre.py	raiz	9
 scripts/verificar_binario_abre.py	rotulo	2
 scripts/verificar_binario_abre.py	ruido	3
 scripts/verificar_binario_abre.py	saida	6

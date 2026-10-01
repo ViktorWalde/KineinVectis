@@ -1,0 +1,52 @@
+# Passeio por superficies (G0.4, roadmap 53 §0.2 e §5.2).
+#
+# Um id da paleta por linha, executados UM POR VEZ pelo StartupCommands.qml,
+# com o intervalo da linha `@passo=`. Cada passo deixa `KINEIN_PASSEIO passo=<id>`
+# no log, e o run-surface-tour.sh atribui cada aviso da lista avisos-qml.txt ao
+# passo em que apareceu. Rodado no binario do checkout (verificar-binario-abre)
+# e no AppImage (testar-appimage, no host e no Debian minimo).
+#
+# FORA de proposito (o motivo esta' ao lado; tirar daqui exige o motivo sumir):
+#   workspace.open        abre o seletor nativo de pasta e espera a pessoa
+#   workspace.close       fecha o projeto no meio do passeio
+#   git.pull / git.push   rede
+#   run.start / debug.start   executam um programa do projeto
+#   lsp.* / git.blame / git.fileDiff   pedem arquivo aberto no editor, e o
+#                         passeio nao abre arquivo (fica para quando o roteiro
+#                         puder abrir um, junto com os comandos de area da F1)
+# AINDA NAO ALCANCAVEIS por id: alternar cada area do trilho, cada aba de baixo
+# e redimensionar a janela. Os comandos de area (53 §6.2) entram aqui na F1.
+@passo=700
+git.status
+git.commit
+git.log
+git.branches
+git.stash
+fs.search
+fs.replace
+editor.find
+editor.replace
+fs.findFiles
+command.list
+index.symbols
+terminal.open
+tools.status
+cargo.metadata
+cmake.configure
+cargo.check
+build.run
+run.stop
+lsp.restart
+configAction.list
+library.list
+datasource.list
+remote.list
+grafana.get
+probe.list
+setup.list
+container.list
+settings.get
+fs.createFile
+fs.createDirectory
+git.status
+@quit

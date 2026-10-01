@@ -57,7 +57,7 @@ promete pegar é introduzido de propósito e ele reprova).
 | G0.1 `scripts/check_identifier_language.py` | identificador novo em português em Rust, C++, QML/JS, Python, shell e Python em heredoc; legado em catraca | **feito** 2026-10-01; mutação (`contadorDePassos` reprovou `contador` e `passos` na linha) |
 | G0.2 `scripts/verificar-qml-qt64.sh` | parte que o Qt 6.4 do AppImage nunca cria num arquivo com `pragma Bound` | **feito** 2026-10-01; mutação contra o HEAD (as quatro ocorrências) |
 | G0.3 `scripts/verificar-qml-logica-qt64.sh` | qualquer harness que passa no Qt do checkout e falha no do pacote; **aviso da lista `avisos-qml.txt` na saída de qualquer harness** (nos dois Qt) | **feito** 2026-10-01. Container Debian 12 próprio (`Containerfile.qml64`, só `qml-qt6` e os módulos usados), 17 s. Novo `tst_list_parts_render` instancia `GitChangesList` e `SymbolResultsList`; mutação: `section.delegate` e `header` inline passam no 6.10 e reprovam no 6.4 com "Component is not ready". O grep de avisos pegou um falso incompleto no `tst_editor_persistence` ("Unable to assign"), já corrigido |
-| G0.4 passeio por superfícies | aviso da lista `scripts/avisos-qml.txt` em qualquer área, aba ou overlay, no checkout e no AppImage | a fazer: `@passo` já existe (§5.2); falta o roteiro versionado e o uso no `verificar-binario-abre` e no `testar-appimage` |
+| G0.4 `scripts/run-surface-tour.sh` + `scripts/surface-tour.txt` | aviso da lista `scripts/avisos-qml.txt` em qualquer superfície alcançável por id (nomeando o **passo** dono), id do roteiro que ninguém trata, passeio que não chega ao `@quit` ou IDE que não sai com 0 | **feito** 2026-10-01. 33 passos de 700 ms num projeto com mudanças git em três pastas (as seções do Git existem), em ~25 s; roda no `verificar-binario-abre` (checkout) e no `testar-appimage` (host e Debian mínimo, Qt 6.4). Mutações: `ReferenceError` no cabeçalho de seção do Git (reprovou em `[git.status]`) e id com erro de digitação. Áreas do trilho, abas de baixo e redimensionar entram no roteiro com os comandos de área da F1 (§6.2) |
 | G0.5 `scripts/check_terminal_quiet.py` | `kinein <pasta>` num pty que não volte em < 300 ms, que imprima algo (o pai **ou** a IDE desacoplada depois), cuja IDE não chegue ao primeiro frame, ou cujo log de diagnóstico receba qualquer mensagem; `--verbose`/`--wait` que soltem o terminal; erro de caminho e `--help` mudos | **feito** 2026-10-01, no modo completo do `verificar.sh`. XDG isolados num temporário; medido 32 ms. Mutações: filho sem `dup2` do stderr, desacoplamento desligado e um `qWarning` na abertura, cada uma reprovada com a sua mensagem |
 
 ### Varredura de idioma, em fatias próprias (logo depois do G0)
@@ -325,7 +325,7 @@ dono     a lista scripts/avisos-qml.txt (já usada pelo verificar_binario_abre.p
             prefixo) à lista única
 2  passeio  KINEIN_STARTUP_COMMANDS já roda comandos por id na abertura
             (StartupCommands.qml). O smoke ganha um ROTEIRO (proposto,
-            scripts/passeio-superficies.txt) que abre e fecha cada área, cada
+            scripts/surface-tour.txt) que abre e fecha cada área, cada
             aba de baixo, cada overlay, a paleta, a busca, o menu e o Git,
             redimensiona para 1024×700, e sai
 3  onde     o mesmo roteiro roda: (a) no checkout (Qt do sistema), no

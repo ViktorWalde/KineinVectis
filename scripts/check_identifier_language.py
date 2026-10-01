@@ -132,6 +132,7 @@ def shell_names(text: str) -> list[tuple[int, str]]:
     """Variable and function names. A heredoc fed to Python is checked as Python;
     any other heredoc body (plain text, file content) is skipped."""
     names, end_marker, body, body_start, body_is_python = [], None, [], 0, False
+    open_quote: str | None = None
     for lineno, line in enumerate(text.splitlines(), 1):
         if end_marker is not None:
             if line.strip() == end_marker:
@@ -142,43 +143,51 @@ def shell_names(text: str) -> list[tuple[int, str]]:
             else:
                 body.append(line)
             continue
-        code = strip_hash(line)
+        was_quoted = open_quote is not None
+        code, open_quote = strip_hash(line, open_quote)
         for groups in SHELL_NAME.findall(code):
             for name in groups:
                 if name:
                     names.append((lineno, name))
         # On the raw line: stripping quotes would erase the `'PY'` marker.
-        m = HEREDOC.search(line)
+        m = None if was_quoted else HEREDOC.search(line)
         if m and "#" not in line[: m.start()]:
             end_marker, body_start = m.group(2), lineno + 1
             body_is_python = re.search(r"\bpython3?\b", line[: m.start()]) is not None
     return names
 
 
-def strip_hash(text: str) -> str:
-    """Remove # comments and quoted strings (shell/python), keeping lines."""
-    lines = []
-    for line in text.splitlines():
-        cleaned, quote, k = [], None, 0
-        while k < len(line):
-            ch = line[k]
-            if quote:
-                if ch == "\\":
-                    k += 2
-                    continue
-                if ch == quote:
-                    quote = None
-                k += 1
+def strip_hash(line: str, quote: str | None = None) -> tuple[str, str | None]:
+    """Remove # comments and quoted strings from one shell line, keeping code.
+
+    `quote` is the quote still open from the previous line, and the one carried
+    to the next line is returned. Only a `'` that opens a TOKEN (an awk or sed
+    program: `awk '`, `-v x='`) is carried, because it is a string on every
+    line it spans. A `"` is not: a multi-line `"$(` holds real code with its
+    own nested quotes. Nor is the Portuguese apostrophe (`e'`), glued to a
+    letter, which only ever appears inside a comment or a string."""
+    cleaned, k = [], 0
+    carry = quote is not None
+    while k < len(line):
+        ch = line[k]
+        if quote:
+            if ch == "\\" and quote == '"':
+                k += 2
                 continue
-            if ch in "\"'":
-                quote = ch
-            elif ch == "#" and (k == 0 or line[k - 1] in " \t;"):
-                break
-            else:
-                cleaned.append(ch)
+            if ch == quote:
+                quote = None
+                carry = False
             k += 1
-        lines.append("".join(cleaned))
-    return "\n".join(lines)
+            continue
+        if ch in "\"'":
+            quote = ch
+            carry = ch == "'" and (k == 0 or line[k - 1] in " \t=(")
+        elif ch == "#" and (k == 0 or line[k - 1] in " \t;"):
+            break
+        else:
+            cleaned.append(ch)
+        k += 1
+    return "".join(cleaned), (quote if carry else None)
 
 
 def tracked_files() -> list[Path]:
