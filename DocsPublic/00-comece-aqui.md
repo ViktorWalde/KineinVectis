@@ -16,7 +16,7 @@ JSON-RPC em stdin/stdout. Sem telemetria, sem IA embutida, sem runtime de
 plugin de terceiros — cada "não" é uma decisão registrada
 ([`leitura-tecnica.md`](leitura-tecnica.md) §1).
 
-## 2. As cinco regras que valem antes de qualquer outra
+## 2. As seis regras que valem antes de qualquer outra
 
 1. **O código e os gates são a única fonte do que existe.** Nenhum documento
    derruba uma medição. Antes de afirmar que algo falta ou existe, meça
@@ -38,8 +38,54 @@ plugin de terceiros — cada "não" é uma decisão registrada
    separa as duas.
 5. **Toda mudança passa pelo gate**, `scripts/verificar.sh`, e todo gate novo é
    provado por mutação ([`contribuindo/04`](contribuindo/04-os-gates-que-dizem-nao.md)).
+6. **Bloqueador real fura a fila.** Perda de dados, crash e bloqueio do uso
+   diário vêm antes de qualquer item planejado
+   ([`roadmaps/34`](roadmaps/34-depois-do-mvp.md) §7).
 
-## 3. Onde mora cada fato
+## 3. A arquitetura da documentação
+
+A documentação pública tem três eixos, e todos estão descritos por inteiro no
+índice, [`README.md`](README.md):
+
+- **Pasta = assunto.** `arquitetura/` (como o código é), `roadmaps/` (estado,
+  registro, versões e planos), `especificacoes/` (o alvo do produto),
+  `contribuindo/` (como trabalhar), `build/`, `integracoes/`, `seguranca/`,
+  `decisoes-adr/`, `pesquisa/`, `iconografia/` — a árvore com o que cada uma
+  guarda está em [`README.md`](README.md) §Estrutura, e cada pasta tem o
+  próprio índice, que cita **todo** documento dela pelo nome.
+- **Classe = o que acontece se o documento envelhecer.** CONTRATO (regra; não
+  muda sem decisão), ESTADO (tem de ser verdade hoje), PLANO (alvo; pode
+  divergir), LOG (registro datado; nunca se reescreve) e PESQUISA (hipótese;
+  não autoriza nada) — [`README.md`](README.md) §"As quatro classes".
+- **Precedência = quem vence num conflito.** O código e os gates, depois o
+  contrato, o estado, o plano, o log e a pesquisa —
+  [`README.md`](README.md) §"Ordem de precedência".
+
+Como os documentos se apoiam uns nos outros:
+
+```mermaid
+flowchart TD
+  porta["00-comece-aqui.md<br/>a porta"] --> indice["README.md<br/>índice: pastas, classes, precedência"]
+  porta --> contribuindo["contribuindo/<br/>como trabalhar; 04 = os gates"]
+  indice --> pastas["índice de cada pasta<br/>(todo documento pelo nome)"]
+  porta -->|"o que está aberto"| estado
+  porta -->|"para onde vai"| versoes
+  porta -->|"quem fala com quem"| mapa
+  codigo[("código")] -->|"gerado e conferido por gate"| mapa["arquitetura/01<br/>mapa de módulos"]
+  codigo -->|"conferido por gate"| protocolo["arquitetura/03<br/>protocolo IPC"]
+  contrato["arquitetura/ARCHITECTURE.md<br/>CONTRATO"] -.->|"regras que o código segue"| codigo
+  versoes["roadmaps/57<br/>versões até a 1.0"] -->|"dono do detalhe"| plano["roadmap da versão<br/>(53, 52, 49/50…)"]
+  plano -->|"alvo de cada área"| specs["especificacoes/<br/>PLANO"]
+  estado["roadmaps/40<br/>ESTADO: a fila"] -->|"a fatia feita vira"| registro["roadmaps/40.7<br/>LOG: o registro"]
+  plano -->|"a fatia em curso entra na"| estado
+  adr["decisoes-adr/<br/>o porquê"] -.-> contrato
+```
+
+Duas regras mantêm isso de pé, e as duas têm gate: **um fato mora num
+documento só** (os outros apontam para ele) e **a documentação pública só cita
+documentação pública** (§6).
+
+## 4. Onde mora cada fato
 
 | Pergunta | Dono (leia este) |
 | --- | --- |
@@ -60,7 +106,7 @@ plugin de terceiros — cada "não" é uma decisão registrada
 | Convenções de código, testes e commits? Nomes de identificador? | [`contribuindo/08`](contribuindo/08-convencoes-codigo-testes-commits.md), [`contribuindo/09`](contribuindo/09-glossario-de-identificadores.md) |
 | Como usar a IDE (usuário final)? | [`manual.md`](manual.md), [`tutorial.md`](tutorial.md) |
 
-## 4. Por onde começar, conforme o que você veio fazer
+## 5. Por onde começar, conforme o que você veio fazer
 
 **Entender o projeto (30 minutos).** `leitura-tecnica.md` §1–§3 → o nível 1 e o
 caminho de um pedido em `arquitetura/01-mapa-de-modulos.md` → o mapa de versões.
@@ -83,10 +129,11 @@ não se repetirem: implementar a partir de uma especificação **cancelada**
 nota do topo), e ligar um sinal no lugar errado — o build passa e a função
 deixa de funcionar em silêncio (ARCHITECTURE §8).
 
-## 5. O que este repositório NÃO contém
+## 6. Só o que é público
 
-`DocsPrivate/` (o log datado do autor, o diário, os prompts de retomada) e os
-arquivos `AGENTS.md`/`GUIAIA.md` citados em documentos antigos são **internos e
-não versionados** ([`README.md`](README.md), "Guias na raiz"). Nada aqui depende
-deles: se um documento público mandar ler um deles, ele está desatualizado — o
-que vale está nos donos da §3.
+Tudo o que é preciso para colaborar está neste repositório. O autor guarda
+esboços fora dele, e **nenhum documento versionado aponta para eles**: a
+documentação pública só se refere a documentação pública (decisão do autor,
+2026-10-01; o `scripts/verificar-links-docs.sh` reprova citação de caminho
+interno). Se um texto parecer depender de algo que você não encontra aqui, é
+defeito de documentação — abra um issue.

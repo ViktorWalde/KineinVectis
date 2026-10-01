@@ -4,8 +4,8 @@
 > "PROPOSTA, nada aqui foi implementado" enquanto a §4.3 do MESMO arquivo
 > registrava *"APROVADA pelo autor em 2026-07-16: (b)"* e a catraca do core já
 > estava no gate. Documento que se contradiz no topo não é proposta pendente: é
-> mapa desatualizado, e mapa desatualizado engana mais que a ausência de mapa
-> (`AGENTS.md`).
+> mapa desatualizado, e mapa desatualizado engana mais que a ausência de mapa —
+> por isso o mapa vivo, [`01-mapa-de-modulos.md`](01-mapa-de-modulos.md), é gerado do código.
 >
 > ```text
 > ENTREGUE   Item 1 — a catraca cobre o core. `verificar-arquitetura.sh` varre
@@ -349,8 +349,8 @@ apareceu; ele não conhece a forma do contrato.
 
 > Esta seção descrevia o simulador OpenGL como subsistema opcional e a colisão
 > dele com o renderer por software do AppImage (§6.2). A simulação **saiu do
-> produto em 2026-09-12** por decisão do autor; o texto está íntegro em
-> `DocsPrivate/historico/simulacao/`. O que dela continua valendo para
+> produto em 2026-09-12** por decisão do autor (40 §5); o texto saiu do
+> repositório junto. O que dela continua valendo para
 > qualquer subsistema futuro que peça GPU: o AppImage força renderer por
 > software, e é isso que faz a IDE abrir em qualquer máquina — um subsistema
 > com GPU nasce como processo separado, opt-in, nunca dentro do processo da UI.

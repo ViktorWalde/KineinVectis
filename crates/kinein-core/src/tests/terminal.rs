@@ -511,8 +511,8 @@ fn render_event_keeps_every_field_the_ui_reads() {
 /// **A primeira versão deste teste não conseguia reprovar** — ela verificava
 /// apenas que `terminal.open` era recusado depois, e isso é verdade só porque
 /// não há workspace, independentemente de as sessões terem morrido. Transformar
-/// `close_all()` em no-op deixava o teste verde. É o vício do `PONTO_ATUAL`
-/// §0.2i, e foi o teste de mutação que o pegou.
+/// `close_all()` em no-op deixava o teste verde: teste que não consegue
+/// reprovar não prova nada, e foi o teste de mutação que o pegou.
 ///
 /// A prova real é o `event.terminal.closed` de CADA sessão: ele nasce no
 /// `spawn_waiter`, quando o processo filho de fato termina.

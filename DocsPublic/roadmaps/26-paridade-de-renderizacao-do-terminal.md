@@ -16,7 +16,7 @@
 Este documento separa o que já está implementado, o que a validação em tela
 real mostrou, as referências oficiais estudadas e a ordem de
 investigação/implementação. Deve ser lido junto de
-`AGENTS.md`, `DocsPrivate/ContextoIA.md`, `GUIAIA.md`, `DocsPublic/arquitetura/ARCHITECTURE.md`,
+`DocsPublic/00-comece-aqui.md`, `DocsPublic/arquitetura/ARCHITECTURE.md`,
 `DocsPublic/arquitetura/03-protocolo-ipc.md`, `DocsPublic/arquitetura/06-modo-estrito.md`, da spec do AI CLI Bridge e
 da seção D2 de `DocsPublic/roadmaps/24-paridade-e-fundacao.md`.
 
@@ -797,7 +797,7 @@ continuam sem autorização separada.
 ## 10. Instrução curta para a próxima sessão
 
 ```text
-Leia AGENTS.md e DocsPublic/roadmaps/26-paridade-de-renderizacao-do-terminal.md. Preserve o
+Leia DocsPublic/00-comece-aqui.md e DocsPublic/roadmaps/26-paridade-de-renderizacao-do-terminal.md. Preserve o
 worktree. O cursor da TUI continua reprovado no teste humano; não ajuste y.
 Comece por R0: fixture PTY + métricas/overlay sob flag, compare com terminal
 externo e só então implemente R1. Code OSS/xterm.js são a base de paridade

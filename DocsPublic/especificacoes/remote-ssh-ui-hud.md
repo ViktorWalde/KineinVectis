@@ -149,8 +149,8 @@ importantes aqui do que lá.
 > seções, uma por vez, e **uma ação primária por estado** no cabeçalho, derivada
 > por regra pura (`RemoteActionRules`) e testada em harness. O subtítulo diz
 > *por que* aquele é o próximo passo. Quando o gesto vive noutra seção, a ação
-> leva até ela. Capturas em `DocsPrivate/Codex/evidencias-2026-09-24-remote/`;
-> registro em [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.98.
+> leva até ela. Registro, com o que foi medido, em
+> [`40.7`](../roadmaps/40.7-registro-das-entregas.md) §7.98.
 >
 > Ainda **não** feito desta seção: a tool window propriamente dita (hoje ainda é
 > uma moldura no menu Ambiente, não um painel lateral ao lado de Projeto/Git) e

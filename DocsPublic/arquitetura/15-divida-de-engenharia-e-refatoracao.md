@@ -133,7 +133,7 @@ Direção desejada:
 >
 > **Decisão posterior do usuário em 2026-07-06:** não tratar sobras pequenas
 > como aceitáveis. A fase de higiene arquitetural sem dívida nova foi executada
-> e documentada em `DocsPrivate/legado/17-architecture-hygiene-plan.md`. Daqui para frente,
+> em 2026-07-06 (os guardrails vivos estão no `ARCHITECTURE.md` §4). Daqui para frente,
 > esses critérios viram regra de regressão: nova feature não pode recolocar
 > modelo, IPC, timer, estado de domínio ou ferramenta externa em componente
 > visual/`Main.qml`.
@@ -192,7 +192,7 @@ Isso cria dois problemas:
 1. Agentes e humanos podem gastar tempo lendo material histórico que já não é a
    fonte da verdade.
 2. Decisões importantes podem ficar duplicadas ou divergentes entre docs
-   numerados, planning, quality, subsystems e `DocsPrivate/ContextoIA.md`.
+   numerados, planning, quality, subsystems e o log de sessão.
 
 A ordem de precedência em `DocsPublic/README.md` ajuda, mas não resolve tudo.
 
@@ -202,7 +202,8 @@ Direção desejada para pós-V1:
 - mover material antigo para arquivo/arquivo histórico quando necessário;
 - manter poucos documentos canônicos;
 - preferir docs curtos, atualizados e diretamente ligados ao código;
-- manter `DocsPrivate/ContextoIA.md` como estado operacional, não como depósito infinito.
+- manter o estado num lugar só (`roadmaps/40`) e o registro datado em outro
+  (`roadmaps/40.7`), sem depósito infinito em nenhum dos dois.
 
 > **Atualização 2026-07-05 — feito, adiantado antes do pós-V1.** O usuário
 > pediu para tratar isso agora em vez de esperar: `DocsPublic/archive/` (32
@@ -213,7 +214,7 @@ Direção desejada para pós-V1:
 > revisada: a taxonomia de pastas `active/implemented/obsolete/future` que ela
 > propunha não foi adotada (redundante com a precedência de 3 níveis que
 > `DocsPublic/README.md` já usa), mas os riscos genuinamente úteis que ela listava
-> foram extraídos para `DocsPublic/arquitetura/16-checklist-de-riscos-ocultos.md`. `DocsPrivate/ContextoIA.md`
+> foram extraídos para `DocsPublic/arquitetura/16-checklist-de-riscos-ocultos.md`. O log de sessão
 > foi cortado de ~450 para a faixa de 150–200 linhas, removendo narrativa de
 > implementação que já vive no código, no histórico do git e em
 > `DocsPublic/arquitetura/03-protocolo-ipc.md`/`DocsPublic/roadmaps/55-backend-para-ui-ux.md`.
@@ -276,8 +277,8 @@ Até a V1.0, cada nova feature deve respeitar estas regras:
 - não aumentar `CoreClient` sem avaliar se o fluxo merece separação;
 - não deixar `Main.qml` acumular função, estado, timer, model ou IPC de
   domínio;
-- não deixar controller/store QML passar do gatilho de split definido em
-  `DocsPrivate/legado/17-architecture-hygiene-plan.md`;
+- não deixar controller/store QML passar do gatilho de split (a catraca do
+  `scripts/verificar-arquitetura.sh`: controller/host 400);
 - não aumentar `kinein-core/src/lib.rs` com lógica que pertence a serviço;
 - não duplicar parsing de saída de ferramenta se já houver helper;
 - não criar novo documento longo sem atualizar o índice e a precedência;

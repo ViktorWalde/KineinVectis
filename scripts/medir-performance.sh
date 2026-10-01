@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2 de DocsPrivate/diario/18).
+# Medicao de performance LOCAL da Kinein Vectis (fatia M4.2,
+# DocsPublic/roadmaps/21-roadmap-de-longo-prazo.md §M4.2).
 #
 # ZERO telemetria/rede: mede via stdio (core) e /proc, imprime uma tabela e
 # sai. Roda quando o dev quiser; o orcamento (numeros-alvo) vive no DocsPublic/roadmaps/21.

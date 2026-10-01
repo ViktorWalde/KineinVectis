@@ -1,7 +1,7 @@
 # 50 — Biblioteca por capacidades e providers na série 0.5
 
-> **Classe: PLANO / ALVO.** Derivado em 2026-09-29 dos dois estudos locais em
-> `DocsPrivate/documentacoes/`, confrontados com a série 0.3 e com as decisões
+> **Classe: PLANO / ALVO.** Derivado em 2026-09-29 de dois estudos do autor
+> (não publicados), confrontados com a série 0.3 e com as decisões
 > de 0.4. A [casca da IDE e a ordem das versões](49-frontend-0.3.6-e-sequencia-0.5.md)
 > estão no roadmap 49. Este arquivo é autossuficiente para execução; os estudos
 > privados são referência de ideias e catálogo, não prova de implementação.
@@ -183,7 +183,7 @@ perde desempenho nem navegação por teclado.
 
 ## 8. Adendo de 2026-10-01 — superfície da Library, Welcome e Wizard
 
-Dois estudos do autor, guardados em `DocsPrivate/documentacoes/`, detalham o
+Dois estudos do autor (não publicados) detalham o
 que esta frente apresenta. Eles entram como direção de desenho. Cada fatia
 continua sujeita às regras das §§2–7: prova real, um dono por valor e nada de
 marketplace.

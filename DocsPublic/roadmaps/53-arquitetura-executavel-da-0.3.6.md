@@ -15,8 +15,7 @@
 > **Fontes:** [49](49-frontend-0.3.6-e-sequencia-0.5.md) (F0–F5 e o adendo
 > §9 da Library), [50 §8](50-biblioteca-e-providers-0.5.md) (o que a 0.5 vai
 > pôr na casca), [52 §7](52-arquitetura-executavel-da-0.4.md) (o que a 0.4
-> vai pôr na casca), os estudos privados em `DocsPrivate/documentacoes/`, o
-> diário `DocsPrivate/uso-diario.md` e a [especificação de frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md).
+> vai pôr na casca), os estudos e o diário de uso do autor e a [especificação de frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md).
 
 ## 0.1 Princípio do autor (2026-10-01): ruído não se esconde, se elimina
 

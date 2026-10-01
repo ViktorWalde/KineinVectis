@@ -2,8 +2,9 @@
 
 > **Classe: PLANO** (`DocsPublic/README.md`). Diverge da implementação por natureza.
 > **Estado do código medido em 2026-08-29**; **afirmações sobre ferramenta de
-> terceiro pesquisadas na fonte na mesma data**, com URL citada (`AGENTS.md`:
-> "ao afirmar que uma API se comporta de tal forma, cite fonte e versão").
+> terceiro pesquisadas na fonte na mesma data**, com URL citada (regra do
+> projeto: "ao afirmar que uma API se comporta de tal forma, cite fonte e versão" —
+> `ARCHITECTURE.md` §1.3, a âncora contra API imaginada).
 > **Pedido do autor:** integração nativa ao contexto de uso de C/C++, Rust e
 > Python; atrito zero; 100% open source; abstrair a configuração de ambiente de
 > C/C++ para o usuário.

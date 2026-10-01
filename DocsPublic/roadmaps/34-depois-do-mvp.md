@@ -31,7 +31,7 @@ AppImage no gate                scripts/verificar-appimage.sh
 ```
 
 O MVP fechou. O que vem agora não é "terminar" — é **transformar MVP em
-ferramenta de uso diário** (TR1 do `GUIAIA.md`) e depois em algo que se compare
+ferramenta de uso diário** (TR1) e depois em algo que se compare
 ao CLion em profundidade (TR2).
 
 ## 2. As quatro frentes, e por que a ordem não é óbvia
@@ -77,7 +77,7 @@ divisão por tamanho — exatamente o que a `ARCHITECTURE.md` §4 regra 9 proíb
 
 Porque a C tem nove itens e nenhum critério para ordená-los. A B **produz esse
 critério**: um registro de saídas ("precisei do VS Code para X") ordena a C por
-dor real em vez de por intuição. O `GUIAIA.md` §2 já diz isso — *"esses dados
+dor real em vez de por intuição. A regra do autor já dizia isso — *"esses dados
 passam a ordenar o backlog antes de confortos hipotéticos"* — e o dado não
 existe.
 
@@ -184,21 +184,19 @@ corte por responsabilidade.
 
 ### 4.1 O registro de saídas — CRIADO em 2026-09-03
 
-O `GUIAIA.md` §2 define o protocolo: ao ouvir *"estou no Kinein"*, registrar cada
+O protocolo do autor: ao ouvir *"estou no Kinein"*, registrar cada
 saída para outra ferramenta com **motivo exato, projeto/arquivo, ação que
-faltou, impacto e reprodução mínima**. O gatilho já foi recebido (PONTO_ATUAL
-§0). O protocolo existia; **o artefato não** — o que havia era prosa de sessão,
+faltou, impacto e reprodução mínima**. O gatilho já foi recebido. O protocolo existia; **o artefato não** — o que havia era prosa de sessão,
 que não se consulta.
 
-**Artefato:** `DocsPrivate/diario/19-registro-de-saidas.md` (etapa 12).
-Append-only, com o formato de entrada, a ordem de prioridade do `GUIAIA.md` §2 e
+**Artefato:** o registro de saídas do dogfooding, mantido pelo autor fora do
+repositório (etapa 12). Append-only, com o formato de entrada, a ordem de prioridade e
 a regra de que **entrada sem reprodução mínima não conta**.
 
-**Medir:** `ls DocsPrivate/diario/19-registro-de-saidas.md` e contar as entradas
-sob "## Entradas".
+**Medir:** contar as entradas do registro (só o autor tem acesso).
 
 **O que a criação mediu, e não era o esperado: ZERO saídas registradas.** A prosa
-do PONTO_ATUAL §0 registra **regressões dentro da Kinein** (scrollback do
+de sessão registra **regressões dentro da Kinein** (scrollback do
 Assistente, resize, faixa da entrada, caret, verde do prompt) — e regressão não é
 saída: é bug, foi tratada nas correções 0.52/0.56/0.57, e o único item ainda
 aberto tem dono em `roadmaps/26`. Zero saídas **não** quer dizer que a IDE
@@ -221,7 +219,7 @@ split editor        AUSENTE   grep -rn "split" ui/qml/editor/ so' acha
                               String.split() de breadcrumb
 multicursor         AUSENTE   grep -rln multicursor ui/ -> vazio
 EditorConfig        AUSENTE   e' DECISAO, nao esquecimento: auditoria de
-                              2026-07-16 (PONTO_ATUAL §0.2e) deu RESULTADO
+                              2026-07-16 deu RESULTADO
                               NEGATIVO — nao ha' crate Rust madura. Nao
                               reabrir sem auditoria nova.
 watches no debug    EXISTE    desde 2026-09-03 (0.66.0): `debug.evaluate`
@@ -238,7 +236,7 @@ não esta lista.
 
 ## 5. FRENTE C — profundidade (TR2), com o estado medido item a item
 
-A ordem arquitetural do `GUIAIA.md` §2, conferida contra o disco em 2026-09-02:
+A ordem arquitetural do TR2, conferida contra o disco em 2026-09-02:
 
 | # | item do TR2 | estado medido | onde |
 | ---: | --- | --- | --- |
@@ -265,7 +263,7 @@ catraca vai barrar. Cortar e acrescentar na mesma fatia é o padrão que o roadm
 ## 6. FRENTE D — simulação (REMOVIDA do produto em 2026-09-12)
 
 > A frente D saiu do produto por decisão do autor em 2026-09-12; o texto desta
-> seção está íntegro em `DocsPrivate/historico/simulacao/`. A numeração das
+> seção saiu do repositório junto (40 §5). A numeração das
 > seções seguintes foi mantida.
 
 ## 7. Ordem linear recomendada
@@ -288,11 +286,11 @@ tem um custo escrito acima.
                                            Produziu o 15o gate: verificar-qml-
                                            propriedades.sh (arquitetura/32 §8.6).
 
-12  Registro de saidas do dogfooding       FEITA em 2026-09-03: DocsPrivate/
-    (§4.1)                                 diario/19-registro-de-saidas.md.
+12  Registro de saidas do dogfooding       FEITA em 2026-09-03 (registro do
+    (§4.1)                                 autor, fora do repositorio).
                                            Nasceu com ZERO entradas, e isso e'
                                            medicao, nao lacuna: a prosa do
-                                           PONTO_ATUAL §0 era regressao, nao
+                                           de sessao era regressao, nao
                                            saida. A frente C SEGUE sem criterio
                                            de ordenacao ate' a primeira entrada
                                            real — agora medido, nao suposto.
@@ -340,7 +338,7 @@ tem um custo escrito acima.
 > embarcados.
 
 **Se o dogfooding (12) produzir um bloqueador concreto, ele fura esta fila.** É a
-regra do `GUIAIA.md` §2 e da PONTO_ATUAL §0: perda de dados / crash / bloqueio
+regra de prioridade do projeto: perda de dados / crash / bloqueio
 diário vêm antes de qualquer item planejado.
 
 ## 8. O que este documento deliberadamente NÃO inclui
@@ -348,7 +346,7 @@ diário vêm antes de qualquer item planejado.
 Nada aqui reabre decisão registrada:
 
 ```text
-IA na IDE         FORA DE ESCOPO desde 2026-07-17 (DocsPrivate/legado/)
+IA na IDE         FORA DE ESCOPO desde 2026-07-17 (40 §5)
 Python            adiado por decisao de 2026-08-30; foco em C/C++ e Rust.
                   A excecao do Tree-sitter de Python NAO foi tomada.
 Pylance           PROIBIDO (licenca so' para produtos Microsoft). Se Python

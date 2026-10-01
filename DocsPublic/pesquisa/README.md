@@ -5,7 +5,7 @@
 
 ## Por que esta pasta existe
 
-O `DocsPublic/README.md` descreve por que o `DocsPrivate/legado/` foi criado:
+O [ADR-0005](../decisoes-adr/ADR-0005-tres-arvores-de-documentacao.md) descreve por que documento cancelado sai do repositório:
 documentos **grandes, completos e persuasivos** de coisas não decididas,
 guardados dentro de `especificacoes/`, são lidos como **alvo** pela próxima
 sessão. Deletar perderia o registro; deixar junto das especificações é

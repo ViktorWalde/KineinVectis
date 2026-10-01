@@ -320,8 +320,8 @@ Grafana e não se declara entregue por apenas trocar um token de raio.
 contorno arredondado para as duas faixas do cabeçalho, com um separador só na
 base. `AppMenuBar` e `TopHeaderBar` ficaram transparentes dentro dele, sem
 duas bordas completas sobrepostas. Em maximizado/fullscreen o raio cai a zero.
-Capturas offscreen antes/depois em 1280×800 e depois em 1024×700 estão em
-`DocsPrivate/Codex/evidencias-2026-09-30-h0/`. Lint QML, build e primeiro
+Capturas offscreen antes/depois foram feitas em 1280×800 e depois em 1024×700
+(reproduzíveis com o hook `KINEIN_SCREENSHOT`). Lint QML, build e primeiro
 frame passaram. Falta aprovação visual e a prova de hits, resize e escala em
 X11/Wayland; H0 ainda não está fechado.
 

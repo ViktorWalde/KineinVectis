@@ -3,7 +3,7 @@
 > **Classe: PLANO / ALVO.** Decisão do autor em 2026-09-29: depois de fechar a
 > série 0.3 até a 0.3.5, a prioridade seguinte é a **0.3.6, dedicada ao
 > frontend da IDE**. O autor aprovou a direção de reorganização da casca
-> descrita nos dois estudos locais em `DocsPrivate/documentacoes/`. Este plano
+> descrita em dois estudos do autor (não publicados). Este plano
 > traduz essa direção em cortes verificáveis; não declara nenhuma fatia pronta.
 >
 > Para o estado real, prevalecem código e [roadmap 40](40-estado-e-continuidade.md).
@@ -228,10 +228,8 @@ dispatcher e os donos de domínio atuais.
 
 ## 9. Adendo de 2026-10-01 — Library, Welcome e o que a 0.3.6 precisa preparar
 
-O autor enviou dois estudos novos, guardados em `DocsPrivate/documentacoes/`
-(`KINEIN_VECTIS_LIBRARY_HUD_UI_UX_0_5.md` e
-`KINEIN_VECTIS_LIBRARY_WELCOME_CAPABILITIES_0_5.md`). Eles descrevem a Library
-e a Welcome da 0.5, mas três decisões dependem da casca que a 0.3.6 constrói.
+O autor enviou dois estudos novos (não publicados), sobre a Library e a
+Welcome da 0.5. Eles as descrevem, mas três decisões dependem da casca que a 0.3.6 constrói.
 Se a 0.3.6 não as acomodar, a 0.5 refaz o trilho e o host central:
 
 1. **Estados independentes de área.** O trilho da F1 passa a separar

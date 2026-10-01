@@ -2,12 +2,11 @@
 
 > **Status vivo desta fatia.** Registra EXPLICITAMENTE os problemas
 > encontrados/a encontrar, qual está EM ANDAMENTO, e o plano. Atualizar a
-> cada passo. Design canônico resumido aqui (a fatia é grande demais para
-> caber só no DocsPrivate/diario/18; DocsPrivate/diario/18 aponta para cá).
+> cada passo. Este é o design canônico da fatia.
 
 ## Por quê
 
-O maior bloqueador do "usar sem se preocupar" (ver ContextoIA e DocsPrivate/diario/18) é
+O maior bloqueador do "usar sem se preocupar" é
 o medo de **perda de dado**. Antes do dogfooding, construir a rede de
 segurança. Decisão do usuário (2026-07-11): persistência local com
 **SQLite** ("escala exponencialmente, o SQLite segura bem").
@@ -18,7 +17,7 @@ segurança. Decisão do usuário (2026-07-11): persistência local com
 |---|---|---|---|
 | **P1** | `fs.write` NÃO é atômico: `fs::write` trunca o arquivo e só então escreve — crash/kill no meio **zera o arquivo em disco**. É o vetor do bug histórico "arquivo zerado". | `crates/kinein-core/src/fsops/ops.rs:166` | **✅ FEITO** |
 | **P2** | Buffer não salvo vive só na RAM da UI. A M4.3-A cobre crash do CORE (a UI segura as abas), mas se a **UI** cair (ou power loss), as edições não salvas somem. | UI-only buffer | **✅ FEITO** |
-| **P3** | (histórico) 3 bugs de perda de dado da refatoração abandonada de lifecycle — JÁ RESOLVIDOS em 2026-07-11. Esta fatia é a rede contra a **classe** deles. | ContextoIA "ponte" | ✅ RESOLVIDO |
+| **P3** | (histórico) 3 bugs de perda de dado da refatoração abandonada de lifecycle — JÁ RESOLVIDOS em 2026-07-11. Esta fatia é a rede contra a **classe** deles. | (registro do autor) | ✅ RESOLVIDO |
 | **P4** | `session.json`/`settings.json` reescrevem o blob JSON inteiro a cada save (não atômico via mesmo mecanismo, não escala). | `workspace/*.rs`, `settings.rs` | 🟡 RADAR (migrar pro mesmo SQLite depois) |
 
 ## Decisões de design (dois pilares)
@@ -131,7 +130,7 @@ segurança. Decisão do usuário (2026-07-11): persistência local com
       `[x]` para `[ ]`. Um `[x]` que aponta para artefato ausente é a mesma
       mentira silenciosa que o `verificar-docs.sh` existe para impedir.
 - [x] sync docs: 03 (contrato `draft.*` + 0.40.0), 18 (ponteiro), MANUAL
-      (nota da rede de segurança), ContextoIA (registro S1).
+      (nota da rede de segurança), registro S1.
 
 ## Estado
 

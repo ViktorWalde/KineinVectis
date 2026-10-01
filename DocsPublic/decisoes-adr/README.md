@@ -12,5 +12,5 @@ ADR-0004-alacritty-terminal-emulator.md    o emulador de terminal do alacritty
 ADR-0005-tres-arvores-de-documentacao.md   as árvores de documentação (duas desde 2026-09-12)
 ```
 
-O ADR-0006 (`exmex`) saiu com a simulação em 2026-09-12 e está em
-`DocsPrivate/historico/simulacao/`.
+O ADR-0006 (`exmex`) saiu do repositório com a simulação em 2026-09-12
+(`roadmaps/40` §5). O número não se reaproveita.

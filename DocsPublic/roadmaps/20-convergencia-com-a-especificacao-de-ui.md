@@ -8,7 +8,7 @@
 > **Status:** ativo e vinculante
 > **Prioridade:** P0 para qualquer trabalho de UI
 > **Fonte de verdade:** ESTE doc define COMO e QUANDO a UI converge;
-> `DocsPublic/especificacoes/` define PARA ONDE (inegociável); `DocsPrivate/diario/18` sequencia as
+> `DocsPublic/especificacoes/` define PARA ONDE (inegociável); os roadmaps sequenciam as
 > fatias; `DocsPublic/arquitetura/19` registra a decisão (D12)
 > **Ultima revisao:** 2026-07-15
 
@@ -37,7 +37,7 @@ tempo inteiro. Registrada como decisão D12 em
    o custo de um remake visual incremental é baixo AQUI, porque o
    trabalho estrutural que o torna barato já foi feito e validado.
 2. Big-bang congela entregas por semanas num projeto de uma pessoa cujo
-   objetivo declarado é virar daily driver o quanto antes (DocsPrivate/diario/18).
+   objetivo declarado é virar daily driver o quanto antes.
    Gradual mantém o dogfooding vivo — e dogfooding é o que valida spec.
 3. Não existe teste visual automatizado (DocsPublic/arquitetura/19, D9): um big-bang
    entregaria a superfície inteira de uma vez sem rede de segurança.
@@ -61,12 +61,12 @@ Aceito: é uma IDE de uso próprio; consistência final > pureza intermediária.
 R1. UI NOVA nasce conforme spec, sempre. Antes de codar qualquer superfície
     nova, ler a spec da área (tabela "Specs por área" abaixo). Se a spec
     for omissa no detalhe, seguir o componente mais próximo JÁ conforme e
-    registrar a interpretação na fatia (DocsPrivate/diario/18).
+    registrar a interpretação na fatia (no registro datado, `40.7`).
 R2. Fatia de convergência (C*) é dedicada: não se mistura com feature no
     mesmo diff. Feature que precisa de área ainda não convergida usa a
     área como está (funcional primeiro), e a convergência daquela área
     entra na fila C.
-R3. Cada marco de DocsPrivate/diario/18 carrega as fatias C mapeadas abaixo. Fatia C
+R3. Cada marco do plano de fatias carrega as fatias C mapeadas abaixo. Fatia C
     atrasada bloqueia a PRÓXIMA fatia de UI do marco seguinte (gate).
 R4. "Conforme" é objetivo, não estético: valores de token idênticos aos da
     spec, dimensões idênticas, regiões presentes com o conteúdo listado.
@@ -201,7 +201,7 @@ disciplina de uso do âmbar (accent contido em ativo/foco/primário, alinhado
 a LAYOUT §7.2); popups escuros com borda sutil; densidade geral próxima do
 alvo.
 
-## Ordem de convergência (fatias C, amarradas aos marcos de DocsPrivate/diario/18)
+## Ordem de convergência (fatias C, amarradas aos marcos M0–M4)
 
 ```text
 C0 [FEITA 2026-07-09] Auditoria formal executada; resultado é a tabela
@@ -441,5 +441,5 @@ Reavaliar big-bang com o usuário — não silenciosamente — se, e somente se:
 [ ] Comportamento funcional preservado (mesmos sinais/controllers).
 [ ] Gate completo verde + smoke offscreen.
 [ ] Verificação visual do usuário contra a spec (R7).
-[ ] Inventário atualizado para "conforme" + ContextoIA sincronizado.
+[ ] Inventário atualizado para "conforme" + `roadmaps/40` sincronizado.
 ```

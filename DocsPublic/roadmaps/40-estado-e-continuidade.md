@@ -23,10 +23,10 @@
 > Qt é reconfigurar **e** recompilar o que ficou velho — o 20º gate agora diz
 > quais objetos são, e imprime o comando.
 >
-> **COMECE POR AQUI ao retomar.** Para a candidata 0.3.5, leia também
-> `DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`: estado atual, arquivos,
-> provas, lacunas e sequência operacional. O panorama mais antigo está em
-> `DocsPrivate/Codex/HANDOFF-panorama.md`, escrito em 2026-09-17.
+> **COMECE POR AQUI ao retomar** — e, se for a primeira vez no projeto, antes
+> pela [`00-comece-aqui.md`](../00-comece-aqui.md). A ordem das versões está no
+> [`57`](57-mapa-de-versoes-ate-a-1.0.md); o registro do que foi feito, no
+> [`40.7`](40.7-registro-das-entregas.md).
 > O plano escrito **antes** das próximas etapas, com estado parcial de Remote,
 > gates, pasta `KV0.3`, commit/push, release e site, está em
 > [`51-plano-fechamento-0.3.5.md`](51-plano-fechamento-0.3.5.md).
@@ -37,8 +37,8 @@
 > **Regra zero vale aqui como em tudo:** antes de aceitar qualquer item como
 > pendente, MEÇA. Cada seção carrega o comando.
 >
-> **Decisão de 2026-09-22 — frontend 0.3+ e Remote SSH.** O material privado
-> `DocsPrivate/arquiKinein/` foi reconciliado com a `main`, sem promovê-lo em
+> **Decisão de 2026-09-22 — frontend 0.3+ e Remote SSH.** Os estudos de
+> arquitetura do autor foram reconciliados com a `main`, sem promovê-los em
 > bloco a fonte da verdade. O alvo consolidado está em
 > `especificacoes/arquitetura-de-frontend-0.3-em-diante.md` e a execução em
 > `roadmaps/46-frontend-0.3-em-diante.md`. Assistente/Chat de IA e telemetria
@@ -71,8 +71,8 @@
 >
 > **Decisão posterior, 2026-09-29 — após fechar a série 0.3:** o autor colocou
 > a reorganização e otimização da casca do frontend na **0.3.6**, antes da 0.4,
-> e aprovou a direção visual/estrutural dos dois estudos locais de
-> `DocsPrivate/documentacoes/`. A auditoria do trilho migra da 0.4 para a
+> e aprovou a direção visual/estrutural de dois estudos do autor (o
+> conteúdo aproveitável está nos roadmaps 49 e 50). A auditoria do trilho migra da 0.4 para a
 > 0.3.6; a versão dedicada aos embarcados permanece 0.4. A Library por
 > capacidades e providers segue na 0.5. Escopo e provas: roadmaps
 > [49](49-frontend-0.3.6-e-sequencia-0.5.md) e
@@ -863,8 +863,7 @@ Placa de teste         gravar firmware (E4/C5) — NUNCA na placa do autor
                        (apagaria o main.py dele); qualquer ESP32 vazio serve
 ```
 
-**(c) Só o autor, com a placa na mão** (roteiro em
-`DocsPrivate/Codex/2026-09-17-e2-permissao-por-canal.md`): o passo do
+**(c) Só o autor, com a placa na mão**: o passo do
 ModemManager (`ID_MM_DEVICE_IGNORE=1`, pede sudo — a IDE só mostra); o
 botão "Identificar" da aba Serial — que até hoje NÃO chegava ao core (§7.63
 consertou o fio); o painel de Embarcados inteiro clicado na IDE aberta.
@@ -1028,15 +1027,15 @@ simulacao: FORA DO PRODUTO   DECISAO DO AUTOR em 2026-09-12, em dois tempos.
                              o `kinein-sim`, os paineis, 7 harnesses, o oraculo
                              SymPy e o `exmex` SAIRAM do codigo; os documentos
                              (31, arquitetura/34, ADR-0006) e as decisoes de
-                             simulacao que estavam aqui foram para
-                             DocsPrivate/historico/simulacao/, integros. O foco
+                             simulacao que estavam aqui sairam do
+                             repositorio. O foco
                              sao DOIS contextos: software (Python, C/C++, Rust,
                              banco) e sistemas embarcados. "Futuramente vejo
                              algo sobre simulacao" — reabrir e' do autor
 documentacao: DUAS ARVORES   DECISAO DO AUTOR em 2026-09-12: `DocsPublic/` (toda a
                              documentacao do projeto, versionada; pastas com
                              nome explicito; documento = numero + nome
-                             explicito) e `DocsPrivate/` (no .gitignore: log,
+                             explicito) e a arvore interna do autor (no .gitignore: log,
                              diario, prompts das sessoes com IA, historico do
                              que saiu, legado/). Sucede as tres arvores de
                              2026-08-29 (ADR-0005 anotado). Os numeros dos
@@ -1113,8 +1112,7 @@ embarcados: templates        catalogo CURADO com fonte e licenca, nunca
 
 ## 6. A lacuna que não é técnica, e continua sendo a mais cara
 
-**O registro de saídas do dogfooding continua VAZIO**
-(`DocsPrivate/diario/19-registro-de-saidas.md`).
+**O registro de saídas do dogfooding continua VAZIO**.
 
 E esta sessão deu a prova mais forte que existe de que ele importa: **cinco
 defeitos reais** — a busca por arquivo quebrada pelo `fd` 10.4.2, o atalho da

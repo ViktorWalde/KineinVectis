@@ -2,7 +2,7 @@
 
 Este é o ponto de entrada para **adicionar uma ferramenta, protocolo, formato ou
 biblioteca** à Kinein. Existe porque a fila de candidatos é longa (53 itens
-triados em `DocsPrivate/historico/PONTO_ATUAL.md` A5.3) e cada adoção precisa seguir o mesmo
+triados pelo autor) e cada adoção precisa seguir o mesmo
 caminho, sem virar improviso.
 
 ## O que é (e o que não é)
@@ -39,7 +39,6 @@ eventos tipados → Problems / Tests / Profiler / Trace / Simulation
 | [`../roadmaps/54-adaptacao-de-plugins-abertos.md`](../roadmaps/54-adaptacao-de-plugins-abertos.md) | **Norte**: modos A–D, gate de auditoria, preferência de licença, política de referência profissional |
 | [`../integracoes/registro-de-componentes-abertos.json`](../integracoes/registro-de-componentes-abertos.json) | **Registro auditável**: pin, licença, telemetria/rede, escopo, verificação |
 | [`../decisoes-adr/`](../decisoes-adr/) | **Decisão**: por que este componente, alternativas, riscos, rollback |
-| `DocsPrivate/historico/PONTO_ATUAL.md` (A5.1–A5.3) | **Ordem**: arquitetura do registry e a sequência de níveis L0–L10 |
 
 ## Modos de adoção (resumo operacional)
 
@@ -56,8 +55,8 @@ no core MIT/Apache — só referência.
 ## Regra que ordena a fila: capacidade antes de ferramenta
 
 Um nível só abre quando o contrato e o serviço do anterior estão comprovados. A
-facilidade de chamar uma CLI **não** antecipa sua integração. A tabela completa
-L0–L10 está em `DocsPrivate/historico/PONTO_ATUAL.md` A5.2; o resumo:
+facilidade de chamar uma CLI **não** antecipa sua integração. A sequência
+L0–L10:
 
 ```text
 L0  baseline medida (A3)                    L6  Target/Device/Probe, flash

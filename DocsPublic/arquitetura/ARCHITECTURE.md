@@ -195,8 +195,8 @@ como chegar lá **sem big-bang**.
 
 ## 3.1. Organização da UI Qt/QML
 
-A UI segue a mesma regra anti-monólito do core. A fase descrita em
-`DocsPrivate/legado/17-architecture-hygiene-plan.md` eliminou as concentrações conhecidas em
+A UI segue a mesma regra anti-monólito do core. A fase de higiene arquitetural
+eliminou as concentrações conhecidas em
 2026-07-06; a regra permanente é não aceitar "dívida pequena" quando ela já é
 uma concentração conhecida.
 
@@ -602,8 +602,8 @@ Regras que mantêm isso saudável:
     criar ou mexer em um, MUTE o produto e confirme que ele cai. Em 2026-07-17 a
     primeira versão do `verificar-docs.sh` deixava passar "42 linhas" porque o
     regex exigia 3 dígitos: cega para arquivo pequeno, e só o teste de mutação
-    mostrou. Vale para teste também — a §0.2i do `PONTO_ATUAL` existe porque uma
-    suíte inteira passava verde com o bug presente.
+    mostrou. Vale para teste também: uma suíte inteira já passou verde com o
+    bug presente, e só a mutação mostrou.
 
     **E gate que grita falso é pior que gate nenhum: ensina a ignorar.** Por isso
     o `verificar-docs.sh` entende que uma seção "## Resultado 2026-07-06" data
@@ -623,7 +623,7 @@ Ao adicionar um comando/feature, siga sempre esta ordem:
 3. Lógica              → kinein-core/src/<dominio>.rs  (ou .../<dominio>/ se já for grande)
 4. Testes              → unit no módulo + integração em tests/<dominio>.rs
 5. Se for operação longa → vira JOB (ver Seção 7), não handler síncrono
-6. Doc                 → atualizar DocsPublic/arquitetura/03-protocolo-ipc.md (contrato) e DocsPrivate/ContextoIA.md (estado)
+6. Doc                 → atualizar DocsPublic/arquitetura/03-protocolo-ipc.md (contrato), roadmaps/40 (estado) e roadmaps/40.7 (registro)
 ```
 
 Se o domínio ainda não existe, crie o par `handlers/<dominio>.rs` +
@@ -718,8 +718,8 @@ transacional quando ganharem preview/rollback.
 
 ### 8.1 A regra da reutilização
 
-Extraída em 2026-08-29 do `IMPLEMENTATION_TASKS` §4 antes de ele ir para
-`DocsPrivate/legado/` — o documento envelheceu (é anterior ao nome atual do projeto),
+Extraída em 2026-08-29 do `IMPLEMENTATION_TASKS` §4 antes de ele sair do
+repositório — o documento envelheceu (é anterior ao nome atual do projeto),
 esta regra não.
 
 > **Toda feature nova deve reutilizar o sistema existente.**
@@ -752,9 +752,10 @@ Uma mudança está arquiteturalmente saudável quando:
 [ ] erro estruturado; nada de unwrap/expect/panic fora de teste.
 [ ] testes unit co-localizados + integração por domínio.
 [ ] o teste/gate novo REPROVA de verdade: mutei o produto e ele caiu (regra 11).
-[ ] contrato novo documentado em DocsPublic/arquitetura/03; decisão registrada no
-    DocsPrivate/ContextoIA.md (que e' LOG datado, nao o estado).
-[ ] GUIAIA.md atualizado se módulo/domínio/router nasceu, mudou de nome ou morreu
+[ ] contrato novo documentado em DocsPublic/arquitetura/03; a entrega registrada no
+    roadmaps/40.7 (LOG datado, nao o estado).
+[ ] python3 scripts/module_map.py rodado se módulo/domínio/router nasceu, mudou de nome ou morreu
+    (o gate --check reprova se esquecer)
     — mapa desatualizado engana mais que ausência de mapa (§1.2).
 [ ] mexeu na UI? `cmake --build --preset release-hardened` ANTES de pedir
     validação: o atalho de desenvolvimento roda o release, não o dev-local.

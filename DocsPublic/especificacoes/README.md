@@ -64,4 +64,5 @@ indice-das-especificacoes.md               o índice antigo, com o resumo de cad
 ```
 
 Os `.svg` ao lado são os diagramas de cada especificação. Specs de features
-canceladas não ficam aqui: vão para `DocsPrivate/legado/` e não voltam.
+canceladas não ficam aqui: saem do repositório público (ADR-0005), e o motivo
+fica registrado no `roadmaps/40` §5.

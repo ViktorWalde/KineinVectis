@@ -4,10 +4,17 @@
 > **Para quem:** qualquer pessoa ou IA que continue este projeto. Este
 > documento existe para que a continuidade NÃO dependa de prompts
 > profissionais: o que fazer, em que ordem, com quais decisões já
-> tomadas e quais réguas, está tudo aqui e em `DocsPrivate/diario/18`.
-> **Regra de ouro:** em conflito entre este doc e o código/`DocsPrivate/ContextoIA.md`,
-> vale o que está implementado + ContextoIA; atualize este doc em vez de
+> tomadas e quais réguas, está tudo aqui.
+> **Regra de ouro:** em conflito entre este doc e o código, vale o que está
+> implementado (e o estado no `40`); atualize este doc em vez de
 > obedecê-lo cegamente.
+>
+> **Nota datada (2026-10-01):** o playbook abaixo é de 2026-07-09 e foi
+> **substituído** pelo ritual de [`contribuindo/03`](../contribuindo/03-o-ritual-de-uma-fatia.md)
+> e pela porta [`00-comece-aqui.md`](../00-comece-aqui.md); em conflito,
+> eles vencem (exemplo: hoje é **um commit por fatia**, não um commit único
+> do autor). Os marcos M4–M7 seguem como base das versões propostas no
+> [`57`](57-mapa-de-versoes-ate-a-1.0.md).
 
 ---
 
@@ -16,9 +23,9 @@
 O ritual por fatia é FIXO e não-negociável (pedido explícito do autor):
 
 ```text
-1. LER: DocsPrivate/ContextoIA.md (estado atual + próxima fatia) → DocsPrivate/diario/18 (ordem e
+1. LER: roadmaps/40 (estado atual + fila) → o roadmap da versão (ordem e
    designs) → este doc (se a fatia for de M4+).
-2. ESTRUTURAR: escrever o design da fatia em DocsPrivate/diario/18 ANTES do código:
+2. ESTRUTURAR: escrever o design da fatia no roadmap da versão ANTES do código:
    decisões COM porquês, contrato IPC (se houver), lista de arquivos,
    testes planejados, o que fica FORA (com gatilho para entrar).
 3. IMPLEMENTAR: protocolo (kinein-protocol, bump de versão) → domínio no
@@ -32,10 +39,10 @@ O ritual por fatia é FIXO e não-negociável (pedido explícito do autor):
    timeout 8 ./scripts/kinein-vectis; exit 124 = vivo = ok) → SONDA e2e
    com a ferramenta real via stdio (padrão: scripts python que sobem
    target/debug/kinein-core e falam JSON-RPC linha a linha; ver sondas
-   de LSP/DAP/git citadas em DocsPrivate/diario/18).
-5. SINCRONIZAR: DocsPublic/arquitetura/03 (contrato), DocsPrivate/diario/18 (checklist [feito] +
+   de LSP/DAP/git em scripts/).
+5. SINCRONIZAR: DocsPublic/arquitetura/03 (contrato), o roadmap da versão (checklist [feito] +
    descobertas incorporadas), MANUAL.md (linguagem de usuário final),
-   DocsPrivate/ContextoIA.md (fatia feita + próxima).
+   roadmaps/40 (próxima fatia) e roadmaps/40.7 (fatia feita).
 6. NUNCA COMMITAR: o autor faz um único commit ele mesmo. A árvore
    acumula tudo.
 ```
@@ -64,8 +71,8 @@ Convenções que pegam quem chega agora (aprendidas em M0–M3):
 - cargo test NÃO recompila o binário target/debug/kinein-core — rodar
   `cargo build -p kinein-core` antes de sondas e2e.
 - Pequenas coisas acumuladas = fluidez (princípio do usuário): cada
-  fatia olha a ergonomia do caminho que toca e registra no radar de
-  DocsPrivate/diario/18 o que não couber nela.
+  fatia olha a ergonomia do caminho que toca e registra na fila do
+  `40` §4 o que não couber nela.
 ```
 
 Estado ao escrever este doc: M0–M2 prontos e validados pelo usuário;
@@ -129,7 +136,7 @@ por fatias, reaproveitando CMake/Cargo/LSP/DAP/Jobs existentes.
 
 **Pergunta de pronto:** *"A IDE aguenta um dia inteiro de trabalho real
 sem susto, e se adapta a mim sem eu editar código dela?"* Regressão em
-M0–M3 bloqueia o M4 (regra de DocsPrivate/diario/18).
+M0–M3 bloqueia o M4.
 
 ### M4.1 — Settings/Storage com schema (a fatia que destrava as outras)
 
@@ -138,8 +145,8 @@ M0–M3 bloqueia o M4 (regra de DocsPrivate/diario/18).
 > consumidores reais: editorFontSize → Theme.fontSizeEditor, autoClosePairs
 > → auto-close da E1, formatOnSave → Ctrl+S formata-então-salva. diffBase
 > (head|index) adiado (precisa de `base` no git.fileDiff). Validada e2e
-> (persistência global/workspace entre processos). Design/descobertas:
-> DocsPrivate/diario/18, "Fatia M4.1".
+> (persistência global/workspace entre processos), fatia M4.1; o contrato
+> está no `arquitetura/03` (`settings.*`).
 
 ```text
 Decisões já tomadas (honrar ou registrar por que mudou):
@@ -166,8 +173,8 @@ Fora: atalhos customizáveis (M5), settings de plugins (M6).
 ### M4.2 — Orçamento de performance medido (sem telemetria, 100% local)
 
 > **[FEITA 2026-07-11]** `scripts/medir-performance.sh` (+ `medir-core.py`)
-> mede offscreen + stdio + `/proc`, zero rede. Design/decisões: DocsPrivate/diario/18
-> "Fatia M4.2". Tabela abaixo com números REAIS.
+> mede offscreen + stdio + `/proc`, zero rede (fatia M4.2). Tabela abaixo
+> com números REAIS.
 
 ```text
 - scripts/medir-performance.sh: (a) startup até primeiro frame (offscreen,
@@ -475,8 +482,8 @@ Informativo, **não orçado** (uma amostra só, ruidosa): pior caso da digitaç�
 tecla→frame.
 
 **Continuação A3.** Falta o item 1 acima e
-rajada PTY→frame. A fila executável e critérios estão em `DocsPrivate/historico/PONTO_ATUAL.md`, A3.1
-a A3.4; não criar um segundo runner. Referências profissionais consultadas:
+rajada PTY→frame. Os critérios estão nas seções A3.1 a A3.4 acima; não
+criar um segundo runner. Referências profissionais consultadas:
 
 - Code OSS `234638618394269563dd77c0c395c270d8df8b12`, MIT/MODE-B,
   `src/vs/base/common/performance.ts` e
@@ -504,8 +511,7 @@ mediana/p95; nenhuma telemetria, runtime, função ou teste das referências.
 > sessão (não sobrescreve edições), com anti-loop de fork e re-sync do LSP
 > do arquivo ativo. Validado com kill -9 real (reconecta com tabs
 > preservadas). FALTA (parte B/C, fatia M4.3b): lsp.restart + auto-restart
-> após N timeouts; cancelar jobs órfãos no shutdown. Design: DocsPrivate/diario/18
-> "Fatia M4.3".
+> após N timeouts; cancelar jobs órfãos no shutdown (fatia M4.3).
 
 ```text
 - Core morreu (crash/kill): CoreClient detecta (QProcess finished),
@@ -603,8 +609,8 @@ navegação/refactor; Neovim para velocidade/composição.
 > Neovim (a tensão modal × identidade JetBrains foi descartada). tree-sitter
 > é OBRIGATÓRIO (realce/indentação/textobjects); LSP e DAP já são plugados
 > direto pelo core. Esta decisão de engine deve contemplar onde o
-> tree-sitter entra (highlighter C++ atual → parser incremental). Ver
-> ContextoIA, "Direção do produto".
+> tree-sitter entra (highlighter C++ atual → parser incremental); a fundação
+> está no [ADR-0002](../decisoes-adr/ADR-0002-tree-sitter-syntax-foundation.md).
 
 ```text
 Contexto honesto: o TextEdit do QtQuick nos levou até aqui (custo
@@ -691,8 +697,7 @@ O que sobrevive: `claude` e `codex` no `KNOWN_TOOLS` do core, detectados como
 `cargo`/`clangd`, sem ramo por programa. Isso é o painel Ferramentas dizendo se o
 binário está no PATH — não é assistente.
 
-Reabrir esta fase exige decisão explícita e registrada, e o obstáculo técnico
-medido está na §4 de `DocsPrivate/legado/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md`.
+Reabrir esta fase exige decisão explícita e registrada (`40` §5).
 
 ---
 
@@ -715,7 +720,7 @@ falar comigo antes?"* Só faz sentido com M4 (robustez) maduro.
   externas por linguagem. O pacote deve declará-las como opcionais/
   recomendadas, nunca instalar tudo silenciosamente.
 - Versionamento: a IDE ganha versão própria (0.x) desacoplada do
-  protocolo IPC; changelog GERADO das seções [feito] de DocsPrivate/diario/18 (fonte
+  protocolo IPC; changelog GERADO do registro datado (`40.7`, fonte
   única, sem duplicar histórico).
 - AppImage cobre outras distribuições Linux, não Windows. Uma port Windows é
   trilha posterior própria: CI nativa, PowerShell/ConPTY, caminhos e `.exe`,
@@ -740,9 +745,8 @@ falar comigo antes?"* Só faz sentido com M4 (robustez) maduro.
   exportador allowlist para um espelho separado; nunca tornar o remoto privado
   atual público por engano.
 - Qualquer cópia do código entregue a terceiros contém, entre arquivos
-  Markdown, somente README.md, MANUAL.md e Tutorial.md. GUIAIA.md,
-  DocsPrivate/ContextoIA.md, DocsPrivate/historico/PONTO_ATUAL.md, AGENTS.md, `DocsPublic/`, `DocsPrivate/prompts/`, roadmaps e
-  notas de agentes ficam privados. Licenças/atribuições usam LICENSE, JSON ou
+  Markdown, somente README.md, MANUAL.md e Tutorial.md. `DocsPublic/`, roadmaps e
+  notas de agentes ficam fora da cópia (lista exata: `scripts/exportar-copia-limpa.sh`). Licenças/atribuições usam LICENSE, JSON ou
   TXT. `.git/` e o histórico privado não entram; eventual espelho começa com
   histórico próprio. O repositório-fonte nunca muda de visibilidade para essa
   entrega.
@@ -837,7 +841,7 @@ T1 Switch header/source (C/C++) [FEITA 2026-07-10, protocolo 0.34.0]:
    atalho Alt+O (sem F-key, não precisa de alternativa) e comando
    "C/C++: Alternar header/source" no Search Everywhere. Gate de
    linguagem no core (arquivo não-C/C++ → INVALID_PARAMS). Validada e2e
-   com clangd real. Design/descobertas: DocsPrivate/diario/18, "Fatia T1".
+   com clangd real (fatia T1).
 T2 clang-tidy no fluxo do editor: hoje o quality.run roda clippy
    (Rust); para C++ o tidy só roda no gate do repositório. Entra:
    quality.run com kind=cmake roda clang-tidy usando o
@@ -871,7 +875,7 @@ T6 Diagnostics na gutter + underline real no editor [FEITA 2026-07-11,
    no EditorHighlighter (SpellCheckUnderline, merge por caractere) +
    marca na gutter com tooltip + navegação F2/Shift+F2 (+Ctrl+Alt+E);
    aba Problemas mostra o code. Validada e2e com clangd e rust-analyzer
-   reais. Design/descobertas: DocsPrivate/diario/18, "Fatia T6". Falta refino do
+   reais (fatia T6). Falta refino do
    Problems 2.0 (marker bar, contadores, underline de build/quality).
 T7 Runnables/test explorer: rust-analyzer expõe runnables (lens "Run/
    Debug" em cima de cada teste/main); ctest lista casos. Entra:
@@ -924,6 +928,6 @@ para não nascer capado; T9/T8 são polimento.
     M7.2–M7.4 e distribuição ampla avançam quando houver testadores reais.
 ```
 
-Cada item acima, ao ser executado, ganha sua seção "Fatia" em DocsPrivate/diario/18
-com o ritual do playbook. Este doc é atualizado quando um marco inteiro
-fecha (mover aprendizados para cá) — ele é o mapa, DocsPrivate/diario/18 é o diário.
+Cada item acima, ao ser executado, ganha sua entrada no registro datado (`40.7`)
+com o ritual de `contribuindo/03`. Este doc é atualizado quando um marco inteiro
+fecha (mover aprendizados para cá) — ele é o mapa, o `40.7` é o diário.

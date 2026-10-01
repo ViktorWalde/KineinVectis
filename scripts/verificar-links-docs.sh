@@ -119,14 +119,44 @@ for readme in sorted(pathlib.Path("DocsPublic").rglob("README.md")):
 for readme, document in missing_from_index:
     print(f"✗ fora do indice {readme}: {document}", file=sys.stderr)
 
+# SO' O PUBLICO (2026-10-01, decisao do autor). A documentacao publica so' se
+# refere a documentacao publica: as notas internas do autor sao esbocos, fora do
+# repositorio, e um texto que manda o leitor a um arquivo que ele nao tem
+# confunde quem vem colaborar. Medido nesta data: ~300 mencoes em 40 arquivos,
+# inclusive instrucoes ("guarde em ...", "leia ..."). Reprova a mencao em
+# qualquer arquivo rastreado; ficam de fora so' os que usam o caminho POR
+# FUNCAO (excluir da copia, ignorar no git, tratar como registro) e o pacote
+# 0.3.5 ja' lancado (KV0.3/, com checksums).
+PRIVATE = re.compile(r"DocsPrivate|AGENTS\.md|GUIAIA|ContextoIA|PONTO_ATUAL")
+PRIVATE_BY_FUNCTION = {
+    ".gitignore", "scripts/exportar-copia-limpa.sh", "scripts/verificar-docs.sh",
+    "scripts/check_identifier_language.py", "scripts/verificar-links-docs.sh",
+}
+private_mentions = []
+for name in tracked:
+    if name in PRIVATE_BY_FUNCTION or name.startswith("KV0.3/"):
+        continue
+    try:
+        text = pathlib.Path(name).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        continue
+    for number, line in enumerate(text.split("\n"), start=1):
+        if PRIVATE.search(line):
+            private_mentions.append((name, number, line.strip()[:90]))
+
+for name, number, line in private_mentions:
+    print(f"✗ mencao a documento interno em {name}:{number}: {line}", file=sys.stderr)
+
 for name, number, target in dead_citations:
     print(f"✗ citacao morta em {name}:{number}: {target}", file=sys.stderr)
 
-if quebrados or dead_citations or missing_from_index:
+if quebrados or dead_citations or missing_from_index or private_mentions:
     print(f"\n✗ links de documentacao FALHOU ({len(quebrados)} links,"
-          f" {len(dead_citations)} citacoes, {len(missing_from_index)} fora do indice)", file=sys.stderr)
+          f" {len(dead_citations)} citacoes, {len(missing_from_index)} fora do indice,"
+          f" {len(private_mentions)} mencoes a documento interno)", file=sys.stderr)
     sys.exit(1)
 
 print(f"links de documentacao: {verificados} links relativos e {citations} citacoes"
-      " de caminho, nenhum morto; todo documento no indice da sua pasta.")
+      " de caminho, nenhum morto; todo documento no indice da sua pasta;"
+      " nenhuma mencao a documento interno.")
 PY

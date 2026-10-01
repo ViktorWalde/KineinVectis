@@ -585,5 +585,5 @@ sem alteração desta sessão:
 ```
 
 E a lacuna que não é técnica continua sendo a mais cara: **o registro de saídas
-do dogfooding está VAZIO** (`DocsPrivate/diario/19-registro-de-saidas.md`).
+do dogfooding está VAZIO**.
 Enquanto estiver, a ordem da frente C é palpite.

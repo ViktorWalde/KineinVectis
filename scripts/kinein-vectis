@@ -51,7 +51,7 @@ fi
 
 # DIZER qual binario subiu, e de quando ele e'.
 #
-# A armadilha registrada no PONTO_ATUAL ("o autor passou horas com uma IDE
+# A armadilha registrada pelo autor ("o autor passou horas com uma IDE
 # quebrada porque esse binario estava 4 commits atras") so e' possivel porque o
 # launcher escolhia em silencio. Duas linhas de stderr matam a classe inteira:
 # quem valida uma mudanca ve na hora se esta olhando o binario dela.

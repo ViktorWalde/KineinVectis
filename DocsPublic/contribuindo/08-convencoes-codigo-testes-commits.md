@@ -193,12 +193,18 @@ rápido vermelho. Sem push/tag/release sem o mantenedor.
 | --- | --- |
 | Contrato IPC | `arquitetura/03` (changelog no topo **e** a seção do domínio) |
 | O que o usuário vê/faz | `manual.md` (seção da área; atalhos na tabela) |
-| O estado do projeto | `roadmaps/40` (números do cabeçalho; §7.N o diário da fatia) |
+| O estado do projeto | `roadmaps/40` (números do cabeçalho; a fila §4) |
+| O registro da fatia | `roadmaps/40.7` (uma entrada `### 7.N`, datada) |
 | A etapa | `roadmaps/<NN>` (desenho fino antes; "feito" depois) |
 | Decisão de arquitetura durável | `arquitetura/*.md` ou um ADR em `decisoes-adr/` |
 | Como usar uma ferramenta externa | `integracoes/` |
 | Instalar/distribuir | `tutorial.md`; a versão em `CHANGELOG.md` |
-| A sessão (privado) | `DocsPrivate/Codex/<data>-<tema>.md` + `evidencias-<data>-<tema>/` |
+| As evidências (fotos, logs) | anexadas ao PR ou ao issue — nunca um caminho que o leitor não tem |
+
+**A documentação pública só se refere a documentação pública** (decisão do
+autor, 2026-10-01). Nenhum arquivo versionado — documento, comentário ou script
+— cita caminho, nome ou arquivo das notas internas do autor; o que for preciso
+saber está escrito aqui, no documento dono. O `verificar-links-docs.sh` reprova.
 
 Todo número é **datado** ("843 testes em 2026-09-19"); todo "não feito" é
 escrito com o porquê; o gate `verificar-docs.sh` confere números sem data

@@ -8,12 +8,12 @@ O ambiente local deve refletir o modo de segurança máximo do projeto.
 detecção de distro (pacman no Arch/CachyOS — alvo principal —, apt no
 Debian/Ubuntu, dnf no Fedora), aceita `--dry-run` (só mostra os comandos) e
 `--extras` (shellcheck, degrau da escada de rigor de
-`DocsPrivate/diario/18-daily-driver-plan.md`; o `cargo-deny` saiu de `--extras`
+[`06-modo-estrito.md`](../arquitetura/06-modo-estrito.md); o `cargo-deny` saiu de `--extras`
 em 2026-08-30 e virou dependência BASE, porque o gate passou a depender dele), e termina verificando ferramenta por
 ferramenta o mesmo conjunto que o ToolDetector do core reporta. Depois dele:
 `cmake --preset dev-local && cmake --preset dev-local-release` e
 `scripts/verificar.sh`. Lembrete: build dir de outra distro é lixo — apagar e
-reconfigurar (ver `DocsPrivate/ContextoIA.md`, seção "Ambiente revalidado").
+reconfigurar: o CMake guarda caminhos absolutos da distro no cache.
 
 ## Rust
 
@@ -72,8 +72,8 @@ reporta a mediana; imprime a tabela e sai. Precisa dos binários compilados
 (`cmake --build build/dev-local` + `cargo build -p kinein-core`). O
 ORÇAMENTO (números-alvo) e as métricas manuais (latência de digitação)
 vivem em `DocsPublic/roadmaps/21`, seção "M4.2". Detalhe do gancho `KINEIN_PERF_MARKER`
-(marker env-gated na `main.cpp`, sem efeito no uso normal): `DocsPrivate/diario/18`,
-"Fatia M4.2".
+(marker env-gated na `main.cpp`, sem efeito no uso normal): o comentário de
+`installStartupPerfMarker` em `ui/src/main.cpp`.
 
 ## Estado observado no notebook (Ubuntu 24.04.5, 2026-09-16)
 
@@ -170,15 +170,14 @@ O **gate completo continua pendente**:
 
 Não confundir dependência instalada, build que abre e gate completo verde.
 Os comandos de execução estão em [como executar](como-executar.md).
-O registro detalhado local, com logs e próximos passos para o Claude CLI,
-está em `DocsPrivate/Codex/2026-09-16-compatibilidade-qt64.md`; a instalação
-e o handoff inicial estão em `2026-09-15-ambiente-notebook-e-handoff.md`.
+O que um Ubuntu limpo exige dos gates, medido em 2026-10-01, está na tabela
+"o que o gate assume da máquina" de
+[`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md).
 
 ## Histórico observado (Fedora 44, 2026-08-29 a 2026-09-04)
 
 Este bloco preserva a medição do ambiente anterior. Não descreve o notebook
-Ubuntu atual nem comprova os gates nele. O registro anterior fica em
-`DocsPrivate/ContextoIA.md`.
+Ubuntu atual nem comprova os gates nele.
 
 - Fedora Linux 44 (Workstation), kernel 7.1.
 - Rust 1.96.1 (a toolchain fixada), rustfmt e clippy via `cargo` direto.

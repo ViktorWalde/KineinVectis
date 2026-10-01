@@ -12,9 +12,8 @@
 >
 > A arquitetura executável, os contratos e o trem de versões proposto estão no
 > [`48-arquitetura-executavel-da-serie-0.3.md`](48-arquitetura-executavel-da-serie-0.3.md).
-> O checkpoint operacional mais recente está em
-> `DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`: H0 aprovada, AppImage
-> candidato testado, e as provas que faltam antes do fechamento.
+> O fechamento da 0.3.5 (H0 aprovada, AppImage testado, provas) está no
+> [`40.7`](40.7-registro-das-entregas.md) §7.142–§7.149.
 >
 > **Início em 2026-09-23:** a primeira fatia do terminal está implementada e
 > provada em automação: atalhos híbridos, menu contextual, seleção visível

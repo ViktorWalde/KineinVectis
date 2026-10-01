@@ -450,7 +450,7 @@ simulação, saiu do produto em 2026-09-12 por decisão do autor.)
 Nada aqui reabre decisão registrada. Em particular, seguem fora:
 
 ```text
-IA na IDE        FORA DE ESCOPO desde 2026-07-17 (DocsPrivate/legado/)
+IA na IDE        FORA DE ESCOPO desde 2026-07-17 (40 §5; specs fora do repositorio)
 Python           adiado; foco em C/C++ e Rust (2026-08-30). A excecao do
                  Tree-sitter de Python NAO foi tomada
 Pylance          PROIBIDO (licenca so para produtos Microsoft). Se Python

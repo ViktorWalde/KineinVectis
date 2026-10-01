@@ -15,7 +15,7 @@ necessário. A ordem **não** muda.
 6. ROUTER    ui/qml/ipc/<Dominio>{Request,Event}Router.qml
 7. CONTROLLER e a view burra; harness em scripts/qml-harness
 8. PROVAR    gates verdes; foto do depois; o número do depois
-9. DOCUMENTAR arquitetura/03, manual, 40 §7.N, o roadmap §feito, o registro privado
+9. DOCUMENTAR arquitetura/03, manual, 40.7 (### 7.N), o roadmap §feito, a fila do 40
 10. COMMIT   um por fatia, com o que provou e o que NÃO fez
 ```
 
@@ -42,7 +42,8 @@ que está escrito?
 
 Foto (`KINEIN_SCREENSHOT`), o número (tempo de primeiro frame, latência da
 tecla, contagem), ou um teste que falha. "Estava ruim" não é medida.
-Guarde em `DocsPrivate/Codex/evidencias-<data>-<tema>/`.
+Guarde fora do repositório e anexe ao PR (ou ao issue) da fatia: é a
+prova de "antes" que o revisor compara com o "depois".
 
 ## 3. O contrato
 
@@ -128,12 +129,12 @@ número do depois. Se algo só uma pessoa na frente da IDE consegue medir
 ## 9. Documentar
 
 - `arquitetura/03` (se contrato); `manual.md` (se o usuário vê);
-- `roadmaps/40` §7.N: o que, por quê, como provou, o que **não** fez e
-  por quê; os números do cabeçalho se mudaram;
+- `roadmaps/40.7`, uma entrada `### 7.N`: o que, por quê, como provou, o
+  que **não** fez e por quê; no `roadmaps/40`, os números do cabeçalho se
+  mudaram e a fila (§4);
 - o roadmap da etapa: a fatia no "feito";
-- o registro privado `DocsPrivate/Codex/<data>-<tema>.md` (tabela
-  fatia × commit × público; provas; notas de método; o que ficou) e o
-  `PROMPT-proxima-sessao.md` apontando o próximo passo;
+- se a fatia deixa trabalho para depois, ele entra na fila do `40` §4
+  com o primeiro passo escrito: a próxima pessoa começa de lá;
 - `bash scripts/verificar-docs.sh` e `verificar-links-docs.sh` verdes.
 
 ## 10. Commit
@@ -147,6 +148,6 @@ para arquivo compartilhado, `git hash-object -w` + `git update-index
 ## A fatia mínima (um bug de uma linha)
 
 0 (ler o `40` da área) → 2 (o teste ou harness que falha) → 4/7 (a
-correção) → 8 (gates) → 9 (uma linha no `40` §7.N e no registro) → 10.
+correção) → 8 (gates) → 9 (uma entrada no `40.7`) → 10.
 Mesmo o bug de uma linha ganha um teste: foi assim que os gates
 cresceram, e é assim que o bug não volta.

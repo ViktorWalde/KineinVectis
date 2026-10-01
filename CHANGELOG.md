@@ -9,8 +9,7 @@ Cargo/CMake já identificam a candidata local como `0.3.5`. Um AppImage
 candidato foi gerado e passou nos smokes local e Debian mínimo, mas ainda não
 foi lançado. O fechamento depende da matriz P3, da escolha da pasta remota
 desde a home e do gate V8 completo. H0 foi aprovado pelo autor em 2026-09-30.
-O roteiro e as evidências estão nos roadmaps 40 e 47 e no checkpoint
-`DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`.
+O roteiro e as evidências estão nos roadmaps 40, 40.7 e 47.
 
 - **Projeto e arquivos (P0–P3, em andamento):** comando curto `kinein`, uma
   janela por workspace, navegação e seleção múltipla na árvore, ações por

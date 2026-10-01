@@ -152,8 +152,7 @@ segurança.
 
 ### 4.4 A lacuna que não é técnica
 
-**O registro de saídas do dogfooding está VAZIO**
-(`DocsPrivate/diario/19-registro-de-saidas.md`). Enquanto ele estiver assim, a
+**O registro de saídas do dogfooding está VAZIO**. Enquanto ele estiver assim, a
 ordem da frente C é palpite. O autor instalou o AppImage atual em 2026-09-03 —
 a primeira entrada real vale mais que qualquer refatoração desta lista.
 

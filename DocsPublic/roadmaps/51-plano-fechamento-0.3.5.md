@@ -1,6 +1,6 @@
 # Plano executável antes das próximas etapas — 0.3.5
 
-Data: 2026-10-01, America/Sao_Paulo. **Classe: PLANO OPERACIONAL.** Este plano foi escrito **antes** de continuar a implementação e a publicação, conforme pedido do autor. A cada etapa, registrar o resultado no roadmap público 40 e atualizar aqui o estado se a sessão for interrompida. O histórico anterior e as provas já obtidas estão em `DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`.
+Data: 2026-10-01, America/Sao_Paulo. **Classe: PLANO OPERACIONAL.** Este plano foi escrito **antes** de continuar a implementação e a publicação, conforme pedido do autor. A cada etapa, registrar o resultado no roadmap público 40 e atualizar aqui o estado se a sessão for interrompida. O histórico anterior e as provas já obtidas estão no [`40.7`](40.7-registro-das-entregas.md).
 
 ## Autorização e estado de entrada
 
