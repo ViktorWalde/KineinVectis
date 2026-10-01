@@ -30,6 +30,12 @@ Item {
     QtObject {
         id: pontefalsa
 
+        // O `Connections` do foco mira `editorSurface`; sem ele no falso, o
+        // alvo vira `undefined` e o Qt avisa "Unable to assign".
+        readonly property QtObject editorSurface: QtObject {
+            property bool editorActiveFocus: true
+        }
+
         function ready() { return true; }
         function text() { return "conteudo do buffer"; }
     }

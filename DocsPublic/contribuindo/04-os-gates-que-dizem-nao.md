@@ -25,6 +25,7 @@ está em
 | `verificar-qml.sh` | qmllint estrito, zero warnings, sobre o módulo do build `debug-strict`; **`.qml` na árvore que não está no módulo** | desde 2026-09-24 ele atualiza sozinho a cópia do QML no build antes de lintar — antes disso podia **passar lintando QML velho**. O que ele recusa é arquivo que ninguém compila: registre em `ui/CMakeLists.txt` ou remova |
 | `check_identifier_language.py` | identificador novo em português (Rust, C++, QML/JS, Python, shell e Python em heredoc) | desde 2026-10-01. Traduza pelo [glossário](09-glossario-de-identificadores.md); sigla ou nome de ferramenta vai para `identifier-language-allowlist.txt` com motivo. O legado é catraca (`identifier-language-baseline.txt`): só desce, com `--update-baseline` |
 | `verificar-qml-qt64.sh` | `header`/`footer`/`highlight`/`section.delegate`/`sourceComponent` num arquivo com `pragma ComponentBehavior: Bound` | desde 2026-10-01. O Qt 6.4 do AppImage nunca cria essas partes (o checkout, com Qt mais novo, cria). Ponha o `Component` num `QtObject` sem o pragma (`*Parts.qml`) |
+| `verificar-qml-logica-qt64.sh` | harness QML que falha no **Qt 6.4.2 do AppImage** (container Debian 12), mesmo verde no Qt local | desde 2026-10-01. Precisa de Podman ou Docker; sem eles reprova, não pula. Reproduza um teste só com `KINEIN_QML_TEST=tst_x`. A causa típica é diferença de versão do Qt: veja o `verificar-qml-qt64.sh` acima |
 | `verificar-qml-fiacao.sh` | binding auto-referente | |
 | `verificar-qml-propriedades.sh` | binding para propriedade inexistente; **margem de âncora sem a âncora**; **binding torto** (mais indentado que a propriedade) | os dois últimos são bindings que o Qt aceita e a tela mostra em branco |
 | `verificar-qml-duplicacao.sh` | a mesma derivação (`kind === "commit"`) em dois arquivos | dê um dono (`inspector.isCommit`); a baseline só se atualiza para fatos diferentes que compartilham a string |
@@ -39,7 +40,7 @@ está em
 | `verificar-links-docs.sh` | alvo relativo inexistente em Markdown versionado ou novo não ignorado; não verifica âncoras/URLs externas | |
 | `verificar-arquitetura.sh` | a catraca: Rust 500 (sem testes), view 300, controller/host 400, ui/src 500; 1 arquivo em débito (`EditorController.qml`, 790) que não pode crescer | split por responsabilidade; nunca "Part2" |
 | `verificar-transicao-workspace.sh` | estado por-workspace com um dono | |
-| `verificar-qml-logica.sh` | os harnesses (`tst_*.qml`, 61 em 2026-09-23) num espelho do módulo | o bitmask está no `console.error`; a asserção correspondente está no arquivo |
+| `verificar-qml-logica.sh` | os harnesses (`tst_*.qml`, 90 em 2026-10-01) num espelho do módulo; **harness verde que imprime aviso de `avisos-qml.txt`** (desde 2026-10-01) | o bitmask está no `console.error`; a asserção correspondente está no arquivo. Aviso na saída quase sempre é um falso incompleto no harness, e se corrige no falso |
 | `verificar-binario-abre.sh --preset <p>` | o binário abre, primeiro frame medido, **nenhum aviso QML no stderr** até o frame | um `Connections` no alvo errado só aparece aqui |
 
 ## O que fazer quando um gate parece "errado"

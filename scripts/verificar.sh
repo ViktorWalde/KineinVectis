@@ -189,6 +189,10 @@ passo "scripts/verificar-qml-logica.sh" \
     "Executa em modo headless a logica real dos controllers e componentes QML."
 scripts/verificar-qml-logica.sh
 
+passo "scripts/verificar-qml-logica-qt64.sh" \
+    "Roda os mesmos harnesses QML no Qt 6.4 do AppImage (container Debian 12)."
+bash scripts/verificar-qml-logica-qt64.sh
+
 if [ "$modo" = "completo" ]; then
     passo "cmake --build --preset $preset_debug" \
         "Compila a UI de desenvolvimento com as protecoes do preset selecionado."

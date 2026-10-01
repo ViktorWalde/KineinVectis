@@ -2355,6 +2355,7 @@ crates/kinein-core/src/tools/search_dirs.rs	subpastas	5
 crates/kinein-core/src/tools/search_dirs.rs	versao	5
 crates/kinein-core/src/workspace/create.rs	pacote	2
 crates/kinein-protocol/src/toolchain.rs	automatico	3
+scripts/check_identifier_language.py	locs	2
 scripts/embutir_comando_kinein.py	delimitador	3
 scripts/embutir_comando_kinein.py	instalador	3
 scripts/embutir_comando_kinein.py	linha	2
@@ -3066,12 +3067,6 @@ scripts/verificar-qml-fiacao.sh	linha	10
 scripts/verificar-qml-fiacao.sh	linhas	7
 scripts/verificar-qml-fiacao.sh	recuo	2
 scripts/verificar-qml-fiacao.sh	texto	3
-scripts/verificar-qml-logica.sh	codigo	1
-scripts/verificar-qml-logica.sh	espelho	1
-scripts/verificar-qml-logica.sh	falhou	3
-scripts/verificar-qml-logica.sh	fonte	2
-scripts/verificar-qml-logica.sh	teste	2
-scripts/verificar-qml-logica.sh	tipo	1
 scripts/verificar-qml.sh	ausentes	4
 scripts/verificar-qml.sh	candidato	2
 scripts/verificar-qml.sh	candidatos	2
@@ -3235,7 +3230,6 @@ scripts/verificar_fiacao_ipc.py	texto	17
 scripts/verificar_fiacao_ipc.py	titulo	9
 scripts/verificar_fiacao_ipc.py	tratador	2
 scripts/verificar_fiacao_ipc.py	tratados	7
-scripts/check_identifier_language.py	locs	2
 scripts/verificar_micropython_porta.py	ambiente	4
 scripts/verificar_micropython_porta.py	cabecalho	5
 scripts/verificar_micropython_porta.py	codigo	2

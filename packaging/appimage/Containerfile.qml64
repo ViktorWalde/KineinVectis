@@ -1,0 +1,24 @@
+FROM docker.io/library/debian:12-slim@sha256:63a496b5d3b99214b39f5ed70eb71a61e590a77979c79cbee4faf991f8c0783e
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# G0.3 (roadmap 53 §0.2): os harnesses QML rodam no MESMO Qt 6.4.2 que o
+# AppImage embarca. O Qt local (6.10) aceita QML que o 6.4 recusa em tempo de
+# execucao ("Component is not ready", componente bound) — e ate' 2026-10-01 so'
+# o usuario do AppImage via isso. Aqui ha' so' o runner e os modulos que o
+# projeto importa (QtQuick, QtQuick.Window); nada de compilador.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        fonts-dejavu-core \
+        libqt6svg6 \
+        qml-qt6 \
+        qml6-module-qtqml \
+        qml6-module-qtqml-models \
+        qml6-module-qtqml-workerscript \
+        qml6-module-qtquick \
+        qml6-module-qtquick-window \
+        qt6-qpa-plugins \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace

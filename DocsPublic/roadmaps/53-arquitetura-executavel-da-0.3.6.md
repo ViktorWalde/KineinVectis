@@ -56,7 +56,7 @@ promete pegar é introduzido de propósito e ele reprova).
 | --- | --- | --- |
 | G0.1 `scripts/check_identifier_language.py` | identificador novo em português em Rust, C++, QML/JS, Python, shell e Python em heredoc; legado em catraca | **feito** 2026-10-01; mutação (`contadorDePassos` reprovou `contador` e `passos` na linha) |
 | G0.2 `scripts/verificar-qml-qt64.sh` | parte que o Qt 6.4 do AppImage nunca cria num arquivo com `pragma Bound` | **feito** 2026-10-01; mutação contra o HEAD (as quatro ocorrências) |
-| G0.3 harnesses QML no Qt 6.4 | qualquer harness que passa no Qt do checkout e falha no do pacote | a fazer: rodar `verificar-qml-logica.sh` com o `qml` do Qt 6.4 no builder (`qml-qt6`) |
+| G0.3 `scripts/verificar-qml-logica-qt64.sh` | qualquer harness que passa no Qt do checkout e falha no do pacote; **aviso da lista `avisos-qml.txt` na saída de qualquer harness** (nos dois Qt) | **feito** 2026-10-01. Container Debian 12 próprio (`Containerfile.qml64`, só `qml-qt6` e os módulos usados), 17 s. Novo `tst_list_parts_render` instancia `GitChangesList` e `SymbolResultsList`; mutação: `section.delegate` e `header` inline passam no 6.10 e reprovam no 6.4 com "Component is not ready". O grep de avisos pegou um falso incompleto no `tst_editor_persistence` ("Unable to assign"), já corrigido |
 | G0.4 passeio por superfícies | aviso da lista `scripts/avisos-qml.txt` em qualquer área, aba ou overlay, no checkout e no AppImage | a fazer: `@passo` já existe (§5.2); falta o roteiro versionado e o uso no `verificar-binario-abre` e no `testar-appimage` |
 | G0.5 terminal mudo | `kinein <pasta>` num pty que não volte em < 300 ms ou que imprima algo | a fazer: teste num pseudo-terminal (`script`) contra o binário do checkout |
 
