@@ -1,7 +1,7 @@
 //! Fontes de dados: as conexoes do autor a bancos relacionais e temporais.
 //!
 //! Este dominio nasceu em 2026-09-04 como a etapa 26 do
-//! `DocsPublic/roadmaps/35-ambiente-cpp-embarcados-simulacao.md`, e a primeira coisa
+//! `DocsPublic/roadmaps/35-ambiente-cpp-e-embarcados.md`, e a primeira coisa
 //! que ele faz e' cumprir a regra que o §7.3 daquele documento escreveu:
 //!
 //! > *"Nenhuma linha de conexao a banco entra antes dessa pergunta ter dono."*

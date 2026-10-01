@@ -22,8 +22,8 @@
 # (ADR-0003 e DocsPublic/arquitetura/27 §6.2). No dia em que alguem acrescentar um
 # `ShaderEffect` a UI, essa garantia morre **em silencio**: o build passa, o
 # gate passa, e so o usuario com driver ruim descobre. Ver
-# `DocsPublic/roadmaps/31-simulacao-fisica-matematica.md` §5.1, onde essa colisao e
-# uma decisao ainda em aberto.
+# o roadmap 31 (simulacao fisica), onde essa colisao era decisao em aberto; a
+# simulacao saiu do produto em 2026-09-12 (DocsPublic/roadmaps/40-estado-e-continuidade.md §5).
 #
 # Uso: bash scripts/verificar-appimage.sh
 set -Eeuo pipefail

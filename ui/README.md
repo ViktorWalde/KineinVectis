@@ -20,7 +20,7 @@ ui/
 │   └── documentation.cpp
 ├── qml/
 │   ├── Main.qml          # composição da janela e dos hosts
-│   ├── Theme.qml         # singleton com a paleta de DocsPublic/05-design-system.md
+│   ├── Theme.qml         # singleton com a paleta de DocsPublic/especificacoes/sistema-de-componentes-de-ui.md
 │   ├── shell/            # cabeçalho, layout, overlays e visualizador do manual
 │   ├── workspace/        # seletor, tela inicial e saúde do projeto
 │   ├── editor/           # superfície, controladores e popups do editor

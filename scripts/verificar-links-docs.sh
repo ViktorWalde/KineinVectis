@@ -69,9 +69,48 @@ for nome, linha, alvo in quebrados:
     print(f"    alvo: {alvo}", file=sys.stderr)
     print(f"    linha: {linha}", file=sys.stderr)
 
-if quebrados:
-    print(f"\n✗ links de documentacao FALHOU ({len(quebrados)})", file=sys.stderr)
+# CITACAO DE CAMINHO (2026-10-01). Codigo, scripts e comentarios citam
+# documentos por caminho (DocsPublic/<pasta>/<nome>.md), sem link Markdown,
+# e ate' esta data nada conferia: medido num checkout limpo, 11 citacoes em 6
+# alvos apontavam para documentos renomeados ou removidos meses antes, inclusive
+# em Rust e C++. Antes da reorganizacao de nomes dos docs, toda citacao
+# explicita `DocsPublic/...` em qualquer arquivo rastreado precisa existir. Em
+# `.md`, bloco de codigo e' exemplo e fica de fora, como os links acima.
+CITATION = re.compile(r"DocsPublic/[A-Za-z0-9_./\-]+?\.(?:md|json)")
+tracked = subprocess.run(
+    ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+    capture_output=True, text=True, check=True,
+).stdout.rstrip("\0").split("\0")
+dead_citations = []
+citations = 0
+for name in tracked:
+    if name.startswith(("KV0.3/", "DocsPublic/iconografia/")):
+        continue
+    path = pathlib.Path(name)
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        continue
+    in_fence = False
+    for number, line in enumerate(text.split("\n"), start=1):
+        if name.endswith(".md") and line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        for target in CITATION.findall(line):
+            citations += 1
+            if not pathlib.Path(target).exists():
+                dead_citations.append((name, number, target))
+
+for name, number, target in dead_citations:
+    print(f"✗ citacao morta em {name}:{number}: {target}", file=sys.stderr)
+
+if quebrados or dead_citations:
+    print(f"\n✗ links de documentacao FALHOU ({len(quebrados)} links,"
+          f" {len(dead_citations)} citacoes)", file=sys.stderr)
     sys.exit(1)
 
-print(f"links de documentacao: {verificados} links relativos, nenhum morto.")
+print(f"links de documentacao: {verificados} links relativos e {citations} citacoes"
+      " de caminho, nenhum morto.")
 PY

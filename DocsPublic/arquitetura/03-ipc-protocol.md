@@ -861,7 +861,7 @@ ripgrep (`rg`) e fd/fdfind.
 }
 ```
 
-Estados possíveis de ferramenta (`DocsPublic/07-tooling-lifecycle.md`):
+Estados possíveis de ferramenta (o ciclo de vida inteiro é esta lista):
 `notConfigured`, `missing`, `detected`, `ready`, `running`, `failed`,
 `disabled`. A detecção usa `missing`, `detected` e `failed`; os demais são
 reservados para o gerenciamento de processos.
