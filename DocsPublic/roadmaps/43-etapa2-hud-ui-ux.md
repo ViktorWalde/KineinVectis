@@ -221,8 +221,8 @@ menu, ou dois grupos com rótulo).
 ## 7. Estado ao fim de 2026-09-18 — F0 a F7 feitas, F8 aberta
 
 Escrito antes da F8, a pedido do autor. Uma linha por fatia: o que entrou,
-como foi medido, a foto, e onde está o registro (o `40` §7.N tem o
-detalhe; o `DocsPrivate/Codex/2026-09-18-etapa2-*.md` tem as provas).
+como foi medido, a foto, e onde está o registro (o `40.7` §7.N tem o
+detalhe e as provas).
 
 ```text
 fatia  o que entrou                                        medida / foto            40 §
@@ -478,9 +478,9 @@ container ENTRA (com o comando visível e confirmação por clique).
 commit   protocolo  o que                                              registro        fotos
 cb46660  0.124.0    Banco: datasource.discover (socket/porta local,   40 §7.66        14
                     containers de banco, .sqlite do projeto) e         37 §6
-                    datasource.create (SQLite em data/; PostgreSQL ou  DocsPrivate/Codex/
-                    Mongo em container no loopback, comando visivel;   2026-09-18-banco-
-                    CREATE DATABASE pelo query confirmado); a coluna   descoberta-criacao.md
+                    datasource.create (SQLite em data/; PostgreSQL ou
+                    Mongo em container no loopback, comando visivel;
+                    CREATE DATABASE pelo query confirmado); a coluna
                     "Nesta maquina" + "Salvos"; caixa "Novo banco";
                     o chip do Mongo (`!arquivo && !mongo`)
 f35cac4  —          Seis ancoras perdidas desde 2026-09-03 (refactor   40 §7.67        15a-15d
@@ -637,8 +637,7 @@ o clique real.
 
 ### 9.6 Como retomar do zero (se o contexto acabar)
 
-Ler, nesta ordem: `DocsPrivate/Codex/README.md` → `HANDOFF-panorama.md` →
-`PROMPT-proxima-sessao.md` (aponta para 9.4) → esta seção → `40` §7.66–
+Ler, nesta ordem: `00-comece-aqui.md` → esta seção → `40` §7.66–
 7.70 → os registros privados de 2026-09-18 da noite. Conferir `git
 status`/`git log --oneline -12`. Rodar `cargo build -p kinein-core &&
 cmake --build build/linux-clang-debug-strict --target kinein-vectis` e as

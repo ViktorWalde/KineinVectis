@@ -62,30 +62,36 @@ def arquivos(pasta: str, *sufixos: str) -> list[Path]:
     return [p for p in (RAIZ / pasta).rglob("*") if p.suffix in sufixos]
 
 
-def metodos_do_core() -> set[str]:
-    """Os bracos `"dominio.metodo" => ...` dos roteadores (`handlers/`, `lib.rs`).
+def core_methods_by_file() -> dict[Path, set[str]]:
+    """Os bracos `"dominio.metodo" => ...` dos roteadores (`handlers/`, `lib.rs`),
+    por arquivo que os roteia. Dono UNICO desta extracao: o mapa de modulos
+    (scripts/module_map.py) a reusa para ligar metodo IPC ao handler.
 
     So' linhas que chamam um `*_response(`/`Continue(`: o mesmo padrao de
     string aparece em ids de configAction e em nomes de arquivo (`boot.py`),
     que nao sao metodos.
     """
-    padrao = re.compile(r'"([a-z][A-Za-z]*(?:\.[a-zA-Z]+)+)"')
-    achados: set[str] = set()
-    fontes = arquivos("crates/kinein-core/src/handlers", ".rs") + [
+    name = re.compile(r'"([a-z][A-Za-z]*(?:\.[a-zA-Z]+)+)"')
+    sources = arquivos("crates/kinein-core/src/handlers", ".rs") + [
         RAIZ / "crates/kinein-core/src/lib.rs",
         RAIZ / "crates/kinein-core/src/handlers.rs",
     ]
-    braco = re.compile(
+    arm = re.compile(
         r'((?:"[a-zA-Z.]+"\s*\|\s*)*"[a-zA-Z.]+")\s*=>\s*(?:Some\(|\{|RequestOutcome|outcome_for\(|self\.|Self::)'
     )
-    for p in fontes:
+    found: dict[Path, set[str]] = {}
+    for path in sources:
         # Um braco pode quebrar linha entre os `|` (debug.continue | … | debug.stop).
-        texto = re.sub(r"\s*\n\s*\|", " |", ler(p))
-        for m in braco.finditer(texto):
-            for nome in padrao.findall(m.group(1)):
-                if not nome.startswith("event."):
-                    achados.add(nome)
-    return achados
+        text = re.sub(r"\s*\n\s*\|", " |", ler(path))
+        for match in arm.finditer(text):
+            for method in name.findall(match.group(1)):
+                if not method.startswith("event."):
+                    found.setdefault(path, set()).add(method)
+    return found
+
+
+def metodos_do_core() -> set[str]:
+    return set().union(*core_methods_by_file().values())
 
 
 def metodos_dos_clientes() -> set[str]:
@@ -179,11 +185,11 @@ def sinais_qml() -> list[tuple[str, str, Path]]:
     return achados
 
 
-DOC_PROTOCOLO = "DocsPublic/arquitetura/03-ipc-protocol.md"
+DOC_PROTOCOLO = "DocsPublic/arquitetura/03-protocolo-ipc.md"
 
 
 def metodos_documentados() -> tuple[set[str], int | None]:
-    """A lista canonica do `03-ipc-protocol.md`, e o numero que o titulo afirma.
+    """A lista canonica do `03-protocolo-ipc.md`, e o numero que o titulo afirma.
 
     A lista e' o bloco ```text que vem logo depois do titulo "Os N metodos
     roteados"; o numero sai do proprio titulo.
@@ -225,7 +231,7 @@ def main() -> int:
     # verde. O gatilho foi concreto: ao extrair o `remote.command` para arquivo
     # proprio, o roteador saiu do formato `"dominio.metodo" => ...`; o metodo
     # continuava funcionando, mas sumiu desta contagem (167 -> 166) e teria
-    # sumido da lista canonica do `03-ipc-protocol`. So' percebemos porque
+    # sumido da lista canonica do `03-protocolo-ipc`. So' percebemos porque
     # alguem olhou o numero.
     pedidos_sem_rota = sorted(
         metodos_dos_clientes() - metodos_do_core() - eventos_do_core()
@@ -235,7 +241,7 @@ def main() -> int:
 
     # 1c — A LISTA CANONICA DA DOCUMENTACAO (2026-09-26).
     #
-    # O `03-ipc-protocol.md` tem a lista inteira dos metodos roteados, e ela e'
+    # O `03-protocolo-ipc.md` tem a lista inteira dos metodos roteados, e ela e'
     # o que alguem le' para saber o que existe no fio. Nada a cruzava com o
     # codigo: em 2026-09-26 o `syntaxTree.indent` entrou roteado, documentado e
     # com bump de versao — mas os tres porque EU LEMBREI, e "porque alguem

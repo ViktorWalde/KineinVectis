@@ -1,9 +1,16 @@
-# ADR-0005 — Três árvores de documentação: `DocsPublic/`, `DocsPrivate/`, `DocsPrivate/legado/`
+# ADR-0005 — Três árvores de documentação: a pública, a interna e o legado
+
+> **Nota datada (2026-10-01), decisão do autor:** a documentação pública só
+> se refere a documentação pública. As notas internas do autor são esboços;
+> tudo o que é preciso para colaborar está em `DocsPublic/`, e nenhum documento
+> versionado cita caminho, nome ou arquivo interno (o `verificar-links-docs.sh`
+> reprova). Por isso, a partir desta data, este ADR descreve a árvore interna
+> sem os nomes dos arquivos dela; as decisões e as datas abaixo não mudaram.
 
 > **Nota datada (2026-09-12):** as três árvores viraram **duas**, por decisão
 > do autor: `docs/` → `DocsPublic/` (toda a documentação do projeto,
-> versionada) e `docs-privada/` + `docs-legada/` → `DocsPrivate/` (não
-> versionada, no `.gitignore`; a legada é `DocsPrivate/legado/`). A regra deste
+> versionada) e as duas internas viraram uma só (não versionada, no
+> `.gitignore`). A regra deste
 > ADR — a árvore de trabalho é auto-suficiente e o log/legado ficam fora dela —
 > continua de pé; mudou o nome e o versionamento da árvore privada.
 
@@ -33,7 +40,7 @@ exatamente o que uma sessão nova procura ao perguntar "para onde este projeto
 vai?". O repositório já pagou por confiar em documento velho: em 2026-07-17 uma
 IA reimplementou um seletor que o autor mandou remover **no mesmo dia**.
 
-Havia uma segunda pressão, medida na mesma data: o `ContextoIA.md` (2.414 linhas
+Havia uma segunda pressão, medida na mesma data: o log de sessões (2.414 linhas
 de log datado) esteve em **primeiro** na ordem de precedência, descrito como
 "estado real". Foi rebaixado em 2026-07-17, mas continuava no caminho de leitura
 de quem só queria trabalhar.
@@ -45,13 +52,13 @@ Três árvores, e uma regra: **uma sessão de trabalho lê `DocsPublic/` e mais 
 ```text
 DocsPublic/            LIDA EM TODA SESSAO. Contrato, estado, plano, specs, build.
                  Auto-suficiente para trabalhar.
-DocsPrivate/    Continuidade interna: ContextoIA (log datado), diario de
-                 sessoes, prompts de bootstrap. Consulta SOB DEMANDA, para
-                 "por que isto ficou assim?" — nunca para "o que existe".
-DocsPrivate/legado/     Superado ou CANCELADO. Nunca e' alvo.
+(interna)        Continuidade interna: log datado, diario de sessoes,
+                 prompts de bootstrap. Fora do repositorio; nada publico
+                 depende dela.
+(legado interno) Superado ou CANCELADO. Nunca e' alvo.
 ```
 
-**Critério de entrada em `DocsPrivate/legado/`, deliberadamente estreito: só entra o
+**Critério de entrada no legado, deliberadamente estreito: só entra o
 que uma sessão poderia confundir com alvo.** O que for descontinuado e
 inofensivo continua seguindo a regra de 2026-07-05 — extrair o que tem valor e
 **remover**. Legar é para o que engana.
@@ -72,11 +79,11 @@ SEPARAR    custa uma pasta e uma regra. E' o que foi feito.
 
 ## Consequências
 
-- `AGENTS.md` ganhou o passo 0: ler `DocsPublic/` e só `DocsPublic/`. O log deixou de ser
-  o item 1 da ordem de leitura.
+- As regras de agente ganharam o passo 0: ler `DocsPublic/` e só `DocsPublic/`. O log deixou de ser
+  o item 1 da ordem de leitura (hoje a porta é o `00-comece-aqui.md`).
 - `DocsPublic/leitura-tecnica.md` passa a ser a primeira leitura de quem é novo.
 - `scripts/exportar-copia-limpa.sh` nega as três árvores (todas internas).
-- `scripts/verificar-docs.sh` trata `DocsPrivate/legado/` como registro: número lá
+- `scripts/verificar-docs.sh` trata o legado como registro: número lá
   dentro descreve o que era verdade quando o documento valia.
 - **Gate novo, `scripts/verificar-links-docs.sh`.** `git mv` não atualiza link
   nenhum, e este repositório já moveu documentação assim uma vez (2026-07-16:
@@ -87,8 +94,8 @@ SEPARAR    custa uma pasta e uma regra. E' o que foi feito.
 
 ## O risco que este ADR aceita
 
-`DocsPrivate/legado/` pode virar depósito — que é exatamente o que a decisão de
-2026-07-05 matou. A defesa é o critério estreito escrito acima e o
-`DocsPrivate/legado/README.md`, que exige **motivo e data** por documento. Se um dia a
+O legado pode virar depósito — que é exatamente o que a decisão de
+2026-07-05 matou. A defesa é o critério estreito escrito acima e o índice do
+legado, que exige **motivo e data** por documento. Se um dia a
 pasta crescer com material que ninguém confundiria com alvo, a regra foi
 violada, não revista.

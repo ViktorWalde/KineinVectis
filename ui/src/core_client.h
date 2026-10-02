@@ -580,7 +580,8 @@ signals:
     void debugContinued();
     void debugFinished(int exitCode);
     void debugStackTraceResolved(const QVariantList& frames);
-    void debugVariablesResolved(double frameId, double ref, const QVariantList& variables);
+    void debugVariablesResolved(double frameId, double ref, const QVariantList& variables,
+                                const QString& notice);
     void debugScopesResolved(double frameId, const QVariantList& scopes);
     void debugMemoryResolved(const QVariantMap& memory);
     void debugDisassemblyResolved(const QVariantList& instructions);

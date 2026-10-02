@@ -3,11 +3,10 @@
 > **Classe: PLANO** (`../README.md`). Descreve o alvo, não o estado. Nada
 > disto existe no código em 2026-09-26.
 >
-> **Origem:** dois relatórios de pesquisa do autor, ambos de 2026-09-26. O
-> segundo é o completo (1580 linhas) e está em
-> `DocsPrivate/Codex/2026-09-26-relatorio-pesquisa-cache-completo.md`. Este
-> documento é o esqueleto **medido** — o que foi conferido nesta máquina — e
-> cede lugar ao relatório onde as duas fontes divergirem.
+> **Origem:** dois relatórios de pesquisa do autor, ambos de 2026-09-26 (não
+> publicados). Este documento é a versão pública e **medida** — o que foi
+> conferido nesta máquina — e é a fonte para quem colabora; uma divergência
+> com a pesquisa original se resolve por decisão do autor registrada aqui.
 >
 > **Esta especificação não é fatia nova: ela dá corpo à `C5` do
 > [`../roadmaps/45`](../roadmaps/45-etapa4-backend-lsp-edicao-compiladores.md)**,
@@ -193,7 +192,7 @@ Pular compilação por análise própria — diff de AST, *fingerprints* semânt
 modo sombra. Isso é **pesquisa**, mora em [`../pesquisa/`](../pesquisa/README.md)
 e não é alvo desta fase. A separação é deliberada: um documento persuasivo
 sobre algo não decidido, guardado junto das especificações, é lido como alvo
-pela próxima sessão — foi exatamente o que criou o `DocsPrivate/legado/`.
+pela próxima sessão — foi exatamente o motivo do ADR-0005.
 
 ## 5. Decisões que são do autor
 

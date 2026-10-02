@@ -5,7 +5,7 @@
 Lista enxuta de riscos que não são "features bonitas", mas que fazem uma IDE
 parecer profissional — ou que quebram a confiança do usuário se ignorados.
 Extraído e condensado da proposta de governança documental revisada em
-2026-07-05 (ver `DocsPublic/arquitetura/15-engineering-debt-and-refactor.md` para o contexto da
+2026-07-05 (ver `DocsPublic/arquitetura/15-divida-de-engenharia-e-refatoracao.md` para o contexto da
 limpeza de docs). Não é um plano de implementação por si só: é a lista que
 qualquer plano de feature grande deve checar antes de ser considerado pronto.
 
@@ -55,7 +55,7 @@ Exemplos: `lsp.hover`/`workspace.status` são `safe`; `fs.write`/
 --hard`, `rm -rf`, flash de firmware, reboot de alvo remoto ou comando remoto
 com sudo são `dangerous`. Comando perigoso nunca roda sem confirmação
 explícita (ver `JobRisk` em `kinein-protocol`, hoje só classificado, ainda sem
-enforcement geral — ver `DocsPublic/roadmaps/backend-para-ui-ux.md` P1 "Risk engine").
+enforcement geral — ver `DocsPublic/roadmaps/55-backend-para-ui-ux.md` P1 "Risk engine").
 
 ## 5. Segredos e logs
 
@@ -113,7 +113,7 @@ manutenção que a Kinein não controla. Código antigo não vira boa referênci
 porque resolve um caso parecido.
 
 Aplicar a seção 2.1 de
-`DocsPublic/roadmaps/adaptacao-de-plugins-abertos.md`: registrar revisão e licença,
+`DocsPublic/roadmaps/54-adaptacao-de-plugins-abertos.md`: registrar revisão e licença,
 ler também testes/falhas, extrair invariantes e implementar código novo nas
 camadas nativas. Code OSS, IntelliJ IDEA Community, Zed, Lapce e Apache
 NetBeans são referências obrigatórias conforme pertinência, nunca fornecedores

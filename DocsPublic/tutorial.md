@@ -321,8 +321,9 @@ Tutorial.md
 ```
 
 Não inclua `.git/` nem o histórico do repositório privado. Também não inclua
-`AGENTS.md`, `DocsPrivate/ContextoIA.md`, `GUIAIA.md`, `DocsPrivate/historico/PONTO_ATUAL.md`, `DocsPublic/`,
-`DocsPrivate/prompts/`, roadmaps, specs ou outras notas de agentes. Antes de entregar, o
+`DocsPublic/`, roadmaps, specs, as notas internas do autor (fora do
+repositório) ou outras notas de agentes; a lista exata de exclusões é a do
+`scripts/exportar-copia-limpa.sh`. Antes de entregar, o
 futuro exportador deve oferecer dry-run, rejeitar Markdown extra, auditar
 segredos e mostrar a lista final de arquivos. Até esse exportador existir, não
 monte a cópia externa por exclusões improvisadas e não altere a visibilidade do

@@ -78,7 +78,7 @@ Entregue nas quatro camadas no protocolo `0.63.0`: `configaction.rs` no
 protocolo, a pasta `configaction/` no core (catálogo, disponibilidade, plano e
 um planejador por arquivo editado), `handlers/configaction.rs`, e na UI o
 `ConfigActionController` + o diálogo de três painéis, acessível pela paleta
-(`Ctrl+Alt+P`). Contrato em `DocsPublic/arquitetura/03-ipc-protocol.md`.
+(`Ctrl+Alt+P`). Contrato em `DocsPublic/arquitetura/03-protocolo-ipc.md`.
 
 *Aceite cumprido:* `src/tests/configaction.rs` verifica **cada uma das 16
 ações contra arquivo real** — abre um workspace de verdade, manda a requisição
@@ -450,7 +450,7 @@ simulação, saiu do produto em 2026-09-12 por decisão do autor.)
 Nada aqui reabre decisão registrada. Em particular, seguem fora:
 
 ```text
-IA na IDE        FORA DE ESCOPO desde 2026-07-17 (DocsPrivate/legado/)
+IA na IDE        FORA DE ESCOPO desde 2026-07-17 (40 §5; specs fora do repositorio)
 Python           adiado; foco em C/C++ e Rust (2026-08-30). A excecao do
                  Tree-sitter de Python NAO foi tomada
 Pylance          PROIBIDO (licenca so para produtos Microsoft). Se Python

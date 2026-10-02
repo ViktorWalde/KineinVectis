@@ -136,10 +136,49 @@ fn terminal_run_until_closed(
                     linhas = render_lines(&e);
                 }
             }
-            return (linhas, code);
+            return (without_login_shell_noise(linhas), code);
         }
     }
     panic!("a sessao {terminal_id} nao fechou em {timeout:?}; visto: {linhas:?}");
+}
+
+/// O que o shell de LOGIN desta maquina imprime antes de rodar qualquer coisa
+/// (`/etc/profile`, `~/.profile`), medido uma vez por processo de teste.
+///
+/// Toda execucao passa por `sh -lc` ("como o autor digitaria",
+/// handlers/run.rs), e um perfil que ecoa algo chegava como se fosse a
+/// primeira linha do programa. Medido em 2026-10-01: o `/etc/profile.d/nvm.sh`
+/// de um container de CI imprime `nvm`, e quatro testes de `run` reprovavam
+/// numa maquina sem defeito nenhum. Tirar do inicio exatamente o que o perfil
+/// imprime mantem a assercao EXATA sobre o que o programa imprimiu; numa
+/// maquina de perfil mudo, nao muda nada.
+fn login_shell_noise() -> &'static [String] {
+    static NOISE: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
+    NOISE.get_or_init(|| {
+        let Ok(output) = std::process::Command::new("sh")
+            .args(["-lc", "true"])
+            .output()
+        else {
+            return Vec::new();
+        };
+        let mut text = String::from_utf8_lossy(&output.stdout).into_owned();
+        text.push_str(&String::from_utf8_lossy(&output.stderr));
+        text.lines()
+            .map(|line| line.trim_end().to_owned())
+            .filter(|line| !line.is_empty())
+            .collect()
+    })
+}
+
+fn without_login_shell_noise(lines: Vec<String>) -> Vec<String> {
+    let noise = login_shell_noise();
+    let mut lines = lines.into_iter().peekable();
+    for expected in noise {
+        if lines.peek().is_some_and(|line| line.trim_end() == expected) {
+            lines.next();
+        }
+    }
+    lines.collect()
 }
 
 fn core_with_empty_search_path(test_name: &str) -> Core {

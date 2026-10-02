@@ -107,7 +107,7 @@ o padrão. Ele **gera** o build (Ninja/Make) a partir do `CMakeLists.txt`.
 | **Compilar 1 alvo** | `cmake --build build --target nome` | Só aquele executável/lib. |
 | **Rodar** | `./build/nome_do_executavel` | O CMake não "roda"; execute o binário gerado. |
 | **Instalar** | `cmake --install build` | Copia artefatos p/ o prefixo de instalação. |
-| **Limpar** | `rm -rf build` | Apaga o build dir. Reconfigure do zero se o cache ficar stale (ver ContextoIA). |
+| **Limpar** | `rm -rf build` | Apaga o build dir. Reconfigure do zero se o cache ficar stale (troca de distro ou de Qt). |
 
 ### CTest — testes de projetos CMake
 
@@ -163,4 +163,4 @@ próprio Kinein:
 | **Equilibrado** | clippy default (sem flags extras) | sem `RUSTFLAGS` |
 | **Relaxado** | `-- -A clippy::all -W clippy::correctness` | sem `RUSTFLAGS` |
 
-Detalhe do contrato IPC de cada um: `DocsPublic/arquitetura/03-ipc-protocol.md`.
+Detalhe do contrato IPC de cada um: `DocsPublic/arquitetura/03-protocolo-ipc.md`.

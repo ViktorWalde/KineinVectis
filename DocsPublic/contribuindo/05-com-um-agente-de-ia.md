@@ -9,12 +9,14 @@ vai revisar o que um agente entregou.
 
 1. **O prompt de entrada** com o estado real: versão do protocolo, os
    números do `40` (cabeçalho), o roadmap da etapa e a fatia; as regras
-   inegociáveis; o que ele pode e não pode fazer na máquina. O modelo
-   deste prompt é `DocsPrivate/Codex/PROMPT-proxima-sessao.md`; para quem
-   não tem acesso ao privado, o conteúdo público equivalente é o
-   [03](03-o-ritual-de-uma-fatia.md) + o roadmap da etapa + o `40`.
-2. **A ordem de leitura**: `40` §cabeçalho e §7 recentes → roadmap da
-   etapa → `arquitetura/ARCHITECTURE.md` → os arquivos da área. Um agente
+   inegociáveis; o que ele pode e não pode fazer na máquina. O conteúdo
+   desse prompt já está escrito: [`00-comece-aqui.md`](../00-comece-aqui.md)
+   + o [03](03-o-ritual-de-uma-fatia.md) + o roadmap da versão + o `40`.
+2. **A ordem de leitura** (desde 2026-10-01): [`00-comece-aqui.md`](../00-comece-aqui.md)
+   → `40` cabeçalho e §4 → as entregas recentes no `40.7` → o roadmap da
+   versão (o [mapa de versões](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md)
+   diz qual) → `arquitetura/01-mapa-de-modulos.md` (o contexto da mudança)
+   → `arquitetura/ARCHITECTURE.md` → os arquivos da área. Um agente
    que começa pelo código repete o que já foi descartado.
 3. **As regras que ele não pode "otimizar"** (todas nasceram de incidente):
 
@@ -45,10 +47,11 @@ vai revisar o que um agente entregou.
 - **O gate é o revisor que não cansa.** Peça o `--rapido` verde antes de
   cada commit e o completo (com o C++ em segundo plano) antes de fechar a
   fatia que mexeu em `ui/src`.
-- **Registro datado ao fim** (`DocsPrivate/Codex/<data>-<tema>.md`) com a
-  tabela fatia × commit, as provas, as notas de método (o que deu errado
-  e como se pegou), o que ficou. É o que faz a próxima sessão começar do
-  lugar certo.
+- **Registro datado ao fim**, na entrada `### 7.N` do
+  [`40.7`](../roadmaps/40.7-registro-das-entregas.md): as provas, as notas
+  de método (o que deu errado e como se pegou) e o que ficou, que também
+  entra na fila do `40` §4. É o que faz a próxima sessão começar do lugar
+  certo.
 - **"Save point" quando a tarefa cresce**: pare, documente, commite o que
   está provado, e só então continue. O mantenedor pediu isso mais de uma
   vez e sempre valeu a pena.
@@ -69,7 +72,7 @@ vai revisar o que um agente entregou.
 
 1. A mensagem do commit diz o que provou? Reproduza **uma** prova
    (o harness, a foto, o teste).
-2. O `40` §7.N e o roadmap §feito foram escritos? Dizem o que **não**
+2. A entrada `### 7.N` do `40.7` e o roadmap §feito foram escritos? Dizem o que **não**
    foi feito?
 3. O contrato (se houve) está no `03` com versão nova?
 4. O gate `--rapido` passa no seu checkout?
@@ -79,7 +82,7 @@ vai revisar o que um agente entregou.
 ## Codex, ou um segundo agente
 
 Só um agente commita. Um segundo pode ser **informado** do que está sendo
-feito (`DocsPrivate/Codex/TAREFAS-PARA-O-CODEX.md`) e pode revisar, medir,
+feito (o issue ou o PR da fatia) e pode revisar, medir,
 propor — mas duas mãos na mesma árvore sem coordenação produz exatamente o
 tipo de merge que este repositório evita. Se dois agentes precisam
 trabalhar, é em fatias diferentes, em worktrees diferentes, e o
@@ -92,4 +95,4 @@ diferença é só quem digita. Um contribuidor humano tem uma vantagem que o
 agente não tem — **ele clica** — e é por isso que a medida que o agente
 não alcança (o gesto real, a placa, o Grafana real) fica escrita como
 "não medido: o autor testa". Se você é essa pessoa, o teste real é a sua
-contribuição mais valiosa, e o lugar de registrá-la é o `40` §7.N.
+contribuição mais valiosa, e o lugar de registrá-la é uma entrada do `40.7`.

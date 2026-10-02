@@ -99,7 +99,7 @@ kinein-core/src/integration/              o dominio, ja em pasta (§4 regra 4)
 vertical real, testes de falha/cancelamento, orçamento medido, configuração
 reversível e nenhum processo/handle órfão.
 
-**Primeira vertical, recomendada (§0.2e do `PONTO_ATUAL`):** o **inventário das
+**Primeira vertical, recomendada pelo autor:** o **inventário das
 ferramentas já detectadas** (clangd, rust-analyzer, CMake, Cargo, Git, rg, fd,
 lldb-dap, Clippy). Zero dependência nova, valida o contrato inteiro e a aba
 informativa. **Não** começar pelo EditorConfig: a auditoria de 2026-07-16 derrubou
@@ -276,7 +276,7 @@ disponível para estudo, e a densidade/organização dele é o alvo estético qu
 autor escolheu (registro de 2026-07-16: "o visual limpo da IDE aberta do
 JetBrains — inspiração, não cópia; referência de print em `imagens/prints`").
 
-**Onde a dívida de UI/UX já é conhecida:** `DocsPublic/roadmaps/20-ui-spec-convergence-plan.md`
+**Onde a dívida de UI/UX já é conhecida:** `DocsPublic/roadmaps/20-convergencia-com-a-especificacao-de-ui.md`
 (fatias C0–C6) e `DocsPublic/especificacoes/sistema-de-componentes-de-ui.md`. Este
 documento não os substitui — aponta para eles e registra que a barra subiu.
 
@@ -287,8 +287,8 @@ débito antes**. A catraca não é opcional e já cobrou 4x num único dia.
 
 ## 8. O que este documento NÃO faz
 
-- **não abre nível nenhum:** a fila real e o que está em aberto vivem na TRILHA
-  do `DocsPrivate/historico/PONTO_ATUAL.md`, medida contra o código;
+- **não abre nível nenhum:** a fila real e o que está em aberto vivem no
+  `roadmaps/40` §4, medida contra o código;
 - **não adota nada:** toda ferramenta citada aqui é candidata e passa pelo gate de
   auditoria + `registro-de-componentes-abertos.json` antes de entrar;
 - **não decide licença:** DBeaver, Database Navigator e SQLTools estão listados

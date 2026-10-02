@@ -19,7 +19,7 @@
 > pastas que existem; `commands.rs` virou pasta; onze pastas de domínio do core
 > e sete handlers estavam ausentes; o `kinein-protocol` aparecia com doze
 > módulos e tem trinta; a lista de pastas do `ui/qml` tinha seis de vinte e
-> três; e `prompts/` estava na raiz, quando mora em `DocsPrivate/`.
+> três; e `prompts/` estava na raiz, quando nem é versionado.
 >
 > **Por que ele envelheceu calado:** este documento não tem número solto, e o
 > `verificar-docs.sh` só confere número. Árvore de arquivos é afirmação sobre o
@@ -30,7 +30,6 @@
 ```text
 kinein-vectis/
 ├── README.md  DocsPublic/{manual,tutorial}.md   os TRES markdown publicos
-├── AGENTS.md  GUIAIA.md  DocsPrivate/historico/PONTO_ATUAL.md   continuidade interna
 ├── build/como-executar.md
 ├── Cargo.toml  rust-toolchain.toml  deny.toml
 ├── .gitignore  .editorconfig
@@ -157,9 +156,8 @@ kinein-vectis/
 ├── DocsPublic/                        LIDA EM TODA SESSAO
 │   └── adr/ arquitetura/ build/ iconografia/ integracoes/ roadmaps/ seguranca/
 │      specs/ tooling/
-├── DocsPrivate/                continuidade interna
-│   └── ContextoIA.md diario/ prompts/
-└── DocsPrivate/legado/                 superado ou cancelado; nao implementar dali
+└── (fora do repositorio)       as notas internas do autor ficam no .gitignore;
+                                nada versionado depende delas
 ```
 
 **Não existe `templates/`.** Criar projeto novo escreve os arquivos a partir de
@@ -215,7 +213,7 @@ e os lints estritos em `[workspace.lints]`, herdados por todos os crates.
 configuração num documento é exatamente o que envelhece calado: a versão
 anterior desta seção dizia `missing_docs = "warn"` quando o arquivo já dizia
 `deny`, e listava três lints a menos do que existem. O que os lints exigem, e
-por quê, está em [`06-strict-mode.md`](06-strict-mode.md); o que eles **são**
+por quê, está em [`06-modo-estrito.md`](06-modo-estrito.md); o que eles **são**
 está em `Cargo.toml`, que é o único lugar onde a resposta não pode envelhecer.
 
 ```bash

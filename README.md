@@ -22,6 +22,12 @@ A Vectis não tenta substituir CMake, Cargo, clangd, GDB ou os SDKs dos fabrican
 
 ---
 
+## Para quem vai colaborar
+
+Pessoa ou IA: comece por **[`DocsPublic/00-comece-aqui.md`](DocsPublic/00-comece-aqui.md)** —
+as regras, onde mora cada fato, o [mapa de módulos](DocsPublic/arquitetura/01-mapa-de-modulos.md)
+(quem fala com quem, por quê e como) e o [mapa de versões até a 1.0](DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md).
+
 ## Download
 
 A **Kinein Vectis 0.3.5** está disponível publicamente pelo GitHub Releases:
@@ -660,7 +666,7 @@ Operações longas são jobs canceláveis.
 O protocolo entre frontend e core está documentado em:
 
 ```text
-DocsPublic/arquitetura/03-ipc-protocol.md
+DocsPublic/arquitetura/03-protocolo-ipc.md
 ```
 
 As decisões e regras arquiteturais estão em:

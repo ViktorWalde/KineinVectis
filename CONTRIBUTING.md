@@ -1,5 +1,10 @@
 # Contribuir
 
+**Primeira vez aqui, pessoa ou IA?** Comece por
+[`DocsPublic/00-comece-aqui.md`](DocsPublic/00-comece-aqui.md): as regras que
+valem antes de qualquer outra, onde mora cada fato do projeto e por onde
+começar conforme o que você veio fazer.
+
 O guia completo de quem chega — a ideia do projeto e o que ele recusa ser,
 como preparar o ambiente, o ritual de uma mudança passo a passo, cada gate
 e o porquê dele, como trabalhar **com ou sem um agente de IA**, e o mapa
@@ -14,6 +19,9 @@ DocsPublic/contribuindo/04-os-gates-que-dizem-nao.md o verificar.sh e cada gate:
 DocsPublic/contribuindo/05-com-um-agente-de-ia.md  colaborar com Claude Code/Codex/outros sem quebrar as regras
 DocsPublic/contribuindo/06-onde-mexer.md          o mapa por área (código, contrato, docs, testes)
 DocsPublic/contribuindo/07-fluxo-e-responsabilidades-dos-gates.md fluxo, comunicação e dono de cada gate
+DocsPublic/contribuindo/08-convencoes-codigo-testes-commits.md idioma, comentários, testes, commits e onde documentar
+DocsPublic/contribuindo/09-glossario-de-identificadores.md a tradução de cada palavra para os nomes em inglês
+DocsPublic/contribuindo/10-sua-primeira-contribuicao-passo-a-passo.md uma contribuição inteira, do clone ao commit
 ```
 
 A versão curta ("onde olhar para mudar o quê") é

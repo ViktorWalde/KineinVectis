@@ -11,11 +11,25 @@ cargo fmt --all          # formate primeiro (o gate apenas CHECA a formatacao)
 scripts/verificar.sh     # completo: lint + testes + C++ + builds debug/release
 ```
 
-Modo rapido para iteracao (sem builds):
+Modo rapido para iteracao (sem build release e sem os smokes; a UI de debug
+compila mesmo assim, antes dos lints que leem o build):
 
 ```bash
 scripts/verificar.sh --rapido
 ```
+
+Antes de release e em CI, acrescente `--estrito` (combina com os dois modos):
+
+```bash
+scripts/verificar.sh --estrito
+```
+
+Sem ele, gate de **ambiente** que nao tem a ferramenta nesta maquina (QEMU,
+debugpy, kit cross, Podman/Docker) nao reprova: aparece na lista
+`NAO PROVADO` do fim, e o veredito vira "VERDE no que esta maquina prova" em
+vez de "TUDO VERDE". Com ele, a lista nao vazia reprova. O contrato inteiro
+esta' em `DocsPublic/contribuindo/07-fluxo-e-responsabilidades-dos-gates.md`
+§1.1, e cada desfecho em `04-os-gates-que-dizem-nao.md`.
 
 O modo **completo** e o que bloqueia release: os binarios do icone
 (`build/linux-clang-release-hardened/ui/kinein-vectis` e

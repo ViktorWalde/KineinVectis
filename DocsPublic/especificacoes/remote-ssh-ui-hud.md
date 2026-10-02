@@ -149,8 +149,8 @@ importantes aqui do que lá.
 > seções, uma por vez, e **uma ação primária por estado** no cabeçalho, derivada
 > por regra pura (`RemoteActionRules`) e testada em harness. O subtítulo diz
 > *por que* aquele é o próximo passo. Quando o gesto vive noutra seção, a ação
-> leva até ela. Capturas em `DocsPrivate/Codex/evidencias-2026-09-24-remote/`;
-> registro em [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.98.
+> leva até ela. Registro, com o que foi medido, em
+> [`40.7`](../roadmaps/40.7-registro-das-entregas.md) §7.98.
 >
 > Ainda **não** feito desta seção: a tool window propriamente dita (hoje ainda é
 > uma moldura no menu Ambiente, não um painel lateral ao lado de Projeto/Git) e
@@ -467,7 +467,7 @@ entrar depois de medir colisões e frequência.
 > **Parcialmente implementada em 2026-09-24.** Quatro dos seis itens entraram,
 > nos protocolos `0.132.0`, `0.133.0` e `0.134.0`. Registro em
 > [`roadmap 40`](../roadmaps/40-estado-e-continuidade.md) §7.93–§7.94; contratos
-> em [`03-ipc-protocol`](../arquitetura/03-ipc-protocol.md).
+> em [`03-protocolo-ipc`](../arquitetura/03-protocolo-ipc.md).
 
 - **feito (`0.132.0`):** separar "usar SSH existente" de "configurar servidor" —
   o `RemoteDiscovery` fica **antes** do formulário, e o formulário continua

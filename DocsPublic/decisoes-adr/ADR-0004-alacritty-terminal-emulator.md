@@ -42,7 +42,7 @@ Substituir `vt100` por [`alacritty_terminal`](https://github.com/alacritty/alacr
 `0.26.0` como motor de grade e estado VT do core, preservando `portable-pty`, o
 contrato IPC tipado e o renderer Qt/QML.
 
-Alinhamento com a política do repositório (`DocsPublic/roadmaps/adaptacao-de-plugins-abertos.md`):
+Alinhamento com a política do repositório (`DocsPublic/roadmaps/54-adaptacao-de-plugins-abertos.md`):
 é **MODE-A** — integrar biblioteca aberta madura em vez de reimplementar. As
 referências do próprio roadmap resolveram o mesmo problema do mesmo jeito:
 Code OSS usa xterm.js, IntelliJ usa JediTerm e **Zed usa `alacritty_terminal`**.

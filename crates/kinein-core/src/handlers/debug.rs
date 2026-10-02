@@ -407,10 +407,11 @@ impl Core {
             (Some(frame_id), None) => {
                 manager
                     .frame_variables(frame_id)
-                    .map(|variables| DebugVariablesResult {
+                    .map(|frame| DebugVariablesResult {
                         frame_id: Some(frame_id),
                         reference: None,
-                        variables,
+                        variables: frame.variables,
+                        notice: frame.notice,
                     })
             }
             (None, Some(reference)) => {
@@ -420,6 +421,7 @@ impl Core {
                         frame_id: None,
                         reference: Some(reference),
                         variables,
+                        notice: None,
                     })
             }
             _ => {

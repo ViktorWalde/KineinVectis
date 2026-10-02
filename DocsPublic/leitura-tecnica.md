@@ -55,7 +55,7 @@ Qt/QML  ──── IPC JSON-RPC (stdio, uma linha por mensagem) ──── R
 | `scripts/` | 10.701 | 76 | Gates, sondas, ambiente, packaging |
 
 **O fato que mais surpreende quem chega:** a documentação tem **70.246 linhas em
-97 arquivos** — as três árvores (`DocsPublic/`, `DocsPrivate/`, `DocsPrivate/legado/`), quase
+97 arquivos** — as três árvores de então (a pública e as duas internas do autor), quase
 tanto quanto o core e a UI **somados**. Isso é uma escolha
 consciente (o projeto é conduzido por sessões que trocam de contexto), mas cobra
 um preço, e é a razão de existirem as três árvores e o gate de veracidade.
@@ -82,7 +82,7 @@ domínios de 2026-09-12 — `serial`, `container`, `project`, `index` — estão
 abaixo.)
 
 **Os comandos que provam os dois primeiros estão no
-[`arquitetura/03`](arquitetura/03-ipc-protocol.md)**, com o motivo de cada
+[`arquitetura/03`](arquitetura/03-protocolo-ipc.md)**, com o motivo de cada
 filtro: sem eles, um grep ingênuo devolve 132 métodos (conta dois nomes de
 evento que aparecem num `match` de teste) e 36 eventos (não vê cinco montados
 com `format!`).
@@ -434,8 +434,8 @@ medido e o que falta por pilar) e a **trilha Python completa** bare metal →
 edge → backend → banco (§9).
 
 A simulação física/matemática **saiu do produto em 2026-09-12, por decisão
-do autor** — código, documentos e decisões foram para o histórico privado
-(`DocsPrivate/historico/simulacao/`). O foco são dois contextos:
+do autor** — código, documentos e decisões saíram do repositório
+(`roadmaps/40` §5). O foco são dois contextos:
 desenvolvimento de software (Python, C/C++, Rust, banco de dados) e sistemas
 embarcados.
 

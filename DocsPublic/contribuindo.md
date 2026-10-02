@@ -73,10 +73,10 @@ Detalhe obrigatório antes de escrever código novo:
 | Quero mudar… | Olhe aqui |
 | --- | --- |
 | Comportamento visual/layout | a spec da área em [`specs/`](especificacoes/) → o componente em `ui/qml/` |
-| Um contrato entre UI e core | [`arquitetura/03-ipc-protocol.md`](arquitetura/03-ipc-protocol.md) → `crates/kinein-protocol/src/<dominio>.rs` |
+| Um contrato entre UI e core | [`arquitetura/03-protocolo-ipc.md`](arquitetura/03-protocolo-ipc.md) → `crates/kinein-protocol/src/<dominio>.rs` |
 | Lógica de um domínio | `crates/kinein-core/src/<dominio>/` + `handlers/<dominio>.rs` |
-| Editor, completion, navegação | spec `EDITOR_LANGUAGE_INTELLIGENCE` + [`roadmaps/25-syntax-tree-semantic-foundation.md`](roadmaps/25-syntax-tree-semantic-foundation.md) |
-| Terminal | [`roadmaps/26-terminal-rendering-parity-roadmap.md`](roadmaps/26-terminal-rendering-parity-roadmap.md) + [`adr/ADR-0004-alacritty-terminal-emulator.md`](decisoes-adr/ADR-0004-alacritty-terminal-emulator.md) |
+| Editor, completion, navegação | spec `EDITOR_LANGUAGE_INTELLIGENCE` + [`roadmaps/25-fundacao-semantica-pela-arvore-sintatica.md`](roadmaps/25-fundacao-semantica-pela-arvore-sintatica.md) |
+| Terminal | [`roadmaps/26-paridade-de-renderizacao-do-terminal.md`](roadmaps/26-paridade-de-renderizacao-do-terminal.md) + [`adr/ADR-0004-alacritty-terminal-emulator.md`](decisoes-adr/ADR-0004-alacritty-terminal-emulator.md) |
 | Build, Run, Test, Debug | spec `PRODUCT_FLOWS_BUILD_RUN_DEBUG` + [`build/22-compilacao-c-cpp-rust.md`](build/22-compilacao-c-cpp-rust.md) |
 | Git | `crates/kinein-core/src/git/` + `ui/qml/git/` |
 | Configurações/persistência | `crates/kinein-config` + `schemas/` (formato novo exige schema) |
@@ -95,7 +95,7 @@ bash scripts/instalar-atalho.sh     # atalho "Kinein Vectis (Desenvolvimento)"
 ./scripts/kinein-vectis             # executa pelo checkout
 ```
 
-Requisitos e detalhes em [`build/14-development-environment.md`](build/14-development-environment.md);
+Requisitos e detalhes em [`build/14-ambiente-de-desenvolvimento.md`](build/14-ambiente-de-desenvolvimento.md);
 os comandos oficiais em [`build/comandos-de-build-e-verificacao.md`](build/comandos-de-build-e-verificacao.md).
 
 ## 5. O ritual de uma mudança

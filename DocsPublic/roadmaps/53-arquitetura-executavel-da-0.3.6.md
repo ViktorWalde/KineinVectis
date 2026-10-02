@@ -15,8 +15,7 @@
 > **Fontes:** [49](49-frontend-0.3.6-e-sequencia-0.5.md) (F0–F5 e o adendo
 > §9 da Library), [50 §8](50-biblioteca-e-providers-0.5.md) (o que a 0.5 vai
 > pôr na casca), [52 §7](52-arquitetura-executavel-da-0.4.md) (o que a 0.4
-> vai pôr na casca), os estudos privados em `DocsPrivate/documentacoes/`, o
-> diário `DocsPrivate/uso-diario.md` e a [especificação de frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md).
+> vai pôr na casca), os estudos e o diário de uso do autor e a [especificação de frontend](../especificacoes/arquitetura-de-frontend-0.3-em-diante.md).
 
 ## 0.1 Princípio do autor (2026-10-01): ruído não se esconde, se elimina
 
@@ -173,7 +172,7 @@ R7 PREPARO     a casca já comporta a área de superfície completa (Library da
 [ ] passeio por superfícies sem aviso (§5.2) no checkout e no AppImage
 [ ] screenshots 1024×700, 1366×768 e largo (§10)
 [ ] medida antes/depois (§8)
-[ ] registro em 40 §7; contrato em 03-ipc-protocol.md quando settings mudar
+[ ] registro em 40 §7; contrato em 03-protocolo-ipc.md quando settings mudar
 ```
 
 ### 3.4 Sinais de alerta na revisão
@@ -523,7 +522,7 @@ overlays de ambiente: sobre o centro (como hoje), até a 0.4/0.5 decidir
 
 ## 8. Desempenho
 
-- Linha de base na F0 e régua do [21](21-long-horizon-roadmap.md):
+- Linha de base na F0 e régua do [21](21-roadmap-de-longo-prazo.md):
   primeiro frame, RSS, tecla→frame, abrir painel, voltar ao editor.
 - Projeção do trilho e da barra de baixo: funções puras sobre listas curtas,
   sem binding que leia `ListModel` (regra do `EditorOpenDocuments`).
@@ -601,6 +600,44 @@ AppImage e as telas nas três larguras.
 4. `--wait` como padrão em algum caso (ex.: `git config core.editor`)?
 5. Atalho para percorrer o foco entre regiões (proposta: Ctrl+F6, como em
    IDEs JetBrains) — confirmar no gate de atalhos.
+
+### 13.0 Decisões do autor sobre o começo da 0.3.6 (2026-10-01)
+
+1. **Ordem das primeiras fatias: F0 → layout → V-1.** Primeiro medir (§5.3:
+   telas nas três larguras, linha de base de desempenho, inventário e os
+   números visuais do 58 §4.3), depois o layout versionado (§4.4), que destrava
+   a 0.3.7, e então a varredura do C++ (V-1).
+2. **O aviso `wayland-egl` do AppImage é investigado na 0.3.6.** Até aqui ele
+   era aceito como "esperado no modo gráfico portátil" e explicado no
+   tutorial, o que contraria a §0.1 (zero mensagem *produzida*). A fatia acha
+   a causa; elimina se der; se for inevitável, prova e registra o porquê.
+3. **A varredura de idioma grande (V-3 QML, V-4 Rust) roda entre fatias de
+   produto**, um domínio por commit e só quando nenhuma fatia de produto
+   estiver aberta — para não gerar conflito em centenas de arquivos.
+4. **O `NewDelete` do clang-tidy no `QPointer` foi provado falso positivo** e
+   tem exceção estreita e com prazo no `verificar-cpp.sh` (40.7 §7.152). Com
+   isso o gate completo deixa de ter vermelho conhecido antes da primeira
+   fatia.
+
+### 13.1 Direção visual do trem 0.3.6–0.3.9 (decisão do autor, 2026-10-01)
+
+Registrada **antes** da task dedicada de UX/HUD, que a detalha e mede; aqui
+é a intenção, não o desenho:
+
+- a 0.3.6–0.3.9 é a **base visual** de todas as versões seguintes: o que se
+  decide aqui vira contrato de componente, não ajuste de tela;
+- **mais visível**: hierarquia clara do que é ação, estado e conteúdo;
+- **carregamento fluido**: nenhuma animação de carga que trave ou engasgue —
+  o trabalho pesado não pode disputar a thread de UI com a animação
+  (hipótese a medir na task: hoje há carga síncrona no caminho do frame);
+- **componentes com bordas arredondadas** e aparência moderna, como regra do
+  sistema de componentes, não caso a caso;
+- **inspiração no layout e no UX das IDEs JetBrains**, adaptada ao contexto
+  do projeto (embarcados, Remote, ambiente) e com identidade própria — não
+  uma cópia.
+
+A task dedicada parte de capturas reais (hook `KINEIN_SCREENSHOT`) e propõe
+com mockups lado a lado; problemas de UX e de HUD/UI entram medidos.
 
 ## F0 — inventário (a preencher na fatia 3)
 

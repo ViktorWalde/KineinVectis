@@ -9,7 +9,8 @@ import "../../ui/qml/debug"
 // ignorado; escolher um escopo pede as variaveis pelo ref dele e so' as
 // desse ref entram; a memoria vira linhas hex+ascii com o endereco certo e
 // os bytes ilegiveis ditos; o disassembly vira uma linha por instrucao sem
-// "undefined"; a recusa do core vira erro; o fim da sessao limpa tudo.
+// "undefined"; a recusa do core vira erro; o fim da sessao limpa tudo; o
+// aviso de degradacao (gdb < 16) e' do frame que o pediu e morre com ele.
 Item {
     id: root
 
@@ -60,6 +61,18 @@ Item {
         // Trocar de frame esquece escopos e variaveis.
         controller.currentFrameId = 8;
         if (i.scopes.length !== 0 || i.selectedScope !== "" || i.scopeVariables.length !== 0) failures += 256;
+
+        // A degradacao explicada (gdb < 16): o aviso do core e' do frame que
+        // o pediu; o de outro frame e' ignorado, e trocar de frame o esquece.
+        i.handleFrameNotice(3, "velho");
+        if (i.frameNotice !== "") failures += 8388608;
+        i.handleFrameNotice(8, "so' registradores");
+        if (i.frameNotice !== "so' registradores") failures += 16777216;
+        controller.currentFrameId = 9;
+        if (i.frameNotice !== "") failures += 33554432;
+        i.handleFrameNotice(9, undefined);
+        if (i.frameNotice !== "") failures += 67108864;
+        controller.currentFrameId = 8;
 
         // Memoria: o endereco aparado, a contagem padrao, e o hex por linha.
         i.readMemory("  0x3ff00000 ");

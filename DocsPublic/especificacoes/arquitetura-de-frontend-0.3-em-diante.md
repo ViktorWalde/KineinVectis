@@ -1,7 +1,7 @@
 # Arquitetura de frontend — 0.3 em diante
 
 > **Classe: ALVO / PLANO VINCULANTE.** Este documento consolida o conteúdo
-> aproveitável de `DocsPrivate/arquiKinein/` depois de confrontá-lo com o código,
+> aproveitável dos estudos de arquitetura do autor depois de confrontá-lo com o código,
 > os gates e os contratos públicos em 2026-09-22.
 >
 > Ele não afirma o que já existe. Para estado, o código e o
@@ -345,7 +345,7 @@ tocar, sem parar o backend para reescrever todo o frontend.
 
 ## 15. Fonte extraída e partes não promovidas
 
-Foram promovidos de `DocsPrivate/arquiKinein/`: shell centrado no editor, áreas
+Foram promovidos dos estudos do autor: shell centrado no editor, áreas
 left/right/bottom, Tool Windows mínimas, commands por ID, design system,
 estados obrigatórios, acessibilidade, tabs robustas, split incremental,
 fronteiras Rust/C++/QML, migração por estrangulamento e gatilhos contra

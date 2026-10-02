@@ -193,12 +193,15 @@ fn refusals_happen_before_the_port_is_opened() {
     assert_eq!(campo.code, JsonRpcErrorCode::InvalidParams);
 
     // Sem permissao: um no' so'-leitura do proprio usuario (root ignoraria o
-    // modo, e nesse caso o teste nao prova nada — pula com aviso).
+    // modo, e nesse caso o teste nao prova nada — pula com aviso). Como root o
+    // pedido NAO e' feito: ele passaria, criaria um job, e a assercao de
+    // "nenhum job" abaixo reprovava por um motivo que nao e' defeito
+    // (medido em 2026-10-01, num container de CI que roda como root).
     std::fs::set_permissions(&c.porta, std::fs::Permissions::from_mode(0o444)).unwrap();
-    let resposta = c.identify(json!({ "device": porta }));
     if rustix::process::geteuid().is_root() {
         eprintln!("rodando como root: a prova de permissao nao vale");
     } else {
+        let resposta = c.identify(json!({ "device": porta }));
         let erro = resposta.error.expect("sem permissao recusa");
         assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest, "{erro:?}");
         assert!(erro.message.contains("r--r--r--"), "{erro:?}");

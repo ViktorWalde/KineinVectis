@@ -148,7 +148,7 @@ QtObject {
         return false;
     }
 
-    // E1 (DocsPrivate/diario/18, trilha E): auto-close de pares, type-over do
+    // E1 (trilha E do editor): auto-close de pares, type-over do
     // fechador, surround da seleção e `#include <`.
     // true = tecla consumida.
     function handleTypingKey(event) {

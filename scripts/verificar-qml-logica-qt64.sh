@@ -22,10 +22,24 @@ elif command -v podman >/dev/null 2>&1; then
 elif command -v docker >/dev/null 2>&1; then
     engine="docker"
 else
-    # Sem container nao ha' Qt 6.4, e pular calado seria o verde falso que
-    # este passo existe para impedir.
-    echo "erro: o G0.3 precisa de Podman ou Docker (Qt 6.4 do AppImage)." >&2
-    exit 1
+    engine=""
+fi
+
+# Sem container nao ha' Qt 6.4. Pular CALADO seria o verde falso que este
+# passo existe para impedir — e reprovar seria falso positivo para quem clonou
+# numa maquina sem Podman/Docker, onde o QML nao tem defeito nenhum. O meio
+# honesto e' o protocolo NAO PROVADO (scripts/unproven.py): dito, contado no
+# resumo do verificar.sh, e reprovado pelo --estrito (2026-10-01). O mesmo
+# vale para o cliente docker sem daemon (medido num container de CI).
+# shellcheck disable=SC1091  # unproven.sh e' lido por si (shellcheck roda arquivo a arquivo)
+. "$repo_root/scripts/unproven.sh"
+if [[ -z "$engine" ]]; then
+    record_unproven "G0.3" "harnesses QML no Qt 6.4 do AppImage" "nem podman nem docker nesta maquina"
+    exit 0
+fi
+if ! "$engine" info >/dev/null 2>&1; then
+    record_unproven "G0.3" "harnesses QML no Qt 6.4 do AppImage" "$engine presente, mas o servico nao responde ($engine info falhou)"
+    exit 0
 fi
 
 # O build e' cacheado pelo engine: so' refaz quando o Containerfile muda.

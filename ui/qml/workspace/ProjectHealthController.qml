@@ -13,7 +13,7 @@ Item {
     // O preset com que a IDE configurou (P0, 0.115.0): o kit, o
     // CMakeUserPresets ou o CMakePresets do projeto; vazio = sem preset.
     property string cmakePreset: ""
-    // Auto-setup ao abrir (radar de DocsPrivate/diario/18): o configure dispara sozinho
+    // Auto-setup ao abrir: o configure dispara sozinho
     // UMA vez por workspace; falha devolve o aviso acionavel (sem loop).
     property bool autoConfigureAttempted: false
     property bool autoConfigureFailed: false

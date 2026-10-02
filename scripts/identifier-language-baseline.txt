@@ -3068,19 +3068,13 @@ scripts/verificar-qml-fiacao.sh	linhas	7
 scripts/verificar-qml-fiacao.sh	recuo	2
 scripts/verificar-qml-fiacao.sh	texto	3
 scripts/verificar-qml.sh	ausentes	4
-scripts/verificar-qml.sh	candidato	2
 scripts/verificar-qml.sh	candidatos	2
-scripts/verificar-qml.sh	configurado	3
 scripts/verificar-qml.sh	copia	5
 scripts/verificar-qml.sh	declarado	2
 scripts/verificar-qml.sh	declarados	5
 scripts/verificar-qml.sh	diferentes	4
-scripts/verificar-qml.sh	escolhido	2
 scripts/verificar-qml.sh	fonte	5
-scripts/verificar-qml.sh	idade	1
-scripts/verificar-qml.sh	novo	2
 scripts/verificar-qml.sh	relativo	4
-scripts/verificar-qml.sh	tipos	2
 scripts/verificar-shell.sh	alvos	5
 scripts/verificar-shell.sh	arquivo	1
 scripts/verificar-transicao-workspace.sh	achados	5
@@ -3095,7 +3089,6 @@ scripts/verificar-transicao-workspace.sh	padrao	2
 scripts/verificar-transicao-workspace.sh	recuo	2
 scripts/verificar-transicao-workspace.sh	teste	3
 scripts/verificar-transicao-workspace.sh	texto	6
-scripts/verificar.sh	etapa	3
 scripts/verificar.sh	modo	3
 scripts/verificar.sh	passo	1
 scripts/verificar.sh	raiz	1
@@ -3186,10 +3179,9 @@ scripts/verificar_embarcado.py	regioes	9
 scripts/verificar_embarcado.py	respostas	4
 scripts/verificar_embarcado.py	vivos	4
 scripts/verificar_fiacao_ipc.py	aceitos	12
-scripts/verificar_fiacao_ipc.py	achados	13
+scripts/verificar_fiacao_ipc.py	achados	10
 scripts/verificar_fiacao_ipc.py	arquivos	11
 scripts/verificar_fiacao_ipc.py	bloco	3
-scripts/verificar_fiacao_ipc.py	braco	2
 scripts/verificar_fiacao_ipc.py	caminho	2
 scripts/verificar_fiacao_ipc.py	chamadas	2
 scripts/verificar_fiacao_ipc.py	chamador	4
@@ -3210,7 +3202,7 @@ scripts/verificar_fiacao_ipc.py	metodos	15
 scripts/verificar_fiacao_ipc.py	orfaos	2
 scripts/verificar_fiacao_ipc.py	ouvido	2
 scripts/verificar_fiacao_ipc.py	ouvinte	3
-scripts/verificar_fiacao_ipc.py	padrao	6
+scripts/verificar_fiacao_ipc.py	padrao	4
 scripts/verificar_fiacao_ipc.py	pedidos	2
 scripts/verificar_fiacao_ipc.py	protocolo	5
 scripts/verificar_fiacao_ipc.py	raiz	6
@@ -3220,7 +3212,7 @@ scripts/verificar_fiacao_ipc.py	roteados	5
 scripts/verificar_fiacao_ipc.py	soltos	3
 scripts/verificar_fiacao_ipc.py	sufixo	2
 scripts/verificar_fiacao_ipc.py	sufixos	2
-scripts/verificar_fiacao_ipc.py	texto	17
+scripts/verificar_fiacao_ipc.py	texto	15
 scripts/verificar_fiacao_ipc.py	titulo	9
 scripts/verificar_fiacao_ipc.py	tratador	2
 scripts/verificar_fiacao_ipc.py	tratados	7
@@ -3245,7 +3237,7 @@ scripts/verificar_micropython_porta.py	titulo	2
 scripts/verificar_micropython_porta.py	trecho	2
 scripts/verificar_micropython_porta.py	verificar	1
 scripts/verificar_python_attach.py	evento	3
-scripts/verificar_python_debug.py	ambiente	9
+scripts/verificar_python_debug.py	ambiente	7
 scripts/verificar_python_debug.py	binario	2
 scripts/verificar_python_debug.py	bombear	5
 scripts/verificar_python_debug.py	bruto	5

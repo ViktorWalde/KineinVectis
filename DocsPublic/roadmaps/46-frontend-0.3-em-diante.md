@@ -1,6 +1,6 @@
 # 46 — Frontend da 0.3 em diante
 
-> **Classe: PLANO.** Extração operacional de `DocsPrivate/arquiKinein/`,
+> **Classe: PLANO.** Extração operacional dos estudos de arquitetura do autor,
 > reconciliada com o código em 2026-09-22.
 >
 > O alvo completo está em

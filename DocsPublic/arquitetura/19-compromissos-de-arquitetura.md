@@ -3,8 +3,8 @@
 > **Status:** ativo
 > **Prioridade:** referência permanente (ler antes de decisão estrutural)
 > **Fonte de verdade:** o *porquê* das decisões. O *como* está em
-> `DocsPublic/arquitetura/ARCHITECTURE.md`; o *o quê/quando* em `DocsPrivate/diario/18-daily-driver-plan.md`
-> e `DocsPublic/roadmaps/backend-para-ui-ux.md`; o visual-alvo em `DocsPublic/especificacoes/`
+> `DocsPublic/arquitetura/ARCHITECTURE.md`; o *o quê/quando* no
+> [mapa de versões](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md) e em `DocsPublic/roadmaps/55-backend-para-ui-ux.md`; o visual-alvo em `DocsPublic/especificacoes/`
 > **Ultima revisao:** 2026-07-09
 
 ## Por que este documento existe
@@ -23,12 +23,11 @@ copy e comportamento visual seguem estritamente os `.md` de `DocsPublic/especifi
 (entrada: `indice-das-especificacoes.md`). Funcionalidade pode ser fatiada,
 adiada ou simplificada; o visual **não se inventa nem se "melhora" de
 passagem** — divergência de spec é bug ou tarefa explícita com o usuário
-ciente. (Já registrado em `DocsPrivate/ContextoIA.md` e `AGENTS.md`; reafirmado aqui em
-2026-07-09.)
+ciente. (Reafirmado aqui em 2026-07-09.)
 
 ## Requisitos funcionais (resumo por área)
 
-Detalhe e sequência vivem em `DocsPrivate/diario/18` (marcos M0–M4) e no roadmap; aqui só
+Detalhe e sequência vivem nos roadmaps (o [`21`](../roadmaps/21-roadmap-de-longo-prazo.md) para M4–M7); aqui só
 o mapa com estado em 2026-07-09:
 
 ```text
@@ -56,7 +55,7 @@ RF17 Settings com schema/migração + Strict/Balanced/Relaxed       [M4]
 
 ```text
 RNF1 Privacidade: 100% local/offline; ZERO telemetria; nada sai da
-     máquina sem ação explícita do usuário (AGENTS.md).
+     máquina sem ação explícita do usuário (leitura-tecnica.md §1).
 RNF2 Segurança de workspace: todo acesso a arquivo pelo core é
      canonicalizado e confinado à raiz aberta; a UI nunca toca disco.
 RNF3 Responsividade: a UI nunca bloqueia em trabalho pesado; operação
@@ -74,7 +73,7 @@ RNF6 Portabilidade: Linux-first, agnóstico de distro (Arch é o alvo
      caminho hardcoded de distro em código.
 RNF7 Performance percebida: startup rápido (LSP/ferramentas sob demanda,
      nunca no boot da UI); highlight semântico assíncrono com debounce.
-     Orçamento formal de medição entra no M4 (DocsPrivate/diario/18).
+     Orçamento formal de medição entra no M4 (21 §M4.2).
 RNF8 UX: memória muscular JetBrains (atalhos/fluxos) + visual dos specs.
 ```
 
@@ -101,7 +100,7 @@ rustfmt/clang-format, clangd/rust-analyzer, cargo/cmake/ninja, fd, script(1).
 - **Custo aceito:** dependência de PATH/versões da máquina (mitigado por
   tools.detect/environment.scan + modo degradado + instalar-ambiente.sh);
   variação de saída entre versões de ferramenta.
-- **Revisitar:** nunca por princípio (AGENTS.md); exceções pontuais só com
+- **Revisitar:** nunca por princípio; exceções pontuais só com
   registro aqui.
 
 ### D3. Core síncrono de request único + JobManager para o resto
@@ -149,7 +148,7 @@ controllers; eventos em `ipc/*`; `CoreClient` fachada única (DocsPublic/arquite
 
 ### D7. Formatação: ferramenta direta, síncrona, sobre o buffer (M1.1)
 
-Registrado em detalhe em `DocsPrivate/diario/18` (design M1.1). Resumo do trade-off:
+Design da fatia M1.1. Resumo do trade-off:
 independência de LSP vivo e zero side effect em disco, ao custo de manter
 seleção de formatter por extensão no core.
 
@@ -159,8 +158,8 @@ seleção de formatter por extensão no core.
   degraus novos (qmllint 117→0) provaram o método fix-first.
 - **Custo aceito:** fricção por entrega (minutos de gate completo); recusas
   do clippy pedantic exigem justificar exceções raras.
-- **Revisitar:** relaxar exige motivo registrado (AGENTS.md); a direção
-  preferida é subir degraus (DocsPrivate/diario/18, escada de rigor).
+- **Revisitar:** relaxar exige motivo registrado; a direção
+  preferida é subir degraus ([`06-modo-estrito.md`](06-modo-estrito.md), a escada de rigor).
 
 ### D9. Testes: comportamento no core; UI sem harness automatizado (hoje)
 
@@ -186,13 +185,13 @@ seleção de formatter por extensão no core.
 
 - **Ganho:** privacidade absoluta (RNF1), confiança, zero infra.
 - **Custo aceito:** melhoria guiada só por uso próprio e reports manuais.
-- **Revisitar:** não revisitar; decisão de produto permanente (AGENTS.md).
+- **Revisitar:** não revisitar; decisão de produto permanente (leitura-tecnica.md §1).
 
 ### D12. UI atual → specs por convergência gradual, não remake big-bang
 
 Decisão de 2026-07-09, confirmada com o usuário. Plano vinculante completo
 (regras, inventário de divergências, ordem C0–C6 e definition of done):
-`DocsPublic/roadmaps/20-ui-spec-convergence-plan.md`.
+`DocsPublic/roadmaps/20-convergencia-com-a-especificacao-de-ui.md`.
 
 - **Ganho:** IDE utilizável durante toda a transição (dogfooding contínuo,
   que é o critério dos marcos); risco de regressão proporcional ao tamanho
@@ -214,5 +213,5 @@ Decisão de 2026-07-09, confirmada com o usuário. Plano vinculante completo
 2. Custo aceito começou a doer de verdade (medido, não intuído)? Esse é o
    gatilho: reabrir a decisão numa fatia própria, nunca "de passagem".
 3. Requisito novo (funcional ou não) primeiro ganha linha aqui; depois
-   vira fatia em DocsPrivate/diario/18.
+   vira fatia no roadmap da versão (o [`57`](../roadmaps/57-mapa-de-versoes-ate-a-1.0.md) diz qual).
 ```

@@ -15,8 +15,9 @@ ui/src/                   a ponte C++ (core_client_<dominio>.cpp), main.cpp (hoo
 ui/qml/                   app/ (composição), ipc/ (roteadores), shell/ (trilho, hosts, atalhos),
                           editor/, git/, datasource/, container/, grafana/, embedded/, components/ (Kv*)
 scripts/                  os gates (verificar-*.sh / verificar_*.py), qml-harness/tst_*.qml
-DocsPublic/               arquitetura/ (03 = contrato), roadmaps/ (40 = estado), manual.md
-DocsPrivate/Codex/        registros datados, evidências, PROMPT-proxima-sessao.md (privado)
+DocsPublic/               00-comece-aqui.md (a porta), arquitetura/ (01 = mapa de módulos,
+                          03 = contrato), roadmaps/ (40 = estado, 40.7 = registro,
+                          57 = versões), manual.md
 ```
 
 ## Por área

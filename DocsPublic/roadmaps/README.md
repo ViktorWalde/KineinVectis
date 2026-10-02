@@ -1,8 +1,10 @@
 # roadmaps/ — planos, trilhas e o ESTADO vivo
 
 **Comece pelo [`40-estado-e-continuidade.md`](40-estado-e-continuidade.md)**:
-é a fila viva (§4), as decisões que não se reabrem (§5) e o registro de cada
-fatia entregue (§7). A Etapa 1 seguiu a ordem do
+é a fila viva (§4) e as decisões que não se reabrem (§5); o registro de cada
+fatia entregue mora no [`40.7-registro-das-entregas.md`](40.7-registro-das-entregas.md).
+A ordem das versões até a 1.0, separando decidido de proposto, está no
+[`57-mapa-de-versoes-ate-a-1.0.md`](57-mapa-de-versoes-ate-a-1.0.md). A Etapa 1 seguiu a ordem do
 [`42-trilha-profunda-embarcados.md`](42-trilha-profunda-embarcados.md); a
 Etapa 2 (2026-09-18/19, fechada) seguiu o
 [`43-etapa2-hud-ui-ux.md`](43-etapa2-hud-ui-ux.md); a Etapa 3 (2026-09-19,
@@ -38,6 +40,9 @@ aviso em execução); o [`52-arquitetura-executavel-da-0.4.md`](52-arquitetura-e
 mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
 
 ```text
+57-mapa-de-versoes-ate-a-1.0.md     as versoes ate a 1.0: encerrada, em curso, planejada, proposta
+58-onde-cada-versao-comeca-no-codigo.md  onde cada versao comeca no codigo: arquivos, extensao, 1a fatia
+40.7-registro-das-entregas.md       LOG: cada fatia entregue, datada, com prova
 53-arquitetura-executavel-da-0.3.6.md arquitetura da 0.3.6: casca, terminal mudo, zero aviso
 52-arquitetura-executavel-da-0.4.md arquitetura da 0.4: donos, fluxos, contratos
 40-estado-e-continuidade.md        ESTADO: números medidos, fila, decisões, entregas
@@ -69,14 +74,21 @@ mapa de donos contra código duplicado, fluxos, contratos, provas e ordem.
                                    licença lida e o que NÃO entra
 35-ambiente-cpp-e-embarcados.md    ambiente C/C++ (catálogo de bibliotecas), a
                                    frente de embarcados e a de banco
-39-divida-tecnica-paga.md, 38-...  a dívida paga e a que restou (registro)
-34-depois-do-mvp.md, 30-...        o pós-MVP e o caminho até o MVP (fechados)
-28, 29                             plataforma/verticais e as verticais de
-                                   linguagem (C/C++, Rust, Python)
-20, 21, 24, 25, 26                 planos antigos, mantidos como registro
-backend-para-ui-ux.md              do backend à UI/UX (2026-07)
-motor-semantico-profundo-cpp-rust.md   a especificação do motor semântico (KSWE)
-adaptacao-de-plugins-abertos.md    o que adaptar de plugins abertos
+39-divida-tecnica-paga.md          a divida paga (registro)
+38-divida-restante-e-continuidade.md  a divida que restou em 2026-09 (registro)
+34-depois-do-mvp.md                as quatro frentes do pos-MVP (fechado)
+30-caminho-para-o-mvp.md           o caminho ate o MVP (fechado)
+29-verticais-de-linguagem.md       as verticais C/C++, Rust e Python
+28-plataforma-de-plugins-e-verticais.md  plataforma e verticais (sem runtime de plugin)
+26-paridade-de-renderizacao-do-terminal.md  paridade de renderizacao do terminal (registro)
+25-fundacao-semantica-pela-arvore-sintatica.md  fundacao semantica Tree-sitter (registro)
+24-paridade-e-fundacao.md          paridade e fundacao (registro)
+21-roadmap-de-longo-prazo.md       os marcos M4-M7 e o playbook; base das versoes
+                                   PROPOSTAS 0.6-1.0 do 57
+20-convergencia-com-a-especificacao-de-ui.md  convergencia da UI com as specs (registro)
+55-backend-para-ui-ux.md              do backend à UI/UX (2026-07)
+56-motor-semantico-profundo-cpp-rust.md   a especificação do motor semântico (KSWE)
+54-adaptacao-de-plugins-abertos.md    o que adaptar de plugins abertos
 ```
 
 Regra zero para qualquer item daqui: **medir antes de aceitar como pendente.**

@@ -256,7 +256,7 @@ pub fn run_build(
     match kind {
         ProjectKind::RustCargo => run_cargo_build(root, profile, toolchain, cancel, sink),
         // C++ CMake -Werror por perfil fica para uma fatia futura (injetar
-        // flag no build do usuario e invasivo — ver DocsPrivate/diario/18 M4.5).
+        // flag no build do usuario e invasivo — DocsPublic/roadmaps/21-roadmap-de-longo-prazo.md §M4.5).
         ProjectKind::Cmake => run_cmake_build(root, toolchain, &extra, cancel, sink),
         ProjectKind::Make => make::run_make_build(root, make_tools, cancel, sink),
         other => Err(BuildError::Unsupported {
@@ -375,7 +375,7 @@ fn run_cargo_build(
         .current_dir(root);
     aplica_alvo(&mut command, toolchain);
     // Strict: warning vira erro no build do usuario (invalida o cache do
-    // cargo ao trocar de perfil — aceito, ver DocsPrivate/diario/18 M4.5).
+    // cargo ao trocar de perfil — aceito, DocsPublic/roadmaps/21-roadmap-de-longo-prazo.md §M4.5).
     if let Some(flags) = rust_build_rustflags(profile) {
         command.env("RUSTFLAGS", flags);
     }

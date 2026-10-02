@@ -119,7 +119,7 @@ Validação e pendências estão no roadmap 40 §7.91.
 ## 3. Referências verificadas, sem copiar arquitetura
 
 Pesquisa revisada em **2026-09-23**, conforme MODE-B do
-[roadmap de adaptação](../roadmaps/adaptacao-de-plugins-abertos.md).
+[roadmap de adaptação](../roadmaps/54-adaptacao-de-plugins-abertos.md).
 A documentação da JetBrains consultada é da IntelliJ IDEA 2026.2; o código
 Code OSS foi lido na revisão `0896e62ebab6f42f24240a9ad72ab3147f7b297e`
 (2026-09-23), sob licença MIT. São referências de comportamento: não houve

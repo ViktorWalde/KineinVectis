@@ -19,12 +19,15 @@ import json
 import os
 import pathlib
 import queue
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import threading
 import time
+
+from unproven import record
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 FIXTURE = RAIZ / "scripts" / "fixtures" / "embarcado"
@@ -86,7 +89,7 @@ class Core:
         fim = time.monotonic() + timeout
         while self.seq not in self.respostas:
             if not self._bombear(fim - time.monotonic()):
-                raise RuntimeError(f"{metodo}: sem resposta em {timeout}s")
+                raise RuntimeError(f"{metodo}: sem response em {timeout}s")
         msg = self.respostas.pop(self.seq)
         if "error" in msg:
             raise RuntimeError(f"{metodo}: {msg['error']}")
@@ -112,10 +115,29 @@ def compilar(destino: pathlib.Path) -> pathlib.Path:
     return elf
 
 
+# O gdb que ganhou o escopo de globais no DAP (decisao do autor, 2026-10-01:
+# vale o >= 16, com degradacao explicada abaixo dele). Medido: o 15.1 so'
+# devolve Arguments/Locals/Registers (gdb/dap/scopes.py); o 17.2 devolve
+# Globals; o anuncio do 16.2 lista o escopo entre as mudancas do 16.
+GDB_WITH_GLOBALS = 16
+
+
+def gdb_major() -> int | None:
+    """`GNU gdb (Ubuntu 15.1-1ubuntu1~24.04) 15.1` -> 15. Sem leitura, None."""
+    try:
+        first = subprocess.run(["gdb", "--version"], capture_output=True, text=True,
+                               check=False, timeout=30).stdout.splitlines()[0]
+    except (OSError, IndexError, subprocess.TimeoutExpired):
+        return None
+    found = re.search(r"(\d+)\.\d+(?:\.\d+)?\s*$", first)
+    return int(found.group(1)) if found else None
+
+
 def main() -> int:
     for ferramenta in ("arm-none-eabi-gcc", "qemu-system-arm", "gdb"):
         if shutil.which(ferramenta) is None:
-            print(f"  - {ferramenta}: ausente nesta maquina (nao reprova; o ciclo fica NAO PROVADO aqui)")
+            record("embarcado", "ciclo de embarcado no QEMU (gdb -i dap)",
+                   f"{ferramenta} ausente nesta maquina")
             return 0
     core_bin = RAIZ / "target" / "debug" / "kinein-core"
     if not core_bin.exists():
@@ -157,9 +179,23 @@ def main() -> int:
             primeiro = core.rpc("debug.evaluate", {"expression": "contador", "frameId": fid})["result"]
             # O escopo que a UI ve NAO e' o de registradores (o GDB os lista
             # primeiro; o core prefere Globals/Locals).
-            nomes = [v["name"] for v in core.rpc("debug.variables", {"frameId": fid})["variables"]]
-            assert "contador" in nomes, nomes
-            assert not any(n in ("r0", "pc", "sp", "lr") for n in nomes), nomes
+            response = core.rpc("debug.variables", {"frameId": fid})
+            nomes = [v["name"] for v in response["variables"]]
+            major = gdb_major()
+            if major is not None and major < GDB_WITH_GLOBALS:
+                # A DEGRADACAO EXPLICADA: sem escopo de globais, so' sobram
+                # registradores, e o core tem de DIZER por que. O que se prova
+                # aqui e' o aviso; a variavel global no painel fica NAO PROVADA.
+                assert response.get("notice"), response
+                assert "contador" not in nomes, nomes
+                variables_seen = f"gdb {major}: so' registradores, com o aviso do core"
+                record("embarcado", "variavel global no painel de variaveis (DAP Globals)",
+                       f"gdb {major} < {GDB_WITH_GLOBALS} nao tem o escopo; instale o gdb >= 16")
+            else:
+                assert "contador" in nomes, nomes
+                assert not any(n in ("r0", "pc", "sp", "lr") for n in nomes), nomes
+                assert "notice" not in response, response
+                variables_seen = "variaveis sem registradores"
 
             core.rpc("debug.continue")
             core.evento("event.debug.stopped")
@@ -205,7 +241,7 @@ def main() -> int:
         return 1
 
     print(f"embarcado no QEMU ({MAQUINA}, gdb -i dap): attach, breakpoint em main.c:4, "
-          f"contador 0 -> 1, variaveis sem registradores, exitCode {code}, servidor morto "
+          f"contador 0 -> 1, {variables_seen}, exitCode {code}, servidor morto "
           f"com a sessao; {ciclo_ms} ms do continue ao stop. "
           f"build.size: FLASH 132/262144, SRAM 4/65536 (arm-none-eabi-size)")
     return 0

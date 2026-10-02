@@ -1,7 +1,7 @@
 //! Observabilidade: o Grafana que observa este projeto.
 //!
 //! Este dominio nasceu em 2026-09-04 e fecha a etapa 27 do
-//! `DocsPublic/roadmaps/35-ambiente-cpp-embarcados-simulacao.md`. Ele existe porque
+//! `DocsPublic/roadmaps/35-ambiente-cpp-e-embarcados.md`. Ele existe porque
 //! a decisao do autor em 2026-09-03 foi *"banco e observabilidade sao NATIVOS,
 //! nao plugins"* — e a licenca do Grafana decidiu o que "nativo" pode
 //! significar aqui.

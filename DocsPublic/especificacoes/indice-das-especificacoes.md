@@ -463,9 +463,9 @@ fonte de verdade para encerramento macro
 
 Medição de 2026-08-29: quatro specs de `DocsPublic/especificacoes/` não apareciam neste índice.
 Três delas não eram citadas por **nenhum** documento do repositório — cerca de
-3.500 linhas invisíveis para quem navega pelo índice, que é o caminho que o
-`AGENTS.md` manda seguir. Não são canceladas (isso teria destino em
-`DocsPrivate/legado/`); eram só inalcançáveis, o que na prática dá no mesmo.
+3.500 linhas invisíveis para quem navega pelo índice, que é o caminho de
+leitura do projeto. Não são canceladas (isso as tiraria do repositório,
+ADR-0005); eram só inalcançáveis, o que na prática dá no mesmo.
 
 ```text
 recursos-sob-demanda-estrategia-de-performance.md          (Parte 10)
@@ -486,8 +486,8 @@ O `tarefas-de-implementacao-diagrama.md` **saiu de `DocsPublic/especificacoes/`*
 2026-08-29, por decisão do autor: fala em "Kernwerk Studio" (nome anterior do
 projeto), e as tarefas M1.1–M1.3 que ele propunha — modularizar `lsp.rs`,
 dividir o `CoreClient`, quebrar o `Main.qml` — **já foram executadas**. A
-sequência dele foi substituída pelos roadmaps 21, 24 e 28. Está em
-`DocsPrivate/legado/`; a regra durável que ele carregava (reutilizar o sistema
+sequência dele foi substituída pelos roadmaps 21, 24 e 28, e ele saiu do
+repositório; a regra durável que ele carregava (reutilizar o sistema
 existente) foi extraída para `DocsPublic/arquitetura/ARCHITECTURE.md` §8.1.
 
 ---

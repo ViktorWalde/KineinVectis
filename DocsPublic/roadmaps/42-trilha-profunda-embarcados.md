@@ -180,7 +180,7 @@ ser profundo**, **como se prova**, e **o que NÃO entra**.
 projeto inteiro** — o domínio `index` (todas as pastas, arquivos, funções e
 tipos, C/C++/Rust/Python) **mais o contexto de código/compilador por arquivo**.
 A parte (b) é o "entender o projeto inteiro" da especificação do KSWE
-([`KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE…`](motor-semantico-profundo-cpp-rust.md)
+([`KINEIN_VECTIS_DEEP_SEMANTIC_ENGINE…`](56-motor-semantico-profundo-cpp-rust.md)
 §2), reaberta pelo autor **nesta forma** — índice estrutural próprio +
 contexto de compilador, com o LSP por cima — sem adotar a especificação
 inteira (scheduler, brokers, RAM budget) até que a dor a peça.

@@ -24,8 +24,8 @@ As duas formas de execução podem coexistir no menu sem se sobrescrever:
 > `dev-local*` — justamente os que o `scripts/verificar.sh` compila por padrão —
 > e caía no build **sanitized** (ASan/UBSan), que é vários vezes mais lento, sem
 > avisar. Agora ele **imprime** qual binário subiu e de quando ele é, e alerta
-> se for o sanitized. Era a metade silenciosa da armadilha registrada no
-> `PONTO_ATUAL` ("horas com uma IDE quebrada porque esse binário estava 4
+> se for o sanitized. Era a metade silenciosa de uma armadilha que o autor
+> registrou ("horas com uma IDE quebrada porque esse binário estava 4
 > commits atrás").
 
 Instale ou atualize somente o atalho de desenvolvimento com:
@@ -89,8 +89,7 @@ cmake --build --preset dev-local
 > Os presets `dev-local*` estão em `CMakeUserPresets.json` (arquivo local,
 > fora do git). Eles herdam os presets estritos oficiais, mas nesta máquina
 > usam GCC nativo com warnings-as-errors e sanitizers desligados, porque o
-> toolchain recente dispara warnings em código gerado pelo Qt (detalhe em
-> `DocsPrivate/ContextoIA.md`, seção "Toolchain local"). Em outra máquina, prefira os
+> toolchain recente dispara warnings em código gerado pelo Qt. Em outra máquina, prefira os
 > presets oficiais `linux-clang-debug-strict` / `linux-clang-release-hardened`
 > (debug oficial liga ASan/UBSan). Se o build reclamar de caminhos de outra
 > distro (ex.: `/usr/lib/x86_64-linux-gnu/...`), apague o diretório em
@@ -167,7 +166,7 @@ chmod u+x ./*.AppImage
 ```
 
 Para o estado das ferramentas no notebook e os gates ainda pendentes, ler
-[ambiente de desenvolvimento](14-development-environment.md).
+[ambiente de desenvolvimento](14-ambiente-de-desenvolvimento.md).
 
 ## Logs de erro da IDE
 

@@ -217,7 +217,7 @@ a conhece é quem fala com a UI. O core não sabe o que é uma aba.
 
 ## 6. O que o plano de 2026-08-29 previu, e o que foi construído
 
-`DocsPrivate/historico/PONTO_ATUAL.md` §0.2m desenhou a fatia com antecedência e acertou o diagnóstico
+O desenho escrito antes da fatia acertou o diagnóstico
 inteiro. Duas coisas saíram diferentes, e as duas merecem registro:
 
 **a) `endLine` + `endColumn` no protocolo: NÃO foram adicionados.** O plano

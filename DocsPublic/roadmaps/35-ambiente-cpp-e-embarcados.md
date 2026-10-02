@@ -37,7 +37,7 @@ H  BANCO E OBSERVABILIDADE     relacional + temporal (TimescaleDB) e Grafana,
 A frente **E vem primeiro**, e não por gosto: é a única das três que não
 reordena nenhuma decisão registrada, é a que tem fundação medida, e é TR1 — o
 autor disse em 2026-09-03 que passará a dar feedback de uso diário, o que
-finalmente alimenta o registro de saídas (`DocsPrivate/diario/19`), vazio desde
+finalmente alimenta o registro de saídas do dogfooding, vazio desde
 que nasceu.
 
 ## 2. As decisões registradas em 2026-09-03
@@ -545,7 +545,7 @@ todas as outras.
 ## 6. FRENTE G — simulação (REMOVIDA do produto em 2026-09-12)
 
 > A frente G saiu do produto por decisão do autor em 2026-09-12; o texto desta
-> seção está íntegro em `DocsPrivate/historico/simulacao/`. A numeração das
+> seção saiu do repositório junto (40 §5). A numeração das
 > seções seguintes foi mantida porque o resto da documentação as cita.
 
 ## 7. FRENTE H — banco de dados e observabilidade
@@ -768,8 +768,8 @@ As de `roadmaps/34` §8 e as deste documento continuam fechadas.
 
 **O feedback de TR1 fura esta fila.** O autor disse em 2026-09-03 que passará a
 usar a IDE e reportar; perda de dados, crash e bloqueio diário vêm antes de
-qualquer item planejado (`GUIAIA.md` §2), e o registro é
-`DocsPrivate/diario/19-registro-de-saidas.md`.
+qualquer item planejado (a regra de prioridade, `00-comece-aqui.md` §2), e o
+registro é o de saídas do dogfooding, mantido pelo autor.
 
 ### 9.1 A etapa 26 exercitada contra um PostgreSQL REAL (2026-09-04)
 

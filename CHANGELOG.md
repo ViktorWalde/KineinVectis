@@ -9,8 +9,7 @@ Cargo/CMake já identificam a candidata local como `0.3.5`. Um AppImage
 candidato foi gerado e passou nos smokes local e Debian mínimo, mas ainda não
 foi lançado. O fechamento depende da matriz P3, da escolha da pasta remota
 desde a home e do gate V8 completo. H0 foi aprovado pelo autor em 2026-09-30.
-O roteiro e as evidências estão nos roadmaps 40 e 47 e no checkpoint
-`DocsPrivate/Codex/HANDOFF-0.3.5-2026-09-30.md`.
+O roteiro e as evidências estão nos roadmaps 40, 40.7 e 47.
 
 - **Projeto e arquivos (P0–P3, em andamento):** comando curto `kinein`, uma
   janela por workspace, navegação e seleção múltipla na árvore, ações por
@@ -33,6 +32,11 @@ O roteiro e as evidências estão nos roadmaps 40 e 47 e no checkpoint
   abrir no pacote (o Loader do Qt 6.4 recusava os componentes) e os ícones SVG
   da árvore voltaram a aparecer (plugin `libqsvg` incluído). O smoke do
   AppImage agora reprova aviso do motor QML e a falta do plugin.
+- Protocolo `0.145.0` — **depurador sem globais, explicado.** Com o gdb < 16
+  (o 15 do Ubuntu 24.04), o painel de variáveis de um alvo bare-metal mostrava
+  só registradores, sem dizer por quê. Agora diz: o gdb anterior ao 16 não
+  expõe globais pelo DAP; a variável se lê pelo nome em Watches. O gdb que
+  vale é o ≥ 16 (decisão do autor, 2026-10-01).
 - Protocolo `0.144.0` — **pasta com espaço no espelho SSH.** O navegador
   oferece e o espelho abre pastas e arquivos com espaço no nome (`rsync -s`),
   provado contra `sshd` real. O caminho digitado precisa ser absoluto.

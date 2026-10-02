@@ -3,6 +3,10 @@
 Este índice organiza a documentação técnica do projeto por assunto e define a
 ordem de precedência quando houver conflito entre documentos.
 
+> **Chegou agora?** Leia antes [`00-comece-aqui.md`](00-comece-aqui.md): as
+> regras, a tabela "pergunta → documento dono" e por onde começar. Este
+> índice é o catálogo completo; aquele é a porta.
+
 ## Como a documentação está organizada (2026-09-12)
 
 Duas árvores, por decisão do autor em 2026-09-12 (sucede a decisão das três
@@ -29,12 +33,10 @@ DocsPublic/      TODA a documentacao do projeto, versionada. Uma sessao de
   decisoes-adr/             decisoes de arquitetura datadas (ADR-0001..0005)
   iconografia/              o sistema visual e os icones (assets com checksum)
 
-DocsPrivate/     NAO versionada (.gitignore): continuidade interna do autor —
-                 o log datado (ContextoIA), o diario, os prompts de retomada
-                 das sessoes com IA, o historico do que saiu do produto
-                 (historico/simulacao/, historico/PONTO_ATUAL.md) e o legado
-                 cancelado (legado/). Consulta-se sob demanda para "por que
-                 isto ficou assim?" — nunca para descobrir "o que existe".
+(fora do repo)   as notas internas do autor ficam no .gitignore. Sao esbocos:
+                 tudo o que e' preciso para colaborar esta' nesta pasta, e
+                 nenhum documento daqui aponta para elas (gate de links,
+                 desde 2026-10-01).
 ```
 
 **Regras de nome:** pasta com nome explícito em português; documento com
@@ -44,13 +46,13 @@ caixa alta de 2026-07 viraram kebab-case em 2026-09-12 (`leitura-tecnica.md`,
 `especificacoes/sistema-de-layout.md`). `ARCHITECTURE.md` e `README.md` são
 as duas exceções convencionais.
 
-**Por que `DocsPrivate/legado/` existe.** Há documentos **grandes, completos e
-persuasivos** de features **canceladas** (a linha inteira de IA na IDE) que
-uma sessão nova encontraria dentro de `especificacoes/` e leria como alvo.
-Deletar perderia o registro de uma decisão de produto; deixar em
-`especificacoes/` é convidar a reimplementação. Regra de mão única: **um
-documento entra em `legado/` e não volta.** Se algo lá dentro voltar a valer,
-o conteúdo é extraído para o documento vivo relevante.
+**Por que feature cancelada sai do repositório.** Documento **grande, completo e
+persuasivo** de feature **cancelada** (a linha inteira de IA na IDE) seria
+encontrado dentro de `especificacoes/` e lido como alvo. Por isso ele sai do
+repositório público, e o que importa dele — o que foi decidido, quando e por
+quê — fica no [`roadmaps/40`](roadmaps/40-estado-e-continuidade.md) §5 e no
+[ADR-0005](decisoes-adr/ADR-0005-tres-arvores-de-documentacao.md). Se algo
+voltar a valer, o conteúdo é reescrito no documento vivo relevante.
 
 ## Ordem de precedência
 
@@ -68,50 +70,34 @@ o conteúdo é extraído para o documento vivo relevante.
 
 ### As quatro classes de volatilidade
 
-Este eixo é **ortogonal** às faixas P/T/X (audiência) de
-`DocsPrivate/legado/PLANO_ORGANIZACAO_E_HANDOFF.md`. Ele responde outra pergunta: *"se este arquivo
+Este eixo é **ortogonal** às faixas P/T/X de audiência (mais abaixo). Ele responde outra pergunta: *"se este arquivo
 envelhecer, o que acontece?"*
 
 | Classe | Regra | O que acontece se envelhecer | Onde |
 | --- | --- | --- | --- |
-| **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `AGENTS.md`, `arquitetura/ARCHITECTURE.md` §2/§4/§5, `adr/` |
-| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `roadmaps/40` (a fila), `leitura-tecnica.md`, `GUIAIA.md` (os mapas), `arquitetura/02`, `arquitetura/03` |
+| **CONTRATO** | Não muda sem decisão explícita e registrada. **Não contém número medido nem inventário** — número é o que apodrece. | Nada: é regra, não estado. | `00-comece-aqui.md` (as regras), `arquitetura/ARCHITECTURE.md` §2/§4/§5, `decisoes-adr/` |
+| **ESTADO** | Tem que ser verdade **agora**. Todo número é verificável contra o disco. | **Mente.** Manda a próxima sessão reimplementar o que existe. | `roadmaps/40` (a fila), `leitura-tecnica.md`, `arquitetura/01` (o mapa, gerado do código), `arquitetura/02`, `arquitetura/03` |
 | **PLANO** | Descreve o alvo. Pode divergir da implementação — é para isso que existe. | Aceitável, mas reconciliar ao retomar. | `DocsPublic/especificacoes/`, `DocsPublic/roadmaps/` |
-| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `DocsPrivate/ContextoIA.md`, `diario/`, `adr/` |
+| **LOG** | Registro datado do que foi decidido **naquele dia**. Nunca reescrever. | Nada: envelhecer é a função dele. | `roadmaps/40.7` (o registro das entregas, separado do `40` em 2026-10-01), `decisoes-adr/` |
 | **PESQUISA** | Hipótese que **ninguém decidiu fazer**. Começa dizendo o que a falsearia. Sair de lá exige decisão datada. | Nada — desde que ninguém a leia como alvo, que é o risco inteiro. | `DocsPublic/pesquisa/` |
 
-### Por que o `DocsPrivate/historico/PONTO_ATUAL.md` saiu de "fila viva" (2026-09-10)
+### Duas lições de documento que mentiu
 
-Ele era o primeiro item da linha ESTADO e a §1 do `GUIAIA.md` mandava lê-lo como
-*"próxima tarefa executável"*. **Medido em 2026-09-10, ele dizia protocolo
-`0.62.0`, 13 gates, 378 testes Rust e 22 arquivos em débito** — contra `0.88.0`,
-19, 666 e 1 no disco. Pior que os números: a §TRILHA dá o `E1` como fechado em
-2026-08-29 e a seção `PRÓXIMO GESTO`, 300 linhas abaixo, ainda o descreve como
-aberto, com caminho de conserto que o código não seguiu.
+**Um documento que já foi estado não vira log sozinho** (2026-09-10). Um antigo
+documento de "próxima tarefa executável" era o primeiro da linha ESTADO. Medido
+naquela data, ele dizia protocolo `0.62.0`, 13 gates, 378 testes Rust e 22
+arquivos em débito — contra `0.88.0`, 19, 666 e 1 no disco. O papel de fila
+passou inteiro para o [`roadmaps/40`](roadmaps/40-estado-e-continuidade.md): um
+documento que para de ser atualizado continua com o crachá de estado no pescoço,
+e mente.
 
-O papel de fila passou para
-[`roadmaps/40-estado-e-continuidade.md`](roadmaps/40-estado-e-continuidade.md),
-que já era anunciado como "COMECE POR AQUI" desde 2026-09-04 — a mudança aqui só
-para de mandar a sessão para dois lugares. **O `DocsPrivate/historico/PONTO_ATUAL.md` não foi legado
-nem esvaziado:** ele continua sendo onde mora o *porquê* de decisões que nenhum
-outro documento carrega, e o cabeçalho dele agora diz exatamente isso.
-
-**A lição é a mesma da nota abaixo, num eixo diferente:** um documento que
-*já foi* estado não vira log sozinho quando para de ser atualizado — ele vira
-mentira, e continua com o crachá de estado no pescoço.
-
-### Por que o `DocsPrivate/ContextoIA.md` saiu de "estado real" (2026-07-17)
-
-Ele estava em **primeiro** nesta lista, descrito como *"estado real e decisões
-vigentes"*. Ele é um **log append-only** com 44 entradas datadas, e o próprio
-cabeçalho dele afirma ser "enxuto de propósito" — sendo o maior documento do
-repositório. Log em primeiro na precedência é o mecanismo que faz uma sessão nova
-confiar num registro velho: foi assim que, em 2026-07-17, uma IA reimplementou um
-seletor que o autor mandou remover no mesmo dia e listou como pendente um harness
-entregue havia 24 horas.
-
-**Log é ótimo para responder "por que isto é assim?". É péssimo para responder "o
-que existe hoje?" — essa pergunta se responde no código.**
+**Log em primeiro na precedência engana** (2026-07-17). Um log datado de 44
+entradas estava em primeiro lugar, descrito como "estado real". Foi assim que uma
+IA reimplementou um seletor que o autor mandou remover no mesmo dia e listou como
+pendente um harness entregue havia 24 horas. **Log é ótimo para responder "por
+que isto é assim?". É péssimo para responder "o que existe hoje?" — essa pergunta
+se responde no código.** Por isso o registro deste projeto (`roadmaps/40.7`) é
+LOG e mora separado do estado (`roadmaps/40`).
 
 ### A regra que separa registro de mentira
 
@@ -138,36 +124,31 @@ Para localizar os arquivos de cada domínio, use [contribuindo.md](contribuindo.
 UX/UI/HUD (F0–F8 feitas em 2026-09-18; resta o fechamento, 40 §4.2.2). **O que ainda falta, por
 classe — fatia de código / prova com hardware / só o autor — está no §4.2
 do mesmo roadmap**, e o estado da Etapa 2 fatia a fatia no
-[roadmap 43](roadmaps/43-etapa2-hud-ui-ux.md) §7. O antigo
-`GUIAIA.md` não está neste checkout (conferido em 2026-09-15).
+[roadmap 43](roadmaps/43-etapa2-hud-ui-ux.md) §7.
 
 ## Estrutura
 
 ```text
 DocsPublic/
-├── arquitetura/   contrato de engenharia, protocolo IPC, strict mode, dívida e higiene
-├── build/         ambiente, comandos de compilação e gate de verificação
-├── seguranca/     rede de segurança de dados (escrita atômica + drafts)
-├── roadmaps/      planos de execução, roadmap de longo prazo, adaptação e KSWE
-├── specs/         especificação canônica (visão-alvo) + diagramas
-├── integracoes/   como adicionar/escalar uma integração ("Plugins")
-├── adr/           decisões arquiteturais registradas
-├── tooling/       registro auditável de componentes open-source
-└── iconografia/   sistema visual, ícones de arquivo e da árvore
-
-DocsPrivate/
-├── ContextoIA.md  log datado (por que), nunca estado (o que existe)
-├── diario/        registro de sessões
-└── prompts/       bootstrap de retomada em terminal
-
-DocsPrivate/legado/       superado ou cancelado; não implementar a partir daqui
+├── 00-comece-aqui.md  a porta de entrada: regras, onde mora cada fato
+├── arquitetura/       mapa de módulos (gerado), contrato de engenharia, protocolo IPC, boot, rigor
+├── build/             ambiente, comandos de compilação e gate de verificação
+├── contribuindo/      o guia completo de quem chega, com ou sem IA
+├── decisoes-adr/      decisões arquiteturais registradas
+├── especificacoes/    a visão-alvo do produto + diagramas
+├── integracoes/       como adotar uma ferramenta; o registro auditável de componentes
+├── pesquisa/          hipóteses que ninguém decidiu fazer
+├── roadmaps/          o estado (40), o registro (40.7), as versões (57) e os planos
+├── seguranca/         rede de segurança de dados, cofre de credencial
+└── iconografia/       sistema visual, ícones de arquivo e da árvore
 ```
 
-## Público × interno
+## Repositório público × cópia de distribuição
 
-Uma cópia entregue a terceiros leva o código e **somente três Markdown**:
-`README.md`, `DocsPublic/manual.md` e `DocsPublic/tutorial.md`. Todo o resto — inclusive esta pasta
-`DocsPublic/` inteira — é interno.
+Este repositório é público, e `DocsPublic/` é a documentação de quem colabora.
+Outra coisa é a **cópia de distribuição** (o pacote para quem só usa a IDE): ela
+leva o código e **somente três Markdown** — `README.md`, `DocsPublic/manual.md` e
+`DocsPublic/tutorial.md`.
 
 Isso não depende de disciplina: `scripts/exportar-copia-limpa.sh` gera a cópia
 por allowlist numa árvore separada, recusa Markdown extra, verifica que nenhum
@@ -192,13 +173,14 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | Documento | Assunto |
 | --- | --- |
 | [arquitetura/ARCHITECTURE.md](arquitetura/ARCHITECTURE.md) | **LEITURA OBRIGATÓRIA — contrato de arquitetura (camadas, regra de split, crescimento). Verificado por catraca. Antes de propor arquitetura nova: MEDIR — o problema costuma ser regra não cumprida, não regra ausente (§1.1)** |
-| [arquitetura/02-repository-structure.md](arquitetura/02-repository-structure.md) | **Estrutura real do repositório e crates** (remedida em 2026-09-10): a árvore como ela é, os comandos que a conferem, e o registro de quando ela mentiu — listava uma pasta `templates/` que nunca existiu |
-| [arquitetura/03-ipc-protocol.md](arquitetura/03-ipc-protocol.md) | Protocolo IPC JSON-RPC implementado — a **forma** de cada mensagem, por domínio |
+| [arquitetura/01-mapa-de-modulos.md](arquitetura/01-mapa-de-modulos.md) | **Quem fala com quem, por quê e como** — GERADO do código por `scripts/module_map.py` e conferido por gate: as pastas do repositório, o caminho de um pedido, o grafo dos domínios do core com os ciclos, e um diagrama por contexto (git, editor, embarcados, Remote…) com os arquivos reais de cada etapa |
+| [arquitetura/02-estrutura-do-repositorio.md](arquitetura/02-estrutura-do-repositorio.md) | **Estrutura real do repositório e crates** (remedida em 2026-09-10): a árvore como ela é, os comandos que a conferem, e o registro de quando ela mentiu — listava uma pasta `templates/` que nunca existiu |
+| [arquitetura/03-protocolo-ipc.md](arquitetura/03-protocolo-ipc.md) | Protocolo IPC JSON-RPC implementado — a **forma** de cada mensagem, por domínio |
 | [arquitetura/04-boot-e-comunicacao.md](arquitetura/04-boot-e-comunicacao.md) | **Boot e comunicação, fim a fim**: quem sobe quem, as threads do core e o que fala com quais, o caminho de uma requisição e de um evento, o que é e o que NÃO é garantido em ordem, crash e recuperação, e como falar com o core na mão |
-| [arquitetura/06-strict-mode.md](arquitetura/06-strict-mode.md) | Strict mode (Rust e C++/Qt) |
-| [arquitetura/15-engineering-debt-and-refactor.md](arquitetura/15-engineering-debt-and-refactor.md) | Dívida técnica e modularização |
-| [arquitetura/16-hidden-risks-checklist.md](arquitetura/16-hidden-risks-checklist.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
-| [arquitetura/19-architecture-tradeoffs.md](arquitetura/19-architecture-tradeoffs.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
+| [arquitetura/06-modo-estrito.md](arquitetura/06-modo-estrito.md) | Strict mode (Rust e C++/Qt) |
+| [arquitetura/15-divida-de-engenharia-e-refatoracao.md](arquitetura/15-divida-de-engenharia-e-refatoracao.md) | Dívida técnica e modularização |
+| [arquitetura/16-checklist-de-riscos-ocultos.md](arquitetura/16-checklist-de-riscos-ocultos.md) | Riscos ocultos (dados, config, segurança de comandos, segredos, a11y, observabilidade, packaging) |
+| [arquitetura/19-compromissos-de-arquitetura.md](arquitetura/19-compromissos-de-arquitetura.md) | Requisitos e trade-offs de arquitetura (o porquê das decisões) |
 | [arquitetura/27-modulos-por-dominio.md](arquitetura/27-modulos-por-dominio.md) | Módulos por domínio. **Parcialmente entregue** (a catraca do core saiu daqui); resta a Frente 1 — `<X>Domain` na UI, o caminho para o `Main.qml` sair do débito |
 | [arquitetura/32-editor-por-responsabilidade.md](arquitetura/32-editor-por-responsabilidade.md) | **O editor cortado por responsabilidade** (2026-09-02): o pagamento do maior débito do repositório, os quatro donos que nasceram, as invariantes que cada um guarda — e a decisão que ficou EM ABERTO, com o custo medido das duas saídas |
 | [arquitetura/33-busca-no-projeto.md](arquitetura/33-busca-no-projeto.md) | **Os TRÊS buscadores e o casamento multi-linha** (2026-09-02): qual é qual e por que confundi-los é o defeito clássico, como a busca passou a casar no conteúdo, a invariante "preview conta o que a escrita faz", e por que a sintaxe `\n` mora na UI e não pode descer para o core |
@@ -208,7 +190,7 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 
 | Documento | Assunto |
 | --- | --- |
-| [build/14-development-environment.md](build/14-development-environment.md) | Ambiente de desenvolvimento |
+| [build/14-ambiente-de-desenvolvimento.md](build/14-ambiente-de-desenvolvimento.md) | Ambiente de desenvolvimento |
 | [build/22-compilacao-c-cpp-rust.md](build/22-compilacao-c-cpp-rust.md) | Referência prática de comandos de compilação C/C++ e Rust mapeados para a IDE |
 | [build/comandos-de-build-e-verificacao.md](build/comandos-de-build-e-verificacao.md) | Gate único de build e verificação |
 
@@ -229,27 +211,27 @@ Roda em dry-run por padrão e **não cria repositório nem publica nada**.
 | [roadmaps/48-arquitetura-executavel-da-serie-0.3.md](roadmaps/48-arquitetura-executavel-da-serie-0.3.md) | **Arquitetura executável da série 0.3 até a 0.3.5:** contratos, donos de estado, trem proposto, migração, rollback e provas; Grafana está confirmado na 0.3.5 |
 | [roadmaps/47-estrutura-da-v0.3.md](roadmaps/47-estrutura-da-v0.3.md) | **Estrutura de produto da série v0.3:** cruza frontend, Remote SSH, terminal, Grafana e o mínimo da Etapa 4 até o fechamento 0.3.5 |
 | [roadmaps/46-frontend-0.3-em-diante.md](roadmaps/46-frontend-0.3-em-diante.md) | **Frontend da 0.3 em diante:** extração operacional de `arquiKinein`, reconciliada com a `main`; Remote SSH utilizável, commands, tool windows mínimas, abas com identidade e área direita, sem big-bang |
-| [roadmaps/backend-para-ui-ux.md](roadmaps/backend-para-ui-ux.md) | Ponte operacional backend → UI/UX |
-| [roadmaps/20-ui-spec-convergence-plan.md](roadmaps/20-ui-spec-convergence-plan.md) | Convergência vinculante da UI atual para as specs (fatias C0–C6) |
-| [roadmaps/21-long-horizon-roadmap.md](roadmaps/21-long-horizon-roadmap.md) | M4–M7, KSWE, distribuição e continuidade longa |
+| [roadmaps/55-backend-para-ui-ux.md](roadmaps/55-backend-para-ui-ux.md) | Ponte operacional backend → UI/UX |
+| [roadmaps/20-convergencia-com-a-especificacao-de-ui.md](roadmaps/20-convergencia-com-a-especificacao-de-ui.md) | Convergência vinculante da UI atual para as specs (fatias C0–C6) |
+| [roadmaps/21-roadmap-de-longo-prazo.md](roadmaps/21-roadmap-de-longo-prazo.md) | M4–M7, KSWE, distribuição e continuidade longa |
 | [roadmaps/24-paridade-e-fundacao.md](roadmaps/24-paridade-e-fundacao.md) | Fases D1–D4: completion, terminal, Tree-sitter e remake |
-| [roadmaps/25-syntax-tree-semantic-foundation.md](roadmaps/25-syntax-tree-semantic-foundation.md) | Contrato da camada sintática (Tree-sitter incremental, composição com LSP) |
+| [roadmaps/25-fundacao-semantica-pela-arvore-sintatica.md](roadmaps/25-fundacao-semantica-pela-arvore-sintatica.md) | Contrato da camada sintática (Tree-sitter incremental, composição com LSP) |
 | [roadmaps/29-verticais-de-linguagem.md](roadmaps/29-verticais-de-linguagem.md) | **Verticais C/C++, Rust e Python medidas**: o que existe hoje por linguagem, por que Python é reconhecido e ignorado, o que falta para C/C++ sem atrito, e onde está o risco proprietário real (Pylance) |
 | [roadmaps/30-caminho-para-o-mvp.md](roadmaps/30-caminho-para-o-mvp.md) | **As etapas para o MVP, em ordem linear** (decidida em 2026-08-30): o que falta medido item por item contra a spec de MVP, e a ordem por dependência |
 | [roadmaps/34-depois-do-mvp.md](roadmaps/34-depois-do-mvp.md) | **Sucessor do 30, o pós-MVP** (2026-09-02): as quatro frentes — dívida que cobra pedágio, atrito diário medido, profundidade (TR2) e a simulação —, o estado medido item a item, a ordem linear recomendada e o comando que decide se cada item ainda existe |
 | [roadmaps/35-ambiente-cpp-e-embarcados.md](roadmaps/35-ambiente-cpp-e-embarcados.md) | **Sucessor parcial do 34** (2026-09-03): ambiente C/C++ facilitado (catálogo de bibliotecas curado e auditado, `find_package`/`FetchContent` pinado), embarcados reordenado de L6 por decisão registrada, e a simulação — com as decisões de escopo tomadas pelo autor e o que já existe medido |
 | [roadmaps/42-trilha-profunda-embarcados.md](roadmaps/42-trilha-profunda-embarcados.md) | **A trilha PROFUNDA de embarcados** (2026-09-12), sucessora do 41 nessa parte: o que a IDE lê de um projeto hoje (medido — e por que isso é a primeira lacuna), a análise do que se repete em todos os levantamentos (identidade/modelo, processo, canal, permissão), oito pilares com critério de pronto POR FAMÍLIA — modelo do projeto, ambiente, ciclo MCU, depuração, Python no embarcado, teste, Linux embarcado (SSH/Yocto/Buildroot/container por dentro), Rust —, a ordem e as três decisões que pede ao autor (respondidas); e, desde a tarde de 2026-09-12, o **"efeito JetBrains" como critério de pronto** (§8: o que já existe medido, o que falta por pilar, com ferramenta e licença) e a **trilha Python completa** bare metal → edge → backend → banco (§9) |
 | [roadmaps/41-ecossistema-embarcados-e-python.md](roadmaps/41-ecossistema-embarcados-e-python.md) | **O ecossistema aberto de embarcados e Python em ORDEM LINEAR** (2026-09-11): o que o VS Code oferece para Python, C/C++, Rust e embarcados, a ferramenta aberta por trás de cada funcionalidade com licença lida no arquivo, o que a IDE já tem medido, o que NÃO entra (Pylance, Serial Monitor fechado, cpptools proprietário…) e os seis blocos A–F. Registra a decisão do autor que reverte o "Python adiado" |
-| [roadmaps/40-estado-e-continuidade.md](roadmaps/40-estado-e-continuidade.md) | **COMECE POR AQUI ao retomar — é a FILA VIVA** (remedido em 2026-09-10, com o gate verde): o estado medido, o único arquivo que resta na catraca e por que ele não se corta, o que cada sessão entregou, o que está aberto e as decisões que não se reabrem. Ele substituiu o `DocsPrivate/historico/PONTO_ATUAL.md` nesse papel |
+| [roadmaps/40-estado-e-continuidade.md](roadmaps/40-estado-e-continuidade.md) | **COMECE POR AQUI ao retomar — é a FILA VIVA** (remedido em 2026-09-10, com o gate verde): o estado medido, o único arquivo que resta na catraca e por que ele não se corta, o que está aberto e as decisões que não se reabrem. O que cada fatia entregou está no [`40.7`](roadmaps/40.7-registro-das-entregas.md) |
 | [roadmaps/39-divida-tecnica-paga.md](roadmaps/39-divida-tecnica-paga.md) | **O registro da dívida paga** (2026-09-04): a dívida da catraca paga de 8 arquivos para 1 — cada corte com a pergunta que o justifica, as regras que saíram da UI, as duplicações que já tinham divergido, e o único arquivo restante com as duas saídas medidas para o autor decidir |
 | [roadmaps/38-divida-restante-e-continuidade.md](roadmaps/38-divida-restante-e-continuidade.md) | **Superado pelo 39** na parte de dívida (2026-09-03): registro de como a fila estava quando o contexto acabou. A §4 (o que está aberto e NÃO é dívida) continua valendo |
 | [roadmaps/29-verticais-de-linguagem.md](roadmaps/29-verticais-de-linguagem.md) | **Verticais C/C++, Rust e Python, medidas**: por que Python é reconhecido e ignorado, o que falta para C/C++ sem atrito, e onde está o risco proprietário real (Pylance) — com fontes citadas |
 | [roadmaps/28-plataforma-de-plugins-e-verticais.md](roadmaps/28-plataforma-de-plugins-e-verticais.md) | **Plataforma de plugins (`integration` v1) e as verticais**: C/C++/Rust sólidos, Docker e banco como domínios NATIVOS, embarcados — e a dívida contínua de UI/UX com o IntelliJ Community como referência adaptada |
-| [roadmaps/26-terminal-rendering-parity-roadmap.md](roadmaps/26-terminal-rendering-parity-roadmap.md) | Paridade de renderização/scroll do terminal: reprodução instrumentada, métricas de célula/DPR e gates (R0–R7) |
-| [roadmaps/adaptacao-de-plugins-abertos.md](roadmaps/adaptacao-de-plugins-abertos.md) | **Norte de adoção e referência open-source**: modos A–D, gate/licenças e política de estudo de Code OSS, IntelliJ, Zed, Lapce e NetBeans |
-| [roadmaps/motor-semantico-profundo-cpp-rust.md](roadmaps/motor-semantico-profundo-cpp-rust.md) | Desenho profundo do KSWE (C++/Rust, scheduler, brokers e contextos) |
+| [roadmaps/26-paridade-de-renderizacao-do-terminal.md](roadmaps/26-paridade-de-renderizacao-do-terminal.md) | Paridade de renderização/scroll do terminal: reprodução instrumentada, métricas de célula/DPR e gates (R0–R7) |
+| [roadmaps/54-adaptacao-de-plugins-abertos.md](roadmaps/54-adaptacao-de-plugins-abertos.md) | **Norte de adoção e referência open-source**: modos A–D, gate/licenças e política de estudo de Code OSS, IntelliJ, Zed, Lapce e NetBeans |
+| [roadmaps/56-motor-semantico-profundo-cpp-rust.md](roadmaps/56-motor-semantico-profundo-cpp-rust.md) | Desenho profundo do KSWE (C++/Rust, scheduler, brokers e contextos) |
 
-## specs/ — especificação canônica (visão-alvo)
+## especificacoes/ — especificação canônica (visão-alvo)
 
 Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 índice: [especificacoes/indice-das-especificacoes.md](especificacoes/indice-das-especificacoes.md).
@@ -272,15 +254,15 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | Configuration Actions | [especificacoes/acoes-de-configuracao-com-escopo-e-links-de-documentacao.md](especificacoes/acoes-de-configuracao-com-escopo-e-links-de-documentacao.md) |
 | Fechamento / MVP / Performance | [especificacoes/finalizacao-mvp-e-checklist-de-polimento.md](especificacoes/finalizacao-mvp-e-checklist-de-polimento.md) |
 
-## adr/ e tooling/
+## decisoes-adr/ e o registro de componentes
 
 | Documento | Assunto |
 | --- | --- |
-| [adr/ADR-0001-notify-filesystem-watcher.md](decisoes-adr/ADR-0001-notify-filesystem-watcher.md) | Adoção do watcher `notify` e barreira compare-before-save |
-| [adr/ADR-0002-tree-sitter-syntax-foundation.md](decisoes-adr/ADR-0002-tree-sitter-syntax-foundation.md) | Adoção do Tree-sitter e fronteira com LSP |
-| [adr/ADR-0003-linuxdeploy-appimage-packaging.md](decisoes-adr/ADR-0003-linuxdeploy-appimage-packaging.md) | Empacotamento AppImage, pins, baseline Linux e auditoria |
-| [adr/ADR-0004-alacritty-terminal-emulator.md](decisoes-adr/ADR-0004-alacritty-terminal-emulator.md) | Adoção do `alacritty_terminal` como motor de emulação VT |
-| [adr/ADR-0005-tres-arvores-de-documentacao.md](decisoes-adr/ADR-0005-tres-arvores-de-documentacao.md) | As três árvores (`DocsPublic/`, `DocsPrivate/`, `DocsPrivate/legado/`) e por que contrariam a remoção da `DocsPublic/archive/` |
+| [decisoes-adr/ADR-0001-notify-filesystem-watcher.md](decisoes-adr/ADR-0001-notify-filesystem-watcher.md) | Adoção do watcher `notify` e barreira compare-before-save |
+| [decisoes-adr/ADR-0002-tree-sitter-syntax-foundation.md](decisoes-adr/ADR-0002-tree-sitter-syntax-foundation.md) | Adoção do Tree-sitter e fronteira com LSP |
+| [decisoes-adr/ADR-0003-linuxdeploy-appimage-packaging.md](decisoes-adr/ADR-0003-linuxdeploy-appimage-packaging.md) | Empacotamento AppImage, pins, baseline Linux e auditoria |
+| [decisoes-adr/ADR-0004-alacritty-terminal-emulator.md](decisoes-adr/ADR-0004-alacritty-terminal-emulator.md) | Adoção do `alacritty_terminal` como motor de emulação VT |
+| [decisoes-adr/ADR-0005-tres-arvores-de-documentacao.md](decisoes-adr/ADR-0005-tres-arvores-de-documentacao.md) | A organização da documentação: uma árvore pública e auto-suficiente; o que é interno fica fora do repositório |
 | [integracoes/registro-de-componentes-abertos.json](integracoes/registro-de-componentes-abertos.json) | Registro auditável de componentes open-source adotados |
 
 ## iconografia/ — sistema visual e ícones
@@ -297,49 +279,19 @@ Fonte de verdade de produto, UX, sistema visual e arquitetura-alvo. Comece pelo
 | Arquivo | Assunto |
 | --- | --- |
 | [../README.md](../README.md) | Apresentação e estado atual do projeto |
-| [../MANUAL.md](manual.md) | **Manual do usuário** — operação, funções e atalhos dentro da IDE |
-| [../Tutorial.md](tutorial.md) | Distribuição, checksum, instalação, atualização e geração do AppImage |
+| [manual.md](manual.md) | **Manual do usuário** — operação, funções e atalhos dentro da IDE |
+| [tutorial.md](tutorial.md) | Distribuição, checksum, instalação, atualização e geração do AppImage |
 | [build/como-executar.md](build/como-executar.md) | Como executar a IDE pelo checkout (ícone/launcher) |
 
-Documentos de continuidade operacional — `../GUIAIA.md` (o mapa para quem
-trabalha no código), `../AGENTS.md` (as regras para agentes) e a árvore
-`../DocsPrivate/` (não versionada: log, diário, prompts, histórico, legado) —
-são material interno de desenvolvimento e não integram a documentação pública.
+## As faixas de audiência P/T/X
 
-## DocsPrivate/ — continuidade interna (consulta sob demanda)
-
-Em 2026-09-15, os registros presentes neste checkout estão em
-`DocsPrivate/Codex/`, lidos a pedido do autor. Os caminhos históricos
-listados abaixo e em `legado/` não estão disponíveis nesta cópia: ficam
-como referências nominais, sem links nem instrução para recriá-los.
-A fila vigente é o roadmap 40 §4.1.
-
-| Documento | Assunto |
-| --- | --- |
-| `../DocsPrivate/ContextoIA.md` | **LOG datado.** Responde "por que isto é assim?"; nunca "o que existe hoje?" |
-| `../DocsPrivate/diario/18-daily-driver-plan.md` | Diário das fatias: marcos de dogfooding, decisões por sessão e escada de rigor. Registro de processo, não contrato |
-| `../DocsPrivate/diario/19-registro-de-saidas.md` | **Registro de saídas do dogfooding** (2026-09-03): cada saída da Kinein para outra ferramenta, com reprodução mínima. É o que ordena a frente C do `roadmaps/34` por dor real — entrada sem reprodução não conta |
-| `../DocsPrivate/prompts/` | Prompts de bootstrap para retomada em terminal. O atual é o `RETOMADA_2026-09-13-noite.md` (a passada de sincronização de 2026-09-13); os anteriores ficam como registro |
-
-## DocsPrivate/legado/ — superado ou cancelado (não implementar a partir daqui)
-
-| Documento | Por que saiu de `DocsPublic/` |
-| --- | --- |
-| `../DocsPrivate/legado/KINEIN_VECTIS_ASSISTANT_AI_ASSISTANCE.md` | ⛔ Linha de IA na IDE **cancelada** pelo autor em 2026-07-17 |
-| `../DocsPrivate/legado/KINEIN_VECTIS_AI_CLI_BRIDGE_EXTERNAL_TERMINAL.md` | ⛔ Idem — o `aiBridge` foi removido do código no protocolo 0.59.0 |
-| `../DocsPrivate/legado/17-architecture-hygiene-plan.md` | Fase concluída em 2026-07-06. Os números envelheceram 3,4x e enganaram uma sessão; os guardrails vivos estão em `arquitetura/ARCHITECTURE.md` §4 |
-| `../DocsPrivate/legado/PLANO_ORGANIZACAO_E_HANDOFF.md` | Descreve o estado **anterior** à reorganização de 2026-07-16, executada. O que continua valendo (faixas P/T/X) foi extraído para cá — ver abaixo |
-
-### Extraído do handoff antes de legar: as faixas P/T/X
-
-O eixo de **audiência** citado na tabela de volatilidade continua valendo e não
-depende mais daquele documento:
+O eixo de **audiência** citado na tabela de volatilidade:
 
 ```text
 P  PUBLICO   entregue a terceiros. Hoje: README.md, DocsPublic/manual.md, DocsPublic/tutorial.md.
 T  TECNICO   quem compila/altera o projeto. Hoje: DocsPublic/ inteira.
-X  INTERNO   continuidade do autor e das sessoes. Hoje: DocsPrivate/,
-             GUIAIA.md, DocsPrivate/historico/PONTO_ATUAL.md, AGENTS.md.
+X  INTERNO   as notas e esbocos do autor, fora do repositorio. Nada em P ou T
+             depende deles.
 ```
 
 O eixo P/T/X responde *"quem pode ler?"*; as quatro classes de volatilidade
@@ -350,7 +302,6 @@ TÉCNICO pode ser CONTRATO (`ARCHITECTURE.md`) ou PLANO (`DocsPublic/especificac
 
 `DocsPublic/archive/` foi removido deliberadamente em 2026-07-05: era material
 histórico que nenhum documento ativo referenciava mais como fonte. Essa regra
-continua: **não existe pasta de depósito.** `DocsPrivate/legado/` não é depósito — é
-uma lista curta, curada e justificada de documentos que uma sessão poderia
-confundir com alvo. Se algo for descontinuado e ninguém puder se enganar com
-ele, extraia o que tiver valor e **remova**; legar é para o que engana.
+continua: **não existe pasta de depósito.** Se algo for descontinuado, extraia o
+que tiver valor para o documento vivo e **remova**; a decisão fica registrada
+(`roadmaps/40` §5, ADR-0005).

@@ -34,18 +34,18 @@ use kinein_protocol::{
 };
 use serde_json::{Value, json};
 
-use super::DebugError;
 use super::adapter::Adapter;
 use super::parse::{
-    breakpoints_arguments, parse_breakpoints, parse_evaluate, parse_instructions,
-    parse_read_memory, parse_scopes, parse_stack_frames, parse_variables,
-    preferred_scope_reference,
+    REGISTERS_ONLY_NOTICE, breakpoints_arguments, parse_breakpoints, parse_evaluate,
+    parse_instructions, parse_read_memory, parse_scopes, parse_stack_frames, parse_variables,
+    preferred_scope,
 };
 use super::reader::{note_continued, send_event, spawn_reader};
 use super::server::DebugServer;
 use super::target::DebugTarget;
 use super::transport::Transport;
 use super::wire::Wire;
+use super::{DebugError, FrameVariables};
 use crate::lsp::EventSender;
 
 /// Tempo maximo aguardando respostas comuns do adapter.
@@ -284,16 +284,22 @@ impl DapSession {
     /// Variaveis do primeiro escopo nao-caro do frame (Locals no lldb-dap).
     ///
     /// A UI nao conhece "scopes": o core resolve `scopes(frameId)` aqui e
-    /// devolve direto as variaveis. Globals/Registers ficam pos-M2.
-    pub(super) fn frame_variables(&self, frame_id: i64) -> Result<Vec<VariableInfo>, DebugError> {
+    /// devolve direto as variaveis. Quando so' havia registradores, elas vem
+    /// com o aviso que diz por que (gdb < 16).
+    pub(super) fn frame_variables(&self, frame_id: i64) -> Result<FrameVariables, DebugError> {
         let _ = self.stopped_thread_id()?;
         let scopes =
             self.wire
                 .request("scopes", &json!({ "frameId": frame_id }), REQUEST_TIMEOUT)?;
-        let Some(reference) = preferred_scope_reference(&scopes) else {
-            return Ok(Vec::new());
+        let Some(scope) = preferred_scope(&scopes) else {
+            return Ok(FrameVariables::default());
         };
-        self.reference_variables(reference)
+        Ok(FrameVariables {
+            variables: self.reference_variables(scope.reference)?,
+            notice: scope
+                .registers_only
+                .then(|| REGISTERS_ONLY_NOTICE.to_owned()),
+        })
     }
 
     /// Expande uma variavel estruturada (handle `ref` de resposta anterior).

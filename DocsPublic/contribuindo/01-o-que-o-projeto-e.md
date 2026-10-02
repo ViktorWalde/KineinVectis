@@ -23,7 +23,7 @@ Três consequências que explicam a maior parte do código:
    é instalado sem o usuário mandar.
 3. **Tudo entre as duas metades é contrato.** Cada método e evento do
    JSON-RPC é um tipo Rust em `kinein-protocol`, documentado em
-   `arquitetura/03-ipc-protocol.md`, com `PROTOCOL_VERSION` que sobe a
+   `arquitetura/03-protocolo-ipc.md`, com `PROTOCOL_VERSION` que sobe a
    cada mudança. A ponte C++ (`ui/src/core_client*.cpp`) é a única que
    fala com o core; os roteadores QML (`ui/qml/ipc/*Router.qml`) levam a
    resposta ao controller dono.
@@ -32,7 +32,7 @@ Três consequências que explicam a maior parte do código:
 
 - **Não é um editor com plugins.** A integração de uma ferramenta é código
   do core com contrato, teste e documentação — não um pacote de terceiros
-  carregado em runtime. (`roadmaps/adaptacao-de-plugins-abertos.md`
+  carregado em runtime. (`roadmaps/54-adaptacao-de-plugins-abertos.md`
   discute o que se aproveita das ferramentas abertas: o *conhecimento*,
   não o *runtime*.)
 - **Não é uma IDE com IA dentro.** Agentes rodam no terminal integrado,
@@ -59,7 +59,7 @@ Três consequências que explicam a maior parte do código:
 | Atalhos: a paleta anuncia o que a IDE obedece | `Ctrl+Alt+L` formatava em vez de abrir a biblioteca (`40` 2026-09-04) | `scripts/verificar-atalhos.sh` |
 | Medir antes de afirmar; número datado | contagens de métodos erradas por grep de literal (`40` §4.2) | `scripts/verificar-docs.sh` |
 | Nunca `git checkout <arquivo>` para desfazer | perdeu-se trabalho não commitado duas vezes (`40` §7.74) | regra de sessão |
-| A placa do autor nunca é gravada sem pedido | é a placa de trabalho dele, com o `main.py` dele | `DocsPrivate` e a memória do agente |
+| A placa do autor nunca é gravada sem pedido | é a placa de trabalho dele, com o `main.py` dele | regra de sessão ([05](05-com-um-agente-de-ia.md)) |
 
 Se uma regra atrapalha, o caminho é **medir, propor e registrar** — não
 contornar. O padrão histórico do repositório é que o problema era regra
@@ -76,9 +76,10 @@ abertura).
   não pode crescer, e nenhum novo pode entrar em débito.
 - **Harness**: um `scripts/qml-harness/tst_*.qml` que carrega um
   controller QML real e afirma o comportamento dele sem tela.
-- **Registro**: o diário datado de uma sessão em `DocsPrivate/Codex/`, com
-  a pasta `evidencias-<data>-<tema>/` (logs, fotos). O público fica no
-  `40` §7.N.
+- **Registro**: a entrada datada da fatia no
+  [`40.7`](../roadmaps/40.7-registro-das-entregas.md) (`### 7.N`): o que,
+  por quê, como provou e o que não fez. A evidência (logs, fotos) vai
+  anexada ao PR ou ao issue, nunca para um caminho que o leitor não tem.
 - **Foto**: um screenshot headless (`QT_QPA_PLATFORM=offscreen
   KINEIN_SCREENSHOT=<png>`) — a prova visual que o agente consegue tirar;
   o clique real é do autor.

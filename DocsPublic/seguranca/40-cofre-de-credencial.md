@@ -198,7 +198,7 @@ A SENHA VEM DE    1. o prompt da sessao, vivendo SO' em memoria
 **O preço aceito, dito na hora de aceitar:** sem `.pgpass` configurado, o autor
 digita a senha uma vez por sessão. Isso é atrito conhecido, não descuido — e é
 o gatilho medido para a saída (b) entrar depois: se o registro de saídas do
-dogfooding (`DocsPrivate/diario/19`) mostrar esse atrito, as +87 crates passam
+dogfooding mostrar esse atrito, as +87 crates passam
 a ter justificativa de uso, que hoje não têm.
 
 **Por que a ordem importa, e não é só cautela:** construir (a) primeiro

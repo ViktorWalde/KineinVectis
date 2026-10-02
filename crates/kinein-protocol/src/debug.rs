@@ -151,6 +151,11 @@ pub struct DebugVariablesResult {
     pub reference: Option<i64>,
     /// Variables of the frame scope or of the expanded variable.
     pub variables: Vec<VariableInfo>,
+    /// Why the frame answer is degraded, for the UI to show next to it.
+    /// Today: the adapter offered only registers (gdb < 16 has no globals
+    /// scope over DAP). Absent when nothing is missing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notice: Option<String>,
 }
 
 #[cfg(test)]
@@ -186,9 +191,11 @@ mod tests {
                 type_name: Some("point".to_owned()),
                 reference: 7,
             }],
+            notice: None,
         })
         .unwrap();
         assert_eq!(value["frameId"], 3);
+        assert!(value.get("notice").is_none(), "{value}");
         assert_eq!(value["variables"][0]["ref"], 7);
         assert_eq!(value["variables"][0]["type"], "point");
     }

@@ -535,7 +535,7 @@ mod tests {
     ///
     /// O lock estreita a janela ENTRE ESTES testes; ele nao a fecha, porque
     /// qualquer outro teste da suite que forke no instante errado herda o
-    /// descritor e produz o mesmo `ETXTBSY` (`PONTO_ATUAL` §0.2h). Quem fecha a
+    /// descritor e produz o mesmo `ETXTBSY`. Quem fecha a
     /// corrida e' o retry de [`EXEC_BUSY_ATTEMPTS`] no `probe_version`; o
     /// escopo deste lock NAO deve crescer para tapar o buraco — isso esconderia
     /// o defeito em vez de corrigi-lo.

@@ -41,8 +41,33 @@ from verificar_python_attach import verify_attach
 RAIZ = pathlib.Path(__file__).resolve().parents[1]
 
 
+def login_shell_noise(environment: dict[str, str]) -> list[str]:
+    """O que o shell de LOGIN imprime antes de rodar qualquer coisa, neste ambiente.
+
+    Toda execucao do core passa por `sh -lc` (handlers/run.rs), e um perfil que
+    ecoa algo chegava como primeira linha do programa: medido em 2026-10-01, o
+    /etc/profile.d/nvm.sh de um container de CI imprime `nvm`, e a prova da porta
+    MicroPython lia "mpremote recebeu: nvm". Mesmo contrato do helper Rust
+    `login_shell_noise` (crates/kinein-core/src/tests/mod.rs).
+    """
+    try:
+        output = subprocess.run(["sh", "-lc", "true"], env=environment, capture_output=True,
+                                text=True, timeout=30, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    return [line.rstrip() for line in (output.stdout + output.stderr).splitlines() if line.strip()]
+
+
+def without_login_shell_noise(text: str, noise: list[str]) -> str:
+    lines = text.splitlines()
+    for expected in noise:
+        if lines and lines[0].rstrip() == expected:
+            lines.pop(0)
+    return "\n".join(lines)
+
+
 class Core:
-    def __init__(self, binario: pathlib.Path, ambiente: dict[str, str], log: pathlib.Path) -> None:
+    def __init__(self, binario: pathlib.Path, environment: dict[str, str], log: pathlib.Path) -> None:
         # O stderr do core vai para um arquivo. O stderr dos adaptadores
         # filhos ainda e' uma pendencia propria do roadmap. Um
         # "o adapter nao respondeu" sem o stderr e' um sintoma sem causa.
@@ -53,8 +78,9 @@ class Core:
             stdout=subprocess.PIPE,
             stderr=self.log,
             text=True,
-            env=ambiente,
+            env=environment,
         )
+        self.login_noise = login_shell_noise(environment)
         self.seq = 0
         self.respostas: dict[int, dict] = {}
         self.eventos: list[dict] = []
@@ -140,7 +166,7 @@ class Core:
                     else:
                         restantes.append(msg)
                 self.eventos = restantes
-                return texto, fechado.get("exitCode")
+                return without_login_shell_noise(texto, self.login_noise), fechado.get("exitCode")
             self._bombear(0.1)
         raise RuntimeError(f"a execucao {terminal_id} nao fechou em {timeout}s; visto: {texto!r}")
 

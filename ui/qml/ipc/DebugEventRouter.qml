@@ -44,8 +44,9 @@ Item {
             root.debugController.handleStackTrace(frames);
         }
 
-        function onDebugVariablesResolved(frameId, ref, variables) {
+        function onDebugVariablesResolved(frameId, ref, variables, notice) {
             root.debugController.handleVariables(frameId, ref, variables);
+            root.debugController.inspect.handleFrameNotice(frameId, notice);
             root.debugController.inspect.handleVariables(ref, variables);
         }
 

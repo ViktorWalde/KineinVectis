@@ -46,8 +46,8 @@ Antes de implementar uma etapa de backend:
 3. implementar handler fino + servico de dominio;
 4. transformar operacao longa em job;
 5. escrever testes de comportamento;
-6. atualizar DocsPublic/arquitetura/03-ipc-protocol.md se IPC mudar;
-7. atualizar DocsPrivate/ContextoIA.md com estado real;
+6. atualizar DocsPublic/arquitetura/03-protocolo-ipc.md se IPC mudar;
+7. atualizar o `roadmaps/40` com o estado real e o `40.7` com a entrega;
 8. atualizar este roadmap com impacto UI futuro.
 ```
 
@@ -109,7 +109,7 @@ UI:
 `toolsListed`; a status bar tem cancelar (×) para build/test/quality/scan de
 ambiente. Desde 2026-07-06, `event.job.created/progress/output/finished`
 tambem alimentam a aba generica "Jobs" no painel inferior, mantendo historico
-visual dos jobs sem abrir pop-up automatico. Ver `DocsPrivate/ContextoIA.md`.
+visual dos jobs sem abrir pop-up automatico.
 
 Backend atual:
 
@@ -229,7 +229,7 @@ Impacto UI futuro:
 - logs sao clicaveis por job/task;
 - "Background Services" consegue explicar o que esta vivo;
 - Run e Terminal dividem UMA aba Terminal com sessoes distintas (decisao do
-  usuario em 2026-07-09, fatia M2.1 de DocsPrivate/diario/18); os BACKENDS continuam
+  usuario em 2026-07-09, fatia M2.1); os BACKENDS continuam
   separados (PTY interativo vs run controlado) e Build segue a parte.
 ```
 
@@ -910,7 +910,7 @@ Antes de quebrar `Main.qml` em componentes grandes, idealmente:
 [ ] Project Health tem payload inicial.
 [ ] Settings/storage tem schemaVersion.
 [ ] Risk/confirmacao esta definido para acoes automaticas.
-[x] DocsPrivate/ContextoIA.md aponta a proxima etapa sem depender de memoria de sessao.
+[x] o estado aponta a proxima etapa sem depender de memoria de sessao.
 ```
 
 ## Regras de continuidade deste roadmap
@@ -918,7 +918,7 @@ Antes de quebrar `Main.qml` em componentes grandes, idealmente:
 ```text
 - DocsPublic/archive/ nao existe mais (removido de proposito em 2026-07-05); nao
   recriar uma pasta de arquivo morto.
-- DocsPublic/arquitetura/ARCHITECTURE.md e DocsPublic/arquitetura/03-ipc-protocol.md sao
+- DocsPublic/arquitetura/ARCHITECTURE.md e DocsPublic/arquitetura/03-protocolo-ipc.md sao
   leitura previa obrigatoria para qualquer mudanca de backend.
 - Este arquivo mantem a ponte entre a capacidade de backend e a UI futura.
 - Backend novo nasce no dominio certo e com testes.

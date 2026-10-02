@@ -40,8 +40,10 @@ if [ -z "$interpretador" ]; then
     fi
 fi
 if [ -z "$interpretador" ]; then
-    echo "  - debugpy: ausente no python3 do PATH e KINEIN_PYTHON_DEBUGPY nao aponta um"
-    echo "    interpretador (nao reprova; o ciclo fica NAO PROVADO aqui)"
+    # shellcheck disable=SC1091  # unproven.sh e' lido por si (shellcheck roda arquivo a arquivo)
+    . "$(dirname "${BASH_SOURCE[0]}")/unproven.sh"
+    record_unproven "python-debug" "ciclo de depurar Python (debugpy)" \
+        "debugpy ausente no python3 do PATH e KINEIN_PYTHON_DEBUGPY nao aponta um interpretador"
     exit 0
 fi
 if ! "$interpretador" -I -c "import debugpy" >/dev/null 2>&1; then
