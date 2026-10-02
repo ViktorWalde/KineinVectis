@@ -70,4 +70,6 @@ toolchains sysroot workspace repo proc
 # --- termos ingleses que o dicionario do sistema nao traz
 formatter resize endpoint sdks ctrl dirname basename abspath ifdef endif rglob
 devnull worktree checksum readline symlinks rpath werror objcopy noop
-unrecognised setuptools lockfile xffd observability reget reemits
+unrecognised setuptools lockfile observability reget reemits
+# 2026-10-01, V-1: participio e plural ingleses que o dicionario nao traz
+redacted timeouts

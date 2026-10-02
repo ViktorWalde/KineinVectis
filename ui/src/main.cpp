@@ -75,8 +75,8 @@ void installStartupPerfMarker(QGuiApplication& app, QQmlApplicationEngine& engin
 // seguida. Sem a env, zero efeito.
 void installScreenshotHook(QGuiApplication& app, QQmlApplicationEngine& engine)
 {
-    const QByteArray destino = qgetenv("KINEIN_SCREENSHOT");
-    if (destino.isEmpty() || engine.rootObjects().isEmpty()) {
+    const QByteArray screenshotEnv = qgetenv("KINEIN_SCREENSHOT");
+    if (screenshotEnv.isEmpty() || engine.rootObjects().isEmpty()) {
         return;
     }
     auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().constFirst());
@@ -84,35 +84,35 @@ void installScreenshotHook(QGuiApplication& app, QQmlApplicationEngine& engine)
         return;
     }
     bool ok = false;
-    int atraso = qEnvironmentVariableIntValue("KINEIN_SCREENSHOT_DELAY_MS", &ok);
-    if (!ok || atraso < 0) {
-        atraso = 4000;
+    int delayMs = qEnvironmentVariableIntValue("KINEIN_SCREENSHOT_DELAY_MS", &ok);
+    if (!ok || delayMs < 0) {
+        delayMs = 4000;
     }
     // KINEIN_SCREENSHOT_SIZE=<largura>x<altura> (fechamento da Etapa 2,
     // 2026-09-19): a foto num tamanho que nao e' o padrao — a status bar a
     // 1024 px foi a divida dita na F2. Sem a env, a janela fica como esta'.
-    const QByteArray tamanho = qgetenv("KINEIN_SCREENSHOT_SIZE");
-    if (!tamanho.isEmpty()) {
-        const QList<QByteArray> partes = tamanho.split('x');
-        if (partes.size() == 2) {
-            const int largura = partes[0].toInt();
-            const int altura = partes[1].toInt();
-            if (largura >= 640 && altura >= 400) {
-                window->resize(largura, altura);
+    const QByteArray sizeEnv = qgetenv("KINEIN_SCREENSHOT_SIZE");
+    if (!sizeEnv.isEmpty()) {
+        const QList<QByteArray> sizeParts = sizeEnv.split('x');
+        if (sizeParts.size() == 2) {
+            const int shotWidth = sizeParts[0].toInt();
+            const int shotHeight = sizeParts[1].toInt();
+            if (shotWidth >= 640 && shotHeight >= 400) {
+                window->resize(shotWidth, shotHeight);
             }
         }
     }
     const bool exitAfter = qEnvironmentVariableIsSet("KINEIN_PERF_EXIT");
-    const QString caminho = QString::fromUtf8(destino);
+    const QString path = QString::fromUtf8(screenshotEnv);
     QObject::connect(
         window, &QQuickWindow::frameSwapped, &app,
-        [window, caminho, atraso, exitAfter]() {
-            QTimer::singleShot(atraso, window, [window, caminho, exitAfter]() {
-                const QImage imagem = window->grabWindow();
-                const bool salvo = imagem.save(caminho);
+        [window, path, delayMs, exitAfter]() {
+            QTimer::singleShot(delayMs, window, [window, path, exitAfter]() {
+                const QImage image = window->grabWindow();
+                const bool saved = image.save(path);
                 qInfo().noquote().nospace()
-                    << "KINEIN_SCREENSHOT " << (salvo ? "salvo=" : "FALHOU=") << caminho << " "
-                    << imagem.width() << "x" << imagem.height();
+                    << "KINEIN_SCREENSHOT " << (saved ? "salvo=" : "FALHOU=") << path << " "
+                    << image.width() << "x" << image.height();
                 if (exitAfter) {
                     QCoreApplication::quit();
                 }
@@ -132,35 +132,35 @@ int main(int argc, char* argv[])
     // `std::span` em vez de indexar `argv` na mao: o clang-tidy recusa
     // aritmetica de ponteiro, e com razao — e' o lugar classico de ler um a mais.
     const std::span<char*> arguments{argv, static_cast<std::size_t>(argc)};
-    QStringList brutos;
-    brutos.reserve(static_cast<qsizetype>(arguments.size()) - 1);
+    QStringList rawArguments;
+    rawArguments.reserve(static_cast<qsizetype>(arguments.size()) - 1);
     for (char* const raw : arguments.subspan(1)) {
-        brutos.append(QString::fromLocal8Bit(raw));
+        rawArguments.append(QString::fromLocal8Bit(raw));
     }
-    const kinein::cli::Arguments request = kinein::cli::parse(brutos, QDir::currentPath());
+    const kinein::cli::Arguments request = kinein::cli::parse(rawArguments, QDir::currentPath());
     switch (request.action) {
     case kinein::cli::Action::Help: {
-        QTextStream saida{stdout};
-        saida << request.message;
+        QTextStream out{stdout};
+        out << request.message;
         return 0;
     }
     case kinein::cli::Action::Version: {
-        QTextStream saida{stdout};
-        saida << QStringLiteral("kinein-vectis %1\n").arg(QLatin1String(KINEIN_VERSAO));
+        QTextStream out{stdout};
+        out << QStringLiteral("kinein-vectis %1\n").arg(QLatin1String(KINEIN_VERSION));
         return 0;
     }
     case kinein::cli::Action::Refusal: {
-        QTextStream erro{stderr};
-        erro << request.message << '\n';
+        QTextStream err{stderr};
+        err << request.message << '\n';
         return 2;
     }
     case kinein::cli::Action::Open: {
         // Caminho ruim e' recusa COM MOTIVO, e nao uma IDE que abre sem projeto
         // deixando a pessoa adivinhar. Nada e' criado.
-        const QString motivo = kinein::cli::validateFolder(request.folder);
-        if (!motivo.isEmpty()) {
-            QTextStream erro{stderr};
-            erro << motivo << '\n';
+        const QString reason = kinein::cli::validateFolder(request.folder);
+        if (!reason.isEmpty()) {
+            QTextStream err{stderr};
+            err << reason << '\n';
             return 2;
         }
         // UMA JANELA POR PASTA (decisao do autor, 2026-09-26). Se ja' ha' uma
@@ -173,16 +173,17 @@ int main(int argc, char* argv[])
         //
         // Antes do QGuiApplication de proposito: se alguem ja' responde por
         // esta pasta, nem a UI nem o core chegam a subir.
-        const QString canonica = QFileInfo{request.folder}.canonicalFilePath();
+        const QString canonicalFolder = QFileInfo{request.folder}.canonicalFilePath();
         const QString socket =
-            kinein::socketPathFor(qEnvironmentVariable("XDG_RUNTIME_DIR"), canonica);
+            kinein::socketPathFor(qEnvironmentVariable("XDG_RUNTIME_DIR"), canonicalFolder);
         // O TOKEN DO XDG E' A UNICA AUTORIZACAO que o compositor Wayland
         // aceita para uma janela subir por pedido de outro processo. O
         // terminal o poe no ambiente quando sabe fazer isso; quando nao poe,
         // o pedido segue sem ele e a janela pode apenas piscar na barra.
-        if (kinein::handOff(socket, canonica, qEnvironmentVariable("XDG_ACTIVATION_TOKEN"))) {
-            QTextStream saida{stdout};
-            saida << QStringLiteral("este projeto já está aberto: %1\n").arg(canonica);
+        if (kinein::handOff(socket, canonicalFolder, qEnvironmentVariable("XDG_ACTIVATION_TOKEN")))
+        {
+            QTextStream out{stdout};
+            out << QStringLiteral("este projeto já está aberto: %1\n").arg(canonicalFolder);
             return 0;
         }
         break;
@@ -232,7 +233,7 @@ int main(int argc, char* argv[])
     QGuiApplication::setOrganizationName(QStringLiteral("Kinein Vectis"));
     // Vem do CMake: escrita a mao, ela ficou em `0.1.0` enquanto o projeto
     // estava em 0.2.0 — e nada reprovava, porque ninguem a lia.
-    QGuiApplication::setApplicationVersion(QLatin1String(KINEIN_VERSAO));
+    QGuiApplication::setApplicationVersion(QLatin1String(KINEIN_VERSION));
 
     QQmlApplicationEngine engine;
     // Qt 6.4: qt_add_qml_module places the module under qrc:/ (no /qt/qml prefix).

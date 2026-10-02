@@ -18,22 +18,22 @@ void CoreClient::remoteSave(const QVariantMap& target)
 {
     // Campos vazios ficam AUSENTES: o contrato e' `deny_unknown_fields` e
     // `Option`; a normalizacao (porta 22, espacos) e' do core.
-    QJsonObject alvo{};
+    QJsonObject payload{};
     for (auto it = target.constBegin(); it != target.constEnd(); ++it) {
         const QVariant& valor = it.value();
         if (it.key() == QStringLiteral("port")) {
-            const int porta = valor.toInt();
-            if (porta > 0) {
-                alvo.insert(it.key(), porta);
+            const int port = valor.toInt();
+            if (port > 0) {
+                payload.insert(it.key(), port);
             }
             continue;
         }
-        const QString texto = valor.toString().trimmed();
-        if (!texto.isEmpty()) {
-            alvo.insert(it.key(), texto);
+        const QString text = valor.toString().trimmed();
+        if (!text.isEmpty()) {
+            payload.insert(it.key(), text);
         }
     }
-    sendRequest(QStringLiteral("remote.save"), QJsonObject{{QStringLiteral("target"), alvo}});
+    sendRequest(QStringLiteral("remote.save"), QJsonObject{{QStringLiteral("target"), payload}});
 }
 
 void CoreClient::remoteRemove(const QString& name)

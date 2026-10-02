@@ -180,9 +180,9 @@ void CoreClient::sendRequest(const QString& method, const QJsonObject& params)
     if (method != QStringLiteral("lsp.didChange") &&
         method != QStringLiteral("syntaxTree.update") && method != QStringLiteral("terminal.input"))
     {
-        const QByteArray registrado =
+        const QByteArray registered =
             QJsonDocument(kinein::redactSecrets(request)).toJson(QJsonDocument::Compact);
-        appendLog(QStringLiteral("-> %1").arg(QString::fromUtf8(registrado.left(200).trimmed())));
+        appendLog(QStringLiteral("-> %1").arg(QString::fromUtf8(registered.left(200).trimmed())));
     }
     m_process.write(payload);
 }

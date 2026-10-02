@@ -168,7 +168,7 @@ void TestMarkdownPolicy::a_refused_image_never_reaches_the_renderer()
     QCOMPARE(rewriteRefusedImages(QStringLiteral("antes ![x](../fuga.png) depois"), refuse),
              QStringLiteral("antes [fora] depois"));
     // A permitida fica INTACTA, com titulo e tudo.
-    const QString kept = QStringLiteral(R"(![ok](img/a.png "titulo"))");
+    const QString kept = QStringLiteral("![ok](img/a.png \"title\")");
     QCOMPARE(rewriteRefusedImages(kept, refuse), kept);
 }
 

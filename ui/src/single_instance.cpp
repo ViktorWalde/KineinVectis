@@ -21,13 +21,13 @@ namespace {
 /// Versao no proprio texto porque uma IDE velha e uma nova podem coexistir na
 /// mesma sessao durante uma atualizacao, e falar linguas diferentes sem
 /// perceber seria pior que nao se falarem.
-constexpr auto kPrefixo = "KINEIN-INSTANCIA-1";
+constexpr auto kPrefix = "KINEIN-INSTANCIA-1";
 constexpr auto kSim = "MEU";
 constexpr auto kNao = "NAO";
 
 /// O separador dos campos. TAB porque caminho de arquivo pode ter espaco —
 /// e tem, no teste e na vida.
-constexpr QChar kSeparador = QLatin1Char('\t');
+constexpr QChar kSeparator = QLatin1Char('\t');
 
 } // namespace
 
@@ -52,41 +52,41 @@ QString encodeRequest(const QString& workspacePath, const QString& activationTok
     // Nenhum dos dois campos pode conter TAB ou quebra de linha. O caminho vem
     // de `QDir::canonicalPath`, e o token do XDG e' base64 — mas confiar nisso
     // seria confiar em quem manda a mensagem, que e' de onde vem o problema.
-    QString caminho = workspacePath;
+    QString path = workspacePath;
     QString token = activationToken;
-    caminho.remove(QLatin1Char('\t')).remove(QLatin1Char('\n'));
+    path.remove(QLatin1Char('\t')).remove(QLatin1Char('\n'));
     token.remove(QLatin1Char('\t')).remove(QLatin1Char('\n'));
-    return QStringLiteral("%1\t%2\t%3\n").arg(QLatin1String(kPrefixo), caminho, token);
+    return QStringLiteral("%1\t%2\t%3\n").arg(QLatin1String(kPrefix), path, token);
 }
 
 std::optional<Request> parseRequest(const QString& line)
 {
-    QString limpa = line;
-    while (limpa.endsWith(QLatin1Char('\n')) || limpa.endsWith(QLatin1Char('\r'))) {
-        limpa.chop(1);
+    QString cleanLine = line;
+    while (cleanLine.endsWith(QLatin1Char('\n')) || cleanLine.endsWith(QLatin1Char('\r'))) {
+        cleanLine.chop(1);
     }
-    const QStringList campos = limpa.split(kSeparador);
+    const QStringList fields = cleanLine.split(kSeparator);
     // Tres campos exatos: prefixo, caminho, token (que pode ser vazio).
-    if (campos.size() != 3 || campos.at(0) != QLatin1String(kPrefixo)) {
+    if (fields.size() != 3 || fields.at(0) != QLatin1String(kPrefix)) {
         return std::nullopt;
     }
-    if (campos.at(1).trimmed().isEmpty()) {
+    if (fields.at(1).trimmed().isEmpty()) {
         return std::nullopt;
     }
-    return Request{.workspacePath = campos.at(1), .activationToken = campos.at(2)};
+    return Request{.workspacePath = fields.at(1), .activationToken = fields.at(2)};
 }
 
-bool sameWorkspace(const QString& um, const QString& outro)
+bool sameWorkspace(const QString& first, const QString& second)
 {
-    const auto normalizar = [](const QString& bruto) {
-        QString caminho = QDir::cleanPath(bruto.trimmed());
-        while (caminho.size() > 1 && caminho.endsWith(QLatin1Char('/'))) {
-            caminho.chop(1);
+    const auto normalize = [](const QString& raw) {
+        QString path = QDir::cleanPath(raw.trimmed());
+        while (path.size() > 1 && path.endsWith(QLatin1Char('/'))) {
+            path.chop(1);
         }
-        return caminho;
+        return path;
     };
-    const QString a = normalizar(um);
-    const QString b = normalizar(outro);
+    const QString a = normalize(first);
+    const QString b = normalize(second);
     return !a.isEmpty() && a == b;
 }
 
@@ -120,21 +120,21 @@ namespace {
 /// clang-tidy recusa — e ele recusa com razao, porque em codigo comum esse
 /// cast quase sempre e' engano. Fica UM lugar, explicado, em vez de tres
 /// espalhados.
-sockaddr* comoGenerico(sockaddr_un& endereco)
+sockaddr* asGeneric(sockaddr_un& address)
 {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
-    return reinterpret_cast<sockaddr*>(&endereco);
+    return reinterpret_cast<sockaddr*>(&address);
 }
 
-bool preencherEndereco(sockaddr_un& endereco, const QString& socketPath)
+bool fillAddress(sockaddr_un& address, const QString& socketPath)
 {
     const QByteArray bytes = socketPath.toUtf8();
-    if (bytes.isEmpty() || static_cast<std::size_t>(bytes.size()) >= sizeof(endereco.sun_path)) {
+    if (bytes.isEmpty() || static_cast<std::size_t>(bytes.size()) >= sizeof(address.sun_path)) {
         return false;
     }
-    endereco = {};
-    endereco.sun_family = AF_UNIX;
-    std::memcpy(static_cast<void*>(endereco.sun_path), bytes.constData(),
+    address = {};
+    address.sun_family = AF_UNIX;
+    std::memcpy(static_cast<void*>(address.sun_path), bytes.constData(),
                 static_cast<std::size_t>(bytes.size()));
     return true;
 }
@@ -143,46 +143,46 @@ bool preencherEndereco(sockaddr_un& endereco, const QString& socketPath)
 ///
 /// Sem isto, um dono TRAVADO — nao morto, travado — seguraria o terminal de
 /// quem so' quis abrir um projeto. Preferimos abrir uma janela a mais.
-void limitarTempo(int fd, int timeoutMs)
+void setTimeouts(int fd, int timeoutMs)
 {
-    timeval prazo{};
-    prazo.tv_sec = timeoutMs / 1000;
-    prazo.tv_usec = static_cast<suseconds_t>(timeoutMs % 1000) * 1000;
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &prazo, sizeof(prazo));
-    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &prazo, sizeof(prazo));
+    timeval timeout{};
+    timeout.tv_sec = timeoutMs / 1000;
+    timeout.tv_usec = static_cast<suseconds_t>(timeoutMs % 1000) * 1000;
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 }
 
 /// Le' ate' a primeira quebra de linha, ou ate' o limite.
-QString lerLinha(int fd, int limite = 8192)
+QString readLine(int fd, int limit = 8192)
 {
-    QByteArray acumulado;
-    std::array<char, 512> pedaco{};
-    while (acumulado.size() < limite) {
-        const ssize_t lidos = ::read(fd, pedaco.data(), pedaco.size());
-        if (lidos <= 0) {
+    QByteArray accumulated;
+    std::array<char, 512> chunk{};
+    while (accumulated.size() < limit) {
+        const ssize_t readCount = ::read(fd, chunk.data(), chunk.size());
+        if (readCount <= 0) {
             break;
         }
-        acumulado.append(pedaco.data(), static_cast<int>(lidos));
-        if (acumulado.contains('\n')) {
+        accumulated.append(chunk.data(), static_cast<int>(readCount));
+        if (accumulated.contains('\n')) {
             break;
         }
     }
-    return QString::fromUtf8(acumulado);
+    return QString::fromUtf8(accumulated);
 }
 
-bool escrever(int fd, const QString& texto)
+bool writeAll(int fd, const QString& text)
 {
-    const QByteArray bytes = texto.toUtf8();
+    const QByteArray bytes = text.toUtf8();
     // `span` em vez de somar no ponteiro: e' o mesmo remedio que o `main` usa
     // com o `argv`, e pelo mesmo motivo — somar no ponteiro a mao e' o lugar
     // classico de escrever um byte a mais.
-    std::span<const char> restante{bytes.constData(), static_cast<std::size_t>(bytes.size())};
-    while (!restante.empty()) {
-        const ssize_t agora = ::write(fd, restante.data(), restante.size());
-        if (agora <= 0) {
+    std::span<const char> remaining{bytes.constData(), static_cast<std::size_t>(bytes.size())};
+    while (!remaining.empty()) {
+        const ssize_t written = ::write(fd, remaining.data(), remaining.size());
+        if (written <= 0) {
             return false;
         }
-        restante = restante.subspan(static_cast<std::size_t>(agora));
+        remaining = remaining.subspan(static_cast<std::size_t>(written));
     }
     return true;
 }
@@ -192,50 +192,50 @@ bool escrever(int fd, const QString& texto)
 bool handOff(const QString& socketPath, const QString& workspacePath,
              const QString& activationToken, int timeoutMs)
 {
-    sockaddr_un endereco{};
-    if (socketPath.isEmpty() || !preencherEndereco(endereco, socketPath)) {
+    sockaddr_un address{};
+    if (socketPath.isEmpty() || !fillAddress(address, socketPath)) {
         return false;
     }
     const int fd = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
     if (fd < 0) {
         return false;
     }
-    limitarTempo(fd, timeoutMs);
-    if (::connect(fd, comoGenerico(endereco), sizeof(endereco)) != 0) {
+    setTimeouts(fd, timeoutMs);
+    if (::connect(fd, asGeneric(address), sizeof(address)) != 0) {
         // Ninguem atende: ou nunca houve, ou o dono morreu. Nos dois casos
         // quem chegou agora e' o dono.
         ::close(fd);
         return false;
     }
-    const bool mandou = escrever(fd, encodeRequest(workspacePath, activationToken));
-    const QString resposta = mandou ? lerLinha(fd) : QString{};
+    const bool sent = writeAll(fd, encodeRequest(workspacePath, activationToken));
+    const QString reply = sent ? readLine(fd) : QString{};
     ::close(fd);
-    return answerIsMine(resposta);
+    return answerIsMine(reply);
 }
 
 int listenFor(const QString& socketPath)
 {
-    sockaddr_un endereco{};
-    if (socketPath.isEmpty() || !preencherEndereco(endereco, socketPath)) {
+    sockaddr_un address{};
+    if (socketPath.isEmpty() || !fillAddress(address, socketPath)) {
         return -1;
     }
-    const QFileInfo informacao{socketPath};
-    QDir pasta = informacao.dir();
-    if (!pasta.exists() && !pasta.mkpath(QStringLiteral("."))) {
+    const QFileInfo info{socketPath};
+    QDir folder = info.dir();
+    if (!folder.exists() && !folder.mkpath(QStringLiteral("."))) {
         return -1;
     }
     // ORFAO: o arquivo existe e ninguem atende. E' o que sobra de um crash, e
     // deixar a coordenacao quebrada ate' o proximo reboot seria pior.
-    if (informacao.exists()) {
+    if (info.exists()) {
         // VIVO OU ORFAO, decidido por `connect` e mais nada. A primeira versao
         // disto mandava um pedido de verdade para sondar, o que jogava lixo no
         // fio de um dono legitimo — e nao respondia melhor a pergunta.
-        const int teste = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
-        if (teste >= 0) {
-            limitarTempo(teste, 150);
-            const bool vivo = ::connect(teste, comoGenerico(endereco), sizeof(endereco)) == 0;
-            ::close(teste);
-            if (vivo) {
+        const int probe = ::socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
+        if (probe >= 0) {
+            setTimeouts(probe, 150);
+            const bool alive = ::connect(probe, asGeneric(address), sizeof(address)) == 0;
+            ::close(probe);
+            if (alive) {
                 return -1;
             }
         }
@@ -247,7 +247,7 @@ int listenFor(const QString& socketPath)
     if (fd < 0) {
         return -1;
     }
-    if (::bind(fd, comoGenerico(endereco), sizeof(endereco)) != 0 || ::listen(fd, 4) != 0) {
+    if (::bind(fd, asGeneric(address), sizeof(address)) != 0 || ::listen(fd, 4) != 0) {
         ::close(fd);
         return -1;
     }
@@ -259,22 +259,22 @@ std::optional<Request> acceptOne(int listenFd, const QString& myWorkspacePath)
     if (listenFd < 0) {
         return std::nullopt;
     }
-    const int cliente = ::accept4(listenFd, nullptr, nullptr, SOCK_CLOEXEC);
-    if (cliente < 0) {
+    const int client = ::accept4(listenFd, nullptr, nullptr, SOCK_CLOEXEC);
+    if (client < 0) {
         return std::nullopt;
     }
-    limitarTempo(cliente, 400);
-    std::optional<Request> pedido = parseRequest(lerLinha(cliente));
-    if (!pedido.has_value() || !sameWorkspace(pedido->workspacePath, myWorkspacePath)) {
+    setTimeouts(client, 400);
+    std::optional<Request> request = parseRequest(readLine(client));
+    if (!request.has_value() || !sameWorkspace(request->workspacePath, myWorkspacePath)) {
         // QUEM NAO E' DAQUI RECEBE UM NAO, e nao o silencio: o outro lado
         // esperaria o tempo inteiro do prazo antes de seguir.
-        escrever(cliente, notMineAnswer());
-        ::close(cliente);
+        writeAll(client, notMineAnswer());
+        ::close(client);
         return std::nullopt;
     }
-    escrever(cliente, mineAnswer());
-    ::close(cliente);
-    return pedido;
+    writeAll(client, mineAnswer());
+    ::close(client);
+    return request;
 }
 
 void releaseSocket(int listenFd, const QString& socketPath)

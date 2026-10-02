@@ -9,7 +9,7 @@ namespace {
 ///
 /// Vazio e' um caso real (container magro, sessao sem systemd) e nao um erro:
 /// a IDE segue sem a coordenacao, abrindo janela como sempre abriu.
-QString diretorioDeRuntime()
+QString runtimeDirectory()
 {
     return qEnvironmentVariable("XDG_RUNTIME_DIR");
 }
@@ -22,7 +22,7 @@ SingleInstanceGuard::SingleInstanceGuard(QObject* parent) : QObject(parent) {}
 
 SingleInstanceGuard::~SingleInstanceGuard()
 {
-    soltar();
+    release();
 }
 
 QString SingleInstanceGuard::workspacePath() const
@@ -30,25 +30,25 @@ QString SingleInstanceGuard::workspacePath() const
     return m_workspacePath;
 }
 
-void SingleInstanceGuard::setWorkspacePath(const QString& caminho)
+void SingleInstanceGuard::setWorkspacePath(const QString& path)
 {
     // CANONICO DOS DOIS LADOS. Quem chega pela linha de comando canoniza antes
     // de calcular o nome do socket; se aqui ficasse o caminho como veio, um
     // symlink no meio faria as duas pontas nomearem sockets diferentes e a
     // coordenacao simplesmente nao aconteceria — sem erro nenhum.
-    const QString limpo = caminho.isEmpty() ? QString{} : QFileInfo{caminho}.canonicalFilePath();
-    if (limpo == m_workspacePath) {
+    const QString canonical = path.isEmpty() ? QString{} : QFileInfo{path}.canonicalFilePath();
+    if (canonical == m_workspacePath) {
         return;
     }
-    soltar();
-    m_workspacePath = limpo;
-    assumir();
+    release();
+    m_workspacePath = canonical;
+    claim();
     emit workspacePathChanged();
 }
 
-void SingleInstanceGuard::soltar()
+void SingleInstanceGuard::release()
 {
-    m_notificador.reset();
+    m_notifier.reset();
     if (m_listenFd >= 0) {
         kinein::releaseSocket(m_listenFd, m_socketPath);
     }
@@ -56,12 +56,12 @@ void SingleInstanceGuard::soltar()
     m_socketPath.clear();
 }
 
-void SingleInstanceGuard::assumir()
+void SingleInstanceGuard::claim()
 {
     if (m_workspacePath.isEmpty()) {
         return;
     }
-    m_socketPath = kinein::socketPathFor(diretorioDeRuntime(), m_workspacePath);
+    m_socketPath = kinein::socketPathFor(runtimeDirectory(), m_workspacePath);
     if (m_socketPath.isEmpty()) {
         return;
     }
@@ -72,17 +72,18 @@ void SingleInstanceGuard::assumir()
         m_socketPath.clear();
         return;
     }
-    m_notificador = std::make_unique<QSocketNotifier>(m_listenFd, QSocketNotifier::Read);
-    connect(m_notificador.get(), &QSocketNotifier::activated, this, &SingleInstanceGuard::atender);
+    m_notifier = std::make_unique<QSocketNotifier>(m_listenFd, QSocketNotifier::Read);
+    connect(m_notifier.get(), &QSocketNotifier::activated, this,
+            &SingleInstanceGuard::serveIncoming);
 }
 
-void SingleInstanceGuard::atender()
+void SingleInstanceGuard::serveIncoming()
 {
-    const std::optional<kinein::Request> pedido = kinein::acceptOne(m_listenFd, m_workspacePath);
-    if (!pedido.has_value()) {
+    const std::optional<kinein::Request> request = kinein::acceptOne(m_listenFd, m_workspacePath);
+    if (!request.has_value()) {
         return;
     }
-    emit activationRequested(pedido->activationToken);
+    emit activationRequested(request->activationToken);
 }
 
 } // namespace kinein

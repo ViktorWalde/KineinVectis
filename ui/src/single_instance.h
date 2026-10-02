@@ -68,7 +68,7 @@ struct Request
 ///
 /// Comparacao por caminho canonico ja' foi feita por quem chama; aqui sobra
 /// normalizar a barra final, que `QDir::cleanPath` deixa passar na raiz.
-[[nodiscard]] bool sameWorkspace(const QString& um, const QString& outro);
+[[nodiscard]] bool sameWorkspace(const QString& first, const QString& second);
 
 /// Entrega o pedido a quem ja' tem esta pasta aberta.
 ///

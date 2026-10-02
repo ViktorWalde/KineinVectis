@@ -68,7 +68,9 @@ Medido em 2026-10-01: **17.862 ocorrências** em 4.054 pares arquivo/palavra (o
 string), passa build, testes e gate, encolhe a linha de base e é um commit:
 
 ```text
-V-1  C++ de ui/src e ui/tests                 (~880)   a unidade cli_args já foi
+V-1  C++ de ui/src e ui/tests                 FEITA em 2026-10-01 (40.7 §7.157):
+                                                       576 ocorrências em 17 arquivos
+                                                       medidas na hora; zero sobrando
 V-2  scripts Python e shell dos gates         (~2.400)
 V-3  QML de ui/qml e scripts/qml-harness      (~4.600)
 V-4  Rust kinein-core, um domínio por commit  (~10.000)

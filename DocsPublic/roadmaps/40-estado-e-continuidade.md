@@ -14,8 +14,9 @@
 >   base no [`53`](53-arquitetura-executavel-da-0.3.6.md) §F0); depois vieram o
 >   "LSP ✗" sem queda falsa (§7.154), o **Criar Projeto** por linguagem
 >   (§7.155) e o **layout versionado** com os limites de tamanho (§7.156,
->   protocolo `0.146.0`). A próxima é a **V-1** (C++ em inglês) — decisão do
->   autor, 53 §13.0. Onde cada fatia começa no código:
+>   protocolo `0.146.0`) e a **V-1** (o C++ todo em inglês, §7.157). Daqui em
+>   diante o 53 §11 manda: a 0.3.6 fecha com o passeio sem aviso no AppImage
+>   e as telas nas três larguras; a 0.3.7 é o trilho por áreas (58 §4.1). Onde cada fatia começa no código:
 >   [`58`](58-onde-cada-versao-comeca-no-codigo.md).
 > - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15 nem
 >   no Ubuntu 26.04 / Qt 6.10 / clang 21 do autor (a exceção do clang-tidy só

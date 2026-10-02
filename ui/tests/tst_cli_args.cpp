@@ -26,19 +26,19 @@ class TestCliArgs : public QObject
     Q_OBJECT
 
 private slots:
-    void sem_argumento_nao_inventa_projeto();
-    void caminho_relativo_resolve_contra_o_terminal_de_origem();
-    void espacos_e_unicode_sobrevivem();
-    void ajuda_e_versao_nao_sobem_nada();
-    void opcao_desconhecida_e_recusada_em_vez_de_ignorada();
-    void dois_caminhos_sao_recusados_com_os_dois_nomes();
-    void o_separador_entrega_o_resto_ao_qt();
-    void o_disco_diz_o_que_esta_errado();
+    void no_argument_invents_no_project();
+    void relative_path_resolves_against_the_calling_terminal();
+    void spaces_and_unicode_survive();
+    void help_and_version_start_nothing();
+    void unknown_option_is_refused_not_ignored();
+    void two_paths_are_refused_naming_both();
+    void the_separator_hands_the_rest_to_qt();
+    void the_disk_says_what_is_wrong();
     void wait_and_verbose_are_parsed();
     void detaches_only_when_a_terminal_calls();
 };
 
-void TestCliArgs::sem_argumento_nao_inventa_projeto()
+void TestCliArgs::no_argument_invents_no_project()
 {
     // A §3 da especificacao avisa: "abertura do desktop sem path nao deve
     // tratar um CWD arbitrario como projeto". O atalho do menu roda o binario
@@ -49,7 +49,7 @@ void TestCliArgs::sem_argumento_nao_inventa_projeto()
     QVERIFY(r.folder.isEmpty());
 }
 
-void TestCliArgs::caminho_relativo_resolve_contra_o_terminal_de_origem()
+void TestCliArgs::relative_path_resolves_against_the_calling_terminal()
 {
     const QString cwd = QStringLiteral("/home/u/proj");
     QCOMPARE(parse({QStringLiteral(".")}, cwd).folder, cwd);
@@ -59,7 +59,7 @@ void TestCliArgs::caminho_relativo_resolve_contra_o_terminal_de_origem()
     QCOMPARE(parse({QStringLiteral("/tmp/./x/")}, cwd).folder, QStringLiteral("/tmp/x"));
 }
 
-void TestCliArgs::espacos_e_unicode_sobrevivem()
+void TestCliArgs::spaces_and_unicode_survive()
 {
     // A §3 da especificacao exige os dois, por escrito.
     const QString cwd = QStringLiteral("/home/u");
@@ -69,23 +69,23 @@ void TestCliArgs::espacos_e_unicode_sobrevivem()
              QString::fromUtf8("/home/u/projeto-ação"));
 }
 
-void TestCliArgs::ajuda_e_versao_nao_sobem_nada()
+void TestCliArgs::help_and_version_start_nothing()
 {
-    for (const auto& forma : {QStringLiteral("--help"), QStringLiteral("-h")}) {
-        const auto r = parse({forma}, QStringLiteral("/x"));
+    for (const auto& spelling : {QStringLiteral("--help"), QStringLiteral("-h")}) {
+        const auto r = parse({spelling}, QStringLiteral("/x"));
         QCOMPARE(r.action, Action::Help);
         QVERIFY(r.message.contains(QStringLiteral("uso:")));
         QVERIFY(r.folder.isEmpty());
     }
-    for (const auto& forma : {QStringLiteral("--version"), QStringLiteral("-V")}) {
-        QCOMPARE(parse({forma}, QStringLiteral("/x")).action, Action::Version);
+    for (const auto& spelling : {QStringLiteral("--version"), QStringLiteral("-V")}) {
+        QCOMPARE(parse({spelling}, QStringLiteral("/x")).action, Action::Version);
     }
     // Ajuda vence um caminho na mesma linha: quem pede ajuda nao quer abrir.
     QCOMPARE(parse({QStringLiteral("/tmp"), QStringLiteral("--help")}, QStringLiteral("/x")).action,
              Action::Help);
 }
 
-void TestCliArgs::opcao_desconhecida_e_recusada_em_vez_de_ignorada()
+void TestCliArgs::unknown_option_is_refused_not_ignored()
 {
     const auto r = parse({QStringLiteral("--reuse-window")}, QStringLiteral("/x"));
     QCOMPARE(r.action, Action::Refusal);
@@ -94,7 +94,7 @@ void TestCliArgs::opcao_desconhecida_e_recusada_em_vez_de_ignorada()
     QVERIFY(r.message.contains(QStringLiteral("--help")));
 }
 
-void TestCliArgs::dois_caminhos_sao_recusados_com_os_dois_nomes()
+void TestCliArgs::two_paths_are_refused_naming_both()
 {
     // Varias raizes e' decisao ABERTA na §7; recusar dizendo por que e' honesto,
     // escolher uma calado nao e'.
@@ -104,7 +104,7 @@ void TestCliArgs::dois_caminhos_sao_recusados_com_os_dois_nomes()
     QVERIFY(r.message.contains(QStringLiteral("/b")));
 }
 
-void TestCliArgs::o_separador_entrega_o_resto_ao_qt()
+void TestCliArgs::the_separator_hands_the_rest_to_qt()
 {
     // Depois de `--` vem argumento do Qt (`-platform offscreen`, por exemplo):
     // nada dali e' pasta, e nada dali pode virar recusa nossa.
@@ -115,29 +115,29 @@ void TestCliArgs::o_separador_entrega_o_resto_ao_qt()
     QCOMPARE(r.folder, QStringLiteral("/tmp"));
 }
 
-void TestCliArgs::o_disco_diz_o_que_esta_errado()
+void TestCliArgs::the_disk_says_what_is_wrong()
 {
     QTemporaryDir base;
     QVERIFY(base.isValid());
-    const QDir raiz{base.path()};
+    const QDir root{base.path()};
 
     // Pasta vazia ABRE: a especificacao diz que nao se exige manifesto.
-    QVERIFY(raiz.mkdir(QStringLiteral("vazia")));
-    QVERIFY(validateFolder(raiz.filePath(QStringLiteral("vazia"))).isEmpty());
+    QVERIFY(root.mkdir(QStringLiteral("vazia")));
+    QVERIFY(validateFolder(root.filePath(QStringLiteral("vazia"))).isEmpty());
 
     // Inexistente: recusa NOMEANDO o caminho, e sem criar nada.
-    const QString fantasma = raiz.filePath(QStringLiteral("nao-existe"));
-    const QString erro = validateFolder(fantasma);
-    QVERIFY(erro.contains(QStringLiteral("nao existe")));
-    QVERIFY(erro.contains(fantasma));
-    QVERIFY2(!QFileInfo::exists(fantasma), "validar NAO pode criar a pasta que faltava");
+    const QString missing = root.filePath(QStringLiteral("nao-existe"));
+    const QString error = validateFolder(missing);
+    QVERIFY(error.contains(QStringLiteral("nao existe")));
+    QVERIFY(error.contains(missing));
+    QVERIFY2(!QFileInfo::exists(missing), "validar NAO pode criar a pasta que faltava");
 
     // Arquivo no lugar de pasta: dizer qual e' o problema, nao so' falhar.
-    const QString arquivo = raiz.filePath(QStringLiteral("um.txt"));
-    QFile f{arquivo};
+    const QString file = root.filePath(QStringLiteral("um.txt"));
+    QFile f{file};
     QVERIFY(f.open(QIODevice::WriteOnly));
     f.close();
-    QVERIFY(validateFolder(arquivo).contains(QStringLiteral("arquivo")));
+    QVERIFY(validateFolder(file).contains(QStringLiteral("arquivo")));
 }
 
 void TestCliArgs::wait_and_verbose_are_parsed()

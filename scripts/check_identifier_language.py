@@ -39,7 +39,9 @@ SUFFIXES = {
     ".rs": "c", ".cpp": "c", ".h": "c", ".qml": "c", ".js": "c",
     ".py": "python", ".sh": "shell",
 }
-IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+# Colado num digito nao e' identificador: e' o resto de um literal numerico
+# (`0xffb48ead` virava o "identificador" `xffb48ead`, 2026-10-01).
+IDENT = re.compile(r"(?<![0-9A-Za-z_])[A-Za-z_][A-Za-z0-9_]*")
 WORD = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+")
 
 

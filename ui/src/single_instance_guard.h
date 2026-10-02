@@ -44,7 +44,7 @@ public:
     SingleInstanceGuard& operator=(SingleInstanceGuard&&) = delete;
 
     [[nodiscard]] QString workspacePath() const;
-    void setWorkspacePath(const QString& caminho);
+    void setWorkspacePath(const QString& path);
 
 signals:
     void workspacePathChanged();
@@ -57,9 +57,9 @@ signals:
     void activationRequested(const QString& token);
 
 private:
-    void soltar();
-    void assumir();
-    void atender();
+    void release();
+    void claim();
+    void serveIncoming();
 
     QString m_workspacePath;
     QString m_socketPath;
@@ -67,7 +67,7 @@ private:
     // DONO EXPLICITO, e nao filho do Qt: o notificador nasce e morre com o
     // descritor que ele observa, e amarrar isso ao ciclo de vida do QObject
     // pai deixaria um notificador apontando para um fd ja' fechado.
-    std::unique_ptr<QSocketNotifier> m_notificador;
+    std::unique_ptr<QSocketNotifier> m_notifier;
 };
 
 } // namespace kinein

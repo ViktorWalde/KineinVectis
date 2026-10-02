@@ -21,19 +21,19 @@ namespace {
 
 /// O pedido como o `sendRequest` o monta, para o teste falar a mesma lingua
 /// que o log.
-QJsonObject pedido(const QString& metodo, const QJsonObject& params)
+QJsonObject makeRequest(const QString& method, const QJsonObject& params)
 {
     return QJsonObject{
         {QStringLiteral("jsonrpc"), QStringLiteral("2.0")},
         {QStringLiteral("id"), 7},
-        {QStringLiteral("method"), metodo},
+        {QStringLiteral("method"), method},
         {QStringLiteral("params"), params},
     };
 }
 
-QString comoTexto(const QJsonObject& objeto)
+QString asText(const QJsonObject& object)
 {
-    return QString::fromUtf8(QJsonDocument(objeto).toJson(QJsonDocument::Compact));
+    return QString::fromUtf8(QJsonDocument(object).toJson(QJsonDocument::Compact));
 }
 
 } // namespace
@@ -55,32 +55,32 @@ private slots:
 // `grafana.probe`, e o log grava em arquivo.
 void TestLogRedaction::grafana_probe_token_never_reaches_the_log()
 {
-    const QString segredo = QStringLiteral("glsa_umTokenDeServicoQualquer");
-    const QJsonObject limpo = redactSecrets(pedido(QStringLiteral("grafana.probe"),
-                                                   QJsonObject{
-                                                       {QStringLiteral("token"), segredo},
-                                                   }));
-    QVERIFY(!comoTexto(limpo).contains(segredo));
-    QCOMPARE(limpo.value(QStringLiteral("params"))
+    const QString secret = QStringLiteral("glsa_umTokenDeServicoQualquer");
+    const QJsonObject redacted = redactSecrets(
+        makeRequest(QStringLiteral("grafana.probe"), QJsonObject{
+                                                         {QStringLiteral("token"), secret},
+                                                     }));
+    QVERIFY(!asText(redacted).contains(secret));
+    QCOMPARE(redacted.value(QStringLiteral("params"))
                  .toObject()
                  .value(QStringLiteral("token"))
                  .toString(),
              QStringLiteral("***"));
     // O metodo continua legivel: redigir o log nao pode cegar quem depura.
-    QCOMPARE(limpo.value(QStringLiteral("method")).toString(), QStringLiteral("grafana.probe"));
+    QCOMPARE(redacted.value(QStringLiteral("method")).toString(), QStringLiteral("grafana.probe"));
 }
 
 void TestLogRedaction::datasource_password_never_reaches_the_log()
 {
-    const QString segredo = QStringLiteral("senha-da-sessao");
-    const QJsonObject limpo =
-        redactSecrets(pedido(QStringLiteral("datasource.connect"),
-                             QJsonObject{
-                                 {QStringLiteral("password"), segredo},
-                                 {QStringLiteral("host"), QStringLiteral("localhost")},
-                             }));
-    QVERIFY(!comoTexto(limpo).contains(segredo));
-    QCOMPARE(limpo.value(QStringLiteral("params"))
+    const QString secret = QStringLiteral("senha-da-sessao");
+    const QJsonObject redacted =
+        redactSecrets(makeRequest(QStringLiteral("datasource.connect"),
+                                  QJsonObject{
+                                      {QStringLiteral("password"), secret},
+                                      {QStringLiteral("host"), QStringLiteral("localhost")},
+                                  }));
+    QVERIFY(!asText(redacted).contains(secret));
+    QCOMPARE(redacted.value(QStringLiteral("params"))
                  .toObject()
                  .value(QStringLiteral("host"))
                  .toString(),
@@ -104,16 +104,15 @@ void TestLogRedaction::field_names_are_matched_without_case()
 // redigi-los apagaria justamente o que explica de onde ele veio.
 void TestLogRedaction::ordinary_fields_are_preserved()
 {
-    const QJsonObject limpo =
-        redactSecrets(pedido(QStringLiteral("grafana.save"),
-                             QJsonObject{
-                                 {QStringLiteral("url"), QStringLiteral("http://localhost:3000")},
-                                 {QStringLiteral("tokenSource"), QStringLiteral("environment")},
-                                 {QStringLiteral("tokenVariable"), QStringLiteral("GRAFANA_TOKEN")},
-                             }));
-    const QJsonObject params = limpo.value(QStringLiteral("params")).toObject();
-    QCOMPARE(params.value(QStringLiteral("tokenSource")).toString(),
-             QStringLiteral("environment"));
+    const QJsonObject redacted = redactSecrets(
+        makeRequest(QStringLiteral("grafana.save"),
+                    QJsonObject{
+                        {QStringLiteral("url"), QStringLiteral("http://localhost:3000")},
+                        {QStringLiteral("tokenSource"), QStringLiteral("environment")},
+                        {QStringLiteral("tokenVariable"), QStringLiteral("GRAFANA_TOKEN")},
+                    }));
+    const QJsonObject params = redacted.value(QStringLiteral("params")).toObject();
+    QCOMPARE(params.value(QStringLiteral("tokenSource")).toString(), QStringLiteral("environment"));
     QCOMPARE(params.value(QStringLiteral("tokenVariable")).toString(),
              QStringLiteral("GRAFANA_TOKEN"));
 }
@@ -122,28 +121,29 @@ void TestLogRedaction::ordinary_fields_are_preserved()
 // segredo do mesmo jeito.
 void TestLogRedaction::nested_objects_and_arrays_are_reached()
 {
-    const QString segredo = QStringLiteral("nao-deveria-sair");
-    const QJsonObject limpo = redactSecrets(pedido(
-        QStringLiteral("workspace.restore"),
-        QJsonObject{
-            {QStringLiteral("conexoes"),
-             QJsonArray{
-                 QJsonObject{{QStringLiteral("nome"), QStringLiteral("prod")},
-                             {QStringLiteral("secret"), segredo}},
-                 QJsonObject{{QStringLiteral("nome"), QStringLiteral("dev")},
-                             {QStringLiteral("aninhado"),
-                              QJsonObject{{QStringLiteral("token"), segredo}}}},
-             }},
-        }));
-    QVERIFY(!comoTexto(limpo).contains(segredo));
+    const QString secret = QStringLiteral("nao-deveria-sair");
+    const QJsonObject redacted = redactSecrets(
+        makeRequest(QStringLiteral("workspace.restore"),
+                    QJsonObject{
+                        {QStringLiteral("conexoes"),
+                         QJsonArray{
+                             QJsonObject{{QStringLiteral("nome"), QStringLiteral("prod")},
+                                         {QStringLiteral("secret"), secret}},
+                             QJsonObject{{QStringLiteral("nome"), QStringLiteral("dev")},
+                                         {QStringLiteral("aninhado"),
+                                          QJsonObject{{QStringLiteral("token"), secret}}}},
+                         }},
+                    }));
+    QVERIFY(!asText(redacted).contains(secret));
 }
 
 // A politica `none` nao manda campo nenhum, e redigir nao pode INVENTAR um: um
 // `"token":"***"` no log diria que houve credencial onde nao houve.
 void TestLogRedaction::absent_token_stays_absent()
 {
-    const QJsonObject limpo = redactSecrets(pedido(QStringLiteral("grafana.probe"), QJsonObject{}));
-    QVERIFY(!limpo.value(QStringLiteral("params")).toObject().contains(QStringLiteral("token")));
+    const QJsonObject redacted =
+        redactSecrets(makeRequest(QStringLiteral("grafana.probe"), QJsonObject{}));
+    QVERIFY(!redacted.value(QStringLiteral("params")).toObject().contains(QStringLiteral("token")));
 }
 
 QTEST_GUILESS_MAIN(TestLogRedaction)

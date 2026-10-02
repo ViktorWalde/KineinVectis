@@ -28,19 +28,19 @@ namespace {
 // Alfabeto da digitacao. So letras, de proposito: parenteses e aspas acionam
 // o auto-close de pares, e uma tecla viraria DUAS edicoes — mediria o recurso
 // de pares, nao a digitacao.
-constexpr QLatin1StringView kAlfabeto("abcdefghijklmnopqrstuvwxyz");
+constexpr QLatin1StringView kAlphabet("abcdefghijklmnopqrstuvwxyz");
 
-int envInt(const char* nome, int padrao)
+int envInt(const char* name, int fallback)
 {
     bool ok = false;
-    const int valor = qEnvironmentVariableIntValue(nome, &ok);
-    return ok ? valor : padrao;
+    const int envValue = qEnvironmentVariableIntValue(name, &ok);
+    return ok ? envValue : fallback;
 }
 
-void erro(const QString& motivo)
+void fail(const QString& reason)
 {
     // A3.2 item 3: ausencia produz motivo explicito, nunca sucesso falso.
-    qInfo().noquote().nospace() << "KINEIN_PERF typing_error=" << motivo;
+    qInfo().noquote().nospace() << "KINEIN_PERF typing_error=" << reason;
     // A instalacao tambem pode falhar antes de app.exec(): exit direto se perde.
     QMetaObject::invokeMethod(QCoreApplication::instance(), "exit", Qt::QueuedConnection,
                               Q_ARG(int, 1));
@@ -67,62 +67,62 @@ public:
         : QObject(parent), m_window(window), m_client(client), m_editor(editor),
           m_workspace(qEnvironmentVariable("KINEIN_PERF_TYPING_WORKSPACE")),
           m_file(qEnvironmentVariable("KINEIN_PERF_TYPING_FILE")),
-          m_teclas(envInt("KINEIN_PERF_TYPING_KEYS", 40)),
-          m_quietoMs(envInt("KINEIN_PERF_TYPING_QUIET_MS", 150)),
+          m_keys(envInt("KINEIN_PERF_TYPING_KEYS", 40)),
+          m_quietMs(envInt("KINEIN_PERF_TYPING_QUIET_MS", 150)),
           m_timeoutMs(envInt("KINEIN_PERF_TYPING_TIMEOUT_MS", 120000))
     {
     }
 
-    void iniciar();
+    void begin();
 
 signals:
-    void amostraColetada(double /*ms*/);
+    void sampleCollected(double /*ms*/);
 
 private:
-    void aoConectar();
-    void aoAbrirWorkspace();
-    void aoCarregarArquivo();
-    void agendarProximaTecla();
-    void enviarTecla();
-    void registrarAmostra(double ms);
-    void relatar();
+    void onConnected();
+    void onWorkspaceOpened();
+    void onFileLoaded();
+    void scheduleNextKey();
+    void sendKey();
+    void recordSample(double ms);
+    void report();
 
     // Espera a UI ficar QUIETA (nenhum frame por m_quietoMs) antes da proxima
     // tecla. Sem isso o numero mente: o realce de sintaxe volta do core ~280 ms
     // depois da tecla anterior (A3.1) e produz um frame proprio; se a tecla
     // seguinte sair antes dele, esse frame seria creditado a ela e a medicao
     // reportaria uma latencia que ninguem viveu.
-    void esperarQuietude(std::function<void()> entao);
+    void waitForQuiet(std::function<void()> then);
 
-    [[nodiscard]] QString textoDoEditor() const;
+    [[nodiscard]] QString editorText() const;
 
     QQuickWindow* m_window = nullptr;
     CoreClient* m_client = nullptr;
     QObject* m_editor = nullptr;
     QString m_workspace;
     QString m_file;
-    int m_teclas = 0;
-    int m_quietoMs = 0;
+    int m_keys = 0;
+    int m_quietMs = 0;
     int m_timeoutMs = 0;
 
     // m_clock corre a sessao inteira e nunca reinicia: os carimbos vem de
     // threads diferentes (GUI e render) e precisam da mesma origem.
     QElapsedTimer m_clock;
-    std::atomic<qint64> m_teclaEnviadaNs{-1};
-    std::atomic<qint64> m_ultimoFrameNs{0};
+    std::atomic<qint64> m_keySentNs{-1};
+    std::atomic<qint64> m_lastFrameNs{0};
 
-    QList<double> m_amostras;
-    int m_enviadas = 0;
-    int m_charsIniciais = 0;
-    bool m_workspacePedido = false;
-    std::function<void()> m_aposQuietude;
-    QTimer m_quietoTimer;
+    QList<double> m_samples;
+    int m_sentCount = 0;
+    int m_initialChars = 0;
+    bool m_workspaceRequested = false;
+    std::function<void()> m_afterQuiet;
+    QTimer m_quietTimer;
 };
 
-void TypingHarness::iniciar()
+void TypingHarness::begin()
 {
     if (m_workspace.isEmpty() || m_file.isEmpty()) {
-        erro(QStringLiteral("KINEIN_PERF_TYPING_WORKSPACE e _FILE sao obrigatorios"));
+        fail(QStringLiteral("KINEIN_PERF_TYPING_WORKSPACE e _FILE sao obrigatorios"));
         return;
     }
 
@@ -132,22 +132,22 @@ void TypingHarness::iniciar()
     QGuiApplication::styleHints()->setCursorFlashTime(0);
 
     m_clock.start();
-    m_quietoTimer.setInterval(10);
-    connect(&m_quietoTimer, &QTimer::timeout, this, [this]() {
-        const qint64 desdeFrame =
-            m_clock.nsecsElapsed() - m_ultimoFrameNs.load(std::memory_order_acquire);
-        if (desdeFrame < static_cast<qint64>(m_quietoMs) * 1000000) {
+    m_quietTimer.setInterval(10);
+    connect(&m_quietTimer, &QTimer::timeout, this, [this]() {
+        const qint64 sinceFrame =
+            m_clock.nsecsElapsed() - m_lastFrameNs.load(std::memory_order_acquire);
+        if (sinceFrame < static_cast<qint64>(m_quietMs) * 1000000) {
             return;
         }
-        m_quietoTimer.stop();
-        const auto entao = m_aposQuietude;
-        m_aposQuietude = nullptr;
-        if (entao) {
-            entao();
+        m_quietTimer.stop();
+        const auto then = m_afterQuiet;
+        m_afterQuiet = nullptr;
+        if (then) {
+            then();
         }
     });
 
-    connect(this, &TypingHarness::amostraColetada, this, &TypingHarness::registrarAmostra,
+    connect(this, &TypingHarness::sampleCollected, this, &TypingHarness::recordSample,
             Qt::QueuedConnection);
 
     // O carimbo do frame TEM de sair na render thread, no instante do swap.
@@ -157,27 +157,27 @@ void TypingHarness::iniciar()
     connect(
         m_window, &QQuickWindow::frameSwapped, this,
         [this]() {
-            const qint64 agora = m_clock.nsecsElapsed();
-            m_ultimoFrameNs.store(agora, std::memory_order_release);
-            const qint64 enviada = m_teclaEnviadaNs.exchange(-1, std::memory_order_acq_rel);
-            if (enviada < 0) {
+            const qint64 now = m_clock.nsecsElapsed();
+            m_lastFrameNs.store(now, std::memory_order_release);
+            const qint64 sentAt = m_keySentNs.exchange(-1, std::memory_order_acq_rel);
+            if (sentAt < 0) {
                 return;
             }
-            const double ms = static_cast<double>(agora - enviada) / 1000000.0;
-            emit amostraColetada(ms);
+            const double ms = static_cast<double>(now - sentAt) / 1000000.0;
+            emit sampleCollected(ms);
         },
         Qt::DirectConnection);
 
     QTimer::singleShot(m_timeoutMs, this, [this]() {
-        erro(QStringLiteral("timeout apos %1 ms (amostras=%2)")
+        fail(QStringLiteral("timeout apos %1 ms (amostras=%2)")
                  .arg(m_timeoutMs)
-                 .arg(m_amostras.size()));
+                 .arg(m_samples.size()));
     });
 
-    connect(m_client, &CoreClient::workspaceChanged, this, [this]() { aoAbrirWorkspace(); });
+    connect(m_client, &CoreClient::workspaceChanged, this, [this]() { onWorkspaceOpened(); });
     connect(m_client, &CoreClient::fileLoaded, this, [this](const QString& path, const QString&) {
         if (path == m_file) {
-            aoCarregarArquivo();
+            onFileLoaded();
         }
     });
 
@@ -185,22 +185,22 @@ void TypingHarness::iniciar()
     // e o sendRequest DESCARTA em silencio o que chega antes de Running. Abrir o
     // workspace aqui direto nao falharia — simplesmente nao aconteceria nada.
     // Espera-se `connected` (o ping do core respondeu).
-    connect(m_client, &CoreClient::statusChanged, this, [this]() { aoConectar(); });
-    aoConectar();
+    connect(m_client, &CoreClient::statusChanged, this, [this]() { onConnected(); });
+    onConnected();
 }
 
-void TypingHarness::aoConectar()
+void TypingHarness::onConnected()
 {
-    if (m_workspacePedido || !m_client->isConnected()) {
+    if (m_workspaceRequested || !m_client->isConnected()) {
         return;
     }
-    m_workspacePedido = true;
+    m_workspaceRequested = true;
     m_client->openWorkspace(m_workspace);
 }
 
-void TypingHarness::aoAbrirWorkspace()
+void TypingHarness::onWorkspaceOpened()
 {
-    if (m_enviadas > 0 || m_client->workspaceRoot().isEmpty()) {
+    if (m_sentCount > 0 || m_client->workspaceRoot().isEmpty()) {
         return;
     }
     disconnect(m_client, &CoreClient::workspaceChanged, this, nullptr);
@@ -209,102 +209,102 @@ void TypingHarness::aoAbrirWorkspace()
                               Q_ARG(QVariant, 1), Q_ARG(QVariant, 1));
 }
 
-void TypingHarness::aoCarregarArquivo()
+void TypingHarness::onFileLoaded()
 {
-    esperarQuietude([this]() {
-        const QString texto = textoDoEditor();
-        if (texto.isEmpty()) {
-            erro(QStringLiteral("editor vazio apos fs.read"));
+    waitForQuiet([this]() {
+        const QString text = editorText();
+        if (text.isEmpty()) {
+            fail(QStringLiteral("editor vazio apos fs.read"));
             return;
         }
         // Conta quebras de linha, igual ao `fixture_lines` do medir-core.py:
         // duas contagens diferentes da MESMA fixture so gerariam duvida.
-        const int linhas = static_cast<int>(texto.count(QLatin1Char('\n')));
+        const int lineCount = static_cast<int>(text.count(QLatin1Char('\n')));
         // Guarda o tamanho de partida: e com ele que se prova, no fim, que as
         // teclas entraram de fato no documento.
-        m_charsIniciais = static_cast<int>(texto.size());
+        m_initialChars = static_cast<int>(text.size());
         // Digitar na PRIMEIRA linha nao seria representativo: seria o pior caso
         // de invalidacao. O meio do arquivo e o gesto comum e e deterministico
         // dado que a fixture e deterministica.
-        const int linha = envInt("KINEIN_PERF_TYPING_LINE", linhas / 2);
-        qInfo().noquote().nospace() << "KINEIN_PERF typing_file_lines=" << linhas;
-        qInfo().noquote().nospace() << "KINEIN_PERF typing_file_bytes=" << texto.toUtf8().size();
-        qInfo().noquote().nospace() << "KINEIN_PERF typing_line=" << linha;
+        const int targetLine = envInt("KINEIN_PERF_TYPING_LINE", lineCount / 2);
+        qInfo().noquote().nospace() << "KINEIN_PERF typing_file_lines=" << lineCount;
+        qInfo().noquote().nospace() << "KINEIN_PERF typing_file_bytes=" << text.toUtf8().size();
+        qInfo().noquote().nospace() << "KINEIN_PERF typing_line=" << targetLine;
 
         QMetaObject::invokeMethod(m_editor, "openDiagnostic", Q_ARG(QVariant, m_file),
-                                  Q_ARG(QVariant, linha), Q_ARG(QVariant, 1));
+                                  Q_ARG(QVariant, targetLine), Q_ARG(QVariant, 1));
         QMetaObject::invokeMethod(m_editor, "focusEditor");
-        agendarProximaTecla();
+        scheduleNextKey();
     });
 }
 
-void TypingHarness::esperarQuietude(std::function<void()> entao)
+void TypingHarness::waitForQuiet(std::function<void()> then)
 {
-    m_aposQuietude = std::move(entao);
-    m_ultimoFrameNs.store(m_clock.nsecsElapsed(), std::memory_order_release);
-    m_quietoTimer.start();
+    m_afterQuiet = std::move(then);
+    m_lastFrameNs.store(m_clock.nsecsElapsed(), std::memory_order_release);
+    m_quietTimer.start();
 }
 
-void TypingHarness::agendarProximaTecla()
+void TypingHarness::scheduleNextKey()
 {
-    if (m_enviadas >= m_teclas) {
-        relatar();
+    if (m_sentCount >= m_keys) {
+        report();
         return;
     }
-    esperarQuietude([this]() { enviarTecla(); });
+    waitForQuiet([this]() { sendKey(); });
 }
 
-void TypingHarness::enviarTecla()
+void TypingHarness::sendKey()
 {
-    const char c = kAlfabeto.at(m_enviadas % kAlfabeto.size()).toLatin1();
+    const char c = kAlphabet.at(m_sentCount % kAlphabet.size()).toLatin1();
     const int key = Qt::Key_A + (c - 'a');
-    const QString texto = QString(QChar::fromLatin1(c));
-    m_enviadas++;
+    const QString text = QString(QChar::fromLatin1(c));
+    m_sentCount++;
 
     // O carimbo sai ANTES do sendEvent: o que o usuario sente comeca na tecla,
     // nao no fim do handler.
-    m_teclaEnviadaNs.store(m_clock.nsecsElapsed(), std::memory_order_release);
-    QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier, texto);
+    m_keySentNs.store(m_clock.nsecsElapsed(), std::memory_order_release);
+    QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier, text);
     QCoreApplication::sendEvent(m_window, &press);
-    QKeyEvent release(QEvent::KeyRelease, key, Qt::NoModifier, texto);
+    QKeyEvent release(QEvent::KeyRelease, key, Qt::NoModifier, text);
     QCoreApplication::sendEvent(m_window, &release);
 }
 
-void TypingHarness::registrarAmostra(double ms)
+void TypingHarness::recordSample(double ms)
 {
-    m_amostras.append(ms);
+    m_samples.append(ms);
     // Amostra crua na saida: mediana e p95 sao calculadas pelo runner
     // (medir-performance.sh), e o numero fica auditavel em vez de so resumido.
     qInfo().noquote().nospace() << "KINEIN_PERF typing_sample_ms=" << QString::number(ms, 'f', 2);
-    agendarProximaTecla();
+    scheduleNextKey();
 }
 
-void TypingHarness::relatar()
+void TypingHarness::report()
 {
     // A MESMA armadilha que o A3.3 item 3 caiu: la, o eco do shell fazia o
     // marcador aparecer sem que a rajada tivesse rodado, e a medicao reportou
     // 50 mil linhas em 1,5 ms. Aqui o gemeo seria medir frames que tecla nenhuma
     // causou — o numero sairia igualmente bonito. Entao o documento tem de
     // provar que recebeu: N teclas => N caracteres a mais.
-    const int inseridos = static_cast<int>(textoDoEditor().size()) - m_charsIniciais;
-    qInfo().noquote().nospace() << "KINEIN_PERF typing_chars_inserted=" << inseridos;
-    if (inseridos != m_enviadas) {
-        erro(QStringLiteral("teclas perdidas: %1 enviadas, %2 inseridas")
-                 .arg(m_enviadas)
-                 .arg(inseridos));
+    const int inserted = static_cast<int>(editorText().size()) - m_initialChars;
+    qInfo().noquote().nospace() << "KINEIN_PERF typing_chars_inserted=" << inserted;
+    if (inserted != m_sentCount) {
+        fail(QStringLiteral("teclas perdidas: %1 enviadas, %2 inseridas")
+                 .arg(m_sentCount)
+                 .arg(inserted));
         return;
     }
-    qInfo().noquote().nospace() << "KINEIN_PERF typing_keys=" << m_amostras.size();
+    qInfo().noquote().nospace() << "KINEIN_PERF typing_keys=" << m_samples.size();
     QCoreApplication::quit();
 }
 
-QString TypingHarness::textoDoEditor() const
+QString TypingHarness::editorText() const
 {
-    QVariant retorno;
-    if (!QMetaObject::invokeMethod(m_editor, "editorText", Q_RETURN_ARG(QVariant, retorno))) {
+    QVariant returned;
+    if (!QMetaObject::invokeMethod(m_editor, "editorText", Q_RETURN_ARG(QVariant, returned))) {
         return {};
     }
-    return retorno.toString();
+    return returned.toString();
 }
 
 } // namespace
@@ -315,19 +315,19 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
         return;
     }
     if (engine.rootObjects().isEmpty()) {
-        erro(QStringLiteral("engine sem root object"));
+        fail(QStringLiteral("engine sem root object"));
         return;
     }
     auto* window = qobject_cast<QQuickWindow*>(engine.rootObjects().constFirst());
     if (window == nullptr) {
-        erro(QStringLiteral("root object nao e QQuickWindow"));
+        fail(QStringLiteral("root object nao e QQuickWindow"));
         return;
     }
     // Alcanca os ids do Main.qml sem exigir objectName na UI de producao:
     // instrumentacao nao deve deixar marca no codigo que ela mede.
     QQmlContext* ctx = qmlContext(window);
     if (ctx == nullptr) {
-        erro(QStringLiteral("sem contexto QML no root"));
+        fail(QStringLiteral("sem contexto QML no root"));
         return;
     }
     auto* client = qobject_cast<CoreClient*>(ctx->objectForName(QStringLiteral("coreClient")));
@@ -335,7 +335,7 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
     QObject* editor =
         domains == nullptr ? nullptr : domains->property("editorController").value<QObject*>();
     if (client == nullptr || editor == nullptr) {
-        erro(QStringLiteral("coreClient/domains.editorController nao encontrados no contexto"));
+        fail(QStringLiteral("coreClient/domains.editorController nao encontrados no contexto"));
         return;
     }
     // Dono e o parent-child do Qt: `app` destroi o harness junto com a
@@ -343,7 +343,7 @@ void installTypingPerfHarness(QGuiApplication& app, QQmlApplicationEngine& engin
     // funcao e morrer com o processo.
     // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     auto* harness = new TypingHarness(window, client, editor, &app);
-    harness->iniciar();
+    harness->begin();
 }
 
 } // namespace kinein

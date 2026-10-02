@@ -67,11 +67,11 @@ private slots:
 // e e' por isso que o nome do arquivo e' um digest e nao o caminho escapado.
 void TestSingleInstance::the_socket_name_is_short_no_matter_how_deep_the_project_is()
 {
-    QString fundo = QStringLiteral("/home/alguem");
-    for (int nivel = 0; nivel < 40; ++nivel) {
-        fundo += QStringLiteral("/uma-pasta-com-nome-bem-comprido-%1").arg(nivel);
+    QString deepPath = QStringLiteral("/home/alguem");
+    for (int level = 0; level < 40; ++level) {
+        deepPath += QStringLiteral("/uma-pasta-com-nome-bem-comprido-%1").arg(level);
     }
-    const QString socket = socketPathFor(QStringLiteral("/run/user/1000"), fundo);
+    const QString socket = socketPathFor(QStringLiteral("/run/user/1000"), deepPath);
     QVERIFY(!socket.isEmpty());
     QVERIFY2(
         socket.toUtf8().size() < 100,
@@ -81,15 +81,15 @@ void TestSingleInstance::the_socket_name_is_short_no_matter_how_deep_the_project
 
 void TestSingleInstance::different_folders_never_share_a_socket_name()
 {
-    const QString um =
+    const QString first =
         socketPathFor(QStringLiteral("/run/user/1000"), QStringLiteral("/home/alguem/projeto-a"));
-    const QString outro =
+    const QString second =
         socketPathFor(QStringLiteral("/run/user/1000"), QStringLiteral("/home/alguem/projeto-b"));
-    QVERIFY(!um.isEmpty());
-    QCOMPARE_NE(um, outro);
+    QVERIFY(!first.isEmpty());
+    QCOMPARE_NE(first, second);
     // E a MESMA pasta da' sempre o mesmo nome — senao a coordenacao nao existe.
-    QCOMPARE(um, socketPathFor(QStringLiteral("/run/user/1000"),
-                               QStringLiteral("/home/alguem/projeto-a")));
+    QCOMPARE(first, socketPathFor(QStringLiteral("/run/user/1000"),
+                                  QStringLiteral("/home/alguem/projeto-a")));
 }
 
 // Sessao sem `XDG_RUNTIME_DIR` existe (container magro, sessao sem systemd).
@@ -103,16 +103,16 @@ void TestSingleInstance::without_a_runtime_dir_there_is_no_socket()
 
 void TestSingleInstance::a_request_survives_spaces_and_unicode_in_the_path()
 {
-    const QString caminho = QStringLiteral("/home/alguém/meus projetos/ção");
-    const auto lido = parseRequest(encodeRequest(caminho, QStringLiteral("tok-123")));
-    QVERIFY(lido.has_value());
-    QCOMPARE(lido->workspacePath, caminho);
-    QCOMPARE(lido->activationToken, QStringLiteral("tok-123"));
+    const QString folderPath = QStringLiteral("/home/alguém/meus projetos/ção");
+    const auto parsed = parseRequest(encodeRequest(folderPath, QStringLiteral("tok-123")));
+    QVERIFY(parsed.has_value());
+    QCOMPARE(parsed->workspacePath, folderPath);
+    QCOMPARE(parsed->activationToken, QStringLiteral("tok-123"));
 
     // Sem token tambem e' um pedido legitimo: nem todo terminal fornece um.
-    const auto semToken = parseRequest(encodeRequest(caminho, QString{}));
-    QVERIFY(semToken.has_value());
-    QVERIFY(semToken->activationToken.isEmpty());
+    const auto withoutToken = parseRequest(encodeRequest(folderPath, QString{}));
+    QVERIFY(withoutToken.has_value());
+    QVERIFY(withoutToken->activationToken.isEmpty());
 }
 
 // Um socket no `XDG_RUNTIME_DIR` e' alcancavel por qualquer processo do mesmo
@@ -132,11 +132,11 @@ void TestSingleInstance::a_line_from_another_protocol_is_refused()
 // O codificador as remove, e este teste guarda isso.
 void TestSingleInstance::a_request_cannot_smuggle_a_second_line()
 {
-    const QString veneno = QStringLiteral("/p\nKINEIN-INSTANCIA-1\t/outra\t");
-    const QString linha = encodeRequest(veneno, QStringLiteral("t\nok"));
-    QCOMPARE(linha.count(QLatin1Char('\n')), 1);
-    const auto lido = parseRequest(linha);
-    QVERIFY(!lido.has_value() || lido->workspacePath != QStringLiteral("/outra"));
+    const QString poison = QStringLiteral("/p\nKINEIN-INSTANCIA-1\t/outra\t");
+    const QString encoded = encodeRequest(poison, QStringLiteral("t\nok"));
+    QCOMPARE(encoded.count(QLatin1Char('\n')), 1);
+    const auto parsed = parseRequest(encoded);
+    QVERIFY(!parsed.has_value() || parsed->workspacePath != QStringLiteral("/outra"));
 }
 
 void TestSingleInstance::the_same_folder_written_two_ways_is_the_same_folder()
@@ -167,22 +167,22 @@ void TestSingleInstance::a_live_owner_answers_and_the_newcomer_steps_aside()
 {
     QTemporaryDir runtime;
     QVERIFY(runtime.isValid());
-    const QString projeto = QStringLiteral("/home/alguem/projeto");
-    const QString socket = socketPathFor(runtime.path(), projeto);
+    const QString project = QStringLiteral("/home/alguem/projeto");
+    const QString socket = socketPathFor(runtime.path(), project);
 
-    const int dono = kinein::listenFor(socket);
-    QVERIFY2(dono >= 0, "nao consegui escutar no socket");
+    const int ownerFd = kinein::listenFor(socket);
+    QVERIFY2(ownerFd >= 0, "nao consegui escutar no socket");
 
-    std::optional<kinein::Request> recebido;
-    std::thread atendente([&] { recebido = acceptAfterReadable(dono, projeto); });
+    std::optional<kinein::Request> received;
+    std::thread server([&] { received = acceptAfterReadable(ownerFd, project); });
 
-    const bool saiu = kinein::handOff(socket, projeto, QStringLiteral("token-do-terminal"));
-    atendente.join();
+    const bool handedOff = kinein::handOff(socket, project, QStringLiteral("token-do-terminal"));
+    server.join();
 
-    QVERIFY2(saiu, "o recem-chegado devia sair, e nao abrir outra janela");
-    QVERIFY(recebido.has_value());
-    QCOMPARE(recebido->activationToken, QStringLiteral("token-do-terminal"));
-    kinein::releaseSocket(dono, socket);
+    QVERIFY2(handedOff, "o recem-chegado devia sair, e nao abrir outra janela");
+    QVERIFY(received.has_value());
+    QCOMPARE(received->activationToken, QStringLiteral("token-do-terminal"));
+    kinein::releaseSocket(ownerFd, socket);
 }
 
 // COLISAO DE NOME NAO PODE FAZER UMA PASTA SE PASSAR POR OUTRA. O caminho
@@ -193,33 +193,32 @@ void TestSingleInstance::an_owner_of_another_folder_says_no_right_away()
     QTemporaryDir runtime;
     QVERIFY(runtime.isValid());
     const QString socket = socketPathFor(runtime.path(), QStringLiteral("/qualquer"));
-    const int dono = kinein::listenFor(socket);
-    QVERIFY(dono >= 0);
+    const int ownerFd = kinein::listenFor(socket);
+    QVERIFY(ownerFd >= 0);
 
-    std::optional<kinein::Request> recebido;
-    std::thread atendente(
-        [&] { recebido = acceptAfterReadable(dono, QStringLiteral("/home/alguem/OUTRA")); });
+    std::optional<kinein::Request> received;
+    std::thread server(
+        [&] { received = acceptAfterReadable(ownerFd, QStringLiteral("/home/alguem/OUTRA")); });
 
     // O QUE SE MEDE e' "respondeu ANTES do prazo", e nao um numero de
     // milissegundos. Por isso o prazo aqui e' folgado de proposito: com o
     // limite colado no tempo real, o teste piscava quando a maquina estava
     // ocupada — visto em 2026-09-26, com o clang-tidy rodando ao lado. Teste
     // que falha ao acaso ensina a ignorar teste.
-    constexpr int kPrazoFolgado = 3000;
-    QElapsedTimer relogio;
-    relogio.start();
-    const bool saiu =
-        kinein::handOff(socket, QStringLiteral("/home/alguem/projeto"), QString{}, kPrazoFolgado);
-    const qint64 levou = relogio.elapsed();
-    atendente.join();
+    constexpr int kGenerousTimeoutMs = 3000;
+    QElapsedTimer clock;
+    clock.start();
+    const bool handedOff = kinein::handOff(socket, QStringLiteral("/home/alguem/projeto"),
+                                           QString{}, kGenerousTimeoutMs);
+    const qint64 elapsedMs = clock.elapsed();
+    server.join();
 
-    QVERIFY2(!saiu, "pasta diferente tem de abrir janela nova");
-    QVERIFY(!recebido.has_value());
-    QVERIFY2(
-        levou < kPrazoFolgado / 2,
-        qPrintable(
-            QStringLiteral("a recusa esperou o prazo (%1 ms) em vez de vir na hora").arg(levou)));
-    kinein::releaseSocket(dono, socket);
+    QVERIFY2(!handedOff, "pasta diferente tem de abrir janela nova");
+    QVERIFY(!received.has_value());
+    QVERIFY2(elapsedMs < kGenerousTimeoutMs / 2,
+             qPrintable(QStringLiteral("a recusa esperou o prazo (%1 ms) em vez de vir na hora")
+                            .arg(elapsedMs)));
+    kinein::releaseSocket(ownerFd, socket);
 }
 
 // Depois de um crash sobra o arquivo do socket sem ninguem atras dele. Deixar
@@ -228,18 +227,18 @@ void TestSingleInstance::an_orphan_socket_is_taken_over()
 {
     QTemporaryDir runtime;
     QVERIFY(runtime.isValid());
-    const QString projeto = QStringLiteral("/home/alguem/projeto");
-    const QString socket = socketPathFor(runtime.path(), projeto);
+    const QString project = QStringLiteral("/home/alguem/projeto");
+    const QString socket = socketPathFor(runtime.path(), project);
 
-    const int morto = kinein::listenFor(socket);
-    QVERIFY(morto >= 0);
+    const int deadFd = kinein::listenFor(socket);
+    QVERIFY(deadFd >= 0);
     // O processo morre sem limpar: o descritor fecha, o ARQUIVO fica.
-    ::close(morto);
+    ::close(deadFd);
     QVERIFY(QFileInfo::exists(socket));
 
-    const int novo = kinein::listenFor(socket);
-    QVERIFY2(novo >= 0, "o socket orfao impediu a janela nova de assumir");
-    kinein::releaseSocket(novo, socket);
+    const int freshFd = kinein::listenFor(socket);
+    QVERIFY2(freshFd >= 0, "o socket orfao impediu a janela nova de assumir");
+    kinein::releaseSocket(freshFd, socket);
     QVERIFY(!QFileInfo::exists(socket));
 }
 
@@ -251,11 +250,11 @@ void TestSingleInstance::with_nobody_listening_the_newcomer_just_opens()
     QVERIFY(runtime.isValid());
     const QString socket = socketPathFor(runtime.path(), QStringLiteral("/home/a/p"));
     // Mesmo raciocinio: o ponto e' nao esperar o prazo, e nao um numero.
-    constexpr int kPrazoFolgado = 3000;
-    QElapsedTimer relogio;
-    relogio.start();
-    QVERIFY(!kinein::handOff(socket, QStringLiteral("/home/a/p"), QString{}, kPrazoFolgado));
-    QVERIFY2(relogio.elapsed() < kPrazoFolgado / 2, "esperou o prazo com ninguem do outro lado");
+    constexpr int kGenerousTimeoutMs = 3000;
+    QElapsedTimer clock;
+    clock.start();
+    QVERIFY(!kinein::handOff(socket, QStringLiteral("/home/a/p"), QString{}, kGenerousTimeoutMs));
+    QVERIFY2(clock.elapsed() < kGenerousTimeoutMs / 2, "esperou o prazo com ninguem do outro lado");
 }
 
 QTEST_GUILESS_MAIN(TestSingleInstance)

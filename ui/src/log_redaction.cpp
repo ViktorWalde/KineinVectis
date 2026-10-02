@@ -12,12 +12,12 @@ QJsonValue redactValue(const QJsonValue& value);
 
 QJsonObject redactObject(const QJsonObject& object)
 {
-    QJsonObject limpo;
+    QJsonObject redacted;
     for (auto it = object.constBegin(); it != object.constEnd(); ++it) {
-        limpo.insert(it.key(), isSecretField(it.key()) ? QJsonValue(QStringLiteral("***"))
-                                                       : redactValue(it.value()));
+        redacted.insert(it.key(), isSecretField(it.key()) ? QJsonValue(QStringLiteral("***"))
+                                                          : redactValue(it.value()));
     }
-    return limpo;
+    return redacted;
 }
 
 QJsonValue redactValue(const QJsonValue& value)
@@ -26,12 +26,12 @@ QJsonValue redactValue(const QJsonValue& value)
         return redactObject(value.toObject());
     }
     if (value.isArray()) {
-        QJsonArray limpo;
+        QJsonArray redacted;
         const QJsonArray original = value.toArray();
         for (const auto item : original) {
-            limpo.append(redactValue(item));
+            redacted.append(redactValue(item));
         }
-        return limpo;
+        return redacted;
     }
     return value;
 }

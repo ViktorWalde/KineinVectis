@@ -302,36 +302,36 @@ QString MarkdownDocument::imageRefusal(const QString& name)
         return QStringLiteral("[%1 — %2]").arg(shortName(href), decision.reason);
     }
     if (decision.path.startsWith(QLatin1String("http"))) {
-        const QString motivo = QStringLiteral("imagem remota ainda não é buscada");
-        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), motivo));
-        return QStringLiteral("[%1 — %2]").arg(shortName(href), motivo);
+        const QString reason = QStringLiteral("imagem remota ainda não é buscada");
+        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), reason));
+        return QStringLiteral("[%1 — %2]").arg(shortName(href), reason);
     }
 
     const QFileInfo info(decision.path);
     if (!info.exists()) {
-        const QString motivo = QStringLiteral("arquivo não encontrado");
-        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), motivo));
-        return QStringLiteral("[%1 — %2]").arg(shortName(href), motivo);
+        const QString reason = QStringLiteral("arquivo não encontrado");
+        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), reason));
+        return QStringLiteral("[%1 — %2]").arg(shortName(href), reason);
     }
     // A trava do SYMLINK: normalizar caminho nao o resolve, e um link dentro do
     // projeto apontando para fora passaria pela politica pura.
     const QString canonical = info.canonicalFilePath();
     if (canonical.isEmpty() || !markdown::insideRoot(canonical, m_workspaceRoot)) {
-        const QString motivo = QStringLiteral("o caminho real sai do projeto");
-        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), motivo));
-        return QStringLiteral("[%1 — %2]").arg(shortName(href), motivo);
+        const QString reason = QStringLiteral("o caminho real sai do projeto");
+        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), reason));
+        return QStringLiteral("[%1 — %2]").arg(shortName(href), reason);
     }
     if (info.size() > kMaxImageBytes) {
-        const QString motivo = QStringLiteral("imagem acima do limite de memória");
-        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), motivo));
-        return QStringLiteral("[%1 — %2]").arg(shortName(href), motivo);
+        const QString reason = QStringLiteral("imagem acima do limite de memória");
+        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), reason));
+        return QStringLiteral("[%1 — %2]").arg(shortName(href), reason);
     }
     QImageReader reader(canonical);
     const QSize size = reader.size();
     if (size.width() > kMaxImageSide || size.height() > kMaxImageSide) {
-        const QString motivo = QStringLiteral("imagem acima de %1 px").arg(kMaxImageSide);
-        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), motivo));
-        return QStringLiteral("[%1 — %2]").arg(shortName(href), motivo);
+        const QString reason = QStringLiteral("imagem acima de %1 px").arg(kMaxImageSide);
+        noteBlocked(QStringLiteral("%1 — %2").arg(shortName(href), reason));
+        return QStringLiteral("[%1 — %2]").arg(shortName(href), reason);
     }
     return {};
 }

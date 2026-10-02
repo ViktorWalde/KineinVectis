@@ -804,7 +804,7 @@ target_include_directories(kinein-vectis PRIVATE src)
 target_link_libraries(kinein-vectis PRIVATE kinein-ui-puro Qt6::Core Qt6::Gui Qt6::Qml Qt6::Quick)
 # A versao vem do `project(... VERSION ...)`: escrita a mao no main.cpp, ela
 # ficou em 0.1.0 enquanto o projeto estava em 0.2.0, e nada reprovava.
-target_compile_definitions(kinein-vectis PRIVATE KINEIN_VERSAO="${PROJECT_VERSION}")
+target_compile_definitions(kinein-vectis PRIVATE KINEIN_VERSION="${PROJECT_VERSION}")
 
 # Keep the install tree AppDir/FHS-compatible. The Rust core is built and
 # installed by the AppImage recipe because it is not a CMake target.
