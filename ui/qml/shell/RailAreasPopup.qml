@@ -194,6 +194,7 @@ FocusScope {
                 height: 28
 
                 KvButton {
+                    focus: false
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     compact: true

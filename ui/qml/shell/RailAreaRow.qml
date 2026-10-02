@@ -105,6 +105,9 @@ Rectangle {
 
         KvIconButton {
             anchors.verticalCenter: parent.verticalCenter
+            // O foco do teclado fica com o painel (Esc fecha), nao com um
+            // botao qualquer que acenderia a borda sem ninguem pedir.
+            focus: false
             compact: true
             iconName: "pin"
             iconSize: 16
@@ -115,6 +118,9 @@ Rectangle {
 
         KvIconButton {
             anchors.verticalCenter: parent.verticalCenter
+            // O foco do teclado fica com o painel (Esc fecha), nao com um
+            // botao qualquer que acenderia a borda sem ninguem pedir.
+            focus: false
             compact: true
             iconName: root.hidden ? "eye-off" : "eye"
             iconSize: 16
@@ -125,6 +131,7 @@ Rectangle {
 
         KvButton {
             anchors.verticalCenter: parent.verticalCenter
+            focus: false
             visible: !root.onRail
             compact: true
             text: qsTr("Abrir")
