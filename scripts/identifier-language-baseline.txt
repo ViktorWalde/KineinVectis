@@ -3838,14 +3838,8 @@ ui/qml/shell/ShellHeaderHost.qml	barra	1
 ui/qml/shell/ShellWorkspaceHost.qml	janelas	4
 ui/qml/shell/StatusBarJobWidget.qml	preenchido	1
 ui/qml/shell/StatusBarJobWidget.qml	trilho	4
-ui/qml/shell/StatusBarProjectSummaries.qml	contexto	3
-ui/qml/shell/StatusBarProjectSummaries.qml	texto	1
 ui/qml/shell/TopHeaderBar.qml	executar	3
 ui/qml/shell/TopHeaderBar.qml	projeto	2
-ui/qml/shell/WorkspaceStatusBar.qml	direita	2
-ui/qml/shell/WorkspaceStatusBar.qml	esquerda	2
-ui/qml/shell/WorkspaceStatusBar.qml	faixa	4
-ui/qml/shell/WorkspaceStatusBar.qml	texto	5
 ui/qml/toolchain/ToolchainController.qml	algum	3
 ui/qml/toolchain/ToolchainController.qml	alvo	3
 ui/qml/toolchain/ToolchainController.qml	automatico	3

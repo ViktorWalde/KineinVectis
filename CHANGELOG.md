@@ -21,6 +21,10 @@ checkout, não em nenhum pacote publicado.
   espremem o editor abaixo de 480 px; a janela menor não apaga o tamanho que
   você escolheu. O rodapé do Git não estoura mais a 1024 px: o **Amend** desce
   para a própria linha.
+- **Barra de status sem texto cortado ao meio.** Numa janela estreita, os
+  resumos do projeto saem inteiros por ordem de importância (o Python, depois
+  o contexto do compilador, por último o índice), em vez de um deles aparecer
+  partido.
 - **Criar Projeto, com todas as linguagens.** A tela inicial tinha dois
   botões fixos, "Novo C++ / CMake" e "Novo Rust / Cargo", e o Python ficava de
   fora. Agora há um único **Criar Projeto**: escolha a linguagem (C/C++, Rust,

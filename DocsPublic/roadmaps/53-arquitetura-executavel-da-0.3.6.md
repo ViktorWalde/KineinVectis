@@ -271,7 +271,7 @@ meio de um arrasto); trocar de workspace cancela a gravação pendente.
 **Limites de tamanho: mínimo do conteúdo, máximo automático (pedido e
 decisão do autor, 2026-10-01; feito na fatia do layout, 40.7 §7.156, para o
 painel da esquerda e o de baixo; a Estrutura segue a regra que o `EditorPane`
-já tinha, e a barra de status por prioridade é a próxima fatia curta).** Hoje os limites são constantes no
+já tinha; a barra de status por prioridade veio logo depois, 40.7 §7.159).** Hoje os limites são constantes no
 `ShellController` (explorer e Git dividem 220–420 px; padrão 22% da janela
 entre 220 e 300), e a F0 mostrou o custo: o mínimo global de 220 px é menor
 que o rodapé do Git precisa, que estoura em 1024×700. A regra:

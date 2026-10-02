@@ -61,12 +61,12 @@ Rectangle {
     color: Theme.background1
 
     Row {
-        id: faixaEsquerda
+        id: leftStrip
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingMedium
-        anchors.right: faixaDireita.left
+        anchors.right: rightStrip.left
         anchors.rightMargin: Theme.spacingMedium
         spacing: Theme.spacingMedium
         clip: true
@@ -74,7 +74,7 @@ Rectangle {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             visible: bar.workspaceRoot !== ""
-            width: Math.min(implicitWidth, Math.max(120, faixaEsquerda.width * 0.32))
+            width: Math.min(implicitWidth, Math.max(120, leftStrip.width * 0.32))
             elide: Text.ElideMiddle
             text: bar.workspaceKindLabel + "  ·  " + bar.workspaceRoot
             color: Theme.textMuted
@@ -88,7 +88,7 @@ Rectangle {
 
             anchors.verticalCenter: parent.verticalCenter
             visible: bar.toolchainVisible
-            width: toolchainTexto.width + 2 * Theme.spacingSmall
+            width: toolchainText.width + 2 * Theme.spacingSmall
             height: 18
             radius: Theme.radiusXSmall
             color: toolchainArea.containsMouse ? Theme.surface2 : "transparent"
@@ -96,7 +96,7 @@ Rectangle {
             border.width: 1
 
             Text {
-                id: toolchainTexto
+                id: toolchainText
 
                 anchors.centerIn: parent
                 text: qsTr("toolchain: %1").arg(bar.toolchainSummary)
@@ -154,6 +154,9 @@ Rectangle {
 
         StatusBarProjectSummaries {
             anchors.verticalCenter: parent.verticalCenter
+            // O que sobra da faixa depois dos itens antes dele (que nao
+            // dependem desta largura: sem laco de binding).
+            availableWidth: leftStrip.width - x
             visible: bar.jobTitle === ""
             indexSummary: bar.indexSummary
             contextSummary: bar.contextSummary
@@ -163,7 +166,7 @@ Rectangle {
     }
 
     Row {
-        id: faixaDireita
+        id: rightStrip
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
@@ -182,7 +185,7 @@ Rectangle {
 
         // Os servidores de linguagem: ● todos rodando, … subindo, ✗ caiu.
         Text {
-            id: lspTexto
+            id: lspText
 
             anchors.verticalCenter: parent.verticalCenter
             visible: bar.lspSummary !== ""
@@ -198,9 +201,9 @@ Rectangle {
                 acceptedButtons: Qt.NoButton
                 onContainsMouseChanged: {
                     if (containsMouse && bar.lspDetail !== "") {
-                        TooltipController.showFor(lspTexto, bar.lspDetail, "top");
+                        TooltipController.showFor(lspText, bar.lspDetail, "top");
                     } else {
-                        TooltipController.hideFor(lspTexto);
+                        TooltipController.hideFor(lspText);
                     }
                 }
             }
