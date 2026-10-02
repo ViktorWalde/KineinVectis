@@ -52,10 +52,12 @@ Rectangle {
         anchors.margins: 1
         spacing: 0
 
+        // O cabecalho usa o fundo arredondado do proprio painel: um retangulo
+        // reto colado no topo era a "borda reta" que o autor apontou.
         Rectangle {
             width: parent.width
             height: 30
-            color: Theme.surface1
+            color: "transparent"
 
             Text {
                 anchors.left: parent.left
@@ -84,6 +86,7 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: 30
+            radius: Theme.radius
             color: Theme.background0
 
             TextInput {

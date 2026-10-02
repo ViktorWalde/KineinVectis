@@ -732,6 +732,16 @@ está boa, mas dá para melhorar. O diálogo de **abrir** e de **criar** projeto
 pode ficar mais intuitivo, com HUD/UI melhores. Vira trabalho da 0.3.7 (menus
 do trilho) e da 0.3.8 (diálogos de projeto), sempre provado na tela real.
 
+**Retorno do autor depois do teste visual (2026-10-02, tarde):** o painel de
+áreas "ficou incrível" (no máximo, responsividade e UX); a criação de projeto
+"ficou muito bom". Três pedidos: (1) a **navegação de pastas** ao criar e abrir
+projeto é estreita ("sensação de encolhido") — mais ampla e prática, com o
+seletor de arquivos da JetBrains como inspiração; (2) **nada de borda reta**:
+há partes redondas e partes retas, e isso causa estranheza — seguir o modelo
+da JetBrains de moldura com as funções nos cantos e áreas internas com cantos
+redondos; (3) as **abas de arquivo** do editor, hoje retangulares, precisam ser
+modernizadas.
+
 A task dedicada parte de capturas reais (hook `KINEIN_SCREENSHOT`) e propõe
 com mockups lado a lado; problemas de UX e de HUD/UI entram medidos.
 

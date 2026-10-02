@@ -2,10 +2,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// As abas do editor (Etapa 2, F3 do roadmaps/43, 2026-09-18): a aba ATIVA e'
-// obvia — fundo do editor, borda de acento em cima, texto primario — e as
-// inativas ficam no fundo do painel (o "islands" da referencia: a aba ativa
-// e o editor sao a mesma superficie). O arquivo modificado mostra "●" no
+// As abas do editor (Etapa 2, F3 do roadmaps/43, 2026-09-18; modernizadas em
+// 2026-10-02, retorno do autor: "ficam retangular"). No modelo da interface
+// nova da JetBrains: a aba INATIVA nao e' caixa — so' texto, com um realce
+// suave no hover; a ATIVA e' uma pilula arredondada com um sublinhado de
+// acento embaixo. Nada de caixa colada no topo com linha reta. O arquivo modificado mostra "●" no
 // lugar do ✕ ate' o mouse chegar; o botao "Salvar" amarelo permanente saiu:
 // salvar e' Ctrl+S ou o autosave (decisao do autor, 2026-09-18).
 Item {
@@ -67,7 +68,7 @@ Item {
     FontMetrics {
         id: tabFontMetrics
 
-        font.pixelSize: 12
+        font.pixelSize: Theme.fontSizeBody
     }
 
     ListView {
@@ -110,18 +111,24 @@ Item {
 
             readonly property bool active: index === root.currentIndex
 
-            width: root.tabWidthFor(name)
-            height: 32
-            radius: Theme.radius
-            color: active ? Theme.background0 : (tabArea.containsMouse ? Theme.surface2 : Theme.surface1)
+            readonly property bool hovered: tabArea.containsMouse || closeArea.containsMouse
 
-            // A borda de acento em cima: a marca da aba ativa.
+            width: root.tabWidthFor(name)
+            height: 28
+            y: (tabList.height - height) / 2
+            radius: Theme.radiusLarge
+            color: active ? Theme.surfaceSelected
+                          : (hovered ? Theme.surface2 : "transparent")
+
+            Behavior on color { ColorAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard } }
+
+            // O sublinhado de acento, arredondado: a marca da aba ativa.
             Rectangle {
-                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.leftMargin: Theme.radius
-                anchors.rightMargin: Theme.radius
+                anchors.leftMargin: Theme.radiusLarge
+                anchors.rightMargin: Theme.radiusLarge
                 height: 2
                 radius: 1
                 visible: tabDelegate.active
@@ -149,7 +156,7 @@ Item {
                 text: tabDelegate.name
                 color: tabDelegate.active ? Theme.textPrimary : Theme.textSecondary
                 elide: Text.ElideRight
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 font.weight: tabDelegate.active ? Font.DemiBold : Font.Normal
             }
 
@@ -159,7 +166,7 @@ Item {
                 visible: tabDelegate.modified && !closeArea.containsMouse
                 text: "●"
                 color: Theme.accent
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             KvIconButton {
@@ -170,7 +177,10 @@ Item {
                 anchors.rightMargin: 2
                 width: 24
                 height: 24
-                opacity: tabDelegate.modified && !closeArea.containsMouse ? 0 : 1
+                // O ✕ aparece na ativa e no hover; nas outras, fica limpo (o
+                // "●" de modificado continua visivel).
+                opacity: tabDelegate.modified && !closeArea.containsMouse ? 0
+                         : (tabDelegate.active || tabDelegate.hovered ? 1 : 0)
                 iconName: "close"
                 iconSize: 13
                 danger: true

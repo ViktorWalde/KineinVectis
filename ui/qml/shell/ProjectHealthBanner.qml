@@ -34,7 +34,7 @@ Rectangle {
 
         width: 8
         height: 8
-        radius: 4
+        radius: Theme.radiusLarge
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingMedium
         anchors.verticalCenter: parent.verticalCenter

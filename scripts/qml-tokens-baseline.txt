@@ -39,7 +39,6 @@ ui/qml/editor/EditorGoToLineDialog.qml	fontSize	3
 ui/qml/editor/EditorHoverPopup.qml	fontSize	1
 ui/qml/editor/EditorOutlineHandle.qml	fontSize	1
 ui/qml/editor/EditorOutlinePanel.qml	fontSize	2
-ui/qml/editor/EditorTabsBar.qml	fontSize	3
 ui/qml/editor/EditorTabsBar.qml	radius	1
 ui/qml/editor/EditorUsagesPopup.qml	fontSize	2
 ui/qml/editor/EditorWorkspaceEditPreviewDialog.qml	fontSize	8
@@ -97,7 +96,6 @@ ui/qml/panels/bottom/TerminalGeometryOverlay.qml	color	3
 ui/qml/panels/bottom/TerminalGeometryOverlay.qml	fontSize	1
 ui/qml/panels/bottom/TerminalPasteDialog.qml	fontSize	3
 ui/qml/panels/bottom/TerminalSessionTabs.qml	fontSize	2
-ui/qml/panels/bottom/TerminalSessionTabs.qml	radius	1
 ui/qml/panels/bottom/TestsPanel.qml	fontSize	4
 ui/qml/panels/bottom/TestsPanel.qml	radius	1
 ui/qml/panels/bottom/ToolsPanel.qml	fontSize	3
@@ -139,7 +137,6 @@ ui/qml/shell/HeaderProjectWidget.qml	fontSize	2
 ui/qml/shell/HeaderProjectWidget.qml	radius	1
 ui/qml/shell/HeaderRunWidget.qml	radius	1
 ui/qml/shell/ProjectHealthBanner.qml	fontSize	2
-ui/qml/shell/ProjectHealthBanner.qml	radius	1
 ui/qml/shell/RunConfigDialog.qml	fontSize	6
 ui/qml/shell/RunConfigMenu.qml	fontSize	5
 ui/qml/shell/SideRail.qml	fontSize	2

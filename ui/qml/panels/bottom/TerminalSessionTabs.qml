@@ -78,7 +78,7 @@ Row {
                     visible: termChip.executing
                     width: 6
                     height: 6
-                    radius: 3
+                    radius: Theme.radius
                     color: Theme.successSoft
                 }
 

@@ -47,6 +47,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
+        radius: Theme.radiusLarge
         color: Theme.backgroundEditor
 
         Text {
