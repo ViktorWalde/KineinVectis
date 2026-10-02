@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
@@ -63,9 +64,6 @@ Rectangle {
 
     StatusBarParts {
         id: statusParts
-
-        bar: bar
-        leftStrip: leftStrip
     }
 
     Row {
@@ -85,6 +83,8 @@ Rectangle {
             delegate: StatusBarSlot {
                 parts: statusParts.byKey
                 reorder: leftReorder
+                bar: bar
+                strip: leftStrip
             }
         }
     }
@@ -103,6 +103,8 @@ Rectangle {
             delegate: StatusBarSlot {
                 parts: statusParts.byKey
                 reorder: rightReorder
+                bar: bar
+                strip: rightStrip
             }
         }
     }

@@ -4,12 +4,11 @@ import KineinVectis
 // As pecas da barra de status (0.3.9), cada uma um Component por chave, para
 // a barra desenha-las na ordem que o usuario arrastou. Sem `pragma
 // ComponentBehavior: Bound` de proposito: o Loader do Qt 6.4 so' cria
-// `sourceComponent` nascido fora de arquivo Bound (53 §5.2.1).
+// `sourceComponent` nascido fora de arquivo Bound (53 §5.2.1); o slot as cria
+// com createObject, entregando `bar` e `strip` ja' na criacao — as pecas nao
+// leem ids de fora.
 Item {
     id: root
-
-    property var bar: null
-    property Item leftStrip: null
 
     visible: false
 
@@ -26,11 +25,16 @@ Item {
         id: pathPart
 
         Text {
-            readonly property bool shown: root.bar.workspaceRoot !== ""
+            id: pathItem
 
-            width: Math.min(implicitWidth, Math.max(120, root.leftStrip.width * 0.32))
+            // Entregues na criacao pelo StatusBarSlot (createObject).
+            property var bar: null
+            property Item strip: null
+            readonly property bool shown: pathItem.bar.workspaceRoot !== ""
+
+            width: Math.min(implicitWidth, Math.max(120, pathItem.strip.width * 0.32))
             elide: Text.ElideMiddle
-            text: root.bar.workspaceRoot
+            text: pathItem.bar.workspaceRoot
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus
             font.family: Theme.monoFont
@@ -41,19 +45,24 @@ Item {
         id: remotePart
 
         StatusBarRemoteWidget {
+            id: remoteItem
+
+            // Entregues na criacao pelo StatusBarSlot (createObject).
+            property var bar: null
+            property Item strip: null
             readonly property bool shown: hud.visible === true
 
-            isMirror: root.bar.remoteIsMirror
-            targetName: root.bar.remoteTarget
-            syncing: root.bar.remoteSyncing
-            syncDirection: root.bar.remoteSyncDirection
-            syncFailed: root.bar.remoteSyncFailed
-            syncMessage: root.bar.remoteSyncMessage
-            deploying: root.bar.remoteDeploying
-            probed: root.bar.remoteProbed
-            probeOk: root.bar.remoteProbeOk
-            probedAt: root.bar.remoteProbedAt
-            onPanelRequested: root.bar.remotePanelRequested()
+            isMirror: remoteItem.bar.remoteIsMirror
+            targetName: remoteItem.bar.remoteTarget
+            syncing: remoteItem.bar.remoteSyncing
+            syncDirection: remoteItem.bar.remoteSyncDirection
+            syncFailed: remoteItem.bar.remoteSyncFailed
+            syncMessage: remoteItem.bar.remoteSyncMessage
+            deploying: remoteItem.bar.remoteDeploying
+            probed: remoteItem.bar.remoteProbed
+            probeOk: remoteItem.bar.remoteProbeOk
+            probedAt: remoteItem.bar.remoteProbedAt
+            onPanelRequested: remoteItem.bar.remotePanelRequested()
         }
     }
 
@@ -64,24 +73,30 @@ Item {
         Row {
             id: activity
 
+            // O x do lugar na faixa (o slot o mantem): o resto da largura
+            // dos resumos se mede a partir dele.
+            property real slotX: 0
+            // Entregues na criacao pelo StatusBarSlot (createObject).
+            property var bar: null
+            property Item strip: null
             readonly property bool shown: true
 
             spacing: Theme.spacingMedium
 
             StatusBarJobWidget {
                 anchors.verticalCenter: parent.verticalCenter
-                title: root.bar.jobTitle
-                progress: root.bar.jobProgress
-                message: root.bar.jobMessage
-                canCancel: root.bar.jobCanCancel
-                runningCount: root.bar.jobCount
-                onCancelRequested: root.bar.cancelJobRequested()
-                onJobsRequested: root.bar.jobsRequested()
+                title: activity.bar.jobTitle
+                progress: activity.bar.jobProgress
+                message: activity.bar.jobMessage
+                canCancel: activity.bar.jobCanCancel
+                runningCount: activity.bar.jobCount
+                onCancelRequested: activity.bar.cancelJobRequested()
+                onJobsRequested: activity.bar.jobsRequested()
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.bar.running && root.bar.jobTitle === ""
+                visible: activity.bar.running && activity.bar.jobTitle === ""
                 text: qsTr("executando…")
                 color: Theme.accent
                 font.pixelSize: Theme.fontSizeStatus
@@ -91,11 +106,11 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 // O que sobra da faixa depois dos itens antes dele (que nao
                 // dependem desta largura: sem laco de binding).
-                availableWidth: root.leftStrip.width - activity.parent.x - x
-                visible: root.bar.jobTitle === ""
-                indexSummary: root.bar.indexSummary
-                contextSummary: root.bar.contextSummary
-                contextDetail: root.bar.contextDetail
+                availableWidth: activity.strip.width - activity.slotX - x
+                visible: activity.bar.jobTitle === ""
+                indexSummary: activity.bar.indexSummary
+                contextSummary: activity.bar.contextSummary
+                contextDetail: activity.bar.contextDetail
             }
         }
     }
@@ -105,9 +120,14 @@ Item {
         id: cursorPart
 
         Text {
-            readonly property bool shown: root.bar.cursorSummary !== ""
+            id: cursorItem
 
-            text: root.bar.cursorSummary
+            // Entregues na criacao pelo StatusBarSlot (createObject).
+            property var bar: null
+            property Item strip: null
+            readonly property bool shown: cursorItem.bar.cursorSummary !== ""
+
+            text: cursorItem.bar.cursorSummary
             color: Theme.textMuted
             font.family: Theme.monoFont
             font.pixelSize: Theme.fontSizeStatus
@@ -121,10 +141,13 @@ Item {
         Text {
             id: lspText
 
-            readonly property bool shown: root.bar.lspSummary !== ""
+            // Entregues na criacao pelo StatusBarSlot (createObject).
+            property var bar: null
+            property Item strip: null
+            readonly property bool shown: lspText.bar.lspSummary !== ""
 
-            text: root.bar.lspSummary
-            color: root.bar.lspFailed ? Theme.errorSoft : Theme.textMuted
+            text: lspText.bar.lspSummary
+            color: lspText.bar.lspFailed ? Theme.errorSoft : Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus
 
             MouseArea {
@@ -132,8 +155,8 @@ Item {
                 hoverEnabled: true
                 acceptedButtons: Qt.NoButton
                 onContainsMouseChanged: {
-                    if (containsMouse && root.bar.lspDetail !== "") {
-                        TooltipController.showFor(lspText, root.bar.lspDetail, "top");
+                    if (containsMouse && lspText.bar.lspDetail !== "") {
+                        TooltipController.showFor(lspText, lspText.bar.lspDetail, "top");
                     } else {
                         TooltipController.hideFor(lspText);
                     }
@@ -146,12 +169,17 @@ Item {
         id: idePart
 
         Rectangle {
+            id: ideItem
+
+            // Entregues na criacao pelo StatusBarSlot (createObject).
+            property var bar: null
+            property Item strip: null
             readonly property bool shown: true
 
             width: logsToggleText.width + 2 * Theme.spacingSmall
             height: 20
             radius: Theme.radius
-            color: root.bar.logsActive ? Theme.surfaceSelected
+            color: ideItem.bar.logsActive ? Theme.surfaceSelected
                                   : (logsToggleArea.containsMouse
                                      ? Theme.surface2 : "transparent")
             border.color: Theme.borderSoft
@@ -162,7 +190,7 @@ Item {
 
                 anchors.centerIn: parent
                 text: qsTr("IDE")
-                color: root.bar.logsActive ? Theme.accent : Theme.textSecondary
+                color: ideItem.bar.logsActive ? Theme.accent : Theme.textSecondary
                 font.pixelSize: Theme.fontSizeStatus
             }
 
@@ -172,7 +200,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.bar.logsRequested()
+                onClicked: ideItem.bar.logsRequested()
             }
         }
     }
@@ -181,6 +209,11 @@ Item {
         id: corePart
 
         Row {
+            id: coreItem
+
+            // Entregues na criacao pelo StatusBarSlot (createObject).
+            property var bar: null
+            property Item strip: null
             readonly property bool shown: true
 
             spacing: Theme.spacingSmall
@@ -190,14 +223,14 @@ Item {
                 height: 7
                 radius: width / 2
                 anchors.verticalCenter: parent.verticalCenter
-                color: root.bar.coreConnected ? Theme.successSoft : Theme.errorSoft
+                color: coreItem.bar.coreConnected ? Theme.successSoft : Theme.errorSoft
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.bar.coreConnected
-                      ? qsTr("core · IPC %1").arg(root.bar.coreProtocolVersion)
-                      : qsTr("core %1").arg(root.bar.coreStatus)
+                text: coreItem.bar.coreConnected
+                      ? qsTr("core · IPC %1").arg(coreItem.bar.coreProtocolVersion)
+                      : qsTr("core %1").arg(coreItem.bar.coreStatus)
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeStatus
             }
