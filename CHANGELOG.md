@@ -46,6 +46,10 @@ no checkout, não em nenhum pacote publicado.
   pede; digite "/" para escrever o caminho; setas, Enter e Backspace navegam.
   Trocar o local de um projeto novo, ou criar uma pasta para ele, não perde
   mais a linguagem e o nome escolhidos.
+- **Editor parado não trabalha mais à toa.** Com um arquivo markdown
+  aberto, a IDE reanalisava o texto cerca de dez vezes por segundo sem
+  ninguém digitar (o realce era confundido com edição). Agora só a edição
+  de verdade dispara a análise.
 - **Arrastar na árvore do projeto, de verdade.** Puxar um arquivo para cima
   ou para baixo arrasta (antes a lista rolava); o cursor leva o nome do
   item, a origem fica esmaecida, a pasta de destino abre sozinha e diz

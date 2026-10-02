@@ -665,7 +665,7 @@ Item {
     }
 
     function handleTextEdited(text) {
-        if (!surfaceBridge.loadingText && documents.markCurrentModified(text)) {
+        if (!surfaceBridge.loadingText && surfaceBridge.acceptEdit(text) && documents.markCurrentModified(text)) {
             // Cada dono reage a edicao com o que e dele. Este arquivo so
             // ORQUESTRA: quem invalida realce e o `highlight`, quem esconde o
             // hover e o `language`, quem agenda rascunho e o `persistence`.
