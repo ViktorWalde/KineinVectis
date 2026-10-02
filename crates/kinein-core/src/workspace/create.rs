@@ -124,8 +124,8 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
         format!("\"\"\"{pacote}: o pacote de {name}.\"\"\""),
         String::new(),
         String::new(),
-        "def greet(name: str) -> str:".to_owned(),
-        "    return f\"Olá, {name}!\"".to_owned(),
+        "def greet(person: str) -> str:".to_owned(),
+        "    return f\"Olá, {person}!\"".to_owned(),
     ]
     .join("\n")
         + "\n";

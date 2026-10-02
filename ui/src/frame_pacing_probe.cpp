@@ -43,18 +43,17 @@ double percentile(std::vector<double> sorted, double fraction)
     if (sorted.empty()) {
         return 0.0;
     }
-    std::sort(sorted.begin(), sorted.end());
+    std::ranges::sort(sorted);
     const auto index = static_cast<std::size_t>(fraction * static_cast<double>(sorted.size() - 1));
     return sorted.at(index);
 }
 
 void summarize(const char* label, const std::vector<double>& samples)
 {
-    const auto over60 =
-        std::count_if(samples.begin(), samples.end(), [](double ms) { return ms > kFrame60HzMs; });
+    const auto over60 = std::ranges::count_if(samples, [](double ms) { return ms > kFrame60HzMs; });
     const auto over120 =
-        std::count_if(samples.begin(), samples.end(), [](double ms) { return ms > kFrame120HzMs; });
-    const double worst = samples.empty() ? 0.0 : *std::max_element(samples.begin(), samples.end());
+        std::ranges::count_if(samples, [](double ms) { return ms > kFrame120HzMs; });
+    const double worst = samples.empty() ? 0.0 : *std::ranges::max_element(samples);
     qInfo().noquote().nospace() << "KINEIN_PERF " << label << " n=" << samples.size()
                                 << " median_ms=" << percentile(samples, 0.5)
                                 << " p95_ms=" << percentile(samples, 0.95) << " max_ms=" << worst
@@ -63,7 +62,7 @@ void summarize(const char* label, const std::vector<double>& samples)
 
 void report(FrameLog& log)
 {
-    const std::lock_guard<std::mutex> guard(log.lock);
+    const std::scoped_lock<std::mutex> guard(log.lock);
     summarize("frame_interval", log.intervalsMs);
     summarize("frame_cost", log.costsMs);
 }
@@ -86,14 +85,14 @@ void installFramePacingProbe(QGuiApplication& app, QQmlApplicationEngine& engine
     QObject::connect(
         window, &QQuickWindow::beforeSynchronizing, window,
         [log]() {
-            const std::lock_guard<std::mutex> guard(log->lock);
+            const std::scoped_lock<std::mutex> guard(log->lock);
             log->syncStartNs = log->clock.nsecsElapsed();
         },
         Qt::DirectConnection);
     QObject::connect(
         window, &QQuickWindow::afterRendering, window,
         [log]() {
-            const std::lock_guard<std::mutex> guard(log->lock);
+            const std::scoped_lock<std::mutex> guard(log->lock);
             if (log->syncStartNs >= 0) {
                 log->costsMs.push_back(
                     static_cast<double>(log->clock.nsecsElapsed() - log->syncStartNs) / kNsPerMs);
@@ -104,7 +103,7 @@ void installFramePacingProbe(QGuiApplication& app, QQmlApplicationEngine& engine
     QObject::connect(
         window, &QQuickWindow::frameSwapped, window,
         [log]() {
-            const std::lock_guard<std::mutex> guard(log->lock);
+            const std::scoped_lock<std::mutex> guard(log->lock);
             const qint64 now = log->clock.nsecsElapsed();
             if (log->lastSwapNs >= 0) {
                 const double intervalMs = static_cast<double>(now - log->lastSwapNs) / kNsPerMs;
