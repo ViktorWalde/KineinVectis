@@ -71,6 +71,7 @@ set_source_files_properties(qml/shell/StatusBarRemoteWidget.qml PROPERTIES QT_RE
 set_source_files_properties(qml/shell/StatusBarJobWidget.qml PROPERTIES QT_RESOURCE_ALIAS StatusBarJobWidget.qml)
 set_source_files_properties(qml/shell/HeaderRunWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderRunWidget.qml)
 set_source_files_properties(qml/shell/HeaderGitWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderGitWidget.qml)
+set_source_files_properties(qml/shell/HeaderContextWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderContextWidget.qml)
 set_source_files_properties(qml/shell/HeaderProjectWidget.qml PROPERTIES QT_RESOURCE_ALIAS HeaderProjectWidget.qml)
 set_source_files_properties(qml/shell/AppMenuBar.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuBar.qml)
 set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_ALIAS AppMenuPopup.qml)
@@ -204,6 +205,8 @@ set_source_files_properties(qml/ipc/ConfigActionEventRouter.qml PROPERTIES QT_RE
 set_source_files_properties(qml/ipc/ConfigActionRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ConfigActionRequestRouter.qml)
 set_source_files_properties(qml/toolchain/ToolchainController.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainController.qml)
 set_source_files_properties(qml/toolchain/ToolchainMenu.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainMenu.qml)
+set_source_files_properties(qml/toolchain/ToolchainRoleRow.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainRoleRow.qml)
+set_source_files_properties(qml/toolchain/ToolchainOptionRow.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainOptionRow.qml)
 set_source_files_properties(qml/ipc/ToolchainEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainEventRouter.qml)
 set_source_files_properties(qml/ipc/ToolchainRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS ToolchainRequestRouter.qml)
 set_source_files_properties(qml/git/GitController.qml PROPERTIES QT_RESOURCE_ALIAS GitController.qml)
@@ -431,6 +434,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/StatusBarJobWidget.qml
         qml/shell/HeaderRunWidget.qml
         qml/shell/HeaderGitWidget.qml
+        qml/shell/HeaderContextWidget.qml
         qml/shell/HeaderProjectWidget.qml
         qml/shell/AppMenuBar.qml
         qml/shell/AppMenuPopup.qml
@@ -564,6 +568,8 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/ConfigActionRequestRouter.qml
         qml/toolchain/ToolchainController.qml
         qml/toolchain/ToolchainMenu.qml
+        qml/toolchain/ToolchainRoleRow.qml
+        qml/toolchain/ToolchainOptionRow.qml
         qml/ipc/ToolchainEventRouter.qml
         qml/ipc/ToolchainRequestRouter.qml
         qml/git/GitController.qml

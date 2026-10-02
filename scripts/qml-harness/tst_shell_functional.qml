@@ -81,8 +81,6 @@ Item {
         if (shell.gitWindowVisible || shell.effectiveShowExplorer) failures += 1;
         shell.toggleExplorer();
         if (!shell.effectiveShowExplorer) failures += 1;
-        shell.workspaceBuildSystems = ["cargo", "cmake"];
-        if (shell.kindLabel("rustCargo") !== "Cargo + CMake") failures += 1;
 
         projectTree.openEntryMenu("/work/src/main.cpp", "file",
                                   "main.cpp", 990, 710);

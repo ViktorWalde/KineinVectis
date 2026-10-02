@@ -33,6 +33,7 @@ Rectangle {
     property string headerMenu: ""
 
     signal configMenuRequested(real menuX, real menuY)
+    signal toolchainMenuRequested(real menuX, real menuY)
     signal appMenuRequested(string key, real menuX, real menuY, var items)
     signal aboutRequested()
     signal manualRequested()
@@ -192,6 +193,16 @@ Rectangle {
         gitBehindCount: root.gitController ? root.gitController.behindCount : 0
         gitChangeCount: root.gitController ? root.gitController.changeCount : 0
         gitPanelActive: root.shellController.tabActive("git")
+        // So' com papel de toolchain (Cargo, CMake, Make): num Python puro o
+        // resumo seria "nenhuma detectada", verdadeiro e inutil.
+        toolchainSummary: root.toolchainController.summaryRoles(
+                              root.coreClient.workspaceBuildSystems).length > 0
+                          && root.coreClient.workspaceBuildSystems.length > 0
+                          ? root.toolchainController.summary(root.coreClient.workspaceBuildSystems) : ""
+        toolchainMenuOpen: root.toolchainController.menuVisible
+        onToolchainMenuRequested: function(menuX, menuY) {
+            root.toolchainMenuRequested(menuX, menuY + appMenuBar.height);
+        }
         onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
         onGitPanelRequested: root.shellController.toggleBottomTab("git")
         // O branch da barra: a aba Git com o menu de branches aberto.

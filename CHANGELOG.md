@@ -46,6 +46,11 @@ no checkout, não em nenhum pacote publicado.
   pede; digite "/" para escrever o caminho; setas, Enter e Backspace navegam.
   Trocar o local de um projeto novo, ou criar uma pasta para ele, não perde
   mais a linguagem e o nome escolhidos.
+- **A toolchain no cabeçalho, sem repetição.** O que o build vai usar
+  ("Clang++ · Ninja", "Cargo") fica ao lado do projeto e do Git; um clique
+  abre o seletor, agora organizado por papel — só os do seu projeto à vista,
+  cada um com o que está valendo, e os outros recolhidos. O rodapé e a faixa
+  de menus deixaram de repetir o nome e o tipo do projeto.
 - **Abas de arquivo e cantos redondos.** A aba ativa é uma pílula com
   sublinhado; as outras não têm caixa. As áreas internas do editor e do
   terminal acompanham os cantos redondos das ilhas.

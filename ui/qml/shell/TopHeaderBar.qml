@@ -30,6 +30,9 @@ Rectangle {
     property int gitBehindCount: 0
     property int gitChangeCount: 0
     property bool gitPanelActive: false
+    // O contexto efetivo (0.3.8 F3): a toolchain que o build usa.
+    property string toolchainSummary: ""
+    property bool toolchainMenuOpen: false
 
     signal openWorkspaceRequested()
     signal projectMenuRequested(real menuX, real menuY)
@@ -37,6 +40,7 @@ Rectangle {
     signal configMenuRequested(real menuX, real menuY)
     signal gitPanelRequested()
     signal gitBranchMenuRequested()
+    signal toolchainMenuRequested(real menuX, real menuY)
     signal runRequested()
     signal stopRunRequested()
     signal debugRequested()
@@ -64,13 +68,15 @@ Rectangle {
     border.width: 0
 
     Row {
+        id: leftWidgets
+
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingMedium
         spacing: Theme.spacingMedium
 
         HeaderProjectWidget {
-            id: projeto
+            id: projectWidget
 
             anchors.verticalCenter: parent.verticalCenter
             workspaceOpen: root.workspaceOpen
@@ -80,12 +86,14 @@ Rectangle {
             menuOpen: root.projectMenuOpen
             onOpenWorkspaceRequested: root.openWorkspaceRequested()
             onMenuRequested: function(menuX, menuY) {
-                const pos = root.mapFromItem(projeto, menuX, menuY);
+                const pos = root.mapFromItem(projectWidget, menuX, menuY);
                 root.projectMenuRequested(pos.x, pos.y);
             }
         }
 
         HeaderGitWidget {
+            id: gitWidget
+
             anchors.verticalCenter: parent.verticalCenter
             visible: root.workspaceOpen && root.gitBranchLabel !== ""
             branchLabel: root.gitBranchLabel
@@ -96,12 +104,28 @@ Rectangle {
             onPanelRequested: root.gitPanelRequested()
             onBranchMenuRequested: root.gitBranchMenuRequested()
         }
+
+        HeaderContextWidget {
+            id: contextWidget
+
+            anchors.verticalCenter: parent.verticalCenter
+            summary: root.workspaceOpen ? root.toolchainSummary : ""
+            menuOpen: root.toolchainMenuOpen
+            // O que sobra ate' o executar, com o respiro de sempre.
+            availableWidth: (runWidget.visible ? runWidget.x : root.width) - Theme.spacingLarge
+                            - leftWidgets.x - projectWidget.width - leftWidgets.spacing
+                            - (gitWidget.visible ? gitWidget.width + leftWidgets.spacing : 0)
+            onMenuRequested: function(menuX, menuY) {
+                const pos = root.mapFromItem(contextWidget, menuX, menuY);
+                root.toolchainMenuRequested(pos.x, pos.y);
+            }
+        }
     }
 
     // Executar fica no CENTRO-DIREITA, como na referencia: e' o gesto mais
     // frequente depois de digitar, e o olho o acha sempre no mesmo lugar.
     HeaderRunWidget {
-        id: executar
+        id: runWidget
 
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingMedium
@@ -119,11 +143,11 @@ Rectangle {
         configMenuOpen: root.configMenuOpen
         actionsMenuOpen: root.actionsMenuOpen
         onConfigMenuRequested: function(menuX, menuY) {
-            const pos = root.mapFromItem(executar, menuX, menuY);
+            const pos = root.mapFromItem(runWidget, menuX, menuY);
             root.configMenuRequested(pos.x, pos.y);
         }
         onActionsMenuRequested: function(menuX, menuY) {
-            const pos = root.mapFromItem(executar, menuX, menuY);
+            const pos = root.mapFromItem(runWidget, menuX, menuY);
             root.actionsMenuRequested(pos.x, pos.y);
         }
         onRunRequested: root.runRequested()

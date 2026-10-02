@@ -185,7 +185,7 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```text
 protocolo   0.147.0 (2026-10-02; o historico das versoes e' o arquitetura/03)
 metodos     174 IPC roteados, 57 eventos (scripts/verificar-fiacao-ipc.sh,
-            2026-10-01); 97 harnesses QML em scripts/qml-harness (2026-10-02)
+            2026-10-01); 98 harnesses QML em scripts/qml-harness (2026-10-02)
 testes      874 Rust aprovados; 1 C++; 67 harnesses QML (medicao de 2026-09-24, §7.99)
 historico   168 IPC roteados, 56 eventos em 2026-09-24 (remote.parseCommand em 0.134.0;
             remote.command kind copyId em 0.133.0;

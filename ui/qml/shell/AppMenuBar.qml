@@ -16,9 +16,6 @@ Rectangle {
     property var workspaceBuildSystems: []
     property var recentWorkspaces: []
     property string activeMenu: ""
-    readonly property string windowContextLabel: workspaceName !== ""
-                                                 ? workspaceName
-                                                 : qsTr("sem projeto")
 
     signal actionRequested(string action)
     signal menuRequested(string key, real menuX, real menuY, var items)
@@ -152,23 +149,15 @@ Rectangle {
         }
     }
 
+    // Faixa de arrastar a janela. Sem titulo desde a 0.3.8 F3: o nome do
+    // projeto aparecia tres vezes (aqui, no widget de projeto e no
+    // explorador); o widget de projeto e' o dono.
     Item {
         id: dragRegion
 
         x: menuRow.x + menuRow.width + Theme.spacingSmall
         width: Math.max(0, windowControls.x - Theme.spacingSmall - x)
         height: parent.height
-
-        Text {
-            anchors.centerIn: parent
-            visible: parent.width >= 72
-            width: Math.min(implicitWidth, parent.width)
-            text: root.windowContextLabel
-            color: Theme.textMuted
-            font.pixelSize: 11
-            elide: Text.ElideMiddle
-            horizontalAlignment: Text.AlignHCenter
-        }
 
         MouseArea {
             id: dragArea

@@ -486,6 +486,12 @@ falha    área surface sem conteúdo → volta ao editor e registra no log
 
 ### 5.7 F3 — header e status com contexto efetivo
 
+**Andamento (2026-10-02):** primeira parte feita (40.7 §7.173) — chip da
+toolchain efetiva no cabeçalho, rodapé sem o sistema e sem o chip repetidos,
+título da faixa removido, seletor de toolchain por papéis. Falta: o contexto
+Python no cabeçalho, perfil/kit, alvo, dispositivo e remoto como chips
+pertinentes, e o "…" com a lista quando a largura acaba.
+
 ```text
 dono     header: ShellHeaderHost/TopHeaderBar/HeaderRunWidget/RunConfigMenu;
          status: WorkspaceStatusBar; fatos: project.model, toolchain.get,

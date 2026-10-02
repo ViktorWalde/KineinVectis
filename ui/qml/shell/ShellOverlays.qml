@@ -152,6 +152,8 @@ Item {
         controller: root.toolchainController
         menuX: root.toolchainController.menuX
         menuY: root.toolchainController.menuY
+        menuBelow: root.toolchainController.menuBelow
+        buildSystems: root.shellController.workspaceBuildSystems
         onDismissRequested: root.toolchainController.closeMenu()
     }
 

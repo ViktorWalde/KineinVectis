@@ -17,6 +17,7 @@ Item {
     property bool menuVisible: false
     property real menuX: 0
     property real menuY: 0
+    property bool menuBelow: false
     property string errorText: ""
 
     // O KIT ativo (etapa 14): nome do preset, vazio = o padrao do workspace.
@@ -379,9 +380,11 @@ Item {
         return partes.join(" · ") + (algumAutomatico ? qsTr(" · automática") : "");
     }
 
-    function openMenu(x, y) {
+    // `below`: o menu abre para BAIXO do ponto (o chip do cabecalho, 0.3.8).
+    function openMenu(x, y, below) {
         menuX = x;
         menuY = y;
+        menuBelow = below === true;
         menuVisible = true;
         getRequested();
     }

@@ -87,7 +87,7 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 │                  Terminal | Debug | Busca | IDE |            │
 │                  Ferramentas                                 │
 ├──────────────────────────────────────────────────────────────┤
-│ Status: projeto · toolchain │ job em curso ▬▬ ✕ │ LSP · IDE · core│
+│ Status: pasta do projeto │ job em curso ▬▬ ✕ │ LSP · IDE · core │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -100,17 +100,21 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   sem nunca deixar o editor com menos de 480 px, e voltam ao tamanho que você
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
-- **Barra principal** (desde 2026-09-18, Etapa 2 F1): **três widgets**, como
+- **Barra principal** (desde 2026-09-18, Etapa 2 F1): os widgets, como
   nas IDEs JetBrains. *Projeto* — o nome do projeto, o que ele é (Cargo +
   CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —
   a branch, ↑↓ e o contador de alterações; o clique abre a janela do Git.
+  *Toolchain* (desde 2026-10-02) — o que o build vai usar ("Clang++ · Ninja ·
+  automática", "Cargo"); o clique abre o seletor por papel, para baixo. Numa
+  janela estreita ele encurta e, sem espaço, sai antes de apertar o resto.
   *Executar* — a configuração ativa (▾ troca), **▶ Rodar**, **🐞 Depurar** e
   o menu **⋯** com Compilar/Testar/Análise/Cobertura/Configurar de cada
   sistema que o projeto tem, com rótulo (antes eram dois pares de botões
   iguais sem rótulo). Um ponto pulsa no ⋯ enquanto um build, teste ou
   análise roda.
 - **Barra de status** (desde 2026-09-18, Etapa 2 F2): diz **o que está
-  acontecendo**. À esquerda o projeto e a toolchain; no centro o **job em
+  acontecendo**. À esquerda a pasta do projeto (a toolchain subiu para a
+  barra principal em 2026-10-02); no centro o **job em
   curso** — build, testes, índice, configure, deploy — com o título, uma
   barra de progresso (que anda sozinha quando o job não mede), a última
   linha da saída e o ✕ para cancelar (clicar no título abre a aba Jobs);
@@ -924,6 +928,13 @@ Sem escolha, o `PATH` decide, que é o comportamento de sempre. A escolha é do
 compilação cruzada e embarcados entram sem um segundo mecanismo.
 
 A IDE escolhe automaticamente quando dá, e **mostra que escolheu**.
+
+O seletor abre pelo widget *Toolchain* da barra principal (ou Ambiente →
+Toolchain e kits…). Cada papel é uma linha com o que está valendo — "· automático"
+quando quem escolheu foi a IDE; clique para ver as opções detectadas nesta
+máquina, com **Automático (PATH)** sempre primeiro. Os papéis do seu projeto
+aparecem à vista (num projeto Cargo, Cargo e Depurador); os outros ficam em
+**Outros papéis**.
 
 **O kit manda no configure e nos servidores.** Com um kit ativo, o configure
 (automático ao abrir, ou o botão Configurar) usa o preset dele; sem kit, o

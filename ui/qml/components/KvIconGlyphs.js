@@ -110,6 +110,27 @@ function draw(name, context, line, node) {
         context.lineTo(12, 12);
         context.lineTo(15.5, 14);
         return true;
+    case "cpu":
+        // chip com pinos: a toolchain efetiva (o chip de contexto do cabecalho)
+        context.moveTo(7, 7);
+        context.lineTo(17, 7);
+        context.lineTo(17, 17);
+        context.lineTo(7, 17);
+        context.closePath();
+        context.moveTo(10, 10);
+        context.lineTo(14, 10);
+        context.lineTo(14, 14);
+        context.lineTo(10, 14);
+        context.closePath();
+        line(context, 10, 4, 10, 7);
+        line(context, 14, 4, 14, 7);
+        line(context, 10, 17, 10, 20);
+        line(context, 14, 17, 14, 20);
+        line(context, 4, 10, 7, 10);
+        line(context, 4, 14, 7, 14);
+        line(context, 17, 10, 20, 10);
+        line(context, 17, 14, 20, 14);
+        return true;
     case "add":
         // o "+" de criar (o "Criar Projeto" da tela inicial, 2026-10-01)
         line(context, 12, 5, 12, 19);

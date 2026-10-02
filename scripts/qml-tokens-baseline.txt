@@ -125,7 +125,7 @@ ui/qml/setup/SetupPanel.qml	fontSize	3
 ui/qml/setup/SetupToolRow.qml	fontSize	8
 ui/qml/setup/SetupToolRow.qml	radius	1
 ui/qml/shell/AboutDialog.qml	fontSize	3
-ui/qml/shell/AppMenuBar.qml	fontSize	3
+ui/qml/shell/AppMenuBar.qml	fontSize	2
 ui/qml/shell/AppMenuPopup.qml	fontSize	2
 ui/qml/shell/BottomTabBar.qml	fontSize	2
 ui/qml/shell/BottomTabBar.qml	radius	2
@@ -144,7 +144,6 @@ ui/qml/shell/StatusBarJobWidget.qml	radius	2
 ui/qml/shell/StatusBarRemoteWidget.qml	radius	1
 ui/qml/shell/WindowControls.qml	radius	3
 ui/qml/shell/WorkspaceStatusBar.qml	radius	1
-ui/qml/toolchain/ToolchainMenu.qml	fontSize	6
 ui/qml/workspace/FolderPickerButton.qml	fontSize	1
 ui/qml/workspace/RecentWorkspacesCard.qml	fontSize	6
 ui/qml/workspace/StartScreen.qml	fontSize	3

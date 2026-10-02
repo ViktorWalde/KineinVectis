@@ -332,17 +332,4 @@ Item {
     function requestFolder(intent) {
         folderOpenRequested(workspaceRoot !== "" ? workspaceRoot : homeDir, intent);
     }
-
-    function kindLabel(kind, buildSystems) {
-        const systems = buildSystems !== undefined && buildSystems !== null
-                ? buildSystems : workspaceBuildSystems;
-        if (systems.indexOf("cargo") >= 0 && systems.indexOf("cmake") >= 0) {
-            return "Cargo + CMake";
-        }
-        if (kind === "unknown") {
-            return qsTr("Projeto");
-        }
-        const label = ProjectKindNames.label(kind);
-        return label !== "" ? label : kind;
-    }
 }

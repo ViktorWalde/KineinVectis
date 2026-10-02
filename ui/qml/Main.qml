@@ -222,6 +222,10 @@ Window {
             const pos = header.mapToItem(shellOverlays, menuX, menuY);
             domains.runConfigController.openConfigMenu(pos.x, pos.y);
         }
+        onToolchainMenuRequested: function(menuX, menuY) {
+            const pos = header.mapToItem(shellOverlays, menuX, menuY);
+            domains.toolchainController.openMenu(pos.x, pos.y, true);
+        }
         onAppMenuRequested: function(key, menuX, menuY, items) {
             if (key === "") {
                 shellOverlays.closeAppMenu();
@@ -336,17 +340,12 @@ Window {
         anchors.right: parent.right
         coreClient: coreClient
         shellController: domains.shellController
-        toolchainController: domains.toolchainController
         indexController: domains.indexController
         pythonController: domains.pythonController
         activeJobController: domains.activeJobController
         lspStatusController: domains.lspStatusController
         editorController: domains.editorController
         remoteController: domains.remoteController
-        onToolchainMenuRequested: function(menuX, menuY) {
-            const pos = statusBar.mapToItem(shellOverlays, menuX, menuY);
-            domains.toolchainController.openMenu(pos.x, pos.y);
-        }
     }
 
     ShellOverlays {

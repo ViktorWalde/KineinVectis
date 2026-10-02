@@ -126,7 +126,7 @@ EOF
 }
 
 load="$(cut -d' ' -f1 /proc/loadavg)"
-if awk -v load="$load" -v cores="$(nproc)" 'BEGIN { exit !(load > cores / 2) }'; then
+if awk -v avg="$load" -v cores="$(nproc)" 'BEGIN { exit !(avg > cores / 2) }'; then
     echo "aviso: carga $load com $(nproc) nucleos — as fotos podem sair antes de a IDE assentar" >&2
 fi
 rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"

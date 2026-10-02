@@ -6,7 +6,6 @@ WorkspaceStatusBar {
 
     property var coreClient: null
     property var shellController: null
-    property var toolchainController: null
     property var indexController: null
     property var pythonController: null
     property var activeJobController: null
@@ -15,17 +14,11 @@ WorkspaceStatusBar {
     property var remoteController: null
 
     workspaceRoot: coreClient.workspaceRoot
-    workspaceKindLabel: shellController.kindLabel(
-                            coreClient.workspaceKind,
-                            coreClient.workspaceBuildSystems)
     logsActive: shellController.tabActive("logs")
     running: coreClient.running
     coreConnected: coreClient.connected
     coreProtocolVersion: coreClient.protocolVersion
     coreStatus: coreClient.status
-    toolchainVisible: coreClient.workspaceRoot !== ""
-                      && coreClient.workspaceBuildSystems.length > 0
-    toolchainSummary: toolchainController.summary(coreClient.workspaceBuildSystems)
     indexSummary: indexController !== null ? indexController.summary() : ""
     contextSummary: indexController !== null ? indexController.contextSummary() : ""
     contextDetail: indexController !== null ? indexController.contextDetail() : ""

@@ -2,7 +2,8 @@ import QtQuick
 import KineinVectis
 
 // A barra de status (Etapa 2, F2 do roadmaps/43, 2026-09-18): ela diz O QUE
-// ESTA' ACONTECENDO. Esquerda: o workspace e a toolchain. Centro: o job em
+// ESTA' ACONTECENDO. Esquerda: a pasta do projeto (o sistema de build e a
+// toolchain subiram ao cabecalho na 0.3.8 F3 — eram repetidos aqui). Centro: o job em
 // curso com progresso e cancelar (build, testes, indice, rsync — o
 // JobsController ja' sabia, a barra nao dizia); sem job, os resumos do
 // projeto. Direita: o contexto do arquivo ativo, o Python, os servidores de
@@ -13,14 +14,11 @@ Rectangle {
     id: bar
 
     property string workspaceRoot: ""
-    property string workspaceKindLabel: ""
     property bool logsActive: false
     property bool running: false
     property bool coreConnected: false
     property string coreProtocolVersion: ""
     property string coreStatus: ""
-    property string toolchainSummary: ""
-    property bool toolchainVisible: false
     property string indexSummary: ""
     property string contextSummary: ""
     property string contextDetail: ""
@@ -54,7 +52,6 @@ Rectangle {
     signal remotePanelRequested()
     signal logsRequested()
     signal jobsRequested()
-    signal toolchainMenuRequested(real menuX, real menuY)
     signal cancelJobRequested()
 
     height: 28
@@ -76,45 +73,10 @@ Rectangle {
             visible: bar.workspaceRoot !== ""
             width: Math.min(implicitWidth, Math.max(120, leftStrip.width * 0.32))
             elide: Text.ElideMiddle
-            text: bar.workspaceKindLabel + "  ·  " + bar.workspaceRoot
+            text: bar.workspaceRoot
             color: Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus
             font.family: Theme.monoFont
-        }
-
-        // Chip da toolchain: diz o que vai rodar e abre o seletor.
-        Rectangle {
-            id: toolchainChip
-
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.toolchainVisible
-            width: toolchainText.width + 2 * Theme.spacingSmall
-            height: 18
-            radius: Theme.radiusXSmall
-            color: toolchainArea.containsMouse ? Theme.surface2 : "transparent"
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                id: toolchainText
-
-                anchors.centerIn: parent
-                text: qsTr("toolchain: %1").arg(bar.toolchainSummary)
-                color: Theme.textMuted
-                font.pixelSize: Theme.fontSizeStatus
-            }
-
-            MouseArea {
-                id: toolchainArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    const pos = toolchainChip.mapToItem(bar, 0, 0);
-                    bar.toolchainMenuRequested(pos.x, pos.y);
-                }
-            }
         }
 
         StatusBarRemoteWidget {

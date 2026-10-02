@@ -3836,8 +3836,6 @@ ui/qml/shell/ShellEnvironmentOverlays.qml	comando	4
 ui/qml/shell/ShellHeaderHost.qml	barra	1
 ui/qml/shell/StatusBarJobWidget.qml	preenchido	1
 ui/qml/shell/StatusBarJobWidget.qml	trilho	4
-ui/qml/shell/TopHeaderBar.qml	executar	3
-ui/qml/shell/TopHeaderBar.qml	projeto	2
 ui/qml/toolchain/ToolchainController.qml	algum	3
 ui/qml/toolchain/ToolchainController.qml	alvo	3
 ui/qml/toolchain/ToolchainController.qml	automatico	3
@@ -3847,13 +3845,6 @@ ui/qml/toolchain/ToolchainController.qml	linhas	9
 ui/qml/toolchain/ToolchainController.qml	outras	2
 ui/qml/toolchain/ToolchainController.qml	papeis	4
 ui/qml/toolchain/ToolchainController.qml	recomendadas	2
-ui/qml/toolchain/ToolchainMenu.qml	ativo	6
-ui/qml/toolchain/ToolchainMenu.qml	automatico	2
-ui/qml/toolchain/ToolchainMenu.qml	bloco	8
-ui/qml/toolchain/ToolchainMenu.qml	coluna	6
-ui/qml/toolchain/ToolchainMenu.qml	opcao	8
-ui/qml/toolchain/ToolchainMenu.qml	opcoes	3
-ui/qml/toolchain/ToolchainMenu.qml	selecao	6
 ui/qml/workspace/LspStatusController.qml	novo	4
 ui/qml/workspace/LspStatusController.qml	rodando	3
 ui/qml/workspace/WorkspaceController.qml	lista	3
