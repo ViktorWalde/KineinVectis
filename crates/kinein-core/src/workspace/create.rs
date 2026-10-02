@@ -105,13 +105,13 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
         + "\n";
     write_template(&root.join("pyproject.toml"), &pyproject)?;
     let main = [
-        format!("\"\"\"Ponto de entrada de {name}: e' o que o botao Executar roda.\"\"\""),
+        format!("\"\"\"Ponto de entrada de {name}: é o que o botão Executar roda.\"\"\""),
         String::new(),
-        format!("from {pacote} import saudacao"),
+        format!("from {pacote} import greet"),
         String::new(),
         String::new(),
         "def main() -> None:".to_owned(),
-        "    print(saudacao(\"mundo\"))".to_owned(),
+        "    print(greet(\"mundo\"))".to_owned(),
         String::new(),
         String::new(),
         "if __name__ == \"__main__\":".to_owned(),
@@ -124,18 +124,18 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
         format!("\"\"\"{pacote}: o pacote de {name}.\"\"\""),
         String::new(),
         String::new(),
-        "def saudacao(nome: str) -> str:".to_owned(),
-        "    return f\"Ola, {nome}!\"".to_owned(),
+        "def greet(name: str) -> str:".to_owned(),
+        "    return f\"Olá, {name}!\"".to_owned(),
     ]
     .join("\n")
         + "\n";
     write_template(&src.join("__init__.py"), &init)?;
     let test_main = [
-        format!("from {pacote} import saudacao"),
+        format!("from {pacote} import greet"),
         String::new(),
         String::new(),
-        "def test_saudacao() -> None:".to_owned(),
-        "    assert saudacao(\"mundo\") == \"Ola, mundo!\"".to_owned(),
+        "def test_greet() -> None:".to_owned(),
+        "    assert greet(\"mundo\") == \"Olá, mundo!\"".to_owned(),
     ]
     .join("\n")
         + "\n";
@@ -149,11 +149,11 @@ fn create_python_project(parent: &Path, name: &str) -> Result<WorkspaceInfo, Wor
         String::new(),
         "Projeto Python criado pelo Kinein Vectis.".to_owned(),
         String::new(),
-        "- Ambiente: o botao \"Criar .venv\" da IDE (`uv venv .venv` ou `python3 -m venv .venv`)."
+        "- Ambiente: o botão \"Criar .venv\" da IDE (`uv venv .venv` ou `python3 -m venv .venv`)."
             .to_owned(),
-        "- Testes: `uv add --dev pytest` (ou `.venv/bin/pip install -e .[dev]`) e o botao Testes."
+        "- Testes: `uv add --dev pytest` (ou `.venv/bin/pip install -e .[dev]`) e o botão Testes."
             .to_owned(),
-        "- Executar: o botao Executar roda `main.py` com o interpretador do projeto.".to_owned(),
+        "- Executar: o botão Executar roda `main.py` com o interpretador do projeto.".to_owned(),
     ]
     .join("\n")
         + "\n";
@@ -430,7 +430,7 @@ mod python_template_tests {
         assert!(root.join("demo_py/__init__.py").is_file());
         assert!(!root.join("src").exists(), "layout plano");
         let main = std::fs::read_to_string(root.join("main.py")).unwrap();
-        assert!(main.contains("from demo_py import saudacao"));
+        assert!(main.contains("from demo_py import greet"));
         assert!(
             std::fs::read_to_string(root.join("tests/test_main.py"))
                 .unwrap()
