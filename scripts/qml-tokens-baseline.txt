@@ -108,7 +108,6 @@ ui/qml/project/ProjectEntryRenameDialog.qml	fontSize	8
 ui/qml/project/ProjectExplorer.qml	fontSize	1
 ui/qml/project/ProjectTransferBatchDialog.qml	fontSize	8
 ui/qml/project/ProjectTransferBatchDialog.qml	radius	1
-ui/qml/project/ProjectTreeRow.qml	fontSize	1
 ui/qml/remote/RemoteDiscovery.qml	fontSize	6
 ui/qml/remote/RemoteForm.qml	fontSize	1
 ui/qml/remote/RemoteList.qml	fontSize	4

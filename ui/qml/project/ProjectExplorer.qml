@@ -35,12 +35,21 @@ Rectangle {
         explorerView.forceActiveFocus();
     }
 
+    // O que esta' sendo arrastado agora: as linhas de origem esmaecem.
+    property var activeDragPaths: []
+
     function dragSources(path) {
         const selected = root.selectedPaths.indexOf(path) >= 0
                          ? root.selectedPaths : [path];
-        const paths = selected.filter(candidate => !selected.some(other =>
-            other !== candidate && candidate.startsWith(other + "/")));
+        const paths = selected.filter(candidate => !ProjectDragRules.insideAny(
+            candidate, selected.filter(other => other !== candidate)));
         return paths.length <= 128 ? paths : [];
+    }
+
+    // A pasta que recebe o que for solto numa linha: ela mesma, ou a pasta do
+    // arquivo. Um dono: a linha mostra o nome e o soltar usa o caminho.
+    function dropDirectory(path, kind) {
+        return treeRules.isDirectory(kind) ? path : root.projectTree.parentDir(path);
     }
 
     function trackDrag(sceneY) {
@@ -61,18 +70,9 @@ Rectangle {
     border.color: dropToRoot ? Theme.accent : Theme.borderSoft
     border.width: dropToRoot ? 2 : 1
 
-    Timer {
-        interval: 35
-        repeat: true
-        running: root.dragEdgeY >= 0
-        onTriggered: {
-            if (root.dragEdgeY < 24)
-                explorerView.contentY = Math.max(0, explorerView.contentY - 8);
-            else if (root.dragEdgeY > explorerView.height - 24)
-                explorerView.contentY = Math.min(
-                    Math.max(0, explorerView.contentHeight - explorerView.height),
-                    explorerView.contentY + 8);
-        }
+    ProjectTreeAutoScroll {
+        view: explorerView
+        edgeY: root.dragEdgeY
     }
 
     Column {
@@ -246,15 +246,21 @@ Rectangle {
                 runnable: root.projectTree !== null
                           && root.projectTree.isRunnableScript(treeRow.path, treeRow.kind)
                 dragPaths: root.dragSources(treeRow.path)
+                activeDragPaths: root.activeDragPaths
+                dropDirectory: root.dropDirectory(treeRow.path, treeRow.kind)
 
                 onFilesDropped: function(paths, copy, external) {
                     root.dragEdgeY = -1;
-                    const directory = treeRules.isDirectory(treeRow.kind)
-                                      ? treeRow.path : root.projectTree.parentDir(treeRow.path);
-                    root.filesDropped(paths, directory, copy, external);
+                    root.activeDragPaths = [];
+                    if (!external && ProjectDragRules.insideAny(treeRow.dropDirectory, paths)) return;
+                    root.filesDropped(paths, treeRow.dropDirectory, copy, external);
                 }
+                onDragStarted: root.activeDragPaths = treeRow.dragPaths
                 onDragPosition: function(sceneY) { root.trackDrag(sceneY); }
-                onDragEnded: { root.dragEdgeY = -1; }
+                onDragEnded: {
+                    root.dragEdgeY = -1;
+                    root.activeDragPaths = [];
+                }
                 onDirectoryHoverRequested: {
                     if (treeRules.isDirectory(treeRow.kind) && !treeRow.expanded)
                         root.directoryToggleRequested(treeRow.path,

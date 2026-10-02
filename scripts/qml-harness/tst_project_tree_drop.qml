@@ -92,6 +92,13 @@ Item {
               && received[0][0] === "/tmp/ação #1.txt"
               && acceptedAction === Qt.CopyAction,
               "MIME interno forjado tentou mover arquivo da árvore");
+
+        // Soltar uma pasta nela mesma ou num filho e' recusado (0.3.9); o
+        // irmao de nome parecido ("/w/src2") nao conta como filho.
+        check(ProjectDragRules.insideAny("/w/src", ["/w/src"]), "a propria pasta");
+        check(ProjectDragRules.insideAny("/w/src/lib", ["/w/a", "/w/src"]), "um filho");
+        check(!ProjectDragRules.insideAny("/w/src2", ["/w/src"]), "irmao de nome parecido");
+        check(!ProjectDragRules.insideAny("/w", ["/w/src"]), "o pai pode receber");
         Qt.exit(failures === 0 ? 0 : 1);
     }
 }

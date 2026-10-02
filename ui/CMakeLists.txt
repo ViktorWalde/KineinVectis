@@ -333,6 +333,8 @@ set_source_files_properties(qml/project/ProjectTreeKeyRules.qml PROPERTIES QT_RE
 set_source_files_properties(qml/project/ProjectTreeKeyboard.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeKeyboard.qml)
 set_source_files_properties(qml/project/ProjectTreeSelection.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeSelection.qml)
 set_source_files_properties(qml/project/ProjectTreeRow.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeRow.qml)
+set_source_files_properties(qml/project/ProjectTreeAutoScroll.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeAutoScroll.qml)
+set_source_files_properties(qml/project/ProjectDragGhost.qml PROPERTIES QT_RESOURCE_ALIAS ProjectDragGhost.qml)
 set_source_files_properties(qml/project/ProjectEntryMenuKeyboard.qml PROPERTIES QT_RESOURCE_ALIAS ProjectEntryMenuKeyboard.qml)
 set_source_files_properties(qml/project/ProjectTreeResults.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTreeResults.qml)
 set_source_files_properties(qml/project/ProjectExplorer.qml PROPERTIES QT_RESOURCE_ALIAS ProjectExplorer.qml)
@@ -701,6 +703,8 @@ qt_add_qml_module(kinein-vectis
         qml/project/ProjectTreeKeyboard.qml
         qml/project/ProjectTreeSelection.qml
         qml/project/ProjectTreeRow.qml
+        qml/project/ProjectTreeAutoScroll.qml
+        qml/project/ProjectDragGhost.qml
         qml/project/ProjectEntryMenuKeyboard.qml
         qml/project/ProjectTreeResults.qml
         qml/project/ProjectExplorer.qml

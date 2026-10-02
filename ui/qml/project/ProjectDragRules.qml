@@ -5,6 +5,12 @@ import QtQuick
 QtObject {
     readonly property ProjectTreeRules treeRules: ProjectTreeRules {}
 
+    // `path` e' uma das `roots` ou esta' dentro de uma delas. Soltar uma pasta
+    // nela mesma (ou num filho) e' recusado na tela antes de chegar ao core.
+    function insideAny(path, roots) {
+        return roots.some(root => path === root || path.startsWith(root + "/"));
+    }
+
     function internalPaths(event) {
         if (event.formats.indexOf("application/x-kinein-project-paths") < 0) return [];
         // Uma aplicação externa pode forjar MIME/keys. Só o Item da árvore

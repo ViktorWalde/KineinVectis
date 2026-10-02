@@ -19,6 +19,15 @@ Rectangle {
     property color gitColor: Theme.textSecondary
     property bool runnable: false
     property var dragPaths: []
+    // O arrasto em curso na arvore e a pasta que recebe o que cair aqui (o
+    // explorador e' o dono das duas).
+    property var activeDragPaths: []
+    property string dropDirectory: ""
+    readonly property bool beingDragged: root.activeDragPaths.indexOf(root.path) >= 0
+    readonly property bool selfDrop: rowDrop.validDrag && !rowDrop.externalDrag
+                                     && ProjectDragRules.insideAny(root.dropDirectory, root.activeDragPaths)
+    readonly property string dropFolderName: root.dropDirectory.substring(
+        root.dropDirectory.lastIndexOf("/") + 1) + "/"
     readonly property bool dropHighlighted: rowDrop.validDrag
     readonly property bool dropCopy: rowDrop.copy
     readonly property string dragUrls: dragPaths.map(path =>
@@ -30,6 +39,7 @@ Rectangle {
     signal filesDropped(var paths, bool copy, bool external)
     signal directoryHoverRequested()
     signal dragPosition(real sceneY)
+    signal dragStarted()
     signal dragEnded()
 
     height: 24
@@ -38,7 +48,9 @@ Rectangle {
           : selected ? Theme.surfaceSelected
           : (rowHover.hovered ? Theme.surface2 : "transparent")
     border.width: dropHighlighted ? 2 : cursorFocused ? 1 : 0
-    border.color: Theme.accent
+    border.color: selfDrop ? Theme.errorSoft : Theme.accent
+    // A origem do arrasto esmaece: o olho ve o que esta' saindo do lugar.
+    opacity: beingDragged ? 0.45 : 1.0
 
     Drag.dragType: Drag.Automatic
     Drag.active: false
@@ -46,6 +58,9 @@ Rectangle {
     Drag.proposedAction: Qt.MoveAction
     Drag.mimeData: ({"text/uri-list": root.dragUrls,
                      "application/x-kinein-project-paths": JSON.stringify(root.dragPaths)})
+    // A pilula vai abaixo e a direita do cursor, sem cobrir o "Mover para".
+    Drag.hotSpot.x: -Theme.spacingMedium
+    Drag.hotSpot.y: -Theme.spacingLarge
     Drag.onDragFinished: root.dragEnded()
 
     DragHandler {
@@ -53,7 +68,40 @@ Rectangle {
         enabled: root.dragPaths.length > 0
         acceptedButtons: Qt.LeftButton
         target: null
-        onActiveChanged: root.Drag.active = active && root.dragPaths.length > 0
+        // Antes da lista: no arrasto VERTICAL o ListView (que filtra os
+        // eventos dos filhos) chegava ao limiar dele (~10 px) primeiro e
+        // rolava em vez de arrastar — visto na tela real (0.3.9). Com 4 px o
+        // arrasto ganha (toma o gesto da MouseArea da linha), e sem os flags
+        // de "aprovar" ninguem o toma depois.
+        dragThreshold: 4
+        grabPermissions: PointerHandler.CanTakeOverFromAnything
+        // O arrasto so' comeca depois de a pilula virar imagem: o sistema a
+        // leva no cursor ate' o destino (0.3.9).
+        onActiveChanged: {
+            if (!active || root.dragPaths.length === 0) {
+                root.Drag.active = false;
+                return;
+            }
+            root.dragStarted();
+            ghost.visible = true;
+            ghost.grabToImage(function(result) {
+                ghost.visible = false;
+                root.Drag.imageSource = result.url;
+                root.Drag.active = dragHandler.active;
+            });
+        }
+    }
+
+    ProjectDragGhost {
+        id: ghost
+
+        visible: false
+        z: 10
+        x: Theme.spacingSmall + root.depth * 12
+        anchors.verticalCenter: parent.verticalCenter
+        name: root.name
+        directory: rules.isDirectory(root.kind)
+        count: root.dragPaths.length
     }
 
     ProjectTreeDropArea {
@@ -76,7 +124,7 @@ Rectangle {
 
     Timer {
         id: hoverExpand
-        interval: 650
+        interval: 450
         onTriggered: root.directoryHoverRequested()
     }
 
@@ -128,10 +176,14 @@ Rectangle {
         anchors.rightMargin: Theme.spacingSmall
         anchors.verticalCenter: parent.verticalCenter
         visible: root.dropHighlighted
-        text: rowDrop.externalDrag ? qsTr("Importar aqui")
-              : root.dropCopy ? qsTr("Copiar aqui") : qsTr("Mover aqui")
-        color: Theme.accent
-        font.pixelSize: 10
+        // O destino pelo NOME da pasta: num arquivo, cai na pasta dele.
+        text: root.selfDrop ? qsTr("não cabe dentro de si mesma")
+              : rowDrop.externalDrag ? qsTr("Importar para %1").arg(root.dropFolderName)
+              : root.dropCopy ? qsTr("Copiar para %1").arg(root.dropFolderName)
+              : qsTr("Mover para %1").arg(root.dropFolderName)
+        color: root.selfDrop ? Theme.errorSoft : Theme.accent
+        font.pixelSize: Theme.fontSizeCaption
+        font.bold: true
     }
 
     MouseArea {

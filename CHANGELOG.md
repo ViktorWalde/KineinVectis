@@ -46,6 +46,11 @@ no checkout, não em nenhum pacote publicado.
   pede; digite "/" para escrever o caminho; setas, Enter e Backspace navegam.
   Trocar o local de um projeto novo, ou criar uma pasta para ele, não perde
   mais a linguagem e o nome escolhidos.
+- **Arrastar na árvore do projeto, de verdade.** Puxar um arquivo para cima
+  ou para baixo arrasta (antes a lista rolava); o cursor leva o nome do
+  item, a origem fica esmaecida, a pasta de destino abre sozinha e diz
+  "Mover para tests/"; soltar uma pasta dentro dela mesma aparece em
+  vermelho e não acontece.
 - **Arraste para organizar.** Os ícones do trilho, as abas do painel de
   baixo, os widgets do cabeçalho e os itens da barra de status se arrastam
   para a ordem que você quiser — cada um dentro da própria barra. Durante o
