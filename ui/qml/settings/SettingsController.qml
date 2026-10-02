@@ -22,6 +22,9 @@ Item {
     property int outlineWidth: 220
     property bool outlineCollapsed: false
     property bool railExpanded: false
+    // O layout do shell (0.146.0): o do workspace, senao o global, ja'
+    // filtrado pelo core (so' schema conhecido). null = nenhum.
+    property var layout: null
     // Perfil de rigor do build/quality do usuario (M4.5): strict|balanced|relaxed.
     property string rigorProfile: "strict"
     // O que esta explicitamente setado no global (para a UI mostrar).
@@ -64,6 +67,7 @@ Item {
                 ? effective.outlineWidth : 220;
         outlineCollapsed = effective.outlineCollapsed === true;
         railExpanded = effective.railExpanded === true;
+        layout = effective.layout !== undefined ? effective.layout : null;
         globalValues = global;
         workspaceValues = workspace;
         loaded = true;
@@ -75,6 +79,12 @@ Item {
     // A UI edita o escopo GLOBAL no v1 (values e um objeto parcial).
     function setGlobal(values) {
         setRequested("global", values);
+    }
+
+    // O layout e' por projeto (53 §4.4): o shell diz o escopo ("workspace" ou
+    // "global"); outro valor o core recusa (`SettingsScope`).
+    function setScoped(scope, values) {
+        setRequested(scope, values);
     }
 
     function hasPersistedLayout() {

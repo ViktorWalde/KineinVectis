@@ -87,6 +87,15 @@ de abrir — é o que os testes headless usam para fotografar um estado.
 └──────────────────────────────────────────────────────────────┘
 ```
 
+- **O layout volta como você deixou, por projeto** (desde 2026-10-01): qual
+  janela está à esquerda (Projeto ou Git), as larguras que você arrastou, a
+  Estrutura recolhida ou não e o painel de baixo com a aba aberta. Cada
+  projeto lembra o seu; sem projeto aberto, o que você ajusta vira o padrão.
+  A aba Terminal volta vazia — o shell só abre quando você pede (Alt+F12).
+  Numa janela menor os painéis encolhem até o mínimo que o conteúdo precisa,
+  sem nunca deixar o editor com menos de 480 px, e voltam ao tamanho que você
+  escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
+  **Amend** numa linha própria em vez de esconder o botão **Commit**.
 - **Barra principal** (desde 2026-09-18, Etapa 2 F1): **três widgets**, como
   nas IDEs JetBrains. *Projeto* — o nome do workspace, o que ele é (Cargo +
   CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —

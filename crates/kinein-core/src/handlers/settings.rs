@@ -129,6 +129,18 @@ fn validate_values(values: &SettingsValues) -> Option<String> {
             settings::MAX_BOTTOM_PANEL_HEIGHT
         ));
     }
+    // O layout (0.146.0) e' um retrato que a UI monta: tem de ser objeto com
+    // `schemaVersion`. O conteudo, a UI confere ao aplicar (cada tamanho passa
+    // pelos limites do ShellController); aqui so' se recusa lixo.
+    if let Some(layout) = &values.layout {
+        if layout
+            .get("schemaVersion")
+            .and_then(serde_json::Value::as_u64)
+            .is_none_or(|version| version == 0)
+        {
+            return Some("layout deve ser um objeto com schemaVersion >= 1".to_owned());
+        }
+    }
     None
 }
 

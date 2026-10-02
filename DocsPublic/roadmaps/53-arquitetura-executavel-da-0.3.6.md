@@ -238,28 +238,38 @@ Mora no `ToolWindows` como função (ex.: `visibleEntries(state, facts)`
 *(proposto)*); o `SideRail` só desenha o resultado. O harness testa a função
 sem janela.
 
-### 4.4 Layout persistido (extensão de `SettingsValues`)
+### 4.4 Layout persistido (extensão de `SettingsValues`) — feito em 2026-10-01 (40.7 §7.156)
 
 ```text
-layout (proposto, escopo workspace; global guarda só preferência do usuário)
-  schemaVersion   1
-  leftWindow      "explorer" | "git" | ...
-  widths          { explorer, context, outline, bottom }   (os que já existem
-                                                             migram para cá)
-  bottom          { visible, tab, order[], pinned[] }
-  rail            { expanded, pinned[], unpinned[], hidden[], order[] }
-  preset          "coding" | "debugging" | "review" | "focus" | ""
-  focusRestore    snapshot do layout antes do modo Foco (ou vazio)
+layout (protocolo 0.146.0; escopo workspace, o global é o padrão de quem não
+        tem o seu; JSON cru no core, que nunca o reescreve campo a campo)
+  schemaVersion     1
+  leftWindow        "explorer" | "git"
+  leftVisible       bool
+  sizes             { explorer, outline, bottom }   tamanhos PREFERIDOS
+  outlineCollapsed  bool
+  bottom            { visible, tab }
 ```
 
-Regras: campos atuais (`explorer_width`, `bottom_panel_height`,
-`outline_width`, `outline_collapsed`, `rail_expanded`) continuam lidos por um
-ciclo como fallback; `layout` desconhecido ou de schema maior abre o padrão
-seguro, sem apagar o arquivo; nunca se restaura processo de terminal (49 F2);
-valores fora de faixa passam pelo `clamp` que o `ShellController` já faz.
+**O que ficou de fora do schema 1, e por quê:** `context` (o painel KV Context
+não existe mais na UI; ninguém lia a largura), `rail { pinned, hidden,
+order }`, `bottom { order, pinned }`, `preset` e `focusRestore`. Cada um entra,
+numa versão nova do schema, com a fatia que o consome (0.3.7 trilho e painel
+de baixo, 0.3.9 presets e modo Foco): mecanismo sem usuário é pior que nenhum
+(ARCHITECTURE §8). `railExpanded` continua fora do layout: é preferência do
+usuário e vai sempre ao global.
+
+Regras, como implementadas: os campos antigos (`explorerWidth`,
+`bottomPanelHeight`, `outlineWidth`, `outlineCollapsed`) continuam lidos pela
+UI quando não há `layout`; `layout` de schema maior abre o padrão seguro e
+**fica no arquivo**; nunca se restaura processo de terminal (a aba Terminal
+volta vazia); o eco do `settings.set` não é reaplicado (puxaria o painel no
+meio de um arrasto); trocar de workspace cancela a gravação pendente.
 
 **Limites de tamanho: mínimo do conteúdo, máximo automático (pedido e
-decisão do autor, 2026-10-01; entra na fatia do layout).** Hoje os limites são constantes no
+decisão do autor, 2026-10-01; feito na fatia do layout, 40.7 §7.156, para o
+painel da esquerda e o de baixo; a Estrutura segue a regra que o `EditorPane`
+já tinha, e a barra de status por prioridade é a próxima fatia curta).** Hoje os limites são constantes no
 `ShellController` (explorer e Git dividem 220–420 px; padrão 22% da janela
 entre 220 e 300), e a F0 mostrou o custo: o mínimo global de 220 px é menor
 que o rodapé do Git precisa, que estoura em 1024×700. A regra:
@@ -671,6 +681,19 @@ Registrada **antes** da task dedicada de UX/HUD, que a detalha e mede; aqui
 - **inspiração no layout e no UX das IDEs JetBrains**, adaptada ao contexto
   do projeto (embarcados, Remote, ambiente) e com identidade própria — não
   uma cópia.
+
+**Fluidez a 60 Hz, 120 Hz onde der (decisão do autor, 2026-10-01, à noite):**
+*"quero que melhore a fluidez das animações que existem na IDE, pelo menos
+60 Hz ou 120 Hz se possível, e deixar mais responsivo e fluido a interação do
+usuário com o mouse, o mais suave possível."* Entra quando a casca com projeto
+aberto for remodelada (0.3.7–0.3.9; o grosso na F4 da 0.3.9, junto dos tokens
+de movimento do 58 §4.3). Critério mensurável: **tempo de quadro ≤ 16,7 ms**
+durante toda animação e toda interação de mouse (hover, arrastar divisória,
+rolar listas e editor, abrir/fechar painel) e **≤ 8,3 ms** onde a tela e o
+renderizador permitirem; medido por marcador de quadro, como o tecla→frame do
+A3.3-1, antes e depois. Hipóteses a medir antes de mexer: o AppImage força
+`QT_QUICK_BACKEND=software`, que provavelmente impede os 120 Hz; e há carga
+síncrona no caminho do quadro (já anotada acima).
 
 A task dedicada parte de capturas reais (hook `KINEIN_SCREENSHOT`) e propõe
 com mockups lado a lado; problemas de UX e de HUD/UI entram medidos.

@@ -9,11 +9,13 @@
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
 > - **Em curso: 0.3.6** (casca e base visual), no checkout com o protocolo
->   `0.145.0`. Os gates G0 estão feitos e passam; a **F0** (medir antes de
+>   `0.146.0`. Os gates G0 estão feitos e passam; a **F0** (medir antes de
 >   mudar) foi feita em 2026-10-01 (40.7 §7.153; inventário, telas e linha de
->   base no [`53`](53-arquitetura-executavel-da-0.3.6.md) §F0). A próxima é o
->   **layout versionado** com os limites de tamanho (53 §4.4), depois a V-1 —
->   decisão do autor, 53 §13.0. Onde cada fatia começa no código:
+>   base no [`53`](53-arquitetura-executavel-da-0.3.6.md) §F0); depois vieram o
+>   "LSP ✗" sem queda falsa (§7.154), o **Criar Projeto** por linguagem
+>   (§7.155) e o **layout versionado** com os limites de tamanho (§7.156,
+>   protocolo `0.146.0`). A próxima é a **V-1** (C++ em inglês) — decisão do
+>   autor, 53 §13.0. Onde cada fatia começa no código:
 >   [`58`](58-onde-cada-versao-comeca-no-codigo.md).
 > - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15 nem
 >   no Ubuntu 26.04 / Qt 6.10 / clang 21 do autor (a exceção do clang-tidy só
@@ -180,9 +182,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.145.0 (2026-10-01; o historico das versoes e' o arquitetura/03)
+protocolo   0.146.0 (2026-10-01; o historico das versoes e' o arquitetura/03)
 metodos     174 IPC roteados, 57 eventos (scripts/verificar-fiacao-ipc.sh,
-            2026-10-01); 90 harnesses QML em scripts/qml-harness
+            2026-10-01); 92 harnesses QML em scripts/qml-harness
 testes      874 Rust aprovados; 1 C++; 67 harnesses QML (medicao de 2026-09-24, §7.99)
 historico   168 IPC roteados, 56 eventos em 2026-09-24 (remote.parseCommand em 0.134.0;
             remote.command kind copyId em 0.133.0;

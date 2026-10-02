@@ -96,6 +96,57 @@ fn settings_set_workspace_overrides_and_persists() {
     assert_eq!(reread["settings"]["outlineCollapsed"], true);
 }
 
+/// O layout do shell (0.146.0, roadmap 53 §4.4) vai e volta pelo IPC por
+/// workspace: o `settings.set` grava o retrato inteiro, o efetivo o devolve, e
+/// um core novo no mesmo workspace o le. Um layout sem `schemaVersion` e'
+/// recusado e nao toca no arquivo.
+#[test]
+fn settings_layout_round_trips_per_workspace_and_rejects_garbage() {
+    let dir = temp_workspace("layout");
+    let mut core = core_with_empty_search_path("settings-layout");
+    let opened = core.handle_request(&JsonRpcRequest::new(
+        20_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    assert!(opened.response().error.is_none());
+    let layout = json!({
+        "schemaVersion": 1,
+        "leftWindow": "git",
+        "leftVisible": true,
+        "sizes": { "explorer": 340, "outline": 240, "bottom": 300 },
+        "outlineCollapsed": false,
+        "bottom": { "visible": true, "tab": "problems" },
+    });
+    let set = core.handle_request(&JsonRpcRequest::new(
+        21_i64,
+        "settings.set",
+        Some(json!({ "scope": "workspace", "values": { "layout": layout } })),
+    ));
+    let result = set.response().result.as_ref().unwrap().clone();
+    assert_eq!(result["settings"]["layout"], layout);
+
+    let garbage = core.handle_request(&JsonRpcRequest::new(
+        22_i64,
+        "settings.set",
+        Some(json!({ "scope": "workspace", "values": { "layout": { "sizes": {} } } })),
+    ));
+    assert_eq!(
+        garbage.response().error.as_ref().unwrap().code,
+        JsonRpcErrorCode::InvalidParams
+    );
+
+    let mut reopened = core_with_empty_search_path("settings-layout-reopen");
+    let _ = reopened.handle_request(&JsonRpcRequest::new(
+        23_i64,
+        "workspace.open",
+        Some(json!({ "path": dir.to_str().unwrap() })),
+    ));
+    let reget = reopened.handle_request(&JsonRpcRequest::new(24_i64, "settings.get", None));
+    let reread = reget.response().result.as_ref().unwrap().clone();
+    assert_eq!(reread["settings"]["layout"], layout);
+}
+
 #[test]
 fn settings_set_rejects_out_of_range_font() {
     let dir = temp_workspace("font-range");

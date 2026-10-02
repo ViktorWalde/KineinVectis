@@ -17,7 +17,6 @@ Item {
         id: automaticSettings
 
         property real explorerWidth: 280
-        property real contextWidth: 360
         property real bottomPanelHeight: 260
         property real outlineWidth: 220
         property bool outlineCollapsed: false
@@ -54,13 +53,12 @@ Item {
         shell.toggleRail();
         if (shell.railExpanded) failures += 8192;
         if (shell.explorerWidth !== 220) failures += 1;
-        if (shell.contextWidth !== 300) failures += 1;
         if (!shell.outlineCollapsed) failures += 1;
 
         shell.resizeExplorer(-1000);
         if (shell.explorerWidth !== 220) failures += 1;
-        shell.resizeContext(1000);
-        if (shell.contextWidth !== 480) failures += 1;
+        // O contextWidth saiu em 2026-10-01 (layout versionado, 53 §4.4): o painel
+        // KV Context nao existe mais na UI, e ninguem lia a largura.
         shell.resizeOutline(1000);
         if (shell.outlineWidth !== 420) failures += 1;
         const collapsed = shell.outlineCollapsed;

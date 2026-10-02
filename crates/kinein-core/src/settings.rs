@@ -164,7 +164,23 @@ pub fn resolve(global: &SettingsValues, workspace: &SettingsValues) -> Effective
             .rail_expanded
             .or(global.rail_expanded)
             .unwrap_or(false),
+        layout: effective_layout(global, workspace),
     }
+}
+
+/// O layout a restaurar (`0.146.0`, roadmap 53 §4.4): o do workspace, senao
+/// o global — e so' com `schemaVersion` conhecido. Um layout de schema maior
+/// (escrito por um core mais novo) nao vale aqui, mas fica no arquivo: quem
+/// o escreveu volta a le-lo.
+fn effective_layout(
+    global: &SettingsValues,
+    workspace: &SettingsValues,
+) -> Option<serde_json::Value> {
+    [&workspace.layout, &global.layout]
+        .into_iter()
+        .flatten()
+        .find(|layout| kinein_protocol::layout_is_supported(layout))
+        .cloned()
 }
 
 /// Perfil de rigor efetivo (global ← workspace) lido do disco, para regular o
@@ -191,6 +207,9 @@ fn merge(base: &SettingsValues, incoming: &SettingsValues) -> SettingsValues {
         outline_width: incoming.outline_width.or(base.outline_width),
         outline_collapsed: incoming.outline_collapsed.or(base.outline_collapsed),
         rail_expanded: incoming.rail_expanded.or(base.rail_expanded),
+        // Inteiro, nunca campo a campo: um layout e' um retrato, e misturar
+        // dois retratos daria um que ninguem montou.
+        layout: incoming.layout.clone().or_else(|| base.layout.clone()),
     }
 }
 
@@ -225,6 +244,77 @@ mod tests {
         }
         std::fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    fn layout(version: u64, explorer: u64) -> serde_json::Value {
+        serde_json::json!({ "schemaVersion": version, "sizes": { "explorer": explorer } })
+    }
+
+    /// O layout do workspace vence o global; sem nenhum, nao ha' layout e a
+    /// UI usa os campos antigos (o ciclo de migracao do 53 §4.4).
+    #[test]
+    fn layout_comes_from_the_workspace_then_the_global() {
+        let global = SettingsValues {
+            layout: Some(layout(1, 300)),
+            ..SettingsValues::default()
+        };
+        let workspace = SettingsValues {
+            layout: Some(layout(1, 340)),
+            ..SettingsValues::default()
+        };
+        assert_eq!(resolve(&global, &workspace).layout, Some(layout(1, 340)));
+        assert_eq!(
+            resolve(&global, &SettingsValues::default()).layout,
+            Some(layout(1, 300))
+        );
+        assert_eq!(
+            resolve(&SettingsValues::default(), &SettingsValues::default()).layout,
+            None
+        );
+    }
+
+    /// Um layout de schema MAIOR (de um core mais novo) nao vale — cai no
+    /// global ou em nada —, mas sobrevive intacto no arquivo, inclusive a uma
+    /// escrita de OUTRO campo pelo core antigo.
+    #[test]
+    fn a_newer_layout_is_ignored_but_kept_on_disk() {
+        let newer = serde_json::json!({ "schemaVersion": 2, "algoNovo": [1, 2] });
+        let workspace = SettingsValues {
+            layout: Some(newer.clone()),
+            ..SettingsValues::default()
+        };
+        let global = SettingsValues {
+            layout: Some(layout(1, 300)),
+            ..SettingsValues::default()
+        };
+        assert_eq!(resolve(&global, &workspace).layout, Some(layout(1, 300)));
+        assert_eq!(resolve(&SettingsValues::default(), &workspace).layout, None);
+
+        let dir = temp_dir("layout-newer");
+        let path = dir.join("settings.json");
+        write_values(&path, &workspace).unwrap();
+        let other_field = SettingsValues {
+            editor_font_size: Some(15),
+            ..SettingsValues::default()
+        };
+        write_values(&path, &merge(&read_values(&path), &other_field)).unwrap();
+        assert_eq!(read_values(&path).layout, Some(newer));
+    }
+
+    /// Um layout novo substitui o anterior INTEIRO: misturar dois retratos
+    /// daria um layout que ninguem montou.
+    #[test]
+    fn a_new_layout_replaces_the_old_one_whole() {
+        let base = SettingsValues {
+            layout: Some(serde_json::json!({ "schemaVersion": 1, "leftWindow": "git" })),
+            ..SettingsValues::default()
+        };
+        let incoming = SettingsValues {
+            layout: Some(layout(1, 280)),
+            ..SettingsValues::default()
+        };
+        assert_eq!(merge(&base, &incoming).layout, Some(layout(1, 280)));
+        assert_eq!(merge(&base, &SettingsValues::default()).layout, base.layout);
     }
 
     #[test]

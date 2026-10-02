@@ -25,6 +25,10 @@ Rectangle {
     border.color: Theme.borderSoft
     border.width: 1
 
+    // O minimo que o slot da esquerda precisa com o Git nele (53 §4.4): o da
+    // caixa de commit, com as margens dela.
+    readonly property real minimumWidth: commitRow.minimumWidth + 2 * Theme.spacingSmall
+
     function clearMessage() {
         commitRow.clearMessage();
     }

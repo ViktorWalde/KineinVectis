@@ -1,5 +1,16 @@
 # 03 — Protocolo IPC
 
+> **0.146.0 (2026-10-01) — layout do shell versionado, por workspace.**
+> `SettingsValues.layout?` e `EffectiveSettings.layout?` (objeto, com o
+> próprio `schemaVersion`). O efetivo é o do workspace, senão o global, e só
+> com `schemaVersion` que o core conhece (`1`); um layout de schema maior,
+> escrito por um core mais novo, é ignorado **e preservado no arquivo**, porque
+> o core o guarda como JSON cru e nunca o reescreve campo a campo. O
+> `settings.set` troca o `layout` inteiro (dois retratos não se misturam) e
+> recusa com `INVALID_PARAMS` um `layout` sem `schemaVersion >= 1`. O schema 1
+> está na seção Settings. Os campos de largura antigos continuam lidos pela UI
+> por um ciclo, quando não há `layout` (roadmap 53 §4.4).
+
 > **0.145.0 (2026-10-01) — degradação explicada do depurador sem globais.**
 > `debug.variables { frameId }` ganha `notice?` (string). O core o preenche
 > quando o adaptador só ofereceu **registradores** para o frame — o caso do
@@ -2678,13 +2689,19 @@ SettingsValues { formatOnSave?: bool, editorFontSize?: u32,
                  explorerWidth?: u32, contextWidth?: u32,
                  assistantTerminalWidth?: u32,
                  bottomPanelHeight?: u32, outlineWidth?: u32,
-                 outlineCollapsed?: bool, railExpanded?: bool (0.128.0) }
+                 outlineCollapsed?: bool, railExpanded?: bool (0.128.0),
+                 layout?: Layout (0.146.0) }
                                           (campos ausentes = não setados)
 EffectiveSettings { formatOnSave, editorFontSize, autoClosePairs, autoSave,
                     rigorProfile, explorerWidth, contextWidth,
                     assistantTerminalWidth,
                     bottomPanelHeight, outlineWidth, outlineCollapsed,
-                    outlineCollapsed }
+                    railExpanded, layout? (0.146.0) }
+Layout (schemaVersion 1) { schemaVersion: 1,
+                 leftWindow?: "explorer"|"git", leftVisible?: bool,
+                 sizes?: { explorer?, outline?, bottom? }   (PREFERIDOS, px)
+                 outlineCollapsed?: bool,
+                 bottom?: { visible?: bool, tab?: string } }
 SettingsResult { settings: EffectiveSettings, global: SettingsValues,
                  workspace: SettingsValues }
 ```
@@ -2714,6 +2731,15 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
   build sem `RUSTFLAGS` no relaxed). NUNCA regula o gate do repo Kinein.
   As dimensões persistem o layout que o usuário redimensionou;
   `outlineCollapsed` persiste o recolhimento da Estrutura.
+- **`layout` (0.146.0)** é o retrato do shell, por workspace: a UI grava no
+  escopo do workspace aberto (sem workspace, no global, que vira o padrão de
+  quem ainda não tem o seu). `sizes` são os tamanhos **preferidos**: o exibido
+  passa pelos limites do `ShellController` (mínimo declarado pelo conteúdo,
+  máximo que deixa o editor com 480 px), e a janela menor não reescreve o
+  preferido. `bottom.tab` nunca restaura processo: a aba Terminal volta vazia
+  até o usuário pedir um shell. `railExpanded` fica fora do layout: é
+  preferência do usuário, sempre no global. `contextWidth` e
+  `assistantTerminalWidth` não têm consumidor na UI e não entram no layout.
   `diffBase` (head|index) fica para uma micro-fatia futura (precisa de
   `base` no `git.fileDiff`).
 

@@ -15,6 +15,11 @@ Item {
     property string workspaceName: ""
     property string workspaceRoot: ""
 
+    // O minimo DECLARADO por quem esta' no slot (53 §4.4); o shell o usa como
+    // piso da largura. O explorer se vira em 220.
+    readonly property real minimumWidth: root.shellController.gitWindowVisible
+                                         ? gitWindow.minimumWidth : 220
+
     signal listDirRequested(string path)
     signal readFileRequested(string path)
     signal closeWorkspaceRequested()
@@ -66,6 +71,8 @@ Item {
     }
 
     GitWindow {
+        id: gitWindow
+
         anchors.fill: parent
         visible: root.shellController.gitWindowVisible
         gitController: root.gitController

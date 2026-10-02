@@ -101,7 +101,7 @@ Os três pedidos de 2026-10-01 já têm dono:
 **PROPOSTA, sem decisão do autor.** A 1.0 é a promessa de que um contrato não
 quebra sem aviso:
 
-- o protocolo IPC tem versão (já tem, `0.145.0` em 2026-10-01) e a 1.0 congela a
+- o protocolo IPC tem versão (já tem, `0.146.0` em 2026-10-01) e a 1.0 congela a
   major: método removido ou mudado só numa 2.0;
 - todo arquivo que o usuário guarda (`schemas/`) tem versão e migração provada;
 - a 0.9 entregou CI pública rodando `scripts/verificar.sh --estrito` num

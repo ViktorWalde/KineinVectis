@@ -102,7 +102,7 @@ Item {
         toolsCount: workspaceController.toolsList.length
         onFolderOpenRequested: (path, intent) => root.folderPicker.openWith(intent, path)
         onToolsDetectionRequested: root.coreClient.detectTools()
-        onLayoutSaveRequested: values => settingsController.setGlobal(values)
+        onLayoutSaveRequested: (scope, values) => settingsController.setScoped(scope, values)
         onSymbolsFocusRequested: query => root.workspaceHost.focusSymbols(query)
     }
 

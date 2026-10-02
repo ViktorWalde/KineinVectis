@@ -57,7 +57,16 @@ Item {
     onHeightChanged: {
         if (root.shellController) root.shellController.updateViewport(width, height);
     }
-    Component.onCompleted: root.shellController.updateViewport(width, height)
+    Component.onCompleted: {
+        root.shellController.updateViewport(width, height);
+        updatePanelLimits();
+    }
+
+    // Os limites dos paineis (53 §4.4): o trilho e o minimo DECLARADO por
+    // quem esta' no slot da esquerda.
+    function updatePanelLimits() {
+        root.shellController.updatePanelLimits(sideBar.width, explorerPanel.minimumWidth);
+    }
 
     function focusSearchInput() {
         bottomPanel.focusSearchInput();
@@ -128,6 +137,7 @@ Item {
 
             height: parent.height
             expanded: root.shellController.railExpanded
+            onWidthChanged: root.updatePanelLimits()
             onExpandedToggled: root.shellController.toggleRail()
             entries: janelas.entries
             onActivated: id => janelas.activate(id)
@@ -145,6 +155,7 @@ Item {
             shellController: root.shellController
             projectTree: root.projectTree
             gitController: root.gitController
+            onMinimumWidthChanged: root.updatePanelLimits()
             workspaceName: root.workspaceName
             workspaceRoot: root.workspaceRoot
             onListDirRequested: function(path) { root.listDirRequested(path); }

@@ -6,6 +6,10 @@
 //! workspace`.
 
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+/// Highest `layout.schemaVersion` this protocol understands (`0.146.0`).
+pub const LAYOUT_SCHEMA_VERSION: u64 = 1;
 
 /// Rigor profile that regulates what the IDE runs for the USER's project
 /// (clippy lints, build warnings) — never the Kinein repo's own gate.
@@ -77,6 +81,14 @@ pub struct SettingsValues {
     /// only (`0.128.0`, Etapa 2 F1 "modo compacto/expandido").
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rail_expanded: Option<bool>,
+    /// The shell layout (`0.146.0`, roadmap 53 §4.4): which left window,
+    /// preferred panel sizes, bottom panel and Structure state, versioned by
+    /// its own `schemaVersion`. Kept as raw JSON on purpose: a layout written
+    /// by a newer core must survive a round trip through an older one
+    /// untouched, so the core never rewrites what it cannot read. Replaced
+    /// whole on `settings.set`, never merged field by field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layout: Option<Value>,
 }
 
 /// Settings after merging defaults, global and workspace scopes.
@@ -111,6 +123,21 @@ pub struct EffectiveSettings {
     pub outline_collapsed: bool,
     /// Effective side-rail mode: labels visible (`true`) or icons only.
     pub rail_expanded: bool,
+    /// The layout to restore: the workspace one, else the global one, and
+    /// only when its `schemaVersion` is one this core understands. Absent =
+    /// the UI uses the legacy width fields above, or its automatic layout.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layout: Option<Value>,
+}
+
+/// `true` when `layout` is an object with a `schemaVersion` this protocol
+/// understands (`1..=LAYOUT_SCHEMA_VERSION`).
+#[must_use]
+pub fn layout_is_supported(layout: &Value) -> bool {
+    layout
+        .get("schemaVersion")
+        .and_then(Value::as_u64)
+        .is_some_and(|version| (1..=LAYOUT_SCHEMA_VERSION).contains(&version))
 }
 
 /// Result payload for `settings.get` / `settings.set`.

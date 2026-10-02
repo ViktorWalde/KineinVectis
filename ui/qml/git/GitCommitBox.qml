@@ -24,9 +24,14 @@ Item {
     signal commitAndPushRequested(string message)
     signal amendToggled()
 
+    // O MINIMO que esta caixa precisa (53 §4.4): os botoes nao quebram; o
+    // resto se rearranja. O GitWindow soma as margens e o declara ao shell.
+    readonly property real minimumWidth: buttonRow.implicitWidth
+    readonly property bool compactFooter: width < amendChip.implicitWidth + Theme.spacingSmall
+                                                  + buttonRow.implicitWidth
     readonly property bool canCommit: commitInput.text.trim() !== "" && (stagedCount > 0 || amend)
 
-    implicitHeight: historyVisible ? 0 : coluna.implicitHeight
+    implicitHeight: historyVisible ? 0 : column.implicitHeight
     visible: !historyVisible
 
     function clearMessage() {
@@ -38,7 +43,7 @@ Item {
     onAmendChanged: pushArmed = false
 
     Column {
-        id: coluna
+        id: column
 
         anchors.left: parent.left
         anchors.right: parent.right
@@ -91,40 +96,45 @@ Item {
             }
         }
 
-        Row {
+        // Os avisos tem linha propria e quebram: na mesma linha dos botoes,
+        // o texto do amend empurrava o "Commit" para fora do painel.
+        Text {
             width: parent.width
-            spacing: Theme.spacingSmall
+            visible: root.amend || root.pushArmed
+            text: root.amend
+                  ? (root.headPushed
+                     ? qsTr("reescreve um commit JÁ ENVIADO — vai exigir push forçado")
+                     : qsTr("reescreve o último commit"))
+                  : qsTr("vai enviar para origin/%1 — clique de novo").arg(root.branchLabel)
+            color: root.amend && root.headPushed ? Theme.errorSoft : Theme.warningSoft
+            font.pixelSize: 10
+            wrapMode: Text.WordWrap
+        }
+
+        // Amend a esquerda e os botoes a direita; sem largura para os dois
+        // numa linha (53 §4.4: perto do minimo o conteudo se rearranja), o
+        // Amend sobe para a linha de cima.
+        Item {
+            id: footer
+
+            width: parent.width
+            height: root.compactFooter ? amendChip.height + Theme.spacingXSmall + buttonRow.height
+                                       : Math.max(amendChip.height, buttonRow.height)
 
             KvToggleChip {
-                anchors.verticalCenter: parent.verticalCenter
+                id: amendChip
+
+                y: root.compactFooter ? 0 : (footer.height - height) / 2
                 labelText: qsTr("Amend")
                 active: root.amend
                 onToggled: root.amendToggled()
             }
 
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root.amend
-                text: root.headPushed
-                      ? qsTr("reescreve um commit JÁ ENVIADO — vai exigir push forçado")
-                      : qsTr("reescreve o último commit")
-                color: root.headPushed ? Theme.errorSoft : Theme.warningSoft
-                font.pixelSize: 10
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                visible: root.pushArmed && !root.amend
-                text: qsTr("vai enviar para origin/%1 — clique de novo").arg(root.branchLabel)
-                color: Theme.warningSoft
-                font.pixelSize: 10
-            }
-
-            Item { width: parent.width - x - botoes.width; height: 1 }
-
             Row {
-                id: botoes
+                id: buttonRow
 
+                anchors.right: parent.right
+                y: root.compactFooter ? amendChip.height + Theme.spacingXSmall : 0
                 spacing: Theme.spacingSmall
 
                 KvButton {

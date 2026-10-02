@@ -4,7 +4,9 @@
   "title": "Kinein Vectis Runtime Settings",
   "description": "Schema v1 dos arquivos settings.json global e por workspace.",
   "type": "object",
-  "required": ["schemaVersion"],
+  "required": [
+    "schemaVersion"
+  ],
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {
@@ -26,7 +28,11 @@
     },
     "rigorProfile": {
       "type": "string",
-      "enum": ["strict", "balanced", "relaxed"],
+      "enum": [
+        "strict",
+        "balanced",
+        "relaxed"
+      ],
       "default": "strict"
     },
     "explorerWidth": {
@@ -53,6 +59,72 @@
     "outlineCollapsed": {
       "type": "boolean",
       "default": false
+    },
+    "autoSave": {
+      "type": "boolean",
+      "default": true,
+      "description": "Salva sozinho depois de uma pausa, ao trocar de aba e ao perder o foco (0.123.0)."
+    },
+    "railExpanded": {
+      "type": "boolean",
+      "default": false,
+      "description": "Trilho lateral com rotulos (0.128.0); preferencia do usuario, fora do layout."
+    },
+    "layout": {
+      "description": "Layout do shell (0.146.0, roadmap 53 §4.4). Substituido inteiro a cada gravacao; um schemaVersion maior que o conhecido e' ignorado e preservado.",
+      "type": "object",
+      "required": [
+        "schemaVersion"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "leftWindow": {
+          "type": "string",
+          "enum": [
+            "explorer",
+            "git"
+          ]
+        },
+        "leftVisible": {
+          "type": "boolean"
+        },
+        "sizes": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "explorer": {
+              "type": "integer",
+              "description": "largura PREFERIDA; a exibida passa pelos limites do ShellController"
+            },
+            "outline": {
+              "type": "integer"
+            },
+            "bottom": {
+              "type": "integer",
+              "description": "altura preferida do painel de baixo"
+            }
+          }
+        },
+        "outlineCollapsed": {
+          "type": "boolean"
+        },
+        "bottom": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "visible": {
+              "type": "boolean"
+            },
+            "tab": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {

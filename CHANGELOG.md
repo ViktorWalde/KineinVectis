@@ -15,6 +15,12 @@ checkout, não em nenhum pacote publicado.
   só registradores, sem dizer por quê. Agora diz: o gdb anterior ao 16 não
   expõe globais pelo DAP; a variável se lê pelo nome em Watches. O gdb que
   vale é o ≥ 16 (decisão do autor, 2026-10-01).
+- Protocolo `0.146.0` — **o layout volta como você deixou, por projeto.**
+  Janela da esquerda, larguras, Estrutura e painel de baixo são lembrados por
+  projeto. Os painéis respeitam o mínimo de que o conteúdo precisa e nunca
+  espremem o editor abaixo de 480 px; a janela menor não apaga o tamanho que
+  você escolheu. O rodapé do Git não estoura mais a 1024 px: o **Amend** desce
+  para a própria linha.
 - **Criar Projeto, com todas as linguagens.** A tela inicial tinha dois
   botões fixos, "Novo C++ / CMake" e "Novo Rust / Cargo", e o Python ficava de
   fora. Agora há um único **Criar Projeto**: escolha a linguagem (C/C++, Rust,
