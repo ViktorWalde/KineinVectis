@@ -214,24 +214,6 @@ Item {
     readonly property var visibleEntries: projection.visibleEntries(root.entries, root.railState,
                                                                     railFacts.knownFacts)
 
-    function entry(id) {
-        for (let i = 0; i < entries.length; i++) {
-            if (entries[i].id === id) {
-                return entries[i];
-            }
-        }
-        return null;
-    }
-
-    function contextItems(id) {
-        const found = entry(id);
-        return found === null ? [] : projection.contextItems(found, railState);
-    }
-
-    function overflowItems() {
-        return projection.overflowItems(entries, railState, visibleEntries);
-    }
-
     // Um dono AUSENTE e' o mesmo caso de um id sem dono: resultado observavel,
     // nao excecao. O trilho existe antes dos controllers em teste e na abertura
     // da janela, e chamar `open()` de um `null` derrubava a funcao inteira.

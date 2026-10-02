@@ -64,6 +64,8 @@ Item {
     // no modo de criar, com a escolha de linguagem). Uma porta, duas intencoes.
     signal folderOpenRequested(string path, string intent)
     signal toolsDetectionRequested()
+    // "Exibir > Areas da IDE..." e a paleta: o host abre o painel de areas.
+    signal areasPanelRequested()
     // `scope`: "workspace" (o layout do projeto aberto) ou "global" (o
     // padrao de quem ainda nao tem layout, e as preferencias do usuario).
     signal layoutSaveRequested(string scope, var values)
@@ -137,6 +139,8 @@ Item {
     function unpinArea(id) { setRail(codec.withMembership(railState, id, false, true, false)); }
     function hideArea(id) { setRail(codec.withMembership(railState, id, false, false, true)); }
     function restoreRail() { setRail(codec.emptyRail()); }
+    // Tira a area de todas as listas: volta ao padrao de fabrica dela.
+    function resetArea(id) { setRail(codec.withMembership(railState, id, false, false, false)); }
 
     function setRail(state) {
         railState = state;
@@ -217,6 +221,10 @@ Item {
     // pedia a aba (paleta, menu Exibir, cabecalho, trilho) continua
     // chamando showTab/toggleBottomTab/tabActive — este e' o ponto de corte.
     function showTab(tab) {
+        if (tab === "areas") {
+            areasPanelRequested();
+            return;
+        }
         if (tab === "git") {
             showGitWindow();
             return;

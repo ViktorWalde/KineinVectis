@@ -14,7 +14,7 @@ Item {
     property int failures: 0
     property var desconhecidos: []
     property var chamadas: []
-    property string abaPedida: ""
+    property string requestedTab: ""
     property string simbolos: ""
     property int folderOpens: 0
     property int projectCreations: 0
@@ -49,7 +49,7 @@ Item {
             if (intent === "open") root.folderOpens++;
             if (intent === "createProject") root.projectCreations++;
         }
-        onShowTabRequested: function(tab) { root.abaPedida = tab; }
+        onShowTabRequested: function(tab) { root.requestedTab = tab; }
         onSymbolsRequested: function(q) { root.simbolos = q; }
     }
 
@@ -68,11 +68,13 @@ Item {
 
         check(d.execute("workspace.open") === true && folderOpens === 1, "workspace.open");
         // Estava no catalogo da paleta sem dono (F0, 2026-10-01).
+        // O painel de areas do trilho (0.3.7): pela paleta tambem.
+        check(d.execute("view.areas") === true && requestedTab === "areas", "view.areas");
         check(d.execute("workspace.createProject") === true && projectCreations === 1
               && folderOpens === 1, "workspace.createProject");
 
         // Dois ids no mesmo braco continuam valendo os dois.
-        check(d.execute("tools.detect") === true && abaPedida === "tools", "tools.detect");
+        check(d.execute("tools.detect") === true && requestedTab === "tools", "tools.detect");
         check(d.execute("tools.status") === true, "tools.status compartilha o braco");
 
         // `id=arg`: so' a medicao headless usa, e a paleta nunca manda `=`.

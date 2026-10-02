@@ -54,51 +54,30 @@ QtObject {
         return entries.filter(function(entry) { return ids.indexOf(entry.id) < 0; });
     }
 
-    // Por que uma area esta' fora do trilho, dito no "Mais".
-    function absenceReason(entry, state) {
+    // O ESTADO de uma area em palavras, com o tom em que aparece no painel de
+    // areas (retorno do autor, 2026-10-02: "tudo numa cor so', em lista, fica
+    // confuso"). Tom: "accent" = fixada pelo usuario; "normal" = no trilho;
+    // "muted" = fora dele.
+    function statusOf(entry, state, onRail) {
         if (contains(state.hidden, entry.id)) {
-            return qsTr("oculta");
+            return { text: qsTr("Oculta neste projeto"), tone: "muted" };
         }
-        if (entry.defaultPolicy === "contextual") {
-            return qsTr("aparece quando houver uso");
+        if (contains(state.pinned, entry.id)) {
+            return { text: qsTr("Fixada por você"), tone: "accent" };
         }
-        return qsTr("desafixada");
+        if (entry.defaultPolicy === "pinned") {
+            return contains(state.unpinned, entry.id)
+                ? { text: qsTr("Desafixada"), tone: "muted" }
+                : { text: qsTr("Sempre no trilho"), tone: "normal" };
+        }
+        return onRail ? { text: qsTr("No trilho porque está em uso"), tone: "normal" }
+                      : { text: qsTr("Aparece quando houver uso"), tone: "muted" };
     }
 
-    // O menu do botao direito num icone do trilho.
-    function contextItems(entry, state) {
-        const pinnedNow = contains(state.pinned, entry.id)
-                          || (entry.defaultPolicy === "pinned" && !contains(state.unpinned, entry.id));
-        return [
-            { label: qsTr("Abrir"), action: entry.commandId, enabled: entry.available },
-            pinnedNow
-                ? { label: qsTr("Desafixar do trilho"), action: "rail.unpin:" + entry.id, enabled: true }
-                : { label: qsTr("Fixar no trilho"), action: "rail.pin:" + entry.id, enabled: true },
-            { label: qsTr("Ocultar do trilho"), action: "rail.hide:" + entry.id, enabled: true },
-            { label: qsTr("Restaurar trilho padrão"), action: "rail.restore", enabled: true }
-        ];
-    }
-
-    // O "Mais": cada area fora do trilho, com o motivo e o atalho, e fixar.
-    function overflowItems(entries, state, visible) {
-        const items = [];
-        const outside = overflowEntries(entries, visible);
-        for (let i = 0; i < outside.length; i++) {
-            const entry = outside[i];
-            const shortcut = entry.shortcut !== undefined && entry.shortcut !== ""
-                             ? "  ·  " + entry.shortcut : "";
-            items.push({
-                label: entry.title + "  —  " + absenceReason(entry, state) + shortcut,
-                action: entry.commandId,
-                enabled: entry.available
-            });
-            items.push({
-                label: "    " + qsTr("Fixar %1 no trilho").arg(entry.title),
-                action: "rail.pin:" + entry.id,
-                enabled: true
-            });
-        }
-        items.push({ label: qsTr("Restaurar trilho padrão"), action: "rail.restore", enabled: true });
-        return items;
+    // Fixa agora? (explicita ou pelo padrao, sem ter sido desafixada.)
+    function isPinned(entry, state) {
+        return contains(state.pinned, entry.id)
+            || (entry.defaultPolicy === "pinned" && !contains(state.unpinned, entry.id)
+                && !contains(state.hidden, entry.id));
     }
 }

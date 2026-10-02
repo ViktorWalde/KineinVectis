@@ -57,15 +57,27 @@ pub(super) fn core_command_descriptors() -> Vec<CommandDescriptor> {
 }
 
 pub(super) fn settings_command_descriptors() -> Vec<CommandDescriptor> {
-    vec![CommandDescriptor {
-        id: "settings.get".to_owned(),
-        title: "Configuracoes".to_owned(),
-        category: "IDE".to_owned(),
-        description: "Abre as configuracoes (fonte do editor, format-on-save, auto-close)"
-            .to_owned(),
-        default_shortcut: Some("Ctrl+Alt+S".to_owned()),
-        requires_workspace: false,
-    }]
+    vec![
+        CommandDescriptor {
+            id: "settings.get".to_owned(),
+            title: "Configuracoes".to_owned(),
+            category: "IDE".to_owned(),
+            description: "Abre as configuracoes (fonte do editor, format-on-save, auto-close)"
+                .to_owned(),
+            default_shortcut: Some("Ctrl+Alt+S".to_owned()),
+            requires_workspace: false,
+        },
+        // O painel de areas do trilho (0.3.7): fixar, ocultar e abrir as areas
+        // pelo teclado e pela paleta, nao so' pelo mouse (roadmap 53 R4).
+        CommandDescriptor {
+            id: "view.areas".to_owned(),
+            title: "Areas da IDE...".to_owned(),
+            category: "IDE".to_owned(),
+            description: "Mostra as areas do trilho: fixar, ocultar e abrir".to_owned(),
+            default_shortcut: None,
+            requires_workspace: false,
+        },
+    ]
 }
 
 pub(super) fn project_command_descriptors() -> Vec<CommandDescriptor> {

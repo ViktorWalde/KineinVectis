@@ -2454,7 +2454,6 @@ scripts/qml-harness/tst_command_dispatcher.qml	chamadas	7
 scripts/qml-harness/tst_command_dispatcher.qml	desconhecidos	7
 scripts/qml-harness/tst_command_dispatcher.qml	falso	4
 scripts/qml-harness/tst_command_dispatcher.qml	mensagem	2
-scripts/qml-harness/tst_command_dispatcher.qml	pedida	3
 scripts/qml-harness/tst_command_dispatcher.qml	simbolos	4
 scripts/qml-harness/tst_completion.qml	falhas	17
 scripts/qml-harness/tst_completion.qml	itens	6

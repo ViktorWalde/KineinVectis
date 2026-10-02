@@ -126,6 +126,7 @@ Item {
                 { label: qsTr("Explorador do projeto"), action: "view.project", enabled: workspaceOpen },
                 { label: qsTr("Terminal"), action: "view.terminal", enabled: workspaceOpen },
                 { label: qsTr("Ferramentas"), action: "view.tools", enabled: true },
+                { label: qsTr("Áreas da IDE..."), action: "view.areas", enabled: true },
                 { label: qsTr("Restaurar trilho padrão"), action: "rail.restore", enabled: true }
             ],
             navigate: [

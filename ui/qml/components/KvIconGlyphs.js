@@ -11,6 +11,29 @@
 
 function draw(name, context, line, node) {
     switch (name) {
+    case "pin":
+        // alfinete: cabeca, corpo e ponta (fixar uma area no trilho)
+        line(context, 9, 4, 15, 4);
+        line(context, 10, 4, 10, 11);
+        line(context, 14, 4, 14, 11);
+        line(context, 7, 11, 17, 11);
+        line(context, 12, 11, 12, 20);
+        return true;
+    case "eye":
+        // olho aberto: a area aparece
+        context.moveTo(3, 12);
+        context.quadraticCurveTo(12, 3, 21, 12);
+        context.quadraticCurveTo(12, 21, 3, 12);
+        context.moveTo(14.5, 12);
+        context.arc(12, 12, 2.5, 0, Math.PI * 2, false);
+        return true;
+    case "eye-off":
+        // olho riscado: a area esta' oculta
+        context.moveTo(3, 12);
+        context.quadraticCurveTo(12, 3, 21, 12);
+        context.quadraticCurveTo(12, 21, 3, 12);
+        line(context, 4, 20, 20, 4);
+        return true;
     case "more":
         // tres pontos: o "Mais" do trilho (as areas fora dele)
         context.moveTo(7, 12);

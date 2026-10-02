@@ -146,13 +146,15 @@ Item {
             onExpandedToggled: root.shellController.toggleRail()
             entries: railEntries.visibleEntries
             onActivated: id => railEntries.activate(id)
+            // O "⋯ Mais" e o botao direito abrem o PAINEL DE AREAS; o botao
+            // direito destaca a area clicada.
             onContextMenuRequested: function(id, menuX, menuY) {
-                const pos = mapToItem(root, menuX, menuY);
-                root.shellMenuRequested(pos.x, pos.y, railEntries.contextItems(id));
+                const pos = mapToItem(root, menuX + Theme.spacingMedium, menuY);
+                railAreas.openAt(pos.x, pos.y, id);
             }
             onMoreRequested: function(menuX, menuY) {
-                const pos = mapToItem(root, menuX, menuY);
-                root.shellMenuRequested(pos.x, pos.y, railEntries.overflowItems());
+                const pos = mapToItem(root, menuX + Theme.spacingSmall, menuY);
+                railAreas.openAt(pos.x, pos.y, "");
             }
         }
 
@@ -336,6 +338,23 @@ Item {
             }
         }
 
+    }
+
+    RailAreasPopup {
+        id: railAreas
+
+        anchors.fill: parent
+        z: 200
+        toolWindows: railEntries
+        shellController: root.shellController
+    }
+
+    Connections {
+        target: root.shellController
+
+        function onAreasPanelRequested() {
+            railAreas.openAt(sideBar.width + 2 * Theme.panelGap, Theme.spacingSmall, "");
+        }
     }
 
     // Alcas de redimensionamento em overlay sobre os vaos do layout

@@ -716,6 +716,13 @@ A3.3-1, antes e depois. Hipóteses a medir antes de mexer: o AppImage força
 `QT_QUICK_BACKEND=software`, que provavelmente impede os 120 Hz; e há carga
 síncrona no caminho do quadro (já anotada acima).
 
+**Retorno do autor depois de usar o trilho e a criação (2026-10-02):** o menu
+de fixar/desafixar/ocultar e o "Mais" estão confusos — tudo numa cor só, em
+lista, um abaixo do outro; precisam ser de fácil entendimento. A tela inicial
+está boa, mas dá para melhorar. O diálogo de **abrir** e de **criar** projeto
+pode ficar mais intuitivo, com HUD/UI melhores. Vira trabalho da 0.3.7 (menus
+do trilho) e da 0.3.8 (diálogos de projeto), sempre provado na tela real.
+
 A task dedicada parte de capturas reais (hook `KINEIN_SCREENSHOT`) e propõe
 com mockups lado a lado; problemas de UX e de HUD/UI entram medidos.
 

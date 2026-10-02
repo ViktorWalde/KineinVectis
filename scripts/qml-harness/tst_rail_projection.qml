@@ -73,18 +73,22 @@ Item {
         }
         failures += check(projection.visibleEntries(many, none, {}).length === 7, "teto de 7");
 
-        // O "Mais" lista o que esta' fora, com motivo, atalho e fixar.
-        const visible = projection.visibleEntries(entries, none, {});
-        const more = projection.overflowItems(entries, none, visible);
-        failures += check(more[0].action === "datasource.list"
-                          && more[0].label.indexOf("Ctrl+Alt+J") >= 0, "mais: abrir com atalho");
-        failures += check(more[1].action === "rail.pin:database", "mais: fixar");
-        failures += check(more[more.length - 1].action === "rail.restore", "mais: restaurar");
-        // O menu de contexto troca Fixar por Desafixar conforme o estado.
-        failures += check(projection.contextItems(entries[0], none)[1].action === "rail.unpin:explorer",
-                          "contexto: desafixar o fixo");
-        failures += check(projection.contextItems(entries[1], none)[1].action === "rail.pin:database",
-                          "contexto: fixar o contextual");
+        // O estado em palavras e o tom (painel de areas, retorno do autor de
+        // 2026-10-02): fixada pelo usuario em destaque; fora do trilho, apagado.
+        const pinnedState = { pinned: ["database"], unpinned: [], hidden: ["remote"] };
+        failures += check(projection.statusOf(entries[1], pinnedState, true).tone === "accent",
+                          "fixada em destaque");
+        failures += check(projection.statusOf(entries[2], pinnedState, false).tone === "muted"
+                          && projection.statusOf(entries[2], pinnedState, false).text.indexOf("Oculta") === 0,
+                          "oculta apagada");
+        failures += check(projection.statusOf(entries[1], none, false).text === "Aparece quando houver uso",
+                          "contextual fora");
+        failures += check(projection.statusOf(entries[0], none, true).text === "Sempre no trilho",
+                          "fixa de fabrica");
+        failures += check(projection.isPinned(entries[0], none) && !projection.isPinned(entries[1], none)
+                          && projection.isPinned(entries[1], pinnedState), "isPinned");
+        failures += check(ids(projection.overflowEntries(entries, projection.visibleEntries(entries, none, {})))
+                          === "database,remote", "fora do trilho");
 
         // Fatos: desconhecido mantem o ultimo conhecido.
         failures += check(facts.knownFacts["remote.any"] === undefined, "sem fato ainda");

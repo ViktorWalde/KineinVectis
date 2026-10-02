@@ -52,6 +52,10 @@ Item {
         case "workspace.createProject":
             folderRequested("createProject");
             return true;
+        // O painel de areas do trilho: o shell trata "areas" como trata "git".
+        case "view.areas":
+            showTabRequested("areas");
+            return true;
         case "workspace.close":
             coreClient.closeWorkspace();
             return true;

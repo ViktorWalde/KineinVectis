@@ -65,15 +65,6 @@ Rectangle {
             }
             return;
         }
-        // O trilho por areas (0.3.7 F1): fixar, desafixar, ocultar e
-        // restaurar mudam o estado do usuario no ShellController.
-        const railAction = /^rail\.(pin|unpin|hide):(.+)$/.exec(action);
-        if (railAction !== null) {
-            if (railAction[1] === "pin") root.shellController.pinArea(railAction[2]);
-            else if (railAction[1] === "unpin") root.shellController.unpinArea(railAction[2]);
-            else root.shellController.hideArea(railAction[2]);
-            return;
-        }
         const bottomAction = /^bottom\.(pin|unpin):(.+)$/.exec(action);
         if (bottomAction !== null) {
             root.shellController.setBottomPinned(bottomAction[2], bottomAction[1] === "pin");
@@ -81,6 +72,7 @@ Rectangle {
         }
         switch (action) {
         case "rail.restore": root.shellController.restoreRail(); break;
+        case "view.areas": root.shellController.showTab("areas"); break;
         case "workspace.open": root.shellController.requestOpenFolder(); break;
         case "workspace.createProject": root.shellController.requestFolder("createProject"); break;
         case "workspace.recent.clear": root.recentWorkspacesController.clearAll(); break;
