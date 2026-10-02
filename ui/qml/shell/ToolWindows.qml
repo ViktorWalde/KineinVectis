@@ -117,7 +117,7 @@ Item {
             "id": "explorer", "label": qsTr("Projeto"), "icon": "project",
             "tooltip": qsTr("Projeto"), "area": "left", "order": 10,
             "title": qsTr("Projeto"), "kind": "dock-left", "defaultPolicy": "pinned",
-            "factKey": "", "commandId": "view.explorer", "shortcut": "",
+            "factKey": "", "commandId": "view.project", "shortcut": "",
             "available": root.workspaceOpen,
             "active": root.shellController !== null
                       && root.shellController.effectiveShowExplorer && root.workspaceOpen

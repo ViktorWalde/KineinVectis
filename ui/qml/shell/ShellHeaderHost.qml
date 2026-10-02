@@ -81,7 +81,6 @@ Rectangle {
         }
         switch (action) {
         case "rail.restore": root.shellController.restoreRail(); break;
-        case "view.explorer": root.shellController.toggleExplorer(); break;
         case "workspace.open": root.shellController.requestOpenFolder(); break;
         case "workspace.createProject": root.shellController.requestFolder("createProject"); break;
         case "workspace.recent.clear": root.recentWorkspacesController.clearAll(); break;

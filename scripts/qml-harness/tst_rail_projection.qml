@@ -26,7 +26,7 @@ Item {
 
     readonly property var entries: [
         { id: "explorer", title: "Projeto", order: 10, defaultPolicy: "pinned", factKey: "",
-          commandId: "view.explorer", shortcut: "", available: true },
+          commandId: "view.project", shortcut: "", available: true },
         { id: "database", title: "Banco", order: 40, defaultPolicy: "contextual",
           factKey: "datasource.any", commandId: "datasource.list", shortcut: "Ctrl+Alt+J",
           available: true },
