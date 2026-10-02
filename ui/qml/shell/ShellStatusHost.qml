@@ -41,6 +41,10 @@ WorkspaceStatusBar {
     remoteProbed: remoteController !== null && remoteController.probedAt > 0
     remoteProbeOk: remoteController !== null && remoteController.probeOk
     remoteProbedAt: remoteController !== null ? remoteController.probedAt : 0
+    leftOrder: shellController.savedOrder("statusLeft")
+    rightOrder: shellController.savedOrder("statusRight")
+    onItemMoved: (strip, key, dropIndex, visibleKeys) => shellController.moveInBar(
+                     strip, visibleKeys, key, dropIndex)
     onRemotePanelRequested: remoteController.open()
     onLogsRequested: shellController.toggleBottomTab("logs")
     onJobsRequested: shellController.showTab("jobs")

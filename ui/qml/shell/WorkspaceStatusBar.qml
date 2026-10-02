@@ -52,9 +52,21 @@ Rectangle {
     signal logsRequested()
     signal jobsRequested()
     signal cancelJobRequested()
+    // Arrastar para reordenar (0.3.9): cada faixa so' dentro dela mesma.
+    property var leftOrder: []
+    property var rightOrder: []
+    signal itemMoved(string strip, string key, int dropIndex, var visibleKeys)
+    readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
 
     height: 28
     color: Theme.background1
+
+    StatusBarParts {
+        id: statusParts
+
+        bar: bar
+        leftStrip: leftStrip
+    }
 
     Row {
         id: leftStrip
@@ -67,61 +79,13 @@ Rectangle {
         spacing: Theme.spacingMedium
         clip: true
 
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.workspaceRoot !== ""
-            width: Math.min(implicitWidth, Math.max(120, leftStrip.width * 0.32))
-            elide: Text.ElideMiddle
-            text: bar.workspaceRoot
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontSizeStatus
-            font.family: Theme.monoFont
-        }
+        Repeater {
+            model: bar.codec.ordered(["path", "remote", "activity"], bar.leftOrder)
 
-        StatusBarRemoteWidget {
-            anchors.verticalCenter: parent.verticalCenter
-            isMirror: bar.remoteIsMirror
-            targetName: bar.remoteTarget
-            syncing: bar.remoteSyncing
-            syncDirection: bar.remoteSyncDirection
-            syncFailed: bar.remoteSyncFailed
-            syncMessage: bar.remoteSyncMessage
-            deploying: bar.remoteDeploying
-            probed: bar.remoteProbed
-            probeOk: bar.remoteProbeOk
-            probedAt: bar.remoteProbedAt
-            onPanelRequested: bar.remotePanelRequested()
-        }
-
-        // O job em curso ocupa o centro; sem job, os resumos do projeto.
-        StatusBarJobWidget {
-            anchors.verticalCenter: parent.verticalCenter
-            title: bar.jobTitle
-            progress: bar.jobProgress
-            message: bar.jobMessage
-            canCancel: bar.jobCanCancel
-            runningCount: bar.jobCount
-            onCancelRequested: bar.cancelJobRequested()
-            onJobsRequested: bar.jobsRequested()
-        }
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.running && bar.jobTitle === ""
-            text: qsTr("executando…")
-            color: Theme.accent
-            font.pixelSize: Theme.fontSizeStatus
-        }
-
-        StatusBarProjectSummaries {
-            anchors.verticalCenter: parent.verticalCenter
-            // O que sobra da faixa depois dos itens antes dele (que nao
-            // dependem desta largura: sem laco de binding).
-            availableWidth: leftStrip.width - x
-            visible: bar.jobTitle === ""
-            indexSummary: bar.indexSummary
-            contextSummary: bar.contextSummary
-            contextDetail: bar.contextDetail
+            delegate: StatusBarSlot {
+                parts: statusParts.byKey
+                reorder: leftReorder
+            }
         }
     }
 
@@ -133,87 +97,27 @@ Rectangle {
         anchors.rightMargin: Theme.spacingMedium
         spacing: Theme.spacingMedium
 
-        // A posicao do cursor, a esquerda do LSP (a referencia poe Ln:Col ali).
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.cursorSummary !== ""
-            text: bar.cursorSummary
-            color: Theme.textMuted
-            font.family: Theme.monoFont
-            font.pixelSize: Theme.fontSizeStatus
-        }
+        Repeater {
+            model: bar.codec.ordered(["cursor", "lsp", "ide", "core"], bar.rightOrder)
 
-        // Os servidores de linguagem: ● todos rodando, … subindo, ✗ caiu.
-        Text {
-            id: lspText
-
-            anchors.verticalCenter: parent.verticalCenter
-            visible: bar.lspSummary !== ""
-            text: bar.lspSummary
-            color: bar.lspFailed ? Theme.errorSoft : Theme.textMuted
-            font.pixelSize: Theme.fontSizeStatus
-
-            MouseArea {
-                id: lspArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.NoButton
-                onContainsMouseChanged: {
-                    if (containsMouse && bar.lspDetail !== "") {
-                        TooltipController.showFor(lspText, bar.lspDetail, "top");
-                    } else {
-                        TooltipController.hideFor(lspText);
-                    }
-                }
+            delegate: StatusBarSlot {
+                parts: statusParts.byKey
+                reorder: rightReorder
             }
         }
+    }
 
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: logsToggleText.width + 2 * Theme.spacingSmall
-            height: 20
-            radius: Theme.radius
-            color: bar.logsActive ? Theme.surfaceSelected
-                                  : (logsToggleArea.containsMouse
-                                     ? Theme.surface2 : "transparent")
-            border.color: Theme.borderSoft
-            border.width: 1
+    ReorderController {
+        id: leftReorder
 
-            Text {
-                id: logsToggleText
+        container: leftStrip
+        onMoved: (key, dropIndex, visibleKeys) => bar.itemMoved("statusLeft", key, dropIndex, visibleKeys)
+    }
 
-                anchors.centerIn: parent
-                text: qsTr("IDE")
-                color: bar.logsActive ? Theme.accent : Theme.textSecondary
-                font.pixelSize: Theme.fontSizeStatus
-            }
+    ReorderController {
+        id: rightReorder
 
-            MouseArea {
-                id: logsToggleArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: bar.logsRequested()
-            }
-        }
-
-        Rectangle {
-            width: 7
-            height: 7
-            radius: 4
-            anchors.verticalCenter: parent.verticalCenter
-            color: bar.coreConnected ? Theme.successSoft : Theme.errorSoft
-        }
-
-        Text {
-            anchors.verticalCenter: parent.verticalCenter
-            text: bar.coreConnected
-                  ? qsTr("core · IPC %1").arg(bar.coreProtocolVersion)
-                  : qsTr("core %1").arg(bar.coreStatus)
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontSizeStatus
-        }
+        container: rightStrip
+        onMoved: (key, dropIndex, visibleKeys) => bar.itemMoved("statusRight", key, dropIndex, visibleKeys)
     }
 }

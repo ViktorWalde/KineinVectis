@@ -77,3 +77,5 @@ redacted timeouts
 codec
 # 2026-10-02: termos tecnicos (as_posix do pathlib; scrim = fundo escurecido de modal)
 posix scrim
+# 2026-10-02: API do Qt (DragHandler.centroid: o ponto do gesto)
+centroid

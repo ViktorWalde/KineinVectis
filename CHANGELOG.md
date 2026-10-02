@@ -46,6 +46,11 @@ no checkout, não em nenhum pacote publicado.
   pede; digite "/" para escrever o caminho; setas, Enter e Backspace navegam.
   Trocar o local de um projeto novo, ou criar uma pasta para ele, não perde
   mais a linguagem e o nome escolhidos.
+- **Arraste para organizar.** Os ícones do trilho, as abas do painel de
+  baixo, os widgets do cabeçalho e os itens da barra de status se arrastam
+  para a ordem que você quiser — cada um dentro da própria barra. Durante o
+  arrasto o item fica translúcido e uma linha mostra onde ele vai cair; a
+  ordem fica salva por projeto. Clique continua sendo clique.
 - **A toolchain no cabeçalho, sem repetição.** O que o build vai usar
   ("Clang++ · Ninja", "Cargo") fica ao lado do projeto e do Git; um clique
   abre o seletor, agora organizado por papel — só os do seu projeto à vista,

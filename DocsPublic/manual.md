@@ -100,6 +100,13 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   sem nunca deixar o editor com menos de 480 px, e voltam ao tamanho que você
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
+- **Arraste para organizar** (desde 2026-10-02): os ícones do trilho, as
+  abas do painel de baixo, os widgets da barra principal e os itens da barra
+  de status mudam de lugar arrastando — cada um só dentro da própria barra
+  (na barra de status, dentro da metade dele). Durante o arrasto o item fica
+  translúcido e uma linha laranja mostra onde ele vai cair; a ordem fica
+  salva por projeto, junto com o resto do layout. Um clique sem arrastar
+  continua sendo clique.
 - **Barra principal** (desde 2026-09-18, Etapa 2 F1): os widgets, como
   nas IDEs JetBrains. *Projeto* — o nome do projeto, o que ele é (Cargo +
   CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —

@@ -54,6 +54,27 @@ Item {
         tabOrder: ["problems", "terminal"]
     }
 
+    WorkspaceStatusBar {
+        id: status
+
+        y: 100
+        width: 800
+        coreConnected: true
+        cursorSummary: "1:1"
+        lspSummary: "LSP ● 2"
+        rightOrder: ["core", "ide"]
+    }
+
+    // As chaves visiveis de uma faixa da barra de status, na ordem desenhada.
+    function stripKeys(strip) {
+        const keys = [];
+        for (let i = 0; i < strip.children.length; i++) {
+            const child = strip.children[i];
+            if (child.visible && child.reorderKey !== undefined) keys.push(child.reorderKey);
+        }
+        return keys.join(",");
+    }
+
     function check(condition, label) {
         if (!condition) console.error("FALHOU: " + label);
         return condition ? 0 : 1;
@@ -96,6 +117,10 @@ Item {
         failures += check(tabs.orderedTabs[0].key === "problems" && tabs.orderedTabs[1].key === "terminal",
                           "abas na ordem salva");
         failures += check(tabs.orderedTabs.length === tabs.allTabs.length, "ordem parcial nao some com abas");
+
+        // A barra de status: a faixa da direita na ordem salva, o resto depois.
+        const rightStrip = status.children.find(child => child.anchors.right === status.right);
+        failures += check(stripKeys(rightStrip) === "core,ide,cursor,lsp", "status: " + stripKeys(rightStrip));
 
         if (failures !== 0) console.error("FALHAS " + failures);
         Qt.exit(failures === 0 ? 0 : 1);
