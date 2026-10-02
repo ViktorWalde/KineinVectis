@@ -27,6 +27,10 @@ checkout, não em nenhum pacote publicado.
   um perfil de banco salvo, um alvo remoto, podman ou docker instalado. O que
   fica de fora está no novo **⋯ Mais**, com o motivo e o atalho; o botão
   direito num ícone fixa, desafixa ou oculta a área, por projeto.
+- **Painel de baixo contextual.** Terminal e Problemas ficam sempre; Build,
+  Testes, Jobs, Debug e Busca aparecem quando há atividade, e a aba que você
+  abre nunca some. O botão direito numa aba a fixa. Nada se perde: o menu
+  Exibir, a paleta e os atalhos continuam abrindo qualquer aba.
 - **Barra de status sem texto cortado ao meio.** Numa janela estreita, os
   resumos do projeto saem inteiros por ordem de importância (o Python, depois
   o contexto do compilador, por último o índice), em vez de um deles aparecer

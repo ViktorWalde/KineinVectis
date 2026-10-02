@@ -46,6 +46,14 @@ Rectangle {
     property var logLinesModel
     property var toolsList
 
+    // As abas de baixo que o usuario fixou (ShellController.bottomPinned).
+    property var pinnedTabs: []
+
+    signal tabMenuRequested(string key, real menuX, real menuY)
+
+    function tabMenuItems(key) {
+        return bottomTabs.tabMenuItems(key);
+    }
     signal tabRequested(string tab)
     signal hideRequested()
     signal refreshToolsRequested()
@@ -104,6 +112,20 @@ Rectangle {
         testsOk: root.testsOk
         jobsRunning: root.jobsRunning
         processRunning: root.running
+        pinnedTabs: root.pinnedTabs
+        // A atividade que torna cada aba relevante (53 §5.5), lida de quem
+        // ja' sabe: saida de build, testes, jobs, sessao de debug, busca.
+        facts: ({
+            build: root.buildOutputModel ? root.buildOutputModel.count > 0 : false,
+            tests: root.testsBadge !== "" || root.testing,
+            jobs: root.jobsModel ? root.jobsModel.count > 0 : false,
+            debug: root.debugController ? root.debugController.sessionActive === true : false,
+            search: (root.searchModel ? root.searchModel.count > 0 : false) || root.searching
+        })
+        onTabMenuRequested: function(key, menuX, menuY) {
+            const pos = bottomTabs.mapToItem(root, menuX, menuY);
+            root.tabMenuRequested(key, pos.x, pos.y);
+        }
         onTabRequested: function(tab) {
             root.tabRequested(tab);
         }

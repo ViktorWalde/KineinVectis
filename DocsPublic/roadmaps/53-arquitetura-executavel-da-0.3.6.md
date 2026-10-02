@@ -446,6 +446,11 @@ falha    fato indisponível (core ainda carregando) → entrada contextual não
 
 ### 5.5 F2 — painéis e painel inferior contextuais
 
+**Primeira fatia feita em 2026-10-02 (40.7 §7.161):** abas contextuais com
+fatos, a ativa sempre visível, fixar/desafixar pelo botão direito e
+`layout.bottom.pinned`. Ficam: a migração da aba Ferramentas para Ambiente
+(antes de removê-la) e os presets.
+
 ```text
 dono     BottomPanelHost/BottomTabBar (abas) · ShellController (estado) ·
          settings (ordem/pin)
@@ -635,7 +640,9 @@ AppImage e as telas nas três larguras.
 
 1. Busca no trilho: decidir pela medida da §5.4 (proposta: fora, se o atalho e
    o header cobrirem com menos gestos).
-2. Abas sempre visíveis: Terminal e Problemas (proposta) — confirmar.
+2. Abas sempre visíveis: Terminal e Problemas (proposta) — confirmar. **Aplicada
+   como padrão na F2 (2026-10-02), como dado de uma linha
+   (`BottomTabBar.alwaysVisible`), até o autor confirmar.**
 3. Overlays de ambiente continuam overlays na 0.3.6 (proposta) e viram área
    de dock ou superfície na 0.4/0.5, por fluxo real?
 4. `--wait` como padrão em algum caso (ex.: `git config core.editor`)?

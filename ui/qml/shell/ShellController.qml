@@ -51,9 +51,12 @@ Item {
     // O slot a esquerda do trilho e' UM (E3-3, roadmaps/44 §4.1): o
     // explorer OU a janela do Git, como a referencia alterna Project/Commit.
     property string leftWindow: "explorer"
+    // As janelas que o slot da esquerda conhece (o codec valida contra esta).
+    readonly property var leftWindows: ["explorer", "git"]
     // O trilho por areas (0.3.7 F1, 53 §4.2): o que o USUARIO decidiu. O que
     // o core sabe (fatos) nao mora aqui. Vai no `layout`, por workspace.
     property var railState: ({ pinned: [], unpinned: [], hidden: [] })
+    property var bottomPinned: []
     readonly property bool effectiveShowExplorer: showExplorer && leftWindow === "explorer"
     readonly property bool gitWindowVisible: showExplorer && leftWindow === "git"
 
@@ -115,84 +118,34 @@ Item {
         return Math.max(minimum, Math.min(preferred, maximum));
     }
 
-    // O retrato gravado (schema 1 do `layout`, 53 §4.4): so' o que tem dono
-    // hoje. Presets, modo Foco e fixar no trilho entram com as fatias que os
-    // usam, numa versao nova do schema.
+    // O retrato do layout e as listas do usuario: funcoes puras do codec.
+    readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
+
     function layoutSnapshot() {
-        return {
-            schemaVersion: 1,
-            leftWindow: leftWindow,
-            leftVisible: showExplorer,
-            sizes: {
-                explorer: Math.round(explorerPreferredWidth),
-                outline: Math.round(outlineWidth),
-                bottom: Math.round(bottomPreferredHeight)
-            },
-            outlineCollapsed: outlineCollapsed,
-            bottom: { visible: showBottomPanel, tab: bottomTab },
-            rail: railState
-        };
+        return codec.snapshot(root);
     }
 
-    function numberOr(value, fallback) {
-        return typeof value === "number" && isFinite(value) && value > 0 ? value : fallback;
-    }
-
-    // Aplica um layout schema 1 (o core so' entrega os que entende). Cada
-    // campo ausente ou estranho fica no que ja' estava.
+    // Aplica um layout schema 1 (o core so' entrega os que entende).
     function applyLayout(layout) {
-        const sizes = layout.sizes !== undefined && layout.sizes !== null ? layout.sizes : {};
-        explorerPreferredWidth = clamp(numberOr(sizes.explorer, explorerPreferredWidth), 160, 1200);
-        outlineWidth = clamp(numberOr(sizes.outline, outlineWidth), 160, 420);
-        bottomPreferredHeight = clamp(numberOr(sizes.bottom, bottomPreferredHeight), 120, 1200);
-        if (layout.leftWindow === "explorer" || layout.leftWindow === "git") {
-            leftWindow = layout.leftWindow;
+        const values = codec.decode(layout, root);
+        for (const key in values) {
+            root[key] = values[key];
         }
-        if (typeof layout.leftVisible === "boolean") {
-            showExplorer = layout.leftVisible;
-        }
-        if (typeof layout.outlineCollapsed === "boolean") {
-            outlineCollapsed = layout.outlineCollapsed;
-        }
-        const bottom = layout.bottom !== undefined && layout.bottom !== null ? layout.bottom : {};
-        if (typeof bottom.tab === "string" && bottom.tab !== "" && bottom.tab !== "git") {
-            bottomTab = bottom.tab;
-        }
-        if (typeof bottom.visible === "boolean") {
-            showBottomPanel = bottom.visible;
-        }
-        // `rail` e' opcional no schema 1 (campo novo, aditivo): ausente =
-        // trilho padrao.
-        const rail = layout.rail !== undefined && layout.rail !== null ? layout.rail : {};
-        railState = {
-            pinned: Array.isArray(rail.pinned) ? rail.pinned : [],
-            unpinned: Array.isArray(rail.unpinned) ? rail.unpinned : [],
-            hidden: Array.isArray(rail.hidden) ? rail.hidden : []
-        };
     }
 
-    // Fixar tira de "desfixada" e de "oculta"; ocultar tira de "fixada";
-    // desfixar so' marca. Cada lista sem repeticao.
-    function setRailMembership(id, pinned, unpinned, hidden) {
-        const without = function(list) { return list.filter(function(x) { return x !== id; }); };
-        const next = {
-            pinned: without(railState.pinned),
-            unpinned: without(railState.unpinned),
-            hidden: without(railState.hidden)
-        };
-        if (pinned) next.pinned.push(id);
-        if (unpinned) next.unpinned.push(id);
-        if (hidden) next.hidden.push(id);
-        railState = next;
+    function pinArea(id) { setRail(codec.withMembership(railState, id, true, false, false)); }
+    function unpinArea(id) { setRail(codec.withMembership(railState, id, false, true, false)); }
+    function hideArea(id) { setRail(codec.withMembership(railState, id, false, false, true)); }
+    function restoreRail() { setRail(codec.emptyRail()); }
+
+    function setRail(state) {
+        railState = state;
         persistLayoutSoon();
     }
 
-    function pinArea(id) { setRailMembership(id, true, false, false); }
-    function unpinArea(id) { setRailMembership(id, false, true, false); }
-    function hideArea(id) { setRailMembership(id, false, false, true); }
-
-    function restoreRail() {
-        railState = { pinned: [], unpinned: [], hidden: [] };
+    // As abas de baixo que o usuario fixou (0.3.7 F2): aparecem sempre.
+    function setBottomPinned(tab, pinned) {
+        bottomPinned = codec.withItem(bottomPinned, tab, pinned);
         persistLayoutSoon();
     }
 

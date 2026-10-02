@@ -50,8 +50,9 @@ Item {
     signal problemNextStepRequested(string kind, string target, string file, int line, int column)
     signal createProjectRequested(string templateId)
     signal settingsRequested()
-    // O menu do trilho (0.3.7 F1): itens prontos, coordenadas deste host.
-    signal railMenuRequested(real menuX, real menuY, var items)
+    // Os menus do trilho e das abas de baixo (0.3.7): itens prontos,
+    // coordenadas deste host; o Main abre o menu compartilhado.
+    signal shellMenuRequested(real menuX, real menuY, var items)
 
     onWidthChanged: {
         if (root.shellController) root.shellController.updateViewport(width, height);
@@ -147,11 +148,11 @@ Item {
             onActivated: id => railEntries.activate(id)
             onContextMenuRequested: function(id, menuX, menuY) {
                 const pos = mapToItem(root, menuX, menuY);
-                root.railMenuRequested(pos.x, pos.y, railEntries.contextItems(id));
+                root.shellMenuRequested(pos.x, pos.y, railEntries.contextItems(id));
             }
             onMoreRequested: function(menuX, menuY) {
                 const pos = mapToItem(root, menuX, menuY);
-                root.railMenuRequested(pos.x, pos.y, railEntries.overflowItems());
+                root.shellMenuRequested(pos.x, pos.y, railEntries.overflowItems());
             }
         }
 
@@ -245,6 +246,11 @@ Item {
 
                 width: parent.width
                 height: root.shellController.bottomPanelHeight
+                pinnedTabs: root.shellController.bottomPinned
+                onTabMenuRequested: function(key, menuX, menuY) {
+                    const pos = mapToItem(root, menuX, menuY);
+                    root.shellMenuRequested(pos.x, pos.y, bottomPanel.tabMenuItems(key));
+                }
                 open: root.shellController.showBottomPanel
                 activeTab: root.shellController.bottomTab
                 problemCount: root.jobsController.problemsModel.count

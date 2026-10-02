@@ -17,6 +17,56 @@ Item {
     property int jobsRunning: 0
     property bool processRunning: false
 
+    // 0.3.7 F2 (roadmap 53 §5.5): o painel de baixo CONTEXTUAL. Sempre
+    // aparecem as abas de `alwaysVisible`, a ativa e as que o usuario fixou;
+    // as outras, quando ha' atividade (`facts`, lidos pelo host de quem sabe).
+    // Escondida nao e' perdida: o menu Exibir, a paleta e o atalho continuam
+    // abrindo, e abrir a torna a ativa. Quais ficam SEMPRE e' a proposta do 53
+    // §13 item 2 (Terminal e Problemas), aplicada como dado ate' o autor
+    // confirmar.
+    readonly property var alwaysVisible: ["terminal", "problems"]
+    property var facts: ({})
+    property var pinnedTabs: []
+
+    readonly property var allTabs: [
+        { key: "terminal", label: qsTr("Terminal"), icon: "terminal" },
+        { key: "build", label: qsTr("Build"), icon: "build" },
+        { key: "problems", label: qsTr("Problemas"), icon: "problems" },
+        { key: "tests", label: qsTr("Testes"), icon: "test" },
+        { key: "jobs", label: qsTr("Jobs"), icon: "run" },
+        { key: "debug", label: qsTr("Debug"), icon: "debug" },
+        { key: "search", label: qsTr("Busca"), icon: "search" },
+        { key: "tools", label: qsTr("Ferramentas"), icon: "tools" },
+        { key: "logs", label: qsTr("IDE"), icon: "file" }
+    ]
+
+    function listHas(list, key) {
+        if (list === undefined || list === null) return false;
+        for (let i = 0; i < list.length; i++) {
+            if (list[i] === key) return true;
+        }
+        return false;
+    }
+
+    // Funcao pura: as abas a desenhar, na ordem de `all`.
+    function visibleTabs(all, active, facts, pinned, always) {
+        return all.filter(function(tab) {
+            return tab.key === active || tabBar.listHas(always, tab.key)
+                || tabBar.listHas(pinned, tab.key) || facts[tab.key] === true;
+        });
+    }
+
+    // O menu do botao direito numa aba.
+    function tabMenuItems(key) {
+        const pinnedNow = listHas(pinnedTabs, key);
+        return [
+            pinnedNow ? { label: qsTr("Desafixar aba"), action: "bottom.unpin:" + key, enabled: true }
+                      : { label: qsTr("Fixar aba"), action: "bottom.pin:" + key,
+                          enabled: !listHas(alwaysVisible, key) }
+        ];
+    }
+
+    signal tabMenuRequested(string key, real menuX, real menuY)
     signal tabRequested(string tab)
     signal refreshToolsRequested()
     signal hideRequested()
@@ -60,17 +110,8 @@ Item {
         spacing: 2
 
         Repeater {
-            model: [
-                { key: "terminal", label: qsTr("Terminal"), icon: "terminal" },
-                { key: "build", label: qsTr("Build"), icon: "build" },
-                { key: "problems", label: qsTr("Problemas"), icon: "problems" },
-                { key: "tests", label: qsTr("Testes"), icon: "test" },
-                { key: "jobs", label: qsTr("Jobs"), icon: "run" },
-                { key: "debug", label: qsTr("Debug"), icon: "debug" },
-                { key: "search", label: qsTr("Busca"), icon: "search" },
-                { key: "tools", label: qsTr("Ferramentas"), icon: "tools" },
-                { key: "logs", label: qsTr("IDE"), icon: "file" }
-            ]
+            model: tabBar.visibleTabs(tabBar.allTabs, tabBar.activeTab, tabBar.facts,
+                                      tabBar.pinnedTabs, tabBar.alwaysVisible)
 
             delegate: Rectangle {
                 id: bottomTab
@@ -144,8 +185,16 @@ Item {
 
                     anchors.fill: parent
                     hoverEnabled: true
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: tabBar.tabRequested(bottomTab.modelData.key)
+                    onClicked: function(mouse) {
+                        if (mouse.button === Qt.RightButton) {
+                            const pos = mapToItem(tabBar, mouse.x, mouse.y);
+                            tabBar.tabMenuRequested(bottomTab.modelData.key, pos.x, pos.y);
+                        } else {
+                            tabBar.tabRequested(bottomTab.modelData.key);
+                        }
+                    }
                 }
             }
         }

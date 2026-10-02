@@ -19,11 +19,12 @@ QtObject {
     property var projectHealthController: null
     property bool workspaceOpen: false
 
-    // Lista ausente: o fato ainda nao chegou (-1). Nao e' `Array.isArray`: a
-    // QVariantList que vem do C++ nao e' um Array do JS e reprovava ali.
+    // Lista ausente: o fato ainda nao chegou (-1). A lista que vem do C++ e'
+    // QVariantList; quem sabe le-la e' o `listOf` do codec, dono unico disso.
+    readonly property ShellLayoutCodec lists: ShellLayoutCodec {}
+
     function listLength(list) {
-        return list !== undefined && list !== null && typeof list.length === "number"
-               ? list.length : -1;
+        return list === undefined || list === null ? -1 : lists.listOf(list).length;
     }
 
     function engineDetected(list) {

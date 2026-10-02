@@ -73,3 +73,5 @@ devnull worktree checksum readline symlinks rpath werror objcopy noop
 unrecognised setuptools lockfile observability reget reemits
 # 2026-10-01, V-1: participio e plural ingleses que o dicionario nao traz
 redacted timeouts
+# 2026-10-02: termo tecnico (o ShellLayoutCodec monta e le o retrato do layout)
+codec

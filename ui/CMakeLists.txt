@@ -77,6 +77,7 @@ set_source_files_properties(qml/shell/AppMenuPopup.qml PROPERTIES QT_RESOURCE_AL
 set_source_files_properties(qml/shell/ToolWindows.qml PROPERTIES QT_RESOURCE_ALIAS ToolWindows.qml)
 set_source_files_properties(qml/shell/RailProjection.qml PROPERTIES QT_RESOURCE_ALIAS RailProjection.qml)
 set_source_files_properties(qml/shell/RailFacts.qml PROPERTIES QT_RESOURCE_ALIAS RailFacts.qml)
+set_source_files_properties(qml/shell/ShellLayoutCodec.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayoutCodec.qml)
 set_source_files_properties(qml/shell/SideRail.qml PROPERTIES QT_RESOURCE_ALIAS SideRail.qml)
 set_source_files_properties(qml/shell/ShellLayout.qml PROPERTIES QT_RESOURCE_ALIAS ShellLayout.qml)
 set_source_files_properties(qml/app/AppDomains.qml PROPERTIES QT_RESOURCE_ALIAS AppDomains.qml)
@@ -425,6 +426,7 @@ qt_add_qml_module(kinein-vectis
         qml/shell/ToolWindows.qml
         qml/shell/RailProjection.qml
         qml/shell/RailFacts.qml
+        qml/shell/ShellLayoutCodec.qml
         qml/shell/SideRail.qml
         qml/shell/ShellLayout.qml
         qml/app/AppDomains.qml

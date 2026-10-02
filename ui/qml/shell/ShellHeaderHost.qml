@@ -74,6 +74,11 @@ Rectangle {
             else root.shellController.hideArea(railAction[2]);
             return;
         }
+        const bottomAction = /^bottom\.(pin|unpin):(.+)$/.exec(action);
+        if (bottomAction !== null) {
+            root.shellController.setBottomPinned(bottomAction[2], bottomAction[1] === "pin");
+            return;
+        }
         switch (action) {
         case "rail.restore": root.shellController.restoreRail(); break;
         case "view.explorer": root.shellController.toggleExplorer(); break;
