@@ -169,11 +169,11 @@ Item {
                 loops: Animation.Infinite
                 NumberAnimation {
                     target: cursorBar; property: "blinkFactor"
-                    from: 1.0; to: 0.29; duration: 520
+                    from: 1.0; to: 0.29; duration: Theme.motionCaretBlink
                 }
                 NumberAnimation {
                     target: cursorBar; property: "blinkFactor"
-                    from: 0.29; to: 1.0; duration: 520
+                    from: 0.29; to: 1.0; duration: Theme.motionCaretBlink
                 }
             }
         }

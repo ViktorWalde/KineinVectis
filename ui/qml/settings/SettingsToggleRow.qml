@@ -55,7 +55,8 @@ Row {
 
             Behavior on x {
                 NumberAnimation {
-                    duration: 90
+                    duration: Theme.motionFast
+                    easing.type: Theme.easingStandard
                 }
             }
         }

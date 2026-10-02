@@ -55,8 +55,8 @@ Row {
             SequentialAnimation on x {
                 running: root.progress < 0 && root.visible
                 loops: Animation.Infinite
-                NumberAnimation { from: 0; to: trilho.width - 28; duration: 900; easing.type: Easing.InOutSine }
-                NumberAnimation { from: trilho.width - 28; to: 0; duration: 900; easing.type: Easing.InOutSine }
+                NumberAnimation { from: 0; to: trilho.width - 28; duration: Theme.motionProgress; easing.type: Theme.easingPendulum }
+                NumberAnimation { from: trilho.width - 28; to: 0; duration: Theme.motionProgress; easing.type: Theme.easingPendulum }
             }
         }
     }

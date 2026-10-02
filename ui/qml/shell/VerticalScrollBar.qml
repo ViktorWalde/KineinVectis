@@ -49,7 +49,7 @@ Item {
         radius: Theme.radiusXSmall
 
         Behavior on opacity {
-            NumberAnimation { duration: 120 }
+            NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
         }
     }
 
@@ -77,7 +77,7 @@ Item {
         opacity: bar.scrollable ? 1.0 : (bar.showWhenIdle ? 0.55 : 0.35)
 
         Behavior on width {
-            NumberAnimation { duration: 120 }
+            NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
         }
     }
 

@@ -75,3 +75,5 @@ unrecognised setuptools lockfile observability reget reemits
 redacted timeouts
 # 2026-10-02: termo tecnico (o ShellLayoutCodec monta e le o retrato do layout)
 codec
+# 2026-10-02: termos tecnicos (as_posix do pathlib; scrim = fundo escurecido de modal)
+posix scrim

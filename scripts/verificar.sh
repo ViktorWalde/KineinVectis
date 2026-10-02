@@ -173,6 +173,10 @@ passo "scripts/verificar-qml-duplicacao.sh" \
     "Impede que a mesma regra derivada seja copiada e possa divergir entre QMLs."
 bash scripts/verificar-qml-duplicacao.sh
 
+passo "scripts/verificar-qml-tokens.sh" \
+    "Impede raio, fonte, duracao e cor escritos a mao no QML (catraca: so' descem)."
+bash scripts/verificar-qml-tokens.sh
+
 passo "scripts/verificar-qml-alcance.sh" \
     "Reprova componente QML entregue pelo modulo que nenhuma tela alcanca."
 bash scripts/verificar-qml-alcance.sh

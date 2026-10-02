@@ -107,8 +107,8 @@ Row {
             SequentialAnimation on opacity {
                 running: root.busy
                 loops: Animation.Infinite
-                NumberAnimation { from: 1.0; to: 0.3; duration: 600 }
-                NumberAnimation { from: 0.3; to: 1.0; duration: 600 }
+                NumberAnimation { from: 1.0; to: 0.3; duration: Theme.motionPulse }
+                NumberAnimation { from: 0.3; to: 1.0; duration: Theme.motionPulse }
             }
         }
     }

@@ -55,7 +55,7 @@ Item {
             visible: root.errorText !== ""
             text: root.errorText
             color: Theme.errorSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             wrapMode: Text.WordWrap
         }
 
@@ -75,7 +75,7 @@ Item {
                 anchors.rightMargin: Theme.spacingSmall
                 verticalAlignment: TextInput.AlignVCenter
                 color: Theme.textPrimary
-                font.pixelSize: 12
+                font.pixelSize: Theme.fontSizeBody
                 clip: true
                 selectByMouse: true
                 onTextEdited: root.pushArmed = false
@@ -91,7 +91,7 @@ Item {
                     visible: commitInput.text === ""
                     text: root.amend ? qsTr("Nova mensagem do último commit…") : qsTr("Mensagem do commit…")
                     color: Theme.textMuted
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.fontSizeBody
                 }
             }
         }
@@ -107,7 +107,7 @@ Item {
                      : qsTr("reescreve o último commit"))
                   : qsTr("vai enviar para origin/%1 — clique de novo").arg(root.branchLabel)
             color: root.amend && root.headPushed ? Theme.errorSoft : Theme.warningSoft
-            font.pixelSize: 10
+            font.pixelSize: Theme.fontSizeCaption
             wrapMode: Text.WordWrap
         }
 

@@ -203,7 +203,9 @@ color: "#…" fora do Theme   4 usos
 É a linha de base da direção visual (bordas arredondadas, animação fluida,
 53 §13.1): **o número que a 0.3.9 tem de baixar**, medido igual antes e depois.
 
-**Primeira fatia — tokens antes de telas:**
+**Primeira fatia — tokens antes de telas** (feita em 2026-10-02, 40.7 §7.162:
+tokens de tipografia e de movimento no `Theme.qml`, catraca
+`scripts/verificar-qml-tokens.sh`, as 9 durações migradas):
 
 ```text
 1  Theme.qml: tokens de movimento (proposto: motionFast, motionNormal,

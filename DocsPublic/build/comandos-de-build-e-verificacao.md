@@ -97,6 +97,7 @@ scripts/verificar-qml.sh                     # qmllint estrito
 scripts/verificar-qml-fiacao.sh              # binding auto-referente
 scripts/verificar-qml-propriedades.sh        # binding para propriedade inexistente
 scripts/verificar-qml-duplicacao.sh          # mesma derivacao em dois arquivos
+scripts/verificar-qml-tokens.sh              # raio/fonte/duracao/cor literais no QML
 scripts/verificar-qml-alcance.sh             # componente entregue que nenhuma tela abre
 scripts/verificar-exercitacao.sh             # o core contra ferramenta real
 scripts/verificar-embarcado.sh               # ciclo de embarcado no QEMU, sem placa

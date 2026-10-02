@@ -48,6 +48,7 @@ ferramenta de gate do **repositório** ausente reprova; ferramenta de
 | `verificar-qml-fiacao.sh` | binding auto-referente | |
 | `verificar-qml-propriedades.sh` | binding para propriedade inexistente; **margem de âncora sem a âncora**; **binding torto** (mais indentado que a propriedade) | os dois últimos são bindings que o Qt aceita e a tela mostra em branco |
 | `verificar-qml-duplicacao.sh` | a mesma derivação (`kind === "commit"`) em dois arquivos | dê um dono (`inspector.isCommit`) |
+| `verificar-qml-tokens.sh` | raio, tamanho de fonte, duração de animação ou cor escritos à mão no QML, além do congelado em `scripts/qml-tokens-baseline.txt` | use o token do `Theme.qml` (`fontSize*`, `radius*`, `motion*`, `easing*`, cores); a linha de base só desce |
 | `verificar-qml-alcance.sh` | componente registrado que nenhuma tela abre | ou ligue, ou remova do CMake e do disco |
 | `verificar-fiacao-ipc.sh` | método roteado que nenhum cliente pede; **cliente que pede método que o core não roteia**; evento sem tratador; sinal sem ouvinte; elo de despacho sem chamador | a direção inversa é a perigosa: um botão que não faz nada em tempo de execução |
 | `verificar-exercitacao.sh` | o core contra ferramentas reais (git, cmake, cargo…) | o que a máquina não tem vira NÃO PROVADO, com o motivo |

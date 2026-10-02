@@ -38,7 +38,7 @@ Rectangle {
                 text: root.controller.createMode === "project"
                       ? qsTr("Projeto") : qsTr("Pasta")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 font.bold: true
             }
 
@@ -62,7 +62,7 @@ Rectangle {
                     color: Theme.textPrimary
                     selectedTextColor: Theme.textPrimary
                     selectionColor: Theme.accentDim
-                    font.pixelSize: 11
+                    font.pixelSize: Theme.fontSizeSmall
                     clip: true
                     selectByMouse: true
                     onTextEdited: root.controller.createName = text
@@ -102,7 +102,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Linguagem")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             Repeater {
@@ -131,7 +131,7 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Ecossistema")
                 color: Theme.textSecondary
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             Repeater {
@@ -156,7 +156,7 @@ Rectangle {
                       : (root.catalog.ecosystem(root.controller.createTemplate) !== null
                          ? root.catalog.ecosystem(root.controller.createTemplate).detail : "")
                 color: Theme.textMuted
-                font.pixelSize: 11
+                font.pixelSize: Theme.fontSizeSmall
                 elide: Text.ElideRight
             }
         }
@@ -178,7 +178,7 @@ Rectangle {
                                              root.controller.createName)
                 color: Theme.textSecondary
                 font.family: Theme.monoFont
-                font.pixelSize: 10
+                font.pixelSize: Theme.fontSizeCaption
                 wrapMode: Text.WrapAnywhere
             }
         }

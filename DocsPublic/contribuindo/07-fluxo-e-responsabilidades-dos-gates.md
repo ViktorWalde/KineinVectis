@@ -128,6 +128,7 @@ muda. O código do produto que um gate inspeciona continua em seu domínio norma
 | `verificar-qml-fiacao.sh` | `scripts/verificar-qml-fiacao.sh` | Binding QML auto-referente. |
 | `verificar-qml-propriedades.sh` | wrapper `.sh` + `scripts/verificar_qml_propriedades.py` | Propriedade/sinal inexistente e bindings estruturalmente tortos. |
 | `verificar-qml-duplicacao.sh` | wrapper `.sh` + `scripts/verificar_qml_duplicacao.py` | Catraca de regra derivada duplicada entre arquivos QML. |
+| `verificar-qml-tokens.sh` | wrapper `.sh` + `scripts/verificar_qml_tokens.py` | Catraca de valor literal (raio, fonte, duração, cor) no QML, por arquivo e categoria. |
 | `verificar-qml-alcance.sh` | wrapper `.sh` + `scripts/verificar_qml_alcance.py` | Componente registrado no módulo mas inalcançável por qualquer tela. |
 | `verificar-fiacao-ipc.sh` | wrapper `.sh` + `scripts/verificar_fiacao_ipc.py` | Cadeia método/evento/sinal/dispatcher/consumidor de ponta a ponta. |
 | `verificar-exercitacao.sh` | `scripts/verificar-exercitacao.sh` e suas fixtures | Core real contra ferramentas externas disponíveis. |

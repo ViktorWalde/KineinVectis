@@ -91,7 +91,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: "#c0000000"
+        color: Theme.scrim
 
         MouseArea {
             anchors.fill: parent
