@@ -123,10 +123,11 @@ ficam em `~/.config/kinein-vectis/`; sessões e rascunhos de um projeto ficam na
 pasta `.kinein/` dentro do próprio workspace.
 
 O modo portátil prioriza compatibilidade: a interface é desenhada por
-software. Por isso, ao abrir pelo terminal numa sessão Wayland, é esperado ver
-`qt.qpa.wayland: Failed to load client buffer integration: "wayland-egl"`. O Qt
-tenta a integração EGL, não precisa dela e segue com buffers comuns, e a IDE
-funciona normalmente.
+software. Abrir pelo terminal devolve o prompt na hora e não imprime nada; uma
+mensagem do Qt no terminal (com `--verbose`) ou no log de diagnóstico é defeito
+a relatar. O antigo aviso `qt.qpa.wayland: Failed to load client buffer
+integration: "wayland-egl"` era um plugin empacotado sem caminho para as
+próprias bibliotecas, e foi corrigido na 0.3.6.
 
 Para testar aceleração gráfica no
 desktop atual, sem mudar permanentemente o atalho, execute:
