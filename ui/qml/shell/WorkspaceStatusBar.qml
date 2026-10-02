@@ -60,7 +60,8 @@ Rectangle {
     readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
 
     height: 28
-    color: Theme.background1
+    // Moldura, como a faixa de menus: sobre o fundo da janela (0.3.9).
+    color: Theme.background0
 
     StatusBarParts {
         id: statusParts

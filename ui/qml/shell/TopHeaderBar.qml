@@ -105,9 +105,12 @@ Rectangle {
         return workspaceKind === "" ? "" : workspaceKind;
     }
 
-    height: 44
-    color: "transparent"
-    border.width: 0
+    // Uma ilha, como as areas de baixo (o host a posiciona com o vao).
+    height: 42
+    radius: Theme.radiusLarge
+    color: Theme.background1
+    border.color: Theme.borderSoft
+    border.width: 1
 
     Item {
         id: leftWidgets

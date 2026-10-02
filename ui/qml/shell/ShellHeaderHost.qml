@@ -43,19 +43,15 @@ Rectangle {
     signal closeWindowRequested()
     signal moveWindowRequested()
 
+    // A MOLDURA de cima (0.3.9, retorno do autor: "arredondar as bordas do
+    // rodape superior"; modelo Islands da JetBrains): a faixa de menus fica
+    // sobre o fundo da janela, sem faixa clara nem linha reta, e a barra de
+    // ferramentas e' uma ILHA arredondada, alinhada as de baixo pelo mesmo
+    // vao (Theme.panelGap).
     height: 84
     z: 100
     radius: root.windowEdgesFlush ? 0 : Theme.radiusLarge
-    color: Theme.background1
-    clip: true
-
-    Rectangle {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: 1
-        color: Theme.borderSoft
-    }
+    color: Theme.background0
 
     function executeMenuAction(action) {
         const recentPrefix = "workspace.recent.open:";
@@ -193,8 +189,10 @@ Rectangle {
     TopHeaderBar {
         id: headerBar
 
-        y: appMenuBar.height
-        width: parent.width
+        x: Theme.panelGap
+        y: appMenuBar.height + 2
+        width: parent.width - 2 * Theme.panelGap
+        height: root.height - y
         workspaceOpen: root.coreClient.workspaceRoot !== ""
         coreConnected: root.coreClient.connected
         workspaceName: root.coreClient.workspaceName
