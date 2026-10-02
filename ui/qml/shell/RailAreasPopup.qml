@@ -20,13 +20,27 @@ FocusScope {
     readonly property var projection: toolWindows ? toolWindows.projection : null
     readonly property var railState: toolWindows ? toolWindows.railState
                                                  : ({ pinned: [], unpinned: [], hidden: [] })
-    readonly property var onRail: toolWindows ? toolWindows.visibleEntries : []
+    // As SECOES ficam como estavam ao abrir (visto na tela real em 2026-10-02:
+    // fixar uma area a puxava para cima, a lista andava sob o ponteiro e o
+    // proximo clique caia no alfinete de outra). Enquanto o painel esta'
+    // aberto so' o ESTADO de cada linha muda; reabrir reorganiza.
+    property var frozenRailIds: []
+    readonly property var onRail: toolWindows
+        ? toolWindows.entries.filter(function(e) { return root.frozenRailIds.indexOf(e.id) >= 0; })
+        : []
     readonly property var offRail: toolWindows && projection
         ? projection.overflowEntries(toolWindows.entries, onRail) : []
+
+    // Esta' no trilho AGORA (o estado mostrado), independente da secao.
+    function railHas(id) {
+        return toolWindows !== null
+            && toolWindows.visibleEntries.some(function(e) { return e.id === id; });
+    }
 
     visible: false
 
     function openAt(x, y, id) {
+        frozenRailIds = toolWindows ? toolWindows.visibleEntries.map(function(e) { return e.id; }) : [];
         anchorX = x;
         anchorY = y;
         focusId = id;
@@ -126,10 +140,11 @@ FocusScope {
 
                     width: content.width
                     entry: modelData
-                    onRail: true
-                    status: root.projection.statusOf(modelData, root.railState, true)
+                    onRail: root.railHas(modelData.id)
+                    status: root.projection.statusOf(modelData, root.railState,
+                                                     root.railHas(modelData.id))
                     pinned: root.projection.isPinned(modelData, root.railState)
-                    hidden: false
+                    hidden: root.projection.contains(root.railState.hidden, modelData.id)
                     highlighted: root.focusId === modelData.id
                     onOpenRequested: root.open(modelData)
                     onPinToggled: root.togglePin(modelData)
@@ -156,8 +171,9 @@ FocusScope {
 
                     width: content.width
                     entry: modelData
-                    onRail: false
-                    status: root.projection.statusOf(modelData, root.railState, false)
+                    onRail: root.railHas(modelData.id)
+                    status: root.projection.statusOf(modelData, root.railState,
+                                                     root.railHas(modelData.id))
                     pinned: root.projection.isPinned(modelData, root.railState)
                     hidden: root.projection.contains(root.railState.hidden, modelData.id)
                     highlighted: root.focusId === modelData.id
