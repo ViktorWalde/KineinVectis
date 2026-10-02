@@ -1,11 +1,34 @@
 # 40 — Onde o projeto está, e por onde continuar
 
-> **Classe: ESTADO** (`DocsPublic/README.md`). Remedido em **2026-09-12** à noite,
-> com o gate completo verde. O foco do produto, por decisão do autor no mesmo
-> dia, são **dois contextos**: desenvolvimento de software (Python, C/C++,
-> Rust, banco de dados) e **sistemas embarcados** (MCU bare metal e Linux
-> embarcado) — a simulação física/matemática saiu do produto (§5). Se divergir
-> do código, o código vence e este documento se corrige no mesmo gesto.
+> **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
+> vence e este documento se corrige no mesmo gesto.
+>
+> **O estado, em 2026-10-02 (leia isto; o resto do cabeçalho é histórico):**
+>
+> - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
+>   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
+>   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
+> - **Em curso: 0.3.6** (casca e base visual), no checkout com o protocolo
+>   `0.145.0`. Os gates G0 estão feitos e passam; a próxima fatia é a **F0**
+>   (medir antes de mudar), depois o layout versionado e a V-1 — decisão do
+>   autor, [`53`](53-arquitetura-executavel-da-0.3.6.md) §13.0. Onde cada fatia
+>   começa no código: [`58`](58-onde-cada-versao-comeca-no-codigo.md).
+> - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15; o que
+>   a máquina não prova sai como NÃO PROVADO
+>   ([`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md)).
+> - **Versões até a 1.0** e o que ainda é proposta:
+>   [`57`](57-mapa-de-versoes-ate-a-1.0.md). As decisões que não se reabrem:
+>   §5 deste documento. O que foi feito, com data e prova:
+>   [`40.7`](40.7-registro-das-entregas.md).
+> - O foco do produto são **dois contextos**: desenvolvimento de software
+>   (Python, C/C++, Rust, banco de dados) e **sistemas embarcados** (MCU bare
+>   metal e Linux embarcado); a simulação física/matemática saiu do produto
+>   (§5), e emulador como alvo de depuração é outra coisa (0.4).
+>
+> **Histórico do cabeçalho (registro; não é o estado de hoje).** Os parágrafos
+> abaixo foram escritos em datas diferentes, de 2026-09-05 a 2026-09-29, e
+> ficam como lição e contexto. Onde contradizerem o bloco acima, vale o bloco
+> acima.
 >
 > **AVISO que a sessão de 2026-09-05 aprendeu na pele:** "gate verde" tem prazo
 > de validade de uma atualização de sistema. Ao abrir a sessão o gate

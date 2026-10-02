@@ -1,17 +1,36 @@
 # Changelog — Kinein Vectis
 
-Versões de teste fechado. O detalhe de cada mudança, com data, medida e
-prova, está em `DocsPublic/roadmaps/40-estado-e-continuidade.md` §7.
+Versões beta (série 0.x; até a 0.2 era teste fechado). O detalhe de cada
+mudança, com data, medida e prova, está em
+`DocsPublic/roadmaps/40.7-registro-das-entregas.md`; a situação de cada versão,
+em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 
-## Série 0.3 — checkout em desenvolvimento, fechamento previsto na 0.3.5
+## 0.3.6 — em desenvolvimento (não lançada)
 
-Cargo/CMake já identificam a candidata local como `0.3.5`. Um AppImage
-candidato foi gerado e passou nos smokes local e Debian mínimo, mas ainda não
-foi lançado. O fechamento depende da matriz P3, da escolha da pasta remota
-desde a home e do gate V8 completo. H0 foi aprovado pelo autor em 2026-09-30.
-O roteiro e as evidências estão nos roadmaps 40, 40.7 e 47.
+A reorganização da casca da IDE (roadmaps 53 e 57). O que está abaixo existe no
+checkout, não em nenhum pacote publicado.
 
-- **Projeto e arquivos (P0–P3, em andamento):** comando curto `kinein`, uma
+- Protocolo `0.145.0` — **depurador sem globais, explicado.** Com o gdb < 16
+  (o 15 do Ubuntu 24.04), o painel de variáveis de um alvo bare-metal mostrava
+  só registradores, sem dizer por quê. Agora diz: o gdb anterior ao 16 não
+  expõe globais pelo DAP; a variável se lê pelo nome em Watches. O gdb que
+  vale é o ≥ 16 (decisão do autor, 2026-10-01).
+- **Gates sem falso positivo num clone novo**, e o que a máquina não prova
+  aparece como **NÃO PROVADO** em vez de verde (`scripts/verificar.sh --estrito`
+  reprova). Detalhe em `DocsPublic/contribuindo/04-os-gates-que-dizem-nao.md`.
+
+## 0.3.5 — lançada em 2026-10-01 (pré-release "Public Beta")
+
+Fechamento da série 0.3: release
+[`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
+protocolo `0.144.0`. Assets: `Kinein-Vectis-0.3.5-x86_64.AppImage` (SHA-256
+`c2710023928767f39b583c1e56fc946ee46f977985fbd08930229d991a33ecf7`), o
+`.sha256` dele e `KV0.3.zip` (a pasta `KV0.3/`, com instalador, tutorial e
+notas). Requisitos: Linux x86_64, glibc 2.36+, Wayland ou X11. A série 0.x
+continua beta: interfaces e configurações podem mudar até a 1.0. As provas
+estão no `DocsPublic/roadmaps/40.7-registro-das-entregas.md` §7.147–§7.149.
+
+- **Projeto e arquivos (P0–P3):** comando curto `kinein`, uma
   janela por workspace, navegação e seleção múltipla na árvore, ações por
   menu e teclado, clipboard de arquivos, transferências por lote com Jobs,
   colisões sem sobrescrita e importação externa por cópia. O arrasto interno,
@@ -32,11 +51,6 @@ O roteiro e as evidências estão nos roadmaps 40, 40.7 e 47.
   abrir no pacote (o Loader do Qt 6.4 recusava os componentes) e os ícones SVG
   da árvore voltaram a aparecer (plugin `libqsvg` incluído). O smoke do
   AppImage agora reprova aviso do motor QML e a falta do plugin.
-- Protocolo `0.145.0` — **depurador sem globais, explicado.** Com o gdb < 16
-  (o 15 do Ubuntu 24.04), o painel de variáveis de um alvo bare-metal mostrava
-  só registradores, sem dizer por quê. Agora diz: o gdb anterior ao 16 não
-  expõe globais pelo DAP; a variável se lê pelo nome em Watches. O gdb que
-  vale é o ≥ 16 (decisão do autor, 2026-10-01).
 - Protocolo `0.144.0` — **pasta com espaço no espelho SSH.** O navegador
   oferece e o espelho abre pastas e arquivos com espaço no nome (`rsync -s`),
   provado contra `sshd` real. O caminho digitado precisa ser absoluto.
