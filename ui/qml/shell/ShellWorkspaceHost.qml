@@ -145,6 +145,10 @@ Item {
             onWidthChanged: root.updatePanelLimits()
             onExpandedToggled: root.shellController.toggleRail()
             entries: railEntries.visibleEntries
+            order: root.shellController.barOrders["rail"] !== undefined
+                   ? root.shellController.barOrders["rail"] : []
+            onEntryMoved: (id, dropIndex, visibleIds) => root.shellController.moveInBar(
+                              "rail", visibleIds, id, dropIndex)
             onActivated: id => railEntries.activate(id)
             // O "⋯ Mais" e o botao direito abrem o PAINEL DE AREAS; o botao
             // direito destaca a area clicada.

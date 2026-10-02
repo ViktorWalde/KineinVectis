@@ -31,12 +31,7 @@ Item {
     // ordem dele (ShellController.barOrder("bottom")); vazia = de fabrica.
     property var tabOrder: []
     readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
-    readonly property var orderedTabs: {
-        const byKey = {};
-        for (const tab of tabBar.allTabs) byKey[tab.key] = tab;
-        return tabBar.codec.ordered(tabBar.allTabs.map(tab => tab.key), tabBar.tabOrder)
-            .map(key => byKey[key]);
-    }
+    readonly property var orderedTabs: tabBar.codec.orderItems(tabBar.allTabs, "key", tabBar.tabOrder)
 
     readonly property var allTabs: [
         { key: "terminal", label: qsTr("Terminal"), icon: "terminal" },

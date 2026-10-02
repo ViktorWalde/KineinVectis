@@ -127,6 +127,15 @@ QtObject {
         return known.concat(listOf(keys).filter(function(key) { return known.indexOf(key) < 0; }));
     }
 
+    // Os ITENS (objetos com a chave em `field`) na ordem salva.
+    function orderItems(items, field, saved) {
+        const list = listOf(items);
+        const byKey = {};
+        for (const item of list) byKey[item[field]] = item;
+        return ordered(list.map(function(item) { return item[field]; }), saved)
+            .map(function(key) { return byKey[key]; });
+    }
+
     // Soltar `key` no vao `dropIndex` da lista VISIVEL (0 = antes do
     // primeiro, n = depois do ultimo). As chaves salvas que nao estao a vista
     // agora guardam o lugar delas no fim, para voltarem quando aparecerem.

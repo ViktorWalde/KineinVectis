@@ -15,6 +15,11 @@ Rectangle {
     // mais o binding e o handler do outro lado. Quem declara e' o
     // `ToolWindows`; este arquivo so' desenha.
     property var entries: []
+    // A ordem que o usuario arrastou (0.3.9): os ids, na ordem dele.
+    property var order: []
+    readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
+    readonly property var orderedEntries: root.codec.orderItems(root.entries, "id", root.order)
+    signal entryMoved(string id, int dropIndex, var visibleIds)
 
     signal activated(string id)
     // 0.3.7 F1: botao direito num icone (fixar, ocultar, restaurar) e o
@@ -42,6 +47,8 @@ Rectangle {
         // O rotulo do modo expandido; sem ele, o tooltip ate' o primeiro parentese.
         property string label: ""
         property bool active: false
+        // Vazio no "Mais": ele nao se arrasta.
+        property string reorderKey: ""
 
         signal activated()
         signal contextMenuRequested(real menuX, real menuY)
@@ -81,13 +88,13 @@ Rectangle {
             elide: Text.ElideRight
         }
 
-        MouseArea {
+        // Arrastar reordena o trilho (0.3.9); clique ativa, direito abre o menu.
+        ReorderMouseArea {
             id: railButtonArea
 
             anchors.fill: parent
-            hoverEnabled: true
-            acceptedButtons: Qt.LeftButton | Qt.RightButton
-            cursorShape: railButton.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+            reorder: railReorder
+            reorderKey: railButton.reorderKey
             onContainsMouseChanged: {
                 if (containsMouse && !root.expanded) {
                     TooltipController.showFor(railButton, railButton.tooltip,
@@ -96,7 +103,7 @@ Rectangle {
                     TooltipController.hideFor(railButton);
                 }
             }
-            onClicked: function(mouse) {
+            onTapped: function(mouse) {
                 TooltipController.hideFor(railButton);
                 // O menu de contexto vale tambem para a area indisponivel:
                 // ocultar ou desafixar nao depende de abrir.
@@ -110,17 +117,21 @@ Rectangle {
     }
 
     Column {
+        id: railColumn
+
         anchors.top: parent.top
         anchors.topMargin: Theme.spacingSmall
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: Theme.spacingSmall
 
         Repeater {
-            model: root.entries
+            model: root.orderedEntries
 
             delegate: RailButton {
                 required property var modelData
 
+                reorderKey: modelData.id
+                opacity: (modelData.available ? 1.0 : 0.72) * railReorder.opacityFor(modelData.id)
                 iconName: modelData.icon
                 tooltip: modelData.tooltip
                 label: modelData.label
@@ -173,6 +184,16 @@ Rectangle {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: root.expandedToggled()
+        }
+    }
+
+    ReorderController {
+        id: railReorder
+
+        container: railColumn
+        vertical: true
+        onMoved: function(key, dropIndex, visibleKeys) {
+            root.entryMoved(key, dropIndex, visibleKeys);
         }
     }
 }
