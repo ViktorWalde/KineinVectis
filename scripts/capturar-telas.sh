@@ -25,12 +25,19 @@
 #   PASTA_DE_SAIDA  padrao build/telas; grava <cena>-<largura>x<altura>.png
 #   KINEIN_TELAS_CENAS="editor git"  restringe as cenas
 #   KINEIN_TELAS_TAMANHOS="1366x768" restringe os tamanhos
+#   KINEIN_TELAS_ESPERA_MS=8000      espera depois do primeiro quadro
+#
+# A FOTO DEPENDE DA CARGA DA MAQUINA: com o gate rodando ao lado (o clang-tidy
+# ocupa todos os nucleos), a deteccao de ferramentas chegou depois da foto e o
+# trilho saiu sem o Containers (2026-10-02). Por isso a espera e' de 8 s e o
+# script avisa quando a carga passa da metade dos nucleos.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 binary="${1:-$repo_root/build/dev-local/ui/kinein-vectis}"
 out_dir="${2:-$repo_root/build/telas}"
 sizes="${KINEIN_TELAS_TAMANHOS:-1024x700 1366x768 1920x1080}"
+delay_ms="${KINEIN_TELAS_ESPERA_MS:-8000}"
 scenes="${KINEIN_TELAS_CENAS:-editor inicio git terminal busca paleta remoto criar}"
 
 if [[ ! -x "$binary" ]]; then
@@ -116,6 +123,10 @@ EOF
 EOF
 }
 
+load="$(cut -d' ' -f1 /proc/loadavg)"
+if awk -v load="$load" -v cores="$(nproc)" 'BEGIN { exit !(load > cores / 2) }'; then
+    echo "aviso: carga $load com $(nproc) nucleos — as fotos podem sair antes de a IDE assentar" >&2
+fi
 rustup_home="${RUSTUP_HOME:-$HOME/.rustup}"
 cargo_home="${CARGO_HOME:-$HOME/.cargo}"
 failed=0
@@ -159,7 +170,7 @@ for scene in $scenes; do
             KINEIN_STARTUP_COMMANDS="$startup" \
             KINEIN_SCREENSHOT="$shot" \
             KINEIN_SCREENSHOT_SIZE="$size" \
-            KINEIN_SCREENSHOT_DELAY_MS=5000 \
+            KINEIN_SCREENSHOT_DELAY_MS="$delay_ms" \
             KINEIN_PERF_EXIT=1 \
             xvfb-run -a -s "-screen 0 ${size}x24 -dpi 96 -nolisten tcp" \
             "$binary" --wait "$project" >"$run_dir/log" 2>&1 || status=$?
