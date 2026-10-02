@@ -152,5 +152,5 @@ ui/qml/workspace/FolderPickerButton.qml	fontSize	1
 ui/qml/workspace/FolderPickerDirectoryList.qml	fontSize	4
 ui/qml/workspace/FolderPickerPathBar.qml	fontSize	1
 ui/qml/workspace/RecentWorkspacesCard.qml	fontSize	6
-ui/qml/workspace/StartScreen.qml	fontSize	4
+ui/qml/workspace/StartScreen.qml	fontSize	3
 ui/qml/workspace/StartScreen.qml	radius	1

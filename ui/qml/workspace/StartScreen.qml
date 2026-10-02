@@ -112,61 +112,40 @@ Rectangle {
             }
         }
 
-            Rectangle {
-            width: parent.width
-            height: 142
-            radius: Theme.radiusLarge
-            color: Theme.background1
-            border.color: Theme.borderSoft
-            border.width: 1
+            // As tres acoes como CARTOES que dizem para que servem (0.3.8,
+            // retorno do autor). UM gesto para criar, e a linguagem se escolhe
+            // dentro dele (53 §13.0 item 6).
+            Row {
+                id: actionTiles
 
-            Column {
-                anchors.fill: parent
-                anchors.margins: Theme.spacingLarge
+                width: parent.width
                 spacing: Theme.spacingMedium
 
-                Text {
-                    text: qsTr("Começar")
-                    color: Theme.textPrimary
-                    font.pixelSize: Theme.fontSizePanelTitle
-                    font.bold: true
+                StartActionTile {
+                    width: (actionTiles.width - 2 * actionTiles.spacing) / 3
+                    primary: true
+                    iconName: "add"
+                    title: qsTr("Criar projeto")
+                    description: qsTr("C/C++, Rust, Python ou uma pasta vazia — você vê os arquivos antes")
+                    onActivated: root.newProjectRequested("")
                 }
 
-                Row {
-                    spacing: Theme.spacingSmall
-
-                    // UM gesto para criar, e a linguagem se escolhe dentro
-                    // dele (53 §13.0 item 6): dois botoes fixos de C++ e Rust
-                    // deixavam o Python de fora da porta de entrada.
-                    KvButton {
-                        text: qsTr("Criar Projeto")
-                        iconName: "add"
-                        primary: true
-                        onClicked: root.newProjectRequested("")
-                    }
-
-                    KvButton {
-                        text: qsTr("Abrir workspace")
-                        iconName: "project"
-                        onClicked: root.openWorkspaceRequested()
-                    }
-
-                    KvButton {
-                        text: qsTr("Configurações")
-                        iconName: "settings"
-                        onClicked: root.settingsRequested()
-                    }
+                StartActionTile {
+                    width: (actionTiles.width - 2 * actionTiles.spacing) / 3
+                    iconName: "project"
+                    title: qsTr("Abrir projeto")
+                    description: qsTr("Uma pasta que já existe — ou arraste a pasta para esta tela")
+                    onActivated: root.openWorkspaceRequested()
                 }
 
-                Text {
-                    text: qsTr("Projetos novos mostram os arquivos reais antes de abrir; projetos existentes não são alterados automaticamente.")
-                    color: Theme.textMuted
-                    font.pixelSize: 11
-                    wrapMode: Text.WordWrap
-                    width: parent.width
+                StartActionTile {
+                    width: (actionTiles.width - 2 * actionTiles.spacing) / 3
+                    iconName: "settings"
+                    title: qsTr("Configurações")
+                    description: qsTr("Fonte, salvar sozinho, rigor do build")
+                    onActivated: root.settingsRequested()
                 }
             }
-        }
 
             RecentWorkspacesCard {
                 width: parent.width
