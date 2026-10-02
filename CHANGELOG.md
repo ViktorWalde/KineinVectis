@@ -36,6 +36,12 @@ no checkout, não em nenhum pacote publicado.
   resumos do projeto saem inteiros por ordem de importância (o Python, depois
   o contexto do compilador, por último o índice), em vez de um deles aparecer
   partido.
+- **Criar e abrir projeto, cada um com a sua tela.** Criar mostra a
+  linguagem em cartões, o nome com o caminho que vai nascer e a prévia, e só
+  habilita "Criar projeto" com linguagem e nome; abrir diz qual pasta vai abrir.
+- **Painel de áreas do trilho.** "⋯ Mais", o botão direito num ícone e
+  Exibir → Áreas da IDE… abrem um painel com o que está no trilho e o que está
+  fora, o estado de cada área em palavras e botões de fixar e ocultar.
 - **Criar Projeto, com todas as linguagens.** A tela inicial tinha dois
   botões fixos, "Novo C++ / CMake" e "Novo Rust / Cargo", e o Python ficava de
   fora. Agora há um único **Criar Projeto**: escolha a linguagem (C/C++, Rust,

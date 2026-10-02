@@ -149,9 +149,7 @@ ui/qml/shell/WindowControls.qml	radius	3
 ui/qml/shell/WorkspaceStatusBar.qml	radius	1
 ui/qml/toolchain/ToolchainMenu.qml	fontSize	6
 ui/qml/workspace/FolderPickerButton.qml	fontSize	1
-ui/qml/workspace/FolderPickerCard.qml	fontSize	1
 ui/qml/workspace/FolderPickerDirectoryList.qml	fontSize	4
-ui/qml/workspace/FolderPickerHeader.qml	fontSize	1
 ui/qml/workspace/FolderPickerPathBar.qml	fontSize	1
 ui/qml/workspace/RecentWorkspacesCard.qml	fontSize	6
 ui/qml/workspace/StartScreen.qml	fontSize	4

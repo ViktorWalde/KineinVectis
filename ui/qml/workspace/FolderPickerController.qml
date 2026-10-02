@@ -16,6 +16,13 @@ Item {
     property string createLanguage: ""
     property string createTemplate: ""
     readonly property ProjectTemplateCatalog templateCatalog: ProjectTemplateCatalog {}
+    // No "Criar projeto" o navegador de pastas fica recolhido; "Alterar
+    // local..." o abre (0.3.8).
+    property bool createBrowsing: false
+    // O dono de "o que estou criando": o cartao e o painel so' perguntam.
+    readonly property bool creatingProject: createMode === "project"
+    readonly property bool creatingFolder: createMode === "folder"
+    readonly property bool canCreateProject: createTemplate !== "" && createName.trim() !== ""
     property string pendingSelectionPath: ""
     property string pathDraft: ""
     property string createName: ""
@@ -133,6 +140,7 @@ Item {
 
     function beginCreateProject() {
         createMode = "project";
+        createBrowsing = false;
         errorText = "";
         createName = "";
         createFocusRequested();

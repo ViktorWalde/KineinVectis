@@ -51,7 +51,7 @@ Column {
         spacing: Theme.spacingSmall
 
         FolderPickerButton {
-            text: qsTr("Inicio")
+            text: qsTr("Início")
             height: parent.height
             onClicked: root.controller.browsePath(root.controller.homePath)
         }
@@ -64,9 +64,9 @@ Column {
         }
 
         FolderPickerButton {
+            // Botao comum: a acao principal do dialogo e' a do pe' (Abrir).
             text: qsTr("Ir")
             height: parent.height
-            primary: true
             onClicked: root.controller.browsePath(pathField.text)
         }
 
@@ -74,12 +74,6 @@ Column {
             text: qsTr("+ pasta")
             height: parent.height
             onClicked: root.controller.beginCreateFolder()
-        }
-
-        FolderPickerButton {
-            text: qsTr("+ projeto")
-            height: parent.height
-            onClicked: root.controller.beginCreateProject()
         }
     }
 }

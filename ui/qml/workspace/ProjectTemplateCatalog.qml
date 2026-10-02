@@ -16,7 +16,7 @@ QtObject {
 
     readonly property var languages: [
         {
-            "key": "cpp", "label": "C/C++",
+            "key": "cpp", "label": "C/C++", "iconFile": "main.cpp",
             "ecosystems": [
                 {
                     "template": "cppCmake", "label": "CMake",
@@ -29,7 +29,7 @@ QtObject {
             ]
         },
         {
-            "key": "rust", "label": "Rust",
+            "key": "rust", "label": "Rust", "iconFile": "main.rs",
             "ecosystems": [
                 {
                     "template": "rustCargo", "label": "Cargo",
@@ -40,7 +40,7 @@ QtObject {
             ]
         },
         {
-            "key": "python", "label": "Python",
+            "key": "python", "label": "Python", "iconFile": "main.py",
             "ecosystems": [
                 {
                     "template": "python", "label": "pyproject.toml",
@@ -53,7 +53,7 @@ QtObject {
             ]
         },
         {
-            "key": "empty", "label": qsTr("Vazio"),
+            "key": "empty", "label": qsTr("Vazio"), "iconFile": "",
             "ecosystems": [
                 {
                     "template": "empty", "label": qsTr("Pasta vazia"),

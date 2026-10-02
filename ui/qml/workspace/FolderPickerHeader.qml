@@ -4,18 +4,31 @@ import KineinVectis
 Row {
     id: root
 
+    property string title: qsTr("Abrir projeto")
+    property string subtitle: ""
+
     signal closeRequested()
 
     width: parent.width
-    height: 28
+    height: root.subtitle !== "" ? 44 : 28
     spacing: Theme.spacingMedium
 
-    Text {
+    Column {
         anchors.verticalCenter: parent.verticalCenter
-        text: qsTr("Abrir ou criar projeto")
-        color: Theme.textPrimary
-        font.pixelSize: 16
-        font.bold: true
+
+        Text {
+            text: root.title
+            color: Theme.textPrimary
+            font.pixelSize: Theme.fontSizeHeadline - 4
+            font.bold: true
+        }
+
+        Text {
+            visible: root.subtitle !== ""
+            text: root.subtitle
+            color: Theme.textMuted
+            font.pixelSize: Theme.fontSizeSmall
+        }
     }
 
     Item {

@@ -16,6 +16,7 @@
 #   paleta     paleta de comandos
 #   remoto     painel de ambiente do Remote (overlay do trilho)
 #   criar      "Criar Projeto": o seletor no modo de criar, linguagem por escolher
+#   abrir      "Abrir projeto": o seletor no modo de abrir
 #
 # Uso: bash scripts/capturar-telas.sh [BINARIO] [PASTA_DE_SAIDA]
 #   BINARIO         padrao build/dev-local/ui/kinein-vectis
@@ -38,7 +39,7 @@ binary="${1:-$repo_root/build/dev-local/ui/kinein-vectis}"
 out_dir="${2:-$repo_root/build/telas}"
 sizes="${KINEIN_TELAS_TAMANHOS:-1024x700 1366x768 1920x1080}"
 delay_ms="${KINEIN_TELAS_ESPERA_MS:-8000}"
-scenes="${KINEIN_TELAS_CENAS:-editor inicio git terminal busca paleta remoto criar}"
+scenes="${KINEIN_TELAS_CENAS:-editor inicio git terminal busca paleta remoto criar abrir}"
 
 if [[ ! -x "$binary" ]]; then
     echo "erro: binario nao encontrado: $binary (compile: cmake --build build/dev-local)" >&2
@@ -64,6 +65,7 @@ scene_commands() {
         paleta) echo "command.list" ;;
         remoto) echo "remote.list" ;;
         criar) echo "workspace.createProject" ;;
+        abrir) echo "workspace.open" ;;
         *) return 1 ;;
     esac
 }
