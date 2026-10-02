@@ -46,6 +46,16 @@ Item {
         id: documents
     }
 
+    // Arrastar uma aba (0.3.9) move a linha no modelo: o mapa docId -> indice
+    // se refaz, e quem deriva a aba atual do documento (V5) acompanha.
+    Connections {
+        target: documents
+
+        function onRowsMoved() {
+            root.reindex();
+        }
+    }
+
     function reindex() {
         const map = ({});
         for (let i = 0; i < documents.count; i++) {

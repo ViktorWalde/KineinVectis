@@ -5,11 +5,12 @@
 // do `EditorController` para um dono próprio, as duas invariantes que as
 // separam ficaram sem teste:
 //
-//   1. a ORDEM do restore — o arquivo ATIVO é pedido por ÚLTIMO, porque o core
-//      responde na ordem em que recebe (`arquitetura/04` §6) e cada resposta
-//      seleciona a própria aba. Inverter isso reabre o projeto na aba errada, e
-//      NADA reclama: o build passa, o qmllint passa, e o usuário só nota que
-//      "a IDE nunca lembra onde eu estava".
+//   1. a ORDEM do restore — as abas são pedidas na ordem salva (desde 0.3.9,
+//      quando a aba passou a se arrastar) e, como cada resposta seleciona a
+//      própria aba, a sessão SELECIONA o ativo quando a última chega. Errar
+//      isso reabre o projeto na aba errada, e NADA reclama: o build passa, o
+//      qmllint passa, e o usuário só nota que "a IDE nunca lembra onde eu
+//      estava".
 //
 //   2. o rascunho só existe para buffer SUJO. Persistir um buffer limpo faria a
 //      próxima abertura "recuperar" um texto idêntico ao disco e marcar a aba
@@ -41,7 +42,19 @@ Item {
     }
 
     ListModel {
-        id: abas
+        id: openTabs
+    }
+
+    property int selectedDocId: 0
+
+    // As abas de um restore ja' carregadas, num modelo a parte: mexer no
+    // `abas` agendaria sessao e estragaria a prova de tempo mais abaixo.
+    ListModel {
+        id: restoredTabs
+
+        ListElement { path: "/tmp/projeto/a.cpp"; docId: 1 }
+        ListElement { path: "/tmp/projeto/b.cpp"; docId: 2 }
+        ListElement { path: "/tmp/projeto/c.cpp"; docId: 3 }
     }
 
     QtObject {
@@ -49,6 +62,7 @@ Item {
 
         function currentFilePath() { return root.caminhoAtual; }
         function currentIsModified() { return root.sujo; }
+        function selectDocument(docId) { root.selectedDocId = docId; }
     }
 
     EditorPersistenceController {
@@ -57,7 +71,7 @@ Item {
         workspaceRoot: "/tmp/projeto"
         surfaceBridge: pontefalsa
         documentController: documentosFalsos
-        filesModel: abas
+        filesModel: openTabs
         onReadFileRequested: function (path) { root.lidos.push(path); }
         onDraftSaveRequested: function (path, content) {
             root.rascunhos.push({ path: path, content: content });
@@ -105,18 +119,22 @@ Item {
     Component.onCompleted: {
         let failures = 0;
 
-        // ---- A ordem do restore: o ATIVO por ÚLTIMO ------------------------
+        // ---- A ordem do restore: a das abas, e o ativo no fim -------------
         persistence.restoreSession(
             ["/tmp/projeto/a.cpp", "/tmp/projeto/b.cpp", "/tmp/projeto/c.cpp"],
             "/tmp/projeto/b.cpp");
-        if (root.lidos.length !== 3) {
+        if (root.lidos.join() !== "/tmp/projeto/a.cpp,/tmp/projeto/b.cpp,/tmp/projeto/c.cpp") {
             failures += 1;
-        } else {
-            if (root.lidos[2] !== "/tmp/projeto/b.cpp") failures += 2;
-            // Os outros dois vão antes, em ordem, e o ativo não é repetido.
-            if (root.lidos[0] !== "/tmp/projeto/a.cpp") failures += 4;
-            if (root.lidos[1] !== "/tmp/projeto/c.cpp") failures += 8;
         }
+        // O ativo e' lembrado ate' a ultima aba chegar, e entao selecionado.
+        if (persistence.restoringActive !== "/tmp/projeto/b.cpp" || persistence.restoringExpected !== 3) {
+            failures += 2;
+        }
+        persistence.filesModel = restoredTabs;
+        persistence.finishRestore();
+        persistence.filesModel = openTabs;
+        if (root.selectedDocId !== 2) failures += 4;
+        if (persistence.restoringActive !== "") failures += 8;
 
         // Restore sem ativo conhecido não deixa ninguém de fora.
         root.lidos = [];
@@ -157,8 +175,8 @@ Item {
                 root.falhasAcumuladas += 2048;
             }
             root.sujo = true;
-            abas.append({ path: "/tmp/projeto/a.cpp" });
-            abas.append({ path: "/tmp/projeto/b.cpp" });
+            openTabs.append({ path: "/tmp/projeto/a.cpp" });
+            openTabs.append({ path: "/tmp/projeto/b.cpp" });
             persistence.scheduleDraftSave();
             persistence.scheduleSessionSave();
         }

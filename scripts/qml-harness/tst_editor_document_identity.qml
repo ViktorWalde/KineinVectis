@@ -213,6 +213,16 @@ Item {
               "trocar de aba marcou o documento novo como modificado");
         root.echoOnSwitch = false;
 
+        // ARRASTAR UMA ABA (0.3.9) move a linha do modelo: o documento da tela
+        // e' o mesmo, e o indice dele acompanha a posicao nova.
+        const onScreen = documents.currentDocId;
+        const count = documents.filesModel.count;
+        const fromRow = documents.currentTab;
+        const toRow = fromRow === 0 ? count - 1 : 0;
+        documents.filesModel.move(fromRow, toRow, 1);
+        check(documents.currentDocId === onScreen && documents.currentTab === toRow, 34359738368,
+              "mover a aba trocou o documento ou perdeu o indice: " + documents.currentTab);
+
         if (root.failures !== 0) console.error("FALHAS bitmask=" + root.failures);
         Qt.exit(root.failures === 0 ? 0 : 1);
     }

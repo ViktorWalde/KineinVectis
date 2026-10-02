@@ -110,11 +110,13 @@ Item {
             required property bool modified
 
             readonly property bool active: index === root.currentIndex
+            readonly property string reorderKey: String(docId)
 
             readonly property bool hovered: tabArea.containsMouse || closeArea.containsMouse
 
             width: root.tabWidthFor(name)
             height: 28
+            opacity: tabReorder.opacityFor(String(docId))
             y: (tabList.height - height) / 2
             radius: Theme.radiusLarge
             color: active ? Theme.surfaceSelected
@@ -196,13 +198,14 @@ Item {
                 }
             }
 
-            MouseArea {
+            // Arrastar muda a aba de lugar (0.3.9, pedido do autor); clique abre.
+            ReorderMouseArea {
                 id: tabArea
 
                 anchors.fill: parent
                 anchors.rightMargin: closeButton.width + Theme.spacingSmall
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
+                reorder: tabReorder
+                reorderKey: tabDelegate.reorderKey
                 onContainsMouseChanged: {
                     if (containsMouse && tabLabel.truncated) {
                         TooltipController.showFor(tabDelegate,
@@ -212,8 +215,23 @@ Item {
                         TooltipController.hideFor(tabDelegate);
                     }
                 }
-                onClicked: root.tabSelected(tabDelegate.docId)
+                onTapped: function(mouse) {
+                    if (mouse.button === Qt.LeftButton) root.tabSelected(tabDelegate.docId);
+                }
             }
+        }
+    }
+
+    // A ordem das abas e' a do modelo de documentos: soltar move a linha (a
+    // aba ativa continua a mesma, porque e' derivada do documento).
+    ReorderController {
+        id: tabReorder
+
+        container: tabList.contentItem
+        onMoved: function(key, dropIndex, visibleKeys) {
+            const from = visibleKeys.indexOf(key);
+            const to = dropIndex > from ? dropIndex - 1 : dropIndex;
+            if (from >= 0 && to !== from) root.filesModel.move(from, to, 1);
         }
     }
 }

@@ -50,6 +50,8 @@ no checkout, não em nenhum pacote publicado.
   aberto, a IDE reanalisava o texto cerca de dez vezes por segundo sem
   ninguém digitar (o realce era confundido com edição). Agora só a edição
   de verdade dispara a análise.
+- **Abas de arquivo arrastáveis.** Mude a ordem das abas arrastando; a
+  ordem e a aba ativa voltam como estavam ao reabrir o projeto.
 - **Arrastar na árvore do projeto, de verdade.** Puxar um arquivo para cima
   ou para baixo arrasta (antes a lista rolava); o cursor leva o nome do
   item, a origem fica esmaecida, a pasta de destino abre sozinha e diz

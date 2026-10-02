@@ -34,10 +34,13 @@ import QtQuick
 //
 // # A ordem do restore de sessão é carga estrutural
 //
-// Os arquivos são pedidos com o ATIVO POR ÚLTIMO. O core responde na ordem em
-// que recebe (`arquitetura/04` §6, a única garantia de ordem que existe) e cada
-// `fileLoaded` seleciona a própria aba — então quem carrega por último fica
-// ativo. Inverter isso reabre o projeto na aba errada, e nada reclama.
+// Os arquivos são pedidos NA ORDEM DAS ABAS (desde 0.3.9: a aba se arrasta, e
+// a ordem tem de voltar como estava). O core responde na ordem em que recebe
+// (`arquitetura/04` §6, a única garantia de ordem que existe) e cada
+// `fileLoaded` seleciona a própria aba — por isso, quando a última chega, a
+// sessão SELECIONA o ativo de volta. Até 2026-10-02 o ativo era pedido por
+// último e ia parar no fim da fila; selecionar antes do fim reabre o projeto
+// na aba errada, e nada reclama.
 Item {
     id: root
 
@@ -71,19 +74,38 @@ Item {
                ? "" : documentController.currentFilePath();
     }
 
+    // O ativo da sessão em restauração, e quantas abas ela abre.
+    property string restoringActive: ""
+    property int restoringExpected: 0
+
     function restoreSession(files, activeFile) {
+        restoringActive = activeFile;
+        restoringExpected = files.length;
         for (let index = 0; index < files.length; index++) {
-            if (files[index] !== activeFile) {
-                readFileRequested(files[index]);
-            }
+            readFileRequested(files[index]);
         }
-        // O ATIVO por último — ver a nota da ordem, no topo do arquivo.
-        for (let index = 0; index < files.length; index++) {
-            if (files[index] === activeFile) {
-                readFileRequested(files[index]);
+        restoreDeadline.restart();
+    }
+
+    // A última aba chegou (ou o prazo venceu: um arquivo da sessão pode ter
+    // sumido do disco): volta para o ativo — ver a nota da ordem, no topo.
+    function finishRestore() {
+        if (restoringActive === "" || filesModel === null) return;
+        for (let index = 0; index < filesModel.count; index++) {
+            if (filesModel.get(index).path === restoringActive) {
+                documentController.selectDocument(filesModel.get(index).docId);
                 break;
             }
         }
+        restoringActive = "";
+        restoreDeadline.stop();
+    }
+
+    Timer {
+        id: restoreDeadline
+
+        interval: 3000
+        onTriggered: root.finishRestore()
     }
 
     // Sem workspace não há sessão a gravar: o snapshot iria para lugar nenhum.
@@ -176,11 +198,19 @@ Item {
         }
     }
 
-    // Abrir ou fechar aba muda a sessão tanto quanto trocar de aba.
+    // Abrir, fechar ou ARRASTAR aba (0.3.9) muda a sessão tanto quanto
+    // trocar de aba: a ordem das abas volta como estava.
     Connections {
         target: root.filesModel
 
         function onCountChanged() {
+            if (root.restoringActive !== "" && root.filesModel.count >= root.restoringExpected) {
+                Qt.callLater(root.finishRestore);
+            }
+            root.scheduleSessionSave();
+        }
+
+        function onRowsMoved() {
             root.scheduleSessionSave();
         }
     }

@@ -2547,7 +2547,6 @@ scripts/qml-harness/tst_editor_language.qml	superficie	4
 scripts/qml-harness/tst_editor_language.qml	texto	2
 scripts/qml-harness/tst_editor_language.qml	tipo	11
 scripts/qml-harness/tst_editor_language.qml	versao	3
-scripts/qml-harness/tst_editor_persistence.qml	abas	4
 scripts/qml-harness/tst_editor_persistence.qml	acumuladas	5
 scripts/qml-harness/tst_editor_persistence.qml	atual	2
 scripts/qml-harness/tst_editor_persistence.qml	caminho	2
@@ -2556,7 +2555,7 @@ scripts/qml-harness/tst_editor_persistence.qml	disparar	2
 scripts/qml-harness/tst_editor_persistence.qml	documentos	2
 scripts/qml-harness/tst_editor_persistence.qml	falhas	5
 scripts/qml-harness/tst_editor_persistence.qml	falsos	2
-scripts/qml-harness/tst_editor_persistence.qml	lidos	8
+scripts/qml-harness/tst_editor_persistence.qml	lidos	5
 scripts/qml-harness/tst_editor_persistence.qml	limpar	2
 scripts/qml-harness/tst_editor_persistence.qml	pontefalsa	2
 scripts/qml-harness/tst_editor_persistence.qml	rascunhos	5
