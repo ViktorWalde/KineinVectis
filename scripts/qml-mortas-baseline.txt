@@ -10,6 +10,5 @@ ui/qml/library/LibraryController.qml::libraryById
 ui/qml/python/PythonController.qml::nativeModuleBuildHint
 ui/qml/remote/RemoteActionRules.qml::sectionFor
 ui/qml/runtime/RuntimeController.qml::appendTerminalData
-ui/qml/shell/ShellController.qml::resizeContext
 ui/qml/toolchain/ToolchainController.qml::isAutomatic
 ui/qml/toolchain/ToolchainController.qml::selectKit

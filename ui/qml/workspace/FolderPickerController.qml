@@ -21,10 +21,34 @@ Item {
     property bool createBrowsing: false
     // O dono de "o que estou criando": o cartao e o painel so' perguntam.
     readonly property bool creatingProject: createMode === "project"
-    readonly property bool creatingFolder: createMode === "folder"
+    // "Nova pasta" e' uma linha do navegador, independente do projeto: criar
+    // a pasta do local nao desfaz o projeto que se esta' montando.
+    property bool creatingFolder: false
+    property string folderName: ""
     readonly property bool canCreateProject: createTemplate !== "" && createName.trim() !== ""
+    // O navegador amplo (0.3.9, retorno do autor: "encolhido"; modelo do
+    // seletor da JetBrains). Locais vem do core (0.147.0); ocultas ficam
+    // fora ate' pedir; voltar/avancar e' o historico desta abertura.
+    property var places: []
+    property bool showHidden: false
+    property int hiddenCount: 0
+    property var backStack: []
+    property var forwardStack: []
+    property string historyMove: ""
+    // O caminho como migalhas: "/" e cada pasta ate' a atual, clicaveis.
+    readonly property var crumbs: {
+        const result = [{ label: "/", path: "/" }];
+        const parts = currentPath.split("/").filter(part => part !== "");
+        let path = "";
+        for (const part of parts) {
+            path += "/" + part;
+            result.push({ label: part, path: path });
+        }
+        return result;
+    }
+    property bool editingPath: false
+    property var listing: []
     property string pendingSelectionPath: ""
-    property string pathDraft: ""
     property string createName: ""
     property alias entriesModel: entryModel
     // Para que a pasta escolhida serve (2026-09-17): "workspace" abre o
@@ -58,8 +82,13 @@ Item {
         errorText = "";
         selectedPath = path;
         createMode = "";
+        creatingFolder = false;
         pendingSelectionPath = "";
-        pathDraft = path;
+        backStack = [];
+        forwardStack = [];
+        // A primeira listagem desta abertura nao empilha a pasta da anterior.
+        historyMove = "open";
+        editingPath = false;
         browsePath(path);
         pathFocusRequested();
     }
@@ -69,6 +98,7 @@ Item {
         errorText = "";
         createMode = "";
         createName = "";
+        creatingFolder = false;
     }
 
     function browsePath(path) {
@@ -81,26 +111,108 @@ Item {
         browseRequested(cleanPath);
     }
 
-    function setListing(path, parent, entries) {
+    function setListing(path, parent, entries, newPlaces) {
         loading = false;
+        recordHistory(path);
         currentPath = path;
         parentPath = parent;
         selectedPath = pendingSelectionPath !== "" ? pendingSelectionPath : path;
         pendingSelectionPath = "";
         errorText = "";
-        pathDraft = path;
+        editingPath = false;
+        // Listas do C++ chegam como QVariantList (nao e' Array do JS): so'
+        // `length` e indice, nada de for..of nem filter.
+        if (newPlaces !== undefined && newPlaces !== null && newPlaces.length > 0) {
+            places = newPlaces;
+        }
+        listing = entries;
+        rebuildEntries();
+    }
 
+    // O historico so' muda quando a listagem chega: um caminho que falhou
+    // nao entra nem tira nada das pilhas.
+    function recordHistory(path) {
+        const previous = currentPath;
+        if (historyMove === "back") {
+            backStack = backStack.slice(0, -1);
+            forwardStack = forwardStack.concat([previous]);
+        } else if (historyMove === "forward") {
+            forwardStack = forwardStack.slice(0, -1);
+            backStack = backStack.concat([previous]);
+        } else if (historyMove === "" && previous !== "" && previous !== path) {
+            backStack = backStack.concat([previous]);
+            forwardStack = [];
+        }
+        historyMove = "";
+    }
+
+    function goBack() {
+        if (backStack.length === 0) return;
+        historyMove = "back";
+        browsePath(backStack[backStack.length - 1]);
+    }
+
+    function goForward() {
+        if (forwardStack.length === 0) return;
+        historyMove = "forward";
+        browsePath(forwardStack[forwardStack.length - 1]);
+    }
+
+    function isHidden(name) {
+        return name.startsWith(".");
+    }
+
+    function rebuildEntries() {
         entryModel.clear();
-        for (let i = 0; i < entries.length; i++) {
+        let hidden = 0;
+        for (let i = 0; i < listing.length; i++) {
+            const entry = listing[i];
+            if (isHidden(entry.name)) {
+                hidden += 1;
+                if (!showHidden) continue;
+            }
             entryModel.append({
-                name: entries[i].name,
-                path: entries[i].path
+                name: entry.name,
+                path: entry.path,
+                kind: entry.kind !== undefined ? entry.kind : ""
             });
         }
+        hiddenCount = hidden;
+    }
+
+    function setShowHidden(show) {
+        showHidden = show;
+        rebuildEntries();
+    }
+
+    // Teclado na lista: setas andam, Enter entra, Backspace sobe.
+    function selectedIndex() {
+        for (let i = 0; i < entryModel.count; i++) {
+            if (entryModel.get(i).path === selectedPath) return i;
+        }
+        return -1;
+    }
+
+    function moveSelection(delta) {
+        if (entryModel.count === 0) return;
+        const index = Math.max(0, Math.min(entryModel.count - 1, selectedIndex() + delta));
+        selectedPath = entryModel.get(index).path;
+    }
+
+    function enterSelected() {
+        if (selectedPath !== "" && selectedPath !== currentPath) browsePath(selectedPath);
+    }
+
+    // "Usar esta pasta" do local do projeto novo: a selecionada (ou a atual)
+    // vira o local e o navegador recolhe.
+    function useAsLocation() {
+        createBrowsing = false;
+        if (selectedPath !== "" && selectedPath !== currentPath) browsePath(selectedPath);
     }
 
     function showError(message) {
         loading = false;
+        historyMove = "";
         errorText = message;
     }
 
@@ -117,10 +229,23 @@ Item {
     }
 
     function beginCreateFolder() {
-        createMode = "folder";
+        creatingFolder = true;
+        folderName = "";
         errorText = "";
-        createName = "";
-        createFocusRequested();
+    }
+
+    function cancelCreateFolder() {
+        creatingFolder = false;
+        errorText = "";
+    }
+
+    function submitCreateFolder() {
+        const name = folderName.trim();
+        if (name === "") {
+            errorText = qsTr("Informe um nome.");
+            return;
+        }
+        createFolderRequested(currentPath, name);
     }
 
     // Escolher a linguagem seleciona o primeiro ecossistema dela.
@@ -146,30 +271,22 @@ Item {
         createFocusRequested();
     }
 
-    function cancelCreate() {
-        createMode = "";
-        errorText = "";
-        createName = "";
-    }
-
     function submitCreate() {
         const name = createName.trim();
         if (name === "") {
             errorText = qsTr("Informe um nome.");
             return;
         }
-        if (createMode === "folder") {
-            createFolderRequested(currentPath, name);
-        } else if (createMode === "project") {
-            if (createTemplate === "") {
-                errorText = qsTr("Escolha a linguagem do projeto.");
-                return;
-            }
-            createProjectRequested(currentPath, name, createTemplate);
+        if (createTemplate === "") {
+            errorText = qsTr("Escolha a linguagem do projeto.");
+            return;
         }
+        createProjectRequested(currentPath, name, createTemplate);
     }
 
+    // A pasta nova foi criada: a linha fecha e ela vem selecionada.
     function selectAfterRefresh(path) {
+        creatingFolder = false;
         pendingSelectionPath = path;
     }
 }

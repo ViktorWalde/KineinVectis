@@ -173,7 +173,8 @@ bool CoreClient::dispatchWorkspaceResult(const QString& method, const QJsonObjec
         emit workspaceBrowseListed(
             result.value(QStringLiteral("path")).toString(),
             result.value(QStringLiteral("parent")).toString(),
-            result.value(QStringLiteral("entries")).toArray().toVariantList());
+            result.value(QStringLiteral("entries")).toArray().toVariantList(),
+            result.value(QStringLiteral("places")).toArray().toVariantList());
         return true;
     }
     if (method == QStringLiteral("workspace.close")) {

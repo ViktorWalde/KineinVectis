@@ -740,7 +740,8 @@ seletor de arquivos da JetBrains como inspiração; (2) **nada de borda reta**:
 há partes redondas e partes retas, e isso causa estranheza — seguir o modelo
 da JetBrains de moldura com as funções nos cantos e áreas internas com cantos
 redondos; (3) as **abas de arquivo** do editor, hoje retangulares, precisam ser
-modernizadas.
+modernizadas. Feitos: (2) e (3) no 40.7 §7.171; (1) no §7.172 (navegador
+amplo com locais, migalhas, pastas de projeto marcadas; protocolo 0.147.0).
 
 A task dedicada parte de capturas reais (hook `KINEIN_SCREENSHOT`) e propõe
 com mockups lado a lado; problemas de UX e de HUD/UI entram medidos.

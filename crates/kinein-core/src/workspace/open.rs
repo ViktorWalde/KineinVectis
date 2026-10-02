@@ -5,11 +5,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use kinein_protocol::{WorkspaceBrowseEntry, WorkspaceBrowseResult, WorkspaceInfo};
+use kinein_protocol::{ProjectKind, WorkspaceBrowseEntry, WorkspaceBrowseResult, WorkspaceInfo};
 use serde::{Deserialize, Serialize};
 
-use super::detect_project;
 use super::{WORKSPACE_DIR, WORKSPACE_FILE, WORKSPACE_SCHEMA_VERSION, WorkspaceError};
+use super::{browse_places, detect_project};
 
 /// On-disk representation of `.kinein/workspace.json`.
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -91,9 +91,13 @@ pub fn browse_directories(path: &Path) -> Result<WorkspaceBrowseResult, Workspac
                     path: path.display().to_string(),
                     source,
                 })?;
+            // A pasta de projeto vem marcada (0.147.0): o seletor mostra o
+            // ecossistema antes de abrir. Sao stats na pasta filha, sem ler.
+            let (kind, _, _) = detect_project(&canonical_path);
             entries.push(WorkspaceBrowseEntry {
                 name: dir_entry.file_name().to_string_lossy().into_owned(),
                 path: canonical_path.display().to_string(),
+                kind: (kind != ProjectKind::Unknown).then_some(kind),
             });
         }
     }
@@ -108,6 +112,7 @@ pub fn browse_directories(path: &Path) -> Result<WorkspaceBrowseResult, Workspac
         path: directory.display().to_string(),
         parent,
         entries,
+        places: browse_places(),
     })
 }
 
@@ -210,6 +215,31 @@ mod tests {
             .map(|entry| entry.name.as_str())
             .collect::<Vec<_>>();
         assert_eq!(names, ["Alpha", "zeta"]);
+        assert!(result.entries.iter().all(|entry| entry.kind.is_none()));
+        assert_eq!(
+            result.places.last().map(|place| place.id.as_str()),
+            Some("root")
+        );
+    }
+
+    #[test]
+    fn browse_directories_marks_project_folders() {
+        let dir = temp_workspace("browse-kind");
+        fs::create_dir(dir.join("app")).unwrap();
+        fs::write(dir.join("app").join("Cargo.toml"), "[package]").unwrap();
+        fs::create_dir(dir.join("notes")).unwrap();
+
+        let result = browse_directories(&dir).unwrap();
+
+        let kinds = result
+            .entries
+            .iter()
+            .map(|entry| (entry.name.as_str(), entry.kind))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            kinds,
+            [("app", Some(ProjectKind::RustCargo)), ("notes", None)]
+        );
     }
 
     #[test]

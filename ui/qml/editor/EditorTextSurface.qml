@@ -66,8 +66,6 @@ Rectangle {
     signal closerBraceRequested()
     signal smartHomeRequested(bool extendSelection)
 
-    // Raio grande, como a ilha que a contem (retorno do autor de 2026-10-02:
-    // nada de caixa quase reta dentro de uma area redonda).
     radius: Theme.radiusLarge
     color: Theme.background0
 

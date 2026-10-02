@@ -43,6 +43,73 @@ function draw(name, context, line, node) {
         context.moveTo(19, 12);
         context.arc(18, 12, 1, 0, Math.PI * 2, false);
         return true;
+    case "home":
+        // casa: telhado, paredes e porta (o "Inicio" do seletor de pastas)
+        context.moveTo(3, 11);
+        context.lineTo(12, 4);
+        context.lineTo(21, 11);
+        context.moveTo(5.5, 9.5);
+        context.lineTo(5.5, 20);
+        context.lineTo(18.5, 20);
+        context.lineTo(18.5, 9.5);
+        context.moveTo(10, 20);
+        context.lineTo(10, 15);
+        context.lineTo(14, 15);
+        context.lineTo(14, 20);
+        return true;
+    case "desktop":
+        // monitor no pe': a area de trabalho
+        context.moveTo(3, 5);
+        context.lineTo(21, 5);
+        context.lineTo(21, 16);
+        context.lineTo(3, 16);
+        context.closePath();
+        line(context, 12, 16, 12, 20);
+        line(context, 8, 20, 16, 20);
+        return true;
+    case "documents":
+        // folha com a orelha dobrada e duas linhas de texto
+        context.moveTo(6, 3);
+        context.lineTo(14, 3);
+        context.lineTo(19, 8);
+        context.lineTo(19, 21);
+        context.lineTo(6, 21);
+        context.closePath();
+        context.moveTo(14, 3);
+        context.lineTo(14, 8);
+        context.lineTo(19, 8);
+        line(context, 9, 13, 16, 13);
+        line(context, 9, 17, 16, 17);
+        return true;
+    case "download":
+        // seta descendo para a bandeja
+        line(context, 12, 4, 12, 15);
+        context.moveTo(7.5, 10.5);
+        context.lineTo(12, 15);
+        context.lineTo(16.5, 10.5);
+        line(context, 5, 19, 19, 19);
+        return true;
+    case "drive":
+        // disco: a raiz do sistema de arquivos
+        context.moveTo(3, 13);
+        context.lineTo(21, 13);
+        context.lineTo(21, 19);
+        context.lineTo(3, 19);
+        context.closePath();
+        context.moveTo(5, 13);
+        context.lineTo(7.5, 6);
+        context.lineTo(16.5, 6);
+        context.lineTo(19, 13);
+        node(context, 17, 16, 1);
+        return true;
+    case "recent":
+        // relogio: projetos abertos antes
+        context.moveTo(20, 12);
+        context.arc(12, 12, 8, 0, Math.PI * 2, false);
+        context.moveTo(12, 7);
+        context.lineTo(12, 12);
+        context.lineTo(15.5, 14);
+        return true;
     case "add":
         // o "+" de criar (o "Criar Projeto" da tela inicial, 2026-10-01)
         line(context, 12, 5, 12, 19);

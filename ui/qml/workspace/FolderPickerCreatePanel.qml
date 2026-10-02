@@ -2,7 +2,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
-// Criar — pasta (uma linha) ou PROJETO (a tela inteira do "Criar projeto").
+// Criar PROJETO: a tela inteira do "Criar projeto". (A "nova pasta" do
+// navegador e' a FolderPickerNewFolderRow, desde a 0.3.9.)
 //
 // 0.3.8 (retorno do autor de 2026-10-02: "quando clico em Criar projeto da'
 // para melhorar e deixar mais intuitivo"). O projeto deixou de ser um campo e
@@ -10,7 +11,7 @@ import KineinVectis
 // que se le de cima para baixo — a LINGUAGEM em cartoes, o NOME com o caminho
 // que vai nascer, o LOCAL numa linha (o navegador so' abre se pedir) e a
 // PREVIA dos arquivos. O botao "Criar projeto" mora no pe' do cartao.
-Rectangle {
+Item {
     id: root
 
     property var controller
@@ -21,12 +22,8 @@ Rectangle {
     readonly property string projectName: root.controller.createName.trim()
 
     width: parent.width
-    height: visible ? content.implicitHeight + (projectMode ? 0 : 2 * Theme.spacingSmall) : 0
-    visible: root.controller.createMode !== ""
-    radius: Theme.radius
-    color: projectMode ? "transparent" : Theme.background2
-    border.color: projectMode ? "transparent" : Theme.borderSoft
-    border.width: 1
+    height: visible ? content.implicitHeight : 0
+    visible: root.projectMode
 
     function focusName() {
         nameField.forceActiveFocus();
@@ -36,12 +33,10 @@ Rectangle {
         id: content
 
         anchors.fill: parent
-        anchors.margins: root.projectMode ? 0 : Theme.spacingSmall
-        spacing: root.projectMode ? Theme.spacingMedium : Theme.spacingSmall
+        spacing: Theme.spacingMedium
 
         // ---- 1. a linguagem, em cartoes ------------------------------------
         Text {
-            visible: root.projectMode
             text: qsTr("LINGUAGEM")
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeMicro
@@ -52,7 +47,6 @@ Rectangle {
         Row {
             id: tiles
 
-            visible: root.projectMode
             width: parent.width
             spacing: Theme.spacingSmall
 
@@ -76,7 +70,7 @@ Rectangle {
         // Mais de um ecossistema para a linguagem: a escolha aparece; um so':
         // a linha de baixo so' diz o que vai ser criado.
         Row {
-            visible: root.projectMode && root.catalog.ecosystems(root.controller.createLanguage).length > 1
+            visible: root.catalog.ecosystems(root.controller.createLanguage).length > 1
             spacing: Theme.spacingSmall
 
             Repeater {
@@ -95,7 +89,6 @@ Rectangle {
         }
 
         Text {
-            visible: root.projectMode
             width: parent.width
             text: root.chosenEcosystem !== null
                   ? root.chosenEcosystem.label + "  —  " + root.chosenEcosystem.detail
@@ -107,7 +100,6 @@ Rectangle {
 
         // ---- 2. o nome -------------------------------------------------------
         Text {
-            visible: root.projectMode
             text: qsTr("NOME")
             color: Theme.textSecondary
             font.pixelSize: Theme.fontSizeMicro
@@ -115,23 +107,12 @@ Rectangle {
             font.letterSpacing: 0.8
         }
 
-        Row {
+        Item {
             width: parent.width
-            height: root.projectMode ? 34 : 26
-            spacing: Theme.spacingSmall
-
-            Text {
-                visible: !root.projectMode
-                anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Pasta")
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSizeSmall
-                font.bold: true
-            }
+            height: 34
 
             Rectangle {
-                width: parent.width - x - (root.projectMode ? 0 : folderCreate.width
-                                           + cancelFolder.width + 2 * Theme.spacingSmall)
+                width: parent.width
                 height: parent.height
                 radius: Theme.radius
                 color: Theme.background0
@@ -149,7 +130,7 @@ Rectangle {
                     color: Theme.textPrimary
                     selectedTextColor: Theme.textPrimary
                     selectionColor: Theme.accentDim
-                    font.pixelSize: root.projectMode ? Theme.fontSizeLarge : Theme.fontSizeSmall
+                    font.pixelSize: Theme.fontSizeLarge
                     clip: true
                     selectByMouse: true
                     onTextEdited: root.controller.createName = text
@@ -159,37 +140,16 @@ Rectangle {
                 Text {
                     anchors.fill: nameField
                     verticalAlignment: Text.AlignVCenter
-                    visible: nameField.text === "" && root.projectMode
+                    visible: nameField.text === ""
                     text: qsTr("meu-projeto")
                     color: Theme.textDisabled
                     font: nameField.font
                 }
             }
-
-            FolderPickerButton {
-                id: folderCreate
-
-                visible: !root.projectMode
-                text: qsTr("Criar")
-                height: parent.height
-                primary: true
-                onClicked: root.controller.submitCreate()
-            }
-
-            KvIconButton {
-                id: cancelFolder
-
-                visible: !root.projectMode
-                compact: true
-                iconName: "close"
-                tooltip: qsTr("Cancelar criação")
-                onClicked: root.controller.cancelCreate()
-            }
         }
 
         // ---- 3. o local: uma linha; o navegador so' se pedir --------------
         Row {
-            visible: root.projectMode
             width: parent.width
             height: 26
             spacing: Theme.spacingSmall
@@ -217,8 +177,8 @@ Rectangle {
                 id: changeLocation
 
                 height: parent.height
-                text: root.controller.createBrowsing ? qsTr("Fechar pastas") : qsTr("Alterar local…")
-                onClicked: root.controller.createBrowsing = !root.controller.createBrowsing
+                text: qsTr("Alterar local…")
+                onClicked: root.controller.createBrowsing = true
             }
         }
 
@@ -226,7 +186,6 @@ Rectangle {
         Rectangle {
             width: parent.width
             height: previewText.implicitHeight + 2 * Theme.spacingSmall
-            visible: root.projectMode && !root.controller.createBrowsing
             radius: Theme.radius
             color: Theme.background0
             border.color: Theme.borderSoft

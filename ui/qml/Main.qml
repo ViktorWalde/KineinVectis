@@ -97,6 +97,7 @@ Window {
 
         anchors.fill: parent
         homePath: coreClient.homeDir
+        recentProjects: domains.recentWorkspacesController.visibleWorkspaces
         onBrowseRequested: function(path) {
             coreClient.browseWorkspaceFolders(path);
         }

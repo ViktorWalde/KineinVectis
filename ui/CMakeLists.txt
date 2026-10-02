@@ -285,6 +285,13 @@ set_source_files_properties(qml/workspace/StartActionTile.qml PROPERTIES QT_RESO
 set_source_files_properties(qml/workspace/FolderPickerDirectoryList.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerDirectoryList.qml)
 set_source_files_properties(qml/workspace/FolderPickerActionRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerActionRow.qml)
 set_source_files_properties(qml/workspace/FolderPickerCard.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCard.qml)
+set_source_files_properties(qml/workspace/ProjectKindNames.qml PROPERTIES QT_RESOURCE_ALIAS ProjectKindNames.qml)
+set_source_files_properties(qml/workspace/FolderPickerBrowser.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerBrowser.qml)
+set_source_files_properties(qml/workspace/FolderPickerPlaces.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerPlaces.qml)
+set_source_files_properties(qml/workspace/FolderPickerBreadcrumb.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerBreadcrumb.qml)
+set_source_files_properties(qml/workspace/FolderPickerNewFolderRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerNewFolderRow.qml)
+set_source_files_properties(qml/workspace/FolderPickerPlaceRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerPlaceRow.qml)
+set_source_files_properties(qml/workspace/ProjectKindNames.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(qml/workspace/WorkspaceController.qml PROPERTIES QT_RESOURCE_ALIAS WorkspaceController.qml)
 set_source_files_properties(qml/workspace/RecentWorkspacesController.qml PROPERTIES QT_RESOURCE_ALIAS RecentWorkspacesController.qml)
 set_source_files_properties(qml/workspace/RecentWorkspacesCard.qml PROPERTIES QT_RESOURCE_ALIAS RecentWorkspacesCard.qml)
@@ -638,6 +645,12 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/FolderPickerDirectoryList.qml
         qml/workspace/FolderPickerActionRow.qml
         qml/workspace/FolderPickerCard.qml
+        qml/workspace/ProjectKindNames.qml
+        qml/workspace/FolderPickerBrowser.qml
+        qml/workspace/FolderPickerPlaces.qml
+        qml/workspace/FolderPickerBreadcrumb.qml
+        qml/workspace/FolderPickerNewFolderRow.qml
+        qml/workspace/FolderPickerPlaceRow.qml
         qml/workspace/WorkspaceController.qml
         qml/workspace/RecentWorkspacesController.qml
         qml/workspace/RecentWorkspacesCard.qml

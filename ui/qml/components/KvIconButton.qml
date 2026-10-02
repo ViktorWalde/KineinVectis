@@ -11,6 +11,7 @@ Rectangle {
     property bool danger: false
     property bool compact: false
     property int iconSize: 20
+    property real iconRotation: 0
     property string tooltipPlacement: "bottom"
 
     signal clicked()
@@ -41,6 +42,7 @@ Rectangle {
     KvIcon {
         anchors.centerIn: parent
         name: root.iconName
+        rotation: root.iconRotation
         size: root.compact ? Math.min(root.iconSize, 16) : root.iconSize
         active: root.active
         disabled: !root.enabled

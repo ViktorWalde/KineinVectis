@@ -84,8 +84,8 @@ Item {
             root.projectTree.handleExternalChanges(changes);
         }
 
-        function onWorkspaceBrowseListed(path, parent, entries) {
-            root.folderPicker.setListing(path, parent, entries);
+        function onWorkspaceBrowseListed(path, parent, entries, places) {
+            root.folderPicker.setListing(path, parent, entries, places);
         }
 
         function onWorkspaceFolderCreated(path) {

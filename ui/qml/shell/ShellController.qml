@@ -339,16 +339,10 @@ Item {
         if (systems.indexOf("cargo") >= 0 && systems.indexOf("cmake") >= 0) {
             return "Cargo + CMake";
         }
-        const labels = {
-            rustCargo: "Rust/Cargo",
-            cmake: "CMake",
-            maven: "Maven",
-            gradle: "Gradle",
-            python: "Python",
-            make: "Make",
-            platformIo: "PlatformIO",
-            unknown: qsTr("Projeto")
-        };
-        return labels[kind] !== undefined ? labels[kind] : kind;
+        if (kind === "unknown") {
+            return qsTr("Projeto");
+        }
+        const label = ProjectKindNames.label(kind);
+        return label !== "" ? label : kind;
     }
 }

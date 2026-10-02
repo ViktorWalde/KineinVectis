@@ -1,79 +1,94 @@
 import QtQuick
 import KineinVectis
 
-Column {
+// A barra do navegador (0.3.9): voltar, avancar e subir a esquerda, o caminho
+// em migalhas no meio, e a direita "nova pasta" e "mostrar ocultas" — a
+// arrumacao do seletor da JetBrains, sem botao "Ir" (Enter no campo navega).
+Item {
     id: root
 
     property var controller
 
-    width: parent.width
-    height: pathBox.height + navigationRow.height + Theme.spacingSmall
-    spacing: Theme.spacingSmall
+    signal pathEditingFinished()
 
-    function focusPath() {
-        pathField.forceActiveFocus();
-    }
+    height: 32
 
-    Rectangle {
-        id: pathBox
-
-        width: parent.width
-        height: 34
-        radius: Theme.radius
-        color: Theme.background0
-        border.color: pathField.activeFocus ? Theme.accent : Theme.borderSoft
-        border.width: 1
-
-        TextInput {
-            id: pathField
-
-            anchors.fill: parent
-            anchors.margins: Theme.spacingSmall
-            verticalAlignment: TextInput.AlignVCenter
-            text: root.controller.pathDraft
-            color: Theme.textPrimary
-            selectedTextColor: Theme.textPrimary
-            selectionColor: Theme.accentDim
-            font.family: Theme.monoFont
-            font.pixelSize: 12
-            clip: true
-            selectByMouse: true
-            onTextEdited: root.controller.pathDraft = text
-            onAccepted: root.controller.browsePath(text)
-        }
+    function beginEditing(seed) {
+        breadcrumb.beginEditing(seed);
     }
 
     Row {
-        id: navigationRow
+        id: navigation
 
-        width: parent.width
-        height: 30
-        spacing: Theme.spacingSmall
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 2
 
-        FolderPickerButton {
-            text: qsTr("Início")
-            height: parent.height
-            onClicked: root.controller.browsePath(root.controller.homePath)
+        KvIconButton {
+            iconName: "back"
+            iconSize: 16
+            tooltip: qsTr("Voltar")
+            focus: false
+            enabled: root.controller.backStack.length > 0
+            onClicked: root.controller.goBack()
         }
 
-        FolderPickerButton {
-            text: qsTr("Subir")
-            height: parent.height
+        KvIconButton {
+            iconName: "back"
+            iconRotation: 180
+            iconSize: 16
+            tooltip: qsTr("Avançar")
+            focus: false
+            enabled: root.controller.forwardStack.length > 0
+            onClicked: root.controller.goForward()
+        }
+
+        KvIconButton {
+            iconName: "back"
+            iconRotation: 90
+            iconSize: 16
+            tooltip: qsTr("Pasta de cima (Backspace)")
+            focus: false
             enabled: root.controller.parentPath !== ""
             onClicked: root.controller.browsePath(root.controller.parentPath)
         }
+    }
 
-        FolderPickerButton {
-            // Botao comum: a acao principal do dialogo e' a do pe' (Abrir).
-            text: qsTr("Ir")
-            height: parent.height
-            onClicked: root.controller.browsePath(pathField.text)
+    FolderPickerBreadcrumb {
+        id: breadcrumb
+
+        anchors.left: navigation.right
+        anchors.leftMargin: Theme.spacingSmall
+        anchors.right: tools.left
+        anchors.rightMargin: Theme.spacingSmall
+        height: parent.height
+        controller: root.controller
+        onEditingFinished: root.pathEditingFinished()
+    }
+
+    Row {
+        id: tools
+
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 2
+
+        KvIconButton {
+            iconName: "add"
+            iconSize: 16
+            tooltip: qsTr("Nova pasta aqui")
+            focus: false
+            onClicked: root.controller.beginCreateFolder()
         }
 
-        FolderPickerButton {
-            text: qsTr("+ pasta")
-            height: parent.height
-            onClicked: root.controller.beginCreateFolder()
+        KvIconButton {
+            iconName: root.controller.showHidden ? "eye" : "eye-off"
+            iconSize: 16
+            active: root.controller.showHidden
+            tooltip: root.controller.showHidden ? qsTr("Esconder pastas ocultas")
+                                                : qsTr("Mostrar pastas ocultas")
+            focus: false
+            onClicked: root.controller.setShowHidden(!root.controller.showHidden)
         }
     }
 }

@@ -9,7 +9,7 @@
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
 > - **Em curso: 0.3.6** (casca e base visual), no checkout com o protocolo
->   `0.146.0`. Os gates G0 estão feitos e passam; a **F0** (medir antes de
+>   `0.147.0`. Os gates G0 estão feitos e passam; a **F0** (medir antes de
 >   mudar) foi feita em 2026-10-01 (40.7 §7.153; inventário, telas e linha de
 >   base no [`53`](53-arquitetura-executavel-da-0.3.6.md) §F0); depois vieram o
 >   "LSP ✗" sem queda falsa (§7.154), o **Criar Projeto** por linguagem
@@ -183,9 +183,9 @@ grep -rhoE '"[a-z][a-zA-Z]*\.[a-zA-Z][a-zA-Z.]*"\s*(\||=>)' \
 ```
 
 ```text
-protocolo   0.146.0 (2026-10-01; o historico das versoes e' o arquitetura/03)
+protocolo   0.147.0 (2026-10-02; o historico das versoes e' o arquitetura/03)
 metodos     174 IPC roteados, 57 eventos (scripts/verificar-fiacao-ipc.sh,
-            2026-10-01); 92 harnesses QML em scripts/qml-harness
+            2026-10-01); 97 harnesses QML em scripts/qml-harness (2026-10-02)
 testes      874 Rust aprovados; 1 C++; 67 harnesses QML (medicao de 2026-09-24, §7.99)
 historico   168 IPC roteados, 56 eventos em 2026-09-24 (remote.parseCommand em 0.134.0;
             remote.command kind copyId em 0.133.0;

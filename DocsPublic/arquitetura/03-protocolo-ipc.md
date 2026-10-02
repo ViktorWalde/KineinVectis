@@ -1,5 +1,17 @@
 # 03 — Protocolo IPC
 
+> **0.147.0 (2026-10-02) — o seletor de pastas marca projetos e oferece
+> locais.** `WorkspaceBrowseEntry.kind?` (`ProjectKind`, ausente numa pasta
+> sem marcador de build): o core roda a mesma detecção do `workspace.open` em
+> cada subpasta listada — só `stat`, sem ler arquivo — e o seletor mostra
+> "Rust/Cargo", "CMake", "Python"… antes de abrir. `WorkspaceBrowseResult.places`
+> (`[{ id, path }]`, o mesmo em toda listagem): `home`, os diretórios do
+> usuário que existem (`desktop`, `documents`, `downloads`, lidos do
+> `user-dirs.dirs` do XDG — acha a "Documentos" localizada; um diretório que
+> aponta para a própria home, o jeito do xdg-user-dirs de desligá-lo, fica
+> fora) e `root`. A UI traduz o `id`. Os dois campos são aditivos: um cliente
+> antigo os ignora.
+
 > **0.146.0 (2026-10-01) — layout do shell versionado, por workspace.**
 > `SettingsValues.layout?` e `EffectiveSettings.layout?` (objeto, com o
 > próprio `schemaVersion`). O efetivo é o do workspace, senão o global, e só
@@ -973,13 +985,27 @@ desktop. A UI continua proibida de listar o filesystem diretamente.
     "parent": "/home",
     "entries": [
       {
+        "name": "api",
+        "path": "/home/user/api",
+        "kind": "rustCargo"
+      },
+      {
         "name": "dev",
         "path": "/home/user/dev"
       }
+    ],
+    "places": [
+      { "id": "home", "path": "/home/user" },
+      { "id": "documents", "path": "/home/user/Documentos" },
+      { "id": "root", "path": "/" }
     ]
   }
 }
 ```
+
+Desde a `0.147.0`, `kind` marca a pasta de projeto (ausente quando não há
+marcador) e `places` traz os locais rápidos do seletor (ver o topo deste
+documento).
 
 `workspace.createFolder` recebe `{ "parent": "/dir", "name": "modulo" }`.
 O core canonicaliza `parent`, valida que `name` é apenas um segmento de caminho

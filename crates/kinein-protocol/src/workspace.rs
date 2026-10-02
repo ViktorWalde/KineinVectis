@@ -214,6 +214,22 @@ pub struct WorkspaceBrowseEntry {
     pub name: String,
     /// Canonical absolute path of the directory.
     pub path: String,
+    /// Project kind of the directory, when it carries a build marker
+    /// (`0.147.0`): the picker marks project folders without opening them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<ProjectKind>,
+}
+
+/// One quick place of the folder picker (`0.147.0`): the home, the XDG user
+/// directories that exist and the filesystem root.
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceBrowsePlace {
+    /// Stable id the UI translates: `home`, `desktop`, `documents`,
+    /// `downloads` or `root`.
+    pub id: String,
+    /// Canonical absolute path of the place.
+    pub path: String,
 }
 
 /// Result payload for `workspace.browse`.
@@ -227,6 +243,9 @@ pub struct WorkspaceBrowseResult {
     pub parent: Option<String>,
     /// Child directories sorted case-insensitively.
     pub entries: Vec<WorkspaceBrowseEntry>,
+    /// Quick places, the same on every listing (`0.147.0`).
+    #[serde(default)]
+    pub places: Vec<WorkspaceBrowsePlace>,
 }
 
 /// Project template supported by `workspace.createProject`.

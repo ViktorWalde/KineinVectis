@@ -38,6 +38,17 @@ no checkout, não em nenhum pacote publicado.
   partido.
 - **"Projeto" em toda a interface.** Onde a IDE dizia "workspace" (tela
   inicial, menu, cabeçalho, mensagens, manual), agora diz "projeto".
+- Protocolo `0.147.0` — **navegar pastas sem aperto.** Abrir e criar
+  projeto ganharam um navegador largo: locais à esquerda (Início, Documentos,
+  Downloads, Raiz e os projetos recentes), o caminho em partes clicáveis com
+  voltar, avançar e subir, e a lista grande, com as **pastas de projeto
+  marcadas** (Rust/Cargo, CMake, Python…). Pastas ocultas só quando você
+  pede; digite "/" para escrever o caminho; setas, Enter e Backspace navegam.
+  Trocar o local de um projeto novo, ou criar uma pasta para ele, não perde
+  mais a linguagem e o nome escolhidos.
+- **Abas de arquivo e cantos redondos.** A aba ativa é uma pílula com
+  sublinhado; as outras não têm caixa. As áreas internas do editor e do
+  terminal acompanham os cantos redondos das ilhas.
 - **Criar e abrir projeto, cada um com a sua tela.** Criar mostra a
   linguagem em cartões, o nome com o caminho que vai nascer e a prévia, e só
   habilita "Criar projeto" com linguagem e nome; abrir diz qual pasta vai abrir.

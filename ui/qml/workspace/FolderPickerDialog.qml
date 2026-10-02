@@ -7,10 +7,14 @@ Item {
     id: picker
 
     visible: false
-    z: 100
+    // Modal: acima do cabecalho (z 100, declarado depois no Main — no empate
+    // ele cortava o topo do cartao alto da 0.3.9), abaixo das dicas.
+    z: 500
 
     property alias currentPath: controller.currentPath
     property alias homePath: controller.homePath
+    // Os recentes da tela inicial, na coluna de locais do "Abrir projeto".
+    property var recentProjects: []
 
     signal browseRequested(string path)
     signal openRequested(string path)
@@ -53,8 +57,8 @@ Item {
         controller.close();
     }
 
-    function setListing(path, parent, entries) {
-        controller.setListing(path, parent, entries);
+    function setListing(path, parent, entries, places) {
+        controller.setListing(path, parent, entries, places);
     }
 
     function showError(message) {
@@ -123,6 +127,7 @@ Item {
         controller: controller
         maxAvailableWidth: parent.width - 80
         maxAvailableHeight: parent.height - 80
+        recentProjects: picker.recentProjects
         onCloseRequested: picker.close()
     }
 }

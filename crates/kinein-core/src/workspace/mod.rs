@@ -16,6 +16,7 @@ mod create;
 mod detect;
 mod error;
 mod open;
+mod places;
 mod recent;
 mod session;
 
@@ -23,6 +24,7 @@ pub use create::{create_directory, create_project};
 pub use detect::detect_project;
 pub use error::WorkspaceError;
 pub use open::{browse_directories, metadata_path, open_workspace};
+pub use places::browse_places;
 pub use recent::{
     RecentWorkspaceError, clear_recent_workspaces_in, load_recent_workspaces_in,
     recent_workspaces_path_in, record_recent_workspace_in, remove_recent_workspace_in,

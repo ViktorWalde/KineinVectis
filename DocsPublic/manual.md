@@ -22,8 +22,12 @@ uso.
 1. A IDE abre na **Start Screen**, que mostra o estado das ferramentas sem
    instalar ou alterar nada automaticamente. Clique em **Abrir projeto**
    (ou `Ctrl+O`).
-2. Navegue até a pasta do seu projeto (qualquer projeto com `Cargo.toml` ou
-   `CMakeLists.txt` é detectado automaticamente) e confirme.
+2. Navegue até a pasta do seu projeto e confirme. À esquerda ficam os
+   locais (Início, Documentos, Downloads, Raiz) e os projetos recentes; em
+   cima, o caminho em partes clicáveis, com voltar, avançar e subir. Pastas
+   de projeto vêm marcadas com o ecossistema (Rust/Cargo, CMake, Python…).
+   Digite `/` ou `~` para escrever um caminho; setas, Enter e Backspace
+   navegam; o olho da barra mostra as pastas ocultas.
 3. A árvore de arquivos aparece à esquerda. Clique num arquivo para editar.
 
 Se a raiz tiver `Cargo.toml` **e** `CMakeLists.txt`, a Kinein reconhece o

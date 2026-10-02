@@ -352,7 +352,7 @@ signals:
     void workspaceChanged();
     void recentWorkspacesResolved(const QVariantList& workspaces);
     void workspaceBrowseListed(const QString& path, const QString& parent,
-                               const QVariantList& entries);
+                               const QVariantList& entries, const QVariantList& places);
     void workspaceFolderCreated(const QString& path);
     void sessionRestored(const QStringList& files, const QString& activeFile);
     // M-S1 (DocsPublic/seguranca/23): rascunhos não salvos recuperados de um crash.
