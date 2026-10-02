@@ -76,6 +76,7 @@ lista, um por um, está em [04](04-os-gates-que-dizem-nao.md).
 | `KINEIN_STARTUP_COMMANDS=<ids da paleta>` | executa comandos depois do workspace abrir (`git.log`, `probe.list=kit`, `index.symbols=parse_`, `container.list`…) |
 | `KINEIN_PERF_EXIT=1` `KINEIN_PERF_MARKER` | tempo até o primeiro frame e sai |
 | `KINEIN_PERF_TYPING_WORKSPACE/_FILE/_KEYS` | o harness de latência da tecla |
+| `KINEIN_PERF_FRAMES=<segundos>` | mede os quadros (0.3.9): no fim, `frame_interval` (entre quadros apresentados) e `frame_cost` (sincronizar e desenhar, sem o vsync), com mediana, p95, pior caso e quantos passaram de 16,7 e 8,3 ms |
 | `KINEIN_CORE_BIN=<caminho>` | qual core a UI sobe (o release, ou um logger de IPC) |
 | `XDG_CONFIG_HOME=<pasta>` | isola as configurações (`settings.json` é achatado: `{"schemaVersion":1,"railExpanded":true}`) |
 

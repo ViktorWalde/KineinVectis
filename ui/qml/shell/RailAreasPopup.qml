@@ -82,12 +82,29 @@ FocusScope {
         onClicked: root.close()
     }
 
+    // Entrada: aparece e desliza 6 px em `motionFast` (0.3.9, fluidez).
+    property real entrance: 0
+    onVisibleChanged: if (visible) entranceAnimation.restart()
+
+    NumberAnimation {
+        id: entranceAnimation
+
+        target: root
+        property: "entrance"
+        from: 0
+        to: 1
+        duration: Theme.motionFast
+        easing.type: Theme.easingStandard
+    }
+
     Rectangle {
         id: panel
 
+        opacity: root.entrance
         x: Math.min(root.anchorX, root.width - width - Theme.spacingSmall)
         y: Math.max(Theme.spacingSmall,
                     Math.min(root.anchorY, root.height - height - Theme.spacingSmall))
+           + 6 * (1 - root.entrance)
         width: 380
         height: content.implicitHeight + 2 * Theme.spacingMedium
         radius: Theme.radiusLarge

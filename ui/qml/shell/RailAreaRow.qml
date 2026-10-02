@@ -27,6 +27,11 @@ Rectangle {
     border.color: highlighted ? Theme.accentDim : "transparent"
     border.width: 1
 
+    // Hover e selecao trocam de cor em `motionFast`, nao num salto (0.3.9:
+    // fluidez, decisao do autor de 2026-10-01).
+    Behavior on color { ColorAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard } }
+    Behavior on border.color { ColorAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard } }
+
     MouseArea {
         id: rowArea
 

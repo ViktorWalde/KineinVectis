@@ -782,6 +782,8 @@ qt_add_qml_module(kinein-vectis
         src/editor_highlighter_folding.cpp
         src/typing_perf_harness.cpp
         src/typing_perf_harness.h
+        src/frame_pacing_probe.cpp
+        src/frame_pacing_probe.h
         src/window_chrome_controller.cpp
         src/window_chrome_controller.h
         src/single_instance_guard.cpp

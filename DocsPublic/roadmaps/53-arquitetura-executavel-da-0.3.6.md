@@ -716,6 +716,15 @@ A3.3-1, antes e depois. Hipóteses a medir antes de mexer: o AppImage força
 `QT_QUICK_BACKEND=software`, que provavelmente impede os 120 Hz; e há carga
 síncrona no caminho do quadro (já anotada acima).
 
+**Instrumento e primeira medida (2026-10-02, 40.7 §7.170):**
+`KINEIN_PERF_FRAMES=<segundos>` (`ui/src/frame_pacing_probe.cpp`). Na tela do
+autor (eDP-1, **59,88 Hz**), hover de ida e volta sobre os cartões da tela
+inicial, X11: custo por quadro mediana 0,16 ms, p95 0,66 ms (um quadro de
+164 ms: o primeiro, montando a cena); intervalo entre quadros mediana 16,7 ms
+(o vsync), p95 24 ms. O código cabe com folga em 8,3 ms; o que passa de
+16,7 ms no intervalo é retomada depois de pausa e o compositor. **120 Hz não se
+prova nesta tela**: precisa de um monitor de 120 Hz.
+
 **Retorno do autor depois de usar o trilho e a criação (2026-10-02):** o menu
 de fixar/desafixar/ocultar e o "Mais" estão confusos — tudo numa cor só, em
 lista, um abaixo do outro; precisam ser de fácil entendimento. A tela inicial

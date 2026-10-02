@@ -3,6 +3,7 @@
 #include "cli_args.h"
 #include "qt_message_log.h"
 
+#include "frame_pacing_probe.h"
 #include "single_instance.h"
 #include "typing_perf_harness.h"
 #include <QTextStream>
@@ -245,6 +246,7 @@ int main(int argc, char* argv[])
 
     installStartupPerfMarker(app, engine, perfTimer);
     installScreenshotHook(app, engine);
+    kinein::installFramePacingProbe(app, engine);
     kinein::installTypingPerfHarness(app, engine);
 
     return QGuiApplication::exec();

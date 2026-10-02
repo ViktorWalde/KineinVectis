@@ -99,10 +99,27 @@ Item {
         }
     }
 
+    // Entrada: aparece e desliza 8 px em `motionFast` (0.3.9, fluidez).
+    property real entrance: 0
+    onVisibleChanged: if (visible) entranceAnimation.restart()
+
+    NumberAnimation {
+        id: entranceAnimation
+
+        target: picker
+        property: "entrance"
+        from: 0
+        to: 1
+        duration: Theme.motionFast
+        easing.type: Theme.easingStandard
+    }
+
     FolderPickerCard {
         id: card
 
+        opacity: picker.entrance
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: 8 * (1 - picker.entrance)
         controller: controller
         maxAvailableWidth: parent.width - 80
         maxAvailableHeight: parent.height - 80
