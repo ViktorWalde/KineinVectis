@@ -126,11 +126,14 @@ Rectangle {
         case "setup.list": root.setupController.open(); break;
         case "container.list": root.containerController.open(); break;
         case "configAction.list": root.configActionController.openDialog(); break;
-        // O menu de toolchain nasce ANCORADO no botao da barra. Vindo do menu
-        // de Ambiente nao ha' botao para ancorar, e a coordenada negativa cai
-        // no clamp do proprio ToolchainMenu: ele encosta no canto superior
-        // esquerdo, que e' previsivel e nao fica fora da tela.
-        case "toolchain.get": root.toolchainController.openMenu(-1, -1); break;
+        // Vindo do menu Ambiente ou do "⋯" dos chips, sem chip para ancorar:
+        // o popover abre embaixo do cabecalho, no canto esquerdo (0.3.8 F3).
+        case "toolchain.get":
+            root.toolchainController.openMenu(Theme.spacingLarge, root.contextMenuY(), true);
+            break;
+        case "python.context":
+            root.pythonController.openMenu(Theme.spacingLarge, root.contextMenuY());
+            break;
         case "help.manual": root.manualRequested(); break;
         case "help.about": root.aboutRequested(); break;
         case "app.quit": Qt.quit(); break;
@@ -162,6 +165,24 @@ Rectangle {
         onMaximizeRestoreRequested: root.maximizeRestoreRequested()
         onCloseWindowRequested: root.closeWindowRequested()
         onMoveWindowRequested: root.moveWindowRequested()
+    }
+
+    function contextMenuY() {
+        return appMenuBar.height + headerBar.height + Theme.spacingXSmall;
+    }
+
+    // O "⋯" dos chips: so' os contextos que nao couberam, cada um abrindo o dono.
+    function contextOverflowItems() {
+        const items = [];
+        if (headerBar.toolchainHidden) {
+            items.push({ label: qsTr("Toolchain: %1").arg(headerBar.toolchainSummary),
+                         action: "toolchain.get", enabled: true });
+        }
+        if (headerBar.pythonHidden) {
+            items.push({ label: qsTr("Python: %1").arg(headerBar.pythonSummary),
+                         action: "python.context", enabled: true });
+        }
+        return items;
     }
 
     function closeAppMenu() {
@@ -207,6 +228,11 @@ Rectangle {
         pythonSummary: root.pythonController !== null ? root.pythonController.contextLabel() : ""
         pythonMenuOpen: root.pythonController !== null && root.pythonController.menuVisible
         // Os overlays cobrem a janela inteira: a coordenada da janela serve.
+        onContextOverflowRequested: function(menuX, menuY) {
+            root.headerMenu = "context";
+            root.appMenuRequested("context", menuX, menuY + appMenuBar.height,
+                                  root.contextOverflowItems());
+        }
         onPythonMenuRequested: function(menuX, menuY) {
             const pos = headerBar.mapToItem(null, menuX, menuY);
             root.pythonController.openMenu(pos.x, pos.y);

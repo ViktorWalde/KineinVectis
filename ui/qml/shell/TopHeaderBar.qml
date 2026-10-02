@@ -44,6 +44,13 @@ Rectangle {
     signal gitBranchMenuRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
     signal pythonMenuRequested(real menuX, real menuY)
+    signal contextOverflowRequested(real menuX, real menuY)
+
+    // Contexto que existe mas nao coube: vai para o "⋯".
+    readonly property bool toolchainHidden: root.workspaceOpen && root.toolchainSummary !== ""
+                                            && !contextWidget.visible
+    readonly property bool pythonHidden: root.workspaceOpen && root.pythonSummary !== ""
+                                         && !pythonWidget.visible
     signal runRequested()
     signal stopRunRequested()
     signal debugRequested()
@@ -117,9 +124,11 @@ Rectangle {
             menuOpen: root.toolchainMenuOpen
             // Prioridade por largura: a toolchain pega primeiro o que sobra
             // ate' o executar; o Python, o resto. Sem lugar, o chip sai.
+            // Reserva o lugar do "⋯" (32 px e o espaco) para ele nunca empurrar.
             availableWidth: (runWidget.visible ? runWidget.x : root.width) - Theme.spacingLarge
                             - leftWidgets.x - projectWidget.width - leftWidgets.spacing
                             - (gitWidget.visible ? gitWidget.width + leftWidgets.spacing : 0)
+                            - 32 - leftWidgets.spacing
             onMenuRequested: function(menuX, menuY) {
                 const pos = root.mapFromItem(contextWidget, menuX, menuY);
                 root.toolchainMenuRequested(pos.x, pos.y);
@@ -139,6 +148,22 @@ Rectangle {
             onMenuRequested: function(menuX, menuY) {
                 const pos = root.mapFromItem(pythonWidget, menuX, menuY);
                 root.pythonMenuRequested(pos.x, pos.y);
+            }
+        }
+
+        KvIconButton {
+            id: overflowButton
+
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.toolchainHidden || root.pythonHidden
+            iconName: "more"
+            iconSize: 16
+            focus: false
+            focusOnClick: false
+            tooltip: qsTr("Contexto que não coube")
+            onClicked: {
+                const pos = root.mapFromItem(overflowButton, 0, overflowButton.height);
+                root.contextOverflowRequested(pos.x, pos.y);
             }
         }
     }

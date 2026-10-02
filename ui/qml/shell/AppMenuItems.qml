@@ -172,6 +172,8 @@ Item {
                   enabled: true },
                 { label: qsTr("Toolchain e kits..."), action: "toolchain.get",
                   enabled: workspaceOpen },
+                { label: qsTr("Python do projeto..."), action: "python.context",
+                  enabled: workspaceOpen },
                 { label: qsTr("Ações de configuração..."), action: "configAction.list",
                   enabled: workspaceOpen },
                 { label: qsTr("Configurar CMake"), action: "cmake.configure",

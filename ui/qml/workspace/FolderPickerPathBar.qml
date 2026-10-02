@@ -29,6 +29,7 @@ Item {
             iconSize: 16
             tooltip: qsTr("Voltar")
             focus: false
+            focusOnClick: false
             enabled: root.controller.backStack.length > 0
             onClicked: root.controller.goBack()
         }
@@ -39,6 +40,7 @@ Item {
             iconSize: 16
             tooltip: qsTr("Avançar")
             focus: false
+            focusOnClick: false
             enabled: root.controller.forwardStack.length > 0
             onClicked: root.controller.goForward()
         }
@@ -49,6 +51,7 @@ Item {
             iconSize: 16
             tooltip: qsTr("Pasta de cima (Backspace)")
             focus: false
+            focusOnClick: false
             enabled: root.controller.parentPath !== ""
             onClicked: root.controller.browsePath(root.controller.parentPath)
         }
@@ -78,6 +81,7 @@ Item {
             iconSize: 16
             tooltip: qsTr("Nova pasta aqui")
             focus: false
+            focusOnClick: false
             onClicked: root.controller.beginCreateFolder()
         }
 
@@ -88,6 +92,7 @@ Item {
             tooltip: root.controller.showHidden ? qsTr("Esconder pastas ocultas")
                                                 : qsTr("Mostrar pastas ocultas")
             focus: false
+            focusOnClick: false
             onClicked: root.controller.setShowHidden(!root.controller.showHidden)
         }
     }

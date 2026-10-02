@@ -12,6 +12,9 @@ Rectangle {
     property bool compact: false
     property int iconSize: 20
     property real iconRotation: 0
+    // Botao de barra que abre popover: o clique do mouse nao deixa um anel de
+    // foco preso nele (o teclado continua focando pelo Tab).
+    property bool focusOnClick: true
     property string tooltipPlacement: "bottom"
 
     signal clicked()
@@ -72,7 +75,7 @@ Rectangle {
             }
         }
         onClicked: {
-            root.forceActiveFocus();
+            if (root.focusOnClick) root.forceActiveFocus();
             TooltipController.hideFor(root);
             root.clicked();
         }

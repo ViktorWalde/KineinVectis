@@ -2753,8 +2753,6 @@ scripts/qml-harness/tst_project_tree_teclado.qml	tecla	16
 scripts/qml-harness/tst_project_tree_teclado.qml	teclado	33
 scripts/qml-harness/tst_project_tree_teclado.qml	texto	3
 scripts/qml-harness/tst_project_tree_teclado.qml	todos	3
-scripts/qml-harness/tst_python.qml	criar	5
-scripts/qml-harness/tst_python.qml	pedidos	19
 scripts/qml-harness/tst_remote.qml	pedidos	34
 scripts/qml-harness/tst_remote_action_rules.qml	caso	4
 scripts/qml-harness/tst_remote_action_rules.qml	estado	13

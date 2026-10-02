@@ -12,16 +12,16 @@ import "../../ui/qml/python"
 Item {
     id: root
 
-    property int pedidosStatus: 0
-    property var pedidosCriar: []
-    property var pedidosStubs: []
+    property int statusRequests: 0
+    property var createRequests: []
+    property var stubRequests: []
 
     PythonController {
         id: py
 
-        onStatusRequested: root.pedidosStatus += 1
-        onCreateEnvironmentRequested: function(tool) { root.pedidosCriar.push(tool); }
-        onStubsRequested: function(port, board) { root.pedidosStubs.push(port + "/" + board); }
+        onStatusRequested: root.statusRequests += 1
+        onCreateEnvironmentRequested: function(tool) { root.createRequests.push(tool); }
+        onStubsRequested: function(port, board) { root.stubRequests.push(port + "/" + board); }
     }
 
     Component.onCompleted: {
@@ -30,11 +30,11 @@ Item {
         // Projeto sem Python: nao pergunta, nao resume, nao precisa de nada.
         py.workspaceBuildSystems = ["cmake"];
         py.workspaceRoot = "/tmp/proj";
-        if (root.pedidosStatus !== 0 || py.isPython || py.summary() !== "") failures += 1;
+        if (root.statusRequests !== 0 || py.isPython || py.summary() !== "") failures += 1;
 
         // Projeto Python (ainda que Cargo por fora): pergunta ao abrir.
         py.workspaceBuildSystems = ["cargo", "python"];
-        if (root.pedidosStatus !== 1 || !py.isPython) failures += 2;
+        if (root.statusRequests !== 1 || !py.isPython) failures += 2;
         // Antes da resposta: nada a dizer, e o botao NAO aparece.
         if (py.known || py.needsEnvironment || py.summary() !== "") failures += 4;
 
@@ -62,11 +62,11 @@ Item {
                           hasEnvironment: false, environmentTool: "uv" });
         py.createEnvironment();
         py.createEnvironment();
-        if (root.pedidosCriar.join(",") !== "uv" || !py.creating) failures += 512;
+        if (root.createRequests.join(",") !== "uv" || !py.creating) failures += 512;
         if (py.bannerMessage().indexOf("criando") < 0) failures += 1024;
-        const antes = root.pedidosStatus;
+        const antes = root.statusRequests;
         py.handleEnvironmentFinished({ success: true, tool: "uv", command: "uv venv .venv", path: "/tmp/proj/.venv" });
-        if (py.creating || root.pedidosStatus !== antes + 1) failures += 2048;
+        if (py.creating || root.statusRequests !== antes + 1) failures += 2048;
         if (py.lastOutcome.indexOf("/tmp/proj/.venv") < 0) failures += 4096;
         // Ambiente proprio: sem botao, resumo limpo.
         py.handleStatus({ interpreter: { interpreter: "/tmp/proj/.venv/bin/python", version: "Python 3.14.7", origin: ".venv" },
@@ -79,9 +79,9 @@ Item {
         if (py.creating || py.lastOutcome.indexOf("falhou") < 0) failures += 16384;
         // Com ambiente, criar e' recusado (nao pede).
         py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv" });
-        const pedidos = root.pedidosCriar.length;
+        const createCountBefore = root.createRequests.length;
         py.createEnvironment();
-        if (root.pedidosCriar.length !== pedidos) failures += 32768;
+        if (root.createRequests.length !== createCountBefore) failures += 32768;
 
         // Modulo nativo (fatia 5): entra no resumo e a dica e' a do core.
         py.handleStatus({ interpreter: { interpreter: "/tmp/proj/.venv/bin/python", version: "Python 3.14.7", origin: ".venv" },
@@ -92,9 +92,9 @@ Item {
         // O chip do cabecalho (0.3.8 F3): o mesmo sem o prefixo e sem o
         // modulo nativo; o popover pede o status ao abrir.
         if (py.contextLabel() !== ".venv · 3.14.7") failures += 67108864;
-        const statusBeforeMenu = root.pedidosStatus;
+        const statusBeforeMenu = root.statusRequests;
         py.openMenu(10, 20);
-        if (!py.menuVisible || py.menuY !== 20 || root.pedidosStatus !== statusBeforeMenu + 1) failures += 134217728;
+        if (!py.menuVisible || py.menuY !== 20 || root.statusRequests !== statusBeforeMenu + 1) failures += 134217728;
         py.closeMenu();
         if (py.menuVisible) failures += 268435456;
         py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv" });
@@ -106,13 +106,13 @@ Item {
         py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv",
                           stubsSuggested: "micropython-esp32-esp32_generic_c3-stubs" });
         if (!py.needsStubs || py.stubsMessage().indexOf("micropython-esp32-esp32_generic_c3-stubs") < 0) failures += 2097152;
-        const statusAntes = root.pedidosStatus;
+        const statusBefore = root.statusRequests;
         py.installStubs();
-        if (root.pedidosStubs.join(",") !== "/" || !py.installingStubs) failures += 4194304;
+        if (root.stubRequests.join(",") !== "/" || !py.installingStubs) failures += 4194304;
         py.installStubs();
-        if (root.pedidosStubs.length !== 1) failures += 8388608;
+        if (root.stubRequests.length !== 1) failures += 8388608;
         py.handleStubsFinished({ success: true, package: "micropython-esp32-esp32_generic_c3-stubs", target: "/tmp/proj/typings", command: "uv pip install …" });
-        if (py.installingStubs || py.lastOutcome.indexOf("/tmp/proj/typings") < 0 || root.pedidosStatus !== statusAntes + 1) failures += 16777216;
+        if (py.installingStubs || py.lastOutcome.indexOf("/tmp/proj/typings") < 0 || root.statusRequests !== statusBefore + 1) failures += 16777216;
         py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv",
                           stubsSuggested: "micropython-esp32-esp32_generic_c3-stubs", stubsPath: "/tmp/proj/typings" });
         if (py.needsStubs || py.stubsPath !== "/tmp/proj/typings") failures += 33554432;
