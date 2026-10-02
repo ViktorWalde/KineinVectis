@@ -8,7 +8,7 @@ Rectangle {
     property var controller
 
     width: parent.width
-    height: visible ? (root.controller.createMode === "project" ? 194 : 42) : 0
+    height: visible ? content.implicitHeight + 2 * Theme.spacingSmall : 0
     visible: root.controller.createMode !== ""
     radius: Theme.radius
     color: Theme.background2
@@ -19,36 +19,11 @@ Rectangle {
         createNameField.forceActiveFocus();
     }
 
-    function previewText() {
-        const name = root.controller.createName.trim() !== ""
-                     ? root.controller.createName.trim() : qsTr("meu-projeto");
-        if (root.controller.createTemplate === "cppCmake") {
-            return name + "/\n"
-                 + "  CMakeLists.txt  · C++23 target-based\n"
-                 + "  CMakePresets.json  · Debug + Release / Ninja\n"
-                 + "  src/main.cpp\n"
-                 + "  include/  tests/\n"
-                 + "  .gitignore  README.md\n"
-                 + qsTr("Geração interna: nenhum comando externo");
-        }
-        if (root.controller.createTemplate === "rustCargo") {
-            return name + "/\n"
-                 + "  Cargo.toml\n"
-                 + "  src/main.rs\n\n"
-                 + qsTr("Comando: cargo new --bin --vcs none %1").arg(name);
-        }
-        if (root.controller.createTemplate === "python") {
-            return name + "/\n"
-                 + "  pyproject.toml  · PEP 621, pytest em [dev], ruff\n"
-                 + "  main.py  · o ponto de entrada do Executar\n"
-                 + "  " + name.replace(/-/g, "_") + "/__init__.py  tests/test_main.py\n"
-                 + "  .gitignore  README.md\n"
-                 + qsTr("Geração interna: nenhum comando externo; o .venv é um clique depois");
-        }
-        return name + "/  " + qsTr("(diretório vazio)");
-    }
+    readonly property var catalog: root.controller.templateCatalog
 
     Column {
+        id: content
+
         anchors.fill: parent
         anchors.margins: Theme.spacingSmall
         spacing: Theme.spacingSmall
@@ -114,55 +89,75 @@ Rectangle {
             }
         }
 
+        // 1º a LINGUAGEM, 2º o ECOSSISTEMA dela (53 §13.0 item 6); os dois
+        // vem do catalogo, e o painel so' desenha.
         Row {
             width: parent.width
-            height: 24
+            height: 22
             visible: root.controller.createMode === "project"
             spacing: Theme.spacingSmall
 
+            Text {
+                width: 78
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Linguagem")
+                color: Theme.textSecondary
+                font.pixelSize: 11
+            }
+
             Repeater {
-                model: [
-                    { key: "cppCmake", label: "C++ CMake" },
-                    { key: "rustCargo", label: "Rust Cargo" },
-                    { key: "python", label: "Python" },
-                    { key: "empty", label: qsTr("Vazio") }
-                ]
+                model: root.catalog.languages
 
-                delegate: Rectangle {
-                    id: templateChip
-
+                delegate: KvToggleChip {
                     required property var modelData
 
-                    width: templateLabel.width + 2 * Theme.spacingSmall
-                    height: parent.height
-                    radius: Theme.radius
-                    color: root.controller.createTemplate === modelData.key
-                           ? Theme.surfaceSelected
-                           : (templateArea.containsMouse
-                              ? Theme.surface2 : "transparent")
-                    border.color: Theme.borderSoft
-                    border.width: 1
-
-                    Text {
-                        id: templateLabel
-
-                        anchors.centerIn: parent
-                        text: templateChip.modelData.label
-                        color: root.controller.createTemplate === templateChip.modelData.key
-                               ? Theme.accent : Theme.textSecondary
-                        font.pixelSize: 10
-                        font.bold: true
-                    }
-
-                    MouseArea {
-                        id: templateArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.controller.createTemplate = templateChip.modelData.key
-                    }
+                    labelText: modelData.label
+                    active: root.controller.createLanguage === modelData.key
+                    outlined: true
+                    codeFont: false
+                    onToggled: root.controller.chooseLanguage(modelData.key)
                 }
+            }
+        }
+
+        Row {
+            width: parent.width
+            height: 22
+            visible: root.controller.createMode === "project"
+            spacing: Theme.spacingSmall
+
+            Text {
+                width: 78
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Ecossistema")
+                color: Theme.textSecondary
+                font.pixelSize: 11
+            }
+
+            Repeater {
+                model: root.catalog.ecosystems(root.controller.createLanguage)
+
+                delegate: KvToggleChip {
+                    required property var modelData
+
+                    labelText: modelData.label
+                    active: root.controller.createTemplate === modelData.template
+                    outlined: true
+                    codeFont: false
+                    onToggled: root.controller.createTemplate = modelData.template
+                }
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - x
+                text: root.controller.createLanguage === ""
+                      ? qsTr("escolha a linguagem")
+                      : (root.catalog.ecosystem(root.controller.createTemplate) !== null
+                         ? root.catalog.ecosystem(root.controller.createTemplate).detail : "")
+                color: Theme.textMuted
+                font.pixelSize: 11
+                elide: Text.ElideRight
             }
         }
 
@@ -178,7 +173,9 @@ Rectangle {
             Text {
                 anchors.fill: parent
                 anchors.margins: Theme.spacingSmall
-                text: qsTr("Preview — arquivos e comandos\n") + root.previewText()
+                text: qsTr("Preview — arquivos e comandos\n")
+                      + root.catalog.preview(root.controller.createTemplate,
+                                             root.controller.createName)
                 color: Theme.textSecondary
                 font.family: Theme.monoFont
                 font.pixelSize: 10

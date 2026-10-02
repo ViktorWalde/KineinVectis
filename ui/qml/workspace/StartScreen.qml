@@ -135,17 +135,14 @@ Rectangle {
                 Row {
                     spacing: Theme.spacingSmall
 
+                    // UM gesto para criar, e a linguagem se escolhe dentro
+                    // dele (53 §13.0 item 6): dois botoes fixos de C++ e Rust
+                    // deixavam o Python de fora da porta de entrada.
                     KvButton {
-                        text: qsTr("Novo C++ / CMake")
-                        iconName: "configure"
+                        text: qsTr("Criar Projeto")
+                        iconName: "add"
                         primary: true
-                        onClicked: root.newProjectRequested("cppCmake")
-                    }
-
-                    KvButton {
-                        text: qsTr("Novo Rust / Cargo")
-                        iconName: "build"
-                        onClicked: root.newProjectRequested("rustCargo")
+                        onClicked: root.newProjectRequested("")
                     }
 
                     KvButton {

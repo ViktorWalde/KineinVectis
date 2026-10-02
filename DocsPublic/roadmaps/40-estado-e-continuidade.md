@@ -9,13 +9,16 @@
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
 > - **Em curso: 0.3.6** (casca e base visual), no checkout com o protocolo
->   `0.145.0`. Os gates G0 estão feitos e passam; a próxima fatia é a **F0**
->   (medir antes de mudar), depois o layout versionado e a V-1 — decisão do
->   autor, [`53`](53-arquitetura-executavel-da-0.3.6.md) §13.0. Onde cada fatia
->   começa no código: [`58`](58-onde-cada-versao-comeca-no-codigo.md).
-> - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15; o que
->   a máquina não prova sai como NÃO PROVADO
->   ([`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md)).
+>   `0.145.0`. Os gates G0 estão feitos e passam; a **F0** (medir antes de
+>   mudar) foi feita em 2026-10-01 (40.7 §7.153; inventário, telas e linha de
+>   base no [`53`](53-arquitetura-executavel-da-0.3.6.md) §F0). A próxima é o
+>   **layout versionado** com os limites de tamanho (53 §4.4), depois a V-1 —
+>   decisão do autor, 53 §13.0. Onde cada fatia começa no código:
+>   [`58`](58-onde-cada-versao-comeca-no-codigo.md).
+> - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15 nem
+>   no Ubuntu 26.04 / Qt 6.10 / clang 21 do autor (a exceção do clang-tidy só
+>   vale no 18 desde o 40.7 §7.153); o que a máquina não prova sai como NÃO
+>   PROVADO ([`contribuindo/04`](../contribuindo/04-os-gates-que-dizem-nao.md)).
 > - **Versões até a 1.0** e o que ainda é proposta:
 >   [`57`](57-mapa-de-versoes-ate-a-1.0.md). As decisões que não se reabrem:
 >   §5 deste documento. O que foi feito, com data e prova:

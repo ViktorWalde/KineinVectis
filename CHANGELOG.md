@@ -15,6 +15,14 @@ checkout, não em nenhum pacote publicado.
   só registradores, sem dizer por quê. Agora diz: o gdb anterior ao 16 não
   expõe globais pelo DAP; a variável se lê pelo nome em Watches. O gdb que
   vale é o ≥ 16 (decisão do autor, 2026-10-01).
+- **Criar Projeto, com todas as linguagens.** A tela inicial tinha dois
+  botões fixos, "Novo C++ / CMake" e "Novo Rust / Cargo", e o Python ficava de
+  fora. Agora há um único **Criar Projeto**: escolha a linguagem (C/C++, Rust,
+  Python ou pasta vazia) e depois o ecossistema dela, com a prévia dos arquivos.
+  O mesmo gesto está no menu Arquivo e na paleta ("New Project" não fazia nada).
+- **"LSP ✗" sem queda.** Fechar o projeto ou reiniciar o servidor de
+  linguagem deixava a barra de status vermelha ("LSP ✗ cpp"), como se o
+  servidor tivesse caído. Agora só uma queda de verdade aparece como falha.
 - **Gates sem falso positivo num clone novo**, e o que a máquina não prova
   aparece como **NÃO PROVADO** em vez de verde (`scripts/verificar.sh --estrito`
   reprova). Detalhe em `DocsPublic/contribuindo/04-os-gates-que-dizem-nao.md`.

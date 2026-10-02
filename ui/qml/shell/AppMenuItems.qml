@@ -40,6 +40,7 @@ Item {
     // de projeto da barra (F1 do roadmaps/43). Um dono para a lista.
     function openItems() {
         const items = [
+            { label: qsTr("Criar projeto..."), action: "workspace.createProject", enabled: true },
             { label: qsTr("Abrir workspace..."), action: "workspace.open", enabled: true }
         ];
         if (recentWorkspaces.length > 0) {

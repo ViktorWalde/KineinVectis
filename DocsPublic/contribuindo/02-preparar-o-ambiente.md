@@ -72,7 +72,7 @@ lista, um por um, está em [04](04-os-gates-que-dizem-nao.md).
 | Variável | Efeito |
 | --- | --- |
 | `QT_QPA_PLATFORM=offscreen` | abre sem tela (fotos, gates) |
-| `KINEIN_SCREENSHOT=<png>` `KINEIN_SCREENSHOT_DELAY_MS=<ms>` `KINEIN_SCREENSHOT_SIZE=WxH` | fotografa a janela e sai |
+| `KINEIN_SCREENSHOT=<png>` `KINEIN_SCREENSHOT_DELAY_MS=<ms>` `KINEIN_SCREENSHOT_SIZE=WxH` | fotografa a janela e sai; `scripts/capturar-telas.sh` usa isto para fotografar as cenas da 0.3.6 nas três larguras, num Xvfb e num projeto de teste fixos, e é o antes/depois de toda fatia visual |
 | `KINEIN_STARTUP_COMMANDS=<ids da paleta>` | executa comandos depois do workspace abrir (`git.log`, `probe.list=kit`, `index.symbols=parse_`, `container.list`…) |
 | `KINEIN_PERF_EXIT=1` `KINEIN_PERF_MARKER` | tempo até o primeiro frame e sai |
 | `KINEIN_PERF_TYPING_WORKSPACE/_FILE/_KEYS` | o harness de latência da tecla |

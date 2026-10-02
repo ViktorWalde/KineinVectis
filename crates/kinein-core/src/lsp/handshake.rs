@@ -42,6 +42,7 @@ pub(super) struct HandshakeParts {
     pub(super) child: Arc<Mutex<Child>>,
     pub(super) ready: Arc<AtomicBool>,
     pub(super) failed: Arc<Mutex<Option<String>>>,
+    pub(super) stopping: Arc<AtomicBool>,
     pub(super) legend: Arc<Mutex<Vec<String>>>,
     pub(super) diagnostics: Arc<Mutex<HashMap<String, Value>>>,
     pub(super) events: super::EventSender,
@@ -61,6 +62,7 @@ pub(super) fn spawn_handshake_thread(parts: HandshakeParts) {
             child,
             ready,
             failed,
+            stopping,
             legend,
             diagnostics,
             events,
@@ -86,9 +88,18 @@ pub(super) fn spawn_handshake_thread(parts: HandshakeParts) {
                     Arc::new(spec.settings.clone()),
                     merged,
                     stderr,
+                    Arc::clone(&stopping),
                 );
                 ready.store(true, Ordering::SeqCst);
-                emit_status(&events, spec.key, "running", None);
+                // Encerrado durante o handshake: `running` contradiria o
+                // `stopped` que o core ja' anunciou.
+                if !stopping.load(Ordering::SeqCst) {
+                    emit_status(&events, spec.key, "running", None);
+                }
+            }
+            Err(_) if stopping.load(Ordering::SeqCst) => {
+                // O core matou o filho no meio do `initialize`: nao e' falha
+                // do servidor, e quem pediu ja' anunciou.
             }
             Err(error) => {
                 let message = match error {

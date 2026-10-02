@@ -10,7 +10,12 @@ Item {
     property string errorText: ""
     property bool loading: false
     property string createMode: ""
-    property string createTemplate: "cppCmake"
+    // "Criar Projeto" escolhe a LINGUAGEM e depois o ECOSSISTEMA (53 §13.0
+    // item 6). Os dois comecam vazios: a tela inicial nao escolhe por quem
+    // vai criar. O catalogo e' o dono do que existe.
+    property string createLanguage: ""
+    property string createTemplate: ""
+    readonly property ProjectTemplateCatalog templateCatalog: ProjectTemplateCatalog {}
     property string pendingSelectionPath: ""
     property string pathDraft: ""
     property string createName: ""
@@ -111,6 +116,21 @@ Item {
         createFocusRequested();
     }
 
+    // Escolher a linguagem seleciona o primeiro ecossistema dela.
+    function chooseLanguage(key) {
+        createLanguage = key;
+        createTemplate = templateCatalog.defaultTemplate(key);
+        errorText = "";
+    }
+
+    // O template ja' traz a linguagem (o comando da paleta, ou quem abrir com
+    // um template); vazio deixa os dois por escolher.
+    function chooseTemplate(templateId) {
+        createLanguage = templateCatalog.languageOf(templateId);
+        createTemplate = createLanguage !== "" ? templateId : "";
+        errorText = "";
+    }
+
     function beginCreateProject() {
         createMode = "project";
         errorText = "";
@@ -133,6 +153,10 @@ Item {
         if (createMode === "folder") {
             createFolderRequested(currentPath, name);
         } else if (createMode === "project") {
+            if (createTemplate === "") {
+                errorText = qsTr("Escolha a linguagem do projeto.");
+                return;
+            }
             createProjectRequested(currentPath, name, createTemplate);
         }
     }

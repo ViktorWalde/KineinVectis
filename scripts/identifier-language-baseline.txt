@@ -1961,16 +1961,6 @@ crates/kinein-core/src/tests/lsp_server.rs	saida	3
 crates/kinein-core/src/tests/lsp_server.rs	secao	2
 crates/kinein-core/src/tests/lsp_server.rs	serializar	1
 crates/kinein-core/src/tests/lsp_server.rs	ultimo	2
-crates/kinein-core/src/tests/lsp_stderr.rs	abrir	4
-crates/kinein-core/src/tests/lsp_stderr.rs	cenario	8
-crates/kinein-core/src/tests/lsp_stderr.rs	eventos	5
-crates/kinein-core/src/tests/lsp_stderr.rs	falha	2
-crates/kinein-core/src/tests/lsp_stderr.rs	mensagem	4
-crates/kinein-core/src/tests/lsp_stderr.rs	prazo	2
-crates/kinein-core/src/tests/lsp_stderr.rs	reiniciado	3
-crates/kinein-core/src/tests/lsp_stderr.rs	saiu	3
-crates/kinein-core/src/tests/lsp_stderr.rs	visto	3
-crates/kinein-core/src/tests/lsp_stderr.rs	vistos	14
 crates/kinein-core/src/tests/mod.rs	cheia	2
 crates/kinein-core/src/tests/mod.rs	linhas	10
 crates/kinein-core/src/tests/mod.rs	sessao	3
@@ -2371,8 +2361,7 @@ scripts/fake_lsp_server.py	entrada	5
 scripts/fake_lsp_server.py	escrever	6
 scripts/fake_lsp_server.py	falso	3
 scripts/fake_lsp_server.py	linha	9
-scripts/fake_lsp_server.py	mensagem	16
-scripts/fake_lsp_server.py	metodo	13
+scripts/fake_lsp_server.py	mensagem	2
 scripts/fake_lsp_server.py	morre	2
 scripts/fake_lsp_server.py	novo	2
 scripts/fake_lsp_server.py	publica	9
@@ -2461,8 +2450,6 @@ scripts/qml-harness/tst_app_menu_items.qml	arquivo	2
 scripts/qml-harness/tst_app_menu_items.qml	configurar	3
 scripts/qml-harness/tst_app_menu_items.qml	itens	12
 scripts/qml-harness/tst_app_menu_items.qml	lista	2
-scripts/qml-harness/tst_app_menu_items.qml	projeto	16
-scripts/qml-harness/tst_command_dispatcher.qml	aberturas	3
 scripts/qml-harness/tst_command_dispatcher.qml	chamadas	7
 scripts/qml-harness/tst_command_dispatcher.qml	desconhecidos	7
 scripts/qml-harness/tst_command_dispatcher.qml	falso	4

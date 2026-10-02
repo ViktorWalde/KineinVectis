@@ -274,6 +274,7 @@ set_source_files_properties(qml/workspace/FolderPickerButton.qml PROPERTIES QT_R
 set_source_files_properties(qml/workspace/FolderPickerHeader.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerHeader.qml)
 set_source_files_properties(qml/workspace/FolderPickerPathBar.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerPathBar.qml)
 set_source_files_properties(qml/workspace/FolderPickerCreatePanel.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCreatePanel.qml)
+set_source_files_properties(qml/workspace/ProjectTemplateCatalog.qml PROPERTIES QT_RESOURCE_ALIAS ProjectTemplateCatalog.qml)
 set_source_files_properties(qml/workspace/FolderPickerDirectoryList.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerDirectoryList.qml)
 set_source_files_properties(qml/workspace/FolderPickerActionRow.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerActionRow.qml)
 set_source_files_properties(qml/workspace/FolderPickerCard.qml PROPERTIES QT_RESOURCE_ALIAS FolderPickerCard.qml)
@@ -619,6 +620,7 @@ qt_add_qml_module(kinein-vectis
         qml/workspace/FolderPickerHeader.qml
         qml/workspace/FolderPickerPathBar.qml
         qml/workspace/FolderPickerCreatePanel.qml
+        qml/workspace/ProjectTemplateCatalog.qml
         qml/workspace/FolderPickerDirectoryList.qml
         qml/workspace/FolderPickerActionRow.qml
         qml/workspace/FolderPickerCard.qml

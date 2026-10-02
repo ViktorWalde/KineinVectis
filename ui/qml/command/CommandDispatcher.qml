@@ -22,7 +22,8 @@ Item {
     property var setupController: null
     property var containerController: null
 
-    signal openWorkspaceRequested()
+    // "open" ou "createProject": o seletor de pasta, com a intencao.
+    signal folderRequested(string intent)
     signal showTabRequested(string tab)
     // `index.symbols`: a aba Simbolos a direita (E3-2) — do shell, nao do
     // core. `<id>=<arg>` (so' a medicao headless usa): o texto da busca, a
@@ -44,7 +45,12 @@ Item {
         const commandId = eq > 0 ? rawId.substring(0, eq) : rawId;
         switch (commandId) {
         case "workspace.open":
-            openWorkspaceRequested();
+            folderRequested("open");
+            return true;
+        // Estava no catalogo da paleta ("New Project") sem dono aqui: escolher
+        // nao fazia nada (achado da F0, 2026-10-01).
+        case "workspace.createProject":
+            folderRequested("createProject");
             return true;
         case "workspace.close":
             coreClient.closeWorkspace();

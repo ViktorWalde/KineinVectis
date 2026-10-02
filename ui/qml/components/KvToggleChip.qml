@@ -26,6 +26,11 @@ Rectangle {
     property string labelText: ""
     property bool active: false
     property string tooltip: ""
+    // Opcao de uma escolha (a linguagem do "Criar Projeto", 2026-10-01): a
+    // inativa tambem tem borda, para parecer clicavel ao lado da ativa; e o
+    // rotulo e' texto de interface, nao codigo. O padrao e' o de sempre.
+    property bool outlined: false
+    property bool codeFont: true
 
     signal toggled()
 
@@ -36,7 +41,7 @@ Rectangle {
     height: implicitHeight
     radius: Theme.radiusXSmall
     color: active ? Theme.surfaceSelected : "transparent"
-    border.color: active ? Theme.accent : "transparent"
+    border.color: active ? Theme.accent : (outlined ? Theme.borderSoft : "transparent")
     border.width: 1
 
     Text {
@@ -45,7 +50,7 @@ Rectangle {
         anchors.centerIn: parent
         text: root.labelText
         color: root.active ? Theme.accent : Theme.textMuted
-        font.family: Theme.monoFont
+        font.family: root.codeFont ? Theme.monoFont : Theme.uiFont
         font.pixelSize: 11
         font.bold: root.active
     }

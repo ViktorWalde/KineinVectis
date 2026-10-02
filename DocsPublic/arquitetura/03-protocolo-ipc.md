@@ -2037,6 +2037,14 @@ event.lsp.log          { "language": "cpp|rust|python|python-ruff", "line": "...
 `line` e `column` dos diagnósticos são 1-based para consumo direto da UI. A
 UI integra esses eventos à aba Problemas com origem `lsp`.
 
+**`exited` e `failed` são só do servidor** (2026-10-01, sem mudança de
+versão: o formato é o mesmo, muda o que o core deixa de emitir). Quando o
+próprio core encerra o servidor — workspace fechado (`stopped`), `lsp.restart`
+(`restarting`), companheiro desligado (`stopped`) —, nenhum `exited` ou
+`failed` segue, nem um `running` atrasado do handshake. Antes, a thread leitora
+via o fim do stdout depois do `stopped` e anunciava `exited`, e a barra de
+status mostrava "LSP ✗" depois de fechar o projeto.
+
 **`event.lsp.log` (`0.111.0`)** é o stderr do servidor, uma linha por evento,
 sem interpretação: o `clangd` anunciando a versão e onde procurou o
 `compile_commands.json`, o rust-analyzer contando o índice, o traceback de um

@@ -100,7 +100,7 @@ Item {
         workspaceBuildSystems: root.coreClient.workspaceBuildSystems
         homeDir: root.coreClient.homeDir
         toolsCount: workspaceController.toolsList.length
-        onFolderOpenRequested: path => root.folderPicker.open(path)
+        onFolderOpenRequested: (path, intent) => root.folderPicker.openWith(intent, path)
         onToolsDetectionRequested: root.coreClient.detectTools()
         onLayoutSaveRequested: values => settingsController.setGlobal(values)
         onSymbolsFocusRequested: query => root.workspaceHost.focusSymbols(query)
@@ -336,7 +336,7 @@ Item {
         setupController: environment.setupController
         containerController: environment.containerController
         remoteController: environment.remoteController
-        onOpenWorkspaceRequested: shellController.requestOpenFolder()
+        onFolderRequested: intent => shellController.requestFolder(intent)
         onShowTabRequested: tab => shellController.showTab(tab)
         onSymbolsRequested: query => shellController.openSymbols(query)
     }

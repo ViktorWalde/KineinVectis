@@ -30,7 +30,9 @@ Item {
     readonly property bool effectiveShowExplorer: showExplorer && leftWindow === "explorer"
     readonly property bool gitWindowVisible: showExplorer && leftWindow === "git"
 
-    signal folderOpenRequested(string path)
+    // `intent`: "open" (abrir uma pasta) ou "createProject" (o seletor ja'
+    // no modo de criar, com a escolha de linguagem). Uma porta, duas intencoes.
+    signal folderOpenRequested(string path, string intent)
     signal toolsDetectionRequested()
     signal layoutSaveRequested(var values)
 
@@ -208,7 +210,13 @@ Item {
     }
 
     function requestOpenFolder() {
-        folderOpenRequested(workspaceRoot !== "" ? workspaceRoot : homeDir);
+        requestFolder("open");
+    }
+
+    // Quem entende a intencao e' o seletor (FolderPickerDialog.openWith); o
+    // shell so' leva o pedido com o ponto de partida de sempre.
+    function requestFolder(intent) {
+        folderOpenRequested(workspaceRoot !== "" ? workspaceRoot : homeDir, intent);
     }
 
     function kindLabel(kind, buildSystems) {

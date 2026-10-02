@@ -30,11 +30,22 @@ Item {
         controller.openFor(purpose, startPath);
     }
 
+    // `templateId` vazio: a pessoa escolhe a linguagem e o ecossistema.
     function openCreateProject(startPath, templateId) {
         picker.visible = true;
         controller.open(startPath);
-        controller.createTemplate = templateId;
+        controller.chooseTemplate(templateId);
         controller.beginCreateProject();
+    }
+
+    // Abrir ou criar: a mesma porta, com a intencao de quem pediu. Um projeto
+    // novo nasce na home, nao dentro do workspace aberto.
+    function openWith(intent, startPath) {
+        if (intent === "createProject") {
+            openCreateProject(controller.homePath, "");
+        } else {
+            open(startPath);
+        }
     }
 
     function close() {

@@ -16,7 +16,8 @@ Item {
     property var chamadas: []
     property string abaPedida: ""
     property string simbolos: ""
-    property int aberturas: 0
+    property int folderOpens: 0
+    property int projectCreations: 0
 
     function check(ok, mensagem) {
         if (!ok) {
@@ -44,7 +45,10 @@ Item {
         coreClient: coreFalso
         editorController: editorFalso
         onUnknownCommand: function(id) { root.desconhecidos.push(id); }
-        onOpenWorkspaceRequested: root.aberturas++
+        onFolderRequested: function(intent) {
+            if (intent === "open") root.folderOpens++;
+            if (intent === "createProject") root.projectCreations++;
+        }
         onShowTabRequested: function(tab) { root.abaPedida = tab; }
         onSymbolsRequested: function(q) { root.simbolos = q; }
     }
@@ -62,7 +66,10 @@ Item {
         check(chamadas[0] === "closeWorkspace", "e chamou o dono");
         check(desconhecidos.length === 1, "id conhecido nao vira desconhecido");
 
-        check(d.execute("workspace.open") === true && aberturas === 1, "workspace.open");
+        check(d.execute("workspace.open") === true && folderOpens === 1, "workspace.open");
+        // Estava no catalogo da paleta sem dono (F0, 2026-10-01).
+        check(d.execute("workspace.createProject") === true && projectCreations === 1
+              && folderOpens === 1, "workspace.createProject");
 
         // Dois ids no mesmo braco continuam valendo os dois.
         check(d.execute("tools.detect") === true && abaPedida === "tools", "tools.detect");

@@ -258,6 +258,29 @@ ciclo como fallback; `layout` desconhecido ou de schema maior abre o padrão
 seguro, sem apagar o arquivo; nunca se restaura processo de terminal (49 F2);
 valores fora de faixa passam pelo `clamp` que o `ShellController` já faz.
 
+**Limites de tamanho: mínimo do conteúdo, máximo automático (pedido e
+decisão do autor, 2026-10-01; entra na fatia do layout).** Hoje os limites são constantes no
+`ShellController` (explorer e Git dividem 220–420 px; padrão 22% da janela
+entre 220 e 300), e a F0 mostrou o custo: o mínimo global de 220 px é menor
+que o rodapé do Git precisa, que estoura em 1024×700. A regra:
+
+```text
+mínimo   cada painel DECLARA o seu (o Git: a linha de botões do commit);
+         o host usa max(mínimo do painel, piso global)
+máximo   automático: janela − trilho − outros painéis − mínimo do editor
+         (o editor é a superfície padrão, §2 item 5; o número é hipótese,
+         perto de 80 colunas, e se mede na fatia)
+gravado  o que o usuário arrastou fica no `layout` intacto; a janela menor
+         só limita o EXIBIDO, e maximizar devolve o tamanho escolhido
+abaixo   perto do mínimo o conteúdo se rearranja (o Amend sobe para linha
+         própria), em vez de o painel crescer até caber o nome mais longo
+status   a barra de status não usa mínimo/máximo: itens com prioridade, e o
+         de menor prioridade some inteiro em vez de ser cortado no meio
+prova    o cálculo dos limites é função pura com teste de unidade; o
+         capturar-telas.sh em 1024×700 mostra o rodapé inteiro; tirar o
+         mínimo do painel reprova (mutação)
+```
+
 ## 5. Fluxos
 
 ### 5.1 Abrir pelo terminal sem ruído (R1)
@@ -618,6 +641,19 @@ AppImage e as telas nas três larguras.
    tem exceção estreita e com prazo no `verificar-cpp.sh` (40.7 §7.152). Com
    isso o gate completo deixa de ter vermelho conhecido antes da primeira
    fatia.
+5. **Limites de tamanho dos painéis** (depois da F0): mínimo declarado pelo
+   conteúdo, máximo automático que preserva o mínimo do editor, tamanho
+   escolhido gravado intacto e conteúdo que se rearranja perto do mínimo; a
+   barra de status por prioridade. A regra está na §4.4 e entra na fatia do
+   layout.
+6. **"Criar Projeto" único, com todas as linguagens** (2026-10-01, à noite):
+   *"separar a criação de apenas projetos C/C++ e Rust, deixando o Python de
+   escanteio, é algo que não quero; deve aparecer algo melhor como 'Criar
+   Projeto' e daí sim dar as opções das linguagens e seus respectivos
+   ecossistemas."* A tela inicial tem hoje dois botões fixos ("Novo C++ /
+   CMake", "Novo Rust / Cargo"); vira um gesto "Criar Projeto" que abre a
+   escolha de linguagem e, dentro dela, o ecossistema. **Feito em 2026-10-01**
+   (40.7 §7.155): catálogo `ui/qml/workspace/ProjectTemplateCatalog.qml`.
 
 ### 13.1 Direção visual do trem 0.3.6–0.3.9 (decisão do autor, 2026-10-01)
 
@@ -639,8 +675,96 @@ Registrada **antes** da task dedicada de UX/HUD, que a detalha e mede; aqui
 A task dedicada parte de capturas reais (hook `KINEIN_SCREENSHOT`) e propõe
 com mockups lado a lado; problemas de UX e de HUD/UI entram medidos.
 
-## F0 — inventário (a preencher na fatia 3)
+## F0 — inventário (medido em 2026-10-01)
 
-| Elemento | Host/dono | Frequência/propósito | Duplicação | Decisão | Alcance |
+Telas: `scripts/capturar-telas.sh` (Xvfb no tamanho exato, sem gerenciador de
+janela, projeto CMake de teste fora do repositório — dentro dele o clangd
+herdava o `.clangd` da IDE —, com duas abas e mudanças git em três pastas,
+XDG e HOME de teste isolados e o core casado com o checkout) fotografa as
+cenas — editor, início, git, terminal, busca, paleta, remoto e, desde a
+§7.155 do 40.7, criar — em 1024×700, 1366×768 e 1920×1080, em
+`build/telas/`. Cada fatia da 0.3.6–0.3.9 roda o mesmo script antes e depois.
+A coluna **Decisão** é **proposta** desta fatia; quem decide é o autor.
+**Alcance**: M mouse, T atalho, P paleta (`command.list`), E volta ao editor
+por Esc; "—" é "não tem", medido no `GlobalShortcuts.qml`, no
+`EnvironmentShortcuts.qml` e no `CommandDispatcher.qml`.
+
+| Elemento | Host/dono | Frequência/propósito | Duplicação | Decisão (proposta) | Alcance |
 | --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| Barra de menus (9 menus, 56 itens) | `ShellHeaderHost` → `AppMenuBar`, itens em `AppMenuItems` | rara; descoberta de ações | menu **Ferramentas** com o mesmo nome da entrada do trilho e da aba de baixo | manter; renomear o que colide (F1) | M |
+| Título da janela ("projeto" / "sem workspace") | `ShellHeaderHost` | estado | o nome do projeto aparece **três vezes** na mesma faixa de 110 px: título, widget de projeto e cabeçalho do explorer | unir: título vira o caminho ou some quando o widget de projeto está visível (F3) | — |
+| Controles de janela | `WindowControls` | ação de sistema | — | manter | M |
+| Widget de projeto (nome, sistema, ponto do core, menu) | `TopHeaderBar` → `HeaderProjectWidget` | frequente; contexto e troca de projeto | o sistema de build ("CMake") repete na barra de status, à esquerda | manter; o contexto efetivo mora aqui (F3) e sai da status | M |
+| Widget Git (branch, ahead/behind, mudanças) | `HeaderGitWidget` | frequente; estado e porta do Git | é a única porta do painel Git por mouse desde 2026-09-24 (decisão registrada) | manter | M, P (`git.commit`) |
+| Perfil de execução ("Perfil: automático") | `HeaderRunWidget` | frequente; escolhe o que roda | — | manter | M |
+| Rodar / Depurar | `HeaderRunWidget` | muito frequente | — | manter | M, T (Shift+F10, Shift+F9), P |
+| Compilar/testar/analisar | `HeaderRunWidget`, ícone `build` | frequente | — | **o ícone se lê como prompt de terminal** (`>_`) ao lado do Rodar; trocar o ícone (0.3.9, tokens visuais) | M, T (Ctrl+F9…) |
+| Trilho: Projeto | `SideRail` + entrada `explorer` em `ToolWindows` | muito frequente | — | área principal (F1) | M, — sem atalho (JetBrains: Alt+1) |
+| Trilho: Embarcados, Banco, Containers, Grafana | `ToolWindows` (`panel` de overlay) | por contexto | — | contextuais (F1); continuam overlays na 0.3.6 (§13 item 3) | M, T (Ctrl+Alt+M/J/W/O) |
+| Trilho: Remoto | `ToolWindows` → `RemotePanelHost` | por contexto | — | contextual (F1) | M, P (`remote.list`); **sem atalho** |
+| Trilho: Ferramentas | `ToolWindows` entrada `tools` → aba `tools` de baixo | rara | **três** "Ferramentas": trilho, aba de baixo e menu | migrar para Ambiente e remover do trilho (F2, 49 §F2) | M |
+| Trilho: expandir (›) | `SideRail` | rara | — | manter até a projeção da F1 | M |
+| Explorer do projeto | `ShellLeftWindowHost` → árvore | muito frequente | — | manter | M, — sem atalho |
+| Painel Git (Commit/Log) | `ShellLeftWindowHost` → `GitWindow`, rodapé `GitCommitBox` | frequente | — | **defeito de layout**: em 1024×700 o "Commit e Push" cobre o "Amend" e o "Commit" passa da borda; em 1366×768 o "Commit" encosta na borda; em 1024 o título "Git" some. Corrigir o rodapé para largura mínima (fatia própria, 0.3.6) | M, P |
+| Faixa Project Health | `ProjectHealthBanner` | só quando a detecção falha | — | manter (é estado do usuário, com ação) | M, fechar |
+| Abas do editor, trilha (breadcrumb), gutter | `ShellEditorHost` | muito frequente | — | manter | M, T |
+| Alça "Símbolos" (direita) | `EditorOutlineHandle` | média | — | manter; fica na área direita da F2 | M, T (Alt+7) |
+| Painel de baixo: 9 abas (Terminal, Build, Problemas, Testes, Jobs, Debug, Busca, Ferramentas, IDE) | `BottomPanelHost` → `BottomTabBar` | Terminal e Problemas frequentes; o resto por atividade | aba **IDE** e botão **IDE** da status abrem o mesmo; aba **Jobs** e o widget de job da status | contextual (F2): sempre Terminal e Problemas (§13 item 2), o resto por atividade/pin; 1024 px já enche a faixa | M, T só Terminal (Alt+F12) e Busca (Ctrl+Shift+F) |
+| Barra de status: sistema · caminho · chip toolchain · remoto · job · índice · contexto · cursor · LSP · IDE · core/IPC | `ShellStatusHost` → `WorkspaceStatusBar` | estado | sistema repete o header; IDE repete a aba | contexto efetivo sobe ao header (F3); em **1024×700 o resumo de contexto é cortado** ("símbolos ‹") | M |
+| Paleta / Search Everywhere | `SearchEverywhereController` + catálogo `command.list` do core | frequente | — | **80 títulos, a maioria em inglês** numa interface em português, e **métodos internos do protocolo expostos como ação** (os primeiros itens são "Ping Core" e "Shutdown Core"; há "Sync Editor Buffer", "Read File", "List Directory", "Terminal Input"). Proposta: o catálogo marca o que é ação do usuário, e a paleta só mostra isso; títulos em português | M, T (Ctrl+Shift+A / Ctrl+Shift+N), Esc |
+| Overlays de ambiente (Remoto, Banco, Containers, Grafana, Embarcados, Biblioteca, Instalação, Configurações) | `ShellEnvironmentOverlays`, `ShellOverlays` | por contexto | — | continuam overlays na 0.3.6 (§13 item 3) | M, T (exceto Remoto), Esc |
+| Tela inicial (Começar, Recentes, Ambiente) | `StartScreen` | toda abertura sem projeto | "Abrir workspace" no header e no cartão Começar | manter | M, T (Ctrl+O) |
+
+**Defeitos achados pela F0 (fora do layout):**
+
+- **"LSP ✗ cpp" vermelho na tela inicial depois de fechar o projeto** (cena
+  `inicio`, nas três larguras) — **corrigido em 2026-10-01** (40.7 §7.154).
+  Causa: `lsp/session.rs` `shutdown_all` mata o servidor e emite
+  `stopped`; a thread leitora do `lsp/server.rs` vê o fim do stdout e emite
+  `exited` depois, e o `LspStatusController` pinta `exited` como queda.
+  Fechar o projeto de propósito acaba parecendo falha. **Sequência
+  observada** no stdout do core (wrapper `tee` no `KINEIN_CORE_BIN`, comando
+  `workspace.close`): `running` → `stopped` → `exited` com a cauda do stderr
+  do clangd. Falta o teste que reprova antes da correção.
+- **A UI pega o core pelo diretório corrente** (`core_client_process.cpp`,
+  `target/debug/kinein-core`) e não confere a versão do protocolo: a primeira
+  foto saiu com "IPC 0.144.0" de um core velho. O `capturar-telas.sh` fixa
+  `KINEIN_CORE_BIN`; a UI avisar quando a versão do core não for a dela é
+  candidato a fatia.
+- Menor: a tela inicial mostra a posição do cursor ("1:1") na barra de
+  status sem editor aberto.
+
+**Desempenho de partida** (`scripts/medir-performance.sh`, release, N=5,
+2026-10-01 22:08, Ubuntu 26.04.1, Qt 6.10.2, Ryzen 7 7735HS, carga < 2;
+repetido duas vezes, desvio < 3% fora o rust-analyzer):
+
+| Métrica | Hoje | Base (21 A3.4, 2026-07-16) | Orçamento | Folga hoje |
+| --- | ---: | ---: | ---: | ---: |
+| UI: primeiro frame (offscreen) | 350 ms | 241 ms | 400 ms | **1,14x** |
+| UI: RSS em boot vazio | 122 MB | 106 MB | 200 MB | 1,6x |
+| Core: RSS em regime | 41 MB | 6 MB | 60 MB | **1,5x** |
+| Core: `workspace.open` (repo) | 22 ms | 3,3 ms | 50 ms | 2,3x |
+| Tree-sitter frio / incremental | 74 / 34 ms | 315 / 278 ms | 450 / 400 ms | 6x / 12x |
+| Tecla→frame mediana / p95 / pior | 7,1 / 7,4 / 12,3 ms | 7,4 / 8,4 ms | 16 / 20 ms | 2,3x / 2,7x |
+| Rajada 50k → marcador | 32 ms | 59 ms | 250 ms | 7,8x |
+
+Tudo dentro do orçamento; **o primeiro frame e o RSS do core são as folgas
+apertadas**, e são os candidatos naturais ao R6 (§1). A base de julho é de
+outra distro e outro Qt (Fedora, 6.11.1), então a diferença **ainda não é
+atribuível ao código** — hipótese a perfilar antes de mexer (21 A3.4, item 2).
+**Não medidos por falta de instrumento:** abrir cada painel e voltar ao
+editor (o 49 F0 pede); o `medir-performance.sh` não tem esses marcadores, e
+eles entram junto com a carga sob demanda da 0.3.9 (§5.8), que é quem precisa
+deles.
+
+**Números visuais de partida** (os do 58 §4.3, reproduzidos com estes comandos
+na raiz de `ui/qml`; a 0.3.9 mede igual):
+
+```text
+grep -rE 'radius: *Theme\.'        --include=*.qml . | wc -l   190
+grep -rE '\bradius: *[0-9]'        --include=*.qml . | wc -l    34
+grep -rE 'font\.pixelSize: *[0-9]' --include=*.qml . | wc -l   497
+grep -rE 'font\.pixelSize: *Theme\.' --include=*.qml . | wc -l  42
+grep -rE '\bduration: *[0-9]'      --include=*.qml . | wc -l     9  (em 5 arquivos)
+grep -rE 'color: *"#' --include=*.qml . | grep -v '^./Theme.qml' | wc -l   4
+```

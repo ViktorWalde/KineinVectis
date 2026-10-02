@@ -395,6 +395,11 @@ mod tests {
 /// Mata o processo de um handle (o `Child` vive num `Mutex` porque a thread
 /// do handshake tambem pode mata-lo).
 fn kill_child(handle: &super::server::ServerHandle) {
+    // ANTES de matar: o fim do stdout que a morte provoca so' chega as
+    // threads depois desta linha, e elas precisam saber que foi pedido.
+    handle
+        .stopping
+        .store(true, std::sync::atomic::Ordering::SeqCst);
     if let Ok(mut child) = handle.child.lock() {
         drop(child.kill());
         drop(child.wait());

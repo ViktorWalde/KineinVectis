@@ -1141,8 +1141,9 @@ depurar       o mesmo [Debug]: o `debugpy` e' modulo do interpretador do
 modulo nativo um projeto com pybind11, nanobind ou PyO3 (maturin, scikit-build)
               e' reconhecido, e a barra diz qual e como se constroi — o C/C++
               ou Rust dentro dele e' lido pelo mesmo indice
-novo projeto  Arquivo -> Novo projeto -> template "Python": layout plano,
-              pyproject PEP 621, pytest em [dev], ruff configurado
+novo projeto  Criar Projeto (tela inicial, Arquivo -> Criar projeto... ou a
+              paleta) -> linguagem Python -> ecossistema pyproject.toml:
+              layout plano, pyproject PEP 621, pytest em [dev], ruff
 ```
 
 **MicroPython.** Num projeto MicroPython, o **monitor serial** do painel de

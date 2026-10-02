@@ -11,6 +11,11 @@
 
 function draw(name, context, line, node) {
     switch (name) {
+    case "add":
+        // o "+" de criar (o "Criar Projeto" da tela inicial, 2026-10-01)
+        line(context, 12, 5, 12, 19);
+        line(context, 5, 12, 19, 12);
+        return true;
     case "database":
         // o cilindro: tampa eliptica, dois flancos, duas cintas e o fundo.
         // As elipses sao arcos sob escala vertical; a escala e' desfeita antes

@@ -107,14 +107,34 @@ echo "== clang-tidy =="
 # caminho tem de passar pela atribuicao do QPointer. Qualquer OUTRO achado no
 # arquivo reprova. E ela EXPIRA: no dia em que o clang parar de acusar, o gate
 # reprova pedindo para apagar esta excecao — a excecao nao sobrevive ao bug.
+#
+# So' nas versoes em que foi PROVADA (2026-10-01, a noite). O clang-tidy 21 nao
+# acusa nada no mesmo caso minimo, nem com os headers do Qt 6.4.2 (copiados do
+# container do AppImage) nem com os do 6.10: a variavel e' o analisador, nao o
+# Qt. Sem esta condicao, o "expira" reprovava toda maquina com clang novo — a
+# do autor inclusive —, confundindo "o bug foi corrigido" com "este ambiente
+# nunca o teve". Em versao fora da lista o arquivo e' um arquivo comum: se o
+# achado aparecer numa versao nao provada, reprova e pede a prova.
 KNOWN_FALSE_POSITIVE_FILE="$REPO_ROOT/ui/src/window_chrome_controller.cpp"
+KNOWN_FALSE_POSITIVE_TIDY_MAJORS="18"
+tidy_major="$(clang-tidy --version | sed -n 's/.*LLVM version \([0-9][0-9]*\).*/\1/p' | head -n 1)"
+known_applies=0
+for major in $KNOWN_FALSE_POSITIVE_TIDY_MAJORS; do
+    [ "$tidy_major" = "$major" ] && known_applies=1
+done
 regular_files=""
 for source in "$REPO_ROOT"/ui/src/*.cpp; do
-    [ "$source" = "$KNOWN_FALSE_POSITIVE_FILE" ] && continue
+    [ "$known_applies" -eq 1 ] && [ "$source" = "$KNOWN_FALSE_POSITIVE_FILE" ] && continue
     regular_files="$regular_files $source"
 done
 # shellcheck disable=SC2086 # lista de arquivos, separada por espaco de proposito
 clang-tidy -p "$BUILD_DIR" $regular_files
+
+if [ "$known_applies" -eq 0 ]; then
+    echo "clang-tidy ${tidy_major:-?}: sem excecao (o falso positivo do QPointer so' foi provado no clang-tidy $KNOWN_FALSE_POSITIVE_TIDY_MAJORS; roadmaps/40.7 §7.152)"
+    echo "C++ verificado: tudo limpo."
+    exit 0
+fi
 
 known_output="$(clang-tidy -p "$BUILD_DIR" "$KNOWN_FALSE_POSITIVE_FILE" 2>&1)" && known_status=0 || known_status=$?
 findings="$(printf '%s\n' "$known_output" | grep -E ': (error|warning): ' || true)"

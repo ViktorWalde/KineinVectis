@@ -41,6 +41,12 @@ pub(super) struct ServerHandle {
     pub(super) ready: Arc<AtomicBool>,
     /// O motivo, quando o handshake falhou (o manager remove o servidor).
     pub(super) failed: Arc<Mutex<Option<String>>>,
+    /// `true` quando o PROPRIO core encerrou o servidor (workspace fechado,
+    /// reinicio, companheiro desligado). As threads do handshake e da
+    /// leitura veem o fim do stdout DEPOIS do `stopped`/`restarting`, e sem
+    /// isto anunciavam `exited`/`failed` — a barra pintava queda onde houve
+    /// pedido (F0 da 0.3.6, 2026-10-01).
+    pub(super) stopping: Arc<AtomicBool>,
     pub(super) stdin: Arc<Mutex<ChildStdin>>,
     pub(super) versions: HashMap<String, i64>,
     /// Hash do ultimo conteudo sincronizado por URI. Evita `didChange`
@@ -167,6 +173,7 @@ pub(super) fn spawn_server(
     let child = Arc::new(Mutex::new(child));
     let ready = Arc::new(AtomicBool::new(false));
     let failed = Arc::new(Mutex::new(None));
+    let stopping = Arc::new(AtomicBool::new(false));
     let semantic_token_types = Arc::new(Mutex::new(Vec::new()));
     let diagnostics_by_uri = Arc::new(Mutex::new(HashMap::new()));
     super::handshake::spawn_handshake_thread(super::handshake::HandshakeParts {
@@ -176,6 +183,7 @@ pub(super) fn spawn_server(
         child: Arc::clone(&child),
         ready: Arc::clone(&ready),
         failed: Arc::clone(&failed),
+        stopping: Arc::clone(&stopping),
         legend: Arc::clone(&semantic_token_types),
         diagnostics: Arc::clone(&diagnostics_by_uri),
         events,
@@ -187,6 +195,7 @@ pub(super) fn spawn_server(
         child,
         ready,
         failed,
+        stopping,
         stdin,
         versions: HashMap::new(),
         content_hashes: HashMap::new(),
@@ -233,6 +242,7 @@ pub(super) fn spawn_reader_thread(
     settings: Arc<Value>,
     merged: MergedDiagnostics,
     stderr: StderrTail,
+    stopping: Arc<AtomicBool>,
 ) {
     thread::spawn(move || {
         while let Ok(Some(message)) = read_message(&mut reader) {
@@ -260,6 +270,11 @@ pub(super) fn spawn_reader_thread(
             }
         }
 
+        // Encerrado pelo core: quem pediu ja' anunciou (`stopped`,
+        // `restarting`); um `exited` aqui seria uma queda que nao houve.
+        if stopping.load(Ordering::SeqCst) {
+            return;
+        }
         // O servidor saiu: a cauda do stderr e' o motivo que a faixa de saude
         // mostra (campo `message`, ja' opcional no contrato).
         thread::sleep(Duration::from_millis(50));

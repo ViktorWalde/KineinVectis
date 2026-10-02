@@ -67,6 +67,7 @@ Rectangle {
         }
         switch (action) {
         case "workspace.open": root.shellController.requestOpenFolder(); break;
+        case "workspace.createProject": root.shellController.requestFolder("createProject"); break;
         case "workspace.recent.clear": root.recentWorkspacesController.clearAll(); break;
         case "workspace.close": root.coreClient.closeWorkspace(); break;
         case "project.createFile": root.projectTree.openCreateDialog("file"); break;

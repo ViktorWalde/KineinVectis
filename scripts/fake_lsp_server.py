@@ -52,11 +52,16 @@ que anuncia a versao e o `compile_commands.json` ao subir. Com `--morre`,
 sai com codigo 2 logo depois, sem responder o `initialize`: e' o servidor
 que morre no berco, e o que o core tem de mostrar e' o que ele disse.
 
+Com `--cai` (2026-10-01, o `exited` que so' vale para queda de verdade): sai
+com codigo 3 ao receber a resposta do `workspace/configuration` — quem
+responde e' a thread leitora do core, entao ela ja' existe, e a queda chega
+como fim do stdout depois de o servidor estar de pe', sem depender de tempo.
+
 Uso (sempre indireto, pelo `Core::use_language_server_command` e pelo
 `Core::use_language_server_companion`):
 
     python3 scripts/fake_lsp_server.py /tmp/mensagens.jsonl [--publica NOME]
-                                       [--stderr N] [--morre]
+                                       [--stderr N] [--morre] [--cai]
 """
 import json
 import os
@@ -68,6 +73,7 @@ ARGS = sys.argv[2:]
 PUBLICA = ARGS[ARGS.index("--publica") + 1] if "--publica" in ARGS else None
 STDERR = int(ARGS[ARGS.index("--stderr") + 1]) if "--stderr" in ARGS else 0
 MORRE = "--morre" in ARGS
+CRASH_AFTER_START = "--cai" in ARGS
 
 # Legend anunciada no initialize. O core a le em
 # `capabilities.semanticTokensProvider.legend.tokenTypes` e a usa para decodificar
@@ -77,12 +83,12 @@ VERSOES = {}
 TOKEN_TYPES = ["variable", "function", "keyword"]
 
 
-def registrar(mensagem):
+def registrar(message):
     """Grava a mensagem recebida no log, uma por linha, com flush imediato."""
     if not LOG:
         return
     with open(LOG, "a", encoding="utf-8") as arquivo:
-        arquivo.write(json.dumps(mensagem, separators=(",", ":")) + "\n")
+        arquivo.write(json.dumps(message, separators=(",", ":")) + "\n")
         arquivo.flush()
 
 
@@ -106,16 +112,16 @@ def ler_mensagem(entrada):
     return json.loads(corpo.decode("utf-8"))
 
 
-def escrever(saida, mensagem):
-    corpo = json.dumps(mensagem).encode("utf-8")
+def escrever(saida, message):
+    corpo = json.dumps(message).encode("utf-8")
     saida.write(f"Content-Length: {len(corpo)}\r\n\r\n".encode("ascii"))
     saida.write(corpo)
     saida.flush()
 
 
-def resultado(metodo, params):
+def resultado(method, params):
     """Resposta deterministica por metodo; None quando nao ha nada a dizer."""
-    if metodo == "initialize":
+    if method == "initialize":
         return {
             "capabilities": {
                 "textDocumentSync": 1,
@@ -128,7 +134,7 @@ def resultado(metodo, params):
             },
             "serverInfo": {"name": "kinein-fake-lsp", "version": "1"},
         }
-    if metodo == "textDocument/definition":
+    if method == "textDocument/definition":
         uri = params.get("textDocument", {}).get("uri", "")
         # Linha 2, coluna 4 (0-based no LSP) -> 3:5 na resposta do core, que
         # converte para 1-based. O teste checa exatamente esses numeros.
@@ -139,14 +145,14 @@ def resultado(metodo, params):
                 "end": {"line": 2, "character": 9},
             },
         }
-    if metodo == "textDocument/hover":
+    if method == "textDocument/hover":
         # FAKE_LSP_HOVER_DELAY_MS (Etapa 2 F6): um hover LENTO, para provar
         # que o laco do core nao para esperando por ele.
         atraso = os.environ.get("FAKE_LSP_HOVER_DELAY_MS", "")
         if atraso:
             time.sleep(int(atraso) / 1000.0)
         return {"contents": {"kind": "markdown", "value": "fake hover"}}
-    if metodo == "textDocument/rename":
+    if method == "textDocument/rename":
         # FAKE_LSP_RENAME_DELAY_MS (F6 fechamento, 2026-09-19): um rename
         # LENTO, para provar que a espera e' fora do laco e a transacao
         # nasce na continuacao. Um WorkspaceEdit com UMA troca na linha 1.
@@ -159,7 +165,7 @@ def resultado(metodo, params):
             "range": {"start": {"line": 0, "character": 3}, "end": {"line": 0, "character": 7}},
             "newText": novo,
         }]}}
-    if metodo == "textDocument/codeAction" and PUBLICA:
+    if method == "textDocument/codeAction" and PUBLICA:
         uri = params.get("textDocument", {}).get("uri", "")
         linha = {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 0}}
         return [{
@@ -199,14 +205,16 @@ def main():
     entrada = sys.stdin.buffer
     saida = sys.stdout.buffer
     while True:
-        mensagem = ler_mensagem(entrada)
-        if mensagem is None:
+        message = ler_mensagem(entrada)
+        if message is None:
             return 0
-        registrar(mensagem)
-        metodo = mensagem.get("method")
-        if metodo == "exit":
+        registrar(message)
+        method = message.get("method")
+        if method == "exit":
             return 0
-        if metodo == "initialized":
+        if CRASH_AFTER_START and method is None and message.get("id") == 9001:
+            return 3
+        if method == "initialized":
             # Como o pyright faz: logo depois do initialized, pergunta a
             # configuracao ao cliente. A resposta do core entra no log como
             # qualquer mensagem (sem `method`, com este id) — e' o que o teste
@@ -219,25 +227,25 @@ def main():
                                      {"section": "inexistente"}, {}, {"section": ""}]},
             })
             continue
-        if "id" not in mensagem:
-            if PUBLICA and metodo in ("textDocument/didOpen", "textDocument/didChange"):
-                documento = (mensagem.get("params") or {}).get("textDocument", {})
+        if "id" not in message:
+            if PUBLICA and method in ("textDocument/didOpen", "textDocument/didChange"):
+                documento = (message.get("params") or {}).get("textDocument", {})
                 uri = documento.get("uri", "")
                 VERSOES[uri] = documento.get("version")
                 escrever(saida, diagnostico_falso(uri))
-            if PUBLICA and metodo == "textDocument/didClose":
-                uri = (mensagem.get("params") or {}).get("textDocument", {}).get("uri", "")
+            if PUBLICA and method == "textDocument/didClose":
+                uri = (message.get("params") or {}).get("textDocument", {}).get("uri", "")
                 vazio = diagnostico_falso(uri)
                 vazio["params"]["diagnostics"] = []
                 escrever(saida, vazio)
             continue  # notificacao: so o log importa
-        if metodo == "shutdown":
-            escrever(saida, {"jsonrpc": "2.0", "id": mensagem["id"], "result": None})
+        if method == "shutdown":
+            escrever(saida, {"jsonrpc": "2.0", "id": message["id"], "result": None})
             continue
         escrever(saida, {
             "jsonrpc": "2.0",
-            "id": mensagem["id"],
-            "result": resultado(metodo, mensagem.get("params") or {}),
+            "id": message["id"],
+            "result": resultado(method, message.get("params") or {}),
         })
 
 
