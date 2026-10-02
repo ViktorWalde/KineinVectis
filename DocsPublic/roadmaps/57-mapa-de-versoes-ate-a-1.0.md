@@ -41,6 +41,10 @@ flowchart LR
   classDef proposed fill:#ffffff,stroke:#888,stroke-dasharray:5 4
 ```
 
+**Lançamento da 0.3.6–0.3.9 (decisão do autor, 2026-10-02):** as quatro saem
+juntas, num pacote só; o detalhe e o que ainda está em aberto (juntar às notas
+da 0.4) estão no [`53`](53-arquitetura-executavel-da-0.3.6.md) §11.
+
 Cinza: encerrada. Amarelo: em curso. Azul: planejada. Tracejado: proposta
 (nenhuma versão desde 2026-10-01; o que resta proposto é o critério da 1.0, §4).
 

@@ -606,9 +606,14 @@ mutação    cada guarda nova provada removendo-a
 ## 11. Ordem e trem de versões (decisão do autor, 2026-10-01)
 
 A série 0.3.0–0.3.5 está encerrada e divulgada. A reorganização da casca vai
-da **0.3.6 à 0.3.9**; cada versão é publicável sozinha, com notas de
-atualização no site, e só fecha com o gate completo, o passeio sem aviso no
-AppImage e as telas nas três larguras.
+da **0.3.6 à 0.3.9**, e cada etapa só fecha com o gate completo, o passeio sem
+aviso no AppImage e as telas nas três larguras.
+
+**Lançamento (decisão do autor, 2026-10-02): a 0.3.6 até a 0.3.9 saem JUNTAS,
+num lançamento só**, anunciado como uma versão única. As etapas continuam
+existindo como ordem de trabalho e de registro (40.7), não como pacotes
+publicados. **Em aberto:** publicar esse lançamento junto com as notas da 0.4,
+separando a 0.4.5 a partir daí — o autor ainda decide.
 
 ```text
 0.3.6  LIMPEZA E BASE

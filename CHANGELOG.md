@@ -5,10 +5,11 @@ mudança, com data, medida e prova, está em
 `DocsPublic/roadmaps/40.7-registro-das-entregas.md`; a situação de cada versão,
 em `DocsPublic/roadmaps/57-mapa-de-versoes-ate-a-1.0.md`.
 
-## 0.3.6 — em desenvolvimento (não lançada)
+## 0.3.6 a 0.3.9 — em desenvolvimento, um lançamento só (não lançada)
 
-A reorganização da casca da IDE (roadmaps 53 e 57). O que está abaixo existe no
-checkout, não em nenhum pacote publicado.
+A reorganização da casca da IDE (roadmaps 53 e 57). As quatro etapas saem
+juntas, num pacote só (decisão do autor, 2026-10-02). O que está abaixo existe
+no checkout, não em nenhum pacote publicado.
 
 - Protocolo `0.145.0` — **depurador sem globais, explicado.** Com o gdb < 16
   (o 15 do Ubuntu 24.04), o painel de variáveis de um alvo bare-metal mostrava
