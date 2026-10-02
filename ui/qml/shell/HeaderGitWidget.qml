@@ -13,6 +13,10 @@ Rectangle {
     property int changeCount: 0
     property bool panelActive: false
 
+    // Arrastavel dentro do cabecalho (0.3.9); quem ordena e' o TopHeaderBar.
+    property ReorderController reorder: null
+    property string reorderKey: ""
+
     signal panelRequested()
     // O clique no NOME do branch abre a troca de branch (HUD do Git, 2d).
     signal branchMenuRequested()
@@ -98,12 +102,14 @@ Rectangle {
         }
     }
 
-    MouseArea {
+    ReorderMouseArea {
         id: area
 
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: root.panelRequested()
+        reorder: root.reorder
+        reorderKey: root.reorderKey
+        onTapped: function(mouse) {
+            if (mouse.button === Qt.LeftButton) root.panelRequested();
+        }
     }
 }

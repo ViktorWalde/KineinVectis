@@ -15,6 +15,10 @@ Rectangle {
     property bool coreConnected: false
     property bool menuOpen: false
 
+    // Arrastavel dentro do cabecalho (0.3.9); quem ordena e' o TopHeaderBar.
+    property ReorderController reorder: null
+    property string reorderKey: ""
+
     signal menuRequested(real menuX, real menuY)
     signal openWorkspaceRequested()
 
@@ -76,13 +80,14 @@ Rectangle {
         }
     }
 
-    MouseArea {
+    ReorderMouseArea {
         id: area
 
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
+        reorder: root.reorder
+        reorderKey: root.reorderKey
+        onTapped: function(mouse) {
+            if (mouse.button !== Qt.LeftButton) return;
             if (!root.workspaceOpen) {
                 root.openWorkspaceRequested();
                 return;

@@ -386,7 +386,7 @@ Item {
         menuY = y;
         menuBelow = below === true;
         menuVisible = true;
-        getRequested();
+        getRequested(preset);
     }
 
     function closeMenu() {

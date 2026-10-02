@@ -50,7 +50,6 @@ Rectangle {
     property var pinnedTabs: []
     property var tabOrder: []
     signal tabMoved(string key, int dropIndex, var visibleKeys)
-    readonly property var tabKeys: bottomTabs.allTabs.map(tab => tab.key)
 
     signal tabMenuRequested(string key, real menuX, real menuY)
 

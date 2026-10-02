@@ -145,8 +145,7 @@ Item {
             onWidthChanged: root.updatePanelLimits()
             onExpandedToggled: root.shellController.toggleRail()
             entries: railEntries.visibleEntries
-            order: root.shellController.barOrders["rail"] !== undefined
-                   ? root.shellController.barOrders["rail"] : []
+            order: root.shellController.savedOrder("rail")
             onEntryMoved: (id, dropIndex, visibleIds) => root.shellController.moveInBar(
                               "rail", visibleIds, id, dropIndex)
             onActivated: id => railEntries.activate(id)
@@ -253,7 +252,7 @@ Item {
                 width: parent.width
                 height: root.shellController.bottomPanelHeight
                 pinnedTabs: root.shellController.bottomPinned
-                tabOrder: root.shellController.barOrder("bottom", tabKeys)
+                tabOrder: root.shellController.savedOrder("bottom")
                 onTabMoved: function(key, dropIndex, visibleKeys) {
                     root.shellController.moveInBar("bottom", visibleKeys, key, dropIndex);
                 }

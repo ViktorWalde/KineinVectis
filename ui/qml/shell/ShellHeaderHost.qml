@@ -222,6 +222,9 @@ Rectangle {
                           && root.coreClient.workspaceBuildSystems.length > 0
                           ? root.toolchainController.summary(root.coreClient.workspaceBuildSystems) : ""
         toolchainMenuOpen: root.toolchainController.menuVisible
+        order: root.shellController.savedOrder("header")
+        onWidgetMoved: (key, dropIndex, visibleKeys) => root.shellController.moveInBar(
+                           "header", visibleKeys, key, dropIndex)
         onToolchainMenuRequested: function(menuX, menuY) {
             root.toolchainMenuRequested(menuX, menuY + appMenuBar.height);
         }

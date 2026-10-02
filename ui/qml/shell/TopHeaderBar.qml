@@ -45,6 +45,38 @@ Rectangle {
     signal toolchainMenuRequested(real menuX, real menuY)
     signal pythonMenuRequested(real menuX, real menuY)
     signal contextOverflowRequested(real menuX, real menuY)
+    signal widgetMoved(string key, int dropIndex, var visibleKeys)
+
+    // A ordem que o usuario arrastou (0.3.9). Os widgets sao fixos (nao ha'
+    // Repeater): o grupo da esquerda e' um Item e cada widget calcula o x
+    // pela ordem — a soma dos visiveis antes dele. (Reanexar por um pai
+    // invisivel deixava o chip que aparecia depois fora do grafo de cena, e
+    // o stackBefore/stackAfter do C++ nao chega ao QML.)
+    property var order: []
+    readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
+    readonly property var widgetOrder: root.codec.ordered(["project", "git", "toolchain", "python"],
+                                                          root.order)
+
+    function xOf(key) {
+        const widgets = { project: projectWidget, git: gitWidget,
+                          toolchain: contextWidget, python: pythonWidget };
+        let x = 0;
+        for (const other of root.widgetOrder) {
+            if (other === key) return x;
+            if (widgets[other].visible) x += widgets[other].width + leftWidgets.spacing;
+        }
+        // O "⋯" (chave fora da ordem) e' sempre o ultimo.
+        return x;
+    }
+
+    ReorderController {
+        id: headerReorder
+
+        container: leftWidgets
+        onMoved: function(key, dropIndex, visibleKeys) {
+            root.widgetMoved(key, dropIndex, visibleKeys);
+        }
+    }
 
     // Contexto que existe mas nao coube: vai para o "⋯".
     readonly property bool toolchainHidden: root.workspaceOpen && root.toolchainSummary !== ""
@@ -77,16 +109,27 @@ Rectangle {
     color: "transparent"
     border.width: 0
 
-    Row {
+    Item {
         id: leftWidgets
+
+        property real spacing: Theme.spacingMedium
 
         anchors.verticalCenter: parent.verticalCenter
         anchors.left: parent.left
         anchors.leftMargin: Theme.spacingMedium
-        spacing: Theme.spacingMedium
+        height: 32
+        width: overflowButton.x + (overflowButton.visible ? overflowButton.width : 0)
 
         HeaderProjectWidget {
             id: projectWidget
+
+            reorder: headerReorder
+            reorderKey: "project"
+            x: root.xOf("project")
+            Behavior on x {
+                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
+            }
+            opacity: headerReorder.opacityFor("project")
 
             anchors.verticalCenter: parent.verticalCenter
             workspaceOpen: root.workspaceOpen
@@ -104,6 +147,14 @@ Rectangle {
         HeaderGitWidget {
             id: gitWidget
 
+            reorder: headerReorder
+            reorderKey: "git"
+            x: root.xOf("git")
+            Behavior on x {
+                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
+            }
+            opacity: headerReorder.opacityFor("git")
+
             anchors.verticalCenter: parent.verticalCenter
             visible: root.workspaceOpen && root.gitBranchLabel !== ""
             branchLabel: root.gitBranchLabel
@@ -117,6 +168,14 @@ Rectangle {
 
         HeaderContextWidget {
             id: contextWidget
+
+            reorder: headerReorder
+            reorderKey: "toolchain"
+            x: root.xOf("toolchain")
+            Behavior on x {
+                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
+            }
+            opacity: headerReorder.opacityFor("toolchain")
 
             anchors.verticalCenter: parent.verticalCenter
             summary: root.workspaceOpen ? root.toolchainSummary : ""
@@ -138,6 +197,14 @@ Rectangle {
         HeaderContextWidget {
             id: pythonWidget
 
+            reorder: headerReorder
+            reorderKey: "python"
+            x: root.xOf("python")
+            Behavior on x {
+                NumberAnimation { duration: Theme.motionFast; easing.type: Theme.easingStandard }
+            }
+            opacity: headerReorder.opacityFor("python")
+
             anchors.verticalCenter: parent.verticalCenter
             summary: root.workspaceOpen ? root.pythonSummary : ""
             iconName: "tree-file-python"
@@ -153,6 +220,8 @@ Rectangle {
 
         KvIconButton {
             id: overflowButton
+
+            x: root.xOf("")
 
             anchors.verticalCenter: parent.verticalCenter
             visible: root.toolchainHidden || root.pythonHidden

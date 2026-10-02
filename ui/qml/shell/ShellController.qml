@@ -157,13 +157,14 @@ Item {
 
     // Arrastar um item numa barra: `visible` e' a ordem desenhada agora.
     function moveInBar(bar, visible, key, dropIndex) {
-        const saved = barOrders[bar] !== undefined ? barOrders[bar] : [];
-        barOrders = codec.withOrder(barOrders, bar, codec.reordered(visible, saved, key, dropIndex));
+        barOrders = codec.withOrder(barOrders, bar,
+                                    codec.reordered(visible, savedOrder(bar), key, dropIndex));
         persistLayoutSoon();
     }
 
-    function barOrder(bar, keys) {
-        return codec.ordered(keys, barOrders[bar]);
+    // A ordem salva de uma barra; vazia = de fabrica.
+    function savedOrder(bar) {
+        return barOrders[bar] !== undefined ? barOrders[bar] : [];
     }
 
     function applySettings(settingsController) {

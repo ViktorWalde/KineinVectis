@@ -15,6 +15,9 @@ Rectangle {
     property bool menuOpen: false
     // A largura que sobra na barra para este chip (quem o poe decide).
     property real availableWidth: 0
+    // Arrastavel dentro do cabecalho (0.3.9); quem ordena e' o TopHeaderBar.
+    property ReorderController reorder: null
+    property string reorderKey: ""
 
     signal menuRequested(real menuX, real menuY)
 
@@ -70,13 +73,14 @@ Rectangle {
         }
     }
 
-    MouseArea {
+    ReorderMouseArea {
         id: area
 
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: {
+        reorder: root.reorder
+        reorderKey: root.reorderKey
+        onTapped: function(mouse) {
+            if (mouse.button !== Qt.LeftButton) return;
             TooltipController.hideFor(root);
             root.menuRequested(0, root.height + Theme.spacingXSmall);
         }
