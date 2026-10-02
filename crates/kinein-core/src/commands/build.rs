@@ -9,7 +9,7 @@ pub(super) fn build_command_descriptors() -> Vec<CommandDescriptor> {
             id: "build.run".to_owned(),
             title: "Build Project".to_owned(),
             category: "Build".to_owned(),
-            description: "Compila o projeto do workspace e emite erros estruturados".to_owned(),
+            description: "Compila o projeto e emite erros estruturados".to_owned(),
             default_shortcut: Some("Ctrl+F9".to_owned()),
             requires_workspace: true,
         },

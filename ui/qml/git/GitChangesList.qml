@@ -66,7 +66,7 @@ ListView {
         visible: root.changesModel.count === 0
         text: root.repo
               ? qsTr("Sem mudanças — árvore limpa.")
-              : qsTr("Este workspace não é um repositório git.")
+              : qsTr("Este projeto não é um repositório git.")
         color: Theme.textMuted
         font.pixelSize: 11
     }

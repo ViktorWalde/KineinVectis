@@ -21,7 +21,7 @@ fn lsp_did_change_requires_open_workspace() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert_eq!(error.message, "nenhum workspace aberto");
+    assert_eq!(error.message, "nenhum projeto aberto");
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn lsp_navigation_requires_open_workspace() {
             error.code,
             kinein_protocol::JsonRpcErrorCode::InvalidRequest
         );
-        assert_eq!(error.message, "nenhum workspace aberto");
+        assert_eq!(error.message, "nenhum projeto aberto");
     }
 }
 
@@ -76,7 +76,7 @@ fn lsp_rename_requires_open_workspace_and_non_empty_name() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert_eq!(error.message, "nenhum workspace aberto");
+    assert_eq!(error.message, "nenhum projeto aberto");
 
     let workspace = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -204,7 +204,7 @@ fn lsp_apply_code_action_requires_workspace_and_manager() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert_eq!(error.message, "nenhum workspace aberto");
+    assert_eq!(error.message, "nenhum projeto aberto");
 
     let workspace = std::env::temp_dir()
         .join("kinein-core-tests")
@@ -282,5 +282,5 @@ fn lsp_document_symbols_requires_workspace_and_manager() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert_eq!(error.message, "nenhum workspace aberto");
+    assert_eq!(error.message, "nenhum projeto aberto");
 }

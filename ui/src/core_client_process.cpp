@@ -59,7 +59,7 @@ void CoreClient::handleStarted()
         openWorkspace(m_lastWorkspaceRoot);
     }
     else if (!m_startupWorkspace.isEmpty()) {
-        appendLog(QStringLiteral("abrindo workspace do argumento: %1").arg(m_startupWorkspace));
+        appendLog(QStringLiteral("abrindo projeto do argumento: %1").arg(m_startupWorkspace));
         openWorkspace(m_startupWorkspace);
         m_startupWorkspace.clear();
     }

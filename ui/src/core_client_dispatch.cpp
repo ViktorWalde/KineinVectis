@@ -244,7 +244,7 @@ void CoreClient::handleWorkspaceOpened(const QJsonObject& result)
     if (m_recovering) {
         setRecovering(false);
         m_recoveryAttempts = 0;
-        appendLog(QStringLiteral("core recuperado; workspace reconectado"));
+        appendLog(QStringLiteral("core recuperado; projeto reconectado"));
         emit recovered();
         return;
     }

@@ -36,6 +36,8 @@ no checkout, não em nenhum pacote publicado.
   resumos do projeto saem inteiros por ordem de importância (o Python, depois
   o contexto do compilador, por último o índice), em vez de um deles aparecer
   partido.
+- **"Projeto" em toda a interface.** Onde a IDE dizia "workspace" (tela
+  inicial, menu, cabeçalho, mensagens, manual), agora diz "projeto".
 - **Criar e abrir projeto, cada um com a sua tela.** Criar mostra a
   linguagem em cartões, o nome com o caminho que vai nascer e a prévia, e só
   habilita "Criar projeto" com linguagem e nome; abrir diz qual pasta vai abrir.

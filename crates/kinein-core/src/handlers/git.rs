@@ -462,7 +462,7 @@ fn confined_existing_file(
             request_id.cloned(),
             JsonRpcError::new(
                 JsonRpcErrorCode::InvalidParams,
-                "arquivo fora do workspace aberto",
+                "arquivo fora do projeto aberto",
                 None,
             ),
         )));
@@ -488,7 +488,7 @@ fn confine_paths(root: &std::path::PathBuf, paths: &[String]) -> Result<Vec<Stri
             }
         };
         if !inside {
-            return Err(format!("caminho fora do workspace aberto: {raw}"));
+            return Err(format!("caminho fora do projeto aberto: {raw}"));
         }
         confined.push(raw.clone());
     }

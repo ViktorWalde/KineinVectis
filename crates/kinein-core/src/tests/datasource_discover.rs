@@ -267,12 +267,12 @@ fn destroy_removes_the_profile_and_optionally_the_data() {
         json!({ "name": "fora", "data": true }),
     );
     let resultado = r.result.unwrap();
-    assert!(fora.exists(), "fora do workspace a IDE nao apaga");
+    assert!(fora.exists(), "fora do projeto a IDE nao apaga");
     assert!(
         resultado["note"]
             .as_str()
             .unwrap()
-            .contains("fora do workspace")
+            .contains("fora do projeto")
     );
     let _ = std::fs::remove_file(&fora);
 

@@ -77,7 +77,7 @@ pub(super) fn describe(
         (
             ConfigActionState::HiddenByScope,
             Some(format!(
-                "{} nao esta ativo neste workspace",
+                "{} nao esta ativo neste projeto",
                 match action.scope {
                     ConfigActionScope::Cmake => "CMake",
                     ConfigActionScope::Cargo => "Cargo",
@@ -138,10 +138,10 @@ fn evaluate(
 ) -> (ConfigActionState, Option<String>) {
     match action.scope {
         ConfigActionScope::Cmake if facts.cmakelists.is_none() => {
-            return partial("CMakeLists.txt nao existe na raiz do workspace");
+            return partial("CMakeLists.txt nao existe na raiz do projeto");
         }
         ConfigActionScope::Cargo if facts.cargo_toml.is_none() => {
-            return partial("Cargo.toml nao existe na raiz do workspace");
+            return partial("Cargo.toml nao existe na raiz do projeto");
         }
         _ => {}
     }

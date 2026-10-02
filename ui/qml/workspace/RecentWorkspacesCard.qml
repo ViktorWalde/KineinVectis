@@ -31,7 +31,7 @@ Rectangle {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: qsTr("Workspaces recentes")
+                text: qsTr("Projetos recentes")
                 color: Theme.textPrimary
                 font.pixelSize: Theme.fontSizePanelTitle
                 font.bold: true
@@ -156,7 +156,7 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     compact: true
                     iconName: "close"
-                    tooltip: qsTr("Remover dos workspaces recentes")
+                    tooltip: qsTr("Remover dos projetos recentes")
                     onClicked: root.controller.removeWorkspace(workspaceRow.modelData.root)
                 }
 

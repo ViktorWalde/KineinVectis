@@ -163,7 +163,7 @@ impl Core {
         let parsed = match parse_params::<TerminalOpenParams>(
             request_id.as_ref(),
             params,
-            "terminal.open aceita cwd absoluto dentro do workspace",
+            "terminal.open aceita cwd absoluto dentro do projeto",
         ) {
             Ok(parsed) => parsed,
             Err(response) => return *response,

@@ -147,7 +147,7 @@ Item {
         current: root.section
         sections: [
             { "id": "visao", "label": qsTr("Visão geral") },
-            { "id": "workspace", "label": qsTr("Workspace") },
+            { "id": "workspace", "label": qsTr("Projeto") },
             { "id": "executar", "label": qsTr("Executar") },
             { "id": "sistema", "label": qsTr("Sistema") },
             { "id": "configurar", "label": qsTr("Configurar") }

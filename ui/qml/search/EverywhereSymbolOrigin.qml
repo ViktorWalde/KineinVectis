@@ -39,7 +39,7 @@ QtObject {
         const needle = query.substring(1).trim();
         if (workspaceRoot === "") {
             return { "scope": "", "needle": needle,
-                     "error": qsTr("Abra um workspace para buscar símbolos.") };
+                     "error": qsTr("Abra um projeto para buscar símbolos.") };
         }
         if (!isDocument && needle === "") {
             return { "scope": "", "needle": needle,

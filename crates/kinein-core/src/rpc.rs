@@ -16,7 +16,7 @@ pub(crate) fn no_workspace_response(request_id: Option<Value>, method: &str) -> 
         request_id,
         JsonRpcError::new(
             JsonRpcErrorCode::InvalidRequest,
-            "nenhum workspace aberto",
+            "nenhum projeto aberto",
             Some(json!({ "method": method })),
         ),
     )

@@ -97,7 +97,7 @@ pub(super) fn lsp_core_command_descriptors() -> Vec<CommandDescriptor> {
             id: "lsp.workspaceSymbols".to_owned(),
             title: "Go to Symbol".to_owned(),
             category: "LSP".to_owned(),
-            description: "Busca simbolos no workspace (prefixo # no Search Everywhere)".to_owned(),
+            description: "Busca simbolos no projeto (prefixo # no Search Everywhere)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
         },

@@ -326,7 +326,7 @@ fn terminal_open_requires_an_open_workspace() {
     let erro = saida.response().error.as_ref().unwrap();
 
     assert_eq!(erro.code, JsonRpcErrorCode::InvalidRequest);
-    assert_eq!(erro.message, "nenhum workspace aberto");
+    assert_eq!(erro.message, "nenhum projeto aberto");
 }
 
 /// Sem `enable_lsp` não há `TerminalManager`: o core tem de dizer isso, e não

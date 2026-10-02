@@ -144,7 +144,7 @@ impl fmt::Display for FsError {
                 write!(formatter, "caminho invalido {path}: {source}")
             }
             Self::OutsideRoot { path } => {
-                write!(formatter, "o caminho {path} esta fora do workspace aberto")
+                write!(formatter, "o caminho {path} esta fora do projeto aberto")
             }
             Self::NotADirectory { path } => {
                 write!(formatter, "o caminho {path} nao e um diretorio")
@@ -169,7 +169,7 @@ impl fmt::Display for FsError {
             Self::WorkspaceRoot { path } => {
                 write!(
                     formatter,
-                    "o caminho {path} e a raiz do workspace e nao pode ser renomeado, copiado ou removido"
+                    "o caminho {path} e a raiz do projeto e nao pode ser renomeado, copiado ou removido"
                 )
             }
             Self::TooLarge { path, size } => {

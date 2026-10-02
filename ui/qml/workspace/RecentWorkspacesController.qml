@@ -82,7 +82,7 @@ Item {
     function openWorkspace(rootPath) {
         const entry = entryFor(rootPath);
         if (entry === null || !entry.available) {
-            errorText = qsTr("Esse workspace não está mais disponível.");
+            errorText = qsTr("Esse projeto não está mais disponível.");
             return;
         }
         errorText = "";

@@ -87,7 +87,7 @@ impl fmt::Display for ConfigActionError {
             }
             Self::OutOfScope { id } => write!(
                 formatter,
-                "a acao {id} nao pertence a nenhum build system ativo deste workspace"
+                "a acao {id} nao pertence a nenhum build system ativo deste projeto"
             ),
             Self::MissingParam { name } => {
                 write!(

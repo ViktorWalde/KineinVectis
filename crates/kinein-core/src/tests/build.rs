@@ -16,7 +16,7 @@ fn build_run_requires_open_workspace() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert_eq!(error.message, "nenhum workspace aberto");
+    assert_eq!(error.message, "nenhum projeto aberto");
 }
 
 #[test]

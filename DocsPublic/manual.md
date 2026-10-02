@@ -20,21 +20,21 @@ uso.
 ## 1. Primeiros passos
 
 1. A IDE abre na **Start Screen**, que mostra o estado das ferramentas sem
-   instalar ou alterar nada automaticamente. Clique em **Abrir workspace**
+   instalar ou alterar nada automaticamente. Clique em **Abrir projeto**
    (ou `Ctrl+O`).
 2. Navegue até a pasta do seu projeto (qualquer projeto com `Cargo.toml` ou
    `CMakeLists.txt` é detectado automaticamente) e confirme.
 3. A árvore de arquivos aparece à esquerda. Clique num arquivo para editar.
 
 Se a raiz tiver `Cargo.toml` **e** `CMakeLists.txt`, a Kinein reconhece o
-workspace híbrido: menus e barra superior oferecem Build/Teste Cargo e CMake
+projeto híbrido: menus e barra superior oferecem Build/Teste Cargo e CMake
 separadamente, e o Project Health verifica as duas toolchains.
 4. Ao reabrir o mesmo projeto depois, **suas abas voltam como estavam**
    (sessão automática).
 
-Depois da primeira abertura bem-sucedida, o projeto aparece em **Workspaces
+Depois da primeira abertura bem-sucedida, o projeto aparece em **Projetos
 recentes** na Start Screen e em **Arquivo → Abrir recente**. Um clique reabre o
-workspace e restaura suas abas. Na Start Screen também é possível **fixar** os
+projeto e restaura suas abas. Na Start Screen também é possível **fixar** os
 projetos mais importantes no topo, remover uma entrada ou limpar toda a lista.
 Se uma pasta foi movida ou apagada, ela aparece como **caminho ausente**, fica
 desabilitada e pode ser removida com segurança.
@@ -97,7 +97,7 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   escolheu quando a janela cresce. Perto do mínimo, o rodapé do Git põe o
   **Amend** numa linha própria em vez de esconder o botão **Commit**.
 - **Barra principal** (desde 2026-09-18, Etapa 2 F1): **três widgets**, como
-  nas IDEs JetBrains. *Projeto* — o nome do workspace, o que ele é (Cargo +
+  nas IDEs JetBrains. *Projeto* — o nome do projeto, o que ele é (Cargo +
   CMake) e o ponto do core; o clique abre recentes, abrir e fechar. *Git* —
   a branch, ↑↓ e o contador de alterações; o clique abre a janela do Git.
   *Executar* — a configuração ativa (▾ troca), **▶ Rodar**, **🐞 Depurar** e
@@ -177,7 +177,7 @@ diálogo.
 
 Arrastar dentro da árvore move por padrão; manter Ctrl durante o gesto copia.
 Arrastar arquivos do gerenciador para a árvore **importa por cópia**, sem
-apagar a origem. Soltar uma pasta na tela inicial abre um workspace; soltar um
+apagar a origem. Soltar uma pasta na tela inicial abre um projeto; soltar um
 arquivo da árvore no editor abre sua aba, sem mover o arquivo. Essas rotas
 foram conferidas com o mouse real em X11; em Wayland, a do gerenciador para o
 editor. Arrastar da árvore para o gerenciador de arquivos
@@ -323,7 +323,7 @@ alterado.
 | `Ctrl+E` | Arquivos recentes, no mesmo Search Everywhere |
 | `Alt+7` | Aba **Símbolos**: estrutura do arquivo e busca de declarações por nome no projeto |
 | — digite `@` | ...símbolos do arquivo atual (estrutura); `@nome` filtra |
-| — digite `#nome` | ...símbolos do workspace inteiro (structs, funções...) |
+| — digite `#nome` | ...símbolos do projeto inteiro (structs, funções...) |
 | `Ctrl+Shift+F` | Buscar texto em todos os arquivos (aba Busca) |
 | `Ctrl+Shift+H` | **Substituir texto no projeto** (resumo + confirmação) |
 | `Ctrl+F` / `Ctrl+H` | Buscar/substituir **dentro do arquivo aberto** (barra no editor) |
@@ -409,7 +409,7 @@ com `--coverage`, e a IDE não muda o seu build por conta própria.
 botão de executar ao passar o mouse na árvore. A mesma ação fica no clique
 direito como **Executar script** (e **Depurar**, num `.py`). A saída abre
 numa **aba do Terminal** com o nome do comando (`▶ bash -- 'x.sh'`) e pode
-ser interrompida pelo controle normal de Run (ou pelo × da aba). Só arquivos dentro do workspace são aceitos; não é necessário abrir um
+ser interrompida pelo controle normal de Run (ou pelo × da aba). Só arquivos dentro do projeto são aceitos; não é necessário abrir um
 terminal e digitar o caminho. O que a árvore aceita como executável é o core
 quem diz — a lista não mora na tela.
 
@@ -442,7 +442,7 @@ Abra as fontes correspondentes na IDE e marque os breakpoints. Na aba **Debug**,
 preencha **Host do Python** e **Porta** e clique **Conectar ao Python**.
 Frames, variáveis e watches usam os controles habituais. **Desconectar** encerra
 apenas a sessão de depuração; o serviço continua rodando. O adaptador precisa
-informar caminhos acessíveis neste workspace; SSH e mapeamento de caminhos
+informar caminhos acessíveis neste projeto; SSH e mapeamento de caminhos
 remotos continuam na etapa de Linux embarcado.
 
 Todos os controles são **botões clicáveis na aba Debug** — dá para
@@ -846,10 +846,10 @@ pasta**. O campo de caminho continua disponível para quem já conhece o path
 feita por SSH em Job e exige autenticação por chave. Pastas e arquivos com
 espaço no nome funcionam; o caminho digitado precisa ser absoluto (sem `~`). A IDE puxa a árvore por
 `rsync` para `~/.cache/kinein-vectis/remote/…` e abre esse espelho como um
-workspace comum — editor, busca, git, LSP, tudo funciona nele. A partir daí
+projeto comum — editor, busca, git, LSP, tudo funciona nele. A partir daí
 **salvar um arquivo empurra só ele para o alvo** (um job "Empurrar
 main.c para pi", visível na aba Jobs). O painel Remoto mostra "este
-workspace é um espelho de pi:/home/pi/projeto" com **Puxar do alvo** (o que
+projeto é um espelho de pi:/home/pi/projeto" com **Puxar do alvo** (o que
 mudou lá) e **Empurrar tudo**. Nada apaga do outro lado: renomear ou apagar
 no espelho não propaga — é gesto seu, pelo shell. O que muda no alvo só
 aparece ao Puxar; se os dois lados editarem o mesmo arquivo, o rsync mais
@@ -887,7 +887,7 @@ chamada nova a cada tecla — e `Esc` limpa. Nas listas, as setas andam, `Home` 
 `End` vão às pontas, `Enter` abre no navegador. `Esc` fecha o painel.
 
 **O token.** Fica **só em memória**, some com a aplicação e nunca entra em
-perfil, workspace, log ou screenshot — o campo tem eco de senha. Ele está preso
+perfil, projeto, log ou screenshot — o campo tem eco de senha. Ele está preso
 ao par *projeto + endereço confirmado*: mudar de projeto, confirmar outra URL,
 `Esquecer credencial` ou ter o token recusado apagam. Fechar e reabrir o painel
 **não** apaga, para que abrir uma janela não vire um login novo.
@@ -1102,7 +1102,7 @@ botão desligado diz isso ao pairar). As imagens locais fecham a lista.
 
 **compose up / compose down** são do **projeto**: só acendem quando há motor
 respondendo, uma ferramenta de compose **e um arquivo de compose na raiz do
-workspace** (`compose.yaml`, `docker-compose.yml`...). Sem um deles, a linha do
+projeto** (`compose.yaml`, `docker-compose.yml`...). Sem um deles, a linha do
 motor diz o que falta. `up` é `-d`; a saída viva mora nos logs de cada
 container. Toda ação é um job cancelável, e o que falhou vira motivo no topo
 do painel.
@@ -1221,7 +1221,7 @@ IDE, e quem aperta Enter é você.
 | --- | --- | --- |
 | Arquivo | `Ctrl+S` | Salvar |
 | Arquivo | `Ctrl+Shift+S` | Salvar tudo |
-| Workspace | `Ctrl+O` | Abrir pasta |
+| Projeto | `Ctrl+O` | Abrir pasta |
 | Edição | `Ctrl+D` | Duplicar linha/seleção |
 | Edição | `Alt+Shift+↑/↓` | Mover linha(s) |
 | Edição | `Ctrl+/` | Comentar/descomentar |
@@ -1241,7 +1241,7 @@ IDE, e quem aperta Enter é você.
 | Código | `Alt+O` | C/C++: alternar header/source |
 | Código | `F2` / `Shift+F2` (ou `Ctrl+Alt+E` / `Ctrl+Alt+Shift+E`) | Próximo / anterior problema |
 | IDE | `Ctrl+Alt+S` | Abrir configurações |
-| Busca | `Ctrl+Shift+N` / `Ctrl+Shift+A` | Search Everywhere (`@` símbolos do arquivo, `#` do workspace) |
+| Busca | `Ctrl+Shift+N` / `Ctrl+Shift+A` | Search Everywhere (`@` símbolos do arquivo, `#` do projeto) |
 | Busca | `Ctrl+E` | Arquivos recentes |
 | Busca | `Alt+7` | Aba Símbolos (estrutura do arquivo; declarações do projeto por nome) |
 | Busca | `Ctrl+Shift+F` | Buscar nos arquivos |

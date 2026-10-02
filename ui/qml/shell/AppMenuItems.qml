@@ -41,7 +41,7 @@ Item {
     function openItems() {
         const items = [
             { label: qsTr("Criar projeto..."), action: "workspace.createProject", enabled: true },
-            { label: qsTr("Abrir workspace..."), action: "workspace.open", enabled: true }
+            { label: qsTr("Abrir projeto..."), action: "workspace.open", enabled: true }
         ];
         if (recentWorkspaces.length > 0) {
             items.push({ label: qsTr("Abrir recente"), action: "", enabled: false });
@@ -56,7 +56,7 @@ Item {
                 });
             }
             items.push({
-                label: qsTr("Limpar workspaces recentes"),
+                label: qsTr("Limpar projetos recentes"),
                 action: "workspace.recent.clear",
                 enabled: true
             });
@@ -66,7 +66,7 @@ Item {
 
     function projectMenuItems() {
         const items = openItems();
-        items.push({ label: qsTr("Fechar workspace"), action: "workspace.close", enabled: workspaceOpen });
+        items.push({ label: qsTr("Fechar projeto"), action: "workspace.close", enabled: workspaceOpen });
         return items;
     }
 
@@ -75,7 +75,7 @@ Item {
         fileItems.push(
             { label: qsTr("Novo arquivo..."), action: "project.createFile", enabled: workspaceOpen },
             { label: qsTr("Nova pasta..."), action: "project.createDirectory", enabled: workspaceOpen },
-            { label: qsTr("Fechar workspace"), action: "workspace.close", enabled: workspaceOpen },
+            { label: qsTr("Fechar projeto"), action: "workspace.close", enabled: workspaceOpen },
             { label: qsTr("Salvar"), action: "editor.save", enabled: hasActiveFile },
             { label: qsTr("Salvar tudo"), action: "editor.saveAll", enabled: hasActiveFile },
             { label: qsTr("Sair"), action: "app.quit", enabled: true }

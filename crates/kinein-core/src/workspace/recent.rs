@@ -81,17 +81,14 @@ impl fmt::Display for RecentWorkspaceError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidRoot(root) => {
-                write!(formatter, "root de workspace recente invalido: {root}")
+                write!(formatter, "root de projeto recente invalido: {root}")
             }
             Self::MissingRoot(root) => {
-                write!(formatter, "workspace recente nao encontrado: {root}")
+                write!(formatter, "projeto recente nao encontrado: {root}")
             }
             Self::Io { path, source } => write!(formatter, "falha acessando {path}: {source}"),
             Self::Serialize(source) => {
-                write!(
-                    formatter,
-                    "falha serializando workspaces recentes: {source}"
-                )
+                write!(formatter, "falha serializando projetos recentes: {source}")
             }
         }
     }

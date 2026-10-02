@@ -61,7 +61,7 @@ pub fn plan(root: &Path, profile: &DataSourceProfile, container_exists: bool) ->
             } else {
                 DestroyPlan::ProfileOnly {
                     note: format!(
-                        "{} fica: esta' fora do workspace, e a IDE nao apaga arquivo que nao e' do projeto",
+                        "{} fica: esta' fora do projeto, e a IDE nao apaga arquivo que nao e' do projeto",
                         absolute.display()
                     ),
                 }

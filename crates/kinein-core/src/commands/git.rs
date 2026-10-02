@@ -8,7 +8,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             id: "git.status".to_owned(),
             title: "Git: Atualizar status".to_owned(),
             category: "Git".to_owned(),
-            description: "Reconsulta o git status do workspace (branch e mudancas)".to_owned(),
+            description: "Reconsulta o git status do projeto (branch e mudancas)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
         },

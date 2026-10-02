@@ -39,7 +39,7 @@ impl Core {
                 request_id.cloned(),
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    format!("{method} requer um workspace Rust/Cargo"),
+                    format!("{method} requer um projeto Rust/Cargo"),
                     Some(json!({
                         "kind": workspace.kind,
                         "buildSystems": workspace.capabilities.build_systems,

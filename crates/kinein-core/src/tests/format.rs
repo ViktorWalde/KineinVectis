@@ -38,7 +38,7 @@ fn format_text_requires_open_workspace() {
     ));
     let error = outcome.response().error.as_ref().unwrap();
     assert_eq!(error.code, JsonRpcErrorCode::InvalidRequest);
-    assert_eq!(error.message, "nenhum workspace aberto");
+    assert_eq!(error.message, "nenhum projeto aberto");
 }
 
 #[test]

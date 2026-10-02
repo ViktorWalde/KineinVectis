@@ -290,7 +290,7 @@ impl Core {
                     JsonRpcError::new(
                         JsonRpcErrorCode::InvalidParams,
                         format!(
-                            "{method} requer que o sistema {} exista no workspace",
+                            "{method} requer que o sistema {} exista no projeto",
                             project_system_name(build_system.project_kind())
                         ),
                         Some(json!({

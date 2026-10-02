@@ -65,7 +65,7 @@ QtObject {
                  enabled: true, busy: false,
                  hint: e.temPastaRemota
                      ? qsTr("abre a pasta do alvo como espelho local")
-                     : qsTr("começa pela home do alvo em Workspace") };
+                     : qsTr("começa pela home do alvo em Projeto") };
     }
 
     // Qual seccao o proximo gesto vive, para o painel LEVAR a pessoa ate' ela

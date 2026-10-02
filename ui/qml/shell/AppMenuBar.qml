@@ -18,7 +18,7 @@ Rectangle {
     property string activeMenu: ""
     readonly property string windowContextLabel: workspaceName !== ""
                                                  ? workspaceName
-                                                 : qsTr("sem workspace")
+                                                 : qsTr("sem projeto")
 
     signal actionRequested(string action)
     signal menuRequested(string key, real menuX, real menuY, var items)

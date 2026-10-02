@@ -148,7 +148,7 @@ Rectangle {
                 iconName: "close"
                 iconSize: 14
                 danger: true
-                tooltip: qsTr("Fechar workspace")
+                tooltip: qsTr("Fechar projeto")
                 onClicked: root.closeRequested()
             }
         }

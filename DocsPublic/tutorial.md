@@ -120,7 +120,7 @@ Não use `sudo`. Se mover o AppImage depois de criar o ícone, execute novamente
 
 O AppImage leva a UI, o core e o runtime Qt necessários. Configurações globais
 ficam em `~/.config/kinein-vectis/`; sessões e rascunhos de um projeto ficam na
-pasta `.kinein/` dentro do próprio workspace.
+pasta `.kinein/` dentro do próprio projeto.
 
 O modo portátil prioriza compatibilidade: a interface é desenhada por
 software. Abrir pelo terminal devolve o prompt na hora e não imprime nada; uma
@@ -167,7 +167,7 @@ Quando você enviar uma versão nova, o testador deve:
 4. colocar os quatro arquivos na mesma pasta da versão anterior;
 5. executar `./instalar-kinein-vectis.sh`;
 6. escolher se quer apagar as versões antigas quando o script perguntar;
-7. abrir a Kinein pelo mesmo ícone do menu e testar o workspace.
+7. abrir a Kinein pelo mesmo ícone do menu e testar o projeto.
 
 Se quiser uma possibilidade imediata de rollback, responda `N` à remoção até
 validar a nova versão. Os AppImages podem coexistir porque cada nome contém a

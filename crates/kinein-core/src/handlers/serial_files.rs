@@ -142,7 +142,7 @@ impl Core {
         self.workspace_root().map_or_else(
             || {
                 Err(format!(
-                    "`local` relativo ({local}) exige um workspace aberto; sem ele, use um \
+                    "`local` relativo ({local}) exige um projeto aberto; sem ele, use um \
                      caminho absoluto"
                 ))
             },

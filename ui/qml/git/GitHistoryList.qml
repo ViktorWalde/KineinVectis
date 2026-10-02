@@ -52,7 +52,7 @@ ListView {
               ? qsTr("Carregando histórico...")
               : (root.repo
                  ? qsTr("Sem commits ainda.")
-                 : qsTr("Este workspace não é um repositório git."))
+                 : qsTr("Este projeto não é um repositório git."))
         color: Theme.textMuted
         font.pixelSize: 11
     }

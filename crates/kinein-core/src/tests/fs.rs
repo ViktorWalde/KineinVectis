@@ -19,7 +19,7 @@ fn fs_methods_require_open_workspace() {
         error.code,
         kinein_protocol::JsonRpcErrorCode::InvalidRequest
     );
-    assert_eq!(error.message, "nenhum workspace aberto");
+    assert_eq!(error.message, "nenhum projeto aberto");
     let trash = core.handle_request(&JsonRpcRequest::new(
         21_i64,
         "fs.trash",

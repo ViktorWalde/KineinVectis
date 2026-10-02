@@ -169,7 +169,7 @@ Item {
                     width: parent.width
                     wrapMode: Text.WrapAnywhere
                     text: root.isMirror
-                          ? qsTr("Este workspace é um espelho de %1:%2 — salvar empurra o arquivo; "
+                          ? qsTr("Este projeto é um espelho de %1:%2 — salvar empurra o arquivo; "
                                  + "o que mudar no alvo só aparece ao Puxar.").arg(root.mirror.name).arg(root.mirror.path)
                           : ""
                     color: Theme.textSecondary

@@ -230,7 +230,7 @@ impl Core {
         let Some(espelho) = mirror::read_marker(&root) else {
             return falha(
                 request_id,
-                "este workspace nao e' um espelho remoto — abra uma pasta do alvo pelo painel Remoto",
+                "este projeto nao e' um espelho remoto — abra uma pasta do alvo pelo painel Remoto",
             );
         };
         let rels: Vec<String> = match parsed.paths {

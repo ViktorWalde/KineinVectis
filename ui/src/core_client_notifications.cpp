@@ -267,7 +267,7 @@ bool CoreClient::handleFileSystemNotification(const QString& method, const QJson
     }
     if (method == QStringLiteral("event.fs.watchError")) {
         const QString message = params.value(QStringLiteral("message")).toString();
-        appendErrorLog(QStringLiteral("watcher do workspace: %1").arg(message));
+        appendErrorLog(QStringLiteral("observador do projeto: %1").arg(message));
         emit fileWatchFailed(message);
         return true;
     }

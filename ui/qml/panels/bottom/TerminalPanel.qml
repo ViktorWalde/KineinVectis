@@ -17,7 +17,7 @@ Item {
     property string sessionId: ""
     property var runtimeController: null
     property bool clipboardHasText: false
-    property string emptyText: qsTr("Seu shell ($SHELL) abre aqui na raiz do workspace (Alt+F12).")
+    property string emptyText: qsTr("Seu shell ($SHELL) abre aqui na raiz do projeto (Alt+F12).")
     signal openRequested()
     signal keyPressed(string data)
     signal resizeRequested(int cols, int rows)

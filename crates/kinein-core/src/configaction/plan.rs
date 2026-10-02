@@ -111,7 +111,7 @@ pub(super) fn read_optional(
 /// Le um arquivo obrigatorio, com mensagem de dominio quando ele falta.
 pub(super) fn read_required(root: &Path, relative: &str) -> Result<String, ConfigActionError> {
     read_optional(root, relative)?.ok_or_else(|| ConfigActionError::NotApplicable {
-        reason: format!("{relative} nao existe neste workspace"),
+        reason: format!("{relative} nao existe neste projeto"),
     })
 }
 

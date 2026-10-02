@@ -312,7 +312,7 @@ fn refusals_happen_before_the_port_is_touched() {
         ),
         (
             json!({ "action": "get", "path": "a.py", "local": "a.py" }),
-            "exige um workspace aberto",
+            "exige um projeto aberto",
         ),
     ] {
         let erro = c

@@ -51,7 +51,7 @@ fn cmake_methods_require_workspace_and_cmake_kind() {
     let wrong_kind = core.handle_request(&JsonRpcRequest::new(82_i64, "cmake.status", None));
     let error = wrong_kind.response().error.as_ref().unwrap();
     assert_eq!(error.code, kinein_protocol::JsonRpcErrorCode::InvalidParams);
-    assert!(error.message.contains("workspace CMake"));
+    assert!(error.message.contains("projeto CMake"));
 }
 
 #[test]

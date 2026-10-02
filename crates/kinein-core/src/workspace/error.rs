@@ -101,7 +101,7 @@ impl fmt::Display for WorkspaceError {
             Self::InvalidRoot { path, source } => {
                 write!(
                     formatter,
-                    "nao foi possivel abrir o workspace em {path}: {source}"
+                    "nao foi possivel abrir o projeto em {path}: {source}"
                 )
             }
             Self::NotADirectory { path } => {
@@ -110,7 +110,7 @@ impl fmt::Display for WorkspaceError {
             Self::Persist { path, source } => {
                 write!(
                     formatter,
-                    "falha ao gravar metadados do workspace em {path}: {source}"
+                    "falha ao gravar metadados do projeto em {path}: {source}"
                 )
             }
             Self::ListDirectory { path, source } => {
@@ -144,7 +144,7 @@ impl fmt::Display for WorkspaceError {
             Self::Serialize(error) => {
                 write!(
                     formatter,
-                    "falha ao serializar metadados do workspace: {error}"
+                    "falha ao serializar metadados do projeto: {error}"
                 )
             }
         }

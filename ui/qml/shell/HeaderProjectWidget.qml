@@ -41,7 +41,7 @@ Rectangle {
 
         Text {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.workspaceOpen ? root.workspaceName : qsTr("Abrir workspace")
+            text: root.workspaceOpen ? root.workspaceName : qsTr("Abrir projeto")
             color: Theme.textPrimary
             font.pixelSize: 12
             font.weight: Font.DemiBold

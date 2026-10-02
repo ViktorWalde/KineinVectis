@@ -195,7 +195,7 @@ Rectangle {
         width: parent.width - 2 * Theme.spacingMedium
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.WordWrap
-        text: qsTr("Nenhuma ação para este projeto. Abra um workspace com CMakeLists.txt ou Cargo.toml.")
+        text: qsTr("Nenhuma ação para este projeto. Abra um projeto com CMakeLists.txt ou Cargo.toml.")
         color: Theme.textMuted
         font.pixelSize: 11
         visible: root.actionsModel === null || root.actionsModel.count === 0

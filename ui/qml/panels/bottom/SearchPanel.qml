@@ -71,7 +71,7 @@ Item {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: searchInput.text === ""
-                    text: qsTr("Buscar no workspace (Enter) — \\n quebra linha")
+                    text: qsTr("Buscar no projeto (Enter) — \\n quebra linha")
                     color: Theme.textMuted
                     font.pixelSize: 11
                 }

@@ -196,7 +196,7 @@ impl Core {
         let mut tools = self.python_tools();
         tools.medir_versao = false;
         let env = crate::python::env::python_env(root, &tools).ok_or_else(|| dap::DebugError::NoTarget {
-            message: "sem interpretador Python para este workspace: crie o ambiente (.venv) pela faixa de saude ou instale o python3".to_owned(),
+            message: "sem interpretador Python para este projeto: crie o ambiente (.venv) pela faixa de saude ou instale o python3".to_owned(),
         })?;
         let interpreter = PathBuf::from(env.interpreter);
         crate::python::debug::debugpy_available(&interpreter)
@@ -227,7 +227,7 @@ impl Core {
             );
         };
         if !file.starts_with(&workspace.root) {
-            return invalid_debug_params(request_id, "arquivo fora do workspace aberto");
+            return invalid_debug_params(request_id, "arquivo fora do projeto aberto");
         }
         let Some(file) = file.to_str().map(str::to_owned) else {
             return invalid_debug_params(request_id, "caminho de arquivo invalido");

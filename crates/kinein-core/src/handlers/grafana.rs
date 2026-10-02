@@ -142,7 +142,7 @@ impl Core {
                 request_id,
                 JsonRpcError::new(
                     JsonRpcErrorCode::InvalidParams,
-                    "nenhum Grafana configurado neste workspace".to_owned(),
+                    "nenhum Grafana configurado neste projeto".to_owned(),
                     None,
                 ),
             );
