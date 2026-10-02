@@ -2,14 +2,16 @@ import QtQuick
 import KineinVectis
 
 // O CONTEXTO EFETIVO no cabecalho (0.3.8 F3, 53 §5.7): a toolchain que o
-// build vai usar, ao lado do projeto e do git — antes morava no rodape, longe
-// de quem decide. O clique abre o DONO (o menu de toolchain), para baixo;
+// build vai usar, ou o Python do projeto, ao lado do projeto e do git — antes
+// moravam no rodape, longe de quem decide. O clique abre o DONO, para baixo;
 // nada se edita no chip. Sem espaco, encolhe com reticencias e, abaixo do
 // minimo legivel, sai (o editor nunca encolhe por um chip).
 Rectangle {
     id: root
 
     property string summary: ""
+    property string iconName: "cpu"
+    property string tooltipText: ""
     property bool menuOpen: false
     // A largura que sobra na barra para este chip (quem o poe decide).
     property real availableWidth: 0
@@ -44,7 +46,7 @@ Rectangle {
 
         KvIcon {
             anchors.verticalCenter: parent.verticalCenter
-            name: "cpu"
+            name: root.iconName
             size: 16
             iconColor: Theme.textSecondary
         }
@@ -80,8 +82,7 @@ Rectangle {
         }
         onContainsMouseChanged: {
             if (containsMouse) {
-                TooltipController.showFor(root, qsTr("Toolchain efetiva do build — clique para trocar"),
-                                          "bottom");
+                TooltipController.showFor(root, root.tooltipText, "bottom");
             } else {
                 TooltipController.hideFor(root);
             }

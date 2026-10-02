@@ -107,6 +107,10 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   *Toolchain* (desde 2026-10-02) — o que o build vai usar ("Clang++ · Ninja ·
   automática", "Cargo"); o clique abre o seletor por papel, para baixo. Numa
   janela estreita ele encurta e, sem espaço, sai antes de apertar o resto.
+  *Python* (desde 2026-10-02, projetos Python) — o interpretador que vale
+  (".venv · 3.14", "sistema · 3.14 ⚠"); o clique mostra caminho, origem,
+  versão e o aviso, com **Criar .venv** quando falta ambiente e **Instalar
+  stubs da placa** num projeto MicroPython.
   *Executar* — a configuração ativa (▾ troca), **▶ Rodar**, **🐞 Depurar** e
   o menu **⋯** com Compilar/Testar/Análise/Cobertura/Configurar de cada
   sistema que o projeto tem, com rótulo (antes eram dois pares de botões

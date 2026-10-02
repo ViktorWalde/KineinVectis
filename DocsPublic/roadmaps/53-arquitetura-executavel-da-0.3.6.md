@@ -488,9 +488,10 @@ falha    área surface sem conteúdo → volta ao editor e registra no log
 
 **Andamento (2026-10-02):** primeira parte feita (40.7 §7.173) — chip da
 toolchain efetiva no cabeçalho, rodapé sem o sistema e sem o chip repetidos,
-título da faixa removido, seletor de toolchain por papéis. Falta: o contexto
-Python no cabeçalho, perfil/kit, alvo, dispositivo e remoto como chips
-pertinentes, e o "…" com a lista quando a largura acaba.
+título da faixa removido, seletor de toolchain por papéis; segunda parte
+(§7.174) — chip e popover do Python, prioridade por largura entre os chips.
+Falta: perfil/kit, alvo, dispositivo e remoto como chips pertinentes, e o
+"…" com a lista quando a largura acaba (aí o Python pode sair do rodapé).
 
 ```text
 dono     header: ShellHeaderHost/TopHeaderBar/HeaderRunWidget/RunConfigMenu;

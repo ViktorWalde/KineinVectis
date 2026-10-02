@@ -3750,7 +3750,6 @@ ui/qml/project/ProjectTreeKeyboard.qml	topo	1
 ui/qml/project/ProjectTreeKeyboard.qml	ultima	4
 ui/qml/project/ProjectTreeRevealController.qml	alvo	3
 ui/qml/python/PythonController.qml	nativo	3
-ui/qml/python/PythonController.qml	versao	3
 ui/qml/remote/RemoteActionRules.qml	alvo	1
 ui/qml/remote/RemoteActionRules.qml	espelho	1
 ui/qml/remote/RemoteActionRules.qml	falha	1
@@ -3833,7 +3832,6 @@ ui/qml/shell/HeaderGitWidget.qml	conteudo	2
 ui/qml/shell/HeaderProjectWidget.qml	conteudo	2
 ui/qml/shell/HeaderRunWidget.qml	acoes	3
 ui/qml/shell/ShellEnvironmentOverlays.qml	comando	4
-ui/qml/shell/ShellHeaderHost.qml	barra	1
 ui/qml/shell/StatusBarJobWidget.qml	preenchido	1
 ui/qml/shell/StatusBarJobWidget.qml	trilho	4
 ui/qml/toolchain/ToolchainController.qml	algum	3

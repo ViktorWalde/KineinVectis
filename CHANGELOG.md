@@ -51,6 +51,10 @@ no checkout, não em nenhum pacote publicado.
   abre o seletor, agora organizado por papel — só os do seu projeto à vista,
   cada um com o que está valendo, e os outros recolhidos. O rodapé e a faixa
   de menus deixaram de repetir o nome e o tipo do projeto.
+- **O Python do projeto à vista.** Num projeto Python, o cabeçalho mostra
+  qual interpretador vale (".venv · 3.14", ou "sistema ⚠"); um clique abre
+  o painel com caminho, origem, versão e o aviso — e o botão **Criar .venv**
+  quando falta ambiente.
 - **Abas de arquivo e cantos redondos.** A aba ativa é uma pílula com
   sublinhado; as outras não têm caixa. As áreas internas do editor e do
   terminal acompanham os cantos redondos das ilhas.

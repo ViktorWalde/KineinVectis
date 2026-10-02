@@ -151,6 +151,8 @@ set_source_files_properties(qml/index/IndexController.qml PROPERTIES QT_RESOURCE
 set_source_files_properties(qml/ipc/IndexEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexEventRouter.qml)
 set_source_files_properties(qml/ipc/IndexRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS IndexRequestRouter.qml)
 set_source_files_properties(qml/python/PythonController.qml PROPERTIES QT_RESOURCE_ALIAS PythonController.qml)
+set_source_files_properties(qml/python/PythonContextPopover.qml PROPERTIES QT_RESOURCE_ALIAS PythonContextPopover.qml)
+set_source_files_properties(qml/python/PythonContextFact.qml PROPERTIES QT_RESOURCE_ALIAS PythonContextFact.qml)
 set_source_files_properties(qml/ipc/PythonEventRouter.qml PROPERTIES QT_RESOURCE_ALIAS PythonEventRouter.qml)
 set_source_files_properties(qml/ipc/PythonRequestRouter.qml PROPERTIES QT_RESOURCE_ALIAS PythonRequestRouter.qml)
 set_source_files_properties(qml/container/ContainerPanel.qml PROPERTIES QT_RESOURCE_ALIAS ContainerPanel.qml)
@@ -515,6 +517,8 @@ qt_add_qml_module(kinein-vectis
         qml/ipc/IndexEventRouter.qml
         qml/ipc/IndexRequestRouter.qml
         qml/python/PythonController.qml
+        qml/python/PythonContextPopover.qml
+        qml/python/PythonContextFact.qml
         qml/ipc/PythonEventRouter.qml
         qml/ipc/PythonRequestRouter.qml
         qml/container/ContainerPanel.qml

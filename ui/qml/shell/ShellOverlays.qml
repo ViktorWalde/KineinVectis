@@ -25,6 +25,7 @@ Item {
     property var setupController: null
     property var containerController: null
     property var toolchainController: null
+    property var pythonController: null
     property bool aboutVisible: false
     property bool manualVisible: false
     property bool appMenuVisible: false
@@ -155,6 +156,14 @@ Item {
         menuBelow: root.toolchainController.menuBelow
         buildSystems: root.shellController.workspaceBuildSystems
         onDismissRequested: root.toolchainController.closeMenu()
+    }
+
+    PythonContextPopover {
+        anchors.fill: parent
+        visible: root.pythonController !== null && root.pythonController.menuVisible
+        z: 95
+        controller: root.pythonController
+        onDismissRequested: root.pythonController.closeMenu()
     }
 
     ConfigActionsDialog {

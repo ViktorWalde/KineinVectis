@@ -24,6 +24,7 @@ Rectangle {
     property var containerController: null
     property var configActionController: null
     property var toolchainController: null
+    property var pythonController: null
     property var recentWorkspacesController: null
     property var gitController: null
     property bool windowMaximized: false
@@ -169,7 +170,7 @@ Rectangle {
     }
 
     TopHeaderBar {
-        id: barra
+        id: headerBar
 
         y: appMenuBar.height
         width: parent.width
@@ -202,6 +203,13 @@ Rectangle {
         toolchainMenuOpen: root.toolchainController.menuVisible
         onToolchainMenuRequested: function(menuX, menuY) {
             root.toolchainMenuRequested(menuX, menuY + appMenuBar.height);
+        }
+        pythonSummary: root.pythonController !== null ? root.pythonController.contextLabel() : ""
+        pythonMenuOpen: root.pythonController !== null && root.pythonController.menuVisible
+        // Os overlays cobrem a janela inteira: a coordenada da janela serve.
+        onPythonMenuRequested: function(menuX, menuY) {
+            const pos = headerBar.mapToItem(null, menuX, menuY);
+            root.pythonController.openMenu(pos.x, pos.y);
         }
         onOpenWorkspaceRequested: root.shellController.requestOpenFolder()
         onGitPanelRequested: root.shellController.toggleBottomTab("git")

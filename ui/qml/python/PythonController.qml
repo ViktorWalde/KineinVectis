@@ -16,6 +16,10 @@ Item {
     property var status: ({})
     property bool creating: false
     property string lastOutcome: ""
+    // O popover de contexto Python (0.3.8 F3), aberto pelo chip do cabecalho.
+    property bool menuVisible: false
+    property real menuX: 0
+    property real menuY: 0
 
     readonly property bool isPython: buildsPython()
     readonly property bool known: status.hasEnvironment !== undefined
@@ -109,14 +113,31 @@ Item {
     // / "python: nenhum ⚠" — e, num projeto com extensao nativa, " · pybind11
     // (scikit-build-core)" (fatia 5 da cadeia Python, 2026-09-13).
     function summary() {
+        const label = contextLabel();
+        if (label === "") return "";
+        const nativo = nativeModuleLine();
+        return qsTr("python: %1").arg(label) + (nativo === "" ? "" : " · " + nativo);
+    }
+
+    // O mesmo sem o prefixo: ".venv · 3.14.7", "sistema · 3.14.7 ⚠" — o chip
+    // do cabecalho ja' tem o icone do Python.
+    function contextLabel() {
         if (!isPython || !known) return "";
         const i = status.interpreter;
-        if (i === undefined || i === null) return qsTr("python: nenhum ⚠");
-        const versao = i.version !== undefined ? " · " + String(i.version).replace(/^Python /, "") : "";
-        const base = hasEnvironment ? qsTr("python: %1%2").arg(i.origin).arg(versao)
-                                    : qsTr("python: sistema%1 ⚠").arg(versao);
-        const nativo = nativeModuleLine();
-        return nativo === "" ? base : base + " · " + nativo;
+        if (i === undefined || i === null) return qsTr("nenhum ⚠");
+        const version = i.version !== undefined ? " · " + String(i.version).replace(/^Python /, "") : "";
+        return hasEnvironment ? i.origin + version : qsTr("sistema%1 ⚠").arg(version);
+    }
+
+    function openMenu(x, y) {
+        menuX = x;
+        menuY = y;
+        menuVisible = true;
+        statusRequested();
+    }
+
+    function closeMenu() {
+        menuVisible = false;
     }
 
     // "pybind11 (scikit-build-core)" / "PyO3 (maturin)"; vazio sem modulo nativo.

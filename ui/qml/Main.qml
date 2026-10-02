@@ -213,6 +213,7 @@ Window {
         containerController: domains.containerController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
+        pythonController: domains.pythonController
         recentWorkspacesController: domains.recentWorkspacesController
         gitController: domains.gitController
         windowMaximized: windowChromeController.maximized
@@ -374,6 +375,7 @@ Window {
         containerController: domains.containerController
         configActionController: domains.configActionController
         toolchainController: domains.toolchainController
+        pythonController: domains.pythonController
         onAppMenuActionRequested: function(action) {
             header.executeMenuAction(action);
         }

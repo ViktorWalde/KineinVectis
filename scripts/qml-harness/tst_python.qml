@@ -89,6 +89,14 @@ Item {
                           nativeModule: { kind: "pybind11", tool: "scikit-build-core", evidence: ["CMakeLists.txt: pybind11"], buildHint: "pip install -e . (o scikit-build-core chama o CMake)" } });
         if (py.summary() !== "python: .venv · 3.14.7 · pybind11 (scikit-build-core)") failures += 131072;
         if (py.nativeModuleBuildHint().indexOf("pip install -e .") !== 0) failures += 262144;
+        // O chip do cabecalho (0.3.8 F3): o mesmo sem o prefixo e sem o
+        // modulo nativo; o popover pede o status ao abrir.
+        if (py.contextLabel() !== ".venv · 3.14.7") failures += 67108864;
+        const statusBeforeMenu = root.pedidosStatus;
+        py.openMenu(10, 20);
+        if (!py.menuVisible || py.menuY !== 20 || root.pedidosStatus !== statusBeforeMenu + 1) failures += 134217728;
+        py.closeMenu();
+        if (py.menuVisible) failures += 268435456;
         py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv" });
         if (py.nativeModuleLine() !== "" || py.summary() !== "python: .venv") failures += 524288;
 

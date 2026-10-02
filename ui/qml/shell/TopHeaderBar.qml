@@ -33,6 +33,8 @@ Rectangle {
     // O contexto efetivo (0.3.8 F3): a toolchain que o build usa.
     property string toolchainSummary: ""
     property bool toolchainMenuOpen: false
+    property string pythonSummary: ""
+    property bool pythonMenuOpen: false
 
     signal openWorkspaceRequested()
     signal projectMenuRequested(real menuX, real menuY)
@@ -41,6 +43,7 @@ Rectangle {
     signal gitPanelRequested()
     signal gitBranchMenuRequested()
     signal toolchainMenuRequested(real menuX, real menuY)
+    signal pythonMenuRequested(real menuX, real menuY)
     signal runRequested()
     signal stopRunRequested()
     signal debugRequested()
@@ -110,14 +113,32 @@ Rectangle {
 
             anchors.verticalCenter: parent.verticalCenter
             summary: root.workspaceOpen ? root.toolchainSummary : ""
+            tooltipText: qsTr("Toolchain efetiva do build — clique para trocar")
             menuOpen: root.toolchainMenuOpen
-            // O que sobra ate' o executar, com o respiro de sempre.
+            // Prioridade por largura: a toolchain pega primeiro o que sobra
+            // ate' o executar; o Python, o resto. Sem lugar, o chip sai.
             availableWidth: (runWidget.visible ? runWidget.x : root.width) - Theme.spacingLarge
                             - leftWidgets.x - projectWidget.width - leftWidgets.spacing
                             - (gitWidget.visible ? gitWidget.width + leftWidgets.spacing : 0)
             onMenuRequested: function(menuX, menuY) {
                 const pos = root.mapFromItem(contextWidget, menuX, menuY);
                 root.toolchainMenuRequested(pos.x, pos.y);
+            }
+        }
+
+        HeaderContextWidget {
+            id: pythonWidget
+
+            anchors.verticalCenter: parent.verticalCenter
+            summary: root.workspaceOpen ? root.pythonSummary : ""
+            iconName: "tree-file-python"
+            tooltipText: qsTr("Python do projeto — interpretador e ambiente")
+            menuOpen: root.pythonMenuOpen
+            availableWidth: contextWidget.availableWidth
+                            - (contextWidget.visible ? contextWidget.width + leftWidgets.spacing : 0)
+            onMenuRequested: function(menuX, menuY) {
+                const pos = root.mapFromItem(pythonWidget, menuX, menuY);
+                root.pythonMenuRequested(pos.x, pos.y);
             }
         }
     }
