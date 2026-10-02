@@ -249,6 +249,10 @@ Item {
                 width: parent.width
                 height: root.shellController.bottomPanelHeight
                 pinnedTabs: root.shellController.bottomPinned
+                tabOrder: root.shellController.barOrder("bottom", tabKeys)
+                onTabMoved: function(key, dropIndex, visibleKeys) {
+                    root.shellController.moveInBar("bottom", visibleKeys, key, dropIndex);
+                }
                 onTabMenuRequested: function(key, menuX, menuY) {
                     const pos = mapToItem(root, menuX, menuY);
                     root.shellMenuRequested(pos.x, pos.y, bottomPanel.tabMenuItems(key));

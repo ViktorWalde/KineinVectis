@@ -2767,7 +2767,11 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
   preferência do usuário, sempre no global. `contextWidth` e
   `assistantTerminalWidth` não têm consumidor na UI e não entram no layout.
   `diffBase` (head|index) fica para uma micro-fatia futura (precisa de
-  `base` no `git.fileDiff`).
+  `base` no `git.fileDiff`). `order` (2026-10-02, aditivo no schema 1, sem
+  mudar o protocolo — o core guarda o `layout` cru) é a ordem que o usuário
+  arrastou em cada barra: `{ "bottom": ["tools", "terminal", …], "rail":
+  […], "header": […], "status": […] }`; a UI ignora chave que não conhece e
+  põe item novo no fim.
 
 ### Rascunhos / autosave (`draft.save` / `draft.clear`)
 

@@ -48,6 +48,9 @@ Rectangle {
 
     // As abas de baixo que o usuario fixou (ShellController.bottomPinned).
     property var pinnedTabs: []
+    property var tabOrder: []
+    signal tabMoved(string key, int dropIndex, var visibleKeys)
+    readonly property var tabKeys: bottomTabs.allTabs.map(tab => tab.key)
 
     signal tabMenuRequested(string key, real menuX, real menuY)
 
@@ -113,6 +116,10 @@ Rectangle {
         jobsRunning: root.jobsRunning
         processRunning: root.running
         pinnedTabs: root.pinnedTabs
+        tabOrder: root.tabOrder
+        onTabMoved: function(key, dropIndex, visibleKeys) {
+            root.tabMoved(key, dropIndex, visibleKeys);
+        }
         // A atividade que torna cada aba relevante (53 §5.5), lida de quem
         // ja' sabe: saida de build, testes, jobs, sessao de debug, busca.
         facts: ({

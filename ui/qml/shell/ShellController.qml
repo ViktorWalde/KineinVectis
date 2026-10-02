@@ -57,6 +57,8 @@ Item {
     // o core sabe (fatos) nao mora aqui. Vai no `layout`, por workspace.
     property var railState: ({ pinned: [], unpinned: [], hidden: [] })
     property var bottomPinned: []
+    // A ordem arrastada em cada barra (0.3.9): {"bottom": [...], "rail": [...]}.
+    property var barOrders: ({})
     readonly property bool effectiveShowExplorer: showExplorer && leftWindow === "explorer"
     readonly property bool gitWindowVisible: showExplorer && leftWindow === "git"
 
@@ -151,6 +153,17 @@ Item {
     function setBottomPinned(tab, pinned) {
         bottomPinned = codec.withItem(bottomPinned, tab, pinned);
         persistLayoutSoon();
+    }
+
+    // Arrastar um item numa barra: `visible` e' a ordem desenhada agora.
+    function moveInBar(bar, visible, key, dropIndex) {
+        const saved = barOrders[bar] !== undefined ? barOrders[bar] : [];
+        barOrders = codec.withOrder(barOrders, bar, codec.reordered(visible, saved, key, dropIndex));
+        persistLayoutSoon();
+    }
+
+    function barOrder(bar, keys) {
+        return codec.ordered(keys, barOrders[bar]);
     }
 
     function applySettings(settingsController) {

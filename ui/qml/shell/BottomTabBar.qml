@@ -27,6 +27,16 @@ Item {
     readonly property var alwaysVisible: ["terminal", "problems"]
     property var facts: ({})
     property var pinnedTabs: []
+    // A ordem que o usuario arrastou (0.3.9): as chaves de `allTabs`, na
+    // ordem dele (ShellController.barOrder("bottom")); vazia = de fabrica.
+    property var tabOrder: []
+    readonly property ShellLayoutCodec codec: ShellLayoutCodec {}
+    readonly property var orderedTabs: {
+        const byKey = {};
+        for (const tab of tabBar.allTabs) byKey[tab.key] = tab;
+        return tabBar.codec.ordered(tabBar.allTabs.map(tab => tab.key), tabBar.tabOrder)
+            .map(key => byKey[key]);
+    }
 
     readonly property var allTabs: [
         { key: "terminal", label: qsTr("Terminal"), icon: "terminal" },
@@ -70,6 +80,7 @@ Item {
     }
 
     signal tabMenuRequested(string key, real menuX, real menuY)
+    signal tabMoved(string key, int dropIndex, var visibleKeys)
     signal tabRequested(string tab)
     signal refreshToolsRequested()
     signal hideRequested()
@@ -113,7 +124,7 @@ Item {
         spacing: 2
 
         Repeater {
-            model: tabBar.visibleTabs(tabBar.allTabs, tabBar.activeTab, tabBar.facts,
+            model: tabBar.visibleTabs(tabBar.orderedTabs, tabBar.activeTab, tabBar.facts,
                                       tabBar.pinnedTabs, tabBar.alwaysVisible)
 
             delegate: Rectangle {
@@ -123,6 +134,9 @@ Item {
 
                 readonly property bool active: tabBar.activeTab === modelData.key
                 readonly property string badge: tabBar.badgeFor(modelData.key)
+                readonly property string reorderKey: modelData.key
+
+                opacity: tabReorder.opacityFor(modelData.key)
                 readonly property bool pinned: tabBar.listHas(tabBar.pinnedTabs, modelData.key)
                                                && !tabBar.listHas(tabBar.alwaysVisible, modelData.key)
 
@@ -194,14 +208,14 @@ Item {
                     }
                 }
 
-                MouseArea {
+                // Arrastar reordena dentro da faixa (0.3.9); clique abre.
+                ReorderMouseArea {
                     id: tabArea
 
                     anchors.fill: parent
-                    hoverEnabled: true
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: function(mouse) {
+                    reorder: tabReorder
+                    reorderKey: bottomTab.modelData.key
+                    onTapped: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
                             // Embaixo da aba, sem cobri-la.
                             const pos = mapToItem(tabBar, 0, bottomTab.height + Theme.spacingXSmall);
@@ -238,6 +252,15 @@ Item {
             iconName: "close"
             tooltip: qsTr("Esconder o painel")
             onClicked: tabBar.hideRequested()
+        }
+    }
+
+    ReorderController {
+        id: tabReorder
+
+        container: tabs
+        onMoved: function(key, dropIndex, visibleKeys) {
+            tabBar.tabMoved(key, dropIndex, visibleKeys);
         }
     }
 }

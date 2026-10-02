@@ -123,6 +123,16 @@
               "type": "string"
             }
           }
+        },
+        "order": {
+          "type": "object",
+          "description": "A ordem que o usuario arrastou em cada barra (0.3.9): barra -> chaves dos itens. Chave desconhecida e' ignorada; item novo entra no fim.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     }

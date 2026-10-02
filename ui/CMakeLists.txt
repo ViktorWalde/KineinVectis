@@ -62,6 +62,8 @@ set_source_files_properties(qml/components/KvTooltip.qml PROPERTIES QT_RESOURCE_
 set_source_files_properties(qml/components/KvTooltipHost.qml PROPERTIES QT_RESOURCE_ALIAS KvTooltipHost.qml)
 set_source_files_properties(qml/components/TooltipController.qml PROPERTIES QT_RESOURCE_ALIAS TooltipController.qml)
 set_source_files_properties(qml/components/KvIconButton.qml PROPERTIES QT_RESOURCE_ALIAS KvIconButton.qml)
+set_source_files_properties(qml/components/ReorderController.qml PROPERTIES QT_RESOURCE_ALIAS ReorderController.qml)
+set_source_files_properties(qml/components/ReorderMouseArea.qml PROPERTIES QT_RESOURCE_ALIAS ReorderMouseArea.qml)
 set_source_files_properties(qml/components/KvButton.qml PROPERTIES QT_RESOURCE_ALIAS KvButton.qml)
 set_source_files_properties(qml/shell/TopHeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS TopHeaderBar.qml)
 set_source_files_properties(qml/workspace/LspStatusController.qml PROPERTIES QT_RESOURCE_ALIAS LspStatusController.qml)
@@ -427,6 +429,8 @@ qt_add_qml_module(kinein-vectis
         qml/components/KvTooltipHost.qml
         qml/components/TooltipController.qml
         qml/components/KvIconButton.qml
+        qml/components/ReorderController.qml
+        qml/components/ReorderMouseArea.qml
         qml/components/KvButton.qml
         qml/shell/TopHeaderBar.qml
         qml/workspace/LspStatusController.qml
