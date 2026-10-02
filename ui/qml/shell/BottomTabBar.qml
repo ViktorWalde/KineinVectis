@@ -60,8 +60,11 @@ Item {
     function tabMenuItems(key) {
         const pinnedNow = listHas(pinnedTabs, key);
         return [
-            pinnedNow ? { label: qsTr("Desafixar aba"), action: "bottom.unpin:" + key, enabled: true }
-                      : { label: qsTr("Fixar aba"), action: "bottom.pin:" + key,
+            // O rotulo diz o efeito: fixar e' "fica sempre", desafixar e' "some
+            // quando nao houver atividade" (0.3.9, prova com mouse real).
+            pinnedNow ? { label: qsTr("Desafixar — some sem uso"),
+                          action: "bottom.unpin:" + key, enabled: true }
+                      : { label: qsTr("Fixar — sempre visível"), action: "bottom.pin:" + key,
                           enabled: !listHas(alwaysVisible, key) }
         ];
     }
@@ -120,6 +123,8 @@ Item {
 
                 readonly property bool active: tabBar.activeTab === modelData.key
                 readonly property string badge: tabBar.badgeFor(modelData.key)
+                readonly property bool pinned: tabBar.listHas(tabBar.pinnedTabs, modelData.key)
+                                               && !tabBar.listHas(tabBar.alwaysVisible, modelData.key)
 
                 width: bottomTabContent.implicitWidth + 2 * Theme.spacingSmall
                 height: 24
@@ -169,6 +174,15 @@ Item {
                         }
                     }
 
+                    // Fixada pelo botao direito: o alfinete diz por que ela nao some.
+                    KvIcon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: bottomTab.pinned
+                        name: "pin"
+                        size: 10
+                        iconColor: Theme.textMuted
+                    }
+
                     // A execucao em curso: a bolinha da aba Terminal.
                     Rectangle {
                         anchors.verticalCenter: parent.verticalCenter
@@ -189,7 +203,8 @@ Item {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
-                            const pos = mapToItem(tabBar, mouse.x, mouse.y);
+                            // Embaixo da aba, sem cobri-la.
+                            const pos = mapToItem(tabBar, 0, bottomTab.height + Theme.spacingXSmall);
                             tabBar.tabMenuRequested(bottomTab.modelData.key, pos.x, pos.y);
                         } else {
                             tabBar.tabRequested(bottomTab.modelData.key);
