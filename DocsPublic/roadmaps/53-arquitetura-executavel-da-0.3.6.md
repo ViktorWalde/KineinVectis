@@ -417,6 +417,12 @@ saída    registro no 40 §7 + a tabela anexada aqui (§F0 abaixo, a preencher)
 
 ### 5.4 F1 — trilho por áreas
 
+**Primeira fatia feita em 2026-10-02 (40.7 §7.160):** campos de área no
+`ToolWindows`, fatos em `RailFacts.qml`, projeção pura em `RailProjection.qml`,
+estado do usuário em `layout.rail`, menu de contexto e "Mais". Ficam para as
+próximas fatias da F1: a decisão da Busca pela medida de gestos e a ordem
+definida pelo usuário.
+
 ```text
 dono     ToolWindows (dados e projeção §4.3) · SideRail (desenho) ·
          ShellController (estado) · settings (persistência)

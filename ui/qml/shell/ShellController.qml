@@ -51,6 +51,9 @@ Item {
     // O slot a esquerda do trilho e' UM (E3-3, roadmaps/44 §4.1): o
     // explorer OU a janela do Git, como a referencia alterna Project/Commit.
     property string leftWindow: "explorer"
+    // O trilho por areas (0.3.7 F1, 53 §4.2): o que o USUARIO decidiu. O que
+    // o core sabe (fatos) nao mora aqui. Vai no `layout`, por workspace.
+    property var railState: ({ pinned: [], unpinned: [], hidden: [] })
     readonly property bool effectiveShowExplorer: showExplorer && leftWindow === "explorer"
     readonly property bool gitWindowVisible: showExplorer && leftWindow === "git"
 
@@ -126,7 +129,8 @@ Item {
                 bottom: Math.round(bottomPreferredHeight)
             },
             outlineCollapsed: outlineCollapsed,
-            bottom: { visible: showBottomPanel, tab: bottomTab }
+            bottom: { visible: showBottomPanel, tab: bottomTab },
+            rail: railState
         };
     }
 
@@ -157,6 +161,39 @@ Item {
         if (typeof bottom.visible === "boolean") {
             showBottomPanel = bottom.visible;
         }
+        // `rail` e' opcional no schema 1 (campo novo, aditivo): ausente =
+        // trilho padrao.
+        const rail = layout.rail !== undefined && layout.rail !== null ? layout.rail : {};
+        railState = {
+            pinned: Array.isArray(rail.pinned) ? rail.pinned : [],
+            unpinned: Array.isArray(rail.unpinned) ? rail.unpinned : [],
+            hidden: Array.isArray(rail.hidden) ? rail.hidden : []
+        };
+    }
+
+    // Fixar tira de "desfixada" e de "oculta"; ocultar tira de "fixada";
+    // desfixar so' marca. Cada lista sem repeticao.
+    function setRailMembership(id, pinned, unpinned, hidden) {
+        const without = function(list) { return list.filter(function(x) { return x !== id; }); };
+        const next = {
+            pinned: without(railState.pinned),
+            unpinned: without(railState.unpinned),
+            hidden: without(railState.hidden)
+        };
+        if (pinned) next.pinned.push(id);
+        if (unpinned) next.unpinned.push(id);
+        if (hidden) next.hidden.push(id);
+        railState = next;
+        persistLayoutSoon();
+    }
+
+    function pinArea(id) { setRailMembership(id, true, false, false); }
+    function unpinArea(id) { setRailMembership(id, false, true, false); }
+    function hideArea(id) { setRailMembership(id, false, false, true); }
+
+    function restoreRail() {
+        railState = { pinned: [], unpinned: [], hidden: [] };
+        persistLayoutSoon();
     }
 
     function applySettings(settingsController) {

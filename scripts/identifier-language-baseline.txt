@@ -3835,7 +3835,6 @@ ui/qml/shell/HeaderProjectWidget.qml	conteudo	2
 ui/qml/shell/HeaderRunWidget.qml	acoes	3
 ui/qml/shell/ShellEnvironmentOverlays.qml	comando	4
 ui/qml/shell/ShellHeaderHost.qml	barra	1
-ui/qml/shell/ShellWorkspaceHost.qml	janelas	4
 ui/qml/shell/StatusBarJobWidget.qml	preenchido	1
 ui/qml/shell/StatusBarJobWidget.qml	trilho	4
 ui/qml/shell/TopHeaderBar.qml	executar	3

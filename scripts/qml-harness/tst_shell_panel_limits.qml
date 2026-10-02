@@ -95,7 +95,8 @@ Item {
         const layout = {
             schemaVersion: 1, leftWindow: "git", leftVisible: true,
             sizes: { explorer: 340, outline: 240, bottom: 300 },
-            outlineCollapsed: false, bottom: { visible: true, tab: "problems" }
+            outlineCollapsed: false, bottom: { visible: true, tab: "problems" },
+            rail: { pinned: ["database"], unpinned: [], hidden: ["tools"] }
         };
         settings.layout = layout;
         shell.applySettings(settings);
@@ -105,6 +106,8 @@ Item {
         failures += check(JSON.stringify(shell.layoutSnapshot()) === JSON.stringify(layout),
                           "retrato " + JSON.stringify(shell.layoutSnapshot()));
         failures += check(root.saves.length === 0, "aplicar nao grava");
+        failures += check(shell.railState.pinned[0] === "database" && shell.railState.hidden[0] === "tools",
+                          "trilho aplicado " + JSON.stringify(shell.railState));
 
         // O eco do que se gravou nao puxa o painel de volta.
         shell.explorerPreferredWidth = 360;

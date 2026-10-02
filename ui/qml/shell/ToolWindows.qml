@@ -43,6 +43,11 @@ Item {
     // O painel de embarcados edita o KIT (chip, alvo, depurador).
     property var toolchainController: null
     property bool workspaceOpen: false
+    // As ferramentas detectadas (tools.detect): o fato dos containers e' a
+    // MAQUINA ter podman ou docker, porque o status do motor so' chega quando
+    // o painel abre.
+    property var toolsList: []
+    property var projectHealthController: null
 
     visible: false
 
@@ -111,6 +116,8 @@ Item {
         {
             "id": "explorer", "label": qsTr("Projeto"), "icon": "project",
             "tooltip": qsTr("Projeto"), "area": "left", "order": 10,
+            "title": qsTr("Projeto"), "kind": "dock-left", "defaultPolicy": "pinned",
+            "factKey": "", "commandId": "view.explorer", "shortcut": "",
             "available": root.workspaceOpen,
             "active": root.shellController !== null
                       && root.shellController.effectiveShowExplorer && root.workspaceOpen
@@ -120,6 +127,8 @@ Item {
             "id": "embedded", "label": qsTr("Embarcados"), "icon": "embedded",
             "tooltip": qsTr("Embarcados — placa, projeto, gravar, kit (Ctrl+Alt+M)"),
             "area": "left", "order": 30, "available": root.workspaceOpen,
+            "title": qsTr("Embarcados"), "kind": "overlay", "defaultPolicy": "contextual",
+            "factKey": "project.embedded", "commandId": "probe.list", "shortcut": "Ctrl+Alt+M",
             "active": root.embeddedController !== null && root.embeddedController !== undefined
                       && root.embeddedController.panelVisible
             ,"panel": root.embeddedPanel
@@ -132,6 +141,8 @@ Item {
             "id": "database", "label": qsTr("Banco"), "icon": "database",
             "tooltip": qsTr("Banco de dados (Ctrl+Alt+J)"), "area": "left", "order": 40,
             "available": true,
+            "title": qsTr("Banco de dados"), "kind": "overlay", "defaultPolicy": "contextual",
+            "factKey": "datasource.any", "commandId": "datasource.list", "shortcut": "Ctrl+Alt+J",
             "active": root.dataSourceController !== null && root.dataSourceController !== undefined
                       && root.dataSourceController.panelVisible
             ,"panel": root.databasePanel
@@ -140,6 +151,8 @@ Item {
             "id": "containers", "label": "", "icon": "container",
             "tooltip": qsTr("Containers (Ctrl+Alt+W)"), "area": "left", "order": 50,
             "available": true,
+            "title": qsTr("Containers"), "kind": "overlay", "defaultPolicy": "contextual",
+            "factKey": "container.engine", "commandId": "container.list", "shortcut": "Ctrl+Alt+W",
             "active": root.containerController !== null && root.containerController !== undefined
                       && root.containerController.panelVisible
             ,"panel": root.containersPanel
@@ -152,6 +165,8 @@ Item {
             "id": "remote", "label": qsTr("Remoto"), "icon": "remote",
             "tooltip": qsTr("Alvo remoto — Linux por SSH"), "area": "left", "order": 55,
             "available": true,
+            "title": qsTr("Remoto"), "kind": "overlay", "defaultPolicy": "contextual",
+            "factKey": "remote.any", "commandId": "remote.list", "shortcut": "",
             "active": root.remoteController !== null && root.remoteController !== undefined
                       && root.remoteController.panelVisible
             ,"panel": root.remotePanel
@@ -160,6 +175,8 @@ Item {
             "id": "observability", "label": qsTr("Grafana"), "icon": "observability",
             "tooltip": qsTr("Observabilidade — Grafana (Ctrl+Alt+O)"), "area": "left",
             "order": 60, "available": true,
+            "title": qsTr("Observabilidade"), "kind": "overlay", "defaultPolicy": "contextual",
+            "factKey": "grafana.instance", "commandId": "grafana.get", "shortcut": "Ctrl+Alt+O",
             "active": root.grafanaController !== null && root.grafanaController !== undefined
                       && root.grafanaController.panelVisible
             ,"panel": root.observabilityPanel
@@ -168,10 +185,52 @@ Item {
             "id": "tools", "label": "", "icon": "tools",
             "tooltip": qsTr("Ferramentas"), "area": "left", "order": 70,
             "available": true,
+            "title": qsTr("Ferramentas"), "kind": "bottom", "defaultPolicy": "pinned",
+            "factKey": "", "commandId": "tools.detect", "shortcut": "",
             "active": root.shellController !== null && root.shellController.showBottomPanel
                       && root.shellController.bottomTab === "tools"
         }
     ]
+
+    // Os fatos que tornam uma area contextual relevante (RailFacts) e a
+    // projecao pura do trilho (RailProjection).
+    RailFacts {
+        id: railFacts
+
+        embeddedController: root.embeddedController
+        dataSourceController: root.dataSourceController
+        remoteController: root.remoteController
+        grafanaController: root.grafanaController
+        toolsList: root.toolsList
+        projectHealthController: root.projectHealthController
+        workspaceOpen: root.workspaceOpen
+    }
+
+    readonly property RailProjection projection: RailProjection {}
+    readonly property var railState: root.shellController && root.shellController.railState
+        ? root.shellController.railState
+        : ({ pinned: [], unpinned: [], hidden: [] })
+    // O que o trilho desenha.
+    readonly property var visibleEntries: projection.visibleEntries(root.entries, root.railState,
+                                                                    railFacts.knownFacts)
+
+    function entry(id) {
+        for (let i = 0; i < entries.length; i++) {
+            if (entries[i].id === id) {
+                return entries[i];
+            }
+        }
+        return null;
+    }
+
+    function contextItems(id) {
+        const found = entry(id);
+        return found === null ? [] : projection.contextItems(found, railState);
+    }
+
+    function overflowItems() {
+        return projection.overflowItems(entries, railState, visibleEntries);
+    }
 
     // Um dono AUSENTE e' o mesmo caso de um id sem dono: resultado observavel,
     // nao excecao. O trilho existe antes dos controllers em teste e na abertura

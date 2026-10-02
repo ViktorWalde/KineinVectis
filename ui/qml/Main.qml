@@ -240,6 +240,11 @@ Window {
     ShellWorkspaceHost {
         id: workspaceHost
 
+        onRailMenuRequested: function(menuX, menuY, items) {
+            const pos = workspaceHost.mapToItem(shellOverlays, menuX, menuY);
+            shellOverlays.openAppMenu(pos.x, pos.y, items);
+        }
+
         anchors.top: header.bottom
         anchors.bottom: statusBar.top
         anchors.left: parent.left

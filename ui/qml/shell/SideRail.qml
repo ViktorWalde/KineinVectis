@@ -17,6 +17,11 @@ Rectangle {
     property var entries: []
 
     signal activated(string id)
+    // 0.3.7 F1: botao direito num icone (fixar, ocultar, restaurar) e o
+    // "Mais" (as areas fora do trilho). As coordenadas sao deste item; o
+    // host mapeia e abre o menu compartilhado.
+    signal contextMenuRequested(string id, real menuX, real menuY)
+    signal moreRequested(real menuX, real menuY)
     // O modo EXPANDIDO (F1, fechamento da Etapa 2): o rotulo ao lado do
     // icone, como a referencia; o chevron do pe' alterna e a escolha e'
     // persistida pelo ShellController.
@@ -39,6 +44,7 @@ Rectangle {
         property bool active: false
 
         signal activated()
+        signal contextMenuRequested(real menuX, real menuY)
 
         width: root.expanded ? root.width - 2 * Theme.spacingSmall : 32
         height: 32
@@ -79,9 +85,9 @@ Rectangle {
             id: railButtonArea
 
             anchors.fill: parent
-            enabled: railButton.enabled
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            cursorShape: railButton.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
             onContainsMouseChanged: {
                 if (containsMouse && !root.expanded) {
                     TooltipController.showFor(railButton, railButton.tooltip,
@@ -90,9 +96,15 @@ Rectangle {
                     TooltipController.hideFor(railButton);
                 }
             }
-            onClicked: {
+            onClicked: function(mouse) {
                 TooltipController.hideFor(railButton);
-                railButton.activated();
+                // O menu de contexto vale tambem para a area indisponivel:
+                // ocultar ou desafixar nao depende de abrir.
+                if (mouse.button === Qt.RightButton) {
+                    railButton.contextMenuRequested(mouse.x, mouse.y);
+                } else if (railButton.enabled) {
+                    railButton.activated();
+                }
             }
         }
     }
@@ -115,6 +127,24 @@ Rectangle {
                 active: modelData.active
                 enabled: modelData.available
                 onActivated: root.activated(modelData.id)
+                onContextMenuRequested: function(menuX, menuY) {
+                    const pos = mapToItem(root, menuX, menuY);
+                    root.contextMenuRequested(modelData.id, pos.x, pos.y);
+                }
+            }
+        }
+
+        // O "Mais": as areas que nao estao no trilho (contextuais sem uso,
+        // desafixadas, ocultas), com o motivo e o atalho de cada uma.
+        RailButton {
+            id: moreButton
+
+            iconName: "more"
+            tooltip: qsTr("Mais áreas")
+            label: qsTr("Mais")
+            onActivated: {
+                const pos = mapToItem(root, width, 0);
+                root.moreRequested(pos.x, pos.y);
             }
         }
     }

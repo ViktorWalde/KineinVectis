@@ -21,6 +21,12 @@ checkout, não em nenhum pacote publicado.
   espremem o editor abaixo de 480 px; a janela menor não apaga o tamanho que
   você escolheu. O rodapé do Git não estoura mais a 1024 px: o **Amend** desce
   para a própria linha.
+- **Trilho por áreas (começo da 0.3.7).** O trilho da esquerda mostra o
+  Projeto e as Ferramentas sempre, e as outras áreas (Embarcados, Banco,
+  Containers, Remoto, Observabilidade) quando o projeto ou a máquina as usam —
+  um perfil de banco salvo, um alvo remoto, podman ou docker instalado. O que
+  fica de fora está no novo **⋯ Mais**, com o motivo e o atalho; o botão
+  direito num ícone fixa, desafixa ou oculta a área, por projeto.
 - **Barra de status sem texto cortado ao meio.** Numa janela estreita, os
   resumos do projeto saem inteiros por ordem de importância (o Python, depois
   o contexto do compilador, por último o índice), em vez de um deles aparecer

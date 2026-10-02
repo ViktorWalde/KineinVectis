@@ -11,6 +11,15 @@
 
 function draw(name, context, line, node) {
     switch (name) {
+    case "more":
+        // tres pontos: o "Mais" do trilho (as areas fora dele)
+        context.moveTo(7, 12);
+        context.arc(6, 12, 1, 0, Math.PI * 2, false);
+        context.moveTo(13, 12);
+        context.arc(12, 12, 1, 0, Math.PI * 2, false);
+        context.moveTo(19, 12);
+        context.arc(18, 12, 1, 0, Math.PI * 2, false);
+        return true;
     case "add":
         // o "+" de criar (o "Criar Projeto" da tela inicial, 2026-10-01)
         line(context, 12, 5, 12, 19);

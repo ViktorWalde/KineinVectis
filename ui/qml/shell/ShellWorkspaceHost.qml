@@ -50,6 +50,8 @@ Item {
     signal problemNextStepRequested(string kind, string target, string file, int line, int column)
     signal createProjectRequested(string templateId)
     signal settingsRequested()
+    // O menu do trilho (0.3.7 F1): itens prontos, coordenadas deste host.
+    signal railMenuRequested(real menuX, real menuY, var items)
 
     onWidthChanged: {
         if (root.shellController) root.shellController.updateViewport(width, height);
@@ -111,7 +113,7 @@ Item {
 
     // O trilho e' dado, e os paineis das entradas moram nele: quem monta os
     // overlays de ambiente le' esta lista em vez de conhecer cada painel.
-    readonly property alias toolWindows: janelas
+    readonly property alias toolWindows: railEntries
 
     ShellLayout {
         anchors.fill: parent
@@ -120,7 +122,7 @@ Item {
         // nao conhece mais cada uma pelo nome. Acrescentar uma custa UMA
         // entrada no `ToolWindows`.
         ToolWindows {
-            id: janelas
+            id: railEntries
 
             shellController: root.shellController
             embeddedController: root.embeddedController
@@ -130,6 +132,8 @@ Item {
             remoteController: root.remoteController
             toolchainController: root.toolchainController
             workspaceOpen: root.workspaceOpen
+            toolsList: root.toolsList
+            projectHealthController: root.projectHealthController
         }
 
         SideRail {
@@ -139,8 +143,16 @@ Item {
             expanded: root.shellController.railExpanded
             onWidthChanged: root.updatePanelLimits()
             onExpandedToggled: root.shellController.toggleRail()
-            entries: janelas.entries
-            onActivated: id => janelas.activate(id)
+            entries: railEntries.visibleEntries
+            onActivated: id => railEntries.activate(id)
+            onContextMenuRequested: function(id, menuX, menuY) {
+                const pos = mapToItem(root, menuX, menuY);
+                root.railMenuRequested(pos.x, pos.y, railEntries.contextItems(id));
+            }
+            onMoreRequested: function(menuX, menuY) {
+                const pos = mapToItem(root, menuX, menuY);
+                root.railMenuRequested(pos.x, pos.y, railEntries.overflowItems());
+            }
         }
 
         // O slot a esquerda: o explorer OU a janela do Git (E3-3).
