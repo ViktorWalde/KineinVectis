@@ -3747,7 +3747,6 @@ ui/qml/project/ProjectTreeKeyboard.qml	texto	4
 ui/qml/project/ProjectTreeKeyboard.qml	topo	1
 ui/qml/project/ProjectTreeKeyboard.qml	ultima	4
 ui/qml/project/ProjectTreeRevealController.qml	alvo	3
-ui/qml/python/PythonController.qml	nativo	3
 ui/qml/remote/RemoteActionRules.qml	alvo	1
 ui/qml/remote/RemoteActionRules.qml	espelho	1
 ui/qml/remote/RemoteActionRules.qml	falha	1

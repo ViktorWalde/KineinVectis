@@ -4,8 +4,9 @@ import KineinVectis
 // A barra de status por PRIORIDADE (0.3.6, roadmap 53 §4.4; decisao do autor
 // de 2026-10-01). A 1024 px o contexto do compilador saia cortado ao meio
 // ("simbolos ‹"). O que se prova: os resumos entram inteiros, na ordem
-// python > contexto > indice, conforme a largura que sobra; sem largura,
-// nenhum; e a regra pura nao conta item vazio.
+// contexto > indice, conforme a largura que sobra; sem largura, nenhum; e a
+// regra pura nao conta item vazio. (O Python saiu do rodape na 0.3.8 F3:
+// mora no chip do cabecalho.)
 Item {
     id: root
 
@@ -17,7 +18,6 @@ Item {
 
         indexSummary: "6 arquivos · 16 linhas · 2 símbolos"
         contextSummary: "c++ · 0 -I · 0 -D"
-        pythonSummary: "python: .venv · 3.14.4"
     }
 
     function check(condition, message) {
@@ -29,7 +29,7 @@ Item {
     }
 
     function shown() {
-        return [summaries.fitting[0], summaries.fitting[1], summaries.fitting[2]].join(",");
+        return [summaries.fitting[0], summaries.fitting[1]].join(",");
     }
 
     Component.onCompleted: {
@@ -46,23 +46,23 @@ Item {
         // Um grande que nao cabe nao impede um menor depois dele.
         failures += check(f([200, 30], 100, 10).join(",") === "false,true", "menor depois do grande");
 
-        // O componente: com espaco, os tres; apertando, sai o indice, depois
-        // o contexto; o Python e' o ultimo a sair.
+        // O componente: com espaco, os dois; apertando, sai o indice, depois
+        // o contexto.
         summaries.availableWidth = 100000;
-        failures += check(shown() === "true,true,true", "largo: " + shown());
-        // Os filhos sao os tres textos, na ordem do arquivo: indice, contexto, Python.
-        const pythonText = summaries.children[2];
-        failures += check(pythonText.text === summaries.pythonSummary, "filho errado");
-        const python = pythonText.implicitWidth;
-        summaries.availableWidth = python + gap + 5;
-        failures += check(shown() === "true,false,false", "apertado: " + shown());
-        summaries.availableWidth = python - 1;
-        failures += check(!summaries.fitting[0], "sem espaco nem para o Python: " + shown());
+        failures += check(shown() === "true,true", "largo: " + shown());
+        // Os filhos sao os textos, na ordem do arquivo: indice, contexto.
+        const contextText = summaries.children[1];
+        failures += check(contextText.text.indexOf("contexto:") === 0, "filho errado: " + contextText.text);
+        const context = contextText.implicitWidth;
+        summaries.availableWidth = context + gap + 5;
+        failures += check(shown() === "true,false", "apertado: " + shown());
+        summaries.availableWidth = context - 1;
+        failures += check(!summaries.fitting[0], "sem espaco nem para o contexto: " + shown());
 
-        // Sem resumo de Python, o contexto passa a ser o primeiro.
-        summaries.pythonSummary = "";
+        // Sem contexto (nenhum arquivo C/C++ ativo), o indice passa a ser o primeiro.
+        summaries.contextSummary = "";
         summaries.availableWidth = 100000;
-        failures += check(shown() === "false,true,true", "sem python: " + shown());
+        failures += check(shown() === "false,true", "sem contexto: " + shown());
 
         if (failures !== 0) console.error("FALHAS=" + failures);
         Qt.exit(failures === 0 ? 0 : 1);

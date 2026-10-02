@@ -7,7 +7,6 @@ WorkspaceStatusBar {
     property var coreClient: null
     property var shellController: null
     property var indexController: null
-    property var pythonController: null
     property var activeJobController: null
     property var lspStatusController: null
     property var editorController: null
@@ -22,7 +21,6 @@ WorkspaceStatusBar {
     indexSummary: indexController !== null ? indexController.summary() : ""
     contextSummary: indexController !== null ? indexController.contextSummary() : ""
     contextDetail: indexController !== null ? indexController.contextDetail() : ""
-    pythonSummary: pythonController !== null ? pythonController.summary() : ""
     jobTitle: activeJobController !== null ? activeJobController.title : ""
     jobProgress: activeJobController !== null ? activeJobController.progress : -1
     jobMessage: activeJobController !== null ? activeJobController.message : ""

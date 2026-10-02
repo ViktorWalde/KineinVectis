@@ -54,7 +54,8 @@ no checkout, não em nenhum pacote publicado.
 - **O Python do projeto à vista.** Num projeto Python, o cabeçalho mostra
   qual interpretador vale (".venv · 3.14", ou "sistema ⚠"); um clique abre
   o painel com caminho, origem, versão e o aviso — e o botão **Criar .venv**
-  quando falta ambiente.
+  quando falta ambiente. É o único lugar do Python: o rodapé não o repete
+  mais, e numa janela estreita o **⋯** do cabeçalho acende quando há aviso.
 - **Abas de arquivo e cantos redondos.** A aba ativa é uma pílula com
   sublinhado; as outras não têm caixa. As áreas internas do editor e do
   terminal acompanham os cantos redondos das ilhas.

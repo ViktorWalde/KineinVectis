@@ -22,7 +22,6 @@ Rectangle {
     property string indexSummary: ""
     property string contextSummary: ""
     property string contextDetail: ""
-    property string pythonSummary: ""
     // O job em curso (ActiveJobController).
     property string jobTitle: ""
     property real jobProgress: -1
@@ -123,7 +122,6 @@ Rectangle {
             indexSummary: bar.indexSummary
             contextSummary: bar.contextSummary
             contextDetail: bar.contextDetail
-            pythonSummary: bar.pythonSummary
         }
     }
 

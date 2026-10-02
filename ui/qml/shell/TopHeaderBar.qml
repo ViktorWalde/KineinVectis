@@ -165,6 +165,18 @@ Rectangle {
                 const pos = root.mapFromItem(overflowButton, 0, overflowButton.height);
                 root.contextOverflowRequested(pos.x, pos.y);
             }
+
+            // O aviso nao some com o chip: o Python escondido com ⚠ acende o ⋯.
+            Rectangle {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: 5
+                visible: root.pythonHidden && root.pythonSummary.indexOf("⚠") >= 0
+                width: 7
+                height: width
+                radius: width / 2
+                color: Theme.warningSoft
+            }
         }
     }
 

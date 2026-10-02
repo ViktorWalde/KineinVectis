@@ -30,13 +30,13 @@ Item {
         // Projeto sem Python: nao pergunta, nao resume, nao precisa de nada.
         py.workspaceBuildSystems = ["cmake"];
         py.workspaceRoot = "/tmp/proj";
-        if (root.statusRequests !== 0 || py.isPython || py.summary() !== "") failures += 1;
+        if (root.statusRequests !== 0 || py.isPython || py.contextLabel() !== "") failures += 1;
 
         // Projeto Python (ainda que Cargo por fora): pergunta ao abrir.
         py.workspaceBuildSystems = ["cargo", "python"];
         if (root.statusRequests !== 1 || !py.isPython) failures += 2;
         // Antes da resposta: nada a dizer, e o botao NAO aparece.
-        if (py.known || py.needsEnvironment || py.summary() !== "") failures += 4;
+        if (py.known || py.needsEnvironment || py.contextLabel() !== "") failures += 4;
 
         // Python do sistema + uv na maquina: precisa de ambiente, o botao diz a
         // ferramenta, o resumo avisa.
@@ -45,7 +45,7 @@ Item {
                           projectFiles: ["pyproject.toml"], hint: "o projeto usa o Python do SISTEMA: crie um ambiente proprio (.venv) com o uv" });
         if (!py.needsEnvironment) failures += 8;
         if (py.actionLabel() !== "Criar .venv com uv") failures += 16;
-        if (py.summary() !== "python: sistema · 3.14.7 ⚠") failures += 32;
+        if (py.contextLabel() !== "sistema · 3.14.7 ⚠") failures += 32;
         if (py.bannerMessage().indexOf("SISTEMA") < 0) failures += 64;
         // So' python3: o botao diz venv.
         py.handleStatus({ interpreter: { interpreter: "/usr/bin/python3", origin: "sistema" },
@@ -53,7 +53,7 @@ Item {
         if (py.actionLabel() !== "Criar .venv (python3 -m venv)") failures += 128;
         // Sem ferramenta nenhuma: precisa, mas NAO ha' botao — nada a pedir.
         py.handleStatus({ hasEnvironment: false, hint: "nenhum Python encontrado" });
-        if (py.needsEnvironment || py.actionLabel() !== "" || py.summary() !== "python: nenhum ⚠") failures += 256;
+        if (py.needsEnvironment || py.actionLabel() !== "" || py.contextLabel() !== "nenhum ⚠") failures += 256;
 
         // Criar: pede UMA vez com a ferramenta do status; enquanto cria, nao
         // pede de novo; ao terminar com sucesso, pergunta o status de novo e
@@ -71,7 +71,7 @@ Item {
         // Ambiente proprio: sem botao, resumo limpo.
         py.handleStatus({ interpreter: { interpreter: "/tmp/proj/.venv/bin/python", version: "Python 3.14.7", origin: ".venv" },
                           hasEnvironment: true, environmentTool: "uv" });
-        if (py.needsEnvironment || py.summary() !== "python: .venv · 3.14.7") failures += 8192;
+        if (py.needsEnvironment || py.contextLabel() !== ".venv · 3.14.7") failures += 8192;
         // Falha: diz que falhou e aponta o job; volta a permitir criar.
         py.handleStatus({ interpreter: { origin: "sistema" }, hasEnvironment: false, environmentTool: "uv" });
         py.createEnvironment();
@@ -87,18 +87,17 @@ Item {
         py.handleStatus({ interpreter: { interpreter: "/tmp/proj/.venv/bin/python", version: "Python 3.14.7", origin: ".venv" },
                           hasEnvironment: true, environmentTool: "uv",
                           nativeModule: { kind: "pybind11", tool: "scikit-build-core", evidence: ["CMakeLists.txt: pybind11"], buildHint: "pip install -e . (o scikit-build-core chama o CMake)" } });
-        if (py.summary() !== "python: .venv · 3.14.7 · pybind11 (scikit-build-core)") failures += 131072;
+        if (py.contextLabel() !== ".venv · 3.14.7"
+                || py.nativeModuleLine() !== "pybind11 (scikit-build-core)") failures += 131072;
         if (py.nativeModuleBuildHint().indexOf("pip install -e .") !== 0) failures += 262144;
-        // O chip do cabecalho (0.3.8 F3): o mesmo sem o prefixo e sem o
-        // modulo nativo; o popover pede o status ao abrir.
-        if (py.contextLabel() !== ".venv · 3.14.7") failures += 67108864;
+        // O popover do cabecalho (0.3.8 F3) pede o status ao abrir.
         const statusBeforeMenu = root.statusRequests;
         py.openMenu(10, 20);
         if (!py.menuVisible || py.menuY !== 20 || root.statusRequests !== statusBeforeMenu + 1) failures += 134217728;
         py.closeMenu();
         if (py.menuVisible) failures += 268435456;
         py.handleStatus({ interpreter: { origin: ".venv" }, hasEnvironment: true, environmentTool: "uv" });
-        if (py.nativeModuleLine() !== "" || py.summary() !== "python: .venv") failures += 524288;
+        if (py.nativeModuleLine() !== "" || py.contextLabel() !== ".venv") failures += 524288;
 
         // Os stubs da placa (C4): so' com sugestao do core E sem typings/;
         // instalar pede vazio (o core decide), o desfecho reconsulta o status.

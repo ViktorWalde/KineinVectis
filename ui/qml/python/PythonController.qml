@@ -109,18 +109,9 @@ Item {
         return qsTr("MicroPython sem os stubs da placa (%1): `import machine` não completa").arg(stubsSuggested);
     }
 
-    // Uma linha: "python: .venv · Python 3.14.7" / "python: sistema (3.14.7) ⚠"
-    // / "python: nenhum ⚠" — e, num projeto com extensao nativa, " · pybind11
-    // (scikit-build-core)" (fatia 5 da cadeia Python, 2026-09-13).
-    function summary() {
-        const label = contextLabel();
-        if (label === "") return "";
-        const nativo = nativeModuleLine();
-        return qsTr("python: %1").arg(label) + (nativo === "" ? "" : " · " + nativo);
-    }
-
-    // O mesmo sem o prefixo: ".venv · 3.14.7", "sistema · 3.14.7 ⚠" — o chip
-    // do cabecalho ja' tem o icone do Python.
+    // O chip do cabecalho, o UNICO lugar do Python fora do popover desde a
+    // 0.3.8 F3 (o rodape repetia; decisao do autor de 2026-10-02): ".venv ·
+    // 3.14.7", "sistema · 3.14.7 ⚠". O icone do Python ja' esta' no chip.
     function contextLabel() {
         if (!isPython || !known) return "";
         const i = status.interpreter;

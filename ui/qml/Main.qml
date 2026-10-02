@@ -342,7 +342,6 @@ Window {
         coreClient: coreClient
         shellController: domains.shellController
         indexController: domains.indexController
-        pythonController: domains.pythonController
         activeJobController: domains.activeJobController
         lspStatusController: domains.lspStatusController
         editorController: domains.editorController

@@ -491,8 +491,8 @@ toolchain efetiva no cabeçalho, rodapé sem o sistema e sem o chip repetidos,
 título da faixa removido, seletor de toolchain por papéis; segunda parte
 (§7.174) — chip e popover do Python, prioridade por largura entre os chips;
 o "⋯" com o que não coube (§7.175). Falta: perfil/kit, alvo, dispositivo e
-remoto como chips pertinentes; e decidir com o autor se o Python sai do
-rodapé agora que o "⋯" o guarda.
+remoto como chips pertinentes. O Python saiu do rodapé (decisão do autor,
+§7.176): um lugar só, o chip que também configura.
 
 ```text
 dono     header: ShellHeaderHost/TopHeaderBar/HeaderRunWidget/RunConfigMenu;

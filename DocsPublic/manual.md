@@ -111,7 +111,8 @@ de abrir — é o que os testes headless usam para fotografar um estado.
   (".venv · 3.14", "sistema · 3.14 ⚠"); o clique mostra caminho, origem,
   versão e o aviso, com **Criar .venv** quando falta ambiente e **Instalar
   stubs da placa** num projeto MicroPython. O que não couber na largura vai
-  para um **⋯** ao lado, que lista o que ficou de fora; os mesmos painéis
+  para um **⋯** ao lado, que lista o que ficou de fora (e acende um ponto
+  quando o que está lá tem aviso); os mesmos painéis
   abrem por Ambiente → Toolchain e kits… e Ambiente → Python do projeto….
   *Executar* — a configuração ativa (▾ troca), **▶ Rodar**, **🐞 Depurar** e
   o menu **⋯** com Compilar/Testar/Análise/Cobertura/Configurar de cada
