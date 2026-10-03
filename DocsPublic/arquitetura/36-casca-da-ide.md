@@ -373,8 +373,44 @@ instalação. Duas regras desse arquivo já falharam em silêncio:
    refeita a cada mudança de estado (um `panelVisible`, a aba de baixo…).
    Com a lista como modelo, cada mudança destruía e recriava os cinco
    painéis: cerca de 45 ms, e o que estava digitado num painel aberto se
-   perdia (40.7 §7.195). Com um número igual, o modelo não reinicia. A prova
-   é `tst_environment_overlays`.
+   perdia (40.7 §7.195). Com um número igual, o modelo não reinicia.
+3. **Cada painel nasce na primeira abertura, e fica** (40.7 §7.203). A vaga
+   (`panelSlot`) chama `ensurePanel()` quando fica visível pela primeira
+   vez. Fechar e reabrir mostra o mesmo objeto, então o estado digitado
+   sobrevive. Criar os cinco na abertura da IDE pesava no primeiro quadro.
+
+A prova das regras 2 e 3 é o `tst_environment_overlays`. Ele exige que nada
+seja criado com tudo fechado, que abrir crie só o painel aberto, que
+reabrir não recrie e que o texto digitado continue.
+
+### 6.1 O que nasce na abertura, e como medir
+
+O primeiro quadro (o orçamento é 400 ms; 247 ms em 2026-10-03) paga tudo o
+que é **criado** antes dele, visível ou não. Um diálogo escondido custa o
+mesmo que um aberto. A regra da casca é esta: o que só serve aberto nasce na
+primeira abertura.
+
+| Onde | Como fica sob demanda |
+| --- | --- |
+| `DocumentationDialog` (o manual inteiro em Markdown) | `manualLoaded` vira verdadeiro na primeira abertura; só então o texto entra no `TextEdit` |
+| `ShellEnvironmentOverlays` (cinco painéis) | `ensurePanel()` na primeira abertura (regra 3 acima) |
+
+**Medir antes de cortar.** A medida por componente que encontrou os dois
+casos acima pode ser repetida assim:
+
+```text
+cmake --preset dev-local-release -B build/qmlprof -DCMAKE_CXX_FLAGS=-DQT_QML_DEBUG
+cmake --build build/qmlprof --target kinein-vectis
+QT_QPA_PLATFORM=offscreen KINEIN_PERF_MARKER=1 KINEIN_PERF_EXIT=1 \
+  qmlprofiler -o abertura.qtd -- build/qmlprof/ui/kinein-vectis
+```
+
+O `.qtd` é XML. Some o tempo próprio dos eventos `Creating` pelo
+**arquivo e linha onde o objeto é declarado**, e não pelo aninhamento no
+tempo: o QML compilado não aninha os eventos. O profiler infla o tempo
+absoluto, então compare só proporções. Depois de cortar, a prova é um A/B
+intercalado (antes e depois alternados, máquina parada), nunca um número de
+outro dia.
 
 **Invariante geral:** um `Repeater` sobre uma lista **derivada** recria os
 delegados a cada nova avaliação. Isso é aceitável para itens baratos e sem
@@ -445,8 +481,8 @@ com Qt 6.4. Os casos abaixo passaram no 6.10 e quebraram no 6.4:
 | --- | --- |
 | `tst_bar_reorder` | O codec (ordem, vão, chave escondida, transferência, lados), o `ReorderController` com `partner`, as abas e o status na ordem salva. |
 | `tst_header_order` | Os widgets do topo na ordem de fábrica e na ordem salva; nenhum chip vai para o "⋯" quando cabe. |
-| `tst_tool_windows` | As nove entradas, `activate`, os painéis por entrada. |
-| `tst_environment_overlays` | Os painéis de ambiente nascem uma vez e guardam o estado. |
+| `tst_tool_windows` | As nove entradas, `activate`, os painéis por entrada e os trilhos sem as áreas indisponíveis. |
+| `tst_environment_overlays` | Os painéis de ambiente nascem na primeira abertura, uma vez só, e guardam o estado. |
 | `tst_focus_mode` | Foco: guardar e restaurar; painel aberto à mão; janela estreita. |
 | `tst_focus_cycle` | O ciclo com áreas escondidas, para frente e para trás. |
 | `tst_shell_panel_limits` | Os tamanhos entre o mínimo e o máximo; o retrato do layout. |

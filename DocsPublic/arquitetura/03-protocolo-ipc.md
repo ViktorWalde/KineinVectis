@@ -2765,9 +2765,15 @@ SettingsResult { settings: EffectiveSettings, global: SettingsValues,
   MESMO caminho do Ctrl+S (`fs.write` com `expectedContent` — o disco
   mudado por fora continua recusado); o rascunho do `seguranca/23` segue
   gravando aos 1,5 s como rede entre um salvar e outro; `rigorProfile` (M4.5) → flags de `quality.run`/`build.run`
-  NO PROJETO DO USUÁRIO (clippy pedantic/nursery + `-D warnings` no
-  strict; clippy default no balanced; só `clippy::correctness` +
-  build sem `RUSTFLAGS` no relaxed). NUNCA regula o gate do repo Kinein.
+  NO PROJETO DO USUÁRIO. Rust: clippy pedantic/nursery e `-D warnings` no
+  strict; clippy default no balanced; só `clippy::correctness`, e o build
+  sem `RUSTFLAGS`, no relaxed. C/C++ com CMake (desde 2026-10-03, 40.7
+  §7.202): `CMAKE_COMPILE_WARNING_AS_ERROR=ON` no strict, `OFF` no balanced
+  (o projeto decide), e `OFF` mais `--compile-no-warning-as-error` no relaxed.
+  O build reconfigura quando o perfil anotado em `.kinein/build/.kinein-rigor`
+  difere do atual (`crates/kinein-core/src/cmake/rigor.rs`). Python: as
+  regras do ruff por perfil, quando o projeto não declara as dele. O perfil
+  NUNCA regula o gate do repositório Kinein.
   As dimensões persistem o layout que o usuário redimensionou;
   `outlineCollapsed` persiste o recolhimento da Estrutura.
 - **`layout` (0.146.0)** é o retrato do shell, por workspace: a UI grava no
