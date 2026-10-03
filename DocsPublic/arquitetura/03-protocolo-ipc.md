@@ -1,5 +1,18 @@
 # 03 — Protocolo IPC
 
+> **0.148.0 (2026-10-03) — o catálogo de comandos separa o que é ação do
+> usuário.** `CommandDescriptor.internal?` (`bool`, serializado só quando
+> `true`) marca o **encanamento do protocolo**: `core.ping`,
+> `core.shutdown`, `command.list`, `workspace.browse`, `workspace.status`,
+> `workspace.saveSession`, `fs.list`, `fs.read`, `terminal.input`,
+> `lsp.semanticTokens`, `lsp.didChange`, `lsp.workspaceEdit.apply`,
+> `lsp.workspaceEdit.cancel` e `syntaxTree.update`. O método continua
+> chamável e o atalho dele continua registrado (`command.list` segue sendo o
+> Ctrl+Shift+A). Só a paleta deixa de listá-lo: antes, "Ping Core" e
+> "Shutdown Core" eram os dois primeiros itens que ela mostrava, e o segundo
+> encerrava o core com um clique (achado da F0). O campo é aditivo, e um
+> cliente antigo o ignora.
+
 > **0.147.0 (2026-10-02) — o seletor de pastas marca projetos e oferece
 > locais.** `WorkspaceBrowseEntry.kind?` (`ProjectKind`, ausente numa pasta
 > sem marcador de build): o core roda a mesma detecção do `workspace.open` em
@@ -4054,6 +4067,9 @@ command.list {}   ->  { commands: [CommandDescriptor] }
   "requiresWorkspace": true
 }
 ```
+
+Um descritor de encanamento leva também `"internal": true` (desde a
+0.148.0). A paleta não o lista, mas os atalhos e os menus continuam a lê-lo.
 
 **Não exige workspace aberto** — a paleta existe antes de haver projeto, e é o
 `requiresWorkspace` de cada descritor que diz o que fica desabilitado.

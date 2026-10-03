@@ -24,6 +24,7 @@ Item {
 
     function open(startPath) {
         picker.visible = true;
+        picker.forceActiveFocus();
         controller.open(startPath);
     }
 
@@ -31,12 +32,14 @@ Item {
     // o botao vira "Escolher" e o caminho volta por folderPicked.
     function openFor(purpose, startPath) {
         picker.visible = true;
+        picker.forceActiveFocus();
         controller.openFor(purpose, startPath);
     }
 
     // `templateId` vazio: a pessoa escolhe a linguagem e o ecossistema.
     function openCreateProject(startPath, templateId) {
         picker.visible = true;
+        picker.forceActiveFocus();
         controller.open(startPath);
         controller.chooseTemplate(templateId);
         controller.beginCreateProject();
@@ -55,6 +58,14 @@ Item {
     function close() {
         picker.visible = false;
         controller.close();
+    }
+
+    // Esc fecha, como nos outros dialogos (pente fino 0.3.9: o seletor so'
+    // fechava no botao). Os campos de dentro (trilha editavel, pasta nova)
+    // tratam o Esc deles primeiro — so' o Esc que ninguem usou chega aqui.
+    Keys.onEscapePressed: function(event) {
+        picker.close();
+        event.accepted = true;
     }
 
     function setListing(path, parent, entries, places) {

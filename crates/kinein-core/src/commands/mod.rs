@@ -54,3 +54,47 @@ pub(crate) fn command_descriptors() -> Vec<CommandDescriptor> {
     descriptors.extend(ide::settings_command_descriptors());
     descriptors
 }
+
+#[cfg(test)]
+mod tests {
+    use super::command_descriptors;
+
+    // A paleta lista so' acao do usuario (0.148.0): o encanamento do
+    // protocolo fica no catalogo, marcado, e o atalho dele continua valendo.
+    #[test]
+    fn protocol_plumbing_is_marked_internal_and_keeps_its_shortcut() {
+        let catalog = command_descriptors();
+        let find = |id: &str| catalog.iter().find(|d| d.id == id).expect(id);
+        for id in [
+            "core.ping",
+            "core.shutdown",
+            "fs.read",
+            "lsp.didChange",
+            "terminal.input",
+        ] {
+            assert!(find(id).internal, "{id} deveria ser interno");
+        }
+        let palette = find("command.list");
+        assert!(palette.internal);
+        assert_eq!(palette.default_shortcut.as_deref(), Some("Ctrl+Shift+A"));
+        for id in ["build.run", "git.commit", "view.focusMode", "terminal.open"] {
+            assert!(!find(id).internal, "{id} e' acao do usuario");
+        }
+    }
+
+    #[test]
+    fn a_user_command_does_not_carry_the_flag_on_the_wire() {
+        let catalog = command_descriptors();
+        let build = catalog
+            .iter()
+            .find(|d| d.id == "build.run")
+            .expect("build.run");
+        let wire = serde_json::to_value(build).expect("json");
+        assert!(wire.get("internal").is_none());
+        let ping = catalog
+            .iter()
+            .find(|d| d.id == "core.ping")
+            .expect("core.ping");
+        assert_eq!(serde_json::to_value(ping).expect("json")["internal"], true);
+    }
+}

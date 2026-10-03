@@ -87,34 +87,17 @@ Item {
             font.pixelSize: Theme.fontSizeSmall
         }
 
-        Rectangle {
+        KvIconButton {
             id: closeChip
 
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: Theme.spacingMedium
-            width: 22
-            height: 22
-            radius: Theme.radius
-            color: closeArea.containsMouse ? Theme.surface2 : "transparent"
-            border.color: Theme.borderSoft
-            border.width: 1
-
-            Text {
-                anchors.centerIn: parent
-                text: "✕"
-                color: Theme.textSecondary
-                font.pixelSize: Theme.fontSizeSmall
-            }
-
-            MouseArea {
-                id: closeArea
-
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.dismissRequested()
-            }
+            compact: true
+            iconName: "close"
+            iconSize: 16
+            tooltip: qsTr("Fechar (Esc)")
+            onClicked: root.dismissRequested()
         }
 
         // Filtro por escopo: so aparece quando ha mais de um build system,

@@ -210,8 +210,13 @@ Item {
         if (sides[entry.id] !== undefined) return sides[entry.id];
         return entry.side !== undefined ? entry.side : "left";
     }
-    readonly property var leftEntries: root.visibleEntries.filter(entry => root.sideOf(entry) === "left")
-    readonly property var rightEntries: root.visibleEntries.filter(entry => root.sideOf(entry) === "right")
+    // So' o que se pode usar AGORA vai aos trilhos: sem projeto aberto,
+    // Projeto, Terminal e Simbolos nao fazem nada e ficavam ali apagados
+    // (pente fino 0.3.9). O painel "⋯ areas" continua listando todas.
+    readonly property var leftEntries: root.visibleEntries.filter(
+        entry => entry.available !== false && root.sideOf(entry) === "left")
+    readonly property var rightEntries: root.visibleEntries.filter(
+        entry => entry.available !== false && root.sideOf(entry) === "right")
 
     // Um dono AUSENTE e' o mesmo caso de um id sem dono: resultado observavel,
     // nao excecao. O trilho existe antes dos controllers em teste e na abertura

@@ -19,4 +19,9 @@ pub struct CommandDescriptor {
     pub default_shortcut: Option<String>,
     /// Whether the command requires an open workspace.
     pub requires_workspace: bool,
+    /// Protocol plumbing rather than a user action (`0.148.0`): the method
+    /// stays callable and its shortcut stays registered, but the command
+    /// palette does not list it. Serialized only when true.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub internal: bool,
 }

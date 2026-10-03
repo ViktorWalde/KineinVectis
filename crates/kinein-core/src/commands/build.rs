@@ -7,30 +7,33 @@ pub(super) fn build_command_descriptors() -> Vec<CommandDescriptor> {
     vec![
         CommandDescriptor {
             id: "build.run".to_owned(),
-            title: "Build Project".to_owned(),
+            title: "Compilar projeto".to_owned(),
             category: "Build".to_owned(),
             description: "Compila o projeto e emite erros estruturados".to_owned(),
             default_shortcut: Some("Ctrl+F9".to_owned()),
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "test.run".to_owned(),
-            title: "Run Tests".to_owned(),
+            title: "Rodar testes".to_owned(),
             category: "Build".to_owned(),
             description: "Roda os testes do projeto (cargo test / ctest) com resultado por caso"
                 .to_owned(),
             default_shortcut: Some("Ctrl+Shift+F9".to_owned()),
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "quality.run".to_owned(),
-            title: "Analyze (Lint)".to_owned(),
+            title: "Analisar (lint)".to_owned(),
             category: "Build".to_owned(),
             description:
                 "Roda a analise de qualidade (cargo clippy / ruff / clang-tidy) e lista os avisos"
                     .to_owned(),
             default_shortcut: Some("Ctrl+Shift+L".to_owned()),
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "coverage.run".to_owned(),
@@ -41,6 +44,7 @@ pub(super) fn build_command_descriptors() -> Vec<CommandDescriptor> {
                 .to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
     ]
 }
@@ -49,12 +53,13 @@ pub(super) fn cmake_command_descriptors() -> Vec<CommandDescriptor> {
     vec![
         CommandDescriptor {
             id: "cmake.configure".to_owned(),
-            title: "CMake: Configure".to_owned(),
+            title: "CMake: Configurar".to_owned(),
             category: "CMake".to_owned(),
             description: "Configura o projeto CMake em .kinein/build (gera compile_commands.json)"
                 .to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "cmake.presets.list".to_owned(),
@@ -63,6 +68,7 @@ pub(super) fn cmake_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Lista os configure presets do projeto".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "cmake.targets.list".to_owned(),
@@ -71,14 +77,16 @@ pub(super) fn cmake_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Lista os targets do ultimo configure (file-api)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "cmake.status".to_owned(),
-            title: "CMake: Status".to_owned(),
+            title: "CMake: Estado".to_owned(),
             category: "CMake".to_owned(),
             description: "Mostra se o projeto esta configurado e se ha compile_commands".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
     ]
 }
@@ -87,21 +95,23 @@ pub(super) fn cargo_command_descriptors() -> Vec<CommandDescriptor> {
     vec![
         CommandDescriptor {
             id: "cargo.check".to_owned(),
-            title: "Cargo: Check".to_owned(),
+            title: "Cargo: Verificar (check)".to_owned(),
             category: "Cargo".to_owned(),
             description:
                 "Roda cargo check (feedback rapido sem codegen); problemas na aba Problemas"
                     .to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "cargo.metadata".to_owned(),
-            title: "Cargo: Metadata".to_owned(),
+            title: "Cargo: Metadados".to_owned(),
             category: "Cargo".to_owned(),
             description: "Resumo do workspace Cargo (pacotes, targets, features)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
     ]
 }
@@ -115,14 +125,16 @@ pub(super) fn jobs_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Lista os jobs (operacoes longas) conhecidos pelo core".to_owned(),
             default_shortcut: None,
             requires_workspace: false,
+            internal: false,
         },
         CommandDescriptor {
             id: "job.cancel".to_owned(),
-            title: "Cancel Job".to_owned(),
+            title: "Cancelar job".to_owned(),
             category: "Jobs".to_owned(),
             description: "Sinaliza um job em execucao para cancelar".to_owned(),
             default_shortcut: None,
             requires_workspace: false,
+            internal: false,
         },
     ]
 }
@@ -136,11 +148,12 @@ pub(super) fn jobs_command_descriptors() -> Vec<CommandDescriptor> {
 pub(super) fn configaction_command_descriptors() -> Vec<CommandDescriptor> {
     vec![CommandDescriptor {
         id: "configAction.list".to_owned(),
-        title: "Configuration Actions...".to_owned(),
+        title: "Acoes de configuracao...".to_owned(),
         category: "Projeto".to_owned(),
         description: "Acoes de configuracao do projeto (CMake/Cargo) com preview e diff".to_owned(),
         default_shortcut: Some("Ctrl+Alt+P".to_owned()),
         requires_workspace: true,
+        internal: false,
     }]
 }
 
@@ -156,6 +169,7 @@ pub(super) fn setup_command_descriptors() -> Vec<CommandDescriptor> {
         description: "Passo a passo oficial para a sua distribuicao, com a fonte junto".to_owned(),
         default_shortcut: Some("Ctrl+Alt+H".to_owned()),
         requires_workspace: false,
+        internal: false,
     }]
 }
 
@@ -178,6 +192,7 @@ pub(super) fn datasource_command_descriptors() -> Vec<CommandDescriptor> {
         // DEPURAVA em vez de abrir as fontes de dados.
         default_shortcut: Some("Ctrl+Alt+J".to_owned()),
         requires_workspace: true,
+        internal: false,
     }]
 }
 
@@ -197,6 +212,7 @@ pub(super) fn remote_command_descriptors() -> Vec<CommandDescriptor> {
             .to_owned(),
         default_shortcut: None,
         requires_workspace: true,
+        internal: false,
     }]
 }
 
@@ -220,6 +236,7 @@ pub(super) fn grafana_command_descriptors() -> Vec<CommandDescriptor> {
         // defeito que o `verificar-atalhos.sh` existe para pegar.
         default_shortcut: Some("Ctrl+Alt+O".to_owned()),
         requires_workspace: true,
+        internal: false,
     }]
 }
 
@@ -242,6 +259,7 @@ pub(super) fn probe_command_descriptors() -> Vec<CommandDescriptor> {
         // Ctrl+Alt+M de eMbarcados. O Ctrl+Alt+E ja' e' usado pela UI.
         default_shortcut: Some("Ctrl+Alt+M".to_owned()),
         requires_workspace: true,
+        internal: false,
     }]
 }
 
@@ -262,6 +280,7 @@ pub(super) fn container_command_descriptors() -> Vec<CommandDescriptor> {
         // debug.start — as letras obvias ja' tem dono na UI.
         default_shortcut: Some("Ctrl+Alt+W".to_owned()),
         requires_workspace: false,
+        internal: false,
     }]
 }
 
@@ -287,5 +306,6 @@ pub(super) fn library_command_descriptors() -> Vec<CommandDescriptor> {
         // relato de uso do autor que achou; o 17o gate impede a volta.
         default_shortcut: Some("Ctrl+Alt+K".to_owned()),
         requires_workspace: true,
+        internal: false,
     }]
 }

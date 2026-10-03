@@ -30,7 +30,9 @@ WorkspaceStatusBar {
     jobMessage: activeJobController !== null ? activeJobController.message : ""
     jobCanCancel: activeJobController !== null ? activeJobController.canCancel : false
     jobCount: activeJobController !== null ? activeJobController.runningCount : 0
-    cursorSummary: editorController !== null ? editorController.cursorSummary : ""
+    // So' com arquivo aberto: a tela inicial mostrava "1:1" sem editor (F0).
+    cursorSummary: editorController !== null && editorController.currentTab >= 0
+                   ? editorController.cursorSummary : ""
     lspSummary: lspStatusController !== null ? lspStatusController.summary() : ""
     lspDetail: lspStatusController !== null ? lspStatusController.detail() : ""
     lspFailed: lspStatusController !== null ? lspStatusController.hasFailure() : false

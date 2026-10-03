@@ -91,9 +91,20 @@ Item {
               && porId("observability").available && porId("tools").available
               && porId("remote").available,
               "os da maquina abrem sem projeto");
+        // Os trilhos so' levam o que se usa agora (pente fino 0.3.9): sem
+        // projeto, Projeto, Terminal e Simbolos ficam de fora dos dois.
+        const railIds = function() {
+            return toolWindows.leftEntries.concat(toolWindows.rightEntries)
+                .map(function(e) { return e.id; });
+        };
+        check(railIds().indexOf("explorer") < 0 && railIds().indexOf("terminal") < 0
+              && railIds().indexOf("outline") < 0,
+              "sem projeto, o trilho nao mostra areas que nao abrem: " + railIds().join(","));
         toolWindows.workspaceOpen = true;
         check(porId("explorer").available && porId("embedded").available,
               "com projeto, Projeto e Embarcados liberam");
+        check(railIds().indexOf("explorer") >= 0 && railIds().indexOf("terminal") >= 0,
+              "com projeto, Projeto e Terminal voltam ao trilho: " + railIds().join(","));
 
         // O GIT NAO ESTA' no trilho desde 2026-09-24: o widget do cabecalho
         // abre o mesmo painel e diz mais. Travado aqui para nao voltar por

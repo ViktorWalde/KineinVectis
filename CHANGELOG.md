@@ -117,6 +117,25 @@ no checkout, não em nenhum pacote publicado.
 - **Gates sem falso positivo num clone novo**, e o que a máquina não prova
   aparece como **NÃO PROVADO** em vez de verde (`scripts/verificar.sh --estrito`
   reprova). Detalhe em `DocsPublic/contribuindo/04-os-gates-que-dizem-nao.md`.
+- **Digitar sem engasgo em arquivo grande.** A primeira tecla depois de o
+  servidor de linguagem colorir o arquivo congelava a tela por cerca de meio
+  segundo (2.463 linhas), e uma tecla em cada três perdia um quadro. Agora
+  as cores acompanham a edição e só as linhas que mudaram são repintadas: o
+  pior caso medido caiu de 495 ms para 10 ms. Os diagnósticos e a busca
+  também deixaram de repintar o arquivo inteiro a cada atualização.
+- **Ícones redesenhados.** Uma família só, de traço firme e cantos
+  redondos: martelo para compilar, caixa de ferramentas, servidor para o
+  remoto, frasco para testes, inseto para depurar e um ícone próprio para os
+  Símbolos.
+- Protocolo `0.148.0` — **paleta só com ações.** A paleta de comandos deixou
+  de oferecer o encanamento interno da IDE ("Ping Core", "Shutdown Core",
+  "Read File"…). O "Shutdown Core" encerrava o núcleo com um clique.
+- **Pequenos acertos.** O seletor de pastas fecha com Esc; os diálogos usam
+  o ícone de fechar da família, em vez de um "x" digitado; a tela inicial
+  não mostra mais "1:1" sem editor aberto; sem projeto aberto, o trilho não
+  mostra mais Projeto, Terminal e Símbolos apagados; os painéis de ambiente
+  (Embarcados, Banco, Containers, Remoto, Grafana) não perdem mais o que
+  você digitou quando outra parte da janela muda.
 
 ## 0.3.5 — lançada em 2026-10-01 (pré-release "Public Beta")
 

@@ -253,7 +253,8 @@ Item {
         const needle = query.toLowerCase();
         for (let i = 0; i < commandList.length; i++) {
             const command = commandList[i];
-            if (command.requiresWorkspace === true && workspaceRoot === "") {
+            // Encanamento do protocolo (`internal`, 0.148.0) nao e' acao do usuario.
+            if ((command.requiresWorkspace === true && workspaceRoot === "") || command.internal === true) {
                 continue;
             }
             const id = command.id !== undefined ? command.id : "";

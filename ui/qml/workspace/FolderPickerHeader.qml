@@ -36,12 +36,13 @@ Row {
         height: 1
     }
 
-    FolderPickerButton {
+    KvIconButton {
         id: closeButton
 
-        width: 26
-        height: 26
-        text: "x"
+        compact: true
+        iconName: "close"
+        iconSize: 16
+        tooltip: qsTr("Fechar (Esc)")
         onClicked: root.closeRequested()
     }
 }

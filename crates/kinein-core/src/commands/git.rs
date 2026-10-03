@@ -11,6 +11,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Reconsulta o git status do projeto (branch e mudancas)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.commit".to_owned(),
@@ -19,6 +20,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Abre a aba Git para stage e commit das mudancas".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.fileDiff".to_owned(),
@@ -27,6 +29,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Mostra o diff do arquivo atual contra o HEAD".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.blame".to_owned(),
@@ -35,6 +38,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Liga/desliga autor e idade de cada linha na gutter do editor".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.log".to_owned(),
@@ -43,6 +47,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Abre o historico de commits na aba Git (diff por clique)".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.branches".to_owned(),
@@ -51,6 +56,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Lista branches locais e permite trocar a branch ativa".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.pull".to_owned(),
@@ -59,6 +65,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Atualiza a branch via job usando apenas fast-forward".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.push".to_owned(),
@@ -67,6 +74,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Envia a branch atual ao upstream configurado via job".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
         CommandDescriptor {
             id: "git.stash".to_owned(),
@@ -75,6 +83,7 @@ pub(super) fn git_command_descriptors() -> Vec<CommandDescriptor> {
             description: "Guarda ou restaura mudancas locais incluindo untracked".to_owned(),
             default_shortcut: None,
             requires_workspace: true,
+            internal: false,
         },
     ]
 }
