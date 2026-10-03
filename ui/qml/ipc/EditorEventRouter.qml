@@ -28,6 +28,7 @@ Item {
         // Re-sincroniza o arquivo ativo (didOpen + semantic tokens), então
         // highlighting e diagnósticos do arquivo atual voltam sozinhos.
         function onRecovered() {
+            root.editorController.highlight.forgetUnsupported();
             root.editorController.refreshSemanticTokens();
         }
 
@@ -39,11 +40,13 @@ Item {
             // O handshake corre fora do laco (F6): o buffer que a IDE tentou
             // sincronizar enquanto o servidor subia e' reenviado agora.
             if (status === "running") {
+                root.editorController.highlight.forgetUnsupported();
                 root.editorController.refreshSemanticTokens();
             }
         }
 
         function onLspRestarted(language) {
+            root.editorController.highlight.forgetUnsupported();
             root.editorController.refreshSemanticTokens();
         }
 
@@ -141,6 +144,10 @@ Item {
         }
 
         function onRequestFailed(method, message) {
+            if (method === "lsp.semanticTokens") {
+                root.editorController.highlight.handleSemanticTokensFailed(message);
+                return;
+            }
             if (method === "lsp.hover" || method === "lsp.completion"
                     || method === "lsp.rename" || method === "lsp.codeActions"
                     || method === "lsp.applyCodeAction"

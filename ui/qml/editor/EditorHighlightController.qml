@@ -55,6 +55,11 @@ Item {
     // nao respondeu. Nunca e promovido a referencia semantica.
     property var syntaxLocals: []
 
+    // Arquivos que o core disse nao ter servidor LSP (0.3.9). Sem isto, cada
+    // pausa de edicao num markdown pedia tokens de novo e o log da IDE enchia
+    // de "nenhum servidor LSP suporta". Servidor que (re)inicia esquece.
+    property var noSemanticPaths: ({})
+
     signal semanticTokensRequested(string path, string content, int version)
     signal syntaxTreeRequested(string path, string content, int version)
 
@@ -79,7 +84,25 @@ Item {
             }
             return;
         }
+        if (noSemanticPaths[path] === true) {
+            return;
+        }
         semanticTokensRequested(path, surfaceBridge.text(), semanticVersion);
+    }
+
+    // A falha diz o caminho na mensagem: so' o arquivo dela entra na lista.
+    function handleSemanticTokensFailed(message) {
+        const path = currentPath();
+        if (path === "" || message.indexOf(path) < 0) {
+            return;
+        }
+        const next = Object.assign({}, noSemanticPaths);
+        next[path] = true;
+        noSemanticPaths = next;
+    }
+
+    function forgetUnsupported() {
+        noSemanticPaths = ({});
     }
 
     function handleSemanticTokensResolved(path, version, tokens) {
@@ -150,6 +173,7 @@ Item {
     function clear() {
         syntaxVersion++;
         resetSyntaxState();
+        forgetUnsupported();
     }
 
     Timer {
