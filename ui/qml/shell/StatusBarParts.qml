@@ -33,9 +33,9 @@ Item {
             // Entregues na criacao pelo StatusBarSlot (createObject).
             property var bar: null
             property Item strip: null
-            readonly property bool shown: pathItem.bar.workspaceRoot !== ""
+            readonly property bool shown: (pathItem.bar ? pathItem.bar.workspaceRoot : "") !== ""
 
-            width: Math.min(trail.implicitWidth, Math.max(160, pathItem.strip.width * 0.45))
+            width: Math.min(trail.implicitWidth, Math.max(160, (pathItem.strip ? pathItem.strip.width : 0) * 0.45))
             height: trail.height
             clip: true
 
@@ -43,15 +43,15 @@ Item {
                 id: trail
 
                 anchors.verticalCenter: parent.verticalCenter
-                path: pathItem.bar.workspaceName
-                      + (pathItem.bar.breadcrumb !== "" ? "/" + pathItem.bar.breadcrumb : "")
+                path: (pathItem.bar ? pathItem.bar.workspaceName : "")
+                      + ((pathItem.bar ? pathItem.bar.breadcrumb : "") !== "" ? "/" + (pathItem.bar ? pathItem.bar.breadcrumb : "") : "")
             }
 
             HoverHandler {
                 id: trailHover
 
                 onHoveredChanged: {
-                    if (hovered) TooltipController.showFor(pathItem, pathItem.bar.workspaceRoot, "top");
+                    if (hovered) TooltipController.showFor(pathItem, (pathItem.bar ? pathItem.bar.workspaceRoot : ""), "top");
                     else TooltipController.hideFor(pathItem);
                 }
             }
@@ -69,16 +69,16 @@ Item {
             property Item strip: null
             readonly property bool shown: hud.visible === true
 
-            isMirror: remoteItem.bar.remoteIsMirror
-            targetName: remoteItem.bar.remoteTarget
-            syncing: remoteItem.bar.remoteSyncing
-            syncDirection: remoteItem.bar.remoteSyncDirection
-            syncFailed: remoteItem.bar.remoteSyncFailed
-            syncMessage: remoteItem.bar.remoteSyncMessage
-            deploying: remoteItem.bar.remoteDeploying
-            probed: remoteItem.bar.remoteProbed
-            probeOk: remoteItem.bar.remoteProbeOk
-            probedAt: remoteItem.bar.remoteProbedAt
+            isMirror: (remoteItem.bar ? remoteItem.bar.remoteIsMirror : false)
+            targetName: (remoteItem.bar ? remoteItem.bar.remoteTarget : "")
+            syncing: (remoteItem.bar ? remoteItem.bar.remoteSyncing : false)
+            syncDirection: (remoteItem.bar ? remoteItem.bar.remoteSyncDirection : "")
+            syncFailed: (remoteItem.bar ? remoteItem.bar.remoteSyncFailed : false)
+            syncMessage: (remoteItem.bar ? remoteItem.bar.remoteSyncMessage : "")
+            deploying: (remoteItem.bar ? remoteItem.bar.remoteDeploying : false)
+            probed: (remoteItem.bar ? remoteItem.bar.remoteProbed : false)
+            probeOk: (remoteItem.bar ? remoteItem.bar.remoteProbeOk : false)
+            probedAt: (remoteItem.bar ? remoteItem.bar.remoteProbedAt : 0)
             onPanelRequested: remoteItem.bar.remotePanelRequested()
         }
     }
@@ -102,18 +102,18 @@ Item {
 
             StatusBarJobWidget {
                 anchors.verticalCenter: parent.verticalCenter
-                title: activity.bar.jobTitle
-                progress: activity.bar.jobProgress
-                message: activity.bar.jobMessage
-                canCancel: activity.bar.jobCanCancel
-                runningCount: activity.bar.jobCount
+                title: (activity.bar ? activity.bar.jobTitle : "")
+                progress: (activity.bar ? activity.bar.jobProgress : -1)
+                message: (activity.bar ? activity.bar.jobMessage : "")
+                canCancel: (activity.bar ? activity.bar.jobCanCancel : false)
+                runningCount: (activity.bar ? activity.bar.jobCount : 0)
                 onCancelRequested: activity.bar.cancelJobRequested()
                 onJobsRequested: activity.bar.jobsRequested()
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: activity.bar.running && activity.bar.jobTitle === ""
+                visible: (activity.bar ? activity.bar.running : false) && (activity.bar ? activity.bar.jobTitle : "") === ""
                 text: qsTr("executando…")
                 color: Theme.accent
                 font.pixelSize: Theme.fontSizeStatus
@@ -123,11 +123,11 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 // O que sobra da faixa depois dos itens antes dele (que nao
                 // dependem desta largura: sem laco de binding).
-                availableWidth: activity.strip.width - activity.slotX - x
-                visible: activity.bar.jobTitle === ""
-                indexSummary: activity.bar.indexSummary
-                contextSummary: activity.bar.contextSummary
-                contextDetail: activity.bar.contextDetail
+                availableWidth: (activity.strip ? activity.strip.width : 0) - activity.slotX - x
+                visible: (activity.bar ? activity.bar.jobTitle : "") === ""
+                indexSummary: (activity.bar ? activity.bar.indexSummary : "")
+                contextSummary: (activity.bar ? activity.bar.contextSummary : "")
+                contextDetail: (activity.bar ? activity.bar.contextDetail : "")
             }
         }
     }
@@ -142,9 +142,9 @@ Item {
             // Entregues na criacao pelo StatusBarSlot (createObject).
             property var bar: null
             property Item strip: null
-            readonly property bool shown: cursorItem.bar.cursorSummary !== ""
+            readonly property bool shown: (cursorItem.bar ? cursorItem.bar.cursorSummary : "") !== ""
 
-            text: cursorItem.bar.cursorSummary
+            text: (cursorItem.bar ? cursorItem.bar.cursorSummary : "")
             color: Theme.textMuted
             font.family: Theme.monoFont
             font.pixelSize: Theme.fontSizeStatus
@@ -161,10 +161,10 @@ Item {
             // Entregues na criacao pelo StatusBarSlot (createObject).
             property var bar: null
             property Item strip: null
-            readonly property bool shown: lspText.bar.lspSummary !== ""
+            readonly property bool shown: (lspText.bar ? lspText.bar.lspSummary : "") !== ""
 
-            text: lspText.bar.lspSummary
-            color: lspText.bar.lspFailed ? Theme.errorSoft : Theme.textMuted
+            text: (lspText.bar ? lspText.bar.lspSummary : "")
+            color: (lspText.bar ? lspText.bar.lspFailed : false) ? Theme.errorSoft : Theme.textMuted
             font.pixelSize: Theme.fontSizeStatus
 
             MouseArea {
@@ -172,8 +172,8 @@ Item {
                 hoverEnabled: true
                 acceptedButtons: Qt.NoButton
                 onContainsMouseChanged: {
-                    if (containsMouse && lspText.bar.lspDetail !== "") {
-                        TooltipController.showFor(lspText, lspText.bar.lspDetail, "top");
+                    if (containsMouse && (lspText.bar ? lspText.bar.lspDetail : "") !== "") {
+                        TooltipController.showFor(lspText, (lspText.bar ? lspText.bar.lspDetail : ""), "top");
                     } else {
                         TooltipController.hideFor(lspText);
                     }
@@ -196,7 +196,7 @@ Item {
             width: logsToggleText.width + 2 * Theme.spacingSmall
             height: 20
             radius: Theme.radius
-            color: ideItem.bar.logsActive ? Theme.surfaceSelected
+            color: (ideItem.bar ? ideItem.bar.logsActive : false) ? Theme.surfaceSelected
                                   : (logsToggleArea.containsMouse
                                      ? Theme.surface2 : "transparent")
             border.color: Theme.borderSoft
@@ -207,7 +207,7 @@ Item {
 
                 anchors.centerIn: parent
                 text: qsTr("IDE")
-                color: ideItem.bar.logsActive ? Theme.accent : Theme.textSecondary
+                color: (ideItem.bar ? ideItem.bar.logsActive : false) ? Theme.accent : Theme.textSecondary
                 font.pixelSize: Theme.fontSizeStatus
             }
 
@@ -240,14 +240,14 @@ Item {
                 height: 7
                 radius: width / 2
                 anchors.verticalCenter: parent.verticalCenter
-                color: coreItem.bar.coreConnected ? Theme.successSoft : Theme.errorSoft
+                color: (coreItem.bar ? coreItem.bar.coreConnected : false) ? Theme.successSoft : Theme.errorSoft
             }
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: coreItem.bar.coreConnected
-                      ? qsTr("core · IPC %1").arg(coreItem.bar.coreProtocolVersion)
-                      : qsTr("core %1").arg(coreItem.bar.coreStatus)
+                text: (coreItem.bar ? coreItem.bar.coreConnected : false)
+                      ? qsTr("core · IPC %1").arg((coreItem.bar ? coreItem.bar.coreProtocolVersion : ""))
+                      : qsTr("core %1").arg((coreItem.bar ? coreItem.bar.coreStatus : ""))
                 color: Theme.textMuted
                 font.pixelSize: Theme.fontSizeStatus
             }

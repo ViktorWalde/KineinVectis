@@ -87,7 +87,7 @@ Rectangle {
             delegate: StatusBarSlot {
                 parts: statusParts.byKey
                 reorder: leftReorder
-                bar: bar
+                statusBar: bar
                 strip: leftStrip
             }
         }
@@ -107,7 +107,7 @@ Rectangle {
             delegate: StatusBarSlot {
                 parts: statusParts.byKey
                 reorder: rightReorder
-                bar: bar
+                statusBar: bar
                 strip: rightStrip
             }
         }

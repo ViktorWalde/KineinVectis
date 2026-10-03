@@ -32,8 +32,15 @@ Item {
     // A ordem desenhada: os widgets visiveis do grupo, pelo x de destino
     // (o x de verdade anima em motionFast).
     function keysInRow() {
-        const group = bar.children.find(child => child.spacing !== undefined && child.children.length >= 5);
-        return group.children.filter(child => child.visible && child.reorderKey !== undefined
+        // `children` nao e' Array do JS no Qt 6.4 (o do AppImage): copia por indice.
+        let group = null;
+        for (let i = 0; i < bar.children.length; i++) {
+            const child = bar.children[i];
+            if (child.spacing !== undefined && child.children.length >= 5) group = child;
+        }
+        const items = [];
+        for (let i = 0; i < group.children.length; i++) items.push(group.children[i]);
+        return items.filter(child => child.visible && child.reorderKey !== undefined
                                      && child.reorderKey !== "")
             .sort((a, b) => bar.xOf(a.reorderKey) - bar.xOf(b.reorderKey)).map(child => child.reorderKey);
     }

@@ -119,7 +119,11 @@ Item {
         failures += check(tabs.orderedTabs.length === tabs.allTabs.length, "ordem parcial nao some com abas");
 
         // A barra de status: a faixa da direita na ordem salva, o resto depois.
-        const rightStrip = status.children.find(child => child.anchors.right === status.right);
+        // `children` nao e' Array do JS no Qt 6.4: procura por indice.
+        let rightStrip = null;
+        for (let i = 0; i < status.children.length; i++) {
+            if (status.children[i].anchors.right === status.right) rightStrip = status.children[i];
+        }
         failures += check(stripKeys(rightStrip) === "core,ide,cursor,lsp", "status: " + stripKeys(rightStrip));
 
         if (failures !== 0) console.error("FALHAS " + failures);

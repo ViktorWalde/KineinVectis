@@ -13,7 +13,9 @@ Item {
     required property string modelData
     property var parts: ({})
     property ReorderController reorder: null
-    property var bar: null
+    // `statusBar`, nao `bar`: no Qt 6.4 `bar: bar` no delegado lia a propria
+    // propriedade (o nome tapava o id da barra) e virava laco de binding.
+    property var statusBar: null
     property Item strip: null
     readonly property string reorderKey: root.modelData
     property var part: null
@@ -25,7 +27,7 @@ Item {
     opacity: root.reorder !== null ? root.reorder.opacityFor(root.modelData) : 1.0
 
     Component.onCompleted: {
-        root.part = root.parts[root.modelData].createObject(root, { bar: root.bar, strip: root.strip });
+        root.part = root.parts[root.modelData].createObject(root, { bar: root.statusBar, strip: root.strip });
     }
     onXChanged: if (root.part !== null && root.part.slotX !== undefined) root.part.slotX = root.x
 
