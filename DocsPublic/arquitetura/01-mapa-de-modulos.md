@@ -129,6 +129,7 @@ flowchart LR
   n_core_tools[tools]
   n_core_workspace[workspace]
   n_core_build --> n_core_cdb
+  n_core_build --> n_core_cmake
   n_core_build --> n_core_process
   n_core_build --> n_core_toolchain
   n_core_cargo --> n_core_toolchain
@@ -210,7 +211,7 @@ flowchart LR
   classDef cycle stroke:#d33,stroke-width:3px
 ```
 
-43 módulos, 79 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
+43 módulos, 80 dependências (`crate::<módulo>` fora de testes). Em vermelho, os que estão num ciclo.
 
 ### Ciclos
 
@@ -221,7 +222,7 @@ flowchart LR
 
 | Domínio | Depende de | Cabeçalho |
 | --- | --- | --- |
-| `build` | cdb, process, toolchain | Build execution with streamed output and structured diagnostics. |
+| `build` | cdb, cmake, process, toolchain | Build execution with streamed output and structured diagnostics. |
 | `cargo` | toolchain | Servico Cargo: |
 | `cdb` | — | Descoberta e diagnóstico da compilation database do C/C++. |
 | `cmake` | toolchain | Servico CMake: |
@@ -342,6 +343,7 @@ flowchart LR
     n_core_cdb[cdb]
     n_core_jobs[jobs]
     n_core_rpc[rpc]
+    n_core_settings[settings]
     n_core_toolchain[toolchain]
     n_core_tools[tools]
   end
@@ -363,6 +365,7 @@ flowchart LR
   n_ipc_cmake --> n_crates_kinein_core_src_handlers_cmake_rs
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_cdb
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_rpc
+  n_crates_kinein_core_src_handlers_cmake_rs --> n_core_settings
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_toolchain
   n_ipc_fs --> n_crates_kinein_core_src_handlers_fs_rs
   n_crates_kinein_core_src_handlers_fs_rs --> n_core_jobs
@@ -1325,6 +1328,7 @@ flowchart LR
     n_core_configaction[configaction]
     n_core_library[library]
     n_core_rpc[rpc]
+    n_core_settings[settings]
     n_core_setup[setup]
     n_core_toolchain[toolchain]
   end
@@ -1355,6 +1359,7 @@ flowchart LR
   n_ipc_cmake --> n_crates_kinein_core_src_handlers_cmake_rs
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_cdb
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_rpc
+  n_crates_kinein_core_src_handlers_cmake_rs --> n_core_settings
   n_crates_kinein_core_src_handlers_cmake_rs --> n_core_toolchain
   n_ipc_configAction --> n_crates_kinein_core_src_handlers_configaction_rs
   n_crates_kinein_core_src_handlers_configaction_rs --> n_core_configaction
