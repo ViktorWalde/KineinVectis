@@ -13,7 +13,10 @@ Item {
     // quando so' o realce muda (no markdown, cada snapshot do Tree-sitter):
     // sem esta guarda, realce -> "edicao" -> reparse -> realce virava um laco
     // de ~10 pedidos/s ao core com o editor parado (IPC medido em 2026-10-02).
-    property string lastText: ""
+    // `var`, e nao `string`: a string do JS fica como esta'. Como `string`,
+    // cada tecla convertia o texto inteiro para QString, e numa fixture de
+    // 56 KB uma tecla em cada tres perdia um quadro (24 ms, 40.7 §7.198).
+    property var lastText: ""
 
     visible: false
 

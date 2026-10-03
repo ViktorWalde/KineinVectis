@@ -88,6 +88,9 @@ private:
         int start = 0;
         int length = 0;
         QTextCharFormat format;
+
+        // Para repintar so' as linhas cujos spans mudaram (line_spans.h).
+        bool operator==(const SemanticSpan& other) const = default;
     };
 
     // Um diagnostico com range absoluto em linhas/caracteres 0-based
@@ -118,6 +121,12 @@ private:
     void applyBlockSpans(const QString& text);
     void applySyntaxSpans();
     void applySemanticSpans();
+    // Os spans de fora (Tree-sitter, LSP) acompanham cada edicao do
+    // documento, e so' as linhas que mudaram sao repintadas (0.3.9: apagar e
+    // repintar tudo custava ~500 ms numa fixture de 2.463 linhas).
+    void trackEdit(int position, int charsRemoved, int charsAdded);
+    void rehighlightLines(const QSet<int>& lines);
+    [[nodiscard]] QSet<int> searchLines() const;
     void applyStdlibOverride(const QString& text);
     void applyDiagnosticSpans(const QString& text);
     void applySearchSpans(const QString& text);
@@ -141,6 +150,10 @@ private:
     bool m_hasBlockSpans = false;
     QHash<int, QList<SemanticSpan>> m_syntaxSpansByLine;
     QHash<int, QList<SemanticSpan>> m_semanticSpansByLine;
+    // A contagem de linhas antes da edicao corrente: a diferenca diz quantas
+    // linhas a edicao inseriu ou removeu.
+    int m_lastBlockCount = 0;
+    QMetaObject::Connection m_editConnection;
     QList<FoldingRange> m_foldingRanges;
     QSet<int> m_foldedStartLines;
     QList<DiagnosticSpan> m_diagnostics;

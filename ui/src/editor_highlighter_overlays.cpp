@@ -9,14 +9,50 @@
 #include "editor_highlighter_palette.h"
 
 #include <QTextBlock>
+#include <QTextDocument>
 
 namespace kinein {
 
 using namespace kinein::highlight;
 
+namespace {
+
+// As linhas que um conjunto de diagnosticos toca: so' elas mudam de
+// sublinhado quando a lista troca (0.3.9: antes, cada publicacao do LSP —
+// ate' a lista vazia que continuava vazia — repintava o documento inteiro).
+template <typename Diagnostics>
+void addDiagnosticLines(const Diagnostics& diagnostics, QSet<int>& lines)
+{
+    for (const auto& span : diagnostics) {
+        for (int line = span.startLine; line <= span.endLine; ++line) {
+            lines.insert(line);
+        }
+    }
+}
+
+} // namespace
+
+// As linhas onde caem as ocorrencias da busca (offsets absolutos).
+QSet<int> EditorHighlighter::searchLines() const
+{
+    QSet<int> lines;
+    const QTextDocument* textDocument = document();
+    if (textDocument == nullptr) {
+        return lines;
+    }
+    for (const SearchSpan& span : m_searchMatches) {
+        const int first = textDocument->findBlock(span.start).blockNumber();
+        const int last = textDocument->findBlock(qMax(span.start, span.end - 1)).blockNumber();
+        for (int line = first; line <= last; ++line) {
+            lines.insert(line);
+        }
+    }
+    return lines;
+}
+
 void EditorHighlighter::setSearchMatches(const QVariantList& matches, int current)
 {
-    const bool hadMatches = !m_searchMatches.isEmpty();
+    QSet<int> dirty = searchLines();
     m_searchMatches.clear();
     for (const QVariant& entry : matches) {
         const QVariantMap map = entry.toMap();
@@ -28,9 +64,8 @@ void EditorHighlighter::setSearchMatches(const QVariantList& matches, int curren
         }
     }
     m_currentSearchMatch = current;
-    if (hadMatches || !m_searchMatches.isEmpty()) {
-        rehighlight();
-    }
+    dirty.unite(searchLines());
+    rehighlightLines(dirty);
 }
 
 void EditorHighlighter::applySearchSpans(const QString& text)
@@ -65,6 +100,8 @@ void EditorHighlighter::applySearchSpans(const QString& text)
 
 void EditorHighlighter::setDiagnostics(const QVariantList& diagnostics)
 {
+    QSet<int> dirty;
+    addDiagnosticLines(m_diagnostics, dirty);
     m_diagnostics.clear();
     for (const QVariant& entry : diagnostics) {
         const QVariantMap map = entry.toMap();
@@ -79,7 +116,8 @@ void EditorHighlighter::setDiagnostics(const QVariantList& diagnostics)
         }
         m_diagnostics.append(span);
     }
-    rehighlight();
+    addDiagnosticLines(m_diagnostics, dirty);
+    rehighlightLines(dirty);
 }
 
 void EditorHighlighter::clearDiagnostics()
@@ -87,8 +125,10 @@ void EditorHighlighter::clearDiagnostics()
     if (m_diagnostics.isEmpty()) {
         return;
     }
+    QSet<int> dirty;
+    addDiagnosticLines(m_diagnostics, dirty);
     m_diagnostics.clear();
-    rehighlight();
+    rehighlightLines(dirty);
 }
 
 void EditorHighlighter::applyDiagnosticSpans(const QString& text)

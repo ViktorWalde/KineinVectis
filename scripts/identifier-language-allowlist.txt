@@ -13,7 +13,7 @@ sram musl glibc libc sysv sysfs udev udevadm uaccess wayland loopback cryptograp
 extjson rgba cyan bezier radix hexdigit endiannesses
 
 # --- Rust, C++, Qt, QML, JS e Python (palavras de API e da linguagem)
-const bool struct impl enum usize isize deref nodiscard constexpr nullptr nullopt
+const bool struct impl enum usize isize deref nodiscard constexpr nullptr nullopt typename
 sizeof typeof instanceof readonly pragma namespace mutex mpsc deque tuple dict
 serde deserialize lossy recv eprintln writeln rsplit rsplitn splitn rfind rstrip
 lstrip substr subspan concat findall finditer splitlines startswith endswith keepends

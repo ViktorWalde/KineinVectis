@@ -37,7 +37,17 @@ void EditorHighlighter::setQuickDocument(QQuickTextDocument* document)
     }
     resetFolding();
     m_quickDocument = document;
-    setDocument(document != nullptr ? document->textDocument() : nullptr);
+    QObject::disconnect(m_editConnection);
+    QTextDocument* textDocument = document != nullptr ? document->textDocument() : nullptr;
+    setDocument(textDocument);
+    // Conectado DEPOIS do setDocument: o QSyntaxHighlighter refaz os blocos
+    // editados primeiro, e o trackEdit corrige o que ele pintou com os
+    // spans de antes da edicao.
+    m_lastBlockCount = textDocument != nullptr ? textDocument->blockCount() : 0;
+    if (textDocument != nullptr) {
+        m_editConnection = connect(textDocument, &QTextDocument::contentsChange, this,
+                                   &EditorHighlighter::trackEdit);
+    }
     emit documentChanged();
 }
 

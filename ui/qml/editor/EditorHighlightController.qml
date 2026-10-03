@@ -145,12 +145,14 @@ Item {
     // errada. O Tree-sitter continua como fallback estrutural (ele reparseia
     // localmente em milissegundos), entao a tela nao fica sem cor; o que sai e
     // so a camada que depende do servidor.
+    // Uma edicao: as respostas em voo envelhecem (as versoes andam). Os
+    // tokens que ja' estao na tela FICAM: o realce (C++) os move junto com o
+    // texto e solta so' os da linha editada. Ate' 0.3.9 aqui se apagavam
+    // todos, e apagar repintava o documento inteiro — ~500 ms na primeira
+    // tecla de um arquivo de 2.463 linhas (40.7 §7.198).
     function invalidateForEdit() {
         semanticVersion++;
         syntaxVersion++;
-        if (ready()) {
-            editorSurface.clearSemanticTokens();
-        }
         scheduleSyntaxRefresh();
     }
 

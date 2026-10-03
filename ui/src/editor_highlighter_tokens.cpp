@@ -7,8 +7,12 @@
 // regex e' o piso, Tree-sitter cobre, LSP cobre por ultimo.
 #include "editor_highlighter.h"
 #include "editor_highlighter_palette.h"
+#include "line_spans.h"
+
+#include <algorithm>
 
 #include <QTextBlock>
+#include <QTextDocument>
 
 namespace kinein {
 
@@ -16,7 +20,7 @@ using namespace kinein::highlight;
 
 void EditorHighlighter::setSemanticTokens(const QVariantList& tokens)
 {
-    m_semanticSpansByLine.clear();
+    QHash<int, QList<SemanticSpan>> next;
     for (const QVariant& entry : tokens) {
         const QVariantMap map = entry.toMap();
         // A linha vem 1-based do core, e ate' 2026-09-25 virava 0-based ANTES
@@ -36,13 +40,15 @@ void EditorHighlighter::setSemanticTokens(const QVariantList& tokens)
             continue;
         }
         const int line = oneBasedLine - 1;
-        auto spans = m_semanticSpansByLine.find(line);
-        if (spans == m_semanticSpansByLine.end()) {
-            spans = m_semanticSpansByLine.insert(line, QList<SemanticSpan>{});
+        auto spans = next.find(line);
+        if (spans == next.end()) {
+            spans = next.insert(line, QList<SemanticSpan>{});
         }
         spans.value().append(span);
     }
-    rehighlight();
+    const QSet<int> changed = changedLines(m_semanticSpansByLine, next);
+    m_semanticSpansByLine = std::move(next);
+    rehighlightLines(changed);
 }
 
 void EditorHighlighter::clearSemanticTokens()
@@ -50,13 +56,14 @@ void EditorHighlighter::clearSemanticTokens()
     if (m_semanticSpansByLine.isEmpty()) {
         return;
     }
+    const QSet<int> changed = changedLines(m_semanticSpansByLine, {});
     m_semanticSpansByLine.clear();
-    rehighlight();
+    rehighlightLines(changed);
 }
 
 void EditorHighlighter::setSyntaxTokens(const QVariantList& tokens)
 {
-    m_syntaxSpansByLine.clear();
+    QHash<int, QList<SemanticSpan>> next;
     for (const QVariant& entry : tokens) {
         const QVariantMap map = entry.toMap();
         // A linha vem 1-based do core, e ate' 2026-09-25 virava 0-based ANTES
@@ -76,13 +83,15 @@ void EditorHighlighter::setSyntaxTokens(const QVariantList& tokens)
             continue;
         }
         const int line = oneBasedLine - 1;
-        auto spans = m_syntaxSpansByLine.find(line);
-        if (spans == m_syntaxSpansByLine.end()) {
-            spans = m_syntaxSpansByLine.insert(line, QList<SemanticSpan>{});
+        auto spans = next.find(line);
+        if (spans == next.end()) {
+            spans = next.insert(line, QList<SemanticSpan>{});
         }
         spans.value().append(span);
     }
-    rehighlight();
+    const QSet<int> changed = changedLines(m_syntaxSpansByLine, next);
+    m_syntaxSpansByLine = std::move(next);
+    rehighlightLines(changed);
 }
 
 void EditorHighlighter::clearSyntaxTokens()
@@ -90,8 +99,65 @@ void EditorHighlighter::clearSyntaxTokens()
     if (m_syntaxSpansByLine.isEmpty()) {
         return;
     }
+    const QSet<int> changed = changedLines(m_syntaxSpansByLine, {});
     m_syntaxSpansByLine.clear();
-    rehighlight();
+    rehighlightLines(changed);
+}
+
+// A edicao comecou no bloco de `position` e mudou a contagem de linhas em
+// `delta`. Os spans andam com o texto; a linha editada perde o token
+// semantico (pintaria a coluna errada ate' o LSP responder) e guarda o do
+// Tree-sitter. O QSyntaxHighlighter ja' refez os blocos editados com os
+// spans de ANTES; aqui so' se repinta o que esses spans velhos sujaram.
+void EditorHighlighter::trackEdit(int position, int charsRemoved, int charsAdded)
+{
+    Q_UNUSED(charsRemoved)
+    Q_UNUSED(charsAdded)
+    const QTextDocument* textDocument = document();
+    if (textDocument == nullptr) {
+        return;
+    }
+    const int blocks = textDocument->blockCount();
+    const int delta = blocks - m_lastBlockCount;
+    m_lastBlockCount = blocks;
+    if (m_semanticSpansByLine.isEmpty() && m_syntaxSpansByLine.isEmpty()) {
+        return;
+    }
+    const QTextBlock first = textDocument->findBlock(position);
+    if (!first.isValid()) {
+        return;
+    }
+    const int start = first.blockNumber();
+    QSet<int> dirty;
+    for (int line = start; line <= start + std::max(0, delta); ++line) {
+        if (m_semanticSpansByLine.contains(line) || (line != start && m_syntaxSpansByLine.contains(line))) {
+            dirty.insert(line);
+        }
+    }
+    m_semanticSpansByLine = followEdit(m_semanticSpansByLine, start, delta, false);
+    m_syntaxSpansByLine = followEdit(m_syntaxSpansByLine, start, delta, true);
+    rehighlightLines(dirty);
+}
+
+// Repinta so' estas linhas. Quando sao a maior parte do documento (o
+// primeiro lote de tokens), uma passada inteira sai mais barata que
+// bloco a bloco.
+void EditorHighlighter::rehighlightLines(const QSet<int>& lines)
+{
+    const QTextDocument* textDocument = document();
+    if (lines.isEmpty() || textDocument == nullptr) {
+        return;
+    }
+    if (lines.size() * 2 > textDocument->blockCount()) {
+        rehighlight();
+        return;
+    }
+    for (const int line : lines) {
+        const QTextBlock block = textDocument->findBlockByNumber(line);
+        if (block.isValid()) {
+            rehighlightBlock(block);
+        }
+    }
 }
 
 void EditorHighlighter::applySemanticSpans()
