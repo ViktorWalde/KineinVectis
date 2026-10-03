@@ -13,6 +13,10 @@ WorkspaceStatusBar {
     property var remoteController: null
 
     workspaceRoot: coreClient.workspaceRoot
+    workspaceName: coreClient.workspaceName
+    breadcrumb: editorController !== null && editorController.currentTab >= 0
+                && !editorController.currentReadOnly
+                ? shellController.relativeToRoot(editorController.currentFilePath()) : ""
     logsActive: shellController.tabActive("logs")
     running: coreClient.running
     coreConnected: coreClient.connected

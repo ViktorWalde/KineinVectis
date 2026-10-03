@@ -73,14 +73,6 @@ Item {
             root.editorController.currentFilePath());
     }
 
-    function currentFileBreadcrumb(currentTab) {
-        if (currentTab < 0 || root.editorController.currentReadOnly) {
-            return "";
-        }
-        return root.shellController.relativeToRoot(
-            root.editorController.currentFilePath());
-    }
-
     function currentFileExecutionLine(currentTab, stoppedFile, stoppedLine) {
         if (stoppedFile === ""
                 || stoppedFile !== root.editorController.currentFilePath()) {
@@ -129,8 +121,6 @@ Item {
                 root.debugController.toggleBreakpoint(
                     root.editorController.currentFilePath(), line);
         }
-        breadcrumbPath: root.currentFileBreadcrumb(
-            root.editorController.currentTab)
         diffLineKinds: root.gitController.diffLineKinds
         diffRevision: root.gitController.diffRevision
         coverageLineKinds: root.coverageController.lineKinds

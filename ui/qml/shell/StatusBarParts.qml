@@ -24,7 +24,10 @@ Item {
     Component {
         id: pathPart
 
-        Text {
+        // A TRILHA do arquivo ativo: "projeto › src › main.cpp" (0.3.9 —
+        // subiu de cima do editor para ca', como na JetBrains). Sem arquivo,
+        // so' o projeto. A pasta inteira fica na dica.
+        Item {
             id: pathItem
 
             // Entregues na criacao pelo StatusBarSlot (createObject).
@@ -32,12 +35,26 @@ Item {
             property Item strip: null
             readonly property bool shown: pathItem.bar.workspaceRoot !== ""
 
-            width: Math.min(implicitWidth, Math.max(120, pathItem.strip.width * 0.32))
-            elide: Text.ElideMiddle
-            text: pathItem.bar.workspaceRoot
-            color: Theme.textMuted
-            font.pixelSize: Theme.fontSizeStatus
-            font.family: Theme.monoFont
+            width: Math.min(trail.implicitWidth, Math.max(160, pathItem.strip.width * 0.45))
+            height: trail.height
+            clip: true
+
+            EditorBreadcrumbs {
+                id: trail
+
+                anchors.verticalCenter: parent.verticalCenter
+                path: pathItem.bar.workspaceName
+                      + (pathItem.bar.breadcrumb !== "" ? "/" + pathItem.bar.breadcrumb : "")
+            }
+
+            HoverHandler {
+                id: trailHover
+
+                onHoveredChanged: {
+                    if (hovered) TooltipController.showFor(pathItem, pathItem.bar.workspaceRoot, "top");
+                    else TooltipController.hideFor(pathItem);
+                }
+            }
         }
     }
 

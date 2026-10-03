@@ -17,7 +17,6 @@ Rectangle {
     property var breakpointLines: []
     property int executionLine: 0
     // C4: caminho relativo do arquivo atual, "src/lsp/manager.rs" → segmentos.
-    property string breadcrumbPath: ""
     property var diffLineKinds: ({})
     property int diffRevision: 0
     property var coverageLineKinds: ({})
@@ -111,7 +110,7 @@ Rectangle {
 
         anchors.top: parent.top
         anchors.left: parent.left
-        anchors.right: parent.right
+        anchors.right: modeBar.visible ? modeBar.left : parent.right
         anchors.margins: Theme.spacingSmall
         filesModel: root.filesModel
         fileCount: root.fileCount
@@ -120,22 +119,12 @@ Rectangle {
         onTabCloseRequested: docId => root.tabCloseRequested(docId)
     }
 
-    EditorBreadcrumbs {
-        id: breadcrumbsBar
-
-        anchors.top: tabBar.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: Theme.spacingMedium
-        anchors.rightMargin: Theme.spacingSmall
-        visible: root.currentTab >= 0 && root.breadcrumbPath !== ""
-        path: root.breadcrumbPath
-    }
-
+    // O caminho do arquivo ("src › main.cpp") saiu daqui para a barra de
+    // status (0.3.9, pedido do autor: mais altura para o codigo).
     EditorStatusBanners {
         id: statusBanners
 
-        anchors.top: breadcrumbsBar.bottom
+        anchors.top: tabBar.bottom
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: Theme.spacingSmall
@@ -152,13 +141,13 @@ Rectangle {
         onWatchErrorDismissRequested: root.watchErrorDismissRequested()
     }
 
+    // Na ponta direita da faixa de abas, nao numa linha propria (0.3.9).
     MarkdownModeBar {
         id: modeBar
 
-        anchors.top: statusBanners.bottom
+        anchors.verticalCenter: tabBar.verticalCenter
         anchors.right: parent.right
         anchors.rightMargin: Theme.spacingSmall
-        anchors.topMargin: visible ? Theme.spacingXSmall : 0
         visible: root.markdownAvailable
         mode: root.previewMode
         onModeSelected: function(mode) {
@@ -169,7 +158,7 @@ Rectangle {
     MarkdownPreviewPane {
         id: preview
 
-        anchors.top: modeBar.visible ? modeBar.bottom : statusBanners.bottom
+        anchors.top: statusBanners.bottom
         anchors.bottom: parent.bottom
         // SEM ancora a' esquerda, e com LARGURA explicita. A primeira versao
         // tentava `anchors.left: sideBySide ? undefined : parent.left`, e a foto
@@ -216,7 +205,7 @@ Rectangle {
         id: editor
 
         visible: !root.previewOnly
-        anchors.top: modeBar.visible ? modeBar.bottom : statusBanners.bottom
+        anchors.top: statusBanners.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
         anchors.right: root.sideBySide ? previewSplitter.left : outlineSide.left

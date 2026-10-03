@@ -15,6 +15,9 @@ Rectangle {
     id: bar
 
     property string workspaceRoot: ""
+    property string workspaceName: ""
+    // O arquivo ativo relativo ao projeto ("src/main.cpp"); vazio sem arquivo.
+    property string breadcrumb: ""
     property bool logsActive: false
     property bool running: false
     property bool coreConnected: false
