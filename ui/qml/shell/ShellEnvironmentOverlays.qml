@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import KineinVectis
 
@@ -30,7 +31,14 @@ Item {
     property var runtimeController: null
 
     Repeater {
-        model: root.toolWindows === null ? [] : root.toolWindows.overlayEntries
+        // O modelo e' a CONTAGEM, nao a lista. `overlayEntries` vem de
+        // `ToolWindows.entries`, que se refaz a cada mudanca de estado (um
+        // `panelVisible`, a aba de baixo, o recolher dos Simbolos); com a
+        // lista como modelo, o Repeater destruia e recriava os cinco paineis
+        // a cada vez — ~45 ms e o que estivesse digitado num painel aberto
+        // (medido em 2026-10-03, 40.7 §7.195). Um numero igual nao reinicia o
+        // modelo: cada vaga cria o painel uma vez e le' o `active` pelo indice.
+        model: root.toolWindows === null ? 0 : root.toolWindows.overlayEntries.length
 
         // `createObject`, e NAO `Loader`: os paineis sao componentes "bound"
         // do `ToolWindows`, e o Loader do Qt 6.4 (o do AppImage, Debian 12) os
@@ -38,19 +46,20 @@ Item {
         // component outside its creation context") — os cinco paineis de
         // ambiente nao abriam no pacote, so' no checkout com Qt mais novo.
         // `createObject` usa o contexto de criacao do componente nas duas.
-        // Ciclo de vida igual ao do Loader de antes: criado uma vez, alternando
-        // so' `visible` (carregar ao abrir e' decisao de outra fatia).
+        // Criado uma vez, alternando so' `visible`.
         Item {
             id: panelSlot
 
-            required property var modelData
+            required property int index
+            readonly property var entry: root.toolWindows === null
+                                         ? undefined : root.toolWindows.overlayEntries[panelSlot.index]
 
             anchors.fill: parent
             z: 99
-            visible: modelData.active === true
+            visible: panelSlot.entry !== undefined && panelSlot.entry.active === true
 
             Component.onCompleted: {
-                const panel = modelData.panel.createObject(panelSlot);
+                const panel = panelSlot.entry.panel.createObject(panelSlot);
                 panel.width = Qt.binding(() => panelSlot.width);
                 panel.height = Qt.binding(() => panelSlot.height);
             }
@@ -71,10 +80,6 @@ Item {
         }
     }
 
-
-
-
-
     // O passo de permissao (E2) vai para o TERMINAL DA IDE, visivel, pelo
     // mesmo caminho do painel de instalacao. Nada roda escondido.
     Connections {
@@ -84,7 +89,6 @@ Item {
             root.runtimeController.submitShellInput(comando);
         }
     }
-
 
     SetupPanelHost {
         anchors.fill: parent

@@ -516,8 +516,9 @@ estados  configurado / detectado / selecionado / efetivo quando o core
 §7.191, `view.focusMode` Ctrl+Shift+F12 e `view.returnToEditor`), ciclo de
 foco entre áreas com foco visível (§7.192, Ctrl+F6), e o estreito abaixo de
 1024 px (§7.193), e tamanhos de fonte e raios vindos só do `Theme` (§7.194).
-A F4 está completa; resta medir a carga dos overlays de
-ambiente (item "carga"), que só muda se a medida mostrar custo.
+A carga dos overlays foi medida (§7.195): ~45 ms uma vez; a medida achou e
+corrigiu a recriação dos cinco painéis a cada mudança de estado. **A F4 está
+completa.**
 
 ```text
 foco     grafo explícito: trilho → dock esquerdo → editor → dock direito →
