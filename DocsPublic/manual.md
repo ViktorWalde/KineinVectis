@@ -494,8 +494,9 @@ candidatos.
 **Frames** (a pilha de chamadas — clique num frame para abrir o código
 dele e ver as variáveis daquele nível) e as **Variáveis** locais.
 Variáveis com **▸** são structs/objetos: clique para expandir os campos.
-Acima do editor, uma trilha (breadcrumbs) mostra onde o arquivo atual
-está no projeto; a linha do cursor fica levemente destacada.
+Na barra de status, à esquerda, uma trilha (breadcrumbs) mostra onde o
+arquivo atual está no projeto ("projeto › src › main.cpp"; até 2026-10-02
+ela ficava acima do editor); a linha do cursor fica levemente destacada.
 
 ---
 
