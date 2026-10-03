@@ -3,21 +3,29 @@
 > **Classe: ESTADO** (`DocsPublic/README.md`). Se divergir do código, o código
 > vence e este documento se corrige no mesmo gesto.
 >
-> **O estado, em 2026-10-02 (leia isto; o resto do cabeçalho é histórico):**
+> **O estado, em 2026-10-03 (leia isto; o resto do cabeçalho é histórico):**
 >
 > - **Última versão lançada: 0.3.5**, em 2026-10-01, pré-release "Public Beta"
 >   ([`v0.3.5`](https://github.com/ViktorWalde/KineinVectis/releases/tag/v0.3.5),
 >   protocolo `0.144.0`; provas no 40.7 §7.147–§7.149).
-> - **Em curso: 0.3.6** (casca e base visual), no checkout com o protocolo
->   `0.147.0`. Os gates G0 estão feitos e passam; a **F0** (medir antes de
->   mudar) foi feita em 2026-10-01 (40.7 §7.153; inventário, telas e linha de
->   base no [`53`](53-arquitetura-executavel-da-0.3.6.md) §F0); depois vieram o
->   "LSP ✗" sem queda falsa (§7.154), o **Criar Projeto** por linguagem
->   (§7.155) e o **layout versionado** com os limites de tamanho (§7.156,
->   protocolo `0.146.0`) e a **V-1** (o C++ todo em inglês, §7.157). Daqui em
->   diante o 53 §11 manda: a 0.3.6 fecha com o passeio sem aviso no AppImage
->   e as telas nas três larguras; a 0.3.7 é o trilho por áreas (58 §4.1). Onde cada fatia começa no código:
->   [`58`](58-onde-cada-versao-comeca-no-codigo.md).
+> - **Série 0.3.6–0.3.9 (a casca) feita no checkout**, protocolo `0.148.0`,
+>   não lançada. O autor pensa em lançá-la junto com a 0.4; isso é intenção,
+>   não decisão (53 §11). As fatias e as provas estão no 40.7 §7.153–§7.201.
+>   A arquitetura da casca para quem chega, com diagramas, está em
+>   [`arquitetura/36`](../arquitetura/36-casca-da-ide.md).
+>   - **F0–F4 completas.** A **F5** (§7.201) comparou espaço de código (+4 a
+>     5 linhas em toda largura), gestos e desempenho, e achou e corrigiu uma
+>     regressão de digitação (§7.198). Falta a tarefa real cronometrada pela
+>     mão do autor.
+>   - **Proposta aberta para o autor decidir:** o primeiro quadro está em
+>     400 ms, no limite do orçamento (F0: 372 ms), por acúmulo de fatias.
+>     Criar sob demanda o que só existe com projeto aberto o devolve, mas
+>     mexe no ciclo de vida de controladores e terminais.
+>   - **Dívida anotada:** 20 campos de texto feitos à mão em 18 arquivos (um
+>     `KvTextField` é fatia própria, §7.199).
+> - **Próximo:** a 0.4 (embarcados, [`52`](52-arquitetura-executavel-da-0.4.md)),
+>   depois de o autor revisar a série na tela. Onde cada versão começa no
+>   código: [`58`](58-onde-cada-versao-comeca-no-codigo.md).
 > - **Gate:** sem vermelho conhecido no Ubuntu 24.04 / Qt 6.4.2 / gdb 15 nem
 >   no Ubuntu 26.04 / Qt 6.10 / clang 21 do autor (a exceção do clang-tidy só
 >   vale no 18 desde o 40.7 §7.153); o que a máquina não prova sai como NÃO
